@@ -22,6 +22,8 @@
 #ifndef TCP_EVENT_LOGGER_H
 #define TCP_EVENT_LOGGER_H
 
+#include <cstdint>
+
 /* events */
 #define EVENT_SYN_ON_EST                0x00000001
 #define EVENT_DATA_ON_SYN               0x00000002

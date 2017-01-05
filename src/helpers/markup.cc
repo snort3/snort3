@@ -17,8 +17,13 @@
 //--------------------------------------------------------------------------
 // markup.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "markup.h"
-#include <string.h>
+
+#include <cstring>
 
 using namespace std;
 

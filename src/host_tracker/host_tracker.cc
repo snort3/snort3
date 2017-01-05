@@ -18,7 +18,11 @@
 
 // host_tracker.cc author Steve Chew <stechew@cisco.com>
 
-#include "host_tracker/host_tracker.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "host_tracker.h"
 
 THREAD_LOCAL struct HostTrackerStats host_tracker_stats;
 

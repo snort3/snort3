@@ -18,11 +18,11 @@
 
 // profiler_stats_table.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "profiler_stats_table.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "profiler_stats_table.h"
 
 #include <cassert>
 #include <cstring>

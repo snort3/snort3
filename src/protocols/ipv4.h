@@ -20,15 +20,7 @@
 #ifndef PROTOCOLS_IPV4_H
 #define PROTOCOLS_IPV4_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include <cstdint>
 #include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <net/if.h>
 
 #include "protocols/protocol_ids.h" // include ipv4 protocol numbers
 

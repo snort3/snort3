@@ -17,32 +17,21 @@
 //--------------------------------------------------------------------------
 // main.cc author Russ Combs <rucombs@cisco.com>
 
-#include "main.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <sys/types.h>
-#include <sys/select.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
-#include <time.h>
+#include "main.h"
 
-#ifdef SHELL
-#include <sys/socket.h>
-#include <netinet/in.h>
-#endif
-
-#include <mutex>
-#include <string>
 #include <thread>
 
+#include "control/idle_processing.h"
+#include "framework/module.h"
+#include "helpers/process.h"
 #include "helpers/ring.h"
+#include "helpers/swapper.h"
 #include "log/messages.h"
+#include "lua/lua.h"
 #include "main/analyzer.h"
 #include "main/shell.h"
 #include "main/snort.h"
@@ -50,23 +39,15 @@
 #include "main/snort_debug.h"
 #include "main/snort_module.h"
 #include "main/thread_config.h"
-#include "framework/module.h"
+#include "managers/inspector_manager.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
-#include "managers/inspector_manager.h"
 #include "memory/memory_cap.h"
-#include "utils/util.h"
-#include "parser/parser.h"
-#include "packet_io/trough.h"
-#include "packet_io/intf.h"
 #include "packet_io/sfdaq.h"
-#include "control/idle_processing.h"
+#include "packet_io/trough.h"
 #include "target_based/sftarget_reader.h"
-#include "flow/flow_control.h"
-#include "lua/lua.h"
-#include "helpers/process.h"
-#include "helpers/swapper.h"
 #include "time/periodic.h"
+#include "utils/util.h"
 #include "utils/safec.h"
 
 #ifdef UNIT_TEST

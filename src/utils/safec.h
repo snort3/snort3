@@ -20,10 +20,6 @@
 #ifndef UTILS_SAFEC_H
 #define UTILS_SAFEC_H
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
 //FIXIT-M combine these macros in the build foo 
 #if defined(HAVE_SAFEC) && defined(ENABLE_SAFEC)
 

@@ -20,6 +20,8 @@
 #ifndef HTTP_STR_TO_CODE_H
 #define HTTP_STR_TO_CODE_H
 
+#include <cstdint>
+
 struct StrCode
 {
     int32_t code;

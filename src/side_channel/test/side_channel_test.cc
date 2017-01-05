@@ -19,6 +19,10 @@
 // side_channel_test.cc author Ed Borgoyn <eborgoyn@cisco.com>
 // unit test main
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "side_channel/side_channel.h"
 
 #include "log/messages.h"

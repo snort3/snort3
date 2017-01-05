@@ -20,11 +20,16 @@
 // modbus_paf.cc author Ryan Jordan
 // Protocol-Aware Flushing (PAF) code for the Modbus preprocessor.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "modbus_paf.h"
 
-#include "modbus_decode.h"
-#include "modbus_module.h"
 #include "events/event_queue.h"
+
+#include "modbus.h"
+#include "modbus_module.h"
 
 #define MODBUS_MIN_HDR_LEN 2        // Enough for Unit ID + Function
 #define MODBUS_MAX_HDR_LEN 254      // Max PDU size is 260, 6 bytes already seen

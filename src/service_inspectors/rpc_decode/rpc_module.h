@@ -23,8 +23,6 @@
 // Interface to the RPC decode service inspector
 
 #include "framework/module.h"
-#include "framework/bits.h"
-#include "main/thread.h"
 
 #define GID_RPC_DECODE 106
 

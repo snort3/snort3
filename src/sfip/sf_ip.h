@@ -23,9 +23,7 @@
 #define SF_IP_H
 
 #include <arpa/inet.h>
-#include <assert.h>
 #include <sys/socket.h>
-#include <stddef.h>
 
 #include <sstream>
 

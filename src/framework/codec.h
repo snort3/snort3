@@ -23,18 +23,10 @@
 // Codec is a type of plugin that provides protocol-specific encoding and
 // decoding.
 
-#include <vector>
 #include <cstdint>
-#include <cstddef>
-#include <type_traits> // static_assert
+#include <vector>
 
-#include "main/snort_types.h"
 #include "framework/base_api.h"
-
-// unfortunately necessary due to use of Ipapi in struct
-#include "protocols/protocol_ids.h"
-#include "protocols/ip.h"
-#include "protocols/layer.h"
 #include "framework/decode_data.h"
 
 struct TextLog;

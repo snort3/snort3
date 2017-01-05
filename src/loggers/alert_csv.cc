@@ -28,31 +28,20 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-#include <string>
-#include <vector>
-
-#include "main/snort_debug.h"
+#include "detection/signature.h"
+#include "events/event.h"
 #include "framework/logger.h"
 #include "framework/module.h"
-#include "detection/signature.h"
-#include "utils/util.h"
-#include "utils/stats.h"
 #include "log/log.h"
-#include "log/text_log.h"
 #include "log/log_text.h"
-#include "protocols/packet.h"
-#include "protocols/tcp.h"
-#include "protocols/udp.h"
-#include "protocols/icmp4.h"
-#include "protocols/icmp6.h"
-#include "protocols/eth.h"
+#include "log/text_log.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
+#include "protocols/eth.h"
+#include "protocols/icmp4.h"
+#include "protocols/tcp.h"
+#include "protocols/udp.h"
+#include "utils/stats.h"
 
 using namespace std;
 

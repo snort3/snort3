@@ -23,11 +23,11 @@
  ** 8.15.15 - Initial Source Code. Hui Cao
  */
 
-#include "file_flows.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "file_flows.h"
 
 #include "managers/inspector_manager.h"
 #include "protocols/packet.h"

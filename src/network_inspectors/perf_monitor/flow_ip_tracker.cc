@@ -18,14 +18,14 @@
 
 // flow_ip_tracker.cc author Carter Waxman <cwaxman@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "flow_ip_tracker.h"
 
 #include "log/messages.h"
-#include "sfip/sf_ip.h"
-#include "utils/util.h"
-#include "utils/util_net.h"
-
-#include "perf_module.h"
+#include "protocols/packet.h"
 
 #define FLIP_FILE (PERF_NAME "_flow_ip.csv")
 

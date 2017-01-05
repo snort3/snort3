@@ -21,8 +21,8 @@
 #ifndef RULE_PROFILER_DEFS_H
 #define RULE_PROFILER_DEFS_H
 
-#include "detection/treenodes.h"
-#include "time_profiler_defs.h"
+#include "time/clock_defs.h"
+#include "time/stopwatch.h"
 
 struct dot_node_state_t;
 

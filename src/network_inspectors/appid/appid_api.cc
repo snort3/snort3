@@ -19,13 +19,14 @@
 
 // appid_api.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "appid_api.h"
 
 #include "app_info_table.h"
 #include "service_plugins/service_base.h"
-#include "app_info_table.h"
-
-#include "utils/util.h"
 
 #define SSL_WHITELIST_PKT_LIMIT 20
 

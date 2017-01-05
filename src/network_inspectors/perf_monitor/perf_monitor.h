@@ -24,12 +24,9 @@
 // These are the basic functions and structures that are needed to call
 // performance functions.
 
-#include <vector>
 #include "perf_module.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "main/thread.h"
-#include "protocols/packet.h"
+
+struct Packet;
 
 extern PerfConfig* perfmon_config;  // FIXIT-M shouldn't be needed externally
 extern THREAD_LOCAL bool perfmon_rotate_perf_file;

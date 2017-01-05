@@ -17,22 +17,17 @@
 //--------------------------------------------------------------------------
 // pp_codec_data_iface.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "pp_daq_pkthdr_iface.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <string.h>
-#include <lua.hpp>
+#include "pp_daq_pkthdr_iface.h"
 
-extern "C" {
 #include <daq_common.h>
-}
+
+#include <cstring>
 
 #include "lua/lua_arg.h"
-#include "lua/lua_table.h"
-
 
 static void set_fields(lua_State* L, int tindex, struct _daq_pkthdr& self)
 {

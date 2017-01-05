@@ -18,6 +18,10 @@
 
 // arp_module.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "arp_module.h"
 
 #define ARPSPOOF_UNICAST_ARP_REQUEST_STR \

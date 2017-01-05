@@ -22,7 +22,7 @@
 #ifndef LENGTH_APP_CACHE_H
 #define LENGTH_APP_CACHE_H
 
-#include "appid_api.h"
+#include "flow/flow.h"
 
 #define LENGTH_SEQUENCE_CNT_MAX (5)
 

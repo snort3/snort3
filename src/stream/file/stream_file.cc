@@ -17,16 +17,11 @@
 //--------------------------------------------------------------------------
 // stream_file.cc author Russ Combs <rucombs@cisco.com>
 
-#include "stream_file.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <assert.h>
-
-#include "log/messages.h"
-#include "protocols/packet.h"
+#include "stream_file.h"
 
 #include "file_module.h"
 #include "file_session.h"

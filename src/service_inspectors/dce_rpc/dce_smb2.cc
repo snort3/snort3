@@ -19,6 +19,10 @@
 // SMB2 file processing
 // Author(s):  Hui Cao <huica@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "dce_smb2.h"
 
 #include "detection/detection_util.h"

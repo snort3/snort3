@@ -17,10 +17,13 @@
 //--------------------------------------------------------------------------
 // pp_raw_buffer_iface.cc author Joel Cornett <jocornet@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "pp_raw_buffer_iface.h"
 
 #include "lua/lua_arg.h"
-#include "lua/lua_stack.h"
 
 // FIXIT-H a lot of users keep references to this data.  Need to prevent
 // Lua's garbage collection from destroying RawBuffer while other C++ types

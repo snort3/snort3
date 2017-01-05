@@ -17,14 +17,9 @@
 //--------------------------------------------------------------------------
 // cd_sip.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include <stdint.h>
-
-extern "C" {
 #include <sfbpf_dlt.h>
-}
 
 #include "framework/codec.h"
-#include "protocols/protocol_ids.h"
 
 #define CD_SLIP_NAME "slip"
 #define CD_SLIP_HELP_STR "support for slip protocol"

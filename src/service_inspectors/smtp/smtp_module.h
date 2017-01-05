@@ -24,8 +24,6 @@
 // Interface to the SMTP service inspector
 
 #include "framework/module.h"
-#include "framework/bits.h"
-#include "main/thread.h"
 #include "smtp_config.h"
 
 #define GID_SMTP 124

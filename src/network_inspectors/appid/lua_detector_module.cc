@@ -21,24 +21,25 @@
 
 // supporting Lua detectors in core engine.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "lua_detector_module.h"
 
-#include <algorithm>
 #include <glob.h>
 #include <libgen.h>
-#include <lua.hpp>
-#include <libgen.h>
+
+#include "log/messages.h"
+#include "lua/lua.h"
+#include "main/snort_debug.h"
 
 #include "appid_config.h"
 #include "client_plugins/client_app_base.h"
-#include "service_plugins/service_base.h"
-#include "log/messages.h"
-#include "lua/lua.h"
-#include "lua_detector_util.h"
 #include "lua_detector_api.h"
 #include "lua_detector_flow_api.h"
-#include "main/snort_debug.h"
-#include "utils/util.h"
+#include "lua_detector_util.h"
+#include "service_plugins/service_base.h"
 
 #define MAX_LUA_DETECTOR_FILENAME_LEN 1024
 #define MAX_DEFAULT_NUM_LUA_TRACKERS  10000

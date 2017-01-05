@@ -22,7 +22,7 @@
 
 // Factory for Connectors.
 
-#include "framework/connector.h"
+#include <string>
 
 struct SnortConfig;
 struct ConnectorApi;

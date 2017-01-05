@@ -19,11 +19,11 @@
 
 // sf_multi_mpse.cc author Sourcefire Inc.
 
-#include "sf_multi_mpse.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <stdio.h>
-#include <stdint.h>
-#include <string.h>
+#include "sf_multi_mpse.h"
 
 #include "search_engines/search_tool.h"
 #include "utils/util.h"

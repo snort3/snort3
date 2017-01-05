@@ -20,6 +20,7 @@
 #define SMTP_CONFIG_H
 
 // Configuration for SMTP inspector
+
 #include "mime/file_mime_process.h"
 #include "search_engines/search_tool.h"
 

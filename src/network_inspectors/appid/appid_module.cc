@@ -19,14 +19,14 @@
 // appid_module.cc author davis mcpherson <davmcphe@cisco.com>
 // Created on: May 10, 2016
 
-#include "appid_module.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <string>
+#include "appid_module.h"
 
 #include "log/messages.h"
 #include "profiler/profiler.h"
-#include "sfip/sf_ip.h"
-#include "utils/util.h"
 
 using namespace std;
 

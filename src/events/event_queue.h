@@ -20,8 +20,8 @@
 #ifndef EVENT_QUEUE_H
 #define EVENT_QUEUE_H
 
-#include "main/snort_types.h"
 #include "actions/actions.h"
+#include "main/snort_types.h"
 
 #define SNORT_EVENTQ_PRIORITY    1
 #define SNORT_EVENTQ_CONTENT_LEN 2

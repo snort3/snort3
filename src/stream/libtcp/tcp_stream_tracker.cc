@@ -19,12 +19,13 @@
 // tcp_stream_tracker.cpp author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Jun 24, 2015
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "tcp_stream_tracker.h"
 
-#include "profiler/profiler.h"
 #include "protocols/eth.h"
-#include "protocols/tcp.h"
-#include "protocols/tcp_options.h"
 #include "stream/stream.h"
 
 const char* tcp_state_names[] =

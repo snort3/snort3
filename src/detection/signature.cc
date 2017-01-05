@@ -18,18 +18,18 @@
 //--------------------------------------------------------------------------
 // Author(s):   Andrew R. Baker <andrewb@sourcefire.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "signature.h"
 
-#include <string.h>
-#include <ctype.h>
-
-#include "utils/util.h"
-#include "detection/rules.h"
-#include "detection/treenodes.h"
-#include "hash/sfghash.h"
 #include "log/messages.h"
-#include "parser/parser.h"
 #include "main/snort_config.h"
+#include "parser/parser.h"
+#include "utils/util.h"
+
+#include "treenodes.h"
 
 /********************* Reference Implementation *******************************/
 

@@ -18,6 +18,10 @@
 //
 // author Hui Cao <huica@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "file_policy.h"
 
 #include "hash/hashes.h"

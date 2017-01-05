@@ -51,19 +51,17 @@
 * Author: Marc Norton
 *
 */
-#include "sfghash.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <assert.h>
+#include "sfghash.h"
+
+#include <cassert>
 
 #include "utils/util.h"
+
 #include "sfhashfcn.h"
 #include "sfprimetable.h"
 

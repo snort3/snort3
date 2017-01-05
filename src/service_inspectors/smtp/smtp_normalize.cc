@@ -30,12 +30,13 @@
  *
  */
 
-#include "smtp_normalize.h"
-#include <string.h>
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "smtp_normalize.h"
+
+#include "protocols/packet.h"
 
 #include "smtp.h"
 #include "smtp_util.h"

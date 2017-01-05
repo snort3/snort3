@@ -26,10 +26,6 @@
 // -- inspection - for flow handling
 // -- ips - for rule handling
 
-#include <string>
-#include <vector>
-
-#include "main/snort_types.h"
 #include "framework/data_bus.h"
 
 struct PortTable;

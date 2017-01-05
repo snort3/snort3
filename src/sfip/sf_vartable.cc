@@ -24,18 +24,13 @@
  *
  * Library for managing IP variables.
 */
-#include "sf_vartable.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
+#include "sf_vartable.h"
 
-#include "main/snort_types.h"
-#include "sfip/sf_vartable.h"
 #include "sfip/sf_ipvar.h"
 #include "utils/util.h"
 

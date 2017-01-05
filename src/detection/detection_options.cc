@@ -26,36 +26,32 @@
 **  detection options only once per pattern match.
 */
 
-#include "detection_options.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "detection_defines.h"
-#include "detection_util.h"
-#include "treenodes.h"
-#include "fp_create.h"
-#include "fp_detect.h"
-#include "pattern_match_data.h"
-#include "rules.h"
+#include "detection_options.h"
 
-#include "profiler/profiler.h"
-#include "utils/util.h"
-#include "hash/sfxhash.h"
+#include "filters/detection_filter.h"
+#include "framework/cursor.h"
 #include "hash/sfhashfcn.h"
-#include "parser/parser.h"
+#include "hash/sfxhash.h"
 #include "ips_options/ips_byte_extract.h"
 #include "ips_options/ips_flowbits.h"
-#include "ips_options/ips_pcre.h"
-#include "filters/detection_filter.h"
 #include "latency/packet_latency.h"
+#include "latency/rule_latency_state.h"
 #include "log/messages.h"
+#include "main/snort_config.h"
 #include "main/thread_config.h"
-#include "framework/ips_option.h"
-#include "framework/cursor.h"
 #include "managers/ips_manager.h"
+#include "parser/parser.h"
+#include "profiler/rule_profiler_defs.h"
 #include "protocols/packet_manager.h"
+#include "utils/util.h"
+
+#include "detection_defines.h"
+#include "fp_detect.h"
+#include "pattern_match_data.h"
 
 #define HASH_RULE_OPTIONS 16384
 #define HASH_RULE_TREE     8192

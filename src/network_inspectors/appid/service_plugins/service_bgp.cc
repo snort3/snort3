@@ -19,12 +19,15 @@
 
 // service_bgp.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "service_bgp.h"
-#include "appid_module.h"
-#include "application_ids.h"
 
 #include "main/snort_debug.h"
-#include "utils/util.h"
+
+#include "appid_module.h"
 
 static const unsigned BGP_PORT = 179;
 

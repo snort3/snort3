@@ -18,6 +18,10 @@
 //--------------------------------------------------------------------------
 // sfthd_test.cc author Russ Combs <rcombs@sourcefire.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "catch/catch.hpp"
 #include "catch/unit_test.h"
 #include "hash/sfxhash.h"

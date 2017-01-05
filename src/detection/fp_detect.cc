@@ -34,53 +34,41 @@
 **
 */
 
-#include "fp_detect.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <strings.h>
+#include "fp_detect.h"
 
-#include "detect.h"
-#include "fp_config.h"
-#include "fp_create.h"
-#include "service_map.h"
-#include "detection_util.h"
-#include "detection_options.h"
-#include "pattern_match_data.h"
-#include "pcrm.h"
-#include "tag.h"
-#include "rules.h"
-#include "treenodes.h"
-
+#include "events/event.h"
+#include "filters/rate_filter.h"
+#include "filters/sfthreshold.h"
+#include "framework/cursor.h"
+#include "framework/mpse.h"
 #include "latency/packet_latency.h"
 #include "latency/rule_latency.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
-#include "framework/cursor.h"
-#include "framework/inspector.h"
-#include "framework/ips_action.h"
-#include "framework/mpse.h"
-#include "filters/sfthreshold.h"
-#include "filters/rate_filter.h"
-#include "events/event_wrapper.h"
-#include "packet_io/active.h"
-#include "parser/parser.h"
-#include "utils/sflsq.h"
-#include "utils/util.h"
-#include "profiler/profiler.h"
-#include "actions/actions.h"
-#include "sfip/sf_ip.h"
 #include "managers/action_manager.h"
-#include "protocols/packet_manager.h"
-#include "protocols/tcp.h"
-#include "protocols/udp.h"
+#include "parser/parser.h"
+#include "profiler/profiler_defs.h"
 #include "protocols/icmp4.h"
+#include "protocols/packet_manager.h"
+#include "protocols/udp.h"
 #include "search_engines/pat_stats.h"
 #include "stream/stream.h"
 #include "utils/stats.h"
+#include "utils/util.h"
+
+#include "detect.h"
+#include "detection_options.h"
+#include "detection_util.h"
+#include "fp_config.h"
+#include "fp_create.h"
+#include "pattern_match_data.h"
+#include "pcrm.h"
+#include "service_map.h"
 
 THREAD_LOCAL ProfileStats rulePerfStats;
 THREAD_LOCAL ProfileStats ruleRTNEvalPerfStats;

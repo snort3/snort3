@@ -17,17 +17,15 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "util_net.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <netinet/in.h>
-#include <stdio.h>
-#include <string.h>
+#include "util_net.h"
 
 #include "main/thread.h"
+#include "sfip/sf_ip.h"
+
 #include "util.h"
 
 /**

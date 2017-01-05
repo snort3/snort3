@@ -19,12 +19,15 @@
 // tcp_stream_session.cc author davis mcpherson <davmcphe@cisco.com>
 // Created on: Feb 18, 2016
 
-#include "log/messages.h"
-#include "main/snort_debug.h"
-#include "sfip/sf_ip.h"
-#include "stream/tcp/tcp_ha.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "tcp_stream_session.h"
+
+#include "log/messages.h"
+#include "main/snort_debug.h"
+#include "stream/tcp/tcp_ha.h"
 
 #ifdef DEBUG_MSGS
 const char* const flush_policy_names[] =

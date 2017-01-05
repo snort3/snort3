@@ -17,12 +17,15 @@
 //--------------------------------------------------------------------------
 // http_str_to_code.cc author Tom Peters <thopeter@cisco.com>
 
-#include <string.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "main/snort_types.h"
+#include "http_str_to_code.h"
+
+#include <cstring>
 
 #include "http_enum.h"
-#include "http_str_to_code.h"
 
 // Need to replace this simple algorithm for better performance FIXIT-P
 int32_t str_to_code(const uint8_t* text, const int32_t text_len, const StrCode table[])

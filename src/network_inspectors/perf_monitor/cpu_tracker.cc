@@ -18,23 +18,25 @@
 
 // cpu_tracker.cc author Carter Waxman <cwaxman@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "cpu_tracker.h"
 
-#include "utils/stats.h"
-#include "utils/util.h"
-
 #include <sys/resource.h>
+#include <sys/time.h>
 
 #ifdef __APPLE__
 #include <mach/mach_host.h>
 #include <mach/thread_act.h>
 #endif
 
-#define CPU_FILE (PERF_NAME "_cpu.csv")
-
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"
 #endif
+
+#define CPU_FILE (PERF_NAME "_cpu.csv")
 
 static inline uint64_t get_microseconds(struct timeval t)
 {

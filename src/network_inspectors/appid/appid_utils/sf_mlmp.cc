@@ -19,9 +19,11 @@
 
 // sf_mlmp.cc author Sourcefire Inc.
 
-#include "sf_mlmp.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <string.h>
+#include "sf_mlmp.h"
 
 #include "main/snort_debug.h"
 #include "search_engines/search_tool.h"

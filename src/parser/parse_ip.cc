@@ -16,25 +16,17 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "parse_ip.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <errno.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <netdb.h>
-#include <ctype.h>
-#include <sys/types.h>
+#include "parse_ip.h"
 
-#include "parser.h"
 #include "log/messages.h"
+#include "main/policy.h"
 #include "main/snort_debug.h"
-#include "sfip/sf_vartable.h"
 #include "sfip/sf_ipvar.h"
+#include "sfip/sf_vartable.h"
 #include "utils/util.h"
 
 sfip_var_t* sfip_var_from_string(const char* addr)

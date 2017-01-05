@@ -18,11 +18,11 @@
 
 // host_cache.cc author Steve Chew <stechew@cisco.com>
 
-#include "host_tracker/host_cache.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "main/snort_config.h"
-#include "target_based/snort_protocols.h"
-#include <memory>
+#include "host_cache.h"
 
 #define LRU_CACHE_INITIAL_SIZE 65535
 

@@ -17,16 +17,13 @@
 //--------------------------------------------------------------------------
 // http_msg_status.cc author Tom Peters <thopeter@cisco.com>
 
-#include <string.h>
-#include <sys/types.h>
-#include <stdio.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "detection/detection_util.h"
-
-#include "http_enum.h"
-#include "http_api.h"
 #include "http_msg_status.h"
-#include "http_msg_header.h"
+
+#include "http_api.h"
 
 using namespace HttpEnums;
 

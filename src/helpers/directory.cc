@@ -17,19 +17,18 @@
 //--------------------------------------------------------------------------
 // directory.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "directory.h"
 
-#include <dirent.h>
 #include <fnmatch.h>
 #include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/stat.h>
 
-#include <iostream>
-#include <string>
-using namespace std;
+#include <cerrno>
+#include <cstring>
 
 Directory::Directory(const char* s, const char* f)
 {

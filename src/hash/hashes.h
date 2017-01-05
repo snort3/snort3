@@ -20,14 +20,6 @@
 #ifndef HASHES_H
 #define HASHES_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include <openssl/md5.h>
-#include <openssl/sha.h>
-#include <stdlib.h>
-
 #include "main/snort_types.h"
 
 #define MD5_HASH_SIZE    16

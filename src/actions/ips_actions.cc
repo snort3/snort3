@@ -17,12 +17,13 @@
 //--------------------------------------------------------------------------
 // ips_actions.cc author Russ Combs <rucombs@cisco.com>
 
-#include "ips_actions.h"
-#include "managers/plugin_manager.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "ips_actions.h"
+
+#include "managers/plugin_manager.h"
 
 #ifdef STATIC_IPS_ACTIONS
 extern const BaseApi* act_react[];

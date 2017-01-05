@@ -22,7 +22,6 @@
 
 #include "flow/flow.h"
 #include "flow/ha.h"
-#include "main/snort_types.h"
 
 //-------------------------------------------------------------------------
 

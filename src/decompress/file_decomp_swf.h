@@ -22,16 +22,10 @@
 #ifndef FILE_DECOMP_SWF_H
 #define FILE_DECOMP_SWF_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include <stdint.h>
-#include <zlib.h>
-
 #ifdef HAVE_LZMA
 #include <lzma.h>
 #endif
+#include <zlib.h>
 
 #include "file_decomp.h"
 

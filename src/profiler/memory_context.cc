@@ -18,14 +18,12 @@
 
 // memory_context.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "memory_context.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <cassert>
-#include <cstdlib>
+#include "memory_context.h"
+
 #include <mutex>
 #include <new>
 

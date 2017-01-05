@@ -17,16 +17,16 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "intf.h"
 
 #include <netinet/in.h>
 #include <pcap.h>
-#include <stdio.h>
 
 #include "log/messages.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "utils/util.h"
 #include "sfip/sf_ip.h"
 
 //------------------------------------------------------------------------------

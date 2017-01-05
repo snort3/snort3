@@ -19,33 +19,32 @@
 // appid_inspector.cc author davis mcpherson <davmcphe@cisco.com>
 // Created on: May 10, 2016
 
-#include "appid_inspector.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
+#include "appid_inspector.h"
+
 #include <openssl/crypto.h>
 
 #include "log/messages.h"
-#include "main/thread.h"
 #include "profiler/profiler.h"
-#include "appid_stats.h"
-#include "appid_session.h"
-#include "lua_detector_module.h"
-#include "lua_detector_api.h"
-#include "host_port_app_cache.h"
+#include "pub_sub/sip_events.h"
+
 #include "app_forecast.h"
-#include "service_plugins/service_base.h"
-#include "service_plugins/service_ssl.h"
+#include "appid_http_event_handler.h"
+#include "appid_module.h"
+#include "appid_stats.h"
 #include "client_plugins/client_app_base.h"
 #include "detector_plugins/detector_base.h"
 #include "detector_plugins/detector_dns.h"
 #include "detector_plugins/detector_http.h"
-#include "detector_plugins/detector_sip.h"
 #include "detector_plugins/detector_pattern.h"
-#include "appid_http_event_handler.h"
-#include "pub_sub/sip_events.h"
+#include "host_port_app_cache.h"
+#include "lua_detector_api.h"
+#include "lua_detector_module.h"
+#include "service_plugins/service_base.h"
+#include "service_plugins/service_ssl.h"
 
 static void dump_appid_stats()
 {

@@ -20,7 +20,8 @@
 #ifndef VARS_H
 #define VARS_H
 
-#include "main/snort_types.h"
+#include <cstdint>
+
 #include "sfip/sf_vartable.h"
 
 struct SnortConfig;

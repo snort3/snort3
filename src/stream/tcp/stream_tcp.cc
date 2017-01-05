@@ -20,13 +20,11 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
+#include "stream_tcp.h"
 
 #include "main/snort_config.h"
 #include "stream/flush_bucket.h"
-#include "stream/stream_splitter.h"
 
-#include "stream_tcp.h"
 #include "tcp_ha.h"
 #include "tcp_module.h"
 #include "tcp_session.h"

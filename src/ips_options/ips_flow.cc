@@ -18,30 +18,20 @@
 //--------------------------------------------------------------------------
 // ips_flow.cc derived from sp_clientserver.c by Martin Roesch
 
-#include "ips_flow.h"
-
-#include <sys/types.h>
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
 
-#include "log/messages.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "detection/treenodes.h"
-#include "protocols/packet.h"
-#include "parser/parser.h"
-#include "utils/util.h"
-#include "hash/sfhashfcn.h"
-#include "profiler/profiler.h"
+#include "ips_flow.h"
+
 #include "detection/detection_defines.h"
+#include "detection/treenodes.h"
 #include "framework/ips_option.h"
-#include "framework/parameter.h"
 #include "framework/module.h"
+#include "hash/sfhashfcn.h"
+#include "log/messages.h"
+#include "profiler/profiler.h"
+#include "protocols/packet.h"
 #include "target_based/snort_protocols.h"
 
 #define s_name "flow"

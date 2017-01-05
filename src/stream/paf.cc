@@ -19,20 +19,12 @@
 
 // paf.cc author Russ Combs <rcombs@sourcefire.com>
 
-#include "paf.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <ctype.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
+#include "paf.h"
 
-#include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "protocols/packet.h"
 

@@ -48,15 +48,10 @@
 #include "config.h"
 #endif
 
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "protocols/packet.h"
-#include "profiler/profiler.h"
-#include "packet_io/active.h"
-#include "utils/util.h"
 #include "framework/ips_action.h"
-#include "framework/parameter.h"
 #include "framework/module.h"
+#include "packet_io/active.h"
+#include "profiler/profiler.h"
 
 #define REJ_RST_SRC  0x01
 #define REJ_RST_DST  0x02

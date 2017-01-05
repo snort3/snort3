@@ -17,10 +17,12 @@
 //--------------------------------------------------------------------------
 // icmp_ha.cc author Ed Borgoyn <eborgoyn@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "icmp_ha.h"
 
-#include "flow/flow_control.h"
-#include "main/snort_debug.h"
 #include "stream/icmp/icmp_session.h"
 #include "stream/stream.h"
 

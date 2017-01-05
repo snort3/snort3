@@ -23,17 +23,12 @@
 #include "config.h"
 #endif
 
-#include <ctype.h>
-#include <string.h>
-
-#include <algorithm>
 #include <iostream>
 
-#include "main/snort_types.h"
+#include "detection/signature.h"
+#include "events/event.h"
 #include "framework/logger.h"
 #include "framework/module.h"
-#include "protocols/packet.h"
-#include "detection/signature.h"
 
 using namespace std;
 

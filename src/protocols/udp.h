@@ -20,7 +20,6 @@
 #ifndef PROTOCOLS_UDP_H
 #define PROTOCOLS_UDP_H
 
-#include <cstdint>
 #include <arpa/inet.h>
 
 namespace udp

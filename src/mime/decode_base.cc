@@ -18,8 +18,11 @@
 //--------------------------------------------------------------------------
 // decode_base.cc author Bhagyashree Bantwal <bbantwal@sourcefire.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "decode_base.h"
-#include "utils/util.h"
 
 void DataDecode::reset_decoded_bytes()
 {

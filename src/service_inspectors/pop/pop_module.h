@@ -21,11 +21,10 @@
 #ifndef POP_MODULE_H
 #define POP_MODULE_H
 
-#include "framework/module.h"
-#include "framework/bits.h"
-#include "main/thread.h"
-#include "pop_config.h"
 // Interface to the IMAP service inspector
+
+#include "framework/module.h"
+#include "pop_config.h"
 
 #define GID_POP 142
 

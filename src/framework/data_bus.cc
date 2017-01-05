@@ -17,7 +17,12 @@
 //--------------------------------------------------------------------------
 // data_bus.cc author Russ Combs <rucombs@cisco.com>
 
-#include "framework/data_bus.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "data_bus.h"
+
 #include "main/policy.h"
 #include "protocols/packet.h"
 

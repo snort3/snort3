@@ -27,15 +27,14 @@
 
   Marc Norton
 */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "sfmemcap.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-
 #include "util.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
 
 /*
 *   Set max # bytes & init other variables.

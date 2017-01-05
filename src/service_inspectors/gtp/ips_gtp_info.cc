@@ -24,15 +24,13 @@
 
 // gtp_info rule option implementation
 
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
 #include "detection/detection_defines.h"
+#include "hash/sfhashfcn.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
-#include "hash/sfhashfcn.h"
-#include "protocols/packet.h"
 #include "profiler/profiler.h"
+#include "protocols/packet.h"
 
 #include "gtp.h"
 #include "gtp_inspect.h"

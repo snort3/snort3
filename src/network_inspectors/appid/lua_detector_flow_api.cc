@@ -19,17 +19,16 @@
 
 // lua_detector_flow_api.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "lua_detector_flow_api.h"
 
-#include <lua.hpp>
-
 #include "appid_api.h"
-#include "log/messages.h"
 #include "lua_detector_api.h"
-#include "lua_detector_util.h"
 #include "lua_detector_module.h"
-#include "main/snort_debug.h"
-#include "sfip/sf_ip.h"
+#include "lua_detector_util.h"
 
 /* Lua flag bit/index to C flag value (0 for invalid). */
 static const uint64_t FLAGS_TABLE_LUA_TO_C[32]

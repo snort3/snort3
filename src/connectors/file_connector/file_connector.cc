@@ -18,25 +18,17 @@
 
 // file_connector.cc author Ed Borgoyn <eborgoyn@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "file_connector.h"
 
-#include <assert.h>
-#include <glob.h>
-#include <stdio.h>
-#include <sys/types.h>
-
-#include <fstream>
-#include <string>
-#include <vector>
+#include "main/snort_debug.h"
+#include "profiler/profiler_defs.h"
+#include "side_channel/side_channel.h"
 
 #include "file_connector_module.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "main/thread.h"
-#include "profiler/profiler.h"
-#include "parser/parser.h"
-#include "side_channel/side_channel.h"
-#include "framework/connector.h"
 
 /* Globals ****************************************************************/
 

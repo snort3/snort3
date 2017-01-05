@@ -20,9 +20,9 @@
 #ifndef LUA_STACK_H
 #define LUA_STACK_H
 
-#include <string>
-#include <type_traits>
 #include <lua.hpp>
+
+#include <string>
 
 namespace Lua
 {

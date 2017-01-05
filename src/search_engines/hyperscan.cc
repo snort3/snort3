@@ -18,17 +18,17 @@
 
 // hyperscan.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "hyperscan.h"
-
-#include <assert.h>
-#include <ctype.h>
-#include <string.h>
-
-#include <string>
-#include <vector>
 
 #include <hs_compile.h>
 #include <hs_runtime.h>
+
+#include <cassert>
+#include <cstring>
 
 #include "framework/mpse.h"
 #include "log/messages.h"

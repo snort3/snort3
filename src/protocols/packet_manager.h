@@ -23,15 +23,14 @@
 // PacketManager provides decode and encode services by leveraging Codecs.
 
 #include <array>
-#include <list>
 
-#include "main/snort_types.h"
-#include "protocols/packet.h"
-#include "framework/counts.h"
 #include "framework/codec.h"
+#include "framework/counts.h"
+#include "main/snort_types.h"
 #include "managers/codec_manager.h"
+#include "protocols/packet.h"
 
-struct _daq_pkthdr;
+struct Packet;
 struct TextLog;
 
 enum class TcpResponse

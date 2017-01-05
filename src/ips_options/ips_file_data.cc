@@ -22,19 +22,12 @@
 #include "config.h"
 #endif
 
-#include <sys/types.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <errno.h>
-
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "profiler/profiler.h"
 #include "detection/detection_defines.h"
 #include "detection/detection_util.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
+#include "profiler/profiler.h"
 
 #define s_name "file_data"
 

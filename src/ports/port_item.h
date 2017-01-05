@@ -22,8 +22,7 @@
 #ifndef PORT_ITEM_H
 #define PORT_ITEM_H
 
-#include "framework/bits.h"
-#include "utils/sflsq.h"
+#include <cstdint>
 
 #define SFPO_MAX_LPORTS 500
 #define SFPO_MAX_PORTS 65536

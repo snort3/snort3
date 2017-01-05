@@ -22,9 +22,9 @@
 #ifndef DNP3_H
 #define DNP3_H
 
-#include "protocols/packet.h"
-#include "profiler/profiler.h"
+#include "flow/flow.h"
 #include "framework/counts.h"
+#include "profiler/profiler_defs.h"
 
 #define DNP3_NAME "dnp3"
 #define DNP3_HELP "dnp3 inspection"

@@ -1,6 +1,5 @@
 set (FLOW_INCLUDES
     flow.h
-    flow_config.h
     flow_key.h
     ha.h
     ha_module.h
@@ -13,6 +12,7 @@ add_library (flow STATIC
     flow.cc
     flow_cache.cc
     flow_cache.h
+    flow_config.h
     flow_control.cc
     flow_control.h
     flow_key.cc

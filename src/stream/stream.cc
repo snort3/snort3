@@ -17,47 +17,29 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "stream.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <stdio.h>
-#include <sys/time.h>
-#include <sys/types.h>
+#include "stream.h"
 
-#include "main/snort_config.h"
-#include "main/snort_debug.h"
-#include "main/snort_debug.h"
 #include "flow/flow_control.h"
-#include "flow/flow_cache.h"
+#include "flow/flow_key.h"
 #include "flow/ha.h"
 #include "flow/prune_stats.h"
-#include "flow/session.h"
-#include "stream/stream.h"
-#include "stream/paf.h"
-#include "tcp/tcp_session.h"
-#include "tcp/stream_tcp.h"
-#include "udp/stream_udp.h"
-#include "icmp/stream_icmp.h"
-#include "ip/stream_ip.h"
-#include "detection/detect.h"
+#include "main/snort_config.h"
+#include "main/snort_debug.h"
 #include "packet_io/active.h"
-#include "packet_io/sfdaq.h"
-#include "ips_options/ips_flowbits.h"
-#include "protocols/packet.h"
-#include "protocols/layer.h"
 #include "protocols/vlan.h"
-#include "target_based/snort_protocols.h"
 #include "target_based/sftarget_hostentry.h"
-#include "utils/bitop.h"
+#include "target_based/snort_protocols.h"
 #include "utils/util.h"
+
+#include "tcp/tcp_session.h"
 
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"
-#include "stream/libtcp/stream_tcp_unit_test.h"
+#include "libtcp/stream_tcp_unit_test.h"
 #endif
 
 // this should not be publicly accessible

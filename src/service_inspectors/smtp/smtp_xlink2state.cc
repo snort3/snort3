@@ -20,20 +20,16 @@
 // smtp_xlink2state.c author Andy  Mullican
 // This file handles the X-Link2State vulnerability.
 
-#include "smtp_xlink2state.h"
-
-#include <strings.h>
-#include <ctype.h>
-#include <string.h>
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "smtp_util.h"
-#include "smtp_module.h"
+#include "smtp_xlink2state.h"
 
+#include "events/event_queue.h"
 #include "packet_io/active.h"
+
+#include "smtp_module.h"
 
 #define XLINK_OTHER  1
 #define XLINK_FIRST  2

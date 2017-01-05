@@ -24,9 +24,7 @@
 // Provides list of MIME processing functions. Encoded file data will be decoded
 // and file name will be extracted from MIME header
 
-#include "mime/decode_base.h"
-#include "mime/file_mime_config.h"
-#include "file_api/file_api.h"
+#include "main/snort_types.h"
 
 /* State tracker for data */
 enum MimeDataState

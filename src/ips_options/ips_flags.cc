@@ -18,29 +18,18 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include <sys/types.h>
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
 
-#include "log/messages.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "protocols/packet.h"
-#include "protocols/tcp.h"
-#include "parser/parser.h"
-#include "utils/util.h"
-#include "profiler/profiler.h"
-#include "hash/sfhashfcn.h"
-#include "detection/treenodes.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
-#include "framework/parameter.h"
 #include "framework/module.h"
+#include "hash/sfhashfcn.h"
+#include "log/messages.h"
+#include "profiler/profiler.h"
+#include "protocols/packet.h"
+#include "protocols/tcp.h"
 
 #define M_NORMAL  0
 #define M_ALL     1

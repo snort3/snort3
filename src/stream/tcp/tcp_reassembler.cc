@@ -16,27 +16,22 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_reassembly.cc author davis mcpherson <davmcphe@@cisco.com>
+// tcp_reassember.cc author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Jul 31, 2015
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <errno.h>
-#include <assert.h>
+#include "tcp_reassembler.h"
 
+#include "log/log.h"
 #include "main/snort.h"
-#include "protocols/packet.h"
-#include "protocols/packet_manager.h"
 #include "profiler/profiler.h"
-#include "flow/flow_control.h"
+#include "protocols/packet_manager.h"
 
 #include "tcp_module.h"
-#include "tcp_session.h"
-#include "tcp_event_logger.h"
 #include "tcp_normalizer.h"
-#include "tcp_reassembler.h"
 
 THREAD_LOCAL Packet* s5_pkt = nullptr;
 

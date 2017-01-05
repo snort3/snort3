@@ -17,12 +17,13 @@
 //--------------------------------------------------------------------------
 // user_module.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "user_module.h"
 
-#include <string>
-
 #include "stream_user.h"
-#include "main/snort_config.h"
 
 using namespace std;
 

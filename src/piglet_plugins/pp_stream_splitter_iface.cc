@@ -17,14 +17,15 @@
 //--------------------------------------------------------------------------
 // pp_stream_splitter_iface.cc author Joel Cornett <jocornet@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "pp_stream_splitter_iface.h"
 
-#include <limits>
-#include <lua.hpp>
-
 #include "lua/lua_arg.h"
-#include "lua/lua_stack.h"
 #include "stream/stream_splitter.h"
+
 #include "pp_flow_iface.h"
 #include "pp_raw_buffer_iface.h"
 

@@ -20,8 +20,7 @@
 #ifndef CURSES_H
 #define CURSES_H
 
-#include <ctype.h>
-
+#include <cstdint>
 #include <string>
 #include <vector>
 

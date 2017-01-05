@@ -18,9 +18,11 @@
 
 // ftp_module.cc author Russ Combs <rucombs@cisco.com>
 
-#include "ftp_module.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <sstream>
+#include "ftp_module.h"
 
 #include "log/messages.h"
 

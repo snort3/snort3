@@ -17,8 +17,11 @@
 //--------------------------------------------------------------------------
 // cd_default.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "framework/codec.h"
-#include "protocols/protocol_ids.h"
 
 #define CD_DEFAULT_NAME "unknown"
 #define CD_DEFAULT_HELP "support for unkown protocols"

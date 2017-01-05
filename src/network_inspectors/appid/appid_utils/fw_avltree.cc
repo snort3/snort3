@@ -19,9 +19,11 @@
 
 // fw_avltree.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "fw_avltree.h"
-#include <string.h>
-#include <stdlib.h>
 
 #include "utils/util.h"
 

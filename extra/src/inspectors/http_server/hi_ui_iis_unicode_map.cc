@@ -33,18 +33,16 @@
 **    -  Initial development.  DJR
 */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "hi_ui_iis_unicode_map.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-
 #include <sstream>
-#include <string>
 
 #include "utils/util.h"
-#include "hi_ui_config.h"
+
 #include "hi_return_codes.h"
 
 #define MAX_BUFFER 50000

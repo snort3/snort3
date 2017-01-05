@@ -26,7 +26,6 @@
 #include <list>
 
 #include "framework/data_bus.h"
-#include "protocols/packet.h"
 
 #define SIP_EVENT_TYPE_SIP_DIALOG_KEY "sip_event_type_sip_dialog"
 
@@ -35,6 +34,8 @@ enum SipEventType
     SIP_EVENT_TYPE_SIP_DIALOG
 };
 
+struct Packet;
+struct SfIp;
 struct SIPMsg;
 struct SIP_DialogData;
 struct SIP_MediaSession;

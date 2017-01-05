@@ -22,14 +22,8 @@
 #endif
 
 #include "framework/mpse.h"
-#include "main/snort_debug.h"
-#include "main/snort_types.h"
-#include "main/snort_config.h"
-#include "profiler/profiler.h"
-#include "utils/util.h"
 
 #include "acsmx.h"
-#include "acsmx2.h"
 
 //-------------------------------------------------------------------------
 // "ac_std"

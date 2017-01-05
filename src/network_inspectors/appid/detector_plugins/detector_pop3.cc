@@ -19,18 +19,19 @@
 
 // detector_pop3.cc author Sourcefire Inc.
 
-#include "app_info_table.h"
-#include "application_ids.h"
-#include "appid_module.h"
-#include "client_plugins/client_app_api.h"
-#include "detector_plugins/detector_api.h"
-#include "service_plugins/service_api.h"
-#include "service_plugins/service_util.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "log/messages.h"
+#include "detector_api.h"
+
 #include "main/snort_debug.h"
 #include "search_engines/search_tool.h"
-#include "utils/util.h"
+
+#include "app_info_table.h"
+#include "appid_module.h"
+#include "client_plugins/client_app_api.h"
+#include "service_plugins/service_util.h"
 
 /*#define DEBUG_POP3  1 */
 

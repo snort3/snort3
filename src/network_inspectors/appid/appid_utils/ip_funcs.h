@@ -22,9 +22,11 @@
 #ifndef IP_FUNCS_H
 #define IP_FUNCS_H
 
-#include <stdint.h>
-#include "protocols/ipv6.h"
+#include <cstdint>
+#include <cstring>
+
 #include "sfip/sf_ip.h"
+
 #include "network_set.h"
 
 #define IPFUNCS_EXCEPT_IP                0x01

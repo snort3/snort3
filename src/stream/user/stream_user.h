@@ -20,7 +20,9 @@
 #ifndef STREAM_USER_H
 #define STREAM_USER_H
 
-#include "flow/flow.h"
+#include <cstdint>
+
+class Inspector;
 
 struct StreamUserConfig
 {

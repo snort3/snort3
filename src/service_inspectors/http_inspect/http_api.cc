@@ -17,12 +17,13 @@
 //--------------------------------------------------------------------------
 // http_api.cc author Tom Peters <thopeter@cisco.com>
 
-#include <string.h>
-#include <sys/types.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "http_enum.h"
-#include "http_inspect.h"
 #include "http_api.h"
+
+#include "http_inspect.h"
 
 const char* HttpApi::http_my_name = HTTP_NAME;
 const char* HttpApi::http_help = "the new HTTP inspector!";

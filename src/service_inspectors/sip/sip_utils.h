@@ -24,7 +24,6 @@
 
 // Utility functions for SIP inspector
 
-#include "hash/sfhashfcn.h"
 #include "sip_config.h"
 
 int SIP_IsEmptyStr(char*);

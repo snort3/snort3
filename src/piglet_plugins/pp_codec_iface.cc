@@ -17,17 +17,14 @@
 //--------------------------------------------------------------------------
 // pp_codec_iface.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "pp_codec_iface.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <limits>
-#include <vector>
-#include <assert.h>
-#include <lua.hpp>
+#include "pp_codec_iface.h"
 
 #include "framework/codec.h"
 #include "lua/lua_arg.h"
-#include "lua/lua_table.h"
-#include "protocols/ip.h"
 #include "log/text_log.h"
 
 #include "pp_buffer_iface.h"
@@ -35,9 +32,9 @@
 #include "pp_daq_pkthdr_iface.h"
 #include "pp_decode_data_iface.h"
 #include "pp_enc_state_iface.h"
+#include "pp_flow_iface.h"
 #include "pp_ip_api_iface.h"
 #include "pp_raw_buffer_iface.h"
-#include "pp_flow_iface.h"
 
 // FIXIT-M delete this, and make the IpApi arg in codec.update required
 static const ip::IpApi default_ip_api {};

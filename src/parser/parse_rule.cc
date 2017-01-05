@@ -17,65 +17,32 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "parse_rule.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
-#include <errno.h>
-#include <ctype.h>
-#include <unistd.h>
-#include <stdarg.h>
-#include <pcap.h>
-#include <grp.h>
-#include <pwd.h>
-#include <fnmatch.h>
+#include "parse_rule.h"
 
-#include "parser.h"
-#include "cmd_line.h"
-#include "config_file.h"
-#include "parse_conf.h"
-#include "parse_ports.h"
-
-#include "detection/rules.h"
-#include "detection/treenodes.h"
 #include "detection/detect.h"
-#include "detection/tag.h"
-#include "detection/signature.h"
 #include "detection/fp_config.h"
-#include "detection/fp_create.h"
 #include "detection/fp_utils.h"
-#include "detection/pattern_match_data.h"
-#include "detection/sfrim.h"
-#include "main/snort_debug.h"
-#include "main/snort_config.h"
-#include "main/thread_config.h"
-#include "ports/port_object.h"
-#include "ports/rule_port_tables.h"
-#include "protocols/packet.h"
-#include "filters/sfthreshold.h"
-#include "filters/sfthd.h"
-#include "hash/sfghash.h"
-#include "sfip/sf_vartable.h"
-#include "sfip/sf_ip.h"
-#include "sfip/sf_ipvar.h"
-#include "utils/sflsq.h"
-#include "utils/util.h"
-#include "filters/rate_filter.h"
-#include "filters/detection_filter.h"
-#include "packet_io/active.h"
-#include "file_api/file_config.h"
-#include "framework/ips_option.h"
+#include "detection/treenodes.h"
+#include "framework/decode_data.h"
 #include "log/messages.h"
+#include "main/snort_config.h"
+#include "main/snort_debug.h"
+#include "main/thread_config.h"
 #include "managers/ips_manager.h"
 #include "managers/so_manager.h"
+#include "ports/rule_port_tables.h"
+#include "sfip/sf_ipvar.h"
+#include "sfip/sf_vartable.h"
 #include "target_based/snort_protocols.h"
+#include "utils/util.h"
+
+#include "parser.h"
+#include "parse_conf.h"
+#include "parse_ports.h"
 
 #define SRC  0
 #define DST  1

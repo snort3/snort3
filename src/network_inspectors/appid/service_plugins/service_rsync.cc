@@ -19,15 +19,16 @@
 
 // service_rsync.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "service_rsync.h"
 
-#include "application_ids.h"
-#include "service_api.h"
+#include "main/snort_debug.h"
+
 #include "app_info_table.h"
 #include "appid_module.h"
-
-#include "main/snort_debug.h"
-#include "utils/util.h"
 
 #define RSYNC_PORT  873
 

@@ -24,7 +24,6 @@
 // Modules are strictly used during parse time.
 
 #include <list>
-#include <string>
 
 //-------------------------------------------------------------------------
 

@@ -18,21 +18,16 @@
 
 // file_decomp.cc author Ed Borgoyn <eborgoyn@sourcefire.com>
 
-#include "file_decomp.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#ifdef HAVE_LZMA
-#include <lzma.h>
-#endif
+#include "file_decomp.h"
 
-#include <zlib.h>
+#include <cassert>
 
-#include "main/snort_types.h"
-#include "utils/util.h"
 #include "detection/detection_util.h"
+#include "utils/util.h"
 
 #include "file_decomp_pdf.h"
 #include "file_decomp_swf.h"

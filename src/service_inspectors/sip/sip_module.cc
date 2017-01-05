@@ -18,12 +18,13 @@
 
 // sip_module.cc author Bhagyashree Bantwal <bbantwal@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "sip_module.h"
 
-#include <assert.h>
-#include <sstream>
-
-#include "utils/util.h"
+#include <cassert>
 
 using namespace std;
 

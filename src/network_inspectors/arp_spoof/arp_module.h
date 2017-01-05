@@ -21,10 +21,7 @@
 #ifndef ARP_SPOOF_MODULE_H
 #define ARP_SPOOF_MODULE_H
 
-#include <vector>
-
 #include "framework/module.h"
-#include "main/thread.h"
 
 #define MOD_NAME "arp_spoof"
 #define MOD_HELP "detect ARP attacks and anomalies"

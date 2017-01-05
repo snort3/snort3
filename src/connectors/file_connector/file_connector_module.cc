@@ -18,6 +18,10 @@
 
 // file_connector_module.cc author Ed Borgoyn <eborgoyn@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "file_connector_module.h"
 
 #include "main/snort_debug.h"

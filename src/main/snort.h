@@ -23,14 +23,9 @@
 
 // Snort is the top-level application class.
 
-#include <assert.h>
-#include <sys/types.h>
-#include <stdio.h>
-#include "main/snort_types.h"
-
-extern "C" {
 #include <daq_common.h>
-}
+
+#include "main/snort_types.h"
 
 class Flow;
 struct Packet;

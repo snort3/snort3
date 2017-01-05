@@ -33,23 +33,18 @@
 **      - Initial development.  DJR
 */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "hi_norm.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
-#include <sys/types.h>
-
-#include "detection/detection_util.h"
-
 #include "hi_client_norm.h"
-#include "hi_server_norm.h"
 #include "hi_events.h"
-#include "hi_ui_iis_unicode_map.h"
+#include "hi_include.h"
 #include "hi_return_codes.h"
-#include "hi_si.h"
-#include "hi_util.h"
+#include "hi_server_norm.h"
+#include "hi_ui_iis_unicode_map.h"
 
 #define MAX_DIRS        2048
 

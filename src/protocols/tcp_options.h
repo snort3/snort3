@@ -20,7 +20,6 @@
 #ifndef PROTOCOLS_TCP_OPTIONS_H
 #define PROTOCOLS_TCP_OPTIONS_H
 
-#include <cstdint>
 #include "main/snort_types.h"
 
 struct Packet;

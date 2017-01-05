@@ -26,21 +26,14 @@
    objects, and collections of IP ADDRESSes as objects
 */
 
-#include "ipobj.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
+#include "ipobj.h"
 
 #include "protocols/packet.h"
 #include "utils/util.h"
-#include "utils/snort_bounds.h"
-#include "sfip/sf_ip.h"
 
 /*
    IP COLLECTION INTERFACE

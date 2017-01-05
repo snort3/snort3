@@ -21,7 +21,6 @@
 #ifndef RULE_LATENCY_CONFIG_H
 #define RULE_LATENCY_CONFIG_H
 
-#include <cstdint>
 #include "time/clock_defs.h"
 
 struct RuleLatencyConfig

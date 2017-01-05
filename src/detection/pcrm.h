@@ -29,8 +29,8 @@
 // runle groups by source and dest ports as well as any
 // (generic refers to any)
 
-#include "protocols/packet.h"
 #include "ports/port_group.h"
+#include "protocols/packet.h"
 
 #define ANYPORT (-1)
 

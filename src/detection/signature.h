@@ -24,10 +24,8 @@
 
 // basic non-detection signature info:  gid, sid, rev, class, priority, etc.
 
-#include <sys/types.h>
-#include <stdio.h>
-
-#include "main/snort_types.h"
+#include <cstdint>
+#include <cstdio>
 
 struct SnortConfig;
 struct OptTreeNode;

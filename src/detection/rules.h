@@ -24,7 +24,6 @@
 // misc rule and rule list support
 // FIXIT-L refactor this header
 
-#include "main/snort_types.h"
 #include "actions/actions.h"
 
 #define EXCEPT_SRC_IP   0x0001

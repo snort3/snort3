@@ -22,23 +22,13 @@
 #include "config.h"
 #endif
 
-#include <sys/types.h>
-#include <stdlib.h>
-#include <ctype.h>
-
-#include "main/snort_types.h"
-#include "main/thread.h"
 #include "detection/detection_defines.h"
-#include "detection/treenodes.h"
+#include "framework/decode_data.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
-#include "framework/parameter.h"
 #include "framework/range.h"
 #include "hash/sfhashfcn.h"
-#include "protocols/packet.h"
-#include "protocols/tcp.h"
 #include "profiler/profiler.h"
-#include "utils/stats.h"
 
 static const char* s_name = "pkt_num";
 static const char* s_help = "alert on raw packet number";

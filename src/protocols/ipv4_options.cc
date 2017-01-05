@@ -17,10 +17,13 @@
 //--------------------------------------------------------------------------
 // ipv4_options.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include "protocols/ipv4_options.h"
-#include "protocols/ipv4.h"
-#include "protocols/layer.h"
-#include "protocols/packet.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "ipv4_options.h"
+
+#include "packet.h"
 
 namespace ip
 {

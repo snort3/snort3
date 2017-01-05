@@ -20,11 +20,11 @@
 #ifndef PS_DETECT_H
 #define PS_DETECT_H
 
-#include <time.h>
 #include <sys/time.h>
+#include <time.h>
 
-#include "ipobj.h"
 #include "sfip/sf_ip.h"
+#include "ipobj.h"
 
 #define PS_OPEN_PORTS 8
 

@@ -33,33 +33,23 @@
  *      content:"USER"; isdataat:30,relative; content:!"|0a|"; within:30;)
  */
 
-#include <sys/types.h>
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <stdlib.h>
-#include <ctype.h>
-#include <errno.h>
 
-#include "ips_byte_extract.h"
-#include "log/messages.h"
-#include "protocols/packet.h"
-#include "parser/parser.h"
-#include "parser/mstring.h"
-#include "main/snort_debug.h"
-#include "main/snort_types.h"
-#include "utils/snort_bounds.h"
-#include "utils/util.h"
-#include "profiler/profiler.h"
-#include "hash/sfhashfcn.h"
-#include "detection/treenodes.h"
+#include <cstdlib>
+
 #include "detection/detection_defines.h"
-#include "detection/detection_util.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
-#include "framework/parameter.h"
 #include "framework/module.h"
+#include "hash/sfhashfcn.h"
+#include "log/messages.h"
+#include "parser/mstring.h"
+#include "profiler/profiler.h"
+#include "utils/snort_bounds.h"
+
+#include "ips_byte_extract.h"
 
 #define s_name "isdataat"
 

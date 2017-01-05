@@ -16,22 +16,25 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "fp_utils.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <string.h>
+#include "fp_utils.h"
+
+#include <cassert>
+#include <cstring>
+
+#include "ips_options/ips_flow.h"
+#include "log/messages.h"
+#include "main/thread_config.h"
+#include "ports/port_group.h"
+#include "target_based/snort_protocols.h"
+#include "utils/util.h"
 
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"
 #endif
-
-#include "ips_options/ips_flow.h"
-#include "log/messages.h"
-#include "ports/port_group.h"
-#include "target_based/snort_protocols.h"
 
 #include "pattern_match_data.h"
 #include "treenodes.h"

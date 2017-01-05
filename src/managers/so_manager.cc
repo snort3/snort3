@@ -17,34 +17,22 @@
 //--------------------------------------------------------------------------
 // so_manager.cc author Russ Combs <rucombs@cisco.com>
 
-#include "so_manager.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <unistd.h>
+#include "so_manager.h"
+
 #include <zlib.h>
 
-#include <list>
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
 #include <iomanip>
 #include <iostream>
+#include <list>
 #include <sstream>
 
-#include "plugin_manager.h"
-#include "main/snort_types.h"
-#include "main/snort_config.h"
-#include "main/snort_debug.h"
-#include "framework/so_rule.h"
-#include "framework/module.h"
-#include "utils/util.h"
-#include "parser/parser.h"
 #include "log/messages.h"
 
 using namespace std;

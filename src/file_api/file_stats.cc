@@ -24,11 +24,11 @@
  **  5.25.13 - Initial Source Code. Hui Cao
  */
 
-#include "file_stats.h"
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+
+#include "file_stats.h"
 
 #include "log/messages.h"
 #include "utils/stats.h"

@@ -23,10 +23,10 @@
 #define PORT_TABLE_H
 
 #include "hash/sfghash.h"
-#include "utils/sflsq.h"
 #include "ports/port_item.h"
 #include "ports/port_object.h"
 #include "ports/port_object2.h"
+#include "utils/sflsq.h"
 
 //-------------------------------------------------------------------------
 // PortTable - provides support to analyze the Port List objects defined by

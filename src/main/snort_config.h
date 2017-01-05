@@ -23,10 +23,6 @@
 // SnortConfig encapsulates all data loaded from the config files.
 // FIXIT-L privatize most of this stuff.
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "events/event_queue.h"
 #include "file_api/file_config.h"
 #include "framework/bits.h"

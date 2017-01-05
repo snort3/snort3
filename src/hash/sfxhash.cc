@@ -91,16 +91,10 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "sfxhash.h"
 
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
 #include "utils/util.h"
 
-#include "sfxhash.h"
-#include "sfprimetable.h"
 #include "sfhashfcn.h"
 
 /*

@@ -22,7 +22,7 @@
 #ifndef SIP_COMMON_H
 #define SIP_COMMON_H
 
-#include "framework/data_bus.h"
+#include "sfip/sf_ip.h"
 
 // Header containing datatypes/definitions shared by SSL inspector files.
 

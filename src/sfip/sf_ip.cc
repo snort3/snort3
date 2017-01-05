@@ -21,13 +21,14 @@
 
 /* Library for managing IP addresses of either v6 or v4 families. */
 
-#include "sf_ip.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <math.h> // For ceil
+#include "sf_ip.h"
+
+#include <cassert>
+#include <cmath> // For ceil
 
 #include "main/thread.h"
 #include "utils/util.h"

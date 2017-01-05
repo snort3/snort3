@@ -19,6 +19,10 @@
 // ha_module_test.cc author Ed Borgoyn <eborgoyn@cisco.com>
 // unit test main
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "flow/ha.h"
 #include "flow/ha_module.h"
 

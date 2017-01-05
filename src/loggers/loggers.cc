@@ -17,13 +17,12 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "loggers.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "framework/logger.h"
+#include "loggers.h"
+
 #include "managers/plugin_manager.h"
 
 // to ensure PacketManager::log_protocols() is built into Snort++

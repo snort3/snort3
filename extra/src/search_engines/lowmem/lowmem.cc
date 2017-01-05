@@ -32,12 +32,10 @@
 #include "config.h"
 #endif
 
-#include "sfksearch.h"
-#include "main/snort_debug.h"
-#include "main/snort_types.h"
 #include "log/messages.h"
 #include "framework/mpse.h"
-#include "profiler/profiler.h"
+
+#include "sfksearch.h"
 
 //-------------------------------------------------------------------------
 // "lowmem"

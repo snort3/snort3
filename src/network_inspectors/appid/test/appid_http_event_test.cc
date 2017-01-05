@@ -19,6 +19,10 @@
 // appid_http_event_test.cc author Steve Chew <stechew@cisco.com>
 // unit test for the http inspection event handler.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 //  Must be included before CppUTest files to avoid compiler error.
 #include "network_inspectors/appid/appid_http_event_handler.cc"
 

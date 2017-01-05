@@ -19,6 +19,10 @@
 // http_module_test.cc author Tom Peters <thopeter@cisco.com>
 // unit test main
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "log/messages.h"
 #include "events/event_queue.h"
 

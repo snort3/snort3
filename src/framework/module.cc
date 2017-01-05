@@ -17,10 +17,11 @@
 //--------------------------------------------------------------------------
 // module.cc author Russ Combs <rucombs@cisco.com>
 
-#include "module.h"
-#include "parameter.h"
-#include "utils/stats.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
+#include "module.h"
 
 static const Parameter defaults[] =
 {

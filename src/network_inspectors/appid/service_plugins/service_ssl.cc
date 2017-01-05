@@ -19,24 +19,21 @@
 
 // service_ssl.cc author Sourcefire Inc.
 
-#include <ctype.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <mutex>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <openssl/x509.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "appid_module.h"
-#include "app_info_table.h"
-#include "appid_session.h"
-#include "service_config.h"
-#include "service_base.h"
 #include "service_ssl.h"
 
+#include <openssl/x509.h>
+
+#include <mutex>
+
 #include "main/snort_debug.h"
-#include "utils/util.h"
+#include "protocols/packet.h"
+
+#include "app_info_table.h"
+#include "appid_module.h"
 
 #define SSL_PORT    443
 

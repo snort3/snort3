@@ -23,6 +23,10 @@
 ** 5.05.2012 - Initial Source Code. Hui Cao
 */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "file_module.h"
 
 #include "main/snort_config.h"

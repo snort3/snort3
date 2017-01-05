@@ -18,19 +18,15 @@
 // codec_manager.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #ifdef HAVE_CONFIG_H
-# include "config.h"
+#include "config.h"
 #endif
 
-#include <algorithm>
-#include <string.h>
+#include "codec_manager.h"
 
-#include "main/snort_config.h"
-#include "framework/codec.h"
-#include "managers/codec_manager.h"
-#include "protocols/packet_manager.h"
 #include "log/messages.h"
-#include "parser/parser.h"
+#include "main/snort_config.h"
 #include "packet_io/sfdaq.h"
+#include "protocols/packet_manager.h"
 #include "utils/dnet_header.h"
 
 struct CodecManager::CodecApiWrapper

@@ -18,18 +18,16 @@
 
 // memory_cap.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "memory_cap.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include <cassert>
 
+#include "memory_cap.h"
+
 #include "log/messages.h"
 #include "main/snort_config.h"
-#include "main/snort_debug.h"
-#include "main/thread.h"
 #include "profiler/memory_profiler_active_context.h"
 
 #include "memory_config.h"

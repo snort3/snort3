@@ -20,12 +20,17 @@
 // dnp3_reassembly.cc author Ryan Jordan
 // modifications for snort3 by Rashmi Pitre <rrp@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "dnp3_reassembly.h"
-#include "events/event_queue.h"
+
 #include "detection/detect.h"
+#include "events/event_queue.h"
+#include "protocols/packet.h"
+
 #include "dnp3_map.h"
-#include "dnp3.h"
-#include "dnp3_module.h"
 
 /* CRC look-up table, for computeCRC() below */
 static uint16_t crcLookUpTable[256] =

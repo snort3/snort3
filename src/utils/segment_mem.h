@@ -23,7 +23,8 @@
 
 // Segment memory allocation used by sfrt
 
-#include "main/snort_types.h"
+#include <cstddef>
+#include <cstdint>
 
 using MEM_OFFSET = uint32_t;
 
@@ -33,5 +34,6 @@ void segment_free(MEM_OFFSET ptr);
 MEM_OFFSET segment_snort_calloc(size_t num, size_t size);
 size_t segment_unusedmem();
 void* segment_basePtr();
+
 #endif
 

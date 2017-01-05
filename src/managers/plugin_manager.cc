@@ -17,46 +17,39 @@
 //--------------------------------------------------------------------------
 // plugin_manager.cc author Russ Combs <rucombs@cisco.com>
 
-#include "plugin_manager.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <sys/stat.h>
-#include <dlfcn.h>
+#include "plugin_manager.h"
 
-#include <map>
-#include <vector>
+#include <dlfcn.h>
+#include <sys/stat.h>
+
 #include <iostream>
+#include <map>
+
+#include "framework/codec.h"
+#include "framework/connector.h"
+#include "framework/logger.h"
+#include "framework/mpse.h"
+#include "helpers/directory.h"
+#include "helpers/markup.h"
+#include "log/messages.h"
 
 #ifdef PIGLET
 #include "piglet/piglet_api.h"
 #include "piglet/piglet_manager.h"
 #endif
 
-#include "framework/codec.h"
-#include "framework/logger.h"
-#include "framework/ips_action.h"
-#include "framework/ips_option.h"
-#include "framework/inspector.h"
-#include "framework/mpse.h"
-#include "framework/so_rule.h"
-
-#include "log/messages.h"
-#include "helpers/directory.h"
-#include "helpers/markup.h"
-#include "parser/parser.h"
-
 #include "action_manager.h"
+#include "codec_manager.h"
 #include "connector_manager.h"
 #include "event_manager.h"
 #include "inspector_manager.h"
 #include "ips_manager.h"
 #include "module_manager.h"
 #include "mpse_manager.h"
-#include "codec_manager.h"
 #include "script_manager.h"
 #include "so_manager.h"
 

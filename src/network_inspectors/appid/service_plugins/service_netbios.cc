@@ -19,23 +19,19 @@
 
 // service_netbios.cc author Sourcefire Inc.
 
-#include "service_netbios.h"
-
 #ifdef HAVE_CONFIG_H
-#include "config.h"     /* for WORDS_BIGENDIAN */
+#include "config.h"
 #endif
 
-#include "log/messages.h"
-#include "main/snort_debug.h"
-#include "utils/util.h"
+#include "service_netbios.h"
 
-#include "appid_module.h"
+#include "main/snort_debug.h"
+#include "protocols/packet.h"
+
 #include "app_info_table.h"
-#include "appid_api.h"
-#include "appid_session.h"
-#include "application_ids.h"
+#include "appid_module.h"
+
 #include "dcerpc.h"
-#include "service_api.h"
 
 /*#define RNA_DEBUG_NETBIOS   1 */
 

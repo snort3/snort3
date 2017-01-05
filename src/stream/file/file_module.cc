@@ -17,12 +17,11 @@
 //--------------------------------------------------------------------------
 // file_module.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "file_module.h"
-
-#include <string>
-
-#include "stream_file.h"
-#include "main/snort_config.h"
 
 using namespace std;
 

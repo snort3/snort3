@@ -17,21 +17,16 @@
 //--------------------------------------------------------------------------
 // user_session.cc author Russ Combs <rucombs@cisco.com>
 
-#include "user_session.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "main/snort.h"
-#include "perf_monitor/perf_monitor.h"
-#include "profiler/profiler.h"
-#include "sfip/sf_ip.h"
-#include "utils/util.h"
+#include "user_session.h"
 
-#include "stream/stream.h"
-#include "stream/stream_splitter.h"
-#include "stream/paf.h"
+#include "main/snort.h"
+#include "profiler/profiler_defs.h"
+#include "protocols/packet.h"
+#include "utils/util.h"
 
 #include "stream_user.h"
 #include "user_module.h"

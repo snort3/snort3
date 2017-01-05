@@ -22,7 +22,7 @@
 #ifndef DCERPC_H
 #define DCERPC_H
 
-#include <stdint.h>
+#include <cstdint>
 
 int dcerpc_validate(const uint8_t* data, int size);
 

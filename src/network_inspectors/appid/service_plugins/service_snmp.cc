@@ -19,17 +19,21 @@
 
 // service_snmp.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "service_snmp.h"
 
 #include "log/messages.h"
-#include "utils/util.h"
+#include "main/snort_debug.h"
+#include "protocols/packet.h"
 
-#include "appid_api.h"
-#include "appid_module.h"
 #include "app_info_table.h"
+#include "appid_module.h"
+
 #include "service_base.h"
 #include "service_util.h"
-#include "application_ids.h"
 
 #define SNMP_PORT   161
 

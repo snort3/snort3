@@ -17,38 +17,27 @@
 //--------------------------------------------------------------------------
 // packet_manager.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include "protocols/packet_manager.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <vector>
-#include <cstring>
+#include "packet_manager.h"
+
 #include <mutex>
-#include <algorithm>
-#include <limits>
-#include <type_traits> // static_assert
-
-#include "framework/codec.h"
-#include "managers/codec_manager.h"
-#include "main/snort_config.h"
-#include "main/thread.h"
-#include "log/messages.h"
-#include "detection/fp_detect.h"
-
-#include "protocols/packet.h"
-#include "protocols/protocol_ids.h"
-#include "protocols/eth.h"
-#include "protocols/icmp4.h"
-#include "protocols/icmp6.h"
-#include "profiler/profiler.h"
-#include "parser/parser.h"
 
 #include "codecs/codec_module.h"
 #include "codecs/ip/checksum.h"
-#include "utils/stats.h"
 #include "log/text_log.h"
+#include "main/snort_config.h"
 #include "main/snort_debug.h"
-#include "packet_io/sfdaq.h"
 #include "packet_io/active.h"
+#include "packet_io/sfdaq.h"
+#include "profiler/profiler_defs.h"
 #include "stream/stream.h"
+
+#include "eth.h"
+#include "icmp4.h"
+#include "icmp6.h"
 
 THREAD_LOCAL ProfileStats decodePerfStats;
 

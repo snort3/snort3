@@ -17,32 +17,33 @@
 //--------------------------------------------------------------------------
 // module_manager.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "module_manager.h"
 
-#include <assert.h>
-
-#include <iostream>
-#include <list>
-#include <mutex>
-#include <string>
-#include <sstream>
 #include <lua.hpp>
 
-#include "plugin_manager.h"
-#include "log/messages.h"
-#include "main/snort_config.h"
-#include "main/modules.h"
-#include "main/shell.h"
-#include "main/snort_types.h"
-#include "main/snort.h"
+#include <cassert>
+#include <iostream>
+#include <mutex>
+#include <string>
+
 #include "framework/base_api.h"
 #include "framework/module.h"
-#include "parser/parser.h"
+#include "helpers/markup.h"
+#include "log/messages.h"
+#include "main/modules.h"
+#include "main/shell.h"
+#include "main/snort.h"
+#include "main/snort_config.h"
 #include "parser/parse_conf.h"
+#include "parser/parser.h"
 #include "parser/vars.h"
 #include "profiler/profiler.h"
-#include "helpers/markup.h"
-#include "utils/stats.h"
+
+#include "plugin_manager.h"
 
 using namespace std;
 

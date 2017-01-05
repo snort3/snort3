@@ -23,8 +23,6 @@
 
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
-#include "protocols/packet.h"
-#include "protocols/ipv4_options.h"
 
 #define CD_IGMP_NAME "igmp"
 #define CD_IGMP_HELP "support for Internet group management protocol"

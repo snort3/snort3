@@ -17,21 +17,18 @@
 //--------------------------------------------------------------------------
 // http_msg_header.cc author Tom Peters <thopeter@cisco.com>
 
-#include <cstring>
-#include <cstdio>
-#include <sys/types.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "utils/util.h"
-#include "detection/detection_util.h"
-#include "file_api/file_service.h"
-#include "file_api/file_flows.h"
-
-#include "http_module.h"
-#include "http_api.h"
-#include "http_normalizers.h"
-#include "http_msg_request.h"
 #include "http_msg_header.h"
+
+#include "file_api/file_flows.h"
+#include "file_api/file_service.h"
 #include "pub_sub/http_events.h"
+
+#include "http_api.h"
+#include "http_msg_request.h"
 
 using namespace HttpEnums;
 

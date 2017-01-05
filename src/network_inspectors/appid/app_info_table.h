@@ -22,14 +22,13 @@
 #ifndef APP_INFO_TABLE_H
 #define APP_INFO_TABLE_H
 
-#include <cstdint>
-#include <unordered_map>
 #include <mutex>
+#include <unordered_map>
+
+#include "flow/flow.h"
+#include "utils/util.h"
 
 #include "application_ids.h"
-#include "appid_api.h"
-#include "appid_config.h"
-#include "utils/util.h"
 
 #define APP_PRIORITY_DEFAULT 2
 #define SF_APPID_MAX            40000

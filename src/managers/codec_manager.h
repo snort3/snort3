@@ -23,21 +23,14 @@
 
 // Factory for Codecs.  Runtime support is provided by PacketManager.
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <array>
-#include <string>
 #include <vector>
-#include <cstdint>
 
 #include "main/thread.h"
 #include "protocols/protocol_ids.h"
 
 #ifdef PIGLET
 #include "framework/codec.h"
-#include "piglet/piglet_api.h"
 #endif
 
 struct SnortConfig;

@@ -8,6 +8,7 @@ snort_plugin.lua
 x_mgrdir = $(pkgincludedir)/managers
 
 x_mgr_HEADERS = \
+codec_manager.h \
 inspector_manager.h
 
 noinst_LIBRARIES = libmanagers.a

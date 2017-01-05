@@ -1,7 +1,6 @@
 
 set (HASH_INCLUDES
     hashes.h
-    lru_cache_shared.h
     sfghash.h 
     sfxhash.h 
     sfhashfcn.h 

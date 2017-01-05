@@ -17,33 +17,29 @@
 //--------------------------------------------------------------------------
 // help.cc author Russ Combs <rucombs@cisco.com>
 
-#include "help.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <syslog.h>
-#include <iostream>
-#include <string>
+#include "help.h"
 
-#include "main.h"
-#include "main/snort_config.h"
-#include "main/snort_module.h"
+#include <iostream>
+
 #include "framework/module.h"
-#include "framework/parameter.h"
+#include "helpers/markup.h"
+#include "helpers/process.h"
 #include "managers/event_manager.h"
-#include "managers/so_manager.h"
 #include "managers/inspector_manager.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
 #include "managers/script_manager.h"
-#include "packet_io/sfdaq.h"
+#include "managers/so_manager.h"
 #include "packet_io/intf.h"
-#include "parser/config_file.h"
-#include "helpers/process.h"
+#include "packet_io/sfdaq.h"
 #include "utils/util.h"
-#include "helpers/markup.h"
+
+#include "snort_config.h"
+#include "snort_module.h"
 
 using namespace std;
 

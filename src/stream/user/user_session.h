@@ -20,7 +20,6 @@
 #ifndef USER_SESSION_H
 #define USER_SESSION_H
 
-#include <assert.h>
 #include <list>
 
 #include "flow/session.h"

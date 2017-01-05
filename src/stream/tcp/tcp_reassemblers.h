@@ -22,8 +22,7 @@
 #ifndef TCP_REASSEMBLERS_H
 #define TCP_REASSEMBLERS_H
 
-#include "tcp_defs.h"
-#include "tcp_reassembler.h"
+#include "stream/tcp/tcp_reassembler.h"
 
 class TcpReassemblerFactory
 {

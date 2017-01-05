@@ -41,16 +41,16 @@
 **
 **  - 2.25.03:  Initial Development.  DJR
 */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "hi_si.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include "protocols/packet.h"
 
 #include "hi_return_codes.h"
-#include "hi_ui_config.h"
-#include "hi_ad.h"
-#include "hi_main.h"
 
 /*
 **  NAME

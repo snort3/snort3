@@ -18,6 +18,10 @@
 
 // sfdaq_config.cc author Michael Altizer <mialtize@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "sfdaq_config.h"
 
 using namespace std;

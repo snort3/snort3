@@ -19,11 +19,18 @@
 
 // ip_funcs.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "ip_funcs.h"
 
-#include "appid_utils.h"
+#include <netinet/in.h>
+
 #include "log/messages.h"
 #include "utils/util.h"
+
+#include "appid_utils.h"
 
 RNAIpAddrSet* ParseIpCidr(char* ipstring, uint32_t* netmasks)
 {

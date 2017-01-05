@@ -19,6 +19,10 @@
 // http_uri_norm_test.cc author Tom Peters <thopeter@cisco.com>
 // unit test main
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "log/messages.h"
 #include "service_inspectors/http_inspect/http_uri_norm.h"
 #include "service_inspectors/http_inspect/http_js_norm.h"

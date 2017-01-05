@@ -23,9 +23,9 @@
 // All IPS rule keywords are realized as IpsOptions instantiated when rules
 // are parsed.
 
-#include "main/snort_types.h"
-#include "framework/base_api.h"
 #include "detection/rule_option_types.h"
+#include "framework/base_api.h"
+#include "main/snort_types.h"
 
 struct Packet;
 

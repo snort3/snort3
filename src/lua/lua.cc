@@ -17,13 +17,14 @@
 //--------------------------------------------------------------------------
 // lua.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "lua.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <assert.h>
+#include "lua.h"
+
+#include <cassert>
+#include <utility>
 
 namespace Lua
 {
@@ -65,9 +66,4 @@ ManageStack::~ManageStack()
         lua_settop(state, top);
 }
 }
-
-#ifdef UNIT_TEST
-// FIXIT-L Catch issue; see sfip/sf_ip.cc
-#include "lua_stack_test.cc"
-#endif
 

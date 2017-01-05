@@ -22,16 +22,11 @@
 #ifndef NETWORK_SET_H
 #define NETWORK_SET_H
 
-/* System includes */
-#include <stdio.h>
-#include <sys/types.h>
-#include <stdint.h>
-#include <string.h>
-#include <limits.h>
+#include <cstdio>
 
-#include "utils/sflsq.h"
 #include "hash/sfxhash.h"
 #include "protocols/ipv6.h"
+#include "utils/sflsq.h"
 
 // network_set.h author Sourcefire Inc.
 

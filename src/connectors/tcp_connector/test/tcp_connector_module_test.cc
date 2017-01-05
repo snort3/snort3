@@ -19,6 +19,10 @@
 // tcp_connector_module_test.cc author Ed Borgoyn <eborgoyn@cisco.com>
 // unit test main
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "connectors/tcp_connector/tcp_connector_module.h"
 #include "profiler/profiler.h"
 

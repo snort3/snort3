@@ -18,9 +18,14 @@
 
 // memory_module.cc author Joel Cornett <jocornet@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "memory_module.h"
 
 #include "main/snort_config.h"
+
 #include "memory_config.h"
 
 // -----------------------------------------------------------------------------

@@ -17,16 +17,16 @@
 //--------------------------------------------------------------------------
 // pp_inspector_iface.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "pp_inspector_iface.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <limits>
-#include <string>
-#include <assert.h>
-#include <lua.hpp>
+#include "pp_inspector_iface.h"
 
 #include "framework/inspector.h"
 #include "lua/lua_arg.h"
 #include "main/snort_config.h"
+
 #include "pp_packet_iface.h"
 #include "pp_raw_buffer_iface.h"
 #include "pp_stream_splitter_iface.h"

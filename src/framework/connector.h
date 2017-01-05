@@ -23,11 +23,11 @@
 // Connector provides out-of-band communications among packet processing
 // threads, high-availability partners, and other threads.
 
-#include <vector>
 #include <string>
+#include <vector>
 
-#include "main/snort_types.h"
 #include "framework/base_api.h"
+#include "main/snort_types.h"
 
 // this is the current version of the api
 #define CONNECTOR_API_VERSION ((BASE_API_VERSION << 16) | 0)

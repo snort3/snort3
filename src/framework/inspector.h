@@ -24,9 +24,8 @@
 // decoding a packet and detection.  There are several types that operate
 // in different ways.  These correspond to Snort 2X preprocessors.
 
-#include "main/snort_types.h"
-#include "main/thread.h"
 #include "framework/base_api.h"
+#include "main/thread.h"
 
 struct Packet;
 struct SnortConfig;

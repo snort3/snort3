@@ -24,10 +24,10 @@
 // they reach the Logger.  Packets may be logged along with events or as a
 // result of tagging.
 
-#include "main/snort_types.h"
-#include "events/event.h"
 #include "framework/base_api.h"
+#include "main/snort_types.h"
 
+struct Event;
 struct Packet;
 
 // this is the current version of the api

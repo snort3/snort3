@@ -16,37 +16,30 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "process.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
+#include "process.h"
+
 #include <fcntl.h>
-#include <stdio.h>
-#include <sys/wait.h>
-#include <unistd.h>
 
-#ifdef HAVE_MALLINFO
+#if defined(HAVE_MALLINFO) || defined(HAVE_MALLOC_TRIM)
 #include <malloc.h>
 #endif
 
-#ifdef HAVE_MALLOC_TRIM
-#include <malloc.h>
-#endif
-
+#include <csignal>
 #include <iostream>
 
 #include "log/messages.h"
 #include "main.h"
-#include "main/thread.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
-#include "utils/util.h"
 #include "utils/stats.h"
-#include "helpers/markup.h"
-#include "helpers/ring.h"
-#include "parser/parser.h"
+#include "utils/util.h"
+
+#include "markup.h"
+#include "ring.h"
 
 using namespace std;
 

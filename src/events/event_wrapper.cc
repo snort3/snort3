@@ -37,18 +37,14 @@
  *   an event, but the rule controls the alert/drop functionality.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "event_wrapper.h"
 
-#include "detection/rules.h"
-#include "detection/treenodes.h"
-#include "detection/signature.h"
 #include "detection/fp_detect.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
 #include "parser/parser.h"
-#include "events/event.h"
-#include "detection/detect.h"
-#include "utils/util.h"
 
 /*
  * This function has been updated to find an otn and route the call to fpLogEvent

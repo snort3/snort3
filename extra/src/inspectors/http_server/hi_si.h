@@ -35,12 +35,8 @@
 #ifndef HI_SI_H
 #define HI_SI_H
 
-#include "hi_include.h"
-#include "hi_ui_config.h"
 #include "hi_client.h"
 #include "hi_server.h"
-#include "hi_ad.h"
-#include "sfip/sf_ip.h"
 
 struct Packet;
 

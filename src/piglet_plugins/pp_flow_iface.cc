@@ -17,10 +17,11 @@
 //--------------------------------------------------------------------------
 // pp_flow_iface.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "pp_flow_iface.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <limits>
-#include <lua.hpp>
+#include "pp_flow_iface.h"
 
 #include "flow/flow.h"
 #include "lua/lua_arg.h"

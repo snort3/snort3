@@ -17,9 +17,12 @@
 //--------------------------------------------------------------------------
 // sip_events.cc author Carter Waxman <cwaxman@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "sip_events.h"
 
-#include "service_inspectors/sip/sip_common.h"
 #include "service_inspectors/sip/sip_dialog.h"
 
 using namespace std;

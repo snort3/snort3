@@ -26,23 +26,10 @@
 
 #include "gtp.h"
 
-#include <assert.h>
-#include <ctype.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <syslog.h>
-#include <string.h>
-#include <strings.h>
-#include <sys/time.h>
-
 #include "main/snort_debug.h"
-#include "main/snort_types.h"
 #include "protocols/packet.h"
-#include "profiler/profiler.h"
 
-#include "gtp.h"
 #include "gtp_inspect.h"
-#include "gtp_parser.h"
 
 #define GTPMSG_ZERO_LEN offsetof(GTPMsg, msg_id)
 

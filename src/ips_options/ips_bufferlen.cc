@@ -21,19 +21,13 @@
 #include "config.h"
 #endif
 
-#include <ctype.h>
-#include <stdlib.h>
-
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
+#include "detection/detection_defines.h"
+#include "framework/cursor.h"
+#include "framework/ips_option.h"
+#include "framework/module.h"
+#include "framework/range.h"
 #include "hash/sfhashfcn.h"
 #include "profiler/profiler.h"
-#include "detection/detection_defines.h"
-#include "framework/range.h"
-#include "framework/ips_option.h"
-#include "framework/inspector.h"
-#include "framework/cursor.h"
-#include "framework/module.h"
 
 #define s_name "bufferlen"
 

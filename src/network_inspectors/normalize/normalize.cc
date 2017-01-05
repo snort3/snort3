@@ -17,19 +17,19 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "normalize.h"
 
-#include "norm.h"
-#include "norm_module.h"
+#include "log/messages.h"
+#include "main/policy.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
-#include "parser/parser.h"
 #include "profiler/profiler.h"
-#include "log/messages.h"
-#include "main/snort_types.h"
-#include "main/snort_config.h"
-#include "framework/inspector.h"
-#include "flow/flow.h"
+
+#include "norm_module.h"
 
 THREAD_LOCAL ProfileStats norm_perf_stats;
 static THREAD_LOCAL uint32_t t_flags = 0;

@@ -269,24 +269,38 @@ yet firm so feedback is welcome to get something we can live with.
   implementation declarations should go in a separate header from the
   interface.  And so on.
 
-* A .cc should include its own .h before any others (including
-  system headers).  This ensures that the header stands on its own and can
-  be used by clients without include prerequisites and the developer will
-  be the first to find a dependency problem.
-
-* Include required headers, all required headers, and nothing but required
-  headers.  Don't just clone a bunch of headers because it is convenient.
-
-* Try to keep includes in alpha order.  This makes it easier to maintain,
-  avoid duplicates, etc.
-
-* Any file depending on #ifdefs should include config.h as shown below.  A
-  .h should include it before any other includes, and a .cc should include
-  it immediately after the include of its own .h.
+* All .cc files should include config.h with the standard block shown below
+  immediately following the initial comment blocks and before anything else.
+  This presents a consistent view of all included header files as well as
+  access to any other configure-time definitions. No .h files should include
+  config.h unless they are guaranteed to be local header files (never
+  installed).
 
     #ifdef HAVE_CONFIG_H
     #include "config.h"
     #endif
+
+* A .cc should include its own .h before any others aside from the
+  aforementioned config.h (including system headers).  This ensures that the
+  header stands on its own and can be used by clients without include
+  prerequisites and the developer will be the first to find a dependency issue.
+
+* Split headers included from the local directory into a final block of
+  headers.  For a .cc file, the final order of sets of header includes should
+  look like this:
+
+    1. config.h
+    2. its own .h file
+    3. system headers (.h/.hpp/.hxx)
+    4. C++ standard library headers (no file extension)
+    5. Snort headers external to the local directory (path-prefixed)
+    6. Snort headers in the local directory
+
+* Include required headers, all required headers, and nothing but required
+  headers.  Don't just clone a bunch of headers because it is convenient.
+
+* Keep includes in alphabetical order.  This makes it easier to maintain, avoid
+  duplicates, etc.
 
 * Do not put using statements in headers unless they are tightly scoped.
 

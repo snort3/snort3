@@ -22,14 +22,10 @@
 
 // rule header (RTN) and body (OTN) nodes
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include "main/snort_types.h"
+#include "actions/actions.h"
 #include "detection/signature.h"
 #include "detection/rule_option_types.h"
-#include "actions/actions.h"
+#include "main/snort_types.h"
 #include "time/clock_defs.h"
 
 class IpsOption;

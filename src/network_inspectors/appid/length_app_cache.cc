@@ -19,12 +19,15 @@
 
 // length_app_cache.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "length_app_cache.h"
 
 #include "hash/sfxhash.h"
 #include "log/messages.h"
 
-#include "appid_config.h"
 #include "application_ids.h"
 
 #define HASH_NUM_ROWS (1024)

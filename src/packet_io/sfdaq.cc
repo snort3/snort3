@@ -19,28 +19,23 @@
 
 // sfdaq.cc author Michael Altizer <mialtize@cisco.com>
 
-#include "sfdaq.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <string.h>
-
-#include <mutex>
-#include <ostream>
+#include "sfdaq.h"
 
 extern "C" {
 #include <daq.h>
 #include <sfbpf_dlt.h>
 }
 
+#include <mutex>
+
 #include "log/messages.h"
 #include "main/snort_config.h"
-#include "parser/parser.h"
 #include "protocols/packet.h"
 #include "protocols/vlan.h"
-#include "utils/util.h"
 
 #include "sfdaq_config.h"
 

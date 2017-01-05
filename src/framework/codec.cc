@@ -17,10 +17,14 @@
 //--------------------------------------------------------------------------
 // codec.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include "framework/codec.h"
-#include "events/event_queue.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "codec.h"
+
 #include "codecs/codec_module.h"
-#include "protocols/ipv6.h"
+#include "events/event_queue.h"
 
 EncState::EncState(const ip::IpApi& api, EncodeFlags f, IpProtocol pr,
     uint8_t t, uint16_t data_size) :

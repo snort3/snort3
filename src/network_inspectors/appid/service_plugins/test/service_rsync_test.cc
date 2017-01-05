@@ -19,6 +19,10 @@
 // service_rsync_test.cc author Steve Chew <stechew@cisco.com>
 // unit test for service_rsync
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "network_inspectors/appid/service_plugins/service_rsync.cc"
 
 #include <CppUTest/CommandLineTestRunner.h>

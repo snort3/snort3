@@ -20,7 +20,7 @@
 #ifndef PERIODIC_H
 #define PERIODIC_H
 
-#include "main/snort_types.h"
+#include <cstdint>
 
 using PeriodicHook = void (*)(void*);
 

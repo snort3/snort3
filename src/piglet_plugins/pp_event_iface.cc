@@ -17,16 +17,18 @@
 //--------------------------------------------------------------------------
 // pp_event_iface.cc author Joel Cornett <jocornet@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "pp_event_iface.h"
 
-#include <string.h>
-
-#include <lua.hpp>
+#include <cstring>
 
 #include "detection/signature.h"
 #include "events/event.h"
 #include "lua/lua_arg.h"
-#include "lua/lua_table.h"
+
 #include "pp_raw_buffer_iface.h"
 
 static struct SigInfo* create_sig_info()

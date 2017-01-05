@@ -20,10 +20,6 @@
 #ifndef NORMALIZE_H
 #define NORMALIZE_H
 
-#include <cstdint>
-#include <stdint.h>
-
-#include "main/policy.h"
 #include "framework/counts.h"
 
 // these control protocol specific normalizations

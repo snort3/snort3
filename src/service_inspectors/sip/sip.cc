@@ -17,31 +17,20 @@
 //--------------------------------------------------------------------------
 // sip.cc author Hui Cao <huica@cisco.com>
 
-#include "sip.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <string.h>
-#include <stdio.h>
-#include <sys/types.h>
+#include "sip.h"
 
+#include "events/event_queue.h"
 #include "log/messages.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "main/snort_config.h"
-#include "profiler/profiler.h"
-#include "file_api/file_api.h"
-#include "parser/parser.h"
-#include "framework/inspector.h"
-#include "utils/sfsnprintfappend.h"
-#include "target_based/snort_protocols.h"
 #include "managers/inspector_manager.h"
+#include "profiler/profiler.h"
+#include "protocols/packet.h"
 
-#include "sip_utils.h"
 #include "sip_module.h"
+#include "sip_utils.h"
 
 THREAD_LOCAL ProfileStats sipPerfStats;
 

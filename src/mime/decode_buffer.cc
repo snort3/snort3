@@ -18,7 +18,12 @@
 //--------------------------------------------------------------------------
 // decode_buffer.cc author Bhagyashree Bantwal <bbantwal@sourcefire.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "decode_buffer.h"
+
 #include "utils/util.h"
 
 void DecodeBuffer::reset_saved()

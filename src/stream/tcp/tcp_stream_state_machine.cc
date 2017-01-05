@@ -19,6 +19,12 @@
 // tcp_stream_state_machine.cc author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Apr 1, 2016
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "tcp_stream_state_machine.h"
+
 #include "tcp_state_none.h"
 #include "tcp_state_closed.h"
 #include "tcp_state_listen.h"
@@ -31,8 +37,6 @@
 #include "tcp_state_fin_wait2.h"
 #include "tcp_state_last_ack.h"
 #include "tcp_state_time_wait.h"
-
-#include "tcp_stream_state_machine.h"
 
 TcpStreamStateMachine::TcpStreamStateMachine()
 {

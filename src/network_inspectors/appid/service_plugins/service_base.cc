@@ -19,13 +19,27 @@
 
 // service_base.cc author Ron Dempster <Ron.Dempster@sourcefire.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "service_base.h"
 
-#include <vector>
 #include <algorithm>
-#include <limits.h>
+
+#include "log/messages.h"
+#include "main/snort_debug.h"
+#include "protocols/packet.h"
+#include "search_engines/search_tool.h"
 
 #include "app_info_table.h"
+#include "appid_config.h"
+#include "appid_utils/ip_funcs.h"
+#include "detector_plugins/detector_dns.h"
+#include "detector_plugins/detector_pattern.h"
+#include "detector_plugins/detector_sip.h"
+#include "lua_detector_api.h"
+
 #include "service_api.h"
 #include "service_battle_field.h"
 #include "service_bgp.h"
@@ -54,20 +68,6 @@
 #include "service_ssl.h"
 #include "service_telnet.h"
 #include "service_tftp.h"
-#include "appid_session.h"
-#include "appid_config.h"
-#include "lua_detector_api.h"
-#include "lua_detector_module.h"
-#include "appid_utils/ip_funcs.h"
-#include "detector_plugins/detector_dns.h"
-#include "detector_plugins/detector_pattern.h"
-#include "detector_plugins/detector_sip.h"
-
-#include "log/messages.h"
-#include "main/snort_debug.h"
-#include "search_engines/search_tool.h"
-#include "utils/util.h"
-#include "sfip/sf_ip.h"
 
 //#define SERVICE_DEBUG 1
 //#define SERVICE_DEBUG_PORT  80

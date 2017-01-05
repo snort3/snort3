@@ -20,13 +20,6 @@
 #ifndef PROTOCOLS_IP_H
 #define PROTOCOLS_IP_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <net/if.h>
 #include <cstring>
 
 #include "main/snort_types.h"

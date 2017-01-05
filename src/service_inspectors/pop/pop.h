@@ -24,9 +24,8 @@
 // Implementation header with definitions, datatypes and flowdata class for
 // POP service inspector.
 
-#include "protocols/packet.h"
-#include "stream/stream.h"
-#include "pop_config.h"
+#include "flow/flow.h"
+#include "mime/file_mime_process.h"
 
 // Direction packet is coming from, if we can figure it out
 #define POP_PKT_FROM_UNKNOWN  0

@@ -17,24 +17,18 @@
 //--------------------------------------------------------------------------
 // pp_ips_option.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "piglet_plugins.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <string>
-
 #include "detection/treenodes.h"
-#include "lua/lua_iface.h"
 #include "managers/ips_manager.h"
 #include "piglet/piglet_api.h"
 
 #include "pp_cursor_iface.h"
+#include "pp_ips_option_iface.h"
 #include "pp_packet_iface.h"
 #include "pp_raw_buffer_iface.h"
-
-#include "pp_ips_option_iface.h"
 
 class IpsOptionPiglet : public Piglet::BasePlugin
 {

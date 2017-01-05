@@ -19,13 +19,18 @@
 
 // service_ssh.cc author Sourcefire Inc.
 
-#include "service_ssh.h"
-#include "app_info_table.h"
-#include "service_base.h"
-#include "application_ids.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "utils/util.h"
+#include "service_ssh.h"
+
+#include "main/snort_debug.h"
+
+#include "app_info_table.h"
 #include "appid_module.h"
+
+#include "service_base.h"
 
 #define SSH_PORT    22
 

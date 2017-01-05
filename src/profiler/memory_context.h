@@ -21,8 +21,6 @@
 #ifndef MEMORY_CONTEXT_H
 #define MEMORY_CONTEXT_H
 
-#include "main/thread.h"
-
 struct CombinedMemoryStats;
 
 class MemoryProfiler

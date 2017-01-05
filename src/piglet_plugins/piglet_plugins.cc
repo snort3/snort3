@@ -17,6 +17,10 @@
 //--------------------------------------------------------------------------
 // piglet_plugins.cc author Joel Cornett <jocornet@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "piglet_plugins.h"
 
 #include "managers/plugin_manager.h"

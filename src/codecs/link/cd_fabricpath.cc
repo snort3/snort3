@@ -17,10 +17,12 @@
 //--------------------------------------------------------------------------
 // cd_fabricpath.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include "framework/codec.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "codecs/codec_module.h"
-#include "protocols/protocol_ids.h"
-#include "protocols/packet.h"
+#include "framework/codec.h"
 
 #define CD_FABRICPATH_NAME "fabricpath"
 #define CD_FABRICPATH_HELP "support for fabricpath"

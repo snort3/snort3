@@ -21,8 +21,6 @@
 #define HI_INCLUDE_H
 
 #include "framework/counts.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
 #include "main/thread.h"
 
 #define HI_UNKNOWN_METHOD 1

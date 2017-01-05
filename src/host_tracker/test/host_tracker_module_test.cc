@@ -19,6 +19,10 @@
 // host_tracker_module_test.cc author Steve Chew <stechew@cisco.com>
 // unit tests for the host module APIs
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "target_based/snort_protocols.h"
 #include "host_tracker/host_tracker_module.h"
 #include "host_tracker/host_cache.h"

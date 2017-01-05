@@ -17,10 +17,14 @@
 //--------------------------------------------------------------------------
 // udp_ha.cc author Ed Borgoyn <eborgoyn@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "udp_ha.h"
 
-#include "main/snort_debug.h"
 #include "stream/stream.h"
+
 #include "udp_session.h"
 
 Flow* UdpHA::create_session(FlowKey* key)

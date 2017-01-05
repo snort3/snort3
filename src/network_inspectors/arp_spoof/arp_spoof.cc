@@ -66,33 +66,20 @@
  */
 
 /*  I N C L U D E S  ************************************************/
-#include "arp_module.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <sys/types.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-
-#include "log/messages.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "detection/detect.h"
-#include "events/event.h"
 #include "events/event_queue.h"
-#include "parser/parser.h"
-#include "utils/util.h"
+#include "log/messages.h"
 #include "profiler/profiler.h"
-#include "framework/inspector.h"
-#include "protocols/packet.h"
-#include "protocols/layer.h"
 #include "protocols/arp.h"
 #include "protocols/eth.h"
+#include "protocols/packet.h"
 #include "sfip/sf_ip.h"
+
+#include "arp_module.h"
 
 static const uint8_t bcast[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 

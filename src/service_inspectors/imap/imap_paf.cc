@@ -16,12 +16,16 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include <sys/types.h>
-
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "imap_paf.h"
+
+#include "main/snort_debug.h"
+#include "protocols/packet.h"
+#include "stream/stream.h"
+
 #include "imap.h"
 
 extern IMAPToken imap_resps[];

@@ -16,36 +16,28 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "smtp.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <stdio.h>
-#include <sys/types.h>
+#include "smtp.h"
 
+#include "detection/detection_util.h"
 #include "log/messages.h"
-#include "main/snort_types.h"
+#include "log/unified2.h"
 #include "main/snort_debug.h"
 #include "profiler/profiler.h"
-#include "file_api/file_api.h"
-#include "mime/file_mime_process.h"
-#include "parser/parser.h"
-#include "framework/inspector.h"
-#include "utils/sfsnprintfappend.h"
-#include "target_based/snort_protocols.h"
+#include "protocols/packet.h"
 #include "protocols/ssl.h"
-#include "log/unified2.h"
-#include "detection/detection_util.h"
+#include "stream/stream.h"
 #include "utils/safec.h"
+#include "utils/sfsnprintfappend.h"
 #include "utils/util.h"
 
 #include "smtp_module.h"
+#include "smtp_normalize.h"
 #include "smtp_paf.h"
 #include "smtp_util.h"
-#include "smtp_normalize.h"
 #include "smtp_xlink2state.h"
 
 THREAD_LOCAL ProfileStats smtpPerfStats;

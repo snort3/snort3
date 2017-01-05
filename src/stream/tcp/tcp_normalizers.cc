@@ -19,9 +19,13 @@
 // tcp_normalizers.cc author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Sep 22, 2015
 
-#include "tcp_defs.h"
-#include "tcp_module.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "tcp_normalizers.h"
+
+#include "tcp_module.h"
 
 class TcpNormalizerFirst : public TcpNormalizer
 {

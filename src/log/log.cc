@@ -18,23 +18,16 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "log.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <sys/types.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <signal.h>
+#include "log.h"
 
-#include <string>
 #include <mutex>
 
 #include "main/snort_debug.h"
-#include "main/snort_config.h"
+#include "protocols/packet.h"
 #include "protocols/tcp.h"
 #include "utils/util.h"
 

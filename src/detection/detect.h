@@ -21,19 +21,14 @@
 #ifndef DETECT_H
 #define DETECT_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include "main/snort_debug.h"
-#include "main/snort_types.h"
-#include "protocols/packet.h"
 #include "detection/rules.h"
-#include "detection/treenodes.h"
-#include "log/log.h"
-#include "events/event.h"
+#include "main/snort_types.h"
+#include "main/thread.h"
 
+struct Event;
 struct ProfileStats;
+struct RuleFpList;
+struct RuleTreeNode;
 
 extern THREAD_LOCAL bool do_detect;
 extern THREAD_LOCAL bool do_detect_content;

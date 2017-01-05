@@ -20,7 +20,12 @@
 // Inspection events published by the Http Inspector. Modules can subscribe
 // to receive the events.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "http_events.h"
+
 #include "service_inspectors/http_inspect/http_msg_header.h"
 
 const uint8_t* HttpEvent::get_header(unsigned id, uint64_t sub_id, int32_t& length)

@@ -18,23 +18,22 @@
 
 // profiler.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "profiler.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
+#include "profiler.h"
+
 #include <cassert>
-#include <mutex>
 
 #include "framework/module.h"
 #include "main/snort_config.h"
 
-#include "profiler_nodes.h"
 #include "memory_context.h"
 #include "memory_profiler.h"
-#include "time_profiler.h"
+#include "profiler_nodes.h"
 #include "rule_profiler.h"
+#include "time_profiler.h"
 
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"

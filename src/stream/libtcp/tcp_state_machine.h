@@ -22,11 +22,9 @@
 #ifndef TCP_STATE_MACHINE_H
 #define TCP_STATE_MACHINE_H
 
-#include <memory>
-
-#include "tcp_state_handler.h"
-#include "tcp_stream_tracker.h"
-#include "tcp_segment_descriptor.h"
+#include "stream/libtcp/tcp_state_handler.h"
+#include "stream/libtcp/tcp_stream_tracker.h"
+#include "stream/libtcp/tcp_segment_descriptor.h"
 
 class TcpStateMachine
 {

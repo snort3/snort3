@@ -1,3 +1,7 @@
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "catch/catch.hpp"
 #include "catch/unit_test.h"
 

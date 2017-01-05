@@ -18,20 +18,18 @@
 ** Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "detector_smtp.h"
 
-#include "main/snort_debug.h"
-#include "utils/util.h"
-#include "utils/sflsq.h"
+#include "protocols/packet.h"
 
-#include "application_ids.h"
-#include "detector_api.h"
+#include "app_info_table.h"
+#include "appid_module.h"
 #include "client_plugins/client_app_api.h"
 #include "service_plugins/service_util.h"
-#include "app_info_table.h"
-#include "appid_api.h"
-#include "appid_module.h"
 
 enum SMTPClientState
 {

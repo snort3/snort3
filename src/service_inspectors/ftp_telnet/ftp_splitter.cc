@@ -17,9 +17,13 @@
 //--------------------------------------------------------------------------
 // ftp_splitter.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "ftp_splitter.h"
 
-#include <string.h>
+#include <cstring>
 
 FtpSplitter::FtpSplitter(bool c2s) : StreamSplitter(c2s) { }
 FtpSplitter::~FtpSplitter() { }

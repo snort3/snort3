@@ -5,6 +5,7 @@ set (LUA_INCLUDES
 )
 
 set( MANAGERS_INCLUDES
+    codec_manager.h
     inspector_manager.h
 )
 
@@ -12,7 +13,6 @@ add_library( managers STATIC
     ${MANAGERS_INCLUDES}
     action_manager.h
     action_manager.cc
-    codec_manager.h
     codec_manager.cc
     event_manager.cc
     event_manager.h

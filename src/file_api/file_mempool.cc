@@ -25,6 +25,10 @@
  **
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "file_mempool.h"
 
 #include "log/messages.h"

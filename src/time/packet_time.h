@@ -21,7 +21,6 @@
 #define PACKET_TIME_H
 
 #include <sys/time.h>
-#include <stdint.h>
 
 #include "main/snort_types.h"
 

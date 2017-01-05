@@ -19,17 +19,14 @@
 // tcp_state_fin_wait2.cc author davis mcpherson <davmcphe@cisco.com>
 // Created on: Aug 5, 2015
 
-#include <iostream>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "tcp_module.h"
-#include "tcp_tracker.h"
-#include "tcp_session.h"
-#include "tcp_normalizer.h"
 #include "tcp_state_fin_wait2.h"
 
-#ifdef UNIT_TEST
-#include "catch/catch.hpp"
-#endif
+#include "tcp_normalizer.h"
+#include "tcp_session.h"
 
 using namespace std;
 

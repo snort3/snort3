@@ -22,15 +22,12 @@
 #include "config.h"
 #endif
 
-extern "C" {
 #include <sfbpf_dlt.h>
-}
 
-#include "protocols/wlan.h"
-#include "framework/codec.h"
 #include "codecs/codec_module.h"
-#include "protocols/protocol_ids.h"
+#include "framework/codec.h"
 #include "log/text_log.h"
+#include "protocols/wlan.h"
 
 #define CD_WLAN_NAME "wlan"
 #define CD_WLAN_HELP_STR "support for wireless local area network protocol"

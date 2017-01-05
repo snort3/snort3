@@ -17,11 +17,12 @@
 //--------------------------------------------------------------------------
 // cd_erspan3.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include <arpa/inet.h>
-#include "framework/codec.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "codecs/codec_module.h"
-#include "protocols/protocol_ids.h"
-#include "protocols/packet.h"
+#include "framework/codec.h"
 
 #define CD_ERSPAN3_NAME "erspan3"
 #define CD_ERSPAN3_HELP "support for encapsulated remote switched port analyzer - type 3"

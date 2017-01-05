@@ -22,7 +22,7 @@
 #ifndef SD_CREDIT_CARD_H
 #define SD_CREDIT_CARD_H
 
-#include <stdint.h>
+#include <cstdint>
 
 int SdLuhnAlgorithm(const uint8_t *buf, unsigned long long buflen);
 

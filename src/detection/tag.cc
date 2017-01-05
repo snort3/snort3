@@ -19,26 +19,24 @@
 //--------------------------------------------------------------------------
 // Chris Green <cmg@sourcefire.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "tag.h"
 
-#include <sys/types.h>
-#include <stdlib.h>
-#include <rpc/types.h>
-#include <string.h>
-#include <ctype.h>
-
-#include "rules.h"
-#include "treenodes.h"
-#include "log/messages.h"
-#include "main/snort_debug.h"
-#include "main/snort_config.h"
-#include "protocols/packet.h"
-#include "utils/util.h"
-#include "log/log.h"
-#include "parser/parser.h"
 #include "events/event.h"
 #include "hash/sfxhash.h"
+#include "log/messages.h"
+#include "main/snort_config.h"
+#include "main/snort_debug.h"
+#include "parser/parser.h"
+#include "protocols/packet.h"
 #include "sfip/sf_ip.h"
+#include "utils/cpp_macros.h"
+#include "utils/util.h"
+
+#include "treenodes.h"
 
 /*  D E F I N E S  **************************************************/
 #define MAX_TAG_NODES   256

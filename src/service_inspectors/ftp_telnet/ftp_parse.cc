@@ -23,17 +23,20 @@
  * Marc A. Norton <mnorton@sourcefire.com>
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "ftp_parse.h"
 
-#include <assert.h>
+#include <cassert>
+
+#include "log/messages.h"
+#include "utils/util.h"
 
 #include "ftp_bounce_lookup.h"
 #include "ftp_cmd_lookup.h"
 #include "ftpp_return_codes.h"
-
-#include "log/messages.h"
-#include "sfip/sf_ip.h"
-#include "utils/util.h"
 
 #define CONF_SEPARATORS " \n"
 

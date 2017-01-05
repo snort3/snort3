@@ -21,11 +21,9 @@
 #ifndef IP_MODULE_H
 #define IP_MODULE_H
 
-#include "main/snort_debug.h"
-#include "main/snort_types.h"
-#include "main/thread.h"
 #include "flow/session.h"
 #include "framework/module.h"
+#include "main/snort_debug.h"
 
 struct SnortConfig;
 

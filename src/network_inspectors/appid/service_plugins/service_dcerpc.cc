@@ -19,13 +19,17 @@
 
 // service_dcerpc.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "service_dcerpc.h"
-#include "appid_module.h"
-#include "application_ids.h"
-#include "dcerpc.h"
 
 #include "main/snort_debug.h"
-#include "utils/util.h"
+
+#include "appid_module.h"
+
+#include "dcerpc.h"
 
 #define DCERPC_THRESHOLD    3
 

@@ -18,6 +18,10 @@
 
 // perf_formatter.cc author Carter Waxman <cwaxman@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "perf_formatter.h"
 
 using namespace std;

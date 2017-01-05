@@ -17,10 +17,12 @@
 //--------------------------------------------------------------------------
 // cd_erspan2.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include "framework/codec.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "codecs/codec_module.h"
-#include "protocols/protocol_ids.h"
-#include "protocols/packet.h"
+#include "framework/codec.h"
 
 #define CD_ERSPAN2_NAME "erspan2"
 #define CD_ERSPAN2_HELP "support for encapsulated remote switched port analyzer - type 2"

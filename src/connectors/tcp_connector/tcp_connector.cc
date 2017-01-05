@@ -18,31 +18,23 @@
 
 // tcp_connector.cc author Ed Borgoyn <eborgoyn@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "tcp_connector.h"
 
-#include <assert.h>
-#include <glob.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <netdb.h>
 #include <poll.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
-#include <fstream>
-#include <string>
-#include <thread>
-#include <vector>
-
-#include "helpers/ring.h"
-#include "tcp_connector_module.h"
 #include "log/messages.h"
-#include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "main/thread.h"
-#include "profiler/profiler.h"
-#include "parser/parser.h"
-#include "side_channel/side_channel.h"
-#include "framework/connector.h"
+#include "profiler/profiler_defs.h"
+
+#include "tcp_connector_module.h"
 
 /* Globals ****************************************************************/
 

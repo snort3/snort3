@@ -17,18 +17,20 @@
 //--------------------------------------------------------------------------
 // ips_http.cc author Tom Peters <thopeter@cisco.com>
 
-#include <array>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "protocols/packet.h"
-#include "flow/flow.h"
+#include "ips_http.h"
+
 #include "detection/detection_defines.h"
 #include "framework/cursor.h"
 #include "hash/sfhashfcn.h"
 #include "log/messages.h"
+#include "protocols/packet.h"
 
 #include "http_inspect.h"
 #include "http_msg_head_shared.h"
-#include "ips_http.h"
 
 using namespace HttpEnums;
 

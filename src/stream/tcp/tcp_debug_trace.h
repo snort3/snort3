@@ -22,8 +22,7 @@
 #ifndef TCP_DEBUG_TRACE_H
 #define TCP_DEBUG_TRACE_H
 
-#include "protocols/tcp.h"
-#include "tcp_reassembler.h"
+#include "stream/tcp/tcp_reassembler.h"
 
 #ifndef REG_TEST
 #define S5TraceTCP(pkt, flow, tsd, evt)

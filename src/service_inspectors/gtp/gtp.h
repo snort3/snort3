@@ -25,8 +25,9 @@
 // Provides convenience functions for parsing and querying configuration.
 
 #include <string>
-#include "main/thread.h"
+
 #include "framework/counts.h"
+#include "main/thread.h"
 
 #define MIN_GTP_VERSION_CODE   (0)
 #define MAX_GTP_VERSION_CODE   (2)

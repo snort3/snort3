@@ -25,7 +25,6 @@
 #include "framework/bits.h"
 #include "protocols/packet.h"
 #include "utils/sflsq.h"
-#include "utils/snort_bounds.h"
 
 struct PortObject;
 struct PortObjectItem;

@@ -17,30 +17,20 @@
 //--------------------------------------------------------------------------
 // event_manager.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "event_manager.h"
 
-#include <assert.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <errno.h>
-
+#include <cassert>
 #include <list>
 
-#include "plugin_manager.h"
-#include "module_manager.h"
-
-#include "main/snort_types.h"
-#include "main/snort_config.h"
-#include "main/snort_debug.h"
-#include "utils/util.h"
 #include "framework/logger.h"
-#include "framework/module.h"
-#include "loggers/loggers.h"
-#include "parser/parser.h"
 #include "log/messages.h"
+#include "main/snort_config.h"
+
+#include "module_manager.h"
 
 using namespace std;
 

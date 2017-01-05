@@ -19,11 +19,13 @@
 
 // service_direct_connect.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "service_direct_connect.h"
-#include "application_ids.h"
 
 #include "main/snort_debug.h"
-#include "utils/util.h"
 
 #include "appid_module.h"
 

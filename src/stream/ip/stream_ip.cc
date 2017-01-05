@@ -17,20 +17,18 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "stream_ip.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <assert.h>
+#include "stream_ip.h"
 
-#include "ip_module.h"
+#include "log/messages.h"
+
 #include "ip_defrag.h"
 #include "ip_ha.h"
+#include "ip_module.h"
 #include "ip_session.h"
-#include "log/messages.h"
-#include "protocols/packet.h"
 
 /* max frags in a single frag tracker */
 #define DEFAULT_MAX_FRAGS 8192

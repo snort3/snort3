@@ -43,25 +43,19 @@
 // * Range, Content-Range, and multipart
 //--------------------------------------------------------------------
 
-#include "hi_stream_splitter.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <ctype.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
+#include "hi_stream_splitter.h"
 
-#include "hi_events.h"
-#include "main/snort_debug.h"
 #include "events/event_queue.h"
+#include "main/snort_debug.h"
 #include "protocols/packet.h"
 #include "stream/stream.h"
 #include "utils/util.h"
+
+#include "hi_events.h"
 
 #ifdef DEBUG_MSGS
 #define HI_TRACE     // define for state trace

@@ -24,7 +24,6 @@
 //  Loads host cache configuration data.
 
 #include "framework/module.h"
-#include <assert.h>
 
 #define host_cache_help \
     "configure hosts"

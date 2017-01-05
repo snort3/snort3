@@ -18,25 +18,20 @@
 
 // side_channel.cc author Ed Borgoyn <eborgoyn@cisco.com>
 
-#include "side_channel.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <string.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <time.h>
-#include <thread>
-#include <vector>
-#include <utility>
+#include "side_channel.h"
 
+#include <sys/time.h>
+
+#include <cassert>
+
+#include "framework/counts.h"
 #include "main/snort_debug.h"
 #include "managers/connector_manager.h"
-#include "profiler/profiler.h"
-#include "utils/stats.h"
+#include "profiler/profiler_defs.h"
 
 /* Globals ****************************************************************/
 

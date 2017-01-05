@@ -20,16 +20,15 @@
 // file_mime_log.cc author Hui Cao <huica@cisco.com>
 // 9.25.2012 - Initial Source Code. Hui Cao
 
-#include "file_mime_log.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "utils/util.h"
-#include "file_api/file_api.h"
+#include "file_mime_log.h"
+
 #include "file_api/file_flows.h"
 #include "utils/safec.h"
+#include "utils/util.h"
 
 #define MAX_FILE                             1024
 #define MAX_EMAIL                            1024

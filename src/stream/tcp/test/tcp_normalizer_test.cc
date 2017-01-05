@@ -19,6 +19,10 @@
 // tcp_normalizer_test.cc author Davis McPherson <davmcphe@cisco.com>
 // unit test main
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "stream/tcp/tcp_module.h"
 #include "stream/tcp/tcp_normalizers.h"
 #include "protocols/tcp_options.h"

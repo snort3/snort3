@@ -45,28 +45,17 @@
 #include "config.h"
 #endif
 
-#include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <string.h>
 #include <sys/stat.h>
 
-#include <string>
-
+#include "detection/detection_defines.h"
+#include "framework/ips_option.h"
+#include "framework/module.h"
+#include "hash/sfhashfcn.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
-#include "protocols/packet.h"
-#include "main/snort_debug.h"
-#include "utils/util.h"
 #include "profiler/profiler.h"
-#include "hash/sfhashfcn.h"
-#include "detection/detection_defines.h"
-#include "detection/treenodes.h"
-#include "framework/ips_option.h"
-#include "framework/parameter.h"
-#include "framework/module.h"
-#include "sfip/sf_ip.h"
+#include "protocols/packet.h"
+#include "utils/util.h"
 
 #define s_name "session"
 

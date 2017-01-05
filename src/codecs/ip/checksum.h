@@ -20,8 +20,6 @@
 #ifndef CODECS_CHECKSUM_H
 #define CODECS_CHECKSUM_H
 
-#include <stdint.h>
-#include <stdlib.h>
 #include <cstddef>
 
 #include <protocols/protocol_ids.h>

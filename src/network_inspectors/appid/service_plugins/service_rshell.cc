@@ -19,18 +19,21 @@
 
 // service_rshell.cc author Sourcefire Inc.
 
-#include "service_rshell.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "application_ids.h"
-#include "service_api.h"
-#include "service_base.h"
-#include "service_util.h"
-#include "app_info_table.h"
-#include "appid_module.h"
+#include "service_rshell.h"
 
 #include "log/messages.h"
 #include "main/snort_debug.h"
-#include "utils/util.h"
+#include "protocols/packet.h"
+
+#include "app_info_table.h"
+#include "appid_module.h"
+
+#include "service_base.h"
+#include "service_util.h"
 
 #define RSHELL_PORT  514
 #define RSHELL_MAX_PORT_PACKET 6

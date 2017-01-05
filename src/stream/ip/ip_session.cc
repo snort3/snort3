@@ -17,19 +17,18 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "ip_session.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "stream_ip.h"
-#include "ip_module.h"
+#include "ip_session.h"
+
+#include "profiler/profiler_defs.h"
+#include "protocols/packet.h"
+
 #include "ip_defrag.h"
 #include "ip_ha.h"
-#include "stream/stream.h"
-#include "sfip/sf_ip.h"
-#include "profiler/profiler.h"
+#include "stream_ip.h"
 
 const PegInfo ip_pegs[] =
 {

@@ -17,13 +17,15 @@
 //--------------------------------------------------------------------------
 // pp_buffer_iface.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "pp_buffer_iface.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <lua.hpp>
+#include "pp_buffer_iface.h"
 
 #include "framework/codec.h"
 #include "lua/lua_arg.h"
-#include "lua/lua_ref.h"
+
 #include "pp_raw_buffer_iface.h"
 
 static const luaL_Reg methods[] =

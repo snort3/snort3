@@ -23,7 +23,7 @@
 #ifndef SFRT_H
 #define SFRT_H
 
-#include <stdint.h>
+#include <cstdint>
 
 #include "sfip/sf_ip.h"
 #include "sfrt/sfrt_trie.h"

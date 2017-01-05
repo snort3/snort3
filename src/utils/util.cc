@@ -18,13 +18,12 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "util.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <fcntl.h>
+#include "util.h"
+
 #include <grp.h>
 #include <luajit.h>
 #include <netdb.h>
@@ -49,7 +48,6 @@ extern "C" {
 }
 
 #include <fstream>
-#include <sstream>
 
 #include "log/messages.h"
 #include "main/build.h"

@@ -47,13 +47,12 @@
 **       number of events to log.
 */
 
-#include "sfeventq.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <stdlib.h>
+#include "sfeventq.h"
+
 #include "utils/util.h"
 
 /*

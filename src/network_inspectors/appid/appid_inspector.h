@@ -22,10 +22,10 @@
 #ifndef APPID_INSPECTOR_H
 #define APPID_INSPECTOR_H
 
-#include "main/snort_config.h"
-#include "protocols/packet.h"
+#include "appid_config.h"
 
-#include "appid_module.h"
+struct Packet;
+struct SnortConfig;
 
 class AppIdInspector : public Inspector
 {

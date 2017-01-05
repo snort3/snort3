@@ -21,12 +21,9 @@
 #include "config.h"
 #endif
 
-#include "framework/codec.h"
 #include "codecs/codec_module.h"
-
+#include "framework/codec.h"
 #include "protocols/eth.h"
-#include "protocols/protocol_ids.h"
-#include "protocols/packet.h"
 
 namespace
 {

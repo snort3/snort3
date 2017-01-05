@@ -17,24 +17,20 @@
 //--------------------------------------------------------------------------
 // cmd_line.cc author Russ Combs <rucombs@cisco.com>
 
-#include "cmd_line.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <string>
+#include "cmd_line.h"
 
+#include "framework/module.h"
 #include "log/messages.h"
 #include "main/help.h"
-#include "main/snort_module.h"
 #include "main/snort_config.h"
-#include "framework/module.h"
-#include "framework/parameter.h"
+#include "main/snort_module.h"
 #include "packet_io/trough.h"
-#include "parser/arg_list.h"
-#include "parser/parser.h"
-#include "utils/util.h"
+
+#include "arg_list.h"
 
 using namespace std;
 

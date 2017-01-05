@@ -18,6 +18,10 @@
 //--------------------------------------------------------------------------
 // sf_cidr.cc author Michael Altizer <mialtize@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "sf_cidr.h"
 
 SfIpRet SfCidr::set(const char* src)

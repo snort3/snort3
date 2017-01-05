@@ -17,8 +17,9 @@
 //--------------------------------------------------------------------------
 // spells.cc author Russ Combs <rucombs@cisco.com>
 
-#include <ctype.h>
-#include <strings.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "magic.h"
 

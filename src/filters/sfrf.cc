@@ -20,11 +20,11 @@
 // sfrf.cc author Dilbagh Chahal <dchahal@sourcefire.com>
 // rate filter implementation for Snort
 
-#include "sfrf.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "sfrf.h"
 
 #include "detection/rules.h"
 #include "hash/sfghash.h"

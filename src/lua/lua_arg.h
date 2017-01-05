@@ -20,8 +20,6 @@
 #ifndef LUA_ARG_H
 #define LUA_ARG_H
 
-#include <lua.hpp>
-
 #include "lua_stack.h"
 
 namespace Lua

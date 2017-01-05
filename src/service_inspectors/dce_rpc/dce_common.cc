@@ -18,6 +18,10 @@
 
 // dce_common.cc author Rashmi Pitre <rrp@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "dce_common.h"
 
 #include "detection/detect.h"

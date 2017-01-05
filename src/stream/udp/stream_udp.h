@@ -19,7 +19,9 @@
 #ifndef STREAM_UDP_H
 #define STREAM_UDP_H
 
-#include "flow/flow.h"
+#include <cstdint>
+
+class Inspector;
 
 struct StreamUdpConfig
 {

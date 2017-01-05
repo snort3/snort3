@@ -19,10 +19,13 @@
 
 /* Some UTF-{16,32}{le,be} normalization functions */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "util_utf.h"
 
-#include <stdlib.h>
-#include <string.h>
+#include <cstring>
 
 #define DSTATE_FIRST 0
 #define DSTATE_SECOND 1

@@ -22,9 +22,8 @@
 #ifndef STREAM_LIBTCP_UNIT_TEST_H
 #define STREAM_LIBTCP_UNIT_TEST_H
 
-#include <stdint.h>
-
-#include "protocols/packet.h"
+class Flow;
+struct Packet;
 
 Packet* get_syn_packet(Flow*);
 Packet* get_syn_ack_packet(Flow*);

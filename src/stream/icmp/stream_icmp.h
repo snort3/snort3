@@ -20,7 +20,7 @@
 #ifndef STREAM_ICMP_H
 #define STREAM_ICMP_H
 
-#include "main/snort_types.h"
+#include <cstdint>
 
 struct StreamIcmpConfig
 {

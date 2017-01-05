@@ -20,7 +20,6 @@
 #ifndef LUA_UTIL_H
 #define LUA_UTIL_H
 
-#include <limits>
 #include <string>
 
 #include <lua.hpp>

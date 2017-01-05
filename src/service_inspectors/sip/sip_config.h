@@ -24,7 +24,6 @@
 
 // Configuration for SIP service inspector
 
-#include "protocols/packet.h"
 #include "framework/counts.h"
 #include "main/thread.h"
 #include "sip_common.h"

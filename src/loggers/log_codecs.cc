@@ -22,22 +22,14 @@
 #include "config.h"
 #endif
 
-#include <ctype.h>
-#include <string.h>
-
-#include <algorithm>
-#include <iostream>
-
-#include "main/snort_types.h"
-#include "main/snort_config.h"
+#include "detection/signature.h"
+#include "events/event.h"
 #include "framework/logger.h"
 #include "framework/module.h"
-#include "protocols/packet.h"
-#include "protocols/packet_manager.h"
-#include "detection/signature.h"
-#include "log/text_log.h"
 #include "log/log_text.h"
-#include "utils/stats.h"
+#include "log/text_log.h"
+#include "main/snort_config.h"
+#include "protocols/packet_manager.h"
 
 static THREAD_LOCAL TextLog* test_file = nullptr;
 

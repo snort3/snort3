@@ -21,24 +21,16 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <string.h>
 
-#include "utils/dnet_header.h"
 #include "codecs/codec_module.h"
-#include "protocols/udp.h"
-#include "protocols/teredo.h"
-#include "protocols/protocol_ids.h"
-#include "protocols/icmp4.h"
-#include "protocols/ipv4.h"
-#include "protocols/protocol_ids.h"
-#include "codecs/ip/checksum.h"
-#include "log/text_log.h"
 #include "framework/codec.h"
-#include "packet_io/active.h"
-#include "parser/config_file.h"
+#include "log/text_log.h"
 #include "main/snort_config.h"
-#include "main/snort_debug.h"
+#include "protocols/teredo.h"
+#include "protocols/udp.h"
 #include "utils/util.h"
+
+#include "checksum.h"
 
 #define CD_UDP_NAME "udp"
 #define CD_UDP_HELP "support for user datagram protocol"

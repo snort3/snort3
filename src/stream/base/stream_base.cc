@@ -20,17 +20,14 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
-
 #include "flow/flow_control.h"
 #include "flow/prune_stats.h"
-#include "main/snort_debug.h"
+#include "protocols/packet.h"
 #include "managers/inspector_manager.h"
-#include "profiler/profiler.h"
+#include "profiler/profiler_defs.h"
 
-#include "stream/tcp/tcp_session.h"
-#include "stream_module.h"
 #include "stream_ha.h"
+#include "stream_module.h"
 
 //-------------------------------------------------------------------------
 // stats

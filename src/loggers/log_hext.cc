@@ -22,19 +22,10 @@
 #include "config.h"
 #endif
 
-#include <ctype.h>
-#include <string.h>
-
-#include <algorithm>
-#include <iostream>
-#include <string>
-
-#include "main/snort_types.h"
 #include "framework/logger.h"
 #include "framework/module.h"
-#include "protocols/packet.h"
 #include "log/text_log.h"
-#include "sfip/sf_ip.h"
+#include "protocols/packet.h"
 
 using namespace std;
 

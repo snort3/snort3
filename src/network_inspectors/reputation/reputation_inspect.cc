@@ -19,34 +19,19 @@
 
 // reputation_inspect.cc author Hui Cao <huica@cisco.com>
 
-#include "reputation_inspect.h"
-
-#include "reputation_module.h"
-#include "reputation_parse.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <string.h>
-#include <stdio.h>
-#include <sys/types.h>
+#include "reputation_inspect.h"
 
-#include "protocols/packet.h"
-#include "sfip/sf_ip.h"
+#include "detection/detect.h"
 #include "events/event_queue.h"
 #include "log/messages.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "profiler/profiler.h"
-#include "file_api/file_api.h"
-#include "parser/parser.h"
-#include "framework/inspector.h"
-#include "utils/sfsnprintfappend.h"
-#include "target_based/snort_protocols.h"
-#include "detection/detect.h"
 #include "packet_io/active.h"
+#include "profiler/profiler.h"
+
+#include "reputation_module.h"
 
 THREAD_LOCAL ProfileStats reputationPerfStats;
 ReputationStats reputationstats;

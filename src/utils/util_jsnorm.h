@@ -23,7 +23,6 @@
 
 // Javascript Normalization
 
-#include <stdint.h>
 #include "main/snort_types.h"
 
 #define ALERT_SPACES_EXCEEDED   0x1

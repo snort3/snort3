@@ -19,25 +19,18 @@
 
 // service_rexec.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "service_rexec.h"
 
-#include <ctype.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-
-#include "protocols/packet.h"
 #include "main/snort_debug.h"
-#include "utils/util.h"
+#include "protocols/packet.h"
 
-#include "appid_api.h"
 #include "app_info_table.h"
-#include "appid_session.h"
 #include "appid_module.h"
-#include "application_ids.h"
-#include "service_api.h"
+
 #include "service_base.h"
 #include "service_util.h"
 

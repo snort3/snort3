@@ -22,6 +22,7 @@
 #define GTP_INSPECT_H
 
 #include "flow/flow.h"
+
 #include "gtp_parser.h"
 
 // FIXIT-M why store per packet on flow?

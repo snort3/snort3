@@ -26,15 +26,15 @@
 #include "config.h"
 #endif
 
-#include "sip.h"
+#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
-#include "framework/parameter.h"
-#include "detection/detect.h"
-#include "detection/detection_defines.h"
 #include "hash/sfhashfcn.h"
 #include "log/messages.h"
 #include "profiler/profiler.h"
+#include "protocols/packet.h"
+
+#include "sip.h"
 
 //-------------------------------------------------------------------------
 // sip_method

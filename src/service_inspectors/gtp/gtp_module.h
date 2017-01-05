@@ -21,11 +21,7 @@
 #ifndef GTP_MODULE_H
 #define GTP_MODULE_H
 
-#include <vector>
-#include <string>
-
 #include "framework/module.h"
-#include "main/thread.h"
 
 #define GID_GTP 143
 

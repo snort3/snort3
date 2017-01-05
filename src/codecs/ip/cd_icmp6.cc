@@ -22,17 +22,15 @@
 #include "config.h"
 #endif
 
-#include "main/snort_config.h"
+#include "codecs/codec_module.h"
 #include "framework/codec.h"
+#include "log/text_log.h"
+#include "main/snort_config.h"
 #include "protocols/icmp6.h"
 #include "protocols/icmp4.h"
-#include "codecs/codec_module.h"
-#include "codecs/codec_module.h"
-#include "codecs/ip/checksum.h"
-#include "packet_io/active.h"
-#include "log/text_log.h"
-#include "main/snort_debug.h"
 #include "utils/util.h"
+
+#include "checksum.h"
 
 #define CD_ICMP6_NAME "icmp6"
 #define CD_ICMP6_HELP "support for Internet control message protocol v6"

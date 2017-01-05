@@ -26,7 +26,8 @@
 // Be aware that subsequent calls will overwrite the memory that is pointed to
 
 #include "main/snort_types.h"
-#include "sfip/sf_ip.h"
+
+struct SfIp;
 
 SO_PUBLIC char* inet_ntoax(const SfIp*);
 

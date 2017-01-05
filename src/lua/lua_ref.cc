@@ -17,9 +17,11 @@
 //--------------------------------------------------------------------------
 // lua_ref.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "lua_ref.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <lua.hpp>
+#include "lua_ref.h"
 
 #include "lua.h"
 

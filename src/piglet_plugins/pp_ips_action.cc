@@ -17,20 +17,16 @@
 //--------------------------------------------------------------------------
 // pp_ips_action.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "piglet_plugins.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "lua/lua_iface.h"
 #include "managers/action_manager.h"
 #include "piglet/piglet_api.h"
 
+#include "pp_ips_action_iface.h"
 #include "pp_packet_iface.h"
 #include "pp_raw_buffer_iface.h"
-
-#include "pp_ips_action_iface.h"
 
 class IpsActionPiglet : public Piglet::BasePlugin
 {

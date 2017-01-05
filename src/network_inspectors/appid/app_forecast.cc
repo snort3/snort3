@@ -19,12 +19,18 @@
 
 // app_forecast.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "app_forecast.h"
 
 #include "hash/sfxhash.h"
-#include "time/packet_time.h"
 #include "log/messages.h"
-#include "application_ids.h"
+#include "protocols/packet.h"
+#include "time/packet_time.h"
+
+#include "appid_session.h"
 
 static AFActKey master_key;
 static THREAD_LOCAL SFXHASH* AF_indicators = nullptr;     // App Forecasting list of "indicator apps"

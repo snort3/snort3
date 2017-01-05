@@ -17,20 +17,16 @@
 //--------------------------------------------------------------------------
 // act_replace.cc author Russ Combs <rucombs@cisco.com>
 
-#include "act_replace.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <string>
+#include "act_replace.h"
 
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
 #include "framework/ips_action.h"
 #include "framework/module.h"
-#include "protocols/packet.h"
 #include "packet_io/active.h"
+#include "protocols/packet.h"
 
 #define s_name "rewrite"
 

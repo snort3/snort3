@@ -19,11 +19,17 @@
 // dnp3.cc author Rashmi Pitre <rrp@cisco.com>
 // based on work by Ryan Jordan
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "dnp3.h"
-#include "dnp3_paf.h"
-#include "dnp3_reassembly.h"
 
 #include "events/event_queue.h"
+#include "protocols/packet.h"
+
+#include "dnp3_paf.h"
+#include "dnp3_reassembly.h"
 
 THREAD_LOCAL Dnp3Stats dnp3_stats;
 THREAD_LOCAL ProfileStats dnp3_perf_stats;

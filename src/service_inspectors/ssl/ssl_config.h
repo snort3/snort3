@@ -16,12 +16,12 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "framework/counts.h"
-
 #ifndef SSL_CONFIG_H
 #define SSL_CONFIG_H
 
 // Configuration for SSL service inspector
+
+#include "framework/counts.h"
 
 struct SSL_PROTO_CONF
 {

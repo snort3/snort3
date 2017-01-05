@@ -19,27 +19,19 @@
 
 // ips_appid_option.cc  author: davis mcpherson <davmcphe@cisco.com>
 
-#include <algorithm>    // std::mismatch
-#include <vector>       // std::vector
-#include <utility>      // std::pair
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "app_info_table.h"
-
-#include "main/snort_debug.h"
+#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
-#include "framework/parameter.h"
-#include "detection/detect.h"
-#include "detection/detection_defines.h"
 #include "hash/sfhashfcn.h"
-#include "log/messages.h"
 #include "profiler/profiler.h"
-#include "stream/stream.h"
+#include "protocols/packet.h"
 #include "utils/util.h"
+
+#include "app_info_table.h"
 
 //-------------------------------------------------------------------------
 // appid option

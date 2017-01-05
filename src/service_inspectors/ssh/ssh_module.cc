@@ -18,9 +18,13 @@
 
 // ssh_module.cc author Bhagyashree Bantwal <bbantwal@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "ssh_module.h"
-#include <assert.h>
-#include <sstream>
+
+#include <cassert>
 
 using namespace std;
 

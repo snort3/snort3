@@ -30,9 +30,7 @@
 // client or server traffic appears to flow the wrong direction, or if
 // packets appear malformed/spoofed.
 
-#include "protocols/packet.h"
-#include "stream/stream.h"
-#include "ssh_config.h"
+#include "flow/flow.h"
 
 // Per-session data block containing current state
 // of the SSH preprocessor for the session.

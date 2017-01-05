@@ -17,13 +17,10 @@
 //--------------------------------------------------------------------------
 // http_uri.cc author Tom Peters <thopeter@cisco.com>
 
-#include <assert.h>
-#include <string.h>
-#include <sys/types.h>
-#include <stdio.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "http_enum.h"
-#include "http_module.h"
 #include "http_uri.h"
 
 #include "hash/sfhashfcn.h"

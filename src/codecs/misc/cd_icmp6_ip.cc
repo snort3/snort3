@@ -21,11 +21,8 @@
 #include "config.h"
 #endif
 
-#include "framework/codec.h"
-#include "protocols/protocol_ids.h"
-#include "protocols/ipv6.h"
-#include "protocols/packet.h"
 #include "codecs/codec_module.h"
+#include "framework/codec.h"
 
 // yes, macros are necessary. The API and class constructor require different strings.
 //

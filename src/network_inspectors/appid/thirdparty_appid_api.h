@@ -22,10 +22,9 @@
 #ifndef THIRDPARTY_APPID_API_H
 #define THIRDPARTY_APPID_API_H
 
-#include "protocols/packet.h"
-
-#include "appid_api.h"
 #include "thirdparty_appid_types.h"
+
+struct Packet;
 
 #define THIRD_PARTY_APP_ID_API_VERSION 1
 

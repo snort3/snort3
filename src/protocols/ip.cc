@@ -17,10 +17,13 @@
 //--------------------------------------------------------------------------
 // ip.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include <arpa/inet.h>
-#include "protocols/ip.h"
-#include "protocols/packet.h"
-#include "sfip/sf_ip.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "ip.h"
+
+#include "layer.h"
 
 namespace ip
 {

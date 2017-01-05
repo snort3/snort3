@@ -17,16 +17,19 @@
 //--------------------------------------------------------------------------
 // stream_ha.cc author Ed Borgoyn <eborgoyn@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "stream_ha.h"
 
-#include <thread>
 #include <unordered_map>
 
 #include "binder/binder.h"
+#include "flow/flow_key.h"
 #include "main/snort_debug.h"
 #include "managers/inspector_manager.h"
 #include "stream/stream.h"
-#include "sfip/sf_ip.h"
 
 // HA Session flags helper macros
 #define HA_IGNORED_SESSION_FLAGS \

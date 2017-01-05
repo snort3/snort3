@@ -18,9 +18,11 @@
 
 // udp_module.cc author Russ Combs <rucombs@cisco.com>
 
-#include "udp_module.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <string>
+#include "udp_module.h"
 
 #include "stream_udp.h"
 

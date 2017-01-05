@@ -23,20 +23,22 @@
  * Marc A. Norton <mnorton@sourcefire.com>
  */
 
-#include "ftp_print.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "ft_main.h"
-#include "ftp_cmd_lookup.h"
-#include "ftp_bounce_lookup.h"
-#include "ftp_parse.h"
-#include "ftpp_return_codes.h"
+#include "ftp_print.h"
+
+#include <cstring>
 
 #include "log/messages.h"
 #include "utils/sfsnprintfappend.h"
+
+#include "ft_main.h"
+#include "ftp_bounce_lookup.h"
+#include "ftp_cmd_lookup.h"
+#include "ftp_parse.h"
+#include "ftpp_return_codes.h"
 
 int PrintConfOpt(bool on, const char* Option)
 {

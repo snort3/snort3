@@ -23,7 +23,6 @@
 
 #include "framework/module.h"
 #include "ps_detect.h"
-#include "main/thread.h"
 
 #define PS_NAME "port_scan"
 #define PS_HELP "port scan inspector; also configure port_scan_global"

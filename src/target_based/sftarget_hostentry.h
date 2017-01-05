@@ -23,7 +23,6 @@
 #define SFTARGET_HOSTENTRY_H
 
 #include "target_based/sftarget_reader.h"
-#include "target_based/sftarget_data.h"
 
 /* API for HostAttributeEntry 'class' */
 

@@ -93,7 +93,7 @@ public:
 
     static FileCaptureState error_capture(FileCaptureState);
 
-    static int64_t get_block_size() { return capture_block_size; };
+    static int64_t get_block_size() { return capture_block_size; }
 
 private:
 

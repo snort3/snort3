@@ -18,13 +18,13 @@
 
 // tcp_module.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "tcp_module.h"
 
-#include <string>
-
-#include "profiler/profiler.h"
-#include "stream/stream.h"
-#include "stream_tcp.h"
+#include "profiler/profiler_defs.h"
 
 using namespace std;
 

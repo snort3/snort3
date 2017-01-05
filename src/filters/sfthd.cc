@@ -27,11 +27,13 @@
  * Boris Lytochkin found it.
  */
 
-#include "sfthd.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "sfthd.h"
+
+#include <cassert>
 
 #include "hash/sfghash.h"
 #include "hash/sfxhash.h"

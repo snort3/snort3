@@ -17,14 +17,18 @@
 //--------------------------------------------------------------------------
 // piglet_runner.cc author Joel Cornett <jocornet@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "piglet_runner.h"
 
-#include <string>
-#include <assert.h>
-#include <lua.hpp>
+#include <cassert>
 
+#include "lua/lua.h"
 #include "lua/lua_table.h"
 #include "lua/lua_util.h"
+
 #include "piglet_api.h"
 #include "piglet_manager.h"
 #include "piglet_output.h"

@@ -23,9 +23,8 @@
 
 // Protocol aware flushing for SMTP
 
-#include "main/snort_types.h"
-#include "stream/stream_splitter.h"
 #include "mime/file_mime_paf.h"
+#include "stream/stream_splitter.h"
 
 // State tracker for SMTP PAF
 enum SmtpPafState

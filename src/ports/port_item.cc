@@ -19,9 +19,12 @@
 
 // port_item.cc derived from sfportobject.h by Marc Noron
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "port_item.h"
 
-#include <string.h>
 #include "utils/util.h"
 
 /*

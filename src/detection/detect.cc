@@ -24,22 +24,16 @@
 **
 */
 
-#include "detect.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#define FASTPKT
+#include "detect.h"
 
-#include <string.h>
-#include <stdlib.h>
-
-#include "detection_defines.h"
-#include "fp_detect.h"
-#include "tag.h"
-
+#include "events/event.h"
 #include "latency/packet_latency.h"
+#include "main/snort_config.h"
+#include "main/snort_debug.h"
 #include "managers/event_manager.h"
 #include "managers/inspector_manager.h"
 #include "packet_io/active.h"
@@ -48,6 +42,11 @@
 #include "sfip/sf_ipvar.h"
 #include "stream/stream.h"
 #include "utils/stats.h"
+
+#include "detection_defines.h"
+#include "fp_detect.h"
+#include "tag.h"
+#include "treenodes.h"
 
 #define CHECK_SRC_IP         0x01
 #define CHECK_DST_IP         0x02

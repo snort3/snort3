@@ -17,25 +17,27 @@
 //--------------------------------------------------------------------------
 // inspector_manager.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "inspector_manager.h"
 
-#include <assert.h>
-#include <algorithm>
 #include <list>
 #include <vector>
 
-#include "module_manager.h"
-#include "main/snort_config.h"
-#include "main/thread_config.h"
-#include "flow/flow.h"
-#include "flow/session.h"
-#include "framework/inspector.h"
-#include "detection/detection_util.h"
-#include "log/messages.h"
-#include "packet_io/active.h"
-#include "target_based/snort_protocols.h"
 #include "binder/bind_module.h"
 #include "binder/binder.h"
+#include "detection/detect.h"
+#include "flow/flow.h"
+#include "flow/session.h"
+#include "log/messages.h"
+#include "main/snort_config.h"
+#include "main/thread_config.h"
+#include "protocols/packet.h"
+#include "target_based/snort_protocols.h"
+
+#include "module_manager.h"
 
 using namespace std;
 

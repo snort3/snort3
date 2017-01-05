@@ -17,11 +17,15 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "telnet.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "telnet.h"
+
+#include "log/messages.h"
+#include "profiler/profiler.h"
+#include "protocols/packet.h"
 
 #include "ft_main.h"
 #include "ftp_print.h"
@@ -30,9 +34,6 @@
 #include "ftpp_ui_config.h"
 #include "pp_telnet.h"
 #include "telnet_module.h"
-
-#include "log/messages.h"
-#include "profiler/profiler.h"
 
 THREAD_LOCAL ProfileStats telnetPerfStats;
 THREAD_LOCAL SimpleStats tnstats;

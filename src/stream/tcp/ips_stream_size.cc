@@ -21,16 +21,14 @@
 #include "config.h"
 #endif
 
-#include "tcp_session.h"
+#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
-#include "framework/parameter.h"
 #include "framework/range.h"
-#include "detection/detect.h"
-#include "detection/detection_defines.h"
 #include "hash/sfhashfcn.h"
-#include "profiler/profiler.h"
-#include "sfip/sf_ip.h"
+#include "profiler/profiler_defs.h"
+
+#include "tcp_session.h"
 
 //-------------------------------------------------------------------------
 // stream_size

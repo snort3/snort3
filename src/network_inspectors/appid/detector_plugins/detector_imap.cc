@@ -19,25 +19,19 @@
 
 // detector_imap.cc author Sourcefire Inc.
 
-#include <ctype.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <sys/types.h>
-#include <netinet/in.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "detector_api.h"
-#include "app_info_table.h"
-#include "application_ids.h"
-#include "appid_api.h"
-#include "appid_config.h"
-#include "appid_module.h"
-#include "client_plugins/client_app_api.h"
-#include "service_plugins/service_api.h"
 
 #include "main/snort_debug.h"
 #include "search_engines/search_tool.h"
-#include "utils/util.h"
+
+#include "app_info_table.h"
+#include "appid_module.h"
+#include "client_plugins/client_app_api.h"
+#include "service_plugins/service_api.h"
 
 static const unsigned IMAP_USER_NAME_MAX_LEN = 32;
 static const unsigned IMAP_TAG_MAX_LEN = 6;

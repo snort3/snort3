@@ -20,16 +20,13 @@
 // sfrim.c author Marc Norton
 // modified to use a vector w/o a hard max
 
-#include "sfrim.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "sfrim.h"
 
+#include <cassert>
 #include <vector>
 
 #ifdef UNIT_TEST

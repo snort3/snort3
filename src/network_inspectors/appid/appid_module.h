@@ -22,7 +22,6 @@
 #ifndef APPID_MODULE_H
 #define APPID_MODULE_H
 
-#include "main/snort_types.h"
 #include "framework/module.h"
 #include "appid_config.h"
 

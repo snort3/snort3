@@ -18,12 +18,17 @@
 
 // gtp_module.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "gtp_module.h"
 
 #include <cassert>
 
-#include "gtp.h"
 #include "profiler/profiler.h"
+
+#include "gtp.h"
 
 THREAD_LOCAL ProfileStats gtp_inspect_prof;
 

@@ -32,10 +32,6 @@
 #ifndef HI_NORM_H
 #define HI_NORM_H
 
-#include <sys/types.h>
-
-#include "hi_include.h"
-#include "hi_ui_config.h"
 #include "hi_si.h"
 
 #define MAX_URI 8192

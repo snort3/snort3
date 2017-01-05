@@ -23,10 +23,8 @@
 #define TCP_SEGMENT_H
 
 #include "main/snort_debug.h"
-#include "protocols/packet.h"
-
-#include "tcp_defs.h"
 #include "stream/libtcp/tcp_segment_descriptor.h"
+#include "stream/tcp/tcp_defs.h"
 
 //-----------------------------------------------------------------
 // we make a lot of TcpSegments so it is organized by member

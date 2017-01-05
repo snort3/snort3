@@ -21,24 +21,25 @@
 #include "config.h"
 #endif
 
-#include "ftp_module.h"
-#include "ftpp_si.h"
-#include "ftpp_return_codes.h"
-#include "ftp_cmd_lookup.h"
+#include "main/snort_config.h"
+#include "managers/inspector_manager.h"
+#include "profiler/profiler.h"
+#include "protocols/packet.h"
+#include "stream/stream.h"
+#include "target_based/snort_protocols.h"
+#include "utils/util.h"
+
 #include "ft_main.h"
+#include "ftp_cmd_lookup.h"
+#include "ftp_data.h"
+#include "ftp_module.h"
 #include "ftp_parse.h"
 #include "ftp_print.h"
 #include "ftp_splitter.h"
+#include "ftpp_return_codes.h"
+#include "ftpp_si.h"
 #include "pp_ftp.h"
-#include "ftp_data.h"
 #include "telnet.h"
-
-#include "main/snort_config.h"
-#include "main/snort_types.h"
-#include "managers/inspector_manager.h"
-#include "profiler/profiler.h"
-#include "target_based/snort_protocols.h"
-#include "utils/util.h"
 
 int16_t ftp_data_app_id = SFTARGET_UNKNOWN_PROTOCOL;
 

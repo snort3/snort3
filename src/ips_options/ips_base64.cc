@@ -19,31 +19,21 @@
 
 /* ips_base64.cc */
 
-#include <sys/types.h>
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <stdlib.h>
-#include <ctype.h>
-#include <errno.h>
 
-#include "log/messages.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "protocols/packet.h"
-#include "parser/parser.h"
-#include "profiler/profiler.h"
-#include "utils/util.h"
-#include "mime/decode_b64.h"
-#include "utils/util_unfold.h"
 #include "detection/detection_defines.h"
 #include "detection/detection_util.h"
+#include "detection/treenodes.h"
+#include "hash/sfhashfcn.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
-#include "framework/parameter.h"
 #include "framework/module.h"
-#include "hash/sfhashfcn.h"
+#include "log/messages.h"
+#include "mime/decode_b64.h"
+#include "profiler/profiler.h"
+#include "utils/util_unfold.h"
 
 static THREAD_LOCAL uint8_t base64_decode_buf[DECODE_BLEN];
 static THREAD_LOCAL uint32_t base64_decode_size;

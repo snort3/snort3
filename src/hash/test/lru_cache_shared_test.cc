@@ -19,6 +19,10 @@
 // lru_cache_shared_test.cc author Steve Chew <stechew@cisco.com>
 // unit tests for LruCacheShared class
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "hash/lru_cache_shared.h"
 
 #include <CppUTest/CommandLineTestRunner.h>

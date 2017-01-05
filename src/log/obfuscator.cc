@@ -18,6 +18,10 @@
 
 // obfuscate.h author Victor Roemer <viroemer@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "obfuscator.h"
 
 bool Obfuscator::first(ObfuscatorBlock &b)

@@ -18,26 +18,24 @@
 
 // ips_sd_pattern.cc author Victor Roemer <viroemer@cisco.com>
 
-#include "ips_sd_pattern.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <string.h>
-#include <assert.h>
-#include <string>
+#include "ips_sd_pattern.h"
 
 #include <hs_compile.h>
 #include <hs_runtime.h>
 
+#include "detection/detection_defines.h"
+#include "detection/pattern_match_data.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
-#include "detection/detection_defines.h"
-#include "detection/pattern_match_data.h"
 #include "hash/sfhashfcn.h"
 #include "log/messages.h"
 #include "log/obfuscator.h"
 #include "main/snort_config.h"
-#include "main/thread.h"
-#include "parser/parser.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 

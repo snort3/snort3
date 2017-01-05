@@ -19,11 +19,10 @@
 #ifndef STREAM_TCP_H
 #define STREAM_TCP_H
 
-#include "flow/flow.h"
-#include "protocols/packet.h"
-
-#include "tcp_defs.h"
-#include "tcp_stream_config.h"
+class Flow;
+class Inspector;
+class TcpStreamConfig;
+class Session;
 
 // misc stuff
 Session* get_tcp_session(Flow*);

@@ -19,7 +19,7 @@
 #ifndef REPUTATION_INSPECT_H
 #define REPUTATION_INSPECT_H
 
-#include "protocols/packet.h"
+#include "flow/flow.h"
 
 // Per-session data block containing current state
 // of the Reputation preprocessor for the session.

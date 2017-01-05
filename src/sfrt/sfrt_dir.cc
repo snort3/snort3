@@ -26,14 +26,14 @@
  * DIR-n-m.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "sfrt.h"  // FIXIT-L these includes are circular
 #include "sfrt_dir.h"
 
 #include <stdarg.h>
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include "utils/util.h"
 

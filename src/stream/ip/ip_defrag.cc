@@ -68,34 +68,22 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <sys/types.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <rpc/types.h>
-#include <errno.h>
-#include <array>
-
-#include "framework/codec.h"
-#include "flow/flow_control.h"
 #include "ip_defrag.h"
-#include "stream/ip/ip_session.h"
-#include "stream/ip/ip_module.h"
-#include "stream/ip/stream_ip.h"
-#include "packet_io/active.h"
-#include "packet_io/sfdaq.h"
-#include "protocols/layer.h"
-#include "protocols/ipv4_options.h"
-#include "protocols/packet_manager.h"
+
+#include "detection/detect.h"
 #include "log/messages.h"
 #include "main/snort.h"
-#include "main/snort_debug.h"
-#include "profiler/profiler.h"
+#include "main/snort_config.h"
+#include "packet_io/active.h"
+#include "packet_io/sfdaq.h"
+#include "profiler/profiler_defs.h"
+#include "protocols/ipv4_options.h"
 #include "time/timersub.h"
-#include "utils/stats.h"
-#include "detection/detect.h"
 #include "utils/safec.h"
 #include "utils/util.h"
+
+#include "ip_session.h"
+#include "stream_ip.h"
 
 /*  D E F I N E S  **************************************************/
 

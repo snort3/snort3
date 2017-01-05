@@ -17,13 +17,11 @@
 //--------------------------------------------------------------------------
 // piglet_output.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "piglet_output.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <iostream>
-#include <string>
-#include <sstream>
-#include <vector>
-#include <stdio.h>
+#include "piglet_output.h"
 
 #include "piglet_runner.h"
 #include "piglet_utils.h"

@@ -18,29 +18,22 @@
 
 // packet_latency.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "packet_latency.h"
-
-#include <cassert>
-#include <sstream>
-#include <vector>
-
-#include "log/messages.h"
-#include "main/snort_config.h"
-#include "main/thread.h"
-#include "protocols/packet.h"
-#include "sfip/sf_ip.h"
-#include "time/clock_defs.h"
-#include "utils/stats.h"
-
-#include "latency_config.h"
-#include "latency_timer.h"
-#include "latency_util.h"
-#include "latency_stats.h"
-#include "latency_rules.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "packet_latency.h"
+
+#include "log/messages.h"
+#include "main/snort_config.h"
+#include "protocols/packet.h"
+#include "utils/stats.h"
+
+#include "latency_config.h"
+#include "latency_rules.h"
+#include "latency_stats.h"
+#include "latency_timer.h"
+#include "latency_util.h"
 
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"

@@ -18,7 +18,13 @@
 
 // ps_module.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "ps_module.h"
+
+#include <cassert>
 
 //-------------------------------------------------------------------------
 // port_scan tables

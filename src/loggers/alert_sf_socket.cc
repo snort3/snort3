@@ -19,31 +19,22 @@
 
 /* We use some Linux only socket capabilities */
 
-#include <errno.h>
-#include <stdlib.h>
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #ifdef __linux__
+
 #include <sys/socket.h>
 #include <sys/un.h>
 
-#include <string>
-#include <vector>
-
-#include "main/snort_types.h"
-#include "main/snort_config.h"
-#include "main/snort_debug.h"
+#include "detection/treenodes.h"
+#include "events/event.h"
 #include "framework/logger.h"
 #include "framework/module.h"
 #include "log/messages.h"
+#include "main/snort_config.h"
 #include "managers/event_manager.h"
-#include "detection/rules.h"
-#include "detection/treenodes.h"
-#include "events/event.h"
-#include "hash/sfghash.h"
 #include "parser/parser.h"
 #include "protocols/packet.h"
 #include "target_based/snort_protocols.h"

@@ -19,9 +19,14 @@
 
 // dnp3_map.cc author Ryan Jordan
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "dnp3_map.h"
-#include <stdlib.h>
-#include <string.h>
+
+#include <cstddef>
+#include <cstring>
 
 /* Name/value pair struct */
 struct dnp3_map_t

@@ -18,9 +18,11 @@
 
 // stream_module.cc author Russ Combs <rucombs@cisco.com>
 
-#include "stream_module.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <string>
+#include "stream_module.h"
 
 using namespace std;
 

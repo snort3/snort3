@@ -17,16 +17,15 @@
 //--------------------------------------------------------------------------
 // http_uri_norm.cc author Tom Peters <thopeter@cisco.com>
 
-#include <assert.h>
-#include <sys/types.h>
-#include <cstring>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "http_uri_norm.h"
+
 #include <sstream>
-#include <string>
 
 #include "log/messages.h"
-
-#include "http_enum.h"
-#include "http_uri_norm.h"
 
 using namespace HttpEnums;
 

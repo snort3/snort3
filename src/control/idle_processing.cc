@@ -22,11 +22,11 @@
 // Allow functions to be registered to be called when packet
 // processing is idle.
 
-#include "idle_processing.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "idle_processing.h"
 
 #include <vector>
 

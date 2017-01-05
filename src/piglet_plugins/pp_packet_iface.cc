@@ -17,18 +17,19 @@
 //--------------------------------------------------------------------------
 // pp_packet_iface.cc author Joel Cornett <jocornet@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "pp_packet_iface.h"
 
-#include <string.h>
-#include <lua.hpp>
-
 #include "lua/lua_arg.h"
-#include "lua/lua_table.h"
 #include "protocols/packet.h"
+
+#include "pp_daq_pkthdr_iface.h"
 #include "pp_decode_data_iface.h"
 #include "pp_flow_iface.h"
 #include "pp_raw_buffer_iface.h"
-#include "pp_daq_pkthdr_iface.h"
 
 static void set_fields(lua_State* L, int tindex, Packet& self)
 {

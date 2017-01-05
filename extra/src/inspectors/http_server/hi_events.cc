@@ -18,12 +18,17 @@
 //--------------------------------------------------------------------------
 // hi_events.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "hi_events.h"
 
 #include <assert.h>
 #include <strings.h>
 
 #include "events/event_queue.h"
+#include "main/thread.h"
 
 static THREAD_LOCAL uint64_t gid_client = 0;
 static THREAD_LOCAL uint64_t gid_server = 0;

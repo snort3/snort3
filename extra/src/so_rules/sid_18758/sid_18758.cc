@@ -21,13 +21,10 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <string.h>
-
-#include "main/snort_types.h"
-#include "framework/so_rule.h"
-#include "detection/detection_defines.h"
 #include "sid_18758.h"
+
+#include "detection/detection_defines.h"
+#include "framework/so_rule.h"
 
 static int eval(void*, Cursor&, Packet*)
 {

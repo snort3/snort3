@@ -17,28 +17,26 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "stats.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "util.h"
+#include "stats.h"
+
+#include "file_api/file_stats.h"
+#include "filters/sfthreshold.h"
+#include "helpers/process.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
-#include "helpers/process.h"
-#include "packet_io/sfdaq.h"
-#include "packet_io/active.h"
-#include "packet_io/trough.h"
-#include "target_based/sftarget_reader.h"
 #include "managers/module_manager.h"
-#include "managers/codec_manager.h"
-#include "protocols/packet_manager.h"
-#include "detection/fp_create.h"
-#include "filters/sfthreshold.h"
+#include "packet_io/active.h"
+#include "packet_io/sfdaq.h"
+#include "packet_io/trough.h"
 #include "profiler/profiler.h"
+#include "protocols/packet_manager.h"
 #include "time/timersub.h"
-#include "file_api/file_stats.h"
+
+#include "util.h"
 
 #define STATS_SEPARATOR \
     "--------------------------------------------------"

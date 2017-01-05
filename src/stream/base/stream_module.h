@@ -21,9 +21,8 @@
 #ifndef STREAM_MODULE_H
 #define STREAM_MODULE_H
 
-#include "main/snort_types.h"
-#include "framework/module.h"
 #include "flow/flow_config.h"
+#include "framework/module.h"
 
 extern THREAD_LOCAL ProfileStats s5PerfStats;
 struct SnortConfig;

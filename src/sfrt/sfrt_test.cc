@@ -18,6 +18,10 @@
 //--------------------------------------------------------------------------
 // sfrt_test.cc author Hui Cao <hcao@sourcefire.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "catch/catch.hpp"
 #include "catch/unit_test.h"
 #include "sfip/sf_cidr.h"

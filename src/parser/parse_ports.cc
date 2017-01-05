@@ -17,11 +17,14 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "parse_ports.h"
-#include "protocols/packet.h"
-#include "ports/port_table.h"
+
 #include "main/snort_debug.h"
-#include "utils/snort_bounds.h"
+#include "protocols/packet.h"
 #include "utils/util.h"
 
 static int POParserInit(POParser* pop, const char* s, PortVarTable* pvTable)

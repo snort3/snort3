@@ -20,25 +20,11 @@
 #ifndef PROTOCOLS_PACKET_H
 #define PROTOCOLS_PACKET_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include <stddef.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <net/if.h>
-
-extern "C" {
 #include <daq_common.h>
-}
 
-#include "main/snort_types.h"
-#include "framework/decode_data.h"
 #include "flow/flow.h"
-#include "protocols/layer.h"
-#include "framework/endianness.h"
+#include "framework/decode_data.h"
+#include "main/snort_types.h"
 
 /* packet status flags */
 #define PKT_REBUILT_FRAG     0x00000001  /* is a rebuilt fragment */

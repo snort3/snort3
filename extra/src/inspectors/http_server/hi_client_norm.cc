@@ -45,17 +45,17 @@
 **      - Initial development.  DJR
 */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "hi_client_norm.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <ctype.h>
+#include "main/snort_debug.h"
+#include "utils/safec.h"
 
 #include "hi_norm.h"
-#include "hi_util.h"
 #include "hi_return_codes.h"
-#include "utils/safec.h"
 
 int hi_split_header_cookie(
     HI_SESSION*, u_char* header, int* i_header_len,

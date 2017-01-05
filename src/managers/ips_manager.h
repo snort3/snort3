@@ -23,22 +23,9 @@
 // Factory for IpsOptions.
 // Runtime use of IpsOptions is via detection option tree.
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include <string>
-
-#include "main/snort_types.h"
 #include "detection/detection_options.h"
-#include "framework/base_api.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
-#include "detection/treenodes.h"
-
-#ifdef PIGLET
-#include "piglet/piglet_api.h"
-#endif
 
 struct SnortConfig;
 struct IpsApi;

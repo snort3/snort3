@@ -22,73 +22,21 @@
 
 // defines common types if not already defined
 
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-
-#include <stdint.h>
-#include <sys/types.h>
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <cinttypes>
+#include <cstddef>
+#include <cstdint>
 
 typedef uint16_t Port;
 
-/* use these macros (and those in <inttypes.h>)
- * for 64 bit format portability
- */
+/* use these macros for 64 bit format portability */
 #define STDu64 "%" PRIu64
-#define CSVu64 STDu64 ","
 #define FMTu64(fmt) "%" fmt PRIu64
 
 #define STDi64 "%" PRIi64
-#define CSVi64 STDi64 ","
 #define FMTi64(fmt) "%" fmt PRIi64
 
 #define STDx64 "%" PRIx64
-#define CSVx64 STDx64 ","
 #define FMTx64(fmt) "%" fmt PRIx64
-
-#ifndef UINT8_MAX
-#  define UINT8_MAX 0xff
-#endif
-
-#ifndef USHRT_MAX
-#  define USHRT_MAX  0xffff
-#endif
-
-#ifndef UINT16_MAX
-#  define UINT16_MAX 0xffff
-#endif
-
-#ifndef UINT32_MAX
-#  define UINT32_MAX (4294967295U)
-#endif
-
-#ifndef UINT64_MAX
-#  if SIZEOF_UNSIGNED_LONG_INT == 8
-#    define UINT64_MAX (18446744073709551615UL)
-#  else
-#    define UINT64_MAX (18446744073709551615ULL)
-#  endif
-#endif
-
-/* Somewhat arbitrary, but should be enough for this application
- * since files shouldn't be buried too deep.  This provides about
- * 15 levels of 255 character path components */
-#ifndef PATH_MAX
-#  define PATH_MAX 4096
-#endif
-
-/* utilities */
-
-#ifndef SIZE_MAX
-#define SIZE_MAX 0xFFFFFFFF  // FIXIT-L use c++ define
-#endif
-
-#ifndef INT32_MAX
-#define INT32_MAX 0x7FFFFFFF  // FIXIT-L use c++ define
-#endif
 
 #define UNUSED(x) (void)(x)
 

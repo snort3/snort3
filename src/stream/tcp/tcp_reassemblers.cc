@@ -19,9 +19,10 @@
 // tcp_reassemblers.cc author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Oct 9, 2015
 
-#include "tcp_module.h"
-#include "tcp_event_logger.h"
-#include "tcp_session.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "tcp_reassemblers.h"
 
 class TcpReassemblerFirst : public TcpReassembler

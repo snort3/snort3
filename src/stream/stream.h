@@ -24,11 +24,7 @@
 
 // provides a common flow management interface
 
-#include <sys/types.h>
-
-#include "protocols/packet.h"
 #include "flow/flow.h"
-#include "main/snort_types.h"
 
 /* traffic direction identification */
 #define FROM_SERVER     0

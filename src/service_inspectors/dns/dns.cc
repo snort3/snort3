@@ -21,26 +21,17 @@
 // Alert for DNS client rdata buffer overflow.
 // Alert for Obsolete or Experimental RData types (per RFC 1035)
 
-#include "dns.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <string.h>
-#include <stdio.h>
-#include <sys/types.h>
+#include "dns.h"
 
 #include "events/event_queue.h"
 #include "log/messages.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
 #include "profiler/profiler.h"
-#include "parser/parser.h"
-#include "framework/inspector.h"
+#include "protocols/packet.h"
 #include "stream/stream.h"
-#include "utils/sfsnprintfappend.h"
 
 #include "dns_module.h"
 

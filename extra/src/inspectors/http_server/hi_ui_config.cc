@@ -33,16 +33,17 @@
 **  - 2.10.03:  Initial Developments.  DJR
 **  - 2.4.05:   Added tab_uri_delimiter config option.  AJM.
 */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "hi_ui_config.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/types.h>
-
 #include "utils/util.h"
-#include "hi_return_codes.h"
+
 #include "hi_cmd_lookup.h"
+#include "hi_return_codes.h"
 
 HTTPINSPECT_GLOBAL_CONF::HTTPINSPECT_GLOBAL_CONF()
 {

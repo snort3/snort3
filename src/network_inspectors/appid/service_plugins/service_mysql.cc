@@ -19,15 +19,15 @@
 
 // service_mysql.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "service_mysql.h"
 
 #include "main/snort_debug.h"
 
-#include "application_ids.h"
 #include "app_info_table.h"
-#include "appid_session.h"
-
-#include "service_api.h"
 #include "appid_module.h"
 
 #pragma pack(1)

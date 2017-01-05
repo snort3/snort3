@@ -32,17 +32,16 @@
 **  --------------------------------------------------------------------------
 */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "pcrm.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "fp_config.h"
-#include "fp_create.h"
-#include "log/messages.h"
 #include "main/snort_config.h"
 #include "utils/util.h"
+
+#include "fp_config.h"
 
 PORT_RULE_MAP* prmNewMap()
 {

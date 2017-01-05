@@ -109,25 +109,11 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <sys/types.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <string.h>
-
-#include "log/messages.h"
-#include "main/snort_types.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "detection/detect.h"
-#include "events/event.h"
 #include "events/event_queue.h"
-#include "parser/parser.h"
-#include "utils/util.h"
-#include "profiler/profiler.h"
 #include "framework/inspector.h"
 #include "framework/module.h"
-#include "protocols/udp.h"
+#include "log/messages.h"
+#include "profiler/profiler.h"
 #include "protocols/packet.h"
 
 #define BO_DEFAULT_KEY     31337

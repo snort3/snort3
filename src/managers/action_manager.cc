@@ -17,23 +17,18 @@
 //--------------------------------------------------------------------------
 // action_manager.cc author Russ Combs <rucombs@cisco.com>
 
-#include "action_manager.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <assert.h>
+#include "action_manager.h"
 
 #include <list>
 
 #include "actions/act_replace.h"
-#include "actions/ips_actions.h"
-#include "framework/ips_action.h"
 #include "log/messages.h"
-#include "main/snort_types.h"
-#include "main/snort_config.h"
-#include "main/snort_debug.h"
-#include "managers/module_manager.h"
-#include "parser/parser.h"
 #include "packet_io/active.h"
-#include "utils/util.h"
+#include "parser/parser.h"
 
 using namespace std;
 

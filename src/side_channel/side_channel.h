@@ -19,8 +19,6 @@
 #ifndef SIDE_CHANNEL_H
 #define SIDE_CHANNEL_H
 
-#include <vector>
-#include <string>
 #include <functional>
 
 #include "framework/bits.h"
@@ -43,9 +41,6 @@ struct __attribute__((__packed__)) SCMsgHdr
     uint32_t time_u_seconds;
     uint64_t time_seconds;
 };
-
-class ConnectorMsgHandle;
-class Connector;
 
 struct SCMessage
 {

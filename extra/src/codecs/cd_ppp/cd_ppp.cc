@@ -21,11 +21,7 @@
 #include "config.h"
 #endif
 
-#include <stdint.h>
-
-extern "C" {
 #include <sfbpf_dlt.h>
-}
 
 #include "framework/codec.h"
 

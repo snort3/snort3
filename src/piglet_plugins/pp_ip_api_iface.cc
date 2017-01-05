@@ -17,15 +17,14 @@
 //--------------------------------------------------------------------------
 // pp_ip_api_iface.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "pp_ip_api_iface.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <assert.h>
-#include <lua.hpp>
+#include "pp_ip_api_iface.h"
 
 #include "lua/lua_arg.h"
 #include "protocols/ip.h"
-#include "protocols/ipv4.h"
-#include "protocols/ipv6.h"
 
 #include "pp_raw_buffer_iface.h"
 

@@ -18,11 +18,11 @@
 //--------------------------------------------------------------------------
 // 9/7/2011 - Initial implementation ... Hui Cao <hcao@sourcefire.com>
 
-#include "sfrt_flat.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "sfrt_flat.h"
 
 #include "sfip/sf_cidr.h"
 

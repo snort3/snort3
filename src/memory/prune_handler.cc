@@ -18,7 +18,12 @@
 
 // prune_handler.cc author Joel Cornett <jocornet@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "prune_handler.h"
+
 #include "stream/stream.h"
 
 namespace memory

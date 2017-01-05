@@ -17,13 +17,20 @@
 //--------------------------------------------------------------------------
 // lua_stack_test.cc author Joel Cornett <jocornet@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <cstring>
 #include <string>
-#include <lua.hpp>
 
 #include "catch/catch.hpp"
+#include "catch/unit_test.h"
 
 #include "lua_test_common.h"
 #include "lua/lua_stack.h"
+
+SNORT_CATCH_FORCED_INCLUSION_DEFINITION(lua_stack_test);
 
 static lua_State* L = nullptr;
 

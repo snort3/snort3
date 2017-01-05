@@ -25,7 +25,6 @@
 #include <string>
 #include <vector>
 
-#include "main/snort_config.h"
 #include "main/snort_types.h"
 
 // FIXIT-L use logical type instead of int16_t

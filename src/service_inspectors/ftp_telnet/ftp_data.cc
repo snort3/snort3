@@ -17,21 +17,22 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "ftp_data.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "ftp_module.h"
-#include "ftpp_si.h"
+#include "ftp_data.h"
 
 #include "detection/detection_util.h"
-#include "file_api/file_service.h"
 #include "file_api/file_flows.h"
-#include "profiler/profiler.h"
-#include "utils/util.h"
+#include "file_api/file_service.h"
 #include "packet_io/active.h"
+#include "profiler/profiler.h"
+#include "stream/stream.h"
+#include "utils/util.h"
+
+#include "ftp_module.h"
+#include "ftpp_si.h"
 
 #define s_name "ftp_data"
 

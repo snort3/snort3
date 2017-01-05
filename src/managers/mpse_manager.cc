@@ -17,19 +17,18 @@
 //--------------------------------------------------------------------------
 // mpse_manager.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "mpse_manager.h"
 
 #include <list>
 
-#include "module_manager.h"
-#include "main/snort_types.h"
-#include "main/snort_config.h"
-#include "main/snort_debug.h"
-#include "utils/util.h"
 #include "framework/mpse.h"
-#include "parser/parser.h"
 #include "log/messages.h"
-#include "search_engines/search_common.h"
+
+#include "module_manager.h"
 
 using namespace std;
 

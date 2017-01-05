@@ -21,9 +21,9 @@
 #ifndef TCP_CONNECTOR_MODULE_H
 #define TCP_CONNECTOR_MODULE_H
 
-#include "tcp_connector_config.h"
 #include "framework/module.h"
-#include "main/thread.h"
+
+#include "tcp_connector_config.h"
 
 #define TCP_CONNECTOR_NAME "tcp_connector"
 #define TCP_CONNECTOR_HELP "implement the tcp stream connector"

@@ -19,6 +19,10 @@
 // dce_co.cc author Rashmi Pitre <rrp@cisco.com>
 // based on work by Todd Wease
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "dce_co.h"
 
 #include "main/snort_debug.h"
@@ -26,9 +30,9 @@
 
 #include "dce_smb.h"
 #include "dce_smb_module.h"
+#include "dce_smb_utils.h"
 #include "dce_tcp.h"
 #include "dce_tcp_module.h"
-#include "dce_smb_utils.h"
 
 THREAD_LOCAL int co_reassembled = 0;
 

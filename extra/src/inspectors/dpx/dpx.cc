@@ -21,21 +21,12 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <sys/types.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <string.h>
-
-#include "main/snort_debug.h"
-#include "main/snort_types.h"
 #include "events/event_queue.h"
 #include "framework/inspector.h"
 #include "framework/module.h"
 #include "log/messages.h"
-#include "protocols/packet.h"
 #include "profiler/profiler.h"
-#include "utils/stats.h"
+#include "protocols/packet.h"
 
 #define DPX_GID 256
 #define DPX_SID 1

@@ -20,8 +20,8 @@
 #ifndef PROTOCOLS_TOKEN_RING_H
 #define PROTOCOLS_TOKEN_RING_H
 
-#include <cstdint>
 #include <arpa/inet.h>
+
 #include "protocols/protocol_ids.h"
 
 namespace token_ring

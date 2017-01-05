@@ -49,20 +49,16 @@
 **  the file doc/README.asn1.
 */
 
-#include "asn1_detect.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <sys/types.h>
-#include <stdlib.h>
-#include <ctype.h>
+#include "asn1_detect.h"
 
-#include "asn1_util.h"
-#include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "utils/snort_bounds.h"
+
+#include "asn1_util.h"
 
 /*
 **  NAME

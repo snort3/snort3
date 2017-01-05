@@ -22,8 +22,7 @@
 #ifndef TCP_NORMALIZERS_H
 #define TCP_NORMALIZERS_H
 
-#include "tcp_defs.h"
-#include "tcp_normalizer.h"
+#include "stream/tcp/tcp_normalizer.h"
 
 class TcpNormalizerFactory
 {

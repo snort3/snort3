@@ -25,10 +25,6 @@
 #include "framework/codec.h"
 #include "log/text_log.h"
 #include "main/snort_config.h"
-#include "protocols/ipv6.h"
-#include "protocols/packet.h"
-#include "protocols/packet_manager.h"
-#include "protocols/protocol_ids.h"
 
 #define CD_IPV6_FRAG_NAME "ipv6_frag"
 #define CD_IPV6_FRAG_HELP "support for IPv6 fragment decoding"

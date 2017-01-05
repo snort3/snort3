@@ -24,7 +24,7 @@
 
 #include <string>
 
-#include "framework/base_api.h"
+struct BaseApi;
 
 class LuaApi
 {

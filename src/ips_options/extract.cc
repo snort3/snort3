@@ -19,19 +19,14 @@
 
 // author Chris Green <cmg@sourcefire.com>
 
-#include <sys/types.h>
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <stdlib.h>
-#include <ctype.h>
-#include <errno.h>
 
 #include "extract.h"
-#include "main/snort_debug.h"
-#include "utils/util.h"
+
 #include "utils/snort_bounds.h"
+#include "utils/util.h"
 
 #define TEXTLEN  (PARSELEN + 1)
 

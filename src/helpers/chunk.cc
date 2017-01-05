@@ -17,15 +17,13 @@
 //--------------------------------------------------------------------------
 // chunk.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "chunk.h"
 
-#include <lua.hpp>
-
-#include "managers/ips_manager.h"
-#include "hash/sfhashfcn.h"
 #include "log/messages.h"
-#include "framework/cursor.h"
-#include "profiler/profiler.h"
 #include "lua/lua.h"
 
 #ifdef UNIT_TEST

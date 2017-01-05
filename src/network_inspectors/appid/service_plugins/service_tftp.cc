@@ -19,24 +19,17 @@
 
 // service_tftp.cc author Sourcefire Inc.
 
-#include <ctype.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <sys/types.h>
-#include <netinet/in.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "main/snort_debug.h"
 #include "log/messages.h"
-#include "target_based/snort_protocols.h"
-#include "utils/util.h"
+#include "main/snort_debug.h"
+#include "protocols/packet.h"
 
 #include "app_info_table.h"
-#include "appid_api.h"
-#include "appid_session.h"
 #include "appid_module.h"
-#include "application_ids.h"
-#include "service_api.h"
+
 #include "service_base.h"
 #include "service_util.h"
 

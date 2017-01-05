@@ -18,11 +18,16 @@
 
 // host_tracker_module.cc author Steve Chew <stechew@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "host_tracker_module.h"
 
 #include "main/snort_config.h"
 #include "stream/stream.h"
 #include "target_based/snort_protocols.h"
+
 #include "host_cache.h"
 
 const PegInfo host_tracker_pegs[] =

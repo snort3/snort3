@@ -32,7 +32,6 @@
 #ifndef HI_CLIENT_NORM_H
 #define HI_CLIENT_NORM_H
 
-#include "hi_include.h"
 #include "hi_si.h"
 
 int hi_client_norm(HI_SESSION* session);

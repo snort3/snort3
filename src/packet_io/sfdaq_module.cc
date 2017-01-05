@@ -24,7 +24,7 @@
 
 #include "sfdaq_module.h"
 
-#include <assert.h>
+#include <cassert>
 
 #include "log/messages.h"
 #include "main/snort_config.h"

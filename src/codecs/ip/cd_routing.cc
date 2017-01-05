@@ -22,11 +22,9 @@
 #include "config.h"
 #endif
 
-#include "framework/codec.h"
 #include "codecs/codec_module.h"
-#include "protocols/protocol_ids.h"
+#include "framework/codec.h"
 #include "main/snort_config.h"
-#include "protocols/ipv6.h"
 
 #define CD_IPV6_ROUTING_NAME "ipv6_routing"
 #define CD_IPV6_ROUTING_HELP "support for IPv6 routing extension"

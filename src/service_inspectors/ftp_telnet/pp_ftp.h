@@ -24,9 +24,6 @@
 
 // declares the ftp checking functions
 
-#include <sys/types.h>
-
-#include "ftpp_ui_config.h"
 #include "ftpp_si.h"
 
 /* list of function prototypes for this preprocessor */

@@ -25,10 +25,6 @@
 // generic hash table - stores and maps key + data pairs
 // (supports memcap and automatic memory recovery when out of memory)
 
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-
 #include "utils/sfmemcap.h"
 #include "main/snort_types.h"
 

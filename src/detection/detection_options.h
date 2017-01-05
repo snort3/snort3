@@ -31,17 +31,13 @@
 // Eval, profiling, and latency data are attached in an array sized per max
 // packet threads.
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <sys/time.h>
+
 #include "detection/rule_option_types.h"
-#include "main/snort_types.h"
-#include "latency/rule_latency_state.h"
 #include "time/clock_defs.h"
 
 struct Packet;
+struct RuleLatencyState;
 struct SFXHASH;
 
 typedef int (* eval_func_t)(void* option_data, class Cursor&, Packet*);

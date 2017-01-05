@@ -17,6 +17,10 @@
 //--------------------------------------------------------------------------
 // curses.cc author Maya Dagon <mdagon@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "curses.h"
 
 using namespace std;

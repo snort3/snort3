@@ -22,7 +22,6 @@
 #include "config.h"
 #endif
 
-#include "framework/inspector.h"
 #include "managers/plugin_manager.h"
 
 extern const BaseApi* nin_binder;

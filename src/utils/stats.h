@@ -22,18 +22,11 @@
 
 // Provides facilities for displaying Snort exit stats
 
-#include <sys/time.h>
-#include <sys/types.h>
-
-#include <stdlib.h>
-#include <errno.h>
-#include <unistd.h>
-#include <string.h>
 #include <vector>
 
-#include "main/thread.h"
-#include "main/snort_types.h"
 #include "framework/counts.h"
+#include "main/snort_types.h"
+#include "main/thread.h"
 
 using IndexVec = std::vector<unsigned>;
 

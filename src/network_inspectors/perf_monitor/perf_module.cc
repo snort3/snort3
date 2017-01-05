@@ -18,11 +18,13 @@
 
 // perf_module.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "perf_module.h"
 
 #include "managers/module_manager.h"
-#include "managers/plugin_manager.h"
-#include "utils/util.h"
 
 //-------------------------------------------------------------------------
 // perf attributes

@@ -19,6 +19,10 @@
 // dce_smb_paf.cc author Rashmi Pitre <rrp@cisco.com>
 // based on work by Todd Wease
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "dce_smb_paf.h"
 
 #include "main/snort_debug.h"

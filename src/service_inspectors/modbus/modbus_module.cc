@@ -18,10 +18,15 @@
 
 // modbus_module.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "modbus_module.h"
 
-#include "modbus.h"
 #include "profiler/profiler.h"
+
+#include "modbus.h"
 
 THREAD_LOCAL ProfileStats modbus_prof;
 

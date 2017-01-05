@@ -17,19 +17,21 @@
 //--------------------------------------------------------------------------
 // piglet_manager.cc author Joel Cornett <jocornet@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "piglet_manager.h"
 
-#include <map>
-#include <string>
-#include <vector>
-#include <assert.h>
+#include <cassert>
 
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
-#include "piglet_utils.h"
+
 #include "piglet_api.h"
+#include "piglet_utils.h"
 
 #define PLUGIN_KEY_SEP "::"
 

@@ -18,13 +18,17 @@
 
 // capture_module.cc author Carter Waxman <cwaxman@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "capture_module.h"
 
 #include <lua.hpp>
 
-#include "packet_capture.h"
 #include "profiler/profiler.h"
-#include "utils/util.h"
+
+#include "packet_capture.h"
 
 using namespace std;
 

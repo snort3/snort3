@@ -19,12 +19,14 @@
 
 // sfutil.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "appid_utils.h"
 
 #include <cctype>
-#include <string.h>
-
-#include "utils/util.h"
+#include <cstring>
 
 int AppIdUtils::split(char* data, char** toklist, int max_toks, const char* separator)
 {

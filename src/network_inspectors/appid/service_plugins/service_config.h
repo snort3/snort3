@@ -24,8 +24,6 @@
 
 // Service detector configuration
 
-#include <cstdint>
-
 #include "service_api.h"
 
 #define RNA_SERVICE_MAX_PORT 65536

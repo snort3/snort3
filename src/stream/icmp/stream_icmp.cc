@@ -21,16 +21,13 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
-
 #include "stream_icmp.h"
+
+#include "log/messages.h"
+
 #include "icmp_ha.h"
 #include "icmp_module.h"
 #include "icmp_session.h"
-
-#include "log/messages.h"
-#include "framework/inspector.h"
-#include "protocols/packet.h"
 
 //-------------------------------------------------------------------------
 // helpers

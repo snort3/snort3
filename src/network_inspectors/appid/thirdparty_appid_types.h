@@ -22,7 +22,6 @@
 #ifndef THIRDPARTY_APPID_TYPES_H
 #define THIRDPARTY_APPID_TYPES_H
 
-#include <stdint.h>
 #include "http_common.h"
 
 #define TP_SESSION_FLAG_DPI        0x00000001

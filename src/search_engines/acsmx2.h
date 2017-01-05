@@ -24,10 +24,7 @@
 
 // Version 2.0
 
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdint>
 
 #include "search_common.h"
 

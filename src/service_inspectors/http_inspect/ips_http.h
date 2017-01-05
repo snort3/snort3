@@ -20,14 +20,8 @@
 #ifndef IPS_HTTP_H
 #define IPS_HTTP_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include <string>
 #include <array>
 
-#include "main/snort_types.h"
 #include "profiler/profiler.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"

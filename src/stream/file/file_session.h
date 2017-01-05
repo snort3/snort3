@@ -17,14 +17,10 @@
 //--------------------------------------------------------------------------
 // file_session.h author Russ Combs <rucombs@cisco.com>
 
-#ifndef USER_SESSION_H
-#define USER_SESSION_H
-
-#include <assert.h>
-#include <list>
+#ifndef FILE_SESSION_H
+#define FILE_SESSION_H
 
 #include "flow/session.h"
-#include "stream/paf.h"
 
 class FileSession : public Session
 {

@@ -18,12 +18,13 @@
 //--------------------------------------------------------------------------
 // cd_arp.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include "framework/codec.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "codecs/codec_module.h"
-#include "protocols/protocol_ids.h"
+#include "framework/codec.h"
 #include "protocols/arp.h"
-#include "protocols/packet.h"
-#include "log/text_log.h"
 
 #define CD_ARP_NAME "arp"
 #define CD_ARP_HELP "support for address resolution protocol"

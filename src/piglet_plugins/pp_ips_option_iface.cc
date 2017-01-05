@@ -17,12 +17,15 @@
 //--------------------------------------------------------------------------
 // pp_ips_option_iface.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "pp_ips_option_iface.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <lua.hpp>
+#include "pp_ips_option_iface.h"
 
 #include "framework/ips_option.h"
 #include "lua/lua_stack.h"
+
 #include "pp_packet_iface.h"
 #include "pp_cursor_iface.h"
 

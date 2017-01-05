@@ -22,8 +22,6 @@
 #ifndef IPS_BYTE_EXTRACT_H
 #define IPS_BYTE_EXTRACT_H
 
-#include <stdint.h>
-
 #include "main/snort_types.h"
 
 #define NUM_BYTE_EXTRACT_VARS 2

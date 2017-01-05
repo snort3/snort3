@@ -19,14 +19,20 @@
 
 // detector_pattern.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "detector_pattern.h"
-#include "app_info_table.h"
-#include "client_plugins/client_app_base.h"
-#include "service_plugins/service_api.h"
 
 #include "log/messages.h"
 #include "main/snort_debug.h"
-#include "utils/util.h"
+#include "protocols/packet.h"
+#include "search_engines/search_tool.h"
+
+#include "app_info_table.h"
+#include "client_plugins/client_app_base.h"
+#include "service_plugins/service_api.h"
 
 static THREAD_LOCAL ServicePortPattern service_port_patterns;
 static THREAD_LOCAL ClientPortPattern clientPortPattern;

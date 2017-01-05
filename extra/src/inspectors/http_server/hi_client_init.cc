@@ -22,7 +22,11 @@
 // this file was split from hi_client.cc; look there for the real
 // culprits ;)
 
-#include "hi_client.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "hi_events.h"
 #include "hi_return_codes.h"
 #include "hi_si.h"
 #include "hi_util.h"

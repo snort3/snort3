@@ -18,8 +18,11 @@
 //--------------------------------------------------------------------------
 // decode_bit.cc author Bhagyashree Bantwal <bbantwal@sourcefire.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "decode_bit.h"
-#include "utils/util.h"
 
 void BitDecode::reset_decode_state()
 {

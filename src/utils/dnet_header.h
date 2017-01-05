@@ -23,10 +23,6 @@
 
 // Provide the correct dnet interface
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wc99-extensions"

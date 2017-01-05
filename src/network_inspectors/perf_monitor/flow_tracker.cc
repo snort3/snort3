@@ -18,13 +18,16 @@
 
 // flow_tracker.cc author Carter Waxman <cwaxman@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "flow_tracker.h"
-#include "perf_module.h"
 
 #include "protocols/icmp4.h"
+#include "protocols/packet.h"
 #include "protocols/tcp.h"
 #include "protocols/udp.h"
-#include "utils/util.h"
 
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"

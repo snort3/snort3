@@ -20,8 +20,6 @@
 #ifndef FILE_MODULE_H
 #define FILE_MODULE_H
 
-#include "main/snort_types.h"
-#include "main/thread.h"
 #include "framework/module.h"
 
 struct SnortConfig;

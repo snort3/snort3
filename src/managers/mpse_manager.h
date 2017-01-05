@@ -24,16 +24,10 @@
 // as searching by inspectors with a SearchTool.  Runtime use of the Mpse
 // is by the fast pattern detection module.
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
-#include "main/snort_types.h"
-#include "framework/base_api.h"
+#include "framework/module.h"
 
 #ifdef PIGLET
 #include "framework/mpse.h"
-#include "piglet/piglet_api.h"
 #endif
 
 struct MpseApi;

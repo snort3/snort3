@@ -21,6 +21,10 @@
 
 // Smb transaction commands utils
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "dce_smb_transaction_utils.h"
 
 #include "main/snort_debug.h"

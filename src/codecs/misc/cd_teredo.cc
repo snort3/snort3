@@ -23,11 +23,9 @@
 #endif
 
 #include "framework/codec.h"
+#include "main/snort_config.h"
 #include "packet_io/active.h"
-#include "main/snort_types.h"
-#include "protocols/packet.h"
 #include "protocols/teredo.h"
-#include "protocols/protocol_ids.h"
 
 #define CD_TEREDO_NAME "teredo"
 #define CD_TEREDO_HELP "support for teredo"

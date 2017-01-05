@@ -22,7 +22,7 @@
 #ifndef DNS_H
 #define DNS_H
 
-#include "protocols/packet.h"
+#include "flow/flow.h"
 
 // Implementation header with definitions, datatypes and flowdata class for
 // DNS service inspector.

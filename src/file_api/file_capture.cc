@@ -24,26 +24,20 @@
  **  5.05.2013 - Initial Source Code. Hui Cao
  */
 
-#include "file_capture.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <sys/stat.h>
-#include <unistd.h>
-#include <string.h>
-#include <fcntl.h>
-#include <sys/types.h>
+#include "file_capture.h"
+
 #include <sys/stat.h>
 
-#include "hash/hashes.h"
+#include <cassert>
+
 #include "log/messages.h"
-#include "main/snort_config.h"
-#include "utils/util.h"
 #include "utils/stats.h"
+#include "utils/util.h"
 
-#include "file_config.h"
 #include "file_mempool.h"
 #include "file_stats.h"
 

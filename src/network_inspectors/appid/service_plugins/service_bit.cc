@@ -19,13 +19,15 @@
 
 // service_bit.cc author Sourcefire Inc.
 
-
-#include "application_ids.h"
-#include "service_api.h"
-#include "appid_module.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "main/snort_debug.h"
-#include "utils/util.h"
+
+#include "appid_module.h"
+
+#include "service_api.h"
 
 static const char svc_name[] = "bt";
 static const uint8_t BIT_BANNER[]  = "\023BitTorrent protocol";

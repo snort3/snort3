@@ -18,7 +18,13 @@
 
 // telnet_module.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "telnet_module.h"
+
+#include <cassert>
 
 using namespace std;
 

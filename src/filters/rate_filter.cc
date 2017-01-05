@@ -18,14 +18,13 @@
 //--------------------------------------------------------------------------
 
 // rate_filter.cc author Dilbagh Chahal <dchahal@sourcefire.com>
-
-#include "rate_filter.h"
-
 // rate filter interface for Snort
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "rate_filter.h"
 
 #include "detection/rules.h"
 #include "detection/treenodes.h"

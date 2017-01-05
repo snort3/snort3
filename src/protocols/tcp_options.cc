@@ -17,10 +17,14 @@
 //--------------------------------------------------------------------------
 // tcp_options.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include "protocols/tcp_options.h"
-#include "protocols/tcp.h"
-#include "protocols/layer.h"
-#include "protocols/packet.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "tcp_options.h"
+
+#include "packet.h"
+#include "tcp.h"
 
 namespace tcp
 {

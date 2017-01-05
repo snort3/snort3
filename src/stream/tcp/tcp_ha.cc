@@ -17,10 +17,15 @@
 //--------------------------------------------------------------------------
 // tcp_ha.cc author Ed Borgoyn <eborgoyn@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "tcp_ha.h"
 
 #include "main/snort_debug.h"
 #include "stream/stream.h"
+
 #include "tcp_session.h"
 
 Flow* TcpHA::create_session(FlowKey* key)

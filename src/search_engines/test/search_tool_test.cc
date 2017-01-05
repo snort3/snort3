@@ -18,6 +18,10 @@
 
 // search_tool_test.cc author Steve Chew <stechew@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 //  Change private to public to give access to private members.
 #define private public
 #include "search_engines/search_tool.h"
@@ -70,7 +74,7 @@ FileVerdict FilePolicy::signature_lookup(Flow*, FileContext*)
 FileVerdict FilePolicy::signature_lookup(Flow*, FileInfo*)
 { return FILE_VERDICT_UNKNOWN; }
 
-void LogValue(const char*, const char*, FILE* = stdout)
+void LogValue(const char*, const char*, FILE*)
 {
 }
 
@@ -86,7 +90,7 @@ void FatalError(const char*,...)
 void LogCount(char const*, uint64_t, FILE*)
 { }
 
-void LogStat(const char*, double, FILE* = stdout)
+void LogStat(const char*, double, FILE*)
 {}
 
 static void* s_tree = (void*)"tree";

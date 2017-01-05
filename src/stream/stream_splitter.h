@@ -21,7 +21,6 @@
 #define TCP_SPLITTER_H
 
 #include "main/snort_types.h"
-#include "main/thread.h"
 
 class Flow;
 

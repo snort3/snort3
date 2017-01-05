@@ -19,11 +19,14 @@
 
 // sip_config.cc author Hui Cao <huica@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "sip_config.h"
 
 #include "log/messages.h"
 #include "main/snort_debug.h"
-#include "parser/parser.h"
 #include "utils/util.h"
 
 #define SIP_SEPERATORS       "()<>@,;:\\/[]?={}\" "

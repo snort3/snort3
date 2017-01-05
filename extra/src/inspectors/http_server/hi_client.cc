@@ -41,29 +41,21 @@
 **    - 2.4.05:  Added tab_uri_delimiter config option.  AJM.
 */
 
-#include "hi_client.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <ctype.h>
-#include <sys/types.h>
-#include <errno.h>
+#include "hi_client.h"
 
-#include "hi_ui_config.h"
-#include "hi_si.h"
-#include "hi_mi.h"
-#include "hi_util.h"
-#include "hi_return_codes.h"
-#include "hi_cmd_lookup.h"
-
-#include "utils/util.h"
-#include "utils/util_unfold.h"
-#include "detection/detection_util.h"
+#include "protocols/packet.h"
 #include "utils/safec.h"
+#include "utils/util_unfold.h"
+
+#include "hi_cmd_lookup.h"
+#include "hi_events.h"
+#include "hi_include.h"
+#include "hi_return_codes.h"
+#include "hi_si.h"
 
 #define HEADER_NAME__COOKIE "Cookie"
 #define HEADER_LENGTH__COOKIE 6

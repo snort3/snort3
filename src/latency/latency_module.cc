@@ -18,14 +18,19 @@
 
 // latency_module.cc author Joel Cornett <jocornet@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "latency_module.h"
 
 #include <chrono>
 
 #include "main/snort_config.h"
+
 #include "latency_config.h"
-#include "latency_stats.h"
 #include "latency_rules.h"
+#include "latency_stats.h"
 
 // -----------------------------------------------------------------------------
 // latency attributes

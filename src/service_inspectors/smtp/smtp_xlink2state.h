@@ -24,9 +24,7 @@
 
 // declares the API to handle the X-Link2State vulnerability
 
-#include "protocols/packet.h"
 #include "smtp.h"
-#include "smtp_config.h"
 
 int ParseXLink2State(SMTP_PROTO_CONF*, Packet*, SMTPData*, const uint8_t*);
 

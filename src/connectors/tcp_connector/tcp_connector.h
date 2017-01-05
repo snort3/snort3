@@ -21,14 +21,12 @@
 #ifndef TCP_CONNECTOR_H
 #define TCP_CONNECTOR_H
 
-#include <fstream>
 #include <thread>
 
-#include "tcp_connector_config.h"
 #include "framework/connector.h"
 #include "helpers/ring.h"
-#include "main/thread.h"
-#include "profiler/profiler.h"
+
+#include "tcp_connector_config.h"
 
 #define TCP_FORMAT_VERSION (1)
 

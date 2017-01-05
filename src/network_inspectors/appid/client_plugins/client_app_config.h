@@ -22,8 +22,8 @@
 #ifndef CLIENT_APP_CONFIG_H
 #define CLIENT_APP_CONFIG_H
 
-#include "utils/sflsq.h"
 #include "search_engines/search_tool.h"
+#include "utils/sflsq.h"
 
 struct RNAClientAppModule;
 struct RNAClientAppRecord;

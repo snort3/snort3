@@ -33,9 +33,6 @@
 #ifndef HI_UTIL_H
 #define HI_UTIL_H
 
-#include <strings.h>
-#include "hi_include.h"
-
 /*
 **  This function checks for in bounds condition on buffers.
 **

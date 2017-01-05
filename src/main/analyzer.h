@@ -25,7 +25,6 @@
 // to control the thread and swap configuration.
 
 #include <atomic>
-#include "main/snort_types.h"
 
 enum AnalyzerCommand
 {

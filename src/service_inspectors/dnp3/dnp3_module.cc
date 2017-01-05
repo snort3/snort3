@@ -18,10 +18,15 @@
 
 // dnp3_module.cc author Rashmi Pitre <rrp@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "dnp3_module.h"
-#include "dnp3.h"
+
 #include "log/messages.h"
-#include "main/snort_config.h"
+
+#include "dnp3.h"
 
 using namespace std;
 

@@ -32,16 +32,13 @@
 #ifndef FT_MAIN_H
 #define FT_MAIN_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "ftpp_ui_config.h"
-#include "protocols/packet.h"
 
 #define BUF_SIZE 1024
 
+struct Packet;
 struct ProfileStats;
+struct SnortConfig;
 
 extern int16_t ftp_data_app_id;
 

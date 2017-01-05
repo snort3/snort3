@@ -22,10 +22,8 @@
 #ifndef LUA_DETECTOR_MODULE_H
 #define LUA_DETECTOR_MODULE_H
 
+#include <cstdint>
 #include <list>
-
-#include "main/thread.h"
-#include "utils/sflsq.h"
 
 class AppIdConfig;
 class Detector;

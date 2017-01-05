@@ -18,10 +18,11 @@
 
 // base_tracker.cc author Carter Waxman <cwaxman@cisco.com>
 
-#include "base_tracker.h"  // FIXIT-W Returning null reference (from <vector>)
-#include "perf_module.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "framework/module.h"
+#include "base_tracker.h"  // FIXIT-W Returning null reference (from <vector>)
 
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"

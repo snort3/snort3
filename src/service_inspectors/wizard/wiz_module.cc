@@ -18,12 +18,11 @@
 
 // wiz_module.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "wiz_module.h"
-
-#include <assert.h>
-#include <string.h>
-
-#include <string>
 
 #include "curses.h"
 #include "magic.h"

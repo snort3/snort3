@@ -24,8 +24,6 @@
 // Interface to the SSL service inspector
 
 #include "framework/module.h"
-#include "framework/bits.h"
-#include "main/thread.h"
 #include "ssl_config.h"
 
 #define GID_SSL 137

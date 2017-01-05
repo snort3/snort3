@@ -18,6 +18,10 @@
 
 // tcp_connector_module.cc author Ed Borgoyn <eborgoyn@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "tcp_connector_module.h"
 
 #include "main/snort_debug.h"

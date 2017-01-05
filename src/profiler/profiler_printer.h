@@ -21,8 +21,8 @@
 #ifndef PROFILER_PRINTER_H
 #define PROFILER_PRINTER_H
 
-#include <cassert>
 #include <algorithm>
+#include <cassert>
 #include <functional>
 #include <sstream>
 #include <string>

@@ -18,13 +18,17 @@
 //--------------------------------------------------------------------------
 // ips_file_type.cc author Victor Roemer <vroemer@sourcefire.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <bitset>
 
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
-#include "file_api/file_identifier.h"
 #include "file_api/file_flows.h"
+#include "file_api/file_identifier.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 

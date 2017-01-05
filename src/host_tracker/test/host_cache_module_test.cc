@@ -19,6 +19,10 @@
 // host_cache_module_test.cc author Steve Chew <stechew@cisco.com>
 // unit tests for the host module APIs
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "host_tracker/host_cache_module.h"
 #include "host_tracker/host_cache.h"
 

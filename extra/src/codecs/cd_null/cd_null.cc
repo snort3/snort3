@@ -21,12 +21,9 @@
 #include "config.h"
 #endif
 
-extern "C" {
 #include <sfbpf_dlt.h>
-}
 
 #include "framework/codec.h"
-#include "protocols/protocol_ids.h"
 
 #define CD_NULL_NAME "null"
 #define CD_NULL_HELP_STR "support for null encapsulation"

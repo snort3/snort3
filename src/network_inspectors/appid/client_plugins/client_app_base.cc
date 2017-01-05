@@ -19,38 +19,26 @@
 
 // client_app_base.cc author Ron Dempster <Ron.Dempster@sourcefire.com>
 
-#include "client_app_base.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <time.h>
-#include <string.h>
-#include <stdlib.h>
-#include <limits.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include "client_app_base.h"
 
 #include "main/snort_debug.h"
 #include "log/messages.h"
 #include "protocols/packet.h"
-#include "utils/sflsq.h"
-#include "utils/util.h"
-#include "profiler/profiler.h"
 
-#include "appid_api.h"
-#include "appid_config.h"
 #include "app_info_table.h"
-#include "client_app_api.h"
-#include "client_app_base.h"
-#include "client_app_msn.h"
-#include "client_app_aim.h"
-#include "client_app_ym.h"
-#include "detector_plugins/detector_sip.h"
-#include "lua_detector_module.h"
-#include "lua_detector_api.h"
-#include "http_common.h"
-#include "service_plugins/service_ssl.h"
+#include "appid_config.h"
 #include "detector_plugins/detector_dns.h"
 #include "detector_plugins/detector_pattern.h"
+#include "detector_plugins/detector_sip.h"
+
+#include "client_app_aim.h"
+#include "client_app_api.h"
+#include "client_app_msn.h"
+#include "client_app_ym.h"
 
 /*#define CLIENT_APP_DEBUG    1 */
 

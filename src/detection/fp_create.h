@@ -27,9 +27,7 @@
 
 // this is where rule groups are compiled and MPSE are instantiated
 
-#include "detection/pcrm.h"
 #include "ports/port_group.h"
-#include "target_based/snort_protocols.h"
 
 struct SnortConfig;
 

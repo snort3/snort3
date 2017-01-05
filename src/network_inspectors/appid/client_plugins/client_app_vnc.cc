@@ -19,15 +19,23 @@
 
 // client_app_vnc.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "main/snort_debug.h"
+
+#include "app_info_table.h"
+#include "appid_module.h"
+
+#include "client_app_api.h"
+
+#if 0
 #include "protocols/packet.h"
 #include "utils/sflsq.h"
 #include "utils/util.h"
 
-#include "app_info_table.h"
-#include "application_ids.h"
-#include "client_app_api.h"
-#include "appid_module.h"
+#endif
 
 static const char VNC_BANNER[] = "RFB ";
 static const char VNC_BANNER2[] = ".";

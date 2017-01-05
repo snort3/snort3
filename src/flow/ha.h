@@ -20,14 +20,14 @@
 #ifndef HA_H
 #define HA_H
 
-#include "flow/flow_key.h"
-#include "main/snort_types.h"
-#include "packet_io/sfdaq.h"
+#include <daq_common.h>
+
 #include "side_channel/side_channel.h"
 
 //-------------------------------------------------------------------------
 
 class Flow;
+struct FlowKey;
 
 // The FlowHAHandle is the dynamically allocated index used uniquely identify
 //   the client.  Used both in the API and HA messages.

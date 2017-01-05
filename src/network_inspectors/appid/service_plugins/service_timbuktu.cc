@@ -19,13 +19,15 @@
 
 // service_timbuktu.cc author Sourcefire Inc.
 
-#include "appid_module.h"
-#include "appid_session.h"
-#include "application_ids.h"
-#include "service_api.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "main/snort_debug.h"
-#include "utils/util.h"
+
+#include "appid_module.h"
+
+#include "service_api.h"
 
 static const char svc_name[] = "timbuktu";
 static char TIMBUKTU_BANNER[]  = "\001\001";

@@ -18,6 +18,10 @@
 //--------------------------------------------------------------------------
 // Writen by Bhagyashree Bantwal <bbantwal@sourcefire.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "util_unfold.h"
 
 /* Given a string, removes header folding (\r\n followed by linear whitespace)

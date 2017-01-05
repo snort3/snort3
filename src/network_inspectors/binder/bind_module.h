@@ -23,10 +23,7 @@
 
 // binder management interface
 
-#include <vector>
-
 #include "framework/module.h"
-#include "main/thread.h"
 #include "binding.h"
 
 #define BIND_NAME "binder"
@@ -40,7 +37,6 @@ struct BindStats
 
 extern THREAD_LOCAL BindStats bstats;
 extern THREAD_LOCAL ProfileStats bindPerfStats;
-struct Binding;
 
 class BinderModule : public Module
 {

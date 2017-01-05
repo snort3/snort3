@@ -17,11 +17,14 @@
 //--------------------------------------------------------------------------
 // http_flow_data.cc author Tom Peters <thopeter@cisco.com>
 
-#include "http_enum.h"
-#include "http_test_manager.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "http_flow_data.h"
+
+#include "http_test_manager.h"
 #include "http_transaction.h"
-#include "http_js_norm.h"
 
 using namespace HttpEnums;
 

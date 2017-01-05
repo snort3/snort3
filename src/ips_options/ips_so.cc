@@ -17,21 +17,17 @@
 //--------------------------------------------------------------------------
 // ips_so.cc author Russ Combs <rucombs@cisco.com>
 
-#include "framework/so_rule.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <string>
-
-#include "framework/parameter.h"
+#include "detection/treenodes.h"
+#include "framework/ips_option.h"
 #include "framework/module.h"
-#include "main/thread.h"
-#include "managers/so_manager.h"
+#include "framework/so_rule.h"
 #include "hash/sfhashfcn.h"
 #include "log/messages.h"
-#include "detection/treenodes.h"
+#include "managers/so_manager.h"
 #include "profiler/profiler.h"
 
 using namespace std;

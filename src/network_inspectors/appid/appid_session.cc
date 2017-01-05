@@ -18,32 +18,33 @@
 //--------------------------------------------------------------------------
 
 // appid_session.cc author Sourcefire Inc.
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "appid_session.h"
 
 #include "log/messages.h"
 #include "main/snort_config.h"
-#include "protocols/tcp.h"
 #include "profiler/profiler.h"
-#include "target_based/snort_protocols.h"
-#include "sfip/sf_ip.h"
+#include "protocols/packet.h"
+#include "protocols/tcp.h"
 #include "stream/stream.h"
+#include "target_based/snort_protocols.h"
 #include "time/packet_time.h"
-#include "utils/util.h"
 
+#include "app_forecast.h"
 #include "app_info_table.h"
 #include "appid_module.h"
 #include "appid_stats.h"
-#include "app_forecast.h"
-#include "host_port_app_cache.h"
-#include "lua_detector_module.h"
 #include "appid_utils/ip_funcs.h"
 #include "client_plugins/client_app_base.h"
-#include "detector_plugins/detector_http.h"
 #include "detector_plugins/detector_dns.h"
+#include "detector_plugins/detector_http.h"
+#include "host_port_app_cache.h"
 #include "service_plugins/service_base.h"
 #include "service_plugins/service_ssl.h"
-#include "service_plugins/service_util.h"
-
 
 ProfileStats tpPerfStats;
 ProfileStats tpLibPerfStats;

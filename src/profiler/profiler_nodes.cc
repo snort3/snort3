@@ -18,16 +18,17 @@
 
 // profiler_nodes.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "profiler_nodes.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "profiler_nodes.h"
 
 #include <cassert>
 #include <mutex>
 
 #include "framework/module.h"
+
 #include "profiler_defs.h"
 
 #ifdef UNIT_TEST

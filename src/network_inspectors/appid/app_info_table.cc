@@ -19,16 +19,18 @@
 
 // app_info_table.cc author Sourcefire Inc.
 
-#include "app_info_table.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "application_ids.h"
+#include "app_info_table.h"
+
+#include <limits.h>
+
 #include "log/messages.h"
 #include "main/snort_debug.h"
-#include "utils/util.h"
+
+#include "appid_config.h"
 #include "service_plugins/service_util.h"
 
 #define MAX_TABLE_LINE_LEN      1024

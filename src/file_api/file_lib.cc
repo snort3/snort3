@@ -23,11 +23,13 @@
  **  5.25.12 - Initial Source Code. Hcao
  */
 
-#include "file_lib.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "file_lib.h"
+
+#include <openssl/sha.h>
 
 #include <iostream>
 #include <iomanip>

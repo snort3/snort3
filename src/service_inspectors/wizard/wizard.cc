@@ -17,17 +17,16 @@
 //--------------------------------------------------------------------------
 // wizard.cc author Russ Combs <rucombs@cisco.com>
 
-#include <vector>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
+#include "host_tracker/host_cache.h"
 #include "flow/flow.h"
-#include "framework/inspector.h"
-#include "managers/inspector_manager.h"
+#include "log/messages.h"
+#include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "stream/stream_splitter.h"
-#include "profiler/profiler.h"
-#include "utils/stats.h"
-#include "log/messages.h"
-#include "host_tracker/host_cache.h"
 
 #include "curses.h"
 #include "magic.h"

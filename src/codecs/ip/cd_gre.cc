@@ -22,13 +22,10 @@
 #include "config.h"
 #endif
 
+#include "codecs/codec_module.h"
 #include "framework/codec.h"
-#include "protocols/packet.h"
-#include "protocols/protocol_ids.h"
 #include "protocols/gre.h"
 #include "log/text_log.h"
-#include "protocols/packet_manager.h"
-#include "codecs/codec_module.h"
 
 #define CD_GRE_NAME "gre"
 #define CD_GRE_HELP "support for generic routing encapsulation"

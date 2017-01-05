@@ -20,18 +20,9 @@
 #ifndef TCP_SESSION_H
 #define TCP_SESSION_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include "detection/detect.h"
-
 #include "stream/libtcp/tcp_stream_session.h"
 #include "stream/libtcp/tcp_state_machine.h"
-#include "stream_tcp.h"
-#include "tcp_defs.h"
-#include "tcp_stream_config.h"
-#include "tcp_tracker.h"
+#include "stream/tcp/tcp_tracker.h"
 
 class TcpEventLogger;
 

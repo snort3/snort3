@@ -22,7 +22,6 @@
 #define MODUBS_MODULE_H
 
 #include "framework/module.h"
-#include "main/thread.h"
 
 #define GID_MODBUS 144
 

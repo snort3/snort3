@@ -20,11 +20,9 @@
 #ifndef HI_CLIENT_H
 #define HI_CLIENT_H
 
-#include <sys/types.h>
+#include "flow/flow.h"
 
 #include "hi_main.h"
-#include "hi_include.h"
-#include "hi_events.h"
 
 #define URI_END  99
 #define POST_END 100
@@ -46,22 +44,22 @@
 
 typedef struct s_COOKIE_PTR
 {
-    const u_char* cookie;
-    const u_char* cookie_end;
+    const uint8_t* cookie;
+    const uint8_t* cookie_end;
     struct s_COOKIE_PTR* next;
 } COOKIE_PTR;
 
 typedef struct s_CONTLEN_PTR
 {
-    const u_char* cont_len_start;
-    const u_char* cont_len_end;
+    const uint8_t* cont_len_start;
+    const uint8_t* cont_len_end;
     uint32_t len;
 } CONTLEN_PTR;
 
 typedef struct s_CONT_ENCODING_PTR
 {
-    const u_char* cont_encoding_start;
-    const u_char* cont_encoding_end;
+    const uint8_t* cont_encoding_start;
+    const uint8_t* cont_encoding_end;
     uint16_t compress_fmt;
 } CONT_ENCODING_PTR;
 
@@ -92,18 +90,18 @@ typedef struct s_HEADER_FIELD_PTR
 
 typedef struct s_URI_PTR
 {
-    const u_char* uri;                /* the beginning of the URI */
-    const u_char* uri_end;            /* the end of the URI */
-    const u_char* norm;               /* ptr to first normalization occurence */
-    const u_char* ident;              /* ptr to beginning of the HTTP identifier */
-    const u_char* first_sp_start;     /* beginning of first space delimiter */
-    const u_char* first_sp_end;       /* end of first space delimiter */
-    const u_char* second_sp_start;    /* beginning of second space delimiter */
-    const u_char* second_sp_end;      /* end of second space delimiter */
-    const u_char* param;              /* '?' (beginning of parameter field) */
-    const u_char* delimiter;          /* HTTP URI delimiter (\r\n\) */
-    const u_char* last_dir;           /* ptr to last dir, so we catch long dirs */
-    const u_char* proxy;              /* ptr to the absolute URI */
+    const uint8_t* uri;                /* the beginning of the URI */
+    const uint8_t* uri_end;            /* the end of the URI */
+    const uint8_t* norm;               /* ptr to first normalization occurence */
+    const uint8_t* ident;              /* ptr to beginning of the HTTP identifier */
+    const uint8_t* first_sp_start;     /* beginning of first space delimiter */
+    const uint8_t* first_sp_end;       /* end of first space delimiter */
+    const uint8_t* second_sp_start;    /* beginning of second space delimiter */
+    const uint8_t* second_sp_end;      /* end of second space delimiter */
+    const uint8_t* param;              /* '?' (beginning of parameter field) */
+    const uint8_t* delimiter;          /* HTTP URI delimiter (\r\n\) */
+    const uint8_t* last_dir;           /* ptr to last dir, so we catch long dirs */
+    const uint8_t* proxy;              /* ptr to the absolute URI */
 }  URI_PTR;
 
 typedef struct s_HEADER_PTR
@@ -117,32 +115,32 @@ typedef struct s_HEADER_PTR
 
 typedef struct s_HI_CLIENT_REQ
 {
-    const u_char* uri;
-    const u_char* uri_norm;
-    const u_char* post_raw;
-    const u_char* post_norm;
-    const u_char* header_raw;
-    const u_char* header_norm;
+    const uint8_t* uri;
+    const uint8_t* uri_norm;
+    const uint8_t* post_raw;
+    const uint8_t* post_norm;
+    const uint8_t* header_raw;
+    const uint8_t* header_norm;
     COOKIE_PTR cookie;
-    const u_char* cookie_norm;
-    const u_char* method_raw;
+    const uint8_t* cookie_norm;
+    const uint8_t* method_raw;
 
-    u_int uri_size;
-    u_int uri_norm_size;
-    u_int post_raw_size;
-    u_int post_norm_size;
-    u_int header_raw_size;
-    u_int header_norm_size;
-    u_int cookie_norm_size;
-    u_int method_size;
+    unsigned int uri_size;
+    unsigned int uri_norm_size;
+    unsigned int post_raw_size;
+    unsigned int post_norm_size;
+    unsigned int header_raw_size;
+    unsigned int header_norm_size;
+    unsigned int cookie_norm_size;
+    unsigned int method_size;
 
-    const u_char* pipeline_req;
-    u_char method;
+    const uint8_t* pipeline_req;
+    uint8_t method;
     uint16_t uri_encode_type;
     uint16_t header_encode_type;
     uint16_t cookie_encode_type;
     uint16_t post_encode_type;
-    const u_char* content_type;
+    const uint8_t* content_type;
 }  HI_CLIENT_REQ;
 
 typedef struct s_HI_CLIENT
@@ -168,20 +166,20 @@ int hi_client_init();
 
 char** hi_client_get_field_names();
 
-extern const u_char* proxy_start;
-extern const u_char* proxy_end;
+extern const uint8_t* proxy_start;
+extern const uint8_t* proxy_end;
 
 struct HI_SESSION;
 
-int CheckLongDir(HI_SESSION* session, URI_PTR* uri_ptr, const u_char* ptr);
+int CheckLongDir(HI_SESSION* session, URI_PTR* uri_ptr, const uint8_t* ptr);
 
 /**  This makes passing function arguments much more readable and easier
 **  to follow.
 */
 typedef int (* LOOKUP_FCN)(
-    HI_SESSION*, const u_char* start, const u_char* end, const u_char**, URI_PTR*);
+    HI_SESSION*, const uint8_t* start, const uint8_t* end, const uint8_t**, URI_PTR*);
 
-int NextNonWhiteSpace(HI_SESSION*, const u_char*, const u_char*, const u_char**, URI_PTR*);
+int NextNonWhiteSpace(HI_SESSION*, const uint8_t*, const uint8_t*, const uint8_t**, URI_PTR*);
 
 /*
 **  The lookup table contains functions for different HTTP delimiters

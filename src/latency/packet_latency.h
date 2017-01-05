@@ -21,8 +21,6 @@
 #ifndef PACKET_LATENCY_H
 #define PACKET_LATENCY_H
 
-#include <cstdint>
-
 struct Packet;
 
 class PacketLatency

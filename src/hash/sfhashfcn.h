@@ -20,11 +20,6 @@
 #ifndef SFHASHFCN_H
 #define SFHASHFCN_H
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <time.h>
-
 #include "main/snort_types.h"
 
 #define rot(x,k) (((x)<<(k)) | ((x)>>(32-(k))))

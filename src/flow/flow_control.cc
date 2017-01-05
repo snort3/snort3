@@ -16,30 +16,27 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "flow_control.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <cassert>
+#include "flow_control.h"
 
 #include "detection/detect.h"
+#include "main/snort_config.h"
+#include "main/snort_debug.h"
 #include "managers/inspector_manager.h"
 #include "memory/memory_cap.h"
 #include "packet_io/active.h"
 #include "protocols/icmp4.h"
-#include "protocols/icmp6.h"
 #include "protocols/tcp.h"
 #include "protocols/udp.h"
 #include "protocols/vlan.h"
-#include "sfip/sf_ip.h"
 #include "stream/stream.h"
 #include "utils/util.h"
 
 #include "expect_cache.h"
 #include "flow_cache.h"
-#include "flow_config.h"
 #include "session.h"
 
 FlowControl::FlowControl()

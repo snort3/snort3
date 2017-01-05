@@ -27,11 +27,9 @@
 // state.  Inspector state is stored in FlowData, and Flow manages a list
 // of FlowData items.
 
-#include <assert.h>
-
-#include "flow/flow_key.h"
+#include "framework/decode_data.h"
 #include "framework/inspector.h"
-#include "framework/codec.h"
+#include "protocols/layer.h"
 #include "sfip/sf_ip.h"
 
 #define SSNFLAG_SEEN_CLIENT         0x00000001
@@ -96,6 +94,7 @@ enum AppProtoIdIndex
     APP_PROTOID_MAX
 };
 
+struct FlowKey;
 struct Packet;
 
 typedef void (* StreamAppDataFree)(void*);

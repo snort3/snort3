@@ -35,38 +35,26 @@
  ** - Check the value of the bitmask
  */
 
-#include "ips_flowbits.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <sys/types.h>
+#include "ips_flowbits.h"
 
-#include <string>
 #include <forward_list>
 
-#include "log/messages.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "detection/treenodes.h"
-#include "protocols/packet.h"
-#include "parser/parser.h"
-#include "utils/util.h"
-#include "utils/stats.h"
-#include "utils/sflsq.h"
-#include "utils/bitop.h"
-#include "hash/sfghash.h"
-#include "parser/mstring.h"
-#include "profiler/profiler.h"
-#include "hash/sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
-#include "framework/parameter.h"
 #include "framework/module.h"
+#include "hash/sfghash.h"
+#include "hash/sfhashfcn.h"
+#include "log/messages.h"
+#include "parser/mstring.h"
+#include "protocols/packet.h"
+#include "profiler/profiler.h"
+#include "utils/bitop.h"
+#include "utils/sflsq.h"
+#include "utils/util.h"
 
 using namespace std;
 

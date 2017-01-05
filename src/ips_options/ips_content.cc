@@ -22,29 +22,19 @@
 #include "config.h"
 #endif
 
-#include <errno.h>
-#ifdef DEBUG_MSGS
-# include <assert.h>
-#endif
-
-#include "ips_byte_extract.h"
-#include "log/messages.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "utils/boyer_moore.h"
-#include "utils/util.h"
-#include "parser/parser.h"
-#include "parser/parse_utils.h"
-#include "hash/sfhashfcn.h"
-#include "profiler/profiler.h"
-#include "detection/treenodes.h"
 #include "detection/detection_defines.h"
-#include "detection/detection_util.h"
 #include "detection/pattern_match_data.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
-#include "framework/parameter.h"
 #include "framework/module.h"
+#include "hash/sfhashfcn.h"
+#include "log/messages.h"
+#include "parser/parse_utils.h"
+#include "profiler/profiler.h"
+#include "utils/boyer_moore.h"
+#include "utils/util.h"
+
+#include "ips_byte_extract.h"
 
 #define MAX_PATTERN_SIZE 2048
 

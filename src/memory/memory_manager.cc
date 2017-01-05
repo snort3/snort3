@@ -22,9 +22,8 @@
 #include "config.h"
 #endif
 
-#include <new>
-#include <cstdio>
 #include <cassert>
+#include <new>
 
 #include "main/thread.h"
 

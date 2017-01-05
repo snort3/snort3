@@ -19,12 +19,16 @@
 // ips_dnp3_ind.cc author Maya Dagon <mdagon@cisco.com>
 // based on work by Ryan Jordan
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
-#include "framework/parameter.h"
-#include "detection/detection_defines.h"
 #include "hash/sfhashfcn.h"
 #include "profiler/profiler.h"
+#include "protocols/packet.h"
 
 #include "dnp3.h"
 #include "dnp3_map.h"

@@ -18,6 +18,10 @@
 
 // dce_tcp_module.cc author Rashmi Pitre <rrp@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "dce_tcp_module.h"
 
 #include "log/messages.h"

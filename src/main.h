@@ -21,10 +21,6 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 struct lua_State;
 
 const char* get_prompt();

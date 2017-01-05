@@ -21,9 +21,8 @@
 #include "config.h"
 #endif
 
-#include "framework/codec.h"
 #include "codecs/codec_module.h"
-#include "protocols/protocol_ids.h"
+#include "framework/codec.h"
 #include "main/snort_config.h"
 
 namespace

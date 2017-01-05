@@ -24,17 +24,12 @@
 // which is just a single response deferred until end of current packet
 // processing.
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
-#include "main/snort_types.h"
 #include "actions/actions.h"
-#include "framework/base_api.h"
+#include "framework/ips_action.h"
+#include "framework/module.h"
 
 #ifdef PIGLET
 #include "framework/ips_action.h"
-#include "piglet/piglet_api.h"
 #endif
 
 struct ActionApi;

@@ -20,8 +20,7 @@
 #ifndef FLUSH_BUCKET_H
 #define FLUSH_BUCKET_H
 
-#include "main/snort_types.h"
-#include "main/thread.h"
+#include <cstdint>
 
 class FlushBucket
 {

@@ -19,8 +19,10 @@
 
 // ips_modbus_unit.cc author Russ Combs <rucombs@cisco.com>
 
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"

@@ -19,7 +19,13 @@
 
 // network_set.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "network_set.h"
+
+#include <sys/socket.h>
 
 #include "log/messages.h"
 #include "utils/util.h"

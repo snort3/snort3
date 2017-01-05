@@ -20,7 +20,6 @@
 #ifndef ICMP_HA_H
 #define ICMP_HA_H
 
-#include "main/snort_types.h"
 #include "stream/base/stream_ha.h"
 
 //-------------------------------------------------------------------------

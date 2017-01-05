@@ -22,8 +22,9 @@
 #ifndef TCP_STREAM_CONFIG_H
 #define TCP_STREAM_CONFIG_H
 
+#include "protocols/packet.h"
+#include "stream/tcp/tcp_defs.h"
 #include "time/packet_time.h"
-#include "tcp_defs.h"
 
 #define STREAM_CONFIG_STATEFUL_INSPECTION      0x00000001
 #define STREAM_CONFIG_LOG_STREAMS              0x00000004

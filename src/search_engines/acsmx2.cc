@@ -111,28 +111,15 @@
 **       SparseBands changed ps increment to 2+n to increment between bands.
 */
 
-#include "acsmx2.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
+#include "acsmx2.h"
 
 #include <list>
 
-#define ACSMX2_TRACK_Q
-
-#ifdef  ACSMX2_TRACK_Q
-#include "main/snort_config.h"
-#endif
-
 #include "log/messages.h"
-#include "main/snort_debug.h"
-#include "main/snort_types.h"
 #include "utils/stats.h"
 #include "utils/util.h"
 

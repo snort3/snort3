@@ -24,18 +24,11 @@
 
 // declares the telnet checking functions
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include <sys/types.h>
-
 /* RFC 885 defines an End of Record telnet option */
 #define RFC885
 /* RFC 1184 defines Abort, Suspend, and End of File telnet optinos */
 #define RFC1184
 
-#include "ftpp_ui_config.h"
 #include "ftpp_si.h"
 
 /* define the telnet negotiation codes (TNC) that we're interested in */

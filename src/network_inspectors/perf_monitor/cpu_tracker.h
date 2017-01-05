@@ -21,10 +21,7 @@
 #ifndef CPU_TRACKER_H
 #define CPU_TRACKER_H
 
-#include "perf_module.h"
 #include "perf_tracker.h"
-
-#include <sys/time.h>
 
 class CPUTracker : public PerfTracker
 {

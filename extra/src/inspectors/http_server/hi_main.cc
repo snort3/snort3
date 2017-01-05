@@ -46,44 +46,30 @@
 **  - 2.11.03:  Initial Development.  DJR
 **  - 2.4.05:   Added tab_uri_delimiter config option.  AJM.
 */
-#include "hi_main.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <limits.h>
+#include "hi_main.h"
 
 #include "detection/detect.h"
-#include "detection/detection_util.h"
-#include "events/event.h"
-#include "file_api/file_api.h"
 #include "file_api/file_flows.h"
-#include "framework/data_bus.h"
 #include "log/messages.h"
 #include "log/unified2.h"
-#include "main/snort_debug.h"
-#include "mime/decode_base.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
 #include "search_engines/search_tool.h"
 #include "stream/stream.h"
-#include "utils/util.h"
-#include "utils/util_utf.h"
 #include "utils/sfsnprintfappend.h"
 
-#include "hi_return_codes.h"
-#include "hi_ui_config.h"
-#include "hi_ui_iis_unicode_map.h"
-#include "hi_si.h"
+#include "hi_ad.h"
+#include "hi_include.h"
 #include "hi_mi.h"
 #include "hi_norm.h"
-#include "hi_cmd_lookup.h"
+#include "hi_return_codes.h"
+#include "hi_si.h"
 
 const HiSearchToken hi_patterns[] =
 {

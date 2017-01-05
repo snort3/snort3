@@ -24,8 +24,6 @@
 
 // Protocol-Aware Flushing (PAF) code for the Modbus preprocessor.
 
-#include "modbus.h"
-#include "protocols/packet.h"
 #include "stream/stream_splitter.h"
 
 enum modbus_paf_state_t

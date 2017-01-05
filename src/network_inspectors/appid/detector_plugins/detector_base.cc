@@ -19,13 +19,18 @@
 
 // detector_base.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "detector_base.h"
 
-#include "client_plugins/client_app_base.h"
-#include "detector_api.h"
 #include "log/messages.h"
+
+#include "client_plugins/client_app_base.h"
 #include "service_plugins/service_base.h"
-#include "detector_plugins/detector_smtp.h"
+
+#include "detector_smtp.h"
 
 static void* detector_flowdata_get(AppIdSession* asd, unsigned detector_id);
 static int detector_flowdata_add(AppIdSession* asd, void* data, unsigned detector_id,

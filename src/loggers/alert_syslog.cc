@@ -22,27 +22,19 @@
 #include "config.h"
 #endif
 
-#include <sys/types.h>
 #include <syslog.h>
-#include <stdlib.h>
 
-#include <string>
-
-#include "log/messages.h"
-#include "main/snort_debug.h"
-#include "main/snort_config.h"
+#include "detection/signature.h"
+#include "events/event.h"
 #include "framework/logger.h"
 #include "framework/module.h"
+#include "log/messages.h"
+#include "main/snort_config.h"
+#include "packet_io/intf.h"
+#include "packet_io/sfdaq.h"
 #include "protocols/packet.h"
-#include "detection/detect.h"
-#include "detection/rules.h"
-#include "detection/treenodes.h"
-#include "events/event.h"
-#include "parser/parser.h"
 #include "utils/util.h"
 #include "utils/util_net.h"
-#include "packet_io/sfdaq.h"
-#include "packet_io/intf.h"
 
 using namespace std;
 

@@ -26,13 +26,10 @@
 
 #include "gtp_parser.h"
 
-#include <ctype.h>
+#include <arpa/inet.h>
 
-#include "log/messages.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
 #include "events/event_queue.h"
-#include "protocols/packet.h"
+#include "log/messages.h"
 
 #include "gtp.h"
 #include "gtp_module.h"

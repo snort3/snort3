@@ -26,19 +26,14 @@
 
 #define TIMEBUF_SIZE 26
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
 #if defined(__linux__)
 #include <sys/syscall.h>
 #endif
+#include <unistd.h>
 
+#include <cerrno>
+#include <cstdlib>
+#include <cstring>
 #include <string>
 
 #include "main/snort_types.h"

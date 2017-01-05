@@ -23,11 +23,11 @@
 ** 5.25.2012 - Initial Source Code. Hui Cao
 */
 
-#include "file_config.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "file_config.h"
 
 #include "main/snort_config.h"
 #include "managers/inspector_manager.h"

@@ -18,11 +18,11 @@
 */
 /* daq_file.c author Russ Combs <rucombs@cisco.com> */
 
-#include "daq_user.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "daq_user.h"
 
 #include <errno.h>
 #include <fcntl.h>

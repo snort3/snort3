@@ -17,10 +17,11 @@
 //--------------------------------------------------------------------------
 // stream_splitter.cc author Russ Combs <rucombs@cisco.com>
 
-#include "stream_splitter.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <assert.h>
-#include <string.h>
+#include "stream_splitter.h"
 
 #include "main/snort_config.h"
 #include "protocols/packet.h"

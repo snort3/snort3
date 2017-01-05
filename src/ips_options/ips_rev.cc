@@ -21,14 +21,11 @@
 #include "config.h"
 #endif
 
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "detection/treenodes.h"
 #include "detection/detection_defines.h"
+#include "detection/treenodes.h"
+#include "framework/decode_data.h"
 #include "framework/ips_option.h"
-#include "framework/parameter.h"
 #include "framework/module.h"
-#include "protocols/packet.h"
 
 #define s_name "rev"
 

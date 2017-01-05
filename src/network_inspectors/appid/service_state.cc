@@ -19,14 +19,18 @@
 
 // service_state.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "service_state.h"
 
 #include <map>
 
 #include "log/messages.h"
-#include "service_plugins/service_base.h"
-#include "sfip/sf_ip.h"
-#include "utils/util.h"
+#include "utils/cpp_macros.h"
+
+#include "service_plugins/service_api.h"
 
 //#define DEBUG_SERVICE_STATE 1
 

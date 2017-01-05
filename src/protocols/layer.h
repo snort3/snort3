@@ -20,9 +20,8 @@
 #ifndef PROTOCOLS_LAYER_H
 #define PROTOCOLS_LAYER_H
 
-#include <cstdint>
 #include "main/snort_types.h"
-#include "protocol_ids.h"
+#include "protocols/protocol_ids.h"
 
 struct Layer
 {

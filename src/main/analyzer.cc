@@ -18,19 +18,22 @@
 //--------------------------------------------------------------------------
 // analyzer.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "analyzer.h"
 
-#include <chrono>
 #include <thread>
 
+#include "helpers/swapper.h"
+#include "log/messages.h"
 #include "main.h"
+#include "packet_io/sfdaq.h"
+
 #include "snort.h"
 #include "snort_debug.h"
 #include "thread.h"
-#include "helpers/swapper.h"
-#include "log/messages.h"
-#include "memory/memory_cap.h"
-#include "packet_io/sfdaq.h"
 
 using namespace std;
 

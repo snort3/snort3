@@ -23,6 +23,10 @@
  **  9.25.2012 - Initial Source Code. Hui Cao
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "file_enforcer.h"
 
 #include "log/messages.h"

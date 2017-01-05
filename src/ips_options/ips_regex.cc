@@ -19,25 +19,25 @@
 // ips_regex.cc author Russ Combs <rucombs@cisco.com>
 // FIXIT-M add ! and anchor support like pcre and update retry
 
-#include "ips_regex.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <assert.h>
-#include <string.h>
-#include <string>
+#include "ips_regex.h"
 
 #include <hs_compile.h>
 #include <hs_runtime.h>
 
+#include <cassert>
+
+#include "detection/detection_defines.h"
+#include "detection/pattern_match_data.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
-#include "detection/detection_defines.h"
-#include "detection/pattern_match_data.h"
 #include "hash/sfhashfcn.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
-#include "main/thread.h"
-#include "parser/parser.h"
 #include "profiler/profiler.h"
 
 #define s_name "regex"

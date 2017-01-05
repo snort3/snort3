@@ -26,18 +26,16 @@
 
 #include <pcap.h>
 #include <sfbpf.h>
-#include <string>
 
 #include "framework/inspector.h"
 #include "log/messages.h"
-#include "main/snort_config.h"
-#include "main/thread.h"
 #include "protocols/packet.h"
-#include "utils/util.h"
 
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"
 #endif
+
+#include "capture_module.h"
 
 using namespace std;
 

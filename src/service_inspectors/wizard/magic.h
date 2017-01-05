@@ -17,11 +17,11 @@
 //--------------------------------------------------------------------------
 // magic.h author Russ Combs <rucombs@cisco.com>
 
-#include <string>
-#include <vector>
-
 #ifndef MAGIC_H
 #define MAGIC_H
+
+#include <string>
+#include <vector>
 
 class MagicBook;
 

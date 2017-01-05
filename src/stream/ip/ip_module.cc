@@ -18,13 +18,13 @@
 
 // ip_module.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "ip_module.h"
 
-#include <string>
-
 #include "stream_ip.h"
-#include "ip_defrag.h"
-#include "stream/stream.h"
 
 using namespace std;
 

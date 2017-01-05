@@ -17,10 +17,12 @@
 //--------------------------------------------------------------------------
 // cd_ciscometadata.cc author Bhagya Tholpady <bbantwal@cisco.com>
 
-#include "framework/codec.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "codecs/codec_module.h"
-#include "protocols/protocol_ids.h"
-#include "protocols/packet.h"
+#include "framework/codec.h"
 
 #define CD_CISCOMETADATA_NAME "ciscometadata"
 #define CD_CISCOMETADATA_HELP "support for cisco metadata"

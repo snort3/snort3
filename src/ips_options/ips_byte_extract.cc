@@ -18,25 +18,25 @@
 //--------------------------------------------------------------------------
 // Author: Ryan Jordan <ryan.jordan@sourcefire.com>
 
-#include "ips_byte_extract.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "extract.h"
-#include "log/messages.h"
-#include "main/snort_types.h"
-#include "parser/parser.h"
+#include "ips_byte_extract.h"
+
 #include "detection/detection_defines.h"
-#include "detection/detection_util.h"
-#include "hash/sfhashfcn.h"
-#include "profiler/profiler.h"
-#include "framework/ips_option.h"
+#include "detection/treenodes.h"
 #include "framework/cursor.h"
-#include "framework/parameter.h"
+#include "framework/endianness.h"
+#include "framework/ips_option.h"
 #include "framework/module.h"
+#include "hash/sfhashfcn.h"
+#include "log/messages.h"
+#include "protocols/packet.h"
+#include "profiler/profiler.h"
 #include "utils/util.h"
+
+#include "extract.h"
 
 static THREAD_LOCAL ProfileStats byteExtractPerfStats;
 

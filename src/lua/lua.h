@@ -22,7 +22,6 @@
 
 // methods and templates for the C++ / LuaJIT interface
 
-#include <string>
 #include <lua.hpp>
 
 #include "main/snort_types.h"

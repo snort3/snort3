@@ -29,19 +29,14 @@
 // rule groups are selected based on traffic and any fast pattern
 // matches trigger rule tree evaluation.
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include "main/snort_debug.h"
-#include "protocols/packet.h"
-#include "utils/sflsq.h"
+#include "main/thread.h"
 
 #define REBUILD_FLAGS (PKT_REBUILT_FRAG | PKT_REBUILT_STREAM)
 
+struct Packet;
+struct PortGroup;
 struct ProfileStats;
 struct OptTreeNode;
-struct PortGroup;
 
 extern THREAD_LOCAL ProfileStats rulePerfStats;
 extern THREAD_LOCAL ProfileStats ruleRTNEvalPerfStats;

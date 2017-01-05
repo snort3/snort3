@@ -19,9 +19,13 @@
 // tcp_stream_config.cc author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Oct 22, 2015
 
-#include "log/messages.h"
-#include "main/snort_config.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "tcp_stream_config.h"
+
+#include "log/messages.h"
 
 static const char* const reassembly_policy_names[] =
 { "no policy", "first", "last", "linux", "old_linux", "bsd", "macos", "solaris", "irix",

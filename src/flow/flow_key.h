@@ -23,7 +23,7 @@
 // FlowKey is used to store Flows in the caches.  the data members are
 // sequenced to avoid void space.
 
-#include <stdint.h>
+#include <cstdint>
 
 #include "framework/decode_data.h"
 #include "utils/cpp_macros.h"

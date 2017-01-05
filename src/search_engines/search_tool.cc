@@ -17,14 +17,12 @@
 //--------------------------------------------------------------------------
 // search_tool.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "search_tool.h"
 
-#include <sys/types.h>
-#include <stdlib.h>
-#include <ctype.h>
-
-#include "main/thread.h"
-#include "framework/mpse.h"
 #include "managers/mpse_manager.h"
 
 SearchTool::SearchTool() : SearchTool("ac_bnfa")

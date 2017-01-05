@@ -19,35 +19,33 @@
 
 // lua_detector_api.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "lua_detector_api.h"
 
-#include <cstring>
-
-#include <pcre.h>
 #include <lua.hpp>
+#include <pcre.h>
 
 #include "hash/sfxhash.h"
 #include "log/messages.h"
 #include "main/snort_debug.h"
 #include "profiler/profiler.h"
-#include "protocols/protocol_ids.h"
-#include "sfip/sf_ip.h"
-#include "utils/util.h"
+#include "protocols/packet.h"
 
-#include "appid_module.h"
 #include "app_forecast.h"
 #include "app_info_table.h"
-#include "host_port_app_cache.h"
-#include "http_common.h"
-#include "lua_detector_flow_api.h"
-#include "lua_detector_module.h"
-#include "lua_detector_util.h"
-#include "service_plugins/service_base.h"
-#include "service_plugins/service_ssl.h"
+#include "appid_module.h"
 #include "client_plugins/client_app_base.h"
 #include "detector_plugins/detector_dns.h"
 #include "detector_plugins/detector_http.h"
 #include "detector_plugins/detector_pattern.h"
+#include "host_port_app_cache.h"
+#include "lua_detector_flow_api.h"
+#include "lua_detector_module.h"
+#include "lua_detector_util.h"
+#include "service_plugins/service_base.h"
 
 #define DETECTOR "Detector"
 #define OVECCOUNT 30    /* should be a multiple of 3 */

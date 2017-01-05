@@ -18,9 +18,11 @@
 
 // icmp_module.cc author Russ Combs <rucombs@cisco.com>
 
-#include "icmp_module.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <string>
+#include "icmp_module.h"
 
 #include "stream_icmp.h"
 

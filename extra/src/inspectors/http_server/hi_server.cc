@@ -34,27 +34,27 @@
 **  NOTES:
 **      - Initial development.  DJR
 */
-#include <stdio.h>
-#include <zlib.h>
 
-#include "hi_stream_splitter.h"
-#include "main/thread.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "hi_server.h"
+
+#include "protocols/packet.h"
 #include "utils/safec.h"
-#include "utils/util_utf.h"
+#include "utils/util_unfold.h"
+
+#include "hi_events.h"
+#include "hi_include.h"
+#include "hi_return_codes.h"
+#include "hi_si.h"
+#include "hi_stream_splitter.h"
 
 static THREAD_LOCAL bool headers = false;
 static THREAD_LOCAL bool simple_response = false;
 static THREAD_LOCAL uint8_t decompression_buffer[65535];
 static THREAD_LOCAL uint8_t dechunk_buffer[65535];
-
-#include "hi_server.h"
-#include "hi_ui_config.h"
-#include "hi_return_codes.h"
-#include "hi_si.h"
-
-#include "detection/detection_util.h"
-#include "utils/util_unfold.h"
-#include "protocols/tcp.h"
 
 #define STAT_END 100
 #define HTTPRESP_HEADER_NAME__COOKIE "Set-Cookie"

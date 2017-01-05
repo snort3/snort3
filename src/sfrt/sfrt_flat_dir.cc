@@ -18,12 +18,12 @@
 //--------------------------------------------------------------------------
 // 9/7/2011 - Initial implementation ... Hui Cao <hcao@sourcefire.com>
 
-#include "sfrt_flat.h" // FIXIT-L these includes are circular
-#include "sfrt_flat_dir.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "sfrt_flat.h" // FIXIT-L these includes are circular
+#include "sfrt_flat_dir.h"
 
 #include <stdarg.h>
 

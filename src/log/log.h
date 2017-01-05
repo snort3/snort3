@@ -21,9 +21,11 @@
 #ifndef LOG_H
 #define LOG_H
 
-#include "protocols/packet.h"
+#include <cstdio>
+
 #include "main/snort_types.h"
 
+struct Packet;
 namespace tcp { struct TCPHdr; }
 
 SO_PUBLIC void CreateTCPFlagString(const tcp::TCPHdr* const, char*);

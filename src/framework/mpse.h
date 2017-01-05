@@ -26,13 +26,9 @@
 
 #include <string>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
+#include "framework/base_api.h"
 #include "main/snort_types.h"
 #include "main/thread.h"
-#include "framework/base_api.h"
 #include "search_engines/search_common.h"
 
 // this is the current version of the api

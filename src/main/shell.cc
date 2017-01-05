@@ -17,19 +17,19 @@
 //--------------------------------------------------------------------------
 // shell.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "shell.h"
 
-#include <assert.h>
-#include <string.h>
-#include <string>
-#include <lua.hpp>
+#include <cassert>
+#include <cstring>
 #include <stdexcept>
 
-#include "framework/module.h"
+#include "log/messages.h"
 #include "lua/lua.h"
 #include "managers/module_manager.h"
-#include "parser/parser.h"
-#include "log/messages.h"
 
 using namespace std;
 

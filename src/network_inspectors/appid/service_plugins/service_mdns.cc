@@ -19,25 +19,18 @@
 
 // service_mdns.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "service_mdns.h"
 
-#include "appid_module.h"
-
-#include "appid_config.h"
-#include "app_info_table.h"
-#include "appid_session.h"
-#include "http_common.h"
-#include "lua_detector_api.h"
-#include "service_api.h"
-#include "service_base.h"
-#include "service_ssl.h"
-#include "client_plugins/client_app_base.h"
-#include "detector_plugins/http_url_patterns.h"
-#include "detector_plugins/detector_http.h"
-
 #include "main/snort_debug.h"
-#include "utils/util.h"
+#include "protocols/packet.h"
 #include "search_engines/search_tool.h"
+
+#include "app_info_table.h"
+#include "appid_module.h"
 
 #define MDNS_PORT   5353
 #define PATTERN_REFERENCE_PTR   3

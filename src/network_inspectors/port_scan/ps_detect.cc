@@ -31,30 +31,22 @@
 **      on hosts that are portscanned.  This idea makes portscan a lot more
 **      useful for analysts.
 */
-#include "ps_detect.h"
-#include "ps_inspect.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
+#include "ps_detect.h"
 
-#include "ipobj.h"
-#include "log/messages.h"
-#include "main/snort_config.h"
-#include "protocols/packet.h"
-#include "time/packet_time.h"
 #include "hash/sfxhash.h"
-#include "protocols/tcp.h"
-#include "protocols/udp.h"
+#include "log/messages.h"
 #include "protocols/icmp4.h"
-#include "protocols/icmp6.h"
-#include "protocols/eth.h"
-#include "sfip/sf_ip.h"
+#include "protocols/packet.h"
+#include "protocols/tcp.h"
 #include "stream/stream.h"
+#include "time/packet_time.h"
+#include "utils/cpp_macros.h"
+
+#include "ps_inspect.h"
 
 PADDING_GUARD_BEGIN
 typedef struct s_PS_HASH_KEY

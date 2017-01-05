@@ -19,10 +19,13 @@
 
 // sd_credit_card.cc author Ryan Jordan
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "sd_credit_card.h"
 
-#include <ctype.h>
-#include <stdio.h>
+#include <cctype>
 
 #define ISSUER_SIZE     4
 #define CC_COPY_BUF_LEN 20 /* 16 digits + 3 spaces/dashes + null */
@@ -31,7 +34,7 @@
 /* Check the Issuer Identification Number of a CC#. */
 static inline int CheckIssuers(const uint8_t *cardnum, uint32_t buflen)
 {
-    if (cardnum == NULL || buflen < ISSUER_SIZE)
+    if (cardnum == nullptr || buflen < ISSUER_SIZE)
         return 0;
 
     /* Visa */
@@ -67,7 +70,7 @@ int SdLuhnAlgorithm(const uint8_t *buf, unsigned long long buflen)
     char cc_digits[CC_COPY_BUF_LEN]; /* Normalized CC# string */
     uint32_t j;
 
-    if (buf == NULL || buflen < MIN_CC_BUF_LEN)
+    if (buf == nullptr || buflen < MIN_CC_BUF_LEN)
         return 0;
 
     /* Generally, the buffer has two non-digits, one on either side. Sometimes,

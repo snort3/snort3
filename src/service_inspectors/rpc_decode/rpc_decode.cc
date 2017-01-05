@@ -38,27 +38,15 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <sys/types.h>
-#include <stdlib.h>
-#include <ctype.h>
-
-#include "parser/parser.h"
-#include "log/messages.h"
-#include "main/snort_debug.h"
-#include "detection/detect.h"
-#include "log/log.h"
-#include "profiler/profiler.h"
-#include "utils/util.h"
 #include "detection/detection_util.h"
-#include "stream/stream_splitter.h"
-#include "target_based/snort_protocols.h"
-#include "protocols/tcp.h"
-#include "protocols/packet.h"
 #include "framework/data_bus.h"
-#include "framework/inspector.h"
+#include "log/messages.h"
+#include "profiler/profiler.h"
+#include "protocols/packet.h"
 #include "stream/stream.h"
+#include "stream/stream_splitter.h"
 #include "utils/safec.h"
+#include "utils/util.h"
 
 #include "rpc_module.h"
 

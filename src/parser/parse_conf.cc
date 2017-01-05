@@ -19,55 +19,28 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "parse_conf.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <sys/types.h>
+#include "parse_conf.h"
+
 #include <sys/stat.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
-#include <errno.h>
-#include <ctype.h>
-#include <unistd.h>
-#include <stdarg.h>
-#include <pcap.h>
-#include <grp.h>
-#include <pwd.h>
-#include <fnmatch.h>
 
-#include <stack>
-#include <string>
 #include <fstream>
-#include <sstream>
+#include <stack>
 
+#include "log/messages.h"
+#include "main/snort_config.h"
+#include "managers/action_manager.h"
+#include "sfip/sf_vartable.h"
+#include "target_based/snort_protocols.h"
+#include "utils/util.h"
+
+#include "config_file.h"
 #include "parser.h"
 #include "parse_stream.h"
-#include "cmd_line.h"
-#include "parse_rule.h"
-#include "config_file.h"
 #include "vars.h"
-
-#include "actions/actions.h"
-#include "detection/rules.h"
-#include "detection/treenodes.h"
-#include "detection/signature.h"
-#include "main/snort_debug.h"
-#include "main/snort_config.h"
-#include "utils/util.h"
-#include "hash/sfghash.h"
-#include "sfip/sf_ip.h"
-#include "sfip/sf_vartable.h"
-#include "packet_io/active.h"
-#include "file_api/file_config.h"
-#include "framework/ips_option.h"
-#include "log/messages.h"
-#include "managers/action_manager.h"
-#include "actions/actions.h"
-#include "target_based/snort_protocols.h"
 
 struct Location
 {

@@ -35,10 +35,14 @@
  * Kevin Liu <kliu@sourcefire.com>
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "ftp_bounce_lookup.h"
 
-#include "ftpp_return_codes.h"
 #include "ft_main.h"
+#include "ftpp_return_codes.h"
 
 /*
  * Function: ftp_bounce_lookup_init(BOUNCE_LOOKUP **BounceLookup)

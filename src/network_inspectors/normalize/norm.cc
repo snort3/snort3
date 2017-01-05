@@ -17,24 +17,20 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "norm.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <string.h>
+#include "norm.h"
 
 #include "main/snort_config.h"
 #include "packet_io/sfdaq.h"
-#include "protocols/ipv4.h"
+#include "protocols/icmp4.h"
+#include "protocols/icmp6.h"
 #include "protocols/ipv4_options.h"
 #include "protocols/tcp.h"
 #include "protocols/tcp_options.h"
-#include "protocols/icmp4.h"
-#include "protocols/icmp6.h"
 #include "stream/tcp/tcp_normalizer.h"
-#include "utils/stats.h"
 
 enum PegCounts
 {

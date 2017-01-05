@@ -18,9 +18,12 @@
 //--------------------------------------------------------------------------
 // file_mime_decode.cc author Bhagyashree Bantwal <bbantwal@sourcefire.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "file_mime_decode.h"
 
-#include "utils/util_unfold.h"
 #include "utils/util.h"
 
 #include "decode_b64.h"

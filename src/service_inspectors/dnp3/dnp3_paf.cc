@@ -19,7 +19,12 @@
 // dnp3_paf.cc author Rashmi Pitre <rrp@cisco.com>
 // based on work by Ryan Jordan
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "dnp3_paf.h"
+
 #include "dnp3.h"
 
 /* Function: dnp3_paf()

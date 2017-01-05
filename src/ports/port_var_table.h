@@ -25,7 +25,6 @@
 #include "hash/sfghash.h"
 #include "ports/port_object.h"
 #include "ports/port_table.h"
-#include "utils/sflsq.h"
 
 //-------------------------------------------------------------------------
 // PortVarTable

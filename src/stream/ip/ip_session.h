@@ -20,11 +20,7 @@
 #ifndef IP_SESSION_H
 #define IP_SESSION_H
 
-#include "ip_module.h"
-
-#include <sys/time.h>
-#include "flow/session.h"
-#include "framework/counts.h"
+#include "stream/ip/ip_module.h"
 
 struct Fragment;
 struct FragEngine;

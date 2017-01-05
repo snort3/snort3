@@ -17,27 +17,24 @@
 //--------------------------------------------------------------------------
 // ips_luajit.cc author Russ Combs <rucombs@cisco.com>
 
-#include <assert.h>
-#include <lua.hpp>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "main/snort_types.h"
-#include "main/thread.h"
-#include "main/thread_config.h"
+#include "detection/detection_defines.h"
+#include "framework/cursor.h"
+#include "framework/decode_data.h"
+#include "framework/module.h"
+#include "hash/sfhashfcn.h"
 #include "helpers/chunk.h"
 #include "lua/lua.h"
+#include "log/messages.h"
+#include "main/thread_config.h"
 #include "managers/ips_manager.h"
 #include "managers/lua_plugin_defs.h"
 #include "managers/plugin_manager.h"
 #include "managers/script_manager.h"
-#include "hash/sfhashfcn.h"
-#include "parser/parser.h"
-#include "framework/cursor.h"
-#include "framework/decode_data.h"
-#include "framework/module.h"
-#include "framework/parameter.h"
-#include "log/messages.h"
 #include "profiler/profiler.h"
-#include "detection/detection_defines.h"
 #include "utils/util.h"
 
 static THREAD_LOCAL ProfileStats luaIpsPerfStats;

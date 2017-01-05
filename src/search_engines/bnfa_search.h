@@ -30,10 +30,7 @@
 ** date:   12/21/05
 */
 
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdint>
 
 #include "search_common.h"
 

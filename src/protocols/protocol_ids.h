@@ -20,10 +20,10 @@
 #ifndef PROTOCOLS_PROTOCOL_IDS_H
 #define PROTOCOLS_PROTOCOL_IDS_H
 
-#include <assert.h>
+#include <cassert>
 #include <cstdint>
-#include <type_traits>
 #include <limits>
+#include <type_traits>
 
 /*****************************************************************
  *****  NOTE:   Protocols are only included in this file when ****

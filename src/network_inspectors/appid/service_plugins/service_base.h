@@ -22,12 +22,9 @@
 #ifndef SERVICE_BASE_H
 #define SERVICE_BASE_H
 
-#include <cstdint>
-
 #include "appid_api.h"
 #include "appid_session.h"
 #include "service_api.h"
-#include "sfip/sf_ip.h"
 
 class AppIdConfig;
 class AppIdSession;

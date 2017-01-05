@@ -21,11 +21,6 @@
 #ifndef UDP_MODULE_H
 #define UDP_MODULE_H
 
-#include <string>
-#include <vector>
-
-#include "main/snort_types.h"
-#include "main/thread.h"
 #include "flow/session.h"
 #include "framework/module.h"
 

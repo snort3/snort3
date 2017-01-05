@@ -19,6 +19,10 @@
 // file_connector_test.cc author Ed Borgoyn <eborgoyn@cisco.com>
 // unit test main
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "connectors/file_connector/file_connector.h"
 #include "connectors/file_connector/file_connector_module.h"
 

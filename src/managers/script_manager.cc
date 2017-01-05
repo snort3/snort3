@@ -17,24 +17,21 @@
 //--------------------------------------------------------------------------
 // script_manager.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "script_manager.h"
 
-#include <string.h>
-
-#include <string>
-#include <vector>
 #include <sys/stat.h>
-#include <lua.hpp>
 
-#include "ips_manager.h"
-#include "plugin_manager.h"
-#include "lua/lua.h"
-#include "lua/lua_util.h"
 #include "framework/ips_option.h"
 #include "framework/logger.h"
 #include "framework/lua_api.h"
-#include "log/messages.h"
 #include "helpers/directory.h"
+#include "log/messages.h"
+#include "lua/lua.h"
+#include "lua/lua_util.h"
 
 #ifdef PIGLET
 #include "piglet/piglet_manager.h"

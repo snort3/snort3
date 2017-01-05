@@ -17,10 +17,11 @@
 //--------------------------------------------------------------------------
 // inspector.cc author Russ Combs <rucombs@cisco.com>
 
-#include "inspector.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <assert.h>
-#include <string.h>
+#include "inspector.h"
 
 #include "main/thread_config.h"
 #include "protocols/packet.h"

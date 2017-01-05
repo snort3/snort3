@@ -25,10 +25,8 @@
 // This file declares the server structure and functions to access server
 // inspection.
 
-#include "hi_include.h"
-#include "hi_util.h"
-#include "hi_main.h"
 #include "hi_client.h"
+#include "hi_util.h"
 
 typedef struct s_HI_SERVER_RESP
 {

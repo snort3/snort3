@@ -24,9 +24,6 @@
 
 // This module supports basic API towards Lua detectors.
 
-#include <cstdint>
-#include <string>
-
 #include "client_plugins/client_app_api.h"
 #include "service_plugins/service_api.h"
 

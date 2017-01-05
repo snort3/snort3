@@ -21,9 +21,7 @@
 #include "config.h"
 #endif
 
-extern "C" {
 #include <sfbpf_dlt.h>
-}
 
 #include "framework/codec.h"
 #include "protocols/linux_sll.h"

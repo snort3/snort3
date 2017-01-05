@@ -41,16 +41,18 @@
 
 /* your preprocessor header file goes here */
 
-#include "pp_telnet.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "ftpp_return_codes.h"
-#include "telnet_module.h"
+#include "pp_telnet.h"
 
 #include "detection/detection_util.h"
+#include "protocols/packet.h"
+#include "stream/stream.h"
+
+#include "ftpp_return_codes.h"
+#include "telnet_module.h"
 
 #define NUL 0x00
 #define CR 0x0d

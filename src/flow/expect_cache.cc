@@ -17,9 +17,11 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "expect_cache.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <assert.h>
+#include "expect_cache.h"
 
 #include "hash/zhash.h"
 #include "packet_io/sfdaq.h"

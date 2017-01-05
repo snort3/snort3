@@ -17,69 +17,40 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "parser.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
-#include <errno.h>
-#include <ctype.h>
-#include <unistd.h>
-#include <stdarg.h>
+#include "parser.h"
+
 #include <pcap.h>
-#include <grp.h>
-#include <pwd.h>
-#include <fnmatch.h>
 
+#include <cassert>
 #include <iostream>
-#include <string>
 
-#include "cmd_line.h"
-#include "mstring.h"
+#include "detection/fp_config.h"
+#include "detection/sfrim.h"
+#include "filters/detection_filter.h"
+#include "filters/rate_filter.h"
+#include "filters/sfthreshold.h"
+#include "log/messages.h"
+#include "main/shell.h"
+#include "main/snort_config.h"
+#include "managers/event_manager.h"
+#include "managers/module_manager.h"
+#include "ports/port_object.h"
+#include "ports/port_table.h"
+#include "ports/rule_port_tables.h"
+#include "sfip/sf_ipvar.h"
+#include "target_based/snort_protocols.h"
+#include "utils/util.h"
+
 #include "config_file.h"
+#include "mstring.h"
 #include "parse_conf.h"
 #include "parse_rule.h"
 #include "parse_stream.h"
 #include "vars.h"
-
-#include "utils/util.h"
-#include "utils/sflsq.h"
-#include "ports/port_object.h"
-#include "ports/port_table.h"
-#include "ports/port_utils.h"
-#include "ports/rule_port_tables.h"
-#include "main/snort_config.h"
-#include "main/shell.h"
-#include "main/snort_debug.h"
-#include "detection/signature.h"
-#include "detection/treenodes.h"
-#include "detection/rules.h"
-#include "detection/detect.h"
-#include "detection/fp_config.h"
-#include "detection/tag.h"
-#include "detection/sfrim.h"
-#include "protocols/packet.h"
-#include "filters/sfthreshold.h"
-#include "filters/sfthd.h"
-#include "filters/rate_filter.h"
-#include "filters/detection_filter.h"
-#include "hash/sfghash.h"
-#include "sfip/sf_vartable.h"
-#include "sfip/sf_ip.h"
-#include "sfip/sf_ipvar.h"
-#include "packet_io/active.h"
-#include "file_api/file_config.h"
-#include "actions/actions.h"
-#include "log/messages.h"
-#include "managers/event_manager.h"
-#include "managers/module_manager.h"
-#include "target_based/snort_protocols.h"
 
 static struct rule_index_map_t* ruleIndexMap = nullptr;
 

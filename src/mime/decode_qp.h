@@ -22,7 +22,6 @@
 
 // Email attachment decoder
 
-#include <stdlib.h>
 #include "mime/decode_base.h"
 
 class QPDecode : public DataDecode

@@ -17,9 +17,11 @@
 //--------------------------------------------------------------------------
 // lua_util.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "lua_util.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <stdio.h>
+#include "lua_util.h"
 
 #define LUA_MSG_BUFSIZE     128
 

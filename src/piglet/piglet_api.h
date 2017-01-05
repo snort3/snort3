@@ -23,7 +23,6 @@
 // Piglet plugin API
 
 #include <string>
-#include <utility>
 
 #include "framework/base_api.h"
 #include "log/messages.h"

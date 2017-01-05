@@ -21,13 +21,9 @@
 #include "config.h"
 #endif
 
+#include "codecs/codec_module.h"
 #include "framework/codec.h"
-#include "codecs/codec_module.h"
-#include "protocols/packet.h"
-#include "framework/module.h"
-#include "codecs/codec_module.h"
 #include "log/text_log.h"
-#include "protocols/packet_manager.h"
 
 #define LLC_NAME "llc"
 #define LLC_HELP "support for logical link control"

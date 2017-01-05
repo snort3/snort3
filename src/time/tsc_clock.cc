@@ -17,13 +17,13 @@
 //--------------------------------------------------------------------------
 // tsc_clock.cc author Russ Combs <rucombs@cisco.com>
 
-#include "tsc_clock.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <time.h>
+#include "tsc_clock.h"
+
+#include <ctime>
 
 long clock_scale()
 {

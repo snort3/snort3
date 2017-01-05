@@ -23,11 +23,12 @@
 #endif
 
 #include "codecs/codec_module.h"
-#include "codecs/ip/checksum.h"
 #include "framework/codec.h"
 #include "log/text_log.h"
 #include "main/snort_config.h"
 #include "protocols/icmp4.h"
+
+#include "checksum.h"
 
 #define CD_ICMP4_NAME "icmp4"
 #define CD_ICMP4_HELP "support for Internet control message protocol v4"

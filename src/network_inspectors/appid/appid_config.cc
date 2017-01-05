@@ -18,18 +18,22 @@
 //--------------------------------------------------------------------------
 
 // appid_config.cc author Sourcefire Inc.
-#include <cstring>
-#include <glob.h>
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "appid_config.h"
-#include "app_info_table.h"
-#include "appid_utils/network_set.h"
-#include "appid_utils/ip_funcs.h"
-#include "appid_utils/appid_utils.h"
-#include "main/snort_debug.h"
+
+#include <glob.h>
+#include <limits.h>
+
 #include "log/messages.h"
-#include "utils/util.h"
-#include "thirdparty_appid_utils.h"
+#include "main/snort_debug.h"
+
+#include "app_info_table.h"
+#include "appid_utils/appid_utils.h"
+#include "appid_utils/network_set.h"
 #include "service_plugins/service_base.h"
 
 #define ODP_PORT_DETECTORS "odp/port/*"

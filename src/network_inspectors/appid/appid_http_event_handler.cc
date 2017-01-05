@@ -21,12 +21,13 @@
 // Receive events from the HTTP inspector containing header information
 // to be used to detect AppIds.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "appid_http_event_handler.h"
-#include "appid_config.h"
-#include "appid_session.h"
+
 #include "appid_module.h"
-#include "thirdparty_appid_utils.h"
-#include "utils/util.h"
 
 static void replace_header_data(char **data, uint16_t &datalen, const uint8_t *header_start,
     int32_t header_length)

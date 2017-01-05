@@ -22,10 +22,9 @@
 #include "config.h"
 #endif
 
+#include "codecs/codec_module.h"
 #include "framework/codec.h"
 #include "main/snort_config.h"
-#include "protocols/protocol_ids.h"
-#include "codecs/codec_module.h"
 
 #define CD_ESP_NAME "esp"
 #define CD_ESP_HELP "support for encapsulating security payload"

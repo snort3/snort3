@@ -19,16 +19,20 @@
 // tcp_state_handler.cc author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Jun 24, 2015
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "tcp_state_handler.h"
+
 #include <iostream>
 
 #include "main/snort_debug.h"
 
 #include "tcp_state_machine.h"
-#include "tcp_state_handler.h"
 
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"
-#include "stream_tcp_unit_test.h"
 #endif
 
 using namespace std;

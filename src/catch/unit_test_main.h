@@ -27,6 +27,7 @@
 
 // Unresolved external symbol declarations and references.
 SNORT_CATCH_FORCED_INCLUSION_EXTERN(bitop_test);
+SNORT_CATCH_FORCED_INCLUSION_EXTERN(lua_stack_test);
 SNORT_CATCH_FORCED_INCLUSION_EXTERN(sfdaq_module_test);
 SNORT_CATCH_FORCED_INCLUSION_EXTERN(sfip_test);
 SNORT_CATCH_FORCED_INCLUSION_EXTERN(sfrf_test);
@@ -37,6 +38,7 @@ SNORT_CATCH_FORCED_INCLUSION_EXTERN(stopwatch_test);
 bool catch_extern_tests[] =
 {
     SNORT_CATCH_FORCED_INCLUSION_SYMBOL(bitop_test),
+    SNORT_CATCH_FORCED_INCLUSION_SYMBOL(lua_stack_test),
     SNORT_CATCH_FORCED_INCLUSION_SYMBOL(sfdaq_module_test),
     SNORT_CATCH_FORCED_INCLUSION_SYMBOL(sfip_test),
     SNORT_CATCH_FORCED_INCLUSION_SYMBOL(sfrf_test),

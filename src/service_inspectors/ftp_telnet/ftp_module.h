@@ -21,12 +21,8 @@
 #ifndef FTP_MODULE_H
 #define FTP_MODULE_H
 
-#include <string>
-#include <vector>
-
-#include "ftpp_ui_config.h"
 #include "framework/module.h"
-#include "main/thread.h"
+#include "ftpp_ui_config.h"
 
 #define GID_FTP 125
 

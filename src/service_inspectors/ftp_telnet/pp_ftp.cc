@@ -34,15 +34,16 @@
 
 /* your preprocessor header file goes here */
 
-#include "pp_ftp.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
+#include "pp_ftp.h"
+
 #include "detection/detection_util.h"
 #include "file_api/file_service.h"
-#include "sfip/sf_ip.h"
+#include "protocols/packet.h"
+#include "stream/stream.h"
 #include "utils/util.h"
 
 #include "ft_main.h"

@@ -18,9 +18,15 @@
 //--------------------------------------------------------------------------
 // decode_qp.cc author Bhagyashree Bantwal <bbantwal@sourcefire.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "decode_qp.h"
 
-#include "utils/util.h"
+#include <cctype>
+#include <cstdlib>
+
 #include "utils/util_unfold.h"
 
 #include "decode_buffer.h"

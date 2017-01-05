@@ -24,7 +24,6 @@
 
 #include "flow/flow.h"
 #include "framework/counts.h"
-#include "main/thread.h"
 
 struct ModbusStats
 {

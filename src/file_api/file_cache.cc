@@ -17,8 +17,13 @@
 //--------------------------------------------------------------------------
 //  file_cache.cc author Hui Cao <huica@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "file_cache.h"
 
+#include "hash/sfxhash.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"

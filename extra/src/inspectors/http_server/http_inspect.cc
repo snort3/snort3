@@ -36,30 +36,19 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <string.h>
-#include <sys/types.h>
-
 // FIXIT-L all snort includes should use <form> instead of "form"
 #include "log/messages.h"
-#include "protocols/packet.h"
-#include "main/snort_debug.h"
-#include "decompress/file_decomp.h"
-#include "profiler/profiler.h"
-#include "file_api/file_api.h"
 #include "file_api/file_service.h"
-#include "mime/decode_base.h"
-#include "utils/util.h"
-#include "framework/inspector.h"
 #include "managers/inspector_manager.h"
+#include "profiler/profiler.h"
+#include "protocols/packet.h"
 
-#include "hi_client.h"
-#include "hi_ui_config.h"
-#include "hi_module.h"
-#include "hi_norm.h"
+#include "hi_events.h"
+#include "hi_include.h"
 #include "hi_main.h"
-#include "hi_cmd_lookup.h"
+#include "hi_module.h"
 #include "hi_stream_splitter.h"
+#include "hi_ui_config.h"
 
 int hex_lookup[256];
 int valid_lookup[256];

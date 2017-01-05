@@ -22,10 +22,10 @@
 #include "config.h"
 #endif
 
-#include "framework/codec.h"
 #include "codecs/codec_module.h"
-#include "codecs/ip/checksum.h"
-#include "protocols/packet.h"
+#include "framework/codec.h"
+
+#include "checksum.h"
 
 namespace
 {

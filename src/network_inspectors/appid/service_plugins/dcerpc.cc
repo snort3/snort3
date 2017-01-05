@@ -19,9 +19,13 @@
 
 // dcerpc.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "dcerpc.h"
 
-#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #define min(x,y) ((x)<(y) ? (x) : (y))
 

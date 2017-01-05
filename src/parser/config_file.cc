@@ -17,43 +17,26 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "config_file.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
-#include <errno.h>
-#include <ctype.h>
-#include <unistd.h>
-#include <stdarg.h>
-#include <pcap.h>
+#include "config_file.h"
+
 #include <grp.h>
 #include <pwd.h>
 #include <syslog.h>
-
-#include "parser.h"
-#include "cmd_line.h"
-#include "mstring.h"
 
 #include "detection/detect.h"
 #include "log/messages.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
-#include "main/snort_types.h"
 #include "main/snort_debug.h"
-#include "ips_options/ips_flowbits.h"
 #include "managers/event_manager.h"
-#include "packet_io/sfdaq.h"
-#include "packet_io/sfdaq_config.h"
-#include "sfip/sf_ip.h"
 #include "utils/dnet_header.h"
 #include "utils/util.h"
+
+#include "mstring.h"
 
 #define LOG_NONE    "none"
 #define LOG_DUMP    "dump"

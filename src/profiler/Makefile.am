@@ -6,7 +6,6 @@ x_include_HEADERS = \
 memory_defs.h \
 memory_context.h \
 memory_profiler_defs.h \
-memory_profiler_active_context.h \
 profiler.h \
 profiler_defs.h \
 rule_profiler_defs.h \
@@ -17,6 +16,7 @@ active_context.h \
 memory_context.cc \
 memory_profiler.cc \
 memory_profiler.h \
+memory_profiler_active_context.h \
 profiler.cc \
 profiler_printer.h \
 profiler_stats_table.cc \

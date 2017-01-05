@@ -17,32 +17,20 @@
 //--------------------------------------------------------------------------
 //
 
-/*
- * SSL inspector
- *
- */
-
-#include "ssl_inspector.h"
+// SSL inspector
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <string.h>
-#include <stdio.h>
-#include <sys/types.h>
+#include "ssl_inspector.h"
 
+#include "detection/detect.h"
 #include "events/event_queue.h"
 #include "log/messages.h"
-#include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "profiler/profiler.h"
-#include "parser/parser.h"
-#include "framework/inspector.h"
-#include "utils/sfsnprintfappend.h"
-#include "target_based/snort_protocols.h"
-#include "detection/detect.h"
+#include "protocols/packet.h"
 #include "protocols/ssl.h"
 #include "stream/stream.h"
 

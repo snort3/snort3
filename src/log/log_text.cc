@@ -20,18 +20,17 @@
 // @file    log_text.c
 // @author  Russ Combs <rcombs@sourcefire.com>
 
-#include "log_text.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-extern "C" {
+#include "log_text.h"
+
 #include <sfbpf_dlt.h>
-}
 
 #include "detection/detection_util.h"
-#include "log/messages.h"
+#include "detection/signature.h"
+#include "events/event.h"
 #include "main/snort_config.h"
 #include "packet_io/sfdaq.h"
 #include "protocols/eth.h"
@@ -46,8 +45,8 @@ extern "C" {
 #include "utils/util_net.h"
 
 #include "log.h"
+#include "messages.h"
 #include "obfuscator.h"
-#include "text_log.h"
 
 /*--------------------------------------------------------------------
  * utility functions

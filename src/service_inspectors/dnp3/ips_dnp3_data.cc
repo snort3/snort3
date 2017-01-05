@@ -19,6 +19,10 @@
 // ips_dnp3_data.cc author Maya Dagon <mdagon@cisco.com>
 // based on work by Ryan Jordan
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "detection/detection_defines.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"

@@ -21,8 +21,8 @@
 #include "config.h"
 #endif
 
-#include "framework/codec.h"
 #include "codecs/codec_module.h"
+#include "framework/codec.h"
 
 #define CD_SWIPE_NAME "swipe"
 #define CD_SWIPE_HELP "support for Swipe"

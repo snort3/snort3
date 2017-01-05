@@ -18,14 +18,14 @@
 //--------------------------------------------------------------------------
 // cd_mpls.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include "framework/codec.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "codecs/codec_module.h"
-#include "protocols/mpls.h"
-#include "packet_io/active.h"
-#include "protocols/protocol_ids.h"
-#include "protocols/mpls.h"
+#include "flow/flow.h"
+#include "framework/codec.h"
 #include "main/snort_config.h"
-#include "log/text_log.h"
 #include "utils/safec.h"
 
 #define CD_MPLS_NAME "mpls"

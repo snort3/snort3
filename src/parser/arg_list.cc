@@ -17,9 +17,13 @@
 //--------------------------------------------------------------------------
 // arg_list.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "arg_list.h"
 
-#include <string.h>
+#include <cstring>
 
 void ArgList::dump()
 {

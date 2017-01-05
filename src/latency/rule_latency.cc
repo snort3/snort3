@@ -18,23 +18,17 @@
 
 // rule_latency.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "rule_latency.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <cassert>
-#include <memory>
-#include <sstream>
+#include "rule_latency.h"
 
 #include "detection/detection_options.h"
 #include "detection/treenodes.h"
-#include "events/event_queue.h"
-#include "log/messages.h"
 #include "main/snort_config.h"
+#include "log/messages.h"
 #include "protocols/packet.h"
-#include "sfip/sf_ip.h"
 #include "utils/stats.h"
 
 #include "latency_config.h"
@@ -42,6 +36,7 @@
 #include "latency_stats.h"
 #include "latency_timer.h"
 #include "latency_util.h"
+#include "rule_latency_state.h"
 
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"

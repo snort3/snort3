@@ -19,13 +19,15 @@
 
 // sip_utils.cc author: Hui Cao <huica@cisco.com>
 
-#include "sip_utils.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <ctype.h>
-#include "main/snort_types.h"
+
+#include "sip_utils.h"
+
+#include <cstring>
+
+#include "hash/sfhashfcn.h"
 
 /********************************************************************
  * Function: SIP_IsEmptyStr()

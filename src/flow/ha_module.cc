@@ -18,14 +18,17 @@
 
 // ha_module.cc author Ed Borgoyn <eborgoyn@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "ha_module.h"
 
 #include <cmath>
 
-#include "ha.h"
 #include "log/messages.h"
-#include "main/snort_debug.h"
-#include "main/thread.h"
+
+#include "ha.h"
 
 static const PegInfo ha_pegs[] =
 {

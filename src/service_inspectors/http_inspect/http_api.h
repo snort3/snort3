@@ -20,12 +20,11 @@
 #ifndef HTTP_API_H
 #define HTTP_API_H
 
-#include "framework/parameter.h"
-#include "framework/module.h"
 #include "framework/inspector.h"
+#include "framework/module.h"
 
-#include "http_module.h"
 #include "http_flow_data.h"
+#include "http_module.h"
 
 class HttpApi
 {

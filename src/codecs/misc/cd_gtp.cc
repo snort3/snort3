@@ -22,12 +22,10 @@
 #include "config.h"
 #endif
 
-#include "main/snort_debug.h"
-#include "framework/codec.h"
-#include "protocols/packet.h"
-#include "packet_io/active.h"
-#include "protocols/protocol_ids.h"
 #include "codecs/codec_module.h"
+#include "framework/codec.h"
+#include "main/snort_config.h"
+#include "packet_io/active.h"
 
 #define CD_GTP_NAME "gtp"
 #define CD_GTP_HELP "support for general-packet-radio-service tunnelling protocol"

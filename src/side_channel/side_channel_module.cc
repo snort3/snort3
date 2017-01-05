@@ -18,13 +18,16 @@
 
 // side_channel_module.cc author Ed Borgoyn <eborgoyn@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "side_channel_module.h"
 
-#include <assert.h>
-#include <utility>
+#include <cassert>
 
-#include "main/snort_debug.h"
 #include "log/messages.h"
+
 #include "side_channel.h"
 
 static const PegInfo sc_pegs[] =

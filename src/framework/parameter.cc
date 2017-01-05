@@ -17,19 +17,21 @@
 //--------------------------------------------------------------------------
 // parameter.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "parameter.h"
 
-#include <assert.h>
-#include <string.h>
-#include <stdlib.h>
+#include <cassert>
 
-#include <string>
 #include <iomanip>
 #include <sstream>
 #include <vector>
 
-#include "value.h"
 #include "utils/dnet_header.h"
+
+#include "value.h"
 
 using namespace std;
 

@@ -21,8 +21,7 @@
 #ifndef LUA_TEST_COMMON_H
 #define LUA_TEST_COMMON_H
 
-#include <utility>
-#include <string.h>
+//#include <utility>
 #include <lua.hpp>
 
 inline void l_end_lua_state(lua_State*& L_ptr)

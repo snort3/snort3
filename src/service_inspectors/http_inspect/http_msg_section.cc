@@ -17,20 +17,19 @@
 //--------------------------------------------------------------------------
 // http_msg_section.cc author Tom Peters <thopeter@cisco.com>
 
-#include <string.h>
-#include <sys/types.h>
-#include <stdio.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "http_enum.h"
-#include "http_transaction.h"
-#include "http_test_manager.h"
 #include "http_msg_section.h"
-#include "http_msg_request.h"
-#include "http_msg_status.h"
+
+#include "http_msg_body.h"
 #include "http_msg_head_shared.h"
 #include "http_msg_header.h"
+#include "http_msg_request.h"
+#include "http_msg_status.h"
 #include "http_msg_trailer.h"
-#include "http_msg_body.h"
+#include "http_test_manager.h"
 
 using namespace HttpEnums;
 

@@ -41,12 +41,11 @@
 #include <string>
 #include <vector>
 
+#include "framework/counts.h"
+#include "framework/parameter.h"
+#include "framework/value.h"
 #include "main/snort_debug.h"
 #include "main/snort_types.h"
-#include "framework/value.h"
-#include "framework/parameter.h"
-#include "framework/counts.h"
-#include "main/snort_debug.h"
 #include "utils/stats.h"
 
 using LuaCFunction = int(*)(struct lua_State*);

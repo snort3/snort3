@@ -17,22 +17,20 @@
 //--------------------------------------------------------------------------
 // parse_stream.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "parse_stream.h"
 
-#include <ctype.h>
-#include <stdio.h>
-#include <string.h>
-
-#include <istream>
 #include <sstream>
-#include <string>
+
+#include "log/messages.h"
+#include "managers/ips_manager.h"
 
 #include "parser.h"
 #include "parse_conf.h"
 #include "parse_rule.h"
-#include "detection/treenodes.h"
-#include "log/messages.h"
-#include "managers/ips_manager.h"
 
 using namespace std;
 

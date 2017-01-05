@@ -19,6 +19,10 @@
 // client_app_smtp_test.cc author Steve Chew <stechew@cisco.com>
 // unit test for client_app_smtp
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "network_inspectors/appid/detector_plugins/detector_smtp.cc"
 
 #include <CppUTest/CommandLineTestRunner.h>

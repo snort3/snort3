@@ -21,9 +21,6 @@
 #ifndef NORM_MODULE_H
 #define NORM_MODULE_H
 
-#include <string>
-#include <vector>
-
 #include "framework/module.h"
 #include "norm.h"
 

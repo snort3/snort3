@@ -26,6 +26,11 @@
 * in sfghash, and sfxhash.
 *
 */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "sfprimetable.h"
 
 /* 0-8K, increments=8 */

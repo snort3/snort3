@@ -22,11 +22,8 @@
 
 // Captures decode information from Codecs.
 
-#include <cstdint>
-#include <type_traits>
-
-#include "protocols/mpls.h"
 #include "protocols/ip.h"
+#include "protocols/mpls.h"
 
 namespace tcp
 {

@@ -30,7 +30,7 @@
  // The implementation uses an multibit-trie that is similar to Gupta et-al's
  // DIR-n-m.
 
-#include <stdint.h>
+#include <cstdint>
 
 /*******************************************************************/
 /* DIR-n-m data structures

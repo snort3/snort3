@@ -18,15 +18,11 @@
 
 // time_profiler.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "time_profiler.h"
-
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <chrono>
-#include <iostream>
-#include <string>
+#include "time_profiler.h"
 
 #include "profiler_nodes.h"
 #include "profiler_tree_builder.h"

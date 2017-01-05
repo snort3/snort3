@@ -20,13 +20,14 @@
 // file_mime_config.cc author Hui Cao <huica@cisco.com>
 // 9.25.2012 - Initial Source Code. Hui Cao
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "file_mime_config.h"
 
 #include "log/messages.h"
-#include "main/snort_types.h"
 #include "file_api/file_service.h"
-
-#include "file_mime_process.h"
 
 void DecodeConfig::set_ignore_data(bool ignored)
 {

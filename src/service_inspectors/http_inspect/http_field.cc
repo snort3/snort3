@@ -17,14 +17,13 @@
 //--------------------------------------------------------------------------
 // http_field.cc author Tom Peters <thopeter@cisco.com>
 
-#include <sys/types.h>
-#include <stdio.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "main/snort_types.h"
-
-#include "http_enum.h"
-#include "http_test_manager.h"
 #include "http_field.h"
+
+#include "http_test_manager.h"
 
 using namespace HttpEnums;
 

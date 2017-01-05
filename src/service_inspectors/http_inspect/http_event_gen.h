@@ -20,13 +20,13 @@
 #ifndef HTTP_EVENT_GEN_H
 #define HTTP_EVENT_GEN_H
 
-#include <assert.h>
 #include <bitset>
+#include <cassert>
 
 #include "events/event_queue.h"
+#include "utils/util.h"
 
 #include "http_enum.h"
-#include "utils/util.h"
 
 //-------------------------------------------------------------------------
 // Event generator class

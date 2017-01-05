@@ -19,11 +19,13 @@
 
 // service_flap.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "service_flap.h"
-#include "application_ids.h"
 
 #include "main/snort_debug.h"
-#include "utils/util.h"
 
 #define FLAP_PORT   5190
 

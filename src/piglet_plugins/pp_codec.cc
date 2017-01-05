@@ -17,22 +17,20 @@
 //--------------------------------------------------------------------------
 // pp_codec.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "piglet_plugins.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <string>
-
-#include "lua/lua_iface.h"
 #include "managers/codec_manager.h"
 #include "piglet/piglet_api.h"
 
 #include "pp_buffer_iface.h"
-#include "pp_daq_pkthdr_iface.h"
 #include "pp_codec_data_iface.h"
+#include "pp_codec_iface.h"
+#include "pp_daq_pkthdr_iface.h"
 #include "pp_decode_data_iface.h"
 #include "pp_enc_state_iface.h"
 #include "pp_raw_buffer_iface.h"
-
-#include "pp_codec_iface.h"
 
 class CodecPiglet : public Piglet::BasePlugin
 {

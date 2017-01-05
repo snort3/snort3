@@ -17,13 +17,11 @@
 //--------------------------------------------------------------------------
 // unit_test.h author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "unit_test.h"
-
-#include <stdlib.h>
-#include <string.h>
-
-#include <vector>
-#include <string>
 
 #define CATCH_CONFIG_RUNNER
 #include "catch.hpp"

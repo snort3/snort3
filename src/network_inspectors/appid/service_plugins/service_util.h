@@ -22,8 +22,6 @@
 #ifndef SERVICE_UTIL_H
 #define SERVICE_UTIL_H
 
-#include <stdint.h>
-#include <string.h>
 #include <mutex>
 
 #include "main/snort_config.h"

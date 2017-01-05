@@ -18,31 +18,21 @@
 
 // pop.cc author Bhagyashree Bantwal < bbantwal@cisco.com>
 
-#include "pop.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <string.h>
-#include <stdio.h>
-#include <sys/types.h>
+#include "pop.h"
 
 #include "events/event_queue.h"
 #include "log/messages.h"
-#include "main/snort_types.h"
 #include "main/snort_debug.h"
 #include "profiler/profiler.h"
-#include "parser/parser.h"
-#include "framework/inspector.h"
-#include "target_based/snort_protocols.h"
-#include "search_engines/search_tool.h"
-#include "utils/sfsnprintfappend.h"
-#include "utils/util.h"
+#include "protocols/packet.h"
 #include "protocols/ssl.h"
-#include "file_api/file_api.h"
-#include "mime/file_mime_process.h"
+#include "search_engines/search_tool.h"
+#include "stream/stream.h"
+#include "utils/util.h"
 
 #include "pop_module.h"
 #include "pop_paf.h"

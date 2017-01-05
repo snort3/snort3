@@ -22,8 +22,7 @@
 
 // Email attachment decoder
 
-#include <stdlib.h>
-#include "main/snort_types.h"
+#include <cstdint>
 
 enum DecodeResult
 {

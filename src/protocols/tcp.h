@@ -20,8 +20,9 @@
 #ifndef PROTOCOLS_TCP_H
 #define PROTOCOLS_TCP_H
 
-#include <cstdint>
 #include <arpa/inet.h>
+
+#include <cstdint>
 
 // these are bits in th_flags:
 #define TH_FIN  0x01

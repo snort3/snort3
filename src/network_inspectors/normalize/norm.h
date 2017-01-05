@@ -20,8 +20,8 @@
 #ifndef NORM_H
 #define NORM_H
 
-#include "normalize.h"
 #include "protocols/packet_manager.h"
+#include "normalize.h"
 
 struct NormalizerConfig;
 struct Packet;

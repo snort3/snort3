@@ -17,20 +17,19 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "policy.h"
 
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
-
+#include "detection/detect.h"
 #include "managers/inspector_manager.h"
 #include "parser/vars.h"
-#include "main/shell.h"
-#include "main/snort_config.h"
-#include "detection/detect.h"
-#include "ports/port_table.h"
-#include "ports/port_utils.h"
 #include "ports/port_var_table.h"
+
+#include "shell.h"
+#include "snort_config.h"
 
 //-------------------------------------------------------------------------
 // traffic policy

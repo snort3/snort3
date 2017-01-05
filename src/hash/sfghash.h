@@ -24,10 +24,6 @@
 
 // generic hash table - stores and maps key + data pairs
 
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-
 #include "main/snort_types.h"
 
 struct SFHASHFCN;

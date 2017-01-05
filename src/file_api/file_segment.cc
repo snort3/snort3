@@ -17,6 +17,10 @@
 //--------------------------------------------------------------------------
 //  file_segment.cc author Hui Cao <huica@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "file_segment.h"
 
 #include "file_lib.h"

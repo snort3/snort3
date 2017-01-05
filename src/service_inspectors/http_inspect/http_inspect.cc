@@ -17,24 +17,22 @@
 //--------------------------------------------------------------------------
 // http_inspect.cc author Tom Peters <thopeter@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "http_inspect.h"
 
-#include <assert.h>
-#include <stdio.h>
+#include "protocols/packet.h"
 
-#include "main/snort_types.h"
-
-#include "http_enum.h"
-#include "http_msg_request.h"
-#include "http_msg_status.h"
-#include "http_msg_header.h"
 #include "http_msg_body.h"
 #include "http_msg_body_chunk.h"
 #include "http_msg_body_cl.h"
 #include "http_msg_body_old.h"
+#include "http_msg_header.h"
+#include "http_msg_request.h"
+#include "http_msg_status.h"
 #include "http_msg_trailer.h"
-#include "http_test_manager.h"
-#include "http_field.h"
 
 using namespace HttpEnums;
 

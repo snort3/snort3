@@ -21,10 +21,10 @@
 #include "config.h"
 #endif
 
-#include "framework/codec.h"
+#include <daq_common.h>
+
 #include "daqs/daq_user.h"
-#include "protocols/packet.h"
-#include "sfip/sf_ip.h"
+#include "framework/codec.h"
 
 #define CD_NAME "user"
 #define CD_HELP_STR "support for user sessions"

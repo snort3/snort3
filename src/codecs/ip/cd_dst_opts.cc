@@ -21,11 +21,8 @@
 #include "config.h"
 #endif
 
-#include "framework/codec.h"
-#include "log/messages.h"
-#include "protocols/protocol_ids.h"
-#include "protocols/packet.h"
 #include "codecs/codec_module.h"
+#include "framework/codec.h"
 #include "main/snort_config.h"
 
 #define CD_DSTOPTS_NAME "ipv6_dst_opts"

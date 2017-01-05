@@ -31,13 +31,18 @@
  * Daniel J. Roelker <droelker@sourcefire.com>
  * Marc A. Norton <mnorton@sourcefire.com>
  */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "ftpp_ui_config.h"
+
+#include "utils/util.h"
 
 #include "ftp_bounce_lookup.h"
 #include "ftp_cmd_lookup.h"
 #include "ftpp_return_codes.h"
-
-#include "utils/util.h"
 
 FTP_CLIENT_PROTO_CONF::FTP_CLIENT_PROTO_CONF()
 {

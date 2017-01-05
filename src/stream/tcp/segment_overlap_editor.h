@@ -23,9 +23,9 @@
 #define SEGMENT_OVERLAP_EDITOR_H
 
 #include "normalize/normalize.h"
-#include "tcp_defs.h"
-#include "tcp_segment_node.h"
-#include "tcp_session.h"
+#include "stream/tcp/tcp_segment_node.h"
+
+class TcpSession;
 
 #define STREAM_INSERT_OK  0  // FIXIT-L replace with bool
 

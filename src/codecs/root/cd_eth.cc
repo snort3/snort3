@@ -22,16 +22,13 @@
 #include "config.h"
 #endif
 
-extern "C" {
 #include <sfbpf_dlt.h>
-}
 
 #include "codecs/codec_module.h"
 #include "framework/codec.h"
-#include "protocols/packet.h"
+#include "log/text_log.h"
 #include "protocols/eth.h"
 #include "protocols/packet_manager.h"
-#include "log/text_log.h"
 
 #define CD_ETH_NAME "eth"
 #define CD_ETH_HELP_STR "support for ethernet protocol"

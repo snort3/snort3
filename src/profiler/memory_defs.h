@@ -21,8 +21,7 @@
 #ifndef MEMORY_DEFS_H
 #define MEMORY_DEFS_H
 
-#include "main/snort_types.h"
-#include "memory_context.h"
+#include "main/thread.h"
 
 struct MemoryStats
 {

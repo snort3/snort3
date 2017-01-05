@@ -22,13 +22,9 @@
 #ifndef TCP_NORMALIZER_H
 #define TCP_NORMALIZER_H
 
-#include "main/snort_types.h"
-#include "framework/counts.h"
-#include "protocols/tcp_options.h"
-#include "protocols/tcp.h"
 #include "normalize/normalize.h"
-#include "tcp_session.h"
-#include "tcp_defs.h"
+#include "protocols/tcp_options.h"
+#include "stream/tcp/tcp_session.h"
 
 enum TcpPegCounts
 {

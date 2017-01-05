@@ -20,7 +20,7 @@
 #ifndef PACKET_CAPTURE_H
 #define PACKET_CAPTURE_H
 
-#include "capture_module.h"
+#include <string>
 
 void packet_capture_enable(std::string);
 void packet_capture_disable();

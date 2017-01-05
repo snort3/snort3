@@ -17,31 +17,26 @@
 //--------------------------------------------------------------------------
 // binder.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "binder.h"
 
-#include <vector>
-
-#include "binding.h"
-#include "bind_module.h"
 #include "flow/flow.h"
-#include "flow/session.h"
-#include "framework/inspector.h"
-#include "managers/inspector_manager.h"
-#include "managers/plugin_manager.h"
-#include "protocols/packet.h"
-#include "protocols/vlan.h"
-#include "protocols/layer.h"
-#include "stream/stream_splitter.h"
-#include "profiler/profiler.h"
-#include "utils/stats.h"
+#include "flow/flow_key.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
-#include "main/policy.h"
-#include "parser/parser.h"
-#include "target_based/sftarget_data.h"
-#include "target_based/snort_protocols.h"
+#include "managers/inspector_manager.h"
+#include "profiler/profiler.h"
+#include "protocols/packet.h"
+#include "stream/stream.h"
+#include "stream/stream_splitter.h"
 #include "target_based/sftarget_reader.h"
-#include "packet_io/active.h"
+#include "target_based/snort_protocols.h"
+
+#include "bind_module.h"
+#include "binding.h"
 
 using namespace std;
 

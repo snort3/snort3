@@ -21,13 +21,10 @@
 #ifndef MESSAGES_H
 #define MESSAGES_H
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include <cstdio>
+#include <ctime>
 
 #include "main/snort_types.h"
-
-#include <cstdio>
 
 #define LOG_DIV "--------------------------------------------------"
 

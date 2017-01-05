@@ -18,18 +18,11 @@
 
 // file_decomp_swf.cc author Ed Borgoyn <eborgoyn@sourcefire.com>
 
-#include "file_decomp_swf.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <zlib.h>
-#include <string.h>
-
-#ifdef HAVE_LZMA
-#include <lzma.h>
-#endif
+#include "file_decomp_swf.h"
 
 #include "utils/util.h"
 

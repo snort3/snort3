@@ -21,17 +21,14 @@
 #include "config.h"
 #endif
 
+#include "codecs/codec_module.h"
 #include "framework/codec.h"
-#include "protocols/ipv4.h"
-#include "protocols/packet.h"
-#include "protocols/tcp.h"
 #include "log/text_log.h"
 #include "main/snort_config.h"
-#include "log/messages.h"
-#include "protocols/packet_manager.h"
 #include "protocols/icmp4.h"
+#include "protocols/packet_manager.h"
+#include "protocols/tcp.h"
 #include "protocols/udp.h"
-#include "codecs/codec_module.h"
 
 namespace
 {

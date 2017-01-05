@@ -17,6 +17,10 @@
 //--------------------------------------------------------------------------
 // thread_config.cc author Michael Altizer <mialtize@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "thread_config.h"
 
 #include <hwloc.h>

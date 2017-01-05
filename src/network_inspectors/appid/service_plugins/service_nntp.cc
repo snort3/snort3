@@ -19,15 +19,15 @@
 
 // service_nntp.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "service_nntp.h"
 
 #include "main/snort_debug.h"
-#include "utils/util.h"
 
-#include "appid_session.h"
 #include "appid_module.h"
-#include "application_ids.h"
-#include "service_api.h"
 
 #define NNTP_PORT   119
 

@@ -20,7 +20,7 @@
 #ifndef ASN1_DETECT_H
 #define ASN1_DETECT_H
 
-#include <stdint.h>
+#include <cstdint>
 
 #define ABS_OFFSET 1
 #define REL_OFFSET 2

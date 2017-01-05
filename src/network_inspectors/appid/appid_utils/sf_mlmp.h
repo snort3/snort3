@@ -22,8 +22,8 @@
 #ifndef SF_MULTI_PART_MPSE_H
 #define SF_MULTI_PART_MPSE_H
 
-#include <stdlib.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 
 struct tMlmpPattern
 {

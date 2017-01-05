@@ -18,6 +18,10 @@
 
 // csv_formatter.cc author Carter Waxman <cwaxman@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "csv_formatter.h"
 
 #include <sstream>

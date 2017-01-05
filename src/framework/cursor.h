@@ -25,9 +25,8 @@
 // Cursor provides a formal way of using buffers when doing detection with
 // IpsOptions.
 
-#include <ctype.h>
-#include <stdint.h>
-#include <string.h>
+#include <cstdint>
+#include <cstring>
 
 struct Packet;
 

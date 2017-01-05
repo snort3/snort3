@@ -49,32 +49,20 @@
 **  the file doc/README.asn1.
 */
 
-#include <sys/types.h>
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <stdlib.h>
-#include <ctype.h>
-#include <errno.h>
 
-#include "asn1_detect.h"
-#include "main/snort_types.h"
-#include "main/snort_config.h"
-#include "main/snort_debug.h"
-#include "protocols/packet.h"
-#include "parser/parser.h"
-#include "utils/util.h"
-#include "ips_options/asn1_util.h"
-#include "hash/sfhashfcn.h"
-#include "detection/treenodes.h"
-#include "detection/detection_util.h"
 #include "detection/detection_defines.h"
-#include "profiler/profiler.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
-#include "framework/parameter.h"
 #include "framework/module.h"
+#include "hash/sfhashfcn.h"
+#include "profiler/profiler.h"
+#include "protocols/packet.h"
+
+#include "asn1_detect.h"
+#include "asn1_util.h"
 
 #define BITSTRING_OPT  "bitstring_overflow"
 #define DOUBLE_OPT     "double_overflow"

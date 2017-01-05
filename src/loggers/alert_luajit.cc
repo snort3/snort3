@@ -17,29 +17,23 @@
 //--------------------------------------------------------------------------
 // alert_luajit.cc author Russ Combs <rucombs@cisco.com>
 
-#include <assert.h>
-#include <vector>  // FIXIT-W Returning null reference (somewhere below)
-#include <lua.hpp>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "main/snort_types.h"
-#include "main/thread_config.h"
+#include "detection/signature.h"
 #include "events/event.h"
+#include "framework/logger.h"
+#include "framework/module.h"
 #include "helpers/chunk.h"
 #include "log/messages.h"
 #include "lua/lua.h"
-#include "managers/event_manager.h"
+#include "main/thread_config.h"
 #include "managers/lua_plugin_defs.h"
-#include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
 #include "managers/script_manager.h"
-#include "hash/sfhashfcn.h"
-#include "parser/parser.h"
+#include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
-#include "framework/logger.h"
-#include "framework/module.h"
-#include "framework/parameter.h"
-#include "profiler/profiler.h"
-#include "utils/stats.h"
 
 static THREAD_LOCAL ProfileStats luaLogPerfStats;
 

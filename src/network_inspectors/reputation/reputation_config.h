@@ -20,11 +20,9 @@
 #ifndef REPUTATION_CONFIG_H
 #define REPUTATION_CONFIG_H
 
-#include "main/snort_types.h"
-#include "sfrt/sfrt_flat.h"
-#include "main/snort_debug.h"
 #include "framework/counts.h"
-#include "main/thread.h"
+#include "main/snort_debug.h"
+#include "sfrt/sfrt_flat.h"
 
 #define NUM_INDEX_PER_ENTRY 4
 

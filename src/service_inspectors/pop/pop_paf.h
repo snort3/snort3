@@ -24,9 +24,8 @@
 
 // Protocol aware flushing for POP.
 
-#include "main/snort_types.h"
-#include "stream/stream_splitter.h"
 #include "mime/file_mime_paf.h"
+#include "stream/stream_splitter.h"
 
 // Structure used to record expected server termination sequence
 enum PopExpectedResp

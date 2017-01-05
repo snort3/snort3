@@ -17,12 +17,11 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#ifdef INTEL_SOFT_CPM
-#include "intel_soft_cpm.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "intel_soft_cpm.h"
 
 #include "framework/mpse.h"
 #include "main/snort_debug.h"
@@ -156,6 +155,4 @@ const BaseApi* se_intel_cpm[] =
     &cpm_api.base,
     nullptr
 };
-
-#endif
 

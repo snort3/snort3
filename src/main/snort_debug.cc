@@ -18,18 +18,20 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "snort_debug.h"
 
-#include <stdio.h>
-#include <stdarg.h>
 #include <syslog.h>
-#include <stdlib.h>
+
+#include <cstring>
 
 #include "log/messages.h"
-
-#include "snort_types.h"
-#include "snort_config.h"
 #include "utils/safec.h"
+
+#include "snort_config.h"
 
 bool Debug::init = false;
 uint64_t Debug::mask = 0;

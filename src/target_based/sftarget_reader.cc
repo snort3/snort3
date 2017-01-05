@@ -22,36 +22,19 @@
  * sftarget_reader.c
  */
 
-#include "sftarget_reader.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <stdio.h>
-#include <signal.h>
-#include <sys/types.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <unistd.h>
-#include <time.h>
+#include "sftarget_reader.h"
 
-#include "snort_protocols.h"
-#include "sftarget_hostentry.h"
-#include "sftarget_data.h"
-
-#include "hash/sfxhash.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
-#include "parser/parser.h"
 #include "protocols/packet.h"
+#include "sfrt/sfrt.h"
 #include "utils/stats.h"
 #include "utils/util.h"
-#include "utils/util_net.h"
-#include "sfip/sf_ip.h"
-#include "sfrt/sfrt.h"
 
 #define ATTRIBUTE_MAP_MAX_ROWS 1024
 

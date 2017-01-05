@@ -23,21 +23,13 @@
 #include "config.h"
 #endif
 
-#include <sys/types.h>
-#include <string.h>
 #include <sys/un.h>
-#include <unistd.h>
-#include <errno.h>
 
-#include <string>
-
-#include "log/messages.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "framework/logger.h"
-#include "framework/module.h"
 #include "detection/signature.h"
 #include "events/event.h"
+#include "framework/logger.h"
+#include "framework/module.h"
+#include "log/messages.h"
 #include "protocols/packet.h"
 #include "utils/util.h"
 

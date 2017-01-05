@@ -21,8 +21,7 @@
 
 // Implementation header with definitions, datatypes and flowdata class for SSL service inspector.
 
-#include "protocols/packet.h"
-#include "ssl_config.h"
+#include "flow/flow.h"
 
 #define SSLPP_ENCRYPTED_FLAGS \
     (SSL_HS_SDONE_FLAG | SSL_CLIENT_KEYX_FLAG | \

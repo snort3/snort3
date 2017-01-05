@@ -18,6 +18,10 @@
 
 // text_formatter.cc author Carter Waxman <cwaxman@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "text_formatter.h"
 
 #include <sstream>

@@ -45,21 +45,18 @@
 **      - Initial development.  DJR
 */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "hi_server_norm.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <ctype.h>
-
-#include "hi_norm.h"
-#include "hi_util.h"
-#include "hi_return_codes.h"
-
-#include "detection/detection_util.h"
 #include "search_engines/search_tool.h"
 #include "utils/safec.h"
-#include "utils/util_utf.h"
+
+#include "hi_events.h"
+#include "hi_norm.h"
+#include "hi_return_codes.h"
 
 int hi_server_norm(HI_SESSION* session, HttpSessionData* hsd)
 {

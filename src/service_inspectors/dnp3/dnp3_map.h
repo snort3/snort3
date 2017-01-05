@@ -22,7 +22,7 @@
 #ifndef DNP3_MAP__H
 #define DNP3_MAP__H
 
-#include <stdint.h>
+#include <cstdint>
 
 /* Check if "code" is in the function map.
  *

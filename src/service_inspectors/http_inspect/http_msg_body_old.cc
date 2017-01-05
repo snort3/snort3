@@ -17,17 +17,10 @@
 //--------------------------------------------------------------------------
 // http_msg_body_old.cc author Tom Peters <thopeter@cisco.com>
 
-#include <string.h>
-#include <sys/types.h>
-#include <stdio.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "detection/detection_util.h"
-#include "file_api/file_api.h"
-#include "file_api/file_flows.h"
-#include "mime/file_mime_process.h"
-
-#include "http_enum.h"
-#include "http_msg_request.h"
 #include "http_msg_body_old.h"
 
 using namespace HttpEnums;

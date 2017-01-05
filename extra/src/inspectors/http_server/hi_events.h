@@ -20,8 +20,6 @@
 #ifndef HI_EVENTS_H
 #define HI_EVENTS_H
 
-#include "hi_include.h"
-
 // changed gids from 119-120 to avoid overlap with nhi
 #define GID_HTTP_CLIENT  319
 #define GID_HTTP_SERVER  320

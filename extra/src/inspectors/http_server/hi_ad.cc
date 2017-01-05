@@ -28,12 +28,17 @@
 **  NOTES:
 **    - 3.2.03:  Initial development.  DJR
 */
-#include <stdlib.h>
-#include <sys/types.h>
 
-#include "hi_ui_config.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "hi_ad.h"
+
+#include "hi_events.h"
 #include "hi_return_codes.h"
 #include "hi_si.h"
+#include "hi_ui_config.h"
 
 /*
 **  NAME

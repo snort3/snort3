@@ -23,7 +23,6 @@
 #define PARSE_PORTS_H
 
 #include "ports/port_var_table.h"
-#include "utils/sflsq.h"
 
 //-------------------------------------------------------------------------
 // parser

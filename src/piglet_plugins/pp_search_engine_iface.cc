@@ -17,6 +17,10 @@
 //--------------------------------------------------------------------------
 // pp_search_engine_iface.cc author Joel Cornett <jocornet@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "pp_search_engine_iface.h"
 
 #include "framework/mpse.h"

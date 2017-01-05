@@ -21,14 +21,9 @@
 #ifndef TCP_MODULE_H
 #define TCP_MODULE_H
 
-#include <string>
-#include <vector>
-
-#include "main/snort_types.h"
-#include "main/thread.h"
 #include "flow/session.h"
 #include "framework/module.h"
-#include "tcp_stream_config.h"
+#include "stream/tcp/tcp_stream_config.h"
 
 #define GID_STREAM_TCP  129
 

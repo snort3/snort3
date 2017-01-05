@@ -49,20 +49,14 @@
 **  Nov 2,2002: Fixed queue_init() , added count=0
 */
 
-#include "acsmx.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
+#include "acsmx.h"
 
 #include <list>
 
-#include "main/snort_debug.h"
 #include "main/thread.h"
 #include "utils/util.h"
 

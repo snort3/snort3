@@ -20,10 +20,6 @@
 #ifndef CLOCK_DEFS_H
 #define CLOCK_DEFS_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #ifdef USE_TSC_CLOCK
 #include "time/tsc_clock.h"
 using SnortClock = TscClock;

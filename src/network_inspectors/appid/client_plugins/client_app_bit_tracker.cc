@@ -19,15 +19,15 @@
 
 // client_app_bit_tracker.cc author Sourcefire Inc.
 
-#include "main/snort_debug.h"
-#include "protocols/packet.h"
-#include "utils/sflsq.h"
-#include "utils/util.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "app_info_table.h"
-#include "application_ids.h"
-#include "client_app_api.h"
+#include "main/snort_debug.h"
+
 #include "appid_module.h"
+
+#include "client_app_api.h"
 
 static const char UDP_BIT_QUERY[] = "d1:a";
 static const char UDP_BIT_RESPONSE[] = "d1:r";

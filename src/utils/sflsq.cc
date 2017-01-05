@@ -29,14 +29,13 @@
 *   multiple readers to traverse a list.
 */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "sflsq.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "main/snort_types.h"
-#include "utils/util.h"
+#include "util.h"
 
 /*
 *  private alloc

@@ -23,9 +23,8 @@
 #define TCP_SEGMENT_DESCRIPTOR_H
 
 #include "flow/flow.h"
-#include "protocols/tcp.h"
 #include "protocols/packet.h"
-
+#include "protocols/tcp.h"
 #include "stream/tcp/tcp_event_logger.h"
 
 class TcpSegmentDescriptor

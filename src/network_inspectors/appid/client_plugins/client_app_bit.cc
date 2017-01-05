@@ -19,12 +19,15 @@
 
 // client_app_bit.cc author Sourcefire Inc.
 
-#include "client_app_api.h"
-#include "application_ids.h"
-#include "appid_module.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "main/snort_debug.h"
-#include "utils/util.h"
+
+#include "appid_module.h"
+
+#include "client_app_api.h"
 
 static const char BIT_BANNER[] = "\023BitTorrent protocol";
 

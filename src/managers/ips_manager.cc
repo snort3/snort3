@@ -17,33 +17,21 @@
 //--------------------------------------------------------------------------
 // ips_manager.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "ips_manager.h"
 
-#include <assert.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <unistd.h>
-#include <zlib.h>
-
+#include <cassert>
 #include <list>
-#include <fstream>
 
-#include "plugin_manager.h"
-#include "main/snort_types.h"
-#include "main/snort_config.h"
-#include "main/snort_debug.h"
-#include "framework/ips_option.h"
-#include "framework/so_rule.h"
-#include "framework/module.h"
-#include "framework/parameter.h"
-#include "managers/module_manager.h"
-#include "ips_options/ips_options.h"
-#include "utils/util.h"
-#include "parser/parser.h"
+#include "detection/treenodes.h"
 #include "log/messages.h"
+#include "main/snort_config.h"
+
+#include "module_manager.h"
+#include "plugin_manager.h"
 
 using namespace std;
 

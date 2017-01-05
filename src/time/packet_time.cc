@@ -29,8 +29,13 @@
  * or use the packet time.  I choose the latter.
  */
 
-#include "time/packet_time.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "main/thread.h"
+
+#include "packet_time.h"
 
 static THREAD_LOCAL struct timeval s_recent_packet = { 0, 0 };
 static THREAD_LOCAL uint32_t s_first_packet = 0;

@@ -18,10 +18,15 @@
 //--------------------------------------------------------------------------
 // Writen by Bhagyashree Bantwal <bbantwal@sourcefire.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "util_jsnorm.h"
 
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
+
 #include "main/thread.h"
 
 #define INVALID_HEX_VAL -1

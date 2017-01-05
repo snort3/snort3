@@ -17,23 +17,19 @@
 //--------------------------------------------------------------------------
 // pp_logger.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "piglet_plugins.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "lua/lua_iface.h"
 #include "managers/event_manager.h"
 #include "piglet/piglet_api.h"
 
 #include "pp_decode_data_iface.h"
 #include "pp_event_iface.h"
 #include "pp_ip_api_iface.h"
+#include "pp_logger_iface.h"
 #include "pp_packet_iface.h"
 #include "pp_raw_buffer_iface.h"
-
-#include "pp_logger_iface.h"
 
 class LoggerPiglet : public Piglet::BasePlugin
 {

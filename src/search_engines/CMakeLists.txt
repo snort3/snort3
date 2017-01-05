@@ -1,6 +1,5 @@
 
 set (SEARCH_ENGINE_INCLUDES
-    pat_stats.h
     search_common.h
     search_tool.h
 )
@@ -44,6 +43,7 @@ if ( HAVE_HYPERSCAN )
 endif ()
 
 set (SEARCH_ENGINE_SOURCES
+    pat_stats.h
     search_engines.cc
     search_engines.h
     search_tool.cc

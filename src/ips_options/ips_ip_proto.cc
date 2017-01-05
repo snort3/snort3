@@ -21,24 +21,16 @@
 #include "config.h"
 #endif
 
-#include <sys/types.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <errno.h>
 #include <netdb.h>
 
-#include "log/messages.h"
-#include "main/snort_debug.h"
-#include "protocols/packet.h"
-#include "parser/parser.h"
-#include "utils/util.h"
-#include "profiler/profiler.h"
-#include "hash/sfhashfcn.h"
-#include "detection/treenodes.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
-#include "framework/parameter.h"
 #include "framework/module.h"
+#include "hash/sfhashfcn.h"
+#include "log/messages.h"
+#include "profiler/profiler.h"
+#include "protocols/packet.h"
+#include "utils/util.h"
 
 #define s_name "ip_proto"
 

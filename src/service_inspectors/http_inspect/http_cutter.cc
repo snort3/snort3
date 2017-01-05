@@ -17,6 +17,10 @@
 //--------------------------------------------------------------------------
 // http_cutter.cc author Tom Peters <thopeter@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "http_cutter.h"
 
 using namespace HttpEnums;

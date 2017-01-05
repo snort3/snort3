@@ -21,10 +21,8 @@
 #include "config.h"
 #endif
 
-#include <string>
-
-#include "detection/detection_defines.h"
 #include "framework/cursor.h"
+#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/sfhashfcn.h"

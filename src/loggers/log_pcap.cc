@@ -22,32 +22,15 @@
 #include "config.h"
 #endif
 
-#include <sys/types.h>
-#include <ctype.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <unistd.h>
-#include <time.h>
 #include <pcap.h>
 
-extern "C" {
-#include <sfbpf_dlt.h>
-}
-
-#include <string>
-
-#include "log/messages.h"
-#include "main/snort_debug.h"
-#include "main/snort_config.h"
 #include "framework/logger.h"
 #include "framework/module.h"
+#include "log/messages.h"
+#include "main/snort_config.h"
 #include "protocols/packet.h"
-#include "events/event.h"
-#include "parser/parser.h"
 #include "packet_io/sfdaq.h"
 #include "utils/util.h"
-#include "utils/stats.h"
 
 using namespace std;
 

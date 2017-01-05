@@ -18,16 +18,17 @@
 
 // hi_module.cc author Russ Combs <rucombs@cisco.com>
 
-#include "hi_module.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <string>
+#include "hi_module.h"
 
 #include "decompress/file_decomp.h"
 #include "utils/util.h"
 
-#include "hi_ui_config.h"
-#include "hi_events.h"
 #include "hi_cmd_lookup.h"
+#include "hi_include.h"
 #include "hi_ui_iis_unicode_map.h"
 
 //-------------------------------------------------------------------------

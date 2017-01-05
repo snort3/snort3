@@ -25,40 +25,24 @@
  *
  */
 
-#include "log/unified2.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <sys/types.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <time.h>
-#include <netinet/in.h>
-
-#include <string>
-
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "main/snort_config.h"
+#include "detection/signature.h"
+#include "detection/detection_util.h"
+#include "events/event.h"
 #include "framework/logger.h"
 #include "framework/module.h"
-#include "protocols/packet.h"
-#include "detection/rules.h"
-#include "detection/treenodes.h"
-#include "detection/detection_util.h"
-#include "detection/detect.h"
-#include "parser/parser.h"
-#include "events/event.h"
 #include "log/messages.h"
 #include "log/obfuscator.h"
+#include "log/unified2.h"
+#include "main/snort_config.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
-#include "protocols/layer.h"
-#include "protocols/vlan.h"
 #include "protocols/icmp4.h"
+#include "protocols/packet.h"
+#include "protocols/vlan.h"
 #include "stream/stream.h"
 #include "utils/safec.h"
 #include "utils/util.h"

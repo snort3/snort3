@@ -19,17 +19,18 @@
 
 // ips_modbus_data.cc author Russ Combs <rucombs@cisco.com>
 
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "detection/detection_defines.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/sfhashfcn.h"
-#include "protocols/packet.h"
 #include "profiler/profiler.h"
+#include "protocols/packet.h"
 
-#include "modbus.h"
 #include "modbus_decode.h"
 
 static const char* s_name = "modbus_data";

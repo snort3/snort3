@@ -17,14 +17,16 @@
 //--------------------------------------------------------------------------
 // http_module.cc author Tom Peters <thopeter@cisco.com>
 
-#include <string.h>
-#include <sys/types.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "http_module.h"
 
 #include "log/messages.h"
 
-#include "http_uri_norm.h"
 #include "http_js_norm.h"
-#include "http_module.h"
+#include "http_uri_norm.h"
 
 using namespace HttpEnums;
 

@@ -17,27 +17,17 @@
 //--------------------------------------------------------------------------
 // ips_ack.cc author Russ Combs <rucombs@cisco.com>
 
-#include <sys/types.h>
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <stdlib.h>
-#include <ctype.h>
 
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "detection/treenodes.h"
-#include "protocols/packet.h"
-#include "parser/parser.h"
-#include "utils/util.h"
-#include "profiler/profiler.h"
-#include "hash/sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
-#include "framework/parameter.h"
 #include "framework/module.h"
 #include "framework/range.h"
+#include "hash/sfhashfcn.h"
+#include "profiler/profiler_defs.h"
+#include "protocols/packet.h"
 #include "protocols/tcp.h"
 
 #define s_name "ack"

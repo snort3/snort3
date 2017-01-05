@@ -21,24 +21,12 @@
 #include "config.h"
 #endif
 
-#include <string.h>
-#include <time.h>
-
-#include <iostream>
-#include <string>
-
-#include "main/snort_debug.h"
-#include "main/snort_types.h"
+#include "flow/flow.h"
 #include "framework/data_bus.h"
 #include "framework/inspector.h"
 #include "framework/module.h"
 #include "log/messages.h"
 #include "log/text_log.h"
-#include "protocols/packet.h"
-#include "profiler/profiler.h"
-#include "utils/stats.h"
-#include "flow/flow.h"
-#include "sfip/sf_ip.h"
 
 static const char* s_name = "data_log";
 static const char* f_name = "data.log";

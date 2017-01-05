@@ -33,11 +33,14 @@
 **    - 3.2.03:  Initial development.  DJR
 */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "hi_mi.h"
 
-#include "hi_si.h"
-#include "hi_client.h"
-#include "hi_server.h"
+#include "protocols/packet.h"
+
 #include "hi_return_codes.h"
 
 /*

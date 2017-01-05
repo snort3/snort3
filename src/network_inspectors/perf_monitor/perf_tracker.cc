@@ -18,19 +18,21 @@
 
 // perf_tracker.cc author Carter Waxman <cwaxman@cisco.com>
 
-#include <sys/stat.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "perf_tracker.h"
 
-#include "csv_formatter.h"
-#include "perf_module.h"
-#include "text_formatter.h"
+#include <limits.h>
+#include <sys/stat.h>
 
 #include "log/messages.h"
 #include "main/snort_config.h"
-#include "main/thread.h"
-#include "parser/parser.h"
 #include "utils/util.h"
+
+#include "csv_formatter.h"
+#include "text_formatter.h"
 
 static inline bool check_file_size(FILE* fh, uint64_t max_file_size)
 {

@@ -26,6 +26,10 @@
 // within each activity.  Also sets appropriate data for use with
 // preprocessor rule options.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "dce_udp.h"
 
 #include "flow/session.h"

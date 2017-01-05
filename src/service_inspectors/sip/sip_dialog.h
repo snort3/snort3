@@ -24,8 +24,9 @@
 
 // Dialog management for SIP call flow analysis
 
-#include "sip_config.h"
 #include "sip_parser.h"
+
+struct Packet;
 
 #define TOTAL_RESPONSES 0
 #define RESPONSE1XX     1

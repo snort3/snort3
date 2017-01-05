@@ -18,9 +18,11 @@
 
 // dns_module.cc author Bhagyashree Bantwal <bbantwal@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "dns_module.h"
-#include <assert.h>
-#include <sstream>
 
 using namespace std;
 

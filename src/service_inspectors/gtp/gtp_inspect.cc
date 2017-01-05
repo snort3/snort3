@@ -19,15 +19,15 @@
 // gtp_inspect.cc author Russ Combs <rucombs@cisco.com>
 // adapt 2x preprocessor code to 3x inspector
 
-#include "gtp_inspect.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
+#include "gtp_inspect.h"
+
 #include "managers/inspector_manager.h"
-#include "protocols/packet.h"
 #include "profiler/profiler.h"
+#include "protocols/packet.h"
 
 #include "gtp.h"
 #include "gtp_module.h"

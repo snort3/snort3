@@ -17,7 +17,14 @@
 //--------------------------------------------------------------------------
 // hashes.h author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "hashes.h"
+
+#include <openssl/md5.h>
+#include <openssl/sha.h>
 
 void sha256(const unsigned char* data, size_t size, unsigned char* digest)
 {

@@ -17,18 +17,16 @@
 //--------------------------------------------------------------------------
 // stream_user.cc author Russ Combs <rucombs@cisco.com>
 
-#include "stream_user.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <assert.h>
+#include "stream_user.h"
+
+#include "log/messages.h"
 
 #include "user_module.h"
 #include "user_session.h"
-#include "log/messages.h"
-#include "protocols/packet.h"
 
 //-------------------------------------------------------------------------
 // helpers

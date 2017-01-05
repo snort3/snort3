@@ -18,7 +18,12 @@
 //--------------------------------------------------------------------------
 // trie_api.cc author Russ Combs <rucombs@cisco.com>
 
-#include "framework/mpse.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "framework/base_api.h"
+#include "main/snort_types.h"
 
 extern const BaseApi* se_lowmem;
 

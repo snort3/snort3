@@ -19,13 +19,14 @@
 
 // service_lpr.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "main/snort_debug.h"
-#include "utils/util.h"
 
 #include "appid_module.h"
-#include "application_ids.h"
-#include "appid_session.h"
-#include "app_info_table.h"
+
 #include "service_api.h"
 
 #define LPR_COUNT_THRESHOLD 2

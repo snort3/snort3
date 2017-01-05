@@ -1,19 +1,20 @@
-set ( LATENCY_INCLUDES
-    packet_latency.h
-    rule_latency.h
-    latency_rules.h
-    )
 
 set ( LATENCY_SOURCES
+    latency_config.h
+    latency_rules.h
+    latency_stats.h
     latency_timer.h
     latency_util.h
-    packet_latency.cc
-    rule_latency.cc
+    latency_module.h
     latency_module.cc
+    packet_latency.h
+    packet_latency.cc
+    packet_latency_config.h
+    rule_latency_config.h
+    rule_latency_state.h
+    rule_latency.h
+    rule_latency.cc
     )
 
 add_library ( latency STATIC ${LATENCY_SOURCES} )
 
-install ( FILES ${LATENCY_INCLUDES}
-    DESTINATION "${INCLUDE_INSTALL_PATH}/latency"
-)

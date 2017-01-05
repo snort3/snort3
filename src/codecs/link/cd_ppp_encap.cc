@@ -23,8 +23,6 @@
 #endif
 
 #include "framework/codec.h"
-#include "protocols/protocol_ids.h"
-#include "main/snort_config.h"
 #include "main/snort_debug.h"
 
 #define CD_PPPENCAP_NAME "ppp_encap"

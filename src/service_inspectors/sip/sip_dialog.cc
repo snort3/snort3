@@ -19,26 +19,23 @@
 
 // sip_dialog.cc author Hui Cao <huica@cisco.com>
 
-#include "sip_dialog.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <assert.h>
+#include "sip_dialog.h"
 
+#include "events/event_queue.h"
 #include "framework/data_bus.h"
-#include "main/snort_config.h"
 #include "main/snort_debug.h"
-#include "main/snort_types.h"
-#include "pub_sub/sip_events.h"
+#include "protocols/packet.h"
 #include "protocols/vlan.h"
-#include "sfip/sf_ip.h"
+#include "pub_sub/sip_events.h"
 #include "stream/stream.h"
 #include "utils/util.h"
 
-#include "sip_module.h"
 #include "sip.h"
+#include "sip_module.h"
 
 static void SIP_updateMedias(SIP_MediaSession*, SIP_MediaList*);
 static int SIP_compareMedias(SIP_MediaDataList, SIP_MediaDataList);

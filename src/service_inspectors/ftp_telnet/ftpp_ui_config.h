@@ -38,9 +38,7 @@
 #ifndef FTPP_UI_CONFIG_H
 #define FTPP_UI_CONFIG_H
 
-#include "framework/bits.h"
 #include "sfip/sf_ip.h"
-#include "sfrt/sfrt.h"
 #include "utils/kmap.h"
 
 /*

@@ -18,11 +18,11 @@
 //--------------------------------------------------------------------------
 // flow_key.cc author Steven Sturges <ssturges@sourcefire.com>
 
-#include "flow/flow_key.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "flow/flow_key.h"
 
 #include "hash/sfhashfcn.h"
 #include "main/snort_config.h"

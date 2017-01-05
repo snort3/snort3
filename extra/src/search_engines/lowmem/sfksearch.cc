@@ -32,19 +32,12 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <ctype.h>
+#include "sfksearch.h"
 
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
+#include <cassert>
+
 #include "main/thread.h"
 #include "utils/util.h"
-
-#include "sfksearch.h"
 
 static void KTrieFree(KTRIENODE* n);
 

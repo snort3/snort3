@@ -17,13 +17,15 @@
 //--------------------------------------------------------------------------
 // pp_logger_iface.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "pp_logger_iface.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <lua.hpp>
+#include "pp_logger_iface.h"
 
 #include "framework/logger.h"
 #include "lua/lua_arg.h"
-#include "lua/lua_stack.h"
+
 #include "pp_event_iface.h"
 #include "pp_packet_iface.h"
 

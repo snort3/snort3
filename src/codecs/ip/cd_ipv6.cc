@@ -22,18 +22,11 @@
 #include "config.h"
 #endif
 
-#include <arpa/inet.h>
-#include <limits>
-
-#include "protocols/ipv6.h"
 #include "codecs/codec_module.h"
 #include "framework/codec.h"
+#include "log/text_log.h"
 #include "main/snort_config.h"
 #include "packet_io/active.h"
-#include "protocols/protocol_ids.h"
-#include "protocols/packet_manager.h"
-#include "log/text_log.h"
-#include "sfip/sf_ip.h"
 
 #define CD_IPV6_NAME "ipv6"
 #define CD_IPV6_HELP "support for Internet protocol v6"

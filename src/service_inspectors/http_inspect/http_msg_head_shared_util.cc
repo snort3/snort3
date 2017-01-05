@@ -17,8 +17,11 @@
 //--------------------------------------------------------------------------
 // http_msg_head_shared_util.cc author Tom Peters <thopeter@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "http_msg_head_shared.h"
-#include <string>
 
 int32_t HttpMsgHeadShared::get_next_code(const Field& field, int32_t& offset,
     const StrCode table[])

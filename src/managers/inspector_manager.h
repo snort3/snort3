@@ -23,17 +23,10 @@
 // Factory for Inspectors.
 // Also provides packet evaluation.
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include "main/snort_types.h"
-#include "framework/base_api.h"
 #include "framework/inspector.h"
 
 #ifdef PIGLET
 #include "framework/inspector.h"
-#include "piglet/piglet_api.h"
 #endif
 
 struct Packet;

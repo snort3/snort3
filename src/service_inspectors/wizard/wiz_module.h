@@ -23,11 +23,7 @@
 
 // wizard management interface
 
-#include <string>
-#include <vector>
-
 #include "framework/module.h"
-#include "main/thread.h"
 
 #define WIZ_NAME "wizard"
 #define WIZ_HELP "inspector that implements port-independent protocol identification"

@@ -18,29 +18,17 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include <sys/types.h>
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <stdlib.h>
-#include <ctype.h>
-#include <string.h>
 
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "protocols/packet.h"
-#include "protocols/ipv4.h"
-#include "protocols/ipv4_options.h"
-#include "parser/parser.h"
-#include "utils/util.h"
-#include "profiler/profiler.h"
-#include "hash/sfhashfcn.h"
-#include "detection/treenodes.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
-#include "framework/parameter.h"
 #include "framework/module.h"
+#include "hash/sfhashfcn.h"
+#include "profiler/profiler.h"
+#include "protocols/ipv4_options.h"
+#include "protocols/packet.h"
 
 #define s_name "ipopts"
 

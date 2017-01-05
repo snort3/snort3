@@ -18,15 +18,15 @@
 
 // modbus.cc author Russ Combs <rucombs@cisco.com>
 
-#include "modbus.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
+#include "modbus.h"
+
 #include "events/event_queue.h"
-#include "managers/inspector_manager.h"
 #include "profiler/profiler.h"
+#include "protocols/packet.h"
 
 #include "modbus_decode.h"
 #include "modbus_module.h"

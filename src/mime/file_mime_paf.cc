@@ -20,17 +20,15 @@
 // file_mime_paf.cc author Hui Cao <huica@cisco.com>
 // 9.25.2012 - Initial Source Code. Hui Cao
 
-#include "file_mime_paf.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "file_api/file_api.h"
+#include "file_mime_paf.h"
 
-#include "file_mime_config.h"
+#include <cctype>
+
+#include "main/snort_debug.h"
 
 static const char* boundary_str = "boundary=";
 

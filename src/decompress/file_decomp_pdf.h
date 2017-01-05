@@ -22,7 +22,6 @@
 #ifndef FILE_DECOMP_PDF_H
 #define FILE_DECOMP_PDF_H
 
-#include <stdint.h>
 #include <zlib.h>
 
 #include "file_decomp.h"

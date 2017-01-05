@@ -19,12 +19,15 @@
 
 // service_battle_field.cc author Sourcefire Inc.
 
-#include "service_battle_field.h"
-#include "appid_module.h"
-#include "application_ids.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "main/snort_debug.h"
-#include "utils/util.h"
+#include "service_battle_field.h"
+
+#include "protocols/packet.h"
+
+#include "appid_module.h"
 
 enum CONNECTION_STATES
 {

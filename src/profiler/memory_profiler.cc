@@ -18,18 +18,14 @@
 
 // memory_profiler.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "memory_profiler.h"
-
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <memory>
+#include "memory_profiler.h"
 
-#include "profiler_tree_builder.h"
 #include "profiler_nodes.h"
 #include "profiler_printer.h"
-#include "profiler_stats_table.h"
 #include "memory_defs.h"
 
 #ifdef UNIT_TEST

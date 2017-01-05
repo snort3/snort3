@@ -19,19 +19,20 @@
 
 // service_ftp.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "service_ftp.h"
 
 #include "main/snort_debug.h"
-#include "sfip/sf_ip.h"
-#include "utils/util.h"
+#include "protocols/packet.h"
 
 #include "app_info_table.h"
-#include "appid_api.h"
-#include "appid_session.h"
-#include "application_ids.h"
+#include "appid_module.h"
+
 #include "service_base.h"
 #include "service_util.h"
-#include "appid_module.h"
 
 #define FTP_PORT    21
 

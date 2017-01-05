@@ -24,11 +24,10 @@
 // The host cache is used to cache information about hosts so that it can
 // be shared among threads.
 
-#include <functional>
-#include "host_tracker/host_tracker.h"
-#include "hash/lru_cache_shared.h"
-#include "main/snort_types.h"
+#include <memory>
 
+#include "hash/lru_cache_shared.h"
+#include "host_tracker/host_tracker.h"
 
 struct HostIpKey
 {

@@ -26,11 +26,13 @@
 #include "active.h"
 
 #include "log/messages.h"
+#include "main/snort_config.h"
 #include "managers/action_manager.h"
-#include "packet_io/sfdaq.h"
 #include "protocols/tcp.h"
 #include "stream/stream.h"
 #include "utils/dnet_header.h"
+
+#include "sfdaq.h"
 
 #define MAX_ATTEMPTS 20
 

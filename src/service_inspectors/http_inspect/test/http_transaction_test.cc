@@ -19,6 +19,10 @@
 // http_transaction_test.cc author Tom Peters <thopeter@cisco.com>
 // unit test main
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "service_inspectors/http_inspect/http_transaction.h"
 #include "service_inspectors/http_inspect/http_module.h"
 #include "service_inspectors/http_inspect/http_flow_data.h"

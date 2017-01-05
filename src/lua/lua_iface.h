@@ -21,7 +21,6 @@
 #define LUA_IFACE_H
 
 #include <cassert>
-#include <lua.hpp>
 
 #include "lua.h"
 #include "lua_ref.h"

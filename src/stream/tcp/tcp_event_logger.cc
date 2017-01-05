@@ -19,15 +19,17 @@
 // tcp_event_logger.cc author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Jul 30, 2015
 
-#include "strings.h"
-#include "main/snort_config.h"
-#include "events/event_queue.h"
-#include "filters/sfrf.h"
-#include "detection/rules.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "tcp_defs.h"
-#include "tcp_module.h"
 #include "tcp_event_logger.h"
+
+#include "detection/rules.h"
+#include "filters/sfrf.h"
+#include "main/snort_config.h"
+
+#include "tcp_module.h"
 
 #define EVENT_SYN_ON_EST                0x00000001
 #define EVENT_DATA_ON_SYN               0x00000002

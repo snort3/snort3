@@ -17,16 +17,15 @@
 //--------------------------------------------------------------------------
 // http_stream_splitter_reassemble.cc author Tom Peters <thopeter@cisco.com>
 
-#include <assert.h>
-#include <sys/types.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "file_api/file_flows.h"
-#include "http_enum.h"
-#include "http_field.h"
-#include "http_test_manager.h"
-#include "http_test_input.h"
+#include "protocols/packet.h"
+
 #include "http_inspect.h"
 #include "http_stream_splitter.h"
+#include "http_test_input.h"
 
 using namespace HttpEnums;
 

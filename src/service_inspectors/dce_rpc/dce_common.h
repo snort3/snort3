@@ -23,6 +23,7 @@
 
 #include "events/event_queue.h"
 #include "framework/counts.h"
+#include "framework/endianness.h"
 #include "framework/value.h"
 #include "protocols/packet.h"
 #include <assert.h>

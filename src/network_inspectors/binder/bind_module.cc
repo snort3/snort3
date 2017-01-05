@@ -18,22 +18,17 @@
 
 // bind_module.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "bind_module.h"
 
-#include <assert.h>
-#include <string.h>
-
-#include <string>
-
-#include "binding.h"
-#include "protocols/packet.h"
-#include "parser/parse_ip.h"
 #include "log/messages.h"
-#include "main/policy.h"
-#include "main/snort_config.h"
 #include "main/shell.h"
-#include "managers/module_manager.h"
-#include "parser/parser.h"
+#include "main/snort_config.h"
+#include "parser/parse_ip.h"
+#include "protocols/packet.h"
 
 using namespace std;
 

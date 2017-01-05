@@ -19,11 +19,14 @@
 // tcp_state_established.cc author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Jul 30, 2015
 
-#include "tcp_module.h"
-#include "tcp_tracker.h"
-#include "tcp_session.h"
-#include "tcp_normalizer.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "tcp_state_established.h"
+
+#include "tcp_normalizer.h"
+#include "tcp_session.h"
 
 TcpStateEstablished::TcpStateEstablished(TcpStateMachine& tsm) :
     TcpStateHandler(TcpStreamTracker::TCP_ESTABLISHED, tsm)

@@ -22,14 +22,6 @@
 #ifndef SSL_H
 #define SSL_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include <ctype.h>
-#include <stdint.h>
-#include <stdlib.h>
-
 #include "main/snort_types.h"
 
 #define SSL_NO_FLAG             0x00000000

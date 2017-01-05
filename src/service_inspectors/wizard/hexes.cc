@@ -17,9 +17,11 @@
 //--------------------------------------------------------------------------
 // magic.cc author Russ Combs <rucombs@cisco.com>
 
-#include <ctype.h>
-#include <stdlib.h>
-#include <strings.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <cstdlib>
 
 #include "magic.h"
 

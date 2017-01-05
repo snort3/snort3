@@ -17,15 +17,13 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "dyn_array.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-
-#include "main/snort_debug.h"
-#include "sfrt/sfrt.h"
-#include "utils/util.h"
+#include "util.h"
 
 // number of additional policies allocated with each re-alloc operation
 #define POLICY_ALLOCATION_CHUNK 10

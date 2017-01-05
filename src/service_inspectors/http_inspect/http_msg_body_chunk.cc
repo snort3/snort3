@@ -17,13 +17,10 @@
 //--------------------------------------------------------------------------
 // http_msg_body_chunk.cc author Tom Peters <thopeter@cisco.com>
 
-#include <string.h>
-#include <sys/types.h>
-#include <stdio.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "mime/file_mime_process.h"
-
-#include "http_enum.h"
 #include "http_msg_body_chunk.h"
 
 using namespace HttpEnums;

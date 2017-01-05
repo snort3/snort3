@@ -17,11 +17,14 @@
 //--------------------------------------------------------------------------
 // http_js_norm.cc author Tom Peters <thopeter@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "http_js_norm.h"
+
 #include "utils/util_jsnorm.h"
-#include "utils/util.h"
 #include "utils/safec.h"
-#include "http_enum.h"
 
 using namespace HttpEnums;
 

@@ -22,7 +22,7 @@
 #ifndef STREAM_IP_H
 #define STREAM_IP_H
 
-#include "flow/flow.h"
+#include "framework/inspector.h"
 
 /* engine-based defragmentation policy enums */
 // must update stream.h::IP_POLICIES if this changes

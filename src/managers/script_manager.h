@@ -26,7 +26,6 @@
 #include <string>
 #include <vector>
 
-#include "main/snort_types.h"
 #include "framework/base_api.h"
 
 //-------------------------------------------------------------------------

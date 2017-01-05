@@ -19,12 +19,17 @@
 
 // thirdparty_appid_utils.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "thirdparty_appid_utils.h"
 
 #include <dlfcn.h>
 
-#include "main/snort_debug.h"
 #include "log/messages.h"
+#include "main/snort_debug.h"
+
 #include "appid_config.h"
 #include "thirdparty_appid_api.h"
 

@@ -23,13 +23,11 @@
 #include "config.h"
 #endif
 
-extern "C" {
 #include <sfbpf_dlt.h>
-}
 
-#include "protocols/token_ring.h"
-#include "framework/codec.h"
 #include "codecs/codec_module.h"
+#include "framework/codec.h"
+#include "protocols/token_ring.h"
 
 namespace
 {

@@ -17,13 +17,16 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "rule_port_tables.h"
+
+#include "log/messages.h"
 
 #include "port_object.h"
 #include "port_table.h"
-#include "log/messages.h"
-#include "parser/parser.h"
-#include "utils/util.h"
 
 #define DEFAULT_LARGE_RULE_GROUP 9
 

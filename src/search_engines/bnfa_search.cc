@@ -139,24 +139,16 @@
 **                 queue ops is optional, as this can impose a modest
 **                 performance hit of a few percent.
 */
-#include "bnfa_search.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
+#include "bnfa_search.h"
 
 #include <list>
 
-#include "search_common.h"
 #include "log/messages.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
 #include "utils/stats.h"
 #include "utils/util.h"
 

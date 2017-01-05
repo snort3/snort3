@@ -21,9 +21,6 @@
 #ifndef PS_INSPECT_H
 #define PS_INSPECT_H
 
-#include <time.h>
-#include <sys/time.h>
-
 #include "framework/inspector.h"
 #include "ps_detect.h"
 

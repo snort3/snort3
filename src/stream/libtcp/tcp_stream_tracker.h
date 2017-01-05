@@ -22,11 +22,9 @@
 #ifndef TCP_STREAM_TRACKER_H
 #define TCP_STREAM_TRACKER_H
 
-#include "stdint.h"
-
+#include "stream/libtcp/tcp_segment_descriptor.h"
 #include "stream/paf.h"
 #include "stream/tcp/tcp_defs.h"
-#include "tcp_segment_descriptor.h"
 
 /* Only track a maximum number of alerts per session */
 #define MAX_SESSION_ALERTS 8

@@ -17,13 +17,12 @@
 //--------------------------------------------------------------------------
 // ips_options.cc author Russ Combs <rucombs@cisco.com>
 
-#include "ips_options.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "framework/ips_option.h"
+#include "ips_options.h"
+
 #include "managers/plugin_manager.h"
 
 extern const BaseApi* ips_byte_extract;

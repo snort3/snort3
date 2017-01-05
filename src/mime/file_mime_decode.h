@@ -22,10 +22,7 @@
 
 // Email attachment decoder, supports Base64, QP, UU, and Bit7/8
 
-#include <stdlib.h>
-
 #include "framework/counts.h"
-#include "main/snort_types.h"
 #include "mime/decode_base.h"
 #include "mime/file_mime_config.h"
 

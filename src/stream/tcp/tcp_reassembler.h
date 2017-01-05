@@ -22,13 +22,8 @@
 #ifndef TCP_REASSEMBLER_H
 #define TCP_REASSEMBLER_H
 
-#include "framework/counts.h"
-#include "detection/detect.h"
-#include "normalize/normalize.h"
-
-#include "segment_overlap_editor.h"
-#include "tcp_defs.h"
-#include "tcp_segment_node.h"
+#include "stream/stream.h"
+#include "stream/tcp/segment_overlap_editor.h"
 
 class TcpSession;
 class TcpStreamTracker;

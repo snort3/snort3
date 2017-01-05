@@ -21,7 +21,8 @@
 #include "config.h"
 #endif
 
-#include "framework/mpse.h"
+#include "main/snort_types.h"
+
 #include "search_engines.h"
 
 extern const BaseApi* se_ac_banded;

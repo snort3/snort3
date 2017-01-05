@@ -19,8 +19,10 @@
 // tcp_state_machine.cc author davis mcpherson <davmcphe@cisco.com>
 // Created on: Jul 29, 2015
 
-#include "tcp_stream_tracker.h"
-#include "tcp_stream_session.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "tcp_state_machine.h"
 
 TcpStateMachine::TcpStateMachine()

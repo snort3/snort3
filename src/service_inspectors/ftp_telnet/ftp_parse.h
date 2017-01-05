@@ -26,8 +26,6 @@
 #define FTP_PARSE_H
 
 #include "ftpp_ui_config.h"
-#include "protocols/packet.h"
-#include "framework/bits.h"
 
 /*
  * These are the definitions of the parser section delimiting

@@ -21,9 +21,6 @@
 #ifndef EVENT_H
 #define EVENT_H
 
-#include <sys/types.h>
-
-#include "main/snort_types.h"
 #include "main/thread.h"
 
 struct SigInfo;

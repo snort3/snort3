@@ -21,14 +21,10 @@
 #include "config.h"
 #endif
 
-#include "protocols/packet.h"
-#include "framework/codec.h"
 #include "codecs/codec_module.h"
-#include "protocols/vlan.h"
-#include "protocols/eth.h"
-#include "protocols/protocol_ids.h"
-#include "protocols/packet_manager.h"
+#include "framework/codec.h"
 #include "log/text_log.h"
+#include "protocols/vlan.h"
 
 #define CD_VLAN_NAME "vlan"
 #define CD_VLAN_HELP "support for local area network"

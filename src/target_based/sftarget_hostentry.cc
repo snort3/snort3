@@ -19,6 +19,10 @@
 
 // sftarget_hostentry.c author Steven Sturges
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "sftarget_hostentry.h"
 
 #if 0

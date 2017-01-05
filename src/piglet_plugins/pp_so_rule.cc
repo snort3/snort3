@@ -17,15 +17,12 @@
 //--------------------------------------------------------------------------
 // pp_so_rule.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "piglet_plugins.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <string>
+#include "piglet_plugins.h"
 
-#include "lua/lua_iface.h"
 #include "managers/so_manager.h"
 #include "piglet/piglet_api.h"
 

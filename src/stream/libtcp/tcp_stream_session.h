@@ -22,15 +22,10 @@
 #ifndef TCP_STREAM_SESSION_H_
 #define TCP_STREAM_SESSION_H_
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "detection/detect.h"
 #include "flow/session.h"
+#include "stream/libtcp/tcp_stream_tracker.h"
 #include "stream/tcp/tcp_stream_config.h"
-#include "stream/tcp/tcp_event_logger.h"
-#include "tcp_stream_tracker.h"
 
 #ifdef DEBUG_MSGS
 extern const char* const flush_policy_names[];

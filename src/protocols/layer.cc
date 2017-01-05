@@ -17,16 +17,13 @@
 //--------------------------------------------------------------------------
 // layer.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "layer.h"
 
-#include <netinet/in.h>
-#include "protocols/layer.h"
-#include "protocols/protocol_ids.h"
-#include "protocols/packet.h"
-#include "protocols/ipv4.h"
-#include "protocols/ipv6.h"
-#include "protocols/ip.h"
-#include "main/thread.h"
+#include "packet.h"
 
 namespace layer
 {

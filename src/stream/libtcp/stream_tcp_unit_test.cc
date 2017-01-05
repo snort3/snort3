@@ -22,12 +22,13 @@
 #ifndef STREAM_LIBTCP_UNIT_TEST
 #define STREAM_LIBTCP_UNIT_TEST
 
-#include <stdint.h>
-#include <sys/time.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "stream_tcp_unit_test.h"
 
 #include "protocols/packet.h"
-#include "protocols/tcp.h"
-#include "stream_tcp_unit_test.h"
 
 // SYN PACKET
 // IP 192.168.0.89.9012 > p3nlh044.shr.prod.phx3.secureserver.net.http: Flags [S], seq 9050, win

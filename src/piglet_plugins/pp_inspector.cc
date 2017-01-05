@@ -17,25 +17,21 @@
 //--------------------------------------------------------------------------
 // pp_inspector.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "piglet_plugins.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <string>
-#include <assert.h>
-
-#include "log/messages.h"
-#include "lua/lua_iface.h"
 #include "managers/inspector_manager.h"
 #include "piglet/piglet_api.h"
 #include "stream/flush_bucket.h"
 
 #include "pp_decode_data_iface.h"
 #include "pp_flow_iface.h"
+#include "pp_inspector_iface.h"
 #include "pp_ip_api_iface.h"
 #include "pp_packet_iface.h"
 #include "pp_raw_buffer_iface.h"
 #include "pp_stream_splitter_iface.h"
-
-#include "pp_inspector_iface.h"
 
 class InspectorPiglet : public Piglet::BasePlugin
 {

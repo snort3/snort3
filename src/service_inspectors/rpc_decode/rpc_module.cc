@@ -18,8 +18,11 @@
 
 // rpc_module.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "rpc_module.h"
-#include <assert.h>
 
 #define RPC_FRAG_TRAFFIC_STR \
     "fragmented RPC records"

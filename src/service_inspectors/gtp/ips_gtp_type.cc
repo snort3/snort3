@@ -24,10 +24,7 @@
 
 // gtp_type rule option implementation
 
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
 #include "detection/detection_defines.h"
-#include "framework/bits.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/sfhashfcn.h"

@@ -18,17 +18,13 @@
 //--------------------------------------------------------------------------
 // 8/7/2011 - Initial implementation ... Hui Cao <hcao@sourcefire.com>
 
-#include "segment_mem.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <string.h>
-#include "main/snort_types.h"
 
-#ifndef SIZE_MAX
-#define SIZE_MAX 0xFFFFFFFF  // FIXIT-L use c++ value
-#endif
+#include "segment_mem.h"
+
+#include <cstring>
 
 /*point to the start of the unused memory*/
 static MEM_OFFSET unused_ptr = 0;

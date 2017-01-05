@@ -20,24 +20,16 @@
 // file_mime_process.cc author Hui Cao <huica@cisco.com>
 // 9.25.2012 - Initial Source Code. Hui Cao
 
-#include "file_mime_process.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "main/snort_types.h"
-#include "detection/detection_util.h"
-#include "file_api/file_api.h"
-#include "file_api/file_flows.h"
-#include "framework/data_bus.h"
-#include "log/messages.h"
-#include "protocols/packet.h"
-#include "search_engines/search_tool.h"
-#include "utils/util.h"
+#include "file_mime_process.h"
 
-#include "file_mime_config.h"
-#include "file_mime_decode.h"
+#include "detection/detection_util.h"
+#include "file_api/file_flows.h"
+#include "log/messages.h"
+#include "search_engines/search_tool.h"
 
 struct MimeToken
 {

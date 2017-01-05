@@ -17,16 +17,15 @@
 //--------------------------------------------------------------------------
 // range.cc author Russ Combs <rucombs@cisco.com>
 
-#include "framework/range.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
+#include "framework/range.h"
 
+#include <cerrno>
+#include <cstdlib>
+#include <cstring>
 #include <string>
 
 #ifdef UNIT_TEST

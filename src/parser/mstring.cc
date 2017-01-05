@@ -18,21 +18,12 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "mstring.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <sys/types.h>
+#include "mstring.h"
 
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "detection/detection_util.h"
 #include "utils/util.h"
 
 static char* mSplitAddTok(const char*, const int, const char*, const char);

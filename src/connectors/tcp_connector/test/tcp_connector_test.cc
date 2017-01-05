@@ -19,12 +19,17 @@
 // tcp_connector_test.cc author Ed Borgoyn <eborgoyn@cisco.com>
 // unit test main
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "connectors/tcp_connector/tcp_connector.h"
 #include "connectors/tcp_connector/tcp_connector_module.h"
 
-#include <sys/socket.h>
-#include <sys/poll.h>
 #include <netdb.h>
+#include <sys/poll.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 #include "main/snort_debug.h"
 

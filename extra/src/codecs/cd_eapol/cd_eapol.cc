@@ -21,9 +21,8 @@
 #include "config.h"
 #endif
 
-#include "framework/codec.h"
 #include "codecs/codec_module.h"
-#include "protocols/protocol_ids.h"
+#include "framework/codec.h"
 #include "protocols/eapol.h"
 
 #define CD_EAPOL_NAME "eapol"

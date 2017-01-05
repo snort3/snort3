@@ -17,11 +17,10 @@
 //--------------------------------------------------------------------------
 // http_normalizers.cc author Tom Peters <thopeter@cisco.com>
 
-#include <string.h>
-#include <sys/types.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "http_enum.h"
-#include "http_str_to_code.h"
 #include "http_normalizers.h"
 
 using namespace HttpEnums;

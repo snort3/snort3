@@ -20,16 +20,15 @@
 #ifndef HI_MAIN_H
 #define HI_MAIN_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <zlib.h>
 
+#include "decompress/file_decomp.h"
 #include "detection/detection_util.h"
-#include "protocols/packet.h"
+#include "flow/flow.h"
+#include "utils/util.h"
 #include "utils/util_jsnorm.h"
 #include "utils/util_utf.h"
+
 #include "hi_ui_config.h"
 
 #define MAX_METHOD_LEN  256

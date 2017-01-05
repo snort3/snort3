@@ -42,14 +42,19 @@
  * Marc A. Norton <mnorton@sourcefire.com>
  * Kevin Liu <kliu@sourcefire.com>
  */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "ftpp_si.h"
+
+#include "protocols/packet.h"
+#include "stream/stream.h"
+#include "utils/util.h"
 
 #include "ft_main.h"
 #include "ftpp_return_codes.h"
-
-#include "sfip/sf_ip.h"
-#include "stream/stream.h"
-#include "utils/util.h"
 
 unsigned FtpFlowData::flow_id = 0;
 unsigned TelnetFlowData::flow_id = 0;

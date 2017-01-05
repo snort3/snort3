@@ -28,31 +28,16 @@
 #include "config.h"
 #endif
 
-#include <stdlib.h>
-#include <ctype.h>
-#include <errno.h>
-#include <unistd.h>
-
-#include <string>
-
 #include "perf_monitor.h"
-#include "perf_module.h"
 
 #include "log/messages.h"
-#include "main/snort_config.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "parser/parser.h"
-#include "packet_io/sfdaq.h"
 #include "profiler/profiler.h"
-#include "framework/inspector.h"
-#include "utils/stats.h"
-#include "utils/util.h"
+#include "protocols/packet.h"
 
 #include "base_tracker.h"
 #include "cpu_tracker.h"
-#include "flow_tracker.h"
 #include "flow_ip_tracker.h"
+#include "flow_tracker.h"
 
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"

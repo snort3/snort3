@@ -19,6 +19,10 @@
 // http_normalizers_test.cc author Tom Peters <thopeter@cisco.com>
 // unit test main
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "service_inspectors/http_inspect/http_msg_header.h"
 #include "service_inspectors/http_inspect/http_test_manager.h"
 

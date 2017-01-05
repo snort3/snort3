@@ -17,13 +17,14 @@
 //--------------------------------------------------------------------------
 // pp_enc_state_iface.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "pp_enc_state_iface.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <lua.hpp>
+#include "pp_enc_state_iface.h"
 
 #include "framework/codec.h"
 #include "lua/lua_arg.h"
-#include "protocols/ip.h"
 
 // FIXIT-M ip_api should also be its own object (copyable)
 static const class ip::IpApi ip_api {};

@@ -17,22 +17,23 @@
 //--------------------------------------------------------------------------
 // ha.cc author Ed Borgoyn <eborgoyn@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "ha.h"
 
-#include <assert.h>
-#include <functional>
 #include <array>
+
+#include "framework/counts.h"
+#include "log/messages.h"
+#include "main/snort_debug.h"
+#include "profiler/profiler_defs.h"
+#include "stream/stream.h"
+#include "time/packet_time.h"
 
 #include "flow.h"
 #include "flow_key.h"
-#include "ha_module.h"
-#include "log/messages.h"
-#include "main/snort_debug.h"
-#include "packet_io/sfdaq.h"
-#include "profiler/profiler.h"
-#include "side_channel/side_channel.h"
-#include "stream/stream.h"
-#include "time/packet_time.h"
 
 static const uint8_t HA_MESSAGE_VERSION = 3;
 

@@ -17,13 +17,10 @@
 //--------------------------------------------------------------------------
 // http_msg_head_shared.cc author Tom Peters <thopeter@cisco.com>
 
-#include <string.h>
-#include <sys/types.h>
-#include <stdio.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "http_enum.h"
-#include "http_normalizers.h"
-#include "http_uri_norm.h"
 #include "http_msg_head_shared.h"
 
 using namespace HttpEnums;

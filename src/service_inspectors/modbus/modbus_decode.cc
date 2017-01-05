@@ -19,12 +19,17 @@
 
 // modbus_decode.cc author Ryan Jordan
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "modbus_decode.h"
+
+#include "events/event_queue.h"
+#include "protocols/packet.h"
 
 #include "modbus.h"
 #include "modbus_module.h"
-#include "protocols/packet.h"
-#include "events/event_queue.h"
 
 // FIXIT-L convert this stuff to a table and make configurable
 

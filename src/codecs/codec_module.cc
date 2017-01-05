@@ -17,6 +17,10 @@
 //--------------------------------------------------------------------------
 // codec_module.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "codecs/codec_module.h"
 
 #define codec_module_help \

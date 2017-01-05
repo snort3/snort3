@@ -24,12 +24,12 @@
  *
  * Library for IP variables.
 */
-#include "sf_ipvar.h"
 
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <stdio.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "sf_ipvar.h"
 
 #include "utils/util.h"
 

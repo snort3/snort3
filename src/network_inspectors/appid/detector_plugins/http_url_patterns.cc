@@ -19,17 +19,17 @@
 
 // http_url_patterns.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "http_url_patterns.h"
 
-#include <string.h>
-
 #include "log/messages.h"
-
-#include "application_ids.h"
-#include "http_common.h"
-#include "appid_utils/sf_multi_mpse.h"
-#include "appid_utils/sf_mlmp.h"
 #include "utils/util.h"
+
+#include "appid_utils/sf_mlmp.h"
+#include "application_ids.h"
 
 static const char* const FP_OPERATION_AND = "%&%";
 static const unsigned PATTERN_PART_MAX = 10;

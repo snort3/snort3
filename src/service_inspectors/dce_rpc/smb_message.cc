@@ -18,6 +18,10 @@
 
 // smb_message.cc author Rashmi Pitre <rrp@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "dce_smb.h"
 
 #include "detection/detect.h"
@@ -26,13 +30,13 @@
 #include "utils/util.h"
 #include "packet_io/active.h"
 
-#include "dce_smb_module.h"
-#include "dce_smb_utils.h"
-#include "dce_smb_paf.h"
-#include "dce_smb_commands.h"
-#include "dce_smb_transaction.h"
-#include "dce_smb2.h"
 #include "dce_smb.h"
+#include "dce_smb_commands.h"
+#include "dce_smb_module.h"
+#include "dce_smb_paf.h"
+#include "dce_smb_transaction.h"
+#include "dce_smb_utils.h"
+#include "dce_smb2.h"
 
 /********************************************************************
  * Global variables

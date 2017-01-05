@@ -10,14 +10,12 @@ endif ( BUILD_SNPRINTF )
 set( UTIL_INCLUDES
     bitop.h
     cpp_macros.h
-    dnet_header.h
     kmap.h
     safec.h
     segment_mem.h
     sflsq.h
     sfmemcap.h
     sfsnprintfappend.h
-    snort_bounds.h
     stats.h
     util.h
     util_jsnorm.h
@@ -34,6 +32,7 @@ ADD_LIBRARY( utils STATIC
     ${SNPRINTF_SOURCES}
     boyer_moore.cc 
     boyer_moore.h
+    dnet_header.h
     dyn_array.cc
     dyn_array.h
     kmap.cc
@@ -41,6 +40,7 @@ ADD_LIBRARY( utils STATIC
     sflsq.cc 
     sfmemcap.cc 
     sfsnprintfappend.cc 
+    snort_bounds.h
     stats.cc
     util.cc
     util_jsnorm.cc 

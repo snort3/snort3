@@ -18,6 +18,10 @@
 
 // host_cache_module.cc author Steve Chew <stechew@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "host_cache_module.h"
 
 #include "host_cache.h"

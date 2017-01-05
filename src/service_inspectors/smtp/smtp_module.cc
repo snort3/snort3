@@ -18,13 +18,13 @@
 
 // smtp_module.cc author Bhagyashree Bantwal <bbantwal@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "smtp_module.h"
 
-#include <assert.h>
-#include <sstream>
-
 #include "log/messages.h"
-#include "main/snort_config.h"
 #include "utils/util.h"
 
 using namespace std;

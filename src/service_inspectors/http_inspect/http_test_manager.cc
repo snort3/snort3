@@ -17,11 +17,14 @@
 //--------------------------------------------------------------------------
 // http_test_manager.cc author Tom Peters <thopeter@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifdef REG_TEST
 
-#include <stdexcept>
-
 #include "http_test_manager.h"
+
 #include "http_test_input.h"
 
 bool HttpTestManager::test_input = false;

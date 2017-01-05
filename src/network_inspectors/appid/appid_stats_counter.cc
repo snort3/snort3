@@ -19,7 +19,10 @@
 // appid_module.cc author Steve Chew <stechew@cisco.com>
 // Created on: Auguest 18, 2016
 
-#include "main/thread.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "appid_module.h"
 
 THREAD_LOCAL AppIdStats appid_stats;

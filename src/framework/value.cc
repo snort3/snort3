@@ -17,14 +17,15 @@
 //--------------------------------------------------------------------------
 // value.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "value.h"
 
-#include <assert.h>
-#include <iostream>
-#include <sstream>
-#include <string>
+#include <cassert>
 
-#include "sfip/sf_ip.h"
+#include "sfip/sf_cidr.h"
 
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"

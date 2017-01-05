@@ -17,11 +17,15 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "dce_utils.h"
 
 #include "main/snort_debug.h"
-#include "utils/util.h"
 #include "utils/safec.h"
+#include "utils/util.h"
 
 /********************************************************************
  * Function: DCE2_GetValue()

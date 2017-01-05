@@ -18,11 +18,12 @@
 //--------------------------------------------------------------------------
 // cd_pppoe.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include "framework/codec.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "codecs/codec_module.h"
-#include "protocols/packet.h"
-#include "protocols/layer.h"
-#include "main/snort_debug.h"
+#include "framework/codec.h"
 
 namespace
 {

@@ -23,12 +23,16 @@
 
 // ip datagram reassembly
 
-int drop_all_fragments(Packet* p);
-int fragGetApplicationProtocolId(Packet* p);
+#include <cstdint>
 
 struct FragEngine;
 struct FragTracker;
 struct Fragment;
+struct Packet;
+struct SnortConfig;
+
+int drop_all_fragments(Packet* p);
+int fragGetApplicationProtocolId(Packet* p);
 
 class Defrag
 {

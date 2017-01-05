@@ -19,19 +19,15 @@
 
 // client_app_aim.cc author Sourcefire Inc.
 
-#include "client_app_api.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <cstdint>
+#include "client_app_api.h"
 
 #include "main/snort_debug.h"
-#include "utils/sflsq.h"
 
 #include "app_info_table.h"
-#include "application_ids.h"
 #include "appid_module.h"
 
 #pragma pack(1)

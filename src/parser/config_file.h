@@ -19,9 +19,6 @@
 #ifndef CONFIG_FILE_H
 #define CONFIG_FILE_H
 
-#include "main/snort_types.h"
-#include "main/policy.h"
-
 struct SnortConfig;
 
 const char* get_snort_conf();

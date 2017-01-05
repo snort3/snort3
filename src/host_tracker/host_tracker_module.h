@@ -27,9 +27,10 @@
 // HostTracker object.  May eventually replace old Hosts module with this
 // one.
 
+#include <cassert>
+
 #include "framework/module.h"
 #include "host_tracker/host_tracker.h"
-#include <assert.h>
 
 #define host_tracker_help \
     "configure hosts"

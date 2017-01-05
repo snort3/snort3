@@ -22,14 +22,11 @@
 #ifndef SMTP_UTIL_H
 #define SMTP_UTIL_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 // SMTP helper functions
 
 #include "smtp_config.h"
-#include "protocols/packet.h"
+
+struct Packet;
 
 void SMTP_GetEOL(const uint8_t*, const uint8_t*, const uint8_t**, const uint8_t**);
 void SMTP_LogFuncs(SMTP_PROTO_CONF* config, Packet* p, MimeSession* mime_ssn);

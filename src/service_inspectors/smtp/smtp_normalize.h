@@ -22,7 +22,9 @@
 
 // Implementation of normalizing SMTP traffic into the alternate buffer
 
-#include "protocols/packet.h"
+#include <cstdint>
+
+struct Packet;
 
 int SMTP_NormalizeCmd(Packet*, const uint8_t*, const uint8_t*, const uint8_t*);
 

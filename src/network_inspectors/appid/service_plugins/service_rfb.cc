@@ -19,14 +19,18 @@
 
 // service_rfb.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "service_rfb.h"
 
-#include "service_api.h"
+#include "main/snort_debug.h"
+
 #include "app_info_table.h"
-#include "application_ids.h"
 #include "appid_module.h"
 
-#include "main/snort_debug.h"
+#include "service_api.h"
 
 #define RFB_BANNER_SIZE 12
 

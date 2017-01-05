@@ -23,11 +23,12 @@
 
 #include <mutex>
 
-#include "hash/sfxhash.h"
 #include "sfip/sf_ip.h"
 #include "utils/cpp_macros.h"
 
 #include "file_config.h"
+
+struct SFXHASH;
 
 class FileCache
 {

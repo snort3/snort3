@@ -19,6 +19,10 @@
 // binder_test.cc author Ed Borgoyn <eborgoyn@cisco.com>
 // unit test main
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "network_inspectors/binder/binder.cc"
 #include "network_inspectors/binder/bind_module.h"
 

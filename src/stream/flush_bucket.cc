@@ -17,15 +17,16 @@
 //--------------------------------------------------------------------------
 // flush_bucket.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "flush_bucket.h"
 
-#include <assert.h>
-#include <string.h>
-
+#include <cassert>
 #include <random>
 
 #include "main/snort_config.h"
-#include "protocols/packet.h"
 
 //-------------------------------------------------------------------------
 // static base members

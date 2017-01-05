@@ -19,13 +19,14 @@
 
 // service_irc.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "service_irc.h"
 
 #include "main/snort_debug.h"
-#include "utils/util.h"
 
-#include "appid_session.h"
-#include "application_ids.h"
 #include "appid_module.h"
 
 #define IRC_COUNT_THRESHOLD 10

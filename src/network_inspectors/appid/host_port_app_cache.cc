@@ -19,13 +19,16 @@
 
 // host_port_app_cache.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "host_port_app_cache.h"
 
 #include <map>
 
-#include "appid_config.h"
 #include "log/messages.h"
-#include "sfip/sf_ip.h"
+#include "utils/cpp_macros.h"
 
 PADDING_GUARD_BEGIN
 struct HostPortKey

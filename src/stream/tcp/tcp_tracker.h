@@ -23,7 +23,6 @@
 #define TCP_TRACKER_H_
 
 #include "stream/libtcp/tcp_stream_tracker.h"
-#include "tcp_defs.h"
 
 //-------------------------------------------------------------------------
 // extra, extra - read all about it!

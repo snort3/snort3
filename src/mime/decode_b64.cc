@@ -18,12 +18,14 @@
 //--------------------------------------------------------------------------
 // decode_b64.cc author Bhagyashree Bantwal <bbantwal@sourcefire.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "decode_b64.h"
 
-#include "utils/util.h"
 #include "utils/util_unfold.h"
 
-#include "decode_base.h"
 #include "decode_buffer.h"
 
 void B64Decode::reset_decode_state()

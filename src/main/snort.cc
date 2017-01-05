@@ -17,23 +17,14 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "snort.h"
-
 #ifdef HAVE_CONFIG_H
-# include "config.h"
+#include "config.h"
 #endif
 
-#include <assert.h>
-#include <ctype.h>
-#include <fcntl.h>
-#include <netdb.h>
-#include <string.h>
-#include <syslog.h>
-#include <time.h>
-#include <unistd.h>
+#include "snort.h"
 
-#include <netinet/in.h>
 #include <sys/stat.h>
+#include <syslog.h>
 
 #include "actions/ips_actions.h"
 #include "codecs/codec_api.h"
@@ -56,8 +47,10 @@
 #include "ips_options/ips_options.h"
 #include "latency/packet_latency.h"
 #include "latency/rule_latency.h"
+#include "log/log.h"
 #include "log/messages.h"
 #include "loggers/loggers.h"
+#include "main.h"
 #include "managers/action_manager.h"
 #include "managers/codec_manager.h"
 #include "managers/inspector_manager.h"
@@ -68,15 +61,13 @@
 #include "managers/plugin_manager.h"
 #include "managers/script_manager.h"
 #include "network_inspectors/network_inspectors.h"
-#include "packet_io/sfdaq.h"
 #include "packet_io/active.h"
+#include "packet_io/sfdaq.h"
 #include "packet_io/trough.h"
 #include "parser/cmd_line.h"
 #include "parser/parser.h"
 #include "perf_monitor/perf_monitor.h"
 #include "profiler/profiler.h"
-#include "protocols/packet.h"
-#include "protocols/packet_manager.h"
 #include "search_engines/search_engines.h"
 #include "service_inspectors/service_inspectors.h"
 #include "side_channel/side_channel.h"
@@ -97,9 +88,7 @@
 #endif
 
 #include "build.h"
-#include "main.h"
 #include "snort_config.h"
-#include "snort_debug.h"
 #include "thread_config.h"
 
 using namespace std;

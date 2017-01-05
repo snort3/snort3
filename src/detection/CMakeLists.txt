@@ -4,7 +4,6 @@ set (DETECTION_INCLUDES
     detection_defines.h
     detection_options.h
     detection_util.h
-    pattern_match_data.h
     rule_option_types.h
     rules.h
     signature.h
@@ -24,6 +23,7 @@ add_library (detection STATIC
     fp_detect.h
     fp_utils.cc
     fp_utils.h
+    pattern_match_data.h
     pcrm.cc
     pcrm.h
     service_map.cc

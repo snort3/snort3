@@ -22,10 +22,11 @@
 #ifndef HTTP_COMMON_H
 #define HTTP_COMMON_H
 
-#include "appid_api.h"
-#include "appid_utils/sf_multi_mpse.h"
+#include <vector>
 
-#include "utils/sflsq.h"
+#include "flow/flow.h"
+
+#include "appid_utils/sf_multi_mpse.h"
 
 #define MAX_USERNAME_SIZE   64
 #define MAX_URL_SIZE        65535

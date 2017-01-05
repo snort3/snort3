@@ -21,12 +21,8 @@
 #ifndef SIDE_CHANNEL_MODULE_H
 #define SIDE_CHANNEL_MODULE_H
 
-#include <vector>
-
-#include "framework/connector.h"
 #include "framework/module.h"
-#include "main/thread.h"
-#include "side_channel.h"
+#include "side_channel/side_channel.h"
 
 #define SIDECHANNEL_NAME "side_channel"
 #define SIDECHANNEL_HELP "implement the side-channel asynchronous messaging subsystem"

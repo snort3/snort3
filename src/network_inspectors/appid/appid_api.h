@@ -22,8 +22,6 @@
 #ifndef APPID_API_H
 #define APPID_API_H
 
-#include <cstdint>
-
 #include "flow/flow.h"
 
 enum class IpProtocol : uint8_t;

@@ -17,18 +17,14 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "event.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <sys/types.h>
-#include <stdlib.h>
-#include <string.h>
+#include "event.h"
 
-#include "main/snort_config.h"
 #include "detection/signature.h"
+#include "main/snort_config.h"
 
 THREAD_LOCAL uint16_t event_id; // FIXIT-M also incremented in fpLogEvent()
 THREAD_LOCAL SigInfo sig_info;  // FIXIT-M move to stack

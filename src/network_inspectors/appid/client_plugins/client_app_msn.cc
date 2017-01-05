@@ -19,10 +19,15 @@
 
 // client_app_msn.cc author Sourcefire Inc.
 
-#include "client_app_msn.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "main/snort_debug.h"
+
+#include "client_app_msn.h"
+
 #include "app_info_table.h"
-#include "application_ids.h"
 #include "appid_module.h"
 
 #define MAX_VERSION_SIZE 64

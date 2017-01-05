@@ -23,8 +23,7 @@
 
 // File_Decomp global typedefs (used in child objects)
 
-#include <stdint.h>
-#include <string.h>
+#include <cstring>
 
 #include "main/snort_types.h"
 

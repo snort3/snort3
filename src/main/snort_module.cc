@@ -18,40 +18,31 @@
 
 // snort_module.cc author Russ Combs <rucombs@cisco.com>
 
-#include "snort_module.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <string.h>
+#include "snort_module.h"
 
-#include <string>
-
-#include "main.h"
-#include "snort_config.h"
-#include "help.h"
-#include "shell.h"
-#include "thread_config.h"
-#include "detection/detect.h"
-#include "framework/base_api.h"
 #include "framework/module.h"
 #include "framework/parameter.h"
 #include "log/messages.h"
-#include "managers/module_manager.h"
-#include "managers/plugin_manager.h"
+#include "main.h"
 #include "packet_io/sfdaq_config.h"
+#include "packet_io/trough.h"
 #include "parser/config_file.h"
 #include "parser/parser.h"
 #include "parser/parse_utils.h"
 #include "parser/vars.h"
-#include "packet_io/trough.h"
-#include "utils/stats.h"
 
 #ifdef UNIT_TEST
 #include "catch/unit_test.h"
 #endif
+
+#include "help.h"
+#include "shell.h"
+#include "snort_config.h"
+#include "thread_config.h"
 
 using namespace std;
 

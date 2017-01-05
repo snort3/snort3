@@ -22,28 +22,20 @@
 #include "config.h"
 #endif
 
-#include <arpa/inet.h>
-#include <array>
-
-#include "utils/dnet_header.h"
-#include "main/snort_config.h"
-
-#include "protocols/tcp.h"
-#include "protocols/ipv4.h"
-#include "protocols/packet_manager.h"
-
-#include "utils/stats.h"
-#include "packet_io/active.h"
-#include "codecs/ip/checksum.h"
-#include "main/thread.h"
 #include "codecs/codec_module.h"
-#include "protocols/ip.h"
-#include "protocols/ipv4_options.h"
-#include "log/messages.h"
-#include "log/text_log.h"
 #include "log/log_text.h"
-#include "sfip/sf_ipvar.h"
+#include "log/messages.h"
+#include "main/snort_config.h"
+#include "packet_io/active.h"
 #include "parser/parse_ip.h"
+#include "protocols/ip.h"
+#include "protocols/ipv4.h"
+#include "protocols/ipv4_options.h"
+#include "protocols/tcp.h"
+#include "sfip/sf_ipvar.h"
+#include "utils/dnet_header.h"
+
+#include "checksum.h"
 
 #define CD_IPV4_NAME "ipv4"
 #define CD_IPV4_HELP "support for Internet protocol v4"

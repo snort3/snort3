@@ -30,6 +30,10 @@
  **  5.25.13 - Initial Source Code. Hui Cao
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "circular_buffer.h"
 
 #include "utils/util.h"

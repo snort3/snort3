@@ -19,11 +19,14 @@
 // tcp_segment.cc author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Sep 21, 2015
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "tcp_segment_node.h"
 
-#include "flow/flow_control.h"
-#include "protocols/packet.h"
 #include "utils/util.h"
+
 #include "tcp_module.h"
 
 // FIXIT-P this is going to set each member 2X; once here and once in init

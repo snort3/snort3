@@ -17,6 +17,10 @@
 //--------------------------------------------------------------------------
 // magic.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "magic.h"
 
 MagicPage::MagicPage(const MagicBook& b) : book(b)

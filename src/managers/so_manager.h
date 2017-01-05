@@ -23,8 +23,6 @@
 // Factory for shared object rules.
 // Runtime is same as for text rules.
 
-#include "main/snort_types.h"
-#include "framework/base_api.h"
 #include "framework/so_rule.h"
 
 struct SnortConfig;

@@ -19,11 +19,17 @@
 
 // service_bootp.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "service_bootp.h"
+
 #include "main/snort_debug.h"
 #include "protocols/eth.h"
+#include "protocols/packet.h"
+
 #include "app_info_table.h"
-#include "application_ids.h"
 #include "appid_module.h"
 
 #define DHCP_MAGIC_COOKIE 0x63825363

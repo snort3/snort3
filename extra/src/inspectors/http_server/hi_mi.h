@@ -30,10 +30,7 @@
 #ifndef HI_MI_H
 #define HI_MI_H
 
-#include <sys/types.h>
-
 #include "hi_si.h"
-#include "hi_main.h"
 
 int hi_mi_mode_inspection(HI_SESSION* session, int iInspectMode, Packet* p, HttpSessionData*);
 

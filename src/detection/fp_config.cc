@@ -23,16 +23,17 @@
 **  Marc Norton <mnorton@sourcefire.com>
 */
 
-#include "fp_config.h"
-
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "fp_config.h"
-#include "framework/mpse.h"
-#include "managers/mpse_manager.h"
+
+#include <cassert>
+#include <cstring>
+
 #include "log/messages.h"
+#include "managers/mpse_manager.h"
 
 FastPatternConfig::FastPatternConfig()
 {

@@ -17,14 +17,16 @@
 //--------------------------------------------------------------------------
 // pp_cursor_iface.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "pp_cursor_iface.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <lua.hpp>
+#include "pp_cursor_iface.h"
 
 #include "framework/cursor.h"
 #include "lua/lua_arg.h"
-#include "lua/lua_ref.h"
 #include "protocols/packet.h"
+
 #include "pp_packet_iface.h"
 #include "pp_raw_buffer_iface.h"
 

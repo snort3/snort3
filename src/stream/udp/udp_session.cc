@@ -17,31 +17,20 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "udp_session.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "stream/stream.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "detection/detect.h"
-#include "detection/rules.h"
-#include "detection/treenodes.h"
-#include "hash/sfxhash.h"
-#include "utils/util.h"
-#include "protocols/packet.h"
-#include "flow/session.h"
-#include "packet_io/active.h"
-#include "perf_monitor/flow_ip_tracker.h"
-#include "profiler/profiler.h"
-#include "sfip/sf_ip.h"
-#include "stream/stream.h"
+#include "udp_session.h"
 
-#include "stream_udp.h"
-#include "udp_module.h"
+#include "flow/session.h"
+#include "perf_monitor/flow_ip_tracker.h"
+#include "profiler/profiler_defs.h"
+#include "protocols/packet.h"
+
 #include "udp_ha.h"
+#include "udp_module.h"
+#include "stream_udp.h"
 
 // NOTE:  sender is assumed to be client
 //        responder is assumed to be server

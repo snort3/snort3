@@ -17,14 +17,14 @@
 //--------------------------------------------------------------------------
 // parse_uitls.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "parse_utils.h"
 
-#include <assert.h>
-#include <ctype.h>
-#include <stdio.h>
-#include <string.h>
+#include <cassert>
 
-#include "parser.h"
 #include "log/messages.h"
 #include "utils/util.h"
 

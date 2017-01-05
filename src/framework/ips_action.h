@@ -25,9 +25,9 @@
 // These can be used to execute external controls like updating an external
 // firewall.
 
-#include "main/snort_types.h"
-#include "framework/base_api.h"
 #include "actions/actions.h"
+#include "framework/base_api.h"
+#include "main/snort_types.h"
 
 struct Packet;
 

@@ -24,16 +24,10 @@
 // OutputSet is a group of Loggers that can be attached to external data.
 // Also provides runtime logging.
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include "main/snort_types.h"
-#include "framework/base_api.h"
+#include "framework/module.h"
 
 #ifdef PIGLET
 #include "framework/logger.h"
-#include "piglet/piglet_api.h"
 #endif
 
 #define OUTPUT_TYPE_FLAG__NONE  0x0

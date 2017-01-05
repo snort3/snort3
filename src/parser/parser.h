@@ -20,14 +20,7 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
-#include <stdio.h>
-
 #include "detection/rules.h"
-#include "detection/sfrim.h"
 #include "detection/treenodes.h"
 #include "main/policy.h"
 

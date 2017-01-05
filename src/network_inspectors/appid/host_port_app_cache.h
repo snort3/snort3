@@ -22,7 +22,6 @@
 #ifndef HOST_PORT_APP_CACHE_H
 #define HOST_PORT_APP_CACHE_H
 
-#include "sfip/sf_ip.h"
 #include "appid_api.h"
 
 struct HostPortVal

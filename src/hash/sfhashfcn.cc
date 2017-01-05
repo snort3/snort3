@@ -29,9 +29,12 @@
      8/31/2006 - man - changed to use sfprimetable.c
 */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "sfhashfcn.h"
 
-#include "main/snort_types.h"
 #include "main/snort_config.h"
 #include "utils/util.h"
 

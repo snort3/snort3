@@ -38,20 +38,20 @@
  * of the external network.
  */
 
-#include "ft_main.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "ftpp_return_codes.h"
-#include "ftp_cmd_lookup.h"
-#include "ftp_bounce_lookup.h"
+#include "ft_main.h"
 
 #include "detection/detect.h"
 #include "framework/data_bus.h"
 #include "log/messages.h"
 #include "utils/util.h"
+
+#include "ftp_cmd_lookup.h"
+#include "ftp_bounce_lookup.h"
+#include "ftpp_return_codes.h"
 
 void CleanupFTPCMDConf(void* ftpCmd)
 {

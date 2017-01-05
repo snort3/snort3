@@ -18,25 +18,20 @@
 
 // modules.cc author Russ Combs <rucombs@cisco.com>
 
-#include "modules.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "snort_config.h"
-#include "snort_module.h"
-#include "thread_config.h"
+#include "modules.h"
 
 #include "codecs/codec_module.h"
 #include "detection/fp_config.h"
-#include "file_api/file_module.h"
 #include "filters/detection_filter.h"
 #include "filters/rate_filter.h"
 #include "filters/sfrf.h"
 #include "filters/sfthd.h"
-#include "flow/ha_module.h"
 #include "filters/sfthreshold.h"
+#include "flow/ha_module.h"
 #include "framework/module.h"
 #include "host_tracker/host_tracker_module.h"
 #include "host_tracker/host_cache_module.h"
@@ -50,14 +45,17 @@
 #include "parser/parse_conf.h"
 #include "parser/parse_ip.h"
 #include "parser/parser.h"
-#include "profiler/profiler.h"
+#include "profiler/profiler_defs.h"
 #include "search_engines/pat_stats.h"
 #include "side_channel/side_channel_module.h"
-#include "sfip/sf_ip.h"
 #include "sfip/sf_ipvar.h"
 #include "stream/stream.h"
 #include "target_based/sftarget_data.h"
 #include "target_based/snort_protocols.h"
+
+#include "snort_config.h"
+#include "snort_module.h"
+#include "thread_config.h"
 
 using namespace std;
 

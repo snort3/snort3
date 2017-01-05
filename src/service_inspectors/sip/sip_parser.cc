@@ -23,18 +23,14 @@
 #include "config.h"
 #endif
 
-#include <ctype.h>
+#include "sip_parser.h"
 
-#include "main/snort_types.h"
+#include "events/event_queue.h"
 #include "main/snort_debug.h"
-#include "main/snort_config.h"
-#include "sfip/sf_ip.h"
 #include "utils/util.h"
 
-#include "sip_parser.h"
-#include "sip_config.h"
-#include "sip_utils.h"
 #include "sip_module.h"
+#include "sip_utils.h"
 
 #define MAX_NUM_32BIT  2147483647
 

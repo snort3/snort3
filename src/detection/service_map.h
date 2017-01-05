@@ -30,9 +30,9 @@
 
 #include <vector>
 
-#include "detection/pcrm.h"
 #include "target_based/snort_protocols.h"
 
+struct PortGroup;
 struct SFGHASH;
 struct SnortConfig;
 

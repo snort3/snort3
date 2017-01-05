@@ -21,23 +21,8 @@
 #include "config.h"
 #endif
 
-#include <string.h>
-#include <sys/types.h>
-
-#include "framework/module.h"
-#include "framework/counts.h"
-
-#include "utils/util_utf.h"
-
-#include "http_enum.h"
-#include "http_str_to_code.h"
-#include "http_normalizers.h"
-#include "http_head_norm.h"
-#include "http_msg_request.h"
 #include "http_msg_header.h"
-#include "http_module.h"
-#include "http_uri_norm.h"
-#include "http_cutter.h"
+#include "http_msg_request.h"
 
 using namespace HttpEnums;
 

@@ -24,8 +24,6 @@
 // Interface to the REPUTATION network inspector
 
 #include "framework/module.h"
-#include "framework/bits.h"
-#include "main/thread.h"
 #include "reputation_config.h"
 
 #define GID_REPUTATION 136

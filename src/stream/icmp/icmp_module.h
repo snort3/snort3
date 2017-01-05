@@ -21,8 +21,6 @@
 #ifndef ICMP_MODULE_H
 #define ICMP_MODULE_H
 
-#include "main/snort_types.h"
-#include "main/thread.h"
 #include "flow/session.h"
 #include "framework/module.h"
 

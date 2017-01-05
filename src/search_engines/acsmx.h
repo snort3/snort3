@@ -25,15 +25,8 @@
 
 // version 1
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <cstdint>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "main/snort_types.h"
 #include "search_common.h"
 
 #define ALPHABET_SIZE    256

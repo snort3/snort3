@@ -21,12 +21,9 @@
 #include "config.h"
 #endif
 
-extern "C" {
 #include <sfbpf_dlt.h>
-}
 
 #include "framework/codec.h"
-#include "protocols/protocol_ids.h"
 
 #define CD_RAW6_NAME "raw6"
 #define CD_RAW6_HELP_STR "support for unencapsulated IPv6"

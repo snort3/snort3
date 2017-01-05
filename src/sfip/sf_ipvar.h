@@ -33,8 +33,7 @@
 #define SFIP_NEGATED  1
 #define SFIP_ANY      2
 
-#include <stdio.h>
-#include <stdint.h>
+#include <cstdint>
 
 #include "sfip/sf_returns.h"
 

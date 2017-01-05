@@ -19,31 +19,25 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "ips_pcre.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <sys/types.h>
+#include "ips_pcre.h"
+
 #include <pcre.h>
 
-#include "log/messages.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "main/snort_config.h"
-#include "protocols/packet.h"
-#include "parser/parser.h"
-#include "utils/util.h"
-#include "hash/sfhashfcn.h"
-#include "profiler/profiler.h"
-#include "detection/treenodes.h"
+#include <cassert>
+
 #include "detection/detection_defines.h"
-#include "detection/detection_util.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
-#include "framework/parameter.h"
 #include "framework/module.h"
+#include "hash/sfhashfcn.h"
+#include "log/messages.h"
+#include "main/snort_config.h"
+#include "profiler/profiler.h"
+#include "utils/util.h"
 
 #ifndef PCRE_STUDY_JIT_COMPILE
 #define PCRE_STUDY_JIT_COMPILE 0

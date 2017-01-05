@@ -18,16 +18,11 @@
 
 // file_decomp_pdf.cc author Ed Borgoyn <eborgoyn@sourcefire.com>
 
-#include "file_decomp_pdf.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <ctype.h>
-#include <string.h>
-#include <stdlib.h>
-#include <zlib.h>
+#include "file_decomp_pdf.h"
 
 #include "main/thread.h"
 #include "utils/util.h"

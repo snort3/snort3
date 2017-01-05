@@ -36,8 +36,6 @@
 #ifndef HI_RETURN_CODES_H
 #define HI_RETURN_CODES_H
 
-#include "hi_include.h"
-
 #define HI_BOOL_FALSE 0
 #define HI_SUCCESS    0
 

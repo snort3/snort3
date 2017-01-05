@@ -22,13 +22,14 @@
 *
 *  Author: Steven Sturges
 */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "sfsnprintfappend.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <unistd.h>
-#include <string.h>
+#include <cstdarg>
 
 #include "util.h"
 

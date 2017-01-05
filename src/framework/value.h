@@ -22,16 +22,14 @@
 
 // Value is used to represent Lua bool, number, and string.
 
-#include <string.h>
-
 #include <algorithm>
-#include <string>
+#include <cstring>
 
-#include "main/snort_types.h"
 #include "framework/bits.h"
 #include "framework/parameter.h"
-#include "sfip/sf_cidr.h"
+#include "main/snort_types.h"
 
+struct SfCidr;
 struct SfIp;
 
 class SO_PUBLIC Value

@@ -18,6 +18,10 @@
 
 // dce_udp_module.cc author Maya Dagon <mdagon@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "dce_udp_module.h"
 
 #include "log/messages.h"

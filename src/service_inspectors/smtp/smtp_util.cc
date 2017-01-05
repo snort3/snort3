@@ -19,20 +19,18 @@
 // smtp_util.cc author Andy  Mullican
 // This file contains SMTP helper functions.
 
-#include "smtp_util.h"
-
-#include <sys/types.h>
-#include <stdlib.h>
-#include <ctype.h>
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "smtp.h"
-#include "smtp_config.h"
+#include "smtp_util.h"
+
 #include "detection/detection_util.h"
+#include "protocols/packet.h"
+#include "stream/stream.h"
 #include "utils/safec.h"
+
+#include "smtp.h"
 
 static THREAD_LOCAL DataBuffer DecodeBuf;
 

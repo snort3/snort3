@@ -18,11 +18,11 @@
 //--------------------------------------------------------------------------
 // flow_cache.cc author Russ Combs <rucombs@cisco.com>
 
-#include "flow/flow_cache.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "flow/flow_cache.h"
 
 #include "flow/ha.h"
 #include "hash/zhash.h"
@@ -32,6 +32,8 @@
 #include "packet_io/active.h"
 #include "time/packet_time.h"
 #include "utils/stats.h"
+
+#include "flow_key.h"
 
 #define SESSION_CACHE_FLAG_PURGING  0x01
 

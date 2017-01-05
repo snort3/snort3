@@ -18,17 +18,17 @@
 
 // rule_profiler.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "rule_profiler.h"
-
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <algorithm>
-#include <functional>
-#include <iostream>
-#include <sstream>
-#include <vector>
+#include "rule_profiler.h"
+
+//#include <algorithm>
+//#include <functional>
+//#include <iostream>
+//#include <sstream>
+//#include <vector>
 
 // this include eventually leads to possible issues with std::chrono:
 // 1.  Undefined or garbage value returned to caller (rep count())
@@ -37,7 +37,6 @@
 #include "detection/detection_options.h"  // ... FIXIT-W
 
 #include "detection/treenodes.h"
-#include "hash/sfghash.h"
 #include "main/snort_config.h"
 #include "main/thread_config.h"
 #include "parser/parser.h"

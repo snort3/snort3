@@ -17,22 +17,20 @@
 //--------------------------------------------------------------------------
 // file_session.cc author Russ Combs <rucombs@cisco.com>
 
-#include "file_session.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "file_api/file_api.h"
-#include "perf_monitor/perf_monitor.h"
-#include "file_api/file_flows.h"
-#include "profiler/profiler.h"
-#include "packet_io/sfdaq.h"
+#include "file_session.h"
+
 #include "detection/detection_util.h"
+#include "file_api/file_flows.h"
+#include "packet_io/sfdaq.h"
+#include "profiler/profiler_defs.h"
+#include "protocols/packet.h"
 #include "target_based/snort_protocols.h"
 
 #include "stream_file.h"
-#include "file_module.h"
 
 #define DECODE_PDU (DECODE_SOF | DECODE_EOF)
 

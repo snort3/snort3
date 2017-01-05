@@ -25,9 +25,8 @@
 // like a text rule except that it can call function hooks. It can also
 // define its own rule options and any other plugins it may need.
 
-#include "main/snort_types.h"
 #include "framework/base_api.h"
-#include "framework/ips_option.h"
+#include "main/snort_types.h"
 
 struct Packet;
 

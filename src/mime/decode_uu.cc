@@ -18,11 +18,14 @@
 //--------------------------------------------------------------------------
 // decode_uu.cc author Bhagyashree Bantwal <bbantwal@sourcefire.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "decode_uu.h"
 
 #include "utils/safec.h"
 #include "utils/util.h"
-#include "utils/util_unfold.h"
 
 #include "decode_buffer.h"
 

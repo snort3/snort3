@@ -21,8 +21,10 @@
 #ifndef HA_MODULE_H
 #define HA_MODULE_H
 
-#include "main/thread.h"
+#include <sys/time.h>
+
 #include "framework/module.h"
+#include "main/thread.h"
 
 #define HA_NAME "high_availability"
 #define HA_HELP "implement flow tracking high availability"

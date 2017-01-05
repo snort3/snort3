@@ -17,9 +17,12 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "port_group.h"
 
-#include <stdlib.h>
 #include "utils/util.h"
 
 void PortGroup::add_rule()

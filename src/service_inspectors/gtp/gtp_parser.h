@@ -22,7 +22,7 @@
 #ifndef GTP_PARSER_H
 #define GTP_PARSER_H
 
-#include "main/snort_types.h"
+#include <cstdint>
 
 struct GTP_IEData
 {

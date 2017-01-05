@@ -36,6 +36,11 @@
    2003-11-3:
      man: cleaned up and added more startup printout.
 */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "sfthreshold.h"
 
 #include "hash/sfxhash.h"

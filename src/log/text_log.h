@@ -34,9 +34,7 @@
  * name plus a timestamp.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <time.h>
+#include <cstring>
 
 #include "main/snort_types.h"
 

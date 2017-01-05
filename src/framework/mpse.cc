@@ -17,15 +17,13 @@
 //--------------------------------------------------------------------------
 // mpse.cc author Russ Combs <rucombs@cisco.com>
 
-#include "mpse.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "main/snort_debug.h"
-#include "main/snort_types.h"
-#include "profiler/profiler.h"
+#include "mpse.h"
+
+#include "profiler/profiler_defs.h"
 
 using namespace std;
 

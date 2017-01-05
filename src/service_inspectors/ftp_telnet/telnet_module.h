@@ -21,9 +21,8 @@
 #ifndef TELNET_MODULE_H
 #define TELNET_MODULE_H
 
-#include "ftpp_ui_config.h"
 #include "framework/module.h"
-#include "main/thread.h"
+#include "ftpp_ui_config.h"
 
 #define GID_TELNET 126
 

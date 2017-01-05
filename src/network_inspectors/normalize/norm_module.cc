@@ -17,13 +17,13 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "norm_module.h"
 
-#include <string.h>
-#include <string>
-#include <sstream>
-#include <vector>
-
+#include "main/policy.h"
 #include "stream/tcp/tcp_normalizer.h"
 
 using namespace std;

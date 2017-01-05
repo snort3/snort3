@@ -23,27 +23,17 @@
  * Contributors: Adam Keeton, Ryan Jordan
  */
 
-#include "ssh.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <string.h>
-#include <stdio.h>
-#include <sys/types.h>
+#include "ssh.h"
 
 #include "events/event_queue.h"
-#include "file_api/file_api.h"
-#include "framework/inspector.h"
 #include "log/messages.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "parser/parser.h"
 #include "profiler/profiler.h"
-#include "utils/sfsnprintfappend.h"
-#include "target_based/snort_protocols.h"
+#include "protocols/packet.h"
+#include "stream/stream.h"
 
 #include "ssh_module.h"
 

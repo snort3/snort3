@@ -21,9 +21,6 @@
 
 // process oriented services like signal handling, heap info, etc.
 
-#include <signal.h>
-#include <stdint.h>
-
 enum PigSignal
 {
     PIG_SIG_NONE,

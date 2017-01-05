@@ -17,15 +17,10 @@
 //--------------------------------------------------------------------------
 // pp_search_engine.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "piglet_plugins.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <string>
-
-#include "lua/lua_iface.h"
 #include "managers/mpse_manager.h"
 #include "piglet/piglet_api.h"
 

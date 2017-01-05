@@ -17,26 +17,19 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "port_object.h"
 
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <ctype.h>
-
-#include <memory>
+#include "log/messages.h"
+#include "main/snort_debug.h"
+#include "parser/parser.h"
+#include "utils/util.h"
 
 #include "port_item.h"
 #include "port_utils.h"
-#include "log/messages.h"
-#include "main/snort_types.h"
-#include "main/snort_config.h"
-#include "main/snort_debug.h"
-#include "detection/sfrim.h"
-#include "parser/parser.h"
-#include "utils/util.h"
-#include "utils/snort_bounds.h"
-#include "hash/sfhashfcn.h"
 
 //-------------------------------------------------------------------------
 // PortObject - public

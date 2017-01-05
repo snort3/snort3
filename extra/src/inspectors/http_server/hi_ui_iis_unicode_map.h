@@ -23,8 +23,7 @@
 #ifndef HI_UI_IIS_UNICODE_MAP_H
 #define HI_UI_IIS_UNICODE_MAP_H
 
-#include "hi_include.h"
-#include "hi_ui_config.h"
+#include <cstdint>
 
 /*
 **  This is the define for the iis_unicode_map array when there is no

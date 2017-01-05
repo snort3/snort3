@@ -17,15 +17,14 @@
 //--------------------------------------------------------------------------
 // pp_decode_data_iface.cc author Joel Cornett <jocornet@cisco.com>
 
-#include "pp_decode_data_iface.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <assert.h>
-#include <lua.hpp>
+#include "pp_decode_data_iface.h"
 
 #include "framework/decode_data.h"
 #include "lua/lua_arg.h"
-#include "lua/lua_table.h"
-#include "protocols/ipv4.h"
 
 #include "pp_ip_api_iface.h"
 #include "pp_raw_buffer_iface.h"

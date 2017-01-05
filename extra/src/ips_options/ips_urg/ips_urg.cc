@@ -22,22 +22,14 @@
 #include "config.h"
 #endif
 
-#include <sys/types.h>
-#include <stdlib.h>
-#include <ctype.h>
-
-#include "main/snort_types.h"
-#include "main/thread.h"
 #include "detection/detection_defines.h"
-#include "detection/treenodes.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
-#include "framework/parameter.h"
 #include "framework/range.h"
 #include "hash/sfhashfcn.h"
+#include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
-#include "profiler/profiler.h"
 
 static const char* s_name = "urg";
 static const char* s_help = "detection for TCP urgent pointer";

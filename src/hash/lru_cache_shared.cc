@@ -18,6 +18,10 @@
 
 // lru_cache_shared.cc author Steve Chew <stechew@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "hash/lru_cache_shared.h"
 
 const PegInfo lru_cache_shared_peg_names[] =

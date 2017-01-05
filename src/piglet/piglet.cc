@@ -17,16 +17,19 @@
 //--------------------------------------------------------------------------
 // piglet.cc author Joel Cornett <jocornet@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "piglet.h"
 
 #include <iostream>
 #include <chrono>
 
 #include "main/snort_config.h"
-#include "piglet_manager.h"
+
 #include "piglet_output.h"
 #include "piglet_runner.h"
-#include "piglet_utils.h"
 
 namespace Piglet
 {

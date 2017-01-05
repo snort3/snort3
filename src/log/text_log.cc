@@ -25,17 +25,19 @@
  * @brief  implements buffered text stream for logging
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "text_log.h"
 
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/stat.h>
 
-#include "log.h"
-#include "main/snort_types.h"
+#include <cstdarg>
+
 #include "utils/util.h"
+
+#include "log.h"
 
 /* some reasonable minimums */
 #define MIN_BUF  (1* K_BYTES)

@@ -21,11 +21,8 @@
 #include "config.h"
 #endif
 
-#include "framework/codec.h"
-#include "protocols/protocol_ids.h"
-#include "protocols/ipv6.h"
-#include "protocols/packet.h"
 #include "codecs/codec_module.h"
+#include "framework/codec.h"
 #include "main/snort_config.h"
 
 #define CD_AUTH_NAME "auth"

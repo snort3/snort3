@@ -61,8 +61,10 @@
 //    a la FlowCache)
 //-------------------------------------------------------------------------
 
-#include "flow/flow.h"
+#include "flow/flow_key.h"
 
+class Flow;
+class FlowData;
 struct Packet;
 struct ExpectFlow;
 struct ExpectNode;

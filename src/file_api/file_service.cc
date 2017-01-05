@@ -23,11 +23,11 @@
  ** 5.25.12 - Initial Source Code. Hui Cao
  */
 
-#include "file_service.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "file_service.h"
 
 #include "main/snort_config.h"
 #include "mime/file_mime_process.h"

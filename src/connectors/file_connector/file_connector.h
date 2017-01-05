@@ -23,10 +23,9 @@
 
 #include <fstream>
 
-#include "file_connector_config.h"
 #include "framework/connector.h"
-#include "main/thread.h"
-#include "profiler/profiler.h"
+
+#include "file_connector_config.h"
 
 #define FILE_FORMAT_VERSION (1)
 

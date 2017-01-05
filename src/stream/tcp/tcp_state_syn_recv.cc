@@ -19,13 +19,15 @@
 // tcp_state_syn_recv.cc author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Aug 5, 2015
 
-#include <iostream>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "tcp_state_syn_recv.h"
 
 #include "tcp_module.h"
-#include "tcp_tracker.h"
-#include "tcp_session.h"
 #include "tcp_normalizer.h"
-#include "tcp_state_syn_recv.h"
+#include "tcp_session.h"
 
 using namespace std;
 

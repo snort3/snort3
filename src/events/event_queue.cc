@@ -51,16 +51,21 @@
 **           SnortEventqAdd() - only adds events that have an otn
 **
 */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "event_queue.h"
 
-#include "sfeventq.h"
-#include "event_wrapper.h"
 #include "detection/fp_detect.h"
-#include "utils/util.h"
-#include "utils/stats.h"
 #include "filters/sfthreshold.h"
 #include "log/messages.h"
 #include "parser/parser.h"
+#include "utils/stats.h"
+#include "utils/util.h"
+
+#include "sfeventq.h"
 
 typedef struct s_SNORT_EVENTQ_USER
 {

@@ -17,14 +17,16 @@
 //--------------------------------------------------------------------------
 // http_test_input.cc author Tom Peters <thopeter@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifdef REG_TEST
 
-#include <assert.h>
-#include <stdexcept>
+#include "http_test_input.h"
 
 #include "http_module.h"
 #include "http_test_manager.h"
-#include "http_test_input.h"
 
 using namespace HttpEnums;
 

@@ -19,20 +19,22 @@
 
 // detector_http.cc author Sourcefire Inc.
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "detector_http.h"
 
-#include "search_engines/search_tool.h"
 #include "main/snort_debug.h"
-#include "sfip/sf_ip.h"
-
-#include "service_plugins/service_api.h"
-#include "service_plugins/service_util.h"
-#include "appid_utils/sf_mlmp.h"
-#include "utils/util.h"
+#include "protocols/packet.h"
+#include "search_engines/search_tool.h"
 
 #include "app_info_table.h"
-#include "application_ids.h"
+#include "appid_config.h"
+#include "appid_utils/sf_mlmp.h"
 #include "client_plugins/client_app_base.h"
+#include "service_plugins/service_util.h"
+
 #include "http_url_patterns.h"
 
 /* URL line patterns for identifying client */

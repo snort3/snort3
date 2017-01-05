@@ -27,8 +27,6 @@
 #include "config.h"
 #endif
 
-#include <sys/types.h>
-
 #include "framework/logger.h"
 #include "framework/module.h"
 

@@ -21,9 +21,9 @@
 #ifndef FILE_CONNECTOR_MODULE_H
 #define FILE_CONNECTOR_MODULE_H
 
-#include "file_connector_config.h"
 #include "framework/module.h"
-#include "main/thread.h"
+
+#include "file_connector_config.h"
 
 #define FILE_CONNECTOR_NAME "file_connector"
 #define FILE_CONNECTOR_HELP "implement the file based connector"

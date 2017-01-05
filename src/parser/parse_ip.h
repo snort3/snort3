@@ -20,9 +20,6 @@
 #ifndef PARSE_IP_H
 #define PARSE_IP_H
 
-#include <sys/types.h>
-#include "main/snort_types.h"
-
 struct sfip_var_t;
 
 sfip_var_t* sfip_var_from_string(const char*);

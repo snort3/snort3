@@ -18,6 +18,10 @@
 
 // memory_allocator.cc author Joel Cornett <jocornet@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "memory_allocator.h"
 
 #include <cstdlib>

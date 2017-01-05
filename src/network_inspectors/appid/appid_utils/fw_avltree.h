@@ -22,8 +22,8 @@
 #ifndef FW_AVL_TREE_H
 #define FW_AVL_TREE_H
 
-#include <stdint.h>
-#include <stdlib.h>
+#include <cstddef>
+#include <cstdint>
 
 struct FwAvlNode
 {

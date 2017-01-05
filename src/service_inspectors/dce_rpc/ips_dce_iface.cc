@@ -19,6 +19,10 @@
 // ips_dce_iface.cc author Maya Dagon <mdagon@cisco.com>
 // based on work by Todd Wease
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <cerrno>
 
 #include "detection/detection_defines.h"

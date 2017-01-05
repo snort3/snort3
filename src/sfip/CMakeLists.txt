@@ -2,7 +2,6 @@
 set(SFIP_INCLUDES
     sf_cidr.h
     sf_ip.h
-    sf_ipvar.h
     sf_returns.h
 )
 
@@ -16,6 +15,7 @@ add_library ( sfip STATIC
     sf_cidr.cc
     sf_ip.cc
     sf_ipvar.cc
+    sf_ipvar.h
     sf_vartable.cc
     sf_vartable.h 
 )

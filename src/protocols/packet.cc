@@ -17,15 +17,16 @@
 //--------------------------------------------------------------------------
 // packet.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include <assert.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "protocols/packet.h"
-#include "protocols/packet_manager.h"
-#include "protocols/protocol_ids.h"
+#include "packet.h"
+
 #include "log/obfuscator.h"
-#include "log/messages.h"
 #include "managers/codec_manager.h"
-#include "utils/util.h"
+
+#include "packet_manager.h"
 
 Packet::Packet(bool packet_data)
 {

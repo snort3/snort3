@@ -36,15 +36,13 @@
 #ifndef FTPP_SI_H
 #define FTPP_SI_H
 
-#include <stdint.h>
-
-#include "ftpp_ui_config.h"
-#include "ftp_client.h"
-#include "ftp_server.h"
-#include "protocols/packet.h"
 #include "file_api/file_api.h"
 #include "flow/flow.h"
-#include "stream/stream.h"
+#include "flow/flow_key.h"
+
+#include "ftp_client.h"
+#include "ftp_server.h"
+#include "ftpp_ui_config.h"
 
 /*
  * These are the defines for the different types of

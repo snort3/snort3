@@ -17,15 +17,17 @@
 //--------------------------------------------------------------------------
 // http_transaction.cc author Tom Peters <thopeter@cisco.com>
 
-#include <sys/types.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "http_enum.h"
 #include "http_transaction.h"
+
+#include "http_msg_body.h"
+#include "http_msg_header.h"
 #include "http_msg_request.h"
 #include "http_msg_status.h"
-#include "http_msg_header.h"
 #include "http_msg_trailer.h"
-#include "http_msg_body.h"
 
 using namespace HttpEnums;
 

@@ -21,6 +21,10 @@
 
 // Smb commands processing
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "dce_smb_commands.h"
 
 #include "main/snort_debug.h"

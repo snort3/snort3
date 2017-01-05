@@ -21,14 +21,6 @@
 #ifndef UNIFIED2_H
 #define UNIFIED2_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include <sys/types.h>
-#if defined(__linux__)
-#include <stdint.h>
-#endif
 #include <netinet/in.h>
 
 #include "protocols/protocol_ids.h"

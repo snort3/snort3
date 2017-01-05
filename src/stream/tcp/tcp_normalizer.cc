@@ -19,10 +19,14 @@
 // tcp_normalization.cc author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Jul 31, 2015
 
-#include "packet_io/active.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "tcp_normalizer.h"
-#include "tcp_event_logger.h"
+
+#include "main/snort_debug.h"
+#include "packet_io/active.h"
 
 THREAD_LOCAL PegCount tcp_norm_stats[PC_TCP_MAX][NORM_MODE_MAX];
 

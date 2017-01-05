@@ -17,13 +17,13 @@
 //--------------------------------------------------------------------------
 // pp_codec_data_iface.cc author Joel Cornett <jocornet@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "pp_codec_data_iface.h"
 
-#include <string.h>
-#include <lua.hpp>
-
 #include "framework/codec.h"
-#include "lua/lua_table.h"
 #include "lua/lua_arg.h"
 
 static void set_fields(lua_State* L, int tindex, CodecData& self)

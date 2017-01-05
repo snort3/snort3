@@ -22,26 +22,20 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <string>
-
-#include "log/messages.h"
-#include "main/snort_config.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "main/thread_config.h"
-#include "protocols/packet.h"
-#include "parser/parser.h"
-#include "parser/parse_utils.h"
-#include "packet_io/sfdaq.h"
+#include "actions/act_replace.h"
+#include "detection/detection_defines.h"
+#include "detection/treenodes.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
-#include "framework/parameter.h"
 #include "framework/module.h"
-#include "detection/detection_defines.h"
-#include "actions/act_replace.h"
 #include "hash/sfhashfcn.h"
+#include "log/messages.h"
+#include "main/snort_config.h"
+#include "main/thread_config.h"
+#include "packet_io/sfdaq.h"
+#include "parser/parse_utils.h"
 #include "profiler/profiler.h"
+#include "protocols/packet.h"
 
 using namespace std;
 

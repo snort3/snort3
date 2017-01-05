@@ -18,14 +18,14 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "treenodes.h"
 
 #include "framework/ips_option.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
 #include "utils/util.h"
-
-#include "detect.h"
 
 OptFpList* AddOptFuncToList(RuleOptEvalFunc ro_eval_func, OptTreeNode* otn)
 {

@@ -19,22 +19,17 @@
 
 // appid_stats.cc author Sourcefire Inc.
 
-#include "appid_stats.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <cerrno>
-#include <cstdio>
-#include <ctime>
-#include <cstdint>
+#include "appid_stats.h"
 
 #include "log/messages.h"
 #include "log/unified2.h"
-#include "utils/sflsq.h"
-#include "utils/util.h"
 
-#include "appid_module.h"
-#include "appid_api.h"
-#include "appid_session.h"
 #include "app_info_table.h"
+#include "appid_config.h"
 #include "appid_utils/fw_avltree.h"
 
 #define URLCATBUCKETS   100

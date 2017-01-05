@@ -21,7 +21,7 @@
 
 // Define action types and provide hooks to apply a given action to a packet
 
-#include <stdint.h>
+#include <cstdint>
 
 #define ACTION_LOG      "log"
 #define ACTION_PASS     "pass"

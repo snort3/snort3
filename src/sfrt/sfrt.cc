@@ -77,11 +77,11 @@
  *  sfrt_free   - free table
 */
 
-#include "sfrt.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "sfrt.h"
 
 #include "sfip/sf_cidr.h"
 #include "utils/util.h"

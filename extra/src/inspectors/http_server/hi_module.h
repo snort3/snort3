@@ -21,11 +21,10 @@
 #ifndef HI_MODULE_H
 #define HI_MODULE_H
 
-#include <string>
-
 #include "framework/module.h"
-#include "hi_ui_config.h"
+
 #include "hi_events.h"
+#include "hi_ui_config.h"
 
 #define GLOBAL_KEYWORD "http_global"
 #define SERVER_KEYWORD "http_server"

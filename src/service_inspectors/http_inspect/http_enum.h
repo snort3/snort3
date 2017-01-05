@@ -20,7 +20,7 @@
 #ifndef HTTP_ENUM_H
 #define HTTP_ENUM_H
 
-#include <stdint.h>
+#include <cstdint>
 
 namespace HttpEnums
 {

@@ -44,23 +44,14 @@
 #include "config.h"
 #endif
 
-#include <sys/types.h>
 #include <sys/stat.h>
 
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-
-#include "log/messages.h"
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "protocols/packet.h"
-#include "profiler/profiler.h"
-#include "packet_io/active.h"
-#include "parser/parser.h"
 #include "framework/ips_action.h"
-#include "framework/parameter.h"
 #include "framework/module.h"
+#include "log/messages.h"
+#include "packet_io/active.h"
+#include "profiler/profiler.h"
+#include "protocols/packet.h"
 #include "utils/util.h"
 
 #define s_name "react"

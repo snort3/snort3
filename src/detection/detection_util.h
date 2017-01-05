@@ -25,13 +25,7 @@
 // it provides file and alt data pointers, event trace foo, and
 // some http stuff.
 
-#include <assert.h>
-
-#include "main/snort_types.h"
 #include "main/snort_config.h"
-#include "main/snort_debug.h"
-#include "detection/detect.h"
-#include "protocols/packet.h"
 
 #define DECODE_BLEN 65535
 

@@ -21,16 +21,10 @@
 #ifndef PATTERN_MATCH_DATA_H
 #define PATTERN_MATCH_DATA_H
 
-#include <assert.h>
-#include <ctype.h>
 #include <sys/time.h>
 #include <vector>
 
-#include "detection/treenodes.h"
 #include "framework/ips_option.h"  // FIXIT-L not a good dependency
-#include "main/snort_types.h"
-#include "main/thread_config.h"
-#include "utils/util.h"
 
 struct PmdLastCheck
 {

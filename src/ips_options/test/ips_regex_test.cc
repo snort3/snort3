@@ -18,6 +18,10 @@
 
 // ips_regex_test.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "ips_options/ips_regex.h"
 
 #include "framework/base_api.h"

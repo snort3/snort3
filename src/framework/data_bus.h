@@ -31,11 +31,11 @@
 #include <string>
 #include <vector>
 
+#include "main/snort_types.h"
+
 // FIXIT-P evaluate perf; focus is on correctness
 typedef std::vector<class DataHandler*> DataList;
 typedef std::map<std::string, DataList> DataMap;
-
-#include "main/snort_types.h"
 
 class Flow;
 struct Packet;

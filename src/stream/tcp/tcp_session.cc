@@ -46,45 +46,20 @@
 #include "config.h"
 #endif
 
-#include <errno.h>
-#include <assert.h>
+#include "tcp_session.h"
 
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "main/snort_config.h"
-#include "detection/detect.h"
-#include "detection/detection_util.h"
-#include "hash/sfxhash.h"
-#include "utils/util.h"
-#include "utils/util_net.h"
-#include "utils/sflsq.h"
-#include "time/packet_time.h"
+#include "log/log.h"
 #include "perf_monitor/flow_ip_tracker.h"
-#include "sfip/sf_ip.h"
-#include "protocols/packet.h"
-#include "protocols/packet_manager.h"
-#include "protocols/tcp_options.h"
-#include "protocols/tcp.h"
-#include "protocols/eth.h"
-#include "log/log_text.h"
-#include "stream/stream.h"
-#include "stream/stream_splitter.h"
-#include "flow/session.h"
 #include "profiler/profiler.h"
-#include "file_api/file_api.h"
-#include "perf_monitor/flow_tracker.h"
-#include "filters/sfrf.h"
+#include "protocols/eth.h"
 
-#include "stream/paf.h"
 #include "stream_tcp.h"
+#include "tcp_debug_trace.h"
 #include "tcp_ha.h"
 #include "tcp_module.h"
-#include "tcp_event_logger.h"
-#include "tcp_debug_trace.h"
 #include "tcp_normalizers.h"
 #include "tcp_reassemblers.h"
 #include "tcp_stream_state_machine.h"
-#include "tcp_session.h"
 
 DEBUG_WRAP(const char* t_name = NULL; const char* l_name = NULL; )
 

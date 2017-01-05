@@ -37,26 +37,16 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-
-#include <string>
-
-#include "main/snort_debug.h"
-#include "main/snort_config.h"
+#include "detection/signature.h"
+#include "events/event.h"
 #include "framework/logger.h"
 #include "framework/module.h"
-#include "protocols/packet.h"
-#include "parser/parser.h"
-#include "utils/util.h"
-#include "log/text_log.h"
 #include "log/log_text.h"
+#include "log/text_log.h"
+#include "main/snort_config.h"
 #include "packet_io/active.h"
-#include "packet_io/sfdaq.h"
 #include "packet_io/intf.h"
-#include "events/event.h"
+#include "packet_io/sfdaq.h"
 
 using namespace std;
 

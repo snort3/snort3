@@ -24,9 +24,9 @@
 
 // encapsulate Lua interface boilerplate to get sane, identical behavior across users
 
-#include <cassert>
-
 #include <lua.hpp>
+
+#include <cassert>
 
 template<typename T>
 struct UserData

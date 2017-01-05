@@ -23,6 +23,7 @@
 // basic thread management utilities
 
 #include <string>
+
 #include "main/snort_types.h"
 
 #define THREAD_LOCAL_TBD

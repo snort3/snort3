@@ -23,15 +23,14 @@
 ** 5.25.2012 - Initial Source Code. Hcao
 */
 
-#include "file_identifier.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <assert.h>
+#include "file_identifier.h"
 
 #include <algorithm>
+#include <cassert>
 
 #include "log/messages.h"
 #include "utils/util.h"

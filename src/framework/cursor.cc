@@ -17,10 +17,13 @@
 //--------------------------------------------------------------------------
 // cursor.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "cursor.h"
+
 #include "detection/detection_util.h"
-#include "framework/inspector.h"
-#include "flow/flow.h"
 #include "protocols/packet.h"
 
 Cursor::Cursor(Packet* p)

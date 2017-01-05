@@ -25,15 +25,14 @@
 // configuration or dynamic discovery).  It provides a thread-safe API to
 // set/get the host data.
 
-#include <mutex>
-#include <memory>
+#include <algorithm>
 #include <cstring>
 #include <list>
-#include <algorithm>
+#include <mutex>
 
-#include "sfip/sf_ip.h"
 #include "framework/counts.h"
 #include "main/thread.h"
+#include "sfip/sf_ip.h"
 
 //  FIXIT-M For now this emulates the Snort++ attribute table.
 //  Need to add in sfrnaincludes/host_tracker.h data eventually.

@@ -26,14 +26,7 @@
 //
 // FIXIT-M debug flags needs to be replaced with a module facility.
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <cstdarg>
-#include <cstdio>
-#include <stdint.h>
-#include <ctype.h>
 
 #include "main/snort_types.h"
 

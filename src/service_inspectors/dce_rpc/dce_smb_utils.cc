@@ -19,12 +19,17 @@
 // dce_smb_utils.cc author Maya Dagon <mdagon@cisco.com>
 // based on work by Todd Wease
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "dce_smb_utils.h"
 
+#include "detection/detect.h"
 #include "detection/detection_util.h"
-#include "utils/util.h"
-#include "packet_io/active.h"
 #include "main/snort.h"
+#include "packet_io/active.h"
+#include "utils/util.h"
 
 #include "dce_smb_module.h"
 
@@ -1478,7 +1483,7 @@ void DCE2_SmbAbortFileAPI(DCE2_SmbSsnData* ssd)
     ssd->fapi_ftracker = nullptr;
 }
 
-FileContext* DCE2_get_main_file_context(DCE2_SmbSsnData* ssd)
+static FileContext* DCE2_get_main_file_context(DCE2_SmbSsnData* ssd)
 {
     assert(ssd->sd.wire_pkt);
     FileFlows* file_flows = FileFlows::get_file_flows((ssd->sd.wire_pkt)->flow);

@@ -30,12 +30,8 @@
 #ifndef IPOBJ_H
 #define IPOBJ_H
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-
-#include "utils/sflsq.h"
 #include "sfip/sf_cidr.h"
+#include "utils/sflsq.h"
 
 struct PORTRANGE
 {

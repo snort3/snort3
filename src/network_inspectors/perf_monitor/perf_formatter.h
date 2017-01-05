@@ -43,10 +43,10 @@
 // ouput open.
 //
 
-#include <framework/counts.h>
-
 #include <string>
 #include <vector>
+
+#include "framework/counts.h"
 
 union FormatterValue
 {

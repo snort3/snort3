@@ -17,11 +17,14 @@
 //--------------------------------------------------------------------------
 // pp_ips_action_iface.cc author Joel Cornett <jocornet@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "pp_ips_action_iface.h"
 
-#include <lua.hpp>
-
 #include "framework/ips_action.h"
+
 #include "pp_packet_iface.h"
 
 static const luaL_Reg methods[] =

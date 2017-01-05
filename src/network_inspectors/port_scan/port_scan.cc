@@ -42,31 +42,19 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <sys/types.h>
-#include <errno.h>
-
-#include <string>
-
-#include "ps_detect.h"
-#include "ps_inspect.h"
-#include "ps_module.h"
-
-#include "ipobj.h"
-#include "log/messages.h"
-#include "main/snort_config.h"
-#include "managers/inspector_manager.h"
-#include "protocols/packet_manager.h"
-#include "protocols/packet.h"
+#include "detection/detect.h"
 #include "events/event.h"
 #include "events/event_wrapper.h"
 #include "filters/sfthreshold.h"
-#include "utils/util.h"
-#include "utils/sfsnprintfappend.h"
-#include "framework/inspector.h"
+#include "log/messages.h"
+#include "managers/inspector_manager.h"
 #include "profiler/profiler.h"
-#include "time/packet_time.h"
-#include "detection/detect.h"
+#include "protocols/packet_manager.h"
+#include "utils/sfsnprintfappend.h"
+#include "utils/util.h"
+
+#include "ps_inspect.h"
+#include "ps_module.h"
 
 #define PROTO_BUFFER_SIZE 256
 

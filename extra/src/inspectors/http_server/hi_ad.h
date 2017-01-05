@@ -20,11 +20,9 @@
 #ifndef HI_AD_H
 #define HI_AD_H
 
-#include <sys/types.h>
+#include <cstdint>
 
-#include "hi_include.h"
-
-int hi_server_anomaly_detection(void* S, const u_char* data, int dsize);
+int hi_server_anomaly_detection(void* S, const uint8_t* data, int dsize);
 
 #endif
 

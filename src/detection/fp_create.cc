@@ -28,44 +28,31 @@
 **
 */
 
-#include "fp_create.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "fp_create.h"
 
-#include "main/snort_config.h"
-#include "hash/sfghash.h"
-#include "ips_options/ips_flow.h"
-#include "utils/util.h"
-#include "utils/stats.h"
-#include "utils/sflsq.h"
-#include "parser/parser.h"
-#include "parser/parse_rule.h"
-#include "ports/port_table.h"
-#include "ports/port_utils.h"
-#include "ports/rule_port_tables.h"
 #include "framework/mpse.h"
-#include "framework/ips_option.h"
+#include "hash/sfghash.h"
 #include "log/messages.h"
+#include "main/snort_config.h"
 #include "managers/mpse_manager.h"
-#include "target_based/snort_protocols.h"
+#include "parser/parse_rule.h"
+#include "parser/parser.h"
+#include "ports/port_table.h"
+#include "ports/rule_port_tables.h"
+#include "utils/stats.h"
+#include "utils/util.h"
 
-#include "fp_config.h"
-#include "service_map.h"
-#include "rules.h"
-#include "treenodes.h"
-#include "fp_detect.h"
-#include "fp_utils.h"
 #include "detection_options.h"
-#include "detection_defines.h"
-#include "sfrim.h"
+#include "fp_config.h"
+#include "fp_utils.h"
 #include "pattern_match_data.h"
+#include "pcrm.h"
+#include "service_map.h"
+#include "treenodes.h"
 
 static unsigned mpse_count = 0;
 static const char* s_group = "";

@@ -23,10 +23,6 @@
 #ifndef SFTHD_H
 #define SFTHD_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "main/policy.h"
 #include "sfip/sf_ip.h"
 #include "utils/cpp_macros.h"

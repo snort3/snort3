@@ -22,8 +22,9 @@
 #ifndef TCP_DEFS_H
 #define TCP_DEFS_H
 
-#include "main/snort_debug.h"
-#include "protocols/packet.h"
+#include "main/thread.h"
+
+struct Packet;
 
 /* actions */
 #define ACTION_NOTHING                  0x00000000

@@ -17,6 +17,10 @@
 //--------------------------------------------------------------------------
 // pp_so_rule_iface.cc author Joel Cornett <jocornet@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "pp_so_rule_iface.h"
 
 #include "framework/so_rule.h"

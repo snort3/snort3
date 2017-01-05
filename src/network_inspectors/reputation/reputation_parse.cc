@@ -16,17 +16,20 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 // reputation_parse.cc author Hui Cao <huica@cisco.com>
-//
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "reputation_parse.h"
 
-#include <assert.h>
+#include <limits.h>
 #include <netinet/in.h>
 
+#include <cassert>
 #include <limits>
 
 #include "log/messages.h"
-#include "main/snort_debug.h"
 #include "parser/config_file.h"
 #include "sfip/sf_cidr.h"
 #include "utils/util.h"

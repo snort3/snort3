@@ -18,15 +18,18 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "detection_util.h"
 
-#include <time.h>
-#include <string>
-
-#include "main/snort_config.h"
+#include "events/event.h"
 #include "log/text_log.h"
-#include "actions/actions.h"
+#include "protocols/packet.h"
 #include "utils/stats.h"
+
+#include "treenodes.h"
 
 THREAD_LOCAL DataPointer g_file_data;
 

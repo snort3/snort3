@@ -17,11 +17,11 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "snort_config.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "snort_config.h"
 
 #include "detection/fp_config.h"
 #include "detection/fp_create.h"
@@ -42,9 +42,10 @@
 #include "parser/parser.h"
 #include "parser/vars.h"
 #include "profiler/profiler.h"
+#include "protocols/packet.h"
 #include "sfip/sf_ip.h"
-#include "thread_config.h"
 #include "target_based/sftarget_reader.h"
+#include "target_based/snort_protocols.h"
 #include "utils/util.h"
 
 #ifdef HAVE_HYPERSCAN
@@ -52,6 +53,8 @@
 #include "ips_options/ips_sd_pattern.h"
 #include "search_engines/hyperscan.h"
 #endif
+
+#include "thread_config.h"
 
 THREAD_LOCAL SnortConfig* snort_conf = nullptr;
 uint32_t SnortConfig::warning_flags = 0;

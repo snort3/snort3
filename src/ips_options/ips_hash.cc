@@ -20,24 +20,20 @@
 #include "config.h"
 #endif
 
-#include <errno.h>
 #include <array>
-#include <string>
+#include <cassert>
 
-#include "ips_byte_extract.h"
-#include "log/messages.h"
-#include "main/snort_types.h"
-#include "parser/parser.h"
-#include "parser/parse_utils.h"
-#include "hash/sfhashfcn.h"
-#include "hash/hashes.h"
+#include "detection/detection_defines.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
-#include "profiler/profiler.h"
-#include "detection/detection_defines.h"
-#include "detection/detection_util.h"
-#include "framework/parameter.h"
 #include "framework/module.h"
+#include "hash/hashes.h"
+#include "hash/sfhashfcn.h"
+#include "log/messages.h"
+#include "parser/parse_utils.h"
+#include "profiler/profiler.h"
+
+#include "ips_byte_extract.h"
 
 enum HashPsIdx
 {

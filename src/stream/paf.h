@@ -25,9 +25,6 @@
 #ifndef PAF_H
 #define PAF_H
 
-#include <stdint.h>
-
-#include "main/snort_types.h"
 #include "stream/stream_splitter.h"
 
 struct SnortConfig;

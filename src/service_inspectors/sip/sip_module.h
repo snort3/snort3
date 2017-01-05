@@ -24,8 +24,6 @@
 // Interface to the SIP service inspector
 
 #include "framework/module.h"
-#include "framework/bits.h"
-#include "main/thread.h"
 #include "sip_config.h"
 
 #define GID_SIP 140

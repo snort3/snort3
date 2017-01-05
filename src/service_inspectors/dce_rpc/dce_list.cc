@@ -25,6 +25,10 @@
  *
  ****************************************************************************/
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "dce_list.h"
 
 #include "main/snort_debug.h"

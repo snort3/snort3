@@ -17,33 +17,24 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#include "stream_icmp.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "hash/sfxhash.h"
-#include "utils/util.h"
-#include "stream/stream.h"
-#include "flow/flow.h"
-#include "flow/flow_control.h"
-#include "flow/session.h"
-#include "profiler/profiler.h"
-#include "protocols/packet.h"
-#include "protocols/layer.h"
-#include "protocols/vlan.h"
-#include "protocols/ip.h"
+#include "icmp_session.h"
+
+#include "flow/flow_key.h"
+#include "profiler/profiler_defs.h"
 #include "protocols/icmp4.h"
-#include "protocols/udp.h"
+#include "protocols/packet.h"
 #include "protocols/tcp.h"
-#include "sfip/sf_ip.h"
+#include "protocols/udp.h"
+#include "protocols/vlan.h"
+#include "utils/util.h"
 
 #include "icmp_ha.h"
 #include "icmp_module.h"
-#include "icmp_session.h"
+#include "stream_icmp.h"
 
 const PegInfo icmp_pegs[] =
 {

@@ -24,12 +24,11 @@
 // Provides list of MIME processing functions. Encoded file data will be decoded
 // and file name will be extracted from MIME header
 
-#include "main/snort_types.h"
 #include "file_api/file_api.h"
 #include "mime/file_mime_config.h"
-#include "mime/file_mime_paf.h"
-#include "mime/file_mime_log.h"
 #include "mime/file_mime_decode.h"
+#include "mime/file_mime_log.h"
+#include "mime/file_mime_paf.h"
 
 /* state flags */
 #define MIME_FLAG_FOLDING                    0x00000001

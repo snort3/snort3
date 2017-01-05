@@ -25,11 +25,7 @@
 // usage fields, it provides module instantiation and release functions, as
 // well as additional data to help detect mismatched builds etc.
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include "main/snort_types.h"
+#include <cstdint>
 
 // this is the current version of the base api
 // must be prefixed to subtype version

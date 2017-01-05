@@ -25,10 +25,10 @@
 // manages packet processing verdicts returned to the DAQ.  action (what to
 // do) is separate from status (whether we can actually do it or not).
 
-#include "main/snort_config.h"
 #include "protocols/packet_manager.h"
 
 struct Packet;
+struct SnortConfig;
 
 class SO_PUBLIC Active
 {

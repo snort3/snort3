@@ -20,20 +20,16 @@
 // kmap.cc author Marc Norton
 // a generic map library - maps key + data pairs
 
-#include "kmap.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <string>
-#include <limits>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
+#include "kmap.h"
 
-#include "utils/util.h"
+#include <limits>
+#include <string>
+
+#include "util.h"
 
 void keep_kmap_lib() { }
 

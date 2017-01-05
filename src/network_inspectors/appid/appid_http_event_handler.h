@@ -24,8 +24,6 @@
 #ifndef APPID_HTTP_EVENT_HANDLER_H
 #define APPID_HTTP_EVENT_HANDLER_H
 
-#include "framework/data_bus.h"
-
 #include "pub_sub/http_events.h"
 
 class HttpEventHandler : public DataHandler

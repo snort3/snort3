@@ -17,11 +17,11 @@
 //--------------------------------------------------------------------------
 // codec_api.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include "codec_api.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "codec_api.h"
 
 #include "framework/codec.h"
 #include "managers/plugin_manager.h"

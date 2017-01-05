@@ -19,6 +19,10 @@
 // http_msg_head_shared_util_test.cc author Tom Peters <thopeter@cisco.com>
 // unit test main
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "service_inspectors/http_inspect/http_msg_head_shared.h"
 #include "service_inspectors/http_inspect/http_field.h"
 #include "service_inspectors/http_inspect/http_str_to_code.h"

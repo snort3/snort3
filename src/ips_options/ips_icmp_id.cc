@@ -39,24 +39,19 @@
  *
  */
 
-#include <sys/types.h>
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "main/snort_types.h"
-#include "main/snort_debug.h"
-#include "protocols/packet.h"
-#include "profiler/profiler.h"
-#include "hash/sfhashfcn.h"
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
-#include "framework/parameter.h"
 #include "framework/module.h"
 #include "framework/range.h"
+#include "hash/sfhashfcn.h"
+#include "profiler/profiler.h"
 #include "protocols/icmp4.h"
 #include "protocols/icmp6.h"
+#include "protocols/packet.h"
 
 #define s_name "icmp_id"
 
