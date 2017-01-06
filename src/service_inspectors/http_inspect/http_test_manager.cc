@@ -23,6 +23,8 @@
 
 #ifdef REG_TEST
 
+#include <stdexcept>
+
 #include "http_test_manager.h"
 
 #include "http_test_input.h"

@@ -26,7 +26,12 @@
 #include <cstdint>
 
 #include "sfip/sf_ip.h"
-#include "sfrt/sfrt_trie.h"
+
+/* A 32-bit word is used to hold the bit patterns of
+   the addresses. In IPv6 this should be 128 bits.
+   The following typedef is machine dependent.
+   A word must be 32 bits long! */
+typedef unsigned long word;
 
 typedef void* GENERIC;   /* To be replaced with a pointer to a policy */
 struct tuple_t

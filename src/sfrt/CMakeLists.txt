@@ -12,7 +12,6 @@ add_library ( sfrt STATIC
     sfrt_flat.h
     sfrt_flat_dir.cc
     sfrt_flat_dir.h
-    sfrt_trie.h
     ${TEST_FILES}
 )
 
