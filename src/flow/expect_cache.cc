@@ -108,6 +108,7 @@ void ExpectCache::prune()
         if ( !node || now <= node->expires )
             break;
 
+        node->clear(free_list);
         hash_table->remove();
         ++prunes;
     }
