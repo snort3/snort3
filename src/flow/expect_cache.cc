@@ -173,6 +173,8 @@ ExpectNode* ExpectCache::find_node_by_packet(Packet* p, FlowKey &key)
     }
     if (!node->head || (p->pkth->ts.tv_sec > node->expires))
     {
+        if (node->head)
+            node->clear(free_list);
         hash_table->remove(&key);
         return nullptr;
     }
