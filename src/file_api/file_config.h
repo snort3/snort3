@@ -75,6 +75,6 @@ private:
 };
 
 std::string file_type_name(uint32_t id);
-FileConfig* get_file_config ();
+FileConfig* get_file_config();
 #endif
 

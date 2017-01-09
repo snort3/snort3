@@ -27,6 +27,7 @@
 
 #include "detection/detection_util.h"
 #include "file_api/file_flows.h"
+#include "file_api/file_service.h"
 #include "utils/util.h"
 
 #include "dce_smb_module.h"
@@ -784,7 +785,9 @@ void DCE2_Smb2Process(DCE2_SmbSsnData* ssd)
     const uint8_t* data_ptr = p->data;
     uint16_t data_len = p->dsize;
     Smb2Hdr* smb_hdr;
-    const uint8_t* end = data_ptr +  data_len;
+
+    if (!FileService::is_file_service_enabled())
+        return;
 
     /*Check header length*/
     if (data_len < sizeof(NbssHdr) + SMB2_HEADER_LENGTH)
@@ -806,7 +809,7 @@ void DCE2_Smb2Process(DCE2_SmbSsnData* ssd)
             dce_alert(GID_DCE2, DCE2_SMB_BAD_NEXT_COMMAND_OFFSET,
                 (dce2CommonStats*)&dce2_smb_stats);
         }
-        DCE2_Smb2Inspect(ssd, (Smb2Hdr*)smb_hdr, end);
+        DCE2_Smb2Inspect(ssd, (Smb2Hdr*)smb_hdr, data_ptr +  data_len);
     }
     else if (ssd->pdu_state == DCE2_SMB_PDU_STATE__RAW_DATA)
     {
