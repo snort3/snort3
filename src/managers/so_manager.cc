@@ -66,7 +66,7 @@ void SoManager::dump_plugins()
 //-------------------------------------------------------------------------
 
 // FIXIT-L eliminate this arbitrary limit on rule text size
-const unsigned window_bits = -8;
+const unsigned window_bits = -9;
 const unsigned max_rule = 128000;
 static uint8_t so_buf[max_rule];
 

@@ -898,50 +898,41 @@ static void SetGzipBuffers(HttpSessionData* hsd, HI_SESSION* session)
 static int uncompress_gzip(u_char* dest, int destLen, const u_char* source,
     int sourceLen, HttpSessionData* sd, int* total_bytes_read, int compr_fmt)
 {
-    z_stream stream;
+    z_stream* stream;
     int err;
     int iRet = HI_SUCCESS;
 
-    stream = sd->decomp_state->d_stream;
+    stream = &sd->decomp_state->d_stream;
 
-    stream.next_in = (Bytef*)source;
-    stream.avail_in = (uInt)sourceLen;
-    if ((uLong)stream.avail_in != (uLong)sourceLen)
-    {
-        sd->decomp_state->d_stream = stream;
+    stream->next_in = (Bytef*)source;
+    stream->avail_in = (uInt)sourceLen;
+    if ((uLong)stream->avail_in != (uLong)sourceLen)
         return HI_FATAL_ERR;
-    }
 
-    stream.next_out = dest;
-    stream.avail_out = (uInt)destLen;
-    if ((uLong)stream.avail_out != (uLong)destLen)
-    {
-        sd->decomp_state->d_stream = stream;
+    stream->next_out = dest;
+    stream->avail_out = (uInt)destLen;
+    if ((uLong)stream->avail_out != (uLong)destLen)
         return HI_FATAL_ERR;
-    }
 
     if (!sd->decomp_state->inflate_init)
     {
         sd->decomp_state->inflate_init = 1;
-        stream.zalloc = (alloc_func)0;
-        stream.zfree = (free_func)0;
+        stream->zalloc = (alloc_func)0;
+        stream->zfree = (free_func)0;
         if (compr_fmt & HTTP_RESP_COMPRESS_TYPE__DEFLATE)
-            err = inflateInit(&stream);
+            err = inflateInit(stream);
         else
-            err = inflateInit2(&stream, GZIP_WBITS);
+            err = inflateInit2(stream, GZIP_WBITS);
         if (err != Z_OK)
-        {
-            sd->decomp_state->d_stream = stream;
             return HI_FATAL_ERR;
-        }
     }
     else
     {
-        stream.total_in = 0;
-        stream.total_out =0;
+        stream->total_in = 0;
+        stream->total_out =0;
     }
 
-    err = inflate(&stream, Z_SYNC_FLUSH);
+    err = inflate(stream, Z_SYNC_FLUSH);
     if ((!sd->decomp_state->deflate_initialized)
         && (err == Z_DATA_ERROR)
         && (compr_fmt & HTTP_RESP_COMPRESS_TYPE__DEFLATE))
@@ -949,38 +940,36 @@ static int uncompress_gzip(u_char* dest, int destLen, const u_char* source,
         /* Might not have zlib header - add one */
         static constexpr char zlib_header[2] = { 0x78, 0x01 };
 
-        inflateReset(&stream);
-        stream.next_in = (Bytef*)zlib_header;
-        stream.avail_in = sizeof(zlib_header);
+        inflateReset(stream);
+        stream->next_in = (Bytef*)zlib_header;
+        stream->avail_in = sizeof(zlib_header);
 
         sd->decomp_state->deflate_initialized = true;
 
-        err = inflate(&stream, Z_SYNC_FLUSH);
+        err = inflate(stream, Z_SYNC_FLUSH);
         if (err == Z_OK)
         {
-            stream.next_in = (Bytef*)source;
-            stream.avail_in = (uInt)sourceLen;
+            stream->next_in = (Bytef*)source;
+            stream->avail_in = (uInt)sourceLen;
 
-            err = inflate(&stream, Z_SYNC_FLUSH);
+            err = inflate(stream, Z_SYNC_FLUSH);
         }
     }
 
     if ((err != Z_STREAM_END) && (err !=Z_OK))
     {
         /* If some of the compressed data is decompressed we need to provide that for detection */
-        if (( stream.total_out > 0) && (err != Z_DATA_ERROR))
+        if (( stream->total_out > 0) && (err != Z_DATA_ERROR))
         {
-            *total_bytes_read = stream.total_out;
+            *total_bytes_read = stream->total_out;
             iRet = HI_NONFATAL_ERR;
         }
         else
             iRet = HI_FATAL_ERR;
-        inflateEnd(&stream);
-        sd->decomp_state->d_stream = stream;
+        inflateEnd(stream);
         return iRet;
     }
-    *total_bytes_read = stream.total_out;
-    sd->decomp_state->d_stream = stream;
+    *total_bytes_read = stream->total_out;
     return HI_SUCCESS;
 }
 
