@@ -535,7 +535,7 @@ static void _Unified2LogPacketAlert(
         {
             off_t off = p->data - p->pkt;
 
-            if ( !p->is_data() )
+            if ( p->is_data() )
                 off = 0;
 
             for ( const auto& b : *p->obfuscator )

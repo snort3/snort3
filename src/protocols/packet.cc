@@ -53,6 +53,8 @@ Packet::Packet(bool packet_data)
 
 Packet::~Packet()
 {
+    if (obfuscator)
+        delete obfuscator;
     if (allocated)
         delete[] (uint8_t*)pkth;
     delete[] layers;

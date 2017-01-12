@@ -43,6 +43,7 @@
 #include "framework/module.h"
 #include "log/log_text.h"
 #include "log/text_log.h"
+#include "log/obfuscator.h"
 #include "main/snort_config.h"
 #include "packet_io/active.h"
 #include "packet_io/intf.h"
@@ -219,6 +220,16 @@ void FastLogger::alert(Packet* p, const char* msg, Event* event)
         TextLog_NewLine(fast_log);
         if (p->has_ip())
             LogIPPkt(fast_log, p);
+        else if ( p->obfuscator )
+        {
+            // FIXIT-P avoid string copy
+            std::string buf((const char*)p->data, p->dsize);
+
+            for ( const auto& b : *p->obfuscator )
+                buf.replace(b.offset, b.length, b.length, p->obfuscator->get_mask_char());
+
+            LogNetData(fast_log, (const uint8_t*)buf.c_str(), p->dsize, p);
+        }
         else
             LogNetData(fast_log, p->data, p->dsize, p);
 

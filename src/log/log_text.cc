@@ -1478,7 +1478,7 @@ void LogPayload(TextLog* log, Packet* p)
             if ( p->obfuscator )
             {
                 // FIXIT-P avoid string copy
-                std::string buf(p->data, p->data + p->dsize);
+                std::string buf((const char*)p->data, p->dsize);
 
                 for ( const auto& b : *p->obfuscator )
                     buf.replace(b.offset, b.length, b.length, p->obfuscator->get_mask_char());
