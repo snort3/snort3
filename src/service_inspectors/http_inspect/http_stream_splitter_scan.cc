@@ -33,13 +33,15 @@ using namespace HttpEnums;
 // Convenience function. All housekeeping that must be done before we can return FLUSH to stream.
 void HttpStreamSplitter::prepare_flush(HttpFlowData* session_data, uint32_t* flush_offset,
     SectionType section_type, uint32_t num_flushed, uint32_t num_excess, int32_t num_head_lines,
-    bool is_broken_chunk, uint32_t num_good_chunks) const
+    bool is_broken_chunk, uint32_t num_good_chunks, uint32_t octets_seen, bool strict_length) const
 {
     session_data->section_type[source_id] = section_type;
     session_data->num_excess[source_id] = num_excess;
     session_data->num_head_lines[source_id] = num_head_lines;
     session_data->is_broken_chunk[source_id] = is_broken_chunk;
     session_data->num_good_chunks[source_id] = num_good_chunks;
+    session_data->octets_expected[source_id] = octets_seen + num_flushed;
+    session_data->strict_length[source_id] = strict_length;
 
 #ifdef REG_TEST
     if (HttpTestManager::use_test_input())
@@ -112,8 +114,9 @@ StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data,
     }
     else if (HttpTestManager::use_test_output())
     {
-        printf("Scan from flow data %" PRIu64 " direction %d length %u\n", session_data->seq_num,
-            source_id, length);
+        printf("Scan from flow data %" PRIu64
+            " direction %d length %u client port %u server port %u\n", session_data->seq_num,
+            source_id, length, flow->client_port, flow->server_port);
         fflush(stdout);
     }
 #endif
@@ -131,9 +134,9 @@ StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data,
         // us to overcome this limitation and reuse the entire HTTP infrastructure.
         type = SEC_BODY_OLD;
         uint32_t not_used;
-        prepare_flush(session_data, &not_used, SEC_STATUS, 14, 0, 0, false, 0);
+        prepare_flush(session_data, &not_used, SEC_STATUS, 14, 0, 0, false, 0, 14, true);
         my_inspector->process((const uint8_t*)"HTTP/0.9 200 .", 14, flow, SRC_SERVER, false);
-        prepare_flush(session_data, &not_used, SEC_HEADER, 0, 0, 0, false, 0);
+        prepare_flush(session_data, &not_used, SEC_HEADER, 0, 0, 0, false, 0, 0, true);
         my_inspector->process((const uint8_t*)"", 0, flow, SRC_SERVER, false);
     }
 
@@ -152,6 +155,8 @@ StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data,
         if (cutter->get_octets_seen() == MAX_OCTETS)
         {
             session_data->infractions[source_id] += INF_ENDLESS_HEADER;
+            // FIXIT-L the following call seems inappropriate for headers and trailers. Those cases
+            // should be an unconditional EVENT_LOSS_OF_SYNC.
             session_data->events[source_id].generate_misformatted_http(data, length);
             // FIXIT-H need to process this data not just discard it.
             session_data->type_expected[source_id] = SEC_ABORT;
@@ -175,7 +180,7 @@ StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data,
     case SCAN_DISCARD:
     case SCAN_DISCARD_PIECE:
         prepare_flush(session_data, flush_offset, SEC_DISCARD, cutter->get_num_flush(), 0, 0,
-            false, 0);
+            false, 0, cutter->get_octets_seen(), true);
         if (cut_result == SCAN_DISCARD)
         {
             delete cutter;
@@ -188,7 +193,8 @@ StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data,
         const uint32_t flush_octets = cutter->get_num_flush();
         prepare_flush(session_data, flush_offset, type, flush_octets, cutter->get_num_excess(),
             cutter->get_num_head_lines(), cutter->get_is_broken_chunk(),
-            cutter->get_num_good_chunks());
+            cutter->get_num_good_chunks(), cutter->get_octets_seen(),
+            !((type == SEC_BODY_CL) || (type == SEC_BODY_OLD)));
         if (cut_result == SCAN_FOUND)
         {
             delete cutter;
@@ -234,6 +240,7 @@ bool HttpStreamSplitter::finish(Flow* flow)
             (session_data->type_expected[source_id] == SEC_STATUS))
         {
             session_data->infractions[source_id] += INF_PARTIAL_START;
+            // FIXIT-M why not use generate_misformatted_http()?
             session_data->events[source_id].create_event(EVENT_LOSS_OF_SYNC);
             return false;
         }
@@ -242,7 +249,9 @@ bool HttpStreamSplitter::finish(Flow* flow)
         prepare_flush(session_data, &not_used, session_data->type_expected[source_id], 0, 0,
             session_data->cutter[source_id]->get_num_head_lines() + 1,
             session_data->cutter[source_id]->get_is_broken_chunk(),
-            session_data->cutter[source_id]->get_num_good_chunks());
+            session_data->cutter[source_id]->get_num_good_chunks(),
+            session_data->cutter[source_id]->get_octets_seen(),
+            true);
         return true;
     }
 

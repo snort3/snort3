@@ -47,7 +47,8 @@ public:
 private:
     void prepare_flush(HttpFlowData* session_data, uint32_t* flush_offset, HttpEnums::SectionType
         section_type, uint32_t num_flushed, uint32_t num_excess, int32_t num_head_lines,
-        bool is_broken_chunk, uint32_t num_good_chunks) const;
+        bool is_broken_chunk, uint32_t num_good_chunks, uint32_t octets_seen, bool strict_length)
+        const;
     HttpCutter* get_cutter(HttpEnums::SectionType type, const HttpFlowData* session) const;
     void chunk_spray(HttpFlowData* session_data, uint8_t* buffer, const uint8_t* data,
         unsigned length) const;

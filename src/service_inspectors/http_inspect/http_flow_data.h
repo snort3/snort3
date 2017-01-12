@@ -73,14 +73,18 @@ private:
 
     // *** StreamSplitter internal data - reassemble()
     uint8_t* section_buffer[2] = { nullptr, nullptr };
+    uint32_t section_total[2] = { 0, 0 };
     uint32_t section_offset[2] = { 0, 0 };
     HttpEnums::ChunkState chunk_state[2] = { HttpEnums::CHUNK_NUMBER, HttpEnums::CHUNK_NUMBER };
     uint32_t chunk_expected_length[2] = { 0, 0 };
+    uint32_t running_total[2] = { 0, 0 };
 
     // *** StreamSplitter internal data - scan() => reassemble()
     uint32_t num_excess[2] = { 0, 0 };
     bool is_broken_chunk[2] = { false, false };
     uint32_t num_good_chunks[2] = { 0, 0 };
+    uint32_t octets_expected[2] = { 0, 0 };
+    bool strict_length[2] = { false, false };
 
     // *** StreamSplitter => Inspector (facts about the most recent message section)
     HttpEnums::SectionType section_type[2] = { HttpEnums::SEC__NOT_COMPUTE,

@@ -219,7 +219,7 @@ public:
     { return (ssn_state.session_flags & SSNFLAG_PROXIED) != 0; }
 
     bool is_stream()
-    { return to_utype(pkt_type) & to_utype(PktType::STREAM); }
+    { return (to_utype(pkt_type) & to_utype(PktType::STREAM)) != 0; }
 
     void block()
     { ssn_state.session_flags |= SSNFLAG_BLOCK; }

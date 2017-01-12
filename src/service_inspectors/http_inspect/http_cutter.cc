@@ -439,12 +439,12 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
             break;
         }
     }
-    octets_seen += length;
     if (discard_mode)
     {
         num_flush = length;
         return SCAN_DISCARD_PIECE;
     }
+    octets_seen += length;
     return SCAN_NOTFOUND;
 }
 

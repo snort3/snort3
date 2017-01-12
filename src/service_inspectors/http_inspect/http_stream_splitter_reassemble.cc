@@ -204,8 +204,6 @@ const StreamBuffer* HttpStreamSplitter::reassemble(Flow* flow, unsigned total, u
 
     copied = len;
 
-    assert(total <= MAX_OCTETS);
-
     HttpFlowData* session_data = (HttpFlowData*)flow->get_flow_data(HttpFlowData::http_flow_id);
     assert(session_data != nullptr);
 
@@ -244,12 +242,19 @@ const StreamBuffer* HttpStreamSplitter::reassemble(Flow* flow, unsigned total, u
     }
 #endif
 
+    // FIXIT-H Workaround for TP Bug 149662
     if (session_data->section_type[source_id] == SEC__NOT_COMPUTE)
-    {   // FIXIT-M In theory this check should not be necessary
+    {
         return nullptr;
     }
 
-    // FIXIT-P stream should be ehanced to do discarding for us. For now flush-then-discard here
+    assert(session_data->section_type[source_id] != SEC__NOT_COMPUTE);
+    assert(total <= MAX_OCTETS);
+
+    session_data->running_total[source_id] += len;
+    assert(session_data->running_total[source_id] <= total);
+
+    // FIXIT-P stream should be enhanced to do discarding for us. For now flush-then-discard here
     // is how scan() handles things we don't need to examine.
     if (session_data->section_type[source_id] == SEC_DISCARD)
     {
@@ -262,6 +267,12 @@ const StreamBuffer* HttpStreamSplitter::reassemble(Flow* flow, unsigned total, u
 #endif
         if (flags & PKT_PDU_TAIL)
         {
+            assert(session_data->running_total[source_id] == total);
+            assert(
+                (session_data->octets_expected[source_id] == total) ||
+                    (!session_data->strict_length[source_id] &&
+                    (total <= session_data->octets_expected[source_id])));
+            session_data->running_total[source_id] = 0;
             session_data->section_type[source_id] = SEC__NOT_COMPUTE;
 
             // When we are skipping through a message body beyond flow depth this is the end of
@@ -295,7 +306,10 @@ const StreamBuffer* HttpStreamSplitter::reassemble(Flow* flow, unsigned total, u
             buffer = new uint8_t[MAX_OCTETS];
         else
             buffer = new uint8_t[total];
-     }
+        session_data->section_total[source_id] = total;
+    }
+    else
+        assert(session_data->section_total[source_id] == total);
 
     if (session_data->section_type[source_id] != SEC_BODY_CHUNK)
     {
@@ -312,6 +326,20 @@ const StreamBuffer* HttpStreamSplitter::reassemble(Flow* flow, unsigned total, u
 
     if (flags & PKT_PDU_TAIL)
     {
+        uint32_t& running_total = session_data->running_total[source_id];
+        // FIXIT-H workaround for TP Bug 149980: if we get shorted it must be because the TCP
+        // connection closed
+        if ((running_total < session_data->octets_expected[source_id]) &&
+            !session_data->strict_length[source_id])
+            session_data->tcp_close[source_id] = true;
+        // FIXIT-L workaround for TP Bug 148058: for now number of bytes provided following a
+        // connection close may be slightly less than total
+        assert((running_total == total) || session_data->tcp_close[source_id]);
+        assert(
+            (session_data->octets_expected[source_id] == running_total) ||
+                (!session_data->strict_length[source_id] &&
+                (running_total <= session_data->octets_expected[source_id])));
+        running_total = 0;
         const Field& send_to_detection = my_inspector->process(buffer,
             session_data->section_offset[source_id] - session_data->num_excess[source_id], flow,
             source_id, true);
