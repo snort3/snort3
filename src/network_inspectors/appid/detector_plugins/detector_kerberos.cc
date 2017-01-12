@@ -912,7 +912,6 @@ static KRB_RETCODE krb_walk_server_packet(KRBState* krbs, const uint8_t* s, cons
                 service_mod.api->add_service(asd, pkt, dir, &svc_element, APP_ID_KERBEROS,
                     nullptr, krbs->ver, nullptr);
                 asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED);
-                appid_stats.kerberos_flows++;
             }
         }
 
@@ -973,6 +972,7 @@ static CLIENT_APP_RETCODE krb_client_validate(const uint8_t* data, uint16_t size
             fd->clnt_state.state = KRB_STATE_APP;
             fd->svr_state.state = KRB_STATE_APP;
         }
+        appid_stats.kerberos_flows++;
     }
 
     if (!fd->set_flags)
