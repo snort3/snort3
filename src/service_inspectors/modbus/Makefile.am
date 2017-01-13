@@ -17,10 +17,10 @@ noinst_LIBRARIES = libmodbus.a
 libmodbus_a_SOURCES = $(file_list)
 else
 shlibdir = $(pkglibdir)/inspectors
-shlib_LTLIBRARIES = libmodbus.la
-libmodbus_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libmodbus_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-libmodbus_la_SOURCES = $(file_list)
+shlib_LTLIBRARIES = modbus.la
+modbus_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+modbus_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
+modbus_la_SOURCES = $(file_list)
 endif
 
 EXTRA_DIST = dev_notes.txt

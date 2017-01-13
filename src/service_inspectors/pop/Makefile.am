@@ -14,9 +14,9 @@ noinst_LIBRARIES = libpop.a
 libpop_a_SOURCES = $(file_list)
 #else
 #shlibdir = $(pkglibdir)/inspectors
-#shlib_LTLIBRARIES = libpop.la
-#libpop_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-#libpop_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-#libpop_la_SOURCES = $(file_list)
+#shlib_LTLIBRARIES = pop.la
+#pop_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+#pop_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
+#pop_la_SOURCES = $(file_list)
 #endif
 

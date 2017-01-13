@@ -39,7 +39,7 @@ if (STATIC_INSPECTORS)
     target_link_libraries(ftp_telnet utils)
 
 else (STATIC_INSPECTORS)
-   add_shared_library(ftp_telnet inspectors ${FILE_LIST})
+   add_dynamic_module(ftp_telnet inspectors ${FILE_LIST})
 
 endif (STATIC_INSPECTORS)
 

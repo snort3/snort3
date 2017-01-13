@@ -3,18 +3,28 @@ project ( cd_pflog CXX )
 
 if ( APPLE )
     set ( CMAKE_MACOSX_RPATH OFF )
-    set (
-        CMAKE_SHARED_LINKER_FLAGS
-        "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup"
-    )
 endif ( APPLE )
 
 include ( FindPkgConfig )
 pkg_search_module ( SNORT3 REQUIRED snort>=3 )
 
 add_library (
-    cd_pflog SHARED
+    cd_pflog MODULE
     cd_pflog.cc
+)
+
+if ( APPLE )
+    set_target_properties (
+        cd_pflog
+        PROPERTIES
+            LINK_FLAGS "-undefined dynamic_lookup"
+    )
+endif ( APPLE )
+
+set_target_properties (
+    cd_pflog
+    PROPERTIES
+        PREFIX ""
 )
 
 set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
@@ -26,5 +36,6 @@ target_include_directories (
 
 install (
     TARGETS cd_pflog
-    LIBRARY DESTINATION "lib/${CMAKE_PROJECT_NAME}/codecs"
+    LIBRARY
+        DESTINATION "lib/${CMAKE_PROJECT_NAME}/codecs"
 )

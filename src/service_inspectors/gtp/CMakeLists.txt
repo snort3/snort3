@@ -17,7 +17,7 @@ if (STATIC_INSPECTORS)
     add_library(gtp_inspect STATIC ${FILE_LIST})
 
 else (STATIC_INSPECTORS)
-    add_shared_library(gtp_inspect inspectors ${FILE_LIST})
+    add_dynamic_module(gtp_inspect inspectors ${FILE_LIST})
 
 endif (STATIC_INSPECTORS)
 

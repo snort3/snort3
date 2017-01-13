@@ -46,8 +46,8 @@ noinst_LIBRARIES = libdce_rpc.a
 libdce_rpc_a_SOURCES = $(file_list)
 else
 shlibdir = $(pkglibdir)/inspectors
-shlib_LTLIBRARIES = libdce_rpc.la
-libdce_rpc_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libdce_rpc_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-libdce_rpc_la_SOURCES = $(file_list)
+shlib_LTLIBRARIES = dce_rpc.la
+dce_rpc_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+dce_rpc_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
+dce_rpc_la_SOURCES = $(file_list)
 endif

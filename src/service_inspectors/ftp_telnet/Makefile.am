@@ -24,9 +24,9 @@ noinst_LIBRARIES = libftp_telnet.a
 libftp_telnet_a_SOURCES = $(file_list)
 else
 shlibdir = $(pkglibdir)/inspectors
-shlib_LTLIBRARIES = libftp_telnet.la
-libftp_telnet_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libftp_telnet_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-libftp_telnet_la_SOURCES = $(file_list)
+shlib_LTLIBRARIES = ftp_telnet.la
+ftp_telnet_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+ftp_telnet_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
+ftp_telnet_la_SOURCES = $(file_list)
 endif
 

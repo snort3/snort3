@@ -20,7 +20,7 @@ boilerplate=(
 
 [[ -n $DRY_RUN ]] && ECHO=echo || ECHO=
 
-for project_dir in $(find $RECURSE -type d -mindepth 3); do
+for project_dir in $(find $RECURSE -mindepth 3 -type d); do
   project_base=${project_dir##*/}
 
   for template in "${boilerplate[@]}"; do

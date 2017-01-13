@@ -21,7 +21,7 @@ if (STATIC_INSPECTORS)
     add_library(dnp3 STATIC ${FILE_LIST})
 
 else (STATIC_INSPECTORS)
-    add_shared_library(dnp3 inspectors ${FILE_LIST})
+    add_dynamic_module(dnp3 inspectors ${FILE_LIST})
 
 endif (STATIC_INSPECTORS)
 

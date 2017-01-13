@@ -37,13 +37,13 @@ else (STATIC_LOGGERS)
         ${LOGGER_SOURCES}
     )
 
-    add_shared_library(alert_csv loggers alert_csv.cc)
-    add_shared_library(alert_fast loggers alert_fast.cc)
-    add_shared_library(alert_full loggers alert_full.cc)
-    add_shared_library(alert_syslog loggers alert_syslog.cc)
-    add_shared_library(log_hext loggers log_hext.cc)
-    add_shared_library(log_pcap loggers log_pcap.cc)
-    add_shared_library(unified2 loggers unified2.cc)
+    add_dynamic_module(alert_csv loggers alert_csv.cc)
+    add_dynamic_module(alert_fast loggers alert_fast.cc)
+    add_dynamic_module(alert_full loggers alert_full.cc)
+    add_dynamic_module(alert_syslog loggers alert_syslog.cc)
+    add_dynamic_module(log_hext loggers log_hext.cc)
+    add_dynamic_module(log_pcap loggers log_pcap.cc)
+    add_dynamic_module(unified2 loggers unified2.cc)
 
 endif (STATIC_LOGGERS)
 

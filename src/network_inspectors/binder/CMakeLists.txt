@@ -11,7 +11,7 @@ set(FILE_LIST
     add_library(binder STATIC ${FILE_LIST})
 
 #else (STATIC_INSPECTORS)
-#    add_shared_library(binder inspectors ${FILE_LIST})
+#    add_dynamic_module(binder inspectors ${FILE_LIST})
 #    
 #endif (STATIC_INSPECTORS)
 

@@ -1,17 +1,9 @@
 macro ( add_daq_module libname )
-    set ( sources ${ARGN} )
-    add_library ( ${libname} MODULE ${sources} )
+    add_dynamic_module ( ${libname} daqs ${ARGN} )
     set_target_properties (
         ${libname}
         PROPERTIES
-            COMPILE_FLAGS "-DBUILDING_SO"
             C_STANDARD 99
-    )
-
-    install (
-        TARGETS ${libname}
-        LIBRARY
-        DESTINATION "lib/${CMAKE_PROJECT_NAME}/daqs"
     )
 endmacro ( add_daq_module )
 

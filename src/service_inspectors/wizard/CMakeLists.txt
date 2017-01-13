@@ -15,6 +15,6 @@ if (STATIC_INSPECTORS)
     add_library(wizard STATIC ${FILE_LIST})
 
 else (STATIC_INSPECTORS)
-    add_shared_library(wizard inspectors ${FILE_LIST})
+    add_dynamic_module(wizard inspectors ${FILE_LIST})
 
 endif (STATIC_INSPECTORS)

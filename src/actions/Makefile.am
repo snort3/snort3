@@ -22,13 +22,13 @@ libips_actions_a_SOURCES += $(plugin_list)
 else
 actlibdir = $(pkglibdir)/ips_actions
 
-actlib_LTLIBRARIES = libact_react.la
-libact_react_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libact_react_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-libact_react_la_SOURCES = act_react.cc
+actlib_LTLIBRARIES = act_react.la
+act_react_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+act_react_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
+act_react_la_SOURCES = act_react.cc
 
-actlib_LTLIBRARIES += libact_reject.la
-libact_reject_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libact_reject_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-libact_reject_la_SOURCES = act_reject.cc
+actlib_LTLIBRARIES += act_reject.la
+act_reject_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+act_reject_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
+act_reject_la_SOURCES = act_reject.cc
 endif

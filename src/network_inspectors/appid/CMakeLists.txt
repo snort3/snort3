@@ -177,7 +177,7 @@ set ( APPID_SOURCES
     	${UTIL_APPID_SOURCES}
     )
 #else (STATIC_INSPECTORS)
-#    add_shared_library(appid inspectors
+#    add_dynamic_module(appid inspectors
 #    	${APPID_SOURCES}
 #    	${CP_APPID_SOURCES}
 #    	${DP_APPID_SOURCES}

@@ -14,9 +14,9 @@ noinst_LIBRARIES = libimap.a
 libimap_a_SOURCES = $(file_list)
 #else
 #shlibdir = $(pkglibdir)/inspectors
-#shlib_LTLIBRARIES = libimap.la
-#libimap_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-#libimap_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-#libimap_la_SOURCES = $(file_list)
+#shlib_LTLIBRARIES = imap.la
+#imap_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+#imap_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
+#imap_la_SOURCES = $(file_list)
 #endif
 

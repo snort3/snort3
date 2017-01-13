@@ -25,39 +25,39 @@ libloggers_a_SOURCES += $(plugin_list)
 else
 ehlibdir = $(pkglibdir)/loggers
 
-ehlib_LTLIBRARIES = libalert_csv.la
-libalert_csv_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libalert_csv_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-libalert_csv_la_SOURCES = alert_csv.cc
+ehlib_LTLIBRARIES = alert_csv.la
+alert_csv_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+alert_csv_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
+alert_csv_la_SOURCES = alert_csv.cc
 
-ehlib_LTLIBRARIES += libalert_fast.la
-libalert_fast_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libalert_fast_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-libalert_fast_la_SOURCES = alert_fast.cc
+ehlib_LTLIBRARIES += alert_fast.la
+alert_fast_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+alert_fast_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
+alert_fast_la_SOURCES = alert_fast.cc
 
-ehlib_LTLIBRARIES += libalert_full.la
-libalert_full_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libalert_full_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-libalert_full_la_SOURCES = alert_full.cc
+ehlib_LTLIBRARIES += alert_full.la
+alert_full_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+alert_full_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
+alert_full_la_SOURCES = alert_full.cc
 
-ehlib_LTLIBRARIES += libalert_syslog.la
-libalert_syslog_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libalert_syslog_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-libalert_syslog_la_SOURCES = alert_syslog.cc
+ehlib_LTLIBRARIES += alert_syslog.la
+alert_syslog_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+alert_syslog_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
+alert_syslog_la_SOURCES = alert_syslog.cc
 
-ehlib_LTLIBRARIES += liblog_hext.la
-liblog_hext_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-liblog_hext_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-liblog_hext_la_SOURCES = log_hext.cc
+ehlib_LTLIBRARIES += log_hext.la
+log_hext_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+log_hext_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
+log_hext_la_SOURCES = log_hext.cc
 
-ehlib_LTLIBRARIES += liblog_pcap.la
-liblog_pcap_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-liblog_pcap_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-liblog_pcap_la_SOURCES = log_pcap.cc
+ehlib_LTLIBRARIES += log_pcap.la
+log_pcap_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+log_pcap_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
+log_pcap_la_SOURCES = log_pcap.cc
 
-ehlib_LTLIBRARIES += libunified2.la
-libunified2_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libunified2_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-libunified2_la_SOURCES = unified2.cc
+ehlib_LTLIBRARIES += unified2.la
+unified2_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+unified2_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
+unified2_la_SOURCES = unified2.cc
 endif
 

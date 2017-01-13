@@ -12,10 +12,10 @@ libbinder_a_SOURCES = $(file_list)
 #else
 # need to fix undefineds first :(
 #shlibdir = $(pkglibdir)/inspectors
-#shlib_LTLIBRARIES = libbinder.la
-#libbinder_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-#libbinder_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-#libbinder_la_SOURCES = $(file_list)
+#shlib_LTLIBRARIES = binder.la
+#binder_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+#binder_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
+#binder_la_SOURCES = $(file_list)
 #endif
 
 if ENABLE_UNIT_TESTS

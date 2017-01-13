@@ -1,8 +1,6 @@
 set (FLOW_INCLUDES
     flow.h
     flow_key.h
-    ha.h
-    ha_module.h
 )
 
 add_library (flow STATIC
@@ -17,7 +15,9 @@ add_library (flow STATIC
     flow_control.h
     flow_key.cc
     ha.cc
+    ha.h
     ha_module.cc
+    ha_module.h
     prune_stats.h
     session.h
 )

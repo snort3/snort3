@@ -171,10 +171,10 @@ $(dp_file_list) \
 $(util_file_list)
 #else
 #shlibdir = $(pkglibdir)/inspectors
-#shlib_LTLIBRARIES = libappid.la
-#libappid_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-#libappid_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-#libappid_la_SOURCES = $(file_list) \
+#shlib_LTLIBRARIES = appid.la
+#appid_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+#appid_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
+#appid_la_SOURCES = $(file_list) \
 #$(cp_file_list) \
 #$(sp_file_list) \
 #$(dp_file_list) \

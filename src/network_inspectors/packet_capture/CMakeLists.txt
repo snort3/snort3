@@ -10,6 +10,6 @@ if (STATIC_INSPECTORS)
     target_link_libraries(packet_capture utils)
 
 else (STATIC_INSPECTORS)
-    add_shared_library(packet_capture inspectors ${FILE_LIST})
+    add_dynamic_module(packet_capture inspectors ${FILE_LIST})
 
 endif (STATIC_INSPECTORS)

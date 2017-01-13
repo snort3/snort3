@@ -28,8 +28,8 @@ else (STATIC_IPS_ACTIONS)
         ${IPS_ACTION_SOURCES}
     )
 
-    add_shared_library(act_react ips_actions act_react.cc)
-    add_shared_library(act_reject ips_actions act_reject.cc)
+    add_dynamic_module(act_react ips_actions act_react.cc)
+    add_dynamic_module(act_reject ips_actions act_reject.cc)
 
 endif (STATIC_IPS_ACTIONS)
 

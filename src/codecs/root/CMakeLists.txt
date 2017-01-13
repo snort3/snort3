@@ -6,7 +6,7 @@ if (STATIC_CODECS)
 
 
 else (STATIC_CODECS)
-    add_shared_library (cd_eth codecs cd_eth.cc)
+    add_dynamic_module (cd_eth codecs cd_eth.cc)
 
 endif (STATIC_CODECS)
 

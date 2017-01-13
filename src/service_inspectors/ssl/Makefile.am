@@ -16,7 +16,7 @@ libssl_a_SOURCES = $(file_list)
 #shlibdir = $(pkglibdir)/inspectors
 #shlib_LTLIBRARIES = libssl.la
 #libssl_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-#libssl_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
+#libssl_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
 #libssl_la_SOURCES = $(file_list)
 #endif
 

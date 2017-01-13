@@ -17,8 +17,8 @@ libport_scan_a_SOURCES = $(file_list)
 
 #else
 #shlibdir = $(pkglibdir)/inspectors
-#shlib_LTLIBRARIES = libport_scan.la
-#libport_scan_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-#libport_scan_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-#libport_scan_la_SOURCES = $(file_list)
+#shlib_LTLIBRARIES = port_scan.la
+#port_scan_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+#port_scan_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
+#port_scan_la_SOURCES = $(file_list)
 #endif

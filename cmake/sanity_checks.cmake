@@ -183,5 +183,3 @@ endif()
 if (DEFINED LIBLZMA_LIBRARIES)
     check_library_exists (${LIBLZMA_LIBRARIES} lzma_code "" HAVE_LZMA)
 endif()
-
-check_library_exists (pcap pcap_lib_version "${PCAP_LIBRARIES}" HAVE_PCAP_LIB_VERSION)

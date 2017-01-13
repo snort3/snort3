@@ -13,9 +13,9 @@ noinst_LIBRARIES = libwizard.a
 libwizard_a_SOURCES = $(file_list)
 else
 shlibdir = $(pkglibdir)/inspectors
-shlib_LTLIBRARIES = libwizard.la
-libwizard_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libwizard_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-libwizard_la_SOURCES = $(file_list)
+shlib_LTLIBRARIES = wizard.la
+wizard_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+wizard_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
+wizard_la_SOURCES = $(file_list)
 endif
 

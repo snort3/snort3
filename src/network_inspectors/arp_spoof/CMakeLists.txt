@@ -11,6 +11,6 @@ if (STATIC_INSPECTORS)
     )
 
 else (STATIC_INSPECTORS)
-    add_shared_library(arp_spoof inspectors ${FILE_LIST})
+    add_dynamic_module(arp_spoof inspectors ${FILE_LIST})
     
 endif (STATIC_INSPECTORS)

@@ -7,9 +7,9 @@ noinst_LIBRARIES = libback_orifice.a
 libback_orifice_a_SOURCES = $(file_list)
 else
 shlibdir = $(pkglibdir)/inspectors
-shlib_LTLIBRARIES = libback_orifice.la
-libback_orifice_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libback_orifice_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-libback_orifice_la_SOURCES = $(file_list)
+shlib_LTLIBRARIES = back_orifice.la
+back_orifice_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+back_orifice_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
+back_orifice_la_SOURCES = $(file_list)
 endif
 

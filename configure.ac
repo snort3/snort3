@@ -606,22 +606,6 @@ if test "x$LPCAP" = "xno"; then
     exit 1
 fi
 
-AC_MSG_CHECKING([for pcap_lib_version])
-AC_LINK_IFELSE(
-    [AC_LANG_PROGRAM(
-        [[#include <pcap.h>]],
-        [[pcap_lib_version();]]
-    )],
-    [have_pcap_lib_version="yes"],
-    [have_pcap_lib_version="no"]
-)
-AC_MSG_RESULT($have_pcap_lib_version)
-
-if test "x$have_pcap_lib_version" = "xyes"; then
-    AC_DEFINE([HAVE_PCAP_LIB_VERSION],[1],
-        [Can output the library version.])
-fi
-
 #--------------------------------------------------------------------------
 # hwloc
 #--------------------------------------------------------------------------

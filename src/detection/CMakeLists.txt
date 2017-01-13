@@ -2,7 +2,6 @@
 set (DETECTION_INCLUDES
     detect.h
     detection_defines.h
-    detection_options.h
     detection_util.h
     rule_option_types.h
     rules.h
@@ -14,6 +13,7 @@ add_library (detection STATIC
     ${DETECTION_INCLUDES}
     detect.cc
     detection_options.cc
+    detection_options.h
     detection_util.cc
     fp_config.cc
     fp_config.h

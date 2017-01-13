@@ -12,28 +12,28 @@ set(datadir "\${datarootdir}")
 set(mandir "\${datarootdir}/man")
 set(infodir "\${datarootdir}/info")
 
-if(PCAP_INCLUDE_DIR)
-    set(PCAP_CPPFLAGS "-I${PCAP_INCLUDE_DIR}")
-endif()
-
-if(HWLOC_INCLUDE_DIR)
-    set(HWLOC_CPPFLAGS "-I${HWLOC_INCLUDE_DIR}")
-endif()
-
-if(LUAJIT_INCLUDE_DIR)
-    set(LUAJIT_CPPFLAGS "-I${LUAJIT_INCLUDE_DIR}")
-endif()
-
-if(PCRE_INCLUDE_DIR)
-    set(PCRE_CPPFLAGS "-I${PCRE_INCLUDE_DIR}")
+if(DAQ_INCLUDE_DIR)
+    set(DAQ_CPPFLAGS "-I${DAQ_INCLUDE_DIR}")
 endif()
 
 if(DNET_INCLUDE_DIR)
     set(DNET_CPPFLAGS "-I${DNET_INCLUDE_DIR}")
 endif()
 
-if(DAQ_INCLUDE_DIR)
-    set(DAQ_CPPFLAGS "-I${DAQ_INCLUDE_DIR}")
+if(HS_INCLUDE_DIR)
+    set(HYPERSCAN_CPPFLAGS "-I${HS_INCLUDE_DIR}")
+endif()
+
+if(HWLOC_INCLUDE_DIR)
+    set(HWLOC_CPPFLAGS "-I${HWLOC_INCLUDE_DIR}")
+endif()
+
+if(INTEL_SOFT_CPM_INCLUDE_DIR)
+    set(INTEL_SOFT_CPM_CPPFLAGS "-I${INTEL_SOFT_CPM_INCLUDE_DIR}")
+endif()
+
+if(LUAJIT_INCLUDE_DIR)
+    set(LUAJIT_CPPFLAGS "-I${LUAJIT_INCLUDE_DIR}")
 endif()
 
 if(LZMA_INCLUDE_DIR)
@@ -44,12 +44,12 @@ if(OPENSSL_INCLUDE_DIR)
     set(OPENSSL_CPPFLAGS "-I${OPENSSL_INCLUDE_DIR}")
 endif()
 
-if(INTEL_SOFT_CPM_INCLUDE_DIR)
-    set(INTEL_SOFT_CPM_CPPFLAGS "-I${INTEL_SOFT_CPM_INCLUDE_DIR}")
+if(PCAP_INCLUDE_DIR)
+    set(PCAP_CPPFLAGS "-I${PCAP_INCLUDE_DIR}")
 endif()
 
-if(HYPERSCAN_INCLUDE_DIR)
-    set(HYPERSCAN_CPPFLAGS "-I${HYPERSCAN_INCLUDE_DIR}")
+if(PCRE_INCLUDE_DIR)
+    set(PCRE_CPPFLAGS "-I${PCRE_INCLUDE_DIR}")
 endif()
 
 # create & install pkgconfig file

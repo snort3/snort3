@@ -3,18 +3,28 @@ project ( alert_ex CXX )
 
 if ( APPLE )
     set ( CMAKE_MACOSX_RPATH OFF )
-    set (
-        CMAKE_SHARED_LINKER_FLAGS
-        "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup"
-    )
 endif ( APPLE )
 
 include ( FindPkgConfig )
 pkg_search_module ( SNORT3 REQUIRED snort>=3 )
 
 add_library (
-    alert_ex SHARED
+    alert_ex MODULE
     alert_ex.cc
+)
+
+if ( APPLE )
+    set_target_properties (
+        alert_ex
+        PROPERTIES
+            LINK_FLAGS "-undefined dynamic_lookup"
+    )
+endif ( APPLE )
+
+set_target_properties (
+    alert_ex
+    PROPERTIES
+        PREFIX ""
 )
 
 set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
@@ -26,5 +36,6 @@ target_include_directories (
 
 install (
     TARGETS alert_ex
-    LIBRARY DESTINATION "lib/${CMAKE_PROJECT_NAME}/loggers"
+    LIBRARY
+        DESTINATION "lib/${CMAKE_PROJECT_NAME}/loggers"
 )

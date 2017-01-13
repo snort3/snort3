@@ -9,6 +9,6 @@ if (STATIC_INSPECTORS)
     add_library( rpc_decode STATIC ${FILE_LIST})
 
 else (STATIC_INSPECTORS)
-    add_shared_library(rpc_decode inspectors ${FILE_LIST})
+    add_dynamic_module(rpc_decode inspectors ${FILE_LIST})
 
 endif (STATIC_INSPECTORS)

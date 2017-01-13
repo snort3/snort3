@@ -66,8 +66,8 @@ else ( STATIC_SEARCH_ENGINES)
         ${SEARCH_ENGINE_INCLUDES}
     )
 
-    add_shared_library(acsmx search_engines ${ACSMX_SOURCES})
-    add_shared_library(acsmx2 search_engines ${ACSMX2_SOURCES})
+    add_dynamic_module(acsmx search_engines ${ACSMX_SOURCES})
+    add_dynamic_module(acsmx2 search_engines ${ACSMX2_SOURCES})
 
 endif (STATIC_SEARCH_ENGINES)
 

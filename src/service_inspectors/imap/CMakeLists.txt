@@ -14,7 +14,7 @@ set( FILE_LIST
     add_library( imap STATIC ${FILE_LIST})
 
 #else (STATIC_INSPECTORS)
-    #add_shared_library(imap inspectors ${FILE_LIST})
+    #add_dynamic_module(imap inspectors ${FILE_LIST})
 
 #endif (STATIC_INSPECTORS)
 

@@ -113,9 +113,7 @@ int DisplayBanner()
                            " All rights reserved.\n");
     LogMessage("           Copyright (C) 1998-2013 Sourcefire, Inc., et al.\n");
     LogMessage("           Using DAQ version %s\n", daq_version_string());
-#ifdef HAVE_PCAP_LIB_VERSION
     LogMessage("           Using %s\n", pcap_lib_version());
-#endif
     LogMessage("           Using LuaJIT version %s\n", ljv);
     LogMessage("           Using PCRE version %s\n", pcre_version());
     LogMessage("           Using ZLIB version %s\n", zlib_version);

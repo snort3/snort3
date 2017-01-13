@@ -55,11 +55,7 @@
 
 using namespace std;
 
-#if defined(__linux__)
 #define lib_pattern "*.so"
-#else
-#define lib_pattern "*.dylib"
-#endif
 
 struct Symbol
 {

@@ -23,9 +23,9 @@ noinst_LIBRARIES = libsip.a
 libsip_a_SOURCES = $(file_list)
 #else
 #shlibdir = $(pkglibdir)/inspectors
-#shlib_LTLIBRARIES = libsip.la
-#libsip_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-#libsip_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-#libsip_la_SOURCES = $(file_list)
+#shlib_LTLIBRARIES = sip.la
+#sip_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+#sip_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
+#sip_la_SOURCES = $(file_list)
 #endif
 

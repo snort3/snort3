@@ -1,23 +1,32 @@
 # TO CALL THIS MACRO...
 # PARAMS:
-#       libname :  The library's libname
-#       additional args : the library's sources.  Must have at least one source
-macro (add_shared_library libname install_path)
+#       libname :  The module's name
+#       additional args : the module's sources.  Must have at least one source
+macro (add_dynamic_module libname install_path)
     set (sources ${ARGN})
 
-    add_library ( ${libname} SHARED ${sources} )
+    add_library ( ${libname} MODULE ${sources} )
     set_target_properties (
         ${libname}
         PROPERTIES
             COMPILE_FLAGS "-DBUILDING_SO"
+            PREFIX ""
     )
+
+    if (APPLE)
+        set_target_properties (
+            ${libname}
+            PROPERTIES
+                LINK_FLAGS "-undefined dynamic_lookup"
+        )
+    endif()
 
     install (
         TARGETS ${libname}
         LIBRARY
             DESTINATION "lib/${CMAKE_PROJECT_NAME}/${install_path}"
     )
-endmacro (add_shared_library)
+endmacro (add_dynamic_module)
 
 
 #anything following testname is assumed to be a link dependency

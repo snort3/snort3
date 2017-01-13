@@ -11,9 +11,9 @@ noinst_LIBRARIES = libssh.a
 libssh_a_SOURCES = $(file_list)
 else
 shlibdir = $(pkglibdir)/inspectors
-shlib_LTLIBRARIES = libssh.la
-libssh_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libssh_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-libssh_la_SOURCES = $(file_list)
+shlib_LTLIBRARIES = ssh.la
+ssh_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+ssh_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
+ssh_la_SOURCES = $(file_list)
 endif
 

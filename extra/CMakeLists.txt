@@ -1,8 +1,6 @@
 cmake_minimum_required ( VERSION 2.8.11 )
 project( snort_extra CXX C )
 
-add_subdirectory ( src )
-
 set (EXTRA_VERSION_MAJOR 1)
 set (EXTRA_VERSION_MINOR 0)
 set (EXTRA_VERSION_BUILD 0-a4)
@@ -28,8 +26,8 @@ include(CPack)
 set ( C_FLAGS "" CACHE STRING "" )
 set ( CXX_FLAGS "" CACHE STRING "" )
 
-set ( CMAKE_C_FLAGS "${C_FLAGS}" CACHE STRING "" FORCE )
-set ( CMAKE_CXX_FLAGS "${CXX_FLAGS}" CACHE STRING "" FORCE )
+set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_FLAGS}" CACHE STRING "" FORCE )
+set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_FLAGS}" CACHE STRING "" FORCE )
 
 execute_process (
     COMMAND pkg-config --variable=cpp_opts snort
@@ -67,3 +65,5 @@ foreach ( OPT ${CPP_OPTS_OTHER} )
     string ( REGEX REPLACE "[\r\n]" " " CPPFLAGS "${CPPFLAGS}" )
     set ( ${OPT}_CPPFLAGS "${CPPFLAGS}" CACHE STRING "" )
 endforeach ( OPT )
+
+add_subdirectory ( src )

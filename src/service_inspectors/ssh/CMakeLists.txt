@@ -11,6 +11,6 @@ if (STATIC_INSPECTORS)
     add_library( ssh STATIC ${FILE_LIST})
 
 else (STATIC_INSPECTORS)
-    add_shared_library(ssh inspectors ${FILE_LIST})
+    add_dynamic_module(ssh inspectors ${FILE_LIST})
 
 endif (STATIC_INSPECTORS)

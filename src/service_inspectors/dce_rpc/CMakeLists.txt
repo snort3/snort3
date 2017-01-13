@@ -48,6 +48,6 @@ if (STATIC_INSPECTORS)
     add_library(dce_rpc STATIC ${FILE_LIST})
 
 else (STATIC_INSPECTORS)
-    add_shared_library(dce_rpc inspectors ${FILE_LIST})
+    add_dynamic_module(dce_rpc inspectors ${FILE_LIST})
 
 endif (STATIC_INSPECTORS)

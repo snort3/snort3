@@ -24,6 +24,6 @@ set( FILE_LIST
     add_library( sip STATIC ${FILE_LIST})
 
 #else (STATIC_INSPECTORS)
-#    add_shared_library(sip inspectors ${FILE_LIST})
+#    add_dynamic_module(sip inspectors ${FILE_LIST})
 
 #endif (STATIC_INSPECTORS)

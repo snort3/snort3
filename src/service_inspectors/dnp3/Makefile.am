@@ -21,8 +21,8 @@ noinst_LIBRARIES = libdnp3.a
 libdnp3_a_SOURCES = $(file_list)
 else
 shlibdir = $(pkglibdir)/inspectors
-shlib_LTLIBRARIES = libdnp3.la
-libdnp3_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libdnp3_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-libdnp3_la_SOURCES = $(file_list)
+shlib_LTLIBRARIES = dnp3.la
+dnp3_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+dnp3_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
+dnp3_la_SOURCES = $(file_list)
 endif

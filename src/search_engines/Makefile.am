@@ -57,15 +57,15 @@ libsearch_engines_a_SOURCES += $(plugin_list)
 else
 mpselibdir = $(pkglibdir)/search_engines
 
-mpselib_LTLIBRARIES = libacsmx.la
-libacsmx_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libacsmx_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-libacsmx_la_SOURCES = $(acsmx_sources)
+mpselib_LTLIBRARIES = acsmx.la
+acsmx_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+acsmx_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
+acsmx_la_SOURCES = $(acsmx_sources)
 
-mpselib_LTLIBRARIES += libacsmx2.la
-libacsmx2_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-libacsmx2_la_LDFLAGS = $(AM_LDFLAGS) -export-dynamic -shared
-libacsmx2_la_SOURCES = $(acsmx2_sources)
+mpselib_LTLIBRARIES += acsmx2.la
+acsmx2_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+acsmx2_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
+acsmx2_la_SOURCES = $(acsmx2_sources)
 endif
 
 if BUILD_CPPUTESTS

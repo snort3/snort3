@@ -14,7 +14,7 @@ set( FILE_LIST
     add_library( pop STATIC ${FILE_LIST})
 
 #else (STATIC_INSPECTORS)
-    #add_shared_library(pop inspectors ${FILE_LIST})
+    #add_dynamic_module(pop inspectors ${FILE_LIST})
 
 #endif (STATIC_INSPECTORS)
 
