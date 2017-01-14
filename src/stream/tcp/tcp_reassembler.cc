@@ -606,7 +606,7 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
     uint32_t bytes_processed = 0;
     uint32_t stop_seq = seglist.next->seq + bytes;
 
-    do
+    while ( seglist.next and SEQ_LT(seglist.next->seq, stop_seq) )
     {
         seglist_base_seq = seglist.next->seq;
         uint32_t footprint = stop_seq - seglist_base_seq;
@@ -675,8 +675,11 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
         }
         else
             tracker->clear_tf_flags(TF_MISSING_PREV_PKT);
+
+        // check here instead of in while to allow single segment flushes
+        if ( !flush_data_ready() )
+            break;
     }
-    while ( seglist.next and flush_data_ready( ) );
 
     return bytes_processed;
 }

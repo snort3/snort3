@@ -154,8 +154,10 @@ static const Parameter s_params[] =
       "enable appid debug logging" },
     { "dump_ports", Parameter::PT_BOOL, nullptr, "false",
       "enable dump of appid port information" },
+#ifdef REMOVED_WHILE_NOT_IN_USE
     { "thirdparty_appid_dir", Parameter::PT_STRING, nullptr, nullptr,
       "directory to load thirdparty appid detectors from" },
+#endif
     { "session_log_filter", Parameter::PT_TABLE, session_log_filter, nullptr,
       "session log filter options" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }

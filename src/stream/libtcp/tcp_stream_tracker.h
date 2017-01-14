@@ -278,7 +278,7 @@ public:
         this->ts_last = ts_last;
     }
 
-    uint8_t get_tf_flags() const
+    uint16_t get_tf_flags() const
     {
         return tf_flags;
     }
@@ -409,8 +409,8 @@ protected:
     // FIXIT-L make this protected...
 
 public:
-    uint16_t wscale; /* window scale setting */
-    uint16_t mss; /* max segment size */
+    uint16_t wscale = 0; /* window scale setting */
+    uint16_t mss = 0; /* max segment size */
 };
 
 // <--- note -- the 'state' parameter must be a reference
