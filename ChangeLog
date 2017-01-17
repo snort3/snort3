@@ -1,3 +1,22 @@
+17/01/17 - build 224
+
+-- fix various stream_tcp flush issues
+-- fix various cmake issues
+-- fix appid counting of kerberos flows
+-- fix expected flow leak when expiring nodes during lookup
+   thanks to João Soares <joaosoares11@hotmail.com> for reporting the issue
+-- fix autoconf retrieving PCRE cppflags from pkg-config
+-- fix stream_user reassembly
+-- remove unused appid.thirdparty_appid_dir
+-- build and install plugins as modules instead of libraries
+-- obfuscate stream rebuilt payload
+-- updates for latest zlib
+-- disable smb2 processing when file service is disabled
+-- refactor includes; prune the set of installed headers
+-- don't build alert_sf_socket on OSX
+-- added CPP flags used to build Snort to snort.pc for extras and other
+   plugins to use
+
 16/21/16 - build 223
 
 -- port 2983 smb active response updates
