@@ -18,6 +18,10 @@
 
 // detection_engine.h author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "detection_engine.h"
 
 #include "events/sfeventq.h"

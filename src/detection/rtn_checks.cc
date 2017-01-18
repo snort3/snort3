@@ -23,6 +23,10 @@
 //     Dan Roelker <droelker@sourcefire.com>
 //     Marc Norton <mnorton@sourcefire.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "rtn_checks.h"
 
 #include "main/snort_debug.h"

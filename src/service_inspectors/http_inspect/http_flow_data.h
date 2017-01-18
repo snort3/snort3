@@ -117,7 +117,6 @@ private:
         HttpEnums::STAT_NOT_PRESENT };
     MimeSession* mime_state[2] = { nullptr, nullptr };
     UtfDecodeSession* utf_state = nullptr; // SRC_SERVER only
-    class HttpMsgSection* latest_section = nullptr;
     uint64_t expected_trans_num[2] = { 1, 1 };
     HttpMsgSection* latest_section = nullptr;
 

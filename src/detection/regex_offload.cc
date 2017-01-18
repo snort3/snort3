@@ -18,6 +18,10 @@
 
 // regex_offload.cc author Russ Combs <rucombs@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "regex_offload.h"
 
 #include <assert.h>
