@@ -64,7 +64,7 @@ enum SSLContentType
 struct MatchedSSLPatterns
 {
     SSLCertPattern* mpattern;
-    int index;
+    int match_start_pos;
     struct MatchedSSLPatterns* next;
 };
 
@@ -203,7 +203,7 @@ static std::mutex crypto_lib_mutex;
     + (uint32_t)(((uint8_t*)msb_ptr)[1] <<  8)    \
     + (uint32_t)(((uint8_t*)msb_ptr)[2]      ) ))
 
-static int ssl_cert_pattern_match(void* id, void*, int index, void* data, void*)
+static int ssl_cert_pattern_match(void* id, void*, int match_end_pos, void* data, void*)
 {
     MatchedSSLPatterns* cm;
     MatchedSSLPatterns** matches = (MatchedSSLPatterns**)data;
@@ -211,7 +211,7 @@ static int ssl_cert_pattern_match(void* id, void*, int index, void* data, void*)
 
     cm = (MatchedSSLPatterns*)snort_alloc(sizeof(MatchedSSLPatterns));
     cm->mpattern = target;
-    cm->index = index;
+    cm->match_start_pos = match_end_pos + 1 - target->pattern_size;
     cm->next = *matches;
     *matches = cm;
 
@@ -1008,7 +1008,7 @@ bool isSslServiceAppId(AppId appId)
     return false;
 }
 
-static int ssl_scan_patterns(SearchTool* matcher, const uint8_t* pattern, size_t size,
+static int ssl_scan_patterns(SearchTool* matcher, const uint8_t* data, size_t size,
     AppId* ClientAppId, AppId* payloadId)
 {
     MatchedSSLPatterns* mp = nullptr;
@@ -1018,7 +1018,7 @@ static int ssl_scan_patterns(SearchTool* matcher, const uint8_t* pattern, size_t
     if (!matcher)
         return 0;
 
-    matcher->find_all((char*)pattern, size, ssl_cert_pattern_match, false, &mp);
+    matcher->find_all((char*)data, size, ssl_cert_pattern_match, false, &mp);
 
     if (!mp)
         return 0;
@@ -1026,9 +1026,12 @@ static int ssl_scan_patterns(SearchTool* matcher, const uint8_t* pattern, size_t
     best_match = nullptr;
     while (mp)
     {
-        //only patterns that match start of payload, or patterns starting with '.' or patterns
-        // folowing '.' in payload are considered a match.
-        if (mp->index == 0 || *mp->mpattern->pattern == '.' || pattern[mp->index-1] == '.')
+        //  Only patterns that match start of payload, 
+        //  or patterns starting with '.' 
+        //  or patterns following '.' in payload are considered a match.
+        if (mp->match_start_pos == 0 ||
+            *mp->mpattern->pattern == '.' ||
+            data[mp->match_start_pos-1] == '.')
         {
             if (!best_match || mp->mpattern->pattern_size > best_match->pattern_size)
             {
@@ -1061,14 +1064,14 @@ static int ssl_scan_patterns(SearchTool* matcher, const uint8_t* pattern, size_t
     return 1;
 }
 
-int ssl_scan_hostname(const uint8_t* pattern, size_t size, AppId* ClientAppId, AppId* payloadId)
+int ssl_scan_hostname(const uint8_t* hostname, size_t size, AppId* ClientAppId, AppId* payloadId)
 {
-    return ssl_scan_patterns(service_ssl_config.ssl_host_matcher, pattern, size, ClientAppId, payloadId);
+    return ssl_scan_patterns(service_ssl_config.ssl_host_matcher, hostname, size, ClientAppId, payloadId);
 }
 
-int ssl_scan_cname(const uint8_t* pattern, size_t size, AppId* ClientAppId, AppId* payloadId)
+int ssl_scan_cname(const uint8_t* common_name, size_t size, AppId* ClientAppId, AppId* payloadId)
 {
-    return ssl_scan_patterns(service_ssl_config.ssl_cname_matcher, pattern, size, ClientAppId, payloadId);
+    return ssl_scan_patterns(service_ssl_config.ssl_cname_matcher, common_name, size, ClientAppId, payloadId);
 }
 
 void service_ssl_clean()

@@ -37,37 +37,6 @@
 
 #include "http_url_patterns.h"
 
-/* URL line patterns for identifying client */
-#define HTTP_GET "GET "
-#define HTTP_PUT "PUT "
-#define HTTP_POST "POST "
-#define HTTP_HEAD "HEAD "
-#define HTTP_TRACE "TRACE "
-#define HTTP_DELETE "DELETE "
-#define HTTP_OPTIONS "OPTIONS "
-#define HTTP_PROPFIND "PROPFIND "
-#define HTTP_PROPPATCH "PROPPATCH "
-#define HTTP_MKCOL "MKCOL "
-#define HTTP_COPY "COPY "
-#define HTTP_MOVE "MOVE "
-#define HTTP_LOCK "LOCK "
-#define HTTP_UNLOCK "UNLOCK "
-
-#define HTTP_GET_SIZE (sizeof(HTTP_GET)-1)
-#define HTTP_PUT_SIZE (sizeof(HTTP_PUT)-1)
-#define HTTP_POST_SIZE (sizeof(HTTP_POST)-1)
-#define HTTP_HEAD_SIZE (sizeof(HTTP_HEAD)-1)
-#define HTTP_TRACE_SIZE (sizeof(HTTP_TRACE)-1)
-#define HTTP_DELETE_SIZE (sizeof(HTTP_DELETE)-1)
-#define HTTP_OPTIONS_SIZE (sizeof(HTTP_OPTIONS)-1)
-#define HTTP_PROPFIND_SIZE (sizeof(HTTP_PROPFIND)-1)
-#define HTTP_PROPPATCH_SIZE (sizeof(HTTP_PROPPATCH)-1)
-#define HTTP_MKCOL_SIZE (sizeof(HTTP_MKCOL)-1)
-#define HTTP_COPY_SIZE (sizeof(HTTP_COPY)-1)
-#define HTTP_MOVE_SIZE (sizeof(HTTP_MOVE)-1)
-#define HTTP_LOCK_SIZE (sizeof(HTTP_LOCK)-1)
-#define HTTP_UNLOCK_SIZE (sizeof(HTTP_UNLOCK)-1)
-
 /* media type patterns*/
 #define VIDEO_BANNER "video/"
 #define AUDIO_BANNER "audio/"
@@ -172,7 +141,9 @@ static const char GOOGLE_TB_PATTERN[] = "toolbarqueries.google.com";
 struct MatchedPatterns
 {
     DetectorHTTPPattern* mpattern;
-    int index;
+    int after_match_pos;  // Warning: may point past end of buffer.
+                          // Position of character in buffer after last 
+                          // matching character.
     MatchedPatterns* next;
 };
 
@@ -294,48 +265,6 @@ static DetectorHTTPPattern client_agent_patterns[] =
       sizeof(APPLE_EMAIL_PATTERN)-1, (uint8_t*)APPLE_EMAIL_PATTERN, APP_ID_APPLE_EMAIL,},
 };
 
-struct HeaderPattern
-{
-    int id;
-    uint8_t* data;
-    unsigned length;
-};
-
-static const char HTTP_HEADER_CONTENT_TYPE[] = "Content-Type: ";
-static const char HTTP_HEADER_SERVER_FIELD[] = "Server: ";
-static const char HTTP_HEADER_X_WORKING_WITH[] = "X-Working-With: ";
-static const char HTTP_HEADER_CRLF[] = "\r";
-static const char HTTP_HEADER_LF[] = "\n";
-
-#define HTTP_HEADER_CONTENT_TYPE_SIZE (sizeof(HTTP_HEADER_CONTENT_TYPE)-1)
-#define HTTP_HEADER_SERVER_FIELD_SIZE (sizeof(HTTP_HEADER_SERVER_FIELD)-1)
-#define HTTP_HEADER_X_WORKING_WITH_SIZE (sizeof(HTTP_HEADER_X_WORKING_WITH)-1)
-#define HTTP_HEADER_CRLF_SIZE (sizeof(HTTP_HEADER_CRLF)-1)
-#define HTTP_HEADER_LF_SIZE (sizeof(HTTP_HEADER_LF)-1)
-
-static HeaderPattern header_patterns[] =
-{
-    { HTTP_ID_CONTENT_TYPE, (uint8_t*)HTTP_HEADER_CONTENT_TYPE,HTTP_HEADER_CONTENT_TYPE_SIZE },
-    { HTTP_ID_SERVER, (uint8_t*)HTTP_HEADER_SERVER_FIELD,HTTP_HEADER_SERVER_FIELD_SIZE },
-    { HTTP_ID_COPY, (uint8_t*)HTTP_COPY, HTTP_COPY_SIZE },
-    { HTTP_ID_DELETE, (uint8_t*)HTTP_DELETE, HTTP_DELETE_SIZE },
-    { HTTP_ID_GET, (uint8_t*)HTTP_GET, HTTP_GET_SIZE },
-    { HTTP_ID_HEAD, (uint8_t*)HTTP_HEAD, HTTP_HEAD_SIZE },
-    { HTTP_ID_OPTIONS, (uint8_t*)HTTP_OPTIONS, HTTP_OPTIONS_SIZE },
-    { HTTP_ID_PROPFIND, (uint8_t*)HTTP_PROPFIND, HTTP_PROPFIND_SIZE },
-    { HTTP_ID_PROPPATCH, (uint8_t*)HTTP_PROPPATCH, HTTP_PROPPATCH_SIZE },
-    { HTTP_ID_MKCOL, (uint8_t*)HTTP_MKCOL, HTTP_MKCOL_SIZE },
-    { HTTP_ID_LOCK, (uint8_t*)HTTP_LOCK, HTTP_LOCK_SIZE },
-    { HTTP_ID_MOVE, (uint8_t*)HTTP_MOVE, HTTP_MOVE_SIZE },
-    { HTTP_ID_PUT, (uint8_t*)HTTP_PUT, HTTP_PUT_SIZE },
-    { HTTP_ID_TRACE, (uint8_t*)HTTP_TRACE, HTTP_TRACE_SIZE },
-    { HTTP_ID_UNLOCK, (uint8_t*)HTTP_UNLOCK, HTTP_UNLOCK_SIZE },
-    { HTTP_ID_X_WORKING_WITH, (uint8_t*)HTTP_HEADER_X_WORKING_WITH,
-      HTTP_HEADER_X_WORKING_WITH_SIZE },
-    { HTTP_ID_LEN, (uint8_t*)HTTP_HEADER_CRLF, HTTP_HEADER_CRLF_SIZE },
-    { HTTP_ID_LEN, (uint8_t*)HTTP_HEADER_LF, HTTP_HEADER_LF_SIZE }
-};
-
 class DetectorHttpConfig
 {
 public:
@@ -347,7 +276,6 @@ public:
     SearchTool* via_matcher = nullptr;
     tMlmpTree* host_url_matcher = nullptr;
     tMlmpTree* RTMPHosUrlMatcher = nullptr;
-    SearchTool* header_matcher = nullptr;
     SearchTool* content_type_matcher = nullptr;
     SearchTool* field_matcher = nullptr;
     SearchTool* chp_matchers[MAX_PATTERN_TYPE + 1] = { nullptr };
@@ -554,7 +482,7 @@ static void CleanHttpPatternLists()
     }
 }
 
-static int content_pattern_match(void* id, void*, int index, void* data, void*)
+static int content_pattern_match(void* id, void*, int match_end_pos, void* data, void*)
 {
     MatchedPatterns* cm;
     MatchedPatterns** matches = (MatchedPatterns**)data;
@@ -562,14 +490,14 @@ static int content_pattern_match(void* id, void*, int index, void* data, void*)
 
     cm = (MatchedPatterns*)snort_calloc(sizeof(MatchedPatterns));
     cm->mpattern = target;
-    cm->index = index;
+    cm->after_match_pos = match_end_pos + 1;
     cm->next = *matches;
     *matches = cm;
 
     return 0;
 }
 
-static int chp_pattern_match(void* id, void*, int index, void* data, void*)
+static int chp_pattern_match(void* id, void*, int match_end_pos, void* data, void*)
 {
     MatchedCHPAction* new_match;
     MatchedCHPAction* current_search;
@@ -579,7 +507,7 @@ static int chp_pattern_match(void* id, void*, int index, void* data, void*)
 
     new_match = (MatchedCHPAction*)snort_calloc(sizeof(MatchedCHPAction));
     new_match->mpattern = target;
-    new_match->index = index;
+    new_match->start_match_pos = match_end_pos + 1 - target->psize;
 
     // preserving order is required: sort by appIdInstance, then by precedence
     for (current_search = *matches, prev_search = nullptr;
@@ -627,7 +555,7 @@ static inline void chp_add_candidate_to_tally(CHPMatchTally& match_tally, CHPApp
 
 // In addition to creating the linked list of matching actions this function will
 // create the CHPMatchTally needed to find the longest matching pattern.
-static int chp_key_pattern_match(void* id, void*, int index, void* data, void*)
+static int chp_key_pattern_match(void* id, void*, int match_end_pos, void* data, void*)
 {
     CHPTallyAndActions* chp = (CHPTallyAndActions*)data;
     CHPAction* target = (CHPAction*)id;
@@ -641,10 +569,10 @@ static int chp_key_pattern_match(void* id, void*, int index, void* data, void*)
         chp_add_candidate_to_tally(chp->match_tally, target->chpapp);
     }
 
-    return chp_pattern_match(id, nullptr, index, &chp->matches, nullptr);
+    return chp_pattern_match(id, nullptr, match_end_pos, &chp->matches, nullptr);
 }
 
-static int http_pattern_match(void* id, void*, int index, void* data, void*)
+static int http_pattern_match(void* id, void*, int match_end_pos, void* data, void*)
 {
     MatchedPatterns* cm = nullptr;
     MatchedPatterns** tmp;
@@ -659,7 +587,7 @@ static int http_pattern_match(void* id, void*, int index, void* data, void*)
     {
         cm = (MatchedPatterns*)snort_calloc(sizeof(MatchedPatterns));
         cm->mpattern = target;
-        cm->index = index + 1;
+        cm->after_match_pos = match_end_pos + 1;
         cm->next = nullptr;
         *tmp = cm;
     }
@@ -805,18 +733,6 @@ static int processCHPList(CHPListElement* chplist)
     return 1;
 }
 
-static SearchTool* registerHeaderPatterns(HeaderPattern* patternList, size_t patternListCount)
-{
-    SearchTool* patternMatcher = new SearchTool("ac_full");
-
-    for (size_t i = 0; i < patternListCount; i++)
-        patternMatcher->add(patternList[i].data, patternList[i].length, &patternList[i], true);
-
-    patternMatcher->prep();
-
-    return patternMatcher;
-}
-
 #define HTTP_FIELD_PREFIX_USER_AGENT    "\r\nUser-Agent: "
 #define HTTP_FIELD_PREFIX_USER_AGENT_SIZE (sizeof(HTTP_FIELD_PREFIX_USER_AGENT)-1)
 #define HTTP_FIELD_PREFIX_HOST    "\r\nHost: "
@@ -863,14 +779,14 @@ typedef struct fieldPatternData_t
     httpSession *hsession;
 } FieldPatternData;
 
-static int http_field_pattern_match(void *id, void *, int index, void *data, void *)
+static int http_field_pattern_match(void *id, void *, int match_end_pos, void *data, void *)
 {
     static const uint8_t crlf[] = "\r\n";
     static unsigned crlfLen = sizeof(crlf)-1;
     FieldPatternData *pFieldData = (FieldPatternData*)data;
     FieldPattern *target = (FieldPattern  *)id;
     const uint8_t* p;
-    unsigned fieldOffset = target->length + index;
+    unsigned fieldOffset = match_end_pos + 1;
     unsigned remainingLength = pFieldData->length - fieldOffset;
 
     if (!(p = (uint8_t*)service_strstr(&pFieldData->payload[fieldOffset], remainingLength, crlf, crlfLen)))
@@ -882,6 +798,7 @@ static int http_field_pattern_match(void *id, void *, int index, void *data, voi
     return 1;
 }
 
+//  FIXIT-M: Is this still necessary now that we use inspection events?
 void httpGetNewOffsetsFromPacket(Packet *pkt, httpSession *hsession)
 {
     constexpr auto MIN_HTTP_REQ_HEADER_SIZE = (sizeof("GET /\r\n\r\n") - 1);
@@ -940,11 +857,6 @@ int finalize_http_detector()
     if (!detectorHttpConfig->client_agent_matcher)
         return -1;
 
-    numPatterns = sizeof(header_patterns)/sizeof(*header_patterns);
-    detectorHttpConfig->header_matcher = registerHeaderPatterns(header_patterns, numPatterns);
-    if (!detectorHttpConfig->header_matcher)
-        return -1;
-
     numPatterns = sizeof(host_payload_http_detector_patterns)/
         sizeof(*host_payload_http_detector_patterns);
     if (processHostPatterns(host_payload_http_detector_patterns, numPatterns) < 0)
@@ -975,7 +887,6 @@ void clean_http_detector()
     delete detectorHttpConfig->via_matcher;
     delete detectorHttpConfig->url_matcher;
     delete detectorHttpConfig->client_agent_matcher;
-    delete detectorHttpConfig->header_matcher;
     delete detectorHttpConfig->content_type_matcher;
     delete detectorHttpConfig->field_matcher;
 
@@ -1219,14 +1130,14 @@ AppId scan_chp(PatternType ptype, char* buf, int buf_size, MatchedCHPAction* mp,
         {
         case COLLECT_VERSION:
             if (!*version)
-                extractCHP(buf, buf_size, tmp->index, match->psize,
+                extractCHP(buf, buf_size, tmp->start_match_pos, match->psize,
                     match->action_data, version);
             hsession->skip_simple_detect = true;
             break;
         case EXTRACT_USER:
             if (!*user && !AppIdConfig::get_appid_config()->mod_config->chp_userid_disabled)
             {
-                extractCHP(buf, buf_size, tmp->index, match->psize,
+                extractCHP(buf, buf_size, tmp->start_match_pos, match->psize,
                     match->action_data, user);
                 if (*user)
                     *user = normalize_userid(*user);
@@ -1238,7 +1149,7 @@ AppId scan_chp(PatternType ptype, char* buf, int buf_size, MatchedCHPAction* mp,
                 nullptr == *new_field)
             {
                 // The field supports rewrites, and a rewrite hasn't happened.
-                rewriteCHP(buf, buf_size, tmp->index, match->psize,
+                rewriteCHP(buf, buf_size, tmp->start_match_pos, match->psize,
                     match->action_data, new_field, 0);
                 (*total_found)++;
                 do_not_further_modify_field = 1;
@@ -1297,7 +1208,7 @@ AppId scan_chp(PatternType ptype, char* buf, int buf_size, MatchedCHPAction* mp,
     {
         // We will take the first INSERT_FIELD with an action string,
         // which was decided with the setting of second_sweep_for_inserts.
-        rewriteCHP(buf, buf_size, second_sweep_for_inserts->index,
+        rewriteCHP(buf, buf_size, second_sweep_for_inserts->start_match_pos,
             second_sweep_for_inserts->mpattern->psize,
             second_sweep_for_inserts->mpattern->action_data,
             new_field, 1);     // insert
@@ -1323,7 +1234,7 @@ static inline int optionallyReplaceWithStrdup(char** optionalStr, const char* st
 static inline uint8_t* continue_buffer_scan(
     const uint8_t* start, const uint8_t* end, MatchedPatterns* mp, DetectorHTTPPattern*)
 {
-    uint8_t* bp = (uint8_t*) (start) + mp->index;
+    uint8_t* bp = (uint8_t*) (start) + mp->after_match_pos;
     if( (bp >= end) || (*bp != ' ' && *bp != 0x09 && *bp != '/') )
         return nullptr;
     else
@@ -1461,7 +1372,7 @@ void identify_user_agent(const uint8_t* start, int size, AppId* serviceAppId, Ap
                 goto done;
 
             case APP_ID_GOOGLE_DESKTOP:
-                buffPtr = (uint8_t*)start + tmp->index;
+                buffPtr = (uint8_t*)start + tmp->after_match_pos;
 
                 if(buffPtr >= end)
                     break;
@@ -1516,7 +1427,7 @@ void identify_user_agent(const uint8_t* start, int size, AppId* serviceAppId, Ap
                 break;
 
             case APP_ID_WGET:
-                buffPtr = (uint8_t*)start + tmp->index;
+                buffPtr = (uint8_t*)start + tmp->after_match_pos;
                 if(buffPtr >= end)
                     break;
                 while (i < MAX_VERSION_SIZE - 1 && buffPtr < end)
@@ -1567,7 +1478,7 @@ void identify_user_agent(const uint8_t* start, int size, AppId* serviceAppId, Ap
                     temp_ver[0] = 0;
                     i = 0;
                 }
-                buffPtr = (uint8_t*)start + tmp->index;
+                buffPtr = (uint8_t*)start + tmp->after_match_pos;
 
                 if(buffPtr >= end)
                     break;
@@ -1596,7 +1507,7 @@ void identify_user_agent(const uint8_t* start, int size, AppId* serviceAppId, Ap
                     i =0;
                     /* if we already collected temp_ver information after seeing 'Version', let's
                        use that*/
-                    buffPtr = (uint8_t*)start + tmp->index;
+                    buffPtr = (uint8_t*)start + tmp->after_match_pos;
                     if(buffPtr >= end)
                         break;
                     /* we may have to enter the pattern with the / in it. */
@@ -1676,7 +1587,7 @@ int get_appid_by_pattern(const uint8_t* data, unsigned size, char** version)
         switch (match->service_id)
         {
         case APP_ID_SQUID:
-            data_ptr = (uint8_t*)data + mp->index;
+            data_ptr = (uint8_t*)data + mp->after_match_pos;
 
             if (data_ptr >= end)
                 break;
@@ -1757,82 +1668,6 @@ AppId get_appid_by_content_type(const uint8_t* data, int size)
     FreeMatchStructures(mp);
 
     return payloadId;
-}
-
-static int http_header_pattern_match(void* id, void*, int index, void* data, void*)
-{
-    HeaderMatchedPatterns* matches = (HeaderMatchedPatterns*)data;
-    HeaderPattern* target = (HeaderPattern*)id;
-    HTTPHeaderIndices* headers = matches->headers;
-
-    if (matches->last_match >= 0)
-    {
-        headers[matches->last_match].end = index;
-        matches->last_match = -1;
-    }
-
-    if (target->id < HTTP_ID_LEN)
-    {
-        if (index == 0)
-        {
-            goto store_index;
-        }
-        else if (index == matches->last_index_end)
-        {
-            /* This checks if the last match was \r or \n
-               It is still possible to have nefarious payloads
-               that have HTTP Headers in "" */
-            goto store_index;
-        }
-    }
-
-    goto done;
-
-store_index:
-    headers[target->id].start = index + target->length;
-    headers[target->id].end = 0;
-    matches->last_match = target->id;
-done:
-    matches->last_index_end = index + target->length;
-    return 0;
-}
-
-int get_http_header_location(const uint8_t* data, unsigned size, HttpId id, int* start, int* end,
-        HeaderMatchedPatterns* hmp)
-{
-    HTTPHeaderIndices* match;
-
-    if (hmp->headers[id].start > 0)
-    {
-        *start = hmp->headers[id].start;
-        *end = hmp->headers[id].end;
-        return 1;
-    }
-
-    if (hmp->searched)
-        return 0;
-
-    if (detectorHttpConfig->header_matcher)
-    {
-        detectorHttpConfig->header_matcher->find_all((const char*)data, size,
-            &http_header_pattern_match, false, (void*)hmp);
-    }
-
-    hmp->searched = 1;
-
-    /*Close out search space for last matched if needed */
-    if (hmp->last_match > 0 && hmp->headers[hmp->last_match].end <= 0)
-        hmp->headers[hmp->last_match].end = size;
-
-    match = &(hmp->headers[id]);
-    if (match->start > 0)
-    {
-        *start = match->start;
-        *end = match->end;
-        return 1;
-    }
-
-    return 0;
 }
 
 AppId get_appid_from_url(char* host, char* url, char** version, char* referer, AppId* ClientAppId,
@@ -2102,8 +1937,13 @@ void get_server_vendor_version(const uint8_t* data, int len, char** version, cha
     *(*vendor+vendor_len) = '\0';
 }
 
-bool is_webdav_found(HeaderMatchedPatterns* hmp)
+// FIXIT-M: Replace with inspection event data from http_inspect. This 
+//          is not working now that we've switched to getting data from 
+//          http_inspect.
+bool is_webdav_found()
 {
+    return false;
+#if REPLACE_WITH_INSPECTION_EVENT
     bool found = false;
 
     if (hmp->headers[HTTP_ID_COPY].start > 0)
@@ -2122,6 +1962,7 @@ bool is_webdav_found(HeaderMatchedPatterns* hmp)
         found = true;
 
     return found;
+#endif
 }
 
 // Start of HTTP/2 detection logic.

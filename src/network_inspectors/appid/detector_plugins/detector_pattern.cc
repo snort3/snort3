@@ -576,14 +576,15 @@ struct PServiceMatch
 
 static PServiceMatch* free_servicematch_list;
 
-static int pattern_match(void* id, void*, int index, void* data, void*)
+static int pattern_match(void* id, void*, int match_end_pos, void* data, void*)
 {
     PServiceMatch** matches = (PServiceMatch**)data;
     Pattern* pd = (Pattern*)id;
     PServiceMatch* psm;
     PServiceMatch* sm;
 
-    if (pd->offset >= 0 && pd->offset != index)
+    //  Ignore matches that don't start at the expected position.
+    if (pd->offset >= 0 && pd->offset != (match_end_pos + 1 - (int)pd->length))
         return 0;
 
     /*find if previously this PS was matched. */

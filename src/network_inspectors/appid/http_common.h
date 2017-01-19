@@ -182,7 +182,7 @@ struct CHPListElement
 struct MatchedCHPAction
 {
     CHPAction* mpattern;
-    int index;
+    int start_match_pos;
     MatchedCHPAction* next;
 };
 

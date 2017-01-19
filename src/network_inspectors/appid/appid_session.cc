@@ -3430,7 +3430,6 @@ int AppIdSession::process_http_packet(int direction)
 {
     Profile http_profile_context(httpPerfStats);
     constexpr auto RESPONSE_CODE_LENGTH = 3;
-    HeaderMatchedPatterns hmp;
     int size;
     char* version = nullptr;
     char* vendorVersion = nullptr;
@@ -3493,7 +3492,6 @@ int AppIdSession::process_http_packet(int direction)
     char* via = hsession->via;
     char* useragent = hsession->useragent;
     char* referer = hsession->referer;
-    memset(&hmp, 0, sizeof(hmp));
 
     if (serviceAppId == APP_ID_NONE)
         serviceAppId = APP_ID_HTTP;
@@ -3551,7 +3549,7 @@ int AppIdSession::process_http_packet(int direction)
                 }
             }
 
-            if (is_webdav_found(&hmp))
+            if (is_webdav_found())
             {
                 if (session_logging_enabled && payload_id > APP_ID_NONE &&
                     payload_app_id != payload_id)

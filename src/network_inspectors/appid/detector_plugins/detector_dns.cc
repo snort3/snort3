@@ -139,7 +139,6 @@ struct ServiceDNSData
 struct MatchedDNSPatterns
 {
     DNSHostPattern* mpattern;
-    int index;
     MatchedDNSPatterns* next;
 };
 
@@ -266,7 +265,7 @@ static CLIENT_APP_RETCODE dns_tcp_client_validate( const uint8_t*, uint16_t, con
     return CLIENT_APP_INPROCESS;
 }
 
-static int dns_host_pattern_match(void* id, void*, int index, void* data, void*)
+static int dns_host_pattern_match(void* id, void*, int, void* data, void*)
 {
     MatchedDNSPatterns* cm;
     MatchedDNSPatterns** matches = (MatchedDNSPatterns**)data;
@@ -274,7 +273,6 @@ static int dns_host_pattern_match(void* id, void*, int index, void* data, void*)
 
     cm = (MatchedDNSPatterns*)snort_calloc(sizeof(MatchedDNSPatterns));
     cm->mpattern = target;
-    cm->index = index;
     cm->next = *matches;
     *matches = cm;
 

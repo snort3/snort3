@@ -64,7 +64,7 @@ struct DetectorDNSHostPattern
 struct ServicePatternData
 {
     ServicePatternData* next;
-    int position;
+    int pattern_start_pos;
     unsigned size;
     RNAServiceElement* svc;
 };

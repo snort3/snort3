@@ -118,20 +118,6 @@ enum HttpId
 	HTTP_ID_LEN
 };
 
-struct HTTPHeaderIndices
-{
-	int start;
-	int end;
-};
-
-struct HeaderMatchedPatterns
-{
-	HTTPHeaderIndices headers[HTTP_ID_LEN];
-	int last_match;
-	int last_index_end;
-	int searched;
-};
-
 struct UrlUserData
 {
     uint32_t service_id;
@@ -164,7 +150,6 @@ void insert_url_pattern(DetectorAppUrlPattern* pattern);
 void insert_rtmp_url_pattern(DetectorAppUrlPattern* pattern);
 void insert_app_url_pattern(DetectorAppUrlPattern* pattern);
 int get_appid_by_pattern(const uint8_t*, unsigned, char**);
-int get_http_header_location(const uint8_t*, unsigned, HttpId, int*, int*, HeaderMatchedPatterns*);
 void httpGetNewOffsetsFromPacket(Packet *pkt, httpSession *hsession);
 
 inline void free_matched_chp_actions(MatchedCHPAction* ma)
@@ -187,7 +172,7 @@ AppId get_appid_by_content_type(const uint8_t*, int);
 AppId scan_header_x_working_with(const uint8_t*, uint32_t, char**);
 void identify_user_agent(const uint8_t*, int, AppId*, AppId*, char**);
 void get_server_vendor_version(const uint8_t*, int, char**, char**, RNAServiceSubtype**);
-bool is_webdav_found(HeaderMatchedPatterns*);
+bool is_webdav_found();
 
 #endif
 

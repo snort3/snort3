@@ -26,6 +26,7 @@
 #include "main/snort_debug.h"
 
 #include "client_app_api.h"
+#include "appid_module.h"
 
 static const char TIMBUKTU_BANNER[] = "\000\001";
 
@@ -236,6 +237,7 @@ inprocess:
 
 done:
     timbuktu_client_mod.api->add_app(asd, APP_ID_TIMBUKTU, APP_ID_TIMBUKTU, nullptr);
+    appid_stats.timbuktu_clients++;
     asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
     return CLIENT_APP_SUCCESS;
 }

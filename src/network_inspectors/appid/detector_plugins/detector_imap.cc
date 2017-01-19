@@ -351,15 +351,17 @@ static void clean()
     AppidConfigElement::remove_generic_config_element(client_app_mod.name);
 }
 
-static int pattern_match(void* id, void*, int index, void* data, void*)
+static int pattern_match(void* id, void*, int match_end_pos, void* data, void*)
 {
-    Client_App_Pattern** pcmd = (Client_App_Pattern**)data;
-    unsigned long idx = (unsigned long)id;
+    Client_App_Pattern* matching_pattern = (Client_App_Pattern*)id;
 
-    if (index)
+    //  Pattern must start at beginning of data. Otherwise, keep looking.
+    if ((int)matching_pattern->length != match_end_pos + 1)
         return 0;
-    pcmd = (Client_App_Pattern**)data;
-    *pcmd = &patterns[idx];
+
+    //  Found matching pattern.
+    Client_App_Pattern** pcmd = (Client_App_Pattern**)data;
+    *pcmd = matching_pattern;
     return 1;
 }
 

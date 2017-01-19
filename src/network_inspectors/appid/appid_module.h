@@ -66,6 +66,8 @@ struct AppIdStats
     PegCount nntp_flows;
     PegCount ntp_flows;
     PegCount pop_flows;
+    PegCount pop3_clients;
+    PegCount pop3s_clients;
     PegCount radius_flows;
     PegCount rexec_flows;
     PegCount rfb_flows;
@@ -97,6 +99,7 @@ struct AppIdStats
     PegCount ssl_flows;
     PegCount telnet_flows;
     PegCount tftp_flows;
+    PegCount timbuktu_clients;
     PegCount timbuktu_flows;
     PegCount tns_clients;
     PegCount tns_flows;

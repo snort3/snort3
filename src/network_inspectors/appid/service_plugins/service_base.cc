@@ -283,13 +283,14 @@ static inline ServiceMatch* allocServiceMatch(void)
     return (ServiceMatch*)snort_calloc(sizeof(ServiceMatch));
 }
 
-static int pattern_match(void* id, void*, int index, void* data, void*)
+static int pattern_match(void* id, void*, int match_end_pos, void* data, void*)
 {
     ServiceMatch** matches = (ServiceMatch**)data;
     ServicePatternData* pd = (ServicePatternData*)id;
     ServiceMatch* sm;
 
-    if (pd->position >= 0 && pd->position != index)
+    // Ignore matches that don't start at the expected position.
+    if (pd->pattern_start_pos >= 0 && pd->pattern_start_pos != (match_end_pos + 1 - (int)pd->size))
         return 0;
 
     for (sm = *matches; sm; sm = sm->next)
@@ -490,7 +491,7 @@ static void ServiceRegisterPattern(RNAServiceValidationFCN fcn, IpProtocol proto
 
     pd->svc = li;
     pd->size = size;
-    pd->position = position;
+    pd->pattern_start_pos = position;
     (*patterns)->add(pattern, size, pd, false);
     (*count)++;
     pd->next = *pd_list;

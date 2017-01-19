@@ -198,7 +198,8 @@ static void add_pattern_data(SearchTool* st, const RNAClientAppModule* li, int p
 {
     ClientPatternData* pd = (ClientPatternData*)snort_calloc(sizeof(ClientPatternData));
     pd->ca = li;
-    pd->position = position;
+    pd->pattern_start_pos = position;
+    pd->size = size;
     (*count)++;
     pd->next = client_app_config->pattern_data_list;
     client_app_config->pattern_data_list = pd;
@@ -650,21 +651,22 @@ void clean_client_plugins()
 /*
  * Callback function for string search
  *
- * @param   id      id in array of search strings from pop_config.cmds
- * @param   index   index in array of search strings from pop_config.cmds
+ * @param   id      pointer to pattern data in array of search strings.
+ * @param   match_end_pos   position of the last char of matching string
  * @param   data    buffer passed in to search function
  *
  * @return response
  * @retval 1        commands caller to stop searching
  */
-static int pattern_match(void* id, void* /*unused_tree*/, int index, void* data,
+static int pattern_match(void* id, void* /*unused_tree*/, int match_end_pos, void* data,
     void* /*unused_neg*/)
 {
     ClientAppMatch** matches = (ClientAppMatch**)data;
     ClientPatternData* pd = (ClientPatternData*)id;
     ClientAppMatch* cam;
 
-    if ( pd->position >= 0 && pd->position != index )
+    // Ignore matches that don't start at the expected position.
+    if ( pd->pattern_start_pos >= 0 && pd->pattern_start_pos != (match_end_pos + 1 - (int)pd->size))
         return 0;
 
     for (cam = *matches; cam; cam = cam->next)

@@ -329,15 +329,14 @@ static void pop3_ca_clean()
     AppidConfigElement::remove_generic_config_element(client_app_mod.name);
 }
 
-static int pop3_pattern_match(void* id, void*, int index, void* data, void*)
+static int pop3_pattern_match(void* id, void*, int match_end_pos, void* data, void*)
 {
-    Client_App_Pattern** pcmd;
-    unsigned long idx = (unsigned long)id;
+    Client_App_Pattern* matching_pattern = (Client_App_Pattern*)id;
 
-    if (index)
+    if ((int)matching_pattern->length != match_end_pos + 1)
         return 0;
-    pcmd = (Client_App_Pattern**)data;
-    *pcmd = &patterns[idx];
+    Client_App_Pattern** pcmd = (Client_App_Pattern**)data;
+    *pcmd = matching_pattern;
     return 1;
 }
 
@@ -464,6 +463,7 @@ static int pop3_server_validate(POP3DetectorData* dd, const uint8_t* data, uint1
                 asd->set_session_flags(APPID_SESSION_ENCRYPTED);
                 asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
                 client_app_mod.api->add_app(asd, APP_ID_POP3S, APP_ID_POP3S, nullptr);
+                appid_stats.pop3s_clients++;
             }
         }
         else if (dd->client.username) // possible only with non-TLS authentication therefore APP_ID_POP3
@@ -851,6 +851,7 @@ static CLIENT_APP_RETCODE pop3_ca_validate(const uint8_t* data, uint16_t size, c
                 // Still in non-secure mode and received a TRANSACTION-state command: POP3 found
                 // sets APPID_SESSION_CLIENT_DETECTED
                 client_app_mod.api->add_app(asd, APP_ID_POP3, APP_ID_POP3, nullptr);
+                appid_stats.pop3_clients++;
                 fd->detected = 1;
             }
             else

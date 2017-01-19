@@ -31,7 +31,8 @@ struct RNAClientAppRecord;
 struct ClientPatternData
 {
     ClientPatternData* next;
-    int position;
+    int pattern_start_pos;
+    unsigned size;
     const RNAClientAppModule* ca;
 };
 

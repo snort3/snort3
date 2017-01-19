@@ -71,7 +71,7 @@ struct tMlmpTree
 struct tMatchedPatternList
 {
     tPatternNode* patternNode;
-    size_t index;
+    size_t match_start_pos;
     /*uint32_t level; */
     tMatchedPatternList* next;
 };
@@ -88,7 +88,7 @@ static tPatternNode* genericPatternSelector(const tMatchedPatternList* matchList
     uint8_t* payload);
 static void* mlmpMatchPatternCustom(tMlmpTree* root, tMlmpPattern* inputPatternList,
     tPatternNode* (*callback)(const tMatchedPatternList*, const uint8_t*));
-static int patternMatcherCallback(void* id, void* unused_tree, int index, void* data,
+static int patternMatcherCallback(void* id, void* unused_tree, int match_end_pos, void* data,
     void* unused_neg);
 
 static uint32_t gPatternId = 1;
@@ -126,13 +126,14 @@ void* mlmpMatchPatternGeneric(tMlmpTree* root, tMlmpPattern* inputPatternList)
     return mlmpMatchPatternCustom(root, inputPatternList, genericPatternSelector);
 }
 
-static inline int matchDomainPattern(const tMatchedPatternList* mp, const uint8_t* pattern)
+static inline bool match_is_domain_pattern(const tMatchedPatternList* mp, const uint8_t* payload)
 {
-    if (!pattern)
-        return -1;
+    if (!payload)
+        return false;
 
-    return (mp->patternNode->pattern.level == 0 && !(mp->index == 0 || pattern[mp->index-1] ==
-           '.'));
+    return mp->patternNode->pattern.level != 0 or
+           mp->match_start_pos == 0 or
+           payload[mp->match_start_pos-1] == '.';
 }
 
 static void* mlmpMatchPatternCustom(tMlmpTree* rootNode, tMlmpPattern* inputPatternList,
@@ -384,7 +385,7 @@ static tPatternNode* patternSelector(const tMatchedPatternList* patternMatchList
 
         /*backward compatibility */
         if ((tmpList->patternNode->partTotal == 1)
-            && domain && matchDomainPattern(tmpList, payload))
+            && domain && !match_is_domain_pattern(tmpList, payload))
             continue;
 
         /*last pattern part is seen in sequence */
@@ -427,7 +428,7 @@ static tPatternNode* genericPatternSelector(const tMatchedPatternList* patternMa
     return patternSelector (patternMatchList, payload, false);
 }
 
-static int patternMatcherCallback(void* id, void*, int index, void* data, void*)
+static int patternMatcherCallback(void* id, void*, int match_end_pos, void* data, void*)
 {
     tPatternNode* target = (tPatternNode*)id;
     tMatchedPatternList** matchList = (tMatchedPatternList**)data;
@@ -462,7 +463,7 @@ static int patternMatcherCallback(void* id, void*, int index, void* data, void*)
     }
 
     newNode = (tMatchedPatternList*)snort_calloc(sizeof(tMatchedPatternList));
-    newNode->index = index;
+    newNode->match_start_pos = match_end_pos + 1 - target->pattern.patternSize;
     newNode->patternNode = target;
 
     if (prevNode == nullptr)

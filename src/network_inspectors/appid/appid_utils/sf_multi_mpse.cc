@@ -52,7 +52,7 @@ struct tPatternRootNode
 struct MatchedPattern
 {
     tPatternList* patternNode;
-    size_t index;
+    size_t match_start_pos;
     unsigned int level;
 };
 
@@ -62,9 +62,9 @@ static void destroyTreesRecursively(void* root);
 static void dumpTreesRecursively(void* root, int level);
 static int addPatternRecursively(void* root, const tMlpPattern** inputPatternList, void* metaData,
     int level);
-static int longest_pattern_match(void* id, void*, int index, void* data,
+static int longest_pattern_match(void* id, void*, int match_end_pos, void* data,
     void*);
-static int url_pattern_match(void* id, void*, int index, void* data, void*);
+static int url_pattern_match(void* id, void*, int match_end_pos, void* data, void*);
 
 void* mlpCreate(void)
 {
@@ -99,12 +99,14 @@ void* mlpMatchPatternUrl(void* root, tMlpPattern** inputPatternList)
     return mlpMatchPatternCustom(root, inputPatternList, url_pattern_match);
 }
 
-static inline int matchDomainPattern(MatchedPattern mp, const uint8_t* pattern)
+static inline bool match_is_domain_pattern(MatchedPattern mp, const uint8_t* data)
 {
-    if (!pattern)
-        return -1;
+    if (!data)
+        return false;
 
-    return (mp.level == 0 && !(mp.index == 0 || pattern[mp.index-1] == '.'));
+    return mp.level != 0 or
+           mp.match_start_pos == 0 or
+           data[mp.match_start_pos-1] == '.';
 }
 
 void* mlpMatchPatternCustom(void* root, tMlpPattern** inputPatternList, int (* callback)(void*,
@@ -131,7 +133,7 @@ void* mlpMatchPatternCustom(void* root, tMlpPattern** inputPatternList, int (* c
     patternNode = mp.patternNode;
     if (patternNode)
     {
-        if (matchDomainPattern(mp, pattern->pattern) != 0)
+        if (!match_is_domain_pattern(mp, pattern->pattern))
             return nullptr;
 
         data = patternNode->userData;
@@ -257,14 +259,14 @@ static void dumpTreesRecursively(void* root, int level)
     snort_free(offset);
 }
 
-static int longest_pattern_match(void* id, void*, int index, void* data,
+static int longest_pattern_match(void* id, void*, int match_end_pos, void* data,
     void*)
 {
     tPatternList* target = (tPatternList*)id;
     MatchedPattern* match = (MatchedPattern*)data;
     int newMatchWins = 0;
 
-    /*printf("LongestMatcher: level %d, index: %d, matched %s\n", matches->level, index,
+    /*printf("LongestMatcher: level %d, match_end_pos: %d, matched %s\n", matches->level, match_end_pos,
        target->pattern.pattern); */
 
     /*first match */
@@ -278,19 +280,19 @@ static int longest_pattern_match(void* id, void*, int index, void* data,
     {
         /*printf("new pattern wins\n"); */
         match->patternNode = target;
-        match->index = index;
+        match->match_start_pos = match_end_pos + 1 - target->pattern.patternSize;
     }
 
     return 0;
 }
 
-static int url_pattern_match(void* id, void*, int index, void* data, void*)
+static int url_pattern_match(void* id, void*, int match_end_pos, void* data, void*)
 {
     tPatternList* target = (tPatternList*)id;
     MatchedPattern* match = (MatchedPattern*)data;
     int newMatchWins = 0;
 
-    /*printf("UrlMatcher: level %d, index: %d, matched %s\n", match->level, index,
+    /*printf("UrlMatcher: level %d, match_end_pos: %d, matched %s\n", match->level, match_end_pos,
       target->pattern.pattern);
       first match */
     if (!match->patternNode)
@@ -304,10 +306,10 @@ static int url_pattern_match(void* id, void*, int index, void* data, void*)
         /*host part matching towards later part is better. This is not designed to prevent
           mis-identifying
           url 'www.spoof_for_google.google.com.phishing.com' as google. */
-        if ((match->level == 0) && (match->index < (unsigned int)index))
+        if ((match->level == 0) && (match->match_start_pos < (unsigned int)match_end_pos + 1 - target->pattern.patternSize))
             newMatchWins = 1;
-        /*path part matching towards lower index is better */
-        if ((match->level == 1) && (match->index > (unsigned int)index))
+        /*path part matching towards lower position is better */
+        if ((match->level == 1) && (match->match_start_pos > (unsigned int)match_end_pos + 1 - target->pattern.patternSize))
             newMatchWins = 1;
     }
 
@@ -315,7 +317,7 @@ static int url_pattern_match(void* id, void*, int index, void* data, void*)
     {
         /*printf("new pattern wins\n"); */
         match->patternNode = target;
-        match->index = index;
+        match->match_start_pos = match_end_pos + 1 - target->pattern.patternSize;
     }
 
     return 0;

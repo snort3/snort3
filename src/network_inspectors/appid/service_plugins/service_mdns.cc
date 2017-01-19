@@ -75,7 +75,7 @@ struct MdnsPattern
 struct MatchedPatterns
 {
     MdnsPattern* mpattern;
-    int index;
+    int match_start_pos;
     MatchedPatterns* next;
 };
 
@@ -185,8 +185,6 @@ static int ReferencePointer(const char* start_ptr, const char** resp_endptr,   i
     const char* temp_start_ptr;
     temp_start_ptr  = start_ptr+index;
 
-    // FIXIT-M - This code needs review to ensure it works correctly with the new semantics of the
-    //           index returned by the SearchTool find_all pattern matching function
     mdnsMatchListFind(start_ptr, size - data_size + index, resp_endptr, &pattern_length);
     /* Contains reference pointer */
     while ((index < data_size) && !(*resp_endptr) && ((uint8_t )temp_start_ptr[index]  >>
@@ -423,10 +421,10 @@ static THREAD_LOCAL MatchedPatterns* patternFreeList;
 
 static MdnsPattern patterns[] =
 {
-    { (uint8_t*)PATTERN_STR_LOCAL_1, sizeof(PATTERN_STR_LOCAL_1) },
-    { (uint8_t*)PATTERN_STR_LOCAL_2, sizeof(PATTERN_STR_LOCAL_2) },
-    { (uint8_t*)PATTERN_STR_ARPA_1, sizeof(PATTERN_STR_ARPA_1) },
-    { (uint8_t*)PATTERN_STR_ARPA_2, sizeof(PATTERN_STR_ARPA_2) },
+    { (uint8_t*)PATTERN_STR_LOCAL_1, sizeof(PATTERN_STR_LOCAL_1)-1 },
+    { (uint8_t*)PATTERN_STR_LOCAL_2, sizeof(PATTERN_STR_LOCAL_2)-1 },
+    { (uint8_t*)PATTERN_STR_ARPA_1, sizeof(PATTERN_STR_ARPA_1)-1 },
+    { (uint8_t*)PATTERN_STR_ARPA_2, sizeof(PATTERN_STR_ARPA_2)-1 },
 };
 
 static int mdnsMatcherCreate()
@@ -468,7 +466,7 @@ static void mdnsMatcherDestroy()
     AppidConfigElement::remove_generic_config_element(svc_element.name);
 }
 
-static int mdns_pattern_match(void* id, void*, int index, void* data, void*)
+static int mdns_pattern_match(void* id, void*, int match_end_pos, void* data, void*)
 {
     MatchedPatterns* cm;
     MatchedPatterns** matches = (MatchedPatterns**)data;
@@ -485,12 +483,12 @@ static int mdns_pattern_match(void* id, void*, int index, void* data, void*)
         cm = (MatchedPatterns*)snort_calloc(sizeof(MatchedPatterns));
 
     cm->mpattern = target;
-    cm->index = index;
+    cm->match_start_pos = match_end_pos - target->length + 1;
     for (prevElement = nullptr, element = *matches;
         element;
         prevElement = element, element = element->next)
     {
-        if (element->index > index)
+        if (element->match_start_pos > cm->match_start_pos)
             break;
     }
     if (prevElement)
@@ -531,13 +529,13 @@ static void mdnsMatchListFind(const char* dataPtr, uint16_t index, const char** 
 
     while (pMdnsConfig->patternList)
     {
-        if (pMdnsConfig->patternList->index == index)
+        if (pMdnsConfig->patternList->match_start_pos == index)
         {
-            *resp_endptr = dataPtr+pMdnsConfig->patternList->index-index;
+            *resp_endptr = dataPtr;
             *pattern_length = pMdnsConfig->patternList->mpattern->length;
             return;
         }
-        if (pMdnsConfig->patternList->index > index)
+        if (pMdnsConfig->patternList->match_start_pos > index)
             break;
         MatchedPatterns* element;
         element = pMdnsConfig->patternList;
