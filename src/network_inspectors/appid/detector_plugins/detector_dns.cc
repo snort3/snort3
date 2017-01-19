@@ -663,7 +663,6 @@ success:
         asd->set_session_flags(APPID_SESSION_CONTINUE);
         dns_service_mod.api->add_service(asd, args->pkt, dir, &udp_svc_element,
             APP_ID_DNS, nullptr, nullptr, nullptr);
-        appid_stats.dns_udp_flows++;
         return SERVICE_SUCCESS;
     case SERVICE_INVALID_CLIENT:
 invalid:
@@ -680,6 +679,7 @@ nomatch:
 inprocess:
         dns_udp_client_mod.api->add_app(asd, APP_ID_NONE, APP_ID_DNS, nullptr);
         dns_service_mod.api->service_inprocess(asd, args->pkt, dir, &udp_svc_element);
+        appid_stats.dns_udp_flows++;
         return SERVICE_INPROCESS;
     default:
         return rval;
