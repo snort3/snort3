@@ -153,6 +153,11 @@ public:
     virtual void show_stats();
     virtual void reset_stats();
 
+    // Wrappers to check that lists are not tables
+    bool verified_begin(const char*, int, SnortConfig*);
+    bool verified_set(const char*, Value&, SnortConfig*);
+    bool verified_end(const char*, int, SnortConfig*);
+
 protected:
     Module(const char* name, const char* help);
     Module(const char* name, const char* help, const Parameter*,
@@ -171,6 +176,7 @@ private:
     const Parameter* params;
     const Parameter* default_params = nullptr;
     bool list;
+    int table_level = 0;
 
     Trace* trace;
 };

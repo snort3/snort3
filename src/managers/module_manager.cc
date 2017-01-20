@@ -403,7 +403,7 @@ static bool set_var(const char* fqn, Value& val)
 
 static bool set_param(Module* mod, const char* fqn, Value& val)
 {
-    if ( !mod->set(fqn, val, s_config) )
+    if ( !mod->verified_set(fqn, val, s_config) )
     {
         ParseError("%s is invalid", fqn);
         ++s_errors;
@@ -525,7 +525,7 @@ static bool begin(Module* m, const Parameter* p, const char* s, int idx, int dep
          (idx and p->type != Parameter::PT_LIST) )
     {
         //printf("begin %s %d\n", s, idx);
-        if ( !m->begin(s, idx, s_config) )
+        if ( !m->verified_begin(s, idx, s_config) )
             return false;
     }
     // don't set list defaults
@@ -626,7 +626,7 @@ static bool end(Module* m, const Parameter* p, const char* s, int idx)
          (idx and p->type != Parameter::PT_LIST) )
     {
         //printf("end %s %d\n", s, idx);
-        return m->end(s, idx, s_config);
+        return m->verified_end(s, idx, s_config);
     }
     return true;
 }
@@ -810,8 +810,8 @@ Module* ModuleManager::get_default_module(const char* s, SnortConfig* sc)
 
     if ( mod )
     {
-        mod->begin(s, 0, sc);
-        mod->end(s, 0, nullptr);
+        mod->verified_begin(s, 0, sc);
+        mod->verified_end(s, 0, nullptr);
     }
     return mod;
 }

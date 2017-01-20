@@ -138,6 +138,26 @@ void Module::reset_stats()
         counts[i] = 0;
 }
 
+bool Module::verified_begin(const char* fqn, int idx, SnortConfig* c)
+{
+    table_level++;
+    return begin(fqn, idx, c);
+}
+
+bool Module::verified_set(const char* fqn, Value& v, SnortConfig* c)
+{
+    if ( list and table_level < 2 )
+        return false;
+
+    return set(fqn, v, c);
+}
+
+bool Module::verified_end(const char* fqn, int idx, SnortConfig* c)
+{
+    table_level--;
+    return end(fqn, idx, c);
+}
+
 const PegInfo simple_pegs[] =
 {
     { "packets", "total packets" },
