@@ -244,8 +244,13 @@ FilePosition get_file_position(Packet* pkt)
 
 FileInspect::FileInspect(FileIdModule* fm)
 {
-    fm->fc.get_file_policy().load();
-    config = &(fm->fc);
+    fm->load_config(config);
+}
+
+FileInspect:: ~FileInspect()
+{
+    if (config)
+        delete config;
 }
 
 static Module* mod_ctor()

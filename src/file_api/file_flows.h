@@ -83,6 +83,7 @@ class FileInspect : public Inspector
 {
 public:
     FileInspect(FileIdModule*);
+    ~FileInspect();
     void eval(Packet*) override { }
 
     FileConfig* config;

@@ -184,6 +184,12 @@ static const PegInfo file_pegs[] =
 
 FileIdModule::FileIdModule() : Module(FILE_ID_NAME, FILE_ID_HELP, file_id_params) { }
 
+FileIdModule::~FileIdModule()
+{
+    if (fc)
+        delete fc;
+}
+
 const PegInfo* FileIdModule::get_pegs() const
 { return file_pegs; }
 
@@ -198,37 +204,40 @@ void FileIdModule::sum_stats()
 
 bool FileIdModule::set(const char*, Value& v, SnortConfig*)
 {
-    FilePolicy& fp = fc.get_file_policy();
+    if (!fc)
+        fc = new FileConfig;
+
+    FilePolicy& fp = fc->get_file_policy();
 
     if ( v.is("type_depth") )
-        fc.file_type_depth = v.get_long();
+        fc->file_type_depth = v.get_long();
 
     else if ( v.is("signature_depth") )
-        fc.file_signature_depth = v.get_long();
+        fc->file_signature_depth = v.get_long();
 
     else if ( v.is("block_timeout") )
-        fc.file_block_timeout = v.get_long();
+        fc->file_block_timeout = v.get_long();
 
     else if ( v.is("lookup_timeout") )
-        fc.file_lookup_timeout = v.get_long();
+        fc->file_lookup_timeout = v.get_long();
 
     else if ( v.is("block_timeout_lookup") )
-        fc.block_timeout_lookup = v.get_bool();
+        fc->block_timeout_lookup = v.get_bool();
 
     else if ( v.is("capture_memcap") )
-        fc.capture_memcap = v.get_long();
+        fc->capture_memcap = v.get_long();
 
     else if ( v.is("capture_max_size") )
-        fc.capture_max_size = v.get_long();
+        fc->capture_max_size = v.get_long();
 
     else if ( v.is("capture_min_size") )
-        fc.capture_min_size = v.get_long();
+        fc->capture_min_size = v.get_long();
 
     else if ( v.is("capture_block_size") )
-        fc.capture_block_size = v.get_long();
+        fc->capture_block_size = v.get_long();
 
     else if ( v.is("max_files_cached") )
-        fc.max_files_cached = v.get_long();
+        fc->max_files_cached = v.get_long();
 
     else if ( v.is("enable_type") )
     {
@@ -252,16 +261,16 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
         }
     }
     else if ( v.is("show_data_depth") )
-        fc.show_data_depth = v.get_long();
+        fc->show_data_depth = v.get_long();
 
     else if ( v.is("trace_type") )
-        fc.trace_type = v.get_bool();
+        fc->trace_type = v.get_bool();
 
     else if ( v.is("trace_signature") )
-        fc.trace_signature = v.get_bool();
+        fc->trace_signature = v.get_bool();
 
     else if ( v.is("trace_stream") )
-        fc.trace_stream = v.get_bool();
+        fc->trace_stream = v.get_bool();
 
     else if ( v.is("file_rules") )
         return true;
@@ -354,18 +363,28 @@ bool FileIdModule::end(const char* fqn, int idx, SnortConfig*)
 
     if ( !strcmp(fqn, "file_id.file_rules") )
     {
-        fc.process_file_rule(rule);
+        fc->process_file_rule(rule);
     }
     else if ( !strcmp(fqn, "file_id.file_rules.magic") )
     {
-        fc.process_file_magic(magic);
+        fc->process_file_magic(magic);
         rule.file_magics.push_back(magic);
     }
     else if ( !strcmp(fqn, "file_id.file_policy") )
     {
-        fc.process_file_policy_rule(file_rule);
+        fc->process_file_policy_rule(file_rule);
     }
 
     return true;
 }
 
+void FileIdModule::load_config(FileConfig*& dst)
+{
+    dst = fc;
+
+    if (fc)
+    {
+        fc->get_file_policy().load();
+        fc = nullptr;
+    }
+}

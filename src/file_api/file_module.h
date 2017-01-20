@@ -36,6 +36,7 @@ class FileIdModule : public Module
 {
 public:
     FileIdModule();
+    ~FileIdModule() override;
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
@@ -46,12 +47,13 @@ public:
 
     void sum_stats() override;
 
-    FileConfig fc;
+    void load_config(FileConfig*& dst);
 
 private:
     FileMagicRule rule;
     FileMagicData magic;
     FileRule file_rule;
+    FileConfig *fc = nullptr;
 };
 
 #endif
