@@ -199,10 +199,8 @@ public:
         uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId);
 
     // Delete the session if it is in the closed session state.
-    static void check_flow_closed(Packet*);
-
     // Handle session block pending state
-    static void check_flow_block_pending(Packet*);
+    static void check_flow_closed(Packet*);
 
     //  Create a session key from the Packet
     static FlowKey* get_flow_key(Packet*);

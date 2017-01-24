@@ -105,8 +105,6 @@ void snort_inspect(Packet* p)
             InspectorManager::execute(p);
             inspected = true;
 
-            Active::apply_delayed_action(p);
-
             if ( do_detect )
                 snort_detect(p);
         }
@@ -119,24 +117,20 @@ void snort_inspect(Packet* p)
         */
         if ( p->has_ip() )
             CheckTagging(p);
-
-        // clear closed sessions here after inspection since non-stream
-        // inspectors may depend on flow information
-        // FIXIT-H but this result in double clearing?  should normal
-        // clear_session() calls be deleted from stream?  this is a
-        // performance hit on short-lived flows
-        Stream::check_flow_closed(p);
     }
 
     Profile profile(eventqPerfStats);
     SnortEventqLog(p);
     SnortEventqReset();
 
+    Active::apply_delayed_action(p);
+    // clear closed sessions here after inspection since non-stream
+    // inspectors may depend on flow information
+    // This also handles block pending state
+    Stream::check_flow_closed(p);
+
     if ( inspected )
         InspectorManager::clear(p);
-
-    // Handle block pending state
-    Stream::check_flow_block_pending(p);
 }
 
 void snort_log(Packet* p)

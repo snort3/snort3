@@ -146,24 +146,6 @@ FlowData* Stream::get_flow_data(
 // session status
 //-------------------------------------------------------------------------
 
-void Stream::check_flow_block_pending(Packet* p)
-{
-    Flow* flow = p->flow;
-
-    if ( !flow )
-        return;
-
-    if (flow->session_state & STREAM_STATE_BLOCK_PENDING)
-    {
-        flow->session->clear();
-        flow->set_state(Flow::FlowState::BLOCK);
-
-        if ( !(p->packet_flags & PKT_STATELESS) )
-            drop_traffic(flow, SSN_DIR_BOTH);
-        flow->session_state &= ~STREAM_STATE_BLOCK_PENDING;
-    }
-}
-
 void Stream::check_flow_closed(Packet* p)
 {
     Flow* flow = p->flow;
@@ -176,6 +158,15 @@ void Stream::check_flow_closed(Packet* p)
         assert(flow_con);
         flow_con->delete_flow(flow, PruneReason::NONE);
         p->flow = nullptr;
+    }
+    else if (flow->session_state & STREAM_STATE_BLOCK_PENDING)
+    {
+        flow->session->clear();
+        flow->set_state(Flow::FlowState::BLOCK);
+
+        if ( !(p->packet_flags & PKT_STATELESS) )
+            drop_traffic(flow, SSN_DIR_BOTH);
+        flow->session_state &= ~STREAM_STATE_BLOCK_PENDING;
     }
 }
 
