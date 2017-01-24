@@ -104,7 +104,7 @@ PegCount* BinderModule::get_counts() const { return (PegCount*)&bstats; }
 
 Inspector::Inspector()
 {
-    ref_count = new unsigned[1];
+    ref_count = new std::atomic_uint[1];
     ref_count[0] = 0;
 }
 Inspector::~Inspector()

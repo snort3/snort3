@@ -34,7 +34,7 @@
 #include "reputation_module.h"
 
 THREAD_LOCAL ProfileStats reputationPerfStats;
-ReputationStats reputationstats;
+THREAD_LOCAL ReputationStats reputationstats;
 
 const PegInfo reputation_peg_names[] =
 {

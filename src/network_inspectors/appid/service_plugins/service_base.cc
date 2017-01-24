@@ -189,7 +189,7 @@ static void appSetServiceValidator( RNAServiceValidationFCN, AppId, unsigned ext
 static int CServiceAddPort(const RNAServiceValidationPort*, RNAServiceValidationModule*);
 static void CServiceRemovePorts(RNAServiceValidationFCN validate);
 
-static InitServiceAPI svc_init_api =
+static THREAD_LOCAL InitServiceAPI svc_init_api =
 {
     &CServiceRegisterPattern,
     &CServiceAddPort,
@@ -691,7 +691,7 @@ void add_service_to_active_list(RNAServiceValidationModule* service)
 
 static int serviceLoadForConfigCallback(void* symbol)
 {
-    static unsigned service_module_index = 0;
+    static THREAD_LOCAL unsigned service_module_index = 0;
     RNAServiceValidationModule* svm = (RNAServiceValidationModule*)symbol;
     const RNAServiceValidationPort* pp;
 

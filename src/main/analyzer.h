@@ -25,6 +25,7 @@
 // to control the thread and swap configuration.
 
 #include <atomic>
+#include <string>
 
 enum AnalyzerCommand
 {
@@ -59,7 +60,7 @@ public:
 
     State get_state() { return state; }
     const char* get_state_string();
-    const char* get_source() { return source; }
+    const char* get_source() { return source.c_str(); }
 
     // FIXIT-M add asynchronous response too
     AnalyzerCommand get_current_command() { return command; }
@@ -83,7 +84,7 @@ private:
 
     unsigned id;
 
-    const char* source;
+    std::string source;
     Swapper* swap;
     SFDAQInstance* daq_instance;
 };

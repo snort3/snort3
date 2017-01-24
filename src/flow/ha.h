@@ -22,6 +22,7 @@
 
 #include <daq_common.h>
 
+#include "main/thread.h"
 #include "side_channel/side_channel.h"
 
 //-------------------------------------------------------------------------
@@ -188,7 +189,7 @@ private:
     HighAvailabilityManager() = delete;
     static bool use_daq_channel;
     static PortBitSet* ports;
-    static bool shutting_down;
+    static THREAD_LOCAL bool shutting_down;
 };
 #endif
 

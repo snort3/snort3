@@ -68,7 +68,7 @@ bool TcpStateHandler::eval(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
     bool handled = false;
 
-    switch ( tcp_event = tracker.get_tcp_event() )
+    switch ( tracker.get_tcp_event() )
     {
     case TcpStreamTracker::TCP_SYN_SENT_EVENT:
         handled = syn_sent(tsd, tracker);

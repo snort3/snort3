@@ -35,12 +35,14 @@ public:
     {
     }
 
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
+    bool set(const char*, Value&, SnortConfig*) override;
+
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
 
-    bool set(const char*, Value&, SnortConfig*) override;
-    bool begin(const char*, int, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
+    void sum_stats() override;
 
 private:
     static const Parameter host_cache_params[];

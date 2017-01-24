@@ -106,7 +106,7 @@ void Analyzer::operator()(Swapper* ps)
     ps->apply();
     delete ps;
 
-    if (Snort::thread_init_privileged(source))
+    if (Snort::thread_init_privileged(source.c_str()))
     {
         daq_instance = SFDAQ::get_local_instance();
         privileged_start = daq_instance->can_start_unprivileged();

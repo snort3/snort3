@@ -58,7 +58,7 @@ THREAD_LOCAL ProfileStats ha_perf_stats;
 static THREAD_LOCAL HighAvailability* ha;
 PortBitSet* HighAvailabilityManager::ports = nullptr;
 bool HighAvailabilityManager::use_daq_channel = false;
-bool HighAvailabilityManager::shutting_down = false;
+THREAD_LOCAL bool HighAvailabilityManager::shutting_down = false;
 struct timeval FlowHAState::min_session_lifetime;
 struct timeval FlowHAState::min_sync_interval;
 uint8_t s_handle_counter = 1; // stream client (index == 0) always exists

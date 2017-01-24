@@ -38,7 +38,7 @@ Inspector::Inspector()
 {
     unsigned max = ThreadConfig::get_instance_max();
     assert(slot < max);
-    ref_count = new unsigned[max];
+    ref_count = new std::atomic_uint[max];
 
     for ( unsigned i = 0; i < max; ++i )
         ref_count[i] = 0;

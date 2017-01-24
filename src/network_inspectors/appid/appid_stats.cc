@@ -84,9 +84,9 @@ static THREAD_LOCAL time_t bucketInterval;
 static THREAD_LOCAL time_t bucketEnd;
 
 static const char appid_stats_file_suffix[] = "appid_stats.log";
-static size_t rollSize;
-static time_t rollPeriod;
-static bool enableAppStats;
+static THREAD_LOCAL size_t rollSize;
+static THREAD_LOCAL time_t rollPeriod;
+static THREAD_LOCAL bool enableAppStats;
 
 static void end_stats_period(void);
 static void start_stats_period(time_t startTime);
@@ -258,6 +258,7 @@ static void close_stats_log_file()
     }
 }
 
+/* FIXIT-L Unused function flush_appid_statistics() */
 void flush_appid_statistics()
 {
     if (!enableAppStats)

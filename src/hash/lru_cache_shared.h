@@ -113,6 +113,16 @@ public:
         return (PegCount*)&stats;
     }
 
+    void lock()
+    {
+        cache_mutex.lock();
+    }
+
+    void unlock()
+    {
+        cache_mutex.unlock();
+    }
+
 private:
     using LruList = std::list<std::pair<Key, Data> >;
     using LruListIter = typename LruList::iterator;

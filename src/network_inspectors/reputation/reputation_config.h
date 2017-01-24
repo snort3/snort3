@@ -22,6 +22,7 @@
 
 #include "framework/counts.h"
 #include "main/snort_debug.h"
+#include "main/thread.h"
 #include "sfrt/sfrt_flat.h"
 
 #define NUM_INDEX_PER_ENTRY 4
@@ -96,6 +97,6 @@ struct ReputationStats
 };
 
 extern const PegInfo reputation_peg_names[];
-extern ReputationStats reputationstats;
+extern THREAD_LOCAL ReputationStats reputationstats;
 #endif
 

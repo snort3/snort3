@@ -24,6 +24,8 @@
 // decoding a packet and detection.  There are several types that operate
 // in different ways.  These correspond to Snort 2X preprocessors.
 
+#include <atomic>
+
 #include "framework/base_api.h"
 #include "main/thread.h"
 
@@ -129,7 +131,7 @@ protected:
 
 private:
     const InspectApi* api;
-    unsigned* ref_count;
+    std::atomic_uint* ref_count;
     ServiceId srv_id;
 };
 

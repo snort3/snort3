@@ -183,7 +183,7 @@ bool TcpStateClosed::do_post_sm_packet_actions(TcpSegmentDescriptor& tsd, TcpStr
     trk.session->update_paws_timestamps(tsd);
     trk.session->check_for_window_slam(tsd);
 
-    if ( tcp_event != TcpStreamTracker::TCP_FIN_RECV_EVENT )
+    if ( trk.get_tcp_event() != TcpStreamTracker::TCP_FIN_RECV_EVENT )
     {
         TcpStreamTracker::TcpState talker_state = trk.session->get_talker_state();
         Flow* flow = tsd.get_flow();

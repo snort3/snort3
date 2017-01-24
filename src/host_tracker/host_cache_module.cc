@@ -66,3 +66,9 @@ const PegInfo* HostCacheModule::get_pegs() const
 PegCount* HostCacheModule::get_counts() const
 { return (PegCount*)host_cache.get_counts(); }
 
+void HostCacheModule::sum_stats()
+{
+    host_cache.lock();
+    Module::sum_stats();
+    host_cache.unlock();
+}

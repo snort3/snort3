@@ -489,7 +489,7 @@ int SFDAQInstance::acquire(int max, DAQ_Analysis_Func_t callback)
     if (err && err != DAQ_READFILE_EOF)
         LogMessage("Can't acquire (%d) - %s\n", err, daq_get_error(daq_mod, daq_hand));
 
-    if (s_error != DAQ_SUCCESS)  // FIXIT-L tsan race read pkt thread
+    if (s_error != DAQ_SUCCESS)
     {
         err = s_error;
         s_error = DAQ_SUCCESS;
@@ -509,7 +509,8 @@ int SFDAQInstance::inject(const DAQ_PktHdr_t* h, int rev, const uint8_t* buf, ui
 
 bool SFDAQInstance::break_loop(int error)
 {
-    s_error = error;  // FIXIT-L tsan race write main thread
+    if (error)
+        s_error = error;
     return (daq_breakloop(daq_mod, daq_hand) == DAQ_SUCCESS);
 }
 

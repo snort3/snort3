@@ -36,19 +36,9 @@ public:
 
     virtual bool eval(TcpSegmentDescriptor&, TcpStreamTracker&);
 
-    TcpStreamTracker::TcpEvent get_tcp_event() const
-    {
-        return tcp_event;
-    }
-
     TcpStreamTracker::TcpState get_tcp_state() const
     {
         return tcp_state;
-    }
-
-    void set_tcp_event(TcpStreamTracker::TcpEvent tcp_event)
-    {
-        this->tcp_event = tcp_event;
     }
 
     const TcpStateMachine* get_tsm() const
@@ -82,7 +72,6 @@ protected:
 
     const TcpStateMachine* tsm;
     TcpStreamTracker::TcpState tcp_state;
-    TcpStreamTracker::TcpEvent tcp_event = TcpStreamTracker::TCP_MAX_EVENTS;
 };
 
 #endif
