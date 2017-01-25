@@ -77,7 +77,7 @@ private:
 
 private:
     static const unsigned cleanup_flows = 1;
-    const FlowConfig& config;
+    const FlowConfig config;
     unsigned uni_count;
     uint32_t flags;
 

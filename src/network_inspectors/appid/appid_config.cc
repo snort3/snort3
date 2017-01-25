@@ -66,8 +66,6 @@ AppIdModuleConfig::~AppIdModuleConfig()
 #endif
     snort_free((void*)app_detector_dir);
     snort_free((void*)thirdparty_appid_dir);
-    appid_config = nullptr;
-
 }
 
 AppIdConfig::AppIdConfig( AppIdModuleConfig* config )
