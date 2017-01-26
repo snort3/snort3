@@ -52,8 +52,8 @@ public:
 
     virtual void flush_client(Packet*) { }
     virtual void flush_server(Packet*) { }
-    virtual void flush_talker(Packet*) { }
-    virtual void flush_listener(Packet*) { }
+    virtual void flush_talker(Packet*, bool /*final_flush */ = false) { }
+    virtual void flush_listener(Packet*, bool /*final_flush */ = false) { }
 
     virtual void set_splitter(bool /*c2s*/, StreamSplitter*) { }
     virtual StreamSplitter* get_splitter(bool /*c2s*/) { return nullptr; }

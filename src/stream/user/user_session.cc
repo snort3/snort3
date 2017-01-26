@@ -506,14 +506,6 @@ int UserSession::update_alert(
     uint32_t /*event_id*/, uint32_t /*event_second*/)
 { return 0; }
 
-void UserSession::flush_client(Packet*) { }
-void UserSession::flush_server(Packet*) { }
-void UserSession::flush_talker(Packet*) { }
-void UserSession::flush_listener(Packet*) { }
-
-void UserSession::set_extra_data(Packet*, uint32_t /*flag*/) { }
-void UserSession::clear_extra_data(Packet*, uint32_t /*flag*/) { }
-
 uint8_t UserSession::get_reassembly_direction()
 { return SSN_DIR_NONE; }
 

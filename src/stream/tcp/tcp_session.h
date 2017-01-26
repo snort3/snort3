@@ -40,8 +40,8 @@ public:
     void flush() override;
     void flush_client(Packet*) override;
     void flush_server(Packet*) override;
-    void flush_talker(Packet*) override;
-    void flush_listener(Packet*) override;
+    void flush_talker(Packet*, bool final_flush = false) override;
+    void flush_listener(Packet*, bool final_flush = false) override;
 
     virtual void clear_session(bool free_flow_data, bool flush_segments, bool restart, Packet* p = nullptr) override;
 
@@ -81,7 +81,6 @@ private:
     void cleanup_session_if_expired(Packet*);
     bool do_packet_analysis_pre_checks(Packet*, TcpSegmentDescriptor&);
     void do_packet_analysis_post_checks(Packet*);
-
 
     TcpStateMachine* tsm;
 };

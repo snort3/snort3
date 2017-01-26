@@ -211,7 +211,12 @@ StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data,
 bool HttpStreamSplitter::finish(Flow* flow)
 {
     HttpFlowData* session_data = (HttpFlowData*)flow->get_flow_data(HttpFlowData::http_flow_id);
-    assert(session_data != nullptr);
+    // FIXIT-M - this assert has been changed to check for null session data and return false if so
+    //           due to lack of reliable feedback to stream that scan has been called...if that is
+    //           addressed in stream reassembly rewrite this can be reverted to an assert
+    //assert(session_data != nullptr);
+    if(!session_data)
+        return false;
 
 #ifdef REG_TEST
     if (HttpTestManager::use_test_output() && !HttpTestManager::use_test_input())

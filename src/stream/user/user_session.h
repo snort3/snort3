@@ -108,13 +108,13 @@ private:
     int update_alert(
         Packet*, uint32_t gid, uint32_t sid, uint32_t event_id, uint32_t event_second) override;
 
-    void flush_client(Packet*) override;
-    void flush_server(Packet*) override;
-    void flush_talker(Packet*) override;
-    void flush_listener(Packet*) override;
+    void flush_client(Packet*) override { };
+    void flush_server(Packet*) override { };
+    void flush_talker(Packet*, bool /*final_flush */ = false) override { };
+    void flush_listener(Packet*, bool /*final_flush */ = false) override { };
 
-    void set_extra_data(Packet*, uint32_t flag) override;
-    void clear_extra_data(Packet*, uint32_t flag) override;
+    void set_extra_data(Packet*, uint32_t /* flag */) override { };
+    void clear_extra_data(Packet*, uint32_t /* flag */) override { };
 
     uint8_t get_reassembly_direction() override;
 
