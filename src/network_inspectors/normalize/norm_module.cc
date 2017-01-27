@@ -377,7 +377,7 @@ void NormalizeModule::add_test_peg(const PegInfo& norm) const
 {
     PegInfo test;
 
-    std::string* test_name = new std::string("test ");
+    std::string* test_name = new std::string("test_");
     test_name->append(norm.name);
     test_text.push_back(test_name);
     test.name = test_text.back()->c_str();

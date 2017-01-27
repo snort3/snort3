@@ -124,14 +124,14 @@ const PegInfo imap_peg_names[] =
 {
     { "packets", "total packets processed" },
     { "sessions", "total imap sessions" },
-    { "b64 attachments", "total base64 attachments decoded" },
-    { "b64 decoded bytes", "total base64 decoded bytes" },
-    { "qp attachments", "total quoted-printable attachments decoded" },
-    { "qp decoded bytes", "total quoted-printable decoded bytes" },
-    { "uu attachments", "total uu attachments decoded" },
-    { "uu decoded bytes", "total uu decoded bytes" },
-    { "non-encoded attachments", "total non-encoded attachments extracted" },
-    { "non-encoded bytes", "total non-encoded extracted bytes" },
+    { "b64_attachments", "total base64 attachments decoded" },
+    { "b64_decoded_bytes", "total base64 decoded bytes" },
+    { "qp_attachments", "total quoted-printable attachments decoded" },
+    { "qp_decoded_bytes", "total quoted-printable decoded bytes" },
+    { "uu_attachments", "total uu attachments decoded" },
+    { "uu_decoded_bytes", "total uu decoded bytes" },
+    { "non_encoded_attachments", "total non-encoded attachments extracted" },
+    { "non_encoded_bytes", "total non-encoded extracted bytes" },
 
     { nullptr, nullptr }
 };

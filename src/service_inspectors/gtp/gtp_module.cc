@@ -44,8 +44,8 @@ const PegInfo peg_names[] =
 {
     { "sessions", "total sessions processed" },
     { "events", "requests" },
-    { "unknown types", "unknown message types" },
-    { "unknown infos", "unknown information elements" },
+    { "unknown_types", "unknown message types" },
+    { "unknown_infos", "unknown information elements" },
 
     { nullptr, nullptr }
 };

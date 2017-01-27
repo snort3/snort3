@@ -51,9 +51,7 @@ public:
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
 
-    const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
-
     ProfileStats* get_profile() const override;
 
 private:

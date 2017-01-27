@@ -68,13 +68,13 @@ TEST(host_cache_module, host_cache_module_test_values)
     const PegInfo* ht_pegs = module.get_pegs();
     const PegCount* ht_stats = module.get_counts();
 
-    CHECK(!strcmp(ht_pegs[0].name, "lru cache adds"));
-    CHECK(!strcmp(ht_pegs[1].name, "lru cache replaces"));
-    CHECK(!strcmp(ht_pegs[2].name, "lru cache prunes"));
-    CHECK(!strcmp(ht_pegs[3].name, "lru cache find hits"));
-    CHECK(!strcmp(ht_pegs[4].name, "lru cache find misses"));
-    CHECK(!strcmp(ht_pegs[5].name, "lru cache removes"));
-    CHECK(!strcmp(ht_pegs[6].name, "lru cache clears"));
+    CHECK(!strcmp(ht_pegs[0].name, "lru_cache_adds"));
+    CHECK(!strcmp(ht_pegs[1].name, "lru_cache_replaces"));
+    CHECK(!strcmp(ht_pegs[2].name, "lru_cache_prunes"));
+    CHECK(!strcmp(ht_pegs[3].name, "lru_cache_find_hits"));
+    CHECK(!strcmp(ht_pegs[4].name, "lru_cache_find_misses"));
+    CHECK(!strcmp(ht_pegs[5].name, "lru_cache_removes"));
+    CHECK(!strcmp(ht_pegs[6].name, "lru_cache_clears"));
     CHECK(!ht_pegs[7].name);
 
     CHECK(ht_stats[0] == 0);

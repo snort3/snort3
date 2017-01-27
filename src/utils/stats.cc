@@ -178,8 +178,8 @@ const PegInfo daq_names[] =
     { "ignore", "total ignore verdicts" },
 
     // FIXIT-L these are not exactly DAQ counts - but they are related
-    { "internal blacklist", "packets blacklisted internally due to lack of DAQ support" },
-    { "internal whitelist", "packets whitelisted internally due to lack of DAQ support" },
+    { "internal_blacklist", "packets blacklisted internally due to lack of DAQ support" },
+    { "internal_whitelist", "packets whitelisted internally due to lack of DAQ support" },
     { "skipped", "packets skipped at startup" },
     { "idle", "attempts to acquire from DAQ without available packets" },
     { nullptr, nullptr }
@@ -188,35 +188,35 @@ const PegInfo daq_names[] =
 const PegInfo pc_names[] =
 {
     { "analyzed", "packets sent to detection" },
-    { "hard evals", "non-fast pattern rule evaluations" },
-    { "raw searches", "fast pattern searches in raw packet data" },
-    { "cooked searches", "fast pattern searches in cooked packet data" },
-    { "pkt searches", "fast pattern searches in packet data" },
-    { "alt searches", "alt fast pattern searches in packet data" },
-    { "key searches", "fast pattern searches in key buffer" },
-    { "header searches", "fast pattern searches in header buffer" },
-    { "body searches", "fast pattern searches in body buffer" },
-    { "file searches", "fast pattern searches in file buffer" },
+    { "hard_evals", "non-fast pattern rule evaluations" },
+    { "raw_searches", "fast pattern searches in raw packet data" },
+    { "cooked_searches", "fast pattern searches in cooked packet data" },
+    { "pkt_searches", "fast pattern searches in packet data" },
+    { "alt_searches", "alt fast pattern searches in packet data" },
+    { "key_searches", "fast pattern searches in key buffer" },
+    { "header_searches", "fast pattern searches in header buffer" },
+    { "body_searches", "fast pattern searches in body buffer" },
+    { "file_searches", "fast pattern searches in file buffer" },
     { "alerts", "alerts not including IP reputation" },
-    { "total alerts", "alerts including IP reputation" },
+    { "total_alerts", "alerts including IP reputation" },
     { "logged", "logged packets" },
     { "passed", "passed packets" },
-    { "match limit", "fast pattern matches not processed" },
-    { "queue limit", "events not queued because queue full" },
-    { "log limit", "events queued but not logged" },
-    { "event limit", "events filtered" },
-    { "alert limit", "events previously triggered on same PDU" },
+    { "match_limit", "fast pattern matches not processed" },
+    { "queue_limit", "events not queued because queue full" },
+    { "log_limit", "events queued but not logged" },
+    { "event_limit", "events filtered" },
+    { "alert_limit", "events previously triggered on same PDU" },
     { nullptr, nullptr }
 };
 
 const PegInfo proc_names[] =
 {
-    { "local commands", "total local commands processed" },
-    { "remote commands", "total remote commands processed" },
+    { "local_commands", "total local commands processed" },
+    { "remote_commands", "total remote commands processed" },
     { "signals", "total signals processed" },
-    { "conf reloads", "number of times configuration was reloaded" },
-    { "attribute table reloads", "number of times hosts table was reloaded" },
-    { "attribute table hosts", "total number of hosts in table" },
+    { "conf_reloads", "number of times configuration was reloaded" },
+    { "attribute_table_reloads", "number of times hosts table was reloaded" },
+    { "attribute_table_hosts", "total number of hosts in table" },
     { nullptr, nullptr }
 };
 

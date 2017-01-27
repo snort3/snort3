@@ -48,12 +48,12 @@ struct WizStats
 
 const PegInfo wiz_pegs[] =
 {
-    { "tcp scans", "tcp payload scans" },
-    { "tcp hits", "tcp identifications" },
-    { "udp scans", "udp payload scans" },
-    { "udp hits", "udp identifications" },
-    { "user scans", "user payload scans" },
-    { "user hits", "user identifications" },
+    { "tcp_scans", "tcp payload scans" },
+    { "tcp_hits", "tcp identifications" },
+    { "udp_scans", "udp payload scans" },
+    { "udp_hits", "udp identifications" },
+    { "user_scans", "user payload scans" },
+    { "user_hits", "user identifications" },
     { nullptr, nullptr }
 };
 

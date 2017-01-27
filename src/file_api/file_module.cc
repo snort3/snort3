@@ -176,9 +176,9 @@ static const Parameter file_id_params[] =
 
 static const PegInfo file_pegs[] =
 {
-    { "total files", "number of files processed" },
-    { "total file data", "number of file data bytes processed" },
-    { "cache failures", "number of file cache add failures" },
+    { "total_files", "number of files processed" },
+    { "total_file_data", "number of file data bytes processed" },
+    { "cache_failures", "number of file cache add failures" },
     { nullptr, nullptr }
 };
 

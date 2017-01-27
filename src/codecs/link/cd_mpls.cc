@@ -64,8 +64,8 @@ static const RuleMap mpls_rules[] =
 
 static const PegInfo mpls_pegs[] =
 {
-    { "total packets", "total mpls labeled packets processed" },
-    { "total bytes", "total mpls labeled bytes processed" },
+    { "total_packets", "total mpls labeled packets processed" },
+    { "total_bytes", "total mpls labeled bytes processed" },
     { nullptr, nullptr }
 };
 

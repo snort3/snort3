@@ -51,7 +51,7 @@ static THREAD_LOCAL FileLogStats fl_stats;
 
 static const PegInfo fl_pegs[] =
 {
-    { "total events", "total file events" },
+    { "total_events", "total file events" },
 
     { nullptr, nullptr }
 };

@@ -40,14 +40,14 @@ static BaseStats g_stats;
 THREAD_LOCAL BaseStats stream_base_stats;
 
 #define PROTO_PEGS(proto_str) \
-    { proto_str " flows", "total " proto_str " sessions" }, \
-    { proto_str " total prunes", "total " proto_str " sessions pruned" }, \
-    { proto_str " idle prunes", proto_str " sessions pruned due to timeout" }, \
-    { proto_str " excess prunes", proto_str " sessions pruned due to excess" }, \
-    { proto_str " uni prunes", proto_str " uni sessions pruned" }, \
-    { proto_str " preemptive prunes", proto_str " sessions pruned during preemptive pruning" }, \
-    { proto_str " memcap prunes", proto_str " sessions pruned due to memcap" }, \
-    { proto_str " ha prunes", proto_str " sessions pruned by high availability sync" }
+    { proto_str "_flows", "total " proto_str " sessions" }, \
+    { proto_str "_total_prunes", "total " proto_str " sessions pruned" }, \
+    { proto_str "_idle_prunes", proto_str " sessions pruned due to timeout" }, \
+    { proto_str "_excess_prunes", proto_str " sessions pruned due to excess" }, \
+    { proto_str "_uni_prunes", proto_str " uni sessions pruned" }, \
+    { proto_str "_preemptive_prunes", proto_str " sessions pruned during preemptive pruning" }, \
+    { proto_str "_memcap_prunes", proto_str " sessions pruned due to memcap" }, \
+    { proto_str "_ha_prunes", proto_str " sessions pruned by high availability sync" }
 
 #define SET_PROTO_COUNTS(proto, pkttype) \
     stream_base_stats.proto ## _flows = flow_con->get_flows(PktType::pkttype); \

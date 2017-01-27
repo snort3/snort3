@@ -66,8 +66,8 @@ struct SdStats
 
 const PegInfo sd_pegs[] =
 {
-    { "below threshold", "sd_pattern matched but missed threshold" },
-    { "pattern not found", "sd_pattern did not not match" },
+    { "below_threshold", "sd_pattern matched but missed threshold" },
+    { "pattern_not_found", "sd_pattern did not not match" },
     { "terminated", "hyperscan terminated" },
     { nullptr, nullptr }
 };

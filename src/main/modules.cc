@@ -243,12 +243,12 @@ THREAD_LOCAL PatMatQStat pmqs;
 
 const PegInfo mpse_pegs[] =
 {
-    { "max queued", "maximum fast pattern matches queued for further evaluation" },
-    { "total flushed", "fast pattern matches discarded due to overflow" },
-    { "total inserts", "total fast pattern hits" },
-    { "total unique", "total unique fast pattern hits" },
-    { "non-qualified events", "total non-qualified events" },
-    { "qualified events", "total qualified events" },
+    { "max_queued", "maximum fast pattern matches queued for further evaluation" },
+    { "total_flushed", "fast pattern matches discarded due to overflow" },
+    { "total_inserts", "total fast pattern hits" },
+    { "total_unique", "total unique fast pattern hits" },
+    { "non_qualified_events", "total non-qualified events" },
+    { "qualified_events", "total qualified events" },
     { nullptr, nullptr }
 };
 

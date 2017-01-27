@@ -32,9 +32,9 @@
 
 const PegInfo host_tracker_pegs[] =
 {
-    { "service adds", "host service adds" },
-    { "service finds", "host service finds" },
-    { "service removes", "host service removes" },
+    { "service_adds", "host service adds" },
+    { "service_finds", "host service finds" },
+    { "service_removes", "host service removes" },
     { nullptr, nullptr },
 };
 

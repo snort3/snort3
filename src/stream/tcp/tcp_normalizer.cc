@@ -32,14 +32,14 @@ THREAD_LOCAL PegCount tcp_norm_stats[PC_TCP_MAX][NORM_MODE_MAX];
 
 static const PegInfo pegName[] =
 {
-    { "tcp trim syn", "tcp segments trimmed on SYN" },
-    { "tcp trim rst", "RST packets with data trimmed" },
-    { "tcp trim win", "data trimed to window" },
-    { "tcp trim mss", "data trimmed to MSS" },
-    { "tcp ecn session", "ECN bits cleared" },
-    { "tcp ts nop", "timestamp options cleared" },
-    { "tcp ips data", "normalized segments" },
-    { "tcp block", "blocked segments" },
+    { "tcp_trim_syn", "tcp segments trimmed on SYN" },
+    { "tcp_trim_rst", "RST packets with data trimmed" },
+    { "tcp_trim_win", "data trimed to window" },
+    { "tcp_trim_mss", "data trimmed to MSS" },
+    { "tcp_ecn_session", "ECN bits cleared" },
+    { "tcp_ts_nop", "timestamp options cleared" },
+    { "tcp_ips_data", "normalized segments" },
+    { "tcp_block", "blocked segments" },
     { nullptr, nullptr }
 };
 

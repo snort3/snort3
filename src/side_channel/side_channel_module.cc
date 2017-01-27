@@ -30,11 +30,6 @@
 
 #include "side_channel.h"
 
-static const PegInfo sc_pegs[] =
-{
-    { nullptr, nullptr }
-};
-
 extern THREAD_LOCAL SimpleStats sc_stats;
 extern THREAD_LOCAL ProfileStats sc_perf_stats;
 
@@ -176,9 +171,6 @@ bool SideChannelModule::end(const char* fqn, int idx, SnortConfig*)
 
     return true;
 }
-
-const PegInfo* SideChannelModule::get_pegs() const
-{ return sc_pegs; }
 
 PegCount* SideChannelModule::get_counts() const
 { return (PegCount*)&sc_stats; }

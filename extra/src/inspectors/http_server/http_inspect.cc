@@ -61,22 +61,22 @@ const PegInfo peg_names[] =
     { "gets", "GET requests" },
     { "posts", "POST requests" },
 
-    { "request headers", "total requests" },
-    { "response headers", "total responses" },
-    { "request cookies", "requests with Cookie" },
-    { "response cookies", "responses with Set-Cookie" },
-    { "post params", "POST parameters extracted" },
+    { "request_headers", "total requests" },
+    { "response_headers", "total responses" },
+    { "request_cookies", "requests with Cookie" },
+    { "response_cookies", "responses with Set-Cookie" },
+    { "post_params", "POST parameters extracted" },
 
     { "unicode", "unicode normalizations" },
-    { "double unicode", "double unicode normalizations" },
-    { "non-ascii", "non-ascii normalizations" },
-    { "paths with ../", "directory traversal normalizations" },
-    { "paths with //", "double slash normalizations" },
-    { "paths with ./", "relative directory normalizations" },
+    { "double_unicode", "double unicode normalizations" },
+    { "non_ascii", "non-ascii normalizations" },
+    { "paths_with_traversal", "directory traversal (../) normalizations" },
+    { "paths_with_double_slash", "double slash (//) normalizations" },
+    { "paths_with_relative", "relative directory (./) normalizations" },
 
-    { "gzip packets", "packets with gzip compression" },
-    { "compressed bytes", "total comparessed bytes processed" },
-    { "decompressed bytes", "total bytes decompressed" },
+    { "gzip_packets", "packets with gzip compression" },
+    { "compressed_bytes", "total comparessed bytes processed" },
+    { "decompressed_bytes", "total bytes decompressed" },
 
     { nullptr, nullptr }
 };

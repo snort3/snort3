@@ -39,8 +39,8 @@ namespace
 {
 const PegInfo pegs[]
 {
-    { "bad checksum (ip4)", "nonzero ipcm4 checksums" },
-    { "bad checksum (ip6)", "nonzero ipcm6 checksums" },
+    { "bad_icmp4_checksum", "nonzero ipcm4 checksums" },
+    { "bad_icmp6_checksum", "nonzero ipcm6 checksums" },
     { nullptr, nullptr }
 };
 

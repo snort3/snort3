@@ -37,7 +37,7 @@ namespace
 {
 const PegInfo pegs[]
 {
-    { "bad checksum", "non-zero icmp checksums" },
+    { "bad_checksum", "non-zero icmp checksums" },
     { nullptr, nullptr }
 };
 

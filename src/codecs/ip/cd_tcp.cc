@@ -44,8 +44,8 @@ namespace
 {
 const PegInfo pegs[]
 {
-    { "bad checksum (ip4)", "nonzero tcp over ip checksums" },
-    { "bad checksum (ip6)", "nonzero tcp over ipv6 checksums" },
+    { "bad_tcp4_checksum", "nonzero tcp over ip checksums" },
+    { "bad_tcp6_checksum", "nonzero tcp over ipv6 checksums" },
     { nullptr, nullptr }
 };
 

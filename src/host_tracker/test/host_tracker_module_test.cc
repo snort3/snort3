@@ -77,9 +77,9 @@ TEST_GROUP(host_tracker_module)
         const PegInfo* ht_pegs = module.get_pegs();
         const PegCount* ht_stats = module.get_counts();
 
-        CHECK(!strcmp(ht_pegs[0].name, "service adds"));
-        CHECK(!strcmp(ht_pegs[1].name, "service finds"));
-        CHECK(!strcmp(ht_pegs[2].name, "service removes"));
+        CHECK(!strcmp(ht_pegs[0].name, "service_adds"));
+        CHECK(!strcmp(ht_pegs[1].name, "service_finds"));
+        CHECK(!strcmp(ht_pegs[2].name, "service_removes"));
         CHECK(!ht_pegs[3].name);
 
         CHECK(ht_stats[0] == 0);

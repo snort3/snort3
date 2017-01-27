@@ -202,13 +202,13 @@ TEST(lru_cache_shared, stats_test)
 
     // Check statistics names.
     const PegInfo* pegs = lru_cache.get_pegs();
-    CHECK(!strcmp(pegs[0].name, "lru cache adds"));
-    CHECK(!strcmp(pegs[1].name, "lru cache replaces"));
-    CHECK(!strcmp(pegs[2].name, "lru cache prunes"));
-    CHECK(!strcmp(pegs[3].name, "lru cache find hits"));
-    CHECK(!strcmp(pegs[4].name, "lru cache find misses"));
-    CHECK(!strcmp(pegs[5].name, "lru cache removes"));
-    CHECK(!strcmp(pegs[6].name, "lru cache clears"));
+    CHECK(!strcmp(pegs[0].name, "lru_cache_adds"));
+    CHECK(!strcmp(pegs[1].name, "lru_cache_replaces"));
+    CHECK(!strcmp(pegs[2].name, "lru_cache_prunes"));
+    CHECK(!strcmp(pegs[3].name, "lru_cache_find_hits"));
+    CHECK(!strcmp(pegs[4].name, "lru_cache_find_misses"));
+    CHECK(!strcmp(pegs[5].name, "lru_cache_removes"));
+    CHECK(!strcmp(pegs[6].name, "lru_cache_clears"));
 }
 
 int main(int argc, char** argv)

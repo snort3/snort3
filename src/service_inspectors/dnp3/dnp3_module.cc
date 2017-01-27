@@ -51,11 +51,11 @@ static const RuleMap dnp3_rules[] =
 
 static const PegInfo dnp3_pegs[] =
 {
-    { "total packets", "total packets" },
-    { "udp packets", "total udp packets" },
-    { "tcp pdus", "total tcp pdus" },
-    { "dnp3 link layer frames", "total dnp3 link layer frames" },
-    { "dnp3 application pdus", "total dnp3 application pdus" },
+    { "total_packets", "total packets" },
+    { "udp_packets", "total udp packets" },
+    { "tcp_pdus", "total tcp pdus" },
+    { "dnp3_link_layer_frames", "total dnp3 link layer frames" },
+    { "dnp3_application_pdus", "total dnp3 application pdus" },
 
     { nullptr, nullptr }
 };
