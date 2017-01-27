@@ -268,33 +268,36 @@ bool FlowKey::init(
 // hash foo
 //-------------------------------------------------------------------------
 
-uint32_t FlowKey::hash(SFHASHFCN*, unsigned char* d, int)
+uint32_t FlowKey::hash(SFHASHFCN* hf, unsigned char* p, int)
 {
-    uint32_t a,b,c;
+    uint32_t a, b, c;
+    a = b = c = hf->hardener;
 
-    a = *(uint32_t*)d;         /* IPv6 lo[0] */
-    b = *(uint32_t*)(d+4);     /* IPv6 lo[1] */
-    c = *(uint32_t*)(d+8);     /* IPv6 lo[2] */
+    const uint32_t* d = (uint32_t*)p;
 
-    mix(a,b,c);
+    a += d[0];   // IPv6 lo[0]
+    b += d[1];   // IPv6 lo[1]
+    c += d[2];   // IPv6 lo[2]
 
-    a += *(uint32_t*)(d+12);   /* IPv6 lo[3] */
-    b += *(uint32_t*)(d+16);   /* IPv6 hi[0] */
-    c += *(uint32_t*)(d+20);   /* IPv6 hi[1] */
+    mix(a, b, c);
 
-    mix(a,b,c);
+    a += d[3];   // IPv6 lo[3]
+    b += d[4];   // IPv6 hi[0]
+    c += d[5];   // IPv6 hi[1]
 
-    a += *(uint32_t*)(d+24);   /* IPv6 hi[2] */
-    b += *(uint32_t*)(d+28);   /* IPv6 hi[3] */
-    c += *(uint32_t*)(d+32);   /* port lo & port hi */
+    mix(a, b, c);
 
-    mix(a,b,c);
+    a += d[6];   // IPv6 hi[2]
+    b += d[7];   // IPv6 hi[3]
+    c += d[8];   // port lo & port hi
 
-    a += *(uint32_t*)(d+36);    /* vlan tag, packet type, & version */
-    b += *(uint32_t*)(d+40);    /* mpls label */
-    c += *(uint32_t*)(d+44);    /* address space id and 16bits of zero'd pad */
+    mix(a, b, c);
 
-    finalize(a,b,c);
+    a += d[9];   // vlan tag, packet type, & version
+    b += d[10];  // mpls label
+    c += d[11];  // address space id and 16bits of zero'd pad
+
+    finalize(a, b, c);
 
     return c;
 }
