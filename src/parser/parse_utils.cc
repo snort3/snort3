@@ -66,8 +66,11 @@ bool parse_byte_code(const char* in, bool& negate, std::string& out)
             }
         // fall through
         case 1:
-            if ( c == '"' )
+            if ( c == '"' and in[len-1] == '"' )
+            {
+                --len;
                 state = 2;
+            }
             else if ( !isspace(c) )
                 ok = false;
             break;
@@ -78,8 +81,6 @@ bool parse_byte_code(const char* in, bool& negate, std::string& out)
                 nx = 0;
                 state = 4;
             }
-            else if ( c == '"' )
-                state = 9;
             else
                 out += c;
             break;
@@ -108,10 +109,6 @@ bool parse_byte_code(const char* in, bool& negate, std::string& out)
                 nx = 0;
             }
             else if ( !isspace(c) )
-                ok = false;
-            break;
-        case 9:
-            if ( !isspace(c) )
                 ok = false;
             break;
         default:
