@@ -10,7 +10,6 @@ add_library (helpers STATIC
     process.h
     ring.h
     ring_logic.h
-    swapper.h
 )
 
 target_link_libraries(helpers

@@ -12,8 +12,10 @@ if ( ENABLE_DEBUG_MSGS )
 endif ( ENABLE_DEBUG_MSGS )
 
 add_library (main STATIC
+    analyzer.cc
     analyzer.h
-    analyzer.cc 
+    analyzer_command.cc
+    analyzer_command.h
     build.h
     help.cc
     help.h
@@ -24,13 +26,15 @@ add_library (main STATIC
     shell.cc
     snort.cc
     snort.h
-    ${DEBUG_MSGS_SOURCES}
     snort_config.cc
     snort_module.h
     snort_module.cc
+    swapper.cc
+    swapper.h
     thread.cc
     thread_config.h
     thread_config.cc
+    ${DEBUG_MSGS_SOURCES}
     ${INCLUDES}
 )
 

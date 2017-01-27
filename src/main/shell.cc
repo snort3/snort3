@@ -205,6 +205,7 @@ void Shell::execute(const char* cmd, string& rsp)
     if (err)
     {
         rsp = lua_tostring(lua, -1);
+        rsp += "\n";
         lua_pop(lua, 1);
     }
 }

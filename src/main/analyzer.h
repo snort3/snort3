@@ -25,23 +25,13 @@
 // to control the thread and swap configuration.
 
 #include <atomic>
+#include <mutex>
+#include <queue>
 #include <string>
 
-enum AnalyzerCommand
-{
-    AC_NONE,
-    AC_START,
-    AC_RUN,
-    AC_STOP,
-    AC_PAUSE,
-    AC_RESUME,
-    AC_ROTATE,
-    AC_SWAP,
-    AC_MAX = AC_SWAP
-};
-
-class Swapper;
+class AnalyzerCommand;
 class SFDAQInstance;
+class Swapper;
 
 class Analyzer
 {
@@ -62,31 +52,38 @@ public:
     const char* get_state_string();
     const char* get_source() { return source.c_str(); }
 
-    // FIXIT-M add asynchronous response too
-    AnalyzerCommand get_current_command() { return command; }
-    void execute(AnalyzerCommand);
+    void execute(AnalyzerCommand*);
 
-    void set_config(Swapper* ps) { swap = ps; }
-    bool swap_pending() { return command == AC_SWAP; }
     bool requires_privileged_start() { return privileged_start; }
 
-    static const char* get_command_string(AnalyzerCommand ac);
+    // Functions called by analyzer commands
+    void start();
+    void run();
+    void stop();
+    void pause();
+    void resume();
 
 private:
     void analyze();
     bool handle_command();
     void set_state(State);
 
+public:
+    std::queue<AnalyzerCommand*> completed_work_queue;
+    std::mutex completed_work_queue_mutex;
+    std::queue<AnalyzerCommand*> pending_work_queue;
+
 private:
     std::atomic<State> state;
-    std::atomic<AnalyzerCommand> command;
     std::atomic<bool> privileged_start;
 
     unsigned id;
+    bool exit_requested;
 
     std::string source;
-    Swapper* swap;
     SFDAQInstance* daq_instance;
+
+    std::mutex pending_work_queue_mutex;
 };
 
 #endif

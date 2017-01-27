@@ -13,6 +13,8 @@ thread.h
 libmain_a_SOURCES = \
 analyzer.cc \
 analyzer.h \
+analyzer_command.cc \
+analyzer_command.h \
 build.h \
 help.cc \
 help.h \
@@ -25,6 +27,8 @@ snort.cc \
 snort.h \
 snort_config.cc \
 snort_config.h \
+swapper.cc \
+swapper.h \
 thread_config.h \
 thread_config.cc
 

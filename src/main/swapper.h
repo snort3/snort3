@@ -22,8 +22,6 @@
 
 // used to make thread local, pointer-based config swaps by packet threads
 
-#include <mutex>
-
 struct SnortConfig;
 struct tTargetBasedConfig;
 
@@ -37,8 +35,8 @@ public:
 
     void apply();
 
-public:
-    static std::mutex mutex;
+    static bool get_reload_in_progress() { return reload_in_progress; }
+    static void set_reload_in_progress(bool rip) { reload_in_progress = rip; }
 
 private:
     SnortConfig* old_conf;
@@ -46,6 +44,8 @@ private:
 
     tTargetBasedConfig* old_attribs;
     tTargetBasedConfig* new_attribs;
+
+    static bool reload_in_progress;
 };
 
 #endif

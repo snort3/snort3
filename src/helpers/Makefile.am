@@ -14,5 +14,4 @@ markup.h \
 process.cc \
 process.h \
 ring.h \
-ring_logic.h \
-swapper.h
+ring_logic.h

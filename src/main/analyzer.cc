@@ -26,11 +26,12 @@
 
 #include <thread>
 
-#include "helpers/swapper.h"
 #include "log/messages.h"
+#include "main/swapper.h"
 #include "main.h"
 #include "packet_io/sfdaq.h"
 
+#include "analyzer_command.h"
 #include "snort.h"
 #include "snort_debug.h"
 #include "thread.h"
@@ -70,31 +71,13 @@ const char* Analyzer::get_state_string()
     return "UNKNOWN";
 }
 
-const char* Analyzer::get_command_string(AnalyzerCommand ac)
-{
-    switch ( ac )
-    {
-    case AC_NONE:   return "NONE";
-    case AC_START:  return "START";
-    case AC_RUN:    return "RUN";
-    case AC_STOP:   return "STOP";
-    case AC_PAUSE:  return "PAUSE";
-    case AC_RESUME: return "RESUME";
-    case AC_ROTATE: return "ROTATE";
-    case AC_SWAP:   return "SWAP";
-    }
-
-    return "UNRECOGNIZED";
-}
-
 Analyzer::Analyzer(unsigned i, const char* s)
 {
     id = i;
     source = s;
-    command = AC_NONE;
-    swap = nullptr;
     daq_instance = nullptr;
     privileged_start = false;
+    exit_requested = false;
     set_state(State::NEW);
 }
 
@@ -122,12 +105,11 @@ void Analyzer::operator()(Swapper* ps)
 
 /* Note: This will be called from the main thread.  Everything it does must be
     thread-safe in relation to interactions with the analyzer thread. */
-void Analyzer::execute(AnalyzerCommand ac)
+void Analyzer::execute(AnalyzerCommand* ac)
 {
-    /* Nobody should be sending a command while we are still processing one. */
-    assert(command == AC_NONE);
-
-    command = ac;
+    pending_work_queue_mutex.lock();
+    pending_work_queue.push(ac);
+    pending_work_queue_mutex.unlock();
 
     /* Break out of the DAQ acquire loop so that the command will be processed.
         This is explicitly safe to call from another thread. */
@@ -137,80 +119,36 @@ void Analyzer::execute(AnalyzerCommand ac)
 
 bool Analyzer::handle_command()
 {
-    AnalyzerCommand ac = command;  // can't use atomic in switch with optimization
+    AnalyzerCommand* ac = nullptr;
 
-    switch ( ac )
+    pending_work_queue_mutex.lock();
+    if (!pending_work_queue.empty())
     {
-    case AC_START:
-        assert(state == State::INITIALIZED);
+        ac = pending_work_queue.front();
+        pending_work_queue.pop();
+    }
+    pending_work_queue_mutex.unlock();
 
-        if (!daq_instance->start())
-        {
-            ErrorMessage("Analyzer: Failed to start DAQ instance\n");
-            return false;
-        }
-        command = AC_NONE;
-        set_state(State::STARTED);
-        DebugMessage(DEBUG_ANALYZER, "Handled START command\n");
-        break;
-
-    case AC_RUN:
-        assert(state == State::STARTED);
-        Snort::thread_init_unprivileged();
-        command = AC_NONE;
-        set_state(State::RUNNING);
-        DebugMessage(DEBUG_ANALYZER, "Handled RUN command\n");
-        break;
-
-    case AC_STOP:
-        command = AC_NONE;
-        DebugMessage(DEBUG_ANALYZER, "Handled STOP command\n");
+    if (!ac)
         return false;
 
-    case AC_PAUSE:
-        command = AC_NONE;
-        if (state == State::RUNNING)
-            set_state(State::PAUSED);
-        else
-            ErrorMessage("Analyzer: Received PAUSE command while in state %s\n",
-                get_state_string());
-        break;
+    ac->execute(*this);
 
-    case AC_RESUME:
-        command = AC_NONE;
-        if (state == State::PAUSED)
-            set_state(State::RUNNING);
-        else
-            ErrorMessage("Analyzer: Received RESUME command while in state %s\n",
-                get_state_string());
-        break;
+    completed_work_queue_mutex.lock();
+    completed_work_queue.push(ac);
+    completed_work_queue_mutex.unlock();
 
-    case AC_ROTATE:
-        Snort::thread_rotate();
-        command = AC_NONE;
-        break;
-
-    case AC_SWAP:
-        if (swap)
-            swap->apply();
-
-        // clear cmd only; swap ptr cleared by main thread
-        command = AC_NONE;
-        break;
-
-    case AC_NONE:
-        break;
-    }
     return true;
 }
 
 void Analyzer::analyze()
 {
     // The main analyzer loop is terminated by a command returning false or an error during acquire
-    while (true)
+    while (!exit_requested)
     {
-        if (!handle_command())
-            break;
+        if (handle_command())
+            continue;
+
         // If we're not in the running state (usually either pre-start or paused),
         // just keep stalling until something else comes up.
         if (state != State::RUNNING)
@@ -228,5 +166,50 @@ void Analyzer::analyze()
         // things periodically even when traffic is available
         Snort::thread_idle();
     }
+}
+
+void Analyzer::start()
+{
+    assert(state == State::INITIALIZED);
+
+    if (!daq_instance->start())
+    {
+        ErrorMessage("Analyzer: Failed to start DAQ instance\n");
+        exit_requested = true;
+    }
+    set_state(State::STARTED);
+    DebugMessage(DEBUG_ANALYZER, "Handled START command\n");
+}
+
+void Analyzer::run()
+{
+    assert(state == State::STARTED);
+    Snort::thread_init_unprivileged();
+    set_state(State::RUNNING);
+    DebugMessage(DEBUG_ANALYZER, "Handled RUN command\n");
+}
+
+void Analyzer::stop()
+{
+    exit_requested = true;
+    DebugMessage(DEBUG_ANALYZER, "Handled STOP command\n");
+}
+
+void Analyzer::pause()
+{
+    if (state == State::RUNNING)
+        set_state(State::PAUSED);
+    else
+        ErrorMessage("Analyzer: Received PAUSE command while in state %s\n",
+                get_state_string());
+}
+
+void Analyzer::resume()
+{
+    if (state == State::PAUSED)
+        set_state(State::RUNNING);
+    else
+        ErrorMessage("Analyzer: Received RESUME command while in state %s\n",
+                get_state_string());
 }
 

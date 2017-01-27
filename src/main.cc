@@ -29,15 +29,16 @@
 #include "framework/module.h"
 #include "helpers/process.h"
 #include "helpers/ring.h"
-#include "helpers/swapper.h"
 #include "log/messages.h"
 #include "lua/lua.h"
 #include "main/analyzer.h"
+#include "main/analyzer_command.h"
 #include "main/shell.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
 #include "main/snort_module.h"
+#include "main/swapper.h"
 #include "main/thread_config.h"
 #include "managers/inspector_manager.h"
 #include "managers/module_manager.h"
@@ -60,10 +61,6 @@
 
 //-------------------------------------------------------------------------
 
-std::mutex Swapper::mutex;
-static Swapper* swapper = NULL;
-
-static bool swap_requested = false;
 static bool exit_requested = false;
 static int main_exit_code = 0;
 static bool paused = false;
@@ -102,59 +99,6 @@ static int main_read()
 {
     std::lock_guard<std::mutex> lock(poke_mutex);
     return pig_poke->get(-1);
-}
-
-//-------------------------------------------------------------------------
-// swap foo
-//-------------------------------------------------------------------------
-
-Swapper::Swapper(SnortConfig* s, tTargetBasedConfig* t)
-{
-    old_conf = nullptr;
-    new_conf = s;
-
-    old_attribs = nullptr;
-    new_attribs = t;
-}
-
-Swapper::Swapper(SnortConfig* sold, SnortConfig* snew)
-{
-    old_conf = sold;
-    new_conf = snew;
-
-    old_attribs = nullptr;
-    new_attribs = nullptr;
-}
-
-Swapper::Swapper(tTargetBasedConfig* told, tTargetBasedConfig* tnew)
-{
-    old_conf = nullptr;
-    new_conf = nullptr;
-
-    old_attribs = told;
-    new_attribs = tnew;
-}
-
-Swapper::~Swapper()
-{
-    std::lock_guard<std::mutex> lock(mutex);
-
-    if ( old_conf )
-        delete old_conf;
-
-    if ( old_attribs )
-        SFAT_Free(old_attribs);
-}
-
-void Swapper::apply()
-{
-    std::lock_guard<std::mutex> lock(mutex);
-
-    if ( new_conf )
-        snort_conf = new_conf;
-
-    if ( new_attribs )
-        SFAT_SetConfig(new_attribs);
 }
 
 //-------------------------------------------------------------------------
@@ -247,11 +191,12 @@ public:
     void start();
     void stop();
 
-    bool attentive();
-    bool execute(AnalyzerCommand);
-    void swap(Swapper*);
+    bool queue_command(AnalyzerCommand*);
+    void reap_commands();
 
 private:
+    void reap_command(AnalyzerCommand* ac);
+
     std::thread* athread;
     unsigned idx;
 };
@@ -281,35 +226,76 @@ void Pig::stop()
 
     LogMessage("-- [%u] %s\n", idx, analyzer->get_source());
 
+    // Reap all analyzer commands, completed or not.
+    // FIXIT-L X Add concept of finalizing commands differently based on whether they were
+    //  completed or not when we have commands that care about that.
+    while (!analyzer->completed_work_queue.empty())
+    {
+        reap_command(analyzer->completed_work_queue.front());
+        analyzer->completed_work_queue.pop();
+    }
+    while (!analyzer->pending_work_queue.empty())
+    {
+        reap_command(analyzer->pending_work_queue.front());
+        analyzer->pending_work_queue.pop();
+    }
     delete analyzer;
     analyzer = nullptr;
 }
 
-bool Pig::attentive()
+bool Pig::queue_command(AnalyzerCommand* ac)
 {
-    return analyzer && athread && analyzer->get_current_command() == AC_NONE;
-}
-
-bool Pig::execute(AnalyzerCommand ac)
-{
-    if (attentive())
+    if (!analyzer || !athread)
     {
-        DebugFormat(DEBUG_ANALYZER, "[%u] Executing command %s\n",
-            idx, Analyzer::get_command_string(ac));
-        analyzer->execute(ac);
-        return true;
+        assert(false);
+        return false;
     }
-    assert(false);
-    return false;
+#ifdef DEBUG_MSGS
+    unsigned ac_ref_count = ac->get();
+    DebugFormat(DEBUG_ANALYZER, "[%u] Queuing command %s for execution (refcount %u)\n",
+            idx, ac->stringify(), ac_ref_count);
+#else
+    ac->get();
+#endif
+    analyzer->execute(ac);
+    return true;
 }
 
-void Pig::swap(Swapper* ps)
+void Pig::reap_command(AnalyzerCommand* ac)
 {
-    if ( !analyzer )
-        return;
+    unsigned ac_ref_count = ac->put();
+    if (ac_ref_count == 0)
+    {
+        DebugFormat(DEBUG_ANALYZER, "[%u] Destroying completed command %s\n",
+                idx, ac->stringify());
+        delete ac;
+    }
+#ifdef DEBUG_MSGS
+    else
+        DebugFormat(DEBUG_ANALYZER, "[%u] Reaped ongoing command %s (refcount %u)\n",
+                idx, ac->stringify(), ac_ref_count);
+#endif
+}
 
-    analyzer->set_config(ps);
-    analyzer->execute(AC_SWAP);
+void Pig::reap_commands()
+{
+    if (!analyzer)
+        return;
+    size_t commands_to_reap;
+    do
+    {
+        AnalyzerCommand* ac = nullptr;
+        analyzer->completed_work_queue_mutex.lock();
+        commands_to_reap = analyzer->completed_work_queue.size();
+        if (commands_to_reap)
+        {
+            ac = analyzer->completed_work_queue.front();
+            analyzer->completed_work_queue.pop();
+        }
+        analyzer->completed_work_queue_mutex.unlock();
+        if (ac)
+            reap_command(ac);
+    } while (commands_to_reap > 1);
 }
 
 static Pig* pigs = nullptr;
@@ -329,40 +315,36 @@ static Pig* get_lazy_pig(unsigned max)
 // main commands
 //-------------------------------------------------------------------------
 
-static bool broadcast(AnalyzerCommand ac)
+static void broadcast(AnalyzerCommand* ac)
 {
+    unsigned dispatched = 0;
+
     for (unsigned idx = 0; idx < max_pigs; ++idx)
     {
-        if ( !pigs[idx].attentive() )
-        {
-            // FIXIT-L queue commands when busy
-            request.respond("== busy, try again later\n");
-            return false;
-        }
+        if (pigs[idx].queue_command(ac))
+            dispatched++;
     }
-    for (unsigned idx = 0; idx < max_pigs; ++idx)
-        pigs[idx].execute(ac);
 
-    return true;
+    if (!dispatched)
+        delete ac;
 }
 
 int main_dump_stats(lua_State*)
 {
-    DropStats();
+    broadcast(new ACGetStats());
     return 0;
 }
 
 int main_rotate_stats(lua_State*)
 {
-    if ( broadcast(AC_ROTATE) )
-        request.respond("== rotating stats\n");
-
+    request.respond("== rotating stats\n");
+    broadcast(new ACRotate());
     return 0;
 }
 
 int main_reload_config(lua_State* L)
 {
-    if ( swapper )
+    if ( Swapper::get_reload_in_progress() )
     {
         request.respond("== reload pending; retry\n");
         return 0;
@@ -386,16 +368,15 @@ int main_reload_config(lua_State* L)
     }
     snort_conf = sc;
     proc_stats.conf_reloads++;
-    swapper = new Swapper(old, sc);
-    swap_requested = true;
     request.respond(".. swapping configuration\n");
+    broadcast(new ACSwap(new Swapper(old, sc)));
 
     return 0;
 }
 
 int main_reload_hosts(lua_State* L)
 {
-    if ( swapper )
+    if ( Swapper::get_reload_in_progress() )
     {
         request.respond("== reload pending; retry\n");
         return 0;
@@ -422,9 +403,8 @@ int main_reload_hosts(lua_State* L)
         request.respond("== reload failed\n");
         return 0;
     }
-    swapper = new Swapper(old, tc);
-    swap_requested = true;
     request.respond(".. swapping hosts table\n");
+    broadcast(new ACSwap(new Swapper(old, tc)));
 
     return 0;
 }
@@ -444,21 +424,17 @@ int main_process(lua_State* L)
 
 int main_pause(lua_State*)
 {
-    if ( broadcast(AC_PAUSE) )
-    {
-        request.respond("== pausing\n");
-        paused = true;
-    }
+    request.respond("== pausing\n");
+    broadcast(new ACPause());
+    paused = true;
     return 0;
 }
 
 int main_resume(lua_State*)
 {
-    if ( broadcast(AC_RESUME) )
-    {
-        request.respond("== resuming\n");
-        paused = false;
-    }
+    request.respond("== resuming\n");
+    broadcast(new ACResume());
+    paused = false;
     return 0;
 }
 
@@ -480,11 +456,9 @@ int main_dump_plugins(lua_State*)
 
 int main_quit(lua_State*)
 {
-    if ( broadcast(AC_STOP) )
-    {
-        request.respond("== stopping\n");
-        exit_requested = true;
-    }
+    request.respond("== stopping\n");
+    broadcast(new ACStop());
+    exit_requested = true;
     return 0;
 }
 
@@ -554,10 +528,18 @@ static int signal_check()
     return 1;
 }
 
+static void reap_commands()
+{
+    for (unsigned idx = 0; idx < max_pigs; ++idx)
+        pigs[idx].reap_commands();
+}
+
 // FIXIT-L return true if something was done to avoid sleeping
 static bool house_keeping()
 {
     signal_check();
+
+    reap_commands();
 
     IdleProcessing::execute();
 
@@ -577,6 +559,7 @@ static bool house_keeping()
 // FIXIT-M allow at least 2 remote controls
 // FIXIT-M bind to configured ip including INADDR_ANY
 // (default is loopback if enabled)
+// FIXIT-M block on asynchronous analyzer commands until they complete
 static int listener = -1;
 static int local_control = STDIN_FILENO;
 static int remote_control = -1;
@@ -715,57 +698,12 @@ static bool service_users()
 }
 #endif
 
-static bool issue_swap()
-{
-    for ( unsigned idx = 0; idx < max_pigs; ++idx )
-    {
-        if ( !pigs[idx].attentive() )
-            return false;
-    }
-
-    std::lock_guard<std::mutex> lock(Swapper::mutex);
-
-    for ( unsigned idx = 0; idx < max_pigs; ++idx )
-        pigs[idx].swap(swapper);
-
-    swap_requested = false;
-    return true;
-}
-
-static bool check_swap()
-{
-    for ( unsigned idx = 0; idx < max_pigs; ++idx )
-    {
-        if ( pigs[idx].analyzer and pigs[idx].analyzer->swap_pending() )
-            return false;
-    }
-
-    delete swapper;
-    swapper = nullptr;
-
-    LogMessage("== reload complete\n");
-    return true;
-}
-
 static void service_check()
 {
 #ifdef SHELL
     if ( service_users() )
         return;
 #endif
-
-    if ( swapper )
-    {
-        bool done;
-
-        if ( swap_requested )
-            done = issue_swap();
-        else
-            done = check_swap();
-
-        if ( done )
-            return;
-    }
 
     if ( house_keeping() )
         return;
@@ -879,7 +817,7 @@ static void handle(Pig& pig, unsigned& swine, unsigned& pending_privileges)
                 break;
             Snort::drop_privileges();
         }
-        pig.execute(AC_START);
+        pig.queue_command(new ACStart());
         break;
 
     case Analyzer::State::STARTED:
@@ -895,7 +833,7 @@ static void handle(Pig& pig, unsigned& swine, unsigned& pending_privileges)
                 break;
             Snort::drop_privileges();
         }
-        pig.execute(AC_RUN);
+        pig.queue_command(new ACRun());
         break;
 
     case Analyzer::State::STOPPED:
