@@ -24,6 +24,7 @@
 #include "http_msg_status.h"
 
 #include "http_api.h"
+#include "stream/stream.h"
 
 using namespace HttpEnums;
 
@@ -138,6 +139,16 @@ void HttpMsgStatus::gen_events()
             infractions += INF_BAD_PHRASE;
             events.create_event(EVENT_CTRL_IN_REASON);
             break;
+        }
+    }
+
+    if( !transaction->get_request() && (trans_num == 1) )
+    {
+        if( flow->is_pdu_inorder(SSN_DIR_FROM_SERVER) )
+        {
+            //Http response without a request. Possible ssh tunneling
+            infractions += INF_RSP_WO_REQ;
+            events.create_event(EVENT_RESPONSE_WO_REQUEST);
         }
     }
 }

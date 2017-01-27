@@ -212,6 +212,8 @@ public:
     bool two_way_traffic()
     { return (ssn_state.session_flags & SSNFLAG_SEEN_BOTH) == SSNFLAG_SEEN_BOTH; }
 
+    bool is_pdu_inorder(uint8_t dir);
+
     void set_proxied()
     { ssn_state.session_flags |= SSNFLAG_PROXIED; }
 

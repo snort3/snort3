@@ -166,13 +166,13 @@ bool TcpStreamSession::is_sequenced(uint8_t dir)
 {
     if (dir & SSN_DIR_FROM_CLIENT)
     {
-        if ( server->get_tf_flags() & ( TF_MISSING_PREV_PKT | TF_MISSING_PKT ) )
+        if ( server->get_tf_flags() & ( TF_MISSING_PREV_PKT | TF_PKT_MISSED ) )
             return false;
     }
 
     if ( dir & SSN_DIR_FROM_SERVER )
     {
-        if ( client->get_tf_flags() & ( TF_MISSING_PREV_PKT | TF_MISSING_PKT ) )
+        if ( client->get_tf_flags() & ( TF_MISSING_PREV_PKT | TF_PKT_MISSED ) )
             return false;
     }
 

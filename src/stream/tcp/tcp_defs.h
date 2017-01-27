@@ -50,7 +50,6 @@ struct Packet;
 #define TF_PKT_MISSED               0x0020  // sticky
 #define TF_MISSING_PKT              0x0040  // used internally
 #define TF_MISSING_PREV_PKT         0x0080  // reset for each reassembled
-#define TF_FIRST_PKT_MISSING        0x0100
 
 #define PAWS_WINDOW         60
 #define PAWS_24DAYS         2073600         /* 24 days in seconds */

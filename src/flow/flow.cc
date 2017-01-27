@@ -470,3 +470,10 @@ Layer Flow::get_mpls_layer_per_dir(bool client)
     else
         return mpls_server;
 }
+
+bool Flow::is_pdu_inorder(uint8_t dir)
+{
+    return ( (session != nullptr) && session->is_sequenced(dir) 
+            && (session->missing_in_reassembled(dir) == SSN_MISSING_NONE) 
+            && !(ssn_state.session_flags & SSNFLAG_MIDSTREAM));
+}

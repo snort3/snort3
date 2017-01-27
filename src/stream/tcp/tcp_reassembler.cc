@@ -514,8 +514,7 @@ int TcpReassembler::flush_data_segments(Packet* p, uint32_t total)
         // scanning at the start of next PDU instead of aborting.
         // FIXIT-L FIN may be in to_seq causing bogus gap counts.
         if (((tsn->next && (tsn->seq + tsn->payload_size != tsn->next->seq))
-            || (!tsn->next && (tsn->seq + tsn->payload_size < to_seq)))
-            && !(tracker->get_tf_flags() & TF_FIRST_PKT_MISSING))
+            || (!tsn->next && (tsn->seq + tsn->payload_size < to_seq))))
         {
             // FIXIT-L this is suboptimal - better to exclude fin from to_seq
             if ( !tracker->fin_set() or SEQ_LEQ(to_seq, tracker->fin_final_seq) )
@@ -715,8 +714,7 @@ int TcpReassembler::flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
 
     /* This will set this flag on the first reassembly
      * if reassembly for this direction was set midstream */
-    if ( SEQ_LT(seglist_base_seq, seglist.next->seq)
-        && !( tracker->get_tf_flags() & TF_FIRST_PKT_MISSING ) )
+    if ( SEQ_LT(seglist_base_seq, seglist.next->seq) )
     {
         uint32_t missed = seglist.next->seq - seglist_base_seq;
 
@@ -731,8 +729,6 @@ int TcpReassembler::flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
         if ( !bytes )
             return 0;
     }
-
-    tracker->clear_tf_flags(TF_FIRST_PKT_MISSING);
 
     return _flush_to_seq(bytes, p, pkt_flags);
 }

@@ -348,6 +348,7 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_UNSUPPORTED_ENCODING,       "unsupported Transfer-Encoding or Content-Encoding used" },
     { EVENT_UNKNOWN_ENCODING,           "unknown Transfer-Encoding or Content-Encoding used" },
     { EVENT_STACKED_ENCODINGS,          "multiple layers of compression encodings applied" },
+    { EVENT_RESPONSE_WO_REQUEST,        "server response before client request" },
     { 0, nullptr }
 };
 
