@@ -20,7 +20,7 @@
 #ifndef HTTP_TEST_MANAGER_H
 #define HTTP_TEST_MANAGER_H
 
-#ifdef REG_TEST
+#if defined(REG_TEST) || defined(UNIT_TEST)
 
 #include <sys/types.h>
 #include <stdio.h>

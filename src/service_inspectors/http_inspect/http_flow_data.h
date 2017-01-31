@@ -57,7 +57,7 @@ public:
     friend class HttpMsgBodyOld;
     friend class HttpStreamSplitter;
     friend class HttpTransaction;
-#ifdef REG_TEST
+#if defined(REG_TEST) || defined(UNIT_TEST)
     friend class HttpUnitTestSetup;
 #endif
 
