@@ -59,7 +59,7 @@ public:
     static InspectorType get_type(const char* key);
     SO_PUBLIC static Inspector* get_inspector(const char* key, bool dflt_only = false);
 
-    static Inspector* get_binder();
+    SO_PUBLIC static Inspector* get_binder();
     static Inspector* get_wizard();
 
     SO_PUBLIC static Inspector* acquire(const char* key, SnortConfig*);

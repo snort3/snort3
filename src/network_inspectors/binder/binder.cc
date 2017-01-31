@@ -481,6 +481,8 @@ int Binder::exec_handle_gadget( void* pv )
 
     if ( ins )
     {
+        if (flow->gadget != nullptr )
+            flow->clear_gadget();
         flow->set_gadget(ins);
         flow->ssn_state.application_protocol = ins->get_service();
     }

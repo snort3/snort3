@@ -19,3 +19,8 @@ functionality is replaced by wizard curses.
 
 The Snort 2x global configuration is now rolled into server
 configuration.
+
+The http_proxy and http_server functionality is implemented as two
+inspectors.  These inspectors only serve to locate the 'tunnel' setup
+content.  If/when the setup content is located, the session is transfered
+to the DCE TCP inspector.

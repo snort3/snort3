@@ -62,6 +62,10 @@
 #define SSNFLAG_CLIENT_SWAPPED      0x00400000
 
 #define SSNFLAG_PROXIED             0x01000000
+
+#define SSNFLAG_ABORT_CLIENT        0x10000000
+#define SSNFLAG_ABORT_SERVER        0x20000000
+
 #define SSNFLAG_NONE                0x00000000 /* nothing, an MT bag of chips */
 
 #define SSNFLAG_SEEN_BOTH (SSNFLAG_SEEN_SERVER | SSNFLAG_SEEN_CLIENT)

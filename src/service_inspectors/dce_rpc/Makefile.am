@@ -3,6 +3,18 @@ dce_co.cc \
 dce_co.h \
 dce_common.cc \
 dce_common.h \
+dce_http_common.cc \
+dce_http_common.h \
+dce_http_proxy.cc \
+dce_http_proxy_module.cc \
+dce_http_proxy_module.h \
+dce_http_proxy_splitter.cc \
+dce_http_proxy_splitter.h \
+dce_http_server.cc\
+dce_http_server_module.cc \
+dce_http_server_module.h \
+dce_http_server_splitter.cc \
+dce_http_server_splitter.h \
 dce_list.cc \
 dce_list.h \
 dce_smb.cc \

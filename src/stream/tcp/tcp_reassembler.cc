@@ -925,6 +925,8 @@ void TcpReassembler::fallback()
     delete tracker->splitter;
     tracker->splitter = new AtomSplitter(c2s, session->config->paf_max);
     tracker->paf_state.paf = StreamSplitter::SEARCH;
+
+    session->flow->set_session_flags( c2s ? SSNFLAG_ABORT_CLIENT : SSNFLAG_ABORT_SERVER );
 }
 
 // iterate over seglist and scan all new acked bytes

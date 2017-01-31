@@ -29,6 +29,8 @@
 #include "log/messages.h"
 #include "utils/safec.h"
 
+#include "dce_http_proxy_module.h"
+#include "dce_http_server_module.h"
 #include "dce_smb_utils.h"
 #include "dce_tcp.h"
 #include "dce_udp.h"
@@ -190,8 +192,6 @@ static void dce2_protocol_detect(DCE2_SsnData* sd, Packet* pkt)
     {
         Profile profile(dce2_udp_pstat_detect);
     }
-    // FIXIT-M add HTTP case when these are ported
-    // Same for all other instances of profiling
 
     SnortEventqPush();
     snort_detect(pkt);
@@ -249,8 +249,6 @@ DCE2_SsnData* get_dce2_session_data(Packet* p)
     {
         return sd;
     }
-
-    // FIXIT-L add checks for http once ported
 
     return nullptr;
 }
@@ -594,9 +592,10 @@ const BaseApi* sin_dce[] =
     &dce2_tcp_api.base,
     &dce2_smb_api.base,
     &dce2_udp_api.base,
+    &dce_http_proxy_api.base,
+    &dce_http_server_api.base,
     ips_dce_iface,
     ips_dce_opnum,
     ips_dce_stub_data,
     nullptr
 };
-
