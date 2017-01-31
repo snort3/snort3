@@ -52,6 +52,7 @@ extern const ConvertMap* disable_decode_drops_map;
 extern const ConvertMap* disable_inline_init_failopen_map;
 extern const ConvertMap* disable_ipopt_alerts_map;
 extern const ConvertMap* disable_ipopt_drops_map;
+extern const ConvertMap* disable_replace_map;
 extern const ConvertMap* disable_tcpopt_alerts_map;
 extern const ConvertMap* disable_tcpopt_drops_map;
 extern const ConvertMap* disable_tcpopt_experimental_alerts_map;
@@ -168,6 +169,7 @@ const std::vector<const ConvertMap*> config_api =
     disable_inline_init_failopen_map,
     disable_ipopt_alerts_map,
     disable_ipopt_drops_map,
+    disable_replace_map,
     disable_tcpopt_alerts_map,
     disable_tcpopt_drops_map,
     disable_tcpopt_experimental_alerts_map,

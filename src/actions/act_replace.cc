@@ -101,6 +101,9 @@ static void Replace_ModifyPacket(Packet* p)
 
 static const Parameter s_params[] =
 {
+    { "disable_replace", Parameter::PT_BOOL, nullptr, "false",
+      "disable replace of packet contents with rewrite rules" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -113,15 +116,22 @@ public:
     bool end(const char*, int, SnortConfig*) override;
 
 public:
+    bool disable_replace;
 };
 
-bool ReplaceModule::set(const char*, Value&, SnortConfig*)
+bool ReplaceModule::set(const char*, Value& v, SnortConfig*)
 {
-    return false;
+    if ( v.is("disable_replace") )
+        disable_replace = v.get_bool();
+    else
+        return false;
+
+    return true;
 }
 
 bool ReplaceModule::begin(const char*, int, SnortConfig*)
 {
+    disable_replace = false;
     return true;
 }
 
@@ -138,17 +148,20 @@ public:
     ReplaceAction(ReplaceModule*);
 
     void exec(Packet*) override;
+private:
+    bool disable_replace = false;
 };
 
-ReplaceAction::ReplaceAction(ReplaceModule*) :
+ReplaceAction::ReplaceAction(ReplaceModule* m) :
     IpsAction(s_name, ACT_RESET)
 {
+    disable_replace = m->disable_replace;
     Active::set_enabled();
 }
 
 void ReplaceAction::exec(Packet* p)
 {
-    if ( p->is_rebuilt() )
+    if ( p->is_rebuilt() || disable_replace )
         return;
 
     Replace_ModifyPacket(p);

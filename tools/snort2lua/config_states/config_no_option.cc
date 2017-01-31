@@ -108,6 +108,7 @@ static const std::string ips = "ips";
 static const std::string packets = "packets";
 static const std::string process = "process";
 static const std::string output = "output";
+static const std::string rewrite = "rewrite";
 
 /*************************************************
  **********  addressspace_agnostic  **********
@@ -177,6 +178,19 @@ static const ConvertMap dirty_pig_api =
 };
 
 const ConvertMap* dirty_pig_map = &dirty_pig_api;
+
+/*************************************************
+ *****  disable rewrite rules with replace *******
+ *************************************************/
+
+static const std::string disable_replace = "disable_replace";
+static const ConvertMap disable_replace_api =
+{
+    disable_replace,
+    config_true_no_opt_ctor<& disable_replace, & rewrite>,
+};
+
+const ConvertMap* disable_replace_map = &disable_replace_api;
 
 /*************************************************
  ***************  dump_chars_only  ***************
