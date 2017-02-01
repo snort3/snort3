@@ -870,68 +870,36 @@ void TcpSession::flush_client(Packet* p)
     client->clear_tf_flags(TF_FORCE_FLUSH);
 }
 
+void TcpSession::flush_tracker(TcpStreamTracker* tracker, Packet* p, uint32_t dir, bool final_flush)
+{
+    if( final_flush && ( !tracker->splitter || !tracker->splitter->finish(flow) ) )
+         return;
+
+     DebugFormat(DEBUG_STREAM_STATE, "Flushing tracker on packet from %s\n",
+             (dir == PKT_FROM_CLIENT) ? "client" : "server");
+     tracker->set_tf_flags(TF_FORCE_FLUSH);
+     if ( tracker->reassembler->flush_stream(p, dir) )
+         tracker->reassembler->purge_flushed_ackd( );
+
+     tracker->clear_tf_flags(TF_FORCE_FLUSH);
+}
+
 void TcpSession::flush_listener(Packet* p, bool final_flush)
 {
-    TcpStreamTracker* listener = nullptr;
-    uint32_t dir = 0;
-
     // direction of flush is the data from the opposite side
     if ( p->is_from_server() )
-    {
-        listener = client;
-        dir = PKT_FROM_SERVER;
-    }
+        flush_tracker( client, p, PKT_FROM_SERVER, final_flush);
     else if ( p->is_from_client() )
-    {
-        listener = server;
-        dir = PKT_FROM_CLIENT;
-    }
-
-    if ( dir )
-    {
-    	if( final_flush && !listener->splitter->finish(flow) )
-    		return;
-
-    	DebugFormat(DEBUG_STREAM_STATE, "Flushing listener on packet from %s\n",
-        		(dir == PKT_FROM_CLIENT) ? "client" : "server");
-        listener->set_tf_flags(TF_FORCE_FLUSH);
-        if ( listener->reassembler->flush_stream(p, dir) )
-            listener->reassembler->purge_flushed_ackd( );
-
-        listener->clear_tf_flags(TF_FORCE_FLUSH);
-    }
+        flush_tracker( server, p, PKT_FROM_CLIENT, final_flush);
 }
 
 void TcpSession::flush_talker(Packet* p, bool final_flush)
 {
-    TcpStreamTracker* talker = nullptr;
-    uint32_t dir = 0;
-
-    /* direction of flush is the data from the opposite side */
+    // direction of flush is the data from the opposite side
     if ( p->is_from_server() )
-    {
-        talker = server;
-        dir = PKT_FROM_CLIENT;
-    }
+        flush_tracker( server, p, PKT_FROM_CLIENT, final_flush);
     else if ( p->is_from_client() )
-    {
-        talker = client;
-        dir = PKT_FROM_SERVER;
-    }
-
-    if ( dir )
-    {
-    	if( final_flush && !talker->splitter->finish(flow) )
-    		return;
-
-    	DebugFormat(DEBUG_STREAM_STATE, "Flushing talker on packet from %s\n",
-        		(dir == PKT_FROM_SERVER) ? "client" : "server");
-        talker->set_tf_flags(TF_FORCE_FLUSH);
-        if ( talker->reassembler->flush_stream(p, dir) )
-            talker->reassembler->purge_flushed_ackd( );
-
-        talker->clear_tf_flags(TF_FORCE_FLUSH);
-    }
+        flush_tracker( client, p, PKT_FROM_SERVER, final_flush);
 }
 
 void TcpSession::set_extra_data(Packet* p, uint32_t xid)

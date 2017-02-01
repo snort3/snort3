@@ -81,6 +81,7 @@ private:
     void cleanup_session_if_expired(Packet*);
     bool do_packet_analysis_pre_checks(Packet*, TcpSegmentDescriptor&);
     void do_packet_analysis_post_checks(Packet*);
+    void flush_tracker(TcpStreamTracker*, Packet*, uint32_t dir, bool final_flush);
 
     TcpStateMachine* tsm;
 };
