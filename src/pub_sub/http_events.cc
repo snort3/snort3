@@ -27,6 +27,7 @@
 #include "http_events.h"
 
 #include "service_inspectors/http_inspect/http_msg_header.h"
+#include "service_inspectors/http_inspect/http_msg_request.h"
 
 const uint8_t* HttpEvent::get_header(unsigned id, uint64_t sub_id, int32_t& length)
 {
@@ -105,5 +106,12 @@ const uint8_t* HttpEvent::get_x_working_with(int32_t& length)
 {
     return get_header(HttpEnums::HTTP_BUFFER_HEADER,
         HttpEnums::HEAD_X_WORKING_WITH, length);
+}
+
+bool HttpEvent::contains_webdav_method()
+{
+    HttpEnums::MethodId method = http_msg_header->get_method_id();
+
+    return HttpMsgRequest::is_webdav(method);
 }
 

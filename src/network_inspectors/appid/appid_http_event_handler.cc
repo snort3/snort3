@@ -113,6 +113,8 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
         replace_header_data(&session->hsession->x_working_with, tmplen,
             header_start, header_length);
 
+        session->hsession->is_webdav = http_event->contains_webdav_method();
+
         // FIXIT-M: Should we get request body (may be expensive to copy)?
         //      It is not currently set in callback in 2.9.x, only via 
         //      third-party.

@@ -162,6 +162,7 @@ struct httpSession
     uint16_t fieldOffset[HTTP_FIELD_MAX+1] = { 0 };
     uint16_t fieldEndOffset[HTTP_FIELD_MAX+1] = { 0 };
     bool new_field_contents = false;
+    bool is_webdav = false;
     int chp_finished = 0;
     AppId chp_candidate = APP_ID_NONE;
     AppId chp_alt_candidate = APP_ID_NONE;

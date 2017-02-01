@@ -44,6 +44,17 @@ public:
     const Field& get_uri_norm_classic();
     HttpUri* get_http_uri() { return uri; }
 
+    static bool is_webdav(HttpEnums::MethodId method)
+    {
+        if(method > HttpEnums::MethodId::METH__WEBDAV_LOW and 
+           method < HttpEnums::MethodId::METH__WEBDAV_HIGH)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
 #ifdef REG_TEST
     void print_section(FILE* output) override;
 #endif

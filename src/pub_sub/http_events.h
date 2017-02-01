@@ -51,6 +51,7 @@ public:
     const uint8_t* get_via(int32_t &length);
     const uint8_t* get_x_working_with(int32_t &length);
     int32_t get_response_code();
+    bool contains_webdav_method();
 
 private:
     HttpMsgHeader* const http_msg_header;

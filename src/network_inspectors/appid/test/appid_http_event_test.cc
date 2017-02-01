@@ -253,6 +253,11 @@ const uint8_t* HttpEvent::get_x_working_with(int32_t &length)
     return global_field.start();
 }
 
+bool HttpEvent::contains_webdav_method()
+{
+    return true;
+}
+
 Flow::Flow() {}
 Flow::~Flow() {}
 

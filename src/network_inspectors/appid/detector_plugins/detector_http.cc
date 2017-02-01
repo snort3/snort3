@@ -1937,34 +1937,6 @@ void get_server_vendor_version(const uint8_t* data, int len, char** version, cha
     *(*vendor+vendor_len) = '\0';
 }
 
-// FIXIT-M: Replace with inspection event data from http_inspect. This 
-//          is not working now that we've switched to getting data from 
-//          http_inspect.
-bool is_webdav_found()
-{
-    return false;
-#if REPLACE_WITH_INSPECTION_EVENT
-    bool found = false;
-
-    if (hmp->headers[HTTP_ID_COPY].start > 0)
-        found = true;
-    else if (hmp->headers[HTTP_ID_MOVE].start > 0)
-        found = true;
-    else if (hmp->headers[HTTP_ID_LOCK].start > 0)
-        found = true;
-    else if (hmp->headers[HTTP_ID_UNLOCK].start > 0)
-        found = true;
-    else if (hmp->headers[HTTP_ID_MKCOL].start > 0)
-        found = true;
-    else if (hmp->headers[HTTP_ID_PROPPATCH].start > 0)
-        found = true;
-    else if (hmp->headers[HTTP_ID_PROPFIND].start > 0)
-        found = true;
-
-    return found;
-#endif
-}
-
 // Start of HTTP/2 detection logic.
 //
 // This is intended to simply detect the presence of HTTP version 2 as a

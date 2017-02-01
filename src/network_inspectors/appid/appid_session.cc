@@ -2291,11 +2291,15 @@ void AppIdSession::set_client_app_id_data(AppId id, char** version)
 
     if (id != client_app_id)
     {
-        unsigned prev_priority = app_info_mgr->get_app_info_priority(client_app_id);
-        unsigned curr_priority = app_info_mgr->get_app_info_priority(id);
+        if (client_app_id)
+        {
+            unsigned prev_priority = app_info_mgr->get_app_info_priority(client_app_id);
+            unsigned curr_priority = app_info_mgr->get_app_info_priority(id);
 
-        if ((client_app_id) && (prev_priority > curr_priority ))
-            return;
+            if (prev_priority > curr_priority)
+                return;
+        }
+
         client_app_id = id;
 
         if (client_version)
@@ -2472,11 +2476,13 @@ void AppIdSession::set_payload_app_id_data(ApplicationId id, char** version)
 
     if (payload_app_id != id)
     {
-        unsigned prev_priority = app_info_mgr->get_app_info_priority(payload_app_id);
-        unsigned curr_priority = app_info_mgr->get_app_info_priority(id);
-
-        if ((payload_app_id ) && (prev_priority > curr_priority ))
-            return;
+        if (payload_app_id)
+        {
+            unsigned prev_priority = app_info_mgr->get_app_info_priority(payload_app_id);
+            unsigned curr_priority = app_info_mgr->get_app_info_priority(id);
+            if (prev_priority > curr_priority)
+                return;
+        }
 
         payload_app_id = id;
 
@@ -3549,10 +3555,9 @@ int AppIdSession::process_http_packet(int direction)
                 }
             }
 
-            if (is_webdav_found())
+            if (hsession->is_webdav)
             {
-                if (session_logging_enabled && payload_id > APP_ID_NONE &&
-                    payload_app_id != payload_id)
+                if (session_logging_enabled and payload_app_id != APP_ID_WEBDAV)
                     LogMessage("AppIdDbg %s data is webdav\n", session_logging_id);
                 set_payload_app_id_data(APP_ID_WEBDAV, nullptr);
             }
