@@ -26,6 +26,7 @@
 #include "sd_credit_card.h"
 
 #include <cctype>
+#include <cassert>
 
 #define ISSUER_SIZE     4
 #define CC_COPY_BUF_LEN 20 /* 16 digits + 3 spaces/dashes + null */
@@ -70,22 +71,10 @@ int SdLuhnAlgorithm(const uint8_t *buf, unsigned long long buflen)
     char cc_digits[CC_COPY_BUF_LEN]; /* Normalized CC# string */
     uint32_t j;
 
-    if (buf == nullptr || buflen < MIN_CC_BUF_LEN)
+    assert(buf);
+
+    if (buflen < MIN_CC_BUF_LEN)
         return 0;
-
-    /* Generally, the buffer has two non-digits, one on either side. Sometimes,
-     * when the buffer is pointing to the first line of the data, it might
-     * start with a digit, instead of a non-digit. Strip the non-digits
-     * only.
-     */
-    if (isdigit((int)buf[0]))
-        buflen -= 1;
-
-    else
-    {
-        buf++;
-        buflen -= 2;
-    }
 
     /* If the first digit is greater than 6, this isn't one of the major
        credit cards. */

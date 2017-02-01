@@ -24,6 +24,8 @@
 
 #include "ips_sd_pattern.h"
 
+#include <cctype>
+
 #include <hs_compile.h>
 #include <hs_runtime.h>
 
@@ -44,9 +46,9 @@
 #define s_name "sd_pattern"
 #define s_help "rule option for detecting sensitive data"
 
-#define SD_SOCIAL_PATTERN          R"(\b\d{3}-\d{2}-\d{4}\b)"
-#define SD_SOCIAL_NODASHES_PATTERN R"(\b\d{9}\b)"
-#define SD_CREDIT_PATTERN_ALL      R"(\b\d{4}[- ]?\d{4}[- ]?\d{2}[- ]?\d{2}[- ]?\d{3,4}\b)"
+#define SD_SOCIAL_PATTERN          R"(\d{3}-\d{2}-\d{4})"
+#define SD_SOCIAL_NODASHES_PATTERN R"(\d{9})"
+#define SD_CREDIT_PATTERN_ALL      R"(\d{4}\D?\d{4}\D?\d{2}\D?\d{2}\D?\d{3,4})"
 
 // we need to update scratch in the main thread as each pattern is processed
 // and then clone to thread specific after all rules are loaded.  s_scratch is
@@ -82,6 +84,7 @@ struct SdPatternConfig
     std::string pii;
     unsigned threshold = 1;
     bool obfuscate_pii = false;
+    bool forced_boundary = false; 
     int (* validate)(const uint8_t* buf, unsigned long long buflen) = nullptr;
 
     inline bool operator==(const SdPatternConfig& rhs) const
@@ -176,8 +179,31 @@ bool SdPatternOption::operator==(const IpsOption& ips) const
 
 struct hsContext
 {
-    hsContext(const SdPatternConfig& c_, Packet* p_, const uint8_t* const start_)
-        : config(c_), packet(p_), start(start_) { }
+    hsContext(const SdPatternConfig& c_, Packet* p_, const uint8_t* const start_,
+            const uint8_t* _buf, unsigned int _buflen )
+        : config(c_), packet(p_), start(start_), buf(_buf), buflen(_buflen) { }
+
+    bool has_valid_bounds(unsigned long long from, unsigned long long len)
+    {
+        bool left = false;
+        bool right = false;
+
+        // validate the left side
+
+        if ( from == 0 )
+            left = true;
+        else if ( from && !::isdigit((int)buf[from-1]) )
+            left = true;
+
+        // validate the right side
+   
+        if ( from+len == buflen )
+            right = true;
+        else if ( from + len < buflen && !::isdigit((int)buf[from+len]) )
+            right = true;
+
+        return left and right;
+    }
 
     unsigned int count = 0;
 
@@ -185,6 +211,7 @@ struct hsContext
     Packet* packet = nullptr;
     const uint8_t* const start = nullptr;
     const uint8_t* buf = nullptr;
+    unsigned int buflen = 0;
 };
 
 static int hs_match(unsigned int /*id*/, unsigned long long from,
@@ -197,6 +224,10 @@ static int hs_match(unsigned int /*id*/, unsigned long long from,
     assert(ctx->start);
 
     unsigned long long len = to - from;
+
+    if ( ctx->config.forced_boundary && !ctx->has_valid_bounds(from, len) )
+        return 0;
+
     if ( ctx->config.validate && ctx->config.validate(ctx->buf+from, len) != 1 )
         return 0;
 
@@ -224,8 +255,7 @@ unsigned SdPatternOption::SdSearch(Cursor& c, Packet* p)
     SnortState* ss = snort_conf->state + get_instance_id();
     assert(ss->sdpattern_scratch);
 
-    hsContext ctx(config, p, start);
-    ctx.buf = buf;
+    hsContext ctx(config, p, start, buf, buflen);
 
     hs_error_t stat = hs_scan(config.db, (const char*)buf, buflen, 0,
         (hs_scratch_t*)ss->sdpattern_scratch, hs_match, (void*)&ctx);
@@ -318,16 +348,19 @@ bool SdPatternModule::set(const char*, Value& v, SnortConfig* sc)
         config.pii = SD_CREDIT_PATTERN_ALL;
         config.validate = SdLuhnAlgorithm;
         config.obfuscate_pii = sc->obfuscate_pii;
+        config.forced_boundary = true;
     }
     else if (config.pii == "us_social")
     {
         config.pii = SD_SOCIAL_PATTERN;
         config.obfuscate_pii = sc->obfuscate_pii;
+        config.forced_boundary = true;
     }
     else if (config.pii == "us_social_nodashes")
     {
         config.pii = SD_SOCIAL_NODASHES_PATTERN;
         config.obfuscate_pii = sc->obfuscate_pii;
+        config.forced_boundary = true;
     }
 
     return true;
