@@ -246,10 +246,8 @@ void Pig::stop()
 bool Pig::queue_command(AnalyzerCommand* ac)
 {
     if (!analyzer || !athread)
-    {
-        assert(false);
         return false;
-    }
+
 #ifdef DEBUG_MSGS
     unsigned ac_ref_count = ac->get();
     DebugFormat(DEBUG_ANALYZER, "[%u] Queuing command %s for execution (refcount %u)\n",

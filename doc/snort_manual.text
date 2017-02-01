@@ -73,26 +73,25 @@ Table of Contents
     6.7. detection
     6.8. event_filter
     6.9. event_queue
-    6.10. file_id
-    6.11. high_availability
-    6.12. host_cache
-    6.13. host_tracker
-    6.14. hosts
-    6.15. ips
-    6.16. latency
-    6.17. memory
-    6.18. network
-    6.19. output
-    6.20. packets
-    6.21. process
-    6.22. profiler
-    6.23. rate_filter
-    6.24. references
-    6.25. rule_state
-    6.26. search_engine
-    6.27. side_channel
-    6.28. snort
-    6.29. suppress
+    6.10. high_availability
+    6.11. host_cache
+    6.12. host_tracker
+    6.13. hosts
+    6.14. ips
+    6.15. latency
+    6.16. memory
+    6.17. network
+    6.18. output
+    6.19. packets
+    6.20. process
+    6.21. profiler
+    6.22. rate_filter
+    6.23. references
+    6.24. rule_state
+    6.25. search_engine
+    6.26. side_channel
+    6.27. snort
+    6.28. suppress
 
 7. Codec Modules
 
@@ -124,40 +123,43 @@ Table of Contents
     8.2. arp_spoof
     8.3. back_orifice
     8.4. binder
-    8.5. dce_smb
-    8.6. dce_tcp
-    8.7. dce_udp
-    8.8. dnp3
-    8.9. dns
-    8.10. file_log
-    8.11. ftp_client
-    8.12. ftp_data
-    8.13. ftp_server
-    8.14. gtp_inspect
-    8.15. http_inspect
-    8.16. imap
-    8.17. modbus
-    8.18. normalizer
-    8.19. packet_capture
-    8.20. perf_monitor
-    8.21. pop
-    8.22. port_scan
-    8.23. port_scan_global
-    8.24. reputation
-    8.25. rpc_decode
-    8.26. sip
-    8.27. smtp
-    8.28. ssh
-    8.29. ssl
-    8.30. stream
-    8.31. stream_file
-    8.32. stream_icmp
-    8.33. stream_ip
-    8.34. stream_tcp
-    8.35. stream_udp
-    8.36. stream_user
-    8.37. telnet
-    8.38. wizard
+    8.5. dce_http_proxy
+    8.6. dce_http_server
+    8.7. dce_smb
+    8.8. dce_tcp
+    8.9. dce_udp
+    8.10. dnp3
+    8.11. dns
+    8.12. file_id
+    8.13. file_log
+    8.14. ftp_client
+    8.15. ftp_data
+    8.16. ftp_server
+    8.17. gtp_inspect
+    8.18. http_inspect
+    8.19. imap
+    8.20. modbus
+    8.21. normalizer
+    8.22. packet_capture
+    8.23. perf_monitor
+    8.24. pop
+    8.25. port_scan
+    8.26. port_scan_global
+    8.27. reputation
+    8.28. rpc_decode
+    8.29. sip
+    8.30. smtp
+    8.31. ssh
+    8.32. ssl
+    8.33. stream
+    8.34. stream_file
+    8.35. stream_icmp
+    8.36. stream_ip
+    8.37. stream_tcp
+    8.38. stream_udp
+    8.39. stream_user
+    8.40. telnet
+    8.41. wizard
 
 9. IPS Action Modules
 
@@ -297,6 +299,7 @@ Table of Contents
     15.4. Rules
     15.5. Output
     15.6. HTTP Profiles
+    15.7. SDF Preprocessor
 
 16. Snort2Lua
 
@@ -348,7 +351,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.0-a4 (Build 222) from 2.9.8-383
+o"  )~   Version 3.0.0-a4 (Build 224) from 2.9.8-383
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2016 Cisco and/or its affiliates. All rights reserved.
@@ -3203,9 +3206,9 @@ Peg counts:
   * daq.whitelist: total whitelist verdicts
   * daq.blacklist: total blacklist verdicts
   * daq.ignore: total ignore verdicts
-  * daq.internal blacklist: packets blacklisted internally due to
+  * daq.internal_blacklist: packets blacklisted internally due to
     lack of DAQ support
-  * daq.internal whitelist: packets whitelisted internally due to
+  * daq.internal_whitelist: packets whitelisted internally due to
     lack of DAQ support
   * daq.skipped: packets skipped at startup
   * daq.idle: attempts to acquire from DAQ without available packets
@@ -3251,25 +3254,25 @@ Configuration:
 Peg counts:
 
   * detection.analyzed: packets sent to detection
-  * detection.hard evals: non-fast pattern rule evaluations
-  * detection.raw searches: fast pattern searches in raw packet data
-  * detection.cooked searches: fast pattern searches in cooked packet
+  * detection.hard_evals: non-fast pattern rule evaluations
+  * detection.raw_searches: fast pattern searches in raw packet data
+  * detection.cooked_searches: fast pattern searches in cooked packet
     data
-  * detection.pkt searches: fast pattern searches in packet data
-  * detection.alt searches: alt fast pattern searches in packet data
-  * detection.key searches: fast pattern searches in key buffer
-  * detection.header searches: fast pattern searches in header buffer
-  * detection.body searches: fast pattern searches in body buffer
-  * detection.file searches: fast pattern searches in file buffer
+  * detection.pkt_searches: fast pattern searches in packet data
+  * detection.alt_searches: alt fast pattern searches in packet data
+  * detection.key_searches: fast pattern searches in key buffer
+  * detection.header_searches: fast pattern searches in header buffer
+  * detection.body_searches: fast pattern searches in body buffer
+  * detection.file_searches: fast pattern searches in file buffer
   * detection.alerts: alerts not including IP reputation
-  * detection.total alerts: alerts including IP reputation
+  * detection.total_alerts: alerts including IP reputation
   * detection.logged: logged packets
   * detection.passed: passed packets
-  * detection.match limit: fast pattern matches not processed
-  * detection.queue limit: events not queued because queue full
-  * detection.log limit: events queued but not logged
-  * detection.event limit: events filtered
-  * detection.alert limit: events previously triggered on same PDU
+  * detection.match_limit: fast pattern matches not processed
+  * detection.queue_limit: events not queued because queue full
+  * detection.log_limit: events queued but not logged
+  * detection.event_limit: events filtered
+  * detection.alert_limit: events previously triggered on same PDU
 
 
 6.8. event_filter
@@ -3313,74 +3316,7 @@ Configuration:
     action group or all action groups
 
 
-6.10. file_id
-
---------------
-
-What: configure file identification
-
-Type: basic
-
-Configuration:
-
-  * int file_id.type_depth = 1460: stop type ID at this point { 0: }
-  * int file_id.signature_depth = 10485760: stop signature at this
-    point { 0: }
-  * int file_id.block_timeout = 86400: stop blocking after this many
-    seconds { 0: }
-  * int file_id.lookup_timeout = 2: give up on lookup after this many
-    seconds { 0: }
-  * bool file_id.block_timeout_lookup = false: block if lookup times
-    out
-  * int file_id.capture_memcap = 100: memcap for file capture in
-    megabytes { 0: }
-  * int file_id.capture_max_size = 1048576: stop file capture beyond
-    this point { 0: }
-  * int file_id.capture_min_size = 0: stop file capture if file size
-    less than this { 0: }
-  * int file_id.capture_block_size = 32768: file capture block size
-    in bytes { 8: }
-  * int file_id.max_files_cached = 65536: maximal number of files
-    cached in memory { 8: }
-  * bool file_id.enable_type = false: enable type ID
-  * bool file_id.enable_signature = false: enable signature
-    calculation
-  * bool file_id.enable_capture = false: enable file capture
-  * int file_id.show_data_depth = 100: print this many octets { 0: }
-  * int file_id.file_rules[].rev = 0: rule revision { 0: }
-  * string file_id.file_rules[].msg: information about the file type
-  * string file_id.file_rules[].type: file type name
-  * int file_id.file_rules[].id = 0: file type id { 0: }
-  * string file_id.file_rules[].category: file type category
-  * string file_id.file_rules[].version: file type version
-  * string file_id.file_rules[].magic[].content: file magic content
-  * int file_id.file_rules[].magic[].offset = 0: file magic offset {
-    0: }
-  * int file_id.file_policy[].when.file_type_id = 0: unique ID for
-    file type in file magic rule { 0: }
-  * string file_id.file_policy[].when.sha256: SHA 256
-  * enum file_id.file_policy[].use.verdict = unknown: what to do with
-    matching traffic { unknown | log | stop | block | reset }
-  * bool file_id.file_policy[].use.enable_file_type = false: true/
-    false → enable/disable file type identification
-  * bool file_id.file_policy[].use.enable_file_signature = false:
-    true/false → enable/disable file signature
-  * bool file_id.file_policy[].use.enable_file_capture = false: true/
-    false → enable/disable file capture
-  * bool file_id.trace_type = false: enable runtime dump of type info
-  * bool file_id.trace_signature = false: enable runtime dump of
-    signature info
-  * bool file_id.trace_stream = false: enable runtime dump of file
-    data
-
-Peg counts:
-
-  * file_id.total files: number of files processed
-  * file_id.total file data: number of file data bytes processed
-  * file_id.cache failures: number of file cache add failures
-
-
-6.11. high_availability
+6.10. high_availability
 
 --------------
 
@@ -3400,10 +3336,8 @@ Configuration:
   * real high_availability.min_sync = 1.0: minimum interval between
     HA updates { 0.0:100.0 }
 
-Peg counts:
 
-
-6.12. host_cache
+6.11. host_cache
 
 --------------
 
@@ -3417,19 +3351,19 @@ Configuration:
 
 Peg counts:
 
-  * host_cache.lru cache adds: lru cache added new entry
-  * host_cache.lru cache replaces: lru cache replaced existing entry
-  * host_cache.lru cache prunes: lru cache pruned entry to make space
+  * host_cache.lru_cache_adds: lru cache added new entry
+  * host_cache.lru_cache_replaces: lru cache replaced existing entry
+  * host_cache.lru_cache_prunes: lru cache pruned entry to make space
     for new entry
-  * host_cache.lru cache find hits: lru cache found entry in cache
-  * host_cache.lru cache find misses: lru cache did not find entry in
+  * host_cache.lru_cache_find_hits: lru cache found entry in cache
+  * host_cache.lru_cache_find_misses: lru cache did not find entry in
     cache
-  * host_cache.lru cache removes: lru cache found entry and removed
+  * host_cache.lru_cache_removes: lru cache found entry and removed
     it
-  * host_cache.lru cache clears: lru cache clear API calls
+  * host_cache.lru_cache_clears: lru cache clear API calls
 
 
-6.13. host_tracker
+6.12. host_tracker
 
 --------------
 
@@ -3452,12 +3386,12 @@ Configuration:
 
 Peg counts:
 
-  * host_tracker.service adds: host service adds
-  * host_tracker.service finds: host service finds
-  * host_tracker.service removes: host service removes
+  * host_tracker.service_adds: host service adds
+  * host_tracker.service_finds: host service finds
+  * host_tracker.service_removes: host service removes
 
 
-6.14. hosts
+6.13. hosts
 
 --------------
 
@@ -3478,7 +3412,7 @@ Configuration:
   * port hosts[].services[].port: port number
 
 
-6.15. ips
+6.14. ips
 
 --------------
 
@@ -3497,7 +3431,7 @@ Configuration:
   * string ips.rules: snort rules and includes
 
 
-6.16. latency
+6.15. latency
 
 --------------
 
@@ -3532,16 +3466,16 @@ Rules:
 
 Peg counts:
 
-  * latency.total packets: total packets monitored
-  * latency.total usecs: total usecs elapsed
-  * latency.max usecs: maximum usecs elapsed
-  * latency.packet timeouts: packets that timed out
-  * latency.total rule evals: total rule evals monitored
-  * latency.rule eval timeouts: rule evals that timed out
-  * latency.rule tree enables: rule tree re-enables
+  * latency.total_packets: total packets monitored
+  * latency.total_usecs: total usecs elapsed
+  * latency.max_usecs: maximum usecs elapsed
+  * latency.packet_timeouts: packets that timed out
+  * latency.total_rule_evals: total rule evals monitored
+  * latency.rule_eval_timeouts: rule evals that timed out
+  * latency.rule_tree_enables: rule tree re-enables
 
 
-6.17. memory
+6.16. memory
 
 --------------
 
@@ -3559,7 +3493,7 @@ Configuration:
     preemptive cleanup actions (percent, 0 to disable) { 0: }
 
 
-6.18. network
+6.17. network
 
 --------------
 
@@ -3592,7 +3526,7 @@ Configuration:
     unlimited) { 0:255 }
 
 
-6.19. output
+6.18. output
 
 --------------
 
@@ -3626,7 +3560,7 @@ Configuration:
   * bool output.verbose = false: be verbose (same as -v)
 
 
-6.20. packets
+6.19. packets
 
 --------------
 
@@ -3648,7 +3582,7 @@ Configuration:
     is used to track fragments and connections
 
 
-6.21. process
+6.20. process
 
 --------------
 
@@ -3672,7 +3606,7 @@ Configuration:
     timestamps
 
 
-6.22. profiler
+6.21. profiler
 
 --------------
 
@@ -3705,7 +3639,7 @@ Configuration:
     avg_match | avg_no_match }
 
 
-6.23. rate_filter
+6.22. rate_filter
 
 --------------
 
@@ -3729,7 +3663,7 @@ Configuration:
     according to track
 
 
-6.24. references
+6.23. references
 
 --------------
 
@@ -3743,7 +3677,7 @@ Configuration:
   * string references[].url: where this reference is defined
 
 
-6.25. rule_state
+6.24. rule_state
 
 --------------
 
@@ -3759,7 +3693,7 @@ Configuration:
     policies
 
 
-6.26. search_engine
+6.25. search_engine
 
 --------------
 
@@ -3803,17 +3737,17 @@ Configuration:
 
 Peg counts:
 
-  * search_engine.max queued: maximum fast pattern matches queued for
+  * search_engine.max_queued: maximum fast pattern matches queued for
     further evaluation
-  * search_engine.total flushed: fast pattern matches discarded due
+  * search_engine.total_flushed: fast pattern matches discarded due
     to overflow
-  * search_engine.total inserts: total fast pattern hits
-  * search_engine.total unique: total unique fast pattern hits
-  * search_engine.non-qualified events: total non-qualified events
-  * search_engine.qualified events: total qualified events
+  * search_engine.total_inserts: total fast pattern hits
+  * search_engine.total_unique: total unique fast pattern hits
+  * search_engine.non_qualified_events: total non-qualified events
+  * search_engine.qualified_events: total qualified events
 
 
-6.27. side_channel
+6.26. side_channel
 
 --------------
 
@@ -3828,10 +3762,8 @@ Configuration:
   * string side_channel.connectors[].connector: connector handle
   * string side_channel.connector: connector handle
 
-Peg counts:
 
-
-6.28. snort
+6.27. snort
 
 --------------
 
@@ -4040,16 +3972,16 @@ Commands:
 
 Peg counts:
 
-  * snort.local commands: total local commands processed
-  * snort.remote commands: total remote commands processed
+  * snort.local_commands: total local commands processed
+  * snort.remote_commands: total remote commands processed
   * snort.signals: total signals processed
-  * snort.conf reloads: number of times configuration was reloaded
-  * snort.attribute table reloads: number of times hosts table was
+  * snort.conf_reloads: number of times configuration was reloaded
+  * snort.attribute_table_reloads: number of times hosts table was
     reloaded
-  * snort.attribute table hosts: total number of hosts in table
+  * snort.attribute_table_hosts: total number of hosts in table
 
 
-6.29. suppress
+6.28. suppress
 
 --------------
 
@@ -4267,7 +4199,7 @@ Rules:
 
 Peg counts:
 
-  * icmp4.bad checksum: non-zero icmp checksums
+  * icmp4.bad_checksum: non-zero icmp checksums
 
 
 7.12. icmp6
@@ -4302,8 +4234,8 @@ Rules:
 
 Peg counts:
 
-  * icmp6.bad checksum (ip4): nonzero ipcm4 checksums
-  * icmp6.bad checksum (ip6): nonzero ipcm6 checksums
+  * icmp6.bad_icmp4_checksum: nonzero ipcm4 checksums
+  * icmp6.bad_icmp6_checksum: nonzero ipcm6 checksums
 
 
 7.13. igmp
@@ -4354,7 +4286,7 @@ Rules:
 
 Peg counts:
 
-  * ipv4.bad checksum: nonzero ip checksums
+  * ipv4.bad_checksum: nonzero ip checksums
 
 
 7.15. ipv6
@@ -4431,8 +4363,8 @@ Rules:
 
 Peg counts:
 
-  * mpls.total packets: total mpls labeled packets processed
-  * mpls.total bytes: total mpls labeled bytes processed
+  * mpls.total_packets: total mpls labeled packets processed
+  * mpls.total_bytes: total mpls labeled bytes processed
 
 
 7.17. pgm
@@ -4495,8 +4427,8 @@ Rules:
 
 Peg counts:
 
-  * tcp.bad checksum (ip4): nonzero tcp over ip checksums
-  * tcp.bad checksum (ip6): nonzero tcp over ipv6 checksums
+  * tcp.bad_tcp4_checksum: nonzero tcp over ip checksums
+  * tcp.bad_tcp6_checksum: nonzero tcp over ipv6 checksums
 
 
 7.20. udp
@@ -4526,8 +4458,8 @@ Rules:
 
 Peg counts:
 
-  * udp.bad checksum (ip4): nonzero udp over ipv4 checksums
-  * udp.bad checksum (ip6): nonzero udp over ipv6 checksums
+  * udp.bad_udp4_checksum: nonzero udp over ipv4 checksums
+  * udp.bad_udp6_checksum: nonzero udp over ipv6 checksums
 
 
 7.21. vlan
@@ -4580,8 +4512,6 @@ Configuration:
   * bool appid.debug = false: enable appid debug logging
   * bool appid.dump_ports = false: enable dump of appid port
     information
-  * string appid.thirdparty_appid_dir: directory to load thirdparty
-    appid detectors from
   * addr appid.session_log_filter.src_ip = 0.0.0.0/32: source ip
     address in CIDR format
   * addr appid.session_log_filter.dst_ip = 0.0.0.0/32: destination ip
@@ -4595,91 +4525,94 @@ Configuration:
 Peg counts:
 
   * appid.packets: count of packets received
-  * appid.processed packets: count of packets processed
-  * appid.ignored packets: count of packets ignored
-  * appid.aim clients: count of aim clients discovered
-  * appid.battlefield flows: count of battle field flows discovered
-  * appid.bgp flows: count of bgp flows discovered
-  * appid.bit clients: count of bittorrent clients discovered
-  * appid.bit flows: count of bittorrent flows discovered
-  * appid.bittracker clients: count of bittorrent tracker clients
+  * appid.processed_packets: count of packets processed
+  * appid.ignored_packets: count of packets ignored
+  * appid.aim_clients: count of aim clients discovered
+  * appid.battlefield_flows: count of battle field flows discovered
+  * appid.bgp_flows: count of bgp flows discovered
+  * appid.bit_clients: count of bittorrent clients discovered
+  * appid.bit_flows: count of bittorrent flows discovered
+  * appid.bittracker_clients: count of bittorrent tracker clients
     discovered
-  * appid.bootp flows: count of bootp flows discovered
-  * appid.dcerpc tcp flows: count of dce rpc flows over tcp
+  * appid.bootp_flows: count of bootp flows discovered
+  * appid.dcerpc_tcp_flows: count of dce rpc flows over tcp
     discovered
-  * appid.dcerpc udp flows: count of dce rpc flows over udp
+  * appid.dcerpc_udp_flows: count of dce rpc flows over udp
     discovered
-  * appid.direct connect flows: count of direct connect flows
+  * appid.direct_connect_flows: count of direct connect flows
     discovered
-  * appid.dns tcp flows: count of dns flows over tcp discovered
-  * appid.dns udp flows: count of dns flows over udp discovered
-  * appid.ftp flows: count of ftp flows discovered
-  * appid.ftps flows: count of ftps flows discovered
-  * appid.http flows: count of http flows discovered
-  * appid.imap flows: count of imap service flows discovered
-  * appid.imaps flows: count of imap TLS service flows discovered
-  * appid.irc flows: count of irc service flows discovered
-  * appid.kerberos clients: count of kerberos clients discovered
-  * appid.kerberos flows: count of kerberos service flows discovered
-  * appid.kerberos users: count of kerberos users discovered
-  * appid.lpr flows: count of lpr service flows discovered
-  * appid.mdns flows: count of mdns service flows discovered
-  * appid.msn clients: count of msn clients discovered
-  * appid.mysql flows: count of mysql service flows discovered
-  * appid.netbios dgm flows: count of netbios-dgm service flows
+  * appid.dns_tcp_flows: count of dns flows over tcp discovered
+  * appid.dns_udp_flows: count of dns flows over udp discovered
+  * appid.ftp_flows: count of ftp flows discovered
+  * appid.ftps_flows: count of ftps flows discovered
+  * appid.http_flows: count of http flows discovered
+  * appid.imap_flows: count of imap service flows discovered
+  * appid.imaps_flows: count of imap TLS service flows discovered
+  * appid.irc_flows: count of irc service flows discovered
+  * appid.kerberos_clients: count of kerberos clients discovered
+  * appid.kerberos_flows: count of kerberos service flows discovered
+  * appid.kerberos_users: count of kerberos users discovered
+  * appid.lpr_flows: count of lpr service flows discovered
+  * appid.mdns_flows: count of mdns service flows discovered
+  * appid.msn_clients: count of msn clients discovered
+  * appid.mysql_flows: count of mysql service flows discovered
+  * appid.netbios_dgm_flows: count of netbios-dgm service flows
     discovered
-  * appid.netbios ns flows: count of netbios-ns service flows
+  * appid.netbios_ns_flows: count of netbios-ns service flows
     discovered
-  * appid.netbios ssn flows: count of netbios-ssn service flows
+  * appid.netbios_ssn_flows: count of netbios-ssn service flows
     discovered
-  * appid.nntp flows: count of nntp flows discovered
-  * appid.ntp flows: count of ntp flows discovered
-  * appid.pop flows: count of pop service flows discovered
-  * appid.radius flows: count of radius flows discovered
-  * appid.rexec flows: count of rexec flows discovered
-  * appid.rfb flows: count of rfb flows discovered
-  * appid.rlogin flows: count of rlogin flows discovered
-  * appid.rpc flows: count of rpc flows discovered
-  * appid.rshell flows: count of rshell flows discovered
-  * appid.rsync flows: count of rsync service flows discovered
-  * appid.rtmp flows: count of rtmp flows discovered
-  * appid.rtp clients: count of rtp clients discovered
-  * appid.sip clients: count of SIP clients discovered
-  * appid.sip flows: count of SIP flows discovered
-  * appid.smtp aol clients: count of AOL smtp clients discovered
-  * appid.smtp applemail clients: count of Apple Mail smtp clients
+  * appid.nntp_flows: count of nntp flows discovered
+  * appid.ntp_flows: count of ntp flows discovered
+  * appid.pop_flows: count of pop service flows discovered
+  * appid.pop3_clients: count of pop3 clients discovered
+  * appid.pop3s_clients: count of pop3s clients discovered
+  * appid.radius_flows: count of radius flows discovered
+  * appid.rexec_flows: count of rexec flows discovered
+  * appid.rfb_flows: count of rfb flows discovered
+  * appid.rlogin_flows: count of rlogin flows discovered
+  * appid.rpc_flows: count of rpc flows discovered
+  * appid.rshell_flows: count of rshell flows discovered
+  * appid.rsync_flows: count of rsync service flows discovered
+  * appid.rtmp_flows: count of rtmp flows discovered
+  * appid.rtp_clients: count of rtp clients discovered
+  * appid.sip_clients: count of SIP clients discovered
+  * appid.sip_flows: count of SIP flows discovered
+  * appid.smtp_aol_clients: count of AOL smtp clients discovered
+  * appid.smtp_applemail_clients: count of Apple Mail smtp clients
     discovered
-  * appid.smtp eudora clients: count of Eudora smtp clients
+  * appid.smtp_eudora_clients: count of Eudora smtp clients
     discovered
-  * appid.smtp eudora pro clients: count of Eudora Pro smtp clients
+  * appid.smtp_eudora_pro_clients: count of Eudora Pro smtp clients
     discovered
-  * appid.smtp evolution clients: count of Evolution smtp clients
+  * appid.smtp_evolution_clients: count of Evolution smtp clients
     discovered
-  * appid.smtp kmail clients: count of KMail smtp clients discovered
-  * appid.smtp lotus notes clients: count of Lotus Notes smtp clients
+  * appid.smtp_kmail_clients: count of KMail smtp clients discovered
+  * appid.smtp_lotus_notes_clients: count of Lotus Notes smtp clients
     discovered
-  * appid.smtp microsoft outlook clients: count of Microsoft Outlook
+  * appid.smtp_microsoft_outlook_clients: count of Microsoft Outlook
     smtp clients discovered
-  * appid.smtp microsoft outlook express clients: count of Microsoft
+  * appid.smtp_microsoft_outlook_express_clients: count_of Microsoft
     Outlook Express smtp clients discovered
-  * appid.smtp microsoft outlook imo clients: count of Microsoft
+  * appid.smtp_microsoft_outlook_imo_clients: count of Microsoft
     Outlook IMO smtp clients discovered
-  * appid.smtp mutt clients: count of Mutt smtp clients discovered
-  * appid.smtp thunderbird clients: count of Thunderbird smtp clients
+  * appid.smtp_mutt_clients: count of Mutt smtp clients discovered
+  * appid.smtp_thunderbird_clients: count of Thunderbird smtp clients
     discovered
-  * appid.smtp flows: count of smtp flows discovered
-  * appid.smtps flows: count of smtps flows discovered
-  * appid.snmp flows: count of snmp flows discovered
-  * appid.ssh clients: count of ssh clients discovered
-  * appid.ssh flows: count of ssh flows discovered
-  * appid.ssl flows: count of ssl flows discovered
-  * appid.telnet flows: count of telnet flows discovered
-  * appid.tftp flows: count of tftp flows discovered
-  * appid.timbuktu flows: count of timbuktu flows discovered
-  * appid.tns clients: count of tns clients discovered
-  * appid.tns flows: count of tns flows discovered
-  * appid.vnc clients: count of vnc clients discovered
-  * appid.yahoo messenger clients: count of Yahoo Messenger clients
+  * appid.smtp_flows: count of smtp flows discovered
+  * appid.smtps_flows: count of smtps flows discovered
+  * appid.snmp_flows: count of snmp flows discovered
+  * appid.ssh_clients: count of ssh clients discovered
+  * appid.ssh_flows: count of ssh flows discovered
+  * appid.ssl_flows: count of ssl flows discovered
+  * appid.telnet_flows: count of telnet flows discovered
+  * appid.tftp_flows: count of tftp flows discovered
+  * appid.timbuktu_clients: count of timbuktu clients discovered
+  * appid.timbuktu_flows: count of timbuktu flows discovered
+  * appid.tns_clients: count of tns clients discovered
+  * appid.tns_flows: count of tns flows discovered
+  * appid.vnc_clients: count of vnc clients discovered
+  * appid.yahoo_messenger_clients: count of Yahoo Messenger clients
     discovered
 
 
@@ -4766,7 +4699,39 @@ Peg counts:
   * binder.inspects: inspect bindings
 
 
-8.5. dce_smb
+8.5. dce_http_proxy
+
+--------------
+
+What: dce over http inspection - client to/from proxy
+
+Type: inspector
+
+Peg counts:
+
+  * dce_http_proxy.http_proxy_sessions: successful http proxy
+    sessions
+  * dce_http_proxy.http_proxy_session_failures: failed http proxy
+    sessions
+
+
+8.6. dce_http_server
+
+--------------
+
+What: dce over http inspection - proxy to/from server
+
+Type: inspector
+
+Peg counts:
+
+  * dce_http_server.http_server_sessions: successful http server
+    sessions
+  * dce_http_server.http_server_session_failures: failed http server
+    sessions
+
+
+8.7. dce_smb
 
 --------------
 
@@ -4887,69 +4852,69 @@ Rules:
 Peg counts:
 
   * dce_smb.events: total events
-  * dce_smb.PDUs: total connection-oriented PDUs
-  * dce_smb.Binds: total connection-oriented binds
-  * dce_smb.Bind acks: total connection-oriented binds acks
-  * dce_smb.Alter contexts: total connection-oriented alter contexts
-  * dce_smb.Alter context responses: total connection-oriented alter
+  * dce_smb.pdus: total connection-oriented PDUs
+  * dce_smb.binds: total connection-oriented binds
+  * dce_smb.bind_acks: total connection-oriented binds acks
+  * dce_smb.alter_contexts: total connection-oriented alter contexts
+  * dce_smb.alter_context_responses: total connection-oriented alter
     context responses
-  * dce_smb.Bind naks: total connection-oriented bind naks
-  * dce_smb.Requests: total connection-oriented requests
-  * dce_smb.Responses: total connection-oriented responses
-  * dce_smb.Cancels: total connection-oriented cancels
-  * dce_smb.Orphaned: total connection-oriented orphaned
-  * dce_smb.Faults: total connection-oriented faults
-  * dce_smb.Auth3s: total connection-oriented auth3s
-  * dce_smb.Shutdowns: total connection-oriented shutdowns
-  * dce_smb.Rejects: total connection-oriented rejects
-  * dce_smb.MS RPC/HTTP PDUs: total connection-oriented MS requests
+  * dce_smb.bind_naks: total connection-oriented bind naks
+  * dce_smb.requests: total connection-oriented requests
+  * dce_smb.responses: total connection-oriented responses
+  * dce_smb.cancels: total connection-oriented cancels
+  * dce_smb.orphaned: total connection-oriented orphaned
+  * dce_smb.faults: total connection-oriented faults
+  * dce_smb.auth3s: total connection-oriented auth3s
+  * dce_smb.shutdowns: total connection-oriented shutdowns
+  * dce_smb.rejects: total connection-oriented rejects
+  * dce_smb.ms_rpc_http_pdus: total connection-oriented MS requests
     to send RPC over HTTP
-  * dce_smb.Other requests: total connection-oriented other requests
-  * dce_smb.Other responses: total connection-oriented other
+  * dce_smb.other_requests: total connection-oriented other requests
+  * dce_smb.other_responses: total connection-oriented other
     responses
-  * dce_smb.Request fragments: total connection-oriented request
+  * dce_smb.request_fragments: total connection-oriented request
     fragments
-  * dce_smb.Response fragments: total connection-oriented response
+  * dce_smb.response_fragments: total connection-oriented response
     fragments
-  * dce_smb.Client max fragment size: connection-oriented client
+  * dce_smb.client_max_fragment_size: connection-oriented client
     maximum fragment size
-  * dce_smb.Client min fragment size: connection-oriented client
+  * dce_smb.client_min_fragment_size: connection-oriented client
     minimum fragment size
-  * dce_smb.Client segs reassembled: total connection-oriented client
+  * dce_smb.client_segs_reassembled: total connection-oriented client
     segments reassembled
-  * dce_smb.Client frags reassembled: total connection-oriented
+  * dce_smb.client_frags_reassembled: total connection-oriented
     client fragments reassembled
-  * dce_smb.Server max fragment size: connection-oriented server
+  * dce_smb.server_max_fragment_size: connection-oriented server
     maximum fragment size
-  * dce_smb.Server min fragment size: connection-oriented server
+  * dce_smb.server_min_fragment_size: connection-oriented server
     minimum fragment size
-  * dce_smb.Server segs reassembled: total connection-oriented server
+  * dce_smb.server_segs_reassembled: total connection-oriented server
     segments reassembled
-  * dce_smb.Server frags reassembled: total connection-oriented
+  * dce_smb.server_frags_reassembled: total connection-oriented
     server fragments reassembled
-  * dce_smb.Sessions: total smb sessions
-  * dce_smb.Packets: total smb packets
-  * dce_smb.Ignored bytes: total ignored bytes
-  * dce_smb.Client segs reassembled: total smb client segments
+  * dce_smb.sessions: total smb sessions
+  * dce_smb.packets: total smb packets
+  * dce_smb.ignored_bytes: total ignored bytes
+  * dce_smb.client_segs_reassembled: total smb client segments
     reassembled
-  * dce_smb.Server segs reassembled: total smb server segments
+  * dce_smb.server_segs_reassembled: total smb server segments
     reassembled
-  * dce_smb.Max outstanding requests: total smb maximum outstanding
+  * dce_smb.max_outstanding_requests: total smb maximum outstanding
     requests
-  * dce_smb.Files processed: total smb files processed
-  * dce_smb.SMBv2 create: total number of SMBv2 create packets seen
-  * dce_smb.SMBv2 write: total number of SMBv2 write packets seen
-  * dce_smb.SMBv2 read: total number of SMBv2 read packets seen
-  * dce_smb.SMBv2 set info: total number of SMBv2 set info packets
+  * dce_smb.files_processed: total smb files processed
+  * dce_smb.smbv2_create: total number of SMBv2 create packets seen
+  * dce_smb.smbv2_write: total number of SMBv2 write packets seen
+  * dce_smb.smbv2_read: total number of SMBv2 read packets seen
+  * dce_smb.smbv2_set_info: total number of SMBv2 set info packets
     seen
-  * dce_smb.SMBv2 tree connect: total number of SMBv2 tree connect
+  * dce_smb.smbv2_tree_connect: total number of SMBv2 tree connect
     packets seen
-  * dce_smb.SMBv2 tree disconnect: total number of SMBv2 tree
+  * dce_smb.smbv2_tree_disconnect: total number of SMBv2 tree
     disconnect packets seen
-  * dce_smb.SMBv2 close: total number of SMBv2 close packets seen
+  * dce_smb.smbv2_close: total number of SMBv2 close packets seen
 
 
-8.6. dce_tcp
+8.8. dce_tcp
 
 --------------
 
@@ -5002,51 +4967,51 @@ Rules:
 Peg counts:
 
   * dce_tcp.events: total events
-  * dce_tcp.PDUs: total connection-oriented PDUs
-  * dce_tcp.Binds: total connection-oriented binds
-  * dce_tcp.Bind acks: total connection-oriented binds acks
-  * dce_tcp.Alter contexts: total connection-oriented alter contexts
-  * dce_tcp.Alter context responses: total connection-oriented alter
+  * dce_tcp.pdus: total connection-oriented PDUs
+  * dce_tcp.binds: total connection-oriented binds
+  * dce_tcp.bind_acks: total connection-oriented binds acks
+  * dce_tcp.alter_contexts: total connection-oriented alter contexts
+  * dce_tcp.alter_context_responses: total connection-oriented alter
     context responses
-  * dce_tcp.Bind naks: total connection-oriented bind naks
-  * dce_tcp.Requests: total connection-oriented requests
-  * dce_tcp.Responses: total connection-oriented responses
-  * dce_tcp.Cancels: total connection-oriented cancels
-  * dce_tcp.Orphaned: total connection-oriented orphaned
-  * dce_tcp.Faults: total connection-oriented faults
-  * dce_tcp.Auth3s: total connection-oriented auth3s
-  * dce_tcp.Shutdowns: total connection-oriented shutdowns
-  * dce_tcp.Rejects: total connection-oriented rejects
-  * dce_tcp.MS RPC/HTTP PDUs: total connection-oriented MS requests
+  * dce_tcp.bind_naks: total connection-oriented bind naks
+  * dce_tcp.requests: total connection-oriented requests
+  * dce_tcp.responses: total connection-oriented responses
+  * dce_tcp.cancels: total connection-oriented cancels
+  * dce_tcp.orphaned: total connection-oriented orphaned
+  * dce_tcp.faults: total connection-oriented faults
+  * dce_tcp.auth3s: total connection-oriented auth3s
+  * dce_tcp.shutdowns: total connection-oriented shutdowns
+  * dce_tcp.rejects: total connection-oriented rejects
+  * dce_tcp.ms_rpc_http_pdus: total connection-oriented MS requests
     to send RPC over HTTP
-  * dce_tcp.Other requests: total connection-oriented other requests
-  * dce_tcp.Other responses: total connection-oriented other
+  * dce_tcp.other_requests: total connection-oriented other requests
+  * dce_tcp.other_responses: total connection-oriented other
     responses
-  * dce_tcp.Request fragments: total connection-oriented request
+  * dce_tcp.request_fragments: total connection-oriented request
     fragments
-  * dce_tcp.Response fragments: total connection-oriented response
+  * dce_tcp.response_fragments: total connection-oriented response
     fragments
-  * dce_tcp.Client max fragment size: connection-oriented client
+  * dce_tcp.client_max_fragment_size: connection-oriented client
     maximum fragment size
-  * dce_tcp.Client min fragment size: connection-oriented client
+  * dce_tcp.client_min_fragment_size: connection-oriented client
     minimum fragment size
-  * dce_tcp.Client segs reassembled: total connection-oriented client
+  * dce_tcp.client_segs_reassembled: total connection-oriented client
     segments reassembled
-  * dce_tcp.Client frags reassembled: total connection-oriented
+  * dce_tcp.client_frags_reassembled: total connection-oriented
     client fragments reassembled
-  * dce_tcp.Server max fragment size: connection-oriented server
+  * dce_tcp.server_max_fragment_size: connection-oriented server
     maximum fragment size
-  * dce_tcp.Server min fragment size: connection-oriented server
+  * dce_tcp.server_min_fragment_size: connection-oriented server
     minimum fragment size
-  * dce_tcp.Server segs reassembled: total connection-oriented server
+  * dce_tcp.server_segs_reassembled: total connection-oriented server
     segments reassembled
-  * dce_tcp.Server frags reassembled: total connection-oriented
+  * dce_tcp.server_frags_reassembled: total connection-oriented
     server fragments reassembled
-  * dce_tcp.tcp sessions: total tcp sessions
-  * dce_tcp.tcp packets: total tcp packets
+  * dce_tcp.tcp_sessions: total tcp sessions
+  * dce_tcp.tcp_packets: total tcp packets
 
 
-8.7. dce_udp
+8.9. dce_udp
 
 --------------
 
@@ -5072,30 +5037,30 @@ Rules:
 Peg counts:
 
   * dce_udp.events: total events
-  * dce_udp.udp sessions: total udp sessions
-  * dce_udp.udp packets: total udp packets
-  * dce_udp.Requests: total connection-less requests
-  * dce_udp.Acks: total connection-less acks
-  * dce_udp.Cancels: total connection-less cancels
-  * dce_udp.Client facks: total connection-less client facks
-  * dce_udp.Ping: total connection-less ping
-  * dce_udp.Responses: total connection-less responses
-  * dce_udp.Rejects: total connection-less rejects
-  * dce_udp.Cancel acks: total connection-less cancel acks
-  * dce_udp.Server facks: total connection-less server facks
-  * dce_udp.Faults: total connection-less faults
-  * dce_udp.No calls: total connection-less no calls
-  * dce_udp.Working: total connection-less working
-  * dce_udp.Other requests: total connection-less other requests
-  * dce_udp.Other responses: total connection-less other responses
-  * dce_udp.Fragments: total connection-less fragments
-  * dce_udp.Max fragment size: connection-less maximum fragment size
-  * dce_udp.Frags reassembled: total connection-less fragments
+  * dce_udp.udp_sessions: total udp sessions
+  * dce_udp.udp_packets: total udp packets
+  * dce_udp.requests: total connection-less requests
+  * dce_udp.acks: total connection-less acks
+  * dce_udp.cancels: total connection-less cancels
+  * dce_udp.client_facks: total connection-less client facks
+  * dce_udp.ping: total connection-less ping
+  * dce_udp.responses: total connection-less responses
+  * dce_udp.rejects: total connection-less rejects
+  * dce_udp.cancel_acks: total connection-less cancel acks
+  * dce_udp.server_facks: total connection-less server facks
+  * dce_udp.faults: total connection-less faults
+  * dce_udp.no_calls: total connection-less no calls
+  * dce_udp.working: total connection-less working
+  * dce_udp.other_requests: total connection-less other requests
+  * dce_udp.other_responses: total connection-less other responses
+  * dce_udp.fragments: total connection-less fragments
+  * dce_udp.max_fragment_size: connection-less maximum fragment size
+  * dce_udp.frags_reassembled: total connection-less fragments
     reassembled
-  * dce_udp.Max seqnum: max connection-less seqnum
+  * dce_udp.max_seqnum: max connection-less seqnum
 
 
-8.8. dnp3
+8.10. dnp3
 
 --------------
 
@@ -5122,14 +5087,14 @@ Rules:
 
 Peg counts:
 
-  * dnp3.total packets: total packets
-  * dnp3.udp packets: total udp packets
-  * dnp3.tcp pdus: total tcp pdus
-  * dnp3.dnp3 link layer frames: total dnp3 link layer frames
-  * dnp3.dnp3 application pdus: total dnp3 application pdus
+  * dnp3.total_packets: total packets
+  * dnp3.udp_packets: total udp packets
+  * dnp3.tcp_pdus: total tcp pdus
+  * dnp3.dnp3_link_layer_frames: total dnp3 link layer frames
+  * dnp3.dnp3_application_pdus: total dnp3 application pdus
 
 
-8.9. dns
+8.11. dns
 
 --------------
 
@@ -5150,7 +5115,74 @@ Peg counts:
   * dns.responses: total dns responses
 
 
-8.10. file_log
+8.12. file_id
+
+--------------
+
+What: configure file identification
+
+Type: inspector
+
+Configuration:
+
+  * int file_id.type_depth = 1460: stop type ID at this point { 0: }
+  * int file_id.signature_depth = 10485760: stop signature at this
+    point { 0: }
+  * int file_id.block_timeout = 86400: stop blocking after this many
+    seconds { 0: }
+  * int file_id.lookup_timeout = 2: give up on lookup after this many
+    seconds { 0: }
+  * bool file_id.block_timeout_lookup = false: block if lookup times
+    out
+  * int file_id.capture_memcap = 100: memcap for file capture in
+    megabytes { 0: }
+  * int file_id.capture_max_size = 1048576: stop file capture beyond
+    this point { 0: }
+  * int file_id.capture_min_size = 0: stop file capture if file size
+    less than this { 0: }
+  * int file_id.capture_block_size = 32768: file capture block size
+    in bytes { 8: }
+  * int file_id.max_files_cached = 65536: maximal number of files
+    cached in memory { 8: }
+  * bool file_id.enable_type = false: enable type ID
+  * bool file_id.enable_signature = false: enable signature
+    calculation
+  * bool file_id.enable_capture = false: enable file capture
+  * int file_id.show_data_depth = 100: print this many octets { 0: }
+  * int file_id.file_rules[].rev = 0: rule revision { 0: }
+  * string file_id.file_rules[].msg: information about the file type
+  * string file_id.file_rules[].type: file type name
+  * int file_id.file_rules[].id = 0: file type id { 0: }
+  * string file_id.file_rules[].category: file type category
+  * string file_id.file_rules[].version: file type version
+  * string file_id.file_rules[].magic[].content: file magic content
+  * int file_id.file_rules[].magic[].offset = 0: file magic offset {
+    0: }
+  * int file_id.file_policy[].when.file_type_id = 0: unique ID for
+    file type in file magic rule { 0: }
+  * string file_id.file_policy[].when.sha256: SHA 256
+  * enum file_id.file_policy[].use.verdict = unknown: what to do with
+    matching traffic { unknown | log | stop | block | reset }
+  * bool file_id.file_policy[].use.enable_file_type = false: true/
+    false → enable/disable file type identification
+  * bool file_id.file_policy[].use.enable_file_signature = false:
+    true/false → enable/disable file signature
+  * bool file_id.file_policy[].use.enable_file_capture = false: true/
+    false → enable/disable file capture
+  * bool file_id.trace_type = false: enable runtime dump of type info
+  * bool file_id.trace_signature = false: enable runtime dump of
+    signature info
+  * bool file_id.trace_stream = false: enable runtime dump of file
+    data
+
+Peg counts:
+
+  * file_id.total_files: number of files processed
+  * file_id.total_file_data: number of file data bytes processed
+  * file_id.cache_failures: number of file cache add failures
+
+
+8.13. file_log
 
 --------------
 
@@ -5167,10 +5199,10 @@ Configuration:
 
 Peg counts:
 
-  * file_log.total events: total file events
+  * file_log.total_events: total file events
 
 
-8.11. ftp_client
+8.14. ftp_client
 
 --------------
 
@@ -5194,7 +5226,7 @@ Configuration:
     sequences on ftp control channel
 
 
-8.12. ftp_data
+8.15. ftp_data
 
 --------------
 
@@ -5207,7 +5239,7 @@ Peg counts:
   * ftp_data.packets: total packets
 
 
-8.13. ftp_server
+8.16. ftp_server
 
 --------------
 
@@ -5276,7 +5308,7 @@ Peg counts:
   * ftp_server.packets: total packets
 
 
-8.14. gtp_inspect
+8.17. gtp_inspect
 
 --------------
 
@@ -5306,11 +5338,11 @@ Peg counts:
 
   * gtp_inspect.sessions: total sessions processed
   * gtp_inspect.events: requests
-  * gtp_inspect.unknown types: unknown message types
-  * gtp_inspect.unknown infos: unknown information elements
+  * gtp_inspect.unknown_types: unknown message types
+  * gtp_inspect.unknown_infos: unknown information elements
 
 
-8.15. http_inspect
+8.18. http_inspect
 
 --------------
 
@@ -5464,6 +5496,7 @@ Rules:
     Content-Encoding used
   * 119:78 (http_inspect) multiple layers of compression encodings
     applied
+  * 119:79 (http_inspect) server response before client request
 
 Peg counts:
 
@@ -5475,24 +5508,24 @@ Peg counts:
   * http_inspect.inspections: total message sections inspected
   * http_inspect.requests: HTTP request messages inspected
   * http_inspect.responses: HTTP response messages inspected
-  * http_inspect.GET requests: GET requests inspected
-  * http_inspect.HEAD requests: HEAD requests inspected
-  * http_inspect.POST requests: POST requests inspected
-  * http_inspect.PUT requests: PUT requests inspected
-  * http_inspect.DELETE requests: DELETE requests inspected
-  * http_inspect.CONNECT requests: CONNECT requests inspected
-  * http_inspect.OPTIONS requests: OPTIONS requests inspected
-  * http_inspect.TRACE requests: TRACE requests inspected
-  * http_inspect.other requests: other request methods inspected
-  * http_inspect.request bodies: POST, PUT, and other requests with
+  * http_inspect.get_requests: GET requests inspected
+  * http_inspect.head_requests: HEAD requests inspected
+  * http_inspect.post_requests: POST requests inspected
+  * http_inspect.put_requests: PUT requests inspected
+  * http_inspect.delete_requests: DELETE requests inspected
+  * http_inspect.connect_requests: CONNECT requests inspected
+  * http_inspect.options_requests: OPTIONS requests inspected
+  * http_inspect.trace_requests: TRACE requests inspected
+  * http_inspect.other_requests: other request methods inspected
+  * http_inspect.request_bodies: POST, PUT, and other requests with
     message bodies
   * http_inspect.chunked: chunked message bodies
-  * http_inspect.URI normalizations: URIs needing to be normalization
-  * http_inspect.URI path: URIs with path problems
-  * http_inspect.URI coding: URIs with character coding problems
+  * http_inspect.uri_normalizations: URIs needing to be normalization
+  * http_inspect.uri_path: URIs with path problems
+  * http_inspect.uri_coding: URIs with character coding problems
 
 
-8.16. imap
+8.19. imap
 
 --------------
 
@@ -5523,18 +5556,18 @@ Peg counts:
 
   * imap.packets: total packets processed
   * imap.sessions: total imap sessions
-  * imap.b64 attachments: total base64 attachments decoded
-  * imap.b64 decoded bytes: total base64 decoded bytes
-  * imap.qp attachments: total quoted-printable attachments decoded
-  * imap.qp decoded bytes: total quoted-printable decoded bytes
-  * imap.uu attachments: total uu attachments decoded
-  * imap.uu decoded bytes: total uu decoded bytes
-  * imap.non-encoded attachments: total non-encoded attachments
+  * imap.b64_attachments: total base64 attachments decoded
+  * imap.b64_decoded_bytes: total base64 decoded bytes
+  * imap.qp_attachments: total quoted-printable attachments decoded
+  * imap.qp_decoded_bytes: total quoted-printable decoded bytes
+  * imap.uu_attachments: total uu attachments decoded
+  * imap.uu_decoded_bytes: total uu decoded bytes
+  * imap.non_encoded_attachments: total non-encoded attachments
     extracted
-  * imap.non-encoded bytes: total non-encoded extracted bytes
+  * imap.non_encoded_bytes: total non-encoded extracted bytes
 
 
-8.17. modbus
+8.20. modbus
 
 --------------
 
@@ -5555,7 +5588,7 @@ Peg counts:
   * modbus.frames: total Modbus messages
 
 
-8.18. normalizer
+8.21. normalizer
 
 --------------
 
@@ -5609,79 +5642,79 @@ Configuration:
 
 Peg counts:
 
-  * normalizer.ip4 trim: eth packets trimmed to datagram size
-  * normalizer.test ip4 trim: test eth packets trimmed to datagram
+  * normalizer.ip4_trim: eth packets trimmed to datagram size
+  * normalizer.test_ip4_trim: test eth packets trimmed to datagram
     size
-  * normalizer.ip4 tos: type of service normalizations
-  * normalizer.test ip4 tos: test type of service normalizations
-  * normalizer.ip4 df: don’t frag bit normalizations
-  * normalizer.test ip4 df: test don’t frag bit normalizations
-  * normalizer.ip4 rf: reserved flag bit clears
-  * normalizer.test ip4 rf: test reserved flag bit clears
-  * normalizer.ip4 ttl: time-to-live normalizations
-  * normalizer.test ip4 ttl: test time-to-live normalizations
-  * normalizer.ip4 opts: ip4 options cleared
-  * normalizer.test ip4 opts: test ip4 options cleared
-  * normalizer.icmp4 echo: icmp4 ping normalizations
-  * normalizer.test icmp4 echo: test icmp4 ping normalizations
-  * normalizer.ip6 hops: ip6 hop limit normalizations
-  * normalizer.test ip6 hops: test ip6 hop limit normalizations
-  * normalizer.ip6 options: ip6 options cleared
-  * normalizer.test ip6 options: test ip6 options cleared
-  * normalizer.icmp6 echo: icmp6 echo normalizations
-  * normalizer.test icmp6 echo: test icmp6 echo normalizations
-  * normalizer.tcp syn options: SYN only options cleared from non-SYN
+  * normalizer.ip4_tos: type of service normalizations
+  * normalizer.test_ip4_tos: test type of service normalizations
+  * normalizer.ip4_df: don’t frag bit normalizations
+  * normalizer.test_ip4_df: test don’t frag bit normalizations
+  * normalizer.ip4_rf: reserved flag bit clears
+  * normalizer.test_ip4_rf: test reserved flag bit clears
+  * normalizer.ip4_ttl: time-to-live normalizations
+  * normalizer.test_ip4_ttl: test time-to-live normalizations
+  * normalizer.ip4_opts: ip4 options cleared
+  * normalizer.test_ip4_opts: test ip4 options cleared
+  * normalizer.icmp4_echo: icmp4 ping normalizations
+  * normalizer.test_icmp4_echo: test icmp4 ping normalizations
+  * normalizer.ip6_hops: ip6 hop limit normalizations
+  * normalizer.test_ip6_hops: test ip6 hop limit normalizations
+  * normalizer.ip6_options: ip6 options cleared
+  * normalizer.test_ip6_options: test ip6 options cleared
+  * normalizer.icmp6_echo: icmp6 echo normalizations
+  * normalizer.test_icmp6_echo: test icmp6 echo normalizations
+  * normalizer.tcp_syn_options: SYN only options cleared from non-SYN
     packets
-  * normalizer.test tcp syn options: test SYN only options cleared
+  * normalizer.test_tcp_syn_options: test SYN only options cleared
     from non-SYN packets
-  * normalizer.tcp options: packets with options cleared
-  * normalizer.test tcp options: test packets with options cleared
-  * normalizer.tcp paddding: packets with padding cleared
-  * normalizer.test tcp paddding: test packets with padding cleared
-  * normalizer.tcp reserved: packets with reserved bits cleared
-  * normalizer.test tcp reserved: test packets with reserved bits
+  * normalizer.tcp_options: packets with options cleared
+  * normalizer.test_tcp_options: test packets with options cleared
+  * normalizer.tcp_paddding: packets with padding cleared
+  * normalizer.test_tcp_paddding: test packets with padding cleared
+  * normalizer.tcp_reserved: packets with reserved bits cleared
+  * normalizer.test_tcp_reserved: test packets with reserved bits
     cleared
-  * normalizer.tcp nonce: packets with nonce bit cleared
-  * normalizer.test tcp nonce: test packets with nonce bit cleared
-  * normalizer.tcp urgent ptr: packets without data with urgent
+  * normalizer.tcp_nonce: packets with nonce bit cleared
+  * normalizer.test_tcp_nonce: test packets with nonce bit cleared
+  * normalizer.tcp_urgent_ptr: packets without data with urgent
     pointer cleared
-  * normalizer.test tcp urgent ptr: test packets without data with
+  * normalizer.test_tcp_urgent_ptr: test packets without data with
     urgent pointer cleared
-  * normalizer.tcp ecn pkt: packets with ECN bits cleared
-  * normalizer.test tcp ecn pkt: test packets with ECN bits cleared
-  * normalizer.tcp ts ecr: timestamp cleared on non-ACKs
-  * normalizer.test tcp ts ecr: test timestamp cleared on non-ACKs
-  * normalizer.tcp req urg: cleared urgent pointer when urgent flag
+  * normalizer.tcp_ecn_pkt: packets with ECN bits cleared
+  * normalizer.test_tcp_ecn_pkt: test packets with ECN bits cleared
+  * normalizer.tcp_ts_ecr: timestamp cleared on non-ACKs
+  * normalizer.test_tcp_ts_ecr: test timestamp cleared on non-ACKs
+  * normalizer.tcp_req_urg: cleared urgent pointer when urgent flag
     is not set
-  * normalizer.test tcp req urg: test cleared urgent pointer when
+  * normalizer.test_tcp_req_urg: test cleared urgent pointer when
     urgent flag is not set
-  * normalizer.tcp req pay: cleared urgent pointer and urgent flag
+  * normalizer.tcp_req_pay: cleared urgent pointer and urgent flag
     when there is no payload
-  * normalizer.test tcp req pay: test cleared urgent pointer and
+  * normalizer.test_tcp_req_pay: test cleared urgent pointer and
     urgent flag when there is no payload
-  * normalizer.tcp req urp: cleared the urgent flag if the urgent
+  * normalizer.tcp_req_urp: cleared the urgent flag if the urgent
     pointer is not set
-  * normalizer.test tcp req urp: test cleared the urgent flag if the
+  * normalizer.test_tcp_req_urp: test cleared the urgent flag if the
     urgent pointer is not set
-  * normalizer.tcp trim syn: tcp segments trimmed on SYN
-  * normalizer.test tcp trim syn: test tcp segments trimmed on SYN
-  * normalizer.tcp trim rst: RST packets with data trimmed
-  * normalizer.test tcp trim rst: test RST packets with data trimmed
-  * normalizer.tcp trim win: data trimed to window
-  * normalizer.test tcp trim win: test data trimed to window
-  * normalizer.tcp trim mss: data trimmed to MSS
-  * normalizer.test tcp trim mss: test data trimmed to MSS
-  * normalizer.tcp ecn session: ECN bits cleared
-  * normalizer.test tcp ecn session: test ECN bits cleared
-  * normalizer.tcp ts nop: timestamp options cleared
-  * normalizer.test tcp ts nop: test timestamp options cleared
-  * normalizer.tcp ips data: normalized segments
-  * normalizer.test tcp ips data: test normalized segments
-  * normalizer.tcp block: blocked segments
-  * normalizer.test tcp block: test blocked segments
+  * normalizer.tcp_trim_syn: tcp segments trimmed on SYN
+  * normalizer.test_tcp_trim_syn: test tcp segments trimmed on SYN
+  * normalizer.tcp_trim_rst: RST packets with data trimmed
+  * normalizer.test_tcp_trim_rst: test RST packets with data trimmed
+  * normalizer.tcp_trim_win: data trimed to window
+  * normalizer.test_tcp_trim_win: test data trimed to window
+  * normalizer.tcp_trim_mss: data trimmed to MSS
+  * normalizer.test_tcp_trim_mss: test data trimmed to MSS
+  * normalizer.tcp_ecn_session: ECN bits cleared
+  * normalizer.test_tcp_ecn_session: test ECN bits cleared
+  * normalizer.tcp_ts_nop: timestamp options cleared
+  * normalizer.test_tcp_ts_nop: test timestamp options cleared
+  * normalizer.tcp_ips_data: normalized segments
+  * normalizer.test_tcp_ips_data: test normalized segments
+  * normalizer.tcp_block: blocked segments
+  * normalizer.test_tcp_block: test blocked segments
 
 
-8.19. packet_capture
+8.22. packet_capture
 
 --------------
 
@@ -5707,7 +5740,7 @@ Peg counts:
     filter
 
 
-8.20. perf_monitor
+8.23. perf_monitor
 
 --------------
 
@@ -5745,7 +5778,7 @@ Peg counts:
   * perf_monitor.packets: total packets
 
 
-8.21. pop
+8.24. pop
 
 --------------
 
@@ -5776,18 +5809,18 @@ Peg counts:
 
   * pop.packets: total packets processed
   * pop.sessions: total pop sessions
-  * pop.b64 attachments: total base64 attachments decoded
-  * pop.b64 decoded bytes: total base64 decoded bytes
-  * pop.qp attachments: total quoted-printable attachments decoded
-  * pop.qp decoded bytes: total quoted-printable decoded bytes
-  * pop.uu attachments: total uu attachments decoded
-  * pop.uu decoded bytes: total uu decoded bytes
-  * pop.non-encoded attachments: total non-encoded attachments
+  * pop.b64_attachments: total base64 attachments decoded
+  * pop.b64_decoded_bytes: total base64 decoded bytes
+  * pop.qp_attachments: total quoted-printable attachments decoded
+  * pop.qp_decoded_bytes: total quoted-printable decoded bytes
+  * pop.uu_attachments: total uu attachments decoded
+  * pop.uu_decoded_bytes: total uu decoded bytes
+  * pop.non_encoded_attachments: total non-encoded attachments
     extracted
-  * pop.non-encoded bytes: total non-encoded extracted bytes
+  * pop.non_encoded_bytes: total non-encoded extracted bytes
 
 
-8.22. port_scan
+8.25. port_scan
 
 --------------
 
@@ -5845,7 +5878,7 @@ Rules:
   * 122:27 (port_scan) open port
 
 
-8.23. port_scan_global
+8.26. port_scan_global
 
 --------------
 
@@ -5863,7 +5896,7 @@ Peg counts:
   * port_scan_global.packets: total packets
 
 
-8.24. reputation
+8.27. reputation
 
 --------------
 
@@ -5898,10 +5931,10 @@ Peg counts:
   * reputation.blacklisted: number of packets blacklisted
   * reputation.whitelisted: number of packets whitelisted
   * reputation.monitored: number of packets monitored
-  * reputation.memory allocated: total memory allocated
+  * reputation.memory_allocated: total memory allocated
 
 
-8.25. rpc_decode
+8.28. rpc_decode
 
 --------------
 
@@ -5922,7 +5955,7 @@ Peg counts:
   * rpc_decode.packets: total packets
 
 
-8.26. sip
+8.29. sip
 
 --------------
 
@@ -5990,9 +6023,9 @@ Peg counts:
   * sip.sessions: total sessions
   * sip.events: events generated
   * sip.dialogs: total dialogs
-  * sip.ignored channels: total channels ignored
-  * sip.ignored sessions: total sessions ignored
-  * sip.total requests: total requests
+  * sip.ignored_channels: total channels ignored
+  * sip.ignored_sessions: total sessions ignored
+  * sip.total_requests: total requests
   * sip.invite: invite
   * sip.cancel: cancel
   * sip.ack: ack
@@ -6007,7 +6040,7 @@ Peg counts:
   * sip.message: message
   * sip.notify: notify
   * sip.prack: prack
-  * sip.total responses: total responses
+  * sip.total_responses: total responses
   * sip.1xx: 1xx
   * sip.2xx: 2xx
   * sip.3xx: 3xx
@@ -6019,7 +6052,7 @@ Peg counts:
   * sip.9xx: 9xx
 
 
-8.27. smtp
+8.30. smtp
 
 --------------
 
@@ -6097,20 +6130,20 @@ Peg counts:
 
   * smtp.packets: total packets processed
   * smtp.sessions: total smtp sessions
-  * smtp.concurrent sessions: total concurrent smtp sessions
-  * smtp.max concurrent sessions: maximum concurrent smtp sessions
-  * smtp.b64 attachments: total base64 attachments decoded
-  * smtp.b64 decoded bytes: total base64 decoded bytes
-  * smtp.qp attachments: total quoted-printable attachments decoded
-  * smtp.qp decoded bytes: total quoted-printable decoded bytes
-  * smtp.uu attachments: total uu attachments decoded
-  * smtp.uu decoded bytes: total uu decoded bytes
-  * smtp.non-encoded attachments: total non-encoded attachments
+  * smtp.concurrent_sessions: total concurrent smtp sessions
+  * smtp.max_concurrent_sessions: maximum concurrent smtp sessions
+  * smtp.b64_attachments: total base64 attachments decoded
+  * smtp.b64_decoded_bytes: total base64 decoded bytes
+  * smtp.qp_attachments: total quoted-printable attachments decoded
+  * smtp.qp_decoded_bytes: total quoted-printable decoded bytes
+  * smtp.uu_attachments: total uu attachments decoded
+  * smtp.uu_decoded_bytes: total uu decoded bytes
+  * smtp.non_encoded_attachments: total non-encoded attachments
     extracted
-  * smtp.non-encoded bytes: total non-encoded extracted bytes
+  * smtp.non_encoded_bytes: total non-encoded extracted bytes
 
 
-8.28. ssh
+8.31. ssh
 
 --------------
 
@@ -6142,7 +6175,7 @@ Peg counts:
   * ssh.packets: total packets
 
 
-8.29. ssl
+8.32. ssl
 
 --------------
 
@@ -6168,25 +6201,25 @@ Peg counts:
 
   * ssl.packets: total packets processed
   * ssl.decoded: ssl packets decoded
-  * ssl.client hello: total client hellos
-  * ssl.server hello: total server hellos
+  * ssl.client_hello: total client hellos
+  * ssl.server_hello: total server hellos
   * ssl.certificate: total ssl certificates
-  * ssl.server done: total server done
-  * ssl.client key exchange: total client key exchanges
-  * ssl.server key exchange: total server key exchanges
-  * ssl.change cipher: total change cipher records
+  * ssl.server_done: total server done
+  * ssl.client_key_exchange: total client key exchanges
+  * ssl.server_key_exchange: total server key exchanges
+  * ssl.change_cipher: total change cipher records
   * ssl.finished: total handshakes finished
-  * ssl.client application: total client application records
-  * ssl.server application: total server application records
+  * ssl.client_application: total client application records
+  * ssl.server_application: total server application records
   * ssl.alert: total ssl alert records
-  * ssl.unrecognized records: total unrecognized records
-  * ssl.handshakes completed: total completed ssl handshakes
-  * ssl.bad handshakes: total bad handshakes
-  * ssl.sessions ignored: total sessions ignore
-  * ssl.detection disabled: total detection disabled
+  * ssl.unrecognized_records: total unrecognized records
+  * ssl.handshakes_completed: total completed ssl handshakes
+  * ssl.bad_handshakes: total bad handshakes
+  * ssl.sessions_ignored: total sessions ignore
+  * ssl.detection_disabled: total detection disabled
 
 
-8.30. stream
+8.33. stream
 
 --------------
 
@@ -6236,68 +6269,68 @@ Configuration:
 
 Peg counts:
 
-  * stream.ip flows: total ip sessions
-  * stream.ip total prunes: total ip sessions pruned
-  * stream.ip idle prunes: ip sessions pruned due to timeout
-  * stream.ip excess prunes: ip sessions pruned due to excess
-  * stream.ip uni prunes: ip uni sessions pruned
-  * stream.ip preemptive prunes: ip sessions pruned during preemptive
+  * stream.ip_flows: total ip sessions
+  * stream.ip_total_prunes: total ip sessions pruned
+  * stream.ip_idle_prunes: ip sessions pruned due to timeout
+  * stream.ip_excess_prunes: ip sessions pruned due to excess
+  * stream.ip_uni_prunes: ip uni sessions pruned
+  * stream.ip_preemptive_prunes: ip sessions pruned during preemptive
     pruning
-  * stream.ip memcap prunes: ip sessions pruned due to memcap
-  * stream.ip ha prunes: ip sessions pruned by high availability sync
-  * stream.icmp flows: total icmp sessions
-  * stream.icmp total prunes: total icmp sessions pruned
-  * stream.icmp idle prunes: icmp sessions pruned due to timeout
-  * stream.icmp excess prunes: icmp sessions pruned due to excess
-  * stream.icmp uni prunes: icmp uni sessions pruned
-  * stream.icmp preemptive prunes: icmp sessions pruned during
+  * stream.ip_memcap_prunes: ip sessions pruned due to memcap
+  * stream.ip_ha_prunes: ip sessions pruned by high availability sync
+  * stream.icmp_flows: total icmp sessions
+  * stream.icmp_total_prunes: total icmp sessions pruned
+  * stream.icmp_idle_prunes: icmp sessions pruned due to timeout
+  * stream.icmp_excess_prunes: icmp sessions pruned due to excess
+  * stream.icmp_uni_prunes: icmp uni sessions pruned
+  * stream.icmp_preemptive_prunes: icmp sessions pruned during
     preemptive pruning
-  * stream.icmp memcap prunes: icmp sessions pruned due to memcap
-  * stream.icmp ha prunes: icmp sessions pruned by high availability
+  * stream.icmp_memcap_prunes: icmp sessions pruned due to memcap
+  * stream.icmp_ha_prunes: icmp sessions pruned by high availability
     sync
-  * stream.tcp flows: total tcp sessions
-  * stream.tcp total prunes: total tcp sessions pruned
-  * stream.tcp idle prunes: tcp sessions pruned due to timeout
-  * stream.tcp excess prunes: tcp sessions pruned due to excess
-  * stream.tcp uni prunes: tcp uni sessions pruned
-  * stream.tcp preemptive prunes: tcp sessions pruned during
+  * stream.tcp_flows: total tcp sessions
+  * stream.tcp_total_prunes: total tcp sessions pruned
+  * stream.tcp_idle_prunes: tcp sessions pruned due to timeout
+  * stream.tcp_excess_prunes: tcp sessions pruned due to excess
+  * stream.tcp_uni_prunes: tcp uni sessions pruned
+  * stream.tcp_preemptive_prunes: tcp sessions pruned during
     preemptive pruning
-  * stream.tcp memcap prunes: tcp sessions pruned due to memcap
-  * stream.tcp ha prunes: tcp sessions pruned by high availability
+  * stream.tcp_memcap_prunes: tcp sessions pruned due to memcap
+  * stream.tcp_ha_prunes: tcp sessions pruned by high availability
     sync
-  * stream.udp flows: total udp sessions
-  * stream.udp total prunes: total udp sessions pruned
-  * stream.udp idle prunes: udp sessions pruned due to timeout
-  * stream.udp excess prunes: udp sessions pruned due to excess
-  * stream.udp uni prunes: udp uni sessions pruned
-  * stream.udp preemptive prunes: udp sessions pruned during
+  * stream.udp_flows: total udp sessions
+  * stream.udp_total_prunes: total udp sessions pruned
+  * stream.udp_idle_prunes: udp sessions pruned due to timeout
+  * stream.udp_excess_prunes: udp sessions pruned due to excess
+  * stream.udp_uni_prunes: udp uni sessions pruned
+  * stream.udp_preemptive_prunes: udp sessions pruned during
     preemptive pruning
-  * stream.udp memcap prunes: udp sessions pruned due to memcap
-  * stream.udp ha prunes: udp sessions pruned by high availability
+  * stream.udp_memcap_prunes: udp sessions pruned due to memcap
+  * stream.udp_ha_prunes: udp sessions pruned by high availability
     sync
-  * stream.user flows: total user sessions
-  * stream.user total prunes: total user sessions pruned
-  * stream.user idle prunes: user sessions pruned due to timeout
-  * stream.user excess prunes: user sessions pruned due to excess
-  * stream.user uni prunes: user uni sessions pruned
-  * stream.user preemptive prunes: user sessions pruned during
+  * stream.user_flows: total user sessions
+  * stream.user_total_prunes: total user sessions pruned
+  * stream.user_idle_prunes: user sessions pruned due to timeout
+  * stream.user_excess_prunes: user sessions pruned due to excess
+  * stream.user_uni_prunes: user uni sessions pruned
+  * stream.user_preemptive_prunes: user sessions pruned during
     preemptive pruning
-  * stream.user memcap prunes: user sessions pruned due to memcap
-  * stream.user ha prunes: user sessions pruned by high availability
+  * stream.user_memcap_prunes: user sessions pruned due to memcap
+  * stream.user_ha_prunes: user sessions pruned by high availability
     sync
-  * stream.file flows: total file sessions
-  * stream.file total prunes: total file sessions pruned
-  * stream.file idle prunes: file sessions pruned due to timeout
-  * stream.file excess prunes: file sessions pruned due to excess
-  * stream.file uni prunes: file uni sessions pruned
-  * stream.file preemptive prunes: file sessions pruned during
+  * stream.file_flows: total file sessions
+  * stream.file_total_prunes: total file sessions pruned
+  * stream.file_idle_prunes: file sessions pruned due to timeout
+  * stream.file_excess_prunes: file sessions pruned due to excess
+  * stream.file_uni_prunes: file uni sessions pruned
+  * stream.file_preemptive_prunes: file sessions pruned during
     preemptive pruning
-  * stream.file memcap prunes: file sessions pruned due to memcap
-  * stream.file ha prunes: file sessions pruned by high availability
+  * stream.file_memcap_prunes: file sessions pruned due to memcap
+  * stream.file_ha_prunes: file sessions pruned by high availability
     sync
 
 
-8.31. stream_file
+8.34. stream_file
 
 --------------
 
@@ -6310,7 +6343,7 @@ Configuration:
   * bool stream_file.upload = false: indicate file transfer direction
 
 
-8.32. stream_icmp
+8.35. stream_icmp
 
 --------------
 
@@ -6325,15 +6358,15 @@ Configuration:
 
 Peg counts:
 
-  * stream_icmp.sessions: total icmp sessions
-  * stream_icmp.max: max icmp sessions
-  * stream_icmp.created: icmp session trackers created
-  * stream_icmp.released: icmp session trackers released
-  * stream_icmp.timeouts: icmp session timeouts
-  * stream_icmp.prunes: icmp session prunes
+  * stream_icmp.sessions: total icmp_ sessions
+  * stream_icmp.max: max icmp_ sessions
+  * stream_icmp.created: icmp_ session trackers created
+  * stream_icmp.released: icmp_ session trackers released
+  * stream_icmp.timeouts: icmp_ session timeouts
+  * stream_icmp.prunes: icmp_ session prunes
 
 
-8.33. stream_ip
+8.36. stream_ip
 
 --------------
 
@@ -6375,34 +6408,34 @@ Rules:
 
 Peg counts:
 
-  * stream_ip.sessions: total ip sessions
-  * stream_ip.max: max ip sessions
-  * stream_ip.created: ip session trackers created
-  * stream_ip.released: ip session trackers released
-  * stream_ip.timeouts: ip session timeouts
-  * stream_ip.prunes: ip session prunes
-  * stream_ip.total frags: total fragments
-  * stream_ip.current frags: current fragments
-  * stream_ip.max frags: max fragments
+  * stream_ip.sessions: total ip_ sessions
+  * stream_ip.max: max ip_ sessions
+  * stream_ip.created: ip_ session trackers created
+  * stream_ip.released: ip_ session trackers released
+  * stream_ip.timeouts: ip_ session timeouts
+  * stream_ip.prunes: ip_ session prunes
+  * stream_ip.total_frags: total fragments
+  * stream_ip.current_frags: current fragments
+  * stream_ip.max_frags: max fragments
   * stream_ip.reassembled: reassembled datagrams
   * stream_ip.discards: fragments discarded
-  * stream_ip.frag timeouts: datagrams abandoned
+  * stream_ip.frag_timeouts: datagrams abandoned
   * stream_ip.overlaps: overlapping fragments
   * stream_ip.anomalies: anomalies detected
   * stream_ip.alerts: alerts generated
   * stream_ip.drops: fragments dropped
-  * stream_ip.trackers added: datagram trackers created
-  * stream_ip.trackers freed: datagram trackers released
-  * stream_ip.trackers cleared: datagram trackers cleared
-  * stream_ip.trackers completed: datagram trackers completed
-  * stream_ip.nodes inserted: fragments added to tracker
-  * stream_ip.nodes deleted: fragments deleted from tracker
-  * stream_ip.memory used: current memory usage in bytes
-  * stream_ip.reassembled bytes: total reassembled bytes
-  * stream_ip.fragmented bytes: total fragmented bytes
+  * stream_ip.trackers_added: datagram trackers created
+  * stream_ip.trackers_freed: datagram trackers released
+  * stream_ip.trackers_cleared: datagram trackers cleared
+  * stream_ip.trackers_completed: datagram trackers completed
+  * stream_ip.nodes_inserted: fragments added to tracker
+  * stream_ip.nodes_deleted: fragments deleted from tracker
+  * stream_ip.memory_used: current memory usage in bytes
+  * stream_ip.reassembled_bytes: total reassembled bytes
+  * stream_ip.fragmented_bytes: total fragmented bytes
 
 
-8.34. stream_tcp
+8.37. stream_tcp
 
 --------------
 
@@ -6476,40 +6509,40 @@ Rules:
 
 Peg counts:
 
-  * stream_tcp.sessions: total tcp sessions
-  * stream_tcp.max: max tcp sessions
-  * stream_tcp.created: tcp session trackers created
-  * stream_tcp.released: tcp session trackers released
-  * stream_tcp.timeouts: tcp session timeouts
-  * stream_tcp.prunes: tcp session prunes
+  * stream_tcp.sessions: total tcp_ sessions
+  * stream_tcp.max: max tcp_ sessions
+  * stream_tcp.created: tcp_ session trackers created
+  * stream_tcp.released: tcp_ session trackers released
+  * stream_tcp.timeouts: tcp_ session timeouts
+  * stream_tcp.prunes: tcp_ session prunes
   * stream_tcp.resyns: SYN received on established session
   * stream_tcp.discards: tcp packets discarded
   * stream_tcp.events: events generated
   * stream_tcp.ignored: tcp packets ignored
   * stream_tcp.untracked: tcp packets not tracked
-  * stream_tcp.syn trackers: tcp session tracking started on syn
-  * stream_tcp.syn-ack trackers: tcp session tracking started on
+  * stream_tcp.syn_trackers: tcp session tracking started on syn
+  * stream_tcp.syn_ack_trackers: tcp session tracking started on
     syn-ack
-  * stream_tcp.3way trackers: tcp session tracking started on ack
-  * stream_tcp.data trackers: tcp session tracking started on data
-  * stream_tcp.segs queued: total segments queued
-  * stream_tcp.segs released: total segments released
-  * stream_tcp.segs split: tcp segments split when reassembling PDUs
-  * stream_tcp.segs used: queued tcp segments applied to reassembled
+  * stream_tcp.3way_trackers: tcp session tracking started on ack
+  * stream_tcp.data_trackers: tcp session tracking started on data
+  * stream_tcp.segs_queued: total segments queued
+  * stream_tcp.segs_released: total segments released
+  * stream_tcp.segs_split: tcp segments split when reassembling PDUs
+  * stream_tcp.segs_used: queued tcp segments applied to reassembled
     PDUs
-  * stream_tcp.rebuilt packets: total reassembled PDUs
-  * stream_tcp.rebuilt buffers: rebuilt PDU sections
-  * stream_tcp.rebuilt bytes: total rebuilt bytes
+  * stream_tcp.rebuilt_packets: total reassembled PDUs
+  * stream_tcp.rebuilt_buffers: rebuilt PDU sections
+  * stream_tcp.rebuilt_bytes: total rebuilt bytes
   * stream_tcp.overlaps: overlapping segments queued
   * stream_tcp.gaps: missing data between PDUs
-  * stream_tcp.max segs: number of times the maximum queued segment
+  * stream_tcp.max_segs: number of times the maximum queued segment
     limit was reached
-  * stream_tcp.max bytes: number of times the maximum queued byte
+  * stream_tcp.max_bytes: number of times the maximum queued byte
     limit was reached
-  * stream_tcp.internal events: 135:X events generated
-  * stream_tcp.client cleanups: number of times data from server was
+  * stream_tcp.internal_events: 135:X events generated
+  * stream_tcp.client_cleanups: number of times data from server was
     flushed when session released
-  * stream_tcp.server cleanups: number of times data from client was
+  * stream_tcp.server_cleanups: number of times data from client was
     flushed when session released
   * stream_tcp.memory: current memory in use
   * stream_tcp.initializing: number of sessions currently
@@ -6518,7 +6551,7 @@ Peg counts:
   * stream_tcp.closing: number of sessions currently closing
 
 
-8.35. stream_udp
+8.38. stream_udp
 
 --------------
 
@@ -6535,15 +6568,15 @@ Configuration:
 
 Peg counts:
 
-  * stream_udp.sessions: total udp sessions
-  * stream_udp.max: max udp sessions
-  * stream_udp.created: udp session trackers created
-  * stream_udp.released: udp session trackers released
-  * stream_udp.timeouts: udp session timeouts
-  * stream_udp.prunes: udp session prunes
+  * stream_udp.sessions: total udp_ sessions
+  * stream_udp.max: max udp_ sessions
+  * stream_udp.created: udp_ session trackers created
+  * stream_udp.released: udp_ session trackers released
+  * stream_udp.timeouts: udp_ session timeouts
+  * stream_udp.prunes: udp_ session prunes
 
 
-8.36. stream_user
+8.39. stream_user
 
 --------------
 
@@ -6555,9 +6588,10 @@ Configuration:
 
   * int stream_user.session_timeout = 30: session tracking timeout {
     1:86400 }
+  * int stream_user.trace: mask for enabling debug traces in module
 
 
-8.37. telnet
+8.40. telnet
 
 --------------
 
@@ -6586,7 +6620,7 @@ Peg counts:
   * telnet.packets: total packets
 
 
-8.38. wizard
+8.41. wizard
 
 --------------
 
@@ -6619,12 +6653,12 @@ Configuration:
 
 Peg counts:
 
-  * wizard.tcp scans: tcp payload scans
-  * wizard.tcp hits: tcp identifications
-  * wizard.udp scans: udp payload scans
-  * wizard.udp hits: udp identifications
-  * wizard.user scans: user payload scans
-  * wizard.user hits: user identifications
+  * wizard.tcp_scans: tcp payload scans
+  * wizard.tcp_hits: tcp identifications
+  * wizard.udp_scans: udp payload scans
+  * wizard.udp_hits: udp identifications
+  * wizard.user_scans: user payload scans
+  * wizard.user_hits: user identifications
 
 
 ---------------------------------------------------------------------
@@ -6681,6 +6715,11 @@ Configuration:
 What: overwrite packet contents
 
 Type: ips_action
+
+Configuration:
+
+  * bool rewrite.disable_replace = false: disable replace of packet
+    contents with rewrite rules
 
 
 ---------------------------------------------------------------------
@@ -7814,9 +7853,9 @@ Configuration:
 
 Peg counts:
 
-  * sd_pattern.below threshold: sd_pattern matched but missed
+  * sd_pattern.below_threshold: sd_pattern matched but missed
     threshold
-  * sd_pattern.pattern not found: sd_pattern did not not match
+  * sd_pattern.pattern_not_found: sd_pattern did not not match
   * sd_pattern.terminated: hyperscan terminated
 
 
@@ -9186,6 +9225,31 @@ can configure can be found by running the following command:
 snort --help-config http_inspect | grep http_inspect.profile
 
 
+15.7. SDF Preprocessor
+
+--------------
+
+The Snort 2.X SDF Preprocessor is gone, replaced by ips option
+sd_pattern. The sd_pattern rule option is synonymous with the
+sd_pattern option used for gid:138 rules, but has a different syntax.
+A major difference in syntax is the use of Hyperscan pattern matching
+library which provides a regex language similar to PCRE.
+
+To facilitate continued performance, sd_pattern rule option is
+implemented with Hyperscan pattern matching library. The rule option
+is now also utilized as a "fast pattern" in the Snort engine which
+provides a significant performance improvement over the separate
+detection step of earlier implementations.
+
+The preprocessor alert SDF_COMBO_ALERT (139:1) has been removed and
+has no replacement in Snort 3.X. This is because the rule offered no
+additional value over gid:138 rules and was difficult to interpret
+the result of.
+
+For more information, See Features > Sensitive Data Filtering for
+details.
+
+
 ---------------------------------------------------------------------
 
 16. Snort2Lua
@@ -10355,24 +10419,38 @@ with.
     Everything should be scoped as tightly as possible. Shared
     implementation declarations should go in a separate header from
     the interface. And so on.
-  * A .cc should include its own .h before any others (including
-    system headers). This ensures that the header stands on its own
-    and can be used by clients without include prerequisites and the
-    developer will be the first to find a dependency problem.
-  * Include required headers, all required headers, and nothing but
-    required headers. Don’t just clone a bunch of headers because it
-    is convenient.
-  * Try to keep includes in alpha order. This makes it easier to
-    maintain, avoid duplicates, etc.
-  * Any file depending on #ifdefs should include config.h as shown
-    below. A .h should include it before any other includes, and a
-    .cc should include it immediately after the include of its own
-    .h.
+  * All .cc files should include config.h with the standard block
+    shown below immediately following the initial comment blocks and
+    before anything else. This presents a consistent view of all
+    included header files as well as access to any other
+    configure-time definitions. No .h files should include config.h
+    unless they are guaranteed to be local header files (never
+    installed).
 
     #ifdef HAVE_CONFIG_H
     #include "config.h"
     #endif
 
+  * A .cc should include its own .h before any others aside from the
+    aforementioned config.h (including system headers). This ensures
+    that the header stands on its own and can be used by clients
+    without include prerequisites and the developer will be the first
+    to find a dependency issue.
+  * Split headers included from the local directory into a final
+    block of headers. For a .cc file, the final order of sets of
+    header includes should look like this:
+
+     1. config.h
+     2. its own .h file
+     3. system headers (.h/.hpp/.hxx)
+     4. C++ standard library headers (no file extension)
+     5. Snort headers external to the local directory (path-prefixed)
+     6. Snort headers in the local directory
+  * Include required headers, all required headers, and nothing but
+    required headers. Don’t just clone a bunch of headers because it
+    is convenient.
+  * Keep includes in alphabetical order. This makes it easier to
+    maintain, avoid duplicates, etc.
   * Do not put using statements in headers unless they are tightly
     scoped.
 
@@ -10737,8 +10815,6 @@ libraries see the Getting Started section of the manual.
   * addr appid.session_log_filter.src_ip = 0.0.0.0/32: source ip
     address in CIDR format
   * port appid.session_log_filter.src_port: source port { 1: }
-  * string appid.thirdparty_appid_dir: directory to load thirdparty
-    appid detectors from
   * ip4 arp_spoof.hosts[].ip: host ip address
   * mac arp_spoof.hosts[].mac: host mac address
   * int asn1.absolute_offset: absolute offset from the beginning of
@@ -11577,6 +11653,8 @@ libraries see the Getting Started section of the manual.
   * enum reputation.white = unblack: specify the meaning of whitelist
     { unblack|trust }
   * int rev.~: revision { 1: }
+  * bool rewrite.disable_replace = false: disable replace of packet
+    contents with rewrite rules
   * int rpc.~app: application number
   * int rpc.proc: procedure number or * for any
   * int rpc.ver: version number or * for any
@@ -12032,6 +12110,7 @@ libraries see the Getting Started section of the manual.
     before being eligible for pruning { 1: }
   * int stream_user.session_timeout = 30: session tracking timeout {
     1:86400 }
+  * int stream_user.trace: mask for enabling debug traces in module
   * int suppress[].gid = 0: rule generator ID { 0: }
   * string suppress[].ip: restrict suppression to these addresses
     according to track
@@ -12096,92 +12175,95 @@ libraries see the Getting Started section of the manual.
 
 --------------
 
-  * appid.aim clients: count of aim clients discovered
-  * appid.battlefield flows: count of battle field flows discovered
-  * appid.bgp flows: count of bgp flows discovered
-  * appid.bit clients: count of bittorrent clients discovered
-  * appid.bit flows: count of bittorrent flows discovered
-  * appid.bittracker clients: count of bittorrent tracker clients
+  * appid.aim_clients: count of aim clients discovered
+  * appid.battlefield_flows: count of battle field flows discovered
+  * appid.bgp_flows: count of bgp flows discovered
+  * appid.bit_clients: count of bittorrent clients discovered
+  * appid.bit_flows: count of bittorrent flows discovered
+  * appid.bittracker_clients: count of bittorrent tracker clients
     discovered
-  * appid.bootp flows: count of bootp flows discovered
-  * appid.dcerpc tcp flows: count of dce rpc flows over tcp
+  * appid.bootp_flows: count of bootp flows discovered
+  * appid.dcerpc_tcp_flows: count of dce rpc flows over tcp
     discovered
-  * appid.dcerpc udp flows: count of dce rpc flows over udp
+  * appid.dcerpc_udp_flows: count of dce rpc flows over udp
     discovered
-  * appid.direct connect flows: count of direct connect flows
+  * appid.direct_connect_flows: count of direct connect flows
     discovered
-  * appid.dns tcp flows: count of dns flows over tcp discovered
-  * appid.dns udp flows: count of dns flows over udp discovered
-  * appid.ftp flows: count of ftp flows discovered
-  * appid.ftps flows: count of ftps flows discovered
-  * appid.http flows: count of http flows discovered
-  * appid.ignored packets: count of packets ignored
-  * appid.imap flows: count of imap service flows discovered
-  * appid.imaps flows: count of imap TLS service flows discovered
-  * appid.irc flows: count of irc service flows discovered
-  * appid.kerberos clients: count of kerberos clients discovered
-  * appid.kerberos flows: count of kerberos service flows discovered
-  * appid.kerberos users: count of kerberos users discovered
-  * appid.lpr flows: count of lpr service flows discovered
-  * appid.mdns flows: count of mdns service flows discovered
-  * appid.msn clients: count of msn clients discovered
-  * appid.mysql flows: count of mysql service flows discovered
-  * appid.netbios dgm flows: count of netbios-dgm service flows
+  * appid.dns_tcp_flows: count of dns flows over tcp discovered
+  * appid.dns_udp_flows: count of dns flows over udp discovered
+  * appid.ftp_flows: count of ftp flows discovered
+  * appid.ftps_flows: count of ftps flows discovered
+  * appid.http_flows: count of http flows discovered
+  * appid.ignored_packets: count of packets ignored
+  * appid.imap_flows: count of imap service flows discovered
+  * appid.imaps_flows: count of imap TLS service flows discovered
+  * appid.irc_flows: count of irc service flows discovered
+  * appid.kerberos_clients: count of kerberos clients discovered
+  * appid.kerberos_flows: count of kerberos service flows discovered
+  * appid.kerberos_users: count of kerberos users discovered
+  * appid.lpr_flows: count of lpr service flows discovered
+  * appid.mdns_flows: count of mdns service flows discovered
+  * appid.msn_clients: count of msn clients discovered
+  * appid.mysql_flows: count of mysql service flows discovered
+  * appid.netbios_dgm_flows: count of netbios-dgm service flows
     discovered
-  * appid.netbios ns flows: count of netbios-ns service flows
+  * appid.netbios_ns_flows: count of netbios-ns service flows
     discovered
-  * appid.netbios ssn flows: count of netbios-ssn service flows
+  * appid.netbios_ssn_flows: count of netbios-ssn service flows
     discovered
-  * appid.nntp flows: count of nntp flows discovered
-  * appid.ntp flows: count of ntp flows discovered
+  * appid.nntp_flows: count of nntp flows discovered
+  * appid.ntp_flows: count of ntp flows discovered
   * appid.packets: count of packets received
-  * appid.pop flows: count of pop service flows discovered
-  * appid.processed packets: count of packets processed
-  * appid.radius flows: count of radius flows discovered
-  * appid.rexec flows: count of rexec flows discovered
-  * appid.rfb flows: count of rfb flows discovered
-  * appid.rlogin flows: count of rlogin flows discovered
-  * appid.rpc flows: count of rpc flows discovered
-  * appid.rshell flows: count of rshell flows discovered
-  * appid.rsync flows: count of rsync service flows discovered
-  * appid.rtmp flows: count of rtmp flows discovered
-  * appid.rtp clients: count of rtp clients discovered
-  * appid.sip clients: count of SIP clients discovered
-  * appid.sip flows: count of SIP flows discovered
-  * appid.smtp aol clients: count of AOL smtp clients discovered
-  * appid.smtp applemail clients: count of Apple Mail smtp clients
+  * appid.pop3_clients: count of pop3 clients discovered
+  * appid.pop3s_clients: count of pop3s clients discovered
+  * appid.pop_flows: count of pop service flows discovered
+  * appid.processed_packets: count of packets processed
+  * appid.radius_flows: count of radius flows discovered
+  * appid.rexec_flows: count of rexec flows discovered
+  * appid.rfb_flows: count of rfb flows discovered
+  * appid.rlogin_flows: count of rlogin flows discovered
+  * appid.rpc_flows: count of rpc flows discovered
+  * appid.rshell_flows: count of rshell flows discovered
+  * appid.rsync_flows: count of rsync service flows discovered
+  * appid.rtmp_flows: count of rtmp flows discovered
+  * appid.rtp_clients: count of rtp clients discovered
+  * appid.sip_clients: count of SIP clients discovered
+  * appid.sip_flows: count of SIP flows discovered
+  * appid.smtp_aol_clients: count of AOL smtp clients discovered
+  * appid.smtp_applemail_clients: count of Apple Mail smtp clients
     discovered
-  * appid.smtp eudora clients: count of Eudora smtp clients
+  * appid.smtp_eudora_clients: count of Eudora smtp clients
     discovered
-  * appid.smtp eudora pro clients: count of Eudora Pro smtp clients
+  * appid.smtp_eudora_pro_clients: count of Eudora Pro smtp clients
     discovered
-  * appid.smtp evolution clients: count of Evolution smtp clients
+  * appid.smtp_evolution_clients: count of Evolution smtp clients
     discovered
-  * appid.smtp flows: count of smtp flows discovered
-  * appid.smtp kmail clients: count of KMail smtp clients discovered
-  * appid.smtp lotus notes clients: count of Lotus Notes smtp clients
+  * appid.smtp_flows: count of smtp flows discovered
+  * appid.smtp_kmail_clients: count of KMail smtp clients discovered
+  * appid.smtp_lotus_notes_clients: count of Lotus Notes smtp clients
     discovered
-  * appid.smtp microsoft outlook clients: count of Microsoft Outlook
+  * appid.smtp_microsoft_outlook_clients: count of Microsoft Outlook
     smtp clients discovered
-  * appid.smtp microsoft outlook express clients: count of Microsoft
+  * appid.smtp_microsoft_outlook_express_clients: count_of Microsoft
     Outlook Express smtp clients discovered
-  * appid.smtp microsoft outlook imo clients: count of Microsoft
+  * appid.smtp_microsoft_outlook_imo_clients: count of Microsoft
     Outlook IMO smtp clients discovered
-  * appid.smtp mutt clients: count of Mutt smtp clients discovered
-  * appid.smtps flows: count of smtps flows discovered
-  * appid.smtp thunderbird clients: count of Thunderbird smtp clients
+  * appid.smtp_mutt_clients: count of Mutt smtp clients discovered
+  * appid.smtps_flows: count of smtps flows discovered
+  * appid.smtp_thunderbird_clients: count of Thunderbird smtp clients
     discovered
-  * appid.snmp flows: count of snmp flows discovered
-  * appid.ssh clients: count of ssh clients discovered
-  * appid.ssh flows: count of ssh flows discovered
-  * appid.ssl flows: count of ssl flows discovered
-  * appid.telnet flows: count of telnet flows discovered
-  * appid.tftp flows: count of tftp flows discovered
-  * appid.timbuktu flows: count of timbuktu flows discovered
-  * appid.tns clients: count of tns clients discovered
-  * appid.tns flows: count of tns flows discovered
-  * appid.vnc clients: count of vnc clients discovered
-  * appid.yahoo messenger clients: count of Yahoo Messenger clients
+  * appid.snmp_flows: count of snmp flows discovered
+  * appid.ssh_clients: count of ssh clients discovered
+  * appid.ssh_flows: count of ssh flows discovered
+  * appid.ssl_flows: count of ssl flows discovered
+  * appid.telnet_flows: count of telnet flows discovered
+  * appid.tftp_flows: count of tftp flows discovered
+  * appid.timbuktu_clients: count of timbuktu clients discovered
+  * appid.timbuktu_flows: count of timbuktu flows discovered
+  * appid.tns_clients: count of tns clients discovered
+  * appid.tns_flows: count of tns flows discovered
+  * appid.vnc_clients: count of vnc clients discovered
+  * appid.yahoo_messenger_clients: count of Yahoo Messenger clients
     discovered
   * arp_spoof.packets: total packets
   * back_orifice.packets: total packets
@@ -12199,9 +12281,9 @@ libraries see the Getting Started section of the manual.
   * daq.idle: attempts to acquire from DAQ without available packets
   * daq.ignore: total ignore verdicts
   * daq.injected: active responses or replacements
-  * daq.internal blacklist: packets blacklisted internally due to
+  * daq.internal_blacklist: packets blacklisted internally due to
     lack of DAQ support
-  * daq.internal whitelist: packets whitelisted internally due to
+  * daq.internal_whitelist: packets whitelisted internally due to
     lack of DAQ support
   * daq.outstanding: packets unprocessed
   * daq.pcaps: total files and interfaces processed
@@ -12209,337 +12291,345 @@ libraries see the Getting Started section of the manual.
   * daq.replace: total replace verdicts
   * daq.skipped: packets skipped at startup
   * daq.whitelist: total whitelist verdicts
-  * dce_smb.Alter context responses: total connection-oriented alter
+  * dce_http_proxy.http_proxy_session_failures: failed http proxy
+    sessions
+  * dce_http_proxy.http_proxy_sessions: successful http proxy
+    sessions
+  * dce_http_server.http_server_session_failures: failed http server
+    sessions
+  * dce_http_server.http_server_sessions: successful http server
+    sessions
+  * dce_smb.alter_context_responses: total connection-oriented alter
     context responses
-  * dce_smb.Alter contexts: total connection-oriented alter contexts
-  * dce_smb.Auth3s: total connection-oriented auth3s
-  * dce_smb.Bind acks: total connection-oriented binds acks
-  * dce_smb.Bind naks: total connection-oriented bind naks
-  * dce_smb.Binds: total connection-oriented binds
-  * dce_smb.Cancels: total connection-oriented cancels
-  * dce_smb.Client frags reassembled: total connection-oriented
+  * dce_smb.alter_contexts: total connection-oriented alter contexts
+  * dce_smb.auth3s: total connection-oriented auth3s
+  * dce_smb.bind_acks: total connection-oriented binds acks
+  * dce_smb.bind_naks: total connection-oriented bind naks
+  * dce_smb.binds: total connection-oriented binds
+  * dce_smb.cancels: total connection-oriented cancels
+  * dce_smb.client_frags_reassembled: total connection-oriented
     client fragments reassembled
-  * dce_smb.Client max fragment size: connection-oriented client
+  * dce_smb.client_max_fragment_size: connection-oriented client
     maximum fragment size
-  * dce_smb.Client min fragment size: connection-oriented client
+  * dce_smb.client_min_fragment_size: connection-oriented client
     minimum fragment size
-  * dce_smb.Client segs reassembled: total connection-oriented client
+  * dce_smb.client_segs_reassembled: total connection-oriented client
     segments reassembled
-  * dce_smb.Client segs reassembled: total smb client segments
+  * dce_smb.client_segs_reassembled: total smb client segments
     reassembled
   * dce_smb.events: total events
-  * dce_smb.Faults: total connection-oriented faults
-  * dce_smb.Files processed: total smb files processed
-  * dce_smb.Ignored bytes: total ignored bytes
-  * dce_smb.Max outstanding requests: total smb maximum outstanding
+  * dce_smb.faults: total connection-oriented faults
+  * dce_smb.files_processed: total smb files processed
+  * dce_smb.ignored_bytes: total ignored bytes
+  * dce_smb.max_outstanding_requests: total smb maximum outstanding
     requests
-  * dce_smb.MS RPC/HTTP PDUs: total connection-oriented MS requests
+  * dce_smb.ms_rpc_http_pdus: total connection-oriented MS requests
     to send RPC over HTTP
-  * dce_smb.Orphaned: total connection-oriented orphaned
-  * dce_smb.Other requests: total connection-oriented other requests
-  * dce_smb.Other responses: total connection-oriented other
+  * dce_smb.orphaned: total connection-oriented orphaned
+  * dce_smb.other_requests: total connection-oriented other requests
+  * dce_smb.other_responses: total connection-oriented other
     responses
-  * dce_smb.Packets: total smb packets
-  * dce_smb.PDUs: total connection-oriented PDUs
-  * dce_smb.Rejects: total connection-oriented rejects
-  * dce_smb.Request fragments: total connection-oriented request
+  * dce_smb.packets: total smb packets
+  * dce_smb.pdus: total connection-oriented PDUs
+  * dce_smb.rejects: total connection-oriented rejects
+  * dce_smb.request_fragments: total connection-oriented request
     fragments
-  * dce_smb.Requests: total connection-oriented requests
-  * dce_smb.Response fragments: total connection-oriented response
+  * dce_smb.requests: total connection-oriented requests
+  * dce_smb.response_fragments: total connection-oriented response
     fragments
-  * dce_smb.Responses: total connection-oriented responses
-  * dce_smb.Server frags reassembled: total connection-oriented
+  * dce_smb.responses: total connection-oriented responses
+  * dce_smb.server_frags_reassembled: total connection-oriented
     server fragments reassembled
-  * dce_smb.Server max fragment size: connection-oriented server
+  * dce_smb.server_max_fragment_size: connection-oriented server
     maximum fragment size
-  * dce_smb.Server min fragment size: connection-oriented server
+  * dce_smb.server_min_fragment_size: connection-oriented server
     minimum fragment size
-  * dce_smb.Server segs reassembled: total connection-oriented server
+  * dce_smb.server_segs_reassembled: total connection-oriented server
     segments reassembled
-  * dce_smb.Server segs reassembled: total smb server segments
+  * dce_smb.server_segs_reassembled: total smb server segments
     reassembled
-  * dce_smb.Sessions: total smb sessions
-  * dce_smb.Shutdowns: total connection-oriented shutdowns
-  * dce_smb.SMBv2 close: total number of SMBv2 close packets seen
-  * dce_smb.SMBv2 create: total number of SMBv2 create packets seen
-  * dce_smb.SMBv2 read: total number of SMBv2 read packets seen
-  * dce_smb.SMBv2 set info: total number of SMBv2 set info packets
+  * dce_smb.sessions: total smb sessions
+  * dce_smb.shutdowns: total connection-oriented shutdowns
+  * dce_smb.smbv2_close: total number of SMBv2 close packets seen
+  * dce_smb.smbv2_create: total number of SMBv2 create packets seen
+  * dce_smb.smbv2_read: total number of SMBv2 read packets seen
+  * dce_smb.smbv2_set_info: total number of SMBv2 set info packets
     seen
-  * dce_smb.SMBv2 tree connect: total number of SMBv2 tree connect
+  * dce_smb.smbv2_tree_connect: total number of SMBv2 tree connect
     packets seen
-  * dce_smb.SMBv2 tree disconnect: total number of SMBv2 tree
+  * dce_smb.smbv2_tree_disconnect: total number of SMBv2 tree
     disconnect packets seen
-  * dce_smb.SMBv2 write: total number of SMBv2 write packets seen
-  * dce_tcp.Alter context responses: total connection-oriented alter
+  * dce_smb.smbv2_write: total number of SMBv2 write packets seen
+  * dce_tcp.alter_context_responses: total connection-oriented alter
     context responses
-  * dce_tcp.Alter contexts: total connection-oriented alter contexts
-  * dce_tcp.Auth3s: total connection-oriented auth3s
-  * dce_tcp.Bind acks: total connection-oriented binds acks
-  * dce_tcp.Bind naks: total connection-oriented bind naks
-  * dce_tcp.Binds: total connection-oriented binds
-  * dce_tcp.Cancels: total connection-oriented cancels
-  * dce_tcp.Client frags reassembled: total connection-oriented
+  * dce_tcp.alter_contexts: total connection-oriented alter contexts
+  * dce_tcp.auth3s: total connection-oriented auth3s
+  * dce_tcp.bind_acks: total connection-oriented binds acks
+  * dce_tcp.bind_naks: total connection-oriented bind naks
+  * dce_tcp.binds: total connection-oriented binds
+  * dce_tcp.cancels: total connection-oriented cancels
+  * dce_tcp.client_frags_reassembled: total connection-oriented
     client fragments reassembled
-  * dce_tcp.Client max fragment size: connection-oriented client
+  * dce_tcp.client_max_fragment_size: connection-oriented client
     maximum fragment size
-  * dce_tcp.Client min fragment size: connection-oriented client
+  * dce_tcp.client_min_fragment_size: connection-oriented client
     minimum fragment size
-  * dce_tcp.Client segs reassembled: total connection-oriented client
+  * dce_tcp.client_segs_reassembled: total connection-oriented client
     segments reassembled
   * dce_tcp.events: total events
-  * dce_tcp.Faults: total connection-oriented faults
-  * dce_tcp.MS RPC/HTTP PDUs: total connection-oriented MS requests
+  * dce_tcp.faults: total connection-oriented faults
+  * dce_tcp.ms_rpc_http_pdus: total connection-oriented MS requests
     to send RPC over HTTP
-  * dce_tcp.Orphaned: total connection-oriented orphaned
-  * dce_tcp.Other requests: total connection-oriented other requests
-  * dce_tcp.Other responses: total connection-oriented other
+  * dce_tcp.orphaned: total connection-oriented orphaned
+  * dce_tcp.other_requests: total connection-oriented other requests
+  * dce_tcp.other_responses: total connection-oriented other
     responses
-  * dce_tcp.PDUs: total connection-oriented PDUs
-  * dce_tcp.Rejects: total connection-oriented rejects
-  * dce_tcp.Request fragments: total connection-oriented request
+  * dce_tcp.pdus: total connection-oriented PDUs
+  * dce_tcp.rejects: total connection-oriented rejects
+  * dce_tcp.request_fragments: total connection-oriented request
     fragments
-  * dce_tcp.Requests: total connection-oriented requests
-  * dce_tcp.Response fragments: total connection-oriented response
+  * dce_tcp.requests: total connection-oriented requests
+  * dce_tcp.response_fragments: total connection-oriented response
     fragments
-  * dce_tcp.Responses: total connection-oriented responses
-  * dce_tcp.Server frags reassembled: total connection-oriented
+  * dce_tcp.responses: total connection-oriented responses
+  * dce_tcp.server_frags_reassembled: total connection-oriented
     server fragments reassembled
-  * dce_tcp.Server max fragment size: connection-oriented server
+  * dce_tcp.server_max_fragment_size: connection-oriented server
     maximum fragment size
-  * dce_tcp.Server min fragment size: connection-oriented server
+  * dce_tcp.server_min_fragment_size: connection-oriented server
     minimum fragment size
-  * dce_tcp.Server segs reassembled: total connection-oriented server
+  * dce_tcp.server_segs_reassembled: total connection-oriented server
     segments reassembled
-  * dce_tcp.Shutdowns: total connection-oriented shutdowns
-  * dce_tcp.tcp packets: total tcp packets
-  * dce_tcp.tcp sessions: total tcp sessions
-  * dce_udp.Acks: total connection-less acks
-  * dce_udp.Cancel acks: total connection-less cancel acks
-  * dce_udp.Cancels: total connection-less cancels
-  * dce_udp.Client facks: total connection-less client facks
+  * dce_tcp.shutdowns: total connection-oriented shutdowns
+  * dce_tcp.tcp_packets: total tcp packets
+  * dce_tcp.tcp_sessions: total tcp sessions
+  * dce_udp.acks: total connection-less acks
+  * dce_udp.cancel_acks: total connection-less cancel acks
+  * dce_udp.cancels: total connection-less cancels
+  * dce_udp.client_facks: total connection-less client facks
   * dce_udp.events: total events
-  * dce_udp.Faults: total connection-less faults
-  * dce_udp.Fragments: total connection-less fragments
-  * dce_udp.Frags reassembled: total connection-less fragments
+  * dce_udp.faults: total connection-less faults
+  * dce_udp.fragments: total connection-less fragments
+  * dce_udp.frags_reassembled: total connection-less fragments
     reassembled
-  * dce_udp.Max fragment size: connection-less maximum fragment size
-  * dce_udp.Max seqnum: max connection-less seqnum
-  * dce_udp.No calls: total connection-less no calls
-  * dce_udp.Other requests: total connection-less other requests
-  * dce_udp.Other responses: total connection-less other responses
-  * dce_udp.Ping: total connection-less ping
-  * dce_udp.Rejects: total connection-less rejects
-  * dce_udp.Requests: total connection-less requests
-  * dce_udp.Responses: total connection-less responses
-  * dce_udp.Server facks: total connection-less server facks
-  * dce_udp.udp packets: total udp packets
-  * dce_udp.udp sessions: total udp sessions
-  * dce_udp.Working: total connection-less working
-  * detection.alert limit: events previously triggered on same PDU
+  * dce_udp.max_fragment_size: connection-less maximum fragment size
+  * dce_udp.max_seqnum: max connection-less seqnum
+  * dce_udp.no_calls: total connection-less no calls
+  * dce_udp.other_requests: total connection-less other requests
+  * dce_udp.other_responses: total connection-less other responses
+  * dce_udp.ping: total connection-less ping
+  * dce_udp.rejects: total connection-less rejects
+  * dce_udp.requests: total connection-less requests
+  * dce_udp.responses: total connection-less responses
+  * dce_udp.server_facks: total connection-less server facks
+  * dce_udp.udp_packets: total udp packets
+  * dce_udp.udp_sessions: total udp sessions
+  * dce_udp.working: total connection-less working
+  * detection.alert_limit: events previously triggered on same PDU
   * detection.alerts: alerts not including IP reputation
-  * detection.alt searches: alt fast pattern searches in packet data
+  * detection.alt_searches: alt fast pattern searches in packet data
   * detection.analyzed: packets sent to detection
-  * detection.body searches: fast pattern searches in body buffer
-  * detection.cooked searches: fast pattern searches in cooked packet
+  * detection.body_searches: fast pattern searches in body buffer
+  * detection.cooked_searches: fast pattern searches in cooked packet
     data
-  * detection.event limit: events filtered
-  * detection.file searches: fast pattern searches in file buffer
-  * detection.hard evals: non-fast pattern rule evaluations
-  * detection.header searches: fast pattern searches in header buffer
-  * detection.key searches: fast pattern searches in key buffer
+  * detection.event_limit: events filtered
+  * detection.file_searches: fast pattern searches in file buffer
+  * detection.hard_evals: non-fast pattern rule evaluations
+  * detection.header_searches: fast pattern searches in header buffer
+  * detection.key_searches: fast pattern searches in key buffer
   * detection.logged: logged packets
-  * detection.log limit: events queued but not logged
-  * detection.match limit: fast pattern matches not processed
+  * detection.log_limit: events queued but not logged
+  * detection.match_limit: fast pattern matches not processed
   * detection.passed: passed packets
-  * detection.pkt searches: fast pattern searches in packet data
-  * detection.queue limit: events not queued because queue full
-  * detection.raw searches: fast pattern searches in raw packet data
-  * detection.total alerts: alerts including IP reputation
-  * dnp3.dnp3 application pdus: total dnp3 application pdus
-  * dnp3.dnp3 link layer frames: total dnp3 link layer frames
-  * dnp3.tcp pdus: total tcp pdus
-  * dnp3.total packets: total packets
-  * dnp3.udp packets: total udp packets
+  * detection.pkt_searches: fast pattern searches in packet data
+  * detection.queue_limit: events not queued because queue full
+  * detection.raw_searches: fast pattern searches in raw packet data
+  * detection.total_alerts: alerts including IP reputation
+  * dnp3.dnp3_application_pdus: total dnp3 application pdus
+  * dnp3.dnp3_link_layer_frames: total dnp3 link layer frames
+  * dnp3.tcp_pdus: total tcp pdus
+  * dnp3.total_packets: total packets
+  * dnp3.udp_packets: total udp packets
   * dns.packets: total packets processed
   * dns.requests: total dns requests
   * dns.responses: total dns responses
   * file_connector.messages: total messages
-  * file_id.cache failures: number of file cache add failures
-  * file_id.total file data: number of file data bytes processed
-  * file_id.total files: number of files processed
-  * file_log.total events: total file events
+  * file_id.cache_failures: number of file cache add failures
+  * file_id.total_file_data: number of file data bytes processed
+  * file_id.total_files: number of files processed
+  * file_log.total_events: total file events
   * ftp_data.packets: total packets
   * ftp_server.packets: total packets
   * gtp_inspect.events: requests
   * gtp_inspect.sessions: total sessions processed
-  * gtp_inspect.unknown infos: unknown information elements
-  * gtp_inspect.unknown types: unknown message types
-  * host_cache.lru cache adds: lru cache added new entry
-  * host_cache.lru cache clears: lru cache clear API calls
-  * host_cache.lru cache find hits: lru cache found entry in cache
-  * host_cache.lru cache find misses: lru cache did not find entry in
+  * gtp_inspect.unknown_infos: unknown information elements
+  * gtp_inspect.unknown_types: unknown message types
+  * host_cache.lru_cache_adds: lru cache added new entry
+  * host_cache.lru_cache_clears: lru cache clear API calls
+  * host_cache.lru_cache_find_hits: lru cache found entry in cache
+  * host_cache.lru_cache_find_misses: lru cache did not find entry in
     cache
-  * host_cache.lru cache prunes: lru cache pruned entry to make space
+  * host_cache.lru_cache_prunes: lru cache pruned entry to make space
     for new entry
-  * host_cache.lru cache removes: lru cache found entry and removed
+  * host_cache.lru_cache_removes: lru cache found entry and removed
     it
-  * host_cache.lru cache replaces: lru cache replaced existing entry
-  * host_tracker.service adds: host service adds
-  * host_tracker.service finds: host service finds
-  * host_tracker.service removes: host service removes
+  * host_cache.lru_cache_replaces: lru cache replaced existing entry
+  * host_tracker.service_adds: host service adds
+  * host_tracker.service_finds: host service finds
+  * host_tracker.service_removes: host service removes
   * http_inspect.chunked: chunked message bodies
-  * http_inspect.CONNECT requests: CONNECT requests inspected
-  * http_inspect.DELETE requests: DELETE requests inspected
+  * http_inspect.connect_requests: CONNECT requests inspected
+  * http_inspect.delete_requests: DELETE requests inspected
   * http_inspect.flows: HTTP connections inspected
-  * http_inspect.GET requests: GET requests inspected
-  * http_inspect.HEAD requests: HEAD requests inspected
+  * http_inspect.get_requests: GET requests inspected
+  * http_inspect.head_requests: HEAD requests inspected
   * http_inspect.inspections: total message sections inspected
-  * http_inspect.OPTIONS requests: OPTIONS requests inspected
-  * http_inspect.other requests: other request methods inspected
-  * http_inspect.POST requests: POST requests inspected
-  * http_inspect.PUT requests: PUT requests inspected
+  * http_inspect.options_requests: OPTIONS requests inspected
+  * http_inspect.other_requests: other request methods inspected
+  * http_inspect.post_requests: POST requests inspected
+  * http_inspect.put_requests: PUT requests inspected
   * http_inspect.reassembles: TCP segments combined into HTTP
     messages
-  * http_inspect.request bodies: POST, PUT, and other requests with
+  * http_inspect.request_bodies: POST, PUT, and other requests with
     message bodies
   * http_inspect.requests: HTTP request messages inspected
   * http_inspect.responses: HTTP response messages inspected
   * http_inspect.scans: TCP segments scanned looking for HTTP
     messages
-  * http_inspect.TRACE requests: TRACE requests inspected
-  * http_inspect.URI coding: URIs with character coding problems
-  * http_inspect.URI normalizations: URIs needing to be normalization
-  * http_inspect.URI path: URIs with path problems
-  * icmp4.bad checksum: non-zero icmp checksums
-  * icmp6.bad checksum (ip4): nonzero ipcm4 checksums
-  * icmp6.bad checksum (ip6): nonzero ipcm6 checksums
-  * imap.b64 attachments: total base64 attachments decoded
-  * imap.b64 decoded bytes: total base64 decoded bytes
-  * imap.non-encoded attachments: total non-encoded attachments
+  * http_inspect.trace_requests: TRACE requests inspected
+  * http_inspect.uri_coding: URIs with character coding problems
+  * http_inspect.uri_normalizations: URIs needing to be normalization
+  * http_inspect.uri_path: URIs with path problems
+  * icmp4.bad_checksum: non-zero icmp checksums
+  * icmp6.bad_icmp4_checksum: nonzero ipcm4 checksums
+  * icmp6.bad_icmp6_checksum: nonzero ipcm6 checksums
+  * imap.b64_attachments: total base64 attachments decoded
+  * imap.b64_decoded_bytes: total base64 decoded bytes
+  * imap.non_encoded_attachments: total non-encoded attachments
     extracted
-  * imap.non-encoded bytes: total non-encoded extracted bytes
+  * imap.non_encoded_bytes: total non-encoded extracted bytes
   * imap.packets: total packets processed
-  * imap.qp attachments: total quoted-printable attachments decoded
-  * imap.qp decoded bytes: total quoted-printable decoded bytes
+  * imap.qp_attachments: total quoted-printable attachments decoded
+  * imap.qp_decoded_bytes: total quoted-printable decoded bytes
   * imap.sessions: total imap sessions
-  * imap.uu attachments: total uu attachments decoded
-  * imap.uu decoded bytes: total uu decoded bytes
-  * ipv4.bad checksum: nonzero ip checksums
-  * latency.max usecs: maximum usecs elapsed
-  * latency.packet timeouts: packets that timed out
-  * latency.rule eval timeouts: rule evals that timed out
-  * latency.rule tree enables: rule tree re-enables
-  * latency.total packets: total packets monitored
-  * latency.total rule evals: total rule evals monitored
-  * latency.total usecs: total usecs elapsed
+  * imap.uu_attachments: total uu attachments decoded
+  * imap.uu_decoded_bytes: total uu decoded bytes
+  * ipv4.bad_checksum: nonzero ip checksums
+  * latency.max_usecs: maximum usecs elapsed
+  * latency.packet_timeouts: packets that timed out
+  * latency.rule_eval_timeouts: rule evals that timed out
+  * latency.rule_tree_enables: rule tree re-enables
+  * latency.total_packets: total packets monitored
+  * latency.total_rule_evals: total rule evals monitored
+  * latency.total_usecs: total usecs elapsed
   * modbus.frames: total Modbus messages
   * modbus.sessions: total sessions processed
-  * mpls.total bytes: total mpls labeled bytes processed
-  * mpls.total packets: total mpls labeled packets processed
-  * normalizer.icmp4 echo: icmp4 ping normalizations
-  * normalizer.icmp6 echo: icmp6 echo normalizations
-  * normalizer.ip4 df: don’t frag bit normalizations
-  * normalizer.ip4 opts: ip4 options cleared
-  * normalizer.ip4 rf: reserved flag bit clears
-  * normalizer.ip4 tos: type of service normalizations
-  * normalizer.ip4 trim: eth packets trimmed to datagram size
-  * normalizer.ip4 ttl: time-to-live normalizations
-  * normalizer.ip6 hops: ip6 hop limit normalizations
-  * normalizer.ip6 options: ip6 options cleared
-  * normalizer.tcp block: blocked segments
-  * normalizer.tcp ecn pkt: packets with ECN bits cleared
-  * normalizer.tcp ecn session: ECN bits cleared
-  * normalizer.tcp ips data: normalized segments
-  * normalizer.tcp nonce: packets with nonce bit cleared
-  * normalizer.tcp options: packets with options cleared
-  * normalizer.tcp paddding: packets with padding cleared
-  * normalizer.tcp req pay: cleared urgent pointer and urgent flag
+  * mpls.total_bytes: total mpls labeled bytes processed
+  * mpls.total_packets: total mpls labeled packets processed
+  * normalizer.icmp4_echo: icmp4 ping normalizations
+  * normalizer.icmp6_echo: icmp6 echo normalizations
+  * normalizer.ip4_df: don’t frag bit normalizations
+  * normalizer.ip4_opts: ip4 options cleared
+  * normalizer.ip4_rf: reserved flag bit clears
+  * normalizer.ip4_tos: type of service normalizations
+  * normalizer.ip4_trim: eth packets trimmed to datagram size
+  * normalizer.ip4_ttl: time-to-live normalizations
+  * normalizer.ip6_hops: ip6 hop limit normalizations
+  * normalizer.ip6_options: ip6 options cleared
+  * normalizer.tcp_block: blocked segments
+  * normalizer.tcp_ecn_pkt: packets with ECN bits cleared
+  * normalizer.tcp_ecn_session: ECN bits cleared
+  * normalizer.tcp_ips_data: normalized segments
+  * normalizer.tcp_nonce: packets with nonce bit cleared
+  * normalizer.tcp_options: packets with options cleared
+  * normalizer.tcp_paddding: packets with padding cleared
+  * normalizer.tcp_req_pay: cleared urgent pointer and urgent flag
     when there is no payload
-  * normalizer.tcp req urg: cleared urgent pointer when urgent flag
+  * normalizer.tcp_req_urg: cleared urgent pointer when urgent flag
     is not set
-  * normalizer.tcp req urp: cleared the urgent flag if the urgent
+  * normalizer.tcp_req_urp: cleared the urgent flag if the urgent
     pointer is not set
-  * normalizer.tcp reserved: packets with reserved bits cleared
-  * normalizer.tcp syn options: SYN only options cleared from non-SYN
+  * normalizer.tcp_reserved: packets with reserved bits cleared
+  * normalizer.tcp_syn_options: SYN only options cleared from non-SYN
     packets
-  * normalizer.tcp trim mss: data trimmed to MSS
-  * normalizer.tcp trim rst: RST packets with data trimmed
-  * normalizer.tcp trim syn: tcp segments trimmed on SYN
-  * normalizer.tcp trim win: data trimed to window
-  * normalizer.tcp ts ecr: timestamp cleared on non-ACKs
-  * normalizer.tcp ts nop: timestamp options cleared
-  * normalizer.tcp urgent ptr: packets without data with urgent
+  * normalizer.tcp_trim_mss: data trimmed to MSS
+  * normalizer.tcp_trim_rst: RST packets with data trimmed
+  * normalizer.tcp_trim_syn: tcp segments trimmed on SYN
+  * normalizer.tcp_trim_win: data trimed to window
+  * normalizer.tcp_ts_ecr: timestamp cleared on non-ACKs
+  * normalizer.tcp_ts_nop: timestamp options cleared
+  * normalizer.tcp_urgent_ptr: packets without data with urgent
     pointer cleared
-  * normalizer.test icmp4 echo: test icmp4 ping normalizations
-  * normalizer.test icmp6 echo: test icmp6 echo normalizations
-  * normalizer.test ip4 df: test don’t frag bit normalizations
-  * normalizer.test ip4 opts: test ip4 options cleared
-  * normalizer.test ip4 rf: test reserved flag bit clears
-  * normalizer.test ip4 tos: test type of service normalizations
-  * normalizer.test ip4 trim: test eth packets trimmed to datagram
+  * normalizer.test_icmp4_echo: test icmp4 ping normalizations
+  * normalizer.test_icmp6_echo: test icmp6 echo normalizations
+  * normalizer.test_ip4_df: test don’t frag bit normalizations
+  * normalizer.test_ip4_opts: test ip4 options cleared
+  * normalizer.test_ip4_rf: test reserved flag bit clears
+  * normalizer.test_ip4_tos: test type of service normalizations
+  * normalizer.test_ip4_trim: test eth packets trimmed to datagram
     size
-  * normalizer.test ip4 ttl: test time-to-live normalizations
-  * normalizer.test ip6 hops: test ip6 hop limit normalizations
-  * normalizer.test ip6 options: test ip6 options cleared
-  * normalizer.test tcp block: test blocked segments
-  * normalizer.test tcp ecn pkt: test packets with ECN bits cleared
-  * normalizer.test tcp ecn session: test ECN bits cleared
-  * normalizer.test tcp ips data: test normalized segments
-  * normalizer.test tcp nonce: test packets with nonce bit cleared
-  * normalizer.test tcp options: test packets with options cleared
-  * normalizer.test tcp paddding: test packets with padding cleared
-  * normalizer.test tcp req pay: test cleared urgent pointer and
+  * normalizer.test_ip4_ttl: test time-to-live normalizations
+  * normalizer.test_ip6_hops: test ip6 hop limit normalizations
+  * normalizer.test_ip6_options: test ip6 options cleared
+  * normalizer.test_tcp_block: test blocked segments
+  * normalizer.test_tcp_ecn_pkt: test packets with ECN bits cleared
+  * normalizer.test_tcp_ecn_session: test ECN bits cleared
+  * normalizer.test_tcp_ips_data: test normalized segments
+  * normalizer.test_tcp_nonce: test packets with nonce bit cleared
+  * normalizer.test_tcp_options: test packets with options cleared
+  * normalizer.test_tcp_paddding: test packets with padding cleared
+  * normalizer.test_tcp_req_pay: test cleared urgent pointer and
     urgent flag when there is no payload
-  * normalizer.test tcp req urg: test cleared urgent pointer when
+  * normalizer.test_tcp_req_urg: test cleared urgent pointer when
     urgent flag is not set
-  * normalizer.test tcp req urp: test cleared the urgent flag if the
+  * normalizer.test_tcp_req_urp: test cleared the urgent flag if the
     urgent pointer is not set
-  * normalizer.test tcp reserved: test packets with reserved bits
+  * normalizer.test_tcp_reserved: test packets with reserved bits
     cleared
-  * normalizer.test tcp syn options: test SYN only options cleared
+  * normalizer.test_tcp_syn_options: test SYN only options cleared
     from non-SYN packets
-  * normalizer.test tcp trim mss: test data trimmed to MSS
-  * normalizer.test tcp trim rst: test RST packets with data trimmed
-  * normalizer.test tcp trim syn: test tcp segments trimmed on SYN
-  * normalizer.test tcp trim win: test data trimed to window
-  * normalizer.test tcp ts ecr: test timestamp cleared on non-ACKs
-  * normalizer.test tcp ts nop: test timestamp options cleared
-  * normalizer.test tcp urgent ptr: test packets without data with
+  * normalizer.test_tcp_trim_mss: test data trimmed to MSS
+  * normalizer.test_tcp_trim_rst: test RST packets with data trimmed
+  * normalizer.test_tcp_trim_syn: test tcp segments trimmed on SYN
+  * normalizer.test_tcp_trim_win: test data trimed to window
+  * normalizer.test_tcp_ts_ecr: test timestamp cleared on non-ACKs
+  * normalizer.test_tcp_ts_nop: test timestamp options cleared
+  * normalizer.test_tcp_urgent_ptr: test packets without data with
     urgent pointer cleared
   * packet_capture.captured: packets matching dumped after matching
     filter
   * packet_capture.processed: packets processed against filter
   * perf_monitor.packets: total packets
-  * pop.b64 attachments: total base64 attachments decoded
-  * pop.b64 decoded bytes: total base64 decoded bytes
-  * pop.non-encoded attachments: total non-encoded attachments
+  * pop.b64_attachments: total base64 attachments decoded
+  * pop.b64_decoded_bytes: total base64 decoded bytes
+  * pop.non_encoded_attachments: total non-encoded attachments
     extracted
-  * pop.non-encoded bytes: total non-encoded extracted bytes
+  * pop.non_encoded_bytes: total non-encoded extracted bytes
   * pop.packets: total packets processed
-  * pop.qp attachments: total quoted-printable attachments decoded
-  * pop.qp decoded bytes: total quoted-printable decoded bytes
+  * pop.qp_attachments: total quoted-printable attachments decoded
+  * pop.qp_decoded_bytes: total quoted-printable decoded bytes
   * pop.sessions: total pop sessions
-  * pop.uu attachments: total uu attachments decoded
-  * pop.uu decoded bytes: total uu decoded bytes
+  * pop.uu_attachments: total uu attachments decoded
+  * pop.uu_decoded_bytes: total uu decoded bytes
   * port_scan_global.packets: total packets
   * reputation.blacklisted: number of packets blacklisted
-  * reputation.memory allocated: total memory allocated
+  * reputation.memory_allocated: total memory allocated
   * reputation.monitored: number of packets monitored
   * reputation.packets: total packets processed
   * reputation.whitelisted: number of packets whitelisted
   * rpc_decode.packets: total packets
-  * sd_pattern.below threshold: sd_pattern matched but missed
+  * sd_pattern.below_threshold: sd_pattern matched but missed
     threshold
-  * sd_pattern.pattern not found: sd_pattern did not not match
+  * sd_pattern.pattern_not_found: sd_pattern did not not match
   * sd_pattern.terminated: hyperscan terminated
-  * search_engine.max queued: maximum fast pattern matches queued for
+  * search_engine.max_queued: maximum fast pattern matches queued for
     further evaluation
-  * search_engine.non-qualified events: total non-qualified events
-  * search_engine.qualified events: total qualified events
-  * search_engine.total flushed: fast pattern matches discarded due
+  * search_engine.non_qualified_events: total non-qualified events
+  * search_engine.qualified_events: total qualified events
+  * search_engine.total_flushed: fast pattern matches discarded due
     to overflow
-  * search_engine.total inserts: total fast pattern hits
-  * search_engine.total unique: total unique fast pattern hits
+  * search_engine.total_inserts: total fast pattern hits
+  * search_engine.total_unique: total unique fast pattern hits
   * sip.1xx: 1xx
   * sip.2xx: 2xx
   * sip.3xx: 3xx
@@ -12554,8 +12644,8 @@ libraries see the Getting Started section of the manual.
   * sip.cancel: cancel
   * sip.dialogs: total dialogs
   * sip.events: events generated
-  * sip.ignored channels: total channels ignored
-  * sip.ignored sessions: total sessions ignored
+  * sip.ignored_channels: total channels ignored
+  * sip.ignored_sessions: total sessions ignored
   * sip.info: info
   * sip.invite: invite
   * sip.join: join
@@ -12568,196 +12658,196 @@ libraries see the Getting Started section of the manual.
   * sip.register: register
   * sip.sessions: total sessions
   * sip.subscribe: subscribe
-  * sip.total requests: total requests
-  * sip.total responses: total responses
+  * sip.total_requests: total requests
+  * sip.total_responses: total responses
   * sip.update: update
-  * smtp.b64 attachments: total base64 attachments decoded
-  * smtp.b64 decoded bytes: total base64 decoded bytes
-  * smtp.concurrent sessions: total concurrent smtp sessions
-  * smtp.max concurrent sessions: maximum concurrent smtp sessions
-  * smtp.non-encoded attachments: total non-encoded attachments
+  * smtp.b64_attachments: total base64 attachments decoded
+  * smtp.b64_decoded_bytes: total base64 decoded bytes
+  * smtp.concurrent_sessions: total concurrent smtp sessions
+  * smtp.max_concurrent_sessions: maximum concurrent smtp sessions
+  * smtp.non_encoded_attachments: total non-encoded attachments
     extracted
-  * smtp.non-encoded bytes: total non-encoded extracted bytes
+  * smtp.non_encoded_bytes: total non-encoded extracted bytes
   * smtp.packets: total packets processed
-  * smtp.qp attachments: total quoted-printable attachments decoded
-  * smtp.qp decoded bytes: total quoted-printable decoded bytes
+  * smtp.qp_attachments: total quoted-printable attachments decoded
+  * smtp.qp_decoded_bytes: total quoted-printable decoded bytes
   * smtp.sessions: total smtp sessions
-  * smtp.uu attachments: total uu attachments decoded
-  * smtp.uu decoded bytes: total uu decoded bytes
-  * snort.attribute table hosts: total number of hosts in table
-  * snort.attribute table reloads: number of times hosts table was
+  * smtp.uu_attachments: total uu attachments decoded
+  * smtp.uu_decoded_bytes: total uu decoded bytes
+  * snort.attribute_table_hosts: total number of hosts in table
+  * snort.attribute_table_reloads: number of times hosts table was
     reloaded
-  * snort.conf reloads: number of times configuration was reloaded
-  * snort.local commands: total local commands processed
-  * snort.remote commands: total remote commands processed
+  * snort.conf_reloads: number of times configuration was reloaded
+  * snort.local_commands: total local commands processed
+  * snort.remote_commands: total remote commands processed
   * snort.signals: total signals processed
   * ssh.packets: total packets
   * ssl.alert: total ssl alert records
-  * ssl.bad handshakes: total bad handshakes
+  * ssl.bad_handshakes: total bad handshakes
   * ssl.certificate: total ssl certificates
-  * ssl.change cipher: total change cipher records
-  * ssl.client application: total client application records
-  * ssl.client hello: total client hellos
-  * ssl.client key exchange: total client key exchanges
+  * ssl.change_cipher: total change cipher records
+  * ssl.client_application: total client application records
+  * ssl.client_hello: total client hellos
+  * ssl.client_key_exchange: total client key exchanges
   * ssl.decoded: ssl packets decoded
-  * ssl.detection disabled: total detection disabled
+  * ssl.detection_disabled: total detection disabled
   * ssl.finished: total handshakes finished
-  * ssl.handshakes completed: total completed ssl handshakes
+  * ssl.handshakes_completed: total completed ssl handshakes
   * ssl.packets: total packets processed
-  * ssl.server application: total server application records
-  * ssl.server done: total server done
-  * ssl.server hello: total server hellos
-  * ssl.server key exchange: total server key exchanges
-  * ssl.sessions ignored: total sessions ignore
-  * ssl.unrecognized records: total unrecognized records
-  * stream.file excess prunes: file sessions pruned due to excess
-  * stream.file flows: total file sessions
-  * stream.file ha prunes: file sessions pruned by high availability
+  * ssl.server_application: total server application records
+  * ssl.server_done: total server done
+  * ssl.server_hello: total server hellos
+  * ssl.server_key_exchange: total server key exchanges
+  * ssl.sessions_ignored: total sessions ignore
+  * ssl.unrecognized_records: total unrecognized records
+  * stream.file_excess_prunes: file sessions pruned due to excess
+  * stream.file_flows: total file sessions
+  * stream.file_ha_prunes: file sessions pruned by high availability
     sync
-  * stream.file idle prunes: file sessions pruned due to timeout
-  * stream.file memcap prunes: file sessions pruned due to memcap
-  * stream.file preemptive prunes: file sessions pruned during
+  * stream.file_idle_prunes: file sessions pruned due to timeout
+  * stream.file_memcap_prunes: file sessions pruned due to memcap
+  * stream.file_preemptive_prunes: file sessions pruned during
     preemptive pruning
-  * stream.file total prunes: total file sessions pruned
-  * stream.file uni prunes: file uni sessions pruned
-  * stream_icmp.created: icmp session trackers created
-  * stream.icmp excess prunes: icmp sessions pruned due to excess
-  * stream.icmp flows: total icmp sessions
-  * stream.icmp ha prunes: icmp sessions pruned by high availability
+  * stream.file_total_prunes: total file sessions pruned
+  * stream.file_uni_prunes: file uni sessions pruned
+  * stream_icmp.created: icmp_ session trackers created
+  * stream.icmp_excess_prunes: icmp sessions pruned due to excess
+  * stream.icmp_flows: total icmp sessions
+  * stream.icmp_ha_prunes: icmp sessions pruned by high availability
     sync
-  * stream.icmp idle prunes: icmp sessions pruned due to timeout
-  * stream_icmp.max: max icmp sessions
-  * stream.icmp memcap prunes: icmp sessions pruned due to memcap
-  * stream.icmp preemptive prunes: icmp sessions pruned during
+  * stream.icmp_idle_prunes: icmp sessions pruned due to timeout
+  * stream_icmp.max: max icmp_ sessions
+  * stream.icmp_memcap_prunes: icmp sessions pruned due to memcap
+  * stream.icmp_preemptive_prunes: icmp sessions pruned during
     preemptive pruning
-  * stream_icmp.prunes: icmp session prunes
-  * stream_icmp.released: icmp session trackers released
-  * stream_icmp.sessions: total icmp sessions
-  * stream_icmp.timeouts: icmp session timeouts
-  * stream.icmp total prunes: total icmp sessions pruned
-  * stream.icmp uni prunes: icmp uni sessions pruned
+  * stream_icmp.prunes: icmp_ session prunes
+  * stream_icmp.released: icmp_ session trackers released
+  * stream_icmp.sessions: total icmp_ sessions
+  * stream_icmp.timeouts: icmp_ session timeouts
+  * stream.icmp_total_prunes: total icmp sessions pruned
+  * stream.icmp_uni_prunes: icmp uni sessions pruned
   * stream_ip.alerts: alerts generated
   * stream_ip.anomalies: anomalies detected
-  * stream_ip.created: ip session trackers created
-  * stream_ip.current frags: current fragments
+  * stream_ip.created: ip_ session trackers created
+  * stream_ip.current_frags: current fragments
   * stream_ip.discards: fragments discarded
   * stream_ip.drops: fragments dropped
-  * stream.ip excess prunes: ip sessions pruned due to excess
-  * stream.ip flows: total ip sessions
-  * stream_ip.fragmented bytes: total fragmented bytes
-  * stream_ip.frag timeouts: datagrams abandoned
-  * stream.ip ha prunes: ip sessions pruned by high availability sync
-  * stream.ip idle prunes: ip sessions pruned due to timeout
-  * stream_ip.max frags: max fragments
-  * stream_ip.max: max ip sessions
-  * stream.ip memcap prunes: ip sessions pruned due to memcap
-  * stream_ip.memory used: current memory usage in bytes
-  * stream_ip.nodes deleted: fragments deleted from tracker
-  * stream_ip.nodes inserted: fragments added to tracker
+  * stream.ip_excess_prunes: ip sessions pruned due to excess
+  * stream.ip_flows: total ip sessions
+  * stream_ip.fragmented_bytes: total fragmented bytes
+  * stream_ip.frag_timeouts: datagrams abandoned
+  * stream.ip_ha_prunes: ip sessions pruned by high availability sync
+  * stream.ip_idle_prunes: ip sessions pruned due to timeout
+  * stream_ip.max_frags: max fragments
+  * stream_ip.max: max ip_ sessions
+  * stream.ip_memcap_prunes: ip sessions pruned due to memcap
+  * stream_ip.memory_used: current memory usage in bytes
+  * stream_ip.nodes_deleted: fragments deleted from tracker
+  * stream_ip.nodes_inserted: fragments added to tracker
   * stream_ip.overlaps: overlapping fragments
-  * stream.ip preemptive prunes: ip sessions pruned during preemptive
+  * stream.ip_preemptive_prunes: ip sessions pruned during preemptive
     pruning
-  * stream_ip.prunes: ip session prunes
-  * stream_ip.reassembled bytes: total reassembled bytes
+  * stream_ip.prunes: ip_ session prunes
+  * stream_ip.reassembled_bytes: total reassembled bytes
   * stream_ip.reassembled: reassembled datagrams
-  * stream_ip.released: ip session trackers released
-  * stream_ip.sessions: total ip sessions
-  * stream_ip.timeouts: ip session timeouts
-  * stream_ip.total frags: total fragments
-  * stream.ip total prunes: total ip sessions pruned
-  * stream_ip.trackers added: datagram trackers created
-  * stream_ip.trackers cleared: datagram trackers cleared
-  * stream_ip.trackers completed: datagram trackers completed
-  * stream_ip.trackers freed: datagram trackers released
-  * stream.ip uni prunes: ip uni sessions pruned
-  * stream_tcp.3way trackers: tcp session tracking started on ack
-  * stream_tcp.client cleanups: number of times data from server was
+  * stream_ip.released: ip_ session trackers released
+  * stream_ip.sessions: total ip_ sessions
+  * stream_ip.timeouts: ip_ session timeouts
+  * stream_ip.total_frags: total fragments
+  * stream.ip_total_prunes: total ip sessions pruned
+  * stream_ip.trackers_added: datagram trackers created
+  * stream_ip.trackers_cleared: datagram trackers cleared
+  * stream_ip.trackers_completed: datagram trackers completed
+  * stream_ip.trackers_freed: datagram trackers released
+  * stream.ip_uni_prunes: ip uni sessions pruned
+  * stream_tcp.3way_trackers: tcp session tracking started on ack
+  * stream_tcp.client_cleanups: number of times data from server was
     flushed when session released
   * stream_tcp.closing: number of sessions currently closing
-  * stream_tcp.created: tcp session trackers created
-  * stream_tcp.data trackers: tcp session tracking started on data
+  * stream_tcp.created: tcp_ session trackers created
+  * stream_tcp.data_trackers: tcp session tracking started on data
   * stream_tcp.discards: tcp packets discarded
   * stream_tcp.established: number of sessions currently established
   * stream_tcp.events: events generated
-  * stream.tcp excess prunes: tcp sessions pruned due to excess
-  * stream.tcp flows: total tcp sessions
+  * stream.tcp_excess_prunes: tcp sessions pruned due to excess
+  * stream.tcp_flows: total tcp sessions
   * stream_tcp.gaps: missing data between PDUs
-  * stream.tcp ha prunes: tcp sessions pruned by high availability
+  * stream.tcp_ha_prunes: tcp sessions pruned by high availability
     sync
-  * stream.tcp idle prunes: tcp sessions pruned due to timeout
+  * stream.tcp_idle_prunes: tcp sessions pruned due to timeout
   * stream_tcp.ignored: tcp packets ignored
   * stream_tcp.initializing: number of sessions currently
     initializing
-  * stream_tcp.internal events: 135:X events generated
-  * stream_tcp.max bytes: number of times the maximum queued byte
+  * stream_tcp.internal_events: 135:X events generated
+  * stream_tcp.max_bytes: number of times the maximum queued byte
     limit was reached
-  * stream_tcp.max: max tcp sessions
-  * stream_tcp.max segs: number of times the maximum queued segment
+  * stream_tcp.max: max tcp_ sessions
+  * stream_tcp.max_segs: number of times the maximum queued segment
     limit was reached
-  * stream.tcp memcap prunes: tcp sessions pruned due to memcap
+  * stream.tcp_memcap_prunes: tcp sessions pruned due to memcap
   * stream_tcp.memory: current memory in use
   * stream_tcp.overlaps: overlapping segments queued
-  * stream.tcp preemptive prunes: tcp sessions pruned during
+  * stream.tcp_preemptive_prunes: tcp sessions pruned during
     preemptive pruning
-  * stream_tcp.prunes: tcp session prunes
-  * stream_tcp.rebuilt buffers: rebuilt PDU sections
-  * stream_tcp.rebuilt bytes: total rebuilt bytes
-  * stream_tcp.rebuilt packets: total reassembled PDUs
-  * stream_tcp.released: tcp session trackers released
+  * stream_tcp.prunes: tcp_ session prunes
+  * stream_tcp.rebuilt_buffers: rebuilt PDU sections
+  * stream_tcp.rebuilt_bytes: total rebuilt bytes
+  * stream_tcp.rebuilt_packets: total reassembled PDUs
+  * stream_tcp.released: tcp_ session trackers released
   * stream_tcp.resyns: SYN received on established session
-  * stream_tcp.segs queued: total segments queued
-  * stream_tcp.segs released: total segments released
-  * stream_tcp.segs split: tcp segments split when reassembling PDUs
-  * stream_tcp.segs used: queued tcp segments applied to reassembled
+  * stream_tcp.segs_queued: total segments queued
+  * stream_tcp.segs_released: total segments released
+  * stream_tcp.segs_split: tcp segments split when reassembling PDUs
+  * stream_tcp.segs_used: queued tcp segments applied to reassembled
     PDUs
-  * stream_tcp.server cleanups: number of times data from client was
+  * stream_tcp.server_cleanups: number of times data from client was
     flushed when session released
-  * stream_tcp.sessions: total tcp sessions
-  * stream_tcp.syn-ack trackers: tcp session tracking started on
+  * stream_tcp.sessions: total tcp_ sessions
+  * stream_tcp.syn_ack_trackers: tcp session tracking started on
     syn-ack
-  * stream_tcp.syn trackers: tcp session tracking started on syn
-  * stream_tcp.timeouts: tcp session timeouts
-  * stream.tcp total prunes: total tcp sessions pruned
-  * stream.tcp uni prunes: tcp uni sessions pruned
+  * stream_tcp.syn_trackers: tcp session tracking started on syn
+  * stream_tcp.timeouts: tcp_ session timeouts
+  * stream.tcp_total_prunes: total tcp sessions pruned
+  * stream.tcp_uni_prunes: tcp uni sessions pruned
   * stream_tcp.untracked: tcp packets not tracked
-  * stream_udp.created: udp session trackers created
-  * stream.udp excess prunes: udp sessions pruned due to excess
-  * stream.udp flows: total udp sessions
-  * stream.udp ha prunes: udp sessions pruned by high availability
+  * stream_udp.created: udp_ session trackers created
+  * stream.udp_excess_prunes: udp sessions pruned due to excess
+  * stream.udp_flows: total udp sessions
+  * stream.udp_ha_prunes: udp sessions pruned by high availability
     sync
-  * stream.udp idle prunes: udp sessions pruned due to timeout
-  * stream_udp.max: max udp sessions
-  * stream.udp memcap prunes: udp sessions pruned due to memcap
-  * stream.udp preemptive prunes: udp sessions pruned during
+  * stream.udp_idle_prunes: udp sessions pruned due to timeout
+  * stream_udp.max: max udp_ sessions
+  * stream.udp_memcap_prunes: udp sessions pruned due to memcap
+  * stream.udp_preemptive_prunes: udp sessions pruned during
     preemptive pruning
-  * stream_udp.prunes: udp session prunes
-  * stream_udp.released: udp session trackers released
-  * stream_udp.sessions: total udp sessions
-  * stream_udp.timeouts: udp session timeouts
-  * stream.udp total prunes: total udp sessions pruned
-  * stream.udp uni prunes: udp uni sessions pruned
-  * stream.user excess prunes: user sessions pruned due to excess
-  * stream.user flows: total user sessions
-  * stream.user ha prunes: user sessions pruned by high availability
+  * stream_udp.prunes: udp_ session prunes
+  * stream_udp.released: udp_ session trackers released
+  * stream_udp.sessions: total udp_ sessions
+  * stream_udp.timeouts: udp_ session timeouts
+  * stream.udp_total_prunes: total udp sessions pruned
+  * stream.udp_uni_prunes: udp uni sessions pruned
+  * stream.user_excess_prunes: user sessions pruned due to excess
+  * stream.user_flows: total user sessions
+  * stream.user_ha_prunes: user sessions pruned by high availability
     sync
-  * stream.user idle prunes: user sessions pruned due to timeout
-  * stream.user memcap prunes: user sessions pruned due to memcap
-  * stream.user preemptive prunes: user sessions pruned during
+  * stream.user_idle_prunes: user sessions pruned due to timeout
+  * stream.user_memcap_prunes: user sessions pruned due to memcap
+  * stream.user_preemptive_prunes: user sessions pruned during
     preemptive pruning
-  * stream.user total prunes: total user sessions pruned
-  * stream.user uni prunes: user uni sessions pruned
-  * tcp.bad checksum (ip4): nonzero tcp over ip checksums
-  * tcp.bad checksum (ip6): nonzero tcp over ipv6 checksums
+  * stream.user_total_prunes: total user sessions pruned
+  * stream.user_uni_prunes: user uni sessions pruned
+  * tcp.bad_tcp4_checksum: nonzero tcp over ip checksums
+  * tcp.bad_tcp6_checksum: nonzero tcp over ipv6 checksums
   * tcp_connector.messages: total messages
   * telnet.packets: total packets
-  * udp.bad checksum (ip4): nonzero udp over ipv4 checksums
-  * udp.bad checksum (ip6): nonzero udp over ipv6 checksums
-  * wizard.tcp hits: tcp identifications
-  * wizard.tcp scans: tcp payload scans
-  * wizard.udp hits: udp identifications
-  * wizard.udp scans: udp payload scans
-  * wizard.user hits: user identifications
-  * wizard.user scans: user payload scans
+  * udp.bad_udp4_checksum: nonzero udp over ipv4 checksums
+  * udp.bad_udp6_checksum: nonzero udp over ipv6 checksums
+  * wizard.tcp_hits: tcp identifications
+  * wizard.tcp_scans: tcp payload scans
+  * wizard.udp_hits: udp identifications
+  * wizard.udp_scans: udp payload scans
+  * wizard.user_hits: user identifications
+  * wizard.user_scans: user payload scans
 
 
 19.6. Generators
@@ -12798,6 +12888,8 @@ libraries see the Getting Started section of the manual.
   * 128: ssh
   * 129: stream_tcp
   * 131: dns
+  * 133: dce_http_proxy
+  * 133: dce_http_server
   * 133: dce_smb
   * 133: dce_tcp
   * 133: dce_udp
@@ -13090,6 +13182,7 @@ libraries see the Getting Started section of the manual.
     Content-Encoding used
   * 119:78 (http_inspect) multiple layers of compression encodings
     applied
+  * 119:79 (http_inspect) server response before client request
   * 122:1 (port_scan) TCP portscan
   * 122:2 (port_scan) TCP decoy portscan
   * 122:3 (port_scan) TCP portsweep
@@ -13755,6 +13848,10 @@ deleted -> unified2: 'filename'
   * cvs (ips_option): payload rule option for detecting specific
     attacks
   * daq (basic): configure packet acquisition interface
+  * dce_http_proxy (inspector): dce over http inspection - client to/
+    from proxy
+  * dce_http_server (inspector): dce over http inspection - proxy to/
+    from server
   * dce_iface (ips_option): detection option to check dcerpc
     interface
   * dce_opnum (ips_option): detection option to check dcerpc
@@ -13790,7 +13887,7 @@ deleted -> unified2: 'filename'
   * file_connector (connector): implement the file based connector
   * file_data (ips_option): rule option to set detection cursor to
     file data
-  * file_id (basic): configure file identification
+  * file_id (inspector): configure file identification
   * file_log (inspector): log file event to file.log
   * file_type (ips_option): rule option to check file type
   * flags (ips_option): rule option to test TCP control flags
@@ -14033,11 +14130,16 @@ deleted -> unified2: 'filename'
   * inspector::back_orifice: back orifice detection
   * inspector::binder: configure processing based on CIDRs, ports,
     services, etc.
+  * inspector::dce_http_proxy: dce over http inspection - client to/
+    from proxy
+  * inspector::dce_http_server: dce over http inspection - proxy to/
+    from server
   * inspector::dce_smb: dce over smb inspection
   * inspector::dce_tcp: dce over tcp inspection
   * inspector::dce_udp: dce over udp inspection
   * inspector::dnp3: dnp3 inspection
   * inspector::dns: dns inspection
+  * inspector::file_id: configure file identification
   * inspector::file_log: log file event to file.log
   * inspector::ftp_client: FTP inspector client module
   * inspector::ftp_data: FTP data channel handler

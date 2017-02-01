@@ -1,3 +1,28 @@
+17/02/01 - build 225
+
+-- implement RPC over HTTP by adding dce_http_server and dce_http_proxy
+-- port disable_replace option from snort 2.x and add snort2lua support
+-- port ssh tunnel over http detection
+-- fix stream splitter handling during final flush of session data
+-- fix appid to use HTTP inspection events to detect webdav methods
+-- fix unit test build to work w/o REG_TEST
+-- fix shell to add missing newline to Lua execution error responses
+-- fix support for content strings with escaped quotes ("foo\"bar")
+   thanks to secres@linuxmail.org for reporting the issue
+-- fix various reload issues
+-- fix various thread sanitizer issues
+-- fix session disposal to always be after logging
+-- fix appid pattern matching issues
+-- fix appid dns flow counts
+-- fix shell resume after command line --pause
+-- fix sd_pattern validation boundary conditions
+-- build: don't disable asserts when compiling with code coverage
+-- autoconf: update to latest versions of autoconf-archive macros
+-- main: add asynchronous, broadcastable analyzer commands
+-- add salt to flow hash
+-- normalize peg names to lower snake_case
+-- update default manuals
+
 17/01/17 - build 224
 
 -- fix various stream_tcp flush issues
