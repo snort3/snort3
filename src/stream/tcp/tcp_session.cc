@@ -274,6 +274,9 @@ bool TcpSession::flow_exceeds_config_thresholds(TcpSegmentDescriptor& tsd)
         return true;
     }
 
+    // FIXIT-H any discards must be counted and in many cases alerted as well
+    // (count all but alert at most once per flow)
+    // three cases in this function; look for others
     if ( ( config->flags & STREAM_CONFIG_NO_ASYNC_REASSEMBLY ) && !flow->two_way_traffic() )
         return true;
 
@@ -296,6 +299,7 @@ bool TcpSession::flow_exceeds_config_thresholds(TcpSegmentDescriptor& tsd)
         && ( listener->reassembler->get_seg_bytes_total() > config->max_queued_bytes ) )
     {
         tcpStats.max_bytes++;
+        // FIXIT-H add one alert per flow per above
         return true;
     }
 
@@ -303,6 +307,7 @@ bool TcpSession::flow_exceeds_config_thresholds(TcpSegmentDescriptor& tsd)
         && ( listener->reassembler->get_seg_count() + 1 > config->max_queued_segs ) )
     {
         tcpStats.max_segs++;
+        // FIXIT-H add one alert per flow per above
         return true;
     }
 

@@ -323,6 +323,9 @@ bool StreamTcp::convert(std::istringstream& data_stream)
         else if (!keyword.compare("check_session_hijacking"))
             table_api.add_deleted_comment("check_session_hijacking");
 
+        else if (!keyword.compare("log_asymmetric_traffic"))
+            table_api.add_deleted_comment("log_asymmetric_traffic");
+
         else if (!keyword.compare("flush_factor"))
             tmpval = parse_int_option("flush_factor", arg_stream, false);
 

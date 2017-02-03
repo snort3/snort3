@@ -401,6 +401,7 @@ public:
     PAF_State paf_state;    // for tracking protocol aware flushing
 
 protected:
+    // FIXIT-H reorganize per-flow structs to minimize padding
     uint32_t ts_last_packet = 0;
     uint32_t ts_last = 0; /* last timestamp (for PAWS) */
     uint16_t tf_flags = 0;
@@ -408,7 +409,7 @@ protected:
     uint8_t mac_addr[6] = { };
     bool mac_addr_valid = false;
     uint32_t fin_final_seq = 0;
-    bool fin_seq_set = false;
+    bool fin_seq_set = false;  // FIXIT-M should be obviated by tcp state
     // FIXIT-L make this protected...
 
 public:
