@@ -60,6 +60,8 @@ void TcpTracker::init_tcp_state(void )
     memset(&mac_addr, 0, sizeof(mac_addr));
     mac_addr_valid = false;
     fin_final_seq = 0;
+    fin_seq_status = TcpStreamTracker::FIN_NOT_SEEN;
+    fin_seq_set = false;
     rst_pkt_sent = false;
 }
 
@@ -293,7 +295,7 @@ void TcpTracker::init_on_data_seg_sent(TcpSegmentDescriptor& tsd)
 
     r_win_base = tsd.get_seg_ack();
     r_nxt_ack = tsd.get_seg_ack();
-    reassembler->set_seglist_base_seq(tsd.get_seg_ack() );
+    reassembler->set_seglist_base_seq(tsd.get_seg_ack());
 
     ts_last_packet = tsd.get_pkt()->pkth->ts.tv_sec;
     tf_flags |= normalizer->get_tcp_timestamp(tsd, 0);
@@ -320,7 +322,7 @@ void TcpTracker::init_on_data_seg_recv(TcpSegmentDescriptor& tsd)
 
     r_nxt_ack = tsd.get_seg_seq();
     r_win_base = tsd.get_seg_seq();
-    reassembler->set_seglist_base_seq(tsd.get_seg_seq() );
+    reassembler->set_seglist_base_seq(tsd.get_seg_seq());
 
     cache_mac_address(tsd, tsd.get_direction() );
     set_splitter(tsd.get_flow() );
@@ -400,6 +402,12 @@ void TcpTracker::update_tracker_ack_sent(TcpSegmentDescriptor& tsd)
     if ( SEQ_GT(tsd.get_seg_ack(), r_win_base) )
 #endif
         r_win_base = tsd.get_seg_ack();
+
+    if ( ( fin_seq_status == TcpStreamTracker::FIN_WITH_SEQ_SEEN )
+        && SEQ_EQ(r_win_base, fin_final_seq) )
+    {
+        fin_seq_status = TcpStreamTracker::FIN_WITH_SEQ_ACKED;
+    }
 
     snd_wnd = tsd.get_seg_wnd();
     reassembler->flush_on_ack_policy(tsd.get_pkt() );
@@ -495,8 +503,13 @@ bool TcpTracker::update_on_fin_recv(TcpSegmentDescriptor& tsd)
     r_nxt_ack++;
 
     // set final seq # any packet rx'ed with seq > is bad
-    if ( !fin_set() )
+    if ( !fin_seq_set )
+    {
         fin_final_seq = tsd.get_end_seq();
+        fin_seq_set = true;
+        if( tsd.get_seg_len() == 0 )
+            fin_seq_status = TcpStreamTracker::FIN_WITH_SEQ_SEEN;
+    }
 
     return true;
 }

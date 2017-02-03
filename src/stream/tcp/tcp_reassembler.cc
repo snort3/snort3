@@ -517,7 +517,7 @@ int TcpReassembler::flush_data_segments(Packet* p, uint32_t total)
             || (!tsn->next && (tsn->seq + tsn->payload_size < to_seq))))
         {
             // FIXIT-L this is suboptimal - better to exclude fin from to_seq
-            if ( !tracker->fin_set() or SEQ_LEQ(to_seq, tracker->fin_final_seq) )
+            if ( !tracker->is_fin_seq_set() or SEQ_LEQ(to_seq, tracker->get_fin_final_seq()) )
                 tracker->set_tf_flags(TF_MISSING_PKT);
 
             break;
@@ -592,7 +592,6 @@ void TcpReassembler::prep_s5_pkt(Flow* flow, Packet* p, uint32_t pkt_flags)
 int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
 {
     Profile profile(s5TcpFlushPerfStats);
-
     DAQ_PktHdr_t pkth;
     EncodeFlags enc_flags = 0;
 
@@ -604,7 +603,6 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
 
     uint32_t bytes_processed = 0;
     uint32_t stop_seq = seglist.next->seq + bytes;
-
     while ( seglist.next and SEQ_LT(seglist.next->seq, stop_seq) )
     {
         seglist_base_seq = seglist.next->seq;
@@ -619,16 +617,13 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
 
         ((DAQ_PktHdr_t*)s5_pkt->pkth)->ts.tv_sec = seglist.next->tv.tv_sec;
         ((DAQ_PktHdr_t*)s5_pkt->pkth)->ts.tv_usec = seglist.next->tv.tv_usec;
-
-        /* setup the pseudopacket payload */
         s5_pkt->dsize = 0;
         s5_pkt->data = nullptr;
 
-        if ( tracker->splitter->is_paf() and tracker->get_tf_flags() & TF_MISSING_PREV_PKT )
+        if ( tracker->splitter->is_paf() and ( tracker->get_tf_flags() & TF_MISSING_PREV_PKT ) )
             fallback();
 
         int32_t flushed_bytes = flush_data_segments(p, footprint);
-
         if ( flushed_bytes == 0 )
             break; /* No more data... bail */
 
@@ -643,9 +638,7 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
                 s5_pkt->packet_flags |= ( PKT_REBUILT_STREAM | PKT_STREAM_EST );
 
             // FIXIT-H this came with merge should it be here? YES
-            //s5_pkt->application_protocol_ordinal =
-            //    p->application_protocol_ordinal;
-
+            //s5_pkt->application_protocol_ordinal = p->application_protocol_ordinal;
             show_rebuilt_packet(s5_pkt);
             tcpStats.rebuilt_packets++;
             tcpStats.rebuilt_bytes += flushed_bytes;
@@ -660,12 +653,11 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
 
         DebugFormat(DEBUG_STREAM_STATE, "setting seglist_base_seq to 0x%X\n", seglist_base_seq);
 
+        // FIXIT-L must check because above may clear session
         if ( tracker->splitter )
-            // FIXIT-L must check because above may clear session
             tracker->splitter->update();
 
-        // FIXIT-L abort should be by PAF callback only since recovery may be
-        // possible in some cases
+        // FIXIT-L abort should be by PAF callback only since recovery may be possible
         if ( tracker->get_tf_flags() & TF_MISSING_PKT )
         {
             tracker->set_tf_flags(TF_MISSING_PREV_PKT | TF_PKT_MISSED);
@@ -683,23 +675,13 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
     return bytes_processed;
 }
 
-/*
- * flush a seglist up to the given point, generate a pseudopacket,
- * and fire it thru the system.
- */
+// flush a seglist up to the given point, generate a pseudopacket, and fire it thru the system.
 int TcpReassembler::flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
 {
-    DebugMessage(DEBUG_STREAM_STATE, "In flush_to_seq()\n");
-
-    if ( !bytes )
+    if ( !bytes || !seglist.next )
     {
-        DebugMessage(DEBUG_STREAM_STATE, "bailing, no data\n");
-        return 0;
-    }
-
-    if ( !seglist.next )
-    {
-        DebugMessage(DEBUG_STREAM_STATE, "bailing, bad seglist ptr\n");
+        DebugFormat(DEBUG_STREAM_STATE, "bailing: no bytes: %d or empty seglist: %p\n",
+            bytes, (void*)seglist.next);
         return 0;
     }
 
@@ -738,15 +720,21 @@ int TcpReassembler::flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
 
 uint32_t TcpReassembler::get_q_footprint()
 {
+    int32_t footprint = 0, sequenced = 0;
+
     if ( !tracker )
         return 0;
 
     seglist.next = seglist.head;
-    uint32_t fp = tracker->r_win_base - seglist_base_seq;
+    footprint = tracker->r_win_base - seglist_base_seq;
+    if( footprint )
+    {
+        sequenced = get_q_sequenced();
+        if( tracker->fin_seq_status == TcpStreamTracker::FIN_WITH_SEQ_ACKED )
+            --footprint;
+    }
 
-    // FIXIT-M ideally would exclude fin here
-
-    return fp;
+    return ( footprint > sequenced ) ? sequenced : footprint;
 }
 
 // FIXIT-P get_q_sequenced() performance could possibly be
@@ -755,14 +743,10 @@ uint32_t TcpReassembler::get_q_footprint()
 
 uint32_t TcpReassembler::get_q_sequenced()
 {
-    int32_t len;
     TcpSegmentNode* tsn = tracker ? seglist.head : nullptr;
     TcpSegmentNode* base = nullptr;
 
-    if ( !tsn )
-        return 0;
-
-    if ( session->flow->two_way_traffic() && SEQ_LT(tracker->r_win_base, tsn->seq) )
+    if ( !tsn || ( session->flow->two_way_traffic() && SEQ_LT(tracker->r_win_base, tsn->seq) ) )
         return 0;
 
     while ( tsn->next && ( tsn->next->seq == tsn->seq + tsn->payload_size ) )
@@ -775,12 +759,13 @@ uint32_t TcpReassembler::get_q_sequenced()
     if ( !tsn->buffered && !base )
         base = tsn;
 
-    if ( !base )
-        return 0;
-
-    seglist.next = base;
-    seglist_base_seq = base->seq;
-    len = tsn->seq + tsn->payload_size - base->seq;
+    int32_t len = 0;
+    if ( base )
+    {
+        seglist.next = base;
+        seglist_base_seq = base->seq;
+        len = tsn->seq + tsn->payload_size - base->seq;
+    }
 
     return ( len > 0 ) ? len : 0;
 }

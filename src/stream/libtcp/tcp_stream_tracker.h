@@ -83,6 +83,8 @@ public:
         TCP_MAX_EVENTS
     };
 
+    enum FinSeqNumStatus { FIN_NOT_SEEN, FIN_WITH_SEQ_SEEN, FIN_WITH_SEQ_ACKED };
+
     TcpStreamTracker(bool);
     virtual ~TcpStreamTracker();
 
@@ -238,9 +240,10 @@ public:
         this->fin_final_seq = fin_final_seq;
     }
 
-    // FIXIT-M fin_final_seq can be zero so need to use current state
-    // or other flag to know when it is actually set
-    bool fin_set() { return fin_final_seq != 0; }
+    bool is_fin_seq_set() const
+    {
+        return fin_seq_set;
+    }
 
     uint32_t get_ts_last_packet() const
     {
@@ -374,7 +377,6 @@ public:
     uint16_t rcv_up = 0;  // RCV.UP  - receive urgent pointer
     uint32_t irs = 0;     // IRS     - initial receive sequence number
 
-    uint32_t fin_final_seq = 0;
     bool rst_pkt_sent = false;
     bool inorder_fin = false;
 
@@ -405,12 +407,14 @@ protected:
 
     uint8_t mac_addr[6] = { };
     bool mac_addr_valid = false;
-
+    uint32_t fin_final_seq = 0;
+    bool fin_seq_set = false;
     // FIXIT-L make this protected...
 
 public:
     uint16_t wscale = 0; /* window scale setting */
     uint16_t mss = 0; /* max segment size */
+    FinSeqNumStatus fin_seq_status = TcpStreamTracker::FIN_NOT_SEEN;
 };
 
 // <--- note -- the 'state' parameter must be a reference

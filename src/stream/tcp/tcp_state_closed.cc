@@ -131,10 +131,8 @@ bool TcpStateClosed::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& track
     return default_state_action(tsd, trk);
 }
 
-bool TcpStateClosed::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateClosed::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
     trk.update_tracker_ack_recv(tsd);
 
     if( tsd.get_seg_len() > 0 )

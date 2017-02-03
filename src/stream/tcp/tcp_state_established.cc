@@ -144,8 +144,8 @@ bool TcpStateEstablished::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
     else
     {
         //Out of Order FIN received
-        if ( trk.fin_final_seq == 0 )
-            trk.fin_final_seq = tsd.get_seg_seq();
+        if ( !trk.is_fin_seq_set() )
+            trk.set_fin_final_seq( tsd.get_seg_seq() );
     }
 
     return default_state_action(tsd, trk);

@@ -327,18 +327,10 @@ const StreamBuffer* HttpStreamSplitter::reassemble(Flow* flow, unsigned total, u
     if (flags & PKT_PDU_TAIL)
     {
         uint32_t& running_total = session_data->running_total[source_id];
-        // FIXIT-H workaround for TP Bug 149980: if we get shorted it must be because the TCP
-        // connection closed
-        if ((running_total < session_data->octets_expected[source_id]) &&
-            !session_data->strict_length[source_id])
-            session_data->tcp_close[source_id] = true;
-        // FIXIT-L workaround for TP Bug 148058: for now number of bytes provided following a
-        // connection close may be slightly less than total
-        assert((running_total == total) || session_data->tcp_close[source_id]);
-        assert(
-            (session_data->octets_expected[source_id] == running_total) ||
+        assert(running_total == total);
+        assert((session_data->octets_expected[source_id] == total) ||
                 (!session_data->strict_length[source_id] &&
-                (running_total <= session_data->octets_expected[source_id])));
+                (total <= session_data->octets_expected[source_id])));
         running_total = 0;
         const Field& send_to_detection = my_inspector->process(buffer,
             session_data->section_offset[source_id] - session_data->num_excess[source_id], flow,

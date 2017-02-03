@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_debug_trace.h author davis mcpherson <davmcphe@@cisco.com>
+// tcp_debug_trace.h author davis mcpherson <davmcphe@cisco.com>
 // Created on: Aug 5, 2015
 
 #ifndef TCP_DEBUG_TRACE_H
