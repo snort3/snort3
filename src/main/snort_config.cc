@@ -225,8 +225,8 @@ SnortConfig::~SnortConfig()
         snort_conf->fast_pattern_config->get_search_api())) )
     {
         MpseManager::stop_search_engine(fast_pattern_config->get_search_api());
-        delete fast_pattern_config;
     }
+    delete fast_pattern_config;
 
     delete policy_map;
     InspectorManager::delete_config(this);

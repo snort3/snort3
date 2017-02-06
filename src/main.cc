@@ -64,6 +64,7 @@
 static bool exit_requested = false;
 static int main_exit_code = 0;
 static bool paused = false;
+static std::queue<AnalyzerCommand*> orphan_commands;
 
 #ifdef SHELL
 static bool shell_enabled = false;
@@ -324,7 +325,7 @@ static void broadcast(AnalyzerCommand* ac)
     }
 
     if (!dispatched)
-        delete ac;
+        orphan_commands.push(ac);
 }
 
 int main_dump_stats(lua_State*)
@@ -530,6 +531,14 @@ static void reap_commands()
 {
     for (unsigned idx = 0; idx < max_pigs; ++idx)
         pigs[idx].reap_commands();
+
+    while (!orphan_commands.empty())
+    {
+        AnalyzerCommand* ac = orphan_commands.front();
+        orphan_commands.pop();
+        DebugFormat(DEBUG_ANALYZER, "Destroying orphan command %s\n", ac->stringify());
+        delete ac;
+    }
 }
 
 // FIXIT-L return true if something was done to avoid sleeping
@@ -861,7 +870,7 @@ static void main_loop()
     // Iterate over the drove, spawn them as allowed, and handle their deaths.
     // FIXIT-L X - If an exit has been requested, we might want to have some mechanism
     //             for forcing inconsiderate pigs to die in timely fashion.
-    while ( swine or paused or Trough::has_next() )
+    while ( swine or paused or (Trough::has_next() and !exit_requested) )
     {
         const char* src;
         int idx = paused ? -1 : main_read();
