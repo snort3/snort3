@@ -22,6 +22,8 @@
 #ifndef NETWORK_SET_H
 #define NETWORK_SET_H
 
+#ifdef USE_RNA_CONFIG
+
 #include <cstdio>
 
 #include "hash/sfxhash.h"
@@ -358,4 +360,6 @@ private:
     static int reduce_network_set(SF_LIST* networks);
     static int reduce_network_set6(SF_LIST* networks);
 };
+#endif
+
 #endif

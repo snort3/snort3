@@ -33,7 +33,9 @@
 
 #include "app_info_table.h"
 #include "appid_utils/appid_utils.h"
+#ifdef USE_RNA_CONFIG
 #include "appid_utils/network_set.h"
+#endif
 #include "service_plugins/service_base.h"
 
 #define ODP_PORT_DETECTORS "odp/port/*"
@@ -71,8 +73,10 @@ AppIdModuleConfig::~AppIdModuleConfig()
 AppIdConfig::AppIdConfig( AppIdModuleConfig* config )
      : mod_config( config ), app_info_mgr(AppInfoManager::get_instance())
 {
+#ifdef USE_RNA_CONFIG
     for( unsigned i = 0; i < MAX_ZONES; i++ )
         net_list_by_zone[ i ] = nullptr;
+#endif
 
     for( unsigned i = 0; i < 65535; i++ )
     {
@@ -755,12 +759,14 @@ void AppIdConfig::cleanup()
 
     app_info_mgr.cleanup_appid_info_table();
 
+#ifdef USE_RNA_CONFIG
     NetworkSet* net_list;          ///< list of network sets
     while ((net_list = net_list_list))
     {
         net_list_list = net_list->next;
         NetworkSetManager::destroy(net_list);
     }
+#endif
 
     free_port_exclusion_list(tcp_port_exclusions_src);
     free_port_exclusion_list(tcp_port_exclusions_dst);
@@ -795,75 +801,75 @@ static void display_port_exclusion_list(SF_LIST* pe_list, uint16_t port)
 void AppIdConfig::show()
 {
     unsigned i;
-    int j;
-    struct in_addr ia;
-    char inet_buffer[INET6_ADDRSTRLEN];
-    char inet_buffer2[INET6_ADDRSTRLEN];
-    NSIPv6Addr six;
-    const char* p;
-    const char* p2;
-    NetworkSet* my_net_list;
 
     if (mod_config->thirdparty_appid_dir)
         LogMessage("    3rd Party Dir: %s\n", mod_config->thirdparty_appid_dir);
 
-    my_net_list = net_list;
+#ifdef USE_RNA_CONFIG
+    struct in_addr ia;
+    NSIPv6Addr six;
+    char inet_buffer[INET6_ADDRSTRLEN];
+    char inet_buffer2[INET6_ADDRSTRLEN];
+    const char* p;
+    const char* p2;
+
     LogMessage("    Monitoring Networks for any zone:\n");
-    for (i = 0; i < my_net_list->count; i++)
+    for (i = 0; i < net_list->count; i++)
     {
-        ia.s_addr = htonl(my_net_list->pnetwork[i]->range_min);
+        ia.s_addr = htonl(net_list->pnetwork[i]->range_min);
         p = inet_ntop(AF_INET, &ia, inet_buffer, sizeof(inet_buffer));
-        ia.s_addr = htonl(my_net_list->pnetwork[i]->range_max);
+        ia.s_addr = htonl(net_list->pnetwork[i]->range_max);
         p2 = inet_ntop(AF_INET, &ia, inet_buffer2, sizeof(inet_buffer2));
-        LogMessage("        %s%s-%s %04X\n", (my_net_list->pnetwork[i]->info.ip_not) ? "!" : "",
+        LogMessage("        %s%s-%s %04X\n", (net_list->pnetwork[i]->info.ip_not) ? "!" : "",
             p ?
             p : "ERROR",
-            p2 ? p2 : "ERROR", my_net_list->pnetwork[i]->info.type);
+            p2 ? p2 : "ERROR", net_list->pnetwork[i]->info.type);
     }
-    for (i = 0; i < my_net_list->count6; i++)
+    for (i = 0; i < net_list->count6; i++)
     {
-        six = my_net_list->pnetwork6[i]->range_min;
+        six = net_list->pnetwork6[i]->range_min;
         NetworkSetManager::ntoh_ipv6(&six);
         p = inet_ntop(AF_INET6, (struct in6_addr*)&six, inet_buffer, sizeof(inet_buffer));
-        six = my_net_list->pnetwork6[i]->range_max;
+        six = net_list->pnetwork6[i]->range_max;
         NetworkSetManager::ntoh_ipv6(&six);
         p2 = inet_ntop(AF_INET6, (struct in6_addr*)&six, inet_buffer2, sizeof(inet_buffer2));
-        LogMessage("        %s%s-%s %04X\n", (my_net_list->pnetwork6[i]->info.ip_not) ? "!" : "",
+        LogMessage("        %s%s-%s %04X\n", (net_list->pnetwork6[i]->info.ip_not) ? "!" : "",
             p ?
             p : "ERROR",
-            p2 ? p2 : "ERROR", my_net_list->pnetwork6[i]->info.type);
+            p2 ? p2 : "ERROR", net_list->pnetwork6[i]->info.type);
     }
 
-    for (j=0; j < MAX_ZONES; j++)
+    for (int j = 0; j < MAX_ZONES; j++)
     {
-        if (!(my_net_list = net_list_by_zone[j]))
+        if (!(net_list = net_list_by_zone[j]))
             continue;
         LogMessage("    Monitoring Networks for zone %d:\n", j);
-        for (i = 0; i < my_net_list->count; i++)
+        for (i = 0; i < net_list->count; i++)
         {
-            ia.s_addr = htonl(my_net_list->pnetwork[i]->range_min);
+            ia.s_addr = htonl(net_list->pnetwork[i]->range_min);
             p = inet_ntop(AF_INET, &ia, inet_buffer, sizeof(inet_buffer));
-            ia.s_addr = htonl(my_net_list->pnetwork[i]->range_max);
+            ia.s_addr = htonl(net_list->pnetwork[i]->range_max);
             p2 = inet_ntop(AF_INET, &ia, inet_buffer2, sizeof(inet_buffer2));
-            LogMessage("        %s%s-%s %04X\n", (my_net_list->pnetwork[i]->info.ip_not) ? "!" :
+            LogMessage("        %s%s-%s %04X\n", (net_list->pnetwork[i]->info.ip_not) ? "!" :
                 "",
                 p ? p : "ERROR",
-                p2 ? p2 : "ERROR", my_net_list->pnetwork[i]->info.type);
+                p2 ? p2 : "ERROR", net_list->pnetwork[i]->info.type);
         }
-        for (i = 0; i < my_net_list->count6; i++)
+        for (i = 0; i < net_list->count6; i++)
         {
-            six = my_net_list->pnetwork6[i]->range_min;
+            six = net_list->pnetwork6[i]->range_min;
             NetworkSetManager::ntoh_ipv6(&six);
             p = inet_ntop(AF_INET6, (struct in6_addr*)&six, inet_buffer, sizeof(inet_buffer));
-            six = my_net_list->pnetwork6[i]->range_max;
+            six = net_list->pnetwork6[i]->range_max;
             NetworkSetManager::ntoh_ipv6(&six);
             p2 = inet_ntop(AF_INET6, (struct in6_addr*)&six, inet_buffer2, sizeof(inet_buffer2));
-            LogMessage("        %s%s-%s %04X\n", (my_net_list->pnetwork6[i]->info.ip_not) ? "!" :
+            LogMessage("        %s%s-%s %04X\n", (net_list->pnetwork6[i]->info.ip_not) ? "!" :
                 "",
                 p ? p : "ERROR",
-                p2 ? p2 : "ERROR", my_net_list->pnetwork6[i]->info.type);
+                p2 ? p2 : "ERROR", net_list->pnetwork6[i]->info.type);
         }
     }
+#endif
 
     LogMessage("    Excluded TCP Ports for Src:\n");
     for (i = 0; i < APP_ID_PORT_ARRAY_SIZE; i++)

@@ -1011,6 +1011,7 @@ void AppIdFreeDhcpInfo(DHCPInfo* dd)
     }
 }
 
+#ifdef USE_RNA_CONFIG
 static unsigned isIPv4HostMonitored(uint32_t ip4, int32_t zone)
 {
     NetworkSet* net_list;
@@ -1025,6 +1026,13 @@ static unsigned isIPv4HostMonitored(uint32_t ip4, int32_t zone)
     NetworkSetManager::contains_ex(net_list, ip4, &flags);
     return flags;
 }
+#else
+static unsigned isIPv4HostMonitored(uint32_t, int32_t)
+{
+    // FIXIT-M Defaulting to checking everything everywhere until RNA config is reimplemented
+    return IPFUNCS_HOSTS_IP | IPFUNCS_USER_IP | IPFUNCS_APPLICATION;
+}
+#endif
 
 static void add_host_ip_info(AppIdSession* asd, const uint8_t* mac, uint32_t ip, int32_t zone,
     uint32_t subnetmask, uint32_t leaseSecs, uint32_t router)

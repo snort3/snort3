@@ -31,12 +31,12 @@
 
 #define IPFUNCS_EXCEPT_IP                0x01
 #define IPFUNCS_SECONDARY_IP             0x02
-#define IPFUNCS_APPID_SESSION_EXCLUDE_IP 0x04
-#define IPFUNCS_USER_IP                  0x08
-#define IPFUNCS_HOSTS_IP                 0x10
-#define IPFUNCS_APPLICATION              0x20
+#define IPFUNCS_USER_IP                  0x04
+#define IPFUNCS_HOSTS_IP                 0x08
+#define IPFUNCS_APPLICATION              0x10
 #define IPFUNCS_CHECKED                  0x80000000
 
+#ifdef USE_RNA_CONFIG
 struct RNAIpAddrSet
 {
     uint32_t range_min;
@@ -78,6 +78,7 @@ inline int cmpSnortIpToHostKey(const ip::snort_in6_addr* keyIp, const SfIp* snor
 {
     return memcmp(keyIp, snortIp->get_ip6_ptr(), sizeof(*keyIp));
 }
+#endif
 
 #endif
 

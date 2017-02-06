@@ -1942,11 +1942,13 @@ static inline int check_port_exclusion(const Packet* pkt, bool reversed)
 static inline unsigned get_ipfuncs_flags(const Packet* p, bool dst)
 {
     const SfIp* sf_ip;
-    NetworkSet* net_list;
     unsigned flags;
     int32_t zone;
+#ifdef USE_RNA_CONFIG
     NSIPv6Addr ip6;
     AppIdConfig* config = AppIdConfig::get_appid_config();
+    NetworkSet* net_list;
+#endif
 
     if (!dst)
     {
@@ -1962,6 +1964,7 @@ static inline unsigned get_ipfuncs_flags(const Packet* p, bool dst)
         sf_ip = p->ptrs.ip_api.get_dst();
     }
 
+#ifdef USE_RNA_CONFIG
     if (zone >= 0 && zone < MAX_ZONES && config->net_list_by_zone[zone])
         net_list = config->net_list_by_zone[zone];
     else
@@ -1979,6 +1982,12 @@ static inline unsigned get_ipfuncs_flags(const Packet* p, bool dst)
         NetworkSetManager::ntoh_ipv6(&ip6);
         NetworkSetManager::contains6_ex(net_list, &ip6, &flags);
     }
+#else
+    if (sf_ip->is_ip4() && sf_ip->get_ip4_value() == 0xFFFFFFFF)
+        return IPFUNCS_CHECKED;
+    // FIXIT-M Defaulting to checking everything everywhere until RNA config is reimplemented
+    flags = IPFUNCS_HOSTS_IP | IPFUNCS_USER_IP | IPFUNCS_APPLICATION;
+#endif
 
     return flags | IPFUNCS_CHECKED;
 }

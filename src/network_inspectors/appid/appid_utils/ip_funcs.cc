@@ -25,6 +25,8 @@
 
 #include "ip_funcs.h"
 
+#ifdef USE_RNA_CONFIG
+
 #include <netinet/in.h>
 
 #include "log/messages.h"
@@ -211,4 +213,6 @@ RNAIpv6AddrSet* ParseIpv6Cidr(char* ipstring)
 
     return ias;
 }
+
+#endif
 

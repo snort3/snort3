@@ -25,6 +25,8 @@
 
 #include "network_set.h"
 
+#ifdef USE_RNA_CONFIG
+
 #include <sys/socket.h>
 
 #include "log/messages.h"
@@ -1156,4 +1158,6 @@ int NetworkSetManager::add_set(NetworkSet* dest_set, NetworkSet* src_set)
     }
     return 0;
 }
+
+#endif
 
