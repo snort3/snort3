@@ -67,9 +67,6 @@ struct InitClientAppAPI
     void (*RegisterPatternNoCase)(RNAClientAppFCN, IpProtocol proto, const uint8_t* const pattern,
         unsigned size, int position);
     void (*RegisterAppId)(RNAClientAppFCN, AppId, uint32_t additionalInfo);
-    int debug;
-    uint32_t instance_id;
-    AppIdConfig* pAppidConfig;  ///< AppId context for which this API should be used
 };
 
 struct FinalizeClientAppAPI

@@ -38,6 +38,7 @@
 
 struct RNAClientAppModule;
 struct RNAServiceElement;
+class AppIdModuleConfig;
 
 enum AppInfoFlags
 {
@@ -145,13 +146,13 @@ public:
         return entry ? entry->priority : 0;
     }
 
-     void init_appid_info_table(const char* path);
+     void init_appid_info_table(AppIdModuleConfig*);
      void cleanup_appid_info_table();
      void dump_app_info_table();
 
 private:
     AppInfoManager() {}
-    void load_appid_config(const char* path);
+    void load_appid_config(AppIdModuleConfig* mod_config, const char* path);
     AppInfoTableEntry* get_app_info_entry(AppId appId, const AppInfoTable& lookup_table);
     std::mutex app_info_tables_rw_mutex;
 };

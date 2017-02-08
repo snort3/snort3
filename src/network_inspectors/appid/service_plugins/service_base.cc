@@ -195,10 +195,7 @@ static THREAD_LOCAL InitServiceAPI svc_init_api =
     &CServiceAddPort,
     &CServiceRemovePorts,
     &ServiceRegisterPatternUser,
-    &appSetServiceValidator,
-    0,
-    0,
-    nullptr
+    &appSetServiceValidator
 };
 
 extern RNAServiceValidationModule timbuktu_service_mod;
@@ -725,10 +722,6 @@ int serviceLoadCallback(void* symbol)
 
 static int load_service_detectors()
 {
-    svc_init_api.instance_id = AppIdConfig::get_appid_config()->mod_config->instance_id;
-    svc_init_api.debug = AppIdConfig::get_appid_config()->mod_config->debug;
-    svc_init_api.pAppidConfig = AppIdConfig::get_appid_config();
-
     for ( unsigned i = 0; i < NUM_STATIC_SERVICES; i++)
     {
         if (serviceLoadForConfigCallback(static_service_list[i]))
@@ -1012,11 +1005,10 @@ void AppIdFreeDhcpInfo(DHCPInfo* dd)
 }
 
 #ifdef USE_RNA_CONFIG
-static unsigned isIPv4HostMonitored(uint32_t ip4, int32_t zone)
+static unsigned isIPv4HostMonitored(uint32_t ip4, int32_t zone, AppIdConfig* config)
 {
     NetworkSet* net_list;
     unsigned flags;
-    AppIdConfig* config = AppIdConfig::get_appid_config();
 
     if (zone >= 0 && zone < MAX_ZONES && config->net_list_by_zone[zone])
         net_list = config->net_list_by_zone[zone];
@@ -1027,7 +1019,7 @@ static unsigned isIPv4HostMonitored(uint32_t ip4, int32_t zone)
     return flags;
 }
 #else
-static unsigned isIPv4HostMonitored(uint32_t, int32_t)
+static unsigned isIPv4HostMonitored(uint32_t, int32_t, AppIdConfig*)
 {
     // FIXIT-M Defaulting to checking everything everywhere until RNA config is reimplemented
     return IPFUNCS_HOSTS_IP | IPFUNCS_USER_IP | IPFUNCS_APPLICATION;
@@ -1046,7 +1038,7 @@ static void add_host_ip_info(AppIdSession* asd, const uint8_t* mac, uint32_t ip,
             || asd->get_session_flags(APPID_SESSION_HAS_DHCP_INFO))
         return;
 
-    unsigned flags = isIPv4HostMonitored(ntohl(ip), zone);
+    unsigned flags = isIPv4HostMonitored(ntohl(ip), zone, asd->config);
     if (!(flags & IPFUNCS_HOSTS_IP))
         return;
 
@@ -1796,7 +1788,7 @@ int AppIdDiscoverService(Packet* p, const int dir, AppIdSession* asd)
     args.dir = dir;
     args.asd = asd;
     args.pkt = p;
-    args.pConfig = AppIdConfig::get_appid_config();
+    args.pConfig = asd->config;
     args.session_logging_enabled = asd->session_logging_enabled;
     args.session_logging_id = asd->session_logging_id;
 

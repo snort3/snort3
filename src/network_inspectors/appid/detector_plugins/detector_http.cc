@@ -29,6 +29,7 @@
 #include "protocols/packet.h"
 #include "search_engines/search_tool.h"
 
+#include "appid_inspector.h"
 #include "app_info_table.h"
 #include "appid_config.h"
 #include "appid_utils/sf_mlmp.h"
@@ -1071,7 +1072,8 @@ void scan_key_chp(PatternType ptype, char* buf, int buf_size, CHPTallyAndActions
 }
 
 AppId scan_chp(PatternType ptype, char* buf, int buf_size, MatchedCHPAction* mp, char** version,
-        char** user, char** new_field, int* total_found, httpSession* hsession, Packet*)
+        char** user, char** new_field, int* total_found, httpSession* hsession,
+        Packet*, AppIdModuleConfig* mod_config)
 {
     MatchedCHPAction* second_sweep_for_inserts = nullptr;
     int do_not_further_modify_field = 0;
@@ -1089,7 +1091,7 @@ AppId scan_chp(PatternType ptype, char* buf, int buf_size, MatchedCHPAction* mp,
     if (!mp)
         return APP_ID_NONE;
 
-    if (AppIdConfig::get_appid_config()->mod_config->disable_safe_search)
+    if (mod_config->disable_safe_search)
     {
         new_field = nullptr;
     }
@@ -1135,7 +1137,7 @@ AppId scan_chp(PatternType ptype, char* buf, int buf_size, MatchedCHPAction* mp,
             hsession->skip_simple_detect = true;
             break;
         case EXTRACT_USER:
-            if (!*user && !AppIdConfig::get_appid_config()->mod_config->chp_userid_disabled)
+            if (!*user && !mod_config->chp_userid_disabled)
             {
                 extractCHP(buf, buf_size, tmp->start_match_pos, match->psize,
                     match->action_data, user);
@@ -2033,7 +2035,7 @@ RNAServiceValidationModule http_service_mod =
 
 static CLIENT_APP_RETCODE http_client_init(const InitClientAppAPI* const init_api, SF_LIST*)
 {
-    if (AppIdConfig::get_appid_config()->mod_config->http2_detection_enabled)
+    if (AppIdInspector::get_inspector()->get_appid_config()->mod_config->http2_detection_enabled)
     {
         for (unsigned i = 0; i < sizeof(patterns)/sizeof(*patterns); i++)
         {

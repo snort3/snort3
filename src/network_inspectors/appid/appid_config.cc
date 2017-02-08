@@ -43,7 +43,6 @@
 #define MAX_DISPLAY_SIZE   65536
 #define MAX_LINE    2048
 
-static AppIdConfig* appid_config = nullptr;
 unsigned appIdPolicyId;
 uint32_t app_id_netmasks[33];
 
@@ -99,11 +98,6 @@ AppIdConfig::AppIdConfig( AppIdModuleConfig* config )
 AppIdConfig::~AppIdConfig()
 {
     cleanup();
-}
-
-AppIdConfig* AppIdConfig::get_appid_config()
-{
-    return appid_config;
 }
 
 void AppidConfigElement::add_generic_config_element(const char* name, void* data)
@@ -702,12 +696,11 @@ void AppIdConfig::set_safe_search_enforcement(int enabled)
 
 bool AppIdConfig::init_appid( )
 {
-    appid_config = this;
 	map_app_names_to_snort_ids();
 	appIdPolicyId = 53;
 	AppIdUtils::init_netmasks(app_id_netmasks);
-	app_info_mgr.init_appid_info_table(mod_config->app_detector_dir);
-	sflist_init(&appid_config->client_app_args);
+	app_info_mgr.init_appid_info_table(mod_config);
+	sflist_init(&client_app_args);
 #if USE_RNA_CONFIG
 	load_analysis_config(mod_config->conf_file, 0, mod_config->instance_id);
 #endif

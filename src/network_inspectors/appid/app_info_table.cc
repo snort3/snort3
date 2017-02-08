@@ -221,7 +221,7 @@ void AppInfoManager::set_app_info_active(AppId appId)
         WarningMessage("AppInfo: AppId %d has no entry in application info table\n", appId);
 }
 
-void AppInfoManager::load_appid_config(const char* path)
+void AppInfoManager::load_appid_config(AppIdModuleConfig* mod_config, const char* path)
 {
     char buf[1024];
     unsigned line = 0;
@@ -279,7 +279,7 @@ void AppInfoManager::load_appid_config(const char* path)
                     DebugFormat(DEBUG_APPID,
                         "AppId: setting max thirdparty inspection flow depth to %d packets.\n",
                         max_tp_flow_depth);
-                    AppIdConfig::get_appid_config()->mod_config->max_tp_flow_depth = max_tp_flow_depth;
+                    mod_config->max_tp_flow_depth = max_tp_flow_depth;
                 }
             }
             else if (!(strcasecmp(conf_key, "tp_allow_probes")))
@@ -289,7 +289,7 @@ void AppInfoManager::load_appid_config(const char* path)
                     DebugMessage(DEBUG_APPID,
                         "AppId: TCP probes will be analyzed by NAVL.\n");
 
-                    AppIdConfig::get_appid_config()->mod_config->tp_allow_probes = 1;
+                    mod_config->tp_allow_probes = 1;
                 }
             }
             else if (!(strcasecmp(conf_key, "tp_client_app")))
@@ -311,7 +311,7 @@ void AppInfoManager::load_appid_config(const char* path)
                 if (!(strcasecmp(conf_val, "disabled")))
                 {
                     DebugMessage(DEBUG_APPID, "AppId: disabling safe search enforcement.\n");
-                    AppIdConfig::get_appid_config()->mod_config->disable_safe_search = 1;
+                    mod_config->disable_safe_search = 1;
                 }
             }
             else if (!(strcasecmp(conf_key, "ssl_squelch")))
@@ -342,7 +342,7 @@ void AppInfoManager::load_appid_config(const char* path)
                 {
                     DebugMessage(DEBUG_APPID,
                         "AppId: HTTP UserID collection disabled.\n");
-                    AppIdConfig::get_appid_config()->mod_config->chp_userid_disabled = 1;
+                    mod_config->chp_userid_disabled = 1;
                     continue;
                 }
             }
@@ -352,7 +352,7 @@ void AppInfoManager::load_appid_config(const char* path)
                 {
                     DebugMessage(DEBUG_APPID,
                         "AppId: HTTP Body header reading disabled.\n");
-                    AppIdConfig::get_appid_config()->mod_config->chp_body_collection_disabled = 1;
+                    mod_config->chp_body_collection_disabled = 1;
                     continue;
                 }
             }
@@ -361,7 +361,7 @@ void AppInfoManager::load_appid_config(const char* path)
                 if (!(strcasecmp(conf_val, "disabled")))
                 {
                     DebugMessage(DEBUG_APPID, "AppId: FTP userID disabled.\n");
-                    AppIdConfig::get_appid_config()->mod_config->ftp_userid_disabled = 1;
+                    mod_config->ftp_userid_disabled = 1;
                     continue;
                 }
             }
@@ -387,10 +387,10 @@ void AppInfoManager::load_appid_config(const char* path)
             {
                 if (!(strcasecmp(conf_val, "disabled")))
                 {
-                    AppIdConfig::get_appid_config()->mod_config->referred_appId_disabled = 1;
+                    mod_config->referred_appId_disabled = 1;
                     continue;
                 }
-                else if (!AppIdConfig::get_appid_config()->mod_config->referred_appId_disabled)
+                else if (!mod_config->referred_appId_disabled)
                 {
                     char referred_app_list[4096];
                     int referred_app_index = snprintf(referred_app_list, 4096, "%d ", atoi(conf_val));
@@ -410,19 +410,19 @@ void AppInfoManager::load_appid_config(const char* path)
             }
             else if (!(strcasecmp(conf_key, "rtmp_max_packets")))
             {
-                AppIdConfig::get_appid_config()->mod_config->rtmp_max_packets = atoi(conf_val);
+                mod_config->rtmp_max_packets = atoi(conf_val);
             }
             else if (!(strcasecmp(conf_key, "mdns_user_report")))
             {
-                AppIdConfig::get_appid_config()->mod_config->mdns_user_reporting = atoi(conf_val);
+                mod_config->mdns_user_reporting = atoi(conf_val);
             }
             else if (!(strcasecmp(conf_key, "dns_host_report")))
             {
-                AppIdConfig::get_appid_config()->mod_config->dns_host_reporting = atoi(conf_val);
+                mod_config->dns_host_reporting = atoi(conf_val);
             }
             else if (!(strcasecmp(conf_key, "chp_body_max_bytes")))
             {
-                AppIdConfig::get_appid_config()->mod_config->chp_body_collection_max = atoi(conf_val);
+                mod_config->chp_body_collection_max = atoi(conf_val);
             }
             else if (!(strcasecmp(conf_key, "ignore_thirdparty_appid")))
             {
@@ -440,12 +440,12 @@ void AppInfoManager::load_appid_config(const char* path)
                 if (!(strcasecmp(conf_val, "disabled")))
                 {
                     DebugMessage(DEBUG_APPID, "AppId: disabling internal HTTP/2 detection.\n");
-                    AppIdConfig::get_appid_config()->mod_config->http2_detection_enabled = false;
+                    mod_config->http2_detection_enabled = false;
                 }
                 else if (!(strcasecmp(conf_val, "enabled")))
                 {
                     DebugMessage(DEBUG_APPID, "AppId: enabling internal HTTP/2 detection.\n");
-                    AppIdConfig::get_appid_config()->mod_config->http2_detection_enabled = true;
+                    mod_config->http2_detection_enabled = true;
                 }
                 else
                 {
@@ -459,7 +459,7 @@ void AppInfoManager::load_appid_config(const char* path)
     fclose(config_file);
 }
 
-void AppInfoManager::init_appid_info_table(const char* path)
+void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config)
 {
     FILE* tableFile;
     const char* token;
@@ -472,7 +472,7 @@ void AppInfoManager::init_appid_info_table(const char* path)
     char* snortName = nullptr;
     char* context;
 
-    snprintf(filepath, sizeof(filepath), "%s/odp/%s", path, APP_MAPPING_FILE);
+    snprintf(filepath, sizeof(filepath), "%s/odp/%s", mod_config->app_detector_dir, APP_MAPPING_FILE);
 
     tableFile = fopen(filepath, "r");
     if (tableFile == nullptr)
@@ -561,15 +561,15 @@ void AppInfoManager::init_appid_info_table(const char* path)
     fclose(tableFile);
 
     /* Configuration defaults. */
-    AppIdConfig::get_appid_config()->mod_config->rtmp_max_packets = 15;
-    AppIdConfig::get_appid_config()->mod_config->mdns_user_reporting = 1;
-    AppIdConfig::get_appid_config()->mod_config->dns_host_reporting = 1;
-    AppIdConfig::get_appid_config()->mod_config->max_tp_flow_depth = 5;
-    AppIdConfig::get_appid_config()->mod_config->http2_detection_enabled = false;
+    mod_config->rtmp_max_packets = 15;
+    mod_config->mdns_user_reporting = 1;
+    mod_config->dns_host_reporting = 1;
+    mod_config->max_tp_flow_depth = 5;
+    mod_config->http2_detection_enabled = false;
 
-    snprintf(filepath, sizeof(filepath), "%s/odp/%s", path, APP_CONFIG_FILE);
-    load_appid_config (filepath);
-    snprintf(filepath, sizeof(filepath), "%s/custom/%s", path, USR_CONFIG_FILE);
-    load_appid_config (filepath);
+    snprintf(filepath, sizeof(filepath), "%s/odp/%s", mod_config->app_detector_dir, APP_CONFIG_FILE);
+    load_appid_config (mod_config, filepath);
+    snprintf(filepath, sizeof(filepath), "%s/custom/%s", mod_config->app_detector_dir, USR_CONFIG_FILE);
+    load_appid_config (mod_config, filepath);
 }
 

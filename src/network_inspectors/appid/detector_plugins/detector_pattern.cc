@@ -516,9 +516,6 @@ void finalize_service_port_patterns()
 static int pattern_service_init(const InitServiceAPI* const init_api)
 {
     iniServiceApi = init_api;
-
-    DebugFormat(DEBUG_LOG,"Initializing with instance %u\n",iniServiceApi->instance_id);
-
     return 0;
 }
 

@@ -166,7 +166,7 @@ inline void free_matched_chp_actions(MatchedCHPAction* ma)
 
 void scan_key_chp(PatternType ptype, char* buf, int buf_size, CHPTallyAndActions& match_tally);
 AppId scan_chp(PatternType, char*, int, MatchedCHPAction*, char**, char**, char**, int*,
-        httpSession*, Packet*);
+        httpSession*, Packet*, AppIdModuleConfig*);
 AppId get_appid_from_url(char*, char*, char**, char*, AppId*, AppId*, AppId*, AppId*, unsigned);
 AppId get_appid_by_content_type(const uint8_t*, int);
 AppId scan_header_x_working_with(const uint8_t*, uint32_t, char**);

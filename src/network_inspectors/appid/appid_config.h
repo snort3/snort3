@@ -138,8 +138,6 @@ public:
     bool init_appid();
     void cleanup();
     void show();
-
-    static AppIdConfig* get_appid_config();
     void set_safe_search_enforcement(int enabled);
 
     unsigned max_service_info = 0;

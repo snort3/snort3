@@ -77,10 +77,7 @@ static InitClientAppAPI client_init_api =
     &CClientAppRegisterPattern,
     &LuaClientAppRegisterPattern,
     &CClientAppRegisterPatternNoCase,
-    &appSetClientValidator,
-    0,
-    0,
-    nullptr
+    &appSetClientValidator
 };
 
 static FinalizeClientAppAPI finalize_api =
@@ -533,41 +530,25 @@ static void finalize_module(RNAClientAppRecord* li)
     }
 }
 
-static int load_builtin_client_plugins()
+static void load_builtin_client_plugins()
 {
-    unsigned i;
-
-    for (i = 0; i < NUM_BUILTIN_CLIENT_PLUGINS; i++)
-    {
-        if (load_client_application_plugin(builtin_client_plugins[i]))
-            return -1;
-    }
-
-    return 0;
+    for (unsigned i = 0; i < NUM_BUILTIN_CLIENT_PLUGINS; i++)
+        load_client_application_plugin(builtin_client_plugins[i]);
 }
 
-/**
- * Initialize the configuration of the client app module
- *
- * @param args
- */
-void init_client_plugins()
+void init_client_plugins(AppIdConfig* config)
 {
-    RNAClientAppRecord* li;
-
     client_app_config = new ClientAppConfig;
-    if (load_builtin_client_plugins())
-         exit(-1);
 
     sflist_init(&client_app_config->module_configs);
     client_app_config->enabled = true;
-    ClientAppParseArgs(&AppIdConfig::get_appid_config()->client_app_args);
+    ClientAppParseArgs(&config->client_app_args);
 
     if (client_app_config->enabled)
     {
-        client_init_api.debug = AppIdConfig::get_appid_config()->mod_config->debug;
-        client_init_api.pAppidConfig = AppIdConfig::get_appid_config();
-        client_init_api.instance_id = AppIdConfig::get_appid_config()->mod_config->instance_id;
+        RNAClientAppRecord* li;
+
+        load_builtin_client_plugins();
 
         for (li = client_app_config->tcp_client_app_list; li; li = li->next)
             initialize_module(li);

@@ -613,7 +613,7 @@ static int dns_udp_validate(ServiceValidationArgs* args)
         goto udp_done;
     }
     if ((rval = dns_validate_header(dir, (DNSHeader*)data,
-            AppIdConfig::get_appid_config()->mod_config->dns_host_reporting, asd)) != SERVICE_SUCCESS)
+            asd->config->mod_config->dns_host_reporting, asd)) != SERVICE_SUCCESS)
     {
         if (rval == SERVICE_REVERSED)
         {
@@ -624,7 +624,7 @@ static int dns_udp_validate(ServiceValidationArgs* args)
                     // To get here, we missed the initial query, got a
                     // response, and now we've got another query.
                     rval = validate_packet(data, size, dir,
-                        AppIdConfig::get_appid_config()->mod_config->dns_host_reporting, asd);
+                        asd->config->mod_config->dns_host_reporting, asd);
                     if (rval == SERVICE_SUCCESS)
                         goto inprocess;
                 }
@@ -635,7 +635,7 @@ static int dns_udp_validate(ServiceValidationArgs* args)
                 // To get here, we missed the initial query, but now we've got
                 // a response.
                 rval = validate_packet(data, size, dir,
-                    AppIdConfig::get_appid_config()->mod_config->dns_host_reporting, asd);
+                    asd->config->mod_config->dns_host_reporting, asd);
                 if (rval == SERVICE_SUCCESS)
                 {
                     asd->set_session_flags(APPID_SESSION_UDP_REVERSED);
@@ -649,7 +649,7 @@ static int dns_udp_validate(ServiceValidationArgs* args)
     }
 
     rval = validate_packet(data, size, dir,
-        AppIdConfig::get_appid_config()->mod_config->dns_host_reporting, asd);
+        asd->config->mod_config->dns_host_reporting, asd);
     if ((rval == SERVICE_SUCCESS) && (dir == APP_ID_FROM_INITIATOR))
         goto inprocess;
 
@@ -709,7 +709,7 @@ static int dns_tcp_validate(ServiceValidationArgs* args)
     size -= sizeof(DNSTCPHeader);
     tmp = ntohs(hdr->length);
     if (tmp < sizeof(DNSHeader) || dns_validate_header(dir, (DNSHeader*)data,
-        AppIdConfig::get_appid_config()->mod_config->dns_host_reporting, asd))
+        asd->config->mod_config->dns_host_reporting, asd))
     {
         if (dir == APP_ID_FROM_INITIATOR)
             goto not_compatible;
@@ -719,7 +719,7 @@ static int dns_tcp_validate(ServiceValidationArgs* args)
 
     if (tmp > size)
         goto not_compatible;
-    rval = validate_packet(data, size, dir, AppIdConfig::get_appid_config()->mod_config->dns_host_reporting,
+    rval = validate_packet(data, size, dir, asd->config->mod_config->dns_host_reporting,
         asd);
     if (rval != SERVICE_SUCCESS)
         goto tcp_done;

@@ -33,18 +33,14 @@ public:
 
     AppIdInspector(const AppIdModuleConfig*);
     ~AppIdInspector();
+    static AppIdInspector* get_inspector();
 
     bool configure(SnortConfig*) override;
     void show(SnortConfig*) override;
     void tinit() override;
     void tterm() override;
     void eval(Packet*) override;
-
-    AppIdConfig* get_active_config()
-    {
-        return active_config;
-    }
-
+    AppIdConfig* get_appid_config();
 
 private:
     const AppIdModuleConfig* config = nullptr;

@@ -148,7 +148,7 @@ static inline bool get_lua_field(
     return result;
 }
 
-static lua_State* create_lua_state()
+static lua_State* create_lua_state(AppIdModuleConfig* mod_config)
 {
     auto L = luaL_newstate();
     luaL_openlibs(L);
@@ -185,8 +185,7 @@ static lua_State* create_lua_state()
     // FIXIT-L compute this path in the appid config module and return it ready to use
     snprintf(
         extra_path_buffer, PATH_MAX-1, "%s/odp/libs/?.lua;%s/custom/libs/?.lua",
-        AppIdConfig::get_appid_config()->mod_config->app_detector_dir,
-        AppIdConfig::get_appid_config()->mod_config->app_detector_dir);
+        mod_config->app_detector_dir, mod_config->app_detector_dir);
 
     const int save_top = lua_gettop(L);
     if ( get_lua_ns(L, "package.path") )
@@ -407,7 +406,7 @@ void LuaDetectorManager::load_detector(char* detector_filename, bool isCustom)
 {
     char detectorName[MAX_LUA_DETECTOR_FILENAME_LEN];
 
-    lua_State* L = create_lua_state();
+    lua_State* L = create_lua_state(config.mod_config);
     if ( !L )
     {
         ErrorMessage("can not create new luaState");
@@ -581,11 +580,9 @@ void LuaDetectorManager::initialize_lua_detectors()
 {
     char path[PATH_MAX];
 
-    snprintf(path, sizeof(path), "%s/odp/lua",
-            AppIdConfig::get_appid_config()->mod_config->app_detector_dir);
+    snprintf(path, sizeof(path), "%s/odp/lua", config.mod_config->app_detector_dir);
     load_lua_detectors(path, false);
-    snprintf(path, sizeof(path), "%s/custom/lua",
-            AppIdConfig::get_appid_config()->mod_config->app_detector_dir);
+    snprintf(path, sizeof(path), "%s/custom/lua", config.mod_config->app_detector_dir);
     load_lua_detectors(path, true);
 }
 

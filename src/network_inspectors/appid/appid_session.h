@@ -224,7 +224,7 @@ public:
     static AppIdSession* allocate_session(const Packet*, IpProtocol, int);
     static AppIdSession* create_future_session(const Packet*, const SfIp*, uint16_t, const SfIp*,
             uint16_t, IpProtocol, int16_t, int);
-    static void do_application_discovery(Packet*);
+    static void do_application_discovery(Packet*, AppIdConfig*);
     static void add_user(AppIdSession*, const char* username, AppId, int success);
     static void add_payload(AppIdSession*, AppId);
 
@@ -379,7 +379,7 @@ private:
     bool do_service_discovery(IpProtocol, int, AppId, AppId,  Packet*);
     int exec_client_detectors(Packet*, int);
 
-    static uint64_t is_session_monitored(const Packet*, int, AppIdSession*);
+    static uint64_t is_session_monitored(const Packet*, int, AppIdSession*, AppIdConfig*);
     static bool is_packet_ignored(Packet* p);
     bool is_payload_appid_set();
     void reinit_shared_data();

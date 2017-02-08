@@ -391,7 +391,7 @@ static int MDNS_validate(ServiceValidationArgs* args)
         ret_val = MDNS_validate_reply(data, size);
         if (ret_val == 1)
         {
-            if (AppIdConfig::get_appid_config()->mod_config->mdns_user_reporting)
+            if (asd->config->mod_config->mdns_user_reporting)
             {
                 MDNSUserAnalyser(asd, pkt, size);
                 mdnsMatchListDestroy();

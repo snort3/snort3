@@ -35,7 +35,7 @@ struct Packet;
 struct ClientAppApi;
 struct RNAClientAppModuleConfig;
 
-void init_client_plugins();
+void init_client_plugins(AppIdConfig*);
 void finalize_client_plugins();
 void UnconfigureClientApp(AppIdConfig*);
 void clean_client_plugins();

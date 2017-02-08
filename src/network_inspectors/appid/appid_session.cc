@@ -34,6 +34,7 @@
 #include "target_based/snort_protocols.h"
 #include "time/packet_time.h"
 
+#include "appid_inspector.h"
 #include "app_forecast.h"
 #include "app_info_table.h"
 #include "appid_module.h"
@@ -167,7 +168,7 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t port)
     common.flow_type = APPID_FLOW_TYPE_NORMAL;
     common.initiator_ip = *ip;
     common.initiator_port = port;
-    config = AppIdConfig::get_appid_config();
+    config = AppIdInspector::get_inspector()->get_appid_config();
     app_info_mgr = &AppInfoManager::get_instance();
     if (thirdparty_appid_module)
         if (!(tpsession = thirdparty_appid_module->session_create()))
@@ -1474,7 +1475,7 @@ bool AppIdSession::do_client_discovery(int direction, Packet* p)
     return isTpAppidDiscoveryDone;
 }
 
-void AppIdSession::do_application_discovery(Packet* p)
+void AppIdSession::do_application_discovery(Packet* p, AppIdConfig* config)
 {
     IpProtocol protocol = IpProtocol::PROTO_NOT_SET;
     AppId client_app_id = 0;
@@ -1527,7 +1528,7 @@ void AppIdSession::do_application_discovery(Packet* p)
         direction = p->is_from_client() ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
     }
 
-    uint64_t flow_flags = AppIdSession::is_session_monitored(p, direction, asd);
+    uint64_t flow_flags = AppIdSession::is_session_monitored(p, direction, asd, config);
     if (!(flow_flags & (APPID_SESSION_DISCOVER_APP | APPID_SESSION_SPECIAL_MONITORED)))
     {
         if (!asd)
@@ -1879,14 +1880,13 @@ static inline int PENetworkMatch(const SfIp* pktAddr, const PortExclusion* pe)
            && ((pkt[3] & nm[3]) == peIP[3]));
 }
 
-static inline int check_port_exclusion(const Packet* pkt, bool reversed)
+static inline int check_port_exclusion(const Packet* pkt, bool reversed, AppIdConfig* config)
 {
     AppIdPortExclusions* src_port_exclusions;
     AppIdPortExclusions* dst_port_exclusions;
     SF_LIST* pe_list;
     PortExclusion* pe;
     const SfIp* s_ip;
-    AppIdConfig* config = AppIdConfig::get_appid_config();
 
     if ( pkt->is_tcp() )
     {
@@ -1939,14 +1939,13 @@ static inline int check_port_exclusion(const Packet* pkt, bool reversed)
     return 0;
 }
 
-static inline unsigned get_ipfuncs_flags(const Packet* p, bool dst)
+static inline unsigned get_ipfuncs_flags(const Packet* p, bool dst, AppIdConfig*)
 {
     const SfIp* sf_ip;
     unsigned flags;
     int32_t zone;
 #ifdef USE_RNA_CONFIG
     NSIPv6Addr ip6;
-    AppIdConfig* config = AppIdConfig::get_appid_config();
     NetworkSet* net_list;
 #endif
 
@@ -2014,7 +2013,7 @@ bool AppIdSession::is_ssl_decryption_enabled()
 }
 
 
-uint64_t AppIdSession::is_session_monitored(const Packet* p, int dir, AppIdSession* asd)
+uint64_t AppIdSession::is_session_monitored(const Packet* p, int dir, AppIdSession* asd, AppIdConfig* config)
 {
     uint64_t flags = 0;
     uint64_t flow_flags = APPID_SESSION_DISCOVER_APP;
@@ -2026,7 +2025,7 @@ uint64_t AppIdSession::is_session_monitored(const Packet* p, int dir, AppIdSessi
         flow_flags |= asd->common.flags;
         if (asd->common.policyId != appIdPolicyId)
         {
-            if (check_port_exclusion(p, dir == APP_ID_FROM_RESPONDER))
+            if (check_port_exclusion(p, dir == APP_ID_FROM_RESPONDER, config))
             {
                 flow_flags |= APPID_SESSION_INITIATOR_SEEN | APPID_SESSION_RESPONDER_SEEN |
                     APPID_SESSION_INITIATOR_CHECKED | APPID_SESSION_RESPONDER_CHECKED;
@@ -2038,7 +2037,7 @@ uint64_t AppIdSession::is_session_monitored(const Packet* p, int dir, AppIdSessi
             {
                 if (asd->get_session_flags(APPID_SESSION_INITIATOR_CHECKED))
                 {
-                    flags = get_ipfuncs_flags(p, false);
+                    flags = get_ipfuncs_flags(p, false, config);
                     if (flags & IPFUNCS_HOSTS_IP)
                         flow_flags |= APPID_SESSION_INITIATOR_MONITORED;
                     else
@@ -2047,7 +2046,7 @@ uint64_t AppIdSession::is_session_monitored(const Packet* p, int dir, AppIdSessi
 
                 if (asd->get_session_flags(APPID_SESSION_RESPONDER_CHECKED))
                 {
-                    flags = get_ipfuncs_flags(p, true);
+                    flags = get_ipfuncs_flags(p, true, config);
                     if (flags & IPFUNCS_HOSTS_IP)
                         flow_flags |= APPID_SESSION_RESPONDER_MONITORED;
                     else
@@ -2058,7 +2057,7 @@ uint64_t AppIdSession::is_session_monitored(const Packet* p, int dir, AppIdSessi
             {
                 if (asd->get_session_flags(APPID_SESSION_RESPONDER_CHECKED))
                 {
-                    flags = get_ipfuncs_flags(p, false);
+                    flags = get_ipfuncs_flags(p, false, config);
                     if (flags & IPFUNCS_HOSTS_IP)
                         flow_flags |= APPID_SESSION_RESPONDER_MONITORED;
                     else
@@ -2067,7 +2066,7 @@ uint64_t AppIdSession::is_session_monitored(const Packet* p, int dir, AppIdSessi
 
                 if (asd->get_session_flags(APPID_SESSION_INITIATOR_CHECKED))
                 {
-                    flags = get_ipfuncs_flags(p, true);
+                    flags = get_ipfuncs_flags(p, true, config);
                     if (flags & IPFUNCS_HOSTS_IP)
                         flow_flags |= APPID_SESSION_INITIATOR_MONITORED;
                     else
@@ -2084,7 +2083,7 @@ uint64_t AppIdSession::is_session_monitored(const Packet* p, int dir, AppIdSessi
         {
             if (!asd->get_session_flags(APPID_SESSION_INITIATOR_CHECKED))
             {
-                flags = get_ipfuncs_flags(p, false);
+                flags = get_ipfuncs_flags(p, false, config);
                 flow_flags |= APPID_SESSION_INITIATOR_CHECKED;
                 if (flags & IPFUNCS_HOSTS_IP)
                     flow_flags |= APPID_SESSION_INITIATOR_MONITORED;
@@ -2101,7 +2100,7 @@ uint64_t AppIdSession::is_session_monitored(const Packet* p, int dir, AppIdSessi
             if (!(flow_flags & APPID_SESSION_DISCOVER_APP)
                     && !asd->get_session_flags(APPID_SESSION_RESPONDER_CHECKED))
             {
-                flags = get_ipfuncs_flags(p, true);
+                flags = get_ipfuncs_flags(p, true, config);
                 if (flags & IPFUNCS_CHECKED)
                     flow_flags |= APPID_SESSION_RESPONDER_CHECKED;
                 if (flags & IPFUNCS_HOSTS_IP)
@@ -2118,7 +2117,7 @@ uint64_t AppIdSession::is_session_monitored(const Packet* p, int dir, AppIdSessi
         {
             if (!asd->get_session_flags(APPID_SESSION_RESPONDER_CHECKED))
             {
-                flags = get_ipfuncs_flags(p, false);
+                flags = get_ipfuncs_flags(p, false, config);
                 flow_flags |= APPID_SESSION_RESPONDER_CHECKED;
                 if (flags & IPFUNCS_HOSTS_IP)
                     flow_flags |= APPID_SESSION_RESPONDER_MONITORED;
@@ -2132,7 +2131,7 @@ uint64_t AppIdSession::is_session_monitored(const Packet* p, int dir, AppIdSessi
             if (!(flow_flags & APPID_SESSION_DISCOVER_APP)
                     && !asd->get_session_flags(APPID_SESSION_INITIATOR_CHECKED))
             {
-                flags = get_ipfuncs_flags(p, true);
+                flags = get_ipfuncs_flags(p, true, config);
                 if (flags & IPFUNCS_CHECKED)
                     flow_flags |= APPID_SESSION_INITIATOR_CHECKED;
                 if (flags & IPFUNCS_HOSTS_IP)
@@ -2148,14 +2147,14 @@ uint64_t AppIdSession::is_session_monitored(const Packet* p, int dir, AppIdSessi
             }
         }
     }
-    else if (check_port_exclusion(p, false))
+    else if (check_port_exclusion(p, false, config))
     {
         flow_flags |= APPID_SESSION_INITIATOR_SEEN | APPID_SESSION_RESPONDER_SEEN |
             APPID_SESSION_INITIATOR_CHECKED | APPID_SESSION_RESPONDER_CHECKED;
     }
     else if (dir == APP_ID_FROM_INITIATOR)
     {
-        flags = get_ipfuncs_flags(p, false);
+        flags = get_ipfuncs_flags(p, false, config);
         flow_flags |= APPID_SESSION_INITIATOR_CHECKED;
         if (flags & IPFUNCS_HOSTS_IP)
             flow_flags |= APPID_SESSION_INITIATOR_MONITORED;
@@ -2165,7 +2164,7 @@ uint64_t AppIdSession::is_session_monitored(const Packet* p, int dir, AppIdSessi
             flow_flags |= APPID_SESSION_DISCOVER_APP;
         if (!(flow_flags & APPID_SESSION_DISCOVER_APP))
         {
-            flags = get_ipfuncs_flags(p, true);
+            flags = get_ipfuncs_flags(p, true, config);
             if (flags & IPFUNCS_CHECKED)
                 flow_flags |= APPID_SESSION_RESPONDER_CHECKED;
             if (flags & IPFUNCS_HOSTS_IP)
@@ -2180,7 +2179,7 @@ uint64_t AppIdSession::is_session_monitored(const Packet* p, int dir, AppIdSessi
     }
     else
     {
-        flags = get_ipfuncs_flags(p, false);
+        flags = get_ipfuncs_flags(p, false, config);
         flow_flags |= APPID_SESSION_RESPONDER_CHECKED;
         if (flags & IPFUNCS_HOSTS_IP)
             flow_flags |= APPID_SESSION_RESPONDER_MONITORED;
@@ -2188,7 +2187,7 @@ uint64_t AppIdSession::is_session_monitored(const Packet* p, int dir, AppIdSessi
             flow_flags |= APPID_SESSION_DISCOVER_APP;
         if (!(flow_flags & APPID_SESSION_DISCOVER_APP))
         {
-            flags = get_ipfuncs_flags(p, true);
+            flags = get_ipfuncs_flags(p, true, config);
             if (flags & IPFUNCS_CHECKED)
                 flow_flags |= APPID_SESSION_INITIATOR_CHECKED;
             if (flags & IPFUNCS_HOSTS_IP)
@@ -3294,7 +3293,7 @@ void AppIdSession::processCHP(char** version, Packet* p)
             {
                 int found_in_buffer = 0;
                 AppId ret = scan_chp((PatternType)i, chp_buffers[i], chp_buffer_lengths[i], chp_matches[i], version, &user,
-                               &chp_rewritten[i], &found_in_buffer, hsession, p);
+                               &chp_rewritten[i], &found_in_buffer, hsession, p, config->mod_config);
                 chp_matches[i] = nullptr; // freed by scanCHP()
                 hsession->total_found += found_in_buffer;
                 if (!ret || found_in_buffer < hsession->ptype_req_counts[i])

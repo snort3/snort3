@@ -656,7 +656,7 @@ static int rtmp_validate(ServiceValidationArgs* args)
     }
 
     /* Give up if it's taking us too long to figure out this thing. */
-    if (asd->session_packet_count >= AppIdConfig::get_appid_config()->mod_config->rtmp_max_packets)
+    if (asd->session_packet_count >= asd->config->mod_config->rtmp_max_packets)
     {
         goto fail;
     }
@@ -694,7 +694,7 @@ success:
         if (!asd->hsession)
             asd->hsession = (httpSession*)snort_calloc(sizeof(httpSession));
 
-        if (!AppIdConfig::get_appid_config()->mod_config->referred_appId_disabled &&
+        if (!asd->config->mod_config->referred_appId_disabled &&
             (asd->hsession->referer == nullptr))
             asd->hsession->referer = ss->pageUrl;
         else

@@ -67,11 +67,6 @@ struct ServiceValidationArgs
 
 using RNAServiceValidationFCN = int(*)(ServiceValidationArgs*);
 
-struct CleanServiceAPI
-{
-    AppIdConfig* pAppidConfig;  ///< AppId context for which this API should be used
-};
-
 struct InitServiceAPI;
 using RNAServiceValidationInitFCN = int(*)(const InitServiceAPI* const);
 using RNAServiceValidationCleanFCN = void(*)();
@@ -87,9 +82,6 @@ struct InitServiceAPI
     void (*RegisterPatternUser)(RNAServiceValidationFCN, IpProtocol proto,
             const uint8_t* pattern, unsigned size, int position, const char* name);
     void (*RegisterAppId)( RNAServiceValidationFCN, AppId, uint32_t additionalInfo);
-    int debug;
-    uint32_t instance_id;
-    AppIdConfig* pAppidConfig;  ///< AppId context for which this API should be used
 };
 
 struct RNAServiceElement

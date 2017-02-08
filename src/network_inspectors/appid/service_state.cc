@@ -88,15 +88,15 @@ void AppIdServiceState::initialize(unsigned long)
 
 void AppIdServiceState::clean(void)
 {
-    if (!service_state_cache)
-        return;
+    if ( service_state_cache )
+    {
+        for( auto& kv : *service_state_cache )
+            delete kv.second;
 
-	for( auto& kv : *service_state_cache )
-    	delete kv.second;
-
-	service_state_cache->empty();
-	delete service_state_cache;
-	service_state_cache = nullptr;
+        service_state_cache->empty();
+        delete service_state_cache;
+        service_state_cache = nullptr;
+    }
 }
 
 AppIdServiceIDState* AppIdServiceState::add(const SfIp* ip, IpProtocol proto, uint16_t port,

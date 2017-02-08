@@ -28,6 +28,7 @@
 #include <openssl/crypto.h>
 
 #include "log/messages.h"
+#include "managers/inspector_manager.h"
 #include "profiler/profiler.h"
 #include "pub_sub/sip_events.h"
 
@@ -79,6 +80,16 @@ AppIdInspector::~AppIdInspector()
     delete config;
 }
 
+AppIdInspector* AppIdInspector::get_inspector()
+{
+    return (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME);
+}
+
+AppIdConfig* AppIdInspector::get_appid_config()
+{
+    return active_config;
+}
+
 bool AppIdInspector::configure(SnortConfig*)
 {
     assert(!active_config);
@@ -118,10 +129,10 @@ void AppIdInspector::tinit()
     init_appid_statistics(*config);
     HostPortCache::initialize();
     init_appid_forecast();
-    init_http_detector();
     init_service_plugins();
-    init_client_plugins();
+    init_client_plugins(active_config);
     init_detector_plugins();
+    init_http_detector();
     init_chp_glossary();
     init_length_app_cache();
     LuaDetectorManager::initialize(*active_config);
@@ -160,7 +171,7 @@ void AppIdInspector::eval(Packet* pkt)
     Profile profile(appidPerfStats);
 
     appid_stats.packets++;
-    AppIdSession::do_application_discovery(pkt);
+    AppIdSession::do_application_discovery(pkt, active_config);
 }
 
 //-------------------------------------------------------------------------
@@ -246,7 +257,9 @@ const BaseApi* nin_appid[] =
 //    AppId* serviceAppId, AppId* ClientAppId, AppId* payloadAppId)
 int sslAppGroupIdLookup(void*, const char*, const char*, AppId*, AppId*, AppId*)
 {
-    // FIXIT-M detemine need and proper location for this code when support for ssl is implemented
+    // FIXIT-M determine need and proper location for this code when support for ssl is implemented
+    //         also once this is done the call to get the appid config should change to use the config
+    //         assigned to the flow being processed
 #ifdef REMOVED_WHILE_NOT_IN_USE
     AppIdSession* asd;
     *serviceAppId = *ClientAppId = *payload_app_id = APP_ID_NONE;
@@ -254,12 +267,12 @@ int sslAppGroupIdLookup(void*, const char*, const char*, AppId*, AppId*, AppId*)
     if (commonName)
     {
         ssl_scan_cname((const uint8_t*)commonName, strlen(commonName), ClientAppId, payload_app_id,
-            &AppIdConfig::get_appid_config()->serviceSslConfig);
+            &AppIdInspector::get_inspector()->get_appid_config()->serviceSslConfig);
     }
     if (serverName)
     {
         ssl_scan_hostname((const uint8_t*)serverName, strlen(serverName), ClientAppId,
-            payload_app_id, &AppIdConfig::get_appid_config()->serviceSslConfig);
+            payload_app_id, &AppIdInspector::get_inspector()->get_appid_config()->serviceSslConfig);
     }
 
     if (ssnptr && (asd = appid_api.get_appid_data(ssnptr)))
