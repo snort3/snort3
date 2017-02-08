@@ -39,7 +39,7 @@ THREAD_LOCAL DceHttpServerStats dce_http_server_stats;
 class DceHttpServer : public Inspector
 {
 public:
-    void eval(Packet*) {};
+    void eval(Packet*) override { }
     void clear(Packet*) override;
     StreamSplitter* get_splitter(bool c2s) override
     {

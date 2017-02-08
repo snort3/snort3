@@ -1951,7 +1951,9 @@ static inline unsigned get_ipfuncs_flags(const Packet* p, bool dst, AppIdConfig*
 
     if (!dst)
     {
+#ifdef USE_RNA_CONFIG
         zone = p->pkth->ingress_group;
+#endif
         sf_ip = p->ptrs.ip_api.get_src();
     }
     else
