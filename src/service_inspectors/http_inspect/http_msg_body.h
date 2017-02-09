@@ -36,6 +36,7 @@ public:
     HttpEnums::InspectSection get_inspection_section() const override
         { return detection_section ? HttpEnums::IS_DETECTION : HttpEnums::IS_BODY; }
     const Field& get_classic_client_body();
+    static void fd_event_callback(void* context, int event);
 
 protected:
     HttpMsgBody(const uint8_t* buffer, const uint16_t buf_size, HttpFlowData* session_data_,
@@ -51,12 +52,14 @@ protected:
 private:
     void do_file_processing(Field& file_data);
     void do_utf_decoding(const Field& input, Field& output);
+    void do_pdf_swf_decompression(const Field& input, Field& output);
     void do_js_normalization(const Field& input, Field& output);
 
     Field detect_data;
     const bool detection_section;
     Field classic_client_body;   // URI normalization applied
     Field decoded_body;
+    Field decompressed_pdf_swf_body;
     Field js_norm_body;
 };
 

@@ -47,13 +47,13 @@ void HttpMsgBody::analyze()
 
     if (session_data->detect_depth_remaining[source_id] > 0)
     {
-        do_js_normalization(decoded_body, js_norm_body);
+        do_pdf_swf_decompression(decoded_body, decompressed_pdf_swf_body);
+        do_js_normalization(decompressed_pdf_swf_body, js_norm_body);
         const int32_t detect_length =
             (js_norm_body.length() <= session_data->detect_depth_remaining[source_id]) ?
             js_norm_body.length() : session_data->detect_depth_remaining[source_id];
         detect_data.set(detect_length, js_norm_body.start());
         session_data->detect_depth_remaining[source_id] -= detect_length;
-        // Always set file data. File processing will later set a new value in some cases.
         set_file_data(const_cast<uint8_t*>(detect_data.start()), (unsigned)detect_data.length());
     }
 
@@ -67,13 +67,13 @@ void HttpMsgBody::analyze()
 
 void HttpMsgBody::do_utf_decoding(const Field& input, Field& output)
 {
-    if (!params->normalize_utf || source_id == SRC_CLIENT)
+    if ((source_id == SRC_CLIENT) || (session_data->utf_state == nullptr))
     {
         output.set(input);
         return;
     }
 
-    if (session_data->utf_state && session_data->utf_state->is_utf_encoding_present())
+    if (session_data->utf_state->is_utf_encoding_present())
     {
         int bytes_copied;
         bool decoded;
@@ -100,6 +100,81 @@ void HttpMsgBody::do_utf_decoding(const Field& input, Field& output)
 
     else
         output.set(input);
+}
+
+void HttpMsgBody::do_pdf_swf_decompression(const Field& input, Field& output)
+{
+    if ((source_id == SRC_CLIENT) || (session_data->fd_state == nullptr))
+    {
+        output.set(input);
+        return;
+    }
+    uint8_t* buffer = new uint8_t[MAX_OCTETS];
+    session_data->fd_alert_context.infractions = &infractions;
+    session_data->fd_alert_context.events = &events;
+    session_data->fd_state->Next_In = (uint8_t*)input.start();
+    session_data->fd_state->Avail_In = (uint32_t)input.length();
+    session_data->fd_state->Next_Out = buffer;
+    session_data->fd_state->Avail_Out = MAX_OCTETS;
+
+    const fd_status_t status = File_Decomp(session_data->fd_state);
+
+    switch(status)
+    {
+    case File_Decomp_DecompError:
+        File_Decomp_Alert(session_data->fd_state, session_data->fd_state->Error_Event);
+        // Fall through
+    case File_Decomp_NoSig:
+    case File_Decomp_Error:
+        delete[] buffer;
+        output.set(input);
+        File_Decomp_StopFree(session_data->fd_state);
+        session_data->fd_state = nullptr;
+        break;
+    case File_Decomp_BlockOut:
+        infractions += INF_PDF_SWF_OVERRUN;
+        events.create_event(EVENT_PDF_SWF_OVERRUN);
+        // Fall through
+    default:
+        output.set(session_data->fd_state->Next_Out - buffer, buffer, true);
+        break;
+    }
+}
+
+void HttpMsgBody::fd_event_callback(void* context, int event)
+{
+    HttpInfractions& infractions = *(((HttpFlowData::FdCallbackContext*)context)->infractions);
+    HttpEventGen& events = *(((HttpFlowData::FdCallbackContext*)context)->events);
+    switch (event)
+    {
+    case FILE_DECOMP_ERR_SWF_ZLIB_FAILURE:
+        infractions += INF_SWF_ZLIB_FAILURE;
+        events.create_event(EVENT_SWF_ZLIB_FAILURE);
+        break;
+    case FILE_DECOMP_ERR_SWF_LZMA_FAILURE:
+        infractions += INF_SWF_LZMA_FAILURE;
+        events.create_event(EVENT_SWF_LZMA_FAILURE);
+        break;
+    case FILE_DECOMP_ERR_PDF_DEFL_FAILURE:
+        infractions += INF_PDF_DEFL_FAILURE;
+        events.create_event(EVENT_PDF_DEFL_FAILURE);
+        break;
+    case FILE_DECOMP_ERR_PDF_UNSUP_COMP_TYPE:
+        infractions += INF_PDF_UNSUP_COMP_TYPE;
+        events.create_event(EVENT_PDF_UNSUP_COMP_TYPE);
+        break;
+    case FILE_DECOMP_ERR_PDF_CASC_COMP:
+        infractions += INF_PDF_CASC_COMP;
+        events.create_event(EVENT_PDF_CASC_COMP);
+        break;
+    case FILE_DECOMP_ERR_PDF_PARSE_FAILURE:
+        infractions += INF_PDF_PARSE_FAILURE;
+        events.create_event(EVENT_PDF_PARSE_FAILURE);
+        break;
+    default:
+        assert(false);
+        break;
+    }
 }
 
 void HttpMsgBody::do_js_normalization(const Field& input, Field& output)

@@ -820,9 +820,8 @@ static inline fd_status_t Handle_State_START(fd_session_p_t SessionPtr, uint8_t 
 
 /* Incrementally search the incoming data for a PDF compressed stream
    (of the type that we can decompress).  Move bytes to outgoing data
-   up to the beginning of the compressed segment.  If the FILE_REVERT_BIT
-   is set in the Session, remove the /Filter spec that was located by
-   replacing the name with null.  */
+   up to the beginning of the compressed segment. */
+// FIXIT-L Should remove the /Filter spec that was located by replacing the name with null.
 
 /* Parse file until input blocked or stream located. */
 static fd_status_t Locate_Stream_Beginning(fd_session_p_t SessionPtr)

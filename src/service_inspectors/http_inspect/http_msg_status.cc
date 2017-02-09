@@ -181,7 +181,7 @@ void HttpMsgStatus::update_flow()
 void HttpMsgStatus::print_section(FILE* output)
 {
     HttpMsgSection::print_section_title(output, "status line");
-    fprintf(output, "Version Id: %d\n", version_id);
+    fprintf(output, "Version ID: %d\n", version_id);
     fprintf(output, "Status Code Num: %d\n", status_code_num);
     reason_phrase.print(output, "Reason Phrase");
     get_classic_buffer(HTTP_BUFFER_STAT_CODE, 0, 0).print(output,

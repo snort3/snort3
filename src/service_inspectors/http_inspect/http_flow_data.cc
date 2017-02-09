@@ -23,6 +23,8 @@
 
 #include "http_flow_data.h"
 
+#include "decompress/file_decomp.h"
+
 #include "http_test_manager.h"
 #include "http_transaction.h"
 
@@ -74,11 +76,9 @@ HttpFlowData::~HttpFlowData()
         }
     }
 
-    if (utf_state != nullptr )
-    {
-        delete utf_state;
-    }
-
+    delete utf_state;
+    if (fd_state != nullptr)
+        File_Decomp_StopFree(fd_state);
     delete_pipeline();
 }
 
@@ -123,10 +123,12 @@ void HttpFlowData::half_reset(SourceId source_id)
         if (transaction[SRC_SERVER]->final_response())
             expected_trans_num[SRC_SERVER]++;
         status_code_num = STAT_NOT_PRESENT;
-        if (utf_state != nullptr)
+        delete utf_state;
+        utf_state = nullptr;
+        if (fd_state != nullptr)
         {
-            delete utf_state;
-            utf_state = nullptr;
+            File_Decomp_StopFree(fd_state);
+            fd_state = nullptr;
         }
     }
 }
@@ -204,6 +206,7 @@ void HttpFlowData::show(FILE* out_file) const
     fprintf(out_file, "Cutter: %s/%s\n", (cutter[0] != nullptr) ? "Present" : "nullptr",
         (cutter[1] != nullptr) ? "Present" : "nullptr");
     fprintf(out_file, "utf_state: %s\n", (utf_state != nullptr) ? "Present" : "nullptr");
+    fprintf(out_file, "fd_state: %s\n", (fd_state != nullptr) ? "Present" : "nullptr");
     fprintf(out_file, "mime_state: %s/%s\n", (mime_state[0] != nullptr) ? "Present" : "nullptr",
         (mime_state[1] != nullptr) ? "Present" : "nullptr");
 }

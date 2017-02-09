@@ -260,10 +260,16 @@ bool NHttpInspectServer::convert(std::istringstream& data_stream)
             table_api.add_deleted_comment("no_alerts");
 
         else if (!keyword.compare("decompress_swf"))
+        {
             tmpval = parse_bracketed_unsupported_list("decompress_swf", data_stream);
+            table_api.add_option("decompress_swf", true);
+        }
 
         else if (!keyword.compare("decompress_pdf"))
+        {
             tmpval = parse_bracketed_unsupported_list("decompress_pdf", data_stream);
+            table_api.add_option("decompress_pdf", true);
+        }
 
         else if (!keyword.compare("http_methods"))
             tmpval = parse_bracketed_unsupported_list("http_methods", data_stream);

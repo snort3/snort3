@@ -39,6 +39,10 @@ const Parameter HttpModule::http_params[] =
     { "unzip", Parameter::PT_BOOL, nullptr, "true", "decompress gzip and deflate message bodies" },
     { "normalize_utf", Parameter::PT_BOOL, nullptr, "true",
           "normalize charset utf encodings in response bodies" },
+    { "decompress_pdf", Parameter::PT_BOOL, nullptr, "false",
+          "decompress pdf files in response bodies" },
+    { "decompress_swf", Parameter::PT_BOOL, nullptr, "false",
+          "decompress swf files in response bodies" },
     { "normalize_javascript", Parameter::PT_BOOL, nullptr, "false",
           "normalize javascript in response bodies" },
     { "max_javascript_whitespaces", Parameter::PT_INT, "1:65535", "200",
@@ -107,6 +111,14 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     else if (val.is("normalize_utf"))
     {
         params->normalize_utf = val.get_bool();
+    }
+    else if (val.is("decompress_pdf"))
+    {
+        params->decompress_pdf = val.get_bool();
+    }
+    else if (val.is("decompress_swf"))
+    {
+        params->decompress_swf = val.get_bool();
     }
     else if (val.is("normalize_javascript"))
     {

@@ -48,8 +48,9 @@ private:
 
     void prepare_body();
     void setup_file_processing();
-    void setup_decompression();
+    void setup_encoding_decompression();
     void setup_utf_decoding();
+    void setup_pdf_swf_decompression();
 
     bool detection_section = true;
 

@@ -251,8 +251,8 @@ void HttpMsgRequest::update_flow()
 void HttpMsgRequest::print_section(FILE* output)
 {
     HttpMsgSection::print_section_title(output, "request line");
-    fprintf(output, "Version Id: %d\n", version_id);
-    fprintf(output, "Method Id: %d\n", method_id);
+    fprintf(output, "Version ID: %d\n", version_id);
+    fprintf(output, "Method ID: %d\n", method_id);
     if (uri != nullptr)
     {
         uri->get_uri().print(output, "URI");

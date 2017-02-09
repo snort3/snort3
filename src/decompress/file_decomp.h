@@ -28,6 +28,13 @@
 #include "main/snort_types.h"
 
 /* Function return codes used internally and with caller */
+// FIXIT-L these need to be split into internal-only codes and things that may be returned to the
+// application. The codes used by PDF and SWF should be standardized. PDF is returning BlockIn and
+// BlockOut while SWF is using OK. There also needs to be clarity about what Error means and what
+// should be done about it. Is it just an indicator of programming error or are there operational
+// cases where it occurs? No idea whether Complete and Eof are real things and what should be done
+// about them.
+
 enum fd_status_t
 {
     File_Decomp_DecompError = -2,  /* Error from decompression */
@@ -53,10 +60,6 @@ enum file_compression_type_t
 #define FILE_SWF_LZMA_BIT    (0x00000001)
 #define FILE_SWF_ZLIB_BIT    (0x00000002)
 #define FILE_PDF_DEFL_BIT    (0x00000004)
-
-/* The FILE_REVERT and FILT_NORM functionality is currently not implemented */
-#define FILE_FILT_NORM_BIT   (0x40000000)    /* Normalize the PDF /Filter value string */
-#define FILE_REVERT_BIT      (0x80000000)    /* Revert to 'uncompressed' state */
 
 #define FILE_PDF_ANY         (FILE_PDF_DEFL_BIT)
 #define FILE_SWF_ANY         (FILE_SWF_LZMA_BIT | FILE_SWF_ZLIB_BIT)
@@ -101,9 +104,9 @@ struct fd_session_t
         struct fd_SWF_t* SWF;
     };
 
+    // FIXIT-L Next_In should be const uint8_t*
     uint8_t* Next_In;    // next input byte
     uint8_t* Next_Out;   // next output byte should be put there
-    uint8_t* Buffer;     // pointer to decompresiion buffer
 
     // Alerting callback
     void (* Alert_Callback)(void* Context, int Event);
@@ -115,9 +118,8 @@ struct fd_session_t
     uint32_t Avail_Out;  // remaining free space at next_out
     uint32_t Total_Out;  // total number of bytes output so far
 
-    uint32_t Buffer_Len;  // length of decompression buffer
-
     // Configuration settings
+    // FIXIT-L Compr_Depth and Decompr_Depth only support OHI and eventually should be removed
     uint32_t Compr_Depth;
     uint32_t Decompr_Depth;
     uint32_t Modes;      // Bit mapped set of potential file/algo modes

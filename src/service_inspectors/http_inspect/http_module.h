@@ -37,6 +37,8 @@ public:
     long response_depth;
     bool unzip;
     bool normalize_utf = true;
+    bool decompress_pdf = false;
+    bool decompress_swf = false;
 
     struct JsNormParam
     {

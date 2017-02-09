@@ -72,7 +72,7 @@ static struct sig_map_s
 #define SIG_CHR_INDEX_MASK  (0x07)
 #define SIG_CHR_INDEX_SHIFT (0)
 
-static uint8_t File_Decomp_Buffer[DECODE_BLEN];
+static THREAD_LOCAL uint8_t File_Decomp_Buffer[DECODE_BLEN];
 
 void keep_decomp_lib() { }
 
@@ -138,8 +138,7 @@ static fd_status_t Locate_Sig_Here(fd_session_p_t SessionPtr)
                 SessionPtr->File_Type = Signature_Map[Sig_Index].File_Type;
                 SessionPtr->Decomp_Type = Signature_Map[Sig_Index].File_Compression_Type;
 
-                if ( (SessionPtr->File_Type == FILE_TYPE_SWF) && ((SessionPtr->Modes &
-                    FILE_REVERT_BIT) != 0) )
+                if (SessionPtr->File_Type == FILE_TYPE_SWF)
                 {
                     Sig = (uint8_t*)SWF_Uncomp_Sig;
                     Len = (uint16_t)sizeof( SWF_Uncomp_Sig );
@@ -270,13 +269,11 @@ fd_status_t File_Decomp_Init(fd_session_p_t SessionPtr)
 }
 
 /* Setup session to use internal decompression buffer. Set compr/decompr limits */
+// FIXIT-L OHI-only method eventually should be removed.
 fd_status_t File_Decomp_SetBuf(fd_session_p_t SessionPtr)
 {
     if ( SessionPtr == NULL )
         return( File_Decomp_Error );
-
-    SessionPtr->Buffer = File_Decomp_Buffer;
-    SessionPtr->Buffer_Len = sizeof(File_Decomp_Buffer);
 
     SessionPtr->Next_Out = File_Decomp_Buffer;
     SessionPtr->Avail_Out = sizeof(File_Decomp_Buffer);

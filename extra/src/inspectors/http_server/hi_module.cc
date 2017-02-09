@@ -499,11 +499,10 @@ bool HttpServerModule::set(const char*, Value& v, SnortConfig*)
         server->iis_unicode_codepage = v.get_long();
 
     else if ( v.is("decompress_pdf") )
-        v.update_mask(server->file_decomp_modes, (FILE_PDF_DEFL_BIT | FILE_REVERT_BIT));
+        v.update_mask(server->file_decomp_modes, FILE_PDF_DEFL_BIT);
 
     else if ( v.is("decompress_swf") )
-        v.update_mask(server->file_decomp_modes,
-            (FILE_SWF_ZLIB_BIT | FILE_SWF_LZMA_BIT | FILE_REVERT_BIT));
+        v.update_mask(server->file_decomp_modes, FILE_SWF_ZLIB_BIT | FILE_SWF_LZMA_BIT);
 
     else if ( v.is("directory") )
         server->directory.on = v.get_bool();

@@ -26,9 +26,11 @@
 #include "file_api/file_flows.h"
 #include "file_api/file_service.h"
 #include "pub_sub/http_events.h"
+#include "decompress/file_decomp.h"
 
 #include "http_api.h"
 #include "http_msg_request.h"
+#include "http_msg_body.h"
 
 using namespace HttpEnums;
 
@@ -195,8 +197,9 @@ void HttpMsgHeader::prepare_body()
         detection_section = false;
     }
     setup_file_processing();
-    setup_decompression();
+    setup_encoding_decompression();
     setup_utf_decoding();
+    setup_pdf_swf_decompression();
     update_depth();
     session_data->infractions[source_id].reset();
     session_data->events[source_id].reset();
@@ -257,7 +260,7 @@ void HttpMsgHeader::setup_file_processing()
     }
 }
 
-void HttpMsgHeader::setup_decompression()
+void HttpMsgHeader::setup_encoding_decompression()
 {
     if (!params->unzip)
         return;
@@ -364,11 +367,11 @@ void HttpMsgHeader::setup_decompression()
 
 void HttpMsgHeader::setup_utf_decoding()
 {
-    Field last_token;
-    CharsetCode charset_code;
-
     if (!params->normalize_utf || source_id == SRC_CLIENT )
         return;
+
+    Field last_token;
+    CharsetCode charset_code;
 
     const Field& norm_content_type = get_header_value_norm(HEAD_CONTENT_TYPE);
     if (norm_content_type.length() <= 0)
@@ -409,6 +412,23 @@ void HttpMsgHeader::setup_utf_decoding()
 
     session_data->utf_state = new UtfDecodeSession();
     session_data->utf_state->set_decode_utf_state_charset(charset_code);
+}
+
+void HttpMsgHeader::setup_pdf_swf_decompression()
+{
+    if (source_id == SRC_CLIENT || (!params->decompress_pdf && !params->decompress_swf))
+        return;
+
+    session_data->fd_state = File_Decomp_New();
+    session_data->fd_state->Modes =
+        (params->decompress_pdf ? FILE_PDF_DEFL_BIT : 0) |
+        (params->decompress_swf ? (FILE_SWF_ZLIB_BIT | FILE_SWF_LZMA_BIT) : 0);
+    session_data->fd_state->Alert_Callback = HttpMsgBody::fd_event_callback;
+    session_data->fd_state->Alert_Context = &session_data->fd_alert_context;
+    session_data->fd_state->Compr_Depth = 0;
+    session_data->fd_state->Decompr_Depth = 0;
+
+    (void)File_Decomp_Init(session_data->fd_state);
 }
 
 #ifdef REG_TEST

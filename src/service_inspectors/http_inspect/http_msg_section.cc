@@ -55,25 +55,27 @@ HttpMsgSection::HttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
 
 void HttpMsgSection::update_depth() const
 {
-    const int64_t& depth = (session_data->file_depth_remaining[source_id] >=
-                            session_data->detect_depth_remaining[source_id]) ?
-        session_data->file_depth_remaining[source_id] :
-        session_data->detect_depth_remaining[source_id];
+    if ((session_data->file_depth_remaining[source_id] <= 0) &&
+        (session_data->detect_depth_remaining[source_id] <= 0))
+    {
+        // Don't need any more of the body
+        session_data->section_size_target[source_id] = 0;
+        session_data->section_size_max[source_id] = 0;
+        return;
+    }
 
     switch (session_data->compression[source_id])
     {
     case CMP_NONE:
       {
-        session_data->section_size_target[source_id] = (depth <= DATA_BLOCK_SIZE) ? depth :
-            DATA_BLOCK_SIZE;
-        session_data->section_size_max[source_id] = (depth <= FINAL_BLOCK_SIZE) ? depth :
-            FINAL_BLOCK_SIZE;
+        session_data->section_size_target[source_id] = DATA_BLOCK_SIZE;
+        session_data->section_size_max[source_id] = FINAL_BLOCK_SIZE;
         break;
       }
     case CMP_GZIP:
     case CMP_DEFLATE:
-        session_data->section_size_target[source_id] = (depth > 0) ? GZIP_BLOCK_SIZE : 0;
-        session_data->section_size_max[source_id] = (depth > 0) ? FINAL_GZIP_BLOCK_SIZE : 0;
+        session_data->section_size_target[source_id] = GZIP_BLOCK_SIZE;
+        session_data->section_size_max[source_id] = FINAL_GZIP_BLOCK_SIZE;
         break;
     default:
         assert(false);

@@ -1062,7 +1062,7 @@ int HttpInspectMain(HTTPINSPECT_CONF* conf, Packet* p)
                     }
                     else
                     {
-                        session->server.response.body = hsd->fd_state->Buffer;
+                        session->server.response.body = hsd->fd_state->Next_Out;
                         session->server.response.body_size = hsd->fd_state->Total_Out;
                     }
 

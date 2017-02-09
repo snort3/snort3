@@ -349,6 +349,7 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_UNKNOWN_ENCODING,           "unknown Transfer-Encoding or Content-Encoding used" },
     { EVENT_STACKED_ENCODINGS,          "multiple layers of compression encodings applied" },
     { EVENT_RESPONSE_WO_REQUEST,        "server response before client request" },
+    { EVENT_PDF_SWF_OVERRUN,            "PDF/SWF decompression of server response too big" },
     { 0, nullptr }
 };
 

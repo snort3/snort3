@@ -26,6 +26,7 @@
 #include "flow/flow.h"
 #include "mime/file_mime_process.h"
 #include "utils/util_utf.h"
+#include "decompress/file_decomp.h"
 
 #include "http_cutter.h"
 #include "http_infractions.h"
@@ -115,6 +116,13 @@ private:
         HttpEnums::STAT_NOT_PRESENT };
     MimeSession* mime_state[2] = { nullptr, nullptr };
     UtfDecodeSession* utf_state = nullptr; // SRC_SERVER only
+    fd_session_t* fd_state = nullptr; // SRC_SERVER only
+    struct FdCallbackContext
+    {
+        HttpInfractions* infractions = nullptr;
+        HttpEventGen* events = nullptr;
+    };
+    FdCallbackContext fd_alert_context; // SRC_SERVER only
     uint64_t expected_trans_num[2] = { 1, 1 };
     HttpMsgSection* latest_section = nullptr;
 
