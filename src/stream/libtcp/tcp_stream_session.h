@@ -109,10 +109,10 @@ public:
 
     void generate_no_3whs_event()
     {
-        if ( !no_3whs )
+        if ( generate_3whs_alert && flow->two_way_traffic())
         {
             tel.set_tcp_event(EVENT_NO_3WHS);
-            no_3whs = true;
+            generate_3whs_alert = false;
         }
     }
 
@@ -139,7 +139,7 @@ public:
     int32_t egress_group = 0;
     uint32_t daq_flags = 0;
     uint16_t address_space_id = 0;
-    bool no_3whs = false;
+    bool generate_3whs_alert = true;
     TcpStreamConfig* config = nullptr;
     TcpEventLogger tel;
 

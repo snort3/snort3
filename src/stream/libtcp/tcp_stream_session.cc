@@ -419,7 +419,7 @@ bool TcpStreamSession::setup(Packet*)
     client->init_tcp_state();
     server->init_tcp_state();
     lws_init = tcp_init = false;
-    no_3whs = false;
+    generate_3whs_alert = true;
     pkt_action_mask = ACTION_NOTHING;
     ecn = 0;
     ingress_index = egress_index = 0;
