@@ -1,14 +1,18 @@
 One of the major undertakings for Snort 3 is developing a completely new
-HTTP inspector. You can configure it by adding:
+HTTP inspector.
+
+==== Overview
+
+You can configure it by adding:
 
     http_inspect = {}
 
-to your snort.lua configuration file. Or you can read it in the source code
-under src/service_inspectors/http_inspect.
+to your snort.lua configuration file. Or you can read about it in the
+source code under src/service_inspectors/http_inspect.
 
-The classic HTTP preprocessor is still available in the alpha release under
-extra. It has been renamed http_server. Be sure not to configure both old
-and new HTTP inspectors at the same time.
+The classic HTTP preprocessor is still available in the alpha release
+under extra. It has been renamed http_server. Be sure not to configure
+both old and new HTTP inspectors at the same time.
 
 So why a new HTTP inspector?
 
@@ -20,25 +24,25 @@ the new HTTP inspector’s knowledge of HTTP is centralized in a series of
 tables where it can be easily reviewed and modified. Many significant
 changes can be made just by updating these tables.
 
-Http_inspect is the first inspector written specifically for the new
-Snort 3 architecture. That provides access to one of the very best
-features of Snort 3: purely PDU-based inspection. The classic preprocessor
-processes HTTP messages, but even while doing so it is constantly aware of
-IP packets and how they divide up the TCP data stream. The same HTTP
-message might be processed differently depending on how the sender (bad
-guy) divided it up into IP packets.
+http_inspect is the first inspector written specifically for the new
+Snort 3 architecture. This provides access to one of the very best features
+of Snort 3: purely PDU-based inspection. The classic preprocessor processes
+HTTP messages, but even while doing so it is constantly aware of IP packets
+and how they divide up the TCP data stream. The same HTTP message might be
+processed differently depending on how the sender (bad guy) divided it up
+into IP packets.
 
-Http_inspect is free of this burden and can focus exclusively on HTTP.
-That makes it much simpler, easier to test, and less prone to false
+http_inspect is free of this burden and can focus exclusively on HTTP.
+This makes it much simpler, easier to test, and less prone to false
 positives. It also greatly reduces the opportunity for adversaries to probe
 the inspector for weak spots by adjusting packet boundaries to disguise bad
 behavior.
 
 Dealing solely with HTTP messages also opens the door for developing major
-new features. The http_inspect design supports true stateful
-processing. Want to ask questions that involve both the client request and
-the server response? Or different requests in the same session? These
-things are possible.
+new features. The http_inspect design supports true stateful processing.
+Want to ask questions that involve both the client request and the server
+response? Or different requests in the same session? These things are
+possible.
 
 Another new feature on the horizon is HTTP/2 analysis. HTTP/2 derives from
 Google’s SPDY project and is in the process of being standardized. Despite
@@ -48,8 +52,8 @@ on top of TLS or TCP. It’s a perfect fit for the new Snort 3 architecture
 because a new HTTP/2 inspector would naturally output HTTP/1.1 messages but
 not any underlying packets. Exactly what http_inspect wants to input.
 
-Http_inspect is taking a very different approach to HTTP header fields.
-The classic preprocessor divides all the HTTP headers following the start line
+http_inspect is taking a very different approach to HTTP header fields. The
+classic preprocessor divides all the HTTP headers following the start line
 into cookies and everything else. It normalizes the two pieces using a
 generic process and puts them in buffers that one can write rules against.
 There is some limited support for examining individual headers within the
@@ -59,4 +63,525 @@ The new concept is that every header should be normalized in an appropriate
 and specific way and individually made available for the user to write
 rules against it. If for example a header is supposed to be a date then
 normalization means put that date in a standard format.
+
+==== Configuration
+
+Configuration can be as simple as adding:
+
+    http_inspect = {}
+
+to your snort.lua file. The default configuration provides a thorough
+inspection and may be all that you need. But there are some options that
+provide extra features, tweak how things are done, or conserve resources by
+doing less.
+
+===== request_depth and response_depth
+
+These replace the flow depth parameters used by the old HTTP inspector but
+they work differently.
+
+The default is to inspect the entire HTTP message body. That's a very sound
+approach but if your HTTP traffic includes many very large files such as
+videos the load on Snort can become burdensome. Setting the request_depth
+and response_depth parameters will limit the amount of body data that is
+sent to the rule engine. For example:
+
+    request_depth = 10000,
+    response_depth = 80000,
+
+would examine only the first 10000 bytes of POST, PUT, and other message
+bodies sent by the client. Responses from the server would be limited to
+80000 bytes.
+
+These limits apply only to the message bodies. HTTP headers are always
+completely inspected.
+
+If you want to only inspect headers and no body, set the depth to 0. If
+you want to inspect the entire body set the depth to -1 or simply omit the
+depth parameter entirely because that is the default.
+
+These limits have no effect on how much data is forwarded to file
+processing.
+
+===== gzip
+
+http_inspect by default decompresses deflate and gzip message bodies
+before inspecting them. This feature can be turned off by unzip = false.
+Turning off decompression provides a substantial performance improvement
+but at a very high price. It is unlikely that any meaningful inspection of
+message bodies will be possible. Effectively HTTP processing would be
+limited to the headers.
+
+===== normalize_utf
+
+http_inspect will decode utf-8, utf-7, utf-16le, utf-16be, utf-32le, and
+utf-32be in response message bodies based on the Content-Type header. This
+feature is on by default: normalize_utf = false will deactivate it.
+
+===== decompress_pdf
+
+decompress_pdf = true will enable decompression of compressed portions of
+PDF files encountered in a response body. http_inspect will examine the
+response body for PDF files that are then parsed to locate PDF streams with
+a single /FlateDecode filter. The compressed content is decompressed and
+made available through the file data rule option.
+
+===== decompress_swf
+
+decompress_swf = true will enable decompression of compressed SWF (Adobe
+Flash content) files encountered in a response body. The available
+decompression modes are ’deflate’ and ’lzma’. http_inspect will search for
+the file signatures CWS for Deflate/ZLIB and ZWS for LZMA. The compressed
+content is decompressed and made available through the file data rule
+option. The compressed SWF file signature is converted to FWS to indicate
+an uncompressed file.
+
+===== normalize_javascript
+
+normalize_javascript = true will enable normalization of JavaScript within
+the HTTP response body. http_inspect looks for JavaScript by searching for
+the <script> tag without a type. Obfuscated data within the JavaScript
+functions such as unescape, String.fromCharCode, decodeURI, and
+decodeURIComponent are normalized. The different encodings handled within
+the unescape, decodeURI, or decodeURIComponent are %XX, %uXXXX, XX and
+uXXXXi. http_inspect also replaces consecutive whitespaces with a single
+space and normalizes the plus by concatenating the strings.
+
+===== URI processing
+
+Normalization and inspection of the URI in the HTTP request message is a
+key aspect of what http_inspect does. The best way to normalize a URI is
+very dependent on the idiosyncrasies of the HTTP server being accessed.
+The goal is to interpret the URI the same way as the server will so that
+nothing the server will see can be hidden from the rule engine.
+
+The default URI inspection parameters are oriented toward following the
+HTTP RFCs--reading the URI the way the standards say it should be read.
+Most servers deviate from this ideal in various ways that can be exploited
+by an attacker. The options provide tools for the user to cope with that.
+
+    utf8 = true
+    plus_to_space = true
+    percent_u = false
+    utf8_bare_byte = false
+    iis_unicode = false
+    iis_double_decode = false
+
+The HTTP inspector normalizes percent encodings found in URIs. For instance
+it will convert "%48%69%64%64%65%6e" to "Hidden". All the options listed
+above control how this is done. The options listed as true are fairly
+standard features that are decoded by default. You don't need to list them
+in snort.lua unless you want to turn them off by setting them to false. But
+that is not recommended unless you know what you are doing and have a
+definite reason.
+
+The other options are primarily for the protection of servers that support
+irregular forms of decoding. These features are off by default but you can
+activate them if you need to by setting them to true in snort.lua.
+
+    bad_characters = "0x25 0x7e 0x6b 0x80 0x81 0x82 0x83 0x84"
+
+That's a list of 8-bit Ascii characters that you don't want present in any
+normalized URI after the percent decoding is done. For example 0x25 is a
+hexadecimal number (37 in decimal) which stands for the '%' character. The
+% character is legitimately used for encoding special characters in a URI.
+But if there is still a percent after normalization one might conclude that
+something is wrong. If you choose to configure 0x25 as a bad character
+there will be an alert whenever this happens.
+
+Another example is 0x00 which signifies the null character zero. Null
+characters in a URI are generally wrong and very suspicious.
+
+The default is not to alert on any of the 256 8-bit Ascii characters. Add
+this option to your configuration if you want to define some bad
+characters.
+
+    ignore_unreserved = "abc123"
+
+Percent encoding common characters such as letters and numbers that have no
+special meaning in HTTP is suspicious. It's legal but why would you do it
+unless you have something to hide? http_inspect will alert whenever an
+upper-case or lower-case letter, a digit, period, underscore, tilde, or
+minus is percent-encoded. But if a legitimate application in your
+environment encodes some of these characters for some reason this allows
+you to create exemptions for those characters.
+
+In the example, the lower-case letters a, b, and c and the digits 1, 2, and
+3 are exempted. These may be percent-encoded without generating an alert.
+
+    simplify_path = true
+    backslash_to_slash = false
+
+HTTP inspector simplifies directory paths in URIs by eliminating extra
+traversals using ., .., and /.
+
+For example I can take a simple URI such as
+
+    /very/easy/example
+
+and complicate it like this:
+
+    /very/../very/././././easy//////detour/to/nowhere/../.././../example
+
+which may be very difficult to match with a detection rule. simplify_path
+is on by default and you should not turn it off unless you have no interest
+in URI paths.
+
+backslash_to_slash is a tweak to path simplification for servers that allow
+directories to be separated by backslashs:
+
+    /this/is/the/normal/way/to/write/a/path
+
+    \this\is\the\other\way\to\write\a\path
+
+backslash_to_slash is turned off by default. If you are protecting such a
+server then set backslash_to_slash = true and all the backslashes will be
+replaced with slashes during normalization.
+
+==== Detection rules
+
+http_inspect parses HTTP messages into their components and makes them
+available to the detection engine through rule options. Let's start with an
+example:
+
+    alert tcp any any -> any any ( msg:"URI example"; flow:established,
+    to_server; http_uri; content:"chocolate"; sid:1; rev:1; )
+
+This rule looks for chocolate in the URI portion of the request message.
+Specifically, the http_uri rule option is the normalized URI with all the
+percent encodings removed. It will find chocolate in both:
+
+    GET /chocolate/cake HTTP/1.1
+
+and
+
+    GET /%63%68$6F%63%6F%6C%61%74%65/%63%61%6B%65 HTTP/1.1
+
+It is also possible to search the unnormalized URI
+
+    alert tcp any any -> any any ( msg:"Raw URI example"; flow:established,
+    to_server; http_raw_uri; content:"chocolate"; sid:2; rev:1; )
+
+will match the first message but not the second. If you want to detect
+someone who is trying to hide his request for chocolate then
+
+    alert tcp any any -> any any ( msg:"Raw URI example"; flow:established,
+    to_server; http_raw_uri; content:"%63%68$6F%63%6F%6C%61%74%65";
+    sid:3; rev:1; )
+
+will do the trick.
+
+Let's look at possible ways of writing a rule to match HTTP response
+messages with the Content-Language header set to "da" (Danish). You could
+write:
+
+    alert tcp any any -> any any ( msg:"whole header search";
+    flow:established, to_client; http_header; content:
+    "Content-Language: da", nocase; sid:4; rev:1; )
+
+This rule leaves much to be desired. Modern headers are often thousands of
+bytes and seem to get longer every year. Searching all of the headers
+consumes a lot of resources. Furthermore this rule is easily evaded:
+
+    HTTP/1.1 ... Content-Language:  da ...
+
+the extra space before the "da" throws the rule off. Or how about:
+
+    HTTP/1.1 ... Content-Language: xx,da ...
+
+By adding a made up second language the attacker has once again thwarted
+the match.
+
+A better way to write this rule is:
+
+    alert tcp any any -> any any ( msg:"individual header search";
+    flow:established, to_client; http_header: field content-language;
+    content:"da", nocase; sid:4; rev:2; )
+
+The field option improves performance by narrowing the search to the
+Content-Language field of the header. Because it uses the header parsing
+abilities of http_inspect to find the field of interest it will not be
+thrown off by extra spaces or other languages in the list.
+
+In addition to the headers there are rule options for virtually every part
+of the HTTP message.
+
+===== http_uri and http_raw_uri
+
+These provide the URI of the request message. The raw form is exactly as it
+appeared in the message and the normalized form is determined by the URI
+normalization options you selected. In addition to searching the entire URI
+there are six components that can be searched individually:
+
+    alert tcp any any -> any any ( msg:"URI path"; flow:established,
+    to_server; http_uri: path; content:"chocolate"; sid:1; rev:2; )
+
+By specifying "path" the search is limited to the path portion of the URI.
+Informally this is the part consisting of the directory path and file name.
+Thus it will match:
+
+    GET /chocolate/cake HTTP/1.1
+
+but not:
+
+    GET /book/recipes?chocolate+cake HTTP/1.1
+
+The question mark ends the path and begins the query portion of the URI.
+Informally the query is where parameter values are set and often contains a
+search to be performed.
+
+The six components are:
+
+1. path: directory and file
+2. query: user parameters
+3. fragment: part of the file requested, normally found only inside a
+   browser and not transmitted over the network
+4. host: domain name of the server being addressed
+5. port: TCP port number being addressed
+6. scheme: normally "http" or "https" but others are possible such as "ftp"
+
+Here is an example with all six:
+
+    GET https://www.samplehost.com:287/basic/example/of/path?with-query
+    #and-fragment HTTP/1.1\r\n
+
+The URI is everything between the first space and the last space. "https"
+is the scheme, "www.samplehost.com" is the host, "287" is the port,
+"/basic/example/of/path" is the path, "with-query" is the query, and
+"and-fragment" is the fragment.
+
+Note: this section uses informal language to explain some things. Nothing
+here is intended to conflict with the technical language of the HTTP RFCs
+and the implementation follows the RFCs.
+
+===== http_header and http_raw_header
+
+These cover all the header lines except the first one. You may specify an
+individual header by name using the field option as shown in this earlier
+example:
+
+    alert tcp any any -> any any ( msg:"individual header search";
+    flow:established, to_client; http_header: field content-language;
+    content:"da", nocase; sid:4; rev:2; )
+
+This rule searches the value of the Content-Language header. Header names
+are not case sensitive and may be written in the rule in any mixture of
+upper and lower case.
+
+With http_header the individual header value is normalized in a way that is
+appropriate for that header.
+
+Specifying an individual header is not available for http_raw_header.
+
+If you don't specify a header you get all of the headers except for the
+cookie headers Cookie and Set-Cookie. http_raw_header includes the
+unmodified header names and values as they appeared in the original
+message. http_header is the same except percent encodings are removed and
+pathes are simplified exactly as if the headers were a URI.
+
+In most cases specifying individual headers creates a more efficient and
+accurate rule. It is recommended that new rules be written using individual
+headers whenever possible.
+
+===== http_trailer and http_raw_trailer
+
+HTTP permits header lines to appear after a chunked body ends. Typically
+they contain information about the message content that was not available
+when the headers were created. For convenience we call them trailers.
+
+http_trailer and http_raw_trailer are identical to their header
+counterparts except they apply to these end headers. If you want a rule to
+inspect both kinds of headers you need to write two rules, one using header
+and one using trailer.
+
+===== http_cookie and http_raw_cookie
+
+These provide the value of the Cookie header for a request message and the
+Set-Cookie for a response message. If multiple cookies are present they
+will be concatenated into a comma-separated list.
+
+Normalization for http_cookie is the same URI-style normalization applied
+to http_header when no specific header is specified.
+
+===== http_client_body
+
+This is the body of a request message such as POST or PUT. Normalization
+for http_client_body is the same URI-like normalization applied to
+http_header when no specific header is specified.
+
+===== http_method
+
+The method field of a request message. Common values are "GET", "POST",
+"OPTIONS", "HEAD", "DELETE", "PUT", "TRACE", and "CONNECT".
+
+===== http_stat_code
+
+The status code field of a response message. This is normally a 3-digit
+number between 100 and 599. In this example it is 200.
+
+    HTTP/1.1 200 OK
+
+===== http_stat_msg
+
+The reason phrase field of a response message. This is the human-readable
+text following the status code. "OK" in the previous example.
+
+===== http_version
+
+The protocol version information that appears on the first line of an HTTP
+message. This is usually "HTTP/1.0" or "HTTP/1.1".
+
+===== http_raw_request and http_raw_status
+
+These are the unmodified first header line of the HTTP request and response
+messages respectively. These rule options are a safety valve in case you
+need to do something you cannot otherwise do. In most cases it is better to
+use a rule option for a specifc part of the first header line. For a
+request message those are http_method, http_raw_uri, and http_version. For
+a response message those are http_version, http_stat_code, and
+http_stat_msg.
+
+===== file_data and packet data
+
+file_data contains the normalized message body. This is the normalization
+described above under gzip, normalize_utf, decompress_pdf, decompress_swf,
+and normalize_javascript.
+
+The unnormalized message body is available in the packet data. If gzip is
+configured the packet data will be unzipped.
+
+==== Timing issues and combining rule options
+
+HTTP inspector is stateful. That means it is aware of a bigger picture than
+the packet in front of it. It knows what all the pieces of a message are,
+the dividing lines between one message and the next, which request message
+triggered which response message, pipelines, and how many messages have
+been sent over the current connection.
+
+Some rules use a single rule option:
+
+    alert tcp any any -> any any ( msg:"URI example"; flow:established,
+    to_server; http_uri; content:"chocolate"; sid:1; rev:1; )
+
+Whenever a new URI is available this rule will be evaluated. Nothing
+complicated about that, but suppose we use more than one rule option:
+
+    alert tcp any any -> any any ( msg:"combined example"; flow:established,
+    to_server; http_uri; content:"chocolate"; file_data;
+    content:"sinister POST data"; sid:5; rev:1; )
+
+This rule requires both the URI and the request message body. That sounds
+simple until one considers that the message body may be millions of bytes
+long. The headers with the URI may be long gone by that time.
+
+Is this rule going to work or do we need to do something different?
+
+It is helpful to understand when things happen. All the message headers and
+the first few thousand bytes of the body go through detection at the same
+time. Commonly this is about 16K bytes but there are several exceptions and
+there is no guaranteed minimum amount.
+
+That may be all you need. In many cases that will be the entire message. Or
+it may be more than your request_depth/response_depth. Or this rule may
+simply not care what happens after that in a very long message body.
+
+Beyond that the message body will continue to be subdivided into roughly
+16K-byte sections and inspected. But the previous rule will not be able to
+see the URI and hence will not work unless we rewrite it:
+
+    alert tcp any any -> any any ( msg:"URI with_body"; flow:established,
+    to_server; http_uri: with_body; content:"chocolate"; file_data;
+    content:"sinister POST data"; sid:5; rev:2; )
+
+The with_body option to http_uri causes the URI to be made available with
+every body section, not just the first one. These extra inspections have a
+performance cost which is why they are not done automatically. with_body is
+an option to be used when you actually need it.
+
+The with_trailer option is analogous and causes an earlier message element
+to be made available at the end of the message when the trailers following a
+chunked body arrive.
+
+    alert tcp any any -> any any ( msg:"double content-language";
+    flow:established, to_client; http_header: with_trailer, field
+    content-language; content:"da", nocase; http_trailer: field
+    content-language; content:"en", nocase; sid:6; rev:1; )
+
+This rule will alert if the Content-Language changes from Danish in the
+headers to English in the trailers. The with_trailer option is essential to
+make this rule work.
+
+It is also possible to write rules that examine both the client request and
+the server response to it.
+
+    alert tcp any any -> any any ( msg:"request and response example";
+    flow:established, to_client; http_uri: with_body; content:"chocolate";
+    file_data; content:"white chocolate"; sid:7; rev:1; )
+
+This rule looks for white chocolate in a response message body where the
+URI of the request contained chocolate. Note that this is a "to_client"
+rule that will alert on and potentially block a server response containing
+white chocolate, but only if the client URI requested chocolate. If the
+rule were rewritten "to_server" it would be nonsense and not work. Snort
+cannot block a client request based on what the server response will be
+because that has not happened yet.
+
+Another point is "with_body" for http_uri. This ensures the rule works on
+the entire response body. If we were looking for white chocolate in the
+response headers this would not be necessary.
+
+Response messages do not have a URI so there was only one thing http_uri
+could have meant in the previous rule. It had to be referring to the
+request message. Sometimes that is not so clear.
+
+    alert tcp any any -> any any ( msg:"header ambiguity example 1";
+    flow:established, to_client; http_header: with_body; content:
+    "chocolate"; file_data; content:"white chocolate"; sid:8; rev:1; )
+
+    alert tcp any any -> any any ( msg:"header ambiguity example 2";
+    flow:established, to_client; http_header: with_body, request; content:
+    "chocolate"; file_data; content:"white chocolate"; sid:8; rev:2; )
+
+Our search for chocolate has moved from the URI to the message headers.
+Both the request and response messages have headers--which one are we
+asking about? Ambiguity is always resolved in favor of looking in the
+current message which is the response. The first rule is looking for a
+server response containing chocolate in the headers and white chocolate in
+the body.
+
+The second rule uses the "request" option to explicitly say that the
+http_header to be searched is the request header.
+
+Let's put all of this together. There are six opportunities to do
+detection:
+
+1. When the first part of the request message body arrives. The request
+line, all of the headers, and the first part of the body all go through
+detection at the same time. Of course most requests don't have a body. In
+that case the request line and the headers are the whole message and get
+done at the same time.
+
+2. When subsequent sections of the request message body arrive. If you want
+to combine this with something from the request line or headers you must
+use the with_body option.
+
+3. When the request trailers arrive. If you want to combine this with
+something from the request line or headers you must use the with_trailer
+option.
+
+4. When the first part of the response message body arrives. The status
+line, all of the headers, and the first part of the body all go through
+detection at the same time. These may be combined with elements from the
+request line, request headers, or request trailers. Where ambiguity arises
+use the request option.
+
+5. When subsequent sections of the response message body arrive. These may
+be combined with the status line, response headers, request line, request
+headers, or request trailers as described above.
+
+6. When the response trailers arrive. Again these may be combined as
+described above.
+
+Message body data can only go through detection at the time it is received.
+Headers may be combined with later items but the body cannot.
 
