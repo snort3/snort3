@@ -135,7 +135,7 @@
     "back orifice detection"
 
 /* global keyvalue for the BoRand() function */
-static THREAD_LOCAL long holdrand = 1L;
+static THREAD_LOCAL uint64_t holdrand = 1;
 
 // these are const during runtime
 static uint16_t lookup1[65536][3];
@@ -215,8 +215,8 @@ ProfileStats* BoModule::get_profile() const
  */
 static char BoRand()
 {
-    holdrand = holdrand * 214013L + 2531011L;
-    return (char)(((holdrand  >> 16) & 0x7fff) & 0xFF);
+    holdrand = holdrand * 214013 + 2531011;
+    return (char)((holdrand >> 16) & 0xFF);
 }
 
 /*
