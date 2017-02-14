@@ -817,7 +817,7 @@ void PacketManager::encode_set_dst_mac(uint8_t* mac)
 uint8_t* PacketManager::encode_get_dst_mac()
 { return dst_mac; }
 
-uint64_t PacketManager::get_rebuilt_packet_count()
+PegCount PacketManager::get_rebuilt_packet_count()
 { return total_rebuilt_pkts; }
 
 void PacketManager::encode_set_pkt(Packet* p)

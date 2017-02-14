@@ -128,9 +128,15 @@ IpSession::IpSession(Flow* flow) : Session(flow)
 
 void IpSession::clear()
 {
+    if(tracker.engine)
+    {
+        //  Only decrement if the tracker was not already cleaned up.
+        assert(ip_stats.current_frags);
+        ip_stats.current_frags--;
+    }
+
     IpSessionCleanup(flow, &tracker);
     IpHAManager::process_deletion(flow);
-    ip_stats.current--;
 }
 
 bool IpSession::setup(Packet*)
@@ -141,7 +147,7 @@ bool IpSession::setup(Packet*)
     memset(&tracker, 0, sizeof(tracker));
     SESSION_STATS_ADD(ip_stats);
     ip_stats.trackers_created++;
-    ip_stats.current++;
+    ip_stats.current_frags++;
 
 #ifdef ENABLE_EXPECTED_IP
     if ( Stream::expected_flow(flow, p) )

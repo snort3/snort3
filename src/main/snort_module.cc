@@ -513,7 +513,7 @@ public:
     bool global_stats() const override
     { return true; }
 
-    void sum_stats() override
+    void sum_stats(bool) override
     { }  // accumulate externally
 
 private:

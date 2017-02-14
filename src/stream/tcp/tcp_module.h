@@ -82,8 +82,8 @@ struct TcpStats
     PegCount rebuilt_bytes;     //total_rebuilt_bytes
     PegCount overlaps;
     PegCount gaps;
-    PegCount max_segs;
-    PegCount max_bytes;
+    PegCount exceeded_max_segs;
+    PegCount exceeded_max_bytes;
     PegCount internalEvents;
     PegCount s5tcp1;
     PegCount s5tcp2;
@@ -91,6 +91,40 @@ struct TcpStats
     PegCount sessions_initializing;
     PegCount sessions_established;
     PegCount sessions_closing;
+};
+
+struct TcpStatTypes
+{
+    SESSION_STAT_TYPES;
+    CountType resyns = CountType::SUM;
+    CountType discards = CountType::SUM;
+    CountType events = CountType::SUM;
+    CountType sessions_ignored = CountType::SUM;
+    CountType no_pickups = CountType::SUM;
+    CountType sessions_on_syn = CountType::SUM;
+    CountType sessions_on_syn_ack = CountType::SUM;
+    CountType sessions_on_3way = CountType::SUM;
+    CountType sessions_on_data = CountType::SUM;
+    CountType segs_queued = CountType::SUM;
+    CountType segs_released = CountType::SUM;
+    CountType segs_split = CountType::SUM;
+    CountType segs_used = CountType::SUM;
+    CountType rebuilt_packets = CountType::SUM;
+    CountType rebuilt_buffers = CountType::SUM;
+    CountType rebuilt_bytes = CountType::SUM;
+    CountType overlaps = CountType::SUM;
+    CountType gaps = CountType::SUM;
+    CountType exceeded_max_segs = CountType::SUM;
+    CountType exceeded_max_bytes = CountType::SUM;
+    CountType internalEvents = CountType::SUM;
+    CountType s5tcp1 = CountType::SUM;
+    CountType s5tcp2 = CountType::SUM;
+    CountType mem_in_use = CountType::NOW;
+    CountType sessions_initializing = CountType::NOW;
+    CountType sessions_established = CountType::NOW;
+    CountType sessions_closing = CountType::NOW;
+
+    TcpStatTypes() {}
 };
 
 extern THREAD_LOCAL struct TcpStats tcpStats;
@@ -130,6 +164,7 @@ public:
     ProfileStats* get_profile(unsigned, const char*&, const char*&) const override;
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
+    void sum_stats(bool) override;
 
 private:
     TcpStreamConfig* config;

@@ -204,9 +204,8 @@ void TcpSession::update_perf_base_state(char newState)
             if ( ( session_flags & SSNFLAG_COUNTED_INITIALIZE )
                 && !( session_flags & SSNFLAG_COUNTED_CLOSING ) )
             {
-                //assert(tcpStats.sessions_initializing);
-                if ( tcpStats.sessions_initializing )  // FIXIT-L eliminate / fix underflow
-                    tcpStats.sessions_initializing--;
+                assert(tcpStats.sessions_initializing);
+                tcpStats.sessions_initializing--;
             }
         }
         break;
@@ -219,7 +218,7 @@ void TcpSession::update_perf_base_state(char newState)
 
             if ( session_flags & SSNFLAG_COUNTED_ESTABLISH )
             {
-                //assert(tcpStats.sessions_established);
+                assert(tcpStats.sessions_established);
                 tcpStats.sessions_established--;
 
                 if (perfmon_config  && (perfmon_config->perf_flags & PERF_FLOWIP))
@@ -228,34 +227,36 @@ void TcpSession::update_perf_base_state(char newState)
             }
             else if ( session_flags & SSNFLAG_COUNTED_INITIALIZE )
             {
-                //assert(tcpStats.sessions_initializing);
-                if ( tcpStats.sessions_initializing )  // FIXIT-L eliminate / fix underflow
-                    tcpStats.sessions_initializing--;
+                assert(tcpStats.sessions_initializing);
+                tcpStats.sessions_initializing--;
             }
         }
         break;
 
     case TcpStreamTracker::TCP_CLOSED:
-        if ( session_flags & SSNFLAG_COUNTED_CLOSING )
+        if ( !( session_flags & SSNFLAG_COUNTED_CLOSED ) )
         {
-            //assert(tcpStats.sessions_closing);
-            tcpStats.sessions_closing--;
-        }
-        else if ( session_flags & SSNFLAG_COUNTED_ESTABLISH )
-        {
-            //assert(tcpStats.sessions_established);
-            if ( tcpStats.sessions_established )  // FIXIT-L eliminate / fix underflow
+            session_flags |= SSNFLAG_COUNTED_CLOSED;
+
+            if ( session_flags & SSNFLAG_COUNTED_CLOSING )
+            {
+                assert(tcpStats.sessions_closing);
+                tcpStats.sessions_closing--;
+            }
+            else if ( session_flags & SSNFLAG_COUNTED_ESTABLISH )
+            {
+                assert(tcpStats.sessions_established);
                 tcpStats.sessions_established--;
 
-            if ( perfmon_config && ( perfmon_config->perf_flags & PERF_FLOWIP ) )
-                perf_flow_ip->update_state(&flow->client_ip,
-                    &flow->server_ip, SFS_STATE_TCP_CLOSED);
-        }
-        else if ( session_flags & SSNFLAG_COUNTED_INITIALIZE )
-        {
-            //assert(tcpStats.sessions_initializing);
-            if ( tcpStats.sessions_initializing )  // FIXIT-L eliminate / fix underflow
+                if ( perfmon_config && ( perfmon_config->perf_flags & PERF_FLOWIP ) )
+                    perf_flow_ip->update_state(&flow->client_ip,
+                        &flow->server_ip, SFS_STATE_TCP_CLOSED);
+            }
+            else if ( session_flags & SSNFLAG_COUNTED_INITIALIZE )
+            {
+                assert(tcpStats.sessions_initializing);
                 tcpStats.sessions_initializing--;
+            }
         }
         break;
 
@@ -298,7 +299,7 @@ bool TcpSession::flow_exceeds_config_thresholds(TcpSegmentDescriptor& tsd)
     if ( config->max_queued_bytes
         && ( listener->reassembler->get_seg_bytes_total() > config->max_queued_bytes ) )
     {
-        tcpStats.max_bytes++;
+        tcpStats.exceeded_max_bytes++;
         // FIXIT-H add one alert per flow per above
         return true;
     }
@@ -306,7 +307,7 @@ bool TcpSession::flow_exceeds_config_thresholds(TcpSegmentDescriptor& tsd)
     if ( config->max_queued_segs
         && ( listener->reassembler->get_seg_count() + 1 > config->max_queued_segs ) )
     {
-        tcpStats.max_segs++;
+        tcpStats.exceeded_max_segs++;
         // FIXIT-H add one alert per flow per above
         return true;
     }

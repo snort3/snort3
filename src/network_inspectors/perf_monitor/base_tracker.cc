@@ -55,7 +55,7 @@ void BaseTracker::process(bool summary)
 
     for ( auto const& m : config->modules )
         if (!summary)
-            m->sum_stats();
+            m->sum_stats(false);
 }
 
 #ifdef UNIT_TEST
@@ -77,9 +77,9 @@ public:
 
     PegCount* get_counts() const override { return counts; }
 
-    void sum_stats() override {}
+    void sum_stats(bool) override {}
 
-    void real_sum_stats() { Module::sum_stats(); }
+    void real_sum_stats() { Module::sum_stats(false); }
 
 private:
     PegCount* counts;

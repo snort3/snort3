@@ -94,6 +94,16 @@ public:
     PegCount timeouts; \
     PegCount prunes
 
+#define SESSION_STAT_TYPES \
+    CountType sessions = CountType::SUM; \
+    CountType max = CountType::MAX; \
+    CountType created = CountType::SUM; \
+    CountType released = CountType::SUM; \
+    CountType timeouts = CountType::SUM; \
+    CountType prunes = CountType::SUM
+
+// FIXIT-M The calculation for max sessions is incorrect since the sessions
+//         value is reset to zero after writing it out to the now file.
 #define SESSION_STATS_ADD(stats) \
     { \
         stats.sessions++; \

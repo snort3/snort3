@@ -196,10 +196,10 @@ const PegInfo* FileIdModule::get_pegs() const
 PegCount* FileIdModule::get_counts() const
 { return (PegCount*)&file_counts; }
 
-void FileIdModule::sum_stats()
+void FileIdModule::sum_stats(bool accumulate_now_stats)
 {
     file_stats_sum();
-    Module::sum_stats();
+    Module::sum_stats(accumulate_now_stats);
 }
 
 bool FileIdModule::set(const char*, Value& v, SnortConfig*)

@@ -45,7 +45,7 @@ public:
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
 
-    void sum_stats() override;
+    void sum_stats(bool) override;
 
     void load_config(FileConfig*& dst);
 

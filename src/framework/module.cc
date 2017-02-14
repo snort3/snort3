@@ -84,7 +84,7 @@ bool Module::set(const char*, Value& v, SnortConfig*)
     return true;
 }
 
-void Module::sum_stats()
+void Module::sum_stats_helper(bool accumulate_now_stats, const CountType* const count_types)
 {
     if ( num_counts < 0 )
         reset_stats();
@@ -97,16 +97,43 @@ void Module::sum_stats()
     if ( global_stats() )
     {
         for ( int i = 0; i < num_counts; i++ )
-            counts[i] = p[i];
+            set_peg_count(i, p[i]);
     }
     else
     {
         for ( int i = 0; i < num_counts; i++ )
         {
-            counts[i] += p[i];
-            p[i] = 0;
+            if(count_types)
+            {
+                switch (count_types[i])
+                {
+                case CountType::SUM:
+                    add_peg_count(i, p[i]);
+                    p[i] = 0;
+                    break;
+
+                case CountType::NOW:
+                    if(accumulate_now_stats)
+                        add_peg_count(i, p[i]);
+                    break;
+
+                case CountType::MAX:
+                    set_max_peg_count(i, p[i]);
+                    break;
+                }
+            }
+            else
+            {
+                add_peg_count(i, p[i]);
+                p[i] = 0;
+            }
         }
     }
+}
+
+void Module::sum_stats(bool)
+{
+    sum_stats_helper(false, nullptr);
 }
 
 void Module::show_interval_stats(IndexVec& peg_idxs, FILE* fh)
@@ -123,16 +150,19 @@ void Module::show_stats()
 
 void Module::reset_stats()
 {
-    num_counts = 0;
-    const PegInfo* pegs = get_pegs();
+    if( num_counts <= 0 )
+    {
+        num_counts = 0;
+        const PegInfo* pegs = get_pegs();
 
-    if ( !pegs )
-        return;
+        if ( !pegs )
+            return;
 
-    while ( pegs[num_counts].name )
-        ++num_counts;
+        while ( pegs[num_counts].name )
+            ++num_counts;
 
-    counts.resize(num_counts);
+        counts.resize(num_counts);
+    }
 
     for ( int i = 0; i < num_counts; i++ )
         counts[i] = 0;

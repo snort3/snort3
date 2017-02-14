@@ -62,8 +62,8 @@ const PegInfo tcp_pegs[] =
     { "rebuilt_bytes", "total rebuilt bytes" },
     { "overlaps", "overlapping segments queued" },
     { "gaps", "missing data between PDUs" },
-    { "max_segs", "number of times the maximum queued segment limit was reached" },
-    { "max_bytes", "number of times the maximum queued byte limit was reached" },
+    { "exceeded_max_segs", "number of times the maximum queued segment limit was reached" },
+    { "exceeded_max_bytes", "number of times the maximum queued byte limit was reached" },
     { "internal_events", "135:X events generated" },
     { "client_cleanups", "number of times data from server was flushed when session released" },
     { "server_cleanups", "number of times data from client was flushed when session released" },
@@ -364,4 +364,14 @@ const PegInfo* StreamTcpModule::get_pegs() const
 
 PegCount* StreamTcpModule::get_counts() const
 { return (PegCount*)&tcpStats; }
+
+void StreamTcpModule::sum_stats(bool accumulate_now_stats)
+{
+    assert(sizeof(TcpStats)/sizeof(PegCount) == sizeof(TcpStatTypes)/sizeof(CountType));
+
+    static const TcpStatTypes tcp_stat_types;
+    static const CountType* const count_types = (const CountType* const)&tcp_stat_types;
+
+    sum_stats_helper(accumulate_now_stats, count_types);
+}
 

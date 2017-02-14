@@ -42,7 +42,7 @@ public:
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
 
-    void sum_stats() override;
+    void sum_stats(bool) override;
 
 private:
     static const Parameter host_cache_params[];

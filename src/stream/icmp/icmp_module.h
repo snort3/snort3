@@ -35,6 +35,13 @@ struct IcmpStats
     SESSION_STATS;
 };
 
+struct IcmpStatTypes
+{
+    SESSION_STAT_TYPES;
+
+    IcmpStatTypes() {}
+};
+
 //-------------------------------------------------------------------------
 // stream_icmp module
 //-------------------------------------------------------------------------
@@ -55,6 +62,7 @@ public:
     ProfileStats* get_profile(unsigned, const char*&, const char*&) const override;
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
+    void sum_stats(bool) override;
 
     StreamIcmpConfig* get_data();
 

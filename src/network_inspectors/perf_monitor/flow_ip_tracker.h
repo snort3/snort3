@@ -42,10 +42,10 @@ enum FlowType
 
 struct TrafficStats
 {
-    uint64_t packets_a_to_b;
-    uint64_t bytes_a_to_b;
-    uint64_t packets_b_to_a;
-    uint64_t bytes_b_to_a;
+    PegCount  packets_a_to_b;
+    PegCount  bytes_a_to_b;
+    PegCount  packets_b_to_a;
+    PegCount  bytes_b_to_a;
 };
 
 struct FlowStateValue

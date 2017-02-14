@@ -142,7 +142,7 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig*)
     return true;
 }
 
-void StreamModule::sum_stats()
+void StreamModule::sum_stats(bool)
 { base_sum(); }
 
 void StreamModule::show_stats()

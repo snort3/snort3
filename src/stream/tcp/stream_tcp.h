@@ -19,21 +19,10 @@
 #ifndef STREAM_TCP_H
 #define STREAM_TCP_H
 
-class Flow;
 class Inspector;
 class TcpStreamConfig;
-class Session;
 
-// misc stuff
-Session* get_tcp_session(Flow*);
 TcpStreamConfig* get_tcp_cfg(Inspector*);
-
-void tcp_sinit();
-void tcp_sterm();
-void tcp_sum();
-void tcp_stats();
-void tcp_reset_stats();
-void tcp_show(TcpStreamConfig*);
 
 #endif
 

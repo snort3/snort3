@@ -82,7 +82,7 @@ public:
     ProfileStats* get_profile() const override;
     const StreamModuleConfig* get_data();
 
-    void sum_stats() override;
+    void sum_stats(bool) override;
     void show_stats() override;
     void reset_stats() override;
 

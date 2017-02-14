@@ -40,6 +40,13 @@ struct PegInfo
     const char* help;
 };
 
+enum CountType
+{
+    SUM,   // Tracks cumulative total number of items seen.
+    NOW,   // Gives snapshot of current number of items.
+    MAX,   // Tracks maximum value seen.
+};
+
 SO_PUBLIC extern const struct PegInfo simple_pegs[];
 
 #define array_size(a) (sizeof(a)/sizeof(a[0]))

@@ -58,7 +58,7 @@ struct IpStats
 {
     SESSION_STATS;
     PegCount total;             // total_ipfragmented_packets
-    PegCount current;           // iCurrentFrags
+    PegCount current_frags;     // iCurrentFrags
     PegCount max_frags;         // iMaxFrags
     PegCount reassembles;       // total_ipreassembled_packets / iFragFlushes
     PegCount discards;
@@ -76,6 +76,35 @@ struct IpStats
     PegCount mem_in_use;        // frag_mem_in_use
     PegCount reassembled_bytes; // total_ipreassembled_bytes
     PegCount fragmented_bytes;  // total_ipfragmented_bytes
+};
+
+struct IpStatTypes
+{
+    SESSION_STAT_TYPES;
+    CountType total = CountType::SUM;
+    CountType current_frags = CountType::NOW;
+
+    // FIXIT-M max_frags appears to be unused.
+    CountType max_frags = CountType::SUM;
+
+    CountType reassembles = CountType::SUM;
+    CountType discards = CountType::SUM;
+    CountType frag_timeouts = CountType::SUM;
+    CountType overlaps = CountType::SUM;
+    CountType anomalies = CountType::SUM;
+    CountType alerts = CountType::SUM;
+    CountType drops = CountType::SUM;
+    CountType trackers_created = CountType::SUM;
+    CountType trackers_released = CountType::SUM;
+    CountType trackers_cleared = CountType::SUM;
+    CountType trackers_completed = CountType::SUM;
+    CountType nodes_created = CountType::SUM;
+    CountType nodes_released = CountType::SUM;
+    CountType mem_in_use = CountType::NOW;
+    CountType reassembled_bytes = CountType::SUM;
+    CountType fragmented_bytes = CountType::SUM;
+
+    IpStatTypes() {}
 };
 
 extern const PegInfo ip_pegs[];
@@ -109,6 +138,7 @@ public:
     ProfileStats* get_profile(unsigned, const char*&, const char*&) const override;
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
+    void sum_stats(bool) override;
     StreamIpConfig* get_data();
 
     unsigned get_gid() const override

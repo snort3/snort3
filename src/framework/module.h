@@ -40,6 +40,7 @@
 
 #include <string>
 #include <vector>
+#include <assert.h>
 
 #include "framework/counts.h"
 #include "framework/parameter.h"
@@ -148,7 +149,7 @@ public:
     virtual bool global_stats() const
     { return false; }
 
-    virtual void sum_stats();
+    virtual void sum_stats(bool accumulate_now_stats);
     virtual void show_interval_stats(IndexVec&, FILE*);
     virtual void show_stats();
     virtual void reset_stats();
@@ -163,12 +164,15 @@ protected:
     Module(const char* name, const char* help, const Parameter*,
         bool is_list = false, Trace* = nullptr);
 
+    void sum_stats_helper(bool accumulate_now_stats, 
+        const CountType* const count_types);
+
 private:
     friend class ModuleManager;
     void init(const char*, const char* = nullptr);
 
     std::vector<PegCount> counts;
-    int num_counts;
+    int num_counts = -1;
 
     const char* name;
     const char* help;
@@ -179,6 +183,25 @@ private:
     int table_level = 0;
 
     Trace* trace;
+
+    void set_peg_count(int index, PegCount value)
+    {
+        assert(index < num_counts);
+        counts[index] = value;
+    }
+
+    void set_max_peg_count(int index, PegCount value)
+    {
+        assert(index < num_counts);
+        if(value > counts[index])
+            counts[index] = value;
+    }
+
+    void add_peg_count(int index, PegCount value)
+    {
+        assert(index < num_counts);
+        counts[index] += value;
+    }
 };
 
 #endif
