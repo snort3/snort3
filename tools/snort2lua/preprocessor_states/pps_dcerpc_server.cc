@@ -712,9 +712,24 @@ bool DcerpcServer::convert(std::istringstream& data_stream)
         }
         else if (!keyword.compare("smb_file_inspection"))
         {
+            std::string val;
             table_api.open_table(table_name["smb"]);
             tmpval = parse_smb_file_inspection(data_stream);
-            table_api.close_table();
+            if (!table_api.get_option_value("smb_file_inspection", val))
+            {
+                table_api.close_table();
+            }
+            else
+            {
+                table_api.close_table();
+                if ( val.compare("on") == 0 )
+                {
+                    table_api.open_table("file_id");
+                    table_api.add_option("enable_type", true);
+                    table_api.close_table();
+                }
+            }
+
         }
         else if (!keyword.compare("smb2_max_compound"))
         {
