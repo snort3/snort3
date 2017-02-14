@@ -1,0 +1,40 @@
+HighAvailability (or HA) is a snort module that provides state coherancy
+between two partner snort instances.  It uses SideChannel for messaging.
+
+There can be multiple types of HA within snort and snort plugins.  HA
+implements an extensible architecture to enable plugins to subscribe to the
+base flow HA messaging.  These plugins can then include their own messages
+along with the flow cache HA messages.
+
+HA produces and consumes two type of messages:
+
+* Update - Update flow status.  Plugins may add their own data to the messages
+
+* Delete - A flow has been removed from the cache
+
+The HA module is configured with these items:
+
+    high_availability =
+    {
+        ports = "1",
+        enable = true,
+        min_age = 0.0,
+        min_sync = 0.0
+    }
+
+The 'ports' item maps to the SideChannel port to use for the HA messaging.
+
+The 'enabled' item controls the overall HA operation.
+
+The items min_age and min_sync are used in the stream HA logic.  min_age is
+the number of seconds that a flow must exist in the flow cache before sending
+HA messages to the partner.  min_sync is the minimum time between HA status
+updates.  HA messages for a particular flow will not be sent faster than
+min_sync.  Both are expressed as a floating point number of seconds.
+
+HA messages are composed of the base 'stream' information plus any content
+from additional modules.  Modules subscribe HA in order to add message
+content.  The 'stream' HA content is always present in the messages while
+the ancillary module content is only present when requested via a status
+change request.
+

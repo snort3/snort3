@@ -37,6 +37,7 @@ set (
     bugs.txt
     building.txt
     concepts.txt
+    connector.txt
     daq.txt
     dcerpc.txt
     differences.txt
@@ -45,12 +46,14 @@ set (
     extending.txt
     features.txt
     file_processing.txt
+    high_availability.txt
     http_inspect.txt
     overview.txt
     params.txt
     perf_monitor.txt
     reference.txt
     sensitive_data.txt
+    side_channel.txt
     snort2lua.txt
     snort2x.png
     snort3x.png

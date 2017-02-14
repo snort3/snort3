@@ -14,6 +14,23 @@ include::dcerpc.txt[]
 
 include::file_processing.txt[]
 
+=== High Availability
+
+High Availability includes the HA flow synchronization and the SideChannel
+messaging subsystems.
+
+==== HA
+
+include::high_availability.txt[]
+
+==== Connector
+
+include::connector.txt[]
+
+==== Side Channel
+
+include::side_channel.txt[]
+
 === HTTP Inspector
 
 include::http_inspect.txt[]
