@@ -34,6 +34,7 @@
 #include "packet_io/sfdaq.h"
 #include "protocols/packet.h"
 #include "utils/util.h"
+#include "utils/util_cstring.h"
 #include "utils/util_net.h"
 
 using namespace std;

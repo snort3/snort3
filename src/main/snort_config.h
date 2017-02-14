@@ -191,7 +191,7 @@ public:
     int user_id = -1;
     int group_id = -1;
 
-    int dirty_pig = 0;
+    bool dirty_pig = false;
 
     std::string chroot_dir;        /* -t or config chroot */
     std::string plugin_path;
@@ -355,6 +355,43 @@ public:
     // curr_ip is the zero based ip layer
     bool hit_ip_maxlayers(uint8_t curr_ip) const
     { return max_ip_layers && (curr_ip >= max_ip_layers); }
+
+    //------------------------------------------------------
+    // Non-static mutator methods
+
+    void add_script_path(const char*);
+    void enable_syslog();
+    void set_alert_before_pass(bool);
+    void set_alert_mode(const char*);
+    void set_chroot_dir(const char*);
+    void set_create_pid_file(bool);
+    void set_daemon(bool);
+    void set_decode_data_link(bool);
+    void set_dirty_pig(bool);
+    void set_dst_mac(const char*);
+    void set_dump_chars_only(bool);
+    void set_dump_payload(bool);
+    void set_dump_payload_verbose(bool);
+    void set_gid(const char*);
+    void set_log_dir(const char*);
+    void set_log_mode(const char*);
+    void set_no_logging_timestamps(bool);
+    void set_obfuscate(bool);
+    void set_obfuscation_mask(const char*);
+    void set_plugin_path(const char*);
+    void set_process_all_events(bool);
+    void set_quiet(bool);
+    void set_show_year(bool);
+    void set_tunnel_verdicts(const char*);
+    void set_treat_drop_as_alert(bool);
+    void set_treat_drop_as_ignore(bool);
+    void set_uid(const char*);
+    void set_umask(const char*);
+    void set_utc(bool);
+    void set_verbose(bool);
+
+    //------------------------------------------------------
+    // Static convenience accesor methods
 
     static long int get_mpls_stack_depth()
     { return snort_conf->mpls_stack_depth; }
@@ -560,7 +597,7 @@ public:
     { return snort_conf->addressspace_agnostic; }
 
     static bool change_privileges()
-    { return snort_conf->user_id != -1 || snort_conf->group_id != -1; }
+    { return snort_conf->user_id != -1 || snort_conf->group_id != -1 || !snort_conf->chroot_dir.empty(); }
 };
 
 #endif

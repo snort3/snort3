@@ -26,6 +26,8 @@
 #include "config.h"
 #endif
 
+#include "utils/util_cstring.h"
+
 #include "hi_events.h"
 #include "hi_return_codes.h"
 #include "hi_si.h"

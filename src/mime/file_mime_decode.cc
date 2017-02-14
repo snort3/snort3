@@ -24,7 +24,7 @@
 
 #include "file_mime_decode.h"
 
-#include "utils/util.h"
+#include "utils/util_cstring.h"
 
 #include "decode_b64.h"
 #include "decode_bit.h"

@@ -37,8 +37,9 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX11_COMPILER_FLAGS}")
 # FIXIT - there is probably a better way to do this
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99")
 
-set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${SPECIAL_FLAGS}" )
-set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SPECIAL_FLAGS}" )
+# Apply sanitizer compiler and linker flags
+set ( CMAKE_C_FLAGS "${SANITIZER_CXXFLAGS} ${CMAKE_C_FLAGS}" )
+set ( CMAKE_CXX_FLAGS "${SANITIZER_CXXFLAGS} ${CMAKE_CXX_FLAGS}" )
 
 include_directories (${PROJECT_BINARY_DIR})
 include_directories (${PROJECT_SOURCE_DIR})

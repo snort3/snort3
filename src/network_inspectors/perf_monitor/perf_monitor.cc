@@ -167,16 +167,19 @@ void PerfMonitor::tterm()
 {
     perf_flow_ip = nullptr;
 
-    while (!trackers->empty())
+    if (trackers)
     {
-        auto back = trackers->back();
-        if ( config.perf_flags & PERF_SUMMARY )
-            back->process(true);
-        back->close();
-        delete back;
-        trackers->pop_back();
+        while (!trackers->empty())
+        {
+            auto back = trackers->back();
+            if ( config.perf_flags & PERF_SUMMARY )
+                back->process(true);
+            back->close();
+            delete back;
+            trackers->pop_back();
+        }
+        delete trackers;
     }
-    delete trackers;
 }
 
 void PerfMonitor::eval(Packet* p)

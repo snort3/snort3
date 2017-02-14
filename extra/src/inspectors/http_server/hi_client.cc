@@ -49,6 +49,7 @@
 
 #include "protocols/packet.h"
 #include "utils/safec.h"
+#include "utils/util_cstring.h"
 #include "utils/util_unfold.h"
 
 #include "hi_cmd_lookup.h"

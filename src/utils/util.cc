@@ -56,6 +56,8 @@ extern "C" {
 #include "packet_io/sfdaq.h"
 #include "protocols/packet.h"   // For NUM_IP_PROTOS
 
+#include "util_cstring.h"
+
 #ifdef PATH_MAX
 #define PATH_MAX_UTIL PATH_MAX
 #else
@@ -325,29 +327,40 @@ void ClosePidFile()
  * Returns: void function
  *
  ****************************************************************************/
-void SetUidGid(int user_id, int group_id)
+bool SetUidGid(int user_id, int group_id)
 {
-    if ((group_id != -1) && (getgid() != (gid_t)group_id))
+    // Were any changes requested?
+    if (group_id == -1 && user_id == -1)
+        return true;
+
+    // FIXIT-L Move this check to Snort::drop_privileges()
+    if (!SFDAQ::unprivileged())
     {
-        if (!SFDAQ::unprivileged())
-            ParseError("Cannot set GID - %s DAQ does not support unprivileged operation.\n",
-                    SFDAQ::get_type());
-        else if (setgid(group_id) < 0)
-            ParseError("Cannot set GID: %d", group_id);
-        else
-            LogMessage("Set GID to %d\n", group_id);
+        ParseError("Cannot drop privileges - %s DAQ does not support unprivileged operation.\n", SFDAQ::get_type());
+        return false;
     }
 
-    if ((user_id != -1) && (getuid() != (uid_t)user_id))
+    if (group_id != -1)
     {
-        if (!SFDAQ::unprivileged())
-            ParseError("Cannot set UID - %s DAQ does not support unprivileged operation.\n",
-                    SFDAQ::get_type());
-        else if (setuid(user_id) < 0)
-            ParseError("Cannot set UID: %d", user_id);
-        else
-            LogMessage("Set UID to %d\n", user_id);
+        if (setgid(group_id) < 0)
+        {
+            ParseError("Cannot set GID: %d", group_id);
+            return false;
+        }
+        LogMessage("Set GID to %d\n", group_id);
     }
+
+    if (user_id != -1)
+    {
+        if (setuid(user_id) < 0)
+        {
+            ParseError("Cannot set UID: %d", user_id);
+            return false;
+        }
+        LogMessage("Set UID to %d\n", user_id);
+    }
+
+    return true;
 }
 
 /****************************************************************************
@@ -479,134 +492,6 @@ std::string read_infile(const char* key, const char* fname)
     return line;
 }
 
-/* Guaranteed to be '\0' terminated even if truncation occurs.
- *
- * returns  SNORT_SNPRINTF_SUCCESS if successful
- * returns  SNORT_SNPRINTF_TRUNCATION on truncation
- * returns  SNORT_SNPRINTF_ERROR on error
- */
-int SnortSnprintf(char* buf, size_t buf_size, const char* format, ...)
-{
-    va_list ap;
-    int ret;
-
-    if (buf == NULL || buf_size <= 0 || format == NULL)
-        return SNORT_SNPRINTF_ERROR;
-
-    /* zero first byte in case an error occurs with
-     * vsnprintf, so buffer is null terminated with
-     * zero length */
-    buf[0] = '\0';
-    buf[buf_size - 1] = '\0';
-
-    va_start(ap, format);
-
-    ret = vsnprintf(buf, buf_size, format, ap);
-
-    va_end(ap);
-
-    if (ret < 0)
-        return SNORT_SNPRINTF_ERROR;
-
-    if (buf[buf_size - 1] != '\0' || (size_t)ret >= buf_size)
-    {
-        /* result was truncated */
-        buf[buf_size - 1] = '\0';
-        return SNORT_SNPRINTF_TRUNCATION;
-    }
-
-    return SNORT_SNPRINTF_SUCCESS;
-}
-
-/* Appends to a given string
- * Guaranteed to be '\0' terminated even if truncation occurs.
- *
- * returns SNORT_SNPRINTF_SUCCESS if successful
- * returns SNORT_SNPRINTF_TRUNCATION on truncation
- * returns SNORT_SNPRINTF_ERROR on error
- */
-int SnortSnprintfAppend(char* buf, size_t buf_size, const char* format, ...)
-{
-    int str_len;
-    int ret;
-    va_list ap;
-
-    if (buf == NULL || buf_size <= 0 || format == NULL)
-        return SNORT_SNPRINTF_ERROR;
-
-    str_len = SnortStrnlen(buf, buf_size);
-
-    /* since we've already checked buf and buf_size an error
-     * indicates no null termination, so just start at
-     * beginning of buffer */
-    if (str_len == SNORT_STRNLEN_ERROR)
-    {
-        buf[0] = '\0';
-        str_len = 0;
-    }
-
-    buf[buf_size - 1] = '\0';
-
-    va_start(ap, format);
-
-    ret = vsnprintf(buf + str_len, buf_size - (size_t)str_len, format, ap);
-
-    va_end(ap);
-
-    if (ret < 0)
-        return SNORT_SNPRINTF_ERROR;
-
-    if (buf[buf_size - 1] != '\0' || (size_t)ret >= buf_size)
-    {
-        /* truncation occured */
-        buf[buf_size - 1] = '\0';
-        return SNORT_SNPRINTF_TRUNCATION;
-    }
-
-    return SNORT_SNPRINTF_SUCCESS;
-}
-
-/* Guaranteed to be '\0' terminated even if truncation occurs.
- *
- * Arguments:  dst - the string to contain the copy
- *             src - the string to copy from
- *             dst_size - the size of the destination buffer
- *                        including the null byte.
- *
- * returns SNORT_STRNCPY_SUCCESS if successful
- * returns SNORT_STRNCPY_TRUNCATION on truncation
- * returns SNORT_STRNCPY_ERROR on error
- *
- * Note: Do not set dst[0] = '\0' on error since it's possible that
- * dst and src are the same pointer - it will at least be null
- * terminated in any case
- */
-int SnortStrncpy(char* dst, const char* src, size_t dst_size)
-{
-    char* ret = NULL;
-
-    if (dst == NULL || src == NULL || dst_size <= 0)
-        return SNORT_STRNCPY_ERROR;
-
-    dst[dst_size - 1] = '\0';
-
-    ret = strncpy(dst, src, dst_size);
-
-    /* Not sure if this ever happens but might as
-     * well be on the safe side */
-    if (ret == NULL)
-        return SNORT_STRNCPY_ERROR;
-
-    if (dst[dst_size - 1] != '\0')
-    {
-        /* result was truncated */
-        dst[dst_size - 1] = '\0';
-        return SNORT_STRNCPY_TRUNCATION;
-    }
-
-    return SNORT_STRNCPY_SUCCESS;
-}
-
 char* snort_strndup(const char* src, size_t dst_size)
 {
     char* dup = (char*)snort_calloc(dst_size + 1);
@@ -620,31 +505,6 @@ char* snort_strndup(const char* src, size_t dst_size)
     return dup;
 }
 
-/* Determines whether a buffer is '\0' terminated and returns the
- * string length if so
- *
- * returns the string length if '\0' terminated
- * returns SNORT_STRNLEN_ERROR if not '\0' terminated
- */
-int SnortStrnlen(const char* buf, int buf_size)
-{
-    int i = 0;
-
-    if (buf == NULL || buf_size <= 0)
-        return SNORT_STRNLEN_ERROR;
-
-    for (i = 0; i < buf_size; i++)
-    {
-        if (buf[i] == '\0')
-            break;
-    }
-
-    if (i == buf_size)
-        return SNORT_STRNLEN_ERROR;
-
-    return i;
-}
-
 char* snort_strdup(const char* str)
 {
     assert(str);
@@ -654,254 +514,116 @@ char* snort_strdup(const char* str)
     return p;
 }
 
-/*
- * Find first occurrence of char of accept in s, limited by slen.
- * A 'safe' version of strpbrk that won't read past end of buffer s
- * in cases that s is not NULL terminated.
- *
- * This code assumes 'accept' is a static string.
- */
-const char* SnortStrnPbrk(const char* s, int slen, const char* accept)
-{
-    char ch;
-    const char* s_end;
-    if (!s || (slen == 0) || !*s || !accept)
-        return NULL;
-
-    s_end = s + slen;
-    while (s < s_end)
-    {
-        ch = *s;
-        if (strchr(accept, ch))
-            return s;
-        s++;
-    }
-    return NULL;
-}
-
-/*
- * Find first occurrence of searchstr in s, limited by slen.
- * A 'safe' version of strstr that won't read past end of buffer s
- * in cases that s is not NULL terminated.
- */
-const char* SnortStrnStr(const char* s, int slen, const char* searchstr)
-{
-    char ch, nc;
-    int len;
-    if (!s || (slen == 0) || !*s || !searchstr)
-        return NULL;
-
-    if ((ch = *searchstr++) != 0)
-    {
-        len = strlen(searchstr);
-        do
-        {
-            do
-            {
-                if ((nc = *s++) == 0)
-                {
-                    return NULL;
-                }
-                slen--;
-                if (slen == 0)
-                    return NULL;
-            }
-            while (nc != ch);
-            if (slen - len < 0)
-                return NULL;
-        }
-        while (memcmp(s, searchstr, len) != 0);
-        s--;
-    }
-    return s;
-}
-
-/*
- * Find first occurrence of substring in s, ignore case.
-*/
-const char* SnortStrcasestr(const char* s, int slen, const char* substr)
-{
-    char ch, nc;
-    int len;
-
-    if (!s || (slen == 0) || !*s || !substr)
-        return NULL;
-
-    if ((ch = *substr++) != 0)
-    {
-        ch = tolower((char)ch);
-        len = strlen(substr);
-        do
-        {
-            do
-            {
-                if ((nc = *s++) == 0)
-                {
-                    return NULL;
-                }
-                slen--;
-                if (slen == 0)
-                    return NULL;
-            }
-            while ((char)tolower((uint8_t)nc) != ch);
-            if (slen - len < 0)
-                return NULL;
-        }
-        while (strncasecmp(s, substr, len) != 0);
-        s--;
-    }
-    return s;
-}
-
-/**
- * Chroot and adjust the snort_conf->log_dir reference
- *
- * @param directory directory to chroot to
- * @param logstore ptr to snort_conf->log_dir which must be dynamically allocated
- */
-void SetChroot(std::string directory, std::string& logstore)
-{
-    char* absdir;
-    size_t abslen;
-
-    if ( logstore.empty() )
-    {
-        ParseError("Null log directory");
-        return;
-    }
-
-    DebugFormat(DEBUG_INIT,"SetChroot: %s\n", CurrentWorkingDir());
-
-    const char* logdir = GetAbsolutePath(logstore.c_str());
-
-    DebugFormat(DEBUG_INIT, "SetChroot: %s\n", CurrentWorkingDir());
-
-    /* change to the directory */
-    if (chdir(directory.c_str()) != 0)
-    {
-        ParseError("SetChroot: Can not chdir to \"%s\": %s", directory.c_str(),
-            get_error(errno));
-        return;
-    }
-
-    /* always returns an absolute pathname */
-    absdir = CurrentWorkingDir();
-
-    if (absdir == NULL)
-    {
-        ParseError("NULL Chroot found");
-        return;
-    }
-
-    abslen = strlen(absdir);
-
-    DebugFormat(DEBUG_INIT, "ABS: %s %zu\n", absdir, abslen);
-
-    /* make the chroot call */
-    if (chroot(absdir) < 0)
-    {
-        ParseError("Can not chroot to \"%s\": absolute: %s: %s",
-            directory.c_str(), absdir, get_error(errno));
-        return;
-    }
-
-    DebugFormat(DEBUG_INIT,"chroot success (%s ->", absdir);
-    DebugFormat(DEBUG_INIT,"%s)\n ", CurrentWorkingDir());
-
-    /* change to "/" in the new directory */
-    if (chdir("/") < 0)
-    {
-        ParseError("Can not chdir to \"/\" after chroot: %s",
-            get_error(errno));
-        return;
-    }
-
-    DebugFormat(DEBUG_INIT,"chdir success (%s)\n", CurrentWorkingDir());
-
-    if (strncmp(absdir, logdir, strlen(absdir)))
-    {
-        ParseError("Absdir is not a subset of the logdir");
-        return;
-    }
-
-    if (abslen >= strlen(logdir))
-    {
-        logstore = "/";
-    }
-    else
-    {
-        logstore = logdir + abslen;
-    }
-
-    DebugFormat(DEBUG_INIT,"new logdir from %s to %s\n",
-        logdir, logstore.c_str());
-
-    LogMessage("Chroot directory = %s\n", directory.c_str());
-}
-
 /**
  * Return a ptr to the absolute pathname of snort.  This memory must
  * be copied to another region if you wish to save it for later use.
  */
-char* CurrentWorkingDir()
+static const char* CurrentWorkingDir()
 {
     static THREAD_LOCAL char buf[PATH_MAX_UTIL + 1];
 
-    if (getcwd((char*)buf, PATH_MAX_UTIL) == NULL)
+    if (getcwd(buf, PATH_MAX_UTIL) == NULL)
     {
         return NULL;
     }
 
     buf[PATH_MAX_UTIL] = '\0';
 
-    return (char*)buf;
+    return buf;
 }
 
 /**
  * Given a directory name, return a ptr to a static
  */
-char* GetAbsolutePath(const char* dir)
+static char* GetAbsolutePath(const char* dir)
 {
-    char* savedir, * dirp;
     static THREAD_LOCAL char buf[PATH_MAX_UTIL + 1];
 
-    if (dir == NULL)
+    if (!dir)
+        return NULL;
+
+    errno = 0;
+    if (!realpath(dir, buf))
     {
+        LogMessage("Couldn't determine absolute path for '%s': %s\n", dir, get_error(errno));
         return NULL;
     }
 
-    savedir = snort_strdup(CurrentWorkingDir());
+    return buf;
+}
 
-    if (chdir(dir) < 0)
+/**
+ * Chroot and adjust the snort_conf->log_dir reference
+ */
+bool EnterChroot(std::string& root_dir, std::string& log_dir)
+{
+    if (log_dir.empty())
     {
-        LogMessage("Can't change to directory: %s\n", dir);
-        snort_free(savedir);
-        return NULL;
+        ParseError("Log directory not specified");
+        return false;
     }
 
-    dirp = CurrentWorkingDir();
+    DebugFormat(DEBUG_INIT, "EnterChroot: %s\n", CurrentWorkingDir());
 
-    if (dirp == NULL)
+    const char* abs_log_dir = GetAbsolutePath(log_dir.c_str());
+
+    if (!abs_log_dir)
+        return false;
+
+    /* change to the desired root directory */
+    if (chdir(root_dir.c_str()) != 0)
     {
-        LogMessage("Unable to access current directory\n");
-        snort_free(savedir);
-        return NULL;
+        ParseError("EnterChroot: Can not chdir to \"%s\": %s", root_dir.c_str(),
+            get_error(errno));
+        return false;
     }
+
+    /* always returns an absolute pathname */
+    const char* abs_root_dir = CurrentWorkingDir();
+    if (!abs_root_dir)
+    {
+        ParseError("Couldn't retrieve current working directory");
+        return false;
+    }
+    size_t abs_root_dir_len = strlen(abs_root_dir);
+    DebugFormat(DEBUG_INIT, "ABS: %s %zu\n", abs_root_dir, abs_root_dir_len);
+
+    if (strncmp(abs_root_dir, abs_log_dir, abs_root_dir_len))
+    {
+        ParseError("Specified log directory is not contained with the chroot jail");
+        return false;
+    }
+
+    if (chroot(abs_root_dir) < 0)
+    {
+        ParseError("Can not chroot to \"%s\": absolute: %s: %s",
+            root_dir.c_str(), abs_root_dir, get_error(errno));
+        return false;
+    }
+
+    DebugFormat(DEBUG_INIT,"chroot success (%s ->", abs_root_dir);
+    DebugFormat(DEBUG_INIT,"%s)\n ", CurrentWorkingDir());
+
+    /* Immediately change to the root directory of the jail. */
+    if (chdir("/") < 0)
+    {
+        ParseError("Can not chdir to \"/\" after chroot: %s",
+            get_error(errno));
+        return false;
+    }
+
+    DebugFormat(DEBUG_INIT,"chdir success (%s)\n", CurrentWorkingDir());
+
+    if (abs_root_dir_len >= strlen(abs_log_dir))
+        log_dir = "/";
     else
-    {
-        strncpy(buf, dirp, PATH_MAX_UTIL);
-        buf[PATH_MAX_UTIL] = '\0';
-    }
+        log_dir = abs_log_dir + abs_root_dir_len;
 
-    if (chdir(savedir) < 0)
-    {
-        LogMessage("Can't change back to directory: %s\n", dir);
-        snort_free(savedir);
-        return NULL;
-    }
+    DebugFormat(DEBUG_INIT,"new logdir from %s to %s\n", abs_log_dir, log_dir.c_str());
 
-    snort_free(savedir);
-    return (char*)buf;
+    LogMessage("Chroot directory = %s\n", root_dir.c_str());
+
+    return true;
 }
 
 #if defined(NOCOREFILE)

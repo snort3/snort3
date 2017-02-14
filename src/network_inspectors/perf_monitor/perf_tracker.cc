@@ -30,6 +30,7 @@
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "utils/util.h"
+#include "utils/util_cstring.h"
 
 #include "csv_formatter.h"
 #include "text_formatter.h"

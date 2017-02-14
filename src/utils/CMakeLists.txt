@@ -1,12 +1,4 @@
 
-if ( BUILD_SNPRINTF )
-    SET (SNPRINTF_SOURCES
-        snprintf.cc 
-        snprintf.h c
-        defs.h
-    )
-endif ( BUILD_SNPRINTF )
-
 set( UTIL_INCLUDES
     bitop.h
     cpp_macros.h
@@ -15,9 +7,9 @@ set( UTIL_INCLUDES
     segment_mem.h
     sflsq.h
     sfmemcap.h
-    sfsnprintfappend.h
     stats.h
     util.h
+    util_cstring.h
     util_jsnorm.h
     util_unfold.h
     util_utf.h
@@ -39,10 +31,10 @@ ADD_LIBRARY( utils STATIC
     segment_mem.cc 
     sflsq.cc 
     sfmemcap.cc 
-    sfsnprintfappend.cc 
     snort_bounds.h
     stats.cc
     util.cc
+    util_cstring.cc
     util_jsnorm.cc 
     util_net.cc 
     util_net.h

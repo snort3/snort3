@@ -28,6 +28,7 @@
 #include "events/event_queue.h"
 #include "main/snort_debug.h"
 #include "utils/util.h"
+#include "utils/util_cstring.h"
 
 #include "sip_module.h"
 #include "sip_utils.h"

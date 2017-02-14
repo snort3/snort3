@@ -32,7 +32,7 @@
 #include <cstring>
 
 #include "log/messages.h"
-#include "utils/sfsnprintfappend.h"
+#include "utils/util_cstring.h"
 
 #include "ft_main.h"
 #include "ftp_bounce_lookup.h"
@@ -121,7 +121,7 @@ static void PrintCmdFmt(char* buf, FTP_PARAM_FMT* CmdFmt)
         PrintFormatDate(buf, CmdFmt->format.date_fmt);
         break;
     case e_literal:
-        sfsnprintfappend(buf, BUF_SIZE, " %s 0x%x", F_LITERAL,
+        sfsnprintfappend(buf, BUF_SIZE, " %s %s", F_LITERAL,
             CmdFmt->format.literal);
         break;
     case e_unrestricted:

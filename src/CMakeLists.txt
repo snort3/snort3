@@ -182,6 +182,11 @@ set_property(TARGET snort APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
 
 set_property(TARGET snort APPEND PROPERTY INTERFACE_COMPILE_OPTIONS "${CMAKE_CXX_FLAGS}")
 
+set_target_properties(
+    snort
+    PROPERTIES
+        LINK_FLAGS "${SANITIZER_LDFLAGS}"
+)
 
 install (TARGETS snort
     EXPORT snortexe

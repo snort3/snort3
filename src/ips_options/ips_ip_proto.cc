@@ -30,7 +30,7 @@
 #include "log/messages.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
-#include "utils/util.h"
+#include "utils/util_cstring.h"
 
 #define s_name "ip_proto"
 

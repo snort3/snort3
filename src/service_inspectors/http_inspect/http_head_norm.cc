@@ -23,6 +23,8 @@
 
 #include "http_head_norm.h"
 
+#include <cstring>
+
 using namespace HttpEnums;
 
 // This derivation removes embedded CRLFs (wrapping), omits leading and trailing linear white

@@ -27,6 +27,7 @@
 #include "main/snort_debug.h"
 #include "parser/parser.h"
 #include "utils/util.h"
+#include "utils/util_cstring.h"
 
 #include "port_item.h"
 #include "port_utils.h"

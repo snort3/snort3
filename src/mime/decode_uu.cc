@@ -24,8 +24,10 @@
 
 #include "decode_uu.h"
 
+#include <cstring>
+
 #include "utils/safec.h"
-#include "utils/util.h"
+#include "utils/util_cstring.h"
 
 #include "decode_buffer.h"
 

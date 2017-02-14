@@ -26,6 +26,7 @@
 #include "port_item.h"
 
 #include "utils/util.h"
+#include "utils/util_cstring.h"
 
 /*
  * Create a new PortObjectItem

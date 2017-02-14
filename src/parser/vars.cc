@@ -28,6 +28,7 @@
 #include "main/snort_debug.h"
 #include "sfip/sf_ipvar.h"
 #include "utils/util.h"
+#include "utils/util_cstring.h"
 
 #include "parse_ports.h"
 

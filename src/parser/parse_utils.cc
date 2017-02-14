@@ -24,9 +24,10 @@
 #include "parse_utils.h"
 
 #include <cassert>
+#include <cstring>
 
 #include "log/messages.h"
-#include "utils/util.h"
+#include "utils/util_cstring.h"
 
 using namespace std;
 

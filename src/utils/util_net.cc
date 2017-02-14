@@ -26,7 +26,7 @@
 #include "main/thread.h"
 #include "sfip/sf_ip.h"
 
-#include "util.h"
+#include "util_cstring.h"
 
 /**
  * A inet_ntoa that has 2 static buffers that are changed between

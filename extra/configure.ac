@@ -1,4 +1,5 @@
 AC_INIT([snort_extra],[1.0.0-a4],[snort-team@cisco.com])
+AC_CONFIG_AUX_DIR([.])
 AC_PREREQ([2.69])
 AC_CONFIG_MACRO_DIRS([m4])
 

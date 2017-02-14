@@ -35,6 +35,7 @@
 #include "sfmemcap.h"
 
 #include "util.h"
+#include "util_cstring.h"
 
 /*
 *   Set max # bytes & init other variables.

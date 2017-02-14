@@ -29,6 +29,7 @@
 #include "log/messages.h"
 #include "main/snort_debug.h"
 #include "utils/util.h"
+#include "utils/util_cstring.h"
 
 #include "port_utils.h"
 

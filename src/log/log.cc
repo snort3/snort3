@@ -30,6 +30,7 @@
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
 #include "utils/util.h"
+#include "utils/util_cstring.h"
 
 #include "log_text.h"
 #include "messages.h"

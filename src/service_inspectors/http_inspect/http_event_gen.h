@@ -24,7 +24,7 @@
 #include <cassert>
 
 #include "events/event_queue.h"
-#include "utils/util.h"
+#include "utils/util_cstring.h"
 
 #include "http_enum.h"
 

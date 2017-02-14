@@ -11,9 +11,9 @@ safec.h \
 segment_mem.h \
 sflsq.h \
 sfmemcap.h \
-sfsnprintfappend.h \
 stats.h \
 util.h \
+util_cstring.h \
 util_jsnorm.h \
 util_unfold.h \
 util_utf.h
@@ -26,10 +26,10 @@ kmap.cc \
 segment_mem.cc \
 sflsq.cc \
 sfmemcap.cc \
-sfsnprintfappend.cc \
 snort_bounds.h \
 stats.cc \
 util.cc \
+util_cstring.cc \
 util_jsnorm.cc \
 util_net.cc util_net.h \
 util_unfold.cc \

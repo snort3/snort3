@@ -669,7 +669,7 @@ bool AlertsModule::set(const char*, Value& v, SnortConfig* sc)
         v.update_mask(sc->run_flags, RUN_FLAG__ASSURE_EST);
 
     else if ( v.is("tunnel_verdicts") )
-        ConfigTunnelVerdicts(sc, v.get_string());
+        sc->set_tunnel_verdicts(v.get_string());
 
     else
         return false;
@@ -828,7 +828,7 @@ bool ActiveModule::set(const char*, Value& v, SnortConfig* sc)
         sc->respond_device = v.get_string();
 
     else if ( v.is("dst_mac") )
-        ConfigDstMac(sc, v.get_string());
+        sc->set_dst_mac(v.get_string());
 
     else if ( v.is("max_responses") )
         sc->max_responses = v.get_long();
@@ -1002,10 +1002,10 @@ bool NetworkModule::set(const char*, Value& v, SnortConfig* sc)
     NetworkPolicy* p = get_network_policy();
 
     if ( v.is("checksum_drop") )
-        ConfigChecksumDrop(sc, v.get_string());
+        ConfigChecksumDrop(v.get_string());
 
     else if ( v.is("checksum_eval") )
-        ConfigChecksumMode(sc, v.get_string());
+        ConfigChecksumMode(v.get_string());
 
     else if ( v.is("decode_drops") )
         p->decoder_drop = v.get_bool();
@@ -1157,32 +1157,26 @@ private:
 bool ProcessModule::set(const char*, Value& v, SnortConfig* sc)
 {
     if ( v.is("daemon") )
-    {
-        if ( v.get_bool() )
-            ConfigDaemon(sc, "");
-    }
+        sc->set_daemon(v.get_bool());
+
     else if ( v.is("chroot") )
-        ConfigChrootDir(sc, v.get_string());
+        sc->set_chroot_dir(v.get_string());
 
     else if ( v.is("dirty_pig") )
-    {
-        if ( v.get_bool() )
-            ConfigDirtyPig(sc, "");
-    }
+        sc->set_dirty_pig(v.get_bool());
+
     else if ( v.is("set_gid") )
-        ConfigSetGid(sc, v.get_string());
+        sc->set_gid(v.get_string());
 
     else if ( v.is("set_uid") )
-        ConfigSetUid(sc, v.get_string());
+        sc->set_uid(v.get_string());
 
     else if ( v.is("umask") )
-        ConfigUmask(sc, v.get_string());
+        sc->set_umask(v.get_string());
 
     else if ( v.is("utc") )
-    {
-        if ( v.get_bool() )
-            ConfigUtc(sc, "");
-    }
+        sc->set_utc(v.get_bool());
+
     else if (v.is("cpuset"))
     {
         if (!(cpuset = ThreadConfig::validate_cpuset_string(v.get_string())))

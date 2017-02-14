@@ -33,6 +33,7 @@
 
 #include "sfip/sf_ipvar.h"
 #include "utils/util.h"
+#include "utils/util_cstring.h"
 
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"

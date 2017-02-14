@@ -29,6 +29,7 @@
 #include "file_api/file_flows.h"
 #include "utils/safec.h"
 #include "utils/util.h"
+#include "utils/util_cstring.h"
 
 #define MAX_FILE                             1024
 #define MAX_EMAIL                            1024

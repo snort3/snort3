@@ -422,13 +422,19 @@ fi
 AC_ARG_ENABLE(address-sanitizer,
     AS_HELP_STRING([--enable-address-sanitizer],[enable address sanitizer support]),
     [
-        ASAN_CCXFLAGS="-fsanitize=address -fno-omit-frame-pointer"
+        AX_CHECK_COMPILE_FLAG([-fsanitize=address], [SANITIZER_CXXFLAGS="$SANITIZER_CXXFLAGS -fsanitize=address"])
+        AX_CHECK_COMPILE_FLAG([-fno-omit-frame-pointer], [SANITIZER_CXXFLAGS="$SANITIZER_CXXFLAGS -fno-omit-frame-pointer"])
+        AX_CHECK_LINK_FLAG([-fsanitize=address], [SANITIZER_LDFLAGS="$SANITIZER_LDFLAGS -fsanitize=address"], [], [$SANITIZER_LDFLAGS])
+        AX_CHECK_LINK_FLAG([-static-libasan], [SANITIZER_LDFLAGS="$SANITIZER_LDFLAGS -static-libasan"], [], [$SANITIZER_LDFLAGS])
     ])
 
 AC_ARG_ENABLE(thread-sanitizer,
     AS_HELP_STRING([--enable-thread-sanitizer],[enable thread sanitizer support]),
     [
-        ASAN_CCXFLAGS="-fsanitize=thread -fno-omit-frame-pointer"
+        AX_CHECK_COMPILE_FLAG([-fsanitize=thread], [SANITIZER_CXXFLAGS="$SANITIZER_CXXFLAGS -fsanitize=thread"])
+        AX_CHECK_COMPILE_FLAG([-fno-omit-frame-pointer], [SANITIZER_CXXFLAGS="$SANITIZER_CXXFLAGS -fno-omit-frame-pointer"])
+        AX_CHECK_LINK_FLAG([-fsanitize=thread], [SANITIZER_LDFLAGS="$SANITIZER_LDFLAGS -fsanitize=thread"], [], [$SANITIZER_LDFLAGS])
+        AX_CHECK_LINK_FLAG([-static-libtsan], [SANITIZER_LDFLAGS="$SANITIZER_LDFLAGS -static-libtsan"], [], [$SANITIZER_LDFLAGS])
     ])
 
 #--------------------------------------------------------------------------
@@ -1069,9 +1075,9 @@ AM_CONDITIONAL([HAVE_HYPERSCAN], [test "x$HS_HEADERS" = "xyes" -a "x$HS_LIB" = "
 
 AC_DEFINE_UNQUOTED([API_OPTIONS], ["$API_OPTIONS"], [plugin api related build options])
 
-if test -n "$ASAN_CCXFLAGS" ; then
-    CFLAGS="$ASAN_CCXFLAGS $CFLAGS"
-    CXXFLAGS="$ASAN_CCXFLAGS $CXXFLAGS"
+if test -n "$SANITIZER_CXXFLAGS" ; then
+    CFLAGS="$SANITIZER_CXXFLAGS $CFLAGS"
+    CXXFLAGS="$SANITIZER_CXXFLAGS $CXXFLAGS"
 fi
 
 if test "x${CODE_COVERAGE_ENABLED}" = "xyes" ; then
@@ -1110,6 +1116,8 @@ AC_SUBST(LZMA_CPPFLAGS)
 AC_SUBST(OPENSSL_CPPFLAGS)
 AC_SUBST(INTEL_SOFT_CPM_CPPFLAGS)
 AC_SUBST(HYPERSCAN_CPPFLAGS)
+
+AC_SUBST(SANITIZER_LDFLAGS)
 
 AC_CONFIG_FILES([ \
 snort.pc \

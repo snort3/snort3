@@ -32,6 +32,7 @@
 #include "main/snort_debug.h"
 #include "protocols/packet.h"
 #include "utils/util.h"
+#include "utils/util_cstring.h"
 
 #include "sftarget_data.h"
 

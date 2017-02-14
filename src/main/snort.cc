@@ -335,21 +335,33 @@ void Snort::init(int argc, char** argv)
 // much initialization stuff in Snort::init() as possible and to restrict this
 // function to those things that depend on DAQ startup or non-root user/group.
 
-void Snort::drop_privileges()
+bool Snort::drop_privileges()
 {
-    /* FIXIT-M X - I have no idea if the chroot functionality actually works. */
-    /* Drop the Chrooted Settings */
-    if ( !snort_conf->chroot_dir.empty() )
-        SetChroot(snort_conf->chroot_dir, snort_conf->log_dir);
+    /* Enter the chroot jail if necessary. */
+    if (!snort_conf->chroot_dir.empty() &&
+        !EnterChroot(snort_conf->chroot_dir, snort_conf->log_dir))
+        return false;
 
-    /* Drop privileges if requested, when initialization is done */
-    SetUidGid(SnortConfig::get_uid(), SnortConfig::get_gid());
+    /* Drop privileges if requested. */
+    if (SnortConfig::get_uid() != -1 || SnortConfig::get_gid() != -1)
+    {
+        if (!SFDAQ::unprivileged())
+        {
+            ParseError("Cannot drop privileges - %s DAQ does not support unprivileged operation.\n",
+                    SFDAQ::get_type());
+            return false;
+        }
+        if (!SetUidGid(SnortConfig::get_uid(), SnortConfig::get_gid()))
+            return false;
+    }
 
-    if ( SnortConfig::create_pid_file() )
+    if (SnortConfig::create_pid_file())
         CreatePidFile(snort_main_thread_pid);
 
     initializing = false;
     privileges_dropped = true;
+
+    return true;
 }
 
 //-------------------------------------------------------------------------

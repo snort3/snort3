@@ -28,6 +28,7 @@
 #include "main/snort_config.h"
 #include "parser/parser.h"
 #include "utils/util.h"
+#include "utils/util_cstring.h"
 
 #include "treenodes.h"
 

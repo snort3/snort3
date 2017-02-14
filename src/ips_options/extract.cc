@@ -26,7 +26,7 @@
 #include "extract.h"
 
 #include "utils/snort_bounds.h"
-#include "utils/util.h"
+#include "utils/util_cstring.h"
 
 #define TEXTLEN  (PARSELEN + 1)
 

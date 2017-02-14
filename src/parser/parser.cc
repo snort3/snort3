@@ -44,6 +44,7 @@
 #include "sfip/sf_ipvar.h"
 #include "target_based/snort_protocols.h"
 #include "utils/util.h"
+#include "utils/util_cstring.h"
 
 #include "config_file.h"
 #include "mstring.h"

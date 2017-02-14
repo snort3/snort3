@@ -23,6 +23,11 @@
 
 #include "snort_config.h"
 
+#include <grp.h>
+#include <pwd.h>
+#include <syslog.h>
+
+#include "detection/detect.h"
 #include "detection/fp_config.h"
 #include "detection/fp_create.h"
 #include "filters/detection_filter.h"
@@ -33,6 +38,7 @@
 #include "ips_options/ips_pcre.h"
 #include "latency/latency_config.h"
 #include "log/messages.h"
+#include "managers/event_manager.h"
 #include "managers/inspector_manager.h"
 #include "managers/ips_manager.h"
 #include "managers/module_manager.h"
@@ -46,7 +52,9 @@
 #include "sfip/sf_ip.h"
 #include "target_based/sftarget_reader.h"
 #include "target_based/snort_protocols.h"
+#include "utils/dnet_header.h"
 #include "utils/util.h"
+#include "utils/util_cstring.h"
 
 #ifdef HAVE_HYPERSCAN
 #include "ips_options/ips_regex.h"
@@ -54,7 +62,22 @@
 #include "search_engines/hyperscan.h"
 #endif
 
+#include "snort.h"
 #include "thread_config.h"
+
+#define LOG_NONE    "none"
+#define LOG_DUMP    "dump"
+#define LOG_CODECS  "codecs"
+
+#define ALERT_NONE  "none"
+#define ALERT_CMG   "cmg"
+#define ALERT_JH    "jh"
+#define ALERT_DJR   "djr"
+#define ALERT_U2    "u2"
+#define ALERT_AJK   "ajk"
+
+#define OUTPUT_U2   "unified2"
+#define OUTPUT_FAST "alert_fast"
 
 THREAD_LOCAL SnortConfig* snort_conf = nullptr;
 uint32_t SnortConfig::warning_flags = 0;
@@ -519,5 +542,401 @@ bool SnortConfig::verify()
     }
 
     return true;
+}
+
+void SnortConfig::set_alert_before_pass(bool enabled)
+{
+    if (enabled)
+        run_flags |= RUN_FLAG__ALERT_BEFORE_PASS;
+    else
+        run_flags &= ~RUN_FLAG__ALERT_BEFORE_PASS;
+}
+
+void SnortConfig::set_chroot_dir(const char* directory)
+{
+    if (directory)
+        chroot_dir = directory;
+    else
+        chroot_dir.clear();
+}
+
+void SnortConfig::set_create_pid_file(bool enabled)
+{
+    if (enabled)
+        run_flags |= RUN_FLAG__CREATE_PID_FILE;
+    else
+        run_flags &= ~RUN_FLAG__CREATE_PID_FILE;
+}
+
+void SnortConfig::set_daemon(bool enabled)
+{
+    if (enabled)
+    {
+        DebugMessage(DEBUG_INIT, "Daemon mode flag set\n");
+        run_flags |= RUN_FLAG__DAEMON;
+    }
+    else
+        run_flags &= ~RUN_FLAG__DAEMON;
+}
+
+void SnortConfig::set_decode_data_link(bool enabled)
+{
+    if (enabled)
+    {
+        DebugMessage(DEBUG_INIT, "Decode DLL set\n");
+        output_flags |= OUTPUT_FLAG__SHOW_DATA_LINK;
+    }
+    else
+        output_flags &= ~OUTPUT_FLAG__SHOW_DATA_LINK;
+}
+
+void SnortConfig::set_dump_chars_only(bool enabled)
+{
+    if (enabled)
+    {
+        /* dump the application layer as text only */
+        DebugMessage(DEBUG_INIT, "Character payload dump set\n");
+        output_flags |= OUTPUT_FLAG__CHAR_DATA;
+    }
+    else
+        output_flags &= ~OUTPUT_FLAG__CHAR_DATA;
+}
+
+void SnortConfig::set_dump_payload(bool enabled)
+{
+    if (enabled)
+    {
+        /* dump the application layer */
+        DebugMessage(DEBUG_INIT, "Payload dump set\n");
+        output_flags |= OUTPUT_FLAG__APP_DATA;
+    }
+    else
+        output_flags &= ~OUTPUT_FLAG__APP_DATA;
+}
+
+void SnortConfig::set_dump_payload_verbose(bool enabled)
+{
+    if (enabled)
+    {
+        DebugMessage(DEBUG_INIT, "Verbose packet bytecode dumps enabled\n");
+        output_flags |= OUTPUT_FLAG__VERBOSE_DUMP;
+    }
+    else
+        output_flags &= ~OUTPUT_FLAG__VERBOSE_DUMP;
+}
+
+void SnortConfig::set_dst_mac(const char* mac_addr)
+{
+    if (mac_addr)
+    {
+        eth_addr_t dst;
+
+        if (eth_pton(mac_addr, &dst) < 0)
+        {
+            ParseError("Format check failed: %s,  Use format like 12:34:56:78:90:1a", mac_addr);
+            return;
+        }
+        free(eth_dst);
+        eth_dst = (uint8_t*) snort_calloc(sizeof(dst.data));
+        memcpy(eth_dst, dst.data, sizeof(dst.data));
+    }
+    else
+    {
+        free(eth_dst);
+        eth_dst = nullptr;
+    }
+}
+
+void SnortConfig::set_log_dir(const char* directory)
+{
+    if (directory)
+        log_dir = directory;
+    else
+        log_dir.clear();
+}
+
+void SnortConfig::set_dirty_pig(bool enabled)
+{
+    dirty_pig = enabled;
+}
+
+void SnortConfig::set_obfuscate(bool enabled)
+{
+    if (enabled)
+        output_flags |= OUTPUT_FLAG__OBFUSCATE;
+    else
+        output_flags &= ~OUTPUT_FLAG__OBFUSCATE;
+}
+
+void SnortConfig::set_no_logging_timestamps(bool enabled)
+{
+    if (enabled)
+        output_flags |= OUTPUT_FLAG__NO_TIMESTAMP;
+    else
+        output_flags &= ~OUTPUT_FLAG__NO_TIMESTAMP;
+}
+
+void SnortConfig::set_obfuscation_mask(const char* mask)
+{
+   if (!mask)
+        return;
+
+    DebugFormat(DEBUG_INIT, "Got obfus data: %s\n", mask);
+
+    output_flags |= OUTPUT_FLAG__OBFUSCATE;
+
+    obfuscation_net.set(mask);
+}
+
+void SnortConfig::set_quiet(bool enabled)
+{
+    if (enabled)
+        logging_flags |= LOGGING_FLAG__QUIET;
+    else
+        logging_flags &= ~LOGGING_FLAG__QUIET;
+}
+
+void SnortConfig::set_gid(const char* args)
+{
+    struct group* gr;
+    long target_gid;
+    char* endptr;
+
+    if (!args)
+        return;
+
+    target_gid = SnortStrtol(args, &endptr, 10);
+    if (*endptr != '\0')
+        gr = getgrnam(args); // main thread only
+    else if (errno == ERANGE || target_gid < 0)
+    {
+        ParseError("group id '%s' out of range.", args);
+        return;
+    }
+    else
+        gr = getgrgid((gid_t) target_gid); // main thread only
+
+    if (!gr)
+    {
+        ParseError("group '%s' unknown.", args);
+        return;
+    }
+
+    /* If we're already running as the desired group ID, don't bother to try changing it later. */
+    if (gr->gr_gid != getgid())
+        group_id = (int) gr->gr_gid;
+}
+
+void SnortConfig::set_uid(const char* args)
+{
+    struct passwd* pw;
+    long target_uid;
+    char* endptr;
+
+    if (!args)
+        return;
+
+    target_uid = SnortStrtol(args, &endptr, 10);
+    if (*endptr != '\0')
+        pw = getpwnam(args); // main thread only
+    else if (errno == ERANGE || target_uid < 0)
+    {
+        ParseError("user id '%s' out of range.", args);
+        return;
+    }
+    else
+        pw = getpwuid((uid_t) target_uid); // main thread only
+
+    if (!pw)
+    {
+        ParseError("user '%s' unknown.", args);
+        return;
+    }
+
+    /* Set group ID to user's default group if not already set.
+       If we're already running as the desired user and/or group ID,
+       don't bother to try changing it later. */
+    if (pw->pw_uid != getuid())
+        user_id = (int) pw->pw_uid;
+
+    if (group_id == -1 && pw->pw_gid != getgid())
+        group_id = (int) pw->pw_gid;
+
+    DebugFormat(DEBUG_INIT, "UserID: %d GroupID: %d.\n", user_id, group_id);
+}
+
+void SnortConfig::set_show_year(bool enabled)
+{
+    if (enabled)
+    {
+        output_flags |= OUTPUT_FLAG__INCLUDE_YEAR;
+        DebugMessage(DEBUG_INIT, "Enabled year in timestamp\n");
+    }
+    else
+        output_flags &= ~OUTPUT_FLAG__INCLUDE_YEAR;
+}
+
+void SnortConfig::set_treat_drop_as_alert(bool enabled)
+{
+    if (enabled)
+        run_flags |= RUN_FLAG__TREAT_DROP_AS_ALERT;
+    else
+        run_flags &= ~RUN_FLAG__TREAT_DROP_AS_ALERT;
+}
+
+void SnortConfig::set_treat_drop_as_ignore(bool enabled)
+{
+    if (enabled)
+        run_flags |= RUN_FLAG__TREAT_DROP_AS_IGNORE;
+    else
+        run_flags &= ~RUN_FLAG__TREAT_DROP_AS_IGNORE;
+}
+
+void SnortConfig::set_process_all_events(bool enabled)
+{
+    if (enabled)
+        run_flags |= RUN_FLAG__PROCESS_ALL_EVENTS;
+    else
+        run_flags &= ~RUN_FLAG__PROCESS_ALL_EVENTS;
+}
+
+#ifdef ACCESSPERMS
+# define FILE_ACCESS_BITS ACCESSPERMS
+#else
+# ifdef S_IAMB
+#  define FILE_ACCESS_BITS S_IAMB
+# else
+#  define FILE_ACCESS_BITS 0x1FF
+# endif
+#endif
+
+void SnortConfig::set_umask(const char* args)
+{
+    char* endptr;
+    long mask = SnortStrtol(args, &endptr, 0);
+
+    if ((errno == ERANGE) || (*endptr != '\0') ||
+        (mask < 0) || (mask & ~FILE_ACCESS_BITS))
+    {
+        ParseError("bad umask: %s", args);
+    }
+    file_mask = (mode_t)mask;
+}
+
+void SnortConfig::set_utc(bool enabled)
+{
+    if (enabled)
+        output_flags |= OUTPUT_FLAG__USE_UTC;
+    else
+        output_flags &= ~OUTPUT_FLAG__USE_UTC;
+}
+
+void SnortConfig::set_verbose(bool enabled)
+{
+    if (enabled)
+    {
+        logging_flags |= LOGGING_FLAG__VERBOSE;
+        DebugMessage(DEBUG_INIT, "Verbose Flag active\n");
+    }
+    else
+        logging_flags &= ~LOGGING_FLAG__VERBOSE;
+}
+
+void SnortConfig::set_tunnel_verdicts(const char* args)
+{
+    char* tmp, * tok;
+
+    tmp = snort_strdup(args);
+    char* lasts = { 0 };
+    tok = strtok_r(tmp, " ,", &lasts);
+
+    while (tok)
+    {
+        if (!strcasecmp(tok, "gtp"))
+            tunnel_mask |= TUNNEL_GTP;
+
+        else if (!strcasecmp(tok, "teredo"))
+            tunnel_mask |= TUNNEL_TEREDO;
+
+        else if (!strcasecmp(tok, "6in4"))
+            tunnel_mask |= TUNNEL_6IN4;
+
+        else if (!strcasecmp(tok, "4in6"))
+            tunnel_mask |= TUNNEL_4IN6;
+
+        else
+        {
+            ParseError("unknown tunnel bypass protocol");
+            return;
+        }
+
+        tok = strtok_r(NULL, " ,", &lasts);
+    }
+    snort_free(tmp);
+}
+
+void SnortConfig::set_plugin_path(const char* path)
+{
+    if (path)
+        plugin_path = path;
+    else
+        plugin_path.clear();
+}
+
+void SnortConfig::add_script_path(const char* path)
+{
+    if (path)
+        script_paths.push_back(path);
+}
+
+void SnortConfig::set_alert_mode(const char* val)
+{
+    if (strcasecmp(val, ALERT_NONE) == 0)
+        EventManager::enable_alerts(false);
+
+    else if ( !strcasecmp(val, ALERT_CMG) or !strcasecmp(val, ALERT_JH) or
+        !strcasecmp(val, ALERT_DJR) )
+    {
+        output = OUTPUT_FAST;
+        output_flags |= OUTPUT_FLAG__SHOW_DATA_LINK;
+        output_flags |= OUTPUT_FLAG__APP_DATA;
+    }
+    else if ( !strcasecmp(val, ALERT_U2) or !strcasecmp(val, ALERT_AJK) )
+        output = OUTPUT_U2;
+
+    else
+        output = val;
+
+    output_flags |= OUTPUT_FLAG__ALERTS;
+    Snort::set_main_hook(snort_inspect);
+}
+
+void SnortConfig::set_log_mode(const char* val)
+{
+    if (strcasecmp(val, LOG_NONE) == 0)
+    {
+        Snort::set_main_hook(snort_ignore);
+        EventManager::enable_logs(false);
+    }
+    else
+    {
+        if ( !strcmp(val, LOG_DUMP) )
+            val = LOG_CODECS;
+        output = val;
+        Snort::set_main_hook(snort_log);
+    }
+}
+
+void SnortConfig::enable_syslog()
+{
+   static bool syslog_configured = false;
+
+    if (syslog_configured)
+        return;
+
+    openlog("snort", LOG_PID | LOG_CONS, LOG_DAEMON);
+
+    logging_flags |= LOGGING_FLAG__SYSLOG;
+    syslog_configured = true;
 }
 

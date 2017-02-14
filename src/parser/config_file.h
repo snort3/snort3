@@ -19,46 +19,13 @@
 #ifndef CONFIG_FILE_H
 #define CONFIG_FILE_H
 
-struct SnortConfig;
-
 const char* get_snort_conf();
 const char* get_snort_conf_dir();
 
-void ConfigAlertBeforePass(SnortConfig*, const char*);
-void ConfigChecksumDrop(SnortConfig*, const char*);
-void ConfigChecksumMode(SnortConfig*, const char*);
-void ConfigChrootDir(SnortConfig*, const char*);
-void ConfigCreatePidFile(SnortConfig*, const char*);
-void ConfigDaemon(SnortConfig*, const char*);
-void ConfigDecodeDataLink(SnortConfig*, const char*);
-void ConfigDumpCharsOnly(SnortConfig*, const char*);
-void ConfigDumpPayload(SnortConfig*, const char*);
-void ConfigDumpPayloadVerbose(SnortConfig*, const char*);
-void ConfigLogDir(SnortConfig*, const char*);
-void ConfigDirtyPig(SnortConfig*, const char*);
-void ConfigNoLoggingTimestamps(SnortConfig*, const char*);
-void ConfigObfuscate(SnortConfig*, const char*);
-void ConfigObfuscationMask(SnortConfig*, const char*);
-void ConfigQuiet(SnortConfig*, const char*);
-void ConfigShowYear(SnortConfig*, const char*);
-void ConfigTreatDropAsAlert(SnortConfig*, const char*);
-void ConfigTreatDropAsIgnore(SnortConfig*, const char*);
-void ConfigProcessAllEvents(SnortConfig*, const char*);
-void ConfigUtc(SnortConfig*, const char*);
-void ConfigVerbose(SnortConfig*, const char*);
-void ConfigPluginPath(SnortConfig*, const char*);
-void ConfigScriptPaths(SnortConfig*, const char*);
-void ConfigDstMac(SnortConfig*, const char*);
+void ConfigChecksumDrop(const char*);
+void ConfigChecksumMode(const char*);
 
-void ConfigSetGid(SnortConfig*, const char*);
-void ConfigSetUid(SnortConfig*, const char*);
-void ConfigUmask(SnortConfig*, const char*);
-void ConfigTunnelVerdicts(SnortConfig*, const char*);
-void config_syslog(SnortConfig* sc, const char*);
-void config_daemon(SnortConfig* sc, const char*);
-void config_alert_mode(SnortConfig* sc, const char*);
-void config_log_mode(SnortConfig* sc, const char*);
-void config_conf(SnortConfig*, const char*);
+void config_conf(const char*);
 void SetSnortConfDir(const char*);
 
 #endif

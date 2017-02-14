@@ -31,8 +31,8 @@
 #include "protocols/ssl.h"
 #include "stream/stream.h"
 #include "utils/safec.h"
-#include "utils/sfsnprintfappend.h"
 #include "utils/util.h"
+#include "utils/util_cstring.h"
 
 #include "smtp_module.h"
 #include "smtp_normalize.h"

@@ -53,6 +53,7 @@
 
 #include "search_engines/search_tool.h"
 #include "utils/safec.h"
+#include "utils/util_cstring.h"
 
 #include "hi_events.h"
 #include "hi_norm.h"

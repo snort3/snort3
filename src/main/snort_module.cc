@@ -533,25 +533,25 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         help_options(sc, v.get_string());
 
     else if ( v.is("-A") )
-        config_alert_mode(sc, v.get_string());
+        sc->set_alert_mode(v.get_string());
 
     else if ( v.is("-B") )
-        ConfigObfuscationMask(sc, v.get_string());
+        sc->set_obfuscation_mask(v.get_string());
 
     else if ( v.is("-C") )
-        ConfigDumpCharsOnly(sc, v.get_string());
+        sc->set_dump_chars_only(true);
 
     else if ( v.is("-c") )
-        config_conf(sc, v.get_string());
+        config_conf(v.get_string());
 
     else if ( v.is("-D") )
-        config_daemon(sc, v.get_string());
+        sc->set_daemon(true);
 
     else if ( v.is("-d") )
-        ConfigDumpPayload(sc, v.get_string());
+        sc->set_dump_payload(true);
 
     else if ( v.is("-e") )
-        ConfigDecodeDataLink(sc, v.get_string());
+        sc->set_decode_data_link(true);
 
     else if ( v.is("-f") )
         sc->output_flags |= OUTPUT_FLAG__LINE_BUFFER;
@@ -560,7 +560,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->event_log_id = v.get_long() << 16;
 
     else if ( v.is("-g") )
-        ConfigSetGid(sc, v.get_string());
+        sc->set_gid(v.get_string());
 
     else if ( v.is("-H") )
         sc->run_flags |= RUN_FLAG__STATIC_HASH;
@@ -580,31 +580,31 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 #endif
 
     else if ( v.is("-k") )
-        ConfigChecksumMode(sc, v.get_string());
+        ConfigChecksumMode(v.get_string());
 
     else if ( v.is("-L") )
-        config_log_mode(sc, v.get_string());
+        sc->set_log_mode(v.get_string());
 
     else if ( v.is("-l") )
-        ConfigLogDir(sc, v.get_string());
+        sc->set_log_dir(v.get_string());
 
     else if ( v.is("-M") )
-        config_syslog(sc, v.get_string());
+        sc->enable_syslog();
 
     else if ( v.is("-m") )
-        ConfigUmask(sc, v.get_string());
+        sc->set_umask(v.get_string());
 
     else if ( v.is("-n") )
         sc->pkt_cnt = v.get_long();
 
     else if ( v.is("-O") )
-        ConfigObfuscate(sc, v.get_string());
+        sc->set_obfuscate(true);
 
     else if ( v.is("-Q") )
         sc->run_flags |= RUN_FLAG__INLINE;
 
     else if ( v.is("-q") )
-        ConfigQuiet(sc, v.get_string());
+        sc->set_quiet(true);
 
     else if ( v.is("-R") )
     {
@@ -627,37 +627,37 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->run_flags |= RUN_FLAG__TEST;
 
     else if ( v.is("-t") )
-        ConfigChrootDir(sc, v.get_string());
+        sc->set_chroot_dir(v.get_string());
 
     else if ( v.is("-U") )
-        ConfigUtc(sc, v.get_string());
+        sc->set_utc(true);
 
     else if ( v.is("-u") )
-        ConfigSetUid(sc, v.get_string());
+        sc->set_uid(v.get_string());
 
     else if ( v.is("-V") )
         help_version(sc);
 
     else if ( v.is("-v") )
-        ConfigVerbose(sc, v.get_string());
+        sc->set_verbose(true);
 
     else if ( v.is("-W") )
         list_interfaces(sc);
 
     else if ( v.is("-X") )
-        ConfigDumpPayloadVerbose(sc, v.get_string());
+        sc->set_dump_payload_verbose(true);
 
     else if ( v.is("-x") || v.is("--pedantic") )
         sc->run_flags |= RUN_FLAG__CONF_ERROR_OUT;
 
     else if ( v.is("-y") )
-        ConfigShowYear(sc, v.get_string());
+        sc->set_show_year(true);
 
     else if ( v.is("-z") || v.is("--max-packet-threads") )
         ThreadConfig::set_instance_max(v.get_long());
 
     else if ( v.is("--alert-before-pass") )
-        ConfigAlertBeforePass(sc, v.get_string());
+        sc->set_alert_before_pass(true);
 
     else if ( v.is("--bpf") )
         sc->bpf_filter = v.get_string();
@@ -666,7 +666,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         c2x(v.get_string());
 
     else if ( v.is("--create-pidfile") )
-        ConfigCreatePidFile(sc, v.get_string());
+        sc->set_create_pid_file(true);
 
     else if ( v.is("--daq") )
         sc->daq_config->set_module_name(v.get_string());
@@ -686,7 +686,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     }
 
     else if ( v.is("--dirty-pig") )
-        ConfigDirtyPig(sc, v.get_string());
+        sc->set_dirty_pig(true);
 
     else if ( v.is("--dump-builtin-rules") )
         dump_builtin_rules(sc, v.get_string());
@@ -758,7 +758,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         config_markup(sc, v.get_string());
 
     else if ( v.is("--nostamps") )
-        ConfigNoLoggingTimestamps(sc, v.get_string());
+        sc->set_no_logging_timestamps(true);
 
     else if ( v.is("--nolock-pidfile") )
         sc->run_flags |= RUN_FLAG__NO_LOCK_PID_FILE;
@@ -792,10 +792,10 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->run_flags |= RUN_FLAG__PCAP_SHOW;
 
     else if ( v.is("--plugin-path") )
-        ConfigPluginPath(sc, v.get_string());
+        sc->set_plugin_path(v.get_string());
 
     else if ( v.is("--process-all-events") )
-        ConfigProcessAllEvents(sc, v.get_string());
+        sc->set_process_all_events(true);
 
     else if ( v.is("--rule") )
         parser_append_rules(v.get_string());
@@ -810,7 +810,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->run_prefix = v.get_string();
 
     else if ( v.is("--script-path") )
-        ConfigScriptPaths(sc, v.get_string());
+        sc->add_script_path(v.get_string());
 
 #ifdef SHELL
     else if ( v.is("--shell") )
@@ -835,10 +835,10 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->stdin_rules = true;
 
     else if ( v.is("--treat-drop-as-alert") )
-        ConfigTreatDropAsAlert(sc, v.get_string());
+        sc->set_treat_drop_as_alert(true);
 
     else if ( v.is("--treat-drop-as-ignore") )
-        ConfigTreatDropAsIgnore(sc, v.get_string());
+        sc->set_treat_drop_as_ignore(true);
 
 #ifdef UNIT_TEST
     else if ( v.is("--catch-test") )

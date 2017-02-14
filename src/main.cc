@@ -90,6 +90,7 @@ static bool use_shell(SnortConfig* sc)
 #endif
 }
 
+// FIXIT-L X Replace main_poke()/main_read() usage with command objects
 void main_poke(unsigned id)
 {
     std::lock_guard<std::mutex> lock(poke_mutex);
@@ -317,6 +318,8 @@ static Pig* get_lazy_pig(unsigned max)
 static void broadcast(AnalyzerCommand* ac)
 {
     unsigned dispatched = 0;
+
+    DebugFormat(DEBUG_ANALYZER, "Broadcasting %s command\n", ac->stringify());
 
     for (unsigned idx = 0; idx < max_pigs; ++idx)
     {
@@ -822,9 +825,13 @@ static void handle(Pig& pig, unsigned& swine, unsigned& pending_privileges)
             }
             if (pending_privileges)
                 break;
-            Snort::drop_privileges();
+            // FIXIT-L Make this call and the one below exit more gracefully upon error
+            if (!Snort::drop_privileges())
+                FatalError("Failed to drop privileges!\n");
+            broadcast(new ACStart());
         }
-        pig.queue_command(new ACStart());
+        else
+            pig.queue_command(new ACStart());
         break;
 
     case Analyzer::State::STARTED:
@@ -838,9 +845,12 @@ static void handle(Pig& pig, unsigned& swine, unsigned& pending_privileges)
             }
             if (pending_privileges)
                 break;
-            Snort::drop_privileges();
+            if (!Snort::drop_privileges())
+                FatalError("Failed to drop privileges!\n");
+            broadcast(new ACRun());
         }
-        pig.queue_command(new ACRun());
+        else
+            pig.queue_command(new ACRun());
         break;
 
     case Analyzer::State::STOPPED:

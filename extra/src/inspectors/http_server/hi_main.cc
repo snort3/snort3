@@ -62,7 +62,7 @@
 #include "protocols/tcp.h"
 #include "search_engines/search_tool.h"
 #include "stream/stream.h"
-#include "utils/sfsnprintfappend.h"
+#include "utils/util_cstring.h"
 
 #include "hi_ad.h"
 #include "hi_include.h"

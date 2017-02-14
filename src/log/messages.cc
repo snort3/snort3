@@ -27,11 +27,12 @@
 
 #include <cassert>
 #include <cstdarg>
+#include <cstring>
 
 #include "main/snort_config.h"
 #include "parser/parser.h"
 #include "time/packet_time.h"
-#include "utils/util.h"
+#include "utils/util_cstring.h"
 
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"

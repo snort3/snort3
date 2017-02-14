@@ -32,7 +32,7 @@
 #include "protocols/ssl.h"
 #include "search_engines/search_tool.h"
 #include "stream/stream.h"
-#include "utils/util.h"
+#include "utils/util_cstring.h"
 
 #include "pop_module.h"
 #include "pop_paf.h"
