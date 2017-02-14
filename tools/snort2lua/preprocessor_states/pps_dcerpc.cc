@@ -48,6 +48,8 @@ bool Dcerpc::add_option_to_all(std::string option, const bool val, bool co_only)
 
     for (auto type : transport)
     {
+        if ( (type.compare("http_proxy") == 0) || (type.compare("http_server") == 0) )
+            continue;
         if (co_only && (type.compare("udp") == 0))
             continue;
         tmpval = add_option_to_table(table_api, "dce_" + type, option, val);
@@ -66,6 +68,9 @@ bool Dcerpc::add_option_to_all(std::string option, const int val, bool co_only)
 
     for (auto type : transport)
     {
+        if ( (type.compare("http_proxy") == 0) || (type.compare("http_server") == 0) )
+            continue;
+
         if (co_only && (type.compare("udp") == 0))
             continue;
         tmpval = add_option_to_table(table_api, "dce_" + type, option, val);

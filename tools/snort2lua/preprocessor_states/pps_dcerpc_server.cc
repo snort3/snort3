@@ -44,7 +44,7 @@ enum DceDetectListState
     DCE_DETECT_LIST_STATE__END,
 };
 
-std::string transport[3] = { "smb", "tcp", "udp" };
+std::string transport[5] = { "smb", "tcp", "udp", "http_proxy", "http_server" };
 
 std::map <std::string, std::vector<uint16_t> > default_ports
 {
@@ -53,6 +53,10 @@ std::map <std::string, std::vector<uint16_t> > default_ports
     { "tcp", { 135 }
     },
     { "udp", { 135 }
+    },
+    { "http_proxy", { 80 }
+    },
+    { "http_server", { 593 }
     }
 };
 
@@ -229,7 +233,7 @@ void DcerpcServer::add_default_ports(std::string type,  std::map<std::string,Bin
 
 // add single port / range
 bool DcerpcServer::parse_and_add_ports(std::string ports, std::string type, std::map<std::string,
-    Binder*> bind)
+    Binder*> bind, bool bind_port_to_tcp)
 {
     if (ports.empty())
     {
@@ -245,6 +249,8 @@ bool DcerpcServer::parse_and_add_ports(std::string ports, std::string type, std:
         if (pos == std::string::npos)
         {
             bind[type]->add_when_port(port);
+            if ( bind_port_to_tcp )
+                bind["tcp"]->add_when_port(port);
         }
         else
         {
@@ -269,6 +275,8 @@ bool DcerpcServer::parse_and_add_ports(std::string ports, std::string type, std:
             for (uint32_t i = min_port; i<= max_port; i++)
             {
                 bind[type]->add_when_port(std::to_string(i));
+                if ( bind_port_to_tcp )
+                    bind["tcp"]->add_when_port(std::to_string(i));
             }
         }
     }
@@ -358,6 +366,7 @@ bool DcerpcServer::parse_detect(std::istringstream& data_stream,
         case DCE_DETECT_LIST_STATE__PORTS_START:
         {
             std::string ports;
+            bool bind_port_to_tcp = false;
 
             if (!(data_stream >> ports))
             {
@@ -412,6 +421,17 @@ bool DcerpcServer::parse_detect(std::istringstream& data_stream,
                 state = DCE_DETECT_LIST_STATE__PORTS_END;
             }
 
+            if (type.compare("rpc-over-http-server") == 0)
+            {
+                type = "http_server";
+                bind_port_to_tcp = true;
+            }
+            else if (type.compare("rpc-over-http-proxy") == 0)
+            {
+                type = "http_proxy";
+                bind_port_to_tcp = true;
+            }
+
             // if ports are for unsupported types - stop here
             if (bind.find(type) == bind.end())
             {
@@ -430,7 +450,7 @@ bool DcerpcServer::parse_detect(std::istringstream& data_stream,
             // remove extra spaces
             ports.erase(remove_if(ports.begin(), ports.end(), isspace), ports.end());
 
-            if (!parse_and_add_ports(ports, type, bind))
+            if (!parse_and_add_ports(ports, type, bind, bind_port_to_tcp))
             {
                 return false;
             }
@@ -484,6 +504,8 @@ bool DcerpcServer::init_net_created_table()
         table_api.close_table();
         for (auto type : transport)
         {
+            if ( (type.compare("http_proxy") == 0) || (type.compare("http_server") == 0) )
+                continue;
             tmpval = add_option_to_table(table_api, table_name[type], "disable_defrag", true) &&
                 tmpval;
         }
@@ -499,6 +521,8 @@ bool DcerpcServer::init_net_created_table()
         table_api.close_table();
         for (auto type : transport)
         {
+            if ( (type.compare("http_proxy") == 0) || (type.compare("http_server") == 0) )
+                continue;
             tmpval = add_option_to_table(table_api,table_name[type], "max_frag_len", std::stoi(
                 val)) && tmpval;
         }
@@ -514,7 +538,7 @@ bool DcerpcServer::init_net_created_table()
         table_api.close_table();
         for (auto type : transport)
         {
-            if (type.compare("udp") == 0)
+            if ( (type.compare("http_proxy") == 0) || (type.compare("http_server") == 0) || (type.compare("udp") == 0) ) 
                 continue;
             tmpval = add_option_to_table(table_api,table_name[type], "reassemble_threshold",
                 std::stoi(val)) && tmpval;
@@ -596,6 +620,8 @@ bool DcerpcServer::add_option_to_transports(std::string option, std::string valu
 
     for (auto type: transport)
     {
+        if ( (type.compare("http_proxy") == 0) || (type.compare("http_server") == 0) )
+            continue;
         if (co_only && (type.compare("udp") == 0))
             continue;
         table_api.open_table(table_name[type]);
@@ -614,12 +640,16 @@ bool DcerpcServer::convert(std::istringstream& data_stream)
     Binder bind_tcp(table_api);
     Binder bind_smb(table_api);
     Binder bind_udp(table_api);
+    Binder bind_http_proxy(table_api);
+    Binder bind_http_server(table_api);
 
     std::map<std::string, Binder*> bind;
 
     bind["smb"] = &bind_smb;
     bind["tcp"] = &bind_tcp;
     bind["udp"] = &bind_udp;
+    bind["http_proxy"] = &bind_http_proxy;
+    bind["http_server"] = &bind_http_server;
 
     for (auto type : transport)
     {
@@ -627,6 +657,7 @@ bool DcerpcServer::convert(std::istringstream& data_stream)
         bind[type]->set_use_type("dce_" + type);
     }
     bind["udp"]->set_when_proto("udp");
+    bind["tcp"]->set_when_service("dce_tcp");
 
     if (!(data_stream >> keyword))
         return false;
@@ -691,7 +722,7 @@ bool DcerpcServer::convert(std::istringstream& data_stream)
         }
         else if (!keyword.compare("no_autodetect_http_proxy_ports"))
         {
-            // FIXIT-M add once http transport is supported
+            add_deleted_comment_to_table(table_api, table_name["http_proxy"], "no_autodetect_http_proxy_ports");
         }
         else if (!keyword.compare("smb_invalid_shares"))
         {

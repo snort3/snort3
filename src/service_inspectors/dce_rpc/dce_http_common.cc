@@ -30,10 +30,10 @@
 
 void dce_http_bind(Flow* flow, const char* service)
 {
-    Inspector* ins = InspectorManager::get_binder();
-
     assert (flow);
     flow->service = service;
+
+    Inspector* ins = InspectorManager::get_binder();
 
     if ( ins )
         ins->exec(BinderSpace::ExecOperation::HANDLE_GADGET, flow);
