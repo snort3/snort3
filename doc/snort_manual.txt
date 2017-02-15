@@ -46,6 +46,12 @@ protocol decoding, anomaly detection, and construction of active responses.
 
 include::codec.txt[]
 
+== Connector Modules
+
+Connectors support High Availability communication links.
+
+include::connector.txt[]
+
 == Inspector Modules
 
 These modules perform a variety of functions, including analysis of

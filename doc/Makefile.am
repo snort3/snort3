@@ -13,6 +13,7 @@ signals.txt \
 version.txt \
 basic.txt \
 codec.txt \
+connector.txt \
 inspector.txt \
 ips_action.txt \
 ips_option.txt \
@@ -30,7 +31,7 @@ bugs.txt \
 building.txt \
 concepts.txt \
 config_changes.txt \
-connector.txt \
+connectors.txt \
 daq.txt \
 dcerpc.txt \
 differences.txt \
@@ -112,6 +113,11 @@ basic.txt: $(snort)
 
 codec.txt: $(snort)
 	for m in `$(snort) $(plugin_path) --list-modules codec` ; do \
+		$(snort) $(plugin_path)  --markup --help-module $$m ; \
+	done > $@
+
+connector.txt: $(snort)
+	for m in `$(snort) $(plugin_path) --list-modules connector` ; do \
 		$(snort) $(plugin_path)  --markup --help-module $$m ; \
 	done > $@
 

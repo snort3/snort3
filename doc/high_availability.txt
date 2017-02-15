@@ -1,7 +1,7 @@
-HighAvailability (or HA) is a snort module that provides state coherancy
+HighAvailability (or HA) is a Snort module that provides state coherancy
 between two partner snort instances.  It uses SideChannel for messaging.
 
-There can be multiple types of HA within snort and snort plugins.  HA
+There can be multiple types of HA within Snort and Snort plugins.  HA
 implements an extensible architecture to enable plugins to subscribe to the
 base flow HA messaging.  These plugins can then include their own messages
 along with the flow cache HA messages.

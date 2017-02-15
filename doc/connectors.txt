@@ -1,12 +1,12 @@
 Connectors are a set of modules that are used to exchange message-oriented
-data among snort threads and the external world.  A typical use-case is
+data among Snort threads and the external world.  A typical use-case is
 HA (High Availability) message exchange.  Connectors serve to decouple the
 message transport from the message creation/consumption.  Connectors expose
 a common API for several forms of message transport.
 
 Connectors are a Snort plugin type.
 
-===== Connector (parent plugin class):
+===== Connector (parent plugin class)
 
 Connectors may either be a simplex channel and perform unidirectional
 communications.  Or may be duplex and perform bidirectional communications.
@@ -25,7 +25,7 @@ There are currently two implementations of Connectors:
 * FileConnector - Write messages to files and read messages from files.
 
 
-===== TcpConnector:
+===== TcpConnector
 
 TcpConnector is a subclass of Connector and implements a DUPLEX type Connector,
 able to send and receive messages over a tcp session.
@@ -54,7 +54,7 @@ An example segment of TcpConnector configuration:
     }
 
 
-===== FileConnector:
+===== FileConnector
 
 FileConnector implements a Connector that can either read from files or write
 to files.  FileConnector's are simplex and must be configured to be
@@ -70,7 +70,7 @@ The configured 'name' string is used to construct the actual names as in:
 
 * file_connector_NAME_transmit and file_connector_NAME_receive
 
-All messages for one snort invocation are read and written to one file.
+All messages for one Snort invocation are read and written to one file.
 
 In the case of a receive FileConnector, all messages are read from the file
 prior to the start of packet processing.  This allows the messages to

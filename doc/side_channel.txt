@@ -1,5 +1,5 @@
-SideChannel is a snort module that uses Connectors to implement a messaging
-infrastructure that is used to communicate between snort threads and the
+SideChannel is a Snort module that uses Connectors to implement a messaging
+infrastructure that is used to communicate between Snort threads and the
 outside world.
 
 SideChannel adds functionality onto the Connector as:

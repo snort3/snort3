@@ -23,6 +23,7 @@ set (
     MODULE_SOURCES
     basic.txt
     codec.txt
+    connector.txt
     data.txt
     inspector.txt
     ips_action.txt
@@ -37,7 +38,7 @@ set (
     bugs.txt
     building.txt
     concepts.txt
-    connector.txt
+    connectors.txt
     daq.txt
     dcerpc.txt
     differences.txt

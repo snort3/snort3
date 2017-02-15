@@ -25,7 +25,7 @@ include::high_availability.txt[]
 
 ==== Connector
 
-include::connector.txt[]
+include::connectors.txt[]
 
 ==== Side Channel
 
