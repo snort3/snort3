@@ -73,9 +73,6 @@
   'foo.bar'", but file is a bool and you cannot specify an output file name
   in the configuration.
 
-* preprocessor ports option: ports <number> not supported.
-
-
 ==== Runtime
 
 * -B <mask> feature does not work. It does ordinary IP address obfuscation
