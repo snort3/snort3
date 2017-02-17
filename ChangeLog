@@ -1,3 +1,27 @@
+17/02/16 - build 226
+
+-- add PDF/SWF decompression to http_inspect
+-- add connectors to generated reference parts of manual
+-- add feature documentation for HA, side_channel, and connectors
+-- add feature documentation for http_inspect
+-- update default manuals
+-- fix privilege dropping and chroot behavior
+-- fix perf_monitor segfault when tterm is called before tinit
+-- fix stream_tcp counter underflow bug and handle max and instant stats
+-- fix lzma length calculation bug
+-- fix bogus 129:20 alerts
+-- fix back orifice compiler warning with -O3
+-- fix bug that could cause hang on ctl-C
+-- fix memory leak after reload w/o changing search engine
+-- fix off by one error when reassembling after TCP FIN received
+-- fix cmake doc build to include plugins on SNORT_PLUGIN_PATH
+-- fix compiler warnings in dce_http_server and dce_http_proxy
+-- fix appid reload issue
+-- snort2lua - changes for rpc over http
+-- snort2lua - changes to convert config alertfile: <filename>
+-- snort2lua - changes to add file_id when smb file inspection is on
+-- snort2lua - add deprecated option stream5_tcp: log_asymmetric_traffic
+
 17/02/01 - build 225
 
 -- implement RPC over HTTP by adding dce_http_server and dce_http_proxy

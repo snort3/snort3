@@ -6,11 +6,6 @@
 * Enabling debug messages may erroneously affect the number of packets
   processed from pcaps.
 
-* g++ 4.9.2 with -O3 reports:
-
-    src/service_inspectors/back_orifice/back_orifice.cc:231:25: warning:
-    iteration 930u invokes undefined behavior [-Waggressive-loop-optimizations]
-
 * Building with clang and autotools on Linux will show the following
   warning many times.  Please ignore.
 
