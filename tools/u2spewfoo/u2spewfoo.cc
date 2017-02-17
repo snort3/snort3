@@ -519,7 +519,7 @@ static void packet_dump(u2record* record)
     unsigned reclen = record->length - offset;
 
     Serial_Unified2Packet packet;
-    memcpy(&packet, record->data, sizeof(Serial_Unified2Packet));
+    memcpy(&packet, record->data, offset);
 
     /* network to host ordering
        The first 7 fields need to be convertted */
@@ -530,13 +530,21 @@ static void packet_dump(u2record* record)
     }
     /* done changing from network ordering */
 
-    printf("\nPacket\n"
-        "\tsensor id: %u\tevent id: %u\tevent second: %u\n"
-        "\tpacket second: %u\tpacket microsecond: %u\n"
-        "\tlinktype: %u\tpacket_length: %u\n",
-        packet.sensor_id, packet.event_id, packet.event_second,
-        packet.packet_second, packet.packet_microsecond, packet.linktype,
-        packet.packet_length);
+    if (record->type == UNIFIED2_PACKET)
+        printf("\nPacket\n"
+            "\tsensor id: %u\tevent id: %u\tevent second: %u\n"
+            "\tpacket second: %u\tpacket microsecond: %u\n"
+            "\tlinktype: %u\tpacket_length: %u\n",
+            packet.sensor_id, packet.event_id, packet.event_second,
+            packet.packet_second, packet.packet_microsecond, packet.linktype,
+            packet.packet_length);
+    else
+        printf("\nBuffer\n"
+            "\tsensor_id: %u\tevent_id: %u\tevent_second: %u\n"
+            "\tpacket_second: %u\tpacket_microsecond: %u\n"
+            "\tpacket_length: %u\n",
+            packet.sensor_id, packet.event_id, packet.event_second,
+            packet.packet_second, packet.packet_microsecond, packet.packet_length);
 
     if ( record->length <= offset )
         return;
@@ -574,7 +582,7 @@ static int u2dump(char* file)
             event_dump(&record);
         else if (record.type == UNIFIED2_IDS_EVENT_VLAN)
             event2_dump(&record);
-        else if (record.type == UNIFIED2_PACKET)
+        else if ((record.type == UNIFIED2_PACKET) || (record.type == UNIFIED2_BUFFER))
             packet_dump(&record);
         else if (record.type == UNIFIED2_IDS_EVENT_IPV6)
             event6_dump(&record);

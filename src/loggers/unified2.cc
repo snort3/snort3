@@ -245,41 +245,52 @@ static void _AlertIP4_v2(Packet* p, const char*, Unified2Config* config, Event* 
             const ip::IP4Hdr* const iph = p->ptrs.ip_api.get_ip4h();
             alertdata.ip_source = iph->get_src();
             alertdata.ip_destination = iph->get_dst();
-
-            if (p->is_portscan())
+        }
+        else if (p->flow)
+        {
+            if (p->is_from_client())
             {
-                alertdata.ip_proto = p->ps_proto;
+                alertdata.ip_source = *(p->flow->client_ip.get_ip4_ptr());
+                alertdata.ip_destination = *(p->flow->server_ip.get_ip4_ptr());
             }
             else
             {
-                alertdata.ip_proto = p->get_ip_proto_next();
-
-                if ( p->type() == PktType::ICMP)
-                {
-                    // If PktType == ICMP, icmph is set
-                    alertdata.sport_itype = htons(p->ptrs.icmph->type);
-                    alertdata.dport_icode = htons(p->ptrs.icmph->code);
-                }
-                else if (!p->is_portscan())
-                {
-                    alertdata.sport_itype = htons(p->ptrs.sp);
-                    alertdata.dport_icode = htons(p->ptrs.dp);
-                }
+                alertdata.ip_source = *(p->flow->server_ip.get_ip4_ptr());
+                alertdata.ip_destination = *(p->flow->client_ip.get_ip4_ptr());
             }
+        }
 
-            if ((p->proto_bits & PROTO_BIT__MPLS) && (config->mpls_event_types))
+        if (p->is_portscan())
+        {
+            alertdata.ip_proto = p->ps_proto;
+        }
+        else
+        {
+            alertdata.ip_proto = p->get_ip_proto_next();
+
+            if ( p->type() == PktType::ICMP)
             {
-                alertdata.mpls_label = htonl(p->ptrs.mplsHdr.label);
+                // If PktType == ICMP, icmph is set
+                alertdata.sport_itype = htons(p->ptrs.icmph->type);
+                alertdata.dport_icode = htons(p->ptrs.icmph->code);
             }
-            if (config->vlan_event_types)
-            {
-                if (p->proto_bits & PROTO_BIT__VLAN)
-                {
-                    alertdata.vlanId = htons(layer::get_vlan_layer(p)->vid());
-                }
 
-                alertdata.pad2 = htons(p->user_policy_id);
+            alertdata.sport_itype = htons(p->ptrs.sp);
+            alertdata.dport_icode = htons(p->ptrs.dp);
+        }
+
+        if ((p->proto_bits & PROTO_BIT__MPLS) && (config->mpls_event_types))
+        {
+            alertdata.mpls_label = htonl(p->ptrs.mplsHdr.label);
+        }
+        if (config->vlan_event_types)
+        {
+            if (p->proto_bits & PROTO_BIT__VLAN)
+            {
+                alertdata.vlanId = htons(layer::get_vlan_layer(p)->vid());
             }
+
+            alertdata.pad2 = htons(p->user_policy_id);
         }
     }
 
@@ -322,47 +333,56 @@ static void _AlertIP6_v2(Packet* p, const char*, Unified2Config* config, Event* 
         if(p->ptrs.ip_api.is_ip())
         {
             const SfIp* ip;
-
             ip = p->ptrs.ip_api.get_src();
             alertdata.ip_source = *(struct in6_addr*)ip->get_ip6_ptr();
-
             ip = p->ptrs.ip_api.get_dst();
             alertdata.ip_destination = *(struct in6_addr*)ip->get_ip6_ptr();
-
-            if (p->is_portscan())
+        }
+        else if (p->flow)
+        {
+            if (p->is_from_client())
             {
-                alertdata.ip_proto = p->ps_proto;
+                alertdata.ip_source = *(struct in6_addr*)p->flow->client_ip.get_ip6_ptr();
+                alertdata.ip_destination = *(struct in6_addr*)p->flow->server_ip.get_ip6_ptr();
             }
             else
             {
-                alertdata.ip_proto = p->get_ip_proto_next();
-
-                if ( p->type() == PktType::ICMP)
-                {
-                    // If PktType == ICMP, icmph is set
-                    alertdata.sport_itype = htons(p->ptrs.icmph->type);
-                    alertdata.dport_icode = htons(p->ptrs.icmph->code);
-                }
-                else if (!p->is_portscan())
-                {
-                    alertdata.sport_itype = htons(p->ptrs.sp);
-                    alertdata.dport_icode = htons(p->ptrs.dp);
-                }
+                alertdata.ip_source = *(struct in6_addr*)p->flow->server_ip.get_ip6_ptr();
+                alertdata.ip_destination = *(struct in6_addr*)p->flow->client_ip.get_ip6_ptr();
             }
+        }
 
-            if ((p->proto_bits & PROTO_BIT__MPLS) && (config->mpls_event_types))
+        if (p->is_portscan())
+        {
+            alertdata.ip_proto = p->ps_proto;
+        }
+        else
+        {
+            alertdata.ip_proto = p->get_ip_proto_next();
+
+            if ( p->type() == PktType::ICMP)
             {
-                alertdata.mpls_label = htonl(p->ptrs.mplsHdr.label);
+                // If PktType == ICMP, icmph is set
+                alertdata.sport_itype = htons(p->ptrs.icmph->type);
+                alertdata.dport_icode = htons(p->ptrs.icmph->code);
             }
-            if (config->vlan_event_types)
-            {
-                if (p->proto_bits & PROTO_BIT__VLAN)
-                {
-                    alertdata.vlanId = htons(layer::get_vlan_layer(p)->vid());
-                }
 
-                alertdata.pad2 = htons(p->user_policy_id);
+            alertdata.sport_itype = htons(p->ptrs.sp);
+            alertdata.dport_icode = htons(p->ptrs.dp);
+        }
+
+        if ((p->proto_bits & PROTO_BIT__MPLS) && (config->mpls_event_types))
+        {
+            alertdata.mpls_label = htonl(p->ptrs.mplsHdr.label);
+        }
+        if (config->vlan_event_types)
+        {
+            if (p->proto_bits & PROTO_BIT__VLAN)
+            {
+                alertdata.vlanId = htons(layer::get_vlan_layer(p)->vid());
             }
+
+            alertdata.pad2 = htons(p->user_policy_id);
         }
     }
 
@@ -495,9 +515,8 @@ static void _Unified2LogPacketAlert(
     {
         logheader.packet_second = htonl((uint32_t)p->pkth->ts.tv_sec);
         logheader.packet_microsecond = htonl((uint32_t)p->pkth->ts.tv_usec);
-        logheader.packet_length = htonl(p->pkth->caplen);
-
-        pkt_length = p->pkth->caplen;
+        pkt_length = ( p->is_rebuilt() ) ? p->dsize : p->pkth->caplen;
+        logheader.packet_length = htonl(pkt_length);
         write_len += pkt_length;
     }
     else
@@ -511,7 +530,7 @@ static void _Unified2LogPacketAlert(
         Unified2RotateFile(config);
 
     hdr.length = htonl(sizeof(Serial_Unified2Packet) - 4 + pkt_length);
-    hdr.type = htonl(UNIFIED2_PACKET);
+    hdr.type = ( p and p->is_rebuilt() ) ? htonl(UNIFIED2_BUFFER) : htonl(UNIFIED2_PACKET);
 
     memcpy_s(write_pkt_buffer, sizeof(write_pkt_buffer), &hdr, sizeof(hdr));
 

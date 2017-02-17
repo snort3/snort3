@@ -31,6 +31,7 @@
 
 // CURRENT
 #define UNIFIED2_PACKET              2
+#define UNIFIED2_BUFFER              3
 #define UNIFIED2_IDS_EVENT           7
 #define UNIFIED2_IDS_EVENT_IPV6      72
 #define UNIFIED2_IDS_EVENT_MPLS      99
