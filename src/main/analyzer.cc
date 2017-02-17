@@ -74,7 +74,7 @@ const char* Analyzer::get_state_string()
 Analyzer::Analyzer(unsigned i, const char* s)
 {
     id = i;
-    source = s;
+    source = s ? s : "";
     daq_instance = nullptr;
     privileged_start = false;
     exit_requested = false;
