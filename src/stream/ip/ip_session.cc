@@ -32,7 +32,7 @@
 
 const PegInfo ip_pegs[] =
 {
-    SESSION_PEGS("ip_"),
+    SESSION_PEGS("ip"),
     { "total_frags", "total fragments" },
     { "current_frags", "current fragments" },
     { "max_frags", "max fragments" },

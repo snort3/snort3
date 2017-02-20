@@ -37,7 +37,7 @@
 
 const PegInfo udp_pegs[] =
 {
-    SESSION_PEGS("udp_"),
+    SESSION_PEGS("udp"),
     { nullptr, nullptr }
 };
 

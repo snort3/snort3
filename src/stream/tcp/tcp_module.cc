@@ -43,7 +43,7 @@ THREAD_LOCAL ProfileStats s5TcpBuildPacketPerfStats;
 
 const PegInfo tcp_pegs[] =
 {
-    SESSION_PEGS("tcp_"),
+    SESSION_PEGS("tcp"),
     { "resyns", "SYN received on established session" },
     { "discards", "tcp packets discarded" },
     { "events", "events generated" },

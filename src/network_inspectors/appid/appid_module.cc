@@ -97,7 +97,7 @@ const PegInfo appid_pegs[] =
     { "smtp_lotus_notes_clients", "count of Lotus Notes smtp clients discovered" },
     { "smtp_microsoft_outlook_clients", "count of Microsoft Outlook smtp clients discovered" },
     { "smtp_microsoft_outlook_express_clients",
-      "count_of Microsoft Outlook Express smtp clients discovered" },
+      "count of Microsoft Outlook Express smtp clients discovered" },
     { "smtp_microsoft_outlook_imo_clients",
       "count of Microsoft Outlook IMO smtp clients discovered" },
     { "smtp_mutt_clients", "count of Mutt smtp clients discovered" },

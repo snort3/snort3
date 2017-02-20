@@ -38,7 +38,7 @@
 
 const PegInfo icmp_pegs[] =
 {
-    SESSION_PEGS("icmp_"),
+    SESSION_PEGS("icmp"),
     { nullptr, nullptr }
 };
 
