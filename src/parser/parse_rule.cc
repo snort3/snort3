@@ -33,6 +33,7 @@
 #include "main/snort_debug.h"
 #include "main/thread_config.h"
 #include "managers/ips_manager.h"
+#include "managers/module_manager.h"
 #include "managers/so_manager.h"
 #include "ports/rule_port_tables.h"
 #include "sfip/sf_ipvar.h"
@@ -1263,11 +1264,8 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
         otn->sigInfo.text_rule = true;
         so_rule_count++;
     }
-    else
+    else if ( ModuleManager::gid_in_use(otn->sigInfo.generator) )
     {
-        if ( !otn->sigInfo.generator )
-            ParseError("gid must set in builtin rules");
-
         if ( otn->num_detection_opts )
             ParseError("%u:%u builtin rules do not support detection options",
                 otn->sigInfo.generator, otn->sigInfo.id);

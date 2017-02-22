@@ -63,6 +63,8 @@ typedef std::list<ModHook*> ModuleList;
 static ModuleList s_modules;
 static unsigned s_errors = 0;
 
+std::set<uint32_t> ModuleManager::gids;
+
 static string s_current;
 static string s_name;
 static string s_type;
@@ -793,6 +795,9 @@ void ModuleManager::add_module(Module* m, const BaseApi* b)
 
     std::lock_guard<std::mutex> lock(stats_mutex);
     m->reset_stats();
+
+    if ( m->get_gid() )
+        gids.emplace(m->get_gid());
 }
 
 Module* ModuleManager::get_module(const char* s)
@@ -1052,6 +1057,11 @@ void ModuleManager::show_commands(const char* pfx, bool exact)
     }
     if ( !n )
         cout << "no match" << endl;
+}
+
+bool ModuleManager::gid_in_use(uint32_t gid)
+{
+    return gids.find(gid) != gids.end();
 }
 
 void ModuleManager::show_gids(const char* pfx, bool exact)

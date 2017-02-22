@@ -23,6 +23,8 @@
 // Factory for Modules, including all builtin and plugin modules.
 // Modules are strictly used during parse time.
 
+#include <cstdint>
+#include <set>
 #include <list>
 
 //-------------------------------------------------------------------------
@@ -46,6 +48,8 @@ public:
     static void show_modules();
     static void show_module(const char*);
 
+    static bool gid_in_use(uint32_t);
+
     // output for matching module name; prefix is sufficient if not exact
     static void show_configs(const char* = nullptr, bool exact = false);
     static void show_commands(const char* = nullptr, bool exact = false);
@@ -66,6 +70,8 @@ public:
     static void dump_stats(SnortConfig*, const char* skip = nullptr);
     static void accumulate(SnortConfig*);
     static void reset_stats(SnortConfig*);
+
+    static std::set<uint32_t> gids;
 };
 
 #endif
