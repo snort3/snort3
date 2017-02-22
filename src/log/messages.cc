@@ -136,6 +136,26 @@ NORETURN void ParseAbort(const char* format, ...)
         FatalError("%s\n", buf);
 }
 
+static void WriteLogMessage(FILE* fh, bool prefer_fh, const char* format, va_list& ap)
+{
+    char buf[STD_BUF+1];
+
+    if ( snort_conf && !prefer_fh )
+    {
+        if ( SnortConfig::log_quiet() )
+            return;
+
+        if ( SnortConfig::log_syslog() )
+        {
+            vsnprintf(buf, STD_BUF, format, ap);
+            buf[STD_BUF] = '\0';
+            syslog(LOG_DAEMON | LOG_NOTICE, "%s", buf);
+            return;
+        }
+    }
+    vfprintf(fh, format, ap);
+}
+
 /*
  * Function: LogMessage(const char *, ...)
  *
@@ -148,46 +168,22 @@ NORETURN void ParseAbort(const char* format, ...)
  */
 void LogMessage(const char* format,...)
 {
-    char buf[STD_BUF+1];
     va_list ap;
-
-    if ( !snort_conf )
-    {
-        va_start(ap, format);
-        vfprintf(stdout, format, ap);
-        va_end(ap);
-        return;
-    }
-    if ( SnortConfig::log_quiet() )
-        return;
-
     va_start(ap, format);
 
-    if ( SnortConfig::log_syslog() )
-    {
-        vsnprintf(buf, STD_BUF, format, ap);
-        buf[STD_BUF] = '\0';
-        syslog(LOG_DAEMON | LOG_NOTICE, "%s", buf);
-    }
-    else
-    {
-        vfprintf(stdout, format, ap);
-    }
+    WriteLogMessage(stdout, false, format, ap);
 
     va_end(ap);
 }
 
 void LogMessage(FILE* fh, const char* format,...)
 {
-    if ( snort_conf &&
-        ( !SnortConfig::log_quiet() || fh != stdout ))
-    {
-        va_list ap;
+    va_list ap;
+    va_start(ap, format);
 
-        va_start(ap, format);
-        vfprintf(fh, format, ap);
-        va_end(ap);
-    }
+    WriteLogMessage(fh, fh != stdout, format, ap);
+
+    va_end(ap);
 }
 
 /*
