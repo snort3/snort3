@@ -79,7 +79,7 @@ void Rule::add_suboption(std::string keyword)
 void Rule::add_suboption(std::string keyword, std::string val)
 { options.back()->add_suboption(keyword, val); }
 
-void Rule::set_curr_options_buffer(std::string new_buffer)
+void Rule::set_curr_options_buffer(std::string new_buffer, bool add_option)
 {
     /* set the buffer if
      * 1) No buffer has been set and this is not the default "pkt_data" buffer
@@ -89,7 +89,10 @@ void Rule::set_curr_options_buffer(std::string new_buffer)
         (!sticky_buffer.empty() && sticky_buffer.compare(new_buffer)) )
     {
         RuleOption* new_opt = new RuleOption(new_buffer);
-        options.insert(options.end() - 1, new_opt);
+        if ( add_option )
+            options.push_back(new_opt);
+        else
+            options.insert(options.end() - 1, new_opt);
         sticky_buffer = new_buffer;
     }
 }

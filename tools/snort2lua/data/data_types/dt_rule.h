@@ -38,7 +38,7 @@ public:
     void add_option(std::string keyword, std::string data);
     void add_suboption(std::string keyword);
     void add_suboption(std::string keyword, std::string val);
-    void set_curr_options_buffer(std::string buffer);
+    void set_curr_options_buffer(std::string buffer, bool add_option);
     void update_rule_action(std::string);
 
     void add_comment(std::string comment);

@@ -173,10 +173,10 @@ void RuleApi::add_suboption(std::string keyword,
         DataApi::developer_error("Add some header data before adding content!!");
 }
 
-void RuleApi::set_curr_options_buffer(std::string buffer)
+void RuleApi::set_curr_options_buffer(std::string buffer, bool add_option)
 {
     if (curr_rule)
-        curr_rule->set_curr_options_buffer(buffer);
+        curr_rule->set_curr_options_buffer(buffer, add_option);
     else
         DataApi::developer_error("Add some header data before adding content!!");
 }

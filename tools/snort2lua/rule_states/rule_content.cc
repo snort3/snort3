@@ -34,7 +34,7 @@ template<const std::string* option_name>
 class Content : public ConversionState
 {
 public:
-    Content(Converter& c) : ConversionState(c), sticky_buffer_set(false) { }
+    Content(Converter& c, bool val) : ConversionState(c), sticky_buffer_set(val) { }
     virtual ~Content() { }
     virtual bool convert(std::istringstream& data);
 
@@ -281,7 +281,7 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
 template<const std::string* rule_name>
 static ConversionState* content_ctor(Converter& c)
 {
-    return new Content<rule_name>(c);
+    return new Content<rule_name>(c, false);
 }
 
 static const std::string content = "content";
@@ -292,9 +292,9 @@ static const std::string uricontent = "uricontent";
 //  So, just add the 'http_uri' option first, then parse as if content
 static ConversionState* uricontent_ctor(Converter& c)
 {
-    c.get_rule_api().add_option("http_uri");
     c.get_rule_api().add_comment("uricontent deprecated --> 'http_uri: content:'foo'");
-    return new Content<& content>(c);
+    c.get_rule_api().set_curr_options_buffer("http_uri", true);
+    return new Content<& content>(c, true);
 }
 
 static const ConvertMap rule_content_api =
