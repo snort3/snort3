@@ -57,7 +57,7 @@ bool AppId::convert(std::istringstream& data_stream)
             std::string file_name;
             if( arg_stream >> file_name)
             {
-                tmpval = table_api.add_option("conf", file_name);
+                tmpval = table_api.add_unsupported_comment("conf: " + file_name);
             }
             else
             {
@@ -130,7 +130,7 @@ bool AppId::convert(std::istringstream& data_stream)
             std::string file_name;
             if (arg_stream >> file_name)
             {
-                tmpval = table_api.add_option("thirdparty_appid_dir", file_name);
+                tmpval = table_api.add_unsupported_comment("thirdparty_appid_dir: " + file_name);
             }
             else
             {

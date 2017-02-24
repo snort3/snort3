@@ -204,10 +204,11 @@ class Dce2IfaceOption : public IpsOption
 {
 public:
     Dce2IfaceOption(const RangeCheck& iface_version, bool iface_any_frag, const Uuid& iface_uuid) :
-        IpsOption(s_name), version(iface_version), any_frag(iface_any_frag), uuid(iface_uuid)
+        IpsOption(s_name), version(iface_version), any_frag(iface_any_frag), uuid(iface_uuid),
+        pmd(), alt_pmd()
     {
-        memset(&pmd, 0, sizeof(pmd));
-        memset(&alt_pmd, 0, sizeof(alt_pmd));
+        pmd.literal = true;
+        alt_pmd.literal = true;
     }
 
     uint32_t hash() const override;

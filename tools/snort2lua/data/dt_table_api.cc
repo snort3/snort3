@@ -348,11 +348,11 @@ bool TableApi::add_deleted_comment(std::string dep_var)
 bool TableApi::add_unsupported_comment(std::string unsupported_var)
 {
     std::string unsupported_str = "option '" + unsupported_var +
-        "' is current unsupported";
+        "' is currently unsupported";
 
     if (open_tables.size() == 0)
     {
-        DataApi::developer_error("Must open a tablebefore adding an "
+        DataApi::developer_error("Must open a table before adding an "
             "'unsupported' comment");
         return false;
     }

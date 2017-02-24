@@ -95,6 +95,9 @@ bool FtpTelnet::convert(std::istringstream& data_stream)
         else if (!keyword.compare("inspection_type"))
             add_ftp_n_telnet_deprecated(data_stream, "inspection_type");
 
+        else if (!keyword.compare("memcap"))
+            add_ftp_n_telnet_deprecated(data_stream, "memcap");
+
         else if (!keyword.compare("encrypted_traffic"))
         {
             data_stream >> s_value;

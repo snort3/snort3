@@ -11,8 +11,8 @@
 # vars
 # enables
 # unit tests
-# required libs (pcap, luajit, pcre, dnet, daq, zlib, hwloc, openssl / crypto)
-# optional libs (hyperscan, lzma, intel soft cpm)
+# required libs (daq / sfbpf, dnet, hwloc, luajit, openssl / crypto, pcap, pcre, zlib)
+# optional libs (hyperscan, intel soft cpm, lzma, safec)
 # outputs
 #
 # if you add an AC_DEFINE() for a symbol that appears in an exported
@@ -577,39 +577,140 @@ fi
 AM_CONDITIONAL(ENABLE_PIGLET, test "x$enable_piglet" = "xyes")
 
 #--------------------------------------------------------------------------
-# pcap
+#--------------------------------------------------------------------------
+# Required libraries
+#--------------------------------------------------------------------------
 #--------------------------------------------------------------------------
 
-AC_ARG_WITH(pcap_includes,
-    AS_HELP_STRING([--with-pcap-includes=DIR],[libpcap include directory]),
-    [with_libpcap_includes="$withval"],[with_libpcap_includes="no"])
+#--------------------------------------------------------------------------
+# daq / sfbpf
+#--------------------------------------------------------------------------
 
-PCAP_CPPFLAGS=""
-if test "x$with_libpcap_includes" != "xno"; then
-    PCAP_CPPFLAGS="-I${with_libpcap_includes}"
-    CPPFLAGS="${CPPFLAGS} ${PCAP_CPPFLAGS}"
+AC_ARG_WITH(daq_includes,
+    AS_HELP_STRING([--with-daq-includes=DIR],[DAQ include directory]),
+    [with_daq_includes="$withval"],[with_daq_includes="no"])
+
+DAQ_CPPFLAGS=""
+if test "x$with_daq_includes" != "xno"; then
+    DAQ_CPPFLAGS="-I${with_daq_includes}"
+    CPPFLAGS="${CPPFLAGS} ${DAQ_CPPFLAGS}"
 fi
 
-AC_ARG_WITH(pcap_libraries,
-    AS_HELP_STRING([--with-pcap-libraries=DIR],[libpcap library directory]),
-    [with_libpcap_libraries="$withval"],[with_libpcap_libraries="no"])
+AC_ARG_WITH(daq_libraries,
+    AS_HELP_STRING([--with-daq-libraries=DIR],[DAQ library directory]),
+    [with_daq_libraries="$withval"],[with_daq_libraries="no"])
 
-if test "x$with_libpcap_libraries" != "xno"; then
-    LDFLAGS="${LDFLAGS} -L${with_libpcap_libraries}"
+if test "x$with_daq_libraries" != "xno"; then
+    LDFLAGS="${LDFLAGS} -L${with_daq_libraries}"
 fi
 
-LPCAP=""
-AC_CHECK_HEADERS([pcap.h],, LPCAP="no")
-AC_CHECK_LIB(pcap, pcap_datalink,, LPCAP="no")
+AC_ARG_ENABLE(static_daq,
+    AS_HELP_STRING([--disable-static-daq],[link static DAQ modules]),
+    enable_static_daq="$enableval", enable_static_daq="yes")
 
-if test "x$LPCAP" = "xno"; then
+if test "$DLLIB" != "no"; then
+    LIBS="${LIBS} -ldl"
+else
+    AC_CHECK_LIB(c, dlsym, DLLIB="yes", DLLIB="no")
+    if test "$DLLIB" = "no"; then
+       echo
+       echo "   ERROR:  programmatic interface to dynamic link loader"
+       echo "   not found.  Cannot build Snort."
+       echo
+       exit 1
+    fi
+fi
+
+if test "x$enable_static_daq" = "xyes"; then
+    LDAQ=""
+    LIBS="${LIBS} `daq-modules-config --static --libs`"
+    AC_CHECK_LIB([daq_static], [daq_load_modules],
+        [LIBS="-ldaq_static ${LIBS}"], [LDAQ="no"], [ ])
+
+    if test "x$LDAQ" = "xno"; then
+        echo
+        echo "   ERROR:  daq_static library not found, go get it from"
+        echo "   http://www.snort.org/."
+        #AC_MSG_ERROR("Fatal!")  # FIXTHIS switch over to this macro
+        exit 1                   # instead of raw exits!
+    fi
+else
+    LDAQ=""
+    AC_CHECK_LIB([daq], [daq_load_modules],
+        [LIBS="${LIBS} -ldaq"], [LDAQ="no"], [ ])
+
+    if test "x$LDAQ" = "xno"; then
+        echo
+        echo "   ERROR:  daq library not found, go get it from"
+        echo "   http://www.snort.org/."
+        #AC_MSG_ERROR("Fatal!")
+        exit 1
+    fi
+fi
+
+AC_CHECK_HEADERS(sfbpf.h,,[SFBPF_H="no"])
+
+if test "x$SFBPF_H" = "xno"; then
     echo
-    echo "   ERROR:  Libpcap library/headers (libpcap.a (or .so)/pcap.h)"
-    echo "   not found, go get it from http://www.tcpdump.org"
-    echo "   or use the --with-pcap-* options, if you have it installed"
-    echo "   in unusual place.  Also check if your libpcap depends on another"
-    echo "   shared library that may be installed in an unusual place"
-    exit 1
+    echo "   ERROR:  sfbpf header not found"
+    exit
+fi
+
+AC_CHECK_LIB(sfbpf, sfbpf_compile, [LIBS="${LIBS} -lsfbpf"], [SFBPF="no"])
+
+if test "x$SFBPF" = "xno"; then
+    echo
+    echo "   ERROR:  sfbpf library not found"
+    exit
+fi
+
+#--------------------------------------------------------------------------
+# dnet
+#--------------------------------------------------------------------------
+
+AC_ARG_WITH(dnet_includes,
+    AS_HELP_STRING([--with-dnet-includes=DIR],[libdnet include directory]),
+    [with_dnet_includes="$withval"],[with_dnet_includes="no"])
+
+DNET_CPPFLAGS=""
+if test "x$with_dnet_includes" != "xno"; then
+    DNET_CPPFLAGS="-I${with_dnet_includes}"
+else
+    DNET_CPPFLAGS="`dnet-config --cflags 2>/dev/null`"
+fi
+CPPFLAGS="${CPPFLAGS} ${DNET_CPPFLAGS}"
+
+AC_ARG_WITH(dnet_libraries,
+    AS_HELP_STRING([--with-dnet-libraries=DIR],[libdnet library directory]),
+    [with_dnet_libraries="$withval"],[with_dnet_libraries="no"])
+
+if test "x$with_dnet_libraries" != "xno"; then
+    DNET_LIBS="-L${with_dnet_libraries}"
+else
+    DNET_LIBS="`dnet-config --libs 2>/dev/null`"
+fi
+LDFLAGS="${LDFLAGS} ${DNET_LIBS}"
+
+AC_CHECK_HEADERS(dnet.h,,DNET_H="no")
+AC_CHECK_HEADERS(dumbnet.h,,DUMBNET_H="no")
+
+if test "x$DNET_H" = "xno" -a "x$DUMBNET_H" = "xno"; then
+    echo
+    echo "   ERROR:  dnet header not found, go get it from"
+    echo "   https://github.com/dugsong/libdnet.git or use the --with-dnet-*"
+    echo "   options, if you have it installed in an unusual place"
+    exit
+fi
+
+AC_CHECK_LIB(dnet, eth_set,,[DNET="no"])
+AC_CHECK_LIB(dumbnet, eth_set,,[DUMBNET="no"])
+
+if test "x$DNET" = "xno" -a "x$DUMBNET" = "xno"; then
+    echo
+    echo "   ERROR:  dnet library not found, go get it from"
+    echo "   http://code.google.com/p/libdnet/ or use the --with-dnet-*"
+    echo "   options, if you have it installed in an unusual place"
+    exit
 fi
 
 #--------------------------------------------------------------------------
@@ -691,6 +792,67 @@ AC_CHECK_LIB(luajit-5.1, main, , [AC_MSG_ERROR("Linking against LuaJIT library f
 AC_LANG_POP([C++])
 
 #--------------------------------------------------------------------------
+# openssl / crypto
+#--------------------------------------------------------------------------
+
+AC_ARG_WITH(openssl_includes,
+    AS_HELP_STRING([--with-openssl-includes=DIR],[openssl include directory]),
+    [with_openssl_includes="$withval"],[with_openssl_includes="no"])
+
+OPENSSL_CPPFLAGS=""
+if test "x$with_openssl_includes" != "xno"; then
+    OPENSSL_CPPFLAGS="-I${with_openssl_includes}"
+    CPPFLAGS="${CPPFLAGS} ${OPENSSL_CPPFLAGS}"
+fi
+
+AC_ARG_WITH(openssl_libraries,
+    AS_HELP_STRING([--with-openssl-libraries=DIR],[openssl library directory]),
+    [with_openssl_libraries="$withval"],[with_openssl_libraries="no"])
+
+if test "x$with_openssl_libraries" != "xno"; then
+    LDFLAGS="${LDFLAGS} -L${with_openssl_libraries}"
+fi
+
+AC_CHECK_HEADERS([openssl/md5.h openssl/sha.h openssl/x509.h], , [AC_MSG_ERROR("OpenSSL headers not found.")])
+AC_CHECK_LIB([crypto], [MD5_Init], , [AC_MSG_ERROR("OpenSSL crypto library not found.")])
+
+#--------------------------------------------------------------------------
+# pcap
+#--------------------------------------------------------------------------
+
+AC_ARG_WITH(pcap_includes,
+    AS_HELP_STRING([--with-pcap-includes=DIR],[libpcap include directory]),
+    [with_libpcap_includes="$withval"],[with_libpcap_includes="no"])
+
+PCAP_CPPFLAGS=""
+if test "x$with_libpcap_includes" != "xno"; then
+    PCAP_CPPFLAGS="-I${with_libpcap_includes}"
+    CPPFLAGS="${CPPFLAGS} ${PCAP_CPPFLAGS}"
+fi
+
+AC_ARG_WITH(pcap_libraries,
+    AS_HELP_STRING([--with-pcap-libraries=DIR],[libpcap library directory]),
+    [with_libpcap_libraries="$withval"],[with_libpcap_libraries="no"])
+
+if test "x$with_libpcap_libraries" != "xno"; then
+    LDFLAGS="${LDFLAGS} -L${with_libpcap_libraries}"
+fi
+
+LPCAP=""
+AC_CHECK_HEADERS([pcap.h],, LPCAP="no")
+AC_CHECK_LIB(pcap, pcap_datalink,, LPCAP="no")
+
+if test "x$LPCAP" = "xno"; then
+    echo
+    echo "   ERROR:  Libpcap library/headers (libpcap.a (or .so)/pcap.h)"
+    echo "   not found, go get it from http://www.tcpdump.org"
+    echo "   or use the --with-pcap-* options, if you have it installed"
+    echo "   in unusual place.  Also check if your libpcap depends on another"
+    echo "   shared library that may be installed in an unusual place"
+    exit 1
+fi
+
+#--------------------------------------------------------------------------
 # pcre
 #--------------------------------------------------------------------------
 
@@ -750,141 +912,6 @@ if test "x$PCRE_L" = "xno"; then
 fi
 
 #--------------------------------------------------------------------------
-# dnet
-#--------------------------------------------------------------------------
-
-AC_ARG_WITH(dnet_includes,
-    AS_HELP_STRING([--with-dnet-includes=DIR],[libdnet include directory]),
-    [with_dnet_includes="$withval"],[with_dnet_includes="no"])
-
-DNET_CPPFLAGS=""
-if test "x$with_dnet_includes" != "xno"; then
-    DNET_CPPFLAGS="-I${with_dnet_includes}"
-else
-    DNET_CPPFLAGS="`dnet-config --cflags 2>/dev/null`"
-fi
-CPPFLAGS="${CPPFLAGS} ${DNET_CPPFLAGS}"
-
-AC_ARG_WITH(dnet_libraries,
-    AS_HELP_STRING([--with-dnet-libraries=DIR],[libdnet library directory]),
-    [with_dnet_libraries="$withval"],[with_dnet_libraries="no"])
-
-if test "x$with_dnet_libraries" != "xno"; then
-    DNET_LIBS="-L${with_dnet_libraries}"
-else
-    DNET_LIBS="`dnet-config --libs 2>/dev/null`"
-fi
-LDFLAGS="${LDFLAGS} ${DNET_LIBS}"
-
-AC_CHECK_HEADERS(dnet.h,,DNET_H="no")
-AC_CHECK_HEADERS(dumbnet.h,,DUMBNET_H="no")
-
-if test "x$DNET_H" = "xno" -a "x$DUMBNET_H" = "xno"; then
-    echo
-    echo "   ERROR:  dnet header not found, go get it from"
-    echo "   https://github.com/dugsong/libdnet.git or use the --with-dnet-*"
-    echo "   options, if you have it installed in an unusual place"
-    exit
-fi
-
-AC_CHECK_LIB(dnet, eth_set,,[DNET="no"])
-AC_CHECK_LIB(dumbnet, eth_set,,[DUMBNET="no"])
-
-if test "x$DNET" = "xno" -a "x$DUMBNET" = "xno"; then
-    echo
-    echo "   ERROR:  dnet library not found, go get it from"
-    echo "   http://code.google.com/p/libdnet/ or use the --with-dnet-*"
-    echo "   options, if you have it installed in an unusual place"
-    exit
-fi
-
-#--------------------------------------------------------------------------
-# daq
-#--------------------------------------------------------------------------
-
-AC_ARG_WITH(daq_includes,
-    AS_HELP_STRING([--with-daq-includes=DIR],[DAQ include directory]),
-    [with_daq_includes="$withval"],[with_daq_includes="no"])
-
-DAQ_CPPFLAGS=""
-if test "x$with_daq_includes" != "xno"; then
-    DAQ_CPPFLAGS="-I${with_daq_includes}"
-    CPPFLAGS="${CPPFLAGS} ${DAQ_CPPFLAGS}"
-fi
-
-AC_ARG_WITH(daq_libraries,
-    AS_HELP_STRING([--with-daq-libraries=DIR],[DAQ library directory]),
-    [with_daq_libraries="$withval"],[with_daq_libraries="no"])
-
-if test "x$with_daq_libraries" != "xno"; then
-    LDFLAGS="${LDFLAGS} -L${with_daq_libraries}"
-fi
-
-AC_ARG_ENABLE(static_daq,
-    AS_HELP_STRING([--disable-static-daq],[link static DAQ modules]),
-    enable_static_daq="$enableval", enable_static_daq="yes")
-
-if test "$DLLIB" != "no"; then
-    LIBS="${LIBS} -ldl"
-else
-    AC_CHECK_LIB(c, dlsym, DLLIB="yes", DLLIB="no")
-    if test "$DLLIB" = "no"; then
-       echo
-       echo "   ERROR:  programmatic interface to dynamic link loader"
-       echo "   not found.  Cannot build Snort."
-       echo
-       exit 1
-    fi
-fi
-
-if test "x$enable_static_daq" = "xyes"; then
-    LDAQ=""
-    LIBS="${LIBS} `daq-modules-config --static --libs`"
-    AC_CHECK_LIB([daq_static], [daq_load_modules],
-        [LIBS="-ldaq_static ${LIBS}"], [LDAQ="no"], [ ])
-
-    if test "x$LDAQ" = "xno"; then
-        echo
-        echo "   ERROR:  daq_static library not found, go get it from"
-        echo "   http://www.snort.org/."
-        #AC_MSG_ERROR("Fatal!")  # FIXTHIS switch over to this macro
-        exit 1                   # instead of raw exits!
-    fi
-else
-    LDAQ=""
-    AC_CHECK_LIB([daq], [daq_load_modules],
-        [LIBS="${LIBS} -ldaq"], [LDAQ="no"], [ ])
-
-    if test "x$LDAQ" = "xno"; then
-        echo
-        echo "   ERROR:  daq library not found, go get it from"
-        echo "   http://www.snort.org/."
-        #AC_MSG_ERROR("Fatal!")
-        exit 1
-    fi
-fi
-
-#--------------------------------------------------------------------------
-# sfbpf 
-#--------------------------------------------------------------------------
-
-AC_CHECK_HEADERS(sfbpf.h,,[SFBPF_H="no"])
-
-if test "x$SFBPF_H" = "xno"; then
-    echo
-    echo "   ERROR:  sfbpf header not found"
-    exit
-fi
-
-AC_CHECK_LIB(sfbpf, sfbpf_compile, [LIBS="${LIBS} -lsfbpf"], [SFBPF="no"])
-
-if test "x$SFBPF" = "xno"; then
-    echo
-    echo "   ERROR:  sfbpf library not found"
-    exit
-fi
-
-#--------------------------------------------------------------------------
 # zlib
 #--------------------------------------------------------------------------
 
@@ -906,6 +933,92 @@ if test "x$Z_LIB" = "xno"; then
     exit
 fi
 LIBS="$LIBS -lz"
+
+#--------------------------------------------------------------------------
+#--------------------------------------------------------------------------
+# Optional libraries
+#--------------------------------------------------------------------------
+#--------------------------------------------------------------------------
+
+#--------------------------------------------------------------------------
+# hyperscan (optional)
+#--------------------------------------------------------------------------
+
+AC_MSG_CHECKING([for hyperscan pkg-config presence])
+PKG_CHECK_EXISTS([libhs], [ have_hyperscan_pkgconfig="yes" ], [ have_hyperscan_pkgconfig="no" ])
+AC_MSG_RESULT(${have_hyperscan_pkgconfig})
+
+HYPERSCAN_CPPFLAGS=""
+if test "${have_hyperscan_pkgconfig}" = "yes" ; then
+    HYPERSCAN_CPPFLAGS=`${PKG_CONFIG} --cflags libhs`
+    HYPERSCAN_LDFLAGS=`${PKG_CONFIG} --libs-only-L libhs`
+fi
+
+AC_ARG_WITH(hyperscan_includes,
+    AS_HELP_STRING([--with-hyperscan-includes=DIR],[libhs include directory]),
+    [with_hyperscan_includes="$withval"],[with_hyperscan_includes="no"])
+
+if test "x$with_hyperscan_includes" != "xno"; then
+    HYPERSCAN_CPPFLAGS="-I${with_hyperscan_includes}"
+fi
+
+AC_ARG_WITH(hyperscan_libraries,
+    AS_HELP_STRING([--with-hyperscan-libraries=DIR],[libhs library directory]),
+    [with_hyperscan_libraries="$withval"],[with_hyperscan_libraries="no"])
+
+if test "x$with_hyperscan_libraries" != "xno"; then
+    HYPERSCAN_LDFLAGS="-L${with_hyperscan_libraries}"
+fi
+
+CPPFLAGS="${CPPFLAGS} ${HYPERSCAN_CPPFLAGS}"
+LDFLAGS="${LDFLAGS} ${HYPERSCAN_LDFLAGS}"
+
+AC_CHECK_HEADERS(hs.h, HS_HEADERS="yes", HS_HEADERS="no")
+AC_CHECK_LIB(hs, hs_scan, HS_LIB="yes", HS_LIB="no")
+
+if test "x$HS_LIB" != "xno"; then
+    if test "x$HS_HEADERS" != "xno"; then
+        AC_DEFINE([HAVE_HYPERSCAN],[1],[can build hyperscan code])
+        LIBS="${LIBS} -lhs"
+    fi
+fi
+
+AM_CONDITIONAL([HAVE_HYPERSCAN], [test "x$HS_HEADERS" = "xyes" -a "x$HS_LIB" = "xyes"])
+
+#--------------------------------------------------------------------------
+# intel soft cpm (optional)
+#--------------------------------------------------------------------------
+
+enable_intel_soft_cpm="yes"
+
+AC_ARG_WITH(intel_soft_cpm_includes,
+    AS_HELP_STRING([--with-intel-soft-cpm-includes=DIR],[Intel Soft CPM include directory]),
+    [with_intel_soft_cpm_includes="$withval"],[with_intel_soft_cpm_includes="no"])
+
+INTEL_SOFT_CPM_CPPFLAGS=""
+if test "x$with_intel_soft_cpm_includes" != "xno"; then
+    INTEL_SOFT_CPM_CPPFLAGS="-I${with_intel_soft_cpm_includes}"
+    CPPFLAGS="${CPPFLAGS} ${INTEL_SOFT_CPM_CPPFLAGS}"
+else
+    enable_intel_soft_cpm="no"
+fi
+
+AC_ARG_WITH(intel_soft_cpm_libraries,
+    AS_HELP_STRING([--with-intel-soft-cpm-libraries=DIR],[Intel Soft CPM library directory]),
+    [with_intel_soft_cpm_libraries="$withval"],[with_intel_soft_cpm_libraries="no"])
+
+if test "x$with_intel_soft_cpm_libraries" != "xno"; then
+    LDFLAGS="${LDFLAGS} -L${with_intel_soft_cpm_libraries}"
+    LIBS="${LIBS} -lpm"
+else
+    enable_intel_soft_cpm="no"
+fi
+
+AM_CONDITIONAL(HAVE_INTEL_SOFT_CPM, test "x$enable_intel_soft_cpm" = "xyes")
+
+if test "x$enable_intel_soft_cpm" = "xyes"; then
+    AC_DEFINE(INTEL_SOFT_CPM, [1], [enable intel cpm support in build])
+fi
 
 #--------------------------------------------------------------------------
 # lzma (optional)
@@ -963,111 +1076,6 @@ if test "x$SAFEC_LIB" != "xno"; then
         LIBS="${LIBS} -lsafec-1.0"
     fi
 fi
-
-#--------------------------------------------------------------------------
-# openssl / crypto
-#--------------------------------------------------------------------------
-
-AC_ARG_WITH(openssl_includes,
-    AS_HELP_STRING([--with-openssl-includes=DIR],[openssl include directory]),
-    [with_openssl_includes="$withval"],[with_openssl_includes="no"])
-
-OPENSSL_CPPFLAGS=""
-if test "x$with_openssl_includes" != "xno"; then
-    OPENSSL_CPPFLAGS="-I${with_openssl_includes}"
-    CPPFLAGS="${CPPFLAGS} ${OPENSSL_CPPFLAGS}"
-fi
-
-AC_ARG_WITH(openssl_libraries,
-    AS_HELP_STRING([--with-openssl-libraries=DIR],[openssl library directory]),
-    [with_openssl_libraries="$withval"],[with_openssl_libraries="no"])
-
-if test "x$with_openssl_libraries" != "xno"; then
-    LDFLAGS="${LDFLAGS} -L${with_openssl_libraries}"
-fi
-
-AC_CHECK_HEADERS([openssl/md5.h openssl/sha.h openssl/x509.h], , [AC_MSG_ERROR("OpenSSL headers not found.")])
-AC_CHECK_LIB([crypto], [MD5_Init], , [AC_MSG_ERROR("OpenSSL crypto library not found.")])
-
-#--------------------------------------------------------------------------
-# intel soft cpm (optional)
-#--------------------------------------------------------------------------
-
-enable_intel_soft_cpm="yes"
-
-AC_ARG_WITH(intel_soft_cpm_includes,
-    AS_HELP_STRING([--with-intel-soft-cpm-includes=DIR],[Intel Soft CPM include directory]),
-    [with_intel_soft_cpm_includes="$withval"],[with_intel_soft_cpm_includes="no"])
-
-INTEL_SOFT_CPM_CPPFLAGS=""
-if test "x$with_intel_soft_cpm_includes" != "xno"; then
-    INTEL_SOFT_CPM_CPPFLAGS="-I${with_intel_soft_cpm_includes}"
-    CPPFLAGS="${CPPFLAGS} ${INTEL_SOFT_CPM_CPPFLAGS}"
-else
-    enable_intel_soft_cpm="no"
-fi
-
-AC_ARG_WITH(intel_soft_cpm_libraries,
-    AS_HELP_STRING([--with-intel-soft-cpm-libraries=DIR],[Intel Soft CPM library directory]),
-    [with_intel_soft_cpm_libraries="$withval"],[with_intel_soft_cpm_libraries="no"])
-
-if test "x$with_intel_soft_cpm_libraries" != "xno"; then
-    LDFLAGS="${LDFLAGS} -L${with_intel_soft_cpm_libraries}"
-    LIBS="${LIBS} -lpm"
-else
-    enable_intel_soft_cpm="no"
-fi
-
-AM_CONDITIONAL(HAVE_INTEL_SOFT_CPM, test "x$enable_intel_soft_cpm" = "xyes")
-
-if test "x$enable_intel_soft_cpm" = "xyes"; then
-    AC_DEFINE(INTEL_SOFT_CPM, [1], [enable intel cpm support in build])
-fi
-
-#--------------------------------------------------------------------------
-# hyperscan (optional)
-#--------------------------------------------------------------------------
-
-AC_MSG_CHECKING([for hyperscan pkg-config presence])
-PKG_CHECK_EXISTS([libhs], [ have_hyperscan_pkgconfig="yes" ], [ have_hyperscan_pkgconfig="no" ])
-AC_MSG_RESULT(${have_hyperscan_pkgconfig})
-
-HYPERSCAN_CPPFLAGS=""
-if test "${have_hyperscan_pkgconfig}" = "yes" ; then
-    HYPERSCAN_CPPFLAGS=`${PKG_CONFIG} --cflags libhs`
-    HYPERSCAN_LDFLAGS=`${PKG_CONFIG} --libs-only-L libhs`
-fi
-
-AC_ARG_WITH(hyperscan_includes,
-    AS_HELP_STRING([--with-hyperscan-includes=DIR],[libhs include directory]),
-    [with_hyperscan_includes="$withval"],[with_hyperscan_includes="no"])
-
-if test "x$with_hyperscan_includes" != "xno"; then
-    HYPERSCAN_CPPFLAGS="-I${with_hyperscan_includes}"
-fi
-
-AC_ARG_WITH(hyperscan_libraries,
-    AS_HELP_STRING([--with-hyperscan-libraries=DIR],[libhs library directory]),
-    [with_hyperscan_libraries="$withval"],[with_hyperscan_libraries="no"])
-
-if test "x$with_hyperscan_libraries" != "xno"; then
-    HYPERSCAN_LDFLAGS="-L${with_hyperscan_libraries}"
-fi
-
-CPPFLAGS="${CPPFLAGS} ${HYPERSCAN_CPPFLAGS}"
-LDFLAGS="${LDFLAGS} ${HYPERSCAN_LDFLAGS}"
-
-AC_CHECK_HEADERS(hs.h, HS_HEADERS="yes", HS_HEADERS="no")
-AC_CHECK_LIB(hs, hs_scan, HS_LIB="yes", HS_LIB="no")
-
-if test "x$HS_LIB" != "xno"; then
-    if test "x$HS_HEADERS" != "xno"; then
-        AC_DEFINE([HAVE_HYPERSCAN],[1],[can build hyperscan code])
-        LIBS="${LIBS} -lhs"
-    fi
-fi
-
-AM_CONDITIONAL([HAVE_HYPERSCAN], [test "x$HS_HEADERS" = "xyes" -a "x$HS_LIB" = "xyes"])
 
 #--------------------------------------------------------------------------
 # outputs
