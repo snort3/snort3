@@ -1,3 +1,10 @@
+17/02/24 - build 227
+
+-- allow arbitrary / unused gids in text rules
+-- support DAQs w/o explicit sources (nfq, ipfw)
+-- fix up peg help (remove _)
+-- fix u2 logging of PDUs
+
 17/02/16 - build 226
 
 -- add PDF/SWF decompression to http_inspect
