@@ -54,7 +54,7 @@ struct ByteExtractData
     uint8_t relative_flag;
     uint8_t data_string_convert_flag;
     uint8_t align;
-    int8_t endianess;
+    uint8_t endianess;
     uint32_t base;
     uint32_t multiplier;
     int8_t var_number;
@@ -166,7 +166,7 @@ int ByteExtractOption::eval(Cursor& c, Packet* p)
     if (ptr < start || ptr >= end)
         return DETECTION_OPTION_NO_MATCH;
 
-    int8_t endian = data->endianess;
+    uint8_t endian = data->endianess;
     if (data->endianess == ENDIAN_FUNC)
     {
         if (!p->endianness ||
@@ -359,16 +359,6 @@ static bool ByteExtractVerify(ByteExtractData* data)
             "argument.");
         return false;
     }
-    unsigned e1 = ffs(data->endianess);
-    unsigned e2 = ffs(data->endianess >> e1);
-
-    if ( e1 && e2 )
-    {
-        ParseError("byte_extract rule option has multiple arguments "
-            "specifying endianness. Use only "
-            "one of 'big', 'little', or 'dce'.");
-        return false;
-    }
     return true;
 }
 
@@ -444,6 +434,8 @@ bool ExtractModule::begin(const char*, int, SnortConfig*)
 
 bool ExtractModule::end(const char*, int, SnortConfig*)
 {
+    if ( !data.endianess )
+        data.endianess = ENDIAN_BIG;
     return ByteExtractVerify(&data);
 }
 
@@ -468,13 +460,13 @@ bool ExtractModule::set(const char*, Value& v, SnortConfig*)
         data.multiplier = v.get_long();
 
     else if ( v.is("big") )
-        data.endianess |= ENDIAN_BIG;
+        set_byte_order(data.endianess, ENDIAN_BIG, "byte_extract");
 
     else if ( v.is("little") )
-        data.endianess |= ENDIAN_LITTLE;
+        set_byte_order(data.endianess, ENDIAN_LITTLE, "byte_extract");
 
     else if ( v.is("dce") )
-        data.endianess |= ENDIAN_FUNC;
+        set_byte_order(data.endianess, ENDIAN_FUNC, "byte_extract");
 
     else if ( v.is("string") )
     {

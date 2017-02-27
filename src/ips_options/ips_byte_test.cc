@@ -132,7 +132,7 @@ typedef struct _ByteTestData
     uint8_t not_flag;
     uint8_t relative_flag;
     uint8_t data_string_convert_flag;
-    int8_t endianess;
+    uint8_t endianess;
     uint32_t base;
     int8_t cmp_value_var;
     int8_t offset_var;
@@ -312,7 +312,7 @@ int ByteTestOption::eval(Cursor& c, Packet* p)
     const uint8_t* start_ptr = btd->relative_flag ? c.start() : c.buffer();
     start_ptr += offset;
 
-    int8_t endian = btd->endianess;
+    uint8_t endian = btd->endianess;
     if (endian == ENDIAN_FUNC)
     {
         if (!p->endianness ||
@@ -514,16 +514,8 @@ bool ByteTestModule::end(const char*, int, SnortConfig*)
             return false;
         }
     }
-    unsigned e1 = ffs(data.endianess);
-    unsigned e2 = ffs(data.endianess >> e1);
-
-    if ( e1 && e2 )
-    {
-        ParseError("byte_test has multiple arguments "
-            "specifying endianness. Use only "
-            "one of 'big', 'little', or 'dce'.");
-        return false;
-    }
+    if ( !data.endianess )
+        data.endianess = ENDIAN_BIG;
 
     return true;
 }
@@ -556,13 +548,13 @@ bool ByteTestModule::set(const char*, Value& v, SnortConfig*)
         data.relative_flag = 1;
 
     else if ( v.is("big") )
-        data.endianess |= ENDIAN_BIG;
+        set_byte_order(data.endianess, ENDIAN_BIG, "byte_test");
 
     else if ( v.is("little") )
-        data.endianess |= ENDIAN_LITTLE;
+        set_byte_order(data.endianess, ENDIAN_LITTLE, "byte_test");
 
     else if ( v.is("dce") )
-        data.endianess |= ENDIAN_FUNC;
+        set_byte_order(data.endianess, ENDIAN_FUNC, "byte_test");
 
     else if ( v.is("string") )
     {

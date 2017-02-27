@@ -221,7 +221,7 @@ public:
 
 public:
     DceEndianness();
-    virtual bool get_offset_endianness(int32_t offset, int8_t& endian);
+    virtual bool get_offset_endianness(int32_t offset, uint8_t& endian);
     void reset();
 };
 

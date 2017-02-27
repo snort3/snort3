@@ -93,7 +93,7 @@ typedef struct _ByteJumpData
     uint8_t data_string_convert_flag;
     uint8_t from_beginning_flag;
     uint8_t align_flag;
-    int8_t endianess;
+    uint8_t endianess;
     uint32_t base;
     uint32_t multiplier;
     int32_t post_offset;
@@ -213,7 +213,7 @@ int ByteJumpOption::eval(Cursor& c, Packet* p)
 
     uint32_t jump = 0;
     uint32_t payload_bytes_grabbed = 0;
-    int8_t endian = bjd->endianess;
+    uint8_t endian = bjd->endianess;
     if (endian == ENDIAN_FUNC)
     {
         if (!p->endianness ||
@@ -368,16 +368,8 @@ bool ByteJumpModule::end(const char*, int, SnortConfig*)
             return false;
         }
     }
-    unsigned e1 = ffs(data.endianess);
-    unsigned e2 = ffs(data.endianess >> e1);
-
-    if ( e1 && e2 )
-    {
-        ParseError("byte_jump has multiple arguments "
-            "specifying endianness. Use only "
-            "one of 'big', 'little', or 'dce'.");
-        return false;
-    }
+    if ( !data.endianess )
+        data.endianess = ENDIAN_BIG;
 
     return true;
 }
@@ -411,13 +403,13 @@ bool ByteJumpModule::set(const char*, Value& v, SnortConfig*)
         data.post_offset = v.get_long();
 
     else if ( v.is("big") )
-        data.endianess |= ENDIAN_BIG;
+        set_byte_order(data.endianess, ENDIAN_BIG, "byte_jump");
 
     else if ( v.is("little") )
-        data.endianess |= ENDIAN_LITTLE;
+        set_byte_order(data.endianess, ENDIAN_LITTLE, "byte_jump");
 
     else if ( v.is("dce") )
-        data.endianess |= ENDIAN_FUNC;
+        set_byte_order(data.endianess, ENDIAN_FUNC, "byte_jump");
 
     else if ( v.is("string") )
     {

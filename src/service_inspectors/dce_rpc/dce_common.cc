@@ -267,7 +267,7 @@ void DceEndianness::reset()
     stub_data_offset = DCE2_SENTINEL;
 }
 
-bool DceEndianness::get_offset_endianness(int32_t offset, int8_t& endian)
+bool DceEndianness::get_offset_endianness(int32_t offset, uint8_t& endian)
 {
     int byte_order;
 

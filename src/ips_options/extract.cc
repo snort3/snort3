@@ -25,8 +25,17 @@
 
 #include "extract.h"
 
+#include "log/messages.h"
 #include "utils/snort_bounds.h"
 #include "utils/util_cstring.h"
+
+void set_byte_order(uint8_t& order, uint8_t flag, const char* opt)
+{
+    if ( order )
+        ParseWarning(WARN_RULES, "%s specifies multiple byte orders, using last", opt);
+
+    order = flag;
+}
 
 #define TEXTLEN  (PARSELEN + 1)
 
