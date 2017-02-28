@@ -33,6 +33,7 @@ concepts.txt \
 config_changes.txt \
 connectors.txt \
 daq.txt \
+daq_readme.txt \
 dcerpc.txt \
 differences.txt \
 enviro.txt \

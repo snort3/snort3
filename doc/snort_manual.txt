@@ -96,7 +96,7 @@ All output of events and packets is done by Loggers.
 
 include::logger.txt[]
 
-== DAQ Modules
+== DAQ Configuration and Modules
 
 include::daq.txt[]
 

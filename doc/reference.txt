@@ -55,3 +55,7 @@ include::plugins.txt[]
 
 include::bugs.txt[]
 
+=== LibDAQ and DAQ Modules
+
+include::daq_readme.txt[]
+
