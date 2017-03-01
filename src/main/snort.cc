@@ -355,13 +355,21 @@ bool Snort::drop_privileges()
             return false;
     }
 
-    if (SnortConfig::create_pid_file())
-        CreatePidFile(snort_main_thread_pid);
-
     initializing = false;
     privileges_dropped = true;
 
     return true;
+}
+
+void Snort::do_pidfile()
+{
+    static bool pid_file_created = false;
+
+    if (SnortConfig::create_pid_file() && !pid_file_created)
+    {
+        CreatePidFile(snort_main_thread_pid);
+        pid_file_created = true;
+    }
 }
 
 //-------------------------------------------------------------------------

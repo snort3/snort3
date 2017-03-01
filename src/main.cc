@@ -828,10 +828,15 @@ static void handle(Pig& pig, unsigned& swine, unsigned& pending_privileges)
             // FIXIT-L Make this call and the one below exit more gracefully upon error
             if (!Snort::drop_privileges())
                 FatalError("Failed to drop privileges!\n");
+
+            Snort::do_pidfile();
             broadcast(new ACStart());
         }
         else
+        {
+            Snort::do_pidfile();
             pig.queue_command(new ACStart());
+        }
         break;
 
     case Analyzer::State::STARTED:
@@ -845,12 +850,18 @@ static void handle(Pig& pig, unsigned& swine, unsigned& pending_privileges)
             }
             if (pending_privileges)
                 break;
+
             if (!Snort::drop_privileges())
                 FatalError("Failed to drop privileges!\n");
+
+            Snort::do_pidfile();
             broadcast(new ACRun());
         }
         else
+        {
+            Snort::do_pidfile();
             pig.queue_command(new ACRun());
+        }
         break;
 
     case Analyzer::State::STOPPED:
