@@ -1,3 +1,16 @@
+17/03/02 - build 228
+
+-- update hypercsan mpse: print error message and erroneous pattern when compilation fails
+-- update rule parser: add multiple byte orders warning
+-- fix pid file: create regardless of priv drop settings
+-- fix dce_rpc: mark generated iface patterns as literal
+-- snort2lua: mark appid conf and thirdparty_appid_dir as unsupported (temporary)
+-- snort2lua: fix a couple of typos in table API output
+-- snort2lua: fix sticky buffer following uricontent
+-- doc: add DAQ configuration documentation
+-- doc: move LibDAQ README to Reference, update, and fix typos
+-- doc: update default manuals
+
 17/02/24 - build 227
 
 -- allow arbitrary / unused gids in text rules
