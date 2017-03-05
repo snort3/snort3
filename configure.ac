@@ -944,8 +944,8 @@ LIBS="$LIBS -lz"
 # hyperscan (optional)
 #--------------------------------------------------------------------------
 
-AC_MSG_CHECKING([for hyperscan pkg-config presence])
-PKG_CHECK_EXISTS([libhs], [ have_hyperscan_pkgconfig="yes" ], [ have_hyperscan_pkgconfig="no" ])
+AC_MSG_CHECKING([for hyperscan >= 4.4.0 pkg-config presence])
+PKG_CHECK_EXISTS([libhs >= 4.4.0], [ have_hyperscan_pkgconfig="yes" ], [ have_hyperscan_pkgconfig="no" ])
 AC_MSG_RESULT(${have_hyperscan_pkgconfig})
 
 HYPERSCAN_CPPFLAGS=""
