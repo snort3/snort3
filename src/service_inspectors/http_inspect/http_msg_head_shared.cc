@@ -198,6 +198,11 @@ void HttpMsgHeadShared::derive_header_name_id(int index)
         {
             lower_name[lower_length++] = ((buffer[k] < 'A') || (buffer[k] > 'Z')) ?
                 buffer[k] : buffer[k] - ('A' - 'a');
+            if (!is_print_char[buffer[k]])
+            {
+                infractions += INF_BAD_CHAR_IN_HEADER_NAME;
+                events.create_event(EVENT_BAD_CHAR_IN_HEADER_NAME);
+            }
         }
         else
         {

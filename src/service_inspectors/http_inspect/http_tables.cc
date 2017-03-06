@@ -350,6 +350,8 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_STACKED_ENCODINGS,          "multiple layers of compression encodings applied" },
     { EVENT_RESPONSE_WO_REQUEST,        "server response before client request" },
     { EVENT_PDF_SWF_OVERRUN,            "PDF/SWF decompression of server response too big" },
+    { EVENT_BAD_CHAR_IN_HEADER_NAME,    "Nonprinting character in HTTP message header name" },
+    { EVENT_BAD_CONTENT_LENGTH,         "Bad Content-Length value in HTTP header" },
     { 0, nullptr }
 };
 
@@ -445,6 +447,33 @@ const bool HttpEnums::is_sp_tab[256] =
 
     false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
     false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
+};
+
+const bool HttpEnums::is_print_char[256] =
+{
+    false, false, false, false, false, false, false, false, false,  true,  true, false, false,  true, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+     true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
+     true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
+
+     true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
+     true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
+
+     true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
+     true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true, false,
 
     false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
     false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,

@@ -155,7 +155,8 @@ void HttpMsgHeader::update_flow()
         }
         else
         {
-            infractions += INF_BAD_HEADER_DATA;
+            infractions += INF_BAD_CONTENT_LENGTH;
+            events.create_event(EVENT_BAD_CONTENT_LENGTH);
             // Treat as if there was no Content-Length header (drop through)
         }
     }

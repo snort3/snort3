@@ -139,7 +139,7 @@ enum Infraction
     INF_BAD_VERSION,
     INF_ZERO_NINE_NOT_FIRST,
     INF_URI_IIS_UNICODE,
-    INF_BAD_HEADER_DATA,
+    INF_BAD_CONTENT_LENGTH,
     INF_PIPELINE_OVERFLOW,
     INF_BAD_CHUNK_SIZE,
     INF_BAD_PHRASE,
@@ -215,6 +215,7 @@ enum Infraction
     INF_PDF_CASC_COMP,
     INF_PDF_PARSE_FAILURE,
     INF_PDF_SWF_OVERRUN,
+    INF_BAD_CHAR_IN_HEADER_NAME,
     INF__MAX_VALUE
 };
 
@@ -312,12 +313,15 @@ enum EventSid
     EVENT_STACKED_ENCODINGS, 
     EVENT_RESPONSE_WO_REQUEST,
     EVENT_PDF_SWF_OVERRUN,
+    EVENT_BAD_CHAR_IN_HEADER_NAME,
+    EVENT_BAD_CONTENT_LENGTH,
     EVENT__MAX_VALUE
 };
 
 extern const int8_t as_hex[256];
 extern const bool token_char[256];
 extern const bool is_sp_tab[256];
+extern const bool is_print_char[256]; // printable includes SP, tab, CR, LF
 } // end namespace HttpEnums
 
 #endif
