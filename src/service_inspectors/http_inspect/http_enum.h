@@ -216,6 +216,7 @@ enum Infraction
     INF_PDF_PARSE_FAILURE,
     INF_PDF_SWF_OVERRUN,
     INF_BAD_CHAR_IN_HEADER_NAME,
+    INF_HEADER_WRAPPING,
     INF__MAX_VALUE
 };
 
@@ -315,12 +316,14 @@ enum EventSid
     EVENT_PDF_SWF_OVERRUN,
     EVENT_BAD_CHAR_IN_HEADER_NAME,
     EVENT_BAD_CONTENT_LENGTH,
+    EVENT_HEADER_WRAPPING,
     EVENT__MAX_VALUE
 };
 
 extern const int8_t as_hex[256];
 extern const bool token_char[256];
 extern const bool is_sp_tab[256];
+extern const bool is_sp_tab_cr_lf[256];
 extern const bool is_print_char[256]; // printable includes SP, tab, CR, LF
 } // end namespace HttpEnums
 

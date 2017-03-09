@@ -141,6 +141,11 @@ uint32_t HttpMsgHeadShared::find_header_end(const uint8_t* buffer, int32_t lengt
                 }
                 return k + 1 - num_seps;
             }
+            else
+            {
+                infractions += INF_HEADER_WRAPPING;
+                events.create_event(EVENT_HEADER_WRAPPING);
+            }
         }
     }
     num_seps = 0;
@@ -194,7 +199,7 @@ void HttpMsgHeadShared::derive_header_name_id(int index)
     uint8_t* lower_name = new uint8_t[length];
     for (int32_t k=0; k < length; k++)
     {
-        if (!is_sp_tab[buffer[k]])
+        if (!is_sp_tab_cr_lf[buffer[k]])
         {
             lower_name[lower_length++] = ((buffer[k] < 'A') || (buffer[k] > 'Z')) ?
                 buffer[k] : buffer[k] - ('A' - 'a');

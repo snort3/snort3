@@ -352,6 +352,7 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_PDF_SWF_OVERRUN,            "PDF/SWF decompression of server response too big" },
     { EVENT_BAD_CHAR_IN_HEADER_NAME,    "Nonprinting character in HTTP message header name" },
     { EVENT_BAD_CONTENT_LENGTH,         "Bad Content-Length value in HTTP header" },
+    { EVENT_HEADER_WRAPPING,            "HTTP header line wrapped" },
     { 0, nullptr }
 };
 
@@ -437,6 +438,33 @@ const bool HttpEnums::token_char[256] =
 const bool HttpEnums::is_sp_tab[256] =
 {
     false, false, false, false, false, false, false, false, false,  true, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+     true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
+};
+
+const bool HttpEnums::is_sp_tab_cr_lf[256] =
+{
+    false, false, false, false, false, false, false, false, false,  true,  true, false, false,  true, false, false,
     false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
 
      true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
