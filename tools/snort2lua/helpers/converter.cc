@@ -29,6 +29,7 @@
 
 bool Converter::parse_includes = true;
 bool Converter::ohi_convert = false;
+bool Converter::empty_args = false;
 bool Converter::convert_rules_mult_files = true;
 bool Converter::convert_conf_mult_files = true;
 
@@ -201,6 +202,14 @@ int Converter::parse_file(std::string input_file)
                     {
                         data_api.failed_conversion(data_stream);
                         break;
+                    }
+                }
+                if(empty_args)
+                {
+                    set_empty_args(false);
+                    if (state && !state->convert(data_stream))
+                    {
+                        data_api.failed_conversion(data_stream);
                     }
                 }
             }

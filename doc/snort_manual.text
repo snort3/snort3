@@ -10081,16 +10081,10 @@ some of the information may not be successfully converted. Check the
 error file for all of the conversion problems.
 
 Those errors can occur for a multitude of reasons and are not
-necessarily bad. For instance, Snort2Lua will only convert
-preprocessors that are currently supported. Therefore, any
-unsupported preprocessors or configuration options including DCERP,
-SIP, and SMTP, will cause an error in Snort2Lua since Snort 3 does
-not support those preprocessors. Additionally, any rule options
-associated with those preprocessors are also not supported. Finally,
-Snort2Lua expects a valid Snort 2 configuration. Therefore, if the
-configuration is invalid or has questionable syntax, Snort2Lua may
-fail to parse the configuration file or create an invalid Snort 3
-configuration file.
+necessarily bad. Snort2Lua expects a valid Snort 2 configuration.
+Therefore, if the configuration is invalid or has questionable syntax,
+Snort2Lua may fail to parse the configuration file or create an invalid
+Snort 3 configuration file.
 
 There are a also few peculiarities of Snort2Lua that may be confusing
 to a first time user. Specifically, aside from an initial

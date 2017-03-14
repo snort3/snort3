@@ -51,6 +51,8 @@ bool Config::convert(std::istringstream& data_stream)
         if (map)
         {
             cv.set_state(map->ctor(cv));
+            if(data_stream.peek() == EOF)
+                cv.set_empty_args(true);
             return true;
         }
 

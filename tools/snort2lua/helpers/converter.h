@@ -59,6 +59,9 @@ public:
     inline static bool get_ohi_convert()
     { return ohi_convert; }
 
+    inline static void set_empty_args(bool val)
+    { empty_args = val; }
+
     int convert(std::string input,
         std::string output,
         std::string rules,         // defaults to output_file
@@ -97,6 +100,7 @@ private:
     static bool ohi_convert;
     static bool convert_rules_mult_files;
     static bool convert_conf_mult_files;
+    static bool empty_args;
 
     DataApi data_api;
     TableApi table_api;

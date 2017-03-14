@@ -1,11 +1,11 @@
 One of the major differences between Snort 2 and Snort 3 is the
 configuration. Snort 2 configuration files are written in Snort-specific
 syntax while Snort 3 configuration files are written in Lua. Snort2Lua is
-a program specifically designed to convert Snort 2 configuration files
+a program specifically designed to convert valid Snort 2 configuration files
 into Lua files that Snort 3 can understand.
 
 Snort2Lua reads your legacy Snort conf file(s) and generates Snort 3 Lua
-and rules files.  When running this program, the only mandatory option is
+and rules files. When running this program, the only mandatory option is
 to provide Snort2Lua with a Snort 2 configuration file. The default
 output file file is snort.lua, the default error file will be snort.rej,
 and the default rule file is the output file (default is snort.lua).  When
@@ -17,13 +17,8 @@ manually adjust or comment the file name. Additionally, if the exit code is
 not zero, some of the information may not be successfully converted.  Check
 the error file for all of the conversion problems.
 
-Those errors can occur for a multitude of reasons and are not necessarily
-bad.  For instance, Snort2Lua will only convert preprocessors that are
-currently supported. Therefore, any unsupported preprocessors or
-configuration options including DCERP, SIP, and SMTP, will cause an error
-in Snort2Lua since Snort 3 does not support those preprocessors.
-Additionally, any rule options associated with those preprocessors are also
-not supported.  Finally, Snort2Lua expects a valid Snort 2 configuration.
+Those errors can occur for a multitude of reasons and are not
+necessarily bad. Snort2Lua expects a valid Snort 2 configuration.
 Therefore, if the configuration is invalid or has questionable syntax,
 Snort2Lua may fail to parse the configuration file or create an invalid
 Snort 3 configuration file.
