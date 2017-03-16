@@ -647,7 +647,7 @@ static int pattern_match(void* id, void* /*unused_tree*/, int match_end_pos, voi
     ClientAppMatch* cam;
 
     // Ignore matches that don't start at the expected position.
-    if ( pd->pattern_start_pos >= 0 && pd->pattern_start_pos != (match_end_pos + 1 - (int)pd->size))
+    if ( pd->pattern_start_pos >= 0 && pd->pattern_start_pos != (match_end_pos - (int)pd->size))
         return 0;
 
     for (cam = *matches; cam; cam = cam->next)

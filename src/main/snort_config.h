@@ -141,6 +141,7 @@ public:
     ~SnortConfig();
 
     void setup();
+    void post_setup();
     bool verify();
 
     void merge(SnortConfig*);

@@ -134,6 +134,12 @@ Mpse* MpseManager::get_search_engine(const char *type)
     return acf;
 }
 
+Mpse* MpseManager::get_search_engine(
+    SnortConfig* sc, const MpseApi* api, bool use_gc, const MpseAgent* agent)
+{
+    return MpseManager::get_search_engine("ac_bnfa");
+}
+
 void MpseManager::delete_search_engine(Mpse *)
 {
     mpse_api->dtor(acf);

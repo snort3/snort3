@@ -179,6 +179,8 @@ static IMAPData* SetNewIMAPData(IMAP_PROTO_CONF* config, Packet* p)
 static void IMAP_SearchInit()
 {
     const IMAPToken* tmp;
+    if ( imap_cmd_search_mpse )
+        return;
     imap_cmd_search_mpse = new SearchTool();
 
     for (tmp = &imap_known_cmds[0]; tmp->name != NULL; tmp++)
@@ -747,6 +749,7 @@ bool Imap::configure(SnortConfig*)
     if (config->decode_conf.get_file_depth() > -1)
         config->log_config.log_filename = 1;
 
+    IMAP_SearchInit();
     return true;
 }
 
@@ -781,7 +784,6 @@ static void mod_dtor(Module* m)
 static void imap_init()
 {
     ImapFlowData::init();
-    IMAP_SearchInit();
 }
 
 static void imap_term()

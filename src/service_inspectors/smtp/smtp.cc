@@ -277,6 +277,10 @@ static void SMTP_CommandSearchTerm(SMTP_PROTO_CONF* config)
 static void SMTP_ResponseSearchInit()
 {
     const SMTPToken* tmp;
+
+    if ( smtp_resp_search_mpse )
+        return;
+
     smtp_resp_search_mpse = new SearchTool();
 
     for (tmp = &smtp_resps[0]; tmp->name != NULL; tmp++)
@@ -1525,6 +1529,8 @@ bool Smtp::configure(SnortConfig*)
     if (config->decode_conf.get_file_depth() > -1)
         config->log_config.log_filename = 1;
 
+    SMTP_ResponseSearchInit();
+    SMTP_CommandSearchInit(config);
     return true;
 }
 
@@ -1608,7 +1614,6 @@ static void mod_dtor(Module* m)
 static void smtp_init()
 {
     SmtpFlowData::init();
-    SMTP_ResponseSearchInit();
 }
 
 static void smtp_term()
@@ -1628,7 +1633,6 @@ static Inspector* smtp_ctor(Module* m)
     while ( (cmd = mod->get_cmd(i++)) )
         smtp->ProcessSmtpCmdsList(cmd);
 
-    SMTP_CommandSearchInit(conf);
     return smtp;
 }
 

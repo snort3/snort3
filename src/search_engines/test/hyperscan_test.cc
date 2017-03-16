@@ -222,7 +222,7 @@ TEST(mpse_hs_match, single)
     hyperscan_setup(snort_conf);
 
     int state = 0;
-    CHECK(hs->search((uint8_t*)"foo", 3, match, nullptr, &state) == 0);
+    CHECK(hs->search((uint8_t*)"foo", 3, match, nullptr, &state) == 1);
     CHECK(hits == 1);
 }
 
@@ -237,8 +237,8 @@ TEST(mpse_hs_match, nocase)
     hyperscan_setup(snort_conf);
 
     int state = 0;
-    CHECK(hs->search((uint8_t*)"foo", 3, match, nullptr, &state) == 0);
-    CHECK(hs->search((uint8_t*)"fOo", 3, match, nullptr, &state) == 0);
+    CHECK(hs->search((uint8_t*)"foo", 3, match, nullptr, &state) == 1);
+    CHECK(hs->search((uint8_t*)"fOo", 3, match, nullptr, &state) == 1);
     CHECK(hits == 2);
 }
 
@@ -253,7 +253,7 @@ TEST(mpse_hs_match, other)
     hyperscan_setup(snort_conf);
 
     int state = 0;
-    CHECK(hs->search((uint8_t*)"foo", 3, match, nullptr, &state) == 0);
+    CHECK(hs->search((uint8_t*)"foo", 3, match, nullptr, &state) == 1);
     CHECK(hs->search((uint8_t*)"fOo", 3, match, nullptr, &state) == 0);
     CHECK(hits == 1);
 }
@@ -271,7 +271,7 @@ TEST(mpse_hs_match, multi)
     hyperscan_setup(snort_conf);
 
     int state = 0;
-    CHECK(hs->search((uint8_t*)"foo bar baz", 11, match, nullptr, &state) == 0);
+    CHECK(hs->search((uint8_t*)"foo bar baz", 11, match, nullptr, &state) == 3);
     CHECK(hits == 3);
 }
 
@@ -363,7 +363,7 @@ TEST(mpse_hs_multi, single)
     hyperscan_setup(snort_conf);
 
     int state = 0;
-    CHECK(hs1->search((uint8_t*)"fubar", 5, match, nullptr, &state) == 0);
+    CHECK(hs1->search((uint8_t*)"fubar", 5, match, nullptr, &state) == 1 );
     CHECK(hits == 1);
 
     CHECK(hs2->search((uint8_t*)"fubar", 5, match, nullptr, &state) == 0);

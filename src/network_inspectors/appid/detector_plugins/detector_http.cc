@@ -491,7 +491,7 @@ static int content_pattern_match(void* id, void*, int match_end_pos, void* data,
 
     cm = (MatchedPatterns*)snort_calloc(sizeof(MatchedPatterns));
     cm->mpattern = target;
-    cm->after_match_pos = match_end_pos + 1;
+    cm->after_match_pos = match_end_pos;
     cm->next = *matches;
     *matches = cm;
 
@@ -508,7 +508,7 @@ static int chp_pattern_match(void* id, void*, int match_end_pos, void* data, voi
 
     new_match = (MatchedCHPAction*)snort_calloc(sizeof(MatchedCHPAction));
     new_match->mpattern = target;
-    new_match->start_match_pos = match_end_pos + 1 - target->psize;
+    new_match->start_match_pos = match_end_pos - target->psize;
 
     // preserving order is required: sort by appIdInstance, then by precedence
     for (current_search = *matches, prev_search = nullptr;
@@ -588,7 +588,7 @@ static int http_pattern_match(void* id, void*, int match_end_pos, void* data, vo
     {
         cm = (MatchedPatterns*)snort_calloc(sizeof(MatchedPatterns));
         cm->mpattern = target;
-        cm->after_match_pos = match_end_pos + 1;
+        cm->after_match_pos = match_end_pos;
         cm->next = nullptr;
         *tmp = cm;
     }
@@ -787,7 +787,7 @@ static int http_field_pattern_match(void *id, void *, int match_end_pos, void *d
     FieldPatternData *pFieldData = (FieldPatternData*)data;
     FieldPattern *target = (FieldPattern  *)id;
     const uint8_t* p;
-    unsigned fieldOffset = match_end_pos + 1;
+    unsigned fieldOffset = match_end_pos;
     unsigned remainingLength = pFieldData->length - fieldOffset;
 
     if (!(p = (uint8_t*)service_strstr(&pFieldData->payload[fieldOffset], remainingLength, crlf, crlfLen)))

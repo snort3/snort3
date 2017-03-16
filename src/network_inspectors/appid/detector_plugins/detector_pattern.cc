@@ -581,7 +581,7 @@ static int pattern_match(void* id, void*, int match_end_pos, void* data, void*)
     PServiceMatch* sm;
 
     //  Ignore matches that don't start at the expected position.
-    if (pd->offset >= 0 && pd->offset != (match_end_pos + 1 - (int)pd->length))
+    if (pd->offset >= 0 && pd->offset != (match_end_pos - (int)pd->length))
         return 0;
 
     /*find if previously this PS was matched. */

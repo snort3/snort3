@@ -463,7 +463,7 @@ static int patternMatcherCallback(void* id, void*, int match_end_pos, void* data
     }
 
     newNode = (tMatchedPatternList*)snort_calloc(sizeof(tMatchedPatternList));
-    newNode->match_start_pos = match_end_pos + 1 - target->pattern.patternSize;
+    newNode->match_start_pos = match_end_pos - target->pattern.patternSize;
     newNode->patternNode = target;
 
     if (prevNode == nullptr)

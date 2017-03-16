@@ -483,7 +483,7 @@ static int mdns_pattern_match(void* id, void*, int match_end_pos, void* data, vo
         cm = (MatchedPatterns*)snort_calloc(sizeof(MatchedPatterns));
 
     cm->mpattern = target;
-    cm->match_start_pos = match_end_pos - target->length + 1;
+    cm->match_start_pos = match_end_pos - target->length;
     for (prevElement = nullptr, element = *matches;
         element;
         prevElement = element, element = element->next)

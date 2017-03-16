@@ -277,6 +277,7 @@ bool HttpInspect::configure(SnortConfig* sc)
     config->global = global->data;
 
     HttpInspectInitializeGlobalConfig(config->global);
+    HI_SearchInit();
 
     CheckGzipConfig(config->global);
     CheckMemcap(config->global);
@@ -373,7 +374,6 @@ static Module* hs_mod_ctor()
 static void hs_init()
 {
     HttpFlowData::init();
-    HI_SearchInit();
     hi_paf_init(0);  // FIXIT-L is cap needed?
     InitLookupTables();
     InitJSNormLookupTable();

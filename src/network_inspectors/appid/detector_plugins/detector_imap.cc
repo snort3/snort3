@@ -356,7 +356,7 @@ static int pattern_match(void* id, void*, int match_end_pos, void* data, void*)
     Client_App_Pattern* matching_pattern = (Client_App_Pattern*)id;
 
     //  Pattern must start at beginning of data. Otherwise, keep looking.
-    if ((int)matching_pattern->length != match_end_pos + 1)
+    if ((int)matching_pattern->length != match_end_pos)
         return 0;
 
     //  Found matching pattern.

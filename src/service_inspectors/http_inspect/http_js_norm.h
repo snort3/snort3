@@ -40,6 +40,7 @@ public:
     ~HttpJsNorm();
     void normalize(const Field& input, Field& output, HttpInfractions& infractions,
         HttpEventGen& events) const;
+    void configure();
 private:
     enum JsSearchId { JS_JAVASCRIPT };
     enum HtmlSearchId { HTML_JS, HTML_EMA, HTML_VB };
@@ -50,8 +51,8 @@ private:
     const int max_javascript_whitespaces;
     const HttpParaList::UriParam& uri_param;
 
-    SearchTool* const javascript_search_mpse;
-    SearchTool* const htmltype_search_mpse;
+    SearchTool* javascript_search_mpse;
+    SearchTool* htmltype_search_mpse;
 
     static int search_js_found(void*, void*, int index, void*, void*);
     static int search_html_found(void* id, void*, int, void*, void*);

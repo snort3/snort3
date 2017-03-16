@@ -47,12 +47,12 @@ FileCache* FileService::file_cache = nullptr;
 
 void FileService::init()
 {
-    MimeSession::init();
     FileFlows::init();
 }
 
 void FileService::post_init()
 {
+    MimeSession::init();
     FileConfig* conf = get_file_config();
 
     if (!conf)

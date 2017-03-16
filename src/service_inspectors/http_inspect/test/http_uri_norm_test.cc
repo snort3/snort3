@@ -46,6 +46,7 @@ HttpJsNorm::HttpJsNorm(int, const HttpParaList::UriParam& uri_param_) :
     max_javascript_whitespaces(0), uri_param(uri_param_), javascript_search_mpse(nullptr),
     htmltype_search_mpse(nullptr) {}
 HttpJsNorm::~HttpJsNorm() {}
+void HttpJsNorm::configure() {}
 
 TEST_GROUP(http_inspect_uri_norm)
 {

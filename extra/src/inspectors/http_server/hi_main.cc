@@ -1314,6 +1314,8 @@ int GetHttpHostnameData(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type
 void HI_SearchInit()
 {
     const HiSearchToken* tmp;
+    if ( hi_javascript_search_mpse )
+        return;
     hi_javascript_search_mpse = new SearchTool();
 
     for (tmp = &hi_patterns[0]; tmp->name != NULL; tmp++)

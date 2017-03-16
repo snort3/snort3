@@ -136,6 +136,8 @@ static POPData* SetNewPOPData(POP_PROTO_CONF* config, Packet* p)
 static void POP_SearchInit()
 {
     const POPToken* tmp;
+    if ( pop_cmd_search_mpse )
+        return;
     pop_cmd_search_mpse = new SearchTool();
 
     for (tmp = &pop_known_cmds[0]; tmp->name != NULL; tmp++)
@@ -685,6 +687,7 @@ bool Pop::configure(SnortConfig* )
     if (config->decode_conf.get_file_depth() > -1)
         config->log_config.log_filename = 1;
 
+    POP_SearchInit();
     return true;
 }
 
@@ -719,7 +722,6 @@ static void mod_dtor(Module* m)
 static void pop_init()
 {
     PopFlowData::init();
-    POP_SearchInit();
 }
 
 static void pop_term()

@@ -30,8 +30,22 @@ using namespace HttpEnums;
 
 HttpJsNorm::HttpJsNorm(int max_javascript_whitespaces_, const HttpParaList::UriParam& uri_param_) :
     max_javascript_whitespaces(max_javascript_whitespaces_), uri_param(uri_param_),
-    javascript_search_mpse(new SearchTool()), htmltype_search_mpse(new SearchTool())
+    javascript_search_mpse(nullptr), htmltype_search_mpse(nullptr) {}
+
+HttpJsNorm::~HttpJsNorm()
 {
+    delete javascript_search_mpse;
+    delete htmltype_search_mpse;
+}
+
+void HttpJsNorm::configure()
+{
+    if ( javascript_search_mpse || htmltype_search_mpse )
+        return;
+
+    javascript_search_mpse = new SearchTool();
+    htmltype_search_mpse = new SearchTool();
+
     javascript_search_mpse->add(script_start, script_start_length, JS_JAVASCRIPT);
     javascript_search_mpse->prep();
 
@@ -55,12 +69,6 @@ HttpJsNorm::HttpJsNorm(int max_javascript_whitespaces_, const HttpParaList::UriP
         htmltype_search_mpse->add(tmp->name, tmp->name_len, tmp->search_id);
     }
     htmltype_search_mpse->prep();
-}
-
-HttpJsNorm::~HttpJsNorm()
-{
-    delete javascript_search_mpse;
-    delete htmltype_search_mpse;
 }
 
 void HttpJsNorm::normalize(const Field& input, Field& output, HttpInfractions& infractions,

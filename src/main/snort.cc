@@ -298,6 +298,8 @@ void Snort::init(int argc, char** argv)
     /* Need to do this after dynamic detection stuff is initialized, too */
     IpsManager::global_init(snort_conf);
 
+    snort_conf->post_setup();
+
     MpseManager::activate_search_engine(
         snort_conf->fast_pattern_config->get_search_api(), snort_conf);
 
@@ -596,6 +598,8 @@ SnortConfig* Snort::get_reload_config(const char* fname)
             }
         }
     }
+
+    sc->post_setup();
 
     if ( sc->fast_pattern_config->get_search_api() !=
         snort_conf->fast_pattern_config->get_search_api() )

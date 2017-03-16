@@ -33,6 +33,7 @@
 #include "http_msg_request.h"
 #include "http_msg_status.h"
 #include "http_msg_trailer.h"
+#include "http_js_norm.h"
 
 using namespace HttpEnums;
 
@@ -51,6 +52,13 @@ HttpInspect::HttpInspect(const HttpParaList* params_) : params(params_)
     HttpTestManager::set_print_hex(params->print_hex);
     HttpTestManager::set_show_pegs(params->show_pegs);
 #endif
+}
+
+bool HttpInspect::configure(SnortConfig* )
+{
+    if (params->js_norm_param.normalize_javascript)
+        params->js_norm_param.js_norm->configure();
+    return true;
 }
 
 InspectSection HttpInspect::get_latest_is(const Packet* p)

@@ -24,6 +24,8 @@
 #include "search_tool.h"
 
 #include "managers/mpse_manager.h"
+#include "main/snort_config.h"
+#include "detection/fp_config.h"
 
 SearchTool::SearchTool() : SearchTool("ac_bnfa")
 {
@@ -31,7 +33,15 @@ SearchTool::SearchTool() : SearchTool("ac_bnfa")
 
 SearchTool::SearchTool(const char* method)
 {
-    mpse = MpseManager::get_search_engine(method);
+    if ( snort_conf->fast_pattern_config )
+    {
+        const struct MpseApi* mpse_api = snort_conf->fast_pattern_config->get_search_api();
+        mpse = MpseManager::get_search_engine(snort_conf, mpse_api, false, nullptr);
+        if ( mpse && snort_conf->fast_pattern_config->get_search_opt() )
+            mpse->set_opt(1);
+    }
+    else
+        mpse = MpseManager::get_search_engine(method);
     max_len = 0;
 }
 
@@ -57,7 +67,7 @@ void SearchTool::add(const uint8_t* pat, unsigned len, int id, bool no_case)
 
 void SearchTool::add(const uint8_t* pat, unsigned len, void* id, bool no_case)
 {
-    Mpse::PatternDescriptor desc(no_case);
+    Mpse::PatternDescriptor desc(no_case, false, true);
 
     if ( mpse )
         mpse->add_pattern(nullptr,  pat, len, desc, id);

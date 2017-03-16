@@ -118,7 +118,8 @@ public:
         if ( hs_db )
             hs_free_database(hs_db);
 
-        user_dtor();
+        if ( agent )
+            user_dtor();
     }
 
     int add_pattern(
@@ -155,6 +156,7 @@ private:
 
     static THREAD_LOCAL MpseMatch match_cb;
     static THREAD_LOCAL void* match_ctx;
+    static THREAD_LOCAL int nfound;
 
 public:
     static uint64_t instances;
@@ -163,6 +165,7 @@ public:
 
 THREAD_LOCAL MpseMatch HyperscanMpse::match_cb = nullptr;
 THREAD_LOCAL void* HyperscanMpse::match_ctx = nullptr;
+THREAD_LOCAL int HyperscanMpse::nfound = 0;
 
 uint64_t HyperscanMpse::instances = 0;
 uint64_t HyperscanMpse::patterns = 0;
@@ -235,7 +238,8 @@ int HyperscanMpse::prep_patterns(SnortConfig* sc)
         return -2;
     }
 
-    user_ctor(sc);
+    if ( agent )
+        user_ctor(sc);
     return 0;
 }
 
@@ -243,6 +247,7 @@ int HyperscanMpse::match(unsigned id, unsigned long long to)
 {
     assert(id < pvector.size());
     Pattern& p = pvector[id];
+    nfound++;
     return match_cb(p.user, p.user_tree, (int)to, match_ctx, p.user_list);
 }
 
@@ -258,6 +263,7 @@ int HyperscanMpse::_search(
     const uint8_t* buf, int n, MpseMatch mf, void* pv, int* current_state)
 {
     *current_state = 0;
+    nfound = 0;
 
     match_cb = mf;
     match_ctx = pv;
@@ -270,7 +276,7 @@ int HyperscanMpse::_search(
     hs_scan(hs_db, (char*)buf, n, 0, (hs_scratch_t*)ss->hyperscan_scratch,
         HyperscanMpse::match, this);
 
-    return 0;
+    return nfound;
 }
 
 //-------------------------------------------------------------------------

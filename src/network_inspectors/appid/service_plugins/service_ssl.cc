@@ -211,7 +211,7 @@ static int ssl_cert_pattern_match(void* id, void*, int match_end_pos, void* data
 
     cm = (MatchedSSLPatterns*)snort_alloc(sizeof(MatchedSSLPatterns));
     cm->mpattern = target;
-    cm->match_start_pos = match_end_pos + 1 - target->pattern_size;
+    cm->match_start_pos = match_end_pos - target->pattern_size;
     cm->next = *matches;
     *matches = cm;
 

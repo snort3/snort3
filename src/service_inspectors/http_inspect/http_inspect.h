@@ -43,7 +43,7 @@ public:
     bool get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b) override;
     bool http_get_buf(unsigned id, uint64_t sub_id, uint64_t form, Packet* p, InspectionBuffer& b);
     bool get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b) override;
-    bool configure(SnortConfig*) override { return true; }
+    bool configure(SnortConfig*) override;
     void show(SnortConfig*) override { LogMessage("HttpInspect\n"); }
     void eval(Packet*) override { }
     void clear(Packet* p) override;

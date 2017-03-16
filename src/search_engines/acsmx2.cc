@@ -1893,7 +1893,7 @@ int acsm_search_nfa(
         mlist = MatchList[state];
         if (mlist)
         {
-            index = T - Tx;
+            index = T - Tx + 1;
             nfound++;
             if (match (mlist->udata, mlist->rule_option_tree, index, context, mlist->neg_list) > 0)
             {

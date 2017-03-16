@@ -333,7 +333,7 @@ static int pop3_pattern_match(void* id, void*, int match_end_pos, void* data, vo
 {
     Client_App_Pattern* matching_pattern = (Client_App_Pattern*)id;
 
-    if ((int)matching_pattern->length != match_end_pos + 1)
+    if ((int)matching_pattern->length != match_end_pos)
         return 0;
     Client_App_Pattern** pcmd = (Client_App_Pattern**)data;
     *pcmd = matching_pattern;
