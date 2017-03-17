@@ -181,7 +181,7 @@ void CallAlertFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
 
 #if 0
     // FIXIT-M this should be a generic feature of otn
-    if ( otn->sigInfo.generator != GENERATOR_SPP_REPUTATION )
+    if ( otn->sigInfo.gid != GENERATOR_SPP_REPUTATION )
     {
         /* Don't include IP Reputation events in count */
         pc.alert_pkts++;

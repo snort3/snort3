@@ -76,7 +76,7 @@ typedef struct
     const char* ip;
     int expect;
     int create;
-    void* rule;
+    THD_NODE* rule;
 } ThreshData;
 
 typedef struct
@@ -830,7 +830,7 @@ static int RuleCheck(int i)
     return 0;
 }
 
-static int EventTest(EventData* p, void* rule)
+static int EventTest(EventData* p, THD_NODE* rule)
 {
     // now is a float to clarify the impact of
     // just using truncated seconds on thresholds
@@ -843,8 +843,7 @@ static int EventTest(EventData* p, void* rule)
 
     if ( rule )
     {
-        status = sfthd_test_rule(
-            dThd, (THD_NODE*)rule, &sip, &dip, curtime);
+        status = sfthd_test_rule(dThd, rule, &sip, &dip, curtime);
     }
     else
     {
@@ -858,7 +857,7 @@ static int EventTest(EventData* p, void* rule)
 static int EventCheck(int i)
 {
     EventData* p = evData + i;
-    int status = EventTest(p, NULL);
+    int status = EventTest(p, nullptr);
 
     if ( p->expect == status )
         return 1;
@@ -883,7 +882,7 @@ static int IsSuppress(unsigned gid, unsigned sid)
 static int CapCheck(int i)
 {
     EventData* p = evData + i;
-    int status = EventTest(p, NULL);
+    int status = EventTest(p, nullptr);
 
     // suppression not affected by ip nodes limit
     int expect = IsSuppress(p->gid, p->sid) ? p->expect : LOG_OK;
@@ -893,20 +892,21 @@ static int CapCheck(int i)
 
     printf("cap[%u](%u,%u): exp %d, got %d\n",
         p->seq, p->gid, p->sid, expect, status);
+
     return 0;
 }
 
 static int PacketCheck(int i)
 {
     EventData* p = pktData + i;
-    void* pv = ruleData[p->sid].rule;
-    int status = EventTest(p, pv);
+    int status = EventTest(p, ruleData[p->sid].rule);
 
     if ( p->expect == status )
         return 1;
 
     printf("packet[%u](%u,%u): exp %d, got %d\n",
         p->seq, p->gid, p->sid, p->expect, status);
+
     return 0;
 }
 

@@ -119,9 +119,7 @@ int detection_option_node_evaluate(
 void DetectionHashTableFree(SFXHASH*);
 void DetectionTreeHashTableFree(SFXHASH*);
 
-#ifdef DEBUG_OPTION_TREE
 void print_option_tree(detection_option_tree_node_t*, int level);
-#endif
 void detection_option_tree_update_otn_stats(SFXHASH*);
 
 detection_option_tree_root_t* new_root(OptTreeNode*);

@@ -47,8 +47,8 @@ SO_PUBLIC const SnortEvent* get_event()
 {
     assert(event);
 
-    lua_event.gid = event->sig_info->generator;
-    lua_event.sid = event->sig_info->id;
+    lua_event.gid = event->sig_info->gid;
+    lua_event.sid = event->sig_info->sid;
     lua_event.rev = event->sig_info->rev;
 
     lua_event.event_id = event->event_id;

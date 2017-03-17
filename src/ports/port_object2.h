@@ -35,24 +35,23 @@ struct PortObject;
 struct PortObject2
 {
     // FIXIT-L convert char* to C++ string
+    // prefix of this struct must match first 3 items in PortObject
     char* name;                 /* user name */
     int id;                     /* internal tracking - compiling sets this value */
 
     SF_LIST* item_list;         /* list of port and port-range items */
     SFGHASH* rule_hash;         /* hash of rule (rule-indexes) in use */
 
-    int port_cnt;               /* count of ports using this object */
     PortBitSet* port_list;      /* for collecting ports that use this object */
+    struct PortGroup* group;    /* PortGroup based on rule_hash  */
 
-    // FIXIT-L convert from void* to PortGroup* and
-    // call dtor instead of needing free func
-    void* data;                 /* user data, PortGroup based on rule_hash  */
-    void (* data_free)(void*);
+    int port_cnt;               /* count of ports using this object */
 };
 
 PortObject2* PortObject2New(int nrules /*guess at this */);
-void PortObject2Free(void* p);
-PortObject2* PortObject2Dup(PortObject* po);
+void PortObject2Free(PortObject2*);
+void PortObject2Finalize(PortObject2*);
+PortObject2* PortObject2Dup(PortObject*);
 
 typedef void (*PortObjectIterator)(int port, void*);
 void PortObject2Iterate(PortObject2*, PortObjectIterator, void*);

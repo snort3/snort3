@@ -86,16 +86,6 @@ uint32_t SnortConfig::warning_flags = 0;
 // private implementation
 //-------------------------------------------------------------------------
 
-static void FreeRuleStateList(RuleState* head)
-{
-    while ( head )
-    {
-        RuleState* tmp = head;
-        head = head->next;
-        snort_free(tmp);
-    }
-}
-
 static void FreeClassifications(ClassType* head)
 {
     while ( head )
@@ -212,7 +202,7 @@ SnortConfig::SnortConfig()
 
 SnortConfig::~SnortConfig()
 {
-    FreeRuleStateList(rule_state_list);
+    free_rule_state_list();
     FreeClassifications(classifications);
     FreeReferences(references);
 
@@ -942,5 +932,18 @@ void SnortConfig::enable_syslog()
 
     logging_flags |= LOGGING_FLAG__SYSLOG;
     syslog_configured = true;
+}
+
+void SnortConfig::free_rule_state_list()
+{
+    RuleState* head = rule_state_list;
+
+    while ( head )
+    {
+        RuleState* tmp = head;
+        head = head->next;
+        snort_free(tmp);
+    }
+    rule_state_list = nullptr;
 }
 

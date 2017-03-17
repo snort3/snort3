@@ -119,9 +119,10 @@ static void get_alert_pkt(
     // FIXIT-L minimize or eliminate memset
     memset((char*)&us.alert,0,sizeof(us.alert));
 
-    us.alert.gid = event->sig_info->generator;
-    us.alert.sid = event->sig_info->id;
+    us.alert.gid = event->sig_info->gid;
+    us.alert.sid = event->sig_info->sid;
     us.alert.rev = event->sig_info->rev;
+
     us.alert.class_id = event->sig_info->class_id;
     us.alert.priority = event->sig_info->priority;
 

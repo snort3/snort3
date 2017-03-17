@@ -107,8 +107,8 @@ int RateFilter_Test(
     const OptTreeNode* otn,
     Packet* p)
 {
-    unsigned gid = otn->sigInfo.generator;
-    unsigned sid = otn->sigInfo.id;
+    unsigned gid = otn->sigInfo.gid;
+    unsigned sid = otn->sigInfo.sid;
 
     const SfIp* sip;
     const SfIp* dip;

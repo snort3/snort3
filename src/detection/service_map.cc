@@ -99,10 +99,13 @@ void ServiceMapFree(srmm_table_t* table)
 // service pg stuff
 //-------------------------------------------------------------------------
 
+static void delete_pg(void* pv)
+{ PortGroup::free((PortGroup*)pv); }
+
 static SFGHASH* alloc_spgmm()
 {
     // 1000 rows, ascii key
-    SFGHASH* p = sfghash_new(1000, 0, 0, fpDeletePortGroup);
+    SFGHASH* p = sfghash_new(1000, 0, 0, delete_pg);
     return p;
 }
 
@@ -156,7 +159,7 @@ void ServicePortGroupMapFree(srmm_table_t* table)
  * otn - rule - may be content,-no-content, or uri-content
  *
  */
-static void ServiceMapAddOtnRaw(SFGHASH* table, char* servicename, OptTreeNode* otn)
+static void ServiceMapAddOtnRaw(SFGHASH* table, const char* servicename, OptTreeNode* otn)
 {
     SF_LIST* list;
 
@@ -185,13 +188,10 @@ static void ServiceMapAddOtnRaw(SFGHASH* table, char* servicename, OptTreeNode* 
  *  each service map maintains a list of otn's for each service it maps to a
  *  service name.
  */
-static int ServiceMapAddOtn(srmm_table_t* srmm, int proto, char* servicename, OptTreeNode* otn)
+static int ServiceMapAddOtn(
+    srmm_table_t* srmm, int proto, const char* servicename, OptTreeNode* otn)
 {
-    if ( !servicename )
-        return -1;
-
-    if ( !otn )
-        return -1;
+    assert(servicename and otn);
 
     if ( proto > SNORT_PROTO_USER )
         proto = SNORT_PROTO_USER;
@@ -199,17 +199,11 @@ static int ServiceMapAddOtn(srmm_table_t* srmm, int proto, char* servicename, Op
     SFGHASH* to_srv = srmm->to_srv[proto];
     SFGHASH* to_cli = srmm->to_cli[proto];
 
-    if ( OtnFlowFromClient(otn) )
-        ServiceMapAddOtnRaw(to_srv, servicename, otn);
-
-    else if ( OtnFlowFromServer(otn) )
+    if ( !OtnFlowFromClient(otn) )
         ServiceMapAddOtnRaw(to_cli, servicename, otn);
 
-    else /* else add to both sides */
-    {
+    if ( !OtnFlowFromServer(otn) )
         ServiceMapAddOtnRaw(to_srv, servicename, otn);
-        ServiceMapAddOtnRaw(to_cli, servicename, otn);
-    }
 
     return 0;
 }
@@ -267,8 +261,9 @@ int fpCreateServiceMaps(SnortConfig* sc)
 
                 for (svc_idx = 0; svc_idx < otn->sigInfo.num_services; svc_idx++)
                 {
-                    if (ServiceMapAddOtn(sc->srmmTable, rtn->proto,
-                        otn->sigInfo.services[svc_idx].service, otn))
+                    const char* svc = otn->sigInfo.services[svc_idx].service;
+
+                    if ( ServiceMapAddOtn(sc->srmmTable, rtn->proto, svc, otn) )
                         return -1;
                 }
             }
@@ -310,21 +305,18 @@ PortGroup* sopg_table_t::get_port_group(
 
 bool sopg_table_t::set_user_mode()
 {
-    PortGroupVector& v1 = to_srv[SNORT_PROTO_USER];
-
-    for ( unsigned i = 0; i < v1.size(); ++i )
+    for ( auto* p : to_srv[SNORT_PROTO_USER] )
     {
-        if ( v1[i] )
+        if ( p )
         {
             user_mode = true;
             return true;
         }
     }
-    v1 = to_cli[SNORT_PROTO_USER];
 
-    for ( unsigned i = 0; i < v1.size(); ++i )
+    for ( auto* p : to_cli[SNORT_PROTO_USER] )
     {
-        if ( v1[i] )
+        if ( p )
         {
             user_mode = true;
             break;

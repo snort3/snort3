@@ -170,8 +170,8 @@ void FullLogger::alert(Packet* p, const char* msg, Event* event)
         if (event != NULL)
         {
             TextLog_Print(full_log, "[%lu:%lu:%lu] ",
-                (unsigned long)event->sig_info->generator,
-                (unsigned long)event->sig_info->id,
+                (unsigned long)event->sig_info->gid,
+                (unsigned long)event->sig_info->sid,
                 (unsigned long)event->sig_info->rev);
         }
 

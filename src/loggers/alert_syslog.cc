@@ -203,8 +203,8 @@ static void AlertSyslog(
         {
             SnortSnprintfAppend(event_string, sizeof(event_string),
                 "[%lu:%lu:%lu] ",
-                (unsigned long)event->sig_info->generator,
-                (unsigned long)event->sig_info->id,
+                (unsigned long)event->sig_info->gid,
+                (unsigned long)event->sig_info->sid,
                 (unsigned long)event->sig_info->rev);
         }
 
@@ -215,12 +215,12 @@ static void AlertSyslog(
 
         if ( event )
         {
-            if ((event->sig_info->classType != NULL)
-                && (event->sig_info->classType->name != NULL))
+            if ((event->sig_info->class_type != NULL)
+                && (event->sig_info->class_type->name != NULL))
             {
                 SnortSnprintfAppend(event_string, sizeof(event_string),
                     "[Classification: %s] ",
-                    event->sig_info->classType->name);
+                    event->sig_info->class_type->name);
             }
 
             if (event->sig_info->priority != 0)

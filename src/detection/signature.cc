@@ -22,6 +22,8 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
+
 #include "signature.h"
 
 #include "log/messages.h"
@@ -220,28 +222,25 @@ ClassType* ClassTypeLookupById(SnortConfig* sc, int id)
     return node;
 }
 
+/***************** End of Class/Priority Implementation ***********************/
+
 void OtnRemove(SFGHASH* otn_map, OptTreeNode* otn)
 {
+    assert(otn_map and otn);
+
     OtnKey key;
+    key.gid = otn->sigInfo.gid;
+    key.sid = otn->sigInfo.sid;
 
-    if (otn == NULL)
-        return;
-
-    key.gid = otn->sigInfo.generator;
-    key.sid = otn->sigInfo.id;
-
-    if (otn_map != NULL)
-        sfghash_remove(otn_map, &key);
+    sfghash_remove(otn_map, &key);
 }
 
 void OtnFree(void* data)
 {
-    OptTreeNode* otn = (OptTreeNode*)data;
-    unsigned int svc_idx;
-
-    if ( !otn )
+    if ( !data )
         return;
 
+    OptTreeNode* otn = (OptTreeNode*)data;
     OptFpList* opt_func = otn->opt_func;
 
     while ( opt_func )
@@ -256,7 +255,7 @@ void OtnFree(void* data)
         if (!otn->generated)
             snort_free(otn->sigInfo.message);
     }
-    for (svc_idx = 0; svc_idx < otn->sigInfo.num_services; svc_idx++)
+    for (unsigned svc_idx = 0; svc_idx < otn->sigInfo.num_services; svc_idx++)
     {
         if (otn->sigInfo.services[svc_idx].service)
             snort_free(otn->sigInfo.services[svc_idx].service);
@@ -310,57 +309,37 @@ SFGHASH* OtnLookupNew()
 
 void OtnLookupAdd(SFGHASH* otn_map, OptTreeNode* otn)
 {
-    int status;
-    OtnKey key;
+    assert(otn_map);
 
-    if (otn_map == NULL)
+    OtnKey key;
+    key.gid = otn->sigInfo.gid;
+    key.sid = otn->sigInfo.sid;
+
+    int status = sfghash_add(otn_map, &key, otn);
+
+    if ( status == SFGHASH_OK )
         return;
 
-    key.gid = otn->sigInfo.generator;
-    key.sid = otn->sigInfo.id;
-
-    status = sfghash_add(otn_map, &key, otn);
-
-    switch (status)
-    {
-    case SFGHASH_OK:
-        /* otn was inserted successfully */
-        break;
-
-    case SFGHASH_INTABLE:
-        ParseError("duplicate rule with same gid (%u) and sid (%u)",
-            key.gid, key.sid);
-        break;
-
-    default:
-        FatalError("%s(%d): OtnLookupAdd() - unexpected return value "
-            "from sfghash_add().\n", __FILE__, __LINE__);
-    }
+    assert(status == SFGHASH_INTABLE);
+    ParseError("duplicate rule with same gid (%u) and sid (%u)", key.gid, key.sid);
 }
 
 OptTreeNode* OtnLookup(SFGHASH* otn_map, uint32_t gid, uint32_t sid)
 {
-    OptTreeNode* otn;
+    assert(otn_map);
+
     OtnKey key;
-
-    if (otn_map == NULL)
-        return NULL;
-
     key.gid = gid;
     key.sid = sid;
 
-    otn = (OptTreeNode*)sfghash_find(otn_map, &key);
+    OptTreeNode* otn = (OptTreeNode*)sfghash_find(otn_map, &key);
 
     return otn;
 }
 
 void OtnLookupFree(SFGHASH* otn_map)
 {
-    if (otn_map == NULL)
-        return;
-
-    sfghash_delete(otn_map);
+    if ( otn_map )
+        sfghash_delete(otn_map);
 }
-
-/***************** End of Class/Priority Implementation ***********************/
 

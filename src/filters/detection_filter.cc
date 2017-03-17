@@ -75,7 +75,7 @@ void detection_filter_reset_active()
     sfxhash_make_empty(detection_filter_hash);
 }
 
-void* detection_filter_create(DetectionFilterConfig* df_config, THDX_STRUCT* thdx)
+THD_NODE* detection_filter_create(DetectionFilterConfig* df_config, THDX_STRUCT* thdx)
 {
     if (df_config == NULL)
         return NULL;

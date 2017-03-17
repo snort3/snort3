@@ -86,9 +86,7 @@ static int finalize_detection_option_tree(SnortConfig* sc, detection_option_tree
             free_detection_option_tree(node);
             root->children[i] = (detection_option_tree_node_t*)dup_node;
         }
-#ifdef DEBUG_OPTION_TREE
         print_option_tree(root->children[i], 0);
-#endif
     }
 
     return 0;
@@ -106,8 +104,6 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree)
 
     detection_option_tree_root_t* root = (detection_option_tree_root_t*)*existing_tree;
 
-    OptFpList* opt_fp = otn->opt_func;
-
     if (!root->children)
     {
         root->num_children++;
@@ -117,6 +113,7 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree)
 
     int i = 0;
     child = root->children[i];
+    OptFpList* opt_fp = otn->opt_func;
 
     /* Build out sub-nodes for each option in the OTN fp list */
     while (opt_fp)
@@ -310,8 +307,7 @@ static void neg_list_free(void** list)
 
 static int pmx_create_tree(SnortConfig* sc, void* id, void** existing_tree)
 {
-    if (!existing_tree)
-        return -1;
+    assert(existing_tree);
 
     if (!id)
     {
@@ -509,30 +505,28 @@ static int fpAddPortGroupRule(
 
 /*
  * Original PortRuleMaps for each protocol requires creating the following structures.
- *          -pcrm.h
- *          PORT_RULE_MAP -> srcPortGroup,dstPortGroup,genericPortGroup
- *          PortGroup    -> pgPatData, pgPatDataUri (acsm objects), (also rule_node lists 1/rule, not neeed)
- *                           each rule content added to an acsm object has a PMX data ptr associated with it.
- *          RULE_NODE     -> iRuleNodeID (used for bitmap object index)
  *
- *          -fpcreate.h
- *          PMX   -> RULE_NODE(->otn), PatternMatchData
+ * PORT_RULE_MAP -> srcPortGroup,dstPortGroup,genericPortGroup
+ * PortGroup     -> pgPatData, pgPatDataUri (acsm objects), (also rule_node lists 1/rule,
+ *                  not neeed).  each rule content added to an acsm object has a PMX data ptr
+ *                  associated with it.
+ * RULE_NODE     -> iRuleNodeID (used for bitmap object index)
+ * PMX           -> RULE_NODE(->otn), PatternMatchData
  *
- *  PortList model supports the same structures except:
+ * PortList model supports the same structures except:
  *
- *          -pcrm.h
- *          PortGroup    -> no rule_node lists needed, PortObjects maintain a list of rules used
+ * PortGroup    -> no rule_node lists needed, PortObjects maintain a list of rules used
  *
- *  Generation of PortRuleMaps and data is done differently.
+ * Generation of PortRuleMaps and data is done differently.
  *
- *    1) Build tcp/udp/icmp/ip src and dst PortGroup objects based on the PortList Objects rules.
+ * 1) Build tcp/udp/icmp/ip src and dst PortGroup objects based on the PortList Objects rules.
  *
- *    2) For each protocols PortList objects walk it's ports and assign the PORT_RULE_MAP src and dst
- *         PortGroup[port] array pointers to that PortList objects PortGroup.
+ * 2) For each protocols PortList objects walk it's ports and assign the PORT_RULE_MAP src and
+ *    dst PortGroup[port] array pointers to that PortList objects PortGroup.
  *
- *    Implementation:
+ * Implementation:
  *
- *    Each PortList Object will be translated into a PortGroup, than pointed to by the
+ *    Each PortList Object will be translated into a PortGroup, then pointed to by the
  *    PortGroup array in the PORT_RULE_MAP for the procotocol
  *
  *    protocol = tcp, udp, ip, icmp - one port_rule_map for each of these protocols
@@ -592,7 +586,7 @@ static int fpCreateInitRuleMap(
     PORT_RULE_MAP* prm, PortTable* src, PortTable* dst, PortObject* any)
 {
     /* setup the any-port content port group */
-    prm->prmGeneric =(PortGroup*)any->data;
+    prm->prmGeneric = any->group;
 
     /* all rules that are any any some may not be content ? */
     prm->prmNumGenericRules = any->rule_list->count;
@@ -604,14 +598,15 @@ static int fpCreateInitRuleMap(
     prm->prmNumDstGroups = 0;
 
     /* Process src PORT groups */
-    if (src )
+    if ( src )
+    {
         for ( SFGHASH_NODE* node=sfghash_findfirst(src->pt_mpxo_hash);
             node;
             node=sfghash_findnext(src->pt_mpxo_hash) )
         {
             PortObject2* po = (PortObject2*)node->data;
 
-            if ( !po or !po->data )
+            if ( !po or !po->group )
                 continue;
 
             /* Add up the total src rules */
@@ -621,19 +616,21 @@ static int fpCreateInitRuleMap(
             prm->prmNumSrcGroups++;
 
             /* Add this port group to the src table at each port that uses it */
-            PortIteratorData data(prm->prmSrcPort, (PortGroup*)po->data);
-            PortObject2Iterate(po, PortIteratorData::set, &data);
+            PortIteratorData pit(prm->prmSrcPort, po->group);
+            PortObject2Iterate(po, PortIteratorData::set, &pit);
         }
+    }
 
     /* process destination port groups */
     if ( dst )
+    {
         for ( SFGHASH_NODE* node=sfghash_findfirst(dst->pt_mpxo_hash);
             node;
             node=sfghash_findnext(dst->pt_mpxo_hash) )
         {
             PortObject2* po = (PortObject2*)node->data;
 
-            if ( !po or !po->data )
+            if ( !po or !po->group )
                 continue;
 
             /* Add up the total src rules */
@@ -643,9 +640,10 @@ static int fpCreateInitRuleMap(
             prm->prmNumDstGroups++;
 
             /* Add this port group to the src table at each port that uses it */
-            PortIteratorData data(prm->prmDstPort, (PortGroup*)po->data);
-            PortObject2Iterate(po, PortIteratorData::set, &data);
+            PortIteratorData pit(prm->prmDstPort, po->group);
+            PortObject2Iterate(po, PortIteratorData::set, &pit);
         }
+    }
 
     return 0;
 }
@@ -655,26 +653,21 @@ static int fpCreateInitRuleMap(
  */
 static int fpCreateRuleMaps(SnortConfig* sc, RulePortTables* p)
 {
-    if ( !(sc->prmIpRTNX = prmNewMap()) )
-        return 1;
+    sc->prmIpRTNX = prmNewMap();
+    sc->prmIcmpRTNX = prmNewMap();
+    sc->prmTcpRTNX = prmNewMap();
+    sc->prmUdpRTNX = prmNewMap();
 
     if (fpCreateInitRuleMap(sc->prmIpRTNX, p->ip.src, p->ip.dst, p->ip.any))
         return -1;
 
-    if ( !(sc->prmIcmpRTNX = prmNewMap()) )
-        return 1;
-
     if (fpCreateInitRuleMap(sc->prmIcmpRTNX, p->icmp.src, p->icmp.dst, p->icmp.any))
         return -1;
 
-    if ( !(sc->prmTcpRTNX = prmNewMap()) )
-        return 1;
 
     if (fpCreateInitRuleMap(sc->prmTcpRTNX, p->tcp.src, p->tcp.dst, p->tcp.any))
         return -1;
 
-    if ( !(sc->prmUdpRTNX = prmNewMap()) )
-        return -1;
 
     if (fpCreateInitRuleMap(sc->prmUdpRTNX, p->udp.src, p->udp.dst, p->udp.any))
         return -1;
@@ -813,28 +806,10 @@ static void fpPortGroupPrintRuleCount(PortGroup* pg, const char* what)
         LogMessage("\tNo content: %u\n", pg->nfp_rule_count);
 }
 
-static void fpDeletePMX(void* data)
+static void fpDeletePMX(void* pv)
 {
-    if ( data )
-        snort_free(data);
-}
-
-void fpDeletePortGroup(void* data)
-{
-    PortGroup* pg = (PortGroup*)data;
-    pg->delete_nfp_rules();
-
-    for (int i = PM_TYPE_PKT; i < PM_TYPE_MAX; i++)
-    {
-        if (pg->mpse[i] != NULL)
-        {
-            MpseManager::delete_search_engine(pg->mpse[i]);
-            pg->mpse[i] = NULL;
-        }
-    }
-
-    free_detection_option_root(&pg->nfp_tree);
-    snort_free(pg);
+    if ( pv )
+        snort_free(pv);
 }
 
 /*
@@ -858,7 +833,7 @@ static int fpCreatePortObject2PortGroup(
     if (po == NULL)
         return 0;
 
-    po->data = nullptr;
+    po->group = nullptr;
 
     if (fp->get_debug_print_rule_group_build_details())
         PortObject2PrintPorts(po);
@@ -868,7 +843,7 @@ static int fpCreatePortObject2PortGroup(
         return 0;
 
     /* create a port_group */
-    pg = (PortGroup*)snort_calloc(sizeof(PortGroup));
+    pg = PortGroup::alloc();
     s_group = "port";
 
     /*
@@ -925,9 +900,7 @@ static int fpCreatePortObject2PortGroup(
     if (fpFinishPortGroup(sc, pg, fp) != 0)
         return 0;
 
-    po->data = pg;
-    po->data_free = fpDeletePortGroup;
-
+    po->group = pg;
     return 0;
 }
 
@@ -944,9 +917,9 @@ static int fpCreatePortTablePortGroups(
     if (fp->get_debug_print_rule_group_build_details())
         LogMessage("%d Port Groups in Port Table\n",p->pt_mpo_hash->count);
 
-    for (node=sfghash_findfirst(p->pt_mpo_hash); // p->pt_mpxo_hash
+    for (node=sfghash_findfirst(p->pt_mpo_hash);
         node;
-        node=sfghash_findnext(p->pt_mpo_hash) ) // p->pt->mpxo_hash
+        node=sfghash_findnext(p->pt_mpo_hash) )
     {
         PortObject2* po = (PortObject2*)node->data;
 
@@ -977,8 +950,7 @@ static int fpCreatePortTablePortGroups(
  *  note: any ports are standard PortObjects not PortObject2s so we have to
  *  uprade them for the create port group function
  */
-static int fpCreatePortGroups(
-    SnortConfig* sc, RulePortTables* p)
+static int fpCreatePortGroups(SnortConfig* sc, RulePortTables* p)
 {
     PortObject2* po2, * add_any_any;
     FastPatternConfig* fp = sc->fast_pattern_config;
@@ -1019,9 +991,8 @@ static int fpCreatePortGroups(
         return -1;
     }
 
-    p->ip.any->data = po2->data;
-    p->ip.any->data_free = fpDeletePortGroup;
-    po2->data = nullptr;
+    p->ip.any->group = po2->group;
+    po2->group = nullptr;
     PortObject2Free(po2);
 
     /* ICMP */
@@ -1057,9 +1028,8 @@ static int fpCreatePortGroups(
         return -1;
     }
 
-    p->icmp.any->data = po2->data;
-    p->icmp.any->data_free = fpDeletePortGroup;
-    po2->data = nullptr;
+    p->icmp.any->group = po2->group;
+    po2->group = nullptr;
     PortObject2Free(po2);
 
     if ( !(po2 = PortObject2Dup(p->tcp.any)) )
@@ -1094,9 +1064,8 @@ static int fpCreatePortGroups(
         return -1;
     }
 
-    p->tcp.any->data = po2->data;
-    p->tcp.any->data_free = fpDeletePortGroup;
-    po2->data = nullptr;
+    p->tcp.any->group = po2->group;
+    po2->group = nullptr;
     PortObject2Free(po2);
 
     /* UDP */
@@ -1132,9 +1101,8 @@ static int fpCreatePortGroups(
         return -1;
     }
 
-    p->udp.any->data = po2->data;
-    p->udp.any->data_free = fpDeletePortGroup;
-    po2->data = nullptr;
+    p->udp.any->group = po2->group;
+    po2->group = nullptr;
     PortObject2Free(po2);
 
     /* SVC */
@@ -1150,9 +1118,8 @@ static int fpCreatePortGroups(
         return -1;
     }
 
-    p->svc_any->data = po2->data;
-    p->svc_any->data_free = fpDeletePortGroup;
-    po2->data = nullptr;
+    p->svc_any->group = po2->group;
+    po2->group = nullptr;
     PortObject2Free(po2);
 
     return 0;
@@ -1170,8 +1137,7 @@ static int fpCreatePortGroups(
 static void fpBuildServicePortGroupByServiceOtnList(
     SnortConfig* sc, SFGHASH* p, const char* srvc, SF_LIST* list, FastPatternConfig* fp)
 {
-    OptTreeNode* otn;
-    PortGroup* pg = (PortGroup*)snort_calloc(sizeof(PortGroup));
+    PortGroup* pg = PortGroup::alloc();
     s_group = srvc;
 
     /*
@@ -1180,9 +1146,9 @@ static void fpBuildServicePortGroupByServiceOtnList(
      */
     SF_LNODE* cursor;
 
-    for (otn = (OptTreeNode*)sflist_first(list, &cursor);
+    for ( OptTreeNode* otn = (OptTreeNode*)sflist_first(list, &cursor);
         otn;
-        otn = (OptTreeNode*)sflist_next(&cursor))
+        otn = (OptTreeNode*)sflist_next(&cursor) )
     {
         if (fpAddPortGroupRule(sc, pg, otn, fp, true) != 0)
             continue;
@@ -1199,7 +1165,7 @@ static void fpBuildServicePortGroupByServiceOtnList(
  * For each service we create a PortGroup based on the otn's defined to
  * be applicable to that service by the metadata option.
  *
- * Than we lookup the protocol/srvc oridinal in the target-based area
+ * Then we lookup the protocol/srvc oridinal in the target-based area
  * and assign the PortGroup for the srvc to it.
  *
  * spg - service port group (lookup should be by service id/tag)
@@ -1211,29 +1177,19 @@ static void fpBuildServicePortGroupByServiceOtnList(
 static void fpBuildServicePortGroups(
     SnortConfig* sc, SFGHASH* spg, PortGroupVector& sopg, SFGHASH* srm, FastPatternConfig* fp)
 {
-    SFGHASH_NODE* n;
-    const char* srvc;
-    SF_LIST* list;
-    PortGroup* pg;
-
-    for (n=sfghash_findfirst(srm);
+    for ( SFGHASH_NODE* n = sfghash_findfirst(srm);
         n;
         n=sfghash_findnext(srm) )
     {
-        list = (SF_LIST*)n->data;
+        SF_LIST* list = (SF_LIST*)n->data;
+        const char* srvc = (char*)n->key;
 
-        if (!list)
-            continue;
-
-        srvc = (char*)n->key;
-
-        if (!srvc)
-            continue;
+        assert(list and srvc);
 
         fpBuildServicePortGroupByServiceOtnList(sc, spg, srvc, list, fp);
 
         /* Add this PortGroup to the protocol-ordinal -> port_group table */
-        pg = (PortGroup*)sfghash_find(spg, srvc);
+        PortGroup* pg = (PortGroup*)sfghash_find(spg, srvc);
 
         if ( !pg )
         {
@@ -1285,7 +1241,7 @@ static void fpPrintRuleList(SF_LIST* list)
         otn;
         otn=(OptTreeNode*)sflist_next(&cursor) )
     {
-        LogMessage("|   %u:%u\n",otn->sigInfo.generator,otn->sigInfo.id);
+        LogMessage("|   %u:%u\n", otn->sigInfo.gid, otn->sigInfo.sid);
     }
 }
 
@@ -1424,9 +1380,10 @@ static void fp_sum_port_groups(PortTable* tab, unsigned c[PM_TYPE_MAX])
         node; node=sfghash_findnext(tab->pt_mpxo_hash) )
     {
         PortObject2* po = (PortObject2*)node->data;
-        PortGroup* pg = (PortGroup*)po->data;
-        fp_sum_port_groups(pg, c);
+        fp_sum_port_groups(po->group, c);
+        PortObject2Finalize(po);
     }
+    PortTableFinalize(tab);
 }
 
 static void fp_print_port_groups(RulePortTables* port_tables)
@@ -1437,19 +1394,31 @@ static void fp_print_port_groups(RulePortTables* port_tables)
 
     fp_sum_port_groups(port_tables->ip.src, src);
     fp_sum_port_groups(port_tables->ip.dst, dst);
-    fp_sum_port_groups((PortGroup*)port_tables->ip.any->data, any);
+    fp_sum_port_groups((PortGroup*)port_tables->ip.any->group, any);
+
+    PortObjectFinalize(port_tables->ip.any);
+    PortObjectFinalize(port_tables->ip.nfp);
 
     fp_sum_port_groups(port_tables->icmp.src, src);
     fp_sum_port_groups(port_tables->icmp.dst, dst);
-    fp_sum_port_groups((PortGroup*)port_tables->icmp.any->data, any);
+    fp_sum_port_groups((PortGroup*)port_tables->icmp.any->group, any);
+
+    PortObjectFinalize(port_tables->icmp.any);
+    PortObjectFinalize(port_tables->icmp.nfp);
 
     fp_sum_port_groups(port_tables->tcp.src, src);
     fp_sum_port_groups(port_tables->tcp.dst, dst);
-    fp_sum_port_groups((PortGroup*)port_tables->tcp.any->data, any);
+    fp_sum_port_groups((PortGroup*)port_tables->tcp.any->group, any);
+
+    PortObjectFinalize(port_tables->tcp.any);
+    PortObjectFinalize(port_tables->tcp.nfp);
 
     fp_sum_port_groups(port_tables->udp.src, src);
     fp_sum_port_groups(port_tables->udp.dst, dst);
-    fp_sum_port_groups((PortGroup*)port_tables->udp.any->data, any);
+    fp_sum_port_groups((PortGroup*)port_tables->udp.any->group, any);
+
+    PortObjectFinalize(port_tables->udp.any);
+    PortObjectFinalize(port_tables->udp.nfp);
 
     bool label = true;
 
@@ -1490,6 +1459,8 @@ static int fpCreateServicePortGroups(SnortConfig* sc)
     if (fp->get_debug_print_rule_group_build_details())
         fpPrintServicePortGroupSummary(sc, sc->spgmmTable);
 
+    ServiceMapFree(sc->srmmTable);
+    sc->srmmTable = nullptr;
     return 0;
 }
 
@@ -1585,8 +1556,6 @@ void fpDeleteFastPacketDetection(SnortConfig* sc)
     DetectionTreeHashTableFree(sc->detection_option_tree_hash_table);
 
     fpFreeRuleMaps(sc);
-
-    ServiceMapFree(sc->srmmTable);
     ServicePortGroupMapFree(sc->spgmmTable);
 
     if ( sc->sopgTable )
@@ -1596,7 +1565,7 @@ void fpDeleteFastPacketDetection(SnortConfig* sc)
 static void print_nfp_info(const char* group, const OptTreeNode* otn)
 {
     ParseWarning(WARN_RULES, "%s rule %u:%u:%u has no fast pattern",
-        group, otn->sigInfo.generator, otn->sigInfo.id, otn->sigInfo.rev);
+        group, otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev);
 }
 
 static void print_fp_info(
@@ -1619,7 +1588,7 @@ static void print_fp_info(
     opts += " )";
 
     LogMessage("FP %s %u:%u:%u %s[%d] = '%s' |%s| %s\n",
-        group, otn->sigInfo.generator, otn->sigInfo.id, otn->sigInfo.rev,
+        group, otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev,
         pm_type_strings[pmd->pm_type], pattern_length,
         txt.c_str(), hex.c_str(), opts.c_str());
 }

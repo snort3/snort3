@@ -256,7 +256,7 @@ static OptTreeNode* OptTreeNode_Search(uint32_t, uint32_t sid)
 
         if ( rtn and is_network_protocol(rtn->proto) )
         {
-            if (otn->sigInfo.id == sid)
+            if (otn->sigInfo.sid == sid)
                 return otn;
         }
     }
@@ -271,7 +271,7 @@ struct SnortActionRequest
 {
     uint32_t event_id;
     uint32_t tv_sec;
-    uint32_t generator;
+    uint32_t gid;
     uint32_t sid;
     uint32_t src_ip;
     uint32_t dest_ip;
@@ -292,8 +292,8 @@ static void load_sar(Packet* packet, Event* event, SnortActionRequest& sar)
     /* construct the action request */
     sar.event_id = event->event_id;
     sar.tv_sec = packet->pkth->ts.tv_sec;
-    sar.generator = event->sig_info->generator;
-    sar.sid = event->sig_info->id;
+    sar.gid = event->sig_info->gid;
+    sar.sid = event->sig_info->sid;
 
     // when ip6 is supported:
     // * suggest TLV format where T == family, L is implied by

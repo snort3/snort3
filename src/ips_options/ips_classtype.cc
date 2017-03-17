@@ -78,7 +78,7 @@ static void mod_dtor(Module* m)
 static IpsOption* classtype_ctor(Module* p, OptTreeNode* otn)
 {
     ClassTypeModule* m = (ClassTypeModule*)p;
-    otn->sigInfo.classType = m->type;
+    otn->sigInfo.class_type = m->type;
 
     if ( m->type )
     {

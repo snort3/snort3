@@ -76,11 +76,11 @@ void LogTimeStamp(TextLog* log, Packet* p)
  */
 void LogPriorityData(TextLog* log, const Event* e, bool doNewLine)
 {
-    if ((e->sig_info->classType != NULL)
-        && (e->sig_info->classType->name != NULL))
+    if ((e->sig_info->class_type != NULL)
+        && (e->sig_info->class_type->name != NULL))
     {
         TextLog_Print(log, "[Classification: %s] ",
-            e->sig_info->classType->name);
+            e->sig_info->class_type->name);
     }
 
     TextLog_Print(log, "[Priority: %d] ", e->sig_info->priority);

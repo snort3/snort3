@@ -230,8 +230,8 @@ static void _AlertIP4_v2(Packet* p, const char*, Unified2Config* config, Event* 
     alertdata.event_id = htonl(event->event_id);
     alertdata.event_second = htonl(event->ref_time.tv_sec);
     alertdata.event_microsecond = htonl(event->ref_time.tv_usec);
-    alertdata.generator_id = htonl(event->sig_info->generator);
-    alertdata.signature_id = htonl(event->sig_info->id);
+    alertdata.generator_id = htonl(event->sig_info->gid);
+    alertdata.signature_id = htonl(event->sig_info->sid);
     alertdata.signature_revision = htonl(event->sig_info->rev);
     alertdata.classification_id = htonl(event->sig_info->class_id);
     alertdata.priority_id = htonl(event->sig_info->priority);
@@ -320,8 +320,8 @@ static void _AlertIP6_v2(Packet* p, const char*, Unified2Config* config, Event* 
     alertdata.event_id = htonl(event->event_id);
     alertdata.event_second = htonl(event->ref_time.tv_sec);
     alertdata.event_microsecond = htonl(event->ref_time.tv_usec);
-    alertdata.generator_id = htonl(event->sig_info->generator);
-    alertdata.signature_id = htonl(event->sig_info->id);
+    alertdata.generator_id = htonl(event->sig_info->gid);
+    alertdata.signature_id = htonl(event->sig_info->sid);
     alertdata.signature_revision = htonl(event->sig_info->rev);
     alertdata.classification_id = htonl(event->sig_info->class_id);
     alertdata.priority_id = htonl(event->sig_info->priority);
@@ -916,7 +916,7 @@ void U2Logger::alert(Packet* p, const char* msg, Event* event)
 
     if ( p->flow )
         Stream::update_flow_alert(
-            p->flow, p, event->sig_info->generator, event->sig_info->id,
+            p->flow, p, event->sig_info->gid, event->sig_info->sid,
             event->event_id, event->ref_time.tv_sec);
 
     if ( p->xtradata_mask )

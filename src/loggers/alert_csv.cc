@@ -160,7 +160,7 @@ static void ff_eth_type(Args& a)
 static void ff_gid(Args& a)
 {
     if (a.event )
-        TextLog_Print(csv_log, "%u",  a.event->sig_info->generator);
+        TextLog_Print(csv_log, "%u",  a.event->sig_info->gid);
 }
 
 static void ff_icmp_code(Args& a)
@@ -233,13 +233,13 @@ static void ff_rev(Args& a)
 static void ff_rule(Args& a)
 {
     TextLog_Print(csv_log, "%u:%u:%u",
-        a.event->sig_info->generator, a.event->sig_info->id, a.event->sig_info->rev);
+        a.event->sig_info->gid, a.event->sig_info->sid, a.event->sig_info->rev);
 }
 
 static void ff_sid(Args& a)
 {
     if (a.event )
-        TextLog_Print(csv_log, "%u",  a.event->sig_info->id);
+        TextLog_Print(csv_log, "%u",  a.event->sig_info->sid);
 }
 
 static void ff_src_addr(Args& a)

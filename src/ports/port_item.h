@@ -47,9 +47,6 @@ struct PortObjectItem
 
     uint16_t hport;   /* hi port */
     uint16_t lport;   /* lo port */
-
-    uint16_t cur_port; /* internal - first/next */
-    uint16_t tmp;
 };
 
 PortObjectItem* PortObjectItemNew();

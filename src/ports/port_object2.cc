@@ -30,6 +30,7 @@
 #include "utils/util.h"
 #include "utils/util_cstring.h"
 
+#include "port_group.h"
 #include "port_item.h"
 #include "port_object.h"
 #include "port_utils.h"
@@ -105,9 +106,6 @@ static int* RuleHashToSortedArray(SFGHASH* rh)
 // PortObject2 - public
 //-------------------------------------------------------------------------
 
-/*
-    Create a new PortObject2
-*/
 PortObject2* PortObject2New(int nrules)
 {
     PortObject2* po = (PortObject2*)snort_calloc(sizeof(PortObject2));
@@ -134,15 +132,10 @@ PortObject2* PortObject2New(int nrules)
     return po;
 }
 
-/*
- *  Free the PortObject2
- */
-void PortObject2Free(void* pvoid)
+void PortObject2Free(PortObject2* po)
 {
-    PortObject2* po = (PortObject2*)pvoid;
     DEBUG_WRAP(static int pof2_cnt = 0; pof2_cnt++; );
-
-    DebugFormat(DEBUG_PORTLISTS,"PortObjectFree2-Cnt: %d ptr=%p\n",pof2_cnt,pvoid);
+    DebugFormat(DEBUG_PORTLISTS, "PortObjectFree2-Cnt: %d ptr=%p\n", pof2_cnt, (void*)po);
 
     if ( !po )
         return;
@@ -159,10 +152,19 @@ void PortObject2Free(void* pvoid)
     if (po->port_list)
         delete po->port_list;
 
-    if (po->data && po->data_free)
-        po->data_free(po->data);
+    if (po->group )
+        PortGroup::free(po->group);
 
     snort_free(po);
+}
+
+void PortObject2Finalize(PortObject2* po)
+{
+    sflist_free_all(po->item_list, snort_free);
+    po->item_list = nullptr;
+
+    sfghash_delete(po->rule_hash);
+    po->rule_hash = nullptr;
 }
 
 /*

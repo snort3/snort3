@@ -318,7 +318,7 @@ void Snort::init(int argc, char** argv)
     if ( !snort_conf->bpf_filter.empty() )
         LogMessage("Snort BPF option: %s\n", snort_conf->bpf_filter.c_str());
 
-    parser_term();
+    parser_term(snort_conf);
 }
 
 // this function should only include initialization that must be done as a
@@ -554,9 +554,9 @@ SnortConfig* Snort::get_reload_config(const char* fname)
 
     if ( ModuleManager::get_errors() || !sc->verify() )
     {
+        parser_term(sc);
         delete sc;
         reloading = false;
-        parser_term();
         return NULL;
     }
 
@@ -564,9 +564,9 @@ SnortConfig* Snort::get_reload_config(const char* fname)
 
     if ( !InspectorManager::configure(sc) )
     {
+        parser_term(sc);
         delete sc;
         reloading = false;
-        parser_term();
         return NULL;
     }
 
@@ -608,7 +608,7 @@ SnortConfig* Snort::get_reload_config(const char* fname)
     }
 
     reloading = false;
-    parser_term();
+    parser_term(sc);
 
     return sc;
 }

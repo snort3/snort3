@@ -57,16 +57,13 @@ struct IPSET
 };
 
 /*
-
   IP ADDRESS SET OBJECTS
-
 
    Snort Accepts:
 
     IP-Address		192.168.1.1
     IP-Address/MaskBits	192.168.1.0/24
     IP-Address/Mask		192.168.1.0/255.255.255.0
-
 
    These can all be handled via the CIDR block notation : IP/MaskBits
 

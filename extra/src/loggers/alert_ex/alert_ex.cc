@@ -101,8 +101,8 @@ void ExLogger::alert(Packet*, const char* msg, Event* e)
     else
         transform(s.begin(), s.end(), s.begin(), ::tolower);
 
-    cout << e->sig_info->generator << ":";
-    cout << e->sig_info->id << ":";
+    cout << e->sig_info->gid << ":";
+    cout << e->sig_info->sid << ":";
     cout << e->sig_info->rev << " ";
     cout << s << endl;
 }

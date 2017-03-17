@@ -101,8 +101,8 @@ static const luaL_Reg methods[] =
                 lua_newtable(L);
                 Lua::Table si_table(L, lua_gettop(L));
 
-                si_table.set_field("generator", si->generator);
-                si_table.set_field("id", si->id);
+                si_table.set_field("generator", si->gid);
+                si_table.set_field("id", si->sid);
                 si_table.set_field("rev", si->rev);
                 si_table.set_field("class_id", si->class_id);
                 si_table.set_field("priority", si->priority);
@@ -133,8 +133,8 @@ static const luaL_Reg methods[] =
                 Lua::ManageStack ms(L);
                 Lua::Table si_table(L, lua_gettop(L));
 
-                si_table.get_field("generator", si->generator);
-                si_table.get_field("id", si->id);
+                si_table.get_field("generator", si->gid);
+                si_table.get_field("id", si->sid);
                 si_table.get_field("rev", si->rev);
                 si_table.get_field("class_id", si->class_id);
                 si_table.get_field("priority", si->priority);

@@ -89,8 +89,7 @@ void EventTrace_Log(const Packet* p, const OptTreeNode* otn, int action)
 
     TextLog_Print(tlog,
         "\nEvt=%u, Gid=%u, Sid=%u, Rev=%u, Act=%s\n",
-        event_id, otn->sigInfo.generator,
-        otn->sigInfo.id, otn->sigInfo.rev, acts);
+        event_id, otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev, acts);
 
     TextLog_Print(tlog,
         "Pkt=%lu, Sec=%u.%6u, Len=%u, Cap=%u\n",

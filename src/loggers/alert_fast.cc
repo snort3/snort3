@@ -192,8 +192,8 @@ void FastLogger::alert(Packet* p, const char* msg, Event* event)
         if ( event )
         {
             TextLog_Print(fast_log, "[%lu:%lu:%lu] ",
-                (unsigned long)event->sig_info->generator,
-                (unsigned long)event->sig_info->id,
+                (unsigned long)event->sig_info->gid,
+                (unsigned long)event->sig_info->sid,
                 (unsigned long)event->sig_info->rev);
         }
 

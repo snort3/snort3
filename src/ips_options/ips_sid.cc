@@ -78,7 +78,7 @@ static void mod_dtor(Module* m)
 static IpsOption* sid_ctor(Module* p, OptTreeNode* otn)
 {
     SidModule* m = (SidModule*)p;
-    otn->sigInfo.id = m->sid;
+    otn->sigInfo.sid = m->sid;
     return nullptr;
 }
 

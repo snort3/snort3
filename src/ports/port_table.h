@@ -48,21 +48,9 @@ struct PortTable
     SF_LIST* pt_polist;
     int pt_poid;
 
-    /*
-    * Array of lists of PortObject pointers to unique PortObjects,
-    * the associated rule lists are stored in Data elements in rh,
-    * the keys are the address of the PortObjects
-    */
-    SF_LIST* pt_port_lists[SFPO_MAX_PORTS];
-
     /* Compiled / merged port object hash table */
     SFGHASH* pt_mpo_hash;
     SFGHASH* pt_mpxo_hash;
-
-    SF_LIST* pt_plx_list;
-
-    /*  a single rule list with all rules merged together */
-    SF_LIST* pt_merged_rule_list;
 
     /*
     * Final Port/Rule Groupings, one port object per port, or null
@@ -80,26 +68,25 @@ struct PortTable
 };
 
 PortTable* PortTableNew();
-void PortTableFree(PortTable* p);
+void PortTableFree(PortTable*);
+void PortTableFinalize(PortTable*);
 
-PortObject* PortTableFindInputPortObjectPorts(PortTable* pt, PortObject* po);
+PortObject* PortTableFindInputPortObjectPorts(PortTable*, PortObject*);
 
-int PortTableAddObject(PortTable* p, PortObject* po);
-int PortTableCompile(PortTable* P);
+int PortTableAddObject(PortTable*, PortObject*);
+int PortTableCompile(PortTable*);
 
-void PortTablePrintInputEx(PortTable* p,
-    void (* rule_index_map_print)(int index, char* buf, int bufsize) );
+typedef void (* rim_print_f)(int index, char* buf, int bufsize);
 
-int PortTablePrintCompiledEx(PortTable* p,
-    void (* rule_index_map_print)(int index, char* buf, int bufsize) );
+void PortTablePrintInputEx(PortTable*, rim_print_f);
+int PortTablePrintCompiledEx(PortTable*, rim_print_f);
 
-void PortTablePrintInput(PortTable* p);
-void PortTablePrintUserRules(PortTable* p);
-void PortTablePrintPortGroups(PortTable* p);
-void PortTablePrintPortPortObjects(PortTable* p);
+void PortTablePrintInput(PortTable*);
+void PortTablePrintUserRules(PortTable*);
+void PortTablePrintPortGroups(PortTable*);
 
-void RuleListSortUniq(SF_LIST* rl);
-void PortTableSortUniqRules(PortTable* p);
+void RuleListSortUniq(SF_LIST*);
+void PortTableSortUniqRules(PortTable*);
 
 #endif
 

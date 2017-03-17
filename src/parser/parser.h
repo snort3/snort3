@@ -25,7 +25,7 @@
 #include "main/policy.h"
 
 void parser_init();
-void parser_term();
+void parser_term(SnortConfig*);
 
 // line > 0 implies name is non-null
 void get_parse_location(const char*& name, unsigned& line);
@@ -60,25 +60,21 @@ int addRtnToOtn(struct OptTreeNode*, RuleTreeNode*, PolicyId);
 RuleTreeNode* deleteRtnFromOtn(struct OptTreeNode*);
 RuleTreeNode* deleteRtnFromOtn(struct OptTreeNode*, PolicyId);
 
-inline RuleTreeNode* getRtnFromOtn(
-    const struct OptTreeNode* otn, PolicyId policyId)
+inline RuleTreeNode* getRtnFromOtn(const struct OptTreeNode* otn, PolicyId policyId)
 {
     if (otn && otn->proto_nodes && (otn->proto_node_num > (unsigned)policyId))
     {
         return otn->proto_nodes[policyId];
     }
-
-    return NULL;
+    return nullptr;
 }
 
-inline RuleTreeNode* getRtnFromOtn(
-    const struct OptTreeNode* otn)
+inline RuleTreeNode* getRtnFromOtn(const struct OptTreeNode* otn)
 {
     return getRtnFromOtn(otn, get_ips_policy()->policy_id);
 }
 
-inline RuleTreeNode* getRuntimeRtnFromOtn(
-    const struct OptTreeNode* otn)
+inline RuleTreeNode* getRuntimeRtnFromOtn(const struct OptTreeNode* otn)
 {
     return getRtnFromOtn(otn);
 }

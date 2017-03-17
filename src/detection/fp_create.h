@@ -52,7 +52,5 @@ struct NCListNode
 int fpCreateFastPacketDetection(SnortConfig*);
 void fpDeleteFastPacketDetection(SnortConfig*);
 
-void fpDeletePortGroup(void*);
-
 #endif
 

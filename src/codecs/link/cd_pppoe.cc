@@ -47,7 +47,7 @@ struct PPPoEHdr
 // General PPPoEpkt module.
 //
 //      ***** NOTE: THE CODEC HAS A DIFFERENT NAME!
-//          * Additionally, this module is used for generator a rule stub ONLY!
+//          * Additionally, this module is used for generating a rule stub ONLY!
 //          * If you want to create a module for configuration, you must change the
 //          * names of the correct PPPoEpkt codec
 //-------------------------------------------------------------------------

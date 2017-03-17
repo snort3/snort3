@@ -137,8 +137,8 @@ void CodecLogger::log(Packet* p, const char* msg, Event* e)
     if (e != NULL)
     {
         TextLog_Print(test_file, "    gid:%lu    sid:%lu    rev:%lu\t",
-            (unsigned long)e->sig_info->generator,
-            (unsigned long)e->sig_info->id,
+            (unsigned long)e->sig_info->gid,
+            (unsigned long)e->sig_info->sid,
             (unsigned long)e->sig_info->rev);
     }
 

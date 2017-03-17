@@ -168,7 +168,7 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
         rateAction -= RULE_TYPE__MAX;
 
     // internal events are no-ops
-    if ( (rateAction < 0) && EventIsInternal(otn->sigInfo.generator) )
+    if ( (rateAction < 0) && EventIsInternal(otn->sigInfo.gid) )
     {
         return 1;
     }
@@ -179,8 +179,7 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
     if ( p->ptrs.ip_api.is_valid() )
     {
         filterEvent = sfthreshold_test(
-            otn->sigInfo.generator,
-            otn->sigInfo.id,
+            otn->sigInfo.gid, otn->sigInfo.sid,
             p->ptrs.ip_api.get_src(), p->ptrs.ip_api.get_dst(),
             p->pkth->ts.tv_sec);
     }
@@ -190,10 +189,8 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
         cleared.clear();
 
         filterEvent = sfthreshold_test(
-            otn->sigInfo.generator,
-            otn->sigInfo.id,
-            &cleared, &cleared,
-            p->pkth->ts.tv_sec);
+            otn->sigInfo.gid, otn->sigInfo.sid,
+            &cleared, &cleared, p->pkth->ts.tv_sec);
     }
 
     if ( (filterEvent < 0) || (filterEvent > 0 && !override) )
@@ -482,10 +479,10 @@ static int sortOrderByPriority(const void* e1, const void* e2)
         return +1;
 
     /* This improves stability of repeated tests */
-    if ( otn1->sigInfo.id < otn2->sigInfo.id )
+    if ( otn1->sigInfo.sid < otn2->sigInfo.sid )
         return -1;
 
-    if ( otn1->sigInfo.id > otn2->sigInfo.id )
+    if ( otn1->sigInfo.sid > otn2->sigInfo.sid )
         return +1;
 
     return 0;
@@ -511,10 +508,10 @@ static int sortOrderByContentLength(const void* e1, const void* e2)
         return -1;
 
     /* This improves stability of repeated tests */
-    if ( otn1->sigInfo.id < otn2->sigInfo.id )
+    if ( otn1->sigInfo.sid < otn2->sigInfo.sid )
         return +1;
 
-    if ( otn1->sigInfo.id > otn2->sigInfo.id )
+    if ( otn1->sigInfo.sid > otn2->sigInfo.sid )
         return -1;
 
     return 0;
@@ -545,8 +542,7 @@ static inline int fpAddSessionAlert(Packet* p, const OptTreeNode* otn)
     if ( !otn )
         return 0;
 
-    return !Stream::add_flow_alert(
-        p->flow, p, otn->sigInfo.generator, otn->sigInfo.id);
+    return !Stream::add_flow_alert(p->flow, p, otn->sigInfo.gid, otn->sigInfo.sid);
 }
 
 /*
@@ -571,7 +567,7 @@ static inline int fpSessionAlerted(Packet* p, const OptTreeNode* otn)
 {
     const SigInfo* si = &otn->sigInfo;
 
-    if (!Stream::check_flow_alerted(p->flow, p, si->generator, si->id))
+    if (!Stream::check_flow_alerted(p->flow, p, si->gid, si->sid))
         return 0;
     else
         return 1;
@@ -677,9 +673,9 @@ static inline int fpFinalSelectEvent(OTNX_MATCH_DATA* o, Packet* p)
              * all from the same action group we want them sorted so we get
              * the highest 3 in priority, priority and lenght sort do NOT
              * take precedence over 'alert drop pass ...' ordering.  If
-             * order is 'drop alert', and we log 3 for drop alertsdo not
+             * order is 'drop alert', and we log 3 for drop alerts do not
              * get logged.  IF order is 'alert drop', and we log 3 for
-             * alert, than no drops are logged.  So, there should be a
+             * alert, then no drops are logged.  So, there should be a
              * built in drop/sdrop/reject comes before alert/pass/log as
              * part of the natural ordering....Jan '06..
              */

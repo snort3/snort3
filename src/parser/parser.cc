@@ -77,11 +77,12 @@ void parser_init()
         ParseAbort("failed to create rule index map.");
 }
 
-void parser_term()
+void parser_term(SnortConfig* sc)
 {
     parse_rule_term();
     RuleIndexMapFree(ruleIndexMap);
     ruleIndexMap = nullptr;
+    sc->free_rule_state_list();
 }
 
 static void CreateDefaultRules(SnortConfig* sc)
@@ -159,56 +160,46 @@ static void finish_portlist_table(FastPatternConfig* fp, const char* s, PortTabl
 
 static void PortTablesFinish(RulePortTables* port_tables, FastPatternConfig* fp)
 {
-    /* IP */
     if ( fp->get_debug_print_rule_groups_compiled() )
     {
         LogMessage("IP-Any-Any Port List\n");
-        PortObjectPrintEx(port_tables->ip.any,
-            rule_index_map_print_index);
+        PortObjectPrintEx(port_tables->ip.any, rule_index_map_print_index);
     }
 
     finish_portlist_table(fp, "ip src", port_tables->ip.src);
     finish_portlist_table(fp, "ip dst", port_tables->ip.dst);
 
-    /* ICMP */
     if ( fp->get_debug_print_rule_groups_compiled() )
     {
         LogMessage("*** ICMP-Any-Any Port List\n");
-        PortObjectPrintEx(port_tables->icmp.any,
-            rule_index_map_print_index);
+        PortObjectPrintEx(port_tables->icmp.any, rule_index_map_print_index);
     }
 
     finish_portlist_table(fp, "icmp src", port_tables->icmp.src);
     finish_portlist_table(fp, "icmp dst", port_tables->icmp.dst);
 
-    /* TCP */
     if ( fp->get_debug_print_rule_groups_compiled() )
     {
         LogMessage("*** TCP-Any-Any Port List\n");
-        PortObjectPrintEx(port_tables->tcp.any,
-            rule_index_map_print_index);
+        PortObjectPrintEx(port_tables->tcp.any, rule_index_map_print_index);
     }
 
     finish_portlist_table(fp, "tcp src", port_tables->tcp.src);
     finish_portlist_table(fp, "tcp dst", port_tables->tcp.dst);
 
-    /* UDP */
     if ( fp->get_debug_print_rule_groups_compiled() )
     {
         LogMessage("*** UDP-Any-Any Port List\n");
-        PortObjectPrintEx(port_tables->udp.any,
-            rule_index_map_print_index);
+        PortObjectPrintEx(port_tables->udp.any, rule_index_map_print_index);
     }
 
     finish_portlist_table(fp, "udp src", port_tables->udp.src);
     finish_portlist_table(fp, "udp dst", port_tables->udp.dst);
 
-    /* SVC */
     if ( fp->get_debug_print_rule_groups_compiled() )
     {
         LogMessage("*** SVC-Any-Any Port List\n");
-        PortObjectPrintEx(port_tables->svc_any,
-            rule_index_map_print_index);
+        PortObjectPrintEx(port_tables->svc_any, rule_index_map_print_index);
     }
 
     RuleListSortUniq(port_tables->ip.any->rule_list);
@@ -380,56 +371,6 @@ static void printRuleListOrder(RuleListNode* node)
     }
 
     LogMessage("%s\n", buf);
-}
-
-static void IntegrityCheckRules(SnortConfig* sc)
-{
-    int opt_func_count;
-    SFGHASH_NODE* hashNode = NULL;
-    OptTreeNode* otn  = NULL;
-    PolicyId policyId = 0;
-    RuleTreeNode* rtn = NULL;
-
-    for (hashNode = sfghash_findfirst(sc->otn_map);
-        hashNode;
-        hashNode = sfghash_findnext(sc->otn_map))
-    {
-        otn = (OptTreeNode*)hashNode->data;
-
-        for (policyId = 0;
-            policyId < otn->proto_node_num;
-            policyId++)
-        {
-            rtn = getRtnFromOtn(otn, policyId);
-
-            if (!rtn)
-            {
-                continue;
-            }
-
-            if ( is_network_protocol(rtn->proto) )
-            {
-                //do operation
-                OptFpList* ofl_idx = otn->opt_func;
-                opt_func_count = 0;
-
-                while ( ofl_idx )
-                {
-                    opt_func_count++;
-                    //DebugFormat(DEBUG_DETECT, "%p->",ofl_idx->OptTestFunc);
-                    ofl_idx = ofl_idx->next;
-                }
-
-                if (opt_func_count == 0)
-                {
-                    ParseError("zero Length OTN List");
-                }
-                //DebugMessage(DEBUG_DETECT,"\n");
-            }
-        }
-    }
-
-    //DebugMessage(DEBUG_DETECT, "OK\n");
 }
 
 static void parse_file(SnortConfig* sc, Shell* sh)
@@ -630,8 +571,6 @@ void ParseRules(SnortConfig* sc)
             pop_parse_location();
         }
     }
-    IntegrityCheckRules(sc);
-    /*FindMaxSegSize();*/
 
     /* Compile/Finish and Print the PortList Tables */
     PortTablesFinish(sc->port_tables, sc->fast_pattern_config);
@@ -839,11 +778,7 @@ RuleTreeNode* deleteRtnFromOtn(OptTreeNode* otn)
  * @return 0 if successful,
  *         -ve otherwise
  */
-int addRtnToOtn(
-    OptTreeNode* otn,
-    RuleTreeNode* rtn,
-    PolicyId policyId
-    )
+int addRtnToOtn(OptTreeNode* otn, RuleTreeNode* rtn, PolicyId policyId)
 {
     if (otn->proto_node_num <= policyId)
     {

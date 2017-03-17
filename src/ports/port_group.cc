@@ -23,11 +23,33 @@
 
 #include "port_group.h"
 
+#include "detection/detection_options.h"
+#include "managers/mpse_manager.h"
 #include "utils/util.h"
 
 void PortGroup::add_rule()
 {
     rule_count++;
+}
+
+PortGroup* PortGroup::alloc()
+{ return (PortGroup*)snort_calloc(sizeof(PortGroup)); }
+
+void PortGroup::free(PortGroup* pg)
+{
+    pg->delete_nfp_rules();
+
+    for (int i = PM_TYPE_PKT; i < PM_TYPE_MAX; i++)
+    {
+        if (pg->mpse[i] != NULL)
+        {
+            MpseManager::delete_search_engine(pg->mpse[i]);
+            pg->mpse[i] = NULL;
+        }
+    }
+
+    free_detection_option_root(&pg->nfp_tree);
+    snort_free(pg);
 }
 
 bool PortGroup::add_nfp_rule(void* rd)

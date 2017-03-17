@@ -286,39 +286,36 @@ static SFXHASH* DetectionTreeHashTableNew()
     return dtht;
 }
 
-#ifdef DEBUG_OPTION_TREE
-static const char* const option_type_str[] =
-{
-    "leaf_node",
-    "buffer_set",
-    "buffer_use",
-    "content",
-    "flowbit",
-    "other"
-};
-
 void print_option_tree(detection_option_tree_node_t* node, int level)
 {
-    int i;
-    unsigned int indent = 12 - (11 - level) + strlen(option_type_str[node->option_type]);
-    unsigned int offset = 0;
-    if (level >= 10)
-        offset++;
+#ifdef DEBUG_OPTION_TREE
+    char buf[32];
+    const char* opt;
 
-    DEBUG_WRAP(
-        DebugFormat(DEBUG_DETECT, "%d%*s%*d 0x%x\n",
-        level, indent - offset, option_type_str[node->option_type],
-        54 - indent, node->num_children, node->option_data);
+    if ( node->option_type != RULE_OPTION_TYPE_LEAF_NODE )
+        opt = ((IpsOption*)node->option_data)->get_name();
+    else
+    {
+        const OptTreeNode* otn = (OptTreeNode*)node->option_data;
+        const SigInfo& si = otn->sigInfo;
+        snprintf(buf, sizeof(buf), "%d:%d:%d", si.gid, si.sid, si.rev);
+        opt = buf;
+    }
 
-        for (i=0; i<node->num_children; i++)
-            print_option_tree(node->children[i], level+1);
-        );
+    unsigned int indent = level + strlen(opt);
+
+    DebugFormatNoFileLine(DEBUG_DETECT, "%3d %3d  %p %*s\n",
+        level, node->num_children, node->option_data, indent, opt);
+
+    for ( int i=0; i<node->num_children; i++ )
+        print_option_tree(node->children[i], level+1);
+#else
+    UNUSED(node);
+    UNUSED(level);
+#endif
 }
 
-#endif
-
-void* add_detection_option_tree(
-    SnortConfig* sc, detection_option_tree_node_t* option_tree)
+void* add_detection_option_tree(SnortConfig* sc, detection_option_tree_node_t* option_tree)
 {
     if ( !sc->detection_option_tree_hash_table )
         sc->detection_option_tree_hash_table = DetectionTreeHashTableNew();
@@ -431,7 +428,7 @@ int detection_option_node_evaluate(
                     // none of the services match
                     DebugFormat(DEBUG_DETECT,
                         "[**] SID %u not matched because of service mismatch (%d!=%d [**]\n",
-                        sig_info.id, app_proto, sig_info.services[0].service_ordinal);
+                        sig_info.sid, app_proto, sig_info.services[0].service_ordinal);
 
                     break;  // out of case
                 }
@@ -442,8 +439,7 @@ int detection_option_node_evaluate(
             // Don't include RTN time
             {
                 RulePause pause(profile);
-                eval_rtn_result = fpEvalRTN(getRuntimeRtnFromOtn(otn), p,
-                    check_ports);
+                eval_rtn_result = fpEvalRTN(getRuntimeRtnFromOtn(otn), p, check_ports);
             }
 
             if ( eval_rtn_result )
@@ -829,8 +825,7 @@ void free_detection_option_root(void** existing_tree)
     *existing_tree = NULL;
 }
 
-detection_option_tree_node_t* new_node(
-    option_type_t type, void* data)
+detection_option_tree_node_t* new_node(option_type_t type, void* data)
 {
     detection_option_tree_node_t* p =
         (detection_option_tree_node_t*)snort_calloc(sizeof(*p));

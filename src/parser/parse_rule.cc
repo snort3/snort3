@@ -77,7 +77,7 @@ static bool s_ignore = false;  // for skipping drop rules when not inline, etc.
  * Finish adding the rule to the port tables
  *
  * 1) find the table this rule should belong to (src/dst/any-any tcp,udp,icmp,ip or nocontent)
- * 2) find an index for the sid:gid pair
+ * 2) find an index for the gid:sid pair
  * 3) add all no content rules to a single no content port object, the ports are irrelevant so
  *    make it a any-any port object.
  * 4) if it's an any-any rule with content, add to an any-any port object
@@ -93,7 +93,6 @@ static int FinishPortListRule(
     int large_port_group = 0;
     int src_cnt = 0;
     int dst_cnt = 0;
-    int rim_index;
     PortTable* dstTable;
     PortTable* srcTable;
     PortObject* aaObject;
@@ -147,14 +146,10 @@ static int FinishPortListRule(
         DebugFormat(DEBUG_PORTLISTS,
             "***\n***Info:  src & dst ports are both specific"
             " >> gid=%u sid=%u\n***\n",
-            otn->sigInfo.generator, otn->sigInfo.id);
+            otn->sigInfo.gid, otn->sigInfo.sid);
 
         prc->both++;
     }
-
-    /* Create/find an index to store this rules sid and gid at,
-     * and use as reference in Port Objects */
-    rim_index = otn->ruleIndex;
 
     /* If not an any-any rule test for port bleedover, if we are using a
      * single rule group, don't bother */
@@ -179,7 +174,7 @@ static int FinishPortListRule(
         {
             LogMessage("***Bleedover Port Limit(%d) Exceeded for rule %u:%u "
                 "(%d)ports: ", fp->get_bleed_over_port_limit(),
-                otn->sigInfo.generator, otn->sigInfo.id,
+                otn->sigInfo.gid, otn->sigInfo.sid,
                 (src_cnt > dst_cnt) ? src_cnt : dst_cnt);
 
             /* If logging to syslog, this will be all multiline */
@@ -208,33 +203,33 @@ static int FinishPortListRule(
              * IP table */
             DebugFormat(DEBUG_PORTLISTS,
                 "Finishing IP any-any rule %u:%u\n",
-                otn->sigInfo.generator,otn->sigInfo.id);
+                otn->sigInfo.gid, otn->sigInfo.sid);
 
             switch ( otn->proto )
             {
             case SNORT_PROTO_IP:    /* Add to all ip proto any port tables */
-                PortObjectAddRule(port_tables->icmp.any, rim_index);
+                PortObjectAddRule(port_tables->icmp.any, otn->ruleIndex);
                 icmpCnt.any++;
 
-                PortObjectAddRule(port_tables->tcp.any, rim_index);
+                PortObjectAddRule(port_tables->tcp.any, otn->ruleIndex);
                 tcpCnt.any++;
 
-                PortObjectAddRule(port_tables->udp.any, rim_index);
+                PortObjectAddRule(port_tables->udp.any, otn->ruleIndex);
                 udpCnt.any++;
                 break;
 
             case SNORT_PROTO_ICMP:
-                PortObjectAddRule(port_tables->icmp.any, rim_index);
+                PortObjectAddRule(port_tables->icmp.any, otn->ruleIndex);
                 icmpCnt.any++;
                 break;
 
             case SNORT_PROTO_TCP:
-                PortObjectAddRule(port_tables->tcp.any, rim_index);
+                PortObjectAddRule(port_tables->tcp.any, otn->ruleIndex);
                 tcpCnt.any++;
                 break;
 
             case SNORT_PROTO_UDP:
-                PortObjectAddRule(port_tables->udp.any, rim_index);
+                PortObjectAddRule(port_tables->udp.any, otn->ruleIndex);
                 udpCnt.any++;
                 break;
 
@@ -243,7 +238,7 @@ static int FinishPortListRule(
             }
         }
         /* For all protocols-add to the any any group */
-        PortObjectAddRule(aaObject, rim_index);
+        PortObjectAddRule(aaObject, otn->ruleIndex);
         prc->any++;
         rtn->flags = orig_flags;
         return 0; /* done */
@@ -271,7 +266,7 @@ static int FinishPortListRule(
             PortTableAddObject(dstTable, pox);
         }
 
-        PortObjectAddRule(pox, rim_index);
+        PortObjectAddRule(pox, otn->ruleIndex);
 
         /* if bidir, add this rule and port group to the src table */
         if (rtn->flags & BIDIRECTIONAL)
@@ -289,7 +284,7 @@ static int FinishPortListRule(
                 PortTableAddObject(srcTable, pox);
             }
 
-            PortObjectAddRule(pox, rim_index);
+            PortObjectAddRule(pox, otn->ruleIndex);
         }
     }
 
@@ -310,7 +305,7 @@ static int FinishPortListRule(
             PortTableAddObject(srcTable, pox);
         }
 
-        PortObjectAddRule(pox, rim_index);
+        PortObjectAddRule(pox, otn->ruleIndex);
 
         /* if bidir, add this rule and port group to the dst table */
         if (rtn->flags & BIDIRECTIONAL)
@@ -327,7 +322,7 @@ static int FinishPortListRule(
 
                 PortTableAddObject(dstTable, pox);
             }
-            PortObjectAddRule(pox, rim_index);
+            PortObjectAddRule(pox, otn->ruleIndex);
         }
     }
     return 0;
@@ -913,7 +908,7 @@ static int mergeDuplicateOtn(
     if (otn_cur->proto != otn_new->proto)
     {
         ParseError("GID %u SID %u in rule duplicates previous rule, with different protocol.",
-            otn_new->sigInfo.generator, otn_new->sigInfo.id);
+            otn_new->sigInfo.gid, otn_new->sigInfo.sid);
         return true;
     }
 
@@ -922,7 +917,7 @@ static int mergeDuplicateOtn(
     if ( rtn_cur and rtn_cur->type != rtn_new->type )
     {
         ParseError("GID %u SID %u in rule duplicates previous rule, with different type.",
-            otn_new->sigInfo.generator, otn_new->sigInfo.id);
+            otn_new->sigInfo.gid, otn_new->sigInfo.sid);
         return true;
     }
 
@@ -933,7 +928,7 @@ static int mergeDuplicateOtn(
         deleteRtnFromOtn(otn_new);
 
         ParseWarning(WARN_RULES, "%u:%u duplicates previous rule. Using revision %u.",
-            otn_cur->sigInfo.generator, otn_cur->sigInfo.id, otn_cur->sigInfo.rev);
+            otn_cur->sigInfo.gid, otn_cur->sigInfo.sid, otn_cur->sigInfo.rev);
 
         // Now free the OTN itself -- this function is also used
         // by the hash-table calls out of OtnRemove, so it cannot
@@ -970,13 +965,13 @@ static int mergeDuplicateOtn(
         if (SnortConfig::conf_error_out())
         {
             ParseError("%u:%u:%u duplicates previous rule.",
-                otn_new->sigInfo.generator, otn_new->sigInfo.id, otn_new->sigInfo.rev);
+                otn_new->sigInfo.gid, otn_new->sigInfo.sid, otn_new->sigInfo.rev);
             return true;
         }
         else
         {
             ParseWarning(WARN_RULES, "%u:%u duplicates previous rule. Using revision %u.",
-                otn_new->sigInfo.generator, otn_new->sigInfo.id, otn_new->sigInfo.rev);
+                otn_new->sigInfo.gid, otn_new->sigInfo.sid, otn_new->sigInfo.rev);
         }
     }
     OtnRemove(sc->otn_map, otn_cur);
@@ -1117,8 +1112,7 @@ void parse_rule_ports(
 
     IpsPolicy* p = get_ips_policy();
 
-    if ( ParsePortList(&rtn, p->portVarTable, p->nonamePortVarTable,
-        s, src ? SRC : DST) )
+    if ( ParsePortList(&rtn, p->portVarTable, p->nonamePortVarTable, s, src ? SRC : DST) )
     {
         ParseError("bad ports: '%s'", s);
     }
@@ -1183,7 +1177,7 @@ OptTreeNode* parse_rule_open(SnortConfig* sc, RuleTreeNode& rtn, bool stub)
     otn->state = (OtnState*)snort_calloc(ThreadConfig::get_instance_max(), sizeof(OtnState));
 
     if ( !stub )
-        otn->sigInfo.generator = GENERATOR_SNORT_ENGINE;
+        otn->sigInfo.gid = GENERATOR_SNORT_ENGINE;
 
     otn->chain_node_number = otn_count;
     otn->proto = rtn.proto;
@@ -1220,7 +1214,7 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
         else
         {
             // FIXIT-L gid may be overwritten when set to 3 upon close
-            otn->sigInfo.generator = GENERATOR_SNORT_SHARED;
+            otn->sigInfo.gid = GENERATOR_SNORT_SHARED;
             entered = true;
             return so_opts;
         }
@@ -1234,7 +1228,7 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
     addRtnToOtn(otn, new_rtn);
 
     OptTreeNode* otn_dup =
-        OtnLookup(sc->otn_map, otn->sigInfo.generator, otn->sigInfo.id);
+        OtnLookup(sc->otn_map, otn->sigInfo.gid, otn->sigInfo.sid);
 
     if ( otn_dup )
     {
@@ -1254,28 +1248,28 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
     // hard coding these gids do GIDs actually matter anymore (w/o conflict
     // with builtins)?
 
-    if ( otn->sigInfo.generator == GENERATOR_SNORT_ENGINE )
+    if ( otn->sigInfo.gid == GENERATOR_SNORT_ENGINE )
     {
         otn->sigInfo.text_rule = true;
         detect_rule_count++;
     }
-    else if ( otn->sigInfo.generator == GENERATOR_SNORT_SHARED )
+    else if ( otn->sigInfo.gid == GENERATOR_SNORT_SHARED )
     {
         otn->sigInfo.text_rule = true;
         so_rule_count++;
     }
-    else if ( ModuleManager::gid_in_use(otn->sigInfo.generator) )
+    else if ( ModuleManager::gid_in_use(otn->sigInfo.gid) )
     {
         if ( otn->num_detection_opts )
             ParseError("%u:%u builtin rules do not support detection options",
-                otn->sigInfo.generator, otn->sigInfo.id);
+                otn->sigInfo.gid, otn->sigInfo.sid);
 
         otn->sigInfo.text_rule = false;
         builtin_rule_count++;
     }
 
     if ( !otn_dup )
-        otn->ruleIndex = parser_get_rule_index(otn->sigInfo.generator, otn->sigInfo.id);
+        otn->ruleIndex = parser_get_rule_index(otn->sigInfo.gid, otn->sigInfo.sid);
 
     OptFpList* fpl = AddOptFuncToList(OptListEnd, otn);
     fpl->type = RULE_OPTION_TYPE_LEAF_NODE;

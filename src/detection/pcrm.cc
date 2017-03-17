@@ -83,36 +83,31 @@ static int prmFindRuleGroup(
     PortGroup** gen
     )
 {
-    if ((p == NULL) || (src == NULL)
-        || (dst == NULL) || (gen == NULL))
-    {
+    if ( !p )
         return 0;
-    }
 
-    *src = NULL;
-    *dst = NULL;
-    *gen = NULL;
+    assert(src and dst and gen);
+    *src = *dst = *gen = nullptr;
 
-    if ((dport != ANYPORT) && (dport < MAX_PORTS))
+    if ( (dport != ANYPORT) and (dport < MAX_PORTS) )
         *dst = p->prmDstPort[dport];
 
-    if ((sport != ANYPORT) && (sport < MAX_PORTS))
+    if ( (sport != ANYPORT) and (sport < MAX_PORTS) )
         *src = p->prmSrcPort[sport];
 
     /* If no Src/Dst rules - use the generic set, if any exist  */
-    if ((p->prmGeneric != NULL) && (p->prmGeneric->rule_count > 0))
+    if ( p->prmGeneric and (p->prmGeneric->rule_count > 0) )
     {
-        if (snort_conf->fast_pattern_config->get_split_any_any()
-            || ((*src == NULL) && (*dst == NULL)))
+        if ( snort_conf->fast_pattern_config->get_split_any_any() or (!*src and !*dst) )
         {
             *gen = p->prmGeneric;
         }
     }
 
-    if ((*src == NULL) && (*dst == NULL) && (*gen == NULL))
-        return 0;
+    if ( *src or *dst or *gen )
+        return 1;
 
-    return 1;
+    return 0;
 }
 
 /*

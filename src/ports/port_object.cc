@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
+
 #include "port_object.h"
 
 #include "log/messages.h"
@@ -29,6 +31,7 @@
 #include "utils/util.h"
 #include "utils/util_cstring.h"
 
+#include "port_group.h"
 #include "port_item.h"
 #include "port_utils.h"
 
@@ -36,43 +39,21 @@
 // PortObject - public
 //-------------------------------------------------------------------------
 
-/*
-    Create a new PortObject
-*/
 PortObject* PortObjectNew()
 {
     PortObject* po = (PortObject*)snort_calloc(sizeof(PortObject));
     po->item_list =(SF_LIST*)sflist_new();
-
-    if ( !po->item_list )
-    {
-        snort_free(po);
-        return 0;
-    }
-
     po->rule_list =(SF_LIST*)sflist_new();
-    if ( !po->rule_list )
-    {
-        sflist_free_all(po->item_list, snort_free);
-        snort_free(po);
-        return 0;
-    }
-
     return po;
 }
 
-/*
- *  Free the PortObject
- */
-void PortObjectFree(void* pvoid)
+void PortObjectFree(void* pv)
 {
-    PortObject* po = (PortObject*)pvoid;
+    assert(pv);
+    PortObject* po = (PortObject*)pv;
+
     DEBUG_WRAP(static int pof_cnt = 0; pof_cnt++; );
-
-    DebugFormat(DEBUG_PORTLISTS,"PortObjectFree-Cnt: %d ptr=%p\n",pof_cnt,pvoid);
-
-    if ( !po )
-        return;
+    DebugFormat(DEBUG_PORTLISTS, "PortObjectFree-Cnt: %d ptr=%p\n", pof_cnt, (void*)po);
 
     if ( po->name )
         snort_free(po->name);
@@ -83,12 +64,19 @@ void PortObjectFree(void* pvoid)
     if ( po->rule_list)
         sflist_free_all(po->rule_list, snort_free);
 
-    if (po->data && po->data_free)
-    {
-        po->data_free(po->data);
-    }
+    if (po->group )
+        PortGroup::free(po->group);
 
     snort_free(po);
+}
+
+void PortObjectFinalize(PortObject* po)
+{
+    sflist_free_all(po->item_list, snort_free);
+    sflist_free_all(po->rule_list, snort_free);
+
+    po->item_list = nullptr;
+    po->rule_list = nullptr;
 }
 
 /*
@@ -316,7 +304,7 @@ PortObject* PortObjectDupPorts(PortObject* po)
 int PortObjectNormalize(PortObject* po)
 {
     if ( PortObjectHasAny (po) )
-        return 0;   /* ANY =65K */
+        return 0;   /* ANY =64K */
 
     PortBitSet parray;
     int nports = PortObjectBits(parray, po);
@@ -586,10 +574,8 @@ void PortObjectPrintPortsRaw(PortObject* po)
    Print Port Object - Prints input ports and rules (uncompiled)
     ports
     rules (input by user)
-
 */
-void PortObjectPrintEx(PortObject* po,
-    void (* print_index_map)(int index, char* buf, int bufsize) )
+void PortObjectPrintEx(PortObject* po, po_print_f print_index_map)
 {
     PortObjectItem* poi = NULL;
     SF_LNODE* pos = NULL;

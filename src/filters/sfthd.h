@@ -79,13 +79,13 @@ enum
     Dynamic hashed node data - added and deleted during runtime
     These are added during run-time, and recycled if we max out memory usage.
 */
-typedef struct
+struct THD_IP_NODE
 {
     unsigned count;
     unsigned prev;
     time_t tstart;
     time_t tlast;
-} THD_IP_NODE;
+};
 
 /*!
     THD_IP_NODE_KEY
@@ -94,32 +94,30 @@ typedef struct
     policies. This destroys locality of reference and may cause poor performance.
 */
 PADDING_GUARD_BEGIN
-typedef struct
+struct THD_IP_NODE_KEY
 {
     int thd_id;
     PolicyId policyId;
     SfIp ip;
     uint16_t padding;
-} THD_IP_NODE_KEY;
+};
 
-typedef struct
+struct THD_IP_GNODE_KEY
 {
     unsigned gen_id;
     unsigned sig_id;
     PolicyId policyId;
     SfIp ip;
     uint16_t padding;
-} THD_IP_GNODE_KEY;
+};
 PADDING_GUARD_END
 
 /*!
-    THD_NODE
-
     A Thresholding Object
     These are created at program startup, and remain static.
     The THD_IP_NODE elements are dynamic.
 */
-typedef struct
+struct THD_NODE
 {
     int thd_id;        /* Id of this node */
     unsigned gen_id;   /* Keep these around if needed */
@@ -131,11 +129,9 @@ typedef struct
     unsigned seconds;
     uint64_t filtered;
     sfip_var_t* ip_address;
-} THD_NODE;
+};
 
 /*!
-    THD_ITEM
-
     The THD_ITEM acts as a container of gen_id+sig_id based threshold objects,
     this allows multiple threshold objects to be applied to a single
     gen_id+sig_id pair. The sflist is created using the priority field,
@@ -144,7 +140,7 @@ typedef struct
 
     These are static data elements, built at program startup.
 */
-typedef struct
+struct THD_ITEM
 {
     PolicyId policyId;
     unsigned gen_id; /* just so we know what gen_id we are */
@@ -154,7 +150,7 @@ typedef struct
      * 'THD_NODE->sfthd_id + src_ip or dst_ip' to get the correct THD_IP_NODE.
      */
     SF_LIST* sfthd_node_list;
-} THD_ITEM;
+};
 
 // Temporary structure useful when parsing the Snort rules
 struct THDX_STRUCT
@@ -169,11 +165,11 @@ struct THDX_STRUCT
     sfip_var_t* ip_address;
 };
 
-typedef struct
+struct tThdItemKey
 {
     PolicyId policyId;
     unsigned sig_id;
-} tThdItemKey;
+};
 
 /*!
     THD_STRUCT
@@ -221,14 +217,14 @@ void sfthd_objs_free(ThresholdObjects*);
 int sfthd_test_rule(SFXHASH* rule_hash, THD_NODE* sfthd_node,
     const SfIp* sip, const SfIp* dip, long curtime);
 
-void* sfthd_create_rule_threshold(
+THD_NODE* sfthd_create_rule_threshold(
     int id,
     int tracking,
     int type,
     int count,
     unsigned int seconds
     );
-void sfthd_node_free(void*);
+void sfthd_node_free(THD_NODE*);
 
 struct SnortConfig;
 int sfthd_create_threshold(

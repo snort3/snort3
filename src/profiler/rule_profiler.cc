@@ -231,8 +231,8 @@ static void print_single_entry(const View& v, unsigned n)
 
         table << n; // #
 
-        table << v.sig_info.generator; // gid
-        table << v.sig_info.id;        // sid
+        table << v.sig_info.gid;
+        table << v.sig_info.sid;
         table << v.sig_info.rev;
 
         table << v.checks();
@@ -455,8 +455,8 @@ TEST_CASE( "rule entry", "[profiler][rule_profiler]" )
     SECTION( "copy assignment" )
     {
         auto copy = entry;
-        CHECK( copy.sig_info.generator == entry.sig_info.generator );
-        CHECK( copy.sig_info.id == entry.sig_info.id );
+        CHECK( copy.sig_info.gid == entry.sig_info.gid );
+        CHECK( copy.sig_info.sid == entry.sig_info.sid );
         CHECK( copy.sig_info.rev == entry.sig_info.rev );
         CHECK( copy.state == entry.state );
     }
@@ -464,8 +464,8 @@ TEST_CASE( "rule entry", "[profiler][rule_profiler]" )
     SECTION( "copy construction" )
     {
         rule_stats::View copy(entry);
-        CHECK( copy.sig_info.generator == entry.sig_info.generator );
-        CHECK( copy.sig_info.id == entry.sig_info.id );
+        CHECK( copy.sig_info.gid == entry.sig_info.gid );
+        CHECK( copy.sig_info.sid == entry.sig_info.sid );
         CHECK( copy.sig_info.rev == entry.sig_info.rev );
         CHECK( copy.state == entry.state );
     }

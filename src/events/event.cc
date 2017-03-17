@@ -30,11 +30,11 @@ THREAD_LOCAL uint16_t event_id; // FIXIT-M also incremented in fpLogEvent()
 THREAD_LOCAL SigInfo sig_info;  // FIXIT-M move to stack
 
 void SetEvent(
-    Event* event, uint32_t generator, uint32_t id, uint32_t rev,
+    Event* event, uint32_t gid, uint32_t sid, uint32_t rev,
     uint32_t classification, uint32_t priority, uint32_t event_ref)
 {
-    sig_info.generator = generator;
-    sig_info.id = id;
+    sig_info.gid = gid;
+    sig_info.sid = sid;
     sig_info.rev = rev;
     sig_info.class_id = classification;
     sig_info.priority = priority;

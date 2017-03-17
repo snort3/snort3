@@ -346,13 +346,13 @@ PatternMatchVector get_fp_content(OptTreeNode* otn, OptFpList*& next, bool srvc)
     if ( best.pmd and otn->proto == SNORT_PROTO_FILE and best.cat != CAT_SET_FILE )
     {
         ParseWarning(WARN_RULES, "file rule %u:%u does not have file_data fast pattern",
-            otn->sigInfo.generator, otn->sigInfo.id);
+            otn->sigInfo.gid, otn->sigInfo.sid);
         pmds.clear();
     }
 
     if ( content && !best.pmd)
         ParseWarning(WARN_RULES, "content based rule %u:%u has no eligible fast pattern",
-            otn->sigInfo.generator, otn->sigInfo.id);
+            otn->sigInfo.gid, otn->sigInfo.sid);
 
     return pmds;
 }

@@ -390,6 +390,7 @@ public:
     void set_umask(const char*);
     void set_utc(bool);
     void set_verbose(bool);
+    void free_rule_state_list();
 
     //------------------------------------------------------
     // Static convenience accesor methods
@@ -598,7 +599,10 @@ public:
     { return snort_conf->addressspace_agnostic; }
 
     static bool change_privileges()
-    { return snort_conf->user_id != -1 || snort_conf->group_id != -1 || !snort_conf->chroot_dir.empty(); }
+    {
+        return snort_conf->user_id != -1 || snort_conf->group_id != -1 ||
+            !snort_conf->chroot_dir.empty();
+    }
 };
 
 #endif

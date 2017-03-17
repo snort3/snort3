@@ -82,10 +82,8 @@ struct OptTreeNode
     SigInfo sigInfo;
     char* soid;
 
-    void* detection_filter; /* if present, evaluated last, after header checks */
+    struct THD_NODE* detection_filter; /* if present, evaluated last, after header checks */
     TagData* tag;
-
-    OptTreeNode* next;
 
     // ptr to list of RTNs (head part); indexed by policyId
     RuleTreeNode** proto_nodes;

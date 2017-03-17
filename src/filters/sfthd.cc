@@ -155,20 +155,19 @@ ThresholdObjects* sfthd_objs_new()
     return (ThresholdObjects*)snort_calloc(sizeof(ThresholdObjects));
 }
 
-void sfthd_node_free(void* node)
+void sfthd_node_free(THD_NODE* sfthd_node)
 {
-    THD_NODE* sfthd_node = (THD_NODE*)node;
-
-    if (sfthd_node == NULL)
+    if ( !sfthd_node )
         return;
 
-    if (sfthd_node->ip_address != NULL)
-    {
+    if ( sfthd_node->ip_address )
         sfvar_free(sfthd_node->ip_address);
-    }
 
     snort_free(sfthd_node);
 }
+
+static void sfthd_node_free(void* node)
+{ sfthd_node_free((THD_NODE*)node); }
 
 void sfthd_objs_free(ThresholdObjects* thd_objs)
 {
@@ -191,7 +190,7 @@ void sfthd_objs_free(ThresholdObjects* thd_objs)
 
         if (thd_objs->sfthd_garray[policyId][0] != NULL)
         {
-            sfthd_node_free((void*)thd_objs->sfthd_garray[policyId][0]);
+            sfthd_node_free(thd_objs->sfthd_garray[policyId][0]);
 
             /* Free any individuals */
             for (i = 0; i < THD_MAX_GENID; i++)
@@ -199,8 +198,7 @@ void sfthd_objs_free(ThresholdObjects* thd_objs)
                 if (thd_objs->sfthd_garray[policyId][i] !=
                     thd_objs->sfthd_garray[policyId][0])
                 {
-                    sfthd_node_free(
-                        (void*)thd_objs->sfthd_garray[policyId][i]);
+                    sfthd_node_free(thd_objs->sfthd_garray[policyId][i]);
                 }
             }
         }
@@ -211,7 +209,7 @@ void sfthd_objs_free(ThresholdObjects* thd_objs)
             {
                 if (thd_objs->sfthd_garray[policyId][i])
                 {
-                    sfthd_node_free((void*)thd_objs->sfthd_garray[policyId][i]);
+                    sfthd_node_free(thd_objs->sfthd_garray[policyId][i]);
                 }
             }
         }
@@ -248,7 +246,7 @@ void sfthd_free(THD_STRUCT* thd)
     snort_free(thd);
 }
 
-void* sfthd_create_rule_threshold(int id,
+THD_NODE* sfthd_create_rule_threshold(int id,
     int tracking,
     int type,
     int count,
@@ -262,7 +260,7 @@ void* sfthd_create_rule_threshold(int id,
     sfthd_node->count     = count;
     sfthd_node->seconds   = seconds;
 
-    return (void*)sfthd_node;
+    return sfthd_node;
 }
 
 /*!

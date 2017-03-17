@@ -29,6 +29,7 @@
 // associates rules with a PortGroup.
 //-------------------------------------------------------------------------
 
+struct PortGroup;
 struct PortObjectItem;
 
 struct PortObject
@@ -40,15 +41,12 @@ struct PortObject
     SF_LIST* item_list;         /* list of port and port-range items */
     SF_LIST* rule_list;         /* list of rules  */
 
-    // FIXIT-L convert from void* to PortGroup* and
-    // call dtor instead of needing free func
-    void* data;                 /* user data, PortGroup based on rule_list - only used by any-any
-                                  ports */
-    void (* data_free)(void*);
+    PortGroup* group;           // based on rule_list - only used by any-any ports
 };
 
 PortObject* PortObjectNew();
-void PortObjectFree(void* p);
+void PortObjectFree(void*);
+void PortObjectFinalize(PortObject*);
 
 int PortObjectSetName(PortObject*, const char* name);
 int PortObjectAddItem(PortObject*, PortObjectItem*, int* errflag);
@@ -63,7 +61,7 @@ PortObject* PortObjectDupPorts(PortObject*);
 
 int PortObjectNormalize(PortObject*);
 void PortObjectToggle(PortObject*);
-int PortObjectEqual(PortObject* poa, PortObject* bob);
+int PortObjectEqual(PortObject* poa, PortObject* pob);
 
 int PortObjectPortCount(PortObject*);
 int PortObjectHasPort(PortObject*, int port);
@@ -76,8 +74,8 @@ PortObject* PortObjectAppend(PortObject* poa, PortObject* pob);
 void PortObjectPrint(PortObject*);
 void PortObjectPrintPortsRaw(PortObject*);
 
-void PortObjectPrintEx(PortObject*,
-    void (* print_index_map)(int index, char* buf, int bufsize) );
+typedef void (*po_print_f)(int index, char* buf, int bufsize);
+void PortObjectPrintEx(PortObject*, po_print_f);
 
 #endif
 

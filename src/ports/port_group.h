@@ -22,8 +22,8 @@
 // Marc Norton <mnorton@sourcefire.com>
 // Dan Roelker <droelker@sourcefire.com>
 
-#ifndef PortGroup_H
-#define PortGroup_H
+#ifndef PORT_GROUP_H
+#define PORT_GROUP_H
 
 // PortGroup contains a set of fast patterns in the form of an MPSE and a
 // set of non-fast-pattern (nfp) rules.  when a PortGroup is selected, the
@@ -66,6 +66,9 @@ struct PortGroup
     void add_rule();
     bool add_nfp_rule(void*);
     void delete_nfp_rules();
+
+    static PortGroup* alloc();
+    static void free(PortGroup*);
 };
 
 #endif

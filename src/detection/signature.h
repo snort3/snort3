@@ -85,17 +85,20 @@ struct OtnKey
 
 struct SigInfo
 {
-    uint32_t generator;
-    uint32_t id;
-    uint32_t rev;
-    uint32_t class_id;
-    ClassType* classType;
-    uint32_t priority;
     char* message;
-    ReferenceNode* refs;  // FIXIT-H delete this - stored but not used
-    bool text_rule;
-    unsigned int num_services;
+    ClassType* class_type;
+    ReferenceNode* refs;  // FIXIT-L delete this - stored but not used
     ServiceInfo* services;
+
+    uint32_t gid;
+    uint32_t sid;
+    uint32_t rev;
+
+    uint32_t class_id;
+    uint32_t priority;
+    uint32_t num_services;
+
+    bool text_rule;
 };
 
 SFGHASH* OtnLookupNew();
