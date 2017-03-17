@@ -1,3 +1,13 @@
+17/03/17 - build 229
+
+-- fixed mpse to ensure all search methods return consistent results
+-- updated search tool to use fast pattern config's search method
+   (benefits appid, http_inspect, imap, pop, and smtp)
+-- snort2lua parsing bug fixes to recognize incomplete constructs
+-- http_inspect: added alert 119:81 for nonprinting character in header name
+-- http_inspect: added alert 119:82 for bad Content-Length value
+-- http_inspect: added alert 119:83 for header wrapping; CR and LF parsed as whitespace
+
 17/03/02 - build 228
 
 -- update hypercsan mpse: print error message and erroneous pattern when compilation fails
