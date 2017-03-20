@@ -249,7 +249,6 @@ public:
 
 private:
     RegexConfig config;
-    uint16_t hs_flags;
 };
 
 RegexModule::~RegexModule()
