@@ -22,6 +22,12 @@
 #include "config.h"
 #endif
 
+#ifdef HAVE_FLATBUFFERS
+#define FLATBUFFERS_ENUM " | flatbuffers"
+#else
+#define FLATBUFFERS_ENUM
+#endif
+
 #include "perf_module.h"
 
 #include "managers/module_manager.h"
@@ -76,7 +82,7 @@ static const Parameter s_params[] =
     { "modules", Parameter::PT_LIST, module_params, nullptr,
       "gather statistics from the specified modules" },
 
-    { "format", Parameter::PT_ENUM, "csv | text", "csv",
+    { "format", Parameter::PT_ENUM, "csv | text" FLATBUFFERS_ENUM, "csv",
       "output format for stats" },
 
     { "summary", Parameter::PT_BOOL, nullptr, "false",

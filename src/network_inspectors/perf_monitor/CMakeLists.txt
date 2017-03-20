@@ -1,3 +1,7 @@
+if( ${FLATBUFFERS_FOUND} )
+    set( FLATBUFFERS_SOURCE fbs_formatter.h fbs_formatter.cc )
+endif()
+
 add_library ( perf_monitor STATIC
     base_tracker.cc
     base_tracker.h
@@ -5,6 +9,7 @@ add_library ( perf_monitor STATIC
     csv_formatter.h
     cpu_tracker.cc
     cpu_tracker.h
+    ${FLATBUFFERS_SOURCE}
     flow_tracker.cc
     flow_tracker.h
     flow_ip_tracker.cc
@@ -20,3 +25,7 @@ add_library ( perf_monitor STATIC
     text_formatter.cc
     text_formatter.h
 )
+
+if( ${FLATBUFFERS_FOUND} )
+    target_link_libraries( perf_monitor ${FLATBUFFERS_LIBRARIES} )
+endif()

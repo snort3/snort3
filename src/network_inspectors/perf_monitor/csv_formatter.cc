@@ -114,7 +114,7 @@ TEST_CASE("csv output", "[CSVFormatter]")
         "2345678901,0,0,0,,0\n";
 
     FILE* fh = tmpfile();
-    CSVFormatter f;
+    CSVFormatter f("csv_formatter");
 
     f.register_section("name");
     f.register_field("one", &one);

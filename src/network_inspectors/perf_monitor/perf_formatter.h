@@ -65,8 +65,18 @@ enum FormatterType : uint8_t
 class PerfFormatter
 {
 public:
-    PerfFormatter() {}
+    PerfFormatter(std::string tracker_name)
+    { this->tracker_name = tracker_name; }
     virtual ~PerfFormatter() {}
+
+    virtual bool allow_append()
+    { return true; }
+
+    virtual const char* get_extension()
+    { return ""; }
+
+    virtual std::string get_tracker_name() final
+    { return tracker_name; }
 
     virtual void register_section(std::string);
     virtual void register_field(std::string, PegCount*);
@@ -84,6 +94,9 @@ protected:
     std::vector<std::vector<std::string>> field_names;
 
     unsigned last_section = -1;
+
+private:
+    std::string tracker_name;
 };
 
 #ifdef UNIT_TEST
@@ -94,7 +107,7 @@ class MockFormatter : public PerfFormatter
 public:
     std::map<std::string, FormatterValue> public_values;
 
-    MockFormatter() : PerfFormatter() {}
+    MockFormatter(std::string tracker_name) : PerfFormatter(tracker_name) {}
 
     void write(FILE*, time_t) override
     {

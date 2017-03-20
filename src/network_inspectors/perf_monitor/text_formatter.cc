@@ -115,7 +115,7 @@ TEST_CASE("text output", "[TextFormatter]")
         "                 vector.2: 70\n";
 
     FILE* fh = tmpfile();
-    TextFormatter f;
+    TextFormatter f("text_formatter");
 
     f.register_section("name");
     f.register_field("one", &one);

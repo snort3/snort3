@@ -26,7 +26,11 @@
 class TextFormatter : public PerfFormatter
 {
 public:
-    TextFormatter() : PerfFormatter() {}
+    TextFormatter(std::string tracker_name) : PerfFormatter(tracker_name) {}
+    
+    const char* get_extension() override
+    { return ".txt"; }
+
     void write(FILE*, time_t) override;
 };
 

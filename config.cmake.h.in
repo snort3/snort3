@@ -236,6 +236,7 @@
 #cmakedefine HAVE_SAFEC 1
 #cmakedefine ENABLE_SAFEC 1
 
+#cmakedefine HAVE_FLATBUFFERS 1
 
 /* Library specific functions */
 

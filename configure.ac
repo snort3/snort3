@@ -941,6 +941,53 @@ LIBS="$LIBS -lz"
 #--------------------------------------------------------------------------
 
 #--------------------------------------------------------------------------
+# flatbuffers (optional)
+#--------------------------------------------------------------------------
+
+AC_LANG_PUSH(C++)
+
+AC_ARG_WITH(flatbuffers_includes,
+    AS_HELP_STRING([--with-flatbuffers-includes=DIR],[flatbuffers include directory]),
+    [with_flatbuffers_includes="$withval"],[with_flatbuffers_includes="no"])
+
+if test "x$with_flatbuffers_includes" != "xno"; then
+    FLATBUFFERS_CPPFLAGS="-I${with_flatbuffers_includes}"
+fi
+
+AC_ARG_WITH(flatbuffers_libraries,
+    AS_HELP_STRING([--with-flatbuffers-libraries=DIR],[flatbuffers library directory]),
+    [with_flatbuffers_libraries="$withval"],[with_flatbuffers_libraries="no"])
+
+if test "x$with_flatbuffers_libraries" != "xno"; then
+    FLATBUFFERS_LDFLAGS="-L${with_flatbuffers_libraries}"
+fi
+
+CPPFLAGS="${CPPFLAGS} ${FLATBUFFERS_CPPFLAGS}"
+LDFLAGS="${LDFLAGS} ${FLATBUFFERS_LDFLAGS}"
+
+AC_CHECK_HEADERS(flatbuffers/flatbuffers.h, FBS_HEADERS="yes", FBS_HEADERS="no")
+
+SAVED_LDFLAGS=$LDFLAGS
+LDFLAGS="$LDFLAGS -lflatbuffers"
+AC_LINK_IFELSE(
+    [AC_LANG_PROGRAM([#include <flatbuffers/flatbuffers.h>],
+    ["flatbuffers::FlatBufferBuilder builder;"])],
+    [TEST_LIBS="$TEST_LIBS -lflatbufferes"] [FBS_LIBS="yes"], 
+    [AC_MSG_WARN([libflatbuffers is not installed.])])
+LDFLAGS=$SAVED_LDFLAGS
+
+if test "x$FBS_LIBS" = "xyes"; then
+    if test "x$FBS_HEADERS" != "xno"; then
+        AC_DEFINE([HAVE_FLATBUFFERS],[1],[can build flatbuffers code])
+        LIBS="${LIBS} -lflatbuffers"
+    fi
+fi
+
+AC_LANG_POP()
+
+AM_CONDITIONAL([HAVE_FLATBUFFERS], [test "x$FBS_HEADERS" = "xyes"])
+
+#--------------------------------------------------------------------------
 # hyperscan (optional)
 #--------------------------------------------------------------------------
 
@@ -1120,6 +1167,7 @@ AC_SUBST(LUAJIT_CPPFLAGS)
 AC_SUBST(PCRE_CPPFLAGS)
 AC_SUBST(DNET_CPPFLAGS)
 AC_SUBST(DAQ_CPPFLAGS)
+AC_SUBST(FLATBUFFERS_CPPFLAGS)
 AC_SUBST(LZMA_CPPFLAGS)
 AC_SUBST(OPENSSL_CPPFLAGS)
 AC_SUBST(INTEL_SOFT_CPM_CPPFLAGS)
@@ -1229,6 +1277,7 @@ lua/Makefile \
 doc/Makefile \
 daqs/Makefile \
 tools/Makefile \
+tools/flatbuffers/Makefile \
 tools/u2boat/Makefile \
 tools/u2spewfoo/Makefile \
 tools/snort2lua/Makefile \

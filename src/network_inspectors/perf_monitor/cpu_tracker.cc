@@ -36,7 +36,7 @@
 #include "catch/catch.hpp"
 #endif
 
-#define CPU_FILE (PERF_NAME "_cpu.csv")
+#define TRACKER_NAME PERF_NAME "_cpu"
 
 static inline uint64_t get_microseconds(struct timeval t)
 {
@@ -44,7 +44,7 @@ static inline uint64_t get_microseconds(struct timeval t)
 }
 
 CPUTracker::CPUTracker(PerfConfig *perf) :
-    PerfTracker(perf, perf->output == PERF_FILE ? CPU_FILE : nullptr)
+    PerfTracker(perf, perf->output == PERF_FILE, TRACKER_NAME)
 {
     formatter->register_section("cpu");
     formatter->register_field("user", &user_stat);

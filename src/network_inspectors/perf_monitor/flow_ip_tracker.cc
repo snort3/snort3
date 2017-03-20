@@ -27,7 +27,7 @@
 #include "log/messages.h"
 #include "protocols/packet.h"
 
-#define FLIP_FILE (PERF_NAME "_flow_ip.csv")
+#define TRACKER_NAME PERF_NAME "_flow_ip"
 
 struct FlowStateKey
 {
@@ -76,7 +76,7 @@ FlowStateValue* FlowIPTracker::find_stats(const SfIp* src_addr, const SfIp* dst_
 }
 
 FlowIPTracker::FlowIPTracker(PerfConfig* perf) : PerfTracker(perf,
-        perf->output == PERF_FILE ? FLIP_FILE : nullptr)
+        perf->output == PERF_FILE, TRACKER_NAME)
 {
     formatter->register_section("flow_ip");
     formatter->register_field("ip_a", ip_a);

@@ -51,10 +51,12 @@ public:
     virtual void process(bool /*summary*/) {} // FIXIT-M get rid of this step.
 
     virtual void update_time(time_t time) final { cur_time = time; }
-    virtual void open(bool append) final;
-    virtual void close() final;
-    virtual void rotate() final;
-    virtual void auto_rotate() final;
+    virtual const std::string& get_name() final { return tracker_name; }
+
+    virtual bool open(bool append) final;
+    virtual bool close() final;
+    virtual bool rotate() final;
+    virtual bool auto_rotate() final;
 
     virtual ~PerfTracker();
 
@@ -62,11 +64,12 @@ protected:
     PerfConfig* config;
     PerfFormatter* formatter;
 
-    PerfTracker(PerfConfig*, const char* tracker_fname);
+    PerfTracker(PerfConfig*, bool file, const char* tracker_name);
     virtual void write() final;
 
 private:
     std::string fname;
+    std::string tracker_name;
     FILE* fh = nullptr;
     time_t cur_time;
 };

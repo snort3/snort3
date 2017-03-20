@@ -55,8 +55,10 @@ Optional:
   generate the dev guide
 
 * safec from https://sourceforge.net/projects/safeclib/ for runtime bounds
-  checks on certain legacy C-library calls.
+  checks on certain legacy C-library calls
 
+* flatbuffers from https://google.github.io/flatbuffers/ for enabling the
+  flatbuffers serialization format
 
 === Building
 

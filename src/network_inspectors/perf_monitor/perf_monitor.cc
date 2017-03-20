@@ -73,6 +73,7 @@ public:
 
 static THREAD_LOCAL PerfMonitor* this_perf_monitor = nullptr;
 
+
 PerfMonitor::PerfMonitor(PerfMonModule* mod)
 {
     mod->get_config(config);
@@ -122,11 +123,22 @@ void PerfMonitor::show(SnortConfig*)
         case PERF_CSV:
             LogMessage("    Output Format:  csv\n");
             break;
-#ifdef UNIT_TEST
-        case PERF_MOCK:
+#ifdef HAVE_FLATBUFFERS
+        case PERF_FBS:
+            LogMessage("    Output Format:  flatbuffers\n");
             break;
 #endif
+        default: break;
     }
+}
+
+static void disable_tracker(size_t i)
+{
+    WarningMessage("Disabling %s\n", (*trackers)[i]->get_name().c_str());
+    auto tracker = trackers->at(i);
+    (*trackers)[i] = (*trackers)[trackers->size() - 1];
+    trackers->pop_back();
+    delete tracker;
 }
 
 // FIXIT-L perfmonitor should be logging to one file and writing record
@@ -154,8 +166,11 @@ void PerfMonitor::tinit()
     if (config.perf_flags & PERF_CPU )
         trackers->push_back(new CPUTracker(&config));
 
-    for (auto& tracker : *trackers)
-        tracker->open(true);
+    for (unsigned i = 0; i < trackers->size(); i++)
+    {
+        if (!(*trackers)[i]->open(true))
+            disable_tracker(i--);
+    }
 
     for (auto& tracker : *trackers)
         tracker->reset();
@@ -188,8 +203,12 @@ void PerfMonitor::eval(Packet* p)
 
     if (IsSetRotatePerfFileFlag())
     {
-        for (auto& tracker : *trackers)
-            tracker->rotate();
+        for (unsigned i = 0; i < trackers->size(); i++)
+        {
+            if (!(*trackers)[i]->rotate())
+                disable_tracker(i--);
+        }
+
         ClearRotatePerfFileFlag();
     }
 
@@ -206,10 +225,11 @@ void PerfMonitor::eval(Packet* p)
     {
         if (ready_to_process(p))
         {
-            for (auto& tracker : *trackers)
+            for (unsigned i = 0; i < trackers->size(); i++)
             {
-                tracker->process(false);
-                tracker->auto_rotate();
+                (*trackers)[i]->process(false);
+                if (!(*trackers)[i]->auto_rotate())
+                    disable_tracker(i--);
             }
         }
     }

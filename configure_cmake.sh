@@ -85,6 +85,10 @@ Optional Packages:
                             libhs include directory
     --with-hyperscan-libraries=DIR
                             libhs library directory
+    --with-flatbuffers-includes=DIR
+                            flatbuffers include directory
+    --with-flatbuffers-libraries=DIR
+                            flatbuffers library directory
 
 Some influential environment variables:
     SIGNAL_SNORT_RELOAD=<value>
@@ -343,6 +347,12 @@ while [ $# -ne 0 ]; do
             ;;
         --with-hyperscan-libraries=*)
             append_cache_entry HS_LIBRARIES_DIR PATH $optarg
+            ;;
+        --with-flatbuffers-includes=*)
+            append_cache_entry FLATBUFFERS_INCLUDE_DIR_HINT PATH $optarg
+            ;;
+        --with-flatbuffers-libraries=*)
+            append_cache_entry FLATBUFFERS_LIBRARIES_DIR_HINT PATH $optarg
             ;;
         SIGNAL_SNORT_RELOAD=*)
             append_cache_entry SIGNAL_SNORT_RELOAD STRING $optarg

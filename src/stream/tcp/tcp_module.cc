@@ -51,7 +51,7 @@ const PegInfo tcp_pegs[] =
     { "untracked", "tcp packets not tracked" },
     { "syn_trackers", "tcp session tracking started on syn" },
     { "syn_ack_trackers", "tcp session tracking started on syn-ack" },
-    { "3way_trackers", "tcp session tracking started on ack" },
+    { "three_way_trackers", "tcp session tracking started on ack" },
     { "data_trackers", "tcp session tracking started on data" },
     { "segs_queued", "total segments queued" },
     { "segs_released", "total segments released" },

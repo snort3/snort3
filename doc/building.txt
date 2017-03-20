@@ -27,7 +27,7 @@ can use these options:
 * *--with-pkg-libraries*: specify the directory containing the package
   libraries.
 
-These can be use for pcap, luajit, pcre, dnet, daq, lzma, openssl,
-intel-soft-cpm, and hyperscan packages.  For more information on these
-libraries see the Getting Started section of the manual.
+These can be used for pcap, luajit, pcre, dnet, daq, lzma, openssl,
+intel-soft-cpm, flatbuffers, and hyperscan packages.  For more information on
+these libraries see the Getting Started section of the manual.
 

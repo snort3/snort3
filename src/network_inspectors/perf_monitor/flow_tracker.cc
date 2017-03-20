@@ -33,12 +33,12 @@
 #include "catch/catch.hpp"
 #endif
 
-#define FLOW_FILE (PERF_NAME "_flow.csv")
+#define TRACKER_NAME PERF_NAME "_flow"
 
 #define MAX_PKT_LEN  9000
 
 FlowTracker::FlowTracker(PerfConfig* perf) : PerfTracker(perf,
-        perf->output == PERF_FILE ? FLOW_FILE : nullptr)
+        perf->output == PERF_FILE, TRACKER_NAME)
 {
     pkt_len_cnt.resize( MAX_PKT_LEN + 1 );
     tcp.src.resize( config->flow_max_port_to_track + 1, 0 );

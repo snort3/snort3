@@ -37,5 +37,4 @@ Currently output formats are:
 
 2. CSV
 
-Support for a FlatBuffers-based ouput format has been planned for future
-releases.
+3. Flatbuffers (if the library is available at build)

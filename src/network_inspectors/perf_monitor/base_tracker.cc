@@ -31,10 +31,8 @@
 
 using namespace std;
 
-#define BASE_FILE (PERF_NAME ".csv")
-
 BaseTracker::BaseTracker(PerfConfig* perf)
-    : PerfTracker(perf, perf->output == PERF_FILE ? BASE_FILE : nullptr)
+    : PerfTracker(perf, perf->output == PERF_FILE, PERF_NAME)
 {
     for (unsigned i = 0; i < config->modules.size(); i++)
     {

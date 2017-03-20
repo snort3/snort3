@@ -32,8 +32,14 @@
 #include "utils/util.h"
 #include "utils/util_cstring.h"
 
+#ifdef HAVE_FLATBUFFERS
+#include "fbs_formatter.h"
+#endif
+
 #include "csv_formatter.h"
 #include "text_formatter.h"
+
+using namespace std;
 
 static inline bool check_file_size(FILE* fh, uint64_t max_file_size)
 {
@@ -51,21 +57,31 @@ static inline bool check_file_size(FILE* fh, uint64_t max_file_size)
     return false;
 }
 
-PerfTracker::PerfTracker(PerfConfig* config, const char* tracker_fname)
+PerfTracker::PerfTracker(PerfConfig* config, bool file, const char* tracker_name)
 {
     this->config = config;
 
-    if (tracker_fname)
-        get_instance_file(fname, tracker_fname);
-
     switch (config->format)
     {
-        case PERF_CSV: formatter = new CSVFormatter(); break;
-        case PERF_TEXT: formatter = new TextFormatter(); break;
-#ifdef UNIT_TEST
-        case PERF_MOCK: formatter = new MockFormatter(); break;
+        case PERF_CSV: formatter = new CSVFormatter(tracker_name); break;
+        case PERF_TEXT: formatter = new TextFormatter(tracker_name); break;
+#ifdef HAVE_FLATBUFFERS
+        case PERF_FBS: formatter = new FbsFormatter(tracker_name); break;
 #endif
+#ifdef UNIT_TEST
+        case PERF_MOCK: formatter = new MockFormatter(tracker_name); break;
+#endif
+        default: break;
     }
+
+    if (file)
+    {
+        string tracker_fname = tracker_name;
+        tracker_fname += formatter->get_extension();
+        get_instance_file(fname, tracker_fname.c_str());
+    }
+
+    this->tracker_name = tracker_name;
 }
 
 PerfTracker::~PerfTracker()
@@ -74,7 +90,7 @@ PerfTracker::~PerfTracker()
     close();
 }
 
-void PerfTracker::open(bool append)
+bool PerfTracker::open(bool append)
 {
     if (fname.length())
     {
@@ -83,24 +99,27 @@ void PerfTracker::open(bool append)
         struct stat pt;
         mode_t mode =  S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH;
         const char* file_name = fname.c_str();
+        bool existed = false;
 
         /*Check file before change permission*/
         if (stat(file_name, &pt) == 0)
         {
+            existed = true;
+
             /*Only change permission for file owned by root*/
             if ((0 == pt.st_uid) || (0 == pt.st_gid))
             {
                 if (chmod(file_name, mode) != 0)
                 {
                     WarningMessage("perfmonitor: Unable to change mode of "
-                        "stats file '%s' to mode:%u: %s.",
+                        "stats file '%s' to mode:%u: %s.\n",
                         file_name, mode, get_error(errno));
                 }
 
                 if (chown(file_name, SnortConfig::get_uid(), SnortConfig::get_gid()) != 0)
                 {
                     WarningMessage("perfmonitor: Unable to change permissions of "
-                        "stats file '%s' to user:%d and group:%d: %s.",
+                        "stats file '%s' to user:%d and group:%d: %s.\n",
                         file_name, SnortConfig::get_uid(), SnortConfig::get_gid(), get_error(
                         errno));
                 }
@@ -115,21 +134,33 @@ void PerfTracker::open(bool append)
         umask(old_umask);
 
         if (!fh)
-            ErrorMessage("perfmonitor: Cannot open stats file '%s'.", file_name);
+        {
+            ErrorMessage("perfmonitor: Cannot open stats file '%s'.\n", file_name);
+            return false;
+        }
+
+        // FIXIT-L refactor rotation so it doesn't require an open file handle
+        if (existed && append && !formatter->allow_append())
+            return rotate();
     }
     else
         fh = stdout;
 
     formatter->init_output(fh);
+
+    return true;
 }
 
-void PerfTracker::close()
+bool PerfTracker::close()
 {
     if (fh && fh != stdout)
     {
-        fclose(fh);
+        if (fclose(fh))
+            return false;
         fh = nullptr;
     }
+
+    return true;
 }
 
 // FIXIT-M combine with fileRotate
@@ -142,13 +173,13 @@ static bool rotate_file(const char* old_file, FILE* old_fh,
     struct stat fstats;
 
     if (!old_file)
-        return -1;
+        return false;
 
     if (!old_fh)
     {
         ErrorMessage("Perfmonitor: Performance stats file \"%s\" "
             "isn't open.\n", old_file);
-        return -1;
+        return false;
     }
 
     // Close the current stats file if it's already open
@@ -308,24 +339,27 @@ static bool rotate_file(const char* old_file, FILE* old_fh,
         umask(old_umask);
     }
 
-    return 0;
+    return true;
 }
 
-void PerfTracker::rotate()
+bool PerfTracker::rotate()
 {
     if (fh && fh != stdout)
     {
-        bool ret = rotate_file(fname.c_str(), fh, config->max_file_size);
-        if (ret != 0)
-            return;
-        open(false);
+        if (!rotate_file(fname.c_str(), fh, config->max_file_size))
+            return false;
+
+        return open(false);
     }
+    return true;
 }
 
-void PerfTracker::auto_rotate()
+bool PerfTracker::auto_rotate()
 {
     if (fh && fh != stdout && check_file_size(fh, config->max_file_size))
-        rotate();
+        return rotate();
+
+    return true;
 }
 
 void PerfTracker::write()

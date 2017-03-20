@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2016 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2017-2017 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,27 +16,46 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// csv_formatter.h author Carter Waxman <cwaxman@cisco.com>
+// fbs_formatter.h author Carter Waxman <cwaxman@cisco.com>
 
-#ifndef CSV_FORMATTER_H
-#define CSV_FORMATTER_H
+#ifndef FBS_FORMATTER_H
+#define FBS_FORMATTER_H
 
 #include "perf_formatter.h"
 
-class CSVFormatter : public PerfFormatter
+#include <flatbuffers/flatbuffers.h>
+
+class FbsFormatter : public PerfFormatter
 {
 public:
-    CSVFormatter(std::string tracker_name) : PerfFormatter(tracker_name) {}
+    FbsFormatter(std::string tracker_name) : PerfFormatter(tracker_name) {}
 
     const char* get_extension() override
-    { return ".csv"; }
+    { return ".bfbs"; }
 
+    bool allow_append() override
+    { return false; }
+
+    virtual void register_section(std::string) override;
+    virtual void register_field(std::string, PegCount*) override;
+    virtual void register_field(std::string, const char*) override;
+    virtual void register_field(std::string, std::vector<PegCount>*) override;
     void finalize_fields() override;
     void init_output(FILE*) override;
     void write(FILE*, time_t) override;
 
 private:
-    std::string header;
+    std::string schema;
+    std::vector<std::vector<flatbuffers::uoffset_t>> vtable_offsets;
+
+    std::vector<std::string> offset_names;
+    std::vector<FormatterType> offset_types;
+    std::vector<FormatterValue> offset_values;
+
+    std::vector<std::string> non_offset_names;
+    std::vector<PegCount*> non_offset_values;
+
+    void commit_field_reorder();
 };
 
 #endif

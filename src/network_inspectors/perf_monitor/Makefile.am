@@ -13,3 +13,6 @@ perf_module.cc perf_module.h \
 perf_tracker.cc perf_tracker.h \
 text_formatter.cc text_formatter.h
 
+if HAVE_FLATBUFFERS
+libperf_monitor_a_SOURCES += fbs_formatter.cc fbs_formatter.h
+endif
