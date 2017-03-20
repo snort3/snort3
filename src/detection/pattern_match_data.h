@@ -35,28 +35,7 @@ struct PmdLastCheck
 
 struct PatternMatchData
 {
-    // used by both
-    bool negated;            // search for "not this pattern"
-    bool no_case;            // toggle case sensitivity
-    bool relative;           // do relative pattern searching
-    bool literal;            // true for plain contents only
-    bool fp;                 // for fast_pattern arguments
-
-    uint16_t fp_offset;
-    uint16_t fp_length;
-
-    int offset;              // pattern search start offset
-    int depth;               // pattern search depth
-
-    unsigned flags;          // hyperscan only FIXIT-L need to generalize
-    unsigned pattern_size;   // size of app layer pattern
     const char* pattern_buf; // app layer pattern to match on
-
-    // not used by ips_content
-    int8_t fp_only;
-    uint8_t pm_type;
-
-    unsigned replace_size;   // size of app layer replace pattern
     const char* replace_buf; // app layer pattern to replace with
 
     // FIXIT-L wasting some memory here:
@@ -69,8 +48,62 @@ struct PatternMatchData
        applies to negative contents that are not relative */
     PmdLastCheck* last_check;
 
-    bool unbounded() const
+    unsigned pattern_size;   // size of app layer pattern
+    unsigned replace_size;   // size of app layer replace pattern
+
+    int offset;              // pattern search start offset
+    int depth;               // pattern search depth
+
+    enum
+    {
+        NEGATED  = 0x01,
+        NO_CASE  = 0x02,
+        RELATIVE = 0x04,
+        LITERAL  = 0x08,
+        FAST_PAT = 0x10,
+        NO_FP    = 0x20,
+    };
+
+    uint16_t flags;          // from above enum
+    uint16_t fp_offset;
+    uint16_t fp_length;
+
+    // not used by ips_content
+    int8_t fp_only;
+    uint8_t pm_type;
+
+    bool is_unbounded() const
     { return !depth; }
+
+    void set_fast_pattern()
+    { flags |= FAST_PAT; }
+
+    void set_negated()
+    { flags |= NEGATED; }
+
+    void set_no_case()
+    { flags |= NO_CASE; }
+
+    void set_relative()
+    { flags |= RELATIVE; }
+
+    void set_literal()
+    { flags |= LITERAL; }
+
+    bool is_fast_pattern() const
+    { return (flags & FAST_PAT) != 0; }
+
+    bool is_negated() const
+    { return (flags & NEGATED) != 0; }
+
+    bool is_no_case() const
+    { return (flags & NO_CASE) != 0; }
+
+    bool is_relative() const
+    { return (flags & RELATIVE) != 0; }
+
+    bool is_literal() const
+    { return (flags & LITERAL) != 0; }
 
     bool can_be_fp() const;
 };
@@ -79,10 +112,13 @@ typedef std::vector<PatternMatchData*> PatternMatchVector;
 
 inline bool PatternMatchData::can_be_fp() const
 {
-    if ( !pattern_buf || !pattern_size )
+    if ( !pattern_buf or !pattern_size )
         return false;
 
-    if ( !negated )
+    if ( flags & NO_FP )
+        return false;
+
+    if ( !is_negated() )
         return true;
 
     // Negative contents can only be considered if they are not
@@ -95,7 +131,7 @@ inline bool PatternMatchData::can_be_fp() const
     // are inserted into the pattern matcher without case which may
     // lead to false negatives.
 
-    if ( relative || !no_case || offset || depth )
+    if ( is_relative() or !is_no_case() or offset or depth )
         return false;
 
     return true;

@@ -47,9 +47,10 @@
 
 struct RegexConfig
 {
-    PatternMatchData pmd;
-    std::string re;
     hs_database_t* db;
+    std::string re;
+    PatternMatchData pmd;
+    uint16_t hs_flags;
 
     RegexConfig()
     { reset(); }
@@ -59,6 +60,7 @@ struct RegexConfig
         memset(&pmd, 0, sizeof(pmd));
         re.clear();
         db = nullptr;
+        hs_flags = 0;
     }
 };
 
@@ -93,7 +95,7 @@ public:
     { return CAT_ADJUST; }
 
     bool is_relative() override
-    { return config.pmd.relative; }
+    { return config.pmd.is_relative(); }
 
     bool retry() override;
 
@@ -119,6 +121,7 @@ RegexOption::RegexOption(const RegexConfig& c) :
     }
     config.pmd.pattern_buf = config.re.c_str();
     config.pmd.pattern_size = config.re.size();
+
     config.pmd.fp_length = config.pmd.pattern_size;
     config.pmd.fp_offset = 0;
 }
@@ -131,7 +134,7 @@ RegexOption::~RegexOption()
 
 uint32_t RegexOption::hash() const
 {
-    uint32_t a = config.pmd.flags, b = config.pmd.relative, c = 0;
+    uint32_t a = config.pmd.flags, b = config.hs_flags, c = 0;
     mix_str(a, b, c, config.re.c_str());
     mix_str(a, b, c, get_name());
     finalize(a, b, c);
@@ -149,7 +152,7 @@ bool RegexOption::operator==(const IpsOption& ips) const
 
     if ( config.re == rhs.config.re and
         config.pmd.flags == rhs.config.pmd.flags and
-        config.pmd.relative == rhs.config.pmd.relative )
+        config.hs_flags == rhs.config.hs_flags )
         return true;
 #endif
     return this == &ips;
@@ -207,11 +210,14 @@ static const Parameter s_params[] =
     { "~re", Parameter::PT_STRING, nullptr, nullptr,
       "hyperscan regular expression" },
 
-    { "nocase", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "case insensitive match" },
-
     { "dotall", Parameter::PT_IMPLIED, nullptr, nullptr,
       "matching a . will not exclude newlines" },
+
+    { "fast_pattern", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "use this content in the fast pattern matcher instead of the content selected by default" },
+
+    { "nocase", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "case insensitive match" },
 
     { "multiline", Parameter::PT_IMPLIED, nullptr, nullptr,
       "^ and $ anchors match any newlines in data" },
@@ -243,6 +249,7 @@ public:
 
 private:
     RegexConfig config;
+    uint16_t hs_flags;
 };
 
 RegexModule::~RegexModule()
@@ -254,7 +261,8 @@ RegexModule::~RegexModule()
 bool RegexModule::begin(const char*, int, SnortConfig*)
 {
     config.reset();
-    config.pmd.flags |= HS_FLAG_SINGLEMATCH;
+    config.pmd.flags |= PatternMatchData::NO_FP;
+    config.hs_flags |= HS_FLAG_SINGLEMATCH;
     return true;
 }
 
@@ -267,19 +275,24 @@ bool RegexModule::set(const char*, Value& v, SnortConfig*)
         config.re.erase(0, 1);
         config.re.erase(config.re.length()-1, 1);
     }
+    else if ( v.is("dotall") )
+        config.hs_flags |= HS_FLAG_DOTALL;
+
+    else if ( v.is("fast_pattern") )
+    {
+        config.pmd.flags &= ~PatternMatchData::NO_FP;
+        config.pmd.flags |= PatternMatchData::FAST_PAT;
+    }
+    else if ( v.is("multiline") )
+        config.hs_flags |= HS_FLAG_MULTILINE;
+
     else if ( v.is("nocase") )
     {
-        config.pmd.flags |= HS_FLAG_CASELESS;
-        config.pmd.no_case = true;
+        config.hs_flags |= HS_FLAG_CASELESS;
+        config.pmd.set_no_case();
     }
-    else if ( v.is("dotall") )
-        config.pmd.flags |= HS_FLAG_DOTALL;
-
-    else if ( v.is("multiline") )
-        config.pmd.flags |= HS_FLAG_MULTILINE;
-
     else if ( v.is("relative") )
-        config.pmd.relative = true;
+        config.pmd.set_relative();
 
     else
         return false;
@@ -291,8 +304,8 @@ bool RegexModule::end(const char*, int, SnortConfig*)
 {
     hs_compile_error_t* err = nullptr;
 
-    if ( hs_compile(config.re.c_str(), config.pmd.flags, HS_MODE_BLOCK, nullptr, &config.db, &err)
-        or !config.db )
+    if ( hs_compile(config.re.c_str(), config.hs_flags, HS_MODE_BLOCK,
+        nullptr, &config.db, &err) or !config.db )
     {
         ParseError("can't compile regex '%s'", config.re.c_str());
         hs_free_compile_error(err);

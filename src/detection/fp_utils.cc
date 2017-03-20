@@ -50,7 +50,7 @@ static void finalize_content(OptFpList* ofl)
     if ( !pmd )
         return;
 
-    if ( pmd->negated )
+    if ( pmd->is_negated() )
         pmd->last_check = (PmdLastCheck*)snort_calloc(
             ThreadConfig::get_instance_max(), sizeof(*pmd->last_check));
 }
@@ -239,10 +239,10 @@ bool FpSelector::is_better_than(FpSelector& rhs, bool srvc, RuleDirection dir)
 {
     if ( !pmd_can_be_fp(pmd, cat) )
     {
-        if ( pmd->fp )
+        if ( pmd->is_fast_pattern() )
         {
             ParseWarning(WARN_RULES, "content ineligible for fast_pattern matcher - ignored");
-            pmd->fp = 0;
+            pmd->flags &= ~PatternMatchData::FAST_PAT;
         }
         return false;
     }
@@ -266,21 +266,21 @@ bool FpSelector::is_better_than(FpSelector& rhs, bool srvc, RuleDirection dir)
         if ( cat == CAT_SET_KEY and rhs.cat != CAT_SET_KEY )
             return false;
     }
-    if ( pmd->fp )
+    if ( pmd->is_fast_pattern() )
     {
-        if ( rhs.pmd->fp )
+        if ( rhs.pmd->is_fast_pattern() )
         {
             ParseWarning(WARN_RULES,
                 "only one fast_pattern content per rule allowed - using first");
-            pmd->fp = 0;
+            pmd->flags &= ~PatternMatchData::FAST_PAT;
             return false;
         }
         return true;
     }
-    if ( rhs.pmd->fp )
+    if ( rhs.pmd->is_fast_pattern() )
         return false;
 
-    if ( !pmd->negated && rhs.pmd->negated )
+    if ( !pmd->is_negated() && rhs.pmd->is_negated() )
         return true;
 
     if ( size > rhs.size )
@@ -365,11 +365,18 @@ PatternMatchVector get_fp_content(OptTreeNode* otn, OptFpList*& next, bool srvc)
 static void set_pmd(PatternMatchData& pmd, unsigned flags, const char* s)
 {
     memset(&pmd, 0, sizeof(pmd));
-    pmd.negated = (flags & 0x01) != 0;
-    pmd.no_case = (flags & 0x02) != 0;
-    pmd.relative = (flags & 0x04) != 0;
-    pmd.literal = (flags & 0x08) != 0;
-    pmd.fp = (flags & 0x10) != 0;
+
+    if ( flags & 0x01 )
+        pmd.set_negated();
+    if ( flags & 0x02 )
+        pmd.set_no_case();
+    if ( flags & 0x04 )
+        pmd.set_relative();
+    if ( flags & 0x08 )
+        pmd.set_literal();
+    if ( flags & 0x10 )
+        pmd.set_fast_pattern();
+
     pmd.pattern_buf = s;
     pmd.pattern_size = strlen(s);
 }

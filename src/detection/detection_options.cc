@@ -298,7 +298,7 @@ void print_option_tree(detection_option_tree_node_t* node, int level)
     {
         const OptTreeNode* otn = (OptTreeNode*)node->option_data;
         const SigInfo& si = otn->sigInfo;
-        snprintf(buf, sizeof(buf), "%d:%d:%d", si.gid, si.sid, si.rev);
+        snprintf(buf, sizeof(buf), "%u:%u:%u", si.gid, si.sid, si.rev);
         opt = buf;
     }
 
@@ -589,7 +589,7 @@ int detection_option_node_evaluate(
                                 IpsOption* opt = (IpsOption*)node->option_data;
                                 PatternMatchData* pmd = opt->get_pattern(0, RULE_WO_DIR);
 
-                                if ( pmd->unbounded() )
+                                if ( pmd->is_unbounded() )
                                 {
                                     // Only increment result once. Should hit this
                                     // condition on first loop iteration

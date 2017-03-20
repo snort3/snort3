@@ -120,10 +120,10 @@ public:
     { return CAT_ADJUST; }
 
     bool is_relative() override
-    { return (config->pmd.relative == 1); }
+    { return config->pmd.is_relative(); }
 
     bool retry() override
-    { return !config->pmd.negated; }
+    { return !config->pmd.is_negated(); }
 
     ContentData* get_data()
     { return config; }
@@ -168,36 +168,28 @@ uint32_t ContentOption::hash() const
     uint32_t a,b,c;
     const ContentData* cd = config;
 
-    a = cd->pmd.negated;
+    a = cd->pmd.flags;
     b = cd->pmd.offset;
     c = cd->pmd.depth;
 
     mix(a,b,c);
 
     a += cd->pmd.pattern_size;
-    b += cd->pmd.relative;
-    c += cd->match_delta;
+    b += cd->pmd.fp_offset;
+    c += cd->pmd.fp_length;
 
     mix(a,b,c);
 
     if ( cd->pmd.pattern_size )
         mix_str(a, b, c, cd->pmd.pattern_buf, cd->pmd.pattern_size);
 
-    a += cd->pmd.no_case;
-    b += cd->pmd.fp;
-    c += cd->pmd.fp_only;
-
-    mix(a,b,c);
     mix_str(a,b,c,get_name());
 
-    a += cd->pmd.fp_offset;
-    b += cd->pmd.fp_length;
-    c += cd->offset_var;
+    a += cd->depth_var;
+    b += cd->offset_var;
+    c += cd->match_delta;
 
     mix(a,b,c);
-
-    a += cd->depth_var;
-
     finalize(a,b,c);
 
     return c;
@@ -237,7 +229,7 @@ static bool same_buffers(
 
 #endif
 
-// FIXIT-P fp, fp_only are set after hash table comparisons so this must
+// FIXIT-P FAST_PAT and fp_only are set after hash table comparisons so this must
 // return this == &ips to avoid unnecessary reevaluation and false positives.
 // when this is fixed, add PatternMatchData::operator==().
 bool ContentOption::operator==(const IpsOption& ips) const
@@ -250,27 +242,21 @@ bool ContentOption::operator==(const IpsOption& ips) const
     const ContentData& left = *config;
     const ContentData& right = *rhs.config;
 
-    if ( !same_buffers(left.pmd.pattern_size, left.pmd.pattern_buf, left.pmd.no_case,
-        right.pmd.pattern_size, right.pmd.pattern_buf, right.pmd.no_case) )
+    if ( !same_buffers(left.pmd.pattern_size, left.pmd.pattern_buf, left.pmd.is_no_case(),
+        right.pmd.pattern_size, right.pmd.pattern_buf, right.pmd.is_no_case()) )
         return false;
 
-    if ( !same_buffers(left.pmd.replace_size, left.pmd.replace_buf, left.pmd.no_case,
-        right.pmd.replace_size, right.pmd.replace_buf, right.pmd.no_case) )
+    if ( !same_buffers(left.pmd.replace_size, left.pmd.replace_buf, left.pmd.is_no_case(),
+        right.pmd.replace_size, right.pmd.replace_buf, right.pmd.is_no_case()) )
         return false;
 
     /* Now check the rest of the options */
-    if ((left.pmd.negated == right.pmd.negated) &&
-        // fp set later - can't reliably check here
-        (left.pmd.fp == right.pmd.fp) &&
-        // no_case already checked
-        (left.pmd.relative == right.pmd.relative) &&
+    if ((left.pmd.flags == right.pmd.flags) &&
         (left.pmd.fp_offset == right.pmd.fp_offset) &&
         (left.pmd.fp_length == right.pmd.fp_length) &&
         (left.pmd.offset == right.pmd.offset) &&
         (left.pmd.depth == right.pmd.depth) &&
         // pattern_size and pattern_buf already checked
-        (left.pmd.literal == right.pmd.literal) &&
-        // fp_only set later - can't reliably check here
         // pm_type set later (but determined by CAT)
         (left.match_delta == right.match_delta) &&
         (left.offset_var == right.offset_var) &&
@@ -320,7 +306,7 @@ static int uniSearchReal(ContentData* cd, Cursor& c)
 
     if ( !pos )
     {
-        if ( cd->pmd.relative )
+        if ( cd->pmd.is_relative() )
             pos = c.get_pos();
 
         pos += offset;
@@ -341,7 +327,7 @@ static int uniSearchReal(ContentData* cd, Cursor& c)
     // case where the match is inverted and there is at least some data.
     if ( end > c.size() || (int)end > pos + depth )
     {
-        if ( cd->pmd.negated && (depth > 0) )
+        if ( cd->pmd.is_negated() && (depth > 0) )
             return 0;
 
         return -1;
@@ -350,7 +336,7 @@ static int uniSearchReal(ContentData* cd, Cursor& c)
     const uint8_t* base = c.buffer() + pos;
     int found;
 
-    if ( cd->pmd.no_case )
+    if ( cd->pmd.is_no_case() )
     {
         found = mSearchCI(
             (const char*)base, depth, cd->pmd.pattern_buf, cd->pmd.pattern_size,
@@ -392,7 +378,7 @@ static int CheckANDPatternMatch(ContentData* idx, Cursor& c)
     }
     else
     {
-        found ^= idx->pmd.negated;
+        found ^= idx->pmd.is_negated();
     }
 
     if ( found )
@@ -452,15 +438,18 @@ static void parse_content(ContentData* cd, const char* rule)
 
     cd->pmd.pattern_buf = pattern_buf;
     cd->pmd.pattern_size = dummy_size;
-    cd->pmd.negated = negated;
-    cd->pmd.literal = true;
+
+    cd->pmd.set_literal();
+
+    if ( negated )
+        cd->pmd.set_negated();
 
     cd->set_max_jump_size();
 }
 
 static void parse_offset(ContentData* cd, const char* data)
 {
-    if ( GetCMF(cd) & BAD_OFFSET && cd->pmd.relative )
+    if ( GetCMF(cd) & BAD_OFFSET && cd->pmd.is_relative() )
     {
         ParseError("offset can't be used with itself, distance, or within");
         return;
@@ -492,7 +481,7 @@ static void parse_offset(ContentData* cd, const char* data)
 
 static void parse_depth(ContentData* cd, const char* data)
 {
-    if ( GetCMF(cd) & BAD_DEPTH && cd->pmd.relative )
+    if ( GetCMF(cd) & BAD_DEPTH && cd->pmd.is_relative() )
     {
         ParseError("depth can't be used with itself, distance, or within");
         return;
@@ -532,7 +521,7 @@ static void parse_depth(ContentData* cd, const char* data)
 
 static void parse_distance(ContentData* cd, const char* data)
 {
-    if ( GetCMF(cd) & BAD_DISTANCE && !cd->pmd.relative )
+    if ( GetCMF(cd) & BAD_DISTANCE && !cd->pmd.is_relative() )
     {
         ParseError("distance can't be used with itself, offset, or depth");
         return;
@@ -559,12 +548,12 @@ static void parse_distance(ContentData* cd, const char* data)
         }
     }
 
-    cd->pmd.relative = 1;
+    cd->pmd.set_relative();
 }
 
 static void parse_within(ContentData* cd, const char* data)
 {
-    if ( GetCMF(cd) & BAD_WITHIN && !cd->pmd.relative )
+    if ( GetCMF(cd) & BAD_WITHIN && !cd->pmd.is_relative() )
     {
         ParseError("within can't be used with itself, offset, or depth");
         return;
@@ -599,7 +588,7 @@ static void parse_within(ContentData* cd, const char* data)
 
     DebugFormat(DEBUG_PATTERN_MATCH, "Pattern within = %d\n", cd->pmd.depth);
 
-    cd->pmd.relative = 1;
+    cd->pmd.set_relative();
 }
 
 //-------------------------------------------------------------------------
@@ -695,7 +684,7 @@ bool ContentModule::end(const char*, int, SnortConfig*)
             cd->pmd.pattern_size);
         return false;
     }
-    if ( cd->pmd.no_case )
+    if ( cd->pmd.is_no_case() )
     {
         char* s = (char*)cd->pmd.pattern_buf;
 
@@ -724,20 +713,20 @@ bool ContentModule::set(const char*, Value& v, SnortConfig*)
         parse_within(cd, v.get_string());
 
     else if ( v.is("nocase") )
-        cd->pmd.no_case = 1;
+        cd->pmd.set_no_case();
 
     else if ( v.is("fast_pattern") )
-        cd->pmd.fp = 1;
+        cd->pmd.set_fast_pattern();
 
     else if ( v.is("fast_pattern_offset") )
     {
         cd->pmd.fp_offset = v.get_long();
-        cd->pmd.fp = 1;
+        cd->pmd.set_fast_pattern();
     }
     else if ( v.is("fast_pattern_length") )
     {
         cd->pmd.fp_length = v.get_long();
-        cd->pmd.fp = 1;
+        cd->pmd.set_fast_pattern();
     }
     else
         return false;

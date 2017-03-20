@@ -207,8 +207,8 @@ public:
         IpsOption(s_name), version(iface_version), any_frag(iface_any_frag), uuid(iface_uuid),
         pmd(), alt_pmd()
     {
-        pmd.literal = true;
-        alt_pmd.literal = true;
+        pmd.set_literal();
+        alt_pmd.set_literal();
     }
 
     uint32_t hash() const override;

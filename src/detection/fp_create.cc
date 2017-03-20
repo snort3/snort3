@@ -358,7 +358,7 @@ static int fpFinishPortGroupRule(
         if ( fp->get_search_opt() )
             pg->mpse[pmd->pm_type]->set_opt(1);
     }
-    if (pmd->negated)
+    if (pmd->is_negated())
         pg->add_nfp_rule(otn);
 
     else
@@ -377,7 +377,9 @@ static int fpFinishPortGroupRule(
     pmx->rule_node.rnRuleData = otn;
     pmx->pmd = pmd;
 
-    Mpse::PatternDescriptor desc(pmd->no_case, pmd->negated, pmd->literal, pmd->flags);
+    Mpse::PatternDescriptor desc(
+        pmd->is_no_case(), pmd->is_negated(), pmd->is_literal(), pmd->flags);
+
     pg->mpse[pmd->pm_type]->add_pattern(sc, (uint8_t*)pattern, pattern_length, desc, pmx);
 
     return 0;
@@ -451,9 +453,11 @@ static void fpAddAlternatePatterns(SnortConfig* sc, PortGroup* pg,
     pmx->rule_node.rnRuleData = otn;
     pmx->pmd = pmd;
 
-    Mpse::PatternDescriptor desc(pmd->no_case, pmd->negated, pmd->literal, pmd->flags);
-    pg->mpse[pmd->pm_type]->add_pattern(sc, (uint8_t*)pmd->pattern_buf, pmd->pattern_size, desc,
-        pmx);
+    Mpse::PatternDescriptor desc(
+        pmd->is_no_case(), pmd->is_negated(), pmd->is_literal(), pmd->flags);
+
+    pg->mpse[pmd->pm_type]->add_pattern(
+        sc, (uint8_t*)pmd->pattern_buf, pmd->pattern_size, desc, pmx);
 }
 
 static int fpAddPortGroupRule(
@@ -477,9 +481,9 @@ static int fpAddPortGroupRule(
         PatternMatchData* main_pmd = pmv.back();
         pmv.pop_back();
 
-        if ( !main_pmd->relative && !main_pmd->negated && main_pmd->fp_only >= 0 &&
+        if ( !main_pmd->is_relative() && !main_pmd->is_negated() && main_pmd->fp_only >= 0 &&
             // FIXIT-L no_case consideration is mpse specific, delegate
-            !main_pmd->offset && !main_pmd->depth && main_pmd->no_case )
+            !main_pmd->offset && !main_pmd->depth && main_pmd->is_no_case() )
         {
             if ( !next || !next->ips_opt || !next->ips_opt->is_relative() )
                 main_pmd->fp_only = 1;
@@ -731,14 +735,14 @@ static int fpGetFinalPattern(
     // 3. non-literals like regex - truncation could invalidate the
     // expression.
 
-    if ( pmd->fp_only > 0 or pmd->negated or !pmd->literal )
+    if ( pmd->fp_only > 0 or pmd->is_negated() or !pmd->is_literal() )
     {
         ret_pattern = pattern;
         ret_bytes = bytes;
         return 0;
     }
 
-    if ( pmd->fp && (pmd->fp_offset || pmd->fp_length) )
+    if ( pmd->is_fast_pattern() && (pmd->fp_offset || pmd->fp_length) )
     {
         /* (offset + length) potentially being larger than the pattern itself
          * is taken care of during parsing */
@@ -1582,9 +1586,9 @@ static void print_fp_info(
         txt += isprint(pattern[i]) ? pattern[i] : '.';
     }
     std::string opts = "(";
-    if ( pmd->fp ) opts += " user";
+    if ( pmd->is_fast_pattern() ) opts += " user";
     if ( pmd->fp_only ) opts += " only";
-    if ( pmd->negated ) opts += " negated";
+    if ( pmd->is_negated() ) opts += " negated";
     opts += " )";
 
     LogMessage("FP %s %u:%u:%u %s[%d] = '%s' |%s| %s\n",
