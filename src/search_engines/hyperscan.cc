@@ -208,6 +208,12 @@ void HyperscanMpse::user_dtor()
 
 int HyperscanMpse::prep_patterns(SnortConfig* sc)
 {
+    if ( hs_valid_platform() != HS_SUCCESS )
+    {
+        ParseError("This host does not support Hyperscan.");
+        return -1;
+    }
+
     hs_compile_error_t* errptr = nullptr;
     std::vector<const char*> pats;
     std::vector<unsigned> flags;
