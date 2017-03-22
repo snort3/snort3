@@ -167,26 +167,10 @@ DCE2_Ret DCE2_GetValue(char* start, char* end, void* int_value, int negate,
     return DCE2_RET__SUCCESS;
 }
 
-const char* DCE2_UuidToStr(const Uuid* uuid, DceRpcBoFlag byte_order)
+const char* DCE2_UuidToStr(
+    const Uuid* uuid, DceRpcBoFlag byte_order, char (& uuid_buf)[50])
 {
-#define UUID_BUF_SIZE  50
-    static char uuid_buf1[UUID_BUF_SIZE];
-    static char uuid_buf2[UUID_BUF_SIZE];
-    static int buf_num = 0;
-    char* uuid_buf;
-
-    if (buf_num == 0)
-    {
-        uuid_buf = uuid_buf1;
-        buf_num = 1;
-    }
-    else
-    {
-        uuid_buf = uuid_buf2;
-        buf_num = 0;
-    }
-
-    snprintf(uuid_buf, UUID_BUF_SIZE,
+    snprintf(uuid_buf, DCE2_UUID_BUF_SIZE,
         "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
         DceRpcHtonl(&uuid->time_low, byte_order),
         DceRpcHtons(&uuid->time_mid, byte_order),
@@ -195,8 +179,7 @@ const char* DCE2_UuidToStr(const Uuid* uuid, DceRpcBoFlag byte_order)
         uuid->node[0], uuid->node[1], uuid->node[2],
         uuid->node[3], uuid->node[4], uuid->node[5]);
 
-    uuid_buf[UUID_BUF_SIZE - 1] = '\0';
-
+    uuid_buf[DCE2_UUID_BUF_SIZE - 1] = '\0';
     return uuid_buf;
 }
 

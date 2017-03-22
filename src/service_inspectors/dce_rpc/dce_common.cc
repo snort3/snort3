@@ -160,8 +160,9 @@ static void DCE2_PrintRoptions(DCE2_Roptions* ropts)
     }
     else
     {
-        DebugFormat(DEBUG_DCE_COMMON, "  Iface: %s\n", DCE2_UuidToStr(&ropts->iface,
-            DCERPC_BO_FLAG__NONE));
+        DEBUG_WRAP(char uuid_buf[DCE2_UUID_BUF_SIZE];)
+        DebugFormat(DEBUG_DCE_COMMON, "  Iface: %s\n",
+            DCE2_UuidToStr(&ropts->iface, DCERPC_BO_FLAG__NONE, uuid_buf));
         DebugFormat(DEBUG_DCE_COMMON, "  Iface version: %hu\n", ropts->iface_vers_maj);
     }
     if (ropts->opnum == DCE2_SENTINEL)

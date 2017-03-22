@@ -203,7 +203,7 @@ TEST_GROUP(mpse_hs_match)
 TEST(mpse_hs_match, empty)
 {
     CHECK(hs->prep_patterns(snort_conf) != 0);
-    CHECK(parse_errors == 1);
+    CHECK(parse_errors == 0);
     CHECK(hs->get_pattern_count() == 0);
 
     int state = 0;

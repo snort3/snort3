@@ -639,6 +639,7 @@ static void DCE2_CoCtxReq(DCE2_SsnData* sd, DCE2_CoTracker* cot, const DceRpcCoH
         {
             return;
         }
+        DEBUG_WRAP(char uuid_buf[DCE2_UUID_BUF_SIZE];)
 
         DebugFormat(DEBUG_DCE_COMMON, "Added Context item to queue.\n"
             " Context id: %hu\n"
@@ -646,7 +647,7 @@ static void DCE2_CoCtxReq(DCE2_SsnData* sd, DCE2_CoTracker* cot, const DceRpcCoH
             " Interface major version: %hu\n"
             " Interface minor version: %hu\n",
             ctx_node->ctx_id,
-            DCE2_UuidToStr(&ctx_node->iface, DCERPC_BO_FLAG__NONE),
+            DCE2_UuidToStr(&ctx_node->iface, DCERPC_BO_FLAG__NONE, uuid_buf),
             ctx_node->iface_vers_maj, ctx_node->iface_vers_min);
 
         switch (policy)
@@ -689,6 +690,7 @@ static void dce_co_process_ctx_result(DCE2_SsnData* sd,DCE2_CoTracker* cot,
         DebugMessage(DEBUG_DCE_COMMON, "Failed to dequeue a context id node.\n");
         return;
     }
+    DEBUG_WRAP(char uuid_buf[DCE2_UUID_BUF_SIZE];)
 
     DebugFormat(DEBUG_DCE_COMMON, "Adding Context item to context item list.\n"
         " Context id: %hu\n"
@@ -696,7 +698,7 @@ static void dce_co_process_ctx_result(DCE2_SsnData* sd,DCE2_CoTracker* cot,
         " Interface major version: %hu\n"
         " Interface minor version: %hu\n",
         ctx_node->ctx_id,
-        DCE2_UuidToStr(&ctx_node->iface, DCERPC_BO_FLAG__NONE),
+        DCE2_UuidToStr(&ctx_node->iface, DCERPC_BO_FLAG__NONE, uuid_buf),
         ctx_node->iface_vers_maj, ctx_node->iface_vers_min);
 
     if (result == DCERPC_CO_CONT_DEF_RESULT__ACCEPTANCE)

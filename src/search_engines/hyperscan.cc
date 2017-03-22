@@ -208,6 +208,9 @@ void HyperscanMpse::user_dtor()
 
 int HyperscanMpse::prep_patterns(SnortConfig* sc)
 {
+    if ( !pvector.size() )
+        return -1;
+
     hs_compile_error_t* errptr = nullptr;
     std::vector<const char*> pats;
     std::vector<unsigned> flags;
@@ -226,20 +229,21 @@ int HyperscanMpse::prep_patterns(SnortConfig* sc)
             nullptr, &hs_db, &errptr) or !hs_db )
     {
         ParseError("can't compile hyperscan pattern database: %s (%d) - '%s'",
-                errptr->message, errptr->expression,
-                errptr->expression >= 0 ? pats[errptr->expression] : "");
+            errptr->message, errptr->expression,
+            errptr->expression >= 0 ? pats[errptr->expression] : "");
         hs_free_compile_error(errptr);
-        return -1;
+        return -2;
     }
 
     if ( hs_error_t err = hs_alloc_scratch(hs_db, &s_scratch) )
     {
         ParseError("can't allocate search scratch space (%d)", err);
-        return -2;
+        return -3;
     }
 
     if ( agent )
         user_ctor(sc);
+
     return 0;
 }
 
