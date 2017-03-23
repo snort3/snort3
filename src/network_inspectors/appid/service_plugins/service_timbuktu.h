@@ -17,32 +17,23 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// detector_api.h author Sourcefire Inc.
+// service_timbuktu.h author Sourcefire Inc.
 
-#ifndef DETECTOR_API_H
-#define DETECTOR_API_H
+#ifndef SERVICE_TIMBUKTU_H
+#define SERVICE_TIMBUKTU_H
 
-#include "appid_session.h"
+#include "service_detector.h"
 
-struct RNAServiceValidationModule;
-struct RNAClientAppModule;
+class ServiceDiscovery;
 
-using DetectorFlowdataGet = void* (*)(AppIdSession*, unsigned);
-using DetectorFlowdataAdd = int (*)(AppIdSession*, void*, unsigned, AppIdFreeFCN);
-
-struct DetectorApi
+class TimbuktuServiceDetector : public ServiceDetector
 {
-    DetectorFlowdataGet data_get;
-    DetectorFlowdataAdd data_add;
-};
+public:
+    TimbuktuServiceDetector(ServiceDiscovery*);
+    ~TimbuktuServiceDetector();
 
-// compound detector with both service and client side.
-struct RNADetectorValidationModule
-{
-    RNAServiceValidationModule* service;
-    RNAClientAppModule* client;
-    const DetectorApi* api;
-    unsigned flow_data_index;
+    int validate(AppIdDiscoveryArgs&) override;
 };
 
 #endif
+

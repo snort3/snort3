@@ -36,9 +36,9 @@
 #define SF_APPID_CSD_MIN        1000000
 #define SF_APPID_DYNAMIC_MIN    2000000
 
-struct RNAClientAppModule;
-struct RNAServiceElement;
 class AppIdModuleConfig;
+class ClientDetector;
+class ServiceDetector;
 
 enum AppInfoFlags
 {
@@ -66,14 +66,13 @@ public:
     AppInfoTableEntry(AppId id, char* name)
         : appId(id), app_name(name)
     {
-
     }
 
     ~AppInfoTableEntry()
     {
-        if( app_name )
+        if ( app_name )
             snort_free(app_name);
-        if( app_name_key )
+        if ( app_name_key )
             snort_free(app_name_key);
     }
 
@@ -84,8 +83,8 @@ public:
     int16_t snortId = 0;
     uint32_t flags = 0;
     uint32_t priority = APP_PRIORITY_DEFAULT;
-    const RNAClientAppModule* clntValidator = nullptr;
-    const RNAServiceElement* svrValidator = nullptr;
+    ClientDetector* client_detector = nullptr;
+    ServiceDetector* service_detector = nullptr;
     char* app_name = nullptr;
     char* app_name_key = nullptr;
 };
@@ -96,7 +95,7 @@ typedef std::unordered_map<std::string, AppInfoTableEntry*> AppInfoNameTable;
 class AppInfoManager
 {
 public:
-    ~AppInfoManager() {}
+    ~AppInfoManager() { }
 
     static AppInfoManager& get_instance()
     {
@@ -146,14 +145,14 @@ public:
         return entry ? entry->priority : 0;
     }
 
-     void init_appid_info_table(AppIdModuleConfig*);
-     void cleanup_appid_info_table();
-     void dump_app_info_table();
+    void init_appid_info_table(AppIdModuleConfig*);
+    void cleanup_appid_info_table();
+    void dump_app_info_table();
 
 private:
-    AppInfoManager() {}
-    void load_appid_config(AppIdModuleConfig* mod_config, const char* path);
-    AppInfoTableEntry* get_app_info_entry(AppId appId, const AppInfoTable& lookup_table);
+    AppInfoManager() { }
+    void load_appid_config(AppIdModuleConfig*, const char* path);
+    AppInfoTableEntry* get_app_info_entry(AppId appId, const AppInfoTable&);
     std::mutex app_info_tables_rw_mutex;
 };
 

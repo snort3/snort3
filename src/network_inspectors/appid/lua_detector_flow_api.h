@@ -22,7 +22,8 @@
 #ifndef LUA_DETECTOR_FLOW_API_H
 #define LUA_DETECTOR_FLOW_API_H
 
-// This module supports API towards Lua detectors for performing specific operations on a flow object.
+// This module supports API towards Lua detectors for performing specific operations on a flow
+// object.
 // The flow object on Lua side is a userData.
 
 struct lua_State;
@@ -39,3 +40,4 @@ int register_detector_flow_api(lua_State*);
 void free_detector_flow(void* userdata);
 
 #endif
+

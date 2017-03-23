@@ -27,10 +27,11 @@
 
 #include <limits.h>
 
+#include "appid_config.h"
+#include "appid_api.h"
+
 #include "log/messages.h"
 #include "main/snort_debug.h"
-
-#include "appid_config.h"
 #include "service_plugins/service_util.h"
 
 #define MAX_TABLE_LINE_LEN      1024
@@ -51,7 +52,7 @@ static inline char* strdupToLower(const char* source)
     char* dest = snort_strdup(source);
     char* lcd = dest;
 
-    while(*lcd)
+    while (*lcd)
     {
         *lcd = tolower(*lcd);
         lcd++;
@@ -75,7 +76,7 @@ static AppInfoTableEntry* find_app_info_by_name(const char* app_name)
     const char* search_name = strdupToLower(app_name);
 
     app = app_info_name_table.find(search_name);
-    if( app != app_info_name_table.end() )
+    if ( app != app_info_name_table.end() )
         entry = app->second;
 
     snort_free((void*)search_name);
@@ -84,10 +85,11 @@ static AppInfoTableEntry* find_app_info_by_name(const char* app_name)
 
 static void add_entry_to_app_info_hash(const char* app_name, AppInfoTableEntry* entry)
 {
-    if( !is_existing_entry(entry) )
+    if ( !is_existing_entry(entry) )
         app_info_name_table[app_name] = entry;
     else
-        WarningMessage("App name, \"%s\"is a duplicate existing entry will be shared by each detector.\n",
+        WarningMessage(
+            "App name, \"%s\"is a duplicate existing entry will be shared by each detector.\n",
             app_name);
 }
 
@@ -95,12 +97,14 @@ static AppId get_static_app_info_entry(AppId appid)
 {
     if (appid > 0 && appid < SF_APPID_BUILDIN_MAX)
         return appid;
-    if (appid >= SF_APPID_CSD_MIN && appid < SF_APPID_CSD_MIN + (SF_APPID_MAX - SF_APPID_BUILDIN_MAX))
+    if (appid >= SF_APPID_CSD_MIN && appid < SF_APPID_CSD_MIN + (SF_APPID_MAX -
+        SF_APPID_BUILDIN_MAX))
         return (SF_APPID_BUILDIN_MAX + appid - SF_APPID_CSD_MIN);
     return 0;
 }
 
-AppInfoTableEntry* AppInfoManager::get_app_info_entry(AppId appId, const AppInfoTable& lookup_table)
+AppInfoTableEntry* AppInfoManager::get_app_info_entry(AppId appId, const
+    AppInfoTable& lookup_table)
 {
     AppId tmp;
     AppInfoTable::const_iterator app;
@@ -110,13 +114,13 @@ AppInfoTableEntry* AppInfoManager::get_app_info_entry(AppId appId, const AppInfo
     if ((tmp = get_static_app_info_entry(appId)))
     {
         app = lookup_table.find(tmp);
-        if( app != lookup_table.end() )
+        if ( app != lookup_table.end() )
             entry = app->second;
     }
     else
     {
         app = custom_app_info_table.find(appId);
-        if( app != custom_app_info_table.end() )
+        if ( app != custom_app_info_table.end() )
             entry = app->second;
     }
 
@@ -171,12 +175,12 @@ void AppInfoManager::dump_app_info_table()
     LogMessage("Cisco provided detectors:\n");
     for (auto& kv: app_info_table)
         LogMessage("%s\t%d\t%s\n", kv.second->app_name, kv.second->appId,
-                   (kv.second->flags & APPINFO_FLAG_ACTIVE) ? "active" : "inactive");
+            (kv.second->flags & APPINFO_FLAG_ACTIVE) ? "active" : "inactive");
 
     LogMessage("User provided detectors:\n");
     for (auto& kv: custom_app_info_table)
         LogMessage("%s\t%d\t%s\n", kv.second->app_name, kv.second->appId,
-                   (kv.second->flags & APPINFO_FLAG_ACTIVE) ? "active" : "inactive");
+            (kv.second->flags & APPINFO_FLAG_ACTIVE) ? "active" : "inactive");
 }
 
 AppId AppInfoManager::get_appid_by_service_id(uint32_t id)
@@ -393,14 +397,15 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* mod_config, const char
                 else if (!mod_config->referred_appId_disabled)
                 {
                     char referred_app_list[4096];
-                    int referred_app_index = snprintf(referred_app_list, 4096, "%d ", atoi(conf_val));
+                    int referred_app_index = snprintf(referred_app_list, 4096, "%d ", atoi(
+                        conf_val));
                     set_app_info_flags(atoi(conf_val), APPINFO_FLAG_REFERRED);
 
                     while ((token = strtok_r(nullptr, CONF_SEPARATORS, &context)) != nullptr)
                     {
                         AppId id = atoi(token);
                         referred_app_index += snprintf(referred_app_list + referred_app_index,
-                                                      4096 - referred_app_index, "%d ", id);
+                            4096 - referred_app_index, "%d ", id);
                         set_app_info_flags(id, APPINFO_FLAG_REFERRED);
                     }
                     DebugFormat(DEBUG_APPID,
@@ -426,8 +431,9 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* mod_config, const char
             }
             else if (!(strcasecmp(conf_key, "ignore_thirdparty_appid")))
             {
-                DebugFormat(DEBUG_APPID, "AppId: adding app %d to list of ignore thirdparty apps.\n",
-                             atoi(conf_val));
+                DebugFormat(DEBUG_APPID,
+                    "AppId: adding app %d to list of ignore thirdparty apps.\n",
+                    atoi(conf_val));
                 set_app_info_flags(atoi(conf_val), APPINFO_FLAG_IGNORE);
             }
             else if (!(strcasecmp(conf_key, "http2_detection")))
@@ -449,7 +455,8 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* mod_config, const char
                 }
                 else
                 {
-                    ParseWarning(WARN_CONF, "AppId: ignoring invalid option for http2_detection: %s\n",
+                    ParseWarning(WARN_CONF,
+                        "AppId: ignoring invalid option for http2_detection: %s\n",
                         conf_val);
                 }
             }
@@ -472,13 +479,14 @@ void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config)
     char* snortName = nullptr;
     char* context;
 
-    snprintf(filepath, sizeof(filepath), "%s/odp/%s", mod_config->app_detector_dir, APP_MAPPING_FILE);
+    snprintf(filepath, sizeof(filepath), "%s/odp/%s", mod_config->app_detector_dir,
+        APP_MAPPING_FILE);
 
     tableFile = fopen(filepath, "r");
     if (tableFile == nullptr)
     {
         ParseWarning(WARN_RULES,
-                     "Could not open AppMapping Table file: %s, no AppId rule support", filepath);
+            "Could not open AppMapping Table file: %s, no AppId rule support", filepath);
         return;
     }
 
@@ -567,9 +575,11 @@ void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config)
     mod_config->max_tp_flow_depth = 5;
     mod_config->http2_detection_enabled = false;
 
-    snprintf(filepath, sizeof(filepath), "%s/odp/%s", mod_config->app_detector_dir, APP_CONFIG_FILE);
+    snprintf(filepath, sizeof(filepath), "%s/odp/%s", mod_config->app_detector_dir,
+        APP_CONFIG_FILE);
     load_appid_config (mod_config, filepath);
-    snprintf(filepath, sizeof(filepath), "%s/custom/%s", mod_config->app_detector_dir, USR_CONFIG_FILE);
+    snprintf(filepath, sizeof(filepath), "%s/custom/%s", mod_config->app_detector_dir,
+        USR_CONFIG_FILE);
     load_appid_config (mod_config, filepath);
 }
 

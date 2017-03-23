@@ -21,12 +21,23 @@
 
 #ifndef SERVICE_DCERPC_H
 #define SERVICE_DCERPC_H
+#include "service_detector.h"
 
-// Service detector for DCE/RPC
+class AppIdSession;
+class ServiceDiscovery;
+struct ServiceRPCData;
 
-#include "service_api.h"
+class DceRpcServiceDetector : public ServiceDetector
+{
+public:
+    DceRpcServiceDetector(ServiceDiscovery*);
+    ~DceRpcServiceDetector();
 
-extern RNAServiceValidationModule dcerpc_service_mod;
+    int validate(AppIdDiscoveryArgs&) override;
 
+private:
+    int udp_validate(AppIdDiscoveryArgs&);
+    int tcp_validate(AppIdDiscoveryArgs&);
+};
 #endif
 

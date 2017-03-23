@@ -22,25 +22,21 @@
 #ifndef APPID_SESSION_H
 #define APPID_SESSION_H
 
-//  AppId configuration data structures and access methods
-
-#include "utils/sflsq.h"
+#include <map>
+#include <string>
 
 #include "appid_api.h"
 #include "application_ids.h"
-#include "http_common.h"
 #include "length_app_cache.h"
 #include "service_state.h"
-#include "thirdparty_appid_api.h"
-#include "thirdparty_appid_types.h"
-#include "thirdparty_appid_utils.h"
+#include "detector_plugins/http_url_patterns.h"
 
-struct RNAServiceElement;
 struct RNAServiceSubtype;
-struct RNAClientAppModule;
+class ClientDetector;
+class ServiceDetector;
 class AppInfoManager;
 
-using AppIdFreeFCN = void(*)(void*);
+using AppIdFreeFCN = void (*)(void*);
 
 #define MAX_ATTR_LEN           1024
 #define HTTP_PREFIX "http://"
@@ -131,7 +127,12 @@ struct CommonAppIdData
 
 #define RESPONSE_CODE_PACKET_THRESHHOLD 0
 
-struct httpSession
+// These values are used in Lua code as raw numbers. Do NOT reassign new values.
+#define APP_TYPE_SERVICE    0x1
+#define APP_TYPE_CLIENT     0x2
+#define APP_TYPE_PAYLOAD    0x4
+
+struct HttpSession
 {
     char* host = nullptr;
     uint16_t host_buflen = 0;
@@ -157,10 +158,10 @@ struct httpSession
     uint16_t req_body_buflen = 0;
     char* server = nullptr;
     char* x_working_with = nullptr;
-    char* new_field[HTTP_FIELD_MAX+1] = { nullptr };
-    uint16_t new_field_len[HTTP_FIELD_MAX+1] = { 0 };
-    uint16_t fieldOffset[HTTP_FIELD_MAX+1] = { 0 };
-    uint16_t fieldEndOffset[HTTP_FIELD_MAX+1] = { 0 };
+    char* new_field[HTTP_FIELD_MAX + 1] = { nullptr };
+    uint16_t new_field_len[HTTP_FIELD_MAX + 1] = { 0 };
+    uint16_t fieldOffset[HTTP_FIELD_MAX + 1] = { 0 };
+    uint16_t fieldEndOffset[HTTP_FIELD_MAX + 1] = { 0 };
     bool new_field_contents = false;
     bool is_webdav = false;
     int chp_finished = 0;
@@ -184,12 +185,11 @@ struct httpSession
 #endif
 };
 
-
 // For dnsSession.state:
 #define DNS_GOT_QUERY    0x01
 #define DNS_GOT_RESPONSE 0x02
 
-struct dnsSession
+struct DnsSession
 {
     uint8_t state = 0;              // state
     uint8_t host_len = 0;           // for host
@@ -198,12 +198,13 @@ struct dnsSession
     uint16_t host_offset = 0;       // for host
     uint16_t record_type = 0;       // query: QTYPE
     uint32_t ttl = 0;               // response: TTL
-    char* host = nullptr;           // host (usually query, but could be response for reverse lookup)
+    char* host = nullptr;           // host (usually query, but could be response for reverse
+                                    // lookup)
 };
 
 struct _RNAServiceSubtype;
 
-struct tlsSession
+struct TlsSession
 {
     char* tls_host = nullptr;
     int tls_host_strlen = 0;
@@ -213,8 +214,6 @@ struct tlsSession
     int tls_orgUnit_strlen = 0;
 };
 
-void map_app_names_to_snort_ids();
-
 class AppIdSession : public FlowData
 {
 public:
@@ -223,16 +222,14 @@ public:
 
     static AppIdSession* allocate_session(const Packet*, IpProtocol, int);
     static AppIdSession* create_future_session(const Packet*, const SfIp*, uint16_t, const SfIp*,
-            uint16_t, IpProtocol, int16_t, int);
-    static void do_application_discovery(Packet*, AppIdConfig*);
-    static void add_user(AppIdSession*, const char* username, AppId, int success);
-    static void add_payload(AppIdSession*, AppId);
+        uint16_t, IpProtocol, int16_t, int);
 
     AppIdConfig* config = nullptr;
     CommonAppIdData common;
     Flow* flow = nullptr;
     AppIdFlowData* flowData = nullptr;
     AppInfoManager* app_info_mgr = nullptr;
+    HttpPatternMatchers* http_matchers;
 
     SfIp service_ip;
     uint16_t service_port = 0;
@@ -240,15 +237,15 @@ public:
     uint8_t previous_tcp_flags = 0;
 
     // AppId matching service side
-    RNA_INSPECTION_STATE rnaServiceState = RNA_STATE_NONE;
+    RNA_INSPECTION_STATE rna_service_state = RNA_STATE_NONE;
     AppId serviceAppId = APP_ID_NONE;
     AppId portServiceAppId = APP_ID_NONE;
-    const RNAServiceElement* serviceData = nullptr;
+    ServiceDetector* service_detector = nullptr;
     char* serviceVendor = nullptr;
     char* serviceVersion = nullptr;
     RNAServiceSubtype* subtype = nullptr;
     char* netbios_name = nullptr;
-    SF_LIST* candidate_service_list = nullptr;
+    std::vector<ServiceDetector*> service_candidates;
     unsigned int num_candidate_services_tried = 0;
     bool got_incompatible_services = false;
 
@@ -257,8 +254,8 @@ public:
     AppId client_app_id = APP_ID_NONE;
     AppId client_service_app_id = APP_ID_NONE;
     char* client_version = nullptr;
-    const RNAClientAppModule* rna_client_data = nullptr;
-    SF_LIST* candidate_client_list = nullptr;
+    ClientDetector* client_detector = nullptr;
+    std::map<std::string, ClientDetector*> client_candidates;
     unsigned int num_candidate_clients_tried = 0;
     bool tried_reverse_service = false;
 
@@ -275,8 +272,8 @@ public:
     AppId username_service = APP_ID_NONE;
     char* netbios_domain = nullptr;
     uint32_t session_id = 0;
-    httpSession* hsession = nullptr;
-    tlsSession* tsession = nullptr;
+    HttpSession* hsession = nullptr;
+    TlsSession* tsession = nullptr;
     unsigned scan_flags = 0;
     AppId referredAppId = APP_ID_NONE;
     AppId temp_app_id = APP_ID_NONE;
@@ -297,7 +294,7 @@ public:
         uint32_t lastPktsecond;
         uint64_t initiatorBytes;
         uint64_t responderBytes;
-    } stats = {0, 0, 0, 0};
+    } stats = { 0, 0, 0, 0 };
 
     // Policy and rule ID for related flows (e.g. ftp-data)
     AppIdSession* expectedFlow = nullptr;
@@ -313,7 +310,7 @@ public:
     } encrypted = { APP_ID_NONE, APP_ID_NONE, APP_ID_NONE, APP_ID_NONE, APP_ID_NONE };
 
     // New fields introduced for DNS Blacklisting
-    dnsSession* dsession = nullptr;
+    DnsSession* dsession = nullptr;
 
     void* firewallEarlyData = nullptr;
     AppId pastIndicator = APP_ID_NONE;
@@ -346,7 +343,7 @@ public:
     static void release_free_list_flow_data();
     void* get_flow_data(unsigned id);
     int add_flow_data(void* data, unsigned id, AppIdFreeFCN);
-    int add_flow_data_id(uint16_t port, const RNAServiceElement*);
+    int add_flow_data_id(uint16_t port, ServiceDetector*);
     void* remove_flow_data(unsigned id);
     void free_flow_data_by_id(unsigned id);
     void free_flow_data_by_mask(unsigned mask);
@@ -365,89 +362,40 @@ public:
     AppId pick_client_app_id();
     AppId pick_payload_app_id();
     AppId pick_referred_payload_app_id();
-    AppId fw_pick_service_app_id();
-    AppId fw_pick_misc_app_id();
-    AppId fw_pick_client_app_id();
-    AppId fw_pick_payload_app_id();
-    AppId fw_pick_referred_payload_app_id();
+    AppId pick_fw_service_app_id();
+    AppId pick_fw_misc_app_id();
+    AppId pick_fw_client_app_id();
+    AppId pick_fw_payload_app_id();
+    AppId pick_fw_referred_payload_app_id();
     bool is_ssl_session_decrypted();
-    int process_http_packet(Packet*, int, HttpParsedHeaders* const);
     int process_http_packet(int);
 
-private:
-    bool do_client_discovery(int, Packet*);
-    bool do_service_discovery(IpProtocol, int, AppId, AppId,  Packet*);
-    int exec_client_detectors(Packet*, int);
+    void examine_ssl_metadata(Packet*);
+    void set_client_app_id_data(AppId clientAppId, char** version);
+    void set_service_appid_data(AppId, char*, char**);
+    void set_referred_payload_app_id_data(AppId);
+    void set_payload_app_id_data(ApplicationId, char**);
+    void check_app_detection_restart();
+    void update_encrypted_app_id(AppId);
+    void examine_rtmp_metadata();
+    void sync_with_snort_id(AppId, Packet*);
+    void stop_rna_service_inspection(Packet*,  int);
 
-    static uint64_t is_session_monitored(const Packet*, int, AppIdSession*, AppIdConfig*);
-    static bool is_packet_ignored(Packet* p);
+private:
     bool is_payload_appid_set();
     void reinit_shared_data();
     bool is_ssl_decryption_enabled();
-    void check_app_detection_restart();
-    void update_encrypted_app_id(AppId serviceAppId);
-    void sync_with_snort_id(AppId, Packet*);
-    void examine_ssl_metadata(Packet*);
-    void examine_rtmp_metadata();
-    void set_client_app_id_data(AppId clientAppId, char** version);
-    void set_service_appid_data( AppId, char*, char**);
-    void set_referred_payload_app_id_data( AppId);
-    void set_payload_app_id_data( ApplicationId, char**);
-    void stop_rna_service_inspection(Packet*,  int);
-    void set_session_logging_state(const Packet* pkt, int direction);
+
+    void set_session_logging_state(const Packet*, int direction);
     void clear_app_id_data();
-    int initial_CHP_sweep(char**, uint16_t*, MatchedCHPAction**);
-    void clearMiscHttpFlags();
-    void processCHP(char**, Packet*);
-
-#ifdef REMOVED_WHILE_NOT_IN_USE
-    // FIXIT-M these are not needed until appid for snort3 supports 3rd party detectors (e.g. NAVL)
-    void ProcessThirdPartyResults(Packet*, int, AppId*, ThirdPartyAppIDAttributeData*);
-    void checkTerminateTpModule(uint16_t tpPktCount);
-    bool do_third_party_discovery(IpProtocol, const SfIp*,  Packet*, int&);
-    void pickHttpXffAddress(Packet*, ThirdPartyAppIDAttributeData*);
-#endif
-
-    void create_session_logging_id(int direction, Packet* pkt);
+    int initial_chp_sweep(char**, uint16_t*, MatchedCHPAction**);
+    void clear_http_flags();
+    void process_chp_buffers(char**, Packet*);
+    void create_session_logging_id(int direction, Packet*);
 
     static THREAD_LOCAL uint32_t appid_flow_data_id;
     static THREAD_LOCAL AppIdFlowData* fd_free_list;
 };
 
-inline bool is_third_party_appid_done(void* tp_session)
-{
-    if (thirdparty_appid_module)
-    {
-        unsigned state;
-
-        if (tp_session)
-            state = thirdparty_appid_module->session_state_get(tp_session);
-        else
-            state = TP_STATE_INIT;
-
-        return (state  == TP_STATE_CLASSIFIED || state == TP_STATE_TERMINATED
-                        || state == TP_STATE_HA);
-    }
-
-    return true;
-}
-
-inline bool is_third_party_appid_available(void* tp_session)
-{
-    if (thirdparty_appid_module)
-    {
-        unsigned state;
-
-        if (tp_session)
-            state = thirdparty_appid_module->session_state_get(tp_session);
-        else
-            state = TP_STATE_INIT;
-
-        return (state == TP_STATE_CLASSIFIED || state == TP_STATE_TERMINATED
-                        || state == TP_STATE_MONITORING);
-    }
-
-    return true;
-}
-
 #endif
+

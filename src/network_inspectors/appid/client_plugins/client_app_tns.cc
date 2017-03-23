@@ -23,12 +23,11 @@
 #include "config.h"
 #endif
 
-#include "main/snort_debug.h"
+#include "client_app_tns.h"
 
-#include "app_info_table.h"
 #include "appid_module.h"
-
-#include "client_app_api.h"
+#include "app_info_table.h"
+#include "application_ids.h"
 
 static const char TNS_BANNER[] = "\000\000";
 #define TNS_BANNER_LEN (sizeof(TNS_BANNER)-1)
@@ -69,7 +68,6 @@ enum TNSState
     TNS_STATE_COLLECT_USER
 };
 
-#define MAX_VERSION_SIZE    12
 struct ClientTNSData
 {
     TNSState state;
@@ -98,11 +96,6 @@ struct ClientTNSMsg
 };
 #pragma pack()
 
-struct TNS_CLIENT_APP_CONFIG
-{
-    int enabled;
-};
-
 #ifdef REMOVED_WHILE_NOT_IN_USE
 static const char* msg_type[] =
 {
@@ -128,94 +121,34 @@ static const char* msg_type[] =
     nullptr
 };
 #endif
-THREAD_LOCAL TNS_CLIENT_APP_CONFIG tns_config;
 
-static CLIENT_APP_RETCODE tns_init(const InitClientAppAPI* const init_api, SF_LIST* config);
-static CLIENT_APP_RETCODE tns_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet* pkt, Detector* userData);
-
-SO_PUBLIC RNAClientAppModule tns_client_mod =
+TnsClientDetector::TnsClientDetector(ClientDiscovery* cdm)
 {
-    "TNS",                  // name
-    IpProtocol::TCP,            // proto
-    &tns_init,              // init
-    nullptr,                // clean
-    &tns_validate,          // validate
-    1,                      // minimum_matches
-    nullptr,                // api
-    nullptr,                // userData
-    0,                      // precedence
-    nullptr,                // finalize,
-    1,                      // provides_user
-    0                       // flow_data_index
-};
+    handler = cdm;
+    name = "TNS";
+    proto = IpProtocol::TCP;
+    minimum_matches = 1;
+    provides_user = true;
 
-struct Client_App_Pattern
-{
-    const uint8_t* pattern;
-    unsigned length;
-    int index;
-    unsigned appId;
-};
-
-static Client_App_Pattern patterns[] =
-{
-    { (const uint8_t*)TNS_BANNER, sizeof(TNS_BANNER)-1, -1, APP_ID_ORACLE_DATABASE },
-};
-
-static AppRegistryEntry appIdRegistry[] =
-{
-    { APP_ID_ORACLE_DATABASE, APPINFO_FLAG_CLIENT_ADDITIONAL | APPINFO_FLAG_CLIENT_USER }
-};
-
-static CLIENT_APP_RETCODE tns_init(const InitClientAppAPI* const init_api, SF_LIST* config)
-{
-    unsigned i;
-
-    if (config)
+    tcp_patterns =
     {
-        SF_LNODE* cursor;
-        RNAClientAppModuleConfigItem* item;
+        { (const uint8_t*)TNS_BANNER, sizeof(TNS_BANNER)-1, -1, 0, APP_ID_ORACLE_DATABASE },
+    };
 
-        for (item = (RNAClientAppModuleConfigItem*)sflist_first(config, &cursor);
-            item;
-            item = (RNAClientAppModuleConfigItem*)sflist_next(&cursor))
-        {
-            DebugFormat(DEBUG_LOG,"Processing %s: %s\n",item->name, item->value);
-            if (strcasecmp(item->name, "enabled") == 0)
-            {
-                tns_config.enabled = atoi(item->value);
-            }
-        }
-    }
-
-    tns_config.enabled = 1;
-
-    if (tns_config.enabled)
+    appid_registry =
     {
-        for (i=0; i < sizeof(patterns)/sizeof(*patterns); i++)
-        {
-            DebugFormat(DEBUG_LOG,"registering patterns: %s: %d\n",
-            		(const char*)patterns[i].pattern, patterns[i].index);
-            init_api->RegisterPattern(&tns_validate, IpProtocol::TCP, patterns[i].pattern,
-                patterns[i].length, patterns[i].index);
-        }
-    }
+        { APP_ID_ORACLE_DATABASE, APPINFO_FLAG_CLIENT_ADDITIONAL | APPINFO_FLAG_CLIENT_USER }
+    };
 
-    unsigned j;
-    for (j=0; j < sizeof(appIdRegistry)/sizeof(*appIdRegistry); j++)
-    {
-        DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[j].appId);
-        init_api->RegisterAppId(&tns_validate, appIdRegistry[j].appId,
-            appIdRegistry[j].additionalInfo);
-    }
+    handler->register_detector(name, this, proto);
+}
 
-    return CLIENT_APP_SUCCESS;
+TnsClientDetector::~TnsClientDetector()
+{
 }
 
 #define TNS_MAX_INFO_SIZE    63
-static CLIENT_APP_RETCODE tns_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet*, Detector*)
+int TnsClientDetector::validate(AppIdDiscoveryArgs& args)
 {
     char username[TNS_MAX_INFO_SIZE+1];
     ClientTNSData* fd;
@@ -225,54 +158,54 @@ static CLIENT_APP_RETCODE tns_validate(const uint8_t* data, uint16_t size, const
     uint16_t user_start = 0;
     uint16_t user_end = 0;
 
-    if (dir != APP_ID_FROM_INITIATOR)
-        return CLIENT_APP_INPROCESS;
+    if (args.dir != APP_ID_FROM_INITIATOR)
+        return APPID_INPROCESS;
 
-    fd = (ClientTNSData*)tns_client_mod.api->data_get(asd, tns_client_mod.flow_data_index);
+    fd = (ClientTNSData*)data_get(args.asd);
     if (!fd)
     {
         fd = (ClientTNSData*)snort_calloc(sizeof(ClientTNSData));
-        tns_client_mod.api->data_add(asd, fd, tns_client_mod.flow_data_index, &snort_free);
+        data_add(args.asd, fd, &snort_free);
         fd->state = TNS_STATE_MESSAGE_LEN;
     }
 
     offset = 0;
-    while (offset < size)
+    while (offset < args.size)
     {
         switch (fd->state)
         {
         case TNS_STATE_MESSAGE_LEN:
-            fd->l.raw_len[fd->pos++] = data[offset];
+            fd->l.raw_len[fd->pos++] = args.data[offset];
             if (fd->pos >= offsetof(ClientTNSMsg, checksum))
             {
                 fd->stringlen = ntohs(fd->l.len);
                 if (fd->stringlen == 2)
                 {
-                    if (offset == size - 1)
+                    if (offset == args.size - 1)
                         goto done;
-                    return CLIENT_APP_EINVALID;
+                    return APPID_EINVALID;
                 }
                 else if (fd->stringlen < 2)
-                    return CLIENT_APP_EINVALID;
-                else if (fd->stringlen > size)
-                    return CLIENT_APP_EINVALID;
+                    return APPID_EINVALID;
+                else if (fd->stringlen > args.size)
+                    return APPID_EINVALID;
                 else
                     fd->state = TNS_STATE_MESSAGE_CHECKSUM;
             }
             break;
 
         case TNS_STATE_MESSAGE_CHECKSUM:
-            if (data[offset] != 0)
-                return CLIENT_APP_EINVALID;
+            if (args.data[offset] != 0)
+                return APPID_EINVALID;
             fd->pos++;
             if (fd->pos >= offsetof(ClientTNSMsg, msg))
                 fd->state = TNS_STATE_MESSAGE;
             break;
 
         case TNS_STATE_MESSAGE:
-            fd->message = data[offset];
+            fd->message = args.data[offset];
             if (fd->message < TNS_TYPE_CONNECT || fd->message > TNS_TYPE_MAX)
-                return CLIENT_APP_EINVALID;
+                return APPID_EINVALID;
             fd->pos++;
             fd->state = TNS_STATE_MESSAGE_RES;
             break;
@@ -300,21 +233,21 @@ static CLIENT_APP_RETCODE tns_validate(const uint8_t* data, uint16_t size, const
                 case TNS_TYPE_CONTROL:
                     if (fd->pos >= fd->stringlen)
                     {
-                        if (offset == (size - 1))
+                        if (offset == (args.size - 1))
                             goto done;
-                        return CLIENT_APP_EINVALID;
+                        return APPID_EINVALID;
                     }
                     fd->state = TNS_STATE_MESSAGE_DATA;
                     break;
                 case TNS_TYPE_ACCEPT:
                 case TNS_TYPE_REDIRECT:
                 default:
-                    return CLIENT_APP_EINVALID;
+                    return APPID_EINVALID;
                 }
             }
             break;
         case TNS_STATE_MESSAGE_CONNECT:
-            fd->l.raw_len[fd->pos - CONNECT_VERSION_OFFSET] = data[offset];
+            fd->l.raw_len[fd->pos - CONNECT_VERSION_OFFSET] = args.data[offset];
             fd->pos++;
             if (fd->pos >= (CONNECT_VERSION_OFFSET + 2))
             {
@@ -350,14 +283,14 @@ static CLIENT_APP_RETCODE tns_validate(const uint8_t* data, uint16_t size, const
                 fd->state = TNS_STATE_MESSAGE_CONNECT_OFFSET;
             break;
         case TNS_STATE_MESSAGE_CONNECT_OFFSET:
-            fd->l.raw_len[fd->pos - CONNECT_DATA_OFFSET] = data[offset];
+            fd->l.raw_len[fd->pos - CONNECT_DATA_OFFSET] = args.data[offset];
             fd->pos++;
             if (fd->pos >= (CONNECT_DATA_OFFSET + 2))
             {
                 fd->offsetlen = ntohs(fd->l.len);
-                if (fd->offsetlen > size)
+                if (fd->offsetlen > args.size)
                 {
-                    return CLIENT_APP_EINVALID;
+                    return APPID_EINVALID;
                 }
                 fd->state = TNS_STATE_MESSAGE_CONNECT_PREDATA;
             }
@@ -370,10 +303,10 @@ static CLIENT_APP_RETCODE tns_validate(const uint8_t* data, uint16_t size, const
             }
             break;
         case TNS_STATE_MESSAGE_CONNECT_DATA:
-            if (tolower(data[offset]) != USER_STRING[user_pos])
+            if (tolower(args.data[offset]) != USER_STRING[user_pos])
             {
                 user_pos = 0;
-                if (tolower(data[offset]) == USER_STRING[user_pos])
+                if (tolower(args.data[offset]) == USER_STRING[user_pos])
                     user_pos++;
             }
             else if (++user_pos > MAX_USER_POS)
@@ -385,13 +318,13 @@ static CLIENT_APP_RETCODE tns_validate(const uint8_t* data, uint16_t size, const
             fd->pos++;
             if (fd->pos  >= fd->stringlen)
             {
-                if (offset == (size - 1))
+                if (offset == (args.size - 1))
                     goto done;
-                return CLIENT_APP_EINVALID;
+                return APPID_EINVALID;
             }
             break;
         case TNS_STATE_COLLECT_USER:
-            if (user_end == 0 && data[offset] == ')')
+            if (user_end == 0 && args.data[offset] == ')')
             {
                 user_end = offset;
             }
@@ -399,18 +332,18 @@ static CLIENT_APP_RETCODE tns_validate(const uint8_t* data, uint16_t size, const
             fd->pos++;
             if (fd->pos  >= fd->stringlen)
             {
-                if (offset == (size - 1))
+                if (offset == (args.size - 1))
                     goto done;
-                return CLIENT_APP_EINVALID;
+                return APPID_EINVALID;
             }
             break;
         case TNS_STATE_MESSAGE_DATA:
             fd->pos++;
             if (fd->pos >= fd->stringlen)
             {
-                if (offset == (size - 1))
+                if (offset == (args.size - 1))
                     goto done;
-                return CLIENT_APP_EINVALID;
+                return APPID_EINVALID;
             }
             break;
         default:
@@ -419,21 +352,21 @@ static CLIENT_APP_RETCODE tns_validate(const uint8_t* data, uint16_t size, const
         offset++;
     }
 inprocess:
-    return CLIENT_APP_INPROCESS;
+    return APPID_INPROCESS;
 
 done:
-    tns_client_mod.api->add_app(asd, APP_ID_ORACLE_TNS, APP_ID_ORACLE_DATABASE, fd->version);
+    add_app(args.asd, APP_ID_ORACLE_TNS, APP_ID_ORACLE_DATABASE, fd->version);
     if (user_start && user_end && ((user_size = user_end - user_start) > 0))
     {
         /* we truncate extra long usernames */
         if (user_size > TNS_MAX_INFO_SIZE)
             user_size = TNS_MAX_INFO_SIZE;
-        memcpy(username, &data[user_start], user_size);
+        memcpy(username, &args.data[user_start], user_size);
         username[user_size] = 0;
-        tns_client_mod.api->add_user(asd, username, APP_ID_ORACLE_DATABASE, 1);
+        add_user(args.asd, username, APP_ID_ORACLE_DATABASE, 1);
     }
-    asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+    args.asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
     appid_stats.tns_clients++;
-    return CLIENT_APP_SUCCESS;
+    return APPID_SUCCESS;
 }
 

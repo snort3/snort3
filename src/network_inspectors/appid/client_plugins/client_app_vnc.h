@@ -17,12 +17,20 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// detector_base.h author Sourcefire Inc.
+// client_app_vnc.h author Sourcefire Inc.
 
-#ifndef DETECTOR_BASE_H
-#define DETECTOR_BASE_H
+#ifndef CLIENT_APP_VNC_H
+#define CLIENT_APP_VNC_H
 
-int init_detector_plugins();
+#include "client_plugins/client_detector.h"
 
+class VncClientDetector : public ClientDetector
+{
+public:
+    VncClientDetector(ClientDiscovery*);
+    ~VncClientDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
+};
 #endif
 

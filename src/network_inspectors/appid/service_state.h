@@ -23,9 +23,12 @@
 #define SERVICE_STATE_H
 
 #include "sfip/sf_ip.h"
+#include "service_plugins/service_discovery.h"
+#include "protocols/protocol_ids.h"
 #include "utils/util.h"
 
-struct RNAServiceElement;
+class ServiceDetector;
+
 enum class IpProtocol : uint8_t;
 
 // Service state stored in hosttracker for maintaining service matching states.
@@ -54,41 +57,25 @@ enum DetectorType
     DETECTOR_TYPE_NOT_SET
 };
 
-struct ServiceMatch
-{
-    struct ServiceMatch* next;
-    unsigned count;
-    unsigned size;
-    RNAServiceElement* svc;
-};
-
 // Service state saved in hosttracker, for identifying a service across multiple flow instances.
-struct AppIdServiceIDState
+class ServiceDiscoveryState
 {
-	AppIdServiceIDState()
-	{
-		last_detract.clear();
-		last_invalid_client.clear();
-		reset_time = 0;
-	}
+public:
+    ServiceDiscoveryState()
+    {
+        last_detract.clear();
+        last_invalid_client.clear();
+        reset_time = 0;
+    }
 
-	~AppIdServiceIDState()
-	{
-	    free_service_match_list();
-	}
+    ~ServiceDiscoveryState()
+    {
+        if ( brute_force_mgr )
+            delete brute_force_mgr;
+    }
 
-	void free_service_match_list()
-	{
-	    ServiceMatch* sm;
-
-	    while( (sm = service_list) )
-	    {
-	        service_list = sm->next;
-	        snort_free(sm);
-	    }
-	}
-
-    const RNAServiceElement* svc = nullptr;
+    ServiceDetector* service = nullptr;
+    AppIdDetectorList* brute_force_mgr = nullptr;
 
     /**State of service identification.*/
     SERVICE_ID_STATE state = SERVICE_ID_NEW;
@@ -112,28 +99,20 @@ struct AppIdServiceIDState
     unsigned unknowns_logged = 0;
     time_t reset_time;
 
-    /**List of ServiceMatch nodes which are sorted in order of pattern match. The list is contructed
-     * once on first packet from server and then used for subsequent flows. This saves repeat pattern
-     * matching, but has the disadvantage of making one flow match dependent on first instance of the
-     * same flow.
-     */
-    ServiceMatch* service_list = nullptr;
-    ServiceMatch* current_service = nullptr;
-
     /** Is this entry currently being used in an active session? */
     bool searching = false;
 };
 
-
 class AppIdServiceState
 {
 public:
-	static void initialize(unsigned long);
-	static void clean();
-	static AppIdServiceIDState* add( const SfIp*, IpProtocol proto, uint16_t port, uint32_t level);
-    static AppIdServiceIDState* get( const SfIp*, IpProtocol proto, uint16_t port, uint32_t level);
-    static void remove(const SfIp*, IpProtocol proto, uint16_t port, uint32_t level);
+    static void initialize(unsigned long);
+    static void clean();
+    static ServiceDiscoveryState* add(const SfIp*, IpProtocol, uint16_t port, uint32_t level);
+    static ServiceDiscoveryState* get(const SfIp*, IpProtocol, uint16_t port, uint32_t level);
+    static void remove(const SfIp*, IpProtocol, uint16_t port, uint32_t level);
     static void dump_stats();
 };
 
 #endif
+

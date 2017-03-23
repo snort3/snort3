@@ -22,8 +22,17 @@
 #ifndef SERVICE_RSYNC_H
 #define SERVICE_RSYNC_H
 
-#include "service_api.h"
+#include "service_detector.h"
 
-extern RNAServiceValidationModule rsync_service_mod;
+class ServiceDiscovery;
 
+class RsyncServiceDetector : public ServiceDetector
+{
+public:
+    RsyncServiceDetector(ServiceDiscovery*);
+    ~RsyncServiceDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
+};
 #endif
+

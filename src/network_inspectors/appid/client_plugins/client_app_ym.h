@@ -22,9 +22,15 @@
 #ifndef CLIENT_APP_YM_H
 #define CLIENT_APP_YM_H
 
-#include "client_app_api.h"
+#include "client_plugins/client_detector.h"
 
-extern RNAClientAppModule ym_client_mod;
+class YmDetector : public ClientDetector
+{
+public:
+    YmDetector(ClientDiscovery*);
+    ~YmDetector();
 
+    int validate(AppIdDiscoveryArgs&) override;
+};
 #endif
 

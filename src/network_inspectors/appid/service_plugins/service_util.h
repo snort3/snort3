@@ -53,3 +53,4 @@ inline int16_t add_appid_protocol_reference(const char* protocol)
 }
 
 #endif
+

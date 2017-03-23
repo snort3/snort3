@@ -22,7 +22,17 @@
 #ifndef SERVICE_RTMP_H
 #define SERVICE_RTMP_H
 
-struct RNAServiceValidationModule;
-extern RNAServiceValidationModule rtmp_service_mod;
+#include "service_detector.h"
 
+class ServiceDiscovery;
+
+class RtmpServiceDetector : public ServiceDetector
+{
+public:
+    RtmpServiceDetector(ServiceDiscovery*);
+    ~RtmpServiceDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
+};
 #endif
+

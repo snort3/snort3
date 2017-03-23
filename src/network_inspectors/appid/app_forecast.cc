@@ -29,12 +29,11 @@
 #include "log/messages.h"
 #include "protocols/packet.h"
 #include "time/packet_time.h"
-
 #include "appid_session.h"
 
 static AFActKey master_key;
-static THREAD_LOCAL SFXHASH* AF_indicators = nullptr;     // App Forecasting list of "indicator apps"
-static THREAD_LOCAL SFXHASH* AF_actives = nullptr;        // App Forecasting list of hosts to watch for forecast apps
+static THREAD_LOCAL SFXHASH* AF_indicators = nullptr;     // list of "indicator apps"
+static THREAD_LOCAL SFXHASH* AF_actives = nullptr;        // list of hosts to watch
 
 int init_appid_forecast()
 {
@@ -71,7 +70,7 @@ void clean_appid_forecast()
     }
 }
 
-void add_af_indicator(ApplicationId indicator, ApplicationId forecast, ApplicationId target )
+void add_af_indicator(ApplicationId indicator, ApplicationId forecast, ApplicationId target)
 {
     if (sfxhash_find(AF_indicators, &indicator))
     {

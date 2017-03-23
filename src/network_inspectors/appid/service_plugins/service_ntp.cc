@@ -25,9 +25,8 @@
 
 #include "service_ntp.h"
 
-#include "main/snort_debug.h"
-
 #include "appid_module.h"
+#include "application_ids.h"
 
 #pragma pack(1)
 
@@ -60,70 +59,44 @@ struct ServiceNTPOptional
 
 #pragma pack()
 
-static int ntp_init(const InitServiceAPI* const init_api);
-static int ntp_validate(ServiceValidationArgs* args);
-
-static const RNAServiceElement svc_element =
+NtpServiceDetector::NtpServiceDetector(ServiceDiscovery* sd)
 {
-    nullptr,
-    &ntp_validate,
-    nullptr,
-    DETECTOR_TYPE_DECODER,
-    1,
-    1,
-    0,
-    "ntp"
-};
+    handler = sd;
+    name = "ntp";
+    proto = IpProtocol::TCP;
+    detectorType = DETECTOR_TYPE_DECODER;
+    current_ref_count =  1;
 
-static const RNAServiceValidationPort pp[] =
-{
-    { &ntp_validate, 123, IpProtocol::UDP, 0 },
-    { &ntp_validate, 123, IpProtocol::TCP, 0 },
-    { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
-};
-
-RNAServiceValidationModule ntp_service_mod =
-{
-    "NTP",
-    &ntp_init,
-    pp,
-    nullptr,
-    nullptr,
-    0,
-    nullptr,
-    0
-};
-
-static AppRegistryEntry appIdRegistry[] =
-{
-    { APP_ID_NTP, 0 }
-};
-
-static int ntp_init(const InitServiceAPI* const init_api)
-{
-    unsigned i;
-    for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
+    appid_registry =
     {
-        DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[i].appId);
-        init_api->RegisterAppId(&ntp_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo);
-    }
+        { APP_ID_NTP, 0 }
+    };
 
-    return 0;
+    service_ports =
+    {
+        { 123, IpProtocol::UDP, false },
+        { 123, IpProtocol::TCP, false }
+    };
+
+    handler->register_detector(name, this, proto);
 }
 
-static int ntp_validate(ServiceValidationArgs* args)
+NtpServiceDetector::~NtpServiceDetector()
+{
+}
+
+int NtpServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     const ServiceNTPHeader* nh;
     uint8_t ver;
     uint8_t mode;
-    AppIdSession* asd = args->asd;
-    const uint8_t* data = args->data;
-    uint16_t size = args->size;
+    AppIdSession* asd = args.asd;
+    const uint8_t* data = args.data;
+    uint16_t size = args.size;
 
     if (!size)
         goto inprocess;
-    if (args->dir != APP_ID_FROM_RESPONDER)
+    if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
     nh = (ServiceNTPHeader*)data;
@@ -164,18 +137,16 @@ static int ntp_validate(ServiceValidationArgs* args)
             goto fail;
     }
 
-    ntp_service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element,
-        APP_ID_NTP, nullptr, nullptr, nullptr);
+    add_service(asd, args.pkt, args.dir, APP_ID_NTP, nullptr, nullptr, nullptr);
     appid_stats.ntp_flows++;
-    return SERVICE_SUCCESS;
+    return APPID_SUCCESS;
 
 inprocess:
-    ntp_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &svc_element);
-    return SERVICE_INPROCESS;
+    service_inprocess(asd, args.pkt, args.dir);
+    return APPID_INPROCESS;
 
 fail:
-    ntp_service_mod.api->fail_service(asd, args->pkt, args->dir, &svc_element,
-        ntp_service_mod.flow_data_index);
-    return SERVICE_NOMATCH;
+    fail_service(asd, args.pkt, args.dir);
+    return APPID_NOMATCH;
 }
 

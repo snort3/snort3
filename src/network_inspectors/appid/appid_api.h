@@ -42,27 +42,27 @@ enum class IpProtocol : uint8_t;
 #define APPID_SESSION_MID                   (1ULL << 9)
 #define APPID_SESSION_OOO                   (1ULL << 10)
 #define APPID_SESSION_SYN_RST               (1ULL << 11)
-    /**Service missed the first UDP packet in a flow. This causes detectors to see traffic in reverse direction.
-     * Detectors should set this flag by verifying that packet from initiator is indeed a packet from responder.
-     * Setting this flag without this check will cause RNA to not try other detectors in some cases (see bug 77551).*/
+/**Service missed the first UDP packet in a flow. This causes detectors to see traffic in reverse direction.
+ * Detectors should set this flag by verifying that packet from initiator is indeed a packet from responder.
+ * Setting this flag without this check will cause RNA to not try other detectors in some cases (see bug 77551).*/
 #define APPID_SESSION_UDP_REVERSED          (1ULL << 12)
 #define APPID_SESSION_HTTP_SESSION          (1ULL << 13)
-    /**Service protocol was detected */
+/**Service protocol was detected */
 #define APPID_SESSION_SERVICE_DETECTED      (1ULL << 14)
-    /**Finsihed with client app detection */
+/**Finsihed with client app detection */
 #define APPID_SESSION_CLIENT_DETECTED       (1ULL << 15)
-    /**Flow is a data connection not a service */
+/**Flow is a data connection not a service */
 #define APPID_SESSION_NOT_A_SERVICE         (1ULL << 16)
 #define APPID_SESSION_DECRYPTED             (1ULL << 17)
 #define APPID_SESSION_SERVICE_DELETED       (1ULL << 18)
-    //The following attributes are references only with appId
-    /**Continue calling the routine after the service has been identified. */
+//The following attributes are references only with appId
+/**Continue calling the routine after the service has been identified. */
 #define APPID_SESSION_CONTINUE              (1ULL << 19)
-    /**Call service detection even if the host does not exist */
+/**Call service detection even if the host does not exist */
 #define APPID_SESSION_IGNORE_HOST           (1ULL << 20)
-    /**Service protocol had incompatible client data */
+/**Service protocol had incompatible client data */
 #define APPID_SESSION_INCOMPATIBLE          (1ULL << 21)
-    /**we are ready to see out of network Server packets */
+/**we are ready to see out of network Server packets */
 #define APPID_SESSION_CLIENT_GETS_SERVER_PACKETS    (1ULL << 22)
 #define APPID_SESSION_DISCOVER_APP          (1ULL << 23)
 #define APPID_SESSION_PORT_SERVICE_DONE     (1ULL << 24)
@@ -85,11 +85,12 @@ enum class IpProtocol : uint8_t;
 #define APPID_SESSION_OOO_LOGGED            (1ULL << 41)
 #define APPID_SESSION_TPI_OOO_LOGGED        (1ULL << 42)
 #define APPID_SESSION_EXPECTED_EVALUATE     (1ULL << 43)
-#define APPID_SESSION_IGNORE_ID_FLAGS       (APPID_SESSION_IGNORE_FLOW | \
-                                             APPID_SESSION_NOT_A_SERVICE | \
-                                             APPID_SESSION_NO_TPI | \
-                                             APPID_SESSION_SERVICE_DETECTED | \
-                                             APPID_SESSION_PORT_SERVICE_DONE)
+#define APPID_SESSION_IGNORE_ID_FLAGS \
+    (APPID_SESSION_IGNORE_FLOW | \
+    APPID_SESSION_NOT_A_SERVICE | \
+    APPID_SESSION_NO_TPI | \
+    APPID_SESSION_SERVICE_DETECTED | \
+    APPID_SESSION_PORT_SERVICE_DONE)
 class AppIdSession;
 
 enum APPID_FLOW_TYPE
@@ -101,10 +102,10 @@ enum APPID_FLOW_TYPE
 
 struct RNAServiceSubtype
 {
-    RNAServiceSubtype *next;
-    const char *service;
-    const char *vendor;
-    const char *version;
+    RNAServiceSubtype* next;
+    const char* service;
+    const char* vendor;
+    const char* version;
 };
 
 #define DHCP_OP55_MAX_SIZE  64
@@ -112,19 +113,19 @@ struct RNAServiceSubtype
 
 struct DHCPData
 {
-    DHCPData *next;
+    DHCPData* next;
     unsigned op55_len;
     unsigned op60_len;
     uint8_t op55[DHCP_OP55_MAX_SIZE];
     uint8_t op60[DHCP_OP60_MAX_SIZE];
     uint8_t eth_addr[6];
-} ;
+};
 
 struct DHCPInfo
 {
-    DHCPInfo *next;
+    DHCPInfo* next;
     uint32_t ipAddr;
-    uint8_t  eth_addr[6];
+    uint8_t eth_addr[6];
     uint32_t subnetmask;
     uint32_t leaseSecs;
     uint32_t router;
@@ -132,7 +133,7 @@ struct DHCPInfo
 
 struct FpSMBData
 {
-    FpSMBData *next;
+    FpSMBData* next;
     unsigned major;
     unsigned minor;
     uint32_t flags;
@@ -178,8 +179,8 @@ struct SfIp;
 class SO_PUBLIC AppIdApi
 {
 public:
-    SO_PRIVATE AppIdApi() {}
-    SO_PRIVATE ~AppIdApi() {}
+    SO_PRIVATE AppIdApi() { }
+    SO_PRIVATE ~AppIdApi() { }
 
     const char* get_application_name(int32_t app_id);
     AppId get_application_id(const char* appName);
@@ -202,7 +203,8 @@ public:
     char* get_client_version(AppIdSession*);
     uint64_t get_appid_session_attribute(AppIdSession*, uint64_t flag);
     APPID_FLOW_TYPE get_flow_type(AppIdSession*);
-    void get_service_info(AppIdSession*, char **serviceVendor, char** serviceVersion, RNAServiceSubtype** subtype);
+    void get_service_info(AppIdSession*, char** serviceVendor, char** serviceVersion,
+        RNAServiceSubtype**);
     short get_service_port(AppIdSession*);
     SfIp* get_service_ip(AppIdSession*);
     SfIp* get_initiator_ip(AppIdSession*);
@@ -234,9 +236,9 @@ public:
     void free_smb_fp_data(AppIdSession*, FpSMBData*);
     char* get_netbios_name(AppIdSession*);
     uint32_t produce_ha_state(Flow* flow, uint8_t* buf);
-    uint32_t consume_ha_state(Flow* flow, const uint8_t* buf, uint8_t length, IpProtocol proto,
-        SfIp* ip, uint16_t initiatorPort);
-    AppIdSession* get_appid_data(Flow* flow);
+    uint32_t consume_ha_state(Flow* flow, const uint8_t* buf, uint8_t length, IpProtocol,
+        SfIp*, uint16_t initiatorPort);
+    AppIdSession* get_appid_data(Flow*);
     char* get_dns_query(AppIdSession*, uint8_t* query_len);
     uint16_t get_dns_query_offset(AppIdSession*);
     uint16_t get_dns_record_type(AppIdSession*);
@@ -251,3 +253,4 @@ public:
 SO_PUBLIC extern AppIdApi appid_api;
 
 #endif
+

@@ -22,9 +22,15 @@
 #ifndef CLIENT_APP_AIM_H
 #define CLIENT_APP_AIM_H
 
-#include "client_app_api.h"
+#include "client_plugins/client_detector.h"
 
-extern RNAClientAppModule aim_client_mod;
+class AimClientDetector : public ClientDetector
+{
+public:
+    AimClientDetector(ClientDiscovery*);
+    ~AimClientDetector();
 
+    int validate(AppIdDiscoveryArgs&) override;
+};
 #endif
 

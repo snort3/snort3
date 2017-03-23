@@ -22,9 +22,17 @@
 #ifndef SERVICE_TELNET_H
 #define SERVICE_TELNET_H
 
-#include "detector_plugins/detector_api.h"
+#include "service_detector.h"
 
-extern RNAServiceValidationModule telnet_service_mod;
+class ServiceDiscovery;
 
+class TelnetServiceDetector : public ServiceDetector
+{
+public:
+    TelnetServiceDetector(ServiceDiscovery*);
+    ~TelnetServiceDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
+};
 #endif
 

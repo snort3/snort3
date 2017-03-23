@@ -35,6 +35,7 @@
 #include "framework/data_bus.h"
 #include "protocols/protocol_ids.h"
 #include "service_inspectors/http_inspect/http_msg_header.h"
+#include "thirdparty_appid_api.h"
 
 AppIdConfig* pAppidActiveConfig = nullptr;
 AppIdApi appid_api;
@@ -50,7 +51,7 @@ char* snort_strdup(const char* src)
     return strdup(src);
 }
 
-FlowData::FlowData(unsigned, Inspector *)
+FlowData::FlowData(unsigned, Inspector*)
 {
 }
 
@@ -60,17 +61,17 @@ FlowData::~FlowData()
 
 void Flow::set_application_ids(AppId, AppId, AppId, AppId) { }
 
-const char *content_type = nullptr;
-const char *cookie = nullptr;
-const char *host = nullptr;
-const char *location = nullptr;
-const char *referer = nullptr;
+const char* content_type = nullptr;
+const char* cookie = nullptr;
+const char* host = nullptr;
+const char* location = nullptr;
+const char* referer = nullptr;
 int32_t response_code = 0;
-const char *server = nullptr;
-const char *x_working_with = nullptr;
-const char *uri = nullptr;
-const char *useragent = nullptr;
-const char *via = nullptr;
+const char* server = nullptr;
+const char* x_working_with = nullptr;
+const char* uri = nullptr;
+const char* useragent = nullptr;
+const char* via = nullptr;
 
 void Field::set(int32_t length, const uint8_t* start, bool own_the_buffer_)
 {
@@ -86,8 +87,8 @@ class FakeHttpMsgHeader
 };
 
 unsigned AppIdSession::flow_id = 0;
-AppIdSession *fake_session = nullptr;
-FakeHttpMsgHeader *fake_msg_header = nullptr;
+AppIdSession* fake_session = nullptr;
+FakeHttpMsgHeader* fake_msg_header = nullptr;
 
 AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t) : FlowData(flow_id, nullptr)
 {
@@ -96,32 +97,32 @@ AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t) : FlowData(flow_id
 
 AppIdSession::~AppIdSession()
 {
-    if(!hsession)
+    if (!hsession)
         return;
 
-    if(hsession->content_type)
+    if (hsession->content_type)
         snort_free(hsession->content_type);
-    if(hsession->cookie)
+    if (hsession->cookie)
         snort_free(hsession->cookie);
-    if(hsession->host)
+    if (hsession->host)
         snort_free(hsession->host);
-    if(hsession->location)
+    if (hsession->location)
         snort_free(hsession->location);
-    if(hsession->referer)
+    if (hsession->referer)
         snort_free(hsession->referer);
-    if(hsession->response_code)
+    if (hsession->response_code)
         free(hsession->response_code);
-    if(hsession->server)
+    if (hsession->server)
         snort_free(hsession->server);
-    if(hsession->uri)
+    if (hsession->uri)
         snort_free(hsession->uri);
-    if(hsession->url)
+    if (hsession->url)
         snort_free(hsession->url);
-    if(hsession->useragent)
+    if (hsession->useragent)
         snort_free(hsession->useragent);
-    if(hsession->via)
+    if (hsession->via)
         snort_free(hsession->via);
-    if(hsession->x_working_with)
+    if (hsession->x_working_with)
         snort_free(hsession->x_working_with);
 
     snort_free(hsession);
@@ -158,46 +159,46 @@ AppIdSession* AppIdApi::get_appid_data(Flow*)
     return fake_session;
 }
 
-const uint8_t* HttpEvent::get_content_type(int32_t &length)
+const uint8_t* HttpEvent::get_content_type(int32_t& length)
 {
     global_field.set(0, nullptr);
-    if(content_type)
+    if (content_type)
         global_field.set(strlen(content_type), (const uint8_t*)content_type);
     length = global_field.length();
     return global_field.start();
 }
 
-const uint8_t* HttpEvent::get_cookie(int32_t &length)
+const uint8_t* HttpEvent::get_cookie(int32_t& length)
 {
     global_field.set(0, nullptr);
-    if(cookie)
+    if (cookie)
         global_field.set(strlen(cookie), (const uint8_t*)cookie);
     length = global_field.length();
     return global_field.start();
 }
 
-const uint8_t* HttpEvent::get_host(int32_t &length)
+const uint8_t* HttpEvent::get_host(int32_t& length)
 {
     global_field.set(0, nullptr);
-    if(host)
+    if (host)
         global_field.set(strlen(host), (const uint8_t*)host);
     length = global_field.length();
     return global_field.start();
 }
 
-const uint8_t* HttpEvent::get_location(int32_t &length)
+const uint8_t* HttpEvent::get_location(int32_t& length)
 {
     global_field.set(0, nullptr);
-    if(location)
+    if (location)
         global_field.set(strlen(location), (const uint8_t*)location);
     length = global_field.length();
     return global_field.start();
 }
 
-const uint8_t* HttpEvent::get_referer(int32_t &length)
+const uint8_t* HttpEvent::get_referer(int32_t& length)
 {
     global_field.set(0, nullptr);
-    if(referer)
+    if (referer)
         global_field.set(strlen(referer), (const uint8_t*)referer);
     length = global_field.length();
     return global_field.start();
@@ -208,46 +209,46 @@ int32_t HttpEvent::get_response_code()
     return response_code;
 }
 
-const uint8_t* HttpEvent::get_server(int32_t &length)
+const uint8_t* HttpEvent::get_server(int32_t& length)
 {
     global_field.set(0, nullptr);
-    if(server)
+    if (server)
         global_field.set(strlen(server), (const uint8_t*)server);
     length = global_field.length();
     return global_field.start();
 }
 
-const uint8_t* HttpEvent::get_uri(int32_t &length)
+const uint8_t* HttpEvent::get_uri(int32_t& length)
 {
     global_field.set(0, nullptr);
-    if(uri)
+    if (uri)
         global_field.set(strlen(uri), (const uint8_t*)uri);
     length = global_field.length();
     return global_field.start();
 }
 
-const uint8_t* HttpEvent::get_user_agent(int32_t &length)
+const uint8_t* HttpEvent::get_user_agent(int32_t& length)
 {
     global_field.set(0, nullptr);
-    if(useragent)
+    if (useragent)
         global_field.set(strlen(useragent), (const uint8_t*)useragent);
     length = global_field.length();
     return global_field.start();
 }
 
-const uint8_t* HttpEvent::get_via(int32_t &length)
+const uint8_t* HttpEvent::get_via(int32_t& length)
 {
     global_field.set(0, nullptr);
-    if(via)
+    if (via)
         global_field.set(strlen(via), (const uint8_t*)via);
     length = global_field.length();
     return global_field.start();
 }
 
-const uint8_t* HttpEvent::get_x_working_with(int32_t &length)
+const uint8_t* HttpEvent::get_x_working_with(int32_t& length)
 {
     global_field.set(0, nullptr);
-    if(x_working_with)
+    if (x_working_with)
         global_field.set(strlen(x_working_with), (const uint8_t*)x_working_with);
     length = global_field.length();
     return global_field.start();
@@ -258,8 +259,8 @@ bool HttpEvent::contains_webdav_method()
     return true;
 }
 
-Flow::Flow() {}
-Flow::~Flow() {}
+Flow::Flow() { }
+Flow::~Flow() { }
 
 class FakeFlow : public Flow
 {
@@ -325,20 +326,20 @@ struct TestData
     HttpEventHandler::HttpEventType type = HttpEventHandler::REQUEST_EVENT;
     unsigned scan_flags = 0;
     PegCount http_flows = 1;   // Default to 1 since most tests have 1.
-    const char *content_type = nullptr;
-    const char *cookie = nullptr;
-    const char *host = nullptr;
-    const char *location = nullptr;
-    const char *referer = nullptr;
+    const char* content_type = nullptr;
+    const char* cookie = nullptr;
+    const char* host = nullptr;
+    const char* location = nullptr;
+    const char* referer = nullptr;
     int32_t response_code = 0;
-    const char *server = nullptr;
-    const char *x_working_with = nullptr;
-    const char *uri = nullptr;
-    const char *useragent = nullptr;
-    const char *via = nullptr;
+    const char* server = nullptr;
+    const char* x_working_with = nullptr;
+    const char* uri = nullptr;
+    const char* useragent = nullptr;
+    const char* via = nullptr;
 };
 
-void run_event_handler(TestData test_data, TestData *expect_data = nullptr)
+void run_event_handler(TestData test_data, TestData* expect_data = nullptr)
 {
     FakeFlow flow;
     HttpEvent event(nullptr);
@@ -360,7 +361,7 @@ void run_event_handler(TestData test_data, TestData *expect_data = nullptr)
     cookie = test_data.cookie;
     response_code = test_data.response_code;
 
-    if(expect_data == nullptr)
+    if (expect_data == nullptr)
         expect_data = &test_data;
 
     mock().strictOrder();
@@ -378,13 +379,14 @@ void run_event_handler(TestData test_data, TestData *expect_data = nullptr)
     STRCMP_EQUAL(expect_data->x_working_with, session.hsession->x_working_with);
     STRCMP_EQUAL(expect_data->useragent, session.hsession->useragent);
     STRCMP_EQUAL(expect_data->via, session.hsession->via);
-    if(nullptr == session.hsession->response_code)
+    if (nullptr == session.hsession->response_code)
     {
         LONGS_EQUAL(0, expect_data->response_code);
     }
     else
     {
-        LONGS_EQUAL(expect_data->response_code, strtol(session.hsession->response_code, nullptr, 10));
+        LONGS_EQUAL(expect_data->response_code, strtol(session.hsession->response_code, nullptr,
+            10));
     }
     mock().checkExpectations();
 }
@@ -396,7 +398,6 @@ TEST(appid_http_event, handle_msg_header_no_headers_exist)
 
     run_event_handler(test_data);
 }
-
 
 TEST(appid_http_event, handle_msg_header_only_host)
 {

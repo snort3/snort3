@@ -25,10 +25,8 @@
 
 #include "service_mysql.h"
 
-#include "main/snort_debug.h"
-
-#include "app_info_table.h"
 #include "appid_module.h"
+#include "app_info_table.h"
 
 #pragma pack(1)
 
@@ -48,69 +46,44 @@ struct ServiceMYSQLHdr
 
 #pragma pack()
 
-static int svc_mysql_init(const InitServiceAPI* const init_api);
-static int svc_mysql_validate(ServiceValidationArgs* args);
-
-static const RNAServiceElement svc_element
+MySqlServiceDetector::MySqlServiceDetector(ServiceDiscovery* sd)
 {
-    nullptr,
-    &svc_mysql_validate,
-    nullptr,
-    DETECTOR_TYPE_DECODER,
-    1,
-    1,
-    0,
-    "mysql"
-};
+    handler = sd;
+    name = "mysql";
+    proto = IpProtocol::TCP;
+    detectorType = DETECTOR_TYPE_DECODER;
+    current_ref_count =  1;
 
-static const RNAServiceValidationPort pp[]
-{
-    { &svc_mysql_validate, 3306, IpProtocol::TCP, 0 },
-    { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
-};
-
-RNAServiceValidationModule mysql_service_mod
-{
-    "MYSQL",
-    &svc_mysql_init,
-    pp,
-    nullptr,
-    nullptr,
-    0,
-    nullptr,
-    0
-};
-
-static AppRegistryEntry appIdRegistry[]
-{
-    { APP_ID_MYSQL, APPINFO_FLAG_SERVICE_ADDITIONAL }
-};
-
-static int svc_mysql_init(const InitServiceAPI* const init_api)
-{
-    for ( unsigned i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++ )
+    appid_registry =
     {
-        DebugFormat(DEBUG_APPID,"registering appId: %d\n",appIdRegistry[i].appId);
-        init_api->RegisterAppId(&svc_mysql_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo);
-    }
+        { APP_ID_MYSQL, APPINFO_FLAG_SERVICE_ADDITIONAL }
+    };
 
-    return 0;
+    service_ports =
+    {
+        { 3306, IpProtocol::TCP, false }
+    };
+
+    handler->register_detector(name, this, proto);
 }
 
-static int svc_mysql_validate(ServiceValidationArgs* args)
+MySqlServiceDetector::~MySqlServiceDetector()
 {
-    const uint8_t* data = args->data;
+}
+
+int MySqlServiceDetector::validate(AppIdDiscoveryArgs& args)
+{
+    const uint8_t* data = args.data;
     const ServiceMYSQLHdr* hdr = (const ServiceMYSQLHdr*)data;
     uint32_t len;
     const uint8_t* end;
     const uint8_t* p = nullptr;
-    AppIdSession* asd = args->asd;
-    uint16_t size = args->size;
+    AppIdSession* asd = args.asd;
+    uint16_t size = args.size;
 
     if (!size)
         goto inprocess;
-    if (args->dir != APP_ID_FROM_RESPONDER)
+    if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
     if (size < sizeof(ServiceMYSQLHdr))
         goto fail;
@@ -149,18 +122,16 @@ static int svc_mysql_validate(ServiceValidationArgs* args)
     data += 6;
     if (data >= end)
         goto fail;
-    mysql_service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element,
-        APP_ID_MYSQL, nullptr, (char*)p, nullptr);
+    add_service(asd, args.pkt, args.dir, APP_ID_MYSQL, nullptr, (char*)p, nullptr);
     appid_stats.mysql_flows++;
-    return SERVICE_SUCCESS;
+    return APPID_SUCCESS;
 
 inprocess:
-    mysql_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &svc_element);
-    return SERVICE_INPROCESS;
+    service_inprocess(asd, args.pkt, args.dir);
+    return APPID_INPROCESS;
 
 fail:
-    mysql_service_mod.api->fail_service(asd, args->pkt, args->dir, &svc_element,
-        mysql_service_mod.flow_data_index);
-    return SERVICE_NOMATCH;
+    fail_service(asd, args.pkt, args.dir);
+    return APPID_NOMATCH;
 }
 

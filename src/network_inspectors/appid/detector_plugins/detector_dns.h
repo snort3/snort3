@@ -22,14 +22,7 @@
 #ifndef DETECTOR_DNS_H
 #define DETECTOR_DNS_H
 
-#include "service_plugins/service_api.h"
-
-struct RNAServiceValidationModule;
-struct RNAClientAppModule;
-
-extern struct RNAServiceValidationModule dns_service_mod;
-extern struct RNAClientAppModule dns_udp_client_mod;
-extern struct RNAClientAppModule dns_tcp_client_mod;
+#include "service_plugins/service_detector.h"
 
 int dns_host_scan_hostname(const uint8_t*, size_t, AppId*, AppId*);
 void service_dns_host_clean();
@@ -38,5 +31,43 @@ int dns_add_host_pattern(uint8_t*, size_t, uint8_t, AppId);
 void dns_detector_free_patterns();
 char* dns_parse_host(const uint8_t* host, uint8_t host_len);
 
+struct DNSHeader;
+
+class DnsValidator
+{
+public:
+    void add_dns_query_info(AppIdSession*, uint16_t id, const uint8_t* host, uint8_t host_len,
+        uint16_t host_offset, uint16_t record_type);
+    void add_dns_response_info(AppIdSession*, uint16_t id, const uint8_t* host,
+        uint8_t host_len, uint16_t host_offset, uint8_t response_type, uint32_t ttl);
+    void reset_dns_info(AppIdSession*);
+    int dns_validate_label(const uint8_t* data, uint16_t* offset, uint16_t size, uint8_t* len,
+        unsigned* len_valid);
+    int dns_validate_query(const uint8_t* data, uint16_t* offset, uint16_t size,
+        uint16_t id, unsigned host_reporting, AppIdSession*);
+    int dns_validate_answer(const uint8_t* data, uint16_t* offset, uint16_t size,
+        uint16_t id, uint8_t rcode, unsigned host_reporting, AppIdSession*);
+    int dns_validate_header(const int dir, DNSHeader*, unsigned host_reporting, AppIdSession*);
+    int validate_packet(const uint8_t* data, uint16_t size, const int,
+        unsigned host_reporting, AppIdSession*);
+};
+
+class DnsTcpServiceDetector : public ServiceDetector, DnsValidator
+{
+public:
+    DnsTcpServiceDetector(ServiceDiscovery*);
+    ~DnsTcpServiceDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
+};
+
+class DnsUdpServiceDetector : public ServiceDetector, DnsValidator
+{
+public:
+    DnsUdpServiceDetector(ServiceDiscovery*);
+    ~DnsUdpServiceDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
+};
 #endif
 

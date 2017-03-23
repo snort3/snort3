@@ -25,13 +25,10 @@
 
 #include "service_rsync.h"
 
-#include "main/snort_debug.h"
-
-#include "app_info_table.h"
 #include "appid_module.h"
+#include "app_info_table.h"
 
 #define RSYNC_PORT  873
-
 #define RSYNC_BANNER "@RSYNCD: "
 
 enum RSYNCState
@@ -46,81 +43,55 @@ struct ServiceRSYNCData
     RSYNCState state;
 };
 
-static int rsync_init(const InitServiceAPI* const init_api);
-static int rsync_validate(ServiceValidationArgs* args);
-
-static const RNAServiceElement svc_element =
+RsyncServiceDetector::RsyncServiceDetector(ServiceDiscovery* sd)
 {
-    nullptr,
-    &rsync_validate,
-    nullptr,
-    DETECTOR_TYPE_DECODER,
-    1,
-    1,
-    0,
-    "rsync"
-};
+    handler = sd;
+    name = "rsync";
+    proto = IpProtocol::TCP;
+    detectorType = DETECTOR_TYPE_DECODER;
+    current_ref_count =  1;
 
-static const RNAServiceValidationPort pp[] =
-{
-    { &rsync_validate, RSYNC_PORT, IpProtocol::TCP, 0 },
-    { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
-};
-
-RNAServiceValidationModule rsync_service_mod =
-{
-    "RSYNC",
-    &rsync_init,
-    pp,
-    nullptr,
-    nullptr,
-    0,
-    nullptr,
-    0
-};
-
-static AppRegistryEntry appIdRegistry[] =
-{
-    { APP_ID_RSYNC, APPINFO_FLAG_SERVICE_ADDITIONAL }
-};
-
-static int rsync_init(const InitServiceAPI* const init_api)
-{
-    init_api->RegisterPattern(&rsync_validate, IpProtocol::TCP, (uint8_t*)RSYNC_BANNER,
-        sizeof(RSYNC_BANNER)-1, 0, "rsync");
-    unsigned i;
-    for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
+    tcp_patterns =
     {
-        DebugFormat(DEBUG_APPID,"registering appId: %d\n",appIdRegistry[i].appId);
-        init_api->RegisterAppId(&rsync_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo);
-    }
+        { (uint8_t*)RSYNC_BANNER, sizeof(RSYNC_BANNER)-1, 0, 0, 0 }
+    };
 
-    return 0;
+    appid_registry =
+    {
+        { APP_ID_RSYNC, APPINFO_FLAG_SERVICE_ADDITIONAL }
+    };
+
+    service_ports =
+    {
+        { RSYNC_PORT, IpProtocol::TCP, false }
+    };
+
+    handler->register_detector(name, this, proto);
 }
 
-static int rsync_validate(ServiceValidationArgs* args)
+RsyncServiceDetector::~RsyncServiceDetector()
+{
+}
+
+int RsyncServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     ServiceRSYNCData* rd;
     int i;
 
-    assert(args);
-
-    AppIdSession* asd = args->asd;
-    const uint8_t* data = args->data;
-    uint16_t size = args->size;
+    AppIdSession* asd = args.asd;
+    const uint8_t* data = args.data;
+    uint16_t size = args.size;
 
     if (!size)
         goto inprocess;
-    if (args->dir != APP_ID_FROM_RESPONDER)
+    if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    rd = (ServiceRSYNCData*)rsync_service_mod.api->data_get(asd,
-        rsync_service_mod.flow_data_index);
+    rd = (ServiceRSYNCData*)data_get(asd);
     if (!rd)
     {
         rd = (ServiceRSYNCData*)snort_calloc(sizeof(ServiceRSYNCData));
-        rsync_service_mod.api->data_add(asd, rd, rsync_service_mod.flow_data_index, &snort_free);
+        data_add(asd, rd, &snort_free);
         rd->state = RSYNC_STATE_BANNER;
     }
 
@@ -153,18 +124,16 @@ static int rsync_validate(ServiceValidationArgs* args)
     }
 
 inprocess:
-    rsync_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &svc_element);
-    return SERVICE_INPROCESS;
+    service_inprocess(asd, args.pkt, args.dir);
+    return APPID_INPROCESS;
 
 success:
-    rsync_service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element,
-        APP_ID_RSYNC, nullptr, nullptr, nullptr);
+    add_service(asd, args.pkt, args.dir, APP_ID_RSYNC, nullptr, nullptr, nullptr);
     appid_stats.rsync_flows++;
-    return SERVICE_SUCCESS;
+    return APPID_SUCCESS;
 
 fail:
-    rsync_service_mod.api->fail_service(asd, args->pkt, args->dir, &svc_element,
-        rsync_service_mod.flow_data_index);
-    return SERVICE_NOMATCH;
+    fail_service(asd, args.pkt, args.dir);
+    return APPID_NOMATCH;
 }
 

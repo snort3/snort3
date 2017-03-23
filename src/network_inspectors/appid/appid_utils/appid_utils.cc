@@ -35,7 +35,7 @@ int AppIdUtils::split(char* data, char** toklist, int max_toks, const char* sepa
 
     memset(toklist, 0, max_toks * sizeof(*toklist));
     for (ap = (char**)toklist;
-         ap < &toklist[max_toks] && (*ap = strsep(&data, separator)) != nullptr; )
+        ap < &toklist[max_toks] && (*ap = strsep(&data, separator)) != nullptr; )
     {
         if (**ap != '\0')
         {
@@ -199,3 +199,4 @@ void AppIdUtils::dump_hex(FILE* fp, const uint8_t* data, unsigned len)
         fprintf(fp, "  %s\n", str);
     }
 }
+

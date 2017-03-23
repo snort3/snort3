@@ -22,9 +22,18 @@
 #ifndef SERVICE_MYSQL_H
 #define SERVICE_MYSQL_H
 
-#include "service_api.h"
+#include "service_detector.h"
 
-extern RNAServiceValidationModule mysql_service_mod;
+class ServiceDiscovery;
+
+class MySqlServiceDetector : public ServiceDetector
+{
+public:
+    MySqlServiceDetector(ServiceDiscovery*);
+    ~MySqlServiceDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
+};
 
 #endif
 

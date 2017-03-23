@@ -25,9 +25,8 @@
 
 #include "service_nntp.h"
 
-#include "main/snort_debug.h"
-
 #include "appid_module.h"
+#include "application_ids.h"
 
 #define NNTP_PORT   119
 
@@ -62,63 +61,38 @@ struct ServiceNNTPCode
 
 #pragma pack()
 
-static int nntp_init(const InitServiceAPI* const init_api);
-static int nntp_validate(ServiceValidationArgs* args);
-
-static const RNAServiceElement svc_element =
-{
-    nullptr,
-    &nntp_validate,
-    nullptr,
-    DETECTOR_TYPE_DECODER,
-    1,
-    1,
-    0,
-    "nntp"
-};
-
-static const RNAServiceValidationPort pp[] =
-{
-    { &nntp_validate, NNTP_PORT, IpProtocol::TCP, 0 },
-    { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
-};
-
-RNAServiceValidationModule nntp_service_mod =
-{
-    "NNTP",
-    &nntp_init,
-    pp,
-    nullptr,
-    nullptr,
-    0,
-    nullptr,
-    0
-};
-
 #define NNTP_PATTERN1 "200 "
 #define NNTP_PATTERN2 "201 "
 
-static AppRegistryEntry appIdRegistry[] =
+NntpServiceDetector::NntpServiceDetector(ServiceDiscovery* sd)
 {
-    { APP_ID_NNTP, 0 }
-};
+    handler = sd;
+    name = "nntp";
+    proto = IpProtocol::TCP;
+    detectorType = DETECTOR_TYPE_DECODER;
+    current_ref_count =  1;
 
-static int nntp_init(const InitServiceAPI* const init_api)
-{
-    init_api->RegisterPattern(&nntp_validate, IpProtocol::TCP, (uint8_t*)NNTP_PATTERN1,
-        sizeof(NNTP_PATTERN1)-1, 0, "nntp");
-    init_api->RegisterPattern(&nntp_validate, IpProtocol::TCP, (uint8_t*)NNTP_PATTERN2,
-        sizeof(NNTP_PATTERN2)-1, 0, "nntp");
-
-    unsigned i;
-    for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
+    tcp_patterns =
     {
-        DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[i].appId);
-        init_api->RegisterAppId(&nntp_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo);
-    }
+        { (uint8_t*)NNTP_PATTERN1, sizeof(NNTP_PATTERN1) - 1, 0, 0, 0 },
+        { (uint8_t*)NNTP_PATTERN2, sizeof(NNTP_PATTERN2) - 1, 0, 0, 0 },
+    };
 
-    return 0;
+    appid_registry =
+    {
+        { APP_ID_NNTP, 0 }
+    };
+
+    service_ports =
+    {
+        { NNTP_PORT, IpProtocol::TCP, false }
+    };
+
+    handler->register_detector(name, this, proto);
+}
+
+NntpServiceDetector::~NntpServiceDetector()
+{
 }
 
 static int nntp_validate_reply(const uint8_t* data, uint16_t* offset,
@@ -293,25 +267,25 @@ static int nntp_validate_data(const uint8_t* data, uint16_t* offset,
     return 0;
 }
 
-static int nntp_validate(ServiceValidationArgs* args)
+int NntpServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     ServiceNNTPData* nd;
     uint16_t offset;
     int code;
-    AppIdSession* asd = args->asd;
-    const uint8_t* data = args->data;
-    uint16_t size = args->size;
+    AppIdSession* asd = args.asd;
+    const uint8_t* data = args.data;
+    uint16_t size = args.size;
 
     if (!size)
         goto inprocess;
-    if (args->dir != APP_ID_FROM_RESPONDER)
+    if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    nd = (ServiceNNTPData*)nntp_service_mod.api->data_get(asd, nntp_service_mod.flow_data_index);
+    nd = (ServiceNNTPData*)data_get(asd);
     if (!nd)
     {
         nd = (ServiceNNTPData*)snort_calloc(sizeof(ServiceNNTPData));
-        nntp_service_mod.api->data_add(asd, nd, nntp_service_mod.flow_data_index, &snort_free);
+        data_add(asd, nd, &snort_free);
         nd->state = NNTP_STATE_CONNECTION;
     }
 
@@ -375,18 +349,16 @@ static int nntp_validate(ServiceValidationArgs* args)
     }
 
 inprocess:
-    nntp_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &svc_element);
-    return SERVICE_INPROCESS;
+    service_inprocess(asd, args.pkt, args.dir);
+    return APPID_INPROCESS;
 
 success:
-    nntp_service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element,
-        APP_ID_NNTP, nullptr, nullptr, nullptr);
+    add_service(asd, args.pkt, args.dir, APP_ID_NNTP, nullptr, nullptr, nullptr);
     appid_stats.nntp_flows++;
-    return SERVICE_SUCCESS;
+    return APPID_SUCCESS;
 
 fail:
-    nntp_service_mod.api->fail_service(asd, args->pkt, args->dir, &svc_element,
-        nntp_service_mod.flow_data_index);
-    return SERVICE_NOMATCH;
+    fail_service(asd, args.pkt, args.dir);
+    return APPID_NOMATCH;
 }
 

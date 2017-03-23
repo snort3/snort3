@@ -115,30 +115,30 @@ struct NetworkSet
 class NetworkSetManager
 {
 public:
-    static int create(NetworkSet** network_set);
-    static int destroy(NetworkSet* network_set);
-    static NetworkSet* copy(NetworkSet* network_set);
+    static int create(NetworkSet**);
+    static int destroy(NetworkSet*);
+    static NetworkSet* copy(NetworkSet*);
     static int add_set(NetworkSet* dest_set, NetworkSet* src_set);
-    static int add_cidr_block_ex(NetworkSet* network_set, uint32_t ip,
+    static int add_cidr_block_ex(NetworkSet*, uint32_t ip,
         unsigned cidr_bits, int ip_not, unsigned id, unsigned type);
-    static int add_cidr_block6_ex(NetworkSet* network_set, NSIPv6Addr* ip,
+    static int add_cidr_block6_ex(NetworkSet*, NSIPv6Addr*,
         unsigned cidr_bits, int ip_not, unsigned id, unsigned type);
-    static int add_cidr_block(NetworkSet* network_set, uint32_t ip,
+    static int add_cidr_block(NetworkSet*, uint32_t ip,
         unsigned cidr_bits, int ip_not, unsigned id);
-    static int add_cidr_block6(NetworkSet* network_set, NSIPv6Addr* ip,
+    static int add_cidr_block6(NetworkSet*, NSIPv6Addr*,
         unsigned cidr_bits, int ip_not, unsigned id);
-    static int add_network_range_ex(NetworkSet* network_set, uint32_t range_min,
+    static int add_network_range_ex(NetworkSet*, uint32_t range_min,
         uint32_t range_max, unsigned cidr_bits, int ip_not, unsigned id, unsigned type);
-    static int add_network_range6(NetworkSet* network_set, NSIPv6Addr* range_min,
+    static int add_network_range6(NetworkSet*, NSIPv6Addr* range_min,
         NSIPv6Addr* range_max, unsigned cidr_bits, int ip_not, unsigned id, unsigned type);
-    static int add_network_range(NetworkSet* network_set, uint32_t range_min,
+    static int add_network_range(NetworkSet*, uint32_t range_min,
         uint32_t range_max, unsigned cidr_bits, int ip_not, unsigned id);
-    static int add_network_range6(NetworkSet* network_set, NSIPv6Addr* range_min,
+    static int add_network_range6(NetworkSet*, NSIPv6Addr* range_min,
         NSIPv6Addr* range_max, unsigned cidr_bits, int ip_not, unsigned id);
-    static int add_network_range_only_ipv6(NetworkSet* network_set, int ip_not,
-        unsigned id, unsigned  type);
-    static int reduce(NetworkSet* network_set);
-    static int log_network_set(NetworkSet* network_set, const char* prefix, FILE* stream);
+    static int add_network_range_only_ipv6(NetworkSet*, int ip_not,
+        unsigned id, unsigned type);
+    static int reduce(NetworkSet*);
+    static int log_network_set(NetworkSet*, const char* prefix, FILE* stream);
 
     static void pack_ipv4_to_ipv6(NSIPv6Addr* ipv6Addr, uint32_t ipv4Addr)
     {
@@ -363,3 +363,4 @@ private:
 #endif
 
 #endif
+

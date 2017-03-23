@@ -22,7 +22,17 @@
 #ifndef SERVICE_RLOGIN_H
 #define SERVICE_RLOGIN_H
 
-struct RNAServiceValidationModule;
-extern RNAServiceValidationModule rlogin_service_mod;
+#include "service_detector.h"
 
+class ServiceDiscovery;
+
+class RloginServiceDetector : public ServiceDetector
+{
+public:
+    RloginServiceDetector(ServiceDiscovery*);
+    ~RloginServiceDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
+};
 #endif
+

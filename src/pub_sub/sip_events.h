@@ -121,11 +121,11 @@ private:
     const SIPMsg* msg;
     const SIP_DialogData* dialog;
 
-    const char* from;
+    const char* from = nullptr;
     size_t from_len;
-    const char* user_name;
+    const char* user_name = nullptr;
     size_t user_name_len;
-    const char* user_agent;
+    const char* user_agent = nullptr;
     size_t user_agent_len;
     const char* server;
     size_t server_len;

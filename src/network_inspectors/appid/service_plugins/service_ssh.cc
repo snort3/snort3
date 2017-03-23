@@ -26,11 +26,9 @@
 #include "service_ssh.h"
 
 #include "main/snort_debug.h"
-
-#include "app_info_table.h"
 #include "appid_module.h"
-
-#include "service_base.h"
+#include "app_info_table.h"
+#include "application_ids.h"
 
 #define SSH_PORT    22
 
@@ -132,55 +130,34 @@ struct ServiceSSHKeyExchangeFinal
 
 #pragma pack()
 
-static int ssh_init(const InitServiceAPI* const init_api);
-static int ssh_validate(ServiceValidationArgs* args);
-
-static const RNAServiceElement svc_element =
+SshServiceDetector::SshServiceDetector(ServiceDiscovery* sd)
 {
-    nullptr,
-    &ssh_validate,
-    nullptr,
-    DETECTOR_TYPE_DECODER,
-    1,
-    1,
-    0,
-    "ssh",
-};
+    handler = sd;
+    name = "ssh";
+    proto = IpProtocol::TCP;
+    detectorType = DETECTOR_TYPE_DECODER;
+    current_ref_count =  1;
 
-static const RNAServiceValidationPort pp[] =
-{
-    { &ssh_validate, SSH_PORT, IpProtocol::TCP, 0 },
-    { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
-};
-
-RNAServiceValidationModule ssh_service_mod =
-{
-    "SSH",
-    &ssh_init,
-    pp,
-    nullptr,
-    nullptr,
-    0,
-    nullptr,
-    0
-};
-
-static const AppRegistryEntry appIdRegistry[] =
-{
-    { APP_ID_SSH, APPINFO_FLAG_SERVICE_ADDITIONAL }
-};
-
-static int ssh_init(const InitServiceAPI* const init_api)
-{
-    init_api->RegisterPattern(&ssh_validate, IpProtocol::TCP, (uint8_t*)SSH_BANNER,
-        sizeof(SSH_BANNER) - 1, 0, "ssh");
-    for (unsigned i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
+    tcp_patterns =
     {
-        DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[i].appId);
-        init_api->RegisterAppId(&ssh_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo);
-    }
-    return 0;
+        { (uint8_t*)SSH_BANNER, sizeof(SSH_BANNER) - 1, 0, 0, 0 },
+    };
+
+    appid_registry =
+    {
+        { APP_ID_SSH, APPINFO_FLAG_SERVICE_ADDITIONAL }
+    };
+
+    service_ports =
+    {
+        { SSH_PORT, IpProtocol::TCP, false }
+    };
+
+    handler->register_detector(name, this, proto);
+}
+
+SshServiceDetector::~SshServiceDetector()
+{
 }
 
 static int ssh_validate_pubkey(const uint8_t* data, uint16_t size,
@@ -223,10 +200,10 @@ static int ssh_validate_pubkey(const uint8_t* data, uint16_t size,
                 ss->pos++;
             }
             else
-                return SERVICE_NOMATCH;
+                return APPID_NOMATCH;
             ss->len = ss->len + ss->plen + sizeof(skx->len);
             if (ss->len > 35000)
-                return SERVICE_NOMATCH;
+                return APPID_NOMATCH;
             break;
         case OLD_SSH_PUBLIC_KEY:
             ss->pos++;
@@ -234,14 +211,14 @@ static int ssh_validate_pubkey(const uint8_t* data, uint16_t size,
             {
                 offset++;
                 if (offset == size)
-                    return SERVICE_SUCCESS;
-                return SERVICE_NOMATCH;
+                    return APPID_SUCCESS;
+                return APPID_NOMATCH;
             }
             break;
         }
         offset++;
     }
-    return SERVICE_INPROCESS;
+    return APPID_INPROCESS;
 }
 
 static int ssh_validate_keyx(const uint8_t* data, uint16_t size,
@@ -284,10 +261,10 @@ static int ssh_validate_keyx(const uint8_t* data, uint16_t size,
                 ss->hstate = SSH_IGNORE;
             }
             else
-                return SERVICE_NOMATCH;
+                return APPID_NOMATCH;
             ss->len = ntohl(ss->l.len) + sizeof(skx->len);
             if (ss->len > 35000)
-                return SERVICE_NOMATCH;
+                return APPID_NOMATCH;
             break;
         case SSH_IGNORE:
             ss->pos++;
@@ -314,7 +291,7 @@ static int ssh_validate_keyx(const uint8_t* data, uint16_t size,
                 ss->field_len = ntohl(ss->l.len);
                 ss->read_data += ss->field_len + sizeof(sks->len);
                 if (ss->read_data > ss->len)
-                    return SERVICE_NOMATCH;
+                    return APPID_NOMATCH;
                 if (ss->field_len)
                     ss->hstate = SSH_FIELD_DATA_BEGIN;
                 else
@@ -347,7 +324,7 @@ static int ssh_validate_keyx(const uint8_t* data, uint16_t size,
             if (ss->pos >= sizeof(ServiceSSHKeyExchangeFinal))
             {
                 if (ss->l.len != 0)
-                    return SERVICE_NOMATCH;
+                    return APPID_NOMATCH;
                 ss->hstate = SSH_PADDING;
                 ss->pos = 0;
             }
@@ -358,14 +335,14 @@ static int ssh_validate_keyx(const uint8_t* data, uint16_t size,
             {
                 offset++;
                 if (offset == size)
-                    return SERVICE_SUCCESS;
-                return SERVICE_NOMATCH;
+                    return APPID_SUCCESS;
+                return APPID_NOMATCH;
             }
             break;
         }
         offset++;
     }
-    return SERVICE_INPROCESS;
+    return APPID_INPROCESS;
 }
 
 static void ssh_free_state(void* data)
@@ -388,7 +365,7 @@ static void ssh_free_state(void* data)
     }
 }
 
-static int ssh_validate(ServiceValidationArgs* args)
+int SshServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     ServiceSSHData* ss;
     uint16_t offset;
@@ -398,24 +375,24 @@ static int ssh_validate(ServiceValidationArgs* args)
     const char* end;
     unsigned len;
     int client_major;
-    AppIdSession* asd = args->asd;
-    const uint8_t* data = args->data;
-    uint16_t size = args->size;
+    AppIdSession* asd = args.asd;
+    const uint8_t* data = args.data;
+    uint16_t size = args.size;
 
     if (!size)
         goto inprocess;
 
-    ss = (ServiceSSHData*)ssh_service_mod.api->data_get(asd, ssh_service_mod.flow_data_index);
+    ss = (ServiceSSHData*)data_get(asd);
     if (!ss)
     {
         ss = (ServiceSSHData*)snort_calloc(sizeof(ServiceSSHData));
-        ssh_service_mod.api->data_add(asd, ss, ssh_service_mod.flow_data_index, &ssh_free_state);
+        data_add(asd, ss, &ssh_free_state);
         ss->state = SSH_STATE_BANNER;
         ss->hstate = SSH_HEADER_BEGIN;
         ss->oldhstate = OLD_SSH_HEADER_BEGIN;
     }
 
-    if (args->dir != APP_ID_FROM_RESPONDER)
+    if (args.dir != APP_ID_FROM_RESPONDER)
     {
         if (!ss->ssh_version)
         {
@@ -561,27 +538,25 @@ static int ssh_validate(ServiceValidationArgs* args)
 done:
     switch (retval)
     {
-    case SERVICE_INPROCESS:
+    case APPID_INPROCESS:
 inprocess:
-        ssh_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &svc_element);
-        return SERVICE_INPROCESS;
+        service_inprocess(asd, args.pkt, args.dir);
+        return APPID_INPROCESS;
 
-    case SERVICE_SUCCESS:
-        ssh_service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element,
-            APP_ID_SSH, ss->vendor, ss->version, nullptr);
+    case APPID_SUCCESS:
+        add_service(asd, args.pkt, args.dir, APP_ID_SSH,
+            ss->vendor, ss->version, nullptr);
         appid_stats.ssh_flows++;
-        return SERVICE_SUCCESS;
+        return APPID_SUCCESS;
 
-    case SERVICE_NOMATCH:
+    case APPID_NOMATCH:
 fail:
-        ssh_service_mod.api->fail_service(asd, args->pkt, args->dir, &svc_element,
-            ssh_service_mod.flow_data_index);
-        return SERVICE_NOMATCH;
+        fail_service(asd, args.pkt, args.dir);
+        return APPID_NOMATCH;
 
 not_compatible:
-        ssh_service_mod.api->incompatible_data(asd, args->pkt, args->dir, &svc_element,
-            ssh_service_mod.flow_data_index, args->pConfig);
-        return SERVICE_NOT_COMPATIBLE;
+        incompatible_data(asd, args.pkt, args.dir);
+        return APPID_NOT_COMPATIBLE;
 
     default:
         return retval;

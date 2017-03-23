@@ -22,9 +22,33 @@
 #ifndef SERVICE_MDNS_H
 #define SERVICE_MDNS_H
 
-#include "service_api.h"
+#include "service_detector.h"
 
-extern RNAServiceValidationModule mdns_service_mod;
+class SearchTool;
+class ServiceDiscovery;
+struct MatchedPatterns;
 
+class MdnsServiceDetector : public ServiceDetector
+{
+public:
+    MdnsServiceDetector(ServiceDiscovery*);
+    ~MdnsServiceDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
+
+private:
+    unsigned create_match_list(const char* data, uint16_t dataSize);
+    void scan_matched_patterns(const char* dataPtr, uint16_t index, const char** resp_endptr,
+        int* pattern_length);
+    void destroy_match_list();
+    void destory_matcher();
+    int validate_reply(const uint8_t* data, uint16_t size);
+    int analyze_user(AppIdSession*, const Packet*, uint16_t size);
+    int reference_pointer(const char* start_ptr, const char** resp_endptr, int* start_index,
+        uint16_t data_size, uint8_t* user_name_len, unsigned size);
+
+    SearchTool* matcher = nullptr;
+    MatchedPatterns* patternList= nullptr;
+};
 #endif
 

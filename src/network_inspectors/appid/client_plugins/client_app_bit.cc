@@ -23,11 +23,10 @@
 #include "config.h"
 #endif
 
-#include "main/snort_debug.h"
+#include "client_app_bit.h"
 
 #include "appid_module.h"
-
-#include "client_app_api.h"
+#include "application_ids.h"
 
 static const char BIT_BANNER[] = "\023BitTorrent protocol";
 
@@ -67,120 +66,54 @@ struct ClientBITMsg
 };
 #pragma pack()
 
-struct BIT_CLIENT_APP_CONFIG
+BitClientDetector::BitClientDetector(ClientDiscovery* cdm)
 {
-    int enabled;
-};
+    handler = cdm;
+    name = "BIT";
+    proto = IpProtocol::TCP;
+    minimum_matches = 1;
 
-THREAD_LOCAL BIT_CLIENT_APP_CONFIG bit_config;
-
-static CLIENT_APP_RETCODE bit_init(const InitClientAppAPI* const init_api, SF_LIST* config);
-static CLIENT_APP_RETCODE bit_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet* pkt, Detector* userData);
-
-SO_PUBLIC RNAClientAppModule bit_client_mod =
-{
-    "BIT",
-    IpProtocol::TCP,
-    &bit_init,
-    nullptr,
-    &bit_validate,
-    1,
-    nullptr,
-    nullptr,
-    0,
-    nullptr,
-    0,
-    0
-};
-
-struct Client_App_Pattern
-{
-    const uint8_t* pattern;
-    unsigned length;
-    int index;
-    unsigned appId;
-};
-
-static Client_App_Pattern patterns[] =
-{
-    { (const uint8_t*)BIT_BANNER, BIT_BANNER_LEN, -1, APP_ID_BITTORRENT },
-};
-
-static AppRegistryEntry appIdRegistry[] =
-{
-    { APP_ID_BITTORRENT, 0 }
-};
-
-static CLIENT_APP_RETCODE bit_init(const InitClientAppAPI* const init_api, SF_LIST* config)
-{
-    unsigned i;
-    RNAClientAppModuleConfigItem* item;
-
-    bit_config.enabled = 1;
-
-    if (config)
+    tcp_patterns =
     {
-        SF_LNODE* cursor = nullptr;
-        for (item = (RNAClientAppModuleConfigItem*)sflist_first(config, &cursor);
-            item;
-            item = (RNAClientAppModuleConfigItem*)sflist_next(&cursor))
-        {
-            DebugFormat(DEBUG_LOG,"Processing %s: %s\n",item->name, item->value);
-            if (strcasecmp(item->name, "enabled") == 0)
-            {
-                bit_config.enabled = atoi(item->value);
-            }
-        }
-    }
+        { (const uint8_t*)BIT_BANNER, BIT_BANNER_LEN, -1, 0, APP_ID_BITTORRENT }
+    };
 
-    if (bit_config.enabled)
+    appid_registry =
     {
-        for (i=0; i < sizeof(patterns)/sizeof(*patterns); i++)
-        {
-            DebugFormat(DEBUG_LOG,"registering patterns: %s: %d\n",
-            		(const char*)patterns[i].pattern, patterns[i].index);
-            init_api->RegisterPattern(&bit_validate, IpProtocol::TCP, patterns[i].pattern,
-                patterns[i].length, patterns[i].index);
-        }
-    }
+        { APP_ID_BITTORRENT, 0 }
+    };
 
-    unsigned j;
-    for (j=0; j < sizeof(appIdRegistry)/sizeof(*appIdRegistry); j++)
-    {
-        DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[j].appId);
-        init_api->RegisterAppId(&bit_validate, appIdRegistry[j].appId,
-            appIdRegistry[j].additionalInfo);
-    }
-
-    return CLIENT_APP_SUCCESS;
+    handler->register_detector(name, this, proto);
 }
 
-static CLIENT_APP_RETCODE bit_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet*, Detector*)
+BitClientDetector::~BitClientDetector()
+{
+}
+
+int BitClientDetector::validate(AppIdDiscoveryArgs& args)
 {
     ClientBITData* fd;
     uint16_t offset;
 
-    if (dir != APP_ID_FROM_INITIATOR)
-        return CLIENT_APP_INPROCESS;
+    if (args.dir != APP_ID_FROM_INITIATOR)
+        return APPID_INPROCESS;
 
-    fd = (ClientBITData*)bit_client_mod.api->data_get(asd, bit_client_mod.flow_data_index);
+    fd = (ClientBITData*)data_get(args.asd);
     if (!fd)
     {
         fd = (ClientBITData*)snort_calloc(sizeof(ClientBITData));
-        bit_client_mod.api->data_add(asd, fd, bit_client_mod.flow_data_index, &snort_free);
+        data_add(args.asd, fd, &snort_free);
         fd->state = BIT_STATE_BANNER;
     }
 
     offset = 0;
-    while (offset < size)
+    while (offset < args.size)
     {
         switch (fd->state)
         {
         case BIT_STATE_BANNER:
-            if (data[offset] != BIT_BANNER[fd->pos])
-                return CLIENT_APP_EINVALID;
+            if (args.data[offset] != BIT_BANNER[fd->pos])
+                return APPID_EINVALID;
             if (fd->pos == BIT_BANNER_LEN-1)
                 fd->state = BIT_STATE_BANNER_DC;
             fd->pos++;
@@ -195,7 +128,7 @@ static CLIENT_APP_RETCODE bit_validate(const uint8_t* data, uint16_t size, const
             fd->pos++;
             break;
         case BIT_STATE_MESSAGE_LEN:
-            fd->l.raw_len[fd->pos] = data[offset];
+            fd->l.raw_len[fd->pos] = args.data[offset];
             fd->pos++;
             if (fd->pos >= offsetof(ClientBITMsg, code))
             {
@@ -203,9 +136,9 @@ static CLIENT_APP_RETCODE bit_validate(const uint8_t* data, uint16_t size, const
                 fd->state = BIT_STATE_MESSAGE_DATA;
                 if (!fd->stringlen)
                 {
-                    if (offset == size-1)
+                    if (offset == args.size - 1)
                         goto done;
-                    return CLIENT_APP_EINVALID;
+                    return APPID_EINVALID;
                 }
                 fd->pos = 0;
             }
@@ -222,12 +155,12 @@ static CLIENT_APP_RETCODE bit_validate(const uint8_t* data, uint16_t size, const
         offset++;
     }
 inprocess:
-    return CLIENT_APP_INPROCESS;
+    return APPID_INPROCESS;
 
 done:
-    bit_client_mod.api->add_app(asd, APP_ID_BITTORRENT, APP_ID_BITTORRENT, nullptr);
-    asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+    add_app(args.asd, APP_ID_BITTORRENT, APP_ID_BITTORRENT, nullptr);
+    args.asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
     appid_stats.bit_clients++;
-    return CLIENT_APP_SUCCESS;
+    return APPID_SUCCESS;
 }
 

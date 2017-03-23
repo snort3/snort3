@@ -28,10 +28,8 @@
 #ifdef USE_RNA_CONFIG
 
 #include <netinet/in.h>
-
 #include "log/messages.h"
 #include "utils/util.h"
-
 #include "appid_utils.h"
 
 RNAIpAddrSet* ParseIpCidr(char* ipstring, uint32_t* netmasks)

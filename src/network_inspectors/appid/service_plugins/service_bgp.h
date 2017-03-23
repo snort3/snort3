@@ -22,9 +22,18 @@
 #ifndef SERVICE_BGP_H
 #define SERVICE_BGP_H
 
-#include "service_api.h"
+#include "service_detector.h"
 
-extern RNAServiceValidationModule bgp_service_mod;
+class ServiceDiscovery;
+
+class BgpServiceDetector : public ServiceDetector
+{
+public:
+    BgpServiceDetector(ServiceDiscovery*);
+    ~BgpServiceDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
+};
 
 #endif
 

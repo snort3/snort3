@@ -17,15 +17,43 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// service_smtp.h author Sourcefire Inc.
+// detector_smtp.h author Sourcefire Inc.
 
-#ifndef SERVICE_SMTP_H
-#define SERVICE_SMTP_H
+#ifndef DETECTOR_SMTP_H
+#define DETECTOR_SMTP_H
 
-#include "detector_plugins/detector_api.h"
+#include "client_plugins/client_detector.h"
+#include "service_plugins/service_detector.h"
+#include "framework/counts.h"
 
-extern RNADetectorValidationModule smtp_detector_mod;
+struct ClientSMTPData;
+struct SMTPDetectorData;
 
+class SmtpClientDetector : public ClientDetector
+{
+public:
+    SmtpClientDetector(ClientDiscovery*);
+    ~SmtpClientDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
+    SMTPDetectorData* get_smtp_detector_data(AppIdSession*);
+
+private:
+    int extract_version_and_add_client_app(ApplicationId, const int prefix_len,
+        const uint8_t* product, const uint8_t* product_end, ClientSMTPData* const,
+        AppIdSession*, AppId, PegCount*);
+    int IdentifyClientVersion(ClientSMTPData* const, const uint8_t* product,
+        const uint8_t* data_end, AppIdSession*, Packet*);
+};
+
+class SmtpServiceDetector : public ServiceDetector
+{
+public:
+    SmtpServiceDetector(ServiceDiscovery*);
+    ~SmtpServiceDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
+};
 
 #endif
 

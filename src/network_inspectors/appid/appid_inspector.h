@@ -26,6 +26,8 @@
 
 struct Packet;
 struct SnortConfig;
+class AppIdStatistics;
+class HttpPatternMatchers;
 
 class AppIdInspector : public Inspector
 {
@@ -41,14 +43,15 @@ public:
     void tterm() override;
     void eval(Packet*) override;
     AppIdConfig* get_appid_config();
+    AppIdStatistics* get_stats_manager();
 
 private:
     const AppIdModuleConfig* config = nullptr;
     AppIdConfig* active_config = nullptr;
 };
 
-void httpHeaderCallback(Packet*, HttpParsedHeaders* const);
 int sslAppGroupIdLookup(void*, const char*, const char*, AppId*, AppId*, AppId*);
 AppId getOpenAppId(Flow*);
 
 #endif
+

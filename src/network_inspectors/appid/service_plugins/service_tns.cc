@@ -23,14 +23,13 @@
 #include "config.h"
 #endif
 
-#include "main/snort_debug.h"
+#include "service_tns.h"
 
-#include "app_info_table.h"
 #include "appid_module.h"
+#include "app_info_table.h"
 
-#include "service_api.h"
-
-static const char svc_name[] = "oracle";
+// FIXIT-M should we use 'tns' or 'oracle' as the name for this service?
+//static const char svc_name[] = "oracle";
 static const uint8_t TNS_BANNER[]  = "\000\000";
 
 #define TNS_BANNER_LEN    (sizeof(TNS_BANNER)-1)
@@ -62,7 +61,6 @@ enum TNSState
 };
 
 #define ACCEPT_VERSION_OFFSET   8
-#define MAX_VERSION_SIZE    12
 struct ServiceTNSData
 {
     TNSState state;
@@ -89,76 +87,54 @@ struct ServiceTNSMsg
 };
 #pragma pack()
 
-static int tns_init(const InitServiceAPI* const init_api);
-static int tns_validate(ServiceValidationArgs* args);
-
-static const RNAServiceElement svc_element =
+TnsServiceDetector::TnsServiceDetector(ServiceDiscovery* sd)
 {
-    nullptr,
-    &tns_validate,
-    nullptr,
-    DETECTOR_TYPE_DECODER,
-    1,
-    1,
-    0,
-    "tns"
-};
+    handler = sd;
+    name = "tns";
+    proto = IpProtocol::TCP;
+    detectorType = DETECTOR_TYPE_DECODER;
+    current_ref_count =  1;
 
-static const RNAServiceValidationPort pp[] =
-{
-    { &tns_validate, TNS_PORT, IpProtocol::TCP, 0 },
-    { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
-};
-
-SO_PUBLIC RNAServiceValidationModule tns_service_mod =
-{
-    svc_name,
-    &tns_init,
-    pp,
-    nullptr,
-    nullptr,
-    0,
-    nullptr,
-    0
-};
-
-static const AppRegistryEntry appIdRegistry[] =
-{
-    { APP_ID_ORACLE_TNS, APPINFO_FLAG_SERVICE_ADDITIONAL },
-};
-
-static int tns_init(const InitServiceAPI* const init_api)
-{
-    init_api->RegisterPattern(&tns_validate, IpProtocol::TCP, (const uint8_t*)TNS_BANNER,
-        TNS_BANNER_LEN, 2, svc_name);
-    for (unsigned i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
+    tcp_patterns =
     {
-        DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[i].appId);
-        init_api->RegisterAppId(&tns_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo);
-    }
+        { (const uint8_t*)TNS_BANNER, TNS_BANNER_LEN, 2, 0, 0 },
+    };
 
-    return 0;
+    appid_registry =
+    {
+        { APP_ID_ORACLE_TNS, APPINFO_FLAG_SERVICE_ADDITIONAL },
+    };
+
+    service_ports =
+    {
+        { TNS_PORT, IpProtocol::TCP, false }
+    };
+
+    handler->register_detector(name, this, proto);
 }
 
-static int tns_validate(ServiceValidationArgs* args)
+TnsServiceDetector::~TnsServiceDetector()
+{
+}
+
+int TnsServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     ServiceTNSData* ss;
     uint16_t offset;
-    AppIdSession* asd = args->asd;
-    const uint8_t* data = args->data;
-    uint16_t size = args->size;
+    AppIdSession* asd = args.asd;
+    const uint8_t* data = args.data;
+    uint16_t size = args.size;
 
     if (!size)
         goto inprocess;
-    if (args->dir != APP_ID_FROM_RESPONDER)
+    if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    ss = (ServiceTNSData*)tns_service_mod.api->data_get(asd, tns_service_mod.flow_data_index);
+    ss = (ServiceTNSData*)data_get(asd);
     if (!ss)
     {
         ss = (ServiceTNSData*)snort_calloc(sizeof(ServiceTNSData));
-        tns_service_mod.api->data_add(asd, ss, tns_service_mod.flow_data_index, &snort_free);
+        data_add(asd, ss, &snort_free);
         ss->state = TNS_STATE_MESSAGE_LEN;
     }
 
@@ -302,18 +278,17 @@ static int tns_validate(ServiceValidationArgs* args)
     }
 
 inprocess:
-    tns_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &svc_element);
-    return SERVICE_INPROCESS;
+    service_inprocess(asd, args.pkt, args.dir);
+    return APPID_INPROCESS;
 
 success:
-    tns_service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element, APP_ID_ORACLE_TNS,
+    add_service(asd, args.pkt, args.dir, APP_ID_ORACLE_TNS,
         nullptr, ss->version ? ss->version : nullptr, nullptr);
     appid_stats.tns_flows++;
-    return SERVICE_SUCCESS;
+    return APPID_SUCCESS;
 
 fail:
-    tns_service_mod.api->fail_service(asd, args->pkt, args->dir, &svc_element,
-        tns_service_mod.flow_data_index);
-    return SERVICE_NOMATCH;
+    fail_service(asd, args.pkt, args.dir);
+    return APPID_NOMATCH;
 }
 

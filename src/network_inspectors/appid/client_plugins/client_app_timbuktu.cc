@@ -23,10 +23,16 @@
 #include "config.h"
 #endif
 
-#include "main/snort_debug.h"
+#include "client_app_timbuktu.h"
 
-#include "client_app_api.h"
+#include "main/snort_debug.h"
+#include "protocols/packet.h"
+#include "utils/sflsq.h"
+#include "utils/util.h"
+
 #include "appid_module.h"
+#include "app_info_table.h"
+#include "application_ids.h"
 
 static const char TIMBUKTU_BANNER[] = "\000\001";
 
@@ -61,123 +67,55 @@ struct ClientTIMBUKTUMsg
 };
 #pragma pack()
 
-struct TIMBUKTU_CLIENT_APP_CONFIG
+TimbuktuClientDetector::TimbuktuClientDetector(ClientDiscovery* cdm)
 {
-    int enabled;
-};
+    handler = cdm;
+    name = "TIMBUKTU";
+    proto = IpProtocol::TCP;
+    minimum_matches = 1;
+    provides_user = true;
 
-THREAD_LOCAL TIMBUKTU_CLIENT_APP_CONFIG timbuktu_config;
-
-static CLIENT_APP_RETCODE timbuktu_init(const InitClientAppAPI* const init_api, SF_LIST* config);
-static CLIENT_APP_RETCODE timbuktu_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet* pkt, Detector* userData);
-
-SO_PUBLIC RNAClientAppModule timbuktu_client_mod =
-{
-    "TIMBUKTU",             // name
-    IpProtocol::TCP,            // proto
-    &timbuktu_init,         // init
-    nullptr,                // clean
-    &timbuktu_validate,     // validate
-    1,                      // minimum_matches
-    nullptr,                // api
-    nullptr,                // userData
-    0,                      // precedence
-    nullptr,                // finalize,
-    1,                      // provides_user
-    0                       // flow_data_index
-};
-
-struct Client_App_Pattern
-{
-    const uint8_t* pattern;
-    unsigned length;
-    int index;
-    unsigned appId;
-};
-
-static Client_App_Pattern patterns[] =
-{
-    { (const uint8_t*)TIMBUKTU_BANNER, sizeof(TIMBUKTU_BANNER)-1, 0, APP_ID_TIMBUKTU },
-};
-
-static AppRegistryEntry appIdRegistry[] =
-{
-    { APP_ID_TIMBUKTU, 0 }
-};
-
-static CLIENT_APP_RETCODE timbuktu_init(const InitClientAppAPI* const init_api, SF_LIST* config)
-{
-    unsigned i;
-
-    timbuktu_config.enabled = 1;
-
-    if (config)
+    tcp_patterns =
     {
-        SF_LNODE* cursor;
-        RNAClientAppModuleConfigItem* item;
+        { (const uint8_t*)TIMBUKTU_BANNER, sizeof(TIMBUKTU_BANNER)-1, 0, 0, APP_ID_TIMBUKTU },
+    };
 
-        for (item = (RNAClientAppModuleConfigItem*)sflist_first(config, &cursor);
-            item;
-            item = (RNAClientAppModuleConfigItem*)sflist_next(&cursor))
-        {
-            DebugFormat(DEBUG_LOG,"Processing %s: %s\n",item->name, item->value);
-            if (strcasecmp(item->name, "enabled") == 0)
-            {
-                timbuktu_config.enabled = atoi(item->value);
-            }
-        }
-    }
-
-    if (timbuktu_config.enabled)
+    appid_registry =
     {
-        for (i=0; i < sizeof(patterns)/sizeof(*patterns); i++)
-        {
-            DebugFormat(DEBUG_LOG,"registering patterns: %s: %d\n",
-            		(const char*)patterns[i].pattern, patterns[i].index);
-            init_api->RegisterPattern(&timbuktu_validate, IpProtocol::TCP, patterns[i].pattern,
-                patterns[i].length, patterns[i].index);
-        }
-    }
+        { APP_ID_TIMBUKTU, 0 }
+    };
 
-    unsigned j;
-    for (j=0; j < sizeof(appIdRegistry)/sizeof(*appIdRegistry); j++)
-    {
-        DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[j].appId);
-        init_api->RegisterAppId(&timbuktu_validate, appIdRegistry[j].appId,
-            appIdRegistry[j].additionalInfo);
-    }
-
-    return CLIENT_APP_SUCCESS;
+    handler->register_detector(name, this, proto);
 }
 
-static CLIENT_APP_RETCODE timbuktu_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet*, Detector*)
+TimbuktuClientDetector::~TimbuktuClientDetector()
+{
+}
+
+int TimbuktuClientDetector::validate(AppIdDiscoveryArgs& args)
 {
     ClientTIMBUKTUData* fd;
     uint16_t offset;
 
-    if (dir != APP_ID_FROM_INITIATOR)
-        return CLIENT_APP_INPROCESS;
+    if (args.dir != APP_ID_FROM_INITIATOR)
+        return APPID_INPROCESS;
 
-    fd = (ClientTIMBUKTUData*)timbuktu_client_mod.api->data_get(asd,
-        timbuktu_client_mod.flow_data_index);
+    fd = (ClientTIMBUKTUData*)data_get(args.asd);
     if (!fd)
     {
         fd = (ClientTIMBUKTUData*)snort_calloc(sizeof(ClientTIMBUKTUData));
-        timbuktu_client_mod.api->data_add(asd, fd,
-            timbuktu_client_mod.flow_data_index, &snort_free);
+        data_add(args.asd, fd, &snort_free);
         fd->state = TIMBUKTU_STATE_BANNER;
     }
 
     offset = 0;
-    while (offset < size)
+    while (offset < args.size)
     {
         switch (fd->state)
         {
         case TIMBUKTU_STATE_BANNER:
-            if (data[offset] != TIMBUKTU_BANNER[fd->pos])
-                return CLIENT_APP_EINVALID;
+            if (args.data[offset] != TIMBUKTU_BANNER[fd->pos])
+                return APPID_EINVALID;
             if (fd->pos >= TIMBUKTU_BANNER_LEN-1)
             {
                 fd->pos = 0;
@@ -199,7 +137,7 @@ static CLIENT_APP_RETCODE timbuktu_validate(const uint8_t* data, uint16_t size, 
         case TIMBUKTU_STATE_MESSAGE_LEN:
             if (fd->pos < offsetof(ClientTIMBUKTUMsg, message))
             {
-                fd->l.raw_len[fd->pos] = data[offset];
+                fd->l.raw_len[fd->pos] = args.data[offset];
             }
             fd->pos++;
             if (fd->pos >= offsetof(ClientTIMBUKTUMsg, message))
@@ -207,13 +145,13 @@ static CLIENT_APP_RETCODE timbuktu_validate(const uint8_t* data, uint16_t size, 
                 fd->stringlen = ntohs(fd->l.len);
                 if (!fd->stringlen)
                 {
-                    if (offset == size - 1)
+                    if (offset == args.size - 1)
                         goto done;
-                    return CLIENT_APP_EINVALID;
+                    return APPID_EINVALID;
                 }
                 else if ((fd->stringlen + TIMBUKTU_BANNER_LEN + MAX_ANY_SIZE + offsetof(
-                    ClientTIMBUKTUMsg, message)) > size)
-                    return CLIENT_APP_EINVALID;
+                    ClientTIMBUKTUMsg, message)) > args.size)
+                    return APPID_EINVALID;
                 fd->state = TIMBUKTU_STATE_MESSAGE_DATA;
                 fd->pos = 0;
             }
@@ -222,9 +160,9 @@ static CLIENT_APP_RETCODE timbuktu_validate(const uint8_t* data, uint16_t size, 
             fd->pos++;
             if (fd->pos == fd->stringlen)
             {
-                if (offset == size - 1)
+                if (offset == args.size - 1)
                     goto done;
-                return CLIENT_APP_EINVALID;
+                return APPID_EINVALID;
             }
             break;
         default:
@@ -233,12 +171,12 @@ static CLIENT_APP_RETCODE timbuktu_validate(const uint8_t* data, uint16_t size, 
         offset++;
     }
 inprocess:
-    return CLIENT_APP_INPROCESS;
+    return APPID_INPROCESS;
 
 done:
-    timbuktu_client_mod.api->add_app(asd, APP_ID_TIMBUKTU, APP_ID_TIMBUKTU, nullptr);
+    add_app(args.asd, APP_ID_TIMBUKTU, APP_ID_TIMBUKTU, nullptr);
     appid_stats.timbuktu_clients++;
-    asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
-    return CLIENT_APP_SUCCESS;
+    args.asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+    return APPID_SUCCESS;
 }
 

@@ -25,9 +25,8 @@
 
 #include "service_battle_field.h"
 
-#include "protocols/packet.h"
-
 #include "appid_module.h"
+#include "protocols/packet.h"
 
 enum CONNECTION_STATES
 {
@@ -47,34 +46,6 @@ struct ServiceData
     uint32_t packetCount;
 };
 
-static int battle_field_init(const InitServiceAPI* const init_api);
-static int battle_field_validate(ServiceValidationArgs* args);
-
-static const RNAServiceElement svc_element =
-{
-    nullptr,
-    &battle_field_validate,
-    nullptr,
-    DETECTOR_TYPE_DECODER,
-    1,
-    1,
-    0,
-    "battle_field"
-};
-
-static const RNAServiceValidationPort pp[] =
-{
-    { &battle_field_validate, 4711,  IpProtocol::TCP, 0 },
-    { &battle_field_validate, 16567, IpProtocol::UDP, 0 },
-    { &battle_field_validate, 27900, IpProtocol::UDP, 0 },
-    { &battle_field_validate, 27900, IpProtocol::TCP, 0 },
-    { &battle_field_validate, 29900, IpProtocol::UDP, 0 },
-    { &battle_field_validate, 29900, IpProtocol::TCP, 0 },
-    { &battle_field_validate, 27901, IpProtocol::TCP, 0 },
-    { &battle_field_validate, 28910, IpProtocol::UDP, 0 },
-    { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
-};
-
 static const char PATTERN_HELLO[] = "battlefield2\x00";
 static const char PATTERN_2[] = "\xfe\xfd";
 static const char PATTERN_3[] = "\x11\x20\x00\x01\x00\x00\x50\xb9\x10\x11";
@@ -82,84 +53,82 @@ static const char PATTERN_4[] = "\x11\x20\x00\x01\x00\x00\x30\xb9\x10\x11";
 static const char PATTERN_5[] = "\x11\x20\x00\x01\x00\x00\xa0\x98\x00\x11";
 static const char PATTERN_6[] = "\xfe\xfd\x09\x00\x00\x00\x00";
 
-RNAServiceValidationModule battlefield_service_mod =
+BattleFieldServiceDetector::BattleFieldServiceDetector(ServiceDiscovery* sd)
 {
-    "BattleField",
-    &battle_field_init,
-    pp,
-    nullptr,
-    nullptr,
-    0,
-    nullptr,
-    0
-};
+    handler = sd;
+    name = "BattleField";
+    proto = IpProtocol::TCP;
+    detectorType = DETECTOR_TYPE_DECODER;
+    current_ref_count =  1;
 
-static AppRegistryEntry appIdRegistry[] =
-{
-    { APP_ID_BATTLEFIELD, 0 }
-};
-
-static int battle_field_init(const InitServiceAPI* const init_api)
-{
-    init_api->RegisterPattern(&battle_field_validate, IpProtocol::TCP, (uint8_t*)PATTERN_HELLO,
-        sizeof(PATTERN_HELLO)-1,  5, "battle_field");
-    init_api->RegisterPattern(&battle_field_validate, IpProtocol::TCP, (uint8_t*)PATTERN_2,
-        sizeof(PATTERN_2)-1,  0, "battle_field");
-    init_api->RegisterPattern(&battle_field_validate, IpProtocol::TCP, (uint8_t*)PATTERN_3,
-        sizeof(PATTERN_3)-1,  0, "battle_field");
-    init_api->RegisterPattern(&battle_field_validate, IpProtocol::TCP, (uint8_t*)PATTERN_4,
-        sizeof(PATTERN_4)-1,  0, "battle_field");
-    init_api->RegisterPattern(&battle_field_validate, IpProtocol::TCP, (uint8_t*)PATTERN_5,
-        sizeof(PATTERN_5)-1,  0, "battle_field");
-    init_api->RegisterPattern(&battle_field_validate, IpProtocol::TCP, (uint8_t*)PATTERN_6,
-        sizeof(PATTERN_6)-1,  0, "battle_field");
-
-    unsigned i;
-    for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
+    tcp_patterns =
     {
-        init_api->RegisterAppId(&battle_field_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo);
-    }
+        { (uint8_t*)PATTERN_HELLO, sizeof(PATTERN_HELLO) - 1,  5, 0, 0 },
+        { (uint8_t*)PATTERN_2, sizeof(PATTERN_2) - 1,  0, 0, 0 },
+        { (uint8_t*)PATTERN_3, sizeof(PATTERN_3) - 1,  0, 0, 0 },
+        { (uint8_t*)PATTERN_4, sizeof(PATTERN_4) - 1,  0, 0, 0 },
+        { (uint8_t*)PATTERN_5, sizeof(PATTERN_5) - 1,  0, 0, 0 },
+        { (uint8_t*)PATTERN_6, sizeof(PATTERN_6) - 1,  0, 0, 0 }
+    };
 
-    return 0;
+    appid_registry =
+    {
+        { APP_ID_BATTLEFIELD, 0 }
+    };
+
+    service_ports =
+    {
+        { 4711,  IpProtocol::TCP, false },
+        { 16567, IpProtocol::UDP, false },
+        { 27900, IpProtocol::UDP, false },
+        { 27900, IpProtocol::TCP, false },
+        { 29900, IpProtocol::UDP, false },
+        { 29900, IpProtocol::TCP, false },
+        { 27901, IpProtocol::TCP, false },
+        { 28910, IpProtocol::UDP, false }
+    };
+
+    handler->register_detector(name, this, proto);
 }
 
-static int battle_field_validate(ServiceValidationArgs* args)
+BattleFieldServiceDetector::~BattleFieldServiceDetector()
+{
+}
+
+static inline uint32_t get_message_id(const uint8_t* msg)
+{
+    return (msg[2] << 8) | msg[3];
+}
+
+int BattleFieldServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     ServiceData* fd;
-    AppIdSession* asd = args->asd;
-    const uint8_t* data = args->data;
-    Packet* pkt = args->pkt;
-    uint16_t size = args->size;
 
-    if (!size)
-    {
+    if (!args.size)
         goto inprocess_nofd;
-    }
 
-    fd = (ServiceData*)battlefield_service_mod.api->data_get(asd,
-        battlefield_service_mod.flow_data_index);
+    fd = (ServiceData*)data_get(args.asd);
     if (!fd)
     {
         fd = (ServiceData*)snort_calloc(sizeof(ServiceData));
-        battlefield_service_mod.api->data_add(asd, fd,
-            battlefield_service_mod.flow_data_index, &snort_free);
+        data_add(args.asd, fd, &snort_free);
     }
 
     switch (fd->state)
     {
     case CONN_STATE_INIT:
-        if ((pkt->ptrs.sp >= 27000 || pkt->ptrs.dp >= 27000) && size >= 4)
+        if ((args.pkt->ptrs.sp >= 27000 || args.pkt->ptrs.dp >= 27000) && args.size >= 4)
         {
-            if (data[0] == 0xfe && data[1] == 0xfd)
+            if (args.data[0] == 0xfe && args.data[1] == 0xfd)
             {
-                fd->messageId = (data[2]<<8) | data[3];
+                fd->messageId = get_message_id(args.data);
                 fd->state = CONN_STATE_MESSAGE_DETECTED;
                 goto inprocess;
             }
         }
 
-        if (size == 18 &&  memcmp(data+5, PATTERN_HELLO, sizeof(PATTERN_HELLO)-1) == 0)
+        if (args.size == 18 &&
+            memcmp(args.data + 5, PATTERN_HELLO, sizeof(PATTERN_HELLO) -1) ==  0)
         {
             fd->state = CONN_STATE_HELLO_DETECTED;
             goto inprocess;
@@ -167,16 +136,16 @@ static int battle_field_validate(ServiceValidationArgs* args)
         break;
 
     case CONN_STATE_MESSAGE_DETECTED:
-        if (size > 8)
+        if (args.size > 8)
         {
-            if ((uint32_t)(data[0]<<8 | data[1]) == fd->messageId)
+            if ((uint32_t)(args.data[0] << 8 | args.data[1]) == fd->messageId)
             {
                 goto success;
             }
 
-            if (data[0] == 0xfe && data[1] == 0xfd)
+            if (args.data[0] == 0xfe && args.data[1] == 0xfd)
             {
-                fd->messageId = (data[2]<<8) | data[3];
+                fd->messageId = get_message_id(args.data);
                 goto inprocess;
             }
         }
@@ -186,50 +155,49 @@ static int battle_field_validate(ServiceValidationArgs* args)
         break;
 
     case CONN_STATE_HELLO_DETECTED:
-        if ((size == 7) && (memcmp(data, PATTERN_6, sizeof(PATTERN_6)-1) == 0))
+        if ((args.size == 7) && (memcmp(args.data, PATTERN_6, sizeof(PATTERN_6) - 1) == 0))
         {
             goto success;
         }
 
-        if ((size > 10)
-            && ((memcmp(data, PATTERN_3, sizeof(PATTERN_3)-1) == 0)
-            || (memcmp(data, PATTERN_4, sizeof(PATTERN_4)-1) == 0)
-            || (memcmp(data, PATTERN_5, sizeof(PATTERN_5)-1) == 0)))
+        if ((args.size > 10)
+            && ((memcmp(args.data, PATTERN_3, sizeof(PATTERN_3) - 1) == 0)
+            || (memcmp(args.data, PATTERN_4, sizeof(PATTERN_4) - 1) == 0)
+            || (memcmp(args.data, PATTERN_5, sizeof(PATTERN_5) - 1) == 0)))
         {
             goto success;
         }
         break;
+
     case CONN_STATE_SERVICE_DETECTED:
         goto success;
     }
 
-    battlefield_service_mod.api->fail_service(asd, pkt, args->dir, &svc_element,
-        battlefield_service_mod.flow_data_index);
-    return SERVICE_NOMATCH;
+    fail_service(args.asd, args.pkt, args.dir);
+    return APPID_NOMATCH;
 
 inprocess:
     fd->packetCount++;
     if (fd->packetCount >= MAX_PACKET_INSPECTION_COUNT)
         goto fail;
+
 inprocess_nofd:
-    battlefield_service_mod.api->service_inprocess(asd, pkt, args->dir, &svc_element);
-    return SERVICE_INPROCESS;
+    service_inprocess(args.asd, args.pkt, args.dir);
+    return APPID_INPROCESS;
 
 success:
-    if (args->dir != APP_ID_FROM_RESPONDER)
+    if (args.dir != APP_ID_FROM_RESPONDER)
     {
         fd->state = CONN_STATE_SERVICE_DETECTED;
         goto inprocess;
     }
 
-    battlefield_service_mod.api->add_service(asd, pkt, args->dir, &svc_element,
-        APP_ID_BATTLEFIELD, nullptr, nullptr, nullptr);
+    add_service(args.asd, args.pkt, args.dir, APP_ID_BATTLEFIELD, nullptr, nullptr, nullptr);
     appid_stats.battlefield_flows++;
-    return SERVICE_SUCCESS;
+    return APPID_SUCCESS;
 
 fail:
-    battlefield_service_mod.api->fail_service(asd, pkt, args->dir, &svc_element,
-        battlefield_service_mod.flow_data_index);
-    return SERVICE_NOMATCH;
+    fail_service(args.asd, args.pkt, args.dir);
+    return APPID_NOMATCH;
 }
 

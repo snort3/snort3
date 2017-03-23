@@ -25,14 +25,10 @@
 
 #include "service_rexec.h"
 
-#include "main/snort_debug.h"
-#include "protocols/packet.h"
-
-#include "app_info_table.h"
 #include "appid_module.h"
-
-#include "service_base.h"
+#include "app_info_table.h"
 #include "service_util.h"
+#include "protocols/packet.h"
 
 #define REXEC_PORT  512
 #define REXEC_MAX_PORT_PACKET 6
@@ -57,60 +53,31 @@ struct ServiceREXECData
     struct ServiceREXECData* child;
 };
 
-static int rexec_init(const InitServiceAPI* const init_api);
-static int rexec_validate(ServiceValidationArgs* args);
-
-static const RNAServiceElement svc_element =
+RexecServiceDetector::RexecServiceDetector(ServiceDiscovery* sd)
 {
-    nullptr,
-    &rexec_validate,
-    nullptr,
-    DETECTOR_TYPE_DECODER,
-    1,
-    1,
-    0,
-    "rexec"
-};
-
-static const RNAServiceValidationPort pp[] =
-{
-    { &rexec_validate, REXEC_PORT, IpProtocol::TCP, 0 },
-    { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
-};
-
-RNAServiceValidationModule rexec_service_mod =
-{
-    "REXEC",
-    &rexec_init,
-    pp,
-    nullptr,
-    nullptr,
-    0,
-    nullptr,
-    0
-};
-
-static AppRegistryEntry appIdRegistry[] =
-{
-    { APP_ID_EXEC, APPINFO_FLAG_SERVICE_ADDITIONAL }
-};
-
-static int16_t app_id = 0;
-
-static int rexec_init(const InitServiceAPI* const init_api)
-{
-    unsigned i;
+    handler = sd;
+    name = "rexec";
+    proto = IpProtocol::TCP;
+    detectorType = DETECTOR_TYPE_DECODER;
+    current_ref_count =  1;
 
     app_id = add_appid_protocol_reference("rexec");
 
-    for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
+    appid_registry =
     {
-        DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[i].appId);
-        init_api->RegisterAppId(&rexec_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo);
-    }
+        { APP_ID_EXEC, APPINFO_FLAG_SERVICE_ADDITIONAL }
+    };
 
-    return 0;
+    service_ports =
+    {
+        { REXEC_PORT, IpProtocol::TCP, false }
+    };
+
+    handler->register_detector(name, this, proto);
+}
+
+RexecServiceDetector::~RexecServiceDetector()
+{
 }
 
 static void rexec_free_state(void* data)
@@ -133,27 +100,24 @@ static void rexec_free_state(void* data)
     }
 }
 
-static int rexec_validate(ServiceValidationArgs* args)
+int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     int i = 0;
     uint32_t port = 0;
     AppIdSession* pf = nullptr;
-    AppIdSession* asd = args->asd;
-    const uint8_t* data = args->data;
-    Packet* pkt = args->pkt;
-    const int dir = args->dir;
-    uint16_t size = args->size;
+    AppIdSession* asd = args.asd;
+    const uint8_t* data = args.data;
+    Packet* pkt = args.pkt;
+    const int dir = args.dir;
+    uint16_t size = args.size;
 
-    ServiceREXECData* rd = (ServiceREXECData*)rexec_service_mod.api->data_get(
-        asd, rexec_service_mod.flow_data_index);
-
+    ServiceREXECData* rd = (ServiceREXECData*)data_get(asd);
     if (!rd)
     {
         if (!size)
             goto inprocess;
         rd = (ServiceREXECData*)snort_calloc(sizeof(ServiceREXECData));
-        rexec_service_mod.api->data_add(asd, rd,
-            rexec_service_mod.flow_data_index, &rexec_free_state);
+        data_add(asd, rd, &rexec_free_state);
         rd->state = REXEC_STATE_PORT;
     }
 
@@ -183,7 +147,8 @@ static int rexec_validate(ServiceValidationArgs* args)
 
             dip = pkt->ptrs.ip_api.get_dst();
             sip = pkt->ptrs.ip_api.get_src();
-            pf = AppIdSession::create_future_session(pkt, dip, 0, sip, (uint16_t)port, IpProtocol::TCP, app_id,
+            pf = AppIdSession::create_future_session(pkt, dip, 0, sip, (uint16_t)port,
+                IpProtocol::TCP, app_id,
                 APPID_EARLY_SESSION_FLAG_FW_RULE);
             if (pf)
             {
@@ -192,18 +157,17 @@ static int rexec_validate(ServiceValidationArgs* args)
                 tmp_rd->state = REXEC_STATE_STDERR_CONNECT_SYN;
                 tmp_rd->parent = rd;
 
-                rexec_service_mod.api->data_add(pf, tmp_rd,
-                    rexec_service_mod.flow_data_index, &rexec_free_state);
-                if (pf->add_flow_data_id((uint16_t)port, &svc_element))
+                data_add(pf, tmp_rd, &rexec_free_state);
+                if (pf->add_flow_data_id((uint16_t)port, this))
                 {
-                    pf->rnaServiceState = RNA_STATE_FINISHED;
+                    pf->rna_service_state = RNA_STATE_FINISHED;
                     tmp_rd->state = REXEC_STATE_DONE;
                     tmp_rd->parent = nullptr;
-                    return SERVICE_ENULL;
+                    return APPID_ENULL;
                 }
                 rd->child = tmp_rd;
                 rd->state = REXEC_STATE_SERVER_CONNECT;
-                pf->rnaServiceState = RNA_STATE_STATEFUL;
+                pf->rna_service_state = RNA_STATE_STATEFUL;
                 pf->scan_flags |= SCAN_HOST_PORT_FLAG;
                 PopulateExpectedFlow(asd, pf,
                     APPID_SESSION_CONTINUE |
@@ -212,7 +176,7 @@ static int rexec_validate(ServiceValidationArgs* args)
                     APPID_SESSION_SERVICE_DETECTED |
                     APPID_SESSION_NOT_A_SERVICE |
                     APPID_SESSION_PORT_SERVICE_DONE);
-                pf->rnaServiceState = RNA_STATE_STATEFUL;
+                pf->rna_service_state = RNA_STATE_STATEFUL;
             }
             else
                 rd->state = REXEC_STATE_USERNAME;
@@ -312,37 +276,31 @@ static int rexec_validate(ServiceValidationArgs* args)
 
 inprocess:
     if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
-    {
-        rexec_service_mod.api->service_inprocess(asd, pkt, dir, &svc_element);
-    }
-    return SERVICE_INPROCESS;
+        service_inprocess(asd, pkt, dir);
+    return APPID_INPROCESS;
 
 success:
     if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
     {
-        rexec_service_mod.api->add_service(asd, pkt, dir, &svc_element,
-            APP_ID_EXEC, nullptr, nullptr, nullptr);
+        add_service(asd, pkt, dir, APP_ID_EXEC, nullptr, nullptr, nullptr);
         appid_stats.rexec_flows++;
     }
-    return SERVICE_SUCCESS;
+    return APPID_SUCCESS;
 
 bail:
     if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
     {
-        rexec_service_mod.api->incompatible_data(asd, pkt, dir, &svc_element,
-            rexec_service_mod.flow_data_index,
-            args->pConfig);
+        incompatible_data(asd, pkt, dir);
     }
     asd->clear_session_flags(APPID_SESSION_CONTINUE);
-    return SERVICE_NOT_COMPATIBLE;
+    return APPID_NOT_COMPATIBLE;
 
 fail:
     if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
     {
-        rexec_service_mod.api->fail_service(asd, pkt, dir, &svc_element,
-            rexec_service_mod.flow_data_index);
+        fail_service(asd, pkt, dir);
     }
     asd->clear_session_flags(APPID_SESSION_CONTINUE);
-    return SERVICE_NOMATCH;
+    return APPID_NOMATCH;
 }
 

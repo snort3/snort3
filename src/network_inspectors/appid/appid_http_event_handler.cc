@@ -27,16 +27,20 @@
 
 #include "appid_http_event_handler.h"
 
-#include "appid_module.h"
+#include <assert.h>
 
-static void replace_header_data(char **data, uint16_t &datalen, const uint8_t *header_start,
+#include "appid_module.h"
+#include "appid_session.h"
+#include "utils/util.h"
+
+static void replace_header_data(char** data, uint16_t& datalen, const uint8_t* header_start,
     int32_t header_length)
 {
-    if(header_length <= 0)
+    if (header_length <= 0)
         return;
 
     assert(data);
-    if(*data)
+    if (*data)
         snort_free(*data);
 
     *data = (char*)snort_alloc(header_length + 1);
@@ -62,25 +66,25 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     direction = event_type == REQUEST_EVENT ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
 
     if (!session->hsession)
-        session->hsession = (decltype(session->hsession))snort_calloc(sizeof(httpSession));
+        session->hsession = (decltype(session->hsession))snort_calloc(sizeof(HttpSession));
 
     if (direction == APP_ID_FROM_INITIATOR)
     {
         header_start = http_event->get_host(header_length);
-        if(header_length > 0)
+        if (header_length > 0)
         {
             replace_header_data(&session->hsession->host,
                 session->hsession->host_buflen, header_start, header_length);
             session->scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
 
             header_start = http_event->get_uri(header_length);
-            if(header_length > 0)
+            if (header_length > 0)
             {
                 replace_header_data(&session->hsession->uri,
                     session->hsession->uri_buflen, header_start,
                     header_length);
 
-                if(session->hsession->url)
+                if (session->hsession->url)
                     snort_free(session->hsession->url);
                 tmplen = sizeof(HTTP_PREFIX) + session->hsession->host_buflen +
                     session->hsession->uri_buflen + 1;
@@ -94,7 +98,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
         }
 
         header_start = http_event->get_user_agent(header_length);
-        if(header_length > 0)
+        if (header_length > 0)
         {
             replace_header_data(&session->hsession->useragent,
                 session->hsession->useragent_buflen, header_start, header_length);
@@ -116,7 +120,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
         session->hsession->is_webdav = http_event->contains_webdav_method();
 
         // FIXIT-M: Should we get request body (may be expensive to copy)?
-        //      It is not currently set in callback in 2.9.x, only via 
+        //      It is not currently set in callback in 2.9.x, only via
         //      third-party.
     }
     else    // Response headers.
@@ -140,7 +144,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
             unsigned int ret;
             char tmpstr[32];
             ret = snprintf(tmpstr, sizeof(tmpstr), "%d", responseCodeNum);
-            if(ret < sizeof(tmpstr))
+            if (ret < sizeof(tmpstr))
             {
                 snort_free(session->hsession->response_code);
                 session->hsession->response_code = snort_strdup(tmpstr);
@@ -150,13 +154,13 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
 
         // FIXIT-M: Get Location header data.
         // FIXIT-M: Should we get response body (may be expensive to copy)?
-        //      It is not currently set in callback in 2.9.x, only via 
+        //      It is not currently set in callback in 2.9.x, only via
         //      third-party.
     }
 
     //  The Via header can be in both the request and response.
     header_start = http_event->get_via(header_length);
-    if(header_length > 0)
+    if (header_length > 0)
     {
         replace_header_data(&session->hsession->via, tmplen, header_start,
             header_length);

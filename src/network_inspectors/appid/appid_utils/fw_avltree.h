@@ -51,14 +51,14 @@ struct FwQNode
 };
 
 FwAvlTree* fwAvlInit();
-int fwAvlInsert(uint32_t key, void* data, FwAvlTree* tree);
-void* fwAvlLookup(const uint32_t key, const FwAvlTree* tree);
-FwAvlNode* fwAvlFirst(const FwAvlTree* tree);
-FwAvlNode* fwAvlLast(const FwAvlTree* tree);
-FwAvlNode* fwAvlNext(FwAvlNode* node);
-FwAvlNode* fwAvlPrev(FwAvlNode* node);
-FwQNode* fwAvlSerialize(FwAvlTree* tree);
-void fwAvlDeleteTree(FwAvlTree* tree, void (* dataDelete)(void* data));
+int fwAvlInsert(uint32_t key, void* data, FwAvlTree*);
+void* fwAvlLookup(const uint32_t key, const FwAvlTree*);
+FwAvlNode* fwAvlFirst(const FwAvlTree*);
+FwAvlNode* fwAvlLast(const FwAvlTree*);
+FwAvlNode* fwAvlNext(FwAvlNode*);
+FwAvlNode* fwAvlPrev(FwAvlNode*);
+FwQNode* fwAvlSerialize(FwAvlTree*);
+void fwAvlDeleteTree(FwAvlTree*, void (* dataDelete)(void* data));
 
 #endif
 

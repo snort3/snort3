@@ -157,11 +157,8 @@ static int create_detector_flow(lua_State* L)
     SfIp saddr;
     SfIp daddr;
 
-    auto& detector_data = *UserData<Detector>::check(L, DETECTOR, 1);
-
-    /*check inputs and whether this function is called in context of a packet */
-    if ( !detector_data->validateParams.pkt )
-        return 0;   /*number of results */
+    auto& detector_data = *UserData<LuaDetector>::check(L, DETECTOR, 1);
+    assert(detector_data->validateParams.pkt);
 
     char* pattern = (char*)lua_tostring(L, 2);
     size_t patternLen = lua_strlen (L, 2);
@@ -211,8 +208,9 @@ static int create_detector_flow(lua_State* L)
 
     LuaDetectorManager::add_detector_flow(detector_flow);
 
-    detector_flow->asd = AppIdSession::create_future_session(detector_data->validateParams.pkt, &saddr,
-            sport, &daddr, dport, proto, 0, 0);
+    detector_flow->asd = AppIdSession::create_future_session(detector_data->validateParams.pkt,
+        &saddr,
+        sport, &daddr, dport, proto, 0, 0);
 
     if (!detector_flow->asd)
     {
@@ -327,7 +325,7 @@ static int set_detector_flow_service_id(lua_State*)
  * @param applId/stack - client application Id to be set on a flow.
  * @return int - Number of elements on stack, which is 0.
  */
-static int set_detecter_flow_cln_app_id(lua_State* )
+static int set_detecter_flow_cln_app_id(lua_State*)
 {
     return 0;
 }
@@ -438,3 +436,4 @@ int register_detector_flow_api(lua_State* L)
     lua_pop(L, 1);                      /* drop metatable */
     return 1;                           /* return methods on the stack */
 }
+

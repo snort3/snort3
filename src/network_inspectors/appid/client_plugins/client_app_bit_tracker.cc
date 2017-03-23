@@ -23,11 +23,16 @@
 #include "config.h"
 #endif
 
-#include "main/snort_debug.h"
+#include "client_app_bit_tracker.h"
 
+#include "app_info_table.h"
+#include "application_ids.h"
 #include "appid_module.h"
 
-#include "client_app_api.h"
+#include "main/snort_debug.h"
+#include "protocols/packet.h"
+#include "utils/sflsq.h"
+#include "utils/util.h"
 
 static const char UDP_BIT_QUERY[] = "d1:a";
 static const char UDP_BIT_RESPONSE[] = "d1:r";
@@ -63,131 +68,63 @@ struct ClientBITData
     unsigned pos;
 };
 
-struct BIT_CLIENT_APP_CONFIG
+BitTrackerClientDetector::BitTrackerClientDetector(ClientDiscovery* cdm)
 {
-    int enabled;
-};
+    handler = cdm;
+    name = "BIT-UDP";
+    proto = IpProtocol::UDP;
+    minimum_matches = 1;
+    provides_user = true;
 
-THREAD_LOCAL BIT_CLIENT_APP_CONFIG udp_bit_config;
-
-static CLIENT_APP_RETCODE udp_bit_init(const InitClientAppAPI* const init_api, SF_LIST* config);
-static CLIENT_APP_RETCODE udp_bit_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet* pkt, Detector* userData);
-
-SO_PUBLIC RNAClientAppModule bit_tracker_client_mod =
-{
-    "BIT-UDP",              // name
-    IpProtocol::UDP,            // proto
-    &udp_bit_init,          // init
-    nullptr,                // clean
-    &udp_bit_validate,      // validate
-    1,                      // minimum_matches
-    nullptr,                // api
-    nullptr,                // userData
-    0,                      // precedence
-    nullptr,                // finalize,
-    1,                      // provides_user
-    0                       // flow_data_index
-};
-
-struct Client_App_Pattern
-{
-    const uint8_t* pattern;
-    unsigned length;
-    int index;
-    unsigned appId;
-};
-
-static Client_App_Pattern udp_patterns[] =
-{
-    { (const uint8_t*)UDP_BIT_QUERY,    sizeof(UDP_BIT_QUERY) - 1,    -1, APP_ID_BITTRACKER_CLIENT },
-    { (const uint8_t*)UDP_BIT_RESPONSE, sizeof(UDP_BIT_RESPONSE) - 1, -1, APP_ID_BITTRACKER_CLIENT },
-    { (const uint8_t*)UDP_BIT_ERROR,    sizeof(UDP_BIT_ERROR) - 1,    -1, APP_ID_BITTRACKER_CLIENT },
-};
-
-static AppRegistryEntry appIdRegistry[] =
-{
-    { APP_ID_BITTRACKER_CLIENT, 0 }
-};
-
-static CLIENT_APP_RETCODE udp_bit_init(const InitClientAppAPI* const init_api, SF_LIST* config)
-{
-    unsigned i;
-
-    udp_bit_config.enabled = 1;
-
-    if (config)
+    udp_patterns =
     {
-        SF_LNODE* cursor;
-        RNAClientAppModuleConfigItem* item;
+        { (const uint8_t*)UDP_BIT_QUERY,    sizeof(UDP_BIT_QUERY) - 1,    -1, 0, APP_ID_BITTRACKER_CLIENT },
+        { (const uint8_t*)UDP_BIT_RESPONSE, sizeof(UDP_BIT_RESPONSE) - 1, -1, 0, APP_ID_BITTRACKER_CLIENT },
+        { (const uint8_t*)UDP_BIT_ERROR,    sizeof(UDP_BIT_ERROR) - 1,    -1, 0, APP_ID_BITTRACKER_CLIENT },
+    };
 
-        for (item = (RNAClientAppModuleConfigItem*)sflist_first(config, &cursor);
-            item;
-            item = (RNAClientAppModuleConfigItem*)sflist_next(&cursor))
-        {
-            DebugFormat(DEBUG_LOG,"Processing %s: %s\n",item->name, item->value);
-            if (strcasecmp(item->name, "enabled") == 0)
-            {
-                udp_bit_config.enabled = atoi(item->value);
-            }
-        }
-    }
-
-    if (udp_bit_config.enabled)
+    appid_registry =
     {
-        for (i=0; i < sizeof(udp_patterns)/sizeof(*udp_patterns); i++)
-        {
-            DebugFormat(DEBUG_LOG,"registering patterns: %s: %d\n",
-            		(const char*)udp_patterns[i].pattern, udp_patterns[i].index);
-            init_api->RegisterPattern(&udp_bit_validate, IpProtocol::UDP, udp_patterns[i].pattern,
-                udp_patterns[i].length, udp_patterns[i].index);
-        }
-    }
+        { APP_ID_BITTRACKER_CLIENT, 0 }
+    };
 
-    unsigned j;
-    for (j=0; j < sizeof(appIdRegistry)/sizeof(*appIdRegistry); j++)
-    {
-        DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[j].appId);
-        init_api->RegisterAppId(&udp_bit_validate, appIdRegistry[j].appId,
-            appIdRegistry[j].additionalInfo);
-    }
-
-    return CLIENT_APP_SUCCESS;
+    handler->register_detector(name, this, proto);
 }
 
-static CLIENT_APP_RETCODE udp_bit_validate(const uint8_t* data, uint16_t size, const int /*dir*/,
-    AppIdSession* asd, Packet*, Detector*)
+BitTrackerClientDetector::~BitTrackerClientDetector()
+{
+}
+
+int BitTrackerClientDetector::validate(AppIdDiscoveryArgs& args)
 {
     ClientBITData* fd;
     uint16_t offset;
 
-    if (size < (UDP_BIT_FIRST_LEN + UDP_BIT_END_LEN + 3))
-        return CLIENT_APP_EINVALID;
+    if (args.size < (UDP_BIT_FIRST_LEN + UDP_BIT_END_LEN + 3))
+        return APPID_EINVALID;
 
-    fd = (ClientBITData*)bit_tracker_client_mod.api->data_get(asd,
-        bit_tracker_client_mod.flow_data_index);
+    fd = (ClientBITData*)data_get(args.asd);
     if (!fd)
     {
         fd = (ClientBITData*)snort_calloc(sizeof(ClientBITData));
-        bit_tracker_client_mod.api->data_add(asd, fd,
-            bit_tracker_client_mod.flow_data_index, &snort_free);
+        data_add(args.asd, fd, &snort_free);
         fd->state = BIT_STATE_BANNER;
     }
 
     offset = 0;
-    while (offset < size)
+    while (offset < args.size)
     {
         switch (fd->state)
         {
         case BIT_STATE_BANNER:
-            if (data[offset] != UDP_BIT_FIRST[fd->pos])
-                return CLIENT_APP_EINVALID;
+            if (args.data[offset] != UDP_BIT_FIRST[fd->pos])
+                return APPID_EINVALID;
             if (fd->pos == UDP_BIT_FIRST_LEN-1)
                 fd->state = BIT_STATE_TYPES;
             fd->pos++;
             break;
         case BIT_STATE_TYPES:
-            switch (data[offset])
+            switch (args.data[offset])
             {
             case 'a':
                 fd->type = BIT_TYPE_REQUEST;
@@ -202,59 +139,60 @@ static CLIENT_APP_RETCODE udp_bit_validate(const uint8_t* data, uint16_t size, c
                 fd->state = BIT_STATE_DC;
                 break;
             default:
-                return CLIENT_APP_EINVALID;
+                return APPID_EINVALID;
             }
             break;
 
         case BIT_STATE_DC:
-            if (offset < (size - UDP_BIT_END_LEN))
+            if (offset < (args.size - UDP_BIT_END_LEN))
                 break;
-            else if (offset == (size - UDP_BIT_END_LEN) && data[offset] == UDP_BIT_COMMON_END[0])
+            else if (offset == (args.size - UDP_BIT_END_LEN) &&
+                args.data[offset] == UDP_BIT_COMMON_END[0])
             {
                 fd->state = BIT_STATE_CHECK_END;
                 fd->pos = 0;
             }
             else
-                return CLIENT_APP_EINVALID;
+                return APPID_EINVALID;
         /*fall through */
         case BIT_STATE_CHECK_END:
-            if (data[offset] != UDP_BIT_COMMON_END[fd->pos])
-                return CLIENT_APP_EINVALID;
+            if (args.data[offset] != UDP_BIT_COMMON_END[fd->pos])
+                return APPID_EINVALID;
             if (fd->pos == UDP_BIT_COMMON_END_LEN-1)
                 fd->state = BIT_STATE_CHECK_END_TYPES;
             fd->pos++;
             break;
 
         case BIT_STATE_CHECK_END_TYPES:
-            switch (data[offset])
+            switch (args.data[offset])
             {
             case 'q':
                 if (fd->type != BIT_TYPE_REQUEST)
-                    return CLIENT_APP_EINVALID;
+                    return APPID_EINVALID;
                 fd->state = BIT_STATE_CHECK_LAST;
                 break;
             case 'r':
                 if (fd->type != BIT_TYPE_RESPONSE)
-                    return CLIENT_APP_EINVALID;
+                    return APPID_EINVALID;
                 fd->state = BIT_STATE_CHECK_LAST;
                 break;
             case 'e':
                 if (fd->type != BIT_TYPE_ERROR)
-                    return CLIENT_APP_EINVALID;
+                    return APPID_EINVALID;
                 fd->state = BIT_STATE_CHECK_LAST;
                 break;
             default:
-                return CLIENT_APP_EINVALID;
+                return APPID_EINVALID;
             }
             break;
 
         case BIT_STATE_CHECK_LAST:
-            switch (data[offset])
+            switch (args.data[offset])
             {
             case 'e':
                 goto done;
             default:
-                return CLIENT_APP_EINVALID;
+                return APPID_EINVALID;
             }
             break;
 
@@ -264,13 +202,12 @@ static CLIENT_APP_RETCODE udp_bit_validate(const uint8_t* data, uint16_t size, c
         offset++;
     }
 inprocess:
-    return CLIENT_APP_INPROCESS;
+    return APPID_INPROCESS;
 
 done:
-    bit_tracker_client_mod.api->add_app(asd, APP_ID_BITTORRENT, APP_ID_BITTRACKER_CLIENT,
-        nullptr);
-    asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+    add_app(args.asd, APP_ID_BITTORRENT, APP_ID_BITTRACKER_CLIENT, nullptr);
+    args.asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
     appid_stats.bittracker_clients++;
-    return CLIENT_APP_SUCCESS;
+    return APPID_SUCCESS;
 }
 

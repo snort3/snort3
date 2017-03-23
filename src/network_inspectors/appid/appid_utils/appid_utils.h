@@ -34,9 +34,8 @@ public:
     static int strip(char* data);
     static void init_netmasks(uint32_t netmasks[]);
     static int split(char* data, char** toklist, int max_toks, const char* separator);
-    static void dump_hex(FILE* fp, const uint8_t* data, unsigned len);
+    static void dump_hex(FILE*, const uint8_t* data, unsigned len);
 };
-
 
 #endif
 

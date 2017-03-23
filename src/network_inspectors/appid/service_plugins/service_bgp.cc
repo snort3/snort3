@@ -25,8 +25,6 @@
 
 #include "service_bgp.h"
 
-#include "main/snort_debug.h"
-
 #include "appid_module.h"
 
 static const unsigned BGP_PORT = 179;
@@ -89,87 +87,64 @@ struct ServiceBGPV1Open
 
 #pragma pack()
 
-static int bgp_init(const InitServiceAPI* const init_api);
-static int bgp_validate(ServiceValidationArgs* args);
-
-static const RNAServiceElement svc_element =
-{
-    nullptr,
-    &bgp_validate,
-    nullptr,
-    DETECTOR_TYPE_DECODER,
-    1,
-    1,
-    0,
-    "bgp"
-};
-
-static const RNAServiceValidationPort pp[] =
-{
-    { &bgp_validate, BGP_PORT, IpProtocol::TCP, 0 },
-    { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
-};
-
-RNAServiceValidationModule bgp_service_mod =
-{
-    "BGP",
-    &bgp_init,
-    pp,
-    nullptr,
-    nullptr,
-    0,
-    nullptr,
-    0
-};
-
 static uint8_t BGP_PATTERN[] =
 {
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
 };
 
-static AppRegistryEntry appIdRegistry[] =
+BgpServiceDetector::BgpServiceDetector(ServiceDiscovery* sd)
 {
-    { APP_ID_BGP, 0 }
-};
+    handler = sd;
+    name = "bgp";
+    proto = IpProtocol::TCP;
+    detectorType = DETECTOR_TYPE_DECODER;
+    current_ref_count =  1;
 
-static int bgp_init(const InitServiceAPI* const init_api)
-{
-    init_api->RegisterPattern(&bgp_validate, IpProtocol::TCP, BGP_PATTERN,
-            sizeof(BGP_PATTERN), 0, "bgp");
-    unsigned i;
-    for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
+    tcp_patterns =
     {
-        DebugFormat(DEBUG_APPID,"registering appId: %d\n",appIdRegistry[i].appId);
-        init_api->RegisterAppId(&bgp_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo);
-    }
+        { (uint8_t*)BGP_PATTERN, sizeof(BGP_PATTERN), 0, 0, 0 },
+    };
 
-    return 0;
+    appid_registry =
+    {
+        { APP_ID_BGP, 0 }
+    };
+
+    service_ports =
+    {
+        { BGP_PORT, IpProtocol::TCP, false }
+    };
+
+    handler->register_detector(name, this, proto);
 }
 
-static int bgp_validate(ServiceValidationArgs* args)
+BgpServiceDetector::~BgpServiceDetector()
+{
+}
+
+int BgpServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     ServiceBGPData* bd;
     const ServiceBGPHeader* bh;
-    AppIdSession* asd = args->asd;
-    const uint8_t* data = args->data;
-    uint16_t size = args->size;
+    AppIdSession* asd = args.asd;
+    const uint8_t* data = args.data;
+    uint16_t size = args.size;
     uint16_t len;
 
     if (!size)
         goto inprocess;
-    if (args->dir != APP_ID_FROM_RESPONDER)
+    if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
     if (size < sizeof(ServiceBGPHeader))
         goto fail;
 
-    bd = (ServiceBGPData*)bgp_service_mod.api->data_get(asd, bgp_service_mod.flow_data_index);
+    bd = (ServiceBGPData*)data_get(asd);
     if (!bd)
     {
         bd = (ServiceBGPData*)snort_calloc(sizeof(ServiceBGPData));
-        bgp_service_mod.api->data_add(asd, bd, bgp_service_mod.flow_data_index, &snort_free);
+        data_add(asd, bd, &snort_free);
         bd->state = BGP_STATE_CONNECTION;
     }
 
@@ -244,18 +219,16 @@ static int bgp_validate(ServiceValidationArgs* args)
     }
 
 inprocess:
-    bgp_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &svc_element);
-    return SERVICE_INPROCESS;
+    service_inprocess(asd, args.pkt, args.dir);
+    return APPID_INPROCESS;
 
 fail:
-    bgp_service_mod.api->fail_service(asd, args->pkt, args->dir, &svc_element,
-        bgp_service_mod.flow_data_index);
-    return SERVICE_NOMATCH;
+    fail_service(asd, args.pkt, args.dir);
+    return APPID_NOMATCH;
 
 success:
-    bgp_service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element,
-        APP_ID_BGP, nullptr, nullptr, nullptr);
+    add_service(asd, args.pkt, args.dir, APP_ID_BGP, nullptr, nullptr, nullptr);
     appid_stats.bgp_flows++;
-    return SERVICE_SUCCESS;
+    return APPID_SUCCESS;
 }
 

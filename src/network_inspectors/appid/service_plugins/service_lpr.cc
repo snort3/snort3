@@ -23,11 +23,9 @@
 #include "config.h"
 #endif
 
-#include "main/snort_debug.h"
+#include "service_lpr.h"
 
 #include "appid_module.h"
-
-#include "service_api.h"
 
 #define LPR_COUNT_THRESHOLD 2
 
@@ -63,74 +61,48 @@ struct ServiceLPRData
     unsigned count;
 };
 
-static int lpr_init(const InitServiceAPI* const init_api);
-static int lpr_validate(ServiceValidationArgs* args);
-
-static const RNAServiceElement svc_element =
+LprServiceDetector::LprServiceDetector(ServiceDiscovery* sd)
 {
-    nullptr,
-    &lpr_validate,
-    nullptr,
-    DETECTOR_TYPE_DECODER,
-    1,
-    1,
-    0,
-    "lpr"
-};
+    handler = sd;
+    name = "lpr";
+    proto = IpProtocol::TCP;
+    detectorType = DETECTOR_TYPE_DECODER;
+    current_ref_count =  1;
 
-static const RNAServiceValidationPort pp[] =
-{
-    { &lpr_validate, 515, IpProtocol::TCP, 0 },
-    { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
-};
-
-RNAServiceValidationModule lpr_service_mod =
-{
-    "LPR",
-    &lpr_init,
-    pp,
-    nullptr,
-    nullptr,
-    0,
-    nullptr,
-    0
-};
-
-static AppRegistryEntry appIdRegistry[] =
-{
-    { APP_ID_PRINTSRV, 0 }
-};
-
-static int lpr_init(const InitServiceAPI* const init_api)
-{
-    unsigned i;
-    for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
+    appid_registry =
     {
-        DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[i].appId);
-        init_api->RegisterAppId(&lpr_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo);
-    }
+        { APP_ID_PRINTSRV, 0 }
+    };
 
-    return 0;
+    service_ports =
+    {
+        { 515, IpProtocol::TCP, false }
+    };
+
+    handler->register_detector(name, this, proto);
 }
 
-static int lpr_validate(ServiceValidationArgs* args)
+LprServiceDetector::~LprServiceDetector()
+{
+}
+
+int LprServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     ServiceLPRData* ld;
     int i;
-    AppIdSession* asd = args->asd;
-    const uint8_t* data = args->data;
-    const int dir = args->dir;
-    uint16_t size = args->size;
+    AppIdSession* asd = args.asd;
+    const uint8_t* data = args.data;
+    const int dir = args.dir;
+    uint16_t size = args.size;
 
     if (!size)
         goto inprocess;
 
-    ld = (ServiceLPRData*)lpr_service_mod.api->data_get(asd, lpr_service_mod.flow_data_index);
+    ld = (ServiceLPRData*)data_get(asd);
     if (!ld)
     {
         ld = (ServiceLPRData*)snort_calloc(sizeof(ServiceLPRData));
-        lpr_service_mod.api->data_add(asd, ld, lpr_service_mod.flow_data_index, &snort_free);
+        data_add(asd, ld, &snort_free);
         ld->state = LPR_STATE_COMMAND;
     }
 
@@ -243,23 +215,20 @@ static int lpr_validate(ServiceValidationArgs* args)
         goto bail;
     }
 inprocess:
-    lpr_service_mod.api->service_inprocess(asd, args->pkt, dir, &svc_element);
-    return SERVICE_INPROCESS;
+    service_inprocess(asd, args.pkt, dir);
+    return APPID_INPROCESS;
 
 success:
-    lpr_service_mod.api->add_service(asd, args->pkt, dir, &svc_element,
-        APP_ID_PRINTSRV, nullptr, nullptr, nullptr);
+    add_service(asd, args.pkt, dir, APP_ID_PRINTSRV, nullptr, nullptr, nullptr);
     appid_stats.lpr_flows++;
-    return SERVICE_SUCCESS;
+    return APPID_SUCCESS;
 
 fail:
-    lpr_service_mod.api->fail_service(asd, args->pkt, dir, &svc_element,
-        lpr_service_mod.flow_data_index);
-    return SERVICE_NOMATCH;
+    fail_service(asd, args.pkt, dir);
+    return APPID_NOMATCH;
 
 bail:
-    lpr_service_mod.api->incompatible_data(asd, args->pkt, dir, &svc_element,
-        lpr_service_mod.flow_data_index, args->pConfig);
-    return SERVICE_NOT_COMPATIBLE;
+    incompatible_data(asd, args.pkt, dir);
+    return APPID_NOT_COMPATIBLE;
 }
 

@@ -306,10 +306,12 @@ static int url_pattern_match(void* id, void*, int match_end_pos, void* data, voi
         /*host part matching towards later part is better. This is not designed to prevent
           mis-identifying
           url 'www.spoof_for_google.google.com.phishing.com' as google. */
-        if ((match->level == 0) && (match->match_start_pos < (unsigned int)match_end_pos - target->pattern.patternSize))
+        if ((match->level == 0) &&
+            (match->match_start_pos < (unsigned int)match_end_pos - target->pattern.patternSize))
             newMatchWins = 1;
         /*path part matching towards lower position is better */
-        if ((match->level == 1) && (match->match_start_pos > (unsigned int)match_end_pos - target->pattern.patternSize))
+        if ((match->level == 1) &&
+            (match->match_start_pos > (unsigned int)match_end_pos - target->pattern.patternSize))
             newMatchWins = 1;
     }
 

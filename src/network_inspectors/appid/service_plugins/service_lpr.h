@@ -22,11 +22,17 @@
 #ifndef SERVICE_LPR_H
 #define SERVICE_LPR_H
 
-// Service detector for LPR
+#include "service_detector.h"
 
-#include "service_api.h"
+class ServiceDiscovery;
 
-extern RNAServiceValidationModule lpr_service_mod;
+class LprServiceDetector : public ServiceDetector
+{
+public:
+    LprServiceDetector(ServiceDiscovery*);
+    ~LprServiceDetector();
 
+    int validate(AppIdDiscoveryArgs&) override;
+};
 #endif
 

@@ -25,24 +25,15 @@
 
 #include "service_rtmp.h"
 
-#include "main/snort_debug.h"
-
-#include "app_info_table.h"
 #include "appid_module.h"
-
-#include "service_api.h"
+#include "app_info_table.h"
 
 #define RTMP_PORT 1935
-
 #define RTMP_VER_3 3
-
 #define RTMP_HANDSHAKE1_SIZE 1536    /* C1/S1 */
 #define RTMP_HANDSHAKE2_SIZE 1536    /* C2/S2 */
-
 #define RTMP_CHUNK_SIZE 128
-
 #define RTMP_AMF0_COMMAND_MESSAGE_ID 20
-
 #define RTMP_COMMAND_TYPE_CONNECT     "connect"
 #define RTMP_COMMAND_TYPE_CONNECT_LEN 7
 
@@ -82,55 +73,30 @@ struct ServiceRTMPData
     char* pageUrl;
 };
 
-static int rtmp_init(const InitServiceAPI* const api);
-static int rtmp_validate(ServiceValidationArgs* args);
-
-static const RNAServiceElement svc_element =
+RtmpServiceDetector::RtmpServiceDetector(ServiceDiscovery* sd)
 {
-    nullptr,
-    &rtmp_validate,
-    nullptr,
-    DETECTOR_TYPE_DECODER,
-    1,
-    1,
-    0,
-    "rtmp"
-};
+    handler = sd;
+    name = "rtmp";
+    proto = IpProtocol::TCP;
+    detectorType = DETECTOR_TYPE_DECODER;
+    current_ref_count =  1;
 
-static const RNAServiceValidationPort pp[] =
-{
-    { &rtmp_validate, 1935, IpProtocol::TCP, 0 },
-    { &rtmp_validate, 1935, IpProtocol::UDP, 0 },
-    { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
-};
-
-RNAServiceValidationModule rtmp_service_mod =
-{
-    "rtmp",
-    &rtmp_init,
-    pp,
-    nullptr,
-    nullptr,
-    0,
-    nullptr,
-    0
-};
-
-static AppRegistryEntry appIdRegistry[] =
-{
-    { APP_ID_RTMP, APPINFO_FLAG_SERVICE_ADDITIONAL }
-};
-
-static int rtmp_init(const InitServiceAPI* const init_api)
-{
-    unsigned i;
-    for (i = 0; i < (sizeof(appIdRegistry) / sizeof(*appIdRegistry)); i++)
+    appid_registry =
     {
-        DebugFormat(DEBUG_APPID, "registering appId: %d\n", appIdRegistry[i].appId);
-        init_api->RegisterAppId(&rtmp_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo);
-    }
-    return 0;
+        { APP_ID_RTMP, APPINFO_FLAG_SERVICE_ADDITIONAL }
+    };
+
+    service_ports =
+    {
+        { 1935, IpProtocol::TCP, false },
+        { 1935, IpProtocol::UDP, false }
+    };
+
+    handler->register_detector(name, this, proto);
+}
+
+RtmpServiceDetector::~RtmpServiceDetector()
+{
 }
 
 static void rtmp_free(void* ss)    /* AppIdFreeFCN */
@@ -338,7 +304,8 @@ static int skip_property_value(const uint8_t** data_inout, uint16_t* size_inout)
     return 1;
 }
 
-static int parse_rtmp_message(const uint8_t** data_inout, uint16_t* size_inout, ServiceRTMPData* ss)
+static int parse_rtmp_message(const uint8_t** data_inout, uint16_t* size_inout,
+    ServiceRTMPData* ss)
 {
     const uint8_t* data = *data_inout;
     uint16_t size = *size_inout;
@@ -449,22 +416,22 @@ parse_rtmp_message_fail:
     goto parse_rtmp_message_done;
 }
 
-static int rtmp_validate(ServiceValidationArgs* args)
+int RtmpServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     ServiceRTMPData* ss;
-    AppIdSession* asd = args->asd;
-    const uint8_t* data = args->data;
-    const int dir = args->dir;
-    uint16_t size = args->size;
+    AppIdSession* asd = args.asd;
+    const uint8_t* data = args.data;
+    const int dir = args.dir;
+    uint16_t size = args.size;
 
     if (!size)
         goto inprocess;
 
-    ss = (ServiceRTMPData*)rtmp_service_mod.api->data_get(asd, rtmp_service_mod.flow_data_index);
+    ss = (ServiceRTMPData*)data_get(asd);
     if (!ss)
     {
         ss = (ServiceRTMPData*)snort_calloc(sizeof(ServiceRTMPData));
-        rtmp_service_mod.api->data_add(asd, ss, rtmp_service_mod.flow_data_index, &rtmp_free);
+        data_add(asd, ss, &rtmp_free);
     }
 
     /* Client -> Server */
@@ -662,22 +629,21 @@ static int rtmp_validate(ServiceValidationArgs* args)
     }
 
 inprocess:
-    rtmp_service_mod.api->service_inprocess(asd, args->pkt, dir, &svc_element);
-    return SERVICE_INPROCESS;
+    service_inprocess(asd, args.pkt, dir);
+    return APPID_INPROCESS;
 
 fail:
     snort_free(ss->swfUrl);
     snort_free(ss->pageUrl);
     ss->swfUrl = ss->pageUrl = nullptr;
-    rtmp_service_mod.api->fail_service(asd, args->pkt, dir, &svc_element,
-        rtmp_service_mod.flow_data_index);
-    return SERVICE_NOMATCH;
+    fail_service(asd, args.pkt, dir);
+    return APPID_NOMATCH;
 
 success:
     if (ss->swfUrl != nullptr)
     {
         if (!asd->hsession)
-            asd->hsession = (httpSession*)snort_calloc(sizeof(httpSession));
+            asd->hsession = (HttpSession*)snort_calloc(sizeof(HttpSession));
 
         if (asd->hsession->url == nullptr)
         {
@@ -692,7 +658,7 @@ success:
     if (ss->pageUrl != nullptr)
     {
         if (!asd->hsession)
-            asd->hsession = (httpSession*)snort_calloc(sizeof(httpSession));
+            asd->hsession = (HttpSession*)snort_calloc(sizeof(HttpSession));
 
         if (!asd->config->mod_config->referred_appId_disabled &&
             (asd->hsession->referer == nullptr))
@@ -702,9 +668,8 @@ success:
 
         ss->pageUrl = nullptr;
     }
-    rtmp_service_mod.api->add_service(asd, args->pkt, dir, &svc_element,
-        APP_ID_RTMP, nullptr, nullptr, nullptr);
+    add_service(asd, args.pkt, dir, APP_ID_RTMP, nullptr, nullptr, nullptr);
     appid_stats.rtmp_flows++;
-    return SERVICE_SUCCESS;
+    return APPID_SUCCESS;
 }
 

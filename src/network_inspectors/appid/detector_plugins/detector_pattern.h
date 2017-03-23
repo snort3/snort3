@@ -23,9 +23,8 @@
 #define DETECTOR_PATTERN_H
 
 #include "appid_api.h"
-#include "detector_api.h"
-
-extern RNAServiceValidationModule pattern_service_mod;
+#include "client_plugins/client_detector.h"
+#include "service_plugins/service_detector.h"
 
 struct PortPatternNode
 {
@@ -68,8 +67,46 @@ struct PatternService
 };
 
 class SearchTool;
-struct ServicePortPattern
+class ClientDetector;
+class ServiceDetector;
+
+class PatternClientDetector : public ClientDetector
 {
+public:
+    PatternClientDetector(ClientDiscovery*);
+    ~PatternClientDetector();
+
+    static void insert_client_port_pattern(PortPatternNode*);
+    static void finalize_client_port_patterns();
+
+    int validate(AppIdDiscoveryArgs&) override;
+
+private:
+    void createClientPatternTrees();
+    void registerClientPatterns();
+
+    PortPatternNode* luaInjectedPatterns = nullptr;
+    PatternService* servicePortPattern = nullptr;
+    SearchTool* tcp_patterns = nullptr;
+    SearchTool* udp_patterns = nullptr;
+};
+
+class PatternServiceDetector : public ServiceDetector
+{
+public:
+    PatternServiceDetector(ServiceDiscovery*);
+    ~PatternServiceDetector();
+
+    static void insert_service_port_pattern(PortPatternNode*);
+    static void finalize_service_port_patterns();
+
+    int validate(AppIdDiscoveryArgs&) override;
+
+private:
+    void createServicePatternTrees();
+    void registerServicePatterns();
+    void install_ports(PatternService*);
+
     PortPatternNode* luaInjectedPatterns = nullptr;
     PatternService* servicePortPattern = nullptr;
     SearchTool* tcp_patterns = nullptr;
@@ -77,21 +114,6 @@ struct ServicePortPattern
     SearchTool* tcpPortPatternTree[65536] = { nullptr };
     SearchTool* udpPortPatternTree[65536] = { nullptr };
 };
-
-struct ClientPortPattern
-{
-    PortPatternNode* luaInjectedPatterns = nullptr;
-    PatternService* servicePortPattern = nullptr;
-    SearchTool* tcp_patterns = nullptr;
-    SearchTool* udp_patterns = nullptr;
-};
-
-void insert_service_port_pattern(PortPatternNode* pPattern);
-void insert_client_port_pattern(PortPatternNode* pPattern);
-void finalize_service_port_patterns();
-void clean_service_port_patterns();
-void clean_client_port_patterns();
-void finalize_client_port_patterns();
 
 #endif
 

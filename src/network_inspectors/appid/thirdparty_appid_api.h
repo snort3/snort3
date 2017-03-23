@@ -23,6 +23,7 @@
 #define THIRDPARTY_APPID_API_H
 
 #include "thirdparty_appid_types.h"
+#include "flow/flow.h"
 
 struct Packet;
 
@@ -46,26 +47,26 @@ struct ThirdPartyConfig
 
 struct ThirdPartyUtils
 {
-    void (*logMsg)(const char*, ...);
-    uint32_t (*getSnortInstance)();
+    void (* logMsg)(const char*, ...);
+    uint32_t (* getSnortInstance)();
 };
 
-using ThirdPartyAppIDModInit = int(*)(ThirdPartyConfig*, ThirdPartyUtils*);
-using ThirdPartyAppIDModReconfigure = int(*)(ThirdPartyConfig*);
-using ThirdPartyAppIDModFini = int(*)();
+using ThirdPartyAppIDModInit = int (*)(ThirdPartyConfig*, ThirdPartyUtils*);
+using ThirdPartyAppIDModReconfigure = int (*)(ThirdPartyConfig*);
+using ThirdPartyAppIDModFini = int (*)();
 using ThirdPartyAppIDSessionCreate = void*(*)();
-using ThirdPartyAppIDSessionDelete = int(*)(void* tpsession, int just_reset_state);
-using ThirdPartyAppIDSessionProcess = int(*)( void* tpsession, Packet*, int direction,                                  // in
-    AppId*, int* confidence, AppId** proto_list, ThirdPartyAppIDAttributeData** attribute_data );
-using ThirdPartyAppIDPrintStats = int(*)();
-using ThirdPartyAppIDResetStats = int(*)();
-using ThirdPartyAppIDDisableFlags = int(*)(void* tpsession, uint32_t session_flags);
-using ThirdPartyAppIDSessionStateGet = TPState(*)(void* tpsession);
-using ThirdPartyAppIDSessionStateSet = void(*)(void* tpsession, TPState);
-using ThirdPartyAppIDSessionAttrSet = void(*)(void* tpsession, TPSessionAttr);
-using ThirdPartyAppIDSessionAttrClear = void(*)(void* tpsession, TPSessionAttr);
-using ThirdPartyAppIDSessionAttrGet = unsigned(*)(void* tpsession, TPSessionAttr);
-using ThirdPartyAppIDSessionCurrenAppIdGet = AppId(*)(void* tpsession);
+using ThirdPartyAppIDSessionDelete = int (*)(void* tpsession, int just_reset_state);
+using ThirdPartyAppIDSessionProcess = int (*)(void* tpsession, Packet*, int direction,                                  // in
+    AppId*, int* confidence, AppId** proto_list, ThirdPartyAppIDAttributeData** attribute_data);
+using ThirdPartyAppIDPrintStats = int (*)();
+using ThirdPartyAppIDResetStats = int (*)();
+using ThirdPartyAppIDDisableFlags = int (*)(void* tpsession, uint32_t session_flags);
+using ThirdPartyAppIDSessionStateGet = TPState (*)(void* tpsession);
+using ThirdPartyAppIDSessionStateSet = void (*)(void* tpsession, TPState);
+using ThirdPartyAppIDSessionAttrSet = void (*)(void* tpsession, TPSessionAttr);
+using ThirdPartyAppIDSessionAttrClear = void (*)(void* tpsession, TPSessionAttr);
+using ThirdPartyAppIDSessionAttrGet = unsigned (*)(void* tpsession, TPSessionAttr);
+using ThirdPartyAppIDSessionCurrenAppIdGet = AppId (*)(void* tpsession);
 
 // SO_PUBLIC const ThirdPartyAppIDModule thirdparty_appid_impl_module
 struct ThirdPartyAppIDModule
@@ -91,3 +92,4 @@ struct ThirdPartyAppIDModule
 };
 
 #endif
+

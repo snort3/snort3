@@ -22,9 +22,17 @@
 #ifndef SERVICE_SSH_H
 #define SERVICE_SSH_H
 
-#include "detector_plugins/detector_api.h"
+#include "service_detector.h"
 
-extern RNAServiceValidationModule ssh_service_mod;
+class ServiceDiscovery;
 
+class SshServiceDetector : public ServiceDetector
+{
+public:
+    SshServiceDetector(ServiceDiscovery*);
+    ~SshServiceDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
+};
 #endif
 

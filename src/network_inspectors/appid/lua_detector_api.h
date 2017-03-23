@@ -24,35 +24,28 @@
 
 // This module supports basic API towards Lua detectors.
 
-#include "client_plugins/client_app_api.h"
-#include "service_plugins/service_api.h"
+#include <cstdint>
+#include <string>
+
+#include "client_plugins/client_detector.h"
+#include "service_plugins/service_detector.h"
 
 struct Packet;
-struct ProfileStats;
-struct ServiceValidationArgs;
 struct lua_State;
-class AppIdConfig;
 class AppIdSession;
-struct RNAServiceElement;
 
 #define DETECTOR "Detector"
 #define DETECTORFLOW "DetectorFlow"
 
 struct DetectorPackageInfo
 {
-    struct UniInfo
-    {
-        std::string initFunctionName;
-        std::string cleanFunctionName;
-        std::string validateFunctionName;
-        int minimum_matches = 0;
-    };
-
+    bool client_detector = false;
+    std::string initFunctionName;
+    std::string cleanFunctionName;
+    std::string validateFunctionName;
+    int minimum_matches = 0;
     std::string name = "NoName";
     IpProtocol proto;
-
-    UniInfo client;
-    UniInfo server;
 };
 
 struct ValidateParameters
@@ -62,50 +55,60 @@ struct ValidateParameters
     int dir = 0;
     AppIdSession* asd = nullptr;
     Packet* pkt = nullptr;
-    uint8_t macAddress[6] = {0};
+    uint8_t macAddress[6] = { 0 };
 };
 
-struct ServerDetectorState
-{
-    unsigned int serviceId = APP_ID_UNKNOWN;
-    RNAServiceValidationModule serviceModule;
-    RNAServiceElement* pServiceElement = nullptr;
-};
-
-struct ClientDetectorState
-{
-    unsigned int appFpId;
-    RNAClientAppModule appModule;
-};
-
-class Detector
+class LuaDetector
 {
 public:
-    Detector(AppIdConfig* config);
-    ~Detector();
+    LuaDetector() { }
+    virtual ~LuaDetector();
 
-    bool isCustom = false;
-    bool isActive = false;
-    bool wasActive = false;
     ValidateParameters validateParams;
-    ServerDetectorState server;
-    ClientDetectorState client;
-    AppIdSession* pFlow = nullptr;
     lua_State* myLuaState= nullptr;
     int detectorUserDataRef = 0;    // key into LUA_REGISTRYINDEX
-    std::string name;
     DetectorPackageInfo packageInfo;
-    unsigned detector_version = 0;
-    AppIdConfig* appid_config = nullptr;
+    bool is_client = false;
+    unsigned int serviceId = APP_ID_UNKNOWN;
+
+    int lua_validate(AppIdDiscoveryArgs&);
+};
+
+class LuaServiceDetector : public LuaDetector, public ServiceDetector
+{
+public:
+    LuaServiceDetector(AppIdDiscovery* sdm, std::string detector_name, IpProtocol protocol)
+    {
+        handler = sdm;
+        name = detector_name;
+        proto = protocol;
+        handler->register_detector(name, this, proto);
+    }
+
+    virtual ~LuaServiceDetector() { }
+
+    virtual int validate(AppIdDiscoveryArgs&) override;
+};
+
+class LuaClientDetector : public LuaDetector, public ClientDetector
+{
+public:
+    LuaClientDetector(AppIdDiscovery* cdm, std::string detector_name, IpProtocol protocol)
+    {
+        handler = cdm;
+        name = detector_name;
+        proto = protocol;
+        handler->register_detector(name, this, proto);
+    }
+
+    virtual ~LuaClientDetector() { }
+
+    virtual int validate(AppIdDiscoveryArgs&) override;
 };
 
 int register_detector(lua_State*);
-void remove_detector(void* detector);
-CLIENT_APP_RETCODE validate_client_application(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession*, Packet*, Detector*);
-int validate_service_application(ServiceValidationArgs*);
-int check_service_element(Detector*);
 int init_chp_glossary();
 void free_chp_glossary();
 
 #endif
+

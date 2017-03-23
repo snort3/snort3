@@ -32,15 +32,15 @@ struct tMlpPattern
 };
 
 void* mlpCreate();
-int mlpAddPattern(void* root, const tMlpPattern** patterns, void* metaData);
+int mlpAddPattern(void* root, const tMlpPattern**, void* metaData);
 int mlpProcessPatterns(void* root);
-void* mlpMatchPatternLongest(void* root, tMlpPattern** inputPatternList);
-void* mlpMatchPatternUrl(void* root, tMlpPattern** inputPatternList);
-void* mlpMatchPatternCustom(void* root, tMlpPattern** inputPatternList,
+void* mlpMatchPatternLongest(void* root, tMlpPattern**);
+void* mlpMatchPatternUrl(void* root, tMlpPattern**);
+void* mlpMatchPatternCustom(void* root, tMlpPattern**,
     int (* callback)(void*, void*, int, void*, void*));
 void mlpDestroy(void* root);
 void mlpDump(void* root);
-void* mlpGetPatternMatcherTree(void* root, tMlpPattern** inputPatternList);
+void* mlpGetPatternMatcherTree(void* root, tMlpPattern**);
 
 #endif
 

@@ -22,9 +22,26 @@
 #ifndef SERVICE_RADIUS_H
 #define SERVICE_RADIUS_H
 
-#include "service_api.h"
+#include "service_detector.h"
 
-extern RNAServiceValidationModule radius_service_mod;
+class ServiceDiscovery;
 
+class RadiusServiceDetector : public ServiceDetector
+{
+public:
+    RadiusServiceDetector(ServiceDiscovery*);
+    ~RadiusServiceDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
+};
+
+class RadiusAcctServiceDetector : public ServiceDetector
+{
+public:
+    RadiusAcctServiceDetector(ServiceDiscovery*);
+    ~RadiusAcctServiceDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
+};
 #endif
 

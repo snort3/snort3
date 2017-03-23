@@ -25,13 +25,11 @@
 
 #include "service_dcerpc.h"
 
-#include "main/snort_debug.h"
-
 #include "appid_module.h"
-
 #include "dcerpc.h"
 
 #define DCERPC_THRESHOLD    3
+#define DCERPC_PORT 135
 
 #define min(x,y) ((x)<(y) ? (x) : (y))
 
@@ -40,91 +38,59 @@ struct ServiceDCERPCData
     unsigned count;
 };
 
-static int dcerpc_init(const InitServiceAPI* const init_api);
-static int dcerpc_tcp_validate(ServiceValidationArgs* args);
-static int dcerpc_udp_validate(ServiceValidationArgs* args);
+DceRpcServiceDetector::DceRpcServiceDetector(ServiceDiscovery* sd)
+{
+    handler = sd;
+    name = "dcerpc";
+    proto = IpProtocol::TCP;
+    detectorType = DETECTOR_TYPE_DECODER;
+    current_ref_count =  1;
 
-static const RNAServiceElement tcp_svc_element =
-{
-    nullptr,
-    &dcerpc_tcp_validate,
-    nullptr,
-    DETECTOR_TYPE_DECODER,
-    1,
-    1,
-    0,
-    "dcerpc"
-};
-static const RNAServiceElement udp_svc_element =
-{
-    nullptr,
-    &dcerpc_udp_validate,
-    nullptr,
-    DETECTOR_TYPE_DECODER,
-    1,
-    1,
-    0,
-    "udp dcerpc"
-};
-
-static const RNAServiceValidationPort pp[] =
-{
-    { &dcerpc_tcp_validate, 135, IpProtocol::TCP, 0 },
-    { &dcerpc_udp_validate, 135, IpProtocol::UDP, 0 },
-    { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
-};
-
-RNAServiceValidationModule dcerpc_service_mod =
-{
-    "DCERPC",
-    &dcerpc_init,
-    pp,
-    nullptr,
-    nullptr,
-    0,
-    nullptr,
-    0
-};
-
-static AppRegistryEntry appIdRegistry[] =
-{
-    { APP_ID_DCE_RPC, 0 }
-};
-
-static int dcerpc_init(const InitServiceAPI* const init_api)
-{
-    unsigned i;
-    for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
+    appid_registry =
     {
-        DebugFormat(DEBUG_APPID,"registering appId: %d\n",appIdRegistry[i].appId);
-        init_api->RegisterAppId(&dcerpc_udp_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo);
-    }
+        { APP_ID_DCE_RPC, 0 }
+    };
 
-    return 0;
+    service_ports =
+    {
+        { DCERPC_PORT, IpProtocol::TCP, false },
+        { DCERPC_PORT, IpProtocol::UDP, false }
+    };
+
+    handler->register_detector(name, this, proto);
 }
 
-static int dcerpc_tcp_validate(ServiceValidationArgs* args)
+DceRpcServiceDetector::~DceRpcServiceDetector()
+{
+}
+
+int DceRpcServiceDetector::validate(AppIdDiscoveryArgs& args)
+{
+    if (args.asd->protocol == IpProtocol::UDP)
+        return udp_validate(args);
+    else
+        return tcp_validate(args);
+}
+
+int DceRpcServiceDetector::tcp_validate(AppIdDiscoveryArgs& args)
 {
     ServiceDCERPCData* dd;
-    int retval = SERVICE_INPROCESS;
+    int retval = APPID_INPROCESS;
     int length;
-    AppIdSession* asd = args->asd;
-    const uint8_t* data = args->data;
-    uint16_t size = args->size;
+    AppIdSession* asd = args.asd;
+    const uint8_t* data = args.data;
+    uint16_t size = args.size;
 
-    if (args->dir != APP_ID_FROM_RESPONDER)
+    if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
     if (!size)
         goto inprocess;
 
-    dd = (ServiceDCERPCData*)dcerpc_service_mod.api->data_get(asd,
-        dcerpc_service_mod.flow_data_index);
+    dd = (ServiceDCERPCData*)data_get(asd);
     if (!dd)
     {
         dd = (ServiceDCERPCData*)snort_calloc(sizeof(ServiceDCERPCData));
-        dcerpc_service_mod.api->data_add(asd, dd, dcerpc_service_mod.flow_data_index,
-            &snort_free);
+        data_add(asd, dd, &snort_free);
     }
 
     while (size)
@@ -134,49 +100,45 @@ static int dcerpc_tcp_validate(ServiceValidationArgs* args)
             goto fail;
         dd->count++;
         if (dd->count >= DCERPC_THRESHOLD)
-            retval = SERVICE_SUCCESS;
+            retval = APPID_SUCCESS;
         data += length;
         size -= length;
     }
-    if (retval == SERVICE_SUCCESS)
+    if (retval == APPID_SUCCESS)
     {
-        dcerpc_service_mod.api->add_service(asd, args->pkt, args->dir, &tcp_svc_element,
-            APP_ID_DCE_RPC, nullptr, nullptr, nullptr);
+        add_service(asd, args.pkt, args.dir, APP_ID_DCE_RPC, nullptr, nullptr, nullptr);
         appid_stats.dcerpc_tcp_flows++;
-        return SERVICE_SUCCESS;
+        return APPID_SUCCESS;
     }
 
 inprocess:
-    dcerpc_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &tcp_svc_element);
-    return SERVICE_INPROCESS;
+    service_inprocess(asd, args.pkt, args.dir);
+    return APPID_INPROCESS;
 
 fail:
-    dcerpc_service_mod.api->fail_service(asd, args->pkt, args->dir, &tcp_svc_element,
-        dcerpc_service_mod.flow_data_index);
-    return SERVICE_NOMATCH;
+    fail_service(asd, args.pkt, args.dir);
+    return APPID_NOMATCH;
 }
 
-static int dcerpc_udp_validate(ServiceValidationArgs* args)
+int DceRpcServiceDetector::udp_validate(AppIdDiscoveryArgs& args)
 {
     ServiceDCERPCData* dd;
-    int retval = SERVICE_NOMATCH;
+    int retval = APPID_NOMATCH;
     int length;
-    AppIdSession* asd = args->asd;
-    const uint8_t* data = args->data;
-    uint16_t size = args->size;
+    AppIdSession* asd = args.asd;
+    const uint8_t* data = args.data;
+    uint16_t size = args.size;
 
-    if (args->dir != APP_ID_FROM_RESPONDER)
+    if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
     if (!size)
         goto inprocess;
 
-    dd = (ServiceDCERPCData*)dcerpc_service_mod.api->data_get(asd,
-        dcerpc_service_mod.flow_data_index);
+    dd = (ServiceDCERPCData*)data_get(asd);
     if (!dd)
     {
         dd = (ServiceDCERPCData*)snort_calloc(sizeof(ServiceDCERPCData));
-        dcerpc_service_mod.api->data_add(asd, dd, dcerpc_service_mod.flow_data_index,
-            &snort_free);
+        data_add(asd, dd, &snort_free);
     }
 
     while (size)
@@ -186,25 +148,23 @@ static int dcerpc_udp_validate(ServiceValidationArgs* args)
             goto fail;
         dd->count++;
         if (dd->count >= DCERPC_THRESHOLD)
-            retval = SERVICE_SUCCESS;
+            retval = APPID_SUCCESS;
         data += length;
         size -= length;
     }
-    if (retval == SERVICE_SUCCESS)
+    if (retval == APPID_SUCCESS)
     {
-        dcerpc_service_mod.api->add_service(asd, args->pkt, args->dir, &udp_svc_element,
-            APP_ID_DCE_RPC, nullptr, nullptr, nullptr);
+        add_service(asd, args.pkt, args.dir, APP_ID_DCE_RPC, nullptr, nullptr, nullptr);
         appid_stats.dcerpc_udp_flows++;
-        return SERVICE_SUCCESS;
+        return APPID_SUCCESS;
     }
 
 inprocess:
-    dcerpc_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &udp_svc_element);
-    return SERVICE_INPROCESS;
+    service_inprocess(asd, args.pkt, args.dir);
+    return APPID_INPROCESS;
 
 fail:
-    dcerpc_service_mod.api->fail_service(asd, args->pkt, args->dir, &udp_svc_element,
-        dcerpc_service_mod.flow_data_index);
-    return SERVICE_NOMATCH;
+    fail_service(asd, args.pkt, args.dir);
+    return APPID_NOMATCH;
 }
 

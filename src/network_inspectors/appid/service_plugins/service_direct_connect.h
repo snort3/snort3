@@ -22,11 +22,26 @@
 #ifndef SERVICE_DIRECTCONNECT_H
 #define SERVICE_DIRECTCONNECT_H
 
-// Service detector for Direct Connect
+#include "service_detector.h"
 
-#include "service_api.h"
+class ServiceDiscovery;
+class AppIdSession;
+struct ServiceData;
 
-extern RNAServiceValidationModule directconnect_service_mod;
+class DirectConnectServiceDetector : public ServiceDetector
+{
+public:
+    DirectConnectServiceDetector(ServiceDiscovery*);
+    ~DirectConnectServiceDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
+
+private:
+    int tcp_validate(const uint8_t* data, uint16_t size, const int dir, AppIdSession*,
+        const Packet*, ServiceData*);
+    int udp_validate(const uint8_t* data, uint16_t size, const int dir, AppIdSession*,
+        const Packet*, ServiceData*);
+};
 
 #endif
 

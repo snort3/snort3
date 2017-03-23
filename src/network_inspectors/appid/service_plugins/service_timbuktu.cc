@@ -23,13 +23,11 @@
 #include "config.h"
 #endif
 
-#include "main/snort_debug.h"
+#include "service_timbuktu.h"
 
 #include "appid_module.h"
+#include "application_ids.h"
 
-#include "service_api.h"
-
-static const char svc_name[] = "timbuktu";
 static char TIMBUKTU_BANNER[]  = "\001\001";
 
 #define TIMBUKTU_PORT    407
@@ -60,79 +58,54 @@ struct ServiceTIMBUKTUMsg
 };
 #pragma pack()
 
-static int timbuktu_init(const InitServiceAPI* const init_api);
-static int timbuktu_validate(ServiceValidationArgs* args);
-
-static const RNAServiceElement svc_element =
+TimbuktuServiceDetector::TimbuktuServiceDetector(ServiceDiscovery* sd)
 {
-    nullptr,
-    &timbuktu_validate,
-    nullptr,
-    DETECTOR_TYPE_DECODER,
-    1,
-    1,
-    0,
-    "timbuktu"
-};
+    handler = sd;
+    name = "timbuktu";
+    proto = IpProtocol::TCP;
+    detectorType = DETECTOR_TYPE_DECODER;
+    current_ref_count =  1;
 
-static const RNAServiceValidationPort pp[] =
-{
-    { &timbuktu_validate, TIMBUKTU_PORT, IpProtocol::TCP, 0 },
-    { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
-};
-
-SO_PUBLIC RNAServiceValidationModule timbuktu_service_mod =
-{
-    svc_name,
-    &timbuktu_init,
-    pp,
-    nullptr,
-    nullptr,
-    0,
-    nullptr,
-    0
-};
-
-static const AppRegistryEntry appIdRegistry[] =
-{
-    { APP_ID_TIMBUKTU, 0 }
-};
-
-static int timbuktu_init(const InitServiceAPI* const init_api)
-{
-    init_api->RegisterPattern(&timbuktu_validate, IpProtocol::TCP,
-            (const uint8_t*)TIMBUKTU_BANNER, sizeof(TIMBUKTU_BANNER) - 1,
-            0, svc_name);
-    for (unsigned i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
+    tcp_patterns =
     {
-        DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[i].appId);
-        init_api->RegisterAppId(&timbuktu_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo);
-    }
+        { (const uint8_t*)TIMBUKTU_BANNER, sizeof(TIMBUKTU_BANNER) - 1, 0, 0, 0 }
+    };
 
-    return 0;
+    appid_registry =
+    {
+        { APP_ID_TIMBUKTU, 0 }
+    };
+
+    service_ports =
+    {
+        { TIMBUKTU_PORT, IpProtocol::TCP, false }
+    };
+
+    handler->register_detector(name, this, proto);
 }
 
-static int timbuktu_validate(ServiceValidationArgs* args)
+TimbuktuServiceDetector::~TimbuktuServiceDetector()
+{
+}
+
+int TimbuktuServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     ServiceTIMBUKTUData* ss;
-    AppIdSession* asd = args->asd;
-    const uint8_t* data = args->data;
-    uint16_t size = args->size;
+    AppIdSession* asd = args.asd;
+    const uint8_t* data = args.data;
+    uint16_t size = args.size;
     uint16_t offset=0;
 
     if (!size)
         goto inprocess;
-    if (args->dir != APP_ID_FROM_RESPONDER)
+    if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    ss = (ServiceTIMBUKTUData*)timbuktu_service_mod.api->data_get(asd,
-        timbuktu_service_mod.flow_data_index);
+    ss = (ServiceTIMBUKTUData*)data_get(asd);
     if (!ss)
     {
         ss = (ServiceTIMBUKTUData*)snort_calloc(sizeof(ServiceTIMBUKTUData));
-        timbuktu_service_mod.api->data_add(asd, ss,
-            timbuktu_service_mod.flow_data_index, &snort_free);
+        data_add(asd, ss, &snort_free);
         ss->state = TIMBUKTU_STATE_BANNER;
     }
 
@@ -184,18 +157,16 @@ static int timbuktu_validate(ServiceValidationArgs* args)
     }
 
 inprocess:
-    timbuktu_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &svc_element);
-    return SERVICE_INPROCESS;
+    service_inprocess(asd, args.pkt, args.dir);
+    return APPID_INPROCESS;
 
 success:
-    timbuktu_service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element,
-        APP_ID_TIMBUKTU, nullptr, nullptr, nullptr);
+    add_service(asd, args.pkt, args.dir, APP_ID_TIMBUKTU, nullptr, nullptr, nullptr);
     appid_stats.timbuktu_flows++;
-    return SERVICE_SUCCESS;
+    return APPID_SUCCESS;
 
 fail:
-    timbuktu_service_mod.api->fail_service(asd, args->pkt, args->dir, &svc_element,
-        timbuktu_service_mod.flow_data_index);
-    return SERVICE_NOMATCH;
+    fail_service(asd, args.pkt, args.dir);
+    return APPID_NOMATCH;
 }
 

@@ -22,11 +22,17 @@
 #ifndef SERVICE_IRC_H
 #define SERVICE_IRC_H
 
-// Service detector for IRC
+#include "service_detector.h"
 
-#include "service_api.h"
+class ServiceDiscovery;
 
-extern RNAServiceValidationModule irc_service_mod;
+class IrcServiceDetector : public ServiceDetector
+{
+public:
+    IrcServiceDetector(ServiceDiscovery*);
+    ~IrcServiceDetector();
 
+    int validate(AppIdDiscoveryArgs&) override;
+};
 #endif
 

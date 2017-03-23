@@ -20,6 +20,9 @@
 // Inspection events published by the Http Inspector. Modules can subscribe
 // to receive the events.
 
+#ifndef HTTP_EVENTS_H
+#define HTTP_EVENTS_H
+
 #include "framework/data_bus.h"
 
 // These are common values between the HTTP inspector and the subscribers.
@@ -59,4 +62,6 @@ private:
     const uint8_t* get_header(unsigned, uint64_t, int32_t&);
 
 };
+
+#endif
 

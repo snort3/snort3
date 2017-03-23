@@ -22,19 +22,20 @@
 #ifndef APP_FORECAST_H
 #define APP_FORECAST_H
 
-//  AppId flow forcasting data structures and methods
-
+#include <time.h>
 #include "flow/flow.h"
+#include "application_ids.h"
 
 class AppIdSession;
 struct Packet;
 
-// indicator - the appId that indicates there may be subsequent flows to look for, from the same host
+// indicator - the appId that indicates there may be subsequent flows to look for,
+// from the same host
 // forecast - the appId in the subsequent flow that we are looking for
 // target - the appId we want to set in that subsequent flow
 //
-// for now, indicator and target are WEB APPLICATIONS. The forecast is APP PROTOCOL. We can change this
-// later by adding app type info for each, if we find a use case.
+// for now, indicator and target are WEB APPLICATIONS. The forecast is APP PROTOCOL.
+// We can change this later by adding app type info for each, if we find a use case.
 
 enum ApplicationId : int32_t;
 

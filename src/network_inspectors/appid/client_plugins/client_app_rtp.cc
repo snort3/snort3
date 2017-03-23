@@ -23,11 +23,15 @@
 #include "config.h"
 #endif
 
+#include "client_app_rtp.h"
+
 #include "main/snort_debug.h"
+#include "protocols/packet.h"
+#include "utils/sflsq.h"
+#include "utils/util.h"
 
+#include "application_ids.h"
 #include "appid_module.h"
-
-#include "client_app_api.h"
 
 enum RTPState
 {
@@ -76,233 +80,166 @@ struct ClientRTPMsg
 };
 #pragma pack()
 
-struct RTP_CLIENT_APP_CONFIG
+RtpClientDetector::RtpClientDetector(ClientDiscovery* cdm)
 {
-    int enabled;
-};
-
-THREAD_LOCAL RTP_CLIENT_APP_CONFIG rtp_config;
-
-static CLIENT_APP_RETCODE rtp_init(const InitClientAppAPI* const init_api, SF_LIST* config);
-static CLIENT_APP_RETCODE rtp_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet* pkt, Detector* userData);
-
-SO_PUBLIC RNAClientAppModule rtp_client_mod =
-{
-    "RTP",                 // name
-    IpProtocol::UDP,           // proto
-    &rtp_init,             // init
-    nullptr,               // clean
-    &rtp_validate,         // validate
-    1,                     // minimum_matches
-    nullptr,                // api
-    nullptr,                // userData
-    0,                      // precedence
-    nullptr,                // finalize,
-    1,                      // provides_user
-    0                       // flow_data_index
-};
-
-struct Client_App_Pattern
-{
-    const uint8_t* pattern;
-    unsigned length;
-    int index;
-    unsigned appId;
-};
-
-static Client_App_Pattern patterns[] =
-{
-    { (const uint8_t*)"\x000\x000", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x001", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x002", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x003", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x004", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x005", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x006", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x007", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x008", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x009", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x00a", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x00b", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x00c", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x00d", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x00e", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x00f", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x010", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x011", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x012", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x013", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x019", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x01a", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x01b", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x01c", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x01f", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x020", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x021", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x022", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x080", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x081", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x082", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x083", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x084", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x085", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x086", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x087", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x088", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x089", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x08a", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x08b", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x08c", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x08d", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x08e", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x08f", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x090", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x091", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x092", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x093", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x099", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x09a", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x09b", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x09c", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x09f", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x0a0", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x0a1", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x000\x0a2", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x000", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x001", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x002", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x003", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x004", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x005", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x006", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x007", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x008", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x009", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x00a", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x00b", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x00c", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x00d", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x00e", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x00f", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x010", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x011", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x012", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x013", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x019", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x01a", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x01b", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x01c", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x01f", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x020", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x021", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x022", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x080", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x081", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x082", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x083", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x084", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x085", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x086", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x087", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x088", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x089", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x08a", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x08b", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x08c", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x08d", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x08e", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x08f", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x090", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x091", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x092", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x093", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x099", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x09a", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x09b", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x09c", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x09f", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x0a0", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x0a1", 2, -1, APP_ID_RTP },
-    { (const uint8_t*)"\x080\x0a2", 2, -1, APP_ID_RTP },
-};
-
-static AppRegistryEntry appIdRegistry[] =
-{
-    { APP_ID_RTP, 0 }
-};
-
-static CLIENT_APP_RETCODE rtp_init(const InitClientAppAPI* const init_api, SF_LIST* config)
-{
-    unsigned i;
-
-    rtp_config.enabled = 1;
-
-    if (config)
+    handler = cdm;
+    name = "RTP";
+    proto = IpProtocol::UDP;
+    minimum_matches = 1;
+    provides_user = true;
+    udp_patterns =
     {
-        SF_LNODE* cursor;
-        RNAClientAppModuleConfigItem* item;
+        { (const uint8_t*)"\x000\x000", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x001", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x002", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x003", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x004", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x005", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x006", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x007", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x008", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x009", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x00a", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x00b", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x00c", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x00d", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x00e", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x00f", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x010", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x011", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x012", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x013", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x019", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x01a", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x01b", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x01c", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x01f", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x020", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x021", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x022", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x080", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x081", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x082", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x083", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x084", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x085", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x086", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x087", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x088", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x089", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x08a", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x08b", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x08c", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x08d", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x08e", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x08f", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x090", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x091", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x092", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x093", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x099", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x09a", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x09b", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x09c", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x09f", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x0a0", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x0a1", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x000\x0a2", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x000", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x001", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x002", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x003", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x004", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x005", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x006", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x007", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x008", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x009", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x00a", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x00b", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x00c", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x00d", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x00e", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x00f", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x010", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x011", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x012", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x013", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x019", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x01a", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x01b", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x01c", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x01f", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x020", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x021", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x022", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x080", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x081", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x082", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x083", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x084", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x085", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x086", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x087", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x088", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x089", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x08a", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x08b", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x08c", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x08d", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x08e", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x08f", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x090", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x091", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x092", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x093", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x099", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x09a", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x09b", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x09c", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x09f", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x0a0", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x0a1", 2, -1, 0, APP_ID_RTP },
+        { (const uint8_t*)"\x080\x0a2", 2, -1, 0, APP_ID_RTP },
+    };
 
-        for (item = (RNAClientAppModuleConfigItem*)sflist_first(config, &cursor);
-            item;
-            item = (RNAClientAppModuleConfigItem*)sflist_next(&cursor))
-        {
-            DebugFormat(DEBUG_LOG,"Processing %s: %s\n",item->name, item->value);
-            if (strcasecmp(item->name, "enabled") == 0)
-            {
-                rtp_config.enabled = atoi(item->value);
-            }
-        }
-    }
-
-    if (rtp_config.enabled)
+    appid_registry =
     {
-        for (i=0; i < sizeof(patterns)/sizeof(*patterns); i++)
-        {
-            DebugFormat(DEBUG_LOG,"registering patterns: %s: %d\n",
-                (const char*)patterns[i].pattern, patterns[i].index);
-            init_api->RegisterPattern(&rtp_validate, IpProtocol::UDP, patterns[i].pattern,
-                patterns[i].length, patterns[i].index);
-        }
-    }
+        { APP_ID_RTP, 0 }
+    };
 
-    unsigned j;
-    for (j=0; j < sizeof(appIdRegistry)/sizeof(*appIdRegistry); j++)
-    {
-        DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[j].appId);
-        init_api->RegisterAppId(&rtp_validate, appIdRegistry[j].appId,
-            appIdRegistry[j].additionalInfo);
-    }
-
-    return CLIENT_APP_SUCCESS;
+    handler->register_detector(name, this, proto);
 }
 
-static CLIENT_APP_RETCODE rtp_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet*, Detector*)
+RtpClientDetector::~RtpClientDetector()
+{
+}
+
+int RtpClientDetector::validate(AppIdDiscoveryArgs& args)
 {
     ClientRTPData* fd;
     ClientRTPMsg* hdr;
 
-    if (!size)
-        return CLIENT_APP_INPROCESS;
+    if (!args.size)
+        return APPID_INPROCESS;
 
-    fd = (ClientRTPData*)rtp_client_mod.api->data_get(asd, rtp_client_mod.flow_data_index);
+    fd = (ClientRTPData*)data_get(args.asd);
     if (!fd)
     {
         fd = (ClientRTPData*)snort_calloc(sizeof(ClientRTPData));
-        rtp_client_mod.api->data_add(asd, fd, rtp_client_mod.flow_data_index, &snort_free);
+        data_add(args.asd, fd, &snort_free);
         fd->state = RTP_STATE_CONNECTION;
     }
 
     switch (fd->state)
     {
     case RTP_STATE_CONNECTION:
-        if (size < sizeof(ClientRTPMsg))
-            return CLIENT_APP_EINVALID;
-        hdr = (ClientRTPMsg*)data;
+        if (args.size < sizeof(ClientRTPMsg))
+            return APPID_EINVALID;
+        hdr = (ClientRTPMsg*)args.data;
         if (hdr->vers > 2 || hdr->payloadtype > 34)
-            return CLIENT_APP_EINVALID;
-        if (dir == APP_ID_FROM_INITIATOR)
+            return APPID_EINVALID;
+        if (args.dir == APP_ID_FROM_INITIATOR)
         {
             fd->init_seq = ntohs(hdr->seq);
             fd->init_timestamp = ntohl(hdr->timestamp);
@@ -317,45 +254,45 @@ static CLIENT_APP_RETCODE rtp_validate(const uint8_t* data, uint16_t size, const
             fd->resp_count++;
         }
         fd->state = RTP_STATE_CONTINUE;
-        return CLIENT_APP_INPROCESS;
+        return APPID_INPROCESS;
 
     case RTP_STATE_CONTINUE:
-        if (size < sizeof(ClientRTPMsg))
-            return CLIENT_APP_EINVALID;
-        hdr = (ClientRTPMsg*)data;
+        if (args.size < sizeof(ClientRTPMsg))
+            return APPID_EINVALID;
+        hdr = (ClientRTPMsg*)args.data;
         if (hdr->vers > 2)
-            return CLIENT_APP_EINVALID;
+            return APPID_EINVALID;
         if (hdr->payloadtype > 34)
-            return CLIENT_APP_EINVALID;
-        if (dir == APP_ID_FROM_INITIATOR)
+            return APPID_EINVALID;
+        if (args.dir == APP_ID_FROM_INITIATOR)
         {
             if ((ntohs(hdr->seq) != ++fd->init_seq) ||
                 (ntohl(hdr->ssrc) != fd->init_ssrc) ||
                 (ntohl(hdr->timestamp) < fd->init_timestamp))
-                return CLIENT_APP_EINVALID;
+                return APPID_EINVALID;
             fd->init_timestamp = ntohl(hdr->timestamp);
             if (++fd->init_count < NUMBER_OF_PACKETS)
-                return CLIENT_APP_INPROCESS;
+                return APPID_INPROCESS;
         }
         else
         {
             if ((ntohs(hdr->seq) != ++fd->resp_seq) ||
                 (ntohl(hdr->ssrc) != fd->resp_ssrc) ||
                 (ntohl(hdr->timestamp) < fd->resp_timestamp))
-                return CLIENT_APP_EINVALID;
+                return APPID_EINVALID;
             fd->resp_timestamp = ntohl(hdr->timestamp);
             if (++fd->resp_count < NUMBER_OF_PACKETS)
-                return CLIENT_APP_INPROCESS;
+                return APPID_INPROCESS;
         }
         break;
 
     default:
-        return CLIENT_APP_INPROCESS;
+        return APPID_INPROCESS;
     }
 
-    rtp_client_mod.api->add_app(asd, APP_ID_RTP, APP_ID_RTP, nullptr);
-    asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+    add_app(args.asd, APP_ID_RTP, APP_ID_RTP, nullptr);
+    args.asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
     appid_stats.rtp_clients++;
-    return CLIENT_APP_SUCCESS;
+    return APPID_SUCCESS;
 }
 

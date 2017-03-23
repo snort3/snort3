@@ -25,14 +25,14 @@
 
 #include "service_bootp.h"
 
-#include "main/snort_debug.h"
+#include "appid_module.h"
+#include "app_info_table.h"
+#include "appid_utils/ip_funcs.h"
 #include "protocols/eth.h"
 #include "protocols/packet.h"
 
-#include "app_info_table.h"
-#include "appid_module.h"
-
 #define DHCP_MAGIC_COOKIE 0x63825363
+#define DHCP_OPTION55_LEN_MAX 255
 
 #pragma pack(1)
 
@@ -72,59 +72,43 @@ struct ServiceDHCPOption
 
 #pragma pack()
 
-static int bootp_init(const InitServiceAPI* const init_api);
-static int bootp_validate(ServiceValidationArgs* args);
+static const uint8_t zeromac[6] = { 0, 0, 0, 0, 0, 0 };
+static THREAD_LOCAL DHCPInfo* dhcp_info_free_list = nullptr;
 
-static const RNAServiceElement svc_element =
+BootpServiceDetector::BootpServiceDetector(ServiceDiscovery* sd)
 {
-    nullptr,
-    &bootp_validate,
-    nullptr,
-    DETECTOR_TYPE_DECODER,
-    1,
-    1,
-    0,
-    "bootp"
-};
+    handler = sd;
+    name = "bootp";
+    proto = IpProtocol::TCP;
+    detectorType = DETECTOR_TYPE_DECODER;
+    current_ref_count =  1;
 
-static const RNAServiceValidationPort pp[] =
-{
-    { &bootp_validate, 67, IpProtocol::UDP, 0 },
-    { &bootp_validate, 67, IpProtocol::UDP, 1 },
-    { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
-};
-
-RNAServiceValidationModule bootp_service_mod =
-{
-    "DHCP",
-    &bootp_init,
-    pp,
-    nullptr,
-    nullptr,
-    0,
-    nullptr,
-    0
-};
-
-static AppRegistryEntry appIdRegistry[] =
-{
-    { APP_ID_DHCP, APPINFO_FLAG_SERVICE_ADDITIONAL | APPINFO_FLAG_SERVICE_UDP_REVERSED }
-};
-
-static int bootp_init(const InitServiceAPI* const init_api)
-{
-    unsigned i;
-    for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
+    appid_registry =
     {
-        DebugFormat(DEBUG_APPID,"registering appId: %d\n",appIdRegistry[i].appId);
-        init_api->RegisterAppId(&bootp_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo);
-    }
+        { APP_ID_DHCP, APPINFO_FLAG_SERVICE_ADDITIONAL | APPINFO_FLAG_SERVICE_UDP_REVERSED }
+    };
 
-    return 0;
+    service_ports =
+    {
+        { 67, IpProtocol::UDP, false },
+        { 67, IpProtocol::UDP, true },
+    };
+
+    handler->register_detector(name, this, proto);
 }
 
-static int bootp_validate(ServiceValidationArgs* args)
+BootpServiceDetector::~BootpServiceDetector()
+{
+    DHCPInfo* info;
+
+    while ((info = dhcp_info_free_list))
+    {
+        dhcp_info_free_list = info->next;
+        snort_free(info);
+    }
+}
+
+int BootpServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     const ServiceBOOTPHeader* bh;
     const ServiceDHCPOption* op;
@@ -133,11 +117,11 @@ static int bootp_validate(ServiceValidationArgs* args)
     unsigned op60_len=0;
     const uint8_t* op55=nullptr;
     const uint8_t* op60=nullptr;
-    AppIdSession* asd = args->asd;
-    const uint8_t* data = args->data;
-    Packet* pkt = args->pkt;
-    const int dir = args->dir;
-    uint16_t size = args->size;
+    AppIdSession* asd = args.asd;
+    const uint8_t* data = args.data;
+    Packet* pkt = args.pkt;
+    const int dir = args.dir;
+    uint16_t size = args.size;
 
     if (!size)
         goto inprocess;
@@ -188,12 +172,8 @@ static int bootp_validate(ServiceValidationArgs* args)
 
                         if (option53 && op55_len && (memcmp(eh->ether_src, bh->chaddr, 6) == 0))
                         {
-                            if (bootp_service_mod.api->data_add_dhcp(asd, op55_len, op55,
-                                op60_len, op60,
-                                bh->chaddr))
-                            {
-                                return SERVICE_ENOMEM;
-                            }
+                            if (add_dhcp_info(asd, op55_len, op55, op60_len, op60, bh->chaddr))
+                                return APPID_ENOMEM;
                         }
                         goto inprocess;
                     }
@@ -265,8 +245,8 @@ static int bootp_validate(ServiceValidationArgs* args)
                         goto fail;
 
                     if (option53 && (memcmp(eh->ether_dst, bh->chaddr, 6) == 0))
-                        bootp_service_mod.api->dhcpNewLease(asd, bh->chaddr, bh->yiaddr,
-                            pkt->pkth->ingress_group, ntohl(subnet), ntohl(leaseTime),
+                        add_new_dhcp_lease(asd, bh->chaddr, bh->yiaddr, pkt->pkth->ingress_group,
+                            ntohl(subnet), ntohl(leaseTime),
                             router);
                     goto success;
                 }
@@ -315,34 +295,135 @@ success:
     if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
     {
         asd->set_session_flags(APPID_SESSION_CONTINUE);
-        bootp_service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element,
-            APP_ID_DHCP, nullptr, nullptr, nullptr);
+        add_service(asd, args.pkt, args.dir, APP_ID_DHCP, nullptr, nullptr, nullptr);
         appid_stats.bootp_flows++;
     }
-    return SERVICE_SUCCESS;
+    return APPID_SUCCESS;
 
 inprocess:
     if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
     {
-        bootp_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &svc_element);
+        service_inprocess(asd, args.pkt, args.dir);
     }
-    return SERVICE_INPROCESS;
+    return APPID_INPROCESS;
 
 fail:
     if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
     {
-        bootp_service_mod.api->fail_service(asd, args->pkt, args->dir, &svc_element,
-            bootp_service_mod.flow_data_index);
+        fail_service(asd, args.pkt, args.dir);
     }
     asd->clear_session_flags(APPID_SESSION_CONTINUE);
-    return SERVICE_NOMATCH;
+    return APPID_NOMATCH;
 
 not_compatible:
     if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
     {
-        bootp_service_mod.api->incompatible_data(asd, args->pkt, args->dir, &svc_element,
-            bootp_service_mod.flow_data_index, args->pConfig);
+        incompatible_data(asd, args.pkt, args.dir);
     }
-    return SERVICE_NOT_COMPATIBLE;
+    return APPID_NOT_COMPATIBLE;
+}
+
+void BootpServiceDetector::AppIdFreeDhcpData(DHCPData* dd)
+{
+    snort_free(dd);
+}
+
+void BootpServiceDetector::AppIdFreeDhcpInfo(DHCPInfo* dd)
+{
+    if (dd)
+    {
+        dd->next = dhcp_info_free_list;
+        dhcp_info_free_list = dd;
+    }
+}
+
+int BootpServiceDetector::add_dhcp_info(AppIdSession* asd, unsigned op55_len, const uint8_t* op55,
+    unsigned
+    op60_len, const uint8_t* op60, const uint8_t* mac)
+{
+    if (op55_len && op55_len <= DHCP_OPTION55_LEN_MAX
+        && !asd->get_session_flags(APPID_SESSION_HAS_DHCP_FP))
+    {
+        DHCPData* rdd = (DHCPData*)snort_calloc(sizeof(*rdd));
+        if (asd->add_flow_data(rdd, APPID_SESSION_DATA_DHCP_FP_DATA,
+            (AppIdFreeFCN)BootpServiceDetector::AppIdFreeDhcpData))
+        {
+            BootpServiceDetector::AppIdFreeDhcpData(rdd);
+            return -1;
+        }
+
+        asd->set_session_flags(APPID_SESSION_HAS_DHCP_FP);
+        rdd->op55_len = (op55_len > DHCP_OP55_MAX_SIZE) ? DHCP_OP55_MAX_SIZE : op55_len;
+        memcpy(rdd->op55, op55, rdd->op55_len);
+        rdd->op60_len =  (op60_len > DHCP_OP60_MAX_SIZE) ? DHCP_OP60_MAX_SIZE : op60_len;
+        if (op60_len)
+            memcpy(rdd->op60, op60, rdd->op60_len);
+        memcpy(rdd->eth_addr, mac, sizeof(rdd->eth_addr));
+    }
+    return 0;
+}
+
+#ifdef USE_RNA_CONFIG
+static unsigned isIPv4HostMonitored(uint32_t ip4, int32_t zone)
+{
+    NetworkSet* net_list;
+    unsigned flags;
+    AppIdConfig* config = AppIdConfig::get_appid_config();
+
+    if (zone >= 0 && zone < MAX_ZONES && config->net_list_by_zone[zone])
+        net_list = config->net_list_by_zone[zone];
+    else
+        net_list = config->net_list;
+
+    NetworkSetManager::contains_ex(net_list, ip4, &flags);
+    return flags;
+}
+
+#else
+static unsigned isIPv4HostMonitored(uint32_t, int32_t)
+{
+    // FIXIT-M Defaulting to checking everything everywhere until RNA config is reimplemented
+    return IPFUNCS_HOSTS_IP | IPFUNCS_USER_IP | IPFUNCS_APPLICATION;
+}
+
+#endif
+
+void BootpServiceDetector::add_new_dhcp_lease(AppIdSession* asd, const uint8_t* mac, uint32_t ip,
+    int32_t zone,
+    uint32_t subnetmask, uint32_t leaseSecs, uint32_t router)
+{
+    DHCPInfo* info;
+
+    if (memcmp(mac, zeromac, 6) == 0 || ip == 0)
+        return;
+
+    if (!asd->get_session_flags(APPID_SESSION_DO_RNA)
+        || asd->get_session_flags(APPID_SESSION_HAS_DHCP_INFO))
+        return;
+
+    unsigned flags = isIPv4HostMonitored(ntohl(ip), zone);
+    if (!(flags & IPFUNCS_HOSTS_IP))
+        return;
+
+    if (dhcp_info_free_list)
+    {
+        info = dhcp_info_free_list;
+        dhcp_info_free_list = info->next;
+    }
+    else
+        info = (DHCPInfo*)snort_calloc(sizeof(DHCPInfo));
+
+    if (asd->add_flow_data(info, APPID_SESSION_DATA_DHCP_INFO,
+        (AppIdFreeFCN)BootpServiceDetector::AppIdFreeDhcpInfo))
+    {
+        BootpServiceDetector::AppIdFreeDhcpInfo(info);
+        return;
+    }
+    asd->set_session_flags(APPID_SESSION_HAS_DHCP_INFO);
+    info->ipAddr = ip;
+    memcpy(info->eth_addr, mac, sizeof(info->eth_addr));
+    info->subnetmask = subnetmask;
+    info->leaseSecs = leaseSecs;
+    info->router = router;
 }
 

@@ -23,6 +23,8 @@
 #include "config.h"
 #endif
 
+#include "app_info_table.h"
+
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -30,8 +32,6 @@
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "utils/util.h"
-
-#include "app_info_table.h"
 
 //-------------------------------------------------------------------------
 // appid option
@@ -53,7 +53,7 @@
 
 struct AppIdInfo
 {
-    char *appid_name;
+    char* appid_name;
     AppId appid_ordinal;
 };
 
@@ -77,7 +77,7 @@ public:
     ~AppIdIpsOption()
     {
         for (auto& appid_info : opt_data.appid_table)
-            snort_free( appid_info.appid_name);
+            snort_free(appid_info.appid_name);
     }
 
     uint32_t hash() const override;
@@ -86,7 +86,7 @@ public:
 
 private:
     void map_names_to_ids();
-    int match_id_against_rule( int16_t id );
+    int match_id_against_rule(int16_t id);
 
     AppIdRuleOptionData opt_data;
 };
@@ -103,7 +103,7 @@ uint32_t AppIdIpsOption::hash() const
 
     for ( auto& appid_info : opt_data.appid_table )
         mix_str(abc[0], abc[1], abc[2],
-                appid_info.appid_name, strlen(appid_info.appid_name) );
+            appid_info.appid_name, strlen(appid_info.appid_name) );
 
     finalize(abc[0], abc[1], abc[2]);
 
@@ -117,11 +117,12 @@ bool AppIdIpsOption::operator==(const IpsOption& ips) const
 
     const AppIdIpsOption& rhs = (AppIdIpsOption&)ips;
 
-    if( opt_data.appid_table.size() != rhs.opt_data.appid_table.size() )
+    if ( opt_data.appid_table.size() != rhs.opt_data.appid_table.size() )
         return false;
 
-    for(unsigned i = 0; i < opt_data.appid_table.size(); i++)
-        if( strcmp(opt_data.appid_table[i].appid_name, rhs.opt_data.appid_table[i].appid_name) != 0)
+    for (unsigned i = 0; i < opt_data.appid_table.size(); i++)
+        if ( strcmp(opt_data.appid_table[i].appid_name, rhs.opt_data.appid_table[i].appid_name) !=
+            0)
             return false;
 
     return true;
@@ -130,15 +131,16 @@ bool AppIdIpsOption::operator==(const IpsOption& ips) const
 void AppIdIpsOption::map_names_to_ids()
 {
     for (auto& appid_info : opt_data.appid_table)
-            appid_info.appid_ordinal = AppInfoManager::get_instance().get_appid_by_name(appid_info.appid_name);
+        appid_info.appid_ordinal = AppInfoManager::get_instance().get_appid_by_name(
+            appid_info.appid_name);
 
     opt_data.ids_mapped = true;
 }
 
-int AppIdIpsOption::match_id_against_rule( int16_t id )
+int AppIdIpsOption::match_id_against_rule(int16_t id)
 {
     for ( auto& appid_info : opt_data.appid_table )
-        if( id == appid_info.appid_ordinal )
+        if ( id == appid_info.appid_ordinal )
             return id;
 
     return 0;
@@ -154,19 +156,19 @@ int AppIdIpsOption::eval(Cursor&, Packet* p)
     assert(p->flow);
     Profile profile(appidRuleOptionPerfStats);
 
-    if( !opt_data.ids_mapped )
+    if ( !opt_data.ids_mapped )
         map_names_to_ids();
 
     // id order on stream api call is: service, client, payload, misc
     if ((p->packet_flags & PKT_FROM_CLIENT))
         p->flow->get_application_ids(app_ids[CP_SERVICE], app_ids[CP_CLIENT],
-                app_ids[PAYLOAD], app_ids[MISC] );
+            app_ids[PAYLOAD], app_ids[MISC]);
     else
         p->flow->get_application_ids(app_ids[SP_SERVICE], app_ids[SP_CLIENT],
-                app_ids[PAYLOAD], app_ids[MISC] );
+            app_ids[PAYLOAD], app_ids[MISC]);
 
-    for( unsigned i = 0; i < NUM_ID_TYPES; i++ )
-        if( match_id_against_rule(app_ids[i]) )
+    for ( unsigned i = 0; i < NUM_ID_TYPES; i++ )
+        if ( match_id_against_rule(app_ids[i]) )
             return DETECTION_OPTION_MATCH;
 
     return DETECTION_OPTION_NO_MATCH;
@@ -182,10 +184,10 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static bool compare_appid_names(const AppIdInfo& l, const AppIdInfo& r )
+static bool compare_appid_names(const AppIdInfo& l, const AppIdInfo& r)
 {
     int rc = strcmp(l.appid_name, r.appid_name);
-    if( rc < 0 )
+    if ( rc < 0 )
         return true;
     else
         return false;
@@ -241,7 +243,7 @@ bool AppIdOptionModule::set(const char*, Value& v, SnortConfig*)
 
 bool AppIdOptionModule::end(const char*, int, SnortConfig*)
 {
-    std::sort( opt_data.appid_table.begin(), opt_data.appid_table.end(), compare_appid_names);
+    std::sort(opt_data.appid_table.begin(), opt_data.appid_table.end(), compare_appid_names);
     return true;
 }
 

@@ -22,10 +22,19 @@
 #ifndef SERVICE_SSL_H
 #define SERVICE_SSL_H
 
-#include "detector_plugins/detector_api.h"
-#include "service_config.h"
+#include "service_detector.h"
 
-extern struct RNAServiceValidationModule ssl_service_mod;
+class ServiceDiscovery;
+
+class SslServiceDetector : public ServiceDetector
+{
+public:
+    SslServiceDetector(ServiceDiscovery*);
+    ~SslServiceDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
+};
+
 AppId getSslServiceAppId(short srcPort);
 bool isSslServiceAppId(AppId);
 void service_ssl_clean();

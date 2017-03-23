@@ -25,104 +25,37 @@
 
 #include "client_app_ym.h"
 
-#include "main/snort_debug.h"
-
-#include "app_info_table.h"
 #include "appid_module.h"
-
-struct YM_CLIENT_APP_CONFIG
-{
-    int enabled;
-};
-
-THREAD_LOCAL YM_CLIENT_APP_CONFIG ym_config;
+#include "app_info_table.h"
+#include "application_ids.h"
 
 #define MAX_VERSION_SIZE    64
-
-static CLIENT_APP_RETCODE ym_init(const InitClientAppAPI* const init_api, SF_LIST* config);
-static CLIENT_APP_RETCODE ym_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet* pkt, Detector* userData);
-
-RNAClientAppModule ym_client_mod =
-{
-    "YM",                   // name
-    IpProtocol::TCP,            // proto
-    &ym_init,               // init
-    nullptr,                // clean
-    &ym_validate,           // validate
-    1,                      // minimum_matches
-    nullptr,                // api
-    nullptr,                // userData
-    0,                      // precedence
-    nullptr,                // finalize,
-    1,                      // provides_user
-    0                       // flow_data_index
-};
-
-struct Client_App_Pattern
-{
-    const uint8_t* pattern;
-    unsigned length;
-    int index;
-    unsigned appId;
-};
-
 static const uint8_t APP_YMSG[] = "YMSG";
 
-static Client_App_Pattern patterns[] =
+YmDetector::YmDetector(ClientDiscovery* cdm)
 {
-    { APP_YMSG, sizeof(APP_YMSG)-1, -1, APP_ID_YAHOO_MSG },
-};
+    handler = cdm;
+    name = "YM";
+    proto = IpProtocol::TCP;
+    minimum_matches = 1;
+    provides_user = true;
 
-static AppRegistryEntry appIdRegistry[] =
+    tcp_patterns =
+    {
+        { APP_YMSG, sizeof(APP_YMSG) - 1, -1, 0, APP_ID_YAHOO_MSG },
+    };
+
+    appid_registry =
+    {
+        { APP_ID_YAHOO, APPINFO_FLAG_CLIENT_ADDITIONAL },
+        { APP_ID_YAHOO_MSG, APPINFO_FLAG_CLIENT_ADDITIONAL }
+    };
+
+    handler->register_detector(name, this, proto);
+}
+
+YmDetector::~YmDetector()
 {
-    { APP_ID_YAHOO, APPINFO_FLAG_CLIENT_ADDITIONAL },
-    { APP_ID_YAHOO_MSG, APPINFO_FLAG_CLIENT_ADDITIONAL }
-};
-
-static CLIENT_APP_RETCODE ym_init(const InitClientAppAPI* const init_api, SF_LIST* config)
-{
-    unsigned i;
-
-    ym_config.enabled = 1;
-
-    if (config)
-    {
-        SF_LNODE* cursor;
-        RNAClientAppModuleConfigItem* item;
-
-        for (item = (RNAClientAppModuleConfigItem*)sflist_first(config, &cursor);
-            item;
-            item = (RNAClientAppModuleConfigItem*)sflist_next(&cursor))
-        {
-            DebugFormat(DEBUG_LOG,"Processing %s: %s\n",item->name, item->value);
-            if (strcasecmp(item->name, "enabled") == 0)
-            {
-                ym_config.enabled = atoi(item->value);
-            }
-        }
-    }
-
-    if (ym_config.enabled)
-    {
-        for (i=0; i < sizeof(patterns)/sizeof(*patterns); i++)
-        {
-            DebugFormat(DEBUG_LOG,"registering patterns: %s: %d\n",
-            		(const char*)patterns[i].pattern, patterns[i].index);
-            init_api->RegisterPattern(&ym_validate, IpProtocol::TCP, patterns[i].pattern,
-                patterns[i].length, patterns[i].index);
-        }
-    }
-
-    unsigned j;
-    for (j=0; j < sizeof(appIdRegistry)/sizeof(*appIdRegistry); j++)
-    {
-        DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[j].appId);
-        init_api->RegisterAppId(&ym_validate, appIdRegistry[j].appId,
-            appIdRegistry[j].additionalInfo);
-    }
-
-    return CLIENT_APP_SUCCESS;
 }
 
 static const uint8_t* skip_separator(const uint8_t* data, const uint8_t* end)
@@ -140,8 +73,7 @@ static const uint8_t* skip_separator(const uint8_t* data, const uint8_t* end)
     return data;
 }
 
-static CLIENT_APP_RETCODE ym_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet* pkt, Detector*)
+int YmDetector::validate(AppIdDiscoveryArgs& args)
 {
 #define HEADERSIZE 20
 #define VERSIONID "135"
@@ -159,40 +91,41 @@ static CLIENT_APP_RETCODE ym_validate(const uint8_t* data, uint16_t size, const 
 
     DebugFormat(DEBUG_LOG,"Found yahoo! client: %zu\n",sizeof(VERSIONID));
 
-    if (!data || !ym_client_mod.api || !asd || !pkt)
-        return CLIENT_APP_ENULL;
+    if ( !args.data )
+        return APPID_ENULL;
 
-    if (dir != APP_ID_FROM_INITIATOR)
-        return CLIENT_APP_INPROCESS;
+    if (args.dir != APP_ID_FROM_INITIATOR)
+        return APPID_INPROCESS;
 
     /* Validate the packet using the length field, otherwise abort. */
-    if ( size < 10 )
-        return CLIENT_APP_ENULL;
+    if ( args.size < 10 )
+        return APPID_ENULL;
 
-    len = *((uint16_t*)(data + 8));
+    len = *((uint16_t*)(args.data + 8));
     len = ntohs(len);
 
-    if ( len != (size - HEADERSIZE) )
-        return CLIENT_APP_ENULL;
+    if ( len != (args.size - HEADERSIZE) )
+        return APPID_ENULL;
 
-    end = data + size;
+    end = args.data + args.size;
 
-    if ( size >= HEADERSIZE )
+    if ( args.size >= HEADERSIZE )
     {
-        data += HEADERSIZE;
+        args.data += HEADERSIZE;
     }
 
-    while ( data < end )
+    while ( args.data < end )
     {
-        if ( end-data >= (int)sizeof(VERSIONID) && memcmp(data, VERSIONID, sizeof(VERSIONID)-1) ==
+        if ( end-args.data >= (int)sizeof(VERSIONID) && memcmp(args.data, VERSIONID,
+            sizeof(VERSIONID)-1) ==
             0 )
         {
-            data += sizeof(VERSIONID)-1;
+            args.data += sizeof(VERSIONID)-1;
 
-            if ( data + 2 >= end )  /* Skip the separator */
+            if ( args.data + 2 >= end )  /* Skip the separator */
                 goto done;
             else
-                data += 2;
+                args.data += 2;
 
             product_id = APP_ID_YAHOO;
 
@@ -201,29 +134,29 @@ static CLIENT_APP_RETCODE ym_validate(const uint8_t* data, uint16_t size, const 
             v_end = v + (MAX_VERSION_SIZE - 1);
 
             /* Get the version */
-            while ( data + 1 < end && v < v_end )
+            while ( args.data + 1 < end && v < v_end )
             {
-                if ( data[0] == 0xc0 && data[1] == 0x80 )
+                if ( args.data[0] == 0xc0 && args.data[1] == 0x80 )
                     break;
 
-                *v = *data;
+                *v = *args.data;
                 v++;
-                data++;
+                args.data++;
             }
 
             goto done;
         }
 
-        data = skip_separator(data,end); /*skip to the command end separator */
-        data = skip_separator(data,end); /* skip to the command data end separator */
+        args.data = skip_separator(args.data,end); /*skip to the command end separator */
+        args.data = skip_separator(args.data,end); /* skip to the command data end separator */
     }
 
-    return CLIENT_APP_INPROCESS;
+    return APPID_INPROCESS;
 
 done:
-    ym_client_mod.api->add_app(asd, APP_ID_YAHOO, product_id, (char*)version);
-    asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+    add_app(args.asd, APP_ID_YAHOO, product_id, (char*)version);
+    args.asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
     appid_stats.yahoo_messenger_clients++;
-    return CLIENT_APP_SUCCESS;
+    return APPID_SUCCESS;
 }
 

@@ -26,14 +26,11 @@
 #include "service_ssl.h"
 
 #include <openssl/x509.h>
-
 #include <mutex>
 
-#include "main/snort_debug.h"
-#include "protocols/packet.h"
-
-#include "app_info_table.h"
 #include "appid_module.h"
+#include "app_info_table.h"
+#include "protocols/packet.h"
 
 #define SSL_PORT    443
 
@@ -60,6 +57,20 @@ enum SSLContentType
 
 /* Extension types. */
 #define SSL_EXT_SERVER_NAME 0
+
+struct SSLCertPattern
+{
+    uint8_t type;
+    AppId appId;
+    uint8_t* pattern;
+    int pattern_size;
+};
+
+struct DetectorSSLCertPattern
+{
+    SSLCertPattern* dpattern;
+    DetectorSSLCertPattern* next;
+};
 
 struct MatchedSSLPatterns
 {
@@ -259,95 +270,69 @@ int ssl_detector_process_patterns()
     return retVal;
 }
 
-static int ssl_init(const InitServiceAPI* const api);
-static int ssl_validate(ServiceValidationArgs* args);
-
-static const RNAServiceElement svc_element =
-{
-    nullptr,
-    &ssl_validate,
-    nullptr,
-    DETECTOR_TYPE_DECODER,
-    1,
-    1,
-    0,
-    "ssl",
-};
-
-static const RNAServiceValidationPort pp[] =
-{
-    { &ssl_validate, 261, IpProtocol::TCP, 0 },
-    { &ssl_validate, 261, IpProtocol::UDP, 0 },
-    { &ssl_validate, 443, IpProtocol::TCP, 0 },
-    { &ssl_validate, 443, IpProtocol::UDP, 0 },
-    { &ssl_validate, 448, IpProtocol::TCP, 0 },
-    { &ssl_validate, 448, IpProtocol::UDP, 0 },
-    { &ssl_validate, 465, IpProtocol::TCP, 0 },
-    { &ssl_validate, 563, IpProtocol::TCP, 0 },
-    { &ssl_validate, 563, IpProtocol::UDP, 0 },
-    { &ssl_validate, 585, IpProtocol::TCP, 0 },
-    { &ssl_validate, 585, IpProtocol::UDP, 0 },
-    { &ssl_validate, 614, IpProtocol::TCP, 0 },
-    { &ssl_validate, 636, IpProtocol::TCP, 0 },
-    { &ssl_validate, 636, IpProtocol::UDP, 0 },
-    { &ssl_validate, 989, IpProtocol::TCP, 0 },
-    { &ssl_validate, 990, IpProtocol::TCP, 0 },
-    { &ssl_validate, 992, IpProtocol::TCP, 0 },
-    { &ssl_validate, 992, IpProtocol::UDP, 0 },
-    { &ssl_validate, 993, IpProtocol::TCP, 0 },
-    { &ssl_validate, 993, IpProtocol::UDP, 0 },
-    { &ssl_validate, 994, IpProtocol::TCP, 0 },
-    { &ssl_validate, 994, IpProtocol::UDP, 0 },
-    { &ssl_validate, 995, IpProtocol::TCP, 0 },
-    { &ssl_validate, 995, IpProtocol::UDP, 0 },
-    { &ssl_validate, 3269, IpProtocol::TCP, 0 },
-    { &ssl_validate, 8305, IpProtocol::TCP, 0 },
-    { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
-};
-
-RNAServiceValidationModule ssl_service_mod =
-{
-    "ssl",
-    &ssl_init,
-    pp,
-    nullptr,
-    nullptr,
-    0,
-    nullptr,
-    0
-};
-
 static const uint8_t SSL_PATTERN_PCT[] = { 0x02, 0x00, 0x80, 0x01 };
 static const uint8_t SSL_PATTERN3_0[] = { 0x16, 0x03, 0x00 };
 static const uint8_t SSL_PATTERN3_1[] = { 0x16, 0x03, 0x01 };
 static const uint8_t SSL_PATTERN3_2[] = { 0x16, 0x03, 0x02 };
 static const uint8_t SSL_PATTERN3_3[] = { 0x16, 0x03, 0x03 };
 
-static const AppRegistryEntry appIdRegistry[] =
+SslServiceDetector::SslServiceDetector(ServiceDiscovery* sd)
 {
-    { APP_ID_SSL, APPINFO_FLAG_SERVICE_ADDITIONAL }
-};
+    handler = sd;
+    name = "ssl";
+    proto = IpProtocol::TCP;
+    detectorType = DETECTOR_TYPE_DECODER;
+    current_ref_count = 1;
 
-static int ssl_init(const InitServiceAPI* const init_api)
-{
-    init_api->RegisterPattern(&ssl_validate, IpProtocol::TCP, SSL_PATTERN_PCT,
-        sizeof(SSL_PATTERN_PCT), 2, "ssl");
-    init_api->RegisterPattern(&ssl_validate, IpProtocol::TCP, SSL_PATTERN3_0,
-        sizeof(SSL_PATTERN3_0), -1, "ssl");
-    init_api->RegisterPattern(&ssl_validate, IpProtocol::TCP, SSL_PATTERN3_1,
-        sizeof(SSL_PATTERN3_1), -1, "ssl");
-    init_api->RegisterPattern(&ssl_validate, IpProtocol::TCP, SSL_PATTERN3_2,
-        sizeof(SSL_PATTERN3_2), -1, "ssl");
-    init_api->RegisterPattern(&ssl_validate, IpProtocol::TCP, SSL_PATTERN3_3,
-        sizeof(SSL_PATTERN3_3), -1, "ssl");
-    for (unsigned i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
+    tcp_patterns =
     {
-        DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[i].appId);
-        init_api->RegisterAppId(&ssl_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo);
-    }
+        { SSL_PATTERN_PCT, sizeof(SSL_PATTERN_PCT), 2, 0, 0 },
+        { SSL_PATTERN3_0, sizeof(SSL_PATTERN3_0), -1, 0, 0 },
+        { SSL_PATTERN3_1, sizeof(SSL_PATTERN3_1), -1, 0, 0 },
+        { SSL_PATTERN3_2, sizeof(SSL_PATTERN3_2), -1, 0, 0 },
+        { SSL_PATTERN3_3, sizeof(SSL_PATTERN3_3), -1, 0, 0 }
+    };
 
-    return 0;
+    appid_registry =
+    {
+        { APP_ID_SSL, APPINFO_FLAG_SERVICE_ADDITIONAL }
+    };
+
+    service_ports =
+    {
+        { 261, IpProtocol::TCP, false },
+        { 261, IpProtocol::UDP, false },
+        { 443, IpProtocol::TCP, false },
+        { 443, IpProtocol::UDP, false },
+        { 448, IpProtocol::TCP, false },
+        { 448, IpProtocol::UDP, false },
+        { 465, IpProtocol::TCP, false },
+        { 563, IpProtocol::TCP, false },
+        { 563, IpProtocol::UDP, false },
+        { 585, IpProtocol::TCP, false },
+        { 585, IpProtocol::UDP, false },
+        { 614, IpProtocol::TCP, false },
+        { 636, IpProtocol::TCP, false },
+        { 636, IpProtocol::UDP, false },
+        { 989, IpProtocol::TCP, false },
+        { 990, IpProtocol::TCP, false },
+        { 992, IpProtocol::TCP, false },
+        { 992, IpProtocol::UDP, false },
+        { 993, IpProtocol::TCP, false },
+        { 993, IpProtocol::UDP, false },
+        { 994, IpProtocol::TCP, false },
+        { 994, IpProtocol::UDP, false },
+        { 995, IpProtocol::TCP, false },
+        { 995, IpProtocol::UDP, false },
+        { 3269, IpProtocol::TCP, false },
+        { 8305, IpProtocol::TCP, false }
+    };
+
+    handler->register_detector(name, this, proto);
+}
+
+SslServiceDetector::~SslServiceDetector()
+{
 }
 
 static void ssl_free(void* ss)    /* AppIdFreeFCN */
@@ -549,7 +534,8 @@ static bool parse_certificates(ServiceSSLData* ss)
             char* common_name = nullptr;
             if (common_name_tot_len)
             {
-                common_name_tot_len += num_certs;    /* Space between each and terminator at end. */
+                common_name_tot_len += num_certs;    /* Space between each and terminator at end.
+                                                        */
                 common_name = (char*)snort_calloc(common_name_tot_len);
             }
 
@@ -568,7 +554,8 @@ static bool parse_certificates(ServiceSSLData* ss)
                 /* Grab this common name. */
                 if (common_name_ptr && certs_curr->common_name_ptr && certs_curr->common_name_len)
                 {
-                    memcpy(common_name_ptr, certs_curr->common_name_ptr, certs_curr->common_name_len);
+                    memcpy(common_name_ptr, certs_curr->common_name_ptr,
+                        certs_curr->common_name_len);
                     common_name_ptr += certs_curr->common_name_len;
                     *common_name_ptr = ' ';
                     common_name_ptr += 1;
@@ -621,7 +608,7 @@ static bool parse_certificates(ServiceSSLData* ss)
     return success;
 }
 
-static int ssl_validate(ServiceValidationArgs* args)
+int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     ServiceSSLData* ss;
     const ServiceSSLPCTHdr* pct;
@@ -630,19 +617,19 @@ static int ssl_validate(ServiceValidationArgs* args)
     const ServiceSSLV3Record* rec;
     const ServiceSSLV3CertsRecord* certs_rec;
     uint16_t ver;
-    AppIdSession* asd = args->asd;
-    const uint8_t* data = args->data;
-    const int dir = args->dir;
-    uint16_t size = args->size;
+    AppIdSession* asd = args.asd;
+    const uint8_t* data = args.data;
+    const int dir = args.dir;
+    uint16_t size = args.size;
 
     if (!size)
         goto inprocess;
 
-    ss = (ServiceSSLData*)ssl_service_mod.api->data_get(asd, ssl_service_mod.flow_data_index);
+    ss = (ServiceSSLData*)data_get(asd);
     if (!ss)
     {
         ss = (ServiceSSLData*)snort_calloc(sizeof(ServiceSSLData));
-        ssl_service_mod.api->data_add(asd, ss, ssl_service_mod.flow_data_index, &ssl_free);
+        data_add(asd, ss, &ssl_free);
         ss->state = SSL_STATE_INITIATE;
     }
     /* Start off with a Client Hello from client to server. */
@@ -691,7 +678,7 @@ static int ssl_validate(ServiceValidationArgs* args)
                 goto not_v2;
 
             goto success;
-not_v2:;
+not_v2:     ;
         }
         if (size < sizeof(ServiceSSLV3Hdr) ||
             hdr3->type != SSL_HANDSHAKE ||
@@ -866,8 +853,8 @@ not_v2:;
     }
 
 inprocess:
-    ssl_service_mod.api->service_inprocess(asd, args->pkt, dir, &svc_element);
-    return SERVICE_INPROCESS;
+    service_inprocess(asd, args.pkt, dir);
+    return APPID_INPROCESS;
 
 fail:
     snort_free(ss->certs_data);
@@ -876,9 +863,8 @@ fail:
     snort_free(ss->org_name);
     ss->certs_data = nullptr;
     ss->host_name = ss->common_name = ss->org_name = nullptr;
-    ssl_service_mod.api->fail_service(asd, args->pkt, dir, &svc_element,
-        ssl_service_mod.flow_data_index);
-    return SERVICE_NOMATCH;
+    fail_service(asd, args.pkt, dir);
+    return APPID_NOMATCH;
 
 success:
     if (ss->certs_data && ss->certs_len)
@@ -893,7 +879,7 @@ success:
     if (ss->host_name || ss->common_name || ss->org_name)
     {
         if (!asd->tsession)
-            asd->tsession = (tlsSession*)snort_calloc(sizeof(tlsSession));
+            asd->tsession = (TlsSession*)snort_calloc(sizeof(TlsSession));
 
         /* TLS Host */
         if (ss->host_name)
@@ -936,10 +922,10 @@ success:
 
         ss->host_name = ss->common_name = ss->org_name = nullptr;
     }
-    ssl_service_mod.api->add_service(asd, args->pkt, dir, &svc_element,
-        getSslServiceAppId(args->pkt->ptrs.sp), nullptr, nullptr, nullptr);
+    add_service(asd, args.pkt, dir, getSslServiceAppId(args.pkt->ptrs.sp),
+        nullptr, nullptr, nullptr);
     appid_stats.ssl_flows++;
-    return SERVICE_SUCCESS;
+    return APPID_SUCCESS;
 }
 
 AppId getSslServiceAppId(short srcPort)
@@ -1026,8 +1012,8 @@ static int ssl_scan_patterns(SearchTool* matcher, const uint8_t* data, size_t si
     best_match = nullptr;
     while (mp)
     {
-        //  Only patterns that match start of payload, 
-        //  or patterns starting with '.' 
+        //  Only patterns that match start of payload,
+        //  or patterns starting with '.'
         //  or patterns following '.' in payload are considered a match.
         if (mp->match_start_pos == 0 ||
             *mp->mpattern->pattern == '.' ||
@@ -1066,12 +1052,14 @@ static int ssl_scan_patterns(SearchTool* matcher, const uint8_t* data, size_t si
 
 int ssl_scan_hostname(const uint8_t* hostname, size_t size, AppId* ClientAppId, AppId* payloadId)
 {
-    return ssl_scan_patterns(service_ssl_config.ssl_host_matcher, hostname, size, ClientAppId, payloadId);
+    return ssl_scan_patterns(service_ssl_config.ssl_host_matcher, hostname, size, ClientAppId,
+        payloadId);
 }
 
 int ssl_scan_cname(const uint8_t* common_name, size_t size, AppId* ClientAppId, AppId* payloadId)
 {
-    return ssl_scan_patterns(service_ssl_config.ssl_cname_matcher, common_name, size, ClientAppId, payloadId);
+    return ssl_scan_patterns(service_ssl_config.ssl_cname_matcher, common_name, size, ClientAppId,
+        payloadId);
 }
 
 void service_ssl_clean()
@@ -1110,13 +1098,15 @@ static int ssl_add_pattern(DetectorSSLCertPattern** list, uint8_t* pattern_str, 
 
 int ssl_add_cert_pattern(uint8_t* pattern_str, size_t pattern_size, uint8_t type, AppId app_id)
 {
-    return ssl_add_pattern(&service_ssl_config.DetectorSSLCertPatternList, pattern_str, pattern_size,
+    return ssl_add_pattern(&service_ssl_config.DetectorSSLCertPatternList, pattern_str,
+        pattern_size,
         type, app_id);
 }
 
 int ssl_add_cname_pattern(uint8_t* pattern_str, size_t pattern_size, uint8_t type, AppId app_id)
 {
-    return ssl_add_pattern(&service_ssl_config.DetectorSSLCnamePatternList, pattern_str, pattern_size,
+    return ssl_add_pattern(&service_ssl_config.DetectorSSLCnamePatternList, pattern_str,
+        pattern_size,
         type, app_id);
 }
 
@@ -1154,7 +1144,7 @@ bool setSSLSquelch(Packet* p, int type, AppId appId)
     const SfIp* sip = p->ptrs.ip_api.get_src();
 
     if (!(f = AppIdSession::create_future_session(p, sip, 0, dip, p->ptrs.dp, IpProtocol::TCP,
-    		appId, 0)))
+            appId, 0)))
         return false;
 
     switch (type)

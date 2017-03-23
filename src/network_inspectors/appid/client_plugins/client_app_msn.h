@@ -22,9 +22,15 @@
 #ifndef CLIENT_APP_MSN_H
 #define CLIENT_APP_MSN_H
 
-#include "client_app_api.h"
+#include "client_plugins/client_detector.h"
 
-extern RNAClientAppModule msn_client_mod;
+class MsnClientDetector : public ClientDetector
+{
+public:
+    MsnClientDetector(ClientDiscovery*);
+    ~MsnClientDetector();
 
+    int validate(AppIdDiscoveryArgs&) override;
+};
 #endif
 

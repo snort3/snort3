@@ -23,12 +23,11 @@
 #include "config.h"
 #endif
 
-#include "main/snort_debug.h"
+#include "client_app_ssh.h"
 
-#include "app_info_table.h"
 #include "appid_module.h"
-
-#include "client_app_api.h"
+#include "app_info_table.h"
+#include "application_ids.h"
 
 static const char SSH_CLIENT_BANNER[] = "SSH-";
 #define SSH_CLIENT_BANNER_LEN (sizeof(SSH_CLIENT_BANNER)-1)
@@ -147,105 +146,42 @@ struct ClientSSHKeyExchangeFinal
 
 #pragma pack()
 
-struct SSH_CLIENT_CONFIG
+SshClientDetector::SshClientDetector(ClientDiscovery* cdm)
 {
-    int enabled;
-};
+    handler = cdm;
+    name = "SSH";
+    proto = IpProtocol::TCP;
+    minimum_matches = 1;
+    provides_user = true;
 
-THREAD_LOCAL SSH_CLIENT_CONFIG ssh_client_config;
-
-static CLIENT_APP_RETCODE ssh_client_init(const InitClientAppAPI* const init_api, SF_LIST* config);
-static CLIENT_APP_RETCODE ssh_client_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd,  Packet* pkt, Detector* userData);
-
-SO_PUBLIC RNAClientAppModule ssh_client_mod =
-{
-    "SSH",                  // name
-    IpProtocol::TCP,            // proto
-    &ssh_client_init,       // init
-    nullptr,                // clean
-    &ssh_client_validate,   // validate
-    1,                      // minimum_matches
-    nullptr,                // api
-    nullptr,                // userData
-    0,                      // precedence
-    nullptr,                // finalize,
-    1,                      // provides_user
-    0                       // flow_data_index
-};
-
-struct Client_App_Pattern
-{
-    const uint8_t* pattern;
-    unsigned length;
-    int index;
-    unsigned appId;
-};
-
-static Client_App_Pattern patterns[] =
-{
-    { (const uint8_t*)SSH_CLIENT_BANNER, sizeof(SSH_CLIENT_BANNER) - 1, 0, APP_ID_SSH },
-    { (const uint8_t*)OPENSSH_BANNER,    sizeof(OPENSSH_BANNER) - 1,    -1, APP_ID_OPENSSH },
-    { (const uint8_t*)PUTTY_BANNER,      sizeof(PUTTY_BANNER) - 1,      -1, APP_ID_PUTTY },
-    { (const uint8_t*)LSH_BANNER,        sizeof(LSH_BANNER) - 1,        0, APP_ID_LSH },
-    { (const uint8_t*)DROPBEAR_BANNER,   sizeof(DROPBEAR_BANNER) - 1,   -1, APP_ID_DROPBEAR },
-};
-
-static AppRegistryEntry appIdRegistry[] =
-{
-    { APP_ID_DROPBEAR, APPINFO_FLAG_CLIENT_ADDITIONAL },
-    { APP_ID_SSH, APPINFO_FLAG_CLIENT_ADDITIONAL },
-    { APP_ID_LSH, APPINFO_FLAG_CLIENT_ADDITIONAL },
-    { APP_ID_PUTTY, APPINFO_FLAG_CLIENT_ADDITIONAL },
-    { APP_ID_OPENSSH, APPINFO_FLAG_CLIENT_ADDITIONAL }
-};
-
-static CLIENT_APP_RETCODE ssh_client_init(const InitClientAppAPI* const init_api, SF_LIST* config)
-{
-    unsigned i;
-
-    ssh_client_config.enabled = 1;
-
-    if (config)
+    tcp_patterns =
     {
-        SF_LNODE* cursor;
-        RNAClientAppModuleConfigItem* item;
+        { (const uint8_t*)SSH_CLIENT_BANNER, sizeof(SSH_CLIENT_BANNER) - 1,  0, 0, APP_ID_SSH },
+        { (const uint8_t*)OPENSSH_BANNER,    sizeof(OPENSSH_BANNER) - 1,    -1, 0,
+          APP_ID_OPENSSH },
+        { (const uint8_t*)PUTTY_BANNER,      sizeof(PUTTY_BANNER) - 1,      -1, 0, APP_ID_PUTTY },
+        { (const uint8_t*)LSH_BANNER,        sizeof(LSH_BANNER) - 1,         0, 0, APP_ID_LSH },
+        { (const uint8_t*)DROPBEAR_BANNER,   sizeof(DROPBEAR_BANNER) - 1,   -1, 0,
+          APP_ID_DROPBEAR },
+    };
 
-        for (item = (RNAClientAppModuleConfigItem*)sflist_first(config, &cursor);
-            item;
-            item = (RNAClientAppModuleConfigItem*)sflist_next(&cursor))
-        {
-            DebugFormat(DEBUG_LOG,"Processing %s: %s\n", item->name, item->value);
-            if (strcasecmp(item->name, "enabled") == 0)
-            {
-                ssh_client_config.enabled = atoi(item->value);
-            }
-        }
-    }
-
-    if (ssh_client_config.enabled)
+    appid_registry =
     {
-        for (i=0; i < sizeof(patterns)/sizeof(*patterns); i++)
-        {
-            DebugFormat(DEBUG_LOG, "registering patterns: %s: %d",
-                (const char*)patterns[i].pattern, patterns[i].index);
-            init_api->RegisterPattern(&ssh_client_validate, IpProtocol::TCP, patterns[i].pattern,
-                patterns[i].length, patterns[i].index);
-        }
-    }
+        { APP_ID_DROPBEAR, APPINFO_FLAG_CLIENT_ADDITIONAL },
+        { APP_ID_SSH, APPINFO_FLAG_CLIENT_ADDITIONAL },
+        { APP_ID_LSH, APPINFO_FLAG_CLIENT_ADDITIONAL },
+        { APP_ID_PUTTY, APPINFO_FLAG_CLIENT_ADDITIONAL },
+        { APP_ID_OPENSSH, APPINFO_FLAG_CLIENT_ADDITIONAL }
+    };
 
-    unsigned j;
-    for (j=0; j < sizeof(appIdRegistry)/sizeof(*appIdRegistry); j++)
-    {
-        DebugFormat(DEBUG_LOG,"registering appId: %d\n", appIdRegistry[j].appId);
-        init_api->RegisterAppId(&ssh_client_validate, appIdRegistry[j].appId,
-            appIdRegistry[j].additionalInfo);
-    }
-
-    return CLIENT_APP_SUCCESS;
+    handler->register_detector(name, this, proto);
 }
 
-static inline CLIENT_APP_RETCODE ssh_client_validate_keyx(uint16_t offset, const uint8_t* data,
+SshClientDetector::~SshClientDetector()
+{
+}
+
+static inline int ssh_client_validate_keyx(uint16_t offset, const uint8_t* data,
     uint16_t size, ClientSSHData* fd)
 {
     const ClientSSHMsg* ckx;
@@ -284,10 +220,10 @@ static inline CLIENT_APP_RETCODE ssh_client_validate_keyx(uint16_t offset, const
                 fd->hstate = SSH2_IGNORE;
             }
             else
-                return CLIENT_APP_EINVALID;
+                return APPID_EINVALID;
             fd->len = ntohl(fd->l.len) + sizeof(ckx->len);
             if (fd->len > 35000)
-                return CLIENT_APP_EINVALID;
+                return APPID_EINVALID;
             break;
         case SSH2_IGNORE:
             fd->pos++;
@@ -314,7 +250,7 @@ static inline CLIENT_APP_RETCODE ssh_client_validate_keyx(uint16_t offset, const
                 fd->field_len = ntohl(fd->l.len);
                 fd->read_data += fd->field_len + sizeof(cks->len);
                 if (fd->read_data > fd->len)
-                    return CLIENT_APP_EINVALID;
+                    return APPID_EINVALID;
                 if (fd->field_len)
                     fd->hstate = SSH2_FIELD_DATA_BEGIN;
                 else
@@ -347,7 +283,7 @@ static inline CLIENT_APP_RETCODE ssh_client_validate_keyx(uint16_t offset, const
             if (fd->pos >= sizeof(ClientSSHKeyExchangeFinal))
             {
                 if (fd->l.len != 0)
-                    return CLIENT_APP_EINVALID;
+                    return APPID_EINVALID;
                 fd->hstate = SSH2_PADDING;
                 fd->pos = 0;
             }
@@ -357,13 +293,15 @@ static inline CLIENT_APP_RETCODE ssh_client_validate_keyx(uint16_t offset, const
             if (fd->pos >= fd->plen)
             {
                 offset++;
-                // FIXIT-L if offset > size then there is probably a D-H Key Exchange Init packet in this payload
-                // For now parsing the Key Exchange Init is good enough to declare valid key exchange but for
+                // FIXIT-L if offset > size then there is probably a D-H Key Exchange Init packet
+                // in this payload
+                // For now parsing the Key Exchange Init is good enough to declare valid key
+                // exchange but for
                 // future enhance parsing to validate the D-H Key Exchange Init.
                 if (offset == size)
-                    return CLIENT_APP_SUCCESS;
+                    return APPID_SUCCESS;
                 else
-                    return CLIENT_APP_SUCCESS;
+                    return APPID_SUCCESS;
             }
             break;
 
@@ -372,10 +310,10 @@ static inline CLIENT_APP_RETCODE ssh_client_validate_keyx(uint16_t offset, const
         }
         offset++;
     }
-    return CLIENT_APP_INPROCESS;
+    return APPID_INPROCESS;
 }
 
-static inline CLIENT_APP_RETCODE ssh_client_validate_pubkey(uint16_t offset, const uint8_t* data,
+static inline int ssh_client_validate_pubkey(uint16_t offset, const uint8_t* data,
     uint16_t size, ClientSSHData* fd)
 {
     const ClientSSHMsg* ckx;
@@ -415,10 +353,10 @@ static inline CLIENT_APP_RETCODE ssh_client_validate_pubkey(uint16_t offset, con
                 fd->pos++;
             }
             else
-                return CLIENT_APP_EINVALID;
+                return APPID_EINVALID;
             fd->len = fd->len + fd->plen + sizeof(ckx->len);
             if (fd->len > 35000)
-                return CLIENT_APP_EINVALID;
+                return APPID_EINVALID;
             break;
         case SSH1_SESSION_KEY:
             fd->pos++;
@@ -426,17 +364,17 @@ static inline CLIENT_APP_RETCODE ssh_client_validate_pubkey(uint16_t offset, con
             {
                 offset++;
                 if (offset == size)
-                    return CLIENT_APP_SUCCESS;
-                return CLIENT_APP_EINVALID;
+                    return APPID_SUCCESS;
+                return APPID_EINVALID;
             }
             break;
         }
         offset++;
     }
-    return CLIENT_APP_INPROCESS;
+    return APPID_INPROCESS;
 }
 
-static inline CLIENT_APP_RETCODE ssh_client_sm(const uint8_t* data, uint16_t size,
+static inline int ssh_client_sm(const uint8_t* data, uint16_t size,
     ClientSSHData* fd)
 {
     uint16_t offset = 0;
@@ -449,7 +387,7 @@ static inline CLIENT_APP_RETCODE ssh_client_sm(const uint8_t* data, uint16_t siz
         {
         case SSH_CLIENT_STATE_BANNER:
             if (d != SSH_CLIENT_BANNER[fd->pos])
-                return CLIENT_APP_EINVALID;
+                return APPID_EINVALID;
             if (fd->pos >= SSH_CLIENT_BANNER_MAXPOS)
                 fd->state = SSH_CLIENT_STATE_ID_PROTO_VERSION;
             else
@@ -462,7 +400,7 @@ static inline CLIENT_APP_RETCODE ssh_client_sm(const uint8_t* data, uint16_t siz
             else if (d == '2')
                 fd->ssh_version = SSH2;
             else
-                return CLIENT_APP_EINVALID;
+                return APPID_EINVALID;
             fd->state = SSH_CLIENT_STATE_LOOKING_FOR_DASH;
             break;
 
@@ -600,45 +538,44 @@ static inline CLIENT_APP_RETCODE ssh_client_sm(const uint8_t* data, uint16_t siz
                 return ssh_client_validate_pubkey(offset, data, size, fd);
                 break;
             default:
-                return CLIENT_APP_EINVALID;
+                return APPID_EINVALID;
                 break;
             }
             break;
 
         default:
-            return CLIENT_APP_EINVALID;
+            return APPID_EINVALID;
         }
         offset++;
     }
-    return CLIENT_APP_INPROCESS;
+    return APPID_INPROCESS;
 }
 
-static CLIENT_APP_RETCODE ssh_client_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet*, Detector*)
+int SshClientDetector::validate(AppIdDiscoveryArgs& args)
 {
     ClientSSHData* fd;
-    CLIENT_APP_RETCODE sm_ret;
+    int sm_ret;
 
-    if (!size || dir != APP_ID_FROM_INITIATOR)
-        return CLIENT_APP_INPROCESS;
+    if (!args.size || args.dir != APP_ID_FROM_INITIATOR)
+        return APPID_INPROCESS;
 
-    fd = ( ClientSSHData*)ssh_client_mod.api->data_get(asd, ssh_client_mod.flow_data_index);
+    fd = ( ClientSSHData*)data_get(args.asd);
     if (!fd)
     {
         fd = (ClientSSHData*)snort_calloc(sizeof(ClientSSHData));
-        ssh_client_mod.api->data_add(asd, fd, ssh_client_mod.flow_data_index, &snort_free);
+        data_add(args.asd, fd, &snort_free);
         fd->state = SSH_CLIENT_STATE_BANNER;
         fd->hstate = SSH2_HEADER_BEGIN;
         fd->oldhstate = SSH1_HEADER_BEGIN;
     }
 
-    sm_ret = ssh_client_sm(data, size, fd);
-    if (sm_ret != CLIENT_APP_SUCCESS)
+    sm_ret = ssh_client_sm(args.data, args.size, fd);
+    if (sm_ret != APPID_SUCCESS)
         return sm_ret;
 
-    ssh_client_mod.api->add_app(asd, APP_ID_SSH, fd->client_id, (const char*)fd->version);
-    asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+    add_app(args.asd, APP_ID_SSH, fd->client_id, (const char*)fd->version);
+    args.asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
     appid_stats.ssh_clients++;
-    return CLIENT_APP_SUCCESS;
+    return APPID_SUCCESS;
 }
 

@@ -25,10 +25,9 @@
 #include "detector_smtp.h"
 
 #include "protocols/packet.h"
-
-#include "app_info_table.h"
 #include "appid_module.h"
-#include "client_plugins/client_app_api.h"
+#include "application_ids.h"
+#include "app_info_table.h"
 #include "service_plugins/service_util.h"
 
 enum SMTPClientState
@@ -83,38 +82,36 @@ struct ClientSMTPData
 
 struct SMTP_CLIENT_APP_CONFIG
 {
-    int enabled;
+    bool enabled;
 };
-
 
 THREAD_LOCAL SMTP_CLIENT_APP_CONFIG smtp_config;
 
-static CLIENT_APP_RETCODE smtp_ca_init(const InitClientAppAPI* const init_api, SF_LIST *config);
-static CLIENT_APP_RETCODE smtp_ca_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet* pkt, Detector* userData);
-
-static RNAClientAppModule  smtp_client_mod =
+enum SMTPServiceState
 {
-    "SMTP",                 // name
-    IpProtocol::TCP,            // proto
-    &smtp_ca_init,             // init
-    nullptr,                // clean
-    &smtp_ca_validate,         // validate
-    1,                      // minimum_matches
-    nullptr,                // api
-    nullptr,                // userData
-    0,                      // precedence
-    nullptr,                // finalize,
-    1,                      // provides_user
-    0                       // flow_data_index
+    SMTP_SERVICE_STATE_CONNECTION,
+    SMTP_SERVICE_STATE_HELO,
+    SMTP_SERVICE_STATE_TRANSFER,
+    SMTP_SERVICE_STATE_CONNECTION_ERROR,
+    SMTP_SERVICE_STATE_STARTTLS,
+    SMTP_SERVICE_STATE_SSL_HANDSHAKE
 };
 
-struct Client_App_Pattern
+struct ServiceSMTPData
 {
-    const uint8_t* pattern;
-    unsigned length;
-    int index;
-    unsigned appId;
+    SMTPServiceState state;
+    int code;
+    int multiline;
+    int set_flags;
+    bool detected;
+};
+
+struct SMTPDetectorData
+{
+    ClientSMTPData client;
+    ServiceSMTPData server;
+    int need_continue;
+    int watch_for_deprecated_port;
 };
 
 #define HELO "HELO "
@@ -152,200 +149,60 @@ static const uint8_t APP_SMTP_THUNDERBIRD[] =  "Thunderbird ";
 static const uint8_t APP_SMTP_MOZILLA[] = "Mozilla";
 static const uint8_t APP_SMTP_THUNDERBIRD_SHORT[] = "Thunderbird/";
 
-static Client_App_Pattern patterns[] =
+static THREAD_LOCAL SmtpClientDetector* smtp_client_detector = nullptr;
+static THREAD_LOCAL SmtpServiceDetector* smtp_service_detector = nullptr;
+
+SmtpClientDetector::SmtpClientDetector(ClientDiscovery* cdm)
 {
-    {(uint8_t*)HELO, sizeof(HELO)-1, -1, APP_ID_SMTP},
-    {(uint8_t*)EHLO, sizeof(EHLO)-1, -1, APP_ID_SMTP},
-	{APP_SMTP_OUTLOOK,         sizeof(APP_SMTP_OUTLOOK)-1,        -1, APP_ID_OUTLOOK},
-	{APP_SMTP_OUTLOOK_EXPRESS, sizeof(APP_SMTP_OUTLOOK_EXPRESS)-1,-1, APP_ID_OUTLOOK_EXPRESS},
-	{APP_SMTP_IMO,             sizeof(APP_SMTP_IMO)-1,            -1, APP_ID_SMTP_IMO},
-	{APP_SMTP_EVOLUTION,       sizeof(APP_SMTP_EVOLUTION)-1,      -1, APP_ID_EVOLUTION},
-	{APP_SMTP_LOTUS_NOTES,      sizeof(APP_SMTP_LOTUS_NOTES)-1,     -1, APP_ID_LOTUS_NOTES},
-	{APP_SMTP_APPLEMAIL,       sizeof(APP_SMTP_APPLEMAIL)-1,      -1, APP_ID_APPLE_EMAIL},
-	{APP_SMTP_EUDORA,          sizeof(APP_SMTP_EUDORA)-1,         -1, APP_ID_EUDORA},
-	{APP_SMTP_EUDORAPRO,       sizeof(APP_SMTP_EUDORAPRO)-1,      -1, APP_ID_EUDORA_PRO},
-	{APP_SMTP_AOL,             sizeof(APP_SMTP_AOL)-1,            -1, APP_ID_AOL_EMAIL},
-	{APP_SMTP_MUTT,            sizeof(APP_SMTP_MUTT)-1,           -1, APP_ID_MUTT},
-	{APP_SMTP_KMAIL,           sizeof(APP_SMTP_KMAIL)-1,          -1, APP_ID_KMAIL},
-	{APP_SMTP_MTHUNDERBIRD,    sizeof(APP_SMTP_MTHUNDERBIRD)-1,   -1, APP_ID_THUNDERBIRD},
-	{APP_SMTP_THUNDERBIRD,     sizeof(APP_SMTP_THUNDERBIRD)-1,    -1, APP_ID_THUNDERBIRD},
-};
+    handler = cdm;
+    name = "SMTP";
+    proto = IpProtocol::TCP;
+    minimum_matches = 1;
+    provides_user = true;
 
-static AppRegistryEntry clientAppIdRegistry[] =
-{
-    {APP_ID_THUNDERBIRD, APPINFO_FLAG_CLIENT_ADDITIONAL},
-    {APP_ID_OUTLOOK, APPINFO_FLAG_CLIENT_ADDITIONAL},
-    {APP_ID_KMAIL, APPINFO_FLAG_CLIENT_ADDITIONAL},
-    {APP_ID_EUDORA_PRO, APPINFO_FLAG_CLIENT_ADDITIONAL},
-    {APP_ID_EVOLUTION, APPINFO_FLAG_CLIENT_ADDITIONAL},
-    {APP_ID_SMTP_IMO, APPINFO_FLAG_CLIENT_ADDITIONAL},
-    {APP_ID_EUDORA, APPINFO_FLAG_CLIENT_ADDITIONAL},
-    {APP_ID_LOTUS_NOTES, APPINFO_FLAG_CLIENT_ADDITIONAL},
-    {APP_ID_APPLE_EMAIL, APPINFO_FLAG_CLIENT_ADDITIONAL},
-    {APP_ID_AOL_EMAIL, APPINFO_FLAG_CLIENT_ADDITIONAL},
-    {APP_ID_MUTT, APPINFO_FLAG_CLIENT_ADDITIONAL},
-    {APP_ID_SMTP, APPINFO_FLAG_CLIENT_ADDITIONAL},
-    {APP_ID_OUTLOOK_EXPRESS, APPINFO_FLAG_CLIENT_ADDITIONAL},
-    {APP_ID_SMTPS, APPINFO_FLAG_CLIENT_ADDITIONAL}
-};
-
-static CLIENT_APP_RETCODE smtp_ca_init(const InitClientAppAPI* const init_api, SF_LIST* config)
-{
-    unsigned i;
-
-    smtp_config.enabled = 1;
-
-    if (config)
+    tcp_patterns =
     {
-        SF_LNODE* cursor;
-        RNAClientAppModuleConfigItem* item;
+        { (uint8_t*)HELO, sizeof(HELO)-1, -1, 0, APP_ID_SMTP },
+        { (uint8_t*)EHLO, sizeof(EHLO)-1, -1, 0, APP_ID_SMTP },
+        { APP_SMTP_OUTLOOK,         sizeof(APP_SMTP_OUTLOOK)-1,        -1, 0, APP_ID_OUTLOOK },
+        { APP_SMTP_OUTLOOK_EXPRESS, sizeof(APP_SMTP_OUTLOOK_EXPRESS)-1,-1, 0, APP_ID_OUTLOOK_EXPRESS },
+        { APP_SMTP_IMO,             sizeof(APP_SMTP_IMO)-1,            -1, 0, APP_ID_SMTP_IMO },
+        { APP_SMTP_EVOLUTION,       sizeof(APP_SMTP_EVOLUTION)-1,      -1, 0, APP_ID_EVOLUTION },
+        { APP_SMTP_LOTUS_NOTES,      sizeof(APP_SMTP_LOTUS_NOTES)-1,   -1, 0, APP_ID_LOTUS_NOTES },
+        { APP_SMTP_APPLEMAIL,       sizeof(APP_SMTP_APPLEMAIL)-1,      -1, 0, APP_ID_APPLE_EMAIL },
+        { APP_SMTP_EUDORA,          sizeof(APP_SMTP_EUDORA)-1,         -1, 0, APP_ID_EUDORA },
+        { APP_SMTP_EUDORAPRO,       sizeof(APP_SMTP_EUDORAPRO)-1,      -1, 0, APP_ID_EUDORA_PRO },
+        { APP_SMTP_AOL,             sizeof(APP_SMTP_AOL)-1,            -1, 0, APP_ID_AOL_EMAIL },
+        { APP_SMTP_MUTT,            sizeof(APP_SMTP_MUTT)-1,           -1, 0, APP_ID_MUTT },
+        { APP_SMTP_KMAIL,           sizeof(APP_SMTP_KMAIL)-1,          -1, 0, APP_ID_KMAIL },
+        { APP_SMTP_MTHUNDERBIRD,    sizeof(APP_SMTP_MTHUNDERBIRD)-1,   -1, 0, APP_ID_THUNDERBIRD },
+        { APP_SMTP_THUNDERBIRD,     sizeof(APP_SMTP_THUNDERBIRD)-1,    -1, 0, APP_ID_THUNDERBIRD },
+    };
 
-        for (item = (RNAClientAppModuleConfigItem*)sflist_first(config, &cursor);
-            item;
-            item = (RNAClientAppModuleConfigItem*)sflist_next(&cursor))
-        {
-            DebugFormat(DEBUG_LOG,"Processing %s: %s\n",item->name, item->value);
-            if (strcasecmp(item->name, "enabled") == 0)
-            {
-                smtp_config.enabled = atoi(item->value);
-            }
-        }
-    }
-
-    if (smtp_config.enabled)
+    appid_registry =
     {
-        for (i=0; i < sizeof(patterns)/sizeof(*patterns); i++)
-        {
-            init_api->RegisterPattern(&smtp_ca_validate, IpProtocol::TCP, patterns[i].pattern,
-                                      patterns[i].length, patterns[i].index);
-        }
-    }
+        { APP_ID_THUNDERBIRD, APPINFO_FLAG_CLIENT_ADDITIONAL },
+        { APP_ID_OUTLOOK, APPINFO_FLAG_CLIENT_ADDITIONAL },
+        { APP_ID_KMAIL, APPINFO_FLAG_CLIENT_ADDITIONAL },
+        { APP_ID_EUDORA_PRO, APPINFO_FLAG_CLIENT_ADDITIONAL },
+        { APP_ID_EVOLUTION, APPINFO_FLAG_CLIENT_ADDITIONAL },
+        { APP_ID_SMTP_IMO, APPINFO_FLAG_CLIENT_ADDITIONAL },
+        { APP_ID_EUDORA, APPINFO_FLAG_CLIENT_ADDITIONAL },
+        { APP_ID_LOTUS_NOTES, APPINFO_FLAG_CLIENT_ADDITIONAL },
+        { APP_ID_APPLE_EMAIL, APPINFO_FLAG_CLIENT_ADDITIONAL },
+        { APP_ID_AOL_EMAIL, APPINFO_FLAG_CLIENT_ADDITIONAL },
+        { APP_ID_MUTT, APPINFO_FLAG_CLIENT_ADDITIONAL },
+        { APP_ID_SMTP, APPINFO_FLAG_CLIENT_ADDITIONAL },
+        { APP_ID_OUTLOOK_EXPRESS, APPINFO_FLAG_CLIENT_ADDITIONAL },
+        { APP_ID_SMTPS, APPINFO_FLAG_CLIENT_ADDITIONAL }
+    };
 
-	unsigned j;
-	for (j=0; j < sizeof(clientAppIdRegistry)/sizeof(*clientAppIdRegistry); j++)
-	{
-	    DebugFormat(DEBUG_LOG,"registering appId: %d\n",clientAppIdRegistry[j].appId);
-		init_api->RegisterAppId(&smtp_ca_validate, clientAppIdRegistry[j].appId,
-		                        clientAppIdRegistry[j].additionalInfo);
-	}
-
-    return CLIENT_APP_SUCCESS;
+    smtp_client_detector = this;
+    handler->register_detector(name, this, proto);
 }
 
-#define SMTP_PORT   25
-#define SMTPS_DEPRECATED_PORT   465
-#define SMTP_CLOSING_CONN "closing connection\x0d\x0a"
-
-enum SMTPServiceState
+SmtpClientDetector::~SmtpClientDetector()
 {
-    SMTP_SERVICE_STATE_CONNECTION,
-    SMTP_SERVICE_STATE_HELO,
-    SMTP_SERVICE_STATE_TRANSFER,
-    SMTP_SERVICE_STATE_CONNECTION_ERROR,
-    SMTP_SERVICE_STATE_STARTTLS,
-    SMTP_SERVICE_STATE_SSL_HANDSHAKE
-};
-
-struct ServiceSMTPData
-{
-    SMTPServiceState state;
-    int code;
-    int multiline;
-    int set_flags;
-    bool detected;
-};
-
-#pragma pack(1)
-
-struct ServiceSMTPCode
-{
-    uint8_t code[3];
-    uint8_t sp;
-};
-
-#pragma pack()
-
-static int smtp_svc_init(const InitServiceAPI* const init_api);
-static int smtp_svc_validate(ServiceValidationArgs* args);
-
-static const RNAServiceElement svc_element =
-{
-    nullptr,
-    &smtp_svc_validate,
-    nullptr,
-    DETECTOR_TYPE_DECODER,
-    1,
-    1,
-    0,
-    "smtp"
-};
-
-static RNAServiceValidationPort pp[] =
-{
-    {&smtp_svc_validate, SMTP_PORT, IpProtocol::TCP, 0},
-    {&smtp_svc_validate, SMTPS_DEPRECATED_PORT, IpProtocol::TCP, 0},
-    { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
-};
-
-static RNAServiceValidationModule smtp_service_mod =
-{
-    "SMTP",
-    &smtp_svc_init,
-    pp,
-    nullptr,
-    nullptr,
-    0,
-    nullptr,
-    0
-};
-
-static AppRegistryEntry appIdRegistry[] =
-{
-    {APP_ID_SMTP,  0},
-    {APP_ID_SMTPS, 0}
-};
-
-struct SMTPDetectorData
-{
-    ClientSMTPData client;
-    ServiceSMTPData server;
-    int need_continue;
-    int watch_for_deprecated_port;
-};
-
-SO_PUBLIC RNADetectorValidationModule smtp_detector_mod =
-{
-    &smtp_service_mod,
-    &smtp_client_mod,
-    nullptr,
-    0
-};
-
-static int smtp_svc_init(const InitServiceAPI* const init_api)
-{
-    const char SMTP_PATTERN1[] = "220 ";
-    const char SMTP_PATTERN2[] = "220-";
-    const char SMTP_PATTERN3[] = "SMTP";
-    const char SMTP_PATTERN4[] = "smtp";
-
-    init_api->RegisterPattern(&smtp_svc_validate, IpProtocol::TCP, (uint8_t*)SMTP_PATTERN1,
-        sizeof(SMTP_PATTERN1) - 1, 0, "smtp");
-    init_api->RegisterPattern(&smtp_svc_validate, IpProtocol::TCP, (uint8_t*)SMTP_PATTERN2,
-        sizeof(SMTP_PATTERN2) - 1, 0, "smtp");
-    init_api->RegisterPattern(&smtp_svc_validate, IpProtocol::TCP, (uint8_t*)SMTP_PATTERN3,
-        sizeof(SMTP_PATTERN3) - 1, -1, "smtp");
-    init_api->RegisterPattern(&smtp_svc_validate, IpProtocol::TCP, (uint8_t*)SMTP_PATTERN4,
-        sizeof(SMTP_PATTERN4) - 1, -1, "smtp");
-
-	unsigned i;
-	for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
-	{
-        DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[i].appId);
-		init_api->RegisterAppId(&smtp_svc_validate, appIdRegistry[i].appId,
-		                        appIdRegistry[i].additionalInfo);
-	}
-
-    return 0;
 }
 
 /*
@@ -354,9 +211,10 @@ static int smtp_svc_init(const InitServiceAPI* const init_api)
  *    prefix_len - The number of characters that are the prefix to the version,
  *              including the NUL terminating character.
  */
-static int extract_version_and_add_client_app(ApplicationId clientId, const int prefix_len,
-        const uint8_t* product, const uint8_t* product_end, ClientSMTPData* const client_data,
-        AppIdSession* asd, AppId appId, PegCount* stat_counter)
+// FIXIT-M - refactor this to reduce the number of function parameters
+int SmtpClientDetector::extract_version_and_add_client_app(ApplicationId clientId, const int prefix_len,
+    const uint8_t* product, const uint8_t* product_end, ClientSMTPData* const client_data,
+    AppIdSession* asd, AppId appId, PegCount* stat_counter)
 {
     const uint8_t* p;
     uint8_t* v;
@@ -375,18 +233,17 @@ static int extract_version_and_add_client_app(ApplicationId clientId, const int 
         *v = *p;
     }
     *v = 0;
-    smtp_client_mod.api->add_app(asd, appId, clientId, (char*)client_data->version);
+    add_app(asd, appId, clientId, (char*)client_data->version);
     (*stat_counter)++;
     return 0;
 }
-
 
 /*
  *  Identify the product and version of the SMTP client.
  *
  *  Returns 0 if a recognized product is found.  Otherwise returns 1.
  */
-static int IdentifyClientVersion(ClientSMTPData* const fd, const uint8_t* product,
+int SmtpClientDetector::IdentifyClientVersion(ClientSMTPData* const fd, const uint8_t* product,
     const uint8_t* data_end, AppIdSession* asd, Packet*)
 {
     const uint8_t* p;
@@ -460,7 +317,7 @@ static int IdentifyClientVersion(ClientSMTPData* const fd, const uint8_t* produc
             *v = *p;
         }
         *v = 0;
-        smtp_client_mod.api->add_app(asd, appId, APP_ID_APPLE_EMAIL, (char*)fd->version);
+        add_app(asd, appId, APP_ID_APPLE_EMAIL, (char*)fd->version);
         appid_stats.smtp_applemail_clients++;
         return 0;
     }
@@ -536,11 +393,10 @@ static int IdentifyClientVersion(ClientSMTPData* const fd, const uint8_t* produc
     return 1;
 }
 
-
-static void smtp_free_state(void *data)
+static void smtp_free_state(void* data)
 {
     SMTPDetectorData* dd = (SMTPDetectorData*)data;
-    ClientSMTPData *cd;
+    ClientSMTPData* cd;
 
     if (dd)
     {
@@ -550,14 +406,15 @@ static void smtp_free_state(void *data)
         snort_free(dd);
     }
 }
-static inline SMTPDetectorData* smtp_get_SMTPDetectorData(AppIdSession* asd)
+
+SMTPDetectorData* SmtpClientDetector::get_smtp_detector_data(AppIdSession* asd)
 {
-    SMTPDetectorData* dd = (SMTPDetectorData*)smtp_detector_mod.api->data_get(asd, smtp_detector_mod.flow_data_index);
+    SMTPDetectorData* dd = (SMTPDetectorData*)data_get(asd);
     if (dd)
         return dd;
 
     dd = (SMTPDetectorData*)snort_calloc(1, sizeof(*dd));
-    if (smtp_detector_mod.api->data_add(asd, dd, smtp_detector_mod.flow_data_index, &smtp_free_state))
+    if (data_add(asd, dd, &smtp_free_state))
     {
         snort_free(dd);
         return nullptr;
@@ -572,109 +429,104 @@ static inline SMTPDetectorData* smtp_get_SMTPDetectorData(AppIdSession* asd)
     return dd;
 }
 
-// #define UNIT_TEST_SKIP
-static CLIENT_APP_RETCODE smtp_ca_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet* pkt, Detector*)
+int SmtpClientDetector::validate(AppIdDiscoveryArgs& args)
 {
     SMTPDetectorData* dd;
-    ClientSMTPData* fd;
-    const uint8_t* end;
-    unsigned len;
 #ifdef UNIT_TESTING
     SMTPClientState currState = SMTP_CLIENT_STATE_NONE;
 #endif
 
-    if (!(dd = smtp_get_SMTPDetectorData(asd)))
-        return CLIENT_APP_ENOMEM;
+    if ( !( dd = get_smtp_detector_data(args.asd) ) )
+        return APPID_ENOMEM;
 
-    fd = &dd->client;
+    if (args.dir != APP_ID_FROM_INITIATOR)
+        return APPID_INPROCESS;
 
-    if (dir != APP_ID_FROM_INITIATOR)
-        return CLIENT_APP_INPROCESS;
-
-    if (asd->get_session_flags(APPID_SESSION_ENCRYPTED | APPID_SESSION_DECRYPTED) == APPID_SESSION_ENCRYPTED)
+    ClientSMTPData* fd = &dd->client;
+    if (args.asd->get_session_flags(APPID_SESSION_ENCRYPTED | APPID_SESSION_DECRYPTED) == APPID_SESSION_ENCRYPTED)
     {
         if ((fd->flags & CLIENT_FLAG_STARTTLS_SUCCESS))
         {
             fd->decryption_countdown--;
             if (!fd->decryption_countdown)
 #ifdef UNIT_TEST_SKIP
-            if (asd->session_packet_count == 0)
+                if (asd->session_packet_count == 0)
 #endif
             {
                 fd->flags |= CLIENT_FLAG_SMTPS; // report as SMTPS
-                asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+                args.asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
                 /* Because we can't see any further info without decryption we settle for
                    plain APP_ID_SMTPS instead of perhaps finding data that would make calling
                    ExtractVersion() worthwhile, So set the appid and call it good. */
-                smtp_client_mod.api->add_app(asd, APP_ID_SMTPS, APP_ID_SMTPS, nullptr);
+                add_app(args.asd, APP_ID_SMTPS, APP_ID_SMTPS, nullptr);
                 goto done;
             }
         }
-        return CLIENT_APP_INPROCESS;
+        return APPID_INPROCESS;
     }
 
-
-    for (end = data + size; data < end; data++)
+    for (const uint8_t* end = args.data + args.size; args.data < end; args.data++)
     {
 #ifdef UNIT_TESTING
-    if (app_id_debug_session_flag && currState != fd->state)
-    {
-        DEBUG_WRAP(DebugFormat(DEBUG_APPID, "AppIdDbg %s SMTP client state %s\n", app_id_debug_session, stateName[fd->state]););
-        currState = fd->state;
-    }
+        if (app_id_debug_session_flag && currState != fd->state)
+        {
+            DEBUG_WRAP(DebugFormat(DEBUG_APPID, "AppIdDbg %s SMTP client state %s\n", app_id_debug_session, stateName[fd->state]); );
+            currState = fd->state;
+        }
 #endif
-        len = end - data;
+        unsigned len = end - args.data;
         switch (fd->state)
         {
         case SMTP_CLIENT_STATE_HELO:
-            if (len >= (sizeof(HELO)-1) && strncasecmp((const char*)data, HELO, sizeof(HELO)-1) == 0)
+            if (len >= (sizeof(HELO)-1) && strncasecmp((const char*)args.data, HELO, sizeof(HELO)-1) == 0)
             {
-                data += (sizeof(HELO)-1)-1;
+                args.data += (sizeof(HELO)-1)-1;
                 fd->nextstate = SMTP_CLIENT_STATE_MAIL_FROM;
                 fd->state = SMTP_CLIENT_STATE_SKIP_LINE;
             }
-            else if (len >= (sizeof(EHLO)-1) && strncasecmp((const char*)data, EHLO, sizeof(EHLO)-1) == 0)
+            else if (len >= (sizeof(EHLO)-1) && strncasecmp((const char*)args.data, EHLO, sizeof(EHLO)-1) == 0)
             {
-                data += (sizeof(EHLO)-1)-1;
+                args.data += (sizeof(EHLO)-1)-1;
                 fd->nextstate = SMTP_CLIENT_STATE_MAIL_FROM;
                 fd->state = SMTP_CLIENT_STATE_SKIP_LINE;
             }
-            else goto done;
+            else
+                goto done;
             break;
 
         case SMTP_CLIENT_STATE_MAIL_FROM:
-            if (len >= (sizeof(MAILFROM)-1) && strncasecmp((const char*)data, MAILFROM, sizeof(MAILFROM)-1) == 0)
+            if (len >= (sizeof(MAILFROM)-1) && strncasecmp((const char*)args.data, MAILFROM, sizeof(MAILFROM)-1) == 0)
             {
-                data += (sizeof(MAILFROM)-1)-1;
+                args.data += (sizeof(MAILFROM)-1)-1;
                 fd->nextstate = SMTP_CLIENT_STATE_RCPT_TO;
                 fd->state = SMTP_CLIENT_STATE_SKIP_LINE;
             }
-            else if (len >= (sizeof(RSET)-1) && strncasecmp((const char*)data, RSET, sizeof(RSET)-1) == 0)
+            else if (len >= (sizeof(RSET)-1) && strncasecmp((const char*)args.data, RSET, sizeof(RSET)-1) == 0)
             {
-                data += (sizeof(RSET)-1)-1;
+                args.data += (sizeof(RSET)-1)-1;
                 fd->nextstate = fd->state;
                 fd->state = SMTP_CLIENT_STATE_SKIP_LINE;
             }
-            else if (len >= (sizeof(AUTH)-1) && strncasecmp((const char*)data, AUTH, sizeof(AUTH)-1) == 0)
+            else if (len >= (sizeof(AUTH)-1) && strncasecmp((const char*)args.data, AUTH, sizeof(AUTH)-1) == 0)
             {
-                data += (sizeof(AUTH)-1)-1;
+                args.data += (sizeof(AUTH)-1)-1;
                 fd->nextstate = fd->state;
                 fd->state = SMTP_CLIENT_STATE_SKIP_LINE;
             }
-            else if (len >= (sizeof(STARTTLS)-1) && strncasecmp((const char*)data, STARTTLS, sizeof(STARTTLS)-1) == 0)
+            else if (len >= (sizeof(STARTTLS)-1) && strncasecmp((const char*)args.data, STARTTLS, sizeof(STARTTLS)-1) == 0)
             {
-                data += (sizeof(STARTTLS)-1)-1;
+                args.data += (sizeof(STARTTLS)-1)-1;
                 dd->server.state = SMTP_SERVICE_STATE_STARTTLS;
                 fd->nextstate = fd->state;
                 fd->state = SMTP_CLIENT_STATE_SKIP_LINE;
             }
-            else goto done;
+            else
+                goto done;
             break;
         case SMTP_CLIENT_STATE_RCPT_TO:
-            if (len >= (sizeof(RCPTTO)-1) && strncasecmp((const char*)data, RCPTTO, sizeof(RCPTTO)-1) == 0)
+            if (len >= (sizeof(RCPTTO)-1) && strncasecmp((const char*)args.data, RCPTTO, sizeof(RCPTTO)-1) == 0)
             {
-                data += (sizeof(RCPTTO)-1)-1;
+                args.data += (sizeof(RCPTTO)-1)-1;
                 fd->nextstate = SMTP_CLIENT_STATE_DATA;
                 fd->state = SMTP_CLIENT_STATE_SKIP_LINE;
             }
@@ -683,41 +535,41 @@ static CLIENT_APP_RETCODE smtp_ca_validate(const uint8_t* data, uint16_t size, c
             break;
 
         case SMTP_CLIENT_STATE_DATA:
-            if (len >= (sizeof(DATA)-1) && strncasecmp((const char*)data, DATA, sizeof(DATA)-1) == 0)
+            if (len >= (sizeof(DATA)-1) && strncasecmp((const char*)args.data, DATA, sizeof(DATA)-1) == 0)
             {
-                data += (sizeof(DATA)-1)-1;
+                args.data += (sizeof(DATA)-1)-1;
                 fd->nextstate = SMTP_CLIENT_STATE_MESSAGE;
                 fd->state = SMTP_CLIENT_STATE_SKIP_LINE;
             }
-            else if (len >= (sizeof(RCPTTO)-1) && strncasecmp((const char*)data, RCPTTO, sizeof(RCPTTO)-1) == 0)
+            else if (len >= (sizeof(RCPTTO)-1) && strncasecmp((const char*)args.data, RCPTTO, sizeof(RCPTTO)-1) == 0)
             {
-                data += (sizeof(RCPTTO)-1)-1;
+                args.data += (sizeof(RCPTTO)-1)-1;
                 fd->nextstate = fd->state;
                 fd->state = SMTP_CLIENT_STATE_SKIP_LINE;
             }
             break;
         case SMTP_CLIENT_STATE_MESSAGE:
-            if (*data == '.')
+            if (*args.data == '.')
             {
                 if (len == 0 ||
-                    (len >= 1 && data[1] == '\n') ||
-                    (len >= 2 && data[1] == '\r' && data[2] == '\n'))
+                    (len >= 1 && args.data[1] == '\n') ||
+                    (len >= 2 && args.data[1] == '\r' && args.data[2] == '\n'))
                 {
-                    smtp_client_mod.api->add_app(asd, APP_ID_SMTP, APP_ID_SMTP, nullptr);
+                    add_app(args.asd, APP_ID_SMTP, APP_ID_SMTP, nullptr);
                     goto done;
                 }
             }
-            else if (len >= (sizeof(XMAILER)-1) && strncasecmp((const char*)data, XMAILER, sizeof(XMAILER)-1) == 0)
+            else if (len >= (sizeof(XMAILER)-1) && strncasecmp((const char*)args.data, XMAILER, sizeof(XMAILER)-1) == 0)
             {
-                data += (sizeof(XMAILER)-1)-1;
+                args.data += (sizeof(XMAILER)-1)-1;
                 fd->state = SMTP_CLIENT_STATE_GET_PRODUCT_VERSION;
             }
-            else if (len >= (sizeof(USERAGENT)-1) && strncasecmp((const char*)data, USERAGENT, sizeof(USERAGENT)-1) == 0)
+            else if (len >= (sizeof(USERAGENT)-1) && strncasecmp((const char*)args.data, USERAGENT, sizeof(USERAGENT)-1) == 0)
             {
-                data += (sizeof(USERAGENT)-1)-1;
+                args.data += (sizeof(USERAGENT)-1)-1;
                 fd->state = SMTP_CLIENT_STATE_GET_PRODUCT_VERSION;
             }
-            else if (!isprint(*data) && *data != '\t')
+            else if (!isprint(*args.data) && *args.data != '\t')
                 goto done;
             else
             {
@@ -727,18 +579,18 @@ static CLIENT_APP_RETCODE smtp_ca_validate(const uint8_t* data, uint16_t size, c
             break;
 
         case SMTP_CLIENT_STATE_GET_PRODUCT_VERSION:
-            if (*data == '\r')
+            if (*args.data == '\r')
             {
                 if (fd->headerline && fd->pos)
                 {
-                    IdentifyClientVersion(fd, fd->headerline, fd->headerline + fd->pos, asd, pkt);
+                    IdentifyClientVersion(fd, fd->headerline, fd->headerline + fd->pos, args.asd, args.pkt);
                     snort_free(fd->headerline);
                     fd->headerline = nullptr;
                     fd->pos = 0;
                 }
                 goto done;
             }
-            else if (!isprint(*data))
+            else if (!isprint(*args.data))
             {
                 snort_free(fd->headerline);
                 fd->headerline = nullptr;
@@ -751,18 +603,18 @@ static CLIENT_APP_RETCODE smtp_ca_validate(const uint8_t* data, uint16_t size, c
                     fd->headerline = (uint8_t*)snort_alloc(MAX_HEADER_LINE_SIZE);
 
                 if (fd->pos < (MAX_HEADER_LINE_SIZE-1))
-                    fd->headerline[fd->pos++] = *data;
+                    fd->headerline[fd->pos++] = *args.data;
             }
             break;
 
         case SMTP_CLIENT_STATE_SKIP_LINE:
-            if (*data == '\n')
+            if (*args.data == '\n')
             {
                 fd->pos = 0;
                 fd->state = fd->nextstate;
                 fd->nextstate = SMTP_CLIENT_STATE_NONE;
             }
-            else if (!(*data == '\r' || isprint(*data)))
+            else if (!(*args.data == '\r' || isprint(*args.data)))
                 goto done;
             break;
 
@@ -770,15 +622,70 @@ static CLIENT_APP_RETCODE smtp_ca_validate(const uint8_t* data, uint16_t size, c
             goto done;
         }
     }
-    return CLIENT_APP_INPROCESS;
+    return APPID_INPROCESS;
 
 done:
     dd->need_continue = 0;
-    asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
-    return CLIENT_APP_SUCCESS;
+    args.asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+    return APPID_SUCCESS;
 }
 
-static inline int smtp_validate_reply(const uint8_t*data, uint16_t* offset, uint16_t size,
+#define SMTP_PORT   25
+#define SMTPS_DEPRECATED_PORT   465
+#define SMTP_CLOSING_CONN "closing connection\x0d\x0a"
+
+#pragma pack(1)
+
+struct ServiceSMTPCode
+{
+    uint8_t code[3];
+    uint8_t sp;
+};
+
+#pragma pack()
+
+const char SMTP_PATTERN1[] = "220 ";
+const char SMTP_PATTERN2[] = "220-";
+const char SMTP_PATTERN3[] = "SMTP";
+const char SMTP_PATTERN4[] = "smtp";
+
+SmtpServiceDetector::SmtpServiceDetector(ServiceDiscovery* sd)
+{
+    handler = sd;
+    name = "smtp";
+    proto = IpProtocol::TCP;
+    detectorType = DETECTOR_TYPE_DECODER;
+    current_ref_count = 1;
+
+    tcp_patterns =
+    {
+        { (uint8_t*)SMTP_PATTERN1, sizeof(SMTP_PATTERN1) - 1, -1, 0, 0 },
+        { (uint8_t*)SMTP_PATTERN2, sizeof(SMTP_PATTERN2) - 1, -1, 0, 0 },
+        { (uint8_t*)SMTP_PATTERN3, sizeof(SMTP_PATTERN3) - 1, -1, 0, 0 },
+        { (uint8_t*)SMTP_PATTERN4, sizeof(SMTP_PATTERN4) - 1, -1, 0, 0 },
+    };
+
+    appid_registry =
+    {
+        { APP_ID_SMTP,  0 },
+        { APP_ID_SMTPS, 0 }
+    };
+
+    service_ports =
+    {
+        { SMTP_PORT, IpProtocol::TCP, false },
+        { SMTPS_DEPRECATED_PORT, IpProtocol::TCP, false }
+    };
+
+    smtp_service_detector = this;
+    handler->register_detector(name, this, proto);
+}
+
+SmtpServiceDetector::~SmtpServiceDetector()
+{
+}
+
+static inline int smtp_validate_reply(const uint8_t* data, uint16_t* offset, uint16_t size,
     int* multi, int* code)
 {
     const ServiceSMTPCode* code_hdr;
@@ -818,7 +725,8 @@ static inline int smtp_validate_reply(const uint8_t*data, uint16_t* offset, uint
     if (*multi && tmp != *code)
         return -1;
     *code = tmp;
-    if (code_hdr->sp == '-') *multi = 1;
+    if (code_hdr->sp == '-')
+        *multi = 1;
     else if (code_hdr->sp == ' ')
         *multi = 0;
     else
@@ -864,7 +772,8 @@ static inline int smtp_validate_reply(const uint8_t*data, uint16_t* offset, uint
                 if (tmp != *code)
                     return -1;
 
-                if (code_hdr->sp == ' ') *multi = 0;
+                if (code_hdr->sp == ' ')
+                    *multi = 0;
                 else if (code_hdr->sp != '-')
                     return -1;
 
@@ -883,17 +792,17 @@ static inline int smtp_validate_reply(const uint8_t*data, uint16_t* offset, uint
     return 0;
 }
 
-static int smtp_svc_validate(ServiceValidationArgs* args)
+int SmtpServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     SMTPDetectorData* dd;
     ServiceSMTPData* fd;
-    AppIdSession* asd = args->asd;
-    const uint8_t* data = args->data;
-    uint16_t size = args->size;
+    AppIdSession* asd = args.asd;
+    const uint8_t* data = args.data;
+    uint16_t size = args.size;
     uint16_t offset;
 
-    if (!(dd = smtp_get_SMTPDetectorData(asd)))
-        return SERVICE_ENOMEM;
+    if (!(dd = smtp_client_detector->get_smtp_detector_data(asd)))
+        return APPID_ENOMEM;
 
     if (!size)
         goto inprocess;
@@ -909,27 +818,28 @@ static int smtp_svc_validate(ServiceValidationArgs* args)
         if (dd->client.flags & CLIENT_FLAG_SMTPS)
         {
             // client side gave up because everything is encrypted.
-            smtp_service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element,
-                                       APP_ID_SMTPS, nullptr, nullptr, nullptr);
-            return SERVICE_SUCCESS;
+            add_service(asd, args.pkt, args.dir,  APP_ID_SMTPS, nullptr, nullptr, nullptr);
+            return APPID_SUCCESS;
         }
         else if (asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
         {
             // Client made it's decision so we are totally done.
-            return SERVICE_SUCCESS;
+            return APPID_SUCCESS;
         }
         // We arrive here because the service side is not done yet.
     }
 
-    if (args->dir != APP_ID_FROM_RESPONDER)
+    if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess; // allow client validator to have it's shot.
 
     if (dd->watch_for_deprecated_port)
     {
         dd->watch_for_deprecated_port = 0;
-        // If we have caught a response on port 465 that isn't encrypted+decrypted it isn't SMTP at all.
-        // The new IANA assignment for this port is non-SSL and NOT SMTP. Only an old server will survive the test.
-        if (args->pkt->ptrs.sp == SMTPS_DEPRECATED_PORT && !asd->get_session_flags(APPID_SESSION_DECRYPTED))
+        // If we have caught a response on port 465 that isn't encrypted+decrypted it isn't SMTP at
+        // all.
+        // The new IANA assignment for this port is non-SSL and NOT SMTP. Only an old server will
+        // survive the test.
+        if (args.pkt->ptrs.sp == SMTPS_DEPRECATED_PORT && !asd->get_session_flags(APPID_SESSION_DECRYPTED))
         {
             // This is not an SMTPS port because we have not ALREADY gone through the SSL handshake
             goto fail;
@@ -947,7 +857,8 @@ static int smtp_svc_validate(ServiceValidationArgs* args)
                 goto fail;
             goto inprocess;
         }
-        if (!fd->code) goto inprocess;
+        if (!fd->code)
+            goto inprocess;
         switch (fd->state)
         {
         case SMTP_SERVICE_STATE_CONNECTION:
@@ -1008,27 +919,26 @@ static int smtp_svc_validate(ServiceValidationArgs* args)
     }
 
 inprocess:
-    smtp_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &svc_element);
-    return SERVICE_INPROCESS;
+    service_inprocess(asd, args.pkt, args.dir);
+    return APPID_INPROCESS;
 
 success:
     if (dd->need_continue > 0)
         asd->set_session_flags(APPID_SESSION_CONTINUE);
 
-    smtp_service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element,
-                                      APP_ID_SMTP, nullptr, nullptr, nullptr);
+    add_service(asd, args.pkt, args.dir, APP_ID_SMTP, nullptr, nullptr, nullptr);
     if (!fd->detected)
     {
-        if(fd->state == SMTP_SERVICE_STATE_STARTTLS)
+        if (fd->state == SMTP_SERVICE_STATE_STARTTLS)
             appid_stats.smtps_flows++;
         else
             appid_stats.smtp_flows++;
         fd->detected = true;
     }
-    return SERVICE_SUCCESS;
+    return APPID_SUCCESS;
 
 fail:
-    smtp_service_mod.api->fail_service(asd, args->pkt, args->dir, &svc_element,
-                                       smtp_service_mod.flow_data_index);
-    return SERVICE_NOMATCH;
+    fail_service(asd, args.pkt, args.dir);
+    return APPID_NOMATCH;
 }
+

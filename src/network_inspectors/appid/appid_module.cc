@@ -27,6 +27,7 @@
 
 #include "log/messages.h"
 #include "profiler/profiler.h"
+#include "utils/util.h"
 
 using namespace std;
 
@@ -127,7 +128,7 @@ static const Parameter session_log_filter[] =
       "destination ip address in CIDR format" },
     { "src_port", Parameter::PT_PORT, "1:", nullptr, "source port" },
     { "dst_port", Parameter::PT_PORT, "1:", nullptr, "destination port" },
-    { "protocol", Parameter::PT_STRING, nullptr, nullptr,"ip protocol"},
+    { "protocol", Parameter::PT_STRING, nullptr, nullptr,"ip protocol" },
     { "log_all_sessions", Parameter::PT_BOOL, nullptr, "false",
       "enable logging for all appid sessions" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -163,6 +164,8 @@ static const Parameter s_params[] =
 #endif
     { "session_log_filter", Parameter::PT_TABLE, session_log_filter, nullptr,
       "session log filter options" },
+    { "log_all_sessions", Parameter::PT_BOOL, nullptr, "false",
+      "enable logging of all appid sessions" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -225,7 +228,8 @@ bool AppIdModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("dump_ports") )
         config->dump_ports = v.get_bool();
     else if ( v.is("session_log_filter") )
-        config->session_log_filter.log_all_sessions = false;  // FIXIT-L need to implement support for all log options
+        config->session_log_filter.log_all_sessions = false;  // FIXIT-L need to implement support
+                                                              // for all log options
     else if ( v.is("log_all_sessions") )
         config->session_log_filter.log_all_sessions = v.get_bool();
     else if (v.is("src_ip") )

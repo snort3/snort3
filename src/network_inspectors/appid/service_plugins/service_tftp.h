@@ -22,9 +22,20 @@
 #ifndef SERVICE_TFTP_H
 #define SERVICE_TFTP_H
 
-#include "detector_plugins/detector_api.h"
+#include "service_detector.h"
 
-extern RNAServiceValidationModule tftp_service_mod;
+class ServiceDiscovery;
 
+class TftpServiceDetector : public ServiceDetector
+{
+public:
+    TftpServiceDetector(ServiceDiscovery*);
+    ~TftpServiceDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
+
+private:
+    int16_t app_id = 0;
+};
 #endif
 

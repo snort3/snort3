@@ -22,7 +22,18 @@
 #ifndef SERVICE_RFB_H
 #define SERVICE_RFB_H
 
-struct RNAServiceValidationModule;
-extern RNAServiceValidationModule rfb_service_mod;
+#include "service_detector.h"
+
+class ServiceDiscovery;
+
+class RfbServiceDetector : public ServiceDetector
+{
+public:
+    RfbServiceDetector(ServiceDiscovery*);
+    ~RfbServiceDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
+};
 
 #endif
+

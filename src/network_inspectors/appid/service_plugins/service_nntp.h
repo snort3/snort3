@@ -22,9 +22,17 @@
 #ifndef SERVICE_NNTP_H
 #define SERVICE_NNTP_H
 
-#include "service_api.h"
+#include "service_detector.h"
 
-extern RNAServiceValidationModule nntp_service_mod;
+class ServiceDiscovery;
 
+class NntpServiceDetector : public ServiceDetector
+{
+public:
+    NntpServiceDetector(ServiceDiscovery*);
+    ~NntpServiceDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
+};
 #endif
 

@@ -25,15 +25,10 @@
 
 #include "service_rshell.h"
 
-#include "log/messages.h"
-#include "main/snort_debug.h"
-#include "protocols/packet.h"
-
-#include "app_info_table.h"
 #include "appid_module.h"
-
-#include "service_base.h"
+#include "app_info_table.h"
 #include "service_util.h"
+#include "protocols/packet.h"
 
 #define RSHELL_PORT  514
 #define RSHELL_MAX_PORT_PACKET 6
@@ -58,60 +53,30 @@ struct ServiceRSHELLData
     ServiceRSHELLData* child;
 };
 
-static int rshell_init(const InitServiceAPI* const init_api);
-static int rshell_validate(ServiceValidationArgs* args);
-
-static const RNAServiceElement svc_element =
+RshellServiceDetector::RshellServiceDetector(ServiceDiscovery* sd)
 {
-    nullptr,
-    &rshell_validate,
-    nullptr,
-    DETECTOR_TYPE_DECODER,
-    1,
-    1,
-    0,
-    "rshell"
-};
-
-static const RNAServiceValidationPort pp[] =
-{
-    { &rshell_validate, RSHELL_PORT, IpProtocol::TCP, 0 },
-    { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
-};
-
-RNAServiceValidationModule rshell_service_mod =
-{
-    "RSHELL",
-    &rshell_init,
-    pp,
-    nullptr,
-    nullptr,
-    0,
-    nullptr,
-    0
-};
-
-static AppRegistryEntry appIdRegistry[] =
-{
-    { APP_ID_SHELL, APPINFO_FLAG_SERVICE_ADDITIONAL }
-};
-
-static int16_t app_id = 0;
-
-static int rshell_init(const InitServiceAPI* const init_api)
-{
-    unsigned i;
-
+    handler = sd;
+    name = "rshell";
+    proto = IpProtocol::TCP;
+    detectorType = DETECTOR_TYPE_DECODER;
+    current_ref_count =  1;
     app_id = add_appid_protocol_reference("rsh-error");
 
-    for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
+    appid_registry =
     {
-        DebugFormat(DEBUG_APPID,"registering appId: %d\n",appIdRegistry[i].appId);
-        init_api->RegisterAppId(&rshell_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo);
-    }
+        { APP_ID_SHELL, APPINFO_FLAG_SERVICE_ADDITIONAL }
+    };
 
-    return 0;
+    service_ports =
+    {
+        { RSHELL_PORT, IpProtocol::TCP, false }
+    };
+
+    handler->register_detector(name, this, proto);
+}
+
+RshellServiceDetector::~RshellServiceDetector()
+{
 }
 
 static void rshell_free_state(void* data)
@@ -134,32 +99,29 @@ static void rshell_free_state(void* data)
     }
 }
 
-static int rshell_validate(ServiceValidationArgs* args)
+int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
-    ServiceRSHELLData* tmp_rd = nullptr;
     int i = 0;
     uint32_t port = 0;
     AppIdSession* pf = nullptr;
-    AppIdSession* asd = args->asd;
-    const uint8_t* data = args->data;
-    Packet* pkt = args->pkt;
-    const int dir = args->dir;
-    uint16_t size = args->size;
+    AppIdSession* asd = args.asd;
+    const uint8_t* data = args.data;
+    Packet* pkt = args.pkt;
+    const int dir = args.dir;
+    uint16_t size = args.size;
 
-    ServiceRSHELLData* rd = (ServiceRSHELLData*)rshell_service_mod.api->data_get(asd,
-        rshell_service_mod.flow_data_index);
+    ServiceRSHELLData* rd = (ServiceRSHELLData*)data_get(asd);
     if (!rd)
     {
         if (!size)
             goto inprocess;
         rd = (ServiceRSHELLData*)snort_calloc(sizeof(ServiceRSHELLData));
-        rshell_service_mod.api->data_add(asd, rd,
-            rshell_service_mod.flow_data_index, &rshell_free_state);
+        data_add(asd, rd, &rshell_free_state);
         rd->state = RSHELL_STATE_PORT;
     }
 
-    if (args->session_logging_enabled)
-        LogMessage("AppIdDbg %s rshell state %d\n", args->session_logging_id, rd->state);
+    if (args.session_logging_enabled)
+        LogMessage("AppIdDbg %s rshell state %d\n", args.session_logging_id, rd->state);
 
     switch (rd->state)
     {
@@ -182,36 +144,37 @@ static int rshell_validate(ServiceValidationArgs* args)
             goto bail;
         if (port)
         {
-            tmp_rd = (ServiceRSHELLData*)snort_calloc(sizeof(ServiceRSHELLData));
+            ServiceRSHELLData* tmp_rd = (ServiceRSHELLData*)snort_calloc(
+                sizeof(ServiceRSHELLData));
             tmp_rd->state = RSHELL_STATE_STDERR_CONNECT_SYN;
             tmp_rd->parent = rd;
             const SfIp* dip = pkt->ptrs.ip_api.get_dst();
             const SfIp* sip = pkt->ptrs.ip_api.get_src();
-            pf = AppIdSession::create_future_session(pkt, dip, 0, sip, (uint16_t)port, IpProtocol::TCP, app_id,
-                    APPID_EARLY_SESSION_FLAG_FW_RULE);
+            pf = AppIdSession::create_future_session(pkt, dip, 0, sip, (uint16_t)port,
+                IpProtocol::TCP, app_id,
+                APPID_EARLY_SESSION_FLAG_FW_RULE);
             if (pf)
             {
                 pf->rna_client_state = RNA_STATE_FINISHED;
-                rshell_service_mod.api->data_add(pf, tmp_rd,
-                    rshell_service_mod.flow_data_index, &rshell_free_state);
-                if (pf->add_flow_data_id((uint16_t)port, &svc_element))
+                data_add(pf, tmp_rd, &rshell_free_state);
+                if (pf->add_flow_data_id((uint16_t)port, this))
                 {
-                    pf->rnaServiceState = RNA_STATE_FINISHED;
+                    pf->rna_service_state = RNA_STATE_FINISHED;
                     tmp_rd->state = RSHELL_STATE_DONE;
                     tmp_rd->parent = nullptr;
-                    return SERVICE_ENOMEM;
+                    return APPID_ENOMEM;
                 }
                 pf->scan_flags |= SCAN_HOST_PORT_FLAG;
                 PopulateExpectedFlow(asd, pf,
                     APPID_SESSION_CONTINUE | APPID_SESSION_REXEC_STDERR | APPID_SESSION_NO_TPI |
                     APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE |
                     APPID_SESSION_PORT_SERVICE_DONE);
-                pf->rnaServiceState = RNA_STATE_STATEFUL;
+                pf->rna_service_state = RNA_STATE_STATEFUL;
             }
             else
             {
                 snort_free(tmp_rd);
-                return SERVICE_ENOMEM;
+                return APPID_ENOMEM;
             }
             rd->child = tmp_rd;
             rd->state = RSHELL_STATE_SERVER_CONNECT;
@@ -313,29 +276,26 @@ static int rshell_validate(ServiceValidationArgs* args)
         if (rd->parent && rd->parent->state == RSHELL_STATE_SERVER_CONNECT)
             rd->parent->state = RSHELL_STATE_USERNAME;
         asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED);
-        return SERVICE_SUCCESS;
+        return APPID_SUCCESS;
     default:
         goto bail;
     }
 
 inprocess:
-    rshell_service_mod.api->service_inprocess(asd, pkt, dir, &svc_element);
-    return SERVICE_INPROCESS;
+    service_inprocess(asd, pkt, dir);
+    return APPID_INPROCESS;
 
 success:
-    rshell_service_mod.api->add_service(asd, pkt, dir, &svc_element,
-        APP_ID_SHELL, nullptr, nullptr, nullptr);
+    add_service(asd, pkt, dir, APP_ID_SHELL, nullptr, nullptr, nullptr);
     appid_stats.rshell_flows++;
-    return SERVICE_SUCCESS;
+    return APPID_SUCCESS;
 
 bail:
-    rshell_service_mod.api->incompatible_data(asd, pkt, dir, &svc_element,
-        rshell_service_mod.flow_data_index, args->pConfig);
-    return SERVICE_NOT_COMPATIBLE;
+    incompatible_data(asd, pkt, dir);
+    return APPID_NOT_COMPATIBLE;
 
 fail:
-    rshell_service_mod.api->fail_service(asd, pkt, dir, &svc_element,
-        rshell_service_mod.flow_data_index);
-    return SERVICE_NOMATCH;
+    fail_service(asd, pkt, dir);
+    return APPID_NOMATCH;
 }
 

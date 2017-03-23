@@ -28,22 +28,24 @@
 #include <glob.h>
 #include <limits.h>
 
-#include "log/messages.h"
-#include "main/snort_debug.h"
-
 #include "app_info_table.h"
+#include "appid_session.h"
+#include "thirdparty_appid_utils.h"
 #include "appid_utils/appid_utils.h"
 #ifdef USE_RNA_CONFIG
 #include "appid_utils/network_set.h"
 #endif
-#include "service_plugins/service_base.h"
+#include "main/snort_debug.h"
+#include "main/snort_config.h"
+#include "log/messages.h"
+#include "utils/util.h"
+#include "target_based/snort_protocols.h"
 
 #define ODP_PORT_DETECTORS "odp/port/*"
 #define CUSTOM_PORT_DETECTORS "custom/port/*"
 #define MAX_DISPLAY_SIZE   65536
 #define MAX_LINE    2048
 
-unsigned appIdPolicyId;
 uint32_t app_id_netmasks[33];
 
 struct PortList
@@ -53,6 +55,18 @@ struct PortList
 };
 
 static THREAD_LOCAL SF_LIST appid_custom_configs;
+
+int16_t snortId_for_unsynchronized;
+int16_t snortId_for_ftp_data;
+int16_t snortId_for_http2;
+
+void map_app_names_to_snort_ids()
+{
+    /* init globals for snortId compares */
+    snortId_for_unsynchronized = snort_conf->proto_ref->add("unsynchronized");
+    snortId_for_ftp_data = snort_conf->proto_ref->find("ftp-data");
+    snortId_for_http2    = snort_conf->proto_ref->find("http2");
+}
 
 AppIdModuleConfig::AppIdModuleConfig()
 {
@@ -69,24 +83,24 @@ AppIdModuleConfig::~AppIdModuleConfig()
     snort_free((void*)thirdparty_appid_dir);
 }
 
-AppIdConfig::AppIdConfig( AppIdModuleConfig* config )
-     : mod_config( config ), app_info_mgr(AppInfoManager::get_instance())
+AppIdConfig::AppIdConfig(AppIdModuleConfig* config)
+    : mod_config(config), app_info_mgr(AppInfoManager::get_instance())
 {
 #ifdef USE_RNA_CONFIG
-    for( unsigned i = 0; i < MAX_ZONES; i++ )
+    for ( unsigned i = 0; i < MAX_ZONES; i++ )
         net_list_by_zone[ i ] = nullptr;
 #endif
 
-    for( unsigned i = 0; i < 65535; i++ )
+    for ( unsigned i = 0; i < 65535; i++ )
     {
         tcp_port_only[ i ] = APP_ID_NONE;
         udp_port_only[ i ] = APP_ID_NONE;
     }
 
-    for( unsigned i = 0; i < 255; i++ )
+    for ( unsigned i = 0; i < 255; i++ )
         ip_protocol[ i ] = APP_ID_NONE;
 
-    for( unsigned i = 0; i < APP_ID_PORT_ARRAY_SIZE; i++ )
+    for ( unsigned i = 0; i < APP_ID_PORT_ARRAY_SIZE; i++ )
     {
         tcp_port_exclusions_src[ i ] = nullptr;
         udp_port_exclusions_src[ i ] = nullptr;
@@ -117,8 +131,8 @@ void* AppidConfigElement::find_generic_config_element(const char* name)
 
     // Search a module's configuration by its name
     for (ce = (AppidConfigElement*)sflist_first(&appid_custom_configs, &next);
-         ce != nullptr;
-         ce = (AppidConfigElement*)sflist_next(&next))
+        ce != nullptr;
+        ce = (AppidConfigElement*)sflist_next(&next))
     {
         if (strcmp(ce->name, name) == 0)
             return ce->value;
@@ -270,7 +284,7 @@ void AppIdConfig::read_port_detectors(const char* files)
         else
             ErrorMessage("Missing parameter(s) in port service '%s'\n",globs.gl_pathv[n]);
 
-next:;
+next:   ;
         while ((tmp_port = port))
         {
             port = tmp_port->next;
@@ -390,7 +404,8 @@ void AppIdConfig::configure_analysis_networks(char* toklist[], uint32_t flag)
                 }
                 else
                     my_net_list = net_list;
-                if (my_net_list && NetworkSetManager::add_cidr_block_ex(my_net_list, ias->range_min,
+                if (my_net_list && NetworkSetManager::add_cidr_block_ex(my_net_list,
+                    ias->range_min,
                     ias->netmask,
                     ias->addr_flags & IPFUNCS_EXCEPT_IP, 0,
                     ias->addr_flags & (~IPFUNCS_EXCEPT_IP)))
@@ -406,7 +421,8 @@ void AppIdConfig::configure_analysis_networks(char* toklist[], uint32_t flag)
     }
 }
 
-int AppIdConfig::add_port_exclusion(AppIdPortExclusions& port_exclusions, const ip::snort_in6_addr* ip,
+int AppIdConfig::add_port_exclusion(AppIdPortExclusions& port_exclusions, const
+    ip::snort_in6_addr* ip,
     const ip::snort_in6_addr* netmask, int family, uint16_t port)
 {
     SF_LIST* pe_list;
@@ -681,11 +697,13 @@ int AppIdConfig::load_analysis_config(const char* config_file, int reload, int i
     {
         if (NetworkSetManager::reduce(my_net_list))
             ErrorMessage("Failed to reduce the IP address sets");
-        net_list_count += NetworkSetManager::count_ex(my_net_list) + NetworkSetManager::count6_ex(my_net_list);
+        net_list_count += NetworkSetManager::count_ex(my_net_list) + NetworkSetManager::count6_ex(
+            my_net_list);
     }
 
     return 0;
 }
+
 #endif
 
 void AppIdConfig::set_safe_search_enforcement(int enabled)
@@ -696,42 +714,19 @@ void AppIdConfig::set_safe_search_enforcement(int enabled)
 
 bool AppIdConfig::init_appid( )
 {
-	map_app_names_to_snort_ids();
-	appIdPolicyId = 53;
-	AppIdUtils::init_netmasks(app_id_netmasks);
-	app_info_mgr.init_appid_info_table(mod_config);
-	sflist_init(&client_app_args);
+    map_app_names_to_snort_ids();
+    AppIdUtils::init_netmasks(app_id_netmasks);
+    app_info_mgr.init_appid_info_table(mod_config);
 #if USE_RNA_CONFIG
-	load_analysis_config(mod_config->conf_file, 0, mod_config->instance_id);
+    load_analysis_config(mod_config->conf_file, 0, mod_config->instance_id);
 #endif
-	read_port_detectors(ODP_PORT_DETECTORS);
-	read_port_detectors(CUSTOM_PORT_DETECTORS);
-	ThirdPartyAppIDInit(mod_config);
-
-	if ( mod_config->dump_ports )
-	{
-		dumpPorts(stdout);
-		display_port_config();
-		app_info_mgr.dump_app_info_table();
-		exit(0);        // FIXIT-L - implement better way to dump config and exit
-	}
-
-	return true;
+    read_port_detectors(ODP_PORT_DETECTORS);
+    read_port_detectors(CUSTOM_PORT_DETECTORS);
+    ThirdPartyAppIDInit(mod_config);
+    return true;
 }
 
-static void free_config_items(AppidConfigElement* ci)
-{
-    if (ci)
-    {
-        if (ci->name)
-            snort_free(ci->name);
-        if (ci->value)
-            snort_free(ci->value);
-        snort_free(ci);
-    }
-}
-
-static void free_port_exclusion_list( AppIdPortExclusions& pe_list )
+static void free_port_exclusion_list(AppIdPortExclusions& pe_list)
 {
     for ( unsigned i = 0; i < APP_ID_PORT_ARRAY_SIZE; i++ )
     {
@@ -745,7 +740,6 @@ static void free_port_exclusion_list( AppIdPortExclusions& pe_list )
 
 void AppIdConfig::cleanup()
 {
-
     if (thirdparty_appid_module != nullptr)
         thirdparty_appid_module->print_stats();
     ThirdPartyAppIDFini();
@@ -765,8 +759,20 @@ void AppIdConfig::cleanup()
     free_port_exclusion_list(tcp_port_exclusions_dst);
     free_port_exclusion_list(udp_port_exclusions_src);
     free_port_exclusion_list(udp_port_exclusions_dst);
+}
 
-    sflist_static_free_all(&client_app_args, (void (*)(void*))free_config_items);
+AppId AppIdConfig::get_port_service_id(IpProtocol proto, uint16_t port)
+{
+    AppId appId;
+
+    if (proto == IpProtocol::TCP)
+        appId = tcp_port_only[port];
+    else if (proto == IpProtocol::UDP)
+        appId = udp_port_only[port];
+    else
+        appId = ip_protocol[(uint16_t)proto];
+
+    return appId;
 }
 
 static void display_port_exclusion_list(SF_LIST* pe_list, uint16_t port)
@@ -908,3 +914,4 @@ void AppIdConfig::display_port_config()
             LogMessage("        %5u - %u\n", i, udp_port_only[i]);
         }
 }
+

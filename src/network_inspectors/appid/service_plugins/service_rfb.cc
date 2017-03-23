@@ -25,91 +25,63 @@
 
 #include "service_rfb.h"
 
-#include "main/snort_debug.h"
-
-#include "app_info_table.h"
 #include "appid_module.h"
-
-#include "service_api.h"
+#include "app_info_table.h"
 
 #define RFB_BANNER_SIZE 12
-
 #define RFB_BANNER "RFB "
 
-static int rfb_init(const InitServiceAPI* const init_api);
-static int rfb_validate(ServiceValidationArgs* args);
-
-static const RNAServiceElement svc_element =
+RfbServiceDetector::RfbServiceDetector(ServiceDiscovery* sd)
 {
-    nullptr,
-    &rfb_validate,
-    nullptr,
-    DETECTOR_TYPE_DECODER,
-    1,
-    1,
-    0,
-    "rfb"
-};
+    handler = sd;
+    name = "rfb";
+    proto = IpProtocol::TCP;
+    detectorType = DETECTOR_TYPE_DECODER;
+    current_ref_count =  1;
 
-static const RNAServiceValidationPort pp[] =
-{
-    { &rfb_validate, 5900, IpProtocol::TCP, 0 },
-    { &rfb_validate, 5901, IpProtocol::TCP, 0 },
-    { &rfb_validate, 5902, IpProtocol::TCP, 0 },
-    { &rfb_validate, 5903, IpProtocol::TCP, 0 },
-    { &rfb_validate, 5904, IpProtocol::TCP, 0 },
-    { &rfb_validate, 5905, IpProtocol::TCP, 0 },
-    { &rfb_validate, 5906, IpProtocol::TCP, 0 },
-    { &rfb_validate, 5907, IpProtocol::TCP, 0 },
-    { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
-};
-
-RNAServiceValidationModule rfb_service_mod =
-{
-    "RFB",
-    &rfb_init,
-    pp,
-    nullptr,
-    nullptr,
-    0,
-    nullptr,
-    0
-};
-
-static AppRegistryEntry appIdRegistry[] =
-{
-    { APP_ID_VNC, APPINFO_FLAG_SERVICE_ADDITIONAL },
-    { APP_ID_VNC_RFB, APPINFO_FLAG_SERVICE_ADDITIONAL }
-};
-
-static int rfb_init(const InitServiceAPI* const init_api)
-{
-    init_api->RegisterPattern(&rfb_validate, IpProtocol::TCP, (uint8_t*)RFB_BANNER,
-        sizeof(RFB_BANNER) - 1, 0, "rfb");
-    unsigned i;
-    for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
+    tcp_patterns =
     {
-        DebugFormat(DEBUG_APPID,"registering appId: %d\n",appIdRegistry[i].appId);
-        init_api->RegisterAppId(&rfb_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo);
-    }
+        { (uint8_t*)RFB_BANNER, sizeof(RFB_BANNER) - 1, 0, 0, 0 },
+    };
 
-    return 0;
+    appid_registry =
+    {
+        { APP_ID_VNC, APPINFO_FLAG_SERVICE_ADDITIONAL },
+        { APP_ID_VNC_RFB, APPINFO_FLAG_SERVICE_ADDITIONAL }
+    };
+
+    service_ports =
+    {
+        { 5900, IpProtocol::TCP, false },
+        { 5901, IpProtocol::TCP, false },
+        { 5902, IpProtocol::TCP, false },
+        { 5903, IpProtocol::TCP, false },
+        { 5904, IpProtocol::TCP, false },
+        { 5905, IpProtocol::TCP, false },
+        { 5906, IpProtocol::TCP, false },
+        { 5907, IpProtocol::TCP, false }
+    };
+
+    handler->register_detector(name, this, proto);
 }
 
-static int rfb_validate(ServiceValidationArgs* args)
+RfbServiceDetector::~RfbServiceDetector()
+{
+}
+
+int RfbServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     char version[RFB_BANNER_SIZE-4];
     unsigned i;
     char* v;
     const unsigned char* p;
-    AppIdSession* asd = args->asd;
-    const uint8_t* data = args->data;
-    uint16_t size = args->size;
+    AppIdSession* asd = args.asd;
+    const uint8_t* data = args.data;
+    uint16_t size = args.size;
 
     if (!size)
         goto inprocess;
-    if (args->dir != APP_ID_FROM_RESPONDER)
+    if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
     if (size != RFB_BANNER_SIZE)
@@ -132,18 +104,16 @@ static int rfb_validate(ServiceValidationArgs* args)
         p++;
     }
     *v = 0;
-    rfb_service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element,
-        APP_ID_VNC_RFB, nullptr, version, nullptr);
+    add_service(asd, args.pkt, args.dir, APP_ID_VNC_RFB, nullptr, version, nullptr);
     appid_stats.rfb_flows++;
-    return SERVICE_SUCCESS;
+    return APPID_SUCCESS;
 
 inprocess:
-    rfb_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &svc_element);
-    return SERVICE_INPROCESS;
+    service_inprocess(asd, args.pkt, args.dir);
+    return APPID_INPROCESS;
 
 fail:
-    rfb_service_mod.api->fail_service(asd, args->pkt, args->dir, &svc_element,
-        rfb_service_mod.flow_data_index);
-    return SERVICE_NOMATCH;
+    fail_service(asd, args.pkt, args.dir);
+    return APPID_NOMATCH;
 }
 

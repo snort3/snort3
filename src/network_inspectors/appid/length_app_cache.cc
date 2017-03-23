@@ -25,10 +25,9 @@
 
 #include "length_app_cache.h"
 
+#include "application_ids.h"
 #include "hash/sfxhash.h"
 #include "log/messages.h"
-
-#include "application_ids.h"
 
 #define HASH_NUM_ROWS (1024)
 

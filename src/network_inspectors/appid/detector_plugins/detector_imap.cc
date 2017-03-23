@@ -23,76 +23,18 @@
 #include "config.h"
 #endif
 
-#include "detector_api.h"
+#include "detector_imap.h"
 
-#include "main/snort_debug.h"
-#include "search_engines/search_tool.h"
-
-#include "app_info_table.h"
 #include "appid_module.h"
-#include "client_plugins/client_app_api.h"
-#include "service_plugins/service_api.h"
+#include "app_info_table.h"
+#include "search_engines/search_tool.h"
+#include "utils/util.h"
 
 static const unsigned IMAP_USER_NAME_MAX_LEN = 32;
 static const unsigned IMAP_TAG_MAX_LEN = 6;
 static const unsigned MIN_CMDS = 3;
 
 static const char NO_LOGIN[] = " Login failed.";
-
-struct CLIENT_APP_CONFIG
-{
-    int enabled;
-};
-
-enum IMAPClientState
-{
-    IMAP_CLIENT_STATE_NON_AUTH,         // IMAP - Non-Authenticated state
-    IMAP_CLIENT_STATE_AUTH,             // IMAP - Authenticated state
-    IMAP_CLIENT_STATE_AUTHENTICATE_CMD, // IMAP - authentication-in-progress state
-    IMAP_CLIENT_STATE_STARTTLS_CMD,     // IMAP - authentication-in-progress state (probable IMAPS)
-};
-
-struct ClientAppData
-{
-    IMAPClientState state;
-    unsigned count;
-    int detected;
-    int got_user;
-    int auth;
-    int set_flags;
-    char username[IMAP_USER_NAME_MAX_LEN+1];
-    char imapCmdTag[IMAP_TAG_MAX_LEN+1];
-};
-
-static CLIENT_APP_CONFIG ca_config;
-
-static CLIENT_APP_RETCODE init(const InitClientAppAPI* const init_api, SF_LIST* config);
-static void clean();
-static CLIENT_APP_RETCODE validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet* pkt, Detector* userData);
-
-static RNAClientAppModule client_app_mod =
-{
-    "IMAP",
-    IpProtocol::TCP,
-    &init,
-    &clean,
-    &validate,
-    1,
-    nullptr,
-    nullptr,
-    0,
-    nullptr,
-    1,
-    0
-};
-
-struct Client_App_Pattern
-{
-    const uint8_t* pattern;
-    unsigned length;
-    int eoc;
-};
 
 static const uint8_t CAPA[] = "CAPABILITY\x00d\x00a";
 static const uint8_t CAPA2[] = "CAPABILITY\x00a";
@@ -127,53 +69,6 @@ static const uint8_t UID[] = "UID ";
 static const uint8_t STARTTLS[] = "STARTTLS\x00d\x00a";
 static const uint8_t STARTTLS2[] = "STARTTLS\x00a";
 
-enum Client_App_Pattern_Index
-{
-    /* order MUST correspond to that in the array, patterns[], below */
-    PATTERN_LOGIN,
-    PATTERN_AUTHENTICATE,
-    PATTERN_STARTTLS,
-    PATTERN_STARTTLS2,
-    PATTERN_IMAP_OTHER // always last
-};
-
-static Client_App_Pattern patterns[] =
-{
-    { LOGIN, sizeof(LOGIN)-1, 0 },
-    { AUTHENTICATE, sizeof(AUTHENTICATE)-1, 0 },
-    { STARTTLS, sizeof(STARTTLS)-1, 1 },
-    { STARTTLS2, sizeof(STARTTLS2)-1, 1 },
-    /* These are represented by index >= PATTERN_IMAP_OTHER */
-    { CAPA, sizeof(CAPA)-1, 1 },
-    { CAPA2, sizeof(CAPA2)-1, 1 },
-    { NOOP, sizeof(NOOP)-1, 1 },
-    { NOOP2, sizeof(NOOP2)-1, 1 },
-    { LOGOUT, sizeof(LOGOUT)-1, 1 },
-    { LOGOUT2, sizeof(LOGOUT2)-1, 1 },
-    { SELECT, sizeof(SELECT)-1, 0 },
-    { CREATE, sizeof(CREATE)-1, 0 },
-    { DELETE, sizeof(DELETE)-1, 0 },
-    { RENAME, sizeof(RENAME)-1, 0 },
-    { SUBSCRIBE, sizeof(SUBSCRIBE)-1, 0 },
-    { UNSUBSCRIBE, sizeof(UNSUBSCRIBE)-1, 0 },
-    { LISTC, sizeof(LISTC)-1, 0 },
-    { LSUB, sizeof(LSUB)-1, 0 },
-    { APPEND, sizeof(APPEND)-1, 0 },
-    { CHECK, sizeof(CHECK)-1, 1 },
-    { CHECK2, sizeof(CHECK2)-1, 1 },
-    { CLOSE, sizeof(CLOSE)-1, 1 },
-    { CLOSE2, sizeof(CLOSE2)-1, 1 },
-    { EXPUNGE, sizeof(EXPUNGE)-1, 1 },
-    { EXPUNGE2, sizeof(EXPUNGE2)-1, 1 },
-    { SEARCH, sizeof(SEARCH)-1, 0 },
-    { FETCH, sizeof(FETCH)-1, 0 },
-    { PARTIAL, sizeof(PARTIAL)-1, 0 },
-    { STORE, sizeof(STORE)-1, 0 },
-    { COPY, sizeof(COPY)-1, 0 },
-    { UID, sizeof(UID)-1, 0 },
-};
-
-static size_t longest_pattern;
 static const unsigned IMAP_PORT = 143;
 static const unsigned IMAP_COUNT_THRESHOLD = 2;
 static const char OK[] = "OK";
@@ -209,6 +104,38 @@ enum IMAPState
     IMAP_STATE_ALNUM_TAG
 };
 
+static const char IMAP_PATTERN[] = "* OK";
+
+enum IMAPClientState
+{
+    IMAP_CLIENT_STATE_NON_AUTH,         // IMAP - Non-Authenticated state
+    IMAP_CLIENT_STATE_AUTH,             // IMAP - Authenticated state
+    IMAP_CLIENT_STATE_AUTHENTICATE_CMD, // IMAP - authentication-in-progress state
+    IMAP_CLIENT_STATE_STARTTLS_CMD,     // IMAP - authentication-in-progress state (probable IMAPS)
+};
+
+enum Client_App_Pattern_Index
+{
+    /* order MUST correspond to that in the array, patterns[], below */
+    PATTERN_LOGIN,
+    PATTERN_AUTHENTICATE,
+    PATTERN_STARTTLS,
+    PATTERN_STARTTLS2,
+    PATTERN_IMAP_OTHER // always last
+};
+
+struct ClientAppData
+{
+    IMAPClientState state;
+    unsigned count;
+    int detected;
+    int got_user;
+    int auth;
+    int set_flags;
+    char username[IMAP_USER_NAME_MAX_LEN+1];
+    char imapCmdTag[IMAP_TAG_MAX_LEN+1];
+};
+
 struct ServiceIMAPData
 {
     IMAPState state;
@@ -219,42 +146,6 @@ struct ServiceIMAPData
     char tagValue[IMAP_TAG_MAX_LEN+1];
 };
 
-static int imap_init(const InitServiceAPI* const init_api);
-static int imap_validate(ServiceValidationArgs* args);
-
-static const RNAServiceElement svc_element =
-{
-    nullptr,
-    &imap_validate,
-    nullptr,
-    DETECTOR_TYPE_DECODER,
-    1,
-    1,
-    0,
-    "imap",
-};
-
-static const RNAServiceValidationPort pp[] =
-{
-    { &imap_validate, IMAP_PORT, IpProtocol::TCP, 0 },
-    { &imap_validate, 220, IpProtocol::TCP, 0 },
-    { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
-};
-
-static RNAServiceValidationModule service_mod =
-{
-    "IMAP",
-    &imap_init,
-    pp,
-    nullptr,
-    nullptr,
-    1,
-    nullptr,
-    0
-};
-
-static const char IMAP_PATTERN[] = "* OK";
-
 struct DetectorData
 {
     ClientAppData client;
@@ -262,110 +153,7 @@ struct DetectorData
     int need_continue;
 };
 
-SO_PUBLIC RNADetectorValidationModule imap_detector_mod =
-{
-    &service_mod,
-    &client_app_mod,
-    nullptr,
-    0,
-};
-
-static AppRegistryEntry appIdRegistry[] =
-{
-    { APP_ID_IMAP, APPINFO_FLAG_CLIENT_USER },
-    { APP_ID_IMAPS, APPINFO_FLAG_CLIENT_USER }
-};
-
-static CLIENT_APP_RETCODE init(const InitClientAppAPI* const init_api, SF_LIST* config)
-{
-    unsigned i;
-    RNAClientAppModuleConfigItem* item;
-    SearchTool* cmd_matcher = new SearchTool("ac_full");
-
-    for (i=0; i < sizeof(patterns)/sizeof(*patterns); i++)
-    {
-        cmd_matcher->add(patterns[i].pattern, patterns[i].length, &patterns[i]);
-        if (patterns[i].length > longest_pattern)
-            longest_pattern = patterns[i].length;
-    }
-    cmd_matcher->prep();
-
-    AppidConfigElement::add_generic_config_element(client_app_mod.name, cmd_matcher);
-
-    ca_config.enabled = 1;
-
-    if (config)
-    {
-        SF_LNODE* cursor = nullptr;
-        for (item = (RNAClientAppModuleConfigItem*)sflist_first(config, &cursor);
-            item;
-            item = (RNAClientAppModuleConfigItem*)sflist_next(&cursor))
-        {
-            DebugFormat(DEBUG_LOG,"Processing %s: %s\n",item->name, item->value);
-            if (strcasecmp(item->name, "enabled") == 0)
-                ca_config.enabled = atoi(item->value);
-        }
-    }
-
-    if (ca_config.enabled)
-        for (i=0; i < sizeof(patterns)/sizeof(*patterns); i++)
-        {
-            DebugFormat(DEBUG_LOG,"registering pattern: %s\n",(const char*)patterns[i].pattern);
-            init_api->RegisterPatternNoCase(&validate, IpProtocol::TCP, patterns[i].pattern,
-                patterns[i].length, -1);
-        }
-
-    unsigned j;
-    for (j=0; j < sizeof(appIdRegistry)/sizeof(*appIdRegistry); j++)
-    {
-        DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[j].appId);
-        init_api->RegisterAppId(&validate, appIdRegistry[j].appId, appIdRegistry[j].additionalInfo);
-    }
-
-    return CLIENT_APP_SUCCESS;
-}
-
-static int imap_init(const InitServiceAPI* const init_api)
-{
-    init_api->RegisterPatternUser(&imap_validate, IpProtocol::TCP, (uint8_t*)IMAP_PATTERN,
-        sizeof(IMAP_PATTERN)-1, 0, "imap");
-
-    unsigned j;
-    for (j=0; j < sizeof(appIdRegistry)/sizeof(*appIdRegistry); j++)
-    {
-        DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[j].appId);
-        init_api->RegisterAppId(&imap_validate, appIdRegistry[j].appId,
-            appIdRegistry[j].additionalInfo);
-    }
-
-    return 0;
-}
-
-static void clean()
-{
-    SearchTool* cmd_matcher =
-        (SearchTool*)AppidConfigElement::find_generic_config_element(client_app_mod.name);
-    if (cmd_matcher)
-        delete cmd_matcher;
-
-    AppidConfigElement::remove_generic_config_element(client_app_mod.name);
-}
-
-static int pattern_match(void* id, void*, int match_end_pos, void* data, void*)
-{
-    Client_App_Pattern* matching_pattern = (Client_App_Pattern*)id;
-
-    //  Pattern must start at beginning of data. Otherwise, keep looking.
-    if ((int)matching_pattern->length != match_end_pos)
-        return 0;
-
-    //  Found matching pattern.
-    Client_App_Pattern** pcmd = (Client_App_Pattern**)data;
-    *pcmd = matching_pattern;
-    return 1;
-}
-
-static inline int isImapTagChar(uint8_t tag)
+static int isImapTagChar(uint8_t tag)
 {
     /* Per RFC 3501
        tag char's cannot consist of ", %, { */
@@ -388,7 +176,7 @@ static inline int isImapTagChar(uint8_t tag)
 }
 
 static int imap_server_validate(DetectorData* dd, const uint8_t* data, uint16_t size,
-    AppIdSession* asd)
+    AppIdSession* asd, AppIdDetector* detector)
 {
     const uint8_t* end = data + size;
     ServiceIMAPData* id = &dd->server;
@@ -437,7 +225,7 @@ static int imap_server_validate(DetectorData* dd, const uint8_t* data, uint16_t 
             if (*data == OK[id->pos])
             {
                 id->pos++;
-                if (id->pos >= sizeof(OK)-1)
+                if (id->pos >= sizeof(OK) - 1)
                     id->state = IMAP_STATE_BANNER_WHITE_SPACE;
             }
             else
@@ -505,7 +293,7 @@ static int imap_server_validate(DetectorData* dd, const uint8_t* data, uint16_t 
                 return -1;
             break;
         case IMAP_STATE_ALNUM_TAG:
-            if ((id->pos < (sizeof(id->tagValue)-1))
+            if ((id->pos < (sizeof(id->tagValue) - 1))
                 && (isImapTagChar(*data)))
             {
                 id->tagValue[id->pos] = *data;
@@ -540,7 +328,7 @@ static int imap_server_validate(DetectorData* dd, const uint8_t* data, uint16_t 
             if (*data == OK[id->pos])
             {
                 id->pos++;
-                if (id->pos >= sizeof(OK)-1)
+                if (id->pos >= sizeof(OK) - 1)
                 {
                     id->pos = 0;
                     id->state = IMAP_STATE_MID_OK_LOGIN;
@@ -558,7 +346,7 @@ static int imap_server_validate(DetectorData* dd, const uint8_t* data, uint16_t 
         case IMAP_STATE_MID_OK_LOGIN:
             // add user successful - note: use  of LOGIN cmd implies no  IMAPS
             if ((id->flags & IMAP_FLAG_RESULT_OK) && dd->client.username[0])
-                service_mod.api->add_user(asd, dd->client.username, APP_ID_IMAP, 1);
+                detector->add_user(asd, dd->client.username, APP_ID_IMAP, 1);
 
             id->state = IMAP_STATE_MID_LINE;
             break;
@@ -566,7 +354,7 @@ static int imap_server_validate(DetectorData* dd, const uint8_t* data, uint16_t 
             if (*data == NO[id->pos])
             {
                 id->pos++;
-                if (id->pos >= sizeof(NO)-1)
+                if (id->pos >= sizeof(NO) - 1)
                 {
                     id->pos = 0;
                     id->state = IMAP_STATE_MID_NO_LOGIN;
@@ -584,12 +372,12 @@ static int imap_server_validate(DetectorData* dd, const uint8_t* data, uint16_t 
             if (*data == NO_LOGIN[id->pos])
             {
                 id->pos++;
-                if (id->pos >= sizeof(NO_LOGIN)-1)
+                if (id->pos >= sizeof(NO_LOGIN) - 1)
                 {
                     id->state = IMAP_STATE_ALNUM_CODE_TERM;
                     // add user login failed - note: use  of LOGIN cmd implies no  IMAPS
                     if ((id->flags & IMAP_FLAG_RESULT_NO) && dd->client.username[0])
-                        service_mod.api->add_user(asd, dd->client.username, APP_ID_IMAP, 0);
+                        detector->add_user(asd, dd->client.username, APP_ID_IMAP, 0);
                 }
             }
             else
@@ -600,7 +388,7 @@ static int imap_server_validate(DetectorData* dd, const uint8_t* data, uint16_t 
             if (*data == BAD[id->pos])
             {
                 id->pos++;
-                if (id->pos >= sizeof(BAD)-1)
+                if (id->pos >= sizeof(BAD) - 1)
                 {
                     id->state = IMAP_STATE_ALNUM_CODE_TERM;
                     if (!strcasecmp(id->tagValue, dd->client.imapCmdTag))
@@ -633,7 +421,8 @@ static int imap_server_validate(DetectorData* dd, const uint8_t* data, uint16_t 
     {
         if (id->flags & IMAP_FLAG_RESULT_OK)
         {
-            client_app_mod.api->add_app(asd, APP_ID_IMAPS, APP_ID_IMAPS, nullptr);
+            // FIXIT-L - this may be called from server side
+            //add_app(asd, APP_ID_IMAPS, APP_ID_IMAPS, nullptr);
             asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
         }
         else
@@ -641,7 +430,7 @@ static int imap_server_validate(DetectorData* dd, const uint8_t* data, uint16_t 
     }
     else if (dd->client.state == IMAP_CLIENT_STATE_AUTHENTICATE_CMD)
     {
-    	// stop discarding intervening command packets (part of the authenticate)
+        // stop discarding intervening command packets (part of the authenticate)
         dd->client.auth = 0;
         dd->client.state = (id->flags & IMAP_FLAG_RESULT_OK) ?
             IMAP_CLIENT_STATE_AUTH : IMAP_CLIENT_STATE_NON_AUTH;
@@ -650,31 +439,125 @@ static int imap_server_validate(DetectorData* dd, const uint8_t* data, uint16_t 
     return 0;
 }
 
-static CLIENT_APP_RETCODE validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet*, Detector*)
+static AppIdFlowContentPattern imap_client_patterns[] =
 {
-    const uint8_t* s = data;
-    const uint8_t* end = (data + size);
+    { LOGIN, sizeof(LOGIN) - 1, -1, 1, 0 },
+    { AUTHENTICATE, sizeof(AUTHENTICATE) - 1, -1, 1, 0 },
+    { STARTTLS, sizeof(STARTTLS) - 1, -1, 1, 0 },
+    { STARTTLS2, sizeof(STARTTLS2) - 1, -1, 1, 0 },
+    /* These are represented by index >= PATTERN_IMAP_OTHER */
+    { CAPA, sizeof(CAPA) - 1, -1, 1, 0 },
+    { CAPA2, sizeof(CAPA2) - 1, -1, 1, 0 },
+    { NOOP, sizeof(NOOP) - 1, -1, 1, 0 },
+    { NOOP2, sizeof(NOOP2) - 1, -1, 1, 0 },
+    { LOGOUT, sizeof(LOGOUT) - 1, -1, 1, 0 },
+    { LOGOUT2, sizeof(LOGOUT2) - 1, -1, 1, 0 },
+    { SELECT, sizeof(SELECT) - 1, -1, 1, 0 },
+    { CREATE, sizeof(CREATE) - 1, -1, 1, 0 },
+    { DELETE, sizeof(DELETE) - 1, -1, 1, 0 },
+    { RENAME, sizeof(RENAME) - 1, -1, 1, 0 },
+    { SUBSCRIBE, sizeof(SUBSCRIBE) - 1, -1, 1, 0 },
+    { UNSUBSCRIBE, sizeof(UNSUBSCRIBE) - 1, -1, 1, 0 },
+    { LISTC, sizeof(LISTC) - 1, -1, 1, 0 },
+    { LSUB, sizeof(LSUB) - 1, -1, 1, 0 },
+    { APPEND, sizeof(APPEND) - 1, -1, 1, 0 },
+    { CHECK, sizeof(CHECK) - 1, -1, 1, 0 },
+    { CHECK2, sizeof(CHECK2) - 1, -1, 1, 0 },
+    { CLOSE, sizeof(CLOSE) - 1, -1, 1, 0 },
+    { CLOSE2, sizeof(CLOSE2) - 1, -1, 1, 0 },
+    { EXPUNGE, sizeof(EXPUNGE) - 1, -1, 1, 0 },
+    { EXPUNGE2, sizeof(EXPUNGE2) - 1, -1, 1, 0 },
+    { SEARCH, sizeof(SEARCH) - 1, -1, 1, 0 },
+    { FETCH, sizeof(FETCH) - 1, -1, 1, 0 },
+    { PARTIAL, sizeof(PARTIAL) - 1, -1, 1, 0 },
+    { STORE, sizeof(STORE) - 1, -1, 1, 0 },
+    { COPY, sizeof(COPY) - 1, -1, 1, 0 },
+    { UID, sizeof(UID) - 1, -1, 1, 0 },
+};
+static const uint32_t num_imap_client_patterns = sizeof(imap_client_patterns) /
+    sizeof(*imap_client_patterns);
+
+// each entry in this array corresponds to the entry in the imap_client_patterns array
+// above and indicates if the pattern is the end of a protocol command
+static std::array<bool, num_imap_client_patterns> eoc =
+{
+    { false, false, true, true, true, true, true, true, true, true, false, false,
+      false, false, false, false, false, false, false, true, true, true, true, true, true,
+      false, false, false, false, false, false }
+};
+
+ImapClientDetector::ImapClientDetector(ClientDiscovery* cdm)
+{
+    handler = cdm;
+    name = "IMAP";
+    proto = IpProtocol::TCP;
+    minimum_matches = 1;
+    provides_user = true;
+
+    tcp_patterns.assign(imap_client_patterns, imap_client_patterns + num_imap_client_patterns);
+
+    appid_registry =
+    {
+        { APP_ID_IMAP, APPINFO_FLAG_CLIENT_USER },
+        { APP_ID_IMAPS, APPINFO_FLAG_CLIENT_USER }
+    };
+
+    handler->register_detector(name, this, proto);
+}
+
+ImapClientDetector::~ImapClientDetector()
+{
+    if (cmd_matcher)
+        delete cmd_matcher;
+}
+
+void ImapClientDetector::do_custom_init()
+{
+    unsigned cooked_idx = 1;
+    cmd_matcher = new SearchTool("ac_full");
+
+    if ( tcp_patterns.size() )
+        for (auto& pat : tcp_patterns)
+        {
+            cmd_matcher->add(pat.pattern, pat.length, cooked_idx++);
+            if (pat.length > longest_pattern)
+                longest_pattern = pat.length;
+        }
+    cmd_matcher->prep();
+}
+
+static int pattern_match(void* id, void*, int match_end_pos, void* data, void*)
+{
+    unsigned long idx = (unsigned long)id;
+    if ( (int)imap_client_patterns[ idx - 1].length != match_end_pos )
+        return 0;
+
+    unsigned long* pat_idx = (unsigned long*)data;
+    *pat_idx = (unsigned long)id;
+    return 1;
+}
+
+int ImapClientDetector::validate(AppIdDiscoveryArgs& args)
+{
+    const uint8_t* s = args.data;
+    const uint8_t* end = (args.data + args.size);
     unsigned length;
-    Client_App_Pattern* cmd = nullptr;
-    DetectorData* dd;
+    AppIdFlowContentPattern* cmd = nullptr;
     ClientAppData* fd;
-    char tag[IMAP_TAG_MAX_LEN+1] = { 0 };
-    SearchTool* cmd_matcher =
-        (SearchTool*)AppidConfigElement::find_generic_config_element(client_app_mod.name);
+    char tag[IMAP_TAG_MAX_LEN + 1] = { 0 };
 
 #ifdef APP_ID_USES_REASSEMBLED
     Stream::flush_response_flush(pkt);
 #endif
 
-    if (!size)
-        return CLIENT_APP_INPROCESS;
+    if (!args.size)
+        return APPID_INPROCESS;
 
-    dd = (DetectorData*)imap_detector_mod.api->data_get(asd, imap_detector_mod.flow_data_index);
+    DetectorData* dd = (DetectorData*)data_get(args.asd);
     if (!dd)
     {
         dd = (DetectorData*)snort_calloc(sizeof(DetectorData));
-        imap_detector_mod.api->data_add(asd, dd, imap_detector_mod.flow_data_index, &snort_free);
+        data_add(args.asd, dd, &snort_free);
         dd->server.flags = IMAP_FLAG_FIRST_PACKET;
         fd = &dd->client;
     }
@@ -685,19 +568,19 @@ static CLIENT_APP_RETCODE validate(const uint8_t* data, uint16_t size, const int
     {
         dd->need_continue = 1;
         fd->set_flags = 1;
-        asd->set_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+        args.asd->set_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
     }
 
-    if (dir == APP_ID_FROM_RESPONDER)
+    if (args.dir == APP_ID_FROM_RESPONDER)
     {
-        if (imap_server_validate(dd, data, size, asd))
-            asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
-        return CLIENT_APP_INPROCESS;
+        if (imap_server_validate(dd, args.data, args.size, args.asd, this))
+            args.asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+        return APPID_INPROCESS;
     }
 
     while ((length = (end - s)) > 0)
     {
-        unsigned pattern_index;
+        unsigned long pattern_index;
         if (fd->auth)
         {
             /* authentication exchange in progress ignore all client-side
@@ -728,9 +611,9 @@ static CLIENT_APP_RETCODE validate(const uint8_t* data, uint16_t size, const int
         if (end == s || !isblank(*s))
         {
             dd->need_continue = 0;
-            asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
-            asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
-            return CLIENT_APP_SUCCESS;
+            args.asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+            args.asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+            return APPID_SUCCESS;
         }
         for (; (s < end) && isblank(*s); s++)
             ;
@@ -739,31 +622,33 @@ static CLIENT_APP_RETCODE validate(const uint8_t* data, uint16_t size, const int
         if ((length = (end - s)) <= 0)
         {
             dd->need_continue = 0;
-            asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
-            asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
-            return CLIENT_APP_SUCCESS;
+            args.asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+            args.asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+            return APPID_SUCCESS;
         }
         cmd = nullptr;
+        pattern_index = 0;
+        // FIXIT-M - this pattern search looks wrong, the pattern_match callback does some funny
+        // stuff ... do we have tests that verify the client side?
         cmd_matcher->find_all((char*)s, (length > longest_pattern ? longest_pattern : length),
-            &pattern_match, false, (void*)&cmd);
+            &pattern_match, false, (void*)&pattern_index);
 
+        if (pattern_index > 0)
+            cmd = &tcp_patterns[ pattern_index - 1];
         if (!cmd)
         {
             if ( (s[0] >= 'A' && s[0] <= 'Z') || (s[0] >= 'a' && s[0] <= 'z') )
             {
                 // Command was not in the recognized list. Keep searching.
-                return CLIENT_APP_INPROCESS;
+                return APPID_INPROCESS;
             }
             else
             {
                 // IMAP commands are English words, or at least start with X.
-                return CLIENT_APP_ENULL; // anything but CLIENT_APP_SUCCESS or CLIENT_APP_INPROCESS
+                return APPID_ENULL; // anything but CLIENT_APP_SUCCESS or CLIENT_APP_INPROCESS
             }
         }
         s += cmd->length;
-
-        pattern_index = cmd - patterns; // diff of ptr into array and its base addr is the
-                                        // corresponding index.
         switch (fd->state)
         {
         case IMAP_CLIENT_STATE_AUTHENTICATE_CMD:
@@ -793,13 +678,13 @@ static CLIENT_APP_RETCODE validate(const uint8_t* data, uint16_t size, const int
                                 fd->count++;
                                 if (fd->count == MIN_CMDS)
                                 {
-                                    client_app_mod.api->add_app(asd, APP_ID_IMAP, APP_ID_IMAP,
-                                        nullptr);
+                                    add_app(args.asd, APP_ID_IMAP, APP_ID_IMAP, nullptr);
                                     fd->detected = 1;
                                     if (fd->got_user)
                                     {
-                                        asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
-                                        asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+                                        args.asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+                                        args.asd->clear_session_flags(
+                                            APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
                                     }
                                     fd->state = IMAP_CLIENT_STATE_AUTH;
                                 }
@@ -836,14 +721,13 @@ static CLIENT_APP_RETCODE validate(const uint8_t* data, uint16_t size, const int
                                 fd->count++;
                                 if (fd->count == MIN_CMDS)
                                 {
-                                    client_app_mod.api->add_app(asd, APP_ID_IMAP, APP_ID_IMAP,
-                                        nullptr);
+                                    add_app(args.asd, APP_ID_IMAP, APP_ID_IMAP, nullptr);
                                     fd->detected = 1;
                                     if (fd->got_user)
                                     {
-                                        asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
-                                        asd->clear_session_flags(
-                                        		APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+                                        args.asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+                                        args.asd->clear_session_flags(
+                                            APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
                                     }
                                 }
                                 *p = 0;
@@ -866,8 +750,7 @@ static CLIENT_APP_RETCODE validate(const uint8_t* data, uint16_t size, const int
                 strncpy(fd->imapCmdTag, tag, sizeof(fd->imapCmdTag));
                 fd->state = IMAP_CLIENT_STATE_STARTTLS_CMD;
                 for (; (s < end) && (*s == '\r' || *s == '\n'); s++)
-                    ;                                                 // all we need because
-                                                                      // cmd->eoc == 1
+                    ;                            // all we need because cmd->eoc == 1
                 /* No other commands will be coming until the result from this one. */
                 break;
 
@@ -887,15 +770,15 @@ static CLIENT_APP_RETCODE validate(const uint8_t* data, uint16_t size, const int
                 fd->count++;
                 if (fd->count == MIN_CMDS)
                 {
-                    client_app_mod.api->add_app(asd, APP_ID_IMAP, APP_ID_IMAP, nullptr);
+                    add_app(args.asd, APP_ID_IMAP, APP_ID_IMAP, nullptr);
                     fd->detected = 1;
                     if (fd->got_user)
                     {
-                        asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
-                        asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+                        args.asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+                        args.asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
                     }
                 }
-                if (!cmd->eoc)
+                if (!eoc[pattern_index])
                     for (; (s < end) && *s != '\r' && *s != '\n'; s++)
                         ;
                 for (; (s < end) && (*s == '\r' || *s == '\n'); s++)
@@ -909,15 +792,15 @@ static CLIENT_APP_RETCODE validate(const uint8_t* data, uint16_t size, const int
             fd->count++;
             if (fd->count == MIN_CMDS)
             {
-                client_app_mod.api->add_app(asd, APP_ID_IMAP, APP_ID_IMAP, nullptr);
+                add_app(args.asd, APP_ID_IMAP, APP_ID_IMAP, nullptr);
                 fd->detected = 1;
                 if (fd->got_user)
                 {
-                    asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
-                    asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+                    args.asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+                    args.asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
                 }
             }
-            if (!cmd->eoc)
+            if (!eoc[pattern_index])
                 for (; (s < end) && *s != '\r' && *s != '\n'; s++)
                     ;
             for (; (s < end) && (*s == '\r' || *s == '\n'); s++)
@@ -926,32 +809,63 @@ static CLIENT_APP_RETCODE validate(const uint8_t* data, uint16_t size, const int
         break;
         } // end switch(fd->state)
     } // end 'while'
-    return CLIENT_APP_INPROCESS;
+
+    return APPID_INPROCESS;
 }
 
-static int imap_validate(ServiceValidationArgs* args)
+ImapServiceDetector::ImapServiceDetector(ServiceDiscovery* sd)
+{
+    handler = sd;
+    name = "IMAP";
+    proto = IpProtocol::TCP;
+    provides_user = true;
+    detectorType = DETECTOR_TYPE_DECODER;
+    current_ref_count = 1;
+
+    tcp_patterns =
+    {
+        { (const uint8_t*)IMAP_PATTERN, sizeof(IMAP_PATTERN) - 1, 0, 0, 0 }
+    };
+
+    appid_registry =
+    {
+        { APP_ID_IMAP, APPINFO_FLAG_CLIENT_USER },
+        { APP_ID_IMAPS, APPINFO_FLAG_CLIENT_USER }
+    };
+
+    service_ports =
+    {
+        { IMAP_PORT, IpProtocol::TCP, false },
+        { 220, IpProtocol::TCP, false },
+    };
+
+    handler->register_detector(name, this, proto);
+}
+
+ImapServiceDetector::~ImapServiceDetector()
+{
+}
+
+int ImapServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     DetectorData* dd;
     ServiceIMAPData* id;
-    AppIdSession* asd = args->asd;
-    const uint8_t* data = args->data;
-    uint16_t size = args->size;
 
-    if (args->dir != APP_ID_FROM_RESPONDER)
+    if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
 #ifdef APP_ID_USES_REASSEMBLED
     Stream::flush_response_flush(pkt);
 #endif
 
-    if (!size)
+    if (!args.size)
         goto inprocess;
 
-    dd = (DetectorData*)imap_detector_mod.api->data_get(asd, imap_detector_mod.flow_data_index);
+    dd = (DetectorData*)data_get(args.asd);
     if (!dd)
     {
         dd = (DetectorData*)snort_calloc(sizeof(DetectorData));
-        imap_detector_mod.api->data_add(asd, dd, imap_detector_mod.flow_data_index, &snort_free);
+        data_add(args.asd, dd, &snort_free);
         id = &dd->server;
         id->state = IMAP_STATE_BEGIN;
         id->flags = IMAP_FLAG_FIRST_PACKET;
@@ -960,55 +874,52 @@ static int imap_validate(ServiceValidationArgs* args)
         id = &dd->server;
 
     // server side is seeing packets so no need for client side to process them
-    asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+    args.asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
 
     if (dd->need_continue)
-        asd->set_session_flags(APPID_SESSION_CONTINUE);
+        args.asd->set_session_flags(APPID_SESSION_CONTINUE);
     else
     {
-        asd->clear_session_flags(APPID_SESSION_CONTINUE);
-        if (asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+        args.asd->clear_session_flags(APPID_SESSION_CONTINUE);
+        if (args.asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
         {
             appid_stats.imap_flows++;
-            return SERVICE_SUCCESS;
+            return APPID_SUCCESS;
         }
     }
 
-    if (!imap_server_validate(dd, data, size, asd))
+    if (!imap_server_validate(dd, args.data, args.size, args.asd, this))
     {
         if ((id->flags & IMAP_FLAG_RESULT_OK) &&
-                dd->client.state == IMAP_CLIENT_STATE_STARTTLS_CMD)
+            dd->client.state == IMAP_CLIENT_STATE_STARTTLS_CMD)
         {
             /* IMAP server response to STARTTLS command from client was OK */
-            service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element,
-                APP_ID_IMAPS, nullptr, nullptr, nullptr);
+            add_service(args.asd, args.pkt, args.dir, APP_ID_IMAPS, nullptr, nullptr, nullptr);
             appid_stats.imaps_flows++;
-            return SERVICE_SUCCESS;
+            return APPID_SUCCESS;
         }
 
         if (id->count >= IMAP_COUNT_THRESHOLD &&
-                !asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+            !args.asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
         {
-            service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element,
-                APP_ID_IMAP, nullptr, nullptr, nullptr);
+            add_service(args.asd, args.pkt, args.dir, APP_ID_IMAP, nullptr, nullptr, nullptr);
             appid_stats.imap_flows++;
-            return SERVICE_SUCCESS;
+            return APPID_SUCCESS;
         }
     }
-    else if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+    else if (!args.asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
     {
-        service_mod.api->fail_service(asd, args->pkt, args->dir, &svc_element,
-            service_mod.flow_data_index);
-        return SERVICE_NOMATCH;
+        fail_service(args.asd, args.pkt, args.dir);
+        return APPID_NOMATCH;
     }
     else
     {
-        asd->clear_session_flags(APPID_SESSION_CONTINUE);
-        return SERVICE_SUCCESS;
+        args.asd->clear_session_flags(APPID_SESSION_CONTINUE);
+        return APPID_SUCCESS;
     }
 
 inprocess:
-    service_mod.api->service_inprocess(asd, args->pkt, args->dir, &svc_element);
-    return SERVICE_INPROCESS;
+    service_inprocess(args.asd, args.pkt, args.dir);
+    return APPID_INPROCESS;
 }
 

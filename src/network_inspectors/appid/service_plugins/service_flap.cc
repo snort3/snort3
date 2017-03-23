@@ -25,8 +25,6 @@
 
 #include "service_flap.h"
 
-#include "main/snort_debug.h"
-
 #define FLAP_PORT   5190
 
 enum FLAPState
@@ -76,84 +74,61 @@ struct FLAPHeader
 
 #pragma pack()
 
-static int flap_init(const InitServiceAPI* const init_api);
-static int flap_validate(ServiceValidationArgs* args);
-
-static const RNAServiceElement svc_element =
-{
-    nullptr,
-    &flap_validate,
-    nullptr,
-    DETECTOR_TYPE_DECODER,
-    1,
-    1,
-    0,
-    "flap"
-};
-
-static const RNAServiceValidationPort pp[] =
-{
-    { &flap_validate, 5190, IpProtocol::TCP, 0 },
-    { &flap_validate, 9898, IpProtocol::TCP, 0 },
-    { &flap_validate, 4443, IpProtocol::TCP, 0 },
-    { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
-};
-
-RNAServiceValidationModule flap_service_mod =
-{
-    "FLAP",
-    &flap_init,
-    pp,
-    nullptr,
-    nullptr,
-    0,
-    nullptr,
-    0
-};
-
 static uint8_t FLAP_PATTERN[] = { 0x2A, 0x01 };
 
-static AppRegistryEntry appIdRegistry[] =
+FlapServiceDetector::FlapServiceDetector(ServiceDiscovery* sd)
 {
-    { APP_ID_AOL_INSTANT_MESSENGER, 0 }
-};
+    handler = sd;
+    name = "flap";
+    proto = IpProtocol::TCP;
+    detectorType = DETECTOR_TYPE_DECODER;
+    current_ref_count =  1;
 
-static int flap_init(const InitServiceAPI* const init_api)
-{
-    init_api->RegisterPattern(&flap_validate, IpProtocol::TCP, FLAP_PATTERN,
-            sizeof(FLAP_PATTERN), 0, "flap");
-    //unsigned i;
-    for (unsigned i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
+    tcp_patterns =
     {
-        DebugFormat(DEBUG_APPID,"registering appId: %d\n",appIdRegistry[i].appId);
-        init_api->RegisterAppId(&flap_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo);
-    }
+        { FLAP_PATTERN, sizeof(FLAP_PATTERN), 0, 0, 0 },
+    };
 
-    return 0;
+    appid_registry =
+    {
+        { APP_ID_AOL_INSTANT_MESSENGER, 0 }
+    };
+
+    service_ports =
+    {
+        { 5190, IpProtocol::TCP, false },
+        { 9898, IpProtocol::TCP, false },
+        { 4443, IpProtocol::TCP, false }
+    };
+
+    handler->register_detector(name, this, proto);
 }
 
-static int flap_validate(ServiceValidationArgs* args)
+FlapServiceDetector::~FlapServiceDetector()
+{
+}
+
+int FlapServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     ServiceFLAPData* sf;
-    const uint8_t* data = args->data;
-    const FLAPHeader* hdr = (const FLAPHeader*)args->data;
+    const uint8_t* data = args.data;
+    const FLAPHeader* hdr = (const FLAPHeader*)args.data;
     const FLAPFNAC* ff;
     const FLAPTLV* tlv;
-    AppIdSession* asd = args->asd;
-    uint16_t size = args->size;
+    AppIdSession* asd = args.asd;
+    uint16_t size = args.size;
     uint16_t len;
 
     if (!size)
         goto inprocess;
-    if (args->dir != APP_ID_FROM_RESPONDER)
+    if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    sf = (ServiceFLAPData*)flap_service_mod.api->data_get(asd, flap_service_mod.flow_data_index);
+    sf = (ServiceFLAPData*)data_get(asd);
     if (!sf)
     {
         sf = (ServiceFLAPData*)snort_calloc(sizeof(ServiceFLAPData));
-        flap_service_mod.api->data_add(asd, sf, flap_service_mod.flow_data_index, &snort_free);
+        data_add(asd, sf, &snort_free);
         sf->state = FLAP_STATE_ACK;
     }
 
@@ -228,17 +203,15 @@ static int flap_validate(ServiceValidationArgs* args)
     }
 
 fail:
-    flap_service_mod.api->fail_service(asd, args->pkt, args->dir, &svc_element,
-        flap_service_mod.flow_data_index);
-    return SERVICE_NOMATCH;
+    fail_service(asd, args.pkt, args.dir);
+    return APPID_NOMATCH;
 
 success:
-    flap_service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element,
-        APP_ID_AOL_INSTANT_MESSENGER, nullptr, nullptr, nullptr);
-    return SERVICE_SUCCESS;
+    add_service(asd, args.pkt, args.dir, APP_ID_AOL_INSTANT_MESSENGER, nullptr, nullptr, nullptr);
+    return APPID_SUCCESS;
 
 inprocess:
-    flap_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &svc_element);
-    return SERVICE_INPROCESS;
+    service_inprocess(asd, args.pkt, args.dir);
+    return APPID_INPROCESS;
 }
 

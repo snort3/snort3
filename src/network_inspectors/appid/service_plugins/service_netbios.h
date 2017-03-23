@@ -22,9 +22,41 @@
 #ifndef SERVICE_NETBIOS_H
 #define SERVICE_NETBIOS_H
 
-#include "service_api.h"
+#include "service_detector.h"
 
-extern RNAServiceValidationModule netbios_service_mod;
+class ServiceDiscovery;
+class AppIdSession;
 
+class NbssServiceDetector : public ServiceDetector
+{
+public:
+    NbssServiceDetector(ServiceDiscovery*);
+    ~NbssServiceDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
+};
+
+class NbnsServiceDetector : public ServiceDetector
+{
+public:
+    NbnsServiceDetector(ServiceDiscovery*);
+    ~NbnsServiceDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
+};
+
+class NbdgmServiceDetector : public ServiceDetector
+{
+public:
+    NbdgmServiceDetector(ServiceDiscovery*);
+    ~NbdgmServiceDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
+
+    static void AppIdFreeSMBData(FpSMBData*);
+
+private:
+    void add_smb_info(AppIdSession*, unsigned major, unsigned minor, uint32_t flags);
+};
 #endif
 

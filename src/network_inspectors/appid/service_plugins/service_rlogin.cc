@@ -25,13 +25,10 @@
 
 #include "service_rlogin.h"
 
-#include "main/snort_debug.h"
+#include "appid_module.h"
+#include "application_ids.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
-
-#include "appid_module.h"
-
-#include "service_api.h"
 
 #define RLOGIN_PASSWORD "Password: "
 enum RLOGINState
@@ -48,77 +45,49 @@ struct ServiceRLOGINData
     RLOGINState state;
 };
 
-static int rlogin_init(const InitServiceAPI* const init_api);
-static int rlogin_validate(ServiceValidationArgs* args);
-
-static const RNAServiceElement svc_element =
+RloginServiceDetector::RloginServiceDetector(ServiceDiscovery* sd)
 {
-    nullptr,
-    &rlogin_validate,
-    nullptr,
-    DETECTOR_TYPE_DECODER,
-    1,
-    1,
-    0,
-    "rlogin"
-};
+    handler = sd;
+    name = "rlogin";
+    proto = IpProtocol::TCP;
+    detectorType = DETECTOR_TYPE_DECODER;
+    current_ref_count =  1;
 
-static const RNAServiceValidationPort pp[] =
-{
-    { &rlogin_validate, 513, IpProtocol::TCP, 0 },
-    { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
-};
-
-RNAServiceValidationModule rlogin_service_mod =
-{
-    "RLOGIN",
-    &rlogin_init,
-    pp,
-    nullptr,
-    nullptr,
-    0,
-    nullptr,
-    0
-};
-
-static AppRegistryEntry appIdRegistry[] =
-{
-    { APP_ID_RLOGIN, 0 }
-};
-
-static int rlogin_init(const InitServiceAPI* const init_api)
-{
-    unsigned i;
-    for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
+    appid_registry =
     {
-        DebugFormat(DEBUG_APPID,"registering appId: %d\n",appIdRegistry[i].appId);
-        init_api->RegisterAppId(&rlogin_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo);
-    }
+        { APP_ID_RLOGIN, 0 }
+    };
 
-    return 0;
+    service_ports =
+    {
+        { 513, IpProtocol::TCP, false }
+    };
+
+    handler->register_detector(name, this, proto);
 }
 
-static int rlogin_validate(ServiceValidationArgs* args)
+RloginServiceDetector::~RloginServiceDetector()
+{
+}
+
+int RloginServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     ServiceRLOGINData* rd;
-    AppIdSession* asd = args->asd;
-    Packet* pkt = args->pkt;
-    const uint8_t* data = args->data;
-    uint16_t size = args->size;
+    AppIdSession* asd = args.asd;
+    Packet* pkt = args.pkt;
+    const uint8_t* data = args.data;
+    uint16_t size = args.size;
 
     if (!size)
         goto inprocess;
-    if (args->dir != APP_ID_FROM_RESPONDER)
+    if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    rd = (ServiceRLOGINData*)rlogin_service_mod.api->data_get(asd,
-        rlogin_service_mod.flow_data_index);
+    rd = (ServiceRLOGINData*)data_get(asd);
     if (!rd)
     {
         rd = (ServiceRLOGINData*)snort_calloc(sizeof(ServiceRLOGINData));
-        rlogin_service_mod.api->data_add(asd, rd, rlogin_service_mod.flow_data_index,
-            &snort_free);
+        data_add(asd, rd, &snort_free);
         rd->state = RLOGIN_STATE_HANDSHAKE;
     }
 
@@ -164,18 +133,16 @@ static int rlogin_validate(ServiceValidationArgs* args)
     }
 
 inprocess:
-    rlogin_service_mod.api->service_inprocess(asd, pkt, args->dir, &svc_element);
-    return SERVICE_INPROCESS;
+    service_inprocess(asd, pkt, args.dir);
+    return APPID_INPROCESS;
 
 success:
-    rlogin_service_mod.api->add_service(asd, pkt, args->dir, &svc_element,
-        APP_ID_RLOGIN, nullptr, nullptr, nullptr);
+    add_service(asd, pkt, args.dir, APP_ID_RLOGIN, nullptr, nullptr, nullptr);
     appid_stats.rlogin_flows++;
-    return SERVICE_SUCCESS;
+    return APPID_SUCCESS;
 
 fail:
-    rlogin_service_mod.api->fail_service(asd, pkt, args->dir, &svc_element,
-        rlogin_service_mod.flow_data_index);
-    return SERVICE_NOMATCH;
+    fail_service(asd, pkt, args.dir);
+    return APPID_NOMATCH;
 }
 

@@ -23,9 +23,7 @@
 #include "config.h"
 #endif
 
-#include "client_app_api.h"
-
-#include "main/snort_debug.h"
+#include "client_app_aim.h"
 
 #include "app_info_table.h"
 #include "appid_module.h"
@@ -61,42 +59,7 @@ struct FLAPHeader
 
 #pragma pack()
 
-struct AIM_CLIENT_APP_CONFIG
-{
-    int enabled;
-};
-
-THREAD_LOCAL AIM_CLIENT_APP_CONFIG aim_config;
-
 #define MAX_VERSION_SIZE    64
-
-static CLIENT_APP_RETCODE aim_init(const InitClientAppAPI* const, SF_LIST* config);
-static CLIENT_APP_RETCODE aim_validate( const uint8_t* data, uint16_t size, const int dir,
-        AppIdSession*, Packet*, Detector*);
-
-RNAClientAppModule aim_client_mod =
-{
-    "AIM",                  // name
-    IpProtocol::TCP,        // proto
-    &aim_init,              // init
-    nullptr,                // clean
-    &aim_validate,          // validate
-    2,                      // minimum_matches
-    nullptr,                // api
-    nullptr,                // userData
-    0,                      // precedence
-    nullptr,                // finalize,
-    1,                      // provides_user
-    0                       // flow_data_index
-};
-
-struct Client_App_Pattern
-{
-    const uint8_t* pattern;
-    unsigned length;
-    int index;
-    unsigned appId;
-};
 
 static const uint8_t NEW_CONNECTION[] = "\x02a\x001";
 static const uint8_t AIM_PROTOCOL_VERSION[] = "\x000\x004\x000\x000\x000\x001";
@@ -104,61 +67,35 @@ static const uint8_t OLDER_AOL[] = "AOL Instant Messenger";
 static const uint8_t AOL[] = "imApp";
 static const uint8_t NETSCAPE_AOL[] = "Netscape 2000 an approved user of AOL Instant Messenger";
 
-static Client_App_Pattern patterns[] =
+AimClientDetector::AimClientDetector(ClientDiscovery* cdm)
 {
-    { NEW_CONNECTION, sizeof(NEW_CONNECTION)-1, 0, 0 },
-    { AIM_PROTOCOL_VERSION, sizeof(AIM_PROTOCOL_VERSION)-1, 4, 0 },
-    { OLDER_AOL, sizeof(OLDER_AOL)-1, -1, APP_ID_AOL_INSTANT_MESSENGER },
-    { AOL, sizeof(AOL)-1, -1, APP_ID_AOL_INSTANT_MESSENGER },
-    { NETSCAPE_AOL, sizeof(NETSCAPE_AOL), -1, APP_ID_AOL_NETSCAPE },
-};
+    handler = cdm;
+    name = "AIM";
+    proto = IpProtocol::TCP;
+    minimum_matches = 2;
+    provides_user = true;
 
-static AppRegistryEntry appIdRegistry[] =
+    tcp_patterns =
+    {
+        { NEW_CONNECTION, sizeof(NEW_CONNECTION) - 1, 0, 0, 0 },
+        { AIM_PROTOCOL_VERSION, sizeof(AIM_PROTOCOL_VERSION) - 1, 4, 0, 0 },
+        { OLDER_AOL, sizeof(OLDER_AOL) - 1, -1, 0, APP_ID_AOL_INSTANT_MESSENGER },
+        { AOL, sizeof(AOL) - 1, -1, 0, APP_ID_AOL_INSTANT_MESSENGER },
+        { NETSCAPE_AOL, sizeof(NETSCAPE_AOL) - 1, -1, 0, APP_ID_AOL_NETSCAPE },
+    };
+
+    appid_registry =
+    {
+        { APP_ID_AOL_NETSCAPE, APPINFO_FLAG_CLIENT_ADDITIONAL | APPINFO_FLAG_CLIENT_USER },
+        { APP_ID_AOL_INSTANT_MESSENGER, APPINFO_FLAG_CLIENT_ADDITIONAL |
+          APPINFO_FLAG_CLIENT_USER },
+    };
+
+    handler->register_detector(name, this, proto);
+}
+
+AimClientDetector::~AimClientDetector()
 {
-    { APP_ID_AOL_NETSCAPE, APPINFO_FLAG_CLIENT_ADDITIONAL | APPINFO_FLAG_CLIENT_USER },
-    { APP_ID_AOL_INSTANT_MESSENGER, APPINFO_FLAG_CLIENT_ADDITIONAL | APPINFO_FLAG_CLIENT_USER },
-};
-
-static CLIENT_APP_RETCODE aim_init(const InitClientAppAPI* const init_api, SF_LIST* config)
-{
-    aim_config.enabled = 1;
-
-    if ( config )
-    {
-        SF_LNODE* cursor = nullptr;
-        RNAClientAppModuleConfigItem* item = nullptr;
-
-        for ( item = (RNAClientAppModuleConfigItem*)sflist_first(config, &cursor);
-            item;
-            item = (RNAClientAppModuleConfigItem*)sflist_next(&cursor) )
-        {
-            DebugFormat(DEBUG_APPID, "Processing %s: %s\n", item->name, item->value);
-            if (strcasecmp(item->name, "enabled") == 0)
-                aim_config.enabled = atoi(item->value);
-        }
-    }
-
-    if (aim_config.enabled)
-    {
-        for (unsigned i = 0; i < sizeof(patterns)/sizeof(*patterns); i++)
-        {
-            DebugFormat(DEBUG_APPID, "registering pattern length %u at %d\n",
-                patterns[i].length, patterns[i].index);
-
-            init_api->RegisterPattern(&aim_validate, IpProtocol::TCP, patterns[i].pattern,
-                patterns[i].length, patterns[i].index);
-        }
-    }
-
-    for (unsigned j = 0; j < sizeof(appIdRegistry)/sizeof(*appIdRegistry); j++)
-    {
-        DebugFormat(DEBUG_APPID, "registering appId: %d\n",
-            appIdRegistry[j].appId);
-
-        init_api->RegisterAppId(&aim_validate, appIdRegistry[j].appId, appIdRegistry[j].additionalInfo);
-    }
-
-    return CLIENT_APP_SUCCESS;
 }
 
 template<typename Hdr>
@@ -193,14 +130,13 @@ static inline bool check_username(
     return true;
 }
 
-static CLIENT_APP_RETCODE aim_validate( const uint8_t* const data, uint16_t size, const int dir,
-        AppIdSession* asd, Packet*, Detector*)
+int AimClientDetector::validate(AppIdDiscoveryArgs& args)
 {
-    if ( dir != APP_ID_FROM_INITIATOR )
-        return CLIENT_APP_INPROCESS;
+    if ( args.dir != APP_ID_FROM_INITIATOR )
+        return APPID_INPROCESS;
 
-    const uint8_t* const end = data + size;
-    const uint8_t* cur = data;
+    const uint8_t* const end = args.data + args.size;
+    const uint8_t* cur = args.data;
 
     while ( cur < end )
     {
@@ -265,8 +201,7 @@ static CLIENT_APP_RETCODE aim_validate( const uint8_t* const data, uint16_t size
                         char username[USERNAME_LEN];
 
                         if ( check_username(cur, tlv, username, username + USERNAME_LEN) )
-                            aim_client_mod.api->add_user(asd, username,
-                                APP_ID_AOL_INSTANT_MESSENGER, 1);
+                            add_user(args.asd, username, APP_ID_AOL_INSTANT_MESSENGER, 1);
                     }
                     break;
                 case 0x0003:
@@ -296,17 +231,17 @@ static CLIENT_APP_RETCODE aim_validate( const uint8_t* const data, uint16_t size
                 char version[MAX_VERSION_SIZE];
 
                 snprintf(version, sizeof(version), "%d.%d.%d", major, minor, lesser);
-                aim_client_mod.api->add_app( asd, APP_ID_AOL_INSTANT_MESSENGER,
-                    APP_ID_AOL_INSTANT_MESSENGER, version);
+                add_app(args.asd, APP_ID_AOL_INSTANT_MESSENGER, APP_ID_AOL_INSTANT_MESSENGER,
+                    version);
                 appid_stats.aim_clients++;
             }
         }
     }
 
-    return CLIENT_APP_INPROCESS;
+    return APPID_INPROCESS;
 
 bail:
-    asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
-    return CLIENT_APP_SUCCESS;
+    args.asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+    return APPID_SUCCESS;
 }
 

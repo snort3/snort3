@@ -22,13 +22,12 @@
 #ifndef DETECTOR_SIP_H
 #define DETECTOR_SIP_H
 
-//  AppId structures for SIP detection
+#include <mutex>
 
-#include "appid_utils/sf_multi_mpse.h"
-#include "detector_api.h"
+#include "client_plugins/client_detector.h"
+#include "service_plugins/service_detector.h"
 #include "framework/data_bus.h"
-
-struct RNAServiceValidationModule;
+#include "pub_sub/sip_events.h"
 
 struct SipUaUserData
 {
@@ -43,22 +42,75 @@ struct DetectorAppSipPattern
     DetectorAppSipPattern* next;
 };
 
-extern struct RNAClientAppModule sip_udp_client_mod;
-extern struct RNAClientAppModule sip_tcp_client_mod;
-extern struct RNAServiceValidationModule sip_service_mod;
+class SipEventHandler;
 
-// FIXIT-M ServiceEventType enum needs to become real when SIP is supported
-enum ServiceEventType {};
+class SipUdpClientDetector : public ClientDetector
+{
+public:
+    SipUdpClientDetector(ClientDiscovery*);
+    ~SipUdpClientDetector();
 
-void SipSessionSnortCallback(void* ssnptr, ServiceEventType, void* eventData);
-int sipUaPatternAdd( AppId, const char* clientVersion, const char* uaPattern);
-int sipServerPatternAdd(AppId, const char* clientVersion, const char* uaPattern);
-int finalize_sip_ua();
+    int validate(AppIdDiscoveryArgs&) override;
+
+    static int sipUaPatternAdd(AppId, const char* clientVersion, const char* uaPattern);
+    static int sipServerPatternAdd(AppId, const char* clientVersion, const char* uaPattern);
+    static int finalize_sip_ua();
+
+private:
+    SipEventHandler* sip_event_handler = nullptr;
+};
+
+class SipTcpClientDetector : public ClientDetector
+{
+public:
+    SipTcpClientDetector(ClientDiscovery*);
+    ~SipTcpClientDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
+};
+
+class SipServiceDetector : public ServiceDetector
+{
+public:
+    SipServiceDetector(ServiceDiscovery*);
+    ~SipServiceDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
+    void addFutureRtpFlows(SipEvent&, AppIdSession*);
+
+private:
+    void createRtpFlow(AppIdSession*, const Packet*, const SfIp* cliIp,
+        uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol, int16_t app_id);
+};
 
 class SipEventHandler : public DataHandler
 {
 public:
-    void handle(DataEvent&, Flow*);
+    ~SipEventHandler() { }
+    static SipEventHandler& get_instance()
+    {
+        static THREAD_LOCAL SipEventHandler* seh = new SipEventHandler;
+        return *seh;
+    }
+
+    void set_client(SipUdpClientDetector* cd) { client = cd; }
+    void set_service(SipServiceDetector* sd) { service = sd; }
+    void subscribe()
+    {
+        std::lock_guard<std::mutex> lock(SipEventHandler::db_sub_mutex);
+        get_data_bus().subscribe(SIP_EVENT_TYPE_SIP_DIALOG_KEY, this);
+    }
+
+    void handle(DataEvent&, Flow*) override;
+
+private:
+    SipEventHandler() { }
+    void client_handler(SipEvent&, AppIdSession*);
+    void service_handler(SipEvent&, AppIdSession*);
+
+    SipUdpClientDetector* client = nullptr;
+    SipServiceDetector* service = nullptr;
+    static std::mutex db_sub_mutex;
 };
 #endif
 

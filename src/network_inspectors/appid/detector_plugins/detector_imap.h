@@ -17,40 +17,38 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// client_app_config.h author Sourcefire Inc.
+// detector_imap.h author Sourcefire Inc.
 
-#ifndef CLIENT_APP_CONFIG_H
-#define CLIENT_APP_CONFIG_H
+#ifndef DETECTOR_IMAP_H
+#define DETECTOR_IMAP_H
 
-#include "search_engines/search_tool.h"
-#include "utils/sflsq.h"
+#include "client_plugins/client_detector.h"
+#include "service_plugins/service_detector.h"
 
-struct RNAClientAppModule;
-struct RNAClientAppRecord;
+class AppIdSession;
 
-struct ClientPatternData
-{
-    ClientPatternData* next;
-    int pattern_start_pos;
-    unsigned size;
-    const RNAClientAppModule* ca;
-};
-
-class ClientAppConfig
+class ImapClientDetector : public ClientDetector
 {
 public:
-    ClientAppConfig() {}
-    ~ClientAppConfig() {}
+    ImapClientDetector(ClientDiscovery*);
+    ~ImapClientDetector();
 
-    RNAClientAppRecord* tcp_client_app_list = nullptr;
-    RNAClientAppRecord* udp_client_app_list = nullptr;
-    bool enabled = false;
-    SF_LIST module_configs;
-    ClientPatternData* pattern_data_list = nullptr;
-    SearchTool* tcp_patterns = nullptr;
-    int tcp_pattern_count = 0;
-    SearchTool* udp_patterns = nullptr;
-    int udp_pattern_count = 0;
+    void do_custom_init() override;
+    int validate(AppIdDiscoveryArgs&) override;
+
+private:
+    SearchTool* cmd_matcher = nullptr;
+    unsigned longest_pattern = 0;
+};
+
+class ImapServiceDetector : public ServiceDetector
+{
+public:
+    ImapServiceDetector(ServiceDiscovery*);
+    ~ImapServiceDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
 };
 
 #endif
+

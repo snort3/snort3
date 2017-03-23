@@ -22,13 +22,17 @@
 #ifndef THIRDPARTY_APPID_TYPES_H
 #define THIRDPARTY_APPID_TYPES_H
 
-#include "http_common.h"
+#include <cstdint>
 
 #define TP_SESSION_FLAG_DPI        0x00000001
 #define TP_SESSION_FLAG_MUTABLE    0x00000002
 #define TP_SESSION_FLAG_FUTUREFLOW 0x00000004
 #define TP_SESSION_FLAG_ATTRIBUTE  0x00000008
 #define TP_SESSION_FLAG_TUNNELING  0x00000010
+
+#define HTTP_XFF_FIELD_X_FORWARDED_FOR ""
+#define HTTP_XFF_FIELD_TRUE_CLIENT_IP ""
+#define HTTP_MAX_XFF_FIELDS 255
 
 enum TPState
 {
@@ -64,36 +68,36 @@ struct ThirdPartyAppIDAttributeData
     uint16_t httpRequestUriLen;
     uint16_t httpRequestUriOffset;
     uint16_t httpRequestUriEndOffset;
-    char *httpRequestHost;
+    char* httpRequestHost;
     uint16_t httpRequestHostLen;
-    char *httpRequestCookie;
+    char* httpRequestCookie;
     uint16_t httpRequestCookieLen;
     uint16_t httpRequestCookieOffset;
     uint16_t httpRequestCookieEndOffset;
-    char *httpRequestVia;
-    char *httpResponseVia;
-    char *httpResponseUpgrade;
-    char *httpRequestUserAgent;
+    char* httpRequestVia;
+    char* httpResponseVia;
+    char* httpResponseUpgrade;
+    char* httpRequestUserAgent;
     uint16_t httpRequestUserAgentLen;
-    char *httpResponseVersion;
-    char *httpResponseCode;
+    char* httpResponseVersion;
+    char* httpResponseCode;
     uint16_t httpResponseCodeLen;
-    char *httpResponseContent;
+    char* httpResponseContent;
     uint16_t httpResponseContentLen;
-    char *httpResponseLocation;
+    char* httpResponseLocation;
     uint16_t httpResponseLocationLen;
-    char *httpResponseBody;
+    char* httpResponseBody;
     uint16_t httpResponseBodyLen;
-    char *httpRequestBody;
+    char* httpRequestBody;
     uint16_t httpRequestBodyLen;
-    char *httpResponseServer;
-    char *httpRequestXWorkingWith;
-    char *tlsHost;
-    char *tlsCname;
-    char *tlsOrgUnit;
-    char *httpRequestReferer;
+    char* httpResponseServer;
+    char* httpRequestXWorkingWith;
+    char* tlsHost;
+    char* tlsCname;
+    char* tlsOrgUnit;
+    char* httpRequestReferer;
     uint16_t httpRequestRefererLen;
-    char *ftpCommandUser;
+    char* ftpCommandUser;
     struct XffFieldValue xffFieldValue[HTTP_MAX_XFF_FIELDS];
     uint8_t numXffFields;
     uint16_t httpRequestUserAgentOffset;

@@ -43,17 +43,17 @@ struct HostPortKey
 
     bool operator<(HostPortKey right) const
     {
-        if( ip.less_than(right.ip) )
+        if ( ip.less_than(right.ip) )
             return true;
-        else if( right.ip.less_than(ip) )
+        else if ( right.ip.less_than(ip) )
             return false;
         else
         {
-            if( port < right.port)
+            if ( port < right.port)
                 return true;
-            else if( right.port < port )
+            else if ( right.port < port )
                 return false;
-            else if( proto < right.proto)
+            else if ( proto < right.proto)
                 return true;
             else
                 return false;
@@ -100,7 +100,8 @@ HostPortVal* HostPortCache::find(const SfIp* ip, uint16_t port, IpProtocol proto
         return nullptr;
 }
 
-bool HostPortCache::add(const SfIp* ip, uint16_t port, IpProtocol proto, unsigned type, AppId appId)
+bool HostPortCache::add(const SfIp* ip, uint16_t port, IpProtocol proto, unsigned type, AppId
+    appId)
 {
     HostPortKey hk;
     HostPortVal hv;

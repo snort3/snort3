@@ -25,8 +25,6 @@
 
 #include "service_direct_connect.h"
 
-#include "main/snort_debug.h"
-
 #include "appid_module.h"
 
 enum CONNECTION_STATES
@@ -46,38 +44,6 @@ struct ServiceData
     uint32_t packetCount;
 };
 
-static int direct_connect_init(const InitServiceAPI* const init_api);
-static int direct_connect_validate(ServiceValidationArgs* args);
-static int validateDirectConnectTcp(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, const Packet* pkt, ServiceData* serviceData);
-static int validateDirectConnectUdp(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, const Packet* pkt, ServiceData* serviceData);
-
-static const RNAServiceElement svc_element =
-{
-    nullptr,
-    &direct_connect_validate,
-    nullptr,
-    DETECTOR_TYPE_DECODER,
-    1,
-    1,
-    0,
-    "direct_connect"
-};
-
-static const RNAServiceValidationPort pp[] =
-{
-    { &direct_connect_validate, 411, IpProtocol::TCP, 0 },
-    { &direct_connect_validate, 411, IpProtocol::UDP, 0 },
-    { &direct_connect_validate, 412, IpProtocol::TCP, 0 },
-    { &direct_connect_validate, 412, IpProtocol::UDP, 0 },
-    { &direct_connect_validate, 413, IpProtocol::TCP, 0 },
-    { &direct_connect_validate, 413, IpProtocol::UDP, 0 },
-    { &direct_connect_validate, 414, IpProtocol::TCP, 0 },
-    { &direct_connect_validate, 414, IpProtocol::UDP, 0 },
-    { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
-};
-
 #define PATTERN1     "$Lock "
 #define PATTERN2     "$MyNick "
 #define PATTERN3     "HSUP ADBAS0"
@@ -86,81 +52,76 @@ static const RNAServiceValidationPort pp[] =
 #define PATTERN6     "CSUP ADBASE"
 #define PATTERN7     "$SR "
 
-RNAServiceValidationModule directconnect_service_mod =
+DirectConnectServiceDetector::DirectConnectServiceDetector(ServiceDiscovery* sd)
 {
-    "DirectConnect",
-    &direct_connect_init,
-    pp,
-    nullptr,
-    nullptr,
-    0,
-    nullptr,
-    0
-};
+    handler = sd;
+    name = "DirectConnect";
+    proto = IpProtocol::TCP;
+    detectorType = DETECTOR_TYPE_DECODER;
+    current_ref_count =  1;
 
-static AppRegistryEntry appIdRegistry[] =
-{
-    { APP_ID_DIRECT_CONNECT, 0 }
-};
-
-static int direct_connect_init(const InitServiceAPI* const init_api)
-{
-    init_api->RegisterPattern(&direct_connect_validate, IpProtocol::TCP, (uint8_t*)PATTERN1,
-        sizeof(PATTERN1)-1,  0, "direct_connect");
-    init_api->RegisterPattern(&direct_connect_validate, IpProtocol::TCP, (uint8_t*)PATTERN2,
-        sizeof(PATTERN2)-1,  0, "direct_connect");
-    init_api->RegisterPattern(&direct_connect_validate, IpProtocol::TCP, (uint8_t*)PATTERN3,
-        sizeof(PATTERN3)-1,  0, "direct_connect");
-    init_api->RegisterPattern(&direct_connect_validate, IpProtocol::TCP, (uint8_t*)PATTERN4,
-        sizeof(PATTERN4)-1,  0, "direct_connect");
-    init_api->RegisterPattern(&direct_connect_validate, IpProtocol::TCP, (uint8_t*)PATTERN5,
-        sizeof(PATTERN5)-1,  0, "direct_connect");
-    init_api->RegisterPattern(&direct_connect_validate, IpProtocol::TCP, (uint8_t*)PATTERN6,
-        sizeof(PATTERN6)-1,  0, "direct_connect");
-    init_api->RegisterPattern(&direct_connect_validate, IpProtocol::UDP, (uint8_t*)PATTERN7,
-        sizeof(PATTERN7)-1,  0, "direct_connect");
-
-    unsigned i;
-    for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
+    tcp_patterns =
     {
-        DebugFormat(DEBUG_APPID,"registering appId: %d\n",appIdRegistry[i].appId);
-        init_api->RegisterAppId(&direct_connect_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo);
-    }
+        { (uint8_t*)PATTERN1, sizeof(PATTERN1) - 1, 0, 0, 0 },
+        { (uint8_t*)PATTERN2, sizeof(PATTERN2) - 1, 0, 0, 0 },
+        { (uint8_t*)PATTERN3, sizeof(PATTERN3) - 1, 0, 0, 0 },
+        { (uint8_t*)PATTERN4, sizeof(PATTERN4) - 1, 0, 0, 0 },
+        { (uint8_t*)PATTERN5, sizeof(PATTERN5) - 1, 0, 0, 0 },
+        { (uint8_t*)PATTERN6, sizeof(PATTERN6) - 1, 0, 0, 0 },
+        { (uint8_t*)PATTERN7, sizeof(PATTERN7) - 1, 0, 0, 0 }
+    };
 
-    return 0;
+    appid_registry =
+    {
+        { APP_ID_DIRECT_CONNECT, 0 }
+    };
+
+    service_ports =
+    {
+        { 411, IpProtocol::TCP, false },
+        { 411, IpProtocol::UDP, false },
+        { 412, IpProtocol::TCP, false },
+        { 412, IpProtocol::UDP, false },
+        { 413, IpProtocol::TCP, false },
+        { 413, IpProtocol::UDP, false },
+        { 414, IpProtocol::TCP, false },
+        { 414, IpProtocol::UDP, false },
+    };
+
+    handler->register_detector(name, this, proto);
 }
 
-static int direct_connect_validate(ServiceValidationArgs* args)
+DirectConnectServiceDetector::~DirectConnectServiceDetector()
+{
+}
+
+int DirectConnectServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     ServiceData* fd;
-    AppIdSession* asd = args->asd;
-    const uint8_t* data = args->data;
-    uint16_t size = args->size;
+    AppIdSession* asd = args.asd;
+    const uint8_t* data = args.data;
+    uint16_t size = args.size;
 
     if (!size)
     {
-        directconnect_service_mod.api->service_inprocess(asd, args->pkt, args->dir,
-            &svc_element);
-        return SERVICE_INPROCESS;
+        service_inprocess(asd, args.pkt, args.dir);
+        return APPID_INPROCESS;
     }
 
-    fd = (ServiceData*)directconnect_service_mod.api->data_get(asd,
-        directconnect_service_mod.flow_data_index);
+    fd = (ServiceData*)data_get(asd);
     if (!fd)
     {
         fd = (ServiceData*)snort_calloc(sizeof(ServiceData));
-        directconnect_service_mod.api->data_add(asd, fd,
-            directconnect_service_mod.flow_data_index, &snort_free);
+        data_add(asd, fd, &snort_free);
     }
 
     if (asd->protocol == IpProtocol::TCP)
-        return validateDirectConnectTcp(data, size, args->dir, asd, args->pkt, fd);
+        return tcp_validate(data, size, args.dir, asd, args.pkt, fd);
     else
-        return validateDirectConnectUdp(data, size, args->dir, asd, args->pkt, fd);
+        return udp_validate(data, size, args.dir, asd, args.pkt, fd);
 }
 
-static int validateDirectConnectTcp(const uint8_t* data, uint16_t size, const int dir,
+int DirectConnectServiceDetector::tcp_validate(const uint8_t* data, uint16_t size, const int dir,
     AppIdSession* asd, const Packet* pkt, ServiceData* serviceData)
 {
     switch (serviceData->state)
@@ -249,8 +210,8 @@ inprocess:
     if (serviceData->packetCount >= MAX_PACKET_INSPECTION_COUNT)
         goto fail;
 
-    directconnect_service_mod.api->service_inprocess(asd, pkt, dir, &svc_element);
-    return SERVICE_INPROCESS;
+    service_inprocess(asd, pkt, dir);
+    return APPID_INPROCESS;
 
 success:
     if (dir != APP_ID_FROM_RESPONDER)
@@ -259,18 +220,16 @@ success:
         goto inprocess;
     }
 
-    directconnect_service_mod.api->add_service(asd, pkt, dir, &svc_element,
-        APP_ID_DIRECT_CONNECT, nullptr, nullptr, nullptr);
+    add_service(asd, pkt, dir, APP_ID_DIRECT_CONNECT, nullptr, nullptr, nullptr);
     appid_stats.direct_connect_flows++;
-    return SERVICE_SUCCESS;
+    return APPID_SUCCESS;
 
 fail:
-    directconnect_service_mod.api->fail_service(asd, pkt, dir, &svc_element,
-        directconnect_service_mod.flow_data_index);
-    return SERVICE_NOMATCH;
+    fail_service(asd, pkt, dir);
+    return APPID_NOMATCH;
 }
 
-static int validateDirectConnectUdp(const uint8_t* data, uint16_t size, const int dir,
+int DirectConnectServiceDetector::udp_validate(const uint8_t* data, uint16_t size, const int dir,
     AppIdSession* asd, const Packet* pkt, ServiceData* serviceData)
 {
     if (dir == APP_ID_FROM_RESPONDER && serviceData->state == CONN_STATE_SERVICE_DETECTED)
@@ -300,8 +259,8 @@ inprocess:
     if (serviceData->packetCount >= MAX_PACKET_INSPECTION_COUNT)
         goto fail;
 
-    directconnect_service_mod.api->service_inprocess(asd, pkt, dir, &svc_element);
-    return SERVICE_INPROCESS;
+    service_inprocess(asd, pkt, dir);
+    return APPID_INPROCESS;
 
 success:
     if (dir != APP_ID_FROM_RESPONDER)
@@ -311,14 +270,12 @@ success:
     }
 
 reportSuccess:
-    directconnect_service_mod.api->add_service(asd, pkt, dir, &svc_element,
-        APP_ID_DIRECT_CONNECT, nullptr, nullptr, nullptr);
+    add_service(asd, pkt, dir, APP_ID_DIRECT_CONNECT, nullptr, nullptr, nullptr);
     appid_stats.direct_connect_flows++;
-    return SERVICE_SUCCESS;
+    return APPID_SUCCESS;
 
 fail:
-    directconnect_service_mod.api->fail_service(asd, pkt, dir, &svc_element,
-        directconnect_service_mod.flow_data_index);
-    return SERVICE_NOMATCH;
+    fail_service(asd, pkt, dir);
+    return APPID_NOMATCH;
 }
 

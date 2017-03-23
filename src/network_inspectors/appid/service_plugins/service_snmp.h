@@ -22,11 +22,21 @@
 #ifndef SERVICE_SNMP_H
 #define SERVICE_SNMP_H
 
-//  SNMP service
+#include "service_detector.h"
 
-#include "detector_plugins/detector_api.h"
+class ServiceDiscovery;
 
-extern RNAServiceValidationModule snmp_service_mod;
+class SnmpServiceDetector : public ServiceDetector
+{
+public:
+    SnmpServiceDetector(ServiceDiscovery*);
+    ~SnmpServiceDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
+
+private:
+    int16_t app_id = 0;
+};
 
 #endif
 

@@ -23,13 +23,10 @@
 #include "config.h"
 #endif
 
-#include "main/snort_debug.h"
+#include "service_bit.h"
 
 #include "appid_module.h"
 
-#include "service_api.h"
-
-static const char svc_name[] = "bt";
 static const uint8_t BIT_BANNER[]  = "\023BitTorrent protocol";
 
 #define BIT_PORT    6881
@@ -68,85 +65,62 @@ struct ServiceBITMsg
 };
 #pragma pack()
 
-static int bit_init(const InitServiceAPI* const init_api);
-static int bit_validate(ServiceValidationArgs* args);
-
-static const RNAServiceElement svc_element =
+BitServiceDetector::BitServiceDetector(ServiceDiscovery* sd)
 {
-    nullptr,
-    &bit_validate,
-    nullptr,
-    DETECTOR_TYPE_DECODER,
-    1,
-    1,
-    0,
-    "bit"
-};
+    handler = sd;
+    name = "bit";
+    proto = IpProtocol::TCP;
+    detectorType = DETECTOR_TYPE_DECODER;
+    current_ref_count =  1;
 
-static const RNAServiceValidationPort pp[] =
-{
-    { &bit_validate, BIT_PORT, IpProtocol::TCP, 0 },
-    { &bit_validate, BIT_PORT+1, IpProtocol::TCP, 0 },
-    { &bit_validate, BIT_PORT+2, IpProtocol::TCP, 0 },
-    { &bit_validate, BIT_PORT+3, IpProtocol::TCP, 0 },
-    { &bit_validate, BIT_PORT+4, IpProtocol::TCP, 0 },
-    { &bit_validate, BIT_PORT+5, IpProtocol::TCP, 0 },
-    { &bit_validate, BIT_PORT+6, IpProtocol::TCP, 0 },
-    { &bit_validate, BIT_PORT+7, IpProtocol::TCP, 0 },
-    { &bit_validate, BIT_PORT+8, IpProtocol::TCP, 0 },
-    { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
-};
-
-SO_PUBLIC RNAServiceValidationModule bit_service_mod =
-{
-    svc_name,
-    &bit_init,
-    pp,
-    nullptr,
-    nullptr,
-    0,
-    nullptr,
-    0
-};
-
-static AppRegistryEntry appIdRegistry[] =
-{
-    { APP_ID_BITTORRENT, 0 }
-};
-
-static int bit_init(const InitServiceAPI* const init_api)
-{
-    init_api->RegisterPattern(&bit_validate, IpProtocol::TCP, (const uint8_t*)BIT_BANNER,
-        sizeof(BIT_BANNER)-1, 0, svc_name);
-    unsigned i;
-    for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
+    tcp_patterns =
     {
-        DebugFormat(DEBUG_APPID,"registering appId: %d\n",appIdRegistry[i].appId);
-        init_api->RegisterAppId(&bit_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo);
-    }
+        { (const uint8_t*)BIT_BANNER, sizeof(BIT_BANNER) - 1, 0, 0, 0 },
+    };
 
-    return 0;
+    appid_registry =
+    {
+        { APP_ID_BITTORRENT, 0 }
+    };
+
+    service_ports =
+    {
+        { BIT_PORT, IpProtocol::TCP,   false },
+        { BIT_PORT+1, IpProtocol::TCP, false },
+        { BIT_PORT+2, IpProtocol::TCP, false },
+        { BIT_PORT+3, IpProtocol::TCP, false },
+        { BIT_PORT+4, IpProtocol::TCP, false },
+        { BIT_PORT+5, IpProtocol::TCP, false },
+        { BIT_PORT+6, IpProtocol::TCP, false },
+        { BIT_PORT+7, IpProtocol::TCP, false },
+        { BIT_PORT+8, IpProtocol::TCP, false },
+    };
+
+    handler->register_detector(name, this, proto);
 }
 
-static int bit_validate(ServiceValidationArgs* args)
+BitServiceDetector::~BitServiceDetector()
+{
+}
+
+int BitServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     ServiceBITData* ss;
-    AppIdSession* asd = args->asd;
-    const uint8_t* data = args->data;
-    uint16_t size = args->size;
+    AppIdSession* asd = args.asd;
+    const uint8_t* data = args.data;
+    uint16_t size = args.size;
     uint16_t offset;
 
     if (!size)
         goto inprocess;
-    if (args->dir != APP_ID_FROM_RESPONDER)
+    if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    ss = (ServiceBITData*)bit_service_mod.api->data_get(asd, bit_service_mod.flow_data_index);
+    ss = (ServiceBITData*)data_get(asd);
     if (!ss)
     {
         ss = (ServiceBITData*)snort_calloc(sizeof(ServiceBITData));
-        bit_service_mod.api->data_add(asd, ss, bit_service_mod.flow_data_index, &snort_free);
+        data_add(asd, ss, &snort_free);
         ss->state = BIT_STATE_BANNER;
     }
 
@@ -200,18 +174,16 @@ static int bit_validate(ServiceValidationArgs* args)
     }
 
 inprocess:
-    bit_service_mod.api->service_inprocess(asd, args->pkt, args->dir, &svc_element);
-    return SERVICE_INPROCESS;
+    service_inprocess(asd, args.pkt, args.dir);
+    return APPID_INPROCESS;
 
 success:
-    bit_service_mod.api->add_service(asd, args->pkt, args->dir, &svc_element,
-        APP_ID_BITTORRENT, nullptr, nullptr,  nullptr);
+    add_service(asd, args.pkt, args.dir, APP_ID_BITTORRENT, nullptr, nullptr,  nullptr);
     appid_stats.bit_flows++;
-    return SERVICE_SUCCESS;
+    return APPID_SUCCESS;
 
 fail:
-    bit_service_mod.api->fail_service(asd, args->pkt, args->dir, &svc_element,
-        bit_service_mod.flow_data_index);
-    return SERVICE_NOMATCH;
+    fail_service(asd, args.pkt, args.dir);
+    return APPID_NOMATCH;
 }
 

@@ -22,11 +22,17 @@
 #ifndef SERVICE_FLAP_H
 #define SERVICE_FLAP_H
 
-// Service detector for FLAP
+#include "service_detector.h"
 
-#include "service_api.h"
+class ServiceDiscovery;
 
-extern RNAServiceValidationModule flap_service_mod;
+class FlapServiceDetector : public ServiceDetector
+{
+public:
+    FlapServiceDetector(ServiceDiscovery*);
+    ~FlapServiceDetector();
 
+    int validate(AppIdDiscoveryArgs&) override;
+};
 #endif
 

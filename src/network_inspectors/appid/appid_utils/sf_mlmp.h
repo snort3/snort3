@@ -40,12 +40,12 @@ struct tMlmpPattern
 struct tMlmpTree;
 
 tMlmpTree* mlmpCreate();
-int mlmpAddPattern(tMlmpTree* root, const tMlmpPattern* patterns, void* metaData);
-int mlmpProcessPatterns(tMlmpTree* root);
-void* mlmpMatchPatternUrl(tMlmpTree* root, tMlmpPattern* inputPatternList);
-void* mlmpMatchPatternGeneric(tMlmpTree* root, tMlmpPattern* inputPatternList);
-void mlmpDestroy(tMlmpTree* root);
-void mlmpDump(tMlmpTree* root);
+int mlmpAddPattern(tMlmpTree*, const tMlmpPattern*, void* metaData);
+int mlmpProcessPatterns(tMlmpTree*);
+void* mlmpMatchPatternUrl(tMlmpTree*, tMlmpPattern*);
+void* mlmpMatchPatternGeneric(tMlmpTree*, tMlmpPattern*);
+void mlmpDestroy(tMlmpTree*);
+void mlmpDump(tMlmpTree*);
 
 #endif
 

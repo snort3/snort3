@@ -22,9 +22,21 @@
 #ifndef SERVICE_REXEC_H
 #define SERVICE_REXEC_H
 
-#include "service_api.h"
+#include "service_detector.h"
 
-extern RNAServiceValidationModule rexec_service_mod;
+class ServiceDiscovery;
+
+class RexecServiceDetector : public ServiceDetector
+{
+public:
+    RexecServiceDetector(ServiceDiscovery*);
+    ~RexecServiceDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
+
+private:
+    int16_t app_id = 0;
+};
 
 #endif
 

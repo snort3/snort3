@@ -47,6 +47,7 @@ struct DCERPCHeader
 
 #pragma pack()
 
+// FIXIT-L - see if this can be moved to a file of common functions
 int dcerpc_validate(const uint8_t* data, int size)
 {
     DCERPCHeader* hdr;

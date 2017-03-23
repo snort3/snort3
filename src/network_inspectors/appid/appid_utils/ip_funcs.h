@@ -78,6 +78,7 @@ inline int cmpSnortIpToHostKey(const ip::snort_in6_addr* keyIp, const SfIp* snor
 {
     return memcmp(keyIp, snortIp->get_ip6_ptr(), sizeof(*keyIp));
 }
+
 #endif
 
 #endif

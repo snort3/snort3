@@ -22,7 +22,20 @@
 #ifndef SERVICE_RSHELL_H
 #define SERVICE_RSHELL_H
 
-struct RNAServiceValidationModule;
-extern RNAServiceValidationModule rshell_service_mod;
+#include "service_detector.h"
 
+class ServiceDiscovery;
+
+class RshellServiceDetector : public ServiceDetector
+{
+public:
+    RshellServiceDetector(ServiceDiscovery*);
+    ~RshellServiceDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
+
+private:
+    int16_t app_id = 0;
+};
 #endif
+

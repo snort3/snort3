@@ -17,36 +17,20 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// client_app_base.h author Sourcefire Inc.
+// client_app_timbuktu.h author Sourcefire Inc.
 
-#ifndef CLIENT_APP_BASE_H
-#define CLIENT_APP_BASE_H
+#ifndef CLIENT_APP_TIMBUKTU_H
+#define CLIENT_APP_TIMBUKTU_H
 
-#include "appid_api.h"
-#include "client_app_api.h"
+#include "client_plugins/client_detector.h"
 
-#define GENERIC_APP_OFFSET 2000000000
+class TimbuktuClientDetector : public ClientDetector
+{
+public:
+    TimbuktuClientDetector(ClientDiscovery*);
+    ~TimbuktuClientDetector();
 
-class AppIdSession;
-class AppIdConfig;
-class Detector;
-struct RNAClientAppModule;
-struct Packet;
-struct ClientAppApi;
-struct RNAClientAppModuleConfig;
-
-void init_client_plugins(AppIdConfig*);
-void finalize_client_plugins();
-void UnconfigureClientApp(AppIdConfig*);
-void clean_client_plugins();
-int load_client_application_plugin(void* symbol);
-void ClientAppRegisterPattern(RNAClientAppFCN, IpProtocol proto, const uint8_t* const pattern,
-        unsigned size, int position, unsigned nocase, Detector*);
-const ClientAppApi* getClientApi();
-RNAClientAppModuleConfig* getClientAppModuleConfig(const char* moduleName);
-int AppIdDiscoverClientApp(Packet* p, int direction, AppIdSession*);
-void AppIdAddClientApp(AppIdSession*, AppId service_id, AppId id, const char* version);
-
-const RNAClientAppModule* ClientAppGetClientAppModule(RNAClientAppFCN, Detector*);
-
+    int validate(AppIdDiscoveryArgs&) override;
+};
 #endif
+

@@ -204,8 +204,8 @@ int NetworkSetManager::add_network_range6(NetworkSet* network_set, NSIPv6Addr* r
         0);
 }
 
-int NetworkSetManager::add_network_range_only_ipv6(NetworkSet* network_set, int ip_not, unsigned id, unsigned
-    type)
+int NetworkSetManager::add_network_range_only_ipv6(
+    NetworkSet* network_set, int ip_not, unsigned id, unsigned type)
 {
     // Use two ranges to represent all of IPv6, excluding the IPv4-mapped range, ::FFFF:*.*.*.*
     NSIPv6Addr range_min, range_max;
@@ -701,7 +701,7 @@ int NetworkSetManager::reduce_network_set6(SF_LIST* networks)
                 {
                     tmp = i_ias->range_max;
                     i_ias->range_max = ias->range_min;
-                   decrement_ipv6_addr(&i_ias->range_max);
+                    decrement_ipv6_addr(&i_ias->range_max);
                     if (compare_ipv6_address(&ias->range_max, &tmp) < 0)
                     {
                         new_ias = (Network6*)snort_calloc(sizeof(Network6));
@@ -732,7 +732,7 @@ int NetworkSetManager::reduce_network_set6(SF_LIST* networks)
                         *new_ias = *i_ias;
                         new_ias->range_min = tmp;
                         new_ias->range_max = ias->range_min;
-                       decrement_ipv6_addr(&new_ias->range_max);
+                        decrement_ipv6_addr(&new_ias->range_max);
                         sflist_add_tail(&reduced_networks, new_ias);
                         changed = true;
                     }
@@ -787,7 +787,7 @@ int NetworkSetManager::reduce_network_set6(SF_LIST* networks)
                         compare_ipv6_address(&ias->range_min, &i_ias->range_max) <= 0)
                     {
                         i_ias->range_max = ias->range_min;
-                       decrement_ipv6_addr(&i_ias->range_max);
+                        decrement_ipv6_addr(&i_ias->range_max);
                     }
                     /*
                         i_ias      ************
@@ -841,7 +841,7 @@ int NetworkSetManager::reduce_network_set6(SF_LIST* networks)
                     {
                         tmp = i_ias->range_max;
                         i_ias->range_max = ias->range_min;
-                       decrement_ipv6_addr(&i_ias->range_max);
+                        decrement_ipv6_addr(&i_ias->range_max);
                         if (compare_ipv6_address(&ias->range_max, &tmp) < 0)
                         {
                             new_ias = (Network6*)snort_calloc(sizeof(Network6));
@@ -901,7 +901,7 @@ int NetworkSetManager::reduce_network_set6(SF_LIST* networks)
                 tmp2 = ias->range_max;
                 increment_ipv6_addr(&tmp2);
                 if ((ias->range_min.lo || ias->range_min.hi) &&
-                                !compare_ipv6_address(&tmp, &ias->range_min))
+                    !compare_ipv6_address(&tmp, &ias->range_min))
                 {
                     i_ias->range_max = ias->range_max;
                     sflist_remove_node(&reduced_networks, outer_iter);
@@ -956,8 +956,8 @@ int NetworkSetManager::reduce(NetworkSet* network_set)
         return -1;
 
     for (hnode = sfxhash_gfindfirst(network_set->ids);
-                    hnode;
-                    hnode=sfxhash_gfindnext(network_set->ids))
+        hnode;
+        hnode=sfxhash_gfindnext(network_set->ids))
     {
         id = *(unsigned*)(hnode->data);
         if ((rval = order_by_netmask(&ordered_networks, &network_set->networks, id)) != 0)

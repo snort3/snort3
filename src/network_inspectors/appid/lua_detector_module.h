@@ -26,7 +26,7 @@
 #include <list>
 
 class AppIdConfig;
-class Detector;
+class LuaDetector;
 struct DetectorFlow;
 
 class LuaDetectorManager
@@ -43,13 +43,11 @@ private:
     void initialize_lua_detectors();
     void activate_lua_detectors();
     void list_lua_detectors();
-    void init_lua_service_detectors();
-    void init_lua_client_detectors();
     void load_detector(char* detectorName, bool isCustom);
     void load_lua_detectors(const char* path, bool isCustom);
 
     AppIdConfig& config;
-    std::list<Detector*> allocated_detectors;
+    std::list<LuaDetector*> allocated_detectors;
 
     // FIXIT-L make these perf counters
     uint32_t lua_tracker_size = 0;

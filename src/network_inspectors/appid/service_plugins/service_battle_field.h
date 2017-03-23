@@ -22,9 +22,17 @@
 #ifndef SERVICE_BATTLEFIELD_H
 #define SERVICE_BATTLEFIELD_H
 
-#include "service_api.h"
+#include "service_detector.h"
 
-extern RNAServiceValidationModule battlefield_service_mod;
+class ServiceDiscovery;
 
+class BattleFieldServiceDetector : public ServiceDetector
+{
+public:
+    BattleFieldServiceDetector(ServiceDiscovery*);
+    ~BattleFieldServiceDetector();
+
+    int validate(AppIdDiscoveryArgs&) override;
+};
 #endif
 

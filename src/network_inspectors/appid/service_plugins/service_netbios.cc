@@ -25,13 +25,10 @@
 
 #include "service_netbios.h"
 
-#include "main/snort_debug.h"
-#include "protocols/packet.h"
-
-#include "app_info_table.h"
 #include "appid_module.h"
-
+#include "app_info_table.h"
 #include "dcerpc.h"
+#include "protocols/packet.h"
 
 /*#define RNA_DEBUG_NETBIOS   1 */
 
@@ -80,6 +77,10 @@ enum NBSSState
 #define NBDGM_ERROR_CODE_MAX    0x84
 
 #define min(x,y) ((x)<(y) ? (x) : (y))
+
+#define FINGERPRINT_UDP_FLAGS_XENIX 0x00000800
+#define FINGERPRINT_UDP_FLAGS_NT    0x00001000
+#define FINGERPRINT_UDP_FLAGS_MASK  (FINGERPRINT_UDP_FLAGS_XENIX | FINGERPRINT_UDP_FLAGS_NT)
 
 #pragma pack(1)
 
@@ -278,87 +279,8 @@ struct NBDgmError
 
 #pragma pack()
 
-static int netbios_init(const InitServiceAPI* const init_api);
-static int nbns_validate(ServiceValidationArgs* args);
-static int nbss_validate(ServiceValidationArgs* args);
-static int nbdgm_validate(ServiceValidationArgs* args);
-
-static const RNAServiceElement nbns_svc_element =
-{
-    nullptr,
-    &nbns_validate,
-    nullptr,
-    DETECTOR_TYPE_DECODER,
-    1,
-    1,
-    0,
-    "nbns"
-};
-static const RNAServiceElement nbdgm_svc_element =
-{
-    nullptr,
-    &nbdgm_validate,
-    nullptr,
-    DETECTOR_TYPE_DECODER,
-    1,
-    1,
-    0,
-    "nbdgm"
-};
-static const RNAServiceElement nbss_svc_element =
-{
-    nullptr,
-    &nbss_validate,
-    nullptr,
-    DETECTOR_TYPE_DECODER,
-    1,
-    1,
-    0,
-    "nbss"
-};
-
-static const RNAServiceValidationPort pp[]
-{
-    { &nbns_validate, 137, IpProtocol::TCP, 0 },
-    { &nbns_validate, 137, IpProtocol::UDP, 0 },
-    { &nbns_validate, 137, IpProtocol::UDP, 1 },
-    { &nbdgm_validate, 138, IpProtocol::UDP, 0 },
-    { &nbss_validate, 139, IpProtocol::TCP, 0 },
-    { &nbss_validate, 445, IpProtocol::TCP, 0 },
-    { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
-};
-
-RNAServiceValidationModule netbios_service_mod
-{
-    "NETBIOS",
-    &netbios_init,
-    pp,
-    nullptr,
-    nullptr,
-    0,
-    nullptr,
-    0
-};
-
-static int netbios_init(const InitServiceAPI* const init_api)
-{
-    init_api->RegisterPattern(&nbss_validate, IpProtocol::TCP, NB_SMB_BANNER,
-        sizeof(NB_SMB_BANNER), -1, "netbios");
-
-    DebugFormat(DEBUG_APPID,"registering appId: %d for NetBIOS-ns\n",APP_ID_NETBIOS_NS);
-    init_api->RegisterAppId(&nbns_validate, APP_ID_NETBIOS_NS, APPINFO_FLAG_SERVICE_UDP_REVERSED);
-
-    DebugFormat(DEBUG_APPID,"registering appId: %d for NetBIOS-dgm\n",APP_ID_NETBIOS_DGM);
-    init_api->RegisterAppId(&nbdgm_validate, APP_ID_NETBIOS_DGM, APPINFO_FLAG_SERVICE_ADDITIONAL);
-
-    DebugFormat(DEBUG_APPID,"registering appId: %d for NetBIOS-ssn\n",APP_ID_NETBIOS_SSN);
-    init_api->RegisterAppId(&nbss_validate, APP_ID_NETBIOS_SSN, APPINFO_FLAG_SERVICE_ADDITIONAL);
-
-    DebugFormat(DEBUG_APPID,"registering appId: %d\n",APP_ID_DCE_RPC);
-    init_api->RegisterAppId(&nbss_validate, APP_ID_DCE_RPC, 0);
-
-    return 0;
-}
+// FIXIT-L - make this a class member var
+static THREAD_LOCAL FpSMBData* smb_data_free_list = nullptr;
 
 static int netbios_validate_name_and_decode(const uint8_t** data,
     const uint8_t* const begin,
@@ -511,17 +433,44 @@ static int nbns_validate_answer(const uint8_t** data, const uint8_t* const begin
     return ret;
 }
 
-static int nbns_validate(ServiceValidationArgs* args)
+NbnsServiceDetector::NbnsServiceDetector(ServiceDiscovery* sd)
+{
+    handler = sd;
+    name = "nbns";
+    proto = IpProtocol::TCP;
+    detectorType = DETECTOR_TYPE_DECODER;
+    current_ref_count =  1;
+
+    appid_registry =
+    {
+        { APP_ID_NETBIOS_NS, APPINFO_FLAG_SERVICE_UDP_REVERSED }
+    };
+
+    service_ports =
+    {
+        { 137, IpProtocol::TCP, false },
+        { 137, IpProtocol::UDP, false },
+        { 137, IpProtocol::UDP, true }
+    };
+
+    handler->register_detector(name, this, proto);
+}
+
+NbnsServiceDetector::~NbnsServiceDetector()
+{
+}
+
+int NbnsServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     uint16_t i;
     uint16_t count;
     const NBNSHeader* hdr;
     const uint8_t* begin;
     const uint8_t* end;
-    AppIdSession* asd = args->asd;
-    const uint8_t* data = args->data;
-    const int dir = args->dir;
-    uint16_t size = args->size;
+    AppIdSession* asd = args.asd;
+    const uint8_t* data = args.data;
+    const int dir = args.dir;
+    uint16_t size = args.size;
 
     if (!size)
         goto inprocess;
@@ -605,25 +554,21 @@ static int nbns_validate(ServiceValidationArgs* args)
     }
 
 success:
-    netbios_service_mod.api->add_service(asd, args->pkt, dir, &nbns_svc_element,
-        APP_ID_NETBIOS_NS, nullptr, nullptr, nullptr);
+    add_service(asd, args.pkt, dir, APP_ID_NETBIOS_NS, nullptr, nullptr, nullptr);
     appid_stats.netbios_ns_flows++;
-    return SERVICE_SUCCESS;
+    return APPID_SUCCESS;
 
 inprocess:
-    netbios_service_mod.api->service_inprocess(asd, args->pkt, dir, &nbns_svc_element);
-    return SERVICE_INPROCESS;
+    service_inprocess(asd, args.pkt, dir);
+    return APPID_INPROCESS;
 
 fail:
-    netbios_service_mod.api->fail_service(asd, args->pkt, dir, &nbns_svc_element,
-        netbios_service_mod.flow_data_index);
-    return SERVICE_NOMATCH;
+    fail_service(asd, args.pkt, dir);
+    return APPID_NOMATCH;
 
 not_compatible:
-    netbios_service_mod.api->incompatible_data(asd, args->pkt, dir, &nbns_svc_element,
-        netbios_service_mod.flow_data_index,
-        args->pConfig);
-    return SERVICE_NOT_COMPATIBLE;
+    incompatible_data(asd, args.pkt, dir);
+    return APPID_NOT_COMPATIBLE;
 }
 
 static void nbss_free_state(void* data)
@@ -853,31 +798,61 @@ static inline void smb_find_domain(const uint8_t* data, uint16_t size, const int
     }
 }
 
-static int nbss_validate(ServiceValidationArgs* args)
+NbssServiceDetector::NbssServiceDetector(ServiceDiscovery* sd)
+{
+    handler = sd;
+    name = "nbss";
+    proto = IpProtocol::TCP;
+    detectorType = DETECTOR_TYPE_DECODER;
+    current_ref_count =  1;
+
+    tcp_patterns =
+    {
+        { NB_SMB_BANNER,  sizeof(NB_SMB_BANNER), -1, 0, 0 }
+    };
+
+    appid_registry =
+    {
+        { APP_ID_NETBIOS_SSN, APPINFO_FLAG_SERVICE_ADDITIONAL },
+        { APP_ID_DCE_RPC, 0 }
+    };
+
+    service_ports =
+    {
+        { 139, IpProtocol::TCP, false },
+        { 445, IpProtocol::TCP, false }
+    };
+
+    handler->register_detector(name, this, proto);
+}
+
+NbssServiceDetector::~NbssServiceDetector()
+{
+}
+
+int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     ServiceNBSSData* nd;
     const NBSSHeader* hdr;
     const uint8_t* end;
     uint32_t tmp;
     int retval = -1;
-    AppIdSession* asd = args->asd;
-    Packet* pkt = args->pkt;
-    const uint8_t* data = args->data;
-    const int dir = args->dir;
-    uint16_t size = args->size;
+    AppIdSession* asd = args.asd;
+    Packet* pkt = args.pkt;
+    const uint8_t* data = args.data;
+    const int dir = args.dir;
+    uint16_t size = args.size;
 
     if (dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
     if (!size)
         goto inprocess;
 
-    nd = (ServiceNBSSData*)netbios_service_mod.api->data_get(asd,
-        netbios_service_mod.flow_data_index);
+    nd = (ServiceNBSSData*)data_get(asd);
     if (!nd)
     {
         nd = (ServiceNBSSData*)snort_calloc(sizeof(ServiceNBSSData));
-        netbios_service_mod.api->data_add(asd, nd,
-            netbios_service_mod.flow_data_index, &nbss_free_state);
+        data_add(asd, nd, &nbss_free_state);
         nd->state = NBSS_STATE_CONNECTION;
         nd->serviceAppId = APP_ID_NETBIOS_SSN;
         nd->miscAppId = APP_ID_NONE;
@@ -1016,7 +991,7 @@ static int nbss_validate(ServiceValidationArgs* args)
                         nd->count++;
                         if (nd->count >= NBSS_COUNT_THRESHOLD)
                         {
-                            retval = SERVICE_SUCCESS;
+                            retval = APPID_SUCCESS;
                         }
                     }
                 }
@@ -1041,7 +1016,7 @@ static int nbss_validate(ServiceValidationArgs* args)
                     nd->count++;
                     if (nd->count >= NBSS_COUNT_THRESHOLD)
                     {
-                        retval = SERVICE_SUCCESS;
+                        retval = APPID_SUCCESS;
                     }
                 }
             }
@@ -1055,32 +1030,63 @@ static int nbss_validate(ServiceValidationArgs* args)
 
     if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
     {
-        if (netbios_service_mod.api->add_service(asd, pkt, dir, &nbss_svc_element,
-            nd->serviceAppId, nullptr, nullptr, nullptr) == SERVICE_SUCCESS)
+        if (add_service(asd, pkt, dir, nd->serviceAppId, nullptr, nullptr, nullptr) ==
+            APPID_SUCCESS)
         {
-            netbios_service_mod.api->add_misc(asd, nd->miscAppId);
+            add_miscellaneous_info(asd, nd->miscAppId);
         }
         appid_stats.netbios_ssn_flows++;
     }
-    return SERVICE_SUCCESS;
+    return APPID_SUCCESS;
 
 inprocess:
     if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
     {
-        netbios_service_mod.api->service_inprocess(asd, pkt, dir, &nbss_svc_element);
+        service_inprocess(asd, pkt, dir);
     }
-    return SERVICE_INPROCESS;
+    return APPID_INPROCESS;
 
 fail:
     if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
     {
-        netbios_service_mod.api->fail_service(asd, pkt, dir, &nbss_svc_element,
-            netbios_service_mod.flow_data_index);
+        fail_service(asd, pkt, dir);
     }
-    return SERVICE_NOMATCH;
+    return APPID_NOMATCH;
 }
 
-static int nbdgm_validate(ServiceValidationArgs* args)
+NbdgmServiceDetector::NbdgmServiceDetector(ServiceDiscovery* sd)
+{
+    handler = sd;
+    name = "nbdgm";
+    proto = IpProtocol::UDP;
+    detectorType = DETECTOR_TYPE_DECODER;
+    current_ref_count =  1;
+
+    appid_registry =
+    {
+        { APP_ID_NETBIOS_DGM, APPINFO_FLAG_SERVICE_ADDITIONAL }
+    };
+
+    service_ports =
+    {
+        { 138, IpProtocol::UDP, false }
+    };
+
+    handler->register_detector(name, this, proto);
+}
+
+NbdgmServiceDetector::~NbdgmServiceDetector()
+{
+    FpSMBData* sd;
+
+    while ((sd = smb_data_free_list))
+    {
+        smb_data_free_list = sd->next;
+        snort_free(sd);
+    }
+}
+
+int NbdgmServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     const NBDgmHeader* hdr;
     const NBDgmError* err;
@@ -1093,11 +1099,11 @@ static int nbdgm_validate(ServiceValidationArgs* args)
     uint32_t server_type;
     AppId serviceAppId = APP_ID_NETBIOS_DGM;
     AppId miscAppId = APP_ID_NONE;
-    AppIdSession* asd = args->asd;
-    const uint8_t* data = args->data;
-    Packet* pkt = args->pkt;
-    const int dir = args->dir;
-    uint16_t size = args->size;
+    AppIdSession* asd = args.asd;
+    const uint8_t* data = args.data;
+    Packet* pkt = args.pkt;
+    const int dir = args.dir;
+    uint16_t size = args.size;
 
     if (!size)
         goto inprocess;
@@ -1144,9 +1150,8 @@ static int nbdgm_validate(ServiceValidationArgs* args)
             !memcmp(data, NB_SMB_BANNER, sizeof(NB_SMB_BANNER)))
         {
             if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
-            {
                 serviceAppId = APP_ID_NETBIOS_DGM;
-            }
+
             data += sizeof(NB_SMB_BANNER);
             if (end-data < (int)sizeof(ServiceSMBHeader))
                 goto not_mailslot;
@@ -1178,12 +1183,11 @@ static int nbdgm_validate(ServiceValidationArgs* args)
                 goto not_mailslot;
             }
             server_type = LETOHL(&browser->server_type);
-            netbios_service_mod.api->analyzefp(asd, browser->major, browser->minor, server_type);
+            add_smb_info(asd, browser->major, browser->minor, server_type);
         }
 not_mailslot:
         if (source_name[0])
-            netbios_service_mod.api->add_host_info(asd, SERVICE_HOST_INFO_NETBIOS_NAME,
-                source_name);
+            add_host_info(asd, SERVICE_HOST_INFO_NETBIOS_NAME, source_name);
         asd->set_session_flags(APPID_SESSION_CONTINUE);
         goto success;
     case NBDGM_TYPE_ERROR:
@@ -1206,32 +1210,68 @@ not_mailslot:
 fail:
     if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
     {
-        netbios_service_mod.api->fail_service(asd, pkt, dir, &nbdgm_svc_element,
-            netbios_service_mod.flow_data_index);
+        fail_service(asd, pkt, dir);
     }
     asd->clear_session_flags(APPID_SESSION_CONTINUE);
-    return SERVICE_NOMATCH;
+    return APPID_NOMATCH;
 
 success:
     if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
     {
         if (dir == APP_ID_FROM_RESPONDER)
         {
-            if (netbios_service_mod.api->add_service(asd, pkt, dir, &nbdgm_svc_element,
-                serviceAppId, nullptr, nullptr, nullptr) == SERVICE_SUCCESS)
+            if (add_service(asd, pkt, dir, serviceAppId, nullptr, nullptr, nullptr) ==
+                APPID_SUCCESS)
             {
-                netbios_service_mod.api->add_misc(asd, miscAppId);
+                add_miscellaneous_info(asd, miscAppId);
             }
             appid_stats.netbios_dgm_flows++;
         }
     }
-    return SERVICE_SUCCESS;
+    return APPID_SUCCESS;
 
 inprocess:
     if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
     {
-        netbios_service_mod.api->service_inprocess(asd, pkt, dir, &nbdgm_svc_element);
+        service_inprocess(asd, pkt, dir);
     }
-    return SERVICE_INPROCESS;
+    return APPID_INPROCESS;
+}
+
+void NbdgmServiceDetector::add_smb_info(AppIdSession* asd, unsigned major, unsigned minor, uint32_t
+    flags)
+{
+    FpSMBData* sd;
+
+    if (flags & FINGERPRINT_UDP_FLAGS_XENIX)
+        return;
+
+    if (smb_data_free_list)
+    {
+        sd = smb_data_free_list;
+        smb_data_free_list = sd->next;
+    }
+    else
+        sd = (FpSMBData*)snort_calloc(sizeof(FpSMBData));
+
+    if (asd->add_flow_data(sd, APPID_SESSION_DATA_SMB_DATA, (AppIdFreeFCN)AppIdFreeSMBData))
+    {
+        AppIdFreeSMBData(sd);
+        return;
+    }
+
+    asd->set_session_flags(APPID_SESSION_HAS_SMB_INFO);
+    sd->major = major;
+    sd->minor = minor;
+    sd->flags = flags & FINGERPRINT_UDP_FLAGS_MASK;
+}
+
+void NbdgmServiceDetector::AppIdFreeSMBData(FpSMBData* sd)
+{
+    if (sd)
+    {
+        sd->next = smb_data_free_list;
+        smb_data_free_list = sd;
+    }
 }
 

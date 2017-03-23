@@ -22,11 +22,22 @@
 #ifndef SERVICE_FTP_H
 #define SERVICE_FTP_H
 
-// Service detector for FTP
+#include "service_detector.h"
 
-#include "service_api.h"
+class ServiceDiscovery;
 
-extern RNAServiceValidationModule ftp_service_mod;
+class FtpServiceDetector : public ServiceDetector
+{
+public:
+    FtpServiceDetector(ServiceDiscovery*);
+    ~FtpServiceDetector();
 
+    int validate(AppIdDiscoveryArgs&) override;
+
+private:
+    void InitializeDataSession(AppIdSession*, AppIdSession*);
+
+    int16_t ftp_data_app_id = 0;
+};
 #endif
 

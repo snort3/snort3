@@ -25,8 +25,6 @@
 
 #include "service_irc.h"
 
-#include "main/snort_debug.h"
-
 #include "appid_module.h"
 
 #define IRC_COUNT_THRESHOLD 10
@@ -66,77 +64,51 @@ struct ServiceIRCData
     unsigned count;
 };
 
-static int irc_init(const InitServiceAPI* const init_api);
-static int irc_validate(ServiceValidationArgs* args);
-
-static const RNAServiceElement svc_element =
+IrcServiceDetector::IrcServiceDetector(ServiceDiscovery* sd)
 {
-    nullptr,
-    &irc_validate,
-    nullptr,
-    DETECTOR_TYPE_DECODER,
-    1,
-    1,
-    0,
-    "irc"
-};
+    handler = sd;
+    name = "irc";
+    proto = IpProtocol::TCP;
+    detectorType = DETECTOR_TYPE_DECODER;
+    current_ref_count =  1;
 
-static const RNAServiceValidationPort pp[] =
-{
-    { &irc_validate, 6667, IpProtocol::TCP, 0 },
-    { nullptr, 0, IpProtocol::PROTO_NOT_SET, 0 }
-};
-
-RNAServiceValidationModule irc_service_mod =
-{
-    "IRC",
-    &irc_init,
-    pp,
-    nullptr,
-    nullptr,
-    0,
-    nullptr,
-    0
-};
-
-static AppRegistryEntry appIdRegistry[] =
-{
-    { APP_ID_IRCD, 0 }
-};
-
-static int irc_init(const InitServiceAPI* const init_api)
-{
-    unsigned i;
-    for (i=0; i < sizeof(appIdRegistry)/sizeof(*appIdRegistry); i++)
+    appid_registry =
     {
-        DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[i].appId);
-        init_api->RegisterAppId(&irc_validate, appIdRegistry[i].appId,
-            appIdRegistry[i].additionalInfo);
-    }
+        { APP_ID_IRCD, 0 }
+    };
 
-    return 0;
+    service_ports =
+    {
+        { 6667, IpProtocol::TCP, false }
+    };
+
+    handler->register_detector(name, this, proto);
 }
 
-static int irc_validate(ServiceValidationArgs* args)
+IrcServiceDetector::~IrcServiceDetector()
+{
+}
+
+int IrcServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     ServiceIRCData* id;
     const uint8_t* end;
     IRCState* state;
     unsigned* pos;
     const char** command;
-    AppIdSession* asd = args->asd;
-    const uint8_t* data = args->data;
-    const int dir = args->dir;
-    uint16_t size = args->size;
+    AppIdSession* asd = args.asd;
+    const uint8_t* data = args.data;
+    const int dir = args.dir;
+    uint16_t size = args.size;
 
     if (!size)
         goto inprocess;
 
-    id = (ServiceIRCData*)irc_service_mod.api->data_get(asd, irc_service_mod.flow_data_index);
+    id = (ServiceIRCData*)data_get(asd);
     if (!id)
     {
         id =  (ServiceIRCData*)snort_calloc(sizeof(ServiceIRCData));
-        irc_service_mod.api->data_add(asd, id, irc_service_mod.flow_data_index, &snort_free);
+        data_add(asd, id, &snort_free);
         id->initiator_state = IRC_STATE_BEGIN;
         id->state = IRC_STATE_BEGIN;
     }
@@ -316,26 +288,23 @@ static int irc_validate(ServiceValidationArgs* args)
         }
     }
 inprocess:
-    irc_service_mod.api->service_inprocess(asd, args->pkt, dir, &svc_element);
-    return SERVICE_INPROCESS;
+    service_inprocess(asd, args.pkt, dir);
+    return APPID_INPROCESS;
 
 success:
-    irc_service_mod.api->add_service(asd, args->pkt, dir, &svc_element,
-        APP_ID_IRCD, nullptr, nullptr, nullptr);
+    add_service(asd, args.pkt, dir, APP_ID_IRCD, nullptr, nullptr, nullptr);
     appid_stats.irc_flows++;
-    return SERVICE_SUCCESS;
+    return APPID_SUCCESS;
 
 fail:
     if (dir == APP_ID_FROM_RESPONDER)
     {
-        irc_service_mod.api->fail_service(asd, args->pkt, dir, &svc_element,
-            irc_service_mod.flow_data_index);
+        fail_service(asd, args.pkt, dir);
     }
     else
     {
-        irc_service_mod.api->incompatible_data(asd, args->pkt, dir, &svc_element,
-            irc_service_mod.flow_data_index, args->pConfig);
+        incompatible_data(asd, args.pkt, dir);
     }
-    return SERVICE_NOMATCH;
+    return APPID_NOMATCH;
 }
 

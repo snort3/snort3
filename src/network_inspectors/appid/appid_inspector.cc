@@ -27,25 +27,27 @@
 
 #include <openssl/crypto.h>
 
-#include "log/messages.h"
-#include "managers/inspector_manager.h"
-#include "profiler/profiler.h"
-#include "pub_sub/sip_events.h"
-
-#include "app_forecast.h"
-#include "appid_http_event_handler.h"
 #include "appid_module.h"
 #include "appid_stats.h"
-#include "client_plugins/client_app_base.h"
-#include "detector_plugins/detector_base.h"
-#include "detector_plugins/detector_dns.h"
-#include "detector_plugins/detector_http.h"
-#include "detector_plugins/detector_pattern.h"
+#include "appid_session.h"
+#include "appid_discovery.h"
 #include "host_port_app_cache.h"
-#include "lua_detector_api.h"
+#include "app_forecast.h"
 #include "lua_detector_module.h"
-#include "service_plugins/service_base.h"
+#include "appid_http_event_handler.h"
+#include "thirdparty_appid_utils.h"
+#include "client_plugins/client_discovery.h"
+#include "service_plugins/service_discovery.h"
 #include "service_plugins/service_ssl.h"
+#include "detector_plugins/detector_dns.h"
+#include "detector_plugins/http_url_patterns.h"
+#include "detector_plugins/detector_sip.h"
+#include "detector_plugins/detector_pattern.h"
+#include "managers/inspector_manager.h"
+#include "log/messages.h"
+#include "profiler/profiler.h"
+
+THREAD_LOCAL AppIdStatistics* appid_stats_manager = nullptr;
 
 static void dump_appid_stats()
 {
@@ -62,7 +64,7 @@ static void dump_appid_stats()
 //           should probably be done outside of appid
 static void openssl_cleanup()
 {
-     CRYPTO_cleanup_all_ex_data();
+    CRYPTO_cleanup_all_ex_data();
 }
 
 AppIdInspector::AppIdInspector(const AppIdModuleConfig* pc)
@@ -73,7 +75,7 @@ AppIdInspector::AppIdInspector(const AppIdModuleConfig* pc)
 
 AppIdInspector::~AppIdInspector()
 {
-    if(config->debug)
+    if (config->debug)
         dump_appid_stats();
 
     delete active_config;
@@ -90,15 +92,21 @@ AppIdConfig* AppIdInspector::get_appid_config()
     return active_config;
 }
 
+AppIdStatistics* AppIdInspector::get_stats_manager()
+{
+    return appid_stats_manager;
+}
+
 bool AppIdInspector::configure(SnortConfig*)
 {
     assert(!active_config);
 
     active_config = new AppIdConfig( ( AppIdModuleConfig* )config);
 
-    get_data_bus().subscribe(HTTP_REQUEST_HEADER_EVENT_KEY, new HttpEventHandler(HttpEventHandler::REQUEST_EVENT));
-    get_data_bus().subscribe(HTTP_RESPONSE_HEADER_EVENT_KEY, new HttpEventHandler(HttpEventHandler::RESPONSE_EVENT));
-    get_data_bus().subscribe(SIP_EVENT_TYPE_SIP_DIALOG_KEY, new SipEventHandler());
+    get_data_bus().subscribe(HTTP_REQUEST_HEADER_EVENT_KEY, new HttpEventHandler(
+        HttpEventHandler::REQUEST_EVENT));
+    get_data_bus().subscribe(HTTP_RESPONSE_HEADER_EVENT_KEY, new HttpEventHandler(
+        HttpEventHandler::RESPONSE_EVENT));
 
     return active_config->init_appid();
 
@@ -114,57 +122,49 @@ void AppIdInspector::show(SnortConfig*)
     LogMessage("AppId Configuration\n");
 
     LogMessage("    Detector Path:          %s\n", config->app_detector_dir);
-    LogMessage("    appStats Logging:       %s\n", config->stats_logging_enabled ? "enabled" : "disabled");
+    LogMessage("    appStats Logging:       %s\n", config->stats_logging_enabled ? "enabled" :
+        "disabled");
     LogMessage("    appStats Period:        %lu secs\n", config->app_stats_period);
     LogMessage("    appStats Rollover Size: %lu bytes\n",
         config->app_stats_rollover_size);
     LogMessage("    appStats Rollover time: %lu secs\n",
         config->app_stats_rollover_time);
     LogMessage("\n");
-    active_config->show();
-
 }
 
 void AppIdInspector::tinit()
 {
-    init_appid_statistics(*config);
+    appid_stats_manager = AppIdStatistics::initialize_manager(*config);
     HostPortCache::initialize();
     init_appid_forecast();
-    init_service_plugins();
-    init_client_plugins(active_config);
-    init_detector_plugins();
-    init_http_detector();
-    init_chp_glossary();
+    HttpPatternMatchers* http_matchers = HttpPatternMatchers::get_instance();
+    AppIdDiscovery::initialize_plugins();
     init_length_app_cache();
     LuaDetectorManager::initialize(*active_config);
-    finalize_service_port_patterns();
-    finalize_client_port_patterns();
-    finalize_service_patterns();
-    finalize_client_plugins();
-    finalize_http_detector();
-    finalize_sip_ua();
+    PatternServiceDetector::finalize_service_port_patterns();
+    PatternClientDetector::finalize_client_port_patterns();
+    AppIdDiscovery::finalize_plugins();
+    http_matchers->finalize();
+    SipUdpClientDetector::finalize_sip_ua();
     ssl_detector_process_patterns();
     dns_host_detector_process_patterns();
-   	AppIdServiceState::initialize(config->memcap);
+    AppIdServiceState::initialize(config->memcap);
 }
 
 void AppIdInspector::tterm()
 {
-    cleanup_appid_statistics();
-
+    delete appid_stats_manager;
     HostPortCache::terminate();
     clean_appid_forecast();
     service_dns_host_clean();
     service_ssl_clean();
-    clean_service_plugins();
-    clean_client_plugins();
-    clean_http_detector();
-    free_chp_glossary();
     free_length_app_cache();
 
     AppIdSession::release_free_list_flow_data();
     LuaDetectorManager::terminate();
     AppIdServiceState::clean();
+    AppIdDiscovery::release_plugins();
+    delete HttpPatternMatchers::get_instance();
 }
 
 void AppIdInspector::eval(Packet* pkt)
@@ -172,7 +172,7 @@ void AppIdInspector::eval(Packet* pkt)
     Profile profile(appidPerfStats);
 
     appid_stats.packets++;
-    AppIdSession::do_application_discovery(pkt, active_config);
+    AppIdDiscovery::do_application_discovery(pkt);
 }
 
 //-------------------------------------------------------------------------
@@ -251,16 +251,14 @@ const BaseApi* nin_appid[] =
     nullptr
 };
 
-/**
- * @returns 1 if some appid is found, 0 otherwise.
- */
+// @returns 1 if some appid is found, 0 otherwise.
 //int sslAppGroupIdLookup(void* ssnptr, const char* serverName, const char* commonName,
 //    AppId* serviceAppId, AppId* ClientAppId, AppId* payloadAppId)
 int sslAppGroupIdLookup(void*, const char*, const char*, AppId*, AppId*, AppId*)
 {
     // FIXIT-M determine need and proper location for this code when support for ssl is implemented
-    //         also once this is done the call to get the appid config should change to use the config
-    //         assigned to the flow being processed
+    //         also once this is done the call to get the appid config should change to use the
+    //         config assigned to the flow being processed
 #ifdef REMOVED_WHILE_NOT_IN_USE
     AppIdSession* asd;
     *serviceAppId = *ClientAppId = *payload_app_id = APP_ID_NONE;
@@ -273,7 +271,8 @@ int sslAppGroupIdLookup(void*, const char*, const char*, AppId*, AppId*, AppId*)
     if (serverName)
     {
         ssl_scan_hostname((const uint8_t*)serverName, strlen(serverName), ClientAppId,
-            payload_app_id, &AppIdInspector::get_inspector()->get_appid_config()->serviceSslConfig);
+            payload_app_id,
+            &AppIdInspector::get_inspector()->get_appid_config()->serviceSslConfig);
     }
 
     if (ssnptr && (asd = appid_api.get_appid_data(ssnptr)))

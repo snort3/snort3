@@ -23,19 +23,11 @@
 #include "config.h"
 #endif
 
-#include "main/snort_debug.h"
+#include "client_app_vnc.h"
 
-#include "app_info_table.h"
 #include "appid_module.h"
-
-#include "client_app_api.h"
-
-#if 0
-#include "protocols/packet.h"
-#include "utils/sflsq.h"
-#include "utils/util.h"
-
-#endif
+#include "app_info_table.h"
+#include "application_ids.h"
 
 static const char VNC_BANNER[] = "RFB ";
 static const char VNC_BANNER2[] = ".";
@@ -48,131 +40,65 @@ enum VNCState
     VNC_STATE_VERSION
 };
 
-#define MAX_VERSION_SIZE    8
+#define MAX_VNC_VERSION_SIZE    8
 struct ClientVNCData
 {
     VNCState state;
     unsigned pos;
-    uint8_t version[MAX_VERSION_SIZE];
+    uint8_t version[MAX_VNC_VERSION_SIZE];
 };
 
-struct VNC_CLIENT_APP_CONFIG
+VncClientDetector::VncClientDetector(ClientDiscovery* cdm)
 {
-    int enabled;
-};
+    handler = cdm;
+    name = "RFB";
+    proto = IpProtocol::TCP;
+    minimum_matches = 2;
+    provides_user = true;
 
-THREAD_LOCAL VNC_CLIENT_APP_CONFIG vnc_config;
-
-static CLIENT_APP_RETCODE vnc_init(const InitClientAppAPI* const init_api, SF_LIST* config);
-static CLIENT_APP_RETCODE vnc_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet* pkt, Detector* userData);
-
-SO_PUBLIC RNAClientAppModule vnc_client_mod =
-{
-    "RFB",                  // name
-    IpProtocol::TCP,            // proto
-    &vnc_init,              // init
-    nullptr,                // clean
-    &vnc_validate,          // validate
-    2,                      // minimum_matches
-    nullptr,                // api
-    nullptr,                // userData
-    0,                      // precedence
-    nullptr,                // finalize,
-    1,                      // provides_user
-    0                       // flow_data_index
-};
-
-struct Client_App_Pattern
-{
-    const uint8_t* pattern;
-    unsigned length;
-    int index;
-    unsigned appId;
-};
-
-static Client_App_Pattern patterns[] =
-{
-    { (const uint8_t*)VNC_BANNER,  sizeof(VNC_BANNER)-1, -1, APP_ID_VNC },
-    { (const uint8_t*)VNC_BANNER2, sizeof(VNC_BANNER2)-1, 7, APP_ID_VNC },
-};
-
-static AppRegistryEntry appIdRegistry[] =
-{
-    { APP_ID_VNC, APPINFO_FLAG_CLIENT_ADDITIONAL },
-    { APP_ID_VNC_RFB, APPINFO_FLAG_CLIENT_ADDITIONAL }
-};
-
-static CLIENT_APP_RETCODE vnc_init(const InitClientAppAPI* const init_api, SF_LIST* config)
-{
-    unsigned i;
-
-    vnc_config.enabled = 1;
-
-    if (config)
+    tcp_patterns =
     {
-        SF_LNODE* cursor;
-        RNAClientAppModuleConfigItem* item;
+        { (const uint8_t*)VNC_BANNER,  sizeof(VNC_BANNER)-1, -1, 0, APP_ID_VNC },
+        { (const uint8_t*)VNC_BANNER2, sizeof(VNC_BANNER2)-1, 7, 0, APP_ID_VNC },
+    };
 
-        for (item = (RNAClientAppModuleConfigItem*)sflist_first(config, &cursor);
-            item;
-            item = (RNAClientAppModuleConfigItem*)sflist_next(&cursor))
-        {
-            DebugFormat(DEBUG_LOG,"Processing %s: %s\n",item->name, item->value);
-            if (strcasecmp(item->name, "enabled") == 0)
-            {
-                vnc_config.enabled = atoi(item->value);
-            }
-        }
-    }
-
-    if (vnc_config.enabled)
+    appid_registry =
     {
-        for (i=0; i < sizeof(patterns)/sizeof(*patterns); i++)
-        {
-            DebugFormat(DEBUG_LOG,"registering patterns: %s: %d\n",
-            		(const char*)patterns[i].pattern, patterns[i].index);
-            init_api->RegisterPattern(&vnc_validate, IpProtocol::TCP, patterns[i].pattern,
-                patterns[i].length, patterns[i].index);
-        }
-    }
+        { APP_ID_VNC, APPINFO_FLAG_CLIENT_ADDITIONAL },
+        { APP_ID_VNC_RFB, APPINFO_FLAG_CLIENT_ADDITIONAL }
+    };
 
-    unsigned j;
-    for (j=0; j < sizeof(appIdRegistry)/sizeof(*appIdRegistry); j++)
-    {
-        DebugFormat(DEBUG_LOG,"registering appId: %d\n",appIdRegistry[j].appId);
-        init_api->RegisterAppId(&vnc_validate, appIdRegistry[j].appId,
-            appIdRegistry[j].additionalInfo);
-    }
-
-    return CLIENT_APP_SUCCESS;
+    handler->register_detector(name, this, proto);
 }
 
-static CLIENT_APP_RETCODE vnc_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, Packet*, Detector*)
+VncClientDetector::~VncClientDetector()
+{
+}
+
+int VncClientDetector::validate(AppIdDiscoveryArgs& args)
 {
     ClientVNCData* fd;
     uint16_t offset;
 
-    if (dir != APP_ID_FROM_INITIATOR)
-        return CLIENT_APP_INPROCESS;
+    if (args.dir != APP_ID_FROM_INITIATOR)
+        return APPID_INPROCESS;
 
-    fd = (ClientVNCData*)vnc_client_mod.api->data_get(asd, vnc_client_mod.flow_data_index);
+    fd = (ClientVNCData*)data_get(args.asd);
     if (!fd)
     {
         fd = (ClientVNCData*)snort_calloc(sizeof(ClientVNCData));
-        vnc_client_mod.api->data_add(asd, fd, vnc_client_mod.flow_data_index, &snort_free);
+        data_add(args.asd, fd, &snort_free);
         fd->state = VNC_STATE_BANNER;
     }
 
     offset = 0;
-    while (offset < size)
+    while (offset < args.size)
     {
         switch (fd->state)
         {
         case VNC_STATE_BANNER:
-            if (data[offset] != VNC_BANNER[fd->pos])
-                return CLIENT_APP_EINVALID;
+            if (args.data[offset] != VNC_BANNER[fd->pos])
+                return APPID_EINVALID;
             if (fd->pos >= VNC_BANNER_LEN-1)
             {
                 fd->state = VNC_STATE_VERSION;
@@ -182,18 +108,18 @@ static CLIENT_APP_RETCODE vnc_validate(const uint8_t* data, uint16_t size, const
             fd->pos++;
             break;
         case VNC_STATE_VERSION:
-            if ((isdigit(data[offset]) || data[offset] == '.' || data[offset] == '\n') && fd->pos <
-                MAX_VERSION_SIZE)
+            if ((isdigit(args.data[offset]) || args.data[offset] == '.' ||
+                args.data[offset] == '\n') && fd->pos < MAX_VNC_VERSION_SIZE)
             {
-                fd->version[fd->pos] = data[offset];
-                if (data[offset] == '\n' && fd->pos == 7)
+                fd->version[fd->pos] = args.data[offset];
+                if (args.data[offset] == '\n' && fd->pos == 7)
                 {
                     fd->version[fd->pos] = 0;
                     goto done;
                 }
             }
             else
-                return CLIENT_APP_EINVALID;
+                return APPID_EINVALID;
             fd->pos++;
             break;
         default:
@@ -202,12 +128,12 @@ static CLIENT_APP_RETCODE vnc_validate(const uint8_t* data, uint16_t size, const
         offset++;
     }
 inprocess:
-    return CLIENT_APP_INPROCESS;
+    return APPID_INPROCESS;
 
 done:
-    vnc_client_mod.api->add_app(asd, APP_ID_VNC_RFB, APP_ID_VNC, (const char*)fd->version);
-    asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+    add_app(args.asd, APP_ID_VNC_RFB, APP_ID_VNC, (const char*)fd->version);
+    args.asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
     appid_stats.vnc_clients++;
-    return CLIENT_APP_SUCCESS;
+    return APPID_SUCCESS;
 }
 

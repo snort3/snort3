@@ -26,7 +26,10 @@
 #include "appid_api.h"
 
 #include "app_info_table.h"
-#include "service_plugins/service_base.h"
+#include "thirdparty_appid_utils.h"
+#include "service_plugins/service_bootp.h"
+#include "service_plugins/service_netbios.h"
+#include "utils/util.h"
 
 #define SSL_WHITELIST_PKT_LIMIT 20
 
@@ -100,7 +103,7 @@ AppId AppIdApi::get_referred_app_id(AppIdSession* asd)
 AppId AppIdApi::get_fw_service_app_id(AppIdSession* asd)
 {
     if (asd)
-        return asd->fw_pick_service_app_id();
+        return asd->pick_fw_service_app_id();
 
     return APP_ID_NONE;
 }
@@ -108,7 +111,7 @@ AppId AppIdApi::get_fw_service_app_id(AppIdSession* asd)
 AppId AppIdApi::get_fw_misc_app_id(AppIdSession* asd)
 {
     if (asd)
-        return asd->fw_pick_misc_app_id();
+        return asd->pick_fw_misc_app_id();
 
     return APP_ID_NONE;
 }
@@ -116,7 +119,7 @@ AppId AppIdApi::get_fw_misc_app_id(AppIdSession* asd)
 AppId AppIdApi::get_fw_client_app_id(AppIdSession* asd)
 {
     if (asd)
-        return asd->fw_pick_client_app_id();
+        return asd->pick_fw_client_app_id();
 
     return APP_ID_NONE;
 }
@@ -124,7 +127,7 @@ AppId AppIdApi::get_fw_client_app_id(AppIdSession* asd)
 AppId AppIdApi::get_fw_payload_app_id(AppIdSession* asd)
 {
     if (asd)
-        return asd->fw_pick_payload_app_id();
+        return asd->pick_fw_payload_app_id();
 
     return APP_ID_NONE;
 }
@@ -132,7 +135,7 @@ AppId AppIdApi::get_fw_payload_app_id(AppIdSession* asd)
 AppId AppIdApi::get_fw_referred_app_id(AppIdSession* asd)
 {
     if (asd)
-        return asd->fw_pick_referred_payload_app_id();
+        return asd->pick_fw_referred_payload_app_id();
 
     return APP_ID_NONE;
 }
@@ -147,7 +150,7 @@ bool AppIdApi::is_ssl_session_decrypted(AppIdSession* asd)
 
 AppIdSession* AppIdApi::get_appid_data(Flow* flow)
 {
-    AppIdSession* asd = (AppIdSession*) flow->get_flow_data(AppIdSession::flow_id);
+    AppIdSession* asd = (AppIdSession*)flow->get_flow_data(AppIdSession::flow_id);
 
     return (asd && asd->common.flow_type == APPID_FLOW_TYPE_NORMAL) ?
            asd : nullptr;
@@ -157,19 +160,19 @@ bool AppIdApi::is_appid_inspecting_session(AppIdSession* appIdSession)
 {
     if (appIdSession && appIdSession->common.flow_type == APPID_FLOW_TYPE_NORMAL)
     {
-        if (appIdSession->rnaServiceState != RNA_STATE_FINISHED ||
+        if (appIdSession->rna_service_state != RNA_STATE_FINISHED ||
             !is_third_party_appid_done(appIdSession->tpsession) ||
             appIdSession->get_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_CONTINUE) ||
-                (appIdSession->get_session_flags(APPID_SESSION_ENCRYPTED) &&
-                        (appIdSession->get_session_flags(APPID_SESSION_DECRYPTED) ||
-                         appIdSession->session_packet_count < SSL_WHITELIST_PKT_LIMIT)))
+            (appIdSession->get_session_flags(APPID_SESSION_ENCRYPTED) &&
+            (appIdSession->get_session_flags(APPID_SESSION_DECRYPTED) ||
+            appIdSession->session_packet_count < SSL_WHITELIST_PKT_LIMIT)))
         {
             return true;
         }
         if (appIdSession->rna_client_state != RNA_STATE_FINISHED &&
             (!appIdSession->get_session_flags(APPID_SESSION_CLIENT_DETECTED) ||
-            (appIdSession->rnaServiceState != RNA_STATE_STATEFUL
-                    && appIdSession->get_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS))))
+            (appIdSession->rna_service_state != RNA_STATE_STATEFUL
+            && appIdSession->get_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS))))
         {
             return true;
         }
@@ -431,7 +434,7 @@ void AppIdApi::free_dhcp_fp_data(AppIdSession* asd, DHCPData* data)
     if (asd)
     {
         asd->clear_session_flags(APPID_SESSION_HAS_DHCP_FP);
-        AppIdFreeDhcpData(data);
+        BootpServiceDetector::AppIdFreeDhcpData(data);
     }
 }
 
@@ -449,7 +452,7 @@ void AppIdApi::free_dhcp_info(AppIdSession* asd, DHCPInfo* data)
     if (asd)
     {
         asd->clear_session_flags(APPID_SESSION_HAS_DHCP_INFO);
-        AppIdFreeDhcpInfo(data);
+        BootpServiceDetector::AppIdFreeDhcpInfo(data);
     }
 }
 
@@ -467,7 +470,7 @@ void AppIdApi::free_smb_fp_data(AppIdSession* asd, FpSMBData* data)
     if (asd)
     {
         asd->clear_session_flags(APPID_SESSION_HAS_SMB_INFO);
-        AppIdFreeSMBData(data);
+        NbdgmServiceDetector::AppIdFreeSMBData(data);
     }
 }
 
@@ -526,7 +529,7 @@ uint32_t AppIdApi::consume_ha_state(Flow* flow, const uint8_t* buf, uint8_t, IpP
     if (appHA->flags & APPID_HA_FLAGS_APP)
     {
         AppIdSession* asd =
-                (AppIdSession*)(flow->get_flow_data(AppIdSession::flow_id));
+            (AppIdSession*)(flow->get_flow_data(AppIdSession::flow_id));
 
         if (!asd)
         {
@@ -541,10 +544,10 @@ uint32_t AppIdApi::consume_ha_state(Flow* flow, const uint8_t* buf, uint8_t, IpP
                 {
                     asd->set_session_flags(APPID_SESSION_CONTINUE);
                 }
-                asd->rnaServiceState = RNA_STATE_STATEFUL;
+                asd->rna_service_state = RNA_STATE_STATEFUL;
             }
             else
-                asd->rnaServiceState = RNA_STATE_FINISHED;
+                asd->rna_service_state = RNA_STATE_FINISHED;
             asd->rna_client_state = RNA_STATE_FINISHED;
             if (thirdparty_appid_module)
                 thirdparty_appid_module->session_state_set(asd->tpsession, TP_STATE_HA);

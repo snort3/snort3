@@ -24,9 +24,8 @@
 
 // encapsulate Lua interface boilerplate to get sane, identical behavior across users
 
-#include <lua.hpp>
-
 #include <cassert>
+#include <lua.hpp>
 
 template<typename T>
 struct UserData
@@ -66,3 +65,4 @@ struct UserData
 };
 
 #endif
+

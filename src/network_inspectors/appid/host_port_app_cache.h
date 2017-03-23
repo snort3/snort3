@@ -26,20 +26,19 @@
 
 struct HostPortVal
 {
-	AppId appId;
-	unsigned type;
+    AppId appId;
+    unsigned type;
 };
 
 class HostPortCache
 {
 public:
-	static void initialize();
-	static void terminate();
-	static HostPortVal* find(const SfIp*, uint16_t port, IpProtocol proto);
-	static bool add(const SfIp*, uint16_t port, IpProtocol proto, unsigned type, AppId);
-	static void dump();
+    static void initialize();
+    static void terminate();
+    static HostPortVal* find(const SfIp*, uint16_t port, IpProtocol);
+    static bool add(const SfIp*, uint16_t port, IpProtocol, unsigned type, AppId);
+    static void dump();
 };
-
 
 #endif
 

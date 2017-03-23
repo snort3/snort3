@@ -24,9 +24,11 @@
 
 #include <array>
 
-#include "client_plugins/client_app_config.h"
-#include "detector_plugins/detector_sip.h"
-#include "service_plugins/service_config.h"
+#include "framework/decode_data.h"
+#include "protocols/ipv6.h"
+#include "sfip/sf_ip.h"
+#include "utils/sflsq.h"
+#include "flow/flow.h"
 
 #define APP_ID_MAX_DIRS         16
 #define APP_ID_PORT_ARRAY_SIZE  65536
@@ -38,6 +40,10 @@ class AppInfoManager;
 
 extern unsigned appIdPolicyId;
 extern uint32_t app_id_netmasks[];
+
+extern int16_t snortId_for_unsynchronized;
+extern int16_t snortId_for_ftp_data;
+extern int16_t snortId_for_http2;
 
 struct PortExclusion
 {
@@ -60,8 +66,8 @@ struct AppidConfigElement
     void* value;    ///< Module configuration data
 
     static void add_generic_config_element(const char* name, void* pData);
-    static  void* find_generic_config_element(const char* name);
-    static  void remove_generic_config_element(const char* name);
+    static void* find_generic_config_element(const char* name);
+    static void remove_generic_config_element(const char* name);
 };
 
 struct AppIdSessionLogFilter
@@ -118,7 +124,6 @@ public:
     bool http2_detection_enabled = false;
 };
 
-
 // App ID Active Configuration
 enum RnaFwConfigState
 {
@@ -132,13 +137,14 @@ typedef std::array<SF_LIST*, APP_ID_PORT_ARRAY_SIZE> AppIdPortExclusions;
 class AppIdConfig
 {
 public:
-    AppIdConfig( AppIdModuleConfig* config );
+    AppIdConfig(AppIdModuleConfig*);
     ~AppIdConfig();
 
     bool init_appid();
     void cleanup();
     void show();
     void set_safe_search_enforcement(int enabled);
+    AppId get_port_service_id(IpProtocol, uint16_t port);
 
     unsigned max_service_info = 0;
 #ifdef USE_RNA_CONFIG
@@ -147,9 +153,12 @@ public:
     NetworkSet* net_list = nullptr;
     std::array<NetworkSet*, MAX_ZONES> net_list_by_zone;
 #endif
-    std::array<AppId, APP_ID_PORT_ARRAY_SIZE> tcp_port_only;     ///< Service IDs for port-only TCP services
-    std::array<AppId, APP_ID_PORT_ARRAY_SIZE> udp_port_only;     ///< Service IDs for port-only UDP services
-    std::array<AppId, 255> ip_protocol;         ///< Service IDs for non-TCP / UDP protocol services
+    std::array<AppId, APP_ID_PORT_ARRAY_SIZE> tcp_port_only;     ///< Service IDs for port-only TCP
+                                                                 // services
+    std::array<AppId, APP_ID_PORT_ARRAY_SIZE> udp_port_only;     ///< Service IDs for port-only UDP
+                                                                 // services
+    std::array<AppId, 255> ip_protocol;         ///< Service IDs for non-TCP / UDP protocol
+                                                // services
     SF_LIST client_app_args;                ///< List of Client App arguments
     // for each potential port, an sflist of PortExclusion structs
     AppIdPortExclusions tcp_port_exclusions_src;
@@ -157,11 +166,12 @@ public:
     AppIdPortExclusions tcp_port_exclusions_dst;
     AppIdPortExclusions udp_port_exclusions_dst;
     AppIdModuleConfig* mod_config = nullptr;
+    unsigned appIdPolicyId = 53;
 
 private:
     void read_port_detectors(const char* files);
     void configure_analysis_networks(char* toklist[], uint32_t flag);
-    int add_port_exclusion(AppIdPortExclusions& port_exclusions, const ip::snort_in6_addr* ip,
+    int add_port_exclusion(AppIdPortExclusions&, const ip::snort_in6_addr* ip,
         const ip::snort_in6_addr* netmask, int family, uint16_t port);
     void process_port_exclusion(char* toklist[]);
     void process_config_directive(char* toklist[], int /* reload */);
@@ -172,3 +182,4 @@ private:
 };
 
 #endif
+

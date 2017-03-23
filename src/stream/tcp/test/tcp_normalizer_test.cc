@@ -35,7 +35,7 @@
 NormMode mockNormMode = NORM_MODE_ON;
 bool norm_enabled = true;
 THREAD_LOCAL TcpStats tcpStats;
-THREAD_LOCAL void *snort_conf = nullptr;
+THREAD_LOCAL SnortConfig* snort_conf = nullptr;
 
 Flow::Flow( void ) {}
 Flow::~Flow( void ) {}
