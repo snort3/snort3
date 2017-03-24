@@ -68,7 +68,7 @@ static SIPData* SetNewSIPData(Packet* p, SIP_PROTO_CONF* config)
     return &fd->session;
 }
 
-SIPData* get_sip_session_data(Flow* flow)
+SIPData* get_sip_session_data(const Flow* flow)
 {
     SipFlowData* fd = (SipFlowData*)flow->get_flow_data(SipFlowData::flow_id);
     return fd ? &fd->session : NULL;
@@ -267,7 +267,8 @@ public:
     void show(SnortConfig*) override;
     void eval(Packet*) override;
     bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&) override;
-    SIPMethodNode *add_method(char* tok);
+
+    SIPMethodNode* add_method(const char*);
 
 private:
     SIP_PROTO_CONF* config;
@@ -292,16 +293,13 @@ void Sip::show(SnortConfig*)
     PrintSipConf(config);
 }
 
-SIPMethodNode *Sip::add_method(char* tok)
+SIPMethodNode* Sip::add_method(const char* tok)
 {
     SIPMethodNode *method;
-    method = SIP_FindMethod (config->methods, tok, strlen (tok));
+    method = SIP_FindMethod(config->methods, tok, strlen(tok));
 
-    /*if method is not found, add it as a user defined method*/
-    if (method == NULL)
-    {
-        method = SIP_AddUserDefinedMethod(tok, &config->methodsConfig, &config->methods );
-    }
+    if ( !method )
+        method = SIP_AddUserDefinedMethod(tok, &config->methodsConfig, &config->methods);
 
     return method;
 }
@@ -381,12 +379,10 @@ static void sip_dtor(Inspector* p)
     delete p;
 }
 
-SIPMethodNode *add_sip_method(char *tok)
+SIPMethodNode* add_sip_method(const char* tok)
 {
-    Sip *sip_ins = (Sip*)InspectorManager::get_inspector("sip");
-    assert(sip_ins);
-
-    return(sip_ins->add_method(tok));
+    Sip* sip = (Sip*)InspectorManager::get_inspector("sip");
+    return sip ? sip->add_method(tok) : nullptr;
 }
 
 const InspectApi sip_api =

@@ -219,7 +219,7 @@ int Flow::set_flow_data(FlowData* fd)
     return 0;
 }
 
-FlowData* Flow::get_flow_data(unsigned id)
+FlowData* Flow::get_flow_data(unsigned id) const
 {
     FlowData* fd = flow_data;
 

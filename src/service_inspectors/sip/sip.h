@@ -51,9 +51,8 @@ public:
     static unsigned flow_id;
     SIPData session;
 };
-// API to get SIP flow data from the packet flow
-SIPData* get_sip_session_data(Flow* flow);
-// API to add SIP method
-SIPMethodNode *add_sip_method(char *tok);
+
+SIPData* get_sip_session_data(const Flow*);
+SIPMethodNode* add_sip_method(const char*);
 
 #endif

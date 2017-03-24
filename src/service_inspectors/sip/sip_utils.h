@@ -28,7 +28,7 @@
 
 int SIP_IsEmptyStr(char*);
 int SIP_TrimSP(const char*, const char*, char**, char**);
-SIPMethodNode* SIP_FindMethod(SIPMethodlist, char*, unsigned int);
+SIPMethodNode* SIP_FindMethod(SIPMethodlist, const char* method, unsigned int);
 uint32_t strToHash(const char*, int);
 
 #endif

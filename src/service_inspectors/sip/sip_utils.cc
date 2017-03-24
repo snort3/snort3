@@ -120,7 +120,7 @@ int SIP_TrimSP(const char* start, const char* end, char** new_start, char** new_
  *
  ********************************************************************/
 
-SIPMethodNode* SIP_FindMethod(SIPMethodlist methods, char* methodName, unsigned int length)
+SIPMethodNode* SIP_FindMethod(SIPMethodlist methods, const char* methodName, unsigned int length)
 {
     SIPMethodNode* method = methods;
     while (NULL != method)

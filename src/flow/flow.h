@@ -164,7 +164,7 @@ public:
     void clear(bool dump_flow_data = true);
 
     int set_flow_data(FlowData*);
-    FlowData* get_flow_data(uint32_t proto);
+    FlowData* get_flow_data(uint32_t proto) const;
     void free_flow_data(uint32_t proto);
     void free_flow_data(FlowData*);
     void free_flow_data();
