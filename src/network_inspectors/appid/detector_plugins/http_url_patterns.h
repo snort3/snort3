@@ -29,7 +29,7 @@
 #include "flow/flow.h"
 #include "utils/util.h"
 
-class Packet;
+struct Packet;
 struct RNAServiceSubtype;
 struct HttpSession;
 class AppIdModuleConfig;

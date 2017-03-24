@@ -291,25 +291,25 @@ int ClientDiscovery::exec_client_detectors(AppIdSession& asd, Packet* p, int dir
     }
     else
     {
-        for ( auto& kv : asd.client_candidates )
+        for ( auto kv = asd.client_candidates.begin(); kv != asd.client_candidates.end(); )
         {
             AppIdDiscoveryArgs disco_args(p->data, p->dsize, direction, &asd, p);
-            int result = kv.second->validate(disco_args);
+            int result = kv->second->validate(disco_args);
             if (asd.session_logging_enabled)
                 LogMessage("AppIdDbg %s %s client detector returned %d\n",
-                    asd.session_logging_id, kv.second->name.c_str(), result);
+                    asd.session_logging_id, kv->second->name.c_str(), result);
 
             if (result == APPID_SUCCESS)
             {
                 ret = APPID_SUCCESS;
-                asd.client_detector = kv.second;
+                asd.client_detector = kv->second;
                 asd.client_candidates.clear();
                 break;
             }
             else if (result != APPID_INPROCESS)
-            {
-                asd.client_candidates.erase(kv.first);
-            }
+                kv = asd.client_candidates.erase(kv);
+            else
+                ++kv;
         }
     }
 

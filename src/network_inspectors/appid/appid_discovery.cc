@@ -256,6 +256,7 @@ static inline unsigned get_ipfuncs_flags(const Packet* p, bool dst)
         NetworkSetManager::contains6_ex(net_list, &ip6, &flags);
     }
 #else
+    UNUSED(zone);
     if (sf_ip->is_ip4() && sf_ip->get_ip4_value() == 0xFFFFFFFF)
         return IPFUNCS_CHECKED;
     // FIXIT-M Defaulting to checking everything everywhere until RNA config is reimplemented

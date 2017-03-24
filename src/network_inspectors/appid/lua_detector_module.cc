@@ -337,9 +337,9 @@ static LuaDetector* create_lua_detector(lua_State* L, const char* detectorName, 
     if ( !get_lua_field(L, -1, "proto", proto) )
     {
         ErrorMessage("DetectorPackageInfo field 'proto' is not a number\n");
+        return nullptr;
     }
 
-    // use defaults
     if ( lua_isnil(L, -1) )
         return nullptr;
 
@@ -386,12 +386,15 @@ static LuaDetector* create_lua_detector(lua_State* L, const char* detectorName, 
 
     lua_pop(L, 1);  // pop DetectorPackageInfo table
 
-    detector->myLuaState = L;
-    UserData<LuaDetector>::push(L, DETECTOR, detector);
+    if ( detector )
+    {
+        detector->myLuaState = L;
+        UserData<LuaDetector>::push(L, DETECTOR, detector);
 
-    // add a lua reference so the detector doesn't get garbage-collected
-    lua_pushvalue(L, -1);
-    detector->detectorUserDataRef = luaL_ref(L, LUA_REGISTRYINDEX);
+        // add a lua reference so the detector doesn't get garbage-collected
+        lua_pushvalue(L, -1);
+        detector->detectorUserDataRef = luaL_ref(L, LUA_REGISTRYINDEX);
+    }
 
     return detector;
 }
