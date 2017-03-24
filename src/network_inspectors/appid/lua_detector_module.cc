@@ -110,8 +110,7 @@ static inline bool get_lua_ns(lua_State* L, const char* const ns)
     return true;
 }
 
-static inline bool get_lua_field(
-    lua_State* L, int table, const char* field, std::string& out)
+static inline bool get_lua_field(lua_State* L, int table, const char* field, std::string& out)
 {
     lua_getfield(L, table, field);
     bool result = lua_isstring(L, -1);
@@ -122,25 +121,27 @@ static inline bool get_lua_field(
     return result;
 }
 
-static inline bool get_lua_field(
-    lua_State* L, int table, const char* field, int& out)
+static inline bool get_lua_field(lua_State* L, int table, const char* field, int& out)
 {
     lua_getfield(L, table, field);
     bool result = lua_isnumber(L, -1);
     if ( result )
         out = lua_tointeger(L, -1);
+    else
+        out = 0;
 
     lua_pop(L, 1);
     return result;
 }
 
-static inline bool get_lua_field(
-    lua_State* L, int table, const char* field, IpProtocol& out)
+static inline bool get_lua_field(lua_State* L, int table, const char* field, IpProtocol& out)
 {
     lua_getfield(L, table, field);
     bool result = lua_isnumber(L, -1);
     if ( result )
         out = (IpProtocol)lua_tointeger(L, -1);
+    else
+        out = IpProtocol::PROTO_NOT_SET;
 
     lua_pop(L, 1);
     return result;
@@ -329,7 +330,7 @@ static LuaDetector* create_lua_detector(lua_State* L, const char* detectorName, 
 {
     LuaDetector* detector = nullptr;
     std::string detector_name;
-    IpProtocol proto;
+    IpProtocol proto = IpProtocol::PROTO_NOT_SET;
 
     Lua::ManageStack mgr(L);
     lua_getglobal(L, "DetectorPackageInfo");
