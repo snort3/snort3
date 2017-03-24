@@ -368,6 +368,12 @@ bool SdPatternModule::set(const char*, Value& v, SnortConfig* sc)
 
 bool SdPatternModule::end(const char*, int, SnortConfig*)
 {
+    if ( hs_valid_platform() != HS_SUCCESS )
+    {
+        ParseError("This host does not support Hyperscan.");
+        return false;
+    }
+
     hs_compile_error_t* err = nullptr;
 
     if ( hs_compile(config.pii.c_str(), HS_FLAG_DOTALL|HS_FLAG_SOM_LEFTMOST, HS_MODE_BLOCK,

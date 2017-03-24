@@ -301,6 +301,12 @@ bool RegexModule::set(const char*, Value& v, SnortConfig*)
 
 bool RegexModule::end(const char*, int, SnortConfig*)
 {
+    if ( hs_valid_platform() != HS_SUCCESS )
+    {
+        ParseError("This host does not support Hyperscan.");
+        return false;
+    }
+
     hs_compile_error_t* err = nullptr;
 
     if ( hs_compile(config.re.c_str(), config.hs_flags, HS_MODE_BLOCK,

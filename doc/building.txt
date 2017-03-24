@@ -5,18 +5,23 @@ into the Snort binary.  For a full list of build options, run ./configure
 *  *--enable-shell*: enable building local and remote command line shell
    support.
 
+* *--enable-tsc-clock*: use the TSC register on x86 systems for improved
+  performance of latency and profiler features.
+
 These options are built only if the required libraries and headers are
 present.  There is no need to explicitly enable.
 
-* *lzma*: for decompression of SWF and PDF files.
+* *flatbuffers*: for an alternative perf_monitor logging format.
 
-* *openssl*: for SHA and MD5 file signatures and the protected_content rule
-  option.
+* *hyperscan* >= 4.4.0: for the regex and sd_pattern rule options and the hyperscan
+  search engine.
 
 * *intel-soft-cpm": an optional pattern matcher based on a library from
   Intel.
 
-* hyperscan for the regex rule option and hyperscan search engine.
+* *lzma*: for decompression of SWF and PDF files.
+
+* *safec*: for additional runtime error checking of some memory copy operations.
 
 If you need to use headers and/or libraries in non-standard locations, you
 can use these options:
