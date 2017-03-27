@@ -1,3 +1,19 @@
+17/03/27 - build 230
+
+-- require hyperscan >= 4.4.0, check runtime support
+   thanks to justin.viiret@intel.com for submitting the patch
+-- fix search tool issue with empty pattern database
+   thanks to justin.viiret@intel.com for reporting the issue
+-- fix sip_method to error out if sip not instantiated
+-- major appid overhaul to address lingering concerns: refactor, cleanup,
+   simplify
+-- major detection overhaul to address lingering concerns: refactor, cleanup,
+   release memory ASAP
+-- add FlatBuffers output format to perf_monitor
+   also added tool to convert FlatBuffers files to yaml
+-- add regex.fast_pattern; do not use for fast pattern unless explicitly indicated
+-- update copyrights to 2017
+
 17/03/17 - build 229
 
 -- fixed mpse to ensure all search methods return consistent results

@@ -26,6 +26,7 @@
 #include "lua_detector_module.h"
 
 #include <glob.h>
+#include <libgen.h>
 #include <lua.hpp>
 #include "lua/lua.h"
 
