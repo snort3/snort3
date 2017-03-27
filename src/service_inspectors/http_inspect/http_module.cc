@@ -81,6 +81,7 @@ const Parameter HttpModule::http_params[] =
     { "print_hex", Parameter::PT_BOOL, nullptr, "false",
       "nonprinting characters printed in [HH] format instead of using an asterisk" },
     { "show_pegs", Parameter::PT_BOOL, nullptr, "true", "display peg counts with test output" },
+    { "show_scan", Parameter::PT_BOOL, nullptr, "false", "display scanned segments" },
 #endif
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -208,6 +209,10 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     else if (val.is("show_pegs"))
     {
         params->show_pegs = val.get_bool();
+    }
+    else if (val.is("show_scan"))
+    {
+        params->show_scan = val.get_bool();
     }
 #endif
     else

@@ -48,6 +48,8 @@ public:
     static bool get_print_hex() { return print_hex; }
     static void set_show_pegs(bool show_pegs_) { show_pegs = show_pegs_; }
     static bool get_show_pegs() { return show_pegs; }
+    static void set_show_scan(bool show_scan_) { show_scan = show_scan_; }
+    static bool get_show_scan() { return show_scan; }
 
 private:
     HttpTestManager() = delete;
@@ -63,6 +65,7 @@ private:
     static long print_amount;
     static bool print_hex;
     static bool show_pegs;
+    static bool show_scan;
 };
 
 #endif

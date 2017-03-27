@@ -118,6 +118,10 @@ StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data,
             " direction %d length %u client port %u server port %u\n", session_data->seq_num,
             source_id, length, flow->client_port, flow->server_port);
         fflush(stdout);
+        if (HttpTestManager::get_show_scan())
+        {
+            Field(length, data).print(stdout, "Scan segment");
+        }
     }
 #endif
 

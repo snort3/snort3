@@ -106,7 +106,6 @@ void HttpMsgHeadShared::parse_header_block()
     }
     if (bytes_used < msg_text.length())
     {
-        // FIXIT-M eventually need to separate max header alert from internal maximum
         infractions += INF_TOO_MANY_HEADERS;
         events.create_event(EVENT_MAX_HEADERS);
     }

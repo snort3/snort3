@@ -38,6 +38,7 @@ FILE* HttpTestManager::test_out = nullptr;
 long HttpTestManager::print_amount = 1200;
 bool HttpTestManager::print_hex = false;
 bool HttpTestManager::show_pegs = true;
+bool HttpTestManager::show_scan = false;
 
 void HttpTestManager::update_test_number(int64_t new_test_number)
 {

@@ -51,6 +51,7 @@ HttpInspect::HttpInspect(const HttpParaList* params_) : params(params_)
     HttpTestManager::set_print_amount(params->print_amount);
     HttpTestManager::set_print_hex(params->print_hex);
     HttpTestManager::set_show_pegs(params->show_pegs);
+    HttpTestManager::set_show_scan(params->show_scan);
 #endif
 }
 

@@ -80,6 +80,7 @@ public:
     long print_amount;
     bool print_hex;
     bool show_pegs;
+    bool show_scan;
 #endif
 };
 
