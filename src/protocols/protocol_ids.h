@@ -73,7 +73,7 @@ enum class IpProtocol : std::uint8_t
     DSTOPTS = 60,
     SUN_ND = 77,
     PGM = 113,
-
+    MPLS_IP = 137,
     /* Last updated 3/31/2016.
        Source: http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xml */
     MIN_UNASSIGNED_IP_PROTO = 143,
@@ -107,6 +107,7 @@ enum class ProtocolId : std::uint16_t
     DSTOPTS = 60,
     SUN_ND = 77,
     PGM = 113,
+    MPLS_IP = 137,
 
     /* Last updated 3/31/2016.
        Source: http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xml */

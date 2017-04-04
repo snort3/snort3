@@ -143,6 +143,7 @@ void MplsCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
     v.push_back(ProtocolId::ETHERTYPE_MPLS_UNICAST);
     v.push_back(ProtocolId::ETHERTYPE_MPLS_MULTICAST);
+    v.push_back(ProtocolId::MPLS_IP);
 }
 
 bool MplsCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
@@ -269,7 +270,7 @@ int MplsCodec::checkMplsHdr(const CodecData& codec, uint32_t label, uint8_t bos)
     {
     case 0:
     case 2:
-        /* check if this label is the bottom of the stack */
+        //if this label is the bottom of the stack
         if (bos)
         {
             if ( label == 0 )
@@ -279,8 +280,8 @@ int MplsCodec::checkMplsHdr(const CodecData& codec, uint32_t label, uint8_t bos)
 
             /* when label == 2, IPv6 is expected;
              * when label == 0, IPv4 is expected */
-            if ((label&&(SnortConfig::get_mpls_payload_type() != MPLS_PAYLOADTYPE_IPV6))
-                ||((!label)&&(SnortConfig::get_mpls_payload_type() != MPLS_PAYLOADTYPE_IPV4)))
+            if ( (label && ( SnortConfig::get_mpls_payload_type() != MPLS_PAYLOADTYPE_IPV6) )
+                || ( (!label) && (SnortConfig::get_mpls_payload_type() != MPLS_PAYLOADTYPE_IPV4)))
             {
                 if ( !label )
                     codec_event(codec, DECODE_BAD_MPLS_LABEL0);
@@ -289,7 +290,17 @@ int MplsCodec::checkMplsHdr(const CodecData& codec, uint32_t label, uint8_t bos)
             }
             break;
         }
-
+        //if bos is false we are believed to NOT be at the bottom of the stack
+        //and if we arent at the bottom of the stack then we should NOT see 
+        //label 0 or 2 (according to RFC 3032)
+        else 
+        {
+             if ( label == 0 )
+                    codec_event(codec, DECODE_BAD_MPLS_LABEL0);
+            //it MUST be label 2 
+             else
+                    codec_event(codec, DECODE_BAD_MPLS_LABEL2);
+        }
 #if 0
         /* This is valid per RFC 4182.  Just pop this label off, ignore it
          * and move on to the next one.
