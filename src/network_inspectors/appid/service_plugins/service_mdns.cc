@@ -93,7 +93,6 @@ MdnsServiceDetector::MdnsServiceDetector(ServiceDiscovery* sd)
     name = "MDNS";
     proto = IpProtocol::UDP;
     detectorType = DETECTOR_TYPE_DECODER;
-    current_ref_count = 1;
 
     appid_registry =
     {

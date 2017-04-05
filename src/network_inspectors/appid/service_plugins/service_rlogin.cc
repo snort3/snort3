@@ -51,7 +51,6 @@ RloginServiceDetector::RloginServiceDetector(ServiceDiscovery* sd)
     name = "rlogin";
     proto = IpProtocol::TCP;
     detectorType = DETECTOR_TYPE_DECODER;
-    current_ref_count =  1;
 
     appid_registry =
     {

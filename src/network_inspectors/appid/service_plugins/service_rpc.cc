@@ -39,7 +39,7 @@
 #include "log/messages.h"
 #include "protocols/packet.h"
 
-/*#define RNA_DEBUG_RPC   1 */
+/*#define APPID_DEBUG_RPC   1 */
 
 enum RPCState
 {
@@ -180,7 +180,6 @@ RpcServiceDetector::RpcServiceDetector(ServiceDiscovery* sd)
     name = "rpc";
     proto = IpProtocol::TCP;
     detectorType = DETECTOR_TYPE_DECODER;
-    current_ref_count =  1;
 
     struct rpcent* rpc;
     RPCProgram* prog;
@@ -410,7 +409,7 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, int 
                         if (pf)
                         {
                             pf->add_flow_data_id((uint16_t)tmp, this);
-                            pf->rna_service_state = RNA_STATE_STATEFUL;
+                            pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
                             pf->set_session_flags(asd->get_session_flags(
                                 APPID_SESSION_RESPONDER_MONITORED |
                                 APPID_SESSION_INITIATOR_MONITORED |
@@ -479,14 +478,14 @@ int RpcServiceDetector::rpc_udp_validate(AppIdDiscoveryArgs& args)
         rd->xid = 0xFFFFFFFF;
     }
 
-#ifdef RNA_DEBUG_RPC
+#ifdef APPID_DEBUG_RPC
     fprintf(SF_DEBUG_FILE, "Begin %u -> %u %u %d state %d\n", pkt->src_port, pkt->dst_port,
         asd->proto, dir, rd->state);
 #endif
 
     rval = validate_packet(data, size, dir, asd, pkt, rd, &pname, &program);
 
-#ifdef RNA_DEBUG_RPC
+#ifdef APPID_DEBUG_RPC
     fprintf(SF_DEBUG_FILE, "End %u -> %u %u %d state %d rval %d\n", pkt->src_port, pkt->dst_port,
         asd->proto, dir, rd->state, rval);
 #endif
@@ -730,7 +729,7 @@ int RpcServiceDetector::rpc_tcp_validate(AppIdDiscoveryArgs& args)
                     {
                         if (rd->tcpsize[dir] & RPC_TCP_FRAG_MASK)
                         {
-#ifdef RNA_DEBUG_RPC
+#ifdef APPID_DEBUG_RPC
                             fprintf(SF_DEBUG_FILE, "V Begin %u -> %u %u %d state %d\n",
                                 pkt->src_port, pkt->dst_port, asd->proto, dir, rd->state);
 #endif
@@ -738,7 +737,7 @@ int RpcServiceDetector::rpc_tcp_validate(AppIdDiscoveryArgs& args)
                             ret = validate_packet(rd->tcpdata[dir], rd->tcppos[dir], dir, asd,
                                 pkt, rd, &pname, &program);
 
-#ifdef RNA_DEBUG_RPC
+#ifdef APPID_DEBUG_RPC
                             fprintf(SF_DEBUG_FILE, "V End %u -> %u %u %d state %d rval %d\n",
                                 pkt->src_port, pkt->dst_port, asd->proto, dir, rd->state, ret);
 #endif
@@ -807,7 +806,7 @@ int RpcServiceDetector::rpc_tcp_validate(AppIdDiscoveryArgs& args)
             {
                 if (rd->tcpsize[dir] & RPC_TCP_FRAG_MASK)
                 {
-#ifdef RNA_DEBUG_RPC
+#ifdef APPID_DEBUG_RPC
                     fprintf(SF_DEBUG_FILE, "P Begin %u -> %u %u %d state %d\n", pkt->src_port,
                         pkt->dst_port, asd->proto, dir, rd->state);
 #endif
@@ -815,7 +814,7 @@ int RpcServiceDetector::rpc_tcp_validate(AppIdDiscoveryArgs& args)
                     ret = validate_packet(rd->tcpdata[dir], rd->tcppos[dir], dir, asd, pkt,
                         rd, &pname, &program);
 
-#ifdef RNA_DEBUG_RPC
+#ifdef APPID_DEBUG_RPC
                     fprintf(SF_DEBUG_FILE, "P End %u -> %u %u %d state %d rval %d\n",
                         pkt->src_port, pkt->dst_port, asd->proto, dir, rd->state, ret);
 #endif

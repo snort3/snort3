@@ -35,6 +35,17 @@ struct Packet;
 
 #define STATE_ID_MAX_VALID_COUNT 5
 
+enum DetectorType
+{
+    DETECTOR_TYPE_DECODER =  0,
+    DETECTOR_TYPE_NETFLOW,
+    DETECTOR_TYPE_PORT,
+    DETECTOR_TYPE_DERIVED,
+    DETECTOR_TYPE_CONFLICT,
+    DETECTOR_TYPE_PATTERN,
+    DETECTOR_TYPE_NOT_SET
+};
+
 typedef std::vector<AppRegistryEntry> FlowApplicationInfo;
 
 struct AppIdFlowContentPattern
@@ -116,8 +127,6 @@ public:  // FIXIT-M - make this protected:
     bool provides_user = false;
     unsigned flow_data_index = 0;
     unsigned detectorType = DETECTOR_TYPE_NOT_SET;
-    unsigned ref_count = 1;
-    unsigned current_ref_count = 0;
     bool isCustom = false;
 
     AppIdFlowContentPatterns tcp_patterns;
@@ -126,12 +135,6 @@ public:  // FIXIT-M - make this protected:
     ServiceDetectorPorts service_ports;
 };
 
-inline uint32_t get_service_detect_level(AppIdSession* asd)
-{
-    if (asd->get_session_flags(APPID_SESSION_DECRYPTED))
-        return 1;
-    return 0;
-}
 
 #if defined(WORDS_BIGENDIAN)
 #define LETOHS(p)   BYTE_SWAP_16(*((uint16_t*)(p)))

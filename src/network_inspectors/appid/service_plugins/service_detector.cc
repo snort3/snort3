@@ -73,38 +73,12 @@ int ServiceDetector::service_inprocess(AppIdSession* asd, const Packet* pkt, int
         asd->get_session_flags(APPID_SESSION_IGNORE_HOST | APPID_SESSION_UDP_REVERSED))
         return APPID_SUCCESS;
 
-    const SfIp* ip = pkt->ptrs.ip_api.get_src();
-    uint16_t port = asd->service_port ? asd->service_port : pkt->ptrs.sp;
-    ServiceDiscoveryState* id_state = AppIdServiceState::get(ip, asd->protocol, port,
-        get_service_detect_level(asd));
-    if ( !id_state )
+    if (!asd->service_ip.is_set())
     {
-        id_state = AppIdServiceState::add(ip, asd->protocol, port, get_service_detect_level(asd));
-        id_state->state = SERVICE_ID_NEW;
-        id_state->service = this;
-        asd->service_ip = *ip;
-        asd->service_port = port;
+        asd->service_ip = *(pkt->ptrs.ip_api.get_src());
+        if (!asd->service_port)
+            asd->service_port = pkt->ptrs.sp;
     }
-    else
-    {
-        if (!asd->service_ip.is_set())
-        {
-            asd->service_ip = *(pkt->ptrs.ip_api.get_src());
-            if (!asd->service_port)
-                asd->service_port = pkt->ptrs.sp;
-        }
-    }
-
-    APPID_LOG_IP_FILTER_PORTS(pkt->ptrs.dp, pkt->ptrs.sp,asd->service_ip,
-        "Inprocess: %s:%u:%u %p %d\n", ipstr,
-        (unsigned)asd->protocol, (unsigned)asd->service_port, (void*)id_state,
-        (int)id_state->state);
-
-    APPID_LOG_FILTER_PORTS(pkt->ptrs.dp, pkt->ptrs.sp,
-        "Service for protocol %u on port %u is in process (%u->%u), %s\n",
-        (unsigned)asd->protocol, (unsigned)asd->service_port, (unsigned)pkt->ptrs.sp,
-        (unsigned)pkt->ptrs.dp,
-        svc_element->name ? svc_element->name : "UNKNOWN");
 
     return APPID_SUCCESS;
 }
@@ -112,7 +86,6 @@ int ServiceDetector::service_inprocess(AppIdSession* asd, const Packet* pkt, int
 int ServiceDetector::add_service(AppIdSession* asd, const Packet* pkt, int dir, AppId appId,
     const char* vendor, const char* version)
 {
-    ServiceDiscoveryState* id_state = nullptr;
     uint16_t port = 0;
     const SfIp* ip = nullptr;
 
@@ -165,64 +138,13 @@ int ServiceDetector::add_service(AppIdSession* asd, const Packet* pkt, int dir, 
         }
     }
 
-    // If UDP reversed, ensure we have the correct host tracker entry.
-    if (asd->get_session_flags(APPID_SESSION_UDP_REVERSED))
-        id_state = AppIdServiceState::get(ip, asd->protocol, port, get_service_detect_level(asd));
+    asd->service_ip = *ip;
+    asd->service_port = port;
+    ServiceDiscoveryState* sds = AppIdServiceState::get(ip, asd->protocol, port, asd->is_decrypted());
+    if ( !sds )
+       sds = AppIdServiceState::add(ip, asd->protocol, port, asd->is_decrypted());
+    sds->set_service_id_valid(this);
 
-    if ( !id_state )
-    {
-        id_state = AppIdServiceState::add(ip, asd->protocol, port, get_service_detect_level(asd));
-        asd->service_ip = *ip;
-        asd->service_port = port;
-    }
-    else
-    {
-        if (!asd->service_ip.is_set())
-        {
-            asd->service_ip = *ip;
-            asd->service_port = port;
-        }
-
-        APPID_LOG_FILTER_PORTS(pkt->ptrs.dp, pkt->ptrs.sp,
-            "Service %d for protocol %u on port %u (%u->%u) is valid\n",
-            (int)appId, (unsigned)asd->protocol, (unsigned)asd->service_port,
-            (unsigned)pkt->ptrs.sp, (unsigned)pkt->ptrs.dp);
-    }
-    id_state->reset_time = 0;
-    if (id_state->state != SERVICE_ID_VALID)
-    {
-        id_state->state = SERVICE_ID_VALID;
-        id_state->valid_count = 0;
-        id_state->detract_count = 0;
-        id_state->last_detract.clear();
-        id_state->invalid_client_count = 0;
-        id_state->last_invalid_client.clear();
-    }
-    id_state->service = this;
-
-    APPID_LOG_IP_FILTER_PORTS(pkt->ptrs.dp, pkt->ptrs.sp, asd->service_ip,
-        "Valid: %s:%u:%u %p %d\n",
-        ipstr, (unsigned)asd->protocol, (unsigned)asd->service_port,
-        (void*)id_state, (int)id_state->state);
-
-    if (!id_state->valid_count)
-    {
-        id_state->valid_count++;
-        id_state->invalid_client_count = 0;
-        id_state->last_invalid_client.clear();
-        id_state->detract_count = 0;
-        id_state->last_detract.clear();
-    }
-    else if (id_state->valid_count < STATE_ID_MAX_VALID_COUNT)
-        id_state->valid_count++;
-
-    /* Done looking for this session. */
-    id_state->searching = false;
-
-    APPID_LOG_FILTER_PORTS(pkt->ptrs.dp, pkt->ptrs.sp,
-        "Service %d for protocol %u on port %u (%u->%u) is valid\n",
-        (int)appId, (unsigned)asd->protocol, (unsigned)asd->service_port,
-        (unsigned)pkt->ptrs.sp, (unsigned)pkt->ptrs.dp);
     return APPID_SUCCESS;
 }
 
@@ -230,14 +152,6 @@ int ServiceDetector::add_service_consume_subtype(AppIdSession* asd, const Packet
     AppId appId, const char* vendor, const char* version, RNAServiceSubtype* subtype)
 {
     asd->subtype = subtype;
-    if (!current_ref_count)
-    {
-        APPID_LOG_FILTER_PORTS(pkt->ptrs.dp, pkt->ptrs.sp,
-            "Service %d for protocol %u on port %u (%u->%u) is valid, but skipped\n",
-            (int)appId, (unsigned)asd->protocol, (unsigned)asd->service_port,
-            (unsigned)pkt->ptrs.sp, (unsigned)pkt->ptrs.dp);
-        return APPID_SUCCESS;
-    }
     return add_service(asd, pkt, dir, appId, vendor, version);
 }
 
@@ -245,15 +159,6 @@ int ServiceDetector::add_service(AppIdSession* asd, const Packet* pkt, int dir, 
     const char* vendor, const char* version, const RNAServiceSubtype* subtype)
 {
     RNAServiceSubtype* new_subtype = nullptr;
-
-    if (!current_ref_count)
-    {
-        APPID_LOG_FILTER_PORTS(pkt->ptrs.dp, pkt->ptrs.sp,
-            "Service %d for protocol %u on port %u (%u->%u) is valid, but skipped\n",
-            (int)appId, (unsigned)asd->protocol, (unsigned)asd->service_port,
-            (unsigned)pkt->ptrs.sp, (unsigned)pkt->ptrs.dp);
-        return APPID_SUCCESS;
-    }
 
     for (; subtype; subtype = subtype->next)
     {
@@ -296,7 +201,7 @@ void ServiceDetector::PopulateExpectedFlow(AppIdSession* parent,
         APPID_SESSION_INITIATOR_CHECKED |
         APPID_SESSION_DISCOVER_APP |
         APPID_SESSION_DISCOVER_USER));
-    expected->rna_service_state = RNA_STATE_FINISHED;
-    expected->rna_client_state = RNA_STATE_FINISHED;
+    expected->service_disco_state = APPID_DISCO_STATE_FINISHED;
+    expected->client_disco_state = APPID_DISCO_STATE_FINISHED;
 }
 

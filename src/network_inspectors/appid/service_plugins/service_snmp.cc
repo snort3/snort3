@@ -95,7 +95,6 @@ SnmpServiceDetector::SnmpServiceDetector(ServiceDiscovery* sd)
     name = "snmp";
     proto = IpProtocol::UDP;
     detectorType = DETECTOR_TYPE_DECODER;
-    current_ref_count =  1;
 
     app_id = add_appid_protocol_reference("snmp");
 
@@ -500,7 +499,7 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
                 return APPID_ENULL;
             }
             PopulateExpectedFlow(asd, pf, APPID_SESSION_EXPECTED_EVALUATE);
-            pf->rna_service_state = RNA_STATE_STATEFUL;
+            pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
             pf->scan_flags |= SCAN_HOST_PORT_FLAG;
             pf->common.initiator_ip = *sip;
         }

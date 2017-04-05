@@ -59,7 +59,6 @@ RexecServiceDetector::RexecServiceDetector(ServiceDiscovery* sd)
     name = "rexec";
     proto = IpProtocol::TCP;
     detectorType = DETECTOR_TYPE_DECODER;
-    current_ref_count =  1;
 
     app_id = add_appid_protocol_reference("rexec");
 
@@ -160,14 +159,14 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
                 data_add(pf, tmp_rd, &rexec_free_state);
                 if (pf->add_flow_data_id((uint16_t)port, this))
                 {
-                    pf->rna_service_state = RNA_STATE_FINISHED;
+                    pf->service_disco_state = APPID_DISCO_STATE_FINISHED;
                     tmp_rd->state = REXEC_STATE_DONE;
                     tmp_rd->parent = nullptr;
                     return APPID_ENULL;
                 }
                 rd->child = tmp_rd;
                 rd->state = REXEC_STATE_SERVER_CONNECT;
-                pf->rna_service_state = RNA_STATE_STATEFUL;
+                pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
                 pf->scan_flags |= SCAN_HOST_PORT_FLAG;
                 PopulateExpectedFlow(asd, pf,
                     APPID_SESSION_CONTINUE |
@@ -176,7 +175,7 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
                     APPID_SESSION_SERVICE_DETECTED |
                     APPID_SESSION_NOT_A_SERVICE |
                     APPID_SESSION_PORT_SERVICE_DONE);
-                pf->rna_service_state = RNA_STATE_STATEFUL;
+                pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
             }
             else
                 rd->state = REXEC_STATE_USERNAME;

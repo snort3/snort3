@@ -65,7 +65,6 @@ RadiusServiceDetector::RadiusServiceDetector(ServiceDiscovery* sd)
     name = "radius";
     proto = IpProtocol::UDP;
     detectorType = DETECTOR_TYPE_DECODER;
-    current_ref_count =  1;
 
     appid_registry =
     {
@@ -195,7 +194,6 @@ RadiusAcctServiceDetector::RadiusAcctServiceDetector(ServiceDiscovery* sd)
     name = "radiusacct";
     proto = IpProtocol::UDP;
     detectorType = DETECTOR_TYPE_DECODER;
-    current_ref_count =  1;
 
     appid_registry =
     {

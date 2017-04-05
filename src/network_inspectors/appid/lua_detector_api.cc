@@ -334,7 +334,6 @@ static int service_add_ports(lua_State* L)
         return 1;
     }
 
-    ++ud->ref_count;
     lua_pushnumber(L, 0);
     return 1;
 }
@@ -2236,8 +2235,8 @@ static int create_future_flow(lua_State* L)
         fp->payload_app_id = payload_app_id;
         fp->set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE |
             APPID_SESSION_PORT_SERVICE_DONE);
-        fp->rna_service_state = RNA_STATE_FINISHED;
-        fp->rna_client_state  = RNA_STATE_FINISHED;
+        fp->service_disco_state = APPID_DISCO_STATE_FINISHED;
+        fp->client_disco_state  = APPID_DISCO_STATE_FINISHED;
 
         return 1;
     }

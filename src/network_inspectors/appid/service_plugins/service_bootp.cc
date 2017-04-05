@@ -81,7 +81,6 @@ BootpServiceDetector::BootpServiceDetector(ServiceDiscovery* sd)
     name = "bootp";
     proto = IpProtocol::TCP;
     detectorType = DETECTOR_TYPE_DECODER;
-    current_ref_count =  1;
 
     appid_registry =
     {
@@ -214,13 +213,9 @@ int BootpServiceDetector::validate(AppIdDiscoveryArgs& args)
         goto fail;
 
     if (dir == APP_ID_FROM_INITIATOR)
-    {
         asd->set_session_flags(APPID_SESSION_UDP_REVERSED);
-    }
     else
-    {
         asd->clear_session_flags(APPID_SESSION_UDP_REVERSED);
-    }
 
     if (size > sizeof(ServiceBOOTPHeader) + 4)
     {

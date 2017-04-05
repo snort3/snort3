@@ -17,7 +17,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// client_app_bit.cc author Sourcefire Inc.
+// appid_discovery.cc author Sourcefire Inc.
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -45,7 +45,6 @@
 #include "log/messages.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
-#include "time/packet_time.h"
 
 ProfileStats tpPerfStats;
 
@@ -630,8 +629,8 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
 
     if (asd->get_session_flags(APPID_SESSION_IGNORE_FLOW))
     {
-        if (asd->session_logging_enabled && !asd->get_session_flags(
-            APPID_SESSION_IGNORE_FLOW_LOGGED))
+        if ( asd->session_logging_enabled &&
+             !asd->get_session_flags(APPID_SESSION_IGNORE_FLOW_LOGGED) )
         {
             asd->set_session_flags(APPID_SESSION_IGNORE_FLOW_LOGGED);
             LogMessage("AppIdDbg %s Ignoring connection with service %d\n",
@@ -661,20 +660,7 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
                 port = p->ptrs.sp;
             }
 
-            ServiceDiscoveryState* id_state = AppIdServiceState::get(ip, IpProtocol::TCP, port,
-                get_service_detect_level(asd));
-
-            if (id_state)
-            {
-                if (!id_state->reset_time)
-                    id_state->reset_time = packet_time();
-                else if ((packet_time() - id_state->reset_time) >= 60)
-                {
-                    AppIdServiceState::remove(ip, IpProtocol::TCP, port,
-                        get_service_detect_level(asd));
-                    asd->set_session_flags(APPID_SESSION_SERVICE_DELETED);
-                }
-            }
+            AppIdServiceState::check_reset(asd, ip, port);
         }
 
         asd->previous_tcp_flags = p->ptrs.tcph->th_flags;
@@ -704,7 +690,7 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
             {
             case 1:
                 asd->client_app_id = hv->appId;
-                asd->rna_client_state = RNA_STATE_FINISHED;
+                asd->client_disco_state = APPID_DISCO_STATE_FINISHED;
                 break;
             case 2:
                 asd->payload_app_id = hv->appId;
@@ -712,8 +698,8 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
             default:
                 asd->serviceAppId = hv->appId;
                 asd->sync_with_snort_id(hv->appId, p);
-                asd->rna_service_state = RNA_STATE_FINISHED;
-                asd->rna_client_state = RNA_STATE_FINISHED;
+                asd->service_disco_state = APPID_DISCO_STATE_FINISHED;
+                asd->client_disco_state = APPID_DISCO_STATE_FINISHED;
                 asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED);
                 if (thirdparty_appid_module)
                     thirdparty_appid_module->session_delete(asd->tpsession, 1);
@@ -812,7 +798,7 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
     /* exceptions for rexec and any other service detector that needs to see SYN and SYN/ACK */
     if (asd->get_session_flags(APPID_SESSION_REXEC_STDERR))
     {
-        ServiceDiscovery::get_instance().AppIdDiscoverService(p, direction, asd);
+        ServiceDiscovery::get_instance().identify_service(asd, p, direction);
         if (asd->serviceAppId == APP_ID_DNS &&
             asd->config->mod_config->dns_host_reporting &&
             asd->dsession && asd->dsession->host )

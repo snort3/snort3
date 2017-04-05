@@ -124,14 +124,6 @@ public:
     bool http2_detection_enabled = false;
 };
 
-// App ID Active Configuration
-enum RnaFwConfigState
-{
-    RNA_FW_CONFIG_STATE_UNINIT,
-    RNA_FW_CONFIG_STATE_INIT,
-    RNA_FW_CONFIG_STATE_PENDING,
-};
-
 typedef std::array<SF_LIST*, APP_ID_PORT_ARRAY_SIZE> AppIdPortExclusions;
 
 class AppIdConfig

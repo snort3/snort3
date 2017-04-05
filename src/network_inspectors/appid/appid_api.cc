@@ -160,7 +160,7 @@ bool AppIdApi::is_appid_inspecting_session(AppIdSession* appIdSession)
 {
     if (appIdSession && appIdSession->common.flow_type == APPID_FLOW_TYPE_NORMAL)
     {
-        if (appIdSession->rna_service_state != RNA_STATE_FINISHED ||
+        if (appIdSession->service_disco_state != APPID_DISCO_STATE_FINISHED ||
             !is_third_party_appid_done(appIdSession->tpsession) ||
             appIdSession->get_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_CONTINUE) ||
             (appIdSession->get_session_flags(APPID_SESSION_ENCRYPTED) &&
@@ -169,9 +169,9 @@ bool AppIdApi::is_appid_inspecting_session(AppIdSession* appIdSession)
         {
             return true;
         }
-        if (appIdSession->rna_client_state != RNA_STATE_FINISHED &&
+        if (appIdSession->client_disco_state != APPID_DISCO_STATE_FINISHED &&
             (!appIdSession->get_session_flags(APPID_SESSION_CLIENT_DETECTED) ||
-            (appIdSession->rna_service_state != RNA_STATE_STATEFUL
+            (appIdSession->service_disco_state != APPID_DISCO_STATE_STATEFUL
             && appIdSession->get_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS))))
         {
             return true;
@@ -544,11 +544,11 @@ uint32_t AppIdApi::consume_ha_state(Flow* flow, const uint8_t* buf, uint8_t, IpP
                 {
                     asd->set_session_flags(APPID_SESSION_CONTINUE);
                 }
-                asd->rna_service_state = RNA_STATE_STATEFUL;
+                asd->service_disco_state = APPID_DISCO_STATE_STATEFUL;
             }
             else
-                asd->rna_service_state = RNA_STATE_FINISHED;
-            asd->rna_client_state = RNA_STATE_FINISHED;
+                asd->service_disco_state = APPID_DISCO_STATE_FINISHED;
+            asd->client_disco_state = APPID_DISCO_STATE_FINISHED;
             if (thirdparty_appid_module)
                 thirdparty_appid_module->session_state_set(asd->tpsession, TP_STATE_HA);
         }

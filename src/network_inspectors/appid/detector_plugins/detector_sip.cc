@@ -405,7 +405,6 @@ SipServiceDetector::SipServiceDetector(ServiceDiscovery* sd)
     proto = IpProtocol::TCP;
     detectorType = DETECTOR_TYPE_DECODER;
     provides_user = true;
-    current_ref_count = 1;
 
     tcp_patterns =
     {

@@ -71,7 +71,6 @@ TftpServiceDetector::TftpServiceDetector(ServiceDiscovery* sd)
     name = "tftp";
     proto = IpProtocol::UDP;
     detectorType = DETECTOR_TYPE_DECODER;
-    current_ref_count =  1;
 
     app_id = add_appid_protocol_reference("tftp");
 
@@ -206,7 +205,7 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
             }
             PopulateExpectedFlow(asd, pf, APPID_SESSION_EXPECTED_EVALUATE);
             pf->common.initiator_ip = *sip;
-            pf->rna_service_state = RNA_STATE_STATEFUL;
+            pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
             pf->scan_flags |= SCAN_HOST_PORT_FLAG;
         }
         else

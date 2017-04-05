@@ -487,7 +487,6 @@ void LuaDetectorManager::activate_lua_detectors()
                 detector->name.c_str(), lua_tostring(L, -1));
 
         ++num_active_lua_detectors;
-        detector->current_ref_count = detector->ref_count;
     }
 
     lua_tracker_size = compute_lua_tracker_size(MAX_MEMORY_FOR_LUA_DETECTORS,

@@ -99,14 +99,14 @@ AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto, 
     if ( ( proto == IpProtocol::TCP || proto == IpProtocol::UDP ) && ( p->ptrs.sp != p->ptrs.dp ) )
         port = (direction == APP_ID_FROM_INITIATOR) ? p->ptrs.sp : p->ptrs.dp;
 
-    AppIdSession* data = new AppIdSession(proto, ip, port);
+    AppIdSession* asd = new AppIdSession(proto, ip, port);
 
-    data->flow = p->flow;
-    data->stats.firstPktsecond = p->pkth->ts.tv_sec;
-    data->set_session_logging_state(p, direction);
-    data->snort_id = snortId_for_unsynchronized;
-    p->flow->set_flow_data(data);
-    return data;
+    asd->flow = p->flow;
+    asd->stats.firstPktsecond = p->pkth->ts.tv_sec;
+    asd->set_session_logging_state(p, direction);
+    asd->snort_id = snortId_for_unsynchronized;
+    p->flow->set_flow_data(asd);
+    return asd;
 }
 
 AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t port)
@@ -138,8 +138,21 @@ AppIdSession::~AppIdSession()
         if ( stats_mgr )
             stats_mgr->update(this);
 
-        if (flow)
-            FailInProcessService(this, config);
+        // fail any service detection that is in process for this flow
+        if (flow &&
+            !get_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_UDP_REVERSED) )
+        {
+            ServiceDiscoveryState* sds =
+                AppIdServiceState::get(&service_ip, protocol, service_port, is_decrypted());
+            if( sds )
+            {
+                sds->invalid_client_count += STATE_ID_INCONCLUSIVE_SERVICE_WEIGHT;
+                if (flow->server_ip.fast_eq6(service_ip))
+                    sds->set_service_id_failed(this, &flow->client_ip);
+                else
+                    sds->set_service_id_failed(this, &flow->server_ip);
+            }
+        }
     }
 
     delete_shared_data();
@@ -256,7 +269,7 @@ void AppIdSession::reinit_shared_data()
 
         service_ip.clear();
         service_port = 0;
-        rna_service_state = RNA_STATE_NONE;
+        service_disco_state = APPID_DISCO_STATE_NONE;
         service_detector = nullptr;
         free_flow_data_by_mask(APPID_SESSION_DATA_SERVICE_MODSTATE_BIT);
     }
@@ -268,7 +281,7 @@ void AppIdSession::reinit_shared_data()
         snort_free(client_version);
         client_version = nullptr;
     }
-    rna_client_state = RNA_STATE_NONE;
+    client_disco_state = APPID_DISCO_STATE_NONE;
     free_flow_data_by_mask(APPID_SESSION_DATA_CLIENT_MODSTATE_BIT);
 
     //3rd party cleaning
@@ -350,18 +363,15 @@ bool AppIdSession::is_ssl_decryption_enabled()
 
 void AppIdSession::check_app_detection_restart()
 {
-    if (get_session_flags(APPID_SESSION_DECRYPTED))
-        return;
-
-    if (!is_ssl_decryption_enabled())
+    if (get_session_flags(APPID_SESSION_DECRYPTED) || !is_ssl_decryption_enabled() )
         return;
 
     AppId serviceAppId = pick_service_app_id();
     bool isSsl = isSslServiceAppId(serviceAppId);
 
-    // A asd could either:
-    // 1. Start of as SSL - captured with isSsl flag, OR
-    // 2. It could start of as a non-SSL asd and later change to SSL. For example, FTP->FTPS.
+    // A session could either:
+    // 1. Start off as SSL - captured with isSsl flag, OR
+    // 2. It could start off as a non-SSL session and later change to SSL. For example, FTP->FTPS.
     //    In this case APPID_SESSION_ENCRYPTED flag is set by the protocol state machine.
     if (get_session_flags(APPID_SESSION_ENCRYPTED) || isSsl)
     {
@@ -376,9 +386,9 @@ void AppIdSession::check_app_detection_restart()
             LogMessage("AppIdDbg %s SSL decryption is available, restarting app Detection\n",
                 session_logging_id);
 
-        // APPID_SESSION_ENCRYPTED is set upon receiving a command which upgrades the asd to
+        // APPID_SESSION_ENCRYPTED is set upon receiving a command which upgrades the session to
         // SSL. Next packet after the command will have encrypted traffic.  In the case of a
-        // asd which starts as SSL, current packet itself is encrypted. Set the special flag
+        // session which starts as SSL, current packet itself is encrypted. Set the special flag
         // APPID_SESSION_APP_REINSPECT_SSL which allows reinspection of this pcaket.
         if (isSsl)
             set_session_flags(APPID_SESSION_APP_REINSPECT_SSL);
@@ -964,7 +974,7 @@ void AppIdSession::stop_rna_service_inspection(Packet* p, int direction)
         service_port = p->ptrs.sp;
     }
 
-    rna_service_state = RNA_STATE_FINISHED;
+    service_disco_state = APPID_DISCO_STATE_FINISHED;
     set_session_flags(APPID_SESSION_SERVICE_DETECTED);
     clear_session_flags(APPID_SESSION_CONTINUE);
 }

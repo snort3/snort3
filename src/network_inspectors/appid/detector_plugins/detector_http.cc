@@ -66,10 +66,10 @@ HttpClientDetector::~HttpClientDetector()
 int HttpClientDetector::validate(AppIdDiscoveryArgs& args)
 {
     add_app(args.asd, APP_ID_HTTP, APP_ID_HTTP + GENERIC_APP_OFFSET, nullptr);
-    args.asd->rna_client_state = RNA_STATE_FINISHED;
+    args.asd->client_disco_state = APPID_DISCO_STATE_FINISHED;
     http_service_detector->add_service(args.asd, args.pkt, args.dir, APP_ID_HTTP, nullptr, nullptr,
         nullptr);
-    args.asd->rna_service_state = RNA_STATE_FINISHED;
+    args.asd->service_disco_state = APPID_DISCO_STATE_FINISHED;
     args.asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED | APPID_SESSION_SERVICE_DETECTED);
     args.asd->clear_session_flags(APPID_SESSION_CONTINUE);
     args.asd->is_http2 = true;
@@ -84,7 +84,6 @@ HttpServiceDetector::HttpServiceDetector(ServiceDiscovery* sd)
     handler = sd;
     name = "HTTP";
     proto = IpProtocol::TCP;
-    current_ref_count = 1;
     detectorType = DETECTOR_TYPE_DECODER;
 
     appid_registry =

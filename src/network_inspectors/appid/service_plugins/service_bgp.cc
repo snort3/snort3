@@ -99,7 +99,6 @@ BgpServiceDetector::BgpServiceDetector(ServiceDiscovery* sd)
     name = "bgp";
     proto = IpProtocol::TCP;
     detectorType = DETECTOR_TYPE_DECODER;
-    current_ref_count =  1;
 
     tcp_patterns =
     {

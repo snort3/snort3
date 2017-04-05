@@ -757,7 +757,6 @@ Pop3ServiceDetector::Pop3ServiceDetector(ServiceDiscovery* sd)
     proto = IpProtocol::TCP;
     provides_user = true;
     detectorType = DETECTOR_TYPE_DECODER;
-    current_ref_count = 1;
 
     tcp_patterns =
     {

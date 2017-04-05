@@ -22,6 +22,8 @@
 #ifndef SERVICE_STATE_H
 #define SERVICE_STATE_H
 
+#include <mutex>
+
 #include "sfip/sf_ip.h"
 #include "service_plugins/service_discovery.h"
 #include "protocols/protocol_ids.h"
@@ -29,88 +31,81 @@
 
 class ServiceDetector;
 
-enum class IpProtocol : uint8_t;
-
-// Service state stored in hosttracker for maintaining service matching states.
 enum SERVICE_ID_STATE
 {
-    SERVICE_ID_NEW = 0,     // service search starting
-    SERVICE_ID_VALID,       // service detected
-    SERVICE_ID_PORT,        // matched based on src/dest port of first packet
-    SERVICE_ID_PATTERN,     // match based on pattern in first response packet
-    SERVICE_ID_BRUTE_FORCE, // match based on round-robin through tcp/udp service lists
-                            // the lists are walked from first element to last. In a detector
-                            // declares a flow incompatible or the flow closes earlier than
-                            // expected by detector, then the next detector is tried. This can
-                            //  obviously delay detection under some scenarios.
+    SEARCHING_PORT_PATTERN = 0,
+    SEARCHING_BRUTE_FORCE,
+    FAILED,
+    VALID
 };
 
-enum DetectorType
+class AppIdDetectorList
 {
-    DETECTOR_TYPE_PASSIVE =  0,
-    DETECTOR_TYPE_DECODER =  0,
-    DETECTOR_TYPE_NETFLOW,
-    DETECTOR_TYPE_PORT,
-    DETECTOR_TYPE_DERIVED,
-    DETECTOR_TYPE_CONFLICT,
-    DETECTOR_TYPE_PATTERN,
-    DETECTOR_TYPE_NOT_SET
+public:
+    AppIdDetectorList(IpProtocol proto)
+    {
+        if (proto == IpProtocol::TCP)
+            detectors = &ServiceDiscovery::get_instance().tcp_detectors;
+        else
+            detectors = &ServiceDiscovery::get_instance().udp_detectors;
+        dit = detectors->begin();
+    }
+
+    ServiceDetector* next()
+    {
+        ServiceDetector* detector = nullptr;
+
+        if ( dit != detectors->end())
+            detector = (ServiceDetector*)(dit++)->second;
+        return detector;
+    }
+
+    void reset()
+    {
+        dit = detectors->begin();
+    }
+
+private:
+    AppIdDetectors* detectors;
+    AppIdDetectorsIterator dit;
 };
 
-// Service state saved in hosttracker, for identifying a service across multiple flow instances.
 class ServiceDiscoveryState
 {
 public:
-    ServiceDiscoveryState()
-    {
-        last_detract.clear();
-        last_invalid_client.clear();
-        reset_time = 0;
-    }
+    ServiceDiscoveryState();
+    ~ServiceDiscoveryState();
+    void set_service_id_valid(ServiceDetector* sd);
+    void set_service_id_failed(AppIdSession* asd, const SfIp* client_ip);
 
-    ~ServiceDiscoveryState()
-    {
-        if ( brute_force_mgr )
-            delete brute_force_mgr;
-    }
-
+    SERVICE_ID_STATE state;
     ServiceDetector* service = nullptr;
     AppIdDetectorList* brute_force_mgr = nullptr;
-
-    /**State of service identification.*/
-    SERVICE_ID_STATE state = SERVICE_ID_NEW;
     unsigned valid_count = 0;
     unsigned detract_count = 0;
     SfIp last_detract;
 
-    /**Number of consequetive flows that were declared incompatible by detectors. Incompatibility
-     * means client packet did not match.
-     */
+    // consecutive incompatible flows - incompatibile means client packet did not match.
     unsigned invalid_client_count = 0;
 
     /**IP address of client in last flow that was declared incompatible. If client IP address is
-     * different everytime, then consequetive incompatible status indicate that flow is not using
+     * different everytime, then consecutive incompatible status indicate that flow is not using
      * specific service.
      */
     SfIp last_invalid_client;
-
-    /** Count for number of unknown sessions saved
-     */
-    unsigned unknowns_logged = 0;
     time_t reset_time;
-
-    /** Is this entry currently being used in an active session? */
-    bool searching = false;
 };
 
 class AppIdServiceState
 {
 public:
-    static void initialize(unsigned long);
+    static void initialize();
     static void clean();
-    static ServiceDiscoveryState* add(const SfIp*, IpProtocol, uint16_t port, uint32_t level);
-    static ServiceDiscoveryState* get(const SfIp*, IpProtocol, uint16_t port, uint32_t level);
-    static void remove(const SfIp*, IpProtocol, uint16_t port, uint32_t level);
+    static ServiceDiscoveryState* add(const SfIp*, IpProtocol, uint16_t port, bool decrypted);
+    static ServiceDiscoveryState* get(const SfIp*, IpProtocol, uint16_t port, bool decrypted);
+    static void remove(const SfIp*, IpProtocol, uint16_t port, bool decrypted);
+    static void check_reset(AppIdSession* asd, const SfIp* ip, uint16_t port );
+
     static void dump_stats();
 };
 

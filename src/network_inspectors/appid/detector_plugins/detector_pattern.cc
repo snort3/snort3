@@ -430,7 +430,6 @@ PatternServiceDetector::PatternServiceDetector(ServiceDiscovery* sd)
     name = "pattern";
     proto = IpProtocol::TCP;
     detectorType = DETECTOR_TYPE_PATTERN;
-    current_ref_count = 1;
 
     service_pattern_detector = this;
     handler->register_detector(name, this, proto);

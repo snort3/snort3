@@ -78,12 +78,12 @@ enum AppIdFlowStatusCodes
 #define MIN_SFTP_PACKET_COUNT   30
 #define MAX_SFTP_PACKET_COUNT   55
 
-enum RNA_INSPECTION_STATE
+enum APPID_DISCOVERY_STATE
 {
-    RNA_STATE_NONE = 0,
-    RNA_STATE_DIRECT,
-    RNA_STATE_STATEFUL,
-    RNA_STATE_FINISHED
+    APPID_DISCO_STATE_NONE = 0,
+    APPID_DISCO_STATE_DIRECT,
+    APPID_DISCO_STATE_STATEFUL,
+    APPID_DISCO_STATE_FINISHED
 };
 
 enum APPID_SESSION_DIRECTION
@@ -237,7 +237,8 @@ public:
     uint8_t previous_tcp_flags = 0;
 
     // AppId matching service side
-    RNA_INSPECTION_STATE rna_service_state = RNA_STATE_NONE;
+    APPID_DISCOVERY_STATE service_disco_state = APPID_DISCO_STATE_NONE;
+    SESSION_SERVICE_ID_STATE service_search_state = START;
     AppId serviceAppId = APP_ID_NONE;
     AppId portServiceAppId = APP_ID_NONE;
     ServiceDetector* service_detector = nullptr;
@@ -246,17 +247,15 @@ public:
     RNAServiceSubtype* subtype = nullptr;
     char* netbios_name = nullptr;
     std::vector<ServiceDetector*> service_candidates;
-    unsigned int num_candidate_services_tried = 0;
     bool got_incompatible_services = false;
 
     // AppId matching client side
-    RNA_INSPECTION_STATE rna_client_state = RNA_STATE_NONE;
+    APPID_DISCOVERY_STATE client_disco_state = APPID_DISCO_STATE_NONE;
     AppId client_app_id = APP_ID_NONE;
     AppId client_service_app_id = APP_ID_NONE;
     char* client_version = nullptr;
     ClientDetector* client_detector = nullptr;
     std::map<std::string, ClientDetector*> client_candidates;
-    unsigned int num_candidate_clients_tried = 0;
     bool tried_reverse_service = false;
 
     // AppId matching payload
@@ -332,11 +331,15 @@ public:
         common.flags &= ~flags;
     }
 
-    inline uint64_t get_session_flags(uint64_t flags)
+    uint64_t get_session_flags(uint64_t flags)
     {
         return (common.flags & flags);
     }
 
+    bool is_decrypted()
+    {
+       return get_session_flags(APPID_SESSION_DECRYPTED) == APPID_SESSION_DECRYPTED;
+    }
     char session_logging_id[MAX_SESSION_LOGGING_ID_LEN];
     bool session_logging_enabled = false;
 

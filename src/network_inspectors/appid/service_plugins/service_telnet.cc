@@ -78,7 +78,6 @@ TelnetServiceDetector::TelnetServiceDetector(ServiceDiscovery* sd)
     name = "telnet";
     proto = IpProtocol::TCP;
     detectorType = DETECTOR_TYPE_DECODER;
-    current_ref_count =  1;
 
     appid_registry =
     {

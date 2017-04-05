@@ -90,7 +90,6 @@ FtpServiceDetector::FtpServiceDetector(ServiceDiscovery* sd)
     name = "ftp";
     proto = IpProtocol::TCP;
     detectorType = DETECTOR_TYPE_DECODER;
-    current_ref_count =  1;
     ftp_data_app_id = add_appid_protocol_reference("ftp-data");
 
     tcp_patterns =

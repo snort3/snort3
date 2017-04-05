@@ -70,7 +70,6 @@ NntpServiceDetector::NntpServiceDetector(ServiceDiscovery* sd)
     name = "nntp";
     proto = IpProtocol::TCP;
     detectorType = DETECTOR_TYPE_DECODER;
-    current_ref_count =  1;
 
     tcp_patterns =
     {

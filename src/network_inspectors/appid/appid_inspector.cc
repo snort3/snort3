@@ -136,6 +136,7 @@ void AppIdInspector::tinit()
 {
     appid_stats_manager = AppIdStatistics::initialize_manager(*config);
     HostPortCache::initialize();
+    AppIdServiceState::initialize();
     init_appid_forecast();
     HttpPatternMatchers* http_matchers = HttpPatternMatchers::get_instance();
     AppIdDiscovery::initialize_plugins();
@@ -148,7 +149,6 @@ void AppIdInspector::tinit()
     SipUdpClientDetector::finalize_sip_ua();
     ssl_detector_process_patterns();
     dns_host_detector_process_patterns();
-    AppIdServiceState::initialize(config->memcap);
 }
 
 void AppIdInspector::tterm()
@@ -160,9 +160,9 @@ void AppIdInspector::tterm()
     service_ssl_clean();
     free_length_app_cache();
 
+    AppIdServiceState::clean();
     AppIdSession::release_free_list_flow_data();
     LuaDetectorManager::terminate();
-    AppIdServiceState::clean();
     AppIdDiscovery::release_plugins();
     delete HttpPatternMatchers::get_instance();
 }

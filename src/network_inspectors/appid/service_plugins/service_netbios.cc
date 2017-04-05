@@ -30,8 +30,6 @@
 #include "dcerpc.h"
 #include "protocols/packet.h"
 
-/*#define RNA_DEBUG_NETBIOS   1 */
-
 #define NBSS_PORT   139
 
 #define NBNS_NB 32
@@ -439,7 +437,6 @@ NbnsServiceDetector::NbnsServiceDetector(ServiceDiscovery* sd)
     name = "nbns";
     proto = IpProtocol::TCP;
     detectorType = DETECTOR_TYPE_DECODER;
-    current_ref_count =  1;
 
     appid_registry =
     {
@@ -627,7 +624,7 @@ static inline void smb_domain_skip_string(const uint8_t** data, uint16_t* size, 
 }
 
 static inline void smb_find_domain(const uint8_t* data, uint16_t size, const int,
-    AppIdSession* asd, const Packet* pkt)
+    AppIdSession* asd)
 {
     const ServiceSMBHeader* smb;
     const ServiceSMBAndXResponse* resp;
@@ -728,16 +725,7 @@ static inline void smb_find_domain(const uint8_t* data, uint16_t size, const int
                 }
                 data++;
                 if (*data != 0)
-                {
-#ifdef RNA_DEBUG_NETBIOS
-                    _dpd.errMsg("Failed command %02X  %u  0x%08X:%u->0x%08X:%u",
-                        smb->command, byte_count, pkt->src_ip.s_addr, pkt->ptrs.sp,
-                        pkt->dst_ip.s_addr, pkt->ptrs.dp);
-#else
-                    UNUSED(pkt);
-#endif
                     return;
-                }
                 data++;
             }
         }
@@ -746,14 +734,7 @@ static inline void smb_find_domain(const uint8_t* data, uint16_t size, const int
             byte_count--;
         }
         if (byte_count && smb->command != SERVICE_SMB_COMMAND_NEGOTIATE_PROTOCOL)
-        {
-#ifdef RNA_DEBUG_NETBIOS
-            _dpd.errMsg("Failed command %02X  %u  0x%08X:%u->0x%08X:%u",
-                smb->command, byte_count, pkt->src_ip.s_addr, pkt->src_port, pkt->dst_ip.s_addr,
-                pkt->dst_port);
-#endif
             return;
-        }
     }
     else
     {
@@ -777,25 +758,11 @@ static inline void smb_find_domain(const uint8_t* data, uint16_t size, const int
             }
         }
         if (byte_count && smb->command != SERVICE_SMB_COMMAND_NEGOTIATE_PROTOCOL)
-        {
-#ifdef RNA_DEBUG_NETBIOS
-            _dpd.errMsg("Failed command %02X  %u  0x%08X:%u->0x%08X:%u",
-                smb->command, byte_count, pkt->src_ip.s_addr, pkt->src_port, pkt->dst_ip.s_addr,
-                pkt->dst_port);
-#endif
             return;
-        }
     }
-    if (pos)
-    {
-#ifdef RNA_DEBUG_NETBIOS
-        _dpd.debugMsg(DEBUG_LOG, "Found domain %s for command %02X 0x%08X:%u->0x%08X:%u",
-            domain, smb->command, pkt->src_ip.s_addr, pkt->src_port, pkt->dst_ip.s_addr,
-            pkt->dst_port);
-#endif
-        if (!asd->netbios_domain)
-            asd->netbios_domain = snort_strdup(domain);
-    }
+
+    if ( pos && (!asd->netbios_domain) )
+        asd->netbios_domain = snort_strdup(domain);
 }
 
 NbssServiceDetector::NbssServiceDetector(ServiceDiscovery* sd)
@@ -804,7 +771,6 @@ NbssServiceDetector::NbssServiceDetector(ServiceDiscovery* sd)
     name = "nbss";
     proto = IpProtocol::TCP;
     detectorType = DETECTOR_TYPE_DECODER;
-    current_ref_count =  1;
 
     tcp_patterns =
     {
@@ -903,8 +869,7 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
                     if (nd->length <= tmp)
                     {
                         smb_find_domain(data + sizeof(NB_SMB_BANNER),
-                            nd->length - sizeof(NB_SMB_BANNER),
-                            dir, asd, pkt);
+                            nd->length - sizeof(NB_SMB_BANNER), dir, asd);
                     }
                 }
                 else if (tmp >= 4 && nd->length >= 4 &&
@@ -966,7 +931,7 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
                     }
                     if (nd->length <= tmp)
                     {
-                        smb_find_domain(data + sizeof(NB_SMB_BANNER), nd->length, dir, asd, pkt);
+                        smb_find_domain(data + sizeof(NB_SMB_BANNER), nd->length, dir, asd);
                     }
                 }
                 else if (tmp >= 4 && nd->length >= 4 &&
@@ -1060,7 +1025,6 @@ NbdgmServiceDetector::NbdgmServiceDetector(ServiceDiscovery* sd)
     name = "nbdgm";
     proto = IpProtocol::UDP;
     detectorType = DETECTOR_TYPE_DECODER;
-    current_ref_count =  1;
 
     appid_registry =
     {

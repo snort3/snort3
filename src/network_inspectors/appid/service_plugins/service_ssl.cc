@@ -282,7 +282,6 @@ SslServiceDetector::SslServiceDetector(ServiceDiscovery* sd)
     name = "ssl";
     proto = IpProtocol::TCP;
     detectorType = DETECTOR_TYPE_DECODER;
-    current_ref_count = 1;
 
     tcp_patterns =
     {
@@ -1154,7 +1153,7 @@ bool setSSLSquelch(Packet* p, int type, AppId appId)
         break;
     case 2:
         f->client_app_id = appId;
-        f->rna_client_state = RNA_STATE_FINISHED;
+        f->client_disco_state = APPID_DISCO_STATE_FINISHED;
         break;
     default:
         return false;

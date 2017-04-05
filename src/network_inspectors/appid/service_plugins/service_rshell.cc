@@ -59,7 +59,6 @@ RshellServiceDetector::RshellServiceDetector(ServiceDiscovery* sd)
     name = "rshell";
     proto = IpProtocol::TCP;
     detectorType = DETECTOR_TYPE_DECODER;
-    current_ref_count =  1;
     app_id = add_appid_protocol_reference("rsh-error");
 
     appid_registry =
@@ -155,11 +154,11 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
                 APPID_EARLY_SESSION_FLAG_FW_RULE);
             if (pf)
             {
-                pf->rna_client_state = RNA_STATE_FINISHED;
+                pf->client_disco_state = APPID_DISCO_STATE_FINISHED;
                 data_add(pf, tmp_rd, &rshell_free_state);
                 if (pf->add_flow_data_id((uint16_t)port, this))
                 {
-                    pf->rna_service_state = RNA_STATE_FINISHED;
+                    pf->service_disco_state = APPID_DISCO_STATE_FINISHED;
                     tmp_rd->state = RSHELL_STATE_DONE;
                     tmp_rd->parent = nullptr;
                     return APPID_ENOMEM;
@@ -169,7 +168,7 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
                     APPID_SESSION_CONTINUE | APPID_SESSION_REXEC_STDERR | APPID_SESSION_NO_TPI |
                     APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE |
                     APPID_SESSION_PORT_SERVICE_DONE);
-                pf->rna_service_state = RNA_STATE_STATEFUL;
+                pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
             }
             else
             {

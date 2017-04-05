@@ -936,10 +936,10 @@ bool do_third_party_discovery(AppIdSession* asd, IpProtocol protocol, const SfIp
                         APP_ID_HTTP
                         && !asd->get_session_flags(APPID_SESSION_APP_REINSPECT))
                     {
-                        asd->rna_client_state = RNA_STATE_FINISHED;
+                        asd->rna_client_state = APPID_STATE_FINISHED;
                         asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED |
                             APPID_SESSION_SERVICE_DETECTED);
-                        asd->rna_service_state = RNA_STATE_FINISHED;
+                        asd->rna_service_state = APPID_STATE_FINISHED;
                         asd->clear_session_flags(APPID_SESSION_CONTINUE);
                         if (direction == APP_ID_FROM_INITIATOR)
                         {

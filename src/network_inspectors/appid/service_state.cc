@@ -28,11 +28,109 @@
 #include <map>
 
 #include "service_plugins/service_detector.h"
-#include "sfip/sf_ip.h"
-#include "utils/util.h"
 #include "log/messages.h"
+#include "sfip/sf_ip.h"
+#include "time/packet_time.h"
+#include "utils/util.h"
 
-//#define DEBUG_SERVICE_STATE 1
+ServiceDiscoveryState::ServiceDiscoveryState()
+{
+    state = SERVICE_ID_STATE::SEARCHING_PORT_PATTERN;
+    last_detract.clear();
+    last_invalid_client.clear();
+    reset_time = 0;
+}
+
+ServiceDiscoveryState::~ServiceDiscoveryState()
+{
+    if ( brute_force_mgr )
+        delete brute_force_mgr;
+}
+
+void ServiceDiscoveryState::set_service_id_valid(ServiceDetector* sd)
+{
+    service = sd;
+    reset_time = 0;
+    if (state != SERVICE_ID_STATE::VALID)
+    {
+        state = SERVICE_ID_STATE::VALID;
+        valid_count = 0;
+    }
+
+    if(!valid_count)
+    {
+        detract_count = 0;
+        last_detract.clear();
+        invalid_client_count = 0;
+        last_invalid_client.clear();
+    }
+
+    if (valid_count < STATE_ID_MAX_VALID_COUNT)
+        valid_count++;
+}
+
+/* Handle some exception cases on failure:
+ *  - valid_count: If we have a detector that should be valid, but it keeps
+ *    failing, consider restarting the detector search.
+ *  - invalid_client_count: If our service detector search had trouble
+ *    simply because of unrecognized client data, then consider retrying
+ *    the search again. */
+void ServiceDiscoveryState::set_service_id_failed(AppIdSession* asd, const SfIp* client_ip)
+{
+    /* If we had a valid detector, check for too many fails.  If so, start
+     * search sequence again. */
+    if (state == SERVICE_ID_STATE::VALID)
+    {
+        /* Too many invalid clients?  If so, count it as an invalid detect. */
+        if (invalid_client_count >= STATE_ID_INVALID_CLIENT_THRESHOLD)
+        {
+            if (valid_count <= 1)
+            {
+                state = SERVICE_ID_STATE::SEARCHING_PORT_PATTERN;
+                invalid_client_count = 0;
+                last_invalid_client.clear();
+                valid_count = 0;
+                detract_count = 0;
+                last_detract.clear();
+            }
+            else
+            {
+                valid_count--;
+                last_invalid_client = *client_ip;
+                invalid_client_count = 0;
+            }
+        }
+        else if (invalid_client_count == 0)
+        {
+            // Just a plain old fail.  If too many of these happen, start search process over.
+            if (last_detract.fast_eq6(*client_ip))
+                detract_count++;
+            else
+                last_detract = *client_ip;
+
+            if (detract_count >= STATE_ID_NEEDED_DUPE_DETRACT_COUNT)
+            {
+                if (valid_count <= 1)
+                {
+                    state = SERVICE_ID_STATE::SEARCHING_PORT_PATTERN;
+                    invalid_client_count = 0;
+                    last_invalid_client.clear();
+                    valid_count = 0;
+                    detract_count = 0;
+                    last_detract.clear();
+                }
+                else
+                    valid_count--;
+            }
+        }
+    }
+    else if ( ( state == SERVICE_ID_STATE::SEARCHING_PORT_PATTERN ) &&
+              ( asd->service_search_state == SESSION_SERVICE_ID_STATE::PENDING ) &&
+              ( !asd->service_candidates.size() ) )
+    {
+        state = SEARCHING_BRUTE_FORCE;
+    }
+}
 
 class AppIdServiceStateKey
 {
@@ -76,10 +174,9 @@ public:
     char padding[3];
 };
 
-// FIXIT-L - no memcap on size of this table, do we need that?
 THREAD_LOCAL std::map<AppIdServiceStateKey, ServiceDiscoveryState*>* service_state_cache = nullptr;
 
-void AppIdServiceState::initialize(unsigned long)
+void AppIdServiceState::initialize()
 {
     service_state_cache = new std::map<AppIdServiceStateKey, ServiceDiscoveryState*>;
 }
@@ -98,7 +195,7 @@ void AppIdServiceState::clean(void)
 }
 
 ServiceDiscoveryState* AppIdServiceState::add(const SfIp* ip, IpProtocol proto, uint16_t port,
-    uint32_t level)
+    bool decrypted)
 {
     AppIdServiceStateKey ssk;
     ServiceDiscoveryState* ss = nullptr;
@@ -106,80 +203,48 @@ ServiceDiscoveryState* AppIdServiceState::add(const SfIp* ip, IpProtocol proto, 
     ssk.ip.set(*ip);
     ssk.proto = proto;
     ssk.port = port;
-    ssk.level = level;
+    ssk.level = decrypted ? 1 : 0;
 
     std::map<AppIdServiceStateKey, ServiceDiscoveryState*>::iterator it;
     it = service_state_cache->find(ssk);
-    if ( it != service_state_cache->end())
-    {
-        ss = it->second;
-    }
-    else
+    if ( it == service_state_cache->end())
     {
         ss = new ServiceDiscoveryState;
         (*service_state_cache)[ssk] = ss;
     }
-
-#ifdef DEBUG_SERVICE_STATE
-    char ipstr[INET6_ADDRSTRLEN];
-
-    ipstr[0] = 0;
-    sfip_ntop(ip, ipstr, sizeof(ipstr));
-    DebugFormat(DEBUG_APPID, "ServiceState: Added to hash: %s:%u:%u:%u %p\n", ipstr,
-        (unsigned)proto,
-        (unsigned)port, level, (void*)ss);
-#endif
+    else
+        ss = it->second;
 
     return ss;
 }
 
 ServiceDiscoveryState* AppIdServiceState::get(const SfIp* ip, IpProtocol proto, uint16_t port,
-    uint32_t level)
+    bool decrypted)
 {
     AppIdServiceStateKey ssk;
     ServiceDiscoveryState* ss = nullptr;
-    char ipstr[INET6_ADDRSTRLEN];   // FIXIT-M ASAN reports mem leak on ServiceMatch* objects if
-                                    // this is not defined
-                                    //  which makes no sense, need to investigate further
 
     ssk.ip.set(*ip);
     ssk.proto = proto;
     ssk.port = port;
-    ssk.level = level;
+    ssk.level = decrypted ? 1 : 0;
 
     std::map<AppIdServiceStateKey, ServiceDiscoveryState*>::iterator it;
     it = service_state_cache->find(ssk);
     if ( it != service_state_cache->end())
-    {
         ss = it->second;
-        if (ss->service && !ss->service->ref_count)
-        {
-            ss->service = nullptr;
-            ss->state = SERVICE_ID_NEW;
-        }
-    }
-
-#ifdef DEBUG_SERVICE_STATE
-    ipstr[0] = 0;
-    sfip_ntop(ip, ipstr, sizeof(ipstr));
-    DebugFormat(DEBUG_APPID, "ServiceState: Read from hash: %s:%u:%u:%u %p %u %p\n", ipstr,
-        (unsigned)proto,
-        (unsigned)port, level, (void*)ss, ss ? ss->state : 0, ss ? (void*)ss->service : nullptr);
-#else
-    UNUSED(ipstr);
-#endif
 
     return ss;
 }
 
-void AppIdServiceState::remove(const SfIp* ip, IpProtocol proto, uint16_t port, uint32_t level)
+void AppIdServiceState::remove(const SfIp* ip, IpProtocol proto, uint16_t port, bool decrypted)
 {
     AppIdServiceStateKey ssk;
 
     ssk.ip.set(*ip);
     ssk.proto = proto;
     ssk.port = port;
-    ssk.level = level;
+    ssk.level = decrypted ? 1 : 0;
 
     std::map<AppIdServiceStateKey, ServiceDiscoveryState*>::iterator it;
     it = service_state_cache->find(ssk);
@@ -198,6 +263,22 @@ void AppIdServiceState::remove(const SfIp* ip, IpProtocol proto, uint16_t port, 
     }
 }
 
+void AppIdServiceState::check_reset(AppIdSession* asd, const SfIp* ip, uint16_t port )
+{
+    ServiceDiscoveryState* sds = AppIdServiceState::get(ip, IpProtocol::TCP, port,
+        asd->is_decrypted());
+
+    if (sds)
+    {
+        if (!sds->reset_time)
+            sds->reset_time = packet_time();
+        else if ((packet_time() - sds->reset_time) >= 60)
+        {
+            AppIdServiceState::remove(ip, IpProtocol::TCP, port, asd->is_decrypted());
+            asd->set_session_flags(APPID_SESSION_SERVICE_DELETED);
+        }
+    }
+}
 void AppIdServiceState::dump_stats(void)
 {
     // FIXIT-L - do we need to keep ipv4 and ipv6 separate?
