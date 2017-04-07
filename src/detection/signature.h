@@ -52,7 +52,6 @@ struct ReferenceNode
 };
 
 ReferenceNode* AddReference(SnortConfig*, ReferenceNode**, const char*, const char*);
-void FPrintReference(FILE*, ReferenceNode*);
 
 /* struct for rule classification */
 struct ClassType
@@ -69,7 +68,6 @@ struct ClassType
 void AddClassification(SnortConfig*, const char* type, const char* name, int priority);
 
 ClassType* ClassTypeLookupByType(SnortConfig*, const char*);
-ClassType* ClassTypeLookupById(SnortConfig*, int);
 
 struct ServiceInfo
 {

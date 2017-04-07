@@ -1,3 +1,9 @@
+17/04/07 - build 231
+
+-- add decode of MPLS in IP
+-- add 116:171 and 116:173 cases (label 0 or 2 in non-bottom of stack)
+-- cleanup: remove dead code
+
 17/03/27 - build 230
 
 -- require hyperscan >= 4.4.0, check runtime support

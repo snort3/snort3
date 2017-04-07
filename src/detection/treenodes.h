@@ -160,7 +160,6 @@ typedef int (* RuleOptEvalFunc)(void*, Cursor&, Packet*);
 OptFpList* AddOptFuncToList(RuleOptEvalFunc, OptTreeNode*);
 
 void* get_rule_type_data(OptTreeNode*, const char* name);
-void* get_rule_type_data(OptTreeNode*, option_type_t);
 
 SO_PUBLIC bool otn_has_plugin(OptTreeNode* otn, const char* name);
 

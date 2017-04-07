@@ -68,20 +68,6 @@ void otn_trigger_actions(const OptTreeNode* otn, Packet* p)
 // rule FOO
 //-------------------------------------------------------------------------
 
-void* get_rule_type_data(OptTreeNode* otn, option_type_t type)
-{
-    OptFpList* fpl = otn->opt_func;
-
-    while ( fpl )
-    {
-        if ( fpl->type == type )
-            return fpl->ips_opt;
-
-        fpl = fpl->next;
-    }
-    return nullptr;
-}
-
 void* get_rule_type_data(OptTreeNode* otn, const char* name)
 {
     OptFpList* fpl = otn->opt_func;

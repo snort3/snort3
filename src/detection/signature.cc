@@ -64,33 +64,6 @@ ReferenceNode* AddReference(
     return node;
 }
 
-/* print a reference node */
-void FPrintReference(FILE* fp, ReferenceNode* ref_node)
-{
-    if ((fp == NULL) || (ref_node == NULL))
-        return;
-
-    if (ref_node->system != NULL)
-    {
-        if (ref_node->system->url)
-        {
-            fprintf(fp, "[Xref => %s%s]", ref_node->system->url,
-                ref_node->id);
-        }
-        else
-        {
-            fprintf(fp, "[Xref => %s %s]", ref_node->system->name,
-                ref_node->id);
-        }
-    }
-    else
-    {
-        fprintf(fp, "[Xref => %s]", ref_node->id);
-    }
-}
-
-/********************* End of Reference Implementation ************************/
-
 /********************** Reference System Implementation ***********************/
 
 ReferenceSystemNode* ReferenceSystemAdd(
@@ -137,8 +110,6 @@ ReferenceSystemNode* ReferenceSystemLookup(ReferenceSystemNode* head, const char
 
     return head;
 }
-
-/****************** End of Reference System Implementation ********************/
 
 /************************ Class/Priority Implementation ***********************/
 
@@ -201,28 +172,7 @@ ClassType* ClassTypeLookupByType(SnortConfig* sc, const char* type)
     return node;
 }
 
-/* NOTE:  This lookup can only be done during parse time */
-ClassType* ClassTypeLookupById(SnortConfig* sc, int id)
-{
-    ClassType* node;
-
-    if (sc == NULL)
-        FatalError("%s(%d) Snort config is NULL.\n", __FILE__, __LINE__);
-
-    node = sc->classifications;
-
-    while (node != NULL)
-    {
-        if (id == node->id)
-            break;
-
-        node = node->next;
-    }
-
-    return node;
-}
-
-/***************** End of Class/Priority Implementation ***********************/
+/***************** Otn Utilities ***********************/
 
 void OtnRemove(SFGHASH* otn_map, OptTreeNode* otn)
 {
