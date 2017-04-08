@@ -156,28 +156,28 @@ AppIdSession* AppIdApi::get_appid_data(Flow* flow)
            asd : nullptr;
 }
 
-bool AppIdApi::is_appid_inspecting_session(AppIdSession* appIdSession)
+bool AppIdApi::is_appid_inspecting_session(AppIdSession* asd)
 {
-    if (appIdSession && appIdSession->common.flow_type == APPID_FLOW_TYPE_NORMAL)
+    if (asd && asd->common.flow_type == APPID_FLOW_TYPE_NORMAL)
     {
-        if (appIdSession->service_disco_state != APPID_DISCO_STATE_FINISHED ||
-            !is_third_party_appid_done(appIdSession->tpsession) ||
-            appIdSession->get_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_CONTINUE) ||
-            (appIdSession->get_session_flags(APPID_SESSION_ENCRYPTED) &&
-            (appIdSession->get_session_flags(APPID_SESSION_DECRYPTED) ||
-            appIdSession->session_packet_count < SSL_WHITELIST_PKT_LIMIT)))
+        if (asd->service_disco_state != APPID_DISCO_STATE_FINISHED ||
+            !is_third_party_appid_done(asd->tpsession) ||
+            asd->get_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_CONTINUE) ||
+            (asd->get_session_flags(APPID_SESSION_ENCRYPTED) &&
+            (asd->get_session_flags(APPID_SESSION_DECRYPTED) ||
+            asd->session_packet_count < SSL_WHITELIST_PKT_LIMIT)))
         {
             return true;
         }
-        if (appIdSession->client_disco_state != APPID_DISCO_STATE_FINISHED &&
-            (!appIdSession->get_session_flags(APPID_SESSION_CLIENT_DETECTED) ||
-            (appIdSession->service_disco_state != APPID_DISCO_STATE_STATEFUL
-            && appIdSession->get_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS))))
+        if (asd->client_disco_state != APPID_DISCO_STATE_FINISHED &&
+            (!asd->get_session_flags(APPID_SESSION_CLIENT_DETECTED) ||
+            (asd->service_disco_state != APPID_DISCO_STATE_STATEFUL
+            && asd->get_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS))))
         {
             return true;
         }
-        if (appIdSession->tp_app_id == APP_ID_SSH && appIdSession->payload_app_id != APP_ID_SFTP &&
-            appIdSession->session_packet_count < MAX_SFTP_PACKET_COUNT)
+        if (asd->tp_app_id == APP_ID_SSH && asd->payload_app_id != APP_ID_SFTP &&
+            asd->session_packet_count < MAX_SFTP_PACKET_COUNT)
         {
             return true;
         }
@@ -622,4 +622,16 @@ uint32_t AppIdApi::get_dns_ttl(AppIdSession* asd)
         return asd->dsession->ttl;
     return 0;
 }
+
+bool is_http_inspection_done(AppIdSession* asd)
+{
+    bool done = true;
+
+    if ( asd && ( asd->common.flow_type == APPID_FLOW_TYPE_NORMAL ) &&
+         !is_third_party_appid_done(asd->tpsession) )
+        done = false;
+
+    return done;
+}
+
 

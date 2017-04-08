@@ -45,7 +45,6 @@ void ProcessThirdPartyResults(Packet*, int, AppId*, ThirdPartyAppIDAttributeData
 void checkTerminateTpModule(AppIdSession*, uint16_t tpPktCount);
 bool do_third_party_discovery(AppIdSession*, IpProtocol, const SfIp*,  Packet*, int&);
 void pickHttpXffAddress(AppIdSession*, Packet*, ThirdPartyAppIDAttributeData*);
-bool checkThirdPartyReinspect(const Packet*, AppIdSession*);
 
 inline bool is_third_party_appid_done(void* tp_session)
 {

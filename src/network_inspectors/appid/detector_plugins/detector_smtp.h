@@ -42,7 +42,7 @@ private:
     int extract_version_and_add_client_app(ApplicationId, const int prefix_len,
         const uint8_t* product, const uint8_t* product_end, ClientSMTPData* const,
         AppIdSession*, AppId, PegCount*);
-    int IdentifyClientVersion(ClientSMTPData* const, const uint8_t* product,
+    int identify_client_version(ClientSMTPData* const, const uint8_t* product,
         const uint8_t* data_end, AppIdSession*, Packet*);
 };
 

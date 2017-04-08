@@ -813,7 +813,7 @@ void FtpServiceDetector::InitializeDataSession(AppIdSession* asd, AppIdSession* 
         fp->serviceAppId = APP_ID_FTP_DATA;
     }
 
-    PopulateExpectedFlow(asd, fp, APPID_SESSION_IGNORE_ID_FLAGS | encryptedFlag);
+    initialize_expected_session(asd, fp, APPID_SESSION_IGNORE_ID_FLAGS | encryptedFlag);
 }
 
 int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
@@ -1152,8 +1152,7 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
                     addr = htonl(address);
                     ip.set(&addr, AF_INET);
                     fp = AppIdSession::create_future_session(pkt, dip, 0, &ip, port, asd->protocol,
-                        ftp_data_app_id,
-                        APPID_EARLY_SESSION_FLAG_FW_RULE);
+                        ftp_data_app_id,  APPID_EARLY_SESSION_FLAG_FW_RULE);
                     if (fp)
                         InitializeDataSession(asd,fp);
 

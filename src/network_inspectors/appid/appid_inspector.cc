@@ -43,8 +43,9 @@
 #include "detector_plugins/http_url_patterns.h"
 #include "detector_plugins/detector_sip.h"
 #include "detector_plugins/detector_pattern.h"
-#include "managers/inspector_manager.h"
 #include "log/messages.h"
+#include "managers/inspector_manager.h"
+#include "protocols/packet.h"
 #include "profiler/profiler.h"
 
 THREAD_LOCAL AppIdStatistics* appid_stats_manager = nullptr;
@@ -167,12 +168,15 @@ void AppIdInspector::tterm()
     delete HttpPatternMatchers::get_instance();
 }
 
-void AppIdInspector::eval(Packet* pkt)
+void AppIdInspector::eval(Packet* p)
 {
     Profile profile(appidPerfStats);
 
     appid_stats.packets++;
-    AppIdDiscovery::do_application_discovery(pkt);
+    if (p->flow)
+        AppIdDiscovery::do_application_discovery(p);
+    else
+        appid_stats.ignored_packets++;
 }
 
 //-------------------------------------------------------------------------

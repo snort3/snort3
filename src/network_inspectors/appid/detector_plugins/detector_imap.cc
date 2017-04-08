@@ -628,8 +628,6 @@ int ImapClientDetector::validate(AppIdDiscoveryArgs& args)
         }
         cmd = nullptr;
         pattern_index = 0;
-        // FIXIT-M - this pattern search looks wrong, the pattern_match callback does some funny
-        // stuff ... do we have tests that verify the client side?
         cmd_matcher->find_all((char*)s, (length > longest_pattern ? longest_pattern : length),
             &pattern_match, false, (void*)&pattern_index);
 

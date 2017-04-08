@@ -248,6 +248,7 @@ public:
     void free_http_new_field(AppIdSession*, HTTP_FIELD_ID);
     uint16_t get_http_field_offset(AppIdSession*, HTTP_FIELD_ID);
     uint16_t get_http_field_end_offset(AppIdSession*, HTTP_FIELD_ID);
+    bool is_http_inspection_done(AppIdSession*);
 };
 
 SO_PUBLIC extern AppIdApi appid_api;

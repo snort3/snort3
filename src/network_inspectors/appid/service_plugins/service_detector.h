@@ -56,7 +56,7 @@ public:
         asd->misc_app_id = miscId;
     }
 
-    void PopulateExpectedFlow(AppIdSession*, AppIdSession*, uint64_t flags);
+    void initialize_expected_session(AppIdSession*, AppIdSession*, uint64_t flags);
 };
 #endif
 

@@ -44,8 +44,8 @@ THREAD_LOCAL void* module_handle = nullptr;
 THREAD_LOCAL struct ThirdPartyConfig thirdpartyConfig;
 THREAD_LOCAL ThirdPartyAppIDModule* thirdparty_appid_module = nullptr;
 
-static char* defaultXffFields[] = { (char*)HTTP_XFF_FIELD_X_FORWARDED_FOR,
-                                    (char*)HTTP_XFF_FIELD_TRUE_CLIENT_IP };
+static char const* defaultXffFields[] = { HTTP_XFF_FIELD_X_FORWARDED_FOR,
+                                          HTTP_XFF_FIELD_TRUE_CLIENT_IP };
 
 ProfileStats tpLibPerfStats;
 
@@ -111,6 +111,20 @@ static int LoadCallback(const char* const path, int /* indent */)
 
 #endif
 
+static void getXffFields(void)
+{
+    // FIXIT-M need to get xff fields from http config
+    char** xffFields = nullptr; // = _dpd.getHttpXffFields(&thirdpartyConfig.numXffFields);
+    if (!xffFields)
+    {
+        xffFields = (char**)defaultXffFields;
+        thirdpartyConfig.numXffFields = sizeof(defaultXffFields) / sizeof(defaultXffFields[0]);
+    }
+    thirdpartyConfig.xffFields = (char**)snort_alloc(thirdpartyConfig.numXffFields * sizeof(char*));
+    for (unsigned i = 0; i < thirdpartyConfig.numXffFields; i++)
+        thirdpartyConfig.xffFields[i] = snort_strndup(xffFields[i], UINT8_MAX);
+}
+
 void ThirdPartyAppIDInit(AppIdModuleConfig* config)
 {
     const char* thirdparty_appid_dir = config->thirdparty_appid_dir;
@@ -146,15 +160,9 @@ void ThirdPartyAppIDInit(AppIdModuleConfig* config)
     thirdpartyUtils.logMsg           = &DebugFormat;
     thirdpartyUtils.getSnortInstance = _dpd.getSnortInstance;
 
-    // FIXIT-M need to get xff fields from http config
-    thirdpartyConfig.xffFields = _dpd.getHttpXffFields(&thirdpartyConfig.numXffFields);
 #endif
 
-    if (!thirdpartyConfig.xffFields)
-    {
-        thirdpartyConfig.xffFields = defaultXffFields;
-        thirdpartyConfig.numXffFields = sizeof(defaultXffFields) / sizeof(defaultXffFields[0]);
-    }
+    getXffFields();
 
     ret = thirdparty_appid_module->init(&thirdpartyConfig, &thirdpartyUtils);
     if (ret != 0)
@@ -183,16 +191,13 @@ void ThirdPartyAppIDReconfigure(void)
 
     thirdpartyConfig.oldNumXffFields = thirdpartyConfig.numXffFields;
     thirdpartyConfig.oldXffFields = thirdpartyConfig.xffFields;
-
-    // FIXIT-L need to get xff fields from http config
-    // thirdpartyConfig.xffFields = _dpd.getHttpXffFields(&thirdpartyConfig.numXffFields);
-    if (!thirdpartyConfig.xffFields)
-    {
-        thirdpartyConfig.xffFields = defaultXffFields;
-        thirdpartyConfig.numXffFields = sizeof(defaultXffFields) / sizeof(defaultXffFields[0]);
-    }
+    getXffFields();
 
     ret = thirdparty_appid_module->reconfigure(&thirdpartyConfig);
+    for (unsigned i = 0; i < thirdpartyConfig.oldNumXffFields; i++)
+         snort_free(thirdpartyConfig.oldXffFields[i]);
+     snort_free(thirdpartyConfig.oldXffFields);
+
     if (ret != 0)
     {
         ErrorMessage("Unable to reconfigure 3rd party AppID module (%d)!\n", ret);
@@ -249,15 +254,11 @@ bool checkThirdPartyReinspect(const Packet* p, AppIdSession* asd)
            asd->get_session_flags(APPID_SESSION_HTTP_SESSION) && TPIsAppIdDone(asd->tpsession);
 }
 
-#else
 bool checkThirdPartyReinspect(const Packet*, AppIdSession*)
 {
     return false;
 }
 
-#endif
-
-#ifdef REMOVED_WHILE_NOT_IN_USE
 void ProcessThirdPartyResults(AppIdSession* asd, Packet* p, int confidence,
     AppId* proto_list, ThirdPartyAppIDAttributeData* attribute_data)
 {
@@ -810,6 +811,32 @@ bool do_third_party_discovery(AppIdSession* asd, IpProtocol protocol, const SfIp
     int tp_confidence;
     bool isTpAppidDiscoveryDone = false;
 
+    //restart inspection by 3rd party
+    if (!asd->tp_reinspect_by_initiator && (direction == APP_ID_FROM_INITIATOR) &&
+        checkThirdPartyReinspect(p, asd))
+    {
+        asd->tp_reinspect_by_initiator = true;
+        asd->set_session_flags(APPID_SESSION_APP_REINSPECT);
+        if (asd->session_logging_enabled)
+            LogMessage("AppIdDbg %s 3rd party allow reinspect http\n",
+                asd->session_logging_id);
+        asd->clear_http_field();
+    }
+
+    if (asd->tp_app_id == APP_ID_SSH && asd->payload_app_id != APP_ID_SFTP &&
+        asd->session_packet_count >= MIN_SFTP_PACKET_COUNT &&
+        asd->session_packet_count < MAX_SFTP_PACKET_COUNT)
+    {
+        if ( p->ptrs.ip_api.tos() == 8 )
+        {
+            asd->payload_app_id = APP_ID_SFTP;
+            if (asd->session_logging_enabled)
+                LogMessage("AppIdDbg %s data is SFTP\n", asd->session_logging_id);
+        }
+    }
+
+    Profile tpPerfStats_profile_context(tpPerfStats);
+
     /*** Start of third-party processing. ***/
     if (thirdparty_appid_module && !asd->get_session_flags(APPID_SESSION_NO_TPI)
         && (!TPIsAppIdDone(asd->tpsession)
@@ -1011,12 +1038,18 @@ bool do_third_party_discovery(AppIdSession* asd, IpProtocol protocol, const SfIp
         }
     }
 
+    if ( asd->tp_reinspect_by_initiator && checkThirdPartyReinspect(p, asd) )
+    {
+        asd->clear_session_flags(APPID_SESSION_APP_REINSPECT);
+        if (direction == APP_ID_FROM_RESPONDER)
+            asd->tp_reinspect_by_initiator = false; //toggle at OK response
+    }
+
     return isTpAppidDiscoveryDone;
 }
 
 void pickHttpXffAddress(AppIdSession* asd, Packet*, ThirdPartyAppIDAttributeData* attribute_data)
 {
-    int i;
     static const char* defaultXffPrecedence[] =
     {
         HTTP_XFF_FIELD_X_FORWARDED_FOR,
@@ -1025,30 +1058,31 @@ void pickHttpXffAddress(AppIdSession* asd, Packet*, ThirdPartyAppIDAttributeData
 
     // XFF precedence configuration cannot change for a session. Do not get it again if we already
     // got it.
-    if (!asd->hsession->xffPrecedence)
-        asd->hsession->xffPrecedence = _dpd.sessionAPI->get_http_xff_precedence(
-            p->flow, p->packet_flags, &asd->hsession->numXffFields);
-
-    if (!asd->hsession->xffPrecedence)
+    char** xffPrecedence = _dpd.sessionAPI->get_http_xff_precedence(p->stream_session, p->flags, &appIdSession->hsession->numXffFields);
+    if (!xffPrecedence)
     {
-        asd->hsession->xffPrecedence = defaultXffPrecedence;
-        asd->hsession->numXffFields = sizeof(defaultXffPrecedence) /
-            sizeof(defaultXffPrecedence[0]);
+        xffPrecedence = defaultXffPrecedence;
+        appIdSession->hsession->numXffFields = sizeof(defaultXffPrecedence) / sizeof(defaultXffPrecedence[0]);
     }
+
+    appIdSession->hsession->xffPrecedence = malloc(appIdSession->hsession->numXffFields * sizeof(char*));
+
+    for (unsigned j = 0; j < appIdSession->hsession->numXffFields; j++)
+        appIdSession->hsession->xffPrecedence[j] = strndup(xffPrecedence[j], UINT8_MAX);
 
     if (asd->session_logging_enabled)
     {
-        for (i = 0; i < attribute_data->numXffFields; i++)
+        for (unsigned i = 0; i < attribute_data->numXffFields; i++)
             LogMessage("AppIdDbg %s %s : %s\n", asd->session_logging_id,
                 attribute_data->xffFieldValue[i].field, attribute_data->xffFieldValue[i].value);
     }
 
     // xffPrecedence array is sorted based on precedence
-    for (i = 0; (i < asd->hsession->numXffFields) &&
-        asd->hsession->xffPrecedence[i]; i++)
+    for (unsigned i = 0;
+         (i < asd->hsession->numXffFields) && asd->hsession->xffPrecedence[i];
+         i++)
     {
-        int j;
-        for (j = 0; j < attribute_data->numXffFields; j++)
+        for (unsigned j = 0; j < attribute_data->numXffFields; j++)
         {
             if (asd->hsession->xffAddr)
             {
@@ -1059,15 +1093,27 @@ void pickHttpXffAddress(AppIdSession* asd, Packet*, ThirdPartyAppIDAttributeData
             if (strncasecmp(attribute_data->xffFieldValue[j].field,
                 asd->hsession->xffPrecedence[i], UINT8_MAX) == 0)
             {
+                if (!attribute_data->xffFieldValue[j].value ||
+                    (attribute_data->xffFieldValue[j].value[0] == '\0'))
+                    return;
+
+                // For a comma-separated list of addresses, pick the last address
+                // FIXIT-L: change to select last address port from 2.9.10-42..not tested
+                asd->hsession->xffAddr = new SfIp();
+                char* xff_addr = nullptr;
                 char* tmp = strchr(attribute_data->xffFieldValue[j].value, ',');
 
-                // For a comma-separated list of addresses, pick the first address
                 if (tmp)
-                    attribute_data->xffFieldValue[j].value[tmp -
-                    attribute_data->xffFieldValue[j].value] = '\0';
-                asd->hsession->xffAddr = new SfIp();
-                if (asd->hsession->xffAddr->set(attribute_data->xffFieldValue[j].value) !=
-                    SFIP_SUCCESS)
+                {
+                    xff_addr = tmp + 1;
+                }
+                else
+                {
+                    attribute_data->xffFieldValue[j].value[tmp - attribute_data->xffFieldValue[j].value] = '\0';
+                    xff_addr = attribute_data->xffFieldValue[j].value;
+                }
+
+                if (asd->hsession->xffAddr->set(xff_addr) != SFIP_SUCCESS)
                 {
                     delete asd->hsession->xffAddr;
                     asd->hsession->xffAddr = nullptr;
@@ -1075,6 +1121,7 @@ void pickHttpXffAddress(AppIdSession* asd, Packet*, ThirdPartyAppIDAttributeData
                 break;
             }
         }
+
         if (asd->hsession->xffAddr)
             break;
     }

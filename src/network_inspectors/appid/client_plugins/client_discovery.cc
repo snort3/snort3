@@ -421,10 +421,16 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, int direction, Pack
                     ret = exec_client_detectors(asd, p, direction);
 
                 if (ret < 0)
+                {
                     asd.set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+                    asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
+                }
             }
             else
+            {
                 asd.set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+                asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
+            }
         }
 
         if (asd.session_logging_enabled)

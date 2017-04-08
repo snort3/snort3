@@ -48,69 +48,6 @@
 THREAD_LOCAL LuaDetectorManager* lua_detector_mgr;
 THREAD_LOCAL SF_LIST allocated_detector_flow_list;
 
-static inline bool match_char_set(char c, const char* set)
-{
-    while ( *set && *set != c )
-        ++set;
-
-    return *set != '\0';
-}
-
-static inline const char* find_first_not_of(const char* s, const char* const set)
-{
-    while ( *s && match_char_set(*s, set) )
-        ++s;
-
-    return s;
-}
-
-static inline const char* find_first_of(const char* s, const char* const set)
-{
-    while ( *s && !match_char_set(*s, set) )
-        ++s;
-
-    return s;
-}
-
-static const char* tokenize(const char* const delim, const char*& save, size_t& len)
-{
-    if ( !save || !*save )
-        return nullptr;
-
-    save = find_first_not_of(save, delim);
-
-    if ( !*save )
-        return nullptr;
-
-    const char* end = find_first_of(save, delim);
-
-    const char* tmp = save;
-
-    len = end - save;
-    save = end;
-
-    return tmp;
-}
-
-static inline bool get_lua_ns(lua_State* L, const char* const ns)
-{
-    const char* save = ns;
-    size_t len = 0;
-
-    lua_pushvalue(L, LUA_GLOBALSINDEX);
-
-    while ( const char* s = tokenize(". ", save, len) )
-    {
-        if ( !lua_istable(L, -1) )
-            return false;
-
-        lua_pushlstring(L, s, len);
-        lua_gettable(L, -2);
-    }
-
-    return true;
-}
-
 static inline bool get_lua_field(lua_State* L, int table, const char* field, std::string& out)
 {
     lua_getfield(L, table, field);
@@ -154,20 +91,18 @@ static lua_State* create_lua_state(AppIdModuleConfig* mod_config)
     luaL_openlibs(L);
 
     register_detector(L);
-    // After detector register the methods are still on the stack, remove them
-    lua_pop(L, 1);
+    lua_pop(L, 1);          // After registration the methods are still on the stack, remove them
 
     register_detector_flow_api(L);
     lua_pop(L, 1);
 
-#ifdef REMOVED_WHILE_NOT_IN_USE
+
     /*The garbage-collector pause controls how long the collector waits before
       starting a new cycle. Larger values make the collector less aggressive.
       Values smaller than 100 mean the collector will not wait to start a new
       cycle. A value of 200 means that the collector waits for the total memory
       in use to double before starting a new cycle. */
-
-    lua_gc(myLuaState, LUA_GCSETPAUSE, 100);
+    lua_gc(L, LUA_GCSETPAUSE, 100);
 
     /*The step multiplier controls the relative speed of the collector relative
       to memory allocation. Larger values make the collector more aggressive
@@ -175,29 +110,27 @@ static lua_State* create_lua_state(AppIdModuleConfig* mod_config)
       100 make the collector too slow and can result in the collector never
       finishing a cycle. The default, 200, means that the collector runs at
       "twice" the speed of memory allocation. */
+    lua_gc(L, LUA_GCSETSTEPMUL, 200);
 
-    lua_gc(myLuaState, LUA_GCSETSTEPMUL, 200);
-#endif
-
-    // set lua library paths
-    char extra_path_buffer[PATH_MAX];
-
-    // FIXIT-L compute this path in the appid config module and return it ready to use
-    snprintf(
-        extra_path_buffer, PATH_MAX-1, "%s/odp/libs/?.lua;%s/custom/libs/?.lua",
-        mod_config->app_detector_dir, mod_config->app_detector_dir);
-
-    const int save_top = lua_gettop(L);
-    if ( get_lua_ns(L, "package.path") )
+    char new_lua_path[PATH_MAX];
+    lua_getglobal( L, "package" );
+    lua_getfield( L, -1, "path" );
+    const char * cur_lua_path = lua_tostring(L, -1);
+    if (cur_lua_path && (strlen(cur_lua_path)))
     {
-        lua_pushstring(L, extra_path_buffer);
-        lua_concat(L, 2);
-        lua_setfield(L, -2, "path");
+        snprintf(new_lua_path, sizeof(new_lua_path) - 1, "%s;%s/odp/libs/?.lua;%s/custom/libs/?.lua",
+            cur_lua_path, mod_config->app_detector_dir, mod_config->app_detector_dir);
     }
     else
-        ErrorMessage("Could not set lua package.path\n");
+    {
+        snprintf(new_lua_path, sizeof(new_lua_path) - 1, "%s/odp/libs/?.lua;%s/custom/libs/?.lua",
+            mod_config->app_detector_dir, mod_config->app_detector_dir);
+    }
 
-    lua_settop(L, save_top);
+    lua_pop( L, 1 );
+    lua_pushstring( L, new_lua_path);
+    lua_setfield( L, -2, "path" );
+    lua_pop( L, 1 );
 
     return L;
 }

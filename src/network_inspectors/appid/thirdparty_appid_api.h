@@ -38,11 +38,11 @@ struct ThirdPartyConfig
     unsigned chp_body_collection_disabled : 1;
     unsigned tp_allow_probes : 1;
     unsigned http_upgrade_reporting_enabled : 1;
-    char appid_tp_dir[TP_PATH_MAX];
-    int numXffFields;
-    char** xffFields;
-    int oldNumXffFields;
-    char** oldXffFields;
+    char     appid_tp_dir[TP_PATH_MAX];
+    unsigned numXffFields;
+    char**   xffFields;
+    unsigned oldNumXffFields;
+    char**   oldXffFields;
 };
 
 struct ThirdPartyUtils

@@ -190,7 +190,7 @@ int ServiceDetector::fail_service(AppIdSession* asd, const Packet* pkt, int dir)
     return static_cast<ServiceDiscovery*>(handler)->fail_service(asd, pkt, dir, this);
 }
 
-void ServiceDetector::PopulateExpectedFlow(AppIdSession* parent,
+void ServiceDetector::initialize_expected_session(AppIdSession* parent,
     AppIdSession* expected, uint64_t flags)
 {
     expected->set_session_flags(flags |

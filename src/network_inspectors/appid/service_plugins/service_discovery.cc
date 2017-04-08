@@ -621,6 +621,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, IpProtocol protoc
             else
                 asd.service_disco_state = APPID_DISCO_STATE_STATEFUL;
         }
+
         //stop rna inspection as soon as tp has classified a valid AppId later in the session
         if (asd.service_disco_state == APPID_DISCO_STATE_STATEFUL &&
             prevRnaServiceState == APPID_DISCO_STATE_STATEFUL &&
@@ -635,6 +636,34 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, IpProtocol protoc
                 if (asd.session_logging_enabled)
                     LogMessage("AppIdDbg %s Stop service detection\n", asd.session_logging_id);
                 asd.stop_rna_service_inspection(p, direction);
+            }
+        }
+
+        // Check to see if we want to stop any detectors for SIP/RTP.
+        if (asd.service_disco_state != APPID_DISCO_STATE_FINISHED)
+        {
+            if ( asd.tp_app_id == APP_ID_SIP )
+            {
+                // TP needs to see its own future flows and does a better
+                // job of it than we do, so stay out of its way, and don't
+                // waste time (but we will still get the Snort callbacks
+                // for any of our own future flows). Shut down our detectors.
+                asd.serviceAppId = APP_ID_SIP;
+                asd.stop_rna_service_inspection(p, direction);
+                asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
+            }
+            else if ( (asd.tp_app_id == APP_ID_RTP) || (asd.tp_app_id == APP_ID_RTP_AUDIO)
+                || (asd.tp_app_id == APP_ID_RTP_VIDEO) )
+            {
+                // No need for anybody to keep wasting time once we've
+                // found RTP - Shut down our detectors.
+                asd.serviceAppId = asd.tp_app_id;
+                asd.stop_rna_service_inspection(p, direction);
+                asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
+                //  - Shut down TP.
+                thirdparty_appid_module->session_state_set(asd.tpsession, TP_STATE_TERMINATED);
+                //  - Just ignore everything from now on.
+                asd.set_session_flags(APPID_SESSION_IGNORE_FLOW);
             }
         }
 
@@ -712,7 +741,6 @@ int ServiceDiscovery::incompatible_data(AppIdSession* asd, const Packet* pkt, in
             asd->service_port = port;
     }
     sds->reset_time = 0;
-
     return APPID_SUCCESS;
 }
 

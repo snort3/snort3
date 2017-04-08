@@ -179,8 +179,8 @@ static inline PktType get_pkt_type_from_ip_proto(IpProtocol proto)
 }
 
 AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const SfIp* cliIp,
-    uint16_t cliPort,
-    const SfIp* srvIp, uint16_t srvPort, IpProtocol proto, int16_t app_id, int /*flags*/)
+    uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol proto,
+    int16_t app_id, int /*flags*/)
 {
     char src_ip[INET6_ADDRSTRLEN];
     char dst_ip[INET6_ADDRSTRLEN];
@@ -201,8 +201,7 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
     // FIXIT-M 2.9.x set_application_protocol_id_expected has several new parameters, need to look
     // into what is required to support those here.
     if ( Stream::set_application_protocol_id_expected(ctrlPkt, type, proto, cliIp, cliPort, srvIp,
-        srvPort,
-        app_id, asd) )
+            srvPort, app_id, asd) )
     {
         sfip_ntop(cliIp, src_ip, sizeof(src_ip));
         sfip_ntop(srvIp, dst_ip, sizeof(dst_ip));
@@ -253,8 +252,6 @@ void AppIdSession::reinit_shared_data()
     //service
     if (!get_session_flags(APPID_SESSION_STICKY_SERVICE))
     {
-        clear_session_flags(APPID_SESSION_STICKY_SERVICE);
-
         tp_app_id = serviceAppId = portServiceAppId = APP_ID_NONE;
         if (serviceVendor)
         {
@@ -1093,7 +1090,7 @@ AppId AppIdSession::pick_referred_payload_app_id()
 AppId AppIdSession::pick_fw_service_app_id()
 {
     AppId appId = pick_service_app_id();
-    if (appId == APP_ID_NONE)
+    if (appId == APP_ID_NONE || appId== APP_ID_UNKNOWN_UI)
         appId = encrypted.serviceAppId;
     return appId;
 }
@@ -1184,11 +1181,22 @@ void AppIdSession::clear_app_id_data()
         thirdparty_appid_module->session_delete(tpsession, 1);
 }
 
+static void free_chp_matches( HttpPatternMatchers* http_matchers, MatchedCHPAction** ppmatches, unsigned max_matches )
+{
+    for (unsigned i = 0; i <= max_matches; i++)
+    {
+        if (ppmatches[i])
+        {
+            http_matchers->free_matched_chp_actions(ppmatches[i]);
+            ppmatches[i] = nullptr;
+        }
+    }
+}
+
 int AppIdSession::initial_chp_sweep(char** chp_buffers, uint16_t* chp_buffer_lengths,
     MatchedCHPAction** ppmatches)
 {
     CHPApp* cah = nullptr;
-    int longest = 0;
     CHPTallyAndActions chp;
     chp.matches = *ppmatches;
 
@@ -1199,13 +1207,17 @@ int AppIdSession::initial_chp_sweep(char** chp_buffers, uint16_t* chp_buffer_len
             http_matchers->scan_key_chp((PatternType)i, chp_buffers[i], chp_buffer_lengths[i],
                 chp);
     }
-    if (chp.match_tally.empty())
-        return 0;
 
+    if (chp.match_tally.empty())
+    {
+        free_chp_matches( http_matchers, ppmatches, MAX_KEY_PATTERN );
+        return 0;
+    }
+
+    int longest = 0;
     for (auto& item: chp.match_tally)
     {
-        // Only those items which have had their key_pattern_countdown field reduced to zero are a
-        // full match
+       // Only those items with key_pattern_countdown field reduced to zero are a full match
         if (item.key_pattern_countdown)
             continue;
         if (longest < item.key_pattern_length_sum)
@@ -1216,18 +1228,9 @@ int AppIdSession::initial_chp_sweep(char** chp_buffers, uint16_t* chp_buffer_len
         }
     }
 
-    if (cah == nullptr)
+    if ( !cah )
     {
-        // We were planning to pass along the content of ppmatches to the second phase and let
-        // them be freed inside scanCHP, but we have no candidate so we free here
-        for (unsigned i = 0; i <= MAX_KEY_PATTERN; i++)
-        {
-            if (ppmatches[i])
-            {
-                http_matchers->free_matched_chp_actions(ppmatches[i]);
-                ppmatches[i] = nullptr;
-            }
-        }
+        free_chp_matches( http_matchers, ppmatches, MAX_KEY_PATTERN );
         return 0;
     }
 
@@ -1410,6 +1413,8 @@ void AppIdSession::process_chp_buffers(char** version, Packet* p)
                 break;
             }
         }
+
+        free_chp_matches( http_matchers, chp_matches, NUMBER_OF_PTYPES );
 
         if ( !hsession->chp_candidate )
         {

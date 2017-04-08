@@ -346,7 +346,7 @@ void SipServiceDetector::createRtpFlow(AppIdSession* asd, const Packet* pkt, con
         fp->client_app_id = asd->client_app_id;
         fp->payload_app_id = asd->payload_app_id;
         fp->serviceAppId = APP_ID_RTP;
-        PopulateExpectedFlow(asd, fp, APPID_SESSION_IGNORE_ID_FLAGS);
+        initialize_expected_session(asd, fp, APPID_SESSION_IGNORE_ID_FLAGS);
     }
 
     // create an RTCP flow as well
@@ -358,7 +358,7 @@ void SipServiceDetector::createRtpFlow(AppIdSession* asd, const Packet* pkt, con
         fp2->client_app_id = asd->client_app_id;
         fp2->payload_app_id = asd->payload_app_id;
         fp2->serviceAppId = APP_ID_RTCP;
-        PopulateExpectedFlow(asd, fp2, APPID_SESSION_IGNORE_ID_FLAGS);
+        initialize_expected_session(asd, fp2, APPID_SESSION_IGNORE_ID_FLAGS);
     }
 }
 
@@ -367,7 +367,7 @@ void SipServiceDetector::addFutureRtpFlows(SipEvent& event, AppIdSession* asd)
     event.begin_media_sessions();
 
     auto session_a = event.next_media_session();
-    auto session_b= event.next_media_session();
+    auto session_b = event.next_media_session();
 
     if ( !session_a || !session_b )
         return;

@@ -498,7 +498,7 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
                 tmp_sd->state = SNMP_STATE_ERROR;
                 return APPID_ENULL;
             }
-            PopulateExpectedFlow(asd, pf, APPID_SESSION_EXPECTED_EVALUATE);
+            initialize_expected_session(asd, pf, APPID_SESSION_EXPECTED_EVALUATE);
             pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
             pf->scan_flags |= SCAN_HOST_PORT_FLAG;
             pf->common.initiator_ip = *sip;

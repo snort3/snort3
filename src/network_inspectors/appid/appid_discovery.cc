@@ -278,15 +278,54 @@ static inline bool is_special_session_monitored(const Packet* p)
     return false;
 }
 
-static bool is_packet_ignored(Packet* p)
-{
-    if (!p->flow)
-    {
-        appid_stats.ignored_packets++;
-        return true;
-    }
-    AppIdSession* asd = appid_api.get_appid_data(p->flow);
 
+static bool set_network_attributes(AppIdSession* asd, Packet* p, IpProtocol& protocol, int& direction )
+{
+    if (asd)
+    {
+        if (asd->common.flow_type == APPID_FLOW_TYPE_IGNORE)
+            return false;
+
+        if (asd->common.flow_type == APPID_FLOW_TYPE_NORMAL)
+        {
+            protocol = asd->protocol;
+            asd->flow = p->flow;
+        }
+        else if (p->is_tcp())
+            protocol = IpProtocol::TCP;
+        else
+            protocol = IpProtocol::UDP;
+
+        const SfIp* ip = p->ptrs.ip_api.get_src();
+        if (asd->common.initiator_port)
+            direction = (asd->common.initiator_port == p->ptrs.sp) ?
+                APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
+        else
+            direction = ip->fast_equals_raw(asd->common.initiator_ip) ?
+                APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
+
+        asd->in_expected_cache = false;
+    }
+    else
+    {
+        if (p->is_tcp())
+            protocol = IpProtocol::TCP;
+        else if (p->is_udp())
+            protocol = IpProtocol::UDP;
+        else if ( p->is_ip4() || p->is_ip6() )
+            protocol = p->get_ip_proto_next();
+        else
+            return false;
+
+        // FIXIT-L Refactor to use direction symbols defined by snort proper
+        direction = p->is_from_client() ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
+    }
+
+    return true;
+}
+
+static bool is_packet_ignored(AppIdSession* asd, Packet* p, int& direction)
+{
 // FIXIT-M - Need to convert this _dpd stream api call to the correct snort++ method
 #ifdef REMOVED_WHILE_NOT_IN_USE
     bool is_http2     = false; // _dpd.streamAPI->is_session_http2(p->flow);
@@ -299,33 +338,28 @@ static bool is_packet_ignored(Packet* p)
             asd->is_http2 = true;
         if ( !p->is_rebuilt() )
         {
-            // For HTTP/2, we only want to look at the ones that are rebuilt from
-            // Stream / HTTP Inspect as HTTP/1 packets.
+            // For HTTP/2, only examine packets that have been rebuilt as HTTP/1 packets.
             appid_stats.ignored_packets++;
             return true;
         }
     }
-    else    // not HTTP/2
+    else if ( p->is_rebuilt() && !p->flow->is_proxied() )
     {
-        if ( p->is_rebuilt() && !p->flow->is_proxied() )
+        if ( direction == APP_ID_FROM_INITIATOR &&
+                        asd && asd->hsession && asd->hsession->get_offsets_from_rebuilt )
         {
-            // FIXIT-M - latest 2.9 checks direction in this if statement below:
-            //             ( (direction == APP_ID_FROM_INITIATOR) &&... ) do we need to add this?
-            if (asd && asd->hsession && asd->hsession->get_offsets_from_rebuilt)
-            {
-                HttpPatternMatchers::get_instance()->get_http_offsets(p, asd->hsession);
-                if (asd->session_logging_enabled)
-                    LogMessage(
-                        "AppIdDbg %s offsets from rebuilt packet: uri: %u-%u cookie: %u-%u\n",
-                        asd->session_logging_id,
-                        asd->hsession->fieldOffset[REQ_URI_FID],
-                        asd->hsession->fieldEndOffset[REQ_URI_FID],
-                        asd->hsession->fieldOffset[REQ_COOKIE_FID],
-                        asd->hsession->fieldEndOffset[REQ_COOKIE_FID]);
-            }
-            appid_stats.ignored_packets++;
-            return true;
+            HttpPatternMatchers::get_instance()->get_http_offsets(p, asd->hsession);
+            if (asd->session_logging_enabled)
+                LogMessage(
+                    "AppIdDbg %s offsets from rebuilt packet: uri: %u-%u cookie: %u-%u\n",
+                    asd->session_logging_id,
+                    asd->hsession->fieldOffset[REQ_URI_FID],
+                    asd->hsession->fieldEndOffset[REQ_URI_FID],
+                    asd->hsession->fieldOffset[REQ_COOKIE_FID],
+                    asd->hsession->fieldEndOffset[REQ_COOKIE_FID]);
         }
+        appid_stats.ignored_packets++;
+        return true;
     }
 
     return false;
@@ -521,60 +555,22 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
     AppId payload_app_id = 0;
     bool isTpAppidDiscoveryDone = false;
     int direction = 0;
-    const SfIp* ip = nullptr;
-
-    if ( is_packet_ignored(p) )
-        return;
 
     AppIdSession* asd = (AppIdSession*)p->flow->get_flow_data(AppIdSession::flow_id);
-    if (asd)
-    {
-        if (asd->common.flow_type == APPID_FLOW_TYPE_IGNORE)
-            return;
+    if( !set_network_attributes(asd, p, protocol, direction) )
+        return;
 
-        if (asd->common.flow_type == APPID_FLOW_TYPE_NORMAL)
-        {
-            protocol = asd->protocol;
-            asd->flow = p->flow;
-        }
-        else if (p->is_tcp())
-            protocol = IpProtocol::TCP;
-        else
-            protocol = IpProtocol::UDP;
-
-        ip = p->ptrs.ip_api.get_src();
-        if (asd->common.initiator_port)
-            direction = (asd->common.initiator_port == p->ptrs.sp) ?
-                APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
-        else
-            direction = ip->fast_equals_raw(asd->common.initiator_ip) ?
-                APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
-
-        asd->in_expected_cache = false;
-    }
-    else
-    {
-        if (p->is_tcp())
-            protocol = IpProtocol::TCP;
-        else if (p->is_udp())
-            protocol = IpProtocol::UDP;
-        else if ( p->is_ip4() || p->is_ip6() )
-            protocol = p->get_ip_proto_next();
-        else
-            return;
-
-        // FIXIT-L Refactor to use direction symbols defined by snort proper
-        direction = p->is_from_client() ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
-    }
+    if ( is_packet_ignored(asd, p, direction) )
+        return;
 
     uint64_t flow_flags = is_session_monitored(p, direction, asd);
-    if (!(flow_flags & (APPID_SESSION_DISCOVER_APP | APPID_SESSION_SPECIAL_MONITORED)))
+    if ( !( flow_flags & (APPID_SESSION_DISCOVER_APP | APPID_SESSION_SPECIAL_MONITORED) ) )
     {
-        if (!asd)
+        if ( !asd )
         {
             uint16_t port = 0;
 
-            ip = (direction == APP_ID_FROM_INITIATOR) ?
+            const SfIp* ip = (direction == APP_ID_FROM_INITIATOR) ?
                 p->ptrs.ip_api.get_src() : p->ptrs.ip_api.get_dst();
             if ((protocol == IpProtocol::TCP || protocol == IpProtocol::UDP)
                 && p->ptrs.sp != p->ptrs.dp)
@@ -597,8 +593,8 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
         else
         {
             asd->common.flags = flow_flags;
-            if ((flow_flags & APPID_SESSION_BIDIRECTIONAL_CHECKED) ==
-                APPID_SESSION_BIDIRECTIONAL_CHECKED)
+            if ( ( flow_flags & APPID_SESSION_BIDIRECTIONAL_CHECKED) ==
+                APPID_SESSION_BIDIRECTIONAL_CHECKED )
                 asd->common.flow_type = APPID_FLOW_TYPE_IGNORE;
             asd->common.policyId = asd->config->appIdPolicyId;
         }
@@ -606,9 +602,8 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
         return;
     }
 
-    if (!asd || asd->common.flow_type == APPID_FLOW_TYPE_TMP)
+    if ( !asd || asd->common.flow_type == APPID_FLOW_TYPE_TMP )
     {
-        /* This call will free the existing temporary session, if there is one */
         asd = AppIdSession::allocate_session(p, protocol, direction);
         if (asd->session_logging_enabled)
             LogMessage("AppIdDbg %s new session\n", asd->session_logging_id);
@@ -645,6 +640,8 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
     else if ( p->is_tcp() && p->ptrs.tcph )
     {
         uint16_t port = 0;
+        const SfIp* ip = nullptr;
+
         const auto* tcph = p->ptrs.tcph;
         if ( tcph->is_rst() && asd->previous_tcp_flags == TH_SYN )
         {
@@ -671,6 +668,7 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
     {
         HostPortVal* hv = nullptr;
         uint16_t port = 0;
+        const SfIp* ip = nullptr;
 
         asd->scan_flags |= SCAN_HOST_PORT_FLAG;
         if (direction == APP_ID_FROM_INITIATOR)
@@ -710,43 +708,10 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
 
     asd->check_app_detection_restart();
 
-    //restart inspection by 3rd party
-    if (!asd->tp_reinspect_by_initiator && (direction == APP_ID_FROM_INITIATOR) &&
-        checkThirdPartyReinspect(p, asd))
-    {
-        asd->tp_reinspect_by_initiator = true;
-        asd->set_session_flags(APPID_SESSION_APP_REINSPECT);
-        if (asd->session_logging_enabled)
-            LogMessage("AppIdDbg %s 3rd party allow reinspect http\n",
-                asd->session_logging_id);
-        asd->clear_http_field();
-    }
-
-    if (asd->tp_app_id == APP_ID_SSH && asd->payload_app_id != APP_ID_SFTP &&
-        asd->session_packet_count >= MIN_SFTP_PACKET_COUNT &&
-        asd->session_packet_count < MAX_SFTP_PACKET_COUNT)
-    {
-        if ( p->ptrs.ip_api.tos() == 8 )
-        {
-            asd->payload_app_id = APP_ID_SFTP;
-            if (asd->session_logging_enabled)
-                LogMessage("AppIdDbg %s data is SFTP\n", asd->session_logging_id);
-        }
-    }
-
-    Profile tpPerfStats_profile_context(tpPerfStats);
-
 #ifdef REMOVED_WHILE_NOT_IN_USE
     // do third party detector processing
-    isTpAppidDiscoveryDone = asd->do_third_party_discovery(protocol, ip, p, direction);
+    isTpAppidDiscoveryDone = do_third_party_discovery(asd, protocol, ip, p, direction);
 #endif
-
-    if ( asd->tp_reinspect_by_initiator && checkThirdPartyReinspect(p, asd) )
-    {
-        asd->clear_session_flags(APPID_SESSION_APP_REINSPECT);
-        if (direction == APP_ID_FROM_RESPONDER)
-            asd->tp_reinspect_by_initiator = false; //toggle at OK response
-    }
 
     if ( !asd->get_session_flags(APPID_SESSION_PORT_SERVICE_DONE) )
     {

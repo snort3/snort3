@@ -987,12 +987,13 @@ enum ApplicationId : int32_t
     APP_ID_MDNS                           = 1755,
     APP_ID_APPLE_CORE_MEDIA               = 2253,
     APP_ID_HTTP_TUNNEL                    = 2296,
+    APP_ID_RTP_AUDIO                      = 2475,
+    APP_ID_RTP_VIDEO                      = 2476,
     APP_ID_ULTRASURF                      = 2634,
     APP_ID_LYCOS                          = 2775,
     APP_ID_DOGPILE                        = 2804,
     APP_ID_SPDY                           = 2886,
-    APP_ID_HTTP2                          = 2889,   // only used for some quick bookkeeping --
-                                                    // treat as HTTP
+    APP_ID_HTTP2                          = 2889,   // only used for bookkeeping -- treat as HTTP
     APP_ID_ANYCONNECT                     = 2921,
     APP_ID_ANYCONNECT_SSL_CLIENT          = 2922,
     APP_ID_ANYCONNECT_IPSEC_CLIENT        = 2923,
@@ -1001,8 +1002,7 @@ enum ApplicationId : int32_t
     APP_ID_HTTP_SSL_TUNNEL                = 3860,
     APP_ID_FTP_ACTIVE                     = 4002,
     APP_ID_FTP_PASSIVE                    = 4003,
-    APP_ID_UNKNOWN_UI                     = 65535   // this causes the UI to render Unknown instead
-                                                    // of pending or blank
+    APP_ID_UNKNOWN_UI                     = 65535   // UI renders this value as 'Unknown'
 };
 
 struct AppRegistryEntry
