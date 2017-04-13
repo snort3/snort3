@@ -38,3 +38,41 @@ Currently output formats are:
 2. CSV
 
 3. Flatbuffers (if the library is available at build)
+
+==== Flatbuffers Parsing
+
+While a tool has been included to parse the file format used, it may be
+desired to build analysis tools that deal with the files directly. This can
+be accomplished in a few ways; either the records can be split and passed to
+flatc along with the included schema, or the schema can be parsed using the
+Flatbuffers reflection API and used to read the data within the records.
+The format for the files is as follows:
+
+===== File Layout
+
+[options="header"]
+|============================================================================
+|Section     |Description
+|File Header |File ID and schema for parsing. This appears once at the start.
+|Records     |This is a stream of records. There may be an unlimited number.
+|============================================================================
+
+===== File Header
+
+[options="header"]
+|==========================================================================
+|Field Name  |Size                |Description
+|Magic       |4 bytes             |Format identifier. Only "FLTI" exists.
+|Schema Size |4 bytes             |Size of the included schema.
+|Schema      |(schema size) bytes |Schema for parsing records in this file.
+|==========================================================================
+
+===== Record
+
+[options="header"]
+|===========================================================================
+|Field Name  |Size                |Description
+|Timestamp   |8 bytes             |The time this record was written
+|Record Size |4 bytes             |Size of the record to follow
+|Record      |(record size) bytes |Binary record. Parse against file schema.
+|===========================================================================
