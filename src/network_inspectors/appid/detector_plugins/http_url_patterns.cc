@@ -298,7 +298,7 @@ static void add_host_url_pattern(HostUrlDetectorPattern* detector, HostUrlPatter
     }
 }
 
-void destroy_host_url_patterns(HostUrlPatterns** pattern_list)
+static void destroy_host_url_patterns(HostUrlPatterns** pattern_list)
 {
     if (!(*pattern_list))
         return;
@@ -362,7 +362,7 @@ int HttpPatternMatchers::add_mlmp_pattern(void* matcher,
     return mlmpAddPattern((tMlmpTree*)matcher, patterns, detector);
 }
 
-void destroy_host_url_matcher(tMlmpTree** host_url_matcher)
+static void destroy_host_url_matcher(tMlmpTree** host_url_matcher)
 {
     if (host_url_matcher && *host_url_matcher)
     {
@@ -371,7 +371,7 @@ void destroy_host_url_matcher(tMlmpTree** host_url_matcher)
     }
 }
 
-int match_query_elements(
+static int match_query_elements(
     tMlpPattern* packetData,
     tMlpPattern* userPattern,
     char* appVersion,
@@ -420,7 +420,9 @@ int match_query_elements(
 
 HttpPatternMatchers* HttpPatternMatchers::get_instance()
 {
-    static THREAD_LOCAL HttpPatternMatchers* http_matchers = new HttpPatternMatchers;
+    static THREAD_LOCAL HttpPatternMatchers* http_matchers = nullptr;
+    if (!http_matchers)
+        http_matchers = new HttpPatternMatchers;
     return http_matchers;
 }
 

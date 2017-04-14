@@ -21,6 +21,8 @@
 #ifndef CSV_FORMATTER_H
 #define CSV_FORMATTER_H
 
+#include <ctime>
+
 #include "perf_formatter.h"
 
 class CSVFormatter : public PerfFormatter

@@ -43,6 +43,7 @@
 // ouput open.
 //
 
+#include <ctime>
 #include <string>
 #include <vector>
 

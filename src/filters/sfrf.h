@@ -24,6 +24,8 @@
 
 // Implements rate_filter feature for snort
 
+#include <ctime>
+
 #include "actions/actions.h"
 #include "main/policy.h"
 

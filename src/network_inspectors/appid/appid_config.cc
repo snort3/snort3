@@ -60,7 +60,7 @@ int16_t snortId_for_unsynchronized;
 int16_t snortId_for_ftp_data;
 int16_t snortId_for_http2;
 
-void map_app_names_to_snort_ids()
+static void map_app_names_to_snort_ids()
 {
     /* init globals for snortId compares */
     snortId_for_unsynchronized = snort_conf->proto_ref->add("unsynchronized");

@@ -38,6 +38,7 @@
 //
 
 #include <cstdio>
+#include <ctime>
 
 #include "perf_formatter.h"
 #include "perf_monitor.h"

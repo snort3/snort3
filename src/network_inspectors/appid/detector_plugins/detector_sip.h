@@ -89,7 +89,9 @@ public:
     ~SipEventHandler() { }
     static SipEventHandler& get_instance()
     {
-        static THREAD_LOCAL SipEventHandler* seh = new SipEventHandler;
+        static THREAD_LOCAL SipEventHandler* seh = nullptr;
+        if (!seh)
+            seh = new SipEventHandler;
         return *seh;
     }
 

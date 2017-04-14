@@ -90,7 +90,9 @@ ServiceDiscovery::~ServiceDiscovery()
 
 ServiceDiscovery& ServiceDiscovery::get_instance()
 {
-    static THREAD_LOCAL ServiceDiscovery* discovery_manager = new ServiceDiscovery;
+    static THREAD_LOCAL ServiceDiscovery* discovery_manager = nullptr;
+    if (!discovery_manager)
+        discovery_manager = new ServiceDiscovery;
     return *discovery_manager;
 }
 

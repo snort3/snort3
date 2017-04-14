@@ -71,7 +71,9 @@ ClientDiscovery::~ClientDiscovery()
 
 ClientDiscovery& ClientDiscovery::get_instance()
 {
-    static THREAD_LOCAL ClientDiscovery* discovery_manager = new ClientDiscovery;
+    static THREAD_LOCAL ClientDiscovery* discovery_manager = nullptr;
+    if (!discovery_manager)
+        discovery_manager = new ClientDiscovery;
     return *discovery_manager;
 }
 
