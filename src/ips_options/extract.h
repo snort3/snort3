@@ -38,5 +38,10 @@ SO_PUBLIC int byte_extract(
 
 SO_PUBLIC void set_byte_order(uint8_t& order, uint8_t flag, const char* opt);
 
+SO_PUBLIC uint32_t getNumberTailingZerosInBitmask(uint32_t);
+SO_PUBLIC uint8_t numBytesInBitmask(uint32_t);
+SO_PUBLIC void RuleOptionBitmaskParse(uint32_t* bitmask_val, const char* cptr, uint32_t
+    bytes_to_extract, const char* ruleOptionName);
+
 #endif
 

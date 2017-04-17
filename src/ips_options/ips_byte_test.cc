@@ -40,6 +40,9 @@
  *      ["hex"]: converted string data is represented in hexidecimal
  *      ["dec"]: converted string data is represented in decimal
  *      ["oct"]: converted string data is represented in octal
+ *      ["bitmask"]: applies the AND operator on the bytes converted. The
+ *                   result will be right-shifted by the number of bits equal
+ *                   to the number of trailing zeros in the mask.
  *
  *   sample rules:
  *   alert udp $EXTERNAL_NET any -> $HOME_NET any \
@@ -74,6 +77,10 @@
  *      (byte_test: 8, =, 0xdeadbeef, 0, string, hex; \
  *      msg: "got DEADBEEF!";)
  *
+ * alert tcp any any -> any any \
+ *      (byte_test:2, =, 568, 0, bitmask 0x3FF0;	  \
+ *      msg:"got 568 after applying bitmask 0x3FF0 on 2 bytes extracted";)
+ *
  * Effect:
  *
  *      Reads in the indicated bytes, converts them to an numeric
@@ -95,6 +102,7 @@
 #include "log/messages.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
+#include "utils/util.h"
 
 #include "extract.h"
 #include "ips_byte_extract.h"
@@ -117,7 +125,7 @@ static THREAD_LOCAL ProfileStats byteTestPerfStats;
 #define CHECK_AND           6
 #define CHECK_XOR           7
 #define CHECK_ALL           8
-#define CHECK_GT0    9
+#define CHECK_GT0           9
 #define CHECK_NONE          10
 
 #define BIG    0
@@ -134,6 +142,7 @@ typedef struct _ByteTestData
     uint8_t data_string_convert_flag;
     uint8_t endianess;
     uint32_t base;
+    uint32_t bitmask_val;
     int8_t cmp_value_var;
     int8_t offset_var;
 } ByteTestData;
@@ -246,6 +255,7 @@ uint32_t ByteTestOption::hash() const
 
     a += data->cmp_value_var;
     b += data->offset_var;
+    c += data->bitmask_val;
 
     mix(a,b,c);
     mix_str(a,b,c,get_name());
@@ -273,7 +283,8 @@ bool ByteTestOption::operator==(const IpsOption& ips) const
         ( left->endianess == right->endianess) &&
         ( left->base == right->base) &&
         ( left->cmp_value_var == right->cmp_value_var) &&
-        ( left->offset_var == right->offset_var))
+        ( left->offset_var == right->offset_var) &&
+        ( left->bitmask_val == right->bitmask_val))
     {
         return true;
     }
@@ -345,6 +356,16 @@ int ByteTestOption::eval(Cursor& c, Packet* p)
                 "String Extraction Failed\n");
 
             return DETECTION_OPTION_NO_MATCH;
+        }
+    }
+
+    if (btd->bitmask_val != 0 )
+    {
+        uint32_t num_tailing_zeros_bitmask = getNumberTailingZerosInBitmask(btd->bitmask_val);
+        value = value & btd->bitmask_val;
+        if ( value && num_tailing_zeros_bitmask )
+        {
+            value = value >> num_tailing_zeros_bitmask;
         }
     }
 
@@ -456,6 +477,9 @@ static const Parameter s_params[] =
 
     { "dec", Parameter::PT_IMPLIED, nullptr, nullptr,
       "convert from decimal string" },
+
+    { "bitmask", Parameter::PT_STRING, nullptr, nullptr,
+      "applies as an AND prior to evaluation" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -570,6 +594,12 @@ bool ByteTestModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("oct") )
         data.base = 8;
 
+    else if ( v.is("bitmask") )
+    {
+        char* tok = snort_strdup(v.get_string());
+        RuleOptionBitmaskParse(&(data.bitmask_val), tok, data.bytes_to_compare, "byte_test");
+        snort_free(tok);
+    }
     else
         return false;
 

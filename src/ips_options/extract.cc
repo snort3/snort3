@@ -23,11 +23,17 @@
 #include "config.h"
 #endif
 
+#include <strings.h>
+
 #include "extract.h"
 
 #include "log/messages.h"
 #include "utils/snort_bounds.h"
 #include "utils/util_cstring.h"
+
+#ifdef UNIT_TEST
+#include "catch/catch.hpp"
+#endif
 
 void set_byte_order(uint8_t& order, uint8_t flag, const char* opt)
 {
@@ -190,6 +196,84 @@ int string_extract(int bytes_to_grab, int base, const uint8_t* ptr,
 #endif /* TEST_BYTE_EXTRACT */
     return(parse_helper - byte_array);  /* Return the number of bytes actually extracted */
 }
+
+uint32_t getNumberTailingZerosInBitmask(uint32_t bitmask)
+{
+    if (bitmask == 0)
+        return 32;
+
+    return (ffs(bitmask)-1);
+}
+
+uint8_t numBytesInBitmask(uint32_t bitmask_value)
+{
+    uint8_t num_bytes;
+    if ( bitmask_value <= 0xFF )
+        num_bytes = 1;
+    else if ( bitmask_value <= 0xFFFF )
+        num_bytes = 2;
+    else if ( bitmask_value <= 0xFFFFFF )
+        num_bytes = 3;
+    else
+        num_bytes = 4;
+
+    return num_bytes;
+}
+
+void RuleOptionBitmaskParse(uint32_t* bitmask_val, const char* cptr, uint32_t bytes_to_extract,
+    const
+    char* ruleOptionName)
+{
+    char* endp = nullptr;
+    uint32_t bitmask_value;
+
+    if (*bitmask_val == 0 )
+    {
+        if (SnortStrToU32(cptr,&endp,&bitmask_value,16) == -1 )
+            ParseError("%s :: Invalid input value for \"bitmask\" rule option.\n", ruleOptionName);
+
+        else if ( errno == ERANGE )
+            ParseError("%s :: \"bitmask\" value is out of range.\n", ruleOptionName);
+        else if (bitmask_value == 0 )
+            ParseError("%s :: \"bitmask\" value is zero.\n", ruleOptionName);
+        else if (*endp != '\0')
+            ParseError("%s :: Rule option has invalid argument to \"bitmask\".\n", ruleOptionName);
+
+        else
+        {
+            const uint32_t num_bytes = numBytesInBitmask(bitmask_value);
+            if (bytes_to_extract >= num_bytes )
+                *bitmask_val = bitmask_value;
+            else
+                ParseError(
+                    "%s :: Number of bytes in \"bitmask\" value is greater than bytes to extract.\n",
+                    ruleOptionName);
+        }
+    }
+    else
+        ParseError("%s :: Rule option includes the \"bitmask\" argument twice.\n",ruleOptionName);
+}
+
+#ifdef UNIT_TEST
+TEST_CASE("ips options bitmask utils")
+{
+    // numBytesInBitmask tests
+    REQUIRE((numBytesInBitmask(0x1f) == 1));
+    REQUIRE((numBytesInBitmask(0x1ff) == 2));
+    REQUIRE((numBytesInBitmask(0x1ffff) == 3));
+    REQUIRE((numBytesInBitmask(0x1ffffff) == 4));
+
+    // getNumberTailingZerosInBitmask tests
+    REQUIRE((getNumberTailingZerosInBitmask(0x1f) == 0));
+    REQUIRE((getNumberTailingZerosInBitmask(0x1e) == 1));
+    REQUIRE((getNumberTailingZerosInBitmask(0x14) == 2));
+    REQUIRE((getNumberTailingZerosInBitmask(0x10) == 4));
+    REQUIRE((getNumberTailingZerosInBitmask(0x100) == 8));
+    REQUIRE((getNumberTailingZerosInBitmask(0x10000) == 16));
+    REQUIRE((getNumberTailingZerosInBitmask(0x20000) == 17));
+    REQUIRE((getNumberTailingZerosInBitmask(0) == 32));
+}
+#endif
 
 #ifdef TEST_BYTE_EXTRACT
 #include <stdio.h>
