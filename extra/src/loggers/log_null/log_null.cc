@@ -23,10 +23,6 @@
  * alerting, they are completely separate output facilities within Snort.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "framework/logger.h"
 #include "framework/module.h"
 

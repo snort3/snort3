@@ -17,10 +17,6 @@
 //--------------------------------------------------------------------------
 // dpx.cc author Russ Combs <rcombs@sourcefire.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "events/event_queue.h"
 #include "framework/inspector.h"
 #include "framework/module.h"

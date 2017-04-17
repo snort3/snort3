@@ -17,10 +17,6 @@
 //--------------------------------------------------------------------------
 // data_log.cc author Russ Combs <rcombs@sourcefire.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "flow/flow.h"
 #include "framework/data_bus.h"
 #include "framework/inspector.h"

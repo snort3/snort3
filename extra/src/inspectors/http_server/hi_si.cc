@@ -42,10 +42,6 @@
 **  - 2.25.03:  Initial Development.  DJR
 */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "hi_si.h"
 
 #include "protocols/packet.h"

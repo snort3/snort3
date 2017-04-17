@@ -18,28 +18,22 @@
 */
 /* daq_socket.c author Russ Combs <rucombs@cisco.com> */
 
-#include "daqs/daq_user.h"
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <errno.h>
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-
+#include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/unistd.h>
 
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
-
 #include <daq_api.h>
 #include <sfbpf_dlt.h>
+
+#include <daqs/daq_user.h>
 
 #define DAQ_MOD_VERSION 0
 #define DAQ_NAME "socket"

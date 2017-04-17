@@ -17,10 +17,6 @@
 //--------------------------------------------------------------------------
 // ips_http.cc author Russ Combs <rucombs@cisco.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <array>
 
 #include "framework/cursor.h"

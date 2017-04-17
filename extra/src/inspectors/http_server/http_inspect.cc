@@ -32,10 +32,6 @@
 **  - 2.10.03:  Initial Development.  DJR
 */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 // FIXIT-L all snort includes should use <form> instead of "form"
 #include "log/messages.h"
 #include "file_api/file_service.h"

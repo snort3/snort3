@@ -28,10 +28,6 @@
 */
 // lowmem.cc author Russ Combs <rucombs@cisco.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "log/messages.h"
 #include "framework/mpse.h"
 

@@ -18,10 +18,6 @@
 
 // hi_module.cc author Russ Combs <rucombs@cisco.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "hi_module.h"
 
 #include "decompress/file_decomp.h"

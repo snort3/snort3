@@ -58,7 +58,6 @@ doc/snort_manual.chunked.tgz
 doc/snort_manual.tgz
 doc/snort_manual.xml
 doc/version.txt
-extra/m4/*.m4
 extra/rule.xxd
 extra/snort_examples-1.0.tar.gz
 install-sh
@@ -81,6 +80,7 @@ src/test/suite_decl.h
 src/test/suite_list.h
 stamp-h1
 test-driver
+tools/flatbuffers/fbstreamer
 tools/snort2lua/snort2lua
 tools/snort2lua/tags
 tools/u2boat/u2boat

@@ -18,10 +18,6 @@
 
 // ips_urg.cc author Russ Combs <rucombs@cisco.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"

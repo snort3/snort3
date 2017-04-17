@@ -43,10 +43,6 @@
 // * Range, Content-Range, and multipart
 //--------------------------------------------------------------------
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "hi_stream_splitter.h"
 
 #include "events/event_queue.h"

@@ -2,6 +2,7 @@
 noinst_LIBRARIES = libloggers.a
 libloggers_a_SOURCES = \
 alert_luajit.cc \
+alert_sf_socket.cc \
 log_codecs.cc \
 loggers.cc \
 loggers.h
@@ -14,10 +15,6 @@ alert_syslog.cc \
 log_hext.cc \
 log_pcap.cc \
 unified2.cc
-
-if LINUX
-libloggers_a_SOURCES += alert_sf_socket.cc
-endif
 
 if STATIC_LOGGERS
 libloggers_a_SOURCES += $(plugin_list)

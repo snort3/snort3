@@ -18,10 +18,6 @@
 
 // ips_pkt_num.cc author Russ Combs <rucombs@cisco.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "detection/detection_defines.h"
 #include "framework/decode_data.h"
 #include "framework/ips_option.h"

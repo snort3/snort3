@@ -22,10 +22,6 @@
 // this file was split from hi_client.cc; look there for the real
 // culprits ;)
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "utils/util_cstring.h"
 
 #include "hi_events.h"

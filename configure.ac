@@ -106,38 +106,11 @@ AC_CHECK_PROG(have_w3m,w3m,yes,no)
 AM_CONDITIONAL(MAKE_TEXT_DOC, [test "x$have_w3m" = "xyes" -a "x$have_asciidoc" = "xyes"])
 
 #--------------------------------------------------------------------------
-# visibility foo
+# visibility foo (enable it if we can)
 #--------------------------------------------------------------------------
 
-# modified from gnulib/m4/visibility.m4
-AC_DEFUN([CC_VISIBILITY],
-[
-    AC_REQUIRE([AC_PROG_CC])
-    AC_MSG_CHECKING([for visibility support])
-    gl_save_CPPFLAGS="$CPPFLAGS"
-
-    AC_CACHE_VAL(gl_cv_cc_visibility, [
-        # Add -Werror flag since some compilers, e.g. icc 7.1, don't support it,
-        # but only warn about it instead of compilation failing
-        CPPFLAGS="$CPPFLAGS -Werror -fvisibility=hidden"
-        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-            extern __attribute__((__visibility__("hidden"))) int hiddenvar;
-            extern __attribute__((__visibility__("default"))) int exportedvar;
-            extern __attribute__((__visibility__("hidden"))) int hiddenfunc (void);
-            extern __attribute__((__visibility__("default"))) int exportedfunc (void);]],
-            [[]])],
-            [gl_cv_cc_visibility="yes"],
-            [gl_cv_cc_visibility="no"])
-    ])
-    AC_MSG_RESULT([$gl_cv_cc_visibility])
-    CPPFLAGS="$gl_save_CPPFLAGS"
-    if test "x$gl_cv_cc_visibility" = "xyes"; then
-        CPPFLAGS="$CPPFLAGS -fvisibility=hidden"
-        AC_DEFINE([HAVE_VISIBILITY],[1],
-            [Define if the compiler supports visibility declarations.])
-    fi
-])
-CC_VISIBILITY()
+gl_VISIBILITY()
+CPPFLAGS="$CFLAG_VISIBILITY $CPPFLAGS"
 
 #--------------------------------------------------------------------------
 # thread-local storage foo

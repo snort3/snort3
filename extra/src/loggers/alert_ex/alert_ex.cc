@@ -19,10 +19,6 @@
 
 // alert_ex.cc author Russ Combs <rucombs@cisco.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <iostream>
 
 #include "detection/signature.h"

@@ -23,8 +23,6 @@
 #include "config.h"
 #endif
 
-#ifdef __linux__
-
 #include <sys/socket.h>
 #include <sys/un.h>
 
@@ -406,13 +404,10 @@ static LogApi sf_sock_api
     sf_sock_ctor,
     sf_sock_dtor
 };
-#endif   /* __linux__ */
 
 const BaseApi* alert_sf_socket[] =
 {
-#ifdef __linux__
     &sf_sock_api.base,
-#endif
     nullptr
 };
 

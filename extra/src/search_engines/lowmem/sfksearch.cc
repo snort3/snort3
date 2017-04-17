@@ -28,9 +28,6 @@
 *  Keyword-Search: searches the input text for one of multiple keywords,
 *  and supports case sensitivite and case insensitive patterns.
 */
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include "sfksearch.h"
 

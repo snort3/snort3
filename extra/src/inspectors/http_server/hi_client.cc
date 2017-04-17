@@ -41,10 +41,6 @@
 **    - 2.4.05:  Added tab_uri_delimiter config option.  AJM.
 */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "hi_client.h"
 
 #include "protocols/packet.h"

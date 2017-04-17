@@ -45,10 +45,6 @@
 **      - Initial development.  DJR
 */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "hi_client_norm.h"
 
 #include "main/snort_debug.h"

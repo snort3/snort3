@@ -35,10 +35,6 @@
 **      - Initial development.  DJR
 */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "hi_server.h"
 
 #include "protocols/packet.h"

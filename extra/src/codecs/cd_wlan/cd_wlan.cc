@@ -18,10 +18,6 @@
 //--------------------------------------------------------------------------
 // cd_wlan.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <sfbpf_dlt.h>
 
 #include "codecs/codec_module.h"

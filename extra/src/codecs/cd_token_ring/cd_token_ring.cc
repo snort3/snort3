@@ -19,10 +19,6 @@
 //--------------------------------------------------------------------------
 // token_ring.h author Josh Rosenbaum <jrosenba@cisco.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <sfbpf_dlt.h>
 
 #include "codecs/codec_module.h"

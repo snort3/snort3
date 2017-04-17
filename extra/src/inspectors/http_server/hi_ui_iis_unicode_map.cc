@@ -33,10 +33,6 @@
 **    -  Initial development.  DJR
 */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "hi_ui_iis_unicode_map.h"
 
 #include <sstream>

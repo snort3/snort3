@@ -52,7 +52,7 @@ uint8_t opt_flags = 0;
 bool done = false;
 FILE* file;
 
-void help()
+static void help()
 {
     cout << "Flatbuffers Multirecord Streamer for Snort 3\n\n"
          << "Records are output in pairs of YAML objects, representing\n"
@@ -64,7 +64,7 @@ void help()
          << "-t: Tail mode for reading live files\n";
 }
 
-void error(string e)
+static void error(string e)
 {
     if( done )
         return;
@@ -76,7 +76,7 @@ void error(string e)
     exit(-1);
 }
 
-bool tail_read(void* buf, size_t size)
+static bool tail_read(void* buf, size_t size)
 {
     bool tail = opt_flags & OPT_TAIL;
 
@@ -101,7 +101,7 @@ bool tail_read(void* buf, size_t size)
     return true;
 }
 
-uint8_t* read(size_t size, const char* on_error = nullptr)
+static uint8_t* read(size_t size, const char* on_error = nullptr)
 {
     uint8_t* ret = (uint8_t*) malloc(size);
 
@@ -125,10 +125,10 @@ inline T read(const char* on_error = nullptr)
     return ret;
 }
 
-void sigint_handler(int)
+static void sigint_handler(int)
 { done = true; }
 
-bool handle_options(int argc, char* argv[])
+static bool handle_options(int argc, char* argv[])
 {
     int opt;
     while( (opt = getopt(argc, argv, "i:b:a:it")) != -1 )
@@ -168,7 +168,7 @@ bool handle_options(int argc, char* argv[])
     return true;
 }
 
-const reflection::Schema* load_schema(flatbuffers::Parser& parser)
+static const reflection::Schema* load_schema(flatbuffers::Parser& parser)
 {
     auto schema_size = ntohl(read<uint32_t>("Unable to read schema size"));
     auto schema = read(schema_size, "Unable to read schema");
@@ -190,7 +190,7 @@ inline bool is_after_b_stamp(uint64_t timestamp)
 inline bool is_before_a_stamp(uint64_t timestamp)
 { return (opt_flags & OPT_AFTER) && timestamp < a_stamp; }
 
-uint8_t* scan_record(bool skip, uint32_t& size)
+static uint8_t* scan_record(bool skip, uint32_t& size)
 {
     size = ntohl(read<uint32_t>("Unable to read record size"));
 

@@ -1,6 +1,7 @@
 
 set (LOGGER_SOURCES
     alert_luajit.cc
+    alert_sf_socket.cc
     log_codecs.cc
     loggers.cc
     loggers.h
@@ -15,14 +16,6 @@ set (PLUGIN_LIST
     log_pcap.cc
     unified2.cc
 )
-
-if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
-    set ( LOGGER_SOURCES
-        ${LOGGER_SOURCES}
-        alert_sf_socket.cc
-    )
-endif()
-
 
 if (STATIC_LOGGERS)
     add_library ( loggers STATIC

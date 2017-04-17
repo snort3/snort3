@@ -18,10 +18,6 @@
 //--------------------------------------------------------------------------
 // hi_events.cc author Russ Combs <rucombs@cisco.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "hi_events.h"
 
 #include <assert.h>

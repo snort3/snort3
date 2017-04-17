@@ -29,10 +29,6 @@
 **    - 3.2.03:  Initial development.  DJR
 */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "hi_ad.h"
 
 #include "hi_events.h"

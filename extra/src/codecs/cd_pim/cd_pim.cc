@@ -20,10 +20,6 @@
 
 // cd_pim.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
 

@@ -17,10 +17,6 @@
 //--------------------------------------------------------------------------
 // sid_18758.cc author Russ Combs <rucombs@cisco.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "sid_18758.h"
 
 #include "detection/detection_defines.h"

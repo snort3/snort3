@@ -45,10 +45,6 @@
 **      - Initial development.  DJR
 */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "hi_server_norm.h"
 
 #include "search_engines/search_tool.h"
