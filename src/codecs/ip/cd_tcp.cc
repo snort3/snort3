@@ -38,6 +38,14 @@
 #define CD_TCP_NAME "tcp"
 #define CD_TCP_HELP "support for transmission control protocol"
 
+#ifdef WORDS_BIGENDIAN
+    const uint32_t naptha_seq = 0x005c7b2a;
+    const uint16_t naptha_id = 0x019d;
+#else
+    const uint32_t naptha_seq = 0x2a7b5c00;
+    const uint16_t naptha_id = 0x9d01;
+#endif
+
 using namespace tcp;
 
 namespace
@@ -227,12 +235,9 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         /* check if only SYN is set */
         if ( tcph->th_flags == TH_SYN )
         {
-            if ( tcph->th_seq == 6060842 )
+            if ((tcph->th_seq == naptha_seq) and (snort.ip_api.get_ip4h()->ip_id  == naptha_id))
             {
-                if ( snort.ip_api.id() == 413 )
-                {
-                    codec_event(codec, DECODE_DOS_NAPTHA);
-                }
+                codec_event(codec, DECODE_DOS_NAPTHA);
             }
         }
 
