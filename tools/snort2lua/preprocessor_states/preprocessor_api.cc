@@ -77,6 +77,8 @@ std::vector<const ConvertMap*> preprocessor_api =
     gtp_map,
     imap_map,
     modbus_map,
+    nhttpinspect_map,
+    nhttpinspect_server_map,
     normalizer_icmp4_map,
     normalizer_icmp6_map,
     normalizer_ip4_map,
@@ -96,23 +98,10 @@ std::vector<const ConvertMap*> preprocessor_api =
     stream_global_map,
     stream_tcp_map,
     stream_udp_map,
-//    nullptr,
 };
 
-std::vector<const ConvertMap*> get_preprocessor_api(bool ohi_convert)
-{
-    if( ohi_convert )
-    {
-        preprocessor_api.push_back(httpinspect_map);
-        preprocessor_api.push_back(httpinspect_server_map);
-    }
-    else
-    {
-        preprocessor_api.push_back(nhttpinspect_map);
-        preprocessor_api.push_back(nhttpinspect_server_map);
-    }
+std::vector<const ConvertMap*> get_preprocessor_api()
+{ return preprocessor_api; }
 
-    return preprocessor_api;
-}
 } // namespace preprocessors
 

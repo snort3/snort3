@@ -218,8 +218,18 @@ void FastLogger::alert(Packet* p, const char* msg, Event* event)
     if ( packet || SnortConfig::output_app_data() )
     {
         TextLog_NewLine(fast_log);
+
+        if ( p->flow and p->flow->gadget )
+        {
+            InspectionBuffer buf;
+
+            if ( p->flow->gadget->get_buf(InspectionBuffer::IBT_KEY, p, buf) )
+                LogNetData(fast_log, buf.data, buf.len, p);
+        }
+
         if (p->has_ip())
             LogIPPkt(fast_log, p);
+
         else if ( p->obfuscator )
         {
             // FIXIT-P avoid string copy

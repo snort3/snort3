@@ -250,13 +250,13 @@ int SegmentOverlapEditor::left_overlap_keep_last()
                 return rc;
 
             left->payload_size -= ( int16_t )overlap;
-            seg_bytes_logical -= overlap;
 
             right->seq = seq + len;
             uint16_t delta = ( int16_t )( right->seq - left->seq );
             right->payload_size -= delta;
             right->offset += delta;
-            seg_bytes_logical -= delta;
+
+            seg_bytes_logical -= len;
         }
         else
         {

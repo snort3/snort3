@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2017 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2017 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,7 +15,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// pps_http_inspect.cc author Josh Rosenbaum <jrosenba@cisco.com>
+// pps_nhttp_inspect.cc author Bhagya Tholpady <bbantwal@cisco.com>
 
 #include <sstream>
 #include <vector>
@@ -33,8 +33,8 @@ class HttpInspect : public ConversionState
 {
 public:
     HttpInspect(Converter& c) : ConversionState(c) { }
-    virtual ~HttpInspect() { }
-    virtual bool convert(std::istringstream& data);
+    ~HttpInspect() { }
+    bool convert(std::istringstream& data) override;
 
 private:
     bool add_decode_option(std::string opt_name,  std::istringstream& stream);
@@ -57,51 +57,47 @@ bool HttpInspect::convert(std::istringstream& data_stream)
             return false;
         }
     }
-    table_api.open_table("http_global");
-    table_api.add_diff_option_comment("http_inspect", "http_global");
+    table_api.open_table("http_inspect");
 
     while (data_stream >> keyword)
     {
         bool tmpval = true;
 
         if (!keyword.compare("compress_depth"))
-            tmpval = parse_int_option("compress_depth", data_stream, false);
+            parse_deleted_option("compress_depth", data_stream);
 
         else if (!keyword.compare("decompress_depth"))
-            tmpval = parse_int_option("decompress_depth", data_stream, false);
+            parse_deleted_option("decompress_depth", data_stream);
 
         else if (!keyword.compare("detect_anomalous_servers"))
-            tmpval = table_api.add_option("detect_anomalous_servers", true);
+            table_api.add_deleted_comment("detect_anomalous_servers");
 
         else if (!keyword.compare("proxy_alert"))
-            tmpval = table_api.add_option("proxy_alert", true);
+            table_api.add_deleted_comment("proxy_alert");
 
         else if (!keyword.compare("max_gzip_mem"))
-            tmpval = parse_int_option("max_gzip_mem", data_stream, false);
+            parse_deleted_option("max_gzip_mem", data_stream);
 
         else if (!keyword.compare("memcap"))
-            tmpval = parse_int_option("memcap", data_stream, false);
-
-        else if (!keyword.compare("chunk_length"))
-            tmpval = parse_int_option("chunk_length", data_stream, false);
+            parse_deleted_option("memcap", data_stream);
 
         else if (!keyword.compare("disabled"))
             table_api.add_deleted_comment("disabled");
 
         else if (!keyword.compare("b64_decode_depth"))
-            tmpval = add_decode_option("b64_decode_depth", data_stream);
+            parse_deleted_option("b64_decode_depth", data_stream);
 
         else if (!keyword.compare("bitenc_decode_depth"))
-            tmpval = add_decode_option("bitenc_decode_depth", data_stream);
+            parse_deleted_option("bitenc_decode_depth", data_stream);
 
         else if (!keyword.compare("max_mime_mem"))
-            tmpval = add_decode_option("max_mime_mem", data_stream);
+            parse_deleted_option("max_mime_mem", data_stream);
 
         else if (!keyword.compare("qp_decode_depth"))
-            tmpval = add_decode_option("qp_decode_depth", data_stream);
+            parse_deleted_option("qp_decode_depth", data_stream);
 
         else if (!keyword.compare("uu_decode_depth"))
-            tmpval = add_decode_option("uu_decode_depth", data_stream);
+            parse_deleted_option("uu_decode_depth", data_stream);
 
         else if (!keyword.compare("iis_unicode_map"))
         {
@@ -111,10 +107,8 @@ bool HttpInspect::convert(std::istringstream& data_stream)
             if ( (data_stream >> codemap) &&
                 (data_stream >> code_page))
             {
-                table_api.open_table("unicode_map");
-                tmpval = table_api.add_option("map_file", codemap);
-                tmpval = table_api.add_option("code_page", code_page) && tmpval;
-                table_api.close_table();
+                tmpval = table_api.add_option("iis_unicode_map_file", codemap);
+                tmpval = table_api.add_option("iis_unicode_code_page", code_page) && tmpval;
             }
             else
             {
@@ -165,12 +159,12 @@ static ConversionState* ctor(Converter& c)
     return new HttpInspect(c);
 }
 
-static const ConvertMap preprocessor_httpinspect =
+static const ConvertMap preprocessor_nhttpinspect =
 {
     "http_inspect",
     ctor,
 };
 
-const ConvertMap* httpinspect_map = &preprocessor_httpinspect;
+const ConvertMap* nhttpinspect_map = &preprocessor_nhttpinspect;
 } // namespace preprocessors
 

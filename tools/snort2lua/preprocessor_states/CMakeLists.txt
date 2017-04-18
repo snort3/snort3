@@ -14,8 +14,6 @@ add_library(preprocessor_states
     pps_gtp.cc
     pps_http_inspect.cc
     pps_http_inspect_server.cc
-    pps_nhttp_inspect.cc
-    pps_nhttp_inspect_server.cc
     pps_normalizers.cc
     pps_perfmonitor.cc
     pps_reputation.cc

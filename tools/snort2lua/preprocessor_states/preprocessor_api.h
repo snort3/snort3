@@ -26,9 +26,8 @@
 namespace preprocessors
 {
 extern std::vector<const ConvertMap*> preprocessor_api;
-
-std::vector<const ConvertMap*> get_preprocessor_api(bool ohi_convert);
-} // namespace preprocessors
+std::vector<const ConvertMap*> get_preprocessor_api();
+}
 
 #endif
 

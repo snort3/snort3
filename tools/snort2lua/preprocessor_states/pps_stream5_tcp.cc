@@ -241,15 +241,7 @@ bool StreamTcp::parse_protocol(std::istringstream& arg_stream)
                 // to create and save a new Binder for each protocol,
                 // lets save the different protocols and create new
                 // Binders at the very end of the convert() functions.
-                if (!protocol.compare("http_inspect"))
-                {
-                    if ( cv.get_ohi_convert() )
-                        protocols->push_back("http_server");
-                    else
-                        protocols->push_back(protocol);
-                }
-                else
-                    protocols->push_back(protocol);
+                protocols->push_back(protocol);
             }
             while (arg_stream >> protocol);
         }

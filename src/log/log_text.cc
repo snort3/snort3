@@ -1299,15 +1299,10 @@ void LogNetData(TextLog* log, const uint8_t* data, const int len, Packet* p)
                 ip_ob_end = ip_ob_start + 2 + 2*(sizeof(struct in6_addr));
         }
     }
-#if 0
-    TextLog_Print(log, "%s[%d]\n", p->get_pseudo_type(), p->dsize);
-    LogDiv(log);
-#else
     char div[64];
-    snprintf(div, sizeof(div), "- - - %s[%d]", p->get_pseudo_type(), p->dsize);
+    snprintf(div, sizeof(div), "- - - %s[%d]", p->get_pseudo_type(), len);
     div[sizeof(div)-1] = '\0';
     TextLog_Print(log, "%s%s\n", div, SEPARATOR+strlen(div));
-#endif
 
     /* loop thru the whole buffer */
     while ( pb < end )

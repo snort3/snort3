@@ -1,7 +1,6 @@
 SUBDIRS = \
 data_log \
-dpx \
-http_server
+dpx
 
 AM_CPPFLAGS = @AM_CPPFLAGS@
 AM_CFLAGS= @AM_CFLAGS@

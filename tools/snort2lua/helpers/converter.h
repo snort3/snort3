@@ -53,12 +53,6 @@ public:
     inline static bool include_create_lua()
     { return convert_conf_mult_files; }
 
-    inline static void set_ohi_convert(bool val)
-    { ohi_convert = val; }
-
-    inline static bool get_ohi_convert()
-    { return ohi_convert; }
-
     inline static void set_empty_args(bool val)
     { empty_args = val; }
 
@@ -97,7 +91,6 @@ public:
 
 private:
     static bool parse_includes;
-    static bool ohi_convert;
     static bool convert_rules_mult_files;
     static bool convert_conf_mult_files;
     static bool empty_args;
