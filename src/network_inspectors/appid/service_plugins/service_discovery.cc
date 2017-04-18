@@ -359,10 +359,10 @@ void ServiceDiscovery::get_next_service(const Packet* p, const int dir,
                 && (proto == IpProtocol::UDP) && !asd->tried_reverse_service )
             {
                 asd->tried_reverse_service = true;
-                ServiceDiscoveryState* sds = AppIdServiceState::get(p->ptrs.ip_api.get_src(),
+                ServiceDiscoveryState* rsds = AppIdServiceState::get(p->ptrs.ip_api.get_src(),
                     proto, p->ptrs.sp, asd->is_decrypted());
-                if ( sds && sds->service )
-                    asd->service_candidates.push_back(sds->service);
+                if ( rsds && rsds->service )
+                    asd->service_candidates.push_back(rsds->service);
                 else if ( udp_reversed_services[p->ptrs.sp].size() )
                 {
                     asd->service_candidates.insert(asd->service_candidates.end(),

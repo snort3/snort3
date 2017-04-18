@@ -680,7 +680,7 @@ int TcpReassembler::flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
 {
     if ( !bytes || !seglist.next )
     {
-        DebugFormat(DEBUG_STREAM_STATE, "bailing: no bytes: %d or empty seglist: %p\n",
+        DebugFormat(DEBUG_STREAM_STATE, "bailing: no bytes: %u or empty seglist: %p\n",
             bytes, (void*)seglist.next);
         return 0;
     }

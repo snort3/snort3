@@ -370,7 +370,7 @@ void StreamTcpModule::sum_stats(bool accumulate_now_stats)
     assert(sizeof(TcpStats)/sizeof(PegCount) == sizeof(TcpStatTypes)/sizeof(CountType));
 
     static const TcpStatTypes tcp_stat_types;
-    static const CountType* const count_types = (const CountType* const)&tcp_stat_types;
+    static const CountType* const count_types = (const CountType*)&tcp_stat_types;
 
     sum_stats_helper(accumulate_now_stats, count_types);
 }

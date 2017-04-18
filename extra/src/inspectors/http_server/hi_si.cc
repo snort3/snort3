@@ -78,12 +78,6 @@ static int InitServerConf(HTTPINSPECT_CONF* GlobalConf,
     int iServerSip;
     int iServerDip;
     int http_id_found = 0;
-    SfIp sip;
-    SfIp dip;
-
-    //structure copy
-    sip = SiInput->sip;
-    dip = SiInput->dip;
 
     ServerConfDip = ServerConfSip = GlobalConf;
 

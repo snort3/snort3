@@ -135,7 +135,6 @@ static const uint8_t APP_SMTP_MOZILLA[] = "Mozilla";
 static const uint8_t APP_SMTP_THUNDERBIRD_SHORT[] = "Thunderbird/";
 
 static THREAD_LOCAL SmtpClientDetector* smtp_client_detector = nullptr;
-static THREAD_LOCAL SmtpServiceDetector* smtp_service_detector = nullptr;
 
 SmtpClientDetector::SmtpClientDetector(ClientDiscovery* cdm)
 {
@@ -673,7 +672,6 @@ SmtpServiceDetector::SmtpServiceDetector(ServiceDiscovery* sd)
         { SMTPS_DEPRECATED_PORT, IpProtocol::TCP, false }
     };
 
-    smtp_service_detector = this;
     handler->register_detector(name, this, proto);
 }
 

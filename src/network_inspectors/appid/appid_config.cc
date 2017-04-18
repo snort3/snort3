@@ -76,7 +76,7 @@ AppIdModuleConfig::AppIdModuleConfig()
 
 AppIdModuleConfig::~AppIdModuleConfig()
 {
-#if USE_RNA_CONFIG
+#ifdef USE_RNA_CONFIG
     snort_free((void*)conf_file);
 #endif
     snort_free((void*)app_detector_dir);
@@ -296,7 +296,7 @@ next:   ;
     globfree(&globs);
 }
 
-#if USE_RNA_CONFIG
+#ifdef USE_RNA_CONFIG
 void AppIdConfig::configure_analysis_networks(char* toklist[], uint32_t flag)
 {
     int zone;
@@ -717,7 +717,7 @@ bool AppIdConfig::init_appid( )
     map_app_names_to_snort_ids();
     AppIdUtils::init_netmasks(app_id_netmasks);
     app_info_mgr.init_appid_info_table(mod_config);
-#if USE_RNA_CONFIG
+#ifdef USE_RNA_CONFIG
     load_analysis_config(mod_config->conf_file, 0, mod_config->instance_id);
 #endif
     read_port_detectors(ODP_PORT_DETECTORS);

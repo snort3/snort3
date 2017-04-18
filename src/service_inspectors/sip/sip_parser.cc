@@ -382,7 +382,6 @@ static bool sip_startline_parse(SIPMsg* msg, const char* buff, char* end, char**
     {
         char* space;
         char* version;
-        int length;
         SIPMethodNode* method;
 
         /*Process request*/
@@ -392,9 +391,8 @@ static bool sip_startline_parse(SIPMsg* msg, const char* buff, char* end, char**
         space = (char*)memchr(buff, ' ', end - buff);
         if (space == NULL)
             return false;
-        length = space - buff;
         msg->method = (char*)buff;
-        msg->methodLen = length;
+        msg->methodLen = space - buff;
         DebugFormat(DEBUG_SIP, "method: %.*s\n", msg->methodLen, msg->method);
 
         method = SIP_FindMethod (config->methods, msg->method, msg->methodLen);

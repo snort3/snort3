@@ -99,7 +99,7 @@ void StreamIcmpModule::sum_stats(bool accumulate_now_stats)
     assert(sizeof(IcmpStats)/sizeof(PegCount) == sizeof(IcmpStatTypes)/sizeof(CountType));
 
     static const IcmpStatTypes icmp_stat_types;
-    static const CountType* const count_types = (const CountType* const)&icmp_stat_types;
+    static const CountType* const count_types = (const CountType*)&icmp_stat_types;
 
     sum_stats_helper(accumulate_now_stats, count_types);
 }

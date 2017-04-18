@@ -136,7 +136,7 @@ static const Parameter session_log_filter[] =
 
 static const Parameter s_params[] =
 {
-#if USE_RNA_CONFIG
+#ifdef USE_RNA_CONFIG
     { "conf", Parameter::PT_STRING, nullptr, nullptr,
       "RNA configuration file" },  // FIXIT-L eliminate reference to "RNA"
 #endif
@@ -202,7 +202,7 @@ const AppIdModuleConfig* AppIdModule::get_data()
 
 bool AppIdModule::set(const char*, Value& v, SnortConfig*)
 {
-#if USE_RNA_CONFIG
+#ifdef USE_RNA_CONFIG
     if ( v.is("conf") )
         config->conf_file = snort_strdup(v.get_string());
     else

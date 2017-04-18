@@ -232,9 +232,9 @@ void AppIdStatistics::dump_statistics()
                 else
                 {
                     if (cooked_client)
-                        snprintf(tmpBuff, MAX_EVENT_APPNAME_LEN, "_err_cl_%u",app_id);
+                        snprintf(tmpBuff, MAX_EVENT_APPNAME_LEN, "_err_cl_%d",app_id);
                     else
-                        snprintf(tmpBuff, MAX_EVENT_APPNAME_LEN, "_err_%u",app_id);
+                        snprintf(tmpBuff, MAX_EVENT_APPNAME_LEN, "_err_%d",app_id);
 
                     tmpBuff[MAX_EVENT_APPNAME_LEN - 1] = 0;
                     app_name = tmpBuff;

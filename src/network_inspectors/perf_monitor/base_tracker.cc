@@ -41,8 +41,8 @@ BaseTracker::BaseTracker(PerfConfig* perf)
 
         formatter->register_section(m->get_name());
 
-        for (auto const& i : peg_map)
-            formatter->register_field(m->get_pegs()[i].name, &(m->get_counts()[i]));
+        for (auto const& peg : peg_map)
+            formatter->register_field(m->get_pegs()[peg].name, &(m->get_counts()[peg]));
     }
     formatter->finalize_fields();
 }

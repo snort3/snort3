@@ -259,7 +259,7 @@ void AppIdServiceState::remove(const SfIp* ip, IpProtocol proto, uint16_t port, 
 
         ipstr[0] = 0;
         sfip_ntop(ip, ipstr, sizeof(ipstr));
-        ErrorMessage("Failed to remove from hash: %s:%u:%u\n", ipstr, (unsigned)proto, port);
+        ErrorMessage("Failed to remove from hash: %s:%u:%hu\n", ipstr, (unsigned)proto, port);
     }
 }
 

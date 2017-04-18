@@ -52,7 +52,7 @@ public:
         unsigned host_reporting, AppIdSession*);
 };
 
-class DnsTcpServiceDetector : public ServiceDetector, DnsValidator
+class DnsTcpServiceDetector : public ServiceDetector, public DnsValidator
 {
 public:
     DnsTcpServiceDetector(ServiceDiscovery*);
@@ -61,7 +61,7 @@ public:
     int validate(AppIdDiscoveryArgs&) override;
 };
 
-class DnsUdpServiceDetector : public ServiceDetector, DnsValidator
+class DnsUdpServiceDetector : public ServiceDetector, public DnsValidator
 {
 public:
     DnsUdpServiceDetector(ServiceDiscovery*);

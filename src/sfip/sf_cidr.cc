@@ -35,7 +35,7 @@ SfIpRet SfCidr::set(const char* src)
 */
 SfIpRet SfCidr::contains(const SfIp* ip) const
 {
-    unsigned int mask, temp, i;
+    uint16_t i;
     const uint32_t* pn, * pi;
 
     /* SFIP_CONTAINS is returned here due to how sfvar_ip_in
@@ -53,14 +53,14 @@ SfIpRet SfCidr::contains(const SfIp* ip) const
             return SFIP_NOT_CONTAINS;
     }
 
-    mask = 32 - (bits - 32 * i);
+    unsigned int mask = 32 - (bits - 32 * i);
     if (mask == 32)
         return SFIP_CONTAINS;
 
     /* At this point, there are some number of remaining bits to check.
      * Mask the bits we don't care about off of "ip" so we can compare
      * the ints directly */
-    temp = ntohl(*pi);
+    unsigned int temp = ntohl(*pi);
     temp = (temp >> mask) << mask;
 
     /* If pn was setup correctly through this library, there is no need to

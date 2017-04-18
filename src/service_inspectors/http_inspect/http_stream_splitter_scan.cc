@@ -115,7 +115,7 @@ StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data,
     else if (HttpTestManager::use_test_output())
     {
         printf("Scan from flow data %" PRIu64
-            " direction %d length %u client port %u server port %u\n", session_data->seq_num,
+            " direction %d length %u client port %hu server port %hu\n", session_data->seq_num,
             source_id, length, flow->client_port, flow->server_port);
         fflush(stdout);
         if (HttpTestManager::get_show_scan())

@@ -222,7 +222,7 @@ void StreamIpModule::sum_stats(bool accumulate_now_stats)
     assert(sizeof(IpStats)/sizeof(PegCount) == sizeof(IpStatTypes)/sizeof(CountType));
 
     static const IpStatTypes ip_stat_types;
-    static const CountType* const count_types = (const CountType* const)&ip_stat_types;
+    static const CountType* const count_types = (const CountType*)&ip_stat_types;
 
     sum_stats_helper(accumulate_now_stats, count_types);
 }
