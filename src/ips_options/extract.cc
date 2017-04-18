@@ -220,40 +220,6 @@ uint8_t numBytesInBitmask(uint32_t bitmask_value)
     return num_bytes;
 }
 
-void RuleOptionBitmaskParse(uint32_t* bitmask_val, const char* cptr, uint32_t bytes_to_extract,
-    const
-    char* ruleOptionName)
-{
-    char* endp = nullptr;
-    uint32_t bitmask_value;
-
-    if (*bitmask_val == 0 )
-    {
-        if (SnortStrToU32(cptr,&endp,&bitmask_value,16) == -1 )
-            ParseError("%s :: Invalid input value for \"bitmask\" rule option.\n", ruleOptionName);
-
-        else if ( errno == ERANGE )
-            ParseError("%s :: \"bitmask\" value is out of range.\n", ruleOptionName);
-        else if (bitmask_value == 0 )
-            ParseError("%s :: \"bitmask\" value is zero.\n", ruleOptionName);
-        else if (*endp != '\0')
-            ParseError("%s :: Rule option has invalid argument to \"bitmask\".\n", ruleOptionName);
-
-        else
-        {
-            const uint32_t num_bytes = numBytesInBitmask(bitmask_value);
-            if (bytes_to_extract >= num_bytes )
-                *bitmask_val = bitmask_value;
-            else
-                ParseError(
-                    "%s :: Number of bytes in \"bitmask\" value is greater than bytes to extract.\n",
-                    ruleOptionName);
-        }
-    }
-    else
-        ParseError("%s :: Rule option includes the \"bitmask\" argument twice.\n",ruleOptionName);
-}
-
 #ifdef UNIT_TEST
 TEST_CASE("ips options bitmask utils")
 {

@@ -57,6 +57,7 @@ struct ByteExtractData
     uint8_t endianess;
     uint32_t base;
     uint32_t multiplier;
+    uint32_t bitmask_val;
     int8_t var_number;
     char* name;
 };
@@ -112,6 +113,8 @@ uint32_t ByteExtractOption::hash() const
     c += data->var_number;
 
     mix(a,b,c);
+
+    a += data->bitmask_val;
     mix_str(a,b,c,get_name());
 
     finalize(a,b,c);
@@ -136,7 +139,8 @@ bool ByteExtractOption::operator==(const IpsOption& ips) const
         (left->endianess == right->endianess) &&
         (left->base == right->base) &&
         (left->multiplier == right->multiplier) &&
-        (left->var_number == right->var_number))
+        (left->var_number == right->var_number) &&
+        (left->bitmask_val == right->bitmask_val))
     {
         return true;
     }
@@ -193,6 +197,16 @@ int ByteExtractOption::eval(Cursor& c, Packet* p)
             return DETECTION_OPTION_NO_MATCH;
 
         bytes_read = ret;
+    }
+
+    if (data->bitmask_val != 0 )
+    {
+        uint32_t num_tailing_zeros_bitmask = getNumberTailingZerosInBitmask(data->bitmask_val);
+        *value = (*value) & data->bitmask_val;
+        if ( (*value) && num_tailing_zeros_bitmask )
+        {
+            *value = (*value) >> num_tailing_zeros_bitmask;
+        }
     }
 
     /* mulitply */
@@ -345,7 +359,13 @@ static bool ByteExtractVerify(ByteExtractData* data)
         return false;
     }
 
-    if (data->name && isdigit(data->name[0]))
+    if (!data->name)
+    {
+        ParseError("byte_extract rule option must include variable name.");
+        return false;
+    }
+
+    if (isdigit(data->name[0]))
     {
         ParseError("byte_extract rule option has a name which starts with a digit. "
             "Variable names must start with a letter.");
@@ -359,6 +379,13 @@ static bool ByteExtractVerify(ByteExtractData* data)
             "argument.");
         return false;
     }
+
+    if (numBytesInBitmask(data->bitmask_val) > data->bytes_to_grab)
+    {
+        ParseError("Number of bytes in \"bitmask\" value is greater than bytes to extract.");
+        return false;
+    }
+
     return true;
 }
 
@@ -406,6 +433,9 @@ static const Parameter s_params[] =
 
     { "dec", Parameter::PT_IMPLIED, nullptr, nullptr,
       "convert from decimal string" },
+
+    { "bitmask", Parameter::PT_INT, "0x1:0xFFFFFFFF", nullptr,
+      "applies as an AND to the extracted value before storage in 'name'" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -482,6 +512,15 @@ bool ExtractModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("oct") )
         data.base = 8;
 
+    else if ( v.is("bitmask") )
+    {
+        if (data.bitmask_val)
+        {
+            ParseError("\"bitmask\" argument appears twice.\n");
+            return false;
+        }
+        data.bitmask_val = v.get_long();
+    }
     else
         return false;
 

@@ -478,7 +478,7 @@ static const Parameter s_params[] =
     { "dec", Parameter::PT_IMPLIED, nullptr, nullptr,
       "convert from decimal string" },
 
-    { "bitmask", Parameter::PT_STRING, nullptr, nullptr,
+    { "bitmask", Parameter::PT_INT, "0x1:0xFFFFFFFF", nullptr,
       "applies as an AND prior to evaluation" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -541,6 +541,12 @@ bool ByteTestModule::end(const char*, int, SnortConfig*)
     if ( !data.endianess )
         data.endianess = ENDIAN_BIG;
 
+    if (numBytesInBitmask(data.bitmask_val) > data.bytes_to_compare)
+    {
+        ParseError("Number of bytes in \"bitmask\" value is greater than bytes to extract.");
+        return false;
+    }
+
     return true;
 }
 
@@ -596,9 +602,12 @@ bool ByteTestModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("bitmask") )
     {
-        char* tok = snort_strdup(v.get_string());
-        RuleOptionBitmaskParse(&(data.bitmask_val), tok, data.bytes_to_compare, "byte_test");
-        snort_free(tok);
+        if (data.bitmask_val)
+        {
+            ParseError("\"bitmask\" argument appears twice.\n");
+            return false;
+        }
+        data.bitmask_val = v.get_long();
     }
     else
         return false;
