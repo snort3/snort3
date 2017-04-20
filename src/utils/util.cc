@@ -35,12 +35,16 @@
 #include <sys/stat.h>
 #include <zlib.h>
 
-#ifdef HAVE_LZMA
-#include <lzma.h>
+#ifdef HAVE_FLATBUFFERS
+#include <flatbuffers/flatbuffers.h>
 #endif
 
 #ifdef HAVE_HYPERSCAN
 #include <hs_compile.h>
+#endif
+
+#ifdef HAVE_LZMA
+#include <lzma.h>
 #endif
 
 extern "C" {
@@ -125,6 +129,9 @@ int DisplayBanner()
     LogMessage("           Using %s\n", SSLeay_version(SSLEAY_VERSION));
 #ifdef HAVE_HYPERSCAN
     LogMessage("           Using Hyperscan version %s\n", hs_version());
+#endif
+#ifdef HAVE_FLATBUFFERS
+    LogMessage("           Using %s\n", flatbuffers::flatbuffer_version_string);
 #endif
     LogMessage("\n");
 
