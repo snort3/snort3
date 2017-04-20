@@ -308,6 +308,16 @@ bool file_exists(const std::string& name)
     return (stat (name.c_str(), &buffer) == 0);
 }
 
+bool is_regular_file(std::string& path)
+{
+    struct stat s;
+
+    if (stat(path.c_str(), &s) == 0)
+        return (s.st_mode & S_IFREG);
+
+    return false;
+} 
+
 bool case_compare(std::string arg1, std::string arg2)
 {
     std::transform(arg1.begin(), arg1.end(), arg1.begin(), ::tolower);
@@ -318,4 +328,3 @@ bool case_compare(std::string arg1, std::string arg2)
     return false;
 }
 } // namespace util
-

@@ -383,8 +383,16 @@ int Converter::convert(std::string input,
         std::size_t errors = data_api.num_errors() + rule_api.num_errors();
         std::cerr << "ERROR: " << errors << " errors occurred while converting\n";
         std::cerr << "ERROR: see " << error_file << " for details" << std::endl;
-    }
+        std::ofstream rejects;  // in this case, rejects are regular configuration options
+        rejects.open(error_file, std::ifstream::out);
 
+        if (data_api.failed_conversions())
+            data_api.print_errors(rejects);
+
+            if (rule_api.failed_conversions())
+                rule_api.print_rejects(rejects);
+
+         rejects.close();
+    }
     return rc;
 }
-

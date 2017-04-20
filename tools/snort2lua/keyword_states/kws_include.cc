@@ -19,12 +19,12 @@
 
 #include <sstream>
 #include <vector>
-
 #include "conversion_state.h"
 #include "helpers/converter.h"
 #include "helpers/s2l_util.h"
 #include "helpers/parse_cmd_line.h"
 #include "data/data_types/dt_comment.h"
+#include "keywords_api.h"
 
 namespace keywords
 {
@@ -51,17 +51,23 @@ bool Include::convert(std::istringstream& data_stream)
             std::string full_file = data_api.expand_vars(file);
             std::string tmp = full_file; // for the error message
 
+            //check if the file exists using what was provided
+            //if not use the conf_dir with the file
             if (!util::file_exists(full_file))
                 full_file = parser::get_conf_dir() + full_file;
 
-            // if we still can't find this file, add it as a snort file
-            if (util::file_exists(full_file))
-                return !(cv.parse_include_file(full_file));
+            // make sure its a regular file (not a directory)
+            if (util::is_regular_file(full_file))
+            {
+                return !cv.parse_include_file(full_file);
+            }
+            else
+            { //cant find it .. log error
+                std::string error_string = "Can't find file " + file + ".  "
+                "  Searched locations: [" + tmp + "],  [" + full_file + "]";
 
-            std::string error_string = "Can't find file " + file + ".  "
-                "  Searched locations: " + tmp + ",  " + full_file;
-
-            data_api.failed_conversion(data_stream, error_string);
+                data_api.failed_conversion(data_stream, error_string);
+            }
         }
     }
     else
@@ -70,7 +76,6 @@ bool Include::convert(std::istringstream& data_stream)
             "'filename' argument");
     }
 
-    rule_api.include_rule_file(file);
     return false;
 }
 
@@ -89,4 +94,3 @@ static const ConvertMap keyword_include =
 
 const ConvertMap* include_map = &keyword_include;
 }  // namespace keywords
-

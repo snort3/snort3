@@ -111,7 +111,7 @@ std::string& sanitize_lua_string(std::string& s);
 std::size_t get_substr_length(std::string s, std::size_t max_length);
 
 bool case_compare(std::string, std::string);
+bool is_regular_file(std::string& path);
 }  // namespace util
 
 #endif
-
