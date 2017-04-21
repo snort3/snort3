@@ -11,6 +11,10 @@ if ( ENABLE_DEBUG_MSGS )
     set ( DEBUG_MSGS_SOURCES snort_debug.cc )
 endif ( ENABLE_DEBUG_MSGS )
 
+if ( ENABLE_SHELL )
+    set ( SHELL_SOURCES control.cc control.h )
+endif ( ENABLE_SHELL )
+
 add_library (main STATIC
     analyzer.cc
     analyzer.h
@@ -36,6 +40,7 @@ add_library (main STATIC
     thread_config.cc
     ${DEBUG_MSGS_SOURCES}
     ${INCLUDES}
+    ${SHELL_SOURCES}
 )
 
 

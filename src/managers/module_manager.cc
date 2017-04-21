@@ -1164,11 +1164,10 @@ void ModuleManager::show_rules(const char* pfx, bool exact)
         cout << "no match" << endl;
 }
 
-void ModuleManager::load_commands(SnortConfig* sc)
+void ModuleManager::load_commands(Shell* sh)
 {
     // FIXIT-L ideally only install commands from configured modules
     // FIXIT-L install commands into working shell
-    Shell* sh = sc->policy_map->get_shell();
 
     for ( auto p : s_modules )
     {

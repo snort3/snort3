@@ -284,7 +284,7 @@ void SnortConfig::setup()
 
     /* Need to do this after dynamic detection stuff is initialized, too */
     IpsManager::verify(this);
-    ModuleManager::load_commands(this);
+    ModuleManager::load_commands(policy_map->get_shell());
 
     fpCreateFastPacketDetection(this);
 }

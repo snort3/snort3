@@ -323,6 +323,8 @@ if test "x$enable_shell" = "xyes"; then
     AC_DEFINE(SHELL, [1], [enable shell support])
 fi
 
+AM_CONDITIONAL(ENABLE_SHELL, test "x$enable_shell" = "xyes")
+
 AC_ARG_ENABLE(tsc-clock,
     AS_HELP_STRING([--enable-tsc-clock],[use timestamp counter register clock (x86 only)]),
     enable_tsc_clock="$enableval", enable_tsc_clock="no")

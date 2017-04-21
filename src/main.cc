@@ -59,6 +59,10 @@
 #include "piglet/piglet.h"
 #endif
 
+#ifdef SHELL
+#include "main/control.h"
+#endif
+
 //-------------------------------------------------------------------------
 
 static bool exit_requested = false;
@@ -566,12 +570,10 @@ static bool house_keeping()
 
 #ifdef SHELL
 // FIXIT-M make these non-blocking
-// FIXIT-M allow at least 2 remote controls
 // FIXIT-M bind to configured ip including INADDR_ANY
 // (default is loopback if enabled)
 // FIXIT-M block on asynchronous analyzer commands until they complete
 static int listener = -1;
-static int local_control = STDIN_FILENO;
 static int remote_control = -1;
 
 static int socket_init()
@@ -607,8 +609,7 @@ static int socket_init()
 
 static int socket_term()
 {
-    if ( remote_control >= 0 )
-        close(remote_control);
+    Snort::delete_controls();
 
     if ( listener >= 0 )
         close(listener);
@@ -628,19 +629,20 @@ static int socket_conn()
     if ( remote_control < 0 )
         return -1;
 
+    Snort::add_control(remote_control, false);
+
     // FIXIT-L authenticate, use ssl ?
     return 0;
 }
 
-static void shell(int& fd)
+static void shell(int& fd, Shell* sh)
 {
     std::string rsp;
 
     if ( !request.read(fd) )
         return;
 
-    SnortConfig* sc = snort_conf;
-    sc->policy_map->get_shell()->execute(request.get(), rsp);
+    sh->execute(request.get(), rsp);
 
     if ( rsp.size() )
         request.respond(rsp.c_str());
@@ -649,27 +651,55 @@ static void shell(int& fd)
         request.show_prompt();
 }
 
+static bool process_control_commands(fd_set& inputs)
+{
+    bool ret = false;
+
+    for(std::vector<ControlConn*>::iterator control =
+            Snort::get_controls().begin(); control != Snort::get_controls().end();)
+    {
+        int fd = (*control)->get_fd();
+        if ( FD_ISSET(fd, &inputs) )
+        {
+            shell(fd, (*control)->get_shell());
+            if( fd < 0 )
+            {
+                Snort::delete_control(control);
+                ret = false;
+                continue;
+            }
+            else
+            {
+                if ( (*control)->is_local_control() )
+                    proc_stats.local_commands++;
+                else
+                    proc_stats.remote_commands++;
+                ret = true;
+            }
+        }
+        ++control;
+    }
+    return ret;
+}
+
 static bool service_users()
 {
     fd_set inputs;
     FD_ZERO(&inputs);
     int max_fd = -1;
+    bool ret = false;
 
-    if ( shell_enabled and local_control >= 0 )
+    for ( auto control : Snort::get_controls() )
     {
-        FD_SET(local_control, &inputs);
-        max_fd = local_control;
+        int fd = control->get_fd();
+        if ( fd >= 0 )
+        {
+            FD_SET(fd, &inputs);
+            if ( fd > max_fd )
+                max_fd = fd;
+        }
     }
-
-    if ( remote_control >= 0 )
-    {
-        FD_SET(remote_control, &inputs);
-        if ( remote_control > max_fd )
-            max_fd = remote_control;
-    }
-    // one remote at a time; the else prevents a new remote
-    // from taking control from an existing remote
-    else if ( listener >= 0 )
+    if ( listener >= 0 )
     {
         FD_SET(listener, &inputs);
         if ( listener > max_fd )
@@ -682,29 +712,19 @@ static bool service_users()
 
     if ( select(max_fd+1, &inputs, NULL, NULL, &timeout) > 0 )
     {
-        if ( FD_ISSET(local_control, &inputs) )
-        {
-            shell(local_control);
-            proc_stats.local_commands++;
-            return true;
-        }
-        else if ( FD_ISSET(remote_control, &inputs) )
-        {
-            shell(remote_control);
-            proc_stats.remote_commands++;
-            return true;
-        }
-        else if ( FD_ISSET(listener, &inputs) )
+        ret = process_control_commands(inputs);
+
+        if ( FD_ISSET(listener, &inputs) )
         {
             if ( !socket_conn() )
             {
                 request.set(remote_control);
                 request.show_prompt();
-                return true;
+                ret = true;
             }
         }
     }
-    return false;
+    return ret;
 }
 #endif
 
@@ -798,6 +818,7 @@ static bool set_mode()
     {
         LogMessage("Entering command shell\n");
         shell_enabled = true;
+        Snort::add_control(STDOUT_FILENO, true);
         request.set(STDOUT_FILENO, "");
         request.show_prompt();
     }

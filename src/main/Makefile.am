@@ -27,8 +27,11 @@ snort.cc \
 snort.h \
 snort_config.cc \
 snort_config.h \
+snort_module.cc \
+snort_module.h \
 swapper.cc \
 swapper.h \
+thread.cc \
 thread_config.h \
 thread_config.cc
 
@@ -36,7 +39,8 @@ if DEBUG_MSGS
 libmain_a_SOURCES += snort_debug.cc
 endif
 
+if ENABLE_SHELL
 libmain_a_SOURCES += \
-snort_module.cc \
-snort_module.h \
-thread.cc
+control.cc \
+control.h
+endif

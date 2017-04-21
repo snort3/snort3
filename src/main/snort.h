@@ -22,12 +22,13 @@
 #define SNORT_H
 
 // Snort is the top-level application class.
-
+#include <vector>
 #include <daq_common.h>
 
 #include "main/snort_types.h"
 
 class Flow;
+class ControlConn;
 struct Packet;
 struct SnortConfig;
 
@@ -65,6 +66,14 @@ public:
 
     SO_PUBLIC static Packet* get_packet();
 
+#ifdef SHELL
+    static void add_control(int fd, bool local_control);
+    static void delete_control(std::vector<ControlConn*>::iterator& control);
+    static void reconfigure_controls();
+    static std::vector<ControlConn*>& get_controls();
+    static void delete_controls();
+#endif
+
 private:
     static void init(int, char**);
     static void term();
@@ -74,6 +83,9 @@ private:
     static bool initializing;
     static bool reloading;
     static bool privileges_dropped;
+#ifdef SHELL
+    static std::vector<ControlConn*> controls;
+#endif
 };
 
 #endif
