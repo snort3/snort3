@@ -27,6 +27,7 @@
 #define ENDIAN_FUNC   0x4
 
 #define PARSELEN      10
+#define MAX_BYTES_TO_GRAB 4
 
 SO_PUBLIC int string_extract(
     int bytes_to_grab, int base, const uint8_t* ptr,

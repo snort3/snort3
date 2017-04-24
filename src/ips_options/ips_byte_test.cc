@@ -601,14 +601,8 @@ bool ByteTestModule::set(const char*, Value& v, SnortConfig*)
         data.base = 8;
 
     else if ( v.is("bitmask") )
-    {
-        if (data.bitmask_val)
-        {
-            ParseError("\"bitmask\" argument appears twice.\n");
-            return false;
-        }
         data.bitmask_val = v.get_long();
-    }
+    
     else
         return false;
 

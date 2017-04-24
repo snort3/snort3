@@ -45,8 +45,6 @@ static THREAD_LOCAL ProfileStats byteExtractPerfStats;
 #define s_help \
     "rule option to convert data to an integer variable"
 
-#define MAX_BYTES_TO_GRAB 4
-
 struct ByteExtractData
 {
     uint32_t bytes_to_grab;
@@ -513,14 +511,8 @@ bool ExtractModule::set(const char*, Value& v, SnortConfig*)
         data.base = 8;
 
     else if ( v.is("bitmask") )
-    {
-        if (data.bitmask_val)
-        {
-            ParseError("\"bitmask\" argument appears twice.\n");
-            return false;
-        }
         data.bitmask_val = v.get_long();
-    }
+    
     else
         return false;
 

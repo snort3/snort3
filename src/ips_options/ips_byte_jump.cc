@@ -32,8 +32,12 @@
  *      <offset>: number of bytes into the payload to grab the bytes
  *      Optional:
  *      ["relative"]: offset relative to last pattern match
+ *      ["multiplier <value>"]: Multiply the number of calculated bytes by
+ *                             <value> and skip forward that number of bytes
  *      ["big"]: process data as big endian (default)
  *      ["little"]: process data as little endian
+ *      ["dce"]: let the DCE/RPC 2 preprocessor determine the byte order of the
+ *               value to be converted
  *      ["string"]: converted bytes represented as a string needing conversion
  *      ["hex"]: converted string data is represented in hexidecimal
  *      ["dec"]: converted string data is represented in decimal
@@ -41,6 +45,13 @@
  *      ["align"]: round the number of converted bytes up to the next
  *                 32-bit boundry
  *      ["post_offset"]: number of bytes to adjust after applying
+ *      ["from beginning"]: Skip forward from the beginning of the packet
+ *                          payload instead of from the current position in
+ *                          the packet.
+ *      ["from_end"]: the jump will originate from the end of payload
+ *      ["bitmask"]: Applies the AND operator on the bytes to convert argument.
+ *                   The result will be right-shifted by the number of bits
+ *                   equal to the number of trailing zeros in the mask.
  *
  *   sample rules:
  *   alert udp any any -> any 32770:34000 (content: "|00 01 86 B8|"; \
@@ -97,7 +108,9 @@ typedef struct _ByteJumpData
     uint32_t base;
     uint32_t multiplier;
     int32_t post_offset;
+    uint32_t bitmask_val;
     int8_t offset_var;
+    uint8_t from_end_flag;
 } ByteJumpData;
 
 class ByteJumpOption : public IpsOption
@@ -148,7 +161,8 @@ uint32_t ByteJumpOption::hash() const
     mix(a,b,c);
 
     a += data->post_offset;
-    b += data->offset_var;
+    b += data->from_end_flag << 8 | data->offset_var;
+    c += data->bitmask_val;
 
     mix(a,b,c);
     mix_str(a,b,c,get_name());
@@ -177,7 +191,9 @@ bool ByteJumpOption::operator==(const IpsOption& ips) const
         ( left->endianess == right->endianess) &&
         ( left->base == right->base) &&
         ( left->multiplier == right->multiplier) &&
-        ( left->post_offset == right->post_offset))
+        ( left->post_offset == right->post_offset) &&
+        ( left->bitmask_val == right->bitmask_val) &&
+        ( left->from_end_flag == right->from_end_flag))
     {
         return true;
     }
@@ -214,6 +230,7 @@ int ByteJumpOption::eval(Cursor& c, Packet* p)
     uint32_t jump = 0;
     uint32_t payload_bytes_grabbed = 0;
     uint8_t endian = bjd->endianess;
+
     if (endian == ENDIAN_FUNC)
     {
         if (!p->endianness ||
@@ -223,51 +240,67 @@ int ByteJumpOption::eval(Cursor& c, Packet* p)
 
     // Both of the extraction functions contain checks to ensure the data
     // is inbounds and will return no match if it isn't
-    if ( !bjd->data_string_convert_flag )
+    if (bjd->bytes_to_grab)
     {
-        if ( byte_extract(
-            endian, bjd->bytes_to_grab,
-            base_ptr, start_ptr, end_ptr, &jump) )
-            return DETECTION_OPTION_NO_MATCH;
-
-        payload_bytes_grabbed = bjd->bytes_to_grab;
-    }
-    else
-    {
-        int32_t tmp = string_extract(
-            bjd->bytes_to_grab, bjd->base,
-            base_ptr, start_ptr, end_ptr, &jump);
-
-        if (tmp < 0)
-            return DETECTION_OPTION_NO_MATCH;
-
-        payload_bytes_grabbed = tmp;
-    }
-    // Negative offsets that put us outside the buffer should have been caught
-    // in the extraction routines
-    assert(base_ptr >= c.buffer());
-
-    if (bjd->multiplier)
-        jump *= bjd->multiplier;
-
-    /* if we need to align on 32-bit boundries, round up to the next
-     * 32-bit value
-     */
-    if (bjd->align_flag)
-    {
-        if ((jump % 4) != 0)
+        if ( !bjd->data_string_convert_flag )
         {
-            jump += (4 - (jump % 4));
+            if ( byte_extract(
+                endian, bjd->bytes_to_grab,
+                base_ptr, start_ptr, end_ptr, &jump) )
+                return DETECTION_OPTION_NO_MATCH;
+
+            payload_bytes_grabbed = bjd->bytes_to_grab;
+        }
+        else
+        {
+            int32_t tmp = string_extract(
+                bjd->bytes_to_grab, bjd->base,
+                base_ptr, start_ptr, end_ptr, &jump);
+
+            if (tmp < 0)
+                return DETECTION_OPTION_NO_MATCH;
+
+            payload_bytes_grabbed = tmp;
+        }
+
+        // Negative offsets that put us outside the buffer should have been caught
+        // in the extraction routines
+        assert(base_ptr >= c.buffer());
+
+        if (bjd->bitmask_val != 0 )
+        {
+            uint32_t num_tailing_zeros_bitmask = getNumberTailingZerosInBitmask(bjd->bitmask_val);
+            jump = jump & bjd->bitmask_val;
+            if (jump && num_tailing_zeros_bitmask )
+            {
+                jump = jump >> num_tailing_zeros_bitmask;
+            }
+        }
+
+        if (bjd->multiplier)
+            jump *= bjd->multiplier;
+
+        // if we need to align on 32-bit boundries, round up to the next 32-bit value
+        if (bjd->align_flag)
+        {
+            if ((jump % 4) != 0)
+            {
+                jump += (4 - (jump % 4));
+            }
         }
     }
 
-    if ( !bjd->from_beginning_flag )
+    if (!bjd->from_beginning_flag && !bjd->from_end_flag)
     {
         jump += payload_bytes_grabbed;
         jump += c.get_pos();
     }
 
-    jump += offset;
+    if (bjd->from_end_flag)
+        jump += dsize;
+    else
+        jump += offset;
+
     jump += bjd->post_offset;
 
     if ( !c.set_pos(jump) )
@@ -282,7 +315,7 @@ int ByteJumpOption::eval(Cursor& c, Packet* p)
 
 static const Parameter s_params[] =
 {
-    { "~count", Parameter::PT_INT, "1:10", nullptr,
+    { "~count", Parameter::PT_INT, "0:10", nullptr,
       "number of bytes to pick up from the buffer" },
 
     { "~offset", Parameter::PT_STRING, nullptr, nullptr,
@@ -293,6 +326,9 @@ static const Parameter s_params[] =
 
     { "from_beginning", Parameter::PT_IMPLIED, nullptr, nullptr,
       "jump from start of buffer instead of cursor" },
+
+    { "from_end", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "jump backward from end of buffer" },
 
     { "multiplier", Parameter::PT_INT, "1:65535", "1",
       "scale extracted value by given amount" },
@@ -323,6 +359,9 @@ static const Parameter s_params[] =
 
     { "dec", Parameter::PT_IMPLIED, nullptr, nullptr,
       "convert from decimal string" },
+
+    { "bitmask", Parameter::PT_INT, "0x1:0xFFFFFFFF", nullptr,
+      "applies as an AND prior to evaluation" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -370,6 +409,26 @@ bool ByteJumpModule::end(const char*, int, SnortConfig*)
     }
     if ( !data.endianess )
         data.endianess = ENDIAN_BIG;
+
+    if (data.from_beginning_flag && data.from_end_flag)
+    {
+        ParseError("from_beginning and from_end options together in a rule\n");
+        return false;
+    }
+
+    if ( data.bitmask_val && (numBytesInBitmask(data.bitmask_val) > data.bytes_to_grab))
+    {
+        ParseError("Number of bytes in \"bitmask\" value is greater than bytes to extract.");
+        return false;
+    }
+
+    if ((data.bytes_to_grab > MAX_BYTES_TO_GRAB) && !data.data_string_convert_flag)
+    {
+        ParseError(
+            "byte_jump rule option cannot extract more than %d bytes without valid string prefix.",
+            MAX_BYTES_TO_GRAB);
+        return false;
+    }
 
     return true;
 }
@@ -425,6 +484,12 @@ bool ByteJumpModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("oct") )
         data.base = 8;
 
+    else if ( v.is("from_end") )
+        data.from_end_flag = 1;
+
+    else if ( v.is("bitmask") )
+        data.bitmask_val = v.get_long();
+    
     else
         return false;
 
