@@ -109,6 +109,9 @@ void Binder::add_when_net(std::string net)
 void Binder::add_when_port(std::string port)
 { ports.push_back(std::string(port)); }
 
+void Binder::clear_ports()
+{ ports.clear(); }
+
 void Binder::set_use_type(std::string module_name)
 { use_type = std::string(module_name); }
 

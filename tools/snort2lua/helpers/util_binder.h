@@ -48,6 +48,7 @@ public:
     void add_when_vlan(std::string vlan);
     void add_when_net(std::string net);
     void add_when_port(std::string port);
+    void clear_ports();
 
     void set_use_type(std::string module_name);
     void set_use_name(std::string struct_name);

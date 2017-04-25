@@ -483,6 +483,24 @@ bool StreamTcp::convert(std::istringstream& data_stream)
             bind_default->add_when_port(s);
     }
 
+    //  Add the port bindings separately from the protocol bindings since 
+    //  in 2.9.x they are OR'd not AND'd. Clear the ports so they're not 
+    //  included with the protocol bindings.
+    {
+        Binder b = client;      //  Binding is added during destructor.
+        client.clear_ports();
+    }
+
+    {
+        Binder b = server;
+        server.clear_ports();
+    }
+
+    {
+        Binder b = any;
+        any.clear_ports();
+    }
+
     if (!protos_set)
     {
         const std::vector<std::string> default_protos = { "ftp", "telnet",
@@ -494,10 +512,9 @@ bool StreamTcp::convert(std::istringstream& data_stream)
 
         for (const std::string& s : default_protos)
         {
-            Binder b = *bind_default;
+            Binder b = *bind_default; // Binding is added during destructor.
             b.set_when_service(s);
         }
-        bind_default->print_binding(false); // Binder was added in the for loop
     }
 
     if (!client_protocols.empty())
@@ -507,7 +524,6 @@ bool StreamTcp::convert(std::istringstream& data_stream)
             Binder b = client;
             b.set_when_service(s);
         }
-        client.print_binding(false); // Binder was added in the for loop
     }
 
     if (!server_protocols.empty())
@@ -517,7 +533,6 @@ bool StreamTcp::convert(std::istringstream& data_stream)
             Binder b = server;
             b.set_when_service(s);
         }
-        server.print_binding(false); // Binder was added in the for loop
     }
 
     if (!any_protocols.empty())
@@ -527,8 +542,12 @@ bool StreamTcp::convert(std::istringstream& data_stream)
             Binder b = any;
             b.set_when_service(s);
         }
-        any.print_binding(false); // Binder was added in the for loop
     }
+
+    //  All bindings have already been added.
+    client.print_binding(false);
+    server.print_binding(false);
+    any.print_binding(false);
 
     table_api.close_table(); // "tcp_stream"
     return retval;
