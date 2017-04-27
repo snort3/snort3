@@ -36,7 +36,7 @@ public:
 };
 
 AppId getSslServiceAppId(short srcPort);
-bool isSslServiceAppId(AppId);
+bool is_service_over_ssl(AppId);
 void service_ssl_clean();
 int ssl_detector_process_patterns();
 int ssl_scan_hostname(const uint8_t*, size_t, AppId*, AppId*);

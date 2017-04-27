@@ -158,7 +158,7 @@ static int create_detector_flow(lua_State* L)
     SfIp daddr;
 
     auto& detector_data = *UserData<LuaDetector>::check(L, DETECTOR, 1);
-    assert(detector_data->validateParams.pkt);
+    assert(detector_data->validate_params.pkt);
 
     char* pattern = (char*)lua_tostring(L, 2);
     size_t patternLen = lua_strlen (L, 2);
@@ -208,7 +208,7 @@ static int create_detector_flow(lua_State* L)
 
     LuaDetectorManager::add_detector_flow(detector_flow);
 
-    detector_flow->asd = AppIdSession::create_future_session(detector_data->validateParams.pkt,
+    detector_flow->asd = AppIdSession::create_future_session(detector_data->validate_params.pkt,
         &saddr, sport, &daddr, dport, proto, 0, 0);
 
     if (!detector_flow->asd)

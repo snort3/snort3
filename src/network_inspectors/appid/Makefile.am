@@ -87,6 +87,8 @@ service_plugins/service_ntp.cc \
 service_plugins/service_ntp.h \
 service_plugins/service_radius.cc \
 service_plugins/service_radius.h \
+service_plugins/service_regtest.cc \
+service_plugins/service_regtest.h \
 service_plugins/service_rexec.cc \
 service_plugins/service_rexec.h \
 service_plugins/service_rfb.cc \
@@ -114,12 +116,9 @@ service_plugins/service_tftp.h \
 service_plugins/service_timbuktu.cc \
 service_plugins/service_timbuktu.h \
 service_plugins/service_tns.cc \
-service_plugins/service_tns.h \
-service_plugins/service_util.h
+service_plugins/service_tns.h
 
 util_file_list = \
-appid_utils/appid_utils.cc \
-appid_utils/appid_utils.h \
 appid_utils/fw_avltree.cc \
 appid_utils/fw_avltree.h \
 appid_utils/ip_funcs.cc \
@@ -142,6 +141,8 @@ appid_detector.cc \
 appid_detector.h \
 appid_discovery.cc \
 appid_discovery.h \
+appid_http_session.cc \
+appid_http_session.h \
 appid_session.cc \
 appid_session.h \
 appid_inspector.cc \

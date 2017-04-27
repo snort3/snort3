@@ -34,7 +34,6 @@ public:
     virtual ~ClientDetector() { }
 
     virtual void do_custom_init() override { }
-    virtual int validate(AppIdDiscoveryArgs&) override;
     virtual void register_appid(AppId, unsigned extractsInfo) override;
 };
 #endif

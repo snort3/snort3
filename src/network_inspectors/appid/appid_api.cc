@@ -24,7 +24,7 @@
 #endif
 
 #include "appid_api.h"
-
+#include "appid_http_session.h"
 #include "app_info_table.h"
 #include "thirdparty_appid_utils.h"
 #include "service_plugins/service_bootp.h"
@@ -56,7 +56,7 @@ AppId AppIdApi::get_service_app_id(AppIdSession* asd)
 AppId AppIdApi::get_port_service_app_id(AppIdSession* asd)
 {
     if (asd)
-        return asd->portServiceAppId;
+        return asd->port_service_id;
     return APP_ID_NONE;
 }
 
@@ -169,13 +169,15 @@ bool AppIdApi::is_appid_inspecting_session(AppIdSession* asd)
         {
             return true;
         }
+
         if (asd->client_disco_state != APPID_DISCO_STATE_FINISHED &&
-            (!asd->get_session_flags(APPID_SESSION_CLIENT_DETECTED) ||
+            (!asd->is_client_detected() ||
             (asd->service_disco_state != APPID_DISCO_STATE_STATEFUL
             && asd->get_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS))))
         {
             return true;
         }
+
         if (asd->tp_app_id == APP_ID_SSH && asd->payload_app_id != APP_ID_SFTP &&
             asd->session_packet_count < MAX_SFTP_PACKET_COUNT)
         {
@@ -194,6 +196,7 @@ char* AppIdApi::get_user_name(AppIdSession* asd, AppId* service, bool* isLoginSu
         userName = asd->username;
         *service = asd->username_service;
         *isLoginSuccessful = asd->get_session_flags(APPID_SESSION_LOGIN_SUCCEEDED) ? true : false;
+        //FIXIT-L: what is this ownership transfer about, doesn't smell right...
         asd->username = nullptr; //transfer ownership to caller.
         return userName;
     }
@@ -227,12 +230,12 @@ APPID_FLOW_TYPE AppIdApi::get_flow_type(AppIdSession* asd)
 }
 
 void AppIdApi::get_service_info(AppIdSession* asd, char** serviceVendor, char** serviceVersion,
-    RNAServiceSubtype** serviceSubtype)
+    AppIdServiceSubtype** serviceSubtype)
 {
     if (asd)
     {
-        *serviceVendor = asd->serviceVendor;
-        *serviceVersion = asd->serviceVersion;
+        *serviceVendor = asd->service_vendor;
+        *serviceVersion = asd->service_version;
         *serviceSubtype = asd->subtype;
     }
     else
@@ -492,33 +495,32 @@ char* AppIdApi::get_netbios_name(AppIdSession* asd)
 
 uint32_t AppIdApi::produce_ha_state(Flow* flow, uint8_t* buf)
 {
+    assert(flow);
+    assert(buf);
     AppIdSessionHA* appHA = (AppIdSessionHA*)buf;
     AppIdSession* asd = (AppIdSession*)(flow->get_flow_data(AppIdSession::flow_id));
 
-    if ( get_flow_type(asd) != APPID_FLOW_TYPE_NORMAL )
-        asd = nullptr;
-    if ( asd )
+    if ( asd && ( get_flow_type(asd) == APPID_FLOW_TYPE_NORMAL ) )
     {
         appHA->flags = APPID_HA_FLAGS_APP;
         if (is_third_party_appid_available(asd->tpsession))
             appHA->flags |= APPID_HA_FLAGS_TP_DONE;
-        if (asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+        if (asd->is_service_detected())
             appHA->flags |= APPID_HA_FLAGS_SVC_DONE;
         if (asd->get_session_flags(APPID_SESSION_HTTP_SESSION))
             appHA->flags |= APPID_HA_FLAGS_HTTP;
         appHA->appId[0] = asd->tp_app_id;
-        appHA->appId[1] = asd->serviceAppId;
+        appHA->appId[1] = asd->service_app_id;
         appHA->appId[2] = asd->client_service_app_id;
-        appHA->appId[3] = asd->portServiceAppId;
+        appHA->appId[3] = asd->port_service_id;
         appHA->appId[4] = asd->payload_app_id;
         appHA->appId[5] = asd->tp_payload_app_id;
         appHA->appId[6] = asd->client_app_id;
         appHA->appId[7] = asd->misc_app_id;
     }
     else
-    {
         memset(appHA->appId, 0, sizeof(appHA->appId));
-    }
+
     return sizeof(*appHA);
 }
 
@@ -535,19 +537,19 @@ uint32_t AppIdApi::consume_ha_state(Flow* flow, const uint8_t* buf, uint8_t, IpP
         {
             asd = new AppIdSession(proto, ip, port);
             flow->set_flow_data(asd);
-            asd->serviceAppId = appHA->appId[1];
-            if (asd->serviceAppId == APP_ID_FTP_CONTROL)
+            asd->service_app_id = appHA->appId[1];
+            if (asd->service_app_id == APP_ID_FTP_CONTROL)
             {
                 asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED |
                     APPID_SESSION_NOT_A_SERVICE | APPID_SESSION_SERVICE_DETECTED);
-                if (!AddFTPServiceState(asd))
-                {
+                if ( !ServiceDiscovery::add_ftp_service_state(*asd) )
                     asd->set_session_flags(APPID_SESSION_CONTINUE);
-                }
+
                 asd->service_disco_state = APPID_DISCO_STATE_STATEFUL;
             }
             else
                 asd->service_disco_state = APPID_DISCO_STATE_FINISHED;
+
             asd->client_disco_state = APPID_DISCO_STATE_FINISHED;
             if (thirdparty_appid_module)
                 thirdparty_appid_module->session_state_set(asd->tpsession, TP_STATE_HA);
@@ -559,14 +561,14 @@ uint32_t AppIdApi::consume_ha_state(Flow* flow, const uint8_t* buf, uint8_t, IpP
             asd->set_session_flags(APPID_SESSION_NO_TPI);
         }
         if (appHA->flags & APPID_HA_FLAGS_SVC_DONE)
-            asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED);
+            asd->set_service_detected();
         if (appHA->flags & APPID_HA_FLAGS_HTTP)
             asd->set_session_flags(APPID_SESSION_HTTP_SESSION);
 
         asd->tp_app_id = appHA->appId[0];
-        asd->serviceAppId = appHA->appId[1];
+        asd->service_app_id = appHA->appId[1];
         asd->client_service_app_id = appHA->appId[2];
-        asd->portServiceAppId = appHA->appId[3];
+        asd->port_service_id = appHA->appId[3];
         asd->payload_app_id = appHA->appId[4];
         asd->tp_payload_app_id = appHA->appId[5];
         asd->client_app_id = appHA->appId[6];
@@ -623,15 +625,14 @@ uint32_t AppIdApi::get_dns_ttl(AppIdSession* asd)
     return 0;
 }
 
-bool is_http_inspection_done(AppIdSession* asd)
+bool AppIdApi::is_http_inspection_done(AppIdSession* asd)
 {
     bool done = true;
 
     if ( asd && ( asd->common.flow_type == APPID_FLOW_TYPE_NORMAL ) &&
-         !is_third_party_appid_done(asd->tpsession) )
+        !is_third_party_appid_done(asd->tpsession) )
         done = false;
 
     return done;
 }
-
 

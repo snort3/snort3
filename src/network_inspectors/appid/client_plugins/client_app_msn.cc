@@ -110,17 +110,16 @@ int MsnClientDetector::validate(AppIdDiscoveryArgs& args)
 
             args.data++; /* skip the space */
         }
-        else if ( end - args.data >= (int)sizeof(MACMSGS) && memcmp(args.data, MACMSGS,
-            sizeof(MACMSGS)-1) ==
-            0 )
+        else if ( end - args.data >= (int)sizeof(MACMSGS) &&
+            memcmp(args.data, MACMSGS, sizeof(MACMSGS)-1) == 0 )
         {
             product_id = APP_ID_MSN_MESSENGER;
             args.data += sizeof(MACMSGS) - 1;
 
             args.data++; /* skip the space */
         }
-        else if ( end - args.data >= (int)sizeof(MSMSGS) && memcmp(args.data, MSMSGS,
-            sizeof(MSMSGS)-1) == 0 )
+        else if ( end - args.data >= (int)sizeof(MSMSGS) &&
+            memcmp(args.data, MSMSGS, sizeof(MSMSGS)-1) == 0 )
         {
             product_id = APP_ID_MICROSOFT_WINDOWS_MESSENGER;
             args.data += sizeof(MSMSGS) - 1;
@@ -154,7 +153,7 @@ int MsnClientDetector::validate(AppIdDiscoveryArgs& args)
 
 done:
     add_app(args.asd, APP_ID_MSN_MESSENGER, product_id, (char*)version);
-    args.asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+    args.asd->set_client_detected();
     appid_stats.msn_clients++;
     return APPID_SUCCESS;
 }

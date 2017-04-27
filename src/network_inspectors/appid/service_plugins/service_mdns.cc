@@ -313,7 +313,7 @@ int MdnsServiceDetector::analyze_user(AppIdSession* asd, const Packet* pkt, uint
                     user_index++;
                 }
 
-                add_user(asd, user_name, APP_ID_MDNS, 1);
+                add_user(asd, user_name, APP_ID_MDNS, true);
                 break;
             }
 
@@ -366,7 +366,7 @@ int MdnsServiceDetector::analyze_user(AppIdSession* asd, const Packet* pkt, uint
                             memcpy(user_name, user_name_bkp + user_index, user_name_len -
                                 user_index);
                             user_name[ user_name_len - user_index ] = '\0';
-                            add_user(asd, user_name, APP_ID_MDNS, 1);
+                            add_user(asd, user_name, APP_ID_MDNS, true);
                             return 1;
                         }
                         else

@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2017 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2005-2013 Sourcefire, Inc.
+// Copyright (C) 2016-2017 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -17,25 +16,25 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// appid_utils.h author Sourcefire Inc.
+// appid_mock_inspector.h author davis mcpherson <davmcphe@cisco.com>
 
-#ifndef SFUTIL_H
-#define SFUTIL_H
-
-#include <cstdio>
-#include <cstdint>
-
-#define MAX_TOKS    256
-
-class AppIdUtils
+Inspector::Inspector()
 {
-public:
-    static int tokenize(char* data, char* toklist[]);
-    static int strip(char* data);
-    static void init_netmasks(uint32_t netmasks[]);
-    static int split(char* data, char** toklist, int max_toks, const char* separator);
-    static void dump_hex(FILE*, const uint8_t* data, unsigned len);
-};
+    set_api(nullptr);
+}
 
-#endif
+Inspector::~Inspector() { }
+bool Inspector::likes(Packet*) { return true; }
+bool Inspector::get_buf(const char*, Packet*, InspectionBuffer&) { return true; }
+class StreamSplitter* Inspector::get_splitter(bool) { return nullptr; }
+
+AppIdInspector::AppIdInspector(const AppIdModuleConfig*) { }
+AppIdInspector::~AppIdInspector() { }
+AppIdInspector* AppIdInspector::get_inspector() { return new AppIdInspector(nullptr); }
+void AppIdInspector::eval(Packet*) { }
+int16_t AppIdInspector::add_appid_protocol_reference(char const*) { return 1066; }
+bool AppIdInspector::configure(SnortConfig*) { return true; }
+void AppIdInspector::show(SnortConfig*) { }
+void AppIdInspector::tinit() { }
+void AppIdInspector::tterm() { }
 

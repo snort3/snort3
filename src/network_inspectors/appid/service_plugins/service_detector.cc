@@ -42,11 +42,6 @@ ServiceDetector::ServiceDetector()
     flow_data_index = service_module_index++ | APPID_SESSION_DATA_SERVICE_MODSTATE_BIT;
 }
 
-int ServiceDetector::validate(AppIdDiscoveryArgs&)
-{
-    return APPID_SUCCESS;
-}
-
 void ServiceDetector::register_appid(AppId appId, unsigned extractsInfo)
 {
     AppInfoTableEntry* pEntry = AppInfoManager::get_instance().get_app_info_entry(appId);
@@ -93,18 +88,18 @@ int ServiceDetector::add_service(AppIdSession* asd, const Packet* pkt, int dir, 
 
     if (vendor)
     {
-        if (asd->serviceVendor)
-            snort_free(asd->serviceVendor);
-        asd->serviceVendor = snort_strdup(vendor);
+        if (asd->service_vendor)
+            snort_free(asd->service_vendor);
+        asd->service_vendor = snort_strdup(vendor);
     }
     if (version)
     {
-        if (asd->serviceVersion)
-            snort_free(asd->serviceVersion);
-        asd->serviceVersion = snort_strdup(version);
+        if (asd->service_version)
+            snort_free(asd->service_version);
+        asd->service_version = snort_strdup(version);
     }
-    asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED);
-    asd->serviceAppId = appId;
+    asd->set_service_detected();
+    asd->service_app_id = appId;
 
     if (asd->get_session_flags(APPID_SESSION_IGNORE_HOST))
         return APPID_SUCCESS;
@@ -140,30 +135,31 @@ int ServiceDetector::add_service(AppIdSession* asd, const Packet* pkt, int dir, 
 
     asd->service_ip = *ip;
     asd->service_port = port;
-    ServiceDiscoveryState* sds = AppIdServiceState::get(ip, asd->protocol, port, asd->is_decrypted());
+    ServiceDiscoveryState* sds = AppIdServiceState::get(ip, asd->protocol, port,
+        asd->is_decrypted());
     if ( !sds )
-       sds = AppIdServiceState::add(ip, asd->protocol, port, asd->is_decrypted());
+        sds = AppIdServiceState::add(ip, asd->protocol, port, asd->is_decrypted());
     sds->set_service_id_valid(this);
 
     return APPID_SUCCESS;
 }
 
 int ServiceDetector::add_service_consume_subtype(AppIdSession* asd, const Packet* pkt, int dir,
-    AppId appId, const char* vendor, const char* version, RNAServiceSubtype* subtype)
+    AppId appId, const char* vendor, const char* version, AppIdServiceSubtype* subtype)
 {
     asd->subtype = subtype;
     return add_service(asd, pkt, dir, appId, vendor, version);
 }
 
 int ServiceDetector::add_service(AppIdSession* asd, const Packet* pkt, int dir, AppId appId,
-    const char* vendor, const char* version, const RNAServiceSubtype* subtype)
+    const char* vendor, const char* version, const AppIdServiceSubtype* subtype)
 {
-    RNAServiceSubtype* new_subtype = nullptr;
+    AppIdServiceSubtype* new_subtype = nullptr;
 
     for (; subtype; subtype = subtype->next)
     {
-        RNAServiceSubtype* tmp_subtype = (RNAServiceSubtype*)snort_calloc(
-            sizeof(RNAServiceSubtype));
+        AppIdServiceSubtype* tmp_subtype = (AppIdServiceSubtype*)snort_calloc(
+            sizeof(AppIdServiceSubtype));
         if (subtype->service)
             tmp_subtype->service = snort_strdup(subtype->service);
 

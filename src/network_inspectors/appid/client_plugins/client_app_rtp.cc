@@ -291,7 +291,7 @@ int RtpClientDetector::validate(AppIdDiscoveryArgs& args)
     }
 
     add_app(args.asd, APP_ID_RTP, APP_ID_RTP, nullptr);
-    args.asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+    args.asd->set_client_detected();
     appid_stats.rtp_clients++;
     return APPID_SUCCESS;
 }

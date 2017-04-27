@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2017 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2005-2013 Sourcefire, Inc.
+// Copyright (C) 2016-2017 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -17,39 +16,43 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// detector_imap.h author Sourcefire Inc.
+// service_regtest.h  author davis mcpherson <davmcphe@cisco.com>
 
-#ifndef DETECTOR_POP3_H
-#define DETECTOR_POP3_H
+#ifndef SERVICE_REGTEST_H
+#define SERVICE_REGTEST_H
 
-#include "client_plugins/client_detector.h"
-#include "service_plugins/service_detector.h"
+#ifdef REG_TEST
+#include "service_detector.h"
 
-struct POP3DetectorData;
+class ServiceDiscovery;
 
-class Pop3ClientDetector : public ClientDetector
+class RegTestServiceDetector : public ServiceDetector
 {
 public:
-    Pop3ClientDetector(ClientDiscovery*);
-    ~Pop3ClientDetector();
-
-    void do_custom_init() override;
-    int validate(AppIdDiscoveryArgs&) override;
-    POP3DetectorData* get_common_data(AppIdSession*);
-
-private:
-    SearchTool* cmd_matcher = nullptr;
-    unsigned longest_pattern = 0;
-};
-
-class Pop3ServiceDetector : public ServiceDetector
-{
-public:
-    Pop3ServiceDetector(ServiceDiscovery*);
-    ~Pop3ServiceDetector();
+    RegTestServiceDetector(ServiceDiscovery*);
+    ~RegTestServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };
+
+class RegTestServiceDetector1 : public ServiceDetector
+{
+public:
+    RegTestServiceDetector1(ServiceDiscovery*);
+    ~RegTestServiceDetector1();
+
+    int validate(AppIdDiscoveryArgs&) override;
+};
+
+class RegTestServiceDetector2 : public ServiceDetector
+{
+public:
+    RegTestServiceDetector2(ServiceDiscovery*);
+    ~RegTestServiceDetector2();
+
+    int validate(AppIdDiscoveryArgs&) override;
+};
+#endif
 
 #endif
 

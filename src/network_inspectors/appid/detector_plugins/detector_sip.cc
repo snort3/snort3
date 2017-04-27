@@ -345,7 +345,7 @@ void SipServiceDetector::createRtpFlow(AppIdSession* asd, const Packet* pkt, con
     {
         fp->client_app_id = asd->client_app_id;
         fp->payload_app_id = asd->payload_app_id;
-        fp->serviceAppId = APP_ID_RTP;
+        fp->service_app_id = APP_ID_RTP;
         initialize_expected_session(asd, fp, APPID_SESSION_IGNORE_ID_FLAGS);
     }
 
@@ -357,7 +357,7 @@ void SipServiceDetector::createRtpFlow(AppIdSession* asd, const Packet* pkt, con
     {
         fp2->client_app_id = asd->client_app_id;
         fp2->payload_app_id = asd->payload_app_id;
-        fp2->serviceAppId = APP_ID_RTCP;
+        fp2->service_app_id = APP_ID_RTCP;
         initialize_expected_session(asd, fp2, APPID_SESSION_IGNORE_ID_FLAGS);
     }
 }
@@ -456,7 +456,7 @@ int SipServiceDetector::validate(AppIdDiscoveryArgs& args)
 
     if (ss->serverPkt > 10)
     {
-        if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+        if (!asd->is_service_detected())
         {
             fail_service(asd, args.pkt, args.dir);
         }
@@ -464,7 +464,7 @@ int SipServiceDetector::validate(AppIdDiscoveryArgs& args)
         return APPID_NOMATCH;
     }
 
-    if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+    if (!asd->is_service_detected())
         service_inprocess(asd, args.pkt, args.dir);
 
     return APPID_INPROCESS;
@@ -557,9 +557,9 @@ success:
     appid_stats.sip_clients++;
 
     if ( fd->user_name.size() )
-        client->add_user(asd, fd->user_name.c_str(), APP_ID_SIP, 1);
+        client->add_user(asd, fd->user_name.c_str(), APP_ID_SIP, true);
 
-    asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+    asd->set_client_detected();
 }
 
 void SipEventHandler::service_handler(SipEvent& sip_event, AppIdSession* asd)
@@ -599,7 +599,7 @@ void SipEventHandler::service_handler(SipEvent& sip_event, AppIdSession* asd)
 
     if ( sip_event.is_dialog_established() )
     {
-        if ( !asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED) )
+        if ( !asd->is_service_detected() )
         {
             asd->set_session_flags(APPID_SESSION_CONTINUE);
             service->add_service(asd, sip_event.get_packet(), direction, APP_ID_SIP,

@@ -94,11 +94,10 @@ struct KRBState
     unsigned flags;
 };
 
-struct DetectorData
+struct KerberosDetectorData
 {
     KRBState clnt_state;
     KRBState svr_state;
-    int set_flags;
     int need_continue;
 };
 
@@ -413,11 +412,11 @@ static int krb_walk_server_packet(KRBState* krbs, const uint8_t* s, const uint8_
         DebugFormat(DEBUG_APPID,"%p Valid\n", (void*)asd);
         if (krbs->flags & KRB_FLAG_SERVICE_DETECTED)
         {
-            if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED) && pkt)
+            if (!asd->is_service_detected() && pkt)
             {
                 krb_service_detector->add_service(asd, pkt, dir, APP_ID_KERBEROS, nullptr,
                     krbs->ver, nullptr);
-                asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED);
+                asd->set_service_detected();
             }
         }
 
@@ -428,13 +427,13 @@ static int krb_walk_server_packet(KRBState* krbs, const uint8_t* s, const uint8_
             {
                 krb_service_detector->add_user(asd,
                     (krbs->flags & KRB_FLAG_USER_DETECTED) ? krbs->cname : reqCname,
-                    APP_ID_LDAP, 0);
+                    APP_ID_LDAP, false);
                 appid_stats.kerberos_users++;
             }
         }
         else if (krbs->flags & KRB_FLAG_USER_DETECTED)
         {
-            krb_service_detector->add_user(asd, krbs->cname, APP_ID_LDAP, 1);
+            krb_service_detector->add_user(asd, krbs->cname, APP_ID_LDAP, true);
             appid_stats.kerberos_users++;
         }
 
@@ -488,72 +487,48 @@ KerberosServiceDetector::~KerberosServiceDetector()
 
 int KerberosServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
-    DetectorData* fd;
-    AppIdSession* asd = args.asd;
-    const uint8_t* data = args.data;
-    Packet* pkt = args.pkt;
-    const int dir = args.dir;
-    uint16_t size = args.size;
-    const uint8_t* s = data;
-    const uint8_t* end = (data + size);
+    KerberosDetectorData* fd;
+    const uint8_t* s = args.data;
+    const uint8_t* end = (args.data + args.size);
 
-    DebugFormat(DEBUG_APPID, "%p Processing %u %hu->%hu %hu %d",
-        (void*)asd, (unsigned int)asd->protocol, pkt->ptrs.sp, pkt->ptrs.dp, size, dir);
-
-    if (dir != APP_ID_FROM_RESPONDER)
+    if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
 #ifdef APP_ID_USES_REASSEMBLED
     Stream::flush_response_flush(pkt);
 #endif
 
-    if (!size)
+    if (!args.size)
         goto inprocess;
 
     // server side is seeing packets so no need for client side to process them
-    asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
-
-    fd = (DetectorData*)data_get(asd);
-    if (!fd)
-    {
-        fd = (DetectorData*)snort_calloc(sizeof(DetectorData));
-        data_add(asd, fd, &snort_free);
-        if (asd->protocol == IpProtocol::TCP)
-        {
-            fd->clnt_state.state = KRB_STATE_TCP_LENGTH;
-            fd->svr_state.state = KRB_STATE_TCP_LENGTH;
-        }
-        else
-        {
-            fd->clnt_state.state = KRB_STATE_APP;
-            fd->svr_state.state = KRB_STATE_APP;
-        }
-    }
+    args.asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+    fd = krb_client_detector->get_common_data(args.asd, false);
 
     if (fd->need_continue)
-        asd->set_session_flags(APPID_SESSION_CONTINUE);
+        args.asd->set_session_flags(APPID_SESSION_CONTINUE);
     else
     {
-        asd->clear_session_flags(APPID_SESSION_CONTINUE);
-        if (asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+        args.asd->clear_session_flags(APPID_SESSION_CONTINUE);
+        if (args.asd->is_service_detected())
             return APPID_SUCCESS;
     }
 
-    if (krb_walk_server_packet(&fd->svr_state, s, end, asd, pkt, dir, fd->clnt_state.cname) ==
+    if (krb_walk_server_packet(&fd->svr_state, s, end, args.asd, args.pkt, args.dir, fd->clnt_state.cname) ==
         KRB_FAILED)
     {
-        DebugFormat(DEBUG_APPID,"%p Failed\n", (void*)asd);
-        if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+        DebugFormat(DEBUG_APPID,"%p Failed\n", (void*)args.asd);
+        if (!args.asd->is_service_detected())
         {
-            fail_service(asd, pkt, dir);
+            fail_service(args.asd, args.pkt, args.dir);
             return APPID_NOMATCH;
         }
-        asd->clear_session_flags(APPID_SESSION_CONTINUE);
+        args.asd->clear_session_flags(APPID_SESSION_CONTINUE);
         return APPID_SUCCESS;
     }
 
 inprocess:
-    service_inprocess(asd, pkt, dir);
+    service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 }
 
@@ -593,9 +568,8 @@ KerberosClientDetector::~KerberosClientDetector()
 {
 }
 
-int KerberosClientDetector::krb_walk_client_packet(KRBState* krbs, const uint8_t* s, const
-    uint8_t* end,
-    AppIdSession* asd)
+int KerberosClientDetector::krb_walk_client_packet(KRBState* krbs, const uint8_t* s,
+    const  uint8_t* end, AppIdSession* asd)
 {
     static const uint8_t KRB_CLIENT_VERSION[] = "\x0a1\x003\x002\x001";
     static const uint8_t KRB_CLIENT_TYPE[] = "\x0a2\x003\x002\x001";
@@ -909,11 +883,39 @@ int KerberosClientDetector::krb_walk_client_packet(KRBState* krbs, const uint8_t
     return KRB_INPROCESS;
 }
 
+KerberosDetectorData* KerberosClientDetector::get_common_data(AppIdSession* asd, bool client)
+{
+    KerberosDetectorData* dd = (KerberosDetectorData*)data_get(asd);
+    if (!dd)
+    {
+        dd = (KerberosDetectorData*)snort_calloc(sizeof(KerberosDetectorData));
+        data_add(asd, dd, &snort_free);
+        if (asd->protocol == IpProtocol::TCP)
+        {
+            dd->clnt_state.state = KRB_STATE_TCP_LENGTH;
+            dd->svr_state.state = KRB_STATE_TCP_LENGTH;
+        }
+        else
+        {
+            dd->clnt_state.state = KRB_STATE_APP;
+            dd->svr_state.state = KRB_STATE_APP;
+        }
+
+        dd->need_continue = 1;
+        asd->set_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+
+        // FIXIT-M - why is this state increment here?
+        if( client )
+            appid_stats.kerberos_flows++;
+    }
+
+    return dd;
+}
+
 int KerberosClientDetector::validate(AppIdDiscoveryArgs& args)
 {
     const uint8_t* s = args.data;
     const uint8_t* end = (args.data + args.size);
-    DetectorData* fd;
 
 #ifdef APP_ID_USES_REASSEMBLED
     Stream::flush_response_flush(pkt);
@@ -924,37 +926,14 @@ int KerberosClientDetector::validate(AppIdDiscoveryArgs& args)
     if (!args.size)
         return APPID_INPROCESS;
 
-    fd = (DetectorData*)data_get(args.asd);
-    if (!fd)
-    {
-        fd = (DetectorData*)snort_calloc(sizeof(DetectorData));
-        data_add(args.asd, fd, &snort_free);
-        if (args.asd->protocol == IpProtocol::TCP)
-        {
-            fd->clnt_state.state = KRB_STATE_TCP_LENGTH;
-            fd->svr_state.state = KRB_STATE_TCP_LENGTH;
-        }
-        else
-        {
-            fd->clnt_state.state = KRB_STATE_APP;
-            fd->svr_state.state = KRB_STATE_APP;
-        }
-        appid_stats.kerberos_flows++;
-    }
-
-    if (!fd->set_flags)
-    {
-        fd->need_continue = 1;
-        fd->set_flags = 1;
-        args.asd->set_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
-    }
+    KerberosDetectorData* fd = get_common_data(args.asd, true);
 
     if (args.dir == APP_ID_FROM_INITIATOR)
     {
         if (krb_walk_client_packet(&fd->clnt_state, s, end, args.asd) == KRB_FAILED)
         {
             DebugFormat(DEBUG_APPID,"%p Failed\n", (void*)args.asd);
-            args.asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+            args.asd->set_client_detected();
             args.asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
             return APPID_SUCCESS;
         }

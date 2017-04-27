@@ -46,15 +46,16 @@ public:
     static ClientDiscovery& get_instance();
 
     void finalize_client_plugins();
-    bool do_client_discovery(AppIdSession&, int direction, Packet*);
+    bool do_client_discovery(AppIdSession&, Packet*, int direction);
 
 private:
     ClientDiscovery();
     void initialize() override;
     int exec_client_detectors(AppIdSession&, Packet*, int direction);
+    ClientAppMatch* find_detector_candidates(const Packet* pkt, IpProtocol);
+    void create_detector_candidates_list(AppIdSession&, Packet*);
+    int get_detector_candidates_list(AppIdSession&, Packet*, int direction);
 };
-
-int get_detector_candidates_list(Packet*, int direction, AppIdSession*);
 
 #endif
 

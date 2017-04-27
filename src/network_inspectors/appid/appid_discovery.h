@@ -29,12 +29,20 @@
 #include "search_engines/search_tool.h"
 #include "flow/flow.h"
 
-class HttpPatternMatchers;
 class AppIdSession;
 class AppIdDetector;
 class ServiceDetector;
 struct ServiceDetectorPort;
 struct Packet;
+
+#define SCAN_HTTP_VIA_FLAG          (1<<0)
+#define SCAN_HTTP_USER_AGENT_FLAG   (1<<1)
+#define SCAN_HTTP_HOST_URL_FLAG     (1<<2)
+#define SCAN_SSL_HOST_FLAG          (1<<4)
+#define SCAN_HOST_PORT_FLAG         (1<<5)
+#define SCAN_HTTP_VENDOR_FLAG       (1<<6)
+#define SCAN_HTTP_XWORKINGWITH_FLAG (1<<7)
+#define SCAN_HTTP_CONTENT_TYPE_FLAG (1<<8)
 
 struct AppIdPatternMatchNode
 {
@@ -76,6 +84,17 @@ public:
 
     static void do_application_discovery(Packet* p);
 
+    AppIdDetectors* get_tcp_detectors()
+    {
+        return &tcp_detectors;
+    }
+
+    AppIdDetectors* get_udp_detectors()
+    {
+        return &udp_detectors;
+    }
+
+protected:
     AppIdDetectors tcp_detectors;
     AppIdDetectors udp_detectors;
     SearchTool* tcp_patterns = nullptr;
@@ -83,7 +102,6 @@ public:
     SearchTool* udp_patterns = nullptr;
     int udp_pattern_count = 0;
     AppIdPatternMatchNode* pattern_data_list = nullptr;
-    HttpPatternMatchers* http_matchers;
 };
 #endif
 

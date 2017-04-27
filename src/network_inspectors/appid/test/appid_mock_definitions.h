@@ -16,43 +16,48 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// appid_inspector.h author davis mcpherson <davmcphe@cisco.com>
-// Created on: May 10, 2016
+// appid_mock_definitions.h author davis mcpherson <davmcphe@cisco.com>
 
-#ifndef APPID_INSPECTOR_H
-#define APPID_INSPECTOR_H
+#ifndef APPID_MOCK_DEFINITIONS_H_
+#define APPID_MOCK_DEFINITIONS_H_
 
-#include "appid_config.h"
+class Inspector;
+struct ThirdPartyAppIDModule;
 
-struct Packet;
-struct SnortConfig;
-class AppIdStatistics;
-class HttpPatternMatchers;
+AppIdConfig* pAppidActiveConfig = nullptr;
+THREAD_LOCAL ThirdPartyAppIDModule* thirdparty_appid_module = nullptr;
 
-class AppIdInspector : public Inspector
+char* snort_strndup(const char* src, size_t dst_size)
 {
-public:
+    return strndup(src, dst_size);
+}
 
-    AppIdInspector(const AppIdModuleConfig*);
-    ~AppIdInspector();
-    static AppIdInspector* get_inspector();
+char* snort_strdup(const char* str)
+{
+    assert(str);
+    size_t n = strlen(str) + 1;
+    char* p = (char*)snort_alloc(n);
+    memcpy(p, str, n);
+    return p;
+}
 
-    bool configure(SnortConfig*) override;
-    void show(SnortConfig*) override;
-    void tinit() override;
-    void tterm() override;
-    void eval(Packet*) override;
-    AppIdConfig* get_appid_config();
-    AppIdStatistics* get_stats_manager();
-    int16_t add_appid_protocol_reference(const char* protocol);
+void Field::set(int32_t length, const uint8_t* start, bool own_the_buffer_)
+{
+    strt = start;
+    len = length;
+    own_the_buffer = own_the_buffer_;
+}
 
-private:
-    const AppIdModuleConfig* config = nullptr;
-    AppIdConfig* active_config = nullptr;
-};
+Field global_field;
 
-int sslAppGroupIdLookup(void*, const char*, const char*, AppId*, AppId*, AppId*);
-AppId getOpenAppId(Flow*);
+#ifdef DEBUG_MSGS
+void Debug::print(const char*, int, uint64_t, const char*, ...) { }
+#endif
+
+int ServiceDiscovery::add_ftp_service_state(AppIdSession&)
+{
+    return 0;
+}
 
 #endif
 

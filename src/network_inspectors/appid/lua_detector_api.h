@@ -64,12 +64,12 @@ public:
     LuaDetector() { }
     virtual ~LuaDetector();
 
-    ValidateParameters validateParams;
-    lua_State* myLuaState= nullptr;
-    int detectorUserDataRef = 0;    // key into LUA_REGISTRYINDEX
-    DetectorPackageInfo packageInfo;
+    ValidateParameters validate_params;
+    lua_State* my_lua_state= nullptr;
+    int detector_user_data_ref = 0;    // key into LUA_REGISTRYINDEX
+    DetectorPackageInfo package_info;
     bool is_client = false;
-    unsigned int serviceId = APP_ID_UNKNOWN;
+    unsigned int service_id = APP_ID_UNKNOWN;
 
     int lua_validate(AppIdDiscoveryArgs&);
 };

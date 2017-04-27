@@ -30,8 +30,8 @@
 #include "utils/util.h"
 
 struct Packet;
-struct RNAServiceSubtype;
-struct HttpSession;
+struct AppIdServiceSubtype;
+class AppIdHttpSession;
 class AppIdModuleConfig;
 class SearchTool;
 
@@ -93,7 +93,7 @@ struct DetectorHTTPPattern
 
 struct HTTPListElement
 {
-    DetectorHTTPPattern detectorHTTPPattern;
+    DetectorHTTPPattern detector_http_pattern;
     HTTPListElement* next;
 };
 
@@ -233,6 +233,7 @@ class HttpPatternMatchers
 public:
     HttpPatternMatchers() { }
     ~HttpPatternMatchers();
+
     static HttpPatternMatchers* get_instance();
     int finalize();
     void insert_chp_pattern(CHPListElement*);
@@ -246,30 +247,20 @@ public:
     int process_host_patterns(DetectorHTTPPattern*, size_t patternListCount);
     int process_mlmp_patterns();
 
+    void free_matched_chp_actions(MatchedCHPAction* ma);
     void scan_key_chp(PatternType, char* buf, int buf_size, CHPTallyAndActions&);
     AppId scan_chp(PatternType, char*, int, MatchedCHPAction*, char**, char**, char**,
-        int*, HttpSession*, Packet*, AppIdModuleConfig*);
+        int*, AppIdHttpSession*, AppIdModuleConfig*);
     AppId scan_header_x_working_with(const uint8_t*, uint32_t, char**);
     int get_appid_by_pattern(const uint8_t*, unsigned, char**);
-    AppId get_appid_from_url(char*, char*, char**, char*, AppId*, AppId*,
+    bool get_appid_from_url(char*, char*, char**, char*, AppId*, AppId*,
         AppId*, AppId*, unsigned);
     AppId get_appid_by_content_type(const uint8_t*, int);
-    void get_server_vendor_version(const uint8_t*, int, char**, char**, RNAServiceSubtype**);
+    void get_server_vendor_version(const uint8_t*, int, char**, char**, AppIdServiceSubtype**);
     void identify_user_agent(const uint8_t*, int, AppId*, AppId*, char**);
-    void get_http_offsets(Packet*, HttpSession*);
+    void get_http_offsets(Packet*, AppIdHttpSession*);
     uint32_t parse_multiple_http_patterns(const char* pattern, tMlmpPattern*,
         uint32_t numPartLimit, int level);
-    void free_matched_chp_actions(MatchedCHPAction* ma)
-    {
-        MatchedCHPAction* tmp;
-
-        while (ma)
-        {
-            tmp = ma;
-            ma = ma->next;
-            snort_free(tmp);
-        }
-    }
 
 private:
     HTTPListElement* hostPayloadPatternList = nullptr;

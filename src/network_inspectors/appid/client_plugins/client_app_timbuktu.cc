@@ -176,7 +176,7 @@ inprocess:
 done:
     add_app(args.asd, APP_ID_TIMBUKTU, APP_ID_TIMBUKTU, nullptr);
     appid_stats.timbuktu_clients++;
-    args.asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+    args.asd->set_client_detected();
     return APPID_SUCCESS;
 }
 

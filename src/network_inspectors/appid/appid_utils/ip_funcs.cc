@@ -30,7 +30,58 @@
 #include <netinet/in.h>
 #include "log/messages.h"
 #include "utils/util.h"
-#include "appid_utils.h"
+
+// FIXIT-L - These utility functions should probably go in the shared src/utils/ instead of just
+//           appid if they are truly generic.
+
+// convert tabs to space, convert new line or carriage return to null
+// and stop returning the length of the converted string
+static int strip(char* data)
+{
+    int size;
+    char* idx;
+
+    idx = data;
+    size = 0;
+
+    while (*idx)
+    {
+        if ((*idx == '\n') || (*idx == '\r'))
+        {
+            *idx = 0;
+            break;
+        }
+        if (*idx == '\t')
+        {
+            *idx = ' ';
+        }
+        size++;
+        idx++;
+    }
+
+    return size;
+}
+
+// split string pointed to by 'data' into tokens based on the set of delimiters
+// defined by the 'separator string, return number of tokens
+static int split(char* data, char** toklist, int max_toks, const char* separator)
+{
+    char** ap;
+    int argcount = 0;
+
+    memset(toklist, 0, max_toks * sizeof(*toklist));
+    for (ap = (char**)toklist;
+        ap < &toklist[max_toks] && (*ap = strsep(&data, separator)) != nullptr; )
+    {
+        if (**ap != '\0')
+        {
+            ap++;
+            argcount++;
+        }
+    }
+
+    return argcount;
+}
 
 RNAIpAddrSet* ParseIpCidr(char* ipstring, uint32_t* netmasks)
 {
@@ -44,7 +95,7 @@ RNAIpAddrSet* ParseIpCidr(char* ipstring, uint32_t* netmasks)
         return nullptr;
 
     ias = (RNAIpAddrSet*)snort_calloc(sizeof(RNAIpAddrSet));
-    AppIdUtils::strip(ipstring);
+    strip(ipstring);
     cp = ipstring;
     if (*cp == 'h')
     {
@@ -70,7 +121,7 @@ RNAIpAddrSet* ParseIpCidr(char* ipstring, uint32_t* netmasks)
         return ias;
     }
 
-    num_toks = AppIdUtils::split(cp, toks, 2, "/");
+    num_toks = split(cp, toks, 2, "/");
 
     if (inet_pton(AF_INET, toks[0], &ia) <= 0)
     {
@@ -122,7 +173,7 @@ RNAIpv6AddrSet* ParseIpv6Cidr(char* ipstring)
         return nullptr;
 
     ias = (RNAIpv6AddrSet*)snort_calloc(sizeof(*ias));
-    AppIdUtils::strip(ipstring);
+    strip(ipstring);
     cp = ipstring;
     if (*cp == 'h')
     {
@@ -149,7 +200,7 @@ RNAIpv6AddrSet* ParseIpv6Cidr(char* ipstring)
         return ias;
     }
 
-    num_toks = AppIdUtils::split(cp, toks, 2, "/");
+    num_toks = split(cp, toks, 2, "/");
 
     if (inet_pton(AF_INET6, toks[0], &ia) <= 0)
     {

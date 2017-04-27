@@ -52,24 +52,6 @@ struct PortExclusion
     ip::snort_in6_addr netmask;
 };
 
-// Modules can use this generic data structure to store their configuration.
-// All such generic configurations are stored in genericConfigList. Modules
-// are responsible for populating the configuration in init() and cleaning it
-// up in clean() function.
-//
-// Currently, IMAP, PO3 and MDNS use this data structure. Lua modules currently
-// do not have any configuration. They can use this data structure in the future,
-// if needed.
-struct AppidConfigElement
-{
-    char* name;     ///< Module name
-    void* value;    ///< Module configuration data
-
-    static void add_generic_config_element(const char* name, void* pData);
-    static void* find_generic_config_element(const char* name);
-    static void remove_generic_config_element(const char* name);
-};
-
 struct AppIdSessionLogFilter
 {
     AppIdSessionLogFilter()
@@ -109,19 +91,18 @@ public:
     bool dump_ports = false;
     AppIdSessionLogFilter session_log_filter;
 
-    // FIXIT-L configs below not set from appid preproc config, should they be?
-    uint32_t disable_safe_search = 0;
-    uint32_t dns_host_reporting = 0;
-    uint32_t referred_appId_disabled = 0;
-    uint32_t rtmp_max_packets = 0;
-    uint32_t mdns_user_reporting = 0;
+    bool safe_search_enabled = true;
+    bool dns_host_reporting = true;
+    bool referred_appId_disabled = false;
+    bool mdns_user_reporting = true;
+    bool chp_userid_disabled = false;
+    bool http2_detection_enabled = false;
     uint32_t ftp_userid_disabled = 0;
-    uint32_t chp_userid_disabled = 0;
     uint32_t chp_body_collection_disabled = 0;
     uint32_t chp_body_collection_max = 0;
-    uint32_t max_tp_flow_depth = 0;
+    uint32_t rtmp_max_packets = 15;
+    uint32_t max_tp_flow_depth = 5;
     uint32_t tp_allow_probes = 0;
-    bool http2_detection_enabled = false;
 };
 
 typedef std::array<SF_LIST*, APP_ID_PORT_ARRAY_SIZE> AppIdPortExclusions;
@@ -135,7 +116,7 @@ public:
     bool init_appid();
     void cleanup();
     void show();
-    void set_safe_search_enforcement(int enabled);
+    void set_safe_search_enforcement(bool enabled);
     AppId get_port_service_id(IpProtocol, uint16_t port);
 
     unsigned max_service_info = 0;

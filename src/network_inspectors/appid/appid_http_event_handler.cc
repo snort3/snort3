@@ -29,6 +29,7 @@
 
 #include <assert.h>
 
+#include "appid_http_session.h"
 #include "appid_module.h"
 #include "appid_session.h"
 #include "utils/util.h"
@@ -66,7 +67,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     direction = event_type == REQUEST_EVENT ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
 
     if (!session->hsession)
-        session->hsession = (decltype(session->hsession))snort_calloc(sizeof(HttpSession));
+        session->hsession = new AppIdHttpSession(session);
 
     if (direction == APP_ID_FROM_INITIATOR)
     {
@@ -167,7 +168,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
         session->scan_flags |= SCAN_HTTP_VIA_FLAG;
     }
 
-    session->process_http_packet(direction);
+    session->hsession->process_http_packet(direction);
     session->set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_HTTP_SESSION);
     if (direction == APP_ID_FROM_INITIATOR)
         appid_stats.http_flows++;

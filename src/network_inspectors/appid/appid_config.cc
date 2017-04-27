@@ -31,7 +31,6 @@
 #include "app_info_table.h"
 #include "appid_session.h"
 #include "thirdparty_appid_utils.h"
-#include "appid_utils/appid_utils.h"
 #ifdef USE_RNA_CONFIG
 #include "appid_utils/network_set.h"
 #endif
@@ -46,15 +45,18 @@
 #define MAX_DISPLAY_SIZE   65536
 #define MAX_LINE    2048
 
-uint32_t app_id_netmasks[33];
+uint32_t app_id_netmasks[33] =
+{ 0x00000000, 0x80000000, 0xC0000000, 0xE0000000, 0xF0000000, 0xF8000000, 0xFC000000,
+  0xFE000000, 0xFF000000, 0xFF800000, 0xFFC00000, 0xFFE00000, 0xFFF00000, 0xFFF80000,
+  0xFFFC0000, 0xFFFE0000, 0xFFFF0000, 0xFFFF8000, 0xFFFFC000, 0xFFFFE000, 0xFFFFF000,
+  0xFFFFF800, 0xFFFFFC00, 0xFFFFFE00, 0xFFFFFF00, 0xFFFFFF80, 0xFFFFFFC0, 0xFFFFFFE0,
+  0xFFFFFFF0, 0xFFFFFFF8, 0xFFFFFFFC, 0xFFFFFFFE, 0xFFFFFFFF };
 
 struct PortList
 {
     PortList* next;
     uint16_t port;
 };
-
-static THREAD_LOCAL SF_LIST appid_custom_configs;
 
 int16_t snortId_for_unsynchronized;
 int16_t snortId_for_ftp_data;
@@ -112,53 +114,6 @@ AppIdConfig::AppIdConfig(AppIdModuleConfig* config)
 AppIdConfig::~AppIdConfig()
 {
     cleanup();
-}
-
-void AppidConfigElement::add_generic_config_element(const char* name, void* data)
-{
-    AppidConfigElement* ce;
-
-    ce = (AppidConfigElement*)snort_calloc(sizeof(AppidConfigElement));
-    ce->name = snort_strdup(name);
-    ce->value = data;
-    sflist_add_tail(&appid_custom_configs, ce);
-}
-
-void* AppidConfigElement::find_generic_config_element(const char* name)
-{
-    AppidConfigElement* ce;
-    SF_LNODE* next;
-
-    // Search a module's configuration by its name
-    for (ce = (AppidConfigElement*)sflist_first(&appid_custom_configs, &next);
-        ce != nullptr;
-        ce = (AppidConfigElement*)sflist_next(&next))
-    {
-        if (strcmp(ce->name, name) == 0)
-            return ce->value;
-    }
-
-    return nullptr;
-}
-
-void AppidConfigElement::remove_generic_config_element(const char* name)
-{
-    SF_LNODE* iter;
-    AppidConfigElement* ce;
-
-    // Search a module's configuration by its name
-    for (ce = (AppidConfigElement*)sflist_first(&appid_custom_configs, &iter);
-        ce != nullptr;
-        ce = (AppidConfigElement*)sflist_next(&iter))
-    {
-        if (strcmp(ce->name, name) == 0)
-        {
-            snort_free(ce->name);
-            snort_free(ce);
-            sflist_remove_node(&appid_custom_configs, iter);
-            break;
-        }
-    }
 }
 
 void AppIdConfig::read_port_detectors(const char* files)
@@ -604,6 +559,74 @@ void AppIdConfig::process_config_directive(char* toklist[], int /* reload */)
     }
 }
 
+static int strip(char* data)
+{
+    int size;
+    char* idx;
+
+    idx = data;
+    size = 0;
+
+    while (*idx)
+    {
+        if ((*idx == '\n') || (*idx == '\r'))
+        {
+            *idx = 0;
+            break;
+        }
+        if (*idx == '\t')
+        {
+            *idx = ' ';
+        }
+        size++;
+        idx++;
+    }
+
+    return size;
+}
+
+#define MAX_TOKS    256
+static int tokenize(char* data, char* toklist[])
+{
+    char** ap;
+    int argcount = 0;
+    int i = 0;
+    char* tok;
+    int drop_further = 0;
+
+    for (ap = (char**)toklist; ap < &toklist[MAX_TOKS] && (*ap = strsep(&data, " ")) != nullptr; )
+    {
+        if (**ap != '\0')
+        {
+            ap++;
+            argcount++;
+        }
+    }
+
+    *ap = nullptr;
+
+    /* scan for comments */
+    while (i < argcount)
+    {
+        tok = toklist[i];
+
+        if (tok[0] == '#' && !drop_further)
+        {
+            argcount = i;
+            drop_further = 1;
+        }
+
+        if (drop_further)
+        {
+            toklist[i] = nullptr;
+        }
+
+        i++;
+    }
+
+    return argcount;
+}
+
 int AppIdConfig::load_analysis_config(const char* config_file, int reload, int instance_id)
 {
     FILE* fp;
@@ -645,7 +668,7 @@ int AppIdConfig::load_analysis_config(const char* config_file, int reload, int i
         while (fgets(linebuffer, MAX_LINE, fp) != nullptr)
         {
             line++;
-            AppIdUtils::strip(linebuffer);
+            strip(linebuffer);
             cptr = linebuffer;
 
             while (isspace((int)*cptr))
@@ -654,7 +677,7 @@ int AppIdConfig::load_analysis_config(const char* config_file, int reload, int i
             if (*cptr && (*cptr != '#') && (*cptr != 0x0a))
             {
                 memset(toklist, 0, sizeof(toklist));
-                num_toks = AppIdUtils::tokenize(cptr, toklist);
+                num_toks = tokenize(cptr, toklist);
                 if (num_toks < 2)
                 {
                     fclose(fp);
@@ -706,16 +729,16 @@ int AppIdConfig::load_analysis_config(const char* config_file, int reload, int i
 
 #endif
 
-void AppIdConfig::set_safe_search_enforcement(int enabled)
+void AppIdConfig::set_safe_search_enforcement(bool enabled)
 {
-    DEBUG_WRAP(DebugFormat(DEBUG_APPID, "    Safe Search Enforcement enabled = %d.\n",enabled); );
-    mod_config->disable_safe_search = enabled ? 0 : 1;
+    DEBUG_WRAP(DebugFormat(DEBUG_APPID,
+        "    Safe Search Enforcement enabled = %d.\n", enabled); );
+    mod_config->safe_search_enabled = enabled;
 }
 
 bool AppIdConfig::init_appid( )
 {
     map_app_names_to_snort_ids();
-    AppIdUtils::init_netmasks(app_id_netmasks);
     app_info_mgr.init_appid_info_table(mod_config);
 #ifdef USE_RNA_CONFIG
     load_analysis_config(mod_config->conf_file, 0, mod_config->instance_id);

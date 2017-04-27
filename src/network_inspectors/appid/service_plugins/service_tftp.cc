@@ -25,9 +25,9 @@
 
 #include "service_tftp.h"
 
+#include "appid_inspector.h"
 #include "appid_module.h"
 #include "app_info_table.h"
-#include "service_util.h"
 #include "protocols/packet.h"
 
 #define TFTP_PORT   69
@@ -72,7 +72,7 @@ TftpServiceDetector::TftpServiceDetector(ServiceDiscovery* sd)
     proto = IpProtocol::UDP;
     detectorType = DETECTOR_TYPE_DECODER;
 
-    app_id = add_appid_protocol_reference("tftp");
+    app_id = AppIdInspector::get_inspector()->add_appid_protocol_reference("tftp");
 
     appid_registry =
     {

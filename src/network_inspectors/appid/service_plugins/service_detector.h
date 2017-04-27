@@ -34,15 +34,14 @@ public:
     virtual ~ServiceDetector() { }
 
     virtual void do_custom_init() override { }
-    virtual int validate(AppIdDiscoveryArgs&) override;
     virtual void register_appid(AppId, unsigned extractsInfo) override;
     int service_inprocess(AppIdSession*, const Packet*, int dir);
     int add_service(AppIdSession*, const Packet*, int dir, AppId, const char* vendor,
         const char* version);
     int add_service(AppIdSession*, const Packet*, int dir, AppId, const char* vendor,
-        const char* version, const RNAServiceSubtype*);
+        const char* version, const AppIdServiceSubtype*);
     int add_service_consume_subtype(AppIdSession*, const Packet*, int dir, AppId,
-        const char* vendor, const char* version, RNAServiceSubtype*);
+        const char* vendor, const char* version, AppIdServiceSubtype*);
     int incompatible_data(AppIdSession*, const Packet*, int dir);
     int fail_service(AppIdSession*, const Packet*, int dir);
 

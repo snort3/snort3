@@ -50,16 +50,13 @@ enum SERVICE_HOST_INFO_CODE
  * at the beginning of the flow, then independently do service discovery, and
  * synchronize findings at the end of service discovery by the flow.
  */
-enum SESSION_SERVICE_ID_STATE
+enum SESSION_SERVICE_SEARCH_STATE
 {
     START = 0,
     PORT,
     PATTERN,
     PENDING
 };
-
-void FailInProcessService(AppIdSession*, const AppIdConfig*);
-int AddFTPServiceState(AppIdSession*);
 
 class ServiceDiscovery : public AppIdDiscovery
 {
@@ -74,14 +71,11 @@ public:
     ServiceDetector* get_next_tcp_detector(AppIdDetectorsIterator&);
     ServiceDetector* get_next_udp_detector(AppIdDetectorsIterator&);
 
-    bool do_service_discovery(AppIdSession&, IpProtocol, int, AppId, AppId,  Packet*);
+    bool do_service_discovery(AppIdSession&, Packet*, int);
     int identify_service(AppIdSession*, Packet*, int dir);
     int fail_service(AppIdSession*, const Packet*, int dir, ServiceDetector*);
     int incompatible_data(AppIdSession*, const Packet*, int dir, ServiceDetector*);
-
-    std::map<uint16_t, std::vector<ServiceDetector*> > tcp_services;
-    std::map<uint16_t, std::vector<ServiceDetector*> > udp_services;
-    std::map<uint16_t, std::vector<ServiceDetector*> > udp_reversed_services;
+    static int add_ftp_service_state(AppIdSession&);
 
 private:
     ServiceDiscovery();
@@ -89,6 +83,11 @@ private:
     void get_next_service(const Packet*, const int dir, AppIdSession*, ServiceDiscoveryState*);
     void get_port_based_services(IpProtocol, uint16_t port, AppIdSession*);
     void match_services_by_pattern(AppIdSession*, const Packet*, IpProtocol);
+
+    std::map<uint16_t, std::vector<ServiceDetector*> > tcp_services;
+    std::map<uint16_t, std::vector<ServiceDetector*> > udp_services;
+    std::map<uint16_t, std::vector<ServiceDetector*> > udp_reversed_services;
 };
 
 #endif
+

@@ -25,6 +25,8 @@
 
 #include "appid_module.h"
 
+#include <limits.h>
+
 #include "log/messages.h"
 #include "profiler/profiler.h"
 #include "utils/util.h"

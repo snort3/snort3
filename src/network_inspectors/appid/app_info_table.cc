@@ -29,15 +29,9 @@
 
 #include "appid_config.h"
 #include "appid_api.h"
-
+#include "appid_inspector.h"
 #include "log/messages.h"
 #include "main/snort_debug.h"
-#include "service_plugins/service_util.h"
-
-#define MAX_TABLE_LINE_LEN      1024
-#define CONF_SEPARATORS         "\t\n\r"
-#define MIN_MAX_TP_FLOW_DEPTH   1
-#define MAX_MAX_TP_FLOW_DEPTH   1000000
 
 static AppInfoTable app_info_table;
 static AppInfoTable app_info_service_table;
@@ -47,7 +41,15 @@ static AppInfoNameTable app_info_name_table;
 static AppId next_custom_appid = SF_APPID_DYNAMIC_MIN;
 static AppInfoTable custom_app_info_table;
 
-static inline char* strdupToLower(const char* source)
+#define MAX_TABLE_LINE_LEN      1024
+static const char* CONF_SEPARATORS = "\t\n\r";
+static const int MIN_MAX_TP_FLOW_DEPTH = 1;
+static const int MAX_MAX_TP_FLOW_DEPTH = 1000000;
+static const char* APP_CONFIG_FILE = "appid.conf";
+static const char* USR_CONFIG_FILE = "userappid.conf";
+const char* APP_MAPPING_FILE = "appMapping.data";
+
+static inline char* strdup_to_lower(const char* source)
 {
     char* dest = snort_strdup(source);
     char* lcd = dest;
@@ -73,7 +75,7 @@ static AppInfoTableEntry* find_app_info_by_name(const char* app_name)
 {
     AppInfoTableEntry* entry = nullptr;
     AppInfoNameTable::iterator app;
-    const char* search_name = strdupToLower(app_name);
+    const char* search_name = strdup_to_lower(app_name);
 
     app = app_info_name_table.find(search_name);
     if ( app != app_info_name_table.end() )
@@ -83,14 +85,21 @@ static AppInfoTableEntry* find_app_info_by_name(const char* app_name)
     return entry;
 }
 
-static void add_entry_to_app_info_hash(const char* app_name, AppInfoTableEntry* entry)
+static bool add_entry_to_app_info_name_table(const char* app_name, AppInfoTableEntry* entry)
 {
+    bool added = true;
+
     if ( !is_existing_entry(entry) )
         app_info_name_table[app_name] = entry;
     else
+    {
         WarningMessage(
             "App name, \"%s\"is a duplicate existing entry will be shared by each detector.\n",
             app_name);
+        added = false;
+    }
+
+    return added;
 }
 
 static AppId get_static_app_info_entry(AppId appid)
@@ -145,12 +154,12 @@ AppInfoTableEntry* AppInfoManager::add_dynamic_app_entry(const char* app_name)
     if (!entry)
     {
         entry = new AppInfoTableEntry(next_custom_appid++, snort_strdup(app_name));
-        entry->app_name_key = strdupToLower(app_name);
+        entry->app_name_key = strdup_to_lower(app_name);
         entry->serviceId = entry->appId;
         entry->clientId = entry->appId;
         entry->payloadId = entry->appId;
         custom_app_info_table[entry->appId] = entry;
-        add_entry_to_app_info_hash(entry->app_name_key, entry);
+        add_entry_to_app_info_name_table(entry->app_name_key, entry);
     }
 
     return entry;
@@ -160,7 +169,6 @@ void AppInfoManager::cleanup_appid_info_table()
 {
     for (auto& kv: app_info_table)
         delete(kv.second);
-
     app_info_table.erase(app_info_table.begin(), app_info_table.end());
 
     for (auto& kv: custom_app_info_table)
@@ -225,9 +233,9 @@ void AppInfoManager::set_app_info_active(AppId appId)
         WarningMessage("AppInfo: AppId %d has no entry in application info table\n", appId);
 }
 
-void AppInfoManager::load_appid_config(AppIdModuleConfig* mod_config, const char* path)
+void AppInfoManager::load_appid_config(AppIdModuleConfig* config, const char* path)
 {
-    char buf[1024];
+    char buf[MAX_TABLE_LINE_LEN];
     unsigned line = 0;
 
     FILE* config_file = fopen(path, "r");
@@ -271,8 +279,8 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* mod_config, const char
             if (!(strcasecmp(conf_key, "max_tp_flow_depth")))
             {
                 int max_tp_flow_depth = atoi(conf_val);
-                if (max_tp_flow_depth < MIN_MAX_TP_FLOW_DEPTH || max_tp_flow_depth >
-                    MAX_MAX_TP_FLOW_DEPTH)
+                if (max_tp_flow_depth < MIN_MAX_TP_FLOW_DEPTH
+                    || max_tp_flow_depth > MAX_MAX_TP_FLOW_DEPTH)
                 {
                     ParseWarning(WARN_CONF,
                         "AppId: invalid max_tp_flow_depth %d, must be between %d and %d\n.",
@@ -283,7 +291,7 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* mod_config, const char
                     DebugFormat(DEBUG_APPID,
                         "AppId: setting max thirdparty inspection flow depth to %d packets.\n",
                         max_tp_flow_depth);
-                    mod_config->max_tp_flow_depth = max_tp_flow_depth;
+                    config->max_tp_flow_depth = max_tp_flow_depth;
                 }
             }
             else if (!(strcasecmp(conf_key, "tp_allow_probes")))
@@ -293,7 +301,7 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* mod_config, const char
                     DebugMessage(DEBUG_APPID,
                         "AppId: TCP probes will be analyzed by NAVL.\n");
 
-                    mod_config->tp_allow_probes = 1;
+                    config->tp_allow_probes = 1;
                 }
             }
             else if (!(strcasecmp(conf_key, "tp_client_app")))
@@ -315,7 +323,7 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* mod_config, const char
                 if (!(strcasecmp(conf_val, "disabled")))
                 {
                     DebugMessage(DEBUG_APPID, "AppId: disabling safe search enforcement.\n");
-                    mod_config->disable_safe_search = 1;
+                    config->safe_search_enabled = false;
                 }
             }
             else if (!(strcasecmp(conf_key, "ssl_squelch")))
@@ -346,7 +354,7 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* mod_config, const char
                 {
                     DebugMessage(DEBUG_APPID,
                         "AppId: HTTP UserID collection disabled.\n");
-                    mod_config->chp_userid_disabled = 1;
+                    config->chp_userid_disabled = true;
                     continue;
                 }
             }
@@ -356,7 +364,7 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* mod_config, const char
                 {
                     DebugMessage(DEBUG_APPID,
                         "AppId: HTTP Body header reading disabled.\n");
-                    mod_config->chp_body_collection_disabled = 1;
+                    config->chp_body_collection_disabled = 1;
                     continue;
                 }
             }
@@ -365,7 +373,7 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* mod_config, const char
                 if (!(strcasecmp(conf_val, "disabled")))
                 {
                     DebugMessage(DEBUG_APPID, "AppId: FTP userID disabled.\n");
-                    mod_config->ftp_userid_disabled = 1;
+                    config->ftp_userid_disabled = 1;
                     continue;
                 }
             }
@@ -391,10 +399,10 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* mod_config, const char
             {
                 if (!(strcasecmp(conf_val, "disabled")))
                 {
-                    mod_config->referred_appId_disabled = 1;
+                    config->referred_appId_disabled = true;
                     continue;
                 }
-                else if (!mod_config->referred_appId_disabled)
+                else if (!config->referred_appId_disabled)
                 {
                     char referred_app_list[4096];
                     int referred_app_index = snprintf(referred_app_list, 4096, "%d ", atoi(
@@ -415,19 +423,19 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* mod_config, const char
             }
             else if (!(strcasecmp(conf_key, "rtmp_max_packets")))
             {
-                mod_config->rtmp_max_packets = atoi(conf_val);
+                config->rtmp_max_packets = atoi(conf_val);
             }
             else if (!(strcasecmp(conf_key, "mdns_user_report")))
             {
-                mod_config->mdns_user_reporting = atoi(conf_val);
+                config->mdns_user_reporting = atoi(conf_val) ? true : false;
             }
             else if (!(strcasecmp(conf_key, "dns_host_report")))
             {
-                mod_config->dns_host_reporting = atoi(conf_val);
+                config->dns_host_reporting = atoi(conf_val) ? true : false;
             }
             else if (!(strcasecmp(conf_key, "chp_body_max_bytes")))
             {
-                mod_config->chp_body_collection_max = atoi(conf_val);
+                config->chp_body_collection_max = atoi(conf_val);
             }
             else if (!(strcasecmp(conf_key, "ignore_thirdparty_appid")))
             {
@@ -446,12 +454,12 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* mod_config, const char
                 if (!(strcasecmp(conf_val, "disabled")))
                 {
                     DebugMessage(DEBUG_APPID, "AppId: disabling internal HTTP/2 detection.\n");
-                    mod_config->http2_detection_enabled = false;
+                    config->http2_detection_enabled = false;
                 }
                 else if (!(strcasecmp(conf_val, "enabled")))
                 {
                     DebugMessage(DEBUG_APPID, "AppId: enabling internal HTTP/2 detection.\n");
-                    mod_config->http2_detection_enabled = true;
+                    config->http2_detection_enabled = true;
                 }
                 else
                 {
@@ -547,10 +555,10 @@ void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config)
             snortName = snort_strdup(token);
 
         entry = new AppInfoTableEntry(appId, app_name);
-        entry->snortId = add_appid_protocol_reference(snortName);
+        entry->snortId = AppIdInspector::get_inspector()->add_appid_protocol_reference(snortName);
         snort_free(snortName);
         snortName = nullptr;
-        entry->app_name_key = strdupToLower(app_name);
+        entry->app_name_key = strdup_to_lower(app_name);
         entry->serviceId = serviceId;
         entry->clientId = clientId;
         entry->payloadId = payloadId;
@@ -564,16 +572,9 @@ void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config)
         if ((appId = get_static_app_info_entry(entry->payloadId)))
             app_info_payload_table[appId] = entry;
 
-        add_entry_to_app_info_hash(entry->app_name_key, entry);
+        add_entry_to_app_info_name_table(entry->app_name_key, entry);
     }
     fclose(tableFile);
-
-    /* Configuration defaults. */
-    mod_config->rtmp_max_packets = 15;
-    mod_config->mdns_user_reporting = 1;
-    mod_config->dns_host_reporting = 1;
-    mod_config->max_tp_flow_depth = 5;
-    mod_config->http2_detection_enabled = false;
 
     snprintf(filepath, sizeof(filepath), "%s/odp/%s", mod_config->app_detector_dir,
         APP_CONFIG_FILE);

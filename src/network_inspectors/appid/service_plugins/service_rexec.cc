@@ -25,9 +25,9 @@
 
 #include "service_rexec.h"
 
+#include "appid_inspector.h"
 #include "appid_module.h"
 #include "app_info_table.h"
-#include "service_util.h"
 #include "protocols/packet.h"
 
 #define REXEC_PORT  512
@@ -60,7 +60,7 @@ RexecServiceDetector::RexecServiceDetector(ServiceDiscovery* sd)
     proto = IpProtocol::TCP;
     detectorType = DETECTOR_TYPE_DECODER;
 
-    app_id = add_appid_protocol_reference("rexec");
+    app_id = AppIdInspector::get_inspector()->add_appid_protocol_reference("rexec");
 
     appid_registry =
     {
@@ -273,12 +273,12 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
 
 inprocess:
-    if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+    if (!asd->is_service_detected())
         service_inprocess(asd, pkt, dir);
     return APPID_INPROCESS;
 
 success:
-    if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+    if (!asd->is_service_detected())
     {
         add_service(asd, pkt, dir, APP_ID_EXEC, nullptr, nullptr, nullptr);
         appid_stats.rexec_flows++;
@@ -286,7 +286,7 @@ success:
     return APPID_SUCCESS;
 
 bail:
-    if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+    if (!asd->is_service_detected())
     {
         incompatible_data(asd, pkt, dir);
     }
@@ -294,7 +294,7 @@ bail:
     return APPID_NOT_COMPATIBLE;
 
 fail:
-    if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+    if (!asd->is_service_detected())
     {
         fail_service(asd, pkt, dir);
     }

@@ -26,15 +26,16 @@
 #include "appid_discovery.h"
 
 #include "appid_config.h"
-#include "appid_module.h"
-#include "app_forecast.h"
-#include "appid_inspector.h"
-#include "appid_session.h"
 #include "appid_detector.h"
+#include "app_forecast.h"
+#include "appid_http_session.h"
 #include "app_info_table.h"
-#include "host_port_app_cache.h"
+#include "appid_inspector.h"
+#include "appid_module.h"
+#include "appid_session.h"
 #include "appid_utils/ip_funcs.h"
 #include "appid_utils/network_set.h"
+#include "host_port_app_cache.h"
 #include "thirdparty_appid_utils.h"
 #include "service_plugins/service_discovery.h"
 #include "client_plugins/client_discovery.h"
@@ -46,13 +47,10 @@
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
 
-ProfileStats tpPerfStats;
-
 AppIdDiscovery::AppIdDiscovery()
 {
     tcp_patterns = new SearchTool("ac_full");
     udp_patterns = new SearchTool("ac_full");
-    http_matchers = HttpPatternMatchers::get_instance();
 }
 
 AppIdDiscovery::~AppIdDiscovery()
@@ -105,8 +103,7 @@ void AppIdDiscovery::register_detector(std::string name, AppIdDetector* cd,  IpP
 }
 
 void AppIdDiscovery::add_pattern_data(AppIdDetector* detector, SearchTool* st, int position, const
-    uint8_t* const pattern,
-    unsigned size, unsigned nocase, int* count)
+    uint8_t* const pattern, unsigned size, unsigned nocase, int* count)
 {
     AppIdPatternMatchNode* pd = (AppIdPatternMatchNode*)snort_calloc(
         sizeof(AppIdPatternMatchNode));
@@ -120,16 +117,14 @@ void AppIdDiscovery::add_pattern_data(AppIdDetector* detector, SearchTool* st, i
 }
 
 void AppIdDiscovery::register_tcp_pattern(AppIdDetector* detector, const uint8_t* const pattern,
-    unsigned size,
-    int position, unsigned nocase)
+    unsigned size, int position, unsigned nocase)
 {
     int* count = &tcp_pattern_count;
     add_pattern_data(detector, tcp_patterns, position, pattern, size, nocase, count);
 }
 
 void AppIdDiscovery::register_udp_pattern(AppIdDetector* detector, const uint8_t* const pattern,
-    unsigned size,
-    int position, unsigned nocase)
+    unsigned size, int position, unsigned nocase)
 {
     int* count = &udp_pattern_count;
     add_pattern_data(detector, udp_patterns, position, pattern, size, nocase, count);
@@ -278,8 +273,8 @@ static inline bool is_special_session_monitored(const Packet* p)
     return false;
 }
 
-
-static bool set_network_attributes(AppIdSession* asd, Packet* p, IpProtocol& protocol, int& direction )
+static bool set_network_attributes(AppIdSession* asd, Packet* p, IpProtocol& protocol,
+    int& direction)
 {
     if (asd)
     {
@@ -346,7 +341,7 @@ static bool is_packet_ignored(AppIdSession* asd, Packet* p, int& direction)
     else if ( p->is_rebuilt() && !p->flow->is_proxied() )
     {
         if ( direction == APP_ID_FROM_INITIATOR &&
-                        asd && asd->hsession && asd->hsession->get_offsets_from_rebuilt )
+            asd && asd->hsession && asd->hsession->get_offsets_from_rebuilt )
         {
             HttpPatternMatchers::get_instance()->get_http_offsets(p, asd->hsession);
             if (asd->session_logging_enabled)
@@ -365,134 +360,148 @@ static bool is_packet_ignored(AppIdSession* asd, Packet* p, int& direction)
     return false;
 }
 
-static uint64_t is_session_monitored(const Packet* p, int dir, AppIdSession* asd)
+static uint64_t is_session_monitored(AppIdSession& asd, const Packet* p, int dir)
 {
     uint64_t flags = 0;
     uint64_t flow_flags = APPID_SESSION_DISCOVER_APP;
 
     flow_flags |= (dir == APP_ID_FROM_INITIATOR) ?
         APPID_SESSION_INITIATOR_SEEN : APPID_SESSION_RESPONDER_SEEN;
-    if ( asd )
+
+    flow_flags |= asd.common.flags;
+    // FIXIT-M - the 2.x purpose of this check is stop monitoring a flow after a
+    //           reload if the flow ip addresses are no longer configured to be
+    //           monitored... this may not apply in snort++, find out and fix
+    //           accordingly
+    if ( asd.common.policyId != asd.config->appIdPolicyId )
     {
-        flow_flags |= asd->common.flags;
-        if ( asd->common.policyId != asd->config->appIdPolicyId )
+        if (check_port_exclusion(p, dir == APP_ID_FROM_RESPONDER))
         {
-            if (check_port_exclusion(p, dir == APP_ID_FROM_RESPONDER))
-            {
-                flow_flags |= APPID_SESSION_INITIATOR_SEEN | APPID_SESSION_RESPONDER_SEEN |
-                    APPID_SESSION_INITIATOR_CHECKED | APPID_SESSION_RESPONDER_CHECKED;
-                flow_flags &= ~(APPID_SESSION_INITIATOR_MONITORED |
-                    APPID_SESSION_RESPONDER_MONITORED);
-                return flow_flags;
-            }
-            if (dir == APP_ID_FROM_INITIATOR)
-            {
-                if (asd->get_session_flags(APPID_SESSION_INITIATOR_CHECKED))
-                {
-                    flags = get_ipfuncs_flags(p, false);
-                    if (flags & IPFUNCS_HOSTS_IP)
-                        flow_flags |= APPID_SESSION_INITIATOR_MONITORED;
-                    else
-                        flow_flags &= ~APPID_SESSION_INITIATOR_MONITORED;
-                }
-
-                if (asd->get_session_flags(APPID_SESSION_RESPONDER_CHECKED))
-                {
-                    flags = get_ipfuncs_flags(p, true);
-                    if (flags & IPFUNCS_HOSTS_IP)
-                        flow_flags |= APPID_SESSION_RESPONDER_MONITORED;
-                    else
-                        flow_flags &= ~APPID_SESSION_RESPONDER_MONITORED;
-                }
-            }
-            else
-            {
-                if (asd->get_session_flags(APPID_SESSION_RESPONDER_CHECKED))
-                {
-                    flags = get_ipfuncs_flags(p, false);
-                    if (flags & IPFUNCS_HOSTS_IP)
-                        flow_flags |= APPID_SESSION_RESPONDER_MONITORED;
-                    else
-                        flow_flags &= ~APPID_SESSION_RESPONDER_MONITORED;
-                }
-
-                if (asd->get_session_flags(APPID_SESSION_INITIATOR_CHECKED))
-                {
-                    flags = get_ipfuncs_flags(p, true);
-                    if (flags & IPFUNCS_HOSTS_IP)
-                        flow_flags |= APPID_SESSION_INITIATOR_MONITORED;
-                    else
-                        flow_flags &= ~APPID_SESSION_INITIATOR_MONITORED;
-                }
-            }
-        }
-
-        if (asd->get_session_flags(APPID_SESSION_BIDIRECTIONAL_CHECKED) ==
-            APPID_SESSION_BIDIRECTIONAL_CHECKED)
+            flow_flags |= APPID_SESSION_INITIATOR_SEEN | APPID_SESSION_RESPONDER_SEEN |
+                APPID_SESSION_INITIATOR_CHECKED | APPID_SESSION_RESPONDER_CHECKED;
+            flow_flags &= ~(APPID_SESSION_INITIATOR_MONITORED |
+                APPID_SESSION_RESPONDER_MONITORED);
             return flow_flags;
-
+        }
         if (dir == APP_ID_FROM_INITIATOR)
         {
-            if (!asd->get_session_flags(APPID_SESSION_INITIATOR_CHECKED))
+            if (asd.get_session_flags(APPID_SESSION_INITIATOR_CHECKED))
             {
                 flags = get_ipfuncs_flags(p, false);
-                flow_flags |= APPID_SESSION_INITIATOR_CHECKED;
                 if (flags & IPFUNCS_HOSTS_IP)
                     flow_flags |= APPID_SESSION_INITIATOR_MONITORED;
-                if (flags & IPFUNCS_USER_IP)
-                    flow_flags |= APPID_SESSION_DISCOVER_USER;
-                if (flags & IPFUNCS_APPLICATION)
-                    flow_flags |= APPID_SESSION_DISCOVER_APP;
-                if (is_special_session_monitored(p))
-                    flow_flags |= APPID_SESSION_SPECIAL_MONITORED;
+                else
+                    flow_flags &= ~APPID_SESSION_INITIATOR_MONITORED;
             }
 
-            if (!(flow_flags & APPID_SESSION_DISCOVER_APP)
-                && !asd->get_session_flags(APPID_SESSION_RESPONDER_CHECKED))
+            if (asd.get_session_flags(APPID_SESSION_RESPONDER_CHECKED))
             {
                 flags = get_ipfuncs_flags(p, true);
-                if (flags & IPFUNCS_CHECKED)
-                    flow_flags |= APPID_SESSION_RESPONDER_CHECKED;
                 if (flags & IPFUNCS_HOSTS_IP)
                     flow_flags |= APPID_SESSION_RESPONDER_MONITORED;
-                if (flags & IPFUNCS_APPLICATION)
-                    flow_flags |= APPID_SESSION_DISCOVER_APP;
-                if (is_special_session_monitored(p))
-                    flow_flags |= APPID_SESSION_SPECIAL_MONITORED;
+                else
+                    flow_flags &= ~APPID_SESSION_RESPONDER_MONITORED;
             }
         }
         else
         {
-            if (!asd->get_session_flags(APPID_SESSION_RESPONDER_CHECKED))
+            if (asd.get_session_flags(APPID_SESSION_RESPONDER_CHECKED))
             {
                 flags = get_ipfuncs_flags(p, false);
-                flow_flags |= APPID_SESSION_RESPONDER_CHECKED;
                 if (flags & IPFUNCS_HOSTS_IP)
                     flow_flags |= APPID_SESSION_RESPONDER_MONITORED;
-                if (flags & IPFUNCS_APPLICATION)
-                    flow_flags |= APPID_SESSION_DISCOVER_APP;
-                if (is_special_session_monitored(p))
-                    flow_flags |= APPID_SESSION_SPECIAL_MONITORED;
+                else
+                    flow_flags &= ~APPID_SESSION_RESPONDER_MONITORED;
             }
 
-            if (!(flow_flags & APPID_SESSION_DISCOVER_APP)
-                && !asd->get_session_flags(APPID_SESSION_INITIATOR_CHECKED))
+            if (asd.get_session_flags(APPID_SESSION_INITIATOR_CHECKED))
             {
                 flags = get_ipfuncs_flags(p, true);
-                if (flags & IPFUNCS_CHECKED)
-                    flow_flags |= APPID_SESSION_INITIATOR_CHECKED;
                 if (flags & IPFUNCS_HOSTS_IP)
                     flow_flags |= APPID_SESSION_INITIATOR_MONITORED;
-                if (flags & IPFUNCS_USER_IP)
-                    flow_flags |= APPID_SESSION_DISCOVER_USER;
-                if (flags & IPFUNCS_APPLICATION)
-                    flow_flags |= APPID_SESSION_DISCOVER_APP;
-                if (is_special_session_monitored(p))
-                    flow_flags |= APPID_SESSION_SPECIAL_MONITORED;
+                else
+                    flow_flags &= ~APPID_SESSION_INITIATOR_MONITORED;
             }
         }
     }
-    else if (check_port_exclusion(p, false))
+
+    if (asd.get_session_flags(APPID_SESSION_BIDIRECTIONAL_CHECKED) ==
+        APPID_SESSION_BIDIRECTIONAL_CHECKED)
+        return flow_flags;
+
+    if (dir == APP_ID_FROM_INITIATOR)
+    {
+        if (!asd.get_session_flags(APPID_SESSION_INITIATOR_CHECKED))
+        {
+            flags = get_ipfuncs_flags(p, false);
+            flow_flags |= APPID_SESSION_INITIATOR_CHECKED;
+            if (flags & IPFUNCS_HOSTS_IP)
+                flow_flags |= APPID_SESSION_INITIATOR_MONITORED;
+            if (flags & IPFUNCS_USER_IP)
+                flow_flags |= APPID_SESSION_DISCOVER_USER;
+            if (flags & IPFUNCS_APPLICATION)
+                flow_flags |= APPID_SESSION_DISCOVER_APP;
+            if (is_special_session_monitored(p))
+                flow_flags |= APPID_SESSION_SPECIAL_MONITORED;
+        }
+
+        if (!(flow_flags & APPID_SESSION_DISCOVER_APP)
+            && !asd.get_session_flags(APPID_SESSION_RESPONDER_CHECKED))
+        {
+            flags = get_ipfuncs_flags(p, true);
+            if (flags & IPFUNCS_CHECKED)
+                flow_flags |= APPID_SESSION_RESPONDER_CHECKED;
+            if (flags & IPFUNCS_HOSTS_IP)
+                flow_flags |= APPID_SESSION_RESPONDER_MONITORED;
+            if (flags & IPFUNCS_APPLICATION)
+                flow_flags |= APPID_SESSION_DISCOVER_APP;
+            if (is_special_session_monitored(p))
+                flow_flags |= APPID_SESSION_SPECIAL_MONITORED;
+        }
+    }
+    else
+    {
+        if (!asd.get_session_flags(APPID_SESSION_RESPONDER_CHECKED))
+        {
+            flags = get_ipfuncs_flags(p, false);
+            flow_flags |= APPID_SESSION_RESPONDER_CHECKED;
+            if (flags & IPFUNCS_HOSTS_IP)
+                flow_flags |= APPID_SESSION_RESPONDER_MONITORED;
+            if (flags & IPFUNCS_APPLICATION)
+                flow_flags |= APPID_SESSION_DISCOVER_APP;
+            if (is_special_session_monitored(p))
+                flow_flags |= APPID_SESSION_SPECIAL_MONITORED;
+        }
+
+        if (!(flow_flags & APPID_SESSION_DISCOVER_APP)
+            && !asd.get_session_flags(APPID_SESSION_INITIATOR_CHECKED))
+        {
+            flags = get_ipfuncs_flags(p, true);
+            if (flags & IPFUNCS_CHECKED)
+                flow_flags |= APPID_SESSION_INITIATOR_CHECKED;
+            if (flags & IPFUNCS_HOSTS_IP)
+                flow_flags |= APPID_SESSION_INITIATOR_MONITORED;
+            if (flags & IPFUNCS_USER_IP)
+                flow_flags |= APPID_SESSION_DISCOVER_USER;
+            if (flags & IPFUNCS_APPLICATION)
+                flow_flags |= APPID_SESSION_DISCOVER_APP;
+            if (is_special_session_monitored(p))
+                flow_flags |= APPID_SESSION_SPECIAL_MONITORED;
+        }
+    }
+
+    return flow_flags;
+}
+
+static uint64_t is_session_monitored(const Packet* p, int dir)
+{
+    uint64_t flags = 0;
+    uint64_t flow_flags = APPID_SESSION_DISCOVER_APP;
+
+    flow_flags |= (dir == APP_ID_FROM_INITIATOR) ?
+        APPID_SESSION_INITIATOR_SEEN : APPID_SESSION_RESPONDER_SEEN;
+
+    if (check_port_exclusion(p, false))
     {
         flow_flags |= APPID_SESSION_INITIATOR_SEEN | APPID_SESSION_RESPONDER_SEEN |
             APPID_SESSION_INITIATOR_CHECKED | APPID_SESSION_RESPONDER_CHECKED;
@@ -548,22 +557,67 @@ static uint64_t is_session_monitored(const Packet* p, int dir, AppIdSession* asd
     return flow_flags;
 }
 
+static void lookup_appid_by_host_port(AppIdSession* asd, Packet* p, IpProtocol protocol,
+    int direction)
+{
+    HostPortVal* hv = nullptr;
+    uint16_t port = 0;
+    const SfIp* ip = nullptr;
+    asd->scan_flags |= SCAN_HOST_PORT_FLAG;
+    if (direction == APP_ID_FROM_INITIATOR)
+    {
+        ip = p->ptrs.ip_api.get_dst();
+        port = p->ptrs.dp;
+    }
+    else
+    {
+        ip = p->ptrs.ip_api.get_src();
+        port = p->ptrs.sp;
+    }
+    if ((hv = HostPortCache::find(ip, port, protocol)))
+    {
+        switch (hv->type)
+        {
+        case 1:
+            asd->client_app_id = hv->appId;
+            asd->client_disco_state = APPID_DISCO_STATE_FINISHED;
+            break;
+        case 2:
+            asd->payload_app_id = hv->appId;
+            break;
+        default:
+            asd->service_app_id = hv->appId;
+            asd->sync_with_snort_id(hv->appId, p);
+            asd->service_disco_state = APPID_DISCO_STATE_FINISHED;
+            asd->client_disco_state = APPID_DISCO_STATE_FINISHED;
+            asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED);
+            if (thirdparty_appid_module)
+                thirdparty_appid_module->session_delete(asd->tpsession, 1);
+
+            asd->tpsession = nullptr;
+        }
+    }
+}
+
 void AppIdDiscovery::do_application_discovery(Packet* p)
 {
     IpProtocol protocol = IpProtocol::PROTO_NOT_SET;
-    AppId client_app_id = 0;
-    AppId payload_app_id = 0;
     bool isTpAppidDiscoveryDone = false;
     int direction = 0;
 
     AppIdSession* asd = (AppIdSession*)p->flow->get_flow_data(AppIdSession::flow_id);
-    if( !set_network_attributes(asd, p, protocol, direction) )
+    if ( !set_network_attributes(asd, p, protocol, direction) )
         return;
 
     if ( is_packet_ignored(asd, p, direction) )
         return;
 
-    uint64_t flow_flags = is_session_monitored(p, direction, asd);
+    uint64_t flow_flags;
+    if (asd)
+        flow_flags = is_session_monitored(*asd, p, direction);
+    else
+        flow_flags = is_session_monitored(p, direction);
+
     if ( !( flow_flags & (APPID_SESSION_DISCOVER_APP | APPID_SESSION_SPECIAL_MONITORED) ) )
     {
         if ( !asd )
@@ -615,9 +669,9 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
     asd->session_packet_count++;
 
     if (direction == APP_ID_FROM_INITIATOR)
-        asd->stats.initiatorBytes += p->pkth->pktlen;
+        asd->stats.initiator_bytes += p->pkth->pktlen;
     else
-        asd->stats.responderBytes += p->pkth->pktlen;
+        asd->stats.responder_bytes += p->pkth->pktlen;
 
     asd->common.flags = flow_flags;
     asd->common.policyId = asd->config->appIdPolicyId;
@@ -625,11 +679,11 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
     if (asd->get_session_flags(APPID_SESSION_IGNORE_FLOW))
     {
         if ( asd->session_logging_enabled &&
-             !asd->get_session_flags(APPID_SESSION_IGNORE_FLOW_LOGGED) )
+            !asd->get_session_flags(APPID_SESSION_IGNORE_FLOW_LOGGED) )
         {
             asd->set_session_flags(APPID_SESSION_IGNORE_FLOW_LOGGED);
             LogMessage("AppIdDbg %s Ignoring connection with service %d\n",
-                asd->session_logging_id, asd->serviceAppId);
+                asd->session_logging_id, asd->service_app_id);
         }
 
         return;
@@ -664,47 +718,8 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
     }
 
     /*HostPort based AppId.  */
-    if (!(asd->scan_flags & SCAN_HOST_PORT_FLAG))
-    {
-        HostPortVal* hv = nullptr;
-        uint16_t port = 0;
-        const SfIp* ip = nullptr;
-
-        asd->scan_flags |= SCAN_HOST_PORT_FLAG;
-        if (direction == APP_ID_FROM_INITIATOR)
-        {
-            ip = p->ptrs.ip_api.get_dst();
-            port = p->ptrs.dp;
-        }
-        else
-        {
-            ip = p->ptrs.ip_api.get_src();
-            port = p->ptrs.sp;
-        }
-
-        if ((hv = HostPortCache::find(ip, port, protocol)))
-        {
-            switch (hv->type)
-            {
-            case 1:
-                asd->client_app_id = hv->appId;
-                asd->client_disco_state = APPID_DISCO_STATE_FINISHED;
-                break;
-            case 2:
-                asd->payload_app_id = hv->appId;
-                break;
-            default:
-                asd->serviceAppId = hv->appId;
-                asd->sync_with_snort_id(hv->appId, p);
-                asd->service_disco_state = APPID_DISCO_STATE_FINISHED;
-                asd->client_disco_state = APPID_DISCO_STATE_FINISHED;
-                asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED);
-                if (thirdparty_appid_module)
-                    thirdparty_appid_module->session_delete(asd->tpsession, 1);
-                asd->tpsession = nullptr;
-            }
-        }
-    }
+    if ( !(asd->scan_flags & SCAN_HOST_PORT_FLAG) )
+        lookup_appid_by_host_port(asd, p, protocol, direction);
 
     asd->check_app_detection_restart();
 
@@ -731,10 +746,10 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
         // All protocols other than TCP and UDP come straight here.
         default:
         {
-            asd->portServiceAppId = asd->config->get_port_service_id(protocol, p->ptrs.sp);
+            asd->port_service_id = asd->config->get_port_service_id(protocol, p->ptrs.sp);
             if (asd->session_logging_enabled)
                 LogMessage("AppIdDbg %s port service %d\n",
-                    asd->session_logging_id, asd->portServiceAppId);
+                    asd->session_logging_id, asd->port_service_id);
             asd->set_session_flags(APPID_SESSION_PORT_SERVICE_DONE);
         }
         break;
@@ -746,7 +761,7 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
      *  - Port service didn't find anything (and we haven't yet either).
      *  - We haven't hit the max packets allowed for detector sequence matches.
      *  - Packet has data (we'll ignore 0-sized packets in sequencing). */
-    if ( (asd->portServiceAppId <= APP_ID_NONE)
+    if ( (asd->port_service_id <= APP_ID_NONE)
         && (asd->length_sequence.sequence_cnt < LENGTH_SEQUENCE_CNT_MAX)
         && (p->dsize > 0))
     {
@@ -755,8 +770,8 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
         asd->length_sequence.sequence_cnt++;
         asd->length_sequence.sequence[index].direction = direction;
         asd->length_sequence.sequence[index].length    = p->dsize;
-        asd->portServiceAppId = find_length_app_cache(&asd->length_sequence);
-        if (asd->portServiceAppId > APP_ID_NONE)
+        asd->port_service_id = find_length_app_cache(&asd->length_sequence);
+        if (asd->port_service_id > APP_ID_NONE)
             asd->set_session_flags(APPID_SESSION_PORT_SERVICE_DONE);
     }
 
@@ -764,16 +779,17 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
     if (asd->get_session_flags(APPID_SESSION_REXEC_STDERR))
     {
         ServiceDiscovery::get_instance().identify_service(asd, p, direction);
-        if (asd->serviceAppId == APP_ID_DNS &&
+        if (asd->service_app_id == APP_ID_DNS &&
             asd->config->mod_config->dns_host_reporting &&
             asd->dsession && asd->dsession->host )
         {
             size_t size = asd->dsession->host_len;
+            AppId client_app_id = APP_ID_NONE, payload_app_id = APP_ID_NONE;
             dns_host_scan_hostname((const uint8_t*)asd->dsession->host, size,
                 &client_app_id, &payload_app_id);
             asd->set_client_app_id_data(client_app_id, nullptr);
         }
-        else if (asd->serviceAppId == APP_ID_RTMP)
+        else if (asd->service_app_id == APP_ID_RTMP)
             asd->examine_rtmp_metadata();
         else if (asd->get_session_flags(APPID_SESSION_SSL_SESSION) && asd->tsession)
             asd->examine_ssl_metadata(p);
@@ -781,12 +797,12 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
     // FIXIT-M - snort 2.x has added a check for midstream pickup to this if, do we need that?
     else if (protocol != IpProtocol::TCP || !p->dsize || (p->packet_flags & PKT_STREAM_ORDER_OK))
     {
-        // FIXIT-M commented out assignment causes analysis warning
-        /*isTpAppidDiscoveryDone = */
-        ServiceDiscovery::get_instance().do_service_discovery(*asd, protocol, direction,
-            client_app_id, payload_app_id, p);
-        isTpAppidDiscoveryDone = ClientDiscovery::get_instance().do_client_discovery(*asd,
-            direction, p);
+        if (asd->service_disco_state != APPID_DISCO_STATE_FINISHED)
+            isTpAppidDiscoveryDone =
+                ServiceDiscovery::get_instance().do_service_discovery(*asd, p, direction);
+        if (asd->client_disco_state != APPID_DISCO_STATE_FINISHED)
+            isTpAppidDiscoveryDone =
+                ClientDiscovery::get_instance().do_client_discovery(*asd, p, direction);
         asd->set_session_flags(APPID_SESSION_ADDITIONAL_PACKET);
     }
     else
@@ -799,35 +815,34 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
         }
     }
 
-    AppId serviceAppId = asd->pick_service_app_id();
-    payload_app_id = asd->pick_payload_app_id();
+    AppId service_app_id = asd->pick_service_app_id();
+    AppId payload_app_id = asd->pick_payload_app_id();
 
-    if (serviceAppId > APP_ID_NONE)
+    if (service_app_id > APP_ID_NONE)
     {
         if (asd->get_session_flags(APPID_SESSION_DECRYPTED))
         {
             if (asd->misc_app_id == APP_ID_NONE)
-                asd->update_encrypted_app_id(serviceAppId);
+                asd->update_encrypted_app_id(service_app_id);
         }
 // FIXIT-M Need to determine what api to use for this _dpd function
 #if 1
         UNUSED(isTpAppidDiscoveryDone);
 #else
-        else if (isTpAppidDiscoveryDone && isSslServiceAppId(serviceAppId) &&
+        else if (isTpAppidDiscoveryDone && isSslServiceAppId(service_app_id) &&
             _dpd.isSSLPolicyEnabled(nullptr))
             asd->set_session_flags(APPID_SESSION_CONTINUE);
 #endif
     }
 
-    p->flow->set_application_ids(serviceAppId, asd->pick_client_app_id(), payload_app_id,
+    p->flow->set_application_ids(service_app_id, asd->pick_client_app_id(), payload_app_id,
         asd->pick_misc_app_id());
 
     /* Set the field that the Firewall queries to see if we have a search engine. */
     if (asd->search_support_type == UNKNOWN_SEARCH_ENGINE && payload_app_id > APP_ID_NONE)
     {
         uint flags = AppInfoManager::get_instance().get_app_info_flags(payload_app_id,
-            APPINFO_FLAG_SEARCH_ENGINE |
-            APPINFO_FLAG_SUPPORTED_SEARCH);
+            APPINFO_FLAG_SEARCH_ENGINE | APPINFO_FLAG_SUPPORTED_SEARCH);
         asd->search_support_type =
             (flags & APPINFO_FLAG_SEARCH_ENGINE) ?
             ((flags & APPINFO_FLAG_SUPPORTED_SEARCH) ? SUPPORTED_SEARCH_ENGINE :
@@ -849,19 +864,19 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
         }
     }
 
-    if ( serviceAppId !=  APP_ID_NONE )
+    if ( service_app_id !=  APP_ID_NONE )
     {
-        if ( payload_app_id != APP_ID_NONE && payload_app_id != asd->pastIndicator)
+        if ( payload_app_id != APP_ID_NONE && payload_app_id != asd->past_indicator)
         {
-            asd->pastIndicator = payload_app_id;
+            asd->past_indicator = payload_app_id;
             check_session_for_AF_indicator(p, direction, (ApplicationId)payload_app_id);
         }
 
-        if (asd->payload_app_id == APP_ID_NONE && asd->pastForecast != serviceAppId &&
-            asd->pastForecast != APP_ID_UNKNOWN)
+        if (asd->payload_app_id == APP_ID_NONE && asd->past_forecast != service_app_id &&
+            asd->past_forecast != APP_ID_UNKNOWN)
         {
-            asd->pastForecast = check_session_for_AF_forecast(asd, p, direction,
-                (ApplicationId)serviceAppId);
+            asd->past_forecast = check_session_for_AF_forecast(asd, p, direction,
+                (ApplicationId)service_app_id);
         }
     }
 }

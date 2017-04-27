@@ -40,11 +40,6 @@ ClientDetector::ClientDetector()
     flow_data_index = client_module_index++ | APPID_SESSION_DATA_CLIENT_MODSTATE_BIT;
 }
 
-int ClientDetector::validate(AppIdDiscoveryArgs&)
-{
-    return APPID_SUCCESS;
-}
-
 void ClientDetector::register_appid(AppId appId, unsigned extractsInfo)
 {
     AppInfoTableEntry* pEntry = AppInfoManager::get_instance().get_app_info_entry(appId);

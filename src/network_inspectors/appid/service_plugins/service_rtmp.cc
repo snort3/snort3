@@ -25,6 +25,7 @@
 
 #include "service_rtmp.h"
 
+#include "appid_http_session.h"
 #include "appid_module.h"
 #include "app_info_table.h"
 
@@ -418,38 +419,34 @@ parse_rtmp_message_fail:
 int RtmpServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     ServiceRTMPData* ss;
-    AppIdSession* asd = args.asd;
-    const uint8_t* data = args.data;
-    const int dir = args.dir;
-    uint16_t size = args.size;
 
-    if (!size)
+    if (!args.size)
         goto inprocess;
 
-    ss = (ServiceRTMPData*)data_get(asd);
+    ss = (ServiceRTMPData*)data_get(args.asd);
     if (!ss)
     {
         ss = (ServiceRTMPData*)snort_calloc(sizeof(ServiceRTMPData));
-        data_add(asd, ss, &rtmp_free);
+        data_add(args.asd, ss, &rtmp_free);
     }
 
     /* Client -> Server */
-    if (dir == APP_ID_FROM_INITIATOR)
+    if (args.dir == APP_ID_FROM_INITIATOR)
     {
         /* Consume this packet. */
-        while (size > 0)
+        while (args.size > 0)
         {
             switch (ss->client_state)
             {
             case RTMP_STATE_INIT:
                 /* C0 is just a version number.  Must be valid. */
-                if (*data != RTMP_VER_3)
+                if (*args.data != RTMP_VER_3)
                 {
                     goto fail;
                 }
                 ss->client_state = RTMP_STATE_SENT_HANDSHAKE0;
-                data += 1;
-                size -= 1;
+                args.data += 1;
+                args.size -= 1;
                 break;
 
             case RTMP_STATE_SENT_HANDSHAKE0:
@@ -459,18 +456,18 @@ int RtmpServiceDetector::validate(AppIdDiscoveryArgs& args)
             /* fall through */
 
             case RTMP_STATE_SENDING_HANDSHAKE1:
-                if (size < ss->client_bytes_left)
+                if (args.size < ss->client_bytes_left)
                 {
                     /* We've still got more to get next time around. */
-                    ss->client_bytes_left -= size;
-                    size = 0;
+                    ss->client_bytes_left -= args.size;
+                    args.size = 0;
                 }
                 else
                 {
                     /* We've gotten all of the bytes that we wanted. */
                     ss->client_state = RTMP_STATE_SENT_HANDSHAKE1;
-                    data += ss->client_bytes_left;
-                    size -= ss->client_bytes_left;
+                    args.data += ss->client_bytes_left;
+                    args.size -= ss->client_bytes_left;
                 }
                 break;
 
@@ -486,23 +483,23 @@ int RtmpServiceDetector::validate(AppIdDiscoveryArgs& args)
             /* fall through */
 
             case RTMP_STATE_SENDING_HANDSHAKE2:
-                if (size < ss->client_bytes_left)
+                if (args.size < ss->client_bytes_left)
                 {
                     /* We've still got more to get next time around. */
-                    ss->client_bytes_left -= size;
-                    size = 0;
+                    ss->client_bytes_left -= args.size;
+                    args.size = 0;
                 }
                 else
                 {
                     /* We've gotten all of the bytes that we wanted. */
                     ss->client_state = RTMP_STATE_SENT_HANDSHAKE2;
-                    data += ss->client_bytes_left;
-                    size -= ss->client_bytes_left;
+                    args.data += ss->client_bytes_left;
+                    args.size -= ss->client_bytes_left;
                 }
                 break;
 
             case RTMP_STATE_SENT_HANDSHAKE2:
-                if (parse_rtmp_message(&data, &size, ss))
+                if (parse_rtmp_message(&args.data, &args.size, ss))
                 {
                     /* Got our connect command.  We're done. */
                     ss->client_state = RTMP_STATE_DONE;
@@ -516,7 +513,7 @@ int RtmpServiceDetector::validate(AppIdDiscoveryArgs& args)
 
             case RTMP_STATE_DONE:
                 /* We're done with client, so just blindly consume all data. */
-                size = 0;
+                args.size = 0;
                 break;
 
             default:
@@ -525,10 +522,10 @@ int RtmpServiceDetector::validate(AppIdDiscoveryArgs& args)
         }
     }
     /* Server -> Client */
-    else if (dir == APP_ID_FROM_RESPONDER)
+    else if (args.dir == APP_ID_FROM_RESPONDER)
     {
         /* Consume this packet. */
-        while (size > 0)
+        while (args.size > 0)
         {
             switch (ss->server_state)
             {
@@ -539,13 +536,13 @@ int RtmpServiceDetector::validate(AppIdDiscoveryArgs& args)
                     goto fail;
                 }
                 /* S0 is just a version number.  Must be valid. */
-                if (*data != RTMP_VER_3)
+                if (*args.data != RTMP_VER_3)
                 {
                     goto fail;
                 }
                 ss->server_state = RTMP_STATE_SENT_HANDSHAKE0;
-                data += 1;
-                size -= 1;
+                args.data += 1;
+                args.size -= 1;
                 break;
 
             case RTMP_STATE_SENT_HANDSHAKE0:
@@ -555,18 +552,18 @@ int RtmpServiceDetector::validate(AppIdDiscoveryArgs& args)
             /* fall through */
 
             case RTMP_STATE_SENDING_HANDSHAKE1:
-                if (size < ss->server_bytes_left)
+                if (args.size < ss->server_bytes_left)
                 {
                     /* We've still got more to get next time around. */
-                    ss->server_bytes_left -= size;
-                    size = 0;
+                    ss->server_bytes_left -= args.size;
+                    args.size = 0;
                 }
                 else
                 {
                     /* We've gotten all of the bytes that we wanted. */
                     ss->server_state = RTMP_STATE_SENT_HANDSHAKE1;
-                    data += ss->server_bytes_left;
-                    size -= ss->server_bytes_left;
+                    args.data += ss->server_bytes_left;
+                    args.size -= ss->server_bytes_left;
                 }
                 break;
 
@@ -582,19 +579,19 @@ int RtmpServiceDetector::validate(AppIdDiscoveryArgs& args)
             /* fall through */
 
             case RTMP_STATE_SENDING_HANDSHAKE2:
-                if (size < ss->server_bytes_left)
+                if (args.size < ss->server_bytes_left)
                 {
                     /* We've still got more to get next time around. */
-                    ss->server_bytes_left -= size;
-                    size = 0;
+                    ss->server_bytes_left -= args.size;
+                    args.size = 0;
                     break;        /* Not done yet. */
                 }
                 else
                 {
                     /* We've gotten all of the bytes that we wanted. */
                     ss->server_state = RTMP_STATE_SENT_HANDSHAKE2;
-                    data += ss->server_bytes_left;
-                    size -= ss->server_bytes_left;
+                    args.data += ss->server_bytes_left;
+                    args.size -= ss->server_bytes_left;
                 }
             /* fall through */
 
@@ -605,7 +602,7 @@ int RtmpServiceDetector::validate(AppIdDiscoveryArgs& args)
 
             case RTMP_STATE_DONE:
                 /* We're done with server, so just blindly consume all data. */
-                size = 0;
+                args.size = 0;
                 break;
 
             default:
@@ -622,52 +619,53 @@ int RtmpServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
 
     /* Give up if it's taking us too long to figure out this thing. */
-    if (asd->session_packet_count >= asd->config->mod_config->rtmp_max_packets)
+    if (args.asd->session_packet_count >= args.asd->config->mod_config->rtmp_max_packets)
     {
         goto fail;
     }
 
 inprocess:
-    service_inprocess(asd, args.pkt, dir);
+    service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 
 fail:
     snort_free(ss->swfUrl);
     snort_free(ss->pageUrl);
     ss->swfUrl = ss->pageUrl = nullptr;
-    fail_service(asd, args.pkt, dir);
+    fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 
 success:
     if (ss->swfUrl != nullptr)
     {
-        if (!asd->hsession)
-            asd->hsession = (HttpSession*)snort_calloc(sizeof(HttpSession));
+        if (!args.asd->hsession)
+            args.asd->hsession = new AppIdHttpSession(args.asd);
 
-        if (asd->hsession->url == nullptr)
+        if (args.asd->hsession->url == nullptr)
         {
-            asd->hsession->url = ss->swfUrl;
-            asd->scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
+            args.asd->hsession->url = ss->swfUrl;
+            args.asd->scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
         }
         else
             snort_free(ss->swfUrl);
 
         ss->swfUrl = nullptr;
     }
+
     if (ss->pageUrl != nullptr)
     {
-        if (!asd->hsession)
-            asd->hsession = (HttpSession*)snort_calloc(sizeof(HttpSession));
+        if (!args.asd->hsession)
+            args.asd->hsession = new AppIdHttpSession(args.asd);
 
-        if (!asd->config->mod_config->referred_appId_disabled &&
-            (asd->hsession->referer == nullptr))
-            asd->hsession->referer = ss->pageUrl;
+        if (!args.asd->config->mod_config->referred_appId_disabled &&
+            (args.asd->hsession->referer == nullptr))
+            args.asd->hsession->referer = ss->pageUrl;
         else
             snort_free(ss->pageUrl);
 
         ss->pageUrl = nullptr;
     }
-    add_service(asd, args.pkt, dir, APP_ID_RTMP, nullptr, nullptr, nullptr);
+    add_service(args.asd, args.pkt, args.dir, APP_ID_RTMP, nullptr, nullptr, nullptr);
     appid_stats.rtmp_flows++;
     return APPID_SUCCESS;
 }

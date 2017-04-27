@@ -201,7 +201,7 @@ int AimClientDetector::validate(AppIdDiscoveryArgs& args)
                         char username[USERNAME_LEN];
 
                         if ( check_username(cur, tlv, username, username + USERNAME_LEN) )
-                            add_user(args.asd, username, APP_ID_AOL_INSTANT_MESSENGER, 1);
+                            add_user(args.asd, username, APP_ID_AOL_INSTANT_MESSENGER, true);
                     }
                     break;
                 case 0x0003:
@@ -241,7 +241,7 @@ int AimClientDetector::validate(AppIdDiscoveryArgs& args)
     return APPID_INPROCESS;
 
 bail:
-    args.asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+    args.asd->set_client_detected();
     return APPID_SUCCESS;
 }
 

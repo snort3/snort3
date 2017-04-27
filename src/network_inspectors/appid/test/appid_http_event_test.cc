@@ -37,29 +37,11 @@
 #include "service_inspectors/http_inspect/http_msg_header.h"
 #include "thirdparty_appid_api.h"
 
-AppIdConfig* pAppidActiveConfig = nullptr;
+#include "appid_mock_definitions.h"
+#include "appid_mock_http_session.h"
+#include "appid_mock_session.h"
+
 AppIdApi appid_api;
-THREAD_LOCAL ThirdPartyAppIDModule* thirdparty_appid_module = nullptr;
-
-char* snort_strndup(const char* src, size_t dst_size)
-{
-    return strndup(src, dst_size);
-}
-
-char* snort_strdup(const char* src)
-{
-    return strdup(src);
-}
-
-FlowData::FlowData(unsigned, Inspector*)
-{
-}
-
-FlowData::~FlowData()
-{
-}
-
-void Flow::set_application_ids(AppId, AppId, AppId, AppId) { }
 
 const char* content_type = nullptr;
 const char* cookie = nullptr;
@@ -73,91 +55,10 @@ const char* uri = nullptr;
 const char* useragent = nullptr;
 const char* via = nullptr;
 
-void Field::set(int32_t length, const uint8_t* start, bool own_the_buffer_)
-{
-    strt = start;
-    len = length;
-    own_the_buffer = own_the_buffer_;
-}
-
-Field global_field;
-
 class FakeHttpMsgHeader
 {
 };
-
-unsigned AppIdSession::flow_id = 0;
-AppIdSession* fake_session = nullptr;
 FakeHttpMsgHeader* fake_msg_header = nullptr;
-
-AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t) : FlowData(flow_id, nullptr)
-{
-    hsession = nullptr;
-}
-
-AppIdSession::~AppIdSession()
-{
-    if (!hsession)
-        return;
-
-    if (hsession->content_type)
-        snort_free(hsession->content_type);
-    if (hsession->cookie)
-        snort_free(hsession->cookie);
-    if (hsession->host)
-        snort_free(hsession->host);
-    if (hsession->location)
-        snort_free(hsession->location);
-    if (hsession->referer)
-        snort_free(hsession->referer);
-    if (hsession->response_code)
-        free(hsession->response_code);
-    if (hsession->server)
-        snort_free(hsession->server);
-    if (hsession->uri)
-        snort_free(hsession->uri);
-    if (hsession->url)
-        snort_free(hsession->url);
-    if (hsession->useragent)
-        snort_free(hsession->useragent);
-    if (hsession->via)
-        snort_free(hsession->via);
-    if (hsession->x_working_with)
-        snort_free(hsession->x_working_with);
-
-    snort_free(hsession);
-}
-
-int AppIdSession::process_http_packet(int)
-{
-    return 0;
-}
-
-AppId AppIdSession::pick_service_app_id()
-{
-    return 0;
-}
-
-AppId AppIdSession::pick_client_app_id()
-{
-    return 0;
-}
-
-AppId AppIdSession::pick_payload_app_id()
-{
-    return 0;
-}
-
-AppId AppIdSession::pick_misc_app_id()
-{
-    return 0;
-}
-
-AppIdSession* AppIdApi::get_appid_data(Flow*)
-{
-    mock().actualCall("get_appid_data");
-    return fake_session;
-}
 
 const uint8_t* HttpEvent::get_content_type(int32_t& length)
 {
@@ -259,66 +160,56 @@ bool HttpEvent::contains_webdav_method()
     return true;
 }
 
-Flow::Flow() { }
-Flow::~Flow() { }
+Flow* flow = nullptr;
+AppIdSession* mock_session = nullptr;
 
-class FakeFlow : public Flow
+AppIdSession* AppIdApi::get_appid_data(Flow*)
 {
-};
-
-#ifdef DEBUG_MSGS
-void Debug::print(const char*, int, uint64_t, const char*, ...) { }
-#endif
+    mock().actualCall("get_appid_data");
+    return mock_session;
+}
 
 TEST_GROUP(appid_http_event)
 {
     void setup()
     {
+        MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
+        flow = new Flow;
+        mock_session = new AppIdSession(IpProtocol::TCP, nullptr, 1492);
+        flow->set_flow_data(mock_session);
         appid_stats.http_flows = 0;
     }
 
     void teardown()
     {
         fake_msg_header = nullptr;
-        fake_session = nullptr;
+        delete mock_session;
+        delete flow;
         mock().clear();
+        MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };
 
 TEST(appid_http_event, handle_null_appid_data)
 {
-    FakeFlow flow;
     HttpEvent event(nullptr);
     HttpEventHandler event_handler(HttpEventHandler::REQUEST_EVENT);
     mock().expectOneCall("get_appid_data");
-    event_handler.handle(event, &flow);
+    event_handler.handle(event, flow);
     mock().checkExpectations();
 }
 
 TEST(appid_http_event, handle_null_msg_header)
 {
-    FakeFlow flow;
     HttpEvent event(nullptr);
-    AppIdSession session(IpProtocol::TCP, nullptr, 1492);
     HttpEventHandler event_handler(HttpEventHandler::REQUEST_EVENT);
-    fake_session = &session;
 
     mock().strictOrder();
     mock().expectOneCall("get_appid_data");
-    event_handler.handle(event, &flow);
+    event_handler.handle(event, flow);
     mock().checkExpectations();
 }
 
-const char* CONTENT_TYPE = "html/text";
-const char* COOKIE = "this is my request cookie content";
-const char* HOST = "www.google.com";
-const char* LOCATION = "abc.yahoo.com";
-const char* URI = "/path/to/index.html";
-const char* USERAGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X)";
-const char* REFERER = "http://www.yahoo.com/search";
-const char* SERVER = "Apache";
-const char* X_WORKING_WITH = "working with string";
-const char* VIA = "via string";
 #define RESPONSE_CODE 301
 
 struct TestData
@@ -341,12 +232,9 @@ struct TestData
 
 void run_event_handler(TestData test_data, TestData* expect_data = nullptr)
 {
-    FakeFlow flow;
     HttpEvent event(nullptr);
-    AppIdSession session(IpProtocol::TCP, nullptr, 1492);
     FakeHttpMsgHeader http_msg_header;
     HttpEventHandler event_handler(test_data.type);
-    fake_session = &session;
     fake_msg_header = &http_msg_header;
 
     host = test_data.host;
@@ -366,26 +254,27 @@ void run_event_handler(TestData test_data, TestData* expect_data = nullptr)
 
     mock().strictOrder();
     mock().expectOneCall("get_appid_data");
-    event_handler.handle(event, &flow);
-    LONGS_EQUAL(expect_data->scan_flags, session.scan_flags);
+    event_handler.handle(event, flow);
+    LONGS_EQUAL(expect_data->scan_flags, mock_session->scan_flags);
     LONGS_EQUAL(expect_data->http_flows, appid_stats.http_flows);
-    STRCMP_EQUAL(expect_data->host, session.hsession->host);
-    STRCMP_EQUAL(expect_data->uri, session.hsession->uri);
-    STRCMP_EQUAL(expect_data->content_type, session.hsession->content_type);
-    STRCMP_EQUAL(expect_data->cookie, session.hsession->cookie);
-    STRCMP_EQUAL(expect_data->location, session.hsession->location);
-    STRCMP_EQUAL(expect_data->referer, session.hsession->referer);
-    STRCMP_EQUAL(expect_data->server, session.hsession->server);
-    STRCMP_EQUAL(expect_data->x_working_with, session.hsession->x_working_with);
-    STRCMP_EQUAL(expect_data->useragent, session.hsession->useragent);
-    STRCMP_EQUAL(expect_data->via, session.hsession->via);
-    if (nullptr == session.hsession->response_code)
+    STRCMP_EQUAL(expect_data->host, mock_session->hsession->host);
+    STRCMP_EQUAL(expect_data->uri, mock_session->hsession->uri);
+    STRCMP_EQUAL(expect_data->content_type, mock_session->hsession->content_type);
+    STRCMP_EQUAL(expect_data->cookie, mock_session->hsession->cookie);
+    STRCMP_EQUAL(expect_data->location, mock_session->hsession->location);
+    STRCMP_EQUAL(expect_data->referer, mock_session->hsession->referer);
+    STRCMP_EQUAL(expect_data->server, mock_session->hsession->server);
+    STRCMP_EQUAL(expect_data->x_working_with, mock_session->hsession->x_working_with);
+    STRCMP_EQUAL(expect_data->useragent, mock_session->hsession->useragent);
+    STRCMP_EQUAL(expect_data->via, mock_session->hsession->via);
+    if (nullptr == mock_session->hsession->response_code)
     {
         LONGS_EQUAL(0, expect_data->response_code);
     }
     else
     {
-        LONGS_EQUAL(expect_data->response_code, strtol(session.hsession->response_code, nullptr,
+        LONGS_EQUAL(expect_data->response_code, strtol(mock_session->hsession->response_code,
+            nullptr,
             10));
     }
     mock().checkExpectations();

@@ -287,7 +287,7 @@ int BootpServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
 
 success:
-    if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+    if (!asd->is_service_detected())
     {
         asd->set_session_flags(APPID_SESSION_CONTINUE);
         add_service(asd, args.pkt, args.dir, APP_ID_DHCP, nullptr, nullptr, nullptr);
@@ -296,14 +296,14 @@ success:
     return APPID_SUCCESS;
 
 inprocess:
-    if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+    if (!asd->is_service_detected())
     {
         service_inprocess(asd, args.pkt, args.dir);
     }
     return APPID_INPROCESS;
 
 fail:
-    if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+    if (!asd->is_service_detected())
     {
         fail_service(asd, args.pkt, args.dir);
     }
@@ -311,7 +311,7 @@ fail:
     return APPID_NOMATCH;
 
 not_compatible:
-    if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+    if (!asd->is_service_detected())
     {
         incompatible_data(asd, args.pkt, args.dir);
     }

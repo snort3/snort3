@@ -162,23 +162,6 @@ static int pattern_match(void* id, void* /*unused_tree*/, int match_end_pos, voi
     return 0;
 }
 
-static ClientAppMatch* find_detector_candidates(const Packet* pkt, IpProtocol protocol)
-{
-    ClientAppMatch* match_list = nullptr;
-    SearchTool* patterns;
-
-    if (protocol == IpProtocol::TCP)
-        patterns = ClientDiscovery::get_instance().tcp_patterns;
-    else
-        patterns = ClientDiscovery::get_instance().udp_patterns;
-
-    if (!patterns)
-        return nullptr;
-
-    patterns->find_all((char*)pkt->data, pkt->dsize, &pattern_match, false, (void*)&match_list);
-    return match_list;
-}
-
 static const ClientDetector* get_next_detector(ClientAppMatch** match_list)
 {
     ClientAppMatch* curr = nullptr;
@@ -193,12 +176,12 @@ static const ClientDetector* get_next_detector(ClientAppMatch** match_list)
     max_precedence = 0;
     while (curr)
     {
-        if (curr->count >= curr->detector->minimum_matches
+        if (curr->count >= curr->detector->get_minimum_matches()
             && ((curr->count > max_count)
-            || (curr->count == max_count && curr->detector->precedence > max_precedence)))
+            || (curr->count == max_count && curr->detector->get_precedence() > max_precedence)))
         {
             max_count = curr->count;
-            max_precedence = curr->detector->precedence;
+            max_precedence = curr->detector->get_precedence();
             max_curr = curr;
             max_prev = prev;
         }
@@ -238,43 +221,55 @@ static void free_matched_list(ClientAppMatch** match_list)
     *match_list = nullptr;
 }
 
-/**
- * The process to determine the running client app given the packet data.
- *
- * @param p packet to process
- */
-static void create_detector_candidates_list(Packet* p, const int /*direction*/, AppIdSession* asd)
+ClientAppMatch* ClientDiscovery::find_detector_candidates(const Packet* pkt, IpProtocol protocol)
+{
+    ClientAppMatch* match_list = nullptr;
+    SearchTool* patterns;
+
+    if (protocol == IpProtocol::TCP)
+        patterns = ClientDiscovery::get_instance().tcp_patterns;
+    else
+        patterns = ClientDiscovery::get_instance().udp_patterns;
+
+    if (!patterns)
+        return nullptr;
+
+    patterns->find_all((char*)pkt->data, pkt->dsize, &pattern_match, false, (void*)&match_list);
+    return match_list;
+}
+
+void ClientDiscovery::create_detector_candidates_list(AppIdSession& asd, Packet* p)
 {
     ClientAppMatch* match_list;
 
-    if ( !p->dsize || asd->client_detector != nullptr || asd->client_candidates.size() )
+    if ( !p->dsize || asd.client_detector != nullptr || asd.client_candidates.size() )
         return;
 
-    match_list = find_detector_candidates(p, asd->protocol);
-    while (asd->client_candidates.size() < MAX_CANDIDATE_CLIENTS)
+    match_list = find_detector_candidates(p, asd.protocol);
+    while ( asd.client_candidates.size() < MAX_CANDIDATE_CLIENTS )
     {
         ClientDetector* cd = const_cast<ClientDetector*>(get_next_detector(&match_list));
         if (!cd)
             break;
 
-        if ( asd->client_candidates.find(cd->name) == asd->client_candidates.end() )
-            asd->client_candidates[cd->name] = cd;
+        if ( asd.client_candidates.find(cd->get_name()) == asd.client_candidates.end() )
+            asd.client_candidates[cd->get_name()] = cd;
     }
 
     free_matched_list(&match_list);
 }
 
-int get_detector_candidates_list(Packet* p, int direction, AppIdSession* asd)
+int ClientDiscovery::get_detector_candidates_list(AppIdSession& asd, Packet* p, int direction)
 {
     if (direction == APP_ID_FROM_INITIATOR)
     {
         /* get out if we've already tried to validate a client app */
-        if (!asd->get_session_flags(APPID_SESSION_CLIENT_DETECTED))
-            create_detector_candidates_list(p, direction, asd);
+        if ( !asd.is_client_detected() )
+            create_detector_candidates_list(asd, p);
     }
-    else if ( asd->service_disco_state != APPID_DISCO_STATE_STATEFUL
-        && asd->get_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS))
-        create_detector_candidates_list(p, direction, asd);
+    else if ( asd.service_disco_state != APPID_DISCO_STATE_STATEFUL
+        && asd.get_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS) )
+        create_detector_candidates_list(asd, p);
 
     return APPID_SESSION_SUCCESS;
 }
@@ -289,7 +284,7 @@ int ClientDiscovery::exec_client_detectors(AppIdSession& asd, Packet* p, int dir
         ret = asd.client_detector->validate(disco_args);
         if (asd.session_logging_enabled)
             LogMessage("AppIdDbg %s %s client detector returned %d\n",
-                asd.session_logging_id, asd.client_detector->name.c_str(), ret);
+                asd.session_logging_id, asd.client_detector->get_name().c_str(), ret);
     }
     else
     {
@@ -299,7 +294,7 @@ int ClientDiscovery::exec_client_detectors(AppIdSession& asd, Packet* p, int dir
             int result = kv->second->validate(disco_args);
             if (asd.session_logging_enabled)
                 LogMessage("AppIdDbg %s %s client detector returned %d\n",
-                    asd.session_logging_id, kv->second->name.c_str(), result);
+                    asd.session_logging_id, kv->second->get_name().c_str(), result);
 
             if (result == APPID_SUCCESS)
             {
@@ -318,130 +313,125 @@ int ClientDiscovery::exec_client_detectors(AppIdSession& asd, Packet* p, int dir
     return ret;
 }
 
-bool ClientDiscovery::do_client_discovery(AppIdSession& asd, int direction, Packet* p)
+bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p, int direction)
 {
     bool isTpAppidDiscoveryDone = false;
     AppInfoTableEntry* entry;
 
-    if (asd.client_disco_state != APPID_DISCO_STATE_FINISHED)
+    Profile clientMatchPerfStats_profile_context(clientMatchPerfStats);
+    uint32_t prevRnaClientState = asd.client_disco_state;
+    bool was_http2 = asd.is_http2;
+    bool was_service = asd.is_service_detected();
+
+    if ( asd.client_disco_state == APPID_DISCO_STATE_NONE
+        && p->dsize && direction == APP_ID_FROM_INITIATOR )
     {
-        Profile clientMatchPerfStats_profile_context(clientMatchPerfStats);
-        uint32_t prevRnaClientState = asd.client_disco_state;
-        bool was_http2 = asd.is_http2;
-        bool was_service = asd.get_session_flags(APPID_SESSION_SERVICE_DETECTED) ? true : false;
-        //decision to directly call validator or go through elaborate service_state tracking
-        //is made once at the beginning of sesssion.
-        if (asd.client_disco_state == APPID_DISCO_STATE_NONE && p->dsize && direction ==
-            APP_ID_FROM_INITIATOR)
+        if ( p->flow->get_session_flags() & SSNFLAG_MIDSTREAM )
+            asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
+        else if ( is_third_party_appid_available(asd.tpsession)
+            && ( asd.tp_app_id > APP_ID_NONE && asd.tp_app_id < SF_APPID_MAX ) )
         {
-            if (p->flow->get_session_flags() & SSNFLAG_MIDSTREAM)
-                asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
-            else if (is_third_party_appid_available(asd.tpsession) && ( asd.tp_app_id >
-                APP_ID_NONE )
-                && ( asd.tp_app_id < SF_APPID_MAX ) )
-            {
-                entry = asd.app_info_mgr->get_app_info_entry(asd.tp_app_id);
-                if ( entry && entry->client_detector
-                    && ( ( entry->flags & APPINFO_FLAG_CLIENT_ADDITIONAL )
-                    || ( ( entry->flags & APPINFO_FLAG_CLIENT_USER)
-                    && asd.get_session_flags(APPID_SESSION_DISCOVER_USER) ) ) )
-                {
-                    //tp has positively identified appId, Dig deeper only if sourcefire
-                    // detector identifies additional information
-                    asd.client_detector = entry->client_detector;
-                    asd.client_disco_state = APPID_DISCO_STATE_DIRECT;
-                }
-                else
-                {
-                    asd.set_session_flags(APPID_SESSION_CLIENT_DETECTED);
-                    asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
-                }
-            }
-            else if (asd.get_session_flags(APPID_SESSION_HTTP_SESSION))
-                asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
-            else
-                asd.client_disco_state = APPID_DISCO_STATE_STATEFUL;
-        }
-        //stop rna inspection as soon as tp has classified a valid AppId later in the session
-        if ( (asd.client_disco_state == APPID_DISCO_STATE_STATEFUL ||
-              asd.client_disco_state == APPID_DISCO_STATE_DIRECT) &&
-              asd.client_disco_state == prevRnaClientState &&
-              !asd.get_session_flags( APPID_SESSION_NO_TPI)  &&
-              is_third_party_appid_available(asd.tpsession) &&
-              asd.tp_app_id > APP_ID_NONE && asd.tp_app_id < SF_APPID_MAX)
-        {
+            //tp has positively identified appId, Dig deeper only if sourcefire
+            // detector identifies additional information
             entry = asd.app_info_mgr->get_app_info_entry(asd.tp_app_id);
-            if (!(entry && entry->client_detector && entry->client_detector == asd.client_detector
-                && (entry->flags & (APPINFO_FLAG_CLIENT_ADDITIONAL | APPINFO_FLAG_CLIENT_USER))))
+            if ( entry && entry->client_detector
+                && ( ( entry->flags & ( APPINFO_FLAG_CLIENT_ADDITIONAL |
+                APPINFO_FLAG_CLIENT_USER ) )
+                && asd.get_session_flags(APPID_SESSION_DISCOVER_USER) ) )
             {
-                asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
-                asd.set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+                asd.client_detector = entry->client_detector;
+                asd.client_disco_state = APPID_DISCO_STATE_DIRECT;
             }
+            else
+            {
+                asd.set_client_detected();
+                asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
+            }
+        }
+        else if ( asd.get_session_flags(APPID_SESSION_HTTP_SESSION) )
+            asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
+        else
+            asd.client_disco_state = APPID_DISCO_STATE_STATEFUL;
+    }
+
+    //stop rna inspection as soon as tp has classified a valid AppId
+    if ( ( asd.client_disco_state == APPID_DISCO_STATE_STATEFUL ||
+        asd.client_disco_state == APPID_DISCO_STATE_DIRECT) &&
+        asd.client_disco_state == prevRnaClientState &&
+        !asd.get_session_flags(APPID_SESSION_NO_TPI)  &&
+        is_third_party_appid_available(asd.tpsession) &&
+        asd.tp_app_id > APP_ID_NONE && asd.tp_app_id < SF_APPID_MAX)
+    {
+        entry = asd.app_info_mgr->get_app_info_entry(asd.tp_app_id);
+        if ( !( entry && entry->client_detector
+            && entry->client_detector == asd.client_detector
+            && (entry->flags & (APPINFO_FLAG_CLIENT_ADDITIONAL | APPINFO_FLAG_CLIENT_USER) ) ) )
+        {
+            asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
+            asd.set_client_detected();
+        }
+    }
+
+    if ( asd.client_disco_state == APPID_DISCO_STATE_DIRECT )
+    {
+        int ret = APPID_INPROCESS;
+        if ( direction == APP_ID_FROM_INITIATOR )
+        {
+            /* get out if we've already tried to validate a client app */
+            if (!asd.is_client_detected() )
+                ret = exec_client_detectors(asd, p, direction);
+        }
+        else if ( asd.service_disco_state != APPID_DISCO_STATE_STATEFUL
+            && asd.get_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS) )
+        {
+            ret = exec_client_detectors(asd, p, direction);
         }
 
-        if (asd.client_disco_state == APPID_DISCO_STATE_DIRECT)
+        switch (ret)
         {
-            int ret = APPID_INPROCESS;
-            if (direction == APP_ID_FROM_INITIATOR)
+        case APPID_INPROCESS:
+            break;
+        default:
+            asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
+            break;
+        }
+    }
+    else if ( asd.client_disco_state == APPID_DISCO_STATE_STATEFUL )
+    {
+        get_detector_candidates_list(asd, p, direction);
+        isTpAppidDiscoveryDone = true;
+        if ( asd.client_candidates.size() )
+        {
+            int ret = 0;
+            if ( direction == APP_ID_FROM_INITIATOR )
             {
                 /* get out if we've already tried to validate a client app */
-                if (!asd.get_session_flags(APPID_SESSION_CLIENT_DETECTED))
-                {
+                if (!asd.is_client_detected())
                     ret = exec_client_detectors(asd, p, direction);
-                }
             }
-            else if (asd.service_disco_state != APPID_DISCO_STATE_STATEFUL
-                && asd.get_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS))
-            {
+            else if ( asd.service_disco_state != APPID_DISCO_STATE_STATEFUL
+                && asd.get_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS) )
                 ret = exec_client_detectors(asd, p, direction);
-            }
 
-            switch (ret)
+            if ( ret < 0 )
             {
-            case APPID_INPROCESS:
-                break;
-            default:
+                asd.set_client_detected();
                 asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
-                break;
             }
         }
-        else if (asd.client_disco_state == APPID_DISCO_STATE_STATEFUL)
+        else
         {
-            get_detector_candidates_list(p, direction, &asd);
-            isTpAppidDiscoveryDone = true;
-            if ( asd.client_candidates.size() )
-            {
-                int ret = 0;
-                if (direction == APP_ID_FROM_INITIATOR)
-                {
-                    /* get out if we've already tried to validate a client app */
-                    if (!asd.get_session_flags(APPID_SESSION_CLIENT_DETECTED))
-                        ret = exec_client_detectors(asd, p, direction);
-                }
-                else if (asd.service_disco_state != APPID_DISCO_STATE_STATEFUL
-                    && asd.get_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS))
-                    ret = exec_client_detectors(asd, p, direction);
-
-                if (ret < 0)
-                {
-                    asd.set_session_flags(APPID_SESSION_CLIENT_DETECTED);
-                    asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
-                }
-            }
-            else
-            {
-                asd.set_session_flags(APPID_SESSION_CLIENT_DETECTED);
-                asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
-            }
+            asd.set_client_detected();
+            asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
         }
-
-        if (asd.session_logging_enabled)
-            if (!was_http2 && asd.is_http2)
-                LogMessage("AppIdDbg %s Got a preface for HTTP/2\n", asd.session_logging_id);
-
-        if (!was_service && asd.get_session_flags(APPID_SESSION_SERVICE_DETECTED))
-            asd.sync_with_snort_id(asd.serviceAppId, p);
     }
+
+    if ( asd.session_logging_enabled )
+        if ( !was_http2 && asd.is_http2 )
+            LogMessage("AppIdDbg %s Got a preface for HTTP/2\n", asd.session_logging_id);
+
+    if ( !was_service && asd.is_service_detected() )
+        asd.sync_with_snort_id(asd.service_app_id, p);
 
     return isTpAppidDiscoveryDone;
 }

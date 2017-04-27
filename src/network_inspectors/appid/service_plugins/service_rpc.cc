@@ -34,8 +34,8 @@
 #endif
 
 #include "appid_module.h"
+#include "appid_inspector.h"
 #include "app_info_table.h"
-#include "service_util.h"
 #include "log/messages.h"
 #include "protocols/packet.h"
 
@@ -184,7 +184,7 @@ RpcServiceDetector::RpcServiceDetector(ServiceDiscovery* sd)
     struct rpcent* rpc;
     RPCProgram* prog;
 
-    app_id = add_appid_protocol_reference("sunrpc");
+    app_id = AppIdInspector::get_inspector()->add_appid_protocol_reference("sunrpc");
 
     if (!rpc_programs)
     {
@@ -452,8 +452,8 @@ int RpcServiceDetector::rpc_udp_validate(AppIdDiscoveryArgs& args)
 {
     static char subname[64];
     ServiceRPCData* rd;
-    RNAServiceSubtype sub;
-    RNAServiceSubtype* subtype;
+    AppIdServiceSubtype sub;
+    AppIdServiceSubtype* subtype;
     uint32_t program = 0;
     const char* pname = nullptr;
     int rval;
@@ -494,12 +494,12 @@ done:
     switch (rval)
     {
     case APPID_INPROCESS:
-        if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+        if (!asd->is_service_detected())
             service_inprocess(asd, pkt, dir);
         return APPID_INPROCESS;
 
     case APPID_SUCCESS:
-        if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+        if (!asd->is_service_detected())
         {
             if (pname && *pname)
             {
@@ -524,7 +524,7 @@ done:
         return APPID_SUCCESS;
 
     case APPID_NOT_COMPATIBLE:
-        if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+        if (!asd->is_service_detected())
         {
             incompatible_data(asd, pkt, dir);
         }
@@ -532,7 +532,7 @@ done:
         return APPID_NOT_COMPATIBLE;
 
     case APPID_NOMATCH:
-        if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+        if (!asd->is_service_detected())
         {
             fail_service(asd, pkt, dir);
         }
@@ -555,8 +555,8 @@ int RpcServiceDetector::rpc_tcp_validate(AppIdDiscoveryArgs& args)
     const ServiceRPCReply* reply;
 
     static char subname[64];
-    RNAServiceSubtype sub;
-    RNAServiceSubtype* subtype;
+    AppIdServiceSubtype sub;
+    AppIdServiceSubtype* subtype;
     uint32_t program = 0;
     const char* pname = nullptr;
 
@@ -856,12 +856,12 @@ done:
     {
     case APPID_INPROCESS:
 inprocess:
-        if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+        if (!asd->is_service_detected())
             service_inprocess(asd, pkt, dir);
         return APPID_INPROCESS;
 
     case APPID_SUCCESS:
-        if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+        if (!asd->is_service_detected())
         {
             if (pname && *pname)
             {
@@ -885,14 +885,14 @@ inprocess:
         return APPID_SUCCESS;
 
     case APPID_NOT_COMPATIBLE:
-        if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+        if (!asd->is_service_detected())
             incompatible_data(asd, pkt, dir);
         asd->clear_session_flags(APPID_SESSION_CONTINUE);
         return APPID_NOT_COMPATIBLE;
 
     case APPID_NOMATCH:
 fail:
-        if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+        if (!asd->is_service_detected())
             fail_service(asd, pkt, dir);
         asd->clear_session_flags(APPID_SESSION_CONTINUE);
         return APPID_NOMATCH;

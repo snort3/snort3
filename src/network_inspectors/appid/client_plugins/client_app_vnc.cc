@@ -132,7 +132,7 @@ inprocess:
 
 done:
     add_app(args.asd, APP_ID_VNC_RFB, APP_ID_VNC, (const char*)fd->version);
-    args.asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+    args.asd->set_client_detected();
     appid_stats.vnc_clients++;
     return APPID_SUCCESS;
 }

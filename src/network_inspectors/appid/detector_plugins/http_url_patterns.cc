@@ -25,12 +25,12 @@
 
 #include "http_url_patterns.h"
 
+#include "appid_http_session.h"
 #include "appid_module.h"
 #include "app_info_table.h"
 #include "application_ids.h"
 #include "appid_session.h"
 #include "appid_utils/sf_mlmp.h"
-#include "service_plugins/service_util.h"
 #include "search_engines/search_tool.h"
 #include "log/messages.h"
 #include "protocols/packet.h"
@@ -308,60 +308,6 @@ static void destroy_host_url_patterns(HostUrlPatterns** pattern_list)
     *pattern_list = nullptr;
 }
 
-int HttpPatternMatchers::add_mlmp_pattern(void* matcher,
-    const uint8_t* host_pattern, int host_pattern_size, const uint8_t* path_pattern,
-    int path_pattern_size, const uint8_t* query_pattern, int query_pattern_size,
-    AppId appId, uint32_t payload_id, uint32_t service_id, uint32_t client_id, DHPSequence seq)
-{
-    tMlmpPattern patterns[PATTERN_PART_MAX];
-    int num_patterns;
-
-    if (!host_pattern)
-        return -1;
-
-    HostUrlDetectorPattern* detector =
-        (HostUrlDetectorPattern*)snort_calloc(sizeof(HostUrlDetectorPattern));
-    detector->host.pattern = (uint8_t*)snort_strdup((char*)host_pattern);
-
-    if (path_pattern)
-        detector->path.pattern = (uint8_t*)snort_strdup((char*)path_pattern);
-    else
-        detector->path.pattern = nullptr;
-
-    if (query_pattern)
-        detector->query.pattern = (uint8_t*)snort_strdup((char*)query_pattern);
-    else
-        detector->query.pattern = nullptr;
-
-    detector->host.patternSize = host_pattern_size;
-    detector->path.patternSize = path_pattern_size;
-    detector->query.patternSize = query_pattern_size;
-    detector->payload_id = payload_id;
-    detector->service_id = service_id;
-    detector->client_id = client_id;
-    detector->seq = seq;
-    detector->next = nullptr;
-    if (appId > APP_ID_NONE)
-        detector->appId = appId;
-    else if (payload_id > APP_ID_NONE)
-        detector->appId = payload_id;
-    else if (client_id > APP_ID_NONE)
-        detector->appId = client_id;
-    else
-        detector->appId = service_id;
-
-    num_patterns = parse_multiple_http_patterns((const char*)host_pattern, patterns,
-        PATTERN_PART_MAX, 0);
-    if (path_pattern)
-        num_patterns += parse_multiple_http_patterns((const char*)path_pattern, patterns +
-            num_patterns,
-            PATTERN_PART_MAX - num_patterns, 1);
-
-    patterns[num_patterns].pattern = nullptr;
-    add_host_url_pattern(detector, &host_url_patterns);
-    return mlmpAddPattern((tMlmpTree*)matcher, patterns, detector);
-}
-
 static void destroy_host_url_matcher(tMlmpTree** host_url_matcher)
 {
     if (host_url_matcher && *host_url_matcher)
@@ -371,12 +317,8 @@ static void destroy_host_url_matcher(tMlmpTree** host_url_matcher)
     }
 }
 
-static int match_query_elements(
-    tMlpPattern* packetData,
-    tMlpPattern* userPattern,
-    char* appVersion,
-    size_t appVersionSize
-    )
+static int match_query_elements(tMlpPattern* packetData, tMlpPattern* userPattern,
+    char* appVersion, size_t appVersionSize)
 {
     const uint8_t* index;
     const uint8_t* endKey;
@@ -474,8 +416,8 @@ void HttpPatternMatchers::free_http_elements(HTTPListElement* list)
     while ( (element = list) )
     {
         list = element->next;
-        if (element->detectorHTTPPattern.pattern)
-            snort_free(element->detectorHTTPPattern.pattern);
+        if (element->detector_http_pattern.pattern)
+            snort_free(element->detector_http_pattern.pattern);
         snort_free(element);
     }
 }
@@ -595,15 +537,69 @@ void HttpPatternMatchers::insert_app_url_pattern(DetectorAppUrlPattern* pattern)
     HttpPatternMatchers::insert_url_pattern(pattern);
 }
 
+int HttpPatternMatchers::add_mlmp_pattern(void* matcher, const uint8_t* host_pattern,
+    int host_pattern_size, const uint8_t* path_pattern, int path_pattern_size,
+    const uint8_t* query_pattern, int query_pattern_size, AppId appId, uint32_t payload_id,
+    uint32_t service_id, uint32_t client_id, DHPSequence seq)
+{
+    tMlmpPattern patterns[PATTERN_PART_MAX];
+    int num_patterns;
+
+    if (!host_pattern)
+        return -1;
+
+    HostUrlDetectorPattern* detector =
+        (HostUrlDetectorPattern*)snort_calloc(sizeof(HostUrlDetectorPattern));
+    detector->host.pattern = (uint8_t*)snort_strdup((char*)host_pattern);
+
+    if (path_pattern)
+        detector->path.pattern = (uint8_t*)snort_strdup((char*)path_pattern);
+    else
+        detector->path.pattern = nullptr;
+
+    if (query_pattern)
+        detector->query.pattern = (uint8_t*)snort_strdup((char*)query_pattern);
+    else
+        detector->query.pattern = nullptr;
+
+    detector->host.patternSize = host_pattern_size;
+    detector->path.patternSize = path_pattern_size;
+    detector->query.patternSize = query_pattern_size;
+    detector->payload_id = payload_id;
+    detector->service_id = service_id;
+    detector->client_id = client_id;
+    detector->seq = seq;
+    detector->next = nullptr;
+    if (appId > APP_ID_NONE)
+        detector->appId = appId;
+    else if (payload_id > APP_ID_NONE)
+        detector->appId = payload_id;
+    else if (client_id > APP_ID_NONE)
+        detector->appId = client_id;
+    else
+        detector->appId = service_id;
+
+    num_patterns = parse_multiple_http_patterns((const char*)host_pattern, patterns,
+        PATTERN_PART_MAX, 0);
+    if (path_pattern)
+        num_patterns += parse_multiple_http_patterns((const char*)path_pattern, patterns +
+            num_patterns,
+            PATTERN_PART_MAX - num_patterns, 1);
+
+    patterns[num_patterns].pattern = nullptr;
+    add_host_url_pattern(detector, &host_url_patterns);
+    return mlmpAddPattern((tMlmpTree*)matcher, patterns, detector);
+}
+
 int HttpPatternMatchers::process_mlmp_patterns()
 {
     for (auto* element = hostPayloadPatternList; element != 0; element = element->next)
     {
         if ( add_mlmp_pattern(host_url_matcher,
-            element->detectorHTTPPattern.pattern, element->detectorHTTPPattern.pattern_size,
-            nullptr, 0, nullptr, 0, element->detectorHTTPPattern.appId,
-            element->detectorHTTPPattern.payload, element->detectorHTTPPattern.service_id,
-            element->detectorHTTPPattern.client_app, element->detectorHTTPPattern.seq) < 0 )
+            element->detector_http_pattern.pattern, element->detector_http_pattern.pattern_size,
+            nullptr, 0, nullptr, 0, element->detector_http_pattern.appId,
+            element->detector_http_pattern.payload, element->detector_http_pattern.service_id,
+            element->detector_http_pattern.client_app, element->detector_http_pattern.seq) < 0 )
             return -1;
     }
 
@@ -782,8 +778,8 @@ static SearchTool* process_content_type_patterns(DetectorHTTPPattern* patternLis
 
     // Add patterns from Lua API
     for (HTTPListElement* element = luaPatternList; element; element = element->next)
-        patternMatcher->add(element->detectorHTTPPattern.pattern,
-            element->detectorHTTPPattern.pattern_size, &element->detectorHTTPPattern, false);
+        patternMatcher->add(element->detector_http_pattern.pattern,
+            element->detector_http_pattern.pattern_size, &element->detector_http_pattern, false);
 
     patternMatcher->prep();
 
@@ -844,7 +840,6 @@ static SearchTool* process_http_field_patterns(FieldPattern* patternList, size_t
     return patternMatcher;
 }
 
-// FIXIT-M - should only create Searchtool if there are patterns to process...
 static SearchTool* process_patterns(DetectorHTTPPattern* patternList, size_t patternListCount,
     size_t*, HTTPListElement* luaPatternList)
 {
@@ -854,10 +849,9 @@ static SearchTool* process_patterns(DetectorHTTPPattern* patternList, size_t pat
         patternMatcher->add(patternList[i].pattern, patternList[i].pattern_size,
             &patternList[i], false);
 
-    /* Add patterns from Lua API */
     for (HTTPListElement* element = luaPatternList; element != nullptr; element = element->next)
-        patternMatcher->add(element->detectorHTTPPattern.pattern,
-            element->detectorHTTPPattern.pattern_size, &element->detectorHTTPPattern, false);
+        patternMatcher->add(element->detector_http_pattern.pattern,
+            element->detector_http_pattern.pattern_size, &element->detector_http_pattern, false);
 
     patternMatcher->prep();
     return patternMatcher;
@@ -871,14 +865,10 @@ int HttpPatternMatchers::finalize()
     size_t vpc = 0;
     uint32_t numPatterns;
 
-    /*create via pattern matcher */
     numPatterns = sizeof(via_http_detector_patterns) / sizeof(*via_http_detector_patterns);
     via_matcher = process_patterns(via_http_detector_patterns,  numPatterns,  &vpc, nullptr);
-
-    /*create url pattern matcher */
     url_matcher = process_patterns(nullptr, 0, &upc, urlPatternList);
 
-    /*create client agent pattern matcher */
     numPatterns = sizeof(client_agent_patterns) / sizeof(*client_agent_patterns);
     client_agent_matcher = process_patterns(client_agent_patterns, numPatterns,
         &apc, clientAgentPatternList);
@@ -903,7 +893,7 @@ typedef struct fieldPatternData_t
 {
     const uint8_t* payload;
     unsigned length;
-    HttpSession* hsession;
+    AppIdHttpSession* hsession;
 } FieldPatternData;
 
 static int http_field_pattern_match(void* id, void*, int match_end_pos, void* data, void*)
@@ -927,7 +917,7 @@ static int http_field_pattern_match(void* id, void*, int match_end_pos, void* da
 }
 
 //  FIXIT-M: Is this still necessary now that we use inspection events?
-void HttpPatternMatchers::get_http_offsets(Packet* pkt, HttpSession* hsession)
+void HttpPatternMatchers::get_http_offsets(Packet* pkt, AppIdHttpSession* hsession)
 {
     constexpr auto MIN_HTTP_REQ_HEADER_SIZE = (sizeof("GET /\r\n\r\n") - 1);
     static const uint8_t crlfcrlf[] = "\r\n\r\n";
@@ -1113,6 +1103,18 @@ static void extract_chp(char* buf, int bs, int start, int psize, char* adata,  c
     *outbuf = snort_strndup(begin, end-begin);
 }
 
+void HttpPatternMatchers::free_matched_chp_actions(MatchedCHPAction* ma)
+{
+    MatchedCHPAction* tmp;
+
+    while (ma)
+    {
+        tmp = ma;
+        ma = ma->next;
+        snort_free(tmp);
+    }
+}
+
 void HttpPatternMatchers::scan_key_chp(PatternType ptype, char* buf, int buf_size,
     CHPTallyAndActions& match_tally)
 {
@@ -1122,7 +1124,7 @@ void HttpPatternMatchers::scan_key_chp(PatternType ptype, char* buf, int buf_siz
 
 AppId HttpPatternMatchers::scan_chp(PatternType ptype, char* buf, int buf_size,
     MatchedCHPAction* mp, char** version, char** user, char** new_field,
-    int* total_found, HttpSession* hsession, Packet*, AppIdModuleConfig* mod_config)
+    int* total_found, AppIdHttpSession* hsession, AppIdModuleConfig* mod_config)
 {
     MatchedCHPAction* second_sweep_for_inserts = nullptr;
     int do_not_further_modify_field = 0;
@@ -1139,7 +1141,7 @@ AppId HttpPatternMatchers::scan_chp(PatternType ptype, char* buf, int buf_size,
     if (!mp)
         return APP_ID_NONE;
 
-    if (mod_config->disable_safe_search)
+    if (!mod_config->safe_search_enabled)
         new_field = nullptr;
 
     for (tmp = mp; tmp; tmp = tmp->next)
@@ -1650,7 +1652,7 @@ int HttpPatternMatchers::get_appid_by_pattern(const uint8_t* data, unsigned size
             else
                 i = 0;
             temp_ver[i] = 0;
-            replace_optional_string(version,temp_ver);
+            replace_optional_string(version, temp_ver);
             free_matched_patterns(mp);
             return APP_ID_SQUID;
 
@@ -1686,7 +1688,7 @@ AppId HttpPatternMatchers::scan_header_x_working_with(const uint8_t* data, uint3
             temp_ver[i++] = (char)*data;
         }
         temp_ver[i] = 0;
-        replace_optional_string(version,temp_ver);
+        replace_optional_string(version, temp_ver);
         return APP_ID_ASPROXY;
     }
     return APP_ID_NONE;
@@ -1702,14 +1704,14 @@ AppId HttpPatternMatchers::get_appid_by_content_type(const uint8_t* data, int si
         return APP_ID_NONE;
 
     DetectorHTTPPattern* match = mp->mpattern;
-    AppId payloadId = match->appId;
+    AppId payload_id = match->appId;
 
     free_matched_patterns(mp);
 
-    return payloadId;
+    return payload_id;
 }
 
-AppId HttpPatternMatchers::get_appid_from_url(char* host, char* url, char** version,
+bool HttpPatternMatchers::get_appid_from_url(char* host, char* url, char** version,
     char* referer, AppId* ClientAppId, AppId* serviceAppId, AppId* payloadAppId,
     AppId* referredPayloadAppId, unsigned from_rtmp)
 {
@@ -1725,7 +1727,7 @@ AppId HttpPatternMatchers::get_appid_from_url(char* host, char* url, char** vers
     tMlpPattern query;
     HostUrlDetectorPattern* data;
     char* q;
-    int payload_found = 0;
+    bool payload_found = false;
     int url_len;
     static tMlmpTree* matcher;
 
@@ -1791,7 +1793,7 @@ AppId HttpPatternMatchers::get_appid_from_url(char* host, char* url, char** vers
     data = (HostUrlDetectorPattern*)mlmpMatchPatternUrl(matcher, patterns);
     if (data)
     {
-        payload_found = 1;
+        payload_found = true;
         if (url)
         {
             q = strchr(url, '?');
@@ -1805,7 +1807,7 @@ AppId HttpPatternMatchers::get_appid_from_url(char* host, char* url, char** vers
                 match_query_elements(&query, &data->query, temp_ver, MAX_VERSION_SIZE);
 
                 if (temp_ver[0] != 0)
-                    replace_optional_string(version,temp_ver);
+                    replace_optional_string(version, temp_ver);
             }
         }
 
@@ -1858,24 +1860,25 @@ AppId HttpPatternMatchers::get_appid_from_url(char* host, char* url, char** vers
                 if (payload_found)
                     *referredPayloadAppId = *payloadAppId;
                 else
-                    payload_found = 1;
+                    payload_found = true;
                 *payloadAppId = data->payload_id;
             }
         }
     }
+
     return payload_found;
 }
 
 void HttpPatternMatchers::get_server_vendor_version(const uint8_t* data, int len, char** version,
     char** vendor,
-    RNAServiceSubtype** subtype)
+    AppIdServiceSubtype** subtype)
 {
     int vendor_len = len;
 
     const uint8_t* ver = (const uint8_t*)memchr(data, '/', len);
     if (ver)
     {
-        RNAServiceSubtype* sub;
+        AppIdServiceSubtype* sub;
         int version_len = 0;
         int subver_len;
         const uint8_t* subname = nullptr;
@@ -1910,7 +1913,7 @@ void HttpPatternMatchers::get_server_vendor_version(const uint8_t* data, int len
                 {
                     if (subname && subname_len > 0 && subver && *subname)
                     {
-                        sub = (RNAServiceSubtype*)snort_calloc(sizeof(RNAServiceSubtype));
+                        sub = (AppIdServiceSubtype*)snort_calloc(sizeof(AppIdServiceSubtype));
                         char* tmp = (char*)snort_calloc(subname_len + 1);
                         memcpy(tmp, subname, subname_len);
                         tmp[subname_len] = 0;
@@ -1941,7 +1944,7 @@ void HttpPatternMatchers::get_server_vendor_version(const uint8_t* data, int len
         }
         if (subname && subname_len > 0 && subver && *subname)
         {
-            sub = (RNAServiceSubtype*)snort_calloc(sizeof(RNAServiceSubtype));
+            sub = (AppIdServiceSubtype*)snort_calloc(sizeof(AppIdServiceSubtype));
             char* tmp = (char*)snort_calloc(subname_len + 1);
             memcpy(tmp, subname, subname_len);
             tmp[subname_len] = 0;

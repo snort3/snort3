@@ -25,9 +25,9 @@
 
 #include "service_rshell.h"
 
+#include "appid_inspector.h"
 #include "appid_module.h"
 #include "app_info_table.h"
-#include "service_util.h"
 #include "protocols/packet.h"
 
 #define RSHELL_PORT  514
@@ -59,7 +59,7 @@ RshellServiceDetector::RshellServiceDetector(ServiceDiscovery* sd)
     name = "rshell";
     proto = IpProtocol::TCP;
     detectorType = DETECTOR_TYPE_DECODER;
-    app_id = add_appid_protocol_reference("rsh-error");
+    app_id = AppIdInspector::get_inspector()->add_appid_protocol_reference("rsh-error");
 
     appid_registry =
     {
@@ -273,7 +273,7 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
     case RSHELL_STATE_STDERR_CONNECT_SYN_ACK:
         if (rd->parent && rd->parent->state == RSHELL_STATE_SERVER_CONNECT)
             rd->parent->state = RSHELL_STATE_USERNAME;
-        asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED);
+        asd->set_service_detected();
         return APPID_SUCCESS;
     default:
         goto bail;

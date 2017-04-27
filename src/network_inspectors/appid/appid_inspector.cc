@@ -44,9 +44,11 @@
 #include "detector_plugins/detector_sip.h"
 #include "detector_plugins/detector_pattern.h"
 #include "log/messages.h"
+#include "main/snort_config.h"
 #include "managers/inspector_manager.h"
 #include "protocols/packet.h"
 #include "profiler/profiler.h"
+#include "target_based/snort_protocols.h"
 
 THREAD_LOCAL AppIdStatistics* appid_stats_manager = nullptr;
 
@@ -96,6 +98,16 @@ AppIdConfig* AppIdInspector::get_appid_config()
 AppIdStatistics* AppIdInspector::get_stats_manager()
 {
     return appid_stats_manager;
+}
+
+int16_t AppIdInspector::add_appid_protocol_reference(const char* protocol)
+{
+    static std::mutex apr_mutex;
+
+    apr_mutex.lock();
+    int16_t id = snort_conf->proto_ref->add(protocol);
+    apr_mutex.unlock();
+    return id;
 }
 
 bool AppIdInspector::configure(SnortConfig*)

@@ -27,6 +27,15 @@
 
 #include <string.h>
 
+#include "app_forecast.h"
+#include "appid_http_session.h"
+#include "appid_inspector.h"
+#include "app_info_table.h"
+#include "appid_module.h"
+#include "appid_stats.h"
+#include "appid_utils/ip_funcs.h"
+#include "service_plugins/service_ssl.h"
+#include "thirdparty_appid_utils.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "profiler/profiler.h"
@@ -36,24 +45,25 @@
 #include "target_based/snort_protocols.h"
 #include "time/packet_time.h"
 
-#include "appid_inspector.h"
-#include "app_forecast.h"
-#include "app_info_table.h"
-#include "appid_module.h"
-#include "appid_stats.h"
-#include "appid_utils/ip_funcs.h"
-#include "client_plugins/client_detector.h"
-#include "detector_plugins/detector_dns.h"
-#include "detector_plugins/http_url_patterns.h"
-#include "service_plugins/service_ssl.h"
-#include "service_plugins/service_util.h"
-#include "thirdparty_appid_utils.h"
-
-ProfileStats httpPerfStats;
-
 unsigned AppIdSession::flow_id = 0;
 THREAD_LOCAL AppIdFlowData* AppIdSession::fd_free_list = nullptr;
 THREAD_LOCAL uint32_t AppIdSession::appid_flow_data_id = 0;
+
+const uint8_t* service_strstr(const uint8_t* haystack, unsigned haystack_len,
+    const uint8_t* needle, unsigned needle_len)
+{
+    const uint8_t* h_end = haystack + haystack_len;
+
+    for (const uint8_t* p = haystack; h_end-p >= (int)needle_len; p++)
+    {
+        if (memcmp(p, needle, needle_len) == 0)
+        {
+            return p;
+        }
+    }
+
+    return nullptr;
+}
 
 void AppIdSession::set_session_logging_state(const Packet* pkt, int direction)
 {
@@ -102,7 +112,7 @@ AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto, 
     AppIdSession* asd = new AppIdSession(proto, ip, port);
 
     asd->flow = p->flow;
-    asd->stats.firstPktsecond = p->pkth->ts.tv_sec;
+    asd->stats.first_packet_second = p->pkth->ts.tv_sec;
     asd->set_session_logging_state(p, direction);
     asd->snort_id = snortId_for_unsynchronized;
     p->flow->set_flow_data(asd);
@@ -127,12 +137,11 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t port)
     length_sequence.sequence_cnt = 0;
     memset(length_sequence.sequence, '\0', sizeof(length_sequence.sequence));
     session_logging_id[0] = '\0';
-    http_matchers = HttpPatternMatchers::get_instance();
 }
 
 AppIdSession::~AppIdSession()
 {
-    if ( !in_expected_cache)
+    if ( !in_expected_cache )
     {
         AppIdStatistics* stats_mgr = AppIdInspector::get_inspector()->get_stats_manager();
         if ( stats_mgr )
@@ -144,19 +153,29 @@ AppIdSession::~AppIdSession()
         {
             ServiceDiscoveryState* sds =
                 AppIdServiceState::get(&service_ip, protocol, service_port, is_decrypted());
-            if( sds )
+            if ( sds )
             {
-                sds->invalid_client_count += STATE_ID_INCONCLUSIVE_SERVICE_WEIGHT;
                 if (flow->server_ip.fast_eq6(service_ip))
-                    sds->set_service_id_failed(this, &flow->client_ip);
+                    sds->set_service_id_failed(this, &flow->client_ip,
+                        STATE_ID_INCONCLUSIVE_SERVICE_WEIGHT);
                 else
-                    sds->set_service_id_failed(this, &flow->server_ip);
+                    sds->set_service_id_failed(this, &flow->server_ip,
+                        STATE_ID_INCONCLUSIVE_SERVICE_WEIGHT);
             }
         }
     }
 
-    delete_shared_data();
+    if (thirdparty_appid_module)
+    {
+        thirdparty_appid_module->session_delete(tpsession, 0);
+        tpsession = nullptr;
+    }
+
+    delete_session_data();
     free_flow_data();
+    service_candidates.clear();
+    client_candidates.clear();
+    snort_free(firewall_early_data);
 }
 
 // FIXIT-L X Move this to somewhere more generally available/appropriate.
@@ -201,7 +220,7 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
     // FIXIT-M 2.9.x set_application_protocol_id_expected has several new parameters, need to look
     // into what is required to support those here.
     if ( Stream::set_application_protocol_id_expected(ctrlPkt, type, proto, cliIp, cliPort, srvIp,
-            srvPort, app_id, asd) )
+        srvPort, app_id, asd) )
     {
         sfip_ntop(cliIp, src_ip, sizeof(src_ip));
         sfip_ntop(srvIp, dst_ip, sizeof(dst_ip));
@@ -228,21 +247,21 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
     return asd;
 }
 
-void AppIdSession::reinit_shared_data()
+void AppIdSession::reinit_session_data()
 {
     misc_app_id = APP_ID_NONE;
 
     //data
-    if (isSslServiceAppId(tp_app_id))
+    if ( is_service_over_ssl(tp_app_id) )
     {
         payload_app_id = referred_payload_app_id = tp_payload_app_id = APP_ID_NONE;
         clear_session_flags(APPID_SESSION_CONTINUE);
-        if (payload_version)
+        if ( payload_version )
         {
             snort_free(payload_version);
             payload_version = nullptr;
         }
-        if (hsession && hsession->url)
+        if ( hsession && hsession->url )
         {
             snort_free(hsession->url);
             hsession->url = nullptr;
@@ -250,18 +269,18 @@ void AppIdSession::reinit_shared_data()
     }
 
     //service
-    if (!get_session_flags(APPID_SESSION_STICKY_SERVICE))
+    if ( !get_session_flags(APPID_SESSION_STICKY_SERVICE) )
     {
-        tp_app_id = serviceAppId = portServiceAppId = APP_ID_NONE;
-        if (serviceVendor)
+        tp_app_id = service_app_id = port_service_id = APP_ID_NONE;
+        if ( service_vendor )
         {
-            snort_free(serviceVendor);
-            serviceVendor = nullptr;
+            snort_free(service_vendor);
+            service_vendor = nullptr;
         }
-        if (serviceVersion)
+        if ( service_version )
         {
-            snort_free(serviceVersion);
-            serviceVersion = nullptr;
+            snort_free(service_version);
+            service_version = nullptr;
         }
 
         service_ip.clear();
@@ -273,7 +292,7 @@ void AppIdSession::reinit_shared_data()
 
     //client
     client_app_id = client_service_app_id = APP_ID_NONE;
-    if (client_version)
+    if ( client_version )
     {
         snort_free(client_version);
         client_version = nullptr;
@@ -364,7 +383,7 @@ void AppIdSession::check_app_detection_restart()
         return;
 
     AppId serviceAppId = pick_service_app_id();
-    bool isSsl = isSslServiceAppId(serviceAppId);
+    bool isSsl = is_service_over_ssl(serviceAppId);
 
     // A session could either:
     // 1. Start off as SSL - captured with isSsl flag, OR
@@ -373,12 +392,12 @@ void AppIdSession::check_app_detection_restart()
     if (get_session_flags(APPID_SESSION_ENCRYPTED) || isSsl)
     {
         set_session_flags(APPID_SESSION_DECRYPTED);
-        encrypted.serviceAppId = serviceAppId;
-        encrypted.payloadAppId = pick_payload_app_id();
-        encrypted.ClientAppId = pick_client_app_id();
-        encrypted.miscAppId = pick_misc_app_id();
-        encrypted.referredAppId = pick_referred_payload_app_id();
-        reinit_shared_data();
+        encrypted.service_app_id = serviceAppId;
+        encrypted.payload_app_id = pick_payload_app_id();
+        encrypted.client_app_id = pick_client_app_id();
+        encrypted.misc_app_id = pick_misc_app_id();
+        encrypted.referred_app_id = pick_referred_payload_app_id();
+        reinit_session_data();
         if (session_logging_enabled)
             LogMessage("AppIdDbg %s SSL decryption is available, restarting app Detection\n",
                 session_logging_id);
@@ -386,7 +405,7 @@ void AppIdSession::check_app_detection_restart()
         // APPID_SESSION_ENCRYPTED is set upon receiving a command which upgrades the session to
         // SSL. Next packet after the command will have encrypted traffic.  In the case of a
         // session which starts as SSL, current packet itself is encrypted. Set the special flag
-        // APPID_SESSION_APP_REINSPECT_SSL which allows reinspection of this pcaket.
+        // APPID_SESSION_APP_REINSPECT_SSL which allows reinspection of this packet.
         if (isSsl)
             set_session_flags(APPID_SESSION_APP_REINSPECT_SSL);
     }
@@ -440,14 +459,14 @@ void AppIdSession::update_encrypted_app_id(AppId serviceAppId)
     }
 }
 
-void AppIdSession::set_client_app_id_data(AppId id, char** version)
+void AppIdSession::set_client_app_id_data(AppId id, char* version)
 {
-    if (id <= APP_ID_NONE || id == APP_ID_HTTP)
+    if ( id <= APP_ID_NONE || id == APP_ID_HTTP )
         return;
 
-    if (id != client_app_id)
+    if ( id != client_app_id )
     {
-        if (client_app_id)
+        if ( client_app_id )
         {
             unsigned prev_priority = app_info_mgr->get_app_info_priority(client_app_id);
             unsigned curr_priority = app_info_mgr->get_app_info_priority(id);
@@ -458,23 +477,16 @@ void AppIdSession::set_client_app_id_data(AppId id, char** version)
 
         client_app_id = id;
 
-        if (client_version)
+        if ( client_version )
             snort_free(client_version);
-
-        if (version && *version)
-        {
-            client_version = *version;
-            *version = nullptr;
-        }
-        else
-            client_version = nullptr;
+        if (version)
+            client_version = snort_strdup(version);
     }
-    else if (version && *version)
+    else if ( version )
     {
-        if (client_version)
+        if ( client_version )
             snort_free(client_version);
-        client_version = *version;
-        *version = nullptr;
+        client_version = snort_strdup(version);
     }
 }
 
@@ -526,33 +538,36 @@ void AppIdSession::examine_ssl_metadata(Packet* p)
 
 void AppIdSession::examine_rtmp_metadata()
 {
-    AppId serviceAppId = 0;
-    AppId client_app_id = 0;
-    AppId payload_app_id = 0;
-    AppId referredPayloadAppId = 0;
+    AppId service_id = APP_ID_NONE;
+    AppId client_id = APP_ID_NONE;
+    AppId payload_id = APP_ID_NONE;
+    AppId referred_payload_id = APP_ID_NONE;
     char* version = nullptr;
 
-    if (!hsession)
-        hsession = (HttpSession*)snort_calloc(sizeof(HttpSession));
+    if ( !hsession )
+        hsession = new AppIdHttpSession(this);
 
-    if (hsession->url)
+    if ( hsession->url )
     {
-        if (((http_matchers->get_appid_from_url(nullptr, hsession->url, &version,
-            hsession->referer, &client_app_id, &serviceAppId,
-            &payload_app_id, &referredPayloadAppId, 1)) ||
-            (http_matchers->get_appid_from_url(nullptr, hsession->url, &version,
-            hsession->referer, &client_app_id, &serviceAppId,
-            &payload_app_id, &referredPayloadAppId, 0))) == 1)
+        HttpPatternMatchers* http_matchers = HttpPatternMatchers::get_instance();
+
+        if ( ( ( http_matchers->get_appid_from_url(nullptr, hsession->url, &version,
+            hsession->referer, &client_id, &service_id,
+            &payload_id, &referred_payload_id, 1) )
+            ||
+            ( http_matchers->get_appid_from_url(nullptr, hsession->url, &version,
+            hsession->referer, &client_id, &service_id,
+            &payload_id, &referred_payload_id, 0) ) ) )
         {
             /* do not overwrite a previously-set client or service */
             if (client_app_id <= APP_ID_NONE)
-                set_client_app_id_data(client_app_id, nullptr);
-            if (serviceAppId <= APP_ID_NONE)
-                set_service_appid_data(serviceAppId, nullptr, nullptr);
+                set_client_app_id_data(payload_id, nullptr);
+            if (service_app_id <= APP_ID_NONE)
+                set_service_appid_data(service_id, nullptr, nullptr);
 
             /* DO overwrite a previously-set data */
             set_payload_app_id_data((ApplicationId)payload_app_id, nullptr);
-            set_referred_payload_app_id_data(referredPayloadAppId);
+            set_referred_payload_app_id_data(referred_payload_id);
         }
     }
 }
@@ -566,14 +581,14 @@ void AppIdSession::set_referred_payload_app_id_data(AppId id)
         referred_payload_app_id = id;
 }
 
-void AppIdSession::set_payload_app_id_data(ApplicationId id, char** version)
+void AppIdSession::set_payload_app_id_data(ApplicationId id, char* version)
 {
-    if (id <= APP_ID_NONE)
+    if ( id <= APP_ID_NONE )
         return;
 
-    if (payload_app_id != id)
+    if ( payload_app_id != id )
     {
-        if (payload_app_id)
+        if ( payload_app_id )
         {
             unsigned prev_priority = app_info_mgr->get_app_info_priority(payload_app_id);
             unsigned curr_priority = app_info_mgr->get_app_info_priority(id);
@@ -583,27 +598,20 @@ void AppIdSession::set_payload_app_id_data(ApplicationId id, char** version)
 
         payload_app_id = id;
 
-        if (payload_version)
+        if ( payload_version )
             snort_free(payload_version);
-
-        if (version && *version)
-        {
-            payload_version = *version;
-            *version = nullptr;
-        }
-        else
-            payload_version = nullptr;
+        if (version)
+            payload_version = snort_strdup(version);
     }
-    else if (version && *version)
+    else if ( version )
     {
-        if (payload_version)
+        if ( payload_version )
             snort_free(payload_version);
-        payload_version = *version;
-        *version = nullptr;
+        payload_version = snort_strdup(version);
     }
 }
 
-void AppIdSession::set_service_appid_data(AppId id, char* vendor, char** version)
+void AppIdSession::set_service_appid_data(AppId id, char* vendor, char* version)
 {
     if (id <= APP_ID_NONE)
         return;
@@ -616,161 +624,30 @@ void AppIdSession::set_service_appid_data(AppId id, char* vendor, char** version
         return;
     }
 
-    if (serviceAppId != id)
+    if (service_app_id != id)
     {
-        serviceAppId = id;
+        service_app_id = id;
 
-        if (serviceVendor)
-        {
-            snort_free(serviceVendor);
-            serviceVendor = nullptr;
-        }
-        if (serviceVersion)
-        {
-            snort_free(serviceVersion);
-            serviceVersion = nullptr;
-        }
+        if (service_vendor)
+            snort_free(service_vendor);
+        service_vendor = vendor;
 
-        if (vendor)
-            serviceVendor = vendor;
+        if (service_version)
+            snort_free(service_version);
+        if (version)
+            service_version = snort_strdup(version);
+    }
+    else if (vendor || version)
+    {
+        if (service_vendor)
+            snort_free(service_vendor);
+        service_vendor = vendor;
 
-        if (version && *version)
-        {
-            serviceVersion = *version;
-            *version = nullptr;
-        }
+        if (service_version)
+            snort_free(service_version);
+        if (version)
+            service_version = snort_strdup(version);
     }
-    else
-    {
-        if (vendor || version)
-        {
-            if (serviceVendor)
-                snort_free(serviceVendor);
-            if (serviceVersion)
-                snort_free(serviceVersion);
-
-            if (vendor)
-                serviceVendor = vendor;
-            else
-                serviceVendor = nullptr;
-
-            if (version && *version)
-            {
-                serviceVersion = *version;
-                *version = nullptr;
-            }
-            else
-                serviceVersion = nullptr;
-        }
-    }
-}
-
-void AppIdSession::clear_http_field()
-{
-    if (hsession == nullptr)
-        return;
-
-    if (hsession->x_working_with)
-    {
-        snort_free(hsession->x_working_with);
-        hsession->x_working_with = nullptr;
-    }
-    if (hsession->referer)
-    {
-        snort_free(hsession->referer);
-        hsession->referer = nullptr;
-    }
-    if (hsession->cookie)
-    {
-        snort_free(hsession->cookie);
-        hsession->cookie = nullptr;
-    }
-    if (hsession->url)
-    {
-        snort_free(hsession->url);
-        hsession->url = nullptr;
-    }
-    if (hsession->useragent)
-    {
-        snort_free(hsession->useragent);
-        hsession->useragent = nullptr;
-    }
-    if (hsession->host)
-    {
-        snort_free(hsession->host);
-        hsession->host = nullptr;
-    }
-    if (hsession->uri)
-    {
-        snort_free(hsession->uri);
-        hsession->uri = nullptr;
-    }
-    if (hsession->content_type)
-    {
-        snort_free(hsession->content_type);
-        hsession->content_type = nullptr;
-    }
-    if (hsession->location)
-    {
-        snort_free(hsession->location);
-        hsession->location = nullptr;
-    }
-    if (hsession->body)
-    {
-        snort_free(hsession->body);
-        hsession->body = nullptr;
-    }
-    if (hsession->req_body)
-    {
-        snort_free(hsession->req_body);
-        hsession->req_body = nullptr;
-    }
-    if (hsession->xffAddr)
-    {
-        delete hsession->xffAddr;
-        hsession->xffAddr = nullptr;
-    }
-}
-
-void AppIdSession::free_http_session_data()
-{
-    if (hsession == nullptr)
-        return;
-
-    clear_http_field();
-
-    if (hsession->new_field_contents)
-        for ( unsigned i = 0; i < NUMBER_OF_PTYPES; i++)
-        {
-            if (nullptr != hsession->new_field[i])
-            {
-                snort_free(hsession->new_field[i]);
-                hsession->new_field[i] = nullptr;
-            }
-        }
-    if (hsession->via)
-    {
-        snort_free(hsession->via);
-        hsession->via = nullptr;
-    }
-    if (hsession->content_type)
-    {
-        snort_free(hsession->content_type);
-        hsession->content_type = nullptr;
-    }
-    if (hsession->response_code)
-    {
-        snort_free(hsession->response_code);
-        hsession->response_code = nullptr;
-    }
-    if (hsession->server)
-    {
-        snort_free(hsession->server);
-        hsession->server = nullptr;
-    }
-
-    snort_free(hsession);
-    hsession = nullptr;
 }
 
 void AppIdSession::free_dns_session_data()
@@ -806,9 +683,9 @@ void AppIdSession::free_flow_data()
 {
     AppIdFlowData* tmp_fd;
 
-    while ((tmp_fd = flowData))
+    while ((tmp_fd = flow_data))
     {
-        flowData = tmp_fd->next;
+        flow_data = tmp_fd->next;
         if (tmp_fd->fd_data && tmp_fd->fd_free)
             tmp_fd->fd_free(tmp_fd->fd_data);
 
@@ -816,20 +693,17 @@ void AppIdSession::free_flow_data()
     }
 }
 
-void AppIdSession::delete_shared_data()
+void AppIdSession::delete_session_data()
 {
-    if (thirdparty_appid_module)
-    {
-        thirdparty_appid_module->session_delete(tpsession, 0);
-        tpsession = nullptr;
-    }
-
     snort_free(client_version);
-    snort_free(serviceVendor);
-    snort_free(serviceVersion);
+    snort_free(payload_version);
+    snort_free(service_vendor);
+    snort_free(service_version);
     snort_free(netbios_name);
+    snort_free(username);
+    snort_free(netbios_domain);
 
-    RNAServiceSubtype* rna_ss = subtype;
+    AppIdServiceSubtype* rna_ss = subtype;
     while ( rna_ss )
     {
         subtype = rna_ss->next;
@@ -840,17 +714,9 @@ void AppIdSession::delete_shared_data()
         rna_ss = subtype;
     }
 
-    service_candidates.clear();
-    client_candidates.clear();
-    snort_free(username);
-    snort_free(netbios_domain);
-    snort_free(payload_version);
-    free_http_session_data();
+    delete hsession;
     free_tls_session_data();
     free_dns_session_data();
-
-    snort_free(firewallEarlyData);
-    firewallEarlyData = nullptr;
 }
 
 void AppIdSession::release_free_list_flow_data()
@@ -868,7 +734,7 @@ void* AppIdSession::get_flow_data(unsigned id)
 {
     AppIdFlowData* tmp_fd;
 
-    for (tmp_fd = flowData; tmp_fd && tmp_fd->fd_id != id; tmp_fd = tmp_fd->next)
+    for (tmp_fd = flow_data; tmp_fd && tmp_fd->fd_id != id; tmp_fd = tmp_fd->next)
         ;
     return tmp_fd ? tmp_fd->fd_data : nullptr;
 }
@@ -878,7 +744,7 @@ void* AppIdSession::remove_flow_data(unsigned id)
     AppIdFlowData** pfd;
     AppIdFlowData* fd;
 
-    for (pfd = &flowData; *pfd && (*pfd)->fd_id != id; pfd = &(*pfd)->next)
+    for (pfd = &flow_data; *pfd && (*pfd)->fd_id != id; pfd = &(*pfd)->next)
         ;
     if ((fd = *pfd))
     {
@@ -895,7 +761,7 @@ void AppIdSession::free_flow_data_by_id(unsigned id)
     AppIdFlowData** pfd;
     AppIdFlowData* fd;
 
-    for (pfd = &flowData; *pfd && (*pfd)->fd_id != id; pfd = &(*pfd)->next)
+    for (pfd = &flow_data; *pfd && (*pfd)->fd_id != id; pfd = &(*pfd)->next)
         ;
 
     if ((fd = *pfd))
@@ -910,7 +776,7 @@ void AppIdSession::free_flow_data_by_id(unsigned id)
 
 void AppIdSession::free_flow_data_by_mask(unsigned mask)
 {
-    AppIdFlowData** pfd = &flowData;
+    AppIdFlowData** pfd = &flow_data;
     while (*pfd)
     {
         if ((*pfd)->fd_id & mask)
@@ -944,8 +810,8 @@ int AppIdSession::add_flow_data(void* data, unsigned id, AppIdFreeFCN fcn)
     tmp_fd->fd_id = id;
     tmp_fd->fd_data = data;
     tmp_fd->fd_free = fcn;
-    tmp_fd->next = flowData;
-    flowData = tmp_fd;
+    tmp_fd->next = flow_data;
+    flow_data = tmp_fd;
     return 0;
 }
 
@@ -976,11 +842,6 @@ void AppIdSession::stop_rna_service_inspection(Packet* p, int direction)
     clear_session_flags(APPID_SESSION_CONTINUE);
 }
 
-AppId AppIdSession::is_appid_detection_done()
-{
-    return get_session_flags(APPID_SESSION_SERVICE_DETECTED);
-}
-
 AppId AppIdSession::pick_service_app_id()
 {
     AppId rval;
@@ -988,19 +849,19 @@ AppId AppIdSession::pick_service_app_id()
     if ( common.flow_type != APPID_FLOW_TYPE_NORMAL )
         return APP_ID_NONE;
 
-    if (get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+    if ( is_service_detected() )
     {
-        bool deferred = app_info_mgr->get_app_info_flags(serviceAppId, APPINFO_FLAG_DEFER)
+        bool deferred = app_info_mgr->get_app_info_flags(service_app_id, APPINFO_FLAG_DEFER)
             || app_info_mgr->get_app_info_flags(tp_app_id, APPINFO_FLAG_DEFER);
 
-        if (serviceAppId > APP_ID_NONE && !deferred)
-            return serviceAppId;
+        if (service_app_id > APP_ID_NONE && !deferred)
+            return service_app_id;
         if (is_third_party_appid_available(tpsession))
         {
             if (tp_app_id > APP_ID_NONE)
                 return tp_app_id;
             else if (deferred)
-                return serviceAppId;
+                return service_app_id;
             else
                 rval = APP_ID_UNKNOWN_UI;
         }
@@ -1015,8 +876,8 @@ AppId AppIdSession::pick_service_app_id()
     if (client_service_app_id > APP_ID_NONE)
         return client_service_app_id;
 
-    if (portServiceAppId > APP_ID_NONE)
-        return portServiceAppId;
+    if (port_service_id > APP_ID_NONE)
+        return port_service_id;
 
     return rval;
 }
@@ -1026,18 +887,18 @@ AppId AppIdSession::pick_only_service_app_id()
     if ( common.flow_type != APPID_FLOW_TYPE_NORMAL )
         return APP_ID_NONE;
 
-    bool deferred = app_info_mgr->get_app_info_flags(serviceAppId, APPINFO_FLAG_DEFER)
+    bool deferred = app_info_mgr->get_app_info_flags(service_app_id, APPINFO_FLAG_DEFER)
         || app_info_mgr->get_app_info_flags(tp_app_id, APPINFO_FLAG_DEFER);
 
-    if (serviceAppId > APP_ID_NONE && !deferred)
-        return serviceAppId;
+    if (service_app_id > APP_ID_NONE && !deferred)
+        return service_app_id;
 
     if (is_third_party_appid_available(tpsession) && tp_app_id > APP_ID_NONE)
         return tp_app_id;
     else if (deferred)
-        return serviceAppId;
+        return service_app_id;
 
-    if (serviceAppId < APP_ID_NONE)
+    if (service_app_id < APP_ID_NONE)
         return APP_ID_UNKNOWN_UI;
 
     return APP_ID_NONE;
@@ -1091,7 +952,7 @@ AppId AppIdSession::pick_fw_service_app_id()
 {
     AppId appId = pick_service_app_id();
     if (appId == APP_ID_NONE || appId== APP_ID_UNKNOWN_UI)
-        appId = encrypted.serviceAppId;
+        appId = encrypted.service_app_id;
     return appId;
 }
 
@@ -1099,7 +960,7 @@ AppId AppIdSession::pick_fw_misc_app_id()
 {
     AppId appId = pick_misc_app_id();
     if (appId == APP_ID_NONE)
-        appId = encrypted.miscAppId;
+        appId = encrypted.misc_app_id;
     return appId;
 }
 
@@ -1113,7 +974,7 @@ AppId AppIdSession::pick_fw_payload_app_id()
 {
     AppId appId = pick_payload_app_id();
     if (appId == APP_ID_NONE)
-        appId = encrypted.payloadAppId;
+        appId = encrypted.payload_app_id;
     return appId;
 }
 
@@ -1121,7 +982,7 @@ AppId AppIdSession::pick_fw_referred_payload_app_id()
 {
     AppId appId = pick_referred_payload_app_id();
     if (appId == APP_ID_NONE)
-        appId = encrypted.referredAppId;
+        appId = encrypted.referred_app_id;
     return appId;
 }
 
@@ -1130,153 +991,25 @@ bool AppIdSession::is_ssl_session_decrypted()
     return get_session_flags(APPID_SESSION_DECRYPTED);
 }
 
-static const char* httpFieldName[ NUMBER_OF_PTYPES ] = // for use in debug messages
+void AppIdSession::reset_session_data()
 {
-    "useragent",
-    "host",
-    "referer",
-    "uri",
-    "cookie",
-    "req_body",
-    "content_type",
-    "location",
-    "body",
-};
+    delete_session_data();
+    client_version = nullptr;
+    payload_version = nullptr;
+    service_vendor = nullptr;
+    service_version = nullptr;
+    netbios_name = nullptr;
+    netbios_domain = nullptr;
+    username = nullptr;
+    hsession = nullptr;
 
-void AppIdSession::clear_app_id_data()
-{
     payload_app_id = APP_ID_UNKNOWN;
-    serviceAppId = APP_ID_UNKNOWN;
+    service_app_id = APP_ID_UNKNOWN;
     tp_payload_app_id = APP_ID_UNKNOWN;
     tp_app_id = APP_ID_UNKNOWN;
 
-    if (payload_version)
-    {
-        snort_free(payload_version);
-        payload_version = nullptr;
-    }
-
-    if (serviceVendor)
-    {
-        snort_free(serviceVendor);
-        serviceVendor = nullptr;
-    }
-
-    if (serviceVersion)
-    {
-        snort_free(serviceVersion);
-        serviceVersion = nullptr;
-    }
-
-    if (tsession)
-        free_tls_session_data();
-
-    if (hsession)
-        free_http_session_data();
-
-    if (dsession)
-        free_dns_session_data();
-
     if (thirdparty_appid_module)
         thirdparty_appid_module->session_delete(tpsession, 1);
-}
-
-static void free_chp_matches( HttpPatternMatchers* http_matchers, MatchedCHPAction** ppmatches, unsigned max_matches )
-{
-    for (unsigned i = 0; i <= max_matches; i++)
-    {
-        if (ppmatches[i])
-        {
-            http_matchers->free_matched_chp_actions(ppmatches[i]);
-            ppmatches[i] = nullptr;
-        }
-    }
-}
-
-int AppIdSession::initial_chp_sweep(char** chp_buffers, uint16_t* chp_buffer_lengths,
-    MatchedCHPAction** ppmatches)
-{
-    CHPApp* cah = nullptr;
-    CHPTallyAndActions chp;
-    chp.matches = *ppmatches;
-
-    for (unsigned i = 0; i <= MAX_KEY_PATTERN; i++)
-    {
-        ppmatches[i] = nullptr;
-        if (chp_buffers[i] && chp_buffer_lengths[i])
-            http_matchers->scan_key_chp((PatternType)i, chp_buffers[i], chp_buffer_lengths[i],
-                chp);
-    }
-
-    if (chp.match_tally.empty())
-    {
-        free_chp_matches( http_matchers, ppmatches, MAX_KEY_PATTERN );
-        return 0;
-    }
-
-    int longest = 0;
-    for (auto& item: chp.match_tally)
-    {
-       // Only those items with key_pattern_countdown field reduced to zero are a full match
-        if (item.key_pattern_countdown)
-            continue;
-        if (longest < item.key_pattern_length_sum)
-        {
-            // We've found a new longest pattern set
-            longest = item.key_pattern_length_sum;
-            cah = item.chpapp;
-        }
-    }
-
-    if ( !cah )
-    {
-        free_chp_matches( http_matchers, ppmatches, MAX_KEY_PATTERN );
-        return 0;
-    }
-
-    /***************************************************************
-       candidate has been chosen and it is pointed to by cah
-       we will preserve any match sets until the calls to scanCHP()
-      ***************************************************************/
-    for (unsigned i = 0; i < NUMBER_OF_PTYPES; i++)
-    {
-        hsession->ptype_scan_counts[i] = cah->ptype_scan_counts[i];
-        hsession->ptype_req_counts[i] = cah->ptype_req_counts[i] +
-            cah->ptype_rewrite_insert_used[i];
-        if (i > 3 && !cah->ptype_scan_counts[i]
-            && !get_session_flags(APPID_SESSION_SPDY_SESSION))
-        {
-            clear_session_flags(APPID_SESSION_CHP_INSPECTING);
-            if (thirdparty_appid_module)
-                thirdparty_appid_module->session_attr_clear(tpsession,
-                    TP_ATTR_CONTINUE_MONITORING);
-        }
-    }
-    hsession->chp_candidate = cah->appIdInstance;
-    hsession->app_type_flags = cah->app_type_flags;
-    hsession->num_matches = cah->num_matches;
-    hsession->num_scans = cah->num_scans;
-
-    if (thirdparty_appid_module)
-    {
-        if ((hsession->ptype_scan_counts[CONTENT_TYPE_PT]))
-            thirdparty_appid_module->session_attr_set(tpsession, TP_ATTR_COPY_RESPONSE_CONTENT);
-        else
-            thirdparty_appid_module->session_attr_clear(tpsession, TP_ATTR_COPY_RESPONSE_CONTENT);
-
-        if ((hsession->ptype_scan_counts[LOCATION_PT]))
-            thirdparty_appid_module->session_attr_set(tpsession, TP_ATTR_COPY_RESPONSE_LOCATION);
-        else
-            thirdparty_appid_module->session_attr_clear(tpsession, TP_ATTR_COPY_RESPONSE_LOCATION);
-
-
-        if ((hsession->ptype_scan_counts[BODY_PT]))
-            thirdparty_appid_module->session_attr_set(tpsession, TP_ATTR_COPY_RESPONSE_BODY);
-        else
-            thirdparty_appid_module->session_attr_clear(tpsession, TP_ATTR_COPY_RESPONSE_BODY);
-    }
-
-    return 1;
 }
 
 bool AppIdSession::is_payload_appid_set()
@@ -1293,522 +1026,5 @@ void AppIdSession::clear_http_flags()
             thirdparty_appid_module->session_attr_clear(tpsession,
                 TP_ATTR_CONTINUE_MONITORING);
     }
-}
-
-void AppIdSession::process_chp_buffers(char** version, Packet* p)
-{
-    char* chp_buffers[NUMBER_OF_PTYPES] =
-    {
-        hsession->useragent,
-        hsession->host,
-        hsession->referer,
-        hsession->uri,
-        hsession->cookie,
-        hsession->req_body,
-        hsession->content_type,
-        hsession->location,
-        hsession->body,
-    };
-
-    uint16_t chp_buffer_lengths[NUMBER_OF_PTYPES] =
-    {
-        hsession->useragent_buflen,
-        hsession->host_buflen,
-        hsession->referer_buflen,
-        hsession->uri_buflen,
-        hsession->cookie_buflen,
-        hsession->req_body_buflen,
-        hsession->content_type_buflen,
-        hsession->location_buflen,
-        hsession->body_buflen,
-    };
-
-    char* chp_rewritten[NUMBER_OF_PTYPES] =
-    {
-        nullptr,nullptr,nullptr,
-        nullptr,nullptr,nullptr,
-        nullptr,nullptr,nullptr
-    };
-
-    MatchedCHPAction* chp_matches[NUMBER_OF_PTYPES] =
-    {
-        nullptr,nullptr,nullptr,
-        nullptr,nullptr,nullptr,
-        nullptr,nullptr,nullptr
-    };
-
-    if ( hsession->chp_hold_flow )
-        hsession->chp_finished = 0;
-
-    if ( !hsession->chp_candidate )
-    {
-        // remove artifacts from previous matches before we start again.
-        for (unsigned i = 0; i < NUMBER_OF_PTYPES; i++)
-            if (hsession->new_field[i])
-            {
-                snort_free(hsession->new_field[i]);
-                hsession->new_field[i] = nullptr;
-            }
-
-        if ( !initial_chp_sweep(chp_buffers, chp_buffer_lengths, chp_matches) )
-            hsession->chp_finished = 1; // this is a failure case.
-    }
-
-    if ( !hsession->chp_finished && hsession->chp_candidate )
-    {
-        char* user = nullptr;
-
-        for (unsigned i = 0; i < NUMBER_OF_PTYPES; i++)
-        {
-            if ( !hsession->ptype_scan_counts[i] )
-                continue;
-
-            if ( chp_buffers[i] && chp_buffer_lengths[i] )
-            {
-                int found_in_buffer = 0;
-                AppId ret = http_matchers->scan_chp((PatternType)i, chp_buffers[i],
-                    chp_buffer_lengths[i], chp_matches[i], version, &user,
-                    &chp_rewritten[i], &found_in_buffer, hsession, p, config->mod_config);
-                chp_matches[i] = nullptr; // freed by scanCHP()
-                hsession->total_found += found_in_buffer;
-                if (!ret || found_in_buffer < hsession->ptype_req_counts[i])
-                {
-                    // No match at all or the required matches for the field was NOT made
-                    if (!hsession->num_matches)
-                    {
-                        // num_matches == 0 means: all must succeed
-                        // give up early
-                        hsession->chp_candidate = 0;
-                        break;
-                    }
-                }
-            }
-            else if ( !hsession->num_matches )
-            {
-                // num_matches == 0 means: all must succeed  give up early
-                hsession->chp_candidate = 0;
-                break;
-            }
-
-            // Decrement the expected scan count toward 0.
-            hsession->ptype_scan_counts[i] = 0;
-            hsession->num_scans--;
-            // if we have reached the end of the list of scans (which have something to do), then
-            // num_scans == 0
-            if (hsession->num_scans == 0)
-            {
-                // we finished the last scan
-                // either the num_matches value was zero and we failed early-on or we need to check
-                // for the min.
-                if (hsession->num_matches &&
-                    hsession->total_found < hsession->num_matches)
-                {
-                    // There was a minimum scans match count (num_matches != 0)
-                    // And we did not reach that minimum
-                    hsession->chp_candidate = 0;
-                    break;
-                }
-                // All required matches were met.
-                hsession->chp_finished = 1;
-                break;
-            }
-        }
-
-        free_chp_matches( http_matchers, chp_matches, NUMBER_OF_PTYPES );
-
-        if ( !hsession->chp_candidate )
-        {
-            hsession->chp_finished = 1;
-            if ( *version )
-            {
-                snort_free(*version);
-                *version = nullptr;
-            }
-
-            if ( user )
-            {
-                snort_free(user);
-                user = nullptr;
-            }
-
-            for (unsigned i = 0; i < NUMBER_OF_PTYPES; i++)
-            {
-                if (nullptr != chp_rewritten[i])
-                {
-                    snort_free(chp_rewritten[i]);
-                    chp_rewritten[i] = nullptr;
-                }
-            }
-            memset(hsession->ptype_scan_counts, 0, NUMBER_OF_PTYPES * sizeof(int));
-
-            // Make it possible for other detectors to run.
-            hsession->skip_simple_detect = false;
-            return;
-        }
-
-        if (hsession->chp_candidate && hsession->chp_finished)
-        {
-            AppId chp_final = hsession->chp_alt_candidate ? hsession->chp_alt_candidate
-                : CHP_APPIDINSTANCE_TO_ID(hsession->chp_candidate);
-
-            if (hsession->app_type_flags & APP_TYPE_SERVICE)
-                set_service_appid_data(chp_final, nullptr, version);
-
-            if (hsession->app_type_flags & APP_TYPE_CLIENT)
-                set_client_app_id_data(chp_final, version);
-
-            if ( hsession->app_type_flags & APP_TYPE_PAYLOAD )
-                set_payload_app_id_data((ApplicationId)chp_final, version);
-
-            if ( *version )
-                *version = nullptr;
-
-            if ( user )
-            {
-                username = user;
-                user = nullptr;
-                if (hsession->app_type_flags & APP_TYPE_SERVICE)
-                    username_service = chp_final;
-                else
-                    username_service = serviceAppId;
-                set_session_flags(APPID_SESSION_LOGIN_SUCCEEDED);
-            }
-
-            for (unsigned i = 0; i < NUMBER_OF_PTYPES; i++)
-                if ( chp_rewritten[i] )
-                {
-                    if (session_logging_enabled)
-                        LogMessage("AppIdDbg %s rewritten %s: %s\n", session_logging_id,
-                            httpFieldName[i], chp_rewritten[i]);
-                    if (hsession->new_field[i])
-                        snort_free(hsession->new_field[i]);
-                    hsession->new_field[i] = chp_rewritten[i];
-                    hsession->new_field_contents = true;
-                    chp_rewritten[i] = nullptr;
-                }
-
-            hsession->chp_candidate = 0;
-            //if we're doing safesearch rewrites, we want to continue to hold the flow
-            if (!hsession->get_offsets_from_rebuilt)
-                hsession->chp_hold_flow = 0;
-            scan_flags &= ~SCAN_HTTP_VIA_FLAG;
-            scan_flags &= ~SCAN_HTTP_USER_AGENT_FLAG;
-            scan_flags &= ~SCAN_HTTP_HOST_URL_FLAG;
-            memset(hsession->ptype_scan_counts, 0,
-                NUMBER_OF_PTYPES * sizeof(hsession->ptype_scan_counts[0]));
-        }
-        else /* if we have a candidate, but we're not finished */
-        {
-            if ( user )
-            {
-                snort_free(user);
-                user = nullptr;
-            }
-
-            for (unsigned i = 0; i < NUMBER_OF_PTYPES; i++)
-                if (nullptr != chp_rewritten[i])
-                {
-                    snort_free(chp_rewritten[i]);
-                    chp_rewritten[i] = nullptr;
-                }
-        }
-    }
-}
-
-int AppIdSession::process_http_packet(int direction)
-{
-    Profile http_profile_context(httpPerfStats);
-    constexpr auto RESPONSE_CODE_LENGTH = 3;
-    int size;
-    char* version = nullptr;
-    char* vendorVersion = nullptr;
-    char* vendor = nullptr;
-    AppId service_id = 0;
-    AppId client_id = 0;
-    AppId payload_id = 0;
-
-    if (!hsession)
-    {
-        clear_app_id_data();
-        if (session_logging_enabled)
-            LogMessage("AppIdDbg %s attempt to process HTTP packet with no HTTP data\n",
-                session_logging_id);
-
-        return 0;
-    }
-
-    // For fragmented HTTP headers, do not process if none of the fields are set.
-    // These fields will get set when the HTTP header is reassembled.
-    if ((!hsession->useragent) && (!hsession->host) && (!hsession->referer) &&
-        (!hsession->uri))
-    {
-        if (!hsession->skip_simple_detect)
-            clear_http_flags();
-
-        return 0;
-    }
-
-    if (direction == APP_ID_FROM_RESPONDER && !get_session_flags(
-        APPID_SESSION_RESPONSE_CODE_CHECKED))
-    {
-        if (hsession->response_code)
-        {
-            set_session_flags(APPID_SESSION_RESPONSE_CODE_CHECKED);
-            if (hsession->response_code_buflen != RESPONSE_CODE_LENGTH)
-            {
-                /* received bad response code. Stop processing this session */
-                clear_app_id_data();
-                if (session_logging_enabled)
-                    LogMessage("AppIdDbg %s bad http response code\n", session_logging_id);
-
-                return 0;
-            }
-        }
-#if RESPONSE_CODE_PACKET_THRESHHOLD
-        else if (++(hsession->response_code_packets) == RESPONSE_CODE_PACKET_THRESHHOLD)
-        {
-            set_session_flags(APPID_SESSION_RESPONSE_CODE_CHECKED);
-            /* didn't receive response code in first X packets. Stop processing this asd */
-            clear_app_id_data(asd);
-            if (session_logging_enabled)
-                LogMessage("AppIdDbg %s no response code received\n", session_logging_id);
-            PREPROC_PROFILE_END(httpPerfStats);
-            return 0;
-        }
-#endif
-    }
-    char* host = hsession->host;
-    char* url = hsession->url;
-    char* via = hsession->via;
-    char* useragent = hsession->useragent;
-    char* referer = hsession->referer;
-
-    if (serviceAppId == APP_ID_NONE)
-        serviceAppId = APP_ID_HTTP;
-
-    if (session_logging_enabled)
-        LogMessage("AppIdDbg %s chp_finished %d chp_hold_flow %d\n", session_logging_id,
-            hsession->chp_finished, hsession->chp_hold_flow);
-
-    if (!hsession->chp_finished || hsession->chp_hold_flow)
-        process_chp_buffers(&version, nullptr);
-
-    if (!hsession->skip_simple_detect)  // true if processCHP found match
-    {
-        if (!get_session_flags(APPID_SESSION_APP_REINSPECT))
-        {
-            // Scan Server Header for Vendor & Version
-            // FIXIT-M: Should we be checking the scan_flags even when
-            //     thirdparty_appid_module is off?
-            if ((thirdparty_appid_module && (scan_flags & SCAN_HTTP_VENDOR_FLAG) &&
-                hsession->server) ||
-                (!thirdparty_appid_module && hsession->server))
-            {
-                if (serviceAppId == APP_ID_NONE || serviceAppId == APP_ID_HTTP)
-                {
-                    RNAServiceSubtype* local_subtype = nullptr;
-                    RNAServiceSubtype** tmpSubtype;
-
-                    http_matchers->get_server_vendor_version((uint8_t*)hsession->server,
-                        strlen(hsession->server), &vendorVersion, &vendor, &subtype);
-                    if (vendor || vendorVersion)
-                    {
-                        if (serviceVendor)
-                        {
-                            snort_free(serviceVendor);
-                            serviceVendor = nullptr;
-                        }
-                        if (serviceVersion)
-                        {
-                            snort_free(serviceVersion);
-                            serviceVersion = nullptr;
-                        }
-                        if (vendor)
-                            serviceVendor = vendor;
-                        if (vendorVersion)
-                            serviceVersion = vendorVersion;
-                        scan_flags &= ~SCAN_HTTP_VENDOR_FLAG;
-                    }
-                    if (local_subtype)
-                    {
-                        for (tmpSubtype = &subtype; *tmpSubtype; tmpSubtype = &(*tmpSubtype)->next)
-                            ;
-
-                        *tmpSubtype = local_subtype;
-                    }
-                }
-            }
-
-            if (hsession->is_webdav)
-            {
-                if (session_logging_enabled and payload_app_id != APP_ID_WEBDAV)
-                    LogMessage("AppIdDbg %s data is webdav\n", session_logging_id);
-                set_payload_app_id_data(APP_ID_WEBDAV, nullptr);
-            }
-
-            // Scan User-Agent for Browser types or Skype
-            if ((scan_flags & SCAN_HTTP_USER_AGENT_FLAG) && client_app_id <= APP_ID_NONE
-                && useragent && hsession->useragent_buflen)
-            {
-                if (version)
-                {
-                    snort_free(version);
-                    version = nullptr;
-                }
-                http_matchers->identify_user_agent((uint8_t*)useragent, hsession->useragent_buflen,
-                    &service_id, &client_id, &version);
-                if (session_logging_enabled && service_id > APP_ID_NONE &&
-                    service_id != APP_ID_HTTP && serviceAppId != service_id)
-                    LogMessage("AppIdDbg %s User Agent is service %d\n", session_logging_id,
-                        service_id);
-                set_service_appid_data(service_id, nullptr, nullptr);
-                if (session_logging_enabled && client_id > APP_ID_NONE &&
-                    client_id != APP_ID_HTTP && client_app_id != client_id)
-                    LogMessage("AppIdDbg %s User Agent is client %d\n", session_logging_id,
-                        client_id);
-                set_client_app_id_data(client_id, &version);
-                scan_flags &= ~SCAN_HTTP_USER_AGENT_FLAG;
-            }
-
-            /* Scan Via Header for squid */
-            if (!is_payload_appid_set() && (scan_flags & SCAN_HTTP_VIA_FLAG) && via &&
-                (size = strlen(via)) > 0)
-            {
-                if (version)
-                {
-                    snort_free(version);
-                    version = nullptr;
-                }
-                payload_id = http_matchers->get_appid_by_pattern((uint8_t*)via, size, &version);
-                if (session_logging_enabled && payload_id > APP_ID_NONE &&
-                    payload_app_id != payload_id)
-                    LogMessage("AppIdDbg %s VIA is data %d\n", session_logging_id,
-                        payload_id);
-                set_payload_app_id_data((ApplicationId)payload_id, nullptr);
-                scan_flags &= ~SCAN_HTTP_VIA_FLAG;
-            }
-        }
-
-        /* Scan X-Working-With HTTP header */
-        // FIXIT-M: Should we be checking the scan_flags even when
-        //     thirdparty_appid_module is off?
-        if ((thirdparty_appid_module && (scan_flags & SCAN_HTTP_XWORKINGWITH_FLAG) &&
-            hsession->x_working_with) ||
-            (!thirdparty_appid_module && hsession->x_working_with))
-        {
-            AppId appId;
-
-            appId = http_matchers->scan_header_x_working_with((uint8_t*)hsession->x_working_with,
-                strlen(hsession->x_working_with), &version);
-            if (appId)
-            {
-                if (direction == APP_ID_FROM_INITIATOR)
-                {
-                    if (session_logging_enabled && client_id > APP_ID_NONE && client_id !=
-                        APP_ID_HTTP && client_app_id != client_id)
-                        LogMessage("AppIdDbg %s X is client %d\n", session_logging_id, appId);
-                    set_client_app_id_data(appId, &version);
-                }
-                else
-                {
-                    if (session_logging_enabled && service_id > APP_ID_NONE && service_id !=
-                        APP_ID_HTTP && serviceAppId != service_id)
-                        LogMessage("AppIdDbg %s X is service %d\n", session_logging_id, appId);
-                    set_service_appid_data(appId, nullptr, &version);
-                }
-                scan_flags &= ~SCAN_HTTP_XWORKINGWITH_FLAG;
-            }
-        }
-
-        // Scan Content-Type Header for multimedia types and scan contents
-        // FIXIT-M: Should we be checking the scan_flags even when
-        //     thirdparty_appid_module is off?
-        if ((thirdparty_appid_module && (scan_flags & SCAN_HTTP_CONTENT_TYPE_FLAG)
-            && hsession->content_type  && !is_payload_appid_set()) ||
-            (!thirdparty_appid_module && !is_payload_appid_set() &&
-            hsession->content_type))
-        {
-            payload_id = http_matchers->get_appid_by_content_type((uint8_t*)hsession->content_type,
-                strlen(hsession->content_type));
-            if (session_logging_enabled && payload_id > APP_ID_NONE
-                && payload_app_id != payload_id)
-                LogMessage("AppIdDbg %s Content-Type is data %d\n", session_logging_id,
-                    payload_id);
-            set_payload_app_id_data((ApplicationId)payload_id, nullptr);
-            scan_flags &= ~SCAN_HTTP_CONTENT_TYPE_FLAG;
-        }
-
-        if (scan_flags & SCAN_HTTP_HOST_URL_FLAG)
-        {
-            AppId referredPayloadAppId = 0;
-
-            if (version)
-            {
-                snort_free(version);
-                version = nullptr;
-            }
-
-            if (http_matchers->get_appid_from_url(host, url, &version, referer, &client_id,
-                &service_id,
-                &payload_id, &referredPayloadAppId, 0) == 1)
-            {
-                // do not overwrite a previously-set client or service
-                if (client_app_id <= APP_ID_NONE)
-                {
-                    if (session_logging_enabled && client_id > APP_ID_NONE && client_id !=
-                        APP_ID_HTTP && client_app_id != client_id)
-                        LogMessage("AppIdDbg %s URL is client %d\n", session_logging_id,
-                            client_id);
-                    set_client_app_id_data(client_id, nullptr);
-                }
-                if (serviceAppId <= APP_ID_NONE)
-                {
-                    if (session_logging_enabled && service_id > APP_ID_NONE && service_id !=
-                        APP_ID_HTTP && serviceAppId != service_id)
-                        LogMessage("AppIdDbg %s URL is service %d\n", session_logging_id,
-                            service_id);
-                    set_service_appid_data(service_id, nullptr, nullptr);
-                }
-                // DO overwrite a previously-set data
-                if (session_logging_enabled && payload_id > APP_ID_NONE &&
-                    payload_app_id != payload_id)
-                    LogMessage("AppIdDbg %s URL is data %d\n", session_logging_id, payload_id);
-                set_payload_app_id_data((ApplicationId)payload_app_id, &version);
-                set_referred_payload_app_id_data(referredPayloadAppId);
-            }
-            scan_flags &= ~SCAN_HTTP_HOST_URL_FLAG;
-        }
-
-        if (client_app_id == APP_ID_APPLE_CORE_MEDIA)
-        {
-            AppInfoTableEntry* entry;
-
-            if (tp_payload_app_id > APP_ID_NONE)
-            {
-                entry = app_info_mgr->get_app_info_entry(tp_payload_app_id);
-                // only move tpPayloadAppId to client if its got a client_app_id
-                if (entry && entry->clientId > APP_ID_NONE)
-                {
-                    misc_app_id = client_app_id;
-                    client_app_id = tp_payload_app_id;
-                }
-            }
-            else if (payload_app_id > APP_ID_NONE)
-            {
-                entry =  app_info_mgr->get_app_info_entry(payload_app_id);
-                // only move payload_app_id to client if it has a ClientAppid
-                if (entry && entry->clientId > APP_ID_NONE)
-                {
-                    misc_app_id = client_app_id;
-                    client_app_id = payload_app_id;
-                }
-            }
-        }
-
-        clear_http_flags();
-    }  // end DON'T skip_simple_detect
-
-    snort_free(version);
-    return 0;
 }
 

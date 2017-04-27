@@ -155,7 +155,7 @@ int YmDetector::validate(AppIdDiscoveryArgs& args)
 
 done:
     add_app(args.asd, APP_ID_YAHOO, product_id, (char*)version);
-    args.asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+    args.asd->set_client_detected();
     appid_stats.yahoo_messenger_clients++;
     return APPID_SUCCESS;
 }

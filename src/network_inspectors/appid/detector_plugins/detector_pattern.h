@@ -82,8 +82,8 @@ public:
     int validate(AppIdDiscoveryArgs&) override;
 
 private:
-    void createClientPatternTrees();
-    void registerClientPatterns();
+    void create_client_pattern_trees();
+    void register_client_patterns();
 
     PortPatternNode* luaInjectedPatterns = nullptr;
     PatternService* servicePortPattern = nullptr;
@@ -103,8 +103,8 @@ public:
     int validate(AppIdDiscoveryArgs&) override;
 
 private:
-    void createServicePatternTrees();
-    void registerServicePatterns();
+    void create_service_pattern_trees();
+    void register_service_patterns();
     void install_ports(PatternService*);
 
     PortPatternNode* luaInjectedPatterns = nullptr;

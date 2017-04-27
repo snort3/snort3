@@ -26,6 +26,7 @@
 #include "service_plugins/service_detector.h"
 
 struct KRBState;
+struct KerberosDetectorData;
 
 class KerberosClientDetector : public ClientDetector
 {
@@ -34,6 +35,7 @@ public:
     ~KerberosClientDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
+    KerberosDetectorData* get_common_data(AppIdSession*, bool client);
 
     bool failed_login = false;
 

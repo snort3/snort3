@@ -206,7 +206,7 @@ inprocess:
 
 done:
     add_app(args.asd, APP_ID_BITTORRENT, APP_ID_BITTRACKER_CLIENT, nullptr);
-    args.asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+    args.asd->set_client_detected();
     appid_stats.bittracker_clients++;
     return APPID_SUCCESS;
 }

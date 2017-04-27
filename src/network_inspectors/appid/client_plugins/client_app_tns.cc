@@ -363,9 +363,9 @@ done:
             user_size = TNS_MAX_INFO_SIZE;
         memcpy(username, &args.data[user_start], user_size);
         username[user_size] = 0;
-        add_user(args.asd, username, APP_ID_ORACLE_DATABASE, 1);
+        add_user(args.asd, username, APP_ID_ORACLE_DATABASE, true);
     }
-    args.asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+    args.asd->set_client_detected();
     appid_stats.tns_clients++;
     return APPID_SUCCESS;
 }

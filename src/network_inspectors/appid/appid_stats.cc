@@ -157,21 +157,19 @@ FILE* AppIdStatistics::open_stats_log_file(const char* const filename, time_t ts
 void AppIdStatistics::dump_statistics()
 {
     struct StatsBucket* bucket = nullptr;
-    uint8_t* buffer;
     uint32_t* buffPtr;
-    struct    FwAvlNode* node;
-    struct AppIdStatRecord* record;
-    Serial_Unified2_Header header;
-
-    size_t buffSize;
     time_t currTime = time(nullptr);
 
-    if (logBuckets == nullptr)
+    if ( !logBuckets )
         return;
 
     while ((bucket = (struct StatsBucket*)sflist_remove_head(logBuckets)) != nullptr)
     {
-        if (bucket->appRecordCnt)
+        uint8_t* buffer;
+        size_t buffSize;
+        Serial_Unified2_Header header;
+
+        if ( bucket->appRecordCnt )
         {
             buffSize = ( bucket->appRecordCnt * sizeof(struct AppIdStatOutputRecord) ) +
                 ( 4 * sizeof(uint32_t) );
@@ -186,7 +184,7 @@ void AppIdStatistics::dump_statistics()
         else
             buffer = nullptr;
 
-        if (buffer)
+        if ( buffer )
         {
             buffPtr = (uint32_t*)buffer;
             *buffPtr++ = htonl(header.type);
@@ -194,6 +192,7 @@ void AppIdStatistics::dump_statistics()
             *buffPtr++ = htonl(bucket->startTime);
             *buffPtr++ = htonl(bucket->appRecordCnt);
 
+            struct    FwAvlNode* node;
             for (node = fwAvlFirst(bucket->appsTree); node != nullptr; node = fwAvlNext(node))
             {
                 struct AppIdStatOutputRecord* recBuffPtr;
@@ -201,13 +200,14 @@ void AppIdStatistics::dump_statistics()
                 bool cooked_client = false;
                 AppId app_id;
                 char tmpBuff[MAX_EVENT_APPNAME_LEN];
+                struct AppIdStatRecord* record;
 
                 record = (struct AppIdStatRecord*)node->data;
                 app_id = record->app_id;
 
                 recBuffPtr = (struct AppIdStatOutputRecord*)buffPtr;
 
-                if (app_id >= 2000000000)
+                if ( app_id >= 2000000000 )
                 {
                     cooked_client = true;
                     app_id -= 2000000000;
@@ -215,7 +215,7 @@ void AppIdStatistics::dump_statistics()
 
                 AppInfoTableEntry* entry = AppInfoManager::get_instance().get_app_info_entry(
                     app_id);
-                if (entry)
+                if ( entry )
                 {
                     app_name = entry->app_name;
                     if (cooked_client)
@@ -225,9 +225,9 @@ void AppIdStatistics::dump_statistics()
                         app_name = tmpBuff;
                     }
                 }
-                else if (app_id == APP_ID_UNKNOWN || app_id == APP_ID_UNKNOWN_UI)
+                else if ( app_id == APP_ID_UNKNOWN || app_id == APP_ID_UNKNOWN_UI )
                     app_name = "__unknown";
-                else if (app_id == APP_ID_NONE)
+                else if ( app_id == APP_ID_NONE )
                     app_name = "__none";
                 else
                 {
@@ -248,32 +248,31 @@ void AppIdStatistics::dump_statistics()
                 buffPtr += sizeof(*recBuffPtr)/sizeof(*buffPtr);
             }
 
-            if (appid_stats_filename)
+            if ( appid_stats_filename )
             {
-                if (!appfp)
+                if ( !appfp )
                 {
                     appfp = open_stats_log_file(appid_stats_filename, currTime);
                     appTime = currTime;
                     appSize = 0;
                 }
-                else if (((currTime - appTime) > rollPeriod) ||
-                    ((appSize + buffSize) > rollSize))
+                else if ( ( ( currTime - appTime ) > rollPeriod ) ||
+                    ( ( appSize + buffSize) > rollSize ) )
                 {
                     fclose(appfp);
                     appfp = open_stats_log_file(appid_stats_filename, currTime);
                     appTime = currTime;
                     appSize = 0;
                 }
-                if (appfp)
+                if ( appfp )
                 {
-                    if ((fwrite(buffer, buffSize, 1, appfp) == 1) && (fflush(appfp) == 0))
+                    if ( ( fwrite(buffer, buffSize, 1, appfp) == 1 ) && ( fflush(appfp) == 0 ) )
                     {
                         appSize += buffSize;
                     }
                     else
                     {
-                        ErrorMessage(
-                            "AppID ailed to write to statistics file (%s): %s\n",
+                        ErrorMessage("AppID ailed to write to statistics file (%s): %s\n",
                             appid_stats_filename, strerror(errno));
                         fclose(appfp);
                         appfp = nullptr;
@@ -312,17 +311,18 @@ AppIdStatistics::~AppIdStatistics()
     /*flush the last stats period. */
     end_stats_period();
     dump_statistics();
-    if (appfp)
+
+    if ( appfp )
     {
         fclose(appfp);
         appfp = nullptr;
     }
     snort_free((void*)appid_stats_filename);
 
-    if (logBuckets)
+    if ( logBuckets )
         snort_free(logBuckets);
 
-    if (currBuckets)
+    if ( currBuckets )
     {
         while (auto bucket = (StatsBucket*)sflist_remove_head(currBuckets))
         {
@@ -339,6 +339,32 @@ AppIdStatistics* AppIdStatistics::initialize_manager(const AppIdModuleConfig& co
     return new AppIdStatistics(config);
 }
 
+static void update_stats(AppIdSession* asd, AppId app_id, StatsBucket* bucket)
+{
+    AppIdStatRecord* record = (AppIdStatRecord*)(fwAvlLookup(app_id, bucket->appsTree));
+    if ( !record )
+    {
+        record = (AppIdStatRecord*)(snort_calloc(sizeof(struct AppIdStatRecord)));
+        if (fwAvlInsert(app_id, record, bucket->appsTree) == 0)
+        {
+            record->app_id = app_id;
+            bucket->appRecordCnt += 1;
+        }
+        else
+        {
+            WarningMessage("Error saving statistics record for app id: %u", app_id);
+            snort_free(record);
+            record = nullptr;
+        }
+    }
+
+    if ( record )
+    {
+        record->initiatorBytes += asd->stats.initiator_bytes;
+        record->responderBytes += asd->stats.responder_bytes;
+    }
+}
+
 void AppIdStatistics::update(AppIdSession* asd)
 {
     if ( !enabled )
@@ -346,122 +372,35 @@ void AppIdStatistics::update(AppIdSession* asd)
 
     time_t now = get_time();
 
-    if (now >= bucketEnd)
+    if ( now >= bucketEnd )
     {
         end_stats_period();
         dump_statistics();
         start_stats_period(now);
     }
 
-    time_t bucketTime = asd->stats.firstPktsecond -
-        (asd->stats.firstPktsecond % bucketInterval);
+    time_t bucketTime = asd->stats.first_packet_second -
+        (asd->stats.first_packet_second % bucketInterval);
 
     StatsBucket* bucket = get_stats_bucket(bucketTime);
     if ( !bucket )
         return;
 
-    bucket->totalStats.txByteCnt += asd->stats.initiatorBytes;
-    bucket->totalStats.rxByteCnt += asd->stats.responderBytes;
+    bucket->totalStats.txByteCnt += asd->stats.initiator_bytes;
+    bucket->totalStats.rxByteCnt += asd->stats.responder_bytes;
 
-    const uint32_t web_app_id = asd->pick_payload_app_id();
-    if (web_app_id > APP_ID_NONE)
-    {
-        const uint32_t app_id = web_app_id;
-        AppIdStatRecord* record = (AppIdStatRecord*)fwAvlLookup(app_id, bucket->appsTree);
-        if ( !record )
-        {
-            record = (AppIdStatRecord*)snort_calloc(sizeof(struct AppIdStatRecord));
-            if (fwAvlInsert(app_id, record, bucket->appsTree) == 0)
-            {
-                record->app_id = app_id;
-                bucket->appRecordCnt += 1;
-#ifdef DEBUG_STATS
-                fprintf(SF_DEBUG_FILE, "New App: %u Count %u\n", record->app_id,
-                    bucket->appRecordCnt);
-#endif
-            }
-            else
-            {
-                WarningMessage("Error saving statistics record for app id: %u", app_id);
-                snort_free(record);
-                record = nullptr;
-            }
-        }
+    AppId web_app_id = asd->pick_payload_app_id();
+    if ( web_app_id > APP_ID_NONE )
+        update_stats(asd, web_app_id, bucket);
 
-        if (record)
-        {
-            record->initiatorBytes += asd->stats.initiatorBytes;
-            record->responderBytes += asd->stats.responderBytes;
-        }
-    }
+    AppId service_app_id = asd->pick_service_app_id();
+    if ( service_app_id && ( service_app_id != web_app_id ) )
+        update_stats(asd, service_app_id, bucket);
 
-    const uint32_t service_app_id = asd->pick_service_app_id();
-    if ((service_app_id) &&
-        (service_app_id != web_app_id))
-    {
-        const uint32_t app_id = service_app_id;
-        AppIdStatRecord* record = (AppIdStatRecord*)fwAvlLookup(app_id, bucket->appsTree);
-        if ( !record )
-        {
-            record = (AppIdStatRecord*)snort_calloc(sizeof(struct AppIdStatRecord));
-            if (fwAvlInsert(app_id, record, bucket->appsTree) == 0)
-            {
-                record->app_id = app_id;
-                bucket->appRecordCnt += 1;
-#ifdef DEBUG_STATS
-                fprintf(SF_DEBUG_FILE, "New App: %u Count %u\n", record->app_id,
-                    bucket->appRecordCnt);
-#endif
-            }
-            else
-            {
-                WarningMessage("Error saving statistics record for app id: %u", app_id);
-                snort_free(record);
-                record = nullptr;
-            }
-        }
-
-        if (record)
-        {
-            record->initiatorBytes += asd->stats.initiatorBytes;
-            record->responderBytes += asd->stats.responderBytes;
-        }
-    }
-
-    const uint32_t client_app_id = asd->pick_client_app_id();
-    if (client_app_id > APP_ID_NONE
-        && client_app_id != service_app_id
-        && client_app_id != web_app_id)
-    {
-        const uint32_t app_id = client_app_id;
-
-        AppIdStatRecord* record = (AppIdStatRecord*)fwAvlLookup(app_id, bucket->appsTree);
-        if ( !record )
-        {
-            record = (AppIdStatRecord*)snort_calloc(sizeof(struct AppIdStatRecord));
-            if (fwAvlInsert(app_id, record, bucket->appsTree) == 0)
-            {
-                record->app_id = app_id;
-                bucket->appRecordCnt += 1;
-#ifdef DEBUG_STATS
-                fprintf(SF_DEBUG_FILE, "New App: %u Count %u\n", record->app_id,
-                    bucket->appRecordCnt);
-#endif
-            }
-            else
-            {
-                WarningMessage("Error saving statistics record for app id: %u", app_id);
-                snort_free(record);
-                record = nullptr;
-            }
-        }
-
-        if (record)
-        {
-            record->initiatorBytes += asd->stats.initiatorBytes;
-            record->responderBytes += asd->stats.responderBytes;
-        }
-    }
+    AppId client_app_id = asd->pick_client_app_id();
+    if ( client_app_id > APP_ID_NONE && client_app_id != service_app_id
+        && client_app_id != web_app_id )
+        update_stats(asd, client_app_id, bucket);
 }
 
 void AppIdStatistics::flush()

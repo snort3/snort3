@@ -28,6 +28,7 @@
 #include <dlfcn.h>
 
 #include "appid_config.h"
+#include "appid_http_session.h"
 #include "app_info_table.h"
 #include "detector_plugins/http_url_patterns.h"
 #include "service_plugins/service_ssl.h"
@@ -48,6 +49,7 @@ static char const* defaultXffFields[] = { HTTP_XFF_FIELD_X_FORWARDED_FOR,
                                           HTTP_XFF_FIELD_TRUE_CLIENT_IP };
 
 ProfileStats tpLibPerfStats;
+ProfileStats tpPerfStats;
 
 inline int testSSLAppIdForReinspect(AppId app_id)
 {
@@ -59,7 +61,7 @@ inline int testSSLAppIdForReinspect(AppId app_id)
         return 0;
 }
 
-#ifdef APPID_UNUSED_CODE
+#ifdef REMOVED_WHILE_NOT_IN_USE
 static int LoadCallback(const char* const path, int /* indent */)
 {
     void* handle;
@@ -120,7 +122,8 @@ static void getXffFields(void)
         xffFields = (char**)defaultXffFields;
         thirdpartyConfig.numXffFields = sizeof(defaultXffFields) / sizeof(defaultXffFields[0]);
     }
-    thirdpartyConfig.xffFields = (char**)snort_alloc(thirdpartyConfig.numXffFields * sizeof(char*));
+    thirdpartyConfig.xffFields = (char**)snort_alloc(thirdpartyConfig.numXffFields *
+        sizeof(char*));
     for (unsigned i = 0; i < thirdpartyConfig.numXffFields; i++)
         thirdpartyConfig.xffFields[i] = snort_strndup(xffFields[i], UINT8_MAX);
 }
@@ -157,9 +160,8 @@ void ThirdPartyAppIDInit(AppIdModuleConfig* config)
 
     // FIXIT-M need to provide log function and getSnortInstance function to 3rd party utils
 #ifdef REMOVED_WHILE_NOT_IN_USE
-    thirdpartyUtils.logMsg           = &DebugFormat;
-    thirdpartyUtils.getSnortInstance = _dpd.getSnortInstance;
-
+    //thirdpartyUtils.logMsg           = &DebugFormat;
+    //thirdpartyUtils.getSnortInstance = _dpd.getSnortInstance;
 #endif
 
     getXffFields();
@@ -195,8 +197,8 @@ void ThirdPartyAppIDReconfigure(void)
 
     ret = thirdparty_appid_module->reconfigure(&thirdpartyConfig);
     for (unsigned i = 0; i < thirdpartyConfig.oldNumXffFields; i++)
-         snort_free(thirdpartyConfig.oldXffFields[i]);
-     snort_free(thirdpartyConfig.oldXffFields);
+        snort_free(thirdpartyConfig.oldXffFields[i]);
+    snort_free(thirdpartyConfig.oldXffFields);
 
     if (ret != 0)
     {
@@ -254,11 +256,6 @@ bool checkThirdPartyReinspect(const Packet* p, AppIdSession* asd)
            asd->get_session_flags(APPID_SESSION_HTTP_SESSION) && TPIsAppIdDone(asd->tpsession);
 }
 
-bool checkThirdPartyReinspect(const Packet*, AppIdSession*)
-{
-    return false;
-}
-
 void ProcessThirdPartyResults(AppIdSession* asd, Packet* p, int confidence,
     AppId* proto_list, ThirdPartyAppIDAttributeData* attribute_data)
 {
@@ -292,7 +289,7 @@ void ProcessThirdPartyResults(AppIdSession* asd, Packet* p, int confidence,
     {
         if (!asd->hsession)
         {
-            asd->hsession = (HttpSession*)snort_calloc(sizeof(HttpSession));
+            asd->hsession = new AppIdHttpSession(asd);
             memset(asd->hsession->ptype_scan_counts, 0,
                 NUMBER_OF_PTYPES * sizeof(asd->hsession->ptype_scan_counts[0]));
         }
@@ -310,7 +307,7 @@ void ProcessThirdPartyResults(AppIdSession* asd, Packet* p, int confidence,
                 if (asd->hsession->url)
                 {
                     snort_free(asd->hsession->url);
-                    asd->hsession->chp_finished = 0;
+                    asd->hsession->chp_finished = false;
                 }
                 if (asd->get_session_flags(APPID_SESSION_DECRYPTED)
                     && memcmp(attribute_data->spdyRequestScheme, httpScheme, sizeof(httpScheme)-
@@ -346,7 +343,7 @@ void ProcessThirdPartyResults(AppIdSession* asd, Packet* p, int confidence,
                 if (asd->hsession->host)
                 {
                     snort_free(asd->hsession->host);
-                    asd->hsession->chp_finished = 0;
+                    asd->hsession->chp_finished = false;
                 }
                 asd->hsession->host = attribute_data->spdyRequestHost;
                 attribute_data->spdyRequestHost = nullptr;
@@ -365,7 +362,7 @@ void ProcessThirdPartyResults(AppIdSession* asd, Packet* p, int confidence,
                 if (asd->hsession->uri)
                 {
                     free(asd->hsession->uri);
-                    asd->hsession->chp_finished = 0;
+                    asd->hsession->chp_finished = false;
                 }
                 asd->hsession->uri = attribute_data->spdyRequestPath;
                 attribute_data->spdyRequestPath = nullptr;
@@ -386,7 +383,7 @@ void ProcessThirdPartyResults(AppIdSession* asd, Packet* p, int confidence,
                 {
                     snort_free(asd->hsession->host);
                     if (!asd->get_session_flags(APPID_SESSION_APP_REINSPECT))
-                        asd->hsession->chp_finished = 0;
+                        asd->hsession->chp_finished = false;
                 }
                 asd->hsession->host = attribute_data->httpRequestHost;
                 asd->hsession->host_buflen = attribute_data->httpRequestHostLen;
@@ -407,7 +404,7 @@ void ProcessThirdPartyResults(AppIdSession* asd, Packet* p, int confidence,
                 {
                     snort_free(asd->hsession->url);
                     if (!asd->get_session_flags(APPID_SESSION_APP_REINSPECT))
-                        asd->hsession->chp_finished = 0;
+                        asd->hsession->chp_finished = false;
                 }
 
                 //change http to https if session was decrypted.
@@ -439,7 +436,7 @@ void ProcessThirdPartyResults(AppIdSession* asd, Packet* p, int confidence,
                 {
                     snort_free(asd->hsession->uri);
                     if (!asd->get_session_flags(APPID_SESSION_APP_REINSPECT))
-                        asd->hsession->chp_finished = 0;
+                        asd->hsession->chp_finished = false;
                 }
                 asd->hsession->uri = attribute_data->httpRequestUri;
                 asd->hsession->uri_buflen = attribute_data->httpRequestUriLen;
@@ -460,7 +457,7 @@ void ProcessThirdPartyResults(AppIdSession* asd, Packet* p, int confidence,
             {
                 snort_free(asd->hsession->via);
                 if (!asd->get_session_flags(APPID_SESSION_APP_REINSPECT))
-                    asd->hsession->chp_finished = 0;
+                    asd->hsession->chp_finished = false;
             }
             asd->hsession->via = attribute_data->httpRequestVia;
             attribute_data->httpRequestVia = nullptr;
@@ -472,7 +469,7 @@ void ProcessThirdPartyResults(AppIdSession* asd, Packet* p, int confidence,
             {
                 snort_free(asd->hsession->via);
                 if (!asd->get_session_flags(APPID_SESSION_APP_REINSPECT))
-                    asd->hsession->chp_finished = 0;
+                    asd->hsession->chp_finished = false;
             }
             asd->hsession->via = attribute_data->httpResponseVia;
             attribute_data->httpResponseVia = nullptr;
@@ -484,7 +481,7 @@ void ProcessThirdPartyResults(AppIdSession* asd, Packet* p, int confidence,
             {
                 snort_free(asd->hsession->useragent);
                 if (!asd->get_session_flags(APPID_SESSION_APP_REINSPECT))
-                    asd->hsession->chp_finished = 0;
+                    asd->hsession->chp_finished = false;
             }
             asd->hsession->useragent = attribute_data->httpRequestUserAgent;
             attribute_data->httpRequestUserAgent = nullptr;
@@ -516,7 +513,7 @@ void ProcessThirdPartyResults(AppIdSession* asd, Packet* p, int confidence,
             {
                 snort_free(asd->hsession->response_code);
                 if (!asd->get_session_flags(APPID_SESSION_APP_REINSPECT))
-                    asd->hsession->chp_finished = 0;
+                    asd->hsession->chp_finished = false;
             }
             asd->hsession->response_code = attribute_data->httpResponseCode;
             asd->hsession->response_code_buflen = attribute_data->httpResponseCodeLen;
@@ -552,7 +549,7 @@ void ProcessThirdPartyResults(AppIdSession* asd, Packet* p, int confidence,
             {
                 snort_free(asd->hsession->referer);
                 if (!asd->get_session_flags(APPID_SESSION_APP_REINSPECT))
-                    asd->hsession->chp_finished = 0;
+                    asd->hsession->chp_finished = false;
             }
             asd->hsession->referer = attribute_data->httpRequestReferer;
             asd->hsession->referer_buflen = attribute_data->httpRequestRefererLen;
@@ -573,7 +570,7 @@ void ProcessThirdPartyResults(AppIdSession* asd, Packet* p, int confidence,
             {
                 snort_free(asd->hsession->cookie);
                 if (!asd->get_session_flags(APPID_SESSION_APP_REINSPECT))
-                    asd->hsession->chp_finished = 0;
+                    asd->hsession->chp_finished = false;
             }
             asd->hsession->cookie = attribute_data->httpRequestCookie;
             asd->hsession->cookie_buflen = attribute_data->httpRequestCookieLen;
@@ -595,7 +592,7 @@ void ProcessThirdPartyResults(AppIdSession* asd, Packet* p, int confidence,
             {
                 snort_free(asd->hsession->content_type);
                 if (!asd->get_session_flags(APPID_SESSION_APP_REINSPECT))
-                    asd->hsession->chp_finished = 0;
+                    asd->hsession->chp_finished = false;
             }
             asd->hsession->content_type = attribute_data->httpResponseContent;
             asd->hsession->content_type_buflen = attribute_data->httpResponseContentLen;
@@ -608,7 +605,7 @@ void ProcessThirdPartyResults(AppIdSession* asd, Packet* p, int confidence,
             {
                 snort_free(asd->hsession->location);
                 if (!asd->get_session_flags(APPID_SESSION_APP_REINSPECT))
-                    asd->hsession->chp_finished = 0;
+                    asd->hsession->chp_finished = false;
             }
             asd->hsession->location = attribute_data->httpResponseLocation;
             asd->hsession->location_buflen = attribute_data->httpResponseLocationLen;
@@ -623,7 +620,7 @@ void ProcessThirdPartyResults(AppIdSession* asd, Packet* p, int confidence,
             {
                 snort_free(asd->hsession->req_body);
                 if (!asd->get_session_flags(APPID_SESSION_APP_REINSPECT))
-                    asd->hsession->chp_finished = 0;
+                    asd->hsession->chp_finished = false;
             }
             asd->hsession->req_body = attribute_data->httpRequestBody;
             asd->hsession->req_body_buflen = attribute_data->httpRequestBodyLen;
@@ -635,7 +632,7 @@ void ProcessThirdPartyResults(AppIdSession* asd, Packet* p, int confidence,
             {
                 snort_free(asd->hsession->body);
                 if (!asd->get_session_flags(APPID_SESSION_APP_REINSPECT))
-                    asd->hsession->chp_finished = 0;
+                    asd->hsession->chp_finished = false;
             }
             asd->hsession->body = attribute_data->httpResponseBody;
             asd->hsession->body_buflen = attribute_data->httpResponseBodyLen;
@@ -673,7 +670,7 @@ void ProcessThirdPartyResults(AppIdSession* asd, Packet* p, int confidence,
         ThirdPartyAppIDFoundProto(APP_ID_RTSP, proto_list))
     {
         if (!asd->hsession)
-            asd->hsession = (HttpSession*)snort_calloc(sizeof(HttpSession));
+            asd->hsession = new AppIdHttpSession(asd);
 
         if (!asd->hsession->url)
         {
@@ -820,7 +817,7 @@ bool do_third_party_discovery(AppIdSession* asd, IpProtocol protocol, const SfIp
         if (asd->session_logging_enabled)
             LogMessage("AppIdDbg %s 3rd party allow reinspect http\n",
                 asd->session_logging_id);
-        asd->clear_http_field();
+        asd->reset_session_data();
     }
 
     if (asd->tp_app_id == APP_ID_SSH && asd->payload_app_id != APP_ID_SFTP &&
@@ -953,7 +950,7 @@ bool do_third_party_discovery(AppIdSession* asd, IpProtocol protocol, const SfIp
                         APP_ID_SSL))
                         asd->set_payload_app_id_data(APP_ID_HTTP_SSL_TUNNEL, NULL);
 
-                    asd->process_http_packet(direction);
+                    asd->hsession->process_http_packet(direction);
 
                     // If SSL over HTTP tunnel, make sure Snort knows that it's encrypted.
                     if (asd->payload_app_id == APP_ID_HTTP_SSL_TUNNEL)
@@ -963,10 +960,10 @@ bool do_third_party_discovery(AppIdSession* asd, IpProtocol protocol, const SfIp
                         APP_ID_HTTP
                         && !asd->get_session_flags(APPID_SESSION_APP_REINSPECT))
                     {
-                        asd->rna_client_state = APPID_STATE_FINISHED;
+                        asd->client_disco_state = APPID_DISCO_STATE_FINISHED;
                         asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED |
                             APPID_SESSION_SERVICE_DETECTED);
-                        asd->rna_service_state = APPID_STATE_FINISHED;
+                        asd->client_disco_state = APPID_DISCO_STATE_FINISHED;
                         asd->clear_session_flags(APPID_SESSION_CONTINUE);
                         if (direction == APP_ID_FROM_INITIATOR)
                         {
@@ -994,11 +991,11 @@ bool do_third_party_discovery(AppIdSession* asd, IpProtocol protocol, const SfIp
                         asd->tp_app_id = porAppId;
                         //SSL policy determines IMAPS/POP3S etc before appId sees first server
                         // packet
-                        asd->portServiceAppId = porAppId;
+                        asd->port_service_id = porAppId;
                         if (asd->session_logging_enabled)
                             LogMessage("AppIdDbg %s SSL is service %d, portServiceAppId %d\n",
                                 asd->session_logging_id,
-                                asd->tp_app_id, asd->portServiceAppId);
+                                asd->tp_app_id, asd->port_service_id);
                     }
                     else
                     {
@@ -1058,14 +1055,17 @@ void pickHttpXffAddress(AppIdSession* asd, Packet*, ThirdPartyAppIDAttributeData
 
     // XFF precedence configuration cannot change for a session. Do not get it again if we already
     // got it.
-    char** xffPrecedence = _dpd.sessionAPI->get_http_xff_precedence(p->stream_session, p->flags, &appIdSession->hsession->numXffFields);
+    char** xffPrecedence = _dpd.sessionAPI->get_http_xff_precedence(p->stream_session, p->flags,
+        &appIdSession->hsession->numXffFields);
     if (!xffPrecedence)
     {
         xffPrecedence = defaultXffPrecedence;
-        appIdSession->hsession->numXffFields = sizeof(defaultXffPrecedence) / sizeof(defaultXffPrecedence[0]);
+        appIdSession->hsession->numXffFields = sizeof(defaultXffPrecedence) /
+            sizeof(defaultXffPrecedence[0]);
     }
 
-    appIdSession->hsession->xffPrecedence = malloc(appIdSession->hsession->numXffFields * sizeof(char*));
+    appIdSession->hsession->xffPrecedence = malloc(appIdSession->hsession->numXffFields *
+        sizeof(char*));
 
     for (unsigned j = 0; j < appIdSession->hsession->numXffFields; j++)
         appIdSession->hsession->xffPrecedence[j] = strndup(xffPrecedence[j], UINT8_MAX);
@@ -1079,8 +1079,8 @@ void pickHttpXffAddress(AppIdSession* asd, Packet*, ThirdPartyAppIDAttributeData
 
     // xffPrecedence array is sorted based on precedence
     for (unsigned i = 0;
-         (i < asd->hsession->numXffFields) && asd->hsession->xffPrecedence[i];
-         i++)
+        (i < asd->hsession->numXffFields) && asd->hsession->xffPrecedence[i];
+        i++)
     {
         for (unsigned j = 0; j < attribute_data->numXffFields; j++)
         {
@@ -1109,7 +1109,8 @@ void pickHttpXffAddress(AppIdSession* asd, Packet*, ThirdPartyAppIDAttributeData
                 }
                 else
                 {
-                    attribute_data->xffFieldValue[j].value[tmp - attribute_data->xffFieldValue[j].value] = '\0';
+                    attribute_data->xffFieldValue[j].value[tmp -
+                    attribute_data->xffFieldValue[j].value] = '\0';
                     xff_addr = attribute_data->xffFieldValue[j].value;
                 }
 

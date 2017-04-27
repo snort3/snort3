@@ -26,10 +26,6 @@
 
 enum class IpProtocol : uint8_t;
 
-#define APP_MAPPING_FILE "appMapping.data"
-#define APP_CONFIG_FILE "appid.conf"
-#define USR_CONFIG_FILE "userappid.conf"
-
 #define APPID_SESSION_RESPONDER_MONITORED   (1ULL << 0)
 #define APPID_SESSION_INITIATOR_MONITORED   (1ULL << 1)
 #define APPID_SESSION_SPECIAL_MONITORED     (1ULL << 2)
@@ -100,9 +96,9 @@ enum APPID_FLOW_TYPE
     APPID_FLOW_TYPE_TMP
 };
 
-struct RNAServiceSubtype
+struct AppIdServiceSubtype
 {
-    RNAServiceSubtype* next;
+    AppIdServiceSubtype* next;
     const char* service;
     const char* vendor;
     const char* version;
@@ -204,7 +200,7 @@ public:
     uint64_t get_appid_session_attribute(AppIdSession*, uint64_t flag);
     APPID_FLOW_TYPE get_flow_type(AppIdSession*);
     void get_service_info(AppIdSession*, char** serviceVendor, char** serviceVersion,
-        RNAServiceSubtype**);
+        AppIdServiceSubtype**);
     short get_service_port(AppIdSession*);
     SfIp* get_service_ip(AppIdSession*);
     SfIp* get_initiator_ip(AppIdSession*);

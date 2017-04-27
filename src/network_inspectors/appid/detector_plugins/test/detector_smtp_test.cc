@@ -247,7 +247,7 @@ TEST(client_app_smtp, identify_client_version_mozilla_thunderbird)
 #endif
 //  FIXIT-M Add additional tests for other client types (Outlook, etc).
 
-int main(int argc, char** argv)
+int main(int, char**)
 {
 #if 0
     int return_value = CommandLineTestRunner::RunAllTests(argc, argv);

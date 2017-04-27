@@ -574,7 +574,7 @@ int SshClientDetector::validate(AppIdDiscoveryArgs& args)
         return sm_ret;
 
     add_app(args.asd, APP_ID_SSH, fd->client_id, (const char*)fd->version);
-    args.asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+    args.asd->set_client_detected();
     appid_stats.ssh_clients++;
     return APPID_SUCCESS;
 }

@@ -1,0 +1,3237 @@
+2	3COM-TSMUX	0	0	0
+4	914CG	0	0	0
+5	ACA Services	0	0	0
+6	ACI	0	0	0
+7	ACR-NEMA	0	0	0
+9	ActiveSync	0	121	0
+10	AD Backup	0	0	0
+11	AD DRS	0	0	0
+12	AD DSAOP	0	0	0
+13	AD DSROL	0	0	0
+14	AD NSP	0	0	0
+16	AD Restore	0	0	0
+17	ADrive	0	0	24
+18	AD XDS	0	0	0
+19	AED512	0	0	0
+20	AFP	0	0	0
+22	AJP	20043	0	0	ajp
+23	Alias	0	0	0
+24	Amazon	0	0	90
+26	ANSA Notify	0	0	0
+27	ANSA REX Trader	0	0	0
+29	Applejuice	20038	0	0	applejuice
+30	AppleShare	0	0	0
+32	Apple Update	0	290	1585
+33	ARCISDMS	0	0	0
+34	Ariel	0	0	0
+35	ARNS	0	0	0
+37	ASA	0	0	0
+38	Astraweb	0	0	1445
+41	auditd	0	0	0
+42	AUDIT	0	0	0
+44	AVG	0	0	0
+45	Avira Download/Update	0	134	0
+46	Avocent	0	0	0
+47	Backblaze	0	0	112
+48	Backpack	0	0	26
+49	Battlefield	20039	0	0	battlefield
+52	BFTP	0	0	0
+53	BGMP	0	0	0
+54	BH611	0	0	0
+55	BHEVENT	0	0	0
+56	BHFHS	0	0	0
+57	BHMDS	0	0	0
+58	Bing	0	0	114
+59	BitDefender	0	0	1775
+60	BITS	0	280	0
+61	BitTorrent	38	229	1349	bt
+62	Blackboard	0	0	28
+63	Blackjack	0	0	0
+64	BlazeFS	0	0	0
+65	Britton Lee IDM	0	0	0
+66	Bnet	0	0	0
+67	Cableport AX	0	0	0
+68	CAICCI	20045	0	0	caicci
+70	CAP	0	0	0
+71	CDC	0	0	0
+74	Check Point	20046	0	0	checkpoint
+76	Cisco DRP	0	0	0
+77	Cisco FNATIVE	0	0	0
+78	Cisco GDP	0	0	0
+79	Cisco SLA	0	0	0
+80	Cisco SYSMAINT	0	0	0
+81	Cisco TNATIVE	0	0	0
+82	Citrix CGP	0	0	0
+84	Citrix IMA	0	0	0
+85	Citrix Jedi	0	0	0
+86	Citrix Licensing	0	0	0
+87	Citrix Online	0	0	1822
+88	Citrix RTMP	0	0	0
+89	Citrix SLG	0	0	0
+90	Citrix WANScaler	0	0	0
+91	CL1	0	0	0
+92	Clearcase	0	0	0
+93	CLOANTO	0	0	0
+94	CMIP	0	0	0
+95	Coda Auth	0	0	0
+96	Commvault	20171	0	1474	commvault
+97	CompressNET	0	0	0
+98	COMSCM	0	0	0
+99	CORBA	0	0	0
+106	DASP	0	0	0
+107	DATEX-ASN	0	0	0
+108	dBase	0	0	0
+109	DCAP	0	0	0
+110	DCCP	0	0	0
+111	DCP	0	0	0
+112	DEC Auth	0	0	0
+113	DEC LaDebug	0	0	0
+114	DECVMS	0	0	0
+115	DEOS	0	0	0
+116	DHCPv6	20004	0	0	dhcpv6-server
+117	Digg	0	0	31
+118	Direct Connect	20040	0	0	direct_connect
+119	PDRE	0	0	0
+120	DIXIE	0	0	0
+121	DLS	0	0	0
+122	DNA-CML	0	0	0
+123	DNSIX	0	0	0
+124	DPSI	0	0	0
+125	Dropbox	0	300	98
+126	DSFGW	0	0	0
+127	DSP3270	0	0	0
+128	DSP	0	0	0
+129	DSSETUP	0	0	0
+130	DTAG	0	0	0
+131	DTK	0	0	0
+132	eBay	0	0	1551
+133	eBay Bid	0	0	32
+134	eBay Search	0	0	33
+135	eBay Watch	0	0	34
+136	eBuddy	0	0	35
+138	EMBLNDT	0	0	0
+139	EMFIS Data	0	0	0
+140	EntrustTime	0	0	0
+141	Epmap	0	0	0
+142	ERPC	0	0	0
+143	Eset	0	490	1774
+145	ESRO	0	0	0
+147	ETOS	0	0	0
+149	Facebook Apps	0	0	852
+150	Fark	0	0	36
+151	Farmville	0	0	440
+153	FastTrack	0	51	0
+154	Fatmen	0	0	0
+155	FileMaker	0	0	0
+158	FlashGet	0	52	0
+159	Flickr	0	0	225
+160	Flixster	0	219	0
+161	FogBugz	0	0	120
+162	F-Prot	0	0	1812
+163	FreeCast	0	0	831
+164	FriendFeed	0	0	1700
+165	FTP	8	0	0	ftp
+166	FTP Data	36	0	0	ftp-data
+167	FTPS Data	20132	0	0	ftpsdata
+168	FTPS	20131	0	0	ftps
+169	FXP	0	0	0
+170	GACP	0	0	0
+171	Ganglia	20047	0	0	ganglia
+172	Genesis PPP	0	0	0
+173	Genie	0	0	0
+174	GENRAD	0	0	0
+175	Giganews	0	492	0
+176	GIOP	20048	0	0	giop
+177	GIST	0	0	0
+178	Google APIs	0	0	1254
+179	Google App Engine	0	326	1052
+180	Google Drive	0	0	285
+182	Google Talk Gadget	0	460	0
+184	Google	0	0	872
+185	Google Translate	0	0	1295
+187	GoToMeeting	0	0	124
+188	GPFS	0	0	0
+190	Groupwise	20075	84	0	groupwise
+192	Gss X License Verification	0	0	0
+193	ITU H.225	0	0	0
+194	ITU H.245	0	0	0
+197	Hassle	0	0	0
+198	HDAP	0	0	0
+199	HEMS	0	0	0
+200	HiveStor	0	0	0
+201	HL7	20153	262	0	hl7
+202	Hopster	0	0	1501
+205	Windows Live Hotmail	0	0	22
+206	HP Perf	0	0	0
+207	HP VMM	0	0	0
+209	HTTPMGT	0	0	0
+211	Hyper-G	0	0	0
+212	IASD	0	0	0
+214	ICA Browser	20051	0	0	ica_browser
+215	ICAD	0	0	0
+216	ICAP	20052	0	0	icap
+217	ICA	20050	0	0	ica
+218	IceShare	0	55	0
+221	ICP	0	0	0
+222	ICQ2Go	0	0	42
+225	IKE	20064	0	0	isakmp
+226	IMGames	0	0	0
+227	IMSP	0	0	0
+228	InBusiness	0	0	0
+229	Informix	20053	0	0	informix
+230	InfoSeek	0	0	0
+231	Infostore	0	0	0
+232	IngresNET	0	0	0
+240	ircu	20054	0	0	ircu
+243	ATG Live Help	0	0	0
+244	ISI Graphics	0	0	0
+247	Jargon	0	0	0
+248	Kaspersky	0	0	1778
+249	K-Block	0	0	0
+250	KFTPDATA	0	0	0
+251	KFTP	0	0	0
+252	KIS	0	0	0
+253	KNETCMP	0	0	0
+254	Kryptolan	0	0	0
+255	Ktelnet	0	0	0
+256	Kugou	0	58	832
+257	KVM	0	0	0
+258	KWDB	0	0	0
+259	L2TP	0	0	0
+261	Last.fm	0	411	1500
+262	Legent	0	0	0
+263	LINK	0	0	0
+264	Live365	0	0	45
+265	Livemeeting	0	0	1825
+266	Livestation	0	0	47
+267	LLMNR	0	0	0
+269	Locus Map	0	0	0
+270	LogMeIn	0	0	1532
+271	LSARPC	0	0	0
+272	Mafiawars	0	0	904
+273	Magenta Logic	0	0	0
+274	MagicJack	0	0	0
+275	MAILQ	0	0	0
+276	MANET	0	0	0
+277	MAPI	20081	89	0	mapi
+278	Masqudialer	0	0	0
+279	MATIP	0	0	0
+280	McAfee	0	489	1773
+281	MC-FTP	0	0	0
+282	McIDAS	0	0	0
+283	mck-ivpip	0	0	0
+285	MediaFire	0	0	243
+287	Meeting Maker	0	0	0
+289	Metagram	0	0	0
+290	MF Cobol	0	0	0
+291	MFTP	0	0	0
+292	Mini SQL	0	0	0
+293	mit-ml-dev	0	0	0
+294	MIT Spooler	0	0	0
+295	Mixi	0	0	50
+296	MobileIP	0	0	0
+297	MortgageWare	0	0	0
+300	MPM	0	0	0
+302	MPTN	0	0	0
+303	MS CRS	0	0	0
+304	MSDN	0	0	423
+305	MSG	0	0	0
+306	MSMQ	0	0	0
+307	MSNP	0	0	0
+308	MSN	0	0	52
+309	MS OLAP	0	0	0
+310	MS Online	0	0	0
+311	MSP	0	0	0
+312	MS SQL	0	0	0
+313	MTA	0	0	0
+317	MySpace	0	0	14
+318	NAMP	0	0	0
+319	Napster	0	0	54
+320	NCED	0	0	0
+321	NCLD	0	0	0
+322	NDS Auth	0	0	0
+324	Netinfo	0	0	0
+325	Netlogon	0	0	0
+326	NetMeeting	0	0	0
+327	NETSC	0	0	0
+328	NetScout	0	0	0
+329	Netware	0	0	0
+330	NFA	0	0	0
+331	NFS	0	0	0
+332	NI FTP	0	0	0
+333	NI Mail	0	0	0
+334	NIP	0	0	0
+335	NNSP	0	0	0
+336	NovaBACKUP	0	0	1574
+337	NPP	0	0	0
+338	NSIIOPS	20130	0	0	nsiiops
+339	NSRMP	0	0	0
+340	NSS	0	0	0
+341	NSSTP	0	0	0
+342	NXEdit	0	0	0
+343	NeXTStep	0	0	0
+344	OCBinder	0	0	0
+345	OCServer	0	0	0
+346	OCS	0	0	0
+347	ODMR	0	0	0
+348	OFTP	0	0	0
+349	OFTPS	0	0	0
+350	Onmux	0	0	0
+351	Opalis Robot	0	0	0
+352	Openport	0	0	0
+353	OpenVPN	0	0	0
+355	Oracle SQLNET	0	0	0
+356	Orkut	0	0	55
+357	OSCAR	0	0	0
+358	OSUNMS	0	0	0
+359	Panda	0	494	1776
+360	PartyPoker	0	0	57
+361	PAWSERV	0	0	0
+362	PCMAIL	0	0	0
+363	PDAP	0	0	0
+365	PFTP	0	0	0
+367	PIP	0	0	0
+368	PKIX Timestamp	0	0	0
+369	Plaxo	0	0	1596
+370	POP2	0	0	0
+374	PPStream	0	0	59
+375	PPTP	0	0	0
+376	lpr	21	0	0	ldp
+377	PROFILE	0	0	0
+378	PROSPERO	0	0	0
+381	PWDGEN	0	0	0
+382	Qbik	0	0	0
+383	QFT	0	0	0
+384	QMTP	0	0	0
+385	QOTD	0	0	0
+386	QQ	20089	97	1600	qq
+387	QuickTime	0	304	3
+388	RAP	0	0	0
+391	Remote Job Service	0	0	0
+392	Remote Telnet	0	0	0
+393	ResCap	0	0	0
+394	RFR	0	0	0
+395	RIP	0	0	0
+396	RIS	0	0	0
+397	RJE	0	0	0
+398	rlogin	29	0	0	login
+399	RLP	0	0	0
+400	RMT	0	0	0
+401	RPC2PMAP	0	0	0
+402	RRP	0	0	0
+404	RSVD	0	0	0
+407	RTCP	0	0	0
+408	RTSPS	0	0	0
+409	SAMR	0	0	0
+410	SAP HostControl	0	0	0
+411	TFTP subnet broadcast	0	0	0
+412	Sco I2 Dialog Daemon	0	0	0
+414	SCTP	0	0	0
+415	Second Life	20033	0	0	secondlife
+416	SecurSight	0	0	0
+417	Semantix	0	0	0
+418	SEND	0	0	0
+419	SET	0	0	0
+420	SFTP	0	0	0
+421	SGCP	0	0	0
+422	SGMP	0	0	0
+423	Sharepoint	0	0	0
+424	Shrinkwrap	0	0	0
+425	Silverplatter	0	0	0
+426	SIP	20028	30	0	sip
+428	Skype Auth	20034	0	0	skype_auth
+429	Skype Out	0	0	0
+430	Skype p2p	0	0	0
+431	Skype Probe	0	0	0
+432	Slingbox	0	0	64
+433	SMAKYNET	0	0	0
+434	Smart Session Description Protocol	0	0	0
+435	SMPTE	0	0	0
+436	SMSP	0	0	0
+437	SMUX	0	0	0
+438	SNA Gateway	0	0	0
+439	SNET	0	0	0
+440	SNPP	0	0	0
+441	SoftPC	0	0	0
+442	SoulSeek	20142	61	833
+444	SRC	0	0	0
+445	SRMP	0	0	0
+446	Sender Rewriting Scheme	0	0	0
+447	SSDP	0	0	0
+448	StationLauncher	0	62	0
+449	Stat Service	0	0	0
+450	Store Admin	0	0	0
+451	Su-Mit Telnet	0	0	0
+452	Sun RPC	28	0	0	sunrpc
+453	SUPDUP	0	0	0
+454	SuperNews	0	0	1632
+458	Sybase SQL	0	0	0
+459	Symantec System Center	20057	0	0	symantec_system
+461	Exchange System Attendant	0	0	0
+462	syslog	20020	0	0	syslog
+463	Systat	0	0	0
+464	TACACS+	20095	103	0	tacacs
+466	TCPMUX	0	0	0
+468	Texar	0	0	0
+469	TFTPS	0	0	0
+470	Time	0	0	0
+471	Tmobile	0	0	0
+472	Tobit David	0	0	0
+473	TOR	0	0	0
+474	Tripwire	0	0	0
+475	Tumblr	0	271	255
+476	UAAC	0	0	0
+477	UARPS	0	0	0
+478	UC4	20059	0	0	uc4
+480	UIS	0	0	0
+481	ListProc	0	0	1530
+482	UMA	0	0	0
+483	Unicenter	20044	0	0	unicenter
+484	Unidata LDM	0	0	0
+485	Unify	0	0	0
+486	UPS	0	0	0
+487	Usenet	0	0	0
+490	UUCP	0	0	0
+491	Vchat	0	0	0
+492	vettcp	0	0	0
+493	VMNET	0	0	0
+494	VM PWSCS	0	0	0
+495	Vonage	0	0	851
+496	VSLMP	0	0	0
+497	Vuze	0	63	834
+498	WCCP	0	0	0
+499	Webfilter	0	0	0
+500	WebLogic	20042	44	0	weblogic
+501	Wikipedia	0	0	187
+502	Windows Live	0	0	1782
+503	Windows Media	0	0	0
+505	WINS	20014	0	0	nameserver
+506	Wordpress	0	0	1718
+507	World of Warcraft	0	64	0
+510	Xanga	0	0	1715
+511	Xbone	0	0	0
+513	XDMCP	0	0	0
+514	Xfer	0	0	0
+515	XMPP	0	0	0
+516	XNS Authentication	0	0	0
+517	XNS Clearinghouse	0	0	0
+518	XNS Mail	0	0	0
+519	XNS Time	0	0	0
+520	XNS	0	0	0
+521	Xyplex	0	0	0
+522	Yahoo! Games	0	0	72
+524	Yahoo!	0	126	990
+525	ANSI Z39.50	0	0	0
+526	Zannet	0	0	0
+527	Zebra	0	0	0
+528	Zoho	0	0	1717
+529	Zoho Chat	0	0	75
+530	Zoho Mail	0	0	76
+532	Zoho Wiki	0	0	78
+533	Zynga	0	0	137
+535	1-800-Flowers	0	0	88
+536	100Bao	20068	69	0	100bao
+537	2channel	0	0	109
+538	6.pm	0	0	207
+539	Ace Hardware Corporation	0	0	208
+540	Addicting Games	0	0	209
+541	Adobe Software	0	0	21
+542	Adorama	0	0	89
+544	American Express	0	0	110
+545	Android browser	0	49	0
+546	AOL Mail	0	0	13
+547	AOL Instant Messenger	2	19	0	aim
+550	Apple Mail	0	7	0
+551	Apple Store	0	0	91
+552	ARCServe	20069	70	0	arcserve
+553	Ares	20103	107	0	ares
+554	Argos	0	0	92
+555	Atom	0	0	11
+556	Atom.com	0	0	210
+557	Autoblog	0	0	197
+558	AutoTrader.com	0	0	194
+559	B&H Photo Video	0	0	96
+560	Bank of America	0	0	113
+561	Barnes and Noble	0	0	94
+562	Barneys New York	0	0	211
+563	Basecamp	0	0	204
+564	Battle.net	20101	0	0	battle_net
+565	BearShare	0	77	0
+566	Bebo	0	0	27
+567	Best Buy	0	0	95
+568	beWeeVee	0	0	283
+569	BGP	3	0	0	bgp
+571	BitTorrent tracker	0	25	0
+572	Black & Decker Corporation	0	0	212
+573	Blackberry browser	0	50	0
+574	Blip.tv	0	0	213
+575	Blockbuster	0	0	192
+576	Blogger	0	0	29
+577	Bloomingdales	0	0	214
+578	Blue Nile	0	0	216
+579	Bluefly	0	0	215
+581	CamerasDirect.com.au	0	0	138
+582	Capital One	0	0	115
+583	Car and Driver	0	0	195
+584	CarMax	0	0	139
+585	CDiscount	0	0	140
+586	Character Generator	20000	0	0	chargen
+587	Chase	0	0	191
+588	CheapTickets	0	0	218
+589	Chrome	0	46	0
+590	Citi	0	0	116
+591	City Sports	0	0	219
+592	Collabedit	0	0	286
+593	Costco	0	0	141
+594	Craigslist	0	0	206
+595	Crutchfield	0	0	142
+596	cURL	0	36	0
+597	CVS	20070	71	0	cvs
+599	DAAP	20073	0	0	daap
+600	Dailymotion	0	0	30
+601	David Jones	0	0	220
+602	DB2	20071	72	0	db2
+603	DCE/RPC	5	0	0	dcerpc
+604	Deals Direct	0	0	143
+605	Delicious	0	0	221
+606	Dell	0	0	144
+607	Destructoid	0	0	222
+608	deviantART	0	0	287
+609	DHCP	4	0	0	dhcp
+611	Dick's Sporting Goods	0	0	193
+612	Diigo	0	0	223
+613	Dillards	0	0	224
+614	Discard	20005	0	0	discard
+615	Discover	0	0	117
+616	DNP3	20066	67	0	dnp3
+617	DNS	6	0	0	dns
+618	DRDA	20072	73	0	drda
+619	Dropbear	0	39	0
+620	Drugstore.com	0	0	145
+621	E*TRADE	0	0	118
+622	Edmunds.com	0	0	146
+623	eDonkey	20080	88	0	edonkey
+624	Eudora	0	8	0
+625	Eudora Pro	0	9	0
+626	Evolution	0	5	0
+627	exec	7	0	0	exec
+628	Expedia	0	0	147
+629	Facebook	0	161	17
+631	Facebook Comment	0	0	83
+632	Premier Football	0	0	97
+636	Fidelity	0	0	119
+637	Finger	20006	0	0	finger
+638	Firefox	0	32	0
+639	Flash Video	0	0	9
+640	Fnac	0	0	148
+641	Foxy	0	80	0
+642	Friendster	0	0	37
+643	Fry's Electronics	0	0	149
+644	FTD	0	0	150
+646	G4	0	0	226
+647	Game Informer	0	0	227
+648	GameSpot	0	0	121
+649	GameSpy	0	0	228
+650	GameStop	0	0	122
+651	GameTrailers	0	0	229
+652	Gawker	0	0	123
+653	generic audio/video	0	0	7
+654	giFT	0	83	0
+655	Gmail	0	0	12
+656	Gnucleus	0	82	0
+657	GnucleusLAN	0	74	0
+658	Gnutella	20030	27	0	gnutella
+659	Gnutella2	20074	0	0	gnutella2
+660	Google Analytics	0	218	38
+661	Google Calendar	0	0	39
+662	Google Desktop	0	42	0
+663	Google News	0	0	230
+664	Google Product Search	0	0	151
+665	Google Safebrowsing	0	0	40
+667	Gopher	20008	0	0	gopher
+668	gtk-gnutella	0	81	0
+669	Haiku Learning Systems	0	0	231
+670	Home Depot	0	0	152
+671	Hostname server	20009	0	0	hostname
+672	Google Earth	0	54	0
+673	Hotline	20077	86	0	hotline
+674	House of Fraser	0	0	233
+675	HSBC	0	0	125
+676	HTTP	9	0	0	http
+677	Hulu	0	0	41
+678	IBM App	0	0	0
+679	ICQ	0	56	1508
+680	IGN	0	0	126
+682	ImageShack	0	0	235
+683	IMAP	10	127	0	imap
+684	Imgur	0	0	236
+685	imo.im	0	0	237
+686	Internet Explorer	0	1	0
+687	IRC	12	0	0	ircd
+688	ITU H.323	20076	85	0	itu_h_323
+689	iTunes	0	75	850
+690	J.C. Penney	0	0	154
+691	J&R	0	0	155
+692	Jabber	20078	87	0	jabber
+693	Jalopnik	0	0	196
+694	Java RMI	20055	0	0	java_rmi
+695	JIRA	0	0	201
+696	Joystiq	0	0	238
+697	KAD	20079	0	0	kad
+698	Kay Jewelers	0	0	156
+700	KMail	0	12	0
+701	Kerberos	20011	128	0	kerberos
+702	Kmart	0	0	157
+703	Kogan Technologies	0	0	158
+704	Kohl's	0	0	159
+705	Kongregate	0	0	239
+706	Konqueror	0	4	0
+707	Kotaku	0	0	199
+708	Launchpad	0	0	203
+710	LDAP	20012	0	0	ldap
+711	Limelight	0	0	43
+712	LimeWire	0	76	0
+713	LinkedIn	0	0	44
+714	LinkedIn Job Search	0	0	87
+715	Linuxconf	20013	0	0	linuxconf
+716	LiveJournal	0	0	46
+718	Lokalisten	0	0	106
+719	Lord & Taylor	0	0	240
+720	Lotus Notes	20056	6	0	lotus_notes
+721	LOVEFiLM	0	0	241
+722	Lowe's	0	0	160
+723	lsh	0	40	0
+724	Manolito	20084	98	0	manolito
+725	Megaco	20085	93	0	megaco
+727	Menards	0	0	245
+728	Metacafe	0	0	246
+729	MetaFilter	0	0	79
+730	MGCP	20082	90	0	mgcp
+731	Microsoft Update	0	0	15
+732	Microsoft Windows Messenger	0	23	0
+733	Minus	0	0	247
+734	Mixx	0	0	248
+735	MMS	20083	91	0	mms
+736	Mobile Safari	0	47	0
+737	Modbus	20067	0	0	modbus
+738	Morgan Stanley	0	0	128
+739	Morpheus	0	79	0
+741	MP4	0	0	2
+742	MPEG	0	0	1
+743	MSN Messenger	20035	16	0	msn_messenger
+745	Mute	20086	94	0	mute
+746	Mutt	0	11	0
+747	MySQL	14	0	0	mysql
+748	myUdutu	0	0	274
+749	NCP	20087	95	0	ncp
+750	Neckermann	0	0	161
+751	Neiman Marcus	0	0	249
+752	Nessus	20015	0	0	nessus
+753	NetBIOS-dgm	15	0	0	netbios-dgm
+754	NetBIOS-ns	16	0	0	netbios-ns
+755	NetBIOS-ssn (SMB)	17	0	0	netbios-ssn
+756	Netflix	0	0	162
+757	Netlog	0	0	290
+758	Netvibes	0	0	107
+759	Newegg	0	0	163
+760	NewsNow	0	0	250
+761	Newsvine	0	0	251
+762	Nico Nico Douga	0	0	80
+763	NNTP	18	0	0	nntp
+764	Nordstrom	0	0	252
+765	NSPlayer	0	92	0
+766	ntalk	20016	0	0	ntalk
+767	NTP	19	0	0	ntp
+768	Office Depot	0	0	164
+769	OfficeMax	0	0	253
+770	oo.com.au	0	0	165
+771	OpenSSH	0	37	0
+773	Oracle Database	0	29	0
+774	TNS/Oracle	20026	0	0	oracle
+775	Orbitz	0	0	254
+776	Outlook	0	2	0
+777	Outlook Express	0	3	0
+778	Overstock.com	0	0	166
+779	Pandora	0	298	56
+780	PC-Duo	20065	68	0	pc_duo
+781	PcAnywhere	20088	96	0	pcanywhere
+782	PeerCast	20092	100	0	peercast
+783	PeerEnabler	0	59	0
+784	Photobucket	0	0	81
+785	Picasa	0	41	1294
+786	Poco	20093	101	0	poco
+787	Pogo	0	0	58
+788	POP3	20	129	0	pop3
+789	PopCap Games	0	0	256
+790	PopUrls	0	0	257
+791	PostgreSQL	20017	102	0	postgresql
+792	Priceline.com	0	275	258
+793	ProFlowers	0	0	167
+794	PuTTY	0	38	0
+795	Quake	20090	99	0	quake
+796	Quickflix	0	0	259
+797	Quill Corporation	0	0	260
+798	QVC	0	0	168
+799	Qzone	0	0	288
+800	RADIUS	23	0	0	radius
+801	RADIUS-acct	22	0	0	radacct
+803	RDP	20029	33	0	rdp
+804	Reddit	0	0	61
+805	Redmine	0	0	200
+806	REI	0	0	169
+808	Renren	0	0	289
+809	REVOLVEclothing	0	0	261
+810	Rona	0	0	262
+811	RSS	0	0	10
+812	RTMP	20063	0	0	rtmp
+813	RTP	20032	31	0	rtp
+814	RTSP	20018	0	0	rtsp
+815	Safari	0	45	0
+816	Saks Fifth Avenue	0	0	263
+817	Sam's Club	0	0	171
+818	schuelerVZ	0	0	104
+819	Schwab	0	0	130
+820	Scottrade	0	0	131
+821	Sears	0	0	172
+822	Shareaza	0	78	0
+823	shell	27	0	0	shell
+824	Shockwave	0	241	8
+825	Shoplet	0	0	264
+826	ShopNBC	0	0	174
+827	HP Home & Home Office Store	0	0	153
+828	ShopStyle	0	0	265
+829	SHOUTCast Radio	0	0	62
+830	ShowClix	0	0	266
+831	ShowDocument	0	0	284
+832	Skype	0	21	1255
+834	Slashdot	0	0	63
+836	SMTP	30	125	0	smtp
+837	SNMP	31	0	0	snmp
+839	SOCKS	20019	0	0	socks
+840	Soribada	0	0	65
+841	spin.de	0	0	105
+842	Sports Authority	0	0	267
+843	SQL Server	20041	0	0	sql_server
+844	Squid	20062	0	0	squid
+846	SSH	32	0	0	ssh
+847	SSL	33	0	0	ssl
+848	Staples	0	0	175
+849	StayFriends	0	0	101
+850	StubHub	0	0	268
+851	studiVZ	0	0	103
+852	StumbleUpon	0	0	66
+853	STUN	20037	0	0	stun
+854	Swarovski	0	0	269
+855	T. Rowe Price	0	0	133
+856	TDS	0	43	0
+857	talk	20021	0	0	talk
+858	Target	0	0	176
+859	Tchibo	0	0	177
+860	TD Ameritrade	0	327	111
+861	Telnet	34	0	0	telnet
+862	TFTP	35	0	0	tftp
+863	The Gap	0	0	205
+864	The Sharper Image	0	0	173
+865	ThinkGeek	0	0	178
+866	Thunderbird	0	14	0
+867	Ticketmaster	0	0	179
+868	Tickets.com	0	0	180
+869	TicketsNow	0	0	270
+870	Tiffany & Co.	0	0	271
+871	Tiger Direct	0	0	181
+872	Timbuktu	20031	28	0	timbuktu
+873	TinyPic	0	0	272
+874	Tivoli	20058	254	0	tivoli
+875	TN3270	20096	104	0	tn3270
+876	TOC	20097	105	0	toc
+877	Top Gear	0	0	198
+878	Trac	0	0	202
+880	Travelocity	0	0	182
+881	TripAdvisor	0	0	273
+882	Twitter	0	305	67
+883	Urban Outfitters	0	0	275
+884	Ustream.tv	0	0	68
+885	Vanguard	0	0	134
+886	vCOM	20060	0	0	vcom
+887	Vehix	0	0	183
+888	vente-privee.com	0	0	184
+889	Veoh	0	0	276
+890	Verizon Email	0	0	69
+891	Viadeo	0	0	108
+892	Victoria's Secret	0	0	185
+893	Vimeo	0	0	277
+894	VNC	24	34	0	vnc
+895	RFB	20023	0	0	vnc-server
+898	Docstor	0	0	425
+899	Voyages-sncf.com	0	0	278
+900	Wachovia	0	0	135
+901	Walmart	0	0	186
+902	WAV	0	0	5
+903	Web Of Trust	0	0	279
+904	WebDAV	0	0	16
+905	WebEx	0	0	70
+906	WebSphere MQ	20049	0	0	websphere_mq
+907	Wells Fargo	0	0	136
+908	wer-kennt-wen	0	0	102
+909	Wget	0	35	0
+910	Zynga Poker	0	0	422
+911	Windows Live SkyDrive	0	0	132
+912	Windows Media Player	0	48	0
+913	WinMX	20099	0	0	winmx
+914	WiZiQ	0	0	280
+915	WMA	0	0	6
+916	WMV	0	0	4
+917	Woot	0	0	188
+918	WX	20061	0	0	wx
+919	X font server	20007	0	0	font-service
+920	9p.com	0	0	421
+921	Xbox Live	20102	108	0	xbox_live
+922	XING	0	0	100
+923	XM Radio Online	0	0	71
+924	Xunlei	20104	109	0	xunlei
+925	XWindows	20098	106	0	x11
+926	Yahoo! Voice	0	65	0
+927	Yet ABC	0	66	0
+928	Hightail	0	0	73
+929	YouTube	0	297	74
+930	Zales	0	0	189
+931	Zappos	0	0	190
+932	Zip.ca	0	0	281
+934	FireAMP	20105	110	0	fireamp
+936	Yahoo! Messenger	20036	22	0	yahoo_messenger
+937	Googlebot	0	288	0
+938	Yelp	0	0	0
+939	Netflix stream	0	0	1672
+940	Docstoc	0	0	424
+941	Grooveshark	0	0	1705
+942	Yahoo! Slurp	0	337	0
+943	Bingbot	0	278	0
+944	iMesh	0	0	1787
+945	Share P2P	0	0	0
+946	Yahoo! Mail	0	0	18
+947	Yahoo! Toolbar	0	0	20
+948	4shared	0	0	23
+949	Megaupload	0	0	48
+950	Salesforce.com	0	0	129
+951	RitzCamera.com	0	0	170
+952	Macy's	0	0	242
+953	whois	20024	0	0	whois
+954	echo	20002	0	0	echo
+955	daytime	20003	0	0	daytime
+956	Ident	20010	0	0	ident
+957	Pando	20194	0	1779
+958	TeamViewer	0	0	1637
+959	7digital	0	0	291
+960	Avoidr	0	0	292
+962	Chatroulette	0	0	294
+963	Cyworld	0	0	295
+964	Daum	0	0	296
+965	Deezer	0	0	297
+966	DivShare	0	0	298
+967	dl.free.fr	0	0	299
+970	Evony	0	0	302
+971	FileDropper	0	0	303
+972	Filemail	0	0	304
+973	FileServe	0	0	305
+974	Licorize	0	0	306
+975	folkd	0	0	307
+976	FORA.tv	0	0	308
+977	GMX Mail	0	0	309
+978	GOGOBOX	0	0	310
+979	CiteULike	0	0	311
+980	Habbo	0	0	312
+981	Hushmail	0	0	313
+982	The Hype Machine	0	0	314
+983	ifile.it	0	0	315
+984	iHeartRadio	0	414	316
+985	Issuu	0	0	317
+986	Jamendo	0	0	318
+987	Jango	0	0	319
+988	Justin.tv	0	0	320
+989	Kaixin001	0	0	321
+991	Livestream	0	0	323
+992	Me2day	0	0	324
+993	Megashare	0	0	325
+994	Megashares	0	0	326
+995	MyDownloader	0	0	327
+996	Neopets	0	0	328
+997	Omegle	0	0	329
+999	Mister Wong	0	0	331
+1001	ProxEasy	0	0	333
+1002	Qriocity	0	0	334
+1003	RuneScape	0	0	335
+1004	Schmedley	0	0	336
+1005	Scribd	0	0	337
+1006	Songza	0	0	338
+1007	SoundCloud	0	0	339
+1010	Suresome	0	0	342
+1011	Surrogafier	0	0	343
+1013	Tinychat	0	0	345
+1014	Tudou	0	0	346
+1015	TransferBigFiles.com	0	0	347
+1016	Tuenti	0	0	348
+1017	TurboUpload	0	0	349
+1018	VKontakte	0	0	350
+1019	VTunnel	0	0	351
+1020	Webhard	0	0	352
+1021	Webshots	0	0	353
+1022	Weibo	0	0	354
+1025	WooMe	0	0	357
+1026	Writeboard	0	0	358
+1027	BigUpload	0	0	359
+1028	Clarizen	0	0	360
+1029	Rdio	0	0	361
+1031	56.com	0	0	363
+1032	51.com	0	0	364
+1033	Youku	0	0	365
+1034	Crackle	0	0	366
+1035	RuTube	0	0	367
+1037	Afreeca	0	0	369
+1038	Babelgum	0	0	370
+1040	Octopz	0	0	372
+1041	MOG	0	0	373
+1046	Phanfare	0	0	378
+1047	we7	0	0	379
+1048	FilmOn	0	0	380
+1049	Mibbit	0	0	381
+1050	BigBlueButton	0	0	382
+1051	TwitchTV	0	0	383
+1052	MegaMeeting	0	0	384
+1053	Badoo	0	0	385
+1054	DepositFiles	0	0	386
+1055	CloudMe	0	0	387
+1057	Skyrock	0	0	389
+1060	Jubii	0	0	392
+1061	TotoExpress	0	0	393
+1062	Easy-Share	0	0	394
+1063	TwitPic	0	0	395
+1064	yfrog	0	0	396
+1065	Tagged	0	0	397
+1066	hi5	0	0	398
+1067	Livemocha	0	0	399
+1068	Slacker	0	0	400
+1069	Douban	0	0	401
+1070	Odnoklassniki	0	0	402
+1071	Gaia Online	0	0	403
+1072	MyHeritage	0	0	404
+1073	AutoZone	0	0	405
+1074	Dangdang	0	0	406
+1075	PC Mall	0	0	407
+1076	iCal	0	120	0
+1077	Tesco.com	0	0	409
+1078	xda-developers	0	0	410
+1079	4chan	0	0	411
+1080	NeoGAF	0	0	412
+1081	Rhapsody	0	0	413
+1082	Balatarin	0	0	414
+1084	Movieclips	0	0	416
+1085	RDT	20109	0	0	rdt
+1086	Steam	20113	0	0	steam
+1087	9P	20106	111	0	9p
+1088	MSDP	20111	114	0	msdp
+1089	RealAudio	20116	118	417	realaudio
+1090	TeamSpeak	20110	113	0	teamspeak
+1091	Ventrilo	20112	115	0	ventrilo
+1092	Winamp	20117	112	0	winamp
+1093	Advanced Packaging Tool	20115	116	0	apt
+1094	iWARP	20114	117	0	iwarp
+1095	IPP	20108	0	449	ipp
+1096	NDMP	20107	0	0	ndmp
+1097	rsync	26	0	0	rsync
+1098	OPC	0	0	0
+1099	Paltalk Messenger	0	0	0
+1100	Paltalk Chat	0	0	0
+1101	Paltalk File Transfer	20195	0	0	paltalkfilexfer
+1102	Paltalk Video	0	0	0
+1103	Paltalk Voice	0	0	0
+1105	Windows Update	0	328	0
+1106	Google+	0	0	0
+1107	AOL Instant Messenger Netscape	0	0	0
+1108	IMO	0	0	0
+1109	PC Connection	0	0	408
+1110	ASF	0	0	0
+1111	DDM-SSL	20118	0	0	ddm_ssl
+1112	SMTPS	20119	0	0	smtps
+1113	NNTPS	20120	0	0	nntps
+1114	IMAPS	20121	0	0	imaps
+1115	SShell	20122	0	0	sshell
+1116	LDAPS	20123	0	0	ldaps
+1117	TELNETS	20124	0	0	telnets
+1118	IRCS	20125	0	0	ircs
+1119	POP3S	20126	0	0	pop3s
+1120	MS Global Catalog Secure	20127	0	0	msgblcatsec
+1121	SF MGMT	20128	0	0	sf_mgmt
+1122	HTTPS	20129	0	0	https
+1123	Tweet	0	0	418
+1124	Adobe Connect	0	0	419
+1125	BitTornado	0	119	0
+1126	Skype Tunneling	0	0	0
+1127	Applejuice GUI	0	0	0
+1129	CafeMom	0	0	427
+1132	MetaCrawler	0	0	430
+1133	Mininova	0	0	431
+1134	PayPal	0	0	432
+1135	Pinterest	0	185	433
+1136	The Pirate Bay	0	0	434
+1137	Technorati	0	0	435
+1138	Torrentz	0	0	436
+1139	TypePad	0	0	437
+1140	Hotspot Shield	20133	0	1502	hotspot_shield
+1141	Zabbix	20134	0	0	zabbix
+1142	Zabbix Trap	20135	0	0	zabbix_trap
+1143	WhatsApp	0	0	1689
+1144	Munin	20136	0	1830	munin
+1145	ASProxy	0	0	0	asproxy
+1146	Google Toolbar	0	122	0
+1147	DynGate	0	0	0
+1148	Pinger	0	0	1595
+1149	Line2	0	0	1529
+1150	SCCM	0	0	1799
+1151	SCCM Remote Control	0	0	0
+1152	Steam browser	0	0	0
+1153	Steam DLC	0	0	0
+1154	Steam gaming	0	0	0
+1155	Steam social networking	0	0	0
+1156	Hamachi	0	0	0
+1157	Tetris Battle	0	0	438
+1158	Spotify	0	123	575
+1159	Bubble Witch Saga	0	0	439
+1161	Diamond Dash	0	0	442
+1162	Angry Birds	0	0	443
+1163	Words With Friends	0	0	444
+1164	Castleville	0	0	445
+1166	Cityville	0	0	448
+1167	About.com	0	0	1408
+1168	Answers.com	0	0	1434
+1169	Classmates	0	0	1466
+1170	CNET	0	0	1140
+1171	CNET Download	0	0	1157
+1172	DomainTools	0	0	1540
+1173	IBM	0	0	1506
+1175	Open Webmail	0	0	1580
+1176	SlideShare	0	0	1621
+1177	Sourceforge	0	0	1628
+1178	SurveyMonkey	0	0	1633
+1180	w3schools.com	0	0	1712
+1181	Weebly	0	0	1716
+1183	Google Maps	0	0	1780
+1184	APNS	0	0	0
+1185	Apple sites	0	0	1105
+1186	Facetime	0	0	0
+1187	iCloud	0	0	691
+1189	PCoIP	0	0	0
+1190	CNN.com	0	0	450
+1191	IMDB	0	0	451
+1192	NBC News	0	0	452
+1193	Mint.com	0	0	453
+1194	Apple Trailers	0	0	454
+1195	Dictionary.com	0	0	455
+1196	Bild.de	0	0	456
+1197	Bing Maps	0	0	457
+1198	Google Finance	0	0	458
+1200	TCX Flash	0	0	0
+1201	TCX Multimedia	0	0	0
+1202	TCX Sound	0	0	0
+1203	TCX USB	0	0	0
+1205	12306.cn	0	0	1399
+1206	126.com	0	0	1400
+1207	39.net	0	0	1406
+1208	Aizhan	0	0	1432
+1209	Bet365	0	0	1451
+1210	Brothersoft	0	0	1457
+1211	Brighttalk	0	0	1455
+1212	Enet	0	0	1549
+1213	Envato	0	0	1547
+1214	ExtraTorrent	0	0	1352
+1215	Glype Proxy	0	0	1781
+1216	goo.ne.jp	0	0	1720
+1217	Image Venue	0	0	1511
+1218	KAT	0	0	1710
+1219	Leboncoin	0	0	1525
+1220	Multiupload	0	0	1708
+1221	MSN2Go	0	0	1707
+1222	Netease	0	0	1570
+1223	Online File Folder	0	0	1579
+1224	Putlocker	0	0	1034
+1225	Raging Bull	0	0	1605
+1226	Soku	0	0	1626
+1227	Theme Forest	0	0	1767
+1228	Webs	0	0	1728
+1229	Bejeweled Chrome Extension	0	0	459
+1230	Google Play Books	0	0	460
+1231	Google Play Music	0	0	461
+1232	Google Reader	0	246	462
+1233	Instagram	0	124	463
+1234	DoubleDownCasino	0	0	464
+1236	Family Tree	0	0	466
+1237	Playdom	0	0	467
+1238	iAstrology	0	0	468
+1239	Social Empires	0	0	469
+1240	Mesmo Games	0	0	470
+1241	Daily Horoscope	0	0	471
+1243	Slotomania	0	0	473
+1244	Bubble Saga	0	0	474
+1245	Pool Live	0	0	475
+1247	Monster World	0	0	477
+1248	21 Questions	0	0	478
+1250	BranchOut	0	0	480
+1252	Bejeweled Blitz	0	0	482
+1253	Washington Post Social Reader	0	0	483
+1254	Bubble Island	0	0	484
+1256	4399.com	0	0	1407
+1257	AdF.ly	0	0	1412
+1258	Admin5	0	0	1417
+1259	Bloomberg	0	0	1392
+1260	Datei.to	0	0	1484
+1261	Mozilla	0	0	1565
+1262	Wretch	0	0	1714
+1263	Y8	0	0	1727
+1264	Avast	0	130	888
+1265	Allmyapps	0	131	0
+1267	Evernote	0	133	0
+1280	Seamonkey	0	147	0
+1282	Facebook search	0	0	841
+1283	Facebook event	0	0	842
+1284	Facebook Status Update	0	0	843
+1285	Facebook video chat	0	0	844
+1286	Facebook Message	0	0	845
+1287	Facebook video	0	0	846
+1288	Opera	0	149	0
+1290	AdobeAIR	0	151	0
+1296	SSL client	0	0	0
+1297	FireAMP SSL	0	0	0
+1298	Wooga	0	0	0
+1299	The New York Times	0	0	487
+1300	Twitter Link Service	0	0	488
+1301	Yahoo! Finance	0	0	489
+1302	Silverlight	0	0	490
+1303	Isoball	0	0	491
+1304	GO.com	0	0	492
+1305	OnLive	0	0	493
+1306	Ad Advisor	0	0	494
+1307	Ad Mob	0	0	495
+1308	Ad Marvel	0	0	496
+1309	Naver	0	384	497
+1310	Advertising.com	0	0	498
+1312	Burstly	0	0	500
+1313	Doubleclick	0	0	501
+1314	Ad Nexus	0	0	502
+1315	Pubmatic	0	0	503
+1316	Pulse360	0	0	504
+1317	Kanoodle	0	0	505
+1318	Greystripe	0	0	506
+1319	iAd	0	0	507
+1322	Acrobat.com	0	0	906
+1326	Box	0	0	217
+1327	Pandora TV	0	0	839
+1332	CBS	0	0	980
+1335	USA Today	0	0	1108
+1336	Microsoft Ads	0	0	508
+1337	Millennial Media	0	0	509
+1338	Weather Underground	0	0	510
+1340	Clubbox	0	0	512
+1341	Kiwoom	0	0	513
+1342	DCinside	0	0	514
+1343	Nate	0	0	515
+1344	Fileguri	0	0	516
+1345	Baidu	0	0	517
+1346	Babylon	0	0	518
+1357	Samsung	0	0	1046
+1360	TweetDeck	0	0	522
+1361	CanvasRider	0	0	523
+1362	ZEDO	0	0	524
+1363	eHow	0	0	525
+1364	ESPN	0	0	526
+1365	Comcast	0	0	527
+1366	Fox News	0	0	528
+1367	Weather.com	0	251	529
+1368	Weather.gov	0	0	530
+1369	Outbrain	0	0	531
+1370	The Huffington Post	0	0	532
+1371	Ask.com	0	0	533
+1372	OptMD	0	0	534
+1373	GoDaddy	0	0	535
+1374	Etsy	0	0	536
+1375	Conduit	0	0	537
+1376	BBC	0	0	538
+1378	Indeed	0	0	540
+1379	Publishers Clearing House	0	0	541
+1380	AT&T	0	0	542
+1381	Aweber	0	0	543
+1382	Fox Sports	0	0	544
+1383	Searchnu	0	0	545
+1384	Search-Result.com	0	0	546
+1385	Official Major League Baseball	0	0	547
+1386	RoadRunner	0	0	548
+1387	Drudge Report	0	0	549
+1388	Verizon Wireless	0	0	550
+1389	ABC	0	248	551
+1390	Wall Street Journal	0	0	552
+1391	Daily Mail	0	0	553
+1392	Amazon Web Services	0	0	554
+1393	CloudFront	0	0	555
+1398	Sourcefire.com	0	0	560
+1399	Taobao	0	0	561
+1400	Planetarium	0	0	562
+1401	Engadget	0	158	563
+1402	Flipboard	0	159	564
+1403	TED	0	160	565
+1405	KakaoTalk	0	162	1071
+1406	Flurry Analytics	0	0	566
+1407	Apple Stocks	0	163	0
+1408	Ubuntu Software Center	0	0	567
+1409	Ubuntu Update Manager	0	0	568
+1411	Python-httplib	0	166	0
+1412	Eclipse Updates	0	0	569
+1413	Eclipse	0	167	907
+1414	Eclipse Marketplace	0	0	570
+1415	Apple Mobile Yahoo API	0	0	571
+1416	Weather	0	168	0
+1417	NASA	0	0	572
+1418	NATO	0	0	573
+1419	AOL	0	0	574
+1420	NOAA	0	0	576
+1421	WeatherBug	0	169	577
+1422	FC2	0	0	578
+1423	Microsoft	0	0	579
+1424	Google Adsense	0	0	580
+1425	AdNetwork.net	0	0	581
+1426	Localytics	0	0	582
+1427	Nokia Maps	0	0	583
+1428	SymantecUpdates	0	293	584
+1429	Wolfram Alpha	0	171	585
+1430	Libwww-Perl	0	170	0
+1431	Norton AntiVirus	0	172	0
+1440	FastCGI	20137	181	0	fast_cgi
+1441	TPNCP	20138	0	0	tpncp
+1449	Kuaibo	0	0	586
+1450	SMPP	20139	0	0	smpp
+1451	Kismet	20140	0	0	kismet
+1456	Sports Illustrated	0	0	710
+1457	CPX Interactive	0	0	711
+1458	VeriSign	0	0	712
+1459	CBS Sports	0	0	713
+1460	Chartbeat	0	0	714
+1461	InsightExpress	0	0	715
+1480	Zillow	0	0	720
+1481	Monster.com	0	0	721
+1482	MapQuest	0	0	722
+1483	Swagbucks	0	0	723
+1484	Verizon	0	0	724
+1485	Wikia	0	0	725
+1486	TMZ	0	0	726
+1487	ShopAtHome	0	0	727
+1488	Asia Times Online	0	0	728
+1489	HootSuite	0	0	729
+1490	Coupons.com	0	0	730
+1491	CareerBuilder.com	0	0	731
+1492	Commission Junction	0	0	732
+1493	Fiverr	0	0	733
+1494	Backpage.com	0	0	734
+1495	LivingSocial	0	0	735
+1496	AllRecipes	0	0	736
+1497	Yellow Pages	0	0	737
+1498	Bleacher Report	0	0	738
+1499	Stack Overflow	0	0	739
+1500	U.S.Bank	0	0	740
+1501	Ancestry.com	0	0	741
+1502	WebMD	0	0	742
+1503	Trulia	0	0	743
+1504	Slickdeals	0	0	744
+1505	Business Insider	0	0	745
+1506	People.com	0	0	746
+1507	Reuters	0	0	747
+1508	BuzzFeed	0	0	748
+1509	California.gov	0	0	749
+1510	Southwest Airlines	0	0	750
+1511	NIH	0	0	751
+1512	WhitePages Inc	0	0	752
+1513	MGID	0	0	753
+1514	EarthLink	0	0	754
+1515	Disney	0	0	755
+1516	POLITICO.com	0	0	756
+1517	NY Daily News	0	0	757
+1518	Examiner.com	0	0	758
+1519	RetailMeNot	0	0	759
+1520	AddThis	0	0	760
+1521	StatCounter	0	0	761
+1522	OkCupid	0	0	762
+1523	Patch.com	0	0	763
+1524	Legacy.com	0	0	764
+1525	Realtor.com	0	0	765
+1526	Intuit	0	0	766
+1527	The Blaze	0	0	767
+1528	HostGator	0	0	768
+1529	Food Network	0	0	769
+1530	ClickBank	0	0	770
+1531	Cox	0	0	771
+1532	Mashable	0	0	772
+1533	AccuWeather	0	0	773
+1534	Sprint	0	0	774
+1535	Goodreads	0	0	775
+1536	LiveStrong.com	0	0	776
+1537	RealClearPolitics	0	0	777
+1538	Manta	0	0	778
+1539	Empower Network	0	0	779
+1540	CNBC	0	0	780
+1541	Widget Media	0	0	781
+1542	Inbox.com	0	0	782
+1543	Shutterfly	0	0	783
+1544	Neteller	0	0	784
+1545	T Mobile	0	0	785
+1546	Walgreens	0	0	786
+1547	WorldstarHipHop	0	0	787
+1548	NPR	0	0	788
+1549	Kayak	0	0	789
+1550	ToysRUs	0	0	790
+1551	Mail.Ru	0	0	791
+1552	Sohu.com	0	0	792
+1553	1&1 Internet	0	0	793
+1554	Ameba	0	0	794
+1555	Avaya	0	0	795
+1556	Axifile	0	0	796
+1557	Snort.org	0	0	797
+1558	Disqus	0	0	798
+1559	Infusionsoft	0	0	799
+1560	IMRWorldWide	0	0	800
+1561	Alisoft	0	0	801
+1562	Salesforce.com Live Agent	0	0	802
+1565	QVOD	20141	186	805
+1567	Fab.com	0	0	806
+1568	Square Inc.	0	0	807
+1569	Java Update	0	187	1837
+1570	Xlite SIP Client	0	0	0
+1571	X-PRO SIP Client	0	0	0
+1572	Nero SIP Client	0	0	0
+1573	ClearSea SIP Client	0	0	0
+1575	Dooble	0	189	0
+1576	Lynx	0	192	0
+1578	Epiphany	0	191	0
+1579	Chimera2	0	190	0
+1581	Links	0	197	0
+1582	Midori	0	196	0
+1583	NetSurf	0	195	0
+1584	rekonq	0	193	0
+1585	wApua	0	194	0
+1589	Comodo Dragon	0	203	0
+1592	PaleMoon	0	206	0
+1593	Wyzo	0	207	0
+1595	BioDigital Human	0	0	0
+1596	Apple Developer	0	0	692
+1597	Geewa	0	0	0
+1598	GoToMyPC	0	0	873
+1599	King.com	0	0	937
+1601	USPS	0	0	1127
+1602	Xcode	0	233	0
+1603	Siri	0	0	0
+1604	Bria	0	0	0
+1605	sipXecs	0	0	0
+1606	Linphone	0	0	0
+1607	OpenSIPS	0	0	0
+1608	TextMe	0	0	0
+1609	FreeSWITCH	0	0	0
+1610	Asterisk PBX	0	0	0
+1611	textPlus	0	223	0
+1612	Cisco SIP Gateway	0	0	0
+1613	Nuance Voice Platform	0	0	0
+1614	Shutterstock	0	0	808
+1615	Aili	0	0	809
+1616	Yandex	0	0	810
+1617	Adcash	0	0	811
+1618	The Guardian	0	0	812
+1619	Yieldmanager	0	0	862
+1620	The Telegraph	0	0	813
+1621	Livedoor	0	0	814
+1622	WarriorForum	0	0	815
+1623	Indiatimes	0	0	816
+1624	Rediff.com	0	0	817
+1625	Spiegel Online	0	0	818
+1626	UOL	0	0	819
+1627	Jingdong (360buy.com)	0	0	820
+1628	The Xinhuanet	0	0	821
+1630	ShowMyPC	0	0	1615
+1645	Airtime	0	0	0
+1646	CSDN	0	0	822
+1647	Taringa	0	0	823
+1648	Aliexpress	0	0	824
+1649	58 City	0	0	825
+1650	LeTV	0	0	826
+1651	Tianya	0	0	827
+1652	Rakuten	0	0	828
+1653	Snapchat	0	188	0
+1654	500px	0	0	829
+1655	Airbnb	0	0	0
+1656	Invitemedia	0	0	830
+1657	Urban Airship	0	0	835
+1659	Akamai	0	0	837
+1660	Loyalty Innovations	0	0	838
+1661	Avaya Live	0	0	0
+1662	DirBuster	0	208	0
+1663	YY	20143	209	1693
+1664	Dwolla	0	0	848
+1665	Google Remote Desktop	0	0	0
+1666	Magicland	0	0	853
+1667	LINE	0	210	1528
+1668	Fancy	0	0	854
+1669	ChatON	0	0	0
+1670	GitHub	0	0	855
+1671	Trend Micro	0	0	856
+1672	Ogg	0	0	0
+1673	WebM	0	0	0
+1675	QualysGuard	0	0	858
+1676	Flexera Software	0	211	859
+1677	OsiriX	0	212	860
+1678	PACS	20144	0	0	pacs
+1679	DICOM	0	213	0
+1680	Mac App Store	0	214	0
+1681	AirPlay	0	215	0
+1682	AirTunes	20145	0	0	airtunes
+1683	Apple TV	0	216	0
+1684	Google Talk Audio	0	0	0
+1692	Java	0	217	0
+1693	Google Talk Video	0	0	0
+1695	SOUNDROP	0	0	861
+1696	IPsec	0	0	0
+1697	eBuddy XMS	0	0	0
+1699	Android Client	0	220	0
+1700	Vine	0	221	867
+1702	MyLife	0	0	863
+1703	Ning	0	0	864
+1704	Gravatar	0	0	865
+1705	Kickstarter	0	0	866
+1707	Linux Mint	0	0	869
+1709	The Washington Post	0	0	871
+1711	Pandora Audio	0	0	559
+1719	Elinks	0	198	0
+1754	Playstation.com	0	0	880
+1755	MDNS	20146	0	0	mdns
+1756	VLC Media Player	0	224	874
+1757	Raptr	0	225	875
+1758	UPnP	0	284	0
+1759	AIM Express	0	0	878
+1760	Silk	0	283	0
+1761	PS3 web browser	0	285	0
+1763	PS3 Messenger	0	226	0
+1764	Playstation Store	0	0	877
+1765	PS3 Downloads	0	0	876
+1766	PS3 Updater	0	227	0
+1767	PS3 Home Client	0	228	0
+1769	Nokia	0	0	881
+1770	Nokia Music	0	0	882
+1771	Nokia Store	0	0	883
+1772	PBS	0	0	884
+1774	ArtStack	0	0	885
+1775	TRUSTe	0	0	886
+1776	DoubleVerify	0	0	887
+1777	WSDD	20167	230	0	wsdd
+1779	FDSSDP	0	231	0
+1780	Exchange	0	484	1692
+1781	2Leep	0	0	889
+1782	Bizrate	0	0	890
+1783	People Of Walmart	0	0	891
+1784	Cute Overload	0	0	892
+1785	Cheezburger	0	0	893
+1787	Pop Salad	0	0	895
+1788	theCHIVE	0	296	896
+1789	TruuConfessions	0	0	897
+1790	ZergNet	0	0	898
+1791	WhereCoolThingsHappen	0	0	899
+1792	H&R Block	0	0	900
+1793	Constant Contact	0	0	901
+1794	Pivotal Tracker	0	0	902
+1795	Tempo	0	232	903
+1796	Podio	0	0	905
+1797	LivePerson	0	0	908
+1798	Mention	0	0	909
+1799	Feedly	0	0	910
+1800	IPFIX	20147	0	0	ipfix
+1801	Mailbox	0	0	0
+1802	Minecraft	20192	469	911	minecraft
+1803	Rotten Tomatoes	0	0	912
+1804	Amazon Ads System	0	0	913
+1805	MTv	0	0	914
+1806	Tightrope Interactive	0	234	915
+1808	Glympse	0	0	916
+1809	Honeywell Control Station/NIF Server	20148	0	0	honeywell
+1810	TuneIn	0	235	917
+1811	Honeywell Experion DSA Server Monitor	20149	0	0	experion
+1812	Backupgrid	0	0	919
+1813	Carbonite	0	236	920
+1814	iBackup	0	0	924
+1815	JustCloud	0	0	921
+1816	jdistatic	0	0	922
+1817	MyPCBackup	0	0	923
+1818	SOS Online Backup	0	0	936
+1819	SugarSync	0	0	925
+1820	ZipCloud	0	0	926
+1822	PubNub	0	0	927
+1824	Wii Shop Channel	0	0	929
+1826	Nintendo WFC	0	0	931
+1827	FiOS TV	0	238	932
+1829	Vdio	0	0	933
+1830	Redbox	0	0	934
+1831	Google Fiber	0	0	935
+1939	NBA	0	0	1078
+1955	Reduxmedia	0	0	1107
+1988	NBC	0	0	938
+1989	RedOrbit	0	0	939
+1990	Space.com	0	0	940
+1991	SockShare	0	0	941
+1992	BitGravity	0	0	942
+1993	PixelMags	0	0	943
+1994	Zmags	0	0	944
+1995	GNOME	0	0	945
+1996	ESTsoft	0	0	946
+1997	Cabal Online	0	0	947
+1998	ALTools	0	0	948
+1999	GIFSoup.com	0	0	949
+2000	Slate Magazine	0	0	950
+2001	I Waste So Much Time	0	0	951
+2002	Biography.com	0	0	952
+2003	Ubuntu	0	0	953
+2004	Comedy Central	0	0	954
+2005	Wired.com	0	0	955
+2006	E! Online	0	0	956
+2007	NHL.com	0	0	957
+2008	Presto	0	0	958
+2009	Twitter Music	0	243	0
+2010	MacPorts	0	244	960
+2011	Philips Hue	0	245	961
+2012	Baiduspider	0	247	0
+2013	K9 Web Protection	0	249	962
+2014	Bing Bar	0	250	0
+2015	Redbox Instant	0	0	963
+2016	TopTenREVIEWS	0	0	964
+2017	Adweek	0	0	965
+2018	The Week Magazine	0	0	966
+2019	Brightcove	0	0	967
+2020	Newser	0	0	968
+2021	Simpli.fi	0	0	969
+2032	Google Code project hosting	0	0	971
+2033	Windows Help client	0	252	0
+2034	Roku	0	253	972
+2035	TURN Client	0	255	0
+2036	TURN Channel	20150	0	0	turn
+2037	Splunk	0	256	0
+2038	Atlassian	0	0	973
+2040	Prezi	0	0	974
+2041	IFTTT	0	0	975
+2042	OPC-UA	20151	0	0	opcua
+2043	NetWorker	20152	0	0	networker
+2044	NetWorker Data Setup	0	258	0
+2045	Apple iForgot	0	0	976
+2047	JBoss Remoting	0	259	978
+2048	Fink	0	260	979
+2049	Photo Stream	0	261	0
+2050	FOX	0	0	981
+2051	Washington Times	0	0	982
+2052	NextBus	0	0	983
+2053	OpenBSD	0	0	984
+2054	Associated Press	0	0	985
+2055	WTOP	0	0	986
+2056	OpenSUSE	0	0	987
+2057	Turner Broadcasting System	0	0	988
+2058	NCAA	0	0	989
+2059	DSW	0	0	991
+2060	Po.st	0	0	992
+2061	CheapStuff	0	0	993
+2062	Livefyre	0	0	994
+2063	FreeStreams	0	0	995
+2064	Clear Channel	0	0	996
+2065	GOLF.com	0	0	997
+2066	Glam	0	0	998
+2067	BoldChat	0	0	999
+2068	Intermarkets	0	0	1000
+2069	Woopra	0	0	1001
+2070	OCLC	0	0	1002
+2071	Chosun	0	0	1003
+2072	Ooyala	0	0	1004
+2073	iTunes U	0	0	0
+2074	C-SPAN	0	0	1005
+2082	Game Front	0	0	1006
+2083	BitCoin	20154	263	1007	bitcoin
+2084	LiteCoin	20155	264	1008	litecoin
+2085	Bitcoin Forum	0	0	0
+2086	lynda.com	0	0	1010
+2087	IDXRad	0	265	0
+2088	PScribe	0	266	0
+2089	Sunquest	0	267	0
+2090	Medipac	0	268	0
+2091	Letterpress	0	269	1011
+2092	Game Center	0	270	1012
+2093	FriendFinder	0	0	1013
+2094	Audible.com	0	0	1014
+2095	Entertainment Weekly	0	0	1015
+2096	Epic	0	272	0
+2097	UPMC	0	273	0
+2102	Docstoc Upload	0	0	1016
+2103	Speedtest	0	0	1017
+2104	Boxnet Upload SSL	0	0	1018
+2105	Flickr Upload	0	0	1019
+2106	Scribd Upload	0	0	1020
+2107	Youtube Upload	0	0	1021
+2110	Voxer	0	274	1024
+2111	Windows Azure	0	0	1025
+2112	Starbucks	0	276	1026
+2113	iTunes Music	0	277	0
+2116	Adblade	0	0	1027
+2118	BackWeb	0	0	1029
+2119	Blackberry sites	0	0	1030
+2120	Djpod	0	0	1031
+2121	Microsoft download	0	0	1032
+2122	Microsoft AutoUpdate	0	279	0
+2123	MyOnlineArcade	0	0	1033
+2124	SmugMug	0	0	1035
+2126	USAA	0	0	1037
+2127	wimp.com	0	0	1038
+2128	Zendesk	0	0	1039
+2129	Auditude	0	0	1040
+2130	Show My Weather	0	0	1041
+2131	MobiTV	0	0	1042
+2132	TV Guide	0	0	1043
+2133	iFunny	0	301	1044
+2134	Telenav	0	0	1045
+2135	Vlingo	0	0	1047
+2136	Media Hub	0	0	1048
+2137	CheapOAir	0	0	1049
+2138	Crunchyroll	0	0	1050
+2139	Eventbrite	0	0	1051
+2140	J.P. Morgan	0	0	1261
+2141	GoBank	0	0	0
+2142	Path	0	0	1053
+2143	Intel	0	0	1054
+2144	AMD	0	0	1055
+2145	Asus	0	0	1056
+2146	Acer	0	0	1057
+2147	Gateway	0	0	1058
+2148	Toshiba	0	0	1059
+2149	Motorola	0	0	1060
+2150	Nvidia	0	0	1061
+2151	Channel Intelligence	0	0	1062
+2152	Progressive	0	0	1063
+2153	State Farm	0	0	1064
+2154	Allstate	0	0	1065
+2155	Geico	0	0	1066
+2156	Liberty Mutual	0	0	1067
+2157	Ensighten	0	0	1068
+2158	Maxymiser	0	0	1069
+2159	News Distribution Network	0	0	1070
+2160	Jetsetz	0	0	1072
+2161	StudentUniverse	0	0	1073
+2162	PerfectIBE	0	0	1074
+2163	Funny or Die	0	0	1075
+2164	CollegeHumor	0	0	1076
+2165	Zombo.com	0	0	1077
+2170	NovaMov	0	0	1079
+2171	Viki	0	0	1080
+2172	PNC Bank	0	0	1081
+2173	Red Hat	0	0	1082
+2174	United Airlines	0	0	1083
+2176	TextNow	0	0	1085
+2177	FedEx	0	0	1086
+2178	American Airlines	0	0	1087
+2179	Nuance	0	0	1088
+2180	Al Jazeera	0	0	1089
+2181	Wimbledon	0	0	1090
+2182	MLive	0	0	1091
+2183	Times Union	0	0	1092
+2184	beRecruited	0	0	1093
+2185	Bitbucket	0	0	1094
+2186	Detroit Free Press	0	0	1095
+2187	jJcast	0	0	1096
+2188	Michigan Radio	0	0	1097
+2189	De Telegraaf	0	0	1098
+2190	ooVoo	0	0	1099
+2191	The Daily Beast	0	0	1100
+2192	The Free Dictionary	0	0	1101
+2193	The Onion	0	0	1102
+2195	WeatherLink	0	0	1103
+2196	Yahoo! Calendar	0	0	1104
+2197	GVFS	0	281	0
+2198	Yammer	0	282	1106
+2202	ksfetch	0	286	0
+2203	Google Update	0	287	0
+2204	Googlebot Image Search	0	289	0
+2205	Abonti	0	291	0
+2206	Zapier	0	292	1109
+2207	Collider	0	0	1110
+2208	WordReference.com	0	0	1111
+2209	Microsoft Word	0	294	0
+2210	Microsoft Powerpoint	0	295	0
+2211	Yandex Bot	0	299	0
+2212	MJ12 Bot	0	302	0
+2213	Microsoft CryptoAPI	0	303	0
+2214	FrostWire	0	306	1112
+2215	Media Stream Daemon	0	307	0
+2217	OCSPD	0	309	0
+2218	5by5 Radio	0	310	1113
+2219	Acoon.de	0	311	1114
+2220	Anipang	0	312	0
+2221	Apple PubSub	0	313	0
+2222	ArcGIS	0	314	1115
+2223	Blekko	0	0	1116
+2224	BlekkoBot	0	315	0
+2225	Boingo	0	316	1117
+2226	Easou Spider	0	317	0
+2227	FeedBurner	0	318	0
+2228	Feedly Fetcher	0	319	0
+2229	Genieo Web Filter	0	320	1118
+2230	PHP	0	321	0
+2231	Apple Syndication	0	322	0
+2232	Android Download Manager	0	323	0
+2233	Bitcasa	0	324	1119
+2234	Sony	0	0	1120
+2235	Zootool	0	0	1121
+2236	WeTransfer	0	0	1122
+2237	Storify	0	0	1123
+2238	SpeedRunsLive	0	0	1124
+2240	WDT	0	0	1125
+2241	Twitterrific	0	325	1126
+2242	The Seattle Times	0	0	1128
+2243	Readability	0	0	1129
+2244	Postini	0	0	1130
+2245	Oracle sites	0	0	1131
+2246	Okta	0	0	1132
+2247	Nike	0	0	1133
+2248	Libsyn	0	0	1134
+2249	JetSetMe	0	0	1135
+2250	Investopedia	0	0	1136
+2251	The Hollywood Reporter	0	0	1137
+2252	John's Background Switcher	0	329	0
+2253	AppleCoreMedia	0	330	0
+2254	HLN	0	0	1138
+2255	FFFFOUND!	0	0	1139
+2256	CNET TV	0	0	1141
+2257	Fifth Third Bank	0	0	0
+2258	Android Music	0	331	0
+2261	Adap.tv	0	0	1142
+2262	Feedfetcher	0	332	0
+2263	GSA Crawler	0	333	0
+2264	Kraken	0	334	0
+2265	MagPie	0	335	0
+2267	Sogou web spider	0	338	0
+2268	Voilabot	0	339	0
+2269	Drugs.com	0	0	1143
+2270	Campfire	0	0	1144
+2271	AudioDocumentary.org	0	0	1145
+2273	Quick Look	0	341	0
+2274	NVIDIA Update	0	342	0
+2275	Connexion client	0	343	0
+2276	PS3 Community Agent	0	344	0
+2277	PSP Activity Agent	0	345	0
+2278	PSP Community Agent	0	346	0
+2279	MS Office Existence Discovery	0	347	0
+2280	MS Office Protocol Discovery	0	348	0
+2282	Rainmeter WebParser	0	350	0
+2283	reCAPTCHA	0	351	0
+2284	simple-get	0	352	0
+2285	Wood TV8	0	0	1146
+2286	App.net	0	0	1147
+2287	Malware Defense System	0	353	0
+2288	Microsoft Excel	0	354	0
+2289	Microsoft NCSI	0	355	1148
+2290	Microsoft WNS	0	356	0
+2291	Moodlebot	0	357	0
+2292	Windows Phone Browser	0	358	0
+2296	HTTP Tunnel	0	0	0
+2297	XProtectUpdater	0	360	0
+2298	Xenu Link Sleuth	0	361	0
+2299	uTorrent	0	362	0
+2300	URLAppendBot	0	363	0
+2301	Tiny Tiny RSS	0	364	0
+2302	Tinder	0	365	1150
+2303	Sage	0	366	0
+2305	Radian6 CommentReader	0	368	0
+2306	Powermarks	0	369	0
+2307	PDF Expert	0	370	0
+2308	Google PageSpeed	0	371	0
+2309	Owlinbot	0	372	0
+2310	Yeti Bot	0	373	0
+2311	TPKT	20163	0	0	tpkt
+2312	COTP	20164	0	0	cotp
+2313	ISO MMS	20165	0	0	isomms
+2314	Q.931	20166	0	0	q931
+2315	PubSubHubbub	0	375	0
+2316	ndgsa-crawler	0	376	0
+2317	Microsoft Access	0	377	0
+2318	Dr. Watson	0	378	0
+2319	NetSight	0	379	0
+2320	Ovi Browser	0	380	0
+2321	Penultimate	0	381	0
+2322	Boxoh	0	0	1149
+2323	OSSProxy	0	382	0
+2324	NetNewsWire	0	383	0
+2325	050plus	0	0	1804
+2326	Business Intelligence	0	0	0
+2327	MaxDB	0	0	0
+2328	NetWeaver	0	0	0
+2329	urlgrabber	0	385	0
+2330	Apache Nutch	0	386	1151
+2331	MobileAsset	0	387	0
+2332	MCStats	0	388	0
+2333	MapMyFitness	0	389	0
+2334	JikeSpider	0	390	0
+2335	Infinity Blade	0	391	1152
+2336	Mediabot	0	392	0
+2337	Feed43	0	393	0
+2338	Dragon Dictate	0	394	0
+2339	Coc Coc bot	0	395	0
+2341	FinTS	0	0	0
+2345	AD File Replication Service	0	0	0
+2346	2345.com	0	0	1402
+2347	Forbes	0	0	1758
+2348	Freee TV	0	0	1766
+2349	IKEA.com	0	0	1510
+2350	Pchome	0	0	1583
+2351	TechInline	0	0	1639
+2352	wikidot	0	0	1711
+2353	Quote.com	0	0	1603
+2354	CBS Interactive	0	0	1460
+2355	CLDAP	0	0	0
+2356	Hupu	0	0	1505
+2357	Foursquare	0	0	1703
+2358	The Internet Archive	0	0	1729
+2359	Doof	0	0	1541
+2360	Adenin	0	0	1543
+2361	Groupon	0	0	1699
+2363	Match.com	0	0	1536
+2364	Meetup	0	0	1554
+2365	MyWebSearch	0	0	1568
+2366	Uploading.com	0	0	1730
+2367	Viber	0	0	0
+2368	Fring	0	497	1803
+2369	Fring A/V	0	0	0
+2370	ADNStream	0	0	1418
+2371	China.com	0	0	1463
+2372	In.com	0	0	1784
+2373	it168	0	0	1519
+2374	Letitbit	0	0	1527
+2375	MUZU TV	0	0	1566
+2376	NFL.com	0	0	1811
+2377	Squidoo	0	0	1631
+2378	wetpaint entertainment	0	0	1809
+2379	Tango	0	0	1635
+2380	PPTV	0	0	1598
+2381	Apple Maps	0	468	1586
+2382	SendSpace	0	0	1613
+2383	Sogou	0	0	1625
+2384	Chinaren	0	0	1464
+2385	17173.com	0	0	1401
+2386	Alibaba	0	0	1429
+2387	Tmall	0	0	1783
+2388	Etao	0	0	1545
+2389	Aliyun	0	0	1430
+2390	Naverisk	0	0	1569
+2391	Funshion	0	0	1810
+2392	Funshion Video	0	0	0
+2393	Google Talk File Exchange	0	0	0
+2400	Tokbox	0	0	0
+2401	iCall	0	0	1507
+2402	OCSP	0	0	0
+2403	Google ads	0	0	1768
+2404	RichRelevance	0	0	1609
+2405	Quantcast	0	0	1602
+2406	Turn Analytics	0	0	0
+2407	Mediaplex	0	0	0
+2408	Scorecard Research	0	0	1612
+2409	Tribal Fusion	0	0	0
+2411	SPC Media	0	0	1629
+2412	ValueClick	0	0	0
+2413	AppNexus	0	0	1443
+2414	Adconion Media Group	0	0	1411
+2415	OpenX	0	0	1581
+2416	MediaMath	0	0	1539
+2417	Rubicon Project	0	0	1611
+2418	Innovation Interactive	0	0	0
+2419	33Across	0	0	1405
+2420	Akamai NetSession Interface	0	396	0
+2421	AhrefsBot	0	397	0
+2422	AddThis Bot	0	398	0
+2423	IMTransferAgent	0	399	0
+2424	The Atlantic	0	0	1153
+2425	Svpply	0	0	1154
+2426	StreetFire	0	0	1155
+2427	Southern Living	0	0	1156
+2428	Buffer	0	0	1170
+2429	Coupa	0	0	1158
+2430	The Escapist Magazine	0	0	1159
+2431	Pocket	0	0	1160
+2432	Grantland	0	0	1161
+2433	The Independent	0	0	1162
+2434	Instapaper	0	0	1163
+2435	KBS	0	0	1164
+2437	Pinboard	0	0	1166
+2438	Pushover	0	0	1167
+2439	Realview TV	0	0	1168
+2440	Dots	0	401	1169
+2451	Improve Digital	0	0	1512
+2452	BlueKai	0	0	1393
+2453	Triggit	0	0	0
+2454	Admeld	0	0	1415
+2455	iPerceptions	0	0	1517
+2456	Atlas Advertiser Suite	0	0	1446
+2457	BRSRVR	0	0	0
+2458	Compete	0	0	1472
+2459	BRCDN	0	0	0
+2460	Silverpop	0	0	1616
+2461	Infonline	0	0	1514
+2462	comScore	0	0	1552
+2463	Komli Media	0	0	1520
+2464	MediaMind	0	0	0
+2465	Lotame	0	0	1533
+2466	Krux	0	0	1522
+2467	AudienceScience	0	0	1447
+2468	Nielsen	0	0	1573
+2469	Google Play	0	0	0
+2470	Android.com	0	0	1433
+2471	PDBox	0	0	1584
+2472	PDBox P2P	0	0	0
+2474	Lync	0	0	1644
+2475	RTP Audio	0	0	0
+2476	RTP Video	0	0	0
+2477	Yahoo! Messenger Chat	0	0	0
+2478	Yahoo! Messenger SMS	0	0	1827
+2479	Yahoo! Messenger Audio	0	0	0
+2480	Yahoo! Messenger Video	0	0	0
+2481	East Money	0	0	1544
+2482	Blokus	0	0	1391
+2483	Freelancer	0	0	1704
+2484	Goal	0	491	1769
+2485	HubPages	0	0	1504
+2486	Marca	0	0	1535
+2487	Telly	0	0	1641
+2488	Wikispaces	0	0	1737
+2490	Chinauma	0	0	1465
+2491	adSage	0	0	1423
+2492	247 Inc.	0	0	1404
+2493	24/7 Media	0	0	1403
+2494	SLI Systems	0	0	1620
+2495	OwnerIQ	0	0	1297
+2496	Monetate	0	0	1561
+2497	AdReady	0	0	1421
+2499	The Trade Desk	0	0	1762
+2500	AdGear	0	0	1413
+2501	MediaV	0	0	1553
+2502	ClickTale	0	0	1468
+2503	Adtech	0	0	1425
+2504	Amobee	0	0	1427
+2505	LeadBolt	0	0	1524
+2506	Mobile Theory	0	0	1560
+2507	Mojiva	0	0	1557
+2508	Nexage	0	0	1572
+2509	Drawbridge	0	0	1542
+2510	Evidon	0	0	1736
+2511	Brilig	0	0	1456
+2512	Casale	0	0	1459
+2513	Chango	0	0	1461
+2514	Criteo	0	0	1480
+2515	Dotomi	0	0	1722
+2516	Effective Measure	0	0	1550
+2517	eXelate	0	0	1735
+2518	Exponential Interactive	0	0	1756
+2519	Vibrant	0	0	1732
+2520	LiveRail	0	0	1531
+2521	Luminate	0	0	1534
+2522	Media6Degrees	0	0	1734
+2523	Media Innovation Group	0	0	1760
+2525	Motrixi	0	0	1564
+2526	eyeReturn	0	0	1723
+2527	InSkin Media	0	0	1515
+2528	Cognitive Match	0	0	1471
+2529	Connextra	0	0	1478
+2530	Optimizely	0	0	1582
+2531	Ohana	0	0	1577
+2532	Integral Ad Science	0	0	1516
+2533	Proclivity	0	0	1599
+2534	TubeMogul	0	0	1725
+2535	CloudFlare	0	0	1469
+2536	TLVMedia	0	0	1733
+2537	Neustar Information Services	0	0	1491
+2538	AdXpose	0	0	1426
+2539	EQ Ads	0	0	1546
+2540	TowerData	0	0	1607
+2541	Xaxis	0	0	1741
+2542	DataLogicx	0	0	1483
+2544	Nugg	0	0	1576
+2545	Yabuka	0	0	1726
+2546	Ybrant Digital	0	0	1713
+2547	Aggregate Knowledge	0	0	1428
+2548	SpotXchange	0	0	1630
+2549	X Plus One	0	0	1745
+2551	NetSeer	0	0	1571
+2552	Core Audience	0	0	1354
+2553	Resonate Networks	0	0	1608
+2554	engage BDR	0	0	1548
+2555	Connexity	0	0	1477
+2556	Adometry	0	0	1420
+2557	Bizo	0	0	1436
+2558	Brightroll	0	0	1454
+2559	Federated Media	0	0	1702
+2560	Six Apart	0	0	1618
+2561	MaxPoint Interactive	0	0	1537
+2563	Rocket Fuel	0	0	1610
+2564	RadiumOne	0	0	1604
+2565	Admasters	0	0	1409
+2566	contnet	0	0	1479
+2567	eNovance	0	0	1753
+2568	Smart AdServer	0	0	1622
+2569	ADMETA	0	0	1416
+2570	Adify	0	0	1740
+2571	ContextWeb	0	0	1721
+2572	cXense	0	0	1482
+2573	Caraytech	0	0	1458
+2574	Freewheel	0	0	1742
+2575	AdJuggler	0	0	1414
+2576	BV! Media	0	0	1746
+2577	Adtegrity	0	0	1452
+2578	AOL Ads	0	0	1435
+2579	Compuware	0	0	1473
+2580	Dynamic Logic	0	0	1701
+2581	Aptean	0	0	1444
+2582	Polldaddy	0	0	1597
+2583	Undertone	0	0	1738
+2584	VoiceFive	0	0	1731
+2585	ClickBooth	0	0	1467
+2586	MyBuys	0	0	1567
+2587	Webtrends	0	0	1739
+2588	Telecom Express	0	0	1759
+2589	DC Storm	0	0	1747
+2590	Skimlinks	0	0	1619
+2591	Crowd Science	0	0	1481
+2592	Olive Media	0	0	1578
+2593	Mixpanel	0	0	1558
+2594	Tritone Hosting	0	0	1353
+2595	MdotM	0	0	1538
+2596	Telemetry	0	0	1640
+2597	CNZZ	0	0	1470
+2598	HowardForums	0	0	1503
+2599	Softonic	0	0	1623
+2600	Booking.com	0	0	1394
+2601	Concur	0	0	1476
+2602	TeacherTube	0	0	1636
+2603	Rambler	0	0	1606
+2604	EarthCam	0	0	1233
+2605	Boxcar.io	0	0	1453
+2606	Softpedia	0	0	1624
+2607	TechCrunch	0	0	1638
+2608	Hyves	0	0	0
+2609	LA Times	0	0	1523
+2610	China News	0	0	1462
+2611	Nico Nico Douga Video	0	0	0
+2612	NateOn Video Chat	0	0	0
+2613	NateOn	0	0	0
+2614	NateOn Remote Control	0	0	0
+2615	NateOn Voice	0	0	0
+2616	NateOn File Transfer	0	0	0
+2617	Aliwangwang	0	504	1802
+2618	WeChat	0	0	1823
+2619	WeChat login	0	0	0
+2620	WeChat media	0	0	0
+2621	WeChat message	0	0	0
+2622	WeChat heartbeat	0	0	0
+2623	WeChat update	0	0	0
+2624	Nokia sync	0	0	0
+2625	Nokia message	0	0	0
+2626	Xbox Live sites	0	0	1771
+2627	Windows Phone sites	0	0	1772
+2628	SopCast	0	0	1627
+2629	Freegate	0	0	0
+2630	Nimbuzz	0	500	1806
+2631	N-World	0	0	0
+2632	Nimbuzz MMS	0	0	0
+2633	FIX	0	0	0
+2634	Ultrasurf	0	0	0
+2635	ShareThis	0	0	1614
+2636	LOCKSS	0	400	0
+2637	Dump Truck	0	0	0
+2638	GOMTV Remote Control	0	0	1805
+2639	GOMTV.net	0	0	1791
+2640	GOMTV.com	0	496	1790
+2641	GoToWebinar	0	0	0
+2642	GoToTraining	0	0	0
+2643	Citrix GoToMeeting Platform	0	0	0
+2644	VyprVPN Login	0	0	0
+2645	Tunnelbear Login	0	0	0
+2646	Ivacy Login	0	0	0
+2648	Hide My Ass!	0	0	1208
+2650	VEVO.com	0	0	1172
+2651	PNAS	0	0	1173
+2652	HBO	0	0	1174
+2653	Stitcher	0	0	1175
+2654	Panoramio	0	0	1176
+2655	Cisco	0	0	1177
+2656	The Baltimore Sun	0	0	1178
+2657	Dilbert.com	0	0	1179
+2658	Google URL Shortener	0	0	1180
+2659	Hotels.com	0	0	1181
+2660	JSTOR	0	0	1182
+2661	Xiami.com	0	0	1184
+2662	INRIX	0	405	1185
+2663	Lijit	0	0	1186
+2664	Moat	0	0	1187
+2665	Ando Media	0	0	1188
+2666	Break.com	0	0	1189
+2667	BitTorrent Sync	20156	407	0	bittorrent_sync
+2668	Printer Pro Desktop	0	408	0
+2669	Apple Music	0	0	1190
+2680	ibVPN Login	0	0	1205
+2681	Hideman Login	0	0	1206
+2682	Cloudnymous Login	0	0	0
+2683	VMware vCenter client	0	0	0
+2684	NAT-PMP	20160	0	0	nat-pmp
+2685	Python urllib	0	406	0
+2686	Genieo	0	0	1209
+2687	Mathworks	0	0	1210
+2688	GoodSync	0	0	1211
+2689	UpToDate	0	0	1212
+2690	New Relic	0	0	1213
+2691	WorldCat	0	0	1214
+2692	SPOOLSS	0	0	0
+2693	UltraViolet	0	0	1813
+2694	Apple App Store	0	409	0
+2695	SecurityKiss	0	0	1215
+2696	Fuyin.TV	0	0	1216
+2697	SHOWTIME ANYTIME	0	0	1217
+2698	Drupal	0	0	1218
+2699	Sky.com	0	0	1219
+2700	Arizona Public Media	0	0	1220
+2701	EA Games	0	0	1221
+2702	Copy	0	0	1222
+2703	TomTom	0	0	1223
+2704	OpenDNS	0	0	1224
+2705	Gizmodo	0	0	1225
+2706	SimplePie	0	422	1226
+2707	Sophos Live Protection	0	423	1227
+2708	Android Asynchronous Http Client	0	410	0
+2709	VMware Server Console	20161	412	0	vmware-vsphere
+2710	MixBit	0	0	1228
+2711	HBO GO	0	413	1231
+2712	Integromedb Crawler	0	415	0
+2713	Twitter4J	0	416	0
+2714	msnbot	0	417	0
+2715	Pingdom	0	418	0
+2716	PHP-SOAP	0	419	0
+2717	Leap Motion sites	0	0	0
+2718	RealPlayer Cloud	0	420	0
+2719	Google Cloud Messaging	0	0	0
+2720	BJNP	0	0	0
+2721	WebSocket	0	0	0
+2722	CA Certificate	0	0	0
+2723	CR List	0	0	0
+2724	iBooks	0	421	1234
+2725	iTunes Store	0	424	0
+2726	RealNetworks	0	0	1232
+2727	Sametime	20162	0	0	sametime
+2728	blinkx	0	0	1235
+2729	Garmin	0	0	1236
+2732	Nexon	0	0	1239
+2733	PointRoll	0	0	1240
+2734	Samsung Push Notification	0	0	0
+2735	TVonline.cc	0	0	1241
+2736	Airspace	0	0	0
+2737	BesTV	0	0	1242
+2738	Zippyshare	0	0	1243
+2739	Dropcam	0	0	1244
+2740	GTA Online	0	0	1245
+2741	KakaoTalk Audio	0	0	0
+2742	Secure RTCP	0	0	0
+2743	SRTP	0	0	0
+2744	SRTP Audio	0	0	0
+2745	SRTP Video	0	0	0
+2746	Remote Ctrl from iPhone/iPad	0	425	0
+2747	Rockstar Games	0	426	1246
+2748	iRODS	20168	0	0	irods
+2749	Nest Thermostat	0	427	1247
+2750	CTV	0	0	1248
+2751	CTV News	0	0	1249
+2752	Indiegogo	0	0	1250
+2753	KVOA.com	0	0	1251
+2754	MailChimp	0	0	1252
+2755	MovieTickets.com	0	0	1253
+2756	Comcast Mail	0	0	1256
+2757	Coursera	0	0	1257
+2758	XBMC	0	428	1258
+2759	Network PID Checker	20169	430	0
+2760	Gazprom Media	0	0	1259
+2761	Tvigle	0	0	1260
+2762	Bandcamp	0	0	1262
+2763	NetBackup	20170	431	0	netbackup
+2764	Bluehost	0	0	1264
+2765	SFGate	0	0	1265
+2766	Library of Congress	0	0	1266
+2767	OverBlog	0	0	1267
+2768	BBB	0	0	1268
+2769	AddToAny	0	0	1269
+2770	TIME.com	0	0	1270
+2771	Phoca	0	0	1271
+2772	phpBB	0	0	1272
+2773	HugeDomains.com	0	0	1273
+2774	GNU Project	0	0	1274
+2775	Lycos	0	0	1275
+2776	ConnMan	0	432	1276
+2777	Creative Commons	0	0	1277
+2778	NAI	0	0	1278
+2779	Joomla	0	0	1279
+2780	TinyURL	0	0	1280
+2781	Amazon Cloud Player	0	433	0
+2782	Jimdo	0	0	1281
+2783	Stanford University	0	0	1282
+2784	Harvard University	0	0	1283
+2785	eRecht24	0	0	1284
+2786	European Union	0	0	1285
+2787	bitly	0	0	1286
+2788	Viddler	0	0	1287
+2789	Merriam-Webster	0	0	1288
+2790	Websense	0	0	1289
+2791	Zbigz	0	0	1290
+2792	Zulily	0	0	1291
+2793	Zattoo	0	434	1292
+2794	Xfire	20172	435	1293
+2795	Freenet	0	0	0
+2796	Lync Audio	0	0	0
+2797	Lync Video	0	0	0
+2798	Lync Media	0	0	0
+2799	Lync Share	0	0	0
+2800	Lync Control	0	0	0
+2801	Skype File Transfer	0	0	0
+2802	Parallels	20173	0	1296
+2803	Eyejot	0	0	1298
+2804	Dogpile	0	0	1299
+2805	DuckDuckGo	0	0	1300
+2806	Instagram Images	0	0	0
+2807	Instagram Video	0	0	0
+2809	Vagaa	0	0	0
+2810	Exchange Online	0	0	1847
+2811	MS CDN	0	0	0
+2812	Office 365	0	0	1378
+2813	Sharepoint Online	0	0	1795
+2814	Camo Proxy	0	0	1301
+2815	Tencent	0	0	1302
+2816	Picsearch	0	0	1311
+2817	Fetion	0	0	1312
+2818	Fluxiom	0	0	1313
+2820	LeapFILE	0	0	1315
+2822	Okurin	0	0	1317
+2823	RayFile	0	0	1318
+2824	Fotki	0	0	1319
+2825	CrossLoop	0	0	1320
+2826	eRoom	0	0	1321
+2827	Glide	0	0	1322
+2828	GREE	0	0	1323
+2830	Wii	0	0	1303
+2831	Shopkick	0	436	1304
+2832	Hangame	0	0	1305
+2833	SugarCRM	0	0	1306
+2834	Megaproxy	0	0	1307
+2835	KProxy	0	0	1308
+2836	Guardster	0	0	1309
+2837	FlyProxy	0	0	1310
+2838	Coral CDN	0	0	1325
+2839	Pastebin.com	0	0	1326
+2840	Zhihu.com	0	0	1327
+2841	Twiddla	0	0	1328
+2843	Quora	0	0	1330
+2844	Yahoo! Mobage	0	0	1331
+2845	Pogoplug	0	437	1332
+2846	Adobe Analytics	0	0	1786
+2847	Ado Tube	0	0	1419
+2848	AdRoll	0	0	1422
+2849	AdSame	0	0	1424
+2850	AD-X Tracking	0	0	1410
+2851	Allegro.pl	0	0	1431
+2852	Autohome.com.cn	0	0	1448
+2853	BlueLithium	0	0	0
+2854	Ganji	0	0	1724
+2855	Hao123.com	0	0	1706
+2856	Ifeng.com	0	0	1509
+2857	BBC iPlayer	0	0	1829
+2858	iStock	0	0	1518
+2859	Kooora.com	0	0	1521
+2860	Mercado Livre	0	0	1555
+2861	MLN Advertising	0	0	1559
+2862	Mop.com	0	0	1562
+2863	Motley Fool	0	0	1563
+2864	SiteScout	0	0	1617
+2865	Upfront Digital Media	0	0	0
+2866	Zol.com.cn	0	0	1788
+2867	Bloglovin	0	0	1333
+2869	Baidu Movies	0	442	1334
+2871	Microsoft CRM Dynamics	0	0	0
+2874	Gbridge	20178	440	1335
+2875	Mikogo	0	0	1336
+2876	Songsari	20179	441	1337
+2877	StreamWork	20180	0	0
+2878	Xunlei Kankan	0	0	1338
+2879	Google Groups	0	0	1339
+2880	Google+ Photos	0	0	1340
+2881	Google+ Videos	0	0	1341
+2882	Myspace Photos	0	0	1342
+2883	Myspace Videos	0	0	1343
+2884	FileHost.ro	0	0	1344
+2885	Gyao	0	0	1345
+2886	SPDY	0	0	0
+2887	SVN	0	0	1634
+2888	Quake Live	0	0	1601
+2889	HTTP 2.0	0	0	0
+2890	Sophos Update	0	0	1346
+2891	Glype	0	0	1347
+2892	GMX	0	0	1348
+2893	Sanook.com	0	0	1350
+2894	AMMYY	20181	0	1351
+2895	Dropbox Upload	0	0	1355
+2896	Dropbox Download	0	0	1356
+2897	Dropbox Share	0	0	1357
+2898	R6 FeedFetcher	0	443	0
+2899	VMware Horizon View	0	0	0
+2900	Microsoft Windows Live Services Authentication	0	0	0
+2901	Google Accounts Authentication	0	0	0
+2902	Cisco Phone	0	0	0
+2903	LinkedIn Profile	0	0	1358
+2904	LinkedIn Inbox	0	0	1359
+2905	iTunes iPhone	0	444	0
+2906	iTunes iPod	0	445	0
+2907	iTunes iPad	0	446	0
+2909	Facebook Utilities	0	0	1361
+2910	Facebook Sports	0	0	1362
+2911	Facebook Games	0	0	1363
+2912	Skype Video	0	0	0
+2913	Skype Voice	0	0	0
+2914	YiXin	0	502	1808
+2918	Shareman	0	0	1437
+2919	Sophos RED	0	0	0
+2921	AnyConnect	20182	0	0	anyconnect
+2922	AnyConnect SSL Client	0	0	0
+2923	AnyConnect IPSec Client	0	0	0
+2924	iTunes Desktop	0	447	0
+2925	Facebook Photos	0	0	1364
+2926	Yahoo! Accounts	0	0	1366
+2932	WebEx Media	0	0	0
+2933	ESPN Video	0	0	0
+2935	Facebook Applications Other	0	0	1367
+2937	Perforce	20187	451	0
+2938	Bazaarvoice	0	0	1395
+2939	Adobe Flash	0	0	0
+2940	SCCP	20196	505	0	sccp
+2941	Tor Directory Services	0	0	0
+2942	Telepresence Control	0	0	0
+2943	Tomatopang	20184	449	1368
+2944	VDOLive	20185	0	0
+2945	DeNA Comm	0	0	1831
+2946	DeNA websites	0	0	1396
+2947	JonDo	0	402	0
+2948	Sina Video	0	0	1397
+2949	SOAP	0	0	0
+2950	Web Services for Devices	0	0	0
+2951	Web Services for Devices Secured	0	0	0
+2952	WSDL Event Receiver	0	0	0
+2954	Yahoo! Flash	0	0	1838
+2955	Crackle Video	0	0	0
+2958	Teredo	0	0	0
+2959	Apple Remote Desktop	20189	0	0	ard
+2960	Google Hangouts	0	0	1587
+2961	Google Helpouts	0	0	1588
+2962	WebEx Sharing	0	0	0
+2963	LinkedIn Upload	0	0	1369
+3000	3Com AMP3	0	0	0
+3001	Access Network	0	0	0
+3002	AccessBuilder	0	0	0
+3003	AODV	0	0	0
+3005	ALPES	0	0	0
+3006	Adobe PostScript	0	0	0
+3007	Aeolon Core Protocol	0	0	0
+3008	AgentX	0	0	0
+3009	connendp	0	0	0
+3010	PowerChute	0	0	0
+3011	AMInet	0	0	0
+3012	Apertus Tech Load Distribution	0	0	0
+3013	appleqtcsrvr	0	0	0
+3014	AEP	0	0	0
+3015	NBP	0	0	0
+3016	AppleTalk Routing Maintenance	0	0	0
+3017	AppleTalk Unused 203	0	0	0
+3018	AppleTalk Unused 205	0	0	0
+3019	AppleTalk Unused 207	0	0	0
+3020	AppleTalk Unused 208	0	0	0
+3021	AURP	0	0	0
+3022	AppleTalk Zone Information Protocol	0	0	0
+3023	ApplianceWare Managment Protocol	0	0	0
+3024	ACAP	0	0	0
+3025	Applix ac	0	0	0
+3026	Ariel2	0	0	0
+3027	Ariel3	0	0	0
+3028	AS Server Mapper	0	0	0
+3030	Asipregistry	0	0	0
+3032	Aurora CMGR	0	0	0
+3034	dcLINK	0	0	0
+3035	Avian	0	0	0
+3036	Banyan VIP	0	0	0
+3037	banyan-rpc	0	0	0
+3038	RSH-SPX	0	0	0
+3039	bgs-nsi	0	0	0
+3040	bmpp	0	0	0
+3041	Borland DSJ	0	0	0
+3043	BACnet	0	0	0
+3044	CAB Protocol	0	0	0
+3045	Cabletron Management Protocol	0	0	0
+3046	CadLock	0	0	0
+3047	Call of Duty	0	0	0
+3048	campaign contribution disclosures	0	0	0
+3049	Chat	0	0	0
+3050	Chshell	0	0	0
+3051	CIMPLEX	0	0	0
+3052	Cisco NAC	0	0	0
+3053	Citrix Static	0	0	0
+3054	CMIP/TCP Manager	0	0	0
+3055	CFDP	0	0	0
+3056	Collaborator	0	0	0
+3057	Commerce	0	0	0
+3058	Common Trace Facility	0	0	0
+3059	Covia	0	0	0
+3060	CDDB	0	0	0
+3061	cpq-wbem	0	0	0
+3062	CA Intl License Server	0	0	0
+3063	Synergy	0	0	0
+3064	CSTA	0	0	0
+3065	con	0	0	0
+3066	contentserver	0	0	0
+3067	Corerjd	0	0	0
+3068	Courier Mail Server	0	0	0
+3069	Cray Network Semaphore server	0	0	0
+3070	SFS config server	0	0	0
+3071	Cray Unified Resource Manager	0	0	0
+3072	Creative Partner	0	0	0
+3073	Creative Server	0	0	0
+3074	CRYPTOAdmin	0	0	0
+3075	CSNET Mailbox Name Nameserver	0	0	0
+3076	Customer Ixchange	0	0	0
+3077	cvc_hostd	0	0	0
+3078	CVS pserver	0	0	0
+3079	Cybercash	0	0	0
+3080	cycleserv	0	0	0
+3081	cycleserv2	0	0	0
+3082	Retrospect	0	0	0
+3083	DataRamp Svr	0	0	0
+3084	DataRampSrvSec	0	0	0
+3085	DCE endpoint resolution	0	0	0
+3086	dctp	0	0	0
+3087	DDM DFM	0	0	0
+3088	DDM RRDA	0	0	0
+3089	DEC DLM	0	0	0
+3090	decap	0	0	0
+3091	Decbsrv	0	0	0
+3093	DEI-ICDA	0	0	0
+3094	Desknet's	0	0	0
+3095	device	0	0	0
+3096	DHCP Failover	0	0	0
+3097	DHCP Failover 2	0	0	0
+3098	DHCPv6 Client	0	0	0
+3100	digital-vrc	0	0	0
+3101	Direct TV Software Updates	0	0	0
+3102	Direct TV Tickers	0	0	0
+3103	DirectPlay	0	0	0
+3104	DirectPlay8	0	0	0
+3105	DirecTV Data Catalog	0	0	0
+3106	DirecTV Webcasting	0	0	0
+3107	distcc	0	0	0
+3109	DDM	0	0	0
+3110	DOOM	0	0	0
+3111	DWR	0	0	0
+3112	eDonkey Static	0	0	0
+3113	EMC SmartPackets	0	0	0
+3114	entomb	0	0	0
+3115	Entrust Administration Service Handler	0	0	0
+3116	Entrust-KMSH	0	0	0
+3117	Entrust SPS	0	0	0
+3118	entrust-aaas	0	0	0
+3119	entrust-aams	0	0	0
+3120	errlog copy/server daemon	0	0	0
+3121	ESCP	0	0	0
+3122	eSignal	0	0	0
+3123	XTP	0	0	0
+3124	FCP	0	0	0
+3125	FLEXlm	0	0	0
+3126	FTP Software Agent System	0	0	0
+3127	Fujitsu Device Control	0	0	0
+3128	gdomap	0	0	0
+3129	GDS DataBase	0	0	0
+3130	ginad	0	0	0
+3131	GSI-FTP	0	0	0
+3132	GNU Generation Foundation NCP 678	0	0	0
+3133	GNU Generation Foundation NCP 128	0	0	0
+3134	GKrellM	0	0	0
+3135	GoBoogy	0	0	0
+3136	GotoDevice	0	0	0
+3137	Graphics	0	0	0
+3138	GraphOn Login	0	0	0
+3139	Groove	0	0	0
+3140	3GPP	0	0	0
+3141	ha-cluster	0	0	0
+3142	Hardware Control Protocol Wismar	0	0	0
+3143	HELLO Port	0	0	0
+3144	Heroix Longitude	0	0	0
+3147	Hitachi Universal Storage Platform	0	0	0
+3148	HMMP Indication	0	0	0
+3149	HMMP Operation	0	0	0
+3150	HAP	0	0	0
+3151	HP Network Management Center.	0	0	0
+3153	HTTP RPC Ep Map	0	0	0
+3154	Hybrid Point of Presence	0	0	0
+3155	Hyperwave-ISP	0	0	0
+3156	iafdbase	0	0	0
+3157	IAFServer	0	0	0
+3158	IBM Director	0	0	0
+3160	IBM NetView DM	0	0	0
+3161	IBM NetView DM/6000 Server/Client	0	0	0
+3162	ICL coNETion locate server	0	0	0
+3163	ICL coNETion server info	0	0	0
+3164	idfp	0	0	0
+3165	IEEE-MMS-SSL	0	0	0
+3167	IMP Logical Address Maintenance	0	0	0
+3168	Intecourier	0	0	0
+3169	Integra Software Management Environment	0	0	0
+3172	IBP	0	0	0
+3173	Internet Configuration Manager	0	0	0
+3176	Internet telephony tool	0	0	0
+3177	CU-SeeMe	0	0	0
+3178	IPX over UDP	0	0	0
+3179	intrinsa	0	0	0
+3180	ipcd	0	0	0
+3181	ipdd	0	0	0
+3182	Kali	0	0	0
+3183	IRC-SERV	0	0	0
+3184	ISO ILL Protocol	0	0	0
+3185	ISO Transport Class 2 Non-Control over TCP	0	0	0
+3186	ISO SAP	0	0	0
+3188	ISO-TP0	0	0	0
+3189	itm-mcell-s	0	0	0
+3191	Kerberos Administration	0	0	0
+3192	Key Server	0	0	0
+3193	Klogin	0	0	0
+3194	Konspire2b	0	0	0
+3195	kpasswd	0	0	0
+3196	kshell	0	0	0
+3197	LDP	0	0	0
+3198	lanserver	0	0	0
+3199	LWAPP	0	0	0
+3201	ljk-login	0	0	0
+3202	Locus PC-Interface Conn Server	0	0	0
+3203	Loglogic	0	0	0
+3204	MacOS Server Admin	0	0	0
+3205	MSA	0	0	0
+3206	Mailbox-LM	0	0	0
+3207	maitrd	0	0	0
+3208	Management Utility	0	0	0
+3209	mcns-sec	0	0	0
+3210	mdc-portmapper	0	0	0
+3211	Memcomm	0	0	0
+3212	Meregister	0	0	0
+3214	Meter	0	0	0
+3215	micom-pfs	0	0	0
+3217	Micromuse-lm	0	0	0
+3218	Microsoft Global Catalog	0	0	0
+3220	Microsoft Rome	0	0	0
+3221	Microsoft Shuttle	0	0	0
+3222	Microsoft System Center Operations Manager	0	0	0
+3224	MIT ML Device	0	0	0
+3225	MobilIP-MN	0	0	0
+3226	Mobility XE protocol	0	0	0
+3227	Mondex	0	0	0
+3228	Monitor	0	0	0
+3229	MPM FLAGS Protocol	0	0	0
+3230	MS Exchange Routing	0	0	0
+3231	msg-icp	0	0	0
+3232	Bundle Discovery Protocol	0	0	0
+3233	MRM	0	0	0
+3234	Multiling HTTP	0	0	0
+3237	Mylex-mapd	0	0	0
+3238	nCube License Manager	0	0	0
+3239	Nest Protocol	0	0	0
+3240	netGW	0	0	0
+3241	Netix MPP	0	0	0
+3242	Netnews	0	0	0
+3243	Netnews Administration System	0	0	0
+3244	Netop Remote Control	0	0	0
+3245	Network based Rev. Cont. Sys.	0	0	0
+3247	Network Innovations Multiplex	0	0	0
+3248	Nmap	0	0	0
+3250	NQS	0	0	0
+3252	Network Systems	0	0	0
+3253	Networked Media Streaming Protocol	0	0	0
+3254	New who	0	0	0
+3255	NFS Lock Daemon Manager	0	0	0
+3257	nlogin	0	0	0
+3258	Novadigm EDM	0	0	0
+3259	Novell Netware over IP	0	0	0
+3260	NPMP Trap	0	0	0
+3261	npmp-gui	0	0	0
+3262	npmp-local	0	0	0
+3263	NSW User System FE	0	0	0
+3264	OBEX	0	0	0
+3265	OCS_CMU	0	0	0
+3266	Ohimsrv	0	0	0
+3267	Omginitialrefs	0	0	0
+3268	Omserv	0	0	0
+3269	opalis-rdv	0	0	0
+3270	openvms-sysipc	0	0	0
+3271	Operations Manager - Health Service	0	0	0
+3272	oracle	0	0	0
+3273	Oracle coauthor	0	0	0
+3274	Oracle Names	0	0	0
+3275	Oracle Net8 Cman	0	0	0
+3276	Oracle Net8 CMan Admin	0	0	0
+3277	Oracle TCP/IP Listener	0	0	0
+3278	Orbix 2000 Config	0	0	0
+3279	Orbix 2000 Locator	0	0	0
+3280	Orbix 2000 Locator over SSL	0	0	0
+3282	P10	0	0	0
+3283	Parsec Gameserver	0	0	0
+3285	PassGo Technologies Service	0	0	0
+3286	Password Change	0	0	0
+3287	PDL data streaming port	0	0	0
+3289	POV-Ray	0	0	0
+3290	Personal Link	0	0	0
+3291	Pharos psrserver	0	0	0
+3292	Philips Video-Conferencing	0	0	0
+3293	Phonebook	0	0	0
+3294	Photuris	0	0	0
+3295	PIM-RP-DISC	0	0	0
+3296	pirp	0	0	0
+3297	Plus Fives MUMPS	0	0	0
+3298	PTP Event	0	0	0
+3299	PAPI	0	0	0
+3300	PRM Node Man	0	0	0
+3301	PRM Sys Man	0	0	0
+3302	PTC Name Service	0	0	0
+3303	PTP General	0	0	0
+3304	pump	0	0	0
+3305	PureNoise	0	0	0
+3306	qrh	0	0	0
+3308	QMQP	0	0	0
+3310	Quotad	0	0	0
+3312	Radio Control Protocol	0	0	0
+3313	Rational Method Composer	0	0	0
+3315	Radmin	0	0	0
+3316	RDA	0	0	0
+3317	RMCP	0	0	0
+3318	Remote Method Invocation Activation	0	0	0
+3319	rmtis	0	0	0
+3320	Remote-KIS	0	0	0
+3321	RemoteFS	0	0	0
+3322	repcmd	0	0	0
+3323	repscmd	0	0	0
+3326	RRH	0	0	0
+3327	RLZ Dbase	0	0	0
+3328	rmiregistry	0	0	0
+3329	Rmonitor	0	0	0
+3331	netvmg-traceroute	0	0	0
+3332	RSVP Tunnel	0	0	0
+3333	rtip	0	0	0
+3334	RUSHD	0	0	0
+3335	Russell Info Sci Calendar Manager	0	0	0
+3336	rxe	0	0	0
+3337	SANity	0	0	0
+3338	SAP	0	0	0
+3339	SCC Security	0	0	0
+3340	SCO Desktop Administration Server	0	0	0
+3341	SCO System Administration Server	0	0	0
+3342	SCO Web Server Manager 3	0	0	0
+3343	SCO WebServer Manager	0	0	0
+3344	scohelp	0	0	0
+3345	SST	0	0	0
+3346	scx-proxy	0	0	0
+3347	SDNS-KMP	0	0	0
+3349	SILC	0	0	0
+3350	Secure IRC	0	0	0
+3351	SMID	0	0	0
+3353	SNNTP	0	0	0
+3354	SIFT	0	0	0
+3355	srvloc	0	0	0
+3356	sFlow	0	0	0
+3357	Siam	0	0	0
+3358	SAFT	0	0	0
+3359	SNTP-HEARTBEAT	0	0	0
+3361	Sitara Dir	0	0	0
+3362	Sitara Management	0	0	0
+3363	Sitara Server	0	0	0
+3364	Skronk	0	0	0
+3366	smpnameres	0	0	0
+3367	smsd	0	0	0
+3369	Softros LAN Messenger	0	0	0
+3370	Sonar	0	0	0
+3371	SURF	0	0	0
+3372	SPMP	0	0	0
+3373	spsc	0	0	0
+3374	ss7ns	0	0	0
+3375	STMF	0	0	0
+3376	Stock IXChange	0	0	0
+3377	streettalk	0	0	0
+3378	STUN over TLS	0	0	0
+3379	Submit Protocol	0	0	0
+3380	SUBNTBCST_TFTP	0	0	0
+3381	Sun IPC server	0	0	0
+3382	SUNDR	0	0	0
+3383	Survey Measurement	0	0	0
+3384	SRVFP	0	0	0
+3385	SynOptics SNMP Relay	0	0	0
+3386	SynOptics Trap	0	0	0
+3387	SNARE	0	0	0
+3388	BB	0	0	0
+3389	TDP	0	0	0
+3390	TeamSound	0	0	0
+3391	Technical Analysis Software	0	0	0
+3392	Teedtap	0	0	0
+3393	tell	0	0	0
+3394	TenFold	0	0	0
+3395	TESLA	0	0	0
+3396	TIA/EIA/IS-99 modem client	0	0	0
+3397	TIA/EIA/IS-99 modem server	0	0	0
+3398	Timeserver	0	0	0
+3399	tinc	0	0	0
+3400	TNS CML	0	0	0
+3401	Tobit David Replica	0	0	0
+3402	TPIP	0	0	0
+3404	Transport Independent Convergence	0	0	0
+3405	trin00	0	0	0
+3406	Ulpnet	0	0	0
+3407	Unix time	0	0	0
+3408	User Location Protocol	0	0	0
+3409	UTMPCD	0	0	0
+3410	utmpsd	0	0	0
+3411	uuidgen	0	0	0
+3412	VACDSM-APP	0	0	0
+3413	VACDSM-SWS	0	0	0
+3414	VATP	0	0	0
+3415	vemmi	0	0	0
+3416	Vid	0	0	0
+3417	Videotex	0	0	0
+3418	Virtual Presence Protocol	0	0	0
+3419	VMware Fault Domain Manager	0	0	0
+3420	vnas	0	0	0
+3421	VPPS-Via	0	0	0
+3422	vsinet	0	0	0
+3423	VVPS-Qua	0	0	0
+3424	WAP connectionless session service	0	0	0
+3425	WAP Push	0	0	0
+3426	WAP Push OTA-HTTP port	0	0	0
+3427	WAP Push OTA-HTTP secure	0	0	0
+3428	WAP Push Secure	0	0	0
+3429	WAP secure connectionless session service	0	0	0
+3430	WAP Session Service Secure	0	0	0
+3431	WAP Session Service	0	0	0
+3432	WAP vCal	0	0	0
+3433	WAP vCal Secure	0	0	0
+3434	WAP vCard	0	0	0
+3435	WAP vCard Secure	0	0	0
+3436	War-rock	0	0	0
+3437	whoami	0	0	0
+3438	WLCCP	0	0	0
+3439	World Fusion	0	0	0
+3440	wpgs	0	0	0
+3442	xact-backup	0	0	0
+3443	xvttp	0	0	0
+3501	ICMP	0	0	0
+3504	IP in IP	0	0	0
+3505	ST	0	0	0
+3507	CBT	0	0	0
+3508	EGP	0	0	0
+3509	IGRP	0	0	0
+3510	BBN RCC	0	0	0
+3511	NVP	0	0	0
+3513	Argus	0	0	0
+3514	Emission Control Protocol	0	0	0
+3515	Cross Net Debugger	0	0	0
+3516	CHAOSNet	0	0	0
+3519	DCN Measurement Subsystems	0	0	0
+3520	HMP	0	0	0
+3521	Packet Radio Measurement	0	0	0
+3523	Trunk-1 Protocol	0	0	0
+3524	Trunk-2 Protocol	0	0	0
+3525	Leaf-1	0	0	0
+3526	Leaf-2	0	0	0
+3527	Reliable Datagram Protocol	0	0	0
+3528	IRTP	0	0	0
+3529	TP4	0	0	0
+3530	NETBLT	0	0	0
+3531	MFE	0	0	0
+3534	TPCP	0	0	0
+3535	IDPR	0	0	0
+3537	DDP	0	0	0
+3538	IDPR Control Message	0	0	0
+3539	TP++	0	0	0
+3540	IL	0	0	0
+3541	IPv6 encapsulation	0	0	0
+3542	SDRP	0	0	0
+3545	IDRP	0	0	0
+3548	DSR	0	0	0
+3549	BNA	0	0	0
+3552	i-nlsp	0	0	0
+3553	Swipe	0	0	0
+3554	NARP	0	0	0
+3555	IP Mobility	0	0	0
+3557	SKIP	0	0	0
+3558	ICMP for IPv6	0	0	0
+3561	any host	0	0	0
+3562	cFTP	0	0	0
+3564	SATNET and Backroom EXPAK	0	0	0
+3566	RVD	0	0	0
+3567	Pluribus Packet Core	0	0	0
+3569	SATNET Monitoring	0	0	0
+3571	IPCU	0	0	0
+3572	CP Network Executive	0	0	0
+3573	CP Heart Beat	0	0	0
+3574	Wang Span	0	0	0
+3575	PVP	0	0	0
+3576	SATNET	0	0	0
+3577	SUN NDP	0	0	0
+3578	Wideband Monitoring	0	0	0
+3579	Wideband EXPAK	0	0	0
+3582	VMTP	0	0	0
+3584	TTP	0	0	0
+3585	NSFNET-IGP	0	0	0
+3587	TCF	0	0	0
+3588	EIGRP	0	0	0
+3589	OSPF	0	0	0
+3590	Sprite RPC	0	0	0
+3591	Locus ARP	0	0	0
+3592	MTP	0	0	0
+3593	AX.25	0	0	0
+3595	MICP	0	0	0
+3596	Semaphore Sec Pro	0	0	0
+3597	EtherIP	0	0	0
+3598	Encapsulation Header	0	0	0
+3600	GMTP	0	0	0
+3601	IFMP	0	0	0
+3602	PNNI	0	0	0
+3604	ARIS	0	0	0
+3605	SCPS	0	0	0
+3606	QNX	0	0	0
+3607	Active Networks	0	0	0
+3609	SNP	0	0	0
+3610	Compaq-Peer	0	0	0
+3611	IPX over IP	0	0	0
+3612	VRRP	0	0	0
+3613	PGM RTP	0	0	0
+3616	D-II	0	0	0
+3617	IATP	0	0	0
+3618	Schedule Transfer Protocol	0	0	0
+3619	SRP	0	0	0
+3620	UTI	0	0	0
+3621	SMP	0	0	0
+3622	SM	0	0	0
+3623	PTP	0	0	0
+3624	ISIS	0	0	0
+3625	Fire	0	0	0
+3626	Combat Radio Transport Protocol	0	0	0
+3627	Combat Radio User Datagram	0	0	0
+3628	SSCOPMCE	0	0	0
+3629	IPLT	0	0	0
+3630	SPS	0	0	0
+3631	PIPE	0	0	0
+3633	iFCP	0	0	0
+3634	RSVP-E2E-IGNORE	0	0	0
+3637	MPLS	0	0	0
+3639	HIP	0	0	0
+3640	Amazon Cloud Drive	0	0	0
+3641	Amazon Cloud Drive Download	0	0	0
+3642	Amazon Cloud Drive Upload	0	0	0
+3643	Amazon Cloud Drive Authenticate	0	0	0
+3645	Google+ Location Tagging	0	0	0
+3646	Myspace Music	0	0	0
+3648	Kik Messenger	0	453	1370
+3649	Cisco Jabber Audio	0	0	0
+3650	Cisco Jabber Video	0	0	1800
+3651	SmartFox	0	0	0
+3652	VPNReactor	0	0	1789
+3653	CyberGhost VPN	0	0	1785
+3654	GRE	0	0	0
+3655	Alipay	0	0	1526
+3656	Crittercism	0	0	1492
+3657	Delta Search	0	0	1493
+3658	Fluent	0	0	0
+3659	MelOn	0	0	1494
+3670	Microsoft Store	0	0	1495
+3671	news.com.au	0	0	1496
+3672	OpenCandy	0	0	1497
+3673	Soso	0	0	1498
+3674	Woolik	0	0	1499
+3675	Sina	0	0	0
+3676	Airsoft Powerburst	0	0	0
+3677	GSS HTTP	0	0	0
+3678	NetWall	0	0	0
+3679	Eudora Set	0	0	0
+3680	Service Status Update	0	0	0
+3681	ESRO-EMSDP V1.3	0	0	0
+3682	OLSR	0	0	0
+3683	PKIX-3 CA/RA	0	0	0
+3684	Oracle Remote Data Base	0	0	0
+3685	ISCSI	0	0	0
+3686	Tapeware	0	0	0
+3687	IAX	0	0	0
+3688	CVSup	0	0	0
+3689	MSOC File Transfer	0	0	0
+3690	McAfee AutoUpdate	0	0	0
+3691	AMANDA	0	0	0
+3692	Oracle Business Intelligence	0	0	0
+3693	webster	0	0	0
+3694	tn-tl-fd1	0	0	0
+3695	GGP	0	0	0
+3696	MERIT Internodal Protocol	0	0	0
+3699	UDP Lite	0	0	0
+3700	PHP Proxy	0	0	0
+3701	Achetez Facile	0	0	1763
+3702	Ad4mat	0	0	1751
+3703	Betclic	0	0	0
+3704	Beweb	0	0	0
+3705	Cedexis	0	0	1748
+3706	GG	0	501	1807
+3707	GG Media	0	0	0
+3708	HTFacile	0	0	0
+3709	HWCDN	0	0	0
+3710	Itsfogo	0	0	0
+3711	L'equipe.fr	0	0	1709
+3712	Ligatus	0	0	1749
+3713	LINE Games	0	495	1777
+3714	LINE Media	0	493	0
+3715	1000mercis	0	0	1764
+3716	Piksel	0	0	1743
+3717	Proxistore	0	0	1765
+3718	SASCDN	0	0	0
+3719	Surikate	0	0	1752
+3720	Videoplaza	0	0	0
+3721	VIEWON	0	0	1750
+3722	Viewsurf	0	0	1761
+3723	Weborama	0	0	1757
+3724	XiTi	0	0	1755
+3725	Zanox	0	0	1754
+3726	WebEx Connect	0	0	0
+3727	QQ Games	0	454	0
+3728	easyMule	0	0	1371
+3730	Yik Yak	0	470	1372
+3733	OpenDoor	0	467	1450
+3734	Crunchyroll Video	0	0	0
+3735	OneDrive	0	483	1377
+3736	LinkedIn Contacts	0	0	1379
+3737	Rackspace	0	0	1380
+3738	ServiceNow	0	0	1381
+3739	T-Online	0	0	1382
+3740	Web.de	0	0	1383
+3741	Workday	0	0	1384
+3742	AppNeta	0	0	0
+3743	Blizzard Client	0	0	0
+3744	Blizzard Downloader	0	0	1828
+3745	Blizzard	0	0	1832
+3746	Blizzard Game Data	0	0	0
+3747	Battle.net Desktop	0	0	0
+3748	Battle.net Protocol	0	0	0
+3749	Battle.net site	0	0	1820
+3751	Pathtest	0	0	0
+3752	Pathview	0	0	0
+3753	Slingbox Media	0	0	0
+3754	Spotflux	0	0	1794
+3755	USAIP	0	0	1796
+3756	Yahoo! Douga	0	0	1385
+3757	Yahoo! Box	0	0	1386
+3761	BJNP Discovery	0	0	0
+3762	Crazy Browser	0	204	0
+3763	GreenBrowser	0	205	0
+3764	CometBird	0	202	0
+3765	Flock	0	199	0
+3766	Arora	0	200	0
+3767	Facebook Notes	0	0	1360
+3769	Compressed PPP	0	0	0
+3770	CCP	0	0	0
+3771	PPP	0	0	0
+3772	PAP	0	0	0
+3773	LCP	0	0	0
+3774	IPCP	0	0	0
+3775	IPv6CP	0	0	0
+3776	CHAP	0	0	0
+3777	Browzar	0	201	0
+3778	IEC 60870-5-104	20191	0	0	iec-104
+3779	Iperf	0	0	0
+3781	ITU T.120	0	0	0
+3782	Clip2Net	0	461	1387
+3783	Clip2Net Upload	0	0	1388
+3784	LogMeIn Rescue	0	462	1389
+3785	Mendeley	0	463	1390
+3786	Onehub	0	0	0
+3787	ZumoDrive	0	464	0
+3789	eFax	0	466	1439
+3790	Yesky	0	0	1440
+3791	100ye.com	0	0	1441
+3792	Yahoo! Screen	0	0	1643
+3793	Amazon Instant Video	0	482	1690
+3795	Playstation Games	0	0	1798
+3796	Playstation Match	0	0	0
+3798	TISTORY	0	0	1485
+3799	DioDeo	0	0	1486
+3800	Egloos	0	0	1487
+3801	Lineage	0	0	1488
+3802	MapleStory	0	0	1489
+3803	ezhelp	0	0	1490
+3804	Bonjour	0	0	0
+3805	Level 3	0	0	1744
+3806	Net2Phone	0	0	1797
+3807	Net2Phone Media	0	0	0
+3808	PJL	0	0	0
+3809	SoftEther	0	0	0
+3810	Speedtest Upload	0	0	0
+3811	Channel 4	0	0	1770
+3812	Opera Mini	0	0	0
+3815	MissLee	0	0	1591
+3816	Mgoon	0	0	1592
+3817	QDown	0	0	1593
+3818	SBS	0	0	1594
+3819	C3 Metrics	0	0	0
+3820	Oracle CRMOD	0	0	0
+3821	LeadLander	0	0	0
+3822	Bootstrap CDN	0	0	1642
+3823	keyholetv	0	0	0
+3824	COSEM	0	0	0
+3825	Microsoft FrontPage Server Extensions	0	0	0
+3826	GOOSE	0	0	0
+3827	GSE	0	0	0
+3830	XMPP File Transfer	0	0	0
+3832	Scopia	0	0	0
+3833	GTP Control	0	0	0
+3834	GTP User	0	0	0
+3835	GTP Prime	0	0	0
+3836	RIPng	0	0	0
+3837	Aurora	0	0	0
+3838	BaiduHi	0	503	1824
+3839	Diameter	0	0	0
+3841	FASP	0	0	0
+3842	IGMP	0	0	0
+3843	ISO IP	0	0	0
+3844	WSP	0	0	0
+3846	Ad Master	0	0	1645
+3847	Ad Tech	0	0	1646
+3848	Yahoo! Box Download	0	0	0
+3849	Yahoo! Box Upload	0	0	0
+3850	Yahoo! MP4	0	0	0
+3851	Yahoo! Shockwave	0	0	0
+3852	GREE Games	0	0	0
+3853	GungHo Online Entertainment	0	0	0
+3854	Mobaga Town	0	0	0
+3855	UULA	0	0	0
+3856	Netflow	0	0	0
+3857	TunnelBear	0	0	0
+3858	HipChat	0	0	1647
+3859	ITV	0	0	0
+3860	HTTP/SSL Tunnel	0	0	0
+3861	ShareFile Upload SSL	0	0	1022
+3862	PIM	0	0	0
+3863	IPComp	0	0	0
+3864	PARC Universal Packet	0	0	0
+3865	IDP	0	0	0
+3866	360 Safeguard	0	0	1648
+3867	Neobux	0	0	1649
+3868	People's Daily	0	0	1650
+3869	Vube	0	0	1651
+3870	Kickass Torrents	0	0	1652
+3871	China Daily	0	0	1653
+3872	Guangming Online	0	0	1654
+3873	RevenueHits	0	0	1655
+3874	AMQP	0	0	0
+3875	AMQPS	0	0	0
+3876	Info.com	0	0	1656
+3877	Code42	0	0	0
+3878	CrashPlan	0	0	0
+3879	MPEG Transport Stream	0	0	0
+3880	QQ Cloud	0	0	0
+3881	QQ Shopping	0	0	0
+3882	QQ Mail	0	0	0
+3883	QQ Pay	0	0	0
+3884	QQ Weiyun	0	0	0
+3885	Gmail attachment	0	0	1657
+3886	ESP	0	0	0
+3887	Adobe Creative Cloud	0	0	0
+3888	Autodesk	0	0	1793
+3889	Blackbaud	0	0	0
+3890	Demandbase	0	0	1814
+3891	Intralinks	0	0	1815
+3892	NetSuite	0	0	0
+3893	Onavo	0	0	0
+3894	Onavo Count	0	0	0
+3895	Onavo Extend	0	0	0
+3896	Oracle Marketing Cloud	0	0	0
+3897	Plista	0	0	1819
+3898	Scopia Audio	0	0	0
+3899	Scopia Video	0	0	0
+3901	SuccessFactors	0	0	0
+3910	Wow	0	0	1658
+3911	Webcrawler	0	0	1659
+3921	Wikipedia Edit	0	0	0
+3922	ADP	0	0	0
+3923	ADP GlobalView	0	0	0
+3924	ADP Resource	0	0	0
+3925	ADP Streamline	0	0	0
+3926	ADP TotalSource	0	0	0
+3927	ADP Vantage	0	0	0
+3928	ADP Workforce Now	0	0	0
+3929	Benefitfocus	0	0	0
+3930	Cerner Corporation	0	0	0
+3931	Conviva	0	0	1817
+3932	Cornerstone OnDemand	0	0	0
+3933	Dealertrack	0	0	0
+3934	Microsoft Dynamics CRM	0	0	0
+3935	QuickBase	0	0	0
+3936	QuickBooks	0	0	0
+3937	Quicken	0	0	0
+3938	TurboTax	0	0	0
+3939	Jive	0	0	0
+3940	Marketo	0	0	1816
+3941	QQ Music	0	0	0
+3942	QQ Video	0	0	0
+3943	Siteimprove	0	0	1818
+3944	Ultimate Software	0	0	0
+3945	Veeva	0	0	0
+3946	Hulu Video	0	0	1671
+3947	MQTT	20193	471	0	mqtt
+3948	RSVP	0	0	0
+3949	CAPWAP	0	0	0
+3950	Asana	0	0	0
+3951	Baydin	0	0	0
+3952	Boomerang	0	0	0
+3953	Cloudsponge	0	0	0
+3954	Cvent	0	0	0
+3955	DocuSign	0	0	0
+3956	Draw.io	0	0	0
+3957	Gantter	0	0	0
+3958	IAX2	0	0	0
+3959	InQuest Technologies	0	0	0
+3960	Inspectlet	0	0	0
+3961	Lucidchart	0	0	0
+3962	Rapportive	0	0	0
+3963	SlideRocket	0	0	0
+3964	Smartapp	0	0	0
+3965	TripIt	0	0	0
+3966	UEFA	0	0	0
+3967	WarLight	0	0	0
+3968	Zomato	0	0	0
+3969	Crashlytics	0	0	0
+3970	Flipkart	0	472	1673
+3971	Cisco Jabber	0	473	0
+3972	IRC file transfer	0	0	0
+3973	VXLan	0	0	0
+3974	WhatsApp Voice	0	0	0
+3975	WhatsApp Location	0	0	0
+3976	WhatsApp Media Message	0	0	0
+3977	Starsports	0	0	1674
+3978	ESPNcricinfo	0	0	1675
+3979	Microsoft Visual Studio	0	0	1676
+3980	BlueStacks	0	474	1677
+3981	JetBrains	0	475	1678
+3982	Youdao Dictionary	0	476	1679
+3983	JetBrains update	0	0	1680
+3984	JetBrains plugins	0	0	1681
+3985	JetBrains feature	0	0	1682
+3986	BlueStacks update	0	0	1683
+3987	BlueStacks download	0	0	1684
+3988	BlueStacks apps	0	0	1685
+3989	F-secure	0	477	1686
+3990	Malwarebytes	0	478	1687
+3991	SUPERAntiSpyware	0	479	1688
+3992	Periscope	0	480	1691
+3993	Meerkat	0	481	0
+3994	ZenMate	0	0	0
+3996	ibVPN	0	0	0
+3997	Storehouse	0	0	0
+3998	Avaya Audio	0	0	0
+3999	Avaya Video	0	0	0
+4000	Internet Download Manager	0	0	0
+4001	Wi-Fi Calling	0	0	0
+4002	FTP Active	0	0	0
+4003	FTP Passive	0	0	0
+4004	Eve Online	0	0	0
+4005	CCP Games	0	0	1826
+4006	Mojang	0	0	0
+4007	VMware vMotion	0	0	0
+4010	WPS Office	0	486	1698
+4012	Apple Pipeline	0	0	1696
+4013	Kontiki	0	488	1697
+4014	Brewster	0	0	0
+4015	MPLS Unicast	0	0	0
+4016	EA Download Manager	0	487	1695
+4017	Seterus	0	0	0
+4019	JoinMe	0	0	0
+4020	After School	0	0	0
+4021	CloudApp	0	0	0
+4022	HSRP	0	0	0
+4023	QUIC	0	0	0
+4024	Rapidgator	0	0	0
+4025	Skype Photo	0	0	0
+4026	Skype Video Message	0	0	0
+4027	Syncplicity	0	0	0
+4028	Gom VPN	0	0	0
+4029	IxChariot	0	0	0
+4030	ZRTP	0	0	0
+4031	Winny	0	0	0
+4032	AppGlu	0	0	0
+4033	I2P	0	0	0
+4034	Jungle Disk	0	0	0
+4035	Ninite	0	0	0
+4036	SpiderOak	0	0	0
+4037	Uploaded	0	0	0
+4038	Wondershare	0	0	1833
+4039	Western Digital	0	0	1834
+4040	WD softwares Download/Update	0	0	1835
+4041	Hola	0	0	1836
+4043	Baidu Yun	0	0	0
+4044	Spinrilla	0	0	0
+4045	Slack	0	0	0
+4046	Burnbook	0	0	0
+4047	skyZIP	0	0	0
+4048	Facebook VoIP	0	0	0
+4049	Yandex Disk	0	0	0
+4050	Naver Blog	0	0	1839
+4051	Naver Cafe	0	0	1840
+4052	Daum Blog	0	0	1841
+4053	Daum Cafe	0	0	1842
+4054	Naver Mail	0	0	1843
+4055	Daum Mail	0	0	1844
+4056	Kakao Story	0	0	1845
+4057	Edge	0	506	0
+4058	uProxy	0	0	0
+4059	Yandex AppMetrica	0	0	0
+4060	Yandex Images	0	0	0
+4061	Yandex Email	0	0	0
+4062	Yandex Maps	0	0	0
+4063	Yandex Money	0	0	0
+4064	Yandex Market	0	0	0
+4065	Yandex Music	0	0	0
+4066	Yandex Translate	0	0	0
+4067	Yandex Video	0	0	0
+4068	Facebook Like	0	0	1846
+4069	Sway	0	0	1848
+4070	Office 365 Planner	0	0	1849
+4071	Office for iPad	0	0	1850
+4072	Office Mobile	0	0	1851
+4073	Messenger	0	0	1852
+4075	Psiphon	0	0	0
+4076	Tanium	20197	0	0	tanium
+4077	Fiesta	0	0	0
+4078	Blackbox	0	0	1853
+4079	Google Checkout	0	0	0
+4080	Cisco Spark	0	0	0
+4081	Microsoft Web Platform Installer	0	507	1854
+4082	DotVPN	0	0	0
+4083	Yemonisoni	0	0	0
+4084	SuperVPN	0	0	0
+4085	MoPub	0	0	0
+4086	MobileCore	0	0	0
+4087	Addictive Mobility	0	0	0
+4088	Avocarrot	0	0	0
+4089	Synology DSM	0	508	1855
+4090	LiveJournal Post	0	0	1856
+4091	Mail.ru Attachment	0	0	1857
+4092	Betternet	0	0	0
+4093	Boom Beach	0	0	0
+4094	Browsec	0	0	0
+4095	Clash of Clans	0	0	0
+4096	Frozenway	0	0	0
+4097	Supercell	0	0	0
+5001	ENIP	20501	359	0
+10000	RegTestPort	0	0	0
+10001	RegTestPat	0	0	0
+10002	RegTestBrute	0	0	0

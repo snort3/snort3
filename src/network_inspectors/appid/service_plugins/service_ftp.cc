@@ -25,9 +25,9 @@
 
 #include "service_ftp.h"
 
+#include "appid_inspector.h"
 #include "appid_module.h"
 #include "app_info_table.h"
-#include "service_util.h"
 #include "protocols/packet.h"
 
 #define FTP_PORT    21
@@ -90,7 +90,7 @@ FtpServiceDetector::FtpServiceDetector(ServiceDiscovery* sd)
     name = "ftp";
     proto = IpProtocol::TCP;
     detectorType = DETECTOR_TYPE_DECODER;
-    ftp_data_app_id = add_appid_protocol_reference("ftp-data");
+    ftp_data_app_id = AppIdInspector::get_inspector()->add_appid_protocol_reference("ftp-data");
 
     tcp_patterns =
     {
@@ -800,20 +800,19 @@ static inline void WatchForCommandResult(ServiceFTPData* fd, AppIdSession* asd, 
 
 void FtpServiceDetector::InitializeDataSession(AppIdSession* asd, AppIdSession* fp)
 {
-    unsigned encryptedFlag =
-        asd->get_session_flags(APPID_SESSION_ENCRYPTED | APPID_SESSION_DECRYPTED);
-    if (encryptedFlag == APPID_SESSION_ENCRYPTED)
+    uint64_t flags = asd->get_session_flags(APPID_SESSION_ENCRYPTED | APPID_SESSION_DECRYPTED);
+    if (flags == APPID_SESSION_ENCRYPTED)
     {
-        fp->serviceAppId = APP_ID_FTPSDATA;
+        fp->service_app_id = APP_ID_FTPSDATA;
     }
     else
     {
-        encryptedFlag = 0; // change (APPID_SESSION_ENCRYPTED | APPID_SESSION_DECRYPTED) case to
-                           // zeroes.
-        fp->serviceAppId = APP_ID_FTP_DATA;
+        flags = 0; // change (APPID_SESSION_ENCRYPTED | APPID_SESSION_DECRYPTED) case to
+        // zeroes.
+        fp->service_app_id = APP_ID_FTP_DATA;
     }
 
-    initialize_expected_session(asd, fp, APPID_SESSION_IGNORE_ID_FLAGS | encryptedFlag);
+    initialize_expected_session(asd, fp, APPID_SESSION_IGNORE_ID_FLAGS | flags);
 }
 
 int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
@@ -1223,23 +1222,23 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
     default:
     case APPID_INPROCESS:
 inprocess:
-        if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+        if (!asd->is_service_detected())
             service_inprocess(asd, pkt, dir);
         return APPID_INPROCESS;
 
     case APPID_SUCCESS:
-        if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+        if (!asd->is_service_detected())
         {
-            uint64_t encryptedFlag = asd->get_session_flags(
-                APPID_SESSION_ENCRYPTED | APPID_SESSION_DECRYPTED);
+            uint64_t flags = asd->get_session_flags(APPID_SESSION_ENCRYPTED
+                | APPID_SESSION_DECRYPTED);
 
             // FTPS only when encrypted==1 decrypted==0
-            add_service(asd, pkt, dir, encryptedFlag == APPID_SESSION_ENCRYPTED ?
+            add_service(asd, pkt, dir, flags == APPID_SESSION_ENCRYPTED ?
                 APP_ID_FTPS : APP_ID_FTP_CONTROL,
                 fd->vendor[0] ? fd->vendor : nullptr,
                 fd->version[0] ? fd->version : nullptr, nullptr);
 
-            if (encryptedFlag == APPID_SESSION_ENCRYPTED)
+            if (flags == APPID_SESSION_ENCRYPTED)
                 appid_stats.ftps_flows++;
             else
                 appid_stats.ftp_flows++;
@@ -1248,7 +1247,7 @@ inprocess:
 
     case APPID_NOMATCH:
 fail:
-        if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+        if (!asd->is_service_detected())
             fail_service(asd, pkt, dir);
         asd->clear_session_flags(APPID_SESSION_CONTINUE);
         return APPID_NOMATCH;

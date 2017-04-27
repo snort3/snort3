@@ -31,12 +31,16 @@
 #include "service_state.h"
 #include "detector_plugins/http_url_patterns.h"
 
-struct RNAServiceSubtype;
+struct AppIdServiceSubtype;
 class ClientDetector;
 class ServiceDetector;
 class AppInfoManager;
+class AppIdHttpSession;
 
 using AppIdFreeFCN = void (*)(void*);
+
+const uint8_t* service_strstr(const uint8_t* haystack, unsigned haystack_len,
+    const uint8_t* needle, unsigned needle_len);
 
 #define MAX_ATTR_LEN           1024
 #define HTTP_PREFIX "http://"
@@ -116,75 +120,6 @@ struct CommonAppIdData
     uint16_t initiator_port = 0;
 };
 
-#define SCAN_HTTP_VIA_FLAG          (1<<0)
-#define SCAN_HTTP_USER_AGENT_FLAG   (1<<1)
-#define SCAN_HTTP_HOST_URL_FLAG     (1<<2)
-#define SCAN_SSL_HOST_FLAG          (1<<4)
-#define SCAN_HOST_PORT_FLAG         (1<<5)
-#define SCAN_HTTP_VENDOR_FLAG       (1<<6)
-#define SCAN_HTTP_XWORKINGWITH_FLAG (1<<7)
-#define SCAN_HTTP_CONTENT_TYPE_FLAG (1<<8)
-
-#define RESPONSE_CODE_PACKET_THRESHHOLD 0
-
-// These values are used in Lua code as raw numbers. Do NOT reassign new values.
-#define APP_TYPE_SERVICE    0x1
-#define APP_TYPE_CLIENT     0x2
-#define APP_TYPE_PAYLOAD    0x4
-
-struct HttpSession
-{
-    char* host = nullptr;
-    uint16_t host_buflen = 0;
-    char* url = nullptr;
-    char* uri = nullptr;
-    uint16_t uri_buflen = 0;
-    char* via = nullptr;
-    char* useragent = nullptr;
-    uint16_t useragent_buflen = 0;
-    char* response_code = nullptr;
-    uint16_t response_code_buflen = 0;
-    char* referer = nullptr;
-    uint16_t referer_buflen = 0;
-    char* cookie = nullptr;
-    uint16_t cookie_buflen = 0;
-    char* content_type = nullptr;
-    uint16_t content_type_buflen = 0;
-    char* location = nullptr;
-    uint16_t location_buflen = 0;
-    char* body = nullptr;
-    uint16_t body_buflen = 0;
-    char* req_body = nullptr;
-    uint16_t req_body_buflen = 0;
-    char* server = nullptr;
-    char* x_working_with = nullptr;
-    char* new_field[HTTP_FIELD_MAX + 1] = { nullptr };
-    uint16_t new_field_len[HTTP_FIELD_MAX + 1] = { 0 };
-    uint16_t fieldOffset[HTTP_FIELD_MAX + 1] = { 0 };
-    uint16_t fieldEndOffset[HTTP_FIELD_MAX + 1] = { 0 };
-    bool new_field_contents = false;
-    bool is_webdav = false;
-    int chp_finished = 0;
-    AppId chp_candidate = APP_ID_NONE;
-    AppId chp_alt_candidate = APP_ID_NONE;
-    int chp_hold_flow = 0;
-    int ptype_req_counts[NUMBER_OF_PTYPES] = { 0 };
-    int total_found = 0;
-    unsigned app_type_flags = 0;
-    int num_matches = 0;
-    int num_scans = 0;
-    int get_offsets_from_rebuilt = 0;
-    bool skip_simple_detect = false;
-    SfIp* xffAddr = nullptr;
-    const char** xffPrecedence = nullptr;
-    int numXffFields = 0;
-    int ptype_scan_counts[NUMBER_OF_PTYPES] = { 0 };
-
-#if RESPONSE_CODE_PACKET_THRESHHOLD
-    unsigned response_code_packets = 0;
-#endif
-};
-
 // For dnsSession.state:
 #define DNS_GOT_QUERY    0x01
 #define DNS_GOT_RESPONSE 0x02
@@ -202,7 +137,7 @@ struct DnsSession
                                     // lookup)
 };
 
-struct _RNAServiceSubtype;
+struct _AppIdServiceSubtype;
 
 struct TlsSession
 {
@@ -227,9 +162,8 @@ public:
     AppIdConfig* config = nullptr;
     CommonAppIdData common;
     Flow* flow = nullptr;
-    AppIdFlowData* flowData = nullptr;
+    AppIdFlowData* flow_data = nullptr;
     AppInfoManager* app_info_mgr = nullptr;
-    HttpPatternMatchers* http_matchers;
 
     SfIp service_ip;
     uint16_t service_port = 0;
@@ -238,13 +172,13 @@ public:
 
     // AppId matching service side
     APPID_DISCOVERY_STATE service_disco_state = APPID_DISCO_STATE_NONE;
-    SESSION_SERVICE_ID_STATE service_search_state = START;
-    AppId serviceAppId = APP_ID_NONE;
-    AppId portServiceAppId = APP_ID_NONE;
+    SESSION_SERVICE_SEARCH_STATE service_search_state = SESSION_SERVICE_SEARCH_STATE::START;
+    AppId service_app_id = APP_ID_NONE;
+    AppId port_service_id = APP_ID_NONE;
     ServiceDetector* service_detector = nullptr;
-    char* serviceVendor = nullptr;
-    char* serviceVersion = nullptr;
-    RNAServiceSubtype* subtype = nullptr;
+    char* service_vendor = nullptr;
+    char* service_version = nullptr;
+    AppIdServiceSubtype* subtype = nullptr;
     char* netbios_name = nullptr;
     std::vector<ServiceDetector*> service_candidates;
     bool got_incompatible_services = false;
@@ -271,10 +205,10 @@ public:
     AppId username_service = APP_ID_NONE;
     char* netbios_domain = nullptr;
     uint32_t session_id = 0;
-    HttpSession* hsession = nullptr;
+    AppIdHttpSession* hsession = nullptr;
     TlsSession* tsession = nullptr;
     unsigned scan_flags = 0;
-    AppId referredAppId = APP_ID_NONE;
+    AppId referred_app_id = APP_ID_NONE;
     AppId temp_app_id = APP_ID_NONE;
     void* tpsession = nullptr;
     uint16_t init_tpPackets = 0;
@@ -289,10 +223,10 @@ public:
 
     struct
     {
-        uint32_t firstPktsecond;
-        uint32_t lastPktsecond;
-        uint64_t initiatorBytes;
-        uint64_t responderBytes;
+        uint32_t first_packet_second;
+        uint32_t last_packet_second;
+        uint64_t initiator_bytes;
+        uint64_t responder_bytes;
     } stats = { 0, 0, 0, 0 };
 
     // Policy and rule ID for related flows (e.g. ftp-data)
@@ -301,19 +235,19 @@ public:
     //appIds picked from encrypted session.
     struct
     {
-        AppId serviceAppId;
-        AppId ClientAppId;
-        AppId payloadAppId;
-        AppId miscAppId;
-        AppId referredAppId;
+        AppId service_app_id;
+        AppId client_app_id;
+        AppId payload_app_id;
+        AppId misc_app_id;
+        AppId referred_app_id;
     } encrypted = { APP_ID_NONE, APP_ID_NONE, APP_ID_NONE, APP_ID_NONE, APP_ID_NONE };
 
     // New fields introduced for DNS Blacklisting
     DnsSession* dsession = nullptr;
 
-    void* firewallEarlyData = nullptr;
-    AppId pastIndicator = APP_ID_NONE;
-    AppId pastForecast = APP_ID_NONE;
+    void* firewall_early_data = nullptr;
+    AppId past_indicator = APP_ID_NONE;
+    AppId past_forecast = APP_ID_NONE;
 
     bool is_http2 = false;
     SEARCH_SUPPORT_TYPE search_support_type = UNKNOWN_SEARCH_ENGINE;
@@ -336,10 +270,31 @@ public:
         return (common.flags & flags);
     }
 
+    void set_service_detected()
+    {
+        common.flags |= APPID_SESSION_SERVICE_DETECTED;
+    }
+
+    bool is_service_detected()
+    {
+        return common.flags & APPID_SESSION_SERVICE_DETECTED;
+    }
+
+    void set_client_detected()
+    {
+        common.flags |= APPID_SESSION_CLIENT_DETECTED;
+    }
+
+    bool is_client_detected()
+    {
+        return common.flags & APPID_SESSION_CLIENT_DETECTED;
+    }
+
     bool is_decrypted()
     {
-       return get_session_flags(APPID_SESSION_DECRYPTED) == APPID_SESSION_DECRYPTED;
+        return common.flags & APPID_SESSION_DECRYPTED;
     }
+
     char session_logging_id[MAX_SESSION_LOGGING_ID_LEN];
     bool session_logging_enabled = false;
 
@@ -350,15 +305,10 @@ public:
     void* remove_flow_data(unsigned id);
     void free_flow_data_by_id(unsigned id);
     void free_flow_data_by_mask(unsigned mask);
-
-    void clear_http_field();
-    void free_http_session_data();
     void free_dns_session_data();
     void free_tls_session_data();
     void free_flow_data();
-    void delete_shared_data();
 
-    AppId is_appid_detection_done();
     AppId pick_service_app_id();
     AppId pick_only_service_app_id();
     AppId pick_misc_app_id();
@@ -371,29 +321,28 @@ public:
     AppId pick_fw_payload_app_id();
     AppId pick_fw_referred_payload_app_id();
     bool is_ssl_session_decrypted();
-    int process_http_packet(int);
 
     void examine_ssl_metadata(Packet*);
-    void set_client_app_id_data(AppId clientAppId, char** version);
-    void set_service_appid_data(AppId, char*, char**);
+    void set_client_app_id_data(AppId, char*);
+    void set_service_appid_data(AppId, char*, char*);
     void set_referred_payload_app_id_data(AppId);
-    void set_payload_app_id_data(ApplicationId, char**);
+    void set_payload_app_id_data(ApplicationId, char*);
     void check_app_detection_restart();
     void update_encrypted_app_id(AppId);
     void examine_rtmp_metadata();
     void sync_with_snort_id(AppId, Packet*);
     void stop_rna_service_inspection(Packet*,  int);
 
-private:
     bool is_payload_appid_set();
-    void reinit_shared_data();
+    void clear_http_flags();
+    void reset_session_data();
+
+private:
+    void reinit_session_data();
+    void delete_session_data();
     bool is_ssl_decryption_enabled();
 
     void set_session_logging_state(const Packet*, int direction);
-    void clear_app_id_data();
-    int initial_chp_sweep(char**, uint16_t*, MatchedCHPAction**);
-    void clear_http_flags();
-    void process_chp_buffers(char**, Packet*);
     void create_session_logging_id(int direction, Packet*);
 
     static THREAD_LOCAL uint32_t appid_flow_data_id;

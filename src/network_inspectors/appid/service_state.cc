@@ -47,17 +47,32 @@ ServiceDiscoveryState::~ServiceDiscoveryState()
         delete brute_force_mgr;
 }
 
+ServiceDetector* ServiceDiscoveryState::select_detector_by_brute_force(IpProtocol proto)
+{
+    if ( state == SERVICE_ID_STATE::SEARCHING_BRUTE_FORCE )
+    {
+        if ( !brute_force_mgr )
+            brute_force_mgr = new AppIdDetectorList(proto);
+
+        service = brute_force_mgr->next();
+        if ( !service )
+            state = SERVICE_ID_STATE::FAILED;
+    }
+
+    return service;
+}
+
 void ServiceDiscoveryState::set_service_id_valid(ServiceDetector* sd)
 {
     service = sd;
     reset_time = 0;
-    if (state != SERVICE_ID_STATE::VALID)
+    if ( state != SERVICE_ID_STATE::VALID )
     {
         state = SERVICE_ID_STATE::VALID;
         valid_count = 0;
     }
 
-    if(!valid_count)
+    if ( !valid_count )
     {
         detract_count = 0;
         last_detract.clear();
@@ -65,7 +80,7 @@ void ServiceDiscoveryState::set_service_id_valid(ServiceDetector* sd)
         last_invalid_client.clear();
     }
 
-    if (valid_count < STATE_ID_MAX_VALID_COUNT)
+    if ( valid_count < STATE_ID_MAX_VALID_COUNT)
         valid_count++;
 }
 
@@ -75,16 +90,19 @@ void ServiceDiscoveryState::set_service_id_valid(ServiceDetector* sd)
  *  - invalid_client_count: If our service detector search had trouble
  *    simply because of unrecognized client data, then consider retrying
  *    the search again. */
-void ServiceDiscoveryState::set_service_id_failed(AppIdSession* asd, const SfIp* client_ip)
+void ServiceDiscoveryState::set_service_id_failed(AppIdSession* asd, const SfIp* client_ip,
+    unsigned invalid_delta)
 {
+    invalid_client_count += invalid_delta;
+
     /* If we had a valid detector, check for too many fails.  If so, start
      * search sequence again. */
-    if (state == SERVICE_ID_STATE::VALID)
+    if ( state == SERVICE_ID_STATE::VALID )
     {
         /* Too many invalid clients?  If so, count it as an invalid detect. */
-        if (invalid_client_count >= STATE_ID_INVALID_CLIENT_THRESHOLD)
+        if ( invalid_client_count >= STATE_ID_INVALID_CLIENT_THRESHOLD )
         {
-            if (valid_count <= 1)
+            if ( valid_count <= 1 )
             {
                 state = SERVICE_ID_STATE::SEARCHING_PORT_PATTERN;
                 invalid_client_count = 0;
@@ -100,7 +118,7 @@ void ServiceDiscoveryState::set_service_id_failed(AppIdSession* asd, const SfIp*
                 invalid_client_count = 0;
             }
         }
-        else if (invalid_client_count == 0)
+        else if ( invalid_client_count == 0 )
         {
             // Just a plain old fail.  If too many of these happen, start search process over.
             if (last_detract.fast_eq6(*client_ip))
@@ -125,10 +143,24 @@ void ServiceDiscoveryState::set_service_id_failed(AppIdSession* asd, const SfIp*
         }
     }
     else if ( ( state == SERVICE_ID_STATE::SEARCHING_PORT_PATTERN ) &&
-              ( asd->service_search_state == SESSION_SERVICE_ID_STATE::PENDING ) &&
-              ( !asd->service_candidates.size() ) )
+        ( asd->service_search_state == SESSION_SERVICE_SEARCH_STATE::PENDING ) &&
+        ( !asd->service_candidates.size() ) )
     {
         state = SEARCHING_BRUTE_FORCE;
+    }
+}
+
+void ServiceDiscoveryState::update_service_incompatiable(const SfIp* ip)
+{
+    if ( invalid_client_count < STATE_ID_INVALID_CLIENT_THRESHOLD )
+    {
+        if ( last_invalid_client.fast_equals_raw(*ip) )
+            invalid_client_count++;
+        else
+        {
+            invalid_client_count += 3;
+            last_invalid_client = *ip;
+        }
     }
 }
 
@@ -207,7 +239,7 @@ ServiceDiscoveryState* AppIdServiceState::add(const SfIp* ip, IpProtocol proto, 
 
     std::map<AppIdServiceStateKey, ServiceDiscoveryState*>::iterator it;
     it = service_state_cache->find(ssk);
-    if ( it == service_state_cache->end())
+    if ( it == service_state_cache->end() )
     {
         ss = new ServiceDiscoveryState;
         (*service_state_cache)[ssk] = ss;
@@ -231,7 +263,7 @@ ServiceDiscoveryState* AppIdServiceState::get(const SfIp* ip, IpProtocol proto, 
 
     std::map<AppIdServiceStateKey, ServiceDiscoveryState*>::iterator it;
     it = service_state_cache->find(ssk);
-    if ( it != service_state_cache->end())
+    if ( it != service_state_cache->end() )
         ss = it->second;
 
     return ss;
@@ -248,7 +280,7 @@ void AppIdServiceState::remove(const SfIp* ip, IpProtocol proto, uint16_t port, 
 
     std::map<AppIdServiceStateKey, ServiceDiscoveryState*>::iterator it;
     it = service_state_cache->find(ssk);
-    if ( it != service_state_cache->end())
+    if ( it != service_state_cache->end() )
     {
         delete it->second;
         service_state_cache->erase(it);
@@ -263,22 +295,22 @@ void AppIdServiceState::remove(const SfIp* ip, IpProtocol proto, uint16_t port, 
     }
 }
 
-void AppIdServiceState::check_reset(AppIdSession* asd, const SfIp* ip, uint16_t port )
+void AppIdServiceState::check_reset(AppIdSession* asd, const SfIp* ip, uint16_t port)
 {
     ServiceDiscoveryState* sds = AppIdServiceState::get(ip, IpProtocol::TCP, port,
         asd->is_decrypted());
-
-    if (sds)
+    if ( sds )
     {
-        if (!sds->reset_time)
-            sds->reset_time = packet_time();
-        else if ((packet_time() - sds->reset_time) >= 60)
+        if ( !sds->get_reset_time() )
+            sds->set_reset_time(packet_time() );
+        else if ( ( packet_time() - sds->get_reset_time() ) >= 60 )
         {
             AppIdServiceState::remove(ip, IpProtocol::TCP, port, asd->is_decrypted());
             asd->set_session_flags(APPID_SESSION_SERVICE_DELETED);
         }
     }
 }
+
 void AppIdServiceState::dump_stats(void)
 {
     // FIXIT-L - do we need to keep ipv4 and ipv6 separate?

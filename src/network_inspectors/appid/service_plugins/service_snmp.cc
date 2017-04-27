@@ -25,9 +25,9 @@
 
 #include "service_snmp.h"
 
+#include "appid_inspector.h"
 #include "appid_module.h"
 #include "app_info_table.h"
-#include "service_util.h"
 #include "log/messages.h"
 #include "protocols/packet.h"
 
@@ -96,7 +96,7 @@ SnmpServiceDetector::SnmpServiceDetector(ServiceDiscovery* sd)
     proto = IpProtocol::UDP;
     detectorType = DETECTOR_TYPE_DECODER;
 
-    app_id = add_appid_protocol_reference("snmp");
+    app_id = AppIdInspector::get_inspector()->add_appid_protocol_reference("snmp");
 
     udp_patterns =
     {
@@ -476,7 +476,7 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
         {
             asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE);
             asd->clear_session_flags(APPID_SESSION_CONTINUE);
-            asd->serviceAppId = APP_ID_SNMP;
+            asd->service_app_id = APP_ID_SNMP;
             break;
         }
         sd->state = SNMP_STATE_RESPONSE;

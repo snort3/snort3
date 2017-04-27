@@ -26,6 +26,7 @@
 #include "appid_detector.h"
 
 #include "appid_config.h"
+#include "appid_http_session.h"
 #include "app_info_table.h"
 #include "lua_detector_api.h"
 #include "protocols/packet.h"
@@ -60,23 +61,6 @@ int AppIdDetector::initialize()
     return APPID_SUCCESS;
 }
 
-void AppIdDetector::activate()
-{
-}
-
-int AppIdDetector::validate(AppIdDiscoveryArgs&)
-{
-    return APPID_SUCCESS;
-}
-
-void AppIdDetector::clean()
-{
-}
-
-void AppIdDetector::register_appid(AppId, unsigned)
-{
-}
-
 void* AppIdDetector::data_get(AppIdSession* asd)
 {
     return asd->get_flow_data(flow_data_index);
@@ -93,7 +77,7 @@ void AppIdDetector::add_info(AppIdSession* asd, const char* info)
         asd->hsession->url = snort_strdup(info);
 }
 
-void AppIdDetector::add_user(AppIdSession* asd, const char* username, AppId appId, int success)
+void AppIdDetector::add_user(AppIdSession* asd, const char* username, AppId appId, bool success)
 {
     if (asd->username)
         snort_free(asd->username);
@@ -126,7 +110,7 @@ void AppIdDetector::add_app(AppIdSession* asd, AppId service_id, AppId id, const
             asd->client_version = snort_strdup(version);
     }
 
-    asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
+    asd->set_client_detected();
     asd->client_service_app_id = service_id;
     asd->client_app_id = id;
 }

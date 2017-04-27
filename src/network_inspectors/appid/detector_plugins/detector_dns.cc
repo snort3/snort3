@@ -260,8 +260,7 @@ DnsUdpServiceDetector::~DnsUdpServiceDetector()
 }
 
 void DnsValidator::add_dns_query_info(AppIdSession* asd, uint16_t id, const uint8_t* host, uint8_t
-    host_len,
-    uint16_t host_offset, uint16_t record_type)
+    host_len, uint16_t host_offset, uint16_t record_type)
 {
     if ( asd->dsession )
     {
@@ -392,7 +391,7 @@ int DnsValidator::dns_validate_label(const uint8_t* data, uint16_t* offset, uint
 }
 
 int DnsValidator::dns_validate_query(const uint8_t* data, uint16_t* offset, uint16_t size,
-    uint16_t id, unsigned host_reporting, AppIdSession* asd)
+    uint16_t id, bool host_reporting, AppIdSession* asd)
 {
     int ret;
     const uint8_t* host;
@@ -442,7 +441,7 @@ int DnsValidator::dns_validate_query(const uint8_t* data, uint16_t* offset, uint
 }
 
 int DnsValidator::dns_validate_answer(const uint8_t* data, uint16_t* offset, uint16_t size,
-    uint16_t id, uint8_t rcode, unsigned host_reporting, AppIdSession* asd)
+    uint16_t id, uint8_t rcode, bool host_reporting, AppIdSession* asd)
 {
     int ret;
     const uint8_t* host;
@@ -501,7 +500,7 @@ int DnsValidator::dns_validate_answer(const uint8_t* data, uint16_t* offset, uin
 }
 
 int DnsValidator::dns_validate_header(const int dir, DNSHeader* hdr,
-    unsigned host_reporting, AppIdSession* asd)
+    bool host_reporting, AppIdSession* asd)
 {
     if (hdr->Opcode > MAX_OPCODE || hdr->Opcode == INVALID_OPCODE)
     {
@@ -528,7 +527,7 @@ int DnsValidator::dns_validate_header(const int dir, DNSHeader* hdr,
 }
 
 int DnsValidator::validate_packet(const uint8_t* data, uint16_t size, const int,
-    unsigned host_reporting, AppIdSession* asd)
+    bool host_reporting, AppIdSession* asd)
 {
     uint16_t i;
     uint16_t count;
@@ -830,7 +829,7 @@ int dns_host_scan_hostname(const uint8_t* pattern, size_t size, AppId* ClientApp
     AppId* payloadId)
 {
     return dns_host_scan_patterns(serviceDnsConfig.dns_host_host_matcher, pattern, size,
-        +ClientAppId, payloadId);
+        ClientAppId, payloadId);
 }
 
 void service_dns_host_clean()

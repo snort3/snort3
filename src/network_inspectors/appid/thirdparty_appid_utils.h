@@ -37,7 +37,6 @@ struct Packet;
 
 extern THREAD_LOCAL ThirdPartyAppIDModule* thirdparty_appid_module;    // nullptr means no 3rd
                                                                        // party AppID module
-
 void ThirdPartyAppIDInit(AppIdModuleConfig*);
 void ThirdPartyAppIDReconfigure();
 void ThirdPartyAppIDFini();

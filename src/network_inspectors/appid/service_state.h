@@ -45,9 +45,9 @@ public:
     AppIdDetectorList(IpProtocol proto)
     {
         if (proto == IpProtocol::TCP)
-            detectors = &ServiceDiscovery::get_instance().tcp_detectors;
+            detectors = ServiceDiscovery::get_instance().get_tcp_detectors();
         else
-            detectors = &ServiceDiscovery::get_instance().udp_detectors;
+            detectors = ServiceDiscovery::get_instance().get_udp_detectors();
         dit = detectors->begin();
     }
 
@@ -75,9 +75,43 @@ class ServiceDiscoveryState
 public:
     ServiceDiscoveryState();
     ~ServiceDiscoveryState();
+    ServiceDetector* select_detector_by_brute_force(IpProtocol proto);
     void set_service_id_valid(ServiceDetector* sd);
-    void set_service_id_failed(AppIdSession* asd, const SfIp* client_ip);
+    void set_service_id_failed(AppIdSession* asd, const SfIp* client_ip, unsigned invalid_delta =
+        0);
+    void update_service_incompatiable(const SfIp* ip);
 
+    SERVICE_ID_STATE get_state() const
+    {
+        return state;
+    }
+
+    void set_state(SERVICE_ID_STATE state)
+    {
+        this->state = state;
+    }
+
+    ServiceDetector* get_service() const
+    {
+        return service;
+    }
+
+    void set_service(ServiceDetector* service)
+    {
+        this->service = service;
+    }
+
+    time_t get_reset_time() const
+    {
+        return reset_time;
+    }
+
+    void set_reset_time(time_t resetTime)
+    {
+        reset_time = resetTime;
+    }
+
+private:
     SERVICE_ID_STATE state;
     ServiceDetector* service = nullptr;
     AppIdDetectorList* brute_force_mgr = nullptr;
@@ -104,7 +138,7 @@ public:
     static ServiceDiscoveryState* add(const SfIp*, IpProtocol, uint16_t port, bool decrypted);
     static ServiceDiscoveryState* get(const SfIp*, IpProtocol, uint16_t port, bool decrypted);
     static void remove(const SfIp*, IpProtocol, uint16_t port, bool decrypted);
-    static void check_reset(AppIdSession* asd, const SfIp* ip, uint16_t port );
+    static void check_reset(AppIdSession* asd, const SfIp* ip, uint16_t port);
 
     static void dump_stats();
 };

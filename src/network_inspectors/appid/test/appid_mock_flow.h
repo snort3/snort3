@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2017 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2005-2013 Sourcefire, Inc.
+// Copyright (C) 2016-2017 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -17,40 +16,44 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// service_util.h author Sourcefire Inc.
+// appid_mock_flow.h author davis mcpherson <davmcphe@cisco.com>
 
-#ifndef SERVICE_UTIL_H
-#define SERVICE_UTIL_H
+#ifndef APPID_MOCK_FLOW_H_
+#define APPID_MOCK_FLOW_H_
 
-#include <mutex>
-
-#include "main/snort_config.h"
-#include "target_based/snort_protocols.h"
-
-inline const uint8_t* service_strstr(const uint8_t* haystack, unsigned haystack_len,
-    const uint8_t* needle, unsigned needle_len)
+FlowData::FlowData(unsigned, Inspector*)
 {
-    const uint8_t* h_end = haystack + haystack_len;
-
-    for (const uint8_t* p = haystack; h_end-p >= (int)needle_len; p++)
-    {
-        if (memcmp(p, needle, needle_len) == 0)
-        {
-            return p;
-        }
-    }
-    return nullptr;
+    next = prev = nullptr;
+    handler = nullptr;
+    id = 222;
 }
 
-inline int16_t add_appid_protocol_reference(const char* protocol)
+FlowData::~FlowData()
 {
-    static std::mutex apr_mutex;
-
-    apr_mutex.lock();
-    int16_t id = snort_conf->proto_ref->add(protocol);
-    apr_mutex.unlock();
-    return id;
 }
+
+FlowData* mock_flow_data = nullptr;
+
+typedef int32_t AppId;
+Flow::Flow() { }
+Flow::~Flow() { }
+
+class FakeFlow : public Flow
+{
+};
+
+FlowData* Flow::get_flow_data(unsigned) const
+{
+    return mock_flow_data;
+}
+
+int Flow::set_flow_data(FlowData* fd)
+{
+    mock_flow_data = fd;
+    return 0;
+}
+
+void Flow::set_application_ids(AppId, AppId, AppId, AppId) { }
 
 #endif
 

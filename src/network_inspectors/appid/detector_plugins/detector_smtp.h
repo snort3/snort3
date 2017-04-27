@@ -36,7 +36,7 @@ public:
     ~SmtpClientDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
-    SMTPDetectorData* get_smtp_detector_data(AppIdSession*);
+    SMTPDetectorData* get_common_data(AppIdSession*);
 
 private:
     int extract_version_and_add_client_app(ApplicationId, const int prefix_len,

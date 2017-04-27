@@ -67,7 +67,7 @@ struct HostPortKey
 };
 PADDING_GUARD_END
 
-THREAD_LOCAL std::map<HostPortKey, HostPortVal>* host_port_cache = nullptr;
+static THREAD_LOCAL std::map<HostPortKey, HostPortVal>* host_port_cache = nullptr;
 
 void HostPortCache::initialize()
 {

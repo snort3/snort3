@@ -967,7 +967,7 @@ AppId getSslServiceAppId(short srcPort)
     }
 }
 
-bool isSslServiceAppId(AppId appId)
+bool is_service_over_ssl(AppId appId)
 {
     switch (appId)
     {

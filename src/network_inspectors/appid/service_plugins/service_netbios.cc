@@ -993,7 +993,7 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
     if (retval == -1)
         goto inprocess;
 
-    if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+    if (!asd->is_service_detected())
     {
         if (add_service(asd, pkt, dir, nd->serviceAppId, nullptr, nullptr, nullptr) ==
             APPID_SUCCESS)
@@ -1005,14 +1005,14 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
     return APPID_SUCCESS;
 
 inprocess:
-    if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+    if (!asd->is_service_detected())
     {
         service_inprocess(asd, pkt, dir);
     }
     return APPID_INPROCESS;
 
 fail:
-    if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+    if (!asd->is_service_detected())
     {
         fail_service(asd, pkt, dir);
     }
@@ -1113,7 +1113,7 @@ int NbdgmServiceDetector::validate(AppIdDiscoveryArgs& args)
         if (end-data >= (int)sizeof(NB_SMB_BANNER) &&
             !memcmp(data, NB_SMB_BANNER, sizeof(NB_SMB_BANNER)))
         {
-            if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+            if (!asd->is_service_detected())
                 serviceAppId = APP_ID_NETBIOS_DGM;
 
             data += sizeof(NB_SMB_BANNER);
@@ -1172,7 +1172,7 @@ not_mailslot:
     }
 
 fail:
-    if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+    if (!asd->is_service_detected())
     {
         fail_service(asd, pkt, dir);
     }
@@ -1180,7 +1180,7 @@ fail:
     return APPID_NOMATCH;
 
 success:
-    if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+    if (!asd->is_service_detected())
     {
         if (dir == APP_ID_FROM_RESPONDER)
         {
@@ -1195,7 +1195,7 @@ success:
     return APPID_SUCCESS;
 
 inprocess:
-    if (!asd->get_session_flags(APPID_SESSION_SERVICE_DETECTED))
+    if (!asd->is_service_detected())
     {
         service_inprocess(asd, pkt, dir);
     }
