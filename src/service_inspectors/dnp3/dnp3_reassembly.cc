@@ -334,20 +334,20 @@ static bool dnp3_check_remove_crc(dnp3ProtoConf& config, uint8_t* pdu_start,
 
 static bool dnp3_check_reserved_addrs(dnp3_link_header_t* link)
 {
-    int bad_addr = 0;
+    uint16_t src = ntohs(link->src);
+    uint16_t dst = ntohs(link->dest);
 
-    if ((link->src >= DNP3_MIN_RESERVED_ADDR) && (link->src <= DNP3_MAX_RESERVED_ADDR))
-        bad_addr = 1;
-
-    else if ((link->dest >= DNP3_MIN_RESERVED_ADDR) && (link->dest <= DNP3_MAX_RESERVED_ADDR))
-        bad_addr = 1;
-
-    if (bad_addr)
+    if ((src >= DNP3_MIN_RESERVED_ADDR) and (src <= DNP3_MAX_RESERVED_ADDR))
     {
         SnortEventqAdd(GID_DNP3, DNP3_RESERVED_ADDRESS);
         return false;
     }
 
+    if ((dst >= DNP3_MIN_RESERVED_ADDR) and (dst <= DNP3_MAX_RESERVED_ADDR))
+    {
+        SnortEventqAdd(GID_DNP3, DNP3_RESERVED_ADDRESS);
+        return false;
+    }
     return true;
 }
 
