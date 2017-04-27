@@ -16,37 +16,28 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#ifndef CONTROL_H
-#define CONTROL_H
+#ifndef REQUEST_H
+#define REQUEST_H
 
 #include "main/snort_types.h"
 
-class ControlConn
+class Request
 {
 public:
-    ControlConn(int fd, bool local_control = false);
-    ~ControlConn();
+    Request(int f = -1);
 
-    int get_fd() const { return fd; }
-    class Shell* get_shell() const { return sh; }
-    class Request* get_request() const { return request; }
-    bool is_local_control() const { return local_control; }
-
-    void block();
-    void unblock();
+    bool read(int&);
+    const char* get() { return read_buf; }
+    bool write_response(const char* s) const;
+    void respond(const char* s, bool queue_response = false);
+#ifdef SHELL
     bool send_queued_response();
-    bool is_blocked() const { return blocked; }
-
-    void configure() const;
-    int shell_execute(int& current_fd, Request*& current_request);
-    bool show_prompt() const;
-private:
-    int fd;
-    bool blocked = false;
-    bool local_control;
-    class Shell *sh;
-    class Request* request;
-};
-
 #endif
 
+private:
+    int fd;
+    char read_buf[1024];
+    size_t bytes_read;
+    const char* queued_response;
+};
+#endif

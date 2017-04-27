@@ -33,6 +33,7 @@
 #include "lua/lua.h"
 #include "main/analyzer.h"
 #include "main/analyzer_command.h"
+#include "main/request.h"
 #include "main/shell.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
@@ -60,7 +61,7 @@
 #endif
 
 #ifdef SHELL
-#include "main/control.h"
+#include "main/control_mgmt.h"
 #endif
 
 //-------------------------------------------------------------------------
@@ -107,77 +108,9 @@ static int main_read()
     return pig_poke->get(-1);
 }
 
-//-------------------------------------------------------------------------
-// request foo
-//-------------------------------------------------------------------------
-
-class Request
-{
-public:
-    void set(int, const char* = "");
-    const char* get() const { return buf; }
-
-    bool read(int&);
-    void respond(const char*) const;
-    void show_prompt() const;
-
-private:
-    int fd;
-    char buf[1024];
-};
-
-void Request::set(int f, const char* s)
-{
-    fd = f;
-    strncpy(buf, s, sizeof(buf));
-    buf[sizeof(buf)-1] = '\0';
-}
-
-// FIXIT-L ignoring partial reads for now
-// using simple text for now so can use telnet as client
-// but must parse commands out of stream (ending with \n)
-bool Request::read(int& f)
-{
-    fd = f;
-    buf[0] = '\0';
-    ssize_t n = ::read(fd, buf, sizeof(buf)-1);
-
-    if ( n <= 0 and errno != EAGAIN and errno != EINTR )
-    {
-        f = -1;
-        return false;
-    }
-
-    bool ok = n > 0;
-
-    while ( n > 0 and isspace(buf[--n]) )
-        buf[n] = '\0';
-
-    return ok;
-}
-
-// FIXIT-L supporting only simple strings for now
-// could support var args formats
-void Request::respond(const char* s) const
-{
-    if ( fd < 1 )
-    {
-        LogMessage("%s", s);
-        return;
-    }
-    // FIXIT-L count errors?
-    (void)write(fd, s, strlen(s));  // FIXIT-W ignoring return value
-}
-
-// FIXIT-L would like to flush prompt w/o \n
-void Request::show_prompt() const
-{
-    std::string s = prompt;
-    s += "\n";
-    respond(s.c_str());
-}
-
 static Request request;
+static Request* current_request = &request;
+static int current_fd = -1;
 
 //-------------------------------------------------------------------------
 // pig foo
@@ -335,16 +268,29 @@ static void broadcast(AnalyzerCommand* ac)
         orphan_commands.push(ac);
 }
 
-int main_dump_stats(lua_State*)
+static AnalyzerCommand* get_command(AnalyzerCommand* ac, bool from_shell)
 {
-    broadcast(new ACGetStats());
+#ifdef SHELL
+    if ( from_shell )
+        return ( new ACShellCmd(current_fd, ac) );
+    else
+#endif
+        return ac;
+}
+
+int main_dump_stats(lua_State* L)
+{
+    bool from_shell = ( L != nullptr );
+    current_request->respond("== dumping stats\n", from_shell);
+    broadcast(get_command(new ACGetStats(), from_shell));
     return 0;
 }
 
-int main_rotate_stats(lua_State*)
+int main_rotate_stats(lua_State* L)
 {
-    request.respond("== rotating stats\n");
-    broadcast(new ACRotate());
+    bool from_shell = ( L != nullptr );
+    current_request->respond("== rotating stats\n", from_shell);
+    broadcast(get_command(new ACRotate(), from_shell));
     return 0;
 }
 
@@ -352,7 +298,7 @@ int main_reload_config(lua_State* L)
 {
     if ( Swapper::get_reload_in_progress() )
     {
-        request.respond("== reload pending; retry\n");
+        current_request->respond("== reload pending; retry\n");
         return 0;
     }
     const char* fname =  nullptr;
@@ -363,19 +309,21 @@ int main_reload_config(lua_State* L)
         fname = luaL_checkstring(L, 1);
     }
 
-    request.respond(".. reloading configuration\n");
+    current_request->respond(".. reloading configuration\n");
     SnortConfig* old = snort_conf;
     SnortConfig* sc = Snort::get_reload_config(fname);
 
     if ( !sc )
     {
-        request.respond("== reload failed\n");
+        current_request->respond("== reload failed\n");
         return 0;
     }
     snort_conf = sc;
     proc_stats.conf_reloads++;
-    request.respond(".. swapping configuration\n");
-    broadcast(new ACSwap(new Swapper(old, sc)));
+
+    bool from_shell = ( L != nullptr );
+    current_request->respond(".. swapping configuration\n", from_shell);
+    broadcast(get_command(new ACSwap(new Swapper(old, sc)), from_shell));
 
     return 0;
 }
@@ -384,17 +332,17 @@ int main_reload_hosts(lua_State* L)
 {
     if ( Swapper::get_reload_in_progress() )
     {
-        request.respond("== reload pending; retry\n");
+        current_request->respond("== reload pending; retry\n");
         return 0;
     }
     Lua::ManageStack(L, 1);
     const char* fname = luaL_checkstring(L, 1);
 
     if ( fname and *fname )
-        request.respond(".. reloading hosts table\n");
+        current_request->respond(".. reloading hosts table\n");
     else
     {
-        request.respond("== filename required\n");
+        current_request->respond("== filename required\n");
         return 0;
     }
 
@@ -406,11 +354,13 @@ int main_reload_hosts(lua_State* L)
 
     if ( !tc )
     {
-        request.respond("== reload failed\n");
+        current_request->respond("== reload failed\n");
         return 0;
     }
-    request.respond(".. swapping hosts table\n");
-    broadcast(new ACSwap(new Swapper(old, tc)));
+
+    bool from_shell = ( L != nullptr );
+    current_request->respond(".. swapping hosts table\n", from_shell);
+    broadcast(get_command(new ACSwap(new Swapper(old, tc)), from_shell));
 
     return 0;
 }
@@ -420,26 +370,28 @@ int main_process(lua_State* L)
     const char* f = lua_tostring(L, 1);
     if ( !f )
     {
-        request.respond("== pcap filename required\n");
+        current_request->respond("== pcap filename required\n");
         return 0;
     }
-    request.respond("== queuing pcap\n");
+    current_request->respond("== queuing pcap\n");
     Trough::add_source(Trough::SOURCE_LIST, f);
     return 0;
 }
 
-int main_pause(lua_State*)
+int main_pause(lua_State* L)
 {
-    request.respond("== pausing\n");
-    broadcast(new ACPause());
+    bool from_shell = ( L != nullptr );
+    current_request->respond("== pausing\n", from_shell);
+    broadcast(get_command(new ACPause(), from_shell));
     paused = true;
     return 0;
 }
 
-int main_resume(lua_State*)
+int main_resume(lua_State* L)
 {
-    request.respond("== resuming\n");
-    broadcast(new ACResume());
+    bool from_shell = ( L != nullptr );
+    current_request->respond("== resuming\n", from_shell);
+    broadcast(get_command(new ACResume(), from_shell));
     paused = false;
     return 0;
 }
@@ -448,7 +400,7 @@ int main_resume(lua_State*)
 int main_detach(lua_State*)
 {
     shell_enabled = false;
-    request.respond("== detaching\n");
+    current_request->respond("== detaching\n");
     return 0;
 }
 
@@ -460,10 +412,11 @@ int main_dump_plugins(lua_State*)
 }
 #endif
 
-int main_quit(lua_State*)
+int main_quit(lua_State* L)
 {
-    request.respond("== stopping\n");
-    broadcast(new ACStop());
+    bool from_shell = ( L != nullptr );
+    current_request->respond("== stopping\n", from_shell);
+    broadcast(get_command(new ACStop(), from_shell));
     exit_requested = true;
     return 0;
 }
@@ -479,7 +432,7 @@ int main_help(lua_State*)
         info += ": ";
         info += cmd->help;
         info += "\n";
-        request.respond(info.c_str());
+        current_request->respond(info.c_str());
         ++cmd;
     }
     return 0;
@@ -564,174 +517,10 @@ static bool house_keeping()
     return false;
 }
 
-//-------------------------------------------------------------------------
-// socket foo
-//-------------------------------------------------------------------------
-
-#ifdef SHELL
-// FIXIT-M make these non-blocking
-// FIXIT-M bind to configured ip including INADDR_ANY
-// (default is loopback if enabled)
-// FIXIT-M block on asynchronous analyzer commands until they complete
-static int listener = -1;
-static int remote_control = -1;
-
-static int socket_init()
-{
-    if ( !snort_conf->remote_control )
-        return -1;
-
-    listener = socket(AF_INET, SOCK_STREAM, 0);
-
-    if (listener < 0)
-        FatalError("socket failed: %s\n", get_error(errno));
-
-    // FIXIT-M want to disable time wait
-    int on = 1;
-    setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
-
-    struct sockaddr_in addr;
-    memset(&addr, 0, sizeof(addr));
-
-    addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = htonl(0x7F000001);
-    addr.sin_port = htons(snort_conf->remote_control);
-
-    if ( ::bind(listener, (struct sockaddr*)&addr, sizeof(addr)) < 0 )
-        FatalError("bind failed: %s\n", get_error(errno));
-
-    // FIXIT-M configure max conns
-    if ( listen(listener, 0) < 0 )
-        FatalError("listen failed: %s\n", get_error(errno));
-
-    return 0;
-}
-
-static int socket_term()
-{
-    Snort::delete_controls();
-
-    if ( listener >= 0 )
-        close(listener);
-
-    listener = remote_control = -1;
-
-    return 0;
-}
-
-static int socket_conn()
-{
-    struct sockaddr_in addr;
-    socklen_t len = sizeof(addr);
-
-    remote_control = accept(listener, (struct sockaddr*)&addr, &len);
-
-    if ( remote_control < 0 )
-        return -1;
-
-    Snort::add_control(remote_control, false);
-
-    // FIXIT-L authenticate, use ssl ?
-    return 0;
-}
-
-static void shell(int& fd, Shell* sh)
-{
-    std::string rsp;
-
-    if ( !request.read(fd) )
-        return;
-
-    sh->execute(request.get(), rsp);
-
-    if ( rsp.size() )
-        request.respond(rsp.c_str());
-
-    if ( fd >= 0 )
-        request.show_prompt();
-}
-
-static bool process_control_commands(fd_set& inputs)
-{
-    bool ret = false;
-
-    for(std::vector<ControlConn*>::iterator control =
-            Snort::get_controls().begin(); control != Snort::get_controls().end();)
-    {
-        int fd = (*control)->get_fd();
-        if ( FD_ISSET(fd, &inputs) )
-        {
-            shell(fd, (*control)->get_shell());
-            if( fd < 0 )
-            {
-                Snort::delete_control(control);
-                ret = false;
-                continue;
-            }
-            else
-            {
-                if ( (*control)->is_local_control() )
-                    proc_stats.local_commands++;
-                else
-                    proc_stats.remote_commands++;
-                ret = true;
-            }
-        }
-        ++control;
-    }
-    return ret;
-}
-
-static bool service_users()
-{
-    fd_set inputs;
-    FD_ZERO(&inputs);
-    int max_fd = -1;
-    bool ret = false;
-
-    for ( auto control : Snort::get_controls() )
-    {
-        int fd = control->get_fd();
-        if ( fd >= 0 )
-        {
-            FD_SET(fd, &inputs);
-            if ( fd > max_fd )
-                max_fd = fd;
-        }
-    }
-    if ( listener >= 0 )
-    {
-        FD_SET(listener, &inputs);
-        if ( listener > max_fd )
-            max_fd = listener;
-    }
-
-    struct timeval timeout;
-    timeout.tv_sec = 0;
-    timeout.tv_usec = 0;
-
-    if ( select(max_fd+1, &inputs, NULL, NULL, &timeout) > 0 )
-    {
-        ret = process_control_commands(inputs);
-
-        if ( FD_ISSET(listener, &inputs) )
-        {
-            if ( !socket_conn() )
-            {
-                request.set(remote_control);
-                request.show_prompt();
-                ret = true;
-            }
-        }
-    }
-    return ret;
-}
-#endif
-
 static void service_check()
 {
 #ifdef SHELL
-    if ( service_users() )
+    if ( ControlMgmt::service_users(current_fd, current_request) )
         return;
 #endif
 
@@ -818,9 +607,7 @@ static bool set_mode()
     {
         LogMessage("Entering command shell\n");
         shell_enabled = true;
-        Snort::add_control(STDOUT_FILENO, true);
-        request.set(STDOUT_FILENO, "");
-        request.show_prompt();
+        ControlMgmt::add_control(STDOUT_FILENO, true);
     }
 #endif
 
@@ -946,7 +733,7 @@ static void main_loop()
 static void snort_main()
 {
 #ifdef SHELL
-    socket_init();
+    ControlMgmt::socket_init();
 #endif
 
     max_pigs = ThreadConfig::get_instance_max();
@@ -972,7 +759,7 @@ static void snort_main()
     pigs = nullptr;
 
 #ifdef SHELL
-    socket_term();
+    ControlMgmt::socket_term();
 #endif
 }
 

@@ -21,6 +21,8 @@ help.h \
 modules.cc \
 modules.h \
 policy.cc \
+request.cc \
+request.h \
 shell.cc \
 shell.h \
 snort.cc \
@@ -42,5 +44,7 @@ endif
 if ENABLE_SHELL
 libmain_a_SOURCES += \
 control.cc \
-control.h
+control.h \
+control_mgmt.cc \
+control_mgmt.h
 endif

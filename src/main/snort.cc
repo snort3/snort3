@@ -88,7 +88,7 @@
 #endif
 
 #ifdef SHELL
-#include "control.h"
+#include "control_mgmt.h"
 #endif
 
 #include "build.h"
@@ -532,9 +532,6 @@ void Snort::setup(int argc, char* argv[])
 
 void Snort::cleanup()
 {
-#ifdef SHELL
-    delete_controls();
-#endif
     TimeStop();
 
     SFDAQ::term();
@@ -570,7 +567,7 @@ SnortConfig* Snort::get_reload_config(const char* fname)
     sc->setup();
 
 #ifdef SHELL
-    reconfigure_controls();
+    ControlMgmt::reconfigure_controls();
 #endif
 
     if ( !InspectorManager::configure(sc) )
@@ -917,39 +914,3 @@ DAQ_Verdict Snort::packet_callback(
     return verdict;
 }
 
-#ifdef SHELL
-std::vector<ControlConn*> Snort::controls;
-
-void Snort::add_control(int fd, bool local)
-{
-    controls.push_back(new ControlConn(fd, local));
-}
-
-void Snort::delete_control(std::vector<ControlConn*>::iterator& control)
-{
-    delete *control;
-    control = controls.erase(control);
-}
-
-void Snort::reconfigure_controls()
-{
-    for ( auto control : controls )
-    {
-        control->configure();
-    }
-}
-
-std::vector<ControlConn*>& Snort::get_controls()
-{
-    return controls;
-}
-
-void Snort::delete_controls()
-{
-    for ( auto control : controls )
-    {
-        delete control;
-    }
-    controls.clear();
-}
-#endif

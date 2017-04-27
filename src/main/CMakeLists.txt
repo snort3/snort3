@@ -12,7 +12,7 @@ if ( ENABLE_DEBUG_MSGS )
 endif ( ENABLE_DEBUG_MSGS )
 
 if ( ENABLE_SHELL )
-    set ( SHELL_SOURCES control.cc control.h )
+    set ( SHELL_SOURCES control.cc control.h control_mgmt.cc control_mgmt.h )
 endif ( ENABLE_SHELL )
 
 add_library (main STATIC
@@ -26,6 +26,8 @@ add_library (main STATIC
     modules.cc
     modules.h
     policy.cc
+    request.cc
+    request.h
     shell.h
     shell.cc
     snort.cc
