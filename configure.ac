@@ -762,7 +762,7 @@ CPPFLAGS="${CPPFLAGS} ${LUAJIT_CPPFLAGS}"
 LDFLAGS="${LDFLAGS} ${LUAJIT_LDFLAGS}"
 
 AC_LANG_PUSH([C++])
-AC_CHECK_HEADERS([luajit.h], , [AC_MSG_ERROR("LuaJIT header not found.")])
+AC_CHECK_HEADERS([luajit.h lua.hpp], , [AC_MSG_ERROR("LuaJIT headers not found.")])
 AC_CHECK_LIB(luajit-5.1, main, , [AC_MSG_ERROR("Linking against LuaJIT library failed.")])
 AC_LANG_POP([C++])
 

@@ -1,4 +1,4 @@
-if( FLATBUFFERS_FOUND )
+if ( FLATBUFFERS_FOUND )
     include_directories(${PROJECT_SOURCE_DIR}/src ${FLATBUFFERS_INCLUDE_DIR})
 
     add_executable( fbstreamer

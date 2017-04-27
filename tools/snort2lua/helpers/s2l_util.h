@@ -115,3 +115,4 @@ bool is_regular_file(std::string& path);
 }  // namespace util
 
 #endif
+

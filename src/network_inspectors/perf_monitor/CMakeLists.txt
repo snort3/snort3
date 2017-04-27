@@ -1,4 +1,4 @@
-if( ${FLATBUFFERS_FOUND} )
+if ( FLATBUFFERS_FOUND )
     set( FLATBUFFERS_SOURCE fbs_formatter.h fbs_formatter.cc )
 endif()
 
@@ -26,6 +26,7 @@ add_library ( perf_monitor STATIC
     text_formatter.h
 )
 
-if( ${FLATBUFFERS_FOUND} )
+if ( FLATBUFFERS_FOUND )
+    target_include_directories( perf_monitor PRIVATE ${FLATBUFFERS_INCLUDE_DIR} )
     target_link_libraries( perf_monitor ${FLATBUFFERS_LIBRARIES} )
 endif()

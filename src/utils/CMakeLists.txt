@@ -43,6 +43,10 @@ ADD_LIBRARY( utils STATIC
     ${TEST_FILES}
 )
 
+if ( FLATBUFFERS_FOUND )
+    target_include_directories( utils PRIVATE ${FLATBUFFERS_INCLUDE_DIR} )
+endif()
+
 target_link_libraries(utils
     log
 )
