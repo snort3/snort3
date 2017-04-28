@@ -1,3 +1,22 @@
+17/04/28 - build 232
+
+build: clean up Intel compiler warnings and remarks
+build: fix FreeBSD compilation issues
+cmake: fix building with and without flatbuffers present
+autoconf: check for lua.hpp as well as luajit.h to ensure C++ support
+shell: make commands non-blocking
+shell: allow multiple remote connections
+snort2lua: fix generated stream_tcp bindings
+snort2lua: fix basic error handling with non-conformant 2.X conf
+decode: fix 116:402
+dnp3:  fix 145:5
+appid: numerous fixes and cleanup
+http_server: removed (use new http_inspect instead)
+byte_jump: add bitmask and from_end (from 2.9.9 Snort)
+byte_extract: add bitmask (from 2.9.9 Snort)
+flatbuffers: add version to banner if present
+loggers: build alert_sf_socket on all platforms
+
 17/04/07 - build 231
 
 -- add decode of MPLS in IP
