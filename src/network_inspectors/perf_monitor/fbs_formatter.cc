@@ -223,9 +223,11 @@ void FbsFormatter::write(FILE* fh, time_t timestamp)
             {
                 case FT_STRING:
                     if( *values[i][j].s )
+                    {
                         nz_found = true;
                         leaf_queue.push(OffsetPair(fbb.CreateString(values[i][j].s).Union(),
                             vtable_offsets[i + 1][j]));
+                    }
 
                     break;
 
