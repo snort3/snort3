@@ -110,7 +110,9 @@ static int main_read()
 
 static Request request;
 static Request* current_request = &request;
+#ifdef SHELL
 static int current_fd = -1;
+#endif
 
 //-------------------------------------------------------------------------
 // pig foo
@@ -270,7 +272,9 @@ static void broadcast(AnalyzerCommand* ac)
 
 static AnalyzerCommand* get_command(AnalyzerCommand* ac, bool from_shell)
 {
-#ifdef SHELL
+#ifndef SHELL
+    UNUSED(from_shell);
+#else
     if ( from_shell )
         return ( new ACShellCmd(current_fd, ac) );
     else
