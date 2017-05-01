@@ -26,7 +26,7 @@
 #define PCRM_H
 
 // Packet Classification-Rule Manager
-// runle groups by source and dest ports as well as any
+// rule groups by source and dest ports as well as any
 // (generic refers to any)
 
 #include "ports/port_group.h"

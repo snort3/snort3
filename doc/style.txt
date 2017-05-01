@@ -163,7 +163,7 @@ yet firm so feedback is welcome to get something we can live with.
   multiple error returns.  The C-style use of zero for success and -1 for
   error is less readable and often leads to messy code that either ignores
   the various errors anyway or needlessly and ineffectively tries to do
-  something aobut them.  Generally that code is not updated if new errors
+  something about them.  Generally that code is not updated if new errors
   are added.
 
 === Macros (aka defines)

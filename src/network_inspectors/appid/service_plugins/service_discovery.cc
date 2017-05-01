@@ -239,7 +239,7 @@ static int pattern_match(void* id, void*, int match_end_pos, void* data, void*)
  * returned. The list itself is saved in ServiceDiscoveryState. If
  * appId is already identified, then use it instead of searching again. RNA will capability
  * to try out other inferior matches. If appId is unknown i.e. searched and not found by FRE then
- * dont do any pattern match. This is a way degrades RNA detector selection if FRE is running on
+ * don't do any pattern match. This is a way degrades RNA detector selection if FRE is running on
  * this sensor.
 */
 void ServiceDiscovery::match_services_by_pattern(AppIdSession* asd, const Packet* pkt, IpProtocol
@@ -577,7 +577,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p, int di
             if (asd.tp_app_id > APP_ID_NONE)
             {
                 //tp has positively identified appId, Dig deeper only if sourcefire
-                // detector identifies additional information or flow is UDP reveresed.
+                // detector identifies additional information or flow is UDP reversed.
                 AppInfoTableEntry* entry = asd.app_info_mgr->get_app_info_entry(asd.tp_app_id);
                 if ( entry && entry->service_detector &&
                     ( ( entry->flags & APPINFO_FLAG_SERVICE_ADDITIONAL ) ||

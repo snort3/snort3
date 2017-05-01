@@ -28,7 +28,7 @@
 #include "packet_io/active.h"
 
 #define CD_GTP_NAME "gtp"
-#define CD_GTP_HELP "support for general-packet-radio-service tunnelling protocol"
+#define CD_GTP_HELP "support for general-packet-radio-service tunneling protocol"
 
 namespace
 {

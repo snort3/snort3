@@ -195,7 +195,7 @@ static int CvsDecode(const uint8_t* data, uint16_t data_len,
             return CVS_NO_ALERT;
 
         DebugFormat(DEBUG_IPS_OPTION, "CVS command\n"
-            "  comand: %.*s\n"
+            " command: %.*s\n"
             "argument: %.*s\n",
             command.cmd_str_len, (char*)command.cmd_str,
             command.cmd_arg == NULL ? 4 : command.cmd_arg_len,

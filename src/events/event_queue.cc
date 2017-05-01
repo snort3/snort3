@@ -31,7 +31,7 @@
 **  11/1/05  Updates to add support for rules for all events in
 **           decoders and preprocessors and the detection engine.
 **           Added support for rule by rule flushing control via
-**           metadata. Also added code to check fo an otn for every
+**           metadata. Also added code to check for an otn for every
 **           event (gid,sid pair).  This is now required to get events
 **           to be logged. The decoders and preprocessors are still
 **           configured independently, which allows them to inspect and
@@ -39,8 +39,8 @@
 **           and GenerateEvent2() for portscan.cc.  The GenerateSnortEvent()
 **           function now finds and otn and calls fpLogEvent.
 **
-**           Any event that has no otn associated with it's gid,sid pair,
-**           will/should not alert, even if the preprocessor or decoiderr is
+**           Any event that has no otn associated with it's gid,sid pair
+**           will/should not alert, even if the preprocessor or decoder is
 **           configured to detect an alertable event.
 **
 **           In the future, preporcessor may have an api that gets called

@@ -74,7 +74,7 @@ Example:
      magic = { { content = "| 47 49 46 38 39 61 |",offset = 0 } } },
 
 The previous two rules define GIF format, because two file magics are 
-different. File magics are specifed by content and offset, which look
+different. File magics are specified by content and offset, which look
 at content at particular file offset to identify the file type. In this
 case, two magics look at the beginning of the file. You can use character
 if it is printable or hex value in between "|".

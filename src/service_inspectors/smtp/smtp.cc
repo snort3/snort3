@@ -107,7 +107,7 @@ const SMTPToken smtp_resps[] =
     { "250",  3,  RESP_250, SMTP_CMD_TYPE_NORMAL },  /* Requested mail action okay, completed */
     { "334",  3,  RESP_334, SMTP_CMD_TYPE_NORMAL },  /* Auth intermediate response */
     { "354",  3,  RESP_354, SMTP_CMD_TYPE_NORMAL },  /* Start mail input - data response */
-    { "421",  3,  RESP_421, SMTP_CMD_TYPE_NORMAL },  /* Service not availiable - closes connection
+    { "421",  3,  RESP_421, SMTP_CMD_TYPE_NORMAL },  /* Service not available - closes connection
                                                         */
     { "450",  3,  RESP_450, SMTP_CMD_TYPE_NORMAL },  /* Mailbox unavailable */
     { "451",  3,  RESP_451, SMTP_CMD_TYPE_NORMAL },  /* Local error in processing */
@@ -305,7 +305,7 @@ static int AddCmd(SMTP_PROTO_CONF* config, const char* name, SMTPCmdTypeEnum typ
 
     config->num_cmds++;
 
-    /* allocate enough memory for new commmand - alloc one extra for NULL entry */
+    /* allocate enough memory for new command - alloc one extra for NULL entry */
     // FIXIT-L this constant reallocation is not necessary; use vector
     cmds = (SMTPToken*)snort_calloc((config->num_cmds + 1) * sizeof(*cmds));
     cmd_config = (SMTPCmdConfig*)snort_calloc((config->num_cmds + 1) * sizeof(*cmd_config));
@@ -1372,7 +1372,7 @@ static int SMTP_GetRcptTo(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* ty
     return 1;
 }
 
-/* Calback to return the email headers */
+/* Callback to return the email headers */
 static int SMTP_GetEmailHdrs(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
     SMTPData* ssn = get_session_data(flow);

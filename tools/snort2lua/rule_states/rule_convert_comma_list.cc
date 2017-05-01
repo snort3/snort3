@@ -27,7 +27,7 @@
 namespace rules
 {
 /*
- * Convert rule option from comma list to a space sperated list in qoutes:
+ * Convert rule option from comma list to a space separated list in qoutes:
  * x,y,z to "x y z"
  */
 

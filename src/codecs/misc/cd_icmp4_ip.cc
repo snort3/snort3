@@ -146,7 +146,7 @@ void Icmp4IpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     TextLog_NewLine(text_log);
     TextLog_Puts(text_log, "\tIPv4\n\t\t");
 
-    // COPIED DIRECTLY FROM ipv4 CODEC.  This is specificially replicated since
+    // COPIED DIRECTLY FROM ipv4 CODEC.  This is specifically replicated since
     //      the two are not necessarily the same.
 
     // FIXIT-H this does NOT obfuscate correctly

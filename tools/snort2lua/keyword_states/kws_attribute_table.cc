@@ -63,7 +63,7 @@ bool AttributeTable::get_next_element(std::string& elem)
 
     if (!elem.empty() && elem.front() != '<')
     {
-        // add the '<' charachter back for next call
+        // add the '<' character back for next call
         attr_file.unget();
         return true;
     }
@@ -76,7 +76,7 @@ bool AttributeTable::get_next_element(std::string& elem)
 }
 
 /*
- * Parse the 'SERVICE' element and add elemnts to Lua configuration
+ * Parse the 'SERVICE' element and add elements to Lua configuration
  */
 void AttributeTable::parse_service()
 {
@@ -466,7 +466,7 @@ bool AttributeTable::convert(std::istringstream& data_stream)
             parse_attr_table();
 
         /*
-         * While there probaby should be another else,
+         * While there probably should be another else,
          * I have absolutely NO idea what correct
          * 'grammar' entails. So, in this case and all others
          * just ignore any extra data.

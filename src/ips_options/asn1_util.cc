@@ -544,7 +544,7 @@ static int asn1_decode_type(const u_char** data, u_int* len, ASN1_TYPE** asn1_ty
     }
 
     /*
-    **  Set this varible here, so we can set the data_len for
+    **  Set this variable here, so we can set the data_len for
     **  indeterminate constructs.
     */
     uiRawLen = asn1data.end - asn1data.data;
@@ -686,7 +686,7 @@ int asn1_decode(const u_char* data, u_int len, ASN1_TYPE** asn1_type)
         /*
         **  This is where we decode the ASN.1 constructs.  We do while()
         **  because we may have back to back constructs.  We bail on the
-        **  first indentifier that isn't a construct.
+        **  first identifier that isn't a construct.
         */
         while (cur && cur->ident.flag == SF_ASN1_FLAG_CONSTRUCT)
         {

@@ -45,7 +45,7 @@ bool DefaultRuleState::convert(std::istringstream& data_stream)
     table_api.open_table("alerts");
 
     if (data_stream >> val &&
-        util::case_compare(val, "disableD"))
+        util::case_compare(val, "disabled"))
     {
         table_api.add_option("default_rule_state", false);
     }

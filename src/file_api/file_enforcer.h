@@ -22,7 +22,7 @@
 #ifndef FILE_ENFORCER_H
 #define FILE_ENFORCER_H
 
-// If a file transfered through HTTP is blocked, a new session might be created
+// If a file transferred through HTTP is blocked, a new session might be created
 // to request the file data left. To block the new session, we use URL and IPs
 // to continue blocking the same file.
 

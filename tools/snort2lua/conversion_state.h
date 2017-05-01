@@ -58,7 +58,7 @@ protected:
     RuleApi& rule_api;
 
 #if 0
-    Forward declaration fo parsing methods.Since these are all inline,
+    Forward declaration of parsing methods.Since these are all inline,
     unable to forward declare in regular code.
 
     inline bool eat_option(std::istringstream& stream);
@@ -204,8 +204,9 @@ protected:
             }
             else
             {
-                table_api.add_comment("Unable to convert " + elem +
-                    "!!  The element must be a single charachter or number between 0 - 255 inclusive");
+                table_api.add_comment(
+                    "Unable to convert " + elem + "!!  "
+                    "The element must be a single character or number between 0 - 255 inclusive");
                 retval = false;
             }
         }
@@ -225,7 +226,7 @@ protected:
         while (stream >> elem && elem != "}")
             tmp += " " + elem;
 
-        // remove the extra space at the beginig of the string
+        // remove the extra space at the beginning of the string
         if (tmp.size() > 0)
             tmp.erase(tmp.begin());
 

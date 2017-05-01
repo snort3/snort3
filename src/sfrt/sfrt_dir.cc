@@ -275,7 +275,7 @@ static inline void _dir_fill_less_specific(int index, int fill,
  * a specific subnet. table->data[] entry for more specific subnet is not cleared.
  *
  * @note RT_FAVOR_TIME can cause orphaned table->data[] entries if the entire subnet
- * is replaced by more specific sudnets.
+ * is replaced by more specific subnets.
  */
 static inline uint32_t _dir_remove_all(uint32_t* allocated, uint32_t index, uint32_t fill,
     word length, dir_sub_table_t* table)
@@ -683,7 +683,7 @@ static int _dir_sub_remove(IPLOOKUP* ip, int length, int cur_len,
 
         fill += index;
 
-        /* Remove and overwrite without consedering CIDR specificity*/
+        /* Remove and overwrite without considering CIDR specificity*/
         if (behavior == RT_FAVOR_TIME)
         {
             valueIndex = _dir_remove_all(&root_table->allocated, index, fill, length, sub_table);

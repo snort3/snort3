@@ -56,8 +56,8 @@ typedef struct _ip_node
     struct _ip_node* next;
     int flags;
     // XXX
-    int addr_flags; /* Flags used exlusively by Snort */
-                    /* Keeping these variables seperate keeps
+    int addr_flags; /* Flags used exclusively by Snort */
+                    /* Keeping these variables separate keeps
                      * this from stepping on Snort's toes. */
                     /* Should merge them later */
 } sfip_node_t;

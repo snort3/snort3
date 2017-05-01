@@ -25,8 +25,7 @@
 **  NOTES
 **  5.15.02   - Initial version of pcrm.c distributed. - Norton/Roelker
 **
-**  Packet Classificationa and Rule Manager
-**
+**  Packet Classification and Rule Manager
 **
 **  A Fast Packet Classification method for Rule and Pattern Matching in SNORT
 **  --------------------------------------------------------------------------
@@ -112,7 +111,7 @@ static int prmFindRuleGroup(
 
 /*
 **  The following functions are wrappers to the pcrm routines,
-**  that utilize the variables that we have intialized by
+**  that utilize the variables that we have initialized by
 **  calling fpCreateFastPacketDetection().  These functions
 **  are also used in the file fpdetect.c, where we do lookups
 **  on the initialized variables.

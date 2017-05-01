@@ -63,9 +63,9 @@ static THREAD_LOCAL rand_t* s_rand = NULL;
 /*
  * Begin search from index 1.  0 is a special case in that it is the default
  * codec and is actually a duplicate. i.e., we can find the 0 indexed
- * codec somehwere else in the array too.
+ * codec somewhere else in the array too.
  *
- * Returns: 0 on failure, induex on success
+ * Returns: 0 on failure, index on success
  */
 uint8_t CodecManager::get_codec(const char* const keyword)
 {
@@ -116,7 +116,7 @@ void CodecManager::release_plugins()
         if (wrap.api->pterm)
         {
             wrap.api->pterm();
-            wrap.init = false; // Future proofing this functin.
+            wrap.init = false; // Future proofing this function.
         }
 
         uint8_t index = get_codec(wrap.api->base.name);
@@ -235,7 +235,7 @@ void CodecManager::thread_init(SnortConfig* sc)
     if ( s_rand )
         rand_close(s_rand);
 
-    // rand_open() can yield valgriind errors because the
+    // rand_open() can yield valgrind errors because the
     // starting seed may come from "random stack contents"
     // (see man 3 dnet)
     s_rand = rand_open();

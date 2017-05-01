@@ -54,7 +54,7 @@ enum class UnreachResponse
 class SO_PUBLIC PacketManager
 {
 public:
-    // decode this packet and set all relevent packet fields.
+    // decode this packet and set all relevant packet fields.
     static void decode(Packet*, const struct _daq_pkthdr*, const uint8_t*, bool cooked = false);
 
     // when encoding, rather than copy the destination MAC address from the
@@ -129,7 +129,7 @@ public:
     /* Accessor functions -- any object in Snort++ can now convert a
      * protocol to its mapped value.
      *
-     * The equivelant of Snort's PROTO_ID */
+     * The equivalent of Snort's PROTO_ID */
     static constexpr std::size_t max_protocols() // compile time constant
     { return CodecManager::s_protocols.size(); }
 

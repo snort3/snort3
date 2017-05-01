@@ -104,7 +104,7 @@ private:
 
     /*
      * Private helper functions.  These are all declared here
-     * because they need access to private varaibles.
+     * because they need access to private variables.
      */
 
     // Private struct defined in an anonymous namespace.

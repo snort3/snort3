@@ -572,7 +572,7 @@ static bool set_mode()
     }
 #endif
 #ifdef UNIT_TEST
-    // FIXIT-M X we should move this out of set_mode and not do Snort bringup/teardown at all
+    // FIXIT-M X we should move this out of set_mode and not do Snort bring up/teardown at all
     if ( catch_enabled() )
     {
         main_exit_code = catch_test();

@@ -676,7 +676,7 @@ inprocess:
         add_app(args.asd, APP_ID_NONE, APP_ID_DNS, nullptr);
         service_inprocess(args.asd, args.pkt, args.dir);
         // FIXIT - incrementing stat early so its counted in case of blocks... not great solution
-        //         refer to this PR for more details on the issue and possible soluitons:
+        //         refer to this PR for more details on the issue and possible solutions:
         // https://bitbucket-eng-rtp1.cisco.com/bitbucket/projects/SNORT/repos/snort3/pull-requests/779/overview
         appid_stats.dns_udp_flows++;
         return APPID_INPROCESS;

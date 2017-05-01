@@ -32,13 +32,13 @@
 * really three distinct API's rolled into one.  One API for rules,
 * one api for misc data (variables, includes, etcs), one api
 * for creating tables. Hoever, the reason they are
-* together is becasue this class is not static, and I did not
+* together is because this class is not static, and I did not
 * want to be pass three pointers to the three API's when
-* creating new convesion states.  There are comments in
-* in all caps which show the seperate the sections.
+* creating new conversion states.  There are comments in
+* in all caps which show the separate the sections.
 *
 * The first section of this file is really DataApi creation
-* and initialization, and adding miscelaneous objects
+* and initialization, and adding miscellaneous objects
 * to the DataApi data.  The second section is for creating
 * tables and their options.  The third section is for
 * creating rules.
@@ -109,7 +109,7 @@ public:
 // add an option with a list of variables -->  table = { name = 'elem1 elem2 ...' }
 // corresponds to Parameter::PT_MULTI
     bool add_list(std::string list_name, std::string next_elem);
-// add a commment to be printed in the table --> table = { -- comment \n ... }
+// add a comment to be printed in the table --> table = { -- comment \n ... }
     bool add_comment(std::string comment);
 // add a comment about an option change to the table
     bool add_diff_option_comment(std::string orig_var, std::string new_var);

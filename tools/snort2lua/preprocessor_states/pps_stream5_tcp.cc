@@ -271,7 +271,7 @@ bool StreamTcp::convert(std::istringstream& data_stream)
     server.set_when_role("server");
     any.set_when_role("any");
 
-    // create pointers so other member functinos can access binders
+    // create pointers so other member functions can access binders
     bind_client = &client;
     bind_server = &server;
     bind_any = &any;
@@ -287,7 +287,7 @@ bool StreamTcp::convert(std::istringstream& data_stream)
         bool tmpval = true;
         std::istringstream arg_stream(keyword);
 
-        // should be gauranteed to happen.  Checking for error just cause
+        // should be guaranteed to happen.  Checking for error just cause
         if (!(arg_stream >> keyword))
             tmpval = false;
 

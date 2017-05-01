@@ -98,7 +98,7 @@ void Stream::populate_flow_key(Packet* p, FlowKey* key)
         p->type(), p->get_ip_proto_next(),
         p->ptrs.ip_api.get_src(), p->ptrs.sp,
         p->ptrs.ip_api.get_dst(), p->ptrs.dp,
-        // if the vlan protocol bit is defined, vlan layer gauranteed to exist
+        // if the vlan protocol bit is defined, vlan layer guaranteed to exist
         (p->proto_bits & PROTO_BIT__VLAN) ? layer::get_vlan_layer(p)->vid() : 0,
         (p->proto_bits & PROTO_BIT__MPLS) ? p->ptrs.mplsHdr.label : 0,
         p->pkth->address_space_id);

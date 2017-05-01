@@ -811,10 +811,7 @@ DCE2_SmbFileTracker* DCE2_SmbDequeueTmpFileTracker(DCE2_SmbSsnData* ssd,
     DCE2_SmbRequestTracker* rtracker, const uint16_t fid)
 {
     Profile profile(dce2_smb_pstat_smb_fid);
-
-    DebugFormat(DEBUG_DCE_SMB, "Dequeueing file tracker "
-        "and binding to fid: 0x%04X\n", fid);
-
+    DebugFormat(DEBUG_DCE_SMB, "Dequeuing file tracker and binding to fid: 0x%04X\n", fid);
     DCE2_SmbFileTracker* ftracker = (DCE2_SmbFileTracker*)DCE2_QueueDequeue(rtracker->ft_queue);
 
     if (ftracker == nullptr)
@@ -853,7 +850,7 @@ DCE2_SmbFileTracker* DCE2_SmbDequeueTmpFileTracker(DCE2_SmbSsnData* ssd,
         }
     }
 
-    // Other values were intialized when queueing.
+    // Other values were initialized when queuing.
     ftracker->fid_v1 = (int)fid;
 
     return ftracker;
@@ -1051,7 +1048,7 @@ void DCE2_SmbQueueTmpFileTracker(DCE2_SmbSsnData* ssd,
 {
     Profile profile(dce2_smb_pstat_smb_fid);
 
-    DebugFormat(DEBUG_DCE_SMB, "Queueing file tracker "
+    DebugFormat(DEBUG_DCE_SMB, "Queuing file tracker "
         "with Uid: %hu, Tid: %hu\n", uid, tid);
 
     DCE2_SmbFileTracker* ftracker = (DCE2_SmbFileTracker*)
@@ -1361,7 +1358,7 @@ Packet* DCE2_SmbGetRpkt(DCE2_SmbSsnData* ssd,
  *
  * Returns:
  *  DCE2_Ret
- *      DCE2_RET__ERROR if an error occured.  Nothing can
+ *      DCE2_RET__ERROR if an error occurred.  Nothing can
  *          be trusted.
  *      DCE2_RET__SUCCESS if data was successfully added.
  *

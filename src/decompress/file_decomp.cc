@@ -117,7 +117,7 @@ static fd_status_t Locate_Sig_Here(fd_session_p_t SessionPtr)
               at least MAX_SIG_LENGTH bytes in the output buffer.  This assumption
               is valid for the current implementation where the signature only
               occurs at the beginning of the file.  For the generic case of the sig
-              begin embedded with the file, the seach will need to modified.*/
+              begin embedded with the file, the search will need to modified.*/
     while ( 1 )
     {
         /* if we get to the end of the sig table (or the table is empty),

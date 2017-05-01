@@ -108,7 +108,7 @@ void RuleApi::include_rule_file(std::string file_name)
 {
     if (curr_rule)
     {
-        DataApi::developer_error("Attempting to include a file while buliding a rule!");
+        DataApi::developer_error("Attempting to include a file while building a rule!");
     }
     else
     {

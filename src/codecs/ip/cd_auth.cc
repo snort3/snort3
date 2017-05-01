@@ -72,7 +72,7 @@ struct AuthHdr
 };
 
 constexpr uint8_t MIN_AUTH_LEN = 16; // this is in minimum number of bytes ...
-// no relatino to the AuthHdr.len field.
+// no relation to the AuthHdr.len field.
 } // anonymous namespace
 
 void AuthCodec::get_protocol_ids(std::vector<ProtocolId>& v)

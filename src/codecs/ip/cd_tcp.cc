@@ -503,7 +503,7 @@ int TcpCodec::OptLenValidate(const tcp::TcpOption* const opt,
     }
     else /* expected_len < 0 (i.e. variable length) */
     {
-        /* RFC sez that we MUST have atleast this much data */
+        /* RFC says that we MUST have at least this much data */
         if (opt->len < 2)
             return tcp::OPT_BADLEN;
 

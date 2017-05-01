@@ -444,7 +444,7 @@ void Ipv6Codec::CheckIPV6Multicast(const ip::IP6Hdr* const ip6h, const CodecData
         else if ((ntohl(ip6h->ip6_dst.u6_addr32[3]) >= 0x80000000) &&
             (ntohl(ip6h->ip6_dst.u6_addr32[3]) <= 0xFFFFFFFF))
         {
-            return; // Dynamiclly allocated by hosts when needed
+            return; // Dynamically allocated by hosts when needed
         }
         else
         {

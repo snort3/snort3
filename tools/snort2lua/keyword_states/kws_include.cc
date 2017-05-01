@@ -72,8 +72,7 @@ bool Include::convert(std::istringstream& data_stream)
     }
     else
     {
-        data_api.failed_conversion(data_stream, "include requires a"
-            "'filename' argument");
+        data_api.failed_conversion(data_stream, "include requires a 'filename' argument");
     }
 
     return false;

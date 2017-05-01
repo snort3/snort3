@@ -76,7 +76,7 @@ static bool parse_literal_length(const uint8_t ch, uint32_t* len)
         }
     }
     else if (ch != '}')
-        *len = 0;                      //  ALERT!!  charachter should be a digit or ''}''
+        *len = 0;                      //  ALERT!!  character should be a digit or ''}''
 
     return true;
 }

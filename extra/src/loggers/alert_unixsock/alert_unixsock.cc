@@ -52,8 +52,7 @@ struct Alertpkt
     uint32_t nethdr;       /* network header offset. (ip etc...) */
     uint32_t transhdr;     /* transport header offset (tcp/udp/icmp ..) */
     uint32_t data;
-    uint32_t val;  /* which fields are valid. (NULL could be
-                    * valids also) */
+    uint32_t val;          /* which fields are valid. (NULL could be valid also) */
     /* Packet struct --> was null */
 #define NOPACKET_STRUCT 0x1
     /* no transport headers in packet */

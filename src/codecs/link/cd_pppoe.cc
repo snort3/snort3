@@ -320,7 +320,7 @@ public:
 
 // ***  NOTE: THE CODEC AND MODULE HAVE A DIFFERENT NAME!
 // since the module is only creating a rule stub and is NOT
-// used for configurtion, it doesn't matter. However, if you want to use the module
+// used for configuration, it doesn't matter. However, if you want to use the module
 // for configuration, ensure the names are identical before continuing!
 static Module* mod_ctor()
 { return new PPPoEModule; }

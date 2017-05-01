@@ -202,7 +202,7 @@ static void parse_config_file(const char* key, const char* val)
         std::size_t path_sep = conf_file.find_last_of("\\");
 #endif
 
-        /* is there a directory seperator in the filename */
+        /* is there a directory separator in the filename */
         if (path_sep != std::string::npos)
         {
             path_sep++;  /* include path separator */
@@ -353,18 +353,18 @@ static ConfigFunc basic_opts[] =
       "output the new Snort++ lua configuration to <out_file>" },
 
     { "q", print_quiet, "",
-      "quiet mode. Only output valid confiration information to the <out_file>" },
+      "quiet mode. Only output valid configuration information to the <out_file>" },
 
     { "r", parse_rule_file, "<rule_file>",
       "output any converted rule to <rule_file>" },
 
     { "s", sing_rule_files, "",
       "when parsing <include_file>, write <include_file>'s rules to "
-      "<rule_file>. Meaningles if '-i' provided" },
+      "<rule_file>. Meaningless if '-i' provided" },
 
     { "t", sing_conf_files, "",
       "when parsing <include_file>, write <include_file>'s information, "
-      "excluding rules, to <out_file>. Meaningles if '-i' provided" },
+      "excluding rules, to <out_file>. Meaningless if '-i' provided" },
 
     { "V", print_version, "",
       "Print the current Snort2Lua version" },
@@ -396,7 +396,7 @@ static ConfigFunc basic_opts[] =
       "between the Snort and Snort++ configurations to the <out_file>" },
 
     { "quiet", print_quiet, "",
-      "Same as '-q'. quiet mode. Only output valid confiration information to the <out_file>" },
+      "Same as '-q'. quiet mode. Only output valid configuration information to the <out_file>" },
 
     { "remark", add_remark, "",
       "same as '-m'.  add a remark to the end of every converted rule" },

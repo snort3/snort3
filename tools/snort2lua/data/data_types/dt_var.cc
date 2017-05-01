@@ -114,7 +114,7 @@ bool Variable::add_value(std::string elem)
         VarData* vd = new VarData();
         vd->type = VarType::STRING;
 
-        // if the previous variable was a symbol, we need a space seperator.
+        // if the previous variable was a symbol, we need a space separator.
         if (!vars.empty())
             s.insert(0, " ");
 

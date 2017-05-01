@@ -683,7 +683,7 @@ static void dce_co_process_ctx_result(DCE2_SsnData* sd,DCE2_CoTracker* cot,
     }
 
     /* Dequeue context item in pending queue - this will get put in the permanent
-     * context id list or free'd */
+     * context id list or freed */
     ctx_node = (DCE2_CoCtxIdNode*)DCE2_QueueDequeue(cot->pending_ctx_ids);
     if (ctx_node == nullptr)
     {
@@ -1319,7 +1319,7 @@ static Packet* dce_co_reassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot,
 /********************************************************************
  * Function: DCE2_CoReassemble()
  *
- * Gets a reassemly packet based on the transport and the type of
+ * Gets a reassembly packet based on the transport and the type of
  * reassembly we want to do.  Sets rule options and calls detect
  * on the reassembled packet.
  *
@@ -2050,7 +2050,7 @@ static DCE2_Ret DCE2_CoSegEarlyRequest(DCE2_CoTracker* cot,
  * the current data in fragmentation and segmentation buffers
  * to the detection engine.  Whether we do or not is based on
  * whether or not we are configured to do so.  The number of bytes
- * in the fragmentation and segmentation buffers are calulated
+ * in the fragmentation and segmentation buffers are calculated
  * and if they exceed the amount we are configured for, we
  * reassemble.
  *

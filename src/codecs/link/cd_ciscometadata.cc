@@ -98,7 +98,7 @@ bool CiscoMetaDataCodec::decode(const RawData& raw, CodecData& codec, DecodeData
     const CiscoMetaDataOpt* cmd_options =
         reinterpret_cast<const CiscoMetaDataOpt*>(raw.data + sizeof(CiscoMetaDataHdr));
     // validate options, lengths, and SGTs
-    cmdh_rem_len -= sizeof(CiscoMetaDataHdr) + sizeof(uint16_t); //2 octects for ethertype
+    cmdh_rem_len -= sizeof(CiscoMetaDataHdr) + sizeof(uint16_t); //2 octets for ethertype
     if(cmdh_rem_len == 0)
         cmd_options = nullptr;
 

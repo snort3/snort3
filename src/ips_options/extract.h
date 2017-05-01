@@ -34,7 +34,7 @@ SO_PUBLIC int string_extract(
     const uint8_t* start, const uint8_t* end, uint32_t* value);
 
 SO_PUBLIC int byte_extract(
-    int endianess, int bytes_to_grab, const uint8_t* ptr,
+    int endianness, int bytes_to_grab, const uint8_t* ptr,
     const uint8_t* start, const uint8_t* end, uint32_t* value);
 
 SO_PUBLIC void set_byte_order(uint8_t& order, uint8_t flag, const char* opt);

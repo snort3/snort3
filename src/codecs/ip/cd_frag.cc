@@ -81,7 +81,7 @@ bool Ipv6FragCodec::decode(const RawData& raw, CodecData& codec, DecodeData& sno
         data.decode_flags |= DECODE_RF;
 #endif
 
-    // three least signifigant bits are all flags
+    // three least significant bits are all flags
     const uint16_t frag_offset = ip6frag_hdr->off();
 
     if (frag_offset || (snort.decode_flags & DECODE_MF))

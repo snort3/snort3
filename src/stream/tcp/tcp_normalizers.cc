@@ -199,8 +199,8 @@ public:
 static inline int handle_repeated_syn_mswin(TcpStreamTracker* talker, TcpStreamTracker* listener,
     TcpSegmentDescriptor& tsd, TcpSession* session)
 {
-    /* Windows has some strange behaviour here.  If the sequence of the reset is the
-     *  next expected sequence, it Resets.  Otherwise it ignores the 2nd SYN.
+    /* Windows has some strange behavior here.  If the sequence of the reset is the
+     * next expected sequence, it Resets.  Otherwise it ignores the 2nd SYN.
      */
     if (SEQ_EQ(tsd.get_seg_seq(), listener->r_nxt_ack))
     {

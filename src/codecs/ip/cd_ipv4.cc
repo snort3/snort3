@@ -485,7 +485,7 @@ default_case:
             if ((tot_len + 1) >= o_len)
                 code = tcp::OPT_TRUNC;
 
-            /* RFC sez that we MUST have atleast this much data */
+            /* RFC says that we MUST have at least this much data */
             else if (option->len < 2)
                 code = tcp::OPT_BADLEN;
 

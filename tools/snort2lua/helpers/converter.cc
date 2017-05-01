@@ -175,7 +175,7 @@ int Converter::parse_file(std::string input_file)
 
             if (!tmp.empty())
             {
-                // first charachter is either a '#' or a ';'
+                // first character is either a '#' or a ';'
                 tmp.erase(tmp.begin());
                 util::ltrim(tmp);
             }

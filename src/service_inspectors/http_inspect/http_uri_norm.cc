@@ -500,6 +500,7 @@ void UriNormalizer::load_default_unicode_map(uint8_t map[65536])
 
     // Default unicode map is just a single string of tokens of the form
     // HHHH:HH (HHHH = unicode, HH = ascii char)
+// __STRDUMP_DISABLE__
     std::stringstream ss(
 "0100:41 0101:61 0102:41 0103:61 0104:41 0105:61 0106:43 0107:63 0108:43 0109:63 010a:43 010b:63 "
 "010c:43 010d:63 010e:44 010f:64 0111:64 0112:45 0113:65 0114:45 0115:65 0116:45 0117:65 0118:45 "
@@ -534,6 +535,7 @@ void UriNormalizer::load_default_unicode_map(uint8_t map[65536])
 "ff41:61 ff42:62 ff43:63 ff44:64 ff45:65 ff46:66 ff47:67 ff48:68 ff49:69 ff4a:6a ff4b:6b ff4c:6c "
 "ff4d:6d ff4e:6e ff4f:6f ff50:70 ff51:71 ff52:72 ff53:73 ff54:74 ff55:75 ff56:76 ff57:77 ff58:78 "
 "ff59:79 ff5a:7a ff5b:7b ff5c:7c ff5d:7d ff5e:7e");
+// __STRDUMP_ENABLE__
 
     std::string token;
 

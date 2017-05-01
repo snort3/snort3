@@ -189,7 +189,7 @@ void SetSnortConfDir(const char* file)
     {
         const char* path_sep = strrchr(file, '/');
 
-        /* is there a directory seperator in the filename */
+        /* is there a directory separator in the filename */
         if (path_sep != NULL)
         {
             path_sep++;  /* include path separator */

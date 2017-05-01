@@ -450,7 +450,7 @@ void Icmp4Codec::log(TextLog* const log, const uint8_t* raw_pkt,
         break;
 
     case icmp::IcmpType::ROUTER_ADVERTISE:
-        TextLog_Print(log, "ROUTER ADVERTISMENT: "
+        TextLog_Print(log, "ROUTER ADVERTISEMENT: "
             "Num addrs: %d Addr entry size: %d Lifetime: %u",
             icmph->s_icmp_num_addrs, icmph->s_icmp_wpa,
             ntohs(icmph->s_icmp_lifetime));

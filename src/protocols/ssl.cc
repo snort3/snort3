@@ -526,7 +526,7 @@ uint32_t SSL_decode(
                 if (pkt[9] == 3)
                 {
                     /* Saw a TLS version, but this could also be an SSHv2 length.
-                      * If it is, check if a hypothetical TLS record-data length agress
+                      * If it is, check if a hypothetical TLS record-data length agrees
                       * with its record length */
                     datalen = THREE_BYTE_LEN( (pkt+6) );
 
@@ -545,7 +545,7 @@ uint32_t SSL_decode(
         else if (size >= 8 && pkt[7] == 2)
         {
             /* A version of '2' at byte 7 overlaps with TLS record-data length.
-             * Check if a hypothetical TLS record-data length agress with its
+             * Check if a hypothetical TLS record-data length agrees with its
              * record length */
             datalen = THREE_BYTE_LEN( (pkt+6) );
 

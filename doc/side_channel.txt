@@ -24,9 +24,9 @@ applications.
 The SideChannel configuration mostly serves to map a port number to a Connector
 or set of connectors.  Each port mapping can have at most one transmit plus
 one receive connector or one duplex connector.  Multiple SideChannel's
-may be configured and instatiated to support multiple applications.
+may be configured and instantiated to support multiple applications.
 
-An example SideChannel configuration along with the corresponing Connector
+An example SideChannel configuration along with the corresponding Connector
 configuration:
 
     side_channel =

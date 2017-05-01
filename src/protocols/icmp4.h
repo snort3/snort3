@@ -28,7 +28,7 @@ namespace icmp
 constexpr uint32_t ICMP_BASE_LEN = 4;
 constexpr uint8_t ICMP_UNREACH_DATA_LEN = 8;
 
-// do NOT add 'ICMP_' to the begining of these const because they
+// do NOT add 'ICMP_' to the beginning of these const because they
 // will overlap with dnet macros
 
 //enum class IcmpType : std::uint8_t {
@@ -73,7 +73,7 @@ enum IcmpCode : std::uint8_t
     PREC_VIOLATION = 14,
     PREC_CUTOFF = 15,
 
-    /* Code for ICMP Source Quence (4) */
+    /* Code for ICMP Source Quench (4) */
     SOURCE_QUENCH_CODE = 0,
 
     /* Codes for an ICMP Redirect (5) */
@@ -85,7 +85,7 @@ enum IcmpCode : std::uint8_t
     /* Codes for ICMP Echo (8) */
     ECHO_CODE = 0,
 
-    /* Codes for ICMP time excceeded (11) */
+    /* Codes for ICMP time exceeded (11) */
     TIMEOUT_TRANSIT = 0,
     TIMEOUT_REASSY = 1,
 

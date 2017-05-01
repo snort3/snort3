@@ -59,13 +59,13 @@ inline uint16_t ip_cksum(const uint16_t* buf, std::size_t len);
  *          is to either include all of the checksum details in a header,
  *          or ensure I include these symbols for every linker which
  *          can be used. Obviously, setting correct linker flags is
- *          signifigantly more difficult, so these functions will all
+ *          significantly more difficult, so these functions will all
  *          stay in a header file
  */
 
 /*
  *  IT IS HIGHLY RECOMMENDED to use the above API. Rathern than calling
- *  any of of the following recomendations directly
+ *  any of of the following recommendations directly
  */
 namespace detail
 {

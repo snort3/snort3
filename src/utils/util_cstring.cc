@@ -108,7 +108,7 @@ int SnortSnprintfAppend(char* buf, size_t buf_size, const char* format, ...)
 
     if (buf[buf_size - 1] != '\0' || (size_t)ret >= buf_size)
     {
-        /* truncation occured */
+        /* truncation occurred */
         buf[buf_size - 1] = '\0';
         return SNORT_SNPRINTF_TRUNCATION;
     }
@@ -315,7 +315,7 @@ int sfsnprintfappend(char* dest, int dsize, const char* format, ...)
     appendLen = vsnprintf(dest+currLen, dsize-currLen, format, ap);
     va_end(ap);
 
-    dest[dsize-1]=0; /* guarantee a null tremination */
+    dest[dsize-1]=0; /* guarantee a null termination */
 
     return appendLen;
 }

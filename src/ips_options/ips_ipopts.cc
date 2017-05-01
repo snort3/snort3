@@ -105,7 +105,7 @@ int IpOptOption::eval(Cursor&, Packet* p)
     DebugMessage(DEBUG_IPS_OPTION, "CheckIpOptions:");
 
     if ( !p->is_ip4() )
-        // if error occured while ip header
+        // if error occurred while ip header
         // was processed, return 0 automatically.
         return DETECTION_OPTION_NO_MATCH;
 

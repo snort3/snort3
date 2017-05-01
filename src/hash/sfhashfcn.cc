@@ -97,7 +97,7 @@ unsigned sfhashfcn_hash(SFHASHFCN* p, unsigned char* d, int n)
  *
  * @param h sfhashfcn ptr
  * @param hash_fcn user specified hash function
- * @param keycmp_fcn user specified key comparisoin function
+ * @param keycmp_fcn user specified key comparison function
  */
 int sfhashfcn_set_keyops(SFHASHFCN* h,
     unsigned (* hash_fcn)(SFHASHFCN* p, unsigned char* d, int n),

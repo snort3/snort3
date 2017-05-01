@@ -165,7 +165,7 @@ struct FTP_SESSION
     SfIp serverIP;
     uint16_t serverPort;
 
-    /* A file is being transfered on ftp-data channel */
+    /* A file is being transferred on ftp-data channel */
     char* filename;
     int file_xfer_info; /* -1: ignore, 0: unknown, >0: filename length */
     unsigned char flags;

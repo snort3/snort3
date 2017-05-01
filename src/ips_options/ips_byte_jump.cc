@@ -39,11 +39,11 @@
  *      ["dce"]: let the DCE/RPC 2 preprocessor determine the byte order of the
  *               value to be converted
  *      ["string"]: converted bytes represented as a string needing conversion
- *      ["hex"]: converted string data is represented in hexidecimal
+ *      ["hex"]: converted string data is represented in hexadecimal
  *      ["dec"]: converted string data is represented in decimal
  *      ["oct"]: converted string data is represented in octal
  *      ["align"]: round the number of converted bytes up to the next
- *                 32-bit boundry
+ *                 32-bit boundary
  *      ["post_offset"]: number of bytes to adjust after applying
  *      ["from beginning"]: Skip forward from the beginning of the packet
  *                          payload instead of from the current position in
@@ -104,7 +104,7 @@ typedef struct _ByteJumpData
     uint8_t data_string_convert_flag;
     uint8_t from_beginning_flag;
     uint8_t align_flag;
-    uint8_t endianess;
+    uint8_t endianness;
     uint32_t base;
     uint32_t multiplier;
     int32_t post_offset;
@@ -155,7 +155,7 @@ uint32_t ByteJumpOption::hash() const
         data->data_string_convert_flag << 16 |
         data->from_beginning_flag << 8 |
         data->align_flag);
-    b += data->endianess;
+    b += data->endianness;
     c += data->multiplier;
 
     mix(a,b,c);
@@ -188,7 +188,7 @@ bool ByteJumpOption::operator==(const IpsOption& ips) const
         ( left->data_string_convert_flag == right->data_string_convert_flag) &&
         ( left->from_beginning_flag == right->from_beginning_flag) &&
         ( left->align_flag == right->align_flag) &&
-        ( left->endianess == right->endianess) &&
+        ( left->endianness == right->endianness) &&
         ( left->base == right->base) &&
         ( left->multiplier == right->multiplier) &&
         ( left->post_offset == right->post_offset) &&
@@ -229,7 +229,7 @@ int ByteJumpOption::eval(Cursor& c, Packet* p)
 
     uint32_t jump = 0;
     uint32_t payload_bytes_grabbed = 0;
-    uint8_t endian = bjd->endianess;
+    uint8_t endian = bjd->endianness;
 
     if (endian == ENDIAN_FUNC)
     {
@@ -280,7 +280,7 @@ int ByteJumpOption::eval(Cursor& c, Packet* p)
         if (bjd->multiplier)
             jump *= bjd->multiplier;
 
-        // if we need to align on 32-bit boundries, round up to the next 32-bit value
+        // if we need to align on 32-bit boundaries, round up to the next 32-bit value
         if (bjd->align_flag)
         {
             if ((jump % 4) != 0)
@@ -407,8 +407,8 @@ bool ByteJumpModule::end(const char*, int, SnortConfig*)
             return false;
         }
     }
-    if ( !data.endianess )
-        data.endianess = ENDIAN_BIG;
+    if ( !data.endianness )
+        data.endianness = ENDIAN_BIG;
 
     if (data.from_beginning_flag && data.from_end_flag)
     {
@@ -462,13 +462,13 @@ bool ByteJumpModule::set(const char*, Value& v, SnortConfig*)
         data.post_offset = v.get_long();
 
     else if ( v.is("big") )
-        set_byte_order(data.endianess, ENDIAN_BIG, "byte_jump");
+        set_byte_order(data.endianness, ENDIAN_BIG, "byte_jump");
 
     else if ( v.is("little") )
-        set_byte_order(data.endianess, ENDIAN_LITTLE, "byte_jump");
+        set_byte_order(data.endianness, ENDIAN_LITTLE, "byte_jump");
 
     else if ( v.is("dce") )
-        set_byte_order(data.endianess, ENDIAN_FUNC, "byte_jump");
+        set_byte_order(data.endianness, ENDIAN_FUNC, "byte_jump");
 
     else if ( v.is("string") )
     {

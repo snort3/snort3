@@ -62,7 +62,7 @@
  * @param   eol    end of end of line marker
  *
  * @return  response
- * @retval   0          function succeded without error
+ * @retval   0          function succeeded without error
  * @retval  -1          there were errors
  */
 int SMTP_NormalizeCmd(Packet* p, const uint8_t* ptr, const uint8_t* eolm, const uint8_t* eol)

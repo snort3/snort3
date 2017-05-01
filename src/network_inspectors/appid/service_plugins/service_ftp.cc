@@ -841,7 +841,7 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
 
     //ignore packets while encryption is on in explicit mode. In future, this will be changed
     //to direct traffic to SSL detector to extract payload from certs. This will require
-    // manintaining
+    // maintaining
     //two detector states at the same time.
     if (asd->get_session_flags(APPID_SESSION_ENCRYPTED))
     {
@@ -928,18 +928,18 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
             case 225: /* data connection open */
             case 226: /* Transfer complete */
             case 227: /*entering passive mode */
-            case 230: /*user loggined */
+            case 230: /*user logged in */
             case 250: /* CWD command successful */
             case 257: /* PATHNAME created */
             case 331: /* login ok need password */
             case 332: /*new account for login */
-            case 350: /*requested file action pending futher information */
+            case 350: /*requested file action pending further information */
             case 450: /*requested file action not taken */
             case 451: /*requested file action aborted */
             case 452: /*requested file action not taken not enough space */
             case 500: /*syntax error */
-            case 501: /*not recognozed */
-            case 502: /*not recognozed */
+            case 501: /*not recognized */
+            case 502: /*not recognized */
             case 503: /*bad sequence of commands */
             case 504: /*command not implemented */
             case 530: /*login incorrect */

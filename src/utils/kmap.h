@@ -25,7 +25,7 @@
 // Keyword Trie based Map Table
 // The tree uses linked lists to build the finite automata
 //
-// MapKeyFind(): Performs a setwise strcmp() equivalant.
+// MapKeyFind(): Performs a setwise strcmp() equivalent.
 //
 // Keys may be ascii or binary, both may be of random sizes.  Each key may
 // be a different size, or all one size.  Fast dictionary lookup,

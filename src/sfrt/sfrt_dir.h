@@ -47,8 +47,8 @@ typedef struct
                       * are used. */
     int cur_num;     /* Present number of used nodes */
 
-    /** number of entries filled including chidren sub_tables. This is used
-     * for freeing sub_tables when all entried are freed by delete operation.
+    /** number of entries filled including children sub_tables. This is used
+     * for freeing sub_tables when all entries are freed by delete operation.
      */
     int filledEntries;
 } dir_sub_table_t;

@@ -224,7 +224,7 @@ const PegInfo proc_names[] =
 
 void pc_sum()
 {
-    // must sum explicitly; can't zero; daq stats are cuumulative ...
+    // must sum explicitly; can't zero; daq stats are cumulative ...
     const DAQ_Stats_t* daq_stats = SFDAQ::get_stats();
 
     g_daq_stats.hw_packets_received += daq_stats->hw_packets_received;

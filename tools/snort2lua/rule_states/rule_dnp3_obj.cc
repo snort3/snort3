@@ -49,7 +49,7 @@ bool DNP3Obj::convert(std::istringstream& data)
     val.insert(0, group);
     size_t start_pos = val.find(',');
     if (start_pos == std::string::npos)
-        rule_api.bad_rule(data, "dnp3_obj:expecting 2 args seperated by comma");
+        rule_api.bad_rule(data, "dnp3_obj:expecting 2 args separated by comma");
     else
         val.insert(start_pos+1, var);
 

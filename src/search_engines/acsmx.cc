@@ -25,7 +25,7 @@
 **
 **   Reference - Efficient String matching: An Aid to Bibliographic Search
 **               Alfred V Aho and Margaret J Corasick
-**               Bell Labratories
+**               Bell Laboratories
 **               Copyright (C) 1975 Association for Computing Machinery,Inc
 **
 **   Implemented from the 4 algorithms in the paper by Aho & Corasick
@@ -36,7 +36,7 @@
 **     2) This algorithm finds all occurrences of all patterns within a
 **        body of text.
 **     3) Support is included to handle upper and lower case matching.
-**     4) Some comopilers optimize the search routine well, others don't, this makes all the difference.
+**     4) Some compilers optimize the search routine well, others don't, this makes all the difference.
 **     5) Aho inspects all bytes of the search text, but only once so it's very efficient,
 **        if the patterns are all large than the Modified Wu-Manbar method is often faster.
 **     6) I don't subscribe to any one method is best for all searching needs,
@@ -219,7 +219,7 @@ static void Build_NFA(ACSM_STRUCT* acsm)
                 acsm->acsmStateTable[s].FailState = next;
 
                 /*
-                 *  Copy 'next'states MatchList to 's' states MatchList,
+                 *  Copy 'next' states MatchList to 's' states MatchList,
                  *  we copy them so each list can be AC_FREE'd later,
                  *  else we could just manipulate pointers to fake the copy.
                  */

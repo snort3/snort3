@@ -58,7 +58,7 @@ bool RuleHeader::convert(std::istringstream& data_stream)
     std::string rule_string = data_stream.str();
     std::size_t end_pos = rule_string.rfind(')');
     rule_string = rule_string.substr(0, end_pos);
-    util::rtrim(rule_string); // gaurantee last char is a rule opt/subopt
+    util::rtrim(rule_string); // guarantee last char is a rule opt/subopt
     data_stream.str(rule_string);
     data_stream.seekg(curr_pos);  // position was reset. so find curr position
 

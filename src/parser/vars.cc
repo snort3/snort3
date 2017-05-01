@@ -351,7 +351,7 @@ int VarIsIpList(vartable_t* ip_vartable, const char* value)
  *
  * Purpose: ParseErrors if the a variable name is redefined across variable
  *          types.  Enforcing this mutual exclusion prevents the
- *          catatrophe where the variable lookup fall-through (see VarSearch)
+ *          catastrophe where the variable lookup fall-through (see VarSearch)
  *          finds an unintended variable from the wrong table.  Note:  VarSearch
  *          is only necessary for ExpandVars.
  *
@@ -477,7 +477,7 @@ VarEntry* VarDefine(
 
         /* Verify a variable by this name is not already used as either a
          * portvar or regular var.  Enforcing this mutual exclusion prevents the
-         * catatrophe where the variable lookup fall-through (see VarSearch)
+         * catastrophe where the variable lookup fall-through (see VarSearch)
          * finds an unintended variable from the wrong table.  Note:  VarSearch
          * is only necessary for ExpandVars. */
         DisallowCrossTableDuplicateVars(sc, name, VAR_TYPE__IPVAR);
@@ -698,7 +698,7 @@ const char* VarGet(SnortConfig*, const char* name)
     sfip_var_t* var;
 
 // XXX-IPv6 This function should never be used if IP6 support is enabled!
-// Infact it won't presently even work for IP variables since the raw ASCII
+// In fact it won't presently even work for IP variables since the raw ASCII
 // value is never stored, and is never meant to be used.
 
     if ((var = sfvt_lookup_var(ip_vartable, name)) == NULL)
@@ -885,7 +885,7 @@ const char* ExpandVars(SnortConfig* sc, const char* string)
 
 void AddVarToTable(SnortConfig* sc, const char* name, const char* value)
 {
-    //TODO: snort.cfg and rules should use PortVar instead ...this allows compatability for now.
+    //TODO: snort.cfg and rules should use PortVar instead ...this allows compatibility for now.
     if (strstr(name, "_PORT") || strstr(name, "PORT_"))
     {
         DebugMessage(DEBUG_CONFIGRULES,"PortVar\n");

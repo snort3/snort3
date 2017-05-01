@@ -295,7 +295,7 @@ uint32_t FlowKey::hash(SFHASHFCN* hf, unsigned char* p, int)
 
     a += d[9];   // vlan tag, packet type, & version
     b += d[10];  // mpls label
-    c += d[11];  // address space id and 16bits of zero'd pad
+    c += d[11];  // address space id and 16bits of zeroed pad
 
     finalize(a, b, c);
 

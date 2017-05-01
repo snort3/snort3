@@ -596,9 +596,7 @@ const char* PortObjectParseError(POParser* pop)
     {
     case POPERR_NO_NAME:            return "no name";
     case POPERR_NO_ENDLIST_BRACKET: return "no end of list bracket."
-               " Elements must be comma seperated,"
-               " and no spaces may appear between"
-               " brackets.";
+        " Elements must be comma separated, and no spaces may appear between brackets.";
     case POPERR_NOT_A_NUMBER:       return "not a number";
     case POPERR_EXTRA_BRACKET:      return "extra list bracket";
     case POPERR_NO_DATA:            return "no data";

@@ -544,7 +544,8 @@ int SFDAQInstance::modify_flow_opaque(const DAQ_PktHdr_t* hdr, uint32_t opaque)
     return daq_modify_flow(daq_mod, daq_hand, hdr, &mod);
 }
 
-// FIXIT-L X Add Snort flag defitions for callers to use and translate/pass them through to the DAQ module
+// FIXIT-L X Add Snort flag definitions for callers to use and translate/pass them through to
+// the DAQ module
 int SFDAQInstance::add_expected(const Packet* ctrlPkt, const SfIp* cliIP, uint16_t cliPort,
         const SfIp* srvIP, uint16_t srvPort, IpProtocol protocol, unsigned timeout_ms, unsigned /* flags */)
 {

@@ -291,7 +291,7 @@ static int service_analyze_payload(lua_State* L)
 // FIXIT-M - the comments and code below for service_get_service_id don't appear to be useful
 //           the ud->server.service_id field is set to APP_ID_UNKNOWN at init time and never updated
 //           is this function ever used?
-/**design: dont store service_id in detector structure since a single detector
+/**design: don't store service_id in detector structure since a single detector
  * can get service_id for multiple protocols. For example SIP which gets Id for RTP and
  * SIP services.
  */
@@ -544,8 +544,8 @@ static int detector_get_packet_size(lua_State* L)
     return 1;
 }
 
-/**Get packet direction. A flow/session maintains initiater and responder sides. A packet direction
- * is determined wrt to the original initiater.
+/**Get packet direction. A flow/session maintains initiator and responder sides. A packet direction
+ * is determined wrt to the original initiator.
  *
  * @param Lua_State* - Lua state variable.
  * @param detector/stack - detector object
@@ -638,7 +638,7 @@ static int detector_get_pcre_groups(lua_State* L)
  * @param Lua_State* - Lua state variable.
  * @param detector/stack - detector object
  * @param pattern/stack - pattern to be matched.
- * @param patternLenght/stack - length of pattern
+ * @param patternLength/stack - length of pattern
  * @param offset/stack - offset into packet payload where matching should start.
  *
  * @return int - Number of group matches.  May be 1 if successful, and 0 if error is encountered.
@@ -687,7 +687,7 @@ static int detector_get_protocol_type(lua_State* L)
  * @param Lua_State* - Lua state variable.
  * @param detector/stack - detector object
  * @return int - Number of elements on stack, which is 1 if successful, 0 otherwise.
- * @return IPv4/stack - Source IPv4 addresss.
+ * @return IPv4/stack - Source IPv4 address.
  */
 static int detector_get_packet_src_addr(lua_State* L)
 {
@@ -705,7 +705,7 @@ static int detector_get_packet_src_addr(lua_State* L)
  * @param Lua_State* - Lua state variable.
  * @param detector/stack - detector object
  * @return int - Number of elements on stack, which is 1 if successful, 0 otherwise.
- * @return IPv4/stack - destination IPv4 addresss.
+ * @return IPv4/stack - destination IPv4 address.
  */
 static int detector_get_packet_dst_addr(lua_State* L)
 {
@@ -783,7 +783,7 @@ static int client_register_pattern(lua_State* L)
       give a local callback function, which will do demuxing and
       then call lua callback function. */
 
-    /*mpse library does not hold reference to pattern therefore we dont need to allocate it. */
+    /*mpse library does not hold reference to pattern therefore we don't need to allocate it. */
 
     if ( protocol == IpProtocol::TCP)
         ClientDiscovery::get_instance().register_tcp_pattern(ud, (const uint8_t*)pattern,
@@ -965,7 +965,7 @@ static int detector_add_http_pattern(lua_State* L)
     pattern->pattern_size  = (int)pattern_size;
     pattern->appId         = appId;
 
-    // for apps that should not show up in 4.10 and ealier, we cannot include an entry in
+    // for apps that should not show up in 4.10 and earlier, we cannot include an entry in
     // the legacy client app or payload tables. We will use the appId instead. This is only for
     // user-agents that ID clients. if you want a user-agent to ID a payload, include it in the
     // payload database. If you want a host pattern ID, use the other API.
@@ -1806,7 +1806,7 @@ static int detector_add_rtmp_url(lua_State* L)
     return 0;
 }
 
-/*Lua should inject patterns in <clienAppId, clientVersion, multi-Pattern> format. */
+/*Lua should inject patterns in <clientAppId, clientVersion, multi-Pattern> format. */
 static int detector_add_sip_user_agent(lua_State* L)
 {
     int index = 1;
@@ -1976,7 +1976,7 @@ static int add_url_pattern(lua_State* L)
     assert(!(*UserData<LuaDetector>::check(L, DETECTOR, index))->validate_params.pkt);
 
     uint32_t service_app_id = lua_tointeger(L, ++index);
-    uint32_t clienAppId   = lua_tointeger(L, ++index);
+    uint32_t clientAppId   = lua_tointeger(L, ++index);
     uint32_t payload_app_id = lua_tointeger(L, ++index);
 
     /* Verify that host pattern is a valid string */
@@ -2019,7 +2019,7 @@ static int add_url_pattern(lua_State* L)
     DetectorAppUrlPattern* pattern =
         (DetectorAppUrlPattern*)snort_calloc(sizeof(DetectorAppUrlPattern));
     pattern->userData.service_id        = service_app_id;
-    pattern->userData.client_app        = clienAppId;
+    pattern->userData.client_app        = clientAppId;
     pattern->userData.payload           = payload_app_id;
     pattern->userData.appId             = APP_ID_NONE;
     pattern->userData.query.pattern     = nullptr;
@@ -2034,7 +2034,7 @@ static int add_url_pattern(lua_State* L)
 
     AppInfoManager& app_info_manager = AppInfoManager::get_instance();
     app_info_manager.set_app_info_active(service_app_id);
-    app_info_manager.set_app_info_active(clienAppId);
+    app_info_manager.set_app_info_active(clientAppId);
     app_info_manager.set_app_info_active(payload_app_id);
 
     return 0;
@@ -2048,7 +2048,7 @@ static int add_url_pattern(lua_State* L)
  *                             IPPROTO_UDP/DC.ipproto.udp (17)).
  * @param port/stack - port number to register.
  * @param pattern/stack - pattern to be matched.
- * @param patternLenght/stack - length of pattern
+ * @param patternLength/stack - length of pattern
  * @param offset/stack - offset into packet payload where matching should start.
  * @param appId/stack        - App ID to use for this detector.
  * @return int - Number of elements on stack, which is always 0.
@@ -2095,7 +2095,7 @@ static int add_port_pattern_client(lua_State* L)
  *                             IPPROTO_UDP/DC.ipproto.udp (17)).
  * @param port/stack - port number to register.
  * @param pattern/stack - pattern to be matched.
- * @param patternLenght/stack - length of pattern
+ * @param patternLength/stack - length of pattern
  * @param offset/stack - offset into packet payload where matching should start.
  * @param appId/stack        - App ID to use for this detector.
  * @return int - Number of elements on stack, which is always 0.
@@ -2127,7 +2127,7 @@ static int add_port_pattern_service(lua_State* L)
     return 0;
 }
 
-/*Lua should inject patterns in <clienAppId, clientVersion, multi-Pattern> format. */
+/*Lua should inject patterns in <clientAppId, clientVersion, multi-Pattern> format. */
 static int detector_add_sip_server(lua_State* L)
 {
     int index = 1;
@@ -2364,7 +2364,7 @@ static const luaL_reg detector_methods[] =
  * If in future, one needs to free any of these buffers then one should consider
  * references to detector buffer in  ServiceDetector stored in flows and hostServices
  * data structures. Other detectors at this time create one static instance for the
- * lifetime of RNA, and therefore we have adopted the same principle for Lua Detecotors.
+ * lifetime of RNA, and therefore we have adopted the same principle for Lua Detectors.
  */
 static int Detector_gc(lua_State*)
 {
@@ -2449,7 +2449,7 @@ int LuaDetector::lua_validate(AppIdDiscoveryArgs& args)
     {
         // Runtime Lua errors are suppressed in production code since detectors are written for
         // efficiency and with defensive minimum checks. Errors are dealt as exceptions
-        // that dont impact processing by other detectors or future packets by the same detector.
+        // that don't impact processing by other detectors or future packets by the same detector.
         ErrorMessage("lua detector %s: error validating %s\n",
             package_info.name.c_str(), lua_tostring(my_lua_state, -1));
         validate_params.pkt = nullptr;

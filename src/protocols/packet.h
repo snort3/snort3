@@ -44,7 +44,7 @@
 #define PKT_PDU_TAIL         0x00000200  /* end of PDU */
 #define PKT_HTTP_DECODE      0x00000400  /* this packet has normalized http */
 
-#define PKT_ALLOW_MULTIPLE_DETECT 0x00000800  /* packet has either pipelined mime attachements
+#define PKT_ALLOW_MULTIPLE_DETECT 0x00000800  /* packet has either pipelined mime attachments
                                                  or pipeline http requests */
 #define PKT_PAYLOAD_OBFUSCATE     0x00001000
 

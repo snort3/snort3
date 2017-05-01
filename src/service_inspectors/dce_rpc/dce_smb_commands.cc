@@ -922,7 +922,7 @@ DCE2_Ret DCE2_SmbWriteAndUnlock(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
             return DCE2_RET__ERROR;
 
         // These are special cases.  The write succeeds but the unlock fails
-        // so an error reponse is returned but the data was actually written.
+        // so an error response is returned but the data was actually written.
         if (DCE2_ComInfoIsResponse(com_info) && DCE2_ComInfoIsStatusError(com_info))
         {
             if (DCE2_SmbIsTidIPC(ssd, ssd->cur_rtracker->tid))

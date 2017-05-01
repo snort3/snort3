@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// packet_cpture.cc author Carter Waxman <cwaxman@cisco.com>
+// packet_capture.cc author Carter Waxman <cwaxman@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

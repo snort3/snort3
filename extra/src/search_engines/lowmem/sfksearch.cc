@@ -26,7 +26,7 @@
 *     - use for token testing after parsing the language tokens using lex or the like.
 *
 *  Keyword-Search: searches the input text for one of multiple keywords,
-*  and supports case sensitivite and case insensitive patterns.
+*  and supports case sensitive and case insensitive patterns.
 */
 
 #include "sfksearch.h"
@@ -334,7 +334,7 @@ static int KTrieInsert(KTRIE_STRUCT* ts, KTRIEPATTERN* px)
         else
         {
             /*
-            *  Start a new sibling bracnch to finish this Keyword
+            *  Start a new sibling branch to finish this Keyword
             */
             root->sibling= KTrieCreateNode(ts);
             if ( !root->sibling )
@@ -396,7 +396,7 @@ static void Build_Bad_Character_Shifts(KTRIE_STRUCT* kt)
     }
 
     /*
-    *  Initialze the Bad Character shift table.
+    *  Initialize the Bad Character shift table.
     */
     for ( int i = 0; i < KTRIE_ROOT_NODES; i++ )
     {

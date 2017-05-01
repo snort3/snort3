@@ -154,7 +154,7 @@ static inline unsigned int memory_per_node(
 
 /** Allocate a TagNode
  *
- * Alocates a TagNode while guaranteeing that total memory usage remains within TAG_MEMCAP.
+ * Allocates a TagNode while guaranteeing that total memory usage remains within TAG_MEMCAP.
  * Least used nodes may be deleted from ssn_tag_cache and host_tag_cache to make space if
  * the limit is being exceeded.
  *

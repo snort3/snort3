@@ -253,7 +253,7 @@ bool TcpConnector::transmit_message(ConnectorMsgHandle* msg)
 
     if ( sock_fd < 0 )
     {
-        ErrorMessage("TcpConnector: tranmitting to a closed socket\n");
+        ErrorMessage("TcpConnector: transmitting to a closed socket\n");
         delete tmsg;
         return false;
     }

@@ -95,7 +95,7 @@ struct SIP_PROTO_CONF
     uint32_t maxNumDialogsInSession;
     uint32_t methodsConfig;
     SIPMethodlist methods;   // Which methods to check
-    uint16_t maxUriLen;      // Maximum requst_URI size
+    uint16_t maxUriLen;      // Maximum request_URI size
     uint16_t maxCallIdLen;   // Maximum call_ID size.
     uint16_t maxRequestNameLen;  // Maximum length of request name in the CSeqID.
     uint16_t maxFromLen;     // Maximum From field size

@@ -115,13 +115,13 @@ std::ostream& operator<<(std::ostream& out, const Comments& c)
         std::string curr_pre_str = pre_str;
         std::size_t max_line_length = c.max_line_length - pre_str_length - 1;
 
-        // print a newline betweens strings, but not before the first line.
+        // print a newline between strings, but not before the first line.
         if (first_str)
             first_str = false;
         else
             out << "\n";
 
-        // if the line is emptry, we need a newline. the loop won't print it.
+        // if the line is empty, we need a newline. the loop won't print it.
         if (str.size() == 0)
             out << "\n";
 

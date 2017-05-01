@@ -48,7 +48,7 @@
 #define F_DATE              "date"
 #define F_LITERAL           "'"
 #define F_STRING            "string"
-#define F_STRING_FMT        "formated_string"
+#define F_STRING_FMT        "formatted_string"
 #define F_HOST_PORT         "host_port"
 #define F_LONG_HOST_PORT    "long_host_port"
 #define F_EXTD_HOST_PORT    "extd_host_port"

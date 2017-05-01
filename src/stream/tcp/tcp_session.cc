@@ -383,7 +383,7 @@ int TcpSession::process_tcp_data(TcpSegmentDescriptor& tsd)
             return STREAM_UNALIGNED;
         }
 
-        /* move the ack boundry up, this is the only way we'll accept data */
+        /* move the ack boundary up, this is the only way we'll accept data */
         // FIXIT-L for ips, must move all the way to first hole or right end
         listener->r_nxt_ack = tsd.get_end_seq();
 
@@ -679,7 +679,7 @@ void TcpSession::check_for_session_hijack(TcpSegmentDescriptor& tsd)
 
         if ( tsd.get_pkt()->is_eth() )
         {
-            // if flag is set, gauranteed to have an eth layer
+            // if flag is set, guaranteed to have an eth layer
             Packet* p = tsd.get_pkt();
             const eth::EtherHdr* eh = layer::get_eth_layer(p);
             bool t_hijack = !talker->compare_mac_addresses(eh->ether_src);
@@ -767,7 +767,7 @@ void TcpSession::handle_data_segment(TcpSegmentDescriptor& tsd)
         // FIXIT-M move this to normalizer base class, handle OS_PROXY in derived class
         if (config->policy != StreamPolicy::OS_PROXY)
         {
-            /* check for valid seqeuence/retrans */
+            /* check for valid sequence/retrans */
             if (!listener->is_segment_seq_valid(tsd) )
                 return;
 

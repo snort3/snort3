@@ -143,7 +143,7 @@ static void LogGREHeader(TextLog* log, Packet* p)
 /*--------------------------------------------------------------------
  * Function: Log2ndHeader(TextLog* , Packet p)
  *
- * Purpose: Log2ndHeader -- prints second layber  header info.
+ * Purpose: Log2ndHeader -- prints second layer  header info.
  *
  * Arguments: log => pointer to TextLog to print to
  *
@@ -1019,7 +1019,7 @@ void LogICMPHeader(TextLog* log, Packet* p)
         break;
 
     case ICMP_ROUTER_ADVERTISE:
-        TextLog_Print(log, "ROUTER ADVERTISMENT: "
+        TextLog_Print(log, "ROUTER ADVERTISEMENT: "
             "Num addrs: %d Addr entry size: %d Lifetime: %u",
             p->ptrs.icmph->s_icmp_num_addrs, p->ptrs.icmph->s_icmp_wpa,
             ntohs(p->ptrs.icmph->s_icmp_lifetime));

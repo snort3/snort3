@@ -33,7 +33,7 @@
  *  The mechanism for processing frags is based on the Linux IP stack
  *  implementation of IP defragmentation with proper amounts of paranoia
  *  and an IDS perspective applied.  Some of this code was derived from
- *  frag2 originally, but it's basically unrecognizeable if you compare
+ *  frag2 originally, but it's basically unrecognizable if you compare
  *  it to frag2 IMO.
  *
  *  I switched from using the UBI libs to using sfxhash and linked lists for
@@ -55,7 +55,7 @@
  *  Frag3 is also capable of performing "engine-based" IP defragmentation.
  *  What this means practically is that frag3 can model the IP stack of a
  *  engine on the network to avoid Ptacek-Newsham evasions of the IDS through
- *  sensor/engine desynchronization.  In terms of implentation, this is
+ *  sensor/engine desynchronization.  In terms of implementation, this is
  *  reflected by passing a "engine" into the defragmentation engine that has
  *  a specific configuration for a specific engine type.  Windows can put
  *  fragments back together differently than Linux/BSD/etc, so we model that
@@ -256,7 +256,7 @@ static inline void EventExcessiveOverlap(FragEngine*)
 }
 
 /**
- * Generate an event due to a fragment being too short, typcially based
+ * Generate an event due to a fragment being too short, typically based
  * on a non-last fragment that doesn't properly end on an 8-byte boundary
  *
  * @param engine Current run engine
@@ -415,7 +415,7 @@ static inline int FragCheckFirstLast(const Packet* const p,
         /* Use the actual length here because packet may have been
          * truncated.  Don't want to try to copy more than we actually
          * captured. Use dsize as the frag length since it is distance
-         * between the last sucesfully decoded layer (which is ip6_frag
+         * between the last succesfully decoded layer (which is ip6_frag
          *  or ipv4) and the end of packet, */
         fragLength = p->dsize;
         endOfThisFrag = frag_offset + fragLength;
@@ -674,7 +674,7 @@ static inline int FragIsComplete(FragTracker* ft)
 
         /*
          * if we've accumulated enough data to match the calculated size
-         * of the defragg'd packet, return 1
+         * of the defragged packet, return 1
          */
         if (ft->frag_bytes == ft->calculated_size)
         {
@@ -902,7 +902,7 @@ static void FragRebuild(FragTracker* ft, Packet* p)
  * Plug a Fragment into the fraglist of a FragTracker
  *
  * @param ft FragTracker to put the new node into
- * @param prev ptr to preceeding Fragment in fraglist
+ * @param prev ptr to preceding Fragment in fraglist
  * @param next ptr to following Fragment in fraglist
  * @param node ptr to node to put in list
  *
@@ -1178,7 +1178,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
     ft->frag_time.tv_sec = p->pkth->ts.tv_sec;
     ft->frag_time.tv_usec = p->pkth->ts.tv_usec;
 
-    //dont forward fragments to engine if some previous fragment was dropped
+    //don't forward fragments to engine if some previous fragment was dropped
     if ( ft->frag_flags & FRAG_DROP_FRAGMENTS )
     {
         DisableDetect();
@@ -1343,7 +1343,7 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
     /* Use the actual length here because packet may have been
      * truncated.  Don't want to try to copy more than we actually
      * captured. Use dsize as the frag length since it is distance
-     * between the last sucesfully decoded layer (which is ip6_frag
+     * between the last succesfully decoded layer (which is ip6_frag
      *  or ipv4) and the end of packet, */
     len = fragLength = p->dsize;
     fragStart = p->data;
@@ -1376,7 +1376,7 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
     {
         uint16_t oldfrag_end;
         /*
-         * all non-last frags are supposed to end on 8-byte boundries
+         * all non-last frags are supposed to end on 8-byte boundaries
          */
         if (frag_end & 7)
         {
@@ -1595,7 +1595,7 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
                      * existing frag -- existing frag needs to be split
                      * and the new frag inserted in the middle.
                      *
-                     * Need to duplciate left.  Adjust that guys
+                     * Need to duplicate left.  Adjust that guys
                      * offset by + (frag_offset + len) and
                      * size by - (frag_offset + len - left->offset).
                      */
@@ -2029,7 +2029,7 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
     /* Use the actual length here because packet may have been
      * truncated.  Don't want to try to copy more than we actually
      * captured. Use dsize as the frag length since it is distance
-     * between the last sucesfully decoded layer (which is ip6_frag
+     * between the last succesfully decoded layer (which is ip6_frag
      *  or ipv4) and the end of packet, */
     fragLength = p->dsize;
     fragStart = p->data;
@@ -2113,7 +2113,7 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
     else
     {
         /*
-         * all non-last frags are supposed to end on 8-byte boundries
+         * all non-last frags are supposed to end on 8-byte boundaries
          */
         if (frag_end & 7)
         {
@@ -2138,7 +2138,7 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
     /* insert the fragment into the frag list */
     ft->fraglist = f;
     ft->fraglist_tail = f;
-    ft->fraglist_count = 1;  /* XXX: Are these duplciates? */
+    ft->fraglist_count = 1;  /* XXX: Are these duplicates? */
     ft->frag_pkts = 1;
 
     /*
@@ -2163,9 +2163,9 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
  * @param fragLength Length of packet data
  * @param len Length of this fragment
  * @param slide Adjustment to make to left side of data (for left overlaps)
- * @param trunc Adjustment to maek to right side of data (for right overlaps)
+ * @param trunc Adjustment to make to right side of data (for right overlaps)
  * @param frag_offset Offset for this fragment
- * @prarm left FragNode prior to this one
+ * @param left FragNode prior to this one
  * @param retFrag this one after its inserted (returned)
  *
  * @return status
@@ -2285,7 +2285,7 @@ int Defrag::add_frag_node(
  * Duplicate a frag node and insert it into the list.
  *
  * @param ft FragTracker to hold the packet
- * @prarm left FragNode prior to this one (to be dup'd)
+ * @param left FragNode prior to this one (to be dup'd)
  * @param retFrag this one after its inserted (returned)
  *
  * @return status

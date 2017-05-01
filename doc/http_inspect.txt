@@ -228,7 +228,7 @@ is on by default and you should not turn it off unless you have no interest
 in URI paths.
 
 backslash_to_slash is a tweak to path simplification for servers that allow
-directories to be separated by backslashs:
+directories to be separated by backslashes:
 
     /this/is/the/normal/way/to/write/a/path
 
@@ -377,7 +377,7 @@ If you don't specify a header you get all of the headers except for the
 cookie headers Cookie and Set-Cookie. http_raw_header includes the
 unmodified header names and values as they appeared in the original
 message. http_header is the same except percent encodings are removed and
-pathes are simplified exactly as if the headers were a URI.
+paths are simplified exactly as if the headers were a URI.
 
 In most cases specifying individual headers creates a more efficient and
 accurate rule. It is recommended that new rules be written using individual
@@ -436,7 +436,7 @@ message. This is usually "HTTP/1.0" or "HTTP/1.1".
 These are the unmodified first header line of the HTTP request and response
 messages respectively. These rule options are a safety valve in case you
 need to do something you cannot otherwise do. In most cases it is better to
-use a rule option for a specifc part of the first header line. For a
+use a rule option for a specific part of the first header line. For a
 request message those are http_method, http_raw_uri, and http_version. For
 a response message those are http_version, http_stat_code, and
 http_stat_msg.

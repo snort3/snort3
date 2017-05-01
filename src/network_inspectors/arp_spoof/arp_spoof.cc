@@ -33,7 +33,7 @@
  * arpspoof: -unicast
  *
  * WARNING: this can generate false positives as Linux systems send unicast
- * ARP requests repetatively for entries in their cache.
+ * ARP requests repetitively for entries in their cache.
  *
  * This plugin also takes a list of IP addresses and MAC address in the form:
  * arpspoof_detect_host: 10.10.10.10 29:a2:9a:29:a2:9a

@@ -35,7 +35,7 @@
 #include "sfip/sf_ip.h"
 
 //  FIXIT-M For now this emulates the Snort++ attribute table.
-//  Need to add in sfrnaincludes/host_tracker.h data eventually.
+//  Need to add in host_tracker.h data eventually.
 
 typedef uint16_t Port;
 typedef uint16_t Protocol;

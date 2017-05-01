@@ -52,7 +52,7 @@ struct ByteExtractData
     uint8_t relative_flag;
     uint8_t data_string_convert_flag;
     uint8_t align;
-    uint8_t endianess;
+    uint8_t endianness;
     uint32_t base;
     uint32_t multiplier;
     uint32_t bitmask_val;
@@ -106,7 +106,7 @@ uint32_t ByteExtractOption::hash() const
     a += (data->relative_flag << 24 |
         data->data_string_convert_flag << 16 |
         data->align << 8 |
-        data->endianess);
+        data->endianness);
     b += data->multiplier;
     c += data->var_number;
 
@@ -134,7 +134,7 @@ bool ByteExtractOption::operator==(const IpsOption& ips) const
         (left->relative_flag == right->relative_flag) &&
         (left->data_string_convert_flag == right->data_string_convert_flag) &&
         (left->align == right->align) &&
-        (left->endianess == right->endianess) &&
+        (left->endianness == right->endianness) &&
         (left->base == right->base) &&
         (left->multiplier == right->multiplier) &&
         (left->var_number == right->var_number) &&
@@ -168,8 +168,8 @@ int ByteExtractOption::eval(Cursor& c, Packet* p)
     if (ptr < start || ptr >= end)
         return DETECTION_OPTION_NO_MATCH;
 
-    uint8_t endian = data->endianess;
-    if (data->endianess == ENDIAN_FUNC)
+    uint8_t endian = data->endianness;
+    if (data->endianness == ENDIAN_FUNC)
     {
         if (!p->endianness ||
             !p->endianness->get_offset_endianness(ptr - p->data, endian))
@@ -207,7 +207,7 @@ int ByteExtractOption::eval(Cursor& c, Packet* p)
         }
     }
 
-    /* mulitply */
+    /* multiply */
     *value *= data->multiplier;
 
     /* align to next 32-bit or 16-bit boundary */
@@ -462,8 +462,8 @@ bool ExtractModule::begin(const char*, int, SnortConfig*)
 
 bool ExtractModule::end(const char*, int, SnortConfig*)
 {
-    if ( !data.endianess )
-        data.endianess = ENDIAN_BIG;
+    if ( !data.endianness )
+        data.endianness = ENDIAN_BIG;
     return ByteExtractVerify(&data);
 }
 
@@ -488,13 +488,13 @@ bool ExtractModule::set(const char*, Value& v, SnortConfig*)
         data.multiplier = v.get_long();
 
     else if ( v.is("big") )
-        set_byte_order(data.endianess, ENDIAN_BIG, "byte_extract");
+        set_byte_order(data.endianness, ENDIAN_BIG, "byte_extract");
 
     else if ( v.is("little") )
-        set_byte_order(data.endianess, ENDIAN_LITTLE, "byte_extract");
+        set_byte_order(data.endianness, ENDIAN_LITTLE, "byte_extract");
 
     else if ( v.is("dce") )
-        set_byte_order(data.endianess, ENDIAN_FUNC, "byte_extract");
+        set_byte_order(data.endianness, ENDIAN_FUNC, "byte_extract");
 
     else if ( v.is("string") )
     {

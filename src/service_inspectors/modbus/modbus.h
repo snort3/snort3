@@ -17,7 +17,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// modubs.h author Russ Combs <rucombs@cisco.com>
+// modbus.h author Russ Combs <rucombs@cisco.com>
 
 #ifndef MODBUS_H
 #define MODBUS_H

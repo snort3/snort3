@@ -25,7 +25,7 @@
 
 class TableApi;
 
-// The Binders destrutor will add the Objects configuration to the
+// The Binders destructor will add the Objects configuration to the
 //   table_api.
 class Binder
 {

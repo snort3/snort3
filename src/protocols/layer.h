@@ -30,7 +30,7 @@ struct Layer
     uint16_t length;
 };
 
-// forward declaring relevent structs. Since we're only return a pointer,
+// forward declaring relevant structs. Since we're only return a pointer,
 // there is no need for the actual header files
 
 namespace vlan
@@ -140,7 +140,7 @@ SO_PUBLIC const icmp::ICMPHdr* get_icmp_embed_icmp(const ip::IpApi&);
  *                              layer refer to packet get_next_ip_proto()
  *                              for more information.
  *          int8_t curr_layer = the current, zero based layer from which to
- *                              start searching inward. After the function returs,
+ *                              start searching inward. After the function returns,
  *                              This field will be set to the layer before
  *                              the Ip Api.  If no IP layer is found,
  *                              it will be set to -1.
@@ -151,7 +151,7 @@ SO_PUBLIC const icmp::ICMPHdr* get_icmp_embed_icmp(const ip::IpApi&);
  *          false: if the api has NOT been set
  *
  * NOTE: curr_layer is zero based.  That means to get all of the ip
- *       layers (starting from teh innermost layer), during the first call
+ *       layers (starting from the innermost layer), during the first call
  *       'curr_layer == p->num_layers'.
  *
  * NOTE: This functions is extremely useful in a loop

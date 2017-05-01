@@ -21,7 +21,7 @@
 #ifndef TIMERSUB_H
 #define TIMERSUB_H
 
-// never worry about timersub type activies again -- from GLIBC and upcased.
+// never worry about timersub type activities again -- from GLIBC and upcased.
 #define TIMERSUB(a, b, result)                                                \
     do {                                                                      \
         (result)->tv_sec = (a)->tv_sec - (b)->tv_sec;                         \

@@ -69,9 +69,9 @@ that variable in the Lua string.
 
 *  Snort2Lua currently does not handle variables well. First, that means
 variables will not always be parsed correctly.  Second, sometimes a
-variables value will be outoput in the lua file rather than a variable
+variables value will be output in the lua file rather than a variable
 For instance, if Snort2Lua attempted to convert the line
-'include $RULE_PATH/example.rule', the output may ouput
+'include $RULE_PATH/example.rule', the output may output
 'include /etc/rules/example.rule' instead.
 
 *  When Snort2Lua parses a ‘binding’ configuration file, the rules and
@@ -81,7 +81,7 @@ extension.  There is currently no way to specify or change that files name.
 
 *  If a rule's action is a custom ruletype, that rule action will be silently
 converted to the rultype's 'type'. No warnings or errors are currently
-emmitted. Additionally, the custom ruletypes outputs will be silently
+emitted. Additionally, the custom ruletypes outputs will be silently
 discarded.
 
 *  If the original configuration contains a binding that points to another

@@ -341,7 +341,7 @@ void UdpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
 bool UdpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
     EncState& enc, Buffer& buf, Flow*)
 {
-    // If we enter this function, this packe is some sort of tunnel.
+    // If we enter this function, this packet is some sort of tunnel.
 
     if (!buf.allocate(udp::UDP_HEADER_LEN))
         return false;

@@ -32,7 +32,7 @@
  * This plugin can take two arguments:
  *    printable => only log the "printable" ASCII characters.
  *    all       => log all traffic in the session, logging non-printable
- *                 chars in "\xNN" hexidecimal format
+ *                 chars in "\xNN" hexadecimal format
  *
  * Effect:
  *
@@ -281,7 +281,7 @@ static void DumpSessionData(FILE* fp, Packet* p, SessionData* sessionData)
         {
             if ((*idx > 0x1f && *idx < 0x7f) || *idx == 0x0a || *idx == 0x0d)
             {
-                /* Escape all occurences of '\' */
+                /* Escape all occurrences of '\' */
                 if (*idx == '\\')
                     fputc('\\', fp);
                 fputc(*idx, fp);

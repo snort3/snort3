@@ -79,7 +79,7 @@ FlowHAState::FlowHAState()
     state |= (NEW | NEW_SESSION);
     pending = NONE_PENDING;
 
-    // Set the initial upate time to now+min_session_lifetime
+    // Set the initial update time to now+min_session_lifetime
     packet_gettimeofday(&next_update);
     next_update.tv_usec += min_session_lifetime.tv_usec;
     if (next_update.tv_usec > USEC_PER_SEC)
@@ -380,7 +380,7 @@ static void consume_receive_update_message(HAMessage* msg)
 
         if ( (content_end - msg->cursor + 1) < header->length )
         {
-            ErrorMessage("Consuming HA Update memssage - message too short\n");
+            ErrorMessage("Consuming HA Update message - message too short\n");
             break;
         }
 

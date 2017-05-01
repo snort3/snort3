@@ -20,7 +20,7 @@
 /* sp_isdataat
  *
  * Purpose:
- *    Test a specific byte to see if there is data.  (Basicly, rule keyword
+ *    Test a specific byte to see if there is data.  (Basically, rule keyword
  *    into inBounds)
  *
  * Arguments:

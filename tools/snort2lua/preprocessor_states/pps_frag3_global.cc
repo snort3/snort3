@@ -42,12 +42,12 @@ bool Frag3Global::convert(std::istringstream& data_stream)
 
     table_api.open_table("stream_ip");
 
-    // full options are comma seperated
+    // full options are comma separated
     while (util::get_string(data_stream, keyword, ","))
     {
         bool tmpval = true;
 
-        // suboptions are space seperated
+        // suboptions are space separated
         std::istringstream args_stream(keyword);
         args_stream >> keyword;
 

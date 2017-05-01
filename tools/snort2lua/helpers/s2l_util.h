@@ -43,7 +43,7 @@ const ConvertMap* find_map(const std::vector<const ConvertMap*>&, const std::str
 const std::unique_ptr<const ConvertMap>& find_map(
     const std::vector<std::unique_ptr<const ConvertMap> >&, const std::string& keyword, bool strict_case = true);
 
-// trim from begining
+// trim from beginning
 std::string& ltrim(std::string& s);
 
 // trim from end
@@ -56,27 +56,27 @@ std::string& trim(std::string& s);
 bool file_exists(const std::string& name);
 
 /*
- * Takes in a stream and a string of delimeters. The function will extract the characters
- * from the stream until it hits one of the delimeters.  The substring will be set to the
- * third parameter.  The stream itself will point to the chrachter after the first delim.
+ * Takes in a stream and a string of delimiters. The function will extract the characters
+ * from the stream until it hits one of the delimiters.  The substring will be set to the
+ * third parameter.  The stream itself will point to the character after the first delim.
  *
  * PARAMS:
  *          data_stream - the data stream from which to find a substring.
- *          delimeters - The string of delimeters.
+ *          delimiters - The string of delimiters.
  *          options - The found substring will be place in this parameter.  If the
  *                     stream is empty or no characters have been extracted, then
- *                     this parameter wil be set to an empty string.
+ *                     this parameter will be set to an empty string.
  * RETURNS:
  *          True - when the string is found.
- *          False - whenma substing was unable to be extracted.
+ *          False - when the substring was unable to be extracted.
  */
 bool get_string(std::istringstream& data_stream,
     std::string& option,
-    const std::string delimeters);
+    const std::string delimiters);
 
 /*
  * Returns the rest of the data_streams data as one argument.
- * Usefule when parsing filenames with spaces or other
+ * Useful when parsing filenames with spaces or other
  * characters which can get removed by c++ libraries
  *
  * NO SIDE EFFECTS
@@ -93,7 +93,7 @@ std::string get_rule_option_args(std::istringstream& data_stream);
  *
  * PARAMS:
  *          data_stream - the rule's data stream
- *          opt_name - the option name for which to seach.
+ *          opt_name - the option name for which to search.
  * RETURN:
  *          the opt_names value or an empty string if the opt_name
  *          is not found.
@@ -105,7 +105,7 @@ std::string rule_option_find_val(std::istringstream& data_stream,
 // remove any ']]' and double spaces from this string.
 std::string& sanitize_lua_string(std::string& s);
 
-// find the location of the first space before max_str_lenght.
+// find the location of the first space before max_str_length.
 // if no space exists before max_str_length, return the first space
 // after max_length. Otherwise, return std::string::npos
 std::size_t get_substr_length(std::string s, std::size_t max_length);

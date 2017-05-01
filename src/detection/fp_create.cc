@@ -512,7 +512,7 @@ static int fpAddPortGroupRule(
  *
  * PORT_RULE_MAP -> srcPortGroup,dstPortGroup,genericPortGroup
  * PortGroup     -> pgPatData, pgPatDataUri (acsm objects), (also rule_node lists 1/rule,
- *                  not neeed).  each rule content added to an acsm object has a PMX data ptr
+ *                  not needed).  each rule content added to an acsm object has a PMX data ptr
  *                  associated with it.
  * RULE_NODE     -> iRuleNodeID (used for bitmap object index)
  * PMX           -> RULE_NODE(->otn), PatternMatchData
@@ -531,7 +531,7 @@ static int fpAddPortGroupRule(
  * Implementation:
  *
  *    Each PortList Object will be translated into a PortGroup, then pointed to by the
- *    PortGroup array in the PORT_RULE_MAP for the procotocol
+ *    PortGroup array in the PORT_RULE_MAP for the protocol
  *
  *    protocol = tcp, udp, ip, icmp - one port_rule_map for each of these protocols
  *    { create a port_rule_map
@@ -561,7 +561,7 @@ static int fpAddPortGroupRule(
 /*
 **  Build a Pattern group for the Uri-Content rules in this group
 **
-**  The patterns added for each rule must be suffcient so if we find any of them
+**  The patterns added for each rule must be sufficient so if we find any of them
 **  we proceed to fully analyze the OTN and RTN against the packet.
 **
 */
@@ -727,7 +727,7 @@ static int fpGetFinalPattern(
     // pattern matcher as is since the content won't be evaluated as a rule
     // option.
     //
-    // 2. negated contents since truncating them could inadvertantly
+    // 2. negated contents since truncating them could inadvertently
     // disable evaluation of a rule - the shorter pattern may be found,
     // while the unaltered pattern may not be found, disabling inspection
     // of a rule we should inspect.
@@ -767,7 +767,7 @@ static int fpGetFinalPattern(
 
             if (bytes < (int)pmd->pattern_size)
             {
-                /* The patten is all '\0' - use the whole pattern
+                /* The pattern is all '\0' - use the whole pattern
                  * XXX This potentially hurts the performance boost
                  * gained by stripping leading zeros */
                 if (bytes == 0)
@@ -817,7 +817,7 @@ static void fpDeletePMX(void* pv)
 }
 
 /*
- *  Create the PortGroup for these PortObject2 entitiies
+ *  Create the PortGroup for these PortObject2 entities
  *
  *  This builds the 1st pass multi-pattern state machines for
  *  content and uricontent based on the rules in the PortObjects
@@ -952,7 +952,7 @@ static int fpCreatePortTablePortGroups(
  *  Create port group objects for all port tables
  *
  *  note: any ports are standard PortObjects not PortObject2s so we have to
- *  uprade them for the create port group function
+ *  upgrade them for the create port group function
  */
 static int fpCreatePortGroups(SnortConfig* sc, RulePortTables* p)
 {
@@ -1169,7 +1169,7 @@ static void fpBuildServicePortGroupByServiceOtnList(
  * For each service we create a PortGroup based on the otn's defined to
  * be applicable to that service by the metadata option.
  *
- * Then we lookup the protocol/srvc oridinal in the target-based area
+ * Then we lookup the protocol/srvc ordinal in the target-based area
  * and assign the PortGroup for the srvc to it.
  *
  * spg - service port group (lookup should be by service id/tag)

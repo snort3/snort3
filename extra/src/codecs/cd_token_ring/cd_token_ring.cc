@@ -130,7 +130,7 @@ bool TrCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         /*
          * DSAP != SSAP != 0xAA .. either we are having frame which doesn't
          * carry IP datagrams or has RIF information present. We assume
-         * lattest ...
+         * the latter ...
          */
 
         if (cap_len < (sizeof(token_ring::Trh_hdr) + sizeof(token_ring::Trh_llc) +

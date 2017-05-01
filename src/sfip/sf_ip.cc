@@ -396,7 +396,7 @@ void snort_inet_ntop(int family, const void* ip_raw, char* buf, int bufsize)
     if (!ip_raw || !buf ||
         (family != AF_INET && family != AF_INET6) ||
         /* Make sure if it's IPv6 that the buf is large enough. */
-        /* Need atleast a max of 8 fields of 4 bytes plus 7 for colons in
+        /* Need at least a max of 8 fields of 4 bytes plus 7 for colons in
          * between.  Need 1 more byte for null. */
         (family == AF_INET6 && bufsize < INET6_ADDRSTRLEN) ||
         /* Make sure if it's IPv4 that the buf is large enough.

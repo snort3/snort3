@@ -537,7 +537,7 @@ static PortObject* ParsePortListTcpUdpPort(
         {
             DebugFormat(DEBUG_PORTLISTS,
                 "parser.c: already have '%s' as a PortObject - "
-                "calling PortObjectFree(portbject) line=%d\n",port_str,__LINE__);
+                "calling PortObjectFree(portobject) line=%d\n",port_str,__LINE__);
             PortObjectFree(portobject);
             portobject = pox;
         }
@@ -599,7 +599,7 @@ static int ParsePortList(
     DebugFormat(DEBUG_PORTLISTS,"Rule-PortVar Parsed: %s \n",port_str);
 
     /* !ports - port lists can be mixed 80:90,!82,
-    * so the old NOT flag is depracated for port lists
+    * so the old NOT flag is deprecated for port lists
     */
 
     /* set up any any flags */
@@ -1220,9 +1220,9 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
         }
     }
 
-    /* The IPs in the test node get free'd in ProcessHeadNode if there is
-     * already a matching RTN.  The portobjects will get free'd when the
-     * port var table is free'd */
+    /* The IPs in the test node get freed in ProcessHeadNode if there is
+     * already a matching RTN.  The portobjects will get freed when the
+     * port var table is freed */
     RuleTreeNode* new_rtn = ProcessHeadNode(sc, &rtn, rtn.listhead);
 
     addRtnToOtn(otn, new_rtn);
@@ -1237,7 +1237,7 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
         if ( mergeDuplicateOtn(sc, otn_dup, otn, new_rtn) )
         {
             /* We are keeping the old/dup OTN and trashing the new one
-             * we just created - it's free'd in the remove dup function */
+             * we just created - it's freed in the remove dup function */
             return nullptr;
         }
     }

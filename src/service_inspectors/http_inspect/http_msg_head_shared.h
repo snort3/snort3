@@ -60,7 +60,7 @@ protected:
     ~HttpMsgHeadShared();
     // Get the next item in a comma-separated header value and convert it to an enum value
     static int32_t get_next_code(const Field& field, int32_t& offset, const StrCode table[]);
-    // Do a case insensitve search for "boundary=" in a Field
+    // Do a case insensitive search for "boundary=" in a Field
     static bool boundary_present(const Field& field);
 
 #ifdef REG_TEST

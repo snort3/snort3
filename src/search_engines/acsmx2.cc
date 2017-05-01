@@ -30,7 +30,7 @@
 **
 **   Reference - Efficient String matching: An Aid to Bibliographic Search
 **               Alfred V Aho and Margaret J Corasick
-**               Bell Labratories
+**               Bell Laboratories
 **               Copyright (C) 1975 Association for Computing Machinery,Inc
 **
 **   +++
@@ -54,7 +54,7 @@
 **   only use 1/4 of what we use to. The caching performance is better in
 **   pure benchmarking tests, but does not show overall improvement in Snort.
 **   Unfortunately, once a pattern match test has been performed Snort moves
-**   on to doing many other things before we get back to a patteren match test,
+**   on to doing many other things before we get back to a pattern match test,
 **   so the cache is voided.
 **
 **   This versions has better caching performance characteristics, reduced
@@ -89,7 +89,7 @@
 **    You can use any of the 4 storage modes above -full, sparse, banded,
 **    sparse-bands, set the structure directly.
 **    For applications where you have lots of data and a pattern set to
-**    search, this version was up to 3x faster than the previous verion, due
+**    search, this version was up to 3x faster than the previous version, due
 **    to caching performance. This cannot be fully realized in Snort yet,
 **    but other applications may have better caching opportunities.
 **    Snort only needs to use the banded or full storage.
@@ -651,7 +651,7 @@ static void Build_NFA(ACSM_STRUCT2* acsm)
                 FailState[s] = next;
 
                 /*
-                 *  Copy 'next'states MatchList to 's' states MatchList,
+                 *  Copy 'next' states MatchList to 's' states MatchList,
                  *  we copy them so each list can be AC_FREE'd later,
                  *  else we could just manipulate pointers to fake the copy.
                  */
@@ -777,7 +777,7 @@ static int Conv_List_To_Full(ACSM_STRUCT2* acsm)
 *                            1-1       fmt(0-full,1-sparse,2-banded,3-sparsebands)
 *                            2-2       bool match flag (indicates this state has pattern matches)
 *                            3-3       sparse state count ( # of input/next-state pairs )
-*                            4-3+2*cnt 'input,next-state' pairs... each sizof(acstate_t)
+*                            4-3+2*cnt 'input,next-state' pairs... each sizeof(acstate_t)
 *
 *   above example case yields:
 *     Full Format:    0, 1 7 0 0 0 3 0 0 0 0 0 0 0 0 0 0 ...
@@ -1183,7 +1183,7 @@ static inline int _acsmCompile2(ACSM_STRUCT2* acsm)
         ACSM2_MEMORY_TYPE__TRANSTABLE);
     MEMASSERT(acsm->acsmTransTable, "_acsmCompile2");
 
-    /* Alloc a MatchList table - this has a lis tof pattern matches for each state, if any */
+    /* Alloc a MatchList table - this has a list of pattern matches for each state, if any */
     acsm->acsmMatchList =
         (ACSM_PATTERN2**)AC_MALLOC(sizeof(ACSM_PATTERN2*) * acsm->acsmMaxStates,
         ACSM2_MEMORY_TYPE__MATCHLIST);
@@ -2062,7 +2062,7 @@ int acsmPrintDetailInfo2(ACSM_STRUCT2* acsm)
 }
 
 /*
- *   Global sumary of all info and all state machines built during this run
+ *   Global summary of all info and all state machines built during this run
  *   This feeds off of the last pattern groupd built within snort,
  *   all groups use the same format, state size, etc..
  *   Combined with accrued stats, we get an average picture of things.

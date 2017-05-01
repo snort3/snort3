@@ -21,7 +21,7 @@
  * Adam Keeton
  *
  * 09/26/06
- * This file is litterally unified.c converted to write unified2
+ * This file is literally unified.c converted to write unified2
  *
  */
 
@@ -611,7 +611,7 @@ static void Unified2Write(uint8_t* buf, uint32_t buf_len, Unified2Config* config
         ((ffstatus = fflush(u2.stream)) != 0))
     {
         /* errno is saved just to avoid other intervening calls
-         * (e.g. ErrorMessage) potentially reseting it to something else. */
+         * (e.g. ErrorMessage) potentially resetting it to something else. */
         int error = errno;
         int max_retries = 3;
 

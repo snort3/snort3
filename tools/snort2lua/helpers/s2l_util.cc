@@ -164,16 +164,16 @@ std::size_t get_substr_length(std::string str, std::size_t max_length)
 
 bool get_string(std::istringstream& stream,
     std::string& option,
-    const std::string delimeters)
+    const std::string delimiters)
 {
-    if (delimeters.empty() || !stream.good())
+    if (delimiters.empty() || !stream.good())
     {
         option = std::string();
         return false;
     }
-    else if (delimeters.size() == 1)
+    else if (delimiters.size() == 1)
     {
-        std::getline(stream, option, delimeters[0]);
+        std::getline(stream, option, delimiters[0]);
         trim(option);
         return !option.empty();
     }
@@ -186,18 +186,18 @@ bool get_string(std::istringstream& stream,
         while (stream.good() && option.empty())
         {
             pos = stream.tellg();
-            std::getline(stream, option, delimeters[0]);
+            std::getline(stream, option, delimiters[0]);
         }
 
-        // find the first non-delimeter charachter
-        const std::size_t first_char = option.find_first_not_of(delimeters);
+        // find the first non-delimiter character
+        const std::size_t first_char = option.find_first_not_of(delimiters);
 
-        // if there are no characters between a delimeter, empty string. return false
+        // if there are no characters between a delimiter, empty string. return false
         if (first_char == std::string::npos)
             return false;
 
-        // find the first delimeter after the first non-delimeter
-        std::size_t first_delim = option.find_first_of(delimeters, first_char);
+        // find the first delimiter after the first non-delimiter
+        std::size_t first_delim = option.find_first_of(delimiters, first_char);
 
         if (first_delim == std::string::npos)
             first_delim = option.size();    // set value to take proper substr

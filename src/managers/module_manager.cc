@@ -457,7 +457,7 @@ static bool set_value(const char* fqn, Value& v)
         bool found = set_var(fqn, v);
 
         if ( !found && !ignored(fqn) )
-            ParseWarning(WARN_SYMBOLS, "uknown symbol %s", fqn);
+            ParseWarning(WARN_SYMBOLS, "unknown symbol %s", fqn);
         return found;
     }
 

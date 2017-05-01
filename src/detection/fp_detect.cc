@@ -234,7 +234,7 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
 **    Add and Event to the appropriate Match Queue: Alert, Pass, or Log.
 **    This allows us to find multiple events per packet and pick the 'best'
 **    one.  This function also allows us to change the order of alert,
-**    pass, and log signatures by cacheing them for decision later.
+**    pass, and log signatures by caching them for decision later.
 **
 **    IMPORTANT NOTE:
 **    fpAddMatch must be called even when the queue has been maxed
@@ -418,7 +418,7 @@ static int rule_tree_match(
     if (eval_data.flowbit_failed)
         return -1;
 
-    /* If this is for an IP rule set, evalute the rules from
+    /* If this is for an IP rule set, evaluate the rules from
      * the inner IP offset as well */
     if (eval_data.p->packet_flags & PKT_IP_RULE)
     {
@@ -433,7 +433,7 @@ static int rule_tree_match(
             const uint8_t* tmp_data = eval_data.p->data;
             uint16_t tmp_dsize = eval_data.p->dsize;
 
-            /* clear so we dont keep recursing */
+            /* clear so we don't keep recursing */
             eval_data.p->packet_flags &= ~PKT_IP_RULE;
             eval_data.p->packet_flags |= PKT_IP_RULE_2ND;
 
@@ -627,7 +627,7 @@ static inline int fpSessionAlerted(Packet* p, const OptTreeNode* otn)
 **    flag causes any drop/sdrop/reject rules to be loaded as alert rules.
 **    The default has been to ignore them on parsing.
 **
-**    If this is less than clear, herese the $.02 version:
+**    If this is less than clear, here's the $.02 version:
 **    default order -> pass drop alert log ( --alert-before-pass reverts
 **    to -> drop alert pass log ) the 1st action-type of events in the rule
 **    ordering to be seen gets logged by default the --flush-all-events
@@ -662,7 +662,7 @@ static inline int fpFinalSelectEvent(OTNX_MATCH_DATA* o, Packet* p)
     for ( i = 0; i < o->iMatchInfoArraySize; i++ )
     {
         /* bail if were not dumping events in all the action groups,
-         * and we've alresady got some events */
+         * and we've already got some events */
         if (!SnortConfig::process_all_events() && (tcnt > 0))
             return 1;
 
@@ -671,7 +671,7 @@ static inline int fpFinalSelectEvent(OTNX_MATCH_DATA* o, Packet* p)
             /*
              * We must always sort so if we que 8 and log 3 and they are
              * all from the same action group we want them sorted so we get
-             * the highest 3 in priority, priority and lenght sort do NOT
+             * the highest 3 in priority, priority and length sort do NOT
              * take precedence over 'alert drop pass ...' ordering.  If
              * order is 'drop alert', and we log 3 for drop alerts do not
              * get logged.  IF order is 'alert drop', and we log 3 for
@@ -951,7 +951,7 @@ static int fp_search(
 **
 **  FORMAL OUTPUTS
 **    int - 0 for failed pattern match
-**          1 for sucessful pattern match
+**          1 for successful pattern match
 **
 */
 static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
@@ -1158,7 +1158,7 @@ static inline bool fpEvalHeaderSvc(Packet* p, OTNX_MATCH_DATA* omd, int proto)
             "file:%p\n",p->ptrs.sp,p->ptrs.dp,proto_ordinal,proto,(void*)svc,(void*)file);
     }
     // FIXIT-P put alert service rules with file data fp in alert file group and
-    // verfiy ports and service during rule eval to avoid searching file data 2x.
+    // verify ports and service during rule eval to avoid searching file data 2x.
     int check_ports = (proto == SNORT_PROTO_USER) ? 2 : 1;
 
     if ( file )

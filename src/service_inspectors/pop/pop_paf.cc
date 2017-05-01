@@ -162,7 +162,7 @@ static inline int valid_response(const uint8_t data)
 
 /*
  * Client PAF calls this command to set the server's state.  This is the
- * function which ensure's the server know the correct expected
+ * function which ensures the server know the correct expected
  * DATA
  */
 static inline void set_server_state(Flow* ssn, PopExpectedResp state)
@@ -231,7 +231,7 @@ static bool find_data_end_multi_line(PopPafData* pfdata, const uint8_t ch, bool 
  * PARAMS:
  *
  * RETURNS:
- *         0 - if terminatino sequence not found
+ *         0 - if termination sequence not found
  *         1 - if termination sequence found
  */
 static inline bool find_data_end_single_line(PopPafData* pfdata, const uint8_t ch, bool client)

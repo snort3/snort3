@@ -189,7 +189,7 @@ void TableApi::create_append_data(std::string& fqn, Table*& t)
     // I need to iterate over the stack of open tables.  However,
     // stack's don't allow iteration without popping.  So, rather
     // than change the underlying stack data structure, I am going
-    // to just copy the entire data structure.  Innedficciant, but
+    // to just copy the entire data structure.  Inefficient, but
     // not pressed for speed here.
     std::stack<Table*> copy(open_tables);
 

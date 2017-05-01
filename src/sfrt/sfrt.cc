@@ -34,7 +34,7 @@
  * then more specific information will be written into the routing tables
  * from RNA.  Ideally, information will only move from less specific to more
  * specific.  If a more general information is to overwrite existing entries,
- * the table should be free'ed and rebuilt.
+ * the table should be freed and rebuilt.
  *
  *
  * Implementation:
@@ -47,13 +47,13 @@
  * Inserts are performed by specifying a CIDR and a pointer to its associated
  * data.  Since a new routing table entry may overwrite previous entries,
  * a flag selects whether the insert favors the most recent or favors the most
- * specific.  Favoring most specific should be the default behvior.  If
+ * specific.  Favoring most specific should be the default behavior.  If
  * the user wishes to overwrite routing entries with more general data, the
  * table should be flushed, rather than using favor-most-recent.
  *
  * Before modifying the routing or data tables, the insert function performs a
- * lookup on the CIDR-to-be-insertted.  If no entry or an entry *of differing
- * bit length* is found, the data is insertted into the data table, and its
+ * lookup on the CIDR-to-be-inserted.  If no entry or an entry *of differing
+ * bit length* is found, the data is inserted into the data table, and its
  * index is used for the new routing table entry.  If an entry is found that
  * is as specific as the new CIDR, the index stored points to where the new
  * data is written into the data table.
@@ -109,7 +109,7 @@ table_t* sfrt_new(char table_type, char ip_type, long data_size, uint32_t mem_ca
     table_t* table = (table_t*)snort_alloc(sizeof(table_t));
 
     /* If this limit is exceeded, there will be no way to distinguish
-     * between pointers and indeces into the data table.  Only
+     * between pointers and indices into the data table.  Only
      * applies to DIR-n-m. */
 #if SIZEOF_LONG_INT == 8
     if (data_size >= 0x800000000000000)

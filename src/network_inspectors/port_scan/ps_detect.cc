@@ -835,7 +835,7 @@ int PortScan::ps_tracker_update_tcp(PS_PKT* ps_pkt, PS_TRACKER* scanner,
             }
         }
         /*
-        **  We only get here on the server's response to the intial
+        **  We only get here on the server's response to the initial
         **  client connection.
         **
         **  That's why we use the sp, because that's the port that is
@@ -1070,7 +1070,7 @@ int PortScan::ps_tracker_update_icmp(
 **    ps_tracker_update::
 */
 /**
-**  At this point, we should only be looking at tranport protocols
+**  At this point, we should only be looking at transport protocols
 **  that we want to.  For instance, if we aren't doing UDP portscans
 **  then we won't see UDP packets here because they were ignored.
 **

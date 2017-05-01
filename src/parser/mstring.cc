@@ -38,7 +38,7 @@ static char* mSplitAddTok(const char*, const int, const char*, const char);
  *  char *
  *      The string to be split
  *  char *
- *      A string of token seperaters
+ *      A string of token separators
  *  int
  *      The maximum number of tokens to be returned. A value
  *      of 0 means to get them all.
@@ -46,7 +46,7 @@ static char* mSplitAddTok(const char*, const int, const char*, const char);
  *      Place to store the number of tokens returned
  *  char
  *      The "escape metacharacter", treat the character after
- *      this character as a literal and "escape" a seperator.
+ *      this character as a literal and "escape" a separator.
  *
  *  Note if max_toks is reached, the last tok in the returned
  *  token array will possibly have separator characters in it.
@@ -287,7 +287,7 @@ char** mSplit(const char* str, const char* sep_chars, const int max_toks,
     }
 
     /* Last character was not a separator character so we've got
-     * one more tok.  Unescape escaped sepatator charactors */
+     * one more tok.  Unescape escaped separator characters */
     if (toks != toks_alloc)
     {
         retstr = (char**)snort_calloc(cur_tok + 1, sizeof(char*));

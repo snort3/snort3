@@ -171,7 +171,7 @@ static const luaL_Reg methods[] =
         {
             Lua::Args args(L);
 
-            // FIXIT-M this hacky arg offset stuff is for backwards compatibilty
+            // FIXIT-M this hacky arg offset stuff is for backwards compatibility
             // it will be removed in later updates
 
             int off = 0;

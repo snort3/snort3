@@ -88,7 +88,7 @@ struct IP6Hdr
     inline uint32_t flow() const
     { return (uint16_t)((ntohl(ip6_vtf) & 0x000FFFFF) >> 20); }
 
-    // becaise Snort expects this in terms of 32 bit words.
+    // because Snort expects this in terms of 32 bit words.
     inline uint8_t hlen() const
     { return IP6_HEADER_LEN; }
 
@@ -223,7 +223,7 @@ struct IP6Frag
     { return ip6f_ident; }
 };
 
-// Reflects the recomended IPv6 order in RFC 2460 4.1
+// Reflects the recommended IPv6 order in RFC 2460 4.1
 constexpr int IPV6_ORDER_MAX = 7;
 inline int IPV6IdExtensionOrder(const ProtocolId prot_id)
 {

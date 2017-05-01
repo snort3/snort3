@@ -56,7 +56,7 @@ table_flat_t* sfrt_flat_new(char table_flat_type, char ip_type,  long data_size,
     table = (table_flat_t*)(&base[table_ptr]);
 
     /* If this limit is exceeded, there will be no way to distinguish
-     * between pointers and indeces into the data table.  Only
+     * between pointers and indices into the data table.  Only
      * applies to DIR-n-m. */
 
 #if SIZEOF_LONG_INT == 8

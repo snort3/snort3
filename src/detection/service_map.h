@@ -52,7 +52,7 @@ void ServicePortGroupMapFree(srmm_table_t*);
 void fpPrintServicePortGroupSummary(SnortConfig*, srmm_table_t*);
 int fpCreateServiceMaps(SnortConfig*);
 
-//  Service/Protocol Oridinal To PortGroup table
+//  Service/Protocol Ordinal To PortGroup table
 typedef std::vector<PortGroup*> PortGroupVector;
 
 struct sopg_table_t

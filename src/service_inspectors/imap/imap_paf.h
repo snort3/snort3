@@ -33,7 +33,7 @@ struct ImapDataInfo
     const char* next_letter;  // The current command in fetch
     bool found_len;
     uint32_t length;
-    bool esc_nxt_char;        // true if the next charachter has been escaped
+    bool esc_nxt_char;        // true if the next character has been escaped
 };
 
 // States for IMAP PAF

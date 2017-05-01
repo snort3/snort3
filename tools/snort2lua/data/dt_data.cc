@@ -69,7 +69,7 @@ std::string DataApi::translate_variable(const std::string& var_name)
  * I copied the Snort version of ExpandVars and made some
  * minor adjustments.
  *
- * Given a Snort style string to expand, this funcion will return
+ * Given a Snort style string to expand, this function will return
  * the expanded string
  */
 std::string DataApi::expand_vars(const std::string& string)

@@ -179,7 +179,7 @@ bool TcpStreamSession::is_sequenced(uint8_t dir)
     return true;
 }
 
-/* This will falsely return SSN_MISSING_BEFORE on the first reassembed
+/* This will falsely return SSN_MISSING_BEFORE on the first reassembled
  * packet if reassembly for this direction was set mid-session */
 uint8_t TcpStreamSession::missing_in_reassembled(uint8_t dir)
 {

@@ -23,7 +23,7 @@
  * Purpose:
  *
  * This preprocessor normalizes the RPC requests from remote machines by
- * converting all fragments into one continous stream.
+ * converting all fragments into one continuous stream.
  * This is very useful for doing things like defeating hostile attackers
  * trying to stealth themselves from IDSs by fragmenting the request so the
  * string 0186A0 is broken up.
@@ -702,7 +702,7 @@ static int ConvertRPC(RpcDecodeConfig* rconfig, RpcSsnData* rsdata, Packet* p)
     uint8_t* data_end;       /* points to the end of the payload for loop control */
     uint32_t length;          /* length of current fragment */
     int last_fragment = 0; /* have we seen the last fragment sign? */
-    uint32_t decoded_len; /* our decoded length is always atleast a 0 byte header */
+    uint32_t decoded_len; /* our decoded length is always at least a 0 byte header */
     uint32_t fraghdr;   /* Used to store the RPC fragment header data */
     int fragcount = 0;   /* How many fragment counters have we seen? */
     size_t decode_buf_rem = sizeof(DecodeBuffer.data);
@@ -769,7 +769,7 @@ static int ConvertRPC(RpcDecodeConfig* rconfig, RpcSsnData* rsdata, Packet* p)
     decoded_len = 4;
     decode_buf_rem -= 4;
 
-    /* always make sure that we have enough data to process atleast
+    /* always make sure that we have enough data to process at least
      * the header and that we only process at most, one fragment
      */
 
@@ -833,8 +833,7 @@ static int ConvertRPC(RpcDecodeConfig* rconfig, RpcSsnData* rsdata, Packet* p)
         else if ((data_index + length) > data_end)
         {
             DebugMessage(DEBUG_RPC,
-                "returning LARGE_FRAGSIZE"
-                "since we'd read past our end\n");
+                "returning LARGE_FRAGSIZE since we'd read past our end\n");
             return RPC_LARGE_FRAGSIZE;
         }
         else
@@ -890,7 +889,7 @@ static int ConvertRPC(RpcDecodeConfig* rconfig, RpcSsnData* rsdata, Packet* p)
 //-------------------------------------------------------------------------
 // splitter stuff:
 //
-// see above commments on MIN_CALL_BODY_SZ
+// see above comments on MIN_CALL_BODY_SZ
 // why flush_point == 28 instead of 32 IDK
 //
 // we don't set a flush point to flush_point (= 28 above) because that will
@@ -952,7 +951,7 @@ void RpcDecode::show(SnortConfig*)
 
 /*
  * Purpose: Inspects the packet's payload for fragment records and
- *          converts them into one infragmented record.
+ *          converts them into one unfragmented record.
  */
 void RpcDecode::eval(Packet* p)
 {
@@ -965,7 +964,7 @@ void RpcDecode::eval(Packet* p)
     // In this case we don't look at server packets.
     // There is the case were stream configuration requires a 3 way handshake.
     // If no 3 way, then the packet flags won't be set, so don't look at it
-    // since we won't be able to determeine who's the client and who's the
+    // since we won't be able to determine who's the client and who's the
     // server.
     if ( !p->is_from_client() )
         return;

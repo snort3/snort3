@@ -29,19 +29,19 @@
 #include "data/dt_rule_api.h"
 
 // FIXIT-L change name to data_api
-// FIXIT-L remove all unecessary includes
+// FIXIT-L remove all unnecessary includes
 // FIXIT-L set_default_print name should be change to print_all
 
 // As a heads up to whoever reads this file.  This one API is really three
 // distinct API's rolled into one.  One API for rules, one api for misc
 // data (variables, includes, etcs), one api for creating tables. Hoever,
-// the reason they are together is becasue this class is not static, and I
+// the reason they are together is because this class is not static, and I
 // did not want to be pass three pointers to the three API's when creating
-// new convesion states.  There are comments in in all caps which show the
-// seperate the sections.
+// new conversion states.  There are comments in in all caps which show the
+// separate the sections.
 
 // The first section of this file is really DataApi creation and
-// initialization, and adding miscelaneous objects to the DataApi data.
+// initialization, and adding miscellaneous objects to the DataApi data.
 // The second section is for creating tables and their options.  The third
 // section is for creating rules.
 
@@ -89,7 +89,7 @@ public:
     bool empty() const
     { return vars.empty() && includes.empty(); }
 
-    // functions specifically usefull when parsing includes.
+    // functions specifically useful when parsing includes.
     // allows for easy swapping of data.  These two functions
     // swap data which will be printed in 'print_rules()' and
     // 'print_conf_options()'
@@ -103,7 +103,7 @@ public:
     bool add_variable(std::string name, std::string value);
     // add a Snort style include file
     bool add_include_file(std::string name);
-    // add a 'comment' to the Lua file. shoudl ONLY be used when
+    // add a 'comment' to the Lua file. should ONLY be used when
     // adding a comment from the original Snort file.
     void add_comment(std::string);
     // Call when failed to convert a line.

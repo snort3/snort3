@@ -121,7 +121,7 @@ bool RuleType::convert(std::istringstream& stream)
 
                 if (map)
                 {
-                    // using smart pointer to gaurantee new Map is deleted
+                    // using smart pointer to guarantee new Map is deleted
                     const std::vector<std::unique_ptr<const ConvertMap> >& ruletype_map =
                         ruletype_api;
                     std::unique_ptr<ConvertMap> new_map(new ConvertMap());

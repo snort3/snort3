@@ -151,7 +151,7 @@ static void printInfoElements(GTP_IEData* info_elements, GTPMsg* msg)
  *  GTP_Ret
  *      true if we were able to successfully parse the
  *          port list.
- *      false if an error occured in parsing the port list.
+ *      false if an error occurred in parsing the port list.
  *
  ********************************************************************/
 static int gtp_processInfoElements(GTPMsg* msg, const uint8_t* buff, uint16_t len)

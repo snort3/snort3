@@ -22,7 +22,7 @@
 *
 * Prime number calculation via Table lookups.
 *
-* This was implemented for use with the hasing functions
+* This was implemented for use with the hashing functions
 * in sfghash, and sfxhash.
 *
 */

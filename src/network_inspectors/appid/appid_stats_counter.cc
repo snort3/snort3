@@ -17,7 +17,7 @@
 //--------------------------------------------------------------------------
 
 // appid_module.cc author Steve Chew <stechew@cisco.com>
-// Created on: Auguest 18, 2016
+// Created on: August 18, 2016
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

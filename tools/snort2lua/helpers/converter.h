@@ -61,7 +61,7 @@ public:
         std::string rules,         // defaults to output_file
         std::string errors);         // defaults to output_file
 
-    // parse a file without creating an entirely new Lua configuation
+    // parse a file without creating an entirely new Lua configuration
     int parse_include_file(std::string input_file);
 
     // set the next parsing state.

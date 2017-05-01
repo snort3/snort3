@@ -38,7 +38,7 @@ struct WifiHdr
     uint8_t addr4[6];
 };
 
-/* Frame type/subype combinations with version = 0
+/* Frame type/subtype combinations with version = 0
   ** FRAME TYPE *****  HEX ****  SUBTYPE TYPE  DESCRIPT ********/
 #define WLAN_TYPE_MGMT_ASREQ   0x0      /* 0000    00  Association Req */
 #define WLAN_TYPE_MGMT_ASRES   0x10     /* 0001    00  Assocaition Res */
@@ -54,7 +54,7 @@ struct WifiHdr
 
 #define WLAN_TYPE_CONT_PS      0xa4     /* 1010    01  Power Save      */
 #define WLAN_TYPE_CONT_RTS     0xb4     /* 1011    01  Request to send */
-#define WLAN_TYPE_CONT_CTS     0xc4     /* 1100    01  Clear to sene   */
+#define WLAN_TYPE_CONT_CTS     0xc4     /* 1100    01  Clear to send   */
 #define WLAN_TYPE_CONT_ACK     0xd4     /* 1101    01  Acknowledgement */
 #define WLAN_TYPE_CONT_CFE     0xe4     /* 1110    01  Cont. Free end  */
 #define WLAN_TYPE_CONT_CFACK   0xf4     /* 1111    01  CF-End + CF-Ack */

@@ -399,7 +399,7 @@ static int parse_rtmp_message(const uint8_t** data_inout, uint16_t* size_inout,
         }
         else
         {
-            /* Something we dont care about... */
+            /* Something we don't care about... */
             ADVANCE_DATA(field_len);
             if (!skip_property_value(&data, &size))
                 goto parse_rtmp_message_fail;

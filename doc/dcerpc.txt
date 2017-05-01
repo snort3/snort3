@@ -170,12 +170,12 @@ effectively disabling SMB file inspection in rules.  An argument of 0 to
  
 ==== TCP
 
-dce_tcp inspector supports defragementation, reassembling, and policy that is 
+dce_tcp inspector supports defragmentation, reassembling, and policy that is 
 similar to SMB.
 
 ==== UDP
 
-dce_udp is a very simple inspector that only supports defragementation
+dce_udp is a very simple inspector that only supports defragmentation
 
 ==== Rule Options
 

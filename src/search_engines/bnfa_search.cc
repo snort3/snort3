@@ -50,7 +50,7 @@
 **   word 3+ : transition word =  input<<24 |  next-state-index
 **   input : 8 bit character, input to state machine from search text
 **   next-state-index: 24 bits for index of next state
-**     (if we reallly need 16M states, we can add a state->index lookup array)
+**     (if we really need 16M states, we can add a state->index lookup array)
 **     ...repeat for each state ...
 **
 **   * if a state is empty it has words 1 and 2, but no transition words.
@@ -82,7 +82,7 @@
 ** a binary search if there are more than 5 elements in the state to test for
 ** a match.  This allows us to use a simple sparse memory design with an
 ** acceptable worst case search scenario.  The binary search over 256 elements
-** is limtied to a max of 8 tests.  The zero'th state may use a full 256 state
+** is limited to a max of 8 tests.  The zero'th state may use a full 256 state
 ** array, so a quick index lookup provides the next state transition.  The
 ** zero'th state is generally visited much more than other states.
 **
@@ -99,7 +99,7 @@
 ** instruction pipelining.  Aren't we all.  To this end, the number of
 ** patterns, length of search text, and cpu cache L1,L2,L3 all affect
 ** performance. The relative performance of the sparse and full format NFA and
-** DFA varies as you vary the pattern charactersitics,and search text length,
+** DFA varies as you vary the pattern characteristics, and search text length,
 ** but strong performance trends are present and stable.
 **
 **
@@ -116,14 +116,14 @@
 **
 ** Reference - Efficient String matching: An Aid to Bibliographic Search
 **             Alfred V Aho and Margaret J Corasick
-**             Bell Labratories
+**             Bell Laboratories
 **             Copyright (C) 1975 Association for Computing Machinery,Inc
 **
 ** 12/4/06 - man - modified summary
 ** 6/26/07 - man - Added last_match tracking, and accounted for nocase/case by
-**                 preseting the last match state, and reverting if we fail the
+**                 presetting the last match state, and reverting if we fail the
 **                 case memcmp test for any rule in the states matching rule
-**                 list.  The states in the defaul matcher represent either
+**                 list.  The states in the default matcher represent either
 **                 case or nocase states, so they are dual mode, that makes
 **                 this a bit tricky.  When we sue the pure exact match, or
 **                 pure don't care matching routines, we just track the last
@@ -132,7 +132,7 @@
 ** 01/2008 - man - added 2 phase pattern matcher using a pattern match queue.
 **                 Text is scanned and matching states are queued, duplicate
 **                 matches are dropped, and after the complete buffer scan the
-**                 queued matches are processed.  This improves cacheing
+**                 queued matches are processed.  This improves caching
 **                 performance, and reduces duplicate rule processing.  The
 **                 queue is limited in size and is flushed if it becomes full
 **                 during the scan.  This allows simple insertions.  Tracking
@@ -650,7 +650,7 @@ static int KcontainsJ(bnfa_trans_node_t* tk, bnfa_trans_node_t* tj)
     bnfa_state_t full[BNFA_MAX_ALPHABET_SIZE];
 
     if ( !_bnfa_conv_node_to_full(tk,full)  )
-        return 1; /* emtpy state */
+        return 1; /* empty state */
 
     while ( tj )
     {
@@ -758,7 +758,7 @@ static int _bnfa_build_nfa(bnfa_struct_t* bnfa)
             FailState[s] = next;
 
             /*
-            *  Copy 'next'states MatchList into 's' states MatchList,
+            *  Copy 'next' states MatchList into 's' states MatchList,
             *  we just create a new list nodes, the patterns are not copied.
             */
             for ( mlist = MatchList[next]; mlist; mlist = mlist->next)
@@ -789,7 +789,7 @@ static int _bnfa_build_nfa(bnfa_struct_t* bnfa)
 
 #ifdef ALLOW_NFA_FULL
 /*
-*  Conver state machine to full format
+*  Convert state machine to full format
 */
 static int _bnfa_conv_list_to_full(bnfa_struct_t* bnfa)
 {
@@ -826,7 +826,7 @@ static int _bnfa_conv_list_to_full(bnfa_struct_t* bnfa)
 *  The transition and failure states are replaced with the start index of
 *  transition state, this eliminates the NextState[] lookup....
 *
-*  The compaction of multiple arays into a single array reduces the total
+*  The compaction of multiple arrays into a single array reduces the total
 *  number of states that can be handled since the max index is 2^24-1,
 *  whereas without compaction we had 2^24-1 states.
 */
@@ -917,7 +917,7 @@ static int _bnfa_conv_list_to_csparse_array(bnfa_struct_t* bnfa)
 
         ps_index++;  /* skip past state word */
 
-        /* conver state 'k' to full format */
+        /* convert state 'k' to full format */
         _bnfa_list_conv_row_to_full(bnfa, (bnfa_state_t)k, full);
 
         /* count transitions */
@@ -2135,8 +2135,8 @@ void bnfaAccumInfo(bnfa_struct_t* p)
 *  sindex - state tracker, set value to zero to reset the state machine,
 *            zero should be the value passed in on the 1st buffer or each buffer
 *           that is to be analyzed on its own, the state machine updates this
-*            during searches. This allows for sequential buffer searchs without
-*            reseting the state machine. Save this value as returned from the
+*            during searches. This allows for sequential buffer searches without
+*            resetting the state machine. Save this value as returned from the
 *            previous search for the next search.
 *
 *  returns

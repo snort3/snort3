@@ -37,7 +37,7 @@ struct SFHASHFCN;
 
 struct SFXHASH_NODE
 {
-    struct SFXHASH_NODE* gnext; // global node list - used for ageing nodes
+    struct SFXHASH_NODE* gnext; // global node list - used for aging nodes
     struct SFXHASH_NODE* gprev;
     struct SFXHASH_NODE* next;  // row node list
     struct SFXHASH_NODE* prev;
@@ -73,7 +73,7 @@ struct SFXHASH
     unsigned find_success;
 
     SFXHASH_NODE* ghead, * gtail;  // global - root of all nodes allocated in table
-    SFXHASH_NODE* fhead, * ftail;  // list of free nodes, which are recyled
+    SFXHASH_NODE* fhead, * ftail;  // list of free nodes, which are recycled
     SFXHASH_NODE* gnode;           // gfirst/gnext node ptr */
     int recycle_nodes;             // recycle nodes. Nodes are not freed, but are used for
                                    // subsequent new nodes
@@ -83,7 +83,7 @@ struct SFXHASH
      * the new node. anr_tries indicates # of ANR tries.*/
 
     unsigned anr_tries;
-    unsigned anr_count;      // # ANR ops performaed
+    unsigned anr_count;      // # ANR ops performed
     int anr_flag;            // 0=off, !0=on
 
     SFXHASH_FREE_FCN anrfree;
@@ -118,11 +118,11 @@ inline unsigned sfxhash_anr_count(SFXHASH* t)
 inline unsigned sfxhash_find_total(SFXHASH* t)
 { return t->find_success + t->find_fail; }
 
-//  Get the # unsucessful finds
+//  Get the # unsuccessful finds
 inline unsigned sfxhash_find_fail(SFXHASH* t)
 { return t->find_fail; }
 
-//  Get the # sucessful finds
+//  Get the # successful finds
 inline unsigned sfxhash_find_success(SFXHASH* t)
 { return t->find_success; }
 

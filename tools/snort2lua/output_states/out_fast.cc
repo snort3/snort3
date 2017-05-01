@@ -69,7 +69,7 @@ bool AlertFast::convert(std::istringstream& data_stream)
     std::string units = "B";
 
     std::istringstream tmp_stream(keyword);
-    tmp_stream >> limit;  // gauranteed success since keyword is non-empty
+    tmp_stream >> limit;  // guaranteed success since keyword is non-empty
     if (tmp_stream >> c)
     {
         if (c == 'K' || c == 'k')

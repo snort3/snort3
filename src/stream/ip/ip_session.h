@@ -45,7 +45,7 @@ struct FragTracker
                                 * last frag offset
                                 */
 
-    uint32_t frag_pkts;   /* nummber of frag pkts stored under this tracker */
+    uint32_t frag_pkts;   /* number of frag pkts stored under this tracker */
 
     struct timeval frag_time; /* time we started tracking this frag */
 

@@ -67,7 +67,7 @@ ScanResult HttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
         if (!validated)
         {
             // The purpose of validate() is to quickly and efficiently dispose of obviously wrong
-            // bindings. Passing is no guarentee that the connection is really HTTP, but failing
+            // bindings. Passing is no guarantee that the connection is really HTTP, but failing
             // makes it clear that it isn't.
             switch (validate(buffer[k]))
             {

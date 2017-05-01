@@ -43,7 +43,7 @@ struct tPatternNode
     /**Total number of parts.*/
     uint32_t partTotal;
 
-    /**Uniq non-zero identifier to tie parts of a multi-part patterns together. */
+    /**Unique non-zero identifier to tie parts of a multi-part patterns together. */
     uint32_t patternId;
 
     tPatternNode* nextPattern;
@@ -184,7 +184,7 @@ void mlmpDump(tMlmpTree* root)
 }
 
 /**tMlmpPattern comparator: compares patterns based on pattern, patternSize. This will
- * result in alphabatical order. Notice that patternId is ignored here.
+ * result in alphabetical order. Notice that patternId is ignored here.
  */
 static int compareMlmpPatterns(const void* p1, const void* p2)
 {

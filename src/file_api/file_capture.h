@@ -29,7 +29,7 @@
 //    allow file data remains in mempool. Even if a session is closed, the file
 //     data will stay in the mempool.
 // 3) Then file data can be read through file_capture_read()
-// 4) Finally, fila data must be released from mempool file_capture_release()
+// 4) Finally, file data must be released from mempool file_capture_release()
 
 #include <condition_variable>
 #include <mutex>
@@ -84,7 +84,7 @@ public:
     // Store file to disk asynchronously
     void store_file_async();
 
-    // Log file capture mempoofile_contentl usage
+    // Log file capture mempool usage
     static void print_mem_usage();
 
     // Exit file capture, release all file capture memory etc,

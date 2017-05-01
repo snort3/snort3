@@ -901,7 +901,7 @@ static void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
                 {
                 case DNS_RESP_STATE_RR_RDATA_START:
                     DebugFormat(DEBUG_DNS,
-                        "DNS ADDITONAL RR %d: type %hu, class %hu, "
+                        "DNS ADDITIONAL RR %d: type %hu, class %hu, "
                         "ttl %u rdlength %hu\n", i,
                         dnsSessionData->curr_rr.type,
                         dnsSessionData->curr_rr.dns_class,

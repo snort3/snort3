@@ -163,7 +163,7 @@ public:  // FIXIT-M make impl private
 //-------------------------------------------------------------------------
 
 // FIXIT-L may be inlined at some point; on lockdown for now
-// FIXIT-L SO_PUBLIC requierd because SnortConfig::inline_mode(), etc. uses the function
+// FIXIT-L SO_PUBLIC required because SnortConfig::inline_mode(), etc. uses the function
 SO_PUBLIC NetworkPolicy* get_network_policy();
 SO_PUBLIC InspectionPolicy* get_inspection_policy();
 SO_PUBLIC IpsPolicy* get_ips_policy();

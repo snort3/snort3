@@ -32,7 +32,7 @@
 
 static const char* boundary_str = "boundary=";
 
-/* Save the bounday string into paf state*/
+/* Save the boundary string into paf state*/
 static inline bool store_boundary(MimeDataPafInfo* data_info,  uint8_t val)
 {
     if (!data_info->boundary_search)
@@ -92,7 +92,7 @@ static inline bool store_boundary(MimeDataPafInfo* data_info,  uint8_t val)
     return false;
 }
 
-/* check the bounday string in the mail body*/
+/* check the boundary string in the mail body*/
 static inline bool check_boundary(MimeDataPafInfo* data_info,  uint8_t data)
 {
     /* Search for boundary signature "--"*/
@@ -153,11 +153,11 @@ bool process_mime_paf_data(MimeDataPafInfo* data_info,  uint8_t data)
     switch (data_info->data_state)
     {
     case MIME_PAF_FINDING_BOUNDARY_STATE:
-        /* Search for boundary Store bounday string in PAF state*/
+        /* Search for boundary Store boundary string in PAF state*/
         if (store_boundary(data_info, data))
         {
             /* End of boundary, move to MIME_PAF_FOUND_BOUNDARY_STATE*/
-            DebugFormat(DEBUG_FILE, "Create boudary string: %s\n", data_info->boundary);
+            DebugFormat(DEBUG_FILE, "Create boundary string: %s\n", data_info->boundary);
             data_info->data_state = MIME_PAF_FOUND_BOUNDARY_STATE;
         }
         break;
@@ -166,7 +166,7 @@ bool process_mime_paf_data(MimeDataPafInfo* data_info,  uint8_t data)
         if (check_boundary(data_info,  data))
         {
             /* End of boundary, move to MIME_PAF_FOUND_BOUNDARY_STATE*/
-            DebugFormat(DEBUG_FILE, "Found Boudary string: %s\n", data_info->boundary);
+            DebugFormat(DEBUG_FILE, "Found boundary string: %s\n", data_info->boundary);
             return true;
         }
         break;

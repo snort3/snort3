@@ -28,9 +28,9 @@
 
 extern const BaseApi* cd_ipv4[];    // static due to dependence on fpdetect
 extern const BaseApi* cd_hopopts[]; // static to ensure the symbols CheckIPV6HopOptions
-                                    // and CheckIPv6ExtensionOrder the final executuable.
+                                    // and CheckIPv6ExtensionOrder the final executable.
 extern const BaseApi* cd_tcp[];     // static because only file that specific functions
-                                    // (symbols will be removed from final executabel)
+                                    // (symbols will be removed from final executable)
 
 #ifdef STATIC_CODECS
 extern const BaseApi* cd_ah[];

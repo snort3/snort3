@@ -45,7 +45,7 @@ enum class IpProtocol : uint8_t;
 #define APPID_SESSION_HTTP_SESSION          (1ULL << 13)
 /**Service protocol was detected */
 #define APPID_SESSION_SERVICE_DETECTED      (1ULL << 14)
-/**Finsihed with client app detection */
+/**Finished with client app detection */
 #define APPID_SESSION_CLIENT_DETECTED       (1ULL << 15)
 /**Flow is a data connection not a service */
 #define APPID_SESSION_NOT_A_SERVICE         (1ULL << 16)

@@ -221,7 +221,7 @@ static inline void set_lua_tracker_size(lua_State* L, uint32_t numTrackers)
     }
     else
     {
-        DebugMessage(DEBUG_LOG, "hostServiceTrackerModule.setHosServiceTrackerSize not found");
+        DebugMessage(DEBUG_LOG, "hostServiceTrackerModule.setHostServiceTrackerSize not found");
     }
 
     lua_pop(L, 1);

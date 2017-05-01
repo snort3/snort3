@@ -484,7 +484,7 @@ static void sfghash_next(SFGHASH* t)
     }
 
     /* Next row
-       Get 1st node in next non-emtoy row/node list */
+       Get 1st node in next non-empty row/node list */
     for ( t->crow++; t->crow < t->nrows; t->crow++ )
     {
         t->cnode = t->table[ t->crow ];
@@ -547,7 +547,7 @@ SFGHASH_NODE* sfghash_findnext(SFGHASH* t)
  *
  * @param h sfhashfcn ptr
  * @param hash_fcn user specified hash function
- * @param keycmp_fcn user specified key comparisoin function
+ * @param keycmp_fcn user specified key comparison function
  */
 
 int sfghash_set_keyops(SFGHASH* h,

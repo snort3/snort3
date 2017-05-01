@@ -398,7 +398,7 @@ static int MakePortscanPkt(PS_PKT* ps_pkt, PS_PROTO* proto, int proto_type,
     */
     PacketManager::encode_update(g_tmp_pkt);
 
-    // FIXIT-L IP4 is gauranteed to have been set in update().  Is IP6() also gauranteed?
+    // FIXIT-L IP4 is guaranteed to have been set in update().  Is IP6() also guaranteed?
     if (g_tmp_pkt->ptrs.ip_api.is_ip6())
         ((ip::IP6Hdr*)g_tmp_pkt->ptrs.ip_api.get_ip6h())->set_len((uint16_t)ip_size);
 
@@ -911,7 +911,7 @@ void PortScan::eval(Packet* p)
     memset(&ps_pkt, 0x00, sizeof(PS_PKT)); // FIXIT-P don't zap unless necessary
     ps_pkt.pkt = (void*)p;
 
-    /* See if there is already an exisiting node in the hash table */
+    /* See if there is already an existing node in the hash table */
     ps_detect(&ps_pkt);
 
     if (ps_pkt.scanner && ps_pkt.scanner->proto.alerts &&

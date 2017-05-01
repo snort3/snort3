@@ -120,7 +120,7 @@ enum class ProtocolId : std::uint16_t
     /*
      *  Undefined Protocols!
      */
-    FINISHED_DECODE = 0x0100,  // Indicates Codecs have succesfully decoded packet
+    FINISHED_DECODE = 0x0100,  // Indicates Codecs have successfully decoded packet
     TEREDO = 0x0101,
     GTP = 0x0102,
     IP_EMBEDDED_IN_ICMP4 = 0x0103,

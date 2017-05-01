@@ -72,7 +72,7 @@ void sfvar_free(sfip_var_t* var)
     snort_free(var);
 }
 
-/* Allocaties and returns an IP node described by 'str' */
+/* Allocates and returns an IP node described by 'str' */
 static sfip_node_t* sfipnode_alloc(const char* str, SfIpRet* status)
 {
     // FIXIT-L rename variables from ret to something with more descriptive
@@ -138,7 +138,7 @@ static sfip_node_t* sfipnode_alloc(const char* str, SfIpRet* status)
         }
     }
 
-    /* Check if this is a negated, zero'ed IP (equivalent of a "!any") */
+    /* Check if this is a negated, zeroed IP (equivalent of a "!any") */
     if (!ret->ip->is_set() && (ret->flags & SFIP_NEGATED))
     {
         if (status)
@@ -308,7 +308,7 @@ static SfIpRet sfvar_add_node(sfip_var_t* var, sfip_node_t* node, int negated)
     }
 
     /* If we're here, the head node was lesser than the new node */
-    /* Before searching the list, verify there is atleast two nodes.
+    /* Before searching the list, verify there is at least two nodes.
      * (This saves an extra check during the loop below) */
     if (!(*head)->next)
     {
@@ -588,7 +588,7 @@ SfIpRet sfvar_parse_iplist(vartable_t* table, sfip_var_t* var,
                     return SFIP_NOT_ANY;
                 }
 
-                /* Check if this is a negated, zero'ed IP (equivalent of a "!any") */
+                /* Check if this is a negated, zeroed IP (equivalent of a "!any") */
                 if (copy_var->head && !copy_var->head->ip->is_set())
                 {
                     snort_free(tok);
@@ -643,7 +643,7 @@ SfIpRet sfvar_parse_iplist(vartable_t* table, sfip_var_t* var,
                 _negate_node(node);
             }
 
-            /* Check if this is a negated, zero'ed IP (equivalent of a "!any") */
+            /* Check if this is a negated, zeroed IP (equivalent of a "!any") */
             if (!node->ip->is_set() && (node->flags & SFIP_NEGATED))
             {
                 sfip_node_free(node);

@@ -66,6 +66,7 @@ struct FuncTest
 };
 
 //---------------------------------------------------------------
+// __STRDUMP_DISABLE__
 
 static FuncTest ftests[] =
 {
@@ -232,6 +233,7 @@ static FuncTest ftests[] =
 
 #define NUM_TESTS (sizeof(ftests)/sizeof(ftests[0]))
 
+// __STRDUMP_ENABLE__
 //---------------------------------------------------------------
 
 static int RunFunc(const char* func, const char* arg1, const char* arg2)

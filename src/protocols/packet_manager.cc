@@ -733,7 +733,7 @@ int PacketManager::encode_format(
     pkth->pktlen = len;
     pkth->ts = p->pkth->ts;
 
-    layer::set_packet_pointer(c);  // set layer pointer to ensure lookin at the new packet
+    layer::set_packet_pointer(c);  // set layer pointer to ensure looking at the new packet
     total_rebuilt_pkts++;  // update local counter
     return 0;
 }

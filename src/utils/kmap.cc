@@ -214,7 +214,7 @@ int KMapAdd(KMAP* km, void* key, int n, void* userdata)
         root = km->root[ *P ];
     }
 
-    /* Walk exisitng Patterns */
+    /* Walk existing Patterns */
     while ( n )
     {
         if ( root->nodechar == *P )
@@ -268,7 +268,7 @@ int KMapAdd(KMAP* km, void* key, int n, void* userdata)
         else
         {
             /*
-            *  Start a new sibling bracnch to finish this Keyword
+            *  Start a new sibling branch to finish this Keyword
                 */
             //printf("added sibling branch nodechar = %c \n",*P);
             root->sibling= KMapCreateNode(km);

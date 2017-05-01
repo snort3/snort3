@@ -24,7 +24,7 @@
 #include "framework/codec.h"
 
 #define CD_DEFAULT_NAME "unknown"
-#define CD_DEFAULT_HELP "support for unkown protocols"
+#define CD_DEFAULT_HELP "support for unknown protocols"
 
 namespace
 {

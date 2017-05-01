@@ -137,7 +137,7 @@ bool is_fast_pattern_only(OptFpList* ofl)
   *
   * returns
   *   length - of trimmed pattern
-  *   buff - ptr to new beggining of trimmed buffer
+  *   buff - ptr to new beginning of trimmed buffer
   */
 int flp_trim(const char* p, int plen, const char** buff)
 {

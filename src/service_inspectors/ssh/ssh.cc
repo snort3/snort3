@@ -663,7 +663,7 @@ static unsigned int ProcessSSHKeyExchange(SSHData* sessionp, Packet* p,
              * key exchange. Both server and client should
              * send one, but as per Alex Kirk's note on this,
              * in some implementations the server does not
-             * actually send this message. So receving a new
+             * actually send this message. So receiving a new
              * keys msg from the client is sufficient.
              */
             if ( direction == SSH_DIR_FROM_CLIENT )

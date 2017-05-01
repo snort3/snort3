@@ -14,7 +14,7 @@ The TcpConnector is duplex while the FileConnector is simplex.
 
 All subtypes of Connector have a 'direction' configuration element and a
 'connector' element.  The 'connector' string is the key used to identify the
-element for sidechannel configiration.  The 'direction' element may have a
+element for sidechannel configuration.  The 'direction' element may have a
 default value, for instance TcpConnector's are 'duplex'.
 
 
@@ -62,7 +62,7 @@ CONN_TRANSMIT or CONN_RECEIVE.
 
 FileConnector configuration adds two additional element:
 
-* name = string - used as part of the messsage file name
+* name = string - used as part of the message file name
 
 * format = 'text' or 'binary' - FileConnector supports two file types
 

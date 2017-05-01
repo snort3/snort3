@@ -219,7 +219,7 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
         std::string tmp_str;
         val = "";
 
-        opts >> keyword;  // gauranteed to work since get_string is true
+        opts >> keyword;  // guaranteed to work since get_string is true
         std::getline(opts, val);
 
         util::trim(keyword);
@@ -254,7 +254,7 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
                 add_sticky_buffer(data_stream, "pkt_data");
 
             // since this option is not an content modifier,
-            // lets coninue parsing the rest of the rule.
+            // lets continue parsing the rest of the rule.
             data_stream.clear();
             data_stream.seekg(pos);
             return set_next_rule_state(data_stream);

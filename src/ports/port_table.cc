@@ -207,7 +207,7 @@ static unsigned PortObject_hash(SFHASHFCN* p, unsigned char* d, int)
  *  1) check if it's in the plx table-mhashx, this uses the list of
  *  addresses of the Input PortObjects as it's key, not the ports.
  *  This is quick and does not require assembling/merging the port
- *  objects intoa PortObject2 1st.
+ *  objects into a PortObject2 1st.
  *  2) if found were done, otherwise
  *  3) make a merged PortObject2
  *  4) Try adding the PortObject2 to it's table - mhash
@@ -219,7 +219,7 @@ static unsigned PortObject_hash(SFHASHFCN* p, unsigned char* d, int)
  *  5) Create a plx object
  *  6) Add the plx object to the plx Table
  *      1) if it's already in the object - fail this contradicts 1)
- *  7) return the create PortObject2, or the one retrived from the
+ *  7) return the create PortObject2, or the one retrieved from the
  *     PortObject table.
  *
  * pol    - list of input PortObject pointers
@@ -984,7 +984,7 @@ void PortTablePrintInput(PortTable* p)
 
 /*
    Prints the original (normalized) PortGroups and
-   as sepcified by the user
+   as specified by the user
 */
 void PortTablePrintUserRules(PortTable* p)
 {

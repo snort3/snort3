@@ -114,7 +114,7 @@ static ConversionState* ctor(Converter& c)
 {
     // react may not have arguments. So, set this information now.
 
-    // create this table to ensure react is instatiated
+    // create this table to ensure react is instantiated
     c.get_table_api().open_table("react");
     c.get_table_api().close_table();
 

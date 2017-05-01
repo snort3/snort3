@@ -185,7 +185,7 @@ void MailLogState::set_file_name_from_log(Flow* flow)
     }
 }
 
-/* Accumulate EOL seperated headers, one or more at a time */
+/* Accumulate EOL separated headers, one or more at a time */
 int MailLogState::log_email_hdrs(const uint8_t* start, int length)
 {
     int log_avail = 0;

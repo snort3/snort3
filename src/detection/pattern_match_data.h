@@ -41,7 +41,7 @@ struct PatternMatchData
     // FIXIT-L wasting some memory here:
     // - this is not used by content option logic directly
     // - and only used on current eval (not across packets)
-    // (partly mitigated by only allocating if excpetion_flag is set)
+    // (partly mitigated by only allocating if exception_flag is set)
     //
     /* Set if fast pattern matcher found a content in the packet,
        but the rule option specifies a negated content. Only

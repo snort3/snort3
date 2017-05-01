@@ -302,7 +302,7 @@ static void event_dump(u2record* record)
 
     /* network to host ordering
        In the event structure, only the last 40 bits are not 32 bit fields
-       The first 11 fields need to be convertted */
+       The first 11 fields need to be converted */
     field = (uint8_t*)&event;
     for (i=0; i<11; i++, field+=4)
     {
@@ -341,7 +341,7 @@ static void event6_dump(u2record* record)
 
     /* network to host ordering
        In the event structure, only the last 40 bits are not 32 bit fields
-       The first fields need to be convertted */
+       The first fields need to be converted */
     field = (uint8_t*)&event;
     for (i=0; i<9; i++, field+=4)
     {
@@ -387,7 +387,7 @@ static void event2_dump(u2record* record)
 
     /* network to host ordering
        In the event structure, only the last 40 bits are not 32 bit fields
-       The first 11 fields need to be convertted */
+       The first 11 fields need to be converted */
     field = (uint8_t*)&event;
     for (i=0; i<11; i++, field+=4)
     {
@@ -436,7 +436,7 @@ static void event2_6_dump(u2record* record)
 
     /* network to host ordering
        In the event structure, only the last 40 bits are not 32 bit fields
-       The first fields need to be convertted */
+       The first fields need to be converted */
     field = (uint8_t*)&event;
     for (i=0; i<9; i++, field+=4)
     {
@@ -522,7 +522,7 @@ static void packet_dump(u2record* record)
     memcpy(&packet, record->data, offset);
 
     /* network to host ordering
-       The first 7 fields need to be convertted */
+       The first 7 fields need to be converted */
     field = (uint8_t*)&packet;
     for (counter=0; counter<7; counter++, field+=4)
     {

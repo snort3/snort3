@@ -339,7 +339,7 @@ const uint8_t* MimeSession::process_mime_header(const uint8_t* ptr,
         /* check if we're in a content-type header and not folding. if so we have the whole
          * header line/lines for content-type - see if we got a multipart with boundary
          * we don't check each folded line, but wait until we have the complete header
-         * because boundary=BOUNDARY can be split across mulitple folded lines before
+         * because boundary=BOUNDARY can be split across multiple folded lines before
          * or after the '=' */
         if ((state_flags &
                 (MIME_FLAG_IN_CONTENT_TYPE | MIME_FLAG_FOLDING)) == MIME_FLAG_IN_CONTENT_TYPE)

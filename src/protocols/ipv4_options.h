@@ -76,8 +76,8 @@ struct IpOptions
 };
 
 /*
- * relly creative name ... right
- * Use IpOptionIter ... this is the placehold
+ * really creative name ... right
+ * Use IpOptionIter ... this is the placeholder
  */
 class SO_PUBLIC IpOptionIteratorIter
 {
@@ -90,7 +90,7 @@ public:
     bool operator!=(const IpOptionIteratorIter& rhs)
     { return opt != rhs.opt; }
 
-    // I'd suggest just using IpOptionIterator and completley ignoring this
+    // I'd suggest just using IpOptionIterator and completely ignoring this
     // horror of a ++ operation.
     IpOptionIteratorIter& operator++()
     {
@@ -105,7 +105,7 @@ private:
 };
 
 /*
- * relly creative name ... right
+ * really creative name ... right
  * Use IP ranged for loop rather than calling this directly.
  * i.e.,
  *      IpOptionIter iter(ip4h, p)
@@ -126,7 +126,7 @@ public:
     /* If you already know the validated option length (for instance,
      * if you are in a decode() method), then call this constructor.
      * You MUST validate the a;; ip_options within len before
-     * using this constuctor*/
+     * using this constructor*/
     IpOptionIterator(const IP4Hdr* const, const uint8_t valid_hdr_len);
     IpOptionIteratorIter begin() const;
     IpOptionIteratorIter end() const;

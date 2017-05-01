@@ -92,7 +92,7 @@ enum
 };
 
 /*
-*   Aho-Corasick State Machine Struct - one per group of pattterns
+*   Aho-Corasick State Machine Struct - one per group of patterns
 */
 struct ACSM_STRUCT2
 {

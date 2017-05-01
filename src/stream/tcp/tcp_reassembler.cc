@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_reassember.cc author davis mcpherson <davmcphe@@cisco.com>
+// tcp_reassembler.cc author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Jul 31, 2015
 
 #ifdef HAVE_CONFIG_H
@@ -369,7 +369,7 @@ int TcpReassembler::purge_to_seq(uint32_t flush_seq)
      * Without doing it this way, the timestamp would be 20.  With
      * the next packet to arrive (P4, seq 40), the ts_last value
      * wouldn't be updated for the talker in ProcessTcp() since that
-     * code specificially looks for the NEXT sequence number.
+     * code specifically looks for the NEXT sequence number.
      */
     if ( !last_ts )
         return purged_bytes;

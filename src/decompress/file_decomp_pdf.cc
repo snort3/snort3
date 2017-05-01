@@ -178,7 +178,7 @@ static inline void Process_One_Filter(fd_session_p_t SessionPtr, uint8_t* Token,
 }
 
 /* Parse the buffered Filter_Spec and create a stream decompression
-   mode and/or event alerts.  Return File_Decomp_OK if successfui.
+   mode and/or event alerts.  Return File_Decomp_OK if successful.
    Return File_Decomp_Error for a parsing error. */
 static fd_status_t Process_Filter_Spec(fd_session_p_t SessionPtr)
 {
@@ -279,7 +279,7 @@ static inline void Init_Parser(fd_session_p_t SessionPtr)
     fd_PDF_Parse_p_t p = &(SessionPtr->PDF->Parse);
     /* The parser starts in the P_COMMENT state we start
        parsing the file just after the signature is located
-       and the signature is syntactially a comment. */
+       and the signature is syntactically a comment. */
     p->State = P_COMMENT;
     p->Parse_Stack_Index = 0; // Stack is empty
 }
@@ -729,7 +729,7 @@ static inline fd_status_t Handle_State_XREF(fd_session_p_t SessionPtr, uint8_t c
     if ( p->State != P_XREF )
     {
         p->Sub_State = P_XREF_TOKEN;
-        p->Elem_Index = 1;  // Aready matched the first char in START state
+        p->Elem_Index = 1;  // already matched the first char in START state
         p->State = P_XREF;
         Xref_Tok = (uint8_t*)((c == TOK_XRF_XREF[0]) ? TOK_XRF_XREF : TOK_XRF_STARTXREF);
         return( File_Decomp_OK );
@@ -978,7 +978,7 @@ static fd_status_t Decomp_Stream(fd_session_p_t SessionPtr)
     return( File_Decomp_OK );
 }
 
-/* After processing a stream, close the decompession engine
+/* After processing a stream, close the decompression engine
    and return the state of the parser. */
 static fd_status_t Close_Stream(fd_session_p_t SessionPtr)
 {

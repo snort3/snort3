@@ -56,7 +56,7 @@ enum file_compression_type_t
     FILE_COMPRESSION_TYPE_MAX
 };
 
-/* Potential decompression modes, passed in at initalization time. */
+/* Potential decompression modes, passed in at initialization time. */
 #define FILE_SWF_LZMA_BIT    (0x00000001)
 #define FILE_SWF_ZLIB_BIT    (0x00000002)
 #define FILE_PDF_DEFL_BIT    (0x00000004)
@@ -189,7 +189,7 @@ inline bool Get_1(fd_session_p_t SessionPtr, uint8_t* c)
 }
 
 /* If available, get N bytes from the input queue.  All N must be
-   availble for this call to succeed. */
+   available for this call to succeed. */
 inline bool Get_N(fd_session_p_t SessionPtr, uint8_t** c, uint16_t N)
 {
     if ( (SessionPtr->Next_In != NULL) && (SessionPtr->Avail_In >= N) )

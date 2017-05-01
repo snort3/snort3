@@ -176,7 +176,7 @@ struct tThdItemKey
 
     The main thresholding data structure.
 
-    Local and global threshold thd_id's are all unqiue, so we use just one
+    Local and global threshold thd_id's are all unique, so we use just one
     ip_nodes lookup table
  */
 struct THD_STRUCT

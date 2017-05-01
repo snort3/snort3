@@ -51,7 +51,7 @@ void set_byte_order(uint8_t& order, uint8_t flag, const char* opt)
  * This method will read either a big or little endian value in binary
  * data from the packet and return an uint32_t value.
  *
- * @param endianess value to read the byte as
+ * @param endianness value to read the byte as
  * @param bytes_to_grab how many bytes should we grab from the packet
  * @param data pointer to where to grab the data from
  * @param start pointer to start range of buffer
@@ -60,11 +60,11 @@ void set_byte_order(uint8_t& order, uint8_t flag, const char* opt)
  *
  * @returns 0 on success, otherwise failure
  */
-int byte_extract(int endianess, int bytes_to_grab, const uint8_t* ptr,
+int byte_extract(int endianness, int bytes_to_grab, const uint8_t* ptr,
     const uint8_t* start, const uint8_t* end,
     uint32_t* value)
 {
-    if (endianess != ENDIAN_LITTLE && endianess != ENDIAN_BIG)
+    if (endianness != ENDIAN_LITTLE && endianness != ENDIAN_BIG)
     {
         /* we only support 2 byte formats */
         return -2;
@@ -91,7 +91,7 @@ int byte_extract(int endianess, int bytes_to_grab, const uint8_t* ptr,
         *value =  (*ptr) & 0xFF;
         break;
     case 2:
-        if (endianess == ENDIAN_LITTLE)
+        if (endianness == ENDIAN_LITTLE)
         {
             *value = (*ptr) & 0xFF;
             *value |= (*(ptr + 1) & 0xFF) << 8;
@@ -103,7 +103,7 @@ int byte_extract(int endianess, int bytes_to_grab, const uint8_t* ptr,
         }
         break;
     case 3:
-        if (endianess == ENDIAN_LITTLE)
+        if (endianness == ENDIAN_LITTLE)
         {
             *value = (*ptr) & 0xFF;
             *value |= ((*(ptr + 1)) & 0xFF) << 8;
@@ -117,7 +117,7 @@ int byte_extract(int endianess, int bytes_to_grab, const uint8_t* ptr,
         }
         break;
     case 4:
-        if (endianess == ENDIAN_LITTLE)
+        if (endianness == ENDIAN_LITTLE)
         {
             *value = (*ptr) & 0xFF;
             *value |= ((*(ptr + 1)) & 0xFF) << 8;

@@ -65,7 +65,7 @@
 **    BitStringOverflow::
 */
 /**
-**  The neccessary info to detect possible bitstring overflows.  Thanks
+**  The necessary info to detect possible bitstring overflows.  Thanks
 **  once again to microsoft for keeping us in business.
 **
 **  @return integer
@@ -139,7 +139,7 @@ static int DoubleOverflow(ASN1_TYPE* asn1, void*)
     /*
     **  Here's what this does.
     **
-    **  There is a vulnerablity in the MSASN1 library when decoding
+    **  There is a vulnerability in the MSASN1 library when decoding
     **  a double (real) type.  If the encoding is ASCII (specified by
     **  not setting bit 7 or 8), and the buffer is greater than 256,
     **  then you overflow the array in the function.

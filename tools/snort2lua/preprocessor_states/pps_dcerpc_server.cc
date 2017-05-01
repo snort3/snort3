@@ -134,7 +134,7 @@ bool DcerpcServer::get_bracket_list(std::istringstream& data_stream, std::string
 }
 
 // Read from data_stream either a single value x or list : [x,y,z ... ]
-// Put in str either a single value 'x', or space sperated list 'x y z'
+// Put in str either a single value 'x', or space separated list 'x y z'
 bool DcerpcServer::convert_val_or_list(std::istringstream& data_stream, std::string& str)
 {
     if (!(data_stream >> str))
@@ -165,7 +165,7 @@ bool DcerpcServer::convert_val_or_list(std::istringstream& data_stream, std::str
     // remove ""
     str.erase(std::remove(str.begin(), str.end(), '"'), str.end());
 
-    // convert ',' seperators to spaces
+    // convert ',' separators to spaces
     replace(str.begin(), str.end(), ',', ' ');
 
     return true;
@@ -405,7 +405,7 @@ bool DcerpcServer::parse_detect(std::istringstream& data_stream,
                 ((ports.find('[') == std::string::npos) &&  (ports.find(']') !=
                 std::string::npos)))
             {
-                // found outer list seperator
+                // found outer list separator
                 if (one_type)
                 {
                     return false;
@@ -465,7 +465,7 @@ bool DcerpcServer::parse_detect(std::istringstream& data_stream,
             {
                 return true;
             }
-            else // wait for list terminator or item seperator
+            else // wait for list terminator or item separator
             {
                 if (!data_stream.get(c))
                     return false;

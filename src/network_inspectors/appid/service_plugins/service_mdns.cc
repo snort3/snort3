@@ -340,7 +340,7 @@ int MdnsServiceDetector::analyze_user(AppIdSession* asd, const Packet* pkt, uint
                     {
                         user_name_len = user_original - srv_original - start_index;
                         user_name_bkp = (char*)(srv_original + start_index);
-                        /* Non-Printable characters in the begining */
+                        /* Non-Printable characters in the beginning */
 
                         while (user_index < user_name_len)
                         {

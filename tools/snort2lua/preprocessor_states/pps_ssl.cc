@@ -55,7 +55,7 @@ bool Ssl::convert(std::istringstream& data_stream)
         bool tmpval = true;
         std::istringstream arg_stream(keyword);
 
-        // should be gauranteed to happen.  Checking for error just cause
+        // should be guaranteed to happen.  Checking for error just cause
         if (!(arg_stream >> keyword))
             tmpval = false;
 

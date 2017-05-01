@@ -87,7 +87,7 @@ constexpr uint16_t CODEC_SAVE_LAYER = 0x0004;
 // DECODE_ENCAP_LAYER for the next layer (and only the next layer).
 constexpr uint16_t CODEC_ENCAP_LAYER = (CODEC_SAVE_LAYER | CODEC_UNSURE_ENCAP );
 
-// used to check ip6 extensino order
+// used to check ip6 extension order
 constexpr uint16_t CODEC_ROUTING_SEEN = 0x0008;
 
 // used by icmp4 for alerting
@@ -120,7 +120,7 @@ struct CodecData
 
     /* Reset before each decode of packet begins */
 
-    /*  Codec specific fields.  These fields are only relevent to codecs. */
+    /*  Codec specific fields.  These fields are only relevant to codecs. */
     uint16_t proto_bits;    /* protocols contained within this packet
                                  -- will be propogated to Snort++ Packet struct*/
     uint16_t codec_flags;   /* flags used while decoding */
@@ -129,7 +129,7 @@ struct CodecData
     /*  The following values have junk values after initialization */
     uint8_t ip6_extension_count; /* initialized in cd_ipv6.cc */
     uint8_t curr_ip6_extension;  /* initialized in cd_ipv6.cc */
-    IpProtocol ip6_csum_proto;      /* initalized in cd_ipv6.cc.  Used for IPv6 checksums */
+    IpProtocol ip6_csum_proto;      /* initialized in cd_ipv6.cc.  Used for IPv6 checksums */
 
     CodecData(ProtocolId init_prot) : next_prot_id(init_prot), lyr_len(0),
         invalid_bytes(0), proto_bits(0), codec_flags(0), ip_layer_cnt(0)
@@ -264,7 +264,7 @@ public:
      * Main decoding function!  Will get called when decoding a packet.
      *
      * PARAMS:
-     *      const RawData& = struct containing informatin about the
+     *      const RawData& = struct containing information about the
      *                      current packet's raw data
      *
      *      CodecData& = Pass information the PacketManager and other
@@ -311,12 +311,12 @@ public:
      *              like IPv4 (original ipv4 header may contain invalid options
      *              which we don't want to copy) and GTP have dynamic lengths.
      *              So, this parameter ensure the encode() function doesn't
-     *              need to revalidatae and recalculate the length.
+     *              need to revalidate and recalculate the length.
      *        EncState& = The current EncState struct
      *        Buffer& = the packet which will be sent. All inward layers will already
      *              be set.
      *
-     * NOTE:  all funtions MUST call the Buffer.allocate() function before
+     * NOTE:  all functions MUST call the Buffer.allocate() function before
      *          manipulating memory.
      */
     virtual bool encode(const uint8_t* const /*raw_in */,

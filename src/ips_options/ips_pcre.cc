@@ -65,7 +65,7 @@ struct PcreData
     pcre* re;           /* compiled regex */
     pcre_extra* pe;     /* studied regex foo */
     bool free_pe;
-    int options;        /* sp_pcre specfic options (relative & inverse) */
+    int options;        /* sp_pcre specific options (relative & inverse) */
     char* expression;
 };
 
@@ -80,7 +80,7 @@ struct PcreData
 // exactly correct is obviated and thus the need to reload as well.
 
 /* Since SO rules are loaded 1 time at startup, regardless of
- * configuraton, we won't pcre_capture count again, so save the max.  */
+ * configuration, we won't pcre_capture count again, so save the max.  */
 static int s_ovector_max = 0;
 
 // this is a temporary value used during parsing and set in snort conf
@@ -147,7 +147,7 @@ static void pcre_check_anchored(PcreData* pcre_data)
 
     if ((options & PCRE_ANCHORED) && !(options & PCRE_MULTILINE))
     {
-        /* This means that this pcre rule option shouldn't be reevaluted
+        /* This means that this pcre rule option shouldn't be reevaluated
          * even if any of it's relative children should fail to match.
          * It is anchored to the cursor set by the previous cursor setting
          * rule option */
@@ -356,7 +356,7 @@ syntax:
  * @param len size of buffer
  * @param found_offset pointer to an integer so that we know where the search ended
  *
- * *found_offset will be set to -1 when the find is unsucessful OR the routine is inverted
+ * *found_offset will be set to -1 when the find is unsuccessful OR the routine is inverted
  *
  * @return 1 when we find the string, 0 when we don't (unless we've been passed a flag to invert)
  */

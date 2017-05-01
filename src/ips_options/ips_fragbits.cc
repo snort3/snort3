@@ -230,7 +230,7 @@ void FragBitsData::parse_fragbits(const char* data)
 
         switch ( bit_string.at( a ) )
         {
-        case 'd': // dont fragment
+        case 'd': // don't fragment
         case 'D':
             set_dont_fragment_bit();
             break;

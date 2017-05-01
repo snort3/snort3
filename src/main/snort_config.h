@@ -303,7 +303,7 @@ public:
 
     srmm_table_t* srmmTable = nullptr;   /* srvc rule map master table */
     srmm_table_t* spgmmTable = nullptr;  /* srvc port_group map master table */
-    sopg_table_t* sopgTable = nullptr;   /* service-oridnal to port_group table */
+    sopg_table_t* sopgTable = nullptr;   /* service-ordinal to port_group table */
 
     SFXHASH* detection_option_hash_table = nullptr;
     SFXHASH* detection_option_tree_hash_table = nullptr;
@@ -393,7 +393,7 @@ public:
     void free_rule_state_list();
 
     //------------------------------------------------------
-    // Static convenience accesor methods
+    // Static convenience accessor methods
 
     static long int get_mpls_stack_depth()
     { return snort_conf->mpls_stack_depth; }

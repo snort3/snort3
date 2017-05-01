@@ -73,7 +73,7 @@ bool IgnorePorts::convert(std::istringstream& data_stream)
 
             if (!port.compare("any"))
             {
-                // Possible Snort bug, but only port zero is ignrored
+                // Possible Snort bug, but only port zero is ignored
                 bind.add_when_port("0");
             }
             else if (colon_pos == std::string::npos)
@@ -116,13 +116,13 @@ bool IgnorePorts::convert(std::istringstream& data_stream)
         {
             data_api.failed_conversion(data_stream, "can't convert " + port);
             retval = false;
-            bind.print_binding(false); // don't print the binding if an error occured
+            bind.print_binding(false); // don't print the binding if an error occurred
         }
         catch (std::out_of_range)
         {
             data_api.failed_conversion(data_stream, "Port" + port + " must be <= 65535");
             retval = false;
-            bind.print_binding(false); // don't print the binding if an error occured
+            bind.print_binding(false); // don't print the binding if an error occurred
         }
     }
 

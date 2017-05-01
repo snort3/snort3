@@ -124,7 +124,7 @@ int TimbuktuClientDetector::validate(AppIdDiscoveryArgs& args)
             }
             fd->pos++;
             break;
-        /* cheeck any 2 bytes fisrt */
+        /* check any 2 bytes first */
         case TIMBUKTU_STATE_ANY_MESSAGE_LEN:
             fd->pos++;
             if (fd->pos >= MAX_ANY_SIZE)

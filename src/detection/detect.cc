@@ -261,7 +261,7 @@ bool snort_detect(Packet* p)
     }
 
     // FIXIT-M restrict detect to current ip layer
-    // Curently, if a rule is found on any IP layer, we perform the detect routine
+    // Currently, if a rule is found on any IP layer, we perform the detect routine
     // on the entire packet. Instead, we should only perform detect on that layer!!
     switch ( p->type() )
     {

@@ -190,7 +190,7 @@ void MemoryCap::calculate(unsigned num_threads)
     {
         preemptive_threshold = memory::calculate_threshold(thread_cap, config.threshold);
         DebugFormat(DEBUG_MEMORY,
-            "per-thread pre-emptive action threshold set to %zu\n", preemptive_threshold);
+            "per-thread preemptive action threshold set to %zu\n", preemptive_threshold);
     }
 }
 

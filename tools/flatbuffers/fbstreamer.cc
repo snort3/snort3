@@ -19,7 +19,7 @@
 
 //  This program is a simple utility for reading the flatbuffers files
 //  Snort generates. The files consist of a schema with a stream of
-//  timetamped records that this program converts into a YAML array for
+//  timestamped records that this program converts into a YAML array for
 //  further data processing.
 
 #include <csignal>

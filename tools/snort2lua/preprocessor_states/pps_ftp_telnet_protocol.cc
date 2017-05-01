@@ -454,7 +454,7 @@ bool FtpClient::convert(std::istringstream& data_stream)
                         retval = false;
                     }
 
-                    table_api.close_table(); // anonymouse
+                    table_api.close_table(); // anonymous
                 }
                 table_api.close_table(); // "bounce_to"
             }
@@ -551,7 +551,7 @@ bool Telnet::convert(std::istringstream& data_stream)
         }
     }
 
-    // adding the defualt port.
+    // adding the default port.
     if (!ports_set)
         bind.add_when_port("23");
 

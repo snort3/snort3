@@ -25,7 +25,7 @@ namespace parser
 {
 /*
  * This file is directly copied (and then edited)
- * from Snrot++'s cmd_line.h
+ * from Snort++'s cmd_line.h
  */
 
 bool parse_cmd_line(int argc, char* argv[]);

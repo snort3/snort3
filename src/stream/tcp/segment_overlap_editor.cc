@@ -400,7 +400,7 @@ int SegmentOverlapEditor::full_right_overlap_os2()
 int SegmentOverlapEditor::full_right_overlap_os3()
 {
     // If this packet is wholly overlapping and the same size as a previous one and we have not
-    // received the one immediately preceeding, we take the FIRST.
+    // received the one immediately preceding, we take the FIRST.
     if ( SEQ_EQ(right->seq, seq) && ( right->payload_size == len )
         && ( left && !SEQ_EQ(left->seq + left->payload_size, seq) ) )
     {

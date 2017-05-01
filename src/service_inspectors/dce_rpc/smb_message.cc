@@ -367,13 +367,13 @@ static uint32_t DCE2_IgnoreJunkData(const uint8_t* data_ptr, uint16_t data_len,
  *
  * Checks some relevant fields in the header to make sure they're
  * sane.
- * Side effects are potential alerts for anomolous behavior.
+ * Side effects are potential alerts for anomalous behavior.
  *
  * Arguments:
  *  DCE2_SmbSsnData *
  *      Pointer to the session data structure.
  *  SmbNtHdr *
- *      Pointer to the header struct layed over the packet data.
+ *      Pointer to the header struct laid over the packet data.
  *
  * Returns:
  *  DCE2_Ret
@@ -1380,7 +1380,7 @@ static DCE2_SmbSsnData* dce2_create_new_smb_session(Packet* p, dce2SmbProtoConf*
  *  initial Session Request / Session Positive/Negative response
  *  followed by the normal SMB conversation, i.e. Negotiate,
  *  SessionSetupAndX, etc.
- *  Side effects are potential alerts for anomolous behavior.
+ *  Side effects are potential alerts for anomalous behavior.
  *
  * Arguments:
  *  DCE2_SmbSsnData * - the session data structure.
@@ -1529,7 +1529,7 @@ static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
             if (data_len < data_need)
             {
                 DebugFormat(DEBUG_DCE_SMB, "Data len(%hu) < NetBIOS SS header(%u). "
-                    "Queueing data.\n", data_len, data_need);
+                    "Queuing data.\n", data_len, data_need);
 
                 if (DCE2_SmbHandleSegmentation(seg_buf, data_ptr,
                     data_len, sizeof(NbssHdr)) != DCE2_RET__SUCCESS)
@@ -1623,7 +1623,7 @@ static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
             if (data_len < data_need)
             {
                 DebugFormat(DEBUG_DCE_SMB, "Data len (%hu) < "
-                    "NetBIOS SS header + SMB header (%u). Queueing data.\n",
+                    "NetBIOS SS header + SMB header (%u). Queuing data.\n",
                     data_len, data_need);
 
                 if (DCE2_SmbHandleSegmentation(seg_buf, data_ptr, data_len,
@@ -1688,7 +1688,7 @@ static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
                 continue;
             }
 
-            // Check the SMB header for anomolies
+            // Check the SMB header for anomalies
             if (DCE2_SmbHdrChecks(ssd, smb_hdr) != DCE2_RET__SUCCESS)
             {
                 DebugMessage(DEBUG_DCE_SMB, "Bad SMB header.\n");
@@ -1741,7 +1741,7 @@ static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
             {
                 DebugFormat(DEBUG_DCE_SMB, "Data len(%hu) < "
                     "NetBIOS SS header + NetBIOS len(%zu). "
-                    "Queueing data.\n", data_len, sizeof(NbssHdr) + nb_len);
+                    "Queuing data.\n", data_len, sizeof(NbssHdr) + nb_len);
 
                 if (DCE2_SmbHandleSegmentation(seg_buf, data_ptr, data_len,
                     sizeof(NbssHdr) + nb_len) != DCE2_RET__SUCCESS)
@@ -1876,7 +1876,7 @@ void DCE2_SmbInitGlobals()
     // Sets up the function to call for the command and valid word and byte
     // counts for the command.  Ensuring valid word and byte counts is very
     // important to processing the command as it will assume the command is
-    // legitimate and can access data that is acutally there.  Note that
+    // legitimate and can access data that is actually there.  Note that
     // commands with multiple word counts indicate a different command
     // structure, however most, if not all just have an extended version
     // of the structure for which the extended part isn't used.  If the

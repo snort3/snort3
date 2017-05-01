@@ -23,8 +23,8 @@
 #include <string>
 
 /*
- * This file was specifically created to avoid cyclic depencies
- * and should therefore avoid ANY local depencies.
+ * This file was specifically created to avoid cyclic dependencies
+ * and should therefore avoid ANY local dependencies.
  */
 
 class ConversionState;

@@ -31,7 +31,7 @@ static const std::string start_comments =
 
 static const std::string start_errors =
     "\nERRORS:\n"
-    "    all of these occured during the attempted conversion:\n\n";
+    "    all of these occurred during the attempted conversion:\n\n";
 
 static const std::string start_bad_rules =
     "\nFAILED RULES CONVERSIONS:\n"

@@ -72,7 +72,7 @@ public:
     static Flow* new_flow(FlowKey*);
 
     // Looks in the flow cache for flow session with specified key and returns
-    // pointer to flow session oject if found, otherwise null.
+    // pointer to flow session object if found, otherwise null.
     static Flow* get_flow(const FlowKey*);
 
     // Allocates a flow session object from the flow cache table for the protocol

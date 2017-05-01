@@ -39,7 +39,7 @@ constexpr uint8_t IP4_MULTICAST = 0x0E;  // ms nibble
 constexpr uint8_t IP4_RESERVED = 0x0F;  // ms nibble
 constexpr uint8_t IP4_LOOPBACK = 0x7F;  // msb
 
-// This must be a standard layour struct!
+// This must be a standard layer struct!
 struct IP4Hdr
 {
     uint8_t ip_verhl;      /* version & header length */

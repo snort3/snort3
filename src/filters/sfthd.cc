@@ -275,15 +275,15 @@ the current event should be logged or dropped.
 
 @param thd Threshold object from sfthd_new()
 @param gen_id Generator id
-@param sig_id Signauture id
+@param sig_id Signature id
 @param tracking Selects tracking by src ip or by dst ip
-@param type  Thresholding type: Limit, Threshold, or Limt+Threshold, Suppress
+@param type  Thresholding type: Limit, Threshold, or Limit+Threshold, Suppress
 @param priority Assigns a relative priority to this object, higher numbers imply higher priority
 
 @param count Number of events
 @param seconds Time duration over which this threshold object acts.
-@param ip      IP address, for supression
-@param ip-mask IP mask, applied with ip_mask, for supression
+@param ip      IP address, for suppression
+@param ip-mask IP mask, applied with ip_mask, for suppression
 
 @return integer
 @retval  0 successfully added the thresholding object
@@ -386,7 +386,7 @@ static int sfthd_create_threshold_local(
             return -10;
         }
         p = (THD_NODE*)sfthd_item->sfthd_node_list->tail->ndata;
-        if (p) /* just to be safe- if thers a tail, there is is node data */
+        if (p) /* just to be safe- if there is a tail, there is is node data */
         {
             if ( p->type != THD_TYPE_SUPPRESS && config->type != THD_TYPE_SUPPRESS )
             {
@@ -405,7 +405,7 @@ static int sfthd_create_threshold_local(
     /* Create a THD_NODE for this THD_ITEM (Object) */
     sfthd_node = (THD_NODE*)snort_calloc(sizeof(THD_NODE));
 
-    /* Limit priorities to force supression nodes to highest priority */
+    /* Limit priorities to force suppression nodes to highest priority */
     if ( config->priority >= THD_PRIORITY_SUPPRESS )
     {
         config->priority  = THD_PRIORITY_SUPPRESS - 1;
@@ -436,7 +436,7 @@ static int sfthd_create_threshold_local(
       objects is done above.
 
       Suppressions have the highest priority and are at the front of the
-      list, the tail node is either a supprssion node or the only pure
+      list, the tail node is either a suppression node or the only pure
       thresholding node.
     */
     {
@@ -577,15 +577,15 @@ the current event should be logged or dropped.
 
 @param thd Threshold object from sfthd_new()
 @param gen_id Generator id
-@param sig_id Signauture id
+@param sig_id Signature id
 @param tracking Selects tracking by src ip or by dst ip
-@param type  Thresholding type: Limit, Threshold, or Limt+Threshold, Suppress
+@param type  Thresholding type: Limit, Threshold, or Limit+Threshold, Suppress
 @param priority Assigns a relative priority to this object, higher numbers imply higher priority
 
 @param count Number of events
 @param seconds Time duration over which this threshold object acts.
-@param ip      IP address, for supression
-@param ip-mask IP mask, applied with ip_mask, for supression
+@param ip      IP address, for suppression
+@param ip-mask IP mask, applied with ip_mask, for suppression
 
 @return integer
 @retval  0 successfully added the thresholding object
@@ -1178,7 +1178,7 @@ int sfthd_test_threshold(
 
     /*
      * Test for a global threshold object
-     * we're here cause ther were no threshold objects for this gen_id/sig_id pair
+     * we're here cause there were no threshold objects for this gen_id/sig_id pair
      */
 global_test:
 

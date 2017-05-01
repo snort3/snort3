@@ -22,7 +22,7 @@
  *
  * Purpose:
  *      Test a byte field against a specific value (with opcode).  Capable
- *      of testing binary values or converting represenative byte strings
+ *      of testing binary values or converting representative byte strings
  *      to their binary equivalent and testing them.
  *
  *
@@ -37,7 +37,7 @@
  *      ["big"]: process data as big endian (default)
  *      ["little"]: process data as little endian
  *      ["string"]: converted bytes represented as a string needing conversion
- *      ["hex"]: converted string data is represented in hexidecimal
+ *      ["hex"]: converted string data is represented in hexadecimal
  *      ["dec"]: converted string data is represented in decimal
  *      ["oct"]: converted string data is represented in octal
  *      ["bitmask"]: applies the AND operator on the bytes converted. The
@@ -140,7 +140,7 @@ typedef struct _ByteTestData
     uint8_t not_flag;
     uint8_t relative_flag;
     uint8_t data_string_convert_flag;
-    uint8_t endianess;
+    uint8_t endianness;
     uint32_t base;
     uint32_t bitmask_val;
     int8_t cmp_value_var;
@@ -248,7 +248,7 @@ uint32_t ByteTestOption::hash() const
     b += (data->not_flag << 24 |
         data->relative_flag << 16 |
         data->data_string_convert_flag << 8 |
-        data->endianess);
+        data->endianness);
     c += data->base;
 
     mix(a,b,c);
@@ -280,7 +280,7 @@ bool ByteTestOption::operator==(const IpsOption& ips) const
         ( left->not_flag == right->not_flag) &&
         ( left->relative_flag == right->relative_flag) &&
         ( left->data_string_convert_flag == right->data_string_convert_flag) &&
-        ( left->endianess == right->endianess) &&
+        ( left->endianness == right->endianness) &&
         ( left->base == right->base) &&
         ( left->cmp_value_var == right->cmp_value_var) &&
         ( left->offset_var == right->offset_var) &&
@@ -323,7 +323,7 @@ int ByteTestOption::eval(Cursor& c, Packet* p)
     const uint8_t* start_ptr = btd->relative_flag ? c.start() : c.buffer();
     start_ptr += offset;
 
-    uint8_t endian = btd->endianess;
+    uint8_t endian = btd->endianness;
     if (endian == ENDIAN_FUNC)
     {
         if (!p->endianness ||
@@ -538,8 +538,8 @@ bool ByteTestModule::end(const char*, int, SnortConfig*)
             return false;
         }
     }
-    if ( !data.endianess )
-        data.endianess = ENDIAN_BIG;
+    if ( !data.endianness )
+        data.endianness = ENDIAN_BIG;
 
     if (numBytesInBitmask(data.bitmask_val) > data.bytes_to_compare)
     {
@@ -578,13 +578,13 @@ bool ByteTestModule::set(const char*, Value& v, SnortConfig*)
         data.relative_flag = 1;
 
     else if ( v.is("big") )
-        set_byte_order(data.endianess, ENDIAN_BIG, "byte_test");
+        set_byte_order(data.endianness, ENDIAN_BIG, "byte_test");
 
     else if ( v.is("little") )
-        set_byte_order(data.endianess, ENDIAN_LITTLE, "byte_test");
+        set_byte_order(data.endianness, ENDIAN_LITTLE, "byte_test");
 
     else if ( v.is("dce") )
-        set_byte_order(data.endianess, ENDIAN_FUNC, "byte_test");
+        set_byte_order(data.endianness, ENDIAN_FUNC, "byte_test");
 
     else if ( v.is("string") )
     {

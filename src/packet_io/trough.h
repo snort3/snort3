@@ -32,7 +32,7 @@ public:
     {
         SOURCE_FILE_LIST,  // a file containing a list of sources
         SOURCE_LIST,       // a list of sources (eg from cmd line)
-        SOURCE_DIR         // a directory of sources; often used wiht filter
+        SOURCE_DIR         // a directory of sources; often used with filter
     };
 
     static void set_loop_count(long int c)

@@ -45,7 +45,7 @@ TcpOptIterator::TcpOptIterator(const TCPHdr* const tcp_header, const Packet* con
     {
         if (p->layers[i].start == (const uint8_t*)tcp_header)
         {
-            // Can't use the tph_header->hlen() becuase the entire may
+            // Can't use the tph_header->hlen() because the entire may
             // be an EOF or invalid options. However, this layers length
             // has been valid by the codecs.
             end_ptr = (hdr + p->layers[i].length);

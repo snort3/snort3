@@ -23,13 +23,13 @@
 
 //
 // This class defines the data gathering layer of perfmon. PerfMonitor will
-// create an instance of each configued class for each packet processing
+// create an instance of each configured class for each packet processing
 // thread. Subclasses of PerfTrackers should implement or call the following
 // methods, leaving the others for internal use by PerfMonitor:
 //
 // reset() - perform initialization after the output handle has been opened.
 //
-// update(Packet*) - update statistics basied on the current packet.
+// update(Packet*) - update statistics based on the current packet.
 //
 // process(bool) - summarize data and report. This is called after the
 // reporting thresholds have been reached.

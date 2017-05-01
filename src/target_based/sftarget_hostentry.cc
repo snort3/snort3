@@ -42,13 +42,13 @@ static bool hasService(const HostAttributeEntry* host_entry,
             {
                 if (!application)
                 {
-                    /* match of ipproto, proto.  application not speicifed */
+                    /* match of ipproto, proto.  application not specified */
                     return true;
                 }
             }
             else if (!protocol)
             {
-                /* match of ipproto.  protocol not speicifed */
+                /* match of ipproto.  protocol not specified */
                 return true;
             }
         }
@@ -74,13 +74,13 @@ static bool hasClient(const HostAttributeEntry* host_entry,
             {
                 if (!application)
                 {
-                    /* match of ipproto, proto.  application not speicifed */
+                    /* match of ipproto, proto.  application not specified */
                     return true;
                 }
             }
             else if (!protocol)
             {
-                /* match of ipproto.  protocol not speicifed */
+                /* match of ipproto.  protocol not specified */
                 return true;
             }
         }

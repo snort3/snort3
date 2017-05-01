@@ -72,7 +72,7 @@ const PegInfo norm_names[] =
     { "icmp6_echo", "icmp6 echo normalizations" },
     { "tcp_syn_options", "SYN only options cleared from non-SYN packets" },
     { "tcp_options", "packets with options cleared" },
-    { "tcp_paddding", "packets with padding cleared" },
+    { "tcp_padding", "packets with padding cleared" },
     { "tcp_reserved", "packets with reserved bits cleared" },
     { "tcp_nonce", "packets with nonce bit cleared" },
     { "tcp_urgent_ptr", "packets without data with urgent pointer cleared" },
@@ -338,7 +338,7 @@ static int Norm_ICMP6(
 
 //-----------------------------------------------------------------------
 // we assume here that the decoder has not pushed ip6 option extension
-// headers unless the basic sizing is correct (size = N*8 octetes, N>0).
+// headers unless the basic sizing is correct (size = N*8 octets, N>0).
 
 struct ExtOpt
 {

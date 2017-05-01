@@ -49,7 +49,7 @@ public:
     void print_rules(std::ostream&, bool in_rule_file);
     void print_rejects(std::ostream&);
 
-    // functions specifically usefull when parsing includes.
+    // functions specifically useful when parsing includes.
     // allows for easy swapping of data.  These two functions
     // swap data which will be printed in 'print_rules()' and
     // 'print_conf_options()'

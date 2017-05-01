@@ -175,8 +175,8 @@ struct DCE2_CoFragTracker
     DCE2_Buffer* cli_stub_buf;
     DCE2_Buffer* srv_stub_buf;
 
-    int opnum;    /* Opnum that is ultimatley used for request */
-    int ctx_id;   /* Context id that is ultimatley used for request */
+    int opnum;    /* Opnum that is ultimately used for request */
+    int ctx_id;   /* Context id that is ultimately used for request */
 
     /* These are set on a first fragment received */
     int expected_call_id;  /* Expected call id for fragments */
@@ -205,7 +205,7 @@ struct DCE2_CoTracker
      * numbers, but in the order they were in the client packet */
     DCE2_Queue* pending_ctx_ids;
 
-    /* Keeps track of fragmentation buffer and frag specfic data */
+    /* Keeps track of fragmentation buffer and frag specific data */
     DCE2_CoFragTracker frag_tracker;
 
     int max_xmit_frag;    /* The maximum negotiated size of a client request */

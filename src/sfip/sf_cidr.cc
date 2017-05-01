@@ -39,7 +39,7 @@ SfIpRet SfCidr::contains(const SfIp* ip) const
     const uint32_t* pn, * pi;
 
     /* SFIP_CONTAINS is returned here due to how sfvar_ip_in
-     * handles zero'ed IPs" */
+     * handles zeroed IPs" */
     if (!ip)
         return SFIP_CONTAINS;
 

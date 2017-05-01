@@ -83,7 +83,7 @@ const uint8_t TCPOLEN_TIMESTAMP = 10;   /* Timestamp [RFC1323], 10 bytes */
 const uint8_t TCPOLEN_PARTIAL_PERM = 2; /* Partial Order Permitted/ Experimental [RFC1693] */
 const uint8_t TCPOLEN_PARTIAL_SVC = 3;  /*  3 bytes long -- Experimental - [RFC1693] */
 
-/* atleast decode T/TCP options... */
+/* at least decode T/TCP options... */
 const uint8_t TCPOLEN_CC = 6;       /* page 17 of rfc1644 */
 const uint8_t TCPOLEN_CC_NEW = 6;   /* page 17 of rfc1644 */
 const uint8_t TCPOLEN_CC_ECHO = 6;  /* page 17 of rfc1644 */

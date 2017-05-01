@@ -345,7 +345,7 @@ struct SmbNtHdr
     uint16_t smb_mid;               /* multiplex id */
 };
 
-/* For server empty respones indicating client error or interim response */
+/* For server empty responses indicating client error or interim response */
 struct SmbEmptyCom
 {
     uint8_t smb_wct;     /* value = 0 */

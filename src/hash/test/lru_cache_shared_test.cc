@@ -71,9 +71,9 @@ TEST(lru_cache_shared, insert_test)
     CHECK(false == lru_cache.find(3, data));
 
     //  Verify that insert will replace data if key exists already.
-    lru_cache.insert(1, "newone");
+    lru_cache.insert(1, "new one");
     CHECK(true == lru_cache.find(1, data));
-    CHECK("newone" == data);
+    CHECK("new one" == data);
 
     //  Verify current number of entries in cache.
     CHECK(3 == lru_cache.size());
@@ -81,7 +81,7 @@ TEST(lru_cache_shared, insert_test)
     //  Verify that the data is in LRU order.
     auto vec = lru_cache.get_all_data();
     CHECK(3 == vec.size());
-    CHECK((vec[0] == std::make_pair(1, std::string("newone"))));
+    CHECK((vec[0] == std::make_pair(1, std::string("new one"))));
     CHECK((vec[1] == std::make_pair(2, std::string("two"))));
     CHECK((vec[2] == std::make_pair(0, std::string("zero"))));
 }
@@ -185,7 +185,7 @@ TEST(lru_cache_shared, stats_test)
     lru_cache.find(8, data);    //  Misses now that they're removed.
     lru_cache.find(9, data);
 
-    lru_cache.remove(100);  //  Removing a non-existant entry does not
+    lru_cache.remove(100);  //  Removing a non-existent entry does not
                             //  increase remove count.
 
     lru_cache.clear();

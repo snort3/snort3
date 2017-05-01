@@ -119,11 +119,11 @@ private:
     unsigned detract_count = 0;
     SfIp last_detract;
 
-    // consecutive incompatible flows - incompatibile means client packet did not match.
+    // consecutive incompatible flows - incompatible means client packet did not match.
     unsigned invalid_client_count = 0;
 
     /**IP address of client in last flow that was declared incompatible. If client IP address is
-     * different everytime, then consecutive incompatible status indicate that flow is not using
+     * different every time, then consecutive incompatible status indicate that flow is not using
      * specific service.
      */
     SfIp last_invalid_client;

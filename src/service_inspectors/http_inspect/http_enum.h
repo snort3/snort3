@@ -101,7 +101,7 @@ enum MethodId {
 enum UriType { URI__NOT_COMPUTE=-14, URI__PROBLEMATIC=-12, URI_ASTERISK = 2, URI_AUTHORITY,
     URI_ABSPATH, URI_ABSOLUTE };
 
-// Body compression tpyes
+// Body compression types
 enum CompressId { CMP_NONE=2, CMP_GZIP, CMP_DEFLATE };
 
 // Message section in which an IPS option provides the buffer

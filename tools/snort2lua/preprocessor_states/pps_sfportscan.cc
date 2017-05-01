@@ -157,7 +157,7 @@ bool PortScan::convert(std::istringstream& data_stream)
             retval = tmpval;
     }
 
-    table_api.close_table(); // unecessary since the state will be reset
+    table_api.close_table(); // unnecessary since the state will be reset
     return retval;
 }
 

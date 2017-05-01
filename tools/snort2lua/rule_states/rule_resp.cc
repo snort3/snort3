@@ -83,7 +83,7 @@ bool Resp::convert(std::istringstream& data_stream)
                 !tmp.compare("reset_source") ||
                 !tmp.compare("icmp_port"))
             {
-                // Now that we have confirmed this is a vlid option, parse it!!
+                // Now that we have confirmed this is a valid option, parse it!!
                 table_api.open_table("reject");
 
                 do
@@ -167,7 +167,7 @@ static ConversionState* ctor(Converter& c)
 {
     // reject may not have arguments. So, set this information now.
 
-    // create this table to ensure reject is instatiated
+    // create this table to ensure reject is instantiated
     c.get_table_api().open_table("reject");
     c.get_table_api().close_table();
 

@@ -33,7 +33,7 @@
  *
  * Arguments:  None
  *
- * Effect:  The telnet nogiation data is removed from the data
+ * Effect:  The telnet negotiation data is removed from the data
  *
  * Comments:
  *
@@ -117,7 +117,7 @@ int normalize_telnet(
     read_ptr = p->data;
     end = p->data + p->dsize;
 
-    /* look to see if we have any telnet negotiaion codes in the data */
+    /* look to see if we have any telnet negotiation codes in the data */
     while (!normalization_required && (read_ptr < end))
     {
         /* look for the start of a negotiation string */
@@ -182,7 +182,7 @@ int normalize_telnet(
     /* rewind the data stream to p->data */
     read_ptr = p->data;
 
-    /* setup for overwriting the negotaiation strings with
+    /* setup for overwriting the negotiation strings with
     * the follow-on data
     */
     write_ptr = (unsigned char*)DecodeBuffer.data;

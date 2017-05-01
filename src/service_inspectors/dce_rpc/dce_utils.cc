@@ -56,7 +56,7 @@
  *  DCE2_Ret
  *      DCE2_RET__SUCCESS if we were able to successfully parse the
  *          integer to the type specified.
- *      DCE2_RET__ERROR if an error occured in parsing.
+ *      DCE2_RET__ERROR if an error occurred in parsing.
  *
  ********************************************************************/
 DCE2_Ret DCE2_GetValue(char* start, char* end, void* int_value, int negate,

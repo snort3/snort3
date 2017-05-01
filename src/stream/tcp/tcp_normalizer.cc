@@ -34,7 +34,7 @@ static const PegInfo pegName[] =
 {
     { "tcp_trim_syn", "tcp segments trimmed on SYN" },
     { "tcp_trim_rst", "RST packets with data trimmed" },
-    { "tcp_trim_win", "data trimed to window" },
+    { "tcp_trim_win", "data trimmed to window" },
     { "tcp_trim_mss", "data trimmed to MSS" },
     { "tcp_ecn_session", "ECN bits cleared" },
     { "tcp_ts_nop", "timestamp options cleared" },

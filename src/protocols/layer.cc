@@ -220,7 +220,7 @@ const udp::UDPHdr* get_outer_udp_lyr(const Packet* const p)
 
 const uint8_t* get_root_layer(const Packet* const p)
 {
-    // since token ring is the grinder, its the begining of the packet.
+    // since token ring is the grinder, its the beginning of the packet.
     if (p->num_layers > 0)
         return p->layers[0].start;
     return nullptr;

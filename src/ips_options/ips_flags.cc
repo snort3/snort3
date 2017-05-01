@@ -198,7 +198,7 @@ static void flags_parse_test(const char* rule, TcpFlagCheckData* idx)
 
     fptr = rule;
 
-    /* make sure there is atleast a split pointer */
+    /* make sure there is at least a split pointer */
     if (fptr == NULL)
     {
         ParseError("flags missing in TCP flag rule");
@@ -284,7 +284,7 @@ static void flags_parse_test(const char* rule, TcpFlagCheckData* idx)
         default:
             ParseError(
                 "bad TCP flag = '%c'"
-                "Valid otions: UAPRSFCE or 0 for NO flags (e.g. NULL scan),"
+                "Valid options: UAPRSFCE or 0 for NO flags (e.g. NULL scan),"
                 " and !, + or * for modifiers",
                 *fptr);
             return;
@@ -301,7 +301,7 @@ static void flags_parse_mask(const char* rule, TcpFlagCheckData* idx)
 
     fptr = rule;
 
-    /* make sure there is atleast a split pointer */
+    /* make sure there is at least a split pointer */
     if (fptr == NULL)
     {
         ParseError("flags missing in TCP flag rule");
@@ -367,7 +367,7 @@ static void flags_parse_mask(const char* rule, TcpFlagCheckData* idx)
             idx->tcp_mask |= R_ECE;     /* ECN echo, RFC 3168 */
             break;
         default:
-            ParseError("bad TCP flag = '%c'. Valid otions: UAPRSFCE", *fptr);
+            ParseError("bad TCP flag = '%c'. Valid options: UAPRSFCE", *fptr);
             return;
         }
 

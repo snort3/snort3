@@ -24,18 +24,18 @@
  *  This table incorporates a memory manager (memcap.c) to provide a memory cap,
  *  and an automatic node recovery system for out of memory management. Keys and
  *  Data are copied into the hash table during the add operation. The data may
- *  be allocated and free'd by the user (by setting the datasize to zero ). A
+ *  be allocated and freed by the user (by setting the datasize to zero ). A
  *  user callback is provided to allow the user to do cleanup whenever a node
- *  is released, by either the ANR system or the relase() function.
+ *  is released, by either the ANR system or the release() function.
  *
  *  Users can and should delete nodes when they know they are not needed anymore,
  *  but this custom table is designed for the case where nodes are allocated
  *  permanently, we have to limit memory, and we wish to recycle old nodes.
- *  Many problems have a natural node ageing paradigm working in our favor,
+ *  Many problems have a natural node aging paradigm working in our favor,
  *  so automated node aging makes sense. i.e. thresholding, tcp state.
  *
  *  This hash table maps keys to data.  All keys must be unique.
- *  Uniqueness is enforcedby the code.
+ *  Uniqueness is enforced by the code.
  *
  *  Features:
  *
@@ -556,7 +556,7 @@ static SFXHASH_NODE* sfxhash_newnode(SFXHASH* t)
      */
     if ( !hnode && t->anr_flag && t->gtail )
     {
-        /* Find the oldes node the users willing to let go. */
+        /* Find the oldest node the users willing to let go. */
         for (hnode = t->gtail; hnode; hnode = hnode->gprev )
         {
             if ( t->anrfree ) /* User has provided a permission+release callback function */
@@ -590,7 +590,7 @@ static SFXHASH_NODE* sfxhash_newnode(SFXHASH* t)
  *
  *  Find a Node based on the key, return the node and the index.
  *  The index is valid even if the return value is nullptr, in which
- *  case the index is the corect row in which the node should be
+ *  case the index is the correct row in which the node should be
  *  created.
  *
  */
@@ -640,7 +640,7 @@ static SFXHASH_NODE* sfxhash_find_node_row(SFXHASH* t, const void* key, int* rin
  * key  users key pointer
  * data  users data pointer
  *
- * eturn integer
+ * return integer
  * retval SFXHASH_OK      success
  * retval SFXHASH_INTABLE already in the table, t->cnode points to the node
  * retval SFXHASH_NOMEM   not enough memory
@@ -1066,7 +1066,7 @@ static void sfxhash_next(SFXHASH* t)
     }
 
     /* Next row
-       Get 1st node in next non-emtoy row/node list */
+       Get 1st node in next non-empty row/node list */
     for ( t->crow++; t->crow < t->nrows; t->crow++ )
     {
         t->cnode = t->table[ t->crow ];
@@ -1181,9 +1181,9 @@ int usrfree(void* key, void* data)
 /*
    Auto Node Recovery Callback - optional
 
-   This is called to ask the user to kill a node, if it reutrns !0 than the hash
+   This is called to ask the user to kill a node, if it returns !0 than the hash
    library does not kill this node.  If the user os willing to let the node die,
-   the user must do any free'ing or clean up on the node during this call.
+   the user must do any freeing or clean up on the node during this call.
 */
 int anrfree(void* key, void* data)
 {
