@@ -263,7 +263,7 @@ static void ModbusCheckResponseLengths(modbus_session_data_t* session, Packet* p
         {
             /* count of 2-byte registers*/
             tmp_count = *(p->data + MODBUS_MIN_LEN);
-            if (modbus_payload_len == MODBUS_BYTE_COUNT_SIZE + 2*tmp_count)
+            if (modbus_payload_len == MODBUS_BYTE_COUNT_SIZE + tmp_count)
                 check_passed = true;
         }
         break;
