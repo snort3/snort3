@@ -67,7 +67,7 @@ void HttpMsgBody::analyze()
 
 void HttpMsgBody::do_utf_decoding(const Field& input, Field& output)
 {
-    if ((source_id == SRC_CLIENT) || (session_data->utf_state == nullptr))
+    if ((source_id == SRC_CLIENT) || (session_data->utf_state == nullptr) || (input.length() == 0))
     {
         output.set(input);
         return;

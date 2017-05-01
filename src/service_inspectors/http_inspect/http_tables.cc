@@ -273,7 +273,7 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_DOUBLE_DECODE,              "double decoding attack" },
     { EVENT_U_ENCODE,                   "u encoding" },
     { EVENT_BARE_BYTE,                  "bare byte unicode encoding" },
-    { EVENT_OBSOLETE_1,                 "obsolete event--should not appear" },
+    { EVENT_OBSOLETE_BASE_36,           "obsolete event--should not appear" },
     { EVENT_UTF_8,                      "UTF-8 encoding" },
     { EVENT_IIS_UNICODE,                "IIS unicode codepoint encoding" },
     { EVENT_MULTI_SLASH,                "multi_slash encoding" },

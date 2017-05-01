@@ -276,13 +276,46 @@ void UtfDecodeSession::determine_charset(const char** src, unsigned int *src_len
                 charset = CHARSET_UTF16LE;
                 size = 2;
             }
+
+            //  BOM (Byte Order Mark) was missing. Try to guess the encoding.
+            else if (((*src)[0] == '\0') && ((*src)[2] == '\0') && ((*src)[3] != '\0'))
+            {
+                if ((*src)[1] != '\0')
+                    charset = CHARSET_UTF16BE;  // \0C\0C
+                else
+                    charset = CHARSET_UTF32BE;  // \0\0\0C
+            }
+            else if (((*src)[0] != '\0') && ((*src)[1] == '\0') && ((*src)[3] == '\0'))
+            {
+                if ((*src)[2] != '\0')
+                    charset = CHARSET_UTF16LE;  // C\0C\0
+                else
+                    charset = CHARSET_UTF32LE;  // C\0\0\0
+            }
             else
+            {
+                // NOTE: The UTF-8 BOM (Byte Order Mark) does not match the above cases, so we end
+                // up here when parsing UTF-8. That works out for the moment because the first 128
+                // characters of UTF-8 are identical to ASCII. We may want to handle other UTF-8
+                // characters beyond 0x7f in the future.
+
                 charset = CHARSET_DEFAULT; // ensure we don't try again
-            *src +=size;
-            *src_len -=size;
+            }
+
+            // FIXIT-M We are not currently handling the case where some characters are not ASCII
+            // and some are ASCII. This is a problem because some UTF-16 characters have no NUL
+            // bytes (so won't be identified as UTF-16.)
+
+            // FIXIT-L We also do not handle multiple levels of encoding (where unicode becomes
+            // %u0020 for example).
+
+            *src += size;
+            *src_len -= size;
         }
         else
+        {
             charset = CHARSET_DEFAULT; // ensure we don't try again
+        }
         set_decode_utf_state_charset(charset);
 
     }
@@ -290,17 +323,13 @@ void UtfDecodeSession::determine_charset(const char** src, unsigned int *src_len
 
 /* Wrapper function for DecodeUTF{16,32}{LE,BE} */
 bool UtfDecodeSession::decode_utf(
-    const char* src, unsigned int src_len, char* dst, unsigned int dst_len,
-    int* bytes_copied)
+    const char* src, unsigned int src_len, char* dst, unsigned int dst_len, int* bytes_copied)
 {
-    if ( !src || !dst || !bytes_copied || !src_len || !dst_len )
-        return false;
-
     *bytes_copied = 0;
 
     determine_charset(&src, &src_len);
 
-    if( !src_len)
+    if (!src_len)
         return false;
 
     switch (dstate.charset)

@@ -238,7 +238,7 @@ enum EventSid
     EVENT_DOUBLE_DECODE,
     EVENT_U_ENCODE,
     EVENT_BARE_BYTE,
-    EVENT_OBSOLETE_1,       // Previously used, do not reuse this number
+    EVENT_OBSOLETE_BASE_36,       // Previously used, do not reuse this number
     EVENT_UTF_8,
     EVENT_IIS_UNICODE,
     EVENT_MULTI_SLASH,
