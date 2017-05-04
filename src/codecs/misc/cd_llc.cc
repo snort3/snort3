@@ -30,6 +30,23 @@
 
 namespace
 {
+static const RuleMap llc_rules[] =
+{
+    { DECODE_BAD_ETHLLC, "bad LLC header" },
+    { DECODE_BAD_ETHLLC_OTHER, "bad extra LLC info"},
+    { DECODE_BAD_LLC_PROTOCOL, "bad LLC protocol id" },
+    { 0, nullptr }
+};
+
+class LlcModule : public CodecModule
+{
+public:
+    LlcModule() : CodecModule(LLC_NAME, LLC_HELP) {}
+
+    const RuleMap* get_rules() const override
+    { return llc_rules; }
+};
+
 class LlcCodec : public Codec
 {
 public:
@@ -85,7 +102,7 @@ bool LlcCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     if (raw.len < sizeof(EthLlc))
     {
         // FIXIT-L need a better alert for llc len
-        codec_event(codec, DECODE_BAD_VLAN_ETHLLC);
+        codec_event(codec, DECODE_BAD_ETHLLC);
         return false;
     }
 
@@ -96,17 +113,24 @@ bool LlcCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     {
         if (raw.len <  sizeof(EthLlc) + sizeof(EthLlcOther))
         {
-            codec_event(codec, DECODE_BAD_VLAN_ETHLLC);
+            codec_event(codec, DECODE_BAD_ETHLLC_OTHER);
             return false;
         }
 
         const EthLlcOther* ehllcother = reinterpret_cast<const EthLlcOther*>(raw.data +
             sizeof(EthLlc));
-
+        
+        //if its ethernet
         if (ehllcother->org_code[0] == 0 &&
             ehllcother->org_code[1] == 0 &&
             ehllcother->org_code[2] == 0)
         {
+            if (ehllcother->proto() < ProtocolId::ETHERTYPE_MINIMUM)
+            {
+                codec_event(codec, DECODE_BAD_LLC_PROTOCOL);
+                return false;
+            }
+
             codec.lyr_len = sizeof(EthLlc) + sizeof(EthLlcOther);
             codec.next_prot_id = ehllcother->proto();
         }
@@ -140,6 +164,13 @@ void LlcCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
 // api
 //-------------------------------------------------------------------------
 
+
+static Module* mod_ctor()
+{ return new LlcModule; }
+
+static void mod_dtor(Module* m)
+{ delete m; }
+
 static Codec* ctor(Module*)
 { return new LlcCodec(); }
 
@@ -157,8 +188,8 @@ static const CodecApi llc_api =
         API_OPTIONS,
         LLC_NAME,
         LLC_HELP,
-        nullptr,
-        nullptr
+        mod_ctor,
+        mod_dtor
     },
     nullptr,
     nullptr,

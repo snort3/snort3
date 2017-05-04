@@ -34,8 +34,6 @@ namespace
 static const RuleMap vlan_rules[] =
 {
     { DECODE_BAD_VLAN, "bad VLAN frame" },
-    { DECODE_BAD_VLAN_ETHLLC, "bad LLC header" },
-    { DECODE_BAD_VLAN_OTHER, "bad extra LLC info" },
     { 0, nullptr }
 };
 

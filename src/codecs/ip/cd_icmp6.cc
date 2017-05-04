@@ -133,6 +133,9 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         /* IPv6 traffic */
         else
         {
+            // make sure we have a valid header
+            assert(snort.ip_api.get_ip6h());
+
             bad_cksum_cnt = &stats.bad_ip6_cksum;
             checksum::Pseudoheader6 ph6;
             COPY4(ph6.sip, snort.ip_api.get_src()->get_ip6_ptr());
