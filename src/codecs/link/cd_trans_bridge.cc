@@ -61,6 +61,8 @@ bool TransbridgeCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     codec.proto_bits |= PROTO_BIT__ETH;
     codec.lyr_len = eth::ETH_HEADER_LEN;
     codec.next_prot_id = eh->ethertype();
+    codec.codec_flags |= CODEC_ETHER_NEXT;
+
     return true;
 }
 

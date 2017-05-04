@@ -108,6 +108,8 @@ constexpr uint16_t CODEC_NON_IP_TUNNEL = 0x0200;
 constexpr uint16_t CODEC_IP6_EXT_OOO = 0x0400;
 constexpr uint16_t CODEC_IP6_BAD_OPT = 0x0800;
 
+constexpr uint16_t CODEC_ETHER_NEXT = 0x1000;
+
 constexpr uint16_t CODEC_IPOPT_FLAGS = (CODEC_IPOPT_RR_SEEN |
     CODEC_IPOPT_RTRALT_SEEN | CODEC_IPOPT_LEN_THREE);
 

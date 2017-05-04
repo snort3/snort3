@@ -56,6 +56,7 @@ bool LinuxSllCodec::decode(const RawData& raw, CodecData& data, DecodeData&)
     /* grab out the network type */
     data.next_prot_id = static_cast<ProtocolId>(ntohs(sllh->sll_protocol));
     data.lyr_len = linux_sll::SLL_HDR_LEN;
+    data.codec_flags |= CODEC_ETHER_NEXT;
     return true;
 }
 

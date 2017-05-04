@@ -32,9 +32,8 @@ namespace
 {
 static const RuleMap llc_rules[] =
 {
-    { DECODE_BAD_ETHLLC, "bad LLC header" },
-    { DECODE_BAD_ETHLLC_OTHER, "bad extra LLC info"},
-    { DECODE_BAD_LLC_PROTOCOL, "bad LLC protocol id" },
+    { DECODE_BAD_LLC_HEADER, "bad LLC header" },
+    { DECODE_BAD_LLC_OTHER, "bad extra LLC info"},
     { 0, nullptr }
 };
 
@@ -102,7 +101,7 @@ bool LlcCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     if (raw.len < sizeof(EthLlc))
     {
         // FIXIT-L need a better alert for llc len
-        codec_event(codec, DECODE_BAD_ETHLLC);
+        codec_event(codec, DECODE_BAD_LLC_HEADER);
         return false;
     }
 
@@ -113,26 +112,20 @@ bool LlcCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     {
         if (raw.len <  sizeof(EthLlc) + sizeof(EthLlcOther))
         {
-            codec_event(codec, DECODE_BAD_ETHLLC_OTHER);
+            codec_event(codec, DECODE_BAD_LLC_OTHER);
             return false;
         }
 
         const EthLlcOther* ehllcother = reinterpret_cast<const EthLlcOther*>(raw.data +
             sizeof(EthLlc));
         
-        //if its ethernet
         if (ehllcother->org_code[0] == 0 &&
             ehllcother->org_code[1] == 0 &&
             ehllcother->org_code[2] == 0)
         {
-            if (ehllcother->proto() < ProtocolId::ETHERTYPE_MINIMUM)
-            {
-                codec_event(codec, DECODE_BAD_LLC_PROTOCOL);
-                return false;
-            }
-
             codec.lyr_len = sizeof(EthLlc) + sizeof(EthLlcOther);
             codec.next_prot_id = ehllcother->proto();
+            codec.codec_flags |= CODEC_ETHER_NEXT;
         }
     }
 

@@ -27,6 +27,7 @@
 
 #include "codecs/codec_module.h"
 #include "codecs/ip/checksum.h"
+#include "events/event_queue.h"
 #include "log/text_log.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
@@ -157,6 +158,16 @@ void PacketManager::decode(
             CodecManager::s_protocols[mapped_prot]->get_name(),
             static_cast<uint16_t>(codec_data.next_prot_id), pkt, codec_data.lyr_len);
 
+        if ( codec_data.codec_flags & CODEC_ETHER_NEXT )
+        {
+            if ( codec_data.next_prot_id < ProtocolId::ETHERTYPE_MINIMUM )
+            {
+                SnortEventqAdd(GID_DECODE, DECODE_BAD_ETHER_TYPE);
+                break;
+            }
+            codec_data.codec_flags &= ~CODEC_ETHER_NEXT;
+        }
+                
         /*
          * We only want the layer immediately following SAVE_LAYER to have the
          * UNSURE_ENCAP flag set.  So, if this is a SAVE_LAYER, zero out the

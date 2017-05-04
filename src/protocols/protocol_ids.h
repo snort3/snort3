@@ -157,8 +157,8 @@ enum class ProtocolId : std::uint16_t
     ETHERTYPE_CISCO_META = 0x8909,
 };
 
-static const auto max_protocol_id =
-    std::numeric_limits<std::underlying_type<ProtocolId>::type>::max();
+static const auto num_protocol_ids =
+    std::numeric_limits<std::underlying_type<ProtocolId>::type>::max() + 1;
 
 inline bool is_ip_protocol(ProtocolId prot_id)
 {

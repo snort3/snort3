@@ -95,7 +95,7 @@ private:
     struct CodecApiWrapper;
 
     static std::vector<CodecApiWrapper> s_codecs;
-    static std::array<ProtocolIndex, max_protocol_id> s_proto_map;
+    static std::array<ProtocolIndex, num_protocol_ids> s_proto_map;
     static std::array<Codec*, UINT8_MAX> s_protocols;
 
     static THREAD_LOCAL ProtocolId grinder_id;

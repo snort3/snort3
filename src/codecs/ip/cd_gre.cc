@@ -208,7 +208,7 @@ bool GreCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
     codec.lyr_len = len;
     codec.next_prot_id = greh->proto();
-    codec.codec_flags |= CODEC_NON_IP_TUNNEL;
+    codec.codec_flags |= CODEC_NON_IP_TUNNEL | CODEC_ETHER_NEXT;
     return true;
 }
 

@@ -39,7 +39,7 @@ struct CodecManager::CodecApiWrapper
 
 // the zero initialization is not required but quiets the compiler
 std::vector<CodecManager::CodecApiWrapper> CodecManager::s_codecs;
-std::array<uint8_t, max_protocol_id> CodecManager::s_proto_map {
+std::array<uint8_t, num_protocol_ids> CodecManager::s_proto_map {
     { 0 }
 };
 std::array<Codec*, UINT8_MAX> CodecManager::s_protocols {

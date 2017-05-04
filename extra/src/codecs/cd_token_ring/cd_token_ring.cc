@@ -174,6 +174,7 @@ bool TrCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
     codec.lyr_len = dataoff;
     codec.next_prot_id = trhllc->ethertype();
+    codec.codec_flags |= CODEC_ETHER_NEXT;
     return true;
 }
 
