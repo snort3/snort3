@@ -133,9 +133,11 @@ bool CiscoMetaDataCodec::decode(const RawData& raw, CodecData& codec, DecodeData
     }
 
     codec.lyr_len = cmdh->length << 3;
+
     //The last 2 octets of the header will be the real ethtype
-    codec.next_prot_id =
-        static_cast<ProtocolId>(ntohs(*(raw.data + codec.lyr_len - sizeof(uint16_t))));
+    codec.next_prot_id = static_cast<ProtocolId>
+        (ntohs(*((uint16_t*)(raw.data + codec.lyr_len - sizeof(uint16_t)))));
+
     codec.codec_flags |= CODEC_ETHER_NEXT;
     return true;
 }
