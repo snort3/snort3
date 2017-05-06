@@ -161,14 +161,6 @@ void sfghash_delete(SFGHASH* h)
 }
 
 /*
-*  Get the # of Nodes in HASH the table
-*/
-int sfghash_count(SFGHASH* t)
-{
-    return t->count;
-}
-
-/*
 *  Add a key + data pair
 *  ---------------------
 *
@@ -196,7 +188,7 @@ int sfghash_add(SFGHASH* t, const void* const key, void* const data)
     int index;
     SFGHASH_NODE* hnode;
 
-    if (t == NULL)
+    if (t == nullptr || key == nullptr)
         return SFGHASH_ERR;
 
     /*
@@ -284,26 +276,6 @@ int sfghash_add(SFGHASH* t, const void* const key, void* const data)
 }
 
 /*
-*  move a node to the front of the list
-*/
-static void movetofront(SFGHASH* t, int index, SFGHASH_NODE* n)
-{
-    if ( t->table[index] != n ) // if not at front of list already...
-    {
-        /* Unlink the node */
-        if ( n->prev )
-            n->prev->next = n->next;
-        if ( n->next )
-            n->next->prev = n->prev;
-
-        /* Link at front of list */
-        n->prev=0;
-        n->next=t->table[index];
-        t->table[index]->prev=n;
-    }
-}
-
-/*
 *  Find a Node based on the key, return users data.
 */
 static SFGHASH_NODE* sfghash_find_node(SFGHASH* t, const void* const key)
@@ -311,6 +283,8 @@ static SFGHASH_NODE* sfghash_find_node(SFGHASH* t, const void* const key)
     unsigned hashkey;
     int index, klen;
     SFGHASH_NODE* hnode;
+
+    assert(t);
 
     if ( t->keysize  )
     {
@@ -331,9 +305,6 @@ static SFGHASH_NODE* sfghash_find_node(SFGHASH* t, const void* const key)
         {
             if ( !strcmp((char*)hnode->key,(char*)key) )
             {
-                if ( t->splay  > 0 )
-                    movetofront(t,index,hnode);
-
                 return hnode;
             }
         }
@@ -341,9 +312,6 @@ static SFGHASH_NODE* sfghash_find_node(SFGHASH* t, const void* const key)
         {
             if ( !t->sfhashfcn->keycmp_fcn(hnode->key,key,t->keysize) )
             {
-                if ( t->splay  > 0 )
-                    movetofront(t,index,hnode);
-
                 return hnode;
             }
         }
@@ -369,33 +337,13 @@ void* sfghash_find(SFGHASH* t, const void* const key)
     return NULL;
 }
 
-/* Returns whether or not the there is an entry in the table with key
- * Sets argument data to data in hash node which could be NULL.
- * This function is used to both make sure there is an entry in the
- * table and get potential data associated with entry */
-int sfghash_find2(SFGHASH* t, const void* key, void** data)
-{
-    SFGHASH_NODE* hnode;
-
-    if (t == NULL)
-        return 0;
-
-    hnode = sfghash_find_node(t, key);
-
-    if (hnode != NULL)
-    {
-        *data = hnode->data;
-        return 1;
-    }
-
-    return 0;
-}
-
 /*
 *  Unlink and free the node
 */
 static int sfghash_free_node(SFGHASH* t, unsigned index, SFGHASH_NODE* hnode)
 {
+    assert(t);
+
     if ( !t->userkey && hnode->key )
         snort_free((void*)hnode->key);
 
@@ -436,6 +384,8 @@ int sfghash_remove(SFGHASH* t, const void* const key)
     int klen;
     unsigned hashkey, index;
 
+    assert(t);
+
     if ( t->keysize > 0 )
     {
         klen = t->keysize;
@@ -473,8 +423,7 @@ int sfghash_remove(SFGHASH* t, const void* const key)
 /* Internal use only */
 static void sfghash_next(SFGHASH* t)
 {
-    if ( !t->cnode )
-        return;
+    assert(t and t->cnode);
 
     /* Next node in current node list */
     t->cnode = t->cnode->next;
@@ -502,6 +451,7 @@ SFGHASH_NODE* sfghash_findfirst(SFGHASH* t)
 {
     SFGHASH_NODE* n;
 
+    assert(t);
     /* Start with 1st row */
     for ( t->crow=0; t->crow < t->nrows; t->crow++ )
     {
@@ -527,6 +477,8 @@ SFGHASH_NODE* sfghash_findnext(SFGHASH* t)
 {
     SFGHASH_NODE* n;
 
+    assert(t);
+
     n = t->cnode;
 
     if ( !n ) /* Done, no more entries */
@@ -549,115 +501,11 @@ SFGHASH_NODE* sfghash_findnext(SFGHASH* t)
  * @param hash_fcn user specified hash function
  * @param keycmp_fcn user specified key comparison function
  */
-
 int sfghash_set_keyops(SFGHASH* h,
-    unsigned (* hash_fcn)(SFHASHFCN* p,
-    unsigned char* d,
-    int n),
-    int (* keycmp_fcn)(const void* s1,
-    const void* s2,
-    size_t n))
+    unsigned (* hash_fcn)(SFHASHFCN* p, unsigned char* d, int n),
+    int (* keycmp_fcn)(const void* s1, const void* s2, size_t n))
 {
-    if (h && hash_fcn && keycmp_fcn)
-    {
-        return sfhashfcn_set_keyops(h->sfhashfcn, hash_fcn, keycmp_fcn);
-    }
+    assert(h && hash_fcn && keycmp_fcn);
 
-    return -1;
+    return sfhashfcn_set_keyops(h->sfhashfcn, hash_fcn, keycmp_fcn);
 }
-
-/*
-*
-*   Test Driver for Hashing
-*
-*/
-
-#ifdef SFGHASH_MAIN
-
-void myfree(void* p)
-{
-    printf("freeing '%s'\n",p);
-    snort_free(p);
-}
-
-/*
-*       Hash test program
-*/
-int main(int argc, char** argv)
-{
-    int i;
-    SFGHASH* t;
-    SFGHASH_NODE* n;
-    char str[256],* p;
-    int num=100;
-
-    if ( argc > 1 )
-        num = atoi(argv[1]);
-
-    sfatom_init();
-
-    /* Create a Hash Table */
-    t = sfghash_new(1000, 0, GH_COPYKEYS, myfree);
-
-    /* Add Nodes to the Hash Table */
-    for (i=0; i<num; i++)
-    {
-        snprintf(str, sizeof(str), "KeyWord%d",i+1);
-        str[sizeof(str) - 1] = '\0';
-        sfghash_add(t, str, strupr(snort_strdup(str)) );
-
-        sfatom_add(str, strupr(snort_strdup(str)) );
-    }
-
-    /* Find and Display Nodes in the Hash Table */
-    printf("\n** FIND KEY TEST\n");
-
-    for (i=0; i<num; i++)
-    {
-        snprintf(str, sizeof(str), "KeyWord%d",i+1);
-        str[sizeof(str) - 1] = '\0';
-
-        p = (char*)sfghash_find(t, str);
-
-        printf("Hash-key=%*s, data=%*s\n", strlen(str),str, strlen(str), p);
-
-        p = (char*)sfatom_find(str);
-
-        printf("Atom-key=%*s, data=%*s\n", strlen(str),str, strlen(str), p);
-    }
-
-    /* Display All Nodes in the Hash Table */
-    printf("\n** FINDFIRST / FINDNEXT TEST\n");
-
-    for ( n = sfghash_findfirst(t); n; n = sfghash_findnext(t) )
-    {
-        printf("hash-findfirst/next: key=%s, data=%s\n", n->key, n->data);
-
-        // hashing code frees user data using 'myfree' above ....
-        if ( sfghash_remove(t,n->key) )
-            printf("Could not remove the key node\n");
-        else
-            printf("key node removed\n");
-    }
-
-    for ( n = sfatom_findfirst(); n; n = sfatom_findnext() )
-    {
-        printf("atom-findfirst/next: key=%s, data=%s\n", n->key, n->data);
-
-        snort_free(n->data);  //since atom data is not freed automatically
-    }
-
-    /* Free the table and it's user data */
-    printf("****sfghash_delete\n");
-    sfghash_delete(t);
-
-    printf("****sfatom_reset\n");
-    sfatom_reset();
-
-    printf("\nnormal pgm finish\n\n");
-
-    return 0;
-}
-
-#endif
-

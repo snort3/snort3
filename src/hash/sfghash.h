@@ -62,17 +62,13 @@ struct SFGHASH
 
     int crow;             /* findfirst/next row in table */
     SFGHASH_NODE* cnode;  /* findfirst/next node ptr */
-
-    int splay;
 };
 
 SO_PUBLIC SFGHASH* sfghash_new(int nrows, int keysize, int userkeys, SfgHashFree);
 SO_PUBLIC void sfghash_delete(SFGHASH*);
 SO_PUBLIC int sfghash_add(SFGHASH*, const void* const key, void* const data);
 SO_PUBLIC int sfghash_remove(SFGHASH*, const void* const key);
-SO_PUBLIC int sfghash_count(SFGHASH*);
 SO_PUBLIC void* sfghash_find(SFGHASH*, const void* const key);
-SO_PUBLIC int sfghash_find2(SFGHASH*, const void*, void**);
 SO_PUBLIC SFGHASH_NODE* sfghash_findfirst(SFGHASH*);
 SO_PUBLIC SFGHASH_NODE* sfghash_findnext(SFGHASH*);
 SO_PUBLIC int sfghash_set_keyops(SFGHASH*,
