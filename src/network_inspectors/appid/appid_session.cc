@@ -417,8 +417,8 @@ void AppIdSession::update_encrypted_app_id(AppId serviceAppId)
     {
     case APP_ID_HTTP:
         if (misc_app_id == APP_ID_NSIIOPS || misc_app_id == APP_ID_DDM_SSL
-            || misc_app_id == APP_ID_MSFT_GC_SSL || misc_app_id ==
-            APP_ID_SF_APPLIANCE_MGMT)
+            || misc_app_id == APP_ID_MSFT_GC_SSL
+            || misc_app_id == APP_ID_SF_APPLIANCE_MGMT)
         {
             break;
         }

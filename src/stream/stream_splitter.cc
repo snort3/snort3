@@ -98,8 +98,7 @@ static inline int CheckFlushCoercion(  // FIXIT-M this should be part of a new s
     if ( !flush_factor )
         return 0;
 
-    if (
-        p->dsize &&
+    if ( p->dsize &&
         (p->dsize < fm->last_size) &&
         (fm->last_count >= flush_factor) )
     {

@@ -298,7 +298,7 @@ void TcpTracker::init_on_data_seg_sent(TcpSegmentDescriptor& tsd)
     reassembler->set_seglist_base_seq(tsd.get_seg_ack());
 
     ts_last_packet = tsd.get_pkt()->pkth->ts.tv_sec;
-    tf_flags |= normalizer->get_tcp_timestamp(tsd, 0);
+    tf_flags |= normalizer->get_tcp_timestamp(tsd, false);
     ts_last = tsd.get_ts();
     if (ts_last == 0)
         tf_flags |= TF_TSTAMP_ZERO;
