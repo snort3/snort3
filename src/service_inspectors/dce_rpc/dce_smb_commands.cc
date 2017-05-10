@@ -262,8 +262,8 @@ static DCE2_Ret DCE2_SmbCheckData(DCE2_SmbSsnData*,
 
     // Not necessarily an error if the addition of the data count goes
     // beyond the data left
-    if (((offset + dcnt) > nb_end)           // beyond data left
-        || ((offset + dcnt) < offset))       // wrap
+
+    if (dcnt > (nb_end - offset))           // beyond data left
     {
         dce_alert(GID_DCE2, DCE2_SMB_NB_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats);
     }
@@ -2253,4 +2253,3 @@ DCE2_Ret DCE2_SmbWriteAndClose(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
     return DCE2_RET__SUCCESS;
 }
-

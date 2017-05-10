@@ -152,9 +152,7 @@ static DCE2_Ret DCE2_SmbCheckTransDataParams(
         dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats);
     }
 
-    // Check the data offset + data count
-    if (((doffset + dcnt) > nb_end)            // beyond data left
-        || ((doffset + dcnt) < doffset))       // wrap
+    if (dcnt > (nb_end - doffset))            // beyond data left
     {
         dce_alert(GID_DCE2, DCE2_SMB_NB_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats);
         return DCE2_RET__ERROR;
@@ -177,9 +175,7 @@ static DCE2_Ret DCE2_SmbCheckTransDataParams(
         dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats);
     }
 
-    // Check the parameter offset + parameter count
-    if (((poffset + pcnt) > nb_end)            // beyond data left
-        || ((poffset + pcnt) < poffset))       // wrap
+    if (pcnt > (nb_end - poffset))            // beyond data left
     {
         dce_alert(GID_DCE2, DCE2_SMB_NB_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats);
         return DCE2_RET__ERROR;
@@ -415,4 +411,3 @@ DCE2_Ret DCE2_SmbBufferTransactionParameters(DCE2_SmbTransactionTracker* ttracke
 
     return DCE2_RET__SUCCESS;
 }
-
