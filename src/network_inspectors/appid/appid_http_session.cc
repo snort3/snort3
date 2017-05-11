@@ -606,7 +606,7 @@ int AppIdHttpSession::process_http_packet(int direction)
             char* version = nullptr;
 
             if ( http_matchers->get_appid_from_url(host, url, &version, referer, &client_id,
-                &service_id, &payload_id, &referredPayloadAppId, 0) )
+                &service_id, &payload_id, &referredPayloadAppId, false) )
             {
                 // do not overwrite a previously-set client or service
                 if (asd->client_app_id <= APP_ID_NONE)

@@ -818,7 +818,7 @@ static int service_add_client(lua_State* L)
     auto& ud = *UserData<LuaClientDetector>::check(L, DETECTOR, 1);
     assert(ud->validate_params.asd);
 
-    AppId client_app_id = lua_tonumber(L, 2);
+    AppId client_id = lua_tonumber(L, 2);
     AppId service_id = lua_tonumber(L, 3);
     const char* version = lua_tostring(L, 4);
 
@@ -828,7 +828,7 @@ static int service_add_client(lua_State* L)
         return 1;
     }
 
-    ud->add_app(ud->validate_params.asd, service_id, client_app_id, version);
+    ud->add_app(ud->validate_params.asd, service_id, client_id, version);
 
     lua_pushnumber(L, 0);
     return 1;
@@ -932,51 +932,26 @@ static int detector_add_http_pattern(lua_State* L)
     }
 
     DHPSequence seq  = (DHPSequence)lua_tointeger(L, ++index);
-    if (seq < SINGLE || seq > USER_AGENT_HEADER)
-    {
-        ErrorMessage("Invalid HTTP DHP Sequence.");
-        return 0;
-    }
-
-    uint32_t service_id      = lua_tointeger(L, ++index);
-    uint32_t client_app      = lua_tointeger(L, ++index);
+    AppInfoManager& aim = AppInfoManager::get_instance();
+    uint32_t service_id = aim.get_appid_by_service_id((uint32_t)lua_tointeger(L, ++index));
+    uint32_t client_id = aim.get_appid_by_client_id((uint32_t)lua_tointeger(L, ++index));
     /*uint32_t client_app_type =*/ lua_tointeger(L, ++index);
-    uint32_t payload         = lua_tointeger(L, ++index);
+    uint32_t payload_id = aim.get_appid_by_payload_id((uint32_t)lua_tointeger(L, ++index));
     /*uint32_t payload_type    =*/ lua_tointeger(L, ++index);
 
     size_t pattern_size = 0;
-    const char* tmp_string = lua_tolstring(L, ++index, &pattern_size);
-    if ( tmp_string == nullptr || pattern_size == 0)
+    uint8_t* pattern_str = (uint8_t*)lua_tolstring(L, ++index, &pattern_size);
+    uint32_t app_id = lua_tointeger(L, ++index);
+    DetectorHTTPPattern pattern;
+    if( pattern.init(pattern_str, pattern_size, seq, service_id, client_id,
+        payload_id, app_id) )
     {
-        ErrorMessage("Invalid HTTP pattern string.");
-        return 0;
+        HttpPatternMatchers::get_instance()->insert_http_pattern(pat_type, pattern);
+        aim.set_app_info_active(service_id);
+        aim.set_app_info_active(client_id);
+        aim.set_app_info_active(payload_id);
+        aim.set_app_info_active(app_id);
     }
-
-    uint8_t* pattern_str = (uint8_t*)snort_strdup(tmp_string);
-    uint32_t appId = lua_tointeger(L, ++index);
-    AppInfoManager& app_info_manager = AppInfoManager::get_instance();
-    HTTPListElement* element = (HTTPListElement*)snort_calloc(sizeof(HTTPListElement));
-    DetectorHTTPPattern* pattern = &element->detector_http_pattern;
-    pattern->seq           = seq;
-    pattern->service_id    = app_info_manager.get_appid_by_service_id(service_id);
-    pattern->client_app    = app_info_manager.get_appid_by_client_id(client_app);
-    pattern->payload       = app_info_manager.get_appid_by_payload_id(payload);
-    pattern->pattern       = pattern_str;
-    pattern->pattern_size  = (int)pattern_size;
-    pattern->appId         = appId;
-
-    // for apps that should not show up in 4.10 and earlier, we cannot include an entry in
-    // the legacy client app or payload tables. We will use the appId instead. This is only for
-    // user-agents that ID clients. if you want a user-agent to ID a payload, include it in the
-    // payload database. If you want a host pattern ID, use the other API.
-    if (!service_id && !client_app && !payload && pat_type == 2)
-        pattern->client_app = appId;
-
-    HttpPatternMatchers::get_instance()->insert_http_pattern_element(pat_type, element);
-    app_info_manager.set_app_info_active(pattern->service_id);
-    app_info_manager.set_app_info_active(pattern->client_app);
-    app_info_manager.set_app_info_active(pattern->payload);
-    app_info_manager.set_app_info_active(appId);
 
     return 0;
 }
@@ -1129,12 +1104,12 @@ static int detector_add_content_type_pattern(lua_State* L)
     uint8_t* pattern = (uint8_t*)snort_strdup(tmp_string);
     AppId appId = lua_tointeger(L, ++index);
 
-    HTTPListElement* element = (HTTPListElement*)snort_calloc(sizeof(HTTPListElement));
-    DetectorHTTPPattern* detector = &element->detector_http_pattern;
-    detector->pattern = pattern;
-    detector->pattern_size = strlen((char*)pattern);
-    detector->appId = appId;
-    HttpPatternMatchers::get_instance()->insert_content_type_pattern(element);
+    DetectorHTTPPattern detector;
+    detector.pattern = pattern;
+    detector.pattern_size = strlen((char*)pattern);
+    detector.app_id = appId;
+    detector.free_pattern = true;
+    HttpPatternMatchers::get_instance()->insert_content_type_pattern(detector);
     AppInfoManager::get_instance().set_app_info_active(appId);
 
     return 0;
@@ -1647,7 +1622,7 @@ static int detector_add_url_application(lua_State* L)
     uint32_t service_id      = lua_tointeger(L, ++index);
     uint32_t client_app      = lua_tointeger(L, ++index);
     /*uint32_t client_app_type =*/ lua_tointeger(L, ++index);
-    uint32_t payload         = lua_tointeger(L, ++index);
+    uint32_t payload_id         = lua_tointeger(L, ++index);
     /*uint32_t payload_type    =*/ lua_tointeger(L, ++index);
 
     /* Verify that host pattern is a valid string */
@@ -1701,8 +1676,8 @@ static int detector_add_url_application(lua_State* L)
     DetectorAppUrlPattern* pattern =
         (DetectorAppUrlPattern*)snort_calloc(sizeof(DetectorAppUrlPattern));
     pattern->userData.service_id        = app_info_manager.get_appid_by_service_id(service_id);
-    pattern->userData.client_app        = app_info_manager.get_appid_by_client_id(client_app);
-    pattern->userData.payload           = app_info_manager.get_appid_by_payload_id(payload);
+    pattern->userData.client_id        = app_info_manager.get_appid_by_client_id(client_app);
+    pattern->userData.payload_id           = app_info_manager.get_appid_by_payload_id(payload_id);
     pattern->userData.appId             = appId;
     pattern->userData.query.pattern     = query_pattern;
     pattern->userData.query.patternSize = query_pattern_size;
@@ -1715,8 +1690,8 @@ static int detector_add_url_application(lua_State* L)
     HttpPatternMatchers::get_instance()->insert_url_pattern(pattern);
 
     app_info_manager.set_app_info_active(pattern->userData.service_id);
-    app_info_manager.set_app_info_active(pattern->userData.client_app);
-    app_info_manager.set_app_info_active(pattern->userData.payload);
+    app_info_manager.set_app_info_active(pattern->userData.client_id);
+    app_info_manager.set_app_info_active(pattern->userData.payload_id);
     app_info_manager.set_app_info_active(appId);
 
     return 0;
@@ -1732,7 +1707,7 @@ static int detector_add_rtmp_url(lua_State* L)
     uint32_t service_id      = lua_tointeger(L, ++index);
     uint32_t client_app      = lua_tointeger(L, ++index);
     /*uint32_t client_app_type =*/ lua_tointeger(L, ++index);
-    uint32_t payload         = lua_tointeger(L, ++index);
+    uint32_t payload_id         = lua_tointeger(L, ++index);
     /*uint32_t payload_type    =*/ lua_tointeger(L, ++index);
 
     /* Verify that host pattern is a valid string */
@@ -1782,10 +1757,10 @@ static int detector_add_rtmp_url(lua_State* L)
         (DetectorAppUrlPattern*)snort_calloc(sizeof(DetectorAppUrlPattern));
 
     /* we want to put these patterns in just like for regular Urls, but we do NOT need legacy IDs for them.
-     * so just use the appID for service, client, or payload ID */
+     * so just use the appID for service, client, or payload_id ID */
     pattern->userData.service_id        = service_id;
-    pattern->userData.client_app        = client_app;
-    pattern->userData.payload           = payload;
+    pattern->userData.client_id        = client_app;
+    pattern->userData.payload_id           = payload_id;
     pattern->userData.appId             = appId;
     pattern->userData.query.pattern     = query_pattern;
     pattern->userData.query.patternSize = query_pattern_size;
@@ -1799,8 +1774,8 @@ static int detector_add_rtmp_url(lua_State* L)
 
     AppInfoManager& app_info_manager = AppInfoManager::get_instance();
     app_info_manager.set_app_info_active(pattern->userData.service_id);
-    app_info_manager.set_app_info_active(pattern->userData.client_app);
-    app_info_manager.set_app_info_active(pattern->userData.payload);
+    app_info_manager.set_app_info_active(pattern->userData.client_id);
+    app_info_manager.set_app_info_active(pattern->userData.payload_id);
     app_info_manager.set_app_info_active(appId);
 
     return 0;
@@ -1866,10 +1841,10 @@ static int add_client_application(lua_State* L)
 {
     auto& ud = *UserData<LuaClientDetector>::check(L, DETECTOR, 1);
     assert(ud->validate_params.pkt);
-    unsigned int service_app_id = lua_tonumber(L, 2);
-    unsigned int client_app_id = lua_tonumber(L, 3);
+    unsigned int service_id = lua_tonumber(L, 2);
+    unsigned int client_id = lua_tonumber(L, 3);
 
-    ud->add_app(ud->validate_params.asd, service_app_id, client_app_id, "");
+    ud->add_app(ud->validate_params.asd, service_id, client_id, "");
     lua_pushnumber(L, 0);
     return 1;
 }
@@ -1905,8 +1880,8 @@ static int add_payload_application(lua_State* L)
     auto& ud = *UserData<LuaClientDetector>::check(L, DETECTOR, 1);
     assert(ud->validate_params.asd);
 
-    unsigned payload_app_id = lua_tonumber(L, 2);
-    ud->add_payload(ud->validate_params.asd, payload_app_id);
+    unsigned payload_id = lua_tonumber(L, 2);
+    ud->add_payload(ud->validate_params.asd, payload_id);
 
     lua_pushnumber(L, 0);
     return 1;
@@ -1929,41 +1904,22 @@ static int add_http_pattern(lua_State* L)
 
     /* Verify valid DHSequence */
     DHPSequence seq  = (DHPSequence)lua_tointeger(L, ++index);
-    if (seq < SINGLE || seq > USER_AGENT_HEADER)
-    {
-        ErrorMessage("Invalid HTTP DHP Sequence.");
-        return 0;
-    }
+    uint32_t service_id = lua_tointeger(L, ++index);
+    uint32_t client_id   = lua_tointeger(L, ++index);
+    uint32_t payload_id = lua_tointeger(L, ++index);
 
-    uint32_t service_app_id = lua_tointeger(L, ++index);
-    uint32_t client_app_id   = lua_tointeger(L, ++index);
-    uint32_t payload_app_id = lua_tointeger(L, ++index);
-
-    /* Verify that pattern is a valid string */
     size_t pattern_size = 0;
-    uint8_t* pattern_str = (uint8_t*)snort_strdup(lua_tolstring(L, ++index, &pattern_size));
-    if (pattern_str == nullptr || pattern_size == 0)
+    uint8_t* pattern_str = (uint8_t*)lua_tolstring(L, ++index, &pattern_size);
+    DetectorHTTPPattern pattern;
+    if( pattern.init(pattern_str, pattern_size, seq, service_id, client_id,
+        payload_id, APP_ID_NONE) )
     {
-        ErrorMessage("Invalid HTTP pattern string.");
-        snort_free(pattern_str);
-        return 0;
+        HttpPatternMatchers::get_instance()->insert_http_pattern(pat_type, pattern);
+        AppInfoManager& app_info_manager = AppInfoManager::get_instance();
+        app_info_manager.set_app_info_active(service_id);
+        app_info_manager.set_app_info_active(client_id);
+        app_info_manager.set_app_info_active(payload_id);
     }
-
-    HTTPListElement* element = (HTTPListElement*)snort_calloc(sizeof(HTTPListElement));
-    DetectorHTTPPattern* pattern = &element->detector_http_pattern;
-    pattern->seq           = seq;
-    pattern->service_id    = service_app_id;
-    pattern->client_app    = client_app_id;
-    pattern->payload       = payload_app_id;
-    pattern->pattern       = pattern_str;
-    pattern->pattern_size  = (int)pattern_size;
-    pattern->appId         = APP_ID_NONE;
-    HttpPatternMatchers::get_instance()->insert_http_pattern_element(pat_type, element);
-
-    AppInfoManager& app_info_manager = AppInfoManager::get_instance();
-    app_info_manager.set_app_info_active(service_app_id);
-    app_info_manager.set_app_info_active(client_app_id);
-    app_info_manager.set_app_info_active(payload_app_id);
 
     return 0;
 }
@@ -1975,9 +1931,9 @@ static int add_url_pattern(lua_State* L)
     // Verify detector user data and that we are not in packet context
     assert(!(*UserData<LuaDetector>::check(L, DETECTOR, index))->validate_params.pkt);
 
-    uint32_t service_app_id = lua_tointeger(L, ++index);
+    uint32_t service_id = lua_tointeger(L, ++index);
     uint32_t clientAppId   = lua_tointeger(L, ++index);
-    uint32_t payload_app_id = lua_tointeger(L, ++index);
+    uint32_t payload_id = lua_tointeger(L, ++index);
 
     /* Verify that host pattern is a valid string */
     size_t host_pattern_size = 0;
@@ -2018,24 +1974,24 @@ static int add_url_pattern(lua_State* L)
     /* Allocate memory for data structures */
     DetectorAppUrlPattern* pattern =
         (DetectorAppUrlPattern*)snort_calloc(sizeof(DetectorAppUrlPattern));
-    pattern->userData.service_id        = service_app_id;
-    pattern->userData.client_app        = clientAppId;
-    pattern->userData.payload           = payload_app_id;
+    pattern->userData.service_id        = service_id;
+    pattern->userData.client_id        = clientAppId;
+    pattern->userData.payload_id           = payload_id;
     pattern->userData.appId             = APP_ID_NONE;
     pattern->userData.query.pattern     = nullptr;
     pattern->userData.query.patternSize = 0;
-    pattern->patterns.host.pattern              = host_pattern;
-    pattern->patterns.host.patternSize         = (int)host_pattern_size;
-    pattern->patterns.path.pattern              = path_pattern;
-    pattern->patterns.path.patternSize         = (int)path_pattern_size;
-    pattern->patterns.scheme.pattern              = schemePattern;
-    pattern->patterns.scheme.patternSize         = (int)schemePatternSize;
+    pattern->patterns.host.pattern      = host_pattern;
+    pattern->patterns.host.patternSize  = (int)host_pattern_size;
+    pattern->patterns.path.pattern      = path_pattern;
+    pattern->patterns.path.patternSize  = (int)path_pattern_size;
+    pattern->patterns.scheme.pattern    = schemePattern;
+    pattern->patterns.scheme.patternSize = (int)schemePatternSize;
     HttpPatternMatchers::get_instance()->insert_app_url_pattern(pattern);
 
     AppInfoManager& app_info_manager = AppInfoManager::get_instance();
-    app_info_manager.set_app_info_active(service_app_id);
+    app_info_manager.set_app_info_active(service_id);
     app_info_manager.set_app_info_active(clientAppId);
-    app_info_manager.set_app_info_active(payload_app_id);
+    app_info_manager.set_app_info_active(payload_id);
 
     return 0;
 }
@@ -2167,9 +2123,9 @@ static int detector_add_sip_server(lua_State* L)
  * @param server_addr/stack - server address of the future flow
  * @param server_port/stack - server port of the future flow
  * @param proto/stack - protocol type (see define IPPROTO_xxxx in /usr/include/netinet/in.h)
- * @param service_app_id/stack - service app ID to declare for future flow (can be 0 for none)
- * @param client_app_id/stack - client app ID to declare for future flow (can be 0 for none)
- * @param payload_app_id/stack - payload app ID to declare for future flow (can be 0 for none)
+ * @param service_id/stack - service app ID to declare for future flow (can be 0 for none)
+ * @param client_id/stack - client app ID to declare for future flow (can be 0 for none)
+ * @param payload_id/stack - payload app ID to declare for future flow (can be 0 for none)
  * @param app_id_to_snort/stack - AppID's app ID entry to convert to Snort app ID (see note below)
  * @return int - number of elements on stack, which is 1 if successful, 0 otherwise.
  *
@@ -2202,9 +2158,9 @@ static int create_future_flow(lua_State* L)
 
     uint16_t server_port = lua_tonumber(L, 5);
     IpProtocol proto = (IpProtocol)lua_tonumber(L, 6);
-    AppId service_app_id = lua_tointeger(L, 7);
-    AppId client_app_id  = lua_tointeger(L, 8);
-    AppId payload_app_id = lua_tointeger(L, 9);
+    AppId service_id = lua_tointeger(L, 7);
+    AppId client_id  = lua_tointeger(L, 8);
+    AppId payload_id = lua_tointeger(L, 9);
     AppId app_id_to_snort = lua_tointeger(L, 10);
     if (app_id_to_snort > APP_ID_NONE)
     {
@@ -2220,9 +2176,9 @@ static int create_future_flow(lua_State* L)
         APPID_EARLY_SESSION_FLAG_FW_RULE);
     if (fp)
     {
-        fp->service_app_id = service_app_id;
-        fp->client_app_id  = client_app_id;
-        fp->payload_app_id = payload_app_id;
+        fp->service_app_id = service_id;
+        fp->client_app_id  = client_id;
+        fp->payload_app_id = payload_id;
         fp->set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE |
             APPID_SESSION_PORT_SERVICE_DONE);
         fp->service_disco_state = APPID_DISCO_STATE_FINISHED;

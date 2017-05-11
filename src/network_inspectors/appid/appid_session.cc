@@ -553,11 +553,11 @@ void AppIdSession::examine_rtmp_metadata()
 
         if ( ( ( http_matchers->get_appid_from_url(nullptr, hsession->url, &version,
             hsession->referer, &client_id, &service_id,
-            &payload_id, &referred_payload_id, 1) )
+            &payload_id, &referred_payload_id, true) )
             ||
             ( http_matchers->get_appid_from_url(nullptr, hsession->url, &version,
             hsession->referer, &client_id, &service_id,
-            &payload_id, &referred_payload_id, 0) ) ) )
+            &payload_id, &referred_payload_id, false) ) ) )
         {
             /* do not overwrite a previously-set client or service */
             if (client_app_id <= APP_ID_NONE)

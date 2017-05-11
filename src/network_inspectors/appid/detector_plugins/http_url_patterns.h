@@ -24,16 +24,18 @@
 
 #include <vector>
 
+#include "application_ids.h"
 #include "appid_utils/sf_multi_mpse.h"
 #include "appid_utils/sf_mlmp.h"
 #include "flow/flow.h"
+#include "log/messages.h"
+#include "search_engines/search_tool.h"
 #include "utils/util.h"
 
 struct Packet;
 struct AppIdServiceSubtype;
 class AppIdHttpSession;
 class AppIdModuleConfig;
-class SearchTool;
 
 enum httpPatternType
 {
@@ -51,8 +53,8 @@ struct HTTPHeaderIndices
 struct UrlUserData
 {
     uint32_t service_id;
-    uint32_t client_app;
-    uint32_t payload;
+    uint32_t client_id;
+    uint32_t payload_id;
     AppId appId;
     tMlpPattern query;
 };
@@ -82,20 +84,42 @@ enum DHPSequence
 
 struct DetectorHTTPPattern
 {
-    DHPSequence seq;
-    AppId service_id;
-    AppId client_app;
-    AppId payload;
-    int pattern_size;
-    uint8_t* pattern;
-    AppId appId;
-};
+    bool init(uint8_t* pat, unsigned len, DHPSequence seq, AppId service, AppId client, AppId payload, AppId app)
+    {
+        if( !pat )
+        {
+            ErrorMessage("HTTP pattern string is NULL.");
+            return false;
+        }
 
-struct HTTPListElement
-{
-    DetectorHTTPPattern detector_http_pattern;
-    HTTPListElement* next;
+        if (seq < SINGLE || seq > USER_AGENT_HEADER)
+        {
+            ErrorMessage("Invalid HTTP DHP Sequence.");
+            return false;
+        }
+
+        pattern_size = len;
+        pattern = (uint8_t*)snort_strdup((const char*)pat);
+        free_pattern = true;
+        sequence = seq;
+        service_id = service;
+        client_id = client;
+        payload_id = payload;
+        app_id = app;
+
+        return true;
+    }
+
+    DHPSequence sequence;
+    AppId service_id;
+    AppId client_id;
+    AppId payload_id;
+    AppId app_id;
+    unsigned pattern_size;
+    uint8_t* pattern;
+    bool free_pattern;
 };
+typedef std::vector<DetectorHTTPPattern> DetectorHTTPPatterns;
 
 #define CHP_APPID_BITS_FOR_INSTANCE  7
 #define CHP_APPID_INSTANCE_MAX (1 << CHP_APPID_BITS_FOR_INSTANCE)
@@ -211,21 +235,29 @@ struct CHPTallyAndActions
 
 struct HostUrlDetectorPattern
 {
-    tMlpPattern host;
-    tMlpPattern path;
-    tMlpPattern query;
-    uint32_t payload_id;
-    uint32_t service_id;
-    uint32_t client_id;
-    AppId appId;
-    DHPSequence seq;
-    HostUrlDetectorPattern* next;
-};
+    HostUrlDetectorPattern(const uint8_t* host_pattern, unsigned length)
+    {
+        host.pattern = (uint8_t*)snort_strdup((char*)host_pattern);
+        host.patternSize = length;
+    }
 
-struct HostUrlPatterns
-{
-    HostUrlDetectorPattern* head;
-    HostUrlDetectorPattern* tail;
+    ~HostUrlDetectorPattern()
+    {
+        snort_free((void*)host.pattern);
+        if (path.pattern)
+            snort_free((void*)path.pattern);
+        if (query.pattern)
+            snort_free((void*)query.pattern);
+    }
+
+    tMlpPattern host = { nullptr, 0 };
+    tMlpPattern path = { nullptr, 0 };
+    tMlpPattern query = { nullptr, 0 };
+    uint32_t payload_id = APP_ID_NONE;
+    uint32_t service_id = APP_ID_NONE;
+    uint32_t client_id = APP_ID_NONE;
+    AppId appId = APP_ID_NONE;
+    DHPSequence seq = SINGLE;
 };
 
 class HttpPatternMatchers
@@ -237,14 +269,14 @@ public:
     static HttpPatternMatchers* get_instance();
     int finalize();
     void insert_chp_pattern(CHPListElement*);
-    void insert_http_pattern_element(enum httpPatternType, HTTPListElement*);
+    void insert_http_pattern(enum httpPatternType, DetectorHTTPPattern&);
     void remove_http_patterns_for_id(AppId);
-    void insert_content_type_pattern(HTTPListElement*);
+    void insert_content_type_pattern(DetectorHTTPPattern&);
     void insert_url_pattern(DetectorAppUrlPattern*);
     void insert_rtmp_url_pattern(DetectorAppUrlPattern*);
     void insert_app_url_pattern(DetectorAppUrlPattern*);
     int process_chp_list(CHPListElement*);
-    int process_host_patterns(DetectorHTTPPattern*, size_t patternListCount);
+    int process_host_patterns(DetectorHTTPPatterns);
     int process_mlmp_patterns();
 
     void free_matched_chp_actions(MatchedCHPAction* ma);
@@ -254,7 +286,7 @@ public:
     AppId scan_header_x_working_with(const uint8_t*, uint32_t, char**);
     int get_appid_by_pattern(const uint8_t*, unsigned, char**);
     bool get_appid_from_url(char*, char*, char**, char*, AppId*, AppId*,
-        AppId*, AppId*, unsigned);
+        AppId*, AppId*, bool);
     AppId get_appid_by_content_type(const uint8_t*, int);
     void get_server_vendor_version(const uint8_t*, int, char**, char**, AppIdServiceSubtype**);
     void identify_user_agent(const uint8_t*, int, AppId*, AppId*, char**);
@@ -263,31 +295,26 @@ public:
         uint32_t numPartLimit, int level);
 
 private:
-    HTTPListElement* hostPayloadPatternList = nullptr;
-    HTTPListElement* urlPatternList = nullptr;
-    HTTPListElement* clientAgentPatternList = nullptr;
-    HTTPListElement* contentTypePatternList = nullptr;
-    CHPListElement* chpList = nullptr;
+    DetectorHTTPPatterns host_payload_patterns;
+    DetectorHTTPPatterns url_patterns;
     std::vector<DetectorAppUrlPattern*> app_url_patterns;
     std::vector<DetectorAppUrlPattern*> rtmp_url_patterns;
+    std::vector<HostUrlDetectorPattern*> host_url_patterns;
+    CHPListElement* chpList = nullptr;
 
-    SearchTool* url_matcher = nullptr;
-    SearchTool* client_agent_matcher = nullptr;
-    SearchTool* via_matcher = nullptr;
-    SearchTool* content_type_matcher = nullptr;
+    SearchTool url_matcher;
+    SearchTool client_agent_matcher;
+    SearchTool via_matcher;
+    SearchTool content_type_matcher;
     SearchTool* field_matcher = nullptr;
     SearchTool* chp_matchers[MAX_PATTERN_TYPE + 1] = { nullptr };
     tMlmpTree* host_url_matcher = nullptr;
     tMlmpTree* rtmp_host_url_matcher = nullptr;
-    HostUrlPatterns* host_url_patterns = nullptr;
 
-    void free_app_url_patterns(std::vector<DetectorAppUrlPattern*>&);
-    void free_http_elements(HTTPListElement*);
     void free_chp_app_elements();
-    int add_mlmp_pattern(void* host_url_matcher,
-        const uint8_t* host_pattern, int host_pattern_size, const uint8_t* path_pattern,
-        int path_pattern_size, const uint8_t* query_pattern, int query_pattern_size,
-        AppId, uint32_t payload_id, uint32_t service_id, uint32_t client_id, DHPSequence);
+    int add_mlmp_pattern(tMlmpTree* matcher, DetectorHTTPPattern& pattern );
+    int add_mlmp_pattern(tMlmpTree* matcher, DetectorAppUrlPattern& pattern);
+
 };
 
 #endif
