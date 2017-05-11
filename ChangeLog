@@ -1,3 +1,21 @@
+17/05/11 - build 233
+
+-- packet manager: ensure ether type proto ids don't masquerade as ip proto ids
+   thanks to Bhargava Shastry <bshastry@sec.t-labs.tu-berlin.de> for reporting the issue
+-- codec manager: fix off-by-1 mapping array size
+   thanks to Bhargava Shastry <bshastry@sec.t-labs.tu-berlin.de> for reporting the issue
+-- codec: fix extraction of ether type from cisco metadata
+-- appid: add new unit tests to the cmake build, fix missing lib reference to sfip
+-- sfghash: clean up and add unit tests
+-- http: fix 119:38 false positive
+-- main: fix compiler warnings when SHELL is not enabled
+-- perf_monitor: fix flatbuffers handling of empty strings
+-- modbus: port fix for false positives on length field
+-- http: port simple UTF decoding w/o byte order mark
+-- build: updated code to resolve cppcheck warnings
+-- cleanup: fix typos in source code string literals and comments
+-- doc: fix typos
+
 17/04/28 - build 232
 
 -- build: clean up Intel compiler warnings and remarks
