@@ -279,14 +279,14 @@ int ByteMathOption::eval(Cursor& c, Packet* p)
 
 static void parse_base(uint8_t value, ByteMathData& idx)
 {
-	assert(0 <= value and value <= 2);
+	assert(value <= 2);
 	int base[] = { 16, 10, 8 };
 	idx.base = base[value];
 }
 
 static void parse_endian(uint8_t value, ByteMathData& idx)
 {
-	assert(0 <= value and value <= 1);
+	assert(value <= 1);
 	int endian[] = { ENDIAN_BIG, ENDIAN_LITTLE };
 	set_byte_order(idx.endianess, endian[value], "byte_math");
 }
