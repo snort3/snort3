@@ -34,7 +34,7 @@
 #include "utils/boyer_moore.h"
 #include "utils/util.h"
 
-#include "ips_byte_extract.h"
+#include "extract.h"
 
 #define MAX_PATTERN_SIZE 2048
 
@@ -67,8 +67,8 @@ struct ContentData
 
 void ContentData::init()
 {
-    offset_var = BYTE_EXTRACT_NO_VAR;
-    depth_var = BYTE_EXTRACT_NO_VAR;
+    offset_var = IPS_OPTIONS_NO_VAR;
+    depth_var = IPS_OPTIONS_NO_VAR;
 }
 
 void ContentData::setup_bm()
@@ -284,19 +284,19 @@ static int uniSearchReal(ContentData* cd, Cursor& c)
     int offset, depth;
 
     /* Get byte_extract variables */
-    if (cd->offset_var >= 0 && cd->offset_var < NUM_BYTE_EXTRACT_VARS)
+    if (cd->offset_var >= 0 && cd->offset_var < NUM_IPS_OPTIONS_VARS)
     {
         uint32_t extract;
-        GetByteExtractValue(&extract, cd->offset_var);
+        GetVarValueByIndex(&extract, cd->offset_var);
         offset = (int)extract;
     }
     else
         offset = cd->pmd.offset;
 
-    if (cd->depth_var >= 0 && cd->depth_var < NUM_BYTE_EXTRACT_VARS)
+    if (cd->depth_var >= 0 && cd->depth_var < NUM_IPS_OPTIONS_VARS)
     {
         uint32_t extract;
-        GetByteExtractValue(&extract, cd->depth_var);
+        GetVarValueByIndex(&extract, cd->depth_var);
         depth = (int)extract;
     }
     else
@@ -464,14 +464,14 @@ static void parse_offset(ContentData* cd, const char* data)
     if (isdigit(data[0]) || data[0] == '-')
     {
         cd->pmd.offset = parse_int(data, "offset");
-        cd->offset_var = BYTE_EXTRACT_NO_VAR;
+        cd->offset_var = IPS_OPTIONS_NO_VAR;
     }
     else
     {
         cd->offset_var = GetVarByName(data);
-        if (cd->offset_var == BYTE_EXTRACT_NO_VAR)
+        if (cd->offset_var == IPS_OPTIONS_NO_VAR)
         {
-            ParseError(BYTE_EXTRACT_INVALID_ERR_STR, "content offset", data);
+            ParseError(INVALID_VAR_ERR_STR, "content offset", data);
             return;
         }
     }
@@ -504,14 +504,14 @@ static void parse_depth(ContentData* cd, const char* data)
                 cd->pmd.depth, cd->pmd.pattern_size);
             return;
         }
-        cd->depth_var = BYTE_EXTRACT_NO_VAR;
+        cd->depth_var = IPS_OPTIONS_NO_VAR;
     }
     else
     {
         cd->depth_var = GetVarByName(data);
-        if (cd->depth_var == BYTE_EXTRACT_NO_VAR)
+        if (cd->depth_var == IPS_OPTIONS_NO_VAR)
         {
-            ParseError(BYTE_EXTRACT_INVALID_ERR_STR, "content depth", data);
+            ParseError(INVALID_VAR_ERR_STR, "content depth", data);
             return;
         }
     }
@@ -536,14 +536,14 @@ static void parse_distance(ContentData* cd, const char* data)
     if (isdigit(data[0]) || data[0] == '-')
     {
         cd->pmd.offset = parse_int(data, "distance");
-        cd->offset_var = BYTE_EXTRACT_NO_VAR;
+        cd->offset_var = IPS_OPTIONS_NO_VAR;
     }
     else
     {
         cd->offset_var = GetVarByName(data);
-        if (cd->offset_var == BYTE_EXTRACT_NO_VAR)
+        if (cd->offset_var == IPS_OPTIONS_NO_VAR)
         {
-            ParseError(BYTE_EXTRACT_INVALID_ERR_STR, "content distance", data);
+            ParseError(INVALID_VAR_ERR_STR, "content distance", data);
             return;
         }
     }
@@ -574,14 +574,14 @@ static void parse_within(ContentData* cd, const char* data)
             ParseError("within (%d) is smaller than size of pattern", cd->pmd.depth);
             return;
         }
-        cd->depth_var = BYTE_EXTRACT_NO_VAR;
+        cd->depth_var = IPS_OPTIONS_NO_VAR;
     }
     else
     {
         cd->depth_var = GetVarByName(data);
-        if (cd->depth_var == BYTE_EXTRACT_NO_VAR)
+        if (cd->depth_var == IPS_OPTIONS_NO_VAR)
         {
-            ParseError(BYTE_EXTRACT_INVALID_ERR_STR, "content within", data);
+            ParseError(INVALID_VAR_ERR_STR, "content within", data);
             return;
         }
     }

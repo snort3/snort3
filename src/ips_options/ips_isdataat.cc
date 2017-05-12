@@ -49,7 +49,7 @@
 #include "profiler/profiler.h"
 #include "utils/snort_bounds.h"
 
-#include "ips_byte_extract.h"
+#include "extract.h"
 
 #define s_name "isdataat"
 
@@ -135,10 +135,10 @@ int IsDataAtOption::eval(Cursor& c, Packet*)
     int offset;
 
     // Get values from byte_extract variables, if present.
-    if (isdata->offset_var >= 0 && isdata->offset_var < NUM_BYTE_EXTRACT_VARS)
+    if (isdata->offset_var >= 0 && isdata->offset_var < NUM_IPS_OPTIONS_VARS)
     {
         uint32_t value;
-        GetByteExtractValue(&(value), isdata->offset_var);
+        GetVarValueByIndex(&(value), isdata->offset_var);
         offset = (int)value;
     }
     else
@@ -213,14 +213,14 @@ static void isdataat_parse(const char* data, IsDataAtData* idx)
             ParseError("isdataat offset greater than max IPV4 packet size");
             return;
         }
-        idx->offset_var = BYTE_EXTRACT_NO_VAR;
+        idx->offset_var = IPS_OPTIONS_NO_VAR;
     }
     else
     {
         idx->offset_var = GetVarByName(offset);
-        if (idx->offset_var == BYTE_EXTRACT_NO_VAR)
+        if (idx->offset_var == IPS_OPTIONS_NO_VAR)
         {
-            ParseError(BYTE_EXTRACT_INVALID_ERR_STR, "isdataat offset", offset);
+            ParseError(INVALID_VAR_ERR_STR, "isdataat offset", offset);
             return;
         }
     }

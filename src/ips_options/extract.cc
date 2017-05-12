@@ -30,10 +30,86 @@
 #include "log/messages.h"
 #include "utils/snort_bounds.h"
 #include "utils/util_cstring.h"
+#include "utils/util.h"
 
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"
 #endif
+
+using namespace std;
+
+/* Storage for extracted variables */
+static string variable_names[NUM_IPS_OPTIONS_VARS];
+static THREAD_LOCAL uint32_t extracted_values[NUM_IPS_OPTIONS_VARS];
+static THREAD_LOCAL uint8_t extracted_values_cnt = 0;
+
+/* Given a variable name, retrieve its index.*/
+int8_t GetVarByName(const char* name)
+{
+    int i;
+
+    if (name == nullptr)
+        return IPS_OPTIONS_NO_VAR;
+
+    for (i = 0; i < extracted_values_cnt; i++)
+    {
+        if (variable_names[i].compare(name) == 0)
+            return i;
+    }
+
+    return IPS_OPTIONS_NO_VAR;
+}
+
+/* Add a variable's name to the variable_names array
+   Returns: variable index
+*/
+int8_t AddVarNameToList(const char* name)
+{
+    int i;
+
+    for (i = 0; i < extracted_values_cnt; i++)
+    {
+        if (variable_names[i].compare(name) == 0)
+            return i;
+    }
+
+    if (extracted_values_cnt < NUM_IPS_OPTIONS_VARS)
+    {
+        variable_names[i] = string(name);
+        extracted_values_cnt++;
+        return i;
+    }
+
+    return IPS_OPTIONS_NO_VAR;
+}
+
+void ClearIpsOptionsVars()
+{
+    extracted_values_cnt = 0;
+}
+
+/* Setters & Getters for extracted values
+   Note: extracted_values_cnt is correct only during parsing, and not during eval. It shouldn't be
+  used at this point */
+int GetVarValueByIndex(uint32_t* dst, int8_t var_number)
+{
+    if (dst == nullptr || var_number >= NUM_IPS_OPTIONS_VARS)
+        return IPS_OPTIONS_NO_VAR;
+
+    *dst = extracted_values[var_number];
+
+    return 0;
+}
+
+int SetVarValueByIndex(uint32_t value, int8_t var_number)
+{
+    if (var_number >= NUM_IPS_OPTIONS_VARS)
+        return IPS_OPTIONS_NO_VAR;
+
+    extracted_values[var_number] = value;
+
+    return 0;
+}
 
 void set_byte_order(uint8_t& order, uint8_t flag, const char* opt)
 {
@@ -239,6 +315,34 @@ TEST_CASE("ips options bitmask utils")
     REQUIRE((getNumberTailingZerosInBitmask(0x20000) == 17));
     REQUIRE((getNumberTailingZerosInBitmask(0) == 32));
 }
+
+TEST_CASE("ips options vars")
+{
+    // Fill up array
+    int8_t ind1 = AddVarNameToList("OFFSET");
+    REQUIRE((ind1 == 0));
+    int8_t ind2 = AddVarNameToList("VALUE");
+    REQUIRE((ind2 == 1));
+    int8_t ind3 = AddVarNameToList("VAR3");
+    REQUIRE((ind3 == 2));
+
+    // Insert same name twice
+    REQUIRE((AddVarNameToList("VALUE") == 1));
+    REQUIRE((GetVarByName("VALUE") == 1));
+
+    // Try to insert to a full array
+    REQUIRE((AddVarNameToList("VALUE1") == IPS_OPTIONS_NO_VAR));
+    // Try to get a name that wasn't inserted
+    REQUIRE((GetVarByName("VALUE1") == IPS_OPTIONS_NO_VAR));
+
+    // Go over error path - nullptr / bad index
+    REQUIRE((GetVarByName(nullptr) == IPS_OPTIONS_NO_VAR));
+    REQUIRE((GetVarValueByIndex(nullptr, 0) == IPS_OPTIONS_NO_VAR));
+    uint32_t dst;
+    REQUIRE((GetVarValueByIndex(&dst, NUM_IPS_OPTIONS_VARS) == IPS_OPTIONS_NO_VAR));
+    REQUIRE((SetVarValueByIndex(0, NUM_IPS_OPTIONS_VARS) == IPS_OPTIONS_NO_VAR));
+}
+
 #endif
 
 #ifdef TEST_BYTE_EXTRACT

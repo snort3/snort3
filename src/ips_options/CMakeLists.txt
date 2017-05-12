@@ -8,7 +8,9 @@ SET( PLUGIN_LIST
     ips_asn1.cc
     ips_base64.cc
     ips_bufferlen.cc
+    ips_byte_extract.cc
     ips_byte_jump.cc
+    ips_byte_math.cc
     ips_byte_test.cc
     ips_cvs.cc
     ips_file_type.cc
@@ -44,8 +46,6 @@ SET( PLUGIN_LIST
 set (IPS_SOURCES
     extract.cc
     extract.h
-    ips_byte_extract.cc
-    ips_byte_extract.h
     ips_classtype.cc
     ips_content.cc
     ips_detection_filter.cc
@@ -95,6 +95,8 @@ else (STATIC_IPS_OPTIONS)
     add_dynamic_module(ips_bufferlen ips_options ips_bufferlen.cc)
     add_dynamic_module(ips_byte_test ips_options ips_byte_test.cc)
     add_dynamic_module(ips_byte_jump ips_options ips_byte_jump.cc)
+    add_dynamic_module(ips_byte_extract ips_options ips_byte_extract.cc)
+    add_dynamic_module(ips_byte_math ips_options ips_byte_math.cc)
     add_dynamic_module(ips_cvs ips_options ips_cvs.cc)
     add_dynamic_module(ips_file_type ips_options ips_file_type.cc)
     add_dynamic_module(ips_flags ips_options ips_flags.cc)

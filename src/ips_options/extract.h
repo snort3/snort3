@@ -20,6 +20,7 @@
 #ifndef EXTRACT_H
 #define EXTRACT_H
 
+#include "main/thread.h"
 #include "main/snort_types.h"
 
 #define ENDIAN_BIG    0x1
@@ -28,6 +29,10 @@
 
 #define PARSELEN      10
 #define MAX_BYTES_TO_GRAB 4
+
+#define NUM_IPS_OPTIONS_VARS 3
+#define IPS_OPTIONS_NO_VAR -1
+#define INVALID_VAR_ERR_STR "%s uses an undefined rule option variable (%s)"
 
 SO_PUBLIC int string_extract(
     int bytes_to_grab, int base, const uint8_t* ptr,
@@ -41,6 +46,15 @@ SO_PUBLIC void set_byte_order(uint8_t& order, uint8_t flag, const char* opt);
 
 SO_PUBLIC uint32_t getNumberTailingZerosInBitmask(uint32_t);
 SO_PUBLIC uint8_t numBytesInBitmask(uint32_t);
+
+// Used during parsing
+SO_PUBLIC int8_t GetVarByName(const char* name);
+SO_PUBLIC int8_t AddVarNameToList(const char* name);
+// Called at the end of rule parsing
+SO_PUBLIC void ClearIpsOptionsVars();
+// Used during eval
+SO_PUBLIC int GetVarValueByIndex(uint32_t* dst, int8_t var_number);
+SO_PUBLIC int SetVarValueByIndex(uint32_t value, int8_t var_number);
 
 #endif
 

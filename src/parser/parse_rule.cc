@@ -40,6 +40,7 @@
 #include "sfip/sf_vartable.h"
 #include "target_based/snort_protocols.h"
 #include "utils/util.h"
+#include "ips_options/extract.h"
 
 #include "parser.h"
 #include "parse_conf.h"
@@ -1289,6 +1290,9 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
     if ( FinishPortListRule(
         sc->port_tables, new_rtn, otn, rtn.proto, sc->fast_pattern_config) )
         ParseError("Failed to finish a port list rule.");
+
+    // Clear ips_option vars
+    ClearIpsOptionsVars();
 
     return nullptr;
 }

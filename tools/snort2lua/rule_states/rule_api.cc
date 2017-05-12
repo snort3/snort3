@@ -31,6 +31,7 @@ extern const ConvertMap* base64_data_map;
 extern const ConvertMap* base64_decode_map;
 extern const ConvertMap* byte_extract_map;
 extern const ConvertMap* byte_jump_map;
+extern const ConvertMap* byte_math_map;
 extern const ConvertMap* byte_test_map;
 extern const ConvertMap* classtype_map;
 extern const ConvertMap* content_map;
@@ -109,6 +110,7 @@ const std::vector<const ConvertMap*> rule_options_api =
     base64_decode_map,
     byte_extract_map,
     byte_jump_map,
+    byte_math_map,
     byte_test_map,
     classtype_map,
     content_map,

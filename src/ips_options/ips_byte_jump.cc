@@ -88,7 +88,6 @@
 #include "protocols/packet.h"
 
 #include "extract.h"
-#include "ips_byte_extract.h"
 
 using namespace std;
 
@@ -210,10 +209,10 @@ int ByteJumpOption::eval(Cursor& c, Packet* p)
     int32_t offset = 0;
 
     // Get values from byte_extract variables, if present.
-    if (bjd->offset_var >= 0 && bjd->offset_var < NUM_BYTE_EXTRACT_VARS)
+    if (bjd->offset_var >= 0 && bjd->offset_var < NUM_IPS_OPTIONS_VARS)
     {
         uint32_t extract_offset;
-        GetByteExtractValue(&extract_offset, bjd->offset_var);
+        GetVarValueByIndex(&extract_offset, bjd->offset_var);
         offset = (int32_t)extract_offset;
     }
     else
@@ -396,14 +395,14 @@ bool ByteJumpModule::begin(const char*, int, SnortConfig*)
 bool ByteJumpModule::end(const char*, int, SnortConfig*)
 {
     if ( var.empty() )
-        data.offset_var = BYTE_EXTRACT_NO_VAR;
+        data.offset_var = IPS_OPTIONS_NO_VAR;
     else
     {
         data.offset_var = GetVarByName(var.c_str());
 
-        if (data.offset_var == BYTE_EXTRACT_NO_VAR)
+        if (data.offset_var == IPS_OPTIONS_NO_VAR)
         {
-            ParseError(BYTE_EXTRACT_INVALID_ERR_STR, "byte_jump", var.c_str());
+            ParseError(INVALID_VAR_ERR_STR, "byte_jump", var.c_str());
             return false;
         }
     }

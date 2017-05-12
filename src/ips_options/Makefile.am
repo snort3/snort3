@@ -8,7 +8,9 @@ ips_ack.cc \
 ips_asn1.cc \
 ips_base64.cc \
 ips_bufferlen.cc \
+ips_byte_extract.cc \
 ips_byte_jump.cc \
+ips_byte_math.cc \
 ips_byte_test.cc \
 ips_cvs.cc \
 ips_file_type.cc \
@@ -41,7 +43,6 @@ ips_window.cc
 
 libips_options_a_SOURCES = \
 extract.cc extract.h \
-ips_byte_extract.cc ips_byte_extract.h \
 ips_classtype.cc \
 ips_content.cc \
 ips_detection_filter.cc \
@@ -98,6 +99,16 @@ optlib_LTLIBRARIES += ips_byte_jump.la
 ips_byte_jump_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 ips_byte_jump_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
 ips_byte_jump_la_SOURCES = ips_byte_jump.cc
+
+optlib_LTLIBRARIES += ips_byte_extract.la
+ips_byte_extract_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+ips_byte_extract_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
+ips_byte_extract_la_SOURCES = ips_byte_extract.cc
+
+optlib_LTLIBRARIES += ips_byte_math.la
+ips_byte_math_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+ips_byte_math_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
+ips_byte_math_la_SOURCES = ips_byte_math.cc
 
 #optlib_LTLIBRARIES += ips_content.la
 #ips_content_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO

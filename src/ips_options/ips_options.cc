@@ -25,7 +25,6 @@
 
 #include "managers/plugin_manager.h"
 
-extern const BaseApi* ips_byte_extract;
 extern const BaseApi* ips_classtype;
 extern const BaseApi* ips_content;
 extern const BaseApi* ips_detection_filter;
@@ -51,7 +50,9 @@ extern const BaseApi* ips_so;
 extern const BaseApi* ips_ack[];
 extern const BaseApi* ips_asn1[];
 extern const BaseApi* ips_base64[];
+extern const BaseApi* ips_byte_extract[];
 extern const BaseApi* ips_byte_jump[];
+extern const BaseApi* ips_byte_math[];
 extern const BaseApi* ips_byte_test[];
 extern const BaseApi* ips_cvs[];
 extern const BaseApi* ips_file_type[];
@@ -86,7 +87,6 @@ extern const BaseApi* ips_window[];
 
 static const BaseApi* ips_options[] =
 {
-    ips_byte_extract,
     ips_classtype,
     ips_content,
     ips_detection_filter,
@@ -118,7 +118,9 @@ void load_ips_options()
     PluginManager::load_plugins(ips_ack);
     PluginManager::load_plugins(ips_asn1);
     PluginManager::load_plugins(ips_base64);
+    PluginManager::load_plugins(ips_byte_extract);
     PluginManager::load_plugins(ips_byte_jump);
+    PluginManager::load_plugins(ips_byte_math);
     PluginManager::load_plugins(ips_byte_test);
     PluginManager::load_plugins(ips_cvs);
     PluginManager::load_plugins(ips_file_type);

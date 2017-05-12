@@ -458,6 +458,19 @@ static const ConvertMap rule_byte_test =
 const ConvertMap* byte_test_map = &rule_byte_test;
 
 /************************************
+ **********  BYTE_MATH  **********
+ ************************************/
+
+static const std::string byte_math = "byte_math";
+static const ConvertMap rule_byte_math =
+{
+    byte_math,
+    unchanged_rule_ctor<& byte_math>,
+};
+
+const ConvertMap* byte_math_map = &rule_byte_math;
+
+/************************************
  ***********  BYTE_JUMP  ************
  ************************************/
 

@@ -36,7 +36,7 @@
 #include "framework/cursor.h"
 #include "hash/sfhashfcn.h"
 #include "hash/sfxhash.h"
-#include "ips_options/ips_byte_extract.h"
+#include "ips_options/extract.h"
 #include "ips_options/ips_flowbits.h"
 #include "latency/packet_latency.h"
 #include "latency/rule_latency_state.h"
@@ -349,7 +349,7 @@ int detection_option_node_evaluate(
     bool continue_loop = true;
     char flowbits_setoperation = 0;
     int loop_count = 0;
-    uint32_t tmp_byte_extract_vars[NUM_BYTE_EXTRACT_VARS];
+    uint32_t tmp_byte_extract_vars[NUM_IPS_OPTIONS_VARS];
     uint64_t cur_eval_pkt_count =
         (rule_eval_pkt_count + (PacketManager::get_rebuilt_packet_count()));
 
@@ -538,8 +538,8 @@ int detection_option_node_evaluate(
         }
 
         // Back up byte_extract vars so they don't get overwritten between rules
-        for ( int i = 0; i < NUM_BYTE_EXTRACT_VARS; ++i )
-            GetByteExtractValue(&(tmp_byte_extract_vars[i]), (int8_t)i);
+        for ( int i = 0; i < NUM_IPS_OPTIONS_VARS; ++i )
+            GetVarValueByIndex(&(tmp_byte_extract_vars[i]), (int8_t)i);
 
         if ( PacketLatency::fastpath() )
         {
@@ -561,8 +561,8 @@ int detection_option_node_evaluate(
                     dot_node_state_t* child_state =
                         child_node->state + get_instance_id();
 
-                    for ( int j = 0; j < NUM_BYTE_EXTRACT_VARS; ++j )
-                        SetByteExtractValue(tmp_byte_extract_vars[j], (int8_t)j);
+                    for ( int j = 0; j < NUM_IPS_OPTIONS_VARS; ++j )
+                        SetVarValueByIndex(tmp_byte_extract_vars[j], (int8_t)j);
 
                     if ( loop_count > 0 )
                     {

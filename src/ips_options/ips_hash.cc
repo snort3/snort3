@@ -33,7 +33,7 @@
 #include "parser/parse_utils.h"
 #include "profiler/profiler.h"
 
-#include "ips_byte_extract.h"
+#include "extract.h"
 
 enum HashPsIdx
 {
@@ -57,7 +57,7 @@ struct HashMatchData
 HashMatchData::HashMatchData()
 {
     length = offset = 0;
-    offset_var = BYTE_EXTRACT_NO_VAR;
+    offset_var = IPS_OPTIONS_NO_VAR;
     relative = negated = false;
 }
 
@@ -145,10 +145,10 @@ int HashOption::match(Cursor& c)
     int offset;
 
     /* Get byte_extract variables */
-    if (config->offset_var >= 0 && config->offset_var < NUM_BYTE_EXTRACT_VARS)
+    if (config->offset_var >= 0 && config->offset_var < NUM_IPS_OPTIONS_VARS)
     {
         uint32_t extract;
-        GetByteExtractValue(&extract, config->offset_var);
+        GetVarValueByIndex(&extract, config->offset_var);
         offset = (int)extract;
     }
     else
@@ -239,14 +239,14 @@ static void parse_offset(HashMatchData* hmd, const char* data)
     if (isdigit(data[0]) || data[0] == '-')
     {
         hmd->offset = parse_int(data, "offset");
-        hmd->offset_var = BYTE_EXTRACT_NO_VAR;
+        hmd->offset_var = IPS_OPTIONS_NO_VAR;
     }
     else
     {
         hmd->offset_var = GetVarByName(data);
 
-        if (hmd->offset_var == BYTE_EXTRACT_NO_VAR)
-            ParseError(BYTE_EXTRACT_INVALID_ERR_STR, "content offset", data);
+        if (hmd->offset_var == IPS_OPTIONS_NO_VAR)
+            ParseError(INVALID_VAR_ERR_STR, "content offset", data);
     }
 }
 

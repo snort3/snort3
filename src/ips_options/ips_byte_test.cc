@@ -105,7 +105,6 @@
 #include "utils/util.h"
 
 #include "extract.h"
-#include "ips_byte_extract.h"
 
 using namespace std;
 
@@ -300,10 +299,10 @@ int ByteTestOption::eval(Cursor& c, Packet* p)
     uint32_t cmp_value = 0;
 
     // Get values from byte_extract variables, if present.
-    if (btd->cmp_value_var >= 0 && btd->cmp_value_var < NUM_BYTE_EXTRACT_VARS)
+    if (btd->cmp_value_var >= 0 && btd->cmp_value_var < NUM_IPS_OPTIONS_VARS)
     {
         uint32_t val;
-        GetByteExtractValue(&val, btd->cmp_value_var);
+        GetVarValueByIndex(&val, btd->cmp_value_var);
         cmp_value = val;
     }
     else
@@ -311,10 +310,10 @@ int ByteTestOption::eval(Cursor& c, Packet* p)
 
     int offset = 0;
 
-    if (btd->offset_var >= 0 && btd->offset_var < NUM_BYTE_EXTRACT_VARS)
+    if (btd->offset_var >= 0 && btd->offset_var < NUM_IPS_OPTIONS_VARS)
     {
         uint32_t val;
-        GetByteExtractValue(&val, btd->offset_var);
+        GetVarValueByIndex(&val, btd->offset_var);
         offset = (int32_t)val;
     }
     else
@@ -515,26 +514,26 @@ bool ByteTestModule::begin(const char*, int, SnortConfig*)
 bool ByteTestModule::end(const char*, int, SnortConfig*)
 {
     if ( off_var.empty() )
-        data.offset_var = BYTE_EXTRACT_NO_VAR;
+        data.offset_var = IPS_OPTIONS_NO_VAR;
     else
     {
         data.offset_var = GetVarByName(off_var.c_str());
 
-        if (data.offset_var == BYTE_EXTRACT_NO_VAR)
+        if (data.offset_var == IPS_OPTIONS_NO_VAR)
         {
-            ParseError(BYTE_EXTRACT_INVALID_ERR_STR, "byte_test", off_var.c_str());
+            ParseError(INVALID_VAR_ERR_STR, "byte_test", off_var.c_str());
             return false;
         }
     }
     if ( cmp_var.empty() )
-        data.cmp_value_var = BYTE_EXTRACT_NO_VAR;
+        data.cmp_value_var = IPS_OPTIONS_NO_VAR;
     else
     {
         data.cmp_value_var = GetVarByName(cmp_var.c_str());
 
-        if (data.cmp_value_var == BYTE_EXTRACT_NO_VAR)
+        if (data.cmp_value_var == IPS_OPTIONS_NO_VAR)
         {
-            ParseError(BYTE_EXTRACT_INVALID_ERR_STR, "byte_test", cmp_var.c_str());
+            ParseError(INVALID_VAR_ERR_STR, "byte_test", cmp_var.c_str());
             return false;
         }
     }

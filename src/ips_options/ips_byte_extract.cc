@@ -22,8 +22,6 @@
 #include "config.h"
 #endif
 
-#include "ips_byte_extract.h"
-
 #include "detection/detection_defines.h"
 #include "detection/treenodes.h"
 #include "framework/cursor.h"
@@ -59,10 +57,6 @@ struct ByteExtractData
     int8_t var_number;
     char* name;
 };
-
-/* Storage for extracted variables */
-static char* variable_names[NUM_BYTE_EXTRACT_VARS];
-static THREAD_LOCAL uint32_t extracted_values[NUM_BYTE_EXTRACT_VARS];
 
 class ByteExtractOption : public IpsOption
 {
@@ -162,7 +156,6 @@ int ByteExtractOption::eval(Cursor& c, Packet* p)
     ptr += data->offset;
 
     const uint8_t* end = start + dsize;
-    uint32_t* value = &(extracted_values[data->var_number]);
 
     // check bounds
     if (ptr < start || ptr >= end)
@@ -179,10 +172,10 @@ int ByteExtractOption::eval(Cursor& c, Packet* p)
     // do the extraction
     int ret = 0;
     int bytes_read = 0;
-
+    uint32_t value;
     if (data->data_string_convert_flag == 0)
     {
-        ret = byte_extract(endian, data->bytes_to_grab, ptr, start, end, value);
+        ret = byte_extract(endian, data->bytes_to_grab, ptr, start, end, &value);
         if (ret < 0)
             return DETECTION_OPTION_NO_MATCH;
 
@@ -190,7 +183,7 @@ int ByteExtractOption::eval(Cursor& c, Packet* p)
     }
     else
     {
-        ret = string_extract(data->bytes_to_grab, data->base, ptr, start, end, value);
+        ret = string_extract(data->bytes_to_grab, data->base, ptr, start, end, &value);
         if (ret < 0)
             return DETECTION_OPTION_NO_MATCH;
 
@@ -200,126 +193,33 @@ int ByteExtractOption::eval(Cursor& c, Packet* p)
     if (data->bitmask_val != 0 )
     {
         uint32_t num_tailing_zeros_bitmask = getNumberTailingZerosInBitmask(data->bitmask_val);
-        *value = (*value) & data->bitmask_val;
-        if ( (*value) && num_tailing_zeros_bitmask )
+        value = value & data->bitmask_val;
+        if ( value && num_tailing_zeros_bitmask )
         {
-            *value = (*value) >> num_tailing_zeros_bitmask;
+            value = value >> num_tailing_zeros_bitmask;
         }
     }
 
     /* multiply */
-    *value *= data->multiplier;
+    value *= data->multiplier;
 
     /* align to next 32-bit or 16-bit boundary */
-    if ((data->align == 4) && (*value % 4))
+    if ((data->align == 4) && (value % 4))
     {
-        *value = *value + 4 - (*value % 4);
+        value = value + 4 - (value % 4);
     }
-    else if ((data->align == 2) && (*value % 2))
+    else if ((data->align == 2) && (value % 2))
     {
-        *value = *value + 2 - (*value % 2);
+        value = value + 2 - (value % 2);
     }
+
+    SetVarValueByIndex(value, data->var_number);
 
     /* advance cursor */
     c.add_pos(bytes_read);
 
     /* this rule option always "matches" if the read is performed correctly */
     return DETECTION_OPTION_MATCH;
-}
-
-static void init_var_names()
-{
-    for (int i = 0; i < NUM_BYTE_EXTRACT_VARS; i++)
-    {
-        variable_names[i] = NULL;
-    }
-}
-
-static void clear_var_names()
-{
-    for (int i = 0; i < NUM_BYTE_EXTRACT_VARS; i++)
-    {
-        snort_free(variable_names[i]);
-        variable_names[i] = NULL;
-    }
-}
-
-//-------------------------------------------------------------------------
-// public methods
-//-------------------------------------------------------------------------
-
-/* Given a variable name, retrieve its index. For use by other options. */
-int8_t GetVarByName(const char* name)
-{
-    int i;
-
-    if (name == NULL)
-        return BYTE_EXTRACT_NO_VAR;
-
-    for (i = 0; i < NUM_BYTE_EXTRACT_VARS; i++)
-    {
-        if (variable_names[i] != NULL && strcmp(variable_names[i], name) == 0)
-            return i;
-    }
-
-    return BYTE_EXTRACT_NO_VAR;
-}
-
-/* If given an OptFpList with no byte_extracts, clear the variable_names array */
-static void ClearVarNames(OptFpList* fpl)
-{
-    while ( fpl )
-    {
-        if ( !strcmp(fpl->ips_opt->get_name(), s_name) )
-            return;
-
-        fpl = fpl->next;
-    }
-    clear_var_names();
-}
-
-/* Add a variable's name to the variable_names array
-   Returns: variable index
-*/
-static int8_t AddVarNameToList(ByteExtractData* data)
-{
-    int i;
-
-    for (i = 0; i < NUM_BYTE_EXTRACT_VARS; i++)
-    {
-        if (variable_names[i] == NULL)
-        {
-            variable_names[i] = snort_strdup(data->name);
-            break;
-        }
-        else if ( strcmp(variable_names[i], data->name) == 0 )
-        {
-            break;
-        }
-    }
-
-    return i;
-}
-
-/* Setters & Getters for extracted values */
-int GetByteExtractValue(uint32_t* dst, int8_t var_number)
-{
-    if (dst == NULL || var_number >= NUM_BYTE_EXTRACT_VARS)
-        return BYTE_EXTRACT_NO_VAR;
-
-    *dst = extracted_values[var_number];
-
-    return 0;
-}
-
-int SetByteExtractValue(uint32_t value, int8_t var_number)
-{
-    if (var_number >= NUM_BYTE_EXTRACT_VARS)
-        return BYTE_EXTRACT_NO_VAR;
-
-    extracted_values[var_number] = value;
-
-    return 0;
 }
 
 //-------------------------------------------------------------------------
@@ -512,7 +412,7 @@ bool ExtractModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("bitmask") )
         data.bitmask_val = v.get_long();
-    
+
     else
         return false;
 
@@ -533,18 +433,17 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* byte_extract_ctor(Module* p, OptTreeNode* otn)
+static IpsOption* byte_extract_ctor(Module* p, OptTreeNode*)
 {
     ExtractModule* m = (ExtractModule*)p;
     ByteExtractData& data = m->data;
 
-    ClearVarNames(otn->opt_func);
-    data.var_number = AddVarNameToList(&data);
+    data.var_number = AddVarNameToList(data.name);
 
-    if (data.var_number >= NUM_BYTE_EXTRACT_VARS)
+    if (data.var_number == IPS_OPTIONS_NO_VAR)
     {
-        ParseError("Rule has more than %d byte_extract variables.",
-            NUM_BYTE_EXTRACT_VARS);
+        ParseError("Rule has more than %d variables.",
+            NUM_IPS_OPTIONS_VARS);
         return nullptr;
     }
     return new ByteExtractOption(data);
@@ -553,16 +452,6 @@ static IpsOption* byte_extract_ctor(Module* p, OptTreeNode* otn)
 static void byte_extract_dtor(IpsOption* p)
 {
     delete p;
-}
-
-static void byte_extract_init(SnortConfig*)
-{
-    init_var_names();
-}
-
-static void byte_extract_term(SnortConfig*)
-{
-    clear_var_names();
 }
 
 static const IpsApi byte_extract_api =
@@ -580,9 +469,9 @@ static const IpsApi byte_extract_api =
         mod_dtor
     },
     OPT_TYPE_DETECTION,
-    NUM_BYTE_EXTRACT_VARS, 0,
-    byte_extract_init,
-    byte_extract_term,
+    0, 0,
+    nullptr,
+    nullptr,
     nullptr,  // tinit
     nullptr,  // tterm
     byte_extract_ctor,
@@ -590,5 +479,12 @@ static const IpsApi byte_extract_api =
     nullptr
 };
 
-const BaseApi* ips_byte_extract = &byte_extract_api.base;
-
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_byte_extract[] =
+#endif
+{
+    &byte_extract_api.base,
+    nullptr
+};
