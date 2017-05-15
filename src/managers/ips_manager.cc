@@ -99,6 +99,9 @@ static bool set_arg(
     if ( !p->is_positional() )
         p = Parameter::find(p, opt);
 
+    else if ( *opt )  // must contain spaces like ip_proto:! 6;
+        return false;
+
     if ( !p )
         return false;
 
