@@ -47,8 +47,9 @@ public:
     static void thread_init();
     static void thread_term();
 
+    static void reset();
+
     static IpsContext* get_context();
-    static uint64_t get_next_id();
 
     static Packet* get_current_packet();
     static Packet* set_packet();
@@ -80,9 +81,6 @@ public:
     static int queue_event(const struct OptTreeNode*);
     static int queue_event(unsigned gid, unsigned sid, RuleType = RULE_TYPE__NONE);
 
-    static int log_events(Packet*);
-    static void reset(Packet*);
-
     static void disable_all(Packet*);
     static bool all_disabled(Packet*);
 
@@ -100,6 +98,9 @@ private:
     static struct SF_EVENTQ* get_event_queue();
     static void offload_thread(IpsContext*);
     static void onload();
+
+    static int log_events(Packet*);
+    static void clear_events(Packet*);
     static void finish_packet(Packet*);
 
 private:

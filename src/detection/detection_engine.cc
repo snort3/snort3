@@ -70,9 +70,8 @@ DetectionEngine::DetectionEngine()
 {
     context = Snort::get_switcher()->interrupt();
     context->file_data = next_file_data;
-    context->context_num = ++context_num;
-    context->alt_data.len = 0;  // FIXIT-H need context::reset()
     next_file_data = { nullptr, 0 };
+    reset();
 }
 
 DetectionEngine::~DetectionEngine()
@@ -87,8 +86,12 @@ DetectionEngine::~DetectionEngine()
     }
 }
 
-uint64_t DetectionEngine::get_next_id()
-{ return ++context_num; }
+void DetectionEngine::reset()
+{
+    IpsContext* c = Snort::get_switcher()->get_context();
+    c->context_num = ++context_num;
+    c->alt_data.len = 0;  // FIXIT-H need context::reset()
+}
 
 IpsContext* DetectionEngine::get_context()
 { return Snort::get_switcher()->get_context(); }
@@ -123,7 +126,7 @@ Packet* DetectionEngine::set_packet()
 void DetectionEngine::finish_packet(Packet* p)
 {
     log_events(p);
-    reset(p);
+    clear_events(p);
 
     if ( p->endianness )
     {
@@ -369,7 +372,7 @@ void DetectionEngine::inspect(Packet* p)
     if ( inspected )
         InspectorManager::clear(p);
 
-    reset(p);
+    clear_events(p);
 }
 
 //--------------------------------------------------------------------------
@@ -462,7 +465,7 @@ int DetectionEngine::log_events(Packet* p)
     return 0;
 }
 
-void DetectionEngine::reset(Packet* p)
+void DetectionEngine::clear_events(Packet* p)
 {
     SF_EVENTQ* pq = p->context->equeue;
     pc.log_limit += sfeventq_reset(pq);
