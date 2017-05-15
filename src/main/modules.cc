@@ -740,6 +740,13 @@ static const Parameter output_params[] =
     { "verbose", Parameter::PT_BOOL, nullptr, "false",
       "be verbose (same as -v)" },
 
+#ifdef REG_TEST
+    { "wide_hex_dump", Parameter::PT_BOOL, nullptr, "true",
+#else
+    { "wide_hex_dump", Parameter::PT_BOOL, nullptr, "false",
+#endif
+      "output 20 bytes per lines instead of 16 when dumping buffers" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -791,6 +798,9 @@ bool OutputModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("verbose") )
         v.update_mask(sc->logging_flags, LOGGING_FLAG__VERBOSE);
+
+    else if ( v.is("wide_hex_dump") )
+        v.update_mask(sc->output_flags, OUTPUT_FLAG__WIDE_HEX);
 
     else
         return false;

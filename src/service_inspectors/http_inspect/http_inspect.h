@@ -41,7 +41,9 @@ public:
     ~HttpInspect() { delete params; }
 
     bool get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b) override;
-    bool http_get_buf(unsigned id, uint64_t sub_id, uint64_t form, Packet* p, InspectionBuffer& b);
+    bool get_buf(unsigned id, Packet* p, InspectionBuffer& b) override;
+    bool http_get_buf(
+        unsigned id, uint64_t sub_id, uint64_t form, Packet* p, InspectionBuffer& b);
     bool get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b) override;
     bool configure(SnortConfig*) override;
     void show(SnortConfig*) override { LogMessage("HttpInspect\n"); }

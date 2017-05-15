@@ -425,9 +425,6 @@ int TcpReassembler::purge_flushed_ackd()
     return 0;
 }
 
-#define SEPARATOR \
-    "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
-
 void TcpReassembler::show_rebuilt_packet(Packet* pkt)
 {
     if ( session->config->flags & STREAM_CONFIG_SHOW_PACKETS )

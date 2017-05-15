@@ -840,7 +840,6 @@ static int ConvertRPC(RpcDecodeConfig* rconfig, RpcSsnData* rsdata, Packet* p)
 
     DebugFormat(DEBUG_RPC, "New size: %u\n", decoded_len);
         DebugMessage(DEBUG_RPC, "converted data:\n");
-    //LogNetData(data, decoded_len, p);
 
     buf.len = (uint16_t)decoded_len;
     return 0;

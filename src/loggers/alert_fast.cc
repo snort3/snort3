@@ -37,6 +37,8 @@
 #include "config.h"
 #endif
 
+#include <vector>
+
 #include "detection/signature.h"
 #include "events/event.h"
 #include "framework/logger.h"
@@ -45,6 +47,7 @@
 #include "log/text_log.h"
 #include "log/obfuscator.h"
 #include "main/snort_config.h"
+#include "managers/inspector_manager.h"
 #include "packet_io/active.h"
 #include "packet_io/intf.h"
 #include "packet_io/sfdaq.h"
@@ -141,6 +144,20 @@ bool FastModule::end(const char*, int, SnortConfig*)
 }
 
 //-------------------------------------------------------------------------
+// helper
+
+static void load_buf_ids(
+    Inspector* ins, std::vector<const char*>& keys, std::vector<unsigned>& ids)
+{
+    for ( auto key : keys )
+    {
+        unsigned id = ins->get_buf_id(key);
+        assert(id);
+        ids.push_back(id);
+    }
+}
+
+//-------------------------------------------------------------------------
 // logger stuff
 //-------------------------------------------------------------------------
 
@@ -158,6 +175,9 @@ private:
     string file;
     unsigned long limit;
     bool packet;
+
+    std::vector<unsigned> req_ids;
+    std::vector<unsigned> rsp_ids;
 };
 
 FastLogger::FastLogger(FastModule* m)
@@ -165,6 +185,26 @@ FastLogger::FastLogger(FastModule* m)
     file = m->file ? F_NAME : "stdout";
     limit = m->limit;
     packet = m->packet;
+
+    //-----------------------------------------------------------------
+    // FIXIT-L generalize buffer sets when other inspectors get smarter
+    // this is only applicable to http_inspect
+    // could be configurable; and should be should be shared with u2
+
+    Inspector* ins = InspectorManager::get_inspector("http_inspect");
+    
+    if ( !ins )
+        return;
+
+    std::vector<const char*> req
+    { "http_raw_request", "http_uri", "http_header", "http_cookie", "http_client_body" };
+
+    std::vector<const char*> rsp
+    { "http_raw_status", "http_uri", "http_header", "http_cookie" };
+    //-----------------------------------------------------------------
+
+    load_buf_ids(ins, req, req_ids);
+    load_buf_ids(ins, rsp, rsp_ids);
 }
 
 void FastLogger::open()
@@ -186,51 +226,69 @@ void FastLogger::alert(Packet* p, const char* msg, Event* event)
     if ( Active::get_action() > Active::ACT_PASS )
         TextLog_Print(fast_log, " [%s]", Active::get_action_string());
 
-    {
-        TextLog_Puts(fast_log, " [**] ");
+    TextLog_Puts(fast_log, " [**] ");
 
-        if ( event )
-        {
-            TextLog_Print(fast_log, "[%lu:%lu:%lu] ",
-                (unsigned long)event->sig_info->gid,
-                (unsigned long)event->sig_info->sid,
-                (unsigned long)event->sig_info->rev);
-        }
+    if ( event )
+        TextLog_Print(fast_log, "[%u:%u:%u] ",
+            event->sig_info->gid, event->sig_info->sid, event->sig_info->rev);
 
-        if (SnortConfig::alert_interface())
-        {
-            TextLog_Print(fast_log, " <%s> ", PRINT_INTERFACE(SFDAQ::get_interface_spec()));
-        }
+    if (SnortConfig::alert_interface())
+        TextLog_Print(fast_log, " <%s> ", PRINT_INTERFACE(SFDAQ::get_interface_spec()));
 
-        if ( msg )
-            TextLog_Puts(fast_log, msg);
+    if ( msg )
+        TextLog_Puts(fast_log, msg);
 
-        TextLog_Puts(fast_log, " [**] ");
-    }
+    TextLog_Puts(fast_log, " [**] ");
 
-    /* print the packet header to the alert file */
-    {
-        LogPriorityData(fast_log, event, 0);
-        TextLog_Print(fast_log, "{%s} ", p->get_type());
-        LogIpAddrs(fast_log, p);
-    }
+    // print the packet header to the alert file
+    LogPriorityData(fast_log, event);
+    TextLog_Print(fast_log, "{%s} ", p->get_type());
+    LogIpAddrs(fast_log, p);
+
+    // log packet (p) if this is not an http request with one or more buffers
+    // because in that case packet data is also in http_headers or http_client_body
+    // only http provides buffers at present; http_raw_status is always
+    // available if a response was processed by http_inspect
+    bool log_pkt = true;
 
     if ( packet || SnortConfig::output_app_data() )
     {
         TextLog_NewLine(fast_log);
+        Inspector* gadget = p->flow ? p->flow->gadget : nullptr;
+        const char** buffers = gadget ? gadget->get_api()->buffers : nullptr;
 
-        if ( p->flow and p->flow->gadget )
+        if ( buffers )
+        {
+            InspectionBuffer buf;
+            const std::vector<unsigned>& idv = gadget->get_buf(15, p, buf) ? rsp_ids : req_ids;
+            bool rsp = (idv == rsp_ids);
+
+            for ( auto id : idv )
+            {
+
+                if ( gadget->get_buf(id, p, buf) )
+                    LogNetData(fast_log, buf.data, buf.len, p, buffers[id-1]);
+
+                log_pkt = rsp;
+            }
+        }
+        else if ( gadget )
         {
             InspectionBuffer buf;
 
-            if ( p->flow->gadget->get_buf(InspectionBuffer::IBT_KEY, p, buf) )
+            if ( gadget->get_buf(InspectionBuffer::IBT_KEY, p, buf) )
+                LogNetData(fast_log, buf.data, buf.len, p);
+
+            if ( gadget->get_buf(InspectionBuffer::IBT_HEADER, p, buf) )
+                LogNetData(fast_log, buf.data, buf.len, p);
+
+            if ( gadget->get_buf(InspectionBuffer::IBT_BODY, p, buf) )
                 LogNetData(fast_log, buf.data, buf.len, p);
         }
-
         if (p->has_ip())
             LogIPPkt(fast_log, p);
 
-        else if ( p->obfuscator )
+        else if ( log_pkt and p->obfuscator )
         {
             // FIXIT-P avoid string copy
             std::string buf((const char*)p->data, p->dsize);
@@ -240,13 +298,8 @@ void FastLogger::alert(Packet* p, const char* msg, Event* event)
 
             LogNetData(fast_log, (const uint8_t*)buf.c_str(), p->dsize, p);
         }
-        else
+        else if ( log_pkt )
             LogNetData(fast_log, p->data, p->dsize, p);
-
-#if 0
-        else if (p->proto_bits & PROTO_BIT__ARP)
-            LogArpHeader(fast_log, p);  // FIXIT-L unimplemented
-#endif
     }
     TextLog_NewLine(fast_log);
     TextLog_Flush(fast_log);

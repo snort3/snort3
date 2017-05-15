@@ -34,19 +34,17 @@ namespace tcp { struct TCPHdr; }
 
 typedef ip::IP4Hdr IP4Hdr;
 
-SO_PUBLIC void LogPriorityData(TextLog*, const Event*, bool doNewLine);
-SO_PUBLIC void LogXrefs(TextLog*, const Event*, bool doNewLine);
+SO_PUBLIC void LogTimeStamp(TextLog*, Packet*);
+SO_PUBLIC void LogPriorityData(TextLog*, const Event*);
+SO_PUBLIC void LogXrefs(TextLog*, const Event*);
 
 SO_PUBLIC void LogIPPkt(TextLog*, Packet*);
 SO_PUBLIC void LogPayload(TextLog*, Packet*);
-SO_PUBLIC void LogNetData(TextLog*, const uint8_t* data, const int len, Packet*);
 
-SO_PUBLIC void LogDiv(TextLog*);
-SO_PUBLIC void LogTimeStamp(TextLog*, Packet*);
+SO_PUBLIC void LogNetData(
+    TextLog*, const uint8_t* data, const int len, Packet*, const char* buf_name = nullptr);
 
-SO_PUBLIC void LogTrHeader(TextLog*, Packet*);
 SO_PUBLIC void Log2ndHeader(TextLog*, Packet*);
-
 SO_PUBLIC void LogTCPHeader(TextLog*, Packet*);
 SO_PUBLIC void LogUDPHeader(TextLog*, Packet*);
 SO_PUBLIC void LogICMPHeader(TextLog*, Packet*);

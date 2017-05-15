@@ -121,6 +121,8 @@ public:
     const InspectApi* get_api()
     { return api; }
 
+    const char* get_name();
+
 public:
     static unsigned max_slots;
     static THREAD_LOCAL unsigned slot;
@@ -186,6 +188,9 @@ struct InspectApi
     InspectSsnFunc ssn;    // get new session tracker
     InspectFunc reset;     // clear stats
 };
+
+inline const char* Inspector::get_name()
+{ return api->base.name; }
 
 #endif
 

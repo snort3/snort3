@@ -102,6 +102,11 @@ bool HttpInspect::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffe
     }
 }
 
+bool HttpInspect::get_buf(unsigned id, Packet* p, InspectionBuffer& b)
+{
+    return http_get_buf(id, 0, 0, p, b);
+}
+
 bool HttpInspect::http_get_buf(unsigned id, uint64_t sub_id, uint64_t form, Packet* p,
     InspectionBuffer& b)
 {

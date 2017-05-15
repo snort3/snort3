@@ -136,10 +136,8 @@ void CodecLogger::log(Packet* p, const char* msg, Event* e)
 
     if (e != NULL)
     {
-        TextLog_Print(test_file, "    gid:%lu    sid:%lu    rev:%lu\t",
-            (unsigned long)e->sig_info->gid,
-            (unsigned long)e->sig_info->sid,
-            (unsigned long)e->sig_info->rev);
+        TextLog_Print(test_file, "    gid:%u    sid:%u    rev:%u\t",
+            e->sig_info->gid, e->sig_info->sid, e->sig_info->rev);
     }
 
     if (flags & ALERT_FLAG_MSG)

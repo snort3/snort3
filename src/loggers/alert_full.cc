@@ -164,37 +164,34 @@ void FullLogger::close()
 
 void FullLogger::alert(Packet* p, const char* msg, Event* event)
 {
+    TextLog_Puts(full_log, "[**] ");
+
+    if (event != NULL)
     {
-        TextLog_Puts(full_log, "[**] ");
+        TextLog_Print(full_log, "[%u:%u:%u] ",
+            event->sig_info->gid, event->sig_info->sid, event->sig_info->rev);
+    }
 
-        if (event != NULL)
-        {
-            TextLog_Print(full_log, "[%lu:%lu:%lu] ",
-                (unsigned long)event->sig_info->gid,
-                (unsigned long)event->sig_info->sid,
-                (unsigned long)event->sig_info->rev);
-        }
+    if (SnortConfig::alert_interface())
+    {
+        const char* iface = PRINT_INTERFACE(SFDAQ::get_interface_spec());
+        TextLog_Print(full_log, " <%s> ", iface);
+    }
 
-        if (SnortConfig::alert_interface())
-        {
-            const char* iface = PRINT_INTERFACE(SFDAQ::get_interface_spec());
-            TextLog_Print(full_log, " <%s> ", iface);
-        }
-
-        if (msg != NULL)
-        {
-            TextLog_Puts(full_log, msg);
-            TextLog_Puts(full_log, " [**]\n");
-        }
-        else
-        {
-            TextLog_Puts(full_log, "[**]\n");
-        }
+    if (msg != NULL)
+    {
+        TextLog_Puts(full_log, msg);
+        TextLog_Puts(full_log, " [**]\n");
+    }
+    else
+    {
+        TextLog_Puts(full_log, "[**]\n");
     }
 
     if (p && p->has_ip())
     {
-        LogPriorityData(full_log, event, true);
+        LogPriorityData(full_log, event);
+        TextLog_NewLine(full_log);
     }
 
     DebugMessage(DEBUG_LOG, "Logging Alert data!\n");
@@ -234,14 +231,9 @@ void FullLogger::alert(Packet* p, const char* msg, Event* event)
                 break;
             }
         }
-        LogXrefs(full_log, event, 1);
-
-        TextLog_Putc(full_log, '\n');
-    } /* End of if(p) */
-    else
-    {
-        TextLog_Puts(full_log, "\n\n");
+        LogXrefs(full_log, event);
     }
+    TextLog_Puts(full_log, "\n");
     TextLog_Flush(full_log);
 }
 

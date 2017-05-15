@@ -64,17 +64,10 @@ void LogTimeStamp(TextLog* log, Packet* p)
  *--------------------------------------------------------------------
  */
 /*--------------------------------------------------------------------
- * Function: LogPriorityData()
- *
- * Purpose: Prints out priority data associated with an alert
- *
- * Arguments: log => pointer to TextLog to write the data to
- *            doNewLine => tack a \n to the end of the line or not (bool)
- *
- * Returns: void function
+ * prints out priority data associated with an alert
  *--------------------------------------------------------------------
  */
-void LogPriorityData(TextLog* log, const Event* e, bool doNewLine)
+void LogPriorityData(TextLog* log, const Event* e)
 {
     if ((e->sig_info->class_type != NULL)
         && (e->sig_info->class_type->name != NULL))
@@ -84,26 +77,13 @@ void LogPriorityData(TextLog* log, const Event* e, bool doNewLine)
     }
 
     TextLog_Print(log, "[Priority: %d] ", e->sig_info->priority);
-
-    if (doNewLine)
-        TextLog_NewLine(log);
 }
 
 /*--------------------------------------------------------------------
- * Layer 2 header stuff cloned from log.c
+ * layer 2 header stuff cloned from log.c
  *--------------------------------------------------------------------
  */
 
-/*--------------------------------------------------------------------
- * Function: LogEthHeader()
- *
- * Purpose: Print the packet Ethernet header to the given TextLog
- *
- * Arguments: log => pointer to TextLog to print to
- *
- * Returns: void function
- *--------------------------------------------------------------------
- */
 static void LogEthHeader(TextLog* log, Packet* p)
 {
     const eth::EtherHdr* eh = layer::get_eth_layer(p);
@@ -141,31 +121,19 @@ static void LogGREHeader(TextLog* log, Packet* p)
 }
 
 /*--------------------------------------------------------------------
- * Function: Log2ndHeader(TextLog* , Packet p)
- *
- * Purpose: Log2ndHeader -- prints second layer  header info.
- *
- * Arguments: log => pointer to TextLog to print to
- *
- * Returns: void function
+ * prints second layer header info
  *--------------------------------------------------------------------
  */
 void Log2ndHeader(TextLog* log, Packet* p)
 {
-    switch (SFDAQ::get_base_protocol())
-    {
-    case DLT_EN10MB:            /* Ethernet */
-        if (p && (p->num_layers > 0))
-            LogEthHeader(log, p);
-        break;
-    default:
-        if (SnortConfig::log_verbose())
-        {
-            // FIXIT-L should only be output once!
-            ErrorMessage("Datalink %i type 2nd layer display is not "
-                "supported\n", SFDAQ::get_base_protocol());
-        }
-    }
+    if ( !p or !p->num_layers )
+        return;
+
+    if ( SFDAQ::get_base_protocol() == DLT_EN10MB )
+        LogEthHeader(log, p);
+
+    else if ( SnortConfig::log_verbose() )
+        ErrorMessage("Datalink %i (not supported)\n", SFDAQ::get_base_protocol());
 }
 
 /*-------------------------------------------------------------------
@@ -280,15 +248,7 @@ static void LogIpOptions(TextLog* log, const IP4Hdr* ip4h, const Packet* const p
 }
 
 /*--------------------------------------------------------------------
- * Function: LogIPAddrs(TextLog* )
- *
- * Purpose: Dump the IP addresses to the given TextLog
- *          Handles obfuscation
- *
- * Arguments: log => TextLog to print to
- *            p => packet structure
- *
- * Returns: void function
+ * dump the IP addresses to the given TextLog, handles obfuscation
  *--------------------------------------------------------------------
  */
 void LogIpAddrs(TextLog* log, Packet* p)
@@ -340,13 +300,7 @@ void LogIpAddrs(TextLog* log, Packet* p)
 }
 
 /*--------------------------------------------------------------------
- * Function: LogIPHeader(TextLog* )
- *
- * Purpose: Dump the IP header info to the given TextLog
- *
- * Arguments: log => TextLog to print to
- *
- * Returns: void function
+ * dump the IP header info to the given TextLog
  *--------------------------------------------------------------------
  */
 void LogIPHeader(TextLog* log, Packet* p)
@@ -629,13 +583,7 @@ static void LogTcpOptions(TextLog* log, const Packet* const p)
 }
 
 /*--------------------------------------------------------------------
- * Function: LogTCPHeader(TextLog* )
- *
- * Purpose: Dump the TCP header info to the given TextLog
- *
- * Arguments: log => pointer to TextLog to print data to
- *
- * Returns: void function
+ * dump the TCP header info to the given TextLog
  *--------------------------------------------------------------------
  */
 void LogTCPHeader(TextLog* log, Packet* p)
@@ -680,13 +628,7 @@ void LogTCPHeader(TextLog* log, Packet* p)
  *-------------------------------------------------------------------
  */
 /*--------------------------------------------------------------------
- * Function: LogUDPHeader(TextLog* )
- *
- * Purpose: Dump the UDP header to the given TextLog
- *
- * Arguments: log => pointer to TextLog
- *
- * Returns: void function
+ * dump the UDP header to the given TextLog
  *--------------------------------------------------------------------
  */
 void LogUDPHeader(TextLog* log, Packet* p)
@@ -705,15 +647,8 @@ void LogUDPHeader(TextLog* log, Packet* p)
  *--------------------------------------------------------------------
  */
 /*--------------------------------------------------------------------
- * Function: LogEmbeddedICMPHeader(TextLog* , ICMPHdr *)
- *
- * Purpose: Prints the 64 bits of the original IP payload in an ICMP packet
- *          that requires it
- *
- * Arguments: log => pointer to TextLog
- *            icmph  => ICMPHdr struct pointing to original ICMP
- *
- * Returns: void function
+ * prints the 64 bits of the original IP payload in an ICMP packet
+ * that requires it
  *--------------------------------------------------------------------
  */
 static void LogEmbeddedICMPHeader(TextLog* log, const ICMPHdr* icmph)
@@ -766,15 +701,8 @@ static void LogEmbeddedICMPHeader(TextLog* log, const ICMPHdr* icmph)
 }
 
 /*--------------------------------------------------------------------
- * Function: LogICMPEmbeddedIP(TextLog* , Packet *)
- *
- * Purpose: Prints the original/encapsulated IP header + 64 bits of the
- *          original IP payload in an ICMP packet
- *
- * Arguments: log => pointer to TextLog
- *            p  => packet struct
- *
- * Returns: void function
+ * prints the original/encapsulated IP header + 64 bits of the
+ * original IP payload in an ICMP packet
  *--------------------------------------------------------------------
  */
 static void LogICMPEmbeddedIP(TextLog* log, Packet* p)
@@ -870,13 +798,7 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet* p)
 }
 
 /*--------------------------------------------------------------------
- * Function: LogICMPHeader(TextLog* )
- *
- * Purpose: Print ICMP header
- *
- * Arguments: log => pointer to TextLog
- *
- * Returns: void function
+ * print ICMP header
  *--------------------------------------------------------------------
  */
 void LogICMPHeader(TextLog* log, Packet* p)
@@ -1008,8 +930,8 @@ void LogICMPHeader(TextLog* log, Packet* p)
         }
 
 /* written this way since inet_ntoa was typedef'ed to use sfip_ntoa
-* which requires SfIp instead of inaddr's.  This call to inet_ntoa
-* is a rare case that doesn't use SfIp's. */
+ * which requires SfIp instead of inaddr's.  This call to inet_ntoa
+ * is a rare case that doesn't use SfIp's. */
 
 // XXX-IPv6 NOT YET IMPLEMENTED - IPV6 addresses technically not supported - need to change ICMP
 
@@ -1130,7 +1052,6 @@ void LogICMPHeader(TextLog* log, Packet* p)
  * reference stuff cloned from signature.c
  *--------------------------------------------------------------------
  */
-/* print a reference node */
 static void LogReference(TextLog* log, ReferenceNode* refNode)
 {
     if (refNode)
@@ -1152,16 +1073,9 @@ static void LogReference(TextLog* log, ReferenceNode* refNode)
 }
 
 /*
- * Function: LogXrefs(TextLog* )
- *
- * Purpose: Prints out cross reference data associated with an alert
- *
- * Arguments: log => pointer to TextLog to write the data to
- *            doNewLine => tack a \n to the end of the line or not (bool)
- *
- * Returns: void function
+ * prints out cross reference data associated with an alert
  */
-void LogXrefs(TextLog* log, const Event* e, bool doNewLine)
+void LogXrefs(TextLog* log, const Event* e)
 {
     ReferenceNode* refNode = e->sig_info->refs;
 
@@ -1169,11 +1083,6 @@ void LogXrefs(TextLog* log, const Event* e, bool doNewLine)
     {
         LogReference(log, refNode);
         refNode = refNode->next;
-
-        /* on the last loop through, print a newline in
-           Full mode */
-        if (doNewLine && (refNode == NULL))
-            TextLog_NewLine(log);
     }
 }
 
@@ -1182,15 +1091,7 @@ void LogXrefs(TextLog* log, const Event* e, bool doNewLine)
  *--------------------------------------------------------------------
  */
 /*--------------------------------------------------------------------
- * Function: SnortConfig::output_char_data(TextLog*, char*, int)
- *
- * Purpose: Dump the printable ASCII data from a packet
- *
- * Arguments: log => ptr to TextLog to print to
- *            data => pointer to buffer data
- *            len => length of data buffer
- *
- * Returns: void function
+ * dump the printable ASCII data from a packet
  *--------------------------------------------------------------------
  */
 static void LogCharData(TextLog* log, const uint8_t* data, int len)
@@ -1229,159 +1130,155 @@ static void LogCharData(TextLog* log, const uint8_t* data, int len)
     TextLog_Putc(log, ' ');
 }
 
-/*
- * Function: LogNetData(TextLog*, uint8_t*,int, Packet*)
- *
- * Purpose: Do a side by side dump of a buffer, hex on
- *          the left, decoded ASCII on the right.
- *
- * Arguments: log => ptr to TextLog to print to
- *            data => pointer to buffer data
- *            len => length of data buffer
- *
- * Returns: void function
- */
-#ifdef REG_TEST
-static const char SEPARATOR[] =
-          "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -";
+// do a side by side dump of a buffer with hex on
+// the left and decoded ASCII on the right
 
-#define BYTES_PER_FRAME 20  // FIXIT-L make configurable
-/* middle:"41 02 43 04 45 06 47 08 49 0A 4B 0C 4D 0E 4F 0F 01 02 03 04  A.C.E.G.I.K.M.O....."
-   at end:"41 02 43 04 45 06 47 08                                      A.C.E.G."*/
-
-static const char PAD3[] =
-          "                                                             ";
-#else
-static const char SEPARATOR[] =
-          "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -";
-
-#define BYTES_PER_FRAME 16
-/* middle:"41 02 43 04 45 06 47 08 49 0A 4B 0C 4D 0E 4F 0F  A.C.E.G.I.K.M.O....."
-   at end:"41 02 43 04 45 06 47 08                          A.C.E.G."*/
-
-static const char PAD3[] =
-          "                                                 ";
-#endif
-
-void LogNetData(TextLog* log, const uint8_t* data, const int len, Packet* p)
+struct HexAsciiLayout
 {
-    const uint8_t* pb = data;
-    const uint8_t* end = data + len;
+    unsigned bytes_per_frame;
+    unsigned frame_break;
+    bool break_text;
+
+    const char* offset_fmt;
+    const char* offset_hdr;
+
+    const char* separator;
+    const char* padding;
+};
+
+static const HexAsciiLayout hal_std =
+{
+    16, 7, true, "%04.4X  ", "- -   ",
+    "- - - - - - - - - - - -  - - - - - - - - - - - -  - - - - - - - - -",
+//  "41 02 43 04 45 06 47 08  49 0A 4B 0C 4D 0E 4F 0F  A.C.E.G. I.K.M.O."
+    "                                                 "
+};
+
+static const HexAsciiLayout hal_wide =
+{
+    20, 9, false, "%5u  ", "- - -  ",
+    "- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -",
+//  "41 02 43 04 45 06 47 08 49 0A  4B 0C 4D 0E 4F 0F 01 02 03 04  A.C.E.G.I.K.M.O....."
+    "                                                             "
+};
+
+static void obfuscate(Packet* p, const uint8_t* data, int& ip_ob_start, int& ip_ob_end)
+{
+    assert(p);
+    ip_ob_start = ip_ob_end = -1;
+
+    if ( !SnortConfig::obfuscate() )
+        return;
 
     const ProtocolIndex ipv4_idx = PacketManager::proto_idx(ProtocolId::IPIP);
     const ProtocolIndex ipv6_idx = PacketManager::proto_idx(ProtocolId::IPV6);
 
-    int offset = 0;
-    char conv[] = "0123456789ABCDEF";   /* xlation lookup table */
-    int ip_ob_start, ip_ob_end, byte_pos, char_pos;
-    int i;
+    unsigned num_layers = p->num_layers;
+    ProtocolIndex lyr_idx = 0;
+    unsigned i;
 
-    byte_pos = char_pos = 0;
-    ip_ob_start = ip_ob_end = -1;
+    for ( i = 0; i < num_layers; i++ )
+    {
+        lyr_idx = PacketManager::proto_idx(p->layers[i].prot_id);
 
+        if ( lyr_idx == ipv4_idx || lyr_idx == ipv6_idx)
+        {
+            if (p->layers[i].length && p->layers[i].start)
+                break;
+        }
+    }
+
+    int ip_start = p->layers[i].start - data;
+
+    if (ip_start > 0 )
+    {
+        ip_ob_start = ip_start + 10;
+        if (lyr_idx == ipv4_idx)
+            ip_ob_end = ip_ob_start + 2 + 2*(sizeof(struct in_addr));
+        else
+            ip_ob_end = ip_ob_start + 2 + 2*(sizeof(struct in6_addr));
+    }
+}
+
+void LogNetData(
+    TextLog* log, const uint8_t* data, const int len, Packet* p, const char* buf_name)
+{
     if ( !len )
         return;
 
-    if (p && SnortConfig::obfuscate() )
+    int ip_ob_start, ip_ob_end;
+
+    if ( buf_name )
+        ip_ob_start = ip_ob_end = -1;
+    else
     {
-        int num_layers =  p->num_layers;
-        ProtocolIndex lyr_idx = 0;
-
-        for ( i = 0; i < num_layers; i++ )
-        {
-            lyr_idx = PacketManager::proto_idx(p->layers[i].prot_id);
-
-            if ( lyr_idx == ipv4_idx || lyr_idx == ipv6_idx)
-            {
-                if (p->layers[i].length && p->layers[i].start)
-                    break;
-            }
-        }
-
-        int ip_start = p->layers[i].start - data;
-
-        if (ip_start > 0 )
-        {
-            ip_ob_start = ip_start + 10;
-            if (lyr_idx == ipv4_idx)
-                ip_ob_end = ip_ob_start + 2 + 2*(sizeof(struct in_addr));
-            else
-                ip_ob_end = ip_ob_start + 2 + 2*(sizeof(struct in6_addr));
-        }
+        obfuscate(p, data, ip_ob_start, ip_ob_end);
+        buf_name = p->get_pseudo_type();
     }
-    char div[64];
-    snprintf(div, sizeof(div), "- - - %s[%d]", p->get_pseudo_type(), len);
-    div[sizeof(div)-1] = '\0';
-    TextLog_Print(log, "%s%s\n", div, SEPARATOR+strlen(div));
+
+    const HexAsciiLayout& hal = snort_conf->output_wide_hex() ? hal_wide : hal_std;
+    const char* hdr_off = SnortConfig::verbose_byte_dump() ? hal.offset_hdr : "";
+    const char* ins_name = p->flow and p->flow->gadget ?  p->flow->gadget->get_name() : "";
+
+    TextLog_Print(log, "%s::%s[%u]:\n", ins_name, buf_name, len);
+    TextLog_Print(log, "%s%s\n", hdr_off, hal.separator);
+
+    const uint8_t* pb = data;
+    const uint8_t* end = data + len;
+
+    int offset = 0;
 
     /* loop thru the whole buffer */
     while ( pb < end )
     {
         if (SnortConfig::verbose_byte_dump())
         {
-            TextLog_Print(log, "0x%04X: ", offset);
-            offset += BYTES_PER_FRAME;
+            TextLog_Print(log, hal.offset_fmt, offset);
+            offset += hal.bytes_per_frame;
         }
-        /* process one frame
-           first print the binary as ascii hex */
-        for (i = 0; i < BYTES_PER_FRAME && pb+i < end; i++, byte_pos++)
+        int byte_pos = 0;
+        unsigned i;
+
+        /* process one frame first print the binary as ascii hex */
+        for (i = 0; i < hal.bytes_per_frame && pb+i < end; i++, byte_pos++)
         {
-            if (SnortConfig::obfuscate() && ((byte_pos >= ip_ob_start) && (byte_pos < ip_ob_end)))
-            {
-                TextLog_Putc(log, 'X');
-                TextLog_Putc(log, 'X');
-                TextLog_Putc(log, ' ');
-            }
+            if ((byte_pos >= ip_ob_start) && (byte_pos < ip_ob_end))
+                TextLog_Quote(log, "XX ");
             else
-            {
-                char b = pb[i];
-                TextLog_Putc(log, conv[(b & 0xFF) >> 4]);
-                TextLog_Putc(log, conv[(b & 0xFF) & 0x0F]);
+                TextLog_Print(log, "%2.2X ", pb[i]);
+
+            if ( i == hal.frame_break )
                 TextLog_Putc(log, ' ');
-            }
         }
+        int char_pos = 0;
+
         /* print ' ' past end of packet and before ascii */
-        TextLog_Puts(log, PAD3+(3*i));
+        unsigned fb = (0 < i and i < hal.frame_break) ? 1 : 0;
+        TextLog_Puts(log, hal.padding+(3*i)-fb);
 
-        /* then print the actual ascii chars
-           or a '.' for control chars */
-        for (i = 0; i < BYTES_PER_FRAME && pb+i < end; i++, char_pos++)
+        /* then print the actual ascii chars or a '.' for control chars */
+        for (unsigned j = 0; j < hal.bytes_per_frame && pb+j < end; j++, char_pos++)
         {
-            if (SnortConfig::obfuscate() && ((char_pos >= ip_ob_start) && (char_pos < ip_ob_end)))
-            {
+            if ((char_pos >= ip_ob_start) && (char_pos < ip_ob_end))
                 TextLog_Putc(log, 'X');
-            }
             else
             {
-                char b = pb[i];
-
-                if ( b > 0x1F && b < 0x7F)
-                    TextLog_Putc(log, (char)(b & 0xFF));
+                if ( 0x1F < pb[j] and pb[j] < 0x7F)
+                    TextLog_Putc(log, pb[j]);
                 else
                     TextLog_Putc(log, '.');
             }
+            if ( j == hal.frame_break and hal.break_text )
+                TextLog_Putc(log, ' ');
         }
-        pb += BYTES_PER_FRAME;
+        pb += hal.bytes_per_frame;
         TextLog_NewLine(log);
     }
-    LogDiv(log);
-}
-
-void LogDiv(TextLog* log)
-{
-    TextLog_Print(log, "%s\n", SEPARATOR);
+    TextLog_Print(log, "%s%s\n", hdr_off, hal.separator);
 }
 
 /*--------------------------------------------------------------------
- * Function: LogIPPkt(TextLog*, int, Packet *)
- *
- * Purpose: Dump the packet to the given TextLog
- *
- * Arguments: log => pointer to print data to
- *            type => packet protocol
- *            p => pointer to decoded packet struct
- *
- * Returns: void function
+ * dump the packet to the given TextLog
  *--------------------------------------------------------------------
  */
 

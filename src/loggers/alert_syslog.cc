@@ -202,10 +202,7 @@ static void AlertSyslog(
         if (event != NULL)
         {
             SnortSnprintfAppend(event_string, sizeof(event_string),
-                "[%lu:%lu:%lu] ",
-                (unsigned long)event->sig_info->gid,
-                (unsigned long)event->sig_info->sid,
-                (unsigned long)event->sig_info->rev);
+                "[%u:%u:%u] ", event->sig_info->gid, event->sig_info->sid, event->sig_info->rev);
         }
 
         if (msg != NULL)

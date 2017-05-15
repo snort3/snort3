@@ -34,68 +34,69 @@
 
 enum RunFlag
 {
-    RUN_FLAG__READ                = 0x00000001,     /* -r, --pcap-list, --pcap-file, --pcap-dir */
-    RUN_FLAG__DAEMON              = 0x00000002,     /* -D */
-    RUN_FLAG__NO_PROMISCUOUS      = 0x00000004,     /* -p */
+    RUN_FLAG__READ                = 0x00000001,
+    RUN_FLAG__DAEMON              = 0x00000002,
+    RUN_FLAG__NO_PROMISCUOUS      = 0x00000004,
     /* UNUSED                       0x00000008 */
 
-    RUN_FLAG__INLINE              = 0x00000010,     /* -Q */
-    RUN_FLAG__STATIC_HASH         = 0x00000020,     /* -H */
-    RUN_FLAG__CREATE_PID_FILE     = 0x00000040,     /* --pid-path and --create-pidfile */
-    RUN_FLAG__NO_LOCK_PID_FILE    = 0x00000080,     /* --nolock-pidfile */
+    RUN_FLAG__INLINE              = 0x00000010,
+    RUN_FLAG__STATIC_HASH         = 0x00000020,
+    RUN_FLAG__CREATE_PID_FILE     = 0x00000040,
+    RUN_FLAG__NO_LOCK_PID_FILE    = 0x00000080,
 
-    RUN_FLAG__TREAT_DROP_AS_ALERT = 0x00000100,     /* --treat-drop-as-alert */
-    RUN_FLAG__ALERT_BEFORE_PASS   = 0x00000200,     /* --alert-before-pass */
-    RUN_FLAG__CONF_ERROR_OUT      = 0x00000400,     /* -x and --conf-error-out */
-    RUN_FLAG__MPLS_MULTICAST      = 0x00000800,     /* --enable_mpls_multicast */
+    RUN_FLAG__TREAT_DROP_AS_ALERT = 0x00000100,
+    RUN_FLAG__ALERT_BEFORE_PASS   = 0x00000200,
+    RUN_FLAG__CONF_ERROR_OUT      = 0x00000400,
+    RUN_FLAG__MPLS_MULTICAST      = 0x00000800,
 
-    RUN_FLAG__MPLS_OVERLAPPING_IP = 0x00001000,     /* --enable_mpls_overlapping_ip */
+    RUN_FLAG__MPLS_OVERLAPPING_IP = 0x00001000,
     RUN_FLAG__PROCESS_ALL_EVENTS  = 0x00002000,
-    RUN_FLAG__INLINE_TEST         = 0x00004000,     /* --enable-inline-test*/
+    RUN_FLAG__INLINE_TEST         = 0x00004000,
     RUN_FLAG__PCAP_SHOW           = 0x00008000,
 
     /* UNUSED                       0x00010000 */
-    RUN_FLAG__PAUSE               = 0x00020000,     // --pause
+    RUN_FLAG__PAUSE               = 0x00020000,
     RUN_FLAG__NO_PCRE             = 0x00040000,
     /* If stream is configured, the STATEFUL flag is set.  This is
      * somewhat misnamed and is used to assure a session is established */
     RUN_FLAG__ASSURE_EST          = 0x00080000,
 
-    RUN_FLAG__TREAT_DROP_AS_IGNORE= 0x00100000,     /* --treat-drop-as-ignore */
-    RUN_FLAG__PCAP_RELOAD         = 0x00200000,     /* --pcap-reload */
-    RUN_FLAG__TEST                = 0x00400000,     /* -T */
+    RUN_FLAG__TREAT_DROP_AS_IGNORE= 0x00100000,
+    RUN_FLAG__PCAP_RELOAD         = 0x00200000,
+    RUN_FLAG__TEST                = 0x00400000,
 #ifdef SHELL
-    RUN_FLAG__SHELL               = 0x00800000,     /* --shell */
+    RUN_FLAG__SHELL               = 0x00800000,
 #endif
 #ifdef PIGLET
-    RUN_FLAG__PIGLET              = 0x01000000      /* --piglet */
+    RUN_FLAG__PIGLET              = 0x01000000
 #endif
 };
 
 enum OutputFlag
 {
-    OUTPUT_FLAG__LINE_BUFFER       = 0x00000001,      /* -f */
-    OUTPUT_FLAG__VERBOSE_DUMP      = 0x00000002,      /* -X */
-    OUTPUT_FLAG__CHAR_DATA         = 0x00000004,      /* -C */
-    OUTPUT_FLAG__APP_DATA          = 0x00000008,      /* -d */
+    OUTPUT_FLAG__LINE_BUFFER       = 0x00000001,
+    OUTPUT_FLAG__VERBOSE_DUMP      = 0x00000002,
+    OUTPUT_FLAG__CHAR_DATA         = 0x00000004,
+    OUTPUT_FLAG__APP_DATA          = 0x00000008,
 
-    OUTPUT_FLAG__SHOW_DATA_LINK    = 0x00000010,      /* -e */
-    OUTPUT_FLAG__USE_UTC           = 0x00000020,      /* -U */
-    OUTPUT_FLAG__INCLUDE_YEAR      = 0x00000040,      /* -y */
+    OUTPUT_FLAG__SHOW_DATA_LINK    = 0x00000010,
+    OUTPUT_FLAG__USE_UTC           = 0x00000020,
+    OUTPUT_FLAG__INCLUDE_YEAR      = 0x00000040,
     /* Note using this alters the packet - can't be used inline */
-    OUTPUT_FLAG__OBFUSCATE         = 0x00000080,      /* -B */
+    OUTPUT_FLAG__OBFUSCATE         = 0x00000080,
 
-    OUTPUT_FLAG__ALERT_IFACE       = 0x00000100,      /* -I */
-    OUTPUT_FLAG__NO_TIMESTAMP      = 0x00000200,      /* --nostamps */
-    OUTPUT_FLAG__ALERTS            = 0x00000400,      /* -A */
+    OUTPUT_FLAG__ALERT_IFACE       = 0x00000100,
+    OUTPUT_FLAG__NO_TIMESTAMP      = 0x00000200,
+    OUTPUT_FLAG__ALERTS            = 0x00000400,
+    OUTPUT_FLAG__WIDE_HEX          = 0x00000800,
 };
 
 enum LoggingFlag
 {
-    LOGGING_FLAG__VERBOSE         = 0x00000001,      /* -v */
-    LOGGING_FLAG__QUIET           = 0x00000002,      /* -q */
-    LOGGING_FLAG__SYSLOG          = 0x00000004,      /* -M */
-    LOGGING_FLAG__SHOW_PLUGINS    = 0x00000008,      // --show-plugins
+    LOGGING_FLAG__VERBOSE         = 0x00000001,
+    LOGGING_FLAG__QUIET           = 0x00000002,
+    LOGGING_FLAG__SYSLOG          = 0x00000004,
+    LOGGING_FLAG__SHOW_PLUGINS    = 0x00000008,
 };
 
 enum TunnelFlags
@@ -160,7 +161,12 @@ public:
 
     //------------------------------------------------------
     // output module stuff
+#ifdef REG_TEST
+    // FIXIT-H builtin modules should set SnortConfig defaults instead
+    uint32_t output_flags = OUTPUT_FLAG__WIDE_HEX;
+#else
     uint32_t output_flags = 0;
+#endif
     uint32_t logging_flags = 0;
 
     uint8_t log_ipv6_extra = 0;
@@ -531,6 +537,9 @@ public:
 
     static bool line_buffered_logging()
     { return snort_conf->output_flags & OUTPUT_FLAG__LINE_BUFFER; }
+
+    static bool output_wide_hex()
+    { return snort_conf->output_flags & OUTPUT_FLAG__WIDE_HEX; }
 
     // run flags
     static bool no_lock_pid_file()
