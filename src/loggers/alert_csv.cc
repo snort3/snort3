@@ -217,7 +217,7 @@ static void ff_pkt_gen(Args& a)
 
 static void ff_pkt_num(Args&)
 {
-    TextLog_Print(csv_log, STDu64, DetectionEngine::get_context()->pkt_count);
+    TextLog_Print(csv_log, STDu64, pc.total_from_daq);
 }
 
 static void ff_proto(Args& a)

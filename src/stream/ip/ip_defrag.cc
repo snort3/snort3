@@ -1047,25 +1047,14 @@ void Defrag::process(Packet* p, FragTracker* ft)
      */
     if (FragIsComplete(ft))
     {
-        trace_log(stream_ip,
-            "[*] Fragment is complete, rebuilding!\n");
+        trace_log(stream_ip, "[*] Fragment is complete, rebuilding!\n");
 
         /*
          * if the frag completes but it's bad we're just going to drop it
          * instead of wasting time on putting it back together
          */
         if (!(ft->frag_flags & FRAG_BAD))
-        {
             FragRebuild(ft, p);
-
-            if (frag_offset != 0 ||
-                (p->get_ip_proto_next() != IpProtocol::UDP && ft->frag_flags & FRAG_REBUILT))
-            {
-                // Need to reset some things here because the rebuilt packet
-                // will have reset the do_detect flag when it hits Inspect.
-                DetectionEngine::disable_all(p);
-            }
-        }
 
         if (Active::packet_was_dropped())
         {
@@ -1890,6 +1879,8 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
 
         ip_stats.mem_in_use = mem_in_use;
     }
+
+    ip_stats.nodes_created++;
 
     /* initialize the fragment list */
     ft->fraglist = NULL;

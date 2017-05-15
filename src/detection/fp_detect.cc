@@ -382,8 +382,7 @@ static int rule_tree_match(
 
             last_check->ts.tv_sec = eval_data.p->pkth->ts.tv_sec;
             last_check->ts.tv_usec = eval_data.p->pkth->ts.tv_usec;
-            last_check->packet_number = eval_data.p->context->pkt_count
-                + PacketManager::get_rebuilt_packet_count();
+            last_check->context_num = eval_data.p->context->context_num;
             last_check->rebuild_flag = (eval_data.p->packet_flags & PKT_REBUILT_STREAM);
         }
 
@@ -827,7 +826,7 @@ void fp_set_context(IpsContext& c)
     c.otnx->matchInfo = (MatchInfo*)snort_calloc(
         snort_conf->num_rule_types, sizeof(MatchInfo));
 
-    c.pkt_count = 0;
+    c.context_num = 0;
 }
 
 void fp_clear_context(IpsContext& c)

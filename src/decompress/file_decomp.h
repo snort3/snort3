@@ -186,7 +186,7 @@ inline bool Get_1(fd_session_t* SessionPtr, uint8_t* c)
 }
 
 /* If available, get N bytes from the input queue.  All N must be
-   availble for this call to succeed. */
+   available for this call to succeed. */
 inline bool Get_N(fd_session_t* SessionPtr, uint8_t** c, uint16_t N)
 {
     if ( (SessionPtr->Next_In != NULL) && (SessionPtr->Avail_In >= N) )

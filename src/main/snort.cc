@@ -879,7 +879,7 @@ DAQ_Verdict Snort::packet_callback(
 
     s_switcher->start();
     s_packet = s_switcher->get_context()->packet;
-    s_switcher->get_context()->pkt_count++;
+    s_switcher->get_context()->context_num = DetectionEngine::get_next_id();
 
     sfthreshold_reset();
     ActionManager::reset_queue();

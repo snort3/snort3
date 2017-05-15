@@ -54,6 +54,7 @@ Trace TRACE_NAME(detection);
 
 static THREAD_LOCAL RegexOffload* offloader = nullptr;
 static THREAD_LOCAL DataPointer next_file_data = { nullptr, 0 };
+static THREAD_LOCAL uint64_t context_num = 0;
 
 //--------------------------------------------------------------------------
 // basic de
@@ -69,7 +70,7 @@ DetectionEngine::DetectionEngine()
 {
     context = Snort::get_switcher()->interrupt();
     context->file_data = next_file_data;
-    context->pkt_count = pc.total_from_daq;
+    context->context_num = ++context_num;
     context->alt_data.len = 0;  // FIXIT-H need context::reset()
     next_file_data = { nullptr, 0 };
 }
@@ -85,6 +86,9 @@ DetectionEngine::~DetectionEngine()
         next_file_data = { nullptr, 0 };
     }
 }
+
+uint64_t DetectionEngine::get_next_id()
+{ return ++context_num; }
 
 IpsContext* DetectionEngine::get_context()
 { return Snort::get_switcher()->get_context(); }

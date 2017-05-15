@@ -49,7 +49,7 @@ struct dot_node_state_t
     struct
     {
         struct timeval ts;
-        uint64_t packet_number;
+        uint64_t context_num;
         uint32_t rebuild_flag;
         char result;
         char flowbit_failed;

@@ -77,7 +77,7 @@ public:
     DataPointer file_data;
     DataBuffer alt_data;
 
-    uint64_t pkt_count;
+    uint64_t context_num;
     ActiveRules active_rules;
     bool check_tags;
 

@@ -29,7 +29,7 @@
 struct PmdLastCheck
 {
     struct timeval ts;
-    uint64_t packet_number;
+    uint64_t context_num;
     uint32_t rebuild_flag;
 };
 

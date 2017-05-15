@@ -48,6 +48,7 @@ public:
     static void thread_term();
 
     static IpsContext* get_context();
+    static uint64_t get_next_id();
 
     static Packet* get_current_packet();
     static Packet* set_packet();

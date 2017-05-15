@@ -360,9 +360,7 @@ int detection_option_node_evaluate(
     char flowbits_setoperation = 0;
     int loop_count = 0;
     uint32_t tmp_byte_extract_vars[NUM_IPS_OPTIONS_VARS];
-
-    uint64_t cur_eval_pkt_count = DetectionEngine::get_context()->pkt_count
-        + PacketManager::get_rebuilt_packet_count();
+    uint64_t cur_eval_context_num = DetectionEngine::get_context()->context_num;
 
     if ( !eval_data || !eval_data->p || !eval_data->pomd )
         return 0;
@@ -376,7 +374,7 @@ int detection_option_node_evaluate(
         auto last_check = state.last_check;
 
         if ( last_check.ts == p->pkth->ts &&
-            last_check.packet_number == cur_eval_pkt_count &&
+            last_check.context_num == cur_eval_context_num &&
             last_check.rebuild_flag == (p->packet_flags & PKT_REBUILT_STREAM) &&
             !(p->packet_flags & PKT_ALLOW_MULTIPLE_DETECT) )
         {
@@ -390,7 +388,7 @@ int detection_option_node_evaluate(
     }
 
     state.last_check.ts = eval_data->p->pkth->ts;
-    state.last_check.packet_number = cur_eval_pkt_count;
+    state.last_check.context_num = cur_eval_context_num;
     state.last_check.flowbit_failed = 0;
     state.last_check.rebuild_flag = p->packet_flags & PKT_REBUILT_STREAM;
 
@@ -491,7 +489,7 @@ int detection_option_node_evaluate(
                 if ( content_last )
                 {
                     if ( content_last->ts == p->pkth->ts &&
-                        content_last->packet_number == cur_eval_pkt_count &&
+                        content_last->context_num == cur_eval_context_num &&
                         content_last->rebuild_flag == (p->packet_flags & PKT_REBUILT_STREAM) )
                     {
                         rval = DETECTION_OPTION_NO_MATCH;
