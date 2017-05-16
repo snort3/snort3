@@ -54,16 +54,38 @@ check_c_source_compiles("int main() { return 0; }" PCAP_LINKS_SOLO)
 set(CMAKE_REQUIRED_LIBRARIES)
 
 
-# check if linking against libpcap also needs to link against a thread library
+# check if linking against libpcap also needs to link against a thread and/or SFBPF library
 if (NOT PCAP_LINKS_SOLO)
     find_package(Threads)
     if (THREADS_FOUND)
         set(CMAKE_REQUIRED_LIBRARIES ${PCAP_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-        check_c_source_compiles("int main() { return 0; }" PCAP_NEEDS_THREADS)
+        check_c_source_compiles("int main() { return 0; }" PCAP_NEEDS_THREADS_ONLY)
+        if (PCAP_NEEDS_THREADS_ONLY)
+            set(PCAP_EXTRA_LIBS ${CMAKE_THREAD_LIBS_INIT})
+        endif ()
         set(CMAKE_REQUIRED_LIBRARIES)
     endif ()
-    if (THREADS_FOUND AND PCAP_NEEDS_THREADS)
-        set(_tmp ${PCAP_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
+    find_package(SFBPF)
+    if (NOT PCAP_NEEDS_THREADS AND SFBPF_FOUND)
+        set(CMAKE_REQUIRED_LIBRARIES ${PCAP_LIBRARIES} ${SFBPF_LIBRARIES})
+        check_c_source_compiles("int main() { return 0; }" PCAP_NEEDS_SFBPF_ONLY)
+        if (PCAP_NEEDS_SFBPF_ONLY)
+            set(PCAP_EXTRA_LIBS ${SFBPF_LIBRARIES})
+        endif ()
+        set(CMAKE_REQUIRED_LIBRARIES)
+    endif ()
+
+    if (NOT (PCAP_NEEDS_THREADS_ONLY OR PCAP_NEEDS_SFBPF_ONLY) AND THREADS_FOUND AND SFBPF_FOUND)
+        set(CMAKE_REQUIRED_LIBRARIES ${PCAP_LIBRARIES} ${SFBPF_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+        check_c_source_compiles("int main() { return 0; }" PCAP_NEEDS_SFBPF_AND_THREADS)
+        if (PCAP_NEEDS_SFBPF_AND_THREADS)
+            set(PCAP_EXTRA_LIBS ${SFBPF_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+        endif ()
+    endif ()
+
+    if (PCAP_EXTRA_LIBS)
+        set(_tmp ${PCAP_LIBRARIES} ${PCAP_EXTRA_LIBS})
         list(REMOVE_DUPLICATES _tmp)
         set(PCAP_LIBRARIES ${_tmp}
             CACHE STRING "Libraries needed to link against libpcap" FORCE)
