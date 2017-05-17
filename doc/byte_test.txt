@@ -1,0 +1,28 @@
+This rule option tests a byte field against a specific value (with
+operator). Capable of testing binary values or converting 
+representative byte strings to their binary equivalent and testing them.
+ 
+Snort uses the C operators for each of these operators. If the &
+operator is used, then it would be the same as using 
+[source,c]
+if (data & value) { do_something(); }
+
+Note:
+The bitmask option applies bitwise AND operator on the bytes
+converted. The result will be right-shifted by the number of bits
+equal to the number of trailing zeros in the mask. 
+This applies for the other rule options as well.
+ 
+
+===== Examples
+
+    alert tcp (byte_test:2, =, 568, 0, bitmask 0x3FF0;)
+
+This example extracts 2 bytes at offset 0, performs bitwise and with 
+bitmask 0x3FF0, shifts the result by 4 bits and compares to 568. 
+
+    alert udp (byte_test:4, =, 1234, 0, string, dec; 
+        msg:"got 1234!";)
+ 
+    alert udp (byte_test:8, =, 0xdeadbeef, 0, string, hex; 
+        msg:"got DEADBEEF!";)

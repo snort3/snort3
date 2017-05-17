@@ -29,6 +29,10 @@ appid.txt \
 binder.txt \
 bugs.txt \
 building.txt \
+byte_extract.txt \
+byte_jump.txt \
+byte_math.txt \
+byte_test.txt \
 concepts.txt \
 config_changes.txt \
 connectors.txt \
@@ -56,6 +60,7 @@ snort_manual.txt \
 snorty.png \
 style.txt \
 terms.txt \
+testing_numerical_values.txt \
 tutorial.txt \
 usage.txt \
 wizard.txt

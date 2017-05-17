@@ -1,0 +1,150 @@
+The rule options byte_test and byte_jump were written to support
+writing rules for protocols that have length encoded data. RPC was 
+the protocol that spawned the requirement for these two rule options, 
+as RPC uses simple length based encoding for passing data.
+
+In order to understand why byte test and byte jump are useful, let's 
+go through an exploit attempt against the sadmind service.
+
+This is the payload of the exploit:
+
+  89 09 9c e2 00 00 00 00 00 00 00 02 00 01 87 88  ................
+  00 00 00 0a 00 00 00 01 00 00 00 01 00 00 00 20  ...............
+  40 28 3a 10 00 00 00 0a 4d 45 54 41 53 50 4c 4f  @(:.....metasplo
+  49 54 00 00 00 00 00 00 00 00 00 00 00 00 00 00  it..............
+  00 00 00 00 00 00 00 00 40 28 3a 14 00 07 45 df  ........@(:...e.
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+  00 00 00 00 00 00 00 06 00 00 00 00 00 00 00 00  ................
+  00 00 00 00 00 00 00 04 00 00 00 00 00 00 00 04  ................
+  7f 00 00 01 00 01 87 88 00 00 00 0a 00 00 00 04  ................
+  7f 00 00 01 00 01 87 88 00 00 00 0a 00 00 00 11  ................
+  00 00 00 1e 00 00 00 00 00 00 00 00 00 00 00 00  ................
+  00 00 00 00 00 00 00 3b 4d 45 54 41 53 50 4c 4f  .......;metasplo
+  49 54 00 00 00 00 00 00 00 00 00 00 00 00 00 00  it..............
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+  00 00 00 00 00 00 00 06 73 79 73 74 65 6d 00 00  ........system..
+  00 00 00 15 2e 2e 2f 2e 2e 2f 2e 2e 2f 2e 2e 2f  ....../../../../
+  2e 2e 2f 62 69 6e 2f 73 68 00 00 00 00 00 04 1e  ../bin/sh.......
+
+
+Let's break this up, describe each of the fields, and figure out how to write a
+rule to catch this exploit.  
+
+There are a few things to note with RPC:
+
+Numbers are written as uint32s, taking four bytes.  The number 26 would
+show up as 0x0000001a.
+
+Strings are written as a uint32 specifying the length of the string, the
+string, and then null bytes to pad the length of the string to end on a 4-byte
+boundary.  The string 'bob' would show up as 0x00000003626f6200.
+
+  89 09 9c e2     - the request id, a random uint32, unique to each request
+  00 00 00 00     - rpc type (call = 0, response = 1)
+  00 00 00 02     - rpc version (2)
+  00 01 87 88     - rpc program (0x00018788 = 100232 = sadmind)
+  00 00 00 0a     - rpc program version (0x0000000a = 10)
+  00 00 00 01     - rpc procedure (0x00000001 = 1)
+  00 00 00 01     - credential flavor (1 = auth_unix)
+  00 00 00 20     - length of auth_unix data (0x20 = 32)
+
+  ## the next 32 bytes are the auth_unix data
+  40 28 3a 10 - unix timestamp (0x40283a10 = 1076378128 = feb 10 01:55:28 2004 gmt)
+  00 00 00 0a - length of the client machine name (0x0a = 10)
+  4d 45 54 41 53 50 4c 4f 49 54 00 00  - metasploit
+
+  00 00 00 00 - uid of requesting user (0)
+  00 00 00 00 - gid of requesting user (0)
+  00 00 00 00 - extra group ids (0)
+
+  00 00 00 00 - verifier flavor (0 = auth_null, aka none)
+  00 00 00 00 - length of verifier (0, aka none)
+
+The rest of the packet is the request that gets passed to procedure 1 of
+sadmind.
+
+However, we know the vulnerability is that sadmind trusts the uid coming from
+the client.  sadmind runs any request where the client's uid is 0 as root.  As
+such, we have decoded enough of the request to write our rule.  
+
+First, we need to make sure that our packet is an RPC call.
+    
+    content:"|00 00 00 00|", offset 4, depth 4;
+
+Then, we need to make sure that our packet is a call to sadmind.
+    
+    content:"|00 01 87 88|", offset 12, depth 4;
+
+Then, we need to make sure that our packet is a call to the procedure 1, the
+vulnerable procedure.  
+   
+    content:"|00 00 00 01|", offset 20, depth 4;
+
+Then, we need to make sure that our packet has auth_unix credentials.  
+    
+    content:"|00 00 00 01|", offset 24, depth 4;
+
+We don't care about the hostname, but we want to skip over it and check a
+number value after the hostname.  This is where byte_test is useful.  Starting
+at the length of the hostname, the data we have is:
+
+  00 00 00 0a 4d 45 54 41 53 50 4c 4f 49 54 00 00
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00 00 00
+
+We want to read 4 bytes, turn it into a number, and jump that many bytes
+forward, making sure to account for the padding that RPC requires on strings.
+If we do that, we are now at:
+
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  00 00 00 00 
+
+which happens to be the exact location of the uid, the value we want to check.
+
+In English, we want to read 4 bytes, 36 bytes from the beginning of the packet,
+and turn those 4 bytes into an integer and jump that many bytes forward,
+aligning on the 4-byte boundary.  To do that in a Snort rule, we use:
+
+    byte_jump:4,36,align;
+
+then we want to look for the uid of 0.
+
+    content:"|00 00 00 00|", within 4;
+
+Now that we have all the detection capabilities for our rule, let's put them
+all together.  
+
+    content:"|00 00 00 00|", offset 4, depth 4;
+    content:"|00 01 87 88|", offset 12, depth 4;
+    content:"|00 00 00 01|", offset 20, depth 4;
+    content:"|00 00 00 01|", offset 24, depth 4;
+    byte_jump:4,36,align;
+    content:"|00 00 00 00|", within 4;
+
+The 3rd and fourth string match are right next to each other, so we should
+combine those patterns.  We end up with:
+
+    content:"|00 00 00 00|", offset 4, depth 4;
+    content:"|00 01 87 88|", offset 12, depth 4;
+    content:"|00 00 00 01 00 00 00 01|", offset 20, depth 8;
+    byte_jump:4,36,align;
+    content:"|00 00 00 00|", within 4;
+
+If the sadmind service was vulnerable to a buffer overflow when reading the
+client's hostname, instead of reading the length of the hostname and jumping
+that many bytes forward, we would check the length of the hostname to make sure
+it is not too large.  
+
+To do that, we would read 4 bytes, starting 36 bytes into the packet, turn it
+into a number, and then make sure it is not too large (let's say bigger than
+200 bytes).  In Snort, we do: 
+
+    byte_test:4,>,200,36;
+    
+Our full rule would be:    
+
+    content:"|00 00 00 00|", offset 4, depth 4;
+    content:"|00 01 87 88|", offset 12, depth 4;
+    content:"|00 00 00 01 00 00 00 01|", offset 20, depth 8;
+    byte_test:4,>,200,36;

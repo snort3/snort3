@@ -1,0 +1,26 @@
+Perform a mathematical operation on an extracted value and a specified
+value or existing variable, and store the outcome in a new resulting
+variable. These resulting variables can be referenced later in the
+rule, at the same places as byte_extract variables. 
+
+The syntax for this rule option is different. The order of the options 
+is critical for the other rule options and can't be changed. For
+example, the first option is the number of bytes to extract.
+Here the name of the option is explicitly written, for example : bytes 2.
+The order is not important.
+
+NOTE: Byte_math operations are performed on unsigned 32-bit values. When 
+      writing a rule it should be taken into consideration to avoid wrap around.
+
+===== Examples
+
+  alert tcp ( byte_math: bytes 2, offset 0, oper *, rvalue 10, result area; 
+     byte_test:2,>,area,16;)
+
+At the zero offset of the payload, extract 2 bytes and apply multiplication operation with
+value 10. Store result in variable area. The area variable is given as
+input to byte_test value option.
+
+Let's consider 2 bytes of extracted data is 5. The rvalue is 10.
+Result variable area is 50 ( 5 * 10 ).
+Area variable can be used in either byte_test offset/value options.

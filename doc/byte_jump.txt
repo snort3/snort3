@@ -1,0 +1,18 @@
+The byte_jump rule option allows rules to be written for length 
+encoded protocols trivially. By having an option that reads the 
+length of a portion of data, then skips that far forward in the 
+packet, rules can be written that skip over specific portions of 
+length-encoded protocols and perform detection in very specific 
+locations.
+
+===== Examples
+
+    alert tcp (content:"Begin"; 
+        byte_jump:0, 0, from_end, post_offset -6; 
+        content:"end..", distance 0, within 5; 
+        msg:"Content match from end of the payload";)
+
+    alert tcp (content:"catalog"; 
+        byte_jump:2, 1, relative, post_offset 2, bitmask 0x03f0; 
+        byte_test:2, =, 968, 0, relative; 
+        msg:"Bitmask applied on the 2 bytes extracted for byte_jump";)
