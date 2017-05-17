@@ -38,7 +38,6 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
-
 //-------------------------------------------------------------------------
 // base stuff
 //-------------------------------------------------------------------------
@@ -53,6 +52,7 @@ SnortConfig::SnortConfig()
     state = &s_state;
     memset(state, 0, sizeof(*state));
     num_slots = 1;
+    fast_pattern_config = nullptr;
 }
 
 SnortConfig::~SnortConfig() { }
@@ -116,32 +116,24 @@ static MpseAgent s_agent =
 };
 
 extern const BaseApi* se_ac_bnfa;
-const MpseApi* mpse_api = (MpseApi*)se_ac_bnfa;
-Mpse* acf = nullptr;
+Mpse* mpse = nullptr;
 
 Mpse* MpseManager::get_search_engine(const char *type)
 {
-    acf = nullptr;
+    assert(!strcmp(type, "ac_bnfa"));
 
-    if(strcmp(type, "ac_bnfa") == 0)
-    {
-        CHECK(se_ac_bnfa);
-        mpse_api->init();
-        acf = mpse_api->ctor(snort_conf, nullptr, &s_agent);
-        CHECK(acf);
-    }
+    const MpseApi* mpse_api = (MpseApi*)se_ac_bnfa;
+    mpse_api->init();
+    mpse = mpse_api->ctor(snort_conf, nullptr, &s_agent);
+    CHECK(mpse);
 
-    return acf;
-}
-
-Mpse* MpseManager::get_search_engine(SnortConfig*, const MpseApi*, const MpseAgent*)
-{
-    return MpseManager::get_search_engine("ac_bnfa");
+    return mpse;
 }
 
 void MpseManager::delete_search_engine(Mpse*)
 {
-    mpse_api->dtor(acf);
+    const MpseApi* mpse_api = (MpseApi*)se_ac_bnfa;
+    mpse_api->dtor(mpse);
 }
 
 Mpse::Mpse(const char*) { }
@@ -171,14 +163,12 @@ static int Test_SearchStrFound(
 TEST_GROUP(search_tool_tests)
 {
     void setup()
-    {
-        CHECK(se_ac_bnfa);
-    }
+    { CHECK(se_ac_bnfa); }
 };
 
 TEST(search_tool_tests, ac_bnfa)
 {
-    SearchTool *stool = new SearchTool;
+    SearchTool *stool = new SearchTool("ac_bnfa");
     CHECK(stool->mpse);
 
     pattern_id = 1;

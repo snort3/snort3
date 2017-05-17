@@ -698,7 +698,7 @@ int HttpPatternMatchers::process_host_patterns(DetectorHTTPPatterns patterns)
 int HttpPatternMatchers::process_chp_list(CHPListElement* chplist)
 {
     for (size_t i = 0; i <= MAX_PATTERN_TYPE; i++)
-        chp_matchers[i] = new SearchTool("ac_full");
+        chp_matchers[i] = new SearchTool;
 
     for (CHPListElement* chpe = chplist; chpe; chpe = chpe->next)
         chp_matchers[chpe->chp_action.ptype]->add(chpe->chp_action.pattern,
@@ -739,7 +739,7 @@ static FieldPattern http_field_patterns[] =
 
 static SearchTool* process_http_field_patterns(FieldPattern* patternList, size_t patternListCount)
 {
-    SearchTool* patternMatcher = new SearchTool("ac_full");
+    SearchTool* patternMatcher = new SearchTool;
 
     for (size_t i=0; i < patternListCount; i++)
         patternMatcher->add( (char*)patternList[i].data, patternList[i].length,
@@ -1690,8 +1690,9 @@ bool HttpPatternMatchers::get_appid_from_url(char* host, char* url, char** versi
         APPINFO_FLAG_REFERRED)))
     {
         char* referer_start = referer;
+        size_t ref_len = strlen(referer);
 
-        char* referer_offset = (char*)service_strstr((uint8_t*)referer_start, URL_SCHEME_MAX_LEN,
+        char* referer_offset = (char*)service_strstr((uint8_t*)referer_start, ref_len,
             (uint8_t*)URL_SCHEME_END_PATTERN, sizeof(URL_SCHEME_END_PATTERN)-1);
 
         if ( !referer_offset )

@@ -184,7 +184,7 @@ static int dns_host_detector_create_matcher(DetectorDNSHostPattern* list)
     if (serviceDnsConfig.dns_host_host_matcher)
         delete serviceDnsConfig.dns_host_host_matcher;
 
-    serviceDnsConfig.dns_host_host_matcher = new SearchTool("ac_full");
+    serviceDnsConfig.dns_host_host_matcher = new SearchTool;
     if (!serviceDnsConfig.dns_host_host_matcher)
         return 0;
 

@@ -128,7 +128,7 @@ inline void Flow::clean()
 void Flow::reset(bool do_cleanup)
 {
     DetectionEngine::onload(this);
-    DetectionEngine::set_packet();
+    DetectionEngine::set_next_packet();
     DetectionEngine de;
 
     if ( session )

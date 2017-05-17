@@ -593,7 +593,7 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
     Profile profile(s5TcpFlushPerfStats);
 
     DetectionEngine::onload(session->flow);
-    Packet* pdu = DetectionEngine::set_packet();
+    Packet* pdu = DetectionEngine::set_next_packet();
 
     if ( !p )
     {
@@ -621,7 +621,7 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
             footprint = pdu->max_dsize;
 
         DetectionEngine::onload(session->flow);
-        pdu = DetectionEngine::set_packet();
+        pdu = DetectionEngine::set_next_packet();
 
         DAQ_PktHdr_t pkth;
         session->GetPacketHeaderFoo(&pkth, pkt_flags);

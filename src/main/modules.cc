@@ -331,7 +331,7 @@ bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("search_method") )
     {
-        if ( !fp->set_detect_search_method(v.get_string()) )
+        if ( !fp->set_search_method(v.get_string()) )
             return false;
     }
     else if ( v.is("search_optimize") )

@@ -49,8 +49,8 @@
 
 AppIdDiscovery::AppIdDiscovery()
 {
-    tcp_patterns = new SearchTool("ac_full");
-    udp_patterns = new SearchTool("ac_full");
+    tcp_patterns = new SearchTool;
+    udp_patterns = new SearchTool;
 }
 
 AppIdDiscovery::~AppIdDiscovery()

@@ -32,6 +32,7 @@
 #include <cassert>
 #include <cstring>
 
+#include "framework/mpse.h"
 #include "log/messages.h"
 #include "managers/mpse_manager.h"
 
@@ -51,7 +52,7 @@ FastPatternConfig::FastPatternConfig()
 FastPatternConfig::~FastPatternConfig()
 { }
 
-bool FastPatternConfig::set_detect_search_method(const char* method)
+bool FastPatternConfig::set_search_method(const char* method)
 {
     const MpseApi* api = MpseManager::get_search_api(method);
 
@@ -61,6 +62,14 @@ bool FastPatternConfig::set_detect_search_method(const char* method)
     search_api = api;
     trim = MpseManager::search_engine_trim(search_api);
     return true;
+}
+
+const char* FastPatternConfig::get_search_method()
+{
+    if ( !search_api )
+        return nullptr;
+
+    return search_api->base.name;
 }
 
 void FastPatternConfig::set_max_pattern_len(unsigned int max_len)

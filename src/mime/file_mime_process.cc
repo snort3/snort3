@@ -700,7 +700,7 @@ void MimeSession::init()
     const MimeToken* tmp;
 
     /* Header search */
-    mime_hdr_search_mpse = new SearchTool();
+    mime_hdr_search_mpse = new SearchTool;
     if (mime_hdr_search_mpse == nullptr)
     {
         // FIXIT-M make configurable or at least fall back to any

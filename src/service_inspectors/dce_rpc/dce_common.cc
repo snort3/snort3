@@ -364,7 +364,7 @@ static void dce2_fill_rpkt_info(Packet* rpkt, Packet* p)
 Packet* DCE2_GetRpkt(Packet* p,DCE2_RpktType rpkt_type,
     const uint8_t* data, uint32_t data_len)
 {
-    Packet* rpkt = DetectionEngine::set_packet();
+    Packet* rpkt = DetectionEngine::set_next_packet();
     dce2_fill_rpkt_info(rpkt, p);
     uint16_t data_overhead = 0;
 

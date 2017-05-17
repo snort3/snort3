@@ -203,7 +203,7 @@ void UserTracker::flush(Packet* p, unsigned flush_amt, uint32_t flags)
     StreamBuffer sb = { nullptr, 0 };
     trace_logf(stream_user, "flush[%d]\n", flush_amt);
     uint32_t rflags = flags & ~PKT_PDU_TAIL;
-    Packet* up = DetectionEngine::set_packet();
+    Packet* up = DetectionEngine::set_next_packet();
 
     while ( !seg_list.empty() and bytes_flushed < flush_amt )
     {

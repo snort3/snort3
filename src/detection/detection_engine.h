@@ -22,7 +22,7 @@
 #define DETECTION_ENGINE_H
 
 // DetectionEngine manages a detection context.  To detect a rebuilt
-// packet (PDU), first call set_packet().  If rebuild is successful,
+// packet (PDU), first call set_next_packet().  If rebuild is successful,
 // then instantiate a new DetectionEngine to detect that packet.
 
 #include "actions/actions.h"
@@ -52,7 +52,8 @@ public:
     static IpsContext* get_context();
 
     static Packet* get_current_packet();
-    static Packet* set_packet();
+    static Packet* set_next_packet();
+    static uint8_t* get_next_buffer(unsigned& max);
 
     static bool offloaded(Packet*);
     static bool offload(Packet*);

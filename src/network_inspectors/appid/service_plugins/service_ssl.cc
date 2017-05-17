@@ -238,7 +238,7 @@ static int ssl_detector_create_matcher(SearchTool** matcher, DetectorSSLCertPatt
     if (*matcher)
         delete *matcher;
 
-    if (!(*matcher = new SearchTool("ac_full")))
+    if (!(*matcher = new SearchTool))
         return 0;
 
     patternIndex = &size;

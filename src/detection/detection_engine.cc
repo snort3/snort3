@@ -110,7 +110,8 @@ Packet* DetectionEngine::get_encode_packet()
 
 // we need to stay in the current context until rebuild is successful
 // any events while rebuilding will be logged against the current packet
-Packet* DetectionEngine::set_packet()
+// however, rebuild is always in the next context, not current.
+Packet* DetectionEngine::set_next_packet()
 {
     const IpsContext* c = Snort::get_switcher()->get_next();
     Packet* p = c->packet;
@@ -139,6 +140,12 @@ uint8_t* DetectionEngine::get_buffer(unsigned& max)
 {
     max = IpsContext::buf_size;
     return Snort::get_switcher()->get_context()->buf;
+}
+
+uint8_t* DetectionEngine::get_next_buffer(unsigned& max)
+{
+    max = IpsContext::buf_size;
+    return Snort::get_switcher()->get_next()->buf;
 }
 
 DataBuffer& DetectionEngine::get_alt_buffer(Packet* p)

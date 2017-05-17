@@ -25,13 +25,13 @@
 class SO_PUBLIC SearchTool
 {
 public:
-    SearchTool();
-    SearchTool(const char* method);
+    SearchTool(const char* method = nullptr);
     ~SearchTool();
 
     void add(const char* pattern, unsigned len, int s_id, bool no_case = true);
-    void add(const uint8_t* pattern, unsigned len, int s_id, bool no_case = true);
     void add(const char* pattern, unsigned len, void* s_context, bool no_case = true);
+
+    void add(const uint8_t* pattern, unsigned len, int s_id, bool no_case = true);
     void add(const uint8_t* pattern, unsigned len, void* s_context, bool no_case = true);
 
     void prep();

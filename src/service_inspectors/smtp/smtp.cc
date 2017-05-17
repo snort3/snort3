@@ -255,7 +255,7 @@ static void SMTP_TermCmds(SMTP_PROTO_CONF* config)
 
 static void SMTP_CommandSearchInit(SMTP_PROTO_CONF* config)
 {
-    config->cmd_search_mpse = new SearchTool();
+    config->cmd_search_mpse = new SearchTool;
     config->cmd_search = (SMTPSearch*)snort_calloc(config->num_cmds, sizeof(*config->cmd_search));
 
     for ( const SMTPToken* tmp = config->cmds; tmp->name != NULL; tmp++ )
@@ -281,7 +281,7 @@ static void SMTP_ResponseSearchInit()
     if ( smtp_resp_search_mpse )
         return;
 
-    smtp_resp_search_mpse = new SearchTool();
+    smtp_resp_search_mpse = new SearchTool;
 
     for (tmp = &smtp_resps[0]; tmp->name != NULL; tmp++)
     {

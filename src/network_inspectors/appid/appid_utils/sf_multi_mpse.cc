@@ -184,7 +184,7 @@ static int createTreesRecusively(void* root)
     tPatternList* patternNode;
 
     /* set up the MPSE for url patterns */
-    if (!(patternMatcher = rootNode->patternTree = new SearchTool("ac_full")))
+    if (!(patternMatcher = rootNode->patternTree = new SearchTool))
         return -1;
 
     for (patternNode = rootNode->patternList;

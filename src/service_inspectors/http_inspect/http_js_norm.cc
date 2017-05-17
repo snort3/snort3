@@ -43,8 +43,8 @@ void HttpJsNorm::configure()
     if ( javascript_search_mpse || htmltype_search_mpse )
         return;
 
-    javascript_search_mpse = new SearchTool();
-    htmltype_search_mpse = new SearchTool();
+    javascript_search_mpse = new SearchTool;
+    htmltype_search_mpse = new SearchTool;
 
     javascript_search_mpse->add(script_start, script_start_length, JS_JAVASCRIPT);
     javascript_search_mpse->prep();

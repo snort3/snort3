@@ -37,7 +37,7 @@ const StreamBuffer StreamSplitter::reassemble(
     unsigned n, uint32_t flags, unsigned& copied)
 {
     unsigned max;
-    uint8_t* pdu_buf = DetectionEngine::get_buffer(max);
+    uint8_t* pdu_buf = DetectionEngine::get_next_buffer(max);
 
     assert(offset + n < max);
     memcpy(pdu_buf+offset, p, n);

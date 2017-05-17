@@ -25,8 +25,10 @@
 
 #include <list>
 
+#include "detection/fp_config.h"
 #include "framework/mpse.h"
 #include "log/messages.h"
+#include "main/snort_config.h"
 
 #include "module_manager.h"
 
@@ -95,6 +97,12 @@ Mpse* MpseManager::get_search_engine(
 
 Mpse* MpseManager::get_search_engine(const char* type)
 {
+    if ( !type and snort_conf->fast_pattern_config )
+        type = snort_conf->fast_pattern_config->get_search_method();
+
+    if ( !type )
+        type = "ac_bnfa";
+
     const MpseApi* api = get_search_api(type);
 
     if ( !api )
@@ -103,6 +111,10 @@ Mpse* MpseManager::get_search_engine(const char* type)
     Module* mod = ModuleManager::get_module(api->base.name);
     Mpse* eng = api->ctor(nullptr, mod, nullptr);
     eng->set_api(api);
+
+    if ( snort_conf->fast_pattern_config and snort_conf->fast_pattern_config->get_search_opt() )
+        eng->set_opt(1);
+
     return eng;
 }
 

@@ -139,7 +139,7 @@ static void POP_SearchInit()
     const POPToken* tmp;
     if ( pop_cmd_search_mpse )
         return;
-    pop_cmd_search_mpse = new SearchTool();
+    pop_cmd_search_mpse = new SearchTool;
 
     for (tmp = &pop_known_cmds[0]; tmp->name != NULL; tmp++)
     {
@@ -148,7 +148,7 @@ static void POP_SearchInit()
         pop_cmd_search_mpse->add(tmp->name, tmp->name_len, tmp->search_id);
     }
     pop_cmd_search_mpse->prep();
-    pop_resp_search_mpse = new SearchTool();
+    pop_resp_search_mpse = new SearchTool;
 
     for (tmp = &pop_resps[0]; tmp->name != NULL; tmp++)
     {

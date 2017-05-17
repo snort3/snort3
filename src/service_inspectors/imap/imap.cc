@@ -182,7 +182,7 @@ static void IMAP_SearchInit()
     const IMAPToken* tmp;
     if ( imap_cmd_search_mpse )
         return;
-    imap_cmd_search_mpse = new SearchTool();
+    imap_cmd_search_mpse = new SearchTool;
 
     for (tmp = &imap_known_cmds[0]; tmp->name != NULL; tmp++)
     {
@@ -191,7 +191,7 @@ static void IMAP_SearchInit()
         imap_cmd_search_mpse->add(tmp->name, tmp->name_len, tmp->search_id);
     }
     imap_cmd_search_mpse->prep();
-    imap_resp_search_mpse = new SearchTool();
+    imap_resp_search_mpse = new SearchTool;
 
     for (tmp = &imap_resps[0]; tmp->name != NULL; tmp++)
     {
