@@ -85,7 +85,6 @@ struct DetectorSipConfig
 };
 
 static THREAD_LOCAL DetectorSipConfig detector_sip_config;
-std::mutex SipEventHandler::db_sub_mutex;
 
 static void clean_sip_ua()
 {
@@ -156,9 +155,7 @@ SipUdpClientDetector::SipUdpClientDetector(ClientDiscovery* cdm)
         { APP_ID_SIP, APPINFO_FLAG_CLIENT_ADDITIONAL | APPINFO_FLAG_CLIENT_USER },
     };
 
-    sip_event_handler = &SipEventHandler::get_instance();
-    sip_event_handler->set_client(this);
-    sip_event_handler->subscribe();
+    SipEventHandler::get_instance().set_client(this);
     handler->register_detector(name, this, proto);
 }
 
@@ -351,8 +348,7 @@ void SipServiceDetector::createRtpFlow(AppIdSession* asd, const Packet* pkt, con
 
     // create an RTCP flow as well
     fp2 = AppIdSession::create_future_session(pkt, cliIp, cliPort + 1, srvIp, srvPort + 1, proto,
-        app_id,
-        APPID_EARLY_SESSION_FLAG_FW_RULE);
+        app_id, APPID_EARLY_SESSION_FLAG_FW_RULE);
     if ( fp2 )
     {
         fp2->client_app_id = asd->client_app_id;
@@ -470,6 +466,9 @@ int SipServiceDetector::validate(AppIdDiscoveryArgs& args)
     return APPID_INPROCESS;
 }
 
+THREAD_LOCAL SipUdpClientDetector* SipEventHandler::client = nullptr;
+THREAD_LOCAL SipServiceDetector* SipEventHandler::service = nullptr;
+
 void SipEventHandler::handle(DataEvent& event, Flow* flow)
 {
     AppIdSession* asd = nullptr;
@@ -515,9 +514,6 @@ void SipEventHandler::client_handler(SipEvent& sip_event, AppIdSession* asd)
         fd->owner = client;
         asd->set_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
     }
-
-    if ( fd->owner != client && fd->owner != client )
-        return;
 
     int direction = (sip_event.get_packet()->is_from_client()) ?
         APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;

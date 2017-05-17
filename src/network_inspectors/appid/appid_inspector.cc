@@ -121,6 +121,8 @@ bool AppIdInspector::configure(SnortConfig*)
     get_data_bus().subscribe(HTTP_RESPONSE_HEADER_EVENT_KEY, new HttpEventHandler(
         HttpEventHandler::RESPONSE_EVENT));
 
+    SipEventHandler::get_instance().subscribe();
+
     return active_config->init_appid();
 
     // FIXIT-M some of this stuff may be needed in some fashion...

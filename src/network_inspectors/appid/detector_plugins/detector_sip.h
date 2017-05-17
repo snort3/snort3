@@ -55,9 +55,6 @@ public:
     static int sipUaPatternAdd(AppId, const char* clientVersion, const char* uaPattern);
     static int sipServerPatternAdd(AppId, const char* clientVersion, const char* uaPattern);
     static int finalize_sip_ua();
-
-private:
-    SipEventHandler* sip_event_handler = nullptr;
 };
 
 class SipTcpClientDetector : public ClientDetector
@@ -89,17 +86,16 @@ public:
     ~SipEventHandler() { }
     static SipEventHandler& get_instance()
     {
-        static THREAD_LOCAL SipEventHandler* seh = nullptr;
-        if (!seh)
+        static SipEventHandler* seh = nullptr;
+        if(!seh)
             seh = new SipEventHandler;
         return *seh;
     }
 
-    void set_client(SipUdpClientDetector* cd) { client = cd; }
-    void set_service(SipServiceDetector* sd) { service = sd; }
+    void set_client(SipUdpClientDetector* cd) { SipEventHandler::client = cd; }
+    void set_service(SipServiceDetector* sd) { SipEventHandler::service = sd; }
     void subscribe()
     {
-        std::lock_guard<std::mutex> lock(SipEventHandler::db_sub_mutex);
         get_data_bus().subscribe(SIP_EVENT_TYPE_SIP_DIALOG_KEY, this);
     }
 
@@ -110,9 +106,8 @@ private:
     void client_handler(SipEvent&, AppIdSession*);
     void service_handler(SipEvent&, AppIdSession*);
 
-    SipUdpClientDetector* client = nullptr;
-    SipServiceDetector* service = nullptr;
-    static std::mutex db_sub_mutex;
+    static THREAD_LOCAL SipUdpClientDetector* client;
+    static THREAD_LOCAL SipServiceDetector* service;
 };
 #endif
 
