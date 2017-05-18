@@ -121,7 +121,8 @@ bool AppIdInspector::configure(SnortConfig*)
     get_data_bus().subscribe(HTTP_RESPONSE_HEADER_EVENT_KEY, new HttpEventHandler(
         HttpEventHandler::RESPONSE_EVENT));
 
-    SipEventHandler::get_instance().subscribe();
+    my_seh = SipEventHandler::create();
+    my_seh->subscribe();
 
     return active_config->init_appid();
 

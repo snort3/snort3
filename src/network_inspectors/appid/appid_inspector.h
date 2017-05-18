@@ -28,6 +28,7 @@ struct Packet;
 struct SnortConfig;
 class AppIdStatistics;
 class HttpPatternMatchers;
+class SipEventHandler;
 
 class AppIdInspector : public Inspector
 {
@@ -46,9 +47,16 @@ public:
     AppIdStatistics* get_stats_manager();
     int16_t add_appid_protocol_reference(const char* protocol);
 
+    SipEventHandler& get_sip_event_handler()
+    {
+        return *my_seh;
+    }
+
 private:
     const AppIdModuleConfig* config = nullptr;
     AppIdConfig* active_config = nullptr;
+    SipEventHandler* my_seh;
+
 };
 
 int sslAppGroupIdLookup(void*, const char*, const char*, AppId*, AppId*, AppId*);

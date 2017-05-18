@@ -84,12 +84,10 @@ class SipEventHandler : public DataHandler
 {
 public:
     ~SipEventHandler() { }
-    static SipEventHandler& get_instance()
+
+    static SipEventHandler* create()
     {
-        static SipEventHandler* seh = nullptr;
-        if(!seh)
-            seh = new SipEventHandler;
-        return *seh;
+        return new SipEventHandler;
     }
 
     void set_client(SipUdpClientDetector* cd) { SipEventHandler::client = cd; }

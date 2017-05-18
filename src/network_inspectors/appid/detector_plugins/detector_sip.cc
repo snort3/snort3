@@ -26,6 +26,7 @@
 #include "detector_sip.h"
 
 #include "appid_module.h"
+#include "appid_inspector.h"
 #include "app_info_table.h"
 #include "protocols/packet.h"
 
@@ -155,7 +156,7 @@ SipUdpClientDetector::SipUdpClientDetector(ClientDiscovery* cdm)
         { APP_ID_SIP, APPINFO_FLAG_CLIENT_ADDITIONAL | APPINFO_FLAG_CLIENT_USER },
     };
 
-    SipEventHandler::get_instance().set_client(this);
+    AppIdInspector::get_inspector()->get_sip_event_handler().set_client(this);
     handler->register_detector(name, this, proto);
 }
 
@@ -427,7 +428,7 @@ SipServiceDetector::SipServiceDetector(ServiceDiscovery* sd)
         { SIP_PORT, IpProtocol::TCP, false }
     };
 
-    SipEventHandler::get_instance().set_service(this);
+    AppIdInspector::get_inspector()->get_sip_event_handler().set_service(this);
     handler->register_detector(name, this, proto);
 }
 
