@@ -51,6 +51,7 @@ struct dot_node_state_t
         struct timeval ts;
         uint64_t context_num;
         uint32_t rebuild_flag;
+        uint16_t run_num;
         char result;
         char flowbit_failed;
     } last_check;

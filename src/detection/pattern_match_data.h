@@ -31,6 +31,7 @@ struct PmdLastCheck
     struct timeval ts;
     uint64_t context_num;
     uint32_t rebuild_flag;
+    uint16_t run_num;
 };
 
 struct PatternMatchData

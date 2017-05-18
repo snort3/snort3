@@ -382,6 +382,7 @@ static int rule_tree_match(
 
             last_check->ts.tv_sec = eval_data.p->pkth->ts.tv_sec;
             last_check->ts.tv_usec = eval_data.p->pkth->ts.tv_usec;
+            last_check->run_num = get_run_num();
             last_check->context_num = eval_data.p->context->context_num;
             last_check->rebuild_flag = (eval_data.p->packet_flags & PKT_REBUILT_STREAM);
         }

@@ -46,7 +46,7 @@ public:
     };
     Analyzer(unsigned id, const char* source);
 
-    void operator()(Swapper*);
+    void operator()(Swapper*, uint16_t run_num);
 
     State get_state() { return state; }
     const char* get_state_string();

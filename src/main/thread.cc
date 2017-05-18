@@ -34,25 +34,27 @@
 // works for now.
 //-------------------------------------------------------------------------
 
+static THREAD_LOCAL uint16_t run_num = 0;
 static THREAD_LOCAL unsigned instance_id = 0;
 static THREAD_LOCAL SThreadType thread_type = STHREAD_TYPE_MAIN;
 
+void set_run_num(uint16_t num)
+{ run_num = num; }
+
+uint16_t get_run_num()
+{ return run_num; }
+
 void set_instance_id(unsigned id)
-{
-    instance_id = id;
-}
+{ instance_id = id; }
+
+unsigned get_instance_id()
+{ return instance_id; }
 
 void set_thread_type(SThreadType type)
 { thread_type = type; }
 
-unsigned get_instance_id()
-{
-    return instance_id;
-}
-
 SThreadType get_thread_type()
 { return thread_type; }
-
 
 //-------------------------------------------------------------------------
 // union rules - breaks are mandatory and must be taken in daq thread

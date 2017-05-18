@@ -81,10 +81,11 @@ Analyzer::Analyzer(unsigned i, const char* s)
     set_state(State::NEW);
 }
 
-void Analyzer::operator()(Swapper* ps)
+void Analyzer::operator()(Swapper* ps, uint16_t run_num)
 {
     set_thread_type(STHREAD_TYPE_PACKET);
     set_instance_id(id);
+    set_run_num(run_num);
 
     ps->apply();
     delete ps;

@@ -46,6 +46,9 @@ enum SThreadType
 void set_instance_id(unsigned);
 void set_thread_type(SThreadType);
 
+void set_run_num(uint16_t);
+uint16_t get_run_num();
+
 SO_PUBLIC unsigned get_instance_id();
 SO_PUBLIC SThreadType get_thread_type();
 SO_PUBLIC inline bool is_packet_thread()

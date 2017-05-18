@@ -149,11 +149,12 @@ void Pig::prep(const char* source)
 
 void Pig::start()
 {
+    static uint16_t run_num = 0;
     assert(!athread);
     LogMessage("++ [%u] %s\n", idx, analyzer->get_source());
 
     Swapper* ps = new Swapper(snort_conf, SFAT_GetConfig());
-    athread = new std::thread(std::ref(*analyzer), ps);
+    athread = new std::thread(std::ref(*analyzer), ps, ++run_num);
 }
 
 void Pig::stop()
