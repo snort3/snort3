@@ -102,8 +102,8 @@ public:
     CountType timeouts = CountType::SUM; \
     CountType prunes = CountType::SUM
 
-// FIXIT-M The calculation for max sessions is incorrect since the sessions
-//         value is reset to zero after writing it out to the now file.
+// Do not change the semantics of max. Max = the highest seen during the perf interval.
+// To obtain max over the entire run, determine the maximum of reported max pegs.
 #define SESSION_STATS_ADD(stats) \
     { \
         stats.sessions++; \
