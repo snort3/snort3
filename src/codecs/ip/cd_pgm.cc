@@ -97,8 +97,9 @@ struct PgmHeader
 /* This PGM NAK function started off as an SO rule, sid 8351. */
 static inline int pgm_nak_detect(const RawData& raw)
 {
-    /* request must be bigger than 44 bytes to cause vuln */
-    if (raw.len <= sizeof(PgmHeader))
+    /* request must be bigger than 44 bytes to cause vuln,
+       and length must be divisible by 4 */
+    if (raw.len <= sizeof(PgmHeader) or (raw.len & 0x03) != 0)
     {
         return PGM_NAK_ERR;
     }
@@ -199,4 +200,3 @@ const BaseApi* cd_pgm[] =
     &pgm_api.base,
     nullptr
 };
-
