@@ -43,7 +43,8 @@ bool Debug::enabled(uint64_t flag)
         const char* b = getenv(DEBUG_BUILTIN);
         const char* p = getenv(DEBUG_PLUGIN);
 
-        mask = p ? (strtoul(p, nullptr, 0) << 32) : 0;
+        mask = (p ? strtoul(p, nullptr, 0) : 0);
+        mask <<= 32;
         mask |= (b ? strtoul(b, NULL, 0) : 0);
 
         init = true;

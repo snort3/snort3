@@ -261,7 +261,7 @@ void LogIpAddrs(TextLog* log, Packet* p)
         if (SnortConfig::obfuscate())
         {
             ObfuscateIpToText(p->ptrs.ip_api.get_src(),
-                snort_conf->homenet, snort_conf->obfuscation_net, src),
+                snort_conf->homenet, snort_conf->obfuscation_net, src);
 
             ObfuscateIpToText(p->ptrs.ip_api.get_dst(),
                 snort_conf->homenet, snort_conf->obfuscation_net, dst);

@@ -210,12 +210,12 @@ void DetectionEngine::idle()
 {
     while ( offloader->count() )
     {
-        trace_logf(detection, "%lu de::sleep\n", pc.total_from_daq);
+        trace_logf(detection, "%" PRIu64 " de::sleep\n", pc.total_from_daq);
         const struct timespec blip = { 0, 1 };
         nanosleep(&blip, nullptr);
         onload();
     }
-    trace_logf(detection, "%lu de::idle (r=%d)\n", pc.total_from_daq, offloader->count());
+    trace_logf(detection, "%" PRIu64 " de::idle (r=%d)\n", pc.total_from_daq, offloader->count());
     offloader->stop();
 }
 
@@ -224,7 +224,7 @@ void DetectionEngine::onload(Flow* flow)
     while ( flow->is_offloaded() )
     {
         const struct timespec blip = { 0, 1 };
-        trace_logf(detection, "%lu de::sleep\n", pc.total_from_daq);
+        trace_logf(detection, "%" PRIu64 " de::sleep\n", pc.total_from_daq);
         nanosleep(&blip, nullptr);
         onload();
     }
@@ -243,7 +243,7 @@ void DetectionEngine::onload()
     IpsContext* c = sw->get_context(id);
     assert(c);
 
-    trace_logf(detection, "%lu de::onload %u (r=%d)\n",
+    trace_logf(detection, "%" PRIu64 " de::onload %u (r=%d)\n",
         pc.total_from_daq, id, offloader->count());
 
     Packet* p = c->packet;
@@ -273,7 +273,7 @@ bool DetectionEngine::offload(Packet* p)
     assert(p->context == sw->get_context());
     unsigned id = sw->suspend();
 
-    trace_logf(detection, "%lu de::offload %u (r=%d)\n",
+    trace_logf(detection, "%" PRIu64 " de::offload %u (r=%d)\n",
         pc.total_from_daq, id, offloader->count());
 
     p->flow->set_offloaded();

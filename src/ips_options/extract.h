@@ -53,8 +53,8 @@ SO_PUBLIC int8_t AddVarNameToList(const char* name);
 // Called at the end of rule parsing
 SO_PUBLIC void ClearIpsOptionsVars();
 // Used during eval
-SO_PUBLIC int GetVarValueByIndex(uint32_t* dst, int8_t var_number);
-SO_PUBLIC int SetVarValueByIndex(uint32_t value, int8_t var_number);
+SO_PUBLIC int GetVarValueByIndex(uint32_t* dst, uint8_t var_number);
+SO_PUBLIC int SetVarValueByIndex(uint32_t value, uint8_t var_number);
 
 #endif
 

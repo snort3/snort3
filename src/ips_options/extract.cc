@@ -91,7 +91,7 @@ void ClearIpsOptionsVars()
 /* Setters & Getters for extracted values
    Note: extracted_values_cnt is correct only during parsing, and not during eval. It shouldn't be
   used at this point */
-int GetVarValueByIndex(uint32_t* dst, int8_t var_number)
+int GetVarValueByIndex(uint32_t* dst, uint8_t var_number)
 {
     if (dst == nullptr || var_number >= NUM_IPS_OPTIONS_VARS)
         return IPS_OPTIONS_NO_VAR;
@@ -101,7 +101,7 @@ int GetVarValueByIndex(uint32_t* dst, int8_t var_number)
     return 0;
 }
 
-int SetVarValueByIndex(uint32_t value, int8_t var_number)
+int SetVarValueByIndex(uint32_t value, uint8_t var_number)
 {
     if (var_number >= NUM_IPS_OPTIONS_VARS)
         return IPS_OPTIONS_NO_VAR;

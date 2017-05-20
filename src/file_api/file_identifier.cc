@@ -98,7 +98,7 @@ void* FileIdentifier::calloc_mem(size_t size)
 
 void FileIdentifier::set_node_state_shared(IdentifierNode* start)
 {
-    int i;
+    unsigned int i;
 
     if (!start)
         return;
@@ -118,7 +118,7 @@ void FileIdentifier::set_node_state_shared(IdentifierNode* start)
 /*Clone a trie*/
 IdentifierNode* FileIdentifier::clone_node(IdentifierNode* start)
 {
-    int index;
+    unsigned int index;
     IdentifierNode* node;
     if (!start)
         return nullptr;
@@ -218,7 +218,7 @@ bool FileIdentifier::update_next(IdentifierNode* start,IdentifierNode** next_ptr
         if ((start->offset < append->offset) && (next->offset > append->offset))
         {
             /*offset could have gap when non 0 offset is allowed */
-            int index;
+            unsigned int index;
             IdentifierNode* node = (IdentifierNode*)calloc_mem(sizeof(*node));
             merge_node.shared_node = next;
             merge_node.append_node = append;
@@ -255,7 +255,7 @@ bool FileIdentifier::update_next(IdentifierNode* start,IdentifierNode** next_ptr
  */
 void FileIdentifier::update_trie(IdentifierNode* start, IdentifierNode* append)
 {
-    int i;
+    unsigned int i;
 
     if ((!start )||(!append)||(start == append))
         return;

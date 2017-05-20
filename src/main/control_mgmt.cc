@@ -22,6 +22,8 @@
 
 #include "control_mgmt.h"
 
+#include <netinet/in.h>
+
 #include <algorithm>
 #include <cassert>
 

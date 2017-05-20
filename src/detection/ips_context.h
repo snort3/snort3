@@ -36,7 +36,7 @@
 class SO_PUBLIC IpsContextData
 {
 public:
-    virtual ~IpsContextData() { };
+    virtual ~IpsContextData() { }
 
     static unsigned get_ips_id();
     static unsigned get_max_id();

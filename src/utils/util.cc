@@ -24,6 +24,7 @@
 
 #include "util.h"
 
+#include <fcntl.h>
 #include <grp.h>
 #include <luajit.h>
 #include <netdb.h>
