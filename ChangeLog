@@ -1,3 +1,14 @@
+17/05/21 - build 234
+
+-- byte_math: port rule option from 2X and add feature documentation
+-- pgm: don't calculate checksum if header length is not divisible by 4
+-- appid: fix sip event handling, http pattern lists, thread locals
+-- build: fix issues with OpenSolaris and FreeBSD builds
+-- cmake: fix issues with libpcap and miscellaneous
+-- offload: refactor for initial (experimental) version of regex offload to other threads
+-- cmg: revamp hex buffer dump format with 16 or 20 bytes per line
+-- rules: reject positional parameters containing spaces
+
 17/05/11 - build 233
 
 -- packet manager: ensure ether type proto ids don't masquerade as ip proto ids
