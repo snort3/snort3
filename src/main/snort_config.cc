@@ -410,8 +410,10 @@ void SnortConfig::merge(SnortConfig* cmd_line)
         event_queue_config->process_all_events = 1;
 
 #ifdef SHELL
-    if ( cmd_line->remote_control )
-        remote_control = cmd_line->remote_control;
+    if ( cmd_line->remote_control_port )
+        remote_control_port = cmd_line->remote_control_port;
+    else if ( !cmd_line->remote_control_socket.empty() )
+        remote_control_socket = cmd_line->remote_control_socket;
 #endif
 
     // config file vars are stored differently

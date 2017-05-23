@@ -23,6 +23,7 @@
 #include "control_mgmt.h"
 
 #include <netinet/in.h>
+#include <sys/un.h>
 
 #include <algorithm>
 #include <cassert>
@@ -36,6 +37,10 @@
 using namespace std;
 
 static int listener = -1;
+static socklen_t sock_addr_size = 0;
+static struct sockaddr* sock_addr = nullptr;
+static struct sockaddr_in in_addr;
+static struct sockaddr_un unix_addr;
 static fd_set inputs;
 static std::vector<ControlConn*> controls;
 
@@ -104,12 +109,50 @@ void ControlMgmt::delete_controls()
 // FIXIT-M make these non-blocking
 // FIXIT-M bind to configured ip including INADDR_ANY
 // (default is loopback if enabled)
+
+int ControlMgmt::setup_socket_family()
+{
+    int family = AF_UNSPEC;
+    if ( snort_conf->remote_control_port )
+    {
+        memset(&in_addr, 0, sizeof(in_addr));
+
+        in_addr.sin_family = AF_INET;
+        in_addr.sin_addr.s_addr = htonl(0x7F000001);
+        in_addr.sin_port = htons(snort_conf->remote_control_port);
+        sock_addr = (struct sockaddr*)&in_addr;
+        sock_addr_size = sizeof(in_addr);
+        family = AF_INET;
+    }
+    else if ( !snort_conf->remote_control_socket.empty() )
+    {
+        std::string fullpath;
+        const char* path_sep = strrchr(snort_conf->remote_control_socket.c_str(), '/');
+        if (path_sep != nullptr)
+            fullpath = snort_conf->remote_control_socket;
+        else
+            get_instance_file(fullpath, snort_conf->remote_control_socket.c_str());
+
+        memset(&unix_addr, 0, sizeof(unix_addr));
+        unix_addr.sun_family = AF_UNIX;
+        strncpy(unix_addr.sun_path, fullpath.c_str(), sizeof(unix_addr.sun_path)-1);
+        sock_addr = (struct sockaddr*)&unix_addr;
+        sock_addr_size = sizeof(unix_addr);
+        unlink(fullpath.c_str());
+        family = AF_UNIX;
+    }
+
+    return family;
+}
+
 int ControlMgmt::socket_init()
 {
-    if ( !snort_conf->remote_control )
+    int sock_family = setup_socket_family();
+
+    if ( sock_family == AF_UNSPEC )
         return -1;
 
-    listener = socket(AF_INET, SOCK_STREAM, 0);
+    listener = socket(sock_family, SOCK_STREAM, 0);
 
     if (listener < 0)
         FatalError("socket failed: %s\n", get_error(errno));
@@ -118,14 +161,7 @@ int ControlMgmt::socket_init()
     int on = 1;
     setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 
-    struct sockaddr_in addr;
-    memset(&addr, 0, sizeof(addr));
-
-    addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = htonl(0x7F000001);
-    addr.sin_port = htons(snort_conf->remote_control);
-
-    if ( ::bind(listener, (struct sockaddr*)&addr, sizeof(addr)) < 0 )
+    if ( ::bind(listener, sock_addr, sock_addr_size) < 0 )
         FatalError("bind failed: %s\n", get_error(errno));
 
     // FIXIT-M configure max conns
@@ -149,10 +185,7 @@ int ControlMgmt::socket_term()
 
 int ControlMgmt::socket_conn()
 {
-    struct sockaddr_in addr;
-    socklen_t len = sizeof(addr);
-
-    int remote_control = accept(listener, (struct sockaddr*)&addr, &len);
+    int remote_control = accept(listener, sock_addr, &sock_addr_size);
 
     if ( remote_control < 0 )
         return -1;

@@ -251,6 +251,11 @@ static const Parameter s_params[] =
     { "--c2x", Parameter::PT_STRING, nullptr, nullptr,
       "output hex for given char (see also --x2c)" },
 
+#ifdef SHELL
+    { "--control-socket", Parameter::PT_STRING, nullptr, nullptr,
+      "<file> to create unix socket" },
+#endif
+
     { "--create-pidfile", Parameter::PT_IMPLIED, nullptr, nullptr,
       "create PID file, even when not in Daemon mode" },
 
@@ -576,7 +581,10 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
 #ifdef SHELL
     else if ( v.is("-j") )
-        sc->remote_control = v.get_long();
+    {
+        sc->remote_control_port = v.get_long();
+        sc->remote_control_socket.clear();
+    }
 #endif
 
     else if ( v.is("-k") )
@@ -664,6 +672,14 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--c2x") )
         c2x(v.get_string());
+
+#ifdef SHELL
+    else if ( v.is("--control-socket") )
+    {
+        sc->remote_control_socket = v.get_string();
+        sc->remote_control_port = 0;
+    }
+#endif
 
     else if ( v.is("--create-pidfile") )
         sc->set_create_pid_file(true);

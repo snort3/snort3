@@ -333,7 +333,8 @@ public:
     LatencyConfig* latency = nullptr;
     struct _IntelPmHandles* ipm_handles = nullptr;
 
-    unsigned remote_control = 0;
+    unsigned remote_control_port = 0;
+    std::string remote_control_socket;
 
     MemoryConfig* memory = nullptr;
     //------------------------------------------------------

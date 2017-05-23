@@ -47,6 +47,8 @@ public:
 
     static bool process_control_commands(int& current_fd, class Request*& current_request);
     static bool service_users(int& current_fd, class Request*& current_request);
+private:
+    static int setup_socket_family();
 };
 
 class ACShellCmd : public AnalyzerCommand
