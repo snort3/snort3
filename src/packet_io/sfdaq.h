@@ -50,6 +50,7 @@ public:
     bool start();
     bool was_started();
     bool stop();
+    void reload();
     void set_metacallback(DAQ_Meta_Func_t);
     int acquire(int max, DAQ_Analysis_Func_t);
     int inject(const DAQ_PktHdr_t*, int rev, const uint8_t* buf, uint32_t len);

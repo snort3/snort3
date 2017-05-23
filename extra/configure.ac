@@ -44,6 +44,7 @@ src/codecs/cd_token_ring/Makefile \
 src/codecs/cd_wlan/Makefile \
 src/daqs/Makefile \
 src/daqs/daq_socket/Makefile \
+src/daqs/daq_regtest/Makefile \
 src/inspectors/Makefile \
 src/inspectors/data_log/Makefile \
 src/inspectors/dpx/Makefile \

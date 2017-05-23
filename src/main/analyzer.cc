@@ -214,3 +214,10 @@ void Analyzer::resume()
                 get_state_string());
 }
 
+void Analyzer::reload_daq()
+{
+    if (daq_instance)
+        daq_instance->reload();
+    DebugMessage(DEBUG_ANALYZER, "Handled RELOAD command\n");
+}
+

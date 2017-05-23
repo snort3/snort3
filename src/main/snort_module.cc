@@ -65,6 +65,7 @@ static const Command snort_cmds[] =
     { "dump_stats", main_dump_stats, nullptr, "show summary statistics" },
     { "rotate_stats", main_rotate_stats, nullptr, "roll perfmonitor log files" },
     { "reload_config", main_reload_config, s_reload, "load new configuration" },
+    { "reload_daq", main_reload_daq, nullptr, "reload daq module" },
     { "reload_hosts", main_reload_hosts, s_reload, "load a new hosts table" },
 
     // FIXIT-M rewrite trough to permit updates on the fly

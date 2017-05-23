@@ -333,6 +333,16 @@ int main_reload_config(lua_State* L)
     return 0;
 }
 
+int main_reload_daq(lua_State* L)
+{
+    bool from_shell = ( L != nullptr );
+    current_request->respond(".. reloading daq module\n", from_shell);
+    broadcast(get_command(new ACDAQSwap(), from_shell));
+    proc_stats.daq_reloads++;
+
+    return 0;
+}
+
 int main_reload_hosts(lua_State* L)
 {
     if ( Swapper::get_reload_in_progress() )

@@ -62,6 +62,7 @@ public:
     void stop();
     void pause();
     void resume();
+    void reload_daq();
 
 private:
     void analyze();

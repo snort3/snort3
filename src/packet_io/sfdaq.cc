@@ -348,7 +348,7 @@ bool SFDAQInstance::configure(const SnortConfig* sc)
     }
 
     // ideally this would be configurable ...
-    if (!strcasecmp(type, "dump"))
+    if (!strcasecmp(type, "dump") or !strcasecmp(type, "regtest"))
         cfg.extra = (char*)daq_find_module("pcap");
 
     err = daq_initialize(daq_mod, &cfg, &daq_hand, buf, sizeof(buf));
@@ -365,6 +365,20 @@ bool SFDAQInstance::configure(const SnortConfig* sc)
     set_filter(sc->bpf_filter.c_str());
 
     return true;
+}
+
+void SFDAQInstance::reload(void)
+{
+    void* old_config = nullptr;
+    void* new_config = nullptr;
+    if (daq_mod && daq_hand)
+    {
+        if ( ( daq_hup_prep(daq_mod, daq_hand, &new_config) == DAQ_SUCCESS ) and
+            ( daq_hup_apply(daq_mod, daq_hand, new_config, &old_config) == DAQ_SUCCESS ) )
+        {
+            daq_hup_post(daq_mod, daq_hand, old_config);
+        }
+    }
 }
 
 void SFDAQInstance::abort()

@@ -217,6 +217,7 @@ const PegInfo proc_names[] =
     { "remote_commands", "total remote commands processed" },
     { "signals", "total signals processed" },
     { "conf_reloads", "number of times configuration was reloaded" },
+    { "daq_reloads", "number of times daq configuration was reloaded" },
     { "attribute_table_reloads", "number of times hosts table was reloaded" },
     { "attribute_table_hosts", "total number of hosts in table" },
     { nullptr, nullptr }

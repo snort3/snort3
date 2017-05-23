@@ -1,5 +1,6 @@
 SUBDIRS = \
-daq_socket
+daq_socket \
+daq_regtest
 
 AM_CPPFLAGS = @AM_CPPFLAGS@
 AM_CFLAGS = @AM_CFLAGS@

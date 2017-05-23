@@ -97,5 +97,13 @@ private:
     Swapper *ps;
 };
 
+class ACDAQSwap : public AnalyzerCommand
+{
+public:
+    void execute(Analyzer&) override;
+    const char* stringify() override { return "DAQ_SWAP"; }
+    ~ACDAQSwap();
+};
+
 #endif
 

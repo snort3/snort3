@@ -98,3 +98,13 @@ ACSwap::~ACSwap()
     LogMessage("== reload complete\n");
 }
 
+void ACDAQSwap::execute(Analyzer& analyzer)
+{
+    analyzer.reload_daq();
+}
+
+ACDAQSwap::~ACDAQSwap()
+{
+    LogMessage("== daq module reload complete\n");
+}
+
