@@ -142,11 +142,6 @@ int IpProtoOption::eval(Cursor&, Packet* p)
             return DETECTION_OPTION_MATCH;
 
         break;
-
-    default:
-        ErrorMessage("%s(%d) Invalid comparison flag.\n",
-            __FILE__, __LINE__);
-        break;
     }
 
     /* if the test isn't successful, this function *must* return 0 */
