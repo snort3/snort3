@@ -117,16 +117,16 @@ private:
 class SO_PUBLIC IpOptionIterator
 {
 public:
-    /* CONSTRUCTOR VALID AFTER DECODE()
-     * Some options in the provided header may not be valid.
-     * Provide the packet struct ensures only valid options
-     * will be returned
-     */
+    // CONSTRUCTOR VALID AFTER DECODE()
+    // Some options in the provided header may not be valid.
+    // Provide the packet struct ensures only valid options
+    // will be returned
     IpOptionIterator(const IP4Hdr* const, const Packet* const);
-    /* If you already know the validated option length (for instance,
-     * if you are in a decode() method), then call this constructor.
-     * You MUST validate the a;; ip_options within len before
-     * using this constructor*/
+
+    // If you already know the validated option length (for instance,
+    // if you are in a decode() method), then call this constructor.
+    // You MUST validate all ip_options within len before using this
+    // constructor
     IpOptionIterator(const IP4Hdr* const, const uint8_t valid_hdr_len);
     IpOptionIteratorIter begin() const;
     IpOptionIteratorIter end() const;
@@ -137,5 +137,5 @@ private:
 };
 } // namespace ip
 
-#endif /* PROTOCOLS_IP_OPTIONS_H */
+#endif
 

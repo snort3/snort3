@@ -1603,7 +1603,7 @@ bool HttpPatternMatchers::get_appid_from_url(char* host, char* url, char** versi
     char* temp_host = nullptr;
     tMlmpPattern patterns[3];
     bool payload_found = false;
-    static tMlmpTree* matcher = from_rtmp ? rtmp_host_url_matcher : host_url_matcher;;
+    tMlmpTree* matcher = from_rtmp ? rtmp_host_url_matcher : host_url_matcher;
 
     if (!host && !url)
         return 0;

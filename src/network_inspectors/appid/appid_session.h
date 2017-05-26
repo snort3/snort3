@@ -97,13 +97,24 @@ enum APPID_SESSION_DIRECTION
     APP_ID_APPID_SESSION_DIRECTION_MAX // Maximum value of a direction (must be last in the list)
 };
 
-struct AppIdFlowData
+class AppIdFlowData
 {
-    AppIdFlowData* next = nullptr;
-    unsigned fd_id = 0;
-    void* fd_data = nullptr;
-    AppIdFreeFCN fd_free = nullptr;
+public:
+    AppIdFlowData(void* data, unsigned id, AppIdFreeFCN fcn) :
+        fd_data(data), fd_id(id), fd_free(fcn)
+    { }
+
+    ~AppIdFlowData()
+    {
+        if ( fd_data && fd_free )
+            fd_free(fd_data);
+    }
+
+    void* fd_data;
+    unsigned fd_id;
+    AppIdFreeFCN fd_free;
 };
+typedef std::map<unsigned, AppIdFlowData*>::const_iterator AppIdFlowDataIter;
 
 struct CommonAppIdData
 {
@@ -162,7 +173,7 @@ public:
     AppIdConfig* config = nullptr;
     CommonAppIdData common;
     Flow* flow = nullptr;
-    AppIdFlowData* flow_data = nullptr;
+    std::map<unsigned, AppIdFlowData*> flow_data;
     AppInfoManager* app_info_mgr = nullptr;
 
     SfIp service_ip;
@@ -298,7 +309,6 @@ public:
     char session_logging_id[MAX_SESSION_LOGGING_ID_LEN];
     bool session_logging_enabled = false;
 
-    static void release_free_list_flow_data();
     void* get_flow_data(unsigned id);
     int add_flow_data(void* data, unsigned id, AppIdFreeFCN);
     int add_flow_data_id(uint16_t port, ServiceDetector*);
@@ -346,7 +356,6 @@ private:
     void create_session_logging_id(int direction, Packet*);
 
     static THREAD_LOCAL uint32_t appid_flow_data_id;
-    static THREAD_LOCAL AppIdFlowData* fd_free_list;
 };
 
 #endif

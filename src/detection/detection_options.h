@@ -69,7 +69,7 @@ struct dot_node_state_t
     // FIXIT-L perf profiler stuff should be factored of the node state struct
     void update(hr_duration delta, bool match)
     {
-        elapsed += delta;;
+        elapsed += delta;
 
         if ( match )
             elapsed_match += delta;

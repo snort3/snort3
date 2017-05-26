@@ -177,7 +177,6 @@ void AppIdInspector::tterm()
     free_length_app_cache();
 
     AppIdServiceState::clean();
-    AppIdSession::release_free_list_flow_data();
     LuaDetectorManager::terminate();
     AppIdDiscovery::release_plugins();
     delete HttpPatternMatchers::get_instance();

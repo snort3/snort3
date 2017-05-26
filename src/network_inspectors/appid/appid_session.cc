@@ -46,7 +46,6 @@
 #include "time/packet_time.h"
 
 unsigned AppIdSession::flow_id = 0;
-THREAD_LOCAL AppIdFlowData* AppIdSession::fd_free_list = nullptr;
 THREAD_LOCAL uint32_t AppIdSession::appid_flow_data_id = 0;
 
 const uint8_t* service_strstr(const uint8_t* haystack, unsigned haystack_len,
@@ -679,20 +678,6 @@ void AppIdSession::free_tls_session_data()
     }
 }
 
-void AppIdSession::free_flow_data()
-{
-    AppIdFlowData* tmp_fd;
-
-    while ((tmp_fd = flow_data))
-    {
-        flow_data = tmp_fd->next;
-        if (tmp_fd->fd_data && tmp_fd->fd_free)
-            tmp_fd->fd_free(tmp_fd->fd_data);
-
-        snort_free(tmp_fd);
-    }
-}
-
 void AppIdSession::delete_session_data()
 {
     snort_free(client_version);
@@ -719,100 +704,70 @@ void AppIdSession::delete_session_data()
     free_dns_session_data();
 }
 
-void AppIdSession::release_free_list_flow_data()
-{
-    AppIdFlowData* tmp_fd;
 
-    while ((tmp_fd = fd_free_list))
-    {
-        fd_free_list = fd_free_list->next;
-        snort_free(tmp_fd);
-    }
+int AppIdSession::add_flow_data(void* data, unsigned id, AppIdFreeFCN fcn)
+{
+    AppIdFlowDataIter it = flow_data.find(id);
+    if ( it != flow_data.end() )
+        return -1;
+
+    AppIdFlowData* fd = new AppIdFlowData(data, id, fcn);
+    flow_data[id] = fd;
+    return 0;
 }
 
 void* AppIdSession::get_flow_data(unsigned id)
 {
-    AppIdFlowData* tmp_fd;
-
-    for (tmp_fd = flow_data; tmp_fd && tmp_fd->fd_id != id; tmp_fd = tmp_fd->next)
-        ;
-    return tmp_fd ? tmp_fd->fd_data : nullptr;
+    AppIdFlowDataIter it = flow_data.find(id);
+    if ( it != flow_data.end() )
+        return it->second->fd_data;
+    else
+        return nullptr;
 }
 
 void* AppIdSession::remove_flow_data(unsigned id)
 {
-    AppIdFlowData** pfd;
-    AppIdFlowData* fd;
+    void* data = nullptr;
 
-    for (pfd = &flow_data; *pfd && (*pfd)->fd_id != id; pfd = &(*pfd)->next)
-        ;
-    if ((fd = *pfd))
+    AppIdFlowDataIter it = flow_data.find(id);
+    if ( it != flow_data.end() )
     {
-        *pfd = fd->next;
-        fd->next = fd_free_list;
-        fd_free_list = fd;
-        return fd->fd_data;
+        data = it->second->fd_data;
+        delete it->second;
+        flow_data.erase(it);
     }
-    return nullptr;
+
+    return data;
+}
+
+void AppIdSession::free_flow_data()
+{
+    for ( AppIdFlowDataIter it = flow_data.cbegin(); it != flow_data.cend(); ++it )
+        delete it->second;
+
+    flow_data.clear();
 }
 
 void AppIdSession::free_flow_data_by_id(unsigned id)
 {
-    AppIdFlowData** pfd;
-    AppIdFlowData* fd;
-
-    for (pfd = &flow_data; *pfd && (*pfd)->fd_id != id; pfd = &(*pfd)->next)
-        ;
-
-    if ((fd = *pfd))
+    AppIdFlowDataIter it = flow_data.find(id);
+    if ( it != flow_data.end() )
     {
-        *pfd = fd->next;
-        if (fd->fd_data && fd->fd_free)
-            fd->fd_free(fd->fd_data);
-        fd->next = fd_free_list;
-        fd_free_list = fd;
+        delete it->second;
+        flow_data.erase(it);
     }
 }
 
 void AppIdSession::free_flow_data_by_mask(unsigned mask)
 {
-    AppIdFlowData** pfd = &flow_data;
-    while (*pfd)
-    {
-        if ((*pfd)->fd_id & mask)
+    for ( AppIdFlowDataIter it = flow_data.cbegin(); it != flow_data.cend(); )
+        if ( !mask || ( it->second->fd_id & mask ) )
         {
-            AppIdFlowData* fd = *pfd;
-            *pfd = fd->next;
-            if (fd->fd_data && fd->fd_free)
-                fd->fd_free(fd->fd_data);
-            fd->next = fd_free_list;
-            fd_free_list = fd;
+            delete it->second;
+            it = flow_data.erase(it);
         }
         else
-        {
-            pfd = &(*pfd)->next;
-        }
-    }
-}
-
-int AppIdSession::add_flow_data(void* data, unsigned id, AppIdFreeFCN fcn)
-{
-    AppIdFlowData* tmp_fd;
-
-    if (fd_free_list)
-    {
-        tmp_fd = fd_free_list;
-        fd_free_list = tmp_fd->next;
-    }
-    else
-        tmp_fd = (AppIdFlowData*)snort_alloc(sizeof(AppIdFlowData));
-
-    tmp_fd->fd_id = id;
-    tmp_fd->fd_data = data;
-    tmp_fd->fd_free = fcn;
-    tmp_fd->next = flow_data;
-    flow_data = tmp_fd;
-    return 0;
+            ++it;
 }
 
 int AppIdSession::add_flow_data_id(uint16_t port, ServiceDetector* service)

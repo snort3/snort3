@@ -132,7 +132,7 @@ TnsClientDetector::TnsClientDetector(ClientDiscovery* cdm)
 
     tcp_patterns =
     {
-        { (const uint8_t*)TNS_BANNER, sizeof(TNS_BANNER)-1, -1, 0, APP_ID_ORACLE_DATABASE },
+        { (const uint8_t*)TNS_BANNER, TNS_BANNER_LEN, -1, 0, APP_ID_ORACLE_DATABASE },
     };
 
     appid_registry =
@@ -147,10 +147,17 @@ TnsClientDetector::~TnsClientDetector()
 {
 }
 
+static int reset_flow_data(ClientTNSData* fd)
+{
+    memset(fd, '\0', sizeof(ClientTNSData));
+    fd->state = TNS_STATE_MESSAGE_LEN;
+    return APPID_EINVALID;
+}
+
 #define TNS_MAX_INFO_SIZE    63
 int TnsClientDetector::validate(AppIdDiscoveryArgs& args)
 {
-    char username[TNS_MAX_INFO_SIZE+1];
+    char username[TNS_MAX_INFO_SIZE + 1];
     ClientTNSData* fd;
     uint16_t offset;
     int user_pos = 0;
@@ -183,12 +190,12 @@ int TnsClientDetector::validate(AppIdDiscoveryArgs& args)
                 {
                     if (offset == args.size - 1)
                         goto done;
-                    return APPID_EINVALID;
+                    return reset_flow_data(fd);
                 }
                 else if (fd->stringlen < 2)
-                    return APPID_EINVALID;
+                    return reset_flow_data(fd);
                 else if (fd->stringlen > args.size)
-                    return APPID_EINVALID;
+                    return reset_flow_data(fd);
                 else
                     fd->state = TNS_STATE_MESSAGE_CHECKSUM;
             }
@@ -196,7 +203,7 @@ int TnsClientDetector::validate(AppIdDiscoveryArgs& args)
 
         case TNS_STATE_MESSAGE_CHECKSUM:
             if (args.data[offset] != 0)
-                return APPID_EINVALID;
+                return reset_flow_data(fd);
             fd->pos++;
             if (fd->pos >= offsetof(ClientTNSMsg, msg))
                 fd->state = TNS_STATE_MESSAGE;
@@ -205,7 +212,7 @@ int TnsClientDetector::validate(AppIdDiscoveryArgs& args)
         case TNS_STATE_MESSAGE:
             fd->message = args.data[offset];
             if (fd->message < TNS_TYPE_CONNECT || fd->message > TNS_TYPE_MAX)
-                return APPID_EINVALID;
+                return reset_flow_data(fd);
             fd->pos++;
             fd->state = TNS_STATE_MESSAGE_RES;
             break;
@@ -235,14 +242,14 @@ int TnsClientDetector::validate(AppIdDiscoveryArgs& args)
                     {
                         if (offset == (args.size - 1))
                             goto done;
-                        return APPID_EINVALID;
+                        return reset_flow_data(fd);
                     }
                     fd->state = TNS_STATE_MESSAGE_DATA;
                     break;
                 case TNS_TYPE_ACCEPT:
                 case TNS_TYPE_REDIRECT:
                 default:
-                    return APPID_EINVALID;
+                    return reset_flow_data(fd);
                 }
             }
             break;
@@ -290,7 +297,7 @@ int TnsClientDetector::validate(AppIdDiscoveryArgs& args)
                 fd->offsetlen = ntohs(fd->l.len);
                 if (fd->offsetlen > args.size)
                 {
-                    return APPID_EINVALID;
+                    return reset_flow_data(fd);
                 }
                 fd->state = TNS_STATE_MESSAGE_CONNECT_PREDATA;
             }
@@ -320,7 +327,7 @@ int TnsClientDetector::validate(AppIdDiscoveryArgs& args)
             {
                 if (offset == (args.size - 1))
                     goto done;
-                return APPID_EINVALID;
+                return reset_flow_data(fd);
             }
             break;
         case TNS_STATE_COLLECT_USER:
@@ -334,7 +341,7 @@ int TnsClientDetector::validate(AppIdDiscoveryArgs& args)
             {
                 if (offset == (args.size - 1))
                     goto done;
-                return APPID_EINVALID;
+                return reset_flow_data(fd);
             }
             break;
         case TNS_STATE_MESSAGE_DATA:
@@ -343,7 +350,7 @@ int TnsClientDetector::validate(AppIdDiscoveryArgs& args)
             {
                 if (offset == (args.size - 1))
                     goto done;
-                return APPID_EINVALID;
+                return reset_flow_data(fd);
             }
             break;
         default:
