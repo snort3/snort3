@@ -169,9 +169,12 @@ void ArpSpoof::eval(Packet* p)
 {
     Profile profile(arpPerfStats);
 
-    // preconditions - what we registered for
+    // precondition - what we registered for
     assert(p->type() == PktType::ARP);
-    assert(p->proto_bits & PROTO_BIT__ETH);
+
+    // 802.11 not supported
+    if ((p->proto_bits & PROTO_BIT__ETH) == 0)
+        return;
 
     const arp::EtherARP* ah = layer::get_arp_layer(p);
     const eth::EtherHdr* eh = layer::get_eth_layer(p);
@@ -222,7 +225,7 @@ void ArpSpoof::eval(Packet* p)
     if ( ipme )
     {
         DebugFormat(DEBUG_INSPECTOR,
-            "MODNAME: LookupIPMacEntryByIP returned %p\n", (void*) ipme);
+            "MODNAME: LookupIPMacEntryByIP returned %p\n", (void*)ipme);
 
         auto cmp_ether_src = memcmp(eh->ether_src, ipme->mac_addr, 6);
         auto cmp_arp_sha = memcmp(ah->arp_sha, ipme->mac_addr, 6);
@@ -235,7 +238,6 @@ void ArpSpoof::eval(Packet* p)
             DebugMessage(DEBUG_INSPECTOR, "MODNAME: Attempted ARP cache overwrite attack\n");
         }
     }
-
     else
     {
         DebugMessage(DEBUG_INSPECTOR,
@@ -298,4 +300,3 @@ const BaseApi* nin_arp_spoof[] =
     &as_api.base,
     nullptr
 };
-
