@@ -275,13 +275,13 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_BARE_BYTE,                  "bare byte unicode encoding" },
     { EVENT_OBSOLETE_BASE_36,           "obsolete event--should not appear" },
     { EVENT_UTF_8,                      "UTF-8 encoding" },
-    { EVENT_IIS_UNICODE,                "IIS unicode codepoint encoding" },
+    { EVENT_CODE_POINT_IN_URI,          "unicode map code point encoding in URI" },
     { EVENT_MULTI_SLASH,                "multi_slash encoding" },
-    { EVENT_IIS_BACKSLASH,              "IIS backslash evasion" },
+    { EVENT_BACKSLASH_IN_URI,           "backslash used in URI path" },
     { EVENT_SELF_DIR_TRAV,              "self directory traversal" },
     { EVENT_DIR_TRAV,                   "directory traversal" },
     { EVENT_APACHE_WS,                  "apache whitespace (tab)" },
-    { EVENT_IIS_DELIMITER,              "non-RFC http delimiter" },
+    { EVENT_LF_WITHOUT_CR,              "HTTP header line terminated by LF without a CR" },
     { EVENT_NON_RFC_CHAR,               "non-RFC defined char" },
     { EVENT_OVERSIZE_DIR,               "oversize request-uri directory" },
     { EVENT_LARGE_CHUNK,                "oversize chunk encoding" },
@@ -294,7 +294,7 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_INVALID_TRUEIP,             "invalid IP in true-client-IP/XFF header" },
     { EVENT_MULTIPLE_HOST_HDRS,         "multiple host hdrs detected" },
     { EVENT_LONG_HOSTNAME,              "hostname exceeds 255 characters" },
-    { EVENT_EXCEEDS_SPACES,             "header parsing space saturation" },
+    { EVENT_EXCEEDS_SPACES,             "too much whitespace in header (not implemented yet)" },
     { EVENT_CONSECUTIVE_SMALL_CHUNKS,   "client consecutive small chunk sizes" },
     { EVENT_UNBOUNDED_POST,             "post w/o content-length or chunks" },
     { EVENT_MULTIPLE_TRUEIP_IN_SESSION, "multiple true ips in a session" },
@@ -350,9 +350,10 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_STACKED_ENCODINGS,          "multiple layers of compression encodings applied" },
     { EVENT_RESPONSE_WO_REQUEST,        "server response before client request" },
     { EVENT_PDF_SWF_OVERRUN,            "PDF/SWF decompression of server response too big" },
-    { EVENT_BAD_CHAR_IN_HEADER_NAME,    "Nonprinting character in HTTP message header name" },
-    { EVENT_BAD_CONTENT_LENGTH,         "Bad Content-Length value in HTTP header" },
+    { EVENT_BAD_CHAR_IN_HEADER_NAME,    "nonprinting character in HTTP message header name" },
+    { EVENT_BAD_CONTENT_LENGTH,         "bad Content-Length value in HTTP header" },
     { EVENT_HEADER_WRAPPING,            "HTTP header line wrapped" },
+    { EVENT_CR_WITHOUT_LF,              "HTTP header line terminated by CR without a LF" },
     { 0, nullptr }
 };
 
@@ -462,12 +463,93 @@ const bool HttpEnums::is_sp_tab[256] =
     false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
 };
 
+const bool HttpEnums::is_cr_lf[256] =
+{
+    false, false, false, false, false, false, false, false, false, false,  true, false, false,  true, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
+};
+
+const bool HttpEnums::is_sp_tab_lf[256] =
+{
+    false, false, false, false, false, false, false, false, false,  true,  true, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+     true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
+};
+
 const bool HttpEnums::is_sp_tab_cr_lf[256] =
 {
     false, false, false, false, false, false, false, false, false,  true,  true, false, false,  true, false, false,
     false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
 
      true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
+};
+
+const bool HttpEnums::is_sp_tab_quote_dquote[256] =
+{
+    false, false, false, false, false, false, false, false, false,  true, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+     true, false,  true, false, false, false, false,  true, false, false, false, false, false, false, false, false,
     false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
 
     false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,

@@ -34,6 +34,7 @@
 int32_t str_to_code(const uint8_t*, const int32_t, const StrCode []) { return 0; }
 int32_t substr_to_code(const uint8_t*, const int32_t, const StrCode []) { return 0; }
 const bool HttpEnums::is_sp_tab[256] {};
+const bool HttpEnums::is_sp_tab_quote_dquote[256] {};
 long HttpTestManager::print_amount {};
 bool HttpTestManager::print_hex {};
 

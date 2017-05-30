@@ -138,7 +138,7 @@ enum Infraction
     INF_UNKNOWN_VERSION,
     INF_BAD_VERSION,
     INF_ZERO_NINE_NOT_FIRST,
-    INF_URI_IIS_UNICODE,
+    INF_CODE_POINT_IN_URI,
     INF_BAD_CONTENT_LENGTH,
     INF_PIPELINE_OVERFLOW,
     INF_BAD_CHUNK_SIZE,
@@ -154,7 +154,7 @@ enum Infraction
     INF_URI_BAD_CHAR,
     INF_URI_8BIT_CHAR,
     INF_URI_MULTISLASH,
-    INF_URI_BACKSLASH,
+    INF_BACKSLASH_IN_URI,
     INF_URI_SLASH_DOT,
     INF_URI_SLASH_DOT_DOT,
     INF_URI_ROOT_TRAV,
@@ -170,7 +170,7 @@ enum Infraction
     INF_STATUS_TAB,
     INF_URI_SPACE,
     INF_TOO_LONG_HEADER,
-    INF_LONE_CR,
+    INF_CR_WITHOUT_LF,
     INF_CHUNK_ZEROS,
     INF_CHUNK_OPTIONS,
     INF_CHUNK_BAD_CHAR,
@@ -240,13 +240,13 @@ enum EventSid
     EVENT_BARE_BYTE,
     EVENT_OBSOLETE_BASE_36,       // Previously used, do not reuse this number
     EVENT_UTF_8,
-    EVENT_IIS_UNICODE,
+    EVENT_CODE_POINT_IN_URI,
     EVENT_MULTI_SLASH,
-    EVENT_IIS_BACKSLASH,
+    EVENT_BACKSLASH_IN_URI,
     EVENT_SELF_DIR_TRAV,
     EVENT_DIR_TRAV,
     EVENT_APACHE_WS,
-    EVENT_IIS_DELIMITER,
+    EVENT_LF_WITHOUT_CR,
     EVENT_NON_RFC_CHAR,
     EVENT_OVERSIZE_DIR,
     EVENT_LARGE_CHUNK,
@@ -317,13 +317,17 @@ enum EventSid
     EVENT_BAD_CHAR_IN_HEADER_NAME,
     EVENT_BAD_CONTENT_LENGTH,
     EVENT_HEADER_WRAPPING,
+    EVENT_CR_WITHOUT_LF,
     EVENT__MAX_VALUE
 };
 
 extern const int8_t as_hex[256];
 extern const bool token_char[256];
 extern const bool is_sp_tab[256];
+extern const bool is_cr_lf[256];
+extern const bool is_sp_tab_lf[256];
 extern const bool is_sp_tab_cr_lf[256];
+extern const bool is_sp_tab_quote_dquote[256];
 extern const bool is_print_char[256]; // printable includes SP, tab, CR, LF
 } // end namespace HttpEnums
 

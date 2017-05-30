@@ -85,14 +85,21 @@ ScanResult HttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
         if (buffer[k] == '\n')
         {
             num_crlf++;
+            if (num_crlf == 1)
+            {
+                // There was no CR before this
+                infractions += INF_LF_WITHOUT_CR;
+                events.create_event(EVENT_LF_WITHOUT_CR);
+            }
             num_flush = k+1;
             return SCAN_FOUND;
         }
         if (num_crlf == 1)
         {   // CR not followed by LF
-            infractions += INF_LONE_CR;
-            events.generate_misformatted_http(buffer, length);
-            return SCAN_ABORT;
+            infractions += INF_CR_WITHOUT_LF;
+            events.create_event(EVENT_CR_WITHOUT_LF);
+            num_flush = k;                      // current octet not flushed
+            return SCAN_FOUND;
         }
         if (buffer[k] == '\r')
         {
@@ -140,47 +147,91 @@ ScanResult HttpHeaderCutter::cut(const uint8_t* buffer, uint32_t length,
     // Header separators: leading \r\n, leading \n, nonleading \r\n\r\n, nonleading \n\r\n,
     // nonleading \r\n\n, and nonleading \n\n. The separator itself becomes num_excess which is
     // discarded during reassemble().
+    // \r without \n can (improperly) end the start line or a header line, but not the entire
+    // header block.
     for (uint32_t k = 0; k < length; k++)
     {
-        if (buffer[k] == '\n')
+        switch (state)
         {
-            num_crlf++;
-            if ((first_lf == 0) && (num_crlf < octets_seen + k + 1))
+        case ZERO:
+            if (buffer[k] == '\r')
             {
-                first_lf = num_crlf;
-                // This count is here so the inspector can quickly allocate memory to store the
-                // header lines. It doesn't allow for line wrapping because that is not important
-                // for this purpose.
-                num_head_lines++;
+                state = HALF;
+                num_crlf++;
             }
-            else
+            else if (buffer[k] == '\n')
             {
-                // Alert on \n not preceded by \r. Correct cases are \r\n\r\n and \r\n.
-                if (!((num_crlf == 4) || ((num_crlf == 2) && (first_lf == 0))))
-                {
-                    infractions += INF_LF_WITHOUT_CR;
-                    events.create_event(EVENT_IIS_DELIMITER);
-                }
-                num_flush = k + 1;
-                return SCAN_FOUND;
+                infractions += INF_LF_WITHOUT_CR;
+                events.create_event(EVENT_LF_WITHOUT_CR);
+                state = ONE;
+                num_crlf++;
             }
-        }
-        else if (buffer[k] == '\r')
-        {
-            if (num_crlf == first_lf)
+            break;
+        case HALF:
+            if (buffer[k] == '\r')
             {
+                infractions += INF_CR_WITHOUT_LF;
+                events.create_event(EVENT_CR_WITHOUT_LF);
+                state = THREEHALF;
+                num_crlf++;
+            }
+            else if (buffer[k] == '\n')
+            {
+                state = ONE;
                 num_crlf++;
             }
             else
             {
-                num_crlf = 1;
-                first_lf = 0;
+                infractions += INF_CR_WITHOUT_LF;
+                events.create_event(EVENT_CR_WITHOUT_LF);
+                state = ZERO;
+                num_crlf = 0;
+                num_head_lines++;
             }
-        }
-        else
-        {
-            num_crlf = 0;
-            first_lf = 0;
+            break;
+        case ONE:
+            if (buffer[k] == '\r')
+            {
+                state = THREEHALF;
+                num_crlf++;
+            }
+            else if (buffer[k] == '\n')
+            {
+                infractions += INF_LF_WITHOUT_CR;
+                events.create_event(EVENT_LF_WITHOUT_CR);
+                num_crlf++;
+                num_flush = k + 1;
+                return SCAN_FOUND;
+            }
+            else
+            {
+                state = ZERO;
+                num_crlf = 0;
+                num_head_lines++;
+            }
+            break;
+        case THREEHALF:
+            if (buffer[k] == '\r')
+            {
+                infractions += INF_CR_WITHOUT_LF;
+                events.create_event(EVENT_CR_WITHOUT_LF);
+                num_crlf++;
+            }
+            else if (buffer[k] == '\n')
+            {
+                num_crlf++;
+                num_flush = k + 1;
+                return SCAN_FOUND;
+            }
+            else
+            {
+                infractions += INF_CR_WITHOUT_LF;
+                events.create_event(EVENT_CR_WITHOUT_LF);
+                state = ZERO;
+                num_crlf = 0;
+                num_head_lines++;
+            }
+            break;
         }
     }
     octets_seen += length;

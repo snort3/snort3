@@ -39,7 +39,7 @@ public:
         uint32_t flow_max) = 0;
     uint32_t get_num_flush() const { return num_flush; }
     uint32_t get_octets_seen() const { return octets_seen; }
-    virtual uint32_t get_num_excess() const { return 0; }
+    uint32_t get_num_excess() const { return num_crlf; }
     virtual uint32_t get_num_head_lines() const { return 0; }
     virtual bool get_is_broken_chunk() const { return false; }
     virtual uint32_t get_num_good_chunks() const { return 0; }
@@ -56,7 +56,6 @@ class HttpStartCutter : public HttpCutter
 public:
     HttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length,
         HttpInfractions& infractions, HttpEventGen& events, uint32_t, uint32_t) override;
-    uint32_t get_num_excess() const override { return (num_flush > 0) ? num_crlf : 0; }
 
 protected:
     enum ValidationResult { V_GOOD, V_BAD, V_TBD };
@@ -86,11 +85,11 @@ class HttpHeaderCutter : public HttpCutter
 public:
     HttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length,
         HttpInfractions& infractions, HttpEventGen& events, uint32_t, uint32_t) override;
-    uint32_t get_num_excess() const override { return (num_flush > 0) ? num_crlf : 0; }
     uint32_t get_num_head_lines() const override { return num_head_lines; }
 
 private:
-    unsigned first_lf = 0;
+    enum LineEndState { ZERO, HALF, ONE, THREEHALF };
+    LineEndState state = ONE;
     int32_t num_head_lines = 0;
 };
 

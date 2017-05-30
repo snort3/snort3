@@ -87,7 +87,7 @@ private:
     static const int MAX_HEADER_LENGTH = 4096; // Based on max cookie size of some browsers
 
     void parse_header_block();
-    uint32_t find_header_end(const uint8_t* buffer, int32_t length, int& num_seps);
+    int32_t find_next_header(const uint8_t* buffer, int32_t length, int32_t& num_seps);
     void parse_header_lines();
     void create_norm_head_list();
     void derive_header_name_id(int index);

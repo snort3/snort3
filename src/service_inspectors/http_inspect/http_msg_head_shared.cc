@@ -82,24 +82,23 @@ void HttpMsgHeadShared::parse_header_block()
 {
     int32_t bytes_used = 0;
     num_headers = 0;
-    int num_seps;
+    int32_t num_seps;
     // session_data->num_head_lines is computed without consideration of wrapping and may overstate
     // actual number of headers. Rely on num_headers which is calculated correctly.
     header_line = new Field[session_data->num_head_lines[source_id]];
     while (bytes_used < msg_text.length())
     {
         assert(num_headers < session_data->num_head_lines[source_id]);
-        header_line[num_headers].set(
-            find_header_end(msg_text.start() + bytes_used, msg_text.length() - bytes_used,
-                num_seps),
-            msg_text.start() + bytes_used);
+        const int32_t header_length = find_next_header(msg_text.start() + bytes_used,
+            msg_text.length() - bytes_used, num_seps);
+        header_line[num_headers].set(header_length, msg_text.start() + bytes_used + num_seps);
         if (header_line[num_headers].length() > MAX_HEADER_LENGTH)
         {
             infractions += INF_TOO_LONG_HEADER;
             events.create_event(EVENT_LONG_HDR);
         }
-        bytes_used += header_line[num_headers++].length() + num_seps;
-        if (num_headers >= MAX_HEADERS)
+        bytes_used += num_seps + header_line[num_headers].length();
+        if (++num_headers >= MAX_HEADERS)
         {
             break;
         }
@@ -111,34 +110,49 @@ void HttpMsgHeadShared::parse_header_block()
     }
 }
 
-// Return the number of octets before the CRLF that ends a header. CRLF does not count when
-// immediately followed by <SP> or <LF>. These whitespace characters at the beginning of the next
-// line indicate that the previous header has wrapped and is continuing on the next line.
+// The header section produced by the splitter is of the form:
 //
-// The final header in the block will not be terminated by CRLF (splitter design) but will
-// terminate at the end of the buffer. length is returned.
+// [CRs]<header 1><separators><header 2><separators> ... <header N>
 //
-// Bare LF without CR is accepted as the terminator.
+// where separators are CRs or LFs. The CRs at the beginning are a pathological case that will
+// virtually never happen. There are no separators after the final header.
 //
-// FIXIT-M Need to generate EVENT_EXCEEDS_SPACES for excessive white space within a header
+// This function splits out the next header from the header block. The return value is the length
+// of the header without any separators. num_seps is the number of separators to skip over before
+// the header starts.
+//
+// Wrapping is fully supported by http_inspect. Wrapping is deprecated by the RFC and some major
+// browsers don't support it. Wrapped headers are very dangerous and should be regarded with
+// extreme suspicion.
+//
+// Except for wrapping, header lines may end with CRLF (correct), LF (incorrect but widely
+// tolerated), and CR without LF (very incorrect). The latter is widely supported but some major
+// browsers don't support it*. Bare CR separators are very dangerous and should be regarded with
+// extreme suspicion. The splitter detects them which is why there is no event generated here.
+// Bare LFs are probably not a big deal.
+//
+// * Not necessarily the same ones that don't support wrapping.
 
-uint32_t HttpMsgHeadShared::find_header_end(const uint8_t* buffer, int32_t length, int& num_seps)
+// FIXIT-M Need to generate EVENT_EXCEEDS_SPACES for excessive white space within a header.
+
+int32_t HttpMsgHeadShared::find_next_header(const uint8_t* buffer, int32_t length,
+    int32_t& num_seps)
 {
-    // k=1 because the splitter would not give us a header consisting solely of LF.
-    for (int32_t k=1; k < length; k++)
+    int32_t k = 0;
+    // Splitter guarantees buffer will not end on CR or LF.
+    for (; is_cr_lf[buffer[k]]; k++);
+    num_seps = k;
+
+    for (k++; k < length; k++)
     {
-        if (buffer[k] == '\n')
+        if (is_cr_lf[buffer[k]])
         {
             // Check for wrapping
-            if ((k+1 == length) || !is_sp_tab[buffer[k+1]])
+            if (((buffer[k] == '\r') && (buffer[k+1] == '\n') && !is_sp_tab[buffer[k+2]]) ||
+                ((buffer[k] == '\n') && !is_sp_tab[buffer[k+1]]) ||
+                ((buffer[k] == '\r') && !is_sp_tab_lf[buffer[k+1]]))
             {
-                num_seps = (buffer[k-1] == '\r') ? 2 : 1;
-                if (num_seps == 1)
-                {
-                    infractions += INF_LF_WITHOUT_CR;
-                    events.create_event(EVENT_IIS_DELIMITER);
-                }
-                return k + 1 - num_seps;
+                return k - num_seps;
             }
             else
             {
@@ -147,8 +161,7 @@ uint32_t HttpMsgHeadShared::find_header_end(const uint8_t* buffer, int32_t lengt
             }
         }
     }
-    num_seps = 0;
-    return length;
+    return length - num_seps;
 }
 
 // Divide header field lines into field name and field value

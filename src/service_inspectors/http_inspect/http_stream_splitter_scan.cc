@@ -255,8 +255,9 @@ bool HttpStreamSplitter::finish(Flow* flow)
         }
 
         uint32_t not_used;
-        prepare_flush(session_data, &not_used, session_data->type_expected[source_id], 0, 0,
-            session_data->cutter[source_id]->get_num_head_lines() + 1,
+        prepare_flush(session_data, &not_used, session_data->type_expected[source_id], 0,
+            session_data->cutter[source_id]->get_num_excess(),
+            session_data->cutter[source_id]->get_num_head_lines(),
             session_data->cutter[source_id]->get_is_broken_chunk(),
             session_data->cutter[source_id]->get_num_good_chunks(),
             session_data->cutter[source_id]->get_octets_seen(),

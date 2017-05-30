@@ -27,8 +27,8 @@
 
 using namespace HttpEnums;
 
-// This derivation removes embedded CRLFs (wrapping), omits leading and trailing linear white
-// space, and replaces internal strings of <SP> and <LF> with a single <SP>
+// This derivation removes leading and trailing linear white space and replaces internal strings of
+// linear whitespace with a single <SP>
 int32_t HeaderNormalizer::derive_header_content(const uint8_t* value, int32_t length,
     uint8_t* buffer)
 {
@@ -36,9 +36,7 @@ int32_t HeaderNormalizer::derive_header_content(const uint8_t* value, int32_t le
     bool last_white = true;
     for (int32_t k=0; k < length; k++)
     {
-        if ((value[k] == '\r') && (k+1 < length) && (value[k+1] == '\n'))
-            k++;
-        else if ((value[k] != ' ') && (value[k] != '\t'))
+        if (!is_sp_tab_cr_lf[value[k]])
         {
             last_white = false;
             buffer[out_length++] = value[k];

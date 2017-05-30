@@ -326,8 +326,8 @@ uint8_t UriNormalizer::reduce_to_eight_bits(uint16_t value,
         return 0xFF;
     if (uri_param.unicode_map[value] != 0xFF)
     {
-        infractions += INF_URI_IIS_UNICODE;
-        events.create_event(EVENT_IIS_UNICODE);
+        infractions += INF_CODE_POINT_IN_URI;
+        events.create_event(EVENT_CODE_POINT_IN_URI);
     }
     return uri_param.unicode_map[value];
 }
@@ -361,8 +361,8 @@ void UriNormalizer::norm_substitute(uint8_t* buf, int32_t length,
             if (buf[k] == '\\')
             {
                 buf[k] = '/';
-                infractions += INF_URI_BACKSLASH;
-                events.create_event(EVENT_IIS_BACKSLASH);
+                infractions += INF_BACKSLASH_IN_URI;
+                events.create_event(EVENT_BACKSLASH_IN_URI);
             }
         }
     }

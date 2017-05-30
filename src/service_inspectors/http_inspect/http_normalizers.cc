@@ -55,16 +55,15 @@ int32_t norm_remove_lws(const uint8_t* in_buf, int32_t in_length, uint8_t* out_b
     }
     return length;
 }
-//FIXIT - norm_remove_lws and norm_remove_quotes_lws could be combined into one function
+
 int32_t norm_remove_quotes_lws(const uint8_t* in_buf, int32_t in_length, uint8_t* out_buf,
     HttpInfractions&, HttpEventGen&)
 {
     int32_t length = 0;
     for (int32_t k=0; k < in_length; k++)
     {
-        if (in_buf[k] == '\'' || in_buf[k] == '\"' || is_sp_tab[in_buf[k]])
-            continue;
-        out_buf[length++] = in_buf[k];
+        if (!is_sp_tab_quote_dquote[in_buf[k]])
+            out_buf[length++] = in_buf[k];
     }
     return length;
 }
