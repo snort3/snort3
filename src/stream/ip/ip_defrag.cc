@@ -1122,6 +1122,15 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
     /* Reset the offset to handle the weird Solaris case */
     if (firstLastOk == FRAG_LAST_OFFSET_ADJUST)
         frag_offset = (uint16_t)ft->calculated_size;
+	
+    if (IP_MAXPACKET - frag_offset < fragLength)
+    {
+        trace_log(stream_ip, "[..] Oversize frag!\n");
+        EventAnomBadsizeLg(fe);
+        ft->frag_flags |= FRAG_BAD;
+        return FRAG_INSERT_ANOMALY;
+    }
+
     frag_end = frag_offset + fragLength;
 
     /*
@@ -1198,20 +1207,6 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
         return FRAG_INSERT_ANOMALY;
     }
 
-    if (ft->calculated_size > IP_MAXPACKET)
-    {
-        /*
-         * oversize pkt...
-         */
-        trace_log(stream_ip,
-            "[..] Oversize frag!\n");
-
-        EventAnomBadsizeLg(fe);
-
-        ft->frag_flags |= FRAG_BAD;
-
-        return FRAG_INSERT_ANOMALY;
-    }
 
     /*
      * This may alert on bad options, but we still want to
