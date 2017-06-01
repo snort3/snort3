@@ -1,7 +1,7 @@
 # Snort++
 
 The Snort++ project has been hard at work for a while now and we have
-released the third alpha of the next generation Snort IPS (Intrusion
+released the fourth alpha of the next generation Snort IPS (Intrusion
 Prevention System).  This file will show you what Snort++ has to offer and
 guide you through the steps from download to demo.  If you are unfamiliar
 with Snort you should take a look at the Snort documentation first. We will
@@ -25,8 +25,8 @@ below:
 
     Project = Snort++
     Binary = snort
-    Version = 3.0.0-a3 build 183
-    Base = 2.9.7 build 262
+    Version = 3.0.0-a4 build 235
+    Base = 2.9.8 build 383
 
 Here are some key features of Snort++:
 
@@ -40,23 +40,12 @@ Here are some key features of Snort++:
 * Provide better cross platform support
 * Facilitate component testing
 
-The following Snort 2.X features are not yet supported but are planned to
-be supported in the next and final alpha release:
-
-* side channel and high availability
-* session capture
-* dcerpc2 preprocessor
-* appid preprocessor
-* sdf preprocessor
-
 Additional features on the roadmap include:
 
 * Use a shared network map
 * Support pipelining of packet processing
 * Support hardware offload and data plane integration
-* Rewrite critical modules like TCP reassembly and HTTP inspection
 * Support proxy mode
-* Simplify memory management
 * Windows support
 
 # DEPENDENCIES
