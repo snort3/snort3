@@ -228,7 +228,7 @@ static const Parameter search_engine_params[] =
     { "max_pattern_len", Parameter::PT_INT, "0:", "0",
       "truncate patterns when compiling into state machine (0 means no maximum)" },
 
-    { "max_queue_events", Parameter::PT_INT, nullptr, "5",
+    { "max_queue_events", Parameter::PT_INT, "2:100", "5",  // upper bound is MAX_EVENT_MATCH
       "maximum number of matching fast pattern states to queue per packet" },
 
     { "inspect_stream_inserts", Parameter::PT_BOOL, nullptr, "false",

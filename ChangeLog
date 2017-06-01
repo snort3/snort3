@@ -1,3 +1,18 @@
+17/06/01 - build 235
+
+-- http_inspect: improve handling of improper bare \r separator
+-- appid: fix bug where TNS detector corrupted the flow data object
+-- search_engine: set range for max_queue_events parameter
+   thanks to Navdeep.Uniyal@neclab.eu for reporting the issue
+-- arp_spoof: reject non-ethernet packets
+-- stream_ip: remove dead code and tweak formatting
+-- ipproto: remove unreachable code
+-- control_mgmt: add support for daq module reload
+-- control_mgmt: add support for unix sockets
+-- doc: update default manuals
+-- doc: update differences section
+-- doc: update README
+
 17/05/21 - build 234
 
 -- byte_math: port rule option from 2X and add feature documentation

@@ -264,7 +264,8 @@ static inline bool frag_timed_out(
  *
  * @return none
  */
-static inline int FragCheckFirstLast(const Packet* const p,
+static inline int FragCheckFirstLast(
+    const Packet* const p,
     FragTracker* ft,
     const uint16_t frag_offset)
 {
@@ -386,7 +387,8 @@ static inline int FragCheckFirstLast(const Packet* const p,
  * @retval 0 on an error
  * @retval 1 on success
  */
-static int FragHandleIPOptions(FragTracker* ft,
+static int FragHandleIPOptions(
+    FragTracker* ft,
     const Packet* const p,
     const uint16_t frag_offset)
 {
@@ -465,8 +467,7 @@ static int FragHandleIPOptions(FragTracker* ft,
 static inline int checkTinyFragments(
     FragEngine* engine,
     const Packet* const p,
-    unsigned int trimmedLength
-    )
+    unsigned int trimmedLength)
 {
     //Snort may need to raise a separate event if
     //only trimmed length is tiny.
@@ -494,26 +495,6 @@ static inline int checkTinyFragments(
                 return 1;
             }
         }
-    }
-
-    return 0;
-}
-
-int drop_all_fragments(
-    Packet* p
-    )
-{
-    if ( !p->flow || p->flow->pkt_type != PktType::IP )
-        return -1;
-
-    FragTracker* ft = &((IpSession*)p->flow->session)->tracker;
-
-    //drop this and all following fragments
-    if (ft && !(ft->frag_flags & FRAG_DROP_FRAGMENTS))
-    {
-        trace_log(stream_ip,
-            "Frag: Will drop all fragments on this packet\n");
-        ft->frag_flags |= FRAG_DROP_FRAGMENTS;
     }
 
     return 0;
@@ -757,8 +738,7 @@ static void FragRebuild(FragTracker* ft, Packet* p)
  *
  * @return none
  */
-static inline void add_node(FragTracker* ft, Fragment* prev,
-    Fragment* node)
+static inline void add_node(FragTracker* ft, Fragment* prev, Fragment* node)
 {
     if (prev)
     {
@@ -2081,10 +2061,7 @@ int Defrag::add_frag_node(
  * @retval FRAG_INSERT_FAILED Memory problem, insertion failed
  * @retval FRAG_INSERT_OK All okay
  */
-int Defrag::dup_frag_node(
-    FragTracker* ft,
-    Fragment* left,
-    Fragment** retFrag)
+int Defrag::dup_frag_node( FragTracker* ft, Fragment* left, Fragment** retFrag)
 {
     Fragment* newfrag = NULL;  /* new frag container */
 

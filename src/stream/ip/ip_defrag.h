@@ -31,9 +31,6 @@ struct Fragment;
 struct Packet;
 struct SnortConfig;
 
-int drop_all_fragments(Packet* p);
-int fragGetApplicationProtocolId(Packet* p);
-
 class Defrag
 {
 public:
