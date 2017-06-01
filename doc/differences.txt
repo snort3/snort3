@@ -8,6 +8,95 @@ Snort 3 differs from Snort 2 in the following ways:
   (e.g.: never assume input from or output to some hardcoded filename)
 * all Snort 2 config options are grouped into Snort 3 modules
 
+=== Features New to Snort 3
+
+Some things Snort++ can do today that Snort can not do:
+
+* regex fast patterns, not just literals
+* FlatBuffers perf monitor logs
+* LuaJIT scriptable rule options and loggers
+* pub/sub inspection events (currently used by sip and http to appid)
+* JIT buffer stuffers (notably with new http_inspect)
+* C-style comments in rules
+* #begin ... #end comment blocks in rules
+* rule remarks (comment is part of rule, not just in it)
+* process raw files (eg read a PDF and do file processing)
+* process raw payload (eg bridge 2 sockets and do inspection)
+* fast pattern offload to separate thread (experimental)
+* track all memory allocated
+* add or override any config item on command line
+* set CPU affinity
+* pause and resume commands
+
+=== Features Improved over Snort 2
+
+Some things Snort++ can do today that Snort can not do as well:
+
+* Hyperscan search engine plugin
+  (Intel provides patch for Snort 2)
+* fast pattern sensitive data
+  (Snort 2 requires a slow, extra search)
+* multiple packet threads with one config
+  (Snort 2 requires multiple processes)
+* wizard automatically detects service for first flow
+  (Snort 2 appid detects for next flow)
+* nested policy binding
+  (Snort 2 has just one level)
+* decode arbitrary layers
+  (Snort 2 supports only 2 IP layers)
+* process PDU buffers
+  (Snort 2 only processes packets)
+* fully stateful http_inspect with 83 builtin alerts
+  (Snort 2 is only partly stateful with 33 builtin alerts)
+* output all semantic errors before quitting
+  (Snort 2 stops at first one)
+* alert service (eg http) and alert file rules
+  (Snort 2 must use metadata:service)
+* elided rule headers omit nets and/or ports
+  (Snort 2 requires explicit 'any')
+* dump builtin rule stubs
+  (Snort 2 can only dump SO stubs)
+* rule sticky buffers
+  (Snort 2 buffers must be repeated)
+* http_header:name supported to restrict to single field
+  (Snort 2 searches all headers)
+* fully equivalent SO rules
+  (Snort 2 has some limitations with SO processing)
+* text-based SO rule implementation
+  (Snort 2 requires tedious, nested C structs)
+* extensible module-based tracing
+  (Snort 2 has a fixed set of flags)
+* over 200 plugins, no need to change core source code
+  (Snort 2 only supports preprocessors and outputs)
+* use consistent conf syntax
+  (Snort 2 defines lists different ways in different places, etc.)
+* use consistent rule syntax
+  (Snort 2 has semicolon separated suboptions, etc.)
+* arbitrary whitespace and comments in conf and rules
+  (Snort 2 requires newline escapes)
+* properly parse rules
+  (Snort 2 can actually completely ignore stuff)
+* optional warnings output, can be fatal
+  (Snort 2 warnings are not optional or fatal)
+* define and use arbitrary variables and functions in config with Lua
+  (Snort 2 has variables just for rule headers)
+* text-based command line shell
+  (Snort 2 has binary control socket)
+* generate text and HTML user guide in addition to PDF
+  (Snort 2 just has PDF and Talos provides HTML)
+* generate developer's guide
+  (Snort 2's is manually written)
+* extensive command line help, eg every config item, rule option, and peg count
+  (Snort 2 only has command line args)
+* cmake builds
+  (Snort 2 only does automake)
+* read rules from separate file or stdin
+  (Snort 2 requires rules directly in or included in conf)
+* simple, clean, uniform startup and shutdown output
+  (Snort 2 is heavy and inconsistent)
+* better modularity 346K/1534 = 226 lines/file, max=2700
+  (Snort 2 has 440K/1021 = 431 lines/file, max=13K)
+
 === Build Options
 
 * configure --with-lib{pcap,pcre}-* -> --with-{pcap,pcre}-*
@@ -119,87 +208,7 @@ Snort 3 differs from Snort 2 in the following ways:
 * deleted the intermediate http and ftp_telnet event queues
 * alert_unified2 and log_unified2 have been deleted
 
-=== HTTP Profiles
-
-This section describes the changes to the Http Inspect config option "profile".
-
-Snort 2 allows users to select pre-defined HTTP server profiles using the
-config option "profile". The user can choose one of five predefined profiles.
-When defined, this option will set defaults for other config options within
-Http Inspect.
-
-With Snort 3, the user has the flexibility of defining and fine tuning custom
-profiles along with the five predefined profiles. 
-
-Snort 2 conf
-
-    preprocessor http_inspect_server: server default \
-        profile apache ports { 80 3128 } max_headers 200
-
-Snort 3 conf
-
-    http_inspect = { profile = http_profile_apache }
-    http_inspect.profile.max_headers = 200 
-
-    binder =
-    {
-        {
-            when = { proto = 'tcp', ports = '80 3128', },
-            use = { type = 'http_inspect' },
-        },
-    } 
-
-NOTE: The "profile" option now that points to a table "http_profile_apache"
-which is defined in "snort_defaults.lua" (as follows).
-
-    http_profile_apache =
-    {
-        profile_type = 'apache',
-        server_flow_depth = 300,
-        client_flow_depth = 300,
-        post_depth = -1,
-        chunk_length = 500000,
-        ascii = true,
-        multi_slash = true,
-        directory = true,
-        webroot = true,
-        utf_8 = true,
-        apache_whitespace = true,
-        non_strict = true,
-        normalize_utf = true,
-        normalize_javascript = false,
-        max_header_length = 0,
-        max_headers = 0,
-        max_spaces = 200,
-        max_javascript_whitespaces = 200,
-        whitespace_chars ='0x9 0xb 0xc 0xd'
-    }
-
-NOTE: The config option "max_headers" is set to 0 in the profile, but
-overwritten by "http_inspect.profile.max_headers = 200".
-
-Conversion
-
-snort2lua can convert the existing snort.conf with the "profile" option to
-Snort 3 compatible "profile".  Please refer to the snort2Lua post for more
-details.
-
-Examples
-
-    "profile all" ==> "profile = http_profile_default"
-    "profile apache" ==> "profile = http_profile_apache"
-    "profile iis" ==> "profile = http_profile_iis"
-    "profile iis_40" ==> "profile = http_profile_iis_40"
-    "profile iis_50" ==> "profile = http_profile_iis_50"
-
-Defining custom profiles
-
-The complete set of Http Inspect config options that a custom profile can
-configure can be found by running the following command:
-
-    snort --help-config http_inspect | grep http_inspect.profile
-
-=== SDF Preprocessor
+=== Sensitive Data
 
 The Snort 2.X SDF Preprocessor is gone, replaced by ips option `sd_pattern`.
 The sd_pattern rule option is synonymous with the sd_pattern option used
