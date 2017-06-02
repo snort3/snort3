@@ -54,6 +54,7 @@ public:
     // FIXIT-L add ttl style syntax
     bool parse(const char* s);
     bool eval(long) const;
+    bool validate(const char* s, const char* r);
 };
 
 #endif

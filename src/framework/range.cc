@@ -223,6 +223,10 @@ bool RangeCheck::parse(const char* s)
         min = max;
         max = 0;
     }
+
+    if ( (op == LG or op == LEG) and (min > max) )
+        return false;
+
     return true;
 }
 
@@ -258,6 +262,53 @@ bool RangeCheck::eval(long c) const
         break;
     }
     return false;
+}
+
+bool RangeCheck::validate(const char* s, const char* r)
+{
+    if ( !parse(s) )
+        return false;
+    if ( !r )
+        return true;
+
+    // check that min and max are within r
+    // require no leading or trailing whitespace
+    // and either # | #: | :# | #:#
+    // where # is a valid pos or neg dec, hex, or octal number
+    long v_min, v_max;
+
+    if ( op == LG or op == LEG )
+    {
+        v_min = min;
+        v_max = max;
+    }
+    else if ( op == GT or op == GE )
+    {
+        v_min = v_max = min;
+    }
+    else
+    {
+        v_min = v_max = max;
+    }
+
+    if ( *r != ':' )
+    {
+        long low = strtol(r, nullptr, 0);
+
+        if ( v_min < low )
+            return false;
+    }
+
+    const char* t = strchr(r, ':');
+
+    if ( t && *++t )
+    {
+        long hi = strtol(t, nullptr, 0);
+
+        if ( v_max > hi )
+            return false;
+    }
+    return true;
 }
 
 //--------------------------------------------------------------------------
@@ -524,6 +575,8 @@ TEST_CASE("parsing", "[RangeCheck]")
         CHECK(!rc.parse("<<0"));
         CHECK(!rc.parse("+9223372036854775808"));
         CHECK(!rc.parse("-9223372036854775809"));
+        CHECK(!rc.parse("4<>2"));
+        CHECK(!rc.parse("24<=>16"));
 
         // backwards
         CHECK(!rc.parse(" 5 = "));
@@ -540,6 +593,31 @@ TEST_CASE("parsing", "[RangeCheck]")
         CHECK(!rc.parse(" 1 <=> "));
         CHECK(!rc.parse(" <=> 5 "));
     }
+}
+
+TEST_CASE("validate", "[RangeCheck]")
+{
+    RangeCheck rc;
+
+    REQUIRE(rc.validate("2<>4", "0:10"));
+    CHECK((rc.min == 2));
+    CHECK((rc.max == 4));
+
+    // #
+    CHECK(rc.validate("2<>4", "0"));
+    // #:
+    CHECK(rc.validate("2<>4", "1:"));
+    // :#
+    CHECK(rc.validate("2<>4", ":8"));
+    // in hex
+    CHECK(rc.validate("2<>4", "0x1:0x0A"));
+    
+    // invalid low
+    CHECK(!rc.validate("2<>4", "3:"));
+    // invalid hi
+    CHECK(!rc.validate("2<>4", "1:3"));
+    // invalid low and hi
+    CHECK(!rc.validate("200<>400", "3:10"));
 }
 #endif
 

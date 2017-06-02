@@ -94,10 +94,12 @@ int FragOffsetOption::eval(Cursor&, Packet* p)
 // module
 //-------------------------------------------------------------------------
 
+#define RANGE "0:8192"
+
 static const Parameter s_params[] =
 {
     { "~range", Parameter::PT_STRING, nullptr, nullptr,
-      "check if ip fragment offset value is 'value | min<>max | <max | >min'" },
+      "check if ip fragment offset value is 'value | min<>max | <max | >min', range is " RANGE },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -130,7 +132,7 @@ bool FragOffsetModule::set(const char*, Value& v, SnortConfig*)
     if ( !v.is("~range") )
         return false;
 
-    return data.parse(v.get_string());
+    return data.validate(v.get_string(), RANGE);
 }
 
 //-------------------------------------------------------------------------
