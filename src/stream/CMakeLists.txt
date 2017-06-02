@@ -7,6 +7,7 @@ add_subdirectory(tcp)
 add_subdirectory(udp)
 add_subdirectory(user)
 add_subdirectory(file)
+add_subdirectory(test)
 
 set (STREAM_INCLUDES
     paf.h

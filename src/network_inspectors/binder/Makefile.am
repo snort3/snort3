@@ -18,7 +18,3 @@ libbinder_a_SOURCES = $(file_list)
 #binder_la_SOURCES = $(file_list)
 #endif
 
-if ENABLE_UNIT_TESTS
-SUBDIRS = test
-endif
-

@@ -70,7 +70,7 @@ static inline SmtpPafData* get_state(Flow* flow, bool c2s)
         return nullptr;
 
     SmtpSplitter* s = (SmtpSplitter*)Stream::get_splitter(flow, c2s);
-    return s ? &s->state : nullptr;
+    return (s and s->is_paf()) ? &s->state : nullptr;
 }
 
 /* Process responses from server, flushed at EOL*/

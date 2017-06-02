@@ -34,16 +34,12 @@
 #include "protocols/packet.h"
 #include "protocols/ssl.h"
 #include "stream/stream.h"
+#include "stream/stream_splitter.h"
 
 #include "ssl_module.h"
 
 THREAD_LOCAL ProfileStats sslPerfStats;
 THREAD_LOCAL SslStats sslstats;
-
-/*
- * Function prototype(s)
- */
-static void snort_ssl(SSL_PROTO_CONF* GlobalConf, Packet* p);
 
 unsigned SslFlowData::flow_id = 0;
 
@@ -415,6 +411,9 @@ public:
 
     void show(SnortConfig*) override;
     void eval(Packet*) override;
+
+    StreamSplitter* get_splitter(bool c2s)
+    { return new StopAndWaitSplitter(c2s); }
 
 private:
     SSL_PROTO_CONF* config;

@@ -43,5 +43,7 @@ udp \
 user \
 file
 
-
+if BUILD_CPPUTESTS
+SUBDIRS += test
+endif
 

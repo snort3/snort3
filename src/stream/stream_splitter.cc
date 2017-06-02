@@ -28,6 +28,7 @@
 #include "protocols/packet.h"
 
 #include "flush_bucket.h"
+#include "stream.h"
 
 unsigned StreamSplitter::max(Flow*)
 { return snort_conf->max_pdu; }
@@ -63,8 +64,7 @@ AtomSplitter::AtomSplitter(bool b, uint32_t sz) : StreamSplitter(b)
 AtomSplitter::~AtomSplitter() { }
 
 StreamSplitter::Status AtomSplitter::scan(
-    Flow*, const uint8_t*, uint32_t len, uint32_t, uint32_t* fp
-    )
+    Flow*, const uint8_t*, uint32_t len, uint32_t, uint32_t* fp)
 {
     bytes += len;
     segs++;
@@ -88,10 +88,51 @@ void AtomSplitter::update()
     min = base + FlushBucket::get_size();
 }
 
+//--------------------------------------------------------------------------
+// log splitter
+//--------------------------------------------------------------------------
+
+LogSplitter::LogSplitter(bool b) : StreamSplitter(b) { }
+
+StreamSplitter::Status LogSplitter::scan(
+    Flow*, const uint8_t*, uint32_t len, uint32_t, uint32_t* fp)
+{
+    *fp = len;
+    return FLUSH;
+}
+
+//--------------------------------------------------------------------------
+// stop-and-wait splitter
+//--------------------------------------------------------------------------
+
+StreamSplitter::Status StopAndWaitSplitter::scan(
+    Flow* flow, const uint8_t*, uint32_t len, uint32_t, uint32_t*)
+{
+    StopAndWaitSplitter* peer = (StopAndWaitSplitter*)Stream::get_splitter(flow, !to_server());
+
+    if ( peer and peer->saw_data() )
+    {
+        Packet* p = DetectionEngine::get_current_packet();
+
+        if ( to_server() )
+            Stream::flush_client(p);
+        else
+            Stream::flush_server(p);
+
+        peer->reset();
+    }
+    byte_count += len;
+    return StreamSplitter::SEARCH;
+}
+
+//--------------------------------------------------------------------------
+// dip splitter - flush when seg size dips below prior sizes
+//--------------------------------------------------------------------------
+
 #if 0
-static inline int CheckFlushCoercion(  // FIXIT-M this should be part of a new splitter
-    Packet* p, FlushMgr* fm, uint16_t flush_factor
-    )
+// FIXIT-L make into splitter class
+static inline int CheckFlushCoercion(
+    Packet* p, FlushMgr* fm, uint16_t flush_factor)
 {
     if ( !flush_factor )
         return 0;
@@ -110,20 +151,5 @@ static inline int CheckFlushCoercion(  // FIXIT-M this should be part of a new s
     fm->last_count++;
     return 0;
 }
-
 #endif
-
-//--------------------------------------------------------------------------
-// log splitter
-//--------------------------------------------------------------------------
-
-LogSplitter::LogSplitter(bool b) : StreamSplitter(b) { }
-
-StreamSplitter::Status LogSplitter::scan(
-    Flow*, const uint8_t*, uint32_t len, uint32_t, uint32_t* fp
-    )
-{
-    *fp = len;
-    return FLUSH;
-}
 

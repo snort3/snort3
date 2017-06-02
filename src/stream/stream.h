@@ -123,17 +123,8 @@ public:
     // at the end of inspection
     static void block_flow(const Packet*);
 
-    // FIXIT-L flush_request() / flush_response() are misnomers in ips mode and may cause errors
-
-    // Flush queued data on the listener side of a stream flow.  The listener is the side of the
-    // connection the packet is destined, so if the Packet is from the client, then the
-    // server side tracker is flushed.
-    static void flush_request(Packet*);  // flush listener
-
-    // Flush queued data on the talker side of a stream flow.  The talker is the side of the
-    // connection the packet originated from, so if the Packet is from the client, then the
-    // client side tracker is flushed.
-    static void flush_response(Packet*);   // flush talker
+    static void flush_client(Packet*);  // flush data received by client
+    static void flush_server(Packet*);  // flush data received by server
 
     // Add session alert - true if added
     static bool add_flow_alert(Flow*, Packet*, uint32_t gid, uint32_t sid);

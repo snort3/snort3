@@ -104,13 +104,8 @@ public:
     AtomSplitter(bool, uint32_t size = 0);
     ~AtomSplitter();
 
-    Status scan(
-        Flow*,
-        const uint8_t* data,
-        uint32_t len,
-        uint32_t flags,
-        uint32_t* fp
-        ) override;
+    Status scan(Flow*, const uint8_t*, uint32_t, uint32_t, uint32_t*) override;
+
     void reset() override;
     void update() override;
 
@@ -129,13 +124,27 @@ class LogSplitter : public StreamSplitter
 public:
     LogSplitter(bool);
 
-    Status scan(
-        Flow*,
-        const uint8_t* data,
-        uint32_t len,
-        uint32_t flags,
-        uint32_t* fp
-        ) override;
+    Status scan(Flow*, const uint8_t*, uint32_t, uint32_t, uint32_t*) override;
+};
+
+//-------------------------------------------------------------------------
+// stop-and-wait splitter (flush opposite direction upon data)
+
+class StopAndWaitSplitter : public StreamSplitter
+{
+public:
+    StopAndWaitSplitter(bool b) : StreamSplitter(b) { }
+
+    Status scan(Flow*, const uint8_t*, uint32_t, uint32_t, uint32_t*) override;
+
+    bool saw_data()
+    { return byte_count > 0; }
+
+    void reset() override
+    { byte_count = 0; }
+
+private:
+    unsigned byte_count = 0;
 };
 
 #endif

@@ -36,7 +36,7 @@ static inline PopPafData* get_state(Flow* flow, bool c2s)
         return nullptr;
 
     PopSplitter* s = (PopSplitter*)Stream::get_splitter(flow, c2s);
-    return s ? &s->state : nullptr;
+    return (s and s->is_paf()) ? &s->state : nullptr;
 }
 
 /*

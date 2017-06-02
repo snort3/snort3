@@ -501,7 +501,7 @@ StreamSplitter* Stream::get_splitter(Flow* flow, bool to_server)
 {
     assert(flow && flow->session);
     StreamSplitter* ss = flow->session->get_splitter(to_server);
-    return ( ss and ss->is_paf() ) ? ss : nullptr;
+    return ss;
 }
 
 bool Stream::is_paf_active(Flow* flow, bool to_server)
@@ -709,24 +709,28 @@ static bool ok_to_flush(Packet* p)
     return true;
 }
 
-void Stream::flush_request(Packet* p)
+void Stream::flush_client(Packet* p)
 {
     if ( !ok_to_flush(p) )
         return;
 
-    /* Flush the listener queue -- this is the same side that
-     * the packet gets inserted into */
-    p->flow->session->flush_listener(p);
+    if ( p->is_from_client() )
+        p->flow->session->flush_talker(p);
+
+    else if ( p->is_from_server() )
+        p->flow->session->flush_listener(p);
 }
 
-void Stream::flush_response(Packet* p)
+void Stream::flush_server(Packet* p)
 {
     if ( !ok_to_flush(p) )
         return;
 
-    /* Flush the talker queue -- this is the opposite side that
-     * the packet gets inserted into */
-    p->flow->session->flush_talker(p);
+    if ( p->is_from_client() )
+        p->flow->session->flush_listener(p);
+
+    else if ( p->is_from_server() )
+        p->flow->session->flush_talker(p);
 }
 
 // return true if added

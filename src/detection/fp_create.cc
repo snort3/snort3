@@ -92,9 +92,29 @@ static int finalize_detection_option_tree(SnortConfig* sc, detection_option_tree
     return 0;
 }
 
+static bool new_sig(int num_children, detection_option_tree_node_t** nodes, OptTreeNode* otn)
+{
+    for ( int i = 0; i < num_children; ++i )
+    {
+        detection_option_tree_node_t* child = nodes[i];
+
+        if ( child->option_type != RULE_OPTION_TYPE_LEAF_NODE )
+            continue;
+
+        OptTreeNode* cotn = (OptTreeNode*)child->option_data;
+        SigInfo& csi = cotn->sigInfo;
+        SigInfo& osi = otn->sigInfo;
+
+        if ( csi.gid == osi.gid and csi.sid == osi.sid and csi.rev == osi.rev )
+            return false;
+    }
+    return true;
+}
+
 static int otn_create_tree(OptTreeNode* otn, void** existing_tree)
 {
     detection_option_tree_node_t* node = NULL, * child;
+    bool need_leaf = false;
 
     if (!existing_tree)
         return -1;
@@ -109,6 +129,7 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree)
         root->num_children++;
         root->children = (detection_option_tree_node_t**)
             snort_calloc(root->num_children, sizeof(detection_option_tree_node_t*));
+        need_leaf = true;
     }
 
     int i = 0;
@@ -155,6 +176,8 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree)
 
             if (node && child->is_relative)
                 node->relative_children++;
+
+            need_leaf = true;
         }
         else
         {
@@ -227,6 +250,7 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree)
                     if (child->is_relative)
                         node->relative_children++;
                 }
+                need_leaf = true;
             }
         }
         node = child;
@@ -234,6 +258,21 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree)
         child = node->children[i];
         opt_fp = opt_fp->next;
     }
+
+    // don't add a new leaf node unless we branched higher in the tree or this
+    // is a different sig ( eg alert ip ( sid:1; ) vs alert tcp ( sid:2; ) )
+    // note: same sig different policy branches at rtn (this is for same policy)
+
+    if ( !need_leaf )
+    {
+        if ( node )
+            need_leaf = new_sig(node->num_children, node->children, otn);
+        else
+            need_leaf = new_sig(root->num_children, root->children, otn);
+    }
+
+    if ( !need_leaf )
+        return 0;
 
     /* Append a leaf node that has option data of the SigInfo/otn pointer */
     child = new_node(RULE_OPTION_TYPE_LEAF_NODE, otn);

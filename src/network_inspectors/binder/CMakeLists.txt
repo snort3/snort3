@@ -15,4 +15,3 @@ set(FILE_LIST
 #    
 #endif (STATIC_INSPECTORS)
 
-add_subdirectory( test )
