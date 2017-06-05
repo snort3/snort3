@@ -38,6 +38,8 @@
 
 #define TRACKER_NAME PERF_NAME "_cpu"
 
+using namespace std;
+
 static inline uint64_t get_microseconds(struct timeval t)
 {
     return (uint64_t)t.tv_sec * 1000000 + t.tv_usec;
@@ -46,10 +48,10 @@ static inline uint64_t get_microseconds(struct timeval t)
 CPUTracker::CPUTracker(PerfConfig *perf) :
     PerfTracker(perf, perf->output == PERF_FILE, TRACKER_NAME)
 {
-    formatter->register_section("cpu");
-    formatter->register_field("user", &user_stat);
-    formatter->register_field("system", &system_stat);
-    formatter->register_field("wall", &wall_stat);
+    formatter->register_section("thread_" + to_string(get_instance_id()));
+    formatter->register_field("cpu_user", &user_stat);
+    formatter->register_field("cpu_system", &system_stat);
+    formatter->register_field("cpu_wall", &wall_stat);
     formatter->finalize_fields();
 }
 
@@ -185,16 +187,16 @@ TEST_CASE("process and output", "[cpu_tracker]")
     tracker.wall.tv_sec = 8;
     tracker.wall.tv_usec = 500000;
     tracker.process(false);
-    CHECK(*formatter->public_values["cpu.user"].pc == expected[pass][u_idx]);
-    CHECK(*formatter->public_values["cpu.system"].pc == expected[pass][s_idx]);
-    CHECK(*formatter->public_values["cpu.wall"].pc == expected[pass++][w_idx]);
+    CHECK(*formatter->public_values["thread_0.cpu_user"].pc == expected[pass][u_idx]);
+    CHECK(*formatter->public_values["thread_0.cpu_system"].pc == expected[pass][s_idx]);
+    CHECK(*formatter->public_values["thread_0.cpu_wall"].pc == expected[pass++][w_idx]);
 
     tracker.wall.tv_sec = 9;
     tracker.wall.tv_usec = 0;
     tracker.process(false);
-    CHECK(*formatter->public_values["cpu.user"].pc == expected[pass][u_idx]);
-    CHECK(*formatter->public_values["cpu.system"].pc == expected[pass][s_idx]);
-    CHECK(*formatter->public_values["cpu.wall"].pc == expected[pass++][w_idx]);
+    CHECK(*formatter->public_values["thread_0.cpu_user"].pc == expected[pass][u_idx]);
+    CHECK(*formatter->public_values["thread_0.cpu_system"].pc == expected[pass][s_idx]);
+    CHECK(*formatter->public_values["thread_0.cpu_wall"].pc == expected[pass++][w_idx]);
 
     tracker.user.tv_sec = 4;
     tracker.user.tv_usec = 200000;
@@ -203,9 +205,9 @@ TEST_CASE("process and output", "[cpu_tracker]")
     tracker.wall.tv_sec = 17;
     tracker.wall.tv_usec = 500000;
     tracker.process(false);
-    CHECK(*formatter->public_values["cpu.user"].pc == expected[pass][u_idx]);
-    CHECK(*formatter->public_values["cpu.system"].pc == expected[pass][s_idx]);
-    CHECK(*formatter->public_values["cpu.wall"].pc == expected[pass++][w_idx]);
+    CHECK(*formatter->public_values["thread_0.cpu_user"].pc == expected[pass][u_idx]);
+    CHECK(*formatter->public_values["thread_0.cpu_system"].pc == expected[pass][s_idx]);
+    CHECK(*formatter->public_values["thread_0.cpu_wall"].pc == expected[pass++][w_idx]);
 }
 
 #endif
