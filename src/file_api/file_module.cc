@@ -144,10 +144,10 @@ static const Parameter file_id_params[] =
     { "max_files_cached", Parameter::PT_INT, "8:", "65536",
       "maximal number of files cached in memory" },
 
-    { "enable_type", Parameter::PT_BOOL, nullptr, "false",
+    { "enable_type", Parameter::PT_BOOL, nullptr, "true",
       "enable type ID" },
 
-    { "enable_signature", Parameter::PT_BOOL, nullptr, "false",
+    { "enable_signature", Parameter::PT_BOOL, nullptr, "true",
       "enable signature calculation" },
 
     { "enable_capture", Parameter::PT_BOOL, nullptr, "false",

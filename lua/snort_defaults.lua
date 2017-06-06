@@ -118,7 +118,7 @@ RPC_PORTS =
 -- default ftp server
 ---------------------------------------------------------------------------
 
-ftp_default_commands =
+ftp_default_cmds =
 [[
     ABOR ACCT ADAT ALLO APPE AUTH CCC CDUP CEL CLNT CMD CONF CWD DELE ENC
     EPRT EPSV ESTA ESTP FEAT HELP LANG LIST LPRT LPSV MACB MAIL MDTM MIC
@@ -213,16 +213,8 @@ ftp_command_specs =
 
 default_ftp_server =
 {
-    def_max_param_len = 100,
-
-    encrypted_traffic = false,
-    check_encrypted = true,
-    print_cmds = false,
-    telnet_cmds = true,
-    ignore_telnet_erase_cmds = true,
-    ignore_data_chan = true,
-
-    ftp_cmds = ftp_default_commands,
+    -- params not specified here get internal defaults
+    ftp_cmds = ftp_default_cmds,
     data_chan_cmds = ftp_default_data_chan_cmds,
     data_xfer_cmds = ftp_default_data_xfer_cmds,
     file_put_cmds = ftp_default_file_put_cmds,
@@ -234,142 +226,45 @@ default_ftp_server =
 }
 
 ---------------------------------------------------------------------------
--- default http profiles
+-- default smtp configuration
 ---------------------------------------------------------------------------
 
-http_profile_default = 
-{
-    profile_type = 'default',
-    server_flow_depth = 300,
-    client_flow_depth = 300,
-    post_depth = -1,
-    chunk_length = 500000,
-    ascii = true,
-    multi_slash = true,
-    directory = true,
-    webroot = true,
-    double_decode = true,
-    u_encode = true,
-    bare_byte = true,
-    iis_unicode = true,
-    iis_backslash = true,
-    iis_delimiter = true,
-    apache_whitespace = true,
-    non_strict = true,
-    normalize_utf = true,
-    normalize_javascript = false,
-    max_header_length = 0,
-    max_headers = 0,
-    max_spaces = 200,
-    max_javascript_whitespaces = 200,
-    whitespace_chars ='0x9 0xb 0xc 0xd'
-}
+smtp_default_auth_cmds =
+[[
+    AUTH XAUTH X-EXPS
+]]
 
-http_profile_apache = 
-{
-    profile_type = 'apache',
-    server_flow_depth = 300,
-    client_flow_depth = 300,
-    post_depth = -1,
-    chunk_length = 500000,
-    ascii = true,
-    multi_slash = true,
-    directory = true,
-    webroot = true,
-    utf_8 = true,
-    apache_whitespace = true,
-    non_strict = true,
-    normalize_utf = true,
-    normalize_javascript = false,
-    max_header_length = 0,
-    max_headers = 0,
-    max_spaces = 200,
-    max_javascript_whitespaces = 200,
-    whitespace_chars ='0x9 0xb 0xc 0xd'
-}
+smtp_default_binary_data_cmds =
+[[
+    BDAT XEXCH50
+]]
 
-http_profile_iis = 
-{
-    profile_type = 'iis',
-    server_flow_depth = 300,
-    client_flow_depth = 300,
-    post_depth = -1,
-    chunk_length = 500000,
-    ascii = true,
-    multi_slash = true,
-    directory = true,
-    webroot = true,
-    double_decode = false,
-    u_encode = true,
-    bare_byte = true,
-    iis_unicode = true,
-    iis_backslash = true,
-    iis_delimiter = true,
-    apache_whitespace = true,
-    non_strict = true,
-    normalize_utf = true,
-    normalize_javascript = false,
-    max_header_length = 0,
-    max_headers = 0,
-    max_spaces = 200,
-    max_javascript_whitespaces = 200,
-    whitespace_chars ='0x9 0xb 0xc 0xd'
-}
+smtp_default_data_cmds =
+[[
+    DATA
+]]
 
-http_profile_iis_40 = 
-{
-    profile_type = 'iis_40',
-    server_flow_depth = 300,
-    client_flow_depth = 300,
-    post_depth = -1,
-    chunk_length = 500000,
-    ascii = true,
-    multi_slash = true,
-    directory = true,
-    webroot = true,
-    double_decode = true,
-    u_encode = true,
-    bare_byte = true,
-    iis_unicode = true,
-    iis_backslash = true,
-    iis_delimiter = true,
-    apache_whitespace = true,
-    non_strict = true,
-    normalize_utf = true,
-    normalize_javascript = false,
-    max_header_length = 0,
-    max_headers = 0,
-    max_spaces = 200,
-    max_javascript_whitespaces = 200,
-    whitespace_chars ='0x9 0xb 0xc 0xd'
-}
+smtp_default_normalize_cmds =
+[[
+    RCPT VRFY EXPN
+]]
 
-http_profile_iis_50 = 
+smtp_default_valid_cmds =
+[[
+    ATRN AUTH BDAT DATA DEBUG EHLO EMAL ESAM ESND ESOM ETRN EVFY EXPN HELO
+    HELP IDENT MAIL NOOP ONEX QUEU QUIT RCPT RSET SAML SEND SIZE SOML
+    STARTTLS TICK TIME TURN TURNME VERB VRFY X-EXPS X-LINK2STATE XADR XAUTH
+    XCIR XEXCH50 XGEN XLICENSE XQUE XSTA XTRN XUSR
+]]
+
+default_smtp =
 {
-    profile_type = 'iis_50',
-    server_flow_depth = 300,
-    client_flow_depth = 300,
-    post_depth = -1,
-    chunk_length = 500000,
-    ascii = true,
-    multi_slash = true,
-    directory = true,
-    webroot = true,
-    double_decode = true,
-    u_encode = true,
-    bare_byte = true,
-    iis_unicode = true,
-    iis_backslash = true,
-    iis_delimiter = true,
-    apache_whitespace = true,
-    non_strict = true,
-    normalize_utf = true,
-    normalize_javascript = false,
-    max_header_length = 0,
-    max_headers = 0,
-    max_spaces = 200,
-    max_javascript_whitespaces = 200,
-    whitespace_chars ='0x9 0xb 0xc 0xd'
+    -- params not specified here get internal defaults
+    auth_cmds = smtp_default_auth_cmds,
+    binary_data_cmds = smtp_default_binary_data_cmds,
+    data_cmds = smtp_default_data_cmds,
+    normalize_cmds = smtp_default_normalize_cmds,
+    valid_cmds = smtp_default_valid_cmds,
 }
 
 ---------------------------------------------------------------------------
@@ -389,7 +284,7 @@ http_methods =  -- build from default_http_methods
     'UNSUBSCRIBE', 'X_MS_ENUMATTS',
 }
 
-ftp_commands =  -- build from ftp_default_commands
+ftp_commands =  -- build from ftp_default_cmds
 {
     'ABOR', 'ACCT', 'ADAT', 'ALLO', 'APPE', 'AUTH', 'CCC', 'CDUP', 'CEL',
     'CLNT', 'CMD', 'CONF', 'CWD', 'DELE', 'ENC', 'EPRT', 'EPSV', 'ESTA',
@@ -483,7 +378,7 @@ default_wizard =
 -- default references
 ---------------------------------------------------------------------------
 
-references =
+default_references =
 {
     { name = 'bugtraq',   url = 'http://www.securityfocus.com/bid/' },
     { name = 'cve',       url = 'http://cve.mitre.org/cgi-bin/cvename.cgi?name=' },
@@ -499,7 +394,7 @@ references =
 -- default classifications
 ---------------------------------------------------------------------------
 
-classifications =
+default_classifications =
 {
     { name = 'not-suspicious', priority = 3,
       text = 'Not Suspicious Traffic' },
