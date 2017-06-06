@@ -129,7 +129,7 @@ bool SeqModule::set(const char*, Value& v, SnortConfig*)
     if ( !v.is("~range") )
         return false;
 
-    return data.parse(v.get_string());
+    return data.validate(v.get_string(), "0:");
 }
 
 //-------------------------------------------------------------------------

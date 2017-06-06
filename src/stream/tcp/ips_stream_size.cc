@@ -198,14 +198,14 @@ bool SizeModule::begin(const char*, int, SnortConfig*)
 bool SizeModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("~range") )
-        ssod.parse(v.get_string());
+        return ssod.validate(v.get_string(), "0:");
 
     else if ( v.is("~direction") )
         direction = v.get_long();
 
     else
         return false;
-
+    
     return true;
 }
 

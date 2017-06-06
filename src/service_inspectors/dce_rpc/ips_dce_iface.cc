@@ -456,7 +456,7 @@ bool Dce2IfaceModule::begin(const char*, int, SnortConfig*)
 bool Dce2IfaceModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("version") )
-        return version.parse(v.get_string());
+        return version.validate(v.get_string(), "0:");
     else if ( v.is("any_frag") )
         any_frag = true;
     else if ( v.is("uuid") )
