@@ -52,17 +52,6 @@
 
 static THREAD_LOCAL AppIdStatistics* appid_stats_manager = nullptr;
 
-static void dump_appid_stats()
-{
-    LogMessage("Application Identification Preprocessor:\n");
-    LogMessage("   Total packets received : %" PRIu64 "\n", appid_stats.packets);
-    LogMessage("  Total packets processed : %" PRIu64 "\n", appid_stats.processed_packets);
-    if (thirdparty_appid_module)
-        thirdparty_appid_module->print_stats();
-    LogMessage("    Total packets ignored : %" PRIu64 "\n", appid_stats.ignored_packets);
-    AppIdServiceState::dump_stats();
-}
-
 // FIXIT-L - appid cleans up openssl now as it is the primary (only) user... eventually this
 //           should probably be done outside of appid
 static void openssl_cleanup()
@@ -78,9 +67,6 @@ AppIdInspector::AppIdInspector(const AppIdModuleConfig* pc)
 
 AppIdInspector::~AppIdInspector()
 {
-    if (config->debug)
-        dump_appid_stats();
-
     delete active_config;
     delete config;
 }
