@@ -20,6 +20,13 @@
 -- export LUA_PATH=$DIR/include/snort/lua/?.lua\;\;
 -- export SNORT_LUA_PATH=$DIR/etc/snort
 
+-- setup the network addresses you are protecting
+HOME_NET = 'any'
+
+-- set up the external network addresses.
+-- (leave as "any" in most situations)
+EXTERNAL_NET = 'any'
+
 ---------------------------------------------------------------------------
 
 ---------------------------------------------------------------------------
@@ -96,13 +103,6 @@ wizard = default_wizard
 ---------------------------------------------------------------------------
 -- 4. configure rules
 ---------------------------------------------------------------------------
-
--- setup the network addresses you are protecting
-HOME_NET = 'any'
-
--- set up the external network addresses.
--- (leave as "any" in most situations)
-EXTERNAL_NET = 'any'
 
 -- see snort_defaults.lua for other nets, ports, and servers
 -- and default references and classifications

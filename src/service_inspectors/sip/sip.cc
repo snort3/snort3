@@ -323,6 +323,8 @@ bool Sip::get_buf(
     if (!len)
         return false;
 
+    assert(data);
+
     b.data = data;
     b.len = len;
 

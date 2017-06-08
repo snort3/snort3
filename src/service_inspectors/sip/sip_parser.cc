@@ -531,6 +531,7 @@ static bool sip_body_parse(SIPMsg* msg, const char* buff, char* end, char** body
         return true;
 
     msg->body_data = (uint8_t*)buff;
+    msg->bodyLen = end - buff;
 
     // Create a media session
     msg->mediaSession = (SIP_MediaSession*)snort_calloc(sizeof(SIP_MediaSession));
@@ -1268,7 +1269,7 @@ bool sip_parse(SIPMsg* msg, const char* buff, char* end, SIP_PROTO_CONF* config)
     msg->header = (uint8_t*)buff;
     status = sip_startline_parse(msg, start, end, &nextIndex, config);
 
-    if (false == status )
+    if ( !status )
     {
         DebugMessage(DEBUG_SIP, "Start line parsing failed...\n");
         return status;
@@ -1279,48 +1280,41 @@ bool sip_parse(SIPMsg* msg, const char* buff, char* end, SIP_PROTO_CONF* config)
     status = sip_headers_parse(msg, start, end, &nextIndex, config);
     msg->headerLen =  nextIndex - buff;
 
-    if (false == status )
+    if ( !status )
     {
         DebugMessage(DEBUG_SIP, "Header parsing failed...\n");
     }
 
     status = sip_check_headers(msg, config);
 
-    if (false == status )
+    if ( !status )
     {
         DebugMessage(DEBUG_SIP, "Headers validation failed...\n");
     }
 
     /*Parse the body*/
     start = nextIndex;
-    msg->bodyLen = end - start;
+    uint16_t bodyLen = end - start;
+
     /*Disable this check for TCP. Revisit this again when PAF enabled for SIP*/
-    if ((!msg->isTcp)&&(msg->content_len > msg->bodyLen))
+    if ((!msg->isTcp)&&(msg->content_len > bodyLen))
         DetectionEngine::queue_event(GID_SIP, SIP_EVENT_MISMATCH_CONTENT_LEN);
 
-    if (msg->content_len < msg->bodyLen)
-        status = sip_body_parse(msg, start, start + msg->content_len, &nextIndex);
-    else
-        status = sip_body_parse(msg, start, end, &nextIndex);
+    status = sip_body_parse(msg, start, start + msg->content_len, &nextIndex);
 
-    if (false == status )
+    if ( !status )
     {
         DebugMessage(DEBUG_SIP, "Headers validation failed...\n");
     }
 
     // Find out whether multiple SIP messages in this packet
     /*Disable this check for TCP. Revisit this again when PAF enabled for SIP*/
-    if ((!msg->isTcp) && (msg->content_len < msg->bodyLen))
+    if ((!msg->isTcp) && (msg->content_len < bodyLen))
     {
-        if (true == sip_startline_parse(msg, start + msg->content_len, end, &nextIndex,
-            config))
-        {
+        if ( sip_startline_parse(msg, start + msg->content_len, end, &nextIndex, config) )
             DetectionEngine::queue_event(GID_SIP, SIP_EVENT_MULTI_MSGS);
-        }
         else
-        {
             DetectionEngine::queue_event(GID_SIP, SIP_EVENT_MISMATCH_CONTENT_LEN);
-        }
     }
     return status;
 }
