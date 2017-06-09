@@ -56,7 +56,7 @@ private:
         unsigned length) const;
     static void decompress_copy(uint8_t* buffer, uint32_t& offset, const uint8_t* data,
         uint32_t length, HttpEnums::CompressId& compression, z_stream*& compress_stream,
-        bool at_start, HttpInfractions& infractions, HttpEventGen& events);
+        bool at_start, HttpInfractions* infractions, HttpEventGen* events);
 
     const HttpEnums::SourceId source_id;
     HttpInspect* const my_inspector;

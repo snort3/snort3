@@ -62,6 +62,8 @@ HttpFlowData::~HttpFlowData()
 #endif
     for (int k=0; k <= 1; k++)
     {
+        delete infractions[k];
+        delete events[k];
         delete[] section_buffer[k];
         HttpTransaction::delete_transaction(transaction[k]);
         delete cutter[k];
@@ -105,10 +107,12 @@ void HttpFlowData::half_reset(SourceId source_id)
         delete mime_state[source_id];
         mime_state[source_id] = nullptr;
     }
-    infractions[source_id].reset();
-    events[source_id].reset();
+    delete infractions[source_id];
+    infractions[source_id] = new HttpInfractions;
+    delete events[source_id];
+    events[source_id] = new HttpEventGen;
     section_offset[source_id] = 0;
-    chunk_state[source_id] = CHUNK_NUMBER;
+    chunk_state[source_id] = CHUNK_NEWLINES;
     chunk_expected_length[source_id] = 0;
 
     if (source_id == SRC_CLIENT)
@@ -143,8 +147,6 @@ void HttpFlowData::trailer_prep(SourceId source_id)
         delete compress_stream[source_id];
         compress_stream[source_id] = nullptr;
     }
-    infractions[source_id].reset();
-    events[source_id].reset();
 }
 
 bool HttpFlowData::add_to_pipeline(HttpTransaction* latest)
@@ -184,6 +186,24 @@ void HttpFlowData::delete_pipeline()
         HttpTransaction::delete_transaction(pipeline[k]);
     }
     delete[] pipeline;
+}
+
+HttpInfractions* HttpFlowData::get_infractions(HttpEnums::SourceId source_id)
+{
+    if (infractions[source_id] != nullptr)
+        return infractions[source_id];
+    assert(transaction[source_id] != nullptr);
+    assert(transaction[source_id]->get_infractions(source_id) != nullptr);
+    return transaction[source_id]->get_infractions(source_id);
+}
+
+HttpEventGen* HttpFlowData::get_events(HttpEnums::SourceId source_id)
+{
+    if (events[source_id] != nullptr)
+        return events[source_id];
+    assert(transaction[source_id] != nullptr);
+    assert(transaction[source_id]->get_events(source_id) != nullptr);
+    return transaction[source_id]->get_events(source_id);
 }
 
 #ifdef REG_TEST

@@ -44,8 +44,9 @@ void HttpMsgRequest::parse_start_line()
         if (!handle_zero_nine())
         {
             // Just a plain old bad request
-            infractions += INF_BAD_REQ_LINE;
-            events.generate_misformatted_http(start_line.start(), start_line.length());
+            *transaction->get_infractions(source_id) += INF_BAD_REQ_LINE;
+            transaction->get_events(source_id)->generate_misformatted_http(start_line.start(),
+                start_line.length());
         }
         return;
     }
@@ -89,12 +90,13 @@ void HttpMsgRequest::parse_start_line()
     if (first_end < last_begin)
     {
         uri = new HttpUri(start_line.start() + first_end + 1, last_begin - first_end - 1,
-            method_id, params->uri_param, infractions, events);
+            method_id, params->uri_param, transaction->get_infractions(source_id),
+            transaction->get_events(source_id));
     }
     else
     {
-        infractions += INF_NO_URI;
-        events.create_event(EVENT_URI_MISSING);
+        *transaction->get_infractions(source_id) += INF_NO_URI;
+        transaction->get_events(source_id)->create_event(EVENT_URI_MISSING);
     }
 }
 
@@ -105,8 +107,8 @@ bool HttpMsgRequest::handle_zero_nine()
         !memcmp(start_line.start(), "GET", 3) &&
         ((start_line.length() == 3) || is_sp_tab[start_line.start()[3]]))
     {
-        infractions += INF_ZERO_NINE_REQ;
-        events.create_event(EVENT_SIMPLE_REQUEST);
+        *transaction->get_infractions(source_id) += INF_ZERO_NINE_REQ;
+        transaction->get_events(source_id)->create_event(EVENT_SIMPLE_REQUEST);
         method.set(3, start_line.start());
         method_id = METH_GET;
         version_id = VERS_0_9;
@@ -122,12 +124,13 @@ bool HttpMsgRequest::handle_zero_nine()
             for (uri_end = start_line.length() - 1; is_sp_tab[start_line.start()[uri_end]];
                 uri_end--);
             uri = new HttpUri(start_line.start() + uri_begin, uri_end - uri_begin + 1, method_id,
-                params->uri_param, infractions, events);
+                params->uri_param, transaction->get_infractions(source_id),
+                transaction->get_events(source_id));
         }
         else
         {
-            infractions += INF_NO_URI;
-            events.create_event(EVENT_URI_MISSING);
+            *transaction->get_infractions(source_id) += INF_NO_URI;
+            transaction->get_events(source_id)->create_event(EVENT_URI_MISSING);
         }
         return true;
     }
@@ -154,16 +157,16 @@ const Field& HttpMsgRequest::get_uri_norm_classic()
 
 void HttpMsgRequest::gen_events()
 {
-    if (infractions & INF_BAD_REQ_LINE)
+    if (*transaction->get_infractions(source_id) & INF_BAD_REQ_LINE)
         return;
 
-    const bool zero_nine = infractions & INF_ZERO_NINE_REQ;
+    const bool zero_nine = *transaction->get_infractions(source_id) & INF_ZERO_NINE_REQ;
 
     if ((start_line.start()[method.length()] == '\t') ||
         (!zero_nine && (start_line.start()[start_line.length() - 9] == '\t')))
     {
-        infractions += INF_REQUEST_TAB;
-        events.create_event(EVENT_APACHE_WS);
+        *transaction->get_infractions(source_id) += INF_REQUEST_TAB;
+        transaction->get_events(source_id)->create_event(EVENT_APACHE_WS);
     }
 
     // Look for white space issues in and around the URI.
@@ -179,50 +182,50 @@ void HttpMsgRequest::gen_events()
                 // white space inside the URI is not allowed
                 if (start_line.start()[k] == ' ')
                 {
-                    infractions += INF_URI_SPACE;
-                    events.create_event(EVENT_UNESCAPED_SPACE_URI);
+                    *transaction->get_infractions(source_id) += INF_URI_SPACE;
+                    transaction->get_events(source_id)->create_event(EVENT_UNESCAPED_SPACE_URI);
                 }
             }
             else
             {
                 // extra white space before or after the URI
-                infractions += INF_REQUEST_WS;
-                events.create_event(EVENT_IMPROPER_WS);
+                *transaction->get_infractions(source_id) += INF_REQUEST_WS;
+                transaction->get_events(source_id)->create_event(EVENT_IMPROPER_WS);
                 if (start_line.start()[k] == '\t')
                 {
                     // which is also a tab
-                    infractions += INF_REQUEST_TAB;
-                    events.create_event(EVENT_APACHE_WS);
+                    *transaction->get_infractions(source_id) += INF_REQUEST_TAB;
+                    transaction->get_events(source_id)->create_event(EVENT_APACHE_WS);
                 }
             }
         }
     }
 
     if (method_id == METH__OTHER)
-        events.create_event(EVENT_UNKNOWN_METHOD);
+        transaction->get_events(source_id)->create_event(EVENT_UNKNOWN_METHOD);
 
     if (session_data->zero_nine_expected != 0)
     {
         // Previous 0.9 request on this connection should have been the last request message
-        infractions += INF_ZERO_NINE_CONTINUE;
-        events.create_event(EVENT_ZERO_NINE_CONTINUE);
+        *transaction->get_infractions(source_id) += INF_ZERO_NINE_CONTINUE;
+        transaction->get_events(source_id)->create_event(EVENT_ZERO_NINE_CONTINUE);
     }
     else if (zero_nine && (trans_num != 1))
     {
         // Switched to 0.9 request after previously sending non-0.9 request on this connection
-        infractions += INF_ZERO_NINE_NOT_FIRST;
-        events.create_event(EVENT_ZERO_NINE_NOT_FIRST);
+        *transaction->get_infractions(source_id) += INF_ZERO_NINE_NOT_FIRST;
+        transaction->get_events(source_id)->create_event(EVENT_ZERO_NINE_NOT_FIRST);
     }
 }
 
 void HttpMsgRequest::update_flow()
 {
-    if (infractions & INF_BAD_REQ_LINE)
+    if (*transaction->get_infractions(source_id) & INF_BAD_REQ_LINE)
     {
         session_data->half_reset(source_id);
         session_data->type_expected[source_id] = SEC_ABORT;
     }
-    else if (infractions & INF_ZERO_NINE_REQ)
+    else if (*transaction->get_infractions(source_id) & INF_ZERO_NINE_REQ)
     {
         session_data->half_reset(source_id);
         // There can only be one 0.9 response per connection because it ends the S2C connection. Do
@@ -240,8 +243,6 @@ void HttpMsgRequest::update_flow()
         session_data->type_expected[source_id] = SEC_HEADER;
         session_data->version_id[source_id] = version_id;
         session_data->method_id = method_id;
-        session_data->infractions[source_id].reset();
-        session_data->events[source_id].reset();
     }
     session_data->section_type[source_id] = SEC__NOT_COMPUTE;
 }

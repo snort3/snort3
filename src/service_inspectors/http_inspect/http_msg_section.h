@@ -26,7 +26,6 @@
 #include "http_module.h"
 #include "http_flow_data.h"
 #include "http_transaction.h"
-#include "http_infractions.h"
 
 //-------------------------------------------------------------------------
 // HttpMsgSection class
@@ -78,8 +77,6 @@ protected:
     HttpTransaction* const transaction;
     const bool tcp_close;
 
-    HttpInfractions infractions;
-    HttpEventGen events;
     HttpEnums::VersionId version_id;
     HttpEnums::MethodId method_id;
     int32_t status_code_num;

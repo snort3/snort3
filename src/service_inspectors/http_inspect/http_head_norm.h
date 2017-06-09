@@ -44,7 +44,7 @@ public:
             nullptr)*(f3 != nullptr)) { }
 
     void normalize(const HttpEnums::HeaderId head_id, const int count,
-        HttpInfractions& infractions, HttpEventGen& events,
+        HttpInfractions* infractions, HttpEventGen* events,
         const HttpEnums::HeaderId header_name_id[], const Field header_value[],
         const int32_t num_headers, Field& result_field) const;
 

@@ -42,8 +42,8 @@ void HttpMsgStatus::parse_start_line()
 
     if ((start_line.length() < 12) || !is_sp_tab[start_line.start()[8]])
     {
-        infractions += INF_BAD_STAT_LINE;
-        events.create_event(EVENT_MISFORMATTED_HTTP);
+        *transaction->get_infractions(source_id) += INF_BAD_STAT_LINE;
+        transaction->get_events(source_id)->create_event(EVENT_MISFORMATTED_HTTP);
         return;
     }
 
@@ -54,8 +54,8 @@ void HttpMsgStatus::parse_start_line()
 
     if (start_line.length() < first_end + 4)
     {
-        infractions += INF_BAD_STAT_LINE;
-        events.create_event(EVENT_MISFORMATTED_HTTP);
+        *transaction->get_infractions(source_id) += INF_BAD_STAT_LINE;
+        transaction->get_events(source_id)->create_event(EVENT_MISFORMATTED_HTTP);
         return;
     }
 
@@ -63,8 +63,8 @@ void HttpMsgStatus::parse_start_line()
     {
         // FIXIT-M This should not be fatal. HI supports something like "HTTP/1.1 200\\OK\r\n" as
         // seen in a status line test.
-        infractions += INF_BAD_STAT_LINE;
-        events.create_event(EVENT_MISFORMATTED_HTTP);
+        *transaction->get_infractions(source_id) += INF_BAD_STAT_LINE;
+        transaction->get_events(source_id)->create_event(EVENT_MISFORMATTED_HTTP);
         return;
     }
 
@@ -88,8 +88,8 @@ void HttpMsgStatus::derive_status_code_num()
         (status_code.start()[1] < '0') || (status_code.start()[1] > '9') ||
         (status_code.start()[2] < '0') || (status_code.start()[2] > '9'))
     {
-        infractions += INF_BAD_STAT_CODE;
-        events.create_event(EVENT_INVALID_STATCODE);
+        *transaction->get_infractions(source_id) += INF_BAD_STAT_CODE;
+        transaction->get_events(source_id)->create_event(EVENT_INVALID_STATCODE);
         status_code_num = STAT_PROBLEMATIC;
         return;
     }
@@ -97,28 +97,28 @@ void HttpMsgStatus::derive_status_code_num()
         (status_code.start()[2] - '0');
     if ((status_code_num < 100) || (status_code_num > 599))
     {
-        infractions += INF_BAD_STAT_CODE;
-        events.create_event(EVENT_INVALID_STATCODE);
+        *transaction->get_infractions(source_id) += INF_BAD_STAT_CODE;
+        transaction->get_events(source_id)->create_event(EVENT_INVALID_STATCODE);
     }
 }
 
 void HttpMsgStatus::gen_events()
 {
-    if (infractions & INF_BAD_STAT_LINE)
+    if (*transaction->get_infractions(source_id) & INF_BAD_STAT_LINE)
         return;
 
     if (status_code.start() > start_line.start() + 9)
     {
-        infractions += INF_STATUS_WS;
-        events.create_event(EVENT_IMPROPER_WS);
+        *transaction->get_infractions(source_id) += INF_STATUS_WS;
+        transaction->get_events(source_id)->create_event(EVENT_IMPROPER_WS);
     }
 
     for (int k = 8; k < status_code.start() - start_line.start(); k++)
     {
         if (start_line.start()[k] == '\t')
         {
-            infractions += INF_STATUS_TAB;
-            events.create_event(EVENT_APACHE_WS);
+            *transaction->get_infractions(source_id) += INF_STATUS_TAB;
+            transaction->get_events(source_id)->create_event(EVENT_APACHE_WS);
         }
     }
 
@@ -126,8 +126,8 @@ void HttpMsgStatus::gen_events()
     {
         if (status_code.start()[3] == '\t')
         {
-            infractions += INF_STATUS_TAB;
-            events.create_event(EVENT_APACHE_WS);
+            *transaction->get_infractions(source_id) += INF_STATUS_TAB;
+            transaction->get_events(source_id)->create_event(EVENT_APACHE_WS);
         }
     }
 
@@ -136,8 +136,8 @@ void HttpMsgStatus::gen_events()
         if ((reason_phrase.start()[k] <= 31) || (reason_phrase.start()[k] >= 127))
         {
             // Illegal character in reason phrase
-            infractions += INF_BAD_PHRASE;
-            events.create_event(EVENT_CTRL_IN_REASON);
+            *transaction->get_infractions(source_id) += INF_BAD_PHRASE;
+            transaction->get_events(source_id)->create_event(EVENT_CTRL_IN_REASON);
             break;
         }
     }
@@ -146,16 +146,16 @@ void HttpMsgStatus::gen_events()
     {
         if( flow->is_pdu_inorder(SSN_DIR_FROM_SERVER) )
         {
-            //Http response without a request. Possible ssh tunneling
-            infractions += INF_RSP_WO_REQ;
-            events.create_event(EVENT_RESPONSE_WO_REQUEST);
+            // HTTP response without a request. Possible ssh tunneling
+            *transaction->get_infractions(source_id) += INF_RSP_WO_REQ;
+            transaction->get_events(source_id)->create_event(EVENT_RESPONSE_WO_REQUEST);
         }
     }
 }
 
 void HttpMsgStatus::update_flow()
 {
-    if (infractions & INF_BAD_STAT_LINE)
+    if (*transaction->get_infractions(source_id) & INF_BAD_STAT_LINE)
     {
         session_data->half_reset(source_id);
         session_data->type_expected[source_id] = SEC_ABORT;
@@ -165,8 +165,6 @@ void HttpMsgStatus::update_flow()
         session_data->type_expected[source_id] = SEC_HEADER;
         session_data->version_id[source_id] = version_id;
         session_data->status_code_num = status_code_num;
-        session_data->infractions[source_id].reset();
-        session_data->events[source_id].reset();
         // 100 response means the next response message will be added to this transaction instead
         // of being part of another transaction. As implemented it is possible for multiple 100
         // responses to all be included in the same transaction. It's not obvious whether that is

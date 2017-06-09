@@ -35,8 +35,8 @@ class HttpUri
 {
 public:
     HttpUri(const uint8_t* start, int32_t length, HttpEnums::MethodId method_id_,
-        const HttpParaList::UriParam& uri_param_, HttpInfractions& infractions_,
-        HttpEventGen& events_) :
+        const HttpParaList::UriParam& uri_param_, HttpInfractions* infractions_,
+        HttpEventGen* events_) :
         uri(length, start), method_id(method_id_), uri_param(uri_param_),
         infractions(infractions_), events(events_)
         { normalize(); }
@@ -62,8 +62,8 @@ private:
     const Field uri;
     const HttpEnums::MethodId method_id;
     const HttpParaList::UriParam& uri_param;
-    HttpInfractions& infractions;
-    HttpEventGen& events;
+    HttpInfractions* infractions;
+    HttpEventGen* events;
 
     Field scheme;
     Field authority;

@@ -30,7 +30,7 @@
 using namespace HttpEnums;
 
 void UriNormalizer::normalize(const Field& input, Field& result, bool do_path, uint8_t* buffer,
-    const HttpParaList::UriParam& uri_param, HttpInfractions& infractions, HttpEventGen& events)
+    const HttpParaList::UriParam& uri_param, HttpInfractions* infractions, HttpEventGen* events)
 {
     // Normalize percent encodings and similar escape sequences
     int32_t data_length = norm_char_clean(input, buffer, uri_param, infractions, events);
@@ -49,7 +49,7 @@ void UriNormalizer::normalize(const Field& input, Field& result, bool do_path, u
 }
 
 bool UriNormalizer::need_norm(const Field& uri_component, bool do_path,
-    const HttpParaList::UriParam& uri_param, HttpInfractions& infractions, HttpEventGen& events)
+    const HttpParaList::UriParam& uri_param, HttpInfractions* infractions, HttpEventGen* events)
 {
     bool need_it;
     if (do_path && uri_param.simplify_path)
@@ -115,7 +115,7 @@ bool UriNormalizer::need_norm_path(const Field& uri_component,
 }
 
 int32_t UriNormalizer::norm_char_clean(const Field& input, uint8_t* out_buf,
-    const HttpParaList::UriParam& uri_param, HttpInfractions& infractions, HttpEventGen& events)
+    const HttpParaList::UriParam& uri_param, HttpInfractions* infractions, HttpEventGen* events)
 {
     bool utf8_needed = false;
     bool double_decoding_needed = false;
@@ -138,7 +138,7 @@ int32_t UriNormalizer::norm_char_clean(const Field& input, uint8_t* out_buf,
 int32_t UriNormalizer::norm_percent_processing(const Field& input, uint8_t* out_buf,
     const HttpParaList::UriParam& uri_param, bool& utf8_needed,
     std::vector<bool>& percent_encoded, bool& double_decoding_needed,
-    HttpInfractions& infractions, HttpEventGen& events)
+    HttpInfractions* infractions, HttpEventGen* events)
 {
     int32_t length = 0;
     for (int32_t k = 0; k < input.length(); k++)
@@ -179,8 +179,8 @@ int32_t UriNormalizer::norm_percent_processing(const Field& input, uint8_t* out_
             else if (uri_param.percent_u && is_u_encoding(input, k))
             {
                 // %u encoding, this is nonstandard and likely to be malicious
-                infractions += INF_URI_U_ENCODE;
-                events.create_event(EVENT_U_ENCODE);
+                *infractions += INF_URI_U_ENCODE;
+                events->create_event(EVENT_U_ENCODE);
                 percent_encoded[length] = true;
                 const uint8_t byte_val = reduce_to_eight_bits(extract_u_encoding(input, k),
                     uri_param, infractions, events);
@@ -194,8 +194,8 @@ int32_t UriNormalizer::norm_percent_processing(const Field& input, uint8_t* out_
             else
             {
                 // don't recognize, pass it through
-                infractions += INF_URI_UNKNOWN_PERCENT;
-                events.create_event(EVENT_UNKNOWN_PERCENT);
+                *infractions += INF_URI_UNKNOWN_PERCENT;
+                events->create_event(EVENT_UNKNOWN_PERCENT);
                 double_decoding_needed = true;
                 out_buf[length++] = '%';
             }
@@ -204,8 +204,8 @@ int32_t UriNormalizer::norm_percent_processing(const Field& input, uint8_t* out_
             // strong clue someone is hiding something.
             if (uri_param.unreserved_char[out_buf[length-1]])
             {
-                infractions += INF_URI_PERCENT_UNRESERVED;
-                events.create_event(EVENT_ASCII);
+                *infractions += INF_URI_PERCENT_UNRESERVED;
+                events->create_event(EVENT_ASCII);
             }
             break;
         }
@@ -215,7 +215,7 @@ int32_t UriNormalizer::norm_percent_processing(const Field& input, uint8_t* out_
 
 int32_t UriNormalizer::norm_utf8_processing(const Field& input, uint8_t* out_buf,
     const HttpParaList::UriParam& uri_param, const std::vector<bool>& percent_encoded,
-    bool& double_decoding_needed, HttpInfractions& infractions, HttpEventGen& events)
+    bool& double_decoding_needed, HttpInfractions* infractions, HttpEventGen* events)
 {
     int32_t length = 0;
     for (int32_t k=0; k < input.length(); k++)
@@ -228,12 +228,12 @@ int32_t UriNormalizer::norm_utf8_processing(const Field& input, uint8_t* out_buf
                 (percent_encoded[k+1] || uri_param.utf8_bare_byte) &&
                 ((input.start()[k+1] & 0xC0) == 0x80))
             {
-                infractions += INF_URI_PERCENT_UTF8_2B;
-                events.create_event(EVENT_UTF_8);
+                *infractions += INF_URI_PERCENT_UTF8_2B;
+                events->create_event(EVENT_UTF_8);
                 if (!percent_encoded[k] || !percent_encoded[k+1])
                 {
-                    infractions += INF_BARE_BYTE;
-                    events.create_event(EVENT_BARE_BYTE);
+                    *infractions += INF_BARE_BYTE;
+                    events->create_event(EVENT_BARE_BYTE);
                 }
                 const uint16_t utf8_val = ((input.start()[k] & 0x1F) << 6) +
                                            (input.start()[k+1] & 0x3F);
@@ -252,12 +252,12 @@ int32_t UriNormalizer::norm_utf8_processing(const Field& input, uint8_t* out_buf
                 (percent_encoded[k+2] || uri_param.utf8_bare_byte) &&
                 ((input.start()[k+2] & 0xC0) == 0x80))
             {
-                infractions += INF_URI_PERCENT_UTF8_3B;
-                events.create_event(EVENT_UTF_8);
+                *infractions += INF_URI_PERCENT_UTF8_3B;
+                events->create_event(EVENT_UTF_8);
                 if (!percent_encoded[k] || !percent_encoded[k+1] || !percent_encoded[k+2])
                 {
-                    infractions += INF_BARE_BYTE;
-                    events.create_event(EVENT_BARE_BYTE);
+                    *infractions += INF_BARE_BYTE;
+                    events->create_event(EVENT_BARE_BYTE);
                 }
                 const uint16_t utf8_val = ((input.start()[k] & 0x0F) << 12) +
                                           ((input.start()[k+1] & 0x3F) << 6) +
@@ -279,8 +279,8 @@ int32_t UriNormalizer::norm_utf8_processing(const Field& input, uint8_t* out_buf
 }
 
 int32_t UriNormalizer::norm_double_decode(const Field& input, uint8_t* out_buf,
-    const HttpParaList::UriParam& uri_param, HttpInfractions& infractions,
-    HttpEventGen& events)
+    const HttpParaList::UriParam& uri_param, HttpInfractions* infractions,
+    HttpEventGen* events)
 {
     // Double decoding is limited to %hh and %u encoding cases
     int32_t length = 0;
@@ -292,17 +292,17 @@ int32_t UriNormalizer::norm_double_decode(const Field& input, uint8_t* out_buf,
         {
             if (is_percent_encoding(input, k))
             {
-                infractions += INF_URI_DOUBLE_DECODE;
-                events.create_event(EVENT_DOUBLE_DECODE);
+                *infractions += INF_URI_DOUBLE_DECODE;
+                events->create_event(EVENT_DOUBLE_DECODE);
                 out_buf[length++] = extract_percent_encoding(input, k);
                 k += 2;
             }
             else if (uri_param.percent_u && is_u_encoding(input, k))
             {
-                infractions += INF_URI_DOUBLE_DECODE;
-                events.create_event(EVENT_DOUBLE_DECODE);
-                infractions += INF_URI_U_ENCODE;
-                events.create_event(EVENT_U_ENCODE);
+                *infractions += INF_URI_DOUBLE_DECODE;
+                events->create_event(EVENT_DOUBLE_DECODE);
+                *infractions += INF_URI_U_ENCODE;
+                events->create_event(EVENT_U_ENCODE);
                 out_buf[length++] = reduce_to_eight_bits(extract_u_encoding(input, k), uri_param,
                     infractions, events);
                 k += 5;
@@ -317,7 +317,7 @@ int32_t UriNormalizer::norm_double_decode(const Field& input, uint8_t* out_buf,
 }
 
 uint8_t UriNormalizer::reduce_to_eight_bits(uint16_t value,
-    const HttpParaList::UriParam& uri_param, HttpInfractions& infractions, HttpEventGen& events)
+    const HttpParaList::UriParam& uri_param, HttpInfractions* infractions, HttpEventGen* events)
 {
     // FIXIT-M are values <= 0xFF subject to the unicode map?
     if (value <= 0xFF)
@@ -326,14 +326,14 @@ uint8_t UriNormalizer::reduce_to_eight_bits(uint16_t value,
         return 0xFF;
     if (uri_param.unicode_map[value] != 0xFF)
     {
-        infractions += INF_CODE_POINT_IN_URI;
-        events.create_event(EVENT_CODE_POINT_IN_URI);
+        *infractions += INF_CODE_POINT_IN_URI;
+        events->create_event(EVENT_CODE_POINT_IN_URI);
     }
     return uri_param.unicode_map[value];
 }
 
 void UriNormalizer::detect_bad_char(const Field& uri_component,
-    const HttpParaList::UriParam& uri_param, HttpInfractions& infractions, HttpEventGen& events)
+    const HttpParaList::UriParam& uri_param, HttpInfractions* infractions, HttpEventGen* events)
 {
     // If the bad character detection feature is not configured we quit
     if (uri_param.bad_characters.count() == 0)
@@ -343,8 +343,8 @@ void UriNormalizer::detect_bad_char(const Field& uri_component,
     {
         if (uri_param.bad_characters[uri_component.start()[k]])
         {
-            infractions += INF_URI_BAD_CHAR;
-            events.create_event(EVENT_NON_RFC_CHAR);
+            *infractions += INF_URI_BAD_CHAR;
+            events->create_event(EVENT_NON_RFC_CHAR);
             return;
         }
     }
@@ -352,7 +352,7 @@ void UriNormalizer::detect_bad_char(const Field& uri_component,
 
 // Replace backslash with slash and plus with space
 void UriNormalizer::norm_substitute(uint8_t* buf, int32_t length,
-    const HttpParaList::UriParam& uri_param, HttpInfractions& infractions, HttpEventGen& events)
+    const HttpParaList::UriParam& uri_param, HttpInfractions* infractions, HttpEventGen* events)
 {
     if (uri_param.backslash_to_slash)
     {
@@ -361,8 +361,8 @@ void UriNormalizer::norm_substitute(uint8_t* buf, int32_t length,
             if (buf[k] == '\\')
             {
                 buf[k] = '/';
-                infractions += INF_BACKSLASH_IN_URI;
-                events.create_event(EVENT_BACKSLASH_IN_URI);
+                *infractions += INF_BACKSLASH_IN_URI;
+                events->create_event(EVENT_BACKSLASH_IN_URI);
             }
         }
     }
@@ -380,7 +380,7 @@ void UriNormalizer::norm_substitute(uint8_t* buf, int32_t length,
 
 // Caution: worst case output length is one greater than input length
 int32_t UriNormalizer::norm_path_clean(uint8_t* buf, const int32_t in_length,
-    HttpInfractions& infractions, HttpEventGen& events)
+    HttpInfractions* infractions, HttpEventGen* events)
 {
     // This is supposed to be the path portion of a URI. Read HttpUri::parse_uri() for an
     // explanation.
@@ -400,15 +400,15 @@ int32_t UriNormalizer::norm_path_clean(uint8_t* buf, const int32_t in_length,
         // Ignore this slash if it directly follows another slash
         else if ((k < in_length) && (length >= 1) && (buf[length-1] == '/'))
         {
-            infractions += INF_URI_MULTISLASH;
-            events.create_event(EVENT_MULTI_SLASH);
+            *infractions += INF_URI_MULTISLASH;
+            events->create_event(EVENT_MULTI_SLASH);
         }
         // This slash is the end of a /./ pattern, ignore this slash and remove the period from the
         // output
         else if ((length >= 2) && (buf[length-1] == '.') && (buf[length-2] == '/'))
         {
-            infractions += INF_URI_SLASH_DOT;
-            events.create_event(EVENT_SELF_DIR_TRAV);
+            *infractions += INF_URI_SLASH_DOT;
+            events->create_event(EVENT_SELF_DIR_TRAV);
             length -= 1;
         }
         // This slash is the end of a /../ pattern, normalization depends on whether there is a
@@ -416,8 +416,8 @@ int32_t UriNormalizer::norm_path_clean(uint8_t* buf, const int32_t in_length,
         else if ((length >= 3) && (buf[length-1] == '.') && (buf[length-2] == '.') &&
             (buf[length-3] == '/'))
         {
-            infractions += INF_URI_SLASH_DOT_DOT;
-            events.create_event(EVENT_DIR_TRAV);
+            *infractions += INF_URI_SLASH_DOT_DOT;
+            events->create_event(EVENT_DIR_TRAV);
             // Traversing above the root of the absolute path. A path of the form
             // /../../../foo/bar/whatever cannot be further normalized. Instead of taking away a
             // directory we leave the .. and write out the new slash. This code can write out the
@@ -427,8 +427,8 @@ int32_t UriNormalizer::norm_path_clean(uint8_t* buf, const int32_t in_length,
                 ((length >= 6) && (buf[length-4] == '.') && (buf[length-5] == '.') &&
                 (buf[length-6] == '/')))
             {
-                infractions += INF_URI_ROOT_TRAV;
-                events.create_event(EVENT_WEBROOT_DIR);
+                *infractions += INF_URI_ROOT_TRAV;
+                events->create_event(EVENT_WEBROOT_DIR);
                 buf[length++] = '/';
             }
             // Remove the previous directory from the output. "/foo/bar/../" becomes "/foo/"
@@ -465,7 +465,7 @@ void UriNormalizer::classic_normalize(const Field& input, Field& result,
     uint8_t* const buffer = new uint8_t[input.length() + URI_NORM_EXPANSION];
 
     // Normalize character escape sequences
-    int32_t data_length = norm_char_clean(input, buffer, uri_param, unused, dummy_ev);
+    int32_t data_length = norm_char_clean(input, buffer, uri_param, &unused, &dummy_ev);
 
     if (uri_param.simplify_path)
     {
@@ -475,10 +475,10 @@ void UriNormalizer::classic_normalize(const Field& input, Field& result,
         if (first_slash != nullptr)
         {
             const int32_t uri_offset = first_slash - buffer;
-            norm_substitute(buffer + uri_offset, data_length - uri_offset, uri_param, unused,
-                dummy_ev);
+            norm_substitute(buffer + uri_offset, data_length - uri_offset, uri_param, &unused,
+                &dummy_ev);
             data_length = uri_offset +
-                norm_path_clean(buffer + uri_offset, data_length - uri_offset, unused, dummy_ev);
+                norm_path_clean(buffer + uri_offset, data_length - uri_offset, &unused, &dummy_ev);
         }
     }
 
@@ -491,7 +491,7 @@ bool UriNormalizer::classic_need_norm(const Field& uri_component, bool do_path,
     HttpInfractions unused;
     HttpDummyEventGen dummy_ev;
 
-    return need_norm(uri_component, do_path, uri_param, unused, dummy_ev);
+    return need_norm(uri_component, do_path, uri_param, &unused, &dummy_ev);
 }
 
 void UriNormalizer::load_default_unicode_map(uint8_t map[65536])

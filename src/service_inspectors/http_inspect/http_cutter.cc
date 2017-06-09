@@ -26,7 +26,7 @@
 using namespace HttpEnums;
 
 ScanResult HttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
-    HttpInfractions& infractions, HttpEventGen& events, uint32_t, uint32_t)
+    HttpInfractions* infractions, HttpEventGen* events, uint32_t, uint32_t)
 {
     for (uint32_t k = 0; k < length; k++)
     {
@@ -35,13 +35,13 @@ ScanResult HttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
         // If we have seen nothing but white space so far ...
         if (num_crlf == octets_seen + k)
         {
-            if ((buffer[k] == ' ') || ((buffer[k] >= '\t') && (buffer[k] <= '\r')))
+            if (is_sp_tab_cr_lf_vt_ff[buffer[k]])
             {
-                if ((buffer[k] != '\n') && (buffer[k] != '\r'))
+                if (!is_cr_lf[buffer[k]])
                 {
                     // tab, VT, FF, or space between messages
-                    infractions += INF_WS_BETWEEN_MSGS;
-                    events.create_event(EVENT_WS_BETWEEN_MSGS);
+                    *infractions += INF_WS_BETWEEN_MSGS;
+                    events->create_event(EVENT_WS_BETWEEN_MSGS);
                 }
                 if (num_crlf < MAX_LEADING_WHITESPACE)
                 {
@@ -50,8 +50,8 @@ ScanResult HttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
                 }
                 else
                 {
-                    infractions += INF_TOO_MUCH_LEADING_WS;
-                    events.generate_misformatted_http(buffer, length);
+                    *infractions += INF_TOO_MUCH_LEADING_WS;
+                    events->generate_misformatted_http(buffer, length);
                     return SCAN_ABORT;
                 }
             }
@@ -75,8 +75,8 @@ ScanResult HttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
                 validated = true;
                 break;
             case V_BAD:
-                infractions += INF_NOT_HTTP;
-                events.generate_misformatted_http(buffer, length);
+                *infractions += INF_NOT_HTTP;
+                events->generate_misformatted_http(buffer, length);
                 return SCAN_ABORT;
             case V_TBD:
                 break;
@@ -88,16 +88,16 @@ ScanResult HttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
             if (num_crlf == 1)
             {
                 // There was no CR before this
-                infractions += INF_LF_WITHOUT_CR;
-                events.create_event(EVENT_LF_WITHOUT_CR);
+                *infractions += INF_LF_WITHOUT_CR;
+                events->create_event(EVENT_LF_WITHOUT_CR);
             }
             num_flush = k+1;
             return SCAN_FOUND;
         }
         if (num_crlf == 1)
         {   // CR not followed by LF
-            infractions += INF_CR_WITHOUT_LF;
-            events.create_event(EVENT_CR_WITHOUT_LF);
+            *infractions += INF_CR_WITHOUT_LF;
+            events->create_event(EVENT_CR_WITHOUT_LF);
             num_flush = k;                      // current octet not flushed
             return SCAN_FOUND;
         }
@@ -142,7 +142,7 @@ HttpStartCutter::ValidationResult HttpStatusCutter::validate(uint8_t octet)
 }
 
 ScanResult HttpHeaderCutter::cut(const uint8_t* buffer, uint32_t length,
-    HttpInfractions& infractions, HttpEventGen& events, uint32_t, uint32_t)
+    HttpInfractions* infractions, HttpEventGen* events, uint32_t, uint32_t)
 {
     // Header separators: leading \r\n, leading \n, nonleading \r\n\r\n, nonleading \n\r\n,
     // nonleading \r\n\n, and nonleading \n\n. The separator itself becomes num_excess which is
@@ -161,8 +161,8 @@ ScanResult HttpHeaderCutter::cut(const uint8_t* buffer, uint32_t length,
             }
             else if (buffer[k] == '\n')
             {
-                infractions += INF_LF_WITHOUT_CR;
-                events.create_event(EVENT_LF_WITHOUT_CR);
+                *infractions += INF_LF_WITHOUT_CR;
+                events->create_event(EVENT_LF_WITHOUT_CR);
                 state = ONE;
                 num_crlf++;
             }
@@ -170,8 +170,8 @@ ScanResult HttpHeaderCutter::cut(const uint8_t* buffer, uint32_t length,
         case HALF:
             if (buffer[k] == '\r')
             {
-                infractions += INF_CR_WITHOUT_LF;
-                events.create_event(EVENT_CR_WITHOUT_LF);
+                *infractions += INF_CR_WITHOUT_LF;
+                events->create_event(EVENT_CR_WITHOUT_LF);
                 state = THREEHALF;
                 num_crlf++;
             }
@@ -182,8 +182,8 @@ ScanResult HttpHeaderCutter::cut(const uint8_t* buffer, uint32_t length,
             }
             else
             {
-                infractions += INF_CR_WITHOUT_LF;
-                events.create_event(EVENT_CR_WITHOUT_LF);
+                *infractions += INF_CR_WITHOUT_LF;
+                events->create_event(EVENT_CR_WITHOUT_LF);
                 state = ZERO;
                 num_crlf = 0;
                 num_head_lines++;
@@ -197,8 +197,8 @@ ScanResult HttpHeaderCutter::cut(const uint8_t* buffer, uint32_t length,
             }
             else if (buffer[k] == '\n')
             {
-                infractions += INF_LF_WITHOUT_CR;
-                events.create_event(EVENT_LF_WITHOUT_CR);
+                *infractions += INF_LF_WITHOUT_CR;
+                events->create_event(EVENT_LF_WITHOUT_CR);
                 num_crlf++;
                 num_flush = k + 1;
                 return SCAN_FOUND;
@@ -213,8 +213,8 @@ ScanResult HttpHeaderCutter::cut(const uint8_t* buffer, uint32_t length,
         case THREEHALF:
             if (buffer[k] == '\r')
             {
-                infractions += INF_CR_WITHOUT_LF;
-                events.create_event(EVENT_CR_WITHOUT_LF);
+                *infractions += INF_CR_WITHOUT_LF;
+                events->create_event(EVENT_CR_WITHOUT_LF);
                 num_crlf++;
             }
             else if (buffer[k] == '\n')
@@ -225,8 +225,8 @@ ScanResult HttpHeaderCutter::cut(const uint8_t* buffer, uint32_t length,
             }
             else
             {
-                infractions += INF_CR_WITHOUT_LF;
-                events.create_event(EVENT_CR_WITHOUT_LF);
+                *infractions += INF_CR_WITHOUT_LF;
+                events->create_event(EVENT_CR_WITHOUT_LF);
                 state = ZERO;
                 num_crlf = 0;
                 num_head_lines++;
@@ -238,8 +238,8 @@ ScanResult HttpHeaderCutter::cut(const uint8_t* buffer, uint32_t length,
     return SCAN_NOTFOUND;
 }
 
-ScanResult HttpBodyClCutter::cut(const uint8_t*, uint32_t length, HttpInfractions&,
-    HttpEventGen&, uint32_t flow_target, uint32_t flow_max)
+ScanResult HttpBodyClCutter::cut(const uint8_t*, uint32_t length, HttpInfractions*,
+    HttpEventGen*, uint32_t flow_target, uint32_t flow_max)
 {
     assert(remaining > 0);
 
@@ -277,7 +277,7 @@ ScanResult HttpBodyClCutter::cut(const uint8_t*, uint32_t length, HttpInfraction
     }
 }
 
-ScanResult HttpBodyOldCutter::cut(const uint8_t*, uint32_t, HttpInfractions&, HttpEventGen&,
+ScanResult HttpBodyOldCutter::cut(const uint8_t*, uint32_t, HttpInfractions*, HttpEventGen*,
     uint32_t flow_target, uint32_t)
 {
     if (flow_target == 0)
@@ -293,7 +293,7 @@ ScanResult HttpBodyOldCutter::cut(const uint8_t*, uint32_t, HttpInfractions&, Ht
 }
 
 ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
-    HttpInfractions& infractions, HttpEventGen& events, uint32_t flow_target, uint32_t)
+    HttpInfractions* infractions, HttpEventGen* events, uint32_t flow_target, uint32_t)
 {
     // Are we skipping through the rest of this chunked body to the trailers and the next message?
     const bool discard_mode = (flow_target == 0);
@@ -305,102 +305,131 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
         num_good_chunks = 0;
     }
 
-    for (uint32_t k=0; k < length; k++)
+    for (int32_t k=0; k < static_cast<int32_t>(length); k++)
     {
         switch (curr_state)
         {
+        case CHUNK_NEWLINES:
+            // Looking for improper CRLFs before the chunk header
+            if (is_cr_lf[buffer[k]])
+            {
+                *infractions += INF_CHUNK_BAD_SEP;
+                events->create_event(EVENT_CHUNK_BAD_SEP);
+                break;
+            }
+            curr_state = CHUNK_ZEROS;
+            k--; // Reprocess this octet in the next state
+            break;
         case CHUNK_ZEROS:
+            // Looking for leading zeros in the chunk size.
             if (buffer[k] == '0')
             {
                 num_zeros++;
                 if (num_zeros == 5)
                 {
-                    infractions += INF_CHUNK_ZEROS;
-                    events.create_event(EVENT_CHUNK_ZEROS);
+                    *infractions += INF_CHUNK_ZEROS;
+                    events->create_event(EVENT_CHUNK_ZEROS);
                 }
                 break;
             }
             curr_state = CHUNK_NUMBER;
-            // Fall through
+            k--;
+            break;
         case CHUNK_NUMBER:
-            if (buffer[k] == '\r')
-            {
-                curr_state = CHUNK_HCRLF;
-                break;
-            }
-            if (is_sp_tab[buffer[k]])
-            {
-                infractions += INF_CHUNK_WHITESPACE;
-                events.create_event(EVENT_CHUNK_WHITESPACE);
-                curr_state = CHUNK_WHITESPACE;
-                break;
-            }
-            if (buffer[k] == ';')
-            {
-                infractions += INF_CHUNK_OPTIONS;
-                events.create_event(EVENT_CHUNK_OPTIONS);
-                curr_state = CHUNK_OPTIONS;
-                break;
-            }
-            if (as_hex[buffer[k]] == -1)
-            {
-                // illegal character present in chunk length
-                infractions += INF_CHUNK_BAD_CHAR;
-                events.create_event(EVENT_BROKEN_CHUNK);
-                curr_state = CHUNK_BAD;
-                break;
-            }
-            expected = expected * 16 + as_hex[buffer[k]];
-            if (++digits_seen > 8)
-            {
-                // overflow protection: must fit into 32 bits
-                infractions += INF_CHUNK_TOO_LARGE;
-                events.create_event(EVENT_BROKEN_CHUNK);
-                curr_state = CHUNK_BAD;
-                break;
-            }
-            break;
-        case CHUNK_WHITESPACE:
-            if (buffer[k] == '\r')
-            {
-                curr_state = CHUNK_HCRLF;
-                break;
-            }
-            if (buffer[k] == ';')
-            {
-                infractions += INF_CHUNK_OPTIONS;
-                events.create_event(EVENT_CHUNK_OPTIONS);
-                curr_state = CHUNK_OPTIONS;
-                break;
-            }
-            if (!is_sp_tab[buffer[k]])
-            {
-                // illegal character present in chunk length
-                infractions += INF_CHUNK_BAD_CHAR;
-                events.create_event(EVENT_BROKEN_CHUNK);
-                curr_state = CHUNK_BAD;
-                break;
-            }
-            break;
-        case CHUNK_OPTIONS:
+            // Reading the chunk size
             if (buffer[k] == '\r')
             {
                 curr_state = CHUNK_HCRLF;
             }
             else if (buffer[k] == '\n')
             {
-                // FIXIT-L better to keep parsing chunks after bare LF (several changes needed)?
-                infractions += INF_CHUNK_BARE_LF;
-                events.create_event(EVENT_BROKEN_CHUNK);
+                *infractions += INF_CHUNK_BARE_LF;
+                events->create_event(EVENT_CHUNK_BARE_LF);
+                curr_state = CHUNK_HCRLF;
+                k--;
+            }
+            else if (is_sp_tab[buffer[k]])
+            {
+                *infractions += INF_CHUNK_WHITESPACE;
+                events->create_event(EVENT_CHUNK_WHITESPACE);
+                curr_state = CHUNK_WHITESPACE;
+            }
+            else if (buffer[k] == ';')
+            {
+                *infractions += INF_CHUNK_OPTIONS;
+                events->create_event(EVENT_CHUNK_OPTIONS);
+                curr_state = CHUNK_OPTIONS;
+            }
+            else if (as_hex[buffer[k]] == -1)
+            {
+                // illegal character present in chunk length
+                *infractions += INF_CHUNK_BAD_CHAR;
+                events->create_event(EVENT_BROKEN_CHUNK);
                 curr_state = CHUNK_BAD;
-                break;
+            }
+            else
+            {
+                expected = expected * 16 + as_hex[buffer[k]];
+                if (++digits_seen > 8)
+                {
+                    // overflow protection: must fit into 32 bits
+                    *infractions += INF_CHUNK_TOO_LARGE;
+                    events->create_event(EVENT_BROKEN_CHUNK);
+                    curr_state = CHUNK_BAD;
+                }
+            }
+            break;
+        case CHUNK_WHITESPACE:
+            // Skipping over improper whitespace following the chunk size
+            if (buffer[k] == '\r')
+            {
+                curr_state = CHUNK_HCRLF;
+            }
+            else if (buffer[k] == '\n')
+            {
+                *infractions += INF_CHUNK_BARE_LF;
+                events->create_event(EVENT_CHUNK_BARE_LF);
+                curr_state = CHUNK_HCRLF;
+                k--;
+            }
+            else if (buffer[k] == ';')
+            {
+                *infractions += INF_CHUNK_OPTIONS;
+                events->create_event(EVENT_CHUNK_OPTIONS);
+                curr_state = CHUNK_OPTIONS;
+            }
+            else if (!is_sp_tab[buffer[k]])
+            {
+                // illegal character present in chunk length
+                *infractions += INF_CHUNK_BAD_CHAR;
+                events->create_event(EVENT_BROKEN_CHUNK);
+                curr_state = CHUNK_BAD;
+            }
+            break;
+        case CHUNK_OPTIONS:
+            // The RFC permits options to follow the chunk size. No one normally does this.
+            if (buffer[k] == '\r')
+            {
+                curr_state = CHUNK_HCRLF;
+            }
+            else if (buffer[k] == '\n')
+            {
+                *infractions += INF_CHUNK_BARE_LF;
+                events->create_event(EVENT_CHUNK_BARE_LF);
+                curr_state = CHUNK_HCRLF;
+                k--;
             }
             break;
         case CHUNK_HCRLF:
+            // The chunk header should end in CRLF and this should be the LF
             if (buffer[k] != '\n')
             {
-                infractions += INF_CHUNK_LONE_CR;
-                events.create_event(EVENT_BROKEN_CHUNK);
+                // This is qualitatively different from similar bare CR issues because it doesn't
+                // provide a transparent data channel. A recipient is much less likely to implement
+                // tolerance for this irregularity because a chunk that begins with LF is
+                // ambiguous.
+                *infractions += INF_CHUNK_LONE_CR;
+                events->create_event(EVENT_BROKEN_CHUNK);
                 curr_state = CHUNK_BAD;
                 break;
             }
@@ -417,13 +446,13 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
             }
             else
             {
-                infractions += INF_CHUNK_NO_LENGTH;
-                events.create_event(EVENT_BROKEN_CHUNK);
+                *infractions += INF_CHUNK_NO_LENGTH;
+                events->create_event(EVENT_BROKEN_CHUNK);
                 curr_state = CHUNK_BAD;
-                break;
             }
             break;
         case CHUNK_DATA:
+            // Moving through the chunk data
           {
             uint32_t skip_amount = (length-k <= expected) ? length-k : expected;
             if (!discard_mode && (skip_amount > flow_target-data_seen))
@@ -446,30 +475,42 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
             break;
           }
         case CHUNK_DCRLF1:
-            if (buffer[k] != '\r')
+            // The CR from the end-of-chunk CRLF should be here
+            if (buffer[k] == '\r')
             {
-                infractions += INF_CHUNK_BAD_END;
-                events.create_event(EVENT_BROKEN_CHUNK);
-                curr_state = CHUNK_BAD;
-                break;
+                curr_state = CHUNK_DCRLF2;
             }
-            curr_state = CHUNK_DCRLF2;
+            else if (buffer[k] == '\n')
+            {
+                *infractions += INF_CHUNK_BAD_SEP;
+                events->create_event(EVENT_CHUNK_BAD_SEP);
+                curr_state = CHUNK_DCRLF2;
+                k--;
+            }
+            else
+            {
+                *infractions += INF_CHUNK_BAD_END;
+                events->create_event(EVENT_BROKEN_CHUNK);
+                curr_state = CHUNK_BAD;
+            }
             break;
         case CHUNK_DCRLF2:
-            if (buffer[k] != '\n')
-            {
-                infractions += INF_CHUNK_BAD_END;
-                events.create_event(EVENT_BROKEN_CHUNK);
-                curr_state = CHUNK_BAD;
-                break;
-            }
+            // The LF from the end-of-chunk CRLF should be here
             num_good_chunks++;
-            curr_state = CHUNK_ZEROS;
             num_zeros = 0;
             expected = 0;
             digits_seen = 0;
+            curr_state = CHUNK_NEWLINES;
+            if (buffer[k] == '\n')
+                break;
+            *infractions += INF_CHUNK_BAD_SEP;
+            events->create_event(EVENT_CHUNK_BAD_SEP);
+            if (buffer[k] != '\r')
+                k--;
             break;
         case CHUNK_BAD:
+            // Chunk reassembly has failed. This is a terminal state but inspection of the body
+            // must go on.
             // If we are skipping to the trailers and next message the broken chunk thwarts us
             if (discard_mode)
             {

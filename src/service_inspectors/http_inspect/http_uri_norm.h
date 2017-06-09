@@ -35,11 +35,11 @@ public:
     static const unsigned URI_NORM_EXPANSION = 1;
 
     static bool need_norm(const Field& uri_component, bool do_path,
-        const HttpParaList::UriParam& uri_param, HttpInfractions& infractions,
-        HttpEventGen& events);
+        const HttpParaList::UriParam& uri_param, HttpInfractions* infractions,
+        HttpEventGen* events);
     static void normalize(const Field& input, Field& result, bool do_path, uint8_t* buffer,
-        const HttpParaList::UriParam& uri_param, HttpInfractions& infractions,
-        HttpEventGen& events);
+        const HttpParaList::UriParam& uri_param, HttpInfractions* infractions,
+        HttpEventGen* events);
     static bool classic_need_norm(const Field& uri_component, bool do_path,
         const HttpParaList::UriParam& uri_param);
     static void classic_normalize(const Field& input, Field& result,
@@ -53,28 +53,28 @@ private:
     static bool need_norm_no_path(const Field& uri_component,
         const HttpParaList::UriParam& uri_param);
     static int32_t norm_char_clean(const Field& input, uint8_t* out_buf,
-        const HttpParaList::UriParam& uri_param, HttpInfractions& infractions,
-        HttpEventGen& events);
+        const HttpParaList::UriParam& uri_param, HttpInfractions* infractions,
+        HttpEventGen* events);
     static int32_t norm_percent_processing(const Field& input, uint8_t* out_buf,
         const HttpParaList::UriParam& uri_param, bool& utf8_needed,
         std::vector<bool>& percent_encoded, bool& double_decoding_needed,
-        HttpInfractions& infractions, HttpEventGen& events);
+        HttpInfractions* infractions, HttpEventGen* events);
     static int32_t norm_utf8_processing(const Field& input, uint8_t* out_buf,
         const HttpParaList::UriParam& uri_param, const std::vector<bool>& percent_encoded,
-        bool& double_decoding_needed, HttpInfractions& infractions, HttpEventGen& events);
+        bool& double_decoding_needed, HttpInfractions* infractions, HttpEventGen* events);
     static int32_t norm_double_decode(const Field& input, uint8_t* out_buf,
-        const HttpParaList::UriParam& uri_param, HttpInfractions& infractions,
-        HttpEventGen& events);
+        const HttpParaList::UriParam& uri_param, HttpInfractions* infractions,
+        HttpEventGen* events);
     static void norm_substitute(uint8_t* buf, int32_t length,
-        const HttpParaList::UriParam& uri_param,  HttpInfractions& infractions,
-        HttpEventGen& events);
+        const HttpParaList::UriParam& uri_param,  HttpInfractions* infractions,
+        HttpEventGen* events);
     static int32_t norm_path_clean(uint8_t* buf, const int32_t in_length,
-        HttpInfractions& infractions, HttpEventGen& events);
+        HttpInfractions* infractions, HttpEventGen* events);
     static void detect_bad_char(const Field& uri_component,
-        const HttpParaList::UriParam& uri_param, HttpInfractions& infractions,
-        HttpEventGen& events);
+        const HttpParaList::UriParam& uri_param, HttpInfractions* infractions,
+        HttpEventGen* events);
     static uint8_t reduce_to_eight_bits(uint16_t value, const HttpParaList::UriParam& uri_param,
-        HttpInfractions& infractions, HttpEventGen& events);
+        HttpInfractions* infractions, HttpEventGen* events);
     static bool advance_to_code_page(FILE* file, int page_to_use);
     static bool map_code_points(FILE* file, uint8_t* map);
 

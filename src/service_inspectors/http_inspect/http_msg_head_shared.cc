@@ -94,8 +94,8 @@ void HttpMsgHeadShared::parse_header_block()
         header_line[num_headers].set(header_length, msg_text.start() + bytes_used + num_seps);
         if (header_line[num_headers].length() > MAX_HEADER_LENGTH)
         {
-            infractions += INF_TOO_LONG_HEADER;
-            events.create_event(EVENT_LONG_HDR);
+            *transaction->get_infractions(source_id) += INF_TOO_LONG_HEADER;
+            transaction->get_events(source_id)->create_event(EVENT_LONG_HDR);
         }
         bytes_used += num_seps + header_line[num_headers].length();
         if (++num_headers >= MAX_HEADERS)
@@ -105,8 +105,8 @@ void HttpMsgHeadShared::parse_header_block()
     }
     if (bytes_used < msg_text.length())
     {
-        infractions += INF_TOO_MANY_HEADERS;
-        events.create_event(EVENT_MAX_HEADERS);
+        *transaction->get_infractions(source_id) += INF_TOO_MANY_HEADERS;
+        transaction->get_events(source_id)->create_event(EVENT_MAX_HEADERS);
     }
 }
 
@@ -156,8 +156,8 @@ int32_t HttpMsgHeadShared::find_next_header(const uint8_t* buffer, int32_t lengt
             }
             else
             {
-                infractions += INF_HEADER_WRAPPING;
-                events.create_event(EVENT_HEADER_WRAPPING);
+                *transaction->get_infractions(source_id) += INF_HEADER_WRAPPING;
+                transaction->get_events(source_id)->create_event(EVENT_HEADER_WRAPPING);
             }
         }
     }
@@ -187,8 +187,8 @@ void HttpMsgHeadShared::parse_header_lines()
         }
         else
         {
-            infractions += INF_BAD_HEADER;
-            events.create_event(EVENT_BAD_HEADER);
+            *transaction->get_infractions(source_id) += INF_BAD_HEADER;
+            transaction->get_events(source_id)->create_event(EVENT_BAD_HEADER);
             header_name[k].set(STAT_PROBLEMATIC);
             header_value[k].set(STAT_PROBLEMATIC);
         }
@@ -217,14 +217,14 @@ void HttpMsgHeadShared::derive_header_name_id(int index)
                 buffer[k] : buffer[k] - ('A' - 'a');
             if (!is_print_char[buffer[k]])
             {
-                infractions += INF_BAD_CHAR_IN_HEADER_NAME;
-                events.create_event(EVENT_BAD_CHAR_IN_HEADER_NAME);
+                *transaction->get_infractions(source_id) += INF_BAD_CHAR_IN_HEADER_NAME;
+                transaction->get_events(source_id)->create_event(EVENT_BAD_CHAR_IN_HEADER_NAME);
             }
         }
         else
         {
-            infractions += INF_HEAD_NAME_WHITESPACE;
-            events.create_event(EVENT_HEAD_NAME_WHITESPACE);
+            *transaction->get_infractions(source_id) += INF_HEAD_NAME_WHITESPACE;
+            transaction->get_events(source_id)->create_event(EVENT_HEAD_NAME_WHITESPACE);
         }
     }
     header_name_id[index] = (HeaderId)str_to_code(lower_name, lower_length, header_list);
@@ -328,8 +328,9 @@ const Field& HttpMsgHeadShared::get_header_value_norm(HeaderId header_id)
     NormalizedHeader* node = get_header_node(header_id);
     if (node == nullptr)
         return Field::FIELD_NULL;
-    header_norms[header_id]->normalize(header_id, node->count, infractions, events, header_name_id,
-        header_value, num_headers, node->norm);
+    header_norms[header_id]->normalize(header_id, node->count,
+        transaction->get_infractions(source_id), transaction->get_events(source_id),
+        header_name_id, header_value, num_headers, node->norm);
     return node->norm;
 }
 

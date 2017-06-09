@@ -32,9 +32,8 @@
 class HttpInfractions
 {
 public:
-    HttpInfractions() { }
+    HttpInfractions() = default;
     HttpInfractions(int inf) { assert((inf >= 0) && (inf < MAX)); infractions[inf] = true; }
-    void reset() { infractions = 0; }
     bool none_found() const { return infractions == 0; }
     HttpInfractions& operator+=(const HttpInfractions& rhs)
         { infractions |= rhs.infractions; return *this; }

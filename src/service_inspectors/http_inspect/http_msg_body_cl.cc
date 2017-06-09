@@ -32,8 +32,6 @@ void HttpMsgBodyCl::update_flow()
         // More body coming
         session_data->body_octets[source_id] = body_octets;
         update_depth();
-        session_data->infractions[source_id] = infractions;
-        session_data->events[source_id] = events;
     }
     else
     {

@@ -56,7 +56,7 @@ int32_t HeaderNormalizer::derive_header_content(const uint8_t* value, int32_t le
 
 // This method normalizes the header field value for headId.
 void HeaderNormalizer::normalize(const HeaderId head_id, const int count,
-    HttpInfractions& infractions, HttpEventGen& events, const HeaderId header_name_id[],
+    HttpInfractions* infractions, HttpEventGen* events, const HeaderId header_name_id[],
     const Field header_value[], const int32_t num_headers, Field& result_field) const
 {
     if (result_field.length() != STAT_NOT_COMPUTE)

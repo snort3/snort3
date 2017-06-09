@@ -290,7 +290,7 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_LONG_HDR,                   "long header" },
     { EVENT_MAX_HEADERS,                "max header fields" },
     { EVENT_MULTIPLE_CONTLEN,           "multiple content length" },
-    { EVENT_CHUNK_SIZE_MISMATCH,        "chunk size mismatch detected" },
+    { EVENT_OBSOLETE_CHUNK_SIZE_MISMATCH, "obsolete event--should not appear" },
     { EVENT_INVALID_TRUEIP,             "invalid IP in true-client-IP/XFF header" },
     { EVENT_MULTIPLE_HOST_HDRS,         "multiple host hdrs detected" },
     { EVENT_LONG_HOSTNAME,              "hostname exceeds 255 characters" },
@@ -306,7 +306,7 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_ANOM_SERVER,                "anomalous http server on undefined HTTP port" },
     { EVENT_INVALID_STATCODE,           "invalid status code in HTTP response" },
     { EVENT_UNUSED_1,                   "unused event number--should not appear" },
-    { EVENT_UTF_NORM_FAIL,              "HTTP response has UTF charset which failed to normalize" },
+    { EVENT_UTF_NORM_FAIL,              "HTTP response has UTF charset that failed to normalize" },
     { EVENT_UTF7,                       "HTTP response has UTF-7 charset" },
     { EVENT_DECOMPR_FAILED,             "HTTP response gzip decompression failed" },
     { EVENT_CONSECUTIVE_SMALL_CHUNKS_S, "server consecutive small chunk sizes" },
@@ -354,6 +354,8 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_BAD_CONTENT_LENGTH,         "bad Content-Length value in HTTP header" },
     { EVENT_HEADER_WRAPPING,            "HTTP header line wrapped" },
     { EVENT_CR_WITHOUT_LF,              "HTTP header line terminated by CR without a LF" },
+    { EVENT_CHUNK_BAD_SEP,              "chunk terminated by nonstandard separator" },
+    { EVENT_CHUNK_BARE_LF,              "chunk length terminated by LF without CR" },
     { 0, nullptr }
 };
 
@@ -520,6 +522,33 @@ const bool HttpEnums::is_sp_tab_lf[256] =
 const bool HttpEnums::is_sp_tab_cr_lf[256] =
 {
     false, false, false, false, false, false, false, false, false,  true,  true, false, false,  true, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+     true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
+};
+
+const bool HttpEnums::is_sp_tab_cr_lf_vt_ff[256] =
+{
+    false, false, false, false, false, false, false, false, false,  true,  true,  true,  true,  true, false, false,
     false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
 
      true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,

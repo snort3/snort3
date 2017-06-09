@@ -44,8 +44,6 @@ HttpMsgSection::HttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
     params(params_),
     transaction(HttpTransaction::attach_my_transaction(session_data, source_id)),
     tcp_close(session_data->tcp_close[source_id]),
-    infractions(session_data->infractions[source_id]),
-    events(session_data->events[source_id]),
     version_id(session_data->version_id[source_id]),
     method_id((source_id == SRC_CLIENT) ? session_data->method_id : METH__NOT_PRESENT),
     status_code_num((source_id == SRC_SERVER) ? session_data->status_code_num : STAT_NOT_PRESENT)
@@ -221,8 +219,12 @@ void HttpMsgSection::print_section_title(FILE* output, const char* title) const
 void HttpMsgSection::print_section_wrapup(FILE* output) const
 {
     fprintf(output, "Infractions: %016" PRIx64 " %016" PRIx64 ", Events: %016" PRIx64 " %016"
-        PRIx64 ", TCP Close: %s\n\n", infractions.get_raw2(), infractions.get_raw(),
-        events.get_raw2(), events.get_raw(), tcp_close ? "True" : "False");
+        PRIx64 ", TCP Close: %s\n\n",
+        transaction->get_infractions(source_id)->get_raw2(),
+        transaction->get_infractions(source_id)->get_raw(),
+        transaction->get_events(source_id)->get_raw2(),
+        transaction->get_events(source_id)->get_raw(),
+        tcp_close ? "True" : "False");
     if (HttpTestManager::get_show_pegs())
     {
         print_peg_counts(output);

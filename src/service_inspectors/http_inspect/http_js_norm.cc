@@ -71,8 +71,8 @@ void HttpJsNorm::configure()
     htmltype_search_mpse->prep();
 }
 
-void HttpJsNorm::normalize(const Field& input, Field& output, HttpInfractions& infractions,
-    HttpEventGen& events) const
+void HttpJsNorm::normalize(const Field& input, Field& output, HttpInfractions* infractions,
+    HttpEventGen* events) const
 {
     bool js_present = false;
     int index = 0;
@@ -160,18 +160,18 @@ void HttpJsNorm::normalize(const Field& input, Field& output, HttpInfractions& i
         {
             if (js.alerts & ALERT_LEVELS_EXCEEDED)
             {
-                infractions += INF_JS_OBFUSCATION_EXCD;
-                events.create_event(EVENT_JS_OBFUSCATION_EXCD);
+                *infractions += INF_JS_OBFUSCATION_EXCD;
+                events->create_event(EVENT_JS_OBFUSCATION_EXCD);
             }
             if (js.alerts & ALERT_SPACES_EXCEEDED)
             {
-                infractions += INF_JS_EXCESS_WS;
-                events.create_event(EVENT_JS_EXCESS_WS);
+                *infractions += INF_JS_EXCESS_WS;
+                events->create_event(EVENT_JS_EXCESS_WS);
             }
             if (js.alerts & ALERT_MIXED_ENCODINGS)
             {
-                infractions += INF_MIXED_ENCODINGS;
-                events.create_event(EVENT_MIXED_ENCODINGS);
+                *infractions += INF_MIXED_ENCODINGS;
+                events->create_event(EVENT_MIXED_ENCODINGS);
             }
         }
         output.set(index, buffer, true);

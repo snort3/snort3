@@ -40,13 +40,27 @@ void HttpStreamSplitter::chunk_spray(HttpFlowData* session_data, uint8_t* buffer
     if (is_broken_chunk && (num_good_chunks == 0))
         curr_state = CHUNK_BAD;
 
-    for (uint32_t k=0; k < length; k++)
+    for (int32_t k=0; k < static_cast<int32_t>(length); k++)
     {
         switch (curr_state)
         {
+        case CHUNK_NEWLINES:
+            if (!is_cr_lf[data[k]])
+            {
+                curr_state = CHUNK_NUMBER;
+                k--;
+            }
+            break;
+        case CHUNK_ZEROS:
         case CHUNK_NUMBER:
+            // CHUNK_ZEROS is not a distinct state in reassemble(). Here to avoid compiler warning.
             if (data[k] == '\r')
                 curr_state = CHUNK_HCRLF;
+            else if (data[k] == '\n')
+            {
+                curr_state = CHUNK_HCRLF;
+                k--;
+            }
             else if (data[k] == ';')
                 curr_state = CHUNK_OPTIONS;
             else if (is_sp_tab[data[k]])
@@ -59,6 +73,11 @@ void HttpStreamSplitter::chunk_spray(HttpFlowData* session_data, uint8_t* buffer
             // No practical difference between white space and options in reassemble()
             if (data[k] == '\r')
                 curr_state = CHUNK_HCRLF;
+            else if (data[k] == '\n')
+            {
+                curr_state = CHUNK_HCRLF;
+                k--;
+            }
             break;
         case CHUNK_HCRLF:
             if (expected > 0)
@@ -66,8 +85,8 @@ void HttpStreamSplitter::chunk_spray(HttpFlowData* session_data, uint8_t* buffer
             else
             {
                 // Terminating zero-length chunk
-                assert(k+1 == length);
-                curr_state = CHUNK_NUMBER;
+                assert(k+1 == static_cast<int32_t>(length));
+                curr_state = CHUNK_NEWLINES;
             }
             break;
         case CHUNK_DATA:
@@ -77,7 +96,8 @@ void HttpStreamSplitter::chunk_spray(HttpFlowData* session_data, uint8_t* buffer
                 (session_data->section_offset[source_id] == 0);
             decompress_copy(buffer, session_data->section_offset[source_id], data+k, skip_amount,
                 session_data->compression[source_id], session_data->compress_stream[source_id],
-                at_start, session_data->infractions[source_id], session_data->events[source_id]);
+                at_start, session_data->get_infractions(source_id),
+                session_data->get_events(source_id));
             if ((expected -= skip_amount) == 0)
                 curr_state = CHUNK_DCRLF1;
             k += skip_amount-1;
@@ -85,15 +105,19 @@ void HttpStreamSplitter::chunk_spray(HttpFlowData* session_data, uint8_t* buffer
           }
         case CHUNK_DCRLF1:
             curr_state = CHUNK_DCRLF2;
+            if (data[k] == '\n')
+                k--;
             break;
         case CHUNK_DCRLF2:
             if (is_broken_chunk && (--num_good_chunks == 0))
                 curr_state = CHUNK_BAD;
             else
             {
-                curr_state = CHUNK_NUMBER;
+                curr_state = CHUNK_NEWLINES;
                 expected = 0;
             }
+            if (!is_cr_lf[data[k]])
+                k--;
             break;
         case CHUNK_BAD:
           {
@@ -102,21 +126,18 @@ void HttpStreamSplitter::chunk_spray(HttpFlowData* session_data, uint8_t* buffer
                 (session_data->section_offset[source_id] == 0);
             decompress_copy(buffer, session_data->section_offset[source_id], data+k, skip_amount,
                 session_data->compression[source_id], session_data->compress_stream[source_id],
-                at_start, session_data->infractions[source_id], session_data->events[source_id]);
+                at_start, session_data->get_infractions(source_id),
+                session_data->get_events(source_id));
             k += skip_amount-1;
             break;
           }
-        case CHUNK_ZEROS:
-            // Not a possible state in reassemble(). Here to avoid compiler warning.
-            assert(false);
-            break;
         }
     }
 }
 
 void HttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& offset, const uint8_t* data,
     uint32_t length, HttpEnums::CompressId& compression, z_stream*& compress_stream,
-    bool at_start, HttpInfractions& infractions, HttpEventGen& events)
+    bool at_start, HttpInfractions* infractions, HttpEventGen* events)
 {
     if ((compression == CMP_GZIP) || (compression == CMP_DEFLATE))
     {
@@ -135,8 +156,8 @@ void HttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& offset, cons
                 if (ret_val == Z_STREAM_END)
                 {
                     // The zipped data stream ended but there is more input data
-                    infractions += INF_GZIP_EARLY_END;
-                    events.create_event(EVENT_GZIP_FAILURE);
+                    *infractions += INF_GZIP_EARLY_END;
+                    events->create_event(EVENT_GZIP_FAILURE);
                     const uInt num_copy =
                         (compress_stream->avail_in <= compress_stream->avail_out) ?
                         compress_stream->avail_in : compress_stream->avail_out;
@@ -147,8 +168,8 @@ void HttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& offset, cons
                 {
                     assert(compress_stream->avail_out == 0);
                     // The data expanded too much
-                    infractions += INF_GZIP_OVERRUN;
-                    events.create_event(EVENT_GZIP_OVERRUN);
+                    *infractions += INF_GZIP_OVERRUN;
+                    events->create_event(EVENT_GZIP_OVERRUN);
                 }
                 compression = CMP_NONE;
                 inflateEnd(compress_stream);
@@ -175,8 +196,8 @@ void HttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& offset, cons
         }
         else
         {
-            infractions += INF_GZIP_FAILURE;
-            events.create_event(EVENT_GZIP_FAILURE);
+            *infractions += INF_GZIP_FAILURE;
+            events->create_event(EVENT_GZIP_FAILURE);
             compression = CMP_NONE;
             inflateEnd(compress_stream);
             delete compress_stream;
@@ -190,8 +211,8 @@ void HttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& offset, cons
     if (length > MAX_OCTETS - offset)
     {
         length = MAX_OCTETS - offset;
-        infractions += INF_GZIP_OVERRUN;
-        events.create_event(EVENT_GZIP_OVERRUN);
+        *infractions += INF_GZIP_OVERRUN;
+        events->create_event(EVENT_GZIP_OVERRUN);
     }
     memcpy(buffer + offset, data, length);
     offset += length;
@@ -317,7 +338,8 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total, un
              (session_data->section_offset[source_id] == 0);
         decompress_copy(buffer, session_data->section_offset[source_id], data, len,
             session_data->compression[source_id], session_data->compress_stream[source_id],
-            at_start, session_data->infractions[source_id], session_data->events[source_id]);
+            at_start, session_data->get_infractions(source_id),
+            session_data->get_events(source_id));
     }
     else
     {

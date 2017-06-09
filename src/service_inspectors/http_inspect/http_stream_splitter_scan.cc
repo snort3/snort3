@@ -151,17 +151,17 @@ StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data,
     }
     const uint32_t max_length = MAX_OCTETS - cutter->get_octets_seen();
     const ScanResult cut_result = cutter->cut(data, (length <= max_length) ? length :
-        max_length, session_data->infractions[source_id], session_data->events[source_id],
+        max_length, session_data->get_infractions(source_id), session_data->get_events(source_id),
         session_data->section_size_target[source_id], session_data->section_size_max[source_id]);
     switch (cut_result)
     {
     case SCAN_NOTFOUND:
         if (cutter->get_octets_seen() == MAX_OCTETS)
         {
-            session_data->infractions[source_id] += INF_ENDLESS_HEADER;
+            *session_data->get_infractions(source_id) += INF_ENDLESS_HEADER;
             // FIXIT-L the following call seems inappropriate for headers and trailers. Those cases
             // should be an unconditional EVENT_LOSS_OF_SYNC.
-            session_data->events[source_id].generate_misformatted_http(data, length);
+            session_data->get_events(source_id)->generate_misformatted_http(data, length);
             // FIXIT-H need to process this data not just discard it.
             session_data->type_expected[source_id] = SEC_ABORT;
             delete cutter;
@@ -248,9 +248,9 @@ bool HttpStreamSplitter::finish(Flow* flow)
         if ((session_data->type_expected[source_id] == SEC_REQUEST) ||
             (session_data->type_expected[source_id] == SEC_STATUS))
         {
-            session_data->infractions[source_id] += INF_PARTIAL_START;
+            *session_data->get_infractions(source_id) += INF_PARTIAL_START;
             // FIXIT-M why not use generate_misformatted_http()?
-            session_data->events[source_id].create_event(EVENT_LOSS_OF_SYNC);
+            session_data->get_events(source_id)->create_event(EVENT_LOSS_OF_SYNC);
             return false;
         }
 

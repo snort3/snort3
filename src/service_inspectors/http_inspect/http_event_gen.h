@@ -37,7 +37,6 @@ class HttpEventGen
 {
 public:
     virtual ~HttpEventGen() = default;
-    void reset() { events_generated = 0; }
 
     virtual void create_event(HttpEnums::EventSid sid)
     {

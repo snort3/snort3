@@ -71,8 +71,8 @@ void HttpUri::parse_uri()
         }
         else
         {
-            infractions += INF_BAD_URI;
-            events.create_event(EVENT_URI_BAD_FORMAT);
+            *infractions += INF_BAD_URI;
+            events->create_event(EVENT_URI_BAD_FORMAT);
             uri_type = URI__PROBLEMATIC;
             scheme.set(STAT_PROBLEMATIC);
             authority.set(STAT_PROBLEMATIC);
@@ -167,8 +167,8 @@ void HttpUri::check_oversize_dir(Field uri_field)
 
                 if ( total_length > uri_param.oversize_dir_length )
                 {
-                    infractions += INF_OVERSIZE_DIR;
-                    events.create_event(EVENT_OVERSIZE_DIR);
+                    *infractions += INF_OVERSIZE_DIR;
+                    events->create_event(EVENT_OVERSIZE_DIR);
                     break;
                 }
             }
@@ -190,19 +190,19 @@ void HttpUri::normalize()
     // Otherwise we set the normalized fields to point at the raw values.
     if ((host.length() > 0) &&
             UriNormalizer::need_norm(host, false, uri_param, infractions, events))
-        infractions += INF_URI_NEED_NORM_HOST;
+        *infractions += INF_URI_NEED_NORM_HOST;
     if ((path.length() > 0) &&
             UriNormalizer::need_norm(path, true, uri_param, infractions, events))
-        infractions += INF_URI_NEED_NORM_PATH;
+        *infractions += INF_URI_NEED_NORM_PATH;
     if ((query.length() > 0) &&
             UriNormalizer::need_norm(query, false, uri_param, infractions, events))
-        infractions += INF_URI_NEED_NORM_QUERY;
+        *infractions += INF_URI_NEED_NORM_QUERY;
     if ((fragment.length() > 0) &&
             UriNormalizer::need_norm(fragment, false, uri_param, infractions, events))
-        infractions += INF_URI_NEED_NORM_FRAGMENT;
+        *infractions += INF_URI_NEED_NORM_FRAGMENT;
 
-    if (!((infractions & INF_URI_NEED_NORM_PATH)  || (infractions & INF_URI_NEED_NORM_HOST) ||
-          (infractions & INF_URI_NEED_NORM_QUERY) || (infractions & INF_URI_NEED_NORM_FRAGMENT)))
+    if (!((*infractions & INF_URI_NEED_NORM_PATH)  || (*infractions & INF_URI_NEED_NORM_HOST) ||
+          (*infractions & INF_URI_NEED_NORM_QUERY) || (*infractions & INF_URI_NEED_NORM_FRAGMENT)))
     {
         // This URI is OK, normalization not required
         host_norm.set(host);
@@ -229,7 +229,7 @@ void HttpUri::normalize()
     }
     if (host.length() > 0)
     {
-        if (infractions & INF_URI_NEED_NORM_HOST)
+        if (*infractions & INF_URI_NEED_NORM_HOST)
             UriNormalizer::normalize(host, host_norm, false, current, uri_param, infractions,
                 events);
         else
@@ -252,7 +252,7 @@ void HttpUri::normalize()
     }
     if (path.length() > 0)
     {
-        if (infractions & INF_URI_NEED_NORM_PATH)
+        if (*infractions & INF_URI_NEED_NORM_PATH)
             UriNormalizer::normalize(path, path_norm, true, current, uri_param, infractions,
                 events);
         else
@@ -266,7 +266,7 @@ void HttpUri::normalize()
     {
         memcpy(current, "?", 1);
         current += 1;
-        if (infractions & INF_URI_NEED_NORM_QUERY)
+        if (*infractions & INF_URI_NEED_NORM_QUERY)
             UriNormalizer::normalize(query, query_norm, false, current, uri_param, infractions,
                 events);
         else
@@ -280,7 +280,7 @@ void HttpUri::normalize()
     {
         memcpy(current, "#", 1);
         current += 1;
-        if (infractions & INF_URI_NEED_NORM_FRAGMENT)
+        if (*infractions & INF_URI_NEED_NORM_FRAGMENT)
             UriNormalizer::normalize(fragment, fragment_norm, false, current, uri_param,
                 infractions, events);
         else
@@ -292,15 +292,15 @@ void HttpUri::normalize()
     }
     assert(current - new_buf <= total_length);
 
-    if ((infractions & INF_URI_MULTISLASH) || (infractions & INF_URI_SLASH_DOT) ||
-        (infractions & INF_URI_SLASH_DOT_DOT))
+    if ((*infractions & INF_URI_MULTISLASH) || (*infractions & INF_URI_SLASH_DOT) ||
+        (*infractions & INF_URI_SLASH_DOT_DOT))
     {
         HttpModule::increment_peg_counts(PEG_URI_PATH);
     }
 
-    if ((infractions & INF_URI_U_ENCODE) || (infractions & INF_URI_UNKNOWN_PERCENT) ||
-        (infractions & INF_URI_PERCENT_UNRESERVED) || (infractions & INF_URI_PERCENT_UTF8_2B) ||
-        (infractions & INF_URI_PERCENT_UTF8_3B) || (infractions & INF_URI_DOUBLE_DECODE))
+    if ((*infractions & INF_URI_U_ENCODE) || (*infractions & INF_URI_UNKNOWN_PERCENT) ||
+        (*infractions & INF_URI_PERCENT_UNRESERVED) || (*infractions & INF_URI_PERCENT_UTF8_2B) ||
+        (*infractions & INF_URI_PERCENT_UTF8_3B) || (*infractions & INF_URI_DOUBLE_DECODE))
     {
         HttpModule::increment_peg_counts(PEG_URI_CODING);
     }

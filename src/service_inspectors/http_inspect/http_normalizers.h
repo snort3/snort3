@@ -31,7 +31,7 @@
 //
 // Normalization functions must return an output buffer with nonnegative length. Status codes are
 // not acceptable.
-typedef int32_t (NormFunc)(const uint8_t*, int32_t, uint8_t*, HttpInfractions&, HttpEventGen&);
+typedef int32_t (NormFunc)(const uint8_t*, int32_t, uint8_t*, HttpInfractions*, HttpEventGen*);
 NormFunc norm_to_lower;
 NormFunc norm_remove_lws;
 NormFunc norm_remove_quotes_lws;

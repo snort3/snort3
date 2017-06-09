@@ -30,6 +30,8 @@ class HttpMsgTrailer;
 class HttpMsgSection;
 class HttpMsgBody;
 class HttpMsgHeadShared;
+class HttpInfractions;
+class HttpEventGen;
 
 class HttpTransaction
 {
@@ -56,6 +58,9 @@ public:
     HttpMsgBody* get_body() const { return latest_body; }
     void set_body(HttpMsgBody* latest_body_);
 
+    HttpInfractions* get_infractions(HttpEnums::SourceId source_id);
+    HttpEventGen* get_events(HttpEnums::SourceId source_id);
+
     void second_response_coming() { assert(response_seen); second_response_expected = true; }
     bool final_response() const { return !second_response_expected; }
 
@@ -68,6 +73,8 @@ private:
     HttpMsgHeader* header[2] = { nullptr, nullptr };
     HttpMsgTrailer* trailer[2] = { nullptr, nullptr };
     HttpMsgBody* latest_body = nullptr;
+    HttpInfractions* infractions[2] = { nullptr, nullptr };
+    HttpEventGen* events[2] = { nullptr, nullptr };
 
     bool response_seen = false;
     bool second_response_expected = false;

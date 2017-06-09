@@ -85,8 +85,8 @@ void HttpMsgBody::do_utf_decoding(const Field& input, Field& output)
         {
             delete[] buffer;
             output.set(input);
-            infractions += INF_UTF_NORM_FAIL;
-            events.create_event(EVENT_UTF_NORM_FAIL);
+            *transaction->get_infractions(source_id) += INF_UTF_NORM_FAIL;
+            transaction->get_events(source_id)->create_event(EVENT_UTF_NORM_FAIL);
         }
         else if (bytes_copied > 0)
         {
@@ -111,8 +111,8 @@ void HttpMsgBody::do_pdf_swf_decompression(const Field& input, Field& output)
         return;
     }
     uint8_t* buffer = new uint8_t[MAX_OCTETS];
-    session_data->fd_alert_context.infractions = &infractions;
-    session_data->fd_alert_context.events = &events;
+    session_data->fd_alert_context.infractions = transaction->get_infractions(source_id);
+    session_data->fd_alert_context.events = transaction->get_events(source_id);
     session_data->fd_state->Next_In = (uint8_t*)input.start();
     session_data->fd_state->Avail_In = (uint32_t)input.length();
     session_data->fd_state->Next_Out = buffer;
@@ -133,8 +133,8 @@ void HttpMsgBody::do_pdf_swf_decompression(const Field& input, Field& output)
         session_data->fd_state = nullptr;
         break;
     case File_Decomp_BlockOut:
-        infractions += INF_PDF_SWF_OVERRUN;
-        events.create_event(EVENT_PDF_SWF_OVERRUN);
+        *transaction->get_infractions(source_id) += INF_PDF_SWF_OVERRUN;
+        transaction->get_events(source_id)->create_event(EVENT_PDF_SWF_OVERRUN);
         // Fall through
     default:
         output.set(session_data->fd_state->Next_Out - buffer, buffer, true);
@@ -144,33 +144,33 @@ void HttpMsgBody::do_pdf_swf_decompression(const Field& input, Field& output)
 
 void HttpMsgBody::fd_event_callback(void* context, int event)
 {
-    HttpInfractions& infractions = *(((HttpFlowData::FdCallbackContext*)context)->infractions);
-    HttpEventGen& events = *(((HttpFlowData::FdCallbackContext*)context)->events);
+    HttpInfractions* infractions = ((HttpFlowData::FdCallbackContext*)context)->infractions;
+    HttpEventGen* events = ((HttpFlowData::FdCallbackContext*)context)->events;
     switch (event)
     {
     case FILE_DECOMP_ERR_SWF_ZLIB_FAILURE:
-        infractions += INF_SWF_ZLIB_FAILURE;
-        events.create_event(EVENT_SWF_ZLIB_FAILURE);
+        *infractions += INF_SWF_ZLIB_FAILURE;
+        events->create_event(EVENT_SWF_ZLIB_FAILURE);
         break;
     case FILE_DECOMP_ERR_SWF_LZMA_FAILURE:
-        infractions += INF_SWF_LZMA_FAILURE;
-        events.create_event(EVENT_SWF_LZMA_FAILURE);
+        *infractions += INF_SWF_LZMA_FAILURE;
+        events->create_event(EVENT_SWF_LZMA_FAILURE);
         break;
     case FILE_DECOMP_ERR_PDF_DEFL_FAILURE:
-        infractions += INF_PDF_DEFL_FAILURE;
-        events.create_event(EVENT_PDF_DEFL_FAILURE);
+        *infractions += INF_PDF_DEFL_FAILURE;
+        events->create_event(EVENT_PDF_DEFL_FAILURE);
         break;
     case FILE_DECOMP_ERR_PDF_UNSUP_COMP_TYPE:
-        infractions += INF_PDF_UNSUP_COMP_TYPE;
-        events.create_event(EVENT_PDF_UNSUP_COMP_TYPE);
+        *infractions += INF_PDF_UNSUP_COMP_TYPE;
+        events->create_event(EVENT_PDF_UNSUP_COMP_TYPE);
         break;
     case FILE_DECOMP_ERR_PDF_CASC_COMP:
-        infractions += INF_PDF_CASC_COMP;
-        events.create_event(EVENT_PDF_CASC_COMP);
+        *infractions += INF_PDF_CASC_COMP;
+        events->create_event(EVENT_PDF_CASC_COMP);
         break;
     case FILE_DECOMP_ERR_PDF_PARSE_FAILURE:
-        infractions += INF_PDF_PARSE_FAILURE;
-        events.create_event(EVENT_PDF_PARSE_FAILURE);
+        *infractions += INF_PDF_PARSE_FAILURE;
+        events->create_event(EVENT_PDF_PARSE_FAILURE);
         break;
     default:
         assert(false);
@@ -186,7 +186,8 @@ void HttpMsgBody::do_js_normalization(const Field& input, Field& output)
         return;
     }
 
-    params->js_norm_param.js_norm->normalize(input, output, infractions, events);
+    params->js_norm_param.js_norm->normalize(input, output,
+        transaction->get_infractions(source_id), transaction->get_events(source_id));
 }
 
 void HttpMsgBody::do_file_processing(Field& file_data)

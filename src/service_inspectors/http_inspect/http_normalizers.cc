@@ -32,7 +32,7 @@ using namespace HttpEnums;
 // special configuration data the function requires.
 
 int32_t norm_to_lower(const uint8_t* in_buf, int32_t in_length, uint8_t* out_buf,
-    HttpInfractions&, HttpEventGen&)
+    HttpInfractions*, HttpEventGen*)
 {
     for (int32_t k=0; k < in_length; k++)
     {
@@ -45,7 +45,7 @@ int32_t norm_to_lower(const uint8_t* in_buf, int32_t in_length, uint8_t* out_buf
 
 // Remove all space and tab characters (known as LWS or linear white space in the RFC)
 int32_t norm_remove_lws(const uint8_t* in_buf, int32_t in_length, uint8_t* out_buf,
-    HttpInfractions&, HttpEventGen&)
+    HttpInfractions*, HttpEventGen*)
 {
     int32_t length = 0;
     for (int32_t k = 0; k < in_length; k++)
@@ -57,7 +57,7 @@ int32_t norm_remove_lws(const uint8_t* in_buf, int32_t in_length, uint8_t* out_b
 }
 
 int32_t norm_remove_quotes_lws(const uint8_t* in_buf, int32_t in_length, uint8_t* out_buf,
-    HttpInfractions&, HttpEventGen&)
+    HttpInfractions*, HttpEventGen*)
 {
     int32_t length = 0;
     for (int32_t k=0; k < in_length; k++)

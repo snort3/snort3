@@ -78,7 +78,8 @@ private:
     uint8_t* section_buffer[2] = { nullptr, nullptr };
     uint32_t section_total[2] = { 0, 0 };
     uint32_t section_offset[2] = { 0, 0 };
-    HttpEnums::ChunkState chunk_state[2] = { HttpEnums::CHUNK_NUMBER, HttpEnums::CHUNK_NUMBER };
+    HttpEnums::ChunkState chunk_state[2] = { HttpEnums::CHUNK_NEWLINES,
+        HttpEnums::CHUNK_NEWLINES };
     uint32_t chunk_expected_length[2] = { 0, 0 };
     uint32_t running_total[2] = { 0, 0 };
 
@@ -93,9 +94,18 @@ private:
     HttpEnums::SectionType section_type[2] = { HttpEnums::SEC__NOT_COMPUTE,
                                                 HttpEnums::SEC__NOT_COMPUTE };
     bool tcp_close[2] = { false, false };
-    HttpInfractions infractions[2];
-    HttpEventGen events[2];
     int32_t num_head_lines[2] = { HttpEnums::STAT_NOT_PRESENT, HttpEnums::STAT_NOT_PRESENT };
+
+    // Infractions and events are associated with a specfic message and are stored in the
+    // transaction for that message. But StreamSplitter splits the start line before there is
+    // a transaction and needs a place to put the problems it finds. Hence infractons and events
+    // are created before there is a transaction to associate them with and stored here until
+    // attach_my_transaction() takes them away and resets these to nullptr. The accessor methods
+    // hide this from StreamSplitter.
+    HttpInfractions* infractions[2] = { new HttpInfractions, new HttpInfractions };
+    HttpEventGen* events[2] = { new HttpEventGen, new HttpEventGen };
+    HttpInfractions* get_infractions(HttpEnums::SourceId source_id);
+    HttpEventGen* get_events(HttpEnums::SourceId source_id);
 
     // *** Inspector => StreamSplitter (facts about the message section that is coming next)
     HttpEnums::SectionType type_expected[2] = { HttpEnums::SEC_REQUEST, HttpEnums::SEC_STATUS };

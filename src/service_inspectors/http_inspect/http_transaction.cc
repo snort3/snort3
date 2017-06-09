@@ -23,6 +23,8 @@
 
 #include "http_transaction.h"
 
+#include "http_event_gen.h"
+#include "http_infractions.h"
 #include "http_msg_body.h"
 #include "http_msg_header.h"
 #include "http_msg_request.h"
@@ -35,10 +37,13 @@ HttpTransaction::~HttpTransaction()
 {
     delete request;
     delete status;
-    delete header[SRC_CLIENT];
-    delete header[SRC_SERVER];
-    delete trailer[SRC_CLIENT];
-    delete trailer[SRC_SERVER];
+    for (int k = 0; k <= 1; k++)
+    {
+        delete header[k];
+        delete trailer[k];
+        delete infractions[k];
+        delete events[k];
+    }
     delete latest_body;
 }
 
@@ -82,12 +87,22 @@ HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_da
             else if (!session_data->add_to_pipeline(session_data->transaction[SRC_CLIENT]))
             {
                 // The pipeline is full and just overflowed.
-                session_data->infractions[source_id] += INF_PIPELINE_OVERFLOW;
-                session_data->events[source_id].create_event(EVENT_PIPELINE_MAX);
+                *session_data->infractions[source_id] += INF_PIPELINE_OVERFLOW;
+                session_data->events[source_id]->create_event(EVENT_PIPELINE_MAX);
                 delete_transaction(session_data->transaction[SRC_CLIENT]);
             }
         }
         session_data->transaction[SRC_CLIENT] = new HttpTransaction;
+
+        // The StreamSplitter generates infractions and events related to this transaction while
+        // splitting the request line and keep them in temporary storage in the FlowData. Now we
+        // move them here.
+        session_data->transaction[SRC_CLIENT]->infractions[SRC_CLIENT] =
+            session_data->infractions[SRC_CLIENT];
+        session_data->infractions[SRC_CLIENT] = nullptr;
+        session_data->transaction[SRC_CLIENT]->events[SRC_CLIENT] =
+            session_data->events[SRC_CLIENT];
+        session_data->events[SRC_CLIENT] = nullptr;
     }
     // This transaction has more than one response. This is a new response which is replacing the
     // interim response. The two responses cannot coexist so we must clean up the interim response.
@@ -145,6 +160,14 @@ HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_da
             }
         }
         session_data->transaction[SRC_SERVER]->response_seen = true;
+
+        // Move in server infractions and events now that the response is attached here
+        session_data->transaction[SRC_SERVER]->infractions[SRC_SERVER] =
+            session_data->infractions[SRC_SERVER];
+        session_data->infractions[SRC_SERVER] = nullptr;
+        session_data->transaction[SRC_SERVER]->events[SRC_SERVER] =
+            session_data->events[SRC_SERVER];
+        session_data->events[SRC_SERVER] = nullptr;
     }
 
     assert(session_data->transaction[source_id] != nullptr);
@@ -166,5 +189,15 @@ void HttpTransaction::set_body(HttpMsgBody* latest_body_)
 {
     delete latest_body;
     latest_body = latest_body_;
+}
+
+HttpInfractions* HttpTransaction::get_infractions(HttpEnums::SourceId source_id)
+{
+    return infractions[source_id];
+}
+
+HttpEventGen* HttpTransaction::get_events(HttpEnums::SourceId source_id)
+{
+    return events[source_id];
 }
 
