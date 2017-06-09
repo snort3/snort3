@@ -67,7 +67,7 @@ struct TcpStats
     PegCount resyns;
     PegCount discards;
     PegCount events;
-    PegCount sessions_ignored;
+    PegCount ignored;
     PegCount no_pickups;
     PegCount sessions_on_syn;
     PegCount sessions_on_syn_ack;
@@ -91,6 +91,10 @@ struct TcpStats
     PegCount sessions_initializing;
     PegCount sessions_established;
     PegCount sessions_closing;
+    PegCount syns;
+    PegCount syn_acks;
+    PegCount resets;
+    PegCount fins;
 };
 
 struct TcpStatTypes
@@ -99,7 +103,7 @@ struct TcpStatTypes
     CountType resyns = CountType::SUM;
     CountType discards = CountType::SUM;
     CountType events = CountType::SUM;
-    CountType sessions_ignored = CountType::SUM;
+    CountType ignored = CountType::SUM;
     CountType no_pickups = CountType::SUM;
     CountType sessions_on_syn = CountType::SUM;
     CountType sessions_on_syn_ack = CountType::SUM;
@@ -123,6 +127,10 @@ struct TcpStatTypes
     CountType sessions_initializing = CountType::NOW;
     CountType sessions_established = CountType::NOW;
     CountType sessions_closing = CountType::NOW;
+    CountType syns = CountType::SUM;
+    CountType syn_acks = CountType::SUM;
+    CountType resets = CountType::SUM;
+    CountType fins = CountType::SUM;
 
     TcpStatTypes() {}
 };

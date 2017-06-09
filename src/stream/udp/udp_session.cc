@@ -38,6 +38,7 @@
 const PegInfo udp_pegs[] =
 {
     SESSION_PEGS("udp"),
+    { "ignored", "udp packets ignored" },
     { nullptr, nullptr }
 };
 
@@ -61,7 +62,10 @@ static int ProcessUdp(
         return 0;
 
     if ( Stream::ignored_flow(lwssn, p) )
+    {
+        udpStats.ignored++;
         return 0;
+    }
 
     /* if both seen, mark established */
     if (p->is_from_server())

@@ -71,6 +71,10 @@ const PegInfo tcp_pegs[] =
     { "initializing", "number of sessions currently initializing" },
     { "established", "number of sessions currently established" },
     { "closing", "number of sessions currently closing" },
+    { "syns", "number of syn packets" },
+    { "syn_acks", "number of syn-ack packets" },
+    { "resets", "number of reset packets" },
+    { "fins", "number of fin packets"},
     { nullptr, nullptr }
 };
 

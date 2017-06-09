@@ -71,7 +71,6 @@ private:
     void check_fin_transition_status(TcpSegmentDescriptor&);
     void process_tcp_stream(TcpSegmentDescriptor&);
     int process_tcp_data(TcpSegmentDescriptor&);
-    void process_tcp_packet(TcpSegmentDescriptor&);
     void swap_trackers();
     void NewTcpSessionOnSyn(TcpSegmentDescriptor&);
     void NewTcpSessionOnSynAck(TcpSegmentDescriptor&);

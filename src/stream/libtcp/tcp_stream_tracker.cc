@@ -27,6 +27,7 @@
 
 #include "protocols/eth.h"
 #include "stream/stream.h"
+#include "stream/tcp/tcp_module.h"
 
 const char* tcp_state_names[] =
 {
@@ -94,13 +95,25 @@ TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(TcpSegmentDescriptor&
     {
         // listener events
         if ( tcph->is_syn_only() )
+        {
             tcp_event = TCP_SYN_RECV_EVENT;
+            tcpStats.syns++;
+        }
         else if ( tcph->is_syn_ack() )
+        {
             tcp_event = TCP_SYN_ACK_RECV_EVENT;
+            tcpStats.syn_acks++;
+        }
         else if ( tcph->is_rst() )
+        {
             tcp_event = TCP_RST_RECV_EVENT;
+            tcpStats.resets++;
+        }
         else if ( tcph->is_fin( ) )
+        {
             tcp_event = TCP_FIN_RECV_EVENT;
+            tcpStats.fins++;
+        }
         else if ( tcph->is_ack() || tcph->is_psh() )
         {
             if ( tsd.get_seg_len() > 0 )

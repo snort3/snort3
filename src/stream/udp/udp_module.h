@@ -29,6 +29,7 @@ struct SnortConfig;
 struct UdpStats
 {
     SESSION_STATS;
+    PegCount ignored;
 };
 
 extern const PegInfo udp_pegs[];

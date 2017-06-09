@@ -984,11 +984,16 @@ bool TcpSession::is_flow_handling_packets(Packet* p)
     if (flow->pkt_type != PktType::TCP)
     {
         DebugMessage(DEBUG_STREAM_STATE, "Lightweight session not TCP on TCP packet\n");
-        flow_ready = false;
+        return false;
     }
 
-    if (Stream::blocked_flow(flow, p) || (flow->session_state & STREAM_STATE_IGNORE))
+    if(flow->session_state & STREAM_STATE_IGNORE)
+    {
+        tcpStats.ignored++;
         flow_ready = false;
+    }
+    else
+        flow_ready = !Stream::blocked_flow(flow, p);
 
     // FIXIT-L expected flow should be checked by Stream before we get here
     // harmonize this with that and the checks above

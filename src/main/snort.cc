@@ -776,6 +776,8 @@ void Snort::inspect(Packet* p)
 DAQ_Verdict Snort::process_packet(
     Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt, bool is_frag)
 {
+    aux_counts.rx_bytes += pkthdr->caplen;
+
     PacketManager::decode(p, pkthdr, pkt);
     assert(p->pkth && p->pkt);
 

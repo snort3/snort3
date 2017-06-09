@@ -183,6 +183,7 @@ const PegInfo daq_names[] =
     { "internal_whitelist", "packets whitelisted internally due to lack of DAQ support" },
     { "skipped", "packets skipped at startup" },
     { "idle", "attempts to acquire from DAQ without available packets" },
+    { "rx_bytes", "total bytes received" },
     { nullptr, nullptr }
 };
 
@@ -273,6 +274,7 @@ void get_daq_stats(DAQStats& daq_stats)
     daq_stats.internal_whitelist = gaux.internal_whitelist;
     daq_stats.skipped = snort_conf->pkt_skip;
     daq_stats.idle = gaux.idle;
+    daq_stats.rx_bytes = gaux.rx_bytes;
 }
 
 void DropStats()

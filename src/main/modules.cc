@@ -262,6 +262,7 @@ const PegInfo mpse_pegs[] =
     { "total_unique", "total unique fast pattern hits" },
     { "non_qualified_events", "total non-qualified events" },
     { "qualified_events", "total qualified events" },
+    { "searched_bytes", "total bytes searched" },
     { nullptr, nullptr }
 };
 

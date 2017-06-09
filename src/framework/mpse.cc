@@ -24,6 +24,7 @@
 #include "mpse.h"
 
 #include "profiler/profiler_defs.h"
+#include "search_engines/pat_stats.h"
 
 using namespace std;
 
@@ -46,6 +47,8 @@ int Mpse::search(
     Profile profile(mpsePerfStats);
 
     int ret = _search(T, n, match, context, current_state);
+
+    pmqs.matched_bytes += n;
 
     return ret;
 }

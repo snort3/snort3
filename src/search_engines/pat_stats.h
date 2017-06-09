@@ -20,6 +20,7 @@
 #ifndef PAT_STATS_H
 #define PAT_STATS_H
 
+#include "framework/counts.h"
 #include "main/snort_types.h"
 #include "main/thread.h"
 
@@ -33,6 +34,7 @@ struct PatMatQStat
     PegCount tot_inq_uinserts;
     PegCount non_qualified_events;
     PegCount qualified_events;
+    PegCount matched_bytes;
 };
 
 SO_PUBLIC extern THREAD_LOCAL PatMatQStat pmqs;
