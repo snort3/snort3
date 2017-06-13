@@ -135,6 +135,8 @@ struct IP6Hdr
         case IpProtocol::DSTOPTS:
         case IpProtocol::ROUTING:
         case IpProtocol::FRAGMENT:
+        case IpProtocol::MPLS_IP:
+        case IpProtocol::GRE:
             return true;
         default:
             break;
