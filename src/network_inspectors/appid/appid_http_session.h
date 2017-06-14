@@ -98,9 +98,10 @@ public:
 #endif
 
 private:
-    int initial_chp_sweep(char**, uint16_t*, MatchedCHPAction**);
+    void init_chp_match_descriptor(ChpMatchDescriptor& cmd);
+    int initial_chp_sweep(ChpMatchDescriptor&);
     void process_chp_buffers();
-    void free_chp_matches(MatchedCHPAction** ppmatches, unsigned max_matches);
+    void free_chp_matches(ChpMatchDescriptor& cmd, unsigned max_matches);
 
     HttpPatternMatchers* http_matchers = nullptr;
 };

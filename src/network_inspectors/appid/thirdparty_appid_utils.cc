@@ -699,7 +699,8 @@ void ProcessThirdPartyResults(AppIdSession* asd, Packet* p, int confidence,
             {
                 if ( ( ( asd->http_matchers->get_appid_from_url(nullptr, asd->hsession->url,
                     nullptr, asd->hsession->referer, &client_app_id, &serviceAppId,
-                    &payload_app_id, &referred_payload_app_id, 1) ) ||
+                    &payload_app_id, &referred_payload_app_id, 1) )
+                    ||
                     ( asd->http_matchers->get_appid_from_url(nullptr, asd->hsession->url, nullptr,
                     asd->hsession->referer, &client_app_id, &serviceAppId, &payload_app_id,
                     &referred_payload_app_id, 0) ) ) == 1 )

@@ -77,41 +77,35 @@ AppIdHttpSession::~AppIdHttpSession()
                 snort_free(new_field[i]);
 }
 
-void AppIdHttpSession::free_chp_matches(MatchedCHPAction** ppmatches, unsigned max_matches)
+void AppIdHttpSession::free_chp_matches(ChpMatchDescriptor& cmd, unsigned max_matches)
 {
     for (unsigned i = 0; i <= max_matches; i++)
-    {
-        if (ppmatches[i])
-        {
-            http_matchers->free_matched_chp_actions(ppmatches[i]);
-            ppmatches[i] = nullptr;
-        }
-    }
+        if ( cmd.chp_matches[i].size() )
+            cmd.chp_matches[i].clear();
 }
 
-int AppIdHttpSession::initial_chp_sweep(char** chp_buffers, uint16_t* chp_buffer_lengths,
-    MatchedCHPAction** ppmatches)
+int AppIdHttpSession::initial_chp_sweep(ChpMatchDescriptor& cmd)
 {
     CHPApp* cah = nullptr;
-    CHPTallyAndActions chp;
-    chp.matches = *ppmatches;
 
     for (unsigned i = 0; i <= MAX_KEY_PATTERN; i++)
     {
-        ppmatches[i] = nullptr;
-        if (chp_buffers[i] && chp_buffer_lengths[i])
-            http_matchers->scan_key_chp((PatternType)i, chp_buffers[i], chp_buffer_lengths[i],
-                chp);
+        if (cmd.buffer[i] && cmd.length[i])
+        {
+            cmd.cur_ptype = (PatternType)i;
+            http_matchers->scan_key_chp(cmd);
+        }
+
     }
 
-    if (chp.match_tally.empty())
+    if (cmd.match_tally.empty())
     {
-        free_chp_matches(ppmatches, MAX_KEY_PATTERN);
+        free_chp_matches(cmd, MAX_KEY_PATTERN);
         return 0;
     }
 
     int longest = 0;
-    for (auto& item: chp.match_tally)
+    for (auto& item: cmd.match_tally)
     {
         // Only those items with key_pattern_countdown field reduced to zero are a full match
         if (item.key_pattern_countdown)
@@ -126,7 +120,7 @@ int AppIdHttpSession::initial_chp_sweep(char** chp_buffers, uint16_t* chp_buffer
 
     if ( !cah )
     {
-        free_chp_matches(ppmatches, MAX_KEY_PATTERN);
+        free_chp_matches(cmd, MAX_KEY_PATTERN);
         return 0;
     }
 
@@ -179,50 +173,34 @@ int AppIdHttpSession::initial_chp_sweep(char** chp_buffers, uint16_t* chp_buffer
     return 1;
 }
 
+void AppIdHttpSession::init_chp_match_descriptor(ChpMatchDescriptor& cmd)
+{
+   cmd.buffer[AGENT_PT] = useragent;
+   cmd.buffer[HOST_PT] = host;
+   cmd.buffer[REFERER_PT] = referer;
+   cmd.buffer[URI_PT] = uri;
+   cmd.buffer[COOKIE_PT] = cookie;
+   cmd.buffer[REQ_BODY_PT] = req_body;
+   cmd.buffer[CONTENT_TYPE_PT] = content_type;
+   cmd.buffer[LOCATION_PT] = location;
+   cmd.buffer[BODY_PT] = body;
+
+   cmd.length[AGENT_PT] = useragent_buflen;
+   cmd.length[HOST_PT] = host_buflen;
+   cmd.length[REFERER_PT] = referer_buflen;
+   cmd.length[URI_PT] = uri_buflen;
+   cmd.length[COOKIE_PT] = cookie_buflen;
+   cmd.length[REQ_BODY_PT] = req_body_buflen;
+   cmd.length[CONTENT_TYPE_PT] = content_type_buflen;
+   cmd.length[LOCATION_PT] = location_buflen;
+   cmd.length[BODY_PT] = body_buflen;
+}
+
 void AppIdHttpSession::process_chp_buffers()
 {
-    char* version = nullptr;
+    ChpMatchDescriptor cmd;
 
-    char* chp_buffers[NUMBER_OF_PTYPES] =
-    {
-        useragent,
-        host,
-        referer,
-        uri,
-        cookie,
-        req_body,
-        content_type,
-        location,
-        body,
-    };
-
-    uint16_t chp_buffer_lengths[NUMBER_OF_PTYPES] =
-    {
-        useragent_buflen,
-        host_buflen,
-        referer_buflen,
-        uri_buflen,
-        cookie_buflen,
-        req_body_buflen,
-        content_type_buflen,
-        location_buflen,
-        body_buflen,
-    };
-
-    char* chp_rewritten[NUMBER_OF_PTYPES] =
-    {
-        nullptr,nullptr,nullptr,
-        nullptr,nullptr,nullptr,
-        nullptr,nullptr,nullptr
-    };
-
-    MatchedCHPAction* chp_matches[NUMBER_OF_PTYPES] =
-    {
-        nullptr,nullptr,nullptr,
-        nullptr,nullptr,nullptr,
-        nullptr,nullptr,nullptr
-    };
-
+    init_chp_match_descriptor(cmd);
     if ( chp_hold_flow )
         chp_finished = false;
 
@@ -236,28 +214,28 @@ void AppIdHttpSession::process_chp_buffers()
                 new_field[i] = nullptr;
             }
 
-        if ( !initial_chp_sweep(chp_buffers, chp_buffer_lengths, chp_matches) )
+        if ( !initial_chp_sweep(cmd) )
             chp_finished = true; // this is a failure case.
     }
 
     if ( !chp_finished && chp_candidate )
     {
         char* user = nullptr;
+        char* version = nullptr;
 
         for (unsigned i = 0; i < NUMBER_OF_PTYPES; i++)
         {
             if ( !ptype_scan_counts[i] )
                 continue;
 
-            if ( chp_buffers[i] && chp_buffer_lengths[i] )
+            if ( cmd.buffer[i] && cmd.length[i] )
             {
-                int found_in_buffer = 0;
-                AppId ret = http_matchers->scan_chp((PatternType)i, chp_buffers[i],
-                    chp_buffer_lengths[i], chp_matches[i], &version, &user,
-                    &chp_rewritten[i], &found_in_buffer, this, asd->config->mod_config);
-                chp_matches[i] = nullptr; // freed by scanCHP()
-                total_found += found_in_buffer;
-                if (!ret || found_in_buffer < ptype_req_counts[i])
+                int num_found = 0;
+                cmd.cur_ptype = (PatternType)i;
+                AppId ret = http_matchers->scan_chp(cmd, &version, &user, &num_found, this,
+                        asd->config->mod_config);
+                total_found += num_found;
+                if (!ret || num_found < ptype_req_counts[i])
                 {
                     // No match at all or the required matches for the field was NOT made
                     if (!num_matches)
@@ -300,7 +278,7 @@ void AppIdHttpSession::process_chp_buffers()
             }
         }
 
-        free_chp_matches(chp_matches, NUMBER_OF_PTYPES);
+        free_chp_matches(cmd, NUMBER_OF_PTYPES);
 
         if ( !chp_candidate )
         {
@@ -317,14 +295,7 @@ void AppIdHttpSession::process_chp_buffers()
                 user = nullptr;
             }
 
-            for (unsigned i = 0; i < NUMBER_OF_PTYPES; i++)
-            {
-                if (nullptr != chp_rewritten[i])
-                {
-                    snort_free(chp_rewritten[i]);
-                    chp_rewritten[i] = nullptr;
-                }
-            }
+            cmd.free_rewrite_buffers();
             memset(ptype_scan_counts, 0, NUMBER_OF_PTYPES * sizeof(int));
 
             // Make it possible for other detectors to run.
@@ -361,16 +332,16 @@ void AppIdHttpSession::process_chp_buffers()
             }
 
             for (unsigned i = 0; i < NUMBER_OF_PTYPES; i++)
-                if ( chp_rewritten[i] )
+                if ( cmd.chp_rewritten[i] )
                 {
                     if (asd->session_logging_enabled)
                         LogMessage("AppIdDbg %s rewritten %s: %s\n", asd->session_logging_id,
-                            httpFieldName[i], chp_rewritten[i]);
+                            httpFieldName[i], cmd.chp_rewritten[i]);
                     if (new_field[i])
                         snort_free(new_field[i]);
-                    new_field[i] = chp_rewritten[i];
+                    new_field[i] = cmd.chp_rewritten[i];
                     new_field_contents = true;
-                    chp_rewritten[i] = nullptr;
+                    cmd.chp_rewritten[i] = nullptr;
                 }
 
             chp_candidate = 0;
@@ -391,12 +362,7 @@ void AppIdHttpSession::process_chp_buffers()
                 user = nullptr;
             }
 
-            for (unsigned i = 0; i < NUMBER_OF_PTYPES; i++)
-                if (nullptr != chp_rewritten[i])
-                {
-                    snort_free(chp_rewritten[i]);
-                    chp_rewritten[i] = nullptr;
-                }
+            cmd.free_rewrite_buffers();
         }
     }
 }

@@ -22,6 +22,7 @@
 #ifndef HTTP_URL_PATTERNS_H
 #define HTTP_URL_PATTERNS_H
 
+#include <list>
 #include <vector>
 
 #include "application_ids.h"
@@ -214,7 +215,6 @@ struct MatchedCHPAction
 {
     CHPAction* mpattern;
     int start_match_pos;
-    MatchedCHPAction* next;
 };
 
 // This is an array element for the dynamically growing tally below
@@ -227,10 +227,40 @@ struct CHPMatchCandidate
 
 typedef std::vector<CHPMatchCandidate> CHPMatchTally;
 
-struct CHPTallyAndActions
+struct ChpMatchDescriptor
 {
+	void free_rewrite_buffers()
+	{
+        for (unsigned i = 0; i < NUMBER_OF_PTYPES; i++)
+            if (chp_rewritten[i])
+            {
+                snort_free(chp_rewritten[i]);
+                chp_rewritten[i] = nullptr;
+            }
+	}
+
+	void sort_chp_matches()
+	{
+	    chp_matches[cur_ptype].sort(ChpMatchDescriptor::comp_chp_actions);
+	}
+
+    PatternType cur_ptype;
+    char* buffer[NUMBER_OF_PTYPES] = { nullptr };
+    uint16_t length[NUMBER_OF_PTYPES] = { 0 };
+    char* chp_rewritten[NUMBER_OF_PTYPES] = { nullptr };
+    std::list<MatchedCHPAction> chp_matches[NUMBER_OF_PTYPES];
     CHPMatchTally match_tally;
-    MatchedCHPAction* matches;
+
+private:
+    static bool comp_chp_actions( const MatchedCHPAction& lhs, const MatchedCHPAction& rhs)
+    {
+        if ( ( lhs.mpattern->appIdInstance < rhs.mpattern->appIdInstance ) ||
+             ( lhs.mpattern->appIdInstance == rhs.mpattern->appIdInstance
+                  && lhs.mpattern->precedence < rhs.mpattern->precedence ) )
+            return true;
+        else
+            return false;
+    }
 };
 
 struct HostUrlDetectorPattern
@@ -279,10 +309,9 @@ public:
     int process_host_patterns(DetectorHTTPPatterns);
     int process_mlmp_patterns();
 
-    void free_matched_chp_actions(MatchedCHPAction* ma);
-    void scan_key_chp(PatternType, char* buf, int buf_size, CHPTallyAndActions&);
-    AppId scan_chp(PatternType, char*, int, MatchedCHPAction*, char**, char**, char**,
-        int*, AppIdHttpSession*, AppIdModuleConfig*);
+    void scan_key_chp(ChpMatchDescriptor&);
+    AppId scan_chp(ChpMatchDescriptor&, char**, char**, int*, AppIdHttpSession*,
+            AppIdModuleConfig*);
     AppId scan_header_x_working_with(const uint8_t*, uint32_t, char**);
     int get_appid_by_pattern(const uint8_t*, unsigned, char**);
     bool get_appid_from_url(char*, char*, char**, char*, AppId*, AppId*,
