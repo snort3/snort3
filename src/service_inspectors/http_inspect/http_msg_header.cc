@@ -109,18 +109,32 @@ void HttpMsgHeader::update_flow()
         return;
     }
 
-    // If there is a Transfer-Encoding header, see if the last of the encoded values is "chunked".
-    if (get_header_value_norm(HEAD_TRANSFER_ENCODING).length() > 0)
+    // If there is a Transfer-Encoding header, it should be "chunked" without any other encodings
+    // being listed. The RFC allows other encodings to come before chunked but no one does this in
+    // real life.
+
+    const Field& te_header = get_header_value_norm(HEAD_TRANSFER_ENCODING);
+    if (te_header.length() > 0)
     {
-        if (chunked_before_end(get_header_value_norm(HEAD_TRANSFER_ENCODING)))
+        const int CHUNKED_SIZE = 7;
+        bool is_chunked = false;
+
+        if ((te_header.length() == CHUNKED_SIZE) &&
+            !memcmp(te_header.start(), "chunked", CHUNKED_SIZE))
         {
-            *transaction->get_infractions(source_id) += INF_CHUNKED_BEFORE_END;
-            transaction->get_events(source_id)->create_event(EVENT_CHUNKED_BEFORE_END);
+            is_chunked = true;
         }
-        if (norm_last_token_code(get_header_value_norm(HEAD_TRANSFER_ENCODING),
-            HttpMsgHeadShared::trans_code_list) == TRANSCODE_CHUNKED)
+        else if ((te_header.length() > CHUNKED_SIZE) &&
+            !memcmp(te_header.start() + (te_header.length() - (CHUNKED_SIZE+1)),
+                ",chunked", CHUNKED_SIZE+1))
         {
-            // Chunked body
+            *transaction->get_infractions(source_id) += INF_PADDED_TE_HEADER;
+            transaction->get_events(source_id)->create_event(EVENT_PADDED_TE_HEADER);
+            is_chunked = true;
+        }
+
+        if (is_chunked)
+        {
             session_data->type_expected[source_id] = SEC_BODY_CHUNK;
             HttpModule::increment_peg_counts(PEG_CHUNKED);
             prepare_body();
@@ -128,8 +142,8 @@ void HttpMsgHeader::update_flow()
         }
         else
         {
-            *transaction->get_infractions(source_id) += INF_FINAL_NOT_CHUNKED;
-            transaction->get_events(source_id)->create_event(EVENT_FINAL_NOT_CHUNKED);
+            *transaction->get_infractions(source_id) += INF_BAD_TE_HEADER;
+            transaction->get_events(source_id)->create_event(EVENT_BAD_TE_HEADER);
         }
     }
 
@@ -266,12 +280,10 @@ void HttpMsgHeader::setup_encoding_decompression()
 
     CompressId& compression = session_data->compression[source_id];
 
-    // Search the Content-Encoding and Transfer-Encoding headers to find the type of compression
-    // used. We detect and alert on multiple layers of compression but we only decompress the
-    // outermost layer. We proceed through the headers inside-out, starting at the front of the
-    // list of Content-Encodings and ending with the last Transfer-Encoding. Thus the last encoding
-    // we encounter (other than chunked) is the one we use. If we don't recognize or support the
-    // last encoding we won't do anything.
+    // Search the Content-Encoding header to find the type of compression used. We detect and alert
+    // on multiple layers of compression but we only decompress the outermost layer. Thus the last
+    // encoding in the Content-Encoding header is the one we use. If we don't recognize or support
+    // the last encoding we won't do anything.
 
     const Field& norm_content_encoding = get_header_value_norm(HEAD_CONTENT_ENCODING);
     int32_t cont_offset = 0;
@@ -304,43 +316,6 @@ void HttpMsgHeader::setup_encoding_decompression()
         case CONTENTCODE_IDENTITY:
             break;
         case CONTENTCODE__OTHER:
-            *transaction->get_infractions(source_id) += INF_UNKNOWN_ENCODING;
-            transaction->get_events(source_id)->create_event(EVENT_UNKNOWN_ENCODING);
-            break;
-        }
-    }
-
-    const Field& norm_transfer_encoding = get_header_value_norm(HEAD_TRANSFER_ENCODING);
-    int32_t trans_offset = 0;
-    while (norm_transfer_encoding.length() > trans_offset)
-    {
-        const Transcoding transfer_code = (Transcoding)get_next_code(norm_transfer_encoding,
-            trans_offset, HttpMsgHeadShared::trans_code_list);
-        if ((compression != CMP_NONE) &&
-            !((transfer_code == TRANSCODE_IDENTITY) || (transfer_code == TRANSCODE_CHUNKED)))
-        {
-            *transaction->get_infractions(source_id) += INF_STACKED_ENCODINGS;
-            transaction->get_events(source_id)->create_event(EVENT_STACKED_ENCODINGS);
-            compression = CMP_NONE;
-        }
-        switch (transfer_code)
-        {
-        case TRANSCODE_GZIP:
-        case TRANSCODE_X_GZIP:
-            compression = CMP_GZIP;
-            break;
-        case TRANSCODE_DEFLATE:
-            compression = CMP_DEFLATE;
-            break;
-        case TRANSCODE_COMPRESS:
-        case TRANSCODE_X_COMPRESS:
-            *transaction->get_infractions(source_id) += INF_UNSUPPORTED_ENCODING;
-            transaction->get_events(source_id)->create_event(EVENT_UNSUPPORTED_ENCODING);
-            break;
-        case TRANSCODE_CHUNKED:
-        case TRANSCODE_IDENTITY:
-            break;
-        case TRANSCODE__OTHER:
             *transaction->get_infractions(source_id) += INF_UNKNOWN_ENCODING;
             transaction->get_events(source_id)->create_event(EVENT_UNKNOWN_ENCODING);
             break;

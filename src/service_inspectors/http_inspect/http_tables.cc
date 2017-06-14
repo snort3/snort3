@@ -136,18 +136,6 @@ const StrCode HttpMsgHeadShared::header_list[] =
     { 0,                         nullptr }
 };
 
-const StrCode HttpMsgHeadShared::trans_code_list[] =
-{
-    { TRANSCODE_CHUNKED,         "chunked" },
-    { TRANSCODE_GZIP,            "gzip" },
-    { TRANSCODE_DEFLATE,         "deflate" },
-    { TRANSCODE_COMPRESS,        "compress" },
-    { TRANSCODE_X_GZIP,          "x-gzip" },
-    { TRANSCODE_X_COMPRESS,      "x-compress" },
-    { TRANSCODE_IDENTITY,        "identity" },
-    { 0,                         nullptr }
-};
-
 const StrCode HttpMsgHeadShared::content_code_list[] =
 {
     { CONTENTCODE_GZIP,          "gzip" },
@@ -296,7 +284,7 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_LONG_HOSTNAME,              "hostname exceeds 255 characters" },
     { EVENT_EXCEEDS_SPACES,             "too much whitespace in header (not implemented yet)" },
     { EVENT_CONSECUTIVE_SMALL_CHUNKS,   "client consecutive small chunk sizes" },
-    { EVENT_UNBOUNDED_POST,             "post w/o content-length or chunks" },
+    { EVENT_UNBOUNDED_POST,             "POST or PUT w/o content-length or chunks" },
     { EVENT_MULTIPLE_TRUEIP_IN_SESSION, "multiple true ips in a session" },
     { EVENT_BOTH_TRUEIP_XFF_HDRS,       "both true-client-IP and XFF hdrs present" },
     { EVENT_UNKNOWN_METHOD,             "unknown method" },
@@ -342,11 +330,11 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_BOTH_CL_AND_TE,             "message has both Content-Length and Transfer-Encoding" },
     { EVENT_BAD_CODE_BODY_HEADER,       "status code implying no body combined with Transfer-"
                                         "Encoding or nonzero Content-Length" },
-    { EVENT_FINAL_NOT_CHUNKED,          "Transfer-Encoding did not end with chunked" },
-    { EVENT_CHUNKED_BEFORE_END,         "Transfer-Encoding with chunked not at end" },
+    { EVENT_BAD_TE_HEADER,              "Transfer-Encoding not ending with chunked" },
+    { EVENT_PADDED_TE_HEADER,           "Transfer-Encoding with encodings before chunked" },
     { EVENT_MISFORMATTED_HTTP,          "misformatted HTTP traffic" },
-    { EVENT_UNSUPPORTED_ENCODING,       "unsupported Transfer-Encoding or Content-Encoding used" },
-    { EVENT_UNKNOWN_ENCODING,           "unknown Transfer-Encoding or Content-Encoding used" },
+    { EVENT_UNSUPPORTED_ENCODING,       "unsupported Content-Encoding used" },
+    { EVENT_UNKNOWN_ENCODING,           "unknown Content-Encoding used" },
     { EVENT_STACKED_ENCODINGS,          "multiple layers of compression encodings applied" },
     { EVENT_RESPONSE_WO_REQUEST,        "server response before client request" },
     { EVENT_PDF_SWF_OVERRUN,            "PDF/SWF decompression of server response too big" },

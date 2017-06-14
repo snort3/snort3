@@ -1,5 +1,4 @@
 add_cpputest(http_uri_norm_test http_inspect framework)
-add_cpputest(http_normalizers_test http_inspect framework)
 add_cpputest(http_module_test http_inspect framework)
 add_cpputest(http_msg_head_shared_util_test http_inspect framework)
 

@@ -100,25 +100,3 @@ void get_last_token(const Field& input, Field& last_token, char ichar)
     return;
 }
 
-// Find the last token in a comma-separated field and convert it to an enum
-int32_t norm_last_token_code(const Field& input, const StrCode table[])
-{
-    Field last_token;
-    get_last_token(input, last_token, ',');
-
-    return str_to_code(last_token.start(), last_token.length(), table);
-}
-
-// Given a comma-separated list of words, does "chunked" appear before the last word
-bool chunked_before_end(const Field& input)
-{
-    for (int k=0; k < (input.length() - 7); k++)
-    {
-        if (((k == 0) || (input.start()[k-1] == ',')) && !memcmp(input.start()+k, "chunked,", 8))
-        {
-            return true;
-        }
-    }
-    return false;
-}
-

@@ -46,7 +46,6 @@ public:
 
     // Tables of header field names and header value names
     static const StrCode header_list[];
-    static const StrCode trans_code_list[];
     static const StrCode content_code_list[];
     static const StrCode charset_code_list[];
     static const StrCode charset_code_opt_list[];

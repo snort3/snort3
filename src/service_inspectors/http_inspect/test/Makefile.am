@@ -3,7 +3,6 @@ AM_DEFAULT_SOURCE_EXT = .cc
 
 check_PROGRAMS = \
 http_uri_norm_test \
-http_normalizers_test \
 http_module_test \
 http_transaction_test \
 http_msg_head_shared_util_test
@@ -21,12 +20,6 @@ http_uri_norm_test_LDADD = \
 ../http_field.o \
 ../http_tables.o \
 ../../../framework/module.o \
-@CPPUTEST_LDFLAGS@
-
-http_normalizers_test_CPPFLAGS = $(AM_CPPFLAGS) @CPPUTEST_CPPFLAGS@
-http_normalizers_test_LDADD = \
-../http_normalizers.o \
-../http_field.o \
 @CPPUTEST_LDFLAGS@
 
 http_module_test_CPPFLAGS = $(AM_CPPFLAGS) @CPPUTEST_CPPFLAGS@
