@@ -38,9 +38,9 @@ class HttpEventGen
 public:
     virtual ~HttpEventGen() = default;
 
-    virtual void create_event(HttpEnums::EventSid sid)
+    virtual void create_event(int sid)
     {
-        assert(((int)sid > 0) && ((int)sid <= MAX));
+        assert((sid > 0) && (sid <= MAX));
         if (!events_generated[sid-1])
         {
             DetectionEngine::queue_event(HttpEnums::HTTP_GID, (uint32_t)sid);

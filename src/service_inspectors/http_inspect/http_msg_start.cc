@@ -37,8 +37,8 @@ void HttpMsgStart::derive_version_id()
     if (version.start()[6] != '.')
     {
         version_id = VERS__PROBLEMATIC;
-        *transaction->get_infractions(source_id) += INF_BAD_VERSION;
-        transaction->get_events(source_id)->create_event(EVENT_BAD_VERS);
+        add_infraction(INF_BAD_VERSION);
+        create_event(EVENT_BAD_VERS);
     }
     else if ((version.start()[5] == '1') && (version.start()[7] == '1'))
     {
@@ -65,14 +65,14 @@ void HttpMsgStart::derive_version_id()
         (version.start()[7] >= '0') && (version.start()[7] <= '9'))
     {
         version_id = VERS__OTHER;
-        *transaction->get_infractions(source_id) += INF_UNKNOWN_VERSION;
-        transaction->get_events(source_id)->create_event(EVENT_UNKNOWN_VERS);
+        add_infraction(INF_UNKNOWN_VERSION);
+        create_event(EVENT_UNKNOWN_VERS);
     }
     else
     {
         version_id = VERS__PROBLEMATIC;
-        *transaction->get_infractions(source_id) += INF_BAD_VERSION;
-        transaction->get_events(source_id)->create_event(EVENT_BAD_VERS);
+        add_infraction(INF_BAD_VERSION);
+        create_event(EVENT_BAD_VERS);
     }
 }
 

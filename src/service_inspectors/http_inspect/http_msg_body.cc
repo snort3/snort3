@@ -85,8 +85,8 @@ void HttpMsgBody::do_utf_decoding(const Field& input, Field& output)
         {
             delete[] buffer;
             output.set(input);
-            *transaction->get_infractions(source_id) += INF_UTF_NORM_FAIL;
-            transaction->get_events(source_id)->create_event(EVENT_UTF_NORM_FAIL);
+            add_infraction(INF_UTF_NORM_FAIL);
+            create_event(EVENT_UTF_NORM_FAIL);
         }
         else if (bytes_copied > 0)
         {
@@ -133,8 +133,8 @@ void HttpMsgBody::do_pdf_swf_decompression(const Field& input, Field& output)
         session_data->fd_state = nullptr;
         break;
     case File_Decomp_BlockOut:
-        *transaction->get_infractions(source_id) += INF_PDF_SWF_OVERRUN;
-        transaction->get_events(source_id)->create_event(EVENT_PDF_SWF_OVERRUN);
+        add_infraction(INF_PDF_SWF_OVERRUN);
+        create_event(EVENT_PDF_SWF_OVERRUN);
         // Fall through
     default:
         output.set(session_data->fd_state->Next_Out - buffer, buffer, true);

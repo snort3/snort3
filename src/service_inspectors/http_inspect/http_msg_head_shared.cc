@@ -94,8 +94,8 @@ void HttpMsgHeadShared::parse_header_block()
         header_line[num_headers].set(header_length, msg_text.start() + bytes_used + num_seps);
         if (header_line[num_headers].length() > MAX_HEADER_LENGTH)
         {
-            *transaction->get_infractions(source_id) += INF_TOO_LONG_HEADER;
-            transaction->get_events(source_id)->create_event(EVENT_LONG_HDR);
+            add_infraction(INF_TOO_LONG_HEADER);
+            create_event(EVENT_LONG_HDR);
         }
         bytes_used += num_seps + header_line[num_headers].length();
         if (++num_headers >= MAX_HEADERS)
@@ -105,8 +105,8 @@ void HttpMsgHeadShared::parse_header_block()
     }
     if (bytes_used < msg_text.length())
     {
-        *transaction->get_infractions(source_id) += INF_TOO_MANY_HEADERS;
-        transaction->get_events(source_id)->create_event(EVENT_MAX_HEADERS);
+        add_infraction(INF_TOO_MANY_HEADERS);
+        create_event(EVENT_MAX_HEADERS);
     }
 }
 
@@ -156,8 +156,8 @@ int32_t HttpMsgHeadShared::find_next_header(const uint8_t* buffer, int32_t lengt
             }
             else
             {
-                *transaction->get_infractions(source_id) += INF_HEADER_WRAPPING;
-                transaction->get_events(source_id)->create_event(EVENT_HEADER_WRAPPING);
+                add_infraction(INF_HEADER_WRAPPING);
+                create_event(EVENT_HEADER_WRAPPING);
             }
         }
     }
@@ -187,8 +187,8 @@ void HttpMsgHeadShared::parse_header_lines()
         }
         else
         {
-            *transaction->get_infractions(source_id) += INF_BAD_HEADER;
-            transaction->get_events(source_id)->create_event(EVENT_BAD_HEADER);
+            add_infraction(INF_BAD_HEADER);
+            create_event(EVENT_BAD_HEADER);
             header_name[k].set(STAT_PROBLEMATIC);
             header_value[k].set(STAT_PROBLEMATIC);
         }
@@ -217,14 +217,14 @@ void HttpMsgHeadShared::derive_header_name_id(int index)
                 buffer[k] : buffer[k] - ('A' - 'a');
             if (!is_print_char[buffer[k]])
             {
-                *transaction->get_infractions(source_id) += INF_BAD_CHAR_IN_HEADER_NAME;
-                transaction->get_events(source_id)->create_event(EVENT_BAD_CHAR_IN_HEADER_NAME);
+                add_infraction(INF_BAD_CHAR_IN_HEADER_NAME);
+                create_event(EVENT_BAD_CHAR_IN_HEADER_NAME);
             }
         }
         else
         {
-            *transaction->get_infractions(source_id) += INF_HEAD_NAME_WHITESPACE;
-            transaction->get_events(source_id)->create_event(EVENT_HEAD_NAME_WHITESPACE);
+            add_infraction(INF_HEAD_NAME_WHITESPACE);
+            create_event(EVENT_HEAD_NAME_WHITESPACE);
         }
     }
     header_name_id[index] = (HeaderId)str_to_code(lower_name, lower_length, header_list);

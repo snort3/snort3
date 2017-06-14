@@ -42,8 +42,8 @@ void HttpMsgStatus::parse_start_line()
 
     if ((start_line.length() < 12) || !is_sp_tab[start_line.start()[8]])
     {
-        *transaction->get_infractions(source_id) += INF_BAD_STAT_LINE;
-        transaction->get_events(source_id)->create_event(EVENT_MISFORMATTED_HTTP);
+        add_infraction(INF_BAD_STAT_LINE);
+        create_event(EVENT_MISFORMATTED_HTTP);
         return;
     }
 
@@ -54,8 +54,8 @@ void HttpMsgStatus::parse_start_line()
 
     if (start_line.length() < first_end + 4)
     {
-        *transaction->get_infractions(source_id) += INF_BAD_STAT_LINE;
-        transaction->get_events(source_id)->create_event(EVENT_MISFORMATTED_HTTP);
+        add_infraction(INF_BAD_STAT_LINE);
+        create_event(EVENT_MISFORMATTED_HTTP);
         return;
     }
 
@@ -63,8 +63,8 @@ void HttpMsgStatus::parse_start_line()
     {
         // FIXIT-M This should not be fatal. HI supports something like "HTTP/1.1 200\\OK\r\n" as
         // seen in a status line test.
-        *transaction->get_infractions(source_id) += INF_BAD_STAT_LINE;
-        transaction->get_events(source_id)->create_event(EVENT_MISFORMATTED_HTTP);
+        add_infraction(INF_BAD_STAT_LINE);
+        create_event(EVENT_MISFORMATTED_HTTP);
         return;
     }
 
@@ -88,8 +88,8 @@ void HttpMsgStatus::derive_status_code_num()
         (status_code.start()[1] < '0') || (status_code.start()[1] > '9') ||
         (status_code.start()[2] < '0') || (status_code.start()[2] > '9'))
     {
-        *transaction->get_infractions(source_id) += INF_BAD_STAT_CODE;
-        transaction->get_events(source_id)->create_event(EVENT_INVALID_STATCODE);
+        add_infraction(INF_BAD_STAT_CODE);
+        create_event(EVENT_INVALID_STATCODE);
         status_code_num = STAT_PROBLEMATIC;
         return;
     }
@@ -97,8 +97,8 @@ void HttpMsgStatus::derive_status_code_num()
         (status_code.start()[2] - '0');
     if ((status_code_num < 100) || (status_code_num > 599))
     {
-        *transaction->get_infractions(source_id) += INF_BAD_STAT_CODE;
-        transaction->get_events(source_id)->create_event(EVENT_INVALID_STATCODE);
+        add_infraction(INF_BAD_STAT_CODE);
+        create_event(EVENT_INVALID_STATCODE);
     }
 }
 
@@ -109,16 +109,16 @@ void HttpMsgStatus::gen_events()
 
     if (status_code.start() > start_line.start() + 9)
     {
-        *transaction->get_infractions(source_id) += INF_STATUS_WS;
-        transaction->get_events(source_id)->create_event(EVENT_IMPROPER_WS);
+        add_infraction(INF_STATUS_WS);
+        create_event(EVENT_IMPROPER_WS);
     }
 
     for (int k = 8; k < status_code.start() - start_line.start(); k++)
     {
         if (start_line.start()[k] == '\t')
         {
-            *transaction->get_infractions(source_id) += INF_STATUS_TAB;
-            transaction->get_events(source_id)->create_event(EVENT_APACHE_WS);
+            add_infraction(INF_STATUS_TAB);
+            create_event(EVENT_APACHE_WS);
         }
     }
 
@@ -126,8 +126,8 @@ void HttpMsgStatus::gen_events()
     {
         if (status_code.start()[3] == '\t')
         {
-            *transaction->get_infractions(source_id) += INF_STATUS_TAB;
-            transaction->get_events(source_id)->create_event(EVENT_APACHE_WS);
+            add_infraction(INF_STATUS_TAB);
+            create_event(EVENT_APACHE_WS);
         }
     }
 
@@ -136,8 +136,8 @@ void HttpMsgStatus::gen_events()
         if ((reason_phrase.start()[k] <= 31) || (reason_phrase.start()[k] >= 127))
         {
             // Illegal character in reason phrase
-            *transaction->get_infractions(source_id) += INF_BAD_PHRASE;
-            transaction->get_events(source_id)->create_event(EVENT_CTRL_IN_REASON);
+            add_infraction(INF_BAD_PHRASE);
+            create_event(EVENT_CTRL_IN_REASON);
             break;
         }
     }
@@ -147,8 +147,8 @@ void HttpMsgStatus::gen_events()
         if( flow->is_pdu_inorder(SSN_DIR_FROM_SERVER) )
         {
             // HTTP response without a request. Possible ssh tunneling
-            *transaction->get_infractions(source_id) += INF_RSP_WO_REQ;
-            transaction->get_events(source_id)->create_event(EVENT_RESPONSE_WO_REQUEST);
+            add_infraction(INF_RSP_WO_REQ);
+            create_event(EVENT_RESPONSE_WO_REQUEST);
         }
     }
 }

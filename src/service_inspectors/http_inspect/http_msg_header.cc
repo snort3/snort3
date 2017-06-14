@@ -61,14 +61,14 @@ void HttpMsgHeader::update_flow()
 
     if (get_header_count(HEAD_CONTENT_LENGTH) > 1)
     {
-        *transaction->get_infractions(source_id) += INF_MULTIPLE_CONTLEN;
-        transaction->get_events(source_id)->create_event(EVENT_MULTIPLE_CONTLEN);
+        add_infraction(INF_MULTIPLE_CONTLEN);
+        create_event(EVENT_MULTIPLE_CONTLEN);
     }
     if ((get_header_count(HEAD_CONTENT_LENGTH) > 0) &&
         (get_header_count(HEAD_TRANSFER_ENCODING) > 0))
     {
-        *transaction->get_infractions(source_id) += INF_BOTH_CL_AND_TE;
-        transaction->get_events(source_id)->create_event(EVENT_BOTH_CL_AND_TE);
+        add_infraction(INF_BOTH_CL_AND_TE);
+        create_event(EVENT_BOTH_CL_AND_TE);
     }
 
     // The following logic to determine body type is by no means the last word on this topic.
@@ -86,15 +86,15 @@ void HttpMsgHeader::update_flow()
         // headers.
         if (get_header_count(HEAD_TRANSFER_ENCODING) > 0)
         {
-            *transaction->get_infractions(source_id) += INF_BAD_CODE_BODY_HEADER;
-            transaction->get_events(source_id)->create_event(EVENT_BAD_CODE_BODY_HEADER);
+            add_infraction(INF_BAD_CODE_BODY_HEADER);
+            create_event(EVENT_BAD_CODE_BODY_HEADER);
         }
         if (get_header_count(HEAD_CONTENT_LENGTH) > 0)
         {
             if (norm_decimal_integer(get_header_value_norm(HEAD_CONTENT_LENGTH)) > 0)
             {
-                *transaction->get_infractions(source_id) += INF_BAD_CODE_BODY_HEADER;
-                transaction->get_events(source_id)->create_event(EVENT_BAD_CODE_BODY_HEADER);
+                add_infraction(INF_BAD_CODE_BODY_HEADER);
+                create_event(EVENT_BAD_CODE_BODY_HEADER);
             }
         }
         session_data->half_reset(SRC_SERVER);
@@ -128,8 +128,8 @@ void HttpMsgHeader::update_flow()
             !memcmp(te_header.start() + (te_header.length() - (CHUNKED_SIZE+1)),
                 ",chunked", CHUNKED_SIZE+1))
         {
-            *transaction->get_infractions(source_id) += INF_PADDED_TE_HEADER;
-            transaction->get_events(source_id)->create_event(EVENT_PADDED_TE_HEADER);
+            add_infraction(INF_PADDED_TE_HEADER);
+            create_event(EVENT_PADDED_TE_HEADER);
             is_chunked = true;
         }
 
@@ -142,8 +142,8 @@ void HttpMsgHeader::update_flow()
         }
         else
         {
-            *transaction->get_infractions(source_id) += INF_BAD_TE_HEADER;
-            transaction->get_events(source_id)->create_event(EVENT_BAD_TE_HEADER);
+            add_infraction(INF_BAD_TE_HEADER);
+            create_event(EVENT_BAD_TE_HEADER);
         }
     }
 
@@ -169,8 +169,8 @@ void HttpMsgHeader::update_flow()
         }
         else
         {
-            *transaction->get_infractions(source_id) += INF_BAD_CONTENT_LENGTH;
-            transaction->get_events(source_id)->create_event(EVENT_BAD_CONTENT_LENGTH);
+            add_infraction(INF_BAD_CONTENT_LENGTH);
+            create_event(EVENT_BAD_CONTENT_LENGTH);
             // Treat as if there was no Content-Length header (drop through)
         }
     }
@@ -183,8 +183,8 @@ void HttpMsgHeader::update_flow()
             // Despite the name of this event, we assume for parsing purposes that this POST or PUT
             // does not have a body rather than running to connection close. Obviously that is just
             // an assumption.
-            *transaction->get_infractions(source_id) += INF_POST_WO_BODY;
-            transaction->get_events(source_id)->create_event(EVENT_UNBOUNDED_POST);
+            add_infraction(INF_POST_WO_BODY);
+            create_event(EVENT_UNBOUNDED_POST);
         }
         session_data->half_reset(source_id);
         return;
@@ -293,8 +293,8 @@ void HttpMsgHeader::setup_encoding_decompression()
             cont_offset, HttpMsgHeadShared::content_code_list);
         if ((compression != CMP_NONE) && (content_code != CONTENTCODE_IDENTITY))
         {
-            *transaction->get_infractions(source_id) += INF_STACKED_ENCODINGS;
-            transaction->get_events(source_id)->create_event(EVENT_STACKED_ENCODINGS);
+            add_infraction(INF_STACKED_ENCODINGS);
+            create_event(EVENT_STACKED_ENCODINGS);
             compression = CMP_NONE;
         }
         switch (content_code)
@@ -310,14 +310,14 @@ void HttpMsgHeader::setup_encoding_decompression()
         case CONTENTCODE_EXI:
         case CONTENTCODE_PACK200_GZIP:
         case CONTENTCODE_X_COMPRESS:
-            *transaction->get_infractions(source_id) += INF_UNSUPPORTED_ENCODING;
-            transaction->get_events(source_id)->create_event(EVENT_UNSUPPORTED_ENCODING);
+            add_infraction(INF_UNSUPPORTED_ENCODING);
+            create_event(EVENT_UNSUPPORTED_ENCODING);
             break;
         case CONTENTCODE_IDENTITY:
             break;
         case CONTENTCODE__OTHER:
-            *transaction->get_infractions(source_id) += INF_UNKNOWN_ENCODING;
-            transaction->get_events(source_id)->create_event(EVENT_UNKNOWN_ENCODING);
+            add_infraction(INF_UNKNOWN_ENCODING);
+            create_event(EVENT_UNKNOWN_ENCODING);
             break;
         }
     }
@@ -379,8 +379,8 @@ void HttpMsgHeader::setup_utf_decoding()
         }
         else if ( charset_code == CHARSET_UTF7 )
         {
-            *transaction->get_infractions(source_id) += INF_UTF7;
-            transaction->get_events(source_id)->create_event(EVENT_UTF7);
+            add_infraction(INF_UTF7);
+            create_event(EVENT_UTF7);
         }
     }
 

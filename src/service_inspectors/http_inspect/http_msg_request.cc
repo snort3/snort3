@@ -44,7 +44,7 @@ void HttpMsgRequest::parse_start_line()
         if (!handle_zero_nine())
         {
             // Just a plain old bad request
-            *transaction->get_infractions(source_id) += INF_BAD_REQ_LINE;
+            add_infraction(INF_BAD_REQ_LINE);
             transaction->get_events(source_id)->generate_misformatted_http(start_line.start(),
                 start_line.length());
         }
@@ -95,8 +95,8 @@ void HttpMsgRequest::parse_start_line()
     }
     else
     {
-        *transaction->get_infractions(source_id) += INF_NO_URI;
-        transaction->get_events(source_id)->create_event(EVENT_URI_MISSING);
+        add_infraction(INF_NO_URI);
+        create_event(EVENT_URI_MISSING);
     }
 }
 
@@ -107,8 +107,8 @@ bool HttpMsgRequest::handle_zero_nine()
         !memcmp(start_line.start(), "GET", 3) &&
         ((start_line.length() == 3) || is_sp_tab[start_line.start()[3]]))
     {
-        *transaction->get_infractions(source_id) += INF_ZERO_NINE_REQ;
-        transaction->get_events(source_id)->create_event(EVENT_SIMPLE_REQUEST);
+        add_infraction(INF_ZERO_NINE_REQ);
+        create_event(EVENT_SIMPLE_REQUEST);
         method.set(3, start_line.start());
         method_id = METH_GET;
         version_id = VERS_0_9;
@@ -129,8 +129,8 @@ bool HttpMsgRequest::handle_zero_nine()
         }
         else
         {
-            *transaction->get_infractions(source_id) += INF_NO_URI;
-            transaction->get_events(source_id)->create_event(EVENT_URI_MISSING);
+            add_infraction(INF_NO_URI);
+            create_event(EVENT_URI_MISSING);
         }
         return true;
     }
@@ -165,8 +165,8 @@ void HttpMsgRequest::gen_events()
     if ((start_line.start()[method.length()] == '\t') ||
         (!zero_nine && (start_line.start()[start_line.length() - 9] == '\t')))
     {
-        *transaction->get_infractions(source_id) += INF_REQUEST_TAB;
-        transaction->get_events(source_id)->create_event(EVENT_APACHE_WS);
+        add_infraction(INF_REQUEST_TAB);
+        create_event(EVENT_APACHE_WS);
     }
 
     // Look for white space issues in and around the URI.
@@ -182,39 +182,39 @@ void HttpMsgRequest::gen_events()
                 // white space inside the URI is not allowed
                 if (start_line.start()[k] == ' ')
                 {
-                    *transaction->get_infractions(source_id) += INF_URI_SPACE;
-                    transaction->get_events(source_id)->create_event(EVENT_UNESCAPED_SPACE_URI);
+                    add_infraction(INF_URI_SPACE);
+                    create_event(EVENT_UNESCAPED_SPACE_URI);
                 }
             }
             else
             {
                 // extra white space before or after the URI
-                *transaction->get_infractions(source_id) += INF_REQUEST_WS;
-                transaction->get_events(source_id)->create_event(EVENT_IMPROPER_WS);
+                add_infraction(INF_REQUEST_WS);
+                create_event(EVENT_IMPROPER_WS);
                 if (start_line.start()[k] == '\t')
                 {
                     // which is also a tab
-                    *transaction->get_infractions(source_id) += INF_REQUEST_TAB;
-                    transaction->get_events(source_id)->create_event(EVENT_APACHE_WS);
+                    add_infraction(INF_REQUEST_TAB);
+                    create_event(EVENT_APACHE_WS);
                 }
             }
         }
     }
 
     if (method_id == METH__OTHER)
-        transaction->get_events(source_id)->create_event(EVENT_UNKNOWN_METHOD);
+        create_event(EVENT_UNKNOWN_METHOD);
 
     if (session_data->zero_nine_expected != 0)
     {
         // Previous 0.9 request on this connection should have been the last request message
-        *transaction->get_infractions(source_id) += INF_ZERO_NINE_CONTINUE;
-        transaction->get_events(source_id)->create_event(EVENT_ZERO_NINE_CONTINUE);
+        add_infraction(INF_ZERO_NINE_CONTINUE);
+        create_event(EVENT_ZERO_NINE_CONTINUE);
     }
     else if (zero_nine && (trans_num != 1))
     {
         // Switched to 0.9 request after previously sending non-0.9 request on this connection
-        *transaction->get_infractions(source_id) += INF_ZERO_NINE_NOT_FIRST;
-        transaction->get_events(source_id)->create_event(EVENT_ZERO_NINE_NOT_FIRST);
+        add_infraction(INF_ZERO_NINE_NOT_FIRST);
+        create_event(EVENT_ZERO_NINE_NOT_FIRST);
     }
 }
 

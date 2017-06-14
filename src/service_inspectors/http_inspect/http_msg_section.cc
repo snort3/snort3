@@ -51,6 +51,16 @@ HttpMsgSection::HttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
     assert((source_id == SRC_CLIENT) || (source_id == SRC_SERVER));
 }
 
+void HttpMsgSection::add_infraction(int infraction)
+{
+    *transaction->get_infractions(source_id) += infraction;
+}
+
+void HttpMsgSection::create_event(int sid)
+{
+    transaction->get_events(source_id)->create_event(sid);
+}
+
 void HttpMsgSection::update_depth() const
 {
     if ((session_data->file_depth_remaining[source_id] <= 0) &&

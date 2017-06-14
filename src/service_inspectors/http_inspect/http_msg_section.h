@@ -82,6 +82,8 @@ protected:
     int32_t status_code_num;
 
     // Convenience methods shared by multiple subclasses
+    void add_infraction(int infraction);
+    void create_event(int sid);
     void update_depth() const;
     static const Field& classic_normalize(const Field& raw, Field& norm,
         const HttpParaList::UriParam& uri_param);

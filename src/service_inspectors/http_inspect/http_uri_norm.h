@@ -86,7 +86,7 @@ private:
     // An artifice used by the classic normalization methods to disable event generation
     class HttpDummyEventGen : public HttpEventGen
     {
-        void create_event(HttpEnums::EventSid) override {}
+        void create_event(int) override {}
     };
 };
 
