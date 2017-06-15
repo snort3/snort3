@@ -47,43 +47,45 @@ public:
 private:
     void ps_parse(SnortConfig*, char*);
 
-    int ps_ignore_ip(
+    bool ps_ignore_ip(
         const SfIp* scanner, uint16_t scanner_port,
         const SfIp* scanned, uint16_t scanned_port);
 
-    int ps_filter_ignore(PS_PKT* ps_pkt);
-    int ps_tracker_lookup(
+    bool ps_tracker_lookup(
         PS_PKT* ps_pkt, PS_TRACKER** scanner, PS_TRACKER** scanned);
 
+    bool ps_filter_ignore(PS_PKT* ps_pkt);
+
+    bool ps_tracker_update(
+        PS_PKT* ps_pkt, PS_TRACKER* scanner, PS_TRACKER* scanned);
+
+    bool ps_tracker_alert(
+        PS_PKT* ps_pkt, PS_TRACKER* scanner, PS_TRACKER* scanned);
+
     int ps_get_proto(PS_PKT* ps_pkt, int* proto);
-    int ps_proto_update_window(PS_PROTO* proto, time_t pkt_time);
+
+    void ps_proto_update_window(unsigned window, PS_PROTO* proto, time_t pkt_time);
 
     int ps_proto_update(
-        PS_PROTO* proto, int ps_cnt, int pri_cnt, const SfIp* ip,
+        PS_PROTO* proto, int ps_cnt, int pri_cnt, unsigned window, const SfIp* ip,
         u_short port, time_t pkt_time);
 
-    int ps_tracker_update(
+    void ps_tracker_update_ip(
         PS_PKT* ps_pkt, PS_TRACKER* scanner, PS_TRACKER* scanned);
 
-    int ps_tracker_update_ip(
+    void ps_tracker_update_tcp(
         PS_PKT* ps_pkt, PS_TRACKER* scanner, PS_TRACKER* scanned);
 
-    int ps_tracker_update_tcp(
+    void ps_tracker_update_udp(
         PS_PKT* ps_pkt, PS_TRACKER* scanner, PS_TRACKER* scanned);
 
-    int ps_tracker_update_udp(
+    void ps_tracker_update_icmp(
         PS_PKT* ps_pkt, PS_TRACKER* scanner, PS_TRACKER* scanned);
 
-    int ps_tracker_update_icmp(
-        PS_PKT* ps_pkt, PS_TRACKER* scanner, PS_TRACKER* scanned);
-
-    int ps_tracker_alert(
-        PS_PKT* ps_pkt, PS_TRACKER* scanner, PS_TRACKER* scanned);
-
-    int ps_alert_tcp(PS_PROTO* scanner, PS_PROTO* scanned);
-    int ps_alert_ip(PS_PROTO* scanner, PS_PROTO* scanned);
-    int ps_alert_udp(PS_PROTO* scanner, PS_PROTO* scanned);
-    int ps_alert_icmp(PS_PROTO* scanner, PS_PROTO* scanned);
+    void ps_alert_tcp(PS_PROTO* scanner, PS_PROTO* scanned);
+    void ps_alert_ip(PS_PROTO* scanner, PS_PROTO* scanned);
+    void ps_alert_udp(PS_PROTO* scanner, PS_PROTO* scanned);
+    void ps_alert_icmp(PS_PROTO* scanner, PS_PROTO* scanned);
 
     int ps_detect(PS_PKT* ps_pkt);
 

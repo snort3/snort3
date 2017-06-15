@@ -17,14 +17,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/*
-   ipobj.c
-
-   IP address encapsulation interface
-
-   This module provides encapsulation of single IP ADDRESSes as
-   objects, and collections of IP ADDRESSes as objects
-*/
+// ipobj.c
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -51,7 +44,6 @@
    and individual addresses.
 
    For a single IPAddress the implied Mask is 32 bits,or 255.255.255.255, or 0xffffffff, or -1.
-
 */
 IPSET* ipset_new()
 {
@@ -67,7 +59,7 @@ IPSET* ipset_copy(IPSET* ipsp)
     SF_LNODE* cursor;
 
     for (ip_port =(IP_PORT*)sflist_first(&ipsp->ip_list, &cursor);
-        ip_port !=NULL;
+        ip_port;
         ip_port =(IP_PORT*)sflist_next(&cursor) )
     {
         ipset_add(newset, &ip_port->ip, &ip_port->portset, ip_port->notflag);
@@ -323,8 +315,8 @@ static int ip_parse(char* ipstr, SfCidr* ip, char* not_flag, PORTSET* portset, c
     char* lasts = nullptr;
     strtok_r(ipstr, " \t", &lasts);
 
-    /* Is either the port after the 1st space, or NULL */
-    port_str = strtok_r(NULL, " \t", &lasts);
+    /* Is either the port after the 1st space, or null */
+    port_str = strtok_r(nullptr, " \t", &lasts);
 
     while (port_str)
     {
@@ -343,7 +335,7 @@ static int ip_parse(char* ipstr, SfCidr* ip, char* not_flag, PORTSET* portset, c
         }
 
         port_parse(port_str, portset);
-        port_str = strtok_r(NULL, " \t", &lasts);
+        port_str = strtok_r(nullptr, " \t", &lasts);
     }
 
     if (portset->port_list.count == 0)
@@ -469,10 +461,10 @@ void test_ip4_parsing()
         "0/0",
         "0.0.0.0/0.0.0.0:25-26 28-29 31",
         "0.0.0.0/0.0.2.0",
-        NULL
+        nullptr
     };
 
-    for (curip = ips; curip[0] != NULL; curip++)
+    for (curip = ips; curip[0]; curip++)
     {
         portset_init(&portset);
 
@@ -521,10 +513,10 @@ void test_ip4set_parsing()
         "0/0",
         "0.0.0.0/0.0.0.0",
         "0.0.0.0/0.0.2.0",
-        NULL
+        nullptr
     };
 
-    for (curip = ips; curip[0] != NULL; curip++)
+    for (curip = ips; curip[0]; curip++)
     {
         IPSET* ipset = ipset_new(IPV4_FAMILY);
 

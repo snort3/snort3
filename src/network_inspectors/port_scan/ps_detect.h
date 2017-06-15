@@ -35,22 +35,51 @@ struct PsCommon
     PsCommon() { memcap = 0; }
 };
 
+struct PS_ALERT_CONF
+{
+    short connection_count;
+    short priority_count;
+    short u_ip_count;
+    short u_port_count;
+};
+
 struct PortscanConfig
 {
-    int disabled;
     int detect_scans;
     int detect_scan_type;
-    int sense_level;
     int proto_cnt;
     int include_midstream;
     int print_tracker;
+
     bool logfile;
+
+    unsigned tcp_window;
+    unsigned udp_window;
+    unsigned ip_window;
+    unsigned icmp_window;
 
     IPSET* ignore_scanners;
     IPSET* ignore_scanned;
     IPSET* watch_ip;
 
     PsCommon* common;
+
+    PS_ALERT_CONF tcp_ports;
+    PS_ALERT_CONF tcp_decoy;
+    PS_ALERT_CONF tcp_sweep;
+    PS_ALERT_CONF tcp_dist;
+
+    PS_ALERT_CONF udp_ports;
+    PS_ALERT_CONF udp_decoy;
+    PS_ALERT_CONF udp_sweep;
+    PS_ALERT_CONF udp_dist;
+
+    PS_ALERT_CONF ip_proto;
+    PS_ALERT_CONF ip_decoy;
+    PS_ALERT_CONF ip_sweep;
+    PS_ALERT_CONF ip_dist;
+
+    PS_ALERT_CONF icmp_sweep;
 
     PortscanConfig();
     ~PortscanConfig();
@@ -92,10 +121,12 @@ struct PS_TRACKER
 struct PS_PKT
 {
     void* pkt;
-    int proto;
-    int reverse_pkt;
+
     PS_TRACKER* scanner;
     PS_TRACKER* scanned;
+
+    int proto;
+    int reverse_pkt;
 };
 
 //-------------------------------------------------------------------------
@@ -130,107 +161,6 @@ struct PS_PKT
 #define PS_ALERT_OPEN_PORT                 9
 
 #define PS_ALERT_GENERATED                 255
-
-//-------------------------------------------------------------------------
-// gid - sids
-//-------------------------------------------------------------------------
-
-#define GID_PORT_SCAN 122
-
-#define PSNG_TCP_PORTSCAN                      1
-#define PSNG_TCP_DECOY_PORTSCAN                2
-#define PSNG_TCP_PORTSWEEP                     3
-#define PSNG_TCP_DISTRIBUTED_PORTSCAN          4
-#define PSNG_TCP_FILTERED_PORTSCAN             5
-#define PSNG_TCP_FILTERED_DECOY_PORTSCAN       6
-#define PSNG_TCP_PORTSWEEP_FILTERED            7
-#define PSNG_TCP_FILTERED_DISTRIBUTED_PORTSCAN 8
-
-#define PSNG_IP_PORTSCAN                       9
-#define PSNG_IP_DECOY_PORTSCAN                 10
-#define PSNG_IP_PORTSWEEP                      11
-#define PSNG_IP_DISTRIBUTED_PORTSCAN           12
-#define PSNG_IP_FILTERED_PORTSCAN              13
-#define PSNG_IP_FILTERED_DECOY_PORTSCAN        14
-#define PSNG_IP_PORTSWEEP_FILTERED             15
-#define PSNG_IP_FILTERED_DISTRIBUTED_PORTSCAN  16
-
-#define PSNG_UDP_PORTSCAN                      17
-#define PSNG_UDP_DECOY_PORTSCAN                18
-#define PSNG_UDP_PORTSWEEP                     19
-#define PSNG_UDP_DISTRIBUTED_PORTSCAN          20
-#define PSNG_UDP_FILTERED_PORTSCAN             21
-#define PSNG_UDP_FILTERED_DECOY_PORTSCAN       22
-#define PSNG_UDP_PORTSWEEP_FILTERED            23
-#define PSNG_UDP_FILTERED_DISTRIBUTED_PORTSCAN 24
-
-#define PSNG_ICMP_PORTSWEEP                    25
-#define PSNG_ICMP_PORTSWEEP_FILTERED           26
-
-#define PSNG_OPEN_PORT                         27
-
-//-------------------------------------------------------------------------
-// rule msgs
-//-------------------------------------------------------------------------
-
-#define PSNG_TCP_PORTSCAN_STR \
-    "TCP portscan"
-#define PSNG_TCP_DECOY_PORTSCAN_STR \
-    "TCP decoy portscan"
-#define PSNG_TCP_PORTSWEEP_STR \
-    "TCP portsweep"
-#define PSNG_TCP_DISTRIBUTED_PORTSCAN_STR \
-    "TCP distributed portscan"
-#define PSNG_TCP_FILTERED_PORTSCAN_STR \
-    "TCP filtered portscan"
-#define PSNG_TCP_FILTERED_DECOY_PORTSCAN_STR \
-    "TCP filtered decoy portscan"
-#define PSNG_TCP_FILTERED_DISTRIBUTED_PORTSCAN_STR \
-    "TCP filtered distributed portscan"
-#define PSNG_TCP_PORTSWEEP_FILTERED_STR \
-    "TCP filtered portsweep"
-
-#define PSNG_IP_PORTSCAN_STR \
-    "IP protocol scan"
-#define PSNG_IP_DECOY_PORTSCAN_STR \
-    "IP decoy protocol scan"
-#define PSNG_IP_PORTSWEEP_STR \
-    "IP protocol sweep"
-#define PSNG_IP_DISTRIBUTED_PORTSCAN_STR \
-    "IP distributed protocol scan"
-#define PSNG_IP_FILTERED_PORTSCAN_STR \
-    "IP filtered protocol scan"
-#define PSNG_IP_FILTERED_DECOY_PORTSCAN_STR \
-    "IP filtered decoy protocol scan"
-#define PSNG_IP_FILTERED_DISTRIBUTED_PORTSCAN_STR \
-    "IP filtered distributed protocol scan"
-#define PSNG_IP_PORTSWEEP_FILTERED_STR \
-    "IP filtered protocol sweep"
-
-#define PSNG_UDP_PORTSCAN_STR \
-    "UDP portscan"
-#define PSNG_UDP_DECOY_PORTSCAN_STR \
-    "UDP decoy portscan"
-#define PSNG_UDP_PORTSWEEP_STR \
-    "UDP portsweep"
-#define PSNG_UDP_DISTRIBUTED_PORTSCAN_STR \
-    "UDP distributed portscan"
-#define PSNG_UDP_FILTERED_PORTSCAN_STR \
-    "UDP filtered portscan"
-#define PSNG_UDP_FILTERED_DECOY_PORTSCAN_STR \
-    "UDP filtered decoy portscan"
-#define PSNG_UDP_FILTERED_DISTRIBUTED_PORTSCAN_STR \
-    "UDP filtered distributed portscan"
-#define PSNG_UDP_PORTSWEEP_FILTERED_STR \
-    "UDP filtered portsweep"
-
-#define PSNG_ICMP_PORTSWEEP_STR \
-    "ICMP sweep"
-#define PSNG_ICMP_PORTSWEEP_FILTERED_STR \
-    "ICMP filtered sweep"
-
-#define PSNG_OPEN_PORT_STR \
-    "open port"
 
 #endif
 

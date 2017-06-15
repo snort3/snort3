@@ -79,7 +79,6 @@ dns = { }
 http_inspect = { }
 imap = { }
 pop = { }
-port_scan = { }
 reputation = { }
 rpc_decode = { }
 sip = { }
@@ -89,6 +88,7 @@ telnet = { }
 
 -- see snort_defaults.lua for default_*
 gtp_inspect = default_gtp
+port_scan = default_med_port_scan
 smtp = default_smtp
 
 ftp_server = default_ftp_server

@@ -994,3 +994,140 @@ default_gtp =
     { version = 2, messages = gtp_v2_msg, infos = gtp_v2_info },
 }
 
+---------------------------------------------------------------------------
+-- port_scan defaults
+---------------------------------------------------------------------------
+
+tcp_low_ports = { scans =   0, rejects =  5, nets =  25, ports =  5 }
+tcp_low_decoy = { scans =   0, rejects = 15, nets =  50, ports = 30 }
+tcp_low_sweep = { scans =   0, rejects =  5, nets =   5, ports = 15 }
+tcp_low_dist =  { scans =   0, rejects = 15, nets =  50, ports = 15 }
+
+tcp_med_ports = { scans = 200, rejects = 10, nets =  60, ports = 15 }
+tcp_med_decoy = { scans = 200, rejects = 30, nets = 120, ports = 60 }
+tcp_med_sweep = { scans =  30, rejects =  7, nets =   7, ports = 10 }
+tcp_med_dist =  { scans = 200, rejects = 30, nets = 120, ports = 30 }
+
+tcp_hi_ports =  { scans = 200, rejects =  5, nets = 100, ports = 10 }
+tcp_hi_decoy =  { scans = 200, rejects =  7, nets = 200, ports = 60 }
+tcp_hi_sweep =  { scans =  30, rejects =  3, nets =   3, ports = 10 }
+tcp_hi_dist =   { scans = 200, rejects =  5, nets = 200, ports = 10 }
+
+udp_low_ports = { scans =   0, rejects =  5, nets =  25, ports =  5 }
+udp_low_decoy = { scans =   0, rejects = 15, nets =  50, ports = 30 }
+udp_low_sweep = { scans =   0, rejects =  5, nets =   5, ports = 15 }
+udp_low_dist =  { scans =   0, rejects = 15, nets =  50, ports = 15 }
+
+udp_med_ports = { scans = 200, rejects = 10, nets =  60, ports = 15 }
+udp_med_decoy = { scans = 200, rejects = 30, nets = 120, ports = 60 }
+udp_med_sweep = { scans =  30, rejects =  5, nets =   5, ports = 20 }
+udp_med_dist =  { scans = 200, rejects = 30, nets = 120, ports = 30 }
+
+udp_hi_ports =  { scans = 200, rejects =  3, nets = 100, ports = 10 }
+udp_hi_decoy =  { scans = 200, rejects =  7, nets = 200, ports = 60 }
+udp_hi_sweep =  { scans =  30, rejects =  3, nets =   3, ports = 10 }
+udp_hi_dist =   { scans = 200, rejects =  3, nets = 200, ports = 10 }
+
+ip_low_proto =  { scans =   0, rejects = 10, nets =  10, ports = 50 }
+ip_low_decoy =  { scans =   0, rejects = 40, nets =  50, ports = 25 }
+ip_low_sweep =  { scans =   0, rejects = 10, nets =  10, ports = 10 }
+ip_low_dist =   { scans =   0, rejects = 15, nets =  25, ports = 50 }
+
+ip_med_proto =  { scans = 200, rejects = 10, nets =  10, ports = 50 }
+ip_med_decoy =  { scans = 200, rejects = 40, nets =  50, ports = 25 }
+ip_med_sweep =  { scans =  30, rejects = 10, nets =  10, ports = 10 }
+ip_med_dist =   { scans = 200, rejects = 15, nets =  25, ports = 50 }
+
+ip_hi_proto =   { scans = 200, rejects =  3, nets =   3, ports = 10 }
+ip_hi_decoy =   { scans = 200, rejects =  7, nets =  15, ports =  5 }
+ip_hi_sweep =   { scans =  30, rejects =  3, nets =   3, ports =  7 }
+ip_hi_dist =    { scans = 200, rejects =  3, nets =  11, ports = 10 }
+
+icmp_low_sweep = { scans =   0, rejects =  5, nets =   5, ports =  5 }
+icmp_med_sweep = { scans =  20, rejects =  5, nets =   5, ports =  5 }
+icmp_hi_sweep =  { scans =  10, rejects =  3, nets =   3, ports =  5 }
+
+default_hi_port_scan =
+{
+    protos = 'all',
+    scan_types = 'all',
+
+    tcp_window = 600,
+    udp_window = 600,
+    ip_window = 600,
+    icmp_window = 600,
+
+    tcp_ports = tcp_hi_ports,
+    tcp_decoy = tcp_hi_decoy,
+    tcp_sweep = tcp_hi_sweep,
+    tcp_dist = tcp_hi_dist,
+
+    udp_ports = udp_hi_ports,
+    udp_decoy = udp_hi_decoy,
+    udp_sweep = udp_hi_sweep,
+    udp_dist = udp_hi_dist,
+
+    ip_proto = ip_hi_proto,
+    ip_decoy = ip_hi_decoy,
+    ip_sweep = ip_hi_sweep,
+    ip_dist = ip_hi_dist,
+
+    icmp_sweep = icmp_hi_sweep,
+}
+
+default_med_port_scan =
+{
+    protos = 'all',
+    scan_types = 'all',
+
+    tcp_window = 90,
+    udp_window = 90,
+    ip_window = 90,
+    icmp_window = 90,
+
+    tcp_ports = tcp_med_ports,
+    tcp_decoy = tcp_med_decoy,
+    tcp_sweep = tcp_med_sweep,
+    tcp_dist = tcp_med_dist,
+
+    udp_ports = udp_med_ports,
+    udp_decoy = udp_med_decoy,
+    udp_sweep = udp_med_sweep,
+    udp_dist = udp_med_dist,
+
+    ip_proto = ip_med_proto,
+    ip_decoy = ip_med_decoy,
+    ip_sweep = ip_med_sweep,
+    ip_dist = ip_med_dist,
+
+    icmp_sweep = icmp_med_sweep,
+}
+
+default_low_port_scan =
+{
+    protos = 'all',
+    scan_types = 'all',
+
+    tcp_window = 60,
+    udp_window = 60,
+    ip_window = 60,
+    icmp_window = 60,
+
+    tcp_ports = tcp_low_ports,
+    tcp_decoy = tcp_low_decoy,
+    tcp_sweep = tcp_low_sweep,
+    tcp_dist = tcp_low_dist,
+
+    udp_ports = udp_low_ports,
+    udp_decoy = udp_low_decoy,
+    udp_sweep = udp_low_sweep,
+    udp_dist = udp_low_dist,
+
+    ip_proto = ip_low_proto,
+    ip_decoy = ip_low_decoy,
+    ip_sweep = ip_low_sweep,
+    ip_dist = ip_low_dist,
+
+    icmp_sweep = icmp_low_sweep,
+}
+

@@ -27,26 +27,40 @@
 #include <cassert>
 
 //-------------------------------------------------------------------------
-// port_scan tables
+// port_scan params
 //-------------------------------------------------------------------------
 
 // order of protos and scans must match PS_* flags
 #define protos \
     "tcp | udp | icmp | ip | all"
 
-#define scans \
+#define scan_types \
     "portscan | portsweep | decoy_portscan | distributed_portscan | all"
+
+static const Parameter scan_params[] =
+{
+    { "scans", Parameter::PT_INT, "0:", "100",
+      "scan attempts" },
+
+    { "rejects", Parameter::PT_INT, "0:", "15",
+      "scan attempts with negative response" },
+
+    { "nets", Parameter::PT_INT, "0:", "25",
+      "number of times address changed from prior attempt" },
+
+    { "ports", Parameter::PT_INT, "0:", "25",
+      "number of times port (or proto) changed from prior attempt" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
 
 static const Parameter ps_params[] =
 {
     { "protos", Parameter::PT_MULTI, protos, "all",
       "choose the protocols to monitor" },
 
-    { "scan_types", Parameter::PT_MULTI, scans, "all",
+    { "scan_types", Parameter::PT_MULTI, scan_types, "all",
       "choose type of scans to look for" },
-
-    { "sense_level", Parameter::PT_ENUM, "low | medium | high", "medium",
-      "choose the level of detection" },
 
     { "watch_ip", Parameter::PT_STRING, nullptr, nullptr,
       "list of CIDRs with optional ports to watch" },
@@ -63,8 +77,63 @@ static const Parameter ps_params[] =
     { "logfile", Parameter::PT_BOOL, nullptr, "false",
       "write scan events to file" },
 
+    { "tcp_ports", Parameter::PT_TABLE, scan_params, nullptr,
+      "tcp port scan configuration (one-to-one)" },
+
+    { "tcp_decoy", Parameter::PT_TABLE, scan_params, nullptr,
+      "tcp decoy scan configuration (one-to-one decoy)" },
+
+    { "tcp_sweep", Parameter::PT_TABLE, scan_params, nullptr,
+      "tcp sweep scan configuration (one-to-many)" },
+
+    { "tcp_dist", Parameter::PT_TABLE, scan_params, nullptr,
+      "tcp distributed scan configuration (many-to-one)" },
+
+    { "udp_ports", Parameter::PT_TABLE, scan_params, nullptr,
+      "udp port scan configuration (one-to-one)" },
+
+    { "udp_decoy", Parameter::PT_TABLE, scan_params, nullptr,
+      "udp decoy scan configuration (one-to-one)" },
+
+    { "udp_sweep", Parameter::PT_TABLE, scan_params, nullptr,
+      "udp sweep scan configuration (one-to-many)" },
+
+    { "udp_dist", Parameter::PT_TABLE, scan_params, nullptr,
+      "udp distributed scan configuration (many-to-one)" },
+
+    { "ip_proto", Parameter::PT_TABLE, scan_params, nullptr,
+      "ip protocol scan configuration (one-to-one)" },
+
+    { "ip_decoy", Parameter::PT_TABLE, scan_params, nullptr,
+      "ip decoy scan configuration (one-to-one decoy)" },
+
+    { "ip_sweep", Parameter::PT_TABLE, scan_params, nullptr,
+      "ip sweep scan configuration (one-to-many)" },
+
+    { "ip_dist", Parameter::PT_TABLE, scan_params, nullptr,
+      "ip distributed scan configuration (many-to-one)" },
+
+    { "icmp_sweep", Parameter::PT_TABLE, scan_params, nullptr,
+      "icmp sweep scan configuration (one-to-many)" },
+
+    { "tcp_window", Parameter::PT_INT, "0:", "0",
+      "detection interval for all tcp scans" },
+
+    { "udp_window", Parameter::PT_INT, "0:", "0",
+      "detection interval for all udp scans" },
+
+    { "ip_window", Parameter::PT_INT, "0:", "0",
+      "detection interval for all ip scans" },
+
+    { "icmp_window", Parameter::PT_INT, "0:", "0",
+      "detection interval for all icmp scans" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
+
+//-------------------------------------------------------------------------
+// port_scan rules
+//-------------------------------------------------------------------------
 
 static const RuleMap port_scan_rules[] =
 {
@@ -138,7 +207,7 @@ const RuleMap* PortScanModule::get_rules() const
 // [ [ and ] ].
 // consult RFC 5952 for ideas.
 //-------------------------------------------------------------------------
-bool PortScanModule::set(const char*, Value& v, SnortConfig*)
+bool PortScanModule::set(const char* fqn, Value& v, SnortConfig*)
 {
     if ( v.is("protos") )
     {
@@ -154,9 +223,6 @@ bool PortScanModule::set(const char*, Value& v, SnortConfig*)
             u = PS_TYPE_ALL;
         config->detect_scan_type = u;
     }
-    else if ( v.is("sense_level") )
-        config->sense_level = v.get_long() + 1;
-
     else if ( v.is("include_midstream") )
         config->include_midstream = v.get_bool();
 
@@ -184,17 +250,105 @@ bool PortScanModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("logfile") )
         config->logfile = v.get_bool();
 
+    else if ( v.is("scans") )
+    {
+        if ( auto p = get_alert_conf(fqn) )
+            p->connection_count = v.get_long();
+        else
+            return false;
+    }
+    else if ( v.is("rejects") )
+    {
+        if ( auto p = get_alert_conf(fqn) )
+            p->priority_count = v.get_long();
+        else
+            return false;
+    }
+    else if ( v.is("nets") )
+    {
+        if ( auto p = get_alert_conf(fqn) )
+            p->u_ip_count = v.get_long();
+        else
+            return false;
+    }
+    else if ( v.is("ports") )
+    {
+        if ( auto p = get_alert_conf(fqn) )
+            p->u_port_count = v.get_long();
+        else
+            return false;
+    }
+    else if ( v.is("tcp_window") )
+        config->tcp_window = v.get_long();
+
+    else if ( v.is("udp_window") )
+        config->udp_window = v.get_long();
+
+    else if ( v.is("ip_window") )
+        config->ip_window = v.get_long();
+
+    else if ( v.is("icmp_window") )
+        config->icmp_window = v.get_long();
+
     else
         return false;
 
     return true;
 }
 
-bool PortScanModule::begin(const char*, int, SnortConfig*)
+bool PortScanModule::begin(const char* fqn, int, SnortConfig*)
 {
-    assert(!config);
-    config = new PortscanConfig;
+    if ( !config )
+        config = new PortscanConfig;
+
+    else if ( strcmp(fqn, "port_scan") )
+        return false;
+
     return true;
+}
+
+PS_ALERT_CONF* PortScanModule::get_alert_conf(const char* fqn)
+{
+    if ( !strncmp(fqn, "port_scan.tcp_ports", 19) )
+        return &config->tcp_ports;
+
+    else if ( !strncmp(fqn, "port_scan.tcp_decoy", 19) )
+        return &config->tcp_decoy;
+
+    else if ( !strncmp(fqn, "port_scan.tcp_sweep", 19) )
+        return &config->tcp_sweep;
+
+    else if ( !strncmp(fqn, "port_scan.tcp_dist", 18) )
+        return &config->tcp_dist;
+
+    else if ( !strncmp(fqn, "port_scan.udp_ports", 19) )
+        return &config->udp_ports;
+
+    else if ( !strncmp(fqn, "port_scan.udp_decoy", 19) )
+        return &config->udp_decoy;
+
+    else if ( !strncmp(fqn, "port_scan.udp_sweep", 19) )
+        return &config->udp_sweep;
+
+    else if ( !strncmp(fqn, "port_scan.udp_dist", 18) )
+        return &config->udp_dist;
+
+    else if ( !strncmp(fqn, "port_scan.ip_proto", 18) )
+        return &config->ip_proto;
+
+    else if ( !strncmp(fqn, "port_scan.ip_decoy", 18) )
+        return &config->ip_decoy;
+
+    else if ( !strncmp(fqn, "port_scan.ip_sweep", 18) )
+        return &config->ip_sweep;
+
+    else if ( !strncmp(fqn, "port_scan.ip_dist", 17) )
+        return &config->ip_dist;
+
+    else if ( !strncmp(fqn, "port_scan.icmp_sweep", 20) )
+        return &config->icmp_sweep;
+
+    return nullptr;
 }
 
 PortscanConfig* PortScanModule::get_data()

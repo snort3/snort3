@@ -17,18 +17,19 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/*
-    ipobj.h
+// ipobj.h
 
+#ifndef IPOBJ_H
+#define IPOBJ_H
+
+/*
     IP address encapsulation interface
 
     This module provides encapsulation of single IP ADDRESSes as objects,
     and collections of IP ADDRESSes as objects
 
-        Interaction with this library should be done in HOST byte order.
+    Interaction with this library should be done in HOST byte order.
 */
-#ifndef IPOBJ_H
-#define IPOBJ_H
 
 #include "sfip/sf_cidr.h"
 #include "utils/sflsq.h"
@@ -80,8 +81,7 @@ IPSET* ipset_copy(IPSET* ipset);
 void ipset_free(IPSET* ipset);
 int ipset_print(IPSET* ipset);
 
-/* helper functions -- all the sets work in host order
-*/
+// helper functions -- all the sets work in host order
 int ipset_parse(IPSET* ipset, const char* ipstr);
 
 #endif

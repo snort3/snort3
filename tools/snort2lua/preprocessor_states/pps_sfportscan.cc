@@ -111,8 +111,11 @@ bool PortScan::convert(std::istringstream& data_stream)
         bool tmpval = true;
 
         if (!keyword.compare("sense_level"))
-            tmpval = parse_option("sense_level", data_stream);
-
+        {
+            table_api.add_deleted_comment("sense_level");
+            if (!util::get_string(data_stream, keyword, "}"))
+                tmpval = false;
+        }
         else if (!keyword.compare("watch_ip"))
             tmpval = parse_ip_list("watch_ip", data_stream);
 

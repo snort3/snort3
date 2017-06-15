@@ -49,89 +49,15 @@
 #include "ps_inspect.h"
 
 PADDING_GUARD_BEGIN
-typedef struct s_PS_HASH_KEY
+struct PS_HASH_KEY
 {
     int protocol;
     SfIp scanner;
     SfIp scanned;
-} PS_HASH_KEY;
+};
 PADDING_GUARD_END
 
-typedef struct s_PS_ALERT_CONF
-{
-    short connection_count;
-    short priority_count;
-    short u_ip_count;
-    short u_port_count;
-} PS_ALERT_CONF;
-
-static THREAD_LOCAL SFXHASH* portscan_hash = NULL;
-
-/*
-**  Scanning configurations.  This is where we configure what the thresholds
-**  are for the different types of scans, protocols, and sense levels.  If
-**  you want to tweak the sense levels, change the values here.
-*/
-/*
-**  TCP alert configurations
-*/
-static const PS_ALERT_CONF g_tcp_low_ps =       { 0,5,25,5 };
-static const PS_ALERT_CONF g_tcp_low_decoy_ps = { 0,15,50,30 };
-static const PS_ALERT_CONF g_tcp_low_sweep =    { 0,5,5,15 };
-static const PS_ALERT_CONF g_tcp_low_dist_ps =  { 0,15,50,15 };
-
-static const PS_ALERT_CONF g_tcp_med_ps =       { 200,10,60,15 };
-static const PS_ALERT_CONF g_tcp_med_decoy_ps = { 200,30,120,60 };
-static const PS_ALERT_CONF g_tcp_med_sweep =    { 30,7,7,10 };
-static const PS_ALERT_CONF g_tcp_med_dist_ps =  { 200,30,120,30 };
-
-static const PS_ALERT_CONF g_tcp_hi_ps =        { 200,5,100,10 };
-static const PS_ALERT_CONF g_tcp_hi_decoy_ps =  { 200,7,200,60 };
-static const PS_ALERT_CONF g_tcp_hi_sweep =     { 30,3,3,10 };
-static const PS_ALERT_CONF g_tcp_hi_dist_ps =   { 200,5,200,10 };
-
-/*
-**  UDP alert configurations
-*/
-static const PS_ALERT_CONF g_udp_low_ps =       { 0,5,25,5 };
-static const PS_ALERT_CONF g_udp_low_decoy_ps = { 0,15,50,30 };
-static const PS_ALERT_CONF g_udp_low_sweep =    { 0,5,5,15 };
-static const PS_ALERT_CONF g_udp_low_dist_ps =  { 0,15,50,15 };
-
-static const PS_ALERT_CONF g_udp_med_ps =       { 200,10,60,15 };
-static const PS_ALERT_CONF g_udp_med_decoy_ps = { 200,30,120,60 };
-static const PS_ALERT_CONF g_udp_med_sweep =    { 30,5,5,20 };
-static const PS_ALERT_CONF g_udp_med_dist_ps =  { 200,30,120,30 };
-
-static const PS_ALERT_CONF g_udp_hi_ps =        { 200,3,100,10 };
-static const PS_ALERT_CONF g_udp_hi_decoy_ps =  { 200,7,200,60 };
-static const PS_ALERT_CONF g_udp_hi_sweep =     { 30,3,3,10 };
-static const PS_ALERT_CONF g_udp_hi_dist_ps =   { 200,3,200,10 };
-
-/*
-**  IP Protocol alert configurations
-*/
-static const PS_ALERT_CONF g_ip_low_ps =        { 0,10,10,50 };
-static const PS_ALERT_CONF g_ip_low_decoy_ps =  { 0,40,50,25 };
-static const PS_ALERT_CONF g_ip_low_sweep =     { 0,10,10,10 };
-static const PS_ALERT_CONF g_ip_low_dist_ps =   { 0,15,25,50 };
-
-static const PS_ALERT_CONF g_ip_med_ps =        { 200,10,10,50 };
-static const PS_ALERT_CONF g_ip_med_decoy_ps =  { 200,40,50,25 };
-static const PS_ALERT_CONF g_ip_med_sweep =     { 30,10,10,10 };
-static const PS_ALERT_CONF g_ip_med_dist_ps =   { 200,15,25,50 };
-
-static const PS_ALERT_CONF g_ip_hi_ps =         { 200,3,3,10 };
-static const PS_ALERT_CONF g_ip_hi_decoy_ps =   { 200,7,15,5 };
-static const PS_ALERT_CONF g_ip_hi_sweep =      { 30,3,3,7 };
-static const PS_ALERT_CONF g_ip_hi_dist_ps =    { 200,3,11,10 };
-
-/*
-**  ICMP alert configurations
-*/
-static const PS_ALERT_CONF g_icmp_low_sweep =   { 0,5,5,5 };
-static const PS_ALERT_CONF g_icmp_med_sweep =   { 20,5,5,5 };
-static const PS_ALERT_CONF g_icmp_hi_sweep =    { 10,3,3,5 };
+static THREAD_LOCAL SFXHASH* portscan_hash = nullptr;
 
 PortscanConfig::PortscanConfig()
 {
@@ -151,10 +77,6 @@ PortscanConfig::~PortscanConfig()
 }
 
 /*
-**  NAME
-**    ps_tracker_free::
-*/
-/**
 **  This function is passed into the hash algorithm, so that
 **  we only reuse nodes that aren't priority nodes.  We have to make
 **  sure that we only track so many priority nodes, otherwise we could
@@ -162,12 +84,11 @@ PortscanConfig::~PortscanConfig()
 */
 static int ps_tracker_free(void* key, void* data)
 {
-    PS_TRACKER* tracker;
-
     if (!key || !data)
         return 0;
 
-    tracker = (PS_TRACKER*)data;
+    PS_TRACKER* tracker = (PS_TRACKER*)data;
+
     if (!tracker->priority_node)
         return 0;
 
@@ -183,10 +104,10 @@ static int ps_tracker_free(void* key, void* data)
 
 void ps_cleanup()
 {
-    if (portscan_hash != NULL)
+    if ( portscan_hash )
     {
         sfxhash_delete(portscan_hash);
-        portscan_hash = NULL;
+        portscan_hash = nullptr;
     }
 }
 
@@ -195,70 +116,51 @@ void ps_init_hash(unsigned long memcap)
     if ( portscan_hash )
         return;
 
-    int rows = 0;
-    int factor = 0;
-#if SIZEOF_LONG_INT == 8
-    factor = 125;
+#if SIZEOF_LONG_INT == 8  // FIXIT-L explain this
+    int factor = 125;
 #else
-    factor = 250;
+    int factor = 250;
 #endif
 
-    rows = memcap/factor;
+    int rows = memcap/factor;
 
     portscan_hash = sfxhash_new(rows, sizeof(PS_HASH_KEY), sizeof(PS_TRACKER),
-        memcap, 1, ps_tracker_free, NULL, 1);
+        memcap, 1, ps_tracker_free, nullptr, 1);
 
-    if (portscan_hash == NULL)
+    if ( !portscan_hash )
         FatalError("Failed to initialize portscan hash table.\n");
 }
 
-/*
-**  NAME
-**    ps_reset::
-*/
-/**
-**  Reset the portscan infrastructure.
-*/
 void ps_reset()
 {
-    if (portscan_hash != NULL)
+    if ( portscan_hash )
         sfxhash_make_empty(portscan_hash);
 }
 
-/*
-**  NAME
-**    ps_ignore_ip::
-*/
-/**
-**  Check scanner and scanned ips to see if we can filter them out.
-*/
-int PortScan::ps_ignore_ip(const SfIp* scanner, uint16_t scanner_port,
+//  Check scanner and scanned ips to see if we can filter them out.
+bool PortScan::ps_ignore_ip(const SfIp* scanner, uint16_t scanner_port,
     const SfIp* scanned, uint16_t scanned_port)
 {
     if (config->ignore_scanners)
     {
         if (ipset_contains(config->ignore_scanners, scanner, &scanner_port))
-            return 1;
+            return true;
     }
 
     if (config->ignore_scanned)
     {
         if (ipset_contains(config->ignore_scanned, scanned, &scanned_port))
-            return 1;
+            return true;
     }
 
-    return 0;
+    return false;
 }
 
 /*
-**  NAME
-**    ps_filter_ignore::
-*/
-/**
 **  Check the incoming packet to decide whether portscan detection cares
 **  about this packet.  We try to ignore as many packets as possible.
 */
-int PortScan::ps_filter_ignore(PS_PKT* ps_pkt)
+bool PortScan::ps_filter_ignore(PS_PKT* ps_pkt)
 {
     Packet* p;
     int reverse_pkt = 0;
@@ -267,12 +169,12 @@ int PortScan::ps_filter_ignore(PS_PKT* ps_pkt)
     p = (Packet*)ps_pkt->pkt;
 
     if(!p->ptrs.ip_api.is_ip())
-        return 1;
+        return true;
 
     if (p->ptrs.tcph)
     {
-        if (!(config->detect_scans & PS_PROTO_TCP))
-            return 1;
+        if ( !(config->detect_scans & PS_PROTO_TCP) )
+            return true;
 
         /*
         **  This is where we check all of snort's flags for different
@@ -290,7 +192,7 @@ int PortScan::ps_filter_ignore(PS_PKT* ps_pkt)
         if (((p->packet_flags & (PKT_STREAM_EST | PKT_STREAM_TWH))
             == PKT_STREAM_EST) && !(p->ptrs.tcph->th_flags & TH_RST))
         {
-            return 1;
+            return true;
         }
 
         /*
@@ -302,32 +204,27 @@ int PortScan::ps_filter_ignore(PS_PKT* ps_pkt)
            !(p->packet_flags & (PKT_STREAM_EST)) &&
             (p->is_from_server()))
         {
-            return 1;
+            return true;
         }
         */
     }
     else if (p->ptrs.udph)
     {
-        if (!(config->detect_scans & PS_PROTO_UDP))
-            return 1;
+        if ( !(config->detect_scans & PS_PROTO_UDP) )
+            return true;
     }
     else if (p->ptrs.icmph)
     {
-        if (p->ptrs.icmph->type != ICMP_DEST_UNREACH &&
-            !(config->detect_scans & PS_PROTO_ICMP))
-        {
-            return 1;
-        }
+        if ( p->ptrs.icmph->type != ICMP_DEST_UNREACH and !(config->detect_scans & PS_PROTO_ICMP) )
+            return true;
     }
     else
     {
-        if (!(config->detect_scans & PS_PROTO_IP))
-            return 1;
+        if ( !(config->detect_scans & PS_PROTO_IP) )
+            return true;
     }
 
-    /*
-    **  Check if the packet is reversed
-    */
+    //  Check if the packet is reversed
     if ((p->is_from_server()))
     {
         reverse_pkt = 1;
@@ -348,12 +245,12 @@ int PortScan::ps_filter_ignore(PS_PKT* ps_pkt)
     if (reverse_pkt)
     {
         if (ps_ignore_ip(scanned, p->ptrs.dp, scanner, p->ptrs.sp))
-            return 1;
+            return true;
     }
     else
     {
         if (ps_ignore_ip(scanner, p->ptrs.sp, scanned, p->ptrs.dp))
-            return 1;
+            return true;
     }
 
     ps_pkt->reverse_pkt = reverse_pkt;
@@ -361,76 +258,46 @@ int PortScan::ps_filter_ignore(PS_PKT* ps_pkt)
     if (config->watch_ip)
     {
         if (ipset_contains(config->watch_ip, scanner, &(p->ptrs.sp)))
-            return 0;
+            return false;
+
         if (ipset_contains(config->watch_ip, scanned, &(p->ptrs.dp)))
-            return 0;
+            return false;
 
-        return 1;
+        return true;
     }
-    return 0;
+    return false;
 }
 
 /*
-**  NAME
-**    ps_tracker_init::
-*/
-/**
-**  Right now all we do is memset, but just in case we want to do more
-**  initialization has been extracted.
-*/
-static int ps_tracker_init(PS_TRACKER* tracker)
-{
-    memset(tracker, 0x00, sizeof(PS_TRACKER));
-
-    return 0;
-}
-
-/*
-**  NAME
-**    ps_tracker_get::
-*/
-/**
 **  Get a tracker node by either finding one or starting a new one.  We may
-**  return NULL, in which case we wait till the next packet.
+**  return null, in which case we wait `til the next packet.
 */
-static int ps_tracker_get(PS_TRACKER** ht, PS_HASH_KEY* key)
+static PS_TRACKER* ps_tracker_get(PS_HASH_KEY* key)
 {
-    int iRet;
+    PS_TRACKER* ht = (PS_TRACKER*)sfxhash_find(portscan_hash, (void*)key);
 
-    *ht = (PS_TRACKER*)sfxhash_find(portscan_hash, (void*)key);
-    if (!(*ht))
-    {
-        iRet = sfxhash_add(portscan_hash, (void*)key, NULL);
-        if (iRet == SFXHASH_OK)
-        {
-            *ht = (PS_TRACKER*)sfxhash_mru(portscan_hash);
-            if (!(*ht))
-                return -1;
+    if ( ht )
+        return ht;
 
-            ps_tracker_init(*ht);
-        }
-        else
-        {
-            return -1;
-        }
-    }
+    if ( sfxhash_add(portscan_hash, (void*)key, nullptr) != SFXHASH_OK )
+        return nullptr;
 
-    return 0;
+    ht = (PS_TRACKER*)sfxhash_mru(portscan_hash);
+
+    if ( ht )
+        memset(ht, 0x00, sizeof(PS_TRACKER));
+
+    return ht;
 }
 
-int PortScan::ps_tracker_lookup(PS_PKT* ps_pkt, PS_TRACKER** scanner,
-    PS_TRACKER** scanned)
+bool PortScan::ps_tracker_lookup(
+    PS_PKT* ps_pkt, PS_TRACKER** scanner, PS_TRACKER** scanned)
 {
     PS_HASH_KEY key;
-    Packet* p;
-
-    if (ps_pkt->pkt == NULL)
-        return -1;
-
-    p = (Packet*)ps_pkt->pkt;
+    Packet* p = (Packet*)ps_pkt->pkt;
 
     if (ps_get_proto(ps_pkt, &key.protocol) == -1)
-        return -1;
+        return false;
 
     ps_pkt->proto = key.protocol;
 
@@ -448,15 +315,10 @@ int PortScan::ps_tracker_lookup(PS_PKT* ps_pkt, PS_TRACKER** scanner,
         else
             key.scanned.set(*p->ptrs.ip_api.get_dst());
 
-        /*
-        **  Get the scanned tracker.
-        */
-        ps_tracker_get(scanned, &key);
+        *scanned = ps_tracker_get(&key);
     }
 
-    /*
-    **  Let's lookup the host that is scanning.
-    */
+    //  Let's lookup the host that is scanning.
     if (config->detect_scan_type & PS_TYPE_PORTSWEEP)
     {
         key.scanned.clear();
@@ -466,23 +328,13 @@ int PortScan::ps_tracker_lookup(PS_PKT* ps_pkt, PS_TRACKER** scanner,
         else
             key.scanner.set(*p->ptrs.ip_api.get_src());
 
-        /*
-        **  Get the scanner tracker
-        */
-        ps_tracker_get(scanner, &key);
+        *scanner = ps_tracker_get(&key);
     }
 
-    if ((*scanner == NULL) && (*scanned == NULL))
-        return -1;
-
-    return 0;
+    return *scanner or *scanned;
 }
 
 /*
-**  NAME
-**    ps_get_proto_index::
-*/
-/**
 **  This logic finds the index to the proto array based on the
 **  portscan configuration.  We need special logic because the
 **  index of the protocol changes based on the configuration.
@@ -497,10 +349,10 @@ int PortScan::ps_get_proto(PS_PKT* ps_pkt, int* proto)
     p = (Packet*)ps_pkt->pkt;
     *proto = 0;
 
-    if (config->detect_scans & PS_PROTO_TCP)
+    if ( config->detect_scans & PS_PROTO_TCP )
     {
-        if ((p->ptrs.tcph != NULL)
-            || ((p->ptrs.icmph != NULL) && (p->ptrs.icmph->type == ICMP_DEST_UNREACH)
+        if ((p->ptrs.tcph)
+            || ((p->ptrs.icmph) && (p->ptrs.icmph->type == ICMP_DEST_UNREACH)
             && ((p->ptrs.icmph->code == ICMP_PORT_UNREACH)
             || (p->ptrs.icmph->code == ICMP_PKT_FILTERED))
             && (p->proto_bits & PROTO_BIT__TCP_EMBED_ICMP)))
@@ -510,10 +362,10 @@ int PortScan::ps_get_proto(PS_PKT* ps_pkt, int* proto)
         }
     }
 
-    if (config->detect_scans & PS_PROTO_UDP)
+    if ( config->detect_scans & PS_PROTO_UDP )
     {
-        if ((p->ptrs.udph != NULL)
-            || ((p->ptrs.icmph != NULL) && (p->ptrs.icmph->type == ICMP_DEST_UNREACH)
+        if ((p->ptrs.udph)
+            || ((p->ptrs.icmph) && (p->ptrs.icmph->type == ICMP_DEST_UNREACH)
             && ((p->ptrs.icmph->code == ICMP_PORT_UNREACH)
             || (p->ptrs.icmph->code == ICMP_PKT_FILTERED))
             && (p->proto_bits & PROTO_BIT__UDP_EMBED_ICMP)))
@@ -523,21 +375,21 @@ int PortScan::ps_get_proto(PS_PKT* ps_pkt, int* proto)
         }
     }
 
-    if (config->detect_scans & PS_PROTO_IP)
+    if ( config->detect_scans & PS_PROTO_IP )
     {
-        if ((p->ptrs.ip_api.is_ip() && (p->ptrs.icmph == NULL))
-                || ((p->ptrs.icmph != NULL) && (p->ptrs.icmph->type == ICMP_DEST_UNREACH)
-                    && ((p->ptrs.icmph->code == ICMP_PROT_UNREACH)
-                        || (p->ptrs.icmph->code == ICMP_PKT_FILTERED))))
+        if ((p->ptrs.ip_api.is_ip() && (!p->ptrs.icmph))
+            || ((p->ptrs.icmph) && (p->ptrs.icmph->type == ICMP_DEST_UNREACH)
+            && ((p->ptrs.icmph->code == ICMP_PROT_UNREACH)
+            || (p->ptrs.icmph->code == ICMP_PKT_FILTERED))))
         {
             *proto = PS_PROTO_IP;
             return 0;
         }
     }
 
-    if (config->detect_scans & PS_PROTO_ICMP)
+    if ( config->detect_scans & PS_PROTO_ICMP )
     {
-        if (p->ptrs.icmph != NULL)
+        if (p->ptrs.icmph)
         {
             *proto = PS_PROTO_ICMP;
             return 0;
@@ -547,58 +399,17 @@ int PortScan::ps_get_proto(PS_PKT* ps_pkt, int* proto)
     return -1;
 }
 
-/*
-**  NAME
-**    ps_proto_update_window::
-*/
-/**
-**  Update the proto time windows based on the portscan sensitivity
-**  level.
-*/
-int PortScan::ps_proto_update_window(PS_PROTO* proto, time_t pkt_time)
+void PortScan::ps_proto_update_window(unsigned interval, PS_PROTO* proto, time_t pkt_time)
 {
-    time_t interval;
-
-    switch (config->sense_level)
-    {
-    case PS_SENSE_LOW:
-        //interval = 15;
-        interval = 60;
-        break;
-
-    case PS_SENSE_MEDIUM:
-        //interval = 15;
-        interval = 90;
-        break;
-
-    case PS_SENSE_HIGH:
-        interval = 600;
-        break;
-
-    default:
-        return -1;
-    }
-
-    /*
-    **  If we are outside of the window, reset our ps counters.
-    */
     if (pkt_time > proto->window)
     {
         memset(proto, 0x00, sizeof(PS_PROTO));
 
         proto->window = pkt_time + interval;
-
-        return 0;
     }
-
-    return 0;
 }
 
 /*
-**  NAME
-**    ps_proto_update::
-*/
-/**
 **  This function updates the PS_PROTO structure.
 **
 **  @param PS_PROTO pointer to structure to update
@@ -607,8 +418,8 @@ int PortScan::ps_proto_update_window(PS_PROTO* proto, time_t pkt_time)
 **  @param u_short  port/ip_proto to track
 **  @param time_t   time the packet was received. update windows.
 */
-int PortScan::ps_proto_update(PS_PROTO* proto, int ps_cnt, int pri_cnt, const SfIp* ip,
-    u_short port, time_t pkt_time)
+int PortScan::ps_proto_update(PS_PROTO* proto, int ps_cnt, int pri_cnt,
+    unsigned window, const SfIp* ip, u_short port, time_t pkt_time)
 {
     if (!proto)
         return 0;
@@ -646,12 +457,9 @@ int PortScan::ps_proto_update(PS_PROTO* proto, int ps_cnt, int pri_cnt, const Sf
     **  Do time check first before we update the counters, so if
     **  we need to reset them we do it before we update them.
     */
-    if (ps_proto_update_window(proto, pkt_time))
-        return -1;
+    ps_proto_update_window(window, proto, pkt_time);
 
-    /*
-    **  Update ps counter
-    */
+    //  Update ps counter
     proto->connection_count += ps_cnt;
     if (proto->connection_count < 0)
         proto->connection_count = 0;
@@ -738,10 +546,6 @@ static int ps_update_open_ports(PS_PROTO* proto, unsigned short port)
 }
 
 /*
-**  NAME
-**    ps_tracker_update_tcp::
-*/
-/**
 **  Determine how to update the portscan counter depending on the type
 **  of TCP packet we have.
 **
@@ -751,15 +555,15 @@ static int ps_update_open_ports(PS_PROTO* proto, unsigned short port)
 **    - TCP 3-way handshake packets (we decrement the counter)
 **    - TCP reset packets on unestablished streams.
 */
-int PortScan::ps_tracker_update_tcp(PS_PKT* ps_pkt, PS_TRACKER* scanner,
+void PortScan::ps_tracker_update_tcp(PS_PKT* ps_pkt, PS_TRACKER* scanner,
     PS_TRACKER* scanned)
 {
-    Packet* p;
+    Packet* p = (Packet*)ps_pkt->pkt;
     uint32_t session_flags = 0x0;
+    unsigned win = config->tcp_window;
+
     SfIp cleared;
     cleared.clear();
-
-    p = (Packet*)ps_pkt->pkt;
 
     /*
     **  Handle the initiating packet.
@@ -789,34 +593,30 @@ int PortScan::ps_tracker_update_tcp(PS_PKT* ps_pkt, PS_TRACKER* scanner,
         {
             if (scanned)
             {
-                ps_proto_update(&scanned->proto,1,0,
-                    p->ptrs.ip_api.get_src(),p->ptrs.dp, packet_time());
+                ps_proto_update(&scanned->proto, 1, 0, win,
+                    p->ptrs.ip_api.get_src(), p->ptrs.dp, packet_time());
             }
 
             if (scanner)
             {
-                ps_proto_update(&scanner->proto,1,0,
-                    p->ptrs.ip_api.get_dst(),p->ptrs.dp, packet_time());
+                ps_proto_update(&scanner->proto, 1, 0, win,
+                    p->ptrs.ip_api.get_dst(), p->ptrs.dp, packet_time());
             }
         }
-        /*
-        **  Handle the final packet of the three-way handshake.
-        */
+        //  Handle the final packet of the three-way handshake.
         else if (p->packet_flags & PKT_STREAM_TWH)
         {
             if (scanned)
             {
-                ps_proto_update(&scanned->proto,-1,0,&cleared,0,0);
+                ps_proto_update(&scanned->proto, -1, 0, win, &cleared, 0, 0);
             }
 
             if (scanner)
             {
-                ps_proto_update(&scanner->proto,-1,0,&cleared,0,0);
+                ps_proto_update(&scanner->proto, -1, 0, win, &cleared, 0, 0);
             }
         }
-        /*
-        **  RST packet on unestablished streams
-        */
+        //  RST packet on unestablished streams
         else if ((p->is_from_server()) &&
             (p->ptrs.tcph && (p->ptrs.tcph->th_flags & TH_RST)) &&
             (!(p->packet_flags & PKT_STREAM_EST) ||
@@ -824,13 +624,13 @@ int PortScan::ps_tracker_update_tcp(PS_PKT* ps_pkt, PS_TRACKER* scanner,
         {
             if (scanned)
             {
-                ps_proto_update(&scanned->proto,0,1,&cleared,0,0);
+                ps_proto_update(&scanned->proto, 0, 1, win, &cleared, 0, 0);
                 scanned->priority_node = 1;
             }
 
             if (scanner)
             {
-                ps_proto_update(&scanner->proto,0,1,&cleared,0,0);
+                ps_proto_update(&scanner->proto, 0, 1, win, &cleared, 0, 0);
                 scanner->priority_node = 1;
             }
         }
@@ -867,14 +667,14 @@ int PortScan::ps_tracker_update_tcp(PS_PKT* ps_pkt, PS_TRACKER* scanner,
         */
         if (scanned)
         {
-            ps_proto_update(&scanned->proto,1,0,
-                p->ptrs.ip_api.get_src(),p->ptrs.dp, packet_time());
+            ps_proto_update(&scanned->proto, 1, 0, win,
+                p->ptrs.ip_api.get_src(), p->ptrs.dp, packet_time());
         }
 
         if (scanner)
         {
-            ps_proto_update(&scanner->proto,1,0,
-                p->ptrs.ip_api.get_dst(),p->ptrs.dp, packet_time());
+            ps_proto_update(&scanner->proto, 1, 0, win,
+                p->ptrs.ip_api.get_dst(), p->ptrs.dp, packet_time());
         }
     }
     /*
@@ -886,12 +686,12 @@ int PortScan::ps_tracker_update_tcp(PS_PKT* ps_pkt, PS_TRACKER* scanner,
     {
         if (scanned)
         {
-            ps_proto_update(&scanned->proto,-1,0,&cleared,0,0);
+            ps_proto_update(&scanned->proto, -1, 0, win, &cleared, 0, 0);
         }
 
         if (scanner)
         {
-            ps_proto_update(&scanner->proto,-1,0,&cleared,0,0);
+            ps_proto_update(&scanner->proto, -1, 0, win, &cleared, 0, 0);
         }
     }
     /*
@@ -902,88 +702,76 @@ int PortScan::ps_tracker_update_tcp(PS_PKT* ps_pkt, PS_TRACKER* scanner,
     {
         if (scanned)
         {
-            ps_proto_update(&scanned->proto,0,1,&cleared,0,0);
+            ps_proto_update(&scanned->proto, 0, 1, win, &cleared, 0, 0);
             scanned->priority_node = 1;
         }
 
         if (scanner)
         {
-            ps_proto_update(&scanner->proto,0,1,&cleared,0,0);
+            ps_proto_update(&scanner->proto, 0, 1, win, &cleared, 0, 0);
             scanner->priority_node = 1;
         }
     }
-    /*
-    **  If we are an icmp unreachable, deal with it here.
-    */
+    //  If we are an icmp unreachable, deal with it here.
     else if (p->ptrs.icmph)
     {
         if (scanned)
         {
-            ps_proto_update(&scanned->proto,0,1,&cleared,0,0);
+            ps_proto_update(&scanned->proto, 0, 1, win, &cleared, 0, 0);
             scanned->priority_node = 1;
         }
 
         if (scanner)
         {
-            ps_proto_update(&scanner->proto,0,1,&cleared,0,0);
+            ps_proto_update(&scanner->proto, 0, 1, win, &cleared, 0, 0);
             scanner->priority_node = 1;
         }
     }
-    return 0;
 }
 
-int PortScan::ps_tracker_update_ip(PS_PKT* ps_pkt, PS_TRACKER* scanner,
+void PortScan::ps_tracker_update_ip(PS_PKT* ps_pkt, PS_TRACKER* scanner,
     PS_TRACKER* scanned)
 {
-    Packet* p;
+    Packet* p = (Packet*)ps_pkt->pkt;
+
+    if ( !p->ptrs.ip_api.is_ip() )
+        return;
+
+    unsigned win = config->ip_window;
     SfIp cleared;
     cleared.clear();
 
-    p = (Packet*)ps_pkt->pkt;
-
-    if(p->ptrs.ip_api.is_ip())
+    if (scanned)
     {
-        if (p->ptrs.icmph)
-        {
-            if (scanned)
-            {
-                ps_proto_update(&scanned->proto,0,1,&cleared,0,0);
-                scanned->priority_node = 1;
-            }
-
-            if (scanner)
-            {
-                ps_proto_update(&scanner->proto,0,1,&cleared,0,0);
-                scanner->priority_node = 1;
-            }
-
-            return 0;
-        }
+        ps_proto_update(&scanned->proto, 1, 0, win, &cleared, (u_short)p->get_ip_proto_next(), 0);
     }
 
-    return 0;
+    if (scanner)
+    {
+        ps_proto_update(&scanner->proto, 1, 0, win, &cleared, (u_short)p->get_ip_proto_next(), 0);
+    }
 }
 
-int PortScan::ps_tracker_update_udp(PS_PKT* ps_pkt, PS_TRACKER* scanner,
+void PortScan::ps_tracker_update_udp(PS_PKT* ps_pkt, PS_TRACKER* scanner,
     PS_TRACKER* scanned)
 {
-    Packet* p;
+    Packet* p = (Packet*)ps_pkt->pkt;
+    unsigned win = config->udp_window;
+
     SfIp cleared;
     cleared.clear();
-
-    p = (Packet*)ps_pkt->pkt;
 
     if (p->ptrs.icmph)
     {
         if (scanned)
         {
-            ps_proto_update(&scanned->proto,0,1,&cleared,0,0);
+            ps_proto_update(&scanned->proto, 0, 1, win, &cleared, 0, 0);
             scanned->priority_node = 1;
         }
 
         if (scanner)
         {
-            ps_proto_update(&scanner->proto,0,1,&cleared,0,0);
+            ps_proto_update(&scanner->proto, 0, 1, win, &cleared, 0, 0);
             scanner->priority_node = 1;
         }
     }
@@ -997,38 +785,36 @@ int PortScan::ps_tracker_update_udp(PS_PKT* ps_pkt, PS_TRACKER* scanner,
             {
                 if (scanned)
                 {
-                    ps_proto_update(&scanned->proto,1,0,
-                        p->ptrs.ip_api.get_src(),p->ptrs.dp, packet_time());
+                    ps_proto_update(&scanned->proto, 1, 0, win,
+                        p->ptrs.ip_api.get_src(), p->ptrs.dp, packet_time());
                 }
 
                 if (scanner)
                 {
-                    ps_proto_update(&scanner->proto,1,0,
-                        p->ptrs.ip_api.get_dst(),p->ptrs.dp, packet_time());
+                    ps_proto_update(&scanner->proto, 1, 0, win,
+                        p->ptrs.ip_api.get_dst(), p->ptrs.dp, packet_time());
                 }
             }
             else if (direction == PKT_FROM_SERVER)
             {
                 if (scanned)
-                    ps_proto_update(&scanned->proto,-1,0,&cleared,0,0);
+                    ps_proto_update(&scanned->proto, -1, 0, win, &cleared, 0, 0);
 
                 if (scanner)
-                    ps_proto_update(&scanner->proto,-1,0,&cleared,0,0);
+                    ps_proto_update(&scanner->proto, -1, 0, win, &cleared, 0, 0);
             }
         }
     }
-
-    return 0;
 }
 
-int PortScan::ps_tracker_update_icmp(
+void PortScan::ps_tracker_update_icmp(
     PS_PKT* ps_pkt, PS_TRACKER* scanner, PS_TRACKER*)
 {
-    Packet* p;
+    Packet* p = (Packet*)ps_pkt->pkt;
+    unsigned win = config->icmp_window;
+
     SfIp cleared;
     cleared.clear();
-
-    p = (Packet*)ps_pkt->pkt;
 
     if (p->ptrs.icmph)
     {
@@ -1038,38 +824,22 @@ int PortScan::ps_tracker_update_icmp(
         case ICMP_TIMESTAMP:
         case ICMP_ADDRESS:
         case ICMP_INFO_REQUEST:
-
-            if (scanner)
-            {
-                ps_proto_update(&scanner->proto,1,0,
-                    p->ptrs.ip_api.get_dst(), 0, packet_time());
-            }
-
+            ps_proto_update(&scanner->proto, 1, 0, win,
+                p->ptrs.ip_api.get_dst(), 0, packet_time());
             break;
 
         case ICMP_DEST_UNREACH:
-
-            if (scanner)
-            {
-                ps_proto_update(&scanner->proto,0,1,&cleared,0,0);
-                scanner->priority_node = 1;
-            }
-
+            ps_proto_update(&scanner->proto, 0, 1, win, &cleared, 0, 0);
+            scanner->priority_node = 1;
             break;
 
         default:
             break;
         }
     }
-
-    return 0;
 }
 
 /*
-**  NAME
-**    ps_tracker_update::
-*/
-/**
 **  At this point, we should only be looking at transport protocols
 **  that we want to.  For instance, if we aren't doing UDP portscans
 **  then we won't see UDP packets here because they were ignored.
@@ -1078,464 +848,269 @@ int PortScan::ps_tracker_update_icmp(
 **  tracker values and prioritize a tracker.  We also update the
 **  time windows.
 */
-int PortScan::ps_tracker_update(PS_PKT* ps_pkt, PS_TRACKER* scanner,
-    PS_TRACKER* scanned)
+bool PortScan::ps_tracker_update(PS_PKT* ps_pkt, PS_TRACKER* scanner, PS_TRACKER* scanned)
 {
-    if (scanner && scanner->proto.alerts)
+    if ( scanner and scanner->proto.alerts )
         scanner->proto.alerts = PS_ALERT_GENERATED;
 
-    if (scanned && scanned->proto.alerts)
+    if ( scanned and scanned->proto.alerts )
         scanned->proto.alerts = PS_ALERT_GENERATED;
 
-    switch (ps_pkt->proto)
+    switch ( ps_pkt->proto )
     {
     case PS_PROTO_TCP:
-        if (ps_tracker_update_tcp(ps_pkt, scanner, scanned))
-            return -1;
-
+        ps_tracker_update_tcp(ps_pkt, scanner, scanned);
         break;
 
     case PS_PROTO_UDP:
-        if (ps_tracker_update_udp(ps_pkt, scanner, scanned))
-            return -1;
-
+        ps_tracker_update_udp(ps_pkt, scanner, scanned);
         break;
 
     case PS_PROTO_ICMP:
-        if (ps_tracker_update_icmp(ps_pkt, scanner, scanned))
-            return -1;
-
+        ps_tracker_update_icmp(ps_pkt, scanner, scanned);
         break;
 
     case PS_PROTO_IP:
-        if (ps_tracker_update_ip(ps_pkt, scanner, scanned))
-            return -1;
-
+        ps_tracker_update_ip(ps_pkt, scanner, scanned);
         break;
 
     default:
-        return -1;
+        return false;
     }
-
-    return 0;
+    return true;
 }
 
-static int ps_alert_one_to_one(PS_PROTO* scanner, PS_PROTO* scanned,
-    const PS_ALERT_CONF* conf)
+static bool ps_alert_one_to_one(
+    const PS_ALERT_CONF& conf, PS_PROTO* scanner, PS_PROTO* scanned)
 {
-    if (!conf)
-        return -1;
-
-    /*
-    **  Let's evaluate the scanned host.
-    */
+    //  Let's evaluate the scanned host.
     if (scanned && !scanned->alerts)
     {
-        if (scanned->priority_count >= conf->priority_count)
+        if (scanned->priority_count >= conf.priority_count)
         {
-            if (scanned->u_ip_count < conf->u_ip_count &&
-                scanned->u_port_count >= conf->u_port_count)
+            if (scanned->u_ip_count < conf.u_ip_count &&
+                scanned->u_port_count >= conf.u_port_count)
             {
                 if (scanner)
                 {
-                    if (scanner->priority_count >= conf->priority_count)
+                    if (scanner->priority_count >= conf.priority_count)
                     {
-                        /*
-                        **  Now let's check to make sure this is one
-                        **  to one
-                        */
+                        //  Now let's check to make sure this is one to one
                         scanned->alerts = PS_ALERT_ONE_TO_ONE;
-                        return 0;
+                        return true;
                     }
                 }
                 else
                 {
-                    /*
-                    **  If there is no scanner, then we do the best we can.
-                    */
+                    //  If there is no scanner, then we do the best we can.
                     scanned->alerts = PS_ALERT_ONE_TO_ONE;
-                    return 0;
+                    return true;
                 }
             }
         }
-        if (scanned->connection_count >= conf->connection_count)
+        if (scanned->connection_count >= conf.connection_count)
         {
-            if (conf->connection_count == 0)
-                return 0;
+            if (conf.connection_count == 0)
+                return false;
 
-            if (scanned->u_ip_count < conf->u_ip_count &&
-                scanned->u_port_count >= conf->u_port_count)
+            if (scanned->u_ip_count < conf.u_ip_count &&
+                scanned->u_port_count >= conf.u_port_count)
             {
                 scanned->alerts = PS_ALERT_ONE_TO_ONE_FILTERED;
-                return 0;
+                return true;
             }
         }
     }
 
-    return 0;
+    return false;
 }
 
-static int ps_alert_one_to_one_decoy(
-    PS_PROTO*, PS_PROTO* scanned, const PS_ALERT_CONF* conf)
+static bool ps_alert_one_to_one_decoy(
+    const PS_ALERT_CONF& conf, PS_PROTO*, PS_PROTO* scanned)
 {
-    if (!conf)
-        return -1;
-
     if (scanned && !scanned->alerts)
     {
-        if (scanned->priority_count >= conf->priority_count)
+        if (scanned->priority_count >= conf.priority_count)
         {
-            if (scanned->u_ip_count >= conf->u_ip_count &&
-                scanned->u_port_count >= conf->u_port_count)
+            if (scanned->u_ip_count >= conf.u_ip_count &&
+                scanned->u_port_count >= conf.u_port_count)
             {
                 scanned->alerts = PS_ALERT_ONE_TO_ONE_DECOY;
-                return 0;
+                return true;
             }
         }
-        if (scanned->connection_count >= conf->connection_count)
+        if (scanned->connection_count >= conf.connection_count)
         {
-            if (conf->connection_count == 0)
-                return 0;
+            if (conf.connection_count == 0)
+                return false;
 
-            if (scanned->u_ip_count >= conf->u_ip_count &&
-                scanned->u_port_count >= conf->u_port_count)
+            if (scanned->u_ip_count >= conf.u_ip_count &&
+                scanned->u_port_count >= conf.u_port_count)
             {
                 scanned->alerts = PS_ALERT_ONE_TO_ONE_DECOY_FILTERED;
-                return 0;
+                return true;
             }
         }
     }
 
-    return 0;
+    return false;
 }
 
-static int ps_alert_many_to_one(
-    PS_PROTO*, PS_PROTO* scanned, const PS_ALERT_CONF* conf)
+static bool ps_alert_many_to_one(
+    const PS_ALERT_CONF& conf, PS_PROTO*, PS_PROTO* scanned)
 {
-    if (!conf)
-        return -1;
-
     if (scanned && !scanned->alerts)
     {
-        if (scanned->priority_count >= conf->priority_count)
+        if (scanned->priority_count >= conf.priority_count)
         {
-            if (scanned->u_ip_count <= conf->u_ip_count &&
-                scanned->u_port_count >= conf->u_port_count)
+            if (scanned->u_ip_count <= conf.u_ip_count &&
+                scanned->u_port_count >= conf.u_port_count)
             {
                 scanned->alerts = PS_ALERT_DISTRIBUTED;
-                return 0;
+                return true;
             }
         }
-        if (scanned->connection_count >= conf->connection_count)
+        if (scanned->connection_count >= conf.connection_count)
         {
-            if (conf->connection_count == 0)
-                return 0;
+            if (conf.connection_count == 0)
+                return false;
 
-            if (scanned->u_ip_count <= conf->u_ip_count &&
-                scanned->u_port_count >= conf->u_port_count)
+            if (scanned->u_ip_count <= conf.u_ip_count &&
+                scanned->u_port_count >= conf.u_port_count)
             {
                 scanned->alerts = PS_ALERT_DISTRIBUTED_FILTERED;
-                return 0;
+                return true;
             }
         }
     }
 
-    return 0;
+    return false;
 }
 
-static int ps_alert_one_to_many(
-    PS_PROTO* scanner, PS_PROTO*, const PS_ALERT_CONF* conf)
+static bool ps_alert_one_to_many(
+    const PS_ALERT_CONF& conf, PS_PROTO* scanner, PS_PROTO*)
 {
-    if (!conf)
-        return -1;
-
     if (scanner && !scanner->alerts)
     {
-        if (scanner->priority_count >= conf->priority_count)
+        if (scanner->priority_count >= conf.priority_count)
         {
-            if (scanner->u_ip_count >= conf->u_ip_count &&
-                scanner->u_port_count <= conf->u_port_count)
+            if (scanner->u_ip_count >= conf.u_ip_count &&
+                scanner->u_port_count <= conf.u_port_count)
             {
                 scanner->alerts = PS_ALERT_PORTSWEEP;
-                return 1;
+                return true;
             }
         }
-        if (scanner->connection_count >= conf->connection_count)
+        if (scanner->connection_count >= conf.connection_count)
         {
-            if (conf->connection_count == 0)
-                return 0;
+            if (conf.connection_count == 0)
+                return false;
 
-            if (scanner->u_ip_count >= conf->u_ip_count &&
-                scanner->u_port_count <= conf->u_port_count)
+            if (scanner->u_ip_count >= conf.u_ip_count &&
+                scanner->u_port_count <= conf.u_port_count)
             {
                 scanner->alerts = PS_ALERT_PORTSWEEP_FILTERED;
-                return 1;
+                return true;
             }
         }
     }
 
-    return 0;
+    return false;
 }
 
-int PortScan::ps_alert_tcp(PS_PROTO* scanner, PS_PROTO* scanned)
+void PortScan::ps_alert_tcp(PS_PROTO* scanner, PS_PROTO* scanned)
 {
-    const PS_ALERT_CONF* one_to_one;
-    const PS_ALERT_CONF* one_to_one_decoy;
-    const PS_ALERT_CONF* one_to_many;
-    const PS_ALERT_CONF* many_to_one;
-
-    /*
-    ** Set the configurations depending on the sensitivity
-    ** level.
-    */
-    switch (config->sense_level)
-    {
-    case PS_SENSE_HIGH:
-        one_to_one       = &g_tcp_hi_ps;
-        one_to_one_decoy = &g_tcp_hi_decoy_ps;
-        one_to_many      = &g_tcp_hi_sweep;
-        many_to_one      = &g_tcp_hi_dist_ps;
-
-        break;
-
-    case PS_SENSE_MEDIUM:
-        one_to_one       = &g_tcp_med_ps;
-        one_to_one_decoy = &g_tcp_med_decoy_ps;
-        one_to_many      = &g_tcp_med_sweep;
-        many_to_one      = &g_tcp_med_dist_ps;
-
-        break;
-
-    case PS_SENSE_LOW:
-        one_to_one       = &g_tcp_low_ps;
-        one_to_one_decoy = &g_tcp_low_decoy_ps;
-        one_to_many      = &g_tcp_low_sweep;
-        many_to_one      = &g_tcp_low_dist_ps;
-
-        break;
-
-    default:
-        return -1;
-    }
-
-    /*
-    **  Do detection on the different portscan types.
-    */
     if ((config->detect_scan_type & PS_TYPE_PORTSCAN) &&
-        ps_alert_one_to_one(scanner, scanned, one_to_one))
+        ps_alert_one_to_one(config->tcp_ports, scanner, scanned))
     {
-        return 0;
+        return;
     }
 
     if ((config->detect_scan_type & PS_TYPE_DECOYSCAN) &&
-        ps_alert_one_to_one_decoy(scanner, scanned, one_to_one_decoy))
+        ps_alert_one_to_one_decoy(config->tcp_decoy, scanner, scanned))
     {
-        return 0;
+        return;
     }
 
     if ((config->detect_scan_type & PS_TYPE_PORTSWEEP) &&
-        ps_alert_one_to_many(scanner, scanned, one_to_many))
+        ps_alert_one_to_many(config->tcp_sweep, scanner, scanned))
     {
-        return 0;
+        return;
     }
 
     if ((config->detect_scan_type & PS_TYPE_DISTPORTSCAN) &&
-        ps_alert_many_to_one(scanner, scanned, many_to_one))
+        ps_alert_many_to_one(config->tcp_dist, scanner, scanned))
     {
-        return 0;
+        return;
     }
-
-    return 0;
 }
 
-int PortScan::ps_alert_ip(PS_PROTO* scanner, PS_PROTO* scanned)
+void PortScan::ps_alert_ip(PS_PROTO* scanner, PS_PROTO* scanned)
 {
-    const PS_ALERT_CONF* one_to_one;
-    const PS_ALERT_CONF* one_to_one_decoy;
-    const PS_ALERT_CONF* one_to_many;
-    const PS_ALERT_CONF* many_to_one;
-
-    /*
-    ** Set the configurations depending on the sensitivity
-    ** level.
-    */
-    switch (config->sense_level)
-    {
-    case PS_SENSE_HIGH:
-        one_to_one       = &g_ip_hi_ps;
-        one_to_one_decoy = &g_ip_hi_decoy_ps;
-        one_to_many      = &g_ip_hi_sweep;
-        many_to_one      = &g_ip_hi_dist_ps;
-
-        break;
-
-    case PS_SENSE_MEDIUM:
-        one_to_one       = &g_ip_med_ps;
-        one_to_one_decoy = &g_ip_med_decoy_ps;
-        one_to_many      = &g_ip_med_sweep;
-        many_to_one      = &g_ip_med_dist_ps;
-
-        break;
-
-    case PS_SENSE_LOW:
-        one_to_one       = &g_ip_low_ps;
-        one_to_one_decoy = &g_ip_low_decoy_ps;
-        one_to_many      = &g_ip_low_sweep;
-        many_to_one      = &g_ip_low_dist_ps;
-
-        break;
-
-    default:
-        return -1;
-    }
-
-    /*
-    **  Do detection on the different portscan types.
-    */
     if ((config->detect_scan_type & PS_TYPE_PORTSCAN) &&
-        ps_alert_one_to_one(scanner, scanned, one_to_one))
+        ps_alert_one_to_one(config->ip_proto, scanner, scanned))
     {
-        return 0;
+        return;
     }
 
     if ((config->detect_scan_type & PS_TYPE_DECOYSCAN) &&
-        ps_alert_one_to_one_decoy(scanner, scanned, one_to_one_decoy))
+        ps_alert_one_to_one_decoy(config->ip_decoy, scanner, scanned))
     {
-        return 0;
+        return;
     }
 
     if ((config->detect_scan_type & PS_TYPE_PORTSWEEP) &&
-        ps_alert_one_to_many(scanner, scanned, one_to_many))
+        ps_alert_one_to_many(config->ip_sweep, scanner, scanned))
     {
-        return 0;
+        return;
     }
 
     if ((config->detect_scan_type & PS_TYPE_DISTPORTSCAN) &&
-        ps_alert_many_to_one(scanner, scanned, many_to_one))
+        ps_alert_many_to_one(config->ip_dist, scanner, scanned))
     {
-        return 0;
+        return;
     }
 
-    return 0;
+    return;
 }
 
-int PortScan::ps_alert_udp(PS_PROTO* scanner, PS_PROTO* scanned)
+void PortScan::ps_alert_udp(PS_PROTO* scanner, PS_PROTO* scanned)
 {
-    const PS_ALERT_CONF* one_to_one;
-    const PS_ALERT_CONF* one_to_one_decoy;
-    const PS_ALERT_CONF* one_to_many;
-    const PS_ALERT_CONF* many_to_one;
-
-    /*
-    ** Set the configurations depending on the sensitivity
-    ** level.
-    */
-    switch (config->sense_level)
-    {
-    case PS_SENSE_HIGH:
-        one_to_one       = &g_udp_hi_ps;
-        one_to_one_decoy = &g_udp_hi_decoy_ps;
-        one_to_many      = &g_udp_hi_sweep;
-        many_to_one      = &g_udp_hi_dist_ps;
-
-        break;
-
-    case PS_SENSE_MEDIUM:
-        one_to_one       = &g_udp_med_ps;
-        one_to_one_decoy = &g_udp_med_decoy_ps;
-        one_to_many      = &g_udp_med_sweep;
-        many_to_one      = &g_udp_med_dist_ps;
-
-        break;
-
-    case PS_SENSE_LOW:
-        one_to_one       = &g_udp_low_ps;
-        one_to_one_decoy = &g_udp_low_decoy_ps;
-        one_to_many      = &g_udp_low_sweep;
-        many_to_one      = &g_udp_low_dist_ps;
-
-        break;
-
-    default:
-        return -1;
-    }
-
-    /*
-    **  Do detection on the different portscan types.
-    */
     if ((config->detect_scan_type & PS_TYPE_PORTSCAN) &&
-        ps_alert_one_to_one(scanner, scanned, one_to_one))
+        ps_alert_one_to_one(config->udp_ports, scanner,  scanned))
     {
-        return 0;
+        return;
     }
 
     if ((config->detect_scan_type & PS_TYPE_DECOYSCAN) &&
-        ps_alert_one_to_one_decoy(scanner, scanned, one_to_one_decoy))
+        ps_alert_one_to_one_decoy(config->udp_decoy, scanner, scanned))
     {
-        return 0;
+        return;
     }
 
     if ((config->detect_scan_type & PS_TYPE_PORTSWEEP) &&
-        ps_alert_one_to_many(scanner, scanned, one_to_many))
+        ps_alert_one_to_many(config->udp_sweep, scanner, scanned))
     {
-        return 0;
+        return;
     }
 
     if ((config->detect_scan_type & PS_TYPE_DISTPORTSCAN) &&
-        ps_alert_many_to_one(scanner, scanned, many_to_one))
+        ps_alert_many_to_one(config->udp_dist, scanner, scanned))
     {
-        return 0;
+        return;
     }
-
-    return 0;
 }
 
-int PortScan::ps_alert_icmp(PS_PROTO* scanner, PS_PROTO* scanned)
+void PortScan::ps_alert_icmp(PS_PROTO* scanner, PS_PROTO* scanned)
 {
-    const PS_ALERT_CONF* one_to_many;
-
-    /*
-    ** Set the configurations depending on the sensitivity
-    ** level.
-    */
-    switch (config->sense_level)
-    {
-    case PS_SENSE_HIGH:
-        one_to_many = &g_icmp_hi_sweep;
-
-        break;
-
-    case PS_SENSE_MEDIUM:
-        one_to_many = &g_icmp_med_sweep;
-
-        break;
-
-    case PS_SENSE_LOW:
-        one_to_many = &g_icmp_low_sweep;
-
-        break;
-
-    default:
-        return -1;
-    }
-
-    /*
-    **  Do detection on the different portscan types.
-    */
     if ((config->detect_scan_type & PS_TYPE_PORTSWEEP) &&
-        ps_alert_one_to_many(scanner, scanned, one_to_many))
+        ps_alert_one_to_many(config->icmp_sweep, scanner, scanned))
     {
-        return 0;
+        return;
     }
-
-    return 0;
 }
 
 /*
-**  NAME
-**    ps_tracker_alert::
-*/
-/**
 **  This function evaluates the scanner and scanned trackers and if
 **  applicable, generate an alert or alerts for either of the trackers.
 **
@@ -1546,46 +1121,50 @@ int PortScan::ps_alert_icmp(PS_PROTO* scanner, PS_PROTO* scanned)
 **    - Distributed Portscan (Many to One)
 **    - Filtered Portscan?
 */
-int PortScan::ps_tracker_alert(PS_PKT* ps_pkt, PS_TRACKER* scanner,
-    PS_TRACKER* scanned)
+bool PortScan::ps_tracker_alert(
+    PS_PKT* ps_pkt, PS_TRACKER* scanner, PS_TRACKER* scanned)
 {
-    if (!ps_pkt)
-        return -1;
+    PS_PROTO* scanner_proto = nullptr;
+    PS_PROTO* scanned_proto = nullptr;
+
+    if ( scanner )
+    {
+        scanner->proto.alerts = 0;
+        scanner_proto = &scanner->proto;
+    }
+
+    if ( scanned )
+    {
+        scanned->proto.alerts = 0;
+        scanned_proto = &scanned->proto;
+    }
 
     switch (ps_pkt->proto)
     {
     case PS_PROTO_TCP:
-        ps_alert_tcp((scanner ? &scanner->proto : NULL),
-            (scanned ? &scanned->proto : NULL));
+        ps_alert_tcp(scanner_proto, scanned_proto);
         break;
 
     case PS_PROTO_UDP:
-        ps_alert_udp((scanner ? &scanner->proto : NULL),
-            (scanned ? &scanned->proto : NULL));
+        ps_alert_udp(scanner_proto, scanned_proto);
         break;
 
     case PS_PROTO_ICMP:
-        ps_alert_icmp((scanner ? &scanner->proto : NULL),
-            (scanned ? &scanned->proto : NULL));
+        ps_alert_icmp(scanner_proto, scanned_proto);
         break;
 
     case PS_PROTO_IP:
-        ps_alert_ip((scanner ? &scanner->proto : NULL),
-            (scanned ? &scanned->proto : NULL));
+        ps_alert_ip(scanner_proto, scanned_proto);
         break;
 
     default:
-        return -1;
+        return false;
     }
 
-    return 0;
+    return true;
 }
 
 /*
-**  NAME
-**    ps_detect::
-*/
-/**
 **  The design of portscan is as follows:
 **
 **    - Filter Packet.  Is the packet part of the ignore or watch list?  Is
@@ -1606,8 +1185,8 @@ int PortScan::ps_tracker_alert(PS_PKT* ps_pkt, PS_TRACKER* scanner,
 */
 int PortScan::ps_detect(PS_PKT* ps_pkt)
 {
-    PS_TRACKER* scanner = NULL;
-    PS_TRACKER* scanned = NULL;
+    PS_TRACKER* scanner = nullptr;
+    PS_TRACKER* scanned = nullptr;
     int check_tcp_rst_other_dir = 1;
     Packet* p;
 
@@ -1621,13 +1200,13 @@ int PortScan::ps_detect(PS_PKT* ps_pkt)
 
     do
     {
-        if (ps_tracker_lookup(ps_pkt, &scanner, &scanned))
+        if ( !ps_tracker_lookup(ps_pkt, &scanner, &scanned) )
             return 0;
 
-        if (ps_tracker_update(ps_pkt, scanner, scanned))
+        if ( !ps_tracker_update(ps_pkt, scanner, scanned) )
             return 0;
 
-        if (ps_tracker_alert(ps_pkt, scanner, scanned))
+        if ( !ps_tracker_alert(ps_pkt, scanner, scanned) )
             return 0;
 
         /* This is added to address the case of no
@@ -1635,13 +1214,9 @@ int PortScan::ps_detect(PS_PKT* ps_pkt)
         if ( p->ptrs.tcph && (p->ptrs.tcph->th_flags & TH_RST) && !p->flow )
         {
             if (ps_pkt->reverse_pkt == 1)
-            {
                 check_tcp_rst_other_dir = 0;
-            }
             else
-            {
                 ps_pkt->reverse_pkt = 1;
-            }
         }
         else
         {
@@ -1650,7 +1225,6 @@ int PortScan::ps_detect(PS_PKT* ps_pkt)
     }
     while (check_tcp_rst_other_dir);
 
-    //printf("** alert\n");
     ps_pkt->scanner = scanner;
     ps_pkt->scanned = scanned;
 
