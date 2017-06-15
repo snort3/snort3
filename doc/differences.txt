@@ -94,6 +94,10 @@ Some things Snort++ can do today that Snort can not do as well:
   (Snort 2 requires rules directly in or included in conf)
 * simple, clean, uniform startup and shutdown output
   (Snort 2 is heavy and inconsistent)
+* port_scan is fully configurable
+  (Snort 2 hard codes most of the configuration)
+* port_scan can block scans
+  (Snort 2 can only detect scans)
 * better modularity 346K/1534 = 226 lines/file, max=2700
   (Snort 2 has 440K/1021 = 431 lines/file, max=13K)
 

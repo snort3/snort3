@@ -1,3 +1,21 @@
+17/06/15 - build 236
+
+-- appid: clean up shutdown stats
+-- appid: fix memory leak
+-- conf: update defaults
+-- decode: updated ipv6 valid next headers
+-- detection: avoid superfluous leaf nodes in detection option trees
+-- http_inspect: improved handling of badly terminated chunks
+-- http_inspect: improved transfer-encoding header processing
+-- ips options: add validation for range check types such as dsize
+-- perf_monitor: add more tcp and udp peg counts
+-- perf_monitor: update cpu tracker output to thread_#.cpu_*
+-- port_scan: alert on all scan attempts so blocking is possible
+-- port_scan: make fully configurable
+-- sip: fix get body buffer for fast patterns
+-- ssl: use stop-and-wait splitter (protocol aware splitter is next)
+-- stream_ip: fix 123:7
+
 17/06/01 - build 235
 
 -- http_inspect: improve handling of improper bare \r separator
