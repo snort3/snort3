@@ -198,10 +198,12 @@ FastLogger::FastLogger(FastModule* m)
         return;
 
     std::vector<const char*> req
-    { "http_raw_request", "http_uri", "http_header", "http_cookie", "http_client_body" };
+    { "http_method", "http_version", "http_uri", "http_header", "http_cookie",
+      "http_client_body" };
 
     std::vector<const char*> rsp
-    { "http_raw_status", "http_uri", "http_header", "http_cookie" };
+    { "http_version", "http_stat_code", "http_stat_msg", "http_uri", "http_header",
+      "http_cookie" };
     //-----------------------------------------------------------------
 
     load_buf_ids(ins, req, req_ids);
