@@ -39,6 +39,7 @@
 
 #include <vector>
 
+#include "detection/detection_engine.h"
 #include "detection/signature.h"
 #include "events/event.h"
 #include "framework/logger.h"
@@ -300,6 +301,11 @@ void FastLogger::alert(Packet* p, const char* msg, Event* event)
         }
         else if ( log_pkt )
             LogNetData(fast_log, p->data, p->dsize, p);
+
+        DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
+
+        if ( buf.len and event->sig_info->gid != 116 )
+            LogNetData(fast_log, buf.data, buf.len, p, "alt");
     }
     TextLog_NewLine(fast_log);
     TextLog_Flush(fast_log);

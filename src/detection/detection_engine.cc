@@ -362,6 +362,8 @@ void DetectionEngine::inspect(Packet* p)
 
         if ( p->has_ip() )
             check_tags(p);
+
+        InspectorManager::probe(p);
     }
 
     Profile profile(eventqPerfStats);

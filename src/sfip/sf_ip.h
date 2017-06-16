@@ -449,8 +449,6 @@ inline bool SfIp::fast_equals_raw(const SfIp& ip2) const
 
 /* End of member function definitions */
 
-
-/* Uses a static buffer to return a string representation of the IP */
 SO_PUBLIC void sfip_ntop(const SfIp* ip, char* buf, int bufsize);
 
 inline std::ostream& operator<<(std::ostream& os, const SfIp* addr)
@@ -460,7 +458,6 @@ inline std::ostream& operator<<(std::ostream& os, const SfIp* addr)
     os << str;
     return os;
 }
-
 
 // FIXIT-L X This should be in utils_net if anywhere, but that makes it way harder to link into unit tests
 SO_PUBLIC void snort_inet_ntop(int family, const void* ip_raw, char* buf, int bufsize);

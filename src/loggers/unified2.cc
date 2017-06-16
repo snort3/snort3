@@ -260,24 +260,17 @@ static void _AlertIP4_v2(Packet* p, const char*, Unified2Config* config, Event* 
             }
         }
 
-        if (p->is_portscan())
-        {
-            alertdata.ip_proto = p->ps_proto;
-        }
-        else
-        {
-            alertdata.ip_proto = p->get_ip_proto_next();
+        alertdata.ip_proto = p->get_ip_proto_next();
 
-            if ( p->type() == PktType::ICMP)
-            {
-                // If PktType == ICMP, icmph is set
-                alertdata.sport_itype = htons(p->ptrs.icmph->type);
-                alertdata.dport_icode = htons(p->ptrs.icmph->code);
-            }
-
-            alertdata.sport_itype = htons(p->ptrs.sp);
-            alertdata.dport_icode = htons(p->ptrs.dp);
+        if ( p->type() == PktType::ICMP)
+        {
+            // If PktType == ICMP, icmph is set
+            alertdata.sport_itype = htons(p->ptrs.icmph->type);
+            alertdata.dport_icode = htons(p->ptrs.icmph->code);
         }
+
+        alertdata.sport_itype = htons(p->ptrs.sp);
+        alertdata.dport_icode = htons(p->ptrs.dp);
 
         if ((p->proto_bits & PROTO_BIT__MPLS) && (config->mpls_event_types))
         {
@@ -352,24 +345,17 @@ static void _AlertIP6_v2(Packet* p, const char*, Unified2Config* config, Event* 
             }
         }
 
-        if (p->is_portscan())
-        {
-            alertdata.ip_proto = p->ps_proto;
-        }
-        else
-        {
-            alertdata.ip_proto = p->get_ip_proto_next();
+        alertdata.ip_proto = p->get_ip_proto_next();
 
-            if ( p->type() == PktType::ICMP)
-            {
-                // If PktType == ICMP, icmph is set
-                alertdata.sport_itype = htons(p->ptrs.icmph->type);
-                alertdata.dport_icode = htons(p->ptrs.icmph->code);
-            }
-
-            alertdata.sport_itype = htons(p->ptrs.sp);
-            alertdata.dport_icode = htons(p->ptrs.dp);
+        if ( p->type() == PktType::ICMP)
+        {
+            // If PktType == ICMP, icmph is set
+            alertdata.sport_itype = htons(p->ptrs.icmph->type);
+            alertdata.dport_icode = htons(p->ptrs.icmph->code);
         }
+
+        alertdata.sport_itype = htons(p->ptrs.sp);
+        alertdata.dport_icode = htons(p->ptrs.dp);
 
         if ((p->proto_bits & PROTO_BIT__MPLS) && (config->mpls_event_types))
         {

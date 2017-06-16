@@ -75,13 +75,10 @@ enum PseudoPacketType
     PSEUDO_PKT_IP,
     PSEUDO_PKT_TCP,
     PSEUDO_PKT_USER,
-    PSEUDO_PKT_DCE_RPKT,
     PSEUDO_PKT_DCE_SEG,
     PSEUDO_PKT_DCE_FRAG,
     PSEUDO_PKT_SMB_SEG,
     PSEUDO_PKT_SMB_TRANS,
-    PSEUDO_PKT_PS,
-    PSEUDO_PKT_SDF,
     PSEUDO_PKT_MAX
 };
 
@@ -136,8 +133,6 @@ struct SO_PUBLIC Packet
 
     // for correlating configuration with event output
     uint16_t user_policy_id;
-
-    IpProtocol ps_proto;  // Used for portscan and unified2 logging
 
     // IP_MAXPACKET is the minimum allowable max_dsize
     // there is no requirement that all data fit into an IP datagram
@@ -230,9 +225,6 @@ struct SO_PUBLIC Packet
 
     bool is_from_server() const
     { return (packet_flags & PKT_FROM_SERVER) != 0; }
-
-    bool is_portscan() const
-    { return is_cooked() and (pseudo_type == PSEUDO_PKT_PS); }
 
     bool is_full_pdu() const
     { return (packet_flags & PKT_PDU_FULL) == PKT_PDU_FULL; }

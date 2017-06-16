@@ -28,6 +28,39 @@
 
 #define PS_OPEN_PORTS 8
 
+#define PS_PROTO_NONE        0x00
+#define PS_PROTO_TCP         0x01
+#define PS_PROTO_UDP         0x02
+#define PS_PROTO_ICMP        0x04
+#define PS_PROTO_IP          0x08
+#define PS_PROTO_ALL         0x0f
+
+#define PS_PROTO_OPEN_PORT   0x80
+
+#define PS_TYPE_PORTSCAN     0x01
+#define PS_TYPE_PORTSWEEP    0x02
+#define PS_TYPE_DECOYSCAN    0x04
+#define PS_TYPE_DISTPORTSCAN 0x08
+#define PS_TYPE_ALL          0x0f
+
+#define PS_SENSE_HIGH        3
+#define PS_SENSE_MEDIUM      2
+#define PS_SENSE_LOW         1
+
+#define PS_ALERT_ONE_TO_ONE                1
+#define PS_ALERT_ONE_TO_ONE_DECOY          2
+#define PS_ALERT_PORTSWEEP                 3
+#define PS_ALERT_DISTRIBUTED               4
+#define PS_ALERT_ONE_TO_ONE_FILTERED       5
+#define PS_ALERT_ONE_TO_ONE_DECOY_FILTERED 6
+#define PS_ALERT_DISTRIBUTED_FILTERED      7
+#define PS_ALERT_PORTSWEEP_FILTERED        8
+#define PS_ALERT_OPEN_PORT                 9
+
+#define PS_ALERT_GENERATED                 255
+
+//-------------------------------------------------------------------------
+
 struct PsCommon
 {
     unsigned long memcap;
@@ -103,9 +136,6 @@ struct PS_PROTO
     unsigned short open_ports[PS_OPEN_PORTS];
     unsigned char open_ports_cnt;
 
-    struct timeval event_time;
-    unsigned int event_ref;
-
     unsigned char alerts;
 
     time_t window;
@@ -120,7 +150,7 @@ struct PS_TRACKER
 
 struct PS_PKT
 {
-    void* pkt;
+    struct Packet* pkt;
 
     PS_TRACKER* scanner;
     PS_TRACKER* scanned;
@@ -129,38 +159,11 @@ struct PS_PKT
     int reverse_pkt;
 };
 
-//-------------------------------------------------------------------------
+void ps_cleanup();
+void ps_reset();
 
-#define PS_PROTO_NONE        0x00
-#define PS_PROTO_TCP         0x01
-#define PS_PROTO_UDP         0x02
-#define PS_PROTO_ICMP        0x04
-#define PS_PROTO_IP          0x08
-#define PS_PROTO_ALL         0x0f
-
-#define PS_PROTO_OPEN_PORT   0x80
-
-#define PS_TYPE_PORTSCAN     0x01
-#define PS_TYPE_PORTSWEEP    0x02
-#define PS_TYPE_DECOYSCAN    0x04
-#define PS_TYPE_DISTPORTSCAN 0x08
-#define PS_TYPE_ALL          0x0f
-
-#define PS_SENSE_HIGH        3
-#define PS_SENSE_MEDIUM      2
-#define PS_SENSE_LOW         1
-
-#define PS_ALERT_ONE_TO_ONE                1
-#define PS_ALERT_ONE_TO_ONE_DECOY          2
-#define PS_ALERT_PORTSWEEP                 3
-#define PS_ALERT_DISTRIBUTED               4
-#define PS_ALERT_ONE_TO_ONE_FILTERED       5
-#define PS_ALERT_ONE_TO_ONE_DECOY_FILTERED 6
-#define PS_ALERT_DISTRIBUTED_FILTERED      7
-#define PS_ALERT_PORTSWEEP_FILTERED        8
-#define PS_ALERT_OPEN_PORT                 9
-
-#define PS_ALERT_GENERATED                 255
+void ps_init_hash(unsigned long);
+int ps_detect(PS_PKT*);
 
 #endif
 

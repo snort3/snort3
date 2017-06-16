@@ -179,9 +179,6 @@ const char* Packet::get_pseudo_type() const
     case PSEUDO_PKT_USER:
         return "stream_user";
 
-    case PSEUDO_PKT_DCE_RPKT:
-        return "dce2_rpc_reass";
-
     case PSEUDO_PKT_DCE_SEG:
         return "dce2_rpc_deseg";
 
@@ -193,12 +190,6 @@ const char* Packet::get_pseudo_type() const
 
     case PSEUDO_PKT_SMB_TRANS:
         return "dce2_smb_transact";
-
-    case PSEUDO_PKT_PS:
-        return "port_scan";
-
-    case PSEUDO_PKT_SDF:
-        return "sdf";
 
     default: break;
     }

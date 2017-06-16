@@ -17,19 +17,15 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+//  portscan.c author Daniel Roelker <droelker@sourcefire.com>
+//  ps_detect.cc author Russ Combs <rucombs@cisco.com>
+
 /*
-**  @file       portscan.c
-**
-**  @author     Daniel Roelker <droelker@sourcefire.com>
-**
-**  @brief      Detect portscans
-**
-**  NOTES
-**    - Marc Norton and Jeremy Hewlett were involved in the requirements and
-**      design of this portscan detection engine.
-**    - Thanks to Judy Novak for her suggestion to log open ports
-**      on hosts that are portscanned.  This idea makes portscan a lot more
-**      useful for analysts.
+**  - Marc Norton and Jeremy Hewlett were involved in the requirements and
+**    design of this portscan detection engine.
+**  - Thanks to Judy Novak for her suggestion to log open ports on hosts
+**    that are portscanned.  This idea makes portscan a lot more useful for
+**    analysts.
 */
 #ifdef HAVE_CONFIG_H
 #include "config.h"

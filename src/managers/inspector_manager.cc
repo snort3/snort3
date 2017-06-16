@@ -818,7 +818,11 @@ void InspectorManager::execute(Packet* p)
         if(!full_inspection(fp, p))
             return;
     }
+}
 
+void InspectorManager::probe(Packet* p)
+{
+    FrameworkPolicy* fp = get_inspection_policy()->framework_policy;
     ::execute(p, fp->probe.vec, fp->probe.num);
 }
 

@@ -76,6 +76,8 @@ public:
     static void dispatch_meta(FrameworkPolicy*, int type, const uint8_t* data);
 
     static void execute(Packet*);
+    static void probe(Packet*);
+
     static void clear(Packet*);
     static void empty_trash();
 
