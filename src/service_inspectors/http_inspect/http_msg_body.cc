@@ -79,8 +79,9 @@ void HttpMsgBody::do_utf_decoding(const Field& input, Field& output)
         int bytes_copied;
         bool decoded;
         uint8_t* buffer = new uint8_t[input.length()];
-        decoded = session_data->utf_state->decode_utf((const char*)input.start(), input.length(),
-                            (char*)buffer, input.length(), &bytes_copied);
+        decoded = session_data->utf_state->decode_utf(
+            input.start(), input.length(), buffer, input.length(), &bytes_copied);
+
         if (!decoded)
         {
             delete[] buffer;

@@ -58,13 +58,13 @@ public:
     void set_decode_utf_state_charset(CharsetCode charset);
     CharsetCode get_decode_utf_state_charset();
     bool is_utf_encoding_present();
-    bool decode_utf(const char* src, unsigned int src_len, char* dst, unsigned int dst_len, int* bytes_copied);
+    bool decode_utf(const uint8_t* src, unsigned int src_len, uint8_t* dst, unsigned int dst_len, int* bytes_copied);
 private:
     decode_utf_state_t dstate;
-    bool DecodeUTF16LE(const char* src, unsigned int src_len, char* dst, unsigned int dst_len, int* bytes_copied);
-    bool DecodeUTF16BE(const char* src, unsigned int src_len, char* dst, unsigned int dst_len, int* bytes_copied);
-    bool DecodeUTF32LE(const char* src, unsigned int src_len, char* dst, unsigned int dst_len, int* bytes_copied);
-    bool DecodeUTF32BE(const char* src, unsigned int src_len, char* dst, unsigned int dst_len, int* bytes_copied);
-    void determine_charset(const char** src, unsigned int *src_len);
+    bool DecodeUTF16LE(const uint8_t* src, unsigned int src_len, uint8_t* dst, unsigned int dst_len, int* bytes_copied);
+    bool DecodeUTF16BE(const uint8_t* src, unsigned int src_len, uint8_t* dst, unsigned int dst_len, int* bytes_copied);
+    bool DecodeUTF32LE(const uint8_t* src, unsigned int src_len, uint8_t* dst, unsigned int dst_len, int* bytes_copied);
+    bool DecodeUTF32BE(const uint8_t* src, unsigned int src_len, uint8_t* dst, unsigned int dst_len, int* bytes_copied);
+    void determine_charset(const uint8_t** src, unsigned int *src_len);
 };
 #endif

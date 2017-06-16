@@ -25,6 +25,7 @@
 
 #include "util_utf.h"
 
+#include <cassert>
 #include <cstring>
 
 #define DSTATE_FIRST 0
@@ -77,11 +78,11 @@ bool UtfDecodeSession::is_utf_encoding_present()
  * returns: true or false
  */
 
-bool UtfDecodeSession::DecodeUTF16LE(const char* src, unsigned int src_len, char* dst, unsigned int dst_len,
+bool UtfDecodeSession::DecodeUTF16LE(const uint8_t* src, unsigned int src_len, uint8_t* dst, unsigned int dst_len,
     int* bytes_copied)
 {
-    const char* src_index = src;
-    char* dst_index = dst;
+    const uint8_t* src_index = src;
+    uint8_t* dst_index = dst;
     bool result = true;
 
     while ((src_index < (src + src_len)) &&
@@ -95,12 +96,12 @@ bool UtfDecodeSession::DecodeUTF16LE(const char* src, unsigned int src_len, char
             dstate.state = DSTATE_SECOND;
             break;
         case DSTATE_SECOND:
-            if (*src_index++ > 0)
+            if (*src_index++ != 0)
                 result = false;
             dstate.state = DSTATE_FIRST;
             break;
         default:
-            return false;
+            assert(false);
         }
     }
 
@@ -120,11 +121,11 @@ bool UtfDecodeSession::DecodeUTF16LE(const char* src, unsigned int src_len, char
  * returns: true or false
  */
 
-bool UtfDecodeSession::DecodeUTF16BE(const char* src, unsigned int src_len, char* dst, unsigned int dst_len,
+bool UtfDecodeSession::DecodeUTF16BE(const uint8_t* src, unsigned int src_len, uint8_t* dst, unsigned int dst_len,
     int* bytes_copied)
 {
-    const char* src_index = src;
-    char* dst_index = dst;
+    const uint8_t* src_index = src;
+    uint8_t* dst_index = dst;
     bool result = true;
 
     while ((src_index < (src + src_len)) &&
@@ -134,7 +135,7 @@ bool UtfDecodeSession::DecodeUTF16BE(const char* src, unsigned int src_len, char
         switch (dstate.state)
         {
         case DSTATE_FIRST:
-            if (*src_index++ > 0)
+            if (*src_index++ != 0)
                 result = false;
             dstate.state = DSTATE_SECOND;
             break;
@@ -143,7 +144,7 @@ bool UtfDecodeSession::DecodeUTF16BE(const char* src, unsigned int src_len, char
             dstate.state = DSTATE_FIRST;
             break;
         default:
-            return false;
+            assert(false);
         }
     }
 
@@ -163,11 +164,11 @@ bool UtfDecodeSession::DecodeUTF16BE(const char* src, unsigned int src_len, char
  * returns: true or false
  */
 
-bool UtfDecodeSession::DecodeUTF32LE(const char* src, unsigned int src_len, char* dst, unsigned int dst_len,
+bool UtfDecodeSession::DecodeUTF32LE(const uint8_t* src, unsigned int src_len, uint8_t* dst, unsigned int dst_len,
     int* bytes_copied)
 {
-    const char* src_index = src;
-    char* dst_index = dst;
+    const uint8_t* src_index = src;
+    uint8_t* dst_index = dst;
     bool result = true;
 
     while ((src_index < (src + src_len)) &&
@@ -183,7 +184,7 @@ bool UtfDecodeSession::DecodeUTF32LE(const char* src, unsigned int src_len, char
         case DSTATE_SECOND:
         case DSTATE_THIRD:
         case DSTATE_FOURTH:
-            if (*src_index++ > 0)
+            if (*src_index++ != 0)
                 result = false;
             if (dstate.state == DSTATE_FOURTH)
                 dstate.state = DSTATE_FIRST;
@@ -191,7 +192,7 @@ bool UtfDecodeSession::DecodeUTF32LE(const char* src, unsigned int src_len, char
                 dstate.state++;
             break;
         default:
-            return false;
+            assert(false);
         }
     }
 
@@ -211,11 +212,11 @@ bool UtfDecodeSession::DecodeUTF32LE(const char* src, unsigned int src_len, char
  * returns: true or false
  */
 
-bool UtfDecodeSession::DecodeUTF32BE(const char* src, unsigned int src_len, char* dst, unsigned int dst_len,
+bool UtfDecodeSession::DecodeUTF32BE(const uint8_t* src, unsigned int src_len, uint8_t* dst, unsigned int dst_len,
     int* bytes_copied)
 {
-    const char* src_index = src;
-    char* dst_index = dst;
+    const uint8_t* src_index = src;
+    uint8_t* dst_index = dst;
     bool result = true;
 
     while ((src_index < (src + src_len)) &&
@@ -227,7 +228,7 @@ bool UtfDecodeSession::DecodeUTF32BE(const char* src, unsigned int src_len, char
         case DSTATE_FIRST:
         case DSTATE_SECOND:
         case DSTATE_THIRD:
-            if (*src_index++ > 0)
+            if (*src_index++ != 0)
                 result = false;
             dstate.state++;
             break;
@@ -236,7 +237,7 @@ bool UtfDecodeSession::DecodeUTF32BE(const char* src, unsigned int src_len, char
             dstate.state = DSTATE_FIRST;
             break;
         default:
-            return false;
+            assert(false);
         }
     }
 
@@ -245,7 +246,7 @@ bool UtfDecodeSession::DecodeUTF32BE(const char* src, unsigned int src_len, char
     return result;
 }
 
-void UtfDecodeSession::determine_charset(const char** src, unsigned int *src_len)
+void UtfDecodeSession::determine_charset(const uint8_t** src, unsigned int *src_len)
 {
     CharsetCode charset;
     if (dstate.charset == CHARSET_UNKNOWN)
@@ -323,7 +324,7 @@ void UtfDecodeSession::determine_charset(const char** src, unsigned int *src_len
 
 /* Wrapper function for DecodeUTF{16,32}{LE,BE} */
 bool UtfDecodeSession::decode_utf(
-    const char* src, unsigned int src_len, char* dst, unsigned int dst_len, int* bytes_copied)
+    const uint8_t* src, unsigned int src_len, uint8_t* dst, unsigned int dst_len, int* bytes_copied)
 {
     *bytes_copied = 0;
 
