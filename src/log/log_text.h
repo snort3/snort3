@@ -35,8 +35,8 @@ namespace tcp { struct TCPHdr; }
 typedef ip::IP4Hdr IP4Hdr;
 
 SO_PUBLIC void LogTimeStamp(TextLog*, Packet*);
-SO_PUBLIC void LogPriorityData(TextLog*, const Event*);
-SO_PUBLIC void LogXrefs(TextLog*, const Event*);
+SO_PUBLIC void LogPriorityData(TextLog*, const Event&);
+SO_PUBLIC void LogXrefs(TextLog*, const Event&);
 
 SO_PUBLIC void LogIPPkt(TextLog*, Packet*);
 SO_PUBLIC void LogPayload(TextLog*, Packet*);

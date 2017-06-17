@@ -107,23 +107,23 @@ public:
 //-------------------------------------------------------------------------
 
 static void get_alert_pkt(
-    Packet* p, const char* msg, Event* event)
+    Packet* p, const char* msg, const Event& event)
 {
     DebugMessage(DEBUG_LOG, "Logging Alert data!\n");
 
     // FIXIT-L minimize or eliminate memset
     memset((char*)&us.alert,0,sizeof(us.alert));
 
-    us.alert.gid = event->sig_info->gid;
-    us.alert.sid = event->sig_info->sid;
-    us.alert.rev = event->sig_info->rev;
+    us.alert.gid = event.sig_info->gid;
+    us.alert.sid = event.sig_info->sid;
+    us.alert.rev = event.sig_info->rev;
 
-    us.alert.class_id = event->sig_info->class_id;
-    us.alert.priority = event->sig_info->priority;
+    us.alert.class_id = event.sig_info->class_id;
+    us.alert.priority = event.sig_info->priority;
 
-    us.alert.event_id = event->event_id;
-    us.alert.event_ref = event->event_reference;
-    us.alert.ref_time = event->ref_time;
+    us.alert.event_id = event.event_id;
+    us.alert.event_ref = event.event_reference;
+    us.alert.ref_time = event.ref_time;
 
     if (p && p->pkt)
     {
@@ -223,7 +223,7 @@ public:
     void open() override;
     void close() override;
 
-    void alert(Packet*, const char* msg, Event*) override;
+    void alert(Packet*, const char* msg, const Event&) override;
 };
 
 void UnixSockLogger::open()
@@ -239,7 +239,7 @@ void UnixSockLogger::close()
     us.socket = -1;
 }
 
-void UnixSockLogger::alert(Packet* p, const char* msg, Event* event)
+void UnixSockLogger::alert(Packet* p, const char* msg, const Event& event)
 {
     get_alert_pkt(p, msg, event);
 

@@ -170,7 +170,7 @@ public:
     void open() override;
     void close() override;
 
-    void alert(Packet*, const char* msg, Event*) override;
+    void alert(Packet*, const char* msg, const Event&) override;
 
 private:
     string file;
@@ -220,7 +220,7 @@ void FastLogger::close()
         TextLog_Term(fast_log);
 }
 
-void FastLogger::alert(Packet* p, const char* msg, Event* event)
+void FastLogger::alert(Packet* p, const char* msg, const Event& event)
 {
     LogTimeStamp(fast_log, p);
 
@@ -229,9 +229,8 @@ void FastLogger::alert(Packet* p, const char* msg, Event* event)
 
     TextLog_Puts(fast_log, " [**] ");
 
-    if ( event )
-        TextLog_Print(fast_log, "[%u:%u:%u] ",
-            event->sig_info->gid, event->sig_info->sid, event->sig_info->rev);
+    TextLog_Print(fast_log, "[%u:%u:%u] ",
+        event.sig_info->gid, event.sig_info->sid, event.sig_info->rev);
 
     if (SnortConfig::alert_interface())
         TextLog_Print(fast_log, " <%s> ", PRINT_INTERFACE(SFDAQ::get_interface_spec()));
@@ -304,7 +303,7 @@ void FastLogger::alert(Packet* p, const char* msg, Event* event)
 
         DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
 
-        if ( buf.len and event->sig_info->gid != 116 )
+        if ( buf.len and event.sig_info->gid != 116 )
             LogNetData(fast_log, buf.data, buf.len, p, "alt");
     }
     TextLog_NewLine(fast_log);

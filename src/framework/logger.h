@@ -54,7 +54,7 @@ public:
     virtual void close() { }
     virtual void reset() { }
 
-    virtual void alert(Packet*, const char*, Event*) { }
+    virtual void alert(Packet*, const char*, const Event&) { }
     virtual void log(Packet*, const char*, Event*) { }
 
     void set_api(const LogApi* p)

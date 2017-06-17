@@ -54,21 +54,14 @@ using namespace std;
 #define F_NAME S_NAME ".log"
 
 /* ------------------ Data structures --------------------------*/
-typedef struct _Unified2Config
+
+struct Unified2Config
 {
     unsigned int limit;
     int nostamp;
     int mpls_event_types;
     int vlan_event_types;
-} Unified2Config;
-
-typedef struct _Unified2LogCallbackData
-{
-    Serial_Unified2Packet* logheader;
-    Unified2Config* config;
-    Event* event;
-    uint32_t num_bytes;
-} Unified2LogCallbackData;
+};
 
 struct U2
 {
@@ -108,11 +101,11 @@ static THREAD_LOCAL char io_buffer[u2_buf_sz];
 /* Unified2 Output functions */
 static void Unified2InitFile(Unified2Config*);
 static inline void Unified2RotateFile(Unified2Config*);
-static void _Unified2LogPacketAlert(Packet*, const char*, Unified2Config*, Event*);
+static void _Unified2LogPacketAlert(Packet*, const char*, Unified2Config*, const Event*);
 static void Unified2Write(uint8_t*, uint32_t, Unified2Config*);
 
-static void _AlertIP4_v2(Packet*, const char*, Unified2Config*, Event*);
-static void _AlertIP6_v2(Packet*, const char*, Unified2Config*, Event*);
+static void _AlertIP4_v2(Packet*, const char*, Unified2Config*, const Event*);
+static void _AlertIP6_v2(Packet*, const char*, Unified2Config*, const Event*);
 
 static void AlertExtraData(Flow*, void* data, LogFunction* log_funcs, uint32_t max_count, uint32_t
     xtradata_mask, uint32_t event_id, uint32_t event_second);
@@ -219,7 +212,7 @@ static inline void Unified2RotateFile(Unified2Config* config)
     Unified2InitFile(config);
 }
 
-static void _AlertIP4_v2(Packet* p, const char*, Unified2Config* config, Event* event)
+static void _AlertIP4_v2(Packet* p, const char*, Unified2Config* config, const Event* event)
 {
     Serial_Unified2_Header hdr;
     Unified2IDSEvent alertdata;
@@ -302,7 +295,7 @@ static void _AlertIP4_v2(Packet* p, const char*, Unified2Config* config, Event* 
     Unified2Write(write_pkt_buffer, write_len, config);
 }
 
-static void _AlertIP6_v2(Packet* p, const char*, Unified2Config* config, Event* event)
+static void _AlertIP6_v2(Packet* p, const char*, Unified2Config* config, const Event* event)
 {
     Serial_Unified2_Header hdr;
     Unified2IDSEventIPv6 alertdata;
@@ -474,7 +467,7 @@ static void AlertExtraData(
 }
 
 static void _Unified2LogPacketAlert(
-    Packet* p, const char*, Unified2Config* config, Event* event)
+    Packet* p, const char*, Unified2Config* config, const Event* event)
 {
     Serial_Unified2_Header hdr;
     Serial_Unified2Packet logheader;
@@ -832,7 +825,7 @@ public:
     void open() override;
     void close() override;
 
-    void alert(Packet*, const char* msg, Event*) override;
+    void alert(Packet*, const char* msg, const Event&) override;
     void log(Packet*, const char* msg, Event*) override;
 
 private:
@@ -878,32 +871,32 @@ void U2Logger::close()
         fclose(u2.stream);
 }
 
-void U2Logger::alert(Packet* p, const char* msg, Event* event)
+void U2Logger::alert(Packet* p, const char* msg, const Event& event)
 {
     if (p->ptrs.ip_api.is_ip6())
     {
-        _AlertIP6_v2(p, msg, &config, event);
+        _AlertIP6_v2(p, msg, &config, &event);
 
         // FIXIT-M delete ip6 extra data; support ip6 normally
         if (SnortConfig::get_log_ip6_extra() && p->ptrs.ip_api.is_ip6())
         {
             const SfIp* ip = p->ptrs.ip_api.get_src();
-            _WriteExtraData(&config, event->event_id, event->ref_time.tv_sec,
+            _WriteExtraData(&config, event.event_id, event.ref_time.tv_sec,
                 (const uint8_t*) ip->get_ip6_ptr(), sizeof(struct in6_addr), EVENT_INFO_IPV6_SRC);
             ip = p->ptrs.ip_api.get_dst();
-            _WriteExtraData(&config, event->event_id, event->ref_time.tv_sec,
+            _WriteExtraData(&config, event.event_id, event.ref_time.tv_sec,
                 (const uint8_t*) ip->get_ip6_ptr(), sizeof(struct in6_addr), EVENT_INFO_IPV6_DST);
         }
     }
     else // ip4 or data
     {
-        _AlertIP4_v2(p, msg, &config, event);
+        _AlertIP4_v2(p, msg, &config, &event);
     }
 
     if ( p->flow )
         Stream::update_flow_alert(
-            p->flow, p, event->sig_info->gid, event->sig_info->sid,
-            event->event_id, event->ref_time.tv_sec);
+            p->flow, p, event.sig_info->gid, event.sig_info->sid,
+            event.event_id, event.ref_time.tv_sec);
 
     if ( p->xtradata_mask )
     {
@@ -913,7 +906,7 @@ void U2Logger::alert(Packet* p, const char* msg, Event* event)
         if ( max_count > 0 )
             AlertExtraData(
                 p->flow, &config, log_funcs, max_count, p->xtradata_mask,
-                event->event_id, event->ref_time.tv_sec);
+                event.event_id, event.ref_time.tv_sec);
     }
 }
 

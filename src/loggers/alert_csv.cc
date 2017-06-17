@@ -61,7 +61,7 @@ struct Args
 {
     Packet* pkt;
     const char* msg;
-    Event* event;
+    const Event& event;
 };
 
 static void ff_action(Args&)
@@ -160,8 +160,7 @@ static void ff_eth_type(Args& a)
 
 static void ff_gid(Args& a)
 {
-    if (a.event )
-        TextLog_Print(csv_log, "%u",  a.event->sig_info->gid);
+    TextLog_Print(csv_log, "%u",  a.event.sig_info->gid);
 }
 
 static void ff_icmp_code(Args& a)
@@ -227,20 +226,18 @@ static void ff_proto(Args& a)
 
 static void ff_rev(Args& a)
 {
-    if (a.event )
-        TextLog_Print(csv_log, "%u",  a.event->sig_info->rev);
+    TextLog_Print(csv_log, "%u",  a.event.sig_info->rev);
 }
 
 static void ff_rule(Args& a)
 {
     TextLog_Print(csv_log, "%u:%u:%u",
-        a.event->sig_info->gid, a.event->sig_info->sid, a.event->sig_info->rev);
+        a.event.sig_info->gid, a.event.sig_info->sid, a.event.sig_info->rev);
 }
 
 static void ff_sid(Args& a)
 {
-    if (a.event )
-        TextLog_Print(csv_log, "%u",  a.event->sig_info->sid);
+    TextLog_Print(csv_log, "%u",  a.event.sig_info->sid);
 }
 
 static void ff_src_addr(Args& a)
@@ -467,7 +464,7 @@ public:
     void open() override;
     void close() override;
 
-    void alert(Packet*, const char* msg, Event*) override;
+    void alert(Packet*, const char* msg, const Event&) override;
 
 public:
     string file;
@@ -495,7 +492,7 @@ void CsvLogger::close()
         TextLog_Term(csv_log);
 }
 
-void CsvLogger::alert(Packet* p, const char* msg, Event* event)
+void CsvLogger::alert(Packet* p, const char* msg, const Event& event)
 {
     Args a = { p, msg, event };
     bool first = true;

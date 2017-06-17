@@ -67,7 +67,7 @@ static const luaL_Reg methods[] =
             auto& self = LoggerIface.get(L);
 
             const char* msg = args[2].check_string();
-            self.alert(&p, msg, &e);
+            self.alert(&p, msg, e);
 
             return 0;
         }

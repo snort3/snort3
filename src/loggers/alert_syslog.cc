@@ -192,39 +192,32 @@ bool SyslogModule::end(const char*, int, SnortConfig*)
 
 // FIXIT-M can't message be put in Event?
 static void AlertSyslog(
-    int priority, Packet* p, const char* msg, Event* event)
+    int priority, Packet* p, const char* msg, const Event& event)
 {
     char event_string[STD_BUF];
     event_string[0] = '\0';
 
     if ((p != NULL) && p->ptrs.ip_api.is_valid())
     {
-        if (event != NULL)
-        {
-            SnortSnprintfAppend(event_string, sizeof(event_string),
-                "[%u:%u:%u] ", event->sig_info->gid, event->sig_info->sid, event->sig_info->rev);
-        }
+        SnortSnprintfAppend(event_string, sizeof(event_string),
+            "[%u:%u:%u] ", event.sig_info->gid, event.sig_info->sid, event.sig_info->rev);
 
         if (msg != NULL)
             SnortSnprintfAppend(event_string, sizeof(event_string), "%s ", msg);
         else
             SnortSnprintfAppend(event_string, sizeof(event_string), "ALERT ");
 
-        if ( event )
+        if ((event.sig_info->class_type != NULL)
+            && (event.sig_info->class_type->name != NULL))
         {
-            if ((event->sig_info->class_type != NULL)
-                && (event->sig_info->class_type->name != NULL))
-            {
-                SnortSnprintfAppend(event_string, sizeof(event_string),
-                    "[Classification: %s] ",
-                    event->sig_info->class_type->name);
-            }
+            SnortSnprintfAppend(event_string, sizeof(event_string),
+                "[Classification: %s] ", event.sig_info->class_type->name);
+        }
 
-            if (event->sig_info->priority != 0)
-            {
-                SnortSnprintfAppend(event_string, sizeof(event_string),
-                    "[Priority: %u] ", event->sig_info->priority);
-            }
+        if (event.sig_info->priority != 0)
+        {
+            SnortSnprintfAppend(event_string, sizeof(event_string),
+                "[Priority: %u] ", event.sig_info->priority);
         }
 
         if (SnortConfig::alert_interface())
@@ -313,7 +306,7 @@ public:
     SyslogLogger(SyslogModule*);
     ~SyslogLogger();
 
-    void alert(Packet*, const char* msg, Event*) override;
+    void alert(Packet*, const char* msg, const Event&) override;
 
 private:
     int priority;
@@ -331,7 +324,7 @@ SyslogLogger::SyslogLogger(SyslogModule* m)
 SyslogLogger::~SyslogLogger()
 { }
 
-void SyslogLogger::alert(Packet* p, const char* msg, Event* event)
+void SyslogLogger::alert(Packet* p, const char* msg, const Event& event)
 {
     AlertSyslog(priority, p, msg, event);
 }

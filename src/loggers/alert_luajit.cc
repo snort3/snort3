@@ -37,7 +37,7 @@
 
 static THREAD_LOCAL ProfileStats luaLogPerfStats;
 
-static THREAD_LOCAL Event* event;
+static THREAD_LOCAL const Event* event;
 static THREAD_LOCAL SnortEvent lua_event;
 
 static THREAD_LOCAL Packet* packet;
@@ -134,7 +134,7 @@ public:
     LuaJitLogger(const char* name, std::string& chunk, class LuaLogModule*);
     ~LuaJitLogger();
 
-    void alert(Packet*, const char*, Event*) override;
+    void alert(Packet*, const char*, const Event&) override;
 
     static const struct LogApi* get_api();
 
@@ -165,12 +165,12 @@ LuaJitLogger::LuaJitLogger(const char* name, std::string& chunk, LuaLogModule* m
 LuaJitLogger::~LuaJitLogger()
 { }
 
-void LuaJitLogger::alert(Packet* p, const char*, Event* e)
+void LuaJitLogger::alert(Packet* p, const char*, const Event& e)
 {
     Profile profile(luaLogPerfStats);
 
     packet = p;
-    event = e;
+    event = &e;
 
     lua_State* L = states[get_instance_id()];
 

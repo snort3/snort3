@@ -67,16 +67,15 @@ void LogTimeStamp(TextLog* log, Packet* p)
  * prints out priority data associated with an alert
  *--------------------------------------------------------------------
  */
-void LogPriorityData(TextLog* log, const Event* e)
+void LogPriorityData(TextLog* log, const Event& e)
 {
-    if ((e->sig_info->class_type != NULL)
-        && (e->sig_info->class_type->name != NULL))
+    if ((e.sig_info->class_type != NULL)
+        && (e.sig_info->class_type->name != NULL))
     {
-        TextLog_Print(log, "[Classification: %s] ",
-            e->sig_info->class_type->name);
+        TextLog_Print(log, "[Classification: %s] ", e.sig_info->class_type->name);
     }
 
-    TextLog_Print(log, "[Priority: %d] ", e->sig_info->priority);
+    TextLog_Print(log, "[Priority: %d] ", e.sig_info->priority);
 }
 
 /*--------------------------------------------------------------------
@@ -1075,9 +1074,9 @@ static void LogReference(TextLog* log, ReferenceNode* refNode)
 /*
  * prints out cross reference data associated with an alert
  */
-void LogXrefs(TextLog* log, const Event* e)
+void LogXrefs(TextLog* log, const Event& e)
 {
-    ReferenceNode* refNode = e->sig_info->refs;
+    ReferenceNode* refNode = e.sig_info->refs;
 
     while ( refNode )
     {

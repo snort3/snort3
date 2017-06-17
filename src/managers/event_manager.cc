@@ -232,7 +232,7 @@ void EventManager::close_outputs()
 }
 
 void EventManager::call_alerters(
-    OutputSet* idx, Packet* pkt, const char* message, Event* event)
+    OutputSet* idx, Packet* pkt, const char* message, const Event& event)
 {
     if ( idx )
     {

@@ -278,9 +278,9 @@ struct SnortActionRequest
     IpProtocol ip_proto;
 };
 
-static void load_sar(Packet* packet, Event* event, SnortActionRequest& sar)
+static void load_sar(Packet* packet, const Event& event, SnortActionRequest& sar)
 {
-    if(!event || !packet || !packet->ptrs.ip_api.is_ip())
+    if ( !packet || !packet->ptrs.ip_api.is_ip() )
         return;
 
     // for now, only support ip4
@@ -288,10 +288,10 @@ static void load_sar(Packet* packet, Event* event, SnortActionRequest& sar)
         return;
 
     /* construct the action request */
-    sar.event_id = event->event_id;
+    sar.event_id = event.event_id;
     sar.tv_sec = packet->pkth->ts.tv_sec;
-    sar.gid = event->sig_info->gid;
-    sar.sid = event->sig_info->sid;
+    sar.gid = event.sig_info->gid;
+    sar.sid = event.sig_info->sid;
 
     // when ip6 is supported:
     // * suggest TLV format where T == family, L is implied by
@@ -329,7 +329,7 @@ public:
     void open() override;
     void close() override;
 
-    void alert(Packet*, const char* msg, Event*) override;
+    void alert(Packet*, const char* msg, const Event&) override;
 
 private:
     string file;
@@ -365,7 +365,7 @@ void SfSocketLogger::close()
     context.sock = -1;
 }
 
-void SfSocketLogger::alert(Packet* packet, const char*, Event* event)
+void SfSocketLogger::alert(Packet* packet, const char*, const Event& event)
 {
     SnortActionRequest sar;
     load_sar(packet, event, sar);

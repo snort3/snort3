@@ -82,13 +82,13 @@ public:
     ExLogger(ExModule* m)
     { upper = m->upper; }
 
-    void alert(Packet*, const char* msg, Event*) override;
+    void alert(Packet*, const char* msg, const Event&) override;
 
 private:
     bool upper;
 };
 
-void ExLogger::alert(Packet*, const char* msg, Event* e)
+void ExLogger::alert(Packet*, const char* msg, const Event& e)
 {
     string s = msg;
 
@@ -97,9 +97,9 @@ void ExLogger::alert(Packet*, const char* msg, Event* e)
     else
         transform(s.begin(), s.end(), s.begin(), ::tolower);
 
-    cout << e->sig_info->gid << ":";
-    cout << e->sig_info->sid << ":";
-    cout << e->sig_info->rev << " ";
+    cout << e.sig_info->gid << ":";
+    cout << e.sig_info->sid << ":";
+    cout << e.sig_info->rev << " ";
     cout << s << endl;
 }
 

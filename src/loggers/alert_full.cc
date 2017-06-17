@@ -138,7 +138,7 @@ public:
     void open() override;
     void close() override;
 
-    void alert(Packet*, const char* msg, Event*) override;
+    void alert(Packet*, const char* msg, const Event&) override;
 
 private:
     string file;
@@ -162,15 +162,12 @@ void FullLogger::close()
         TextLog_Term(full_log);
 }
 
-void FullLogger::alert(Packet* p, const char* msg, Event* event)
+void FullLogger::alert(Packet* p, const char* msg, const Event& event)
 {
     TextLog_Puts(full_log, "[**] ");
 
-    if (event != NULL)
-    {
-        TextLog_Print(full_log, "[%u:%u:%u] ",
-            event->sig_info->gid, event->sig_info->sid, event->sig_info->rev);
-    }
+    TextLog_Print(full_log, "[%u:%u:%u] ",
+        event.sig_info->gid, event.sig_info->sid, event.sig_info->rev);
 
     if (SnortConfig::alert_interface())
     {

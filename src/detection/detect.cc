@@ -112,7 +112,7 @@ void CallAlertFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
 #endif
 
     OutputSet* idx = head ? head->AlertList : NULL;
-    EventManager::call_alerters(idx, p, otn->sigInfo.message, &event);
+    EventManager::call_alerters(idx, p, otn->sigInfo.message, event);
 }
 
 /*

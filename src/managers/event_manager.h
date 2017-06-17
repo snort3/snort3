@@ -78,7 +78,7 @@ public:
     static void open_outputs();
     static void close_outputs();
 
-    static void call_alerters(OutputSet*, Packet*, const char* message, Event*);
+    static void call_alerters(OutputSet*, Packet*, const char* message, const Event&);
     static void call_loggers(OutputSet*, Packet*, const char* message, Event*);
 
     static void enable_alerts(bool b) { alert_enabled = b; }
