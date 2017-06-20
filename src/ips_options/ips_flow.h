@@ -25,8 +25,6 @@ struct OptTreeNode;
 
 int OtnFlowFromServer(OptTreeNode*);
 int OtnFlowFromClient(OptTreeNode*);
-int OtnFlowIgnoreReassembled(OptTreeNode*);
-int OtnFlowOnlyReassembled(OptTreeNode*);
 
 #endif
 

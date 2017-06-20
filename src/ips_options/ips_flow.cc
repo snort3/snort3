@@ -227,32 +227,6 @@ int OtnFlowFromClient(OptTreeNode* otn)
     return 0;
 }
 
-int OtnFlowIgnoreReassembled(OptTreeNode* otn)
-{
-    FlowCheckOption* fco =
-        (FlowCheckOption*)get_rule_type_data(otn, s_name);
-
-    if ( fco )
-    {
-        if ( fco->config.ignore_reassembled )
-            return 1;
-    }
-    return 0;
-}
-
-int OtnFlowOnlyReassembled(OptTreeNode* otn)
-{
-    FlowCheckOption* fco =
-        (FlowCheckOption*)get_rule_type_data(otn, s_name);
-
-    if ( fco )
-    {
-        if ( fco->config.only_reassembled )
-            return 1;
-    }
-    return 0;
-}
-
 //-------------------------------------------------------------------------
 // support methods
 //-------------------------------------------------------------------------
