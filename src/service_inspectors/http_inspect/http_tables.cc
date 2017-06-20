@@ -344,6 +344,10 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_CR_WITHOUT_LF,              "HTTP header line terminated by CR without a LF" },
     { EVENT_CHUNK_BAD_SEP,              "chunk terminated by nonstandard separator" },
     { EVENT_CHUNK_BARE_LF,              "chunk length terminated by LF without CR" },
+    { EVENT_MULTIPLE_100_RESPONSES,     "more than one response with 100 status code" },
+    { EVENT_UNEXPECTED_100_RESPONSE,    "100 status code not in response to Expect header" },
+    { EVENT_UNKNOWN_1XX_STATUS,         "1XX status code other than 100 or 101" },
+    { EVENT_EXPECT_WITHOUT_BODY,        "Expect header sent without a message body" },
     { 0, nullptr }
 };
 

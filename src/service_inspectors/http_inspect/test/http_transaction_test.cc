@@ -287,7 +287,7 @@ TEST(http_transaction_test, basic_continue)
     // Interim response
     section_type[SRC_SERVER] = SEC_STATUS;
     CHECK(trans == HttpTransaction::attach_my_transaction(flow_data, SRC_SERVER));
-    trans->second_response_coming();
+    trans->set_one_hundred_response();
     section_type[SRC_SERVER] = SEC_HEADER;
     CHECK(trans == HttpTransaction::attach_my_transaction(flow_data, SRC_SERVER));
 
@@ -334,7 +334,7 @@ TEST(http_transaction_test, multiple_continue)
     {
         section_type[SRC_SERVER] = SEC_STATUS;
         CHECK(trans == HttpTransaction::attach_my_transaction(flow_data, SRC_SERVER));
-        trans->second_response_coming();
+        trans->set_one_hundred_response();
         section_type[SRC_SERVER] = SEC_HEADER;
         CHECK(trans == HttpTransaction::attach_my_transaction(flow_data, SRC_SERVER));
     }
@@ -374,7 +374,7 @@ TEST(http_transaction_test, multiple_orphan_continue)
         section_type[SRC_SERVER] = SEC_STATUS;
         HttpTransaction* trans = HttpTransaction::attach_my_transaction(flow_data, SRC_SERVER);
         CHECK(trans != nullptr);
-        trans->second_response_coming();
+        trans->set_one_hundred_response();
         section_type[SRC_SERVER] = SEC_HEADER;
         CHECK(trans == HttpTransaction::attach_my_transaction(flow_data, SRC_SERVER));
         section_type[SRC_SERVER] = SEC_BODY_CHUNK;
@@ -430,7 +430,7 @@ TEST(http_transaction_test, pipeline_continue_pipeline)
     // Interim response to fourth request
     section_type[SRC_SERVER] = SEC_STATUS;
     CHECK(trans[3] == HttpTransaction::attach_my_transaction(flow_data, SRC_SERVER));
-    trans[3]->second_response_coming();
+    trans[3]->set_one_hundred_response();
     section_type[SRC_SERVER] = SEC_HEADER;
     CHECK(trans[3] == HttpTransaction::attach_my_transaction(flow_data, SRC_SERVER));
 

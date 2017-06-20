@@ -61,7 +61,7 @@ public:
     HttpInfractions* get_infractions(HttpEnums::SourceId source_id);
     HttpEventGen* get_events(HttpEnums::SourceId source_id);
 
-    void second_response_coming() { assert(response_seen); second_response_expected = true; }
+    void set_one_hundred_response();
     bool final_response() const { return !second_response_expected; }
 
 private:
@@ -77,6 +77,7 @@ private:
     HttpEventGen* events[2] = { nullptr, nullptr };
 
     bool response_seen = false;
+    bool one_hundred_response = false;
     bool second_response_expected = false;
 
     // This is a form of reference counting that prevents premature/double deletion of a

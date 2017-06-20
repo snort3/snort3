@@ -24,6 +24,7 @@
 #include "http_msg_status.h"
 
 #include "http_api.h"
+#include "http_msg_header.h"
 #include "stream/stream.h"
 
 using namespace HttpEnums;
@@ -100,6 +101,11 @@ void HttpMsgStatus::derive_status_code_num()
         add_infraction(INF_BAD_STAT_CODE);
         create_event(EVENT_INVALID_STATCODE);
     }
+    if ((status_code_num >= 102) && (status_code_num <= 199))
+    {
+        add_infraction(INF_UNKNOWN_1XX_STATUS);
+        create_event(EVENT_UNKNOWN_1XX_STATUS);
+    }
 }
 
 void HttpMsgStatus::gen_events()
@@ -142,9 +148,9 @@ void HttpMsgStatus::gen_events()
         }
     }
 
-    if( !transaction->get_request() && (trans_num == 1) )
+    if (!transaction->get_request() && (trans_num == 1))
     {
-        if( flow->is_pdu_inorder(SSN_DIR_FROM_SERVER) )
+        if (flow->is_pdu_inorder(SSN_DIR_FROM_SERVER))
         {
             // HTTP response without a request. Possible ssh tunneling
             add_infraction(INF_RSP_WO_REQ);
@@ -170,7 +176,16 @@ void HttpMsgStatus::update_flow()
         // responses to all be included in the same transaction. It's not obvious whether that is
         // the best way to handle what should be a highly abnormal situation.
         if (status_code_num == 100)
-            transaction->second_response_coming();
+        {
+            // Were we "Expect"-ing this?
+            HttpMsgHeader* const req_header = transaction->get_header(SRC_CLIENT);
+            if ((req_header != nullptr) && (req_header->get_header_count(HEAD_EXPECT) == 0))
+            {
+                add_infraction(INF_UNEXPECTED_100_RESPONSE);
+                create_event(EVENT_UNEXPECTED_100_RESPONSE);
+            }
+            transaction->set_one_hundred_response();
+        }
     }
     session_data->section_type[source_id] = SEC__NOT_COMPUTE;
 }

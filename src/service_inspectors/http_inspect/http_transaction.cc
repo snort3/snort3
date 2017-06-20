@@ -110,7 +110,6 @@ HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_da
              (session_data->transaction[SRC_SERVER] != nullptr) &&
               session_data->transaction[SRC_SERVER]->second_response_expected)
     {
-        assert(session_data->transaction[SRC_SERVER] != nullptr);
         session_data->transaction[SRC_SERVER]->second_response_expected = false;
         delete session_data->transaction[SRC_SERVER]->status;
         session_data->transaction[SRC_SERVER]->status = nullptr;
@@ -199,5 +198,17 @@ HttpInfractions* HttpTransaction::get_infractions(HttpEnums::SourceId source_id)
 HttpEventGen* HttpTransaction::get_events(HttpEnums::SourceId source_id)
 {
     return events[source_id];
+}
+
+void HttpTransaction::set_one_hundred_response()
+{
+    assert(response_seen);
+    if (one_hundred_response)
+    {
+        *infractions[SRC_SERVER] += INF_MULTIPLE_100_RESPONSES;
+        events[SRC_SERVER]->create_event(EVENT_MULTIPLE_100_RESPONSES);
+    }
+    one_hundred_response = true;
+    second_response_expected = true;
 }
 

@@ -164,6 +164,11 @@ void HttpMsgHeader::update_flow()
         else if (content_length == 0)
         {
             // No body
+            if (get_header_count(HEAD_EXPECT) > 0)
+            {
+                add_infraction(INF_EXPECT_WITHOUT_BODY_CL0);
+                create_event(EVENT_EXPECT_WITHOUT_BODY);
+            }
             session_data->half_reset(source_id);
             return;
         }
@@ -185,6 +190,11 @@ void HttpMsgHeader::update_flow()
             // an assumption.
             add_infraction(INF_POST_WO_BODY);
             create_event(EVENT_UNBOUNDED_POST);
+        }
+        if (get_header_count(HEAD_EXPECT) > 0)
+        {
+            add_infraction(INF_EXPECT_WITHOUT_BODY_NO_CL);
+            create_event(EVENT_EXPECT_WITHOUT_BODY);
         }
         session_data->half_reset(source_id);
         return;
