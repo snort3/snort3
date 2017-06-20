@@ -37,6 +37,7 @@
 #include "stream/stream_splitter.h"
 
 #include "ssl_module.h"
+#include "ssl_splitter.h"
 
 THREAD_LOCAL ProfileStats sslPerfStats;
 THREAD_LOCAL SslStats sslstats;
@@ -413,7 +414,7 @@ public:
     void eval(Packet*) override;
 
     StreamSplitter* get_splitter(bool c2s)
-    { return new StopAndWaitSplitter(c2s); }
+    { return new SslSplitter(c2s); }
 
 private:
     SSL_PROTO_CONF* config;
