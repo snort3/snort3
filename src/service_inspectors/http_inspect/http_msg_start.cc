@@ -59,6 +59,11 @@ void HttpMsgStart::derive_version_id()
         // HttpStreamSplitter::reassemble() converts 0.9 responses to a simple form of 1.0 format
         // to allow us to process 0.9 without a lot of extra development. Such responses are
         // labeled 0.9.
+        // FIXIT-M the 0.9 trick opens the door to someone spoofing us with a real start line
+        // labeled HTTP/0.9. Need to close this weakness.
+        // FIXIT-M similarly is "HTTP/2.0" a legitimate thing we could actually see? Or would real
+        // HTTP 2.0 traffic not look like that? Possibly relabeled 1.1 by the down conversion
+        // software. Need to research and resolve this issue.
         version_id = VERS_0_9;
     }
     else if ((version.start()[5] >= '0') && (version.start()[5] <= '9') &&

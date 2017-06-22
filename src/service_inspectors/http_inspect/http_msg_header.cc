@@ -109,13 +109,18 @@ void HttpMsgHeader::update_flow()
         return;
     }
 
-    // If there is a Transfer-Encoding header, it should be "chunked" without any other encodings
-    // being listed. The RFC allows other encodings to come before chunked but no one does this in
-    // real life.
-
     const Field& te_header = get_header_value_norm(HEAD_TRANSFER_ENCODING);
-    if (te_header.length() > 0)
+    if ((te_header.length() > 0) && (version_id == VERS_1_0))
     {
+        // HTTP 1.0 should not be chunked and many browsers will ignore the TE header
+        add_infraction(INF_CHUNKED_ONE_POINT_ZERO);
+        create_event(EVENT_CHUNKED_ONE_POINT_ZERO);
+    }
+    if ((te_header.length() > 0) && (version_id != VERS_1_0))
+    {
+        // If there is a Transfer-Encoding header, it should be "chunked" without any other
+        // encodings being listed. The RFC allows other encodings to come before chunked but
+        // no one does this in real life.
         const int CHUNKED_SIZE = 7;
         bool is_chunked = false;
 
@@ -148,7 +153,8 @@ void HttpMsgHeader::update_flow()
     }
 
     // else because Transfer-Encoding header negates Content-Length header even if something was
-    // wrong with Transfer-Encoding header.
+    // wrong with Transfer-Encoding header. However a Transfer-Encoding header in a 1.0 message
+    // does not negate the Content-Length header.
     else if (get_header_value_norm(HEAD_CONTENT_LENGTH).length() > 0)
     {
         const int64_t content_length =

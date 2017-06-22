@@ -348,6 +348,7 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_UNEXPECTED_100_RESPONSE,    "100 status code not in response to Expect header" },
     { EVENT_UNKNOWN_1XX_STATUS,         "1XX status code other than 100 or 101" },
     { EVENT_EXPECT_WITHOUT_BODY,        "Expect header sent without a message body" },
+    { EVENT_CHUNKED_ONE_POINT_ZERO,     "HTTP 1.0 message with Transfer-Encoding header" },
     { 0, nullptr }
 };
 
