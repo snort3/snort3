@@ -11,7 +11,7 @@ http_msg_body_cl.cc http_msg_body_cl.h \
 http_msg_body_chunk.cc http_msg_body_chunk.h \
 http_msg_body_old.cc http_msg_body_old.h \
 http_msg_trailer.cc http_msg_trailer.h \
-http_head_norm.cc http_head_norm.h \
+http_header_normalizer.cc http_header_normalizer.h \
 http_uri.cc http_uri.h \
 http_uri_norm.cc http_uri_norm.h \
 http_normalizers.cc http_normalizers.h \

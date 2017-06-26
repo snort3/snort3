@@ -23,7 +23,7 @@
 #include <bitset>
 
 #include "http_str_to_code.h"
-#include "http_head_norm.h"
+#include "http_header_normalizer.h"
 #include "http_msg_section.h"
 #include "http_field.h"
 

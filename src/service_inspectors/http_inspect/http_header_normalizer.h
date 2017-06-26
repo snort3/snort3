@@ -15,10 +15,10 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// http_head_norm.h author Tom Peters <thopeter@cisco.com>
+// http_header_normalizer.h author Tom Peters <thopeter@cisco.com>
 
-#ifndef HTTP_HEAD_NORM_H
-#define HTTP_HEAD_NORM_H
+#ifndef HTTP_HEADER_NORMALIZER_H
+#define HTTP_HEADER_NORMALIZER_H
 
 #include "http_field.h"
 #include "http_infractions.h"

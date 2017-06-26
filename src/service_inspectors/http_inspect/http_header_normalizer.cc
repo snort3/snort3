@@ -15,13 +15,13 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// http_head_norm.cc author Tom Peters <thopeter@cisco.com>
+// http_header_normalizer.cc author Tom Peters <thopeter@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "http_head_norm.h"
+#include "http_header_normalizer.h"
 
 #include <cstring>
 
