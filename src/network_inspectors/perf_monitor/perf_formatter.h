@@ -86,6 +86,7 @@ public:
     virtual void finalize_fields() {}
     virtual void init_output(FILE*) {}
     virtual void write(FILE*, time_t) = 0;
+    virtual void finalize_output(FILE*) {}
 
 protected:
     std::vector<std::vector<FormatterType>> types;

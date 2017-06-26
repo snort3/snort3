@@ -37,6 +37,7 @@
 #endif
 
 #include "csv_formatter.h"
+#include "json_formatter.h"
 #include "text_formatter.h"
 
 using namespace std;
@@ -65,6 +66,7 @@ PerfTracker::PerfTracker(PerfConfig* config, bool file, const char* tracker_name
     {
         case PERF_CSV: formatter = new CSVFormatter(tracker_name); break;
         case PERF_TEXT: formatter = new TextFormatter(tracker_name); break;
+        case PERF_JSON: formatter = new JSONFormatter(tracker_name); break;
 #ifdef HAVE_FLATBUFFERS
         case PERF_FBS: formatter = new FbsFormatter(tracker_name); break;
 #endif
@@ -86,8 +88,11 @@ PerfTracker::PerfTracker(PerfConfig* config, bool file, const char* tracker_name
 
 PerfTracker::~PerfTracker()
 {
+    formatter->finalize_output(fh);
     delete formatter;
-    close();
+
+    if (fh && fh != stdout)
+        fclose(fh);
 }
 
 bool PerfTracker::open(bool append)
@@ -147,18 +152,6 @@ bool PerfTracker::open(bool append)
         fh = stdout;
 
     formatter->init_output(fh);
-
-    return true;
-}
-
-bool PerfTracker::close()
-{
-    if (fh && fh != stdout)
-    {
-        if (fclose(fh))
-            return false;
-        fh = nullptr;
-    }
 
     return true;
 }

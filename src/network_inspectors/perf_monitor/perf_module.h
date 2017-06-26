@@ -43,6 +43,7 @@ enum PerfFormat
 {
     PERF_CSV,
     PERF_TEXT,
+    PERF_JSON,
     PERF_FBS,
     PERF_MOCK
 };

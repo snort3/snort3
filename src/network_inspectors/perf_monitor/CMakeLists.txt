@@ -14,6 +14,8 @@ add_library ( perf_monitor STATIC
     flow_tracker.h
     flow_ip_tracker.cc
     flow_ip_tracker.h
+    json_formatter.cc
+    json_formatter.h
     perf_formatter.cc
     perf_formatter.h
     perf_module.cc

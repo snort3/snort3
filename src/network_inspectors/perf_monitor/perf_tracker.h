@@ -55,7 +55,6 @@ public:
     virtual const std::string& get_name() final { return tracker_name; }
 
     virtual bool open(bool append) final;
-    virtual bool close() final;
     virtual bool rotate() final;
     virtual bool auto_rotate() final;
 

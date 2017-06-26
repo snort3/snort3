@@ -121,6 +121,9 @@ void PerfMonitor::show(SnortConfig*)
         case PERF_CSV:
             LogMessage("    Output Format:  csv\n");
             break;
+        case PERF_JSON:
+            LogMessage("    Output Format:  json\n");
+            break;
 #ifdef HAVE_FLATBUFFERS
         case PERF_FBS:
             LogMessage("    Output Format:  flatbuffers\n");
@@ -185,7 +188,6 @@ void PerfMonitor::tterm()
             auto back = trackers->back();
             if ( config.perf_flags & PERF_SUMMARY )
                 back->process(true);
-            back->close();
             delete back;
             trackers->pop_back();
         }

@@ -82,7 +82,7 @@ static const Parameter s_params[] =
     { "modules", Parameter::PT_LIST, module_params, nullptr,
       "gather statistics from the specified modules" },
 
-    { "format", Parameter::PT_ENUM, "csv | text" FLATBUFFERS_ENUM, "csv",
+    { "format", Parameter::PT_ENUM, "csv | text | json" FLATBUFFERS_ENUM, "csv",
       "output format for stats" },
 
     { "summary", Parameter::PT_BOOL, nullptr, "false",
