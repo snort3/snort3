@@ -15,6 +15,10 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+// control_mgmt.h author Bhagya Tholpady <bbantwal@cisco.com>
+//
+// This provides functions to create and control remote/local connections,
+// socket creation/deletion/management functions, and shell commands used by the analyzer.
 
 #ifndef CONTROL_MGMT_H
 #define CONTROL_MGMT_H
@@ -39,7 +43,6 @@ public:
 
     static bool find_control(int fd, std::vector<ControlConn*>::iterator& control);
     static void delete_control(std::vector<ControlConn*>::iterator& control);
-    static std::vector<ControlConn*>& get_controls();
 
     static int socket_init();
     static int socket_term();

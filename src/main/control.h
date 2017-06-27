@@ -15,6 +15,10 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+// control.h author Bhagya Tholpady <bbantwal@cisco.com>
+//
+// Header file defining control class used for remote and local connections.
+// Each control class has a request and shell associated with it.
 
 #ifndef CONTROL_H
 #define CONTROL_H

@@ -28,6 +28,14 @@ will swap in a new configuration at the earliest convenience, and the ROTATE
 command will cause open per-thread output files to be closed, rotated, and
 reopened anew.
 
+On Control connections and management:
+
+Remote control connections can be created using tcp sockets or unix sockets.
+Each control connection (local and/or remote) has a request and shell
+associated with it. The asynchronous control commands within the control
+connection are blocking and control connections are not returned the shell prompt
+until the control commands are completed.
+
 
 Re THREAD_LOCAL defined in thread.h:
 

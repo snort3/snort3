@@ -16,6 +16,9 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+// This header includes request class which is used by the control connections
+// to read control commands and send responses for those commands.
+
 #ifndef REQUEST_H
 #define REQUEST_H
 

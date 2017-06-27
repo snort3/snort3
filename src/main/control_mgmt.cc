@@ -89,11 +89,6 @@ void ControlMgmt::reconfigure_controls()
     }
 }
 
-std::vector<ControlConn*>& ControlMgmt::get_controls()
-{
-    return controls;
-}
-
 void ControlMgmt::delete_controls()
 {
     for ( auto control : controls )
