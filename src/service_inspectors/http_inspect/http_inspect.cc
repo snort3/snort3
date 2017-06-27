@@ -197,6 +197,7 @@ const Field& HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flo
     }
 
     session_data->latest_section->analyze();
+    session_data->latest_section->gen_events();
     session_data->latest_section->update_flow();
 
 #ifdef REG_TEST

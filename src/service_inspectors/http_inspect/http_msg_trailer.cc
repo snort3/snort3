@@ -35,6 +35,51 @@ HttpMsgTrailer::HttpMsgTrailer(const uint8_t* buffer, const uint16_t buf_size,
     transaction->set_trailer(this, source_id);
 }
 
+void HttpMsgTrailer::gen_events()
+{
+    // Trailers not allowed by RFC 7230
+    static const HeaderId bad_trailer[] =
+    {
+        HEAD_AGE,
+        HEAD_AUTHORIZATION,
+        HEAD_CACHE_CONTROL,
+        HEAD_CONTENT_ENCODING,
+        HEAD_CONTENT_LENGTH,
+        HEAD_CONTENT_RANGE,
+        HEAD_CONTENT_TRANSFER_ENCODING,
+        HEAD_CONTENT_TYPE,
+        HEAD_COOKIE,
+        HEAD_DATE,
+        HEAD_EXPECT,
+        HEAD_EXPIRES,
+        HEAD_HOST,
+        HEAD_LOCATION,
+        HEAD_MAX_FORWARDS,
+        HEAD_PRAGMA,
+        HEAD_PROXY_AUTHENTICATE,
+        HEAD_PROXY_AUTHORIZATION,
+        HEAD_RANGE,
+        HEAD_RETRY_AFTER,
+        HEAD_SET_COOKIE,
+        HEAD_TE,
+        HEAD_TRAILER,
+        HEAD_TRANSFER_ENCODING,
+        HEAD_VARY,
+        HEAD_WARNING,
+        HEAD_WWW_AUTHENTICATE
+    };
+
+    for (HeaderId id: bad_trailer)
+    {
+        if (get_header_count(id) > 0)
+        {
+            add_infraction(INF_ILLEGAL_TRAILER);
+            create_event(EVENT_ILLEGAL_TRAILER);
+            break;
+        }
+    }
+}
+
 void HttpMsgTrailer::update_flow()
 {
     session_data->half_reset(source_id);

@@ -53,6 +53,7 @@ set (FILE_LIST
     http_enum.h
     http_field.cc
     http_field.h
+    http_stream_splitter_finish.cc
     http_stream_splitter_reassemble.cc
     http_stream_splitter_scan.cc
     http_stream_splitter.h

@@ -22,7 +22,8 @@ http_module.cc http_module.h \
 http_test_input.cc http_test_input.h \
 http_flow_data.cc http_flow_data.h \
 http_transaction.cc http_transaction.h \
-http_stream_splitter_reassemble.cc http_stream_splitter_scan.cc http_stream_splitter.h \
+http_stream_splitter_finish.cc http_stream_splitter_reassemble.cc http_stream_splitter_scan.cc \
+http_stream_splitter.h \
 http_cutter.cc http_cutter.h \
 http_enum.h \
 http_test_manager.cc http_test_manager.h \

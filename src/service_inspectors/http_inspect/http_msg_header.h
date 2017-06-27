@@ -38,7 +38,7 @@ public:
     HttpEnums::InspectSection get_inspection_section() const override
         { return detection_section ? HttpEnums::IS_DETECTION : HttpEnums::IS_NONE; }
     void update_flow() override;
-
+    void gen_events() override;
     void publish() override;
 
 private:

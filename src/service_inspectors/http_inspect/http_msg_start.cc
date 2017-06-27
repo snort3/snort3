@@ -29,7 +29,6 @@ void HttpMsgStart::analyze()
 {
     start_line.set(msg_text);
     parse_start_line();
-    gen_events();
 }
 
 void HttpMsgStart::derive_version_id()

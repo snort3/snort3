@@ -39,7 +39,6 @@ protected:
         : HttpMsgSection(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_)
         { }
     virtual void parse_start_line() = 0;
-    virtual void gen_events() = 0;
     void derive_version_id();
 
     Field start_line;

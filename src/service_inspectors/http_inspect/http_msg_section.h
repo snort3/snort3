@@ -42,6 +42,12 @@ public:
     // Minimum necessary processing for every message
     virtual void analyze() = 0;
 
+    // analyze() generates many events in the course of its work. Many other events are generated
+    // by JIT normalization but only if someone asks for the item in question. gen_events()
+    // addresses a third category--things that do not come up during analysis but must be
+    // inspected for every message even if no one else asks about them.
+    virtual void gen_events() {}
+
     // Manages the splitter and communication between message sections
     virtual void update_flow() = 0;
 

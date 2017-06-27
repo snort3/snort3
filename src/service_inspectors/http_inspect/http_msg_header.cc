@@ -55,10 +55,8 @@ void HttpMsgHeader::publish()
     }
 }
 
-void HttpMsgHeader::update_flow()
+void HttpMsgHeader::gen_events()
 {
-    session_data->section_type[source_id] = SEC__NOT_COMPUTE;
-
     if (get_header_count(HEAD_CONTENT_LENGTH) > 1)
     {
         add_infraction(INF_MULTIPLE_CONTLEN);
@@ -70,6 +68,18 @@ void HttpMsgHeader::update_flow()
         add_infraction(INF_BOTH_CL_AND_TE);
         create_event(EVENT_BOTH_CL_AND_TE);
     }
+    // Content-Transfer-Encoding is a MIME header not sanctioned by HTTP. Which may not prevent
+    // some clients from recognizing it and applying a decoding that Snort does not expect.
+    if (get_header_count(HEAD_CONTENT_TRANSFER_ENCODING) > 0)
+    {
+        add_infraction(INF_CTE_HEADER);
+        create_event(EVENT_CTE_HEADER);
+    }
+}
+
+void HttpMsgHeader::update_flow()
+{
+    session_data->section_type[source_id] = SEC__NOT_COMPUTE;
 
     // The following logic to determine body type is by no means the last word on this topic.
     if (tcp_close)
