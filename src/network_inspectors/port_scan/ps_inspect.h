@@ -32,7 +32,6 @@ struct SfIp;
 struct PS_PROTO;
 struct PS_TRACKER;
 struct PS_PKT;
-typedef InspectorData<PsCommon> PsData;
 
 class PortScan : public Inspector
 {
@@ -40,9 +39,7 @@ public:
     PortScan(class PortScanModule*);
     ~PortScan();
 
-    bool configure(SnortConfig*) override;
     void show(SnortConfig*) override;
-
     void eval(Packet*) override;
 
     void tinit() override;
@@ -81,7 +78,6 @@ private:
 
 private:
     PortscanConfig* config;
-    PsData* global;
 };
 
 #endif

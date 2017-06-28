@@ -61,13 +61,6 @@
 
 //-------------------------------------------------------------------------
 
-struct PsCommon
-{
-    unsigned long memcap;
-
-    PsCommon() { memcap = 0; }
-};
-
 struct PS_ALERT_CONF
 {
     short connection_count;
@@ -78,6 +71,8 @@ struct PS_ALERT_CONF
 
 struct PortscanConfig
 {
+    unsigned long memcap;
+
     int detect_scans;
     int detect_scan_type;
     int proto_cnt;
@@ -94,8 +89,6 @@ struct PortscanConfig
     IPSET* ignore_scanners;
     IPSET* ignore_scanned;
     IPSET* watch_ip;
-
-    PsCommon* common;
 
     PS_ALERT_CONF tcp_ports;
     PS_ALERT_CONF tcp_decoy;
@@ -162,6 +155,7 @@ struct PS_PKT
 void ps_cleanup();
 void ps_reset();
 
+unsigned ps_node_size();
 void ps_init_hash(unsigned long);
 int ps_detect(PS_PKT*);
 

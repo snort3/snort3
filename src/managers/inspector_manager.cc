@@ -674,14 +674,9 @@ Inspector* InspectorManager::acquire(const char* key, SnortConfig* sc)
     Inspector* pi = get_inspector(key, sc);
 
     if ( !pi )
-    {
-        const InspectApi* api = get_plugin(key);
-        Module* mod = ModuleManager::get_default_module(key, sc);
-        instantiate(api, mod, sc);
-        pi = get_inspector(key, sc);
-    }
+        FatalError("unconfigured inspector: '%s'.\n", key);
 
-    if ( pi )
+    else
         pi->add_ref();
 
     return pi;

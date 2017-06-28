@@ -338,47 +338,40 @@ static void PrintIPPortSet(IP_PORT* p)
 static void PrintPortscanConf(PortscanConfig* config)
 {
     char buf[STD_BUF + 1];
-    int proto_cnt = 0;
 
     LogMessage("Portscan Detection Config:\n");
-    memset(buf, 0, STD_BUF + 1);
-
-    SnortSnprintf(buf, STD_BUF + 1, "    Detect Protocols:  ");
+    SnortSnprintf(buf, sizeof(buf), "    Detect Protocols:  ");
 
     if ( config->detect_scans & PS_PROTO_TCP )
-        sfsnprintfappend(buf, STD_BUF, "TCP ");  proto_cnt++;
+        sfsnprintfappend(buf, sizeof(buf)-1, "TCP ");
 
     if ( config->detect_scans & PS_PROTO_UDP )
-        sfsnprintfappend(buf, STD_BUF, "UDP ");  proto_cnt++;
+        sfsnprintfappend(buf, sizeof(buf)-1, "UDP ");
 
     if ( config->detect_scans & PS_PROTO_ICMP )
-        sfsnprintfappend(buf, STD_BUF, "ICMP "); proto_cnt++;
+        sfsnprintfappend(buf, sizeof(buf)-1, "ICMP ");
 
     if ( config->detect_scans & PS_PROTO_IP )
-        sfsnprintfappend(buf, STD_BUF, "IP");    proto_cnt++;
+        sfsnprintfappend(buf, sizeof(buf)-1, "IP");
 
     LogMessage("%s\n", buf);
-    memset(buf, 0, STD_BUF + 1);
-
-    SnortSnprintf(buf, STD_BUF + 1, "    Detect Scan Type:  ");
+    SnortSnprintf(buf, sizeof(buf), "    Detect Scan Type:  ");
 
     if (config->detect_scan_type & PS_TYPE_PORTSCAN)
-        sfsnprintfappend(buf, STD_BUF, "portscan ");
+        sfsnprintfappend(buf, sizeof(buf)-1, "portscan ");
 
     if (config->detect_scan_type & PS_TYPE_PORTSWEEP)
-        sfsnprintfappend(buf, STD_BUF, "portsweep ");
+        sfsnprintfappend(buf, sizeof(buf)-1, "portsweep ");
 
     if (config->detect_scan_type & PS_TYPE_DECOYSCAN)
-        sfsnprintfappend(buf, STD_BUF, "decoy_portscan ");
+        sfsnprintfappend(buf, sizeof(buf)-1, "decoy_portscan ");
 
     if (config->detect_scan_type & PS_TYPE_DISTPORTSCAN)
-        sfsnprintfappend(buf, STD_BUF, "distributed_portscan");
+        sfsnprintfappend(buf, sizeof(buf)-1, "distributed_portscan");
 
     LogMessage("%s\n", buf);
-    LogMessage("    Memcap (in bytes): %lu\n", config->common->memcap);
-
-    LogMessage("    Number of Nodes:   %ld\n",
-        config->common->memcap / (sizeof(PS_PROTO)*proto_cnt-1));
+    LogMessage("    Memcap (in bytes): %lu\n", config->memcap);
+    LogMessage("    Number of Nodes:   %ld\n", config->memcap / ps_node_size());
 
     if ( config->logfile )
         LogMessage("    Logfile:           %s\n", "yes");
@@ -424,28 +417,17 @@ static void PrintPortscanConf(PortscanConfig* config)
 PortScan::PortScan(PortScanModule* mod)
 {
     config = mod->get_data();
-    global = nullptr;
 }
 
 PortScan::~PortScan()
 {
     if ( config )
         delete config;
-
-    if ( global )
-        InspectorManager::release(global);
-}
-
-bool PortScan::configure(SnortConfig* sc)
-{
-    global = (PsData*)InspectorManager::acquire(PSG_NAME, sc);
-    config->common = global->data;
-    return true;
 }
 
 void PortScan::tinit()
 {
-    ps_init_hash(config->common->memcap);
+    ps_init_hash(config->memcap);
 }
 
 void PortScan::tterm()
@@ -491,70 +473,20 @@ void PortScan::eval(Packet* p)
 // api stuff
 //-------------------------------------------------------------------------
 
-static Module* gmod_ctor()
-{ return new PortScanGlobalModule; }
+static Module* mod_ctor()
+{ return new PortScanModule; }
 
 static void mod_dtor(Module* m)
 { delete m; }
 
-static Inspector* sd_ctor(Module* m)
-{
-    PortScanGlobalModule* mod = (PortScanGlobalModule*)m;
-    PsCommon* com = mod->get_data();
-    PsData* p = new PsData(com);
-    return p;
-}
-
-static void sd_dtor(Inspector* p)
-{ delete p; }
-
-static const InspectApi sd_api =
-{
-    {
-        PT_INSPECTOR,
-        sizeof(InspectApi),
-        INSAPI_VERSION,
-        0,
-        API_RESERVED,
-        API_OPTIONS,
-        PSG_NAME,
-        PSG_HELP,
-        gmod_ctor,
-        mod_dtor
-    },
-    IT_PASSIVE,
-    (uint16_t)PktType::NONE,
-    nullptr, // buffers
-    nullptr, // service
-    nullptr, // pinit
-    nullptr, // pterm
-    nullptr, // tinit
-    nullptr, // tterm
-    sd_ctor,
-    sd_dtor,
-    nullptr, // ssn
-    nullptr  // reset
-};
-
-//-------------------------------------------------------------------------
-
-static Module* mod_ctor()
-{ return new PortScanModule; }
-
 static Inspector* sp_ctor(Module* m)
-{
-    return new PortScan((PortScanModule*)m);
-}
+{ return new PortScan((PortScanModule*)m); }
 
 static void sp_dtor(Inspector* p)
-{
-    delete p;
-}
+{ delete p; }
 
 static void sp_reset()
-{
-    ps_reset();
-}
+{ ps_reset(); }
 
 static const InspectApi sp_api =
 {
@@ -590,7 +522,6 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 const BaseApi* nin_port_scan[] =
 #endif
 {
-    &sd_api.base,
     &sp_api.base,
     nullptr
 };

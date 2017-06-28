@@ -56,6 +56,9 @@ static const Parameter scan_params[] =
 
 static const Parameter ps_params[] =
 {
+    { "memcap", Parameter::PT_INT, "1:", "1048576",
+      "maximum tracker memory in bytes" },
+
     { "protos", Parameter::PT_MULTI, protos, "all",
       "choose the protocols to monitor" },
 
@@ -186,8 +189,28 @@ PortScanModule::~PortScanModule()
         delete config;
 }
 
+ProfileStats* PortScanModule::get_profile() const
+{ return &psPerfStats; }
+
+const PegInfo* PortScanModule::get_pegs() const
+{ return simple_pegs; }
+
+PegCount* PortScanModule::get_counts() const
+{ return (PegCount*)&spstats; }
+
 const RuleMap* PortScanModule::get_rules() const
 { return port_scan_rules; }
+
+bool PortScanModule::begin(const char* fqn, int, SnortConfig*)
+{
+    if ( !config )
+        config = new PortscanConfig;
+
+    else if ( strcmp(fqn, "port_scan") )
+        return false;
+
+    return true;
+}
 
 //-------------------------------------------------------------------------
 // FIXIT-L ipset_parse() format must be changed to remove comma
@@ -206,7 +229,10 @@ const RuleMap* PortScanModule::get_rules() const
 //-------------------------------------------------------------------------
 bool PortScanModule::set(const char* fqn, Value& v, SnortConfig*)
 {
-    if ( v.is("protos") )
+    if ( v.is("memcap") )
+        config->memcap = v.get_long();
+
+    else if ( v.is("protos") )
     {
         unsigned u = v.get_long();
         if ( u & (PS_PROTO_ALL+1) )
@@ -290,17 +316,6 @@ bool PortScanModule::set(const char* fqn, Value& v, SnortConfig*)
     return true;
 }
 
-bool PortScanModule::begin(const char* fqn, int, SnortConfig*)
-{
-    if ( !config )
-        config = new PortscanConfig;
-
-    else if ( strcmp(fqn, "port_scan") )
-        return false;
-
-    return true;
-}
-
 PS_ALERT_CONF* PortScanModule::get_alert_conf(const char* fqn)
 {
     if ( !strncmp(fqn, "port_scan.tcp_ports", 19) )
@@ -351,63 +366,4 @@ PortscanConfig* PortScanModule::get_data()
     config = nullptr;
     return tmp;
 }
-
-//-------------------------------------------------------------------------
-// port_scan module
-//-------------------------------------------------------------------------
-
-static const Parameter psg_params[] =
-{
-    { "memcap", Parameter::PT_INT, "1:", "1048576",
-      "maximum tracker memory in bytes" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-PortScanGlobalModule::PortScanGlobalModule() :
-    Module(PSG_NAME, PSG_HELP, psg_params)
-{
-    common = nullptr;
-}
-
-PortScanGlobalModule::~PortScanGlobalModule()
-{
-    if ( common )
-        delete common;
-}
-
-ProfileStats* PortScanGlobalModule::get_profile() const
-{ return &psPerfStats; }
-
-bool PortScanGlobalModule::begin(const char*, int, SnortConfig*)
-{
-    assert(!common);
-    common = new PsCommon;
-    common->memcap = 1048576;
-    return true;
-}
-
-bool PortScanGlobalModule::set(const char*, Value& v, SnortConfig*)
-{
-    if ( v.is("memcap") )
-        common->memcap = v.get_long();
-
-    else
-        return false;
-
-    return true;
-}
-
-PsCommon* PortScanGlobalModule::get_data()
-{
-    PsCommon* tmp = common;
-    common = nullptr;
-    return tmp;
-}
-
-const PegInfo* PortScanGlobalModule::get_pegs() const
-{ return simple_pegs; }
-
-PegCount* PortScanGlobalModule::get_counts() const
-{ return (PegCount*)&spstats; }
 

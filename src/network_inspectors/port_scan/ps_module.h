@@ -25,10 +25,7 @@
 #include "ps_detect.h"
 
 #define PS_NAME "port_scan"
-#define PS_HELP "port scan inspector; also configure port_scan_global"
-
-#define PSG_NAME "port_scan_global"
-#define PSG_HELP "shared settings for port_scan inspectors for use with port_scan"
+#define PS_HELP "detect various ip, icmp, tcp, and udp port or protocol scans"
 
 //-------------------------------------------------------------------------
 // gid - sids
@@ -136,27 +133,7 @@
 extern THREAD_LOCAL SimpleStats spstats;
 extern THREAD_LOCAL ProfileStats psPerfStats;
 
-struct PsCommon;
 struct PortscanConfig;
-
-class PortScanGlobalModule : public Module
-{
-public:
-    PortScanGlobalModule();
-    ~PortScanGlobalModule();
-
-    bool set(const char*, Value&, SnortConfig*) override;
-    bool begin(const char*, int, SnortConfig*) override;
-
-    const PegInfo* get_pegs() const override;
-    PegCount* get_counts() const override;
-    ProfileStats* get_profile() const override;
-
-    PsCommon* get_data();
-
-private:
-    PsCommon* common;
-};
 
 class PortScanModule : public Module
 {
@@ -167,6 +144,9 @@ public:
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
 
+    const PegInfo* get_pegs() const override;
+    PegCount* get_counts() const override;
+    ProfileStats* get_profile() const override;
     const RuleMap* get_rules() const override;
 
     unsigned get_gid() const override

@@ -107,18 +107,15 @@ void ps_cleanup()
     }
 }
 
+unsigned ps_node_size()
+{ return sizeof(PS_HASH_KEY) + sizeof(PS_TRACKER); }
+
 void ps_init_hash(unsigned long memcap)
 {
     if ( portscan_hash )
         return;
 
-#if SIZEOF_LONG_INT == 8  // FIXIT-L explain this
-    int factor = 125;
-#else
-    int factor = 250;
-#endif
-
-    int rows = memcap/factor;
+    int rows = memcap / ps_node_size();
 
     portscan_hash = sfxhash_new(rows, sizeof(PS_HASH_KEY), sizeof(PS_TRACKER),
         memcap, 1, ps_tracker_free, nullptr, 1);

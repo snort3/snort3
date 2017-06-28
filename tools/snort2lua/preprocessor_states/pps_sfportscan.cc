@@ -37,7 +37,6 @@ public:
 
 private:
     bool parse_option(std::string table_name, std::istringstream& data_stream);
-    bool add_portscan_global_option(std::string name, std::istringstream& data_stream);
     bool parse_ip_list(std::string table_name, std::istringstream& data_stream);
 };
 } // namespace
@@ -63,41 +62,21 @@ bool PortScan::parse_ip_list(std::string list_name, std::istringstream& data_str
     return table_api.add_option(list_name, prev);
 }
 
-bool PortScan::parse_option(std::string list_name, std::istringstream& data_stream)
+bool PortScan::parse_option(std::string var_name, std::istringstream& data_stream)
 {
-    std::string elem;
-    bool retval = true;
+    std::string val, delim;
 
-    if (!(data_stream >> elem) || (elem != "{"))
-        return false;
-
-    while (data_stream >> elem && elem != "}")
-        retval && table_api.add_option(list_name, elem) && retval;
-
-    return retval;
-}
-
-bool PortScan::add_portscan_global_option(std::string name, std::istringstream& data_stream)
-{
-    int val;
-    std::string garbage;
-
-    if (!(data_stream >> garbage) || (garbage != "{"))
+    if (!(data_stream >> delim) || (delim != "{"))
         return false;
 
     if (!(data_stream >> val))
         return false;
 
-    table_api.close_table();
-    table_api.open_table("port_scan_global");
-    bool retval = table_api.add_option(name, val);
-    table_api.close_table();
-    table_api.open_table("port_scan");
-
-    if (!(data_stream >> garbage) || (garbage != "}"))
+    if (!(data_stream >> delim) || (delim != "}"))
         return false;
 
-    return retval;
+    int num = std::stoi(val);
+    return table_api.add_option(var_name, num);
 }
 
 bool PortScan::convert(std::istringstream& data_stream)
@@ -141,7 +120,7 @@ bool PortScan::convert(std::istringstream& data_stream)
             table_api.add_deleted_comment("logfile");
         }
         else if (!keyword.compare("memcap"))
-            tmpval = add_portscan_global_option("memcap", data_stream);
+            tmpval = parse_option("memcap", data_stream) && retval;
 
         else if (!keyword.compare("proto"))
         {

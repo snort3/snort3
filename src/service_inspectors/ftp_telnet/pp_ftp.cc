@@ -1211,12 +1211,12 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
             {
                 if (session->data_chan_index == -1)
                     ftp_cmd_pipe_index = 0;
+
                 session->data_xfer_index = -1;
+
                 if ((rsp_code == 150) || (rsp_code == 125))
-                {
-                    session->data_chan_state &= ~DATA_CHAN_XFER_CMD_ISSUED;
                     session->data_chan_state = DATA_CHAN_XFER_STARTED;
-                }
+
                 /* Clear the session info for next transfer -->
                  * reset host/port */
                 session->serverIP.clear();
