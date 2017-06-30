@@ -207,6 +207,7 @@ bool FileFlows::file_process(const uint8_t* file_data, int data_size,
 
     set_current_file_context(context);
 
+    context->set_signature_state(gen_signature);
     return context->process(flow, file_data, data_size, position);
 }
 

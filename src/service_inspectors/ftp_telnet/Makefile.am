@@ -14,6 +14,7 @@ ftpp_si.cc ftpp_si.h \
 ftpp_ui_config.cc ftpp_ui_config.h \
 ftp_server.h \
 ftp_splitter.cc ftp_splitter.h \
+ftpdata_splitter.cc ftpdata_splitter.h \
 pp_ftp.cc pp_ftp.h \
 pp_telnet.cc pp_telnet.h \
 telnet.cc telnet.h \

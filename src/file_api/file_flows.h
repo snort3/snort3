@@ -56,6 +56,11 @@ public:
 
     void set_file_name(const uint8_t* fname, uint32_t name_size);
 
+    void set_sig_gen_state( bool enable )
+    {
+        gen_signature = enable;
+    }
+
     // This is used when there is only one file per session
     bool file_process(const uint8_t* file_data, int data_size, FilePosition,
         bool upload, size_t file_index = 0);
@@ -76,6 +81,7 @@ private:
     FileContext* current_context = nullptr;
     uint32_t max_file_id = 0;
     uint64_t current_file_id = 0;
+    bool gen_signature = false;
     Flow* flow = nullptr;
 };
 

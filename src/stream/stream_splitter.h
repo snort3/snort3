@@ -78,21 +78,22 @@ public:
     virtual bool is_paf() { return false; }
     virtual unsigned max(Flow*);
 
-    // FIXIT-L max_pdu should suffice
-    static const unsigned max_buf = 65536;
-
+    // FIXIT-L reset is not currently used and may not be needed at all.
+    //         determine if this is so and remove if possible
     virtual void reset() { }
     virtual void update() { }
 
+    unsigned get_max_pdu() { return max_pdu; }
     bool to_server() { return c2s; }
     bool to_client() { return !c2s; }
 
 protected:
-    StreamSplitter(bool b) { c2s = b; }
+    StreamSplitter(bool b) : c2s(b) { }
+    uint16_t get_flush_bucket_size();
 
 private:
-    static unsigned max_pdu;
-    bool c2s;
+    const bool c2s;
+    const unsigned max_pdu = 65536;
 };
 
 //-------------------------------------------------------------------------
@@ -101,11 +102,10 @@ private:
 class AtomSplitter : public StreamSplitter
 {
 public:
-    AtomSplitter(bool, uint32_t size = 0);
-    ~AtomSplitter();
+    AtomSplitter(bool, uint16_t size = 0);
+    ~AtomSplitter() = default;
 
     Status scan(Flow*, const uint8_t*, uint32_t, uint32_t, uint32_t*) override;
-
     void reset() override;
     void update() override;
 
@@ -146,6 +146,5 @@ public:
 private:
     unsigned byte_count = 0;
 };
-
 #endif
 

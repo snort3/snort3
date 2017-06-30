@@ -346,6 +346,7 @@ void TcpSession::process_tcp_stream(TcpSegmentDescriptor& tsd)
         listener->reassembler->set_overlap_count(0);
     }
 }
+
 void TcpSession::check_fin_transition_status(TcpSegmentDescriptor& tsd)
 {
     if((tsd.get_seg_len() != 0) &&

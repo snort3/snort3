@@ -19,6 +19,8 @@ set (FILE_LIST
     ftp_server.h
     ftp_splitter.h
     ftp_splitter.cc
+    ftpdata_splitter.h
+    ftpdata_splitter.cc
     ftpp_return_codes.h
     ftpp_si.cc
     ftpp_si.h

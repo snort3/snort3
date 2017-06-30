@@ -260,16 +260,24 @@ FileVerdict FileContext::file_signature_lookup(Flow* flow)
         return FILE_VERDICT_UNKNOWN;
 }
 
-void FileContext::finish_signature_lookup(Flow* flow)
+void FileContext::finish_signature_lookup(Flow* flow, bool final_lookup)
 {
     if (get_file_sig_sha256())
     {
         //Check file type based on file policy
         FilePolicy& inspect = file_config->get_file_policy();
-        inspect.signature_lookup(flow, this);
-        log_file_event(flow);
-        config_file_signature(false);
-        file_stats->signatures_processed[get_file_type()][get_file_direction()]++;
+        FileVerdict verdict = inspect.signature_lookup(flow, this);
+        if ( verdict != FILE_VERDICT_UNKNOWN || final_lookup )
+        {
+            log_file_event(flow);
+            config_file_signature(false);
+            file_stats->signatures_processed[get_file_type()][get_file_direction()]++;
+        }
+        else
+        {
+            snort_free(sha256);
+            sha256 = nullptr;
+        }
     }
 }
 
@@ -297,7 +305,7 @@ bool FileContext::process(Flow* flow, const uint8_t* file_data, int data_size,
 
     file_counts.file_data_total += data_size;
 
-    if ((!is_file_type_enabled())and (!is_file_signature_enabled()))
+    if ((!is_file_type_enabled()) and (!is_file_signature_enabled()))
     {
         update_file_size(data_size, position);
         return false;
@@ -313,7 +321,7 @@ bool FileContext::process(Flow* flow, const uint8_t* file_data, int data_size,
         process_file_type(file_data, data_size, position);
 
         /*Don't care unknown file type*/
-        if (get_file_type()== SNORT_FILE_TYPE_UNKNOWN)
+        if (get_file_type() == SNORT_FILE_TYPE_UNKNOWN)
         {
             config_file_type(false);
             config_file_signature(false);
@@ -353,7 +361,7 @@ bool FileContext::process(Flow* flow, const uint8_t* file_data, int data_size,
             process_file_capture(file_data, data_size, position);
         }
 
-        finish_signature_lookup(flow);
+        finish_signature_lookup(flow, ( file_state.sig_state != FILE_SIG_FLUSH ) );
     }
     else
     {
@@ -427,12 +435,34 @@ void FileContext::process_file_signature_sha256(const uint8_t* file_data, int si
             file_signature_context = snort_calloc(sizeof(SHA256_CTX));
         SHA256_Init((SHA256_CTX*)file_signature_context);
         SHA256_Update((SHA256_CTX*)file_signature_context, file_data, data_size);
+        if(file_state.sig_state == FILE_SIG_FLUSH)
+        {
+            static uint8_t file_signature_context_backup[sizeof(SHA256_CTX)];
+            sha256 = (uint8_t*)snort_alloc(SHA256_HASH_SIZE);
+            memcpy(file_signature_context_backup, file_signature_context, sizeof(SHA256_CTX));
+
+            SHA256_Final(sha256, (SHA256_CTX *)file_signature_context);
+            memcpy(file_signature_context, file_signature_context_backup, sizeof(SHA256_CTX));
+        }
         break;
+
     case SNORT_FILE_MIDDLE:
         if (!file_signature_context)
             return;
         SHA256_Update((SHA256_CTX*)file_signature_context, file_data, data_size);
+        if(file_state.sig_state == FILE_SIG_FLUSH)
+        {
+            static uint8_t file_signature_context_backup[sizeof(SHA256_CTX)];
+            if ( !sha256 )
+                sha256 = (uint8_t*)snort_alloc(SHA256_HASH_SIZE);
+            memcpy(file_signature_context_backup, file_signature_context, sizeof(SHA256_CTX));
+
+            SHA256_Final(sha256, (SHA256_CTX *)file_signature_context);
+            memcpy(file_signature_context, file_signature_context_backup, sizeof(SHA256_CTX));
+        }
+
         break;
+
     case SNORT_FILE_END:
         if (!file_signature_context)
             return;
@@ -441,6 +471,7 @@ void FileContext::process_file_signature_sha256(const uint8_t* file_data, int si
         SHA256_Final(sha256, (SHA256_CTX*)file_signature_context);
         file_state.sig_state = FILE_SIG_DONE;
         break;
+
     case SNORT_FILE_FULL:
         if (!file_signature_context)
             file_signature_context = snort_calloc(sizeof (SHA256_CTX));
@@ -450,6 +481,7 @@ void FileContext::process_file_signature_sha256(const uint8_t* file_data, int si
         SHA256_Final(sha256, (SHA256_CTX*)file_signature_context);
         file_state.sig_state = FILE_SIG_DONE;
         break;
+
     default:
         break;
     }

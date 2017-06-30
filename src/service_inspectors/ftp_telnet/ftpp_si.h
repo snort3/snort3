@@ -229,12 +229,14 @@ public:
 public:
     static unsigned flow_id;
     FTP_DATA_SESSION session;
+    bool eof_handled = false;
 };
 
 #define FTPDATA_FLG_REASSEMBLY_SET  (1<<0)
 #define FTPDATA_FLG_FILENAME_SET    (1<<1)
 #define FTPDATA_FLG_STOP            (1<<2)
 #define FTPDATA_FLG_REST            (1<<3)
+#define FTPDATA_FLG_FLUSH           (1<<4)
 
 /*
  * The FTPP_SI_INPUT structure holds the information that the session

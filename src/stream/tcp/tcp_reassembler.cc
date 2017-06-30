@@ -525,7 +525,7 @@ int TcpReassembler::flush_data_segments(Packet* p, uint32_t total, Packet* pdu)
         if ( sb.data || !seglist.next )
             break;
 
-        if ( bytes_flushed + seglist.next->payload_size >= StreamSplitter::max_buf )
+        if ( bytes_flushed + seglist.next->payload_size >= tracker->splitter->get_max_pdu() )
             break;
     }
 

@@ -28,6 +28,7 @@
 #include <string>
 
 #include "file_api/file_api.h"
+#include "utils/util.h"
 
 #define SNORT_FILE_TYPE_UNKNOWN          UINT16_MAX
 #define SNORT_FILE_TYPE_CONTINUE         0
@@ -111,6 +112,22 @@ public:
     void config_file_capture(bool enabled);
     bool is_file_capture_enabled();
 
+    void set_signature_state(bool gen_sig)
+    {
+        if ( gen_sig )
+        {
+            if ( sha256 )
+            {
+                snort_free(sha256);
+                sha256 = nullptr;
+            }
+
+            file_state.sig_state = FILE_SIG_FLUSH;
+        }
+        else
+            file_state.sig_state = FILE_SIG_PROCESSING;
+    }
+
     //File properties
     uint64_t get_processed_bytes();
 
@@ -133,7 +150,7 @@ private:
 
     inline int get_data_size_from_depth_limit(FileProcessType type, int data_size);
     inline void finalize_file_type();
-    inline void finish_signature_lookup(Flow*);
+    inline void finish_signature_lookup(Flow*, bool);
 };
 
 #endif

@@ -33,6 +33,9 @@
 unsigned StreamSplitter::max(Flow*)
 { return snort_conf->max_pdu; }
 
+uint16_t StreamSplitter::get_flush_bucket_size()
+{ return FlushBucket::get_size(); }
+
 const StreamBuffer StreamSplitter::reassemble(
     Flow*, unsigned, unsigned offset, const uint8_t* p,
     unsigned n, uint32_t flags, unsigned& copied)
@@ -54,14 +57,12 @@ const StreamBuffer StreamSplitter::reassemble(
 // atom splitter
 //--------------------------------------------------------------------------
 
-AtomSplitter::AtomSplitter(bool b, uint32_t sz) : StreamSplitter(b)
+AtomSplitter::AtomSplitter(bool b, uint16_t sz) : StreamSplitter(b)
 {
     reset();
     base = sz;
-    min = base + FlushBucket::get_size();
+    min = base + get_flush_bucket_size();
 }
-
-AtomSplitter::~AtomSplitter() { }
 
 StreamSplitter::Status AtomSplitter::scan(
     Flow*, const uint8_t*, uint32_t len, uint32_t, uint32_t* fp)
@@ -85,7 +86,7 @@ void AtomSplitter::reset()
 void AtomSplitter::update()
 {
     reset();
-    min = base + FlushBucket::get_size();
+    min = base + get_flush_bucket_size();
 }
 
 //--------------------------------------------------------------------------
@@ -94,8 +95,8 @@ void AtomSplitter::update()
 
 LogSplitter::LogSplitter(bool b) : StreamSplitter(b) { }
 
-StreamSplitter::Status LogSplitter::scan(
-    Flow*, const uint8_t*, uint32_t len, uint32_t, uint32_t* fp)
+StreamSplitter::Status LogSplitter::scan(Flow*, const uint8_t*, uint32_t len, uint32_t,
+    uint32_t* fp)
 {
     *fp = len;
     return FLUSH;
@@ -105,8 +106,8 @@ StreamSplitter::Status LogSplitter::scan(
 // stop-and-wait splitter
 //--------------------------------------------------------------------------
 
-StreamSplitter::Status StopAndWaitSplitter::scan(
-    Flow* flow, const uint8_t*, uint32_t len, uint32_t, uint32_t*)
+StreamSplitter::Status StopAndWaitSplitter::scan(Flow* flow, const uint8_t*, uint32_t len,
+    uint32_t, uint32_t*)
 {
     StopAndWaitSplitter* peer = (StopAndWaitSplitter*)Stream::get_splitter(flow, !to_server());
 
@@ -124,32 +125,3 @@ StreamSplitter::Status StopAndWaitSplitter::scan(
     byte_count += len;
     return StreamSplitter::SEARCH;
 }
-
-//--------------------------------------------------------------------------
-// dip splitter - flush when seg size dips below prior sizes
-//--------------------------------------------------------------------------
-
-#if 0
-// FIXIT-L make into splitter class
-static inline int CheckFlushCoercion(
-    Packet* p, FlushMgr* fm, uint16_t flush_factor)
-{
-    if ( !flush_factor )
-        return 0;
-
-    if ( p->dsize &&
-        (p->dsize < fm->last_size) &&
-        (fm->last_count >= flush_factor) )
-    {
-        fm->last_size = 0;
-        fm->last_count = 0;
-        return 1;
-    }
-    if ( p->dsize > fm->last_size )
-        fm->last_size = p->dsize;
-
-    fm->last_count++;
-    return 0;
-}
-#endif
-

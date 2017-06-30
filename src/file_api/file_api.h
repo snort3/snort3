@@ -77,6 +77,7 @@ enum FileSigState
 {
     FILE_SIG_PROCESSING = 0,
     FILE_SIG_DEPTH_FAIL,              /*larger than file signature depth*/
+    FILE_SIG_FLUSH,
     FILE_SIG_DONE
 };
 

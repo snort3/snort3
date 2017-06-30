@@ -33,6 +33,7 @@
 
 #include "ftp_module.h"
 #include "ftpp_si.h"
+#include "ftpdata_splitter.h"
 
 #define s_name "ftp_data"
 
@@ -62,9 +63,16 @@ static void FTPDataProcess(
     }
 
     FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
-
     if (!file_flows)
         return;
+
+    if (data_ssn->packet_flags & FTPDATA_FLG_FLUSH)
+    {
+        file_flows->set_sig_gen_state( true );
+        data_ssn->packet_flags &= ~FTPDATA_FLG_FLUSH;
+    }
+    else
+        file_flows->set_sig_gen_state( false );
 
     status = file_flows->file_process(file_data, data_length,
         data_ssn->position, data_ssn->direction);
@@ -90,9 +98,7 @@ static void FTPDataProcess(
     /* Ignore the rest of this transfer if file processing is complete
      * and preprocessor was configured to ignore ftp-data sessions. */
     if (!status && data_ssn->data_chan)
-    {
         p->flow->set_ignore_direction(SSN_DIR_BOTH);
-    }
 }
 
 static int SnortFTPData(Packet* p)
@@ -213,7 +219,7 @@ void FtpDataFlowData::handle_eof(Packet* p)
 
     initFilePosition(&data_ssn->position, get_file_processed_size(p->flow));
     finalFilePosition(&data_ssn->position);
-
+    eof_handled = true;
 }
 
 //-------------------------------------------------------------------------
@@ -227,6 +233,7 @@ public:
     ~FtpData() { }
 
     void eval(Packet*) override;
+    StreamSplitter* get_splitter(bool to_server) override;
 };
 
 class FtpDataModule : public Module
@@ -263,6 +270,11 @@ void FtpData::eval(Packet* p)
 
     SnortFTPData(p);
     ++fdstats.total_packets;
+}
+
+StreamSplitter* FtpData::get_splitter(bool to_server)
+{
+	return new FtpDataSplitter(to_server);
 }
 
 //-------------------------------------------------------------------------

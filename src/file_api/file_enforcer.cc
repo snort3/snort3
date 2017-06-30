@@ -159,6 +159,9 @@ int FileEnforcer::store_verdict(Flow* flow, FileInfo* file)
 
 bool FileEnforcer::apply_verdict(Flow* flow, FileInfo* file, FileVerdict verdict)
 {
+    if ( verdict == FILE_VERDICT_UNKNOWN )
+        return false;
+
     file->verdict = verdict;
 
     if (verdict == FILE_VERDICT_BLOCK)

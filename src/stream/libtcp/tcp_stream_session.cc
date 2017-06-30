@@ -150,14 +150,10 @@ uint8_t TcpStreamSession::get_reassembly_direction()
     uint8_t dir = SSN_DIR_NONE;
 
     if (server->flush_policy != STREAM_FLPOLICY_IGNORE)
-    {
         dir |= SSN_DIR_FROM_CLIENT;
-    }
 
     if (client->flush_policy != STREAM_FLPOLICY_IGNORE)
-    {
         dir |= SSN_DIR_FROM_SERVER;
-    }
 
     return dir;
 }
