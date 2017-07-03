@@ -2,6 +2,11 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 noinst_LIBRARIES = libpacket_io.a
 
+x_includedir = $(pkgincludedir)/packet_io
+
+x_include_HEADERS = \
+active.h
+
 libpacket_io_a_SOURCES = \
 active.cc \
 active.h \
