@@ -867,7 +867,7 @@ int sfthd_test_local(
 #ifdef THD_DEBUG
     char buf[24];
     printf("THD_DEBUG: Key THD_NODE IP=%s,",
-        printIP((unsigned)sfthd_node->ip_address), buf, sizeof(buf) );
+        printIP((unsigned)sfthd_node->ip_address, buf, sizeof(buf)) );
     printf(" MASK=%s\n", printIP((unsigned)sfthd_node->ip_mask, buf, sizeof(buf)) );
     printf("THD_DEBUG:        PKT  SIP=%s\n", printIP((unsigned)sip, buf, sizeof(buf)) );
     printf("THD_DEBUG:        PKT  DIP=%s\n", printIP((unsigned)dip, buf, sizeof(buf)) );

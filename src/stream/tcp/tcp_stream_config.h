@@ -58,7 +58,6 @@ public:
         return false;
     }
 
-    int verify_config(SnortConfig*);
     void show_config();
     static void show_config(TcpStreamConfig*);
 

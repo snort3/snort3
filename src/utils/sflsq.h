@@ -96,7 +96,6 @@ SF_QUEUE* sfqueue_new();
 void sfqueue_add(SF_QUEUE*, NODE_DATA);
 NODE_DATA sfqueue_remove(SF_QUEUE*);
 int sfqueue_count(SF_QUEUE*);
-void sfqueue_free(SF_QUEUE*);
 void sfqueue_free_all(SF_QUEUE*, void (* free)(void*) );
 
 #endif

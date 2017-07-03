@@ -78,12 +78,8 @@ enum VarType
 int VarIsIpAddr(vartable_t* ip_vartable, const char* value);
 int VarIsIpList(vartable_t* ip_vartable, const char* value);
 void DisallowCrossTableDuplicateVars(SnortConfig*, const char* name, VarType var_type);
-const char* VarGet(SnortConfig*, const char* name);
-/*
- * Same as VarGet - but this does not Fatal out if a var is not found
- */
-const char* VarSearch(SnortConfig*, const char* name);
 
+const char* VarSearch(SnortConfig*, const char* name);
 const char* ExpandVars(SnortConfig*, const char* string);
 
 #endif

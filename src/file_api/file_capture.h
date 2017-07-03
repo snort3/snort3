@@ -74,10 +74,6 @@ public:
     //   nullptr: end of file or fail to get file
     FileCaptureBlock* get_file_data(uint8_t** buff, int* size);
 
-    // Get the file size captured in the file buffer
-    // Returns:  the size of file in bytes
-    uint64_t get_capture_size() const;
-
     // Store files on local disk
     void store_file();
 

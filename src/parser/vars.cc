@@ -680,51 +680,6 @@ const char* VarSearch(SnortConfig* sc, const char* name)
 
 /****************************************************************************
  *
- * Function: VarGet(SnortConfig *, char *)
- *
- * Purpose: get the contents of a variable
- *
- * Arguments: name => the name of the variable
- *
- * Returns: char * to contents of variable or ParseErrors on an
- *          undefined variable name
- *
- ***************************************************************************/
-const char* VarGet(SnortConfig*, const char* name)
-{
-    IpsPolicy* dp = get_ips_policy();
-    VarEntry* var_table = dp->var_table;
-    vartable_t* ip_vartable = dp->ip_vartable;
-    sfip_var_t* var;
-
-// XXX-IPv6 This function should never be used if IP6 support is enabled!
-// In fact it won't presently even work for IP variables since the raw ASCII
-// value is never stored, and is never meant to be used.
-
-    if ((var = sfvt_lookup_var(ip_vartable, name)) == NULL)
-    {
-        /* Do the old style lookup since it wasn't found in
-         * the variable table */
-        if (var_table != NULL)
-        {
-            VarEntry* p = var_table;
-            do
-            {
-                if (strcasecmp(p->name, name) == 0)
-                    return p->value;
-                p = p->next;
-            }
-            while (p != var_table);
-        }
-
-        ParseError("undefined variable name: %s.", name);
-    }
-
-    return name;
-}
-
-/****************************************************************************
- *
  * Function: ExpandVars()
  *
  * Purpose: expand all variables in a string

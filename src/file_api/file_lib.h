@@ -56,7 +56,6 @@ public:
     uint64_t get_file_size() const;
     void set_file_direction(FileDirection dir);
     FileDirection get_file_direction() const;
-    void set_file_sig_sha256(uint8_t* signature);
     uint8_t* get_file_sig_sha256() const;
     std::string sha_to_string(const uint8_t* sha256);
     void set_file_id(size_t index);

@@ -367,8 +367,3 @@ void sflist_free(SF_LIST* s)
     s_free(s);
 }
 
-void sfqueue_free(SF_QUEUE* s)
-{
-    sflist_free (s);
-}
-

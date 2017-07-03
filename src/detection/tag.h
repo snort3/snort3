@@ -58,7 +58,6 @@ void InitTag();
 void CleanupTag();
 int CheckTagList(Packet*, Event&, void**);
 void SetTags(Packet*, const OptTreeNode*, uint16_t);
-void TagCacheReset();
 
-#endif /* TAG_H */
+#endif
 

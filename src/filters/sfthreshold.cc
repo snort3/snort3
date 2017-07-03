@@ -342,16 +342,3 @@ void sfthreshold_reset()
     thd_checked = 0;
 }
 
-/* empty out active entries */
-void sfthreshold_reset_active()
-{
-    if (thd_runtime == NULL)
-        return;
-
-    if (thd_runtime->ip_nodes != NULL)
-        sfxhash_make_empty(thd_runtime->ip_nodes);
-
-    if (thd_runtime->ip_gnodes != NULL)
-        sfxhash_make_empty(thd_runtime->ip_gnodes);
-}
-

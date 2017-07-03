@@ -97,8 +97,8 @@ void TcpSession::restart(Packet* p)
 {
     // sanity check since this is called externally
     assert(p->ptrs.tcph);
+    assert(p->flow == flow);
 
-    assert(!p or p->flow == flow);
     DetectionEngine::onload(flow);
     TcpStreamTracker* talker, * listener;
 

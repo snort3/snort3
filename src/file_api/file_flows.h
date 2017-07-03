@@ -73,7 +73,6 @@ public:
     static unsigned flow_id;
 
 private:
-    void save_to_pending_context();
     void init_file_context(FileDirection, FileContext*);
     FileContext* find_main_file_context(FilePosition, FileDirection, size_t id = 0);
     FileContext* main_context = nullptr;

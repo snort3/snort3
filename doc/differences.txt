@@ -13,7 +13,7 @@ Snort 3 differs from Snort 2 in the following ways:
 Some things Snort++ can do today that Snort can not do:
 
 * regex fast patterns, not just literals
-* FlatBuffers perf monitor logs
+* FlatBuffers and JSON perf monitor logs
 * LuaJIT scriptable rule options and loggers
 * pub/sub inspection events (currently used by sip and http to appid)
 * JIT buffer stuffers (notably with new http_inspect)

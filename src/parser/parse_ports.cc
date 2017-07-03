@@ -102,60 +102,6 @@ static int POPPeekChar(POParser* pop)
     return 0;
 }
 
-#ifdef XXXX
-/* copy a simple alpha string */
-static void POPeekString(POParser* p, char* s, int smax)
-{
-    int c;
-    int cnt = 0;
-    int k = p->slen;
-
-    smax--;
-
-    s[0] = 0;
-
-    while ( k > 0  && cnt < smax )
-    {
-        c = p->s[ cnt ];
-
-        if ( c ==  0     )
-            break;
-        if ( !isalpha(c) )
-            break;
-
-        s[ cnt++ ] = c;
-        s[ cnt   ] = 0;
-        k--;
-    }
-}
-
-static void POGetString(POParser* p, char* s, int smax)
-{
-    int c;
-    int cnt = 0;
-
-    smax--;
-
-    s[0] = 0;
-
-    while ( p->slen > 0  && cnt < smax )
-    {
-        c = p->s[ 0 ];
-
-        if ( c ==  0     )
-            break;
-        if ( !isalpha(c) )
-            break;
-
-        s[ cnt++ ] = c;
-        s[ cnt   ] = 0;
-        p->slen--;
-        p->s++;
-    }
-}
-
-#endif
-
 /*
    Skip whitespace : ' ', '\t', '\n'
 */

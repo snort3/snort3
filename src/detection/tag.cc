@@ -243,14 +243,6 @@ static int TagFreeHostNodeFunc(void*, void* data)
     return 0;
 }
 
-/**Reset all data structures and free all memory.
- */
-void TagCacheReset()
-{
-    sfxhash_make_empty(ssn_tag_cache_ptr);
-    sfxhash_make_empty(host_tag_cache_ptr);
-}
-
 /**
  * swap the sips and dips, dp's and sp's
  *

@@ -137,11 +137,6 @@ FileDirection FileInfo::get_file_direction() const
     return direction;
 }
 
-void FileInfo::set_file_sig_sha256(uint8_t* signature)
-{
-    sha256 = signature;
-}
-
 uint8_t* FileInfo::get_file_sig_sha256() const
 {
     return (sha256);

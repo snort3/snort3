@@ -77,12 +77,3 @@ void TcpStreamConfig::show_config(TcpStreamConfig* config)
         LogMessage("    Require 3-Way Handshake: after %d seconds\n", config->hs_timeout);
 }
 
-//-------------------------------------------------------------------------
-// attribute table foo
-//-------------------------------------------------------------------------
-
-int TcpStreamConfig::verify_config(SnortConfig*)
-{
-    return 0;
-}
-

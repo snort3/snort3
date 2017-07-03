@@ -46,7 +46,6 @@ void do_detection(Packet*);
 
 void CleanupFTPServerConf(void* serverConf);
 void CleanupFTPCMDConf(void* ftpCmd);
-void CleanupFTPClientConf(void* clientConf);
 void CleanupFTPBounceTo(void* ftpBounce);
 
 int CheckFTPServerConfigs(SnortConfig*, FTP_SERVER_PROTO_CONF*);

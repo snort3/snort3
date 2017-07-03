@@ -164,7 +164,6 @@ public:
 
     static void set_splitter(Flow*, bool toServer, class StreamSplitter* = nullptr);
     static StreamSplitter* get_splitter(Flow*, bool toServer);
-    static bool is_paf_active(Flow*, bool toServer);
 
     // Turn off inspection for potential session. Adds session identifiers to a hash table.
     // TCP only.

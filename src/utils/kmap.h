@@ -84,8 +84,5 @@ SO_PUBLIC void* KMapFind(KMAP* km, void* key, int ksize);
 SO_PUBLIC void* KMapFindFirst(KMAP* km);
 SO_PUBLIC void* KMapFindNext(KMAP* km);
 
-SO_PUBLIC KEYNODE* KMapFindFirstKey(KMAP* km);
-SO_PUBLIC KEYNODE* KMapFindNextKey(KMAP* km);
-
 #endif
 

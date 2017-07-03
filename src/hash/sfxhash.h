@@ -90,7 +90,6 @@ struct SFXHASH
     SFXHASH_FREE_FCN usrfree;
 };
 
-SO_PUBLIC int sfxhash_calcrows(int num);
 SO_PUBLIC SFXHASH* sfxhash_new(int nrows, int keysize, int datasize, unsigned long memcap,
     int anr_flag,
     SFXHASH_FREE_FCN anrfunc,
@@ -136,8 +135,6 @@ inline unsigned sfxhash_overhead_blocks(SFXHASH* t)
 
 SO_PUBLIC void* sfxhash_mru(SFXHASH* t);
 SO_PUBLIC void* sfxhash_lru(SFXHASH* t);
-SO_PUBLIC SFXHASH_NODE* sfxhash_mru_node(SFXHASH* t);
-SO_PUBLIC SFXHASH_NODE* sfxhash_lru_node(SFXHASH* t);
 SO_PUBLIC void* sfxhash_find(SFXHASH* h, void* key);
 SO_PUBLIC SFXHASH_NODE* sfxhash_find_node(SFXHASH* t, const void* key);
 
@@ -145,16 +142,9 @@ SO_PUBLIC SFXHASH_NODE* sfxhash_findfirst(SFXHASH* h);
 SO_PUBLIC SFXHASH_NODE* sfxhash_findnext(SFXHASH* h);
 
 SO_PUBLIC SFXHASH_NODE* sfxhash_ghead(SFXHASH* h);
-SO_PUBLIC SFXHASH_NODE* sfxhash_gnext(SFXHASH_NODE* n);
 SO_PUBLIC void sfxhash_gmovetofront(SFXHASH* t, SFXHASH_NODE* hnode);
 
-SO_PUBLIC void sfxhash_splaymode(SFXHASH* h, int mode);
-
-SO_PUBLIC void* sfxhash_alloc(SFXHASH* t, unsigned nbytes);
-SO_PUBLIC void sfxhash_free(SFXHASH* t, void* p);
 SO_PUBLIC int sfxhash_free_node(SFXHASH* t, SFXHASH_NODE* node);
-
-SO_PUBLIC unsigned sfxhash_maxdepth(SFXHASH* t);
 
 SO_PUBLIC int sfxhash_set_keyops(SFXHASH* h,
     unsigned (* hash_fcn)(SFHASHFCN* p, unsigned char* d, int n),
@@ -162,7 +152,6 @@ SO_PUBLIC int sfxhash_set_keyops(SFXHASH* h,
 
 SO_PUBLIC SFXHASH_NODE* sfxhash_gfindfirst(SFXHASH* t);
 SO_PUBLIC SFXHASH_NODE* sfxhash_gfindnext(SFXHASH* t);
-SO_PUBLIC int sfxhash_add_return_data_ptr(SFXHASH* t, const void* key, void** data);
 
 #endif
 

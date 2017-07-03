@@ -92,16 +92,6 @@ void CleanupFTPBounceTo(void* ftpBounce)
     snort_free(FTPBounce);
 }
 
-void CleanupFTPClientConf(void* clientConf)
-{
-    FTP_CLIENT_PROTO_CONF* ClientConf = (FTP_CLIENT_PROTO_CONF*)clientConf;
-    if (ClientConf == NULL)
-        return;
-
-    /* Iterate through each bounce_lookup for this client */
-    ftp_bounce_lookup_cleanup(&ClientConf->bounce_lookup);
-}
-
 /*
  * Function: CheckFTPCmdOptions(FTP_SERVER_PROTO_CONF *serverConf)
  *

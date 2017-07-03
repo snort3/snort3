@@ -444,8 +444,6 @@ static const JSNorm javascript_norm[] =
 
 static void UnescapeDecode(char*, uint16_t, char**, char**, uint16_t*, JSState*, uint8_t*);
 
-void InitJSNormLookupTable() {}
-
 static inline int outBounds(const char* start, const char* end, char* ptr)
 {
     if ((ptr >= start) && (ptr < end))
@@ -1319,7 +1317,6 @@ int main(int argc, char *argv[])
     js.allowed_levels = 1;
     js.alerts = 0;
 
-    InitJSNormLookupTable();
     ret = JSNormalizeDecode(input, bytes_read, output, sizeof(output),&ptr, &bytes_copied, &js, NULL);
     if( ret == RET_OK)
     {

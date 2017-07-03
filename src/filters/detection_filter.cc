@@ -66,15 +66,6 @@ int detection_filter_test(
         sip, dip, curtime);
 }
 
-/* empty out active entries */
-void detection_filter_reset_active()
-{
-    if (detection_filter_hash == NULL)
-        return;
-
-    sfxhash_make_empty(detection_filter_hash);
-}
-
 THD_NODE* detection_filter_create(DetectionFilterConfig* df_config, THDX_STRUCT* thdx)
 {
     if (df_config == NULL)

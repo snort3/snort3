@@ -95,7 +95,6 @@ private:
     void* calloc_mem(size_t size);
     void set_node_state_shared(IdentifierNode* start);
     IdentifierNode* clone_node(IdentifierNode* start);
-    void verify_magic_offset(FileMagicData* parent, FileMagicData* current);
     bool update_next(IdentifierNode* start, IdentifierNode** next_ptr, IdentifierNode* append);
     IdentifierNode* create_trie_from_magic(FileMagicRule& rule, uint32_t type_id);
     void update_trie(IdentifierNode* start, IdentifierNode* append);

@@ -114,19 +114,6 @@ static inline void s_free(SFXHASH* t, void* p)
     sfmemcap_free(&t->mc, p);
 }
 
-/*
- *   User access to the memory management, do they need it ? WaitAndSee
- */
-void* sfxhash_alloc(SFXHASH* t, unsigned nbytes)
-{
-    return s_alloc(t, nbytes);
-}
-
-void sfxhash_free(SFXHASH* t, void* p)
-{
-    s_free(t, p);
-}
-
 static int sfxhash_nearest_powerof2(int nrows)
 {
     nrows -= 1;
@@ -135,12 +122,6 @@ static int sfxhash_nearest_powerof2(int nrows)
     nrows += 1;
 
     return nrows;
-}
-
-int sfxhash_calcrows(int num)
-{
-    return sfxhash_nearest_powerof2(num);
-//  return sf_nearest_prime( nrows );
 }
 
 /*
@@ -247,18 +228,6 @@ void sfxhash_set_max_nodes(SFXHASH* h, int max_nodes)
     {
         h->max_nodes = max_nodes;
     }
-}
-
-/*!
- *  Set Splay mode : Splays nodes to front of list on each access
- *
- * t SFXHASH table pointer
- * n boolean flag toggles splaying of hash nodes
- *
- */
-void sfxhash_splaymode(SFXHASH* t, int n)
-{
-    t->splay = n;
 }
 
 /*!
@@ -844,23 +813,6 @@ SFXHASH_NODE* sfxhash_ghead(SFXHASH* t)
  *
  * return the next node in the list or nullptr when at the end
  */
-SFXHASH_NODE* sfxhash_gnext(SFXHASH_NODE* n)
-{
-    if (n)
-    {
-        return n->gnext;
-    }
-
-    return nullptr;
-}
-
-/**
- * Walk the global list
- *
- * n current node
- *
- * return the next node in the list or nullptr when at the end
- */
 SFXHASH_NODE* sfxhash_gfindnext(SFXHASH* t)
 {
     SFXHASH_NODE* n = t->gnode;
@@ -923,74 +875,6 @@ void* sfxhash_lru(SFXHASH* t)
         return hnode->data;
 
     return nullptr;
-}
-
-/*!
- * Return the most recently used node from the global list
- *
- * t SFXHASH table pointer
- *
- * return SFXHASH_NODE*   valid pointer to a node
- * retval 0       node not found
- *
- */
-SFXHASH_NODE* sfxhash_mru_node(SFXHASH* t)
-{
-    SFXHASH_NODE* hnode = sfxhash_ghead(t);
-    if ( hnode )
-        return hnode;
-
-    return nullptr;
-}
-
-/*!
- * Return the least recently used node from the global list
- *
- * t SFXHASH table pointer
- *
- * return SFXHASH_NODE*   valid pointer to a node
- * retval 0       node not found
- *
- */
-SFXHASH_NODE* sfxhash_lru_node(SFXHASH* t)
-{
-    SFXHASH_NODE* hnode = t->gtail;
-    if ( hnode )
-        return hnode;
-
-    return nullptr;
-}
-
-/*!
- * Get some hash table statistics. NOT FOR REAL TIME USE.
- *
- *
- * t SFXHASH table pointer
- * param filled how many
- *
- * return max depth of the table
- *
- */
-unsigned sfxhash_maxdepth(SFXHASH* t)
-{
-    unsigned max_depth = 0;
-
-    SFXHASH_NODE* hnode;
-
-    for ( unsigned i = 0; i < t->nrows; i++ )
-    {
-        unsigned cur_depth = 0;
-
-        for (hnode = t->table[i]; hnode != nullptr; hnode = hnode->next)
-        {
-            cur_depth++;
-        }
-
-        if (cur_depth > max_depth)
-            max_depth = cur_depth;
-    }
-
-    return max_depth;
 }
 
 /*
@@ -1150,16 +1034,6 @@ int sfxhash_set_keyops(SFXHASH* h,
     }
 
     return -1;
-}
-
-int sfxhash_add_return_data_ptr(SFXHASH* t, const void* key, void** data)
-{
-    if ( !t->datasize )
-        return SFXHASH_ERR;
-
-    *data = nullptr;
-
-    return sfxhash_add_ex(t, key, nullptr, data);
 }
 
 /*

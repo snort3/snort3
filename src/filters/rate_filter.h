@@ -39,7 +39,6 @@ int RateFilter_Create(SnortConfig* sc, RateFilterConfig*, tSFRFConfigNode*);
 void RateFilter_PrintConfig(RateFilterConfig*);
 
 int RateFilter_Test(const OptTreeNode*, Packet*);
-void RateFilter_ResetActive();
 
 #endif
 

@@ -56,13 +56,6 @@ FileFlows* FileFlows::get_file_flows(Flow* flow)
     return fd;
 }
 
-void FileFlows::save_to_pending_context()
-{
-    if (pending_context != main_context)
-        delete(pending_context);
-    pending_context = main_context;
-}
-
 void FileFlows::set_current_file_context(FileContext* ctx)
 {
     current_context = ctx;

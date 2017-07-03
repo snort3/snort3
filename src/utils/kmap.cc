@@ -387,21 +387,6 @@ void* KMapFind(KMAP* ks, void* key, int n)
 /*
 *
 */
-KEYNODE* KMapFindFirstKey(KMAP* km)
-{
-    km->keynext = km->keylist;
-
-    if (!km->keynext)
-    {
-        return NULL;
-    }
-
-    return km->keynext;
-}
-
-/*
-*
-*/
 void* KMapFindFirst(KMAP* km)
 {
     km->keynext = km->keylist;
@@ -412,22 +397,6 @@ void* KMapFindFirst(KMAP* km)
     }
 
     return km->keynext->userdata;
-}
-
-/*
-*
-*/
-KEYNODE* KMapFindNextKey(KMAP* km)
-{
-    if ( !km->keynext )
-        return 0;
-
-    km->keynext = km->keynext->next;
-
-    if ( !km->keynext )
-        return 0;
-
-    return km->keynext;
 }
 
 /*

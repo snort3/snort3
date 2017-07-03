@@ -45,7 +45,6 @@ void detection_filter_init(DetectionFilterConfig*);
 void detection_filter_term();
 
 void detection_filter_print_config(DetectionFilterConfig*);
-void detection_filter_reset_active();
 
 int detection_filter_test(void*, const SfIp* sip, const SfIp* dip, long curtime);
 struct THD_NODE* detection_filter_create(DetectionFilterConfig*, struct THDX_STRUCT*);

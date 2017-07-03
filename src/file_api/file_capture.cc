@@ -434,12 +434,6 @@ FileCaptureBlock* FileCapture::get_file_data(uint8_t** buff, int* size)
     return (current_block);
 }
 
-// Get the file size captured in the file buffer
-uint64_t FileCapture::get_capture_size() const
-{
-    return capture_size;
-}
-
 /*
  * writing file data to the disk.
  *

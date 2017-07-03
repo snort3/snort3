@@ -37,7 +37,6 @@ void sfthreshold_reset();
 int sfthreshold_create(struct SnortConfig*, ThresholdConfig*, THDX_STRUCT*);
 int sfthreshold_test(unsigned int, unsigned int, const SfIp*, const SfIp*, long curtime);
 void print_thresholding(ThresholdConfig*, unsigned shutdown);
-void sfthreshold_reset_active();
 void sfthreshold_free();
 
 #endif

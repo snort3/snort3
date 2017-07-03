@@ -149,12 +149,6 @@ int RateFilter_Test(
         p->pkth->ts.tv_sec, SFRF_COUNT_INCREMENT);
 }
 
-/* empty out active entries */
-void RateFilter_ResetActive()
-{
-    SFRF_Flush();
-}
-
 void RateFilter_PrintConfig(RateFilterConfig*)
 {
     // FIXIT-L print from module

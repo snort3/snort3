@@ -48,25 +48,6 @@ void sfmemcap_init(MEMCAP* mc, unsigned long nbytes)
 }
 
 /*
-*   Create and Init a MEMCAP -  use free to release it
-*/
-MEMCAP* sfmemcap_new(unsigned nbytes)
-{
-    MEMCAP* mc = (MEMCAP*)snort_calloc(sizeof(MEMCAP));
-    sfmemcap_init(mc, nbytes);
-    return mc;
-}
-
-/*
-*  Release the memcap structure
-*/
-void sfmemcap_delete(MEMCAP* p)
-{
-    if (p)
-        snort_free(p);
-}
-
-/*
 *  Allocate some memory
 */
 void* sfmemcap_alloc(MEMCAP* mc, unsigned long nbytes)
@@ -121,39 +102,5 @@ void sfmemcap_showmem(MEMCAP* mc)
     fprintf(stderr, "memcap: memcap = %lu bytes,",mc->memcap);
     fprintf(stderr, " memused= %lu bytes,",mc->memused);
     fprintf(stderr, " nblocks= %d blocks\n",mc->nblocks);
-}
-
-/*
-*  String Dup Some memory.
-*/
-char* sfmemcap_SnortStrdup(MEMCAP* mc, const char* str)
-{
-    int data_size = strlen(str) + 1;
-    char* data = (char*)sfmemcap_alloc(mc, data_size);
-
-    if (data == NULL)
-    {
-        return 0;
-    }
-
-    SnortStrncpy(data, str, data_size);
-
-    return data;
-}
-
-/*
-*  Dup Some memory.
-*/
-void* sfmemcap_dupmem(MEMCAP* mc, void* src, unsigned long n)
-{
-    void* data = (char*)sfmemcap_alloc(mc, n);
-    if (data == NULL)
-    {
-        return 0;
-    }
-
-    memcpy(data, src, n);
-
-    return data;
 }
 

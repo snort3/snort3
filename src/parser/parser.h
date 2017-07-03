@@ -42,7 +42,6 @@ void ParseRules(SnortConfig*);
 void OrderRuleLists(SnortConfig*, const char*);
 void PrintRuleOrder(RuleListNode*);
 
-const char* VarGet(SnortConfig*, const char*);
 char* ProcessFileOption(SnortConfig*, const char*);
 void SetRuleStates(SnortConfig*);
 

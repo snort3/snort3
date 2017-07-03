@@ -138,16 +138,6 @@ IdentifierNode* FileIdentifier::clone_node(IdentifierNode* start)
     return node;
 }
 
-void FileIdentifier::verify_magic_offset(FileMagicData* parent, FileMagicData* current)
-{
-    if ((parent) && (parent->content.size() + parent->offset > current->offset))
-    {
-        ParseError("magic content at offset %u overlaps with offset %u.",
-            parent->offset, current->offset);
-        return;
-    }
-}
-
 IdentifierNode* FileIdentifier::create_trie_from_magic(FileMagicRule& rule, uint32_t type_id)
 {
     IdentifierNode* current;

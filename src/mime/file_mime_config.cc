@@ -39,16 +39,6 @@ bool DecodeConfig::is_ignore_data()
     return ignore_data;
 }
 
-void DecodeConfig::set_max_mime_mem(int max)
-{
-    max_mime_mem = max;
-}
-
-int DecodeConfig::get_max_mime_mem()
-{
-    return max_mime_mem;
-}
-
 void DecodeConfig::set_b64_depth(int depth)
 {
     b64_depth = depth;

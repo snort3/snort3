@@ -29,38 +29,6 @@
 
 #include "hash/sfhashfcn.h"
 
-/********************************************************************
- * Function: SIP_IsEmptyStr()
- *
- * Checks if string is NULL, empty or just spaces.
- * String must be 0 terminated.
- *
- * Arguments:
- *  char * - string to check
- *
- * Returns:
- *  1  if string is NULL, empty or just spaces
- *  0  otherwise
- *
- ********************************************************************/
-int SIP_IsEmptyStr(char* str)
-{
-    char* end;
-
-    if (str == NULL)
-        return 1;
-
-    end = str + strlen(str);
-
-    while ((str < end) && isspace((int)*str))
-        str++;
-
-    if (str == end)
-        return 1;
-
-    return 0;
-}
-
 /*
  * Trim spaces non-destructively on both sides of string : '', \t, \n, \r
  * If string is empty return 0, otherwise 1

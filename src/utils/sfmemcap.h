@@ -31,13 +31,9 @@ struct MEMCAP
 
 // FIXIT-L could be refactored as a class but should be deleted
 void sfmemcap_init(MEMCAP* mc, unsigned long nbytes);
-MEMCAP* sfmemcap_new(unsigned nbytes);
-void sfmemcap_delete(MEMCAP* mc);
 void* sfmemcap_alloc(MEMCAP* mc, unsigned long nbytes);
 void sfmemcap_showmem(MEMCAP* mc);
 void sfmemcap_free(MEMCAP* mc, void* memory);
-char* sfmemcap_SnortStrdup(MEMCAP* mc, const char* str);
-void* sfmemcap_dupmem(MEMCAP* mc, void* src, unsigned long n);
 
 #endif
 
