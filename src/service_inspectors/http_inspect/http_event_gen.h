@@ -40,6 +40,8 @@ public:
 
     virtual void create_event(int sid)
     {
+        if (sid == HttpEnums::EVENT__NONE)
+            return;
         assert((sid > 0) && (sid <= MAX));
         if (!events_generated[sid-1])
         {

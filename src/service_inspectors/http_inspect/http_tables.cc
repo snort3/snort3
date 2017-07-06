@@ -134,6 +134,7 @@ const StrCode HttpMsgHeadShared::header_list[] =
     { HEAD_TRUE_CLIENT_IP,            "true-client-ip" },
     { HEAD_X_WORKING_WITH,            "x-working-with" },
     { HEAD_CONTENT_TRANSFER_ENCODING, "content-transfer-encoding" },
+    { HEAD_MIME_VERSION,              "mime-version" },
     { 0,                              nullptr }
 };
 
@@ -169,22 +170,39 @@ const StrCode HttpMsgHeadShared::charset_code_opt_list[] =
 };
 
 const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_BASIC
-    { false, nullptr, nullptr, nullptr };
+    { EVENT__NONE, INF__NONE, nullptr, nullptr, nullptr };
+
+const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_NO_REPEAT
+    { EVENT_REPEATED_HEADER, INF_REPEATED_HEADER, nullptr, nullptr, nullptr };
+
+const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_CASE_INSENSITIVE
+    { EVENT__NONE, INF__NONE, norm_to_lower, nullptr, nullptr };
 
 const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_NUMBER
-    { false, norm_remove_lws, nullptr, nullptr };
+    { EVENT_REPEATED_HEADER, INF_REPEATED_HEADER, norm_remove_lws, nullptr, nullptr };
 
 const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_TOKEN_LIST
-    { true, norm_remove_lws, norm_to_lower, nullptr };
+    { EVENT__NONE, INF__NONE, norm_remove_lws, norm_to_lower, nullptr };
+
+const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_METHOD_LIST
+    { EVENT__NONE, INF__NONE, norm_remove_lws, nullptr, nullptr };
+
+// FIXIT-L implement a date normalization function that converts the three legal formats into a
+// single standard format. For now we do nothing special for dates. This object is a placeholder
+// to keep track of which headers have date values.
+const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_DATE
+    { EVENT__NONE, INF__NONE, nullptr, nullptr, nullptr };
+
+// FIXIT-M implement a URI normalization function, probably by extending existing URI capabilities
+// to cover relative formats
+const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_URI
+    { EVENT__NONE, INF__NONE, nullptr, nullptr, nullptr };
+
+const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_CONTENT_LENGTH
+    { EVENT_MULTIPLE_CONTLEN, INF_MULTIPLE_CONTLEN, norm_remove_lws, nullptr, nullptr };
 
 const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_CHARSET
-    { true, norm_remove_quotes_lws, norm_to_lower, nullptr };
-
-const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_CAT
-    { true, norm_remove_lws, nullptr, nullptr };
-
-const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_COOKIE
-    { true, nullptr, nullptr, nullptr };
+    { EVENT__NONE, INF__NONE, norm_remove_quotes_lws, norm_to_lower, nullptr };
 
 #if defined(__clang__)
 // Designated initializers are not supported in C++11. However we're going to play compilation
@@ -197,59 +215,60 @@ const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_COOKIE
 const HeaderNormalizer* const HttpMsgHeadShared::header_norms[HEAD__MAX_VALUE] = {
     [0] = &NORMALIZER_BASIC,
     [HEAD__OTHER] = &NORMALIZER_BASIC,
-    [HEAD_CACHE_CONTROL] = &NORMALIZER_BASIC,
-    [HEAD_CONNECTION] = &NORMALIZER_BASIC,
-    [HEAD_DATE] = &NORMALIZER_BASIC,
-    [HEAD_PRAGMA] = &NORMALIZER_BASIC,
-    [HEAD_TRAILER] = &NORMALIZER_BASIC,
-    [HEAD_COOKIE] = &NORMALIZER_COOKIE,
-    [HEAD_SET_COOKIE] = &NORMALIZER_COOKIE,
+    [HEAD_CACHE_CONTROL] = &NORMALIZER_TOKEN_LIST,
+    [HEAD_CONNECTION] = &NORMALIZER_TOKEN_LIST,
+    [HEAD_DATE] = &NORMALIZER_DATE,
+    [HEAD_PRAGMA] = &NORMALIZER_TOKEN_LIST,
+    [HEAD_TRAILER] = &NORMALIZER_TOKEN_LIST,
+    [HEAD_COOKIE] = &NORMALIZER_BASIC,
+    [HEAD_SET_COOKIE] = &NORMALIZER_BASIC,
     [HEAD_TRANSFER_ENCODING] = &NORMALIZER_TOKEN_LIST,
     [HEAD_UPGRADE] = &NORMALIZER_BASIC,
     [HEAD_VIA] = &NORMALIZER_BASIC,
     [HEAD_WARNING] = &NORMALIZER_BASIC,
-    [HEAD_ACCEPT] = &NORMALIZER_BASIC,
-    [HEAD_ACCEPT_CHARSET] = &NORMALIZER_BASIC,
-    [HEAD_ACCEPT_ENCODING] = &NORMALIZER_CAT,
-    [HEAD_ACCEPT_LANGUAGE] = &NORMALIZER_CAT,
+    [HEAD_ACCEPT] = &NORMALIZER_TOKEN_LIST,
+    [HEAD_ACCEPT_CHARSET] = &NORMALIZER_TOKEN_LIST,
+    [HEAD_ACCEPT_ENCODING] = &NORMALIZER_TOKEN_LIST,
+    [HEAD_ACCEPT_LANGUAGE] = &NORMALIZER_TOKEN_LIST,
     [HEAD_AUTHORIZATION] = &NORMALIZER_BASIC,
-    [HEAD_EXPECT] = &NORMALIZER_BASIC,
+    [HEAD_EXPECT] = &NORMALIZER_CASE_INSENSITIVE,
     [HEAD_FROM] = &NORMALIZER_BASIC,
-    [HEAD_HOST] = &NORMALIZER_BASIC,
+    [HEAD_HOST] = &NORMALIZER_NO_REPEAT,
     [HEAD_IF_MATCH] = &NORMALIZER_BASIC,
-    [HEAD_IF_MODIFIED_SINCE] = &NORMALIZER_BASIC,
+    [HEAD_IF_MODIFIED_SINCE] = &NORMALIZER_DATE,
     [HEAD_IF_NONE_MATCH] = &NORMALIZER_BASIC,
     [HEAD_IF_RANGE] = &NORMALIZER_BASIC,
-    [HEAD_IF_UNMODIFIED_SINCE] = &NORMALIZER_BASIC,
+    [HEAD_IF_UNMODIFIED_SINCE] = &NORMALIZER_DATE,
     [HEAD_MAX_FORWARDS] = &NORMALIZER_BASIC,
     [HEAD_PROXY_AUTHORIZATION] = &NORMALIZER_BASIC,
     [HEAD_RANGE] = &NORMALIZER_BASIC,
-    [HEAD_REFERER] = &NORMALIZER_BASIC,
-    [HEAD_TE] = &NORMALIZER_BASIC,
+    [HEAD_REFERER] = &NORMALIZER_URI,
+    [HEAD_TE] = &NORMALIZER_TOKEN_LIST,
     [HEAD_USER_AGENT] = &NORMALIZER_BASIC,
-    [HEAD_ACCEPT_RANGES] = &NORMALIZER_BASIC,
-    [HEAD_AGE] = &NORMALIZER_BASIC,
+    [HEAD_ACCEPT_RANGES] = &NORMALIZER_TOKEN_LIST,
+    [HEAD_AGE] = &NORMALIZER_NUMBER,
     [HEAD_ETAG] = &NORMALIZER_BASIC,
-    [HEAD_LOCATION] = &NORMALIZER_BASIC,
+    [HEAD_LOCATION] = &NORMALIZER_URI,
     [HEAD_PROXY_AUTHENTICATE] = &NORMALIZER_BASIC,
-    [HEAD_RETRY_AFTER] = &NORMALIZER_BASIC,
+    [HEAD_RETRY_AFTER] = &NORMALIZER_BASIC,  // may be date or number
     [HEAD_SERVER] = &NORMALIZER_BASIC,
-    [HEAD_VARY] = &NORMALIZER_BASIC,
+    [HEAD_VARY] = &NORMALIZER_TOKEN_LIST,
     [HEAD_WWW_AUTHENTICATE] = &NORMALIZER_BASIC,
-    [HEAD_ALLOW] = &NORMALIZER_BASIC,
+    [HEAD_ALLOW] = &NORMALIZER_METHOD_LIST,
     [HEAD_CONTENT_ENCODING] = &NORMALIZER_TOKEN_LIST,
-    [HEAD_CONTENT_LANGUAGE] = &NORMALIZER_BASIC,
-    [HEAD_CONTENT_LENGTH] = &NORMALIZER_NUMBER,
-    [HEAD_CONTENT_LOCATION] = &NORMALIZER_BASIC,
+    [HEAD_CONTENT_LANGUAGE] = &NORMALIZER_TOKEN_LIST,
+    [HEAD_CONTENT_LENGTH] = &NORMALIZER_CONTENT_LENGTH,
+    [HEAD_CONTENT_LOCATION] = &NORMALIZER_URI,
     [HEAD_CONTENT_MD5] = &NORMALIZER_BASIC,
     [HEAD_CONTENT_RANGE] = &NORMALIZER_BASIC,
     [HEAD_CONTENT_TYPE] = &NORMALIZER_CHARSET,
-    [HEAD_EXPIRES] = &NORMALIZER_BASIC,
-    [HEAD_LAST_MODIFIED] = &NORMALIZER_BASIC,
-    [HEAD_X_FORWARDED_FOR] = &NORMALIZER_CAT,
+    [HEAD_EXPIRES] = &NORMALIZER_DATE,
+    [HEAD_LAST_MODIFIED] = &NORMALIZER_DATE,
+    [HEAD_X_FORWARDED_FOR] = &NORMALIZER_BASIC,
     [HEAD_TRUE_CLIENT_IP] = &NORMALIZER_BASIC,
     [HEAD_X_WORKING_WITH] = &NORMALIZER_BASIC,
-    [HEAD_CONTENT_TRANSFER_ENCODING] = &NORMALIZER_CAT,
+    [HEAD_CONTENT_TRANSFER_ENCODING] = &NORMALIZER_TOKEN_LIST,
+    [HEAD_MIME_VERSION] = &NORMALIZER_BASIC,
 };
 /* *INDENT-ON* */
 
@@ -353,6 +372,8 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_CHUNKED_ONE_POINT_ZERO,     "HTTP 1.0 message with Transfer-Encoding header" },
     { EVENT_CTE_HEADER,                 "Content-Transfer-Encoding used as HTTP header" },
     { EVENT_ILLEGAL_TRAILER,            "illegal field in chunked message trailers" },
+    { EVENT_REPEATED_HEADER,            "header field inappropriately appears twice or has two "
+                                        "values" },
     { 0, nullptr }
 };
 

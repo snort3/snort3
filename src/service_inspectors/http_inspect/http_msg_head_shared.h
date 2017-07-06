@@ -72,11 +72,15 @@ private:
     // Header normalization strategies. There should be one defined for every different way we can
     // process a header field value.
     static const HeaderNormalizer NORMALIZER_BASIC;
+    static const HeaderNormalizer NORMALIZER_NO_REPEAT;
+    static const HeaderNormalizer NORMALIZER_CASE_INSENSITIVE;
     static const HeaderNormalizer NORMALIZER_NUMBER;
     static const HeaderNormalizer NORMALIZER_TOKEN_LIST;
+    static const HeaderNormalizer NORMALIZER_METHOD_LIST;
+    static const HeaderNormalizer NORMALIZER_DATE;
+    static const HeaderNormalizer NORMALIZER_URI;
+    static const HeaderNormalizer NORMALIZER_CONTENT_LENGTH;
     static const HeaderNormalizer NORMALIZER_CHARSET;
-    static const HeaderNormalizer NORMALIZER_CAT;
-    static const HeaderNormalizer NORMALIZER_COOKIE;
 
     // Master table of known header fields and their normalization strategies.
     static const HeaderNormalizer* const header_norms[];

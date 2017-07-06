@@ -57,11 +57,6 @@ void HttpMsgHeader::publish()
 
 void HttpMsgHeader::gen_events()
 {
-    if (get_header_count(HEAD_CONTENT_LENGTH) > 1)
-    {
-        add_infraction(INF_MULTIPLE_CONTLEN);
-        create_event(EVENT_MULTIPLE_CONTLEN);
-    }
     if ((get_header_count(HEAD_CONTENT_LENGTH) > 0) &&
         (get_header_count(HEAD_TRANSFER_ENCODING) > 0))
     {
@@ -165,6 +160,7 @@ void HttpMsgHeader::update_flow()
     // else because Transfer-Encoding header negates Content-Length header even if something was
     // wrong with Transfer-Encoding header. However a Transfer-Encoding header in a 1.0 message
     // does not negate the Content-Length header.
+    // FIXIT-L the following can be zero, need an alert for empty CL header value
     else if (get_header_value_norm(HEAD_CONTENT_LENGTH).length() > 0)
     {
         const int64_t content_length =

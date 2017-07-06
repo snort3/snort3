@@ -171,9 +171,9 @@ void HttpMsgHeadShared::parse_header_lines()
     header_value = new Field[num_headers];
     header_name_id = new HeaderId[num_headers];
 
-    int colon;
     for (int k=0; k < num_headers; k++)
     {
+        int colon;
         for (colon=0; colon < header_line[k].length(); colon++)
         {
             if (header_line[k].start()[colon] == ':')

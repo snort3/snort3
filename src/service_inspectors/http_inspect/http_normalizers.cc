@@ -69,14 +69,16 @@ int32_t norm_remove_quotes_lws(const uint8_t* in_buf, int32_t in_length, uint8_t
 }
 
 // Other header-value processing functions (not using the standard normalization signature)
-// Convert a decimal field such as Content-Length to an integer.
+// Convert a decimal field such as Content-Length to an integer. If multiple comma-separated
+// values use the first one.
 int64_t norm_decimal_integer(const Field& input)
 {
     assert(input.length() > 0);
     // Limited to 18 decimal digits, not including leading zeros, to fit comfortably into int64_t
     int64_t total = 0;
     int non_leading_zeros = 0;
-    for (int32_t k=0; k < input.length(); k++)
+    int32_t k=0;
+    do
     {
         int value = input.start()[k] - '0';
         if ((non_leading_zeros > 0) || (value != 0))
@@ -87,6 +89,7 @@ int64_t norm_decimal_integer(const Field& input)
             return STAT_PROBLEMATIC;
         total = total*10 + value;
     }
+    while ((++k < input.length()) && (input.start()[k] != ','));
     return total;
 }
 

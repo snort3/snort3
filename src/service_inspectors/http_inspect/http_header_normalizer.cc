@@ -66,10 +66,13 @@ void HeaderNormalizer::normalize(const HeaderId head_id, const int count,
 
     assert(count > 0);
 
-    // Search Header IDs from all the headers in this message. concatenate_repeats means the header
-    // can properly be present more than once. The standard normalization is to concatenate all the
-    // repeated field values into a comma-separated list. Otherwise only the first value will be
-    // normalized and the rest will be ignored.
+    // Search Header IDs from all the headers in this message. All repeated field values are
+    // concatenated into a comma-separated list.
+    // FIXIT-L Set-Cookie is a special case in the RFC because multiple Set-Cookie headers are
+    // widely used but comma-concatenation of cookies is incorrect. That would be a concern for us
+    // if we actually used the cookies. But since we just want a single value to show to the
+    // pattern matcher, concatenating is probably fine. In the future we may wish to revisit this
+    // issue. Specifically, semicolon-concatenation may be better.
     int num_matches = 0;
     int32_t buffer_length = 0;
 
@@ -82,12 +85,11 @@ void HeaderNormalizer::normalize(const HeaderId head_id, const int count,
             if (++num_matches == 1)
                 curr_match = k;   // remembering location of the first matching header
             buffer_length += header_value[k].length();
-            if (!concatenate_repeats || (num_matches >= count))
+            if (num_matches >= count)
                 break;
         }
     }
-    assert((!concatenate_repeats && (num_matches == 1)) ||
-            (concatenate_repeats && (num_matches == count)));
+    assert(num_matches == count);
     buffer_length += num_matches - 1;    // allow space for concatenation commas
 
     // We are allocating two buffers to store the normalized field value. The raw field value will
@@ -101,7 +103,8 @@ void HeaderNormalizer::normalize(const HeaderId head_id, const int count,
     uint8_t* const temp_space = new uint8_t[buffer_length];
     memset(norm_value, 0, buffer_length);
     memset(temp_space, 0, buffer_length);
-    uint8_t* working = (num_normalizers%2 == 0) ? norm_value : temp_space;
+    uint8_t* const norm_start = (num_normalizers%2 == 0) ? norm_value : temp_space;
+    uint8_t* working = norm_start;
     int32_t data_length = 0;
     for (int j=0; j < num_matches; j++)
     {
@@ -115,6 +118,31 @@ void HeaderNormalizer::normalize(const HeaderId head_id, const int count,
             header_value[curr_match].length(), working);
         working += growth;
         data_length += growth;
+    }
+
+    // Many fields names can appear more than once but some should not. If an event or infraction
+    // is defined we will check as part of normalization. A comma-separated header value is
+    // equivalent to a repeated header name. This is JIT code and we will not check for repeated
+    // headers unless someone asks for that header.
+    if ((repeat_event != EVENT__NONE) || (repeat_inf != INF__NONE))
+    {
+        if (count >= 2)
+        {
+            *infractions += repeat_inf;
+            events->create_event(repeat_event);
+        }
+        else
+        {
+            for (int k=0; k < data_length; k++)
+            {
+                if (norm_start[k] == ',')
+                {
+                    *infractions += repeat_inf;
+                    events->create_event(repeat_event);
+                    break;
+                }
+            }
+        }
     }
 
     for (int i=0; i < num_normalizers; i++)

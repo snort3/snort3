@@ -38,8 +38,9 @@
 class HeaderNormalizer
 {
 public:
-    constexpr HeaderNormalizer(bool _concatenate_repeats, NormFunc* f1, NormFunc* f2, NormFunc* f3)
-        : concatenate_repeats(_concatenate_repeats), normalizer { f1, f2, f3 },
+    constexpr HeaderNormalizer(HttpEnums::EventSid _repeat_event,
+        HttpEnums::Infraction _repeat_inf, NormFunc* f1, NormFunc* f2, NormFunc* f3)
+        : repeat_event(_repeat_event), repeat_inf(_repeat_inf), normalizer { f1, f2, f3 },
         num_normalizers((f1 != nullptr) + (f1 != nullptr)*(f2 != nullptr) + (f1 != nullptr)*(f2 !=
             nullptr)*(f3 != nullptr)) { }
 
@@ -51,7 +52,8 @@ public:
 private:
     static int32_t derive_header_content(const uint8_t* value, int32_t length, uint8_t* buffer);
 
-    const bool concatenate_repeats;
+    const HttpEnums::EventSid repeat_event;
+    const HttpEnums::Infraction repeat_inf;
     NormFunc* const normalizer[3];
     const int num_normalizers;
 };
