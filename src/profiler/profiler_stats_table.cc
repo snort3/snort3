@@ -62,7 +62,7 @@ void StatsTable::header(char c)
 
     if ( c )
     {
-        const auto* field = fields;
+        field = fields;
         while ( field->name )
         {
             format(*field);

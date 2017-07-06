@@ -291,9 +291,7 @@ void help_signals()
 
 static void snuff_stdio()
 {
-    bool err = false;
-
-    err = close(STDIN_FILENO) != 0;
+    bool err = (close(STDIN_FILENO) != 0);
     err = err or (close(STDOUT_FILENO) != 0);
     err = err or (close(STDERR_FILENO) != 0);
 

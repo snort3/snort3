@@ -82,7 +82,7 @@ uint32_t TcpFlagOption::hash() const
     const TcpFlagCheckData* data = &config;
 
     a = data->mode;
-    b = data->tcp_flags || (data->tcp_mask << 8);
+    b = data->tcp_flags | (data->tcp_mask << 8);
     c = 0;
 
     mix_str(a,b,c,get_name());

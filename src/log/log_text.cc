@@ -270,8 +270,8 @@ void LogIpAddrs(TextLog* log, Packet* p)
         else
         {
             TextLog_Print(log, ip_fmt,
-                inet_ntoax(p->ptrs.ip_api.get_src(), src),
-                inet_ntoax(p->ptrs.ip_api.get_dst(), dst));
+                sfip_ntop(p->ptrs.ip_api.get_src(), src, sizeof(src)),
+                sfip_ntop(p->ptrs.ip_api.get_dst(), dst, sizeof(dst)));
         }
     }
     else
@@ -292,8 +292,8 @@ void LogIpAddrs(TextLog* log, Packet* p)
         else
         {
             TextLog_Print(log, ip_fmt,
-                inet_ntoax(p->ptrs.ip_api.get_src(), src), p->ptrs.sp,
-                inet_ntoax(p->ptrs.ip_api.get_dst(), dst), p->ptrs.dp);
+                sfip_ntop(p->ptrs.ip_api.get_src(), src, sizeof(src)), p->ptrs.sp,
+                sfip_ntop(p->ptrs.ip_api.get_dst(), dst, sizeof(dst)), p->ptrs.dp);
         }
     }
 }

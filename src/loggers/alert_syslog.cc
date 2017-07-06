@@ -260,8 +260,8 @@ static void AlertSyslog(
             else
             {
                 SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt,
-                    inet_ntoax(p->ptrs.ip_api.get_src(), src),
-                    inet_ntoax(p->ptrs.ip_api.get_dst(), dst));
+                    sfip_ntop(p->ptrs.ip_api.get_src(), src, sizeof(src)),
+                    sfip_ntop(p->ptrs.ip_api.get_dst(), dst, sizeof(dst)));
             }
         }
         else
@@ -283,8 +283,8 @@ static void AlertSyslog(
             else
             {
                 SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt,
-                    inet_ntoax(p->ptrs.ip_api.get_src(), src), p->ptrs.sp,
-                    inet_ntoax(p->ptrs.ip_api.get_dst(), dst), p->ptrs.dp);
+                    sfip_ntop(p->ptrs.ip_api.get_src(), src, sizeof(src)), p->ptrs.sp,
+                    sfip_ntop(p->ptrs.ip_api.get_dst(), dst, sizeof(dst)), p->ptrs.dp);
             }
         }
 

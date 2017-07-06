@@ -621,7 +621,7 @@ int ImapClientDetector::validate(AppIdDiscoveryArgs& args)
             ;
 
         /*s is now at command beginning */
-        if ((length = (end - s)) <= 0)
+        if (s >= end)
         {
             dd->need_continue = 0;
             args.asd->set_client_detected();
@@ -630,6 +630,7 @@ int ImapClientDetector::validate(AppIdDiscoveryArgs& args)
         }
         cmd = nullptr;
         pattern_index = num_imap_client_patterns;
+        length = end - s;
         cmd_matcher->find_all((char*)s, (length > longest_pattern ? longest_pattern : length),
             &pattern_match, false, (void*)&pattern_index);
 

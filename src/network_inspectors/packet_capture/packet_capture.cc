@@ -51,7 +51,7 @@ static THREAD_LOCAL struct sfbpf_program bpf;
 static inline bool capture_initialized()
 { return dumper != nullptr; }
 
-void packet_capture_enable(string f)
+void packet_capture_enable(const string& f)
 {
     if ( !config.enabled )
     {

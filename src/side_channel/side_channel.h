@@ -61,7 +61,7 @@ public:
     SideChannel();
     ~SideChannel();
 
-    void register_receive_handler(SCProcessMsgFunc handler);
+    void register_receive_handler(const SCProcessMsgFunc& handler);
     void unregister_receive_handler();
 
     bool process(int max_messages);

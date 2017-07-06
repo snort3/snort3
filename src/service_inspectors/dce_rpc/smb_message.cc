@@ -1607,7 +1607,7 @@ static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
             }
         }
 
-        // Fall through for DCE2_SMB_DATA_STATE__SMB_HEADER
+        // Fall through
         // This is the normal progression without segmentation.
 
         // This state is to do validation checks on the SMB header and

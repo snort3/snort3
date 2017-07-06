@@ -91,9 +91,14 @@ bool StreamTcp::parse_small_segments(std::istringstream& stream)
     table_api.add_option("maximum_size", min_bytes);
     table_api.close_table();
 
-    if (!(stream >> ignore_ports))
-        table_api.add_deleted_comment("ignore_ports");
-        return true;
+    if ((stream >> ignore_ports) && !ignore_ports.compare("ignore_ports"))
+    {
+        uint16_t port;
+
+        while (stream >> port)
+            ignore_ports += " " + std::to_string(port);
+        table_api.add_deleted_comment(ignore_ports);
+    }
 
     if (!stream.eof())
         return false;

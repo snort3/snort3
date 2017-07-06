@@ -28,7 +28,7 @@
 class CSVFormatter : public PerfFormatter
 {
 public:
-    CSVFormatter(std::string tracker_name) : PerfFormatter(tracker_name) {}
+    CSVFormatter(const std::string& tracker_name) : PerfFormatter(tracker_name) {}
 
     const char* get_extension() override
     { return ".csv"; }

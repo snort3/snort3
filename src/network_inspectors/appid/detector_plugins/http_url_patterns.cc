@@ -147,121 +147,121 @@ struct MatchedPatterns
     MatchedPatterns* next;
 };
 
-static DetectorHTTPPatterns content_type_patterns =
+static DetectorHTTPPatterns static_content_type_patterns =
 {
     { SINGLE, 0, APP_ID_QUICKTIME, 0,
-        APP_ID_QUICKTIME, sizeof(QUICKTIME_BANNER)-1, (uint8_t*)QUICKTIME_BANNER, false },
+        APP_ID_QUICKTIME, sizeof(QUICKTIME_BANNER)-1, (uint8_t*)QUICKTIME_BANNER },
     { SINGLE, 0, APP_ID_MPEG, 0,
-        APP_ID_MPEG, sizeof(MPEG_BANNER)-1, (uint8_t*)MPEG_BANNER, false },
+        APP_ID_MPEG, sizeof(MPEG_BANNER)-1, (uint8_t*)MPEG_BANNER },
     { SINGLE, 0, APP_ID_MPEG, 0,
-        APP_ID_MPEG, sizeof(MPA_BANNER)-1, (uint8_t*)MPA_BANNER, false },
+        APP_ID_MPEG, sizeof(MPA_BANNER)-1, (uint8_t*)MPA_BANNER },
     { SINGLE, 0, APP_ID_MPEG, 0,
-        APP_ID_MPEG, sizeof(MP4A_BANNER)-1, (uint8_t*)MP4A_BANNER, false },
+        APP_ID_MPEG, sizeof(MP4A_BANNER)-1, (uint8_t*)MP4A_BANNER },
     { SINGLE, 0, APP_ID_MPEG, 0,
-        APP_ID_MPEG, sizeof(ROBUST_MPA_BANNER)-1, (uint8_t*)ROBUST_MPA_BANNER, false },
+        APP_ID_MPEG, sizeof(ROBUST_MPA_BANNER)-1, (uint8_t*)ROBUST_MPA_BANNER },
     { SINGLE, 0, APP_ID_MPEG, 0,
-        APP_ID_MPEG, sizeof(XSCPLS_BANNER)-1, (uint8_t*)XSCPLS_BANNER, false },
+        APP_ID_MPEG, sizeof(XSCPLS_BANNER)-1, (uint8_t*)XSCPLS_BANNER },
     { SINGLE, 0, APP_ID_SHOCKWAVE, 0,
-        APP_ID_SHOCKWAVE, sizeof(SHOCKWAVE_BANNER)-1, (uint8_t*)SHOCKWAVE_BANNER, false },
+        APP_ID_SHOCKWAVE, sizeof(SHOCKWAVE_BANNER)-1, (uint8_t*)SHOCKWAVE_BANNER },
     { SINGLE, 0, APP_ID_RSS, 0,
-        APP_ID_RSS, sizeof(RSS_BANNER)-1, (uint8_t*)RSS_BANNER, false },
+        APP_ID_RSS, sizeof(RSS_BANNER)-1, (uint8_t*)RSS_BANNER },
     { SINGLE, 0, APP_ID_ATOM, 0,
-        APP_ID_ATOM, sizeof(ATOM_BANNER)-1, (uint8_t*)ATOM_BANNER, false },
+        APP_ID_ATOM, sizeof(ATOM_BANNER)-1, (uint8_t*)ATOM_BANNER },
     { SINGLE, 0, APP_ID_MP4, 0,
-        APP_ID_MP4, sizeof(MP4_BANNER)-1, (uint8_t*)MP4_BANNER, false },
+        APP_ID_MP4, sizeof(MP4_BANNER)-1, (uint8_t*)MP4_BANNER },
     { SINGLE, 0, APP_ID_WMV, 0,
-        APP_ID_WMV, sizeof(WMV_BANNER)-1, (uint8_t*)WMV_BANNER, false },
+        APP_ID_WMV, sizeof(WMV_BANNER)-1, (uint8_t*)WMV_BANNER },
     { SINGLE, 0, APP_ID_WMA, 0,
-        APP_ID_WMA, sizeof(WMA_BANNER)-1, (uint8_t*)WMA_BANNER, false },
+        APP_ID_WMA, sizeof(WMA_BANNER)-1, (uint8_t*)WMA_BANNER },
     { SINGLE, 0, APP_ID_WAV, 0,
-        APP_ID_WAV, sizeof(WAV_BANNER)-1, (uint8_t*)WAV_BANNER, false },
+        APP_ID_WAV, sizeof(WAV_BANNER)-1, (uint8_t*)WAV_BANNER },
     { SINGLE, 0, APP_ID_WAV, 0,
-        APP_ID_WAV, sizeof(X_WAV_BANNER)-1, (uint8_t*)X_WAV_BANNER, false },
+        APP_ID_WAV, sizeof(X_WAV_BANNER)-1, (uint8_t*)X_WAV_BANNER },
     { SINGLE, 0, APP_ID_WAV, 0,
-        APP_ID_WAV, sizeof(VND_WAV_BANNER)-1, (uint8_t*)VND_WAV_BANNER, false },
+        APP_ID_WAV, sizeof(VND_WAV_BANNER)-1, (uint8_t*)VND_WAV_BANNER },
     { SINGLE, 0, APP_ID_FLASH_VIDEO, 0,
-        APP_ID_FLASH_VIDEO, sizeof(FLV_BANNER)-1, (uint8_t*)FLV_BANNER, false },
+        APP_ID_FLASH_VIDEO, sizeof(FLV_BANNER)-1, (uint8_t*)FLV_BANNER },
     { SINGLE, 0, APP_ID_FLASH_VIDEO, 0,
-        APP_ID_FLASH_VIDEO, sizeof(M4V_BANNER)-1, (uint8_t*)M4V_BANNER, false },
+        APP_ID_FLASH_VIDEO, sizeof(M4V_BANNER)-1, (uint8_t*)M4V_BANNER },
     { SINGLE, 0, APP_ID_FLASH_VIDEO, 0,
-        APP_ID_FLASH_VIDEO, sizeof(GPP_BANNER)-1, (uint8_t*)GPP_BANNER, false },
+        APP_ID_FLASH_VIDEO, sizeof(GPP_BANNER)-1, (uint8_t*)GPP_BANNER },
     { SINGLE, 0, APP_ID_GENERIC, 0,
-        APP_ID_GENERIC, sizeof(VIDEO_BANNER)-1, (uint8_t*)VIDEO_BANNER, false },
+        APP_ID_GENERIC, sizeof(VIDEO_BANNER)-1, (uint8_t*)VIDEO_BANNER },
     { SINGLE, 0, APP_ID_GENERIC, 0,
-        APP_ID_GENERIC, sizeof(AUDIO_BANNER)-1, (uint8_t*)AUDIO_BANNER, false },
+        APP_ID_GENERIC, sizeof(AUDIO_BANNER)-1, (uint8_t*)AUDIO_BANNER },
 };
 
-static DetectorHTTPPatterns via_http_detector_patterns =
+static DetectorHTTPPatterns static_via_http_detector_patterns =
 {
-    { SINGLE, APP_ID_SQUID, 0, 0, APP_ID_SQUID, SQUID_PATTERN_SIZE, (uint8_t*)SQUID_PATTERN, false },
+    { SINGLE, APP_ID_SQUID, 0, 0, APP_ID_SQUID, SQUID_PATTERN_SIZE, (uint8_t*)SQUID_PATTERN },
 };
 
-static DetectorHTTPPatterns http_host_payload_patterns =
+static DetectorHTTPPatterns static_http_host_payload_patterns =
 {
     { SINGLE, 0, 0, APP_ID_MYSPACE,
-        APP_ID_MYSPACE, MYSPACE_PATTERN_SIZE, (uint8_t*)MYSPACE_PATTERN, false },
+        APP_ID_MYSPACE, MYSPACE_PATTERN_SIZE, (uint8_t*)MYSPACE_PATTERN },
     { SINGLE, 0, 0, APP_ID_GMAIL,
-        APP_ID_GMAIL, GMAIL_PATTERN_SIZE, (uint8_t*)GMAIL_PATTERN, false },
+        APP_ID_GMAIL, GMAIL_PATTERN_SIZE, (uint8_t*)GMAIL_PATTERN },
     { SINGLE, 0, 0, APP_ID_GMAIL,
-        APP_ID_GMAIL, GMAIL_PATTERN2_SIZE, (uint8_t*)GMAIL_PATTERN2, false },
+        APP_ID_GMAIL, GMAIL_PATTERN2_SIZE, (uint8_t*)GMAIL_PATTERN2 },
     { SINGLE, 0, 0, APP_ID_AOL_EMAIL,
-        APP_ID_AOL_EMAIL, AOL_PATTERN_SIZE, (uint8_t*)AOL_PATTERN, false },
+        APP_ID_AOL_EMAIL, AOL_PATTERN_SIZE, (uint8_t*)AOL_PATTERN },
     { SINGLE, 0, 0, APP_ID_MICROSOFT_UPDATE,
-        APP_ID_MICROSOFT_UPDATE, MSUP_PATTERN_SIZE, (uint8_t*)MSUP_PATTERN, false },
+        APP_ID_MICROSOFT_UPDATE, MSUP_PATTERN_SIZE, (uint8_t*)MSUP_PATTERN },
     { SINGLE, 0, 0, APP_ID_MICROSOFT_UPDATE,
-        APP_ID_MICROSOFT_UPDATE,MSUP_PATTERN2_SIZE, (uint8_t*)MSUP_PATTERN2, false },
+        APP_ID_MICROSOFT_UPDATE,MSUP_PATTERN2_SIZE, (uint8_t*)MSUP_PATTERN2 },
     { SINGLE, 0, 0, APP_ID_YAHOOMAIL,
-        APP_ID_YAHOOMAIL, YAHOO_MAIL_PATTERN_SIZE, (uint8_t*)YAHOO_MAIL_PATTERN, false },
+        APP_ID_YAHOOMAIL, YAHOO_MAIL_PATTERN_SIZE, (uint8_t*)YAHOO_MAIL_PATTERN },
     { SINGLE, 0, 0, APP_ID_YAHOO_TOOLBAR,
-        APP_ID_YAHOO_TOOLBAR, YAHOO_TB_PATTERN_SIZE, (uint8_t*)YAHOO_TB_PATTERN, false },
+        APP_ID_YAHOO_TOOLBAR, YAHOO_TB_PATTERN_SIZE, (uint8_t*)YAHOO_TB_PATTERN },
     { SINGLE, 0, 0, APP_ID_ADOBE_UPDATE,
-        APP_ID_ADOBE_UPDATE, ADOBE_UP_PATTERN_SIZE, (uint8_t*)ADOBE_UP_PATTERN, false },
+        APP_ID_ADOBE_UPDATE, ADOBE_UP_PATTERN_SIZE, (uint8_t*)ADOBE_UP_PATTERN },
     { SINGLE, 0, 0, APP_ID_HOTMAIL,
-        APP_ID_HOTMAIL, HOTMAIL_PATTERN1_SIZE, (uint8_t*)HOTMAIL_PATTERN1, false },
+        APP_ID_HOTMAIL, HOTMAIL_PATTERN1_SIZE, (uint8_t*)HOTMAIL_PATTERN1 },
     { SINGLE, 0, 0, APP_ID_HOTMAIL,
-        APP_ID_HOTMAIL, HOTMAIL_PATTERN2_SIZE, (uint8_t*)HOTMAIL_PATTERN2, false },
+        APP_ID_HOTMAIL, HOTMAIL_PATTERN2_SIZE, (uint8_t*)HOTMAIL_PATTERN2 },
     { SINGLE, 0, 0, APP_ID_GOOGLE_TOOLBAR,
-        APP_ID_GOOGLE_TOOLBAR, GOOGLE_TB_PATTERN_SIZE, (uint8_t*)GOOGLE_TB_PATTERN, false },
+        APP_ID_GOOGLE_TOOLBAR, GOOGLE_TB_PATTERN_SIZE, (uint8_t*)GOOGLE_TB_PATTERN },
 };
 
-static DetectorHTTPPatterns client_agent_patterns =
+static DetectorHTTPPatterns static_client_agent_patterns =
 {
     { USER_AGENT_HEADER, 0, FAKE_VERSION_APP_ID, 0,
-        FAKE_VERSION_APP_ID, VERSION_PATTERN_SIZE, (uint8_t*)VERSION_PATTERN, false },
+        FAKE_VERSION_APP_ID, VERSION_PATTERN_SIZE, (uint8_t*)VERSION_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_INTERNET_EXPLORER, 0,
-        APP_ID_INTERNET_EXPLORER, sizeof(MSIE_PATTERN)-1, (uint8_t*)MSIE_PATTERN, false },
+        APP_ID_INTERNET_EXPLORER, sizeof(MSIE_PATTERN)-1, (uint8_t*)MSIE_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_KONQUEROR, 0,
-        APP_ID_KONQUEROR, sizeof(KONQUEROR_PATTERN)-1, (uint8_t*)KONQUEROR_PATTERN, false },
+        APP_ID_KONQUEROR, sizeof(KONQUEROR_PATTERN)-1, (uint8_t*)KONQUEROR_PATTERN },
     { USER_AGENT_HEADER, APP_ID_SKYPE_AUTH, APP_ID_SKYPE, 0,
-        APP_ID_SKYPE, sizeof(SKYPE_PATTERN)-1, (uint8_t*)SKYPE_PATTERN, false },
+        APP_ID_SKYPE, sizeof(SKYPE_PATTERN)-1, (uint8_t*)SKYPE_PATTERN },
     { USER_AGENT_HEADER, APP_ID_BITTORRENT, APP_ID_BITTORRENT, 0,
-        APP_ID_BITTORRENT, sizeof(BITTORRENT_PATTERN)-1, (uint8_t*)BITTORRENT_PATTERN, false },
+        APP_ID_BITTORRENT, sizeof(BITTORRENT_PATTERN)-1, (uint8_t*)BITTORRENT_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_FIREFOX, 0,
-        APP_ID_FIREFOX, sizeof(FIREFOX_PATTERN)-1, (uint8_t*)FIREFOX_PATTERN, false },
+        APP_ID_FIREFOX, sizeof(FIREFOX_PATTERN)-1, (uint8_t*)FIREFOX_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_WGET, 0,
-        APP_ID_WGET, sizeof(WGET_PATTERN)-1, (uint8_t*)WGET_PATTERN, false },
+        APP_ID_WGET, sizeof(WGET_PATTERN)-1, (uint8_t*)WGET_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_CURL, 0,
-        APP_ID_CURL, sizeof(CURL_PATTERN)-1, (uint8_t*)CURL_PATTERN, false },
+        APP_ID_CURL, sizeof(CURL_PATTERN)-1, (uint8_t*)CURL_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_GOOGLE_DESKTOP, 0,
-        APP_ID_GOOGLE_DESKTOP, sizeof(GOOGLE_DESKTOP_PATTERN)-1, (uint8_t*)GOOGLE_DESKTOP_PATTERN, false },
+        APP_ID_GOOGLE_DESKTOP, sizeof(GOOGLE_DESKTOP_PATTERN)-1, (uint8_t*)GOOGLE_DESKTOP_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_PICASA, 0,
-        APP_ID_PICASA, sizeof(PICASA_PATTERN)-1, (uint8_t*)PICASA_PATTERN, false },
+        APP_ID_PICASA, sizeof(PICASA_PATTERN)-1, (uint8_t*)PICASA_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_SAFARI, 0,
-        APP_ID_SAFARI, sizeof(SAFARI_PATTERN)-1, (uint8_t*)SAFARI_PATTERN, false },
+        APP_ID_SAFARI, sizeof(SAFARI_PATTERN)-1, (uint8_t*)SAFARI_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_OPERA, 0,
-        APP_ID_OPERA, sizeof(OPERA_PATTERN)-1, (uint8_t*)OPERA_PATTERN, false },
+        APP_ID_OPERA, sizeof(OPERA_PATTERN)-1, (uint8_t*)OPERA_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_CHROME, 0,
-        APP_ID_CHROME, sizeof(CHROME_PATTERN)-1, (uint8_t*)CHROME_PATTERN, false },
+        APP_ID_CHROME, sizeof(CHROME_PATTERN)-1, (uint8_t*)CHROME_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_SAFARI_MOBILE_DUMMY, 0,
-        APP_ID_SAFARI_MOBILE_DUMMY, sizeof(MOBILE_PATTERN)-1, (uint8_t*)MOBILE_PATTERN, false },
+        APP_ID_SAFARI_MOBILE_DUMMY, sizeof(MOBILE_PATTERN)-1, (uint8_t*)MOBILE_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_BLACKBERRY_BROWSER, 0,
-        APP_ID_BLACKBERRY_BROWSER, sizeof(BLACKBERRY_PATTERN)-1, (uint8_t*)BLACKBERRY_PATTERN, false },
+        APP_ID_BLACKBERRY_BROWSER, sizeof(BLACKBERRY_PATTERN)-1, (uint8_t*)BLACKBERRY_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_ANDROID_BROWSER, 0,
-        APP_ID_ANDROID_BROWSER, sizeof(ANDROID_PATTERN)-1, (uint8_t*)ANDROID_PATTERN, false },
+        APP_ID_ANDROID_BROWSER, sizeof(ANDROID_PATTERN)-1, (uint8_t*)ANDROID_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_WINDOWS_MEDIA_PLAYER, 0,
-        APP_ID_WINDOWS_MEDIA_PLAYER, sizeof(MEDIAPLAYER_PATTERN)-1, (uint8_t*)MEDIAPLAYER_PATTERN, false },
+        APP_ID_WINDOWS_MEDIA_PLAYER, sizeof(MEDIAPLAYER_PATTERN)-1, (uint8_t*)MEDIAPLAYER_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_APPLE_EMAIL, 0,
-        APP_ID_APPLE_EMAIL, sizeof(APPLE_EMAIL_PATTERN)-1, (uint8_t*)APPLE_EMAIL_PATTERN, false },
+        APP_ID_APPLE_EMAIL, sizeof(APPLE_EMAIL_PATTERN)-1, (uint8_t*)APPLE_EMAIL_PATTERN },
 };
 
 static int match_query_elements(tMlpPattern* packetData, tMlpPattern* userPattern,
@@ -332,7 +332,7 @@ static void free_app_url_patterns(std::vector<DetectorAppUrlPattern*>& url_patte
 static void free_http_patterns(DetectorHTTPPatterns& patterns)
 {
     for (auto& pat: patterns)
-        if (pat.free_pattern && pat.pattern)
+        if (pat.pattern)
             snort_free(pat.pattern);
 }
 
@@ -717,23 +717,26 @@ static SearchTool* process_http_field_patterns(FieldPattern* patternList, size_t
     return patternMatcher;
 }
 
-static void process_patterns(SearchTool& matcher, DetectorHTTPPatterns& patterns)
+static void process_patterns(SearchTool& matcher, DetectorHTTPPatterns& patterns, bool last = true)
 {
     for (auto& pat: patterns)
         matcher.add(pat.pattern, pat.pattern_size, &pat, false);
 
-    matcher.prep();
+    if (last)
+        matcher.prep();
 }
 
 int HttpPatternMatchers::finalize()
 {
-    process_patterns(via_matcher, via_http_detector_patterns);
+    process_patterns(via_matcher, static_via_http_detector_patterns);
     process_patterns(url_matcher, url_patterns);
+    process_patterns(client_agent_matcher, static_client_agent_patterns, false);
     process_patterns(client_agent_matcher, client_agent_patterns);
 
-    if (process_host_patterns(http_host_payload_patterns) < 0)
+    if (process_host_patterns(static_http_host_payload_patterns) < 0)
         return -1;
 
+    process_patterns(content_type_matcher, static_content_type_patterns, false);
     process_patterns(content_type_matcher, content_type_patterns);
 
     uint32_t numPatterns = sizeof(http_field_patterns) / sizeof(*http_field_patterns);

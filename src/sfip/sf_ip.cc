@@ -376,9 +376,9 @@ void SfIp::obfuscate(SfCidr* ob)
     ip32[3] |= ob_p[3];
 }
 
-void SfIp::ntop(char* buf, int bufsize) const
+const char* SfIp::ntop(char* buf, int bufsize) const
 {
-    snort_inet_ntop(family, get_ptr(), buf, bufsize);
+    return snort_inet_ntop(family, get_ptr(), buf, bufsize);
 }
 
 /* Uses a static buffer to return a string representation of the IP */
@@ -391,7 +391,7 @@ const char* SfIp::ntoa() const
     return buf;
 }
 
-void snort_inet_ntop(int family, const void* ip_raw, char* buf, int bufsize)
+const char* snort_inet_ntop(int family, const void* ip_raw, char* buf, int bufsize)
 {
     if (!ip_raw || !buf ||
         (family != AF_INET && family != AF_INET6) ||
@@ -405,7 +405,7 @@ void snort_inet_ntop(int family, const void* ip_raw, char* buf, int bufsize)
     {
         if (buf && bufsize > 0)
             buf[0] = 0;
-        return;
+        return buf;
     }
 
 #if defined(HAVE_INET_NTOP) && !defined(REG_TEST)
@@ -448,17 +448,20 @@ void snort_inet_ntop(int family, const void* ip_raw, char* buf, int bufsize)
         }
     }
 #endif
+    return buf;
 }
 
-void sfip_ntop(const SfIp* ip, char* buf, int bufsize)
+const char* sfip_ntop(const SfIp* ip, char* buf, int bufsize)
 {
     if (!ip)
     {
         if (buf && bufsize > 0)
             buf[0] = 0;
-        return;
     }
-    ip->ntop(buf, bufsize);
+    else
+        ip->ntop(buf, bufsize);
+
+    return buf;
 }
 
 bool SfIp::is_mapped() const

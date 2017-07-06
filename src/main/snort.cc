@@ -679,7 +679,11 @@ bool Snort::thread_init_privileged(const char* intf)
     SFDAQInstance *daq_instance = new SFDAQInstance(intf);
     SFDAQ::set_local_instance(daq_instance);
     if (!daq_instance->configure(snort_conf))
+    {
+        SFDAQ::set_local_instance(nullptr);
+        delete daq_instance;
         return false;
+    }
 
     return true;
 }

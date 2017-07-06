@@ -164,7 +164,7 @@ static int pattern_match(void* id, void* /*unused_tree*/, int match_end_pos, voi
 
 static const ClientDetector* get_next_detector(ClientAppMatch** match_list)
 {
-    ClientAppMatch* curr = nullptr;
+    ClientAppMatch* curr;
     ClientAppMatch* prev = nullptr;
     ClientAppMatch* max_curr = nullptr;
     ClientAppMatch* max_prev = nullptr;

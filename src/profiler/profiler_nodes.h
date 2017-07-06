@@ -86,8 +86,8 @@ public:
     map_type::const_iterator end() const
     { return nodes.end(); }
 
-    void register_node(std::string, const char*, Module*);
-    void register_node(std::string, const char*, get_profile_stats_fn);
+    void register_node(const std::string&, const char*, Module*);
+    void register_node(const std::string&, const char*, get_profile_stats_fn);
 
     void accumulate_nodes();
     void reset_nodes();
@@ -95,7 +95,7 @@ public:
     const ProfilerNode& get_root();
 
 private:
-    ProfilerNode& get_node(std::string);
+    ProfilerNode& get_node(const std::string&);
 
     map_type nodes;
 };

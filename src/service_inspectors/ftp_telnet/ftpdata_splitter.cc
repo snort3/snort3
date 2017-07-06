@@ -31,7 +31,7 @@ void FtpDataSplitter::restart_scan()
     bytes = segs = 0;
 }
 
-void set_ftp_flush_flag(Flow* flow)
+static void set_ftp_flush_flag(Flow* flow)
 {
     FtpDataFlowData* fdfd = (FtpDataFlowData*)flow->get_flow_data(FtpDataFlowData::flow_id);
     if ( fdfd )

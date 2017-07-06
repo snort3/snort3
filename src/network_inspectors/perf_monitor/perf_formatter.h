@@ -66,7 +66,7 @@ enum FormatterType : uint8_t
 class PerfFormatter
 {
 public:
-    PerfFormatter(std::string tracker_name)
+    PerfFormatter(const std::string& tracker_name)
     { this->tracker_name = tracker_name; }
     virtual ~PerfFormatter() {}
 
@@ -109,7 +109,7 @@ class MockFormatter : public PerfFormatter
 public:
     std::map<std::string, FormatterValue> public_values;
 
-    MockFormatter(std::string tracker_name) : PerfFormatter(tracker_name) {}
+    MockFormatter(const std::string& tracker_name) : PerfFormatter(tracker_name) {}
 
     void write(FILE*, time_t) override
     {

@@ -77,7 +77,7 @@ public:
 class LuaServiceDetector : public LuaDetector, public ServiceDetector
 {
 public:
-    LuaServiceDetector(AppIdDiscovery* sdm, std::string detector_name, IpProtocol protocol)
+    LuaServiceDetector(AppIdDiscovery* sdm, const std::string& detector_name, IpProtocol protocol)
     {
         handler = sdm;
         name = detector_name;
@@ -93,7 +93,7 @@ public:
 class LuaClientDetector : public LuaDetector, public ClientDetector
 {
 public:
-    LuaClientDetector(AppIdDiscovery* cdm, std::string detector_name, IpProtocol protocol)
+    LuaClientDetector(AppIdDiscovery* cdm, const std::string& detector_name, IpProtocol protocol)
     {
         handler = cdm;
         name = detector_name;

@@ -169,8 +169,6 @@ static int test_fputs(const char* str, FILE*)
 
 TEST_CASE("macros", "[trace]")
 {
-    const Trace my_flags = TRACE_SECTION_1 | TRACE_SECTION_2 | TRACE_SECTION_3;
-
     TestCase cases[] =
     {
         {

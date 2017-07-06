@@ -337,7 +337,7 @@ static inline int ssh_client_validate_pubkey(uint16_t offset, const uint8_t* dat
             else
                 fd->plen = 0;
             fd->oldhstate = SSH1_HEADER_FIND_CODE;
-        //  Fall through to SSH1_HEADER_FIND_CODE state.
+            // fallthrough
         case SSH1_HEADER_FIND_CODE:
             if (fd->pos == fd->plen + sizeof(ckx->len))
             {

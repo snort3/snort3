@@ -381,7 +381,6 @@ TEST_CASE("token test", "[Value]")
 
 TEST_CASE("get as string", "[Value]")
 {
-    string test_str;
     char * str_val;
     bool bool_val = true;
     double num_val = 6;

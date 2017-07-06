@@ -247,7 +247,7 @@ bool SideChannel::process(int max_messages)
     return received_message;
 }
 
-void SideChannel::register_receive_handler(SCProcessMsgFunc handler)
+void SideChannel::register_receive_handler(const SCProcessMsgFunc& handler)
 {
     DebugMessage(DEBUG_SIDE_CHANNEL,"SideChannelManager::register_receive_handler()\n");
     receive_handler = handler;

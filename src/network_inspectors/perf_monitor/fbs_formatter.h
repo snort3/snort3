@@ -28,7 +28,7 @@
 class FbsFormatter : public PerfFormatter
 {
 public:
-    FbsFormatter(std::string tracker_name) : PerfFormatter(tracker_name) {}
+    FbsFormatter(const std::string& tracker_name) : PerfFormatter(tracker_name) {}
 
     const char* get_extension() override
     { return ".bfbs"; }

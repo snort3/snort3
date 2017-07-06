@@ -96,6 +96,7 @@ bool TcpSession::setup(Packet* p)
 void TcpSession::restart(Packet* p)
 {
     // sanity check since this is called externally
+    assert(p);
     assert(p->ptrs.tcph);
     assert(p->flow == flow);
 

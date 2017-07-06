@@ -389,10 +389,10 @@ int Converter::convert(std::string input,
         if (data_api.failed_conversions())
             data_api.print_errors(rejects);
 
-            if (rule_api.failed_conversions())
-                rule_api.print_rejects(rejects);
+        if (rule_api.failed_conversions())
+            rule_api.print_rejects(rejects);
 
-         rejects.close();
+        rejects.close();
     }
     return rc;
 }

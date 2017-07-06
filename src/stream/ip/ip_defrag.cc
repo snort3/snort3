@@ -1122,7 +1122,7 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
     /* Reset the offset to handle the weird Solaris case */
     if (firstLastOk == FRAG_LAST_OFFSET_ADJUST)
         frag_offset = (uint16_t)ft->calculated_size;
-	
+
     if (IP_MAXPACKET - frag_offset < fragLength)
     {
         trace_log(stream_ip, "[..] Oversize frag!\n");
@@ -1613,7 +1613,7 @@ left_overlap_last:
             /* Otherwise, treat it as a POLICY_FIRST,
              * and trim accordingly. */
 
-            /* ie, fall through to the next case */
+            /* fallthrough */
 
             /*
              * overlap is rejected

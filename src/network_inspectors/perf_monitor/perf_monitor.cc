@@ -85,25 +85,25 @@ void PerfMonitor::show(SnortConfig*)
     LogMessage("  Packet Count:     %d\n", config.pkt_cnt);
     LogMessage("  Max File Size:    " STDu64 "\n", config.max_file_size);
     LogMessage("  Summary Mode:     %s\n",
-        config.perf_flags & PERF_SUMMARY ? "ACTIVE" : "INACTIVE");
+        (config.perf_flags & PERF_SUMMARY) ? "ACTIVE" : "INACTIVE");
     LogMessage("  Base Stats:       %s\n",
-        config.perf_flags & PERF_BASE ? "ACTIVE" : "INACTIVE");
+        (config.perf_flags & PERF_BASE) ? "ACTIVE" : "INACTIVE");
     LogMessage("  Flow Stats:       %s\n",
-        config.perf_flags & PERF_FLOW ? "ACTIVE" : "INACTIVE");
+        (config.perf_flags & PERF_FLOW) ? "ACTIVE" : "INACTIVE");
     if (config.perf_flags & PERF_FLOW)
     {
         LogMessage("    Max Flow Port:    %u\n", config.flow_max_port_to_track);
     }
     LogMessage("  Event Stats:      %s\n",
-        config.perf_flags & PERF_EVENT ? "ACTIVE" : "INACTIVE");
+        (config.perf_flags & PERF_EVENT) ? "ACTIVE" : "INACTIVE");
     LogMessage("  Flow IP Stats:    %s\n",
-        config.perf_flags & PERF_FLOWIP ? "ACTIVE" : "INACTIVE");
+        (config.perf_flags & PERF_FLOWIP) ? "ACTIVE" : "INACTIVE");
     if (config.perf_flags & PERF_FLOWIP)
     {
         LogMessage("    Flow IP Memcap:   %u\n", config.flowip_memcap);
     }
     LogMessage("  CPU Stats:    %s\n",
-        config.perf_flags & PERF_CPU ? "ACTIVE" : "INACTIVE");
+        (config.perf_flags & PERF_CPU) ? "ACTIVE" : "INACTIVE");
     switch(config.output)
     {
         case PERF_CONSOLE:

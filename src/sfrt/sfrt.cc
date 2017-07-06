@@ -748,14 +748,14 @@ int main()
             return 1;
         }
 
-        printf("%d\t %x: %c -> %c\n", index, ip_list[index],
+        printf("%u\t %x: %c -> %c\n", index, ip_list[index],
             data[index%NUM_DATA], *(uint32_t*)sfrt_lookup(&ip_list[index], dir));
     }
 
     for (index=0; index < NUM_IPS; index++)
     {
         val = *(uint32_t*)sfrt_lookup(&ip_list[index], dir);
-        printf("\t@%d\t%x: %c.  originally:\t%c\n",
+        printf("\t@%u\t%x: %c.  originally:\t%c\n",
             index, ip_list[index], val, data[index%NUM_DATA]);
     }
 

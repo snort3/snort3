@@ -111,6 +111,7 @@ struct ServiceSSLData
 struct ServiceSSLCertificate
 {
     X509* cert;
+    char* cert_name;
     uint8_t* common_name_ptr;
     int common_name_len;
     uint8_t* org_name_ptr;
@@ -493,7 +494,8 @@ static bool parse_certificates(ServiceSSLData* ss)
             certs_head       = certs_curr;
             num_certs++;
 
-            char* start = strstr(cert->name, COMMON_NAME_STR);
+            certs_curr->cert_name = X509_NAME_oneline(X509_get_subject_name(cert), NULL, 0);
+            char* start = strstr(certs_curr->cert_name, COMMON_NAME_STR);
             if (start)
             {
                 int length;
@@ -510,7 +512,7 @@ static bool parse_certificates(ServiceSSLData* ss)
                 common_name_tot_len += length;
             }
 
-            start = strstr(cert->name, ORG_NAME_STR);
+            start = strstr(certs_curr->cert_name, ORG_NAME_STR);
             if (start)
             {
                 int length;
@@ -594,6 +596,7 @@ static bool parse_certificates(ServiceSSLData* ss)
             certs_head = certs_head->next;
             crypto_lib_mutex.lock();
             X509_free(certs_curr->cert);
+            OPENSSL_free(certs_curr->cert_name);
             crypto_lib_mutex.unlock();
             snort_free(certs_curr);
         }

@@ -74,7 +74,7 @@ protected:
 
     std::string error;  // FIXIT-L unused
 
-    void set_error(std::string s)  // FIXIT-L unused
+    void set_error(const std::string& s)  // FIXIT-L unused
     { error = s; }
 
 private:

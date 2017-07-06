@@ -175,7 +175,7 @@ Connector::Direction SideChannel::get_direction()
 
 void SideChannel::set_default_port(SCPort) { }
 
-void SideChannel::register_receive_handler(std::function<void (SCMessage*)> handler)
+void SideChannel::register_receive_handler(const std::function<void (SCMessage*)>& handler)
 {
     s_handler = handler;
 }

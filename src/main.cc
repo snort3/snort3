@@ -71,10 +71,6 @@ static int main_exit_code = 0;
 static bool paused = false;
 static std::queue<AnalyzerCommand*> orphan_commands;
 
-#ifdef SHELL
-static bool shell_enabled = false;
-#endif
-
 static std::mutex poke_mutex;
 static Ring<unsigned>* pig_poke = nullptr;
 
@@ -414,7 +410,6 @@ int main_resume(lua_State* L)
 #ifdef SHELL
 int main_detach(lua_State*)
 {
-    shell_enabled = false;
     current_request->respond("== detaching\n");
     return 0;
 }
@@ -621,7 +616,6 @@ static bool set_mode()
     if ( use_shell(snort_conf) )
     {
         LogMessage("Entering command shell\n");
-        shell_enabled = true;
         ControlMgmt::add_control(STDOUT_FILENO, true);
     }
 #endif

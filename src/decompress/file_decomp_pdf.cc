@@ -674,6 +674,7 @@ static inline fd_status_t Handle_State_IND_OBJ(fd_session_t* SessionPtr, uint8_t
             if ( TOK_STRM_CLOSE[p->Elem_Index] == '\0' )
             {
                 p->Sub_State = P_ENDOBJ_TOKEN;
+                p->Elem_Index = 0;  // reset for P_ENDOBJ_TOKEN to use
             }
         }
         else

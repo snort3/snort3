@@ -40,7 +40,7 @@ int SnortSnprintf(char* buf, size_t buf_size, const char* format, ...)
     va_list ap;
     int ret;
 
-    if (buf == NULL || buf_size <= 0 || format == NULL)
+    if (buf == NULL || buf_size == 0 || format == NULL)
         return SNORT_SNPRINTF_ERROR;
 
     /* zero first byte in case an error occurs with
@@ -81,7 +81,7 @@ int SnortSnprintfAppend(char* buf, size_t buf_size, const char* format, ...)
     int ret;
     va_list ap;
 
-    if (buf == NULL || buf_size <= 0 || format == NULL)
+    if (buf == NULL || buf_size == 0 || format == NULL)
         return SNORT_SNPRINTF_ERROR;
 
     str_len = SnortStrnlen(buf, buf_size);
@@ -135,7 +135,7 @@ int SnortStrncpy(char* dst, const char* src, size_t dst_size)
 {
     char* ret = NULL;
 
-    if (dst == NULL || src == NULL || dst_size <= 0)
+    if (dst == NULL || src == NULL || dst_size == 0)
         return SNORT_STRNCPY_ERROR;
 
     dst[dst_size - 1] = '\0';

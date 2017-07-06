@@ -26,16 +26,6 @@
 #include "sfip/sf_cidr.h"
 #include "util_cstring.h"
 
-char* inet_ntoax(const SfIp* ip, InetBuf& ab)
-{
-    ab[0] = 0;
-
-    if (ip)
-        SnortSnprintf(ab, sizeof(ab), "%s", ip->ntoa());
-
-    return ab;
-}
-
 char* ObfuscateIpToText(const SfIp* ip, SfCidr& homenet, SfCidr& obfunet, InetBuf& ab)
 {
     ab[0] = 0;

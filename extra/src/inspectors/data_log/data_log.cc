@@ -53,7 +53,7 @@ static void dl_tterm()
 class LogHandler : public DataHandler
 {
 public:
-    LogHandler(std::string s)
+    LogHandler(const std::string& s)
     { key = s; }
 
     void handle(DataEvent& e, Flow*);
@@ -85,7 +85,7 @@ void LogHandler::handle(DataEvent& e, Flow* f)
 class DataLog : public Inspector
 {
 public:
-    DataLog(std::string s) { key = s; }
+    DataLog(const std::string& s) { key = s; }
 
     void show(SnortConfig*) override;
     void eval(Packet*) override { }

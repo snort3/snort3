@@ -91,12 +91,17 @@ void AppIdSession::set_session_logging_state(const Packet* pkt, int direction)
     }
 
     if (session_logging_enabled)
+    {
+        char src_ip_str[INET6_ADDRSTRLEN], dst_ip_str[INET6_ADDRSTRLEN];
+
+        pkt->ptrs.ip_api.get_src()->ntop(src_ip_str, sizeof(src_ip_str));
+        pkt->ptrs.ip_api.get_dst()->ntop(dst_ip_str, sizeof(dst_ip_str));
         snprintf(session_logging_id, MAX_SESSION_LOGGING_ID_LEN,
             "%s-%hu -> %s-%hu %u%s AS %u I %u",
-            pkt->ptrs.ip_api.get_src()->ntoa(), pkt->ptrs.sp,
-            pkt->ptrs.ip_api.get_dst()->ntoa(), pkt->ptrs.dp,
+            src_ip_str, pkt->ptrs.sp, dst_ip_str, pkt->ptrs.dp,
             (unsigned)pkt->ptrs.type, (direction == APP_ID_FROM_INITIATOR) ? "" : " R",
             (unsigned)pkt->pkth->address_space_id, get_instance_id());
+    }
 }
 
 AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto, int direction)

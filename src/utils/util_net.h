@@ -26,8 +26,6 @@
 struct SfCidr;
 typedef char InetBuf[INET6_ADDRSTRLEN];
 
-SO_PUBLIC char* inet_ntoax(const struct SfIp*, InetBuf&);
-
 SO_PUBLIC char* ObfuscateIpToText(
     const struct SfIp*, SfCidr& homenet, SfCidr& obfuscate_net, InetBuf&);
 

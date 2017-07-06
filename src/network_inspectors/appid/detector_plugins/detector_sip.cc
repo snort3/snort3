@@ -78,7 +78,6 @@ struct ClientSIPData
 
 struct DetectorSipConfig
 {
-    bool enabled;
     void* sip_ua_matcher;
     DetectorAppSipPattern* sip_ua_list;
     void* sip_server_matcher;

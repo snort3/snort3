@@ -429,7 +429,7 @@ static bool ByteMathVerify(ByteMathData* data)
     if ( ((data->oper == BM_LEFT_SHIFT) || (data->oper == BM_RIGHT_SHIFT)) &&
         (data->rvalue > 32))
     {
-        ParseError("Number of bits in rvalue input [%d] should be less than 32 "
+        ParseError("Number of bits in rvalue input [%u] should be less than 32 "
             "bits for operator", data->rvalue);
         return false;
     }

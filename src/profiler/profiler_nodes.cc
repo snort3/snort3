@@ -41,7 +41,7 @@
 
 struct GetProfileFunctor
 {
-    GetProfileFunctor(std::string name) : name(name) { }
+    GetProfileFunctor(const std::string& name) : name(name) { }
 
     virtual ~GetProfileFunctor() = default;
     virtual const ProfileStats* operator()() = 0;
@@ -51,7 +51,7 @@ struct GetProfileFunctor
 
 struct GetProfileFromModule : public GetProfileFunctor
 {
-    GetProfileFromModule(std::string name, Module* m) :
+    GetProfileFromModule(const std::string& name, Module* m) :
         GetProfileFunctor(name), m(m) { }
 
     const ProfileStats* operator()() override
@@ -74,7 +74,7 @@ struct GetProfileFromModule : public GetProfileFunctor
 
 struct GetProfileFromFunction : public GetProfileFunctor
 {
-    GetProfileFromFunction(std::string name, get_profile_stats_fn fn) :
+    GetProfileFromFunction(const std::string& name, get_profile_stats_fn fn) :
         GetProfileFunctor(name), fn(fn) { }
 
     const ProfileStats* operator()() override
@@ -120,10 +120,10 @@ void ProfilerNode::accumulate()
     }
 }
 
-void ProfilerNodeMap::register_node(std::string n, const char* pn, Module* m)
+void ProfilerNodeMap::register_node(const std::string &n, const char* pn, Module* m)
 { setup_node(get_node(n), get_node(pn ? pn : ROOT_NODE), m); }
 
-void ProfilerNodeMap::register_node(std::string n, const char* pn, get_profile_stats_fn fn)
+void ProfilerNodeMap::register_node(const std::string& n, const char* pn, get_profile_stats_fn fn)
 { setup_node(get_node(n), get_node(pn ? pn : ROOT_NODE), fn); }
 
 void ProfilerNodeMap::accumulate_nodes()
@@ -144,7 +144,7 @@ void ProfilerNodeMap::reset_nodes()
 const ProfilerNode& ProfilerNodeMap::get_root()
 { return get_node(ROOT_NODE); }
 
-ProfilerNode& ProfilerNodeMap::get_node(std::string key)
+ProfilerNode& ProfilerNodeMap::get_node(const std::string& key)
 {
     auto node = nodes.emplace(key, key);
     return node.first->second;
@@ -163,7 +163,7 @@ static ProfileStats* s_profiler_stats_getter(const char* name)
     return nullptr;
 }
 
-static ProfilerNode find_node(const ProfilerNodeMap& tree, std::string name)
+static ProfilerNode find_node(const ProfilerNodeMap& tree, const std::string& name)
 {
     for ( const auto& it : tree )
         if ( it.first == name )
@@ -224,7 +224,6 @@ TEST_CASE( "get profile functor for module", "[profiler]" )
     ProfileStats the_stats;
     SpyModule m("foo", &the_stats, false);
     GetProfileFromModule functor("foo", &m);
-    auto& ref = functor;
 
     SECTION( "one" )
     {
@@ -245,7 +244,6 @@ TEST_CASE( "get profile functor for function", "[profiler]" )
     s_profiler_name = "foo";
 
     GetProfileFromFunction functor("foo", s_profiler_stats_getter);
-    auto& ref = functor;
     CHECK( functor() == &the_stats );
 }
 

@@ -359,7 +359,7 @@ bool Parameter::validate(Value& v) const
     case PT_PORT:
         if ( !range )
             return valid_int(v, "0:65535");
-    // if a range was given fall thru
+        // fall through
     case PT_INT:
         return valid_int(v, (const char*)range);
     case PT_REAL:

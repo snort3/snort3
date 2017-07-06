@@ -49,9 +49,10 @@ bool Preprocessor::convert(std::istringstream& data_stream)
 
         if (map)
         {
-            cv.set_state(map->ctor(cv));
-            if(data_stream.peek() == EOF)
+            if (data_stream.peek() == EOF)
                 cv.set_empty_args(true);
+            /* cv.set_state() deletes this ConversionState object, so must return immediately after */
+            cv.set_state(map->ctor(cv));
             return true;
         }
         data_api.failed_conversion(data_stream, "preprocessor " + keyword + ":");

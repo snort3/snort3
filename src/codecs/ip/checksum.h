@@ -101,35 +101,35 @@ inline uint16_t cksum_add(const uint16_t* buf, std::size_t len, uint32_t cksum)
         {
         case 0:
             sn = 16;
-            cksum += sp[15];
+            cksum += sp[15];    // fallthrough
         case 15:
-            cksum += sp[14];
+            cksum += sp[14];    // fallthrough
         case 14:
-            cksum += sp[13];
+            cksum += sp[13];    // fallthrough
         case 13:
-            cksum += sp[12];
+            cksum += sp[12];    // fallthrough
         case 12:
-            cksum += sp[11];
+            cksum += sp[11];    // fallthrough
         case 11:
-            cksum += sp[10];
+            cksum += sp[10];    // fallthrough
         case 10:
-            cksum += sp[9];
+            cksum += sp[9];     // fallthrough
         case 9:
-            cksum += sp[8];
+            cksum += sp[8];     // fallthrough
         case 8:
-            cksum  += sp[7];
+            cksum  += sp[7];    // fallthrough
         case 7:
-            cksum += sp[6];
+            cksum += sp[6];     // fallthrough
         case 6:
-            cksum += sp[5];
+            cksum += sp[5];     // fallthrough
         case 5:
-            cksum += sp[4];
+            cksum += sp[4];     // fallthrough
         case 4:
-            cksum += sp[3];
+            cksum += sp[3];     // fallthrough
         case 3:
-            cksum += sp[2];
+            cksum += sp[2];     // fallthrough
         case 2:
-            cksum += sp[1];
+            cksum += sp[1];     // fallthrough
         case 1:
             cksum += sp[0];
         }

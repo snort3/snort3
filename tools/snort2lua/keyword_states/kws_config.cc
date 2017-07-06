@@ -50,9 +50,10 @@ bool Config::convert(std::istringstream& data_stream)
         const ConvertMap* map = util::find_map(config::config_api, keyword);
         if (map)
         {
-            cv.set_state(map->ctor(cv));
-            if(data_stream.peek() == EOF)
+            if (data_stream.peek() == EOF)
                 cv.set_empty_args(true);
+            /* cv.set_state() deletes this ConversionState object, so must return immediately after */
+            cv.set_state(map->ctor(cv));
             return true;
         }
 

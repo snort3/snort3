@@ -1108,7 +1108,6 @@ static int detector_add_content_type_pattern(lua_State* L)
     detector.pattern = pattern;
     detector.pattern_size = strlen((char*)pattern);
     detector.app_id = appId;
-    detector.free_pattern = true;
     HttpPatternMatchers::get_instance()->insert_content_type_pattern(detector);
     AppInfoManager::get_instance().set_app_info_active(appId);
 

@@ -78,9 +78,9 @@ uint32_t FlowCheckOption::hash() const
     uint32_t a,b,c;
     const FlowCheckData* data = &config;
 
-    a = data->from_server || data->from_client << 16;
-    b = data->ignore_reassembled || data->only_reassembled << 16;
-    c = data->stateless || data->established << 16;
+    a = data->from_server | (data->from_client << 16);
+    b = data->ignore_reassembled | (data->only_reassembled << 16);
+    c = data->stateless | (data->established << 16);
 
     mix(a,b,c);
     mix_str(a,b,c,get_name());

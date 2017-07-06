@@ -735,14 +735,14 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
         case IpProtocol::TCP:
             if (asd->get_session_flags(APPID_SESSION_SYN_RST)) // TCP-specific exception
                 break;
-        // fall through to next test
+            // fallthrough
         case IpProtocol::UDP:
             // Both TCP and UDP need this test to be made
             //  against only the p->src_port of the response.
             // For all other cases the port parameter is never checked.
             if (direction != APP_ID_FROM_RESPONDER)
                 break;
-        // fall through to all other cases
+            // fallthrough
         // All protocols other than TCP and UDP come straight here.
         default:
         {

@@ -332,7 +332,8 @@ static StreamSplitter::Status pop_paf_client(Flow* ssn, PopPafData* pfdata,
                 set_server_state(ssn, pfdata->pop_state);
             }
 
-        //break;  DO NOT UNCOMMENT!!  both cases should check for a LF.
+            // both cases should check for a LF.
+            // fallthrough
 
         case POP_CMD_FIN:
             if (find_data_end_single_line(pfdata, ch, true) )

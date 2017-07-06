@@ -413,7 +413,7 @@ public:
     void show(SnortConfig*) override;
     void eval(Packet*) override;
 
-    StreamSplitter* get_splitter(bool c2s)
+    StreamSplitter* get_splitter(bool c2s) override
     { return new SslSplitter(c2s); }
 
 private:

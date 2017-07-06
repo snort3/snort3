@@ -101,7 +101,6 @@ struct DetectorHTTPPattern
 
         pattern_size = len;
         pattern = (uint8_t*)snort_strdup((const char*)pat);
-        free_pattern = true;
         sequence = seq;
         service_id = service;
         client_id = client;
@@ -118,7 +117,6 @@ struct DetectorHTTPPattern
     AppId app_id;
     unsigned pattern_size;
     uint8_t* pattern;
-    bool free_pattern;
 };
 typedef std::vector<DetectorHTTPPattern> DetectorHTTPPatterns;
 
@@ -324,6 +322,8 @@ public:
         uint32_t numPartLimit, int level);
 
 private:
+    DetectorHTTPPatterns client_agent_patterns;
+    DetectorHTTPPatterns content_type_patterns;
     DetectorHTTPPatterns host_payload_patterns;
     DetectorHTTPPatterns url_patterns;
     std::vector<DetectorAppUrlPattern*> app_url_patterns;

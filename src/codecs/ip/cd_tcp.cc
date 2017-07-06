@@ -365,7 +365,7 @@ void TcpCodec::DecodeTCPOptions(const uint8_t* start, uint32_t o_len, CodecData&
         case tcp::TcpOptCode::EOL:
             done = true;
             codec.invalid_bytes = o_len - tot_len;
-        /* fall through to the NOP case */
+            /* fallthrough */
         case tcp::TcpOptCode::NOP:
             code = 0;
             break;

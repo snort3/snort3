@@ -78,7 +78,7 @@ struct SO_PUBLIC SfIp
     bool is_loopback() const;
 	bool is_private() const;
 
-    void ntop(char* buf, int bufsize) const;
+    const char* ntop(char* buf, int bufsize) const;
     const char* ntoa() const;
 
     void obfuscate(SfCidr* ob);
@@ -449,7 +449,7 @@ inline bool SfIp::fast_equals_raw(const SfIp& ip2) const
 
 /* End of member function definitions */
 
-SO_PUBLIC void sfip_ntop(const SfIp* ip, char* buf, int bufsize);
+SO_PUBLIC const char* sfip_ntop(const SfIp* ip, char* buf, int bufsize);
 
 inline std::ostream& operator<<(std::ostream& os, const SfIp* addr)
 {
@@ -460,7 +460,7 @@ inline std::ostream& operator<<(std::ostream& os, const SfIp* addr)
 }
 
 // FIXIT-L X This should be in utils_net if anywhere, but that makes it way harder to link into unit tests
-SO_PUBLIC void snort_inet_ntop(int family, const void* ip_raw, char* buf, int bufsize);
+SO_PUBLIC const char* snort_inet_ntop(int family, const void* ip_raw, char* buf, int bufsize);
 
 #endif
 
