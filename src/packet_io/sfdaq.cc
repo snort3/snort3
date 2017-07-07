@@ -547,6 +547,11 @@ const DAQ_Stats_t* SFDAQInstance::get_stats()
     return &daq_stats;
 }
 
+int SFDAQInstance::query_flow(const DAQ_PktHdr_t* hdr, DAQ_QueryFlow_t* query)
+{
+    return daq_query_flow(daq_mod, daq_hand, hdr, query);
+}
+
 int SFDAQInstance::modify_flow_opaque(const DAQ_PktHdr_t* hdr, uint32_t opaque)
 {
     DAQ_ModFlow_t mod;

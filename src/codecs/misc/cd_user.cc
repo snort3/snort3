@@ -25,6 +25,7 @@
 
 #include "daqs/daq_user.h"
 #include "framework/codec.h"
+#include "packet_io/sfdaq.h"
 
 #define CD_NAME "user"
 #define CD_HELP_STR "support for user sessions"
@@ -96,7 +97,18 @@ static void set_flags(
 
 bool UserCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
-    const DAQ_UsrHdr_t* pci = (DAQ_UsrHdr_t*)raw.pkth->priv_ptr;
+    DAQ_QueryFlow_t query { DAQ_USR_QUERY_PCI, 0, nullptr };
+
+    if ( SFDAQ::get_local_instance()->query_flow(raw.pkth, &query) != DAQ_SUCCESS or
+        query.length != sizeof(DAQ_UsrHdr_t) )
+    {
+        return false;
+    }
+
+    const DAQ_UsrHdr_t* pci = (DAQ_UsrHdr_t*)query.value;
+
+    if ( !pci )
+        return false;
 
     if ( pci->ip_proto )
     {

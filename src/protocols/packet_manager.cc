@@ -232,10 +232,11 @@ void PacketManager::decode(
         CodecManager::s_protocols[mapped_prot]->get_name(),
         static_cast<uint16_t>(prev_prot_id), pkt, (unsigned long)codec_data.lyr_len);
 
-    s_stats[mapped_prot + stat_offset]++;
+    if ( p->num_layers > 0 )
+        s_stats[mapped_prot + stat_offset]++;
 
     // if the final protocol ID is not the default codec, a Codec failed
-    if (prev_prot_id != ProtocolId::FINISHED_DECODE)
+    if (prev_prot_id != ProtocolId::FINISHED_DECODE or p->num_layers == 0 )
     {
         if (codec_data.codec_flags & CODEC_UNSURE_ENCAP)
         {

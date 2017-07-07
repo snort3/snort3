@@ -24,6 +24,7 @@
 
 #include "daq_user.h"
 
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -67,13 +68,13 @@ typedef struct {
 
     DAQ_State state;
     DAQ_Stats_t stats;
-} FileImpl;
+} HextImpl;
 
 //-------------------------------------------------------------------------
 // utility functions
 //-------------------------------------------------------------------------
 
-static void set_c2s(FileImpl* impl, int c2s)
+static void set_c2s(HextImpl* impl, int c2s)
 {
     if ( c2s )
     {
@@ -109,7 +110,7 @@ static void parse_host(const char* s, uint32_t* addr, uint16_t* port)
     *port = atoi(s);
 }
 
-static void parse_pci(FileImpl* impl, const char* s)
+static void parse_pci(HextImpl* impl, const char* s)
 {
     parse_host(s, &impl->pci.src_addr, &impl->pci.src_port);
 
@@ -127,7 +128,7 @@ static void parse_pci(FileImpl* impl, const char* s)
         impl->pci.flags &= ~DAQ_USR_FLAG_TO_SERVER;
 }
 
-static unsigned flush(FileImpl* impl)
+static unsigned flush(HextImpl* impl)
 {
     unsigned n = impl->idx;
     impl->idx = 0;
@@ -174,7 +175,7 @@ static int unescape(char c, char* u)
 // $packet -> server
 // $client <addr> <port>
 // $server <addr> <port>
-static void parse_command(FileImpl* impl, char* s)
+static void parse_command(HextImpl* impl, char* s)
 {
     if ( !strncmp(s, "packet -> client", 16) )
         set_c2s(impl, 0);
@@ -193,7 +194,7 @@ static void parse_command(FileImpl* impl, char* s)
 }
 
 // load quoted string data into buffer up to snaplen
-static void parse_string(FileImpl* impl, char* s)
+static void parse_string(HextImpl* impl, char* s)
 {
     char t;
 
@@ -205,7 +206,7 @@ static void parse_string(FileImpl* impl, char* s)
 }
 
 // load hex data into buffer up to snaplen
-static void parse_hex(FileImpl* impl, char* s)
+static void parse_hex(HextImpl* impl, char* s)
 {
     char* t = s;
     long x = strtol(t, &s, 16);
@@ -217,7 +218,7 @@ static void parse_hex(FileImpl* impl, char* s)
     }
 }
 
-static int parse(FileImpl* impl)
+static int parse(HextImpl* impl)
 {
     char* s = impl->line;
 
@@ -256,7 +257,7 @@ static int parse(FileImpl* impl)
 // file functions
 //-------------------------------------------------------------------------
 
-static int hext_setup(FileImpl* impl)
+static int hext_setup(HextImpl* impl)
 {
     if ( !strcmp(impl->name, "tty") )
     {
@@ -278,7 +279,7 @@ static int hext_setup(FileImpl* impl)
     return 0;
 }
 
-static void hext_cleanup(FileImpl* impl)
+static void hext_cleanup(HextImpl* impl)
 {
     if ( impl->fyle != stdin )
         fclose(impl->fyle);
@@ -286,7 +287,7 @@ static void hext_cleanup(FileImpl* impl)
     impl->fyle = NULL;
 }
 
-static int hext_read(FileImpl* impl)
+static int hext_read(HextImpl* impl)
 {
     int n = 0;
 
@@ -326,7 +327,7 @@ static int hext_read(FileImpl* impl)
 //-------------------------------------------------------------------------
 
 static int get_vars (
-    FileImpl* impl, const DAQ_Config_t* cfg, char* errBuf, size_t errMax
+    HextImpl* impl, const DAQ_Config_t* cfg, char* errBuf, size_t errMax
 ) {
     const char* s = NULL;
     DAQ_Dict* entry;
@@ -348,7 +349,7 @@ static int get_vars (
     return 1;
 }
 
-static void set_pkt_hdr(FileImpl* impl, DAQ_PktHdr_t* phdr, ssize_t len)
+static void set_pkt_hdr(HextImpl* impl, DAQ_PktHdr_t* phdr, ssize_t len)
 {
     struct timeval t;
     gettimeofday(&t, NULL);
@@ -383,7 +384,7 @@ static void set_pkt_hdr(FileImpl* impl, DAQ_PktHdr_t* phdr, ssize_t len)
 }
 
 static int hext_daq_process(
-    FileImpl* impl, DAQ_Analysis_Func_t cb, void* user)
+    HextImpl* impl, DAQ_Analysis_Func_t cb, void* user)
 {
     DAQ_PktHdr_t hdr;
     int n = hext_read(impl);
@@ -407,7 +408,7 @@ static int hext_daq_process(
 
 static void hext_daq_shutdown (void* handle)
 {
-    FileImpl* impl = (FileImpl*)handle;
+    HextImpl* impl = (HextImpl*)handle;
 
     if ( impl->name )
         free(impl->name);
@@ -423,7 +424,7 @@ static void hext_daq_shutdown (void* handle)
 static int hext_daq_initialize (
     const DAQ_Config_t* cfg, void** handle, char* errBuf, size_t errMax)
 {
-    FileImpl* impl = calloc(1, sizeof(*impl));
+    HextImpl* impl = calloc(1, sizeof(*impl));
 
     if ( !impl )
     {
@@ -467,7 +468,7 @@ static int hext_daq_initialize (
 
 static int hext_daq_start (void* handle)
 {
-    FileImpl* impl = (FileImpl*)handle;
+    HextImpl* impl = (HextImpl*)handle;
 
     if ( hext_setup(impl) )
         return DAQ_ERROR;
@@ -478,7 +479,7 @@ static int hext_daq_start (void* handle)
 
 static int hext_daq_stop (void* handle)
 {
-    FileImpl* impl = (FileImpl*)handle;
+    HextImpl* impl = (HextImpl*)handle;
     hext_cleanup(impl);
     impl->state = DAQ_STATE_STOPPED;
     return DAQ_SUCCESS;
@@ -504,7 +505,7 @@ static int hext_daq_acquire (
 {
     (void)meta;
 
-    FileImpl* impl = (FileImpl*)handle;
+    HextImpl* impl = (HextImpl*)handle;
     int hit = 0, miss = 0;
     impl->stop = 0;
 
@@ -530,33 +531,33 @@ static int hext_daq_acquire (
 
 static int hext_daq_breakloop (void* handle)
 {
-    FileImpl* impl = (FileImpl*)handle;
+    HextImpl* impl = (HextImpl*)handle;
     impl->stop = 1;
     return DAQ_SUCCESS;
 }
 
 static DAQ_State hext_daq_check_status (void* handle)
 {
-    FileImpl* impl = (FileImpl*)handle;
+    HextImpl* impl = (HextImpl*)handle;
     return impl->state;
 }
 
 static int hext_daq_get_stats (void* handle, DAQ_Stats_t* stats)
 {
-    FileImpl* impl = (FileImpl*)handle;
+    HextImpl* impl = (HextImpl*)handle;
     *stats = impl->stats;
     return DAQ_SUCCESS;
 }
 
 static void hext_daq_reset_stats (void* handle)
 {
-    FileImpl* impl = (FileImpl*)handle;
+    HextImpl* impl = (HextImpl*)handle;
     memset(&impl->stats, 0, sizeof(impl->stats));
 }
 
 static int hext_daq_get_snaplen (void* handle)
 {
-    FileImpl* impl = (FileImpl*)handle;
+    HextImpl* impl = (HextImpl*)handle;
     return impl->snaplen;
 }
 
@@ -569,19 +570,19 @@ static uint32_t hext_daq_get_capabilities (void* handle)
 
 static int hext_daq_get_datalink_type(void *handle)
 {
-    FileImpl* impl = (FileImpl*)handle;
+    HextImpl* impl = (HextImpl*)handle;
     return impl->dlt;
 }
 
 static const char* hext_daq_get_errbuf (void* handle)
 {
-    FileImpl* impl = (FileImpl*)handle;
+    HextImpl* impl = (HextImpl*)handle;
     return impl->error;
 }
 
 static void hext_daq_set_errbuf (void* handle, const char* s)
 {
-    FileImpl* impl = (FileImpl*)handle;
+    HextImpl* impl = (HextImpl*)handle;
     DPE(impl->error, "%s", s ? s : "");
 }
 
@@ -596,6 +597,20 @@ static int hext_daq_set_filter (void* handle, const char* filter)
 {
     (void)handle;
     (void)filter;
+    return DAQ_ERROR_NOTSUP;
+}
+
+static int hext_query_flow(void *handle, const DAQ_PktHdr_t *hdr, DAQ_QueryFlow_t *query)
+{
+    HextImpl* impl = (HextImpl*)handle;
+    assert(hdr->priv_ptr == &impl->pci);  // sanity check
+
+    if ( query->type == DAQ_USR_QUERY_PCI )
+    {
+        query->value = &impl->pci;
+        query->length = sizeof(impl->pci);
+        return DAQ_SUCCESS;
+    }
     return DAQ_ERROR_NOTSUP;
 }
 
@@ -632,6 +647,7 @@ DAQ_Module_t hext_daq_module_data =
     .hup_prep = NULL,
     .hup_apply = NULL,
     .hup_post = NULL,
-    .dp_add_dc = NULL
+    .dp_add_dc = NULL,
+    .query_flow = hext_query_flow
 };
 

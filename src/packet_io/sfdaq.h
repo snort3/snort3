@@ -38,28 +38,36 @@ class SFDAQInstance
 public:
     SFDAQInstance(const char* intf);
     ~SFDAQInstance();
+
     bool configure(const SnortConfig*);
+    void set_metacallback(DAQ_Meta_Func_t);
+
+    bool start();
+    bool was_started();
+    bool stop();
+    void reload();
     void abort();
-    const char* get_interface_spec();
+
     int get_base_protocol();
+    const char* get_interface_spec();
+    const DAQ_Stats_t* get_stats();
+
     bool can_inject();
     bool can_inject_raw();
     bool can_replace();
     bool can_start_unprivileged();
     bool can_whitelist();
-    bool start();
-    bool was_started();
-    bool stop();
-    void reload();
-    void set_metacallback(DAQ_Meta_Func_t);
+
     int acquire(int max, DAQ_Analysis_Func_t);
     int inject(const DAQ_PktHdr_t*, int rev, const uint8_t* buf, uint32_t len);
     bool break_loop(int error);
-    const DAQ_Stats_t* get_stats();
+
+    SO_PUBLIC int query_flow(const DAQ_PktHdr_t*, DAQ_QueryFlow_t*);
     int modify_flow_opaque(const DAQ_PktHdr_t*, uint32_t opaque);
     int add_expected(const Packet* ctrlPkt, const SfIp* cliIP, uint16_t cliPort,
             const SfIp* srvIP, uint16_t srvPort, IpProtocol, unsigned timeout_ms,
             unsigned /* flags */);
+
 private:
     bool set_filter(const char*);
     std::string interface_spec;
@@ -75,26 +83,32 @@ class SFDAQ
 public:
     static void load(const SnortConfig*);
     static void unload();
+
     static void print_types(std::ostream&);
     static void init(const SnortConfig*);
     static void term();
-    static bool forwarding_packet(const DAQ_PktHdr_t*);
+
     static const char* get_type();
-    SO_PUBLIC static uint32_t get_snap_len();
-    static bool unprivileged();
     static const char* get_input_spec(const SnortConfig*, unsigned instance_id);
     static const char* default_type();
-    // FIXIT-M X Temporary thread-local instance helpers to be removed when no longer needed
-    static void set_local_instance(SFDAQInstance*);
-    static SFDAQInstance* get_local_instance();
-    SO_PUBLIC static const char* get_interface_spec();
-    SO_PUBLIC static int get_base_protocol();
+    static const DAQ_Stats_t* get_stats();
+
+    static bool unprivileged();
     static bool can_inject();
     static bool can_inject_raw();
     static bool can_replace();
+
+    // FIXIT-M X Temporary thread-local instance helpers to be removed when no longer needed
+    static void set_local_instance(SFDAQInstance*);
+
+    SO_PUBLIC static SFDAQInstance* get_local_instance();
+    SO_PUBLIC static const char* get_interface_spec();
+    SO_PUBLIC static int get_base_protocol();
+    SO_PUBLIC static uint32_t get_snap_len();
+
     static int inject(const DAQ_PktHdr_t*, int rev, const uint8_t* buf, uint32_t len);
+    static bool forwarding_packet(const DAQ_PktHdr_t*);
     static bool break_loop(int error);
-    static const DAQ_Stats_t* get_stats();
 };
 
 #endif

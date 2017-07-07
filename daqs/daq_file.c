@@ -24,6 +24,7 @@
 
 #include "daq_user.h"
 
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
@@ -362,6 +363,20 @@ static int file_daq_set_filter (void* handle, const char* filter)
     return DAQ_ERROR_NOTSUP;
 }
 
+static int file_query_flow(void *handle, const DAQ_PktHdr_t *hdr, DAQ_QueryFlow_t *query)
+{
+    FileImpl* impl = (FileImpl*)handle;
+    assert(hdr->priv_ptr == &impl->pci);  // sanity check
+
+    if ( query->type == DAQ_USR_QUERY_PCI )
+    {
+        query->value = &impl->pci;
+        query->length = sizeof(impl->pci);
+        return DAQ_SUCCESS;
+    }
+    return DAQ_ERROR_NOTSUP;
+}
+
 //-------------------------------------------------------------------------
 
 #ifdef BUILDING_SO
@@ -395,6 +410,7 @@ DAQ_Module_t file_daq_module_data =
     .hup_prep = NULL,
     .hup_apply = NULL,
     .hup_post = NULL,
-    .dp_add_dc = NULL
+    .dp_add_dc = NULL,
+    .query_flow = file_query_flow
 };
 

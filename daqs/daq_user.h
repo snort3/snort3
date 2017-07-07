@@ -27,11 +27,15 @@
 /* for raw payload only */
 #define DLT_USER 230
 
+/* in: DAQ_QueryFlow_t.type */
+#define DAQ_USR_QUERY_PCI       1000
+
+/* DAQ_UsrHdr_t.flags */
 #define DAQ_USR_FLAG_TO_SERVER  0x01
 #define DAQ_USR_FLAG_START_FLOW 0x02
 #define DAQ_USR_FLAG_END_FLOW   0x04
 
-/* user-related DAQs set priv_ptr to this */
+/* out: DAQ_QueryFlow_t.value */
 typedef struct
 {
     uint32_t src_addr;
