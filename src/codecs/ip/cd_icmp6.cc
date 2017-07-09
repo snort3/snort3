@@ -39,14 +39,12 @@ namespace
 {
 const PegInfo pegs[]
 {
-    { "bad_icmp4_checksum", "nonzero ipcm4 checksums" },
-    { "bad_icmp6_checksum", "nonzero ipcm6 checksums" },
+    { "bad_icmp6_checksum", "nonzero icmp6 checksums" },
     { nullptr, nullptr }
 };
 
 struct Stats
 {
-    PegCount bad_ip4_cksum;
     PegCount bad_ip6_cksum;
 };
 
@@ -54,7 +52,7 @@ static THREAD_LOCAL Stats stats;
 
 static const RuleMap icmp6_rules[] =
 {
-    { DECODE_ICMP6_HDR_TRUNC, "truncated ICMP6 header" },
+    { DECODE_ICMP6_HDR_TRUNC, "truncated ICMPv6 header" },
     { DECODE_ICMP6_TYPE_OTHER, "ICMPv6 type not decoded" },
     { DECODE_ICMP6_DST_MULTICAST, "ICMPv6 packet to multicast address" },
     { DECODE_ICMPV6_TOO_BIG_BAD_MTU,
@@ -73,6 +71,7 @@ static const RuleMap icmp6_rules[] =
       "ICMPv6 packet of type 1 (destination unreachable) with non-RFC 4443 code" },
     { DECODE_ICMPV6_NODE_INFO_BAD_CODE,
       "ICMPv6 node info query/response packet with a code greater than 2" },
+    { DECODE_ICMP6_NOT_IP6, "ICMPv6 not encapsulated in IPv6" },
     { 0, nullptr }
 };
 
@@ -117,38 +116,28 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         return false;
     }
 
+    if ( !snort.ip_api.get_ip6h() /* FIXIT-L && verify prior layer == ip6 */ )
+    {
+        codec_event(codec, DECODE_ICMP6_NOT_IP6);
+        return false;
+    }
+
     const icmp::Icmp6Hdr* const icmp6h = reinterpret_cast<const icmp::Icmp6Hdr*>(raw.data);
 
-    /* Do checksums */
-    if (SnortConfig::icmp_checksums())
+    if ( SnortConfig::icmp_checksums() )
     {
-        uint16_t csum;
-        PegCount* bad_cksum_cnt;
+        checksum::Pseudoheader6 ph6;
+        COPY4(ph6.sip, snort.ip_api.get_src()->get_ip6_ptr());
+        COPY4(ph6.dip, snort.ip_api.get_dst()->get_ip6_ptr());
+        ph6.zero = 0;
+        ph6.protocol = codec.ip6_csum_proto;
+        ph6.len = htons((u_short)raw.len);
 
-        if (snort.ip_api.is_ip4())
-        {
-            bad_cksum_cnt = &stats.bad_ip4_cksum;
-            csum = checksum::cksum_add((uint16_t*)(icmp6h), raw.len);
-        }
-        /* IPv6 traffic */
-        else
-        {
-            // make sure we have a valid header
-            assert(snort.ip_api.get_ip6h());
+        uint16_t csum = checksum::icmp_cksum((uint16_t*)(icmp6h), raw.len, &ph6);
 
-            bad_cksum_cnt = &stats.bad_ip6_cksum;
-            checksum::Pseudoheader6 ph6;
-            COPY4(ph6.sip, snort.ip_api.get_src()->get_ip6_ptr());
-            COPY4(ph6.dip, snort.ip_api.get_dst()->get_ip6_ptr());
-            ph6.zero = 0;
-            ph6.protocol = codec.ip6_csum_proto;
-            ph6.len = htons((u_short)raw.len);
-
-            csum = checksum::icmp_cksum((uint16_t*)(icmp6h), raw.len, &ph6);
-        }
         if (csum && !codec.is_cooked())
         {
-            (*bad_cksum_cnt)++;
+            stats.bad_ip6_cksum++;
             snort.decode_flags |= DECODE_ERR_CKSUM_ICMP;
             return false;
         }
