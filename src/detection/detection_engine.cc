@@ -208,15 +208,18 @@ bool DetectionEngine::get_check_tags()
 
 void DetectionEngine::idle()
 {
-    while ( offloader->count() )
+    if (offloader)
     {
-        trace_logf(detection, "%" PRIu64 " de::sleep\n", pc.total_from_daq);
-        const struct timespec blip = { 0, 1 };
-        nanosleep(&blip, nullptr);
-        onload();
+        while ( offloader->count() )
+        {
+            trace_logf(detection, "%" PRIu64 " de::sleep\n", pc.total_from_daq);
+            const struct timespec blip = { 0, 1 };
+            nanosleep(&blip, nullptr);
+            onload();
+        }
+        trace_logf(detection, "%" PRIu64 " de::idle (r=%d)\n", pc.total_from_daq, offloader->count());
+        offloader->stop();
     }
-    trace_logf(detection, "%" PRIu64 " de::idle (r=%d)\n", pc.total_from_daq, offloader->count());
-    offloader->stop();
 }
 
 void DetectionEngine::onload(Flow* flow)
