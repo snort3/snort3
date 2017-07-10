@@ -215,11 +215,23 @@ bool IpsManager::option_set(
         return false;
 
     assert(!strcmp(current_keyword.c_str(), key));
+    std::string munge;
 
-    if ( !*val && current_params->is_positional() )
+    if ( current_params->is_positional() )
     {
-        val = opt;  // eg: gid:116; key="gid" and opt="116"
-        opt = "";
+        if ( !*val )  // eg: gid:116; opt="116", val="" -> opt="", val="116"
+        {
+            val = opt;
+            opt = "";
+        }
+        else       // eg: dsize:> 80; opt=">", val="80" -> opt="", val="> 80"
+        {
+            munge = opt;
+            munge += " ";
+            munge += val;
+            val = munge.c_str();
+            opt = "";
+        }
     }
 
     if ( !set_arg(current_module, current_params, opt, val, sc) )
