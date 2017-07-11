@@ -28,6 +28,7 @@
 
 #include "framework/base_api.h"
 #include "framework/decode_data.h"
+#include "utils/cpp_macros.h"
 
 struct TextLog;
 struct _daq_pkthdr;
@@ -54,9 +55,7 @@ struct ICMPHdr;
 }
 
 // Used by root codecs to add their DLT to their HELP string
-#define STRINGIFY(x) #x
-#define ARG_STRINGIFY(x) STRINGIFY(x)
-#define ADD_DLT(help, x) help " (DLT " ARG_STRINGIFY(x) ")"
+#define ADD_DLT(help, x) help " (DLT " STRINGIFY_MX(x) ")"
 
 constexpr uint8_t MIN_TTL = 64;
 constexpr uint8_t MAX_TTL = 255;

@@ -1,6 +1,8 @@
 #ifndef BUILD_H
 #define BUILD_H
 
+#include "utils/cpp_macros.h"
+
 //-----------------------------------------------//
 //     ____                   _                  //
 //    / ___| _ __   ___  _ __| |_  _     _       //
@@ -10,7 +12,13 @@
 //                                               //
 //-----------------------------------------------//
 
-#define BUILD "236"
+#define BUILD_NUMBER 236
+
+#ifndef EXTRABUILD
+#define BUILD STRINGIFY_MX(BUILD_NUMBER)
+#else
+#define BUILD STRINGIFY_MX(PPCAT_MX(BUILD_NUMBER, EXTRABUILD))
+#endif
 
 #endif
 

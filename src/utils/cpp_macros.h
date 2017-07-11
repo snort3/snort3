@@ -22,7 +22,39 @@
 
 // Miscellaneous C preprocessor macros
 
+// Turn x into a string literal without expanding macro definitions
+// Example:
+//      #define BUILD 123
+//      STRINGIFY(BUILD)
+// Result:
+//      "BUILD"
 #define STRINGIFY(x) #x
+
+// Turn x into a string literal after macro-expanding it
+// Example:
+//      #define BUILD 123
+//      STRINGIFY_MX(BUILD)
+// Result:
+//      "123"
+#define STRINGIFY_MX(x) STRINGIFY(x)
+
+// Concatenate preprocessor tokens x and y without expanding macro definitions
+// Example:
+//      #define ice snow
+//      #define cream cone
+//      PPCAT(ice, cream)
+// Result:
+//      icecream
+#define PPCAT(x, y) x ## y
+
+// Concatenate preprocessor tokens x and y after macro-expanding them
+// Example:
+//      #define ice snow
+//      #define cream cone
+//      PPCAT_MX(ice, cream)
+// Result:
+//      snowcone
+#define PPCAT_MX(x, y) PPCAT(x, y)
 
 // Pair of macros to temporarily enable and then disable warnings for structures
 // being automatically padded.  Currently implemented for Clang and GCC >= 5.0.
