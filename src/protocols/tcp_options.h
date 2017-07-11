@@ -91,11 +91,13 @@ const uint8_t TCPOLEN_CC_ECHO = 6;  /* page 17 of rfc1644 */
 const uint8_t TCPOLEN_TRAILER_CSUM = 3;
 const uint8_t TCPOLEN_MD5SIG = 18;
 
+// FIXIT-L reduce all these classes to a simple pointer based approach
+// that doesn't require any reinterpret casts (see also ipv4_options.h)
 struct TcpOption
 {
     TcpOptCode code;
     uint8_t len;
-    uint8_t data[13];  // arbitrary number. choosing 13 to align with 128 bits
+    uint8_t data[40];  // maximum possible
 
     inline uint8_t get_len() const
     { return ((uint8_t)code <= 1) ? 1 : len; }

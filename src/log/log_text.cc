@@ -142,8 +142,6 @@ void Log2ndHeader(TextLog* log, Packet* p)
 
 static void LogIpOptions(TextLog* log, const ip::IpOptionIterator& options)
 {
-    int print_offset;
-    int init_offset = TextLog_Tell(log);
     unsigned c = 0;
 
     for (const auto& opt : options)
@@ -160,14 +158,6 @@ static void LogIpOptions(TextLog* log, const ip::IpOptionIterator& options)
 
     for (auto op : options)
     {
-        print_offset = TextLog_Tell(log);
-
-        if ((print_offset - init_offset) > 60)
-        {
-            TextLog_Puts(log, "\nIP Options => ");
-            init_offset = TextLog_Tell(log);
-        }
-
         switch (op.code)
         {
         case ip::IPOptionCodes::RR:
@@ -212,22 +202,19 @@ static void LogIpOptions(TextLog* log, const ip::IpOptionIterator& options)
             break;
 
         default:
-            TextLog_Print(log, "Opt %d: ", (int)op.code);
+            // the only cases where op.len is invalid were handled aboved
+            // op.len includes code and length bytes but data does not
+            TextLog_Print(log, "Type %u, Len %u", op.code, op.len);
 
-            // the only cases where len is invalid were handled aboved
-            const uint8_t opt_len = op.len;
-            int j;
+            if ( op.len <= 2 )
+                break;
 
-            for (j = 0; (j + 1) < opt_len; j += 2)
-            {
-                TextLog_Print(log, "%02X%02X ",op.data[j],
-                    op.data[j+1]);
-            }
+            TextLog_Print(log, " |%02X", op.data[0]);
 
-            // since we're skipping by two, if (j+1) == opt_len,
-            // we will not have printed j
-            if (j < opt_len)
-                TextLog_Print(log, "%02X", op.data[j]);
+            for ( unsigned j = 1, n = op.len - 2; j < n; ++j )
+                TextLog_Print(log, " %02X", op.data[j]);
+
+            TextLog_Print(log, "| ");
             break;
         }
     }
@@ -460,15 +447,6 @@ static void LogTcpOptions(TextLog* log, const tcp::TcpOptIterator& opt_iter)
 
     for (const tcp::TcpOption& opt : opt_iter)
     {
-#if 0
-        print_offset = TextLog_Tell(log);
-
-        if ((print_offset - init_offset) > 60)
-        {
-            TextLog_Puts(log, "\nTCP Options => ");
-            init_offset = TextLog_Tell(log);
-        }
-#endif
         switch (opt.code)
         {
         case tcp::TcpOptCode::MAXSEG:
@@ -541,30 +519,18 @@ static void LogTcpOptions(TextLog* log, const tcp::TcpOptIterator& opt_iter)
             break;
 
         default:
-        {
-            const int opt_len = opt.len - 2;
+            TextLog_Print(log, " Kind %u, Len %u", opt.code, opt.len);
 
-            if (opt_len > 0)
-            {
-                TextLog_Print(log, "  Opt %d (%d):", opt.code,
-                    (int)opt_len);
+            if ( opt.len <= 2 )
+                break;
 
-                for (int i = 0; (i + 1) < opt_len; i += 2)
-                {
-                    TextLog_Print(log, " %02X%02X",  opt.data[i],
-                        opt.data[i+1]);
-                }
+            TextLog_Print(log, " |%02X",  opt.data[0]);
 
-                // if there is an odd number of bytes
-                if (opt_len & 1)
-                    TextLog_Print(log, " %02x", opt.data[opt_len - 1]);
-            }
-            else
-            {
-                TextLog_Print(log, "  Opt %d", opt.code);
-            }
+            for ( unsigned i = 1, n = opt.len - 2; i < n; ++i )
+                TextLog_Print(log, " %02X",  opt.data[i]);
+
+            TextLog_Print(log, "|");
             break;
-        }
         }
     }
 }

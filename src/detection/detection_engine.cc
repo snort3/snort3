@@ -128,12 +128,11 @@ void DetectionEngine::finish_packet(Packet* p)
 {
     log_events(p);
     clear_events(p);
+    p->release_helpers();
 
-    if ( p->endianness )
-    {
-        delete p->endianness;
-        p->endianness = nullptr;
-    }
+    // clean up any failed rebuilds
+    const IpsContext* c = Snort::get_switcher()->get_next();
+    c->packet->release_helpers();
 }
 
 uint8_t* DetectionEngine::get_buffer(unsigned& max)

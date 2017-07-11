@@ -44,11 +44,13 @@ enum class IPOptionCodes : std::uint8_t
     ANY = 0xff,
 };
 
+// FIXIT-L reduce all these classes to a simple pointer based approach
+// that doesn't require any reinterpret casts (see also tcp_options.h)
 struct IpOptions
 {
     IPOptionCodes code;
     uint8_t len;
-    uint8_t data[6];  // arbitrary number. choosing six to align with 64 bits
+    uint8_t data[40];  // maximum possible
 
     inline uint8_t get_len() const
     { return ((uint8_t)code <= 1) ? 1 : len; }

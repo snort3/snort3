@@ -219,6 +219,7 @@ struct SO_PUBLIC Packet
     bool get_ip_proto_next(uint8_t& lyr, IpProtocol& proto) const;
 
     void reset();
+    void release_helpers();
 
     bool is_from_client() const
     { return (packet_flags & PKT_FROM_CLIENT) != 0; }

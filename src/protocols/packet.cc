@@ -55,24 +55,17 @@ Packet::Packet(bool packet_data)
 
 Packet::~Packet()
 {
-    if (obfuscator)
-        delete obfuscator;
+    release_helpers();
+
     if (allocated)
         delete[] (uint8_t*)pkth;
+
     delete[] layers;
 }
 
 void Packet::reset()
 {
-    if ( obfuscator )
-        delete obfuscator;
-
-    if ( endianness )
-        delete endianness;  // FIXIT-L dce2 leaks in a few cases
-
     flow = nullptr;
-    endianness = nullptr;
-    obfuscator = nullptr;
     packet_flags = 0;
     xtradata_mask = 0;
     proto_bits = 0;
@@ -81,7 +74,23 @@ void Packet::reset()
     ip_proto_next = IpProtocol::PROTO_NOT_SET;
     disable_inspect = false;
 
+    release_helpers();
     ptrs.reset();
+}
+
+void Packet::release_helpers()
+{
+    if ( obfuscator )
+    {
+        delete obfuscator;
+        obfuscator = nullptr;
+    }
+
+    if ( endianness )
+    {
+        delete endianness;
+        endianness = nullptr;
+    }
 }
 
 bool Packet::get_ip_proto_next(uint8_t& lyr, IpProtocol& proto) const
