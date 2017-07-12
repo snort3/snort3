@@ -85,7 +85,7 @@ int ModbusUnitOption::eval(Cursor&, Packet* p)
         return DETECTION_OPTION_NO_MATCH;
 
     ModbusFlowData* mfd =
-        (ModbusFlowData*)p->flow->get_flow_data(ModbusFlowData::flow_id);
+        (ModbusFlowData*)p->flow->get_flow_data(ModbusFlowData::inspector_id);
 
     if ( mfd and unit == mfd->ssn_data.unit )
         return DETECTION_OPTION_MATCH;

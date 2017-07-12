@@ -56,8 +56,8 @@
 #include "ft_main.h"
 #include "ftpp_return_codes.h"
 
-unsigned FtpFlowData::flow_id = 0;
-unsigned TelnetFlowData::flow_id = 0;
+unsigned FtpFlowData::inspector_id = 0;
+unsigned TelnetFlowData::inspector_id = 0;
 
 /*
  * Function: TelnetResetsession(TELNET_SESSION *session)

@@ -37,10 +37,10 @@ class SO_PUBLIC FileFlows : public FlowData
 {
 public:
 
-    FileFlows(Flow* f) : FlowData(flow_id), flow(f) { }
+    FileFlows(Flow* f) : FlowData(file_flow_data_id), flow(f) { }
     ~FileFlows();
     static void init()
-    { flow_id = FlowData::get_flow_id(); }
+    { file_flow_data_id = FlowData::create_flow_data_id(); }
 
     // Factory method to get file flows
     static FileFlows* get_file_flows(Flow*);
@@ -70,7 +70,7 @@ public:
         int data_size, uint64_t offset, FileDirection);
 
     //void handle_retransmit(Packet*) override;
-    static unsigned flow_id;
+    static unsigned file_flow_data_id;
 
 private:
     void init_file_context(FileDirection, FileContext*);

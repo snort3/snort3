@@ -169,10 +169,10 @@ public:
     ~SmtpFlowData();
 
     static void init()
-    { flow_id = FlowData::get_flow_id(); }
+    { inspector_id = FlowData::create_flow_data_id(); }
 
 public:
-    static unsigned flow_id;
+    static unsigned inspector_id;
     SMTPData session;
 };
 

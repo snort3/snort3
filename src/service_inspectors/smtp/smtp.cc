@@ -175,7 +175,7 @@ const PegInfo smtp_peg_names[] =
 static void snort_smtp(SMTP_PROTO_CONF* GlobalConf, Packet* p);
 static void SMTP_ResetState(Flow*);
 
-SmtpFlowData::SmtpFlowData() : FlowData(flow_id)
+SmtpFlowData::SmtpFlowData() : FlowData(inspector_id)
 { memset(&session, 0, sizeof(session)); }
 
 SmtpFlowData::~SmtpFlowData()
@@ -190,10 +190,10 @@ SmtpFlowData::~SmtpFlowData()
         smtpstats.conc_sessions--;
 }
 
-unsigned SmtpFlowData::flow_id = 0;
+unsigned SmtpFlowData::inspector_id = 0;
 static SMTPData* get_session_data(Flow* flow)
 {
-    SmtpFlowData* fd = (SmtpFlowData*)flow->get_flow_data(SmtpFlowData::flow_id);
+    SmtpFlowData* fd = (SmtpFlowData*)flow->get_flow_data(SmtpFlowData::inspector_id);
     return fd ? &fd->session : NULL;
 }
 

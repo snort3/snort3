@@ -169,16 +169,16 @@ struct DNSData
 class DnsFlowData : public FlowData
 {
 public:
-    DnsFlowData() : FlowData(flow_id)
+    DnsFlowData() : FlowData(inspector_id)
     { memset(&session, 0, sizeof(session)); }
 
     ~DnsFlowData() { }
 
     static void init()
-    { flow_id = FlowData::get_flow_id(); }
+    { inspector_id = FlowData::create_flow_data_id(); }
 
 public:
-    static unsigned flow_id;
+    static unsigned inspector_id;
     DNSData session;
 };
 

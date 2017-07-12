@@ -103,7 +103,7 @@ int GtpInfoOption::eval(Cursor& c, Packet* p)
     if ( !p or !p->flow )
         return DETECTION_OPTION_NO_MATCH;
 
-    GtpFlowData* gfd = (GtpFlowData*)p->flow->get_flow_data(GtpFlowData::flow_id);
+    GtpFlowData* gfd = (GtpFlowData*)p->flow->get_flow_data(GtpFlowData::inspector_id);
 
     if ( !gfd or !gfd->ropts.gtp_infoElements )
         return DETECTION_OPTION_NO_MATCH;

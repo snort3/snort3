@@ -49,7 +49,7 @@ static unsigned int ProcessSSHProtocolVersionExchange(SSH_PROTO_CONF*, SSHData*,
 static unsigned int ProcessSSHKeyExchange(SSHData*, Packet*, uint8_t, unsigned int);
 static unsigned int ProcessSSHKeyInitExchange(SSHData*, Packet*, uint8_t, unsigned int);
 
-unsigned SshFlowData::flow_id = 0;
+unsigned SshFlowData::inspector_id = 0;
 
 static SSHData* SetNewSSHData(Packet* p)
 {
@@ -60,7 +60,7 @@ static SSHData* SetNewSSHData(Packet* p)
 
 static SSHData* get_session_data(Flow* flow)
 {
-    SshFlowData* fd = (SshFlowData*)flow->get_flow_data(SshFlowData::flow_id);
+    SshFlowData* fd = (SshFlowData*)flow->get_flow_data(SshFlowData::inspector_id);
     return fd ? &fd->session : NULL;
 }
 

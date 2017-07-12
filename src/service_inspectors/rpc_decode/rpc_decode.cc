@@ -86,14 +86,14 @@ public:
     ~RpcFlowData();
 
     static void init()
-    { flow_id = FlowData::get_flow_id(); }
+    { inspector_id = FlowData::create_flow_data_id(); }
 
 public:
-    static unsigned flow_id;
+    static unsigned inspector_id;
     RpcSsnData session;
 };
 
-unsigned RpcFlowData::flow_id = 0;
+unsigned RpcFlowData::inspector_id = 0;
 
 typedef enum _RpcStatus
 {
@@ -587,7 +587,7 @@ static inline void RpcSsnClean(RpcSsnData* rsdata)
     RpcBufClean(&rsdata->frag);
 }
 
-RpcFlowData::RpcFlowData() : FlowData(flow_id)
+RpcFlowData::RpcFlowData() : FlowData(inspector_id)
 {
     memset(&session, 0, sizeof(session));
 }
@@ -931,7 +931,7 @@ void RpcDecode::eval(Packet* p)
 
     if ( p->flow )
     {
-        RpcFlowData* fd = (RpcFlowData*)p->flow->get_flow_data(RpcFlowData::flow_id);
+        RpcFlowData* fd = (RpcFlowData*)p->flow->get_flow_data(RpcFlowData::inspector_id);
 
         if ( fd )
             rsdata = &fd->session;

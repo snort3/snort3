@@ -39,14 +39,14 @@ THREAD_LOCAL ModbusStats modbus_stats;
 // flow stuff
 //-------------------------------------------------------------------------
 
-unsigned ModbusFlowData::flow_id = 0;
+unsigned ModbusFlowData::inspector_id = 0;
 
 void ModbusFlowData::init()
 {
-    flow_id = FlowData::get_flow_id();
+    inspector_id = FlowData::create_flow_data_id();
 }
 
-ModbusFlowData::ModbusFlowData() : FlowData(flow_id)
+ModbusFlowData::ModbusFlowData() : FlowData(inspector_id)
 {
     reset();
 }
@@ -76,7 +76,7 @@ void Modbus::eval(Packet* p)
     assert(p->has_tcp_data());
 
     ModbusFlowData* mfd =
-        (ModbusFlowData*)p->flow->get_flow_data(ModbusFlowData::flow_id);
+        (ModbusFlowData*)p->flow->get_flow_data(ModbusFlowData::inspector_id);
 
     if ( !p->is_full_pdu() )
     {

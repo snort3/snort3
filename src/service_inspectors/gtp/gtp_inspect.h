@@ -43,7 +43,7 @@ public:
     static void init();
 
 public:
-    static unsigned flow_id;
+    static unsigned inspector_id;
     GTP_Roptions ropts;
 };
 

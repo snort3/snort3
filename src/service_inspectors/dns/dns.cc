@@ -57,7 +57,7 @@ const PegInfo dns_peg_names[] =
  */
 static void snort_dns(Packet* p);
 
-unsigned DnsFlowData::flow_id = 0;
+unsigned DnsFlowData::inspector_id = 0;
 
 DNSData udpSessionData;
 
@@ -98,7 +98,7 @@ static DNSData* get_dns_session_data(Packet* p, bool from_server)
         return &udpSessionData;
     }
 
-    fd = (DnsFlowData*)((p->flow)->get_flow_data(DnsFlowData::flow_id));
+    fd = (DnsFlowData*)((p->flow)->get_flow_data(DnsFlowData::inspector_id));
     return fd ? &fd->session : NULL;
 }
 

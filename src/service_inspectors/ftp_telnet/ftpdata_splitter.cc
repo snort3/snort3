@@ -33,7 +33,7 @@ void FtpDataSplitter::restart_scan()
 
 static void set_ftp_flush_flag(Flow* flow)
 {
-    FtpDataFlowData* fdfd = (FtpDataFlowData*)flow->get_flow_data(FtpDataFlowData::flow_id);
+    FtpDataFlowData* fdfd = (FtpDataFlowData*)flow->get_flow_data(FtpDataFlowData::inspector_id);
     if ( fdfd )
         fdfd->session.packet_flags |= FTPDATA_FLG_FLUSH;
 }
@@ -77,7 +77,7 @@ bool FtpDataSplitter::finish(Flow* flow)
     {
         status = false;
 
-        FtpDataFlowData* fdfd = (FtpDataFlowData*)flow->get_flow_data(FtpDataFlowData::flow_id);
+        FtpDataFlowData* fdfd = (FtpDataFlowData*)flow->get_flow_data(FtpDataFlowData::inspector_id);
         if ( fdfd )
         {
             if ( !fdfd->eof_handled )

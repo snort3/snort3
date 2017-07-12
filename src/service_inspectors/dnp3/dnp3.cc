@@ -35,15 +35,15 @@
 THREAD_LOCAL Dnp3Stats dnp3_stats;
 THREAD_LOCAL ProfileStats dnp3_perf_stats;
 
-Dnp3FlowData::Dnp3FlowData() : FlowData(flow_id)
+Dnp3FlowData::Dnp3FlowData() : FlowData(inspector_id)
 {
 }
 
-unsigned Dnp3FlowData::flow_id = 0;
+unsigned Dnp3FlowData::inspector_id = 0;
 
 static dnp3_session_data_t* get_session_data(Flow* flow)
 {
-    Dnp3FlowData* fd = (Dnp3FlowData*)flow->get_flow_data(Dnp3FlowData::flow_id);
+    Dnp3FlowData* fd = (Dnp3FlowData*)flow->get_flow_data(Dnp3FlowData::inspector_id);
     return fd ? &fd->dnp3_session : nullptr;
 }
 

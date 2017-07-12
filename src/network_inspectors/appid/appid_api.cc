@@ -150,7 +150,7 @@ bool AppIdApi::is_ssl_session_decrypted(AppIdSession* asd)
 
 AppIdSession* AppIdApi::get_appid_data(Flow* flow)
 {
-    AppIdSession* asd = (AppIdSession*)flow->get_flow_data(AppIdSession::flow_id);
+    AppIdSession* asd = (AppIdSession*)flow->get_flow_data(AppIdSession::inspector_id);
 
     return (asd && asd->common.flow_type == APPID_FLOW_TYPE_NORMAL) ?
            asd : nullptr;
@@ -498,7 +498,7 @@ uint32_t AppIdApi::produce_ha_state(Flow* flow, uint8_t* buf)
     assert(flow);
     assert(buf);
     AppIdSessionHA* appHA = (AppIdSessionHA*)buf;
-    AppIdSession* asd = (AppIdSession*)(flow->get_flow_data(AppIdSession::flow_id));
+    AppIdSession* asd = (AppIdSession*)(flow->get_flow_data(AppIdSession::inspector_id));
 
     if ( asd && ( get_flow_type(asd) == APPID_FLOW_TYPE_NORMAL ) )
     {
@@ -531,7 +531,7 @@ uint32_t AppIdApi::consume_ha_state(Flow* flow, const uint8_t* buf, uint8_t, IpP
     if (appHA->flags & APPID_HA_FLAGS_APP)
     {
         AppIdSession* asd =
-            (AppIdSession*)(flow->get_flow_data(AppIdSession::flow_id));
+            (AppIdSession*)(flow->get_flow_data(AppIdSession::inspector_id));
 
         if (!asd)
         {

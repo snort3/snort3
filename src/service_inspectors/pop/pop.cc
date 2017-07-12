@@ -96,7 +96,7 @@ const PegInfo pop_peg_names[] =
 static void snort_pop(POP_PROTO_CONF* GlobalConf, Packet* p);
 static void POP_ResetState(Flow*);
 
-PopFlowData::PopFlowData() : FlowData(flow_id)
+PopFlowData::PopFlowData() : FlowData(inspector_id)
 { memset(&session, 0, sizeof(session)); }
 
 PopFlowData::~PopFlowData()
@@ -105,10 +105,10 @@ PopFlowData::~PopFlowData()
         delete(session.mime_ssn);
 }
 
-unsigned PopFlowData::flow_id = 0;
+unsigned PopFlowData::inspector_id = 0;
 static POPData* get_session_data(Flow* flow)
 {
-    PopFlowData* fd = (PopFlowData*)flow->get_flow_data(PopFlowData::flow_id);
+    PopFlowData* fd = (PopFlowData*)flow->get_flow_data(PopFlowData::inspector_id);
     return fd ? &fd->session : NULL;
 }
 

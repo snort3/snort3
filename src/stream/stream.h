@@ -105,7 +105,7 @@ public:
     // when it arrives.
     static int ignore_flow(
         const Packet* ctrlPkt, PktType, IpProtocol, const SfIp* srcIP, uint16_t srcPort,
-        const SfIp* dstIP, uint16_t dstPort, char direction, uint32_t flow_id);
+        const SfIp* dstIP, uint16_t dstPort, char direction, uint32_t flowdata_id);
 
     // Resume inspection for flow.
     // FIXIT-L does resume work only for a flow that has been stopped by call to stop_inspection?
@@ -176,10 +176,10 @@ public:
     static FlowData* get_flow_data(
         PktType type, IpProtocol proto,
         const SfIp* a1, uint16_t p1, const SfIp* a2, uint16_t p2,
-        uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId, unsigned flow_id);
+        uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId, unsigned flowdata_id);
 
     // Get pointer to application data for a flow using the FlowKey as the lookup criteria
-    static FlowData* get_flow_data(const FlowKey*, unsigned flow_id);
+    static FlowData* get_flow_data(const FlowKey*, unsigned flowdata_id);
 
     // Get pointer to a session flow instance for a flow based on the lookup tuples for
     // cases where Snort does not have an active packet that is relevant.

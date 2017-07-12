@@ -263,8 +263,8 @@ public:
     bool is_http2 = false;
     SEARCH_SUPPORT_TYPE search_support_type = UNKNOWN_SEARCH_ENGINE;
     bool in_expected_cache = false;
-    static unsigned flow_id;
-    static void init() { flow_id = FlowData::get_flow_id(); }
+    static unsigned inspector_id;
+    static void init() { inspector_id = FlowData::create_flow_data_id(); }
 
     void set_session_flags(uint64_t flags)
     {

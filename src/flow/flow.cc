@@ -33,7 +33,7 @@
 #include "utils/stats.h"
 #include "utils/util.h"
 
-unsigned FlowData::flow_id = 0;
+unsigned FlowData::flow_data_id = 0;
 
 FlowData::FlowData(unsigned u, Inspector* ph)
 {

@@ -31,7 +31,7 @@ using namespace HttpEnums;
 
 bool HttpStreamSplitter::finish(Flow* flow)
 {
-    HttpFlowData* session_data = (HttpFlowData*)flow->get_flow_data(HttpFlowData::http_flow_id);
+    HttpFlowData* session_data = (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
     // FIXIT-M - this assert has been changed to check for null session data and return false if so
     //           due to lack of reliable feedback to stream that scan has been called...if that is
     //           addressed in stream reassembly rewrite this can be reverted to an assert

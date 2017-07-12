@@ -38,14 +38,14 @@
 // flow stuff
 //-------------------------------------------------------------------------
 
-unsigned GtpFlowData::flow_id = 0;
+unsigned GtpFlowData::inspector_id = 0;
 
 void GtpFlowData::init()
 {
-    flow_id = FlowData::get_flow_id();
+    inspector_id = FlowData::create_flow_data_id();
 }
 
-GtpFlowData::GtpFlowData() : FlowData(flow_id)
+GtpFlowData::GtpFlowData() : FlowData(inspector_id)
 {
     memset(&ropts, 0, sizeof(ropts));
 }

@@ -68,7 +68,7 @@ const char* WhiteActionOption[] =
  */
 static void snort_reputation(ReputationConfig* GlobalConf, Packet* p);
 
-unsigned ReputationFlowData::flow_id = 0;
+unsigned ReputationFlowData::inspector_id = 0;
 
 static ReputationData* SetNewReputationData(Flow* flow)
 {
@@ -80,7 +80,7 @@ static ReputationData* SetNewReputationData(Flow* flow)
 static ReputationData* get_session_data(Flow* flow)
 {
     ReputationFlowData* fd = (ReputationFlowData*)flow->get_flow_data(
-        ReputationFlowData::flow_id);
+        ReputationFlowData::inspector_id);
 
     return fd ? &fd->session : nullptr;
 }

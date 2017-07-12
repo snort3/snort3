@@ -702,7 +702,7 @@ TEST(appid_api, produce_ha_state)
     SfIp ip;
     ip.pton(AF_INET, "192.168.1.222");
     val = appid_api.consume_ha_state(flow, (uint8_t*)&appHA, 0, IpProtocol::TCP, &ip, 1066);
-    mock_session = (AppIdSession*)flow->get_flow_data(AppIdSession::flow_id);
+    mock_session = (AppIdSession*)flow->get_flow_data(AppIdSession::inspector_id);
     CHECK_TRUE(mock_session);
     CHECK_TRUE(mock_session->tp_app_id == appHA.appId[0]);
     CHECK_TRUE(mock_session->service_app_id == appHA.appId[1]);
@@ -721,7 +721,7 @@ TEST(appid_api, produce_ha_state)
     mock_session = nullptr;
     mock_flow_data= nullptr;
     val = appid_api.consume_ha_state(flow, (uint8_t*)&appHA, 0, IpProtocol::TCP, &ip, 1066);
-    mock_session = (AppIdSession*)flow->get_flow_data(AppIdSession::flow_id);
+    mock_session = (AppIdSession*)flow->get_flow_data(AppIdSession::inspector_id);
     CHECK_TRUE(mock_session);
     uint64_t flags = mock_session->get_session_flags(APPID_SESSION_CLIENT_DETECTED |
         APPID_SESSION_NOT_A_SERVICE | APPID_SESSION_SERVICE_DETECTED);

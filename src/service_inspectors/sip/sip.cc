@@ -38,7 +38,7 @@ THREAD_LOCAL ProfileStats sipPerfStats;
 static void snort_sip(SIP_PROTO_CONF* GlobalConf, Packet* p);
 static void FreeSipData(void*);
 
-unsigned SipFlowData::flow_id = 0;
+unsigned SipFlowData::inspector_id = 0;
 
 SipFlowData::~SipFlowData()
 {
@@ -54,7 +54,7 @@ static SIPData* SetNewSIPData(Packet* p)
 
 SIPData* get_sip_session_data(const Flow* flow)
 {
-    SipFlowData* fd = (SipFlowData*)flow->get_flow_data(SipFlowData::flow_id);
+    SipFlowData* fd = (SipFlowData*)flow->get_flow_data(SipFlowData::inspector_id);
     return fd ? &fd->session : NULL;
 }
 

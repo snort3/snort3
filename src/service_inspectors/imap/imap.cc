@@ -137,7 +137,7 @@ const PegInfo imap_peg_names[] =
     { nullptr, nullptr }
 };
 
-ImapFlowData::ImapFlowData() : FlowData(flow_id)
+ImapFlowData::ImapFlowData() : FlowData(inspector_id)
 { memset(&session, 0, sizeof(session)); }
 
 ImapFlowData::~ImapFlowData()
@@ -146,10 +146,10 @@ ImapFlowData::~ImapFlowData()
         delete(session.mime_ssn);
 }
 
-unsigned ImapFlowData::flow_id = 0;
+unsigned ImapFlowData::inspector_id = 0;
 static IMAPData* get_session_data(Flow* flow)
 {
-    ImapFlowData* fd = (ImapFlowData*)flow->get_flow_data(ImapFlowData::flow_id);
+    ImapFlowData* fd = (ImapFlowData*)flow->get_flow_data(ImapFlowData::inspector_id);
     return fd ? &fd->session : NULL;
 }
 

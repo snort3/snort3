@@ -35,7 +35,7 @@
 using namespace HttpEnums;
 
 // Stubs whose sole purpose is to make the test code link
-unsigned FlowData::flow_id = 0;
+unsigned FlowData::flow_data_id = 0;
 FlowData::FlowData(unsigned, Inspector*) {}
 FlowData::~FlowData() {}
 int DetectionEngine::queue_event(unsigned int, unsigned int, RuleType) { return 0; }

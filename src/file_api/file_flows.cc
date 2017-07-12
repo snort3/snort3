@@ -37,12 +37,12 @@
 #include "file_lib.h"
 #include "file_service.h"
 
-unsigned FileFlows::flow_id = 0;
+unsigned FileFlows::file_flow_data_id = 0;
 
 FileFlows* FileFlows::get_file_flows(Flow* flow)
 {
 
-    FileFlows* fd = (FileFlows*)flow->get_flow_data(FileFlows::flow_id);
+    FileFlows* fd = (FileFlows*)flow->get_flow_data(FileFlows::file_flow_data_id);
 
     if (fd)
         return fd;

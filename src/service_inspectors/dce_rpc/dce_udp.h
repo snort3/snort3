@@ -199,10 +199,10 @@ public:
 
     static void init()
     {
-        flow_id = FlowData::get_flow_id();
+        inspector_id = FlowData::create_flow_data_id();
     }
 
-    static unsigned flow_id;
+    static unsigned inspector_id;
     DCE2_UdpSsnData dce2_udp_session;
 };
 

@@ -605,7 +605,7 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
     bool isTpAppidDiscoveryDone = false;
     int direction = 0;
 
-    AppIdSession* asd = (AppIdSession*)p->flow->get_flow_data(AppIdSession::flow_id);
+    AppIdSession* asd = (AppIdSession*)p->flow->get_flow_data(AppIdSession::inspector_id);
     if ( !set_network_attributes(asd, p, protocol, direction) )
         return;
 

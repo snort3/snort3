@@ -42,7 +42,7 @@
 THREAD_LOCAL ProfileStats sslPerfStats;
 THREAD_LOCAL SslStats sslstats;
 
-unsigned SslFlowData::flow_id = 0;
+unsigned SslFlowData::inspector_id = 0;
 
 const PegInfo ssl_peg_names[] =
 {
@@ -77,7 +77,7 @@ static SSLData* SetNewSSLData(Packet* p)
 
 SSLData* get_ssl_session_data(Flow* flow)
 {
-    SslFlowData* fd = (SslFlowData*)flow->get_flow_data(SslFlowData::flow_id);
+    SslFlowData* fd = (SslFlowData*)flow->get_flow_data(SslFlowData::inspector_id);
     return fd ? &fd->session : NULL;
 }
 

@@ -95,16 +95,16 @@ struct TELNET_SESSION
 class TelnetFlowData : public FlowData
 {
 public:
-    TelnetFlowData() : FlowData(flow_id)
+    TelnetFlowData() : FlowData(inspector_id)
     { memset(&session, 0, sizeof(session)); }
 
     ~TelnetFlowData() { }
 
     static void init()
-    { flow_id = FlowData::get_flow_id(); }
+    { inspector_id = FlowData::create_flow_data_id(); }
 
 public:
-    static unsigned flow_id;
+    static unsigned inspector_id;
     TELNET_SESSION session;
 };
 
@@ -180,17 +180,17 @@ void FTPFreesession(FTP_SESSION*);
 class FtpFlowData : public FlowData
 {
 public:
-    FtpFlowData() : FlowData(flow_id)
+    FtpFlowData() : FlowData(inspector_id)
     { memset(&session, 0, sizeof(session)); }
 
     ~FtpFlowData()
     { FTPFreesession(&session); }
 
     static void init()
-    { flow_id = FlowData::get_flow_id(); }
+    { inspector_id = FlowData::create_flow_data_id(); }
 
 public:
-    static unsigned flow_id;
+    static unsigned inspector_id;
     FTP_SESSION session;
 };
 
@@ -221,13 +221,13 @@ public:
     ~FtpDataFlowData();
 
     static void init()
-    { flow_id = FlowData::get_flow_id(); }
+    { inspector_id = FlowData::create_flow_data_id(); }
 
     void handle_expected(Packet*) override;
     void handle_eof(Packet*) override;
 
 public:
-    static unsigned flow_id;
+    static unsigned inspector_id;
     FTP_DATA_SESSION session;
     bool eof_handled = false;
 };

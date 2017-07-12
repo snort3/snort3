@@ -411,7 +411,7 @@ bool ModbusDecode(Packet* p)
         return false;
 
     ModbusFlowData* mfd =
-        (ModbusFlowData*)p->flow->get_flow_data(ModbusFlowData::flow_id);
+        (ModbusFlowData*)p->flow->get_flow_data(ModbusFlowData::inspector_id);
 
     /* Lay the header struct over the payload */
     header = (modbus_header_t*)p->data;

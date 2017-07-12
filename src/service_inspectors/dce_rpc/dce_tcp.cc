@@ -31,7 +31,7 @@
 #include "dce_tcp_module.h"
 #include "dce_tcp_paf.h"
 
-Dce2TcpFlowData::Dce2TcpFlowData() : FlowData(flow_id)
+Dce2TcpFlowData::Dce2TcpFlowData() : FlowData(inspector_id)
 {
 }
 
@@ -52,11 +52,11 @@ THREAD_LOCAL ProfileStats dce2_tcp_pstat_co_frag;
 THREAD_LOCAL ProfileStats dce2_tcp_pstat_co_reass;
 THREAD_LOCAL ProfileStats dce2_tcp_pstat_co_ctx;
 
-unsigned Dce2TcpFlowData::flow_id = 0;
+unsigned Dce2TcpFlowData::inspector_id = 0;
 
 DCE2_TcpSsnData* get_dce2_tcp_session_data(Flow* flow)
 {
-    Dce2TcpFlowData* fd = (Dce2TcpFlowData*)flow->get_flow_data(Dce2TcpFlowData::flow_id);
+    Dce2TcpFlowData* fd = (Dce2TcpFlowData*)flow->get_flow_data(Dce2TcpFlowData::inspector_id);
     return fd ? &fd->dce2_tcp_session : nullptr;
 }
 

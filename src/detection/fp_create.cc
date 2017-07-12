@@ -659,8 +659,8 @@ static int fpCreateInitRuleMap(
             prm->prmNumSrcGroups++;
 
             /* Add this port group to the src table at each port that uses it */
-            PortIteratorData pit(prm->prmSrcPort, po->group);
-            PortObject2Iterate(po, PortIteratorData::set, &pit);
+            PortIteratorData pit_data(prm->prmSrcPort, po->group);
+            PortObject2Iterate(po, PortIteratorData::set, &pit_data);
         }
     }
 
@@ -683,8 +683,8 @@ static int fpCreateInitRuleMap(
             prm->prmNumDstGroups++;
 
             /* Add this port group to the src table at each port that uses it */
-            PortIteratorData pit(prm->prmDstPort, po->group);
-            PortObject2Iterate(po, PortIteratorData::set, &pit);
+            PortIteratorData pit_data(prm->prmDstPort, po->group);
+            PortObject2Iterate(po, PortIteratorData::set, &pit_data);
         }
     }
 

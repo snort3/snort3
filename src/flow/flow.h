@@ -116,8 +116,8 @@ public:
     unsigned get_id()
     { return id; }
 
-    static unsigned get_flow_id()
-    { return ++flow_id; }
+    static unsigned create_flow_data_id()
+    { return ++flow_data_id; }
 
     virtual void handle_expected(Packet*) { }
     virtual void handle_retransmit(Packet*) { }
@@ -128,7 +128,7 @@ public:  // FIXIT-L privatize
     FlowData* prev;
 
 private:
-    static unsigned flow_id;
+    static unsigned flow_data_id;
     Inspector* handler;
     unsigned id;
 };

@@ -55,7 +55,7 @@ static void DCE2_ClCleanTracker(DCE2_ClTracker* clt)
 //-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
-Dce2UdpFlowData::Dce2UdpFlowData() : FlowData(flow_id)
+Dce2UdpFlowData::Dce2UdpFlowData() : FlowData(inspector_id)
 {
 }
 
@@ -64,11 +64,11 @@ Dce2UdpFlowData::~Dce2UdpFlowData()
     DCE2_ClCleanTracker(&dce2_udp_session.cl_tracker);
 }
 
-unsigned Dce2UdpFlowData::flow_id = 0;
+unsigned Dce2UdpFlowData::inspector_id = 0;
 
 DCE2_UdpSsnData* get_dce2_udp_session_data(Flow* flow)
 {
-    Dce2UdpFlowData* fd = (Dce2UdpFlowData*)flow->get_flow_data(Dce2UdpFlowData::flow_id);
+    Dce2UdpFlowData* fd = (Dce2UdpFlowData*)flow->get_flow_data(Dce2UdpFlowData::inspector_id);
     return fd ? &fd->dce2_udp_session : nullptr;
 }
 

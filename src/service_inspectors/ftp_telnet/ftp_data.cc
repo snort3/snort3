@@ -80,7 +80,7 @@ static void FTPDataProcess(
     if (Active::packet_force_dropped())
     {
         FtpFlowData* fd = (FtpFlowData*)Stream::get_flow_data(
-                            &data_ssn->ftp_key, FtpFlowData::flow_id);
+                            &data_ssn->ftp_key, FtpFlowData::inspector_id);
 
         FTP_SESSION* ftp_ssn = fd ? &fd->session : NULL;
 
@@ -107,7 +107,7 @@ static int SnortFTPData(Packet* p)
         return -1;
 
     FtpDataFlowData* fdfd = (FtpDataFlowData*)
-        p->flow->get_flow_data(FtpDataFlowData::flow_id);
+        p->flow->get_flow_data(FtpDataFlowData::inspector_id);
 
     FTP_DATA_SESSION* data_ssn = fdfd ? &fdfd->session : nullptr;
 
@@ -126,7 +126,7 @@ static int SnortFTPData(Packet* p)
          * to figure out what to do. */
 
         FtpFlowData* ffd = (FtpFlowData*)Stream::get_flow_data(
-            &data_ssn->ftp_key, FtpFlowData::flow_id);
+            &data_ssn->ftp_key, FtpFlowData::inspector_id);
 
         FTP_SESSION* ftp_ssn = ffd ? &ffd->session : NULL;
 
@@ -185,9 +185,9 @@ static int SnortFTPData(Packet* p)
 // flow data stuff
 //-------------------------------------------------------------------------
 
-unsigned FtpDataFlowData::flow_id = 0;
+unsigned FtpDataFlowData::inspector_id = 0;
 
-FtpDataFlowData::FtpDataFlowData(Packet* p) : FlowData(flow_id)
+FtpDataFlowData::FtpDataFlowData(Packet* p) : FlowData(inspector_id)
 {
     memset(&session, 0, sizeof(session));
 

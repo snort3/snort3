@@ -133,7 +133,7 @@ int ModbusFuncOption::eval(Cursor&, Packet* p)
         return DETECTION_OPTION_NO_MATCH;
 
     ModbusFlowData* mfd =
-        (ModbusFlowData*)p->flow->get_flow_data(ModbusFlowData::flow_id);
+        (ModbusFlowData*)p->flow->get_flow_data(ModbusFlowData::inspector_id);
 
     if ( mfd and func == mfd->ssn_data.func )
         return DETECTION_OPTION_MATCH;

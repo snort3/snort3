@@ -52,7 +52,7 @@ public:
     }
 
 public:
-    static unsigned flow_id;
+    static unsigned inspector_id;
     modbus_session_data_t ssn_data;
 };
 

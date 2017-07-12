@@ -1310,7 +1310,7 @@ static void DCE2_SmbDataFree(DCE2_SmbSsnData* ssd)
     }
 }
 
-Dce2SmbFlowData::Dce2SmbFlowData() : FlowData(flow_id)
+Dce2SmbFlowData::Dce2SmbFlowData() : FlowData(inspector_id)
 {
 }
 
@@ -1319,11 +1319,11 @@ Dce2SmbFlowData::~Dce2SmbFlowData()
     DCE2_SmbDataFree(&dce2_smb_session);
 }
 
-unsigned Dce2SmbFlowData::flow_id = 0;
+unsigned Dce2SmbFlowData::inspector_id = 0;
 
 DCE2_SmbSsnData* get_dce2_smb_session_data(Flow* flow)
 {
-    Dce2SmbFlowData* fd = (Dce2SmbFlowData*)flow->get_flow_data(Dce2SmbFlowData::flow_id);
+    Dce2SmbFlowData* fd = (Dce2SmbFlowData*)flow->get_flow_data(Dce2SmbFlowData::inspector_id);
     return fd ? &fd->dce2_smb_session : nullptr;
 }
 

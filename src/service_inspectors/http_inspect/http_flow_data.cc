@@ -30,13 +30,13 @@
 
 using namespace HttpEnums;
 
-unsigned HttpFlowData::http_flow_id = 0;
+unsigned HttpFlowData::inspector_id = 0;
 
 #ifdef REG_TEST
 uint64_t HttpFlowData::instance_count = 0;
 #endif
 
-HttpFlowData::HttpFlowData() : FlowData(http_flow_id)
+HttpFlowData::HttpFlowData() : FlowData(inspector_id)
 {
 #ifdef REG_TEST
     if (HttpTestManager::use_test_output())

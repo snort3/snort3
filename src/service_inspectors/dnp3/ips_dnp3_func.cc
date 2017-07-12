@@ -83,7 +83,7 @@ int Dnp3FuncOption::eval(Cursor&, Packet* p)
     if ((p->has_tcp_data() && !p->is_full_pdu()) || !p->flow || !p->dsize)
         return DETECTION_OPTION_NO_MATCH;
 
-    Dnp3FlowData* fd = (Dnp3FlowData*)p->flow->get_flow_data(Dnp3FlowData::flow_id);
+    Dnp3FlowData* fd = (Dnp3FlowData*)p->flow->get_flow_data(Dnp3FlowData::inspector_id);
 
     if (!fd)
         return DETECTION_OPTION_NO_MATCH;

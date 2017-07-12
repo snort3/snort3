@@ -41,8 +41,8 @@ class HttpFlowData : public FlowData
 public:
     HttpFlowData();
     ~HttpFlowData();
-    static unsigned http_flow_id;
-    static void init() { http_flow_id = FlowData::get_flow_id(); }
+    static unsigned inspector_id;
+    static void init() { inspector_id = FlowData::create_flow_data_id(); }
 
     friend class HttpInspect;
     friend class HttpMsgSection;

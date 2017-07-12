@@ -45,7 +45,7 @@
 #include "target_based/snort_protocols.h"
 #include "time/packet_time.h"
 
-unsigned AppIdSession::flow_id = 0;
+unsigned AppIdSession::inspector_id = 0;
 THREAD_LOCAL uint32_t AppIdSession::appid_flow_data_id = 0;
 
 const uint8_t* service_strstr(const uint8_t* haystack, unsigned haystack_len,
@@ -124,7 +124,7 @@ AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto, 
 }
 
 AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t port)
-    : FlowData(flow_id), protocol(proto)
+    : FlowData(inspector_id), protocol(proto)
 {
     service_ip.clear();
     session_id = ++appid_flow_data_id;

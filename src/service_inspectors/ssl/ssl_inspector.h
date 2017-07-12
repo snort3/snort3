@@ -39,16 +39,16 @@ struct SSLData
 class SslFlowData : public FlowData
 {
 public:
-    SslFlowData() : FlowData(flow_id)
+    SslFlowData() : FlowData(inspector_id)
     { memset(&session, 0, sizeof(session)); }
 
     ~SslFlowData() { }
 
     static void init()
-    { flow_id = FlowData::get_flow_id(); }
+    { inspector_id = FlowData::create_flow_data_id(); }
 
 public:
-    static unsigned flow_id;
+    static unsigned inspector_id;
     SSLData session;
 };
 //Function: API to get the ssl flow data from the packet flow.

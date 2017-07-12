@@ -120,12 +120,12 @@ FlowKey* Stream::get_flow_key(Packet* p)
 //-------------------------------------------------------------------------
 
 FlowData* Stream::get_flow_data(
-    const FlowKey* key, unsigned flow_id)
+    const FlowKey* key, unsigned flowdata_id)
 {
     Flow* flow = get_flow(key);
     if (!flow)
         return nullptr;
-    return flow->get_flow_data(flow_id);
+    return flow->get_flow_data(flowdata_id);
 }
 
 FlowData* Stream::get_flow_data(
@@ -133,7 +133,7 @@ FlowData* Stream::get_flow_data(
     const SfIp* srcIP, uint16_t srcPort,
     const SfIp* dstIP, uint16_t dstPort,
     uint16_t vlan, uint32_t mplsId,
-    uint16_t addressSpaceID, unsigned flow_id)
+    uint16_t addressSpaceID, unsigned flowdata_id)
 {
     Flow* flow = get_flow(
         type, proto,
@@ -143,7 +143,7 @@ FlowData* Stream::get_flow_data(
     if (!flow)
         return nullptr;
 
-    return flow->get_flow_data(flow_id);
+    return flow->get_flow_data(flowdata_id);
 }
 
 //-------------------------------------------------------------------------
@@ -178,10 +178,10 @@ int Stream::ignore_flow(
     const Packet* ctrlPkt, PktType type, IpProtocol ip_proto,
     const SfIp* srcIP, uint16_t srcPort,
     const SfIp* dstIP, uint16_t dstPort,
-    char direction, uint32_t flow_id)
+    char direction, uint32_t flowdata_id)
 {
     assert(flow_con);
-    FlowData* fd = new FlowData(flow_id);
+    FlowData* fd = new FlowData(flowdata_id);
 
     return flow_con->add_expected(
         ctrlPkt, type, ip_proto, srcIP, srcPort, dstIP, dstPort, direction, fd);

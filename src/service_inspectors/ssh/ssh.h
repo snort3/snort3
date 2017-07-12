@@ -45,16 +45,16 @@ struct SSHData
 class SshFlowData : public FlowData
 {
 public:
-    SshFlowData() : FlowData(flow_id)
+    SshFlowData() : FlowData(inspector_id)
     { memset(&session, 0, sizeof(session)); }
 
     ~SshFlowData() { }
 
     static void init()
-    { flow_id = FlowData::get_flow_id(); }
+    { inspector_id = FlowData::create_flow_data_id(); }
 
 public:
-    static unsigned flow_id;
+    static unsigned inspector_id;
     SSHData session;
 };
 

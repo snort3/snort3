@@ -65,7 +65,7 @@ bool HttpInspect::configure(SnortConfig* )
 InspectSection HttpInspect::get_latest_is(const Packet* p)
 {
     const HttpFlowData* const session_data =
-        (HttpFlowData*)p->flow->get_flow_data(HttpFlowData::http_flow_id);
+        (HttpFlowData*)p->flow->get_flow_data(HttpFlowData::inspector_id);
 
     if ((session_data == nullptr) || (session_data->latest_section == nullptr))
         return HttpEnums::IS_NONE;
@@ -76,7 +76,7 @@ InspectSection HttpInspect::get_latest_is(const Packet* p)
 SourceId HttpInspect::get_latest_src(const Packet* p)
 {
     const HttpFlowData* const session_data =
-        (HttpFlowData*)p->flow->get_flow_data(HttpFlowData::http_flow_id);
+        (HttpFlowData*)p->flow->get_flow_data(HttpFlowData::inspector_id);
 
     if ((session_data == nullptr) || (session_data->latest_section == nullptr))
         return HttpEnums::SRC__NOT_COMPUTE;
@@ -111,7 +111,7 @@ bool HttpInspect::http_get_buf(unsigned id, uint64_t sub_id, uint64_t form, Pack
     InspectionBuffer& b)
 {
     const HttpFlowData* const session_data =
-        (HttpFlowData*)p->flow->get_flow_data(HttpFlowData::http_flow_id);
+        (HttpFlowData*)p->flow->get_flow_data(HttpFlowData::inspector_id);
 
     if ((session_data == nullptr) || (session_data->latest_section == nullptr))
         return false;
@@ -152,7 +152,7 @@ bool HttpInspect::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBu
 const Field& HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow,
     SourceId source_id, bool buf_owner) const
 {
-    HttpFlowData* session_data = (HttpFlowData*)flow->get_flow_data(HttpFlowData::http_flow_id);
+    HttpFlowData* session_data = (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
     assert(session_data != nullptr);
 
     HttpModule::increment_peg_counts(PEG_INSPECT);
@@ -221,7 +221,7 @@ const Field& HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flo
 void HttpInspect::clear(Packet* p)
 {
     HttpFlowData* session_data =
-        (HttpFlowData*)p->flow->get_flow_data(HttpFlowData::http_flow_id);
+        (HttpFlowData*)p->flow->get_flow_data(HttpFlowData::inspector_id);
 
     if (session_data == nullptr)
         return;
