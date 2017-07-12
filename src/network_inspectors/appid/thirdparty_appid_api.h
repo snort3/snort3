@@ -22,8 +22,8 @@
 #ifndef THIRDPARTY_APPID_API_H
 #define THIRDPARTY_APPID_API_H
 
+#include "application_ids.h"
 #include "thirdparty_appid_types.h"
-#include "flow/flow.h"
 
 struct Packet;
 

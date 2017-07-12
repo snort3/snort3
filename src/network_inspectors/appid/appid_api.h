@@ -22,6 +22,7 @@
 #ifndef APPID_API_H
 #define APPID_API_H
 
+#include "application_ids.h"
 #include "flow/flow.h"
 
 enum class IpProtocol : uint8_t;
@@ -87,6 +88,8 @@ enum class IpProtocol : uint8_t;
     APPID_SESSION_NO_TPI | \
     APPID_SESSION_SERVICE_DETECTED | \
     APPID_SESSION_PORT_SERVICE_DONE)
+const uint64_t APPID_SESSION_ALL_FLAGS = 0xFFFFFFFFFFFFFFFFULL;
+
 class AppIdSession;
 
 enum APPID_FLOW_TYPE
@@ -135,8 +138,7 @@ struct FpSMBData
     uint32_t flags;
 };
 
-//maximum number of appIds replicated for a flow/session
-#define APPID_HA_SESSION_APP_NUM_MAX 8
+#define APPID_HA_SESSION_APP_NUM_MAX 8    // maximum number of appIds replicated for a flow/session
 
 struct AppIdSessionHA
 {
@@ -178,7 +180,9 @@ public:
     SO_PRIVATE AppIdApi() { }
     SO_PRIVATE ~AppIdApi() { }
 
+    AppIdSession* get_appid_session(Flow*);
     const char* get_application_name(int32_t app_id);
+    const char* get_application_name(Flow*, bool from_client);
     AppId get_application_id(const char* appName);
     AppId get_service_app_id(AppIdSession*);
     AppId get_port_service_app_id(AppIdSession*);
@@ -234,7 +238,6 @@ public:
     uint32_t produce_ha_state(Flow* flow, uint8_t* buf);
     uint32_t consume_ha_state(Flow* flow, const uint8_t* buf, uint8_t length, IpProtocol,
         SfIp*, uint16_t initiatorPort);
-    AppIdSession* get_appid_data(Flow*);
     char* get_dns_query(AppIdSession*, uint8_t* query_len);
     uint16_t get_dns_query_offset(AppIdSession*);
     uint16_t get_dns_record_type(AppIdSession*);

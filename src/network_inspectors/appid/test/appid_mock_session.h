@@ -161,6 +161,8 @@ void* AppIdSession::remove_flow_data(unsigned type)
     return data;
 }
 
+void AppIdSession::set_application_ids(AppId, AppId, AppId, AppId) { }
+
 AppId AppIdSession::pick_service_app_id()
 {
     return APPID_UT_ID;

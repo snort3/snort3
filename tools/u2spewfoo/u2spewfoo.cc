@@ -413,7 +413,7 @@ static void event2_dump(u2record* record)
         "\tsig id: %u\tgen id: %u\trevision: %u\t classification: %u\n"
         "\tpriority: %u\tip source: %u.%u.%u.%u\tip destination: %u.%u.%u.%u\n"
         "\tsrc port: %hu\tdest port: %hu\tip_proto: %hhu\timpact_flag: %hhu\tblocked: %hhu\n"
-        "\tmpls label: %u\tvland id: %hu\tpolicy id: %hu\n",
+        "\tmpls label: %u\tvlan id: %hu\tpolicy id: %hu\tappid: %s\n",
         event.sensor_id, event.event_id,
         event.event_second, event.event_microsecond,
         event.signature_id, event.generator_id,
@@ -422,7 +422,7 @@ static void event2_dump(u2record* record)
         TO_IP(event.ip_destination), event.sport_itype,
         event.dport_icode, to_utype(event.ip_proto),
         event.impact_flag, event.blocked,
-        event.mpls_label, event.vlanId, event.pad2);
+        event.mpls_label, event.vlanId, event.pad2, event.app_name);
 }
 
 static void event2_6_dump(u2record* record)
@@ -474,11 +474,11 @@ static void event2_6_dump(u2record* record)
     inet_ntop(AF_INET6, &event.ip_destination, ip6buf, INET6_ADDRSTRLEN);
     printf("ip destination: %s\n"
         "\tsrc port: %hu\tdest port: %hu\tip_proto: %hhu\timpact_flag: %hhu\tblocked: %hhu\n"
-        "\tmpls label: %u\tvland id: %hu\tpolicy id: %hu\n",
+        "\tmpls label: %u\tvlan id: %hu\tpolicy id: %hu\tappid: %s\n",
         ip6buf, event.sport_itype,
         event.dport_icode, to_utype(event.ip_proto),
         event.impact_flag, event.blocked,
-        event.mpls_label, event.vlanId,event.pad2);
+        event.mpls_label, event.vlanId, event.pad2, event.app_name);
 }
 
 #define LOG_CHARS 16

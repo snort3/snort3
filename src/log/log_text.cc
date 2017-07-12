@@ -32,6 +32,7 @@
 #include "detection/signature.h"
 #include "events/event.h"
 #include "main/snort_config.h"
+#include "network_inspectors/appid/appid_api.h"
 #include "packet_io/sfdaq.h"
 #include "protocols/eth.h"
 #include "protocols/gre.h"
@@ -76,6 +77,27 @@ void LogPriorityData(TextLog* log, const Event& e)
     }
 
     TextLog_Print(log, "[Priority: %d] ", e.sig_info->priority);
+}
+
+/*--------------------------------------------------------------------
+ * Purpose: Prints out AppID data associated with an alert
+ *
+ *--------------------------------------------------------------------
+ */
+bool LogAppID(TextLog* log, Packet* p)
+{
+    if ( p->flow )
+    {
+        const char* app_name = appid_api.get_application_name(p->flow, p->is_from_client());
+
+        if ( app_name )
+        {
+            TextLog_Print(log, "[AppID: %s] ", app_name);
+            return true;
+        }
+    }
+
+    return false;
 }
 
 /*--------------------------------------------------------------------

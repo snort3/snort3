@@ -140,7 +140,6 @@ static void* mlmpMatchPatternCustom(tMlmpTree* rootNode, tMlmpPattern* inputPatt
     tPatternNode* (*callback)(const tMatchedPatternList*, const uint8_t*))
 {
     tMatchedPatternList* mp = nullptr;
-    tMatchedPatternList* tmpMp;
     void* data = nullptr;
     void* tmpData = nullptr;
     tPatternPrimaryNode* primaryNode;
@@ -156,7 +155,7 @@ static void* mlmpMatchPatternCustom(tMlmpTree* rootNode, tMlmpPattern* inputPatt
 
     while (mp)
     {
-        tmpMp = mp;
+        tMatchedPatternList* tmpMp = mp;
         mp = mp->next;
         snort_free(tmpMp);
     }
@@ -276,7 +275,7 @@ static void dumpTreesRecursively(tMlmpTree* rootNode)
     char prefix[41];
     uint32_t prefixSize;
 
-    prefixSize = 4*(rootNode->level)+2;
+    prefixSize = 4 * (rootNode->level) + 2;
     if (prefixSize > 40)
         prefixSize = 40;
 
@@ -435,7 +434,6 @@ static int patternMatcherCallback(void* id, void*, int match_end_pos, void* data
     tMatchedPatternList* prevNode;
     tMatchedPatternList* tmpList;
     tMatchedPatternList* newNode;
-    int cmp;
 
     /*sort matches by patternId, and then by partId or pattern// */
 
@@ -454,7 +452,7 @@ static int patternMatcherCallback(void* id, void*, int match_end_pos, void* data
         tmpList;
         prevNode = tmpList, tmpList = tmpList->next)
     {
-        cmp = compareMlmpPatternList (target, tmpList->patternNode);
+        int cmp = compareMlmpPatternList (target, tmpList->patternNode);
         if (cmp > 0 )
             continue;
         if (cmp == 0)
@@ -541,10 +539,8 @@ static int addPatternRecursively(tMlmpTree* rootNode, const tMlmpPattern* inputP
     tPatternNode* newNode;
     tPatternPrimaryNode* prevPrimaryPatternNode = nullptr;
     tPatternPrimaryNode* primaryNode = nullptr;
-    const tMlmpPattern* nextPattern;
     const tMlmpPattern* patterns = inputPatternList;
     uint32_t partTotal = 0;
-    uint32_t patternId = 0;
     uint32_t i;
 
     if (!rootNode || !inputPatternList)
@@ -572,7 +568,7 @@ static int addPatternRecursively(tMlmpTree* rootNode, const tMlmpPattern* inputP
         if (partTotal > 1)
             tmpPrimaryNode->patternNode.nextPattern =
                 (tPatternNode*)snort_calloc((partTotal - 1) * sizeof(tPatternNode));
-        patternId = gPatternId++;
+        uint32_t patternId = gPatternId++;
         i = 0;
         patterns = inputPatternList + i;
 
@@ -629,7 +625,7 @@ static int addPatternRecursively(tMlmpTree* rootNode, const tMlmpPattern* inputP
     if (primaryNode)
     {
         /*move down the new node */
-        nextPattern = inputPatternList + partTotal;
+        const tMlmpPattern* nextPattern = inputPatternList + partTotal;
         if (!nextPattern || !nextPattern->pattern)
         {
             primaryNode->patternNode.userData = metaData;

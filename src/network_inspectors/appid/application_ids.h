@@ -24,6 +24,16 @@
 
 #include <cstdint>
 
+typedef int32_t AppId;
+enum AppProtoIdIndex
+{
+    APP_PROTOID_SERVICE,
+    APP_PROTOID_CLIENT,
+    APP_PROTOID_PAYLOAD,
+    APP_PROTOID_MISC,
+    APP_PROTOID_MAX
+};
+
 enum ApplicationId : int32_t
 {
     APP_ID_UNKNOWN                        = -1,    // searched and not found any matching app id

@@ -53,7 +53,5 @@ int Flow::set_flow_data(FlowData* fd)
     return 0;
 }
 
-void Flow::set_application_ids(AppId, AppId, AppId, AppId) { }
-
 #endif
 

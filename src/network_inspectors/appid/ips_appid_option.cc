@@ -24,6 +24,7 @@
 #endif
 
 #include "app_info_table.h"
+#include "appid_session.h"
 
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
@@ -159,12 +160,16 @@ int AppIdIpsOption::eval(Cursor&, Packet* p)
     if ( !opt_data.ids_mapped )
         map_names_to_ids();
 
+    AppIdSession* session = appid_api.get_appid_session(p->flow);
+    if (!session)
+        return DETECTION_OPTION_NO_MATCH;
+
     // id order on stream api call is: service, client, payload, misc
     if ((p->packet_flags & PKT_FROM_CLIENT))
-        p->flow->get_application_ids(app_ids[CP_SERVICE], app_ids[CP_CLIENT],
+        session->get_application_ids(app_ids[CP_SERVICE], app_ids[CP_CLIENT],
             app_ids[PAYLOAD], app_ids[MISC]);
     else
-        p->flow->get_application_ids(app_ids[SP_SERVICE], app_ids[SP_CLIENT],
+        session->get_application_ids(app_ids[SP_SERVICE], app_ids[SP_CLIENT],
             app_ids[PAYLOAD], app_ids[MISC]);
 
     for ( unsigned i = 0; i < NUM_ID_TYPES; i++ )

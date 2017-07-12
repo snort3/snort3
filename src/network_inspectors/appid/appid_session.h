@@ -266,45 +266,14 @@ public:
     static unsigned inspector_id;
     static void init() { inspector_id = FlowData::create_flow_data_id(); }
 
-    void set_session_flags(uint64_t flags)
-    {
-        common.flags |= flags;
-    }
-
-    void clear_session_flags(uint64_t flags)
-    {
-        common.flags &= ~flags;
-    }
-
-    uint64_t get_session_flags(uint64_t flags)
-    {
-        return (common.flags & flags);
-    }
-
-    void set_service_detected()
-    {
-        common.flags |= APPID_SESSION_SERVICE_DETECTED;
-    }
-
-    bool is_service_detected()
-    {
-        return common.flags & APPID_SESSION_SERVICE_DETECTED;
-    }
-
-    void set_client_detected()
-    {
-        common.flags |= APPID_SESSION_CLIENT_DETECTED;
-    }
-
-    bool is_client_detected()
-    {
-        return common.flags & APPID_SESSION_CLIENT_DETECTED;
-    }
-
-    bool is_decrypted()
-    {
-        return common.flags & APPID_SESSION_DECRYPTED;
-    }
+    void set_session_flags(uint64_t flags){ common.flags |= flags; }
+    void clear_session_flags(uint64_t flags) { common.flags &= ~flags; }
+    uint64_t get_session_flags(uint64_t flags) { return (common.flags & flags); }
+    void set_service_detected() { common.flags |= APPID_SESSION_SERVICE_DETECTED; }
+    bool is_service_detected() { return common.flags & APPID_SESSION_SERVICE_DETECTED; }
+    void set_client_detected() { common.flags |= APPID_SESSION_CLIENT_DETECTED; }
+    bool is_client_detected() { return common.flags & APPID_SESSION_CLIENT_DETECTED; }
+    bool is_decrypted() { return common.flags & APPID_SESSION_DECRYPTED; }
 
     char session_logging_id[MAX_SESSION_LOGGING_ID_LEN];
     bool session_logging_enabled = false;
@@ -330,8 +299,10 @@ public:
     AppId pick_fw_client_app_id();
     AppId pick_fw_payload_app_id();
     AppId pick_fw_referred_payload_app_id();
-    bool is_ssl_session_decrypted();
+    void set_application_ids(AppId, AppId, AppId, AppId);
+    void get_application_ids(AppId&, AppId&, AppId&, AppId&);
 
+    bool is_ssl_session_decrypted();
     void examine_ssl_metadata(Packet*);
     void set_client_app_id_data(AppId, char*);
     void set_service_appid_data(AppId, char*, char*);
@@ -356,6 +327,9 @@ private:
     void create_session_logging_id(int direction, Packet*);
 
     static THREAD_LOCAL uint32_t appid_flow_data_id;
+    AppId application_ids[APP_PROTOID_MAX];
+
+
 };
 
 #endif

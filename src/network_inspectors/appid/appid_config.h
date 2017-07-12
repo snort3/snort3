@@ -24,16 +24,15 @@
 
 #include <array>
 
+#include "application_ids.h"
 #include "framework/decode_data.h"
 #include "protocols/ipv6.h"
 #include "sfip/sf_ip.h"
 #include "utils/sflsq.h"
-#include "flow/flow.h"
 
 #define APP_ID_MAX_DIRS         16
 #define APP_ID_PORT_ARRAY_SIZE  65536
 #define MAX_ZONES               1024
-#define MAX_EVENT_APPNAME_LEN   64
 
 struct NetworkSet;
 class AppInfoManager;

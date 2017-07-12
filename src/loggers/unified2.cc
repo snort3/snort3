@@ -38,6 +38,7 @@
 #include "log/obfuscator.h"
 #include "log/unified2.h"
 #include "main/snort_config.h"
+#include "network_inspectors/appid/appid_api.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
 #include "protocols/icmp4.h"
@@ -278,6 +279,13 @@ static void _AlertIP4_v2(Packet* p, const char*, Unified2Config* config, const E
 
             alertdata.pad2 = htons(p->user_policy_id);
         }
+
+        if ( p->flow )
+        {
+            const char* app_name = appid_api.get_application_name(p->flow, p->is_from_client());
+            if ( app_name )
+                memcpy_s(alertdata.app_name, sizeof(alertdata.app_name), app_name, strlen(app_name) + 1);
+        }
     }
 
     if ( config->limit && (u2.current + write_len) > config->limit )
@@ -362,6 +370,13 @@ static void _AlertIP6_v2(Packet* p, const char*, Unified2Config* config, const E
             }
 
             alertdata.pad2 = htons(p->user_policy_id);
+        }
+
+        if ( p->flow )
+        {
+            const char* app_name = appid_api.get_application_name(p->flow, p->is_from_client());
+            if ( app_name )
+                memcpy_s(alertdata.app_name, sizeof(alertdata.app_name), app_name, strlen(app_name) + 1);
         }
     }
 

@@ -492,7 +492,7 @@ void SipEventHandler::handle(DataEvent& event, Flow* flow)
     }
 #endif
     if ( flow )
-        asd = appid_api.get_appid_data(flow);
+        asd = appid_api.get_appid_session(flow);
 
     if ( !asd )
         return;

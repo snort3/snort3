@@ -63,10 +63,6 @@ AppInfoManager& app_info_mgr = AppInfoManager::get_instance();
 AppInfoTableEntry* add_static_entry(AppId id, const char* name)
 {
     AppInfoTableEntry* entry = new AppInfoTableEntry(id, snort_strdup(name));
-    entry->app_name_key = snort_strdup(name);
-    entry->serviceId = id;
-    entry->clientId = id;
-    entry->payloadId = id;
     app_info_table[id] = entry;
     bool rc = add_entry_to_app_info_name_table(entry->app_name_key, entry);
     CHECK_TRUE(rc);

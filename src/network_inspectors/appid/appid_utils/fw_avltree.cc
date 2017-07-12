@@ -80,8 +80,6 @@ FwAvlNode* fwAvlLast(const FwAvlTree* tree)
 
 FwAvlNode* fwAvlNext(FwAvlNode* node)
 {
-    FwAvlNode* parent = nullptr;
-    FwAvlNode* tmp;
 
     if (node->right != nullptr)
     {
@@ -89,11 +87,13 @@ FwAvlNode* fwAvlNext(FwAvlNode* node)
     }
     else
     {
-        tmp = node;
+        FwAvlNode* parent = nullptr;
+        FwAvlNode* tmp = node;
         while ( ((parent = get_parent(tmp)) != nullptr) && (parent->right == tmp) )
             tmp = parent;
+
+        return parent;
     }
-    return parent;
 }
 
 FwAvlNode* fwAvlPrev(FwAvlNode* node)

@@ -371,7 +371,6 @@ int AppIdHttpSession::process_http_packet(int direction)
 {
     Profile http_profile_context(httpPerfStats);
     constexpr auto RESPONSE_CODE_LENGTH = 3;
-    int size;
     AppId service_id = APP_ID_NONE;
     AppId client_id = APP_ID_NONE;
     AppId payload_id = APP_ID_NONE;
@@ -436,7 +435,6 @@ int AppIdHttpSession::process_http_packet(int direction)
                 if (asd->service_app_id == APP_ID_NONE || asd->service_app_id == APP_ID_HTTP)
                 {
                     AppIdServiceSubtype* local_subtype = nullptr;
-                    AppIdServiceSubtype** tmpSubtype;
                     char* vendorVersion = nullptr;
                     char* vendor = nullptr;
 
@@ -462,6 +460,8 @@ int AppIdHttpSession::process_http_packet(int direction)
                     }
                     if (local_subtype)
                     {
+                        AppIdServiceSubtype** tmpSubtype;
+
                         for (tmpSubtype = &asd->subtype; *tmpSubtype; tmpSubtype =
                             &(*tmpSubtype)->next)
                             ;
@@ -501,6 +501,7 @@ int AppIdHttpSession::process_http_packet(int direction)
             }
 
             /* Scan Via Header for squid */
+            int size;
             if (!asd->is_payload_appid_set() && (asd->scan_flags & SCAN_HTTP_VIA_FLAG) && via &&
                 (size = strlen(via)) > 0)
             {

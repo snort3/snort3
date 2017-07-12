@@ -28,6 +28,7 @@
 #include "application_ids.h"
 #include "hash/sfxhash.h"
 #include "log/messages.h"
+#include "main/thread.h"
 
 #define HASH_NUM_ROWS (1024)
 

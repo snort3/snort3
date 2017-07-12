@@ -41,6 +41,8 @@
 #define UNIFIED2_EXTRA_DATA          110
 #define UNIFIED2_IDS_EVENT_APPSTAT   113
 
+#define MAX_EVENT_APPNAME_LEN        64
+
 /* Data structure used for serialization of Unified2 Records */
 typedef struct _Serial_Unified2_Header
 {
@@ -72,6 +74,7 @@ struct Unified2IDSEvent
     uint32_t mpls_label;
     uint16_t vlanId;
     uint16_t pad2; // Policy ID
+    char app_name[MAX_EVENT_APPNAME_LEN];
 };
 
 // UNIFIED2_IDS_EVENT_IPV6_VLAN = type 105
@@ -97,6 +100,7 @@ typedef struct _Unified2IDSEventIPv6
     uint32_t mpls_label;
     uint16_t vlanId;
     uint16_t pad2; /*could be IPS Policy local id to support local sensor alerts*/
+    char app_name[MAX_EVENT_APPNAME_LEN];
 } Unified2IDSEventIPv6;
 
 // UNIFIED2_PACKET = type 2

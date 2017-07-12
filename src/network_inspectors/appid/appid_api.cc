@@ -35,9 +35,48 @@
 
 AppIdApi appid_api;
 
+AppIdSession* AppIdApi::get_appid_session(Flow* flow)
+{
+    AppIdSession* asd = (AppIdSession*)flow->get_flow_data(AppIdSession::inspector_id);
+
+    return (asd && asd->common.flow_type == APPID_FLOW_TYPE_NORMAL) ?
+           asd : nullptr;
+}
+
 const char* AppIdApi::get_application_name(int32_t app_id)
 {
     return AppInfoManager::get_instance().get_app_name(app_id);
+}
+
+const char* AppIdApi::get_application_name(Flow* flow, bool from_client)
+{
+    const char* app_name = nullptr;
+    AppIdSession* asd = (AppIdSession*)flow->get_flow_data(AppIdSession::inspector_id);
+
+    if ( asd )
+    {
+
+        if ( asd->payload_app_id )
+            app_name = AppInfoManager::get_instance().get_app_name(asd->payload_app_id);
+        else if ( asd->misc_app_id )
+            app_name = AppInfoManager::get_instance().get_app_name(asd->misc_app_id);
+        else if ( from_client )
+        {
+            if ( asd->client_app_id )
+                app_name = AppInfoManager::get_instance().get_app_name(asd->client_app_id);
+            else
+                app_name = AppInfoManager::get_instance().get_app_name(asd->service_app_id);
+        }
+        else
+        {
+            if ( asd->service_app_id )
+                app_name = AppInfoManager::get_instance().get_app_name(asd->service_app_id);
+            else
+                app_name = AppInfoManager::get_instance().get_app_name(asd->client_app_id);
+        }
+    }
+
+    return app_name;
 }
 
 AppId AppIdApi::get_application_id(const char* appName)
@@ -146,14 +185,6 @@ bool AppIdApi::is_ssl_session_decrypted(AppIdSession* asd)
         return asd->is_ssl_session_decrypted();
 
     return false;
-}
-
-AppIdSession* AppIdApi::get_appid_data(Flow* flow)
-{
-    AppIdSession* asd = (AppIdSession*)flow->get_flow_data(AppIdSession::inspector_id);
-
-    return (asd && asd->common.flow_type == APPID_FLOW_TYPE_NORMAL) ?
-           asd : nullptr;
 }
 
 bool AppIdApi::is_appid_inspecting_session(AppIdSession* asd)

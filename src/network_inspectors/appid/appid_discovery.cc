@@ -693,12 +693,12 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
         asd->set_session_flags(APPID_SESSION_OOO);
     else if ( p->is_tcp() && p->ptrs.tcph )
     {
-        uint16_t port = 0;
-        const SfIp* ip = nullptr;
-
         const auto* tcph = p->ptrs.tcph;
         if ( tcph->is_rst() && asd->previous_tcp_flags == TH_SYN )
         {
+            uint16_t port = 0;
+            const SfIp* ip = nullptr;
+
             asd->set_session_flags(APPID_SESSION_SYN_RST);
             if (asd->service_ip.is_set())
             {
@@ -835,7 +835,7 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
 #endif
     }
 
-    p->flow->set_application_ids(service_app_id, asd->pick_client_app_id(), payload_app_id,
+    asd->set_application_ids(service_app_id, asd->pick_client_app_id(), payload_app_id,
         asd->pick_misc_app_id());
 
     /* Set the field that the Firewall queries to see if we have a search engine. */

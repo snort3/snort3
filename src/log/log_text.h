@@ -40,6 +40,7 @@ SO_PUBLIC void LogXrefs(TextLog*, const Event&);
 
 SO_PUBLIC void LogIPPkt(TextLog*, Packet*);
 SO_PUBLIC void LogPayload(TextLog*, Packet*);
+SO_PUBLIC bool LogAppID(TextLog*, Packet*);
 
 SO_PUBLIC void LogNetData(
     TextLog*, const uint8_t* data, const int len, Packet*, const char* buf_name = nullptr);

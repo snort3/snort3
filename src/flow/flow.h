@@ -90,18 +90,6 @@
 #define FLOW_IS_OFFLOADED              0x01
 #define FLOW_WAS_OFFLOADED             0x02  // FIXIT-L debug only
 
-// FIXIT-L move to appid class if/when the application ids array
-// is moved
-typedef int32_t AppId;
-enum AppProtoIdIndex
-{
-    APP_PROTOID_SERVICE,
-    APP_PROTOID_CLIENT,
-    APP_PROTOID_PAYLOAD,
-    APP_PROTOID_MISC,
-    APP_PROTOID_MAX
-};
-
 struct FlowKey;
 struct Packet;
 
@@ -171,9 +159,6 @@ public:
     void free_flow_data(uint32_t proto);
     void free_flow_data(FlowData*);
     void free_flow_data();
-
-    void set_application_ids(AppId service, AppId client, AppId payload, AppId misc);
-    void get_application_ids(AppId& service, AppId& client, AppId& payload, AppId& misc);
 
     void call_handlers(Packet* p, bool eof = false);
     void markup_packet_flags(Packet*);
@@ -339,10 +324,6 @@ public:  // FIXIT-M privatize if possible
 
     LwState ssn_state;
     LwState previous_ssn_state;
-
-    // FIXIT-L: if appid is only consumer of this move to appid
-    AppId application_ids[APP_PROTOID_MAX];
-
     FlowState flow_state;
     unsigned policy_id;
 

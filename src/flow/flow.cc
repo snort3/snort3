@@ -425,24 +425,6 @@ void Flow::set_ttl(Packet* p, bool client)
     }
 }
 
-void Flow::set_application_ids(AppId serviceAppId, AppId clientAppId,
-        AppId payloadAppId, AppId miscAppId)
-{
-    application_ids[APP_PROTOID_SERVICE] = serviceAppId;
-    application_ids[APP_PROTOID_CLIENT] = clientAppId;
-    application_ids[APP_PROTOID_PAYLOAD] = payloadAppId;
-    application_ids[APP_PROTOID_MISC] = miscAppId;
-}
-
-void Flow::get_application_ids(AppId& serviceAppId, AppId& clientAppId,
-        AppId& payloadAppId, AppId& miscAppId)
-{
-    serviceAppId = application_ids[APP_PROTOID_SERVICE];
-    clientAppId  = application_ids[APP_PROTOID_CLIENT];
-    payloadAppId = application_ids[APP_PROTOID_PAYLOAD];
-    miscAppId    = application_ids[APP_PROTOID_MISC];
-}
-
 void Flow::set_mpls_layer_per_dir(Packet* p)
 {
     const Layer* mpls_lyr = layer::get_mpls_layer(p);

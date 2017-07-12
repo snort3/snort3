@@ -244,6 +244,7 @@ void FastLogger::alert(Packet* p, const char* msg, const Event& event)
 
     // print the packet header to the alert file
     LogPriorityData(fast_log, event);
+    LogAppID(fast_log, p);
     TextLog_Print(fast_log, "{%s} ", p->get_type());
     LogIpAddrs(fast_log, p);
 

@@ -22,7 +22,8 @@
 #ifndef LENGTH_APP_CACHE_H
 #define LENGTH_APP_CACHE_H
 
-#include "flow/flow.h"
+#include "application_ids.h"
+#include "protocols/protocol_ids.h"
 
 #define LENGTH_SEQUENCE_CNT_MAX (5)
 

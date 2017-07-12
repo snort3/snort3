@@ -31,6 +31,7 @@
 #include "appid_api.h"
 #include "appid_inspector.h"
 #include "log/messages.h"
+#include "log/unified2.h"
 #include "main/snort_debug.h"
 
 static AppInfoTable app_info_table;
@@ -61,6 +62,26 @@ static inline char* strdup_to_lower(const char* source)
     }
 
     return dest;
+}
+
+AppInfoTableEntry::AppInfoTableEntry(AppId id, char* name)
+    : appId(id), serviceId(id), clientId(id), payloadId(id), app_name(name)
+{
+    app_name_key = strdup_to_lower(name);
+}
+
+AppInfoTableEntry::AppInfoTableEntry(AppId id, char* name, AppId sid, AppId cid, AppId pid)
+    : appId(id), serviceId(sid), clientId(cid), payloadId(pid), app_name(name)
+{
+    app_name_key = strdup_to_lower(name);
+}
+
+AppInfoTableEntry::~AppInfoTableEntry()
+{
+    if ( app_name )
+        snort_free(app_name);
+    if ( app_name_key )
+        snort_free(app_name_key);
 }
 
 static bool is_existing_entry(AppInfoTableEntry* entry)
@@ -154,10 +175,6 @@ AppInfoTableEntry* AppInfoManager::add_dynamic_app_entry(const char* app_name)
     if (!entry)
     {
         entry = new AppInfoTableEntry(next_custom_appid++, snort_strdup(app_name));
-        entry->app_name_key = strdup_to_lower(app_name);
-        entry->serviceId = entry->appId;
-        entry->clientId = entry->appId;
-        entry->payloadId = entry->appId;
         custom_app_info_table[entry->appId] = entry;
         add_entry_to_app_info_name_table(entry->app_name_key, entry);
     }
@@ -476,21 +493,12 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* config, const char* pa
 
 void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config)
 {
-    FILE* tableFile;
-    const char* token;
     char buf[MAX_TABLE_LINE_LEN];
-    AppInfoTableEntry* entry;
-    AppId appId;
-    uint32_t clientId, serviceId, payloadId;
     char filepath[PATH_MAX];
-    char* app_name;
-    char* snortName = nullptr;
-    char* context;
 
     snprintf(filepath, sizeof(filepath), "%s/odp/%s", mod_config->app_detector_dir,
         APP_MAPPING_FILE);
-
-    tableFile = fopen(filepath, "r");
+    FILE* tableFile = fopen(filepath, "r");
     if (tableFile == nullptr)
     {
         ParseWarning(WARN_RULES,
@@ -498,18 +506,20 @@ void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config)
         return;
     }
 
-    DebugFormat(DEBUG_APPID, "AppInfo read from %s\n", filepath);
-
     while (fgets(buf, sizeof(buf), tableFile))
     {
-        token = strtok_r(buf, CONF_SEPARATORS, &context);
+        AppId app_id;
+        uint32_t client_id, service_id, payload_id;
+        char* app_name;
+        char* context;
+
+        const char* token = strtok_r(buf, CONF_SEPARATORS, &context);
         if (!token)
         {
             ErrorMessage("Could not read id for AppId\n");
             continue;
         }
-
-        appId = strtol(token, nullptr, 10);
+        app_id = strtol(token, nullptr, 10);
 
         token = strtok_r(nullptr, CONF_SEPARATORS, &context);
         if (!token)
@@ -517,8 +527,8 @@ void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config)
             ErrorMessage("Could not read app_name. Line %s\n", buf);
             continue;
         }
-
         app_name = snort_strdup(token);
+
         token = strtok_r(nullptr, CONF_SEPARATORS, &context);
         if (!token)
         {
@@ -526,8 +536,7 @@ void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config)
             snort_free(app_name);
             continue;
         }
-
-        serviceId = strtol(token, nullptr, 10);
+        service_id = strtol(token, nullptr, 10);
 
         token = strtok_r(nullptr, CONF_SEPARATORS, &context);
         if (!token)
@@ -536,8 +545,7 @@ void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config)
             snort_free(app_name);
             continue;
         }
-
-        clientId = strtol(token, nullptr, 10);
+        client_id = strtol(token, nullptr, 10);
 
         token = strtok_r(nullptr, CONF_SEPARATORS, &context);
         if (!token)
@@ -546,31 +554,24 @@ void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config)
             snort_free(app_name);
             continue;
         }
+        payload_id = strtol(token, nullptr, 10);
 
-        payloadId = strtol(token, nullptr, 10);
+        AppInfoTableEntry* entry = new AppInfoTableEntry(app_id, app_name, service_id,
+            client_id, payload_id);
 
         /* snort service key, if it exists */
         token = strtok_r(nullptr, CONF_SEPARATORS, &context);
         if (token)
-            snortName = snort_strdup(token);
+            entry->snortId = AppIdInspector::get_inspector()->add_appid_protocol_reference(token);
 
-        entry = new AppInfoTableEntry(appId, app_name);
-        entry->snortId = AppIdInspector::get_inspector()->add_appid_protocol_reference(snortName);
-        snort_free(snortName);
-        snortName = nullptr;
-        entry->app_name_key = strdup_to_lower(app_name);
-        entry->serviceId = serviceId;
-        entry->clientId = clientId;
-        entry->payloadId = payloadId;
-
-        if ((appId = get_static_app_info_entry(entry->appId)))
-            app_info_table[appId] = entry;
-        if ((appId = get_static_app_info_entry(entry->serviceId)))
-            app_info_service_table[appId] = entry;
-        if ((appId = get_static_app_info_entry(entry->clientId)))
-            app_info_client_table[appId] = entry;
-        if ((appId = get_static_app_info_entry(entry->payloadId)))
-            app_info_payload_table[appId] = entry;
+        if ((app_id = get_static_app_info_entry(entry->appId)))
+            app_info_table[app_id] = entry;
+        if ((app_id = get_static_app_info_entry(entry->serviceId)))
+            app_info_service_table[app_id] = entry;
+        if ((app_id = get_static_app_info_entry(entry->clientId)))
+            app_info_client_table[app_id] = entry;
+        if ((app_id = get_static_app_info_entry(entry->payloadId)))
+            app_info_payload_table[app_id] = entry;
 
         add_entry_to_app_info_name_table(entry->app_name_key, entry);
     }

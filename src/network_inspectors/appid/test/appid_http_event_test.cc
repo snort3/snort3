@@ -163,9 +163,9 @@ bool HttpEvent::contains_webdav_method()
 Flow* flow = nullptr;
 AppIdSession* mock_session = nullptr;
 
-AppIdSession* AppIdApi::get_appid_data(Flow*)
+AppIdSession* AppIdApi::get_appid_session(Flow*)
 {
-    mock().actualCall("get_appid_data");
+    mock().actualCall("get_appid_session");
     return mock_session;
 }
 
@@ -194,7 +194,7 @@ TEST(appid_http_event, handle_null_appid_data)
 {
     HttpEvent event(nullptr);
     HttpEventHandler event_handler(HttpEventHandler::REQUEST_EVENT);
-    mock().expectOneCall("get_appid_data");
+    mock().expectOneCall("get_appid_session");
     event_handler.handle(event, flow);
     mock().checkExpectations();
 }
@@ -205,7 +205,7 @@ TEST(appid_http_event, handle_null_msg_header)
     HttpEventHandler event_handler(HttpEventHandler::REQUEST_EVENT);
 
     mock().strictOrder();
-    mock().expectOneCall("get_appid_data");
+    mock().expectOneCall("get_appid_session");
     event_handler.handle(event, flow);
     mock().checkExpectations();
 }
@@ -253,7 +253,7 @@ void run_event_handler(TestData test_data, TestData* expect_data = nullptr)
         expect_data = &test_data;
 
     mock().strictOrder();
-    mock().expectOneCall("get_appid_data");
+    mock().expectOneCall("get_appid_session");
     event_handler.handle(event, flow);
     LONGS_EQUAL(expect_data->scan_flags, mock_session->scan_flags);
     LONGS_EQUAL(expect_data->http_flows, appid_stats.http_flows);

@@ -279,7 +279,7 @@ int sslAppGroupIdLookup(void*, const char*, const char*, AppId*, AppId*, AppId*)
             &AppIdInspector::get_inspector()->get_appid_config()->serviceSslConfig);
     }
 
-    if (ssnptr && (asd = appid_api.get_appid_data(ssnptr)))
+    if (ssnptr && (asd = appid_api.get_appid_session(ssnptr)))
     {
         *serviceAppId = pick_service_app_id(asd);
         if (*ClientAppId == APP_ID_NONE)
@@ -305,7 +305,7 @@ int sslAppGroupIdLookup(void*, const char*, const char*, AppId*, AppId*, AppId*)
 AppId getOpenAppId(Flow* flow)
 {
     assert(flow);
-    AppIdSession* asd = appid_api.get_appid_data(flow);
+    AppIdSession* asd = appid_api.get_appid_session(flow);
     return asd->payload_app_id;
 }
 

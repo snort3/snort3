@@ -1233,7 +1233,6 @@ static void fpBuildServicePortGroups(
 
         /* Add this PortGroup to the protocol-ordinal -> port_group table */
         PortGroup* pg = (PortGroup*)sfghash_find(spg, srvc);
-
         if ( !pg )
         {
             ParseError("*** failed to create and find a port group for '%s'",srvc);

@@ -24,6 +24,7 @@
 
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #include "main/snort_types.h"
 
@@ -73,7 +74,7 @@ public:
 private:
     std::vector<std::string> id_map;
     std::vector<uint16_t> ind_map;
-    struct SFGHASH* ref_table = nullptr;
+    std::unordered_map<std::string, int16_t> ref_table;
     int16_t protocol_number = 1;
 };
 

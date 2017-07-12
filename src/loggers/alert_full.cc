@@ -189,6 +189,8 @@ void FullLogger::alert(Packet* p, const char* msg, const Event& event)
     {
         LogPriorityData(full_log, event);
         TextLog_NewLine(full_log);
+        if ( LogAppID(full_log, p) )
+            TextLog_NewLine(full_log);
     }
 
     DebugMessage(DEBUG_LOG, "Logging Alert data!\n");

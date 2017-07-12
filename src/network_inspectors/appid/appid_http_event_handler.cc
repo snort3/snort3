@@ -52,7 +52,6 @@ static void replace_header_data(char** data, uint16_t& datalen, const uint8_t* h
 
 void HttpEventHandler::handle(DataEvent& event, Flow* flow)
 {
-    AppIdSession* session;
     int direction;
     uint16_t tmplen;
     const uint8_t* header_start;
@@ -60,7 +59,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     HttpEvent* http_event = (HttpEvent*)&event;
 
     assert(flow);
-    session = appid_api.get_appid_data(flow);
+    AppIdSession* session = appid_api.get_appid_session(flow);
     if (!session)
         return;
 
@@ -172,7 +171,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     session->set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_HTTP_SESSION);
     if (direction == APP_ID_FROM_INITIATOR)
         appid_stats.http_flows++;
-    flow->set_application_ids(session->pick_service_app_id(),
+    session->set_application_ids(session->pick_service_app_id(),
         session->pick_client_app_id(), session->pick_payload_app_id(),
         session->pick_misc_app_id());
 }

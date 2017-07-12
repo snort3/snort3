@@ -37,12 +37,12 @@ struct sf_timeval32
 
 struct Event
 {
-    SigInfo* sig_info;
-    uint32_t event_id;
-    uint32_t event_reference; // reference to other events that have gone off,
+    SigInfo* sig_info = nullptr;
+    uint32_t event_id = 0;
+    uint32_t event_reference = 0; // reference to other events that have gone off,
                               // such as in the case of tagged packets...
-    struct sf_timeval32 ref_time;   /* reference time for the event reference */
-    const char* alt_msg;
+    struct sf_timeval32 ref_time = { 0, 0 };   /* reference time for the event reference */
+    const char* alt_msg = nullptr;
 
     Event() { }
     Event(SigInfo& si)

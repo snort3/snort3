@@ -386,8 +386,8 @@ void AppIdSession::check_app_detection_restart()
     if (get_session_flags(APPID_SESSION_DECRYPTED) || !is_ssl_decryption_enabled() )
         return;
 
-    AppId serviceAppId = pick_service_app_id();
-    bool isSsl = is_service_over_ssl(serviceAppId);
+    AppId service_id = pick_service_app_id();
+    bool isSsl = is_service_over_ssl(service_id);
 
     // A session could either:
     // 1. Start off as SSL - captured with isSsl flag, OR
@@ -396,7 +396,7 @@ void AppIdSession::check_app_detection_restart()
     if (get_session_flags(APPID_SESSION_ENCRYPTED) || isSsl)
     {
         set_session_flags(APPID_SESSION_DECRYPTED);
-        encrypted.service_app_id = serviceAppId;
+        encrypted.service_app_id = service_id;
         encrypted.payload_app_id = pick_payload_app_id();
         encrypted.client_app_id = pick_client_app_id();
         encrypted.misc_app_id = pick_misc_app_id();
@@ -415,9 +415,9 @@ void AppIdSession::check_app_detection_restart()
     }
 }
 
-void AppIdSession::update_encrypted_app_id(AppId serviceAppId)
+void AppIdSession::update_encrypted_app_id(AppId service_id)
 {
-    switch (serviceAppId)
+    switch (service_id)
     {
     case APP_ID_HTTP:
         if (misc_app_id == APP_ID_NSIIOPS || misc_app_id == APP_ID_DDM_SSL
@@ -944,6 +944,24 @@ AppId AppIdSession::pick_fw_referred_payload_app_id()
     if (appId == APP_ID_NONE)
         appId = encrypted.referred_app_id;
     return appId;
+}
+
+void AppIdSession::set_application_ids(AppId service_id, AppId client_id,
+        AppId payload_id, AppId misc_id)
+{
+    application_ids[APP_PROTOID_SERVICE] = service_id;
+    application_ids[APP_PROTOID_CLIENT] = client_id;
+    application_ids[APP_PROTOID_PAYLOAD] = payload_id;
+    application_ids[APP_PROTOID_MISC] = misc_id;
+}
+
+void AppIdSession::get_application_ids(AppId& service_id, AppId& client_id,
+        AppId& payload_id, AppId& misc_id)
+{
+    service_id = application_ids[APP_PROTOID_SERVICE];
+    client_id  = application_ids[APP_PROTOID_CLIENT];
+    payload_id = application_ids[APP_PROTOID_PAYLOAD];
+    misc_id    = application_ids[APP_PROTOID_MISC];
 }
 
 bool AppIdSession::is_ssl_session_decrypted()

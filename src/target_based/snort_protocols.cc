@@ -27,7 +27,6 @@
 
 #include <algorithm>
 
-#include "hash/sfghash.h"
 #include "log/messages.h"
 #include "main/snort_debug.h"
 #include "protocols/packet.h"
@@ -37,12 +36,6 @@
 #include "sftarget_data.h"
 
 using namespace std;
-
-struct SFTargetProtocolReference
-{
-    char name[SFAT_BUFSZ];
-    int16_t ordinal;
-};
 
 int16_t ProtocolReference::get_count()
 { return protocol_number; }
@@ -84,71 +77,51 @@ int16_t ProtocolReference::add(const char* protocol)
     if (!protocol)
         return SFTARGET_UNKNOWN_PROTOCOL;
 
-    SFTargetProtocolReference* reference = (SFTargetProtocolReference*)sfghash_find(
-        ref_table, (void*)protocol);
-
-    if (reference)
+    auto protocol_ref = ref_table.find(protocol);
+    if ( protocol_ref != ref_table.end() )
     {
-        DebugFormat(DEBUG_ATTRIBUTE,
-            "Protocol Reference for %s exists as %d\n",
-            protocol, reference->ordinal);
+        DebugFormat(DEBUG_ATTRIBUTE, "Protocol Reference for %s exists as %d\n",
+            protocol, protocol_ref->second);
 
-        return reference->ordinal;
+        return protocol_ref->second;
     }
 
-    if ( protocol_number == 1 )
-        id_map.push_back("unknown");
-
+    int16_t ordinal = protocol_number++;
     id_map.push_back(protocol);
+    ref_table[protocol] = ordinal;
 
-    reference = (SFTargetProtocolReference*)snort_calloc(sizeof(SFTargetProtocolReference));
-    reference->ordinal = protocol_number++;
-    SnortStrncpy(reference->name, protocol, SFAT_BUFSZ);
-
-    sfghash_add(ref_table, reference->name, reference);
-
-    DebugFormat(DEBUG_ATTRIBUTE,
-        "Added Protocol Reference for %s as %d\n", protocol, reference->ordinal);
-
-    return reference->ordinal;
+    return ordinal;
 }
 
 int16_t ProtocolReference::find(const char* protocol)
 {
-    SFTargetProtocolReference* reference;
+    auto protocol_ref = ref_table.find(protocol);
+    if ( protocol_ref != ref_table.end() )
+    {
+        DebugFormat(DEBUG_ATTRIBUTE, "Protocol Reference for %s exists as %d\n",
+            protocol, protocol_ref->second);
 
-    if (!protocol)
-        return SFTARGET_UNKNOWN_PROTOCOL;
-
-    reference = (SFTargetProtocolReference*)sfghash_find(ref_table, (void*)protocol);
-
-    if (reference)
-        return reference->ordinal;
+        return protocol_ref->second;
+    }
 
     return SFTARGET_UNKNOWN_PROTOCOL;
 }
 
 ProtocolReference::ProtocolReference()
 {
-    ref_table = sfghash_new(65, 0, 1, snort_free);
+    id_map.push_back("unknown");
 
-    bool ok;
-
-    ok = ( add("ip") == SNORT_PROTO_IP );
+    bool ok = ( add("ip") == SNORT_PROTO_IP );
     ok = ( add("icmp") == SNORT_PROTO_ICMP ) and ok;
     ok = ( add("tcp") == SNORT_PROTO_TCP ) and ok;
     ok = ( add("udp") == SNORT_PROTO_UDP ) and ok;
     ok = ( add("user") == SNORT_PROTO_USER ) and ok;
     ok = ( add("file") == SNORT_PROTO_FILE ) and ok;
-
     assert(ok);
-
-    if ( !ok )
-        FatalError("standard protocol reference mismatch");
 }
 
 ProtocolReference::~ProtocolReference()
 {
-    sfghash_delete(ref_table);
+    ref_table.clear();
 }
 

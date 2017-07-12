@@ -25,10 +25,11 @@
 #include <mutex>
 #include <unordered_map>
 
-#include "flow/flow.h"
-#include "utils/util.h"
-
 #include "application_ids.h"
+
+#include "flow/flow.h"
+#include "protocols/packet.h"
+#include "utils/util.h"
 
 #define APP_PRIORITY_DEFAULT 2
 #define SF_APPID_MAX            40000
@@ -63,24 +64,15 @@ enum AppInfoFlags
 class AppInfoTableEntry
 {
 public:
-    AppInfoTableEntry(AppId id, char* name)
-        : appId(id), app_name(name)
-    {
-    }
+    AppInfoTableEntry(AppId id, char* name);
+    AppInfoTableEntry(AppId id, char* name, AppId sid, AppId cid, AppId pid);
+    ~AppInfoTableEntry();
 
-    ~AppInfoTableEntry()
-    {
-        if ( app_name )
-            snort_free(app_name);
-        if ( app_name_key )
-            snort_free(app_name_key);
-    }
-
-    AppId appId = APP_ID_NONE;
-    uint32_t serviceId = APP_ID_NONE;
-    uint32_t clientId = APP_ID_NONE;
-    uint32_t payloadId = APP_ID_NONE;
-    int16_t snortId = 0;
+    AppId appId;
+    uint32_t serviceId;
+    uint32_t clientId;
+    uint32_t payloadId;
+    int16_t snortId = SFTARGET_UNKNOWN_PROTOCOL;
     uint32_t flags = 0;
     uint32_t priority = APP_PRIORITY_DEFAULT;
     ClientDetector* client_detector = nullptr;

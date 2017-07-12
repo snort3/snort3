@@ -23,12 +23,13 @@
 #define APPID_INSPECTOR_H
 
 #include "appid_config.h"
+#include "application_ids.h"
+#include "flow/flow.h"
 
-struct Packet;
-struct SnortConfig;
 class AppIdStatistics;
-class HttpPatternMatchers;
+struct Packet;
 class SipEventHandler;
+struct SnortConfig;
 
 class AppIdInspector : public Inspector
 {

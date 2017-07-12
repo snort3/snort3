@@ -66,8 +66,8 @@ static void map_app_names_to_snort_ids()
 {
     /* init globals for snortId compares */
     snortId_for_unsynchronized = snort_conf->proto_ref->add("unsynchronized");
-    snortId_for_ftp_data = snort_conf->proto_ref->find("ftp-data");
-    snortId_for_http2    = snort_conf->proto_ref->find("http2");
+    snortId_for_ftp_data = snort_conf->proto_ref->add("ftp-data");
+    snortId_for_http2    = snort_conf->proto_ref->add("http2");
 }
 
 AppIdModuleConfig::AppIdModuleConfig()
@@ -738,7 +738,6 @@ void AppIdConfig::set_safe_search_enforcement(bool enabled)
 
 bool AppIdConfig::init_appid( )
 {
-    map_app_names_to_snort_ids();
     app_info_mgr.init_appid_info_table(mod_config);
 #ifdef USE_RNA_CONFIG
     load_analysis_config(mod_config->conf_file, 0, mod_config->instance_id);
@@ -746,6 +745,7 @@ bool AppIdConfig::init_appid( )
     read_port_detectors(ODP_PORT_DETECTORS);
     read_port_detectors(CUSTOM_PORT_DETECTORS);
     ThirdPartyAppIDInit(mod_config);
+    map_app_names_to_snort_ids();
     return true;
 }
 
@@ -800,8 +800,6 @@ AppId AppIdConfig::get_port_service_id(IpProtocol proto, uint16_t port)
 
 static void display_port_exclusion_list(SF_LIST* pe_list, uint16_t port)
 {
-    const char* p;
-    const char* p2;
     char inet_buffer[INET6_ADDRSTRLEN];
     char inet_buffer2[INET6_ADDRSTRLEN];
     PortExclusion* pe;
@@ -814,8 +812,8 @@ static void display_port_exclusion_list(SF_LIST* pe_list, uint16_t port)
         pe;
         pe = (PortExclusion*)sflist_next(&lnext))
     {
-        p = inet_ntop(pe->family, &pe->ip, inet_buffer, sizeof(inet_buffer));
-        p2 = inet_ntop(pe->family, &pe->netmask, inet_buffer2, sizeof(inet_buffer2));
+        const char* p = inet_ntop(pe->family, &pe->ip, inet_buffer, sizeof(inet_buffer));
+        const char* p2 = inet_ntop(pe->family, &pe->netmask, inet_buffer2, sizeof(inet_buffer2));
         LogMessage("        %d on %s/%s\n", port, p ? p : "ERROR", p2 ? p2 : "ERROR");
     }
 }
