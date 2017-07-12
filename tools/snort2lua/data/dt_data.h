@@ -113,6 +113,12 @@ public:
     // caused the failure.
     void failed_conversion(const std::istringstream& stream, const std::string unkown_option);
 
+    void set_current_file(std::string& file)
+    { current_file = file; }
+
+    void set_current_line(unsigned line)
+    { current_line = line; }
+
 private:
 
     enum class PrintMode
@@ -133,6 +139,10 @@ private:
     Comments* errors;
 
     bool curr_data_bad;  // keep track whether current 'conversion' is already bad
+    std::string current_file;
+    unsigned current_line;
+
+    std::string get_file_line();
 };
 
 #endif

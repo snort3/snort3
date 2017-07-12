@@ -147,6 +147,8 @@ int Converter::parse_include_file(std::string input_file)
 
 int Converter::parse_file(std::string input_file)
 {
+    data_api.set_current_file(input_file);
+
     std::ifstream in;
     std::string orig_text;
 
@@ -159,11 +161,14 @@ int Converter::parse_file(std::string input_file)
         return -1;
 
     in.open(input_file, std::ifstream::in);
+    unsigned line_num = 0;
     while (!in.eof())
     {
         std::string tmp;
         std::getline(in, tmp);
         util::rtrim(tmp);
+
+        data_api.set_current_line(++line_num);
 
         std::size_t first_non_white_char = tmp.find_first_not_of(' ');
         if ((first_non_white_char == std::string::npos) ||

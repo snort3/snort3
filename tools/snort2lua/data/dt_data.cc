@@ -230,13 +230,21 @@ bool DataApi::failed_conversions() const
 std::size_t DataApi::num_errors() const
 { return errors_count; }
 
+std::string DataApi::get_file_line()
+{
+    std::string error_string = "Failed to convert ";
+    error_string += current_file + ":";
+    error_string += std::to_string(current_line);
+    return error_string;
+}
+
 void DataApi::failed_conversion(const std::istringstream& stream)
 {
     // we only need to go through this once.
     if (!curr_data_bad)
     {
         errors->add_text(std::string());
-        errors->add_text("Failed to convert the following line:");
+        errors->add_text(get_file_line());
         errors->add_text(stream.str());
         curr_data_bad = true;
         errors_count++;
@@ -250,7 +258,7 @@ void DataApi::failed_conversion(const std::istringstream& stream,
     if (!curr_data_bad)
     {
         errors->add_text(std::string());
-        errors->add_text("Failed to convert the following line:");
+        errors->add_text(get_file_line());
         errors->add_text(stream.str());
         curr_data_bad = true;
         errors_count++;
