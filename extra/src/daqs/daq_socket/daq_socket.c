@@ -558,6 +558,22 @@ static int socket_daq_set_filter (void* handle, const char* filter)
     return DAQ_ERROR_NOTSUP;
 }
 
+static int socket_query_flow(void* handle, const DAQ_PktHdr_t* hdr, DAQ_QueryFlow_t* query)
+{
+    SockImpl* impl = (SockImpl*)handle;
+
+    if ( hdr->priv_ptr != &impl->pci )  // sanity check
+        return DAQ_ERROR_INVAL;
+
+    if ( query->type == DAQ_USR_QUERY_PCI )
+    {
+        query->value = &impl->pci;
+        query->length = sizeof(impl->pci);
+        return DAQ_SUCCESS;
+    }
+    return DAQ_ERROR_NOTSUP;
+}
+
 //-------------------------------------------------------------------------
 
 DAQ_SO_PUBLIC DAQ_Module_t DAQ_MODULE_DATA =
@@ -587,4 +603,6 @@ DAQ_SO_PUBLIC DAQ_Module_t DAQ_MODULE_DATA =
     .hup_prep = NULL,
     .hup_apply = NULL,
     .hup_post = NULL,
+    .dp_add_dc = NULL,
+    .query_flow = socket_query_flow
 };

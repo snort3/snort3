@@ -363,10 +363,12 @@ static int file_daq_set_filter (void* handle, const char* filter)
     return DAQ_ERROR_NOTSUP;
 }
 
-static int file_query_flow(void *handle, const DAQ_PktHdr_t *hdr, DAQ_QueryFlow_t *query)
+static int file_query_flow(void* handle, const DAQ_PktHdr_t* hdr, DAQ_QueryFlow_t* query)
 {
     FileImpl* impl = (FileImpl*)handle;
-    assert(hdr->priv_ptr == &impl->pci);  // sanity check
+
+    if ( hdr->priv_ptr != &impl->pci )  // sanity check
+        return DAQ_ERROR_INVAL;
 
     if ( query->type == DAQ_USR_QUERY_PCI )
     {
