@@ -1,3 +1,37 @@
+17/07/13 - build 237
+
+-- build: add support for appending EXTRABUILD to the BUILD string
+-- build: Clean up some ICC 2017 warnings
+-- build: clean up some GCC 7 warnings
+-- build: support OpenSSL 1.1.0 API
+-- build: clean up some cppcheck warnings
+-- appid: port some missing 2.9.X FEAT_OPEN_APPID code
+-- appid: fix thread-unsafe sharing of HTTP pattern tables
+-- DAQ: fix leaking instance memory when configure fails
+-- daq_hext and daq_file: pass PCI via query method
+-- icmp6: reject non-ip6, raise 116:474
+-- http_inspect: header normalization improvements
+-- http_inspect: port fixes for UTF decoding
+-- http_inspect: added 119:87 - 119:90 for expect / continue issues
+-- http_inspect: added 119:91 for Transfer-Encoding header not valid for HTTP 1.0
+-- http_inspect: added 119:92 for Content-Transfer-Encoding
+-- http_inspect: added 119:93 for issues with chunked message trailers
+-- PDF decompression: fix missing reset in state machine transition
+-- ftp_server: implement splitter to improve EOF processing
+-- port_scan: merge global settings into main module and other improvements
+-- perf_monitor: add JSON formatter
+-- ssl: add splitter to improve PDU processing
+-- detection: fix segfault in DetectionEngine::idle sans thread_init
+-- rules: tolerate spaces in positional parameters
+   thanks to Joao Soares for reporting the issue
+-- ip and tcp options: fix max length handling and clean up logging
+-- cmg: improved alert formatting
+-- doc: updates re control channel
+-- snort2lua: added line number and file name to error output
+-- snort2lua: fix removal of ignore_ports in stream_tcp.small_segments
+-- snort2lua: fix heap-use-after-free for preprocessors and configs with no arguments
+-- snort2lua: update for port_scan
+
 17/06/15 - build 236
 
 -- appid: clean up shutdown stats
