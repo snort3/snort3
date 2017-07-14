@@ -153,8 +153,20 @@ void HttpMsgStatus::gen_events()
         if (flow->is_pdu_inorder(SSN_DIR_FROM_SERVER))
         {
             // HTTP response without a request. Possible ssh tunneling
-            add_infraction(INF_RSP_WO_REQ);
+            add_infraction(INF_RESPONSE_WO_REQUEST);
             create_event(EVENT_RESPONSE_WO_REQUEST);
+        }
+    }
+
+    if (status_code_num == 206)
+    {
+        // Verify that 206 Partial Content is in response to a Range request. Unsolicited 206
+        // responses indicate content is being fragmented for no good reason.
+        HttpMsgHeader* const req_header = transaction->get_header(SRC_CLIENT);
+        if ((req_header != nullptr) && (req_header->get_header_count(HEAD_RANGE) == 0))
+        {
+            add_infraction(INF_206_WITHOUT_RANGE);
+            create_event(EVENT_206_WITHOUT_RANGE);
         }
     }
 }

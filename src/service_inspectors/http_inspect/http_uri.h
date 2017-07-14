@@ -87,7 +87,7 @@ private:
     void parse_authority();
     void parse_abs_path();
 
-    void check_oversize_dir(Field);
+    void check_oversize_dir(Field&);
 };
 
 #endif

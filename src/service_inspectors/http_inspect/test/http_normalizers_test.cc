@@ -49,7 +49,6 @@ TEST(norm_decimal_integer_test, examples)
     CHECK(norm_decimal_integer(Field(2, (const uint8_t*)"-27")) == STAT_PROBLEMATIC);
     CHECK(norm_decimal_integer(Field(6, (const uint8_t*)"27,382")) == 27);
     CHECK(norm_decimal_integer(Field(3, (const uint8_t*)",27")) == STAT_PROBLEMATIC);
-    CHECK(norm_decimal_integer(Field(3, (const uint8_t*)",27")) == STAT_PROBLEMATIC);
     CHECK(norm_decimal_integer(Field(6, (const uint8_t*)"00000=")) == STAT_PROBLEMATIC);
     CHECK(norm_decimal_integer(Field(6, (const uint8_t*)"32.578")) == STAT_PROBLEMATIC);
     CHECK(norm_decimal_integer(Field(18, (const uint8_t*)"123456789012345678")) ==

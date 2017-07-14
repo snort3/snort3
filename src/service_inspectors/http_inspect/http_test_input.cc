@@ -254,10 +254,9 @@ void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, u
                     const unsigned amount = convert_num_octets(command_value + strlen("fileread"),
                         command_length - strlen("fileread"));
                     assert((amount > 0) && (amount <= MAX_OCTETS));
-                    int new_octet;
                     for (unsigned k=0; k < amount; k++)
                     {
-                        new_octet = getc(include_file);
+                        const int new_octet = getc(include_file);
                         assert(new_octet != EOF);
                         msg_buf[end_offset++] = new_octet;
                     }

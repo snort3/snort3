@@ -148,6 +148,7 @@ const StrCode HttpMsgHeadShared::content_code_list[] =
     { CONTENTCODE_X_GZIP,        "x-gzip" },
     { CONTENTCODE_X_COMPRESS,    "x-compress" },
     { CONTENTCODE_IDENTITY,      "identity" },
+    { CONTENTCODE_CHUNKED,       "chunked" },
     { 0,                         nullptr }
 };
 
@@ -374,6 +375,8 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_ILLEGAL_TRAILER,            "illegal field in chunked message trailers" },
     { EVENT_REPEATED_HEADER,            "header field inappropriately appears twice or has two "
                                         "values" },
+    { EVENT_CONTENT_ENCODING_CHUNKED,   "invalid value chunked in Content-Encoding header" },
+    { EVENT_206_WITHOUT_RANGE,          "206 response sent to a request without a Range header" },
     { 0, nullptr }
 };
 

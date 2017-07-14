@@ -337,6 +337,10 @@ void HttpMsgHeader::setup_encoding_decompression()
             break;
         case CONTENTCODE_IDENTITY:
             break;
+        case CONTENTCODE_CHUNKED:
+            add_infraction(INF_CONTENT_ENCODING_CHUNKED);
+            create_event(EVENT_CONTENT_ENCODING_CHUNKED);
+            break;
         case CONTENTCODE__OTHER:
             add_infraction(INF_UNKNOWN_ENCODING);
             create_event(EVENT_UNKNOWN_ENCODING);

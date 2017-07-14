@@ -188,6 +188,8 @@ FileVerdict FilePolicy::signature_lookup(Flow* flow, FileContext* file)
 
         if (file->reserve_file(captured) == FILE_CAPTURE_SUCCESS)
             captured->store_file_async();
+        else
+            delete captured;
     }
 
     return (signature_lookup(flow, (FileInfo*)file));

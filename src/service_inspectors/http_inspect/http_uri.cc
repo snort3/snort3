@@ -144,7 +144,7 @@ void HttpUri::parse_abs_path()
     }
 }
 
-void HttpUri::check_oversize_dir(Field uri_field)
+void HttpUri::check_oversize_dir(Field& uri_field)
 {
     int32_t total_length = 0;
     const uint8_t* last_dir = nullptr;
