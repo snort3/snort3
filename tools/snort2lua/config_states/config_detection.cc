@@ -189,8 +189,8 @@ bool Detection::convert(std::istringstream& data_stream)
             }
             else if (!method.compare("intel-cpm"))
             {
-                table_api.add_diff_option_comment("intel-cpm", "intel_cpm");
-                tmpval = table_api.add_option("search_method", "intel_cpm");
+                table_api.add_diff_option_comment("intel-cpm", "hyperscan");
+                tmpval = table_api.add_option("search_method", "hyperscan");
             }
             else if (!method.compare("ac-std"))
             {

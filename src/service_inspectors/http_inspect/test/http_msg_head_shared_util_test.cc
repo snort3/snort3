@@ -23,8 +23,8 @@
 #include "config.h"
 #endif
 
-#include "service_inspectors/http_inspect/http_msg_head_shared.h"
 #include "service_inspectors/http_inspect/http_field.h"
+#include "service_inspectors/http_inspect/http_msg_head_shared.h"
 #include "service_inspectors/http_inspect/http_str_to_code.h"
 #include "service_inspectors/http_inspect/http_test_manager.h"
 

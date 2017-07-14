@@ -23,10 +23,10 @@
 #include "config.h"
 #endif
 
-#include "service_inspectors/http_inspect/http_transaction.h"
-#include "service_inspectors/http_inspect/http_module.h"
-#include "service_inspectors/http_inspect/http_flow_data.h"
 #include "service_inspectors/http_inspect/http_enum.h"
+#include "service_inspectors/http_inspect/http_flow_data.h"
+#include "service_inspectors/http_inspect/http_module.h"
+#include "service_inspectors/http_inspect/http_transaction.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>

@@ -12,7 +12,7 @@
 # enables
 # unit tests
 # required libs (daq / sfbpf, dnet, hwloc, luajit, openssl / crypto, pcap, pcre, zlib)
-# optional libs (hyperscan, intel soft cpm, lzma, safec)
+# optional libs (hyperscan, lzma, safec)
 # outputs
 #
 # if you add an AC_DEFINE() for a symbol that appears in an exported
@@ -1008,41 +1008,6 @@ fi
 AM_CONDITIONAL([HAVE_HYPERSCAN], [test "x$HS_HEADERS" = "xyes" -a "x$HS_LIB" = "xyes"])
 
 #--------------------------------------------------------------------------
-# intel soft cpm (optional)
-#--------------------------------------------------------------------------
-
-enable_intel_soft_cpm="yes"
-
-AC_ARG_WITH(intel_soft_cpm_includes,
-    AS_HELP_STRING([--with-intel-soft-cpm-includes=DIR],[Intel Soft CPM include directory]),
-    [with_intel_soft_cpm_includes="$withval"],[with_intel_soft_cpm_includes="no"])
-
-INTEL_SOFT_CPM_CPPFLAGS=""
-if test "x$with_intel_soft_cpm_includes" != "xno"; then
-    INTEL_SOFT_CPM_CPPFLAGS="-I${with_intel_soft_cpm_includes}"
-    CPPFLAGS="${CPPFLAGS} ${INTEL_SOFT_CPM_CPPFLAGS}"
-else
-    enable_intel_soft_cpm="no"
-fi
-
-AC_ARG_WITH(intel_soft_cpm_libraries,
-    AS_HELP_STRING([--with-intel-soft-cpm-libraries=DIR],[Intel Soft CPM library directory]),
-    [with_intel_soft_cpm_libraries="$withval"],[with_intel_soft_cpm_libraries="no"])
-
-if test "x$with_intel_soft_cpm_libraries" != "xno"; then
-    LDFLAGS="${LDFLAGS} -L${with_intel_soft_cpm_libraries}"
-    LIBS="${LIBS} -lpm"
-else
-    enable_intel_soft_cpm="no"
-fi
-
-AM_CONDITIONAL(HAVE_INTEL_SOFT_CPM, test "x$enable_intel_soft_cpm" = "xyes")
-
-if test "x$enable_intel_soft_cpm" = "xyes"; then
-    AC_DEFINE(INTEL_SOFT_CPM, [1], [enable intel cpm support in build])
-fi
-
-#--------------------------------------------------------------------------
 # lzma (optional)
 #--------------------------------------------------------------------------
 
@@ -1145,7 +1110,6 @@ AC_SUBST(DAQ_CPPFLAGS)
 AC_SUBST(FLATBUFFERS_CPPFLAGS)
 AC_SUBST(LZMA_CPPFLAGS)
 AC_SUBST(OPENSSL_CPPFLAGS)
-AC_SUBST(INTEL_SOFT_CPM_CPPFLAGS)
 AC_SUBST(HYPERSCAN_CPPFLAGS)
 
 AC_SUBST(SANITIZER_LDFLAGS)

@@ -26,15 +26,6 @@ set (BNFA_SOURCES
     bnfa_search.h
 )
 
-
-if ( ENABLE_INTEL_SOFT_CPM )
-    set(INTEL_SOURCES
-        intel_cpm.cc 
-        intel_soft_cpm.cc
-        intel_soft_cpm.h
-    )
-endif ()
-
 if ( HAVE_HYPERSCAN )
     set(HYPER_SOURCES
         hyperscan.cc

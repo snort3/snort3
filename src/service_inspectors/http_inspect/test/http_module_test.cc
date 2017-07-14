@@ -23,13 +23,12 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_engine.h"
 #include "log/messages.h"
 
-#include "service_inspectors/http_inspect/http_module.h"
-#include "service_inspectors/http_inspect/http_test_manager.h"
-#include "service_inspectors/http_inspect/http_str_to_code.h"
 #include "service_inspectors/http_inspect/http_js_norm.h"
+#include "service_inspectors/http_inspect/http_module.h"
+#include "service_inspectors/http_inspect/http_str_to_code.h"
+#include "service_inspectors/http_inspect/http_test_manager.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>

@@ -26,13 +26,6 @@ ac_bnfa.cc \
 bnfa_search.cc \
 bnfa_search.h
 
-if HAVE_INTEL_SOFT_CPM
-intel_sources = \
-intel_cpm.cc \
-intel_soft_cpm.cc \
-intel_soft_cpm.h
-endif
-
 if HAVE_HYPERSCAN
 hyper_sources = \
 hyperscan.cc \

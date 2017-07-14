@@ -24,8 +24,8 @@
 #endif
 
 #include "log/messages.h"
-#include "service_inspectors/http_inspect/http_uri_norm.h"
 #include "service_inspectors/http_inspect/http_js_norm.h"
+#include "service_inspectors/http_inspect/http_uri_norm.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>

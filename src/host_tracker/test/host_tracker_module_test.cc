@@ -23,14 +23,12 @@
 #include "config.h"
 #endif
 
-#include "target_based/snort_protocols.h"
-#include "host_tracker/host_tracker_module.h"
 #include "host_tracker/host_cache.h"
+#include "host_tracker/host_tracker_module.h"
+#include "target_based/snort_protocols.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
-
-#include "sfip/sf_ip.h"
 
 //  Fake to avoid bringing in a ton of dependencies.
 int16_t ProtocolReference::add(const char* protocol)

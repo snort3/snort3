@@ -23,16 +23,10 @@
 #include "config.h"
 #endif
 
-//  Must be included before CppUTest files to avoid compiler error.
-#include "network_inspectors/appid/appid_http_event_handler.cc"
-
-#include <CppUTest/CommandLineTestRunner.h>
-#include <CppUTest/TestHarness.h>
-#include <CppUTestExt/MockSupport.h>
-
 #include <string>
 
 #include "framework/data_bus.h"
+#include "network_inspectors/appid/appid_http_event_handler.cc"
 #include "protocols/protocol_ids.h"
 #include "service_inspectors/http_inspect/http_msg_header.h"
 #include "thirdparty_appid_api.h"
@@ -40,6 +34,10 @@
 #include "appid_mock_definitions.h"
 #include "appid_mock_http_session.h"
 #include "appid_mock_session.h"
+
+#include <CppUTest/CommandLineTestRunner.h>
+#include <CppUTest/TestHarness.h>
+#include <CppUTestExt/MockSupport.h>
 
 AppIdApi appid_api;
 

@@ -257,10 +257,6 @@ SnortConfig::~SnortConfig()
     delete daq_config;
     delete proto_ref;
 
-#ifdef INTEL_SOFT_CPM
-    IntelPmRelease(ipm_handles);
-#endif
-
     trim_heap();
 }
 

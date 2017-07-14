@@ -335,13 +335,6 @@ while [ $# -ne 0 ]; do
         --with-openssl=*)
             append_cache_entry OPENSSL_ROOT_DIR PATH $optarg
             ;;
-#  Currently unsupported
-#        --with-intel-soft-cpm-includes=*)
-#            append_cache_entry INTEL_SOFT_CPM_INCLUDE_DIR PATH $optarg
-#            ;;
-#        --with-intel-soft-cpm-libraries=*)
-#            append_cache_entry INTEL_SOFT_CPM_LIBRARIES_DIR PATH $optarg
-#            ;;
         --with-hyperscan-includes=*)
             append_cache_entry HS_INCLUDE_DIR PATH $optarg
             ;;

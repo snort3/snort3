@@ -63,9 +63,6 @@
 /* enable ha capable build */
 #cmakedefine ENABLE_HA 1
 
-/* enable intel cpm support in build */
-#cmakedefine INTEL_SOFT_CPM 1
-
 /* enable unit tests in build */
 #cmakedefine UNIT_TEST 1
 

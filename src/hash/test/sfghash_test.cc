@@ -25,12 +25,7 @@
 
 #include "hash/sfghash.h"
 
-#include <sstream>
-#include <string>
-#include <iostream>
-
 #include "main/snort_config.h"
-#include "utils/util.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>

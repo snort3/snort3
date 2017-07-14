@@ -10,7 +10,6 @@ This code has has evolved through 4 major versions:
 1.  acsmx.cc:  ac_std
 2.  acsmx2.cc:  ac_full, ac_sparse, ac_banded, ac_sparse_bands
 3.  bnfa_search.cc:  ac_bnfa
-    intel_cpm.cc:  intel_cpm was added later based on ac_bnfa
 4.  hyperscan.cc:  support of regex fast patterns
 
 Check the comments at the start of the above files for details on the
@@ -47,10 +46,6 @@ This is a potential negative impact on performance but does not yet seem
 significant.  Furthermore, regex based fast patterns may obviate the need
 for the tree.  However, the tree remains as it is essential for other
 algorithms.
-
-intel_cpm will likely be deleted as it requires a license and does not
-perform as well as hyperscan.  It remains pending further performance
-evaluations.
 
 SearchTool makes it easy to use ac_bnfa.  This is used by http, pop, imap,
 and smtp.

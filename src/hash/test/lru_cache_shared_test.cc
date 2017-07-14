@@ -25,16 +25,10 @@
 
 #include "hash/lru_cache_shared.h"
 
+#include <cstring>
+
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
-
-#include <chrono>
-#include <iostream>
-#include <functional>
-#include <unordered_map>
-#include <string.h>
-
-#include "time/stopwatch.h"
 
 TEST_GROUP(lru_cache_shared)
 {

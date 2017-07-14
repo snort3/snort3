@@ -27,10 +27,6 @@
 struct BaseApi;
 extern const BaseApi* se_ac_bnfa[];
 
-#ifdef INTEL_SOFT_CPM
-extern const BaseApi* se_intel_cpm[];
-#endif
-
 #ifdef HAVE_HYPERSCAN
 extern const BaseApi* se_hyperscan[];
 #endif
@@ -43,10 +39,6 @@ extern const BaseApi* se_acsmx2[];
 void load_search_engines()
 {
     PluginManager::load_plugins(se_ac_bnfa);
-
-#ifdef INTEL_SOFT_CPM
-    PluginManager::load_plugins(se_intel_cpm);
-#endif
 
 #ifdef HAVE_HYPERSCAN
     PluginManager::load_plugins(se_hyperscan);
