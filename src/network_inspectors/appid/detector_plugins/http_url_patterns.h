@@ -25,13 +25,14 @@
 #include <list>
 #include <vector>
 
-#include "application_ids.h"
-#include "appid_utils/sf_multi_mpse.h"
-#include "appid_utils/sf_mlmp.h"
 #include "flow/flow.h"
 #include "log/messages.h"
 #include "search_engines/search_tool.h"
 #include "utils/util.h"
+
+#include "application_ids.h"
+#include "appid_utils/sf_multi_mpse.h"
+#include "appid_utils/sf_mlmp.h"
 
 struct Packet;
 struct AppIdServiceSubtype;

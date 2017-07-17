@@ -53,6 +53,7 @@
 #include "latency/rule_latency.h"
 #include "log/log.h"
 #include "log/messages.h"
+#include "log/packet_tracer.h"
 #include "loggers/loggers.h"
 #include "main.h"
 #include "managers/action_manager.h"
@@ -720,6 +721,8 @@ void Snort::thread_init_unprivileged()
     SideChannelManager::thread_init();
     HighAvailabilityManager::thread_init(); // must be before InspectorManager::thread_init();
     InspectorManager::thread_init(snort_conf);
+    if (SnortConfig::packet_trace_enabled())
+        PacketTracer::thread_init();
 
     // in case there are HA messages waiting, process them first
     HighAvailabilityManager::process_receive();
@@ -762,6 +765,7 @@ void Snort::thread_term()
     EventTrace_Term();
     CleanupTag();
     FileService::thread_term();
+    PacketTracer::thread_term();
 
     Active::term();
     delete s_switcher;
@@ -784,6 +788,8 @@ DAQ_Verdict Snort::process_packet(
 
     PacketManager::decode(p, pkthdr, pkt);
     assert(p->pkth && p->pkt);
+
+    PacketTracer::add_header_info(p);
 
     if (is_frag)
     {
@@ -895,6 +901,12 @@ DAQ_Verdict Snort::packet_callback(
 
     int inject = 0;
     verdict = update_verdict(verdict, inject);
+
+    PacketTracer::log("NAP id %d, IPS id %d, Verdict %s\n",
+        get_network_policy()->policy_id, get_ips_policy()->policy_id,
+        SFDAQ::verdict_to_string(verdict));
+
+    PacketTracer::dump();
 
     // FIXIT-H move this to the appropriate struct
     //perfBase->UpdateWireStats(pkthdr->caplen, Active::packet_was_dropped(), inject);

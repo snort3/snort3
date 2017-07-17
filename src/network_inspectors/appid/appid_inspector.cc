@@ -44,6 +44,7 @@
 #include "detector_plugins/detector_sip.h"
 #include "detector_plugins/detector_pattern.h"
 #include "log/messages.h"
+#include "log/packet_tracer.h"
 #include "main/snort_config.h"
 #include "managers/inspector_manager.h"
 #include "protocols/packet.h"
@@ -57,6 +58,27 @@ static THREAD_LOCAL AppIdStatistics* appid_stats_manager = nullptr;
 static void openssl_cleanup()
 {
     CRYPTO_cleanup_all_ex_data();
+}
+
+static void add_appid_to_packet_trace(Flow* flow)
+{
+    AppIdSession* session = appid_api.get_appid_session(flow);
+    if (session)
+    {
+        AppId service_id, client_id, payload_id, misc_id;
+        const char *service_app_name, *client_app_name, *payload_app_name, *misc_name;
+        session->get_application_ids(service_id, client_id, payload_id, misc_id);
+        service_app_name = appid_api.get_application_name(service_id);
+        client_app_name = appid_api.get_application_name(client_id);
+        payload_app_name = appid_api.get_application_name(payload_id);
+        misc_name = appid_api.get_application_name(misc_id);
+
+        PacketTracer::log("AppID: service: %s(%d), client: %s(%d), payload: %s(%d), misc: %s(%d)\n",
+            (service_app_name ? service_app_name : ""), service_id,
+            (client_app_name ? client_app_name : ""), client_id,
+            (payload_app_name ? payload_app_name : ""), payload_id,
+            (misc_name ? misc_name : ""), misc_id);
+    }
 }
 
 AppIdInspector::AppIdInspector(const AppIdModuleConfig* pc)
@@ -174,7 +196,11 @@ void AppIdInspector::eval(Packet* p)
 
     appid_stats.packets++;
     if (p->flow)
+    {
         AppIdDiscovery::do_application_discovery(p);
+        if (SnortConfig::packet_trace_enabled())
+            add_appid_to_packet_trace(p->flow);
+    }
     else
         appid_stats.ignored_packets++;
 }
@@ -308,4 +334,3 @@ AppId getOpenAppId(Flow* flow)
     AppIdSession* asd = appid_api.get_appid_session(flow);
     return asd->payload_app_id;
 }
-

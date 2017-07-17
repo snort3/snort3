@@ -85,6 +85,7 @@ public:
     static void unload();
 
     static void print_types(std::ostream&);
+    static const char* verdict_to_string(DAQ_Verdict verdict);
     static void init(const SnortConfig*);
     static void term();
 

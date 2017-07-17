@@ -49,6 +49,7 @@
 #include "latency/packet_latency.h"
 #include "latency/rule_latency.h"
 #include "log/messages.h"
+#include "log/packet_tracer.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
@@ -111,6 +112,10 @@ static inline void fpLogOther(
 {
     if ( EventTrace_IsEnabled() )
         EventTrace_Log(p, otn, action);
+
+    PacketTracer::log("Event: %d:%d:%d, Action %s\n",
+        otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev,
+        get_action_string((RuleType)action));
 
     // rule option actions are queued here (eg replace)
     otn_trigger_actions(otn, p);

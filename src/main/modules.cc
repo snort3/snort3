@@ -37,6 +37,7 @@
 #include "host_tracker/host_cache_module.h"
 #include "latency/latency_module.h"
 #include "log/messages.h"
+#include "log/packet_tracer.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
 #include "memory/memory_module.h"
@@ -748,6 +749,9 @@ static const Parameter output_params[] =
 #endif
       "output 20 bytes per lines instead of 16 when dumping buffers" },
 
+    { "enable_packet_trace", Parameter::PT_BOOL, nullptr, "false",
+      "enable summary output of state that determined packet verdict" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -771,6 +775,9 @@ bool OutputModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("dump_payload_verbose") )
         v.update_mask(sc->output_flags, OUTPUT_FLAG__VERBOSE_DUMP);
+
+    else if ( v.is("enable_packet_trace") )
+        sc->enable_packet_trace = v.get_bool();
 
     else if ( v.is("log_ipv6_extra_data") )
         // FIXIT-M move to output|logging_flags

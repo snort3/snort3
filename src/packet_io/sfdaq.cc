@@ -178,6 +178,11 @@ void SFDAQ::term()
     daq_mod = nullptr;
 }
 
+const char* SFDAQ::verdict_to_string(DAQ_Verdict verdict)
+{
+    return daq_verdict_string(verdict);
+}
+
 bool SFDAQ::forwarding_packet(const DAQ_PktHdr_t* h)
 {
     // DAQ mode is inline and the packet will be forwarded?

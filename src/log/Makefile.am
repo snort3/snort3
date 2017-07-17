@@ -16,6 +16,8 @@ log_text.h \
 messages.cc \
 obfuscator.cc \
 obfuscator.h \
+packet_tracer.cc \
+packet_tracer.h \
 text_log.cc
 
 if ENABLE_UNIT_TESTS
