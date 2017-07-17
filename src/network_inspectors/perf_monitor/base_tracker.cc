@@ -32,7 +32,7 @@
 using namespace std;
 
 BaseTracker::BaseTracker(PerfConfig* perf)
-    : PerfTracker(perf, perf->output == PERF_FILE, PERF_NAME)
+    : PerfTracker(perf, perf->output == PERF_FILE, PERF_NAME "_base")
 {
     for (unsigned i = 0; i < config->modules.size(); i++)
     {
