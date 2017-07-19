@@ -27,6 +27,7 @@
 
 // this is where rule groups are compiled and MPSE are instantiated
 
+#include <string>
 #include "ports/port_group.h"
 
 struct SnortConfig;
@@ -51,6 +52,9 @@ struct NCListNode
 */
 int fpCreateFastPacketDetection(SnortConfig*);
 void fpDeleteFastPacketDetection(SnortConfig*);
+void get_pattern_info(const PatternMatchData* pmd,
+    const char* pattern, int pattern_length, std::string& hex, std::string& txt,
+    std::string& opts);
 
 #endif
 

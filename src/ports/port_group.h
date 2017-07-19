@@ -33,13 +33,18 @@
 
 enum PmType
 {
-    PM_TYPE_PKT,
+    PM_TYPE_PKT = 0,
     PM_TYPE_ALT,
     PM_TYPE_KEY,
     PM_TYPE_HEADER,
     PM_TYPE_BODY,
     PM_TYPE_FILE,
     PM_TYPE_MAX
+};
+
+const char* const pm_type_strings[PM_TYPE_MAX] =
+{
+    "packet", "alt", "key", "header", "body", "file"
 };
 
 struct RULE_NODE

@@ -39,8 +39,6 @@
 
 #include "fp_detect.h"
 
-#include "detection/detection_engine.h"
-#include "detection/ips_context.h"
 #include "events/event.h"
 #include "filters/rate_filter.h"
 #include "filters/sfthreshold.h"
@@ -50,6 +48,7 @@
 #include "latency/rule_latency.h"
 #include "log/messages.h"
 #include "log/packet_tracer.h"
+#include "main/modules.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
@@ -64,16 +63,9 @@
 #include "utils/stats.h"
 #include "utils/util.h"
 
-#include "detect.h"
-#include "detection_options.h"
-#include "detection_util.h"
-#include "fp_config.h"
-#include "fp_create.h"
-#include "pattern_match_data.h"
-#include "pcrm.h"
-#include "service_map.h"
-
 #include "context_switcher.h"
+#include "detect.h"
+#include "detect_trace.h"
 #include "detection_util.h"
 #include "detection_engine.h"
 #include "detection_options.h"
@@ -313,7 +305,7 @@ int fpEvalRTN(RuleTreeNode* rtn, Packet* p, int check_ports)
 
     // FIXIT-L maybe add a port test here ...
 
-    DebugFormat(DEBUG_DETECT, "[*] Rule Head %p\n", (void*) rtn);
+    DebugFormat(DEBUG_DETECT, "[*] Rule Head %p\n", (void*)rtn);
 
     if (!rtn->rule_func->RuleHeadFunc(p, rtn, rtn->rule_func, check_ports))
     {
@@ -345,11 +337,14 @@ static int detection_option_tree_evaluate(detection_option_tree_root_t* root,
     Cursor c(eval_data->p);
     int rval = 0;
 
+    trace_log(detection, TRACE_RULE_EVAL, "Starting tree eval\n");
+
     for ( int i = 0; i < root->num_children; ++i )
     {
         // Increment number of events generated from that child
         rval += detection_option_node_evaluate(root->children[i], eval_data, c);
     }
+    clear_trace_cursor_info();
 
     return rval;
 }
@@ -369,6 +364,8 @@ static int rule_tree_match(
     eval_data.pmd = pmx->pmd;
     eval_data.flowbit_failed = 0;
     eval_data.flowbit_noalert = 0;
+
+    print_pattern(pmx->pmd);
 
     {
         Profile rule_profile(rulePerfStats);
@@ -755,7 +752,8 @@ private:
     unsigned count;
     unsigned flushed;
 
-    struct Node {
+    struct Node
+    {
         void* user;
         void* tree;
         void* list;
@@ -804,11 +802,17 @@ bool MpseStash::process(MpseMatch match, void* context)
 
     pmqs.tot_inq_flush += flushed;
 
+#ifdef DEBUG_MSGS
+    if (count == 0)
+        trace_log(detection, TRACE_RULE_EVAL, "Fast pattern processing - no matches found\n");
+#endif
+
     for ( unsigned i = 0; i < count; ++i )
     {
         Node& node = queue[i];
 
         // process a pattern - case is handled by otn processing
+        trace_logf(detection, TRACE_RULE_EVAL,"Processing pattern match #%d\n", i+1);
         int res = match(node.user, node.tree, node.index, context, node.list);
 
         if ( res > 0 )
@@ -866,6 +870,7 @@ static inline int search_data(
     omd->data = buf; omd->size = len;
     MpseStash* stash = omd->p->context->stash;
     stash->init();
+    dump_buffer(buf, len);
     so->search(buf, len, rule_tree_queue, omd, &start_state);
     stash->process(rule_tree_match, omd);
     if ( PacketLatency::fastpath() )
@@ -880,7 +885,13 @@ static inline int search_buffer(
     if ( gadget->get_fp_buf(ibt, omd->p, buf) )
     {
         if ( Mpse* so = omd->pg->mpse[pmt] )
+        {
+            trace_logf(detection, TRACE_RULE_EVAL,
+                "inspector %s, buffer type %s\n",
+                gadget->get_name(),pm_type_strings[pmt]);
+
             search_data(so, omd, buf.data, buf.len, cnt);
+        }
     }
     return 0;
 }
@@ -896,6 +907,8 @@ static int fp_search(
     omd->check_ports = check_ports;
 
     bool user_mode = snort_conf->sopgTable->user_mode;
+
+    trace_log(detection, TRACE_RULE_EVAL, "Fast pattern search\n");
 
     if ( (!user_mode or type < 2) and p->data and p->dsize )
     {
@@ -944,7 +957,10 @@ static int fp_search(
             DataPointer file_data = p->context->file_data;
 
             if ( file_data.len )
+            {
+                trace_log(detection, TRACE_RULE_EVAL, "Searching file data\n");
                 search_data(so, omd, file_data.data, file_data.len, pc.file_searches);
+            }
         }
     }
     return 0;
@@ -974,6 +990,8 @@ static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
     bool repeat = false;
     uint16_t tmp_dsize;
     FastPatternConfig* fp = snort_conf->fast_pattern_config;
+
+    print_pkt_info(p);
 
     if (ip_rule)
     {
@@ -1023,6 +1041,7 @@ static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
             {
                 Profile rule_profile(rulePerfStats);
                 Profile rule_nfp_eval_profile(ruleNFPEvalPerfStats);
+                trace_log(detection, TRACE_RULE_EVAL, "Testing non-content rules\n");
                 rval = detection_option_tree_evaluate(
                     (detection_option_tree_root_t*)port_group->nfp_tree, &eval_data);
             }
@@ -1074,7 +1093,7 @@ static inline void fpEvalHeaderIp(Packet* p, OtnxMatchData* omd)
     if ( ip_group )
         fpEvalHeaderSW(ip_group, p, 0, 1, 0, omd);
 
-    if  (any )
+    if (any )
         fpEvalHeaderSW(any, p, 0, 1, 0, omd);
 }
 
@@ -1125,13 +1144,13 @@ static inline void fpEvalHeaderUdp(Packet* p, OtnxMatchData* omd)
         p->ptrs.sp,p->ptrs.dp,(void*)src,(void*)dst,(void*)any);
 
     if ( dst )
-        fpEvalHeaderSW(dst, p, 1, 0, 0, omd) ;
+        fpEvalHeaderSW(dst, p, 1, 0, 0, omd);
 
     if ( src )
-        fpEvalHeaderSW(src, p, 1, 0, 0, omd) ;
+        fpEvalHeaderSW(src, p, 1, 0, 0, omd);
 
     if ( any )
-        fpEvalHeaderSW(any, p, 1, 0, 0, omd) ;
+        fpEvalHeaderSW(any, p, 1, 0, 0, omd);
 }
 
 static inline bool fpEvalHeaderSvc(Packet* p, OtnxMatchData* omd, int proto)

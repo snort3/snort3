@@ -104,21 +104,29 @@ static inline void trace_vprintf(const char* name, Trace mask, const char* file,
     if ( !trace_enabled(mask, flags) )
         return;
 
-    char buf[STD_BUF];
+    char buf[STD_BUF];	
     int buf_len = sizeof(buf);
     char* buf_ptr = buf;
-
-    int size = snprintf(buf, buf_len, "%s: ", name);
-    if ( size > 0 && size < buf_len )
-    {
-        buf_ptr += size;
-        buf_len -= size;
+    int size;
+	
+    if (name)
+    {   
+        size = snprintf(buf, buf_len, "%s: ", name);
+        if ( size >= buf_len )
+            size = buf_len - 1;
+        if ( size > 0 )
+        {
+            buf_ptr += size;
+            buf_len -= size;
+        }
     }
-
+	
     if ( file )
     {
         size = snprintf(buf_ptr, buf_len, "%s:%d: ", file, line);
-        if ( size > 0 && size < buf_len )
+        if ( size >= buf_len )
+            size = buf_len - 1;
+        if ( size > 0 )
         {
             buf_ptr += size;
             buf_len -= size;

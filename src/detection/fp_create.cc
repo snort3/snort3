@@ -47,12 +47,15 @@
 #include "utils/util.h"
 
 #include "detection_options.h"
+#include "detect_trace.h"
 #include "fp_config.h"
 #include "fp_utils.h"
 #include "pattern_match_data.h"
 #include "pcrm.h"
 #include "service_map.h"
 #include "treenodes.h"
+
+using namespace std;
 
 static unsigned mpse_count = 0;
 static const char* s_group = "";
@@ -65,11 +68,6 @@ static int fpGetFinalPattern(
 static void print_nfp_info(const char*, const OptTreeNode*);
 static void print_fp_info(const char*, const OptTreeNode*, const PatternMatchData*,
     const char* pattern, int pattern_length);
-
-static const char* const pm_type_strings[PM_TYPE_MAX] =
-{
-    "packet", "alt", "key", "header", "body", "file"
-};
 
 static int finalize_detection_option_tree(SnortConfig* sc, detection_option_tree_root_t* root)
 {
@@ -707,10 +705,8 @@ static int fpCreateRuleMaps(SnortConfig* sc, RulePortTables* p)
     if (fpCreateInitRuleMap(sc->prmIcmpRTNX, p->icmp.src, p->icmp.dst, p->icmp.any))
         return -1;
 
-
     if (fpCreateInitRuleMap(sc->prmTcpRTNX, p->tcp.src, p->tcp.dst, p->tcp.any))
         return -1;
-
 
     if (fpCreateInitRuleMap(sc->prmUdpRTNX, p->udp.src, p->udp.dst, p->udp.any))
         return -1;
@@ -1365,8 +1361,7 @@ static void fp_print_service_rules(SnortConfig* sc, SFGHASH* cli, SFGHASH* srv, 
 static void fp_print_service_rules_by_proto(SnortConfig* sc, srmm_table_t* srmm)
 {
     for ( int i = SNORT_PROTO_IP; i < SNORT_PROTO_MAX; ++i )
-        fp_print_service_rules(sc, srmm->to_srv[i], srmm->to_cli[i],
-        sc->proto_ref->get_name(i));
+        fp_print_service_rules(sc, srmm->to_srv[i], srmm->to_cli[i], sc->proto_ref->get_name(i));
 }
 
 static void fp_sum_port_groups(PortGroup* pg, unsigned c[PM_TYPE_MAX])
@@ -1610,11 +1605,9 @@ static void print_nfp_info(const char* group, const OptTreeNode* otn)
         group, otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev);
 }
 
-static void print_fp_info(
-    const char* group, const OptTreeNode* otn, const PatternMatchData* pmd,
-    const char* pattern, int pattern_length)
+void get_pattern_info(const PatternMatchData* pmd,
+    const char* pattern, int pattern_length, string& hex, string& txt, string& opts)
 {
-    std::string hex, txt;
     char buf[8];
 
     for ( int i = 0; i < pattern_length; ++i )
@@ -1623,12 +1616,22 @@ static void print_fp_info(
         hex += buf;
         txt += isprint(pattern[i]) ? pattern[i] : '.';
     }
-    std::string opts = "(";
-    if ( pmd->is_fast_pattern() ) opts += " user";
-    if ( pmd->fp_only ) opts += " only";
-    if ( pmd->is_negated() ) opts += " negated";
+    opts = "(";
+    if ( pmd->is_fast_pattern() )
+        opts += " user";
+    if ( pmd->fp_only )
+        opts += " only";
+    if ( pmd->is_negated() )
+        opts += " negated";
     opts += " )";
+}
 
+static void print_fp_info(const char* group, const OptTreeNode* otn, const PatternMatchData* pmd,
+    const char* pattern, int pattern_length)
+{
+    std::string hex, txt, opts;
+
+    get_pattern_info(pmd, pattern, pattern_length, hex, txt, opts);
     LogMessage("FP %s %u:%u:%u %s[%d] = '%s' |%s| %s\n",
         group, otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev,
         pm_type_strings[pmd->pm_type], pattern_length,

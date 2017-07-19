@@ -9,6 +9,7 @@ detection_defines.h \
 detection_engine.h \
 detection_options.h \
 detection_util.h \
+detect_trace.h \
 ips_context.h \
 regex_offload.h \
 rule_option_types.h \
@@ -24,6 +25,7 @@ detection_engine.cc \
 detection_options.cc \
 detection_options.h \
 detection_util.cc \
+detect_trace.cc \
 fp_config.cc \
 fp_config.h \
 fp_create.cc \

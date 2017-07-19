@@ -5,6 +5,7 @@ set (DETECTION_INCLUDES
     detection_engine.h
     detection_options.h
     detection_util.h
+    detect_trace.h
     ips_context.h
     regex_offload.h
     rule_option_types.h
@@ -22,6 +23,7 @@ add_library (detection STATIC
     detection_options.cc
     detection_options.h
     detection_util.cc
+    detect_trace.cc
     fp_config.cc
     fp_config.h
     fp_create.cc

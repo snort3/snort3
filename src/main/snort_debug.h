@@ -155,8 +155,14 @@ static inline void trace_print(const char* name, Trace mask, const char* file,
 #define trace_log(tracer, ...) \
     trace_print(#tracer, tracer##_trace, nullptr, 0, __VA_ARGS__)
 
+#define trace_log_wo_name(tracer, ...) \
+    trace_print(nullptr, tracer##_trace, nullptr, 0, __VA_ARGS__)
+
 #define trace_logf(tracer, ...) \
     trace_printf(#tracer, tracer##_trace, nullptr, 0, __VA_ARGS__)
+
+#define trace_logf_wo_name(tracer, ...) \
+    trace_printf(nullptr, tracer##_trace, nullptr, 0, __VA_ARGS__)
 
 #define trace_debug(tracer, ...) \
     trace_print(#tracer, tracer##_trace, __FILE__, __LINE__, __VA_ARGS__)
@@ -189,7 +195,9 @@ private:
 
 #else
 #define trace_log(tracer, ...)
+#define trace_log_wo_name(tracer, ...)
 #define trace_logf(tracer, ...)
+#define trace_logf_wo_name(tracer, ...)
 #define trace_debug(tracer, ...)
 #define trace_debugf(tracer, ...)
 

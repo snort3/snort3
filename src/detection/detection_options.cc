@@ -32,6 +32,8 @@
 
 #include "detection_options.h"
 
+#include <string>
+
 #include "filters/detection_filter.h"
 #include "framework/cursor.h"
 #include "hash/sfhashfcn.h"
@@ -41,7 +43,9 @@
 #include "latency/packet_latency.h"
 #include "latency/rule_latency_state.h"
 #include "log/messages.h"
+#include "main/modules.h"
 #include "main/snort_config.h"
+#include "main/snort_debug.h"
 #include "main/thread_config.h"
 #include "managers/ips_manager.h"
 #include "parser/parser.h"
@@ -50,12 +54,9 @@
 #include "utils/util.h"
 
 #include "detection_defines.h"
-#include "fp_detect.h"
-#include "pattern_match_data.h"
-
-#include "detection_defines.h"
 #include "detection_engine.h"
 #include "detection_util.h"
+#include "detect_trace.h"
 #include "fp_create.h"
 #include "fp_detect.h"
 #include "ips_context.h"
@@ -365,6 +366,8 @@ int detection_option_node_evaluate(
     if ( !eval_data || !eval_data->p || !eval_data->pomd )
         return 0;
 
+    node_eval_trace(node, cursor);
+
     auto p = eval_data->p;
     auto pomd = eval_data->pomd;
 
@@ -383,6 +386,8 @@ int detection_option_node_evaluate(
                 !(p->packet_flags & PKT_IP_RULE_2ND) &&
                 !(p->proto_bits & (PROTO_BIT__TEREDO|PROTO_BIT__GTP)) )
             {
+                trace_log(detection, TRACE_RULE_EVAL,
+                    "Was evaluated before, returning last check result\n");
                 return last_check.result;
             }
         }
@@ -440,7 +445,9 @@ int detection_option_node_evaluate(
                     DebugFormat(DEBUG_DETECT,
                         "[**] SID %u not matched because of service mismatch (%d!=%d [**]\n",
                         sig_info.sid, app_proto, sig_info.services[0].service_ordinal);
-
+                    trace_logf(detection, TRACE_RULE_EVAL,
+                        "SID %u not matched because of service mismatch %d!=%d \n",
+                        sig_info.sid, app_proto, sig_info.services[0].service_ordinal);
                     break;  // out of case
                 }
             }
@@ -458,9 +465,13 @@ int detection_option_node_evaluate(
                 bool f_result = true;
 
                 if ( otn->detection_filter )
+                {
+                    trace_log(detection, TRACE_RULE_EVAL,
+                        "Evaluating detection filter\n");
                     f_result = !detection_filter_test(otn->detection_filter,
                         p->ptrs.ip_api.get_src(), p->ptrs.ip_api.get_dst(),
                         p->pkth->ts.tv_sec);
+                }
 
                 if ( f_result )
                 {
@@ -470,11 +481,21 @@ int detection_option_node_evaluate(
                     {
                         PatternMatchData* pmd = (PatternMatchData*)eval_data->pmd;
                         int pattern_size = pmd ? pmd->pattern_size : 0;
+#ifdef DEBUG_MSGS
+                        const SigInfo& si = otn->sigInfo;
+                        trace_logf(detection, TRACE_RULE_EVAL,
+                            "Matched rule gid:sid:rev %u:%u:%u\n", si.gid, si.sid, si.rev);
+#endif
+
                         fpAddMatch((OtnxMatchData*)pomd, pattern_size, otn);
                     }
                     result = rval = DETECTION_OPTION_MATCH;
                 }
             }
+#ifdef DEBUG_MSGS
+            else
+                trace_log(detection, TRACE_RULE_EVAL, "Header check failed\n");
+#endif
 
             break;
         }
@@ -530,11 +551,13 @@ int detection_option_node_evaluate(
 
         if ( rval == DETECTION_OPTION_NO_MATCH )
         {
+            trace_log(detection, TRACE_RULE_EVAL, "no match\n");
             state.last_check.result = result;
             return result;
         }
         else if ( rval == DETECTION_OPTION_FAILED_BIT )
         {
+            trace_log(detection, TRACE_RULE_EVAL, "failed bit\n");
             eval_data->flowbit_failed = 1;
             // clear the timestamp so failed flowbit gets eval'd again
             state.last_check.flowbit_failed = 1;
@@ -547,11 +570,18 @@ int detection_option_node_evaluate(
             // so nodes below this don't alert.
             tmp_noalert_flag = eval_data->flowbit_noalert;
             eval_data->flowbit_noalert = 1;
+            trace_log(detection, TRACE_RULE_EVAL, "flowbit no alert\n");
         }
 
         // Back up byte_extract vars so they don't get overwritten between rules
+        trace_log(detection, TRACE_RULE_VARS, "Rule options variables: \n");
         for ( int i = 0; i < NUM_IPS_OPTIONS_VARS; ++i )
+        {
             GetVarValueByIndex(&(tmp_byte_extract_vars[i]), (int8_t)i);
+            trace_logf_wo_name(detection, TRACE_RULE_VARS, "var[%d]=%d ", i,
+                tmp_byte_extract_vars[i]);
+        }
+        trace_log_wo_name(detection, TRACE_RULE_VARS, "\n");
 
         if ( PacketLatency::fastpath() )
         {
