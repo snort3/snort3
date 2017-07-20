@@ -65,7 +65,10 @@ void FileCapture::writer_thread()
         std::unique_lock<std::mutex> lk(capture_mutex);
         capture_cv.wait(lk, [] { return !running or files_waiting.size(); });
 
-        if (!running)
+        // When !running we write out any remaining files before exiting.
+        // FIXIT-L should take dirty_pig into account. But this thread does not have convenient
+        // access to snort_conf.
+        if (!files_waiting.size())
             break;
 
         FileCapture* file = files_waiting.front();
@@ -136,7 +139,10 @@ void FileCapture::init(int64_t memcap, int64_t block_size)
  */
 void FileCapture::exit()
 {
-    running = false;
+    {
+        std::lock_guard<std::mutex> lk(capture_mutex);
+        running = false;
+    }
     capture_cv.notify_one();
 
     if (file_storer)
