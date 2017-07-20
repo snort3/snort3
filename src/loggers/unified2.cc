@@ -29,6 +29,8 @@
 #include "config.h"
 #endif
 
+#include <cassert>
+
 #include "detection/signature.h"
 #include "detection/detection_util.h"
 #include "events/event.h"
@@ -80,10 +82,9 @@ static THREAD_LOCAL U2 u2;
 /* Used for buffering header and payload of unified records so only one
  * write is necessary. */
 constexpr unsigned u2_buf_sz =
-    sizeof(Serial_Unified2_Header) + sizeof(Unified2IDSEventIPv6) + IP_MAXPACKET;
+    sizeof(Serial_Unified2_Header) + sizeof(Unified2Event) + IP_MAXPACKET;
 
-// TBD - is performance any better if these buffers are off the heap?
-static THREAD_LOCAL uint8_t write_pkt_buffer[u2_buf_sz];
+static THREAD_LOCAL uint8_t* write_pkt_buffer = nullptr;
 
 #define MAX_XDATA_WRITE_BUF_LEN \
     (MAX_XFF_WRITE_BUF_LENGTH - \
@@ -95,58 +96,20 @@ static THREAD_LOCAL uint8_t write_pkt_buffer[u2_buf_sz];
  * spoolers get an entire record */
 
 /* use the size of the buffer we copy record data into */
-static THREAD_LOCAL char io_buffer[u2_buf_sz];
+static THREAD_LOCAL char* io_buffer = nullptr;
 
 /* -------------------- Local Functions -----------------------*/
 
-/* Unified2 Output functions */
 static void Unified2InitFile(Unified2Config*);
 static inline void Unified2RotateFile(Unified2Config*);
 static void _Unified2LogPacketAlert(Packet*, const char*, Unified2Config*, const Event*);
 static void Unified2Write(uint8_t*, uint32_t, Unified2Config*);
 
-static void _AlertIP4_v2(Packet*, const char*, Unified2Config*, const Event*);
-static void _AlertIP6_v2(Packet*, const char*, Unified2Config*, const Event*);
+static void alert_event(Packet*, const char*, Unified2Config*, const Event*);
 
-static void AlertExtraData(Flow*, void* data, LogFunction* log_funcs, uint32_t max_count, uint32_t
-    xtradata_mask, uint32_t event_id, uint32_t event_second);
+static void AlertExtraData(Flow*, void* data, LogFunction* log_funcs,
+    uint32_t max_count, uint32_t xtradata_mask, uint32_t event_id, uint32_t event_second);
 
-#define U2_PACKET_FLAG 1
-/* Obsolete flag as UI wont check the impact_flag field anymore.*/
-#define U2_FLAG_BLOCKED 0x20
-/* New flags to set the pad field (corresponds to blocked column in UI) with packet action*/
-#define U2_BLOCKED_FLAG_ALLOW 0x00
-#define U2_BLOCKED_FLAG_BLOCK 0x01
-#define U2_BLOCKED_FLAG_WOULD 0x02
-#define U2_BLOCKED_FLAG_CANT  0x03
-
-static int s_blocked_flag[] =
-{
-    U2_BLOCKED_FLAG_ALLOW,
-    U2_BLOCKED_FLAG_CANT,
-    U2_BLOCKED_FLAG_WOULD,
-    U2_BLOCKED_FLAG_BLOCK,
-};
-
-static int GetU2Flags(const Packet*, uint8_t* pimpact)
-{
-    Active::ActiveStatus dispos = Active::get_status();
-
-    if ( dispos > Active::AST_ALLOW )
-        *pimpact = U2_FLAG_BLOCKED;
-
-    return s_blocked_flag[dispos];
-}
-
-/*
- * Function: Unified2InitFile()
- *
- * Purpose: Initialize the unified2 output file
- *
- * Arguments: config => pointer to the plugin's reference data struct
- *
- * Returns: void function
- */
 static void Unified2InitFile(Unified2Config* config)
 {
     char filepath[STD_BUF];
@@ -185,7 +148,7 @@ static void Unified2InitFile(Unified2Config* config)
 
     /* Set buffer to size of record buffer so the system doesn't flush
      * part of a record if it's greater than BUFSIZ */
-    if (setvbuf(u2.stream, io_buffer, _IOFBF, sizeof(io_buffer)) != 0)
+    if (setvbuf(u2.stream, io_buffer, _IOFBF, u2_buf_sz) != 0)
     {
         ErrorMessage("%s(%d) Could not set I/O buffer: %s. "
             "Using system default.\n",
@@ -213,185 +176,100 @@ static inline void Unified2RotateFile(Unified2Config* config)
     Unified2InitFile(config);
 }
 
-static void _AlertIP4_v2(Packet* p, const char*, Unified2Config* config, const Event* event)
+static inline unsigned get_version(const SfIp& addr)
 {
-    Serial_Unified2_Header hdr;
-    Unified2IDSEvent alertdata;
-    uint32_t write_len = sizeof(hdr) + sizeof(alertdata);
-
-    memset(&alertdata, 0, sizeof(alertdata));
-
-    alertdata.event_id = htonl(event->event_id);
-    alertdata.event_second = htonl(event->ref_time.tv_sec);
-    alertdata.event_microsecond = htonl(event->ref_time.tv_usec);
-    alertdata.generator_id = htonl(event->sig_info->gid);
-    alertdata.signature_id = htonl(event->sig_info->sid);
-    alertdata.signature_revision = htonl(event->sig_info->rev);
-    alertdata.classification_id = htonl(event->sig_info->class_id);
-    alertdata.priority_id = htonl(event->sig_info->priority);
-
-    if (p)
-    {
-        alertdata.blocked = GetU2Flags(p, &alertdata.impact_flag);
-
-        if (p->has_ip())
-        {
-            const ip::IP4Hdr* const iph = p->ptrs.ip_api.get_ip4h();
-            alertdata.ip_source = iph->get_src();
-            alertdata.ip_destination = iph->get_dst();
-        }
-        else if (p->flow)
-        {
-            if (p->is_from_client())
-            {
-                alertdata.ip_source = *(p->flow->client_ip.get_ip4_ptr());
-                alertdata.ip_destination = *(p->flow->server_ip.get_ip4_ptr());
-            }
-            else
-            {
-                alertdata.ip_source = *(p->flow->server_ip.get_ip4_ptr());
-                alertdata.ip_destination = *(p->flow->client_ip.get_ip4_ptr());
-            }
-        }
-
-        alertdata.ip_proto = p->get_ip_proto_next();
-
-        if ( p->type() == PktType::ICMP)
-        {
-            // If PktType == ICMP, icmph is set
-            alertdata.sport_itype = htons(p->ptrs.icmph->type);
-            alertdata.dport_icode = htons(p->ptrs.icmph->code);
-        }
-
-        alertdata.sport_itype = htons(p->ptrs.sp);
-        alertdata.dport_icode = htons(p->ptrs.dp);
-
-        if ((p->proto_bits & PROTO_BIT__MPLS) && (config->mpls_event_types))
-        {
-            alertdata.mpls_label = htonl(p->ptrs.mplsHdr.label);
-        }
-        if (config->vlan_event_types)
-        {
-            if (p->proto_bits & PROTO_BIT__VLAN)
-            {
-                alertdata.vlanId = htons(layer::get_vlan_layer(p)->vid());
-            }
-
-            alertdata.pad2 = htons(p->user_policy_id);
-        }
-
-        if ( p->flow )
-        {
-            const char* app_name = appid_api.get_application_name(p->flow, p->is_from_client());
-            if ( app_name )
-                memcpy_s(alertdata.app_name, sizeof(alertdata.app_name), app_name, strlen(app_name) + 1);
-        }
-    }
-
-    if ( config->limit && (u2.current + write_len) > config->limit )
-        Unified2RotateFile(config);
-
-    hdr.length = htonl(sizeof(alertdata));
-    hdr.type = htonl(UNIFIED2_IDS_EVENT_VLAN);
-
-    memcpy_s(write_pkt_buffer, sizeof(write_pkt_buffer), &hdr, sizeof(hdr));
-
-    size_t offset = sizeof(hdr);
-
-    memcpy_s(write_pkt_buffer + offset, sizeof(write_pkt_buffer) - offset, &alertdata, sizeof(alertdata));
-
-    Unified2Write(write_pkt_buffer, write_len, config);
+    uint16_t family = addr.get_family();
+    return (family == AF_INET) ? 0x4 : (family == AF_INET6 ? 0x6 : 0x0);
 }
 
-static void _AlertIP6_v2(Packet* p, const char*, Unified2Config* config, const Event* event)
+static inline void copy_addr(const SfIp& src, const SfIp& dst, Unified2Event& e)
 {
-    Serial_Unified2_Header hdr;
-    Unified2IDSEventIPv6 alertdata;
-    uint32_t write_len = sizeof(Serial_Unified2_Header) + sizeof(Unified2IDSEventIPv6);
+    COPY4(e.pkt_src_ip, src.get_ip6_ptr());
+    COPY4(e.pkt_dst_ip, dst.get_ip6_ptr());
+    e.pkt_ip_ver = (get_version(src) << 4) | get_version(dst);
+}
 
-    memset(&alertdata, 0, sizeof(alertdata));
+static void alert_event(Packet* p, const char*, Unified2Config* config, const Event* event)
+{
+    Unified2Event u2_event;
+    memset(&u2_event, 0, sizeof(u2_event));
 
-    alertdata.event_id = htonl(event->event_id);
-    alertdata.event_second = htonl(event->ref_time.tv_sec);
-    alertdata.event_microsecond = htonl(event->ref_time.tv_usec);
-    alertdata.generator_id = htonl(event->sig_info->gid);
-    alertdata.signature_id = htonl(event->sig_info->sid);
-    alertdata.signature_revision = htonl(event->sig_info->rev);
-    alertdata.classification_id = htonl(event->sig_info->class_id);
-    alertdata.priority_id = htonl(event->sig_info->priority);
+    u2_event.snort_id = 0;  // FIXIT-H define / use
 
-    if (p)
+    u2_event.event_id = htonl(event->event_id);
+    u2_event.event_second = htonl(event->ref_time.tv_sec);
+    u2_event.event_microsecond = htonl(event->ref_time.tv_usec);
+
+    u2_event.policy_id_context = 0;  // FIXIT-H define / use context ids
+    u2_event.policy_id_detect = 0;   // FIXIT-H define / use detect ids
+
+    u2_event.rule_gid = htonl(event->sig_info->gid);
+    u2_event.rule_sid = htonl(event->sig_info->sid);
+    u2_event.rule_rev = htonl(event->sig_info->rev);
+    u2_event.rule_class = htonl(event->sig_info->class_id);
+    u2_event.rule_priority = htonl(event->sig_info->priority);
+
+    if ( p )
     {
-        alertdata.blocked = GetU2Flags(p, &alertdata.impact_flag);
+        u2_event.policy_id_inspect = htons(p->user_policy_id);  // FIXIT-H inspect id
 
-        if(p->ptrs.ip_api.is_ip())
-        {
-            const SfIp* ip;
-            ip = p->ptrs.ip_api.get_src();
-            alertdata.ip_source = *(struct in6_addr*)ip->get_ip6_ptr();
-            ip = p->ptrs.ip_api.get_dst();
-            alertdata.ip_destination = *(struct in6_addr*)ip->get_ip6_ptr();
-        }
+        if ( p->ptrs.ip_api.is_ip() )
+            copy_addr(*p->ptrs.ip_api.get_src(), *p->ptrs.ip_api.get_dst(), u2_event);
+
         else if (p->flow)
         {
             if (p->is_from_client())
-            {
-                alertdata.ip_source = *(struct in6_addr*)p->flow->client_ip.get_ip6_ptr();
-                alertdata.ip_destination = *(struct in6_addr*)p->flow->server_ip.get_ip6_ptr();
-            }
+                copy_addr(p->flow->client_ip, p->flow->server_ip, u2_event);
             else
-            {
-                alertdata.ip_source = *(struct in6_addr*)p->flow->server_ip.get_ip6_ptr();
-                alertdata.ip_destination = *(struct in6_addr*)p->flow->client_ip.get_ip6_ptr();
-            }
+                copy_addr(p->flow->server_ip, p->flow->client_ip, u2_event);
         }
-
-        alertdata.ip_proto = p->get_ip_proto_next();
 
         if ( p->type() == PktType::ICMP)
         {
             // If PktType == ICMP, icmph is set
-            alertdata.sport_itype = htons(p->ptrs.icmph->type);
-            alertdata.dport_icode = htons(p->ptrs.icmph->code);
+            u2_event.pkt_src_port_itype = htons(p->ptrs.icmph->type);
+            u2_event.pkt_dst_port_icode = htons(p->ptrs.icmph->code);
         }
-
-        alertdata.sport_itype = htons(p->ptrs.sp);
-        alertdata.dport_icode = htons(p->ptrs.dp);
-
-        if ((p->proto_bits & PROTO_BIT__MPLS) && (config->mpls_event_types))
+        else
         {
-            alertdata.mpls_label = htonl(p->ptrs.mplsHdr.label);
-        }
-        if (config->vlan_event_types)
-        {
-            if (p->proto_bits & PROTO_BIT__VLAN)
-            {
-                alertdata.vlanId = htons(layer::get_vlan_layer(p)->vid());
-            }
-
-            alertdata.pad2 = htons(p->user_policy_id);
+            u2_event.pkt_src_port_itype = htons(p->ptrs.sp);
+            u2_event.pkt_dst_port_icode = htons(p->ptrs.dp);
         }
 
-        if ( p->flow )
-        {
-            const char* app_name = appid_api.get_application_name(p->flow, p->is_from_client());
-            if ( app_name )
-                memcpy_s(alertdata.app_name, sizeof(alertdata.app_name), app_name, strlen(app_name) + 1);
-        }
+        if ( p->proto_bits & PROTO_BIT__MPLS )
+            u2_event.pkt_mpls_label = htonl(p->ptrs.mplsHdr.label);
+
+        if ( p->proto_bits & PROTO_BIT__VLAN )
+            u2_event.pkt_vlan_id = htons(layer::get_vlan_layer(p)->vid());
+
+        u2_event.pkt_ip_proto = (uint8_t)p->get_ip_proto_next();
+
+        const char* app_name = p->flow ?
+            appid_api.get_application_name(p->flow, p->is_from_client()) : nullptr;
+
+        if ( app_name )
+            memcpy_s(u2_event.app_name, sizeof(u2_event.app_name),
+                app_name, strlen(app_name) + 1);
     }
+
+    u2_event.snort_status = Active::get_status();
+    u2_event.snort_action = Active::get_action();
+
+    Serial_Unified2_Header hdr;
+    uint32_t write_len = sizeof(hdr) + sizeof(u2_event);
 
     if ( config->limit && (u2.current + write_len) > config->limit )
         Unified2RotateFile(config);
 
-    hdr.length = htonl(sizeof(Unified2IDSEventIPv6));
-    hdr.type = htonl(UNIFIED2_IDS_EVENT_IPV6_VLAN);
+    hdr.length = htonl(sizeof(Unified2Event));
+    hdr.type = htonl(UNIFIED2_EVENT3);
 
-    memcpy_s(write_pkt_buffer, sizeof(write_pkt_buffer), &hdr, sizeof(hdr));
+    memcpy_s(write_pkt_buffer, u2_buf_sz, &hdr, sizeof(hdr));
 
     size_t offset = sizeof(hdr);
 
-    memcpy_s(write_pkt_buffer + offset, sizeof(write_pkt_buffer) - offset,
-        &alertdata, sizeof(alertdata));
+    memcpy_s(write_pkt_buffer + offset, u2_buf_sz - offset,
+        &u2_event, sizeof(u2_event));
 
     Unified2Write(write_pkt_buffer, write_len, config);
 }
@@ -526,23 +404,23 @@ static void _Unified2LogPacketAlert(
     hdr.length = htonl(sizeof(Serial_Unified2Packet) - 4 + pkt_length);
     hdr.type = ( p and p->is_rebuilt() ) ? htonl(UNIFIED2_BUFFER) : htonl(UNIFIED2_PACKET);
 
-    memcpy_s(write_pkt_buffer, sizeof(write_pkt_buffer), &hdr, sizeof(hdr));
+    memcpy_s(write_pkt_buffer, u2_buf_sz, &hdr, sizeof(hdr));
 
     size_t offset = sizeof(hdr);
 
-    memcpy_s(write_pkt_buffer + offset, sizeof(write_pkt_buffer) - offset,
+    memcpy_s(write_pkt_buffer + offset, u2_buf_sz - offset,
         &logheader, sizeof(logheader) - 4);
 
     offset += sizeof(logheader) - 4;
 
     if (pkt_length != 0)
     {
-        if (pkt_length > sizeof(write_pkt_buffer) - offset)
+        if (pkt_length > u2_buf_sz - offset)
             return;
 
         uint8_t *start = write_pkt_buffer + offset;
 
-        memcpy_s(start, sizeof(write_pkt_buffer) - offset,
+        memcpy_s(start, u2_buf_sz - offset,
             p->is_data() ? p->data : p->pkt, pkt_length);
 
         if ( p->obfuscator )
@@ -875,6 +753,9 @@ void U2Logger::open()
     }
     u2.base_proto = htonl(SFDAQ::get_base_protocol());
 
+    write_pkt_buffer = new uint8_t[u2_buf_sz];
+    io_buffer = new char[u2_buf_sz];
+
     Unified2InitFile(&config);
 
     Stream::reg_xtra_data_log(AlertExtraData, &config);
@@ -884,29 +765,17 @@ void U2Logger::close()
 {
     if ( u2.stream )
         fclose(u2.stream);
+
+    delete[] write_pkt_buffer;
+    delete[] io_buffer;
+
+    write_pkt_buffer = nullptr;
+    io_buffer = nullptr;
 }
 
 void U2Logger::alert(Packet* p, const char* msg, const Event& event)
 {
-    if (p->ptrs.ip_api.is_ip6())
-    {
-        _AlertIP6_v2(p, msg, &config, &event);
-
-        // FIXIT-M delete ip6 extra data; support ip6 normally
-        if (SnortConfig::get_log_ip6_extra() && p->ptrs.ip_api.is_ip6())
-        {
-            const SfIp* ip = p->ptrs.ip_api.get_src();
-            _WriteExtraData(&config, event.event_id, event.ref_time.tv_sec,
-                (const uint8_t*) ip->get_ip6_ptr(), sizeof(struct in6_addr), EVENT_INFO_IPV6_SRC);
-            ip = p->ptrs.ip_api.get_dst();
-            _WriteExtraData(&config, event.event_id, event.ref_time.tv_sec,
-                (const uint8_t*) ip->get_ip6_ptr(), sizeof(struct in6_addr), EVENT_INFO_IPV6_DST);
-        }
-    }
-    else // ip4 or data
-    {
-        _AlertIP4_v2(p, msg, &config, &event);
-    }
+    alert_event(p, msg, &config, &event);
 
     if ( p->flow )
         Stream::update_flow_alert(

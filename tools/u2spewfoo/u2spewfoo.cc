@@ -36,10 +36,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#ifdef HAVE_UUID_UUID_H
-#include <uuid/uuid.h>
-#endif
-
 static long s_pos = 0, s_off = 0;
 
 #define TO_IP(x) x >> 24, (x >> 16)& 0xff, (x >> 8)& 0xff, x& 0xff
@@ -211,16 +207,14 @@ static void extradata_dump(u2record* record)
         memcpy(&ip, record->data + sizeof(Unified2ExtraDataHdr) + sizeof(SerialUnified2ExtraData),
             sizeof(uint32_t));
         ip = ntohl(ip);
-        printf("Original Client IP: %u.%u.%u.%u\n",
-            TO_IP(ip));
+        printf("Original Client IP: %u.%u.%u.%u\n", TO_IP(ip));
         break;
 
     case EVENT_INFO_XFF_IPV6:
         memcpy(&ipAddr, record->data + sizeof(Unified2ExtraDataHdr) +
             sizeof(SerialUnified2ExtraData), sizeof(struct in6_addr));
         inet_ntop(AF_INET6, &ipAddr, ip6buf, INET6_ADDRSTRLEN);
-        printf("Original Client IP: %s\n",
-            ip6buf);
+        printf("Original Client IP: %s\n", ip6buf);
         break;
 
     case EVENT_INFO_GZIP_DATA:
@@ -275,16 +269,14 @@ static void extradata_dump(u2record* record)
         memcpy(&ipAddr, record->data + sizeof(Unified2ExtraDataHdr) +
             sizeof(SerialUnified2ExtraData), sizeof(struct in6_addr));
         inet_ntop(AF_INET6, &ipAddr, ip6buf, INET6_ADDRSTRLEN);
-        printf("IPv6 Source Address: %s\n",
-            ip6buf);
+        printf("IPv6 Source Address: %s\n", ip6buf);
         break;
 
     case EVENT_INFO_IPV6_DST:
         memcpy(&ipAddr, record->data + sizeof(Unified2ExtraDataHdr) +
             sizeof(SerialUnified2ExtraData), sizeof(struct in6_addr));
         inet_ntop(AF_INET6, &ipAddr, ip6buf, INET6_ADDRSTRLEN);
-        printf("IPv6 Destination Address: %s\n",
-            ip6buf);
+        printf("IPv6 Destination Address: %s\n", ip6buf);
         break;
 
     default:
@@ -292,88 +284,74 @@ static void extradata_dump(u2record* record)
     }
 }
 
-static void event_dump(u2record* record)
+static const char* lookup(const char* list[], unsigned size, unsigned idx)
 {
-    uint8_t* field;
-    int i;
-    Serial_Unified2IDSEvent_legacy event;
+    if ( idx < size )
+        return list[idx];
 
-    memcpy(&event, record->data, sizeof(Serial_Unified2IDSEvent_legacy));
-
-    /* network to host ordering
-       In the event structure, only the last 40 bits are not 32 bit fields
-       The first 11 fields need to be converted */
-    field = (uint8_t*)&event;
-    for (i=0; i<11; i++, field+=4)
-    {
-        *(uint32_t*)field = ntohl(*(uint32_t*)field);
-    }
-
-    /* last 3 fields, with the exception of the last most since it's just one byte */
-    *(uint16_t*)field = ntohs(*(uint16_t*)field); /* sport_itype */
-    field += 2;
-    *(uint16_t*)field = ntohs(*(uint16_t*)field); /* dport_icode */
-    /* done changing the network ordering */
-
-    printf("\n(Event)\n"
-        "\tsensor id: %u\tevent id: %u\tevent second: %u\tevent microsecond: %u\n"
-        "\tsig id: %u\tgen id: %u\trevision: %u\t classification: %u\n"
-        "\tpriority: %u\tip source: %u.%u.%u.%u\tip destination: %u.%u.%u.%u\n"
-        "\tsrc port: %hu\tdest port: %hu\tip_proto: %hhu\timpact_flag: %hhu\tblocked: %hhu\n",
-        event.sensor_id, event.event_id,
-        event.event_second, event.event_microsecond,
-        event.signature_id, event.generator_id,
-        event.signature_revision, event.classification_id,
-        event.priority_id, TO_IP(event.ip_source),
-        TO_IP(event.ip_destination), event.sport_itype,
-        event.dport_icode, to_utype(event.ip_proto),
-        event.impact_flag, event.blocked);
+    static char buf[8];
+    snprintf(buf, sizeof(buf), "%u", idx);
+    return buf;
 }
 
-static void event6_dump(u2record* record)
+static const char* get_status(uint8_t stat)
 {
-    uint8_t* field;
-    int i;
-    Serial_Unified2IDSEventIPv6_legacy event;
-    char ip6buf[INET6_ADDRSTRLEN+1];
+    const char* stats[] = { "allow", "can't", "would", "force" };
+    return lookup(stats, sizeof(stats)/sizeof(stats[0]), stat);
+}
 
-    memcpy(&event, record->data, sizeof(Serial_Unified2IDSEventIPv6_legacy));
+static const char* get_action(uint8_t act)
+{
+    const char* acts[] = { "pass", "dtop", "block", "reset" };
+    return lookup(acts, sizeof(acts)/sizeof(acts[0]), act);
+}
 
-    /* network to host ordering
-       In the event structure, only the last 40 bits are not 32 bit fields
-       The first fields need to be converted */
-    field = (uint8_t*)&event;
-    for (i=0; i<9; i++, field+=4)
-    {
-        *(uint32_t*)field = ntohl(*(uint32_t*)field);
-    }
+static void print_addr_port(
+    const char* which, unsigned af, const uint32_t* addr, uint16_t port)
+{
+    uint16_t fam = (af == 0x4) ? AF_INET : AF_INET6;
+    unsigned idx = (fam == AF_INET) ? 3 : 0;
 
-    field = field + 2*sizeof(struct in6_addr);
+    char ip_buf[INET6_ADDRSTRLEN+1];
+    inet_ntop(fam, addr+idx, ip_buf, sizeof(ip_buf));
 
-    /* last 3 fields, with the exception of the last most since it's just one byte */
-    *(uint16_t*)field = ntohs(*(uint16_t*)field); /* sport_itype */
-    field += 2;
-    *(uint16_t*)field = ntohs(*(uint16_t*)field); /* dport_icode */
-    /* done changing the network ordering */
+    printf("\t%s IP: %s\tPort: %hu\n", which, ip_buf, htons(port));
+}
 
-    inet_ntop(AF_INET6, &event.ip_source, ip6buf, INET6_ADDRSTRLEN);
+static void event3_dump(u2record* record)
+{
+    Unified2Event event;
+    memcpy(&event, record->data, sizeof(event));
 
-    printf("\n(IPv6 Event)\n"
-        "\tsensor id: %u\tevent id: %u\tevent second: %u\tevent microsecond: %u\n"
-        "\tsig id: %u\tgen id: %u\trevision: %u\t classification: %u\n"
-        "\tpriority: %u\tip source: %s\t",
-        event.sensor_id, event.event_id,
-        event.event_second, event.event_microsecond,
-        event.signature_id, event.generator_id,
-        event.signature_revision, event.classification_id,
-        event.priority_id, ip6buf);
+    printf("%s", "\n(Event)\n");
 
-    inet_ntop(AF_INET6, &event.ip_destination, ip6buf, INET6_ADDRSTRLEN);
-    printf("ip destination: %s\n"
-        "\tsrc port: %hu\tdest port: %hu\tip_proto: %hhu\timpact_flag: %hhu\tblocked: %hhu\n",
-        ip6buf, event.sport_itype,
-        event.dport_icode, to_utype(event.ip_proto),
-        event.impact_flag, event.blocked);
+    printf("\tSnort ID: %u\tEvent ID: %u\tSeconds: %u.%06u\n",
+        htonl(event.snort_id), htonl(event.event_id),
+        htonl(event.event_second), htonl(event.event_microsecond));
+
+    printf(
+        "\tPolicy ID:\tContext: %u\tInspect: %u\tDetect: %u\n",
+        htonl(event.policy_id_context), htonl(event.policy_id_inspect),
+        htonl(event.policy_id_detect));
+
+    printf(
+        "\tRule %u:%u:%u\tClass: %u\tPriority: %u\n",
+        htonl(event.rule_gid), htonl(event.rule_sid), htonl(event.rule_rev),
+        htonl(event.rule_class), htonl(event.rule_priority));
+
+    printf(
+        "\tMPLS Label: %u\tVLAN ID: %hu\tIP Version: 0x%hhX\tIP Proto: %hhu\n",
+        htonl(event.pkt_mpls_label), htons(event.pkt_vlan_id),
+        event.pkt_ip_ver, event.pkt_ip_proto);
+
+    print_addr_port("Src", event.pkt_ip_ver >> 4, event.pkt_src_ip, event.pkt_src_port_itype);
+    print_addr_port("Dst", event.pkt_ip_ver & 0xF, event.pkt_dst_ip, event.pkt_dst_port_icode);
+
+    printf("\tApp Name: %s\n", event.app_name[0] ? event.app_name : "none");
+
+    printf(
+        "\tStatus: %s\tAction: %s\n",
+        get_status(event.snort_status), get_action(event.snort_action));
 }
 
 static void event2_dump(u2record* record)
@@ -381,9 +359,9 @@ static void event2_dump(u2record* record)
     uint8_t* field;
     int i;
 
-    Serial_Unified2IDSEvent event;
+    Unified2IDSEvent event;
 
-    memcpy(&event, record->data, sizeof(Serial_Unified2IDSEvent));
+    memcpy(&event, record->data, sizeof(event));
 
     /* network to host ordering
        In the event structure, only the last 40 bits are not 32 bit fields
@@ -430,9 +408,9 @@ static void event2_6_dump(u2record* record)
     uint8_t* field;
     int i;
     char ip6buf[INET6_ADDRSTRLEN+1];
-    Serial_Unified2IDSEventIPv6 event;
+    Unified2IDSEventIPv6 event;
 
-    memcpy(&event, record->data, sizeof(Serial_Unified2IDSEventIPv6));
+    memcpy(&event, record->data, sizeof(event));
 
     /* network to host ordering
        In the event structure, only the last 40 bits are not 32 bit fields
@@ -572,27 +550,41 @@ static int u2dump(char* file)
 
     if (!it)
     {
-        printf("u2dump: Failed to create new iterator with file: %s\n", file);
+        printf("ERROR: failed to create new iterator with file: %s\n", file);
         return -1;
     }
 
     while ( get_record(it, &record) )
     {
-        if (record.type == UNIFIED2_IDS_EVENT)
-            event_dump(&record);
-        else if (record.type == UNIFIED2_IDS_EVENT_VLAN)
-            event2_dump(&record);
-        else if ((record.type == UNIFIED2_PACKET) || (record.type == UNIFIED2_BUFFER))
+        if ( record.type == UNIFIED2_EVENT3 and record.length == sizeof(Unified2Event) )
+            event3_dump(&record);
+
+        else if ( (record.type == UNIFIED2_PACKET) or (record.type == UNIFIED2_BUFFER) )
             packet_dump(&record);
-        else if (record.type == UNIFIED2_IDS_EVENT_IPV6)
-            event6_dump(&record);
-        else if (record.type == UNIFIED2_IDS_EVENT_IPV6_VLAN)
-            event2_6_dump(&record);
+
         else if (record.type == UNIFIED2_EXTRA_DATA)
             extradata_dump(&record);
+
+        // deprecated
+        else if ( record.type == UNIFIED2_IDS_EVENT_VLAN and
+            record.length == sizeof(Unified2IDSEvent) )
+        {
+            event2_dump(&record);
+        }
+        else if ( record.type == UNIFIED2_IDS_EVENT_IPV6_VLAN and
+            record.length == sizeof(Unified2IDSEventIPv6) )
+        {
+            event2_6_dump(&record);
+        }
+        else
+        {
+            printf("WARNING: skipping unknown record (%u) or bad length (%u)\n",
+                record.type, record.length);
+        }
     }
 
     free_iterator(it);
+
     if (record.data)
         free(record.data);
 
