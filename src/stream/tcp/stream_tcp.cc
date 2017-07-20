@@ -23,7 +23,6 @@
 #include "stream_tcp.h"
 
 #include "main/snort_config.h"
-#include "stream/flush_bucket.h"
 
 #include "tcp_ha.h"
 #include "tcp_module.h"
@@ -75,14 +74,11 @@ bool StreamTcp::configure(SnortConfig* sc)
 void StreamTcp::tinit()
 {
     TcpHAManager::tinit();
-    FlushBucket::set(config->footprint);
 }
 
 void StreamTcp::tterm()
 {
     TcpHAManager::tterm();
-    // must be done after StreamBase::tterm(); see tcp_tterm()
-    //FlushBucket::clear();
 }
 
 void StreamTcp::eval(Packet*)
@@ -131,7 +127,6 @@ static void tcp_tinit()
 static void tcp_tterm()
 {
     TcpSession::sterm();
-    FlushBucket::clear();
 }
 
 static const InspectApi tcp_api =

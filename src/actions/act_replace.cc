@@ -33,9 +33,6 @@
 #define s_help \
     "overwrite packet contents"
 
-// FIXIT-L ips_replace.cc should part of this lib
-// FIXIT-L enforce that a rule with a replace option has a replace action
-//       (and vice-versa)
 //--------------------------------------------------------------------------
 // queue foo
 //--------------------------------------------------------------------------

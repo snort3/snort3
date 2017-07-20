@@ -58,6 +58,9 @@ CACHE_PARAMS(file_params,    "128",  "30", "180", "5");
 
 static const Parameter s_params[] =
 {
+    { "footprint", Parameter::PT_INT, "0:", "0",
+      "use zero for production, non-zero for testing at given size (for tcp and user)" },
+
     { "ip_frags_only", Parameter::PT_BOOL, nullptr, "false",
       "don't process non-frag flows" },
 
@@ -101,7 +104,12 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig*)
 {
     FlowConfig* fc = nullptr;
 
-    if ( v.is("ip_frags_only") )
+    if ( v.is("footprint") )
+    {
+        config.footprint = v.get_long();
+        return true;
+    }
+    else if ( v.is("ip_frags_only") )
     {
         config.ip_frags_only = v.get_bool();
         return true;

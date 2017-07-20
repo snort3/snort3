@@ -90,6 +90,9 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
+    bool is_relative() override
+    { return true; }
+
     void store(int off)
     { offset[get_instance_id()] = off; }
 

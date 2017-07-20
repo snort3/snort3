@@ -246,10 +246,6 @@ bool ContentOption::operator==(const IpsOption& ips) const
         right.pmd.pattern_size, right.pmd.pattern_buf, right.pmd.is_no_case()) )
         return false;
 
-    if ( !same_buffers(left.pmd.replace_size, left.pmd.replace_buf, left.pmd.is_no_case(),
-        right.pmd.replace_size, right.pmd.replace_buf, right.pmd.is_no_case()) )
-        return false;
-
     /* Now check the rest of the options */
     if ((left.pmd.flags == right.pmd.flags) &&
         (left.pmd.fp_offset == right.pmd.fp_offset) &&

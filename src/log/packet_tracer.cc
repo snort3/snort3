@@ -184,7 +184,7 @@ TEST_CASE("corner cases", "[PacketTracer]")
     // log messages larger than buffer size
     for(int i=0; i<1024; i++)
         PacketTracer::log("%s", test_str);
-    // when buffer limit is  reached, buffer length will stoppped at max_buff_size-1
+    // when buffer limit is  reached, buffer length will stopped at max_buff_size-1
     CHECK((s_pkt_trace->get_buff_len() == (MAX_PKT_TRACE_BUFF_SIZE-1)));
 
     // continue logging will not change anything

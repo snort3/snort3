@@ -25,6 +25,7 @@
 #include "managers/inspector_manager.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
+#include "stream/flush_bucket.h"
 
 #include "stream_ha.h"
 #include "stream_module.h"
@@ -192,11 +193,14 @@ void StreamBase::tinit()
 
     if ( max > 0 )
         flow_con->init_exp(max);
+
+    FlushBucket::set(config.footprint);
 }
 
 void StreamBase::tterm()
 {
     StreamHAManager::tterm();
+    FlushBucket::clear();
 }
 
 void StreamBase::show(SnortConfig*)

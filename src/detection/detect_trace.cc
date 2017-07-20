@@ -120,7 +120,7 @@ void node_eval_trace(const detection_option_tree_node_t* node, const Cursor& cur
     if (node->option_type != RULE_OPTION_TYPE_LEAF_NODE )
     {
         trace_logf(detection, TRACE_RULE_EVAL,
-            "Evaulating option %s, cursor name %s, cursor position %u\n",
+            "Evaluating option %s, cursor name %s, cursor position %u\n",
             ((IpsOption*)node->option_data)->get_name(), name, pos);
     }
     else

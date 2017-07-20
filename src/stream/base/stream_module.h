@@ -66,6 +66,8 @@ struct StreamModuleConfig
     FlowConfig udp_cfg;
     FlowConfig user_cfg;
     FlowConfig file_cfg;
+
+    int footprint;
     bool ip_frags_only;
 };
 

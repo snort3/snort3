@@ -1619,7 +1619,7 @@ void get_pattern_info(const PatternMatchData* pmd,
     opts = "(";
     if ( pmd->is_fast_pattern() )
         opts += " user";
-    if ( pmd->fp_only )
+    if ( pmd->fp_only > 0 )
         opts += " only";
     if ( pmd->is_negated() )
         opts += " negated";

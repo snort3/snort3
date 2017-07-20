@@ -181,9 +181,6 @@ static const Parameter s_params[] =
     { "session_timeout", Parameter::PT_INT, "1:86400", "30",
       "session tracking timeout" },
 
-    { "footprint", Parameter::PT_INT, "0:", "0",
-      "use zero for production, non-zero for testing at given size" },
-
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -291,9 +288,6 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("flush_factor") )
         config->flush_factor = v.get_long();
-
-    else if ( v.is("footprint") )
-        config->footprint = v.get_long();
 
     else if ( v.is("ignore_any_rules") )
         config->flags |= STREAM_CONFIG_IGNORE_ANY;

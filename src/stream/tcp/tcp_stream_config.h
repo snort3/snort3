@@ -78,7 +78,6 @@ public:
     uint32_t max_consec_small_seg_size = STREAM_DEFAULT_MAX_SMALL_SEG_SIZE;
 
     int hs_timeout = -1;
-    int footprint = 0;
     uint32_t paf_max = 16384;
 };
 

@@ -98,6 +98,8 @@ Some things Snort++ can do today that Snort can not do as well:
   (Snort 2 hard codes most of the configuration)
 * port_scan can block scans
   (Snort 2 can only detect scans)
+* sigquit will cause a --dirty-pig style exit
+  (Snort 2 handles sigquit the same as sigterm and sigint)
 * better modularity 346K/1534 = 226 lines/file, max=2700
   (Snort 2 has 440K/1021 = 431 lines/file, max=13K)
 

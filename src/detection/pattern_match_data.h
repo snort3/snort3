@@ -37,7 +37,6 @@ struct PmdLastCheck
 struct PatternMatchData
 {
     const char* pattern_buf; // app layer pattern to match on
-    const char* replace_buf; // app layer pattern to replace with
 
     // FIXIT-L wasting some memory here:
     // - this is not used by content option logic directly
@@ -50,7 +49,6 @@ struct PatternMatchData
     PmdLastCheck* last_check;
 
     unsigned pattern_size;   // size of app layer pattern
-    unsigned replace_size;   // size of app layer replace pattern
 
     int offset;              // pattern search start offset
     int depth;               // pattern search depth
