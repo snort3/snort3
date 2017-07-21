@@ -69,7 +69,7 @@ ScanResult HttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
             // The purpose of validate() is to quickly and efficiently dispose of obviously wrong
             // bindings. Passing is no guarantee that the connection is really HTTP, but failing
             // makes it clear that it isn't.
-            switch (validate(buffer[k]))
+            switch (validate(buffer[k], infractions, events))
             {
             case V_GOOD:
                 validated = true;
@@ -110,7 +110,8 @@ ScanResult HttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
     return SCAN_NOTFOUND;
 }
 
-HttpStartCutter::ValidationResult HttpRequestCutter::validate(uint8_t octet)
+HttpStartCutter::ValidationResult HttpRequestCutter::validate(uint8_t octet, HttpInfractions*,
+    HttpEventGen*)
 {
     // Request line must begin with a method. There is no list of all possible methods because
     // extension is allowed, so there is no absolute way to tell whether something is a method.
@@ -128,15 +129,26 @@ HttpStartCutter::ValidationResult HttpRequestCutter::validate(uint8_t octet)
     return V_TBD;
 }
 
-HttpStartCutter::ValidationResult HttpStatusCutter::validate(uint8_t octet)
+HttpStartCutter::ValidationResult HttpStatusCutter::validate(uint8_t octet,
+    HttpInfractions* infractions, HttpEventGen* events)
 {
     // Status line must begin "HTTP/"
     static const int match_size = 5;
-    static const uint8_t match[match_size] = { 'H', 'T', 'T', 'P', '/' };
+    static const uint8_t primary_match[match_size] = { 'H', 'T', 'T', 'P', '/' };
+    static const uint8_t secondary_match[match_size] = { 'h', 't', 't', 'p', '/' };
 
-    if (octet != match[octets_checked++])
-        return V_BAD;
-    if (octets_checked >= match_size)
+    if (octet != primary_match[octets_checked])
+    {
+        if (octet == secondary_match[octets_checked])
+        {
+            // Lower case is wrong but we can still parse the message
+            *infractions += INF_VERSION_NOT_UPPERCASE;
+            events->create_event(EVENT_VERSION_NOT_UPPERCASE);
+        }
+        else
+            return V_BAD;
+    }
+    if (++octets_checked >= match_size)
         return V_GOOD;
     return V_TBD;
 }

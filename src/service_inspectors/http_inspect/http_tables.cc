@@ -377,6 +377,7 @@ const RuleMap HttpModule::http_events[] =
                                         "values" },
     { EVENT_CONTENT_ENCODING_CHUNKED,   "invalid value chunked in Content-Encoding header" },
     { EVENT_206_WITHOUT_RANGE,          "206 response sent to a request without a Range header" },
+    { EVENT_VERSION_NOT_UPPERCASE,      "'HTTP' in version field not all upper case" },
     { 0, nullptr }
 };
 

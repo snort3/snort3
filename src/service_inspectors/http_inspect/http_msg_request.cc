@@ -37,19 +37,34 @@ HttpMsgRequest::HttpMsgRequest(const uint8_t* buffer, const uint16_t buf_size,
 
 void HttpMsgRequest::parse_start_line()
 {
-    // Check the version field
+    // Version field
     if ((start_line.length() < 10) || !is_sp_tab[start_line.start()[start_line.length()-9]] ||
-         memcmp(start_line.start() + start_line.length() - 8, "HTTP/", 5))
+        memcmp(start_line.start() + start_line.length() - 8, "HTTP/", 5))
     {
-        if (!handle_zero_nine())
+        // Something is wrong with this message. Check for lower case letters in HTTP-name.
+        if ((start_line.length() >= 10) && is_sp_tab[start_line.start()[start_line.length()-9]] &&
+            http_name_nocase_ok(start_line.start() + start_line.length() - 8))
         {
-            // Just a plain old bad request
+            add_infraction(INF_VERSION_NOT_UPPERCASE);
+            create_event(EVENT_VERSION_NOT_UPPERCASE);
+        }
+        // Check for version 0.9 request.
+        else if (handle_zero_nine())
+        {
+            return;
+        }
+        // Just a plain old bad request
+        else
+        {
             add_infraction(INF_BAD_REQ_LINE);
             transaction->get_events(source_id)->generate_misformatted_http(start_line.start(),
                 start_line.length());
+            return;
         }
-        return;
     }
+
+    version.set(8, start_line.start() + (start_line.length() - 8));
+    derive_version_id();
 
     HttpModule::increment_peg_counts(PEG_REQUEST);
 
@@ -84,9 +99,6 @@ void HttpMsgRequest::parse_start_line()
     default: HttpModule::increment_peg_counts(PEG_OTHER_METHOD); break;
     }
 
-    version.set(8, start_line.start() + (start_line.length() - 8));
-    derive_version_id();
-
     if (first_end < last_begin)
     {
         uri = new HttpUri(start_line.start() + first_end + 1, last_begin - first_end - 1,
@@ -98,6 +110,15 @@ void HttpMsgRequest::parse_start_line()
         add_infraction(INF_NO_URI);
         create_event(EVENT_URI_MISSING);
     }
+}
+
+bool HttpMsgRequest::http_name_nocase_ok(const uint8_t* start)
+{
+    return ((start[0] == 'H') || (start[0] == 'h')) &&
+           ((start[1] == 'T') || (start[1] == 't')) &&
+           ((start[2] == 'T') || (start[2] == 't')) &&
+           ((start[3] == 'P') || (start[3] == 'p')) &&
+           (start[4] == '/');
 }
 
 bool HttpMsgRequest::handle_zero_nine()

@@ -62,7 +62,7 @@ protected:
 
 private:
     static const int MAX_LEADING_WHITESPACE = 20;
-    virtual ValidationResult validate(uint8_t octet) = 0;
+    virtual ValidationResult validate(uint8_t octet, HttpInfractions*, HttpEventGen*) = 0;
     bool validated = false;
 };
 
@@ -70,14 +70,14 @@ class HttpRequestCutter : public HttpStartCutter
 {
 private:
     uint32_t octets_checked = 0;
-    ValidationResult validate(uint8_t octet) override;
+    ValidationResult validate(uint8_t octet, HttpInfractions*, HttpEventGen*) override;
 };
 
 class HttpStatusCutter : public HttpStartCutter
 {
 private:
     uint32_t octets_checked = 0;
-    ValidationResult validate(uint8_t octet) override;
+    ValidationResult validate(uint8_t octet, HttpInfractions*, HttpEventGen*) override;
 };
 
 class HttpHeaderCutter : public HttpCutter

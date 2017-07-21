@@ -63,6 +63,7 @@ private:
     static const StrCode method_list[];
 
     void parse_start_line() override;
+    bool http_name_nocase_ok(const uint8_t* start);
     bool handle_zero_nine();
 
     Field method;
