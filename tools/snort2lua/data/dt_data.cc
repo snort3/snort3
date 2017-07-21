@@ -233,7 +233,7 @@ std::size_t DataApi::num_errors() const
 std::string DataApi::get_file_line()
 {
     std::string error_string = "Failed to convert ";
-    error_string += current_file + ":";
+    error_string += *current_file + ":";
     error_string += std::to_string(current_line);
     return error_string;
 }

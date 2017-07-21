@@ -147,8 +147,6 @@ int Converter::parse_include_file(std::string input_file)
 
 int Converter::parse_file(std::string input_file)
 {
-    data_api.set_current_file(input_file);
-
     std::ifstream in;
     std::string orig_text;
 
@@ -168,6 +166,7 @@ int Converter::parse_file(std::string input_file)
         std::getline(in, tmp);
         util::rtrim(tmp);
 
+        data_api.set_current_file(input_file); //Set at each line to handle recursion correctly
         data_api.set_current_line(++line_num);
 
         std::size_t first_non_white_char = tmp.find_first_not_of(' ');
