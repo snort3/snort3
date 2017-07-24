@@ -50,14 +50,12 @@ void FileMemPool::verify()
 
     if (free_size > cbuffer_size(free_list))
     {
-        ErrorMessage("%s(%d) file_mempool: failed to verify free list!\n",
-            __FILE__, __LINE__);
+        DebugMessage(DEBUG_FILE, "file_mempool: failed to verify free list!\n");
     }
 
     if (release_size > cbuffer_size(released_list))
     {
-        ErrorMessage("%s(%d) file_mempool: failed to verify release list!\n",
-            __FILE__, __LINE__);
+        DebugMessage(DEBUG_FILE, "file_mempool: failed to verify release list!\n");
     }
 
     /* The free mempool and size of release mempool should be smaller than
@@ -65,8 +63,7 @@ void FileMemPool::verify()
      */
     if (free_size + release_size > total)
     {
-        ErrorMessage("%s(%d) file_mempool: failed to verify mempool size!\n",
-            __FILE__, __LINE__);
+        DebugMessage(DEBUG_FILE, "file_mempool: failed to verify mempool size!\n");
     }
 }
 
@@ -107,8 +104,7 @@ FileMemPool::FileMemPool(uint64_t num_objects, size_t o_size)
     free_list = cbuffer_init(num_objects);
     if (!free_list)
     {
-        ErrorMessage("%s(%d) file_mempool: Failed to init free list\n",
-            __FILE__, __LINE__);
+        DebugMessage(DEBUG_FILE, "file_mempool: Failed to init free list\n");
         free_pools();
         return;
     }
@@ -116,8 +112,7 @@ FileMemPool::FileMemPool(uint64_t num_objects, size_t o_size)
     released_list = cbuffer_init(num_objects);
     if (!released_list)
     {
-        ErrorMessage("%s(%d) file_mempool: "
-            "Failed to init release list\n", __FILE__, __LINE__);
+        DebugMessage(DEBUG_FILE, "file_mempool: Failed to init release list\n");
         free_pools();
         return;
     }
@@ -129,9 +124,7 @@ FileMemPool::FileMemPool(uint64_t num_objects, size_t o_size)
 
         if (cbuffer_write(free_list,  data))
         {
-            ErrorMessage("%s(%d) file_mempool: "
-                "Failed to add to free list\n",
-                __FILE__, __LINE__);
+            DebugMessage(DEBUG_FILE, "file_mempool: Failed to add to free list\n");
             free_pools();
             return;
         }
@@ -174,8 +167,7 @@ void* FileMemPool::m_alloc()
 
     if (*(MagicType*)b != FREE_MAGIC)
     {
-        ErrorMessage("%s(%d) file_mempool_alloc(): Allocation errors! \n",
-            __FILE__, __LINE__);
+        DebugMessage(DEBUG_FILE, "file_mempool_alloc(): Allocation errors!\n");
     }
 
     DEBUG_WRAP(verify(); );
@@ -199,8 +191,7 @@ int FileMemPool::remove(CircularBuffer* cb, void* obj)
 
     if (*(MagicType*)obj == FREE_MAGIC)
     {
-        DEBUG_WRAP(ErrorMessage("%s(%d) file_mempool_remove(): Double free! \n",
-                __FILE__, __LINE__); );
+        DebugMessage(DEBUG_FILE, "file_mempool_remove(): Double free!\n");
         return FILE_MEM_FAIL;
     }
 

@@ -131,9 +131,15 @@ bool Content<option_name>::parse_options(
             static bool not_printed = true;
             if ( not_printed )
             {
-                rule_api.add_comment("content's 'only' option has been deleted");
+                rule_api.add_comment("fast_pattern's 'only' option has been deleted");
                 not_printed = false;
             }
+            rule_api.add_suboption("fast_pattern");
+
+            // FIXIT-L ideally we'd prevent doubling up nocase but in practice Talos
+            // doesn't use nocase with fast_pattern:only because it is implied and
+            // Snort 3 will accept contents with multiple nocase.
+            rule_api.add_suboption("nocase");
         }
         else
         {

@@ -558,8 +558,7 @@ static DCE2_SmbRequestTracker* DCE2_SmbFindRequestTracker(DCE2_SmbSsnData* ssd,
             ret_rtracker = first_mid_rtracker;
         break;
     default:
-        DebugFormat(DEBUG_DCE_SMB, "%s(%d) Invalid policy: %d",
-            __FILE__, __LINE__, policy);
+        DebugFormat(DEBUG_DCE_SMB, "Invalid policy: %d", policy);
         break;
     }
 
@@ -1601,8 +1600,7 @@ static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
                 // Continue here because of fall through below
                 continue;
             default:
-                DebugFormat(DEBUG_DCE_SMB,"%s(%d) Invalid SMB PDU "
-                    "state: %d\n", __FILE__, __LINE__, ssd->pdu_state);
+                DebugFormat(DEBUG_DCE_SMB,"Invalid SMB PDU state: %d\n", ssd->pdu_state);
                 return;
             }
         }
@@ -1826,8 +1824,7 @@ static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
                 ssd->pdu_state = DCE2_SMB_PDU_STATE__COMMAND;
                 break;
             default:
-                DebugFormat(DEBUG_DCE_SMB, "%s(%d) Invalid SMB PDU "
-                    "state: %d\n", __FILE__, __LINE__, ssd->pdu_state);
+                DebugFormat(DEBUG_DCE_SMB, "Invalid SMB PDU state: %d\n", ssd->pdu_state);
                 return;
             }
 
@@ -1841,8 +1838,7 @@ static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
         }
 
         default:
-            DebugFormat(DEBUG_DCE_SMB, "%s(%d) Invalid SMB Data "
-                "state: %d\n", __FILE__, __LINE__, *data_state);
+            DebugFormat(DEBUG_DCE_SMB, "Invalid SMB Data state: %d\n", *data_state);
             return;
         }
     }

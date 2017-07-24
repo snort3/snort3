@@ -187,11 +187,6 @@ SnortConfig::SnortConfig()
     latency = new LatencyConfig();
     memory = new MemoryConfig();
     policy_map = new PolicyMap;
-
-    set_inspection_policy(get_inspection_policy());
-    set_ips_policy(get_ips_policy());
-    set_network_policy(get_network_policy());
-
     thread_config = new ThreadConfig();
 
     homenet.clear();

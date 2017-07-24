@@ -23,7 +23,7 @@
 -- Path to your rules files (this can be a relative path)
 
 RULE_PATH = '../rules'
-BUILTIN_RULE_PATH = '../preproc_rules'
+BUILTIN_RULE_PATH = '../builtin_rules'
 PLUGIN_RULE_PATH = '../so_rules'
 
 -- If you are using reputation preprocessor set these

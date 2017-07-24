@@ -151,24 +151,16 @@ void AddClassification(
 /* NOTE:  This lookup can only be done during parse time */
 ClassType* ClassTypeLookupByType(SnortConfig* sc, const char* type)
 {
-    ClassType* node;
+    assert(sc and type);
+    ClassType* node = sc->classifications;
 
-    if (sc == NULL)
-        FatalError("%s(%d) Snort config is NULL.\n", __FILE__, __LINE__);
-
-    if (type == NULL)
-        return NULL;
-
-    node = sc->classifications;
-
-    while (node != NULL)
+    while ( node )
     {
-        if (strcasecmp(type, node->type) == 0)
+        if ( !strcasecmp(type, node->type) )
             break;
 
         node = node->next;
     }
-
     return node;
 }
 

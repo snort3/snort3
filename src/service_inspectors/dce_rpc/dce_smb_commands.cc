@@ -319,8 +319,7 @@ static DCE2_Ret DCE2_SmbWriteAndXRawRequest(DCE2_SmbSsnData* ssd, const SmbNtHdr
             // See below.
             break;
         default:
-            DebugFormat(DEBUG_DCE_SMB, "%s(%d) Invalid policy: %d",
-                __FILE__, __LINE__, policy);
+            DebugFormat(DEBUG_DCE_SMB, "Invalid policy: %d", policy);
             break;
         }
     }
@@ -453,8 +452,7 @@ static DCE2_Ret DCE2_SmbWriteAndXRawRequest(DCE2_SmbSsnData* ssd, const SmbNtHdr
         // if both flags are set.
         break;
     default:
-        DebugFormat(DEBUG_DCE_SMB, "%s(%d) Invalid policy: %d",
-            __FILE__, __LINE__, policy);
+        DebugFormat(DEBUG_DCE_SMB, "Invalid policy: %d", policy);
         break;
     }
 

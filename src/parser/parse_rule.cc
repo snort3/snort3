@@ -545,14 +545,14 @@ static PortObject* ParsePortListTcpUdpPort(
         {
             DebugFormat(DEBUG_PORTLISTS,
                 "parser.c: already have '%s' as a PortObject - "
-                "calling PortObjectFree(portobject) line=%d\n",port_str,__LINE__);
+                "calling PortObjectFree(portobject)\n", port_str);
             PortObjectFree(portobject);
             portobject = pox;
         }
         else
         {
             DebugFormat(DEBUG_PORTLISTS,
-                "parser.c: adding '%s' as a PortObject line=%d\n",port_str,__LINE__);
+                "parser.c: adding '%s' as a PortObject\n",port_str);
             /* Add to the un-named port var table */
             if (PortTableAddObject(noname, portobject))
             {

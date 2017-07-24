@@ -110,14 +110,10 @@ static void AlertExtraData(Flow*, void* data, LogFunction* log_funcs,
 
 static void Unified2InitFile(Unified2Config* config)
 {
+    assert(config);
+
     char filepath[STD_BUF];
     char* fname_ptr;
-
-    if (config == NULL)
-    {
-        FatalError("%s(%d) Could not initialize unified2 file: Unified2 "
-            "configuration data is NULL.\n", __FILE__, __LINE__);
-    }
 
     u2.timestamp = (uint32_t)time(NULL);
 
@@ -126,8 +122,7 @@ static void Unified2InitFile(Unified2Config* config)
         if (SnortSnprintf(filepath, sizeof(filepath), "%s.%u",
             u2.filepath, u2.timestamp) != SNORT_SNPRINTF_SUCCESS)
         {
-            FatalError("%s(%d) Failed to copy unified2 file path.\n",
-                __FILE__, __LINE__);
+            FatalError("unified2 failed to copy file path.\n");
         }
 
         fname_ptr = filepath;
@@ -140,17 +135,15 @@ static void Unified2InitFile(Unified2Config* config)
     // FIXIT-P should use open() instead of fopen()
     if ((u2.stream = fopen(fname_ptr, "wb")) == NULL)
     {
-        FatalError("%s(%d) Could not open %s: %s\n",
-            __FILE__, __LINE__, fname_ptr, get_error(errno));
+        FatalError("unified2 could not open %s: %s\n", fname_ptr, get_error(errno));
     }
 
     /* Set buffer to size of record buffer so the system doesn't flush
      * part of a record if it's greater than BUFSIZ */
     if (setvbuf(u2.stream, io_buffer, _IOFBF, u2_buf_sz) != 0)
     {
-        ErrorMessage("%s(%d) Could not set I/O buffer: %s. "
-            "Using system default.\n",
-            __FILE__, __LINE__, get_error(errno));
+        ErrorMessage("unified2 could not set I/O buffer: %s. "
+            "Using system default.\n", get_error(errno));
     }
 
     /* If test mode, close and delete the file */
@@ -160,9 +153,8 @@ static void Unified2InitFile(Unified2Config* config)
         u2.stream = NULL;
         if (unlink(fname_ptr) == -1)
         {
-            ErrorMessage("%s(%d) Running in test mode so we want to remove "
-                "test unified2 file. Could not unlink file \"%s\": %s\n",
-                __FILE__, __LINE__, fname_ptr, get_error(errno));
+            ErrorMessage("unified2 could not unlink file \"%s\": %s\n",
+                fname_ptr, get_error(errno));
         }
     }
 }
@@ -493,14 +485,13 @@ static void Unified2Write(uint8_t* buf, uint32_t buf_len, Unified2Config* config
         {
             if (config->nostamp)
             {
-                ErrorMessage("%s(%d) Failed to write to unified2 file (%s): %s\n",
-                    __FILE__, __LINE__, u2.filepath, get_error(error));
+                ErrorMessage("unified2 failed to write to file (%s): %s\n",
+                    u2.filepath, get_error(error));
             }
             else
             {
-                ErrorMessage("%s(%d) Failed to write to unified2 file (%s.%u): %s\n",
-                    __FILE__, __LINE__, u2.filepath,
-                    u2.timestamp, get_error(error));
+                ErrorMessage("unified2 failed to write to file (%s.%u): %s\n",
+                    u2.filepath, u2.timestamp, get_error(error));
             }
 
             while ((error == EINTR) && (max_retries != 0))
@@ -509,33 +500,23 @@ static void Unified2Write(uint8_t* buf, uint32_t buf_len, Unified2Config* config
 
                 /* Supposedly an interrupt can only occur before anything
                  * has been written.  Try again */
-                ErrorMessage("%s(%d) Got interrupt. Retry write to unified2 "
-                    "file.\n", __FILE__, __LINE__);
-
                 if (fwcount != 1)
                 {
                     /* fwrite() failed.  Redo fwrite and fflush */
                     if (((fwcount = fwrite(buf, (size_t)buf_len, 1, u2.stream)) == 1) &&
                         ((ffstatus = fflush(u2.stream)) == 0))
                     {
-                        ErrorMessage("%s(%d) Write to unified2 file succeeded\n",
-                            __FILE__, __LINE__);
                         error = 0;
                         break;
                     }
                 }
                 else if ((ffstatus = fflush(u2.stream)) == 0)
                 {
-                    ErrorMessage("%s(%d) Write to unified2 file succeeded\n",
-                        __FILE__, __LINE__);
                     error = 0;
                     break;
                 }
 
                 error = errno;
-
-                ErrorMessage("%s(%d) Retrying write to unified2 file failed.\n",
-                    __FILE__, __LINE__);
             }
 
             /* If we've reached the maximum number of interrupt retries,
@@ -549,29 +530,23 @@ static void Unified2Write(uint8_t* buf, uint32_t buf_len, Unified2Config* config
                 break;
 
             case EIO:
-                ErrorMessage("%s(%d) Unified2 file is possibly corrupt. "
-                    "Closing this unified2 file and creating "
-                    "a new one.\n", __FILE__, __LINE__);
+                ErrorMessage("unified2 file is possibly corrupt. "
+                    "Closing this unified2 file and creating a new one.\n");
 
                 Unified2RotateFile(config);
 
                 if (config->nostamp)
                 {
-                    ErrorMessage("%s(%d) New unified2 file: %s\n",
-                        __FILE__, __LINE__, u2.filepath);
+                    ErrorMessage("unified2 rotated file: %s\n", u2.filepath);
                 }
                 else
                 {
-                    ErrorMessage("%s(%d) New unified2 file: %s.%u\n",
-                        __FILE__, __LINE__,
-                        u2.filepath, u2.timestamp);
+                    ErrorMessage("unified2 rotated file: %s.%u\n", u2.filepath, u2.timestamp);
                 }
 
                 if (((fwcount = fwrite(buf, (size_t)buf_len, 1, u2.stream)) == 1) &&
                     ((ffstatus = fflush(u2.stream)) == 0))
                 {
-                    ErrorMessage("%s(%d) Write to unified2 file succeeded\n",
-                        __FILE__, __LINE__);
                     error = 0;
                     break;
                 }
@@ -585,14 +560,13 @@ static void Unified2Write(uint8_t* buf, uint32_t buf_len, Unified2Config* config
                 /* Write out error message again, then fall through and fatal */
                 if (config->nostamp)
                 {
-                    ErrorMessage("%s(%d) Failed to write to unified2 file (%s): %s\n",
-                        __FILE__, __LINE__, u2.filepath, get_error(error));
+                    ErrorMessage("unified2 failed to write to file (%s): %s\n",
+                        u2.filepath, get_error(error));
                 }
                 else
                 {
-                    ErrorMessage("%s(%d) Failed to write to unified2 file (%s.%u): %s\n",
-                        __FILE__, __LINE__, u2.filepath,
-                        u2.timestamp, get_error(error));
+                    ErrorMessage("unified2 failed to write to file (%s.%u): %s\n",
+                        u2.filepath, u2.timestamp, get_error(error));
                 }
 
             /* Fall through */
@@ -605,14 +579,14 @@ static void Unified2Write(uint8_t* buf, uint32_t buf_len, Unified2Config* config
             case ENOSPC:
             case EPIPE:
             default:
-                FatalError("%s(%d) Cannot write to device.\n", __FILE__, __LINE__);
+                FatalError("unified2 cannot write to device.\n");
             }
         }
 
         if ((max_retries == 0) && (error != 0))
         {
-            FatalError("%s(%d) Maximum number of interrupts exceeded. "
-                "Cannot write to device.\n", __FILE__, __LINE__);
+            FatalError("unified2 cannot write to device. "
+                "Maximum number of interrupts exceeded.\n");
         }
     }
 
@@ -712,8 +686,7 @@ void U2Logger::open()
 
     if (status != SNORT_SNPRINTF_SUCCESS)
     {
-        FatalError("%s(%d) Failed to copy unified2 file name\n",
-            __FILE__, __LINE__);
+        FatalError("unified2 failed to copy file name\n");
     }
     u2.base_proto = htonl(SFDAQ::get_base_protocol());
 

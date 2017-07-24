@@ -304,8 +304,7 @@ static PortObject2* _merge_N_pol(
             if ( pox )
             {
                 PortObject2AppendPortObject2(pox, ponew);
-                DebugFormat(DEBUG_PORTLISTS,
-                    "sfportobject.c: merge_N_pol() line=%d  SFGHASH_INTABLE\n", __LINE__);
+                DebugMessage(DEBUG_PORTLISTS, "sfportobject.c: merge_N_pol() SFGHASH_INTABLE\n");
                 PortObject2Free(ponew);
                 ponew = pox;
                 DebugFormat(DEBUG_PORTLISTS,

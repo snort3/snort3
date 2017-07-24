@@ -271,8 +271,7 @@ void DCE2_SmbRemoveUid(DCE2_SmbSsnData* ssd, const uint16_t uid)
         break;
 
     default:
-        DebugFormat(DEBUG_DCE_SMB, "%s(%d) Invalid policy: %d",
-            __FILE__, __LINE__, policy);
+        DebugFormat(DEBUG_DCE_SMB, "Invalid policy: %d", policy);
         break;
     }
 }
@@ -552,8 +551,7 @@ DCE2_SmbFileTracker* DCE2_SmbFindFileTracker(DCE2_SmbSsnData* ssd,
         break;
 
     default:
-        DebugFormat(DEBUG_DCE_SMB, "%s(%d) Invalid policy: %d",
-            __FILE__, __LINE__, policy);
+        DebugFormat(DEBUG_DCE_SMB, "Invalid policy: %d", policy);
         break;
     }
 

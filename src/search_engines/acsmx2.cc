@@ -117,6 +117,7 @@
 
 #include "acsmx2.h"
 
+#include <cassert>
 #include <list>
 
 #include "log/messages.h"
@@ -259,7 +260,7 @@ static void* AC_MALLOC(int n, Acsm2MemoryType type)
     case ACSM2_MEMORY_TYPE__NONE:
         break;
     default:
-        FatalError("%s(%d) Invalid memory type\n", __FILE__, __LINE__);
+        assert(false);
     }
     acsm2_total_memory += n;
 
@@ -405,8 +406,7 @@ static int List_PutNextState(ACSM_STRUCT2* acsm, int state, int input, int next_
     }
 
     /* Definitely not an existing transition - add it */
-    tnew = (trans_node_t*)AC_MALLOC(sizeof(trans_node_t),
-        ACSM2_MEMORY_TYPE__TRANSTABLE);
+    tnew = (trans_node_t*)AC_MALLOC(sizeof(trans_node_t), ACSM2_MEMORY_TYPE__TRANSTABLE);
     if ( !tnew )
         return -1;
 
@@ -1180,13 +1180,13 @@ static inline int _acsmCompile2(ACSM_STRUCT2* acsm)
     /* Alloc a List based State Transition table */
     acsm->acsmTransTable =
         (trans_node_t**)AC_MALLOC(sizeof(trans_node_t*) * acsm->acsmMaxStates,
-        ACSM2_MEMORY_TYPE__TRANSTABLE);
+            ACSM2_MEMORY_TYPE__TRANSTABLE);
     MEMASSERT(acsm->acsmTransTable, "_acsmCompile2");
 
     /* Alloc a MatchList table - this has a list of pattern matches for each state, if any */
     acsm->acsmMatchList =
         (ACSM_PATTERN2**)AC_MALLOC(sizeof(ACSM_PATTERN2*) * acsm->acsmMaxStates,
-        ACSM2_MEMORY_TYPE__MATCHLIST);
+            ACSM2_MEMORY_TYPE__MATCHLIST);
     MEMASSERT(acsm->acsmMatchList, "_acsmCompile2");
 
     /* Initialize state zero as a branch */
@@ -1229,7 +1229,7 @@ static inline int _acsmCompile2(ACSM_STRUCT2* acsm)
     /* Alloc a failure table - this has a failure state, and a match list for each state */
     acsm->acsmFailState =
         (acstate_t*)AC_MALLOC(sizeof(acstate_t) * acsm->acsmNumStates,
-        ACSM2_MEMORY_TYPE__FAILSTATE);
+            ACSM2_MEMORY_TYPE__FAILSTATE);
 
     MEMASSERT(acsm->acsmFailState, "_acsmCompile2");
 

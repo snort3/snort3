@@ -66,11 +66,7 @@ void FileMagicRule::clear()
 void FileIdentifier::init_merge_hash()
 {
     identifier_merge_hash = sfghash_new(1000, sizeof(MergeNode), 0, nullptr);
-    if (identifier_merge_hash == nullptr)
-    {
-        FatalError("%s(%d) Could not create identifier merge hash.\n",
-            __FILE__, __LINE__);
-    }
+    assert(identifier_merge_hash);
 }
 
 FileIdentifier::~FileIdentifier()

@@ -572,9 +572,9 @@ static void DCE2_ClFragReassemble(
     {
         if (fnode->frag_len > rlen)
         {
-            DebugFormat(DEBUG_DCE_UDP,
-                "%s(%d) Size of fragments exceeds reassembly buffer size. "
-                "Using as many fragments as will fit.", __FILE__, __LINE__);
+            DebugMessage(DEBUG_DCE_UDP,
+                "Size of fragments exceeds reassembly buffer size. "
+                "Using as many fragments as will fit.");
             break;
         }
 
