@@ -318,6 +318,7 @@ void UserSession::start(Packet* p, Flow* flow)
 
     {
         flow->pkt_type = p->type();
+        flow->ip_proto = (uint8_t)p->get_ip_proto_next();
 
         if (flow->ssn_state.session_flags & SSNFLAG_RESET)
             flow->ssn_state.session_flags &= ~SSNFLAG_RESET;

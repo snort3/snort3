@@ -194,7 +194,10 @@ FtpDataFlowData::FtpDataFlowData(Packet* p) : FlowData(inspector_id)
     session.ft_ssn.proto = FTPP_SI_PROTO_FTP_DATA;
     Stream::populate_flow_key(p, &session.ftp_key);
     if (p->flow)
+    {
         session.ftp_key.pkt_type = p->flow->pkt_type;
+        session.ftp_key.ip_protocol = p->flow->ip_proto;
+    }
 }
 
 FtpDataFlowData::~FtpDataFlowData()

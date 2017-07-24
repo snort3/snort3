@@ -192,7 +192,6 @@ void FlowKey::init_address_space(uint16_t addrSpaceId)
         addressSpaceId = addrSpaceId;
     else
         addressSpaceId = 0;
-    addressSpaceIdPad1 = 0;
 }
 
 void FlowKey::init_mpls(uint32_t mplsId)
@@ -216,6 +215,7 @@ bool FlowKey::init(
      * of the IP addresses is stored in ip_l and the port for
      * that IP is stored in port_l.
      */
+
     if (srcIP->is_ip4())
     {
         version = 4;
@@ -228,9 +228,11 @@ bool FlowKey::init(
     }
 
     pkt_type = type;
+    ip_protocol = (uint8_t)ip_proto;
 
     init_vlan(vlanId);
     init_address_space(addrSpaceId);
+    padding = 0;
 
     return reversed;
 }
@@ -250,16 +252,20 @@ bool FlowKey::init(
     {
         version = 4;
         init4(ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId, false);
+        ip_protocol = (uint8_t)ip_proto;
     }
     else
     {
         version = 6;
         init6(ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId, false);
+        ip_protocol = 0;
     }
+
     pkt_type = type;
 
     init_vlan(vlanId);
     init_address_space(addrSpaceId);
+    padding = 0;
 
     return false;
 }
@@ -289,13 +295,13 @@ uint32_t FlowKey::hash(SFHASHFCN* hf, unsigned char* p, int)
 
     a += d[6];   // IPv6 hi[2]
     b += d[7];   // IPv6 hi[3]
-    c += d[8];   // port lo & port hi
+    c += d[8];   // mpls label
 
     mix(a, b, c);
 
-    a += d[9];   // vlan tag, packet type, & version
-    b += d[10];  // mpls label
-    c += d[11];  // address space id and 16bits of zeroed pad
+    a += d[9];   // port lo & port hi
+    b += d[10];  // vlan tag, address space id
+    c += d[11];  // ip_proto, pkt_type, version, and 8bits of zeroed pad, 
 
     finalize(a, b, c);
 
@@ -331,12 +337,12 @@ int FlowKey::compare(const void* s1, const void* s2, size_t)
     a++;
     b++;
     if (*a - *b)
-        return 1;               /* Compares port lo/hi, vlan, protocol, version */
+        return 1;               /* Compares MPLS label, port lo/hi */
 
     a++;
     b++;
     if (*a - *b)
-        return 1;               /* Compares MPLS label, AddressSpace ID and 16bit pad */
+        return 1;               /* Compares vlan,AddressSpace ID,ip_proto,type,version,8 bit pad */
 
     return 0;
 }

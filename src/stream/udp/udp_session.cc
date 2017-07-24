@@ -113,6 +113,7 @@ bool UdpSession::setup(Packet* p)
     flow->ssn_state.session_flags |= SSNFLAG_SEEN_SENDER;
 
     flow->pkt_type = p->type();
+    flow->ip_proto = (uint8_t)p->get_ip_proto_next();
     flow->ssn_state.direction = FROM_CLIENT;
 
     StreamUdpConfig* pc = get_udp_cfg(flow->ssn_server);

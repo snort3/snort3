@@ -36,14 +36,15 @@ struct FlowKey
 {
     uint32_t   ip_l[4]; /* Low IP */
     uint32_t   ip_h[4]; /* High IP */
+    uint32_t   mplsLabel;
     uint16_t   port_l;  /* Low Port - 0 if ICMP */
     uint16_t   port_h;  /* High Port - 0 if ICMP */
     uint16_t   vlan_tag;
+    uint16_t   addressSpaceId;
+    uint8_t    ip_protocol;
     PktType    pkt_type;
     uint8_t    version;
-    uint32_t   mplsLabel;
-    uint16_t   addressSpaceId;
-    uint16_t   addressSpaceIdPad1;
+    uint8_t    padding;
 
     /* The init() functions return true if the key IP/port fields were actively
         normalized, reversing the source and destination addresses internally.
