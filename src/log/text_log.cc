@@ -39,9 +39,8 @@
 
 #include "log.h"
 
-/* some reasonable minimums */
-#define MIN_BUF  (1* K_BYTES)
-#define MIN_FILE (MIN_BUF)
+/* a reasonable minimum */
+#define MIN_BUF  (4* K_BYTES)
 
 struct TextLog
 {
@@ -115,10 +114,6 @@ TextLog* TextLog_Init(
 
     if ( maxBuf < MIN_BUF )
         maxBuf = MIN_BUF;
-    if ( maxFile < MIN_FILE )
-        maxFile = MIN_FILE;
-    if ( maxFile < maxBuf )
-        maxFile = maxBuf;
 
     txt = (TextLog*)snort_alloc(sizeof(TextLog)+maxBuf);
 
@@ -182,7 +177,8 @@ bool TextLog_Flush(TextLog* const txt)
 
     if ( !txt->pos )
         return false;
-    if ( txt->size + txt->pos > txt->maxFile )
+
+    if ( txt->maxFile and txt->size + txt->pos > txt->maxFile )
         TextLog_Roll(txt);
 
     ok = fwrite(txt->buf, txt->pos, 1, txt->file);

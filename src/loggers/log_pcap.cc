@@ -74,10 +74,7 @@ static void TcpdumpRollLogFile(LtdConfig*);
 static const Parameter s_params[] =
 {
     { "limit", Parameter::PT_INT, "0:", "0",
-      "set limit (0 is unlimited)" },
-
-    { "units", Parameter::PT_ENUM, "B | K | M | G", "B",
-      "bytes | KB | MB | GB" },
+      "set maximum size in MB before rollover (0 is unlimited)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -92,20 +89,15 @@ public:
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
 
 public:
-    unsigned limit;
-    unsigned units;
+    unsigned long limit;
 };
 
 bool TcpdumpModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("limit") )
-        limit = v.get_long();
-
-    else if ( v.is("units") )
-        units = v.get_long();
+        limit = v.get_long() * 1024 * 1024;
 
     else
         return false;
@@ -116,15 +108,6 @@ bool TcpdumpModule::set(const char*, Value& v, SnortConfig*)
 bool TcpdumpModule::begin(const char*, int, SnortConfig*)
 {
     limit = 0;
-    units = 0;
-    return true;
-}
-
-bool TcpdumpModule::end(const char*, int, SnortConfig*)
-{
-    while ( units-- )
-        limit *= 1024;
-
     return true;
 }
 

@@ -138,7 +138,7 @@ static const MpseApi bnfa_api =
         nullptr,
         nullptr
     },
-    false,
+    MPSE_BASE,
     nullptr,
     nullptr,
     nullptr,

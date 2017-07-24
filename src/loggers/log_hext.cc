@@ -107,10 +107,7 @@ static const Parameter s_params[] =
       "output all full packets if true, else just TCP payload" },
 
     { "limit", Parameter::PT_INT, "0:", "0",
-      "set limit (0 is unlimited)" },
-
-    { "units", Parameter::PT_ENUM, "B | K | M | G", "B",
-      "bytes | KB | MB | GB" },
+      "set maximum size in MB before rollover (0 is unlimited)" },
 
     { "width", Parameter::PT_INT, "0:", "20",
       "set line width (0 is unlimited)" },
@@ -125,13 +122,11 @@ public:
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
 
 public:
     bool file;
     bool raw;
     unsigned long limit;
-    unsigned units;
     unsigned width;
 };
 
@@ -144,10 +139,7 @@ bool HextModule::set(const char*, Value& v, SnortConfig*)
         raw = v.get_bool();
 
     else if ( v.is("limit") )
-        limit = v.get_long();
-
-    else if ( v.is("units") )
-        units = v.get_long();
+        limit = v.get_long() * 1024 * 1024;
 
     else if ( v.is("width") )
         width = v.get_long();
@@ -163,16 +155,7 @@ bool HextModule::begin(const char*, int, SnortConfig*)
     file = false;
     raw = false;
     limit = 0;
-    units = 0;
     width = 20;
-    return true;
-}
-
-bool HextModule::end(const char*, int, SnortConfig*)
-{
-    while ( units-- )
-        limit *= 1024;
-
     return true;
 }
 

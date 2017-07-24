@@ -383,6 +383,20 @@ static const ConvertMap enable_ttcp_drops_api =
 const ConvertMap* enable_ttcp_drops_map = &enable_ttcp_drops_api;
 
 /*************************************************
+ *************  log_ipv6_extra_data  *************
+ *************************************************/
+
+static const std::string log_ipv6_extra_data = "log_ipv6_extra_data";
+static const ConvertMap log_ipv6_extra_data_api =
+{
+    log_ipv6_extra_data,
+    deleted_ctor<& log_ipv6_extra_data>
+};
+
+const ConvertMap* log_ipv6_extra_data_map = &log_ipv6_extra_data_api;
+
+
+/*************************************************
  ***********  nolog***********
  *************************************************/
 

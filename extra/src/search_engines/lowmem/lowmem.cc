@@ -120,7 +120,7 @@ static const MpseApi lm_api =
         nullptr,
         nullptr
     },
-    false,
+    MPSE_BASE,
     nullptr,
     nullptr,
     nullptr,

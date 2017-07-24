@@ -43,7 +43,6 @@ bool AlertFull::convert(std::istringstream& data_stream)
     bool retval = true;
     int limit;
     char c = '\0';
-    std::string units = "B";
 
     table_api.open_top_level_table("alert_full");
 
@@ -57,16 +56,19 @@ bool AlertFull::convert(std::istringstream& data_stream)
 
     if (data_stream >> c)
     {
-        if (c == 'K' || c == 'k')
-            units = "K";
-        else if (c == 'M' || c == 'm')
-            units = "M";
+        if (limit <= 0)
+            limit = 0;
+        else if (c == 'K' || c == 'k')
+            limit = (limit + 1023) / 1024;
         else if (c == 'G' || c == 'g')
-            units = "G";
+            limit *= 1024;
     }
+    else
+        limit = (limit + 1024*1024 - 1) / (1024*1024);
 
     retval = table_api.add_option("limit", limit) && retval;
-    retval = table_api.add_option("units", units) && retval;
+    retval = table_api.add_comment("limit now in MB, converted") && retval;
+    retval = table_api.add_deleted_comment("units") && retval;
 
     // If we read something, more data available and bad input
     if (data_stream >> keyword)

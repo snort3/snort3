@@ -108,7 +108,7 @@ void EventTrace_Init()
         char time_buf[26];
         ctime_r(&now, time_buf);
 
-        tlog = TextLog_Init ("event_trace.txt", 128, 8*1024*1024);
+        tlog = TextLog_Init ("event_trace.txt", 4*1024, 8*1024*1024);
         TextLog_Print(tlog, "\nTrace started at %s", time_buf);
         TextLog_Print(tlog, "Trace max_data is %u bytes\n", snort_conf->event_trace_max);
     }

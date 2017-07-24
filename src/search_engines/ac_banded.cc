@@ -120,7 +120,7 @@ static const MpseApi acb_api =
         nullptr,
         nullptr
     },
-    false,
+    MPSE_BASE,
     nullptr,
     nullptr,
     nullptr,

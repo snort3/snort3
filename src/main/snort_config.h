@@ -169,7 +169,6 @@ public:
 #endif
     uint32_t logging_flags = 0;
 
-    uint8_t log_ipv6_extra = 0;
     uint16_t event_trace_max = 0;
     long int tagged_packet_limit = 256;
     bool enable_packet_trace = false;
@@ -465,9 +464,6 @@ public:
     // event stuff
     static uint32_t get_event_log_id()
     { return snort_conf->event_log_id; }
-
-    static bool get_log_ip6_extra()
-    { return snort_conf->log_ipv6_extra; }
 
     static bool process_all_events()
     { return snort_conf->event_queue_config->process_all_events; }

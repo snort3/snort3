@@ -366,7 +366,7 @@ static const MpseApi hs_api =
         nullptr,
         nullptr
     },
-    false,
+    MPSE_REGEX,
     nullptr,  // activate
     nullptr,  // setup
     nullptr,  // start

@@ -361,16 +361,10 @@ static const Parameter s_params[] =
       "selected fields will be output in given order left to right" },
 
     { "limit", Parameter::PT_INT, "0:", "0",
-      "set limit (0 is unlimited)" },
+      "set maximum size in MB before rollover (0 is unlimited)" },
 
     { "separator", Parameter::PT_STRING, nullptr, ", ",
       "separate fields with this character sequence" },
-
-    // FIXIT-L provide PT_UNITS that converts to multiplier automatically
-    // or just delete these and provide KB = 1024, MB = 1024*KB, etc. in
-    // snort_defaults.lua
-    { "units", Parameter::PT_ENUM, "B | K | M | G", "B",
-      "bytes | KB | MB | GB" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -385,13 +379,11 @@ public:
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
 
 public:
     bool file;
     string sep;
     unsigned long limit;
-    unsigned units;
     vector<CsvFunc> fields;
 };
 
@@ -411,13 +403,10 @@ bool CsvModule::set(const char*, Value& v, SnortConfig*)
     }
 
     else if ( v.is("limit") )
-        limit = v.get_long();
+        limit = v.get_long() * 1024 * 1024;
 
     else if ( v.is("separator") )
         sep = v.get_string();
-
-    else if ( v.is("units") )
-        units = v.get_long();
 
     else
         return false;
@@ -429,7 +418,6 @@ bool CsvModule::begin(const char*, int, SnortConfig*)
 {
     file = false;
     limit = 0;
-    units = 0;
     sep = ", ";
 
     if ( fields.empty() )
@@ -441,14 +429,6 @@ bool CsvModule::begin(const char*, int, SnortConfig*)
         while ( v.get_next_token(tok) )
             fields.push_back(csv_func[Parameter::index(csv_range, tok.c_str())]);
     }
-    return true;
-}
-
-bool CsvModule::end(const char*, int, SnortConfig*)
-{
-    while ( units-- )
-        limit *= 1024;
-
     return true;
 }
 

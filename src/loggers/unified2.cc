@@ -62,8 +62,6 @@ struct Unified2Config
 {
     unsigned int limit;
     int nostamp;
-    int mpls_event_types;
-    int vlan_event_types;
 };
 
 struct U2
@@ -628,19 +626,10 @@ static void Unified2Write(uint8_t* buf, uint32_t buf_len, Unified2Config* config
 static const Parameter s_params[] =
 {
     { "limit", Parameter::PT_INT, "0:", "0",
-      "set limit (0 is unlimited)" },
-
-    { "units", Parameter::PT_ENUM, "B | K | M | G", "B",
-      "limit multiplier" },
+      "set maximum size in MB before rollover (0 is unlimited)" },
 
     { "nostamp", Parameter::PT_BOOL, nullptr, "true",
       "append file creation time to name (in Unix Epoch format)" },
-
-    { "mpls_event_types", Parameter::PT_BOOL, nullptr, "false",
-      "include mpls labels in events" },
-
-    { "vlan_event_types", Parameter::PT_BOOL, nullptr, "false",
-      "include vlan IDs in events" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -655,32 +644,19 @@ public:
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
 
 public:
     unsigned limit;
-    unsigned units;
     bool nostamp;
-    bool mpls;
-    bool vlan;
 };
 
 bool U2Module::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("limit") )
-        limit = v.get_long();
-
-    else if ( v.is("units") )
-        units = v.get_long();
+        limit = v.get_long() * 1024 * 1024;
 
     else if ( v.is("nostamp") )
         nostamp = v.get_bool();
-
-    else if ( v.is("mpls_event_types") )
-        mpls = v.get_bool();
-
-    else if ( v.is("vlan_event_types") )
-        vlan = v.get_bool();
 
     else
         return false;
@@ -691,17 +667,7 @@ bool U2Module::set(const char*, Value& v, SnortConfig*)
 bool U2Module::begin(const char*, int, SnortConfig*)
 {
     limit = 0;
-    units = 0;
     nostamp = SnortConfig::output_no_timestamp();
-    mpls = vlan = false;
-    return true;
-}
-
-bool U2Module::end(const char*, int, SnortConfig*)
-{
-    while ( units-- )
-        limit *= 1024;
-
     return true;
 }
 
@@ -729,8 +695,6 @@ U2Logger::U2Logger(U2Module* m)
 {
     config.limit = m->limit;
     config.nostamp = m->nostamp;
-    config.mpls_event_types = m->mpls;
-    config.vlan_event_types = m->vlan;
 }
 
 U2Logger::~U2Logger()

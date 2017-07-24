@@ -23,6 +23,7 @@
 
 #include "mpse_manager.h"
 
+#include <cassert>
 #include <list>
 
 #include "detection/fp_config.h"
@@ -129,36 +130,48 @@ void MpseManager::delete_search_engine(Mpse* eng)
 // the summary info is totaled by type for all instances
 void MpseManager::print_mpse_summary(const MpseApi* api)
 {
+    assert(api);
     api->print();
 }
 
 void MpseManager::activate_search_engine(const MpseApi* api, SnortConfig* sc)
 {
+    assert(api);
     if ( api->activate )
         api->activate(sc);
 }
 
 void MpseManager::setup_search_engine(const MpseApi* api, SnortConfig* sc)
 {
+    assert(api);
     if ( api->setup )
         api->setup(sc);
 }
 
 void MpseManager::start_search_engine(const MpseApi* api)
 {
+    assert(api);
     if ( api->start )
         api->start();
 }
 
 void MpseManager::stop_search_engine(const MpseApi* api)
 {
+    assert(api);
     if ( api->stop )
         api->stop();
 }
 
 bool MpseManager::search_engine_trim(const MpseApi* api)
 {
-    return api->trim;
+    assert(api);
+    return (api->flags & MPSE_TRIM) != 0;
+}
+
+bool MpseManager::is_regex_capable(const MpseApi* api)
+{
+    assert(api);
+    return (api->flags & MPSE_REGEX) != 0;
 }
 
 // was called during drop stats but actually commented out

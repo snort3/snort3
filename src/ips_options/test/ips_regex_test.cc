@@ -216,17 +216,22 @@ TEST(ips_regex_module, config_pass)
     CHECK(mod->set(ips_regex->name, vs, nullptr));
 
     Value vb(true);
-    p = get_param(mod, "nocase");
-    CHECK(p);
-    vb.set(p);
-    CHECK(mod->set(ips_regex->name, vb, nullptr));
-
     p = get_param(mod, "dotall");
     CHECK(p);
     vb.set(p);
     CHECK(mod->set(ips_regex->name, vb, nullptr));
 
+    p = get_param(mod, "fast_pattern");
+    CHECK(p);
+    vb.set(p);
+    CHECK(mod->set(ips_regex->name, vb, nullptr));
+
     p = get_param(mod, "multiline");
+    CHECK(p);
+    vb.set(p);
+    CHECK(mod->set(ips_regex->name, vb, nullptr));
+
+    p = get_param(mod, "nocase");
     CHECK(p);
     vb.set(p);
     CHECK(mod->set(ips_regex->name, vb, nullptr));
@@ -237,18 +242,23 @@ TEST(ips_regex_module, config_pass)
     CHECK(mod->set(ips_regex->name, vb, nullptr));
 }
 
-TEST(ips_regex_module, config_fail)
+TEST(ips_regex_module, config_fail_name)
+{
+    Value vs("unknown");
+    Parameter bad { "bad", Parameter::PT_STRING, nullptr, nullptr, "bad" };
+    vs.set(&bad);
+    CHECK(!mod->set(ips_regex->name, vs, nullptr));
+    expect = 1;
+    end = false;
+}
+
+TEST(ips_regex_module, config_fail_regex)
 {
     Value vs("[[:fubar:]]");
     const Parameter* p = get_param(mod, "~re");
     CHECK(p);
     vs.set(p);
     CHECK(mod->set(ips_regex->name, vs, nullptr));
-
-    Parameter bad { "bad", Parameter::PT_STRING, nullptr, nullptr, "bad" };
-    vs.set(&bad);
-    CHECK(!mod->set(ips_regex->name, vs, nullptr));
-
     expect = 1;
     end = false;
 }

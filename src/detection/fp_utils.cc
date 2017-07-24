@@ -63,9 +63,13 @@ static void clear_fast_pattern_only(OptFpList* ofl)
         pmd->fp_only = 0;
 }
 
-static bool pmd_can_be_fp(PatternMatchData* pmd, CursorActionType cat)
+static bool pmd_can_be_fp(
+    PatternMatchData* pmd, CursorActionType cat, bool only_literals)
 {
     if ( cat <= CAT_SET_OTHER )
+        return false;
+
+    if ( only_literals and !pmd->is_literal() )
         return false;
 
     return pmd->can_be_fp();
@@ -223,7 +227,7 @@ struct FpSelector
     FpSelector()
     { cat = CAT_NONE; pmd = nullptr; size = 0; }
 
-    bool is_better_than(FpSelector&, bool, RuleDirection);
+    bool is_better_than(FpSelector&, bool srvc, RuleDirection, bool only_literals = false);
 };
 
 FpSelector::FpSelector(CursorActionType c, PatternMatchData* p)
@@ -235,9 +239,10 @@ FpSelector::FpSelector(CursorActionType c, PatternMatchData* p)
     size = flp_trim(pmd->pattern_buf, pmd->pattern_size, nullptr);
 }
 
-bool FpSelector::is_better_than(FpSelector& rhs, bool srvc, RuleDirection dir)
+bool FpSelector::is_better_than(
+    FpSelector& rhs, bool srvc, RuleDirection dir, bool only_literals)
 {
-    if ( !pmd_can_be_fp(pmd, cat) )
+    if ( !pmd_can_be_fp(pmd, cat, only_literals) )
     {
         if ( pmd->is_fast_pattern() )
         {
@@ -293,7 +298,8 @@ bool FpSelector::is_better_than(FpSelector& rhs, bool srvc, RuleDirection dir)
 // public methods
 //--------------------------------------------------------------------------
 
-PatternMatchVector get_fp_content(OptTreeNode* otn, OptFpList*& next, bool srvc)
+PatternMatchVector get_fp_content(
+    OptTreeNode* otn, OptFpList*& next, bool srvc, bool only_literals)
 {
     CursorActionType curr_cat = CAT_SET_RAW;
     FpSelector best;
@@ -329,7 +335,7 @@ PatternMatchVector get_fp_content(OptTreeNode* otn, OptFpList*& next, bool srvc)
 
         FpSelector curr(curr_cat, tmp);
 
-        if ( curr.is_better_than(best, srvc, dir) )
+        if ( curr.is_better_than(best, srvc, dir, only_literals) )
         {
             best = curr;
             next = ofl->next;

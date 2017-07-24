@@ -65,6 +65,7 @@ set (IPS_SOURCES
     ips_pkt_data.cc
     ips_reference.cc
     ips_replace.cc
+    ips_service.cc
     ips_so.cc
 )
 

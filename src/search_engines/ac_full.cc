@@ -127,7 +127,7 @@ static const MpseApi acf_api =
         nullptr,
         nullptr
     },
-    false,
+    MPSE_BASE,
     nullptr,
     nullptr,
     nullptr,

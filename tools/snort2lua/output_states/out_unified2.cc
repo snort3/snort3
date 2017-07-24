@@ -60,19 +60,17 @@ public:
                 tmpval = table_api.add_option("nostamp", true);
 
             else if (!keyword.compare("mpls_event_types"))
-                tmpval = table_api.add_option("mpls_event_types", true);
+                table_api.add_deleted_comment("mpls_event_types");
 
             else if (!keyword.compare("vlan_event_types"))
-                tmpval = table_api.add_option("vlan_event_types", true);
+                tmpval = table_api.add_deleted_comment("vlan_event_types");
 
             else if (!keyword.compare("filename"))
                 table_api.add_deleted_comment("filename");
 
             else if (!keyword.compare("limit"))
-            {
                 tmpval = parse_int_option("limit", arg_stream, false);
-                tmpval = table_api.add_option("units", "M") && tmpval;
-            }
+
             else
                 tmpval = false;
 

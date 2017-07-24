@@ -287,20 +287,6 @@ static const ConvertMap enable_mpls_overlapping_ip_api =
 const ConvertMap* enable_mpls_overlapping_ip_map = &enable_mpls_overlapping_ip_api;
 
 /*************************************************
- *************  log_ipv6_extra_data  *************
- *************************************************/
-
-static const std::string log_ipv6_extra_data = "log_ipv6_extra_data";
-static const ConvertMap log_ipv6_extra_data_api =
-{
-    log_ipv6_extra_data,
-    config_true_no_opt_ctor<& log_ipv6_extra_data, & output>
-};
-
-const ConvertMap* log_ipv6_extra_data_map = &log_ipv6_extra_data_api;
-
-
-/*************************************************
  ********************  nopcre  *******************
  *************************************************/
 

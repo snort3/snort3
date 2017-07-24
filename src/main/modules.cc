@@ -715,9 +715,6 @@ static const Parameter output_params[] =
     { "dump_payload_verbose", Parameter::PT_BOOL, nullptr, "false",
       "dumps raw packet starting at link layer (same as -X)" },
 
-    { "log_ipv6_extra_data", Parameter::PT_BOOL, nullptr, "false",
-      "log IPv6 source and destination addresses as unified2 extra data records" },
-
     { "event_trace", Parameter::PT_TABLE, output_event_trace_params, nullptr,
       "" },
 
@@ -778,10 +775,6 @@ bool OutputModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("enable_packet_trace") )
         sc->enable_packet_trace = v.get_bool();
-
-    else if ( v.is("log_ipv6_extra_data") )
-        // FIXIT-M move to output|logging_flags
-        sc->log_ipv6_extra = v.get_bool() ? 0 : 1;
 
     else if ( v.is("quiet") )
         v.update_mask(sc->logging_flags, LOGGING_FLAG__QUIET);

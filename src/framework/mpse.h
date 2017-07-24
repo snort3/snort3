@@ -99,10 +99,14 @@ typedef Mpse* (* MpseNewFunc)(
 
 typedef void (* MpseDelFunc)(Mpse*);
 
+#define MPSE_BASE   0x00
+#define MPSE_TRIM   0x01
+#define MPSE_REGEX  0x02
+
 struct MpseApi
 {
     BaseApi base;
-    bool trim; // set true for NFAs to trim leading \0
+    uint32_t flags;
 
     MpseOptFunc activate;
     MpseOptFunc setup;

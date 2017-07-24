@@ -67,10 +67,7 @@ static const Parameter s_params[] =
       "output to " F_NAME " instead of stdout" },
 
     { "limit", Parameter::PT_INT, "0:", "0",
-      "set limit (0 is unlimited)" },
-
-    { "units", Parameter::PT_ENUM, "B | K | M | G", "B",
-      "limit is in bytes | KB | MB | GB" },
+      "set maximum size in MB before rollover (0 is unlimited)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -85,12 +82,10 @@ public:
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
 
 public:
     bool file;
     unsigned long limit;
-    unsigned units;
 };
 
 bool FullModule::set(const char*, Value& v, SnortConfig*)
@@ -99,10 +94,7 @@ bool FullModule::set(const char*, Value& v, SnortConfig*)
         file = v.get_bool();
 
     else if ( v.is("limit") )
-        limit = v.get_long();
-
-    else if ( v.is("units") )
-        units = v.get_long();
+        limit = v.get_long() * 1024 * 1024;
 
     else
         return false;
@@ -114,15 +106,6 @@ bool FullModule::begin(const char*, int, SnortConfig*)
 {
     file = false;
     limit = 0;
-    units = 0;
-    return true;
-}
-
-bool FullModule::end(const char*, int, SnortConfig*)
-{
-    while ( units-- )
-        limit *= 1024;
-
     return true;
 }
 

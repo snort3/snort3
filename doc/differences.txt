@@ -15,7 +15,7 @@ Some things Snort++ can do today that Snort can not do:
 * regex fast patterns, not just literals
 * FlatBuffers and JSON perf monitor logs
 * LuaJIT scriptable rule options and loggers
-* pub/sub inspection events (currently used by sip and http to appid)
+* pub/sub inspection events (currently used by sip and http_inspect to appid)
 * JIT buffer stuffers (notably with new http_inspect)
 * C-style comments in rules
 * #begin ... #end comment blocks in rules
@@ -76,8 +76,8 @@ Some things Snort++ can do today that Snort can not do as well:
   (Snort 2 requires newline escapes)
 * properly parse rules
   (Snort 2 can actually completely ignore stuff)
-* optional warnings output, can be fatal
-  (Snort 2 warnings are not optional or fatal)
+* optional, expanded warnings output, can be fatal
+  (Snort 2 warnings limited and are not optional or fatal)
 * define and use arbitrary variables and functions in config with Lua
   (Snort 2 has variables just for rule headers)
 * text-based command line shell
@@ -100,6 +100,12 @@ Some things Snort++ can do today that Snort can not do as well:
   (Snort 2 can only detect scans)
 * sigquit will cause a --dirty-pig style exit
   (Snort 2 handles sigquit the same as sigterm and sigint)
+* detection trace
+  (Snort 2 has more limited buffer dumping)
+* updated unified2 events with MPLS, VLAN, and IP6
+  (Snort 2 requires configuration and extra data)
+* significantly more unit tests, including --catch and make check
+  (Snort 2 has very few unit tests)
 * better modularity 346K/1534 = 226 lines/file, max=2700
   (Snort 2 has 440K/1021 = 431 lines/file, max=13K)
 

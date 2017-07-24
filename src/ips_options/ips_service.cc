@@ -15,7 +15,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// ips_metadata.cc author Russ Combs <rucombs@cisco.com>
+// ips_service.cc author Russ Combs <rucombs@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -24,10 +24,12 @@
 #include "framework/decode_data.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
+#include "log/messages.h"
+#include "parser/parse_conf.h"
 
 using namespace std;
 
-#define s_name "metadata"
+#define s_name "service"
 
 //-------------------------------------------------------------------------
 // module
@@ -36,25 +38,50 @@ using namespace std;
 static const Parameter s_params[] =
 {
     { "*", Parameter::PT_STRING, nullptr, nullptr,
-      "comma-separated list of arbitrary name value pairs" },
+      "one or more comma-separated service names" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 #define s_help \
-    "rule option for conveying arbitrary name, value data within the rule text"
+    "rule option to specify list of services for grouping rules"
 
-class MetadataModule : public Module
+class ServiceModule : public Module
 {
 public:
-    MetadataModule() : Module(s_name, s_help, s_params) { }
+    ServiceModule() : Module(s_name, s_help, s_params)
+    { snort_config = nullptr; }
+
     bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+
+    struct SnortConfig* snort_config;
+    vector<string> services;
 };
 
-bool MetadataModule::set(const char*, Value& v, SnortConfig*)
+bool ServiceModule::begin(const char*, int, SnortConfig* sc)
+{
+    snort_config = sc;
+    services.clear();
+    return true;
+}
+
+bool ServiceModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( !v.is("*") )
         return false;
+
+    std::string svc = v.get_string();
+
+    for ( auto p : services )
+    {
+        if ( p == svc )
+        {
+            ParseWarning(WARN_RULES, "repeated service '%s'", svc.c_str());
+            return true;
+        }
+    }
+    services.push_back(svc);
 
     return true;
 }
@@ -65,7 +92,7 @@ bool MetadataModule::set(const char*, Value& v, SnortConfig*)
 
 static Module* mod_ctor()
 {
-    return new MetadataModule;
+    return new ServiceModule;
 }
 
 static void mod_dtor(Module* m)
@@ -73,12 +100,17 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* metadata_ctor(Module*, OptTreeNode*)
+static IpsOption* service_ctor(Module* p, OptTreeNode* otn)
 {
+    ServiceModule* m = (ServiceModule*)p;
+
+    for ( auto service : m->services )
+        add_service_to_otn(m->snort_config, otn, service.c_str());
+
     return nullptr;
 }
 
-static const IpsApi metadata_api =
+static const IpsApi service_api =
 {
     {
         PT_IPS_OPTION,
@@ -98,10 +130,10 @@ static const IpsApi metadata_api =
     nullptr,
     nullptr,
     nullptr,
-    metadata_ctor,
+    service_ctor,
     nullptr,
     nullptr
 };
 
-const BaseApi* ips_metadata = &metadata_api.base;
+const BaseApi* ips_service = &service_api.base;
 

@@ -44,8 +44,9 @@ bool Metadata::convert(std::istringstream& data_stream)
     std::string tmp;
     std::string value;
     std::string soid_val = "";
+    std::string service = "";
 
-    rule_api.add_option("metadata");
+    bool add_opt = true;
 
     tmp = util::get_rule_option_args(data_stream);
     std::istringstream metadata_stream(util::trim(tmp));
@@ -78,6 +79,12 @@ bool Metadata::convert(std::istringstream& data_stream)
         else if (!keyword.compare("soid"))
             soid_val = value;  // add this after metadata to keep ordering
 
+        else if (!keyword.compare("service"))
+        {
+            if ( service.length() )
+                service += ", ";
+            service += value;  // add this after metadata to keep ordering
+        }
         else if (!keyword.compare("engine"))
         {
             rule_api.make_rule_a_comment();
@@ -85,9 +92,18 @@ bool Metadata::convert(std::istringstream& data_stream)
         }
         else
         {
+            if ( add_opt )
+            {
+                // this is to avoid empty metadata (ie "metadata;")
+                rule_api.add_option("metadata");
+                add_opt = false;
+            }
             rule_api.add_suboption(keyword, value);
         }
     }
+
+    if (!service.empty())
+        rule_api.add_option("service", service);
 
     if (!soid_val.empty())
         rule_api.add_option("soid", soid_val);

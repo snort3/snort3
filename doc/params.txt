@@ -29,7 +29,7 @@ information about the type and use of the parameter:
 * For IPS rules only, names starting with ~ indicate positional
   parameters.  The names of such parameters do not appear in the rule.
 * IPS rules may also have a wild card parameter, which is indicated by a
-  *.  Only used for metadata that Snort ignores.
+  *.  Used for unquoted, comma-separated lists such as service and metadata.
 * The snort module has command line options starting with a -.
 
 Some additional details to note:

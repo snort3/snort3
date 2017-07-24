@@ -50,7 +50,6 @@ struct RegexConfig
     hs_database_t* db;
     std::string re;
     PatternMatchData pmd;
-    uint16_t hs_flags;
 
     RegexConfig()
     { reset(); }
@@ -60,7 +59,6 @@ struct RegexConfig
         memset(&pmd, 0, sizeof(pmd));
         re.clear();
         db = nullptr;
-        hs_flags = 0;
     }
 };
 
@@ -134,7 +132,7 @@ RegexOption::~RegexOption()
 
 uint32_t RegexOption::hash() const
 {
-    uint32_t a = config.pmd.flags, b = config.hs_flags, c = 0;
+    uint32_t a = config.pmd.flags, b = config.pmd.mpse_flags, c = 0;
     mix_str(a, b, c, config.re.c_str());
     mix_str(a, b, c, get_name());
     finalize(a, b, c);
@@ -152,7 +150,7 @@ bool RegexOption::operator==(const IpsOption& ips) const
 
     if ( config.re == rhs.config.re and
         config.pmd.flags == rhs.config.pmd.flags and
-        config.hs_flags == rhs.config.hs_flags )
+        config.pmd.mpse_flags == rhs.config.pmd.mpse_flags )
         return true;
 #endif
     return this == &ips;
@@ -216,11 +214,11 @@ static const Parameter s_params[] =
     { "fast_pattern", Parameter::PT_IMPLIED, nullptr, nullptr,
       "use this content in the fast pattern matcher instead of the content selected by default" },
 
-    { "nocase", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "case insensitive match" },
-
     { "multiline", Parameter::PT_IMPLIED, nullptr, nullptr,
       "^ and $ anchors match any newlines in data" },
+
+    { "nocase", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "case insensitive match" },
 
     { "relative", Parameter::PT_IMPLIED, nullptr, nullptr,
       "start search from end of last match instead of start of buffer" },
@@ -261,7 +259,7 @@ bool RegexModule::begin(const char*, int, SnortConfig*)
 {
     config.reset();
     config.pmd.flags |= PatternMatchData::NO_FP;
-    config.hs_flags |= HS_FLAG_SINGLEMATCH;
+    config.pmd.mpse_flags |= HS_FLAG_SINGLEMATCH;
     return true;
 }
 
@@ -275,7 +273,7 @@ bool RegexModule::set(const char*, Value& v, SnortConfig*)
         config.re.erase(config.re.length()-1, 1);
     }
     else if ( v.is("dotall") )
-        config.hs_flags |= HS_FLAG_DOTALL;
+        config.pmd.mpse_flags |= HS_FLAG_DOTALL;
 
     else if ( v.is("fast_pattern") )
     {
@@ -283,11 +281,11 @@ bool RegexModule::set(const char*, Value& v, SnortConfig*)
         config.pmd.flags |= PatternMatchData::FAST_PAT;
     }
     else if ( v.is("multiline") )
-        config.hs_flags |= HS_FLAG_MULTILINE;
+        config.pmd.mpse_flags |= HS_FLAG_MULTILINE;
 
     else if ( v.is("nocase") )
     {
-        config.hs_flags |= HS_FLAG_CASELESS;
+        config.pmd.mpse_flags |= HS_FLAG_CASELESS;
         config.pmd.set_no_case();
     }
     else if ( v.is("relative") )
@@ -309,7 +307,7 @@ bool RegexModule::end(const char*, int, SnortConfig*)
 
     hs_compile_error_t* err = nullptr;
 
-    if ( hs_compile(config.re.c_str(), config.hs_flags, HS_MODE_BLOCK,
+    if ( hs_compile(config.re.c_str(), config.pmd.mpse_flags, HS_MODE_BLOCK,
         nullptr, &config.db, &err) or !config.db )
     {
         ParseError("can't compile regex '%s'", config.re.c_str());

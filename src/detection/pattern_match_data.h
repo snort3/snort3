@@ -64,6 +64,8 @@ struct PatternMatchData
     };
 
     uint16_t flags;          // from above enum
+    uint16_t mpse_flags;     // passed through to mpse
+
     uint16_t fp_offset;
     uint16_t fp_length;
 

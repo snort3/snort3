@@ -42,6 +42,7 @@ extern const BaseApi* ips_regex;
 extern const BaseApi* ips_sd_pattern;
 #endif
 extern const BaseApi* ips_replace;
+extern const BaseApi* ips_service;
 extern const BaseApi* ips_sha256;
 extern const BaseApi* ips_sha512;
 extern const BaseApi* ips_so;
@@ -104,6 +105,7 @@ static const BaseApi* ips_options[] =
     ips_sd_pattern,
 #endif
     ips_replace,
+    ips_service,
     ips_sha256,
     ips_sha512,
     ips_so,

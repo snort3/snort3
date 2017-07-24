@@ -73,6 +73,7 @@ public:
     static void start_search_engine(const MpseApi*);
     static void stop_search_engine(const MpseApi*);
     static bool search_engine_trim(const MpseApi*);
+    static bool is_regex_capable(const MpseApi*);
     static void print_mpse_summary(const MpseApi*);
     static void print_search_engine_stats();
 

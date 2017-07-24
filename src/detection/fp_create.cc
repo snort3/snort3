@@ -415,7 +415,7 @@ static int fpFinishPortGroupRule(
     pmx->pmd = pmd;
 
     Mpse::PatternDescriptor desc(
-        pmd->is_no_case(), pmd->is_negated(), pmd->is_literal(), pmd->flags);
+        pmd->is_no_case(), pmd->is_negated(), pmd->is_literal(), pmd->mpse_flags);
 
     pg->mpse[pmd->pm_type]->add_pattern(sc, (uint8_t*)pattern, pattern_length, desc, pmx);
 
@@ -491,7 +491,7 @@ static void fpAddAlternatePatterns(SnortConfig* sc, PortGroup* pg,
     pmx->pmd = pmd;
 
     Mpse::PatternDescriptor desc(
-        pmd->is_no_case(), pmd->is_negated(), pmd->is_literal(), pmd->flags);
+        pmd->is_no_case(), pmd->is_negated(), pmd->is_literal(), pmd->mpse_flags);
 
     pg->mpse[pmd->pm_type]->add_pattern(
         sc, (uint8_t*)pmd->pattern_buf, pmd->pattern_size, desc, pmx);
@@ -511,7 +511,8 @@ static int fpAddPortGroupRule(
         return -1;
 
     OptFpList* next = nullptr;
-    pmv = get_fp_content(otn, next, srvc);
+    bool only_literal = !MpseManager::is_regex_capable(fp->get_search_api());
+    pmv = get_fp_content(otn, next, srvc, only_literal);
 
     if ( !pmv.empty() )
     {
