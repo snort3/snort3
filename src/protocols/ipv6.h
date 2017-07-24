@@ -86,7 +86,7 @@ struct IP6Hdr
     { return (uint16_t)((ntohl(ip6_vtf) & 0x0FF00000) >> 20); }
 
     inline uint32_t flow() const
-    { return (uint16_t)((ntohl(ip6_vtf) & 0x000FFFFF) >> 20); }
+    { return (ntohl(ip6_vtf) & 0x000FFFFF); }
 
     // because Snort expects this in terms of 32 bit words.
     inline uint8_t hlen() const
