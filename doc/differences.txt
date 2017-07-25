@@ -46,12 +46,16 @@ Some things Snort++ can do today that Snort can not do as well:
   (Snort 2 supports only 2 IP layers)
 * process PDU buffers
   (Snort 2 only processes packets)
-* fully stateful http_inspect with 83 builtin alerts
+* fully stateful http_inspect with 97 builtin alerts
   (Snort 2 is only partly stateful with 33 builtin alerts)
 * output all semantic errors before quitting
   (Snort 2 stops at first one)
-* alert service (eg http) and alert file rules
+* alert file rules
+  (Snort 2 must use multiple rules)
+* alert service rules, eg alert http
   (Snort 2 must use metadata:service)
+* automatic fast_pattern only
+  (Snort 2 requires explicit fast_pattern:only)
 * elided rule headers omit nets and/or ports
   (Snort 2 requires explicit 'any')
 * dump builtin rule stubs
@@ -180,30 +184,48 @@ Some things Snort++ can do today that Snort can not do as well:
 === Rules
 
 * all rules must have a sid
+* sid == 0 not allowed
 * deleted activate / dynamic rules
+* deleted unused rule_state.action
 * deleted metadata engine shared
 * deleted metadata: rule-flushing (with PDU flushing rule flushing can cause
   missed attacks, the opposite of its intent)
-* deleted unused rule_state.action
-* fastpattern_offset, fast_pattern_length
+* changed metadata:service one[, service two]; to service:one[, two];
+* soid is now a non-metadata option
+* metadata is now truly metadata with no impact on detection
+  (Snort doesn't care about metadata internal structure / syntax)
+* deleted fast_pattern:only; use fast_pattern, nocase
+  (option is not added to detection tree if not required)
+* changed fast_pattern:<offset>,<length> to
+  fastpattern_offset: <offset>, fast_pattern_length <length>
+* fast pattern sensitive data with sd_pattern using hyperscan
+* hyperscan regex fast patterns with regex:"<regex>", fast_pattern;
 * no ; separated content suboptions
 * offset, depth, distance, and within must use a space separator not colon
   (e.g. offset:5; becomes offset 5;)
-* rule option sequence: <stub> soid <hidden>
-* sid == 0 not allowed
-* soid is now a non-metadata option
-* content suboptions http_* are now full options and should be place before content
+* content suboptions http_* are now full options
+* added sticky buffers: buffer selector options must precede contents and remain
+  in effect until changed
 * the following pcre options have been deleted: use sticky buffers instead
     B, U, P, H, M, C, I, D, K, S, Y
-* deleted uricontent ips rule option.
+* deleted uricontent option; use sticky buffer
   uricontent:"foo" -->  http_uri; content:"foo"
 * deleted urilen raw and norm; must use http_raw_uri and http_uri instead
 * deleted unused http_encode option
 * urilen replaced with generic bufferlen which applies to current sticky
   buffer
 * added optional selector to http_header, e.g. http_header:User-Agent;
-* multiline rules w/o \n
-* #begin ... #end comments
+* the all new http_inspect has new buffers and rule options
+* added alert file and alert service rules
+  (service in body not required if there is only one and it is in header;
+  alert service / file rules disable fast pattern searching of raw packets)
+* rule option sequence: <stub> soid <hidden>
+* arbitrary whitespace and multiline rules w/o \n
+* #begin ... #end comments to easily commment out multiple lines
+* add rule remarks option with rem:"arbitrary comment"
+* nets and/or ports may be omitted from rule headers (matches any)
+* parse all rules and output all errors before quitting
+* read rules from conf, separate rules file, or stdin
 
 
 === Output

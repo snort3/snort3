@@ -1,3 +1,40 @@
+17/07/24 - build 238
+
+-- check: update hyperscan and regex tests
+-- cpputests: clean up some header include issues
+-- daq_socket: update to support query of pci
+-- detection: fix debug print of fast pattern only
+-- detection: rule evaluation trace utility
+-- doc: update concepts and differences
+-- file_api: memory leak fixed
+-- file_id: fixes for file capture exit
+-- http_inspect: added 119:97 for lower case letters in version field
+-- http_inspect: alert 119:96 added for unsolicited 206 response.
+-- http_inspect: specific alert added 119:95 for Content-Encoding chunked.
+-- ipv6: fix flow label access method; thanks to schrx3b6 for the patch
+-- loggers: remove units options; all limits expressed in MB
+-- mpse: Remove Intel Soft CPM support
+-- mpse: make regex capability generic
+-- mpse: only use literals for fast patterns if search_method is not hyperscan
+-- output: add packet trace feature
+-- perf_monitor: fixed main table (perf_monitor) having same name as pegs for
+-- perfmon field
+-- regex: fix pass through of mpse flags to hyperscan
+-- replace: do not trip over fast pattern only
+-- rpc: revert to positional params, fix tcp logic, clean up formatting
+-- rules: promote metadata:service to a separate option since it is not metadata
+-- snort2lua: Fixed incorrect file names errors
+-- snort2lua: move footprint to stream from stream_tcp
+-- spell check: fix message and comment typos
+-- stream: add ip_proto as part of flow key
+-- stream: fix user dependency on flush bucket
+-- text logs: fix default unlimited file size
+-- u2: add event3 to u2spewfoo
+-- u2: convert thread local buffers to heap
+-- u2: deprecate ip4 and ip6 specific events and add a single event for both
+-- u2: remove obsolete configurations
+-- u2: support mixed IP versions
+
 17/07/13 - build 237
 
 -- build: add support for appending EXTRABUILD to the BUILD string
