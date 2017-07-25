@@ -155,12 +155,8 @@ int DisplayBanner()
  ****************************************************************************/
 void ts_print(const struct timeval* tvp, char* timebuf)
 {
-    int s;
-    int localzone;
-    time_t Time;
     struct timeval tv;
     struct timezone tz;
-    struct tm* lt;    /* place to stick the adjusted clock data */
 
     /* if null was passed, we use current time */
     if (!tvp)
@@ -171,7 +167,7 @@ void ts_print(const struct timeval* tvp, char* timebuf)
         tvp = &tv;
     }
 
-    localzone = snort_conf->thiszone;
+    int localzone = snort_conf->thiszone;
 
     /*
     **  If we're doing UTC, then make sure that the timezone is correct.
@@ -179,13 +175,18 @@ void ts_print(const struct timeval* tvp, char* timebuf)
     if (SnortConfig::output_use_utc())
         localzone = 0;
 
-    s = (tvp->tv_sec + localzone) % 86400;
-    Time = (tvp->tv_sec + localzone) - s;
+    int s = (tvp->tv_sec + localzone) % 86400;
+    time_t Time = (tvp->tv_sec + localzone) - s;
 
     struct tm ttm;
-    lt = gmtime_r(&Time, &ttm);
+    struct tm* lt = gmtime_r(&Time, &ttm);
 
-    if (SnortConfig::output_include_year())
+    if ( !lt )
+    {
+        (void)SnortSnprintf(timebuf, TIMEBUF_SIZE, "%lu", tvp->tv_sec);
+
+    }
+    else if (SnortConfig::output_include_year())
     {
         int year = (lt->tm_year >= 100) ? (lt->tm_year - 100) : lt->tm_year;
 

@@ -303,8 +303,6 @@ sip_methods =
     'UPDATE', 'JOIN', 'INFO', 'MESSAGE', 'NOTIFY', 'PRACK'
 }
 
-isakmp_hex = { '?????????????????|01|', '?????????????????|10|' }
-
 telnet_commands =
 {
     '|FF F0|', '|FF F1|', '|FF F2|', '|FF F3|',
@@ -325,7 +323,7 @@ default_wizard =
 
         { service = 'imap', proto = 'tcp', client_first = false,
           to_server = { 'LOGIN', 'AUTHENTICATE', 'STARTTLS' },
-          to_client = { '**OK', '**BYE' } },
+          to_client = { '** OK', '** BYE' } },
 
         { service = 'pop3', proto = 'tcp', client_first = false,
           to_server = { 'USER', 'APOP' },
@@ -352,9 +350,6 @@ default_wizard =
     {
         { service = 'dnp3', proto = 'tcp', client_first = true, 
           to_server = { '|05 64|' }, to_client = { '|05 64|' } },
-
-        { service = 'isakmp',  proto = 'udp', client_first = true,
-          to_server = isakmp_hex, to_client = isakmp_hex },
 --[[
         { service = 'modbus', proto = 'tcp', client_first = true,
           to_server = { '??|0 0|' } },

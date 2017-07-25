@@ -192,11 +192,17 @@ void WizardModule::add_spells(MagicBook* b, string& service)
         b->add_spell(p.c_str(), service.c_str());
 }
 
-bool WizardModule::end(const char*, int idx, SnortConfig*)
+bool WizardModule::end(const char* fqn, int idx, SnortConfig*)
 {
-    if ( !idx )
+    if ( idx )
+    {
+        service.clear();
         return true;
-
+    }
+    if ( !strstr(fqn, "to_client") and !strstr(fqn, "to_server") )
+    {
+        return true;
+    }
     if ( hex )
     {
         if ( c2s )
@@ -212,9 +218,7 @@ bool WizardModule::end(const char*, int idx, SnortConfig*)
             add_spells(s2c_spells, service);
     }
 
-    service.clear();
     spells.clear();
-
     return true;
 }
 
