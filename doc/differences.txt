@@ -221,7 +221,7 @@ Some things Snort++ can do today that Snort can not do as well:
   alert service / file rules disable fast pattern searching of raw packets)
 * rule option sequence: <stub> soid <hidden>
 * arbitrary whitespace and multiline rules w/o \n
-* #begin ... #end comments to easily commment out multiple lines
+* #begin ... #end comments to easily comment out multiple lines
 * add rule remarks option with rem:"arbitrary comment"
 * nets and/or ports may be omitted from rule headers (matches any)
 * parse all rules and output all errors before quitting

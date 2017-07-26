@@ -1,3 +1,11 @@
+17/07/25 - build 239
+
+-- rules: remove sample.rules; Talos will publish Snort 3 rules on snort.org
+-- logging: fix handling of out of range timeval
+   thanks to kamil@frankowicz.me for reporting the issue
+-- wizard: fix direction issue
+-- wizard: fix imap spell
+
 17/07/24 - build 238
 
 -- check: update hyperscan and regex tests
