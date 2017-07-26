@@ -366,7 +366,7 @@ static int get_detector_flow_key(lua_State* L)
     return 1;
 }
 
-static const luaL_reg detector_flow_api[] =
+static const luaL_Reg detector_flow_api[] =
 {
     /* Obsolete API names.  No longer use these!  They are here for backward
      * compatibility and will eventually be removed. */
@@ -397,7 +397,7 @@ static int detector_flow_tostring(lua_State* L)
     return 1;
 }
 
-static const luaL_reg detector_flow_meta[] =
+static const luaL_Reg detector_flow_meta[] =
 {
     { "__gc",       gc_detector_flow },
     { "__tostring", detector_flow_tostring },

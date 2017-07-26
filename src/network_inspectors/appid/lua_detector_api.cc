@@ -2189,7 +2189,7 @@ static int create_future_flow(lua_State* L)
         return 0;
 }
 
-static const luaL_reg detector_methods[] =
+static const luaL_Reg detector_methods[] =
 {
     /* Obsolete API names.  No longer use these!  They are here for backward
      * compatibility and will eventually be removed. */
@@ -2333,7 +2333,7 @@ static int Detector_tostring(lua_State* L)
     return 1;
 }
 
-static const luaL_reg Detector_meta[] =
+static const luaL_Reg Detector_meta[] =
 {
     { "__gc",       Detector_gc },
     { "__tostring", Detector_tostring },
