@@ -70,6 +70,8 @@ public:
     bool operator!=(const IpsOption& ips) const
     { return !(*this == ips); }
 
+    virtual bool is_agent() { return false; }
+
     // packet threads
     virtual bool is_relative() { return false; }
     virtual bool fp_research() { return false; }

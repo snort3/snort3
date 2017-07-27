@@ -52,22 +52,18 @@ static void replace_parse(const char* args, string& s)
 
 static bool replace_ok()
 {
-    static int warned = 0;
+    if ( SnortConfig::inline_mode() and SFDAQ::can_replace() )
+        return true;
 
-    if ( !SnortConfig::inline_mode() )
-        return false;
+    static THREAD_LOCAL bool warned = false;
 
-    if ( !SFDAQ::can_replace() )
+    if ( !warned )
     {
-        if ( !warned )
-        {
-            ParseWarning(WARN_DAQ, "payload replacements disabled because DAQ "
-                " can't replace packets.\n");
-            warned = 1;
-        }
-        return false;
+        WarningMessage("%s\n",
+            "WARNING: replace requires inline mode and DAQ with replace capability");
+        warned = true;
     }
-    return true;
+    return false;
 }
 
 //-------------------------------------------------------------------------
@@ -89,6 +85,9 @@ public:
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
+
+    bool is_agent() override
+    { return true; }
 
     bool is_relative() override
     { return true; }
@@ -160,7 +159,7 @@ int ReplaceOption::eval(Cursor& c, Packet* p)
     Profile profile(replacePerfStats);
 
     if ( p->is_cooked() )
-        return false;
+        return DETECTION_OPTION_NO_MATCH;
 
     if ( !c.is("pkt_data") )
         return DETECTION_OPTION_NO_MATCH;
@@ -168,7 +167,8 @@ int ReplaceOption::eval(Cursor& c, Packet* p)
     if ( c.get_pos() < repl.size() )
         return DETECTION_OPTION_NO_MATCH;
 
-    store(c.get_pos() - repl.size());
+    if ( replace_ok() )
+        store(c.get_pos() - repl.size());
 
     return DETECTION_OPTION_MATCH;
 }
@@ -241,21 +241,10 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* replace_ctor(Module* p, OptTreeNode* otn)
+static IpsOption* replace_ctor(Module* p, OptTreeNode*)
 {
-    if ( !replace_ok() )
-        ParseError("inline mode and DAQ with replace capabilities required "
-            "to use rule option 'replace'.");
-
     ReplModule* m = (ReplModule*)p;
-    ReplaceOption* opt = new ReplaceOption(m->data);
-
-    if ( otn_set_agent(otn, opt) )
-        return opt;
-
-    delete opt;
-    ParseError("at most one action per rule is allowed");
-    return nullptr;
+    return new ReplaceOption(m->data);
 }
 
 static void replace_dtor(IpsOption* p)

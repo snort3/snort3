@@ -243,10 +243,7 @@ bool SFDAQ::can_inject_raw()
 
 bool SFDAQ::can_replace()
 {
-    // FIXIT-H X can_replace() is beyond broken.
-    if (!local_instance)
-        return true;
-    return local_instance->can_replace();
+    return local_instance && local_instance->can_replace();
 }
 
 int SFDAQ::inject(const DAQ_PktHdr_t* hdr, int rev, const uint8_t* buf, uint32_t len)

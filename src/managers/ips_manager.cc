@@ -279,11 +279,10 @@ bool IpsManager::option_end(
     if ( !ips )
         return ( type == OPT_TYPE_META );
 
-    if ( void* dup = add_detection_option(sc, ips->get_type(), ips) )
+    if ( void* prev = add_detection_option(sc, ips->get_type(), ips) )
     {
-        // FIXIT-L delete dup and keep original?
         delete ips;
-        ips = (IpsOption*)dup;
+        ips = (IpsOption*)prev;
     }
 
     OptFpList* fpl = AddOptFuncToList(IpsOption::eval, otn);
@@ -294,6 +293,13 @@ bool IpsManager::option_end(
         fpl->isRelative = 1;
 
     otn_set_plugin(otn, ips->get_type());
+
+    if ( ips->is_agent() and !otn_set_agent(otn, ips) )
+    {
+        // FIXIT-L support multiple actions (eg replaces) per rule
+        ParseWarning(WARN_RULES,
+            "at most one action per rule is allowed; other actions disabled");
+    }
     return true;
 }
 
