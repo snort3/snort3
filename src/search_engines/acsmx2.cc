@@ -1687,7 +1687,7 @@ int acsm_search_dfa_full(
                 mlist = mlist->next ) \
             { \
                 index = T - Tx; \
-                if ( mlist->nocase || (memcmp (mlist->casepatrn, Tx + index, mlist->n) == 0)) \
+                if ( mlist->nocase || (memcmp (mlist->casepatrn, T - mlist->n, mlist->n) == 0)) \
                 { \
                     nfound++; \
                     if (match (mlist->udata, mlist->rule_option_tree, index, context, \
@@ -1755,7 +1755,7 @@ int acsm_search_dfa_full_all(
     {
         index = T - Tx;
 
-        if ( mlist->nocase || (memcmp (mlist->casepatrn, Tx + index, mlist->n) == 0))
+        if ( mlist->nocase || (memcmp (mlist->casepatrn, T - mlist->n, mlist->n) == 0))
         {
             nfound++;
             if (match(mlist->udata, mlist->rule_option_tree, index, context, mlist->neg_list) > 0)
