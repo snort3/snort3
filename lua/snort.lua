@@ -2,10 +2,18 @@
 -- Snort++ configuration
 ---------------------------------------------------------------------------
 
+-- there are over 200 modules available to tune your policy.
+-- many can be used with defaults w/o any explicit configuration.
+-- use this conf as a template for your specific configuration.
+
 -- 1. configure environment
--- 2. configure dependencies
+-- 2. configure defaults
 -- 3. configure modules
--- 4. configure rules
+-- 4. configure bindings
+-- 5. configure performance
+-- 6. configure rules
+-- 7. configure filters
+-- 8. configure outputs
 
 ---------------------------------------------------------------------------
 -- 1. configure environment
@@ -20,6 +28,23 @@
 -- export LUA_PATH=$DIR/include/snort/lua/?.lua\;\;
 -- export SNORT_LUA_PATH=$DIR/etc/snort
 
+-- this depends on LUA_PATH
+-- used to load this conf into Snort
+require('snort_config')
+
+-- this depends on SNORT_LUA_PATH
+-- where to find other config files
+conf_dir = os.getenv('SNORT_LUA_PATH')
+
+if ( not conf_dir ) then
+    conf_dir = '.'
+end
+
+---------------------------------------------------------------------------
+-- 2. configure defaults
+---------------------------------------------------------------------------
+
+-- HOME_NET and EXTERNAL_NET must be set now
 -- setup the network addresses you are protecting
 HOME_NET = 'any'
 
@@ -27,41 +52,20 @@ HOME_NET = 'any'
 -- (leave as "any" in most situations)
 EXTERNAL_NET = 'any'
 
----------------------------------------------------------------------------
-
----------------------------------------------------------------------------
--- 2. configure dependencies
----------------------------------------------------------------------------
-
-require('snort_config')  -- for loading
-
-conf_dir = os.getenv('SNORT_LUA_PATH')
-
-if ( not conf_dir ) then
-    conf_dir = '.'
-end
-
 dofile(conf_dir .. '/snort_defaults.lua')
 dofile(conf_dir .. '/file_magic.lua')
 
 ---------------------------------------------------------------------------
 -- 3. configure modules
 ---------------------------------------------------------------------------
---
+
 -- mod = { } uses internal defaults
 -- you can see them with snort --help-module mod
--- comment or delete to disable mod functionality
---
--- you can also use default_ftp_server and default_wizard
----------------------------------------------------------------------------
 
--- uncomment normalizer if you are inline or not --pedantic
---normalizer = { }
+-- mod = default_mod uses external defaults
+-- you can see them in snort_defaults.lua
 
--- uncomment these to analyze Snort performance
---latency = { }
---profiler = { }
---perf_monitor = { }
+-- the following are quite capable with defaults:
 
 stream = { }
 stream_ip = { }
@@ -71,20 +75,25 @@ stream_udp = { }
 stream_user = { }
 stream_file = { }
 
-appid = { }
 arp_spoof = { }
 back_orifice = { }
 dnp3 = { }
 dns = { }
 http_inspect = { }
 imap = { }
+modbus = { }
 pop = { }
-reputation = { }
 rpc_decode = { }
 sip = { }
 ssh = { }
 ssl = { }
 telnet = { }
+
+dce_smb = { }
+dce_tcp = { }
+dce_udp = { }
+dce_http_proxy = { }
+dce_http_server = { }
 
 -- see snort_defaults.lua for default_*
 gtp_inspect = default_gtp
@@ -98,18 +107,146 @@ ftp_data = { }
 -- see file_magic.lua for file id rules
 file_id = { file_rules = file_magic }
 
+-- the following require additional configuration to be fully effective:
+
+appid =
+{
+    -- appid requires this to use appids in rules
+    --app_detector_dir = 'directory to load appid detectors from'
+}
+
+-- uncomment normalizer if you are inline
+--normalizer = { }
+
+--[[
+reputation =
+{
+    -- configure one or both of these, then uncomment reputation
+    --blacklist = 'blacklist file name with ip lists'
+    --whitelist = 'whitelist file name with ip lists'
+}
+--]]
+
+---------------------------------------------------------------------------
+-- 4. configure bindings
+---------------------------------------------------------------------------
+
+-- if the wizard is used w/o explicit bindings, default
+-- bindings will be generated for the services configured
 wizard = default_wizard
 
+
+-- configure explicit port bindings, etc. with binder
+-- binder is not necessary for basic configurations but essential
+-- if you want multiple http_inspect configuration, etc.
+--[[
+binder =
+{
+    {
+        when = { proto = 'tcp', role = 'any', ports = '80', },
+        use = { type = 'stream_tcp', },
+    },
+
+    -- if you also want the wizard's help, you must explicitly bind it
+    { when = { service = 'http' }, use = { type = 'http_inspect' } },
+    { use = { type = 'wizard', } }
+}
+--]]
+
 ---------------------------------------------------------------------------
--- 4. configure rules
+-- 5. configure performance
 ---------------------------------------------------------------------------
 
--- see snort_defaults.lua for other nets, ports, and servers
--- and default references and classifications
+-- use latency to enforce packet and rule thresholds
+--latency = { }
+
+-- use these to capture perf data for analysis and tuning 
+--profiler = { }
+--perf_monitor = { }
+
+---------------------------------------------------------------------------
+-- 6. configure rules
+---------------------------------------------------------------------------
 
 references = default_references
 classifications = default_classifications
 
--- use snort -R $SNORT_LUA_PATH/sample.rules and/or set ips params
-ips = { }
+ips =
+{
+    -- use this to enable decoder and inspector alerts
+    --enable_builtin_rules = true,
+
+    -- use include for rules files; be sure to set your path
+    -- note that rules files can include other rules files
+    --include = 'snort3_community.rules'
+}
+
+-- use these to configure additional rule actions
+-- react = { }
+-- reject = { }
+-- rewrite = { }
+
+---------------------------------------------------------------------------
+-- 7. configure filters
+---------------------------------------------------------------------------
+
+-- below are examples of filters
+-- each table is a list of records
+
+--[[
+suppress =
+{
+    -- don't want to any of see these
+    { gid = 1, sid = 1 },
+
+    -- don't want to see these for a given server
+    { gid = 1, sid = 2, track = 'by_dst', ip = '1.2.3.4' },
+}
+--]]
+
+--[[
+event_filter =
+{
+    -- reduce the number of events logged for some rules
+    { gid = 1, sid = 1, type = 'limit', track = 'by_src', count = 2, seconds = 10 },
+    { gid = 1, sid = 2, type = 'both',  track = 'by_dst', count = 5, seconds = 60 },
+}
+--]]
+
+--[[
+rate_filter =
+{
+    -- alert on connection attempts from clients in SOME_NET
+    { gid = 135, sid = 1, track = 'by_src', count = 5, seconds = 1,
+      new_action = 'alert', timeout = 4, apply_to = '[$SOME_NET]' },
+
+    -- alert on connections to servers over threshold
+    { gid = 135, sid = 2, track = 'by_dst', count = 29, seconds = 3,
+      new_action = 'alert', timeout = 1 },
+}
+--]]
+
+---------------------------------------------------------------------------
+-- 8. configure outputs
+---------------------------------------------------------------------------
+
+-- event logging
+-- you can enable with defaults from the command line with -A <alert_type>
+-- uncomment below to set non-default configs
+--alert_csv = { }
+--alert_fast = { }
+--alert_full = { }
+--alert_sfsocket = { }
+--alert_syslog = { }
+--unified2 = { }
+
+-- packet logging
+-- you can enable with defaults from the command line with -L <log_type>
+--log_codecs = { }
+--log_hext = { }
+--log_pcap = { }
+
+-- additional logs
+--packet_capture = { }
+--file_log = { }
 
