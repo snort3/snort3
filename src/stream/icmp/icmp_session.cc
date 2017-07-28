@@ -80,6 +80,8 @@ static int ProcessIcmpUnreach(Packet* p)
 
     skey.pkt_type = p->type();
     skey.version = src->is_ip4() ? 4 : 6;
+    skey.ip_protocol = (uint8_t)p->get_ip_proto_next();
+    skey.padding = 0;
 
     if (p->proto_bits & PROTO_BIT__TCP_EMBED_ICMP)
     {
