@@ -135,7 +135,7 @@ static const Parameter s_params[] =
 class SipStatCodeModule : public Module
 {
 public:
-    SipStatCodeModule() : Module(s_name, s_help, s_params) { }
+    SipStatCodeModule() : Module(s_name, s_help, s_params), ssod() { }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
