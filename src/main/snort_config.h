@@ -89,6 +89,8 @@ enum OutputFlag
     OUTPUT_FLAG__NO_TIMESTAMP      = 0x00000200,
     OUTPUT_FLAG__ALERTS            = 0x00000400,
     OUTPUT_FLAG__WIDE_HEX          = 0x00000800,
+
+    OUTPUT_FLAG__ALERT_REFS        = 0x00001000,
 };
 
 enum LoggingFlag
@@ -538,6 +540,9 @@ public:
 
     static bool output_wide_hex()
     { return snort_conf->output_flags & OUTPUT_FLAG__WIDE_HEX; }
+
+    static bool alert_refs()
+    { return snort_conf->output_flags & OUTPUT_FLAG__ALERT_REFS; }
 
     // run flags
     static bool no_lock_pid_file()

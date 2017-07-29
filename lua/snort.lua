@@ -8,10 +8,10 @@
 
 -- 1. configure environment
 -- 2. configure defaults
--- 3. configure modules
+-- 3. configure inspection
 -- 4. configure bindings
 -- 5. configure performance
--- 6. configure rules
+-- 6. configure detection
 -- 7. configure filters
 -- 8. configure outputs
 
@@ -56,7 +56,7 @@ dofile(conf_dir .. '/snort_defaults.lua')
 dofile(conf_dir .. '/file_magic.lua')
 
 ---------------------------------------------------------------------------
--- 3. configure modules
+-- 3. configure inspection
 ---------------------------------------------------------------------------
 
 -- mod = { } uses internal defaults
@@ -165,7 +165,7 @@ binder =
 --perf_monitor = { }
 
 ---------------------------------------------------------------------------
--- 6. configure rules
+-- 6. configure detection
 ---------------------------------------------------------------------------
 
 references = default_references

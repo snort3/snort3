@@ -39,9 +39,7 @@ struct ReferenceSystemNode
     ReferenceSystemNode* next;
 };
 
-ReferenceSystemNode* ReferenceSystemAdd(SnortConfig*, const char*, const char*);
-ReferenceSystemNode* ReferenceSystemLookup(ReferenceSystemNode*, const char*);
-void ParseReferenceSystemConfig(char* args);
+ReferenceSystemNode* ReferenceSystemAdd(SnortConfig*, const char*, const char* = nullptr);
 
 /* XXX: update to point to the ReferenceURLNode in the referenceURL list */
 struct ReferenceNode
@@ -51,7 +49,7 @@ struct ReferenceNode
     ReferenceNode* next;
 };
 
-ReferenceNode* AddReference(SnortConfig*, ReferenceNode**, const char*, const char*);
+void AddReference(SnortConfig*, ReferenceNode**, const char*, const char*);
 
 /* struct for rule classification */
 struct ClassType
@@ -85,7 +83,7 @@ struct SigInfo
 {
     char* message;
     ClassType* class_type;
-    ReferenceNode* refs;  // FIXIT-L delete this - stored but not used
+    ReferenceNode* refs;
     ServiceInfo* services;
 
     uint32_t gid;

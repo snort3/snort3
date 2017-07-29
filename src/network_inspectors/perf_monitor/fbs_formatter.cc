@@ -324,7 +324,7 @@ static uint8_t* make_prefixed_schema(const char* schema)
 {
     size_t len = strlen(schema);
     uint32_t slen = htonl(len);
-    uint8_t* cooked = (uint8_t*) malloc(slen + 8);
+    uint8_t* cooked = (uint8_t*)snort_alloc(slen + 8);
 
     memcpy(cooked, "FLTI", 4);
     memcpy(cooked + 4, &slen, 4);
@@ -371,7 +371,7 @@ TEST_CASE("peg schema", "[FbsFormatter]")
     CHECK( test_file(fh, cooked) );
 
     fclose(fh);
-    free(cooked);
+    snort_free(cooked);
 }
 
 TEST_CASE("string schema", "[FbsFormatter]")
@@ -397,7 +397,7 @@ TEST_CASE("string schema", "[FbsFormatter]")
     CHECK( test_file(fh, cooked) );
 
     fclose(fh);
-    free(cooked);
+    snort_free(cooked);
 }
 
 TEST_CASE("vector schema", "[FbsFormatter]")
@@ -422,7 +422,7 @@ TEST_CASE("vector schema", "[FbsFormatter]")
     CHECK( test_file(fh, cooked) );
 
     fclose(fh);
-    free(cooked);
+    snort_free(cooked);
 }
 
 TEST_CASE("mixed schema", "[FbsFormatter]")
@@ -451,7 +451,7 @@ TEST_CASE("mixed schema", "[FbsFormatter]")
     CHECK( test_file(fh, cooked) );
 
     fclose(fh);
-    free(cooked);
+    snort_free(cooked);
 }
 
 #endif

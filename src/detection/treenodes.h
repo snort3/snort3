@@ -95,10 +95,9 @@ struct OptTreeNode
     int proto;           /* protocol, added for integrity checks
                             during rule parsing */
 
-    int session_flag;    /* record session data */
-
     unsigned ruleIndex; // unique index
 
+    bool warned_fp;
     bool enabled;
 
     uint32_t num_detection_opts;

@@ -379,18 +379,6 @@ static const ConvertMap rule_ip_proto =
 
 const ConvertMap* ip_proto_map = &rule_ip_proto;
 
-/************************************
- ************  SAME_IP  *************
- ************************************/
-
-static const std::string sameip = "sameip";
-static const ConvertMap rule_sameip =
-{
-    sameip,
-    unchanged_rule_ctor<& sameip>,
-};
-
-const ConvertMap* sameip_map = &rule_sameip;
 
 /************************************
  ************  LOG TO  **************

@@ -34,81 +34,66 @@
 
 #include "treenodes.h"
 
-/********************* Reference Implementation *******************************/
-
-ReferenceNode* AddReference(
-    SnortConfig* sc, ReferenceNode** head, const char* system, const char* id)
-{
-    ReferenceNode* node;
-
-    if ((system == NULL) || (id == NULL) ||
-        (sc == NULL) || (head == NULL))
-    {
-        return NULL;
-    }
-
-    /* create the new node */
-    node = (ReferenceNode*)snort_calloc(sizeof(ReferenceNode));
-
-    /* lookup the reference system */
-    node->system = ReferenceSystemLookup(sc->references, system);
-    if (node->system == NULL)
-        node->system = ReferenceSystemAdd(sc, system, NULL);
-
-    node->id = snort_strdup(id);
-
-    /* Add the node to the front of the list */
-    node->next = *head;
-    *head = node;
-
-    return node;
-}
-
 /********************** Reference System Implementation ***********************/
 
 ReferenceSystemNode* ReferenceSystemAdd(
     SnortConfig* sc, const char* name, const char* url)
 {
-    ReferenceSystemNode** head = &sc->references;
-    ReferenceSystemNode* node;
+    if ( !sc->alert_refs() )
+        return nullptr;
 
-    if (name == NULL)
-    {
-        ErrorMessage("NULL reference system name\n");
-        return NULL;
-    }
+    assert(name);
 
-    if (head == NULL)
-        return NULL;
-
-    /* create the new node */
-    node = (ReferenceSystemNode*)snort_calloc(sizeof(ReferenceSystemNode));
+    ReferenceSystemNode* node = (ReferenceSystemNode*)snort_calloc(sizeof(*node));
     node->name = snort_strdup(name);
 
-    if (url != NULL)
+    if ( url )
         node->url = snort_strdup(url);
 
-    /* Add to the front of the list */
+    ReferenceSystemNode** head = &sc->references;
     node->next = *head;
     *head = node;
 
     return node;
 }
 
-ReferenceSystemNode* ReferenceSystemLookup(ReferenceSystemNode* head, const char* name)
+static ReferenceSystemNode* ReferenceSystemLookup(
+    ReferenceSystemNode* head, const char* name)
 {
-    if (name == NULL)
-        return NULL;
+    assert(name);
 
-    while (head != NULL)
+    while ( head )
     {
-        if (strcasecmp(name, head->name) == 0)
+        if ( !strcasecmp(name, head->name) )
             break;
 
         head = head->next;
     }
-
     return head;
+}
+
+/********************* Reference Implementation *******************************/
+
+void AddReference(
+    SnortConfig* sc, ReferenceNode** head, const char* system, const char* id)
+{
+    if ( !sc->alert_refs() )
+        return;
+
+    assert(sc and head and system and id);
+
+    /* create the new node */
+    ReferenceNode* node = (ReferenceNode*)snort_calloc(sizeof(ReferenceNode));
+
+    node->system = ReferenceSystemLookup(sc->references, system);
+
+    if ( !node->system )
+        node->system = ReferenceSystemAdd(sc, system);
+
+    node->id = snort_strdup(id);
+
+    node->next = *head;
+    *head = node;
 }
 
 /************************ Class/Priority Implementation ***********************/

@@ -1028,7 +1028,7 @@ static int ssl_scan_patterns(SearchTool* matcher, const uint8_t* data, size_t si
         }
         tmpMp = mp;
         mp = mp->next;
-        snort_free (tmpMp);
+        snort_free(tmpMp);
     }
     if (!best_match)
         return 0;
@@ -1123,7 +1123,7 @@ static void ssl_patterns_free(DetectorSSLCertPattern** list)
         {
             if (tmp_pattern->dpattern->pattern)
                 snort_free(tmp_pattern->dpattern->pattern);
-            snort_free (tmp_pattern->dpattern);
+            snort_free(tmp_pattern->dpattern);
         }
         snort_free(tmp_pattern);
     }

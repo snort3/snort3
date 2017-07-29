@@ -65,7 +65,7 @@ static void fpDeletePMX(void* data);
 static int fpGetFinalPattern(
     FastPatternConfig*, PatternMatchData*, const char*& ret_pattern, int& ret_bytes);
 
-static void print_nfp_info(const char*, const OptTreeNode*);
+static void print_nfp_info(const char*, OptTreeNode*);
 static void print_fp_info(const char*, const OptTreeNode*, const PatternMatchData*,
     const char* pattern, int pattern_length);
 
@@ -1600,10 +1600,15 @@ void fpDeleteFastPacketDetection(SnortConfig* sc)
         delete sc->sopgTable;
 }
 
-static void print_nfp_info(const char* group, const OptTreeNode* otn)
+static void print_nfp_info(const char* group, OptTreeNode* otn)
 {
+    if ( otn->warned_fp )
+        return;
+
     ParseWarning(WARN_RULES, "%s rule %u:%u:%u has no fast pattern",
         group, otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev);
+
+    otn->warned_fp = true;
 }
 
 void get_pattern_info(const PatternMatchData* pmd,

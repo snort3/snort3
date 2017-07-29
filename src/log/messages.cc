@@ -27,6 +27,7 @@
 
 #include <cassert>
 #include <cstdarg>
+#include <cstdio>
 #include <cstring>
 
 #include "main/snort_config.h"
@@ -57,16 +58,16 @@ unsigned get_parse_warnings()
     return tmp;
 }
 
-static void log_message(const char* type, const char* msg)
+static void log_message(FILE* file, const char* type, const char* msg)
 {
     const char* file_name;
     unsigned file_line;
     get_parse_location(file_name, file_line);
 
     if ( file_line )
-        LogMessage("%s: %s:%d %s\n", type, file_name, file_line, msg);
+        LogMessage(file, "%s: %s:%d %s\n", type, file_name, file_line, msg);
     else
-        LogMessage("%s: %s\n", type, msg);
+        LogMessage(file, "%s: %s\n", type, msg);
 }
 
 void ParseMessage(const char* format, ...)
@@ -79,7 +80,7 @@ void ParseMessage(const char* format, ...)
     va_end(ap);
 
     buf[STD_BUF] = '\0';
-    log_message("INFO", buf);
+    log_message(stderr, "INFO", buf);
 }
 
 void ParseWarning(WarningGroup wg, const char* format, ...)
@@ -95,7 +96,7 @@ void ParseWarning(WarningGroup wg, const char* format, ...)
     va_end(ap);
 
     buf[STD_BUF] = '\0';
-    log_message("WARNING", buf);
+    log_message(stderr, "WARNING", buf);
 
     parse_warnings++;
 }
@@ -110,7 +111,7 @@ void ParseError(const char* format, ...)
     va_end(ap);
 
     buf[STD_BUF] = '\0';
-    log_message("ERROR", buf);
+    log_message(stderr, "ERROR", buf);
 
     parse_errors++;
 }

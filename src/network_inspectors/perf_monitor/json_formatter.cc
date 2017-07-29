@@ -33,6 +33,7 @@
 #include <cstring>
 
 #include "catch/catch.hpp"
+#include "utils/util.h"
 #endif
 
 using namespace std;
@@ -176,7 +177,7 @@ TEST_CASE("json output", "[JSONFormatter]")
     f.finalize_output(fh);
 
     auto size = ftell(fh);
-    char* fake_file = (char*) malloc(size + 1);
+    char* fake_file = (char*)snort_alloc(size + 1);
 
     rewind(fh);
     fread(fake_file, size, 1, fh);
@@ -184,7 +185,7 @@ TEST_CASE("json output", "[JSONFormatter]")
 
     CHECK( cooked == fake_file );
 
-    free(fake_file);
+    snort_free(fake_file);
     fclose(fh);
 }
 

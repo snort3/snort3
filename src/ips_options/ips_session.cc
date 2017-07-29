@@ -66,10 +66,10 @@ static THREAD_LOCAL ProfileStats sessionPerfStats;
 #define SESSION_BINARY		2
 #define SESSION_ALL		   	3
 
-typedef struct _SessionData
+struct SessionData
 {
     int session_flag;
-} SessionData;
+};
 
 class SessionOption : public IpsOption
 {

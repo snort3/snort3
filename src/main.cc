@@ -586,18 +586,21 @@ static bool set_mode()
     }
 #endif
 
-    if ( int k = get_parse_errors() )
-        FatalError("see prior %d errors\n", k);
+    unsigned warnings = get_parse_warnings();
+
+    if ( unsigned k = get_parse_errors() )
+        FatalError("see prior %u errors (%u warnings)\n", k, warnings);
 
     if ( SnortConfig::conf_error_out() )
     {
-        if ( int k = get_parse_warnings() )
-            FatalError("see prior %d warnings\n", k);
+        if ( warnings )
+            FatalError("see prior %u warnings\n", warnings);
     }
 
     if ( just_validate() )
     {
-        LogMessage("\nSnort successfully validated the configuration.\n");
+        LogMessage("\nSnort successfully validated the configuration (with %u warnings).\n",
+            warnings);
 
         // force test mode to exit w/o stats
         snort_conf->run_flags |= RUN_FLAG__TEST;

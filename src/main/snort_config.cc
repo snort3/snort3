@@ -624,13 +624,13 @@ void SnortConfig::set_dst_mac(const char* mac_addr)
             ParseError("Format check failed: %s,  Use format like 12:34:56:78:90:1a", mac_addr);
             return;
         }
-        free(eth_dst);
-        eth_dst = (uint8_t*) snort_calloc(sizeof(dst.data));
+        snort_free(eth_dst);
+        eth_dst = (uint8_t*)snort_calloc(sizeof(dst.data));
         memcpy(eth_dst, dst.data, sizeof(dst.data));
     }
     else
     {
-        free(eth_dst);
+        snort_free(eth_dst);
         eth_dst = nullptr;
     }
 }

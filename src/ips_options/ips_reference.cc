@@ -25,6 +25,7 @@
 #include "framework/decode_data.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
+#include "main/snort_config.h"
 
 #define s_name "reference"
 
@@ -97,9 +98,7 @@ static void mod_dtor(Module* m)
 static IpsOption* reference_ctor(Module* p, OptTreeNode* otn)
 {
     ReferenceModule* m = (ReferenceModule*)p;
-    AddReference(
-        m->snort_config, &otn->sigInfo.refs,
-        m->scheme.c_str(), m->id.c_str());
+    AddReference(m->snort_config, &otn->sigInfo.refs, m->scheme.c_str(), m->id.c_str());
     return nullptr;
 }
 

@@ -615,7 +615,6 @@ bool ReferencesModule::set(const char*, Value& v, SnortConfig*)
 
 static const Parameter alerts_params[] =
 {
-    // FIXIT-L move to fast, full, syslog and delete from here
     { "alert_with_interface_name", Parameter::PT_BOOL, nullptr, "false",
       "include interface in alert info (fast, full, or syslog only)" },
 
@@ -627,6 +626,9 @@ static const Parameter alerts_params[] =
 
     { "event_filter_memcap", Parameter::PT_INT, "0:", "1048576",
       "set available bytes of memory for event_filters" },
+
+    { "log_references", Parameter::PT_BOOL, nullptr, "false",
+      "include rule references in alert info (full only)" },
 
     { "order", Parameter::PT_STRING, nullptr, "pass drop alert log",
       "change the order of rule action application" },
@@ -670,6 +672,9 @@ bool AlertsModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("event_filter_memcap") )
         sc->threshold_config->memcap = v.get_long();
+
+    else if ( v.is("log_references") )
+        v.update_mask(sc->output_flags, OUTPUT_FLAG__ALERT_REFS);
 
     else if ( v.is("order") )
         OrderRuleLists(sc, v.get_string());
