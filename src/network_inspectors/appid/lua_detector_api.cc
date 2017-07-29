@@ -974,18 +974,13 @@ static int detector_add_ssl_cert_pattern(lua_State* L)
         return 0;
     }
 
-#ifdef REMOVED_WHILE_NOT_IN_USE
     uint8_t* pattern_str = (uint8_t*)snort_strdup(tmp_string);
-    if (!ssl_add_cert_pattern(pattern_str, pattern_size, type, app_id,
-        &ud->appid_config->serviceSslConfig))
+    if (!ssl_add_cert_pattern(pattern_str, pattern_size, type, app_id))
     {
         snort_free(pattern_str);
         ErrorMessage("Failed to add an SSL pattern list member");
         return 0;
     }
-#else
-    UNUSED(type);
-#endif
 
     AppInfoManager::get_instance().set_app_info_active(app_id);
     return 0;
