@@ -64,6 +64,9 @@ class FragBitsData
 {
 public:
     FragBitsData()
+    { reset(); }
+
+    void reset()
     {
         mode = 0;
         frag_bits = 0;
@@ -71,7 +74,6 @@ public:
 
     uint8_t get_mode() const;
     uint16_t get_frag_bits() const;
-    void set_frag_bits(uint16_t);
     void set_more_fragment_bit();
     void set_dont_fragment_bit();
     void set_reserved_bit();
@@ -377,6 +379,7 @@ FragBitsData FragBitsModule::get_fragBits_data()
 
 bool FragBitsModule::begin(const char*, int, SnortConfig*)
 {
+    fragBitsData.reset();
     return true;
 }
 

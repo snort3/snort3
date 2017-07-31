@@ -107,8 +107,7 @@ void TextLog_Reset(TextLog* const txt)
  *-------------------------------------------------------------------
  */
 TextLog* TextLog_Init(
-    const char* name, unsigned int maxBuf, size_t maxFile
-    )
+    const char* name, unsigned int maxBuf, size_t maxFile)
 {
     TextLog* txt;
 
@@ -221,18 +220,11 @@ bool TextLog_Write(TextLog* const txt, const char* str, int len)
         TextLog_Flush(txt);
         avail = TextLog_Avail(txt);
     }
-    len = snprintf(txt->buf+txt->pos, avail, "%s", str);
+    int n = snprintf(txt->buf+txt->pos, avail, "%.*s", len, str);
 
-    if ( len >= avail )
-    {
-        txt->pos = txt->maxBuf - 1;
-        txt->buf[txt->pos] = '\0';
+    if ( n != len )
         return false;
-    }
-    else if ( len < 0 )
-    {
-        return false;
-    }
+
     txt->pos += len;
     return true;
 }

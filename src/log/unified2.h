@@ -63,15 +63,18 @@ struct Unified2Event
     uint32_t event_second;
     uint32_t event_microsecond;
 
-    uint32_t policy_id_context;
-    uint32_t policy_id_inspect;
-    uint32_t policy_id_detect;
-
     uint32_t rule_gid;
     uint32_t rule_sid;
     uint32_t rule_rev;
     uint32_t rule_class;
     uint32_t rule_priority;
+
+    // everything above this point is common to all prior event records
+    // try to keep the same for things like barnyard2
+
+    uint32_t policy_id_context;
+    uint32_t policy_id_inspect;
+    uint32_t policy_id_detect;
 
     uint32_t pkt_src_ip[4];
     uint32_t pkt_dst_ip[4];

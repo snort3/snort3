@@ -188,7 +188,6 @@ bool Normalizer::configure(SnortConfig*)
     // FIXIT-L norm needs a nap policy mode
     if ( mode == POLICY_MODE__PASSIVE )
     {
-        ParseWarning(WARN_DAQ, "normalizations disabled because not inline.");
         config.normalizer_flags = 0;
         return true;
     }

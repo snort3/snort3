@@ -82,6 +82,7 @@ dns = { }
 http_inspect = { }
 imap = { }
 modbus = { }
+normalizer = { }
 pop = { }
 rpc_decode = { }
 sip = { }
@@ -115,9 +116,6 @@ appid =
     --app_detector_dir = 'directory to load appid detectors from'
 }
 
--- uncomment normalizer if you are inline
---normalizer = { }
-
 --[[
 reputation =
 {
@@ -131,36 +129,52 @@ reputation =
 -- 4. configure bindings
 ---------------------------------------------------------------------------
 
--- if the wizard is used w/o explicit bindings, default
--- bindings will be generated for the services configured
 wizard = default_wizard
 
-
--- configure explicit port bindings, etc. with binder
--- binder is not necessary for basic configurations but essential
--- if you want multiple http_inspect configuration, etc.
---[[
 binder =
 {
-    {
-        when = { proto = 'tcp', role = 'any', ports = '80', },
-        use = { type = 'stream_tcp', },
-    },
+    -- these protocols do not yet have wizard support
+    { when = { proto = 'udp', ports = '53' },  use = { type = 'dns' } },
+    { when = { proto = 'tcp', ports = '111' }, use = { type = 'rpc_decode' } },
+    { when = { proto = 'tcp', ports = '502' }, use = { type = 'modbus' } },
+    { when = { proto = 'tcp', ports = '2123 2152 3386' }, use = { type = 'gtp' } },
 
-    -- if you also want the wizard's help, you must explicitly bind it
-    { when = { service = 'http' }, use = { type = 'http_inspect' } },
-    { use = { type = 'wizard', } }
+    { when = { service = 'dce_http_server' },  use = { type = 'dce_http_server' } },
+    { when = { service = 'dce_http_proxy' },   use = { type = 'dce_http_proxy' } },
+    { when = { service = 'dce_smb' },          use = { type = 'dce_smb' } },
+    { when = { service = 'dce_udp' },          use = { type = 'dce_udp' } },
+    { when = { service = 'dce_tcp' },          use = { type = 'dce_tcp' } },
+    { when = { service = 'dnp3' },             use = { type = 'dnp3' } },
+    { when = { service = 'dns' },              use = { type = 'dns' } },
+    { when = { service = 'ftp' },              use = { type = 'ftp_server' } },
+    { when = { service = 'ftp-data' },         use = { type = 'ftp_data' } },
+    { when = { service = 'gtp' },              use = { type = 'gtp_inspect' } },
+    { when = { service = 'imap' },             use = { type = 'imap' } },
+    { when = { service = 'http' },             use = { type = 'http_inspect' } },
+    { when = { service = 'modbus' },           use = { type = 'modbus' } },
+    { when = { service = 'pop3' },             use = { type = 'pop' } },
+    { when = { service = 'ssh' },              use = { type = 'ssh' } },
+    { when = { service = 'sip' },              use = { type = 'sip' } },
+    { when = { service = 'smtp' },             use = { type = 'smtp' } },
+    { when = { service = 'ssl' },              use = { type = 'ssl' } },
+    { when = { service = 'sunrpc' },           use = { type = 'rpc_decode' } },
+    { when = { service = 'telnet' },           use = { type = 'telnet' } },
+
+    { use = { type = 'wizard' } }
 }
---]]
 
 ---------------------------------------------------------------------------
 -- 5. configure performance
 ---------------------------------------------------------------------------
 
--- use latency to enforce packet and rule thresholds
---latency = { }
+-- use latency to monitor / enforce packet and rule thresholds
+latency =
+{
+    packet = { max_time = 1500 },
+    rule = { max_time = 200 },
+}
 
--- use these to capture perf data for analysis and tuning 
+-- use these to capture perf data for analysis and tuning
 --profiler = { }
 --perf_monitor = { }
 

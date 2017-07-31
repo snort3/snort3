@@ -758,7 +758,7 @@ const InspectApi pop_api =
     IT_SERVICE,
     (uint16_t)PktType::PDU,
     nullptr, // buffers
-    "pop",
+    "pop3",
     pop_init,
     pop_term, // pterm
     nullptr, // tinit

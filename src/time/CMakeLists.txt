@@ -1,6 +1,5 @@
 set ( TIME_INTERNAL_SOURCES
     packet_time.cc
-    packet_time.h
     periodic.cc
     periodic.h
     timersub.h
@@ -13,6 +12,7 @@ endif ( ENABLE_UNIT_TESTS )
 
 set ( TIME_INCLUDES
     clock_defs.h
+    packet_time.h
     stopwatch.h
     tsc_clock.h
     )

@@ -17,34 +17,22 @@
 //--------------------------------------------------------------------------
 // data_log.cc author Russ Combs <rcombs@sourcefire.com>
 
+#include <time.h>
+
 #include "flow/flow.h"
 #include "framework/data_bus.h"
 #include "framework/inspector.h"
 #include "framework/module.h"
 #include "log/messages.h"
 #include "log/text_log.h"
+#include "pub_sub/http_events.h"
+#include "time/packet_time.h"
 
 static const char* s_name = "data_log";
-static const char* f_name = "data.log";
 static const char* s_help = "log selected published data to data.log";
 
-static THREAD_LOCAL SimpleStats dl_stats;
-
-//-------------------------------------------------------------------------
-// log stuff
-//-------------------------------------------------------------------------
-
 static THREAD_LOCAL TextLog* tlog = nullptr;
-
-static void dl_tinit()
-{
-    tlog = TextLog_Init(f_name, 64*K_BYTES, 1*M_BYTES);
-}
-
-static void dl_tterm()
-{
-    TextLog_Term(tlog);
-}
+static THREAD_LOCAL SimpleStats dl_stats;
 
 //-------------------------------------------------------------------------
 // data stuff
@@ -59,22 +47,54 @@ public:
     void handle(DataEvent& e, Flow*);
 
 private:
+    void log(const uint8_t*, int32_t);
     std::string key;
 };
 
+void LogHandler::log(const uint8_t* s, int32_t n)
+{
+    if ( !s or !*s or n <= 0 )
+        return;
+
+    TextLog_Print(tlog, ", ");
+    TextLog_Write(tlog, (const char*)s, (unsigned)n);
+}
+
 void LogHandler::handle(DataEvent& e, Flow* f)
 {
-    unsigned n;
-    const char* b = (char*)e.get_data(n);
+    time_t pt = packet_time();
+    struct tm st;
+    char buf[26];
+    
+    gmtime_r(&pt, &st);
+    asctime_r(&st, buf);
+    buf[sizeof(buf)-2] = '\0';
 
-    // FIXIT-L hexify binary data
-    std::string val(b, n);
-
-    TextLog_Print(tlog, "%u, ", time(nullptr));
+    TextLog_Print(tlog, "%s, ", buf);
     TextLog_Print(tlog, "%s, %d, ", f->client_ip.ntoa(), f->client_port);
-    TextLog_Print(tlog, "%s, %d, ", f->server_ip.ntoa(), f->server_port);
-    TextLog_Print(tlog, "%s, %*s\n", key.c_str(), n, val.c_str());
+    TextLog_Print(tlog, "%s, %d", f->server_ip.ntoa(), f->server_port);
 
+    HttpEvent* he = (HttpEvent*)&e;
+    int32_t n;
+    const uint8_t* s;
+    
+    s = he->get_server(n);
+    log(s, n);
+
+    s = he->get_host(n);
+    log(s, n);
+
+    s = he->get_uri(n);
+    log(s, n);
+
+    n = he->get_response_code();
+    if ( n > 0 )
+        TextLog_Print(tlog, ", %d", n);
+    
+    s = he->get_user_agent(n);
+    log(s, n);
+
+    TextLog_NewLine(tlog);
     dl_stats.total_packets++;
 }
 
@@ -85,7 +105,11 @@ void LogHandler::handle(DataEvent& e, Flow* f)
 class DataLog : public Inspector
 {
 public:
-    DataLog(const std::string& s) { key = s; }
+    DataLog(const std::string& s, unsigned long n)
+    {
+        key = s;
+        limit = n;
+    }
 
     void show(SnortConfig*) override;
     void eval(Packet*) override { }
@@ -96,8 +120,15 @@ public:
         return true;
     }
 
+    void tinit() override
+    { tlog = TextLog_Init(s_name, 64*K_BYTES, limit); }
+
+    void tterm() override
+    { TextLog_Term(tlog); }
+
 private:
     std::string key;
+    unsigned long limit;
 };
 
 void DataLog::show(SnortConfig*)
@@ -112,8 +143,11 @@ void DataLog::show(SnortConfig*)
 
 static const Parameter dl_params[] =
 {
-    { "key", Parameter::PT_SELECT, "http_uri | http_raw_uri", "http_raw_uri",
-      "name of data buffer to log" },
+    { "key", Parameter::PT_SELECT, "http_request_header_event | http_response_header_event",
+      "http_request_header_event ", "name of the event to log" },
+
+    { "limit", Parameter::PT_INT, "0:", "0",
+      "set maximum size in MB before rollover (0 is unlimited)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -130,16 +164,28 @@ public:
     PegCount* get_counts() const override
     { return (PegCount*)&dl_stats; }
 
+    bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value& v, SnortConfig*) override;
 
 public:
     std::string key;
+    unsigned long limit;
 };
+
+bool DataLogModule::begin(const char*, int, SnortConfig*)
+{
+    key.clear();
+    limit = 0;
+    return true;
+}
 
 bool DataLogModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("key") )
         key = v.get_string();
+
+    else if ( v.is("limit") )
+        limit = v.get_long() * M_BYTES;
 
     else
         return false;
@@ -160,7 +206,7 @@ static void mod_dtor(Module* m)
 static Inspector* dl_ctor(Module* m)
 {
     DataLogModule* mod = (DataLogModule*)m;
-    return new DataLog(mod->key);
+    return new DataLog(mod->key, mod->limit);
 }
 
 static void dl_dtor(Inspector* p)
@@ -188,8 +234,8 @@ static const InspectApi dl_api
     nullptr, // service
     nullptr, // pinit
     nullptr, // pterm
-    dl_tinit,
-    dl_tterm,
+    nullptr, // tinit,
+    nullptr, // tterm,
     dl_ctor,
     dl_dtor,
     nullptr, // ssn
