@@ -57,7 +57,7 @@ static void make_port_scan_info(Packet* p, PS_PROTO* proto)
     else
         type = 'r';
 
-    buf.len = snprintf((char*)buf.data, sizeof(buf.data),
+    buf.len = safe_snprintf((char*)buf.data, sizeof(buf.data),
         "Priority Count: %d\n"
         "Connection Count: %d\n"
         "IP Count: %d\n"
@@ -80,18 +80,19 @@ static void make_open_port_info(Packet* p, PS_PROTO* proto)
     char a1[INET6_ADDRSTRLEN];
     ip1->ntop(a1, sizeof(a1));
 
-    buf.len = snprintf((char*)buf.data, sizeof(buf.data),
+    buf.len = safe_snprintf((char*)buf.data, sizeof(buf.data),
         "Scanned IP: %s\n"
         "Port Count: %d\n"
-        "Ports: ",
+        "Ports:",
         a1,
         proto->open_ports_cnt);
 
     for ( int i = 0; i < proto->open_ports_cnt; i++ )
     {
-        buf.len += snprintf(
-            (char*)buf.data, sizeof(buf.data) - buf.len, "%hu ", proto->open_ports[i]);
+        buf.len += safe_snprintf(
+            (char*)buf.data + buf.len, sizeof(buf.data) - buf.len, " %hu", proto->open_ports[i]);
     }
+    buf.len += safe_snprintf((char*)buf.data + buf.len, sizeof(buf.data) - buf.len, "\n");
 }
 
 static void make_open_port_info(Packet* p, uint16_t port)
@@ -100,7 +101,7 @@ static void make_open_port_info(Packet* p, uint16_t port)
 
     const char* addr = p->ptrs.ip_api.get_src()->ntoa();
 
-    buf.len = snprintf((char*)buf.data, sizeof(buf.data),
+    buf.len = safe_snprintf((char*)buf.data, sizeof(buf.data),
         "Scanned IP: %s\n"
         "Open Port: %hu\n",
         addr, port);

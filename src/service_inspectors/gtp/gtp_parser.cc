@@ -31,6 +31,7 @@
 #include "detection/detection_engine.h"
 #include "events/event_queue.h"
 #include "log/messages.h"
+#include "utils/util_cstring.h"
 
 #include "gtp.h"
 #include "gtp_inspect.h"
@@ -89,7 +90,7 @@ static void convertToHex(char* output, int outputSize, const uint8_t* input, int
 
     while ((i < inputSize)&&(totalBytes > 0))
     {
-        length = snprintf(buf_ptr, totalBytes, "%.2x ", (uint8_t)input[i]);
+        length = safe_snprintf(buf_ptr, totalBytes, "%.2x ", (uint8_t)input[i]);
         buf_ptr += length;
         totalBytes -= length;
         if (totalBytes < 0)

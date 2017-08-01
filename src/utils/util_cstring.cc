@@ -317,6 +317,27 @@ int sfsnprintfappend(char* dest, int dsize, const char* format, ...)
 
     dest[dsize-1]=0; /* guarantee a null termination */
 
+    if (appendLen >= (dsize - currLen))
+        appendLen = dsize - currLen - 1;
+    else if (appendLen < 0)
+        appendLen = 0;
+
     return appendLen;
 }
 
+// return actual number of bytes written to buffer s
+int safe_snprintf(char* s, size_t n, const char* format, ... )
+{
+    va_list ap;
+
+    va_start(ap, format);
+    int len = vsnprintf(s, n, format, ap);
+    va_end(ap);
+
+    if (len >= (int)n)
+        len = n - 1;
+    else if (len < 0)
+        len = 0;
+
+    return len;
+}

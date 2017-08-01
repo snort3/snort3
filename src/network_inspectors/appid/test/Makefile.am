@@ -14,6 +14,7 @@ appid_http_event_test_CPPFLAGS = -I$(top_srcdir)/src/network_inspectors/appid @A
 appid_http_event_test_LDADD = \
 ../appid_stats_counter.o \
 ../../../sfip/sf_ip.o \
+../../../utils/util_cstring.o \
 @CPPUTEST_LDFLAGS@
 
 appid_api_test_CPPFLAGS = -I$(top_srcdir)/src/network_inspectors/appid @AM_CPPFLAGS@ @CPPUTEST_CPPFLAGS@
@@ -21,16 +22,19 @@ appid_api_test_CPPFLAGS = -I$(top_srcdir)/src/network_inspectors/appid @AM_CPPFL
 appid_api_test_LDADD = \
 ../appid_stats_counter.o \
 ../../../sfip/sf_ip.o \
+../../../utils/util_cstring.o \
 @CPPUTEST_LDFLAGS@
 
 app_info_table_test_CPPFLAGS = -I$(top_srcdir)/src/network_inspectors/appid @AM_CPPFLAGS@ @CPPUTEST_CPPFLAGS@
 app_info_table_test_LDADD = \
 ../appid_stats_counter.o \
+../../../utils/util_cstring.o \
 @CPPUTEST_LDFLAGS@
 
 appid_detector_test_CPPFLAGS = -I$(top_srcdir)/src/network_inspectors/appid @AM_CPPFLAGS@ @CPPUTEST_CPPFLAGS@
 appid_detector_test_LDADD = \
 ../appid_stats_counter.o \
 ../../../sfip/sf_ip.o \
+../../../utils/util_cstring.o \
 @CPPUTEST_LDFLAGS@
 

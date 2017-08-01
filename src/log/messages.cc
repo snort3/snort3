@@ -35,10 +35,6 @@
 #include "time/packet_time.h"
 #include "utils/util_cstring.h"
 
-#ifdef UNIT_TEST
-#include "catch/catch.hpp"
-#endif
-
 static int already_fatal = 0;
 
 static unsigned parse_errors = 0;
@@ -251,55 +247,6 @@ void ErrorMessage(const char* format,...)
     va_end(ap);
 }
 
-ThrottledErrorLogger::ThrottledErrorLogger(uint32_t dur) :
-    throttle_duration { dur }
-{ reset(); }
-
-bool ThrottledErrorLogger::log(const char* format, ...)
-{
-    if ( !snort_conf )
-        return false;
-
-    if ( throttle() )
-        return false;
-
-    va_list ap;
-
-    va_start(ap, format);
-    int index = vsnprintf(buf, STD_BUF, format, ap);
-    va_end(ap);
-
-    if ( index && ( count > 1 ) )
-        snprintf(&buf[index - 1], STD_BUF - index,
-            " (suppressed " STDu64 " times in the last %d seconds).\n",
-            count, delta);
-
-    ErrorMessage("%s", buf);
-    return true;
-}
-
-void ThrottledErrorLogger::reset()
-{ count = 0; }
-
-bool ThrottledErrorLogger::throttle()
-{
-    time_t cur = packet_time();
-    bool result = false;
-
-    if ( count++ )
-    {
-        delta = cur - last;
-        result = (decltype(throttle_duration))delta < throttle_duration;
-
-        if ( !result )
-            count = 0;
-    }
-
-    last = cur;
-
-    return result;
-}
-
 /*
  * Function: FatalError(const char *, ...)
  *
@@ -366,91 +313,3 @@ void log_safec_error(const char* msg, void*, int e)
     assert(false);
 }
 
-#ifdef UNIT_TEST
-
-static void set_packet_time(time_t x)
-{
-    struct timeval t { x, 0 };
-    packet_time_update(&t);
-}
-
-static bool check_message(const char* buffer, const char* msg)
-{
-    if ( strncmp(buffer, msg, strnlen(msg, STD_BUF)) != 0 )
-    {
-        INFO( buffer );
-        return false;
-    }
-
-    return true;
-}
-
-TEST_CASE( "throttled error logger", "[ThrottledErrorLogger]" )
-{
-    uint32_t dur = 5;
-    ThrottledErrorLogger logger(dur);
-
-    set_packet_time(0);
-
-    SECTION( "1st message" )
-    {
-        const char msg[] = "first message";
-        REQUIRE( logger.log("%s\n", msg) );
-
-        CHECK( check_message(logger.last_message(), msg) );
-    }
-
-    SECTION( "2nd message within 1 second" )
-    {
-        const char msg[] = "second message";
-        logger.log(" ");
-
-        REQUIRE_FALSE( logger.log("%s\n", msg) );
-    }
-
-    SECTION( "0 duration" )
-    {
-        logger.throttle_duration = 0;
-        const char msg[] = "zero duration";
-
-        logger.log(" "); // trigger throttling
-        REQUIRE( logger.log("%s\n", msg) );
-
-        CHECK( check_message(logger.last_message(), msg) );
-    }
-
-    SECTION( "message @ duration" )
-    {
-        const char msg[] = "at duration";
-        logger.log(" "); // trigger throttling
-
-        set_packet_time(dur - 1);
-        CHECK_FALSE( logger.log("%s\n", msg) );
-    }
-
-    SECTION( "message after duration" )
-    {
-        const char msg[] = "after duration";
-        logger.log(" "); // trigger throttling
-
-        set_packet_time(dur);
-        REQUIRE( logger.log("%s\n", msg) );
-
-        CHECK( check_message(logger.last_message(), msg) );
-    }
-
-    SECTION( "reversed packet time" )
-    {
-        const char msg[] = "reversed packet time";
-
-        set_packet_time(10);
-        logger.log(" ");
-
-        set_packet_time(4);
-        REQUIRE( logger.log("%s\n", msg) );
-
-        CHECK( check_message(logger.last_message(), msg) );
-    }
-}
-
-#endif

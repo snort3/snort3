@@ -33,6 +33,7 @@
 #include "log/messages.h"
 #include "log/unified2.h"
 #include "main/snort_debug.h"
+#include "utils/util_cstring.h"
 
 static AppInfoTable app_info_table;
 static AppInfoTable app_info_service_table;
@@ -422,15 +423,15 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* config, const char* pa
                 else if (!config->referred_appId_disabled)
                 {
                     char referred_app_list[4096];
-                    int referred_app_index = snprintf(referred_app_list, 4096, "%d ", atoi(
-                        conf_val));
+                    int referred_app_index = safe_snprintf(referred_app_list, 4096, "%d ",
+                        atoi(conf_val));
                     set_app_info_flags(atoi(conf_val), APPINFO_FLAG_REFERRED);
 
                     while ((token = strtok_r(nullptr, CONF_SEPARATORS, &context)) != nullptr)
                     {
                         AppId id = atoi(token);
-                        referred_app_index += snprintf(referred_app_list + referred_app_index,
-                            4096 - referred_app_index, "%d ", id);
+                        referred_app_index += safe_snprintf(referred_app_list + referred_app_index,
+                            sizeof(referred_app_list) - referred_app_index, "%d ", id);
                         set_app_info_flags(id, APPINFO_FLAG_REFERRED);
                     }
                     DebugFormat(DEBUG_APPID,

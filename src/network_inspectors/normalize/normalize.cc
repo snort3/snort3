@@ -28,6 +28,7 @@
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
 #include "profiler/profiler.h"
+#include "utils/util_cstring.h"
 
 #include "norm_module.h"
 
@@ -125,26 +126,29 @@ static void Print_TCP(const NormalizerConfig* nc)
 
     if ( Norm_IsEnabled(nc, NORM_TCP_OPT) )
     {
-        char buf[1024] = "";
+        char buf[1024];
         char* p = buf;
         int opt;
-        size_t min;
+        int buf_size = sizeof(buf);
 
-        p += snprintf(p, buf+sizeof(buf)-p, "%s", "(allow ");
-        min = strlen(buf);
-
+        int len = safe_snprintf(p, buf_size, "%s", "(allow ");
+        p += len;
+        buf_size -= len;
+        bool opt_printed = false;
         // TBD translate options to keywords allowed by parser
         for ( opt = 2; opt < 256; opt++ )
         {
-            const char* fmt = (strlen(buf) > min) ? ",%d" : "%d";
             if ( Norm_TcpIsOptional(nc, opt) )
-                p += snprintf(p, buf+sizeof(buf)-p, fmt, opt);
+            {
+                const char* fmt = opt_printed ? ",%d" : "%d";
+                len = safe_snprintf(p, buf_size, fmt, opt);
+                if (len >0)
+                    opt_printed = true;
+                p += len;
+                buf_size -= len;
+            }
         }
-        if ( strlen(buf) > min )
-        {
-            snprintf(p, buf+sizeof(buf)-p, "%c", ')');
-            buf[sizeof(buf)-1] = '\0';
-        }
+        snprintf(p, buf_size, "%c", ')');
         LogMessage("%12s: %s %s\n", "tcp.opt", ON, buf);
     }
     else

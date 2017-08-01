@@ -36,9 +36,10 @@
 #define SNORT_STRNCPY_SUCCESS 0
 #define SNORT_STRNCPY_TRUNCATION 1
 #define SNORT_STRNCPY_ERROR -1
-
 #define SNORT_STRNLEN_ERROR -1
 
+SO_PUBLIC int safe_snprintf(char*, size_t, const char*, ... )
+    __attribute__((format (printf, 3, 4)));
 // these functions are deprecated; use C++ strings instead
 SO_PUBLIC int SnortSnprintf(char*, size_t, const char*, ...)
     __attribute__((format (printf, 3, 4)));
