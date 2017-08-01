@@ -41,6 +41,7 @@
 
 /* a reasonable minimum */
 #define MIN_BUF  (4* K_BYTES)
+#define STDLOG_FILENO 3
 
 struct TextLog
 {
@@ -65,7 +66,10 @@ struct TextLog
 static FILE* TextLog_Open(const char* name)
 {
     if ( name && !strcasecmp(name, "stdout") )
-        return stdout;
+    {
+        FILE* stdlog = fdopen(STDLOG_FILENO, "w");
+        return stdlog ? stdlog : stdout;
+    }
 
     return OpenAlertFile(name);
 }
