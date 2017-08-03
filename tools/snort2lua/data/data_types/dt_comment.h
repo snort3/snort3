@@ -29,6 +29,10 @@ static const std::string start_comments =
     "    these lines were commented "
     "in the configuration file.\n\n";
 
+static const std::string start_unsupported =
+    "\nUNSUPPORTED:\n"
+    "    these configuration items are not currently supported\n\n";
+
 static const std::string start_errors =
     "\nERRORS:\n"
     "    all of these occurred during the attempted conversion:\n\n";

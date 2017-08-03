@@ -17,6 +17,7 @@ config_ignore_ports.cc \
 config_ipv6_frag.cc \
 config_memcaps.cc \
 config_mpls_payload_type.cc \
+config_na_policy_mode.cc \
 config_no_option.cc \
 config_one_int_option.cc \
 config_one_string_option.cc \

@@ -103,6 +103,7 @@ extern const ConvertMap* max_metadata_services_map;
 extern const ConvertMap* max_mpls_labelchain_len_map;
 extern const ConvertMap* mpls_payload_type_map;
 extern const ConvertMap* min_ttl_map;
+extern const ConvertMap* na_policy_mode_map;
 extern const ConvertMap* new_ttl_map;
 extern const ConvertMap* nolog_map;
 extern const ConvertMap* nopcre_map;
@@ -119,6 +120,7 @@ extern const ConvertMap* policy_mode_map;
 extern const ConvertMap* policy_version_map;
 extern const ConvertMap* profile_preprocs_map;
 extern const ConvertMap* profile_rules_map;
+extern const ConvertMap* protected_content_map;
 extern const ConvertMap* quiet_map;
 extern const ConvertMap* rate_filter_map;
 extern const ConvertMap* react_map;
@@ -220,6 +222,7 @@ const std::vector<const ConvertMap*> config_api =
     max_metadata_services_map,
     max_mpls_labelchain_len_map,
     mpls_payload_type_map,
+    na_policy_mode_map,
     new_ttl_map,
     nolog_map,
     nopcre_map,
@@ -236,6 +239,7 @@ const std::vector<const ConvertMap*> config_api =
     policy_version_map,
     profile_preprocs_map,
     profile_rules_map,
+    protected_content_map,
     quiet_map,
     rate_filter_map,
     react_map,

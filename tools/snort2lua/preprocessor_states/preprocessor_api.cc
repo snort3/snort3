@@ -28,6 +28,7 @@ extern const ConvertMap* bo_map;
 extern const ConvertMap* dcerpc_map;
 extern const ConvertMap* dcerpc_server_map;
 extern const ConvertMap* dnp3_map;
+extern const ConvertMap* firewall_map;
 extern const ConvertMap* frag3_engine_map;
 extern const ConvertMap* frag3_global_map;
 extern const ConvertMap* ftptelnet_map;
@@ -35,6 +36,7 @@ extern const ConvertMap* ftptelnet_protocol_map;
 extern const ConvertMap* gtp_map;
 extern const ConvertMap* httpinspect_map;
 extern const ConvertMap* httpinspect_server_map;
+extern const ConvertMap* nap_selector_map;
 extern const ConvertMap* nhttpinspect_map;
 extern const ConvertMap* nhttpinspect_server_map;
 extern const ConvertMap* normalizer_icmp4_map;
@@ -70,6 +72,7 @@ std::vector<const ConvertMap*> preprocessor_api =
     dcerpc_server_map,
     dnp3_map,
     dns_map,
+    firewall_map,
     frag3_engine_map,
     frag3_global_map,
     ftptelnet_map,
@@ -77,6 +80,7 @@ std::vector<const ConvertMap*> preprocessor_api =
     gtp_map,
     imap_map,
     modbus_map,
+    nap_selector_map,
     nhttpinspect_map,
     nhttpinspect_server_map,
     normalizer_icmp4_map,

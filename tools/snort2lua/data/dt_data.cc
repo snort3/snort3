@@ -39,6 +39,8 @@ DataApi::DataApi() : curr_data_bad(false)
         Comments::CommentType::MULTI_LINE);
     errors = new Comments(start_errors, 0,
         Comments::CommentType::MULTI_LINE);
+    unsupported = new Comments(start_unsupported, 0,
+        Comments::CommentType::MULTI_LINE);
 }
 
 DataApi::~DataApi()
@@ -51,6 +53,7 @@ DataApi::~DataApi()
 
     delete comments;
     delete errors;
+    delete unsupported;
 }
 
 std::string DataApi::translate_variable(const std::string& var_name)
@@ -238,7 +241,7 @@ std::string DataApi::get_file_line()
     return error_string;
 }
 
-void DataApi::failed_conversion(const std::istringstream& stream)
+void DataApi::failed_conversion(const std::istringstream& stream, const std::string unknown_option)
 {
     // we only need to go through this once.
     if (!curr_data_bad)
@@ -249,21 +252,8 @@ void DataApi::failed_conversion(const std::istringstream& stream)
         curr_data_bad = true;
         errors_count++;
     }
-}
-
-void DataApi::failed_conversion(const std::istringstream& stream,
-    const std::string unknown_option)
-{
-    // we only need to go through this once.
-    if (!curr_data_bad)
-    {
-        errors->add_text(std::string());
-        errors->add_text(get_file_line());
-        errors->add_text(stream.str());
-        curr_data_bad = true;
-        errors_count++;
-    }
-    errors->add_text("^^^^ unknown_syntax=" + unknown_option);
+    if ( unknown_option.size() )
+        errors->add_text("^^^^ unknown_syntax=" + unknown_option);
 }
 
 bool DataApi::add_variable(std::string name, std::string value)
@@ -304,6 +294,9 @@ void DataApi::developer_error(std::string error_string)
 void DataApi::add_comment(std::string c)
 { comments->add_text(c); }
 
+void DataApi::add_unsupported_comment(std::string c)
+{ unsupported->add_text(c); }
+
 void DataApi::print_errors(std::ostream& out)
 {
     if (is_default_mode() &&
@@ -328,9 +321,15 @@ void DataApi::print_comments(std::ostream& out)
         out << (*comments) << "\n";
 }
 
+void DataApi::print_unsupported(std::ostream& out)
+{
+    if (is_default_mode() && !unsupported->empty())
+        out << (*unsupported) << "\n";
+}
+
 void DataApi::swap_conf_data(std::vector<Variable*>& new_vars,
     std::vector<Include*>& new_includes,
-    Comments*& new_comments)
+    Comments*& new_comments, Comments*& new_unsupported)
 {
     vars.swap(new_vars);
     includes.swap(new_includes);
@@ -338,5 +337,9 @@ void DataApi::swap_conf_data(std::vector<Variable*>& new_vars,
     Comments* tmp = new_comments;
     new_comments = comments;
     comments = tmp;
+
+    tmp = new_unsupported;
+    new_unsupported = unsupported;
+    unsupported = tmp;
 }
 

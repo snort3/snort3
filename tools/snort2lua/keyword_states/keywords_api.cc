@@ -31,6 +31,7 @@ extern const ConvertMap* dynamic_map;
 extern const ConvertMap* dynamicdetection_map;
 extern const ConvertMap* dynamicengine_map;
 extern const ConvertMap* dynamicpreprocessor_map;
+extern const ConvertMap* dynamicoutput_map;
 extern const ConvertMap* dynamicsidechannel_map;
 extern const ConvertMap* event_filter_map;
 extern const ConvertMap* file_map;
@@ -63,6 +64,7 @@ const std::vector<const ConvertMap*> keywords_api =
     dynamicdetection_map,
     dynamicengine_map,
     dynamicpreprocessor_map,
+    dynamicoutput_map,
     dynamicsidechannel_map,
     event_filter_map,
     file_map,
@@ -84,15 +86,3 @@ const std::vector<const ConvertMap*> keywords_api =
     var_map,
 };
 } // namespace keywords
-
-#if 0
-
-Unconverted keyword---
-
-#define SNORT_CONF_KEYWORD__DYNAMIC_OUTPUT       "dynamicoutput"
-#define SNORT_CONF_KEYWORD__RULE_TYPE            "ruletype"
-
-# define SNORT_CONF_KEYWORD__SIDE_CHANNEL         "sidechannel"
-#define SNORT_CONF_KEYWORD__VERSION              "version"
-#endif
-

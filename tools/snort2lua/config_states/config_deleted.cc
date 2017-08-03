@@ -570,4 +570,17 @@ static const ConvertMap decode_data_link_api =
 };
 
 const ConvertMap* decode_data_link_map = &decode_data_link_api;
+
+/*************************************************
+ *************  protected_content ****************
+ *************************************************/
+
+static const std::string protected_content = "protected_content";
+static const ConvertMap protected_content_api =
+{
+    protected_content,
+    deleted_ctor<& protected_content>,
+};
+
+const ConvertMap* protected_content_map = &protected_content_api;
 } // namespace config

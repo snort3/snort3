@@ -32,6 +32,9 @@ extern const ConvertMap* log_tcpdump_map;
 extern const ConvertMap* log_unified2_map;
 extern const ConvertMap* alert_unixsock_map;
 extern const ConvertMap* unified2_map;
+extern const ConvertMap* sfunified2_map;
+extern const ConvertMap* sflog_unified2_map;
+extern const ConvertMap* sfalert_unified2_map;
 
 const std::vector<const ConvertMap*> output_api =
 {
@@ -46,6 +49,9 @@ const std::vector<const ConvertMap*> output_api =
     log_unified2_map,
     alert_unixsock_map,
     unified2_map,
+    sfunified2_map,
+    sflog_unified2_map,
+    sfalert_unified2_map
 };
 } // namespace output
 

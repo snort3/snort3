@@ -296,5 +296,20 @@ protected:
 private:
 };
 
+template<std::string* config_header>
+class UnsupportedState : public ConversionState
+{
+public:
+    UnsupportedState(Converter& c) : ConversionState(c) {}
+    virtual ~UnsupportedState() {}
+
+    bool convert(std::istringstream& data_stream)
+    {
+        data_api.add_unsupported_comment(*config_header +
+            std::string(std::istreambuf_iterator<char>(data_stream), {}));
+        return true;
+    }
+};
+
 #endif
 

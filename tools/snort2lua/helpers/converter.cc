@@ -69,6 +69,8 @@ int Converter::parse_include_file(std::string input_file)
     std::vector<Rule*> rules;
     std::vector<Include*> includes;
     Comments* comments;
+    Comments* unsupported;
+
     int rc;
 
     if (!parse_includes)
@@ -81,7 +83,10 @@ int Converter::parse_include_file(std::string input_file)
         comments = new Comments(start_comments, 0,
             Comments::CommentType::MULTI_LINE);
 
-        data_api.swap_conf_data(vars, includes, comments);
+        unsupported = new Comments(start_unsupported, 0,
+            Comments::CommentType::MULTI_LINE);
+
+        data_api.swap_conf_data(vars, includes, comments, unsupported);
         table_api.swap_tables(tables);
     }
 
@@ -101,6 +106,7 @@ int Converter::parse_include_file(std::string input_file)
             out.open(input_file + ".lua");
             data_api.print_data(out);
             table_api.print_tables(out);
+            data_api.print_unsupported(out);
             data_api.print_comments(out);
             out << std::endl;
             out.close();
@@ -108,9 +114,10 @@ int Converter::parse_include_file(std::string input_file)
             include_file = true;
         }
 
-        data_api.swap_conf_data(vars, includes, comments);
+        data_api.swap_conf_data(vars, includes, comments, unsupported);
         table_api.swap_tables(tables);
         delete comments;
+        delete unsupported;
 
         if (include_file)
             data_api.add_include_file(input_file + ".lua");
@@ -352,6 +359,7 @@ int Converter::convert(std::string input,
         }
 
         table_api.print_tables(out);
+        data_api.print_unsupported(out);
         data_api.print_comments(out);
 
         if ((failed_conversions()) && !DataApi::is_quiet_mode())

@@ -4,6 +4,7 @@ noinst_LIBRARIES = libkeyword_states.a
 libkeyword_states_a_SOURCES = \
 kws_attribute_table.cc \
 kws_config.cc \
+kws_deleted.cc \
 kws_event_filter.cc \
 kws_file.cc \
 kws_include.cc \

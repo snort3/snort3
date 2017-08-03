@@ -81,6 +81,7 @@ public:
     void print_errors(std::ostream&);
     void print_data(std::ostream&);
     void print_comments(std::ostream& out);
+    void print_unsupported(std::ostream& out);
 
     // have there been any failed conversion?
     bool failed_conversions() const;
@@ -95,7 +96,7 @@ public:
     // 'print_conf_options()'
     void swap_conf_data(std::vector<Variable*>&,
         std::vector<Include*>&,
-        Comments*&);
+        Comments*& comments, Comments*& unsupported);
 
     // FILE CREATION AND ADDITIONS
 
@@ -106,12 +107,13 @@ public:
     // add a 'comment' to the Lua file. should ONLY be used when
     // adding a comment from the original Snort file.
     void add_comment(std::string);
+    // add a lua comment stating that the top-level item does not
+    // exist yet (i.e. preprocessor X, where X doesn't exist)
+    void add_unsupported_comment(std::string);
     // Call when failed to convert a line.
     // stream == the stringstream object which failed to convert
-    void failed_conversion(const std::istringstream& stream);
-    // same as above. unknown_option is the specific option which
-    // caused the failure.
-    void failed_conversion(const std::istringstream& stream, const std::string unkown_option);
+    // unknown_option is the specific option which caused the failure.
+    void failed_conversion(const std::istringstream& stream, const std::string unkown_option = "");
 
     void set_current_file(std::string& file)
     { current_file = &file; }
@@ -136,6 +138,7 @@ private:
     std::vector<Include*> includes;
     Comments* comments;
     Comments* errors;
+    Comments* unsupported;
 
     bool curr_data_bad;  // keep track whether current 'conversion' is already bad
     std::string* current_file;

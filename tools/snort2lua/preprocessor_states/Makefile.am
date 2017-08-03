@@ -9,6 +9,7 @@ pps_dcerpc.cc \
 pps_dcerpc_server.h \
 pps_dcerpc_server.cc \
 pps_dnp3.cc \
+pps_firewall.cc \
 pps_frag3_engine.cc \
 pps_frag3_global.cc \
 pps_ftp_telnet.cc \
@@ -16,6 +17,7 @@ pps_ftp_telnet_protocol.cc \
 pps_gtp.cc \
 pps_http_inspect.cc \
 pps_http_inspect_server.cc \
+pps_nap_selector.cc \
 pps_normalizers.cc \
 pps_perfmonitor.cc \
 pps_reputation.cc \
