@@ -78,7 +78,7 @@ THREAD_LOCAL SnortConfig* snort_conf = &s_conf;
 
 static SnortState s_state;
 
-SnortConfig::SnortConfig()
+SnortConfig::SnortConfig(SnortConfig*)
 {
     state = &s_state;
     memset(state, 0, sizeof(*state));

@@ -140,7 +140,7 @@ struct SnortState
 struct SnortConfig
 {
 public:
-    SnortConfig();
+    SnortConfig(SnortConfig* other_conf = nullptr );
     ~SnortConfig();
 
     void setup();
@@ -148,6 +148,7 @@ public:
     bool verify();
 
     void merge(SnortConfig*);
+    void clone(SnortConfig*);
 
 public:
     //------------------------------------------------------
@@ -346,6 +347,11 @@ public:
     unsigned num_slots = 0;
 
     ThreadConfig* thread_config;
+
+    //------------------------------------------------------
+    //Reload inspector related
+
+    bool cloned = false;
 
     //------------------------------------------------------
     // policy access

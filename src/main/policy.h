@@ -85,7 +85,7 @@ public:
 struct InspectionPolicy
 {
 public:
-    InspectionPolicy();
+    InspectionPolicy(InspectionPolicy* old_inspection_policy = nullptr);
     ~InspectionPolicy();
 
     void configure();
@@ -93,6 +93,7 @@ public:
 public:
     struct FrameworkPolicy* framework_policy;
     DataBus dbus;
+    bool cloned;
 };
 
 //-------------------------------------------------------------------------
@@ -143,10 +144,11 @@ class Shell;
 class PolicyMap
 {
 public:
-    PolicyMap();
+    PolicyMap(PolicyMap* old_map = nullptr);
     ~PolicyMap();
 
     unsigned add_shell(Shell*);
+    void clone(PolicyMap *old_map);
 
     Shell* get_shell(unsigned i = 0)
     { return i < shells.size() ? shells[i] : nullptr; }
@@ -156,6 +158,7 @@ public:  // FIXIT-M make impl private
     std::vector<InspectionPolicy*> inspection_policy;
     std::vector<IpsPolicy*> ips_policy;
     std::vector<NetworkPolicy*> network_policy;
+    bool cloned = false;
 };
 
 //-------------------------------------------------------------------------

@@ -38,6 +38,7 @@ class Snort
 {
 public:
     static SnortConfig* get_reload_config(const char* fname);
+    static SnortConfig* get_reloaded_policy(SnortConfig*, const char* fname);
     static void setup(int argc, char* argv[]);
     static bool drop_privileges();
     static void do_pidfile();

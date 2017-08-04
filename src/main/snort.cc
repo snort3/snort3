@@ -56,6 +56,7 @@
 #include "log/packet_tracer.h"
 #include "loggers/loggers.h"
 #include "main.h"
+#include "main/shell.h"
 #include "managers/action_manager.h"
 #include "managers/codec_manager.h"
 #include "managers/inspector_manager.h"
@@ -627,6 +628,41 @@ SnortConfig* Snort::get_reload_config(const char* fname)
     reloading = false;
     parser_term(sc);
 
+    return sc;
+}
+
+SnortConfig* Snort::get_reloaded_policy(SnortConfig* other_conf, const char* fname)
+{
+    reloading = true;
+
+    SnortConfig* sc = new SnortConfig(other_conf);
+    Shell sh = Shell(fname);
+    sh.configure(sc);
+
+    if ( ModuleManager::get_errors() || !sc->verify() )
+    {
+        sc->cloned = true;
+        InspectorManager::update_policy(other_conf);
+        delete sc;
+        set_policies(other_conf);
+        reloading = false;
+        return nullptr;
+    }
+
+    if ( !InspectorManager::configure(sc, true) )
+    {
+        sc->cloned = true;
+        InspectorManager::update_policy(other_conf);
+        delete sc;
+        set_policies(other_conf);
+        reloading = false;
+        return nullptr;
+    }
+
+    other_conf->cloned = true;
+
+    InspectorManager::update_policy(sc);
+    reloading = false;
     return sc;
 }
 

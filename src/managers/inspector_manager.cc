@@ -33,6 +33,7 @@
 #include "flow/flow.h"
 #include "flow/session.h"
 #include "log/messages.h"
+#include "main/snort.h"
 #include "main/snort_config.h"
 #include "main/thread_config.h"
 #include "protocols/packet.h"
@@ -95,11 +96,19 @@ struct PHClass
     { return ( a->api.type < b->api.type ); }
 };
 
+enum ReloadType {
+    RELOAD_TYPE_NONE = 0,
+    RELOAD_TYPE_REENABLED,
+    RELOAD_TYPE_NEW,
+    RELOAD_TYPE_MAX
+};
+
 struct PHInstance
 {
     PHClass& pp_class;
     Inspector* handler;
     string name;
+    ReloadType reload_type;
 
     PHInstance(PHClass&, SnortConfig*, Module* = nullptr);
     ~PHInstance();
@@ -109,10 +118,21 @@ struct PHInstance
 
     void set_name(const char* s)
     { name = s; }
+
+    void set_reloaded(ReloadType val)
+    { reload_type = val; }
+
+    bool is_reloaded()
+    { return ((reload_type == RELOAD_TYPE_REENABLED) or
+            (reload_type == RELOAD_TYPE_NEW)); }
+
+    ReloadType get_reload_type()
+    { return reload_type; }
 };
 
 PHInstance::PHInstance(PHClass& p, SnortConfig* sc, Module* mod) : pp_class(p)
 {
+    reload_type = RELOAD_TYPE_NONE;
     handler = p.api.ctor(mod);
 
     if ( handler )
@@ -178,6 +198,8 @@ struct FrameworkPolicy
 
     Inspector* binder;
     Inspector* wizard;
+
+    bool default_binder;
 
     void vectorize();
 };
@@ -331,18 +353,94 @@ void InspectorManager::empty_trash()
 // policy stuff
 //-------------------------------------------------------------------------
 
-void InspectorManager::new_policy(InspectionPolicy* pi)
+// FIXIT-L allowing lookup by name or type or key is kinda hinky
+// would be helpful to have specific lookups
+static bool get_instance(
+        FrameworkPolicy* fp, const char* keyword, bool dflt_only, std::vector<PHInstance*>::iterator& it)
+{
+    for ( it = fp->ilist.begin(); it != fp->ilist.end(); ++it )
+    {
+        PHInstance* p = *it;
+        if ( p->name.size() && p->name == keyword )
+            return true;
+
+        else if ( !strcmp(p->pp_class.api.base.name, keyword) )
+            return (!p->name.size() || !dflt_only) ? true : false;
+
+        else if ( p->pp_class.api.service && !strcmp(p->pp_class.api.service, keyword) )
+            return true;
+    }
+    return false;
+}
+
+static PHInstance* get_instance(
+        FrameworkPolicy* fp, const char* keyword, bool dflt_only = false)
+{
+    std::vector<PHInstance*>::iterator it;
+    return get_instance(fp, keyword, dflt_only, it)? *it : nullptr;
+}
+
+static PHInstance* get_new(
+    PHClass* ppc, FrameworkPolicy* fp, const char* keyword, Module* mod, SnortConfig* sc)
+{
+    PHInstance* p = nullptr;
+    bool reloaded = false;
+    std::vector<PHInstance*>::iterator old_it;
+
+    if ( get_instance(fp, keyword, false, old_it) )
+    {
+        if ( Snort::is_reloading() )
+        {
+            (*old_it)->set_reloaded(RELOAD_TYPE_REENABLED);
+            fp->ilist.erase(old_it);
+            reloaded = true;
+        }
+        else
+            return *old_it;
+    }
+
+    p = new PHInstance(*ppc, sc, mod);
+
+    if ( !p->handler )
+    {
+        delete p;
+        return NULL;
+    }
+
+    if ( Snort::is_reloading() )
+    {
+        if ( reloaded )
+            p->set_reloaded(RELOAD_TYPE_REENABLED);
+        else
+            p->set_reloaded(RELOAD_TYPE_NEW);
+    }
+    fp->ilist.push_back(p);
+    return p;
+}
+
+void InspectorManager::new_policy(InspectionPolicy* pi, InspectionPolicy* other_pi)
 {
     pi->framework_policy = new FrameworkPolicy;
+    bool default_binder = false;
 
+    if ( other_pi )
+    {
+        pi->framework_policy->ilist = other_pi->framework_policy->ilist;
+        default_binder = other_pi->framework_policy->default_binder;
+    }
+
+    pi->framework_policy->default_binder = default_binder;
     pi->framework_policy->binder = nullptr;
     pi->framework_policy->wizard = nullptr;
 }
 
-void InspectorManager::delete_policy(InspectionPolicy* pi)
+void InspectorManager::delete_policy(InspectionPolicy* pi, bool cloned)
 {
     for ( auto* p : pi->framework_policy->ilist )
     {
+        if ( cloned and !(p->is_reloaded()) )
+                continue;
+
         if ( p->handler->get_api()->type == IT_PASSIVE )
             s_trash2.push_back(p->handler);
         else
@@ -353,45 +451,15 @@ void InspectorManager::delete_policy(InspectionPolicy* pi)
     pi->framework_policy = nullptr;
 }
 
-// FIXIT-L allowing lookup by name or type or key is kinda hinky
-// would be helpful to have specific lookups
-static PHInstance* get_instance(
-    FrameworkPolicy* fp, const char* keyword, bool dflt_only = false)
+void InspectorManager::update_policy(SnortConfig* sc)
 {
-    for ( auto* p : fp->ilist )
+    if ( sc->policy_map->inspection_policy.size() )
     {
-        if ( p->name.size() && p->name == keyword )
-            return p;
-
-        else if ( !strcmp(p->pp_class.api.base.name, keyword) )
-            return (!p->name.size() || !dflt_only) ? p : nullptr;
-
-        else if ( p->pp_class.api.service && !strcmp(p->pp_class.api.service, keyword) )
-            return p;
+        InspectionPolicy* pi = sc->policy_map->inspection_policy[0];
+        for ( auto* p : pi->framework_policy->ilist )
+            p->set_reloaded(RELOAD_TYPE_NONE);
     }
-    return nullptr;
 }
-
-static PHInstance* get_new(
-    PHClass* ppc, FrameworkPolicy* fp, const char* keyword, Module* mod, SnortConfig* sc)
-{
-    PHInstance* p = get_instance(fp, keyword);
-
-    if ( p )
-        return p;
-
-    p = new PHInstance(*ppc, sc, mod);
-
-    if ( !p->handler )
-    {
-        delete p;
-        return NULL;
-    }
-
-    fp->ilist.push_back(p);
-    return p;
-}
-
 // FIXIT-M create a separate list for meta handlers?  is there really more than one?
 void InspectorManager::dispatch_meta(FrameworkPolicy* fp, int type, const uint8_t* data)
 {
@@ -651,14 +719,51 @@ static void instantiate_binder(SnortConfig* sc, FrameworkPolicy* fp)
     InspectorManager::instantiate(api, m, sc);
     fp->binder = get_instance(fp, bind_id)->handler;
     fp->binder->configure(sc);
+    fp->default_binder = true;
 }
 
-static bool configure(SnortConfig* sc, FrameworkPolicy* fp)
+static bool configure(SnortConfig* sc, FrameworkPolicy* fp, bool cloned)
 {
     bool ok = true;
+    bool new_ins = false;
+    bool reenabled_ins = false;
 
     for ( auto* p : fp->ilist )
+    {
+        ReloadType reload_type = p->get_reload_type();
+
+        if ( cloned )
+        {
+            if ( reload_type == RELOAD_TYPE_NEW )
+                new_ins = true;
+            else if ( reload_type == RELOAD_TYPE_REENABLED )
+                reenabled_ins = true;
+            else
+                continue;
+        }
         ok = p->handler->configure(sc) && ok;
+    }
+
+    if ( new_ins or reenabled_ins )
+    {
+        std::vector<PHInstance*>::iterator old_binder;
+        if ( get_instance(fp, "binder", false, old_binder) )
+        {
+            if ( new_ins and fp->default_binder )
+            {
+                if ( !((*old_binder)->is_reloaded()) )
+                {
+                    (*old_binder)->set_reloaded(RELOAD_TYPE_REENABLED);
+                    fp->ilist.erase(old_binder);
+                }
+                fp->default_binder = false;
+            }
+            else if ( reenabled_ins and !((*old_binder)->is_reloaded()) )
+            {
+                (*old_binder)->handler->configure(sc);
+            }
+        }
+    }
 
     sort(fp->ilist.begin(), fp->ilist.end(), PHInstance::comp);
     fp->vectorize();
@@ -688,7 +793,7 @@ void InspectorManager::release(Inspector* pi)
     pi->rem_ref();
 }
 
-bool InspectorManager::configure(SnortConfig* sc)
+bool InspectorManager::configure(SnortConfig* sc, bool cloned)
 {
     if ( !s_sorted )
     {
@@ -699,10 +804,13 @@ bool InspectorManager::configure(SnortConfig* sc)
 
     for ( unsigned idx = 0; idx < sc->policy_map->inspection_policy.size(); ++idx )
     {
+        if ( cloned and idx )
+            break;
+
         set_policies(sc, idx);
         InspectionPolicy* p = sc->policy_map->inspection_policy[idx];
         p->configure();
-        ok = ::configure(sc, p->framework_policy) && ok;
+        ok = ::configure(sc, p->framework_policy, cloned) && ok;
     }
 
     set_policies(sc);

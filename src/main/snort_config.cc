@@ -168,37 +168,56 @@ static void init_policies(SnortConfig* sc)
  * but the goal is to minimize config checks at run time when running in
  * IDS mode so we keep things simple and enforce that the only difference
  * among run_modes is how we handle packets via the log_func. */
-SnortConfig::SnortConfig()
+SnortConfig::SnortConfig(SnortConfig* other_conf)
 {
-    num_layers = DEFAULT_LAYERMAX;
-
-    max_attribute_hosts = DEFAULT_MAX_ATTRIBUTE_HOSTS;
-    max_attribute_services_per_host = DEFAULT_MAX_ATTRIBUTE_SERVICES_PER_HOST;
-
-    max_metadata_services = DEFAULT_MAX_METADATA_SERVICES;
-    mpls_stack_depth = DEFAULT_LABELCHAIN_LENGTH;
-
-    daq_config = new SFDAQConfig();
-    InspectorManager::new_config(this);
-
-    num_slots = ThreadConfig::get_instance_max();
-    state = (SnortState*)snort_calloc(num_slots, sizeof(SnortState));
-
-    profiler = new ProfilerConfig;
-    latency = new LatencyConfig();
-    memory = new MemoryConfig();
-    policy_map = new PolicyMap;
-    thread_config = new ThreadConfig();
-
     homenet.clear();
     obfuscation_net.clear();
 
-    memset(evalOrder, 0, sizeof(evalOrder));
-    proto_ref = new ProtocolReference;
+    if ( !other_conf )
+    {
+        num_layers = DEFAULT_LAYERMAX;
+
+        max_attribute_hosts = DEFAULT_MAX_ATTRIBUTE_HOSTS;
+        max_attribute_services_per_host = DEFAULT_MAX_ATTRIBUTE_SERVICES_PER_HOST;
+
+        max_metadata_services = DEFAULT_MAX_METADATA_SERVICES;
+        mpls_stack_depth = DEFAULT_LABELCHAIN_LENGTH;
+
+        daq_config = new SFDAQConfig();
+        InspectorManager::new_config(this);
+
+        num_slots = ThreadConfig::get_instance_max();
+        state = (SnortState*)snort_calloc(num_slots, sizeof(SnortState));
+
+        profiler = new ProfilerConfig;
+        latency = new LatencyConfig();
+        memory = new MemoryConfig();
+        policy_map = new PolicyMap;
+        thread_config = new ThreadConfig();
+
+        memset(evalOrder, 0, sizeof(evalOrder));
+        proto_ref = new ProtocolReference;
+    }
+    else
+    {
+        clone(other_conf);
+        policy_map = new PolicyMap(other_conf->policy_map);
+    }
+
+    set_inspection_policy(get_inspection_policy());
+    set_ips_policy(get_ips_policy());
+    set_network_policy(get_network_policy());
 }
 
 SnortConfig::~SnortConfig()
 {
+    if ( cloned )
+    {
+        policy_map->cloned = true;
+        delete policy_map;
+        return;
+    }
+
     free_rule_state_list();
     FreeClassifications(classifications);
     FreeReferences(references);
@@ -296,6 +315,17 @@ void SnortConfig::post_setup()
     sdpattern_setup(this);
     hyperscan_setup(this);
 #endif
+}
+
+void SnortConfig::clone(SnortConfig* conf)
+{
+    *this = *conf;
+    if (conf->homenet.get_family() != 0)
+        memcpy(&homenet, &conf->homenet, sizeof(homenet));
+
+    if (conf->obfuscation_net.get_family() != 0)
+        memcpy(&obfuscation_net, &conf->obfuscation_net, sizeof(obfuscation_net));
+
 }
 
 // merge in everything from the command line config

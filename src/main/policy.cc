@@ -65,16 +65,17 @@ public:
     { DetectionEngine::detect((Packet*)e.get_packet()); }  // FIXIT-L not const!
 };
 
-InspectionPolicy::InspectionPolicy()
+InspectionPolicy::InspectionPolicy(InspectionPolicy* other_inspection_policy)
 {
     framework_policy = nullptr;
+    cloned = false;
 
-    InspectorManager::new_policy(this);
+    InspectorManager::new_policy(this, other_inspection_policy);
 }
 
 InspectionPolicy::~InspectionPolicy()
 {
-    InspectorManager::delete_policy(this);
+    InspectorManager::delete_policy(this, cloned);
 }
 
 void InspectionPolicy::configure()
@@ -121,9 +122,12 @@ IpsPolicy::~IpsPolicy()
 // policy map
 //-------------------------------------------------------------------------
 
-PolicyMap::PolicyMap()
+PolicyMap::PolicyMap(PolicyMap* other_map)
 {
-    add_shell(new Shell);
+    if ( other_map )
+        clone(other_map);
+    else
+        add_shell(new Shell);
 
     set_inspection_policy(inspection_policy[0]);
     set_ips_policy(ips_policy[0]);
@@ -132,22 +136,51 @@ PolicyMap::PolicyMap()
 
 PolicyMap::~PolicyMap()
 {
-    for ( auto p : shells )
-        delete p;
+    if ( cloned )
+    {
+        if ( inspection_policy.size() )
+        {
+            InspectionPolicy* default_policy = inspection_policy[0];
+            default_policy->cloned = true;
+            delete default_policy;
+        }
+    }
+    else
+    {
+        for ( auto p : shells )
+            delete p;
 
-    for ( auto p : inspection_policy )
-        delete p;
+        for ( auto p : inspection_policy )
+            delete p;
 
-    for ( auto p : ips_policy )
-        delete p;
+        for ( auto p : ips_policy )
+            delete p;
 
-    for ( auto p : network_policy )
-        delete p;
+        for ( auto p : network_policy )
+            delete p;
+    }
 
     shells.clear();
     inspection_policy.clear();
     ips_policy.clear();
     network_policy.clear();
+}
+
+void PolicyMap::clone(PolicyMap *other_map)
+{
+    shells = other_map->shells;
+    ips_policy = other_map->ips_policy;
+    network_policy = other_map->network_policy;
+
+    for ( unsigned i = 0; i < (other_map->inspection_policy.size()); i++)
+    {
+        if ( i == 0 )
+        {
+            inspection_policy.push_back(new InspectionPolicy(other_map->inspection_policy[i]));
+        }
+        else
+            inspection_policy.push_back(other_map->inspection_policy[i]);
+    }
 }
 
 unsigned PolicyMap::add_shell(Shell* sh)

@@ -44,8 +44,9 @@ public:
     static void dump_buffers();
     static void release_plugins();
 
-    static void new_policy(InspectionPolicy*);
-    static void delete_policy(InspectionPolicy*);
+    static void new_policy(InspectionPolicy*, InspectionPolicy*);
+    static void delete_policy(InspectionPolicy*, bool cloned);
+    static void update_policy(SnortConfig* sc);
 
     static void new_config(SnortConfig*);
     static void delete_config(SnortConfig*);
@@ -65,7 +66,7 @@ public:
     SO_PUBLIC static Inspector* acquire(const char* key, SnortConfig*);
     SO_PUBLIC static void release(Inspector*);
 
-    static bool configure(SnortConfig*);
+    static bool configure(SnortConfig*, bool cloned = false);
     static void print_config(SnortConfig*);
 
     static void thread_init(SnortConfig*);

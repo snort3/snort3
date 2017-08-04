@@ -29,6 +29,7 @@ const char* get_prompt();
 int main_dump_stats(lua_State* = nullptr);
 int main_rotate_stats(lua_State* = nullptr);
 int main_reload_config(lua_State* = nullptr);
+int main_reload_policy(lua_State* = nullptr);
 int main_reload_daq(lua_State* = nullptr);
 int main_reload_hosts(lua_State* = nullptr);
 int main_process(lua_State* = nullptr);

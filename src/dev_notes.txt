@@ -23,3 +23,16 @@ Reload is implemented by swapping a thread local config pointer by each
 running Pig.  The inspector manager is called to empty trash if the main
 loop is not otherwise busy.
 
+Reload policy is implemented by cloning the thread local config and 
+overwriting the policy map and the inspection policy in the main thread. 
+The inspector list from the old config's inspection policy is copied 
+into the inspection policy of the new config. After the config pointer 
+is cloned, the new inspection policy elements (reloadable) such as 
+inspectors, binder, wizard etc are read and instantiated. 
+The inspector list of the new config is updated by swapping out the 
+old inspectors, binder etc. with the newly instantiated elements. The
+reloaded inspectors, binders and other inspection policy elements are 
+marked for deletion. After the new inspection policy is loaded, the 
+thread local config pointer is swapped with the new cloned config 
+by running Pig. This happens in the packet thread. The inspector manager
+ is then called to delete any reloaded policy elements and empty trash. 

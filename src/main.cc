@@ -329,6 +329,47 @@ int main_reload_config(lua_State* L)
     return 0;
 }
 
+int main_reload_policy(lua_State* L)
+{
+    if ( Swapper::get_reload_in_progress() )
+    {
+        current_request->respond("== reload pending; retry\n");
+        return 0;
+    }
+    const char* fname =  nullptr;
+
+    if ( L )
+    {
+        Lua::ManageStack(L, 1);
+        fname = luaL_checkstring(L, 1);
+    }
+
+    if ( fname and *fname )
+        current_request->respond(".. reloading policy\n");
+    else
+    {
+        current_request->respond("== filename required\n");
+        return 0;
+    }
+
+    SnortConfig* old = snort_conf;
+    SnortConfig* sc = Snort::get_reloaded_policy(old, fname);
+
+    if ( !sc )
+    {
+        current_request->respond("== reload failed\n");
+        return 0;
+    }
+    snort_conf = sc;
+    proc_stats.policy_reloads++;
+
+    bool from_shell = ( L != nullptr );
+    current_request->respond(".. swapping policy\n", from_shell);
+    broadcast(get_command(new ACSwap(new Swapper(old, sc)), from_shell));
+
+    return 0;
+}
+
 int main_reload_daq(lua_State* L)
 {
     bool from_shell = ( L != nullptr );
