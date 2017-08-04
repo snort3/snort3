@@ -318,6 +318,7 @@ public:
 
     SFXHASH* detection_option_hash_table = nullptr;
     SFXHASH* detection_option_tree_hash_table = nullptr;
+    SFXHASH* rtn_hash_table = nullptr;
 
     PolicyMap* policy_map = nullptr;
     struct VarNode* var_list = nullptr;

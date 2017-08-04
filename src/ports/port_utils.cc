@@ -123,18 +123,15 @@ int PortObjectBits(PortBitSet& parray, PortObject* po)
     return cnt;
 }
 
-/*
- *  Make a list of ports form the char array, each char is either
- *  on or off.
- */
 SF_LIST* PortObjectItemListFromBits(const PortBitSet& parray, int n)
 {
     SF_LIST* plist = sflist_new();
+    int nports = parray.count();
 
     if ( !plist )
         return 0;
 
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < n && nports > 0; i++)
     {
         if ( parray[i] == 0 )
             continue;
@@ -143,12 +140,14 @@ SF_LIST* PortObjectItemListFromBits(const PortBitSet& parray, int n)
 
         /* Either a port or the start of a range */
         lport = hport = i;
+        nports--;
 
         for (i++; i<n; i++)
         {
             if ( parray[i] )
             {
                 hport = i;
+                nports--;
                 continue;
             }
             break;

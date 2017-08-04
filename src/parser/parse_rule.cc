@@ -29,6 +29,7 @@
 #include "detection/rtn_checks.h"
 #include "detection/treenodes.h"
 #include "framework/decode_data.h"
+#include "hash/sfxhash.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
@@ -645,7 +646,7 @@ static int ParsePortList(
     return 0;
 }
 
-static bool same_headers(RuleTreeNode* rule, RuleTreeNode* rtn)
+bool same_headers(RuleTreeNode* rule, RuleTreeNode* rtn)
 {
     if ( !rule or !rtn )
         return false;
@@ -685,17 +686,10 @@ static bool same_headers(RuleTreeNode* rule, RuleTreeNode* rtn)
 static RuleTreeNode* findHeadNode(
     SnortConfig* sc, RuleTreeNode* testNode, PolicyId policyId)
 {
-    SFGHASH_NODE* hashNode;
-
-    for (hashNode = sfghash_findfirst(sc->otn_map);
-        hashNode;
-        hashNode = sfghash_findnext(sc->otn_map))
+    if ( sc->rtn_hash_table )
     {
-        OptTreeNode* otn = (OptTreeNode*)hashNode->data;
-        RuleTreeNode* rtn = getRtnFromOtn(otn, policyId);
-
-        if (same_headers(rtn, testNode))
-            return rtn;
+        RuleTreeNodeKey key { testNode, policyId };
+        return (RuleTreeNode*)sfxhash_find(sc->rtn_hash_table, &key);
     }
 
     return nullptr;
@@ -933,7 +927,7 @@ static int mergeDuplicateOtn(
     {
         // current OTN is newer version. Keep current and discard the new one.
         // OTN is for new policy group, salvage RTN
-        deleteRtnFromOtn(otn_new);
+        deleteRtnFromOtn(otn_new, sc);
 
         ParseWarning(WARN_RULES, "%u:%u duplicates previous rule. Using revision %u.",
             otn_cur->sigInfo.gid, otn_cur->sigInfo.sid, otn_cur->sigInfo.rev);
@@ -947,7 +941,7 @@ static int mergeDuplicateOtn(
         // otherwise ignore it
         if ( !rtn_cur )
         {
-            addRtnToOtn(otn_cur, rtn_new);
+            addRtnToOtn(sc, otn_cur, rtn_new);
         }
         else
         {
@@ -960,11 +954,11 @@ static int mergeDuplicateOtn(
 
     for ( unsigned i = 0; i < otn_cur->proto_node_num; ++i )
     {
-        RuleTreeNode* rtnTmp2 = deleteRtnFromOtn(otn_cur, i);
+        RuleTreeNode* rtnTmp2 = deleteRtnFromOtn(otn_cur, i, sc, (rtn_cur != rtn_new));
 
         if ( rtnTmp2 and (i != get_ips_policy()->policy_id) )
         {
-            addRtnToOtn(otn_new, rtnTmp2, i);
+            addRtnToOtn(sc, otn_new, rtnTmp2, i);
         }
     }
 
@@ -1233,7 +1227,7 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
      * port var table is freed */
     RuleTreeNode* new_rtn = ProcessHeadNode(sc, &rtn, rtn.listhead);
 
-    addRtnToOtn(otn, new_rtn);
+    addRtnToOtn(sc, otn, new_rtn);
 
     OptTreeNode* otn_dup =
         OtnLookup(sc->otn_map, otn->sigInfo.gid, otn->sigInfo.sid);

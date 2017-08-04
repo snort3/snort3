@@ -718,7 +718,7 @@ static int PortTableCompileMergePortObjects(PortTable* p)
 // consistency check - part 1
 // make sure each port is only in one composite port object
 
-static void PortTableConsistencyCheck(PortTable* p)
+static bool PortTableConsistencyCheck(PortTable* p)
 {
     std::unique_ptr<char[]> upA(new char[SFPO_MAX_PORTS]);
     char* parray = upA.get();
@@ -732,7 +732,8 @@ static void PortTableConsistencyCheck(PortTable* p)
 
         if ( !po )
         {
-            FatalError("PortObject consistency Check failed, hash table problem\n");
+            DebugMessage(DEBUG_PORTLISTS, "PortObject consistency Check failed, hash table problem\n");
+            return false;
         }
 
         if ( !po->port_cnt ) /* port object is not used ignore it */
@@ -744,16 +745,16 @@ static void PortTableConsistencyCheck(PortTable* p)
             {
                 if ( parray[i] )
                 {
-                    FatalError("PortTableCompile: failed consistency check, "
-                        "multiple objects reference port %d\n", i);
+                    DebugFormat(DEBUG_PORTLISTS, "PortTableCompile: failed consistency check, "
+                            "multiple objects reference port %d\n", i);
+                    return false;
                 }
                 parray[i] = 1;
             }
         }
     }
 
-    DebugMessage(DEBUG_PORTLISTS,
-        "***\n***Port Table Compiler Consistency Check Phase-I Passed !\n");
+    return true;
 }
 
 // consistency check - part 2
@@ -765,7 +766,7 @@ static void PortTableConsistencyCheck(PortTable* p)
 *    check that each port it reference has all of the rules
 *    referenced to that port in the composite object
 */
-static void PortTableConsistencyCheck2(PortTable* p)
+static bool PortTableConsistencyCheck2(PortTable* p)
 {
     SF_LNODE* pos;
     PortObject2* lastpo = nullptr;
@@ -796,8 +797,9 @@ static void PortTableConsistencyCheck2(PortTable* p)
                 {
                     if ( _po2_include_po_rules(p->pt_port_object[i], ipo) )
                     {
-                        FatalError("InputPortObject<->CompositePortObject "
-                            "consistency Check II failed\n");
+                        DebugMessage(DEBUG_PORTLISTS,
+                            "InputPortObject<->CompositePortObject consistency Check II failed\n");
+                        return false;
                     }
                     lastpo = p->pt_port_object[i];
                 }
@@ -805,9 +807,7 @@ static void PortTableConsistencyCheck2(PortTable* p)
         }
     }
 
-    DebugMessage(DEBUG_PORTLISTS,
-        "***\n***Port Table Compiler Consistency Check Phase-II Passed !!!"
-        " - Good to go Houston\n****\n");
+    return true;
 }
 
 //-------------------------------------------------------------------------
@@ -934,8 +934,8 @@ int PortTableCompile(PortTable* p)
 
     DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS, "Done\n"); fflush(stdout); );
 
-    PortTableConsistencyCheck(p);
-    PortTableConsistencyCheck2(p);
+    assert(PortTableConsistencyCheck(p));
+    assert(PortTableConsistencyCheck2(p));
 
     return 0;
 }

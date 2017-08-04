@@ -33,6 +33,8 @@
 #include "filters/detection_filter.h"
 #include "filters/rate_filter.h"
 #include "filters/sfthreshold.h"
+#include "hash/sfhashfcn.h"
+#include "hash/sfxhash.h"
 #include "log/messages.h"
 #include "main/shell.h"
 #include "main/snort_config.h"
@@ -749,25 +751,70 @@ void OrderRuleLists(SnortConfig* sc, const char* order)
  *
  * @return pointer to deleted RTN, NULL otherwise.
  */
-RuleTreeNode* deleteRtnFromOtn(OptTreeNode* otn, PolicyId policyId)
+RuleTreeNode* deleteRtnFromOtn(OptTreeNode* otn, PolicyId policyId, SnortConfig* sc, bool remove)
 {
-    RuleTreeNode* rtn = NULL;
+    RuleTreeNode* rtn = nullptr;
 
     if (otn->proto_nodes
         && (otn->proto_node_num >= (policyId+1)))
     {
         rtn = getRtnFromOtn(otn, policyId);
-        otn->proto_nodes[policyId] = NULL;
+        otn->proto_nodes[policyId] = nullptr;
+
+        if ( remove && rtn )
+        {
+            RuleTreeNodeKey key{ rtn, policyId };
+            if ( sc && sc->rtn_hash_table )
+                sfxhash_remove(sc->rtn_hash_table, &key);
+        }
 
         return rtn;
     }
 
-    return NULL;
+    return nullptr;
 }
 
-RuleTreeNode* deleteRtnFromOtn(OptTreeNode* otn)
+RuleTreeNode* deleteRtnFromOtn(OptTreeNode* otn, SnortConfig* sc)
 {
-    return deleteRtnFromOtn(otn, get_ips_policy()->policy_id);
+    return deleteRtnFromOtn(otn, get_ips_policy()->policy_id, sc);
+}
+
+uint32_t rtn_hash_func(SFHASHFCN*, unsigned char *k, int)
+{
+    uint32_t a,b,c;
+    RuleTreeNodeKey* rtnk = (RuleTreeNodeKey*)k;
+    RuleTreeNode* rtn = rtnk->rtn;
+
+    a = rtn->type;
+    b = rtn->flags;
+    c = (uint32_t)(uintptr_t)rtn->listhead;
+
+    mix(a,b,c);
+
+    a += (uint32_t)(uintptr_t)rtn->src_portobject;
+    b += (uint32_t)(uintptr_t)rtn->dst_portobject;
+    c += (uint32_t)(uintptr_t)rtnk->policyId;
+
+    finalize(a,b,c);
+
+    return c;
+}
+
+int rtn_compare_func(const void *k1, const void *k2, size_t)
+{
+    RuleTreeNodeKey* rtnk1 = (RuleTreeNodeKey*)k1;
+    RuleTreeNodeKey* rtnk2 = (RuleTreeNodeKey*)k2;
+
+    if (!rtnk1 || !rtnk2)
+        return 1;
+
+    if (rtnk1->policyId != rtnk2->policyId)
+        return 1;
+
+    if (same_headers(rtnk1->rtn, rtnk2->rtn))
+        return 0;
+    
+	return 1;
 }
 
 /**Add RTN to OTN for a particular OTN.
@@ -778,7 +825,7 @@ RuleTreeNode* deleteRtnFromOtn(OptTreeNode* otn)
  * @return 0 if successful,
  *         -ve otherwise
  */
-int addRtnToOtn(OptTreeNode* otn, RuleTreeNode* rtn, PolicyId policyId)
+int addRtnToOtn(SnortConfig* sc, OptTreeNode* otn, RuleTreeNode* rtn, PolicyId policyId)
 {
     if (otn->proto_node_num <= policyId)
     {
@@ -810,12 +857,32 @@ int addRtnToOtn(OptTreeNode* otn, RuleTreeNode* rtn, PolicyId policyId)
 
     otn->proto_nodes[policyId] = rtn;
 
+    // Optimized for parsing only, this check avoids adding run time rtn
+    if (!sc)
+        return 0;
+
+    if (!sc->rtn_hash_table)
+    {
+        sc->rtn_hash_table = sfxhash_new(10000, sizeof(RuleTreeNodeKey), 0, 0, 0, nullptr, nullptr, 1);
+
+        if (sc->rtn_hash_table == nullptr)
+            FatalError("Failed to create rule tree node hash table\n");
+
+        sfxhash_set_keyops(sc->rtn_hash_table, rtn_hash_func, rtn_compare_func);
+    }
+
+    RuleTreeNodeKey key;
+    memset(&key, 0, sizeof(key));
+    key.rtn = rtn;
+    key.policyId = policyId;
+    sfxhash_add(sc->rtn_hash_table, &key, rtn);
+
     return 0; //success
 }
 
-int addRtnToOtn(OptTreeNode* otn, RuleTreeNode* rtn)
+int addRtnToOtn(SnortConfig*sc, OptTreeNode* otn, RuleTreeNode* rtn)
 {
-    return addRtnToOtn(otn, rtn, get_ips_policy()->policy_id);
+    return addRtnToOtn(sc, otn, rtn, get_ips_policy()->policy_id);
 }
 
 void rule_index_map_print_index(int index, char* buf, int bufsize)

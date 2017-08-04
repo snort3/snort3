@@ -66,7 +66,7 @@ THREAD_LOCAL ProfileStats dce2_smb_pstat_smb_negotiate;
 // debug stuff
 //-------------------------------------------------------------------------
 
-#ifdef DEBUG
+#ifdef DEBUG_MSGS
 static const char* smb_com_strings[SMB_MAX_NUM_COMS] =
 {
     "Create Directory",            // 0x00

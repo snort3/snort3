@@ -53,11 +53,12 @@ void parser_append_rules(const char*);
 
 int ParseBool(const char* arg);
 
-int addRtnToOtn(struct OptTreeNode*, RuleTreeNode*);
-int addRtnToOtn(struct OptTreeNode*, RuleTreeNode*, PolicyId);
+int addRtnToOtn(SnortConfig*, struct OptTreeNode*, RuleTreeNode*);
+int addRtnToOtn(SnortConfig*, struct OptTreeNode*, RuleTreeNode*, PolicyId);
 
-RuleTreeNode* deleteRtnFromOtn(struct OptTreeNode*);
-RuleTreeNode* deleteRtnFromOtn(struct OptTreeNode*, PolicyId);
+bool same_headers(RuleTreeNode*, RuleTreeNode*);
+RuleTreeNode* deleteRtnFromOtn(OptTreeNode*, SnortConfig* sc = nullptr);
+RuleTreeNode* deleteRtnFromOtn(struct OptTreeNode*, PolicyId, SnortConfig* sc = nullptr, bool remove = true);
 
 inline RuleTreeNode* getRtnFromOtn(const struct OptTreeNode* otn, PolicyId policyId)
 {
@@ -86,6 +87,12 @@ void DestroyRuleTreeNode(RuleTreeNode*);
 int parser_get_rule_index(unsigned gid, unsigned sid);
 void parser_get_rule_ids(int index, unsigned& gid, unsigned& sid);
 void rule_index_map_print_index(int index, char* buf, int);
+
+struct RuleTreeNodeKey
+{
+    RuleTreeNode* rtn;
+    PolicyId policyId;
+};
 
 #endif
 
