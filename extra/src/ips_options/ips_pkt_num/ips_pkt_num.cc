@@ -87,9 +87,11 @@ int PktNumOption::eval(Cursor&, Packet*)
 // module
 //-------------------------------------------------------------------------
 
+#define RANGE "1:"
+
 static const Parameter s_params[] =
 {
-    { "~range", Parameter::PT_STRING, nullptr, nullptr,
+    { "~range", Parameter::PT_INTERVAL, RANGE, nullptr,
       "check if packet number is in given range" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -120,7 +122,7 @@ bool PktNumModule::set(const char*, Value& v, SnortConfig*)
     if ( !v.is("~range") )
         return false;
 
-    return data.validate(v.get_string(), "0:");
+    return data.validate(v.get_string(), RANGE);
 }
 
 //-------------------------------------------------------------------------

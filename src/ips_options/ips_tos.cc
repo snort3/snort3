@@ -101,8 +101,8 @@ int IpTosOption::eval(Cursor&, Packet* p)
 
 static const Parameter s_params[] =
 {
-    { "~range", Parameter::PT_STRING, nullptr, nullptr,
-      "check if ip tos value is 'value | min<>max | <max | >min', range is " RANGE },
+    { "~range", Parameter::PT_INTERVAL, RANGE, nullptr,
+      "check if ip tos is in given range" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

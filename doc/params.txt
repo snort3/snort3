@@ -13,6 +13,7 @@ The following types are used:
 * *enum*: a string selected from the given range
 * *implied*: an IPS rule option that takes no value but means true
 * *int*: a whole number in the given range
+* *interval*: a set of ints (see below)
 * *ip4*: an IP4 address or CIDR
 * *mac*: an ethernet address with the form 01:02:03:04:05:06
 * *multi*: one or more space separated strings from the given range
@@ -43,4 +44,7 @@ Some additional details to note:
   there is no hard limit.
 * bit_list is typically used to store a set of byte, port, or VLAN ID
   values.
+* interval takes the form [operator]i, j<>k, or j<=>k where i,j,k are
+  integers and operator is one of =, !, != (same as !), <, <=, >, >=.
+  j<>k means j < int < k and j<=>k means j <= int <= k.
 

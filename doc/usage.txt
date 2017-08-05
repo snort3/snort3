@@ -98,6 +98,12 @@ Log any generated alerts to the console using the "-A" option:
 
     snort -c $my_path/etc/snort/snort.lua -r /path/to/my.pcap -A alert_full
 
+Capture separate stdout, stderr, and stdlog files (out has startup and
+shutdown output, err has warnings and errors, and log has alerts):
+
+    snort -c $my_path/etc/snort/snort.lua -r /path/to/my.pcap -A csv \
+        1>out 2>err 3>log
+
 Add or modify a configuration from the command line using the "--lua" option:
 
     snort -c $my_path/etc/snort/snort.lua -r /path/to/my.pcap -A cmg \

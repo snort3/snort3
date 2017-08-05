@@ -78,6 +78,20 @@ static bool valid_int(Value& v, const char* r)
     return true;
 }
 
+// interval is a special case because we support a<>b and a<=>b for convenience.
+// if not for that, then dsize:1<>10; would be dsize:>1, <10; (2 parameters) but
+// that is the same as dsize:>1; dsize:<10; which is arguably easier to read and
+// not significantly worse performance and which we also, obviously, already
+// support.  and note that <> and <=> are non-standard Snort-isms.  so, we wind
+// up with a multivalued parameter which is best handled as a string.  validation
+// must be done by the user.  the advantage of using an interval instead of string
+// is that we can document the type in one place and the parameters can focus on
+// their actual, specific semantics instead of trying to explain the syntax.  this
+// also ensures that an int-type range is not applied to a string.
+
+static bool valid_interval(Value&, const char*)
+{ return true; }
+
 // FIXIT-L allow multiple , separated ranges
 static bool valid_real(Value& v, const char* r)
 {
@@ -362,6 +376,8 @@ bool Parameter::validate(Value& v) const
         // fall through
     case PT_INT:
         return valid_int(v, (const char*)range);
+    case PT_INTERVAL:
+        return valid_interval(v, (const char*)range);
     case PT_REAL:
         return valid_real(v, (const char*)range);
 
@@ -402,7 +418,7 @@ bool Parameter::validate(Value& v) const
 static const char* const pt2str[Parameter::PT_MAX] =
 {
     "table", "list", "dynamic",
-    "bool", "int", "real", "port",
+    "bool", "int", "interval", "real", "port",
     "string", "select", "multi", "enum",
     "mac", "ip4", "addr",
     "bit_list", "addr_list", "implied"

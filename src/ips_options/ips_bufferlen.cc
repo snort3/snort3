@@ -97,8 +97,8 @@ int LenOption::eval(Cursor& c, Packet*)
 
 static const Parameter s_params[] =
 {
-    { "~range", Parameter::PT_STRING, nullptr, nullptr,
-      "len | min<>max | <max | >min, range is " RANGE },
+    { "~range", Parameter::PT_INTERVAL, RANGE, nullptr,
+      "check that lenght of current buffer is in given range" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

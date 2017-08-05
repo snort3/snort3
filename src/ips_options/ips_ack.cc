@@ -94,9 +94,11 @@ int TcpAckOption::eval(Cursor&, Packet* p)
 // module
 //-------------------------------------------------------------------------
 
+#define RANGE "0:"
+
 static const Parameter s_params[] =
 {
-    { "~range", Parameter::PT_STRING, nullptr, nullptr,
+    { "~range", Parameter::PT_INTERVAL, RANGE, nullptr,
       "check if tcp ack value is 'value | min<>max | <max | >min'" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -127,7 +129,7 @@ bool AckModule::set(const char*, Value& v, SnortConfig*)
     if ( !v.is("~range") )
         return false;
 
-    return data.validate(v.get_string(), "0:");
+    return data.validate(v.get_string(), RANGE);
 }
 
 //-------------------------------------------------------------------------

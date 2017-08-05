@@ -42,6 +42,7 @@ struct SO_PUBLIC Parameter
         PT_DYNAMIC,    // range is RangeQuery*
         PT_BOOL,       // if you are reading this, get more coffee
         PT_INT,        // signed 64 bits or less determined by range
+        PT_INTERVAL,   // string that defines an interval, bounds within range
         PT_REAL,       // double
         PT_PORT,       // 0 to 64K-1 unless specified otherwise
         PT_STRING,     // any string less than len chars

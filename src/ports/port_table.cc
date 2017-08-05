@@ -513,33 +513,6 @@ static PortObject2* PortTableCompileMergePortObjectList2(
     return ponew;
 }
 
-/*
- *
- *  Verify all rules in 'po' list are in 'po2' hash
- *
- *  return  0 - OK
- *         !0 - a rule in po is not in po2
- */
-static int _po2_include_po_rules(PortObject2* po2, PortObject* po)
-{
-    SF_LNODE* rpos;
-
-    /* get each rule in po */
-    for ( int* pid = (int*)sflist_first(po->rule_list, &rpos);
-        pid;
-        pid = (int*)sflist_next(&rpos) )
-    {
-        /* find it in po2 */
-        int* id = (int*)sfghash_find(po2->rule_hash, pid);
-
-        /* make sure it's in po2 */
-        if ( !id )
-            return 1; /* error */
-    }
-
-    return 0;
-}
-
 static int PortTableCompileMergePortObjects(PortTable* p)
 {
     DebugMessage(DEBUG_PORTLISTS, "***\n***Merging PortObjects->PortObjects2\n***\n");
@@ -715,9 +688,9 @@ static int PortTableCompileMergePortObjects(PortTable* p)
     return 0;
 }
 
+#ifdef DEBUG
 // consistency check - part 1
 // make sure each port is only in one composite port object
-
 static bool PortTableConsistencyCheck(PortTable* p)
 {
     std::unique_ptr<char[]> upA(new char[SFPO_MAX_PORTS]);
@@ -755,6 +728,30 @@ static bool PortTableConsistencyCheck(PortTable* p)
     }
 
     return true;
+}
+
+/*
+ * Verify all rules in 'po' list are in 'po2' hash
+ * return  0 - OK; !0 - a rule in po is not in po2
+ */
+static int _po2_include_po_rules(PortObject2* po2, PortObject* po)
+{
+    SF_LNODE* rpos;
+
+    /* get each rule in po */
+    for ( int* pid = (int*)sflist_first(po->rule_list, &rpos);
+        pid;
+        pid = (int*)sflist_next(&rpos) )
+    {
+        /* find it in po2 */
+        int* id = (int*)sfghash_find(po2->rule_hash, pid);
+
+        /* make sure it's in po2 */
+        if ( !id )
+            return 1; /* error */
+    }
+
+    return 0;
 }
 
 // consistency check - part 2
@@ -809,6 +806,7 @@ static bool PortTableConsistencyCheck2(PortTable* p)
 
     return true;
 }
+#endif
 
 //-------------------------------------------------------------------------
 // PortTable - public
@@ -934,8 +932,10 @@ int PortTableCompile(PortTable* p)
 
     DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS, "Done\n"); fflush(stdout); );
 
+#ifdef DEBUG
     assert(PortTableConsistencyCheck(p));
     assert(PortTableConsistencyCheck2(p));
+#endif
 
     return 0;
 }

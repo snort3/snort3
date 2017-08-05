@@ -421,11 +421,13 @@ int Dce2IfaceOption::eval(Cursor&, Packet* p)
 // dce2_iface module
 //-------------------------------------------------------------------------
 
+#define RANGE "0:"
+
 static const Parameter s_params[] =
 {
     { "uuid", Parameter::PT_STRING, nullptr, nullptr,
       "match given dcerpc uuid" },
-    { "version",Parameter::PT_STRING, nullptr, nullptr,
+    { "version",Parameter::PT_INTERVAL, RANGE, nullptr,
       "interface version" },
     { "any_frag", Parameter::PT_IMPLIED, nullptr, nullptr,
       "match on any fragment" },
@@ -456,7 +458,7 @@ bool Dce2IfaceModule::begin(const char*, int, SnortConfig*)
 bool Dce2IfaceModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("version") )
-        return version.validate(v.get_string(), "0:");
+        return version.validate(v.get_string(), RANGE);
     else if ( v.is("any_frag") )
         any_frag = true;
     else if ( v.is("uuid") )

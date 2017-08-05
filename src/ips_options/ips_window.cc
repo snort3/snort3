@@ -98,8 +98,8 @@ int TcpWinOption::eval(Cursor&, Packet* p)
 
 static const Parameter s_params[] =
 {
-    { "~range", Parameter::PT_STRING, nullptr, nullptr,
-      "check if tcp window field size is 'size | min<>max | <max | >min', range is " RANGE },
+    { "~range", Parameter::PT_INTERVAL, RANGE, nullptr,
+      "check if tcp window size is in given range" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

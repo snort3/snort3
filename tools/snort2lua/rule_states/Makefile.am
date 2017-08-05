@@ -7,6 +7,7 @@ rule_content.cc \
 rule_convert_comma_list.cc \
 rule_dce_iface.cc \
 rule_dnp3_obj.cc \
+rule_dsize.cc \
 rule_file_data.cc \
 rule_http_encode.cc \
 rule_isdataat.cc \

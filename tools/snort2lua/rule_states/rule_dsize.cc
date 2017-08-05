@@ -15,38 +15,57 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// out_sfunified2.cc author Carter Waxman <cwaxman@cisco.com>
+// rule_dsize.cc author Russ Combs <rucombs@cisco.com>
+// (based on the amazing original work by Josh)
 
-#include <sstream>
+#include <string>
+//#include <cstdlib>
 
 #include "conversion_state.h"
 #include "helpers/converter.h"
 #include "rule_states/rule_api.h"
 #include "helpers/s2l_util.h"
 
-namespace output
+namespace rules
 {
-    namespace
+namespace
+{
+class Dsize : public ConversionState
+{
+public:
+    Dsize(Converter& c) : ConversionState(c) { }
+    virtual ~Dsize() { }
+    virtual bool convert(std::istringstream& data);
+};
+} // namespace
+
+bool Dsize::convert(std::istringstream& data_stream)
+{
+    std::string args = util::get_rule_option_args(data_stream);
+    size_t ltgt = args.find("<>");
+
+    if ( ltgt != std::string::npos )
     {
-        //FIXIT-L add when available
-        static std::string header = "output sf_unified2: ";
+        rule_api.add_comment("dsize: option change: '<>' --> '<=>'");
+        args.insert(ltgt+1, "=");
+    }
+    rule_api.add_option("dsize", args);
+    return set_next_rule_state(data_stream);
+}
 
-        template<std::string* header_text>
-        static ConversionState* unified2_ctor(Converter& c)
-        { return new UnsupportedState<header_text>(c); }
+/**************************
+ *******  A P I ***********
+ **************************/
 
-    } // namespace
+static ConversionState* dsize_ctor(Converter& c)
+{ return new Dsize(c); }
 
-    /**************************
-     *******  A P I ***********
-     **************************/
+static const ConvertMap rule_dsize =
+{
+    "dsize",
+    dsize_ctor,
+};
 
-    static const ConvertMap unified2_api =
-    {
-        "sf_unified2",
-        unified2_ctor<&header>,
-    };
-
-    const ConvertMap* sfunified2_map = &unified2_api;
-} // output namespace
+const ConvertMap* dsize_map = &rule_dsize;
+} // namespace rules
 

@@ -93,10 +93,12 @@ int TcpSeqOption::eval(Cursor&, Packet* p)
 // module
 //-------------------------------------------------------------------------
 
+#define RANGE "0:"
+
 static const Parameter s_params[] =
 {
-    { "~range", Parameter::PT_STRING, nullptr, nullptr,
-      "check if tcp sequence number value is 'value | min<>max | <max | >min'" },
+    { "~range", Parameter::PT_INTERVAL, RANGE, nullptr,
+      "check if tcp sequence number is in given range" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -129,7 +131,7 @@ bool SeqModule::set(const char*, Value& v, SnortConfig*)
     if ( !v.is("~range") )
         return false;
 
-    return data.validate(v.get_string(), "0:");
+    return data.validate(v.get_string(), RANGE);
 }
 
 //-------------------------------------------------------------------------

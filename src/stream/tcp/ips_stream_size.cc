@@ -162,10 +162,12 @@ int SizeOption::eval(Cursor&, Packet* pkt)
 // stream_size module
 //-------------------------------------------------------------------------
 
+#define RANGE "0:"
+
 static const Parameter s_params[] =
 {
-    { "~range", Parameter::PT_STRING, nullptr, nullptr,
-      "size for comparison" },
+    { "~range", Parameter::PT_INTERVAL, RANGE, nullptr,
+      "check if the stream size is in the given range" },
 
     { "~direction", Parameter::PT_ENUM, "either|to_server|to_client|both", nullptr,
       "compare applies to the given direction(s)" },
@@ -198,7 +200,7 @@ bool SizeModule::begin(const char*, int, SnortConfig*)
 bool SizeModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("~range") )
-        return ssod.validate(v.get_string(), "0:");
+        return ssod.validate(v.get_string(), RANGE);
 
     else if ( v.is("~direction") )
         direction = v.get_long();

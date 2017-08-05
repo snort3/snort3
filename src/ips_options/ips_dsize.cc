@@ -103,8 +103,8 @@ int DsizeOption::eval(Cursor&, Packet* p)
 
 static const Parameter s_params[] =
 {
-    { "~range", Parameter::PT_STRING, nullptr, nullptr,
-      "check if packet payload size is 'size | min<>max | <max | >min', range is " RANGE },
+    { "~range", Parameter::PT_INTERVAL, RANGE, nullptr,
+      "check if packet payload size is in the given range" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

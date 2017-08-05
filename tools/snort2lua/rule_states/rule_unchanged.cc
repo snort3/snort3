@@ -172,20 +172,7 @@ static const ConvertMap rule_flowbits =
 const ConvertMap* flowbits_map = &rule_flowbits;
 
 /************************************
- *********  D S I Z E  **************
- ************************************/
-
-static const std::string dsize = "dsize";
-static const ConvertMap rule_dsize =
-{
-    dsize,
-    unchanged_rule_ctor<& dsize>,
-};
-
-const ConvertMap* dsize_map = &rule_dsize;
-
-/************************************
- *********  D S I Z E  **************
+ ************  FRABGITS  ************
  ************************************/
 
 static const std::string fragbits = "fragbits";

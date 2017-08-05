@@ -97,8 +97,8 @@ int TcpUrgOption::eval(Cursor&, Packet* p)
 
 static const Parameter s_params[] =
 {
-    { "~range", Parameter::PT_STRING, nullptr, nullptr,
-      "check if urgent offset is min<>max | <max | >min, range is " RANGE },
+    { "~range", Parameter::PT_INTERVAL, RANGE, nullptr,
+      "check if tcp urgent offset is in given range" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
