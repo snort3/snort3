@@ -25,6 +25,8 @@
 #include <cstdint>
 #include <set>
 
+#include "main/snort_types.h"
+
 struct ObfuscatorBlock
 {
     // Only used by `class Obfuscator`
@@ -40,7 +42,7 @@ struct ObfuscatorBlock
     size_t length;
 };
 
-class Obfuscator
+class SO_PUBLIC Obfuscator
 {
 public:
     struct BlockCompare

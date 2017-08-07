@@ -1,6 +1,7 @@
 
 set (LOG_INCLUDES
     messages.h
+    obfuscator.h
     text_log.h
     unified2.h
 )
@@ -13,7 +14,6 @@ add_library ( log STATIC
     log_text.h
     messages.cc
     obfuscator.cc
-    obfuscator.h
     packet_tracer.cc
     packet_tracer.h
     text_log.cc

@@ -57,6 +57,7 @@ src/loggers/alert_ex/Makefile \
 src/loggers/alert_lua/Makefile \
 src/loggers/alert_unixsock/Makefile \
 src/loggers/log_null/Makefile \
+src/loggers/unified2x/Makefile \
 src/search_engines/Makefile \
 src/search_engines/lowmem/Makefile \
 src/so_rules/Makefile \

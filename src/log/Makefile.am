@@ -5,6 +5,7 @@ x_includedir = $(pkgincludedir)/log
 
 x_include_HEADERS = \
 messages.h \
+obfuscator.h \
 text_log.h \
 unified2.h
 
@@ -15,7 +16,6 @@ log_text.cc \
 log_text.h \
 messages.cc \
 obfuscator.cc \
-obfuscator.h \
 packet_tracer.cc \
 packet_tracer.h \
 text_log.cc

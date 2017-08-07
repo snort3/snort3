@@ -2,7 +2,8 @@ SUBDIRS = \
 alert_ex \
 alert_lua \
 alert_unixsock \
-log_null
+log_null \
+unified2x
 
 AM_CPPFLAGS = @AM_CPPFLAGS@
 AM_CFLAGS= @AM_CFLAGS@

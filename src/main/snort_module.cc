@@ -276,7 +276,7 @@ static const Parameter s_params[] =
     { "--dirty-pig", Parameter::PT_IMPLIED, nullptr, nullptr,
       "don't flush packets on shutdown" },
 
-    { "--dump-builtin-rules", Parameter::PT_IMPLIED, nullptr, nullptr,
+    { "--dump-builtin-rules", Parameter::PT_STRING, "(optional)", nullptr,
       "[<module prefix>] output stub rules for selected modules" },
 
     // FIXIT-L add --list-dynamic-rules like --list-builtin-rules
@@ -291,6 +291,9 @@ static const Parameter s_params[] =
 
     { "--enable-inline-test", Parameter::PT_IMPLIED, nullptr, nullptr,
       "enable Inline-Test Mode Operation" },
+
+    { "--gen-msg-map", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "dump builtin rules in gen-msg.map format for use by other tools" },
 
     { "--help", Parameter::PT_IMPLIED, nullptr, nullptr,
       "list command line options" },
@@ -311,7 +314,7 @@ static const Parameter s_params[] =
       "list all available modules with brief help" },
 
     { "--help-options", Parameter::PT_STRING, "(optional)", nullptr,
-      "<option prefix> output matching command line option quick help (same as -?)" },
+      "[<option prefix>] output matching command line option quick help (same as -?)" },
 
     { "--help-plugins", Parameter::PT_IMPLIED, nullptr, nullptr,
       "list all available plugins with brief help" },
@@ -329,7 +332,7 @@ static const Parameter s_params[] =
       "output available inspection buffers" },
 
     { "--list-builtin", Parameter::PT_STRING, "(optional)", nullptr,
-      "<module prefix> output matching builtin rules" },
+      "[<module prefix>] output matching builtin rules" },
 
     { "--list-gids", Parameter::PT_STRING, "(optional)", nullptr,
       "[<module prefix>] output matching generators" },
@@ -720,6 +723,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--enable-inline-test") )
         sc->run_flags |= RUN_FLAG__INLINE_TEST;
+
+    else if ( v.is("--gen-msg-map") )
+        dump_msg_map(sc, v.get_string());
 
     else if ( v.is("--help") )
         help_basic(sc, v.get_string());

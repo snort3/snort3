@@ -127,7 +127,7 @@ NORETURN void help_usage(SnortConfig*, const char* s)
     fprintf(stdout, "    %s [-options] -c conf [-T]: validate conf\n", s);
     fprintf(stdout, "    %s [-options] -c conf -i iface: process live\n", s);
     fprintf(stdout, "    %s [-options] -c conf -r pcap: process readback\n", s);
-    exit(1);
+    exit(0);
 }
 
 NORETURN void help_options(SnortConfig*, const char* val)
@@ -144,9 +144,9 @@ NORETURN void help_signals(SnortConfig*, const char*)
 
 enum HelpType
 {
-    HT_CFG, HT_CMD, HT_GID, HT_IPS, HT_MOD,
-    HT_BUF, HT_LST, HT_PLG, HT_DDR, HT_DBR,
-    HT_HMO, HT_HPL, HT_DFL, HT_PEG
+    HT_BUF, HT_CFG, HT_CMD, HT_DBR, HT_DDR,
+    HT_DMM, HT_GID, HT_HMO, HT_HPL, HT_DFL,
+    HT_IPS, HT_LST, HT_MOD, HT_PEG, HT_PLG
 };
 
 NORETURN static void show_help(SnortConfig* sc, const char* val, HelpType ht)
@@ -158,35 +158,29 @@ NORETURN static void show_help(SnortConfig* sc, const char* val, HelpType ht)
 
     switch ( ht )
     {
+    case HT_BUF:
+        InspectorManager::dump_buffers();
+        break;
     case HT_CFG:
         ModuleManager::show_configs(val);
         break;
     case HT_CMD:
         ModuleManager::show_commands(val);
         break;
-    case HT_GID:
-        ModuleManager::show_gids(val);
-        break;
-    case HT_IPS:
-        ModuleManager::show_rules(val);
-        break;
-    case HT_MOD:
-        ModuleManager::show_module(val);
-        break;
-    case HT_BUF:
-        InspectorManager::dump_buffers();
-        break;
-    case HT_LST:
-        ModuleManager::list_modules(val);
-        break;
-    case HT_PLG:
-        PluginManager::list_plugins();
+    case HT_DBR:
+        ModuleManager::dump_rules(val);
         break;
     case HT_DDR:
         SoManager::dump_rule_stubs(val);
         break;
-    case HT_DBR:
-        ModuleManager::dump_rules(val);
+    case HT_DFL:
+        ModuleManager::dump_defaults(val);
+        break;
+    case HT_DMM:
+        ModuleManager::dump_msg_map(val);
+        break;
+    case HT_GID:
+        ModuleManager::show_gids(val);
         break;
     case HT_HMO:
         ModuleManager::show_modules();
@@ -194,11 +188,20 @@ NORETURN static void show_help(SnortConfig* sc, const char* val, HelpType ht)
     case HT_HPL:
         PluginManager::show_plugins();
         break;
-    case HT_DFL:
-        ModuleManager::dump_defaults(val);
+    case HT_IPS:
+        ModuleManager::show_rules(val);
+        break;
+    case HT_LST:
+        ModuleManager::list_modules(val);
+        break;
+    case HT_MOD:
+        ModuleManager::show_module(val);
         break;
     case HT_PEG:
         ModuleManager::show_pegs(val);
+        break;
+    case HT_PLG:
+        PluginManager::list_plugins();
         break;
     }
     ModuleManager::term();
@@ -238,6 +241,11 @@ NORETURN void help_builtin(SnortConfig* sc, const char* val)
     show_help(sc, val, HT_IPS);
 }
 
+NORETURN void help_counts(SnortConfig* sc, const char* val)
+{
+    show_help(sc, val, HT_PEG);
+}
+
 NORETURN void help_module(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_MOD);
@@ -251,6 +259,26 @@ NORETURN void help_modules(SnortConfig* sc, const char* val)
 NORETURN void help_plugins(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_HPL);
+}
+
+NORETURN void help_version(SnortConfig*)
+{
+    DisplayBanner();
+    exit(0);
+}
+
+NORETURN void list_daqs(SnortConfig* sc)
+{
+    SFDAQ::load(sc);
+    SFDAQ::print_types(cout);
+    SFDAQ::unload();
+    exit(0);
+}
+
+NORETURN void list_interfaces(SnortConfig*)
+{
+    PrintAllInterfaces();
+    exit(0);
 }
 
 NORETURN void list_modules(SnortConfig* sc, const char* val)
@@ -278,9 +306,9 @@ NORETURN void dump_dynamic_rules(SnortConfig* sc, const char* val)
     show_help(sc, val, HT_DDR);
 }
 
-NORETURN void help_counts(SnortConfig* sc, const char* val)
+NORETURN void dump_msg_map(SnortConfig* sc, const char* val)
 {
-    show_help(sc, val, HT_PEG);
+    show_help(sc, val, HT_DMM);
 }
 
 NORETURN void dump_rule_hex(SnortConfig*, const char* val)
@@ -298,26 +326,6 @@ NORETURN void dump_rule_text(SnortConfig*, const char* val)
 NORETURN void dump_version(SnortConfig*)
 {
     cout << VERSION << endl;
-    exit(0);
-}
-
-NORETURN void help_version(SnortConfig*)
-{
-    DisplayBanner();
-    exit(0);
-}
-
-NORETURN void list_interfaces(SnortConfig*)
-{
-    PrintAllInterfaces();
-    exit(0);
-}
-
-NORETURN void list_daqs(SnortConfig* sc)
-{
-    SFDAQ::load(sc);
-    SFDAQ::print_types(cout);
-    SFDAQ::unload();
     exit(0);
 }
 

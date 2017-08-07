@@ -1260,6 +1260,39 @@ void ModuleManager::dump_rules(const char* pfx)
         cout << "no match" << endl;
 }
 
+void ModuleManager::dump_msg_map(const char* pfx)
+{
+    s_modules.sort(comp_gids);
+    unsigned len = pfx ? strlen(pfx) : 0;
+    unsigned c = 0;
+
+    for ( auto p : s_modules )
+    {
+        const Module* m = p->mod;
+
+        if ( pfx && strncmp(m->get_name(), pfx, len) )
+            continue;
+
+        const RuleMap* r = m->get_rules();
+
+        if ( !r )
+            continue;
+
+        unsigned gid = m->get_gid();
+
+        while ( r->msg )
+        {
+            cout << gid << " || " << r->sid << " || ";
+            cout << m->get_name() << ": ";
+            cout << r->msg << endl;
+            r++;
+        }
+        c++;
+    }
+    if ( !c )
+        cout << "no match" << endl;
+}
+
 void ModuleManager::dump_stats(SnortConfig*, const char* skip)
 {
     for ( auto p : s_modules )
