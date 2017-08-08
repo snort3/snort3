@@ -757,8 +757,9 @@ void Snort::thread_init_unprivileged()
     SideChannelManager::thread_init();
     HighAvailabilityManager::thread_init(); // must be before InspectorManager::thread_init();
     InspectorManager::thread_init(snort_conf);
+    PacketTracer::thread_init();
     if (SnortConfig::packet_trace_enabled())
-        PacketTracer::thread_init();
+        PacketTracer::enable_user_trace();
 
     // in case there are HA messages waiting, process them first
     HighAvailabilityManager::process_receive();
@@ -916,6 +917,11 @@ static DAQ_Verdict update_verdict(DAQ_Verdict verdict, int& inject)
 DAQ_Verdict Snort::packet_callback(
     void*, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt)
 {
+    if (pkthdr->flags & DAQ_PKT_FLAG_TRACE_ENABLED)
+        PacketTracer::enable_daq_trace();
+    else
+        PacketTracer::disable_daq_trace();
+
     set_default_policy();
     Profile profile(totalPerfStats);
 
@@ -942,10 +948,8 @@ DAQ_Verdict Snort::packet_callback(
         get_network_policy()->policy_id, get_ips_policy()->policy_id,
         SFDAQ::verdict_to_string(verdict));
 
-    PacketTracer::dump();
+    PacketTracer::dump(pkthdr, verdict);
 
-    // FIXIT-H move this to the appropriate struct
-    //perfBase->UpdateWireStats(pkthdr->caplen, Active::packet_was_dropped(), inject);
     HighAvailabilityManager::process_update(s_packet->flow, pkthdr);
 
     Active::reset();

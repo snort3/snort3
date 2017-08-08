@@ -565,6 +565,20 @@ int SFDAQInstance::modify_flow_opaque(const DAQ_PktHdr_t* hdr, uint32_t opaque)
     return daq_modify_flow(daq_mod, daq_hand, hdr, &mod);
 }
 
+int SFDAQInstance::modify_flow_pkt_trace(const DAQ_PktHdr_t* hdr, DAQ_Verdict verdict,
+    uint8_t* buff, uint32_t buff_len)
+{
+    DAQ_ModFlow_t mod;
+    DAQ_ModFlowPktTrace_t mod_tr;
+    mod_tr.vreason = (uint8_t)verdict;
+    mod_tr.pkt_trace_data_len = buff_len;
+    mod_tr.pkt_trace_data = buff;
+    mod.type = DAQ_MODFLOW_TYPE_PKT_TRACE;
+    mod.length = sizeof(DAQ_ModFlowPktTrace_t);
+    mod.value = (void*)&mod_tr;
+    return daq_modify_flow(daq_mod, daq_hand, hdr, &mod);
+}
+
 // FIXIT-L X Add Snort flag definitions for callers to use and translate/pass them through to
 // the DAQ module
 int SFDAQInstance::add_expected(const Packet* ctrlPkt, const SfIp* cliIP, uint16_t cliPort,

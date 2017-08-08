@@ -49,7 +49,35 @@ typedef struct
     int daq_config_reads;
     const DAQ_Module_t* module;
     void *handle;
+    struct
+    {
+        int skip;
+        int trace;
+        void* user;
+        DAQ_Analysis_Func_t orig_daq_packet_callback;
+    } packt_tracer_cfg;
 }DAQRegTestContext;
+
+// packet tracer configuration from command line daq-var skip and trace
+// --daq-var skip=10 --daq-var trace=5 would trace packets 11 through 15 only
+static void daq_regtest_get_vars(DAQRegTestContext* context, const DAQ_Config_t* cfg)
+{
+    DAQ_Dict* entry;
+
+    context->packt_tracer_cfg.skip = 0;
+    context->packt_tracer_cfg.trace = 0;
+    for ( entry = cfg->values; entry; entry = entry->next)
+    {
+        if ( !strcmp(entry->key, "skip") )
+        {
+            context->packt_tracer_cfg.skip = atoi(entry->value);
+        }
+        else if ( !strcmp(entry->key, "trace") )
+        {
+            context->packt_tracer_cfg.trace = atoi(entry->value);
+        }
+    }
+}
 
 static int daq_regtest_parse_config(DAQRegTestContext *context, DAQRegTestConfig** new_config, char* errBuf, size_t errMax)
 {
@@ -102,7 +130,6 @@ static int daq_regtest_parse_config(DAQRegTestContext *context, DAQRegTestConfig
 static int daq_regtest_init_context(DAQRegTestContext* context, char* errBuf, size_t errMax)
 {
     context->debug_fh = NULL;
-
     return daq_regtest_parse_config(context, &(context->daq_regtest_cfg), errBuf, errMax);
 }
 static void daq_regtest_cleanup(DAQRegTestContext* context)
@@ -171,6 +198,8 @@ static int daq_regtest_initialize (
         return rval;
     }
 
+    daq_regtest_get_vars(context, cfg);
+
     context->module = daq_find_module("dump");
 
     if (!context->module)
@@ -218,12 +247,33 @@ static int daq_regtest_inject (
 }
 
 //-------------------------------------------------------------------------
+static DAQ_Verdict daq_regtest_packet_callback(void* user, const DAQ_PktHdr_t* hdr,
+    const uint8_t* data)
+{
+    DAQRegTestContext* context = (DAQRegTestContext*)user;
+
+    if (context->packt_tracer_cfg.skip == 0 && context->packt_tracer_cfg.trace >0)
+    {
+        DAQ_PktHdr_t* pkthdr = (DAQ_PktHdr_t*)hdr;
+        pkthdr->flags |= DAQ_PKT_FLAG_TRACE_ENABLED;
+    }
+
+    if (context->packt_tracer_cfg.skip > 0)
+        context->packt_tracer_cfg.skip--;
+    else if (context->packt_tracer_cfg.trace > 0)
+        context->packt_tracer_cfg.trace--;
+
+    return context->packt_tracer_cfg.orig_daq_packet_callback(context->packt_tracer_cfg.user,
+        hdr, data);
+}
 
 static int daq_regtest_acquire (
     void* handle, int cnt, DAQ_Analysis_Func_t callback, DAQ_Meta_Func_t meta, void* user)
 {
     DAQRegTestContext* context = (DAQRegTestContext*)handle;
-    return context->module->acquire(context->handle, cnt, callback, meta, user);
+    context->packt_tracer_cfg.orig_daq_packet_callback = callback;
+    context->packt_tracer_cfg.user = user;
+    return context->module->acquire(context->handle, cnt, daq_regtest_packet_callback, meta, handle);
 }
 
 //-------------------------------------------------------------------------
@@ -286,6 +336,25 @@ static int daq_regtest_get_device_index(void* handle, const char* device)
 {
     DAQRegTestContext* context = (DAQRegTestContext*)handle;
     return context->module->get_device_index(context->handle, device);
+}
+
+static int daq_regtest_modify_flow(void *handle, const DAQ_PktHdr_t *hdr, const DAQ_ModFlow_t *modify)
+{
+    DAQRegTestContext* context = (DAQRegTestContext*)handle;
+
+    if (modify->type == DAQ_MODFLOW_TYPE_PKT_TRACE)
+    {
+        if (modify->length != sizeof(DAQ_ModFlowPktTrace_t))
+            return DAQ_ERROR_INVAL;
+
+        DAQ_ModFlowPktTrace_t* mod_tr = (DAQ_ModFlowPktTrace_t *) modify->value;
+        printf("DAQ_REGTEST_PKT_TRACE (%d)\n%s\n", mod_tr->pkt_trace_data_len,
+            mod_tr->pkt_trace_data);
+    }
+    if (context->module->modify_flow)
+        return context->module->modify_flow(context->handle, hdr, modify);
+    else
+        return DAQ_SUCCESS;
 }
 
 static int daq_regtest_set_filter (void* handle, const char* filter)
@@ -362,7 +431,7 @@ DAQ_SO_PUBLIC DAQ_Module_t DAQ_MODULE_DATA =
     .get_errbuf = daq_regtest_get_errbuf,
     .set_errbuf = daq_regtest_set_errbuf,
     .get_device_index = daq_regtest_get_device_index,
-    .modify_flow = NULL,
+    .modify_flow = daq_regtest_modify_flow,
     .hup_prep = daq_regtest_hup_prep,
     .hup_apply = daq_regtest_hup_apply,
     .hup_post = daq_regtest_hup_post,

@@ -21,6 +21,8 @@
 #ifndef PACKET_TRACER_H
 #define PACKET_TRACER_H
 
+#include <daq_common.h>
+
 struct Packet;
 
 class PacketTracer
@@ -29,13 +31,19 @@ public:
     static void thread_init();
     static void thread_term();
     static void log(const char* format, ...) __attribute__((format (printf, 1, 2)));
-    static void dump(char* output_buff=nullptr, unsigned int len=0);
+    static void dump(char* output_buff, unsigned int len);
+    static void dump(const DAQ_PktHdr_t* pkthdr, DAQ_Verdict verdict);
     static void add_header_info(Packet* p);
+    static bool get_enable(const uint32_t mask=0);
+    static void enable_user_trace();
+    static void enable_daq_trace();
+    static void disable_daq_trace();
 #ifdef UNIT_TEST
     char* get_buff();
-    int get_buff_len();
+    unsigned int get_buff_len();
 #endif
 private:
+    uint32_t enable_flags = 0;
     static const int max_buff_size = 2048;
     char buffer[max_buff_size];
     unsigned int buff_len = 0;

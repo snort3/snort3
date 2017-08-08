@@ -27,6 +27,7 @@
 #include <cstdarg>
 
 #include "log.h"
+#include "packet_io/sfdaq.h"
 #include "protocols/eth.h"
 #include "protocols/ip.h"
 #include "protocols/packet.h"
@@ -35,6 +36,9 @@
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"
 #endif
+
+#define PACKET_TRACER_USER_ENABLED  0x00000001
+#define PACKET_TRACER_DAQ_ENABLED   0x00000002
 
 static THREAD_LOCAL PacketTracer* s_pkt_trace = nullptr;
 
@@ -55,16 +59,59 @@ void PacketTracer::thread_term()
     }
 }
 
-void PacketTracer::dump(char* output_buff, unsigned int len)
+bool PacketTracer::get_enable(const uint32_t mask)
 {
     if (!s_pkt_trace)
+        return false;
+    if (mask)
+        return (s_pkt_trace->enable_flags & mask);
+    else
+        return (s_pkt_trace->enable_flags != 0);
+}
+
+void PacketTracer::enable_user_trace()
+{
+    assert(s_pkt_trace);
+    s_pkt_trace->enable_flags |= PACKET_TRACER_USER_ENABLED;
+}
+
+void PacketTracer::enable_daq_trace()
+{
+    assert(s_pkt_trace);
+    s_pkt_trace->enable_flags |= PACKET_TRACER_DAQ_ENABLED;
+}
+
+void PacketTracer::disable_daq_trace()
+{
+    assert(s_pkt_trace);
+    s_pkt_trace->enable_flags &= ~PACKET_TRACER_DAQ_ENABLED;
+}
+
+void PacketTracer::dump(char* output_buff, unsigned int len)
+{
+    if (!get_enable())
         return;
+
     if (output_buff)
-    {
         memcpy(output_buff, s_pkt_trace->buffer,
             (len < s_pkt_trace->buff_len + 1 ? len : s_pkt_trace->buff_len + 1));
+
+    s_pkt_trace->buff_len = 0;
+    s_pkt_trace->buffer[0] = '\0';
+}
+
+void PacketTracer::dump(const DAQ_PktHdr_t* pkthdr, DAQ_Verdict verdict)
+{
+    if (!get_enable())
+        return;
+
+    if (get_enable(PACKET_TRACER_DAQ_ENABLED))
+    {
+        SFDAQ::get_local_instance()->modify_flow_pkt_trace(pkthdr, verdict,
+            (uint8_t *)s_pkt_trace->buffer, s_pkt_trace->buff_len + 1);
     }
-    else
+
+    if (get_enable(PACKET_TRACER_USER_ENABLED))
         printf("%s\n", s_pkt_trace->buffer);
 
     s_pkt_trace->buff_len = 0;
@@ -73,7 +120,7 @@ void PacketTracer::dump(char* output_buff, unsigned int len)
 
 void PacketTracer::log(const char* format, ...)
 {
-    if (!s_pkt_trace)
+    if (!get_enable())
         return;
 
     va_list ap;
@@ -96,13 +143,13 @@ void PacketTracer::log(const char* format, ...)
 
 void PacketTracer::add_header_info(Packet* p)
 {
-    if (!s_pkt_trace)
+    if (!get_enable())
         return;
 
     if ( auto eh = layer::get_eth_layer(p) )
     {
         // MAC layer
-        log("%02X:%02X:%02X:%02X:%02X:%02X - ", eh->ether_src[0],
+        log("%02X:%02X:%02X:%02X:%02X:%02X -> ", eh->ether_src[0],
             eh->ether_src[1], eh->ether_src[2], eh->ether_src[3],
             eh->ether_src[4], eh->ether_src[5]);
         log("%02X:%02X:%02X:%02X:%02X:%02X ", eh->ether_dst[0],
@@ -119,7 +166,7 @@ void PacketTracer::add_header_info(Packet* p)
         p->ptrs.ip_api.get_src()->ntop(sipstr, sizeof(sipstr));
         p->ptrs.ip_api.get_dst()->ntop(dipstr, sizeof(dipstr));
 
-        log("%s-%u - %s-%u %u\n",
+        log("%s:%u -> %s:%u proto %u\n",
             sipstr, p->ptrs.sp, dipstr, p->ptrs.dp, (unsigned)p->ptrs.ip_api.proto());
         log("Packet: %s", p->get_type());
         if (p->type() == PktType::TCP)
@@ -134,15 +181,14 @@ void PacketTracer::add_header_info(Packet* p)
 }
 
 #ifdef UNIT_TEST
-
 char* PacketTracer::get_buff()
 {
-    return this->buffer;
+    return buffer;
 }
 
-int PacketTracer::get_buff_len()
+unsigned int PacketTracer::get_buff_len()
 {
-    return this->buff_len;
+    return buff_len;
 }
 
 #define MAX_PKT_TRACE_BUFF_SIZE 2048
@@ -152,17 +198,17 @@ TEST_CASE("basic log", "[PacketTracer]")
     char test_str[] = "1234567890";
     // instantiate a packet tracer
     PacketTracer::thread_init();
-
+    PacketTracer::enable_user_trace();
     // basic logging
     PacketTracer::log("%s", test_str);
-    CHECK((memcmp(s_pkt_trace->get_buff(), test_str, 10) == 0));
+    CHECK(!(strcmp(s_pkt_trace->get_buff(), test_str)));
     CHECK((s_pkt_trace->get_buff_len() == 10));
     // continue log will add message to the buffer
     PacketTracer::log("%s", "ABCDEFG");
     CHECK((strcmp(s_pkt_trace->get_buff(), "1234567890ABCDEFG") == 0));
-    CHECK((s_pkt_trace->get_buff_len() == (int)strlen(s_pkt_trace->get_buff())));
+    CHECK((s_pkt_trace->get_buff_len() == strlen(s_pkt_trace->get_buff())));
     // log empty string won't change existed buffer
-    int curr_len = s_pkt_trace->get_buff_len();
+    unsigned int curr_len = s_pkt_trace->get_buff_len();
     char empty_str[] = "";
     PacketTracer::log("%s", empty_str);
     CHECK((s_pkt_trace->get_buff_len() == curr_len));
@@ -174,7 +220,7 @@ TEST_CASE("corner cases", "[PacketTracer]")
 {
     char test_str[] = "1234567890", empty_str[] = "";
     PacketTracer::thread_init();
-
+    PacketTracer::enable_user_trace();
     // init length check
     CHECK((s_pkt_trace->get_buff_len() == 0));
     // logging empty string to start with
@@ -200,7 +246,7 @@ TEST_CASE("dump", "[PacketTracer]")
     char test_str[] = "ABCD", results[] = "ABCD3=400";
 
     PacketTracer::thread_init();
-
+    PacketTracer::enable_user_trace();
     PacketTracer::log("%s%d=%d", test_str, 3, 400);
     PacketTracer::dump(test_string, MAX_PKT_TRACE_BUFF_SIZE);
     CHECK(!strcmp(test_string, results));
@@ -213,4 +259,29 @@ TEST_CASE("dump", "[PacketTracer]")
 
     PacketTracer::thread_term();
 }
+
+TEST_CASE("enable", "[PacketTracer]")
+{
+    PacketTracer::thread_init();
+    // packet tracer is disabled by default
+    CHECK(!PacketTracer::get_enable());
+    // enabled from user
+    PacketTracer::enable_user_trace();
+    CHECK(PacketTracer::get_enable());
+    CHECK(PacketTracer::get_enable(PACKET_TRACER_USER_ENABLED));
+    CHECK(!PacketTracer::get_enable(PACKET_TRACER_DAQ_ENABLED));
+    // enabled from DAQ
+    PacketTracer::enable_daq_trace();
+    CHECK(PacketTracer::get_enable());
+    CHECK(PacketTracer::get_enable(PACKET_TRACER_DAQ_ENABLED));
+    // disable DAQ enable
+    PacketTracer::disable_daq_trace();
+    CHECK(!PacketTracer::get_enable(PACKET_TRACER_DAQ_ENABLED));
+    // user configuration remain enabled
+    CHECK(PacketTracer::get_enable());
+    CHECK(PacketTracer::get_enable(PACKET_TRACER_USER_ENABLED));
+    
+    PacketTracer::thread_term();
+}
+
 #endif

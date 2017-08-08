@@ -198,7 +198,7 @@ void AppIdInspector::eval(Packet* p)
     if (p->flow)
     {
         AppIdDiscovery::do_application_discovery(p);
-        if (SnortConfig::packet_trace_enabled())
+        if (PacketTracer::get_enable())
             add_appid_to_packet_trace(p->flow);
     }
     else

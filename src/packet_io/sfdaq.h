@@ -64,6 +64,8 @@ public:
 
     SO_PUBLIC int query_flow(const DAQ_PktHdr_t*, DAQ_QueryFlow_t*);
     int modify_flow_opaque(const DAQ_PktHdr_t*, uint32_t opaque);
+    int modify_flow_pkt_trace(const DAQ_PktHdr_t*, DAQ_Verdict,
+        uint8_t* buff, uint32_t buff_len);
     int add_expected(const Packet* ctrlPkt, const SfIp* cliIP, uint16_t cliPort,
             const SfIp* srvIP, uint16_t srvPort, IpProtocol, unsigned timeout_ms,
             unsigned /* flags */);
