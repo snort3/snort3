@@ -256,6 +256,18 @@ bool Converter::initialize()
     return true;
 }
 
+Binder& Converter::make_binder(Binder& b)
+{
+    binders.push_back(std::unique_ptr<Binder>(new Binder(b)));
+    return *binders.back();
+}
+
+Binder& Converter::make_binder()
+{
+    binders.push_back(std::unique_ptr<Binder>(new Binder(table_api)));
+    return *binders.back();
+}
+
 int Converter::convert(std::string input,
     std::string output_file,
     std::string rule_file,
@@ -265,6 +277,11 @@ int Converter::convert(std::string input,
     initialize();
 
     rc = parse_file(input);
+
+    // vector::clear()'s ordering isn't deterministic but this is
+    // keep in place for stable regressions
+    while ( binders.size() )
+        binders.pop_back();
 
     if (rule_file.empty())
         rule_file = output_file;

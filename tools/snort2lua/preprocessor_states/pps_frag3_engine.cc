@@ -91,7 +91,7 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
             }
             else
             {
-                Binder b(table_api);
+                auto& b = cv.make_binder();
                 b.set_when_proto("ip");
                 b.add_when_net(ip_list);
                 b.set_use_type("stream_ip");

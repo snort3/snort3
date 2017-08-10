@@ -260,9 +260,9 @@ bool StreamTcp::convert(std::istringstream& data_stream)
     std::string keyword;
     bool retval = true;
 
-    Binder client(table_api);
-    Binder server(table_api);
-    Binder any(table_api);
+    auto& client = cv.make_binder();
+    auto& server = cv.make_binder();
+    auto& any = cv.make_binder();
 
     // by default, only print one binding
     client.print_binding(true);
@@ -493,20 +493,14 @@ bool StreamTcp::convert(std::istringstream& data_stream)
     //  Add the port bindings separately from the protocol bindings since 
     //  in 2.9.x they are OR'd not AND'd. Clear the ports so they're not 
     //  included with the protocol bindings.
-    {
-        Binder b = client;      //  Binding is added during destructor.
-        client.clear_ports();
-    }
+    cv.make_binder(client);
+    client.clear_ports();
 
-    {
-        Binder b = server;
-        server.clear_ports();
-    }
+    cv.make_binder(server);
+    server.clear_ports();
 
-    {
-        Binder b = any;
-        any.clear_ports();
-    }
+    cv.make_binder(any);
+    any.clear_ports();
 
     if (!protos_set)
     {
@@ -519,7 +513,7 @@ bool StreamTcp::convert(std::istringstream& data_stream)
 
         for (const std::string& s : default_protos)
         {
-            Binder b = *bind_default; // Binding is added during destructor.
+            auto& b = cv.make_binder(*bind_default);
             b.set_when_service(s);
         }
     }
@@ -528,7 +522,7 @@ bool StreamTcp::convert(std::istringstream& data_stream)
     {
         for (std::string s : client_protocols)
         {
-            Binder b = client;
+            auto& b = cv.make_binder(client);
             b.set_when_service(s);
         }
     }
@@ -537,7 +531,7 @@ bool StreamTcp::convert(std::istringstream& data_stream)
     {
         for (std::string s : server_protocols)
         {
-            Binder b = server;
+            auto& b = cv.make_binder(server);
             b.set_when_service(s);
         }
     }
@@ -546,7 +540,7 @@ bool StreamTcp::convert(std::istringstream& data_stream)
     {
         for (std::string s : any_protocols)
         {
-            Binder b = any;
+            auto& b = cv.make_binder(any);
             b.set_when_service(s);
         }
     }

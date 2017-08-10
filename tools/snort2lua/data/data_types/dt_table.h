@@ -36,6 +36,8 @@ public:
     virtual ~Table();
 
     inline std::string get_name() { return name; }
+    void set_one_line(bool o) { one_line = o; }
+    void set_print_whitespace(bool w) { print_whitespace = w; }
     bool has_differences();
     Table* open_table();
     Table* open_table(std::string);
@@ -59,6 +61,9 @@ public:
 
 private:
     std::string name;
+    bool one_line = false;
+    bool print_whitespace = true;
+
     int depth;
     Comments* comments;
     std::vector<Table*> tables;

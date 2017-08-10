@@ -36,6 +36,10 @@ public:
     inline std::string get_name() { return name; }
     std::string get_value(DataApi*);
     bool add_value(std::string);
+    
+    void set_print_whitespace(bool w)
+    { print_whitespace = w; }
+
     friend std::ostream& operator<<(std::ostream&, const Variable&);
 
 private:
@@ -50,6 +54,7 @@ private:
     std::vector<VarData*> vars;
     std::string name;
     int depth;
+    bool print_whitespace = true;
     static const std::size_t max_line_length = 77; // leave room for additional text
 };
 

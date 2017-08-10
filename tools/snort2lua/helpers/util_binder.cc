@@ -35,9 +35,9 @@ void Binder::add_to_configuration()
 {
     printed = true;
     table_api.open_top_level_table("binder");
-    table_api.open_table();
+    table_api.open_table(true);
 
-    table_api.open_table("when");
+    table_api.open_table("when", true);
 
     if (when_policy_id >= 0)
         table_api.add_option("policy_id", when_policy_id);
@@ -48,7 +48,7 @@ void Binder::add_to_configuration()
     if (!when_proto.empty())
         table_api.add_option("proto", when_proto);
 
-    if (!when_role.empty())
+    if (!when_role.empty() && when_role != "any")
         table_api.add_option("role", when_role);
 
     for (auto p : ports)
@@ -62,7 +62,7 @@ void Binder::add_to_configuration()
 
     table_api.close_table(); // "when"
 
-    table_api.open_table("use");
+    table_api.open_table("use", true);
 
     if (!use_policy_id.empty())
         table_api.add_option("policy_id", use_policy_id);

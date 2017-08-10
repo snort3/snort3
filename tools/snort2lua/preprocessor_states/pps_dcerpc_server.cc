@@ -638,11 +638,11 @@ bool DcerpcServer::convert(std::istringstream& data_stream)
     std::string keyword;
     bool retval = true;
 
-    Binder bind_tcp(table_api);
-    Binder bind_smb(table_api);
-    Binder bind_udp(table_api);
-    Binder bind_http_proxy(table_api);
-    Binder bind_http_server(table_api);
+    auto& bind_tcp = cv.make_binder();
+    auto& bind_smb = cv.make_binder();
+    auto& bind_udp = cv.make_binder();
+    auto& bind_http_proxy = cv.make_binder();
+    auto& bind_http_server = cv.make_binder();
 
     std::map<std::string, Binder*> bind;
 

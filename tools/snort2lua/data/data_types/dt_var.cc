@@ -145,9 +145,15 @@ std::ostream& operator<<(std::ostream& out, const Variable& var)
     for (int i = 0; i < var.depth; i++)
         whitespace += "    ";
 
-    out << whitespace << var.name << " = ";
-    count += whitespace.size() + var.name.size() + 3;
-    whitespace += "    ";
+    out << (var.print_whitespace ? whitespace : "") << var.name << " = ";
+
+    if ( var.print_whitespace )
+        count += whitespace.size();
+
+    count += var.name.size() + 3;
+
+    if ( var.print_whitespace )
+        whitespace += "    ";
 
     for (Variable::VarData* v : var.vars)
     {
@@ -165,15 +171,15 @@ std::ostream& operator<<(std::ostream& out, const Variable& var)
             first_var = false;
 
         // print string
-        if (v->type == Variable::VarType::VARIABLE)
+        if ( v->type == Variable::VarType::VARIABLE )
         {
-            if (v->data.size() + count > var.max_line_length)
+            if ( var.print_whitespace && v->data.size() + count > var.max_line_length )
                 print_newline(out, count, whitespace);
 
             out << v->data;
             count += v->data.size();
         }
-        else if ((count + v->data.size()) < var.max_line_length)
+        else if ( !var.print_whitespace || (count + v->data.size()) < var.max_line_length )
         {
             out << "'" << v->data << "'";
             count += v->data.size() + 2;

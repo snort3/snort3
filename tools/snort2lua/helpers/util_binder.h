@@ -27,10 +27,13 @@ class TableApi;
 
 // The Binders destructor will add the Objects configuration to the
 //   table_api.
+class Converter;
 class Binder
 {
+    //Only use Converter to instantiate Binders through make_binder()
+    //This ensures only one binder tables is created per policy
+    friend class Converter;
 public:
-    Binder(TableApi&);
     ~Binder();
 
     //  By calling add_to_configuration(), you are adding this Binder Object
@@ -40,6 +43,9 @@ public:
     void add_to_configuration();
     void print_binding(bool should_print)
     { printed = !should_print; }
+
+    bool will_print()
+    { return !printed; }
 
     void set_when_policy_id(int id);
     void set_when_service(std::string service);
@@ -58,6 +64,8 @@ public:
     void set_use_policy_id(std::string id);
 
 private:
+    Binder(TableApi&);
+
     TableApi& table_api;
     bool printed; // ensures that the binding is added once,
                   // by either the destructor or user

@@ -114,7 +114,7 @@ bool Smtp::convert(std::istringstream& data_stream)
     std::string keyword;
     bool retval = true;
     bool ports_set = false;
-    Binder bind(table_api);
+    auto& bind = cv.make_binder();
 
     bind.set_when_proto("tcp");
     bind.set_use_type("smtp");

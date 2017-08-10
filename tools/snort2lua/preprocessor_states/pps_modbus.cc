@@ -47,7 +47,7 @@ Modbus::~Modbus()
     if (converted_args)
         return;
 
-    Binder bind(table_api);
+    auto& bind = cv.make_binder();
     bind.set_when_proto("tcp");
     bind.add_when_port("502");
     bind.set_use_type("modbus");
@@ -61,7 +61,7 @@ bool Modbus::convert(std::istringstream& data_stream)
     std::string keyword;
     bool retval = true;
     bool ports_set = false;
-    Binder bind(table_api);
+    auto& bind = cv.make_binder();
 
     bind.set_when_proto("tcp");
     bind.set_use_type("modbus");

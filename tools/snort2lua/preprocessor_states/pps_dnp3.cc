@@ -47,12 +47,12 @@ Dnp3::~Dnp3()
     if (converted_args)
         return;
 
-    Binder tcp_bind(table_api);
+    auto& tcp_bind = cv.make_binder();
     tcp_bind.set_when_proto("tcp");
     tcp_bind.add_when_port("20000");
     tcp_bind.set_use_type("dnp3");
 
-    Binder udp_bind(table_api);
+    auto& udp_bind = cv.make_binder();
     udp_bind.set_when_proto("udp");
     udp_bind.add_when_port("20000");
     udp_bind.set_use_type("dnp3");
@@ -66,8 +66,8 @@ bool Dnp3::convert(std::istringstream& data_stream)
     std::string keyword;
     bool retval = true;
     bool ports_set = false;
-    Binder tcp_bind(table_api);
-    Binder udp_bind(table_api);
+    auto& tcp_bind = cv.make_binder();
+    auto& udp_bind = cv.make_binder();
 
     converted_args = true;
 

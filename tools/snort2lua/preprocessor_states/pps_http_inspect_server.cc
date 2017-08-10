@@ -64,7 +64,7 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
     bool ports_set = false;
     bool simplify = false;
     bool slash_dir_set = false;
-    Binder bind(table_api);
+    auto& bind = cv.make_binder();
 
     bind.set_when_proto("tcp");
     bind.set_use_type("http_inspect");

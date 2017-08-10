@@ -177,7 +177,7 @@ bool FtpServer::convert(std::istringstream& data_stream)
     std::string keyword;
     bool retval = true;
     bool ports_set = false;
-    Binder bind(table_api);
+    auto& bind = cv.make_binder();
     bind.set_use_type("ftp_server");
     bind.set_when_proto("tcp");
 
@@ -361,7 +361,7 @@ bool FtpClient::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
-    Binder bind(table_api);
+    auto& bind = cv.make_binder();
     bind.set_use_type("ftp_client");
     bind.set_when_proto("tcp");
 
@@ -494,7 +494,7 @@ bool Telnet::convert(std::istringstream& data_stream)
     std::string keyword;
     bool ports_set = false;
     bool retval = true;
-    Binder bind(table_api);
+    auto& bind = cv.make_binder();
 
     bind.set_when_proto("tcp");
     bind.set_use_type("telnet");

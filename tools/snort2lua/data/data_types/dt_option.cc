@@ -81,7 +81,9 @@ std::ostream& operator<<(std::ostream& out, const Option& o)
     for (int i = 0; i < o.depth; i++)
         whitespace += "    ";
 
-    out << whitespace;
+    if ( o.print_whitespace )
+        out << whitespace;
+
     if (o.name.size())
         out << o.name << " = ";
 

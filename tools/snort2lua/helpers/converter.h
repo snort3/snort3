@@ -20,11 +20,13 @@
 #ifndef UTILS_CONVERTER_H
 #define UTILS_CONVERTER_H
 
+#include <memory>
 #include <string>
 #include "conversion_defines.h"
 #include "data/dt_data.h"
 #include "data/dt_table_api.h"
 #include "data/dt_rule_api.h"
+#include "util_binder.h"
 
 class Converter
 {
@@ -55,6 +57,9 @@ public:
 
     inline static void set_empty_args(bool val)
     { empty_args = val; }
+
+    Binder& make_binder(Binder&);
+    Binder& make_binder();
 
     int convert(std::string input,
         std::string output,
@@ -98,6 +103,7 @@ private:
     DataApi data_api;
     TableApi table_api;
     RuleApi rule_api;
+    std::vector<std::unique_ptr<Binder>> binders;
 
     // the current parsing state.
     ConversionState* state;

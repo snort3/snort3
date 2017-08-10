@@ -148,7 +148,7 @@ bool Binding::convert(std::istringstream& data_stream)
     if (!util::get_string(data_stream, val, ","))
         return false;
 
-    Binder bind(table_api);
+    auto& bind = cv.make_binder();
     bool rc = true;
 
     do

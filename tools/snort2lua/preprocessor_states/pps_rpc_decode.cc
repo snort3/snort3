@@ -50,7 +50,7 @@ RpcDecode::~RpcDecode()
 {
     if (!converted_args)
     {
-        Binder bind(table_api);
+        auto& bind = cv.make_binder();
         bind.set_when_proto("tcp");
         bind.add_when_port("111");
         bind.add_when_port("32271");
@@ -68,7 +68,7 @@ bool RpcDecode::convert(std::istringstream& data_stream)
     std::string keyword;
 
     // adding the binder entry
-    Binder bind(table_api);
+    auto& bind = cv.make_binder();
     bind.set_when_proto("tcp");
     bind.set_use_type("rpc_decode");
 

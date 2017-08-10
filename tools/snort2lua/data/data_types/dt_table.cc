@@ -250,40 +250,90 @@ std::ostream& operator<<(std::ostream& out, const Table& t)
         whitespace += "    ";
 
     if (!t.name.empty())
-        out << whitespace << t.name << " =" << std::endl;
-    out << whitespace << '{' << std::endl;
+    {
+        if ( t.print_whitespace )
+            out << whitespace;
 
-    if (!t.comments->empty() && !DataApi::is_quiet_mode())
-        out << (*t.comments) << std::endl;
+        out << t.name << (t.one_line ? " = " : " =\n");
+    }
+
+    out << (t.print_whitespace ? whitespace : "")
+        << (t.one_line ? "{ " : "{\n");
 
     // if we only want differences, don't print data
     if (!DataApi::is_difference_mode())
     {
         for (Option* o : t.options)
-            out << (*o) << ",\n";
+        {
+            o->set_print_whitespace(!t.one_line);
+            out << (*o) << (t.one_line ? ", " : ",\n");
+        }
 
         for (Variable* v : t.lists)
-            out << (*v) << ",\n";
+        {
+            v->set_print_whitespace(!t.one_line);
+            out << (*v) << (t.one_line ? ", " : ",\n");
+        }
 
         for (Table* sub_t : t.tables)
-            out << (*sub_t) << ",\n";
+        {
+            //If this table is one_lined, it may still print whitespace beforehand
+            //Don't print whitespace within the table if it's one_lined
+            sub_t->set_print_whitespace(!t.one_line);
+
+            if ( t.one_line )
+                sub_t->set_one_line(true);
+
+            out << (*sub_t) << (t.one_line ? ", " : ",\n");
+        }
     }
     else
     {
         for (Table* sub_t : t.tables)
+        {
             if (sub_t->has_differences())
-                out << (*sub_t) << ",\n";
+            {
+                //If this table is one_lined, it may still print whitespace beforehand
+                //Don't print whitespace within the table if it's one_lined
+                sub_t->set_print_whitespace(!t.one_line);
+
+                if ( t.one_line )
+                    sub_t->set_one_line(true);
+
+                out << (*sub_t) << (t.one_line ? ", " : ",\n");
+            }
+        }
     }
 
-    out << whitespace << "}";
+
+    if (!t.comments->empty() && !DataApi::is_quiet_mode())
+    {
+        // Comments need a new line regardless of one_line setting
+        // When one_line is off, this section is already starting on it's own line
+        if ( t.one_line )
+            out << "\n";
+
+        out << (*t.comments) << "\n";
+    }
+
+    if ( !t.one_line && t.print_whitespace )
+        out << whitespace;
+    out << "}";
 
     // Now, print all options which need to be appended/overwrite earlier options
     if (!t.append_options.empty())
     {
-        out << "\n";
+        if ( !t.one_line )
+            out << "\n";
 
         for (Option* a : t.append_options)
-            out << (*a) << "\n";
+        {
+            a->set_print_whitespace(!t.one_line);
+
+            out << (*a);
+            if ( !t.one_line )
+                out << "\n";
+        }
     }
 
     return out;

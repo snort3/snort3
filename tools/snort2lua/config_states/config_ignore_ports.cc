@@ -62,7 +62,7 @@ bool IgnorePorts::convert(std::istringstream& data_stream)
     }
 
     // Only add to the binder once we have validated the configuration.
-    Binder bind(table_api);
+    auto& bind = cv.make_binder();
     bind.set_when_proto(keyword);
 
     while (data_stream >> port)

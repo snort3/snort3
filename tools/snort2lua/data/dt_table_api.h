@@ -66,11 +66,20 @@ public:
  */
 
 // open a table at the topmost layer. i.e., the table will not be nested inside any other table.
-    void open_top_level_table(std::string name);
+    void open_top_level_table(const char* name, bool one_line = false)
+    { open_top_level_table(std::string(name), one_line); }
+
+    void open_top_level_table(std::string name, bool one_line = false);
+
 // open a nested named table --> 'name = {...}')
-    void open_table(std::string name);
+    void open_table(std::string name, bool one_line = false);
+
+    void open_table(const char* name, bool one_line = false)
+    { open_table(std::string(name), one_line); }
+
 // open a nested table that does not contain a name --> {...})
-    void open_table();
+    void open_table(bool one_line = false);
+
 // close the nested table.  go to previous table level
     void close_table();
 

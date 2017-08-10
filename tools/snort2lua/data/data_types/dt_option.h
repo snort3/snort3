@@ -39,6 +39,9 @@ public:
     inline std::string get_value()
     { return value; }
 
+    void set_print_whitespace(bool w)
+    { print_whitespace = w; }
+
     // overloading operators
     friend std::ostream& operator<<(std::ostream&, const Option&);
     friend bool operator!=(const Option& lhs, const Option& rhs);
@@ -50,6 +53,7 @@ private:
     std::string name;
     std::string value;
     int depth;
+    bool print_whitespace = false;
     OptionType type;
 };
 

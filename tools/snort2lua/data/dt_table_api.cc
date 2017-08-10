@@ -47,7 +47,7 @@ void TableApi::reset_state()
     curr_data_bad = false;
 }
 
-void TableApi::open_top_level_table(std::string table_name)
+void TableApi::open_top_level_table(std::string table_name, bool one_line)
 {
     Table* t = util::find_table(tables, table_name);
 
@@ -57,6 +57,7 @@ void TableApi::open_top_level_table(std::string table_name)
         tables.push_back(t);
     }
 
+    t->set_one_line(one_line);
     open_tables.push(t);
 
     // ignore the initial table
@@ -64,7 +65,7 @@ void TableApi::open_top_level_table(std::string table_name)
         top_level_tables.push(open_tables.size());
 }
 
-void TableApi::open_table(std::string table_name)
+void TableApi::open_table(std::string table_name, bool one_line)
 {
     Table* t;
 
@@ -84,10 +85,11 @@ void TableApi::open_table(std::string table_name)
         }
     }
 
+    t->set_one_line(one_line);
     open_tables.push(t);
 }
 
-void TableApi::open_table()
+void TableApi::open_table(bool one_line)
 {
     // if no open tables, create a top-level table
     if (open_tables.size() == 0)
@@ -97,6 +99,7 @@ void TableApi::open_table()
     else
     {
         Table* t = open_tables.top()->open_table();
+        t->set_one_line(one_line);
         open_tables.push(t);
     }
 }
