@@ -58,6 +58,9 @@ static THREAD_LOCAL eth_t* s_link = NULL;
 static THREAD_LOCAL ip_t* s_ipnet = NULL;
 static THREAD_LOCAL send_t s_send = SFDAQ::inject;
 
+Active::ActiveStatus Active::get_status()
+{ return active_status; }
+
 //--------------------------------------------------------------------
 // helpers
 

@@ -195,12 +195,7 @@ static void parse_config_file(const char* key, const char* val)
     else
     {
         conf_file = std::string(val);
-
-#ifndef WIN32
         std::size_t path_sep = conf_file.find_last_of("/");
-#else
-        std::size_t path_sep = conf_file.find_last_of("\\");
-#endif
 
         /* is there a directory separator in the filename */
         if (path_sep != std::string::npos)

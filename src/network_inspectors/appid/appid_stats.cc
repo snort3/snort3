@@ -43,24 +43,14 @@ struct AppIdStatRecord
     uint32_t responderBytes;
 };
 
-#ifdef WIN32
-#pragma pack(push, app_stats, 1)
-#else
 #pragma pack(1)
-#endif
-
 struct AppIdStatOutputRecord
 {
     char app_name[MAX_EVENT_APPNAME_LEN];
     uint32_t initiatorBytes;
     uint32_t responderBytes;
 };
-
-#ifdef WIN32
-#pragma pack(pop, app_stats)
-#else
 #pragma pack()
-#endif
 
 static const char appid_stats_file_suffix[] = "appid_stats.log";
 

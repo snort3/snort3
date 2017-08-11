@@ -278,7 +278,7 @@ void AppIdHttpSession::process_chp_buffers()
             }
         }
 
-        free_chp_matches(cmd, NUMBER_OF_PTYPES);
+        free_chp_matches(cmd, NUMBER_OF_PTYPES-1);
 
         if ( !chp_candidate )
         {

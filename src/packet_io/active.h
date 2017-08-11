@@ -76,8 +76,7 @@ public:
     static ActiveAction get_action()
     { return active_action; }
 
-    static ActiveStatus get_status()
-    { return active_status; }
+    static ActiveStatus get_status();
 
     static bool can_block()
     { return active_status == AST_ALLOW or active_status == AST_FORCE; }

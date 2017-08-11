@@ -560,7 +560,6 @@ static int UpdatePathToFile(char* full_path_filename, unsigned int max_size, cha
     /*
      *  If an absolute path is specified, then use that.
      */
-#ifndef WIN32
     if (filename[0] == '/')
     {
         snprintf(full_path_filename, max_size, "%s", filename);
@@ -581,29 +580,6 @@ static int UpdatePathToFile(char* full_path_filename, unsigned int max_size, cha
                 "%s/%s", snort_conf_dir, filename);
         }
     }
-#else
-    if (strlen(filename)>3 && filename[1]==':' && filename[2]=='\\')
-    {
-        snprintf(full_path_filename, max_size, "%s", filename);
-    }
-    else
-    {
-        /*
-         **  Set up the file name directory
-         */
-        if (snort_conf_dir[strlen(snort_conf_dir) - 1] == '\\' ||
-            snort_conf_dir[strlen(snort_conf_dir) - 1] == '/' )
-        {
-            snprintf(full_path_filename,max_size,
-                "%s%s", snort_conf_dir, filename);
-        }
-        else
-        {
-            snprintf(full_path_filename, max_size,
-                "%s\\%s", snort_conf_dir, filename);
-        }
-    }
-#endif
     return 1;
 }
 
