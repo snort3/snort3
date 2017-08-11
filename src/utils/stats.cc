@@ -219,6 +219,7 @@ const PegInfo proc_names[] =
     { "signals", "total signals processed" },
     { "conf_reloads", "number of times configuration was reloaded" },
     { "policy_reloads", "number of times policies were reloaded" },
+    { "inspector_deletions", "number of times inspectors were deleted" },
     { "daq_reloads", "number of times daq configuration was reloaded" },
     { "attribute_table_reloads", "number of times hosts table was reloaded" },
     { "attribute_table_hosts", "total number of hosts in table" },

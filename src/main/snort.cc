@@ -631,22 +631,39 @@ SnortConfig* Snort::get_reload_config(const char* fname)
     return sc;
 }
 
-SnortConfig* Snort::get_reloaded_policy(SnortConfig* other_conf, const char* fname)
+SnortConfig* Snort::get_updated_policy(SnortConfig* other_conf, const char* fname, const char* iname)
 {
     reloading = true;
 
     SnortConfig* sc = new SnortConfig(other_conf);
-    Shell sh = Shell(fname);
-    sh.configure(sc);
 
-    if ( ModuleManager::get_errors() || !sc->verify() )
+    if ( fname )
     {
-        sc->cloned = true;
-        InspectorManager::update_policy(other_conf);
-        delete sc;
-        set_policies(other_conf);
-        reloading = false;
-        return nullptr;
+        Shell sh = Shell(fname);
+        sh.configure(sc);
+
+        if ( ModuleManager::get_errors() || !sc->verify() )
+        {
+            sc->cloned = true;
+            InspectorManager::update_policy(other_conf);
+            delete sc;
+            set_policies(other_conf);
+            reloading = false;
+            return nullptr;
+        }
+    }
+
+    if ( iname )
+    {
+        if ( !InspectorManager::delete_inspector(sc, iname) )
+        {
+            sc->cloned = true;
+            InspectorManager::update_policy(other_conf);
+            delete sc;
+            set_policies(other_conf);
+            reloading = false;
+            return nullptr;
+        }
     }
 
     if ( !InspectorManager::configure(sc, true) )

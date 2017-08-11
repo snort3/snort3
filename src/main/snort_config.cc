@@ -325,7 +325,6 @@ void SnortConfig::clone(SnortConfig* conf)
 
     if (conf->obfuscation_net.get_family() != 0)
         memcpy(&obfuscation_net, &conf->obfuscation_net, sizeof(obfuscation_net));
-
 }
 
 // merge in everything from the command line config

@@ -353,7 +353,7 @@ int main_reload_policy(lua_State* L)
     }
 
     SnortConfig* old = snort_conf;
-    SnortConfig* sc = Snort::get_reloaded_policy(old, fname);
+    SnortConfig* sc = Snort::get_updated_policy(old, fname, nullptr);
 
     if ( !sc )
     {
@@ -413,6 +413,47 @@ int main_reload_hosts(lua_State* L)
     bool from_shell = ( L != nullptr );
     current_request->respond(".. swapping hosts table\n", from_shell);
     broadcast(get_command(new ACSwap(new Swapper(old, tc)), from_shell));
+
+    return 0;
+}
+
+int main_delete_inspector(lua_State* L)
+{
+    if ( Swapper::get_reload_in_progress() )
+    {
+        current_request->respond("== delete pending; retry\n");
+        return 0;
+    }
+    const char* iname =  nullptr;
+
+    if ( L )
+    {
+        Lua::ManageStack(L, 1);
+        iname = luaL_checkstring(L, 1);
+    }
+
+    if ( iname and *iname )
+        current_request->respond(".. deleting inspector\n");
+    else
+    {
+        current_request->respond("== inspector name required\n");
+        return 0;
+    }
+
+    SnortConfig* old = snort_conf;
+    SnortConfig* sc = Snort::get_updated_policy(old, nullptr, iname);
+
+    if ( !sc )
+    {
+        current_request->respond("== reload failed\n");
+        return 0;
+    }
+    snort_conf = sc;
+    proc_stats.inspector_deletions++;
+
+    bool from_shell = ( L != nullptr );
+    current_request->respond(".. deleted inspector\n", from_shell);
+    broadcast(get_command(new ACSwap(new Swapper(old, sc)), from_shell));
 
     return 0;
 }

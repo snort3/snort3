@@ -59,9 +59,18 @@ static const Parameter s_reload[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const Parameter s_delete[] =
+{
+    { "inspector", Parameter::PT_STRING, nullptr, nullptr,
+      "name of inspector to delete" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
 static const Command snort_cmds[] =
 {
     { "show_plugins", main_dump_plugins, nullptr, "show available plugins" },
+    { "delete_inspector", main_delete_inspector, s_delete, "delete an inspector from the default policy" },
     { "dump_stats", main_dump_stats, nullptr, "show summary statistics" },
     { "rotate_stats", main_rotate_stats, nullptr, "roll perfmonitor log files" },
     { "reload_config", main_reload_config, s_reload, "load new configuration" },

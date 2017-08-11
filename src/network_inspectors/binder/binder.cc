@@ -410,6 +410,8 @@ public:
     void show(SnortConfig*) override
     { LogMessage("Binder\n"); }
 
+    void update(SnortConfig*, const char*) override;
+
     bool configure(SnortConfig*) override;
 
     void eval(Packet*) override;
@@ -456,6 +458,26 @@ bool Binder::configure(SnortConfig* sc)
             set_binding(sc, pb);
     }
     return true;
+}
+
+void Binder::update(SnortConfig* sc, const char* name)
+{
+    vector<Binding*>::iterator it;
+    for ( it = bindings.begin(); it != bindings.end(); ++it )
+    {
+        const char* key;
+        Binding *pb = *it;
+        if ( pb->use.svc.empty() )
+            key = pb->use.name.c_str();
+        else
+            key = pb->use.svc.c_str();
+        if ( !strcmp(key, name) )
+        {
+            bindings.erase(it);
+            delete pb;
+            return;
+        }
+    }
 }
 
 // FIXIT-M need to consider binding of ips rules / policy

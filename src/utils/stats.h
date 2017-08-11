@@ -62,6 +62,7 @@ struct ProcessCount
     PegCount signals;
     PegCount conf_reloads;
     PegCount policy_reloads;
+    PegCount inspector_deletions;
     PegCount daq_reloads;
     PegCount attribute_table_reloads;
     PegCount attribute_table_hosts;

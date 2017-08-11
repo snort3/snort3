@@ -98,6 +98,7 @@ struct PHClass
 
 enum ReloadType {
     RELOAD_TYPE_NONE = 0,
+    RELOAD_TYPE_DELETED,
     RELOAD_TYPE_REENABLED,
     RELOAD_TYPE_NEW,
     RELOAD_TYPE_MAX
@@ -124,6 +125,7 @@ struct PHInstance
 
     bool is_reloaded()
     { return ((reload_type == RELOAD_TYPE_REENABLED) or
+            (reload_type == RELOAD_TYPE_DELETED) or
             (reload_type == RELOAD_TYPE_NEW)); }
 
     ReloadType get_reload_type()
@@ -511,6 +513,30 @@ InspectorType InspectorManager::get_type(const char* key)
         return IT_MAX;
 
     return p->get_api()->type;
+}
+
+bool InspectorManager::delete_inspector(SnortConfig* sc, const char* iname)
+{
+    bool ok = false;
+    if ( sc->policy_map->inspection_policy.size() )
+    {
+        FrameworkPolicy* fp = sc->policy_map->inspection_policy[0]->framework_policy;
+        std::vector<PHInstance*>::iterator old_it;
+
+        if ( get_instance(fp, iname, false, old_it) )
+        {
+            (*old_it)->set_reloaded(RELOAD_TYPE_DELETED);
+            fp->ilist.erase(old_it);
+            ok = true;
+            std::vector<PHInstance*>::iterator bind_it;
+            if ( get_instance(fp, "binder", false, bind_it) )
+            {
+                (*bind_it)->handler->update(sc, iname);
+            }
+        }
+    }
+
+    return ok;
 }
 
 void InspectorManager::free_inspector(Inspector* p)

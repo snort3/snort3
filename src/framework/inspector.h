@@ -64,6 +64,7 @@ public:
     // return verification status
     virtual bool configure(SnortConfig*) { return true; }
     virtual void show(SnortConfig*) { }
+    virtual void update(SnortConfig*, const char*) { }
 
     // packet thread functions
     // tinit, tterm called on default policy instance only

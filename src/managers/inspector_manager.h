@@ -54,6 +54,7 @@ public:
     static void instantiate(
         const InspectApi*, Module*, SnortConfig*, const char* name = nullptr);
 
+    static bool delete_inspector(SnortConfig* sc, const char* iname);
     static void free_inspector(Inspector*);
     static InspectSsnFunc get_session(uint16_t proto);
 

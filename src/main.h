@@ -26,6 +26,7 @@ struct lua_State;
 const char* get_prompt();
 
 // commands provided by the snort module
+int main_delete_inspector(lua_State* = nullptr);
 int main_dump_stats(lua_State* = nullptr);
 int main_rotate_stats(lua_State* = nullptr);
 int main_reload_config(lua_State* = nullptr);
