@@ -757,12 +757,12 @@ static void handle(Pig& pig, unsigned& swine, unsigned& pending_privileges)
                 FatalError("Failed to drop privileges!\n");
 
             Snort::do_pidfile();
-            broadcast(new ACRun());
+            broadcast(new ACRun(paused));
         }
         else
         {
             Snort::do_pidfile();
-            pig.queue_command(new ACRun());
+            pig.queue_command(new ACRun(paused));
         }
         break;
 
@@ -796,7 +796,7 @@ static void main_loop()
     while ( swine or paused or (Trough::has_next() and !exit_requested) )
     {
         const char* src;
-        int idx = paused ? -1 : main_read();
+        int idx = main_read();
 
         if ( idx >= 0 )
         {
@@ -813,7 +813,7 @@ static void main_loop()
 
             continue;
         }
-        if ( !exit_requested and !paused and (swine < max_pigs) and (src = Trough::get_next()) )
+        if ( !exit_requested and (swine < max_pigs) and (src = Trough::get_next()) )
         {
             Pig* pig = get_lazy_pig(max_pigs);
             pig->prep(src);

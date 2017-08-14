@@ -41,7 +41,8 @@ void ACStart::execute(Analyzer& analyzer)
 
 void ACRun::execute(Analyzer& analyzer)
 {
-    analyzer.run();
+    analyzer.run(paused);
+    paused = false;
 }
 
 void ACStop::execute(Analyzer& analyzer)

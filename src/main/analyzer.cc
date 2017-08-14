@@ -182,11 +182,14 @@ void Analyzer::start()
     DebugMessage(DEBUG_ANALYZER, "Handled START command\n");
 }
 
-void Analyzer::run()
+void Analyzer::run(bool paused)
 {
     assert(state == State::STARTED);
     Snort::thread_init_unprivileged();
-    set_state(State::RUNNING);
+    if ( paused )
+        set_state(State::PAUSED);
+    else
+        set_state(State::RUNNING);
     DebugMessage(DEBUG_ANALYZER, "Handled RUN command\n");
 }
 

@@ -67,8 +67,12 @@ public:
 class ACRun : public AnalyzerCommand
 {
 public:
+    ACRun() = delete;
+    ACRun(bool is_paused = false ) { paused = is_paused; }
     void execute(Analyzer&) override;
     const char* stringify() override { return "RUN"; }
+private:
+    bool paused = false;
 };
 
 class ACStart : public AnalyzerCommand

@@ -58,7 +58,7 @@ public:
 
     // Functions called by analyzer commands
     void start();
-    void run();
+    void run(bool paused = false);
     void stop();
     void pause();
     void resume();
