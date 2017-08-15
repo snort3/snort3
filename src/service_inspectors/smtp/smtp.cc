@@ -176,7 +176,12 @@ static void snort_smtp(SMTP_PROTO_CONF* GlobalConf, Packet* p);
 static void SMTP_ResetState(Flow*);
 
 SmtpFlowData::SmtpFlowData() : FlowData(inspector_id)
-{ memset(&session, 0, sizeof(session)); }
+{
+    memset(&session, 0, sizeof(session));
+    smtpstats.concurrent_sessions++;
+    if(smtpstats.max_concurrent_sessions < smtpstats.concurrent_sessions)
+        smtpstats.max_concurrent_sessions = smtpstats.concurrent_sessions;
+}
 
 SmtpFlowData::~SmtpFlowData()
 {
@@ -186,8 +191,8 @@ SmtpFlowData::~SmtpFlowData()
     if ( session.auth_name )
         snort_free(session.auth_name);
 
-    if ( smtpstats.conc_sessions )
-        smtpstats.conc_sessions--;
+    assert(smtpstats.concurrent_sessions > 0);
+    smtpstats.concurrent_sessions--;
 }
 
 unsigned SmtpFlowData::inspector_id = 0;
@@ -204,11 +209,6 @@ static SMTPData* SetNewSMTPData(SMTP_PROTO_CONF* config, Packet* p)
 
     p->flow->set_flow_data(fd);
     smtp_ssn = &fd->session;
-
-    smtpstats.sessions++;
-    smtpstats.conc_sessions++;
-    if(smtpstats.max_conc_sessions < smtpstats.conc_sessions)
-        smtpstats.max_conc_sessions = smtpstats.conc_sessions;
 
     smtp_ssn->mime_ssn = new SmtpMime(&(config->decode_conf), &(config->log_config));
     smtp_ssn->mime_ssn->config = config;

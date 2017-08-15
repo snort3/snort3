@@ -46,6 +46,8 @@ const PegInfo dns_peg_names[] =
     { "packets", "total packets processed" },
     { "requests", "total dns requests" },
     { "responses", "total dns responses" },
+    { "concurrent_sessions", "total concurrent dns sessions" },
+    { "max_concurrent_sessions", "maximum concurrent dns sessions" },
 
     { nullptr, nullptr }
 };
@@ -60,6 +62,20 @@ static void snort_dns(Packet* p);
 unsigned DnsFlowData::inspector_id = 0;
 
 DNSData udpSessionData;
+
+DnsFlowData::DnsFlowData() : FlowData(inspector_id)
+{
+    memset(&session, 0, sizeof(session));
+    dnsstats.concurrent_sessions++;
+    if(dnsstats.max_concurrent_sessions < dnsstats.concurrent_sessions)
+        dnsstats.max_concurrent_sessions = dnsstats.concurrent_sessions;
+}
+
+DnsFlowData::~DnsFlowData()
+{
+    assert(dnsstats.concurrent_sessions > 0);
+    dnsstats.concurrent_sessions--;
+}
 
 static DNSData* SetNewDNSData(Packet* p)
 {

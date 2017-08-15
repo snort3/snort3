@@ -39,6 +39,7 @@ class GtpFlowData : public FlowData
 {
 public:
     GtpFlowData();
+    ~GtpFlowData();
 
     static void init();
 

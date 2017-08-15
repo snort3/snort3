@@ -39,10 +39,8 @@ struct SSLData
 class SslFlowData : public FlowData
 {
 public:
-    SslFlowData() : FlowData(inspector_id)
-    { memset(&session, 0, sizeof(session)); }
-
-    ~SslFlowData() { }
+    SslFlowData();
+    ~SslFlowData();
 
     static void init()
     { inspector_id = FlowData::create_flow_data_id(); }

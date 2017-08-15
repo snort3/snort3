@@ -39,7 +39,7 @@
 #include "ssh_module.h"
 
 THREAD_LOCAL ProfileStats sshPerfStats;
-THREAD_LOCAL SimpleStats sshstats;
+THREAD_LOCAL SshStats sshstats;
 
 /*
  * Function prototype(s)
@@ -50,6 +50,20 @@ static unsigned int ProcessSSHKeyExchange(SSHData*, Packet*, uint8_t, unsigned i
 static unsigned int ProcessSSHKeyInitExchange(SSHData*, Packet*, uint8_t, unsigned int);
 
 unsigned SshFlowData::inspector_id = 0;
+
+SshFlowData::SshFlowData() : FlowData(inspector_id)
+{
+    memset(&session, 0, sizeof(session));
+    sshstats.concurrent_sessions++;
+    if(sshstats.max_concurrent_sessions < sshstats.concurrent_sessions)
+        sshstats.max_concurrent_sessions = sshstats.concurrent_sessions;
+}
+
+SshFlowData::~SshFlowData()
+{
+    assert(sshstats.concurrent_sessions > 0);
+    sshstats.concurrent_sessions--;
+}
 
 static SSHData* SetNewSSHData(Packet* p)
 {

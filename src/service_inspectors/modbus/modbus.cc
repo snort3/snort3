@@ -49,6 +49,15 @@ void ModbusFlowData::init()
 ModbusFlowData::ModbusFlowData() : FlowData(inspector_id)
 {
     reset();
+    modbus_stats.concurrent_sessions++;
+    if(modbus_stats.max_concurrent_sessions < modbus_stats.concurrent_sessions)
+        modbus_stats.max_concurrent_sessions = modbus_stats.concurrent_sessions;
+}
+
+ModbusFlowData::~ModbusFlowData()
+{
+    assert(modbus_stats.concurrent_sessions > 0);
+    modbus_stats.concurrent_sessions--;
 }
 
 //-------------------------------------------------------------------------

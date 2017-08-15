@@ -45,10 +45,8 @@ struct SSHData
 class SshFlowData : public FlowData
 {
 public:
-    SshFlowData() : FlowData(inspector_id)
-    { memset(&session, 0, sizeof(session)); }
-
-    ~SshFlowData() { }
+    SshFlowData();
+    ~SshFlowData();
 
     static void init()
     { inspector_id = FlowData::create_flow_data_id(); }

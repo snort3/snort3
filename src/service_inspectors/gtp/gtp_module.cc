@@ -43,6 +43,8 @@ THREAD_LOCAL ProfileStats gtp_inspect_prof;
 const PegInfo peg_names[] =
 {
     { "sessions", "total sessions processed" },
+    { "concurrent_sessions", "total concurrent gtp sessions" },
+    { "max_concurrent_sessions", "maximum concurrent gtp sessions" },
     { "events", "requests" },
     { "unknown_types", "unknown message types" },
     { "unknown_infos", "unknown information elements" },

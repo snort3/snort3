@@ -67,6 +67,14 @@ static const RuleMap ssh_rules[] =
     { 0, nullptr }
 };
 
+const PegInfo ssh_pegs[] =
+{
+    { "packets", "total packets" },
+    { "concurrent_sessions", "total concurrent ssh sessions" },
+    { "max_concurrent_sessions", "maximum concurrent ssh sessions" },
+    { nullptr, nullptr }
+};
+
 //-------------------------------------------------------------------------
 // ssh module
 //-------------------------------------------------------------------------
@@ -86,7 +94,7 @@ const RuleMap* SshModule::get_rules() const
 { return ssh_rules; }
 
 const PegInfo* SshModule::get_pegs() const
-{ return simple_pegs; }
+{ return ssh_pegs; }
 
 PegCount* SshModule::get_counts() const
 { return (PegCount*)&sshstats; }

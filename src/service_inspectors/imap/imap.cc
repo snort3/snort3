@@ -125,6 +125,8 @@ const PegInfo imap_peg_names[] =
 {
     { "packets", "total packets processed" },
     { "sessions", "total imap sessions" },
+    { "concurrent_sessions", "total concurrent imap sessions" },
+    { "max_concurrent_sessions", "maximum concurrent imap sessions" },
     { "b64_attachments", "total base64 attachments decoded" },
     { "b64_decoded_bytes", "total base64 decoded bytes" },
     { "qp_attachments", "total quoted-printable attachments decoded" },
@@ -138,12 +140,20 @@ const PegInfo imap_peg_names[] =
 };
 
 ImapFlowData::ImapFlowData() : FlowData(inspector_id)
-{ memset(&session, 0, sizeof(session)); }
+{
+    memset(&session, 0, sizeof(session));
+    imapstats.concurrent_sessions++;
+    if(imapstats.max_concurrent_sessions < imapstats.concurrent_sessions)
+        imapstats.max_concurrent_sessions = imapstats.concurrent_sessions;
+}
 
 ImapFlowData::~ImapFlowData()
 {
     if(session.mime_ssn)
         delete(session.mime_ssn);
+
+    assert(imapstats.concurrent_sessions > 0);
+    imapstats.concurrent_sessions--;
 }
 
 unsigned ImapFlowData::inspector_id = 0;

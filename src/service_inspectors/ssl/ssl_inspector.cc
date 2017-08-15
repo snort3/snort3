@@ -64,9 +64,25 @@ const PegInfo ssl_peg_names[] =
     { "bad_handshakes", "total bad handshakes" },
     { "sessions_ignored", "total sessions ignore" },
     { "detection_disabled", "total detection disabled" },
+    { "concurrent_sessions", "total concurrent ssl sessions" },
+    { "max_concurrent_sessions", "maximum concurrent ssl sessions" },
 
     { nullptr, nullptr }
 };
+
+SslFlowData::SslFlowData() : FlowData(inspector_id)
+{
+    memset(&session, 0, sizeof(session));
+    sslstats.concurrent_sessions++;
+    if(sslstats.max_concurrent_sessions < sslstats.concurrent_sessions)
+        sslstats.max_concurrent_sessions = sslstats.concurrent_sessions;
+}
+
+SslFlowData::~SslFlowData()
+{
+    assert(sslstats.concurrent_sessions > 0);
+    sslstats.concurrent_sessions--;
+}
 
 static SSLData* SetNewSSLData(Packet* p)
 {

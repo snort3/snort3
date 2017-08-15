@@ -29,6 +29,8 @@ struct ModbusStats
 {
     PegCount sessions;
     PegCount frames;
+    PegCount concurrent_sessions;
+    PegCount max_concurrent_sessions;
 };
 
 struct modbus_session_data_t
@@ -42,6 +44,7 @@ class ModbusFlowData : public FlowData
 {
 public:
     ModbusFlowData();
+    ~ModbusFlowData();
 
     static void init();
 

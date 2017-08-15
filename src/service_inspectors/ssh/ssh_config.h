@@ -31,4 +31,11 @@ struct SSH_PROTO_CONF
     uint16_t MaxServerVersionLen;
 };
 
+struct SshStats
+{
+    PegCount total_packets;
+    PegCount concurrent_sessions;
+    PegCount max_concurrent_sessions;
+};
+
 #endif

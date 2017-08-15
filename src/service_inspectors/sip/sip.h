@@ -39,9 +39,7 @@ struct SIPData
 class SipFlowData : public FlowData
 {
 public:
-    SipFlowData() : FlowData(inspector_id)
-    { memset(&session, 0, sizeof(session)); }
-
+    SipFlowData();
     ~SipFlowData();
 
     static void init()

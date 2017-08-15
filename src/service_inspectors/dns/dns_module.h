@@ -42,6 +42,8 @@ struct DnsStats
     PegCount packets;
     PegCount requests;
     PegCount responses;
+    PegCount concurrent_sessions;
+    PegCount max_concurrent_sessions;
 };
 
 extern const PegInfo dns_peg_names[];

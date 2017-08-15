@@ -38,6 +38,8 @@ const PegInfo peg_names[] =
 {
     { "sessions", "total sessions processed" },
     { "frames", "total Modbus messages" },
+    { "concurrent_sessions", "total concurrent modbus sessions" },
+    { "max_concurrent_sessions", "maximum concurrent modbus sessions" },
 
     { nullptr, nullptr }
 };

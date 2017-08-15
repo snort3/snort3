@@ -148,8 +148,8 @@ struct SmtpStats
 {
     PegCount packets;
     PegCount sessions;
-    PegCount conc_sessions;
-    PegCount max_conc_sessions;
+    PegCount concurrent_sessions;
+    PegCount max_concurrent_sessions;
     MimeStats mime_stats;
 };
 

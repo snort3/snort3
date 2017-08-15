@@ -58,6 +58,8 @@ struct GTPConfig
 struct GTP_Stats
 {
     PegCount sessions;
+    PegCount concurrent_sessions;
+    PegCount max_concurrent_sessions;
     PegCount events;
     PegCount unknownTypes;
     PegCount unknownIEs;

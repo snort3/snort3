@@ -56,8 +56,9 @@ struct SipStats
 {
     PegCount packets;
     PegCount sessions;
+    PegCount concurrent_sessions;
+    PegCount max_concurrent_sessions;
     PegCount events;
-
     PegCount dialogs;
     PegCount ignoreChannels;
     PegCount ignoreSessions;

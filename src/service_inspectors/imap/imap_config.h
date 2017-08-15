@@ -33,6 +33,8 @@ struct ImapStats
 {
     PegCount packets;
     PegCount sessions;
+    PegCount concurrent_sessions;
+    PegCount max_concurrent_sessions;
     MimeStats mime_stats;
 };
 

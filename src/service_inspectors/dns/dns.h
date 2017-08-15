@@ -169,10 +169,8 @@ struct DNSData
 class DnsFlowData : public FlowData
 {
 public:
-    DnsFlowData() : FlowData(inspector_id)
-    { memset(&session, 0, sizeof(session)); }
-
-    ~DnsFlowData() { }
+    DnsFlowData();
+    ~DnsFlowData();
 
     static void init()
     { inspector_id = FlowData::create_flow_data_id(); }

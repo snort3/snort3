@@ -41,7 +41,7 @@
 
 struct SnortConfig;
 
-extern THREAD_LOCAL SimpleStats sshstats;
+extern THREAD_LOCAL SshStats sshstats;
 extern THREAD_LOCAL ProfileStats sshPerfStats;
 
 class SshModule : public Module

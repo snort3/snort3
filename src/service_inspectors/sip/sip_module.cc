@@ -133,6 +133,8 @@ static const PegInfo sip_pegs[] =
 {
     { "packets", "total packets" },
     { "sessions", "total sessions" },
+    { "concurrent_sessions", "total concurrent sip sessions" },
+    { "max_concurrent_sessions", "maximum concurrent sip sessions" },
     { "events", "events generated" },
     { "dialogs", "total dialogs" },
     { "ignored_channels", "total channels ignored" },

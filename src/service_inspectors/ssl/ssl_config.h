@@ -49,6 +49,8 @@ struct SslStats
     PegCount bad_handshakes;
     PegCount stopped;
     PegCount disabled;
+    PegCount concurrent_sessions;
+    PegCount max_concurrent_sessions;
 };
 
 extern const PegInfo ssl_peg_names[];

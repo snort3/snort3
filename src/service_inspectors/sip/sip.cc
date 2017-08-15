@@ -40,9 +40,20 @@ static void FreeSipData(void*);
 
 unsigned SipFlowData::inspector_id = 0;
 
+SipFlowData::SipFlowData() : FlowData(inspector_id)
+{
+    memset(&session, 0, sizeof(session));
+    sip_stats.sessions++;
+    sip_stats.concurrent_sessions++;
+    if(sip_stats.max_concurrent_sessions < sip_stats.concurrent_sessions)
+        sip_stats.max_concurrent_sessions = sip_stats.concurrent_sessions;
+}
+
 SipFlowData::~SipFlowData()
 {
     FreeSipData(&session);
+    assert(sip_stats.concurrent_sessions > 0);
+    sip_stats.concurrent_sessions--;
 }
 
 static SIPData* SetNewSIPData(Packet* p)

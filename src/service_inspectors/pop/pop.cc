@@ -80,6 +80,8 @@ const PegInfo pop_peg_names[] =
 {
     { "packets", "total packets processed" },
     { "sessions", "total pop sessions" },
+    { "concurrent_sessions", "total concurrent pop sessions" },
+    { "max_concurrent_sessions", "maximum concurrent pop sessions" },
     { "b64_attachments", "total base64 attachments decoded" },
     { "b64_decoded_bytes", "total base64 decoded bytes" },
     { "qp_attachments", "total quoted-printable attachments decoded" },
@@ -97,12 +99,20 @@ static void snort_pop(POP_PROTO_CONF* GlobalConf, Packet* p);
 static void POP_ResetState(Flow*);
 
 PopFlowData::PopFlowData() : FlowData(inspector_id)
-{ memset(&session, 0, sizeof(session)); }
+{
+    memset(&session, 0, sizeof(session));
+    popstats.concurrent_sessions++;
+    if(popstats.max_concurrent_sessions < popstats.concurrent_sessions)
+        popstats.max_concurrent_sessions = popstats.concurrent_sessions;
+}
 
 PopFlowData::~PopFlowData()
 {
     if (session.mime_ssn)
         delete(session.mime_ssn);
+
+    assert(popstats.concurrent_sessions > 0);
+    popstats.concurrent_sessions--;
 }
 
 unsigned PopFlowData::inspector_id = 0;
