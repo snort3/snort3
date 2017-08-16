@@ -111,8 +111,8 @@ PopFlowData::~PopFlowData()
     if (session.mime_ssn)
         delete(session.mime_ssn);
 
-    assert(popstats.concurrent_sessions > 0);
-    popstats.concurrent_sessions--;
+    if (popstats.concurrent_sessions > 0)
+        popstats.concurrent_sessions--;
 }
 
 unsigned PopFlowData::inspector_id = 0;

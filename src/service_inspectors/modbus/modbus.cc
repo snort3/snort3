@@ -56,8 +56,8 @@ ModbusFlowData::ModbusFlowData() : FlowData(inspector_id)
 
 ModbusFlowData::~ModbusFlowData()
 {
-    assert(modbus_stats.concurrent_sessions > 0);
-    modbus_stats.concurrent_sessions--;
+    if (modbus_stats.concurrent_sessions > 0)
+        modbus_stats.concurrent_sessions--;
 }
 
 //-------------------------------------------------------------------------

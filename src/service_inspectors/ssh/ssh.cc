@@ -61,8 +61,8 @@ SshFlowData::SshFlowData() : FlowData(inspector_id)
 
 SshFlowData::~SshFlowData()
 {
-    assert(sshstats.concurrent_sessions > 0);
-    sshstats.concurrent_sessions--;
+    if (sshstats.concurrent_sessions > 0)
+        sshstats.concurrent_sessions--;
 }
 
 static SSHData* SetNewSSHData(Packet* p)

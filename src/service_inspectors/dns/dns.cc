@@ -73,8 +73,8 @@ DnsFlowData::DnsFlowData() : FlowData(inspector_id)
 
 DnsFlowData::~DnsFlowData()
 {
-    assert(dnsstats.concurrent_sessions > 0);
-    dnsstats.concurrent_sessions--;
+    if (dnsstats.concurrent_sessions > 0)
+        dnsstats.concurrent_sessions--;
 }
 
 static DNSData* SetNewDNSData(Packet* p)

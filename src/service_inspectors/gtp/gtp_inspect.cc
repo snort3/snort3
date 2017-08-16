@@ -55,8 +55,8 @@ GtpFlowData::GtpFlowData() : FlowData(inspector_id)
 
 GtpFlowData::~GtpFlowData()
 {
-    assert(gtp_stats.concurrent_sessions > 0);
-    gtp_stats.concurrent_sessions--;
+    if (gtp_stats.concurrent_sessions > 0)
+        gtp_stats.concurrent_sessions--;
 }
 
 //-------------------------------------------------------------------------

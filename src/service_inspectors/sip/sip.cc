@@ -52,8 +52,8 @@ SipFlowData::SipFlowData() : FlowData(inspector_id)
 SipFlowData::~SipFlowData()
 {
     FreeSipData(&session);
-    assert(sip_stats.concurrent_sessions > 0);
-    sip_stats.concurrent_sessions--;
+    if (sip_stats.concurrent_sessions > 0)
+        sip_stats.concurrent_sessions--;
 }
 
 static SIPData* SetNewSIPData(Packet* p)

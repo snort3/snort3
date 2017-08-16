@@ -80,8 +80,8 @@ SslFlowData::SslFlowData() : FlowData(inspector_id)
 
 SslFlowData::~SslFlowData()
 {
-    assert(sslstats.concurrent_sessions > 0);
-    sslstats.concurrent_sessions--;
+    if (sslstats.concurrent_sessions > 0)
+        sslstats.concurrent_sessions--;
 }
 
 static SSLData* SetNewSSLData(Packet* p)
