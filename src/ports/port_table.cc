@@ -513,6 +513,99 @@ static PortObject2* PortTableCompileMergePortObjectList2(
     return ponew;
 }
 
+static inline void add_port_object(Port port, PortObject* po, SF_LIST** parray)
+{
+    if ( !parray[port] )
+    {
+        parray[port] = sflist_new();
+        assert(parray[port]);
+    }
+
+    if ( parray[port]->tail && parray[port]->tail->ndata == po )
+        return;
+
+    sflist_add_tail(parray[port], po);
+}
+
+// Update port object lists
+static inline void update_port_lists(PortObject* po, SF_LIST** parray)
+{
+    bool not_flag_set = false;
+
+    PortObjectItem* poi;
+    SF_LNODE* lpos;
+    for ( poi = (PortObjectItem*)sflist_first(po->item_list, &lpos);
+          poi;
+          poi = (PortObjectItem*)sflist_next(&lpos) )
+    {
+        if( poi->any())
+            return;
+
+        else if( poi->one() )
+        {
+            if (poi->negate )
+            {
+                not_flag_set = true;
+                break;
+            }
+
+            add_port_object(poi->lport, po, parray);
+        }
+        else
+        {
+            if (poi->negate )
+            {
+                not_flag_set = true;
+                break;
+            }
+
+            for( int port = poi->lport; port <= poi->hport; port++ )
+            {
+                add_port_object(port, po, parray);
+            }
+        }
+
+        add_port_object(poi->lport, po, parray);
+    }
+
+    if (not_flag_set)
+    {
+        for( int port = 0; port < SFPO_MAX_PORTS; port++ )
+        {
+            add_port_object(port, po, parray);
+        }
+    }
+}
+
+// Create optimized port lists per port
+static inline SF_LIST** create_port_lists(PortTable* p)
+{
+    SF_LIST** parray = (SF_LIST**)snort_calloc(sizeof(SF_LIST*), SFPO_MAX_PORTS);
+    assert(parray);
+
+	PortObject* po;
+    SF_LNODE* lpos;
+    for ( po = (PortObject*)sflist_first(p->pt_polist, &lpos);
+          po;
+          po = (PortObject*)sflist_next(&lpos) )
+    {
+        update_port_lists(po, parray);
+    }
+
+    return parray;
+}
+
+static inline void delete_port_lists(SF_LIST** parray)
+{
+    for ( int port = 0; port < SFPO_MAX_PORTS; port++ )
+    {
+        SF_LIST* list = parray[port];
+        if (list)
+            sflist_free(list);
+    }
+}
+
+
 static int PortTableCompileMergePortObjects(PortTable* p)
 {
     DebugMessage(DEBUG_PORTLISTS, "***\n***Merging PortObjects->PortObjects2\n***\n");
@@ -541,6 +634,8 @@ static int PortTableCompileMergePortObjects(PortTable* p)
 
     SF_LIST* plx_list = sflist_new();
 
+    SF_LIST** optimized_pl = create_port_lists(p);
+
     /*
      *  For each port, merge rules from all port objects that touch the port
      *  into an optimal object, that may be shared with other ports.
@@ -554,16 +649,13 @@ static int PortTableCompileMergePortObjects(PortTable* p)
         PortObject* po;
         SF_LNODE* lpos;
 
-        for (po = (PortObject*)sflist_first(p->pt_polist, &lpos);
+        for (po = (PortObject*)sflist_first(optimized_pl[i], &lpos);
             po;
             po = (PortObject*)sflist_next(&lpos) )
         {
-            if ( PortObjectHasPort (po, i) )
+			if (pol_cnt < SFPO_MAX_LPORTS )
             {
-                if ( pol_cnt < SFPO_MAX_LPORTS )
-                {
-                    pol[ pol_cnt++ ] = po;
-                }
+				pol[ pol_cnt++ ] = po;
             }
         }
         p->pt_port_object[i] = 0;
@@ -592,6 +684,9 @@ static int PortTableCompileMergePortObjects(PortTable* p)
 
         DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS, "\n"); fflush(stdout); );
     }
+
+	delete_port_lists(optimized_pl);
+	snort_free(optimized_pl);
 
     /*
      * Normalize the Ports so they indicate only the ports that
@@ -689,6 +784,31 @@ static int PortTableCompileMergePortObjects(PortTable* p)
 }
 
 #ifdef DEBUG
+/*  Verify all rules in 'po' list are in 'po2' hash
+ *
+ *  return  0 - OK
+ *         !0 - a rule in po is not in po2
+ */
+static int _po2_include_po_rules(PortObject2* po2, PortObject* po)
+{
+    SF_LNODE* rpos;
+
+    /* get each rule in po */
+    for ( int* pid = (int*)sflist_first(po->rule_list, &rpos);
+        pid;
+        pid = (int*)sflist_next(&rpos) )
+    {
+        /* find it in po2 */
+        int* id = (int*)sfghash_find(po2->rule_hash, pid);
+
+        /* make sure it's in po2 */
+        if ( !id )
+            return 1; /* error */
+    }
+
+    return 0;
+}
+
 // consistency check - part 1
 // make sure each port is only in one composite port object
 static bool PortTableConsistencyCheck(PortTable* p)
@@ -728,30 +848,6 @@ static bool PortTableConsistencyCheck(PortTable* p)
     }
 
     return true;
-}
-
-/*
- * Verify all rules in 'po' list are in 'po2' hash
- * return  0 - OK; !0 - a rule in po is not in po2
- */
-static int _po2_include_po_rules(PortObject2* po2, PortObject* po)
-{
-    SF_LNODE* rpos;
-
-    /* get each rule in po */
-    for ( int* pid = (int*)sflist_first(po->rule_list, &rpos);
-        pid;
-        pid = (int*)sflist_next(&rpos) )
-    {
-        /* find it in po2 */
-        int* id = (int*)sfghash_find(po2->rule_hash, pid);
-
-        /* make sure it's in po2 */
-        if ( !id )
-            return 1; /* error */
-    }
-
-    return 0;
 }
 
 // consistency check - part 2
@@ -935,6 +1031,11 @@ int PortTableCompile(PortTable* p)
 #ifdef DEBUG
     assert(PortTableConsistencyCheck(p));
     assert(PortTableConsistencyCheck2(p));
+#endif
+
+#ifdef DEBUG_MSGS
+    if ( Debug::enabled(DEBUG_PORTLISTS) )
+        PortTablePrintPortGroups(p);
 #endif
 
     return 0;

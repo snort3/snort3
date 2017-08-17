@@ -91,14 +91,9 @@ int PortObjectBits(PortBitSet& parray, PortObject* po)
     /* A pure Not list */
     if ( po->item_list->count == not_cnt )
     {
-        int i;
-
         /* enable all of the ports */
-        for (i=0; i<SFPO_MAX_PORTS; i++)
-        {
-            parray[i] = 1;
-            cnt++;
-        }
+        parray.set();
+        cnt += parray.count();
 
         /* disable the NOT'd ports */
         for (poi=(PortObjectItem*)sflist_first(po->item_list,&pos);
@@ -111,11 +106,11 @@ int PortObjectBits(PortBitSet& parray, PortObject* po)
             if ( poi->any() )
                 continue;
 
-            for ( int k = poi->lport; k <= poi->hport; k++ )
+            for ( int i = poi->lport; i <= poi->hport; i++ )
             {
-                if ( parray[k] )
+                if ( parray[i] )
                     cnt--;
-                parray[k] = 0;
+                parray[i] = 0;
             }
         }
     }

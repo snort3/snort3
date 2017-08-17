@@ -343,6 +343,26 @@ static void AC_FREE_DFA(void* p, int n, int sizeofstate)
     }
 }
 
+
+/*
+ *  Get Next State-NFA, using direct index to speed up search
+ */
+static int List_GetNextStateOpt( ACSM_STRUCT2 * acsm,
+    trans_node_t **acsmTransTableOpt, int state, int input )
+{
+	int index = state * acsm->acsmAlphabetSize + input;
+	trans_node_t * t = acsmTransTableOpt[index];
+
+	if ( t )
+		return t->next_state;
+
+	if( state == 0 )
+        return 0;
+
+	return ACSM_FAIL_STATE2; /* Fail state ??? */
+}
+
+
 /*
 *  Get Next State-NFA
 */
@@ -382,6 +402,40 @@ static int List_GetNextState2(ACSM_STRUCT2* acsm, int state, int input)
     }
 
     return 0; /* default state */
+}
+
+/*
+ *  Put Next State - Head insertion, and transition updates
+ */
+static int List_PutNextStateOpt( ACSM_STRUCT2 * acsm, trans_node_t **acsmTransTableOpt,
+		int state, int input, int next_state )
+{
+	int index = state * acsm->acsmAlphabetSize + input;
+
+	trans_node_t *t = acsmTransTableOpt[index];
+
+	if ( t )
+	{
+		t->next_state = next_state;
+		return 0;
+	}
+
+	/* Definitely not an existing transition - add it */
+	trans_node_t * tnew = (trans_node_t*)AC_MALLOC(sizeof(trans_node_t),
+			ACSM2_MEMORY_TYPE__TRANSTABLE);
+
+	if( !tnew )
+ 		return -1;
+
+	tnew->key        = input;
+	tnew->next_state = next_state;
+	tnew->next 		 = acsm->acsmTransTable[state];
+	acsm->acsmTransTable[state] = tnew;
+	acsm->acsmNumTrans++;
+
+	acsmTransTableOpt[index] = tnew;
+
+	return 0;
 }
 
 /*
@@ -452,38 +506,14 @@ static int List_FreeTransTable(ACSM_STRUCT2* acsm)
     return 0;
 }
 
-/*
-*
-*/
-/*
-static int List_FreeList( trans_node_t * t )
-{
-  int tcnt=0;
-
-  trans_node_t *p;
-
-  while( t )
-  {
-       p = t->next;
-       snort_free(t);
-       t = p;
-       acsm2_total_memory -= sizeof(trans_node_t);
-       tcnt++;
-   }
-
-   return tcnt;
-}
-*/
 
 /*
 *   Converts row of states from list to a full vector format
 */
-static int List_ConvToFull(ACSM_STRUCT2* acsm, acstate_t state, acstate_t* full)
+static inline int List_ConvToFull(ACSM_STRUCT2* acsm, acstate_t state, acstate_t* full)
 {
     int tcnt = 0;
     trans_node_t* t = acsm->acsmTransTable[state];
-
-    memset(full, 0, acsm->sizeofstate * acsm->acsmAlphabetSize);
 
     if (t == NULL)
         return 0;
@@ -606,9 +636,11 @@ static void Build_NFA(ACSM_STRUCT2* acsm)
 {
     acstate_t* FailState = acsm->acsmFailState;
     ACSM_PATTERN2** MatchList = acsm->acsmMatchList;
-    ACSM_PATTERN2* mlist,* px;
+    ACSM_PATTERN2* mlist, * px;
 
     std::list<int> queue;
+
+    bool* queue_array = (bool*) snort_calloc( acsm->acsmNumStates, sizeof(bool) );
 
     /* Add the state 0 transitions 1st, the states at depth 1, fail to state 0 */
     for (int i = 0; i < acsm->acsmAlphabetSize; i++)
@@ -617,7 +649,11 @@ static void Build_NFA(ACSM_STRUCT2* acsm)
 
         if ( s )
         {
-            queue.push_back(s);
+            if ( !queue_array[s] )
+            {
+                queue.push_back(s);
+                queue_array[s] = true;
+            }
             FailState[s] = 0;
         }
     }
@@ -625,6 +661,8 @@ static void Build_NFA(ACSM_STRUCT2* acsm)
     /* Build the fail state successive layer of transitions */
     for ( auto r : queue )
     {
+        queue_array[r] = false;
+
         /* Find Final States for any Failure */
         for (int i = 0; i < acsm->acsmAlphabetSize; i++)
         {
@@ -633,14 +671,17 @@ static void Build_NFA(ACSM_STRUCT2* acsm)
 
             if ( (acstate_t)s != ACSM_FAIL_STATE2 )
             {
-                queue.push_back(s);
+                if ( !queue_array[s] )
+                {
+                    queue.push_back(s);
+                    queue_array[s] = true;
+                }
                 int fs = FailState[r];
 
                 /*
                  *  Locate the next valid state for 'i' starting at fs
                  */
-                while ((acstate_t)(next = List_GetNextState(acsm,fs,i))
-                    == ACSM_FAIL_STATE2 )
+                while ((acstate_t)(next = List_GetNextState(acsm,fs,i)) == ACSM_FAIL_STATE2 )
                 {
                     fs = FailState[fs];
                 }
@@ -668,6 +709,8 @@ static void Build_NFA(ACSM_STRUCT2* acsm)
             }
         }
     }
+
+    snort_free(queue_array);
 }
 
 /*
@@ -679,37 +722,66 @@ static void Convert_NFA_To_DFA(ACSM_STRUCT2* acsm)
     acstate_t* FailState = acsm->acsmFailState;
 
     std::list<int> queue;
+    bool* queue_array = (bool*) snort_calloc( acsm->acsmNumStates, sizeof(bool) );
+    trans_node_t** acsmTransTableOpt = (trans_node_t**)
+        snort_calloc( acsm->acsmAlphabetSize * acsm->acsmNumStates, sizeof(trans_node_t*) );
+
+    for ( int i = 0; i < acsm->acsmNumStates; i++ )
+    {
+        trans_node_t* t = acsm->acsmTransTable[i];
+        while ( t )
+        {
+            int index = i * acsm->acsmAlphabetSize + t->key;
+            acsmTransTableOpt[index] = t;
+            t = t->next;
+        }
+    }
 
     /* Add the state 0 transitions 1st */
     for (int i=0; i<acsm->acsmAlphabetSize; i++)
     {
-        if ( int s = List_GetNextState(acsm,0,i) )
-            queue.push_back(s);
+        if ( int s = List_GetNextStateOpt(acsm, acsmTransTableOpt, 0, i) )
+		{
+			if ( !queue_array[s] )
+			{
+            	queue.push_back(s);
+				queue_array[s] = true;
+			}
+		}
     }
 
     /* Start building the next layer of transitions */
     for ( auto r : queue )
     {
+		queue_array[r] = false;
+
         /* Process this states layer */
         for (int i = 0; i < acsm->acsmAlphabetSize; i++)
         {
-            int s = List_GetNextState(acsm,r,i);
+            int s = List_GetNextStateOpt(acsm, acsmTransTableOpt, r, i);
 
-            if ( (acstate_t)s != ACSM_FAIL_STATE2 && s!= 0)
+            if ( (acstate_t)s != ACSM_FAIL_STATE2 && s != 0 )
             {
-                queue.push_back(s);
+				if ( !queue_array[s] )
+				{
+					queue.push_back(s);
+					queue_array[s] = true;
+				}
             }
             else
             {
-                cFailState = List_GetNextState(acsm,FailState[r],i);
+                cFailState = List_GetNextStateOpt(acsm, acsmTransTableOpt, FailState[r], i);
 
                 if ( cFailState != 0 && (acstate_t)cFailState != ACSM_FAIL_STATE2 )
                 {
-                    List_PutNextState(acsm,r,i,cFailState);
+                    List_PutNextStateOpt(acsm, acsmTransTableOpt, r, i, cFailState);
                 }
             }
         }
     }
+
+	snort_free(queue_array);
+	snort_free(acsmTransTableOpt);
 }
 
 /*
@@ -794,6 +866,7 @@ static int Conv_Full_DFA_To_Sparse(ACSM_STRUCT2* acsm)
     {
         cnt=0;
 
+        memset(full, 0, acsm->sizeofstate * acsm->acsmAlphabetSize);
         List_ConvToFull(acsm, (acstate_t)k, full);
 
         for (i = 0; i < acsm->acsmAlphabetSize; i++)
@@ -862,6 +935,7 @@ static int Conv_Full_DFA_To_Banded(ACSM_STRUCT2* acsm)
 
     for (k=0; k<acsm->acsmNumStates; k++)
     {
+        memset(full, 0, acsm->sizeofstate * acsm->acsmAlphabetSize);
         List_ConvToFull(acsm, (acstate_t)k, full);
 
         first=-1;
@@ -981,6 +1055,7 @@ static int Conv_Full_DFA_To_SparseBands(ACSM_STRUCT2* acsm)
 
     for (k=0; k<acsm->acsmNumStates; k++)
     {
+        memset(full, 0, acsm->sizeofstate * acsm->acsmAlphabetSize);
         List_ConvToFull(acsm, (acstate_t)k, full);
 
         nbands = calcSparseBands(full, band_begin, band_end, acsm->acsmAlphabetSize, zcnt);
