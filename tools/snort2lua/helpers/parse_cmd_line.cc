@@ -31,6 +31,7 @@
 #include "helpers/converter.h"
 #include "helpers/s2l_util.h"
 #include "helpers/s2l_markup.h"
+#include "helpers/util_binder.h"
 
 namespace parser
 {
@@ -281,6 +282,12 @@ static void print_version(const char* /*key*/, const char* /*val*/)
     std::cout << "Snort2Lua\t0.2.0";
 }
 
+static void print_binder_order(const char* /*key*/, const char* /*val*/)
+{
+    print_binder_priorities();
+    exit(0);
+}
+
 static void help(const char* key, const char* val)
 {
     std::cout << Markup::head(3) << "Usage: snort2lua [OPTIONS]... -c <snort_conf> ...\n";
@@ -385,6 +392,11 @@ static ConfigFunc basic_opts[] =
 
     { "print-all", print_all, "",
       "Same as '-a'. default option.  print all data" },
+
+#ifdef REG_TEST
+    { "print-binding-order", print_binder_order, ""
+      "Print sorting priority used when generating binder table" },
+#endif
 
     { "print-differences", print_differences, "",
       "Same as '-d'. output the differences, and only the differences, "

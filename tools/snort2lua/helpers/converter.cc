@@ -17,6 +17,7 @@
 //--------------------------------------------------------------------------
 // converter.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
+#include <algorithm>
 #include <stdexcept>
 
 #include "helpers/converter.h"
@@ -258,13 +259,13 @@ bool Converter::initialize()
 
 Binder& Converter::make_binder(Binder& b)
 {
-    binders.push_back(std::unique_ptr<Binder>(new Binder(b)));
+    binders.push_back(std::shared_ptr<Binder>(new Binder(b)));
     return *binders.back();
 }
 
 Binder& Converter::make_binder()
 {
-    binders.push_back(std::unique_ptr<Binder>(new Binder(table_api)));
+    binders.push_back(std::shared_ptr<Binder>(new Binder(table_api)));
     return *binders.back();
 }
 
@@ -280,6 +281,7 @@ int Converter::convert(std::string input,
 
     // vector::clear()'s ordering isn't deterministic but this is
     // keep in place for stable regressions
+    std::stable_sort(binders.rbegin(), binders.rend());
     while ( binders.size() )
         binders.pop_back();
 

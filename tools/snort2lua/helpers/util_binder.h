@@ -20,6 +20,7 @@
 #ifndef HELPERS_PPS_BINDER_H
 #define HELPERS_PPS_BINDER_H
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -30,22 +31,19 @@ class TableApi;
 class Converter;
 class Binder
 {
+public:
     //Only use Converter to instantiate Binders through make_binder()
     //This ensures only one binder tables is created per policy
     friend class Converter;
-public:
+
+    //Binding order matters. This allows STL compatible sorting.
+    friend bool operator<(const std::shared_ptr<Binder>, const std::shared_ptr<Binder>);
+
+    Binder(TableApi&);
     ~Binder();
 
-    //  By calling add_to_configuration(), you are adding this Binder Object
-    //  "as is" to the table_api.  Additionally, after calling
-    //  add_to_configuration(), the destructor will NOT add the object to the
-    //  table_api unless 'print_binding(true)' is called.
-    void add_to_configuration();
     void print_binding(bool should_print)
     { printed = !should_print; }
-
-    bool will_print()
-    { return !printed; }
 
     void set_when_policy_id(int id);
     void set_when_service(std::string service);
@@ -56,6 +54,27 @@ public:
     void add_when_port(std::string port);
     void clear_ports();
 
+    bool has_policy_id() const
+    { return when_policy_id >= 0; }
+
+    bool has_service() const
+    { return !when_service.empty(); }
+
+    bool has_proto() const
+    { return !when_proto.empty(); }
+
+    bool has_role() const
+    { return !when_role.empty() && when_role != "any"; }
+
+    bool has_vlans() const
+    { return !vlans.empty(); }
+
+    bool has_nets() const
+    { return !nets.empty(); }
+
+    bool has_ports() const
+    { return !ports.empty(); }
+
     void set_use_type(std::string module_name);
     void set_use_name(std::string struct_name);
     void set_use_file(std::string file_name);
@@ -64,8 +83,6 @@ public:
     void set_use_policy_id(std::string id);
 
 private:
-    Binder(TableApi&);
-
     TableApi& table_api;
     bool printed; // ensures that the binding is added once,
                   // by either the destructor or user
@@ -84,9 +101,17 @@ private:
     std::string use_file;
     std::string use_service;
     std::string use_action;
+
+    void add_to_configuration();
 };
 
+bool operator<(const std::shared_ptr<Binder>, const std::shared_ptr<Binder>);
+
 typedef void (Binder::* binder_func)(std::string);
+
+#ifdef REG_TEST
+void print_binder_priorities();
+#endif
 
 #endif
 

@@ -103,7 +103,7 @@ private:
     DataApi data_api;
     TableApi table_api;
     RuleApi rule_api;
-    std::vector<std::unique_ptr<Binder>> binders;
+    std::vector<std::shared_ptr<Binder>> binders;
 
     // the current parsing state.
     ConversionState* state;
