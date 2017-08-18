@@ -47,7 +47,7 @@ public:
     bool get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b) override;
     bool configure(SnortConfig*) override;
     void show(SnortConfig*) override { LogMessage("HttpInspect\n"); }
-    void eval(Packet*) override { }
+    void eval(Packet* p) override;
     void clear(Packet* p) override;
     void tinit() override { }
     void tterm() override { }
@@ -61,9 +61,8 @@ private:
     friend HttpApi;
     friend HttpStreamSplitter;
 
-    const Field& process(const uint8_t* data, const uint16_t dsize, Flow* const flow,
+    bool process(const uint8_t* data, const uint16_t dsize, Flow* const flow,
         HttpEnums::SourceId source_id_, bool buf_owner) const;
-    void clear(HttpFlowData* session_data, HttpEnums::SourceId source_id);
     static HttpEnums::SourceId get_latest_src(const Packet* p);
 
     const HttpParaList* const params;

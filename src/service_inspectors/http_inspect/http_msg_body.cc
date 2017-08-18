@@ -54,7 +54,7 @@ void HttpMsgBody::analyze()
             js_norm_body.length() : session_data->detect_depth_remaining[source_id];
         detect_data.set(detect_length, js_norm_body.start());
         session_data->detect_depth_remaining[source_id] -= detect_length;
-        set_next_file_data(
+        set_file_data(
             const_cast<uint8_t*>(detect_data.start()), (unsigned)detect_data.length());
     }
 
@@ -64,6 +64,11 @@ void HttpMsgBody::analyze()
     }
 
     body_octets += msg_text.length();
+}
+
+bool HttpMsgBody::detection_required() const
+{
+    return (detect_data.length() > 0) || (get_inspection_section() == IS_DETECTION);
 }
 
 void HttpMsgBody::do_utf_decoding(const Field& input, Field& output)

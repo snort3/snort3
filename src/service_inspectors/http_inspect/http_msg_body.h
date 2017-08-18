@@ -32,9 +32,9 @@ class HttpMsgBody : public HttpMsgSection
 public:
     virtual ~HttpMsgBody() = default;
     void analyze() override;
-    const Field& get_detect_buf() const override { return detect_data; }
     HttpEnums::InspectSection get_inspection_section() const override
         { return detection_section ? HttpEnums::IS_DETECTION : HttpEnums::IS_BODY; }
+    bool detection_required() const override;
     const Field& get_classic_client_body();
     static void fd_event_callback(void* context, int event);
 

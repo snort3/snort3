@@ -52,7 +52,6 @@
 #include "regex_offload.h"
 
 static THREAD_LOCAL RegexOffload* offloader = nullptr;
-static THREAD_LOCAL DataPointer next_file_data = { nullptr, 0 };
 static THREAD_LOCAL uint64_t context_num = 0;
 
 //--------------------------------------------------------------------------
@@ -68,8 +67,7 @@ void DetectionEngine::thread_term()
 DetectionEngine::DetectionEngine()
 {
     context = Snort::get_switcher()->interrupt();
-    context->file_data = next_file_data;
-    next_file_data = { nullptr, 0 };
+    context->file_data = { nullptr, 0 };
     reset();
 }
 
@@ -81,7 +79,6 @@ DetectionEngine::~DetectionEngine()
     if ( context == sw->get_context() )
     {
         sw->complete();
-        next_file_data = { nullptr, 0 };
     }
 }
 
@@ -151,9 +148,6 @@ DataBuffer& DetectionEngine::get_alt_buffer(Packet* p)
     assert(p);
     return p->context->alt_data;
 }
-
-void DetectionEngine::set_next_file_data(const DataPointer& dp)
-{ next_file_data = dp; }
 
 void DetectionEngine::set_file_data(const DataPointer& dp)
 { Snort::get_switcher()->get_context()->file_data = dp; }

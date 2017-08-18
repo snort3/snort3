@@ -354,46 +354,24 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total, un
                 (!session_data->strict_length[source_id] &&
                 (total <= session_data->octets_expected[source_id])));
         running_total = 0;
-        const Field& send_to_detection = my_inspector->process(buffer,
-            session_data->section_offset[source_id] - session_data->num_excess[source_id], flow,
-            source_id, true);
-        // delete[] not necessary because HttpMsgSection is now responsible.
-        buffer = nullptr;
+        const uint16_t buf_size =
+            session_data->section_offset[source_id] - session_data->num_excess[source_id];
 
-        session_data->section_offset[source_id] = 0;
-
-        // The detection section of a message is the first body section, unless there is no body
-        // section in which case it is the headers. The detection section is always returned to the
-        // framework and forwarded to detection even if it is empty. Other body sections and the
-        // trailer section are only forwarded if nonempty. The start line section and header
-        // sections other than the detection section are never forwarded.
-        if (((send_to_detection.length() > 0) &&
-                (session_data->latest_section->get_inspection_section() != IS_NONE)) ||
-            ((send_to_detection.length() == 0) &&
-                (session_data->latest_section->get_inspection_section() == IS_DETECTION)))
+        // FIXIT-M kludge until we work out issues with returning an empty buffer
+        http_buf.data = buffer;
+        if (buf_size > 0)
         {
-            // FIXIT-M kludge until we work out issues with returning an empty buffer
-            if (send_to_detection.length() > 0)
-            {
-                http_buf.data = send_to_detection.start();
-                http_buf.length = send_to_detection.length();
-            }
-            else
-            {
-                http_buf.data = (const uint8_t*)"";
-                http_buf.length = 1;
-            }
-#ifdef REG_TEST
-            if (HttpTestManager::use_test_output())
-            {
-                fprintf(HttpTestManager::get_output_file(), "Sent to detection %u octets\n\n",
-                    http_buf.length);
-                fflush(HttpTestManager::get_output_file());
-            }
-#endif
-            return http_buf;
+            http_buf.length = buf_size;
+            session_data->zero_byte_workaround[source_id] = false;
         }
-        my_inspector->clear(session_data, source_id);
+        else
+        {
+            buffer[0] = '\0';
+            http_buf.length = 1;
+            session_data->zero_byte_workaround[source_id] = true;
+        }
+        buffer = nullptr;
+        session_data->section_offset[source_id] = 0;
     }
     return http_buf;
 }

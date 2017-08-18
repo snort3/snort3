@@ -23,8 +23,8 @@
 
 #include "http_inspect.h"
 
-#include "protocols/packet.h"
-
+#include "detection/detection_engine.h"
+#include "http_js_norm.h"
 #include "http_msg_body.h"
 #include "http_msg_body_chunk.h"
 #include "http_msg_body_cl.h"
@@ -33,7 +33,8 @@
 #include "http_msg_request.h"
 #include "http_msg_status.h"
 #include "http_msg_trailer.h"
-#include "http_js_norm.h"
+#include "http_test_manager.h"
+#include "protocols/packet.h"
 
 using namespace HttpEnums;
 
@@ -149,7 +150,37 @@ bool HttpInspect::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBu
     return get_buf(ibt, p, b);
 }
 
-const Field& HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow,
+void HttpInspect::eval(Packet* p)
+{
+    const SourceId source_id = p->is_from_client() ? SRC_CLIENT : SRC_SERVER;
+
+    HttpFlowData* session_data =
+        (HttpFlowData*)p->flow->get_flow_data(HttpFlowData::inspector_id);
+
+    // FIXIT-H Workaround for unexpected eval() calls
+    if (session_data->section_type[source_id] == SEC__NOT_COMPUTE)
+        return;
+
+    const int remove_workaround = session_data->zero_byte_workaround[source_id] ? 1 : 0;
+    if (!process(p->data, p->dsize - remove_workaround, p->flow, source_id, true))
+    {
+        DetectionEngine::disable_content(p);
+        clear(p);
+    }
+#ifdef REG_TEST
+    else
+    {
+        if (HttpTestManager::use_test_output())
+        {
+            fprintf(HttpTestManager::get_output_file(), "Sent to detection %u octets\n\n",
+                p->dsize);
+            fflush(HttpTestManager::get_output_file());
+        }
+    }
+#endif
+}
+
+bool HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow,
     SourceId source_id, bool buf_owner) const
 {
     HttpFlowData* session_data = (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
@@ -193,7 +224,7 @@ const Field& HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flo
         {
             delete[] data;
         }
-        return Field::FIELD_NULL;
+        return false;
     }
 
     session_data->latest_section->analyze();
@@ -215,31 +246,22 @@ const Field& HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flo
 #endif
 
     session_data->latest_section->publish();
-    return session_data->latest_section->get_detect_buf();
+    return session_data->latest_section->detection_required();
 }
 
 void HttpInspect::clear(Packet* p)
 {
-    HttpFlowData* session_data =
+    HttpFlowData* const session_data =
         (HttpFlowData*)p->flow->get_flow_data(HttpFlowData::inspector_id);
 
     if (session_data == nullptr)
         return;
     session_data->latest_section = nullptr;
 
-    assert((p->is_from_client()) || (p->is_from_server()));
-    assert(!((p->is_from_client()) && (p->is_from_server())));
-    SourceId source_id = (p->is_from_client()) ? SRC_CLIENT : SRC_SERVER;
+    const SourceId source_id = (p->is_from_client()) ? SRC_CLIENT : SRC_SERVER;
 
     if (session_data->transaction[source_id] == nullptr)
         return;
-
-    clear(session_data, source_id);
-}
-
-void HttpInspect::clear(HttpFlowData* session_data, SourceId source_id)
-{
-    session_data->latest_section = nullptr;
 
     // If current transaction is complete then we are done with it and should reclaim the space
     if ((source_id == SRC_SERVER) && (session_data->type_expected[SRC_SERVER] == SEC_STATUS) &&

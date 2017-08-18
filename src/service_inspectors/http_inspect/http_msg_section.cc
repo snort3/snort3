@@ -51,6 +51,12 @@ HttpMsgSection::HttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
     assert((source_id == SRC_CLIENT) || (source_id == SRC_SERVER));
 }
 
+bool HttpMsgSection::detection_required() const
+{
+    return ((msg_text.length() > 0) && (get_inspection_section() != IS_NONE)) ||
+           (get_inspection_section() == IS_DETECTION);
+}
+
 void HttpMsgSection::add_infraction(int infraction)
 {
     *transaction->get_infractions(source_id) += infraction;
@@ -200,12 +206,12 @@ const Field& HttpMsgSection::get_classic_buffer(unsigned id, uint64_t sub_id, ui
     case HTTP_BUFFER_RAW_REQUEST:
       {
         HttpMsgRequest* request = transaction->get_request();
-        return (request != nullptr) ? request->get_detect_buf() : Field::FIELD_NULL;
+        return (request != nullptr) ? request->msg_text : Field::FIELD_NULL;
       }
     case HTTP_BUFFER_RAW_STATUS:
       {
         HttpMsgStatus* status = transaction->get_status();
-        return (status != nullptr) ? status->get_detect_buf() : Field::FIELD_NULL;
+        return (status != nullptr) ? status->msg_text : Field::FIELD_NULL;
       }
     case HTTP_BUFFER_RAW_TRAILER:
       {

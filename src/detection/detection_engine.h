@@ -64,9 +64,6 @@ public:
     static void set_encode_packet(Packet*);
     static Packet* get_encode_packet();
 
-    static void set_next_file_data(const DataPointer&);
-    static void get_next_file_data(DataPointer&);
-
     static void set_file_data(const DataPointer&);
     static void get_file_data(DataPointer&);
 
@@ -107,12 +104,6 @@ private:
 private:
     IpsContext* context;
 };
-
-static inline void set_next_file_data(const uint8_t* p, unsigned n)
-{
-    DataPointer dp { p, n };
-    DetectionEngine::set_next_file_data(dp);
-}
 
 static inline void set_file_data(const uint8_t* p, unsigned n)
 {

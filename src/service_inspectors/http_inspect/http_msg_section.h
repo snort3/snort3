@@ -37,7 +37,8 @@ public:
     virtual ~HttpMsgSection() = default;
     virtual HttpEnums::InspectSection get_inspection_section() const
         { return HttpEnums::IS_NONE; }
-    HttpEnums::SourceId get_source_id() { return source_id; }
+    virtual bool detection_required() const;
+    HttpEnums::SourceId get_source_id() const { return source_id; }
 
     // Minimum necessary processing for every message
     virtual void analyze() = 0;
@@ -53,12 +54,9 @@ public:
 
     const Field& get_classic_buffer(unsigned id, uint64_t sub_id, uint64_t form);
 
-    // Provide buffer to be sent to detection
-    virtual const Field& get_detect_buf() const { return msg_text; }
-
     HttpEnums::MethodId get_method_id() const { return method_id; }
 
-    int32_t get_status_code_num() { return status_code_num; }
+    int32_t get_status_code_num() const { return status_code_num; }
 
     // Publish an inspection event for other modules to consume.
     virtual void publish() { }

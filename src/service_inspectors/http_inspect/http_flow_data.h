@@ -95,6 +95,7 @@ private:
                                                 HttpEnums::SEC__NOT_COMPUTE };
     bool tcp_close[2] = { false, false };
     int32_t num_head_lines[2] = { HttpEnums::STAT_NOT_PRESENT, HttpEnums::STAT_NOT_PRESENT };
+    bool zero_byte_workaround[2];
 
     // Infractions and events are associated with a specific message and are stored in the
     // transaction for that message. But StreamSplitter splits the start line before there is
