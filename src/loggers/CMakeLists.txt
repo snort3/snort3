@@ -14,6 +14,8 @@ set (PLUGIN_LIST
     alert_syslog.cc
     log_hext.cc
     log_pcap.cc
+    u2_packet.cc
+    u2_packet.h
     unified2.cc
 )
 
@@ -36,7 +38,7 @@ else (STATIC_LOGGERS)
     add_dynamic_module(alert_syslog loggers alert_syslog.cc)
     add_dynamic_module(log_hext loggers log_hext.cc)
     add_dynamic_module(log_pcap loggers log_pcap.cc)
-    add_dynamic_module(unified2 loggers unified2.cc)
+    add_dynamic_module(unified2 loggers unified2.cc u2_packet.cc u2_packet.h)
 
 endif (STATIC_LOGGERS)
 

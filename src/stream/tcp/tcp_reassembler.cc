@@ -470,10 +470,13 @@ int TcpReassembler::flush_data_segments(Packet* p, uint32_t total, Packet* pdu)
 
         DebugFormat(DEBUG_STREAM_STATE, "Flushing %u bytes from %X\n", bytes_to_copy, tsn->seq);
 
-        if ( !tsn->next || ( bytes_to_copy < tsn->payload_size )
-            || SEQ_EQ(tsn->seq +  bytes_to_copy, to_seq) )
+        if ( !tsn->next or (bytes_to_copy < tsn->payload_size) or
+            SEQ_EQ(tsn->seq +  bytes_to_copy, to_seq) or
+            (bytes_flushed + tsn->payload_size + tsn->next->payload_size >
+                tracker->splitter->get_max_pdu()) )
+        {
             flags |= PKT_PDU_TAIL;
-
+        }
         const StreamBuffer sb = tracker->splitter->reassemble(
             session->flow, total, bytes_flushed, tsn->payload(),
             bytes_to_copy, flags, bytes_copied);
@@ -525,7 +528,7 @@ int TcpReassembler::flush_data_segments(Packet* p, uint32_t total, Packet* pdu)
         if ( sb.data || !seglist.next )
             break;
 
-        if ( bytes_flushed + seglist.next->payload_size >= tracker->splitter->get_max_pdu() )
+        if ( bytes_flushed + seglist.next->payload_size > tracker->splitter->get_max_pdu() )
             break;
     }
 

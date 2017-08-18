@@ -165,8 +165,8 @@ bool AlertCsv::convert(std::istringstream& data_stream)
         }
         else if (!val.compare("dgmlen"))
         {
-            table_api.add_diff_option_comment("dgmlen", "dgm_len");
-            tmpval = table_api.add_list("fields", "dgm_len");
+            table_api.add_diff_option_comment("dgmlen", "pkt_len");
+            tmpval = table_api.add_list("fields", "pkt_len");
         }
 
         else if (!val.compare("id"))

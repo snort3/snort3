@@ -22,10 +22,6 @@
 #ifndef TCP_STREAM_SESSION_H_
 #define TCP_STREAM_SESSION_H_
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "detection/detection_engine.h"
 #include "flow/session.h"
 #include "stream/libtcp/tcp_stream_tracker.h"

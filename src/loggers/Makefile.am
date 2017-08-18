@@ -14,6 +14,8 @@ alert_full.cc \
 alert_syslog.cc \
 log_hext.cc \
 log_pcap.cc \
+u2_packet.cc \
+u2_packet.h \
 unified2.cc
 
 if STATIC_LOGGERS
@@ -55,6 +57,6 @@ log_pcap_la_SOURCES = log_pcap.cc
 ehlib_LTLIBRARIES += unified2.la
 unified2_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 unified2_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
-unified2_la_SOURCES = unified2.cc
+unified2_la_SOURCES = unified2.cc u2_packet.cc u2_packet.h
 endif
 

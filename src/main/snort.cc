@@ -45,6 +45,7 @@
 #include "flow/ha.h"
 #include "framework/endianness.h"
 #include "framework/mpse.h"
+#include "helpers/base64_encoder.h"
 #include "helpers/process.h"
 #include "host_tracker/host_cache.h"
 #include "ips_options/ips_flowbits.h"
@@ -514,6 +515,8 @@ void Snort::setup(int argc, char* argv[])
 {
     set_main_thread();
 
+    // must be done before any other files are opened because we
+    // will try to grab file descriptor 3 (if --enable-stdlog)
     OpenLogger();
 
     init(argc, argv);
@@ -532,10 +535,12 @@ void Snort::setup(int argc, char* argv[])
 
     set_quick_exit(false);
 
-    keep_utf_lib();
-    keep_kmap_lib();
+    // FIXIT-L eliminate keep_*() required for dynamic-only linkage
+    keep_base64_encoder();
     keep_decomp_lib();
     keep_jsnorm_lib();
+    keep_kmap_lib();
+    keep_utf_lib();
 
     TimeStart();
 }

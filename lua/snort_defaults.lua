@@ -470,7 +470,7 @@ default_classifications =
       text = 'Generic Protocol Command Decode' },
 
     { name = 'web-application-activity', priority = 2,
-      text = 'access to a potentially vulnerable web application' },
+      text = 'Access to a potentially vulnerable web application' },
 
     { name = 'web-application-attack', priority = 1,
       text = 'Web Application Attack' },

@@ -460,7 +460,7 @@ bool Binder::configure(SnortConfig* sc)
     return true;
 }
 
-void Binder::update(SnortConfig* sc, const char* name)
+void Binder::update(SnortConfig*, const char* name)
 {
     vector<Binding*>::iterator it;
     for ( it = bindings.begin(); it != bindings.end(); ++it )

@@ -69,21 +69,18 @@ private:
 
     void end_stats_period(void);
     StatsBucket* get_stats_bucket(time_t);
-    FILE* open_stats_log_file(const char* const filename, time_t);
+    void open_stats_log_file();
     void dump_statistics();
 
     bool enabled = false;
     SF_LIST* currBuckets = nullptr;
     SF_LIST* logBuckets = nullptr;
-    FILE* appfp = nullptr;
-    size_t appSize = 0;
-    time_t appTime = 0;
+    struct TextLog* log = nullptr;
     time_t bucketStart = 0;
     time_t bucketInterval = 0;
     time_t bucketEnd = 0;
     size_t rollSize = 0;
     time_t rollPeriod = 0;
-    const char* appid_stats_filename = nullptr;
 };
 
 #endif

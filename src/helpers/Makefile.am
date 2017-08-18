@@ -1,9 +1,9 @@
 
 noinst_LIBRARIES = libhelpers.a
 
-x_includedir = $(pkgincludedir)/helpers
-
 libhelpers_a_SOURCES = \
+base64_encoder.cc \
+base64_encoder.h \
 chunk.cc \
 chunk.h \
 directory.cc \

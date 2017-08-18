@@ -51,6 +51,8 @@
 #include "utils/util.h"
 #include "utils/util_cstring.h"
 
+#include "u2_packet.h"
+
 using namespace std;
 
 #define S_NAME "unified2"
@@ -99,15 +101,7 @@ static THREAD_LOCAL char* io_buffer = nullptr;
 
 /* -------------------- Local Functions -----------------------*/
 
-static void Unified2InitFile(Unified2Config*);
-static inline void Unified2RotateFile(Unified2Config*);
-static void _Unified2LogPacketAlert(Packet*, const char*, Unified2Config*, const Event*);
 static void Unified2Write(uint8_t*, uint32_t, Unified2Config*);
-
-static void alert_event(Packet*, const char*, Unified2Config*, const Event*);
-
-static void AlertExtraData(Flow*, void* data, LogFunction* log_funcs,
-    uint32_t max_count, uint32_t xtradata_mask, uint32_t event_id, uint32_t event_second);
 
 static void Unified2InitFile(Unified2Config* config)
 {
@@ -337,12 +331,15 @@ static void AlertExtraData(
 }
 
 static void _Unified2LogPacketAlert(
-    Packet* p, const char*, Unified2Config* config, const Event* event)
+    Packet* p, const char*, Unified2Config* config, const Event* event,
+    unsigned u2_type, U2PseudoHeader* u2h = nullptr)
 {
     Serial_Unified2_Header hdr;
     Serial_Unified2Packet logheader;
+
     uint32_t pkt_length = 0;
     uint32_t write_len = sizeof(hdr) + sizeof(Serial_Unified2Packet) - 4;
+    unsigned u2h_len = u2h ? u2h->get_size() : 0;
 
     logheader.sensor_id = 0;
     logheader.linktype = u2.base_proto;
@@ -365,8 +362,8 @@ static void _Unified2LogPacketAlert(
         logheader.packet_second = htonl((uint32_t)p->pkth->ts.tv_sec);
         logheader.packet_microsecond = htonl((uint32_t)p->pkth->ts.tv_usec);
         pkt_length = ( p->is_rebuilt() ) ? p->dsize : p->pkth->caplen;
-        logheader.packet_length = htonl(pkt_length);
-        write_len += pkt_length;
+        logheader.packet_length = htonl(pkt_length + u2h_len);
+        write_len += pkt_length + u2h_len;
     }
     else
     {
@@ -378,16 +375,21 @@ static void _Unified2LogPacketAlert(
     if ( config->limit && (u2.current + write_len) > config->limit )
         Unified2RotateFile(config);
 
-    hdr.length = htonl(sizeof(Serial_Unified2Packet) - 4 + pkt_length);
-    hdr.type = ( p and p->is_rebuilt() ) ? htonl(UNIFIED2_BUFFER) : htonl(UNIFIED2_PACKET);
+    hdr.length = htonl(sizeof(Serial_Unified2Packet) - 4 + pkt_length + u2h_len);
+    hdr.type = htonl(u2_type);
 
     memcpy_s(write_pkt_buffer, u2_buf_sz, &hdr, sizeof(hdr));
-
     size_t offset = sizeof(hdr);
 
     memcpy_s(write_pkt_buffer + offset, u2_buf_sz - offset, &logheader, sizeof(logheader) - 4);
-
     offset += sizeof(logheader) - 4;
+
+    if ( u2h_len > 0 )
+    {
+        assert(u2_buf_sz - offset > u2h_len);
+        memcpy_s(write_pkt_buffer + offset, u2_buf_sz - offset, u2h->get_data(), u2h_len);
+        offset += u2h_len;
+    }
 
     if (pkt_length != 0)
     {
@@ -976,21 +978,19 @@ void U2Logger::alert(Packet* p, const char* msg, const Event& event)
 
 void U2Logger::log(Packet* p, const char* msg, Event* event)
 {
-    if (p)
+    assert(p);
+
+    // FIXIT-H convert to packet method if correct
+    if ( !p->is_cooked() or p->pseudo_type == PSEUDO_PKT_IP )
+        _Unified2LogPacketAlert(p, msg, &config, event, UNIFIED2_PACKET);
+
+    else if ( !config.legacy_events )
+        _Unified2LogPacketAlert(p, msg, &config, event, UNIFIED2_BUFFER);
+
+    else
     {
-        if ( (p->packet_flags & PKT_REBUILT_STREAM) and !p->is_data() )
-        {
-            DebugMessage(DEBUG_LOG,
-                "[*] Reassembled packet, dumping stream packets\n");
-            // FIXIT-H replace with reassembled stream data and
-            // optionally the first captured packet
-            //_Unified2LogStreamAlert(p, msg, &config, event);
-        }
-        else
-        {
-            DebugMessage(DEBUG_LOG, "[*] Logging unified 2 packets...\n");
-            _Unified2LogPacketAlert(p, msg, &config, event);
-        }
+        U2PseudoHeader u2h(p);
+        _Unified2LogPacketAlert(p, msg, &config, event, UNIFIED2_PACKET, &u2h);
     }
 }
 

@@ -25,13 +25,13 @@
 
 #include "appid_stats.h"
 
-#include <string.h>
+#include "log/text_log.h"
+#include "log/unified2.h"
+#include "time/packet_time.h"
 
 #include "appid_config.h"
 #include "app_info_table.h"
 #include "appid_session.h"
-#include "log/messages.h"
-#include "log/unified2.h"
 
 #define URLCATBUCKETS   100
 #define URLREPBUCKETS   5
@@ -43,16 +43,7 @@ struct AppIdStatRecord
     uint32_t responderBytes;
 };
 
-#pragma pack(1)
-struct AppIdStatOutputRecord
-{
-    char app_name[MAX_EVENT_APPNAME_LEN];
-    uint32_t initiatorBytes;
-    uint32_t responderBytes;
-};
-#pragma pack()
-
-static const char appid_stats_file_suffix[] = "appid_stats.log";
+static const char appid_stats_filename[] = "appid_stats.log";
 
 static void delete_record(void* record)
 {
@@ -71,12 +62,7 @@ StatsBucket* AppIdStatistics::get_stats_bucket(time_t startTime)
     StatsBucket* bucket = nullptr;
 
     if ( !currBuckets )
-    {
         currBuckets = sflist_new();
-#       ifdef DEBUG_STATS
-        fprintf(SF_DEBUG_FILE, "New Stats Bucket List\n");
-#       endif
-    }
 
     if ( !currBuckets )
         return nullptr;
@@ -98,11 +84,6 @@ StatsBucket* AppIdStatistics::get_stats_bucket(time_t startTime)
             bucket->startTime = startTime;
             bucket->appsTree = fwAvlInit();
             sflist_add_before(currBuckets, lNode, bucket);
-
-#ifdef DEBUG_STATS
-            fprintf(SF_DEBUG_FILE, "New Bucket Time: %u before %u\n",
-                bucket->startTime, lBucket->startTime);
-#endif
             break;
         }
     }
@@ -113,79 +94,37 @@ StatsBucket* AppIdStatistics::get_stats_bucket(time_t startTime)
         bucket->startTime = startTime;
         bucket->appsTree = fwAvlInit();
         sflist_add_tail(currBuckets, bucket);
-
-#ifdef DEBUG_STATS
-        fprintf(SF_DEBUG_FILE, "New Bucket Time: %u at tail\n", bucket->startTime);
-#endif
     }
 
     return bucket;
 }
 
-FILE* AppIdStatistics::open_stats_log_file(const char* const filename, time_t tstamp)
+void AppIdStatistics::open_stats_log_file()
 {
-    FILE* fp;
-    char output_fullpath[512];
-    time_t curr_time;
-
-    if (tstamp)
-        curr_time = tstamp;
-    else
-        curr_time = time(nullptr);
-
-    snprintf(output_fullpath, sizeof(output_fullpath), "%s.%lu", filename, curr_time);
-    LogMessage("Opening %s for AppId statistics logging.\n", output_fullpath);
-
-    if ((fp = fopen(output_fullpath, "w")) == nullptr)
-    {
-        ErrorMessage("Unable to open output file \"%s\": %s\n for AppId statistics logging.\n",
-            output_fullpath, strerror(errno));
-    }
-    return fp;
+    log = TextLog_Init(appid_stats_filename, 4096, rollSize);
 }
 
 void AppIdStatistics::dump_statistics()
 {
-    struct StatsBucket* bucket = nullptr;
-    uint32_t* buffPtr;
-    time_t currTime = time(nullptr);
+    if ( !enabled )
+        return;
 
     if ( !logBuckets )
         return;
 
+    if ( !log )
+        open_stats_log_file();
+
+    struct StatsBucket* bucket = nullptr;
+
     while ((bucket = (struct StatsBucket*)sflist_remove_head(logBuckets)) != nullptr)
     {
-        uint8_t* buffer;
-        size_t buffSize;
-        Serial_Unified2_Header header;
-
         if ( bucket->appRecordCnt )
         {
-            buffSize = ( bucket->appRecordCnt * sizeof(struct AppIdStatOutputRecord) ) +
-                ( 4 * sizeof(uint32_t) );
-            header.type = UNIFIED2_IDS_EVENT_APPSTAT;
-            header.length = buffSize - ( 2 * sizeof(uint32_t));
-            buffer = (uint8_t*)snort_calloc(buffSize);
-#           ifdef DEBUG_STATS
-            fprintf(SF_DEBUG_FILE, "Write App Records %u Size: %zu\n",
-                bucket->appRecordCnt, buffSize);
-#           endif
-        }
-        else
-            buffer = nullptr;
+            struct FwAvlNode* node;
 
-        if ( buffer )
-        {
-            buffPtr = (uint32_t*)buffer;
-            *buffPtr++ = htonl(header.type);
-            *buffPtr++ = htonl(header.length);
-            *buffPtr++ = htonl(bucket->startTime);
-            *buffPtr++ = htonl(bucket->appRecordCnt);
-
-            struct    FwAvlNode* node;
             for (node = fwAvlFirst(bucket->appsTree); node != nullptr; node = fwAvlNext(node))
             {
-                struct AppIdStatOutputRecord* recBuffPtr;
                 const char* app_name;
                 bool cooked_client = false;
                 AppId app_id;
@@ -195,16 +134,15 @@ void AppIdStatistics::dump_statistics()
                 record = (struct AppIdStatRecord*)node->data;
                 app_id = record->app_id;
 
-                recBuffPtr = (struct AppIdStatOutputRecord*)buffPtr;
-
                 if ( app_id >= 2000000000 )
                 {
                     cooked_client = true;
                     app_id -= 2000000000;
                 }
 
-                AppInfoTableEntry* entry = AppInfoManager::get_instance().get_app_info_entry(
-                    app_id);
+                AppInfoTableEntry* entry
+                    = AppInfoManager::get_instance().get_app_info_entry(app_id);
+
                 if ( entry )
                 {
                     app_name = entry->app_name;
@@ -230,46 +168,9 @@ void AppIdStatistics::dump_statistics()
                     app_name = tmpBuff;
                 }
 
-                memcpy(recBuffPtr->app_name, app_name, strlen(app_name));
-
-                /**buffPtr++ = htonl(record->app_id); */
-                recBuffPtr->initiatorBytes = htonl(record->initiatorBytes);
-                recBuffPtr->responderBytes = htonl(record->responderBytes);
-                buffPtr += sizeof(*recBuffPtr)/sizeof(*buffPtr);
+                TextLog_Print(log, "%lu,%s,%u,%u\n",
+                    packet_time(), app_name, record->initiatorBytes, record->responderBytes);
             }
-
-            if ( appid_stats_filename )
-            {
-                if ( !appfp )
-                {
-                    appfp = open_stats_log_file(appid_stats_filename, currTime);
-                    appTime = currTime;
-                    appSize = 0;
-                }
-                else if ( ( ( currTime - appTime ) > rollPeriod ) ||
-                    ( ( appSize + buffSize) > rollSize ) )
-                {
-                    fclose(appfp);
-                    appfp = open_stats_log_file(appid_stats_filename, currTime);
-                    appTime = currTime;
-                    appSize = 0;
-                }
-                if ( appfp )
-                {
-                    if ( ( fwrite(buffer, buffSize, 1, appfp) == 1 ) && ( fflush(appfp) == 0 ) )
-                    {
-                        appSize += buffSize;
-                    }
-                    else
-                    {
-                        ErrorMessage("AppID ailed to write to statistics file (%s): %s\n",
-                            appid_stats_filename, strerror(errno));
-                        fclose(appfp);
-                        appfp = nullptr;
-                    }
-                }
-            }
-            snort_free(buffer);
         }
         fwAvlDeleteTree(bucket->appsTree, delete_record);
         snort_free(bucket);
@@ -281,13 +182,11 @@ AppIdStatistics::AppIdStatistics(const AppIdModuleConfig& config)
     if ( config.stats_logging_enabled )
     {
         enabled = true;
-        std::string stats_file;
-        appid_stats_filename = snort_strdup(get_instance_file(stats_file,
-            appid_stats_file_suffix));
 
         rollPeriod = config.app_stats_rollover_time;
         rollSize = config.app_stats_rollover_size;
         bucketInterval = config.app_stats_period;
+
         time_t now = get_time();
         start_stats_period(now);
     }
@@ -302,12 +201,8 @@ AppIdStatistics::~AppIdStatistics()
     end_stats_period();
     dump_statistics();
 
-    if ( appfp )
-    {
-        fclose(appfp);
-        appfp = nullptr;
-    }
-    snort_free((void*)appid_stats_filename);
+    if ( log )
+        TextLog_Term(log);
 
     if ( logBuckets )
         snort_free(logBuckets);
@@ -319,7 +214,6 @@ AppIdStatistics::~AppIdStatistics()
             fwAvlDeleteTree(bucket->appsTree, delete_record);
             snort_free(bucket);
         }
-
         snort_free(currBuckets);
     }
 }

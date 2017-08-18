@@ -16,33 +16,39 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// detect_trace.h author Maya Dagon
+// base64_encoder.h author Russ Combs <rucombs@cisco.com>
 
-#ifndef DETECT_TRACE_H
-#define DETECT_TRACE_H
+#ifndef BASE64_ENCODER_H
+#define BASE64_ENCODER_H
 
-// Detection trace utility
+// this is based on the excellent work by devolve found at
+// https://sourceforge.net/projects/libb64/.
 
-#include "framework/cursor.h"
+// usage: instantiate, encode+, finish
+// buf must hold 2*length_in
+
+#include <cstdint>
 #include "main/snort_types.h"
 
-#include "detection_options.h"
-#include "pattern_match_data.h"
-
-enum
+class SO_PUBLIC Base64Encoder
 {
-	TRACE_DETECTION_ENGINE = 0x1,
-	TRACE_RULE_EVAL = 0x2,
-	TRACE_BUFFER_MINIMAL = 0x4,
-	TRACE_BUFFER_VERBOSE = 0x8,
-	TRACE_RULE_VARS = 0x10
+public:
+    Base64Encoder()
+    { reset(); }
+
+    unsigned encode(const uint8_t* plain_text, unsigned length, char* buf);
+    unsigned finish(char* buf);
+
+    void reset()
+    { step = step_A, state = 0; }
+
+private:
+    enum Steps { step_A, step_B, step_C };
+    Steps step;
+    uint8_t state;
 };
-	
-void clear_trace_cursor_info();
-void print_pkt_info(Packet* p);
-void print_pattern(const PatternMatchData* pmd);
-void dump_buffer(const uint8_t* buff, unsigned len);
-void node_eval_trace(const detection_option_tree_node_t* node, const Cursor& cursor);
+
+void keep_base64_encoder();
 
 #endif
 

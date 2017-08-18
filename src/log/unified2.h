@@ -21,31 +21,29 @@
 #ifndef UNIFIED2_H
 #define UNIFIED2_H
 
-// Unified logging (events and packets) shared header.  Fields marked
-// deprecated are no longer generated but can still be dumped with
-// u2spewfoo.
+// Unified logging (events and packets) shared header.
 
 #include <netinet/in.h>
 
 #include "protocols/protocol_ids.h"
 
 // OBSOLETE (no longer generated):
-// #define UNIFIED2_EVENT               1
-// #define UNIFIED2_IDS_EVENT           7
-// #define UNIFIED2_IDS_EVENT_IPV6      72
-// #define UNIFIED2_IDS_EVENT_MPLS      99
+// #define UNIFIED2_EVENT                 1
+// #define UNIFIED2_IDS_EVENT             7
+// #define UNIFIED2_IDS_EVENT_IPV6       72
+// #define UNIFIED2_IDS_EVENT_MPLS       99
 // #define UNIFIED2_IDS_EVENT_IPV6_MPLS 100
 
 // CURRENT
-#define UNIFIED2_PACKET              2
-#define UNIFIED2_BUFFER              3
-#define UNIFIED2_IDS_EVENT_VLAN      104  // deprecated
-#define UNIFIED2_IDS_EVENT_IPV6_VLAN 105  // deprecated
+#define UNIFIED2_PACKET                2
+#define UNIFIED2_BUFFER                3  // !legacy_events
+#define UNIFIED2_IDS_EVENT_VLAN      104  // legacy_events
+#define UNIFIED2_IDS_EVENT_IPV6_VLAN 105  // legacy_events
 #define UNIFIED2_EXTRA_DATA          110
 #define UNIFIED2_IDS_EVENT_APPSTAT   113  // FIXIT-L owned by appid (should have own # space)
 #define UNIFIED2_EVENT3              114
 
-#define MAX_EVENT_APPNAME_LEN        64
+#define MAX_EVENT_APPNAME_LEN         64
 
 /* Data structure used for serialization of Unified2 Records */
 struct Serial_Unified2_Header
@@ -153,7 +151,7 @@ struct Serial_Unified2Packet
     uint32_t event_id;
     uint32_t event_second;
     uint32_t packet_second;
-   uint32_t packet_microsecond;
+    uint32_t packet_microsecond;
     uint32_t linktype;
     uint32_t packet_length;
     uint8_t packet_data[4];

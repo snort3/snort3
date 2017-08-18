@@ -88,7 +88,10 @@
 #cmakedefine _LARGEFILE_SOURCE 1
 #cmakedefine _FILE_OFFSET_BITS @_FILE_OFFSET_BITS@
 
-/* enable ha capable build */
+/* enable stdlog */
+#cmakedefine USE_STDLOG 1
+
+/* enable tsc clock */
 #cmakedefine USE_TSC_CLOCK 1
 
 

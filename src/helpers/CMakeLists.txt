@@ -1,4 +1,6 @@
 add_library (helpers STATIC
+    base64_encoder.cc
+    base64_encoder.h
     chunk.cc
     chunk.h
     directory.cc

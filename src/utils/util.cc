@@ -192,7 +192,7 @@ void ts_print(const struct timeval* tvp, char* timebuf)
 
         (void)SnortSnprintf(timebuf, TIMEBUF_SIZE,
             "%02d/%02d/%02d-%02d:%02d:%02d.%06u",
-            lt->tm_mon + 1, lt->tm_mday, year,
+            year, lt->tm_mon + 1, lt->tm_mday,
             s / 3600, (s % 3600) / 60, s % 60,
             (u_int)tvp->tv_usec);
     }

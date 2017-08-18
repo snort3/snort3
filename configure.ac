@@ -325,6 +325,14 @@ fi
 
 AM_CONDITIONAL(ENABLE_SHELL, test "x$enable_shell" = "xyes")
 
+AC_ARG_ENABLE(stdlog,
+    AS_HELP_STRING([--disable-stdlog],[do not prefer file descriptor 3 over stdout for alerts]),
+    enable_stdlog="$enableval", enable_stdlog="yes")
+
+if test "x$enable_stdlog" = "xyes"; then
+    AC_DEFINE(USE_STDLOG, [1], [enable stdlog])
+fi
+
 AC_ARG_ENABLE(tsc-clock,
     AS_HELP_STRING([--enable-tsc-clock],[use timestamp counter register clock (x86 only)]),
     enable_tsc_clock="$enableval", enable_tsc_clock="no")

@@ -67,8 +67,12 @@ static FILE* TextLog_Open(const char* name)
 {
     if ( name && !strcasecmp(name, "stdout") )
     {
+#ifdef USE_STDLOG
         FILE* stdlog = fdopen(STDLOG_FILENO, "w");
         return stdlog ? stdlog : stdout;
+#else
+        return stdout;
+#endif
     }
 
     return OpenAlertFile(name);

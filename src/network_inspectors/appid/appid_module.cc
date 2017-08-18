@@ -155,7 +155,7 @@ static const Parameter s_params[] =
     { "app_detector_dir", Parameter::PT_STRING, nullptr, nullptr,
       "directory to load appid detectors from" },
     { "instance_id", Parameter::PT_INT, "0:", "0",
-      "instance id - need more details for what this is" },
+      "instance id - ignored" },
     { "debug", Parameter::PT_BOOL, nullptr, "false",
       "enable appid debug logging" },
     { "dump_ports", Parameter::PT_BOOL, nullptr, "false",
