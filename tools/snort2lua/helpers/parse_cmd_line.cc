@@ -282,11 +282,13 @@ static void print_version(const char* /*key*/, const char* /*val*/)
     std::cout << "Snort2Lua\t0.2.0";
 }
 
+#ifdef REG_TEST
 static void print_binder_order(const char* /*key*/, const char* /*val*/)
 {
     print_binder_priorities();
     exit(0);
 }
+#endif
 
 static void help(const char* key, const char* val)
 {
@@ -394,7 +396,7 @@ static ConfigFunc basic_opts[] =
       "Same as '-a'. default option.  print all data" },
 
 #ifdef REG_TEST
-    { "print-binding-order", print_binder_order, ""
+    { "print-binding-order", print_binder_order, "",
       "Print sorting priority used when generating binder table" },
 #endif
 
