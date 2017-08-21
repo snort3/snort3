@@ -28,33 +28,33 @@ struct SnortConfig;
 void config_markup(SnortConfig*, const char*);
 
 void help_args(const char* pfx);
-void help_basic(SnortConfig*, const char*);
-void help_usage(SnortConfig*, const char*);
-void help_options(SnortConfig*, const char*);
-void help_signals(SnortConfig*, const char*);
-void help_config(SnortConfig* sc, const char*);
-void help_commands(SnortConfig* sc, const char*);
-void help_gids(SnortConfig* sc, const char*);
-void help_buffers(SnortConfig* sc, const char*);
-void help_builtin(SnortConfig* sc, const char*);
-void help_module(SnortConfig* sc, const char*);
-void help_modules(SnortConfig* sc, const char*);
-void help_plugins(SnortConfig* sc, const char*);
-void help_version(SnortConfig*);
-void help_counts(SnortConfig* sc, const char*);
+[[noreturn]] void help_basic(SnortConfig*, const char*);
+[[noreturn]] void help_usage(SnortConfig*, const char*);
+[[noreturn]] void help_options(SnortConfig*, const char*);
+[[noreturn]] void help_signals(SnortConfig*, const char*);
+[[noreturn]] void help_config(SnortConfig* sc, const char*);
+[[noreturn]] void help_commands(SnortConfig* sc, const char*);
+[[noreturn]] void help_gids(SnortConfig* sc, const char*);
+[[noreturn]] void help_buffers(SnortConfig* sc, const char*);
+[[noreturn]] void help_builtin(SnortConfig* sc, const char*);
+[[noreturn]] void help_module(SnortConfig* sc, const char*);
+[[noreturn]] void help_modules(SnortConfig* sc, const char*);
+[[noreturn]] void help_plugins(SnortConfig* sc, const char*);
+[[noreturn]] void help_version(SnortConfig*);
+[[noreturn]] void help_counts(SnortConfig* sc, const char*);
 
-void list_modules(SnortConfig* sc, const char*);
-void list_plugins(SnortConfig* sc, const char*);
-void list_interfaces(SnortConfig*);
-void list_daqs(SnortConfig* sc);
+[[noreturn]] void list_modules(SnortConfig* sc, const char*);
+[[noreturn]] void list_plugins(SnortConfig* sc, const char*);
+[[noreturn]] void list_interfaces(SnortConfig*);
+[[noreturn]] void list_daqs(SnortConfig* sc);
 
-void dump_defaults(SnortConfig* sc, const char*);
-void dump_builtin_rules(SnortConfig* sc, const char*);
-void dump_dynamic_rules(SnortConfig* sc, const char*);
-void dump_msg_map(SnortConfig* sc, const char*);
-void dump_rule_hex(SnortConfig* sc, const char*);
-void dump_rule_text(SnortConfig* sc, const char*);
-void dump_version(SnortConfig* sc);
+[[noreturn]] void dump_defaults(SnortConfig* sc, const char*);
+[[noreturn]] void dump_builtin_rules(SnortConfig* sc, const char*);
+[[noreturn]] void dump_dynamic_rules(SnortConfig* sc, const char*);
+[[noreturn]] void dump_msg_map(SnortConfig* sc, const char*);
+[[noreturn]] void dump_rule_hex(SnortConfig* sc, const char*);
+[[noreturn]] void dump_rule_text(SnortConfig* sc, const char*);
+[[noreturn]] void dump_version(SnortConfig* sc);
 
 #endif
 

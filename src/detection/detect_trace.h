@@ -31,13 +31,13 @@
 
 enum
 {
-	TRACE_DETECTION_ENGINE = 0x1,
-	TRACE_RULE_EVAL = 0x2,
-	TRACE_BUFFER_MINIMAL = 0x4,
-	TRACE_BUFFER_VERBOSE = 0x8,
-	TRACE_RULE_VARS = 0x10
+    TRACE_DETECTION_ENGINE = 0x1,
+    TRACE_RULE_EVAL = 0x2,
+    TRACE_BUFFER_MINIMAL = 0x4,
+    TRACE_BUFFER_VERBOSE = 0x8,
+    TRACE_RULE_VARS = 0x10
 };
-	
+
 void clear_trace_cursor_info();
 void print_pkt_info(Packet* p);
 void print_pattern(const PatternMatchData* pmd);

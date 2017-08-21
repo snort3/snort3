@@ -779,7 +779,7 @@ RuleTreeNode* deleteRtnFromOtn(OptTreeNode* otn, SnortConfig* sc)
     return deleteRtnFromOtn(otn, get_ips_policy()->policy_id, sc);
 }
 
-uint32_t rtn_hash_func(SFHASHFCN*, unsigned char *k, int)
+static uint32_t rtn_hash_func(SFHASHFCN*, unsigned char *k, int)
 {
     uint32_t a,b,c;
     RuleTreeNodeKey* rtnk = (RuleTreeNodeKey*)k;
@@ -800,7 +800,7 @@ uint32_t rtn_hash_func(SFHASHFCN*, unsigned char *k, int)
     return c;
 }
 
-int rtn_compare_func(const void *k1, const void *k2, size_t)
+static int rtn_compare_func(const void *k1, const void *k2, size_t)
 {
     RuleTreeNodeKey* rtnk1 = (RuleTreeNodeKey*)k1;
     RuleTreeNodeKey* rtnk2 = (RuleTreeNodeKey*)k2;
@@ -814,7 +814,7 @@ int rtn_compare_func(const void *k1, const void *k2, size_t)
     if (same_headers(rtnk1->rtn, rtnk2->rtn))
         return 0;
     
-	return 1;
+    return 1;
 }
 
 /**Add RTN to OTN for a particular OTN.

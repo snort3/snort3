@@ -40,7 +40,7 @@ struct RpcCheckData
     uint32_t program;
     uint32_t version;
     uint32_t procedure;
-    uint32_t flags;	// which fields to check
+    uint32_t flags; // which fields to check
 };
 
 #define RPC_CHECK_VERSION   0x1
@@ -155,7 +155,7 @@ bool RpcOption::is_match(Packet* p)
 // get a 32-bit int from the current location and increment to next int position
 uint32_t RpcOption::get_int(const uint8_t*& data)
 {
-    uint32_t value = extract_32bits(data);	
+    uint32_t value = extract_32bits(data);
     data += 4;
     return value;
 }

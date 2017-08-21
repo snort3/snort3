@@ -40,7 +40,7 @@ public:
     unsigned finish(char* buf);
 
     void reset()
-    { step = step_A, state = 0; }
+    { step = step_A; state = 0; }
 
 private:
     enum Steps { step_A, step_B, step_C };

@@ -59,18 +59,6 @@ typedef uint16_t Port;
 #endif
 #endif
 
-/* specifies that a function does not return
- * used for quieting Visual Studio warnings */
-#ifdef _MSC_VER
-# if _MSC_VER >= 1400
-#  define NORETURN __declspec(noreturn)
-# else
-#  define NORETURN
-# endif
-#else
-# define NORETURN __attribute__ ((noreturn))
-#endif
-
 #if !defined(__GNUC__) || __GNUC__ < 2 || \
     (__GNUC__ == 2 && __GNUC_MINOR__ < 5)
 #define __attribute__(x)    /* delete __attribute__ if non-gcc or gcc1 */

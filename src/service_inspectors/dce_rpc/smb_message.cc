@@ -1338,34 +1338,34 @@ static DCE2_SmbSsnData* dce2_create_new_smb_session(Packet* p, dce2SmbProtoConf*
 {
     Profile profile(dce2_smb_pstat_new_session);
 
-	DebugMessage(DEBUG_DCE_SMB, "DCE over SMB packet detected\n");
-	DebugMessage(DEBUG_DCE_SMB, "Creating new session\n");
+    DebugMessage(DEBUG_DCE_SMB, "DCE over SMB packet detected\n");
+    DebugMessage(DEBUG_DCE_SMB, "Creating new session\n");
 
     DCE2_SmbSsnData* dce2_smb_sess = set_new_dce2_smb_session(p);
-	if ( dce2_smb_sess )
-	{
-		dce2_smb_sess->dialect_index = DCE2_SENTINEL;
-		dce2_smb_sess->max_outstanding_requests = 10;  // Until Negotiate/SessionSetupAndX
-		dce2_smb_sess->cli_data_state = DCE2_SMB_DATA_STATE__NETBIOS_HEADER;
-		dce2_smb_sess->srv_data_state = DCE2_SMB_DATA_STATE__NETBIOS_HEADER;
-		dce2_smb_sess->pdu_state = DCE2_SMB_PDU_STATE__COMMAND;
-		dce2_smb_sess->uid = DCE2_SENTINEL;
-		dce2_smb_sess->tid = DCE2_SENTINEL;
-		dce2_smb_sess->ftracker.fid_v1 = DCE2_SENTINEL;
-		dce2_smb_sess->rtracker.mid = DCE2_SENTINEL;
-		dce2_smb_sess->max_file_depth = FileService::get_max_file_depth();
+    if ( dce2_smb_sess )
+    {
+        dce2_smb_sess->dialect_index = DCE2_SENTINEL;
+        dce2_smb_sess->max_outstanding_requests = 10;  // Until Negotiate/SessionSetupAndX
+        dce2_smb_sess->cli_data_state = DCE2_SMB_DATA_STATE__NETBIOS_HEADER;
+        dce2_smb_sess->srv_data_state = DCE2_SMB_DATA_STATE__NETBIOS_HEADER;
+        dce2_smb_sess->pdu_state = DCE2_SMB_PDU_STATE__COMMAND;
+        dce2_smb_sess->uid = DCE2_SENTINEL;
+        dce2_smb_sess->tid = DCE2_SENTINEL;
+        dce2_smb_sess->ftracker.fid_v1 = DCE2_SENTINEL;
+        dce2_smb_sess->rtracker.mid = DCE2_SENTINEL;
+        dce2_smb_sess->max_file_depth = FileService::get_max_file_depth();
 
-		DCE2_ResetRopts(&dce2_smb_sess->sd.ropts);
+        DCE2_ResetRopts(&dce2_smb_sess->sd.ropts);
 
-		dce2_smb_stats.smb_sessions++;
-		DebugFormat(DEBUG_DCE_SMB,"Created (%p)\n", (void*)dce2_smb_sess);
+        dce2_smb_stats.smb_sessions++;
+        DebugFormat(DEBUG_DCE_SMB,"Created (%p)\n", (void*)dce2_smb_sess);
 
-		dce2_smb_sess->sd.trans = DCE2_TRANS_TYPE__SMB;
-		dce2_smb_sess->sd.server_policy = config->common.policy;
-		dce2_smb_sess->sd.client_policy = DCE2_POLICY__WINXP;
-		dce2_smb_sess->sd.wire_pkt = p;
-		dce2_smb_sess->sd.config = (void*)config;
-	}
+        dce2_smb_sess->sd.trans = DCE2_TRANS_TYPE__SMB;
+        dce2_smb_sess->sd.server_policy = config->common.policy;
+        dce2_smb_sess->sd.client_policy = DCE2_POLICY__WINXP;
+        dce2_smb_sess->sd.wire_pkt = p;
+        dce2_smb_sess->sd.config = (void*)config;
+    }
 
     return dce2_smb_sess;
 }

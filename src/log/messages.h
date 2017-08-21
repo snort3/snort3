@@ -51,7 +51,7 @@ unsigned get_parse_warnings();
 SO_PUBLIC void ParseMessage(const char*, ...) __attribute__((format (printf, 1, 2)));
 SO_PUBLIC void ParseWarning(WarningGroup, const char*, ...) __attribute__((format (printf, 2, 3)));
 SO_PUBLIC void ParseError(const char*, ...) __attribute__((format (printf, 1, 2)));
-SO_PUBLIC NORETURN void ParseAbort(const char*, ...) __attribute__((format (printf, 1, 2)));
+[[noreturn]] SO_PUBLIC void ParseAbort(const char*, ...) __attribute__((format (printf, 1, 2)));
 
 SO_PUBLIC void LogMessage(const char*, ...) __attribute__((format (printf, 1, 2)));
 SO_PUBLIC void LogMessage(FILE* fh, const char*, ...) __attribute__((format (printf, 2, 3)));
@@ -59,9 +59,9 @@ SO_PUBLIC void WarningMessage(const char*, ...) __attribute__((format (printf, 1
 SO_PUBLIC void ErrorMessage(const char*, ...) __attribute__((format (printf, 1, 2)));
 
 // FIXIT-M do not call FatalError() during runtime
-SO_PUBLIC NORETURN void FatalError(const char*, ...) __attribute__((format (printf, 1, 2)));
+[[noreturn]] SO_PUBLIC void FatalError(const char*, ...) __attribute__((format (printf, 1, 2)));
 
-void log_safec_error(const char*, void*, int);
+[[noreturn]] void log_safec_error(const char*, void*, int);
 
 class Dumper
 {

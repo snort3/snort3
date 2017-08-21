@@ -112,7 +112,7 @@ void ParseError(const char* format, ...)
     parse_errors++;
 }
 
-NORETURN void ParseAbort(const char* format, ...)
+[[noreturn]] void ParseAbort(const char* format, ...)
 {
     char buf[STD_BUF+1];
     va_list ap;
@@ -258,7 +258,7 @@ void ErrorMessage(const char* format,...)
  *
  * Returns: void function
  */
-NORETURN void FatalError(const char* format,...)
+[[noreturn]] void FatalError(const char* format,...)
 {
     char buf[STD_BUF+1];
     va_list ap;
@@ -303,7 +303,7 @@ NORETURN void FatalError(const char* format,...)
     }
 }
 
-void log_safec_error(const char* msg, void*, int e)
+[[noreturn]] void log_safec_error(const char* msg, void*, int e)
 {
     static THREAD_LOCAL unsigned safec_errors = 0;
 

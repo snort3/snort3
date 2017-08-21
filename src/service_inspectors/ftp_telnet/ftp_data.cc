@@ -277,7 +277,7 @@ void FtpData::eval(Packet* p)
 
 StreamSplitter* FtpData::get_splitter(bool to_server)
 {
-	return new FtpDataSplitter(to_server);
+    return new FtpDataSplitter(to_server);
 }
 
 //-------------------------------------------------------------------------

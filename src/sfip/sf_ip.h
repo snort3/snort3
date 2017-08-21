@@ -76,7 +76,7 @@ struct SO_PUBLIC SfIp
     /* Returns true if the IPv6 address appears mapped. */
     bool is_mapped() const;
     bool is_loopback() const;
-	bool is_private() const;
+    bool is_private() const;
 
     const char* ntop(char* buf, int bufsize) const;
     const char* ntoa() const;

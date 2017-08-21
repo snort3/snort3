@@ -130,7 +130,7 @@ void node_eval_trace(const detection_option_tree_node_t* node, const Cursor& cur
     else
     {
         trace_logf(detection, TRACE_RULE_EVAL, "Reached leaf, cursor name %s, cursor position %u\n",
-				  name, pos);
+                  name, pos);
     }
 
     if (!trace_enabled(detection_trace, trace_buffer))

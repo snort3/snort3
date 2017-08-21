@@ -583,7 +583,7 @@ static inline SF_LIST** create_port_lists(PortTable* p)
     SF_LIST** parray = (SF_LIST**)snort_calloc(sizeof(SF_LIST*), SFPO_MAX_PORTS);
     assert(parray);
 
-	PortObject* po;
+    PortObject* po;
     SF_LNODE* lpos;
     for ( po = (PortObject*)sflist_first(p->pt_polist, &lpos);
           po;
@@ -653,9 +653,9 @@ static int PortTableCompileMergePortObjects(PortTable* p)
             po;
             po = (PortObject*)sflist_next(&lpos) )
         {
-			if (pol_cnt < SFPO_MAX_LPORTS )
+            if (pol_cnt < SFPO_MAX_LPORTS )
             {
-				pol[ pol_cnt++ ] = po;
+                pol[ pol_cnt++ ] = po;
             }
         }
         p->pt_port_object[i] = 0;
@@ -685,8 +685,8 @@ static int PortTableCompileMergePortObjects(PortTable* p)
         DEBUG_WRAP(DebugMessage(DEBUG_PORTLISTS, "\n"); fflush(stdout); );
     }
 
-	delete_port_lists(optimized_pl);
-	snort_free(optimized_pl);
+    delete_port_lists(optimized_pl);
+    snort_free(optimized_pl);
 
     /*
      * Normalize the Ports so they indicate only the ports that

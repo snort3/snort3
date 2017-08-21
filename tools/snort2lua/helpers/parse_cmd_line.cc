@@ -72,7 +72,6 @@ const std::string get_rule_file()
 { return rule_file.empty() ? get_out_file() : rule_file; }
 
 static void help_args(const char* pfx, const char* /*val*/);
-static void print_args(const char* pfx, const char* /*val*/);
 
 //-------------------------------------------------------------------------
 // arg foo
@@ -171,7 +170,7 @@ bool ArgList::get_arg(const char*& key, const char*& val)
     return false;
 }
 
-static void help_usage()
+[[noreturn]] static void help_usage()
 {
     std::cout << "usage:\n";
     std::cout << "    -?: list options\n";
@@ -283,14 +282,14 @@ static void print_version(const char* /*key*/, const char* /*val*/)
 }
 
 #ifdef REG_TEST
-static void print_binder_order(const char* /*key*/, const char* /*val*/)
+[[noreturn]] static void print_binder_order(const char* /*key*/, const char* /*val*/)
 {
     print_binder_priorities();
     exit(0);
 }
 #endif
 
-static void help(const char* key, const char* val)
+[[noreturn]] static void help(const char* key, const char* val)
 {
     std::cout << Markup::head(3) << "Usage: snort2lua [OPTIONS]... -c <snort_conf> ...\n";
     std::cout << "\n";
@@ -319,7 +318,7 @@ static void help(const char* key, const char* val)
     exit(0);
 }
 
-static void print_args(const char* key, const char* val)
+[[noreturn]] static void print_args(const char* key, const char* val)
 {
     help_args(key, val);
     exit(0);

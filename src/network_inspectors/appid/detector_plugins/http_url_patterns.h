@@ -228,20 +228,20 @@ typedef std::vector<CHPMatchCandidate> CHPMatchTally;
 
 struct ChpMatchDescriptor
 {
-	void free_rewrite_buffers()
-	{
+    void free_rewrite_buffers()
+    {
         for (unsigned i = 0; i < NUMBER_OF_PTYPES; i++)
             if (chp_rewritten[i])
             {
                 snort_free(chp_rewritten[i]);
                 chp_rewritten[i] = nullptr;
             }
-	}
+    }
 
-	void sort_chp_matches()
-	{
-	    chp_matches[cur_ptype].sort(ChpMatchDescriptor::comp_chp_actions);
-	}
+    void sort_chp_matches()
+    {
+        chp_matches[cur_ptype].sort(ChpMatchDescriptor::comp_chp_actions);
+    }
 
     PatternType cur_ptype;
     char* buffer[NUMBER_OF_PTYPES] = { nullptr };

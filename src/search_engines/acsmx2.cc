@@ -350,16 +350,16 @@ static void AC_FREE_DFA(void* p, int n, int sizeofstate)
 static int List_GetNextStateOpt( ACSM_STRUCT2 * acsm,
     trans_node_t **acsmTransTableOpt, int state, int input )
 {
-	int index = state * acsm->acsmAlphabetSize + input;
-	trans_node_t * t = acsmTransTableOpt[index];
+    int index = state * acsm->acsmAlphabetSize + input;
+    trans_node_t * t = acsmTransTableOpt[index];
 
-	if ( t )
-		return t->next_state;
+    if ( t )
+        return t->next_state;
 
-	if( state == 0 )
+    if( state == 0 )
         return 0;
 
-	return ACSM_FAIL_STATE2; /* Fail state ??? */
+    return ACSM_FAIL_STATE2; /* Fail state ??? */
 }
 
 
@@ -408,34 +408,34 @@ static int List_GetNextState2(ACSM_STRUCT2* acsm, int state, int input)
  *  Put Next State - Head insertion, and transition updates
  */
 static int List_PutNextStateOpt( ACSM_STRUCT2 * acsm, trans_node_t **acsmTransTableOpt,
-		int state, int input, int next_state )
+        int state, int input, int next_state )
 {
-	int index = state * acsm->acsmAlphabetSize + input;
+    int index = state * acsm->acsmAlphabetSize + input;
 
-	trans_node_t *t = acsmTransTableOpt[index];
+    trans_node_t *t = acsmTransTableOpt[index];
 
-	if ( t )
-	{
-		t->next_state = next_state;
-		return 0;
-	}
+    if ( t )
+    {
+        t->next_state = next_state;
+        return 0;
+    }
 
-	/* Definitely not an existing transition - add it */
-	trans_node_t * tnew = (trans_node_t*)AC_MALLOC(sizeof(trans_node_t),
-			ACSM2_MEMORY_TYPE__TRANSTABLE);
+    /* Definitely not an existing transition - add it */
+    trans_node_t * tnew = (trans_node_t*)AC_MALLOC(sizeof(trans_node_t),
+            ACSM2_MEMORY_TYPE__TRANSTABLE);
 
-	if( !tnew )
- 		return -1;
+    if( !tnew )
+        return -1;
 
-	tnew->key        = input;
-	tnew->next_state = next_state;
-	tnew->next 		 = acsm->acsmTransTable[state];
-	acsm->acsmTransTable[state] = tnew;
-	acsm->acsmNumTrans++;
+    tnew->key        = input;
+    tnew->next_state = next_state;
+    tnew->next       = acsm->acsmTransTable[state];
+    acsm->acsmTransTable[state] = tnew;
+    acsm->acsmNumTrans++;
 
-	acsmTransTableOpt[index] = tnew;
+    acsmTransTableOpt[index] = tnew;
 
-	return 0;
+    return 0;
 }
 
 /*
@@ -741,19 +741,19 @@ static void Convert_NFA_To_DFA(ACSM_STRUCT2* acsm)
     for (int i=0; i<acsm->acsmAlphabetSize; i++)
     {
         if ( int s = List_GetNextStateOpt(acsm, acsmTransTableOpt, 0, i) )
-		{
-			if ( !queue_array[s] )
-			{
-            	queue.push_back(s);
-				queue_array[s] = true;
-			}
-		}
+        {
+            if ( !queue_array[s] )
+            {
+                queue.push_back(s);
+                queue_array[s] = true;
+            }
+        }
     }
 
     /* Start building the next layer of transitions */
     for ( auto r : queue )
     {
-		queue_array[r] = false;
+        queue_array[r] = false;
 
         /* Process this states layer */
         for (int i = 0; i < acsm->acsmAlphabetSize; i++)
@@ -762,11 +762,11 @@ static void Convert_NFA_To_DFA(ACSM_STRUCT2* acsm)
 
             if ( (acstate_t)s != ACSM_FAIL_STATE2 && s != 0 )
             {
-				if ( !queue_array[s] )
-				{
-					queue.push_back(s);
-					queue_array[s] = true;
-				}
+                if ( !queue_array[s] )
+                {
+                    queue.push_back(s);
+                    queue_array[s] = true;
+                }
             }
             else
             {
@@ -780,8 +780,8 @@ static void Convert_NFA_To_DFA(ACSM_STRUCT2* acsm)
         }
     }
 
-	snort_free(queue_array);
-	snort_free(acsmTransTableOpt);
+    snort_free(queue_array);
+    snort_free(acsmTransTableOpt);
 }
 
 /*

@@ -62,9 +62,9 @@
 
 static THREAD_LOCAL ProfileStats sessionPerfStats;
 
-#define SESSION_PRINTABLE  	1
-#define SESSION_BINARY		2
-#define SESSION_ALL		   	3
+#define SESSION_PRINTABLE   1
+#define SESSION_BINARY      2
+#define SESSION_ALL         3
 
 struct SessionData
 {
