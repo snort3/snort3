@@ -153,12 +153,12 @@ int PortObjectAddPortObject(PortObject* podst, PortObject* posrc, int* errflag)
     return ret;
 }
 
-int PortObjectAddPort(PortObject* po, int port, int not_flag)
+int PortObjectAddPort(PortObject* po, int port)
 {
-    return PortObjectAddRange(po, port, port, not_flag);
+    return PortObjectAddRange(po, port, port);
 }
 
-int PortObjectAddRange(PortObject* po, int lport, int hport, int not_flag)
+int PortObjectAddRange(PortObject* po, int lport, int hport)
 {
     PortObjectItem* poi = PortObjectItemNew();
 
@@ -167,8 +167,6 @@ int PortObjectAddRange(PortObject* po, int lport, int hport, int not_flag)
 
     poi->lport = (unsigned short)lport;
     poi->hport = (unsigned short)hport;
-
-    poi->negate = not_flag != 0;
 
     sflist_add_tail(po->item_list, poi);
     return 0;
@@ -198,7 +196,7 @@ int PortObjectAddPortAny(PortObject* po)
     if (!po->name)
         po->name = snort_strdup("any");
 
-    return PortObjectAddRange(po, 0, SFPO_MAX_PORTS-1, 0);
+    return PortObjectAddRange(po, 0, SFPO_MAX_PORTS-1);
 }
 
 /*

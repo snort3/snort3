@@ -51,8 +51,8 @@ void PortObjectFinalize(PortObject*);
 int PortObjectSetName(PortObject*, const char* name);
 int PortObjectAddItem(PortObject*, PortObjectItem*, int* errflag);
 int PortObjectAddPortObject(PortObject* podst, PortObject* posrc, int* errflag);
-int PortObjectAddPort(PortObject*, int port, int not_flag);
-int PortObjectAddRange(PortObject*, int lport, int hport, int not_flag);
+int PortObjectAddPort(PortObject*, int port);
+int PortObjectAddRange(PortObject*, int lport, int hport);
 int PortObjectAddRule(PortObject*, int rule);
 int PortObjectAddPortAny(PortObject*);
 

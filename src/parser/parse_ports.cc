@@ -293,7 +293,7 @@ static PortObject* _POParsePort(POParser* pop)
         {
             /* Open ended range, highport is 65k */
             hport = MAX_PORTS-1;
-            PortObjectAddRange(po, lport, hport, 0);
+            PortObjectAddRange(po, lport, hport);
             return po;
         }
 
@@ -319,11 +319,11 @@ static PortObject* _POParsePort(POParser* pop)
             return NULL;
         }
 
-        PortObjectAddRange(po, lport, hport, 0);
+        PortObjectAddRange(po, lport, hport);
     }
     else
     {
-        PortObjectAddPort(po, lport, 0);
+        PortObjectAddPort(po, lport);
     }
 
     return po;
@@ -488,20 +488,20 @@ PortObject* PortObjectParseString(PortVarTable* pvTable, POParser* pop,
     POParserInit(pop, s, pvTable);
 
     po = PortObjectNew();
-    if (!po)
+    if ( !po )
     {
-        pop->errflag=POPERR_MALLOC_FAILED;
-        return 0;
+        pop->errflag = POPERR_MALLOC_FAILED;
+        return nullptr;
     }
 
     if ( nameflag ) /* parse a name */
     {
         po->name = POParserName(pop);
-        if (!po->name )
+        if ( !po->name )
         {
-            pop->errflag=POPERR_NO_NAME;
+            pop->errflag = POPERR_NO_NAME;
             PortObjectFree(po);
-            return 0;
+            return nullptr;
         }
     }
     else
@@ -516,19 +516,28 @@ PortObject* PortObjectParseString(PortVarTable* pvTable, POParser* pop,
 
     potmp = _POParseString(pop);
 
-    if (!potmp)
+    if ( !potmp )
     {
         PortObjectFree(po);
-        return NULL;
+        return nullptr;
     }
 
     PortObjectNormalize(potmp);
 
-    if (PortObjectAddPortObject(po, potmp, &pop->errflag))
+    // Catches !:65535
+    if ( sflist_count(potmp->item_list) == 0 )
     {
         PortObjectFree(po);
         PortObjectFree(potmp);
-        return NULL;
+        pop->errflag = POPERR_INVALID_RANGE;
+        return nullptr;
+    }
+
+    if ( PortObjectAddPortObject(po, potmp, &pop->errflag) )
+    {
+        PortObjectFree(po);
+        PortObjectFree(potmp);
+        return nullptr;
     }
 
     PortObjectFree(potmp);

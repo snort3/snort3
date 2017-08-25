@@ -530,50 +530,25 @@ static inline void add_port_object(Port port, PortObject* po, SF_LIST** parray)
 // Update port object lists
 static inline void update_port_lists(PortObject* po, SF_LIST** parray)
 {
-    bool not_flag_set = false;
-
     PortObjectItem* poi;
     SF_LNODE* lpos;
     for ( poi = (PortObjectItem*)sflist_first(po->item_list, &lpos);
           poi;
           poi = (PortObjectItem*)sflist_next(&lpos) )
     {
+        assert(!poi->negate);
+
         if( poi->any())
             return;
 
         else if( poi->one() )
-        {
-            if (poi->negate )
-            {
-                not_flag_set = true;
-                break;
-            }
-
             add_port_object(poi->lport, po, parray);
-        }
-        else
-        {
-            if (poi->negate )
-            {
-                not_flag_set = true;
-                break;
-            }
 
+        else
             for( int port = poi->lport; port <= poi->hport; port++ )
-            {
                 add_port_object(port, po, parray);
-            }
-        }
 
         add_port_object(poi->lport, po, parray);
-    }
-
-    if (not_flag_set)
-    {
-        for( int port = 0; port < SFPO_MAX_PORTS; port++ )
-        {
-            add_port_object(port, po, parray);
-        }
     }
 }
 
