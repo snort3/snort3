@@ -931,21 +931,6 @@ void TcpSession::set_extra_data(Packet* p, uint32_t xid)
     st->reassembler->set_xtradata_mask(st->reassembler->get_xtradata_mask() | BIT(xid) );
 }
 
-void TcpSession::clear_extra_data(Packet* p, uint32_t xid)
-{
-    TcpStreamTracker* st;
-
-    if (p->ptrs.ip_api.get_src()->equals(flow->client_ip))
-        st = server;
-    else
-        st = client;
-
-    if (xid)
-        st->reassembler->set_xtradata_mask(st->reassembler->get_xtradata_mask() & ~BIT(xid) );
-    else
-        st->reassembler->set_xtradata_mask(0);
-}
-
 static inline void set_window_scale(TcpStreamTracker& talker, TcpStreamTracker& listener,
     TcpSegmentDescriptor& tsd)
 {

@@ -46,7 +46,6 @@ public:
     virtual void clear_session(bool free_flow_data, bool flush_segments, bool restart, Packet* p = nullptr) override;
 
     void set_extra_data(Packet*, uint32_t /*flag*/) override;
-    void clear_extra_data(Packet*, uint32_t /*flag*/) override;
 
     void update_perf_base_state(char new_state) override;
     TcpStreamTracker::TcpState get_talker_state() override;

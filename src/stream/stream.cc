@@ -528,7 +528,9 @@ uint32_t Stream::reg_xtra_data_cb(LogFunction f)
             return i;
     }
     if ( stream.xtradata_func_count == MAX_LOG_FN)
+    {
         return 0;
+    }
 
     stream.xtradata_map[stream.xtradata_func_count++] = f;
     return stream.xtradata_func_count;
@@ -760,14 +762,6 @@ void Stream::set_extra_data(
 {
     assert(flow && flow->session);
     flow->session->set_extra_data(p, flag);
-}
-
-// FIXIT-L get pv/flow from packet directly?
-void Stream::clear_extra_data(
-    Flow* flow, Packet* p, uint32_t flag)
-{
-    assert(flow && flow->session);
-    flow->session->clear_extra_data(p, flag);
 }
 
 char Stream::get_reassembly_direction(Flow* flow)

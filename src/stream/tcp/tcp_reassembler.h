@@ -138,7 +138,7 @@ protected:
     void queue_reassembly_segment(TcpSegmentNode* prev, TcpSegmentNode*);
     void init_overlap_editor(TcpSegmentDescriptor&);
     bool is_segment_fasttrack(TcpSegmentNode* tail, TcpSegmentDescriptor&);
-    int purge_alerts(uint32_t /*flush_seq*/,  Flow*);
+    int purge_alerts(Flow*);
     void show_rebuilt_packet(Packet*);
     uint32_t get_flush_data_len(TcpSegmentNode*, uint32_t to_seq, unsigned max);
     int flush_data_segments(Packet*, uint32_t total, Packet* pdu);

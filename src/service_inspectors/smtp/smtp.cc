@@ -1495,7 +1495,6 @@ Smtp::Smtp(SMTP_PROTO_CONF* pc)
 {
     config = pc;
 
-    SMTP_RegXtraDataFuncs(config);
     SMTP_InitCmds(config);
 }
 
@@ -1509,6 +1508,8 @@ Smtp::~Smtp()
 
 bool Smtp::configure(SnortConfig*)
 {
+    SMTP_RegXtraDataFuncs(config);
+
     config->decode_conf.sync_all_depths();
 
     if (config->decode_conf.get_file_depth() > -1)

@@ -216,7 +216,6 @@ public:
 
     // extra data methods
     static void set_extra_data(Flow*, Packet*, uint32_t);
-    static void clear_extra_data(Flow*, Packet*, uint32_t);
     static void log_extra_data(Flow*, uint32_t mask, uint32_t id, uint32_t sec);
 
     static uint32_t reg_xtra_data_cb(LogFunction);

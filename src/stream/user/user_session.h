@@ -114,7 +114,6 @@ private:
     void flush_listener(Packet*, bool /*final_flush */ = false) override { }
 
     void set_extra_data(Packet*, uint32_t /* flag */) override { }
-    void clear_extra_data(Packet*, uint32_t /* flag */) override { }
 
     uint8_t get_reassembly_direction() override;
 

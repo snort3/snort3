@@ -274,54 +274,26 @@ int TcpReassembler::dup_reassembly_segment(TcpSegmentNode* left, TcpSegmentNode*
     return STREAM_INSERT_OK;
 }
 
-int TcpReassembler::purge_alerts(uint32_t /*flush_seq*/,  Flow* flow)
+int TcpReassembler::purge_alerts(Flow* flow)
 {
-    int i;
-    int new_count = 0;
-
-    for (i = 0; i < tracker->alert_count; i++)
+    for (int i = 0; i < tracker->alert_count; i++)
     {
         StreamAlertInfo* ai = tracker->alerts + i;
-
-        //if (SEQ_LT(ai->seq, flush_seq) )
-        {
-            Stream::log_extra_data(flow, xtradata_mask, ai->event_id, ai->event_second);
-            memset(ai, 0, sizeof(*ai));
-        }
-#if 0
-        else
-        {
-            if (new_count != i)
-            {
-                tracker->alerts[new_count] = tracker->alerts[i];
-            }
-            new_count++;
-        }
-#endif
+        Stream::log_extra_data(flow, xtradata_mask, ai->event_id, ai->event_second);
+        memset(ai, 0, sizeof(*ai));
     }
-    tracker->alert_count = new_count;
+    tracker->alert_count = 0;
 
-    return new_count;
+    return 0;
 }
 
 int TcpReassembler::purge_to_seq(uint32_t flush_seq)
 {
-    TcpSegmentNode* tsn = nullptr;
+    assert(seglist.head != nullptr);
+    TcpSegmentNode* tsn = seglist.head;
     TcpSegmentNode* dump_me = nullptr;
     int purged_bytes = 0;
     uint32_t last_ts = 0;
-
-    if ( seglist.head == nullptr )
-    {
-        if ( SEQ_LT(seglist_base_seq, flush_seq) )
-        {
-            DebugFormat(DEBUG_STREAM_STATE, "setting seglist_base_seq to 0x%X\n", flush_seq);
-            seglist_base_seq = flush_seq;
-        }
-        return 0;
-    }
-
-    tsn = seglist.head;
 
     DebugFormat(DEBUG_STREAM_STATE, "In purge_to_seq, start seq = 0x%X end seq = 0x%X delta %u\n",
         tsn->seq, flush_seq, flush_seq-tsn->seq);
@@ -345,6 +317,7 @@ int TcpReassembler::purge_to_seq(uint32_t flush_seq)
 
     if ( SEQ_LT(seglist_base_seq, flush_seq) )
     {
+        // FIXIT-M these lines are out of code coverage. Is this even possible?
         DebugFormat(DEBUG_STREAM_STATE, "setting seglist_base_seq to 0x%X\n", flush_seq);
         seglist_base_seq = flush_seq;
     }
@@ -352,7 +325,7 @@ int TcpReassembler::purge_to_seq(uint32_t flush_seq)
     if ( SEQ_LT(tracker->r_nxt_ack, flush_seq) )
         tracker->r_nxt_ack = flush_seq;
 
-    purge_alerts(flush_seq, session->flow);
+    purge_alerts(session->flow);
 
     if ( seglist.head == nullptr )
         seglist.tail = nullptr;

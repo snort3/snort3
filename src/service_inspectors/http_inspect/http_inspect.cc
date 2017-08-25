@@ -165,7 +165,6 @@ void HttpInspect::eval(Packet* p)
     if (!process(p->data, p->dsize - remove_workaround, p->flow, source_id, true))
     {
         DetectionEngine::disable_content(p);
-        clear(p);
     }
 #ifdef REG_TEST
     else
