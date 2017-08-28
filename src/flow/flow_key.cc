@@ -31,9 +31,60 @@
 #include "utils/util.h"
 
 //-------------------------------------------------------------------------
+// icmp foo
+//-------------------------------------------------------------------------
+static const ip::snort_in6_addr fixed_addr = {0xFF,0,0,0};
+inline void FlowKey::update_icmp4(const SfIp*& srcIP, uint16_t& srcPort,
+    const SfIp*& dstIP, uint16_t& dstPort)
+{
+    if (srcPort == ICMP_ECHOREPLY)
+    {
+        /* Treat ICMP echo reply the same as request */
+        dstPort = ICMP_ECHO;
+        srcPort = 0;
+    }
+    else if (srcPort == ICMP_ROUTER_ADVERTISE)
+    {
+        dstPort = ICMP_ROUTER_SOLICIT; /* Treat ICMP router advertisement the same as solicitation */
+        srcPort = 0;
+        srcIP = (SfIp *)&fixed_addr; /* Matching src address to solicit dest address */
+    }
+    else
+    {
+        /* otherwise, every ICMP type gets different key */
+        dstPort = 0;
+        if (srcPort == ICMP_ROUTER_SOLICIT)
+            dstIP = (SfIp* )&fixed_addr; /* To get unique key, don't use multicast/broadcast addr (RFC 1256) */
+    }
+}
+
+inline void FlowKey::update_icmp6(const SfIp*& srcIP, uint16_t& srcPort,
+    const SfIp*& dstIP, uint16_t& dstPort)
+{
+    if (srcPort == icmp::Icmp6Types::ECHO_REPLY)
+    {
+        /* Treat ICMPv6 echo reply the same as request */
+        dstPort = icmp::Icmp6Types::ECHO_REQUEST;
+        srcPort = 0;
+    }
+    else if (srcPort == icmp::Icmp6Types::ROUTER_ADVERTISEMENT)
+    {
+        dstPort = icmp::Icmp6Types::ROUTER_SOLICITATION; /* Treat ICMPv6 router advertisement the same as solicitation */
+        srcPort = 0;
+        srcIP = (SfIp* )&fixed_addr; /* Matching src address to solicit dest address */
+    }
+    else
+    {
+        /* otherwise, every ICMP type gets different key */
+        dstPort = 0;
+        if (srcPort == icmp::Icmp6Types::ROUTER_SOLICITATION)
+            dstIP = (SfIp* )&fixed_addr; /* To get unique key, don't use multicast addr (RFC 4861) */
+    }
+}
+
+//-------------------------------------------------------------------------
 // init foo
 //-------------------------------------------------------------------------
-
 inline bool FlowKey::init4(
     IpProtocol ip_proto,
     const SfIp *srcIP, uint16_t srcPort,
@@ -44,19 +95,9 @@ inline bool FlowKey::init4(
     uint32_t dst;
     bool reversed = false;
 
-    if ( ip_proto ==  IpProtocol::ICMPV4 )
-    {
-        if (srcPort == ICMP_ECHOREPLY)
-        {
-            dstPort = ICMP_ECHO; /* Treat ICMP echo reply the same as request */
-            srcPort = 0;
-        }
-        else /* otherwise, every ICMP type gets different key */
-        {
-            dstPort = 0;
-        }
-    }
-
+    if (ip_proto == IpProtocol::ICMPV4)
+        update_icmp4(srcIP, srcPort, dstIP, dstPort);
+    
     src = srcIP->get_ip4_value();
     dst = dstIP->get_ip4_value();
 
@@ -109,34 +150,10 @@ inline bool FlowKey::init6(
 {
     bool reversed = false;
 
-    if ( ip_proto == IpProtocol::ICMPV4 )
-    {
-        if (srcPort == ICMP_ECHOREPLY)
-        {
-            /* Treat ICMP echo reply the same as request */
-            dstPort = ICMP_ECHO;
-            srcPort = 0;
-        }
-        else
-        {
-            /* otherwise, every ICMP type gets different key */
-            dstPort = 0;
-        }
-    }
-    else if ( ip_proto == IpProtocol::ICMPV6 )
-    {
-        if (srcPort == icmp::Icmp6Types::ECHO_REPLY)
-        {
-            /* Treat ICMPv6 echo reply the same as request */
-            dstPort = icmp::Icmp6Types::ECHO_REQUEST;
-            srcPort = 0;
-        }
-        else
-        {
-            /* otherwise, every ICMP type gets different key */
-            dstPort = 0;
-        }
-    }
+    if (ip_proto == IpProtocol::ICMPV6)
+        update_icmp6(srcIP, srcPort, dstIP, dstPort);
+    else if (ip_proto == IpProtocol::ICMPV4)
+        update_icmp4(srcIP, srcPort, dstIP, dstPort);
 
     if ( !order || srcIP->fast_lt6(*dstIP))
     {
