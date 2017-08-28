@@ -36,9 +36,10 @@
 #define FTP_BOUNCE                       8
 #define FTP_EVASIVE_TELNET_CMD           9
 
+struct FtpStats;
 struct SnortConfig;
 
-extern THREAD_LOCAL SimpleStats ftstats;
+extern THREAD_LOCAL FtpStats ftstats;
 extern THREAD_LOCAL ProfileStats ftpPerfStats;
 
 //-------------------------------------------------------------------------

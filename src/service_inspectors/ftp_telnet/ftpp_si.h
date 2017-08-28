@@ -39,6 +39,7 @@
 #include "file_api/file_api.h"
 #include "flow/flow.h"
 #include "flow/flow_key.h"
+#include "framework/counts.h"
 
 #include "ftp_client.h"
 #include "ftp_server.h"
@@ -95,10 +96,8 @@ struct TELNET_SESSION
 class TelnetFlowData : public FlowData
 {
 public:
-    TelnetFlowData() : FlowData(inspector_id)
-    { memset(&session, 0, sizeof(session)); }
-
-    ~TelnetFlowData() { }
+    TelnetFlowData();
+    ~TelnetFlowData();
 
     static void init()
     { inspector_id = FlowData::create_flow_data_id(); }
@@ -180,11 +179,8 @@ void FTPFreesession(FTP_SESSION*);
 class FtpFlowData : public FlowData
 {
 public:
-    FtpFlowData() : FlowData(inspector_id)
-    { memset(&session, 0, sizeof(session)); }
-
-    ~FtpFlowData()
-    { FTPFreesession(&session); }
+    FtpFlowData();
+    ~FtpFlowData();
 
     static void init()
     { inspector_id = FlowData::create_flow_data_id(); }
@@ -273,6 +269,23 @@ int FTPsessionInspection(
     Packet*, FTP_SESSION**, FTPP_SI_INPUT*, int* piInspectMode);
 
 int SetSiInput(FTPP_SI_INPUT*, Packet*);
+
+struct FtpStats
+{
+    PegCount total_packets;
+    PegCount concurrent_sessions;
+    PegCount max_concurrent_sessions;
+};
+
+struct TelnetStats
+{
+    PegCount total_packets;
+    PegCount concurrent_sessions;
+    PegCount max_concurrent_sessions;
+};
+
+extern THREAD_LOCAL FtpStats ftstats;
+extern THREAD_LOCAL TelnetStats tnstats;
 
 #endif
 

@@ -58,6 +58,15 @@ static const RuleMap rpc_rules[] =
 #define s_name "rpc_decode"
 #define s_help "RPC inspector"
 
+static const PegInfo rpc_pegs[] =
+{
+    { "total_packets", "total packets" },
+    { "concurrent_sessions", "total concurrent rpc sessions" },
+    { "max_concurrent_sessions", "maximum concurrent rpc sessions" },
+
+    { nullptr, nullptr }
+};
+
 RpcDecodeModule::RpcDecodeModule() : Module(s_name, s_help, s_params)
 { }
 
@@ -65,7 +74,7 @@ const RuleMap* RpcDecodeModule::get_rules() const
 { return rpc_rules; }
 
 const PegInfo* RpcDecodeModule::get_pegs() const
-{ return simple_pegs; }
+{ return rpc_pegs; }
 
 PegCount* RpcDecodeModule::get_counts() const
 { return (PegCount*)&rdstats; }

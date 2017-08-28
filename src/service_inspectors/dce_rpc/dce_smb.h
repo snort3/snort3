@@ -187,6 +187,8 @@ struct dce2SmbStats
     PegCount smb2_tree_connect;
     PegCount smb2_tree_disconnect;
     PegCount smb2_close;
+    PegCount concurrent_sessions;
+    PegCount max_concurrent_sessions;
 };
 
 extern THREAD_LOCAL dce2SmbStats dce2_smb_stats;

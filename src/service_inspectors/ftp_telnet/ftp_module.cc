@@ -335,6 +335,15 @@ static const RuleMap ftp_server_rules[] =
     { 0, nullptr }
 };
 
+static const PegInfo ftp_pegs[] =
+{
+    { "total_packets", "total packets" },
+    { "concurrent_sessions", "total concurrent ftp sessions" },
+    { "max_concurrent_sessions", "maximum concurrent ftp sessions" },
+
+    { nullptr, nullptr }
+};
+
 //-------------------------------------------------------------------------
 
 FtpServerModule::FtpServerModule() :
@@ -490,7 +499,7 @@ bool FtpServerModule::end(const char* fqn, int idx, SnortConfig*)
 }
 
 const PegInfo* FtpServerModule::get_pegs() const
-{ return simple_pegs; }
+{ return ftp_pegs; }
 
 PegCount* FtpServerModule::get_counts() const
 { return (PegCount*)&ftstats; }

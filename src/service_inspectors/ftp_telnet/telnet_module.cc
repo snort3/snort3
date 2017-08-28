@@ -56,6 +56,15 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const PegInfo telnet_pegs[] =
+{
+    { "total_packets", "total packets" },
+    { "concurrent_sessions", "total concurrent telnet sessions" },
+    { "max_concurrent_sessions", "maximum concurrent telnet sessions" },
+
+    { nullptr, nullptr }
+};
+
 static const RuleMap telnet_rules[] =
 {
     { TELNET_AYT_OVERFLOW, TELNET_AYT_OVERFLOW_STR },
@@ -123,7 +132,7 @@ bool TelnetModule::end(const char*, int, SnortConfig*)
 }
 
 const PegInfo* TelnetModule::get_pegs() const
-{ return simple_pegs; }
+{ return telnet_pegs; }
 
 PegCount* TelnetModule::get_counts() const
 { return (PegCount*)&tnstats; }

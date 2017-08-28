@@ -65,6 +65,8 @@ struct dce2TcpStats
     /*DCE TCP specific*/
     PegCount tcp_sessions;
     PegCount tcp_pkts;
+    PegCount concurrent_sessions;
+    PegCount max_concurrent_sessions;
 };
 
 extern THREAD_LOCAL dce2TcpStats dce2_tcp_stats;

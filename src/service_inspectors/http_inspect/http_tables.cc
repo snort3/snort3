@@ -403,6 +403,8 @@ const PegInfo HttpModule::peg_names[PEG_COUNT_MAX+1] =
     { "uri_normalizations", "URIs needing to be normalization" },
     { "uri_path", "URIs with path problems" },
     { "uri_coding", "URIs with character coding problems" },
+    { "concurrent_sessions", "total concurrent http sessions" },
+    { "max_concurrent_sessions", "maximum concurrent http sessions" },
     { nullptr, nullptr }
 };
 

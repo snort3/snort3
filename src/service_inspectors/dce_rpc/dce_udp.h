@@ -60,6 +60,8 @@ struct dce2UdpStats
     PegCount cl_max_frag_size;
     PegCount cl_frag_reassembled;
     PegCount cl_max_seqnum;
+    PegCount concurrent_sessions;
+    PegCount max_concurrent_sessions;
 };
 
 extern THREAD_LOCAL dce2UdpStats dce2_udp_stats;

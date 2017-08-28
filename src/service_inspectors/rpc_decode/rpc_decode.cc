@@ -102,13 +102,20 @@ typedef enum _RpcStatus
     RPC_STATUS__DEFRAG
 } RpcStatus;
 
+struct RpcStats
+{
+    PegCount total_packets;
+    PegCount concurrent_sessions;
+    PegCount max_concurrent_sessions;
+};
+
 static const uint32_t flush_size = 28;
 
 #define mod_name "rpc_decode"
 #define mod_help "RPC inspector"
 
 THREAD_LOCAL ProfileStats rpcdecodePerfStats;
-THREAD_LOCAL SimpleStats rdstats;
+THREAD_LOCAL RpcStats rdstats;
 
 static int ConvertRPC(RpcDecodeConfig*, RpcSsnData*, Packet*);
 
@@ -590,11 +597,16 @@ static inline void RpcSsnClean(RpcSsnData* rsdata)
 RpcFlowData::RpcFlowData() : FlowData(inspector_id)
 {
     memset(&session, 0, sizeof(session));
+    rdstats.concurrent_sessions++;
+    if(rdstats.max_concurrent_sessions < rdstats.concurrent_sessions)
+        rdstats.max_concurrent_sessions = rdstats.concurrent_sessions;
 }
 
 RpcFlowData::~RpcFlowData()
 {
     RpcSsnClean(&session);
+    if (rdstats.concurrent_sessions > 0)
+        rdstats.concurrent_sessions--;
 }
 
 static RpcSsnData* RpcSsnDataNew(Packet* p)

@@ -76,6 +76,8 @@ static const PegInfo dce2_smb_pegs[] =
     { "smbv2_tree_connect", "total number of SMBv2 tree connect packets seen" },
     { "smbv2_tree_disconnect", "total number of SMBv2 tree disconnect packets seen" },
     { "smbv2_close", "total number of SMBv2 close packets seen" },
+    { "concurrent_sessions", "total concurrent sessions" },
+    { "max_concurrent_sessions", "maximum concurrent sessions" },
     { nullptr, nullptr }
 };
 

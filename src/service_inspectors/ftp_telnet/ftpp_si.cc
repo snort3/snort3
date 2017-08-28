@@ -59,6 +59,20 @@
 unsigned FtpFlowData::inspector_id = 0;
 unsigned TelnetFlowData::inspector_id = 0;
 
+TelnetFlowData::TelnetFlowData() : FlowData(inspector_id)
+{
+    memset(&session, 0, sizeof(session));
+    tnstats.concurrent_sessions++;
+    if(tnstats.max_concurrent_sessions < tnstats.concurrent_sessions)
+        tnstats.max_concurrent_sessions = tnstats.concurrent_sessions;
+}
+
+TelnetFlowData::~TelnetFlowData()
+{
+    if (tnstats.concurrent_sessions > 0)
+        tnstats.concurrent_sessions--;
+}
+
 /*
  * Function: TelnetResetsession(TELNET_SESSION *session)
  *
@@ -104,9 +118,7 @@ static int TelnetStatefulsessionInspection(Packet* p,
         TelnetResetsession(Newsession);
         Newsession->ft_ssn.proto = FTPP_SI_PROTO_TELNET;
         Newsession->telnet_conf = GlobalConf;
-
         SiInput->pproto = FTPP_SI_PROTO_TELNET;
-
         p->flow->set_flow_data(fd);
 
         *Telnetsession = Newsession;
@@ -394,6 +406,21 @@ static inline int FTPResetsession(FTP_SESSION* Ftpsession)
     return FTPP_SUCCESS;
 }
 
+FtpFlowData::FtpFlowData() : FlowData(inspector_id)
+{
+    memset(&session, 0, sizeof(session));
+    ftstats.concurrent_sessions++;
+    if(ftstats.max_concurrent_sessions < ftstats.concurrent_sessions)
+        ftstats.max_concurrent_sessions = ftstats.concurrent_sessions;
+}
+
+FtpFlowData::~FtpFlowData()
+{
+    FTPFreesession(&session);
+    if (ftstats.concurrent_sessions > 0)
+        ftstats.concurrent_sessions--;
+}
+
 /*
  * Purpose: Initialize the session and server configurations for this
  *          packet/stream.  In this function, we set the session pointer
@@ -426,7 +453,6 @@ static int FTPStatefulsessionInspection(
             Newsession->ft_ssn.proto = FTPP_SI_PROTO_FTP;
             Newsession->client_conf = ClientConf;
             Newsession->server_conf = ServerConf;
-
             p->flow->set_flow_data(fd);
 
             *Ftpsession = Newsession;

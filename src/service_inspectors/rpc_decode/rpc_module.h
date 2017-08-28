@@ -32,7 +32,9 @@
 #define RPC_INCOMPLETE_SEGMENT     4
 #define RPC_ZERO_LENGTH_FRAGMENT   5
 
-extern THREAD_LOCAL SimpleStats rdstats;
+struct RpcStats;
+
+extern THREAD_LOCAL RpcStats rdstats;
 extern THREAD_LOCAL ProfileStats rpcdecodePerfStats;
 
 class RpcDecodeModule : public Module

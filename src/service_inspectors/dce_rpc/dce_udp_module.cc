@@ -71,6 +71,8 @@ static const PegInfo dce2_udp_pegs[] =
     { "max_fragment_size", "connection-less maximum fragment size" },
     { "frags_reassembled", "total connection-less fragments reassembled" },
     { "max_seqnum", "max connection-less seqnum" },
+    { "concurrent_sessions", "total concurrent sessions" },
+    { "max_concurrent_sessions", "maximum concurrent sessions" },
     { nullptr, nullptr }
 };
 

@@ -25,6 +25,7 @@
 
 #include "decompress/file_decomp.h"
 
+#include "http_module.h"
 #include "http_test_manager.h"
 #include "http_transaction.h"
 
@@ -49,6 +50,10 @@ HttpFlowData::HttpFlowData() : FlowData(inspector_id)
         }
     }
 #endif
+    HttpModule::increment_peg_counts(PEG_CONCURRENT_SESSIONS);
+    if (HttpModule::get_peg_counts(PEG_MAX_CONCURRENT_SESSIONS) <
+        HttpModule::get_peg_counts(PEG_CONCURRENT_SESSIONS))
+        HttpModule::increment_peg_counts(PEG_MAX_CONCURRENT_SESSIONS);
 }
 
 HttpFlowData::~HttpFlowData()
@@ -60,6 +65,9 @@ HttpFlowData::~HttpFlowData()
         fflush(nullptr);
     }
 #endif
+    if (HttpModule::get_peg_counts(PEG_CONCURRENT_SESSIONS) > 0)
+        HttpModule::decrement_peg_counts(PEG_CONCURRENT_SESSIONS);
+
     for (int k=0; k <= 1; k++)
     {
         delete infractions[k];

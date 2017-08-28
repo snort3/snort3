@@ -50,7 +50,7 @@ int16_t ftp_data_app_id = SFTARGET_UNKNOWN_PROTOCOL;
 #define server_help "FTP inspector server module"
 
 THREAD_LOCAL ProfileStats ftpPerfStats;
-THREAD_LOCAL SimpleStats ftstats;
+THREAD_LOCAL FtpStats ftstats;
 
 //-------------------------------------------------------------------------
 // implementation stuff

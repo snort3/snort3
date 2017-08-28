@@ -37,6 +37,15 @@ THREAD_LOCAL ProfileStats dnp3_perf_stats;
 
 Dnp3FlowData::Dnp3FlowData() : FlowData(inspector_id)
 {
+    dnp3_stats.concurrent_sessions++;
+    if(dnp3_stats.max_concurrent_sessions < dnp3_stats.concurrent_sessions)
+        dnp3_stats.max_concurrent_sessions = dnp3_stats.concurrent_sessions;
+}
+
+Dnp3FlowData::~Dnp3FlowData()
+{
+    if (dnp3_stats.concurrent_sessions > 0)
+        dnp3_stats.concurrent_sessions--;
 }
 
 unsigned Dnp3FlowData::inspector_id = 0;

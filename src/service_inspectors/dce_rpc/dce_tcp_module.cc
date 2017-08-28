@@ -94,6 +94,8 @@ static const PegInfo dce2_tcp_pegs[] =
     { "server_frags_reassembled", "total connection-oriented server fragments reassembled" },
     { "tcp_sessions", "total tcp sessions" },
     { "tcp_packets", "total tcp packets" },
+    { "concurrent_sessions", "total concurrent sessions" },
+    { "max_concurrent_sessions", "maximum concurrent sessions" },
     { nullptr, nullptr }
 };
 

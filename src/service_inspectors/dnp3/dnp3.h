@@ -104,6 +104,8 @@ struct Dnp3Stats
     PegCount tcp_pdus;
     PegCount dnp3_link_layer_frames;
     PegCount dnp3_application_pdus;
+    PegCount concurrent_sessions;
+    PegCount max_concurrent_sessions;
 };
 
 /* DNP3 header structures */
@@ -169,6 +171,7 @@ class Dnp3FlowData : public FlowData
 {
 public:
     Dnp3FlowData();
+    ~Dnp3FlowData();
 
     static void init()
     {

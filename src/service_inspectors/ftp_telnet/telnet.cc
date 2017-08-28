@@ -36,7 +36,7 @@
 #include "telnet_module.h"
 
 THREAD_LOCAL ProfileStats telnetPerfStats;
-THREAD_LOCAL SimpleStats tnstats;
+THREAD_LOCAL TelnetStats tnstats;
 
 //-------------------------------------------------------------------------
 // implementation

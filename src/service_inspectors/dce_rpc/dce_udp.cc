@@ -57,11 +57,16 @@ static void DCE2_ClCleanTracker(DCE2_ClTracker* clt)
 //-------------------------------------------------------------------------
 Dce2UdpFlowData::Dce2UdpFlowData() : FlowData(inspector_id)
 {
+    dce2_udp_stats.concurrent_sessions++;
+    if(dce2_udp_stats.max_concurrent_sessions < dce2_udp_stats.concurrent_sessions)
+        dce2_udp_stats.max_concurrent_sessions = dce2_udp_stats.concurrent_sessions;
 }
 
 Dce2UdpFlowData::~Dce2UdpFlowData()
 {
     DCE2_ClCleanTracker(&dce2_udp_session.cl_tracker);
+    if (dce2_udp_stats.concurrent_sessions > 0)
+        dce2_udp_stats.concurrent_sessions--;
 }
 
 unsigned Dce2UdpFlowData::inspector_id = 0;

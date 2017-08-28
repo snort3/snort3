@@ -105,6 +105,10 @@ public:
     PegCount* get_counts() const override { return peg_counts; }
     static void increment_peg_counts(HttpEnums::PEG_COUNT counter)
         { peg_counts[counter]++; return; }
+    static void decrement_peg_counts(HttpEnums::PEG_COUNT counter)
+        { peg_counts[counter]--; return; }
+    static PegCount get_peg_counts(HttpEnums::PEG_COUNT counter)
+        { return peg_counts[counter]; }
 
 #ifdef REG_TEST
     static const PegInfo* get_peg_names() { return peg_names; }
