@@ -75,7 +75,7 @@ public:
     virtual void initialize() = 0;
     virtual void register_detector(std::string, AppIdDetector*,  IpProtocol);
     virtual void add_pattern_data(AppIdDetector*, SearchTool*, int position,
-        const uint8_t* const pattern, unsigned size, unsigned nocase, int* count);
+        const uint8_t* const pattern, unsigned size, unsigned nocase);
     virtual void register_tcp_pattern(AppIdDetector*, const uint8_t* const pattern, unsigned size,
         int position, unsigned nocase);
     virtual void register_udp_pattern(AppIdDetector*, const uint8_t* const pattern, unsigned size,

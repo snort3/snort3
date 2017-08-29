@@ -318,7 +318,10 @@ void AppIdHttpSession::process_chp_buffers()
                 asd->set_payload_app_id_data((ApplicationId)chp_final, version);
 
             if ( version )
+            {
+                snort_free(version);
                 version = nullptr;
+            }
 
             if ( user )
             {

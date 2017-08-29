@@ -103,14 +103,13 @@ void AppIdDiscovery::register_detector(std::string name, AppIdDetector* cd,  IpP
 }
 
 void AppIdDiscovery::add_pattern_data(AppIdDetector* detector, SearchTool* st, int position, const
-    uint8_t* const pattern, unsigned size, unsigned nocase, int* count)
+    uint8_t* const pattern, unsigned size, unsigned nocase)
 {
-    AppIdPatternMatchNode* pd = (AppIdPatternMatchNode*)snort_calloc(
-        sizeof(AppIdPatternMatchNode));
+    AppIdPatternMatchNode* pd =
+        (AppIdPatternMatchNode*)snort_calloc(sizeof(AppIdPatternMatchNode));
     pd->service = detector;
     pd->pattern_start_pos = position;
     pd->size = size;
-    (*count)++;
     pd->next = pattern_data_list;
     pattern_data_list = pd;
     st->add((const char*)pattern, size, pd, nocase);
@@ -119,15 +118,15 @@ void AppIdDiscovery::add_pattern_data(AppIdDetector* detector, SearchTool* st, i
 void AppIdDiscovery::register_tcp_pattern(AppIdDetector* detector, const uint8_t* const pattern,
     unsigned size, int position, unsigned nocase)
 {
-    int* count = &tcp_pattern_count;
-    add_pattern_data(detector, tcp_patterns, position, pattern, size, nocase, count);
+    tcp_pattern_count++;
+    add_pattern_data(detector, tcp_patterns, position, pattern, size, nocase);
 }
 
 void AppIdDiscovery::register_udp_pattern(AppIdDetector* detector, const uint8_t* const pattern,
     unsigned size, int position, unsigned nocase)
 {
-    int* count = &udp_pattern_count;
-    add_pattern_data(detector, udp_patterns, position, pattern, size, nocase, count);
+    udp_pattern_count++;
+    add_pattern_data(detector, udp_patterns, position, pattern, size, nocase);
 }
 
 int AppIdDiscovery::add_service_port(AppIdDetector*, const ServiceDetectorPort&)
