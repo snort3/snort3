@@ -1,5 +1,9 @@
 set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -fno-strict-aliasing" )
 
+set (APPID_INCLUDES
+    application_ids.h
+)
+
 set ( APPID_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR} )
 
 set ( CP_APPID_SOURCES
@@ -208,6 +212,6 @@ add_subdirectory(service_plugins/test)
 add_subdirectory(detector_plugins/test)
 add_subdirectory(test)
 
-#install (FILES ${APPID_INCLUDES}
-#    DESTINATION "${INCLUDE_INSTALL_PATH}/appid"
-#)
+install (FILES ${APPID_INCLUDES}
+    DESTINATION "${INCLUDE_INSTALL_PATH}/network_inspectors/appid"
+)

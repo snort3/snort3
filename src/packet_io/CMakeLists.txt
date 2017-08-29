@@ -1,6 +1,7 @@
 
 set ( PACKET_IO_INCLUDES
     active.h
+    sfdaq.h
 )
 
 if (ENABLE_UNIT_TESTS)

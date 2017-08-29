@@ -1,5 +1,10 @@
 AUTOMAKE_OPTIONS=foreign nostdinc subdir-objects
 
+x_includedir = $(pkgincludedir)/network_inspectors/appid
+
+x_include_HEADERS = \
+application_ids.h
+
 AM_CPPFLAGS+=-I$(top_srcdir)/src/network_inspectors/appid -fno-strict-aliasing
 
 cp_file_list = \
