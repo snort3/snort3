@@ -166,6 +166,10 @@ public:
     ProfileStats* get_profile() const override
     { return &sslVersionRuleOptionPerfStats; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     SslVersionRuleOptionData svod;
 };
 

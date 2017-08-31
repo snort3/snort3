@@ -44,6 +44,10 @@ public:
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
+    Usage get_usage() const override
+    { return INSPECT; }
+
+public:
     bool upload;
 };
 

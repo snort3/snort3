@@ -120,6 +120,9 @@ public:
 
     bool set(const char*, Value& v, SnortConfig*) override;
 
+    Usage get_usage() const override
+    { return INSPECT; }
+
 public:
     uint16_t port;
     uint16_t max;

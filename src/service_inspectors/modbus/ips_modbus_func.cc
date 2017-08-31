@@ -166,6 +166,9 @@ public:
     ProfileStats* get_profile() const override
     { return &modbus_func_prof; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
 public:
     uint8_t func;
 };

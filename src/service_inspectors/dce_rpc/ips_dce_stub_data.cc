@@ -105,6 +105,9 @@ class Dce2StubDataModule : public Module
 public:
     Dce2StubDataModule() : Module(s_name, s_help) { }
     ProfileStats* get_profile() const override;
+
+    Usage get_usage() const override
+    { return DETECT; }
 };
 
 ProfileStats* Dce2StubDataModule::get_profile() const

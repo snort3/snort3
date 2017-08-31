@@ -45,8 +45,8 @@ static const Parameter tcp_connector_params[] =
 
 static const PegInfo tcp_connector_pegs[] =
 {
-    { "messages", "total messages" },
-    { nullptr, nullptr }
+    { CountType::SUM, "messages", "total messages" },
+    { CountType::END, nullptr, nullptr }
 };
 
 extern THREAD_LOCAL SimpleStats tcp_connector_stats;

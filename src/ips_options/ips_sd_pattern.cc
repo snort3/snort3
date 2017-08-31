@@ -68,10 +68,10 @@ struct SdStats
 
 const PegInfo sd_pegs[] =
 {
-    { "below_threshold", "sd_pattern matched but missed threshold" },
-    { "pattern_not_found", "sd_pattern did not not match" },
-    { "terminated", "hyperscan terminated" },
-    { nullptr, nullptr }
+    { CountType::SUM, "below_threshold", "sd_pattern matched but missed threshold" },
+    { CountType::SUM, "pattern_not_found", "sd_pattern did not not match" },
+    { CountType::SUM, "terminated", "hyperscan terminated" },
+    { CountType::END, nullptr, nullptr }
 };
 
 static THREAD_LOCAL SdStats s_stats;
@@ -317,6 +317,9 @@ public:
 
     void get_data(SdPatternConfig& c)
     { c = config; }
+
+    Usage get_usage() const override
+    { return DETECT; }
 
 private:
     SdPatternConfig config;

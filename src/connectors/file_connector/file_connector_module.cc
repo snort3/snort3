@@ -45,8 +45,8 @@ static const Parameter file_connector_params[] =
 
 static const PegInfo file_connector_pegs[] =
 {
-    { "messages", "total messages" },
-    { nullptr, nullptr }
+    { CountType::SUM, "messages", "total messages" },
+    { CountType::END, nullptr, nullptr }
 };
 
 extern THREAD_LOCAL SimpleStats file_connector_stats;

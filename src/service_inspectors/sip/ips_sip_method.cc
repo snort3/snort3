@@ -143,6 +143,10 @@ public:
     ProfileStats* get_profile() const override
     { return &sipMethodRuleOptionPerfStats; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     SipMethodRuleOptData smod;
 
 private:

@@ -644,6 +644,9 @@ public:
 
     ContentData* get_data();
 
+    Usage get_usage() const override
+    { return DETECT; }
+
 private:
     ContentData* cd;
 };

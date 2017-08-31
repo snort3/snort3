@@ -337,11 +337,11 @@ static const RuleMap ftp_server_rules[] =
 
 static const PegInfo ftp_pegs[] =
 {
-    { "total_packets", "total packets" },
-    { "concurrent_sessions", "total concurrent ftp sessions" },
-    { "max_concurrent_sessions", "maximum concurrent ftp sessions" },
+    { CountType::SUM, "total_packets", "total packets" },
+    { CountType::NOW, "concurrent_sessions", "total concurrent ftp sessions" },
+    { CountType::MAX, "max_concurrent_sessions", "maximum concurrent ftp sessions" },
 
-    { nullptr, nullptr }
+    { CountType::END, nullptr, nullptr }
 };
 
 //-------------------------------------------------------------------------

@@ -104,6 +104,9 @@ public:
 
     PegCount* get_counts() const override
     { return (PegCount*) &pc; }
+
+    Usage get_usage() const override
+    { return GLOBAL; }
 };
 
 bool DetectionModule::set(const char* fqn, Value& v, SnortConfig* sc)
@@ -162,6 +165,9 @@ class EventQueueModule : public Module
 public:
     EventQueueModule() : Module("event_queue", event_queue_help, event_queue_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
+
+    Usage get_usage() const override
+    { return CONTEXT; }
 };
 
 bool EventQueueModule::set(const char*, Value& v, SnortConfig* sc)
@@ -244,7 +250,7 @@ static const Parameter search_engine_params[] =
     { "show_fast_patterns", Parameter::PT_BOOL, nullptr, "false",
       "print fast pattern info for each rule" },
 
-    { "split_any_any", Parameter::PT_BOOL, nullptr, "false",
+    { "split_any_any", Parameter::PT_BOOL, nullptr, "true",
       "evaluate any-any rules separately to save memory" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -257,14 +263,14 @@ THREAD_LOCAL PatMatQStat pmqs;
 
 const PegInfo mpse_pegs[] =
 {
-    { "max_queued", "maximum fast pattern matches queued for further evaluation" },
-    { "total_flushed", "fast pattern matches discarded due to overflow" },
-    { "total_inserts", "total fast pattern hits" },
-    { "total_unique", "total unique fast pattern hits" },
-    { "non_qualified_events", "total non-qualified events" },
-    { "qualified_events", "total qualified events" },
-    { "searched_bytes", "total bytes searched" },
-    { nullptr, nullptr }
+    { CountType::SUM, "max_queued", "maximum fast pattern matches queued for further evaluation" },
+    { CountType::SUM, "total_flushed", "fast pattern matches discarded due to overflow" },
+    { CountType::SUM, "total_inserts", "total fast pattern hits" },
+    { CountType::SUM, "total_unique", "total unique fast pattern hits" },
+    { CountType::SUM, "non_qualified_events", "total non-qualified events" },
+    { CountType::SUM, "qualified_events", "total qualified events" },
+    { CountType::SUM, "searched_bytes", "total bytes searched" },
+    { CountType::END, nullptr, nullptr }
 };
 
 class SearchEngineModule : public Module
@@ -278,6 +284,9 @@ public:
 
     PegCount* get_counts() const override
     { return (PegCount*)&pmqs; }
+
+    Usage get_usage() const override
+    { return GLOBAL; }
 };
 
 bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
@@ -457,6 +466,9 @@ class ProfilerModule : public Module
 public:
     ProfilerModule() : Module("profiler", profiler_help, profiler_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
+
+    Usage get_usage() const override
+    { return GLOBAL; }
 };
 
 bool ProfilerModule::set(const char* fqn, Value& v, SnortConfig* sc)
@@ -509,6 +521,9 @@ public:
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
+
+    Usage get_usage() const override
+    { return GLOBAL; }
 
 private:
     string name;
@@ -575,6 +590,9 @@ public:
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
+
+    Usage get_usage() const override
+    { return GLOBAL; }
 
 private:
     string name;
@@ -657,6 +675,9 @@ class AlertsModule : public Module
 public:
     AlertsModule() : Module("alerts", alerts_help, alerts_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
+
+    Usage get_usage() const override
+    { return GLOBAL; }
 };
 
 bool AlertsModule::set(const char*, Value& v, SnortConfig* sc)
@@ -765,6 +786,9 @@ class OutputModule : public Module
 public:
     OutputModule() : Module("output", output_help, output_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
+
+    Usage get_usage() const override
+    { return GLOBAL; }
 };
 
 bool OutputModule::set(const char*, Value& v, SnortConfig* sc)
@@ -846,6 +870,9 @@ class ActiveModule : public Module
 public:
     ActiveModule() : Module("active", active_help, active_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
+
+    Usage get_usage() const override
+    { return GLOBAL; }
 };
 
 bool ActiveModule::set(const char*, Value& v, SnortConfig* sc)
@@ -903,6 +930,9 @@ class PacketsModule : public Module
 public:
     PacketsModule() : Module("packets", packets_help, packets_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
+
+    Usage get_usage() const override
+    { return GLOBAL; }
 };
 
 bool PacketsModule::set(const char*, Value& v, SnortConfig* sc)
@@ -956,6 +986,9 @@ public:
     AttributeTableModule() :
         Module("attribute_table", attribute_table_help, attribute_table_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
+
+    Usage get_usage() const override
+    { return GLOBAL; }
 };
 
 bool AttributeTableModule::set(const char*, Value& v, SnortConfig* sc)
@@ -1024,6 +1057,9 @@ class NetworkModule : public Module
 public:
     NetworkModule() : Module("network", network_help, network_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
+
+    Usage get_usage() const override
+    { return CONTEXT; }
 };
 
 bool NetworkModule::set(const char*, Value& v, SnortConfig* sc)
@@ -1096,6 +1132,9 @@ class IpsModule : public Module
 public:
     IpsModule() : Module("ips", ips_help, ips_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
+
+    Usage get_usage() const override
+    { return DETECT; }
 };
 
 bool IpsModule::set(const char*, Value& v, SnortConfig*)
@@ -1177,6 +1216,9 @@ public:
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
+
+    Usage get_usage() const override
+    { return GLOBAL; }
 
 private:
     int thread;
@@ -1284,6 +1326,9 @@ public:
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
 
+    Usage get_usage() const override
+    { return DETECT; }
+
 private:
     THDX_STRUCT thdx;
 };
@@ -1368,6 +1413,9 @@ public:
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
+
+    Usage get_usage() const override
+    { return DETECT; }
 
 private:
     THDX_STRUCT thdx;
@@ -1469,6 +1517,9 @@ public:
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
 
+    Usage get_usage() const override
+    { return DETECT; }
+
 private:
     tSFRFConfigNode thdx;
 };
@@ -1555,6 +1606,9 @@ public:
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
 
+    Usage get_usage() const override
+    { return DETECT; }
+
 private:
     RuleState state;
 };
@@ -1637,6 +1691,9 @@ public:
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
+
+    Usage get_usage() const override
+    { return GLOBAL; }
 
 private:
     ApplicationEntry* app;

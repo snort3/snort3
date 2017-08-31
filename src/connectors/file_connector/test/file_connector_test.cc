@@ -49,9 +49,7 @@ Connector* connector_tb;
 Connector* connector_rb;
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
-
 void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*) { }
-
 void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) { }
 
 const char* get_instance_file(std::string& file, const char* name)
@@ -67,7 +65,8 @@ FileConnectorModule::FileConnectorModule() :
 
 FileConnectorConfig::FileConnectorConfigSet* FileConnectorModule::get_and_clear_config()
 {
-    FileConnectorConfig::FileConnectorConfigSet* config_set = new FileConnectorConfig::FileConnectorConfigSet;
+    FileConnectorConfig::FileConnectorConfigSet* config_set =
+        new FileConnectorConfig::FileConnectorConfigSet;
 
     return config_set;
 }
@@ -77,15 +76,11 @@ FileConnectorModule::~FileConnectorModule() { }
 ProfileStats* FileConnectorModule::get_profile() const { return nullptr; }
 
 bool FileConnectorModule::set(const char*, Value&, SnortConfig*) { return true; }
-
 bool FileConnectorModule::begin(const char*, int, SnortConfig*) { return true; }
-
 bool FileConnectorModule::end(const char*, int, SnortConfig*) { return true; }
 
 const PegInfo* FileConnectorModule::get_pegs() const { return nullptr; }
-
 PegCount* FileConnectorModule::get_counts() const { return nullptr; }
-
 
 TEST_GROUP(file_connector)
 {

@@ -39,13 +39,13 @@ THREAD_LOCAL ReputationStats reputationstats;
 
 const PegInfo reputation_peg_names[] =
 {
-    { "packets", "total packets processed" },
-    { "blacklisted", "number of packets blacklisted" },
-    { "whitelisted", "number of packets whitelisted" },
-    { "monitored", "number of packets monitored" },
-    { "memory_allocated", "total memory allocated" },
+    { CountType::SUM, "packets", "total packets processed" },
+    { CountType::SUM, "blacklisted", "number of packets blacklisted" },
+    { CountType::SUM, "whitelisted", "number of packets whitelisted" },
+    { CountType::SUM, "monitored", "number of packets monitored" },
+    { CountType::SUM, "memory_allocated", "total memory allocated" },
 
-    { nullptr, nullptr }
+    { CountType::END, nullptr, nullptr }
 };
 
 const char* NestedIPKeyword[] =

@@ -121,6 +121,10 @@ public:
     ProfileStats* get_profile() const override
     { return &ipTosPerfStats; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     RangeCheck data;
 };
 

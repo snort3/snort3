@@ -39,6 +39,10 @@ public:
 
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
+
+    Usage get_usage() const override
+    { return GLOBAL; }
+
 private:
     SFDAQConfig* config;
     SFDAQInstanceConfig* instance_config;

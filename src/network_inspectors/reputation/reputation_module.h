@@ -61,6 +61,9 @@ public:
 
     ReputationConfig* get_data();
 
+    Usage get_usage() const override
+    { return GLOBAL; }
+
 private:
     ReputationConfig* conf;
 };

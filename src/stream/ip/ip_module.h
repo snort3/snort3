@@ -78,35 +78,6 @@ struct IpStats
     PegCount fragmented_bytes;  // total_ipfragmented_bytes
 };
 
-struct IpStatTypes
-{
-    SESSION_STAT_TYPES;
-    CountType total = CountType::SUM;
-    CountType current_frags = CountType::NOW;
-
-    // FIXIT-M max_frags appears to be unused.
-    CountType max_frags = CountType::SUM;
-
-    CountType reassembles = CountType::SUM;
-    CountType discards = CountType::SUM;
-    CountType frag_timeouts = CountType::SUM;
-    CountType overlaps = CountType::SUM;
-    CountType anomalies = CountType::SUM;
-    CountType alerts = CountType::SUM;
-    CountType drops = CountType::SUM;
-    CountType trackers_created = CountType::SUM;
-    CountType trackers_released = CountType::SUM;
-    CountType trackers_cleared = CountType::SUM;
-    CountType trackers_completed = CountType::SUM;
-    CountType nodes_created = CountType::SUM;
-    CountType nodes_released = CountType::SUM;
-    CountType mem_in_use = CountType::NOW;
-    CountType reassembled_bytes = CountType::SUM;
-    CountType fragmented_bytes = CountType::SUM;
-
-    IpStatTypes() {}
-};
-
 extern const PegInfo ip_pegs[];
 extern THREAD_LOCAL struct IpStats ip_stats;
 extern THREAD_LOCAL ProfileStats ip_perf_stats;
@@ -138,11 +109,13 @@ public:
     ProfileStats* get_profile(unsigned, const char*&, const char*&) const override;
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
-    void sum_stats(bool) override;
     StreamIpConfig* get_data();
 
     unsigned get_gid() const override
     { return GID_DEFRAG; }
+
+    Usage get_usage() const override
+    { return INSPECT; }
 
 private:
     StreamIpConfig* config;

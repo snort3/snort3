@@ -245,6 +245,9 @@ public:
         config.reset();
     }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
 private:
     RegexConfig config;
 };

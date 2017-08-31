@@ -387,6 +387,7 @@ void NormalizeModule::add_test_peg(const PegInfo& norm) const
     test_text.push_back(test_info);
     test.help = test_text.back()->c_str();
 
+    test.type = norm.type;
     test_pegs.push_back(test);
 }
 

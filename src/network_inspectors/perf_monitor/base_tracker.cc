@@ -79,17 +79,20 @@ public:
 
     void real_sum_stats() { Module::sum_stats(false); }
 
+    Usage get_usage() const override
+    { return INSPECT; }
+
 private:
     PegCount* counts;
 
     PegInfo pegs[6] =
     {
-        { "zero", ""},
-        { "one", ""},
-        { "two", ""},
-        { "three", ""},
-        { "four", ""},
-        { nullptr, nullptr }
+        { CountType::SUM, "zero", ""},
+        { CountType::SUM, "one", ""},
+        { CountType::SUM, "two", ""},
+        { CountType::SUM, "three", ""},
+        { CountType::SUM, "four", ""},
+        { CountType::END, nullptr, nullptr }
     };
 };
 

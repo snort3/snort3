@@ -32,26 +32,16 @@ THREAD_LOCAL PegCount tcp_norm_stats[PC_TCP_MAX][NORM_MODE_MAX];
 
 static const PegInfo pegName[] =
 {
-    { "tcp_trim_syn", "tcp segments trimmed on SYN" },
-    { "tcp_trim_rst", "RST packets with data trimmed" },
-    { "tcp_trim_win", "data trimmed to window" },
-    { "tcp_trim_mss", "data trimmed to MSS" },
-    { "tcp_ecn_session", "ECN bits cleared" },
-    { "tcp_ts_nop", "timestamp options cleared" },
-    { "tcp_ips_data", "normalized segments" },
-    { "tcp_block", "blocked segments" },
-    { nullptr, nullptr }
+    { CountType::SUM, "tcp_trim_syn", "tcp segments trimmed on SYN" },
+    { CountType::SUM, "tcp_trim_rst", "RST packets with data trimmed" },
+    { CountType::SUM, "tcp_trim_win", "data trimmed to window" },
+    { CountType::SUM, "tcp_trim_mss", "data trimmed to MSS" },
+    { CountType::SUM, "tcp_ecn_session", "ECN bits cleared" },
+    { CountType::SUM, "tcp_ts_nop", "timestamp options cleared" },
+    { CountType::SUM, "tcp_ips_data", "normalized segments" },
+    { CountType::SUM, "tcp_block", "blocked segments" },
+    { CountType::END, nullptr, nullptr }
 };
-
-#if 0
-static inline int SetupOK(const TcpStreamTracker* st)
-{
-    return ((st->s_mgr.sub_state & SUB_SETUP_OK) == SUB_SETUP_OK);
-}
-
-int strip = ( SetupOK(peer_tracker) && SetupOK(tracker) );
-DebugMessage(DEBUG_STREAM_STATE, "listener not doing timestamps...\n");
-#endif
 
 TcpNormalizer::TcpNormalizer(StreamPolicy os_policy, TcpSession* session,
     TcpStreamTracker* tracker) :

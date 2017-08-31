@@ -269,6 +269,10 @@ public:
     ProfileStats* get_profile() const override
     { return &reactPerfStats; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     bool msg;
 };
 

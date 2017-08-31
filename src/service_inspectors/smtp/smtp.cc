@@ -156,20 +156,20 @@ static THREAD_LOCAL SMTPSearchInfo smtp_search_info;
 
 const PegInfo smtp_peg_names[] =
 {
-    { "packets", "total packets processed" },
-    { "sessions", "total smtp sessions" },
-    { "concurrent_sessions", "total concurrent smtp sessions" },
-    { "max_concurrent_sessions", "maximum concurrent smtp sessions" },
-    { "b64_attachments", "total base64 attachments decoded" },
-    { "b64_decoded_bytes", "total base64 decoded bytes" },
-    { "qp_attachments", "total quoted-printable attachments decoded" },
-    { "qp_decoded_bytes", "total quoted-printable decoded bytes" },
-    { "uu_attachments", "total uu attachments decoded" },
-    { "uu_decoded_bytes", "total uu decoded bytes" },
-    { "non_encoded_attachments", "total non-encoded attachments extracted" },
-    { "non_encoded_bytes", "total non-encoded extracted bytes" },
+    { CountType::SUM, "packets", "total packets processed" },
+    { CountType::SUM, "sessions", "total smtp sessions" },
+    { CountType::NOW, "concurrent_sessions", "total concurrent smtp sessions" },
+    { CountType::MAX, "max_concurrent_sessions", "maximum concurrent smtp sessions" },
+    { CountType::SUM, "b64_attachments", "total base64 attachments decoded" },
+    { CountType::SUM, "b64_decoded_bytes", "total base64 decoded bytes" },
+    { CountType::SUM, "qp_attachments", "total quoted-printable attachments decoded" },
+    { CountType::SUM, "qp_decoded_bytes", "total quoted-printable decoded bytes" },
+    { CountType::SUM, "uu_attachments", "total uu attachments decoded" },
+    { CountType::SUM, "uu_decoded_bytes", "total uu decoded bytes" },
+    { CountType::SUM, "non_encoded_attachments", "total non-encoded attachments extracted" },
+    { CountType::SUM, "non_encoded_bytes", "total non-encoded extracted bytes" },
 
-    { nullptr, nullptr }
+    { CountType::END, nullptr, nullptr }
 };
 
 static void snort_smtp(SMTP_PROTO_CONF* GlobalConf, Packet* p);

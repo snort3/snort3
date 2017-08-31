@@ -364,6 +364,9 @@ static const Parameter s_params[] =
     { "--max-packet-threads", Parameter::PT_INT, "0:", "1",
       "<count> configure maximum number of packet threads (same as -z)" },
 
+    { "--mem-check", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "like -T but also compile search engines" },
+
     { "--nostamps", Parameter::PT_IMPLIED, nullptr, nullptr,
       "don't include timestamps in log file names" },
 
@@ -534,6 +537,9 @@ public:
 
     void sum_stats(bool) override
     { }  // accumulate externally
+
+    Usage get_usage() const override
+    { return GLOBAL; }
 
 private:
     int instance_id;
@@ -789,6 +795,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--markup") )
         config_markup(sc, v.get_string());
+
+    else if ( v.is("--mem-check") )
+        sc->run_flags |= (RUN_FLAG__TEST | RUN_FLAG__MEM_CHECK);
 
     else if ( v.is("--nostamps") )
         sc->set_no_logging_timestamps(true);

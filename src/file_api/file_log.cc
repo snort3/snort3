@@ -51,9 +51,8 @@ static THREAD_LOCAL FileLogStats fl_stats;
 
 static const PegInfo fl_pegs[] =
 {
-    { "total_events", "total file events" },
-
-    { nullptr, nullptr }
+    { CountType::SUM, "total_events", "total file events" },
+    { CountType::END, nullptr, nullptr }
 };
 
 //-------------------------------------------------------------------------
@@ -234,6 +233,9 @@ public:
     { return (PegCount*)&fl_stats; }
 
     bool set(const char*, Value& v, SnortConfig*) override;
+
+    Usage get_usage() const override
+    { return INSPECT; }
 
 public:
     FileLogConfig config;

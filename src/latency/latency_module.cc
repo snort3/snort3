@@ -100,14 +100,14 @@ THREAD_LOCAL LatencyStats latency_stats;
 
 static const PegInfo latency_pegs[] =
 {
-    { "total_packets", "total packets monitored" },
-    { "total_usecs", "total usecs elapsed" },
-    { "max_usecs", "maximum usecs elapsed" },
-    { "packet_timeouts", "packets that timed out" },
-    { "total_rule_evals", "total rule evals monitored" },
-    { "rule_eval_timeouts", "rule evals that timed out" },
-    { "rule_tree_enables", "rule tree re-enables" },
-    { nullptr, nullptr }
+    { CountType::SUM, "total_packets", "total packets monitored" },
+    { CountType::SUM, "total_usecs", "total usecs elapsed" },
+    { CountType::SUM, "max_usecs", "maximum usecs elapsed" },
+    { CountType::SUM, "packet_timeouts", "packets that timed out" },
+    { CountType::SUM, "total_rule_evals", "total rule evals monitored" },
+    { CountType::SUM, "rule_eval_timeouts", "rule evals that timed out" },
+    { CountType::SUM, "rule_tree_enables", "rule tree re-enables" },
+    { CountType::END, nullptr, nullptr }
 };
 
 // -----------------------------------------------------------------------------

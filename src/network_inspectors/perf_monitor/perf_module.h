@@ -89,6 +89,9 @@ public:
 
     void get_config(PerfConfig&);
 
+    Usage get_usage() const override
+    { return CONTEXT; }
+
 private:
     PerfConfig config;
 

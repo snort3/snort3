@@ -58,11 +58,11 @@ static const Parameter s_params[] =
 
 static const PegInfo telnet_pegs[] =
 {
-    { "total_packets", "total packets" },
-    { "concurrent_sessions", "total concurrent telnet sessions" },
-    { "max_concurrent_sessions", "maximum concurrent telnet sessions" },
+    { CountType::SUM, "total_packets", "total packets" },
+    { CountType::NOW, "concurrent_sessions", "total concurrent telnet sessions" },
+    { CountType::MAX, "max_concurrent_sessions", "maximum concurrent telnet sessions" },
 
-    { nullptr, nullptr }
+    { CountType::END, nullptr, nullptr }
 };
 
 static const RuleMap telnet_rules[] =

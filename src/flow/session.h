@@ -77,12 +77,12 @@ public:
  * Having these predefined stats improves consistency and provides convenience.
  */
 #define SESSION_PEGS(module) \
-    { "sessions", "total " module " sessions" }, \
-    { "max", "max " module " sessions" }, \
-    { "created", module " session trackers created" }, \
-    { "released", module " session trackers released" }, \
-    { "timeouts", module " session timeouts" }, \
-    { "prunes", module " session prunes" }
+    { CountType::SUM, "sessions", "total " module " sessions" }, \
+    { CountType::MAX, "max", "max " module " sessions" }, \
+    { CountType::SUM, "created", module " session trackers created" }, \
+    { CountType::SUM, "released", module " session trackers released" }, \
+    { CountType::SUM, "timeouts", module " session timeouts" }, \
+    { CountType::SUM, "prunes", module " session prunes" }
 
 // See above. Add to end of stats array.
 #define SESSION_STATS \
@@ -92,14 +92,6 @@ public:
     PegCount released; \
     PegCount timeouts; \
     PegCount prunes
-
-#define SESSION_STAT_TYPES \
-    CountType sessions = CountType::SUM; \
-    CountType max = CountType::MAX; \
-    CountType created = CountType::SUM; \
-    CountType released = CountType::SUM; \
-    CountType timeouts = CountType::SUM; \
-    CountType prunes = CountType::SUM
 
 // Do not change the semantics of max. Max = the highest seen during the perf interval.
 // To obtain max over the entire run, determine the maximum of reported max pegs.

@@ -88,6 +88,9 @@ public:
     void show_stats() override;
     void reset_stats() override;
 
+    Usage get_usage() const override
+    { return GLOBAL; }
+
 private:
     StreamModuleConfig config;
 };

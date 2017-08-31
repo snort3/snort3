@@ -231,6 +231,9 @@ public:
     { return GID_DECODE; }
 
     const RuleMap* get_rules() const override;
+
+    Usage get_usage() const override
+    { return CONTEXT; }
 };
 
 #endif

@@ -44,6 +44,9 @@ public:
 
     void sum_stats(bool) override;
 
+    Usage get_usage() const override
+    { return GLOBAL; }
+
 private:
     static const Parameter host_cache_params[];
     static const Parameter service_params[];

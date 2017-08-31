@@ -149,6 +149,10 @@ public:
     ProfileStats* get_profile() const override
     { return &icmpSeqPerfStats; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     RangeCheck data;
 };
 

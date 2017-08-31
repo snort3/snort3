@@ -118,6 +118,9 @@ public:
     ProfileStats* get_profile() const override
     { return &modbus_unit_prof; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
 public:
     uint8_t unit;
 };

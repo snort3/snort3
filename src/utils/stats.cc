@@ -164,66 +164,68 @@ static void timing_stats()
 
 const PegInfo daq_names[] =
 {
-    { "pcaps", "total files and interfaces processed" },
-    { "received", "total packets received from DAQ" },
-    { "analyzed", "total packets analyzed from DAQ" },
-    { "dropped", "packets dropped" },
-    { "filtered", "packets filtered out" },
-    { "outstanding", "packets unprocessed" },
-    { "injected", "active responses or replacements" },
-    { "allow", "total allow verdicts" },
-    { "block", "total block verdicts" },
-    { "replace", "total replace verdicts" },
-    { "whitelist", "total whitelist verdicts" },
-    { "blacklist", "total blacklist verdicts" },
-    { "ignore", "total ignore verdicts" },
+    { CountType::SUM, "pcaps", "total files and interfaces processed" },
+    { CountType::SUM, "received", "total packets received from DAQ" },
+    { CountType::SUM, "analyzed", "total packets analyzed from DAQ" },
+    { CountType::SUM, "dropped", "packets dropped" },
+    { CountType::SUM, "filtered", "packets filtered out" },
+    { CountType::SUM, "outstanding", "packets unprocessed" },
+    { CountType::SUM, "injected", "active responses or replacements" },
+    { CountType::SUM, "allow", "total allow verdicts" },
+    { CountType::SUM, "block", "total block verdicts" },
+    { CountType::SUM, "replace", "total replace verdicts" },
+    { CountType::SUM, "whitelist", "total whitelist verdicts" },
+    { CountType::SUM, "blacklist", "total blacklist verdicts" },
+    { CountType::SUM, "ignore", "total ignore verdicts" },
 
     // FIXIT-L these are not exactly DAQ counts - but they are related
-    { "internal_blacklist", "packets blacklisted internally due to lack of DAQ support" },
-    { "internal_whitelist", "packets whitelisted internally due to lack of DAQ support" },
-    { "skipped", "packets skipped at startup" },
-    { "idle", "attempts to acquire from DAQ without available packets" },
-    { "rx_bytes", "total bytes received" },
-    { nullptr, nullptr }
+    { CountType::SUM, "internal_blacklist",
+        "packets blacklisted internally due to lack of DAQ support" },
+    { CountType::SUM, "internal_whitelist",
+        "packets whitelisted internally due to lack of DAQ support" },
+    { CountType::SUM, "skipped", "packets skipped at startup" },
+    { CountType::SUM, "idle", "attempts to acquire from DAQ without available packets" },
+    { CountType::SUM, "rx_bytes", "total bytes received" },
+    { CountType::END, nullptr, nullptr }
 };
 
 const PegInfo pc_names[] =
 {
-    { "analyzed", "packets sent to detection" },
-    { "hard_evals", "non-fast pattern rule evaluations" },
-    { "raw_searches", "fast pattern searches in raw packet data" },
-    { "cooked_searches", "fast pattern searches in cooked packet data" },
-    { "pkt_searches", "fast pattern searches in packet data" },
-    { "alt_searches", "alt fast pattern searches in packet data" },
-    { "key_searches", "fast pattern searches in key buffer" },
-    { "header_searches", "fast pattern searches in header buffer" },
-    { "body_searches", "fast pattern searches in body buffer" },
-    { "file_searches", "fast pattern searches in file buffer" },
-    { "offloads", "fast pattern searches that were offloaded" },
-    { "alerts", "alerts not including IP reputation" },
-    { "total_alerts", "alerts including IP reputation" },
-    { "logged", "logged packets" },
-    { "passed", "passed packets" },
-    { "match_limit", "fast pattern matches not processed" },
-    { "queue_limit", "events not queued because queue full" },
-    { "log_limit", "events queued but not logged" },
-    { "event_limit", "events filtered" },
-    { "alert_limit", "events previously triggered on same PDU" },
-    { nullptr, nullptr }
+    { CountType::SUM, "analyzed", "packets sent to detection" },
+    { CountType::SUM, "hard_evals", "non-fast pattern rule evaluations" },
+    { CountType::SUM, "raw_searches", "fast pattern searches in raw packet data" },
+    { CountType::SUM, "cooked_searches", "fast pattern searches in cooked packet data" },
+    { CountType::SUM, "pkt_searches", "fast pattern searches in packet data" },
+    { CountType::SUM, "alt_searches", "alt fast pattern searches in packet data" },
+    { CountType::SUM, "key_searches", "fast pattern searches in key buffer" },
+    { CountType::SUM, "header_searches", "fast pattern searches in header buffer" },
+    { CountType::SUM, "body_searches", "fast pattern searches in body buffer" },
+    { CountType::SUM, "file_searches", "fast pattern searches in file buffer" },
+    { CountType::SUM, "offloads", "fast pattern searches that were offloaded" },
+    { CountType::SUM, "alerts", "alerts not including IP reputation" },
+    { CountType::SUM, "total_alerts", "alerts including IP reputation" },
+    { CountType::SUM, "logged", "logged packets" },
+    { CountType::SUM, "passed", "passed packets" },
+    { CountType::SUM, "match_limit", "fast pattern matches not processed" },
+    { CountType::SUM, "queue_limit", "events not queued because queue full" },
+    { CountType::SUM, "log_limit", "events queued but not logged" },
+    { CountType::SUM, "event_limit", "events filtered" },
+    { CountType::SUM, "alert_limit", "events previously triggered on same PDU" },
+    { CountType::END, nullptr, nullptr }
 };
 
 const PegInfo proc_names[] =
 {
-    { "local_commands", "total local commands processed" },
-    { "remote_commands", "total remote commands processed" },
-    { "signals", "total signals processed" },
-    { "conf_reloads", "number of times configuration was reloaded" },
-    { "policy_reloads", "number of times policies were reloaded" },
-    { "inspector_deletions", "number of times inspectors were deleted" },
-    { "daq_reloads", "number of times daq configuration was reloaded" },
-    { "attribute_table_reloads", "number of times hosts table was reloaded" },
-    { "attribute_table_hosts", "total number of hosts in table" },
-    { nullptr, nullptr }
+    { CountType::SUM, "local_commands", "total local commands processed" },
+    { CountType::SUM, "remote_commands", "total remote commands processed" },
+    { CountType::SUM, "signals", "total signals processed" },
+    { CountType::SUM, "conf_reloads", "number of times configuration was reloaded" },
+    { CountType::SUM, "policy_reloads", "number of times policies were reloaded" },
+    { CountType::SUM, "inspector_deletions", "number of times inspectors were deleted" },
+    { CountType::SUM, "daq_reloads", "number of times daq configuration was reloaded" },
+    { CountType::SUM, "attribute_table_reloads", "number of times hosts table was reloaded" },
+    { CountType::SUM, "attribute_table_hosts", "total number of hosts in table" },
+    { CountType::END, nullptr, nullptr }
 };
 
 //-------------------------------------------------------------------------

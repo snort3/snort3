@@ -51,8 +51,16 @@ public:
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
 
-    PegCount* get_counts() const override;
+    PegCount* get_counts() const override
+    { return (PegCount*)&ha_stats; }
+
+    const PegInfo* get_pegs() const override
+    { return simple_pegs; }
+
     ProfileStats* get_profile() const override;
+
+    Usage get_usage() const override
+    { return GLOBAL; }
 
 private:
     HighAvailabilityConfig config;

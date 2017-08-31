@@ -39,14 +39,15 @@ public:
     bool set(const char*, Value&, SnortConfig*) override;
 
     unsigned get_gid() const override
-    {
-        return GID_DNP3;
-    }
+    { return GID_DNP3; }
 
     const RuleMap* get_rules() const override;
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
     ProfileStats* get_profile() const override;
+
+    Usage get_usage() const override
+    { return INSPECT; }
 
     void get_data(dnp3ProtoConf&);
 

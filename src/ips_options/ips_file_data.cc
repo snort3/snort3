@@ -78,6 +78,9 @@ public:
 
     ProfileStats* get_profile() const override
     { return &fileDataPerfStats; }
+
+    Usage get_usage() const override
+    { return DETECT; }
 };
 
 //-------------------------------------------------------------------------

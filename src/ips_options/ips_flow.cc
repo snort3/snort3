@@ -335,6 +335,10 @@ public:
     ProfileStats* get_profile() const override
     { return &flowCheckPerfStats; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     FlowCheckData data;
 };
 

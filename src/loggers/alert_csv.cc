@@ -457,6 +457,9 @@ public:
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
 
+    Usage get_usage() const override
+    { return CONTEXT; }
+
 public:
     bool file;
     string sep;

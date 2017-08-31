@@ -66,6 +66,9 @@ public:
     FTP_CLIENT_PROTO_CONF* get_data();
     const BounceTo* get_bounce(unsigned idx);
 
+    Usage get_usage() const override
+    { return INSPECT; }
+
 private:
     FTP_CLIENT_PROTO_CONF* conf;
     std::vector<BounceTo*> bounce_to;

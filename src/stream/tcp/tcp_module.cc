@@ -44,38 +44,42 @@ THREAD_LOCAL ProfileStats s5TcpBuildPacketPerfStats;
 const PegInfo tcp_pegs[] =
 {
     SESSION_PEGS("tcp"),
-    { "resyns", "SYN received on established session" },
-    { "discards", "tcp packets discarded" },
-    { "events", "events generated" },
-    { "ignored", "tcp packets ignored" },
-    { "untracked", "tcp packets not tracked" },
-    { "syn_trackers", "tcp session tracking started on syn" },
-    { "syn_ack_trackers", "tcp session tracking started on syn-ack" },
-    { "three_way_trackers", "tcp session tracking started on ack" },
-    { "data_trackers", "tcp session tracking started on data" },
-    { "segs_queued", "total segments queued" },
-    { "segs_released", "total segments released" },
-    { "segs_split", "tcp segments split when reassembling PDUs" },
-    { "segs_used", "queued tcp segments applied to reassembled PDUs" },
-    { "rebuilt_packets", "total reassembled PDUs" },
-    { "rebuilt_buffers", "rebuilt PDU sections" },
-    { "rebuilt_bytes", "total rebuilt bytes" },
-    { "overlaps", "overlapping segments queued" },
-    { "gaps", "missing data between PDUs" },
-    { "exceeded_max_segs", "number of times the maximum queued segment limit was reached" },
-    { "exceeded_max_bytes", "number of times the maximum queued byte limit was reached" },
-    { "internal_events", "135:X events generated" },
-    { "client_cleanups", "number of times data from server was flushed when session released" },
-    { "server_cleanups", "number of times data from client was flushed when session released" },
-    { "memory", "current memory in use" },
-    { "initializing", "number of sessions currently initializing" },
-    { "established", "number of sessions currently established" },
-    { "closing", "number of sessions currently closing" },
-    { "syns", "number of syn packets" },
-    { "syn_acks", "number of syn-ack packets" },
-    { "resets", "number of reset packets" },
-    { "fins", "number of fin packets"},
-    { nullptr, nullptr }
+    { CountType::SUM, "resyns", "SYN received on established session" },
+    { CountType::SUM, "discards", "tcp packets discarded" },
+    { CountType::SUM, "events", "events generated" },
+    { CountType::SUM, "ignored", "tcp packets ignored" },
+    { CountType::SUM, "untracked", "tcp packets not tracked" },
+    { CountType::SUM, "syn_trackers", "tcp session tracking started on syn" },
+    { CountType::SUM, "syn_ack_trackers", "tcp session tracking started on syn-ack" },
+    { CountType::SUM, "three_way_trackers", "tcp session tracking started on ack" },
+    { CountType::SUM, "data_trackers", "tcp session tracking started on data" },
+    { CountType::SUM, "segs_queued", "total segments queued" },
+    { CountType::SUM, "segs_released", "total segments released" },
+    { CountType::SUM, "segs_split", "tcp segments split when reassembling PDUs" },
+    { CountType::SUM, "segs_used", "queued tcp segments applied to reassembled PDUs" },
+    { CountType::SUM, "rebuilt_packets", "total reassembled PDUs" },
+    { CountType::SUM, "rebuilt_buffers", "rebuilt PDU sections" },
+    { CountType::SUM, "rebuilt_bytes", "total rebuilt bytes" },
+    { CountType::SUM, "overlaps", "overlapping segments queued" },
+    { CountType::SUM, "gaps", "missing data between PDUs" },
+    { CountType::SUM, "exceeded_max_segs",
+        "number of times the maximum queued segment limit was reached" },
+    { CountType::SUM, "exceeded_max_bytes",
+        "number of times the maximum queued byte limit was reached" },
+    { CountType::SUM, "internal_events", "135:X events generated" },
+    { CountType::SUM, "client_cleanups",
+        "number of times data from server was flushed when session released" },
+    { CountType::SUM, "server_cleanups",
+        "number of times data from client was flushed when session released" },
+    { CountType::NOW, "memory", "current memory in use" },
+    { CountType::NOW, "initializing", "number of sessions currently initializing" },
+    { CountType::NOW, "established", "number of sessions currently established" },
+    { CountType::NOW, "closing", "number of sessions currently closing" },
+    { CountType::SUM, "syns", "number of syn packets" },
+    { CountType::SUM, "syn_acks", "number of syn-ack packets" },
+    { CountType::SUM, "resets", "number of reset packets" },
+    { CountType::SUM, "fins", "number of fin packets"},
+    { CountType::END, nullptr, nullptr }
 };
 
 THREAD_LOCAL TcpStats tcpStats;
@@ -362,14 +366,4 @@ const PegInfo* StreamTcpModule::get_pegs() const
 
 PegCount* StreamTcpModule::get_counts() const
 { return (PegCount*)&tcpStats; }
-
-void StreamTcpModule::sum_stats(bool accumulate_now_stats)
-{
-    assert(sizeof(TcpStats)/sizeof(PegCount) == sizeof(TcpStatTypes)/sizeof(CountType));
-
-    static const TcpStatTypes tcp_stat_types;
-    static const CountType* const count_types = (const CountType*)&tcp_stat_types;
-
-    sum_stats_helper(accumulate_now_stats, count_types);
-}
 

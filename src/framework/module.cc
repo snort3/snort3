@@ -84,15 +84,18 @@ bool Module::set(const char*, Value& v, SnortConfig*)
     return true;
 }
 
-void Module::sum_stats_helper(bool accumulate_now_stats, const CountType* const count_types)
+void Module::sum_stats(bool accumulate_now_stats)
 {
     if ( num_counts < 0 )
         reset_stats();
 
     PegCount* p = get_counts();
+    const PegInfo* q = get_pegs();
 
     if ( !p )
         return;
+
+    assert(q);
 
     if ( global_stats() )
     {
@@ -103,37 +106,27 @@ void Module::sum_stats_helper(bool accumulate_now_stats, const CountType* const 
     {
         for ( int i = 0; i < num_counts; i++ )
         {
-            if(count_types)
+            switch ( q[i].type )
             {
-                switch (count_types[i])
-                {
-                case CountType::SUM:
-                    add_peg_count(i, p[i]);
-                    p[i] = 0;
-                    break;
+            case CountType::END:
+                break;
 
-                case CountType::NOW:
-                    if(accumulate_now_stats)
-                        add_peg_count(i, p[i]);
-                    break;
-
-                case CountType::MAX:
-                    set_max_peg_count(i, p[i]);
-                    break;
-                }
-            }
-            else
-            {
+            case CountType::SUM:
                 add_peg_count(i, p[i]);
                 p[i] = 0;
+                break;
+
+            case CountType::NOW:
+                if ( accumulate_now_stats )
+                    add_peg_count(i, p[i]);
+                break;
+
+            case CountType::MAX:
+                set_max_peg_count(i, p[i]);
+                break;
             }
         }
     }
-}
-
-void Module::sum_stats(bool)
-{
-    sum_stats_helper(false, nullptr);
 }
 
 void Module::show_interval_stats(IndexVec& peg_idxs, FILE* fh)
@@ -150,7 +143,7 @@ void Module::show_stats()
 
 void Module::reset_stats()
 {
-    if( num_counts <= 0 )
+    if ( num_counts <= 0 )
     {
         num_counts = 0;
         const PegInfo* pegs = get_pegs();
@@ -190,7 +183,7 @@ bool Module::verified_end(const char* fqn, int idx, SnortConfig* c)
 
 const PegInfo simple_pegs[] =
 {
-    { "packets", "total packets" },
-    { nullptr, nullptr }
+    { CountType::SUM, "packets", "total packets" },
+    { CountType::END, nullptr, nullptr }
 };
 

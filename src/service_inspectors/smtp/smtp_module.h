@@ -92,6 +92,9 @@ public:
     SMTP_PROTO_CONF* get_data();
     const SmtpCmd* get_cmd(unsigned idx);
 
+    Usage get_usage() const override
+    { return INSPECT; }
+
 private:
     void add_commands(Value&, uint32_t flags);
 

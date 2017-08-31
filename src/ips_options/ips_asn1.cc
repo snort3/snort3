@@ -205,6 +205,10 @@ public:
     ProfileStats* get_profile() const override
     { return &asn1PerfStats; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     ASN1_CTXT data;
 };
 

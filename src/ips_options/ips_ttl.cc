@@ -118,6 +118,10 @@ public:
     ProfileStats* get_profile() const override
     { return &ttlCheckPerfStats; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     RangeCheck data;
 };
 

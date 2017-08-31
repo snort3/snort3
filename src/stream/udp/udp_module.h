@@ -58,6 +58,9 @@ public:
     PegCount* get_counts() const override;
     StreamUdpConfig* get_data();
 
+    Usage get_usage() const override
+    { return INSPECT; }
+
 private:
     StreamUdpConfig* config;
 };

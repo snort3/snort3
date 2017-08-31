@@ -498,6 +498,10 @@ public:
     ProfileStats* get_profile() const override
     { return &byteTestPerfStats; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     ByteTestData data;
     string cmp_var;
     string off_var;

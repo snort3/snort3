@@ -84,11 +84,3 @@ bool StreamUserModule::end(const char*, int, SnortConfig*)
     return true;
 }
 
-#if 0
-const PegInfo* StreamUserModule::get_pegs() const
-{ return user_pegs; }
-
-PegCount* StreamUserModule::get_counts() const
-{ return (PegCount*)&user_stats; }
-#endif
-

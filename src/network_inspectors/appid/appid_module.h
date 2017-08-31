@@ -125,6 +125,9 @@ public:
 
     const AppIdModuleConfig* get_data();
 
+    Usage get_usage() const override
+    { return CONTEXT; }
+
 private:
     AppIdModuleConfig* config;
 };

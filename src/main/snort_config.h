@@ -68,8 +68,9 @@ enum RunFlag
     RUN_FLAG__SHELL               = 0x00800000,
 #endif
 #ifdef PIGLET
-    RUN_FLAG__PIGLET              = 0x01000000
+    RUN_FLAG__PIGLET              = 0x01000000,
 #endif
+    RUN_FLAG__MEM_CHECK           = 0x02000000,
 };
 
 enum OutputFlag
@@ -441,6 +442,9 @@ public:
     // mode related
     static bool test_mode()
     { return snort_conf->run_flags & RUN_FLAG__TEST; }
+
+    static bool mem_check()
+    { return snort_conf->run_flags & RUN_FLAG__MEM_CHECK; }
 
     static bool daemon_mode()
     { return snort_conf->run_flags & RUN_FLAG__DAEMON; }

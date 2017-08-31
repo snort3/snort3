@@ -52,6 +52,9 @@ public:
     MagicBook* get_book(bool c2s, bool hex);
     CurseBook* get_curse_book();
 
+    Usage get_usage() const override
+    { return GLOBAL; }
+
 private:
     void add_spells(MagicBook*, std::string&);
 

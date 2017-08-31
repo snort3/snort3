@@ -235,6 +235,10 @@ public:
     ProfileStats* get_profile() const override
     { return &ipProtoPerfStats; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     IpProtoData data;
 };
 

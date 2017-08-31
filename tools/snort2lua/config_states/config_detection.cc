@@ -40,6 +40,7 @@ public:
 bool Detection::convert(std::istringstream& data_stream)
 {
     bool retval = true;
+    bool split_set = false;
     std::string args;
 
     table_api.open_table("search_engine");
@@ -72,6 +73,7 @@ bool Detection::convert(std::istringstream& data_stream)
         {
             table_api.add_diff_option_comment("split-any-any", "split_any_any");
             tmpval = table_api.add_option("split_any_any", true);
+            split_set = true;
         }
         else if (!keyword.compare("bleedover-warnings-enabled"))
         {
@@ -232,6 +234,7 @@ bool Detection::convert(std::istringstream& data_stream)
                 table_api.add_diff_option_comment("ac-split", "ac_full");
                 bool tmpval2 = table_api.add_option("split_any_any", true);
                 bool tmpval1 = table_api.add_option("search_method", "ac_full");
+                split_set = true;
                 tmpval = tmpval1 && tmpval2;
 
                 if (!table_api.add_option("split_any_any", true))
@@ -247,6 +250,11 @@ bool Detection::convert(std::istringstream& data_stream)
 
         if (retval && !tmpval)
             retval = false;
+    }
+    if ( !split_set )
+    {
+        table_api.add_diff_option_comment("split-any-any", "split_any_any = true by default");
+        table_api.add_option("split_any_any", false);
     }
 
     return retval;

@@ -38,12 +38,12 @@ THREAD_LOCAL BindStats bstats;
 
 static const PegInfo bind_pegs[] =
 {
-    { "packets", "initial bindings" },
-    { "resets", "reset bindings" },
-    { "blocks", "block bindings" },
-    { "allows", "allow bindings" },
-    { "inspects", "inspect bindings" },
-    { nullptr, nullptr }
+    { CountType::SUM, "packets", "initial bindings" },
+    { CountType::SUM, "resets", "reset bindings" },
+    { CountType::SUM, "blocks", "block bindings" },
+    { CountType::SUM, "allows", "allow bindings" },
+    { CountType::SUM, "inspects", "inspect bindings" },
+    { CountType::END, nullptr, nullptr }
 };
 
 //-------------------------------------------------------------------------

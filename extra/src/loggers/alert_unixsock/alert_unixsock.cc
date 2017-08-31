@@ -102,6 +102,9 @@ public:
 
     bool set(const char*, Value&, SnortConfig*) override
     { return false; }
+
+    Usage get_usage() const override
+    { return CONTEXT; }
 };
 
 //-------------------------------------------------------------------------

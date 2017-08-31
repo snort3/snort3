@@ -154,6 +154,10 @@ public:
     ProfileStats* get_profile() const override
     { return &gtp_info_prof; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     uint8_t types[MAX_GTP_VERSION_CODE + 1];
 };
 

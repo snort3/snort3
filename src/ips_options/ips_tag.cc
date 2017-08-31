@@ -66,6 +66,11 @@ public:
     bool end(const char*, int, SnortConfig*) override;
 
     TagData* get_data();
+
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     TagData* tag;
 };
 

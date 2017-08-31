@@ -36,12 +36,12 @@ THREAD_LOCAL ProfileStats modbus_prof;
 
 const PegInfo peg_names[] =
 {
-    { "sessions", "total sessions processed" },
-    { "frames", "total Modbus messages" },
-    { "concurrent_sessions", "total concurrent modbus sessions" },
-    { "max_concurrent_sessions", "maximum concurrent modbus sessions" },
+    { CountType::SUM, "sessions", "total sessions processed" },
+    { CountType::SUM, "frames", "total Modbus messages" },
+    { CountType::NOW, "concurrent_sessions", "total concurrent modbus sessions" },
+    { CountType::MAX, "max_concurrent_sessions", "maximum concurrent modbus sessions" },
 
-    { nullptr, nullptr }
+    { CountType::END, nullptr, nullptr }
 };
 
 const PegInfo* ModbusModule::get_pegs() const

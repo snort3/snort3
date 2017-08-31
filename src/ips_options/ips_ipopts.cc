@@ -215,6 +215,10 @@ public:
     ProfileStats* get_profile() const override
     { return &ipOptionPerfStats; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     IpOptionData data;
 };
 

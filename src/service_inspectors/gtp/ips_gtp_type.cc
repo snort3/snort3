@@ -144,6 +144,10 @@ public:
     ProfileStats* get_profile() const override
     { return &gtp_type_prof; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     ByteBitSet types[MAX_GTP_VERSION_CODE + 1];
 };
 

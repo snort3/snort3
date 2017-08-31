@@ -207,6 +207,10 @@ public:
     ProfileStats* get_profile() const override
     { return &replacePerfStats; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     string data;
 };
 

@@ -72,6 +72,9 @@ public:
     const RuleMap* get_rules() const override;
     ProfileStats* get_profile() const override;
 
+    Usage get_usage() const override
+    { return INSPECT; }
+
 private:
     ArpSpoofConfig* config;
     IPMacEntry host;

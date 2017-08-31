@@ -52,9 +52,9 @@ namespace
 {
 const PegInfo pegs[]
 {
-    { "bad_tcp4_checksum", "nonzero tcp over ip checksums" },
-    { "bad_tcp6_checksum", "nonzero tcp over ipv6 checksums" },
-    { nullptr, nullptr }
+    { CountType::SUM, "bad_tcp4_checksum", "nonzero tcp over ip checksums" },
+    { CountType::SUM, "bad_tcp6_checksum", "nonzero tcp over ipv6 checksums" },
+    { CountType::END, nullptr, nullptr }
 };
 
 struct Stats

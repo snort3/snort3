@@ -23,11 +23,19 @@
 
 // basic stats support - note that where these are used, the number of
 // elements in stats must be the same as the number of elements in the peg
-// info.
+// info (and in the same sequence).
 
 #include "main/snort_types.h"
 
 typedef uint64_t PegCount;
+
+enum CountType
+{
+    END,   // sentinel value
+    SUM,   // tracks cumulative total number of items seen (eg #events)
+    NOW,   // gives snapshot of current number of items (eg current #sessions)
+    MAX,   // tracks maximum value seen (eg max #sessions)
+};
 
 struct SimpleStats
 {
@@ -36,15 +44,9 @@ struct SimpleStats
 
 struct PegInfo
 {
+    CountType type;
     const char* name;
     const char* help;
-};
-
-enum CountType
-{
-    SUM,   // Tracks cumulative total number of items seen.
-    NOW,   // Gives snapshot of current number of items.
-    MAX,   // Tracks maximum value seen.
 };
 
 SO_PUBLIC extern const struct PegInfo simple_pegs[];

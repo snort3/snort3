@@ -45,6 +45,9 @@ public:
 
     ProfileStats* get_profile() const override;
 
+    Usage get_usage() const override
+    { return GLOBAL; }
+
 private:
     FileConnectorConfig::FileConnectorConfigSet* config_set;
     FileConnectorConfig* config;

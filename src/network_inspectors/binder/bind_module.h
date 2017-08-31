@@ -58,6 +58,9 @@ public:
 
     std::vector<Binding*>& get_data();
 
+    Usage get_usage() const override
+    { return INSPECT; }
+
 private:
     Binding* work;
     std::vector<Binding*> bindings;

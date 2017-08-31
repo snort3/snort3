@@ -210,6 +210,10 @@ public:
     ProfileStats* get_profile() const override
     { return &appidRuleOptionPerfStats; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     AppIdRuleOptionData opt_data;
 };
 

@@ -47,6 +47,9 @@ public:
     bool set(const char*, Value&, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
 
+    Usage get_usage() const override
+    { return DETECT; }
+
 private:
     friend class HttpIpsOption;
     static THREAD_LOCAL std::array<ProfileStats, PsIdx::PSI_MAX> http_ps;

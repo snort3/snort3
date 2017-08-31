@@ -69,10 +69,10 @@ static const RuleMap ssh_rules[] =
 
 const PegInfo ssh_pegs[] =
 {
-    { "packets", "total packets" },
-    { "concurrent_sessions", "total concurrent ssh sessions" },
-    { "max_concurrent_sessions", "maximum concurrent ssh sessions" },
-    { nullptr, nullptr }
+    { CountType::SUM, "packets", "total packets" },
+    { CountType::NOW, "concurrent_sessions", "total concurrent ssh sessions" },
+    { CountType::MAX, "max_concurrent_sessions", "maximum concurrent ssh sessions" },
+    { CountType::END, nullptr, nullptr }
 };
 
 //-------------------------------------------------------------------------

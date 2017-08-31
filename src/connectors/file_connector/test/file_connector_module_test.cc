@@ -35,9 +35,7 @@ THREAD_LOCAL SimpleStats file_connector_stats;
 THREAD_LOCAL ProfileStats file_connector_perfstats;
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
-
 void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*) { }
-
 void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) { }
 
 #ifdef DEBUG_MSGS

@@ -190,6 +190,9 @@ public:
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
     ProfileStats* get_profile() const override;
+
+    Usage get_usage() const override
+    { return INSPECT; }
 };
 
 const PegInfo* BoModule::get_pegs() const

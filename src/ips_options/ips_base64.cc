@@ -187,6 +187,10 @@ public:
     ProfileStats* get_profile() const override
     { return &base64PerfStats; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     Base64DecodeData data;
 };
 

@@ -39,9 +39,9 @@ namespace
 {
 const PegInfo pegs[]
 {
-    { "bad_udp4_checksum", "nonzero udp over ipv4 checksums" },
-    { "bad_udp6_checksum", "nonzero udp over ipv6 checksums" },
-    { nullptr, nullptr }
+    { CountType::SUM, "bad_udp4_checksum", "nonzero udp over ipv4 checksums" },
+    { CountType::SUM, "bad_udp6_checksum", "nonzero udp over ipv6 checksums" },
+    { CountType::END, nullptr, nullptr }
 };
 
 struct Stats

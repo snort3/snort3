@@ -176,10 +176,10 @@ static const Parameter file_id_params[] =
 
 static const PegInfo file_pegs[] =
 {
-    { "total_files", "number of files processed" },
-    { "total_file_data", "number of file data bytes processed" },
-    { "cache_failures", "number of file cache add failures" },
-    { nullptr, nullptr }
+    { CountType::SUM, "total_files", "number of files processed" },
+    { CountType::SUM, "total_file_data", "number of file data bytes processed" },
+    { CountType::SUM, "cache_failures", "number of file cache add failures" },
+    { CountType::END, nullptr, nullptr }
 };
 
 FileIdModule::FileIdModule() : Module(FILE_ID_NAME, FILE_ID_HELP, file_id_params) { }

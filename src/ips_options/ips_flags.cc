@@ -404,6 +404,10 @@ public:
     ProfileStats* get_profile() const override
     { return &tcpFlagsPerfStats; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     TcpFlagCheckData data;
 };
 

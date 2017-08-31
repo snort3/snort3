@@ -146,6 +146,10 @@ public:
     ProfileStats* get_profile() const override
     { return &rejPerfStats; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     uint32_t flags;
 };
 

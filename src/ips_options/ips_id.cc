@@ -117,6 +117,10 @@ public:
     ProfileStats* get_profile() const override
     { return &ipIdPerfStats; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     RangeCheck data;
 };
 

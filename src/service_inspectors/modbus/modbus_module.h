@@ -49,6 +49,9 @@ public:
 
     ProfileStats* get_profile() const override
     { return &modbus_prof; }
+
+    Usage get_usage() const override
+    { return INSPECT; }
 };
 
 #endif

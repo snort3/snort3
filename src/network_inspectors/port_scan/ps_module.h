@@ -154,6 +154,9 @@ public:
 
     PortscanConfig* get_data();
 
+    Usage get_usage() const override
+    { return CONTEXT; }
+
 private:
     PS_ALERT_CONF* get_alert_conf(const char* fqn);
 

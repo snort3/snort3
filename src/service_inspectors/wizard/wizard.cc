@@ -48,13 +48,13 @@ struct WizStats
 
 const PegInfo wiz_pegs[] =
 {
-    { "tcp_scans", "tcp payload scans" },
-    { "tcp_hits", "tcp identifications" },
-    { "udp_scans", "udp payload scans" },
-    { "udp_hits", "udp identifications" },
-    { "user_scans", "user payload scans" },
-    { "user_hits", "user identifications" },
-    { nullptr, nullptr }
+    { CountType::SUM, "tcp_scans", "tcp payload scans" },
+    { CountType::SUM, "tcp_hits", "tcp identifications" },
+    { CountType::SUM, "udp_scans", "udp payload scans" },
+    { CountType::SUM, "udp_hits", "udp identifications" },
+    { CountType::SUM, "user_scans", "user payload scans" },
+    { CountType::SUM, "user_hits", "user identifications" },
+    { CountType::END, nullptr, nullptr }
 };
 
 THREAD_LOCAL WizStats tstats;

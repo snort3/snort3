@@ -293,6 +293,9 @@ public:
 
     HashMatchData* get_data();
 
+    Usage get_usage() const override
+    { return DETECT; }
+
 private:
     HashMatchData* hmd;
     HashPsIdx idx;

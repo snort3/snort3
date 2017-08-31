@@ -60,11 +60,11 @@ static const RuleMap rpc_rules[] =
 
 static const PegInfo rpc_pegs[] =
 {
-    { "total_packets", "total packets" },
-    { "concurrent_sessions", "total concurrent rpc sessions" },
-    { "max_concurrent_sessions", "maximum concurrent rpc sessions" },
+    { CountType::SUM, "total_packets", "total packets" },
+    { CountType::NOW, "concurrent_sessions", "total concurrent rpc sessions" },
+    { CountType::MAX, "max_concurrent_sessions", "maximum concurrent rpc sessions" },
 
-    { nullptr, nullptr }
+    { CountType::END, nullptr, nullptr }
 };
 
 RpcDecodeModule::RpcDecodeModule() : Module(s_name, s_help, s_params)

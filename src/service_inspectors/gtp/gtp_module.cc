@@ -42,14 +42,14 @@ THREAD_LOCAL ProfileStats gtp_inspect_prof;
 
 const PegInfo peg_names[] =
 {
-    { "sessions", "total sessions processed" },
-    { "concurrent_sessions", "total concurrent gtp sessions" },
-    { "max_concurrent_sessions", "maximum concurrent gtp sessions" },
-    { "events", "requests" },
-    { "unknown_types", "unknown message types" },
-    { "unknown_infos", "unknown information elements" },
+    { CountType::SUM, "sessions", "total sessions processed" },
+    { CountType::NOW, "concurrent_sessions", "total concurrent gtp sessions" },
+    { CountType::MAX, "max_concurrent_sessions", "maximum concurrent gtp sessions" },
+    { CountType::SUM, "events", "requests" },
+    { CountType::SUM, "unknown_types", "unknown message types" },
+    { CountType::SUM, "unknown_infos", "unknown information elements" },
 
-    { nullptr, nullptr }
+    { CountType::END, nullptr, nullptr }
 };
 
 const PegInfo* GtpInspectModule::get_pegs() const

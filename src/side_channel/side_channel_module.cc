@@ -172,6 +172,3 @@ bool SideChannelModule::end(const char* fqn, int idx, SnortConfig*)
     return true;
 }
 
-PegCount* SideChannelModule::get_counts() const
-{ return (PegCount*)&sc_stats; }
-

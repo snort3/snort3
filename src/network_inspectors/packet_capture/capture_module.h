@@ -51,6 +51,9 @@ public:
 
     void get_config(CaptureConfig&);
 
+    Usage get_usage() const override
+    { return CONTEXT; }
+
 private:
     CaptureConfig config;
 };

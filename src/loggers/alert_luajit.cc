@@ -120,6 +120,9 @@ public:
     ProfileStats* get_profile() const override
     { return &luaLogPerfStats; }
 
+    Usage get_usage() const override
+    { return CONTEXT; }
+
 public:
     std::string args;
 };

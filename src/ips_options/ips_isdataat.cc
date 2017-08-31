@@ -257,6 +257,10 @@ public:
     ProfileStats* get_profile() const override
     { return &isDataAtPerfStats; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     IsDataAtData data;
 };
 

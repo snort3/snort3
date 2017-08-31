@@ -112,6 +112,9 @@ public:
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
 
+    Usage get_usage() const override
+    { return DETECT; }
+
 public:
     bool disable_replace;
 };

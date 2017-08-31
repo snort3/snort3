@@ -124,6 +124,10 @@ public:
     ProfileStats* get_profile() const override
     { return &soPerfStats; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     string name;
 };
 

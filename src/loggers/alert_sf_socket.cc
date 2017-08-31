@@ -97,6 +97,9 @@ public:
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
 
+    Usage get_usage() const override
+    { return CONTEXT; }
+
 public:
     string file;
     RuleVector rulez;

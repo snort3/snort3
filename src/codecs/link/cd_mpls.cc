@@ -64,9 +64,9 @@ static const RuleMap mpls_rules[] =
 
 static const PegInfo mpls_pegs[] =
 {
-    { "total_packets", "total mpls labeled packets processed" },
-    { "total_bytes", "total mpls labeled bytes processed" },
-    { nullptr, nullptr }
+    { CountType::SUM, "total_packets", "total mpls labeled packets processed" },
+    { CountType::SUM, "total_bytes", "total mpls labeled bytes processed" },
+    { CountType::END, nullptr, nullptr }
 };
 
 struct MplsStats

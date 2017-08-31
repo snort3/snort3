@@ -62,6 +62,9 @@ public:
     ProfileStats* get_profile() const override
     { return &gtp_inspect_prof; }
 
+    Usage get_usage() const override
+    { return INSPECT; }
+
 public:
     GtpStuff stuff;
     std::vector<GtpStuff> temp;

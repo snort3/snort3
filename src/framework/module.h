@@ -159,13 +159,21 @@ public:
     bool verified_set(const char*, Value&, SnortConfig*);
     bool verified_end(const char*, int, SnortConfig*);
 
+    enum Usage
+    {
+        GLOBAL,
+        CONTEXT,
+        INSPECT,
+        DETECT
+    };
+
+    virtual Usage get_usage() const
+    { return CONTEXT; }
+
 protected:
     Module(const char* name, const char* help);
     Module(const char* name, const char* help, const Parameter*,
         bool is_list = false, Trace* = nullptr);
-
-    void sum_stats_helper(bool accumulate_now_stats,
-        const CountType* const count_types);
 
 private:
     friend class ModuleManager;

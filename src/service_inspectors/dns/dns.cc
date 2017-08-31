@@ -43,16 +43,14 @@ THREAD_LOCAL DnsStats dnsstats;
 
 const PegInfo dns_peg_names[] =
 {
-    { "packets", "total packets processed" },
-    { "requests", "total dns requests" },
-    { "responses", "total dns responses" },
-    { "concurrent_sessions", "total concurrent dns sessions" },
-    { "max_concurrent_sessions", "maximum concurrent dns sessions" },
+    { CountType::SUM, "packets", "total packets processed" },
+    { CountType::SUM, "requests", "total dns requests" },
+    { CountType::SUM, "responses", "total dns responses" },
+    { CountType::NOW, "concurrent_sessions", "total concurrent dns sessions" },
+    { CountType::MAX, "max_concurrent_sessions", "maximum concurrent dns sessions" },
 
-    { nullptr, nullptr }
+    { CountType::END, nullptr, nullptr }
 };
-
-
 
 /*
  * Function prototype(s)

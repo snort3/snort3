@@ -39,7 +39,7 @@
 const PegInfo icmp_pegs[] =
 {
     SESSION_PEGS("icmp"),
-    { nullptr, nullptr }
+    { CountType::END, nullptr, nullptr }
 };
 
 THREAD_LOCAL IcmpStats icmpStats;

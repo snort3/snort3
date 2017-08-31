@@ -98,6 +98,9 @@ public:
 
     ProfileStats* get_profile() const override
     { return &modbus_data_prof; }
+
+    Usage get_usage() const override
+    { return DETECT; }
 };
 
 //-------------------------------------------------------------------------

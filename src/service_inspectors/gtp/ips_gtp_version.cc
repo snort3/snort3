@@ -115,6 +115,10 @@ public:
     ProfileStats* get_profile() const override
     { return &gtp_ver_prof; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     uint8_t version;
 };
 

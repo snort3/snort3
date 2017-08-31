@@ -30,7 +30,6 @@
 
 #include "ha.h"
 
-extern THREAD_LOCAL SimpleStats ha_stats;
 extern THREAD_LOCAL ProfileStats ha_perf_stats;
 
 //-------------------------------------------------------------------------
@@ -150,7 +149,4 @@ bool HighAvailabilityModule::end(const char* fqn, int idx, SnortConfig*)
 
     return true;
 }
-
-PegCount* HighAvailabilityModule::get_counts() const
-{ return (PegCount*)&ha_stats; }
 

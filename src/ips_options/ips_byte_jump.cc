@@ -380,6 +380,10 @@ public:
     ProfileStats* get_profile() const override
     { return &byteJumpPerfStats; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     ByteJumpData data;
     string var;
 };

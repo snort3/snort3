@@ -108,6 +108,10 @@ public:
     ProfileStats* get_profile() const override
     { return &pkt_num_perf_stats; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     RangeCheck data;
 };
 

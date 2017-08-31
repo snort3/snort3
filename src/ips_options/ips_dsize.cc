@@ -123,6 +123,10 @@ public:
     ProfileStats* get_profile() const override
     { return &dsizePerfStats; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     RangeCheck data;
 };
 

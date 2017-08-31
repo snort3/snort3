@@ -46,28 +46,28 @@ unsigned SslFlowData::inspector_id = 0;
 
 const PegInfo ssl_peg_names[] =
 {
-    { "packets", "total packets processed" },
-    { "decoded", "ssl packets decoded" },
-    { "client_hello", "total client hellos" },
-    { "server_hello", "total server hellos" },
-    { "certificate", "total ssl certificates" },
-    { "server_done", "total server done" },
-    { "client_key_exchange", "total client key exchanges" },
-    { "server_key_exchange", "total server key exchanges" },
-    { "change_cipher", "total change cipher records" },
-    { "finished", "total handshakes finished" },
-    { "client_application", "total client application records" },
-    { "server_application", "total server application records" },
-    { "alert", "total ssl alert records" },
-    { "unrecognized_records", "total unrecognized records" },
-    { "handshakes_completed", "total completed ssl handshakes" },
-    { "bad_handshakes", "total bad handshakes" },
-    { "sessions_ignored", "total sessions ignore" },
-    { "detection_disabled", "total detection disabled" },
-    { "concurrent_sessions", "total concurrent ssl sessions" },
-    { "max_concurrent_sessions", "maximum concurrent ssl sessions" },
+    { CountType::SUM, "packets", "total packets processed" },
+    { CountType::SUM, "decoded", "ssl packets decoded" },
+    { CountType::SUM, "client_hello", "total client hellos" },
+    { CountType::SUM, "server_hello", "total server hellos" },
+    { CountType::SUM, "certificate", "total ssl certificates" },
+    { CountType::SUM, "server_done", "total server done" },
+    { CountType::SUM, "client_key_exchange", "total client key exchanges" },
+    { CountType::SUM, "server_key_exchange", "total server key exchanges" },
+    { CountType::SUM, "change_cipher", "total change cipher records" },
+    { CountType::SUM, "finished", "total handshakes finished" },
+    { CountType::SUM, "client_application", "total client application records" },
+    { CountType::SUM, "server_application", "total server application records" },
+    { CountType::SUM, "alert", "total ssl alert records" },
+    { CountType::SUM, "unrecognized_records", "total unrecognized records" },
+    { CountType::SUM, "handshakes_completed", "total completed ssl handshakes" },
+    { CountType::SUM, "bad_handshakes", "total bad handshakes" },
+    { CountType::SUM, "sessions_ignored", "total sessions ignore" },
+    { CountType::SUM, "detection_disabled", "total detection disabled" },
+    { CountType::NOW, "concurrent_sessions", "total concurrent ssl sessions" },
+    { CountType::MAX, "max_concurrent_sessions", "maximum concurrent ssl sessions" },
 
-    { nullptr, nullptr }
+    { CountType::END, nullptr, nullptr }
 };
 
 SslFlowData::SslFlowData() : FlowData(inspector_id)

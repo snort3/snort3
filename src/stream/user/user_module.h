@@ -24,11 +24,6 @@
 
 struct SnortConfig;
 
-#if 0
-extern const PegInfo user_pegs[];
-extern THREAD_LOCAL struct UserStats user_stats;
-#endif
-
 extern THREAD_LOCAL ProfileStats user_perf_stats;
 
 extern Trace TRACE_NAME(stream_user);
@@ -52,10 +47,8 @@ public:
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
 
-#if 0
-    const PegInfo* get_pegs() const override;
-    PegCount* get_counts() const override;
-#endif
+    Usage get_usage() const override
+    { return INSPECT; }
 
     StreamUserConfig* get_data();
 

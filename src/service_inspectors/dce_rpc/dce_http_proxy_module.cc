@@ -26,9 +26,9 @@
 
 static const PegInfo dce_http_proxy_pegs[] =
 {
-    { "http_proxy_sessions", "successful http proxy sessions" },
-    { "http_proxy_session_failures", "failed http proxy sessions" },
-    { nullptr, nullptr }
+    { CountType::SUM, "http_proxy_sessions", "successful http proxy sessions" },
+    { CountType::SUM, "http_proxy_session_failures", "failed http proxy sessions" },
+    { CountType::END, nullptr, nullptr }
 };
 
 DceHttpProxyModule::DceHttpProxyModule() : Module(DCE_HTTP_PROXY_NAME, DCE_HTTP_PROXY_HELP)

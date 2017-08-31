@@ -49,6 +49,9 @@ class MetadataModule : public Module
 public:
     MetadataModule() : Module(s_name, s_help, s_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
+
+    Usage get_usage() const override
+    { return DETECT; }
 };
 
 bool MetadataModule::set(const char*, Value& v, SnortConfig*)

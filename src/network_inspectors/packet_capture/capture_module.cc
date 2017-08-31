@@ -37,9 +37,9 @@ static int disable(lua_State*);
 
 const PegInfo cap_names[] =
 {
-    { "processed", "packets processed against filter" },
-    { "captured", "packets matching dumped after matching filter" },
-    { nullptr, nullptr }
+    { CountType::SUM, "processed", "packets processed against filter" },
+    { CountType::SUM, "captured", "packets matching dumped after matching filter" },
+    { CountType::END, nullptr, nullptr }
 };
 
 static const Parameter s_capture[] =

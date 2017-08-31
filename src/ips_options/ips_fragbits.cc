@@ -367,6 +367,9 @@ public:
 
     FragBitsData get_fragBits_data();
 
+    Usage get_usage() const override
+    { return DETECT; }
+
 private:
     FragBitsData fragBitsData;
 };

@@ -57,6 +57,9 @@ public:
     ProfileStats* get_profile() const override
     { return &sip_ps[idx]; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
 private:
     SipIdx idx;
 };

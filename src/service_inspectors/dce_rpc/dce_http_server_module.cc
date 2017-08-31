@@ -26,9 +26,9 @@
 
 static const PegInfo dce_http_server_pegs[] =
 {
-    { "http_server_sessions", "successful http server sessions" },
-    { "http_server_session_failures", "failed http server sessions" },
-    { nullptr, nullptr }
+    { CountType::SUM, "http_server_sessions", "successful http server sessions" },
+    { CountType::SUM, "http_server_session_failures", "failed http server sessions" },
+    { CountType::END, nullptr, nullptr }
 };
 
 DceHttpServerModule::DceHttpServerModule() : Module(DCE_HTTP_SERVER_NAME, DCE_HTTP_SERVER_HELP)

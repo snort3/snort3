@@ -97,44 +97,6 @@ struct TcpStats
     PegCount fins;
 };
 
-struct TcpStatTypes
-{
-    SESSION_STAT_TYPES;
-    CountType resyns = CountType::SUM;
-    CountType discards = CountType::SUM;
-    CountType events = CountType::SUM;
-    CountType ignored = CountType::SUM;
-    CountType no_pickups = CountType::SUM;
-    CountType sessions_on_syn = CountType::SUM;
-    CountType sessions_on_syn_ack = CountType::SUM;
-    CountType sessions_on_3way = CountType::SUM;
-    CountType sessions_on_data = CountType::SUM;
-    CountType segs_queued = CountType::SUM;
-    CountType segs_released = CountType::SUM;
-    CountType segs_split = CountType::SUM;
-    CountType segs_used = CountType::SUM;
-    CountType rebuilt_packets = CountType::SUM;
-    CountType rebuilt_buffers = CountType::SUM;
-    CountType rebuilt_bytes = CountType::SUM;
-    CountType overlaps = CountType::SUM;
-    CountType gaps = CountType::SUM;
-    CountType exceeded_max_segs = CountType::SUM;
-    CountType exceeded_max_bytes = CountType::SUM;
-    CountType internalEvents = CountType::SUM;
-    CountType s5tcp1 = CountType::SUM;
-    CountType s5tcp2 = CountType::SUM;
-    CountType mem_in_use = CountType::NOW;
-    CountType sessions_initializing = CountType::NOW;
-    CountType sessions_established = CountType::NOW;
-    CountType sessions_closing = CountType::NOW;
-    CountType syns = CountType::SUM;
-    CountType syn_acks = CountType::SUM;
-    CountType resets = CountType::SUM;
-    CountType fins = CountType::SUM;
-
-    TcpStatTypes() {}
-};
-
 extern THREAD_LOCAL struct TcpStats tcpStats;
 
 inline void inc_tcp_discards()
@@ -164,15 +126,15 @@ public:
     const RuleMap* get_rules() const override;
 
     unsigned get_gid() const override
-    {
-        return GID_STREAM_TCP;
-    }
+    { return GID_STREAM_TCP; }
 
     TcpStreamConfig* get_data();
     ProfileStats* get_profile(unsigned, const char*&, const char*&) const override;
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
-    void sum_stats(bool) override;
+
+    Usage get_usage() const override
+    { return INSPECT; }
 
 private:
     TcpStreamConfig* config;

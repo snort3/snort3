@@ -169,6 +169,10 @@ public:
     bool set(const char*, Value&, SnortConfig*) override;
     ProfileStats* get_profile() const override;
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     uint8_t group;
     uint8_t var;
 };

@@ -54,6 +54,10 @@ public:
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     std::string scheme;
     std::string id;
     SnortConfig* snort_config;

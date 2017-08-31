@@ -51,15 +51,14 @@ static const RuleMap dnp3_rules[] =
 
 static const PegInfo dnp3_pegs[] =
 {
-    { "total_packets", "total packets" },
-    { "udp_packets", "total udp packets" },
-    { "tcp_pdus", "total tcp pdus" },
-    { "dnp3_link_layer_frames", "total dnp3 link layer frames" },
-    { "dnp3_application_pdus", "total dnp3 application pdus" },
-    { "concurrent_sessions", "total concurrent dnp3 sessions" },
-    { "max_concurrent_sessions", "maximum concurrent dnp3 sessions" },
-
-    { nullptr, nullptr }
+    { CountType::SUM, "total_packets", "total packets" },
+    { CountType::SUM, "udp_packets", "total udp packets" },
+    { CountType::SUM, "tcp_pdus", "total tcp pdus" },
+    { CountType::SUM, "dnp3_link_layer_frames", "total dnp3 link layer frames" },
+    { CountType::SUM, "dnp3_application_pdus", "total dnp3 application pdus" },
+    { CountType::NOW, "concurrent_sessions", "total concurrent dnp3 sessions" },
+    { CountType::MAX, "max_concurrent_sessions", "maximum concurrent dnp3 sessions" },
+    { CountType::END, nullptr, nullptr }
 };
 
 Dnp3Module::Dnp3Module() : Module(DNP3_NAME, DNP3_HELP, s_params)

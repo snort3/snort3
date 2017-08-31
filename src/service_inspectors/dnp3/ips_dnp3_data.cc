@@ -107,6 +107,9 @@ class Dnp3DataModule : public Module
 public:
     Dnp3DataModule() : Module(s_name, s_help) { }
     ProfileStats* get_profile() const override;
+
+    Usage get_usage() const override
+    { return DETECT; }
 };
 
 ProfileStats* Dnp3DataModule::get_profile() const

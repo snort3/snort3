@@ -38,8 +38,8 @@
 const PegInfo udp_pegs[] =
 {
     SESSION_PEGS("udp"),
-    { "ignored", "udp packets ignored" },
-    { nullptr, nullptr }
+    { CountType::SUM, "ignored", "udp packets ignored" },
+    { CountType::END, nullptr, nullptr }
 };
 
 THREAD_LOCAL UdpStats udpStats;

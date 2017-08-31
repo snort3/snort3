@@ -45,6 +45,9 @@ public:
 
     ProfileStats* get_profile() const override;
 
+    Usage get_usage() const override
+    { return GLOBAL; }
+
 private:
     TcpConnectorConfig::TcpConnectorConfigSet* config_set;
     TcpConnectorConfig* config;

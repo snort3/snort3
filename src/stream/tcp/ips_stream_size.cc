@@ -186,6 +186,10 @@ public:
     ProfileStats* get_profile() const override
     { return &streamSizePerfStats; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     RangeCheck ssod;
     int direction;
 };

@@ -1140,6 +1140,9 @@ public:
     ProfileStats* get_profile() const override
     { return &flowBitsPerfStats; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
 public:
     string args;
 };

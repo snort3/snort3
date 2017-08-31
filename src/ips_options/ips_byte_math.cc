@@ -342,6 +342,10 @@ public:
     ProfileStats* get_profile() const override
     { return &byteMathPerfStats; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     ByteMathData data;
     string rvalue_var;
     string off_var;

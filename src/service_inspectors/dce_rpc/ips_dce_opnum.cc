@@ -467,6 +467,10 @@ public:
     ProfileStats* get_profile() const override;
     ~Dce2OpnumModule();
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     DCE2_Opnum opnum;
 };
 

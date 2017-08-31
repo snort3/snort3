@@ -900,6 +900,19 @@ static const char* mod_type(const BaseApi* api)
     return PluginManager::get_type_name(api->type);
 }
 
+static const char* mod_use(Module::Usage use)
+{
+    switch ( use )
+    {
+    case Module::GLOBAL : return "global";
+    case Module::CONTEXT: return "context";
+    case Module::INSPECT: return "inspect";
+    case Module::DETECT : return "detect";
+    }
+    assert(false);
+    return "error";
+}
+
 void ModuleManager::show_module(const char* name)
 {
     if ( !name || !*name )
@@ -924,6 +937,7 @@ void ModuleManager::show_module(const char* name)
             cout << endl << "What: " << Markup::escape(h) << endl;
 
         cout << endl << "Type: "  << mod_type(p->api) << endl;
+        cout << endl << "Usage: "  << mod_use(m->get_usage()) << endl;
 
         const Parameter* params = m->get_parameters();
         const Parameter* def_params = m->get_default_parameters();
@@ -1095,6 +1109,19 @@ void ModuleManager::show_gids(const char* pfx, bool exact)
         cout << "no match" << endl;
 }
 
+static const char* peg_op(CountType ct)
+{
+    switch ( ct )
+    {
+    case CountType::SUM: return " (sum)";
+    case CountType::NOW: return " (now)";
+    case CountType::MAX: return " (max)";
+    default: break;
+    }
+    assert(false);
+    return "error";
+}
+
 void ModuleManager::show_pegs(const char* pfx, bool exact)
 {
     s_modules.sort(comp_gids);
@@ -1121,6 +1148,7 @@ void ModuleManager::show_pegs(const char* pfx, bool exact)
             cout << "." << Markup::escape(pegs->name);
             cout << Markup::emphasis_off();
             cout << ": " << Markup::escape(pegs->help);
+            cout << Markup::escape(peg_op(pegs->type));
             cout << endl;
             ++pegs;
         }

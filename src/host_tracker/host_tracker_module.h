@@ -39,14 +39,10 @@ class HostTrackerModule : public Module
 {
 public:
     HostTrackerModule() : Module("host_tracker", host_tracker_help, host_tracker_params, true)
-    {
-        host = nullptr;
-    }
+    { host = nullptr; }
 
     ~HostTrackerModule()
-    {
-        assert(!host);
-    }
+    { assert(!host); }
 
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
@@ -54,6 +50,9 @@ public:
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
+
+    Usage get_usage() const override
+    { return GLOBAL; }
 
 private:
     static const Parameter host_tracker_params[];

@@ -49,6 +49,9 @@ public:
 
     void load_config(FileConfig*& dst);
 
+    Usage get_usage() const override
+    { return GLOBAL; }
+
 private:
     FileMagicRule rule;
     FileMagicData magic;

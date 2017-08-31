@@ -29,6 +29,9 @@ public:
     MemoryModule();
 
     bool set(const char*, Value&, SnortConfig*) override;
+
+    Usage get_usage() const override
+    { return GLOBAL; }
 };
 
 #endif

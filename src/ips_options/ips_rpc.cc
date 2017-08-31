@@ -251,6 +251,11 @@ public:
     { return &rpcCheckPerfStats; }
 
     bool set(Value&, uint32_t& field, int flag);
+
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     RpcCheckData data;
 };
 

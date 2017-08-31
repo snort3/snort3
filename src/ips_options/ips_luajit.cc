@@ -80,6 +80,9 @@ public:
     ProfileStats* get_profile() const override
     { return &luaIpsPerfStats; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
 public:
     std::string args;
 };

@@ -250,6 +250,9 @@ public:
 
     bool set(const char*, Value&, SnortConfig*) override
     { return false; }
+
+    Usage get_usage() const override
+    { return INSPECT; }
 };
 
 const PegInfo* FtpDataModule::get_pegs() const

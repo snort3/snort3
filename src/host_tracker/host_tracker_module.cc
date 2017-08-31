@@ -32,10 +32,10 @@
 
 const PegInfo host_tracker_pegs[] =
 {
-    { "service_adds", "host service adds" },
-    { "service_finds", "host service finds" },
-    { "service_removes", "host service removes" },
-    { nullptr, nullptr },
+    { CountType::SUM, "service_adds", "host service adds" },
+    { CountType::SUM, "service_finds", "host service finds" },
+    { CountType::SUM, "service_removes", "host service removes" },
+    { CountType::END, nullptr, nullptr },
 };
 
 const Parameter HostTrackerModule::service_params[] =

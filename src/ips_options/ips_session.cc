@@ -324,6 +324,10 @@ public:
     ProfileStats* get_profile() const override
     { return &sessionPerfStats; }
 
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     SessionData data;
 };
 

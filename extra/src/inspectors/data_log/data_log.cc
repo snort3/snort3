@@ -167,6 +167,9 @@ public:
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value& v, SnortConfig*) override;
 
+    Usage get_usage() const override
+    { return INSPECT; }
+
 public:
     std::string key;
     unsigned long limit;

@@ -72,9 +72,7 @@ ConnectorCommon* connector_common;
 Connector* connector;
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
-
 void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*) { }
-
 void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) { }
 
 unsigned get_instance_id()
@@ -184,13 +182,10 @@ TcpConnectorModule::~TcpConnectorModule() { }
 ProfileStats* TcpConnectorModule::get_profile() const { return nullptr; }
 
 bool TcpConnectorModule::set(const char*, Value&, SnortConfig*) { return true; }
-
 bool TcpConnectorModule::begin(const char*, int, SnortConfig*) { return true; }
-
 bool TcpConnectorModule::end(const char*, int, SnortConfig*) { return true; }
 
 const PegInfo* TcpConnectorModule::get_pegs() const { return nullptr; }
-
 PegCount* TcpConnectorModule::get_counts() const { return nullptr; }
 
 TEST_GROUP(tcp_connector)

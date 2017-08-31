@@ -48,6 +48,11 @@ class ClassTypeModule : public Module
 public:
     ClassTypeModule() : Module(s_name, s_help, s_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
+
+    Usage get_usage() const override
+    { return DETECT; }
+
+public:
     ClassType* type;
 };
 

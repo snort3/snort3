@@ -44,8 +44,8 @@ namespace
 {
 const PegInfo pegs[]
 {
-    { "bad_checksum", "nonzero ip checksums" },
-    { nullptr, nullptr }
+    { CountType::SUM, "bad_checksum", "nonzero ip checksums" },
+    { CountType::END, nullptr, nullptr }
 };
 
 struct Stats
