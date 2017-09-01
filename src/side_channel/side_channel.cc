@@ -212,17 +212,21 @@ bool SideChannel::process(int max_messages)
     {
         // get message if one is available.
         ConnectorMsgHandle* handle = connector_receive->receive_message(false);
+
         // if none, we are complete
-        if ( handle == nullptr )
+        if ( !handle )
             break;
-        else
+
+        else if ( receive_handler )
         {
             SCMessage* msg = new SCMessage;
+
             // get the ConnectorMsg from the (at this point) abstract class
             ConnectorMsg* connector_msg = connector_receive->get_connector_msg(handle);
 
             msg->content = connector_msg->data;
             msg->content_length = connector_msg->length;
+
             // if the message is longer than the header, assume we have a header
             if ( connector_msg->length >= sizeof(SCMsgHdr) )
             {
@@ -234,15 +238,13 @@ bool SideChannel::process(int max_messages)
             }
 
             msg->handle = handle;   // link back to the underlying SCC message
-
             received_message = true;
 
-            if ( receive_handler != nullptr )
-                (receive_handler)(msg);
-
-            if ( (max_messages > 0) && (--max_messages == 0) )
-                break;
+            receive_handler(msg);
         }
+
+        if ( (max_messages > 0) && (--max_messages == 0) )
+            break;
     }
     return received_message;
 }

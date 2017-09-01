@@ -177,7 +177,12 @@ AppInfoTableEntry* AppInfoManager::add_dynamic_app_entry(const char* app_name)
     {
         entry = new AppInfoTableEntry(next_custom_appid++, snort_strdup(app_name));
         custom_app_info_table[entry->appId] = entry;
-        add_entry_to_app_info_name_table(entry->app_name_key, entry);
+
+        if ( !add_entry_to_app_info_name_table(entry->app_name_key, entry) )
+        {
+            delete entry;
+            return nullptr;
+        }
     }
 
     return entry;
@@ -574,7 +579,8 @@ void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config)
         if ((app_id = get_static_app_info_entry(entry->payloadId)))
             app_info_payload_table[app_id] = entry;
 
-        add_entry_to_app_info_name_table(entry->app_name_key, entry);
+        if ( !add_entry_to_app_info_name_table(entry->app_name_key, entry) )
+            delete entry;
     }
     fclose(tableFile);
 

@@ -33,7 +33,9 @@
 //-------------------------------------------------------------------------
 // icmp foo
 //-------------------------------------------------------------------------
-static const ip::snort_in6_addr fixed_addr = {0xFF,0,0,0};
+
+static const ip::snort_in6_addr fixed_addr = { { { 0xFF, 0, 0, 0 } } };
+
 inline void FlowKey::update_icmp4(const SfIp*& srcIP, uint16_t& srcPort,
     const SfIp*& dstIP, uint16_t& dstPort)
 {
