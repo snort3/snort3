@@ -17,7 +17,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// client_app_bit.cc author Sourcefire Inc.
+// client_discovery.cc author Sourcefire Inc.
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -128,35 +128,33 @@ static int pattern_match(void* id, void* /*unused_tree*/, int match_end_pos, voi
 {
     ClientAppMatch** matches = (ClientAppMatch**)data;
     AppIdPatternMatchNode* pd = (AppIdPatternMatchNode*)id;
-    ClientAppMatch* cam;
 
-    // Ignore matches that don't start at the expected position.
-    if ( pd->pattern_start_pos >= 0 && pd->pattern_start_pos != (match_end_pos - (int)pd->size))
-        return 0;
-
-    for (cam = *matches; cam; cam = cam->next)
+    if ( pd->valid_match(match_end_pos) )
     {
-        if (cam->detector == pd->service)
-            break;
-    }
+        ClientAppMatch* cam;
 
-    if (cam)
-        cam->count++;
-    else
-    {
-        if (match_free_list)
-        {
-            cam = match_free_list;
-            match_free_list = cam->next;
-            memset(cam, 0, sizeof(*cam));
-        }
+        for (cam = *matches; cam; cam = cam->next)
+            if (cam->detector == pd->service)
+                break;
+
+        if (cam)
+            cam->count++;
         else
-            cam = (ClientAppMatch*)snort_calloc(sizeof(ClientAppMatch));
+        {
+            if (match_free_list)
+            {
+                cam = match_free_list;
+                match_free_list = cam->next;
+                memset(cam, 0, sizeof(*cam));
+            }
+            else
+                cam = (ClientAppMatch*)snort_calloc(sizeof(ClientAppMatch));
 
-        cam->count = 1;
-        cam->detector =  static_cast<const ClientDetector*>(pd->service);
-        cam->next = *matches;
-        *matches = cam;
+            cam->count = 1;
+            cam->detector =  static_cast<const ClientDetector*>(pd->service);
+            cam->next = *matches;
+            *matches = cam;
+        }
     }
 
     return 0;
@@ -231,10 +229,9 @@ ClientAppMatch* ClientDiscovery::find_detector_candidates(const Packet* pkt, IpP
     else
         patterns = ClientDiscovery::get_instance().udp_patterns;
 
-    if (!patterns)
-        return nullptr;
+    if ( patterns )
+        patterns->find_all((char*)pkt->data, pkt->dsize, &pattern_match, false, (void*)&match_list);
 
-    patterns->find_all((char*)pkt->data, pkt->dsize, &pattern_match, false, (void*)&match_list);
     return match_list;
 }
 

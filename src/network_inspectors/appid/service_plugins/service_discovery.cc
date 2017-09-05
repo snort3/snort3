@@ -210,27 +210,28 @@ static int pattern_match(void* id, void*, int match_end_pos, void* data, void*)
 {
     ServiceMatch** matches = (ServiceMatch**)data;
     AppIdPatternMatchNode* pd = (AppIdPatternMatchNode*)id;
-    ServiceMatch* sm;
 
-    // Ignore matches that don't start at the expected position.
-    if ( pd->pattern_start_pos >= 0 && pd->pattern_start_pos != (match_end_pos - (int)pd->size) )
-        return 0;
-
-    for (sm = *matches; sm; sm = sm->next)
-        if (sm->service == (ServiceDetector*)pd->service)
-            break;
-
-    if (sm)
-        sm->count++;
-    else
+    if ( pd->valid_match(match_end_pos) )
     {
-        sm = (ServiceMatch*)snort_calloc(sizeof(ServiceMatch));
-        sm->count++;
-        sm->service = static_cast<ServiceDetector*>(pd->service);
-        sm->size = pd->size;
-        sm->next = *matches;
-        *matches = sm;
+        ServiceMatch* sm;
+
+        for (sm = *matches; sm; sm = sm->next)
+            if (sm->service == (ServiceDetector*)pd->service)
+                break;
+
+        if (sm)
+            sm->count++;
+        else
+        {
+            sm = (ServiceMatch*)snort_calloc(sizeof(ServiceMatch));
+            sm->count++;
+            sm->service = static_cast<ServiceDetector*>(pd->service);
+            sm->size = pd->size;
+            sm->next = *matches;
+            *matches = sm;
+        }
     }
+
     return 0;
 }
 

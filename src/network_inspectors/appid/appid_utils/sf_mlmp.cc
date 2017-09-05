@@ -211,7 +211,7 @@ static int createTreesRecusively(tMlmpTree* rootNode)
     tPatternNode* ddPatternNode;
 
     /* set up the MPSE for url patterns */
-    patternMatcher = rootNode->patternTree = new SearchTool;
+    patternMatcher = rootNode->patternTree = new SearchTool("ac_full", true);
 
     for (primaryPatternNode = rootNode->patternList;
         primaryPatternNode;

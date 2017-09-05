@@ -22,8 +22,9 @@
 #ifndef APPID_DISCOVERY_H
 #define APPID_DISCOVERY_H
 
-#include <string>
 #include <map>
+#include <string>
+#include <vector>
 
 #include "protocols/protocol_ids.h"
 #include "search_engines/search_tool.h"
@@ -44,12 +45,25 @@ struct Packet;
 #define SCAN_HTTP_XWORKINGWITH_FLAG (1<<7)
 #define SCAN_HTTP_CONTENT_TYPE_FLAG (1<<8)
 
-struct AppIdPatternMatchNode
+class AppIdPatternMatchNode
 {
-    AppIdPatternMatchNode* next = nullptr;
-    int pattern_start_pos = 0;
-    unsigned size = 0;
-    AppIdDetector* service = nullptr;
+public:
+    AppIdPatternMatchNode(AppIdDetector* detector, int start, unsigned len)
+        : service(detector), pattern_start_pos(start), size(len)
+    {}
+    ~AppIdPatternMatchNode() {}
+
+    bool valid_match(int end_position)
+    {
+        if ( pattern_start_pos >= 0 && pattern_start_pos != (end_position - (int)size) )
+            return false;
+        else
+            return true;
+    }
+
+    AppIdDetector* service;
+    int pattern_start_pos;
+    unsigned size;
 };
 
 struct ServiceMatch
@@ -101,7 +115,7 @@ protected:
     int tcp_pattern_count = 0;
     SearchTool* udp_patterns = nullptr;
     int udp_pattern_count = 0;
-    AppIdPatternMatchNode* pattern_data_list = nullptr;
+    std::vector<AppIdPatternMatchNode*> pattern_data;
 };
 #endif
 

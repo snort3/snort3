@@ -25,7 +25,7 @@
 class SO_PUBLIC SearchTool
 {
 public:
-    SearchTool(const char* method = nullptr);
+    SearchTool(const char* method = nullptr, bool dfa = false);
     ~SearchTool();
 
     void add(const char* pattern, unsigned len, int s_id, bool no_case = true);

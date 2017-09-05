@@ -666,7 +666,7 @@ int HttpPatternMatchers::process_host_patterns(DetectorHTTPPatterns patterns)
 int HttpPatternMatchers::process_chp_list(CHPListElement* chplist)
 {
     for (size_t i = 0; i <= MAX_PATTERN_TYPE; i++)
-        chp_matchers[i] = new SearchTool;
+        chp_matchers[i] = new SearchTool("ac_full", true);
 
     for (CHPListElement* chpe = chplist; chpe; chpe = chpe->next)
         chp_matchers[chpe->chp_action.ptype]->add(chpe->chp_action.pattern,
@@ -707,7 +707,7 @@ static FieldPattern http_field_patterns[] =
 
 static SearchTool* process_http_field_patterns(FieldPattern* patternList, size_t patternListCount)
 {
-    SearchTool* patternMatcher = new SearchTool;
+    SearchTool* patternMatcher = new SearchTool("ac_full", true);
 
     for (size_t i=0; i < patternListCount; i++)
         patternMatcher->add( (char*)patternList[i].data, patternList[i].length,

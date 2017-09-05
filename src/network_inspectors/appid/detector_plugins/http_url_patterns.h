@@ -292,7 +292,10 @@ struct HostUrlDetectorPattern
 class HttpPatternMatchers
 {
 public:
-    HttpPatternMatchers() { }
+    HttpPatternMatchers()
+        : url_matcher("ac_full", true), client_agent_matcher("ac_full", true), via_matcher("ac_full", true),
+          content_type_matcher("ac_full", true)
+    { }
     ~HttpPatternMatchers();
 
     static HttpPatternMatchers* get_instance();

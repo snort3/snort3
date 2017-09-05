@@ -49,19 +49,16 @@
 
 AppIdDiscovery::AppIdDiscovery()
 {
-    tcp_patterns = new SearchTool;
-    udp_patterns = new SearchTool;
+    tcp_patterns = new SearchTool("ac_full", true);
+    udp_patterns = new SearchTool("ac_full", true);
 }
 
 AppIdDiscovery::~AppIdDiscovery()
 {
-    AppIdPatternMatchNode* pd = pattern_data_list;
-    while (pd)
-    {
-        pattern_data_list = pd->next;
-        snort_free(pd);
-        pd = pattern_data_list;
-    }
+    for (auto pd : pattern_data )
+        delete pd;
+
+    pattern_data.clear();
 
     delete tcp_patterns;
     delete udp_patterns;
@@ -105,13 +102,8 @@ void AppIdDiscovery::register_detector(std::string name, AppIdDetector* cd,  IpP
 void AppIdDiscovery::add_pattern_data(AppIdDetector* detector, SearchTool* st, int position, const
     uint8_t* const pattern, unsigned size, unsigned nocase)
 {
-    AppIdPatternMatchNode* pd =
-        (AppIdPatternMatchNode*)snort_calloc(sizeof(AppIdPatternMatchNode));
-    pd->service = detector;
-    pd->pattern_start_pos = position;
-    pd->size = size;
-    pd->next = pattern_data_list;
-    pattern_data_list = pd;
+    AppIdPatternMatchNode* pd = new AppIdPatternMatchNode(detector, position, size);
+    pattern_data.push_back(pd);
     st->add((const char*)pattern, size, pd, nocase);
 }
 

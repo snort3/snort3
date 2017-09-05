@@ -27,11 +27,13 @@
 
 #include "managers/mpse_manager.h"
 
-SearchTool::SearchTool(const char* method)
+SearchTool::SearchTool(const char* method, bool dfa)
 {
     mpse = MpseManager::get_search_engine(method);
     assert(mpse);
     max_len = 0;
+    if( dfa )
+        mpse->set_opt(1);
 }
 
 SearchTool::~SearchTool()

@@ -104,7 +104,7 @@ MdnsServiceDetector::MdnsServiceDetector(ServiceDiscovery* sd)
         { 5353, IpProtocol::UDP, false },
     };
 
-    matcher = new SearchTool;
+    matcher = new SearchTool("ac_full", true);
     for (unsigned i = 0; i < sizeof(patterns) / sizeof(*patterns); i++)
         matcher->add((char*)patterns[i].pattern, patterns[i].length, &patterns[i]);
     matcher->prep();

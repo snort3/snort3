@@ -548,14 +548,15 @@ void SipEventHandler::client_handler(SipEvent& sip_event, AppIdSession* asd)
         return;
 
 success:
-    //client detection successful
-    client->add_app(asd, APP_ID_SIP, ClientAppId, clientVersion);
-    appid_stats.sip_clients++;
+    if( !asd->is_client_detected() )
+    {
+        //client detection successful
+        client->add_app(asd, APP_ID_SIP, ClientAppId, clientVersion);
+        appid_stats.sip_clients++;
+    }
 
     if ( fd->user_name.size() )
         client->add_user(asd, fd->user_name.c_str(), APP_ID_SIP, true);
-
-    asd->set_client_detected();
 }
 
 void SipEventHandler::service_handler(SipEvent& sip_event, AppIdSession* asd)
