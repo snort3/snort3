@@ -258,6 +258,8 @@ private:
 
 #define BIT(i) (0x1 << (i-1))
 
+inline void SetExtraData(Packet* p, const uint32_t xid) { p->xtradata_mask |= BIT(xid); }
+
 inline uint16_t extract_16bits(const uint8_t* const p)
 { return ntohs(*(uint16_t*)(p)); }
 

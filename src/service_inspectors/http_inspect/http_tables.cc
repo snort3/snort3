@@ -624,6 +624,33 @@ const bool HttpEnums::is_sp_tab_quote_dquote[256] =
     false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
 };
 
+const bool HttpEnums::is_sp_comma[256] =
+{
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+     true, false, false, false, false, false, false, false, false, false, false, false,  true, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
+};
+
 const bool HttpEnums::is_print_char[256] =
 {
     false, false, false, false, false, false, false, false, false,  true,  true, false, false,  true, false, false,

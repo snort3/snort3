@@ -241,10 +241,11 @@ void HttpMsgBody::do_file_processing(Field& file_data)
             {
                 if (request != nullptr)
                 {
-                    const Field& tranaction_uri = request->get_uri_norm_classic();
-                    if (tranaction_uri.length() > 0)
+                    const Field& transaction_uri = request->get_uri_norm_classic();
+                    if (transaction_uri.length() > 0)
                     {
-                        file_flows->set_file_name(tranaction_uri.start(), tranaction_uri.length());
+                        file_flows->set_file_name(transaction_uri.start(),
+                            transaction_uri.length());
                     }
                 }
             }

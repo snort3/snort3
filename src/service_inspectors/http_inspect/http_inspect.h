@@ -24,13 +24,12 @@
 // HttpInspect class
 //-------------------------------------------------------------------------
 
-#include "log/messages.h"
-
 #include "http_enum.h"
 #include "http_field.h"
 #include "http_module.h"
 #include "http_msg_section.h"
 #include "http_stream_splitter.h"
+#include "log/messages.h"
 
 class HttpApi;
 
@@ -57,6 +56,12 @@ public:
     }
     static HttpEnums::InspectSection get_latest_is(const Packet* p);
 
+    // Callbacks that provide "extra data"
+    static int get_xtra_trueip(Flow*, uint8_t**, uint32_t*, uint32_t*);
+    static int get_xtra_uri(Flow*, uint8_t**, uint32_t*, uint32_t*);
+    static int get_xtra_host(Flow*, uint8_t** buf, uint32_t* len, uint32_t* type);
+    static int get_xtra_jsnorm(Flow*, uint8_t**, uint32_t*, uint32_t*);
+
 private:
     friend HttpApi;
     friend HttpStreamSplitter;
@@ -66,6 +71,12 @@ private:
     static HttpEnums::SourceId get_latest_src(const Packet* p);
 
     const HttpParaList* const params;
+
+    // Registrations for "extra data"
+    static uint32_t xtra_trueip_id;
+    static uint32_t xtra_uri_id;
+    static uint32_t xtra_host_id;
+    static uint32_t xtra_jsnorm_id;
 };
 
 #endif

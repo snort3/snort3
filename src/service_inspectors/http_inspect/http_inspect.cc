@@ -34,9 +34,16 @@
 #include "http_msg_status.h"
 #include "http_msg_trailer.h"
 #include "http_test_manager.h"
+#include "log/unified2.h"
 #include "protocols/packet.h"
+#include "stream/stream.h"
 
 using namespace HttpEnums;
+
+uint32_t HttpInspect::xtra_trueip_id;
+uint32_t HttpInspect::xtra_uri_id;
+uint32_t HttpInspect::xtra_host_id;
+uint32_t HttpInspect::xtra_jsnorm_id;
 
 HttpInspect::HttpInspect(const HttpParaList* params_) : params(params_)
 {
@@ -60,6 +67,12 @@ bool HttpInspect::configure(SnortConfig* )
 {
     if (params->js_norm_param.normalize_javascript)
         params->js_norm_param.js_norm->configure();
+
+    xtra_trueip_id = Stream::reg_xtra_data_cb(get_xtra_trueip);
+    xtra_uri_id = Stream::reg_xtra_data_cb(get_xtra_uri);
+    xtra_host_id = Stream::reg_xtra_data_cb(get_xtra_host);
+    xtra_jsnorm_id = Stream::reg_xtra_data_cb(get_xtra_jsnorm);
+
     return true;
 }
 
@@ -150,6 +163,103 @@ bool HttpInspect::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBu
     return get_buf(ibt, p, b);
 }
 
+int HttpInspect::get_xtra_trueip(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
+{
+    const HttpFlowData* const session_data =
+        (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
+
+    if ((session_data == nullptr) || (session_data->latest_section == nullptr))
+        return 0;
+
+    const HttpTransaction* const transaction = session_data->latest_section->get_transaction();
+    HttpMsgHeader* const req_header = transaction->get_header(SRC_CLIENT);
+    if (req_header == nullptr)
+        return 0;
+    const Field& true_ip = req_header->get_true_ip();
+    if (true_ip.length() <= 0)
+        return 0;
+
+    *buf = const_cast<uint8_t*>(true_ip.start());
+    *len = true_ip.length();
+    *type = (*len == 4) ? EVENT_INFO_XFF_IPV4 : EVENT_INFO_XFF_IPV6;
+    return 1;
+}
+
+int HttpInspect::get_xtra_uri(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
+{
+    const HttpFlowData* const session_data =
+        (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
+
+    if ((session_data == nullptr) || (session_data->latest_section == nullptr))
+        return 0;
+
+    const HttpTransaction* const transaction = session_data->latest_section->get_transaction();
+    HttpMsgRequest* const request = transaction->get_request();
+    if (request == nullptr)
+        return 0;
+    const Field& uri = request->get_uri();
+    if (uri.length() <= 0)
+        return 0;
+
+    *buf = const_cast<uint8_t*>(uri.start());
+    *len = uri.length();
+    *type = EVENT_INFO_HTTP_URI;
+
+    return 1;
+}
+
+int HttpInspect::get_xtra_host(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
+{
+    const HttpFlowData* const session_data =
+        (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
+
+    if ((session_data == nullptr) || (session_data->latest_section == nullptr))
+        return 0;
+
+    const HttpTransaction* const transaction = session_data->latest_section->get_transaction();
+    HttpMsgHeader* const req_header = transaction->get_header(SRC_CLIENT);
+    if (req_header == nullptr)
+        return 0;
+    const Field& host = req_header->get_header_value_norm(HEAD_HOST);
+    if (host.length() <= 0)
+        return 0;
+
+    *buf = const_cast<uint8_t*>(host.start());
+    *len = host.length();
+    *type = EVENT_INFO_HTTP_HOSTNAME;
+
+    return 1;
+}
+
+// The name of this method reflects its legacy purpose. We actually return the normalized data
+// from a response message body which may include other forms of normalization in addition to
+// JavaScript normalization. But if you don't turn JavaScript normalization on you get nothing.
+int HttpInspect::get_xtra_jsnorm(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
+{
+    const HttpFlowData* const session_data =
+        (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
+
+    if ((session_data == nullptr) || (session_data->latest_section == nullptr) ||
+        (session_data->latest_section->get_source_id() != SRC_SERVER) ||
+        !session_data->latest_section->get_params()->js_norm_param.normalize_javascript)
+        return 0;
+
+    const HttpTransaction* const transaction = session_data->latest_section->get_transaction();
+    HttpMsgBody* const body = transaction->get_body();
+    if (body == nullptr)
+        return 0;
+    assert((void*)body == (void*)session_data->latest_section);
+    const Field& detect_data = body->get_detect_data();
+    if (detect_data.length() <= 0)
+        return 0;
+
+    *buf = const_cast<uint8_t*>(detect_data.start());
+    *len = detect_data.length();
+    *type = EVENT_INFO_JSNORM_DATA;
+
+    return 1;
+}
+
 void HttpInspect::eval(Packet* p)
 {
     const SourceId source_id = p->is_from_client() ? SRC_CLIENT : SRC_SERVER;
@@ -177,6 +287,13 @@ void HttpInspect::eval(Packet* p)
         }
     }
 #endif
+
+    // Whenever we process a packet we set these flags. If someone asks for an extra data
+    // buffer the JIT code will figure out if we actually have it.
+    SetExtraData(p, xtra_trueip_id);
+    SetExtraData(p, xtra_uri_id);
+    SetExtraData(p, xtra_host_id);
+    SetExtraData(p, xtra_jsnorm_id);
 }
 
 bool HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow,

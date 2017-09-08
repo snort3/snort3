@@ -39,6 +39,8 @@ public:
         { return HttpEnums::IS_NONE; }
     virtual bool detection_required() const;
     HttpEnums::SourceId get_source_id() const { return source_id; }
+    HttpTransaction* get_transaction() const { return transaction; }
+    const HttpParaList* get_params() const { return params; }
 
     // Minimum necessary processing for every message
     virtual void analyze() = 0;

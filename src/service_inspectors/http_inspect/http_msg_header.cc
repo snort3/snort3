@@ -23,14 +23,14 @@
 
 #include "http_msg_header.h"
 
+#include "decompress/file_decomp.h"
 #include "file_api/file_flows.h"
 #include "file_api/file_service.h"
-#include "pub_sub/http_events.h"
-#include "decompress/file_decomp.h"
-
 #include "http_api.h"
 #include "http_msg_request.h"
 #include "http_msg_body.h"
+#include "pub_sub/http_events.h"
+#include "sfip/sf_ip.h"
 
 using namespace HttpEnums;
 
@@ -53,6 +53,56 @@ void HttpMsgHeader::publish()
     {
         get_data_bus().publish(HTTP_RESPONSE_HEADER_EVENT_KEY, http_event, flow);
     }
+}
+
+const Field& HttpMsgHeader::get_true_ip()
+{
+    if (true_ip.length() != STAT_NOT_COMPUTE)
+        return true_ip;
+
+    const Field* header_to_use;
+    const Field& xff = get_header_value_norm(HEAD_X_FORWARDED_FOR);
+    if (xff.length() > 0)
+        header_to_use = &xff;
+    else
+    {
+        const Field& tcip = get_header_value_norm(HEAD_TRUE_CLIENT_IP);
+        if (tcip.length() > 0)
+            header_to_use = &tcip;
+        else
+        {
+            true_ip.set(STAT_NOT_PRESENT);
+            return true_ip;
+        }
+    }
+
+    // This is potentially a comma-separated list of IP addresses. Just take the first one in
+    // the list. Since this is a normalized header field any whitespace will be an actual space.
+    uint8_t* addr_str = new uint8_t[header_to_use->length()+1];
+    int32_t length;
+    for (length = 0; length < header_to_use->length(); length++)
+    {
+        if (is_sp_comma[header_to_use->start()[length]])
+            break;
+        addr_str[length] = header_to_use->start()[length];
+    }
+    addr_str[length] = '\0';
+
+    SfIp tmp_sfip;
+    const SfIpRet status = tmp_sfip.set((char*)addr_str);
+    delete[] addr_str;
+    if (status != SFIP_SUCCESS)
+    {
+        true_ip.set(STAT_PROBLEMATIC);
+    }
+    else
+    {
+        const size_t addr_length = (tmp_sfip.is_ip6() ? 4 : 1);
+        uint32_t* const addr_buf = new uint32_t[addr_length];
+        memcpy(addr_buf, tmp_sfip.get_ptr(), addr_length * sizeof(uint32_t));
+        true_ip.set(addr_length * sizeof(uint32_t), (uint8_t*)addr_buf, true);
+    }
+    return true_ip;
 }
 
 void HttpMsgHeader::gen_events()

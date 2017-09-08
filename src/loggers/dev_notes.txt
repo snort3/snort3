@@ -2,7 +2,7 @@ Logger subclasses that provide logging and event alerting facilities.
 
 unified2 is currently the best logger for serializing various data like
 events and packets and is the only Logger supporting extra data fields.
-Currently only the SMTP and HTTP inspectors produce exta data.
+Currently only the SMTP and HTTP inspectors produce extra data.
 
 There is separate utility called u2spewfoo provided under tools/ that can
 dump the binary u2 log in text format.

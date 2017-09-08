@@ -354,6 +354,7 @@ extern const bool is_sp_tab_cr_lf[256];
 extern const bool is_sp_tab_cr_lf_vt_ff[256];
 extern const bool is_sp_tab_quote_dquote[256];
 extern const bool is_print_char[256]; // printable includes SP, tab, CR, LF
+extern const bool is_sp_comma[256];
 } // end namespace HttpEnums
 
 #endif

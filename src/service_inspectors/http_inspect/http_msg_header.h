@@ -23,6 +23,7 @@
 #include "file_api/file_api.h"
 
 #include "http_enum.h"
+#include "http_field.h"
 #include "http_msg_head_shared.h"
 
 //-------------------------------------------------------------------------
@@ -40,6 +41,7 @@ public:
     void update_flow() override;
     void gen_events() override;
     void publish() override;
+    const Field& get_true_ip();
 
 private:
     // Dummy configurations to support MIME processing
@@ -53,6 +55,8 @@ private:
     void setup_pdf_swf_decompression();
 
     bool detection_section = true;
+
+    Field true_ip;
 
 #ifdef REG_TEST
     void print_section(FILE* output) override;

@@ -2,12 +2,6 @@ The new Snort HTTP inspector (HI) is divided into two major parts. The HttpStrea
 (splitter) accepts TCP payload data from Stream and subdivides it into message sections.
 HttpInspect (inspector) processes individual message sections.
 
-Unlike other inspectors HI has an empty eval() member. All processing is done by the inspector
-process() member which is called directly from splitter reassemble(). Thus the data flow for
-processing a message section is one or more calls to splitter scan(), followed by one or more calls
-to splitter reassemble(), the last of which calls process(). The reassembled buffer returned to the
-framework is already ready for detection and the subsequent eval() call does nothing.
-
 Splitter finish() is called by the framework when the TCP connection closes (including pruning).
 It serves several specialized purposes in cases where the HTTP message is truncated (ends
 unexpectedly).

@@ -36,6 +36,7 @@ public:
         { return detection_section ? HttpEnums::IS_DETECTION : HttpEnums::IS_BODY; }
     bool detection_required() const override;
     const Field& get_classic_client_body();
+    const Field& get_detect_data() { return detect_data; }
     static void fd_event_callback(void* context, int event);
 
 protected:
