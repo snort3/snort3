@@ -24,7 +24,7 @@
 
 #include "sfip/sf_ip.h"
 
-// Header containing datatypes/definitions shared by SSL inspector files.
+// Header containing datatypes/definitions shared by SIP inspector files.
 
 enum SIPMethodsFlag
 {

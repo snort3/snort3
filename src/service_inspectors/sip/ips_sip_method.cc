@@ -26,6 +26,8 @@
 #include "config.h"
 #endif
 
+#include <unordered_map>
+
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -44,6 +46,8 @@
 #define s_help \
     "detection option for sip stat code"
 
+typedef std::unordered_map<std::string, bool> MethodMap; //Method Name => Negated
+
 static THREAD_LOCAL ProfileStats sipMethodRuleOptionPerfStats;
 
 static inline bool IsRequest(SIP_Roptions* ropts)
@@ -57,28 +61,31 @@ static inline bool IsRequest(SIP_Roptions* ropts)
 class SipMethodOption : public IpsOption
 {
 public:
-    SipMethodOption(const SipMethodRuleOptData& c) :
-        IpsOption(s_name)
-    { smod = c; }
+    SipMethodOption(const MethodMap& m) :
+        IpsOption(s_name), methods(m) {}
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
     int eval(Cursor&, Packet*) override;
 
 private:
-    SipMethodRuleOptData smod;
+    MethodMap methods;
 };
 
 uint32_t SipMethodOption::hash() const
 {
     uint32_t a,b,c;
 
-    a = smod.flags;
-    b = smod.mask;
+    a = methods.size();
+    b = a ? methods.begin()->second : 0;
     c = 0;
 
-    mix_str(a,b,c,get_name());
-    finalize(a,b,c);
+    mix_str(a, b, c, get_name());
+
+    for ( auto& m : methods )
+        mix_str(a, b, c, m.first.c_str(), m.first.size());
+
+    finalize(a, b, c);
 
     return c;
 }
@@ -90,32 +97,40 @@ bool SipMethodOption::operator==(const IpsOption& ips) const
 
     const SipMethodOption& rhs = (SipMethodOption&)ips;
 
-    if ( (smod.flags == rhs.smod.flags) &&
-        (smod.mask == rhs.smod.mask) )
-        return true;
-
-    return false;
+    return methods == rhs.methods;
 }
 
 int SipMethodOption::eval(Cursor&, Packet* p)
 {
     Profile profile(sipMethodRuleOptionPerfStats);
 
-    if ((!p->is_tcp() && !p->is_udp()) || !p->flow || !p->dsize)
+    if ( !p->flow )
         return DETECTION_OPTION_NO_MATCH;
 
     SIPData* sd = get_sip_session_data(p->flow);
 
-    if (!sd)
+    if ( !sd )
         return DETECTION_OPTION_NO_MATCH;
 
     SIP_Roptions* ropts = &sd->ropts;
 
     // Not response
-    uint32_t methodFlag = 1 << (ropts->methodFlag - 1);
+    if ( IsRequest(ropts) && methods.size() )
+    {
+        if ( !ropts->method_data )
+            return DETECTION_OPTION_NO_MATCH;
 
-    if (IsRequest(ropts) && ((smod.flags & methodFlag) ^ smod.mask))
-        return DETECTION_OPTION_MATCH;
+        //FIXIT-P This should really be evaluated once per request instead of once
+        //per rule option evaluation.
+        std::string method(ropts->method_data, ropts->method_len);
+        std::transform(method.begin(), method.end(), method.begin(), ::toupper);
+
+        bool negated = methods.begin()->second;
+        bool match = methods.find(method) != methods.cend(); 
+
+        if ( negated ^ match )
+            return DETECTION_OPTION_MATCH;
+    }
 
     return DETECTION_OPTION_NO_MATCH;
 }
@@ -146,19 +161,16 @@ public:
     Usage get_usage() const override
     { return DETECT; }
 
-public:
-    SipMethodRuleOptData smod;
+    MethodMap methods;
 
 private:
-    int num_tokens;
     bool negated;
 };
 
 bool SipMethodModule::begin(const char*, int, SnortConfig*)
 {
-    num_tokens = 0;
     negated = false;
-    smod.flags = smod.mask = 0;
+    methods.clear();
     return true;
 }
 
@@ -178,21 +190,12 @@ bool SipMethodModule::set(const char*, Value& v, SnortConfig*)
             negated = false;
 
         /*Only one method is allowed with !*/
-        if (negated && (++num_tokens > 1))
+        if ( negated && (!methods.empty()) )
             ParseError("Only one method is allowed with ! for sip_method");
 
-        method = add_sip_method(tok);
-
-        if(!method)
-        {
-            ParseError("Failed to add a new method to sip_method");
-            return false;
-        }
-
-        smod.flags |= 1 << (method->methodFlag - 1);
-
-        if (negated)
-            smod.mask |= 1 << (method->methodFlag - 1);
+        std::string key = tok;
+        std::transform(key.begin(), key.end(), key.begin(), ::toupper);
+        methods[key] = negated;
     }
     else
         return false;
@@ -217,7 +220,7 @@ static void mod_dtor(Module* m)
 static IpsOption* sip_method_ctor(Module* p, OptTreeNode*)
 {
     SipMethodModule* m = (SipMethodModule*)p;
-    return new SipMethodOption(m->smod);
+    return new SipMethodOption(m->methods);
 }
 
 static void opt_dtor(IpsOption* p)

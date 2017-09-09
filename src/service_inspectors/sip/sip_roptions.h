@@ -30,7 +30,9 @@
 
 struct SIP_Roptions
 {
-    SIPMethodsFlag methodFlag;  // sip_method data
+    const char* method_data;
+    uint16_t method_len;
+
     uint16_t status_code;       // sip_stat_code data
 
     const uint8_t* header_data; // Set to NULL if not applicable

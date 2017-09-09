@@ -113,9 +113,6 @@ void SIP_ParseMethods(
 // Sets the Default method lists
 void SIP_SetDefaultMethods(SIP_PROTO_CONF* config);
 
-// API to find a method
-int SIP_findMethod(char* token, SIPMethod* methods);
-
 // API to add a user defined method to SIP config
 SIPMethodNode* SIP_AddUserDefinedMethod(
     const char* methodName, uint32_t* methodsConfig, SIPMethodlist* pmethods);
