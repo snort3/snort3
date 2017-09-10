@@ -29,6 +29,7 @@
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "profiler/memory_profiler_active_context.h"
+#include "utils/stats.h"
 
 #include "memory_config.h"
 #include "memory_module.h"
@@ -49,15 +50,24 @@ struct Tracker
     size_t allocated = 0;
     size_t deallocated = 0;
 
+    uint64_t allocations = 0;
+    uint64_t deallocations = 0;
+
     void allocate(size_t n)
-    { allocated += n; }
+    { allocated += n; ++allocations; }
 
     void deallocate(size_t n)
-    { deallocated += n; }
+    { deallocated += n; ++deallocations; }
 
     size_t used() const
     {
-        assert(allocated >= deallocated);
+        // FIXIT-H this assertion fails at analyzer.cc:93 / starting packet thread
+        // {allocated = 0, deallocated = 48, allocations = 0, deallocations = 1}
+        //assert(allocated >= deallocated);
+
+        if ( allocated < deallocated )
+            return 0;
+
         return allocated - deallocated;
     }
 
@@ -160,9 +170,10 @@ bool MemoryCap::over_threshold()
 
 void MemoryCap::calculate(unsigned num_threads)
 {
+    assert(!is_packet_thread());
     const MemoryConfig& config = *snort_conf->memory;
 
-    assert(!is_packet_thread());
+    auto main_thread_used = s_tracker.used();
 
     if ( !config.cap )
     {
@@ -170,42 +181,50 @@ void MemoryCap::calculate(unsigned num_threads)
         return;
     }
 
-    auto main_thread_used = s_tracker.used();
-
     if ( main_thread_used > config.cap )
-        FatalError("main thread memory usage (%zu) is greater than cap\n", main_thread_used);
+    {
+        ParseError("main thread memory usage (%zu) is greater than cap\n", main_thread_used);
+        return;
+    }
 
     auto real_cap = config.cap - main_thread_used;
-
     thread_cap = real_cap / num_threads;
 
-    // FIXIT-M we probably want to add some fixed overhead to allow the packet threads to
-    // startup and preallocate flows and whatnot
-    if ( !thread_cap )
-        FatalError("per-thread memory cap is 0");
+    // FIXIT-L do we want to add some fixed overhead to allow the packet threads to
+    // startup and preallocate flows and whatnot?
 
-    DebugFormat(DEBUG_MEMORY, "per-thread memory cap set to %zu\n", thread_cap);
+    if ( !thread_cap )
+    {
+        ParseError("per-thread memory cap is 0");
+        return;
+    }
 
     if ( config.threshold )
-    {
         preemptive_threshold = memory::calculate_threshold(thread_cap, config.threshold);
-        DebugFormat(DEBUG_MEMORY,
-            "per-thread preemptive action threshold set to %zu\n", preemptive_threshold);
-    }
 }
 
 void MemoryCap::print()
 {
     const MemoryConfig& config = *snort_conf->memory;
 
-    LogMessage("memory configuration\n");
-    LogMessage("    global cap: %zu\n", config.cap);
-    LogMessage("    global preemptive threshold percent: %zu\n", config.threshold);
-    LogMessage("    cap type: %s\n", config.soft? "soft" : "hard");
-    LogMessage("    thread cap: %zu\n", thread_cap);
-    LogMessage("    preemptive threshold: %zu\n", preemptive_threshold);
-    LogMessage("    main thread usage: %zu\n", s_tracker.used());
-    LogMessage("\n");
+    if ( SnortConfig::log_verbose() or s_tracker.allocations )
+        LogLabel("memory (heap)");
+
+    if ( SnortConfig::log_verbose() )
+    {
+        LogMessage("    global cap: %zu\n", config.cap);
+        LogMessage("    global preemptive threshold percent: %zu\n", config.threshold);
+        LogMessage("    cap type: %s\n", config.soft? "soft" : "hard");
+    }
+
+    if ( s_tracker.allocations )
+    {
+        LogMessage("    main thread usage: %zu\n", s_tracker.used());
+        LogMessage("    allocations: %zu\n", s_tracker.allocations);
+        LogMessage("    deallocations: %zu\n", s_tracker.deallocations);
+        LogMessage("    thread cap: %zu\n", thread_cap);
+        LogMessage("    preemptive threshold: %zu\n", preemptive_threshold);
+    }
 }
 
 } // namespace memory

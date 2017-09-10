@@ -58,6 +58,7 @@
 #include "loggers/loggers.h"
 #include "main.h"
 #include "main/shell.h"
+#include "main/thread_config.h"
 #include "managers/action_manager.h"
 #include "managers/codec_manager.h"
 #include "managers/inspector_manager.h"
@@ -67,6 +68,7 @@
 #include "managers/mpse_manager.h"
 #include "managers/plugin_manager.h"
 #include "managers/script_manager.h"
+#include "memory/memory_cap.h"
 #include "network_inspectors/network_inspectors.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
@@ -541,6 +543,9 @@ void Snort::setup(int argc, char* argv[])
     keep_jsnorm_lib();
     keep_kmap_lib();
     keep_utf_lib();
+
+    memory::MemoryCap::calculate(ThreadConfig::get_instance_max());
+    memory::MemoryCap::print();
 
     TimeStart();
 }

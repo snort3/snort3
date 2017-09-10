@@ -44,7 +44,6 @@
 #include "managers/inspector_manager.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
-#include "memory/memory_cap.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/trough.h"
 #include "target_based/sftarget_reader.h"
@@ -841,10 +840,6 @@ static void snort_main()
         Pig& pig = pigs[idx];
         pig.set_index(idx);
     }
-
-    memory::MemoryCap::calculate(max_pigs);
-    if ( SnortConfig::log_verbose() )
-        memory::MemoryCap::print();
 
     main_loop();
 

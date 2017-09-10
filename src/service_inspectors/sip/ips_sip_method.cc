@@ -179,7 +179,6 @@ bool SipMethodModule::set(const char*, Value& v, SnortConfig*)
     if ( v.is("*method") )
     {
         char* tok = (char*)v.get_string();
-        SIPMethodNode *method = NULL;
 
         if (tok[0] == '!')
         {

@@ -303,7 +303,7 @@ void ErrorMessage(const char* format,...)
     }
 }
 
-[[noreturn]] void log_safec_error(const char* msg, void*, int e)
+void log_safec_error(const char* msg, void*, int e)
 {
     static THREAD_LOCAL unsigned safec_errors = 0;
 

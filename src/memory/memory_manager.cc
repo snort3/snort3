@@ -43,14 +43,22 @@ namespace memory
 
 struct Metadata
 {
+#if defined(REG_TEST) || defined(UNIT_TEST)
+    static constexpr size_t SANITY_CHECK_VALUE = 0xabcdef;
     size_t sanity;
+#endif
+
     // number of requested bytes
     size_t payload_size;
 
     // total number of bytes allocated, including Metadata header
     size_t total_size() const;
     void* payload_offset();
-    bool valid() const;
+
+#if defined(REG_TEST) || defined(UNIT_TEST)
+    bool valid() const
+    { return sanity == SANITY_CHECK_VALUE; }
+#endif
 
     Metadata(size_t = 0);
 
@@ -60,8 +68,6 @@ struct Metadata
     static Metadata* create(size_t);
 
     static Metadata* extract(void*);
-
-    static size_t SANITY_CHECK_VALUE;
 };
 
 inline size_t Metadata::total_size() const
@@ -70,11 +76,11 @@ inline size_t Metadata::total_size() const
 inline void* Metadata::payload_offset()
 { return this + 1; }
 
-inline bool Metadata::valid() const
-{ return sanity == SANITY_CHECK_VALUE; }
-
 inline Metadata::Metadata(size_t n) :
-    sanity(SANITY_CHECK_VALUE), payload_size(n)
+#if defined(REG_TEST) || defined(UNIT_TEST)
+    sanity(SANITY_CHECK_VALUE),
+#endif
+    payload_size(n)
 { }
 
 inline size_t Metadata::calculate_total_size(size_t n)
@@ -91,7 +97,10 @@ Metadata* Metadata::create(size_t n)
 
     // Trigger metadata ctor
     *meta = Metadata(n);
+
+#if defined(REG_TEST) || defined(UNIT_TEST)
     assert(meta->valid());
+#endif
 
     return meta;
 }
@@ -102,12 +111,12 @@ Metadata* Metadata::extract(void* p)
 
     auto meta = static_cast<Metadata*>(p) - 1;
 
+#if defined(REG_TEST) || defined(UNIT_TEST)
     assert(meta->valid());
+#endif
 
     return meta;
 }
-
-size_t Metadata::SANITY_CHECK_VALUE = 0xabcdef;
 
 // -----------------------------------------------------------------------------
 // the meat
