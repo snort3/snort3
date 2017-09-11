@@ -51,6 +51,7 @@ const char* HttpApi::classic_buffer_names[] =
     "http_raw_trailer",
     "http_raw_request",
     "http_raw_status",
+    "http_raw_body",
     nullptr
 };
 
@@ -97,6 +98,7 @@ extern const BaseApi* ips_http_trailer;
 extern const BaseApi* ips_http_raw_trailer;
 extern const BaseApi* ips_http_raw_request;
 extern const BaseApi* ips_http_raw_status;
+extern const BaseApi* ips_http_raw_body;
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
@@ -120,6 +122,7 @@ const BaseApi* sin_http[] =
     ips_http_raw_trailer,
     ips_http_raw_request,
     ips_http_raw_status,
+    ips_http_raw_body,
     nullptr
 };
 

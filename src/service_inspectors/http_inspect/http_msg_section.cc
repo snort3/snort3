@@ -218,6 +218,11 @@ const Field& HttpMsgSection::get_classic_buffer(unsigned id, uint64_t sub_id, ui
         HttpMsgTrailer* trailer = transaction->get_trailer(buffer_side);
         return (trailer != nullptr) ? trailer->get_classic_raw_header() : Field::FIELD_NULL;
       }
+    case HTTP_BUFFER_RAW_BODY:
+      {
+        HttpMsgBody* body = transaction->get_body();
+        return (body != nullptr) ? body->msg_text : Field::FIELD_NULL;
+      }
     default:
         assert(false);
         return Field::FIELD_NULL;

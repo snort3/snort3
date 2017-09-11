@@ -59,6 +59,7 @@ bool HttpCursorModule::begin(const char*, int, SnortConfig*)
         inspect_section = IS_DETECTION;
         break;
     case HTTP_BUFFER_CLIENT_BODY:
+    case HTTP_BUFFER_RAW_BODY:
         inspect_section = IS_BODY;
         break;
     case HTTP_BUFFER_TRAILER:
@@ -1003,6 +1004,46 @@ static const IpsApi raw_status_api =
 };
 
 //-------------------------------------------------------------------------
+// http_raw_body
+//-------------------------------------------------------------------------
+
+#undef IPS_OPT
+#define IPS_OPT "http_raw_body"
+#undef IPS_HELP
+#define IPS_HELP "rule option to set the detection cursor to the unnormalized message body"
+
+static Module* raw_body_mod_ctor()
+{
+    return new HttpCursorModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_RAW_BODY, CAT_SET_OTHER,
+        PSI_RAW_BODY);
+}
+
+static const IpsApi raw_body_api =
+{
+    {
+        PT_IPS_OPTION,
+        sizeof(IpsApi),
+        IPSAPI_VERSION,
+        1,
+        API_RESERVED,
+        API_OPTIONS,
+        IPS_OPT,
+        IPS_HELP,
+        raw_body_mod_ctor,
+        HttpCursorModule::mod_dtor
+    },
+    OPT_TYPE_DETECTION,
+    0, PROTO_BIT__TCP,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    HttpIpsOption::opt_ctor,
+    HttpIpsOption::opt_dtor,
+    nullptr
+};
+
+//-------------------------------------------------------------------------
 // plugins
 //-------------------------------------------------------------------------
 
@@ -1021,4 +1062,5 @@ const BaseApi* ips_http_trailer = &trailer_api.base;
 const BaseApi* ips_http_raw_trailer = &raw_trailer_api.base;
 const BaseApi* ips_http_raw_request = &raw_request_api.base;
 const BaseApi* ips_http_raw_status = &raw_status_api.base;
+const BaseApi* ips_http_raw_body = &raw_body_api.base;
 

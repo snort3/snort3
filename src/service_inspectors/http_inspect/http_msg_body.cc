@@ -282,6 +282,8 @@ void HttpMsgBody::print_body_section(FILE* output)
     detect_data.print(output, "Detect data");
     get_classic_buffer(HTTP_BUFFER_CLIENT_BODY, 0, 0).print(output,
         HttpApi::classic_buffer_names[HTTP_BUFFER_CLIENT_BODY-1]);
+    get_classic_buffer(HTTP_BUFFER_RAW_BODY, 0, 0).print(output,
+        HttpApi::classic_buffer_names[HTTP_BUFFER_RAW_BODY-1]);
 
     HttpMsgSection::print_section_wrapup(output);
 }

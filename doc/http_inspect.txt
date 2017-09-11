@@ -409,6 +409,15 @@ This is the body of a request message such as POST or PUT. Normalization
 for http_client_body is the same URI-like normalization applied to
 http_header when no specific header is specified.
 
+===== http_raw_body
+
+This is the body of a request or response message. It will be dechunked
+and unzipped if applicable but will not be normalized in any other way.
+The difference between http_raw_body and packet data is a rule that uses
+packet data will search and may match an HTTP header, but http_raw_body
+is limited to the message body. Thus the latter is more efficient and
+more accurate for most uses.
+
 ===== http_method
 
 The method field of a request message. Common values are "GET", "POST",
@@ -447,8 +456,8 @@ file_data contains the normalized message body. This is the normalization
 described above under gzip, normalize_utf, decompress_pdf, decompress_swf,
 and normalize_javascript.
 
-The unnormalized message body is available in the packet data. If gzip is
-configured the packet data will be unzipped.
+The unnormalized message content is available in the packet data. If gzip
+is configured the packet data will be unzipped.
 
 ==== Timing issues and combining rule options
 
