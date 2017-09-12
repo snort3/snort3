@@ -602,11 +602,11 @@ void FileContext::print_file_data(FILE* fp, const uint8_t* data, int len, int ma
     }
     if (pos)
     {
+        str[pos] = 0;
         for (; pos < 17; pos++)
         {
             if (pos == 8)
             {
-                str[pos] = ' ';
                 pos++;
                 fprintf(fp, "%s", "    ");
             }
@@ -615,7 +615,6 @@ void FileContext::print_file_data(FILE* fp, const uint8_t* data, int len, int ma
                 fprintf(fp, "%s", "   ");
             }
         }
-        str[pos] = 0;
         fprintf(fp, "  %s\n", str);
     }
 }
