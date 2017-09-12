@@ -30,8 +30,8 @@
 #endif
 
 #include "sf_vartable.h"
-
-#include "sfip/sf_ipvar.h"
+#include "sf_ip.h"
+#include "sf_ipvar.h"
 #include "utils/util.h"
 #include "utils/util_cstring.h"
 
@@ -352,8 +352,7 @@ void sfvt_free_table(vartable_t* table)
     snort_free(table);
 }
 
-// FIXIT-L - Finish converting these unit tests to something that actually passes
-#if 0
+
 #ifdef UNIT_TEST
 
 TEST_CASE("SfVarTable_Kitchen_Sink", "[SfVarTable]")
@@ -385,18 +384,12 @@ TEST_CASE("SfVarTable_Kitchen_Sink", "[SfVarTable]")
     CHECK(sfvt_add_str(table, NULL, &var) == SFIP_FAILURE);
     CHECK(sfvt_add_str(table, "", &var) == SFIP_FAILURE);
 
-    /* Expansion tests
-    puts("Expansions:");
-    printf("\t%s\n", sfvt_alloc_expanded(table, "$foo"));
-    printf("\t%s\n", sfvt_alloc_expanded(table, "goo $goo sf sfasdfasdf $moo"));
-    printf("\t%s\n", sfvt_alloc_expanded(table, " ssdf $moo $moo asdf $fooadff $foo "));
-    printf("\t%s\n", sfvt_alloc_expanded(table, " ssdf $moo $moo\\sdf $foo adff"));
-    */
-
     /* Containment tests */
     var = sfvt_lookup_var(table, "goo");
-    ip = sfip_alloc("192.168.248.255", &status);
-    CHECK(sfvar_ip_in(var, ip));
+    ip = (SfIp *)snort_alloc(sizeof(SfIp));
+    status = ip->set("192.168.248.255");
+    CHECK(SFIP_SUCCESS == status);
+    CHECK(!sfvar_ip_in(var, ip));
 
     /* Check against the 'any' variable */
     var = sfvt_lookup_var(table, "moo");
@@ -408,14 +401,20 @@ TEST_CASE("SfVarTable_Kitchen_Sink", "[SfVarTable]")
 
     /* Check boundary cases */
     var = sfvt_lookup_var(table, "goo");
-    sfip_free(ip);
-    ip = sfip_alloc("192.168.0.3", &status);
+    snort_free(ip);
+    ip = (SfIp *)snort_alloc(sizeof(SfIp));
+    status = ip->set("192.168.0.3");
+    CHECK(SFIP_SUCCESS == status);
     CHECK(!sfvar_ip_in(var, ip));
-    sfip_free(ip);
-    ip = sfip_alloc("192.168.0.2", &status);
+    snort_free(ip);
+    ip = (SfIp *)snort_alloc(sizeof(SfIp));
+    status = ip->set("192.168.0.2");
+    CHECK(SFIP_SUCCESS == status);
     CHECK(sfvar_ip_in(var, ip));
-    sfip_free(ip);
+    snort_free(ip);
+
+    sfvt_free_table(table);
 }
 
 #endif
-#endif
+

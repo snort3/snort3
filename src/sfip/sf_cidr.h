@@ -56,6 +56,7 @@ struct SO_PUBLIC SfCidr
     SfIpRet contains(const SfIp* ip) const;
 
     const char* ntoa() const;
+    SfIpRet compare(const SfCidr&) const;
 
 private:
     SfIp addr;
@@ -161,6 +162,17 @@ inline bool SfCidr::fast_cont6(const SfIp& ip) const
 inline const char* SfCidr::ntoa() const
 {
     return addr.ntoa();
+}
+
+inline SfIpRet SfCidr::compare(const SfCidr& cidr2) const
+{
+    SfIpRet ret = addr.compare(*cidr2.get_addr());
+    if(SFIP_EQUAL == ret)
+    {
+        if(bits < cidr2.get_bits()) return SFIP_LESSER;
+        if(bits > cidr2.get_bits()) return SFIP_GREATER;
+    }
+    return ret;
 }
 
 #endif

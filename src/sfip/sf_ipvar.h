@@ -80,6 +80,8 @@ struct sfip_var_t
     /* Linked list of IP variables for the variable table */
     sfip_var_t* next;
 
+    uint32_t head_count;
+    uint32_t neg_head_count;
     uint32_t id;
     char* name;
     char* value;
