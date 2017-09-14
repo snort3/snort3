@@ -30,7 +30,6 @@
 
 #include "app_forecast.h"
 #include "app_info_table.h"
-#include "appid_module.h"
 #include "appid_inspector.h"
 #include "host_port_app_cache.h"
 #include "lua_detector_flow_api.h"
@@ -284,7 +283,7 @@ static int service_analyze_payload(lua_State* L)
 {
     auto& ud = *UserData<LuaDetector>::check(L, DETECTOR, 1);
     assert(ud->validate_params.asd);
-    ud->validate_params.asd->payload_app_id = lua_tonumber(L, 2);
+    ud->validate_params.asd->payload.set_id(lua_tonumber(L, 2));
     return 0;
 }
 
@@ -765,7 +764,8 @@ static int detector_get_packet_dst_port(lua_State* L)
 static int detector_get_packet_count(lua_State* L)
 {
     lua_checkstack (L, 1);
-    lua_pushnumber(L, appid_stats.processed_packets);
+    lua_pushnumber(L,
+        AppIdPegCounts::get_disco_peg(AppIdPegCounts::DiscoveryPegs::PROCESSED_PACKETS));
     return 1;
 }
 
@@ -1598,9 +1598,9 @@ static int detector_add_af_application(lua_State* L)
     // Verify detector user data and that we are not in packet context
     assert(!(*UserData<LuaDetector>::check(L, DETECTOR, index))->validate_params.pkt);
 
-    ApplicationId indicator = (ApplicationId)lua_tointeger(L, ++index);
-    ApplicationId forecast  = (ApplicationId)lua_tointeger(L, ++index);
-    ApplicationId target    = (ApplicationId)lua_tointeger(L, ++index);
+    AppId indicator = (AppId)lua_tointeger(L, ++index);
+    AppId forecast  = (AppId)lua_tointeger(L, ++index);
+    AppId target    = (AppId)lua_tointeger(L, ++index);
     add_af_indicator(indicator, forecast, target);
 
     return 0;
@@ -1863,7 +1863,7 @@ static int add_service_application(lua_State* L)
       parameter on the following call is nullptr.
       Subtype is not displayed on DC at present. */
     unsigned retValue = ud->add_service(ud->validate_params.asd, ud->validate_params.pkt,
-        ud->validate_params.dir, service_id, nullptr, nullptr, nullptr);
+        ud->validate_params.dir, service_id);
 
     lua_pushnumber(L, retValue);
     return 1;
@@ -2170,9 +2170,9 @@ static int create_future_flow(lua_State* L)
         APPID_EARLY_SESSION_FLAG_FW_RULE);
     if (fp)
     {
-        fp->service_app_id = service_id;
-        fp->client_app_id  = client_id;
-        fp->payload_app_id = payload_id;
+        fp->service.set_id(service_id);
+        fp->client.set_id(client_id);
+        fp->payload.set_id(payload_id);
         fp->set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE |
             APPID_SESSION_PORT_SERVICE_DONE);
         fp->service_disco_state = APPID_DISCO_STATE_FINISHED;
@@ -2188,18 +2188,12 @@ static const luaL_Reg detector_methods[] =
 {
     /* Obsolete API names.  No longer use these!  They are here for backward
      * compatibility and will eventually be removed. */
-    /*  - "memcmp" is now "matchSimplePattern" (below) */
-    { "memcmp",                   detector_memcmp },
-    /*  - "getProtocolType" is now "getL4Protocol" (below) */
-    { "getProtocolType",          detector_get_protocol_type },
-    /*  - "inCompatibleData" is now "markIncompleteData" (below) */
-    { "inCompatibleData",         service_set_incompatible_data },
-    /*  - "addDataId" is now "addAppIdDataToFlow" (below) */
-    { "addDataId",                service_add_data_id },
-    /*  - "service_inCompatibleData" is now "service_markIncompleteData" (below) */
-    { "service_inCompatibleData", service_set_incompatible_data },
-    /*  - "service_addDataId" is now "service_addAppIdDataToFlow" (below) */
-    { "service_addDataId",        service_add_data_id },
+    { "memcmp",                   detector_memcmp },                 //  - "memcmp" is now "matchSimplePattern" (below)
+    { "getProtocolType",          detector_get_protocol_type },      //  - "getProtocolType" is now "getL4Protocol" (below)
+    { "inCompatibleData",         service_set_incompatible_data },   //  - "inCompatibleData" is now "markIncompleteData" (below)
+    { "addDataId",                service_add_data_id },             //  - "addDataId" is now "addAppIdDataToFlow" (below)
+    { "service_inCompatibleData", service_set_incompatible_data },   //  - "service_inCompatibleData" is now "service_markIncompleteData" (below)
+    { "service_addDataId",        service_add_data_id },             //  - "service_addDataId" is now "service_addAppIdDataToFlow" (below)
 
     { "getPacketSize",            detector_get_packet_size },
     { "getPacketDir",             detector_get_packet_direction },

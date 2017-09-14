@@ -26,7 +26,6 @@
 #include "service_tftp.h"
 
 #include "appid_inspector.h"
-#include "appid_module.h"
 #include "app_info_table.h"
 #include "protocols/packet.h"
 
@@ -325,9 +324,7 @@ inprocess:
 success:
     if (args.session_logging_enabled)
         LogMessage("AppIdDbg %s tftp success\n", args.session_logging_id);
-    add_service(asd, pkt, dir, APP_ID_TFTP, nullptr, nullptr, nullptr);
-    appid_stats.tftp_flows++;
-    return APPID_SUCCESS;
+    return add_service(asd, pkt, dir, APP_ID_TFTP);
 
 bail:
     incompatible_data(asd, pkt, dir);

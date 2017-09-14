@@ -25,7 +25,6 @@
 
 #include "service_mysql.h"
 
-#include "appid_module.h"
 #include "app_info_table.h"
 
 #pragma pack(1)
@@ -121,9 +120,7 @@ int MySqlServiceDetector::validate(AppIdDiscoveryArgs& args)
     data += 6;
     if (data >= end)
         goto fail;
-    add_service(asd, args.pkt, args.dir, APP_ID_MYSQL, nullptr, (char*)p, nullptr);
-    appid_stats.mysql_flows++;
-    return APPID_SUCCESS;
+    return add_service(asd, args.pkt, args.dir, APP_ID_MYSQL, nullptr, (char*)p, nullptr);
 
 inprocess:
     service_inprocess(asd, args.pkt, args.dir);

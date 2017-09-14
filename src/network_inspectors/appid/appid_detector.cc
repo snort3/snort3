@@ -79,39 +79,26 @@ void AppIdDetector::add_info(AppIdSession* asd, const char* info)
 
 void AppIdDetector::add_user(AppIdSession* asd, const char* username, AppId appId, bool success)
 {
-    if (asd->username)
-        snort_free(asd->username);
-    asd->username = snort_strdup(username);
-    asd->username_service = appId;
-    if (success)
+    asd->client.update_user( appId, username);
+    if ( success )
         asd->set_session_flags(APPID_SESSION_LOGIN_SUCCEEDED);
     else
         asd->clear_session_flags(APPID_SESSION_LOGIN_SUCCEEDED);
+
 }
 
 void AppIdDetector::add_payload(AppIdSession* asd, AppId payload_id)
 {
-    asd->payload_app_id = payload_id;
+    asd->payload.set_id(payload_id);
 }
 
-void AppIdDetector::add_app(AppIdSession* asd, AppId service_id, AppId id, const char* version)
+void AppIdDetector::add_app(AppIdSession* asd, AppId service_id, AppId client_id, const char* version)
 {
     if (version)
-    {
-        if (asd->client_version)
-        {
-            if (strcmp(version, asd->client_version))
-            {
-                snort_free(asd->client_version);
-                asd->client_version = snort_strdup(version);
-            }
-        }
-        else
-            asd->client_version = snort_strdup(version);
-    }
+        asd->client.set_version(version);
 
     asd->set_client_detected();
-    asd->client_service_app_id = service_id;
-    asd->client_app_id = id;
+    asd->client_inferred_service_id = service_id;
+    asd->client.set_id(client_id);
 }
 

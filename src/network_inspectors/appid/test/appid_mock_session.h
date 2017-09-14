@@ -54,17 +54,15 @@ unsigned AppIdSession::inspector_id = 0;
 
 AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t) : FlowData(inspector_id, nullptr)
 {
-    port_service_id = APPID_UT_ID;
+    service.set_port_service_id(APPID_UT_ID);
     common.flow_type = APPID_FLOW_TYPE_NORMAL;
     service_port = APPID_UT_SERVICE_PORT;
 
-    username_service = APPID_UT_ID;
-    username = (char*)snort_strdup(APPID_UT_USERNAME);
+    client.update_user(APPID_UT_ID, APPID_UT_USERNAME);
+    client.set_version((char*)APPID_UT_CLIENT_VERSION);
 
-    client_version = (char*)APPID_UT_CLIENT_VERSION;
-
-    service_vendor = (char*)APPID_UT_SERVICE_VENDOR;
-    service_version = (char*)APPID_UT_SERVICE_VERSION;
+    service.set_vendor((char*)APPID_UT_SERVICE_VENDOR);
+    service.set_version((char*)APPID_UT_SERVICE_VERSION);
     subtype = &APPID_UT_SERVICE_SUBTYPE;
 
     search_support_type = UNKNOWN_SEARCH_ENGINE;
@@ -86,12 +84,12 @@ AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t) : FlowData(inspect
     dsession->ttl = APPID_UT_DNS_TTL;
 
     tp_app_id = APPID_UT_ID;
-    service_app_id = APPID_UT_ID + 1;
-    client_service_app_id = APPID_UT_ID + 2;
-    port_service_id = APPID_UT_ID + 3;
-    payload_app_id = APPID_UT_ID + 4;
+    service.set_id(APPID_UT_ID + 1);
+    client_inferred_service_id = APPID_UT_ID + 2;
+    service.set_port_service_id(APPID_UT_ID + 3);
+    payload.set_id(APPID_UT_ID + 4);
     tp_payload_app_id = APPID_UT_ID + 5;
-    client_app_id = APPID_UT_ID + 6;
+    client.set_id(APPID_UT_ID + 6);
     misc_app_id = APPID_UT_ID + 7;
 }
 
@@ -102,8 +100,6 @@ AppIdSession::~AppIdSession()
     delete dsession;
     if (netbios_name)
         snort_free(netbios_name);
-    if (username)
-        snort_free(username);
 }
 
 DHCPInfo* dhcp_info = nullptr;

@@ -78,28 +78,19 @@ int ServiceDetector::service_inprocess(AppIdSession* asd, const Packet* pkt, int
     return APPID_SUCCESS;
 }
 
-int ServiceDetector::add_service(AppIdSession* asd, const Packet* pkt, int dir, AppId appId,
+int ServiceDetector::update_service_data(AppIdSession* asd, const Packet* pkt, int dir, AppId appId,
     const char* vendor, const char* version)
 {
     uint16_t port = 0;
     const SfIp* ip = nullptr;
 
     asd->service_detector = this;
+    // FIXIT-H - fix func prototypes to not need this (char*) type conversion from const char*
+    asd->service.set_vendor((char*)vendor);
+    asd->service.set_version((char*)version);
 
-    if (vendor)
-    {
-        if (asd->service_vendor)
-            snort_free(asd->service_vendor);
-        asd->service_vendor = snort_strdup(vendor);
-    }
-    if (version)
-    {
-        if (asd->service_version)
-            snort_free(asd->service_version);
-        asd->service_version = snort_strdup(version);
-    }
     asd->set_service_detected();
-    asd->service_app_id = appId;
+    asd->service.set_id(appId);
 
     if (asd->get_session_flags(APPID_SESSION_IGNORE_HOST))
         return APPID_SUCCESS;
@@ -148,7 +139,7 @@ int ServiceDetector::add_service_consume_subtype(AppIdSession* asd, const Packet
     AppId appId, const char* vendor, const char* version, AppIdServiceSubtype* subtype)
 {
     asd->subtype = subtype;
-    return add_service(asd, pkt, dir, appId, vendor, version);
+    return update_service_data(asd, pkt, dir, appId, vendor, version);
 }
 
 int ServiceDetector::add_service(AppIdSession* asd, const Packet* pkt, int dir, AppId appId,
@@ -173,7 +164,7 @@ int ServiceDetector::add_service(AppIdSession* asd, const Packet* pkt, int dir, 
         new_subtype = tmp_subtype;
     }
     asd->subtype = new_subtype;
-    return add_service(asd, pkt, dir, appId, vendor, version);
+    return update_service_data(asd, pkt, dir, appId, vendor, version);
 }
 
 int ServiceDetector::incompatible_data(AppIdSession* asd, const Packet* pkt, int dir)

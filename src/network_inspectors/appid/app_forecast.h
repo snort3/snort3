@@ -37,32 +37,30 @@ struct Packet;
 // for now, indicator and target are WEB APPLICATIONS. The forecast is APP PROTOCOL.
 // We can change this later by adding app type info for each, if we find a use case.
 
-enum ApplicationId : int32_t;
-
 struct AFElement
 {
-    ApplicationId indicator;
-    ApplicationId forecast;
-    ApplicationId target;
+    AppId indicator;
+    AppId forecast;
+    AppId target;
 };
 
 struct AFActKey
 {
     uint32_t ip[4];
-    ApplicationId forecast;
+    AppId forecast;
 };
 
 struct AFActVal
 {
-    ApplicationId target;
+    AppId target;
     time_t last;
 };
 
 int init_appid_forecast();
 void clean_appid_forecast();
-void add_af_indicator(ApplicationId, ApplicationId, ApplicationId);
-void check_session_for_AF_indicator(Packet*, int, ApplicationId);
-AppId check_session_for_AF_forecast(AppIdSession*, Packet*, int, ApplicationId);
+void add_af_indicator(AppId, AppId, AppId);
+void check_session_for_AF_indicator(Packet*, int, AppId);
+AppId check_session_for_AF_forecast(AppIdSession*, Packet*, int, AppId);
 
 #endif
 

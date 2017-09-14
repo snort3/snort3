@@ -25,9 +25,9 @@
 
 #include "service_rtmp.h"
 
+#include "app_info_table.h"
 #include "appid_http_session.h"
 #include "appid_module.h"
-#include "app_info_table.h"
 
 #define RTMP_PORT 1935
 #define RTMP_VER_3 3
@@ -665,8 +665,6 @@ success:
 
         ss->pageUrl = nullptr;
     }
-    add_service(args.asd, args.pkt, args.dir, APP_ID_RTMP, nullptr, nullptr, nullptr);
-    appid_stats.rtmp_flows++;
-    return APPID_SUCCESS;
+    return add_service(args.asd, args.pkt, args.dir, APP_ID_RTMP);
 }
 

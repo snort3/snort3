@@ -25,7 +25,6 @@
 
 #include "service_dcerpc.h"
 
-#include "appid_module.h"
 #include "dcerpc.h"
 
 #define DCERPC_THRESHOLD    3
@@ -104,11 +103,7 @@ int DceRpcServiceDetector::tcp_validate(AppIdDiscoveryArgs& args)
         size -= length;
     }
     if (retval == APPID_SUCCESS)
-    {
-        add_service(asd, args.pkt, args.dir, APP_ID_DCE_RPC, nullptr, nullptr, nullptr);
-        appid_stats.dcerpc_tcp_flows++;
-        return APPID_SUCCESS;
-    }
+        return add_service(asd, args.pkt, args.dir, APP_ID_DCE_RPC);
 
 inprocess:
     service_inprocess(asd, args.pkt, args.dir);
@@ -152,11 +147,7 @@ int DceRpcServiceDetector::udp_validate(AppIdDiscoveryArgs& args)
         size -= length;
     }
     if (retval == APPID_SUCCESS)
-    {
-        add_service(asd, args.pkt, args.dir, APP_ID_DCE_RPC, nullptr, nullptr, nullptr);
-        appid_stats.dcerpc_udp_flows++;
-        return APPID_SUCCESS;
-    }
+        return add_service(asd, args.pkt, args.dir, APP_ID_DCE_RPC);
 
 inprocess:
     service_inprocess(asd, args.pkt, args.dir);

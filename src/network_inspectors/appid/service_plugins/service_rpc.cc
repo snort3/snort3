@@ -33,7 +33,6 @@
 #include <rpc/rpcent.h>
 #endif
 
-#include "appid_module.h"
 #include "appid_inspector.h"
 #include "app_info_table.h"
 #include "log/messages.h"
@@ -518,7 +517,6 @@ done:
                 subtype = nullptr;
 
             add_service(asd, pkt, dir, APP_ID_SUN_RPC, nullptr, nullptr, subtype);
-            appid_stats.rpc_flows++;
         }
         asd->set_session_flags(APPID_SESSION_CONTINUE);
         return APPID_SUCCESS;
@@ -879,7 +877,6 @@ inprocess:
             else
                 subtype = nullptr;
             add_service(asd, pkt, dir, APP_ID_SUN_RPC, nullptr, nullptr, subtype);
-            appid_stats.rpc_flows++;
         }
         asd->set_session_flags(APPID_SESSION_CONTINUE);
         return APPID_SUCCESS;

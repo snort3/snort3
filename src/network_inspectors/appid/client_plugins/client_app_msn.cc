@@ -28,7 +28,6 @@
 #include "client_app_msn.h"
 
 #include "app_info_table.h"
-#include "appid_module.h"
 
 #define MAX_VERSION_SIZE 64
 
@@ -153,8 +152,6 @@ int MsnClientDetector::validate(AppIdDiscoveryArgs& args)
 
 done:
     add_app(args.asd, APP_ID_MSN_MESSENGER, product_id, (char*)version);
-    args.asd->set_client_detected();
-    appid_stats.msn_clients++;
     return APPID_SUCCESS;
 }
 

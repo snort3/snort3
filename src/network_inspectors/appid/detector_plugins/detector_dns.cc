@@ -26,7 +26,6 @@
 #include "detector_dns.h"
 
 #include "appid_config.h"
-#include "appid_module.h"
 #include "app_info_table.h"
 #include "application_ids.h"
 
@@ -503,27 +502,19 @@ int DnsValidator::dns_validate_header(const int dir, DNSHeader* hdr,
     bool host_reporting, AppIdSession* asd)
 {
     if (hdr->Opcode > MAX_OPCODE || hdr->Opcode == INVALID_OPCODE)
-    {
         return APPID_NOMATCH;
-    }
-    if (hdr->Z)
-    {
+    else if (hdr->Z)
         return APPID_NOMATCH;
-    }
-    if (hdr->RCODE > MAX_RCODE)
-    {
+    else if (hdr->RCODE > MAX_RCODE)
         return APPID_NOMATCH;
-    }
-    if (!hdr->QR)
+    else if (!hdr->QR)        // Query.
     {
-        // Query.
         if (host_reporting)
             reset_dns_info(asd);
         return dir == APP_ID_FROM_INITIATOR ? APPID_SUCCESS : APPID_REVERSED;
     }
-
-    // Response.
-    return dir == APP_ID_FROM_INITIATOR ? APPID_REVERSED : APPID_SUCCESS;
+    else     // Response.
+        return dir == APP_ID_FROM_INITIATOR ? APPID_REVERSED : APPID_SUCCESS;
 }
 
 int DnsValidator::validate_packet(const uint8_t* data, uint16_t size, const int,
@@ -601,56 +592,54 @@ int DnsUdpServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     int rval;
 
-    {
-        if (!args.size)
-            return APPID_INPROCESS;
+    if (!args.size)
+        return APPID_INPROCESS;
 
-        if (args.size < sizeof(DNSHeader))
+    if (args.size < sizeof(DNSHeader))
+    {
+        rval = (args.dir == APP_ID_FROM_INITIATOR) ? APPID_INVALID_CLIENT : APPID_NOMATCH;
+        goto udp_done;
+    }
+    if ((rval = dns_validate_header(args.dir, (DNSHeader*)args.data,
+        args.config->mod_config->dns_host_reporting, args.asd)) != APPID_SUCCESS)
+    {
+        if (rval == APPID_REVERSED)
         {
-            rval = (args.dir == APP_ID_FROM_INITIATOR) ? APPID_INVALID_CLIENT : APPID_NOMATCH;
-            goto udp_done;
-        }
-        if ((rval = dns_validate_header(args.dir, (DNSHeader*)args.data,
-                args.config->mod_config->dns_host_reporting, args.asd)) != APPID_SUCCESS)
-        {
-            if (rval == APPID_REVERSED)
+            if (args.dir == APP_ID_FROM_RESPONDER)
             {
-                if (args.dir == APP_ID_FROM_RESPONDER)
+                if (args.asd->get_session_flags(APPID_SESSION_UDP_REVERSED))
                 {
-                    if (args.asd->get_session_flags(APPID_SESSION_UDP_REVERSED))
-                    {
-                        // To get here, we missed the initial query, got a
-                        // response, and now we've got another query.
-                        rval = validate_packet(args.data, args.size, args.dir,
-                            args.config->mod_config->dns_host_reporting, args.asd);
-                        if (rval == APPID_SUCCESS)
-                            goto inprocess;
-                    }
-                    goto invalid;
-                }
-                else
-                {
-                    // To get here, we missed the initial query, but now we've got
-                    // a response.
+                    // To get here, we missed the initial query, got a
+                    // response, and now we've got another query.
                     rval = validate_packet(args.data, args.size, args.dir,
                         args.config->mod_config->dns_host_reporting, args.asd);
                     if (rval == APPID_SUCCESS)
-                    {
-                        args.asd->set_session_flags(APPID_SESSION_UDP_REVERSED);
-                        goto success;
-                    }
-                    goto nomatch;
+                        goto inprocess;
                 }
+                goto invalid;
             }
-            rval = (args.dir == APP_ID_FROM_INITIATOR) ? APPID_INVALID_CLIENT : APPID_NOMATCH;
-            goto udp_done;
+            else
+            {
+                // To get here, we missed the initial query, but now we've got
+                // a response.
+                rval = validate_packet(args.data, args.size, args.dir,
+                    args.config->mod_config->dns_host_reporting, args.asd);
+                if (rval == APPID_SUCCESS)
+                {
+                    args.asd->set_session_flags(APPID_SESSION_UDP_REVERSED);
+                    goto success;
+                }
+                goto nomatch;
+            }
         }
-
-        rval = validate_packet(args.data, args.size, args.dir,
-            args.config->mod_config->dns_host_reporting, args.asd);
-        if ((rval == APPID_SUCCESS) && (args.dir == APP_ID_FROM_INITIATOR))
-            goto inprocess;
+        rval = (args.dir == APP_ID_FROM_INITIATOR) ? APPID_INVALID_CLIENT : APPID_NOMATCH;
+        goto udp_done;
     }
+
+    rval = validate_packet(args.data, args.size, args.dir,
+        args.config->mod_config->dns_host_reporting, args.asd);
+    if ((rval == APPID_SUCCESS) && (args.dir == APP_ID_FROM_INITIATOR))
+        goto inprocess;
 
 udp_done:
     switch (rval)
@@ -658,8 +647,7 @@ udp_done:
     case APPID_SUCCESS:
 success:
         args.asd->set_session_flags(APPID_SESSION_CONTINUE);
-        add_service(args.asd, args.pkt, args.dir, APP_ID_DNS, nullptr, nullptr, nullptr);
-        return APPID_SUCCESS;
+        return add_service(args.asd, args.pkt, args.dir, APP_ID_DNS);
 
     case APPID_INVALID_CLIENT:
 invalid:
@@ -675,10 +663,6 @@ nomatch:
 inprocess:
         add_app(args.asd, APP_ID_NONE, APP_ID_DNS, nullptr);
         service_inprocess(args.asd, args.pkt, args.dir);
-        // FIXIT - incrementing stat early so its counted in case of blocks... not great solution
-        //         refer to this PR for more details on the issue and possible solutions:
-        // https://bitbucket-eng-rtp1.cisco.com/bitbucket/projects/SNORT/repos/snort3/pull-requests/779/overview
-        appid_stats.dns_udp_flows++;
         return APPID_INPROCESS;
 
     default:
@@ -759,9 +743,7 @@ tcp_done:
 
 success:
     args.asd->set_session_flags(APPID_SESSION_CONTINUE);
-    add_service(args.asd, args.pkt, args.dir, APP_ID_DNS, nullptr, nullptr, nullptr);
-    appid_stats.dns_tcp_flows++;
-    return APPID_SUCCESS;
+    return add_service(args.asd, args.pkt, args.dir, APP_ID_DNS);
 
 not_compatible:
     incompatible_data(args.asd, args.pkt, args.dir);

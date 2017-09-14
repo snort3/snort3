@@ -58,7 +58,7 @@ const char* AppInfoManager::get_app_name(AppId)
     return test_app_name;
 }
 
-int32_t AppInfoManager::get_appid_by_name(const char*)
+AppId AppInfoManager::get_appid_by_name(const char*)
 {
     return APPID_UT_ID;
 }
@@ -503,13 +503,13 @@ TEST(appid_api, is_appid_inspecting_session)
     mock_session->session_packet_count = MAX_SFTP_PACKET_COUNT;
     val = appid_api.is_appid_inspecting_session(mock_session);
     CHECK_TRUE(!val);
-    mock_session->payload_app_id = APP_ID_SFTP;
+    mock_session->payload.set_id(APP_ID_SFTP);
     val = appid_api.is_appid_inspecting_session(mock_session);
     CHECK_TRUE(!val);
     mock_session->session_packet_count = MAX_SFTP_PACKET_COUNT - 1;
     val = appid_api.is_appid_inspecting_session(mock_session);
     CHECK_TRUE(!val);
-    mock_session->payload_app_id = APP_ID_NONE;
+    mock_session->payload.set_id(APP_ID_NONE);
     mock_session->tp_app_id = APP_ID_SSH;
     val = appid_api.is_appid_inspecting_session(mock_session);
     CHECK_TRUE(val);
@@ -520,16 +520,14 @@ TEST(appid_api, get_user_name)
     AppId service;
     bool isLoginSuccessful;
 
-    char* val = appid_api.get_user_name(nullptr, &service, &isLoginSuccessful);
+    const char* val = appid_api.get_user_name(nullptr, &service, &isLoginSuccessful);
     CHECK_TRUE(!val);
     val = appid_api.get_user_name(mock_session, &service, &isLoginSuccessful);
     STRCMP_EQUAL(val, APPID_UT_USERNAME);
     CHECK_TRUE(service == APPID_UT_ID);
     CHECK_TRUE(!isLoginSuccessful);
     mock_session->set_session_flags(APPID_SESSION_LOGIN_SUCCEEDED);
-    snort_free(val);
     val = appid_api.get_user_name(mock_session, &service, &isLoginSuccessful);
-    CHECK_TRUE(!val);
     CHECK_TRUE(service == APPID_UT_ID);
     CHECK_TRUE(isLoginSuccessful);
 }
@@ -547,7 +545,7 @@ TEST(appid_api, is_appid_available)
 
 TEST(appid_api, get_client_version)
 {
-    char* val = appid_api.get_client_version(nullptr);
+    const char* val = appid_api.get_client_version(nullptr);
     CHECK_TRUE(!val);
     val = appid_api.get_client_version(mock_session);
     STRCMP_EQUAL(val, APPID_UT_CLIENT_VERSION);
@@ -571,8 +569,8 @@ TEST(appid_api, get_appid_session_attribute)
 
 TEST(appid_api, get_service_info)
 {
-    char* serviceVendor;
-    char* serviceVersion;
+    const char* serviceVendor;
+    const char* serviceVersion;
     AppIdServiceSubtype* serviceSubtype;
 
     appid_api.get_service_info(nullptr, &serviceVendor, &serviceVersion, &serviceSubtype);
@@ -705,12 +703,12 @@ TEST(appid_api, produce_ha_state)
     mock_session = (AppIdSession*)flow->get_flow_data(AppIdSession::inspector_id);
     CHECK_TRUE(mock_session);
     CHECK_TRUE(mock_session->tp_app_id == appHA.appId[0]);
-    CHECK_TRUE(mock_session->service_app_id == appHA.appId[1]);
-    CHECK_TRUE(mock_session->client_service_app_id == appHA.appId[2]);
-    CHECK_TRUE(mock_session->port_service_id == appHA.appId[3]);
-    CHECK_TRUE(mock_session->payload_app_id == appHA.appId[4]);
+    CHECK_TRUE(mock_session->service.get_id() == appHA.appId[1]);
+    CHECK_TRUE(mock_session->client_inferred_service_id == appHA.appId[2]);
+    CHECK_TRUE(mock_session->service.get_port_service_id() == appHA.appId[3]);
+    CHECK_TRUE(mock_session->payload.get_id() == appHA.appId[4]);
     CHECK_TRUE(mock_session->tp_payload_app_id == appHA.appId[5]);
-    CHECK_TRUE(mock_session->client_app_id == appHA.appId[6]);
+    CHECK_TRUE(mock_session->client.get_id() == appHA.appId[6]);
     CHECK_TRUE(mock_session->misc_app_id == appHA.appId[7]);
     CHECK_TRUE(mock_session->service_disco_state == APPID_DISCO_STATE_FINISHED);
     CHECK_TRUE(mock_session->client_disco_state == APPID_DISCO_STATE_FINISHED);
@@ -727,7 +725,7 @@ TEST(appid_api, produce_ha_state)
         APPID_SESSION_NOT_A_SERVICE | APPID_SESSION_SERVICE_DETECTED);
     CHECK_TRUE(flags == (APPID_SESSION_CLIENT_DETECTED | APPID_SESSION_NOT_A_SERVICE
         | APPID_SESSION_SERVICE_DETECTED));
-    CHECK_TRUE(mock_session->service_app_id == APP_ID_FTP_CONTROL);
+    CHECK_TRUE(mock_session->service.get_id() == APP_ID_FTP_CONTROL);
     CHECK_TRUE(mock_session->service_disco_state == APPID_DISCO_STATE_STATEFUL);
     CHECK_TRUE(mock_session->client_disco_state == APPID_DISCO_STATE_FINISHED);
 }

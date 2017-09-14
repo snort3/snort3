@@ -25,8 +25,8 @@
 
 #include "service_mdns.h"
 
-#include "appid_module.h"
 #include "app_info_table.h"
+#include "appid_module.h"
 #include "protocols/packet.h"
 #include "search_engines/search_tool.h"
 
@@ -153,9 +153,7 @@ int MdnsServiceDetector::validate(AppIdDiscoveryArgs& args)
         goto fail;
 
 success:
-    add_service(asd, pkt, args.dir, APP_ID_MDNS, nullptr, nullptr, nullptr);
-    appid_stats.mdns_flows++;
-    return APPID_SUCCESS;
+    return add_service(asd, pkt, args.dir, APP_ID_MDNS);
 
 fail:
     fail_service(asd, pkt, args.dir);

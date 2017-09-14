@@ -25,7 +25,7 @@
 #include "network_inspectors/appid/app_info_table.cc"
 
 #include <string>
-
+#include <map>
 #include "protocols/protocol_ids.h"
 #include "appid_mock_inspector.h"
 
@@ -59,6 +59,7 @@ const char* UT_TEST_APP_NAME_TOO_LONG =
 #define UT_TEST_APP_ID_002 222
 
 AppInfoManager& app_info_mgr = AppInfoManager::get_instance();
+std::unordered_map<AppId, AppIdPegCounts>* appid_peg_counts;
 
 AppInfoTableEntry* add_static_entry(AppId id, const char* name)
 {
@@ -123,13 +124,13 @@ TEST(app_info_table, duplicate_app_info_entry)
     CHECK_TRUE(!rc);
 }
 
-TEST(app_info_table, get_app_info_priority)
+TEST(app_info_table, get_priority)
 {
     AppInfoTableEntry* entry = add_static_entry(UT_TEST_APP_ID_001, UT_TEST_APP_NAME_001);
     CHECK_TRUE(entry);
-    unsigned priority = app_info_mgr.get_app_info_priority(UT_TEST_APP_ID_001);
+    unsigned priority = app_info_mgr.get_priority(UT_TEST_APP_ID_001);
     CHECK_TRUE(priority == APP_PRIORITY_DEFAULT);
-    priority = app_info_mgr.get_app_info_priority(UT_TEST_APP_ID_002);
+    priority = app_info_mgr.get_priority(UT_TEST_APP_ID_002);
     CHECK_TRUE(priority == 0);
 }
 

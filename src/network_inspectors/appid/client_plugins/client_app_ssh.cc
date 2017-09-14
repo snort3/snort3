@@ -25,7 +25,6 @@
 
 #include "client_app_ssh.h"
 
-#include "appid_module.h"
 #include "app_info_table.h"
 #include "application_ids.h"
 
@@ -574,8 +573,6 @@ int SshClientDetector::validate(AppIdDiscoveryArgs& args)
         return sm_ret;
 
     add_app(args.asd, APP_ID_SSH, fd->client_id, (const char*)fd->version);
-    args.asd->set_client_detected();
-    appid_stats.ssh_clients++;
     return APPID_SUCCESS;
 }
 

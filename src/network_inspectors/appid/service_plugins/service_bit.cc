@@ -25,8 +25,6 @@
 
 #include "service_bit.h"
 
-#include "appid_module.h"
-
 static const uint8_t BIT_BANNER[]  = "\023BitTorrent protocol";
 
 #define BIT_PORT    6881
@@ -177,9 +175,7 @@ inprocess:
     return APPID_INPROCESS;
 
 success:
-    add_service(asd, args.pkt, args.dir, APP_ID_BITTORRENT, nullptr, nullptr,  nullptr);
-    appid_stats.bit_flows++;
-    return APPID_SUCCESS;
+    return add_service(asd, args.pkt, args.dir, APP_ID_BITTORRENT);
 
 fail:
     fail_service(asd, args.pkt, args.dir);

@@ -25,7 +25,9 @@
 #include <map>
 #include <string>
 
+#include "app_info_table.h"
 #include "appid_api.h"
+#include "appid_app_descriptor.h"
 #include "application_ids.h"
 #include "length_app_cache.h"
 #include "service_state.h"
@@ -34,7 +36,6 @@
 struct AppIdServiceSubtype;
 class ClientDetector;
 class ServiceDetector;
-class AppInfoManager;
 class AppIdHttpSession;
 
 using AppIdFreeFCN = void (*)(void*);
@@ -46,6 +47,8 @@ const uint8_t* service_strstr(const uint8_t* haystack, unsigned haystack_len,
 #define HTTP_PREFIX "http://"
 
 #define SF_DEBUG_FILE   stdout
+#define MIN_SFTP_PACKET_COUNT   30
+#define MAX_SFTP_PACKET_COUNT   55
 
 #define APPID_SESSION_DATA_NONE                  0
 #define APPID_SESSION_DATA_DHCP_FP_DATA          2
@@ -78,9 +81,6 @@ enum AppIdFlowStatusCodes
 };
 
 #define MAX_SESSION_LOGGING_ID_LEN    (39+1+5+4+39+1+5+1+3+1+1+1+2+1+10+1+1+1+10+1)
-
-#define MIN_SFTP_PACKET_COUNT   30
-#define MAX_SFTP_PACKET_COUNT   55
 
 enum APPID_DISCOVERY_STATE
 {
@@ -148,8 +148,6 @@ struct DnsSession
                                     // lookup)
 };
 
-struct _AppIdServiceSubtype;
-
 struct TlsSession
 {
     char* tls_host = nullptr;
@@ -159,6 +157,7 @@ struct TlsSession
     char* tls_orgUnit = nullptr;
     int tls_orgUnit_strlen = 0;
 };
+
 
 class AppIdSession : public FlowData
 {
@@ -170,11 +169,13 @@ public:
     static AppIdSession* create_future_session(const Packet*, const SfIp*, uint16_t, const SfIp*,
         uint16_t, IpProtocol, int16_t, int);
 
-    AppIdConfig* config = nullptr;
-    CommonAppIdData common;
+    uint32_t session_id = 0;
     Flow* flow = nullptr;
+    AppIdConfig* config = nullptr;
     std::map<unsigned, AppIdFlowData*> flow_data;
     AppInfoManager* app_info_mgr = nullptr;
+    CommonAppIdData common;
+    uint16_t session_packet_count = 0;
 
     SfIp service_ip;
     uint16_t service_port = 0;
@@ -184,27 +185,20 @@ public:
     // AppId matching service side
     APPID_DISCOVERY_STATE service_disco_state = APPID_DISCO_STATE_NONE;
     SESSION_SERVICE_SEARCH_STATE service_search_state = SESSION_SERVICE_SEARCH_STATE::START;
-    AppId service_app_id = APP_ID_NONE;
-    AppId port_service_id = APP_ID_NONE;
     ServiceDetector* service_detector = nullptr;
-    char* service_vendor = nullptr;
-    char* service_version = nullptr;
     AppIdServiceSubtype* subtype = nullptr;
-    char* netbios_name = nullptr;
     std::vector<ServiceDetector*> service_candidates;
-    bool got_incompatible_services = false;
+    ServiceAppDescriptor service;
+    ClientAppDescriptor client;
+    PayloadAppDescriptor payload;
 
     // AppId matching client side
     APPID_DISCOVERY_STATE client_disco_state = APPID_DISCO_STATE_NONE;
-    AppId client_app_id = APP_ID_NONE;
-    AppId client_service_app_id = APP_ID_NONE;
-    char* client_version = nullptr;
+    AppId client_inferred_service_id = APP_ID_NONE;
     ClientDetector* client_detector = nullptr;
     std::map<std::string, ClientDetector*> client_candidates;
     bool tried_reverse_service = false;
 
-    // AppId matching payload
-    AppId payload_app_id = APP_ID_NONE;
     AppId referred_payload_app_id = APP_ID_NONE;
     AppId misc_app_id = APP_ID_NONE;
 
@@ -212,21 +206,17 @@ public:
     AppId tp_app_id = APP_ID_NONE;
     AppId tp_payload_app_id = APP_ID_NONE;
 
-    char* username = nullptr;
-    AppId username_service = APP_ID_NONE;
+    // FIXIT-M netbios_name is never set to a valid value
+    char* netbios_name = nullptr;
     char* netbios_domain = nullptr;
-    uint32_t session_id = 0;
+
     AppIdHttpSession* hsession = nullptr;
     TlsSession* tsession = nullptr;
     unsigned scan_flags = 0;
-    AppId referred_app_id = APP_ID_NONE;
-    AppId temp_app_id = APP_ID_NONE;
     void* tpsession = nullptr;
     uint16_t init_tpPackets = 0;
     uint16_t resp_tpPackets = 0;
     bool tp_reinspect_by_initiator = false;
-    char* payload_version = nullptr;
-    uint16_t session_packet_count = 0;
     int16_t snort_id = 0;
 
     /* Length-based detectors. */
@@ -246,11 +236,11 @@ public:
     //appIds picked from encrypted session.
     struct
     {
-        AppId service_app_id;
-        AppId client_app_id;
-        AppId payload_app_id;
-        AppId misc_app_id;
-        AppId referred_app_id;
+        AppId service_id;
+        AppId client_id;
+        AppId payload_id;
+        AppId misc_id;
+        AppId referred_id;
     } encrypted = { APP_ID_NONE, APP_ID_NONE, APP_ID_NONE, APP_ID_NONE, APP_ID_NONE };
 
     // New fields introduced for DNS Blacklisting
@@ -304,10 +294,10 @@ public:
 
     bool is_ssl_session_decrypted();
     void examine_ssl_metadata(Packet*);
-    void set_client_app_id_data(AppId, char*);
+    void set_client_appid_data(AppId, char*);
     void set_service_appid_data(AppId, char*, char*);
     void set_referred_payload_app_id_data(AppId);
-    void set_payload_app_id_data(ApplicationId, char*);
+    void set_payload_app_id_data(AppId, char*);
     void check_app_detection_restart();
     void update_encrypted_app_id(AppId);
     void examine_rtmp_metadata();

@@ -181,7 +181,7 @@ public:
     SO_PRIVATE ~AppIdApi() { }
 
     AppIdSession* get_appid_session(Flow*);
-    const char* get_application_name(int32_t app_id);
+    const char* get_application_name(AppId app_id);
     const char* get_application_name(Flow*, bool from_client);
     AppId get_application_id(const char* appName);
     AppId get_service_app_id(AppIdSession*);
@@ -199,11 +199,11 @@ public:
     bool is_ssl_session_decrypted(AppIdSession*);
     bool is_appid_inspecting_session(AppIdSession*);
     bool is_appid_available(AppIdSession*);
-    char* get_user_name(AppIdSession*, AppId* service, bool* isLoginSuccessful);
-    char* get_client_version(AppIdSession*);
+    const char* get_user_name(AppIdSession*, AppId* service, bool* isLoginSuccessful);
+    const char* get_client_version(AppIdSession*);
     uint64_t get_appid_session_attribute(AppIdSession*, uint64_t flag);
     APPID_FLOW_TYPE get_flow_type(AppIdSession*);
-    void get_service_info(AppIdSession*, char** serviceVendor, char** serviceVersion,
+    void get_service_info(AppIdSession*, const char** vendor, const char** version,
         AppIdServiceSubtype**);
     short get_service_port(AppIdSession*);
     SfIp* get_service_ip(AppIdSession*);

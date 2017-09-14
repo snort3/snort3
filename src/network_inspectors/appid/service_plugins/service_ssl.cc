@@ -28,7 +28,6 @@
 #include <openssl/x509.h>
 #include <mutex>
 
-#include "appid_module.h"
 #include "app_info_table.h"
 #include "protocols/packet.h"
 
@@ -924,10 +923,7 @@ success:
 
         ss->host_name = ss->common_name = ss->org_name = nullptr;
     }
-    add_service(asd, args.pkt, dir, getSslServiceAppId(args.pkt->ptrs.sp),
-        nullptr, nullptr, nullptr);
-    appid_stats.ssl_flows++;
-    return APPID_SUCCESS;
+    return add_service(asd, args.pkt, dir, getSslServiceAppId(args.pkt->ptrs.sp));
 }
 
 AppId getSslServiceAppId(short srcPort)
@@ -1152,10 +1148,10 @@ bool setSSLSquelch(Packet* p, int type, AppId appId)
     switch (type)
     {
     case 1:
-        f->payload_app_id = appId;
+        f->payload.set_id(appId);
         break;
     case 2:
-        f->client_app_id = appId;
+        f->client.set_id(appId);
         f->client_disco_state = APPID_DISCO_STATE_FINISHED;
         break;
     default:

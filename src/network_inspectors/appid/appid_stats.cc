@@ -132,7 +132,7 @@ void AppIdStatistics::dump_statistics()
                 struct AppIdStatRecord* record;
 
                 record = (struct AppIdStatRecord*)node->data;
-                app_id = record->app_id;
+                app_id = (AppId)record->app_id;
 
                 if ( app_id >= 2000000000 )
                 {
@@ -277,14 +277,14 @@ void AppIdStatistics::update(AppIdSession* asd)
     if ( web_app_id > APP_ID_NONE )
         update_stats(asd, web_app_id, bucket);
 
-    AppId service_app_id = asd->pick_service_app_id();
-    if ( service_app_id && ( service_app_id != web_app_id ) )
-        update_stats(asd, service_app_id, bucket);
+    AppId service_id = asd->pick_service_app_id();
+    if ( service_id && ( service_id != web_app_id ) )
+        update_stats(asd, service_id, bucket);
 
-    AppId client_app_id = asd->pick_client_app_id();
-    if ( client_app_id > APP_ID_NONE && client_app_id != service_app_id
-        && client_app_id != web_app_id )
-        update_stats(asd, client_app_id, bucket);
+    AppId client_id = asd->pick_client_app_id();
+    if ( client_id > APP_ID_NONE && client_id != service_id
+        && client_id != web_app_id )
+        update_stats(asd, client_id, bucket);
 }
 
 void AppIdStatistics::flush()

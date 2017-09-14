@@ -25,8 +25,6 @@
 
 #include "service_irc.h"
 
-#include "appid_module.h"
-
 #define IRC_COUNT_THRESHOLD 10
 
 static const char* const IRC_USER="USER ";
@@ -291,9 +289,7 @@ inprocess:
     return APPID_INPROCESS;
 
 success:
-    add_service(asd, args.pkt, dir, APP_ID_IRCD, nullptr, nullptr, nullptr);
-    appid_stats.irc_flows++;
-    return APPID_SUCCESS;
+    return add_service(asd, args.pkt, dir, APP_ID_IRCD);
 
 fail:
     if (dir == APP_ID_FROM_RESPONDER)

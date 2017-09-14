@@ -43,7 +43,7 @@ AppIdSession* AppIdApi::get_appid_session(Flow* flow)
            asd : nullptr;
 }
 
-const char* AppIdApi::get_application_name(int32_t app_id)
+const char* AppIdApi::get_application_name(AppId app_id)
 {
     return AppInfoManager::get_instance().get_app_name(app_id);
 }
@@ -55,24 +55,23 @@ const char* AppIdApi::get_application_name(Flow* flow, bool from_client)
 
     if ( asd )
     {
-
-        if ( asd->payload_app_id )
-            app_name = AppInfoManager::get_instance().get_app_name(asd->payload_app_id);
+        if ( asd->payload.get_id() )
+            app_name = AppInfoManager::get_instance().get_app_name(asd->payload.get_id());
         else if ( asd->misc_app_id )
             app_name = AppInfoManager::get_instance().get_app_name(asd->misc_app_id);
         else if ( from_client )
         {
-            if ( asd->client_app_id )
-                app_name = AppInfoManager::get_instance().get_app_name(asd->client_app_id);
+            if ( asd->client.get_id() )
+                app_name = AppInfoManager::get_instance().get_app_name(asd->client.get_id());
             else
-                app_name = AppInfoManager::get_instance().get_app_name(asd->service_app_id);
+                app_name = AppInfoManager::get_instance().get_app_name(asd->service.get_id());
         }
         else
         {
-            if ( asd->service_app_id )
-                app_name = AppInfoManager::get_instance().get_app_name(asd->service_app_id);
+            if ( asd->service.get_id() )
+                app_name = AppInfoManager::get_instance().get_app_name(asd->service.get_id());
             else
-                app_name = AppInfoManager::get_instance().get_app_name(asd->client_app_id);
+                app_name = AppInfoManager::get_instance().get_app_name(asd->client.get_id());
         }
     }
 
@@ -95,7 +94,7 @@ AppId AppIdApi::get_service_app_id(AppIdSession* asd)
 AppId AppIdApi::get_port_service_app_id(AppIdSession* asd)
 {
     if (asd)
-        return asd->port_service_id;
+        return asd->service.get_port_service_id();
     return APP_ID_NONE;
 }
 
@@ -209,7 +208,7 @@ bool AppIdApi::is_appid_inspecting_session(AppIdSession* asd)
             return true;
         }
 
-        if (asd->tp_app_id == APP_ID_SSH && asd->payload_app_id != APP_ID_SFTP &&
+        if (asd->tp_app_id == APP_ID_SSH && asd->payload.get_id() != APP_ID_SFTP &&
             asd->session_packet_count < MAX_SFTP_PACKET_COUNT)
         {
             return true;
@@ -219,17 +218,13 @@ bool AppIdApi::is_appid_inspecting_session(AppIdSession* asd)
     return false;
 }
 
-char* AppIdApi::get_user_name(AppIdSession* asd, AppId* service, bool* isLoginSuccessful)
+const char* AppIdApi::get_user_name(AppIdSession* asd, AppId* service, bool* isLoginSuccessful)
 {
-    char* userName = nullptr;
     if (asd)
     {
-        userName = asd->username;
-        *service = asd->username_service;
+        *service = asd->client.get_user_id();
         *isLoginSuccessful = asd->get_session_flags(APPID_SESSION_LOGIN_SUCCEEDED) ? true : false;
-        //FIXIT-L: what is this ownership transfer about, doesn't smell right...
-        asd->username = nullptr; //transfer ownership to caller.
-        return userName;
+        return asd->client.get_username();
     }
     return nullptr;
 }
@@ -245,9 +240,9 @@ bool AppIdApi::is_appid_available(AppIdSession* asd)
     return false;
 }
 
-char* AppIdApi::get_client_version(AppIdSession* asd)
+const char* AppIdApi::get_client_version(AppIdSession* asd)
 {
-    return asd ? asd->client_version : nullptr;
+    return asd ? asd->client.get_version() : nullptr;
 }
 
 uint64_t AppIdApi::get_appid_session_attribute(AppIdSession* asd, uint64_t flags)
@@ -260,20 +255,20 @@ APPID_FLOW_TYPE AppIdApi::get_flow_type(AppIdSession* asd)
     return asd ? asd->common.flow_type : APPID_FLOW_TYPE_IGNORE;
 }
 
-void AppIdApi::get_service_info(AppIdSession* asd, char** serviceVendor, char** serviceVersion,
-    AppIdServiceSubtype** serviceSubtype)
+void AppIdApi::get_service_info(AppIdSession* asd, const char** vendor, const char** version,
+    AppIdServiceSubtype** subtype)
 {
     if (asd)
     {
-        *serviceVendor = asd->service_vendor;
-        *serviceVersion = asd->service_version;
-        *serviceSubtype = asd->subtype;
+        *vendor = asd->service.get_vendor();
+        *version = asd->service.get_version();
+        *subtype = asd->subtype;
     }
     else
     {
-        *serviceVendor = nullptr;
-        *serviceVersion = nullptr;
-        *serviceSubtype = nullptr;
+        *vendor = nullptr;
+        *version = nullptr;
+        *subtype = nullptr;
     }
 }
 
@@ -541,12 +536,12 @@ uint32_t AppIdApi::produce_ha_state(Flow* flow, uint8_t* buf)
         if (asd->get_session_flags(APPID_SESSION_HTTP_SESSION))
             appHA->flags |= APPID_HA_FLAGS_HTTP;
         appHA->appId[0] = asd->tp_app_id;
-        appHA->appId[1] = asd->service_app_id;
-        appHA->appId[2] = asd->client_service_app_id;
-        appHA->appId[3] = asd->port_service_id;
-        appHA->appId[4] = asd->payload_app_id;
+        appHA->appId[1] = asd->service.get_id();
+        appHA->appId[2] = asd->client_inferred_service_id;
+        appHA->appId[3] = asd->service.get_port_service_id();
+        appHA->appId[4] = asd->payload.get_id();
         appHA->appId[5] = asd->tp_payload_app_id;
-        appHA->appId[6] = asd->client_app_id;
+        appHA->appId[6] = asd->client.get_id();
         appHA->appId[7] = asd->misc_app_id;
     }
     else
@@ -568,8 +563,8 @@ uint32_t AppIdApi::consume_ha_state(Flow* flow, const uint8_t* buf, uint8_t, IpP
         {
             asd = new AppIdSession(proto, ip, port);
             flow->set_flow_data(asd);
-            asd->service_app_id = appHA->appId[1];
-            if (asd->service_app_id == APP_ID_FTP_CONTROL)
+            asd->service.set_id(appHA->appId[1]);
+            if (asd->service.get_id() == APP_ID_FTP_CONTROL)
             {
                 asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED |
                     APPID_SESSION_NOT_A_SERVICE | APPID_SESSION_SERVICE_DETECTED);
@@ -597,12 +592,12 @@ uint32_t AppIdApi::consume_ha_state(Flow* flow, const uint8_t* buf, uint8_t, IpP
             asd->set_session_flags(APPID_SESSION_HTTP_SESSION);
 
         asd->tp_app_id = appHA->appId[0];
-        asd->service_app_id = appHA->appId[1];
-        asd->client_service_app_id = appHA->appId[2];
-        asd->port_service_id = appHA->appId[3];
-        asd->payload_app_id = appHA->appId[4];
+        asd->service.set_id(appHA->appId[1]);
+        asd->client_inferred_service_id = appHA->appId[2];
+        asd->service.set_port_service_id(appHA->appId[3]);
+        asd->payload.set_id(appHA->appId[4]);
         asd->tp_payload_app_id = appHA->appId[5];
-        asd->client_app_id = appHA->appId[6];
+        asd->client.set_id(appHA->appId[6]);
         asd->misc_app_id = appHA->appId[7];
     }
     return sizeof(*appHA);

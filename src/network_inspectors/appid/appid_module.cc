@@ -27,6 +27,8 @@
 
 #include <limits.h>
 
+#include "app_info_table.h"
+#include "appid_peg_counts.h"
 #include "log/messages.h"
 #include "profiler/profiler.h"
 #include "utils/util.h"
@@ -37,91 +39,7 @@ using namespace std;
 // appid module
 //-------------------------------------------------------------------------
 
-unsigned long app_id_ignored_packet_count = 0;
-
 THREAD_LOCAL ProfileStats appidPerfStats;
-
-// FIXIT-M define and implement a flexible solution for maintaining protocol specific stats
-const PegInfo appid_pegs[] =
-{
-    { CountType::SUM, "packets", "count of packets received" },
-    { CountType::SUM, "processed_packets", "count of packets processed" },
-    { CountType::SUM, "ignored_packets", "count of packets ignored" },
-    { CountType::SUM, "aim_clients", "count of aim clients discovered" },
-    { CountType::SUM, "battlefield_flows", "count of battle field flows discovered" },
-    { CountType::SUM, "bgp_flows", "count of bgp flows discovered" },
-    { CountType::SUM, "bit_clients", "count of bittorrent clients discovered" },
-    { CountType::SUM, "bit_flows", "count of bittorrent flows discovered" },
-    { CountType::SUM, "bittracker_clients", "count of bittorrent tracker clients discovered" },
-    { CountType::SUM, "bootp_flows", "count of bootp flows discovered" },
-    { CountType::SUM, "dcerpc_tcp_flows", "count of dce rpc flows over tcp discovered" },
-    { CountType::SUM, "dcerpc_udp_flows", "count of dce rpc flows over udp discovered" },
-    { CountType::SUM, "direct_connect_flows", "count of direct connect flows discovered" },
-    { CountType::SUM, "dns_tcp_flows", "count of dns flows over tcp discovered" },
-    { CountType::SUM, "dns_udp_flows", "count of dns flows over udp discovered" },
-    { CountType::SUM, "ftp_flows", "count of ftp flows discovered" },
-    { CountType::SUM, "ftps_flows", "count of ftps flows discovered" },
-    { CountType::SUM, "http_flows", "count of http flows discovered" },
-    { CountType::SUM, "imap_flows", "count of imap service flows discovered" },
-    { CountType::SUM, "imaps_flows", "count of imap TLS service flows discovered" },
-    { CountType::SUM, "irc_flows", "count of irc service flows discovered" },
-    { CountType::SUM, "kerberos_clients", "count of kerberos clients discovered" },
-    { CountType::SUM, "kerberos_flows", "count of kerberos service flows discovered" },
-    { CountType::SUM, "kerberos_users", "count of kerberos users discovered" },
-    { CountType::SUM, "lpr_flows", "count of lpr service flows discovered" },
-    { CountType::SUM, "mdns_flows", "count of mdns service flows discovered" },
-    { CountType::SUM, "msn_clients", "count of msn clients discovered" },
-    { CountType::SUM, "mysql_flows", "count of mysql service flows discovered" },
-    { CountType::SUM, "netbios_dgm_flows", "count of netbios-dgm service flows discovered" },
-    { CountType::SUM, "netbios_ns_flows", "count of netbios-ns service flows discovered" },
-    { CountType::SUM, "netbios_ssn_flows", "count of netbios-ssn service flows discovered" },
-    { CountType::SUM, "nntp_flows", "count of nntp flows discovered" },
-    { CountType::SUM, "ntp_flows", "count of ntp flows discovered" },
-    { CountType::SUM, "pop_flows", "count of pop service flows discovered" },
-    { CountType::SUM, "pop3_clients", "count of pop3 clients discovered" },
-    { CountType::SUM, "pop3s_clients", "count of pop3s clients discovered" },
-    { CountType::SUM, "radius_flows", "count of radius flows discovered" },
-    { CountType::SUM, "rexec_flows", "count of rexec flows discovered" },
-    { CountType::SUM, "rfb_flows", "count of rfb flows discovered" },
-    { CountType::SUM, "rlogin_flows", "count of rlogin flows discovered" },
-    { CountType::SUM, "rpc_flows", "count of rpc flows discovered" },
-    { CountType::SUM, "rshell_flows", "count of rshell flows discovered" },
-    { CountType::SUM, "rsync_flows", "count of rsync service flows discovered" },
-    { CountType::SUM, "rtmp_flows", "count of rtmp flows discovered" },
-    { CountType::SUM, "rtp_clients", "count of rtp clients discovered" },
-    { CountType::SUM, "sip_clients", "count of SIP clients discovered" },
-    { CountType::SUM, "sip_flows", "count of SIP flows discovered" },
-    { CountType::SUM, "smtp_aol_clients", "count of AOL smtp clients discovered" },
-    { CountType::SUM, "smtp_applemail_clients", "count of Apple Mail smtp clients discovered" },
-    { CountType::SUM, "smtp_eudora_clients", "count of Eudora smtp clients discovered" },
-    { CountType::SUM, "smtp_eudora_pro_clients", "count of Eudora Pro smtp clients discovered" },
-    { CountType::SUM, "smtp_evolution_clients", "count of Evolution smtp clients discovered" },
-    { CountType::SUM, "smtp_kmail_clients", "count of KMail smtp clients discovered" },
-    { CountType::SUM, "smtp_lotus_notes_clients", "count of Lotus Notes smtp clients discovered" },
-    { CountType::SUM,
-        "smtp_microsoft_outlook_clients", "count of Microsoft Outlook smtp clients discovered" },
-    { CountType::SUM, "smtp_microsoft_outlook_express_clients",
-        "count of Microsoft Outlook Express smtp clients discovered" },
-    { CountType::SUM, "smtp_microsoft_outlook_imo_clients",
-        "count of Microsoft Outlook IMO smtp clients discovered" },
-    { CountType::SUM, "smtp_mutt_clients", "count of Mutt smtp clients discovered" },
-    { CountType::SUM, "smtp_thunderbird_clients", "count of Thunderbird smtp clients discovered" },
-    { CountType::SUM, "smtp_flows", "count of smtp flows discovered" },
-    { CountType::SUM, "smtps_flows", "count of smtps flows discovered" },
-    { CountType::SUM, "snmp_flows", "count of snmp flows discovered" },
-    { CountType::SUM, "ssh_clients", "count of ssh clients discovered" },
-    { CountType::SUM, "ssh_flows", "count of ssh flows discovered" },
-    { CountType::SUM, "ssl_flows", "count of ssl flows discovered" },
-    { CountType::SUM, "telnet_flows", "count of telnet flows discovered" },
-    { CountType::SUM, "tftp_flows", "count of tftp flows discovered" },
-    { CountType::SUM, "timbuktu_clients", "count of timbuktu clients discovered" },
-    { CountType::SUM, "timbuktu_flows", "count of timbuktu flows discovered" },
-    { CountType::SUM, "tns_clients", "count of tns clients discovered" },
-    { CountType::SUM, "tns_flows", "count of tns flows discovered" },
-    { CountType::SUM, "vnc_clients", "count of vnc clients discovered" },
-    { CountType::SUM, "yahoo_messenger_clients", "count of Yahoo Messenger clients discovered" },
-    { CountType::END, nullptr, nullptr }
-};
 
 static const Parameter session_log_filter[] =
 {
@@ -189,6 +107,7 @@ AppIdModule::AppIdModule() :
 
 AppIdModule::~AppIdModule()
 {
+    AppIdPegCounts::cleanup_peg_info();
 }
 
 ProfileStats* AppIdModule::get_profile() const
@@ -257,20 +176,18 @@ bool AppIdModule::begin(const char* /*fqn*/, int, SnortConfig*)
 bool AppIdModule::end(const char*, int, SnortConfig*)
 {
     if ( (config == nullptr) || (config->app_detector_dir == nullptr) )
-    {
         ParseWarning(WARN_CONF,"no app_detector_dir present.  No support for appid in rules.\n");
-    }
 
     return true;
 }
 
 const PegInfo* AppIdModule::get_pegs() const
 {
-    return appid_pegs;
+    return AppIdPegCounts::get_peg_info();
 }
 
 PegCount* AppIdModule::get_counts() const
 {
-    return (PegCount*)&appid_stats;
+    return AppIdPegCounts::get_peg_counts();
 }
 

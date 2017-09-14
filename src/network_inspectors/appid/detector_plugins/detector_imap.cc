@@ -25,7 +25,6 @@
 
 #include "detector_imap.h"
 
-#include "appid_module.h"
 #include "app_info_table.h"
 #include "search_engines/search_tool.h"
 #include "utils/util.h"
@@ -874,30 +873,17 @@ int ImapServiceDetector::validate(AppIdDiscoveryArgs& args)
     {
         args.asd->clear_session_flags(APPID_SESSION_CONTINUE);
         if (args.asd->is_service_detected())
-        {
-            appid_stats.imap_flows++;
             return APPID_SUCCESS;
-        }
     }
 
     if (!imap_server_validate(dd, args.data, args.size, args.asd, this))
     {
         if ((id->flags & IMAP_FLAG_RESULT_OK) &&
             dd->client.state == IMAP_CLIENT_STATE_STARTTLS_CMD)
-        {
-            /* IMAP server response to STARTTLS command from client was OK */
-            add_service(args.asd, args.pkt, args.dir, APP_ID_IMAPS, nullptr, nullptr, nullptr);
-            appid_stats.imaps_flows++;
-            return APPID_SUCCESS;
-        }
+            return add_service(args.asd, args.pkt, args.dir, APP_ID_IMAPS);
 
-        if (id->count >= IMAP_COUNT_THRESHOLD &&
-            !args.asd->is_service_detected())
-        {
-            add_service(args.asd, args.pkt, args.dir, APP_ID_IMAP, nullptr, nullptr, nullptr);
-            appid_stats.imap_flows++;
-            return APPID_SUCCESS;
-        }
+        if (id->count >= IMAP_COUNT_THRESHOLD && !args.asd->is_service_detected())
+            return add_service(args.asd, args.pkt, args.dir, APP_ID_IMAP);
     }
     else if (!args.asd->is_service_detected())
     {

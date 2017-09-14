@@ -23,7 +23,6 @@
 
 #include "detector_smtp.h"
 
-#include "appid_module.h"
 #include "application_ids.h"
 #include "app_info_table.h"
 #include "protocols/packet.h"
@@ -79,7 +78,6 @@ struct ServiceSMTPData
     SMTPServiceState state;
     int code;
     int multiline;
-    bool detected;
 };
 
 struct SMTPDetectorData
@@ -187,9 +185,9 @@ SmtpClientDetector::~SmtpClientDetector()
  *              including the NUL terminating character.
  */
 // FIXIT-M - refactor this to reduce the number of function parameters
-int SmtpClientDetector::extract_version_and_add_client_app(ApplicationId clientId, const int prefix_len,
+int SmtpClientDetector::extract_version_and_add_client_app(AppId clientId, const int prefix_len,
     const uint8_t* product, const uint8_t* product_end, ClientSMTPData* const client_data,
-    AppIdSession* asd, AppId appId, PegCount* stat_counter)
+    AppIdSession* asd, AppId appId)
 {
     uint8_t* v_end = client_data->version + MAX_VERSION_SIZE - 1;
 
@@ -203,7 +201,6 @@ int SmtpClientDetector::extract_version_and_add_client_app(ApplicationId clientI
         *v = *p;
     *v = 0;
     add_app(asd, appId, clientId, (char*)client_data->version);
-    (*stat_counter)++;
     return 0;
 }
 
@@ -234,8 +231,7 @@ int SmtpClientDetector::identify_client_version(ClientSMTPData* const fd, const 
                 if (p >= data_end || *p != ' ')
                     return 1;
                 return extract_version_and_add_client_app(APP_ID_OUTLOOK,
-                    2, p, data_end, fd, asd, appId,
-                    &appid_stats.smtp_microsoft_outlook_clients);
+                    2, p, data_end, fd, asd, appId);
             }
             else if (*p == ' ')
             {
@@ -243,14 +239,12 @@ int SmtpClientDetector::identify_client_version(ClientSMTPData* const fd, const 
                 if (data_end-p >= (int)sizeof(EXPRESS) && memcmp(p, EXPRESS, sizeof(EXPRESS)-1) == 0)
                 {
                     return extract_version_and_add_client_app(APP_ID_OUTLOOK_EXPRESS,
-                        sizeof(EXPRESS), p, data_end, fd, asd, appId,
-                        &appid_stats.smtp_microsoft_outlook_express_clients);
+                        sizeof(EXPRESS), p, data_end, fd, asd, appId);
                 }
                 else if (data_end-p >= (int)sizeof(IMO) && memcmp(p, IMO, sizeof(IMO)-1) == 0)
                 {
                     return extract_version_and_add_client_app(APP_ID_OUTLOOK,
-                        sizeof(IMO), p, data_end, fd, asd, appId,
-                        &appid_stats.smtp_microsoft_outlook_imo_clients);
+                        sizeof(IMO), p, data_end, fd, asd, appId);
                 }
             }
         }
@@ -259,15 +253,13 @@ int SmtpClientDetector::identify_client_version(ClientSMTPData* const fd, const 
         sizeof(APP_SMTP_EVOLUTION)-1) == 0)
     {
         return extract_version_and_add_client_app(APP_ID_EVOLUTION,
-            sizeof(APP_SMTP_EVOLUTION), product, data_end, fd, asd, appId,
-            &appid_stats.smtp_evolution_clients);
+            sizeof(APP_SMTP_EVOLUTION), product, data_end, fd, asd, appId);
     }
     else if (len >= sizeof(APP_SMTP_LOTUS_NOTES) && memcmp(product, APP_SMTP_LOTUS_NOTES,
         sizeof(APP_SMTP_LOTUS_NOTES)-1) == 0)
     {
         return extract_version_and_add_client_app(APP_ID_LOTUS_NOTES,
-            sizeof(APP_SMTP_LOTUS_NOTES), product, data_end, fd, asd, appId,
-            &appid_stats.smtp_lotus_notes_clients);
+            sizeof(APP_SMTP_LOTUS_NOTES), product, data_end, fd, asd, appId);
     }
     else if (len >= sizeof(APP_SMTP_APPLEMAIL) && memcmp(product, APP_SMTP_APPLEMAIL,
         sizeof(APP_SMTP_APPLEMAIL)-1) == 0)
@@ -284,57 +276,49 @@ int SmtpClientDetector::identify_client_version(ClientSMTPData* const fd, const 
         *v = 0;
 
         add_app(asd, appId, APP_ID_APPLE_EMAIL, (char*)fd->version);
-        appid_stats.smtp_applemail_clients++;
         return 0;
     }
     else if (len >= sizeof(APP_SMTP_EUDORA) && memcmp(product, APP_SMTP_EUDORA,
         sizeof(APP_SMTP_EUDORA)-1) == 0)
     {
         return extract_version_and_add_client_app(APP_ID_EUDORA,
-            sizeof(APP_SMTP_EUDORA), product, data_end, fd, asd, appId,
-            &appid_stats.smtp_eudora_clients);
+            sizeof(APP_SMTP_EUDORA), product, data_end, fd, asd, appId);
     }
     else if (len >= sizeof(APP_SMTP_EUDORAPRO) && memcmp(product, APP_SMTP_EUDORAPRO,
         sizeof(APP_SMTP_EUDORAPRO)-1) == 0)
     {
         return extract_version_and_add_client_app(APP_ID_EUDORA_PRO,
-            sizeof(APP_SMTP_EUDORAPRO), product, data_end, fd, asd, appId,
-            &appid_stats.smtp_eudora_pro_clients);
+            sizeof(APP_SMTP_EUDORAPRO), product, data_end, fd, asd, appId);
     }
     else if (len >= sizeof(APP_SMTP_AOL) && memcmp(product, APP_SMTP_AOL,
         sizeof(APP_SMTP_AOL)-1) == 0)
     {
         return extract_version_and_add_client_app(APP_ID_AOL_EMAIL,
-            sizeof(APP_SMTP_AOL), product, data_end, fd, asd, appId,
-            &appid_stats.smtp_aol_clients);
+            sizeof(APP_SMTP_AOL), product, data_end, fd, asd, appId);
     }
     else if (len >= sizeof(APP_SMTP_MUTT) && memcmp(product, APP_SMTP_MUTT,
         sizeof(APP_SMTP_MUTT)-1) == 0)
     {
         return extract_version_and_add_client_app(APP_ID_MUTT,
-            sizeof(APP_SMTP_MUTT), product, data_end, fd, asd, appId,
-            &appid_stats.smtp_mutt_clients);
+            sizeof(APP_SMTP_MUTT), product, data_end, fd, asd, appId);
     }
     else if (len >= sizeof(APP_SMTP_KMAIL) && memcmp(product, APP_SMTP_KMAIL,
         sizeof(APP_SMTP_KMAIL)-1) == 0)
     {
         return extract_version_and_add_client_app(APP_ID_KMAIL,
-            sizeof(APP_SMTP_KMAIL), product, data_end, fd, asd, appId,
-            &appid_stats.smtp_kmail_clients);
+            sizeof(APP_SMTP_KMAIL), product, data_end, fd, asd, appId);
     }
     else if (len >= sizeof(APP_SMTP_THUNDERBIRD) && memcmp(product, APP_SMTP_THUNDERBIRD,
         sizeof(APP_SMTP_THUNDERBIRD)-1) == 0)
     {
         return extract_version_and_add_client_app(APP_ID_THUNDERBIRD,
-            sizeof(APP_SMTP_THUNDERBIRD), product, data_end, fd, asd, appId,
-            &appid_stats.smtp_thunderbird_clients);
+            sizeof(APP_SMTP_THUNDERBIRD), product, data_end, fd, asd, appId);
     }
     else if (len >= sizeof(APP_SMTP_MTHUNDERBIRD) && memcmp(product, APP_SMTP_MTHUNDERBIRD,
         sizeof(APP_SMTP_MTHUNDERBIRD)-1) == 0)
     {
         return extract_version_and_add_client_app(APP_ID_THUNDERBIRD,
-            sizeof(APP_SMTP_MTHUNDERBIRD), product, data_end, fd, asd, appId,
-            &appid_stats.smtp_thunderbird_clients);
+            sizeof(APP_SMTP_MTHUNDERBIRD), product, data_end, fd, asd, appId);
     }
     else if (len >= sizeof(APP_SMTP_MOZILLA) && memcmp(product, APP_SMTP_MOZILLA,
         sizeof(APP_SMTP_MOZILLA)-1) == 0)
@@ -349,8 +333,7 @@ int SmtpClientDetector::identify_client_version(ClientSMTPData* const fd, const 
                 {
                     return extract_version_and_add_client_app(
                         APP_ID_THUNDERBIRD, sizeof(APP_SMTP_THUNDERBIRD_SHORT),
-                        p, data_end, fd, asd, appId,
-                        &appid_stats.smtp_thunderbird_clients);
+                        p, data_end, fd, asd, appId);
                 }
             }
         }
@@ -379,7 +362,6 @@ SMTPDetectorData* SmtpClientDetector::get_common_data(AppIdSession* asd)
         dd = (SMTPDetectorData*)snort_calloc(1, sizeof(*dd));
         data_add(asd, dd, &smtp_free_state);
         dd->server.state = SMTP_SERVICE_STATE_CONNECTION;
-        dd->server.detected = false;
         dd->client.state = SMTP_CLIENT_STATE_HELO;
         dd->need_continue = 1;
         asd->set_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
@@ -793,17 +775,10 @@ int SmtpServiceDetector::validate(AppIdDiscoveryArgs& args)
     {
         dd->need_continue--; // don't come through again.
         args.asd->clear_session_flags(APPID_SESSION_CONTINUE);
-        if (dd->client.flags & CLIENT_FLAG_SMTPS)
-        {
-            // client side gave up because everything is encrypted.
-            add_service(args.asd, args.pkt, args.dir,  APP_ID_SMTPS, nullptr, nullptr, nullptr);
+        if ( dd->client.flags & CLIENT_FLAG_SMTPS )    // encrypted session client side gave up
+            return add_service(args.asd, args.pkt, args.dir,  APP_ID_SMTPS);
+        else if ( args.asd->is_service_detected() )    // client done, so we are too
             return APPID_SUCCESS;
-        }
-        else if (args.asd->is_service_detected())
-        {
-            // Client made it's decision so we are totally done.
-            return APPID_SUCCESS;
-        }
         // We arrive here because the service side is not done yet.
     }
 
@@ -888,16 +863,8 @@ success:
     if (dd->need_continue > 0)
         args.asd->set_session_flags(APPID_SESSION_CONTINUE);
 
-    add_service(args.asd, args.pkt, args.dir, APP_ID_SMTP, nullptr, nullptr, nullptr);
-    if (!fd->detected)
-    {
-        if (fd->state == SMTP_SERVICE_STATE_STARTTLS)
-            appid_stats.smtps_flows++;
-        else
-            appid_stats.smtp_flows++;
-        fd->detected = true;
-    }
-    return APPID_SUCCESS;
+    return add_service(args.asd, args.pkt, args.dir,
+        (fd->state == SMTP_SERVICE_STATE_STARTTLS) ? APP_ID_SMTPS : APP_ID_SMTP);
 
 fail:
     fail_service(args.asd, args.pkt, args.dir);

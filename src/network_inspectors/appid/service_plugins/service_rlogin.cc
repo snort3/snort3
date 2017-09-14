@@ -25,7 +25,6 @@
 
 #include "service_rlogin.h"
 
-#include "appid_module.h"
 #include "application_ids.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
@@ -136,9 +135,7 @@ inprocess:
     return APPID_INPROCESS;
 
 success:
-    add_service(asd, pkt, args.dir, APP_ID_RLOGIN, nullptr, nullptr, nullptr);
-    appid_stats.rlogin_flows++;
-    return APPID_SUCCESS;
+    return add_service(asd, pkt, args.dir, APP_ID_RLOGIN);
 
 fail:
     fail_service(asd, pkt, args.dir);

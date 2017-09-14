@@ -23,6 +23,7 @@
 #define APPID_INSPECTOR_H
 
 #include "appid_config.h"
+#include "appid_module.h"
 #include "application_ids.h"
 #include "flow/flow.h"
 
@@ -35,7 +36,7 @@ class AppIdInspector : public Inspector
 {
 public:
 
-    AppIdInspector(const AppIdModuleConfig*);
+    AppIdInspector(AppIdModule&);
     ~AppIdInspector();
     static AppIdInspector* get_inspector();
 

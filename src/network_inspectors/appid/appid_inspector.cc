@@ -27,12 +27,11 @@
 
 #include <openssl/crypto.h>
 
-#include "appid_module.h"
 #include "appid_stats.h"
 #include "appid_session.h"
 #include "appid_discovery.h"
-#include "host_port_app_cache.h"
 #include "app_forecast.h"
+#include "host_port_app_cache.h"
 #include "lua_detector_module.h"
 #include "appid_http_event_handler.h"
 #include "thirdparty_appid_utils.h"
@@ -47,6 +46,7 @@
 #include "log/packet_tracer.h"
 #include "main/snort_config.h"
 #include "managers/inspector_manager.h"
+#include "managers/module_manager.h"
 #include "protocols/packet.h"
 #include "profiler/profiler.h"
 #include "target_based/snort_protocols.h"
@@ -81,10 +81,9 @@ static void add_appid_to_packet_trace(Flow* flow)
     }
 }
 
-AppIdInspector::AppIdInspector(const AppIdModuleConfig* pc)
+AppIdInspector::AppIdInspector(AppIdModule& mod)
 {
-    assert(pc);
-    config = pc;
+    config = mod.get_data();
 }
 
 AppIdInspector::~AppIdInspector()
@@ -132,7 +131,8 @@ bool AppIdInspector::configure(SnortConfig*)
     my_seh = SipEventHandler::create();
     my_seh->subscribe();
 
-    return active_config->init_appid();
+    active_config->init_appid();
+    return true;
 
     // FIXIT-M some of this stuff may be needed in some fashion...
 #ifdef REMOVED_WHILE_NOT_IN_USE
@@ -194,7 +194,7 @@ void AppIdInspector::eval(Packet* p)
 {
     Profile profile(appidPerfStats);
 
-    appid_stats.packets++;
+    AppIdPegCounts::inc_disco_peg(AppIdPegCounts::DiscoveryPegs::PACKETS);
     if (p->flow)
     {
         AppIdDiscovery::do_application_discovery(p);
@@ -202,7 +202,7 @@ void AppIdInspector::eval(Packet* p)
             add_appid_to_packet_trace(p->flow);
     }
     else
-        appid_stats.ignored_packets++;
+        AppIdPegCounts::inc_disco_peg(AppIdPegCounts::DiscoveryPegs::IGNORED_PACKETS);
 }
 
 //-------------------------------------------------------------------------
@@ -229,10 +229,20 @@ static void appid_inspector_pterm()
     openssl_cleanup();
 }
 
+static void appid_inspector_tinit()
+{
+    AppIdPegCounts::init_pegs();
+}
+
+static void appid_inspector_tterm()
+{
+    AppIdPegCounts::cleanup_pegs();
+}
+
 static Inspector* appid_inspector_ctor(Module* m)
 {
-    AppIdModule* mod = (AppIdModule*)m;
-    return new AppIdInspector(mod->get_data());
+	assert(m);
+    return new AppIdInspector((AppIdModule&)*m);
 }
 
 static void appid_inspector_dtor(Inspector* p)
@@ -258,10 +268,10 @@ const InspectApi appid_inspector_api =
     (uint16_t)PktType::ANY_IP,
     nullptr, // buffers
     nullptr, // service
-    appid_inspector_pinit, // pinit
-    appid_inspector_pterm, // pterm
-    nullptr, // tinit
-    nullptr, // tterm
+    appid_inspector_pinit,
+    appid_inspector_pterm,
+    appid_inspector_tinit,
+    appid_inspector_tterm,
     appid_inspector_ctor,
     appid_inspector_dtor,
     nullptr, // ssn
@@ -283,7 +293,7 @@ const BaseApi* nin_appid[] =
 
 // @returns 1 if some appid is found, 0 otherwise.
 //int sslAppGroupIdLookup(void* ssnptr, const char* serverName, const char* commonName,
-//    AppId* serviceAppId, AppId* ClientAppId, AppId* payloadAppId)
+//    AppId* service_id, AppId* client_id, AppId* payload_id)
 int sslAppGroupIdLookup(void*, const char*, const char*, AppId*, AppId*, AppId*)
 {
     // FIXIT-M determine need and proper location for this code when support for ssl is implemented
@@ -291,35 +301,35 @@ int sslAppGroupIdLookup(void*, const char*, const char*, AppId*, AppId*, AppId*)
     //         config assigned to the flow being processed
 #ifdef REMOVED_WHILE_NOT_IN_USE
     AppIdSession* asd;
-    *serviceAppId = *ClientAppId = *payload_app_id = APP_ID_NONE;
+    *service_id = *client_id = *payload_id = APP_ID_NONE;
 
     if (commonName)
     {
-        ssl_scan_cname((const uint8_t*)commonName, strlen(commonName), ClientAppId, payload_app_id,
+        ssl_scan_cname((const uint8_t*)commonName, strlen(commonName), client_id, payload_app_id,
             &AppIdInspector::get_inspector()->get_appid_config()->serviceSslConfig);
     }
     if (serverName)
     {
-        ssl_scan_hostname((const uint8_t*)serverName, strlen(serverName), ClientAppId,
+        ssl_scan_hostname((const uint8_t*)serverName, strlen(serverName), client_id,
             payload_app_id,
             &AppIdInspector::get_inspector()->get_appid_config()->serviceSslConfig);
     }
 
     if (ssnptr && (asd = appid_api.get_appid_session(ssnptr)))
     {
-        *serviceAppId = pick_service_app_id(asd);
-        if (*ClientAppId == APP_ID_NONE)
+        *service_id = pick_service_app_id(asd);
+        if (*client_id == APP_ID_NONE)
         {
-            *ClientAppId = pick_client_app_id(asd);
+            *client_id = pick_client_app_id(asd);
         }
-        if (*payload_app_id == APP_ID_NONE)
+        if (*payload_id == APP_ID_NONE)
         {
-            *payload_app_id = pick_payload_app_id(asd);
+            *payload_id = pick_payload_app_id(asd);
         }
     }
-    if (*serviceAppId != APP_ID_NONE ||
-        *ClientAppId != APP_ID_NONE ||
-        *payload_app_id != APP_ID_NONE)
+    if (*service_id != APP_ID_NONE ||
+        *client_id != APP_ID_NONE ||
+        *payload_id != APP_ID_NONE)
     {
         return 1;
     }
@@ -332,5 +342,5 @@ AppId getOpenAppId(Flow* flow)
 {
     assert(flow);
     AppIdSession* asd = appid_api.get_appid_session(flow);
-    return asd->payload_app_id;
+    return asd->payload.get_id();
 }

@@ -26,7 +26,6 @@
 #include "client_app_aim.h"
 
 #include "app_info_table.h"
-#include "appid_module.h"
 
 #pragma pack(1)
 
@@ -233,7 +232,6 @@ int AimClientDetector::validate(AppIdDiscoveryArgs& args)
                 snprintf(version, sizeof(version), "%d.%d.%d", major, minor, lesser);
                 add_app(args.asd, APP_ID_AOL_INSTANT_MESSENGER, APP_ID_AOL_INSTANT_MESSENGER,
                     version);
-                appid_stats.aim_clients++;
             }
         }
     }
@@ -241,6 +239,7 @@ int AimClientDetector::validate(AppIdDiscoveryArgs& args)
     return APPID_INPROCESS;
 
 bail:
+    // FIXIT-L - why are we setting client detected here?
     args.asd->set_client_detected();
     return APPID_SUCCESS;
 }

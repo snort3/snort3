@@ -303,9 +303,10 @@ void Snort::init(int argc, char** argv)
     // Must be after CodecManager::instantiate()
     if ( !InspectorManager::configure(snort_conf) )
         ParseError("can't initialize inspectors");
-
     else if ( SnortConfig::log_verbose() )
         InspectorManager::print_config(snort_conf);
+
+    ModuleManager::reset_stats(snort_conf);
 
     if (snort_conf->file_mask != 0)
         umask(snort_conf->file_mask);

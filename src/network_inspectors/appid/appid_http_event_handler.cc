@@ -29,8 +29,8 @@
 
 #include <assert.h>
 
+#include "app_info_table.h"
 #include "appid_http_session.h"
-#include "appid_module.h"
 #include "appid_session.h"
 #include "utils/util.h"
 
@@ -169,8 +169,6 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
 
     session->hsession->process_http_packet(direction);
     session->set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_HTTP_SESSION);
-    if (direction == APP_ID_FROM_INITIATOR)
-        appid_stats.http_flows++;
     session->set_application_ids(session->pick_service_app_id(),
         session->pick_client_app_id(), session->pick_payload_app_id(),
         session->pick_misc_app_id());

@@ -24,10 +24,13 @@
 
 #include <mutex>
 #include <unordered_map>
+#include <vector>
 
 #include "application_ids.h"
 
 #include "flow/flow.h"
+#include "framework/counts.h"
+#include "main/thread.h"
 #include "protocols/packet.h"
 #include "utils/util.h"
 
@@ -88,7 +91,6 @@ class AppInfoManager
 {
 public:
     ~AppInfoManager() { }
-
     static AppInfoManager& get_instance()
     {
         static AppInfoManager instance;
@@ -131,7 +133,7 @@ public:
             entry->priority |= priority;
     }
 
-    unsigned get_app_info_priority(AppId app_id)
+    unsigned get_priority(AppId app_id)
     {
         AppInfoTableEntry* entry = get_app_info_entry(app_id);
         return entry ? entry->priority : 0;

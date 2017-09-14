@@ -25,7 +25,6 @@
 
 #include "service_rsync.h"
 
-#include "appid_module.h"
 #include "app_info_table.h"
 
 #define RSYNC_PORT  873
@@ -127,9 +126,7 @@ inprocess:
     return APPID_INPROCESS;
 
 success:
-    add_service(asd, args.pkt, args.dir, APP_ID_RSYNC, nullptr, nullptr, nullptr);
-    appid_stats.rsync_flows++;
-    return APPID_SUCCESS;
+    return add_service(asd, args.pkt, args.dir, APP_ID_RSYNC);
 
 fail:
     fail_service(asd, args.pkt, args.dir);

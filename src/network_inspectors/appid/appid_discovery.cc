@@ -29,9 +29,7 @@
 #include "appid_detector.h"
 #include "app_forecast.h"
 #include "appid_http_session.h"
-#include "app_info_table.h"
 #include "appid_inspector.h"
-#include "appid_module.h"
 #include "appid_session.h"
 #include "appid_utils/ip_funcs.h"
 #include "appid_utils/network_set.h"
@@ -88,6 +86,7 @@ void AppIdDiscovery::release_plugins()
     delete &ClientDiscovery::get_instance();
 }
 
+
 void AppIdDiscovery::register_detector(std::string name, AppIdDetector* cd,  IpProtocol proto)
 {
     // FIXIT-L - check for dup name?
@@ -126,7 +125,7 @@ int AppIdDiscovery::add_service_port(AppIdDetector*, const ServiceDetectorPort&)
     return APPID_EINVALID;
 }
 
-static inline int PENetworkMatch(const SfIp* pktAddr, const PortExclusion* pe)
+static inline int match_pe_network(const SfIp* pktAddr, const PortExclusion* pe)
 {
     const uint32_t* pkt = pktAddr->get_ip6_ptr();
     const uint32_t* nm = pe->netmask.u6_addr32;
@@ -172,7 +171,7 @@ static inline int check_port_exclusion(const Packet* pkt, bool reversed)
             pe;
             pe = (PortExclusion*)sflist_next(&node) )
         {
-            if ( PENetworkMatch(s_ip, pe))
+            if ( match_pe_network(s_ip, pe))
                 return 1;
         }
     }
@@ -189,7 +188,7 @@ static inline int check_port_exclusion(const Packet* pkt, bool reversed)
             pe;
             pe = (PortExclusion*)sflist_next(&node) )
         {
-            if ( PENetworkMatch(s_ip, pe))
+            if ( match_pe_network(s_ip, pe))
                 return 1;
         }
     }
@@ -325,7 +324,7 @@ static bool is_packet_ignored(AppIdSession* asd, Packet* p, int& direction)
         if ( !p->is_rebuilt() )
         {
             // For HTTP/2, only examine packets that have been rebuilt as HTTP/1 packets.
-            appid_stats.ignored_packets++;
+            AppIdPegCounts::inc_disco_peg(AppIdPegCounts::DiscoveryPegs::IGNORED_PACKETS);
             return true;
         }
     }
@@ -344,7 +343,7 @@ static bool is_packet_ignored(AppIdSession* asd, Packet* p, int& direction)
                     asd->hsession->fieldOffset[REQ_COOKIE_FID],
                     asd->hsession->fieldEndOffset[REQ_COOKIE_FID]);
         }
-        appid_stats.ignored_packets++;
+        AppIdPegCounts::inc_disco_peg(AppIdPegCounts::DiscoveryPegs::IGNORED_PACKETS);
         return true;
     }
 
@@ -360,7 +359,7 @@ static uint64_t is_session_monitored(AppIdSession& asd, const Packet* p, int dir
         APPID_SESSION_INITIATOR_SEEN : APPID_SESSION_RESPONDER_SEEN;
 
     flow_flags |= asd.common.flags;
-    // FIXIT-M - the 2.x purpose of this check is stop monitoring a flow after a
+    // FIXIT-M - the 2.x purpose of this check is to stop monitoring a flow after a
     //           reload if the flow ip addresses are no longer configured to be
     //           monitored... this may not apply in snort++, find out and fix
     //           accordingly
@@ -570,14 +569,14 @@ static void lookup_appid_by_host_port(AppIdSession* asd, Packet* p, IpProtocol p
         switch (hv->type)
         {
         case 1:
-            asd->client_app_id = hv->appId;
+            asd->client.set_id(hv->appId);
             asd->client_disco_state = APPID_DISCO_STATE_FINISHED;
             break;
         case 2:
-            asd->payload_app_id = hv->appId;
+            asd->payload.set_id(hv->appId);
             break;
         default:
-            asd->service_app_id = hv->appId;
+            asd->service.set_id(hv->appId);
             asd->sync_with_snort_id(hv->appId, p);
             asd->service_disco_state = APPID_DISCO_STATE_FINISHED;
             asd->client_disco_state = APPID_DISCO_STATE_FINISHED;
@@ -598,7 +597,10 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
 
     AppIdSession* asd = (AppIdSession*)p->flow->get_flow_data(AppIdSession::inspector_id);
     if ( !set_network_attributes(asd, p, protocol, direction) )
+    {
+        AppIdPegCounts::inc_disco_peg(AppIdPegCounts::DiscoveryPegs::IGNORED_PACKETS);
         return;
+    }
 
     if ( is_packet_ignored(asd, p, direction) )
         return;
@@ -656,7 +658,7 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
 
     // FIXIT-L - from this point on we always have a valid ptr to an AppIdSession and a Packet
     //           refactor to pass these as refs and delete any checks for null
-    appid_stats.processed_packets++;
+    AppIdPegCounts::inc_disco_peg(AppIdPegCounts::DiscoveryPegs::PROCESSED_PACKETS);
     asd->session_packet_count++;
 
     if (direction == APP_ID_FROM_INITIATOR)
@@ -674,7 +676,7 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
         {
             asd->set_session_flags(APPID_SESSION_IGNORE_FLOW_LOGGED);
             LogMessage("AppIdDbg %s Ignoring connection with service %d\n",
-                asd->session_logging_id, asd->service_app_id);
+                asd->session_logging_id, asd->service.get_id());
         }
 
         return;
@@ -737,10 +739,10 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
         // All protocols other than TCP and UDP come straight here.
         default:
         {
-            asd->port_service_id = asd->config->get_port_service_id(protocol, p->ptrs.sp);
+            asd->service.set_port_service_id(asd->config->get_port_service_id(protocol, p->ptrs.sp));
             if (asd->session_logging_enabled)
                 LogMessage("AppIdDbg %s port service %d\n",
-                    asd->session_logging_id, asd->port_service_id);
+                    asd->session_logging_id, asd->service.get_port_service_id());
             asd->set_session_flags(APPID_SESSION_PORT_SERVICE_DONE);
         }
         break;
@@ -752,7 +754,7 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
      *  - Port service didn't find anything (and we haven't yet either).
      *  - We haven't hit the max packets allowed for detector sequence matches.
      *  - Packet has data (we'll ignore 0-sized packets in sequencing). */
-    if ( (asd->port_service_id <= APP_ID_NONE)
+    if ( (asd->service.get_port_service_id() <= APP_ID_NONE)
         && (asd->length_sequence.sequence_cnt < LENGTH_SEQUENCE_CNT_MAX)
         && (p->dsize > 0))
     {
@@ -761,26 +763,29 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
         asd->length_sequence.sequence_cnt++;
         asd->length_sequence.sequence[index].direction = direction;
         asd->length_sequence.sequence[index].length    = p->dsize;
-        asd->port_service_id = find_length_app_cache(&asd->length_sequence);
-        if (asd->port_service_id > APP_ID_NONE)
+        AppId id = find_length_app_cache(&asd->length_sequence);
+        if (id > APP_ID_NONE)
+        {
+            asd->service.set_port_service_id(id);
             asd->set_session_flags(APPID_SESSION_PORT_SERVICE_DONE);
+        }
     }
 
     /* exceptions for rexec and any other service detector that needs to see SYN and SYN/ACK */
     if (asd->get_session_flags(APPID_SESSION_REXEC_STDERR))
     {
         ServiceDiscovery::get_instance().identify_service(asd, p, direction);
-        if (asd->service_app_id == APP_ID_DNS &&
+        if (asd->service.get_id() == APP_ID_DNS &&
             asd->config->mod_config->dns_host_reporting &&
             asd->dsession && asd->dsession->host )
         {
             size_t size = asd->dsession->host_len;
-            AppId client_app_id = APP_ID_NONE, payload_app_id = APP_ID_NONE;
+            AppId client_id = APP_ID_NONE, payload_id = APP_ID_NONE;
             dns_host_scan_hostname((const uint8_t*)asd->dsession->host, size,
-                &client_app_id, &payload_app_id);
-            asd->set_client_app_id_data(client_app_id, nullptr);
+                &client_id, &payload_id);
+            asd->set_client_appid_data(client_id, nullptr);
         }
-        else if (asd->service_app_id == APP_ID_RTMP)
+        else if (asd->service.get_id() == APP_ID_RTMP)
             asd->examine_rtmp_metadata();
         else if (asd->get_session_flags(APPID_SESSION_SSL_SESSION) && asd->tsession)
             asd->examine_ssl_metadata(p);
@@ -806,33 +811,33 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
         }
     }
 
-    AppId service_app_id = asd->pick_service_app_id();
-    AppId payload_app_id = asd->pick_payload_app_id();
+    AppId service_id = asd->pick_service_app_id();
+    AppId payload_id = asd->pick_payload_app_id();
 
-    if (service_app_id > APP_ID_NONE)
+    if (service_id > APP_ID_NONE)
     {
         if (asd->get_session_flags(APPID_SESSION_DECRYPTED))
         {
             if (asd->misc_app_id == APP_ID_NONE)
-                asd->update_encrypted_app_id(service_app_id);
+                asd->update_encrypted_app_id(service_id);
         }
 // FIXIT-M Need to determine what api to use for this _dpd function
 #if 1
         UNUSED(isTpAppidDiscoveryDone);
 #else
-        else if (isTpAppidDiscoveryDone && isSslServiceAppId(service_app_id) &&
+        else if (isTpAppidDiscoveryDone && isSslServiceAppId(service_id) &&
             _dpd.isSSLPolicyEnabled(nullptr))
             asd->set_session_flags(APPID_SESSION_CONTINUE);
 #endif
     }
 
-    asd->set_application_ids(service_app_id, asd->pick_client_app_id(), payload_app_id,
+    asd->set_application_ids(service_id, asd->pick_client_app_id(), payload_id,
         asd->pick_misc_app_id());
 
     /* Set the field that the Firewall queries to see if we have a search engine. */
-    if (asd->search_support_type == UNKNOWN_SEARCH_ENGINE && payload_app_id > APP_ID_NONE)
+    if (asd->search_support_type == UNKNOWN_SEARCH_ENGINE && payload_id > APP_ID_NONE)
     {
-        uint flags = AppInfoManager::get_instance().get_app_info_flags(payload_app_id,
+        uint flags = AppInfoManager::get_instance().get_app_info_flags(payload_id,
             APPINFO_FLAG_SEARCH_ENGINE | APPINFO_FLAG_SUPPORTED_SEARCH);
         asd->search_support_type =
             (flags & APPINFO_FLAG_SEARCH_ENGINE) ?
@@ -851,23 +856,23 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
             }
 
             LogMessage("AppIdDbg %s appId: %u (safe)search_support_type=%s\n",
-                asd->session_logging_id, payload_app_id, typeString);
+                asd->session_logging_id, payload_id, typeString);
         }
     }
 
-    if ( service_app_id !=  APP_ID_NONE )
+    if ( service_id !=  APP_ID_NONE )
     {
-        if ( payload_app_id != APP_ID_NONE && payload_app_id != asd->past_indicator)
+        if ( payload_id != APP_ID_NONE && payload_id != asd->past_indicator)
         {
-            asd->past_indicator = payload_app_id;
-            check_session_for_AF_indicator(p, direction, (ApplicationId)payload_app_id);
+            asd->past_indicator = payload_id;
+            check_session_for_AF_indicator(p, direction, (AppId)payload_id);
         }
 
-        if (asd->payload_app_id == APP_ID_NONE && asd->past_forecast != service_app_id &&
+        if (asd->payload.get_id() == APP_ID_NONE && asd->past_forecast != service_id &&
             asd->past_forecast != APP_ID_UNKNOWN)
         {
             asd->past_forecast = check_session_for_AF_forecast(asd, p, direction,
-                (ApplicationId)service_app_id);
+                (AppId)service_id);
         }
     }
 }

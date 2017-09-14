@@ -320,7 +320,7 @@ public:
         AppId*, AppId*, bool);
     AppId get_appid_by_content_type(const uint8_t*, int);
     void get_server_vendor_version(const uint8_t*, int, char**, char**, AppIdServiceSubtype**);
-    void identify_user_agent(const uint8_t*, int, AppId*, AppId*, char**);
+    void identify_user_agent(const uint8_t*, int, AppId&, AppId&, char**);
     void get_http_offsets(Packet*, AppIdHttpSession*);
     uint32_t parse_multiple_http_patterns(const char* pattern, tMlmpPattern*,
         uint32_t numPartLimit, int level);

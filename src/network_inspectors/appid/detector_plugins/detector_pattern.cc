@@ -491,8 +491,7 @@ int PatternServiceDetector::validate(AppIdDiscoveryArgs& args)
         return APPID_NOMATCH;
     }
 
-    add_service(args.asd, args.pkt, args.dir, id, nullptr, nullptr, nullptr);
-    return APPID_SUCCESS;
+    return add_service(args.asd, args.pkt, args.dir, id);
 }
 
 PatternClientDetector::PatternClientDetector(ClientDiscovery* cdm)

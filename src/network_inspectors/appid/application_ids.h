@@ -24,7 +24,6 @@
 
 #include <cstdint>
 
-typedef int32_t AppId;
 enum AppProtoIdIndex
 {
     APP_PROTOID_SERVICE,
@@ -34,7 +33,9 @@ enum AppProtoIdIndex
     APP_PROTOID_MAX
 };
 
-enum ApplicationId : int32_t
+typedef int32_t AppId;
+
+enum ApplicationIds : AppId
 {
     APP_ID_UNKNOWN                        = -1,    // searched and not found any matching app id
     APP_ID_NONE                           = 0,     // AppId not searched
@@ -1022,7 +1023,7 @@ enum ApplicationId : int32_t
 
 struct AppRegistryEntry
 {
-    ApplicationId appId;
+    AppId appId;
     uint32_t additionalInfo;
 };
 

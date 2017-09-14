@@ -25,8 +25,6 @@
 
 #include "service_lpr.h"
 
-#include "appid_module.h"
-
 #define LPR_COUNT_THRESHOLD 2
 
 enum LPRState
@@ -218,9 +216,7 @@ inprocess:
     return APPID_INPROCESS;
 
 success:
-    add_service(asd, args.pkt, dir, APP_ID_PRINTSRV, nullptr, nullptr, nullptr);
-    appid_stats.lpr_flows++;
-    return APPID_SUCCESS;
+    return add_service(asd, args.pkt, dir, APP_ID_PRINTSRV);
 
 fail:
     fail_service(asd, args.pkt, dir);

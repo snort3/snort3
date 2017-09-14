@@ -175,7 +175,6 @@ TEST_GROUP(appid_http_event)
         flow = new Flow;
         mock_session = new AppIdSession(IpProtocol::TCP, nullptr, 1492);
         flow->set_flow_data(mock_session);
-        appid_stats.http_flows = 0;
     }
 
     void teardown()
@@ -254,7 +253,6 @@ void run_event_handler(TestData test_data, TestData* expect_data = nullptr)
     mock().expectOneCall("get_appid_session");
     event_handler.handle(event, flow);
     LONGS_EQUAL(expect_data->scan_flags, mock_session->scan_flags);
-    LONGS_EQUAL(expect_data->http_flows, appid_stats.http_flows);
     STRCMP_EQUAL(expect_data->host, mock_session->hsession->host);
     STRCMP_EQUAL(expect_data->uri, mock_session->hsession->uri);
     STRCMP_EQUAL(expect_data->content_type, mock_session->hsession->content_type);

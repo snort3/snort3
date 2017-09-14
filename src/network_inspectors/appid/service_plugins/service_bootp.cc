@@ -25,7 +25,6 @@
 
 #include "service_bootp.h"
 
-#include "appid_module.h"
 #include "app_info_table.h"
 #include "appid_utils/ip_funcs.h"
 #include "protocols/eth.h"
@@ -290,8 +289,7 @@ success:
     if (!asd->is_service_detected())
     {
         asd->set_session_flags(APPID_SESSION_CONTINUE);
-        add_service(asd, args.pkt, args.dir, APP_ID_DHCP, nullptr, nullptr, nullptr);
-        appid_stats.bootp_flows++;
+        add_service(asd, args.pkt, args.dir, APP_ID_DHCP);
     }
     return APPID_SUCCESS;
 

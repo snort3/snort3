@@ -25,7 +25,6 @@
 
 #include "service_timbuktu.h"
 
-#include "appid_module.h"
 #include "application_ids.h"
 
 static char TIMBUKTU_BANNER[]  = "\001\001";
@@ -160,9 +159,7 @@ inprocess:
     return APPID_INPROCESS;
 
 success:
-    add_service(asd, args.pkt, args.dir, APP_ID_TIMBUKTU, nullptr, nullptr, nullptr);
-    appid_stats.timbuktu_flows++;
-    return APPID_SUCCESS;
+    return add_service(asd, args.pkt, args.dir, APP_ID_TIMBUKTU);
 
 fail:
     fail_service(asd, args.pkt, args.dir);

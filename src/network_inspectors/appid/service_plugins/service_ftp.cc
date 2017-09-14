@@ -26,7 +26,6 @@
 #include "service_ftp.h"
 
 #include "appid_inspector.h"
-#include "appid_module.h"
 #include "app_info_table.h"
 #include "protocols/packet.h"
 
@@ -803,13 +802,12 @@ void FtpServiceDetector::InitializeDataSession(AppIdSession* asd, AppIdSession* 
     uint64_t flags = asd->get_session_flags(APPID_SESSION_ENCRYPTED | APPID_SESSION_DECRYPTED);
     if (flags == APPID_SESSION_ENCRYPTED)
     {
-        fp->service_app_id = APP_ID_FTPSDATA;
+        fp->service.set_id(APP_ID_FTPSDATA);
     }
     else
     {
-        flags = 0; // change (APPID_SESSION_ENCRYPTED | APPID_SESSION_DECRYPTED) case to
-        // zeroes.
-        fp->service_app_id = APP_ID_FTP_DATA;
+        flags = 0; // reset (APPID_SESSION_ENCRYPTED | APPID_SESSION_DECRYPTED) bits
+        fp->service.set_id(APP_ID_FTP_DATA);
     }
 
     initialize_expected_session(asd, fp, APPID_SESSION_IGNORE_ID_FLAGS | flags);
@@ -1237,11 +1235,6 @@ inprocess:
                 APP_ID_FTPS : APP_ID_FTP_CONTROL,
                 fd->vendor[0] ? fd->vendor : nullptr,
                 fd->version[0] ? fd->version : nullptr, nullptr);
-
-            if (flags == APPID_SESSION_ENCRYPTED)
-                appid_stats.ftps_flows++;
-            else
-                appid_stats.ftp_flows++;
         }
         return APPID_SUCCESS;
 

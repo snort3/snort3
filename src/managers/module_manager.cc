@@ -794,9 +794,6 @@ void ModuleManager::add_module(Module* m, const BaseApi* b)
 
     Profiler::register_module(m);
 
-    std::lock_guard<std::mutex> lock(stats_mutex);
-    m->reset_stats();
-
     if ( m->get_gid() )
         gids.emplace(m->get_gid());
 }

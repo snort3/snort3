@@ -99,8 +99,8 @@ TEST(appid_detector_tests, add_user)
     const char* username = "snorty";
     AppIdDetector* ad = new TestDetector;
     ad->add_user(mock_session, username, APPID_UT_ID, true);
-    STRCMP_EQUAL(mock_session->username, username);
-    CHECK_TRUE((mock_session->username_service == APPID_UT_ID));
+    STRCMP_EQUAL(mock_session->client.get_username(), username);
+    CHECK_TRUE((mock_session->client.get_user_id() == APPID_UT_ID));
     CHECK_TRUE((mock_session->get_session_flags(APPID_SESSION_LOGIN_SUCCEEDED)
         & APPID_SESSION_LOGIN_SUCCEEDED));
     delete ad;

@@ -24,8 +24,6 @@
 #endif
 
 #include "service_ntp.h"
-
-#include "appid_module.h"
 #include "application_ids.h"
 
 #pragma pack(1)
@@ -136,9 +134,7 @@ int NtpServiceDetector::validate(AppIdDiscoveryArgs& args)
             goto fail;
     }
 
-    add_service(asd, args.pkt, args.dir, APP_ID_NTP, nullptr, nullptr, nullptr);
-    appid_stats.ntp_flows++;
-    return APPID_SUCCESS;
+    return add_service(asd, args.pkt, args.dir, APP_ID_NTP);
 
 inprocess:
     service_inprocess(asd, args.pkt, args.dir);

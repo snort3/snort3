@@ -25,10 +25,9 @@
 
 #include "appid_http_session.h"
 
-#include "appid_config.h"
-#include "appid_module.h"
-#include "appid_session.h"
 #include "app_info_table.h"
+#include "appid_config.h"
+#include "appid_session.h"
 #include "thirdparty_appid_utils.h"
 #include "profiler/profiler.h"
 
@@ -312,10 +311,10 @@ void AppIdHttpSession::process_chp_buffers()
                 asd->set_service_appid_data(chp_final, nullptr, version);
 
             if (app_type_flags & APP_TYPE_CLIENT)
-                asd->set_client_app_id_data(chp_final, version);
+                asd->set_client_appid_data(chp_final, version);
 
             if ( app_type_flags & APP_TYPE_PAYLOAD )
-                asd->set_payload_app_id_data((ApplicationId)chp_final, version);
+                asd->set_payload_app_id_data((AppId)chp_final, version);
 
             if ( version )
             {
@@ -325,12 +324,11 @@ void AppIdHttpSession::process_chp_buffers()
 
             if ( user )
             {
-                asd->username = user;
-                user = nullptr;
                 if (app_type_flags & APP_TYPE_SERVICE)
-                    asd->username_service = chp_final;
+                    asd->client.update_user(chp_final, user);
                 else
-                    asd->username_service = asd->service_app_id;
+                    asd->client.update_user(asd->service.get_id(), user);
+                user = nullptr;
                 asd->set_session_flags(APPID_SESSION_LOGIN_SUCCEEDED);
             }
 
@@ -384,7 +382,6 @@ int AppIdHttpSession::process_http_packet(int direction)
     {
         if (!skip_simple_detect)
             asd->clear_http_flags();
-
         return 0;
     }
 
@@ -415,8 +412,8 @@ int AppIdHttpSession::process_http_packet(int direction)
 #endif
     }
 
-    if (asd->service_app_id == APP_ID_NONE)
-        asd->service_app_id = APP_ID_HTTP;
+    if (asd->service.get_id() == APP_ID_NONE)
+        asd->service.set_id(APP_ID_HTTP);
 
     if (asd->session_logging_enabled)
         LogMessage("AppIdDbg %s chp_finished %d chp_hold_flow %d\n", asd->session_logging_id,
@@ -435,7 +432,7 @@ int AppIdHttpSession::process_http_packet(int direction)
             if ((thirdparty_appid_module && (asd->scan_flags & SCAN_HTTP_VENDOR_FLAG) &&
                 server) || (!thirdparty_appid_module && server))
             {
-                if (asd->service_app_id == APP_ID_NONE || asd->service_app_id == APP_ID_HTTP)
+                if ( asd->service.get_id() == APP_ID_NONE || asd->service.get_id() == APP_ID_HTTP )
                 {
                     AppIdServiceSubtype* local_subtype = nullptr;
                     char* vendorVersion = nullptr;
@@ -445,21 +442,12 @@ int AppIdHttpSession::process_http_packet(int direction)
                         strlen(server), &vendorVersion, &vendor, &asd->subtype);
                     if (vendor || vendorVersion)
                     {
-                        if (asd->service_vendor)
-                        {
-                            snort_free(asd->service_vendor);
-                            asd->service_vendor = nullptr;
-                        }
-                        if (asd->service_version)
-                        {
-                            snort_free(asd->service_version);
-                            asd->service_version = nullptr;
-                        }
-                        if (vendor)
-                            asd->service_vendor = vendor;
-                        if (vendorVersion)
-                            asd->service_version = vendorVersion;
+                        asd->service.set_vendor(vendor);
+                        asd->service.set_version(vendorVersion);
                         asd->scan_flags &= ~SCAN_HTTP_VENDOR_FLAG;
+
+                        snort_free(vendor);
+                        snort_free(vendorVersion);
                     }
                     if (local_subtype)
                     {
@@ -476,29 +464,21 @@ int AppIdHttpSession::process_http_packet(int direction)
 
             if (is_webdav)
             {
-                if (asd->session_logging_enabled and asd->payload_app_id != APP_ID_WEBDAV)
+                if (asd->session_logging_enabled and asd->payload.get_id() != APP_ID_WEBDAV)
                     LogMessage("AppIdDbg %s data is webdav\n", asd->session_logging_id);
                 asd->set_payload_app_id_data(APP_ID_WEBDAV, nullptr);
             }
 
             // Scan User-Agent for Browser types or Skype
-            if ((asd->scan_flags & SCAN_HTTP_USER_AGENT_FLAG) && asd->client_app_id <= APP_ID_NONE
+            if ((asd->scan_flags & SCAN_HTTP_USER_AGENT_FLAG) && asd->client.get_id() <= APP_ID_NONE
                 && useragent && useragent_buflen)
             {
                 char* version = nullptr;
 
                 http_matchers->identify_user_agent((uint8_t*)useragent, useragent_buflen,
-                    &service_id, &client_id, &version);
-                if (asd->session_logging_enabled && service_id > APP_ID_NONE &&
-                    service_id != APP_ID_HTTP && asd->service_app_id != service_id)
-                    LogMessage("AppIdDbg %s User Agent is service %d\n", asd->session_logging_id,
-                        service_id);
+                    service_id, client_id, &version);
                 asd->set_service_appid_data(service_id, nullptr, nullptr);
-                if (asd->session_logging_enabled && client_id > APP_ID_NONE &&
-                    client_id != APP_ID_HTTP && asd->client_app_id != client_id)
-                    LogMessage("AppIdDbg %s User Agent is client %d\n", asd->session_logging_id,
-                        client_id);
-                asd->set_client_app_id_data(client_id, version);
+                asd->set_client_appid_data(client_id, version);
                 asd->scan_flags &= ~SCAN_HTTP_USER_AGENT_FLAG;
                 snort_free(version);
             }
@@ -510,10 +490,10 @@ int AppIdHttpSession::process_http_packet(int direction)
             {
                 payload_id = http_matchers->get_appid_by_pattern((uint8_t*)via, size, nullptr);
                 if (asd->session_logging_enabled && payload_id > APP_ID_NONE &&
-                    asd->payload_app_id != payload_id)
+                    asd->payload.get_id() != payload_id)
                     LogMessage("AppIdDbg %s VIA is data %d\n", asd->session_logging_id,
                         payload_id);
-                asd->set_payload_app_id_data((ApplicationId)payload_id, nullptr);
+                asd->set_payload_app_id_data((AppId)payload_id, nullptr);
                 asd->scan_flags &= ~SCAN_HTTP_VIA_FLAG;
             }
         }
@@ -534,17 +514,16 @@ int AppIdHttpSession::process_http_packet(int direction)
                 if (direction == APP_ID_FROM_INITIATOR)
                 {
                     if (asd->session_logging_enabled && client_id > APP_ID_NONE && client_id !=
-                        APP_ID_HTTP && asd->client_app_id != client_id)
+                        APP_ID_HTTP && asd->client.get_id() != client_id)
                         LogMessage("AppIdDbg %s X is client %d\n", asd->session_logging_id, appId);
 
-                    asd->set_client_app_id_data(appId, version);
+                    asd->set_client_appid_data(appId, version);
                 }
                 else
                 {
                     if (asd->session_logging_enabled && service_id > APP_ID_NONE && service_id !=
-                        APP_ID_HTTP && asd->service_app_id != service_id)
-                        LogMessage("AppIdDbg %s X is service %d\n", asd->session_logging_id,
-                            appId);
+                        APP_ID_HTTP && asd->service.get_id() != service_id)
+                        LogMessage("AppIdDbg %s X service %d\n", asd->session_logging_id, appId);
                     asd->set_service_appid_data(appId, nullptr, version);
                 }
                 asd->scan_flags &= ~SCAN_HTTP_XWORKINGWITH_FLAG;
@@ -563,10 +542,10 @@ int AppIdHttpSession::process_http_packet(int direction)
             payload_id = http_matchers->get_appid_by_content_type((uint8_t*)content_type,
                 strlen(content_type));
             if (asd->session_logging_enabled && payload_id > APP_ID_NONE
-                && asd->payload_app_id != payload_id)
+                && asd->payload.get_id() != payload_id)
                 LogMessage("AppIdDbg %s Content-Type is data %d\n", asd->session_logging_id,
                     payload_id);
-            asd->set_payload_app_id_data((ApplicationId)payload_id, nullptr);
+            asd->set_payload_app_id_data((AppId)payload_id, nullptr);
             asd->scan_flags &= ~SCAN_HTTP_CONTENT_TYPE_FLAG;
         }
 
@@ -579,19 +558,19 @@ int AppIdHttpSession::process_http_packet(int direction)
                 &service_id, &payload_id, &referredPayloadAppId, false) )
             {
                 // do not overwrite a previously-set client or service
-                if (asd->client_app_id <= APP_ID_NONE)
+                if (asd->client.get_id() <= APP_ID_NONE)
                 {
                     if (asd->session_logging_enabled && client_id > APP_ID_NONE && client_id !=
-                        APP_ID_HTTP && asd->client_app_id != client_id)
+                        APP_ID_HTTP && asd->client.get_id() != client_id)
                         LogMessage("AppIdDbg %s URL is client %d\n", asd->session_logging_id,
                             client_id);
-                    asd->set_client_app_id_data(client_id, nullptr);
+                    asd->set_client_appid_data(client_id, nullptr);
                 }
 
-                if (asd->service_app_id <= APP_ID_NONE)
+                if (asd->service.get_id() <= APP_ID_NONE)
                 {
                     if (asd->session_logging_enabled && service_id > APP_ID_NONE && service_id !=
-                        APP_ID_HTTP && asd->service_app_id != service_id)
+                        APP_ID_HTTP && asd->service.get_id() != service_id)
                         LogMessage("AppIdDbg %s URL is service %d\n", asd->session_logging_id,
                             service_id);
                     asd->set_service_appid_data(service_id, nullptr, nullptr);
@@ -599,10 +578,10 @@ int AppIdHttpSession::process_http_packet(int direction)
 
                 // DO overwrite a previously-set data
                 if (asd->session_logging_enabled && payload_id > APP_ID_NONE &&
-                    asd->payload_app_id != payload_id)
+                    asd->payload.get_id() != payload_id)
                     LogMessage("AppIdDbg %s URL is data %d\n", asd->session_logging_id,
                         payload_id);
-                asd->set_payload_app_id_data((ApplicationId)payload_id, version);
+                asd->set_payload_app_id_data((AppId)payload_id, version);
                 asd->set_referred_payload_app_id_data(referredPayloadAppId);
             }
 
@@ -610,28 +589,28 @@ int AppIdHttpSession::process_http_packet(int direction)
             snort_free(version);
         }
 
-        if (asd->client_app_id == APP_ID_APPLE_CORE_MEDIA)
+        if (asd->client.get_id() == APP_ID_APPLE_CORE_MEDIA)
         {
             AppInfoTableEntry* entry;
 
             if (asd->tp_payload_app_id > APP_ID_NONE)
             {
                 entry = asd->app_info_mgr->get_app_info_entry(asd->tp_payload_app_id);
-                // only move tpPayloadAppId to client if its got a client_app_id
+                // only move tpPayloadAppId to client if client app id is valid
                 if (entry && entry->clientId > APP_ID_NONE)
                 {
-                    asd->misc_app_id = asd->client_app_id;
-                    asd->client_app_id = asd->tp_payload_app_id;
+                    asd->misc_app_id = asd->client.get_id();
+                    asd->client.set_id(asd->tp_payload_app_id);
                 }
             }
-            else if (asd->payload_app_id > APP_ID_NONE)
+            else if (asd->payload.get_id() > APP_ID_NONE)
             {
-                entry =  asd->app_info_mgr->get_app_info_entry(asd->payload_app_id);
+                entry =  asd->app_info_mgr->get_app_info_entry(asd->payload.get_id());
                 // only move payload_app_id to client if it has a ClientAppid
                 if (entry && entry->clientId > APP_ID_NONE)
                 {
-                    asd->misc_app_id = asd->client_app_id;
-                    asd->client_app_id = asd->payload_app_id;
+                    asd->misc_app_id = asd->client.get_id();
+                    asd->client.set_id(asd->payload.get_id());
                 }
             }
         }

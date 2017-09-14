@@ -25,7 +25,6 @@
 
 #include "service_battle_field.h"
 
-#include "appid_module.h"
 #include "protocols/packet.h"
 
 enum CONNECTION_STATES
@@ -191,9 +190,7 @@ success:
         goto inprocess;
     }
 
-    add_service(args.asd, args.pkt, args.dir, APP_ID_BATTLEFIELD, nullptr, nullptr, nullptr);
-    appid_stats.battlefield_flows++;
-    return APPID_SUCCESS;
+    return add_service(args.asd, args.pkt, args.dir, APP_ID_BATTLEFIELD);
 
 fail:
     fail_service(args.asd, args.pkt, args.dir);

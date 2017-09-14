@@ -25,7 +25,6 @@
 
 #include "service_tns.h"
 
-#include "appid_module.h"
 #include "app_info_table.h"
 
 // FIXIT-M should we use 'tns' or 'oracle' as the name for this service?
@@ -281,10 +280,8 @@ inprocess:
     return APPID_INPROCESS;
 
 success:
-    add_service(asd, args.pkt, args.dir, APP_ID_ORACLE_TNS,
+    return add_service(asd, args.pkt, args.dir, APP_ID_ORACLE_TNS,
         nullptr, ss->version ? ss->version : nullptr, nullptr);
-    appid_stats.tns_flows++;
-    return APPID_SUCCESS;
 
 fail:
     fail_service(asd, args.pkt, args.dir);

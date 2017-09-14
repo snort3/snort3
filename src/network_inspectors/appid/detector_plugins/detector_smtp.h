@@ -39,9 +39,9 @@ public:
     SMTPDetectorData* get_common_data(AppIdSession*);
 
 private:
-    int extract_version_and_add_client_app(ApplicationId, const int prefix_len,
+    int extract_version_and_add_client_app(AppId, const int prefix_len,
         const uint8_t* product, const uint8_t* product_end, ClientSMTPData* const,
-        AppIdSession*, AppId, PegCount*);
+        AppIdSession*, AppId);
     int identify_client_version(ClientSMTPData* const, const uint8_t* product,
         const uint8_t* data_end, AppIdSession*, Packet*);
 };

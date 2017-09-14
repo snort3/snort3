@@ -26,7 +26,6 @@
 #include "service_rshell.h"
 
 #include "appid_inspector.h"
-#include "appid_module.h"
 #include "app_info_table.h"
 #include "protocols/packet.h"
 
@@ -273,7 +272,7 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
     case RSHELL_STATE_STDERR_CONNECT_SYN_ACK:
         if (rd->parent && rd->parent->state == RSHELL_STATE_SERVER_CONNECT)
             rd->parent->state = RSHELL_STATE_USERNAME;
-        asd->set_service_detected();
+        asd->set_service_detected();    // FIXIT-M why is this set here and not when add_service is called?
         return APPID_SUCCESS;
     default:
         goto bail;
@@ -284,9 +283,7 @@ inprocess:
     return APPID_INPROCESS;
 
 success:
-    add_service(asd, pkt, dir, APP_ID_SHELL, nullptr, nullptr, nullptr);
-    appid_stats.rshell_flows++;
-    return APPID_SUCCESS;
+    return add_service(asd, pkt, dir, APP_ID_SHELL);
 
 bail:
     incompatible_data(asd, pkt, dir);

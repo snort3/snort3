@@ -24,7 +24,6 @@
 
 #include "service_regtest.h"
 
-#include "appid_module.h"
 #include "app_info_table.h"
 
 #ifdef REG_TEST
@@ -84,8 +83,7 @@ int RegTestServiceDetector::validate(AppIdDiscoveryArgs& args)
         p++;
     }
     *v = 0;
-    add_service(args.asd, args.pkt, args.dir, APP_ID_REGTEST, nullptr, version, nullptr);
-    return APPID_SUCCESS;
+    return add_service(args.asd, args.pkt, args.dir, APP_ID_REGTEST, nullptr, version, nullptr);
 
 inprocess:
     service_inprocess(args.asd, args.pkt, args.dir);
@@ -146,8 +144,7 @@ int RegTestServiceDetector1::validate(AppIdDiscoveryArgs& args)
         p++;
     }
     *v = 0;
-    add_service(args.asd, args.pkt, args.dir, APP_ID_REGTEST1, nullptr, version, nullptr);
-    return APPID_SUCCESS;
+    return add_service(args.asd, args.pkt, args.dir, APP_ID_REGTEST1, nullptr, version, nullptr);
 
 inprocess:
     service_inprocess(args.asd, args.pkt, args.dir);
@@ -203,8 +200,7 @@ int RegTestServiceDetector2::validate(AppIdDiscoveryArgs& args)
         p++;
     }
     *v = 0;
-    add_service(args.asd, args.pkt, args.dir, APP_ID_REGTEST2, nullptr, version, nullptr);
-    return APPID_SUCCESS;
+    return add_service(args.asd, args.pkt, args.dir, APP_ID_REGTEST2, nullptr, version, nullptr);
 
 inprocess:
     service_inprocess(args.asd, args.pkt, args.dir);

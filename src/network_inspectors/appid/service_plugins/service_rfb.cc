@@ -25,7 +25,6 @@
 
 #include "service_rfb.h"
 
-#include "appid_module.h"
 #include "app_info_table.h"
 
 #define RFB_BANNER_SIZE 12
@@ -103,9 +102,7 @@ int RfbServiceDetector::validate(AppIdDiscoveryArgs& args)
         p++;
     }
     *v = 0;
-    add_service(asd, args.pkt, args.dir, APP_ID_VNC_RFB, nullptr, version, nullptr);
-    appid_stats.rfb_flows++;
-    return APPID_SUCCESS;
+    return add_service(asd, args.pkt, args.dir, APP_ID_VNC_RFB, nullptr, version, nullptr);
 
 inprocess:
     service_inprocess(asd, args.pkt, args.dir);

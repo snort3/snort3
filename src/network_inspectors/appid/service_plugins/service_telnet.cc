@@ -34,7 +34,6 @@
 
 #include "appid_session.h"
 #include "application_ids.h"
-#include "appid_module.h"
 #include "main/snort_debug.h"
 #include "utils/util.h"
 
@@ -148,9 +147,7 @@ inprocess:
     return APPID_INPROCESS;
 
 success:
-    add_service(asd, args.pkt, args.dir, APP_ID_TELNET, nullptr, nullptr, nullptr);
-    appid_stats.telnet_flows++;
-    return APPID_SUCCESS;
+    return add_service(asd, args.pkt, args.dir, APP_ID_TELNET);
 
 fail:
     fail_service(asd, args.pkt, args.dir);

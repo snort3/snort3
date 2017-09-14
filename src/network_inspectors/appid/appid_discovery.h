@@ -26,9 +26,12 @@
 #include <string>
 #include <vector>
 
+#include "application_ids.h"
+
 #include "protocols/protocol_ids.h"
 #include "search_engines/search_tool.h"
 #include "flow/flow.h"
+#include "utils/util.h"
 
 class AppIdSession;
 class AppIdDetector;
@@ -51,7 +54,6 @@ public:
     AppIdPatternMatchNode(AppIdDetector* detector, int start, unsigned len)
         : service(detector), pattern_start_pos(start), size(len)
     {}
-    ~AppIdPatternMatchNode() {}
 
     bool valid_match(int end_position)
     {

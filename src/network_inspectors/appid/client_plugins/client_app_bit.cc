@@ -25,7 +25,6 @@
 
 #include "client_app_bit.h"
 
-#include "appid_module.h"
 #include "application_ids.h"
 
 static const char BIT_BANNER[] = "\023BitTorrent protocol";
@@ -159,8 +158,6 @@ inprocess:
 
 done:
     add_app(args.asd, APP_ID_BITTORRENT, APP_ID_BITTORRENT, nullptr);
-    args.asd->set_client_detected();
-    appid_stats.bit_clients++;
     return APPID_SUCCESS;
 }
 

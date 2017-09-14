@@ -30,7 +30,6 @@
 #include "utils/sflsq.h"
 #include "utils/util.h"
 
-#include "appid_module.h"
 #include "app_info_table.h"
 #include "application_ids.h"
 
@@ -175,8 +174,6 @@ inprocess:
 
 done:
     add_app(args.asd, APP_ID_TIMBUKTU, APP_ID_TIMBUKTU, nullptr);
-    appid_stats.timbuktu_clients++;
-    args.asd->set_client_detected();
     return APPID_SUCCESS;
 }
 

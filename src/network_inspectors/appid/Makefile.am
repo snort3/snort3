@@ -140,6 +140,7 @@ app_forecast.cc \
 app_forecast.h \
 appid_api.cc \
 appid_api.h \
+appid_app_descriptor.h \
 appid_config.cc \
 appid_config.h \
 appid_detector.cc \
@@ -148,6 +149,8 @@ appid_discovery.cc \
 appid_discovery.h \
 appid_http_session.cc \
 appid_http_session.h \
+appid_peg_counts.h \
+appid_peg_counts.cc \
 appid_session.cc \
 appid_session.h \
 appid_inspector.cc \
@@ -155,7 +158,6 @@ appid_inspector.h \
 appid_module.cc \
 appid_module.h \
 appid_stats.cc \
-appid_stats_counter.cc \
 appid_stats.h \
 app_info_table.cc \
 app_info_table.h \

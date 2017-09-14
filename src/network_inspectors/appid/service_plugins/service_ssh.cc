@@ -25,10 +25,9 @@
 
 #include "service_ssh.h"
 
-#include "main/snort_debug.h"
-#include "appid_module.h"
 #include "app_info_table.h"
 #include "application_ids.h"
+#include "main/snort_debug.h"
 
 #define SSH_PORT    22
 
@@ -543,10 +542,7 @@ inprocess:
         return APPID_INPROCESS;
 
     case APPID_SUCCESS:
-        add_service(asd, args.pkt, args.dir, APP_ID_SSH,
-            ss->vendor, ss->version, nullptr);
-        appid_stats.ssh_flows++;
-        return APPID_SUCCESS;
+        return add_service(asd, args.pkt, args.dir, APP_ID_SSH, ss->vendor, ss->version, nullptr);
 
     case APPID_NOMATCH:
 fail:

@@ -261,14 +261,14 @@ void ProcessThirdPartyResults(AppIdSession* asd, Packet* p, int confidence,
 {
     int size;
     AppId serviceAppId = 0;
-    AppId client_app_id = 0;
-    AppId payload_app_id = 0;
+    AppId client_id = 0;
+    AppId payload_id = 0;
     AppId referred_payload_app_id = 0;
 
     if (ThirdPartyAppIDFoundProto(APP_ID_EXCHANGE, proto_list))
     {
-        if (!payload_app_id)
-            payload_app_id = APP_ID_EXCHANGE;
+        if (!payload_id)
+            payload_id = APP_ID_EXCHANGE;
     }
 
     if (ThirdPartyAppIDFoundProto(APP_ID_HTTP, proto_list))
@@ -698,21 +698,21 @@ void ProcessThirdPartyResults(AppIdSession* asd, Packet* p, int confidence,
             if (asd->hsession->url)
             {
                 if ( ( ( asd->http_matchers->get_appid_from_url(nullptr, asd->hsession->url,
-                    nullptr, asd->hsession->referer, &client_app_id, &serviceAppId,
-                    &payload_app_id, &referred_payload_app_id, 1) )
+                    nullptr, asd->hsession->referer, &client_id, &serviceAppId,
+                    &payload_id, &referred_payload_app_id, 1) )
                     ||
                     ( asd->http_matchers->get_appid_from_url(nullptr, asd->hsession->url, nullptr,
-                    asd->hsession->referer, &client_app_id, &serviceAppId, &payload_app_id,
+                    asd->hsession->referer, &client_id, &serviceAppId, &payload_id,
                     &referred_payload_app_id, 0) ) ) == 1 )
                 {
                     // do not overwrite a previously-set client or service
-                    if (client_app_id <= APP_ID_NONE)
-                        asd->set_client_app_id_data(client_app_id, nullptr);
+                    if (client_id <= APP_ID_NONE)
+                        asd->set_client_app_id_data(client_id, nullptr);
                     if (serviceAppId <= APP_ID_NONE)
                         asd->set_service_appid_data(serviceAppId, nullptr, nullptr);
 
                     // DO overwrite a previously-set data
-                    asd->set_payload_app_id_data((ApplicationId)payload_app_id, nullptr);
+                    asd->set_payload_app_id_data((ApplicationId)payload_id, nullptr);
                     asd->set_referred_payload_app_id_data(referred_payload_app_id);
                 }
             }
@@ -740,7 +740,7 @@ void ProcessThirdPartyResults(AppIdSession* asd, Packet* p, int confidence,
         if (!asd->tsession)
             asd->tsession = (TlsSession*)snort_calloc(sizeof(TlsSession));
 
-        if (!client_app_id)
+        if (!client_id)
             asd->set_client_app_id_data(APP_ID_SSL_CLIENT, nullptr);
 
         if (attribute_data->tlsHost)
@@ -774,12 +774,9 @@ void ProcessThirdPartyResults(AppIdSession* asd, Packet* p, int confidence,
     {
         if (!asd->config->mod_config->ftp_userid_disabled && attribute_data->ftpCommandUser)
         {
-            if (asd->username)
-                snort_free(asd->username);
-            asd->username = attribute_data->ftpCommandUser;
-            attribute_data->ftpCommandUser = nullptr;
-            asd->username_service = APP_ID_FTP_CONTROL;
+            asd->client.update_user(APP_ID_FTP_CONTROL, attribute_data->ftpCommandUser);
             asd->set_session_flags(APPID_SESSION_LOGIN_SUCCEEDED);
+            attribute_data->ftpCommandUser = nullptr;
         }
     }
 }
@@ -794,8 +791,8 @@ void checkTerminateTpModule(AppIdSession* asd, uint16_t tpPktCount)
     {
         if (asd->tp_app_id == APP_ID_NONE)
             asd->tp_app_id = APP_ID_UNKNOWN;
-        if (asd->payload_app_id == APP_ID_NONE)
-            asd->payload_app_id = APP_ID_UNKNOWN;
+        if (asd->payload.get_id() == APP_ID_NONE)
+            asd->payload.set_id(APP_ID_UNKNOWN);
         if (thirdparty_appid_module)
             thirdparty_appid_module->session_delete(asd->tpsession, 1);
     }
@@ -821,13 +818,13 @@ bool do_third_party_discovery(AppIdSession* asd, IpProtocol protocol, const SfIp
         asd->reset_session_data();
     }
 
-    if (asd->tp_app_id == APP_ID_SSH && asd->payload_app_id != APP_ID_SFTP &&
+    if (asd->tp_app_id == APP_ID_SSH && asd->payload.get_id() != APP_ID_SFTP &&
         asd->session_packet_count >= MIN_SFTP_PACKET_COUNT &&
         asd->session_packet_count < MAX_SFTP_PACKET_COUNT)
     {
         if ( p->ptrs.ip_api.tos() == 8 )
         {
-            asd->payload_app_id = APP_ID_SFTP;
+            asd->payload.set_id(APP_ID_SFTP);
             if (asd->session_logging_enabled)
                 LogMessage("AppIdDbg %s data is SFTP\n", asd->session_logging_id);
         }
@@ -882,7 +879,7 @@ bool do_third_party_discovery(AppIdSession* asd, IpProtocol protocol, const SfIp
                 }
                 // if the third-party appId must be treated as a client, do it now
                 if (asd->app_info_mgr->get_app_info_flags(asd->tp_app_id, APPINFO_FLAG_TP_CLIENT))
-                    asd->client_app_id = asd->tp_app_id;
+                    asd->client.set_id(asd->tp_app_id);
 
                 ProcessThirdPartyResults(asd, p, tp_confidence, tp_proto_list, tp_attribute_data);
 
@@ -931,8 +928,8 @@ bool do_third_party_discovery(AppIdSession* asd, IpProtocol protocol, const SfIp
             }
 
             if (asd->tp_app_id > APP_ID_NONE
-                && (!asd->get_session_flags(APPID_SESSION_APP_REINSPECT) || asd->payload_app_id >
-                APP_ID_NONE))
+                && (!asd->get_session_flags(APPID_SESSION_APP_REINSPECT)
+                || asd->payload.get_id() > APP_ID_NONE))
             {
                 AppId snort_app_id;
                 // if the packet is HTTP, then search for via pattern
@@ -947,14 +944,14 @@ bool do_third_party_discovery(AppIdSession* asd, IpProtocol protocol, const SfIp
                     // Handle HTTP tunneling and SSL possibly then being used in that tunnel
                     if (asd->tp_app_id == APP_ID_HTTP_TUNNEL)
                         asd->set_payload_app_id_data(APP_ID_HTTP_TUNNEL, NULL);
-                    if ((asd->payload_app_id == APP_ID_HTTP_TUNNEL) && (asd->tp_app_id ==
+                    if ((asd->payload.get_id() == APP_ID_HTTP_TUNNEL) && (asd->tp_app_id ==
                         APP_ID_SSL))
                         asd->set_payload_app_id_data(APP_ID_HTTP_SSL_TUNNEL, NULL);
 
                     asd->hsession->process_http_packet(direction);
 
                     // If SSL over HTTP tunnel, make sure Snort knows that it's encrypted.
-                    if (asd->payload_app_id == APP_ID_HTTP_SSL_TUNNEL)
+                    if (asd->payload.get_id() == APP_ID_HTTP_SSL_TUNNEL)
                         snort_app_id = APP_ID_SSL;
 
                     if (is_third_party_appid_available(asd->tpsession) && asd->tp_app_id ==

@@ -26,10 +26,12 @@
 #include "app_info_table.h"
 
 #include <limits.h>
+#include <string>
 
-#include "appid_config.h"
 #include "appid_api.h"
+#include "appid_config.h"
 #include "appid_inspector.h"
+#include "appid_peg_counts.h"
 #include "log/messages.h"
 #include "log/unified2.h"
 #include "main/snort_debug.h"
@@ -116,7 +118,7 @@ static bool add_entry_to_app_info_name_table(const char* app_name, AppInfoTableE
     else
     {
         WarningMessage(
-            "App name, \"%s\"is a duplicate existing entry will be shared by each detector.\n",
+            "App name, \"%s\"is a duplicate entry will be shared by each detector.\n",
             app_name);
         added = false;
     }
@@ -128,8 +130,8 @@ static AppId get_static_app_info_entry(AppId appid)
 {
     if (appid > 0 && appid < SF_APPID_BUILDIN_MAX)
         return appid;
-    if (appid >= SF_APPID_CSD_MIN && appid < SF_APPID_CSD_MIN + (SF_APPID_MAX -
-        SF_APPID_BUILDIN_MAX))
+    if ( ( appid >= SF_APPID_CSD_MIN ) &&
+        appid < ( SF_APPID_CSD_MIN + ( SF_APPID_MAX - SF_APPID_BUILDIN_MAX ) ) )
         return (SF_APPID_BUILDIN_MAX + appid - SF_APPID_CSD_MIN);
     return 0;
 }
@@ -238,7 +240,7 @@ const char* AppInfoManager::get_app_name(int32_t id)
     return entry ? entry->app_name : nullptr;
 }
 
-int32_t AppInfoManager::get_appid_by_name(const char* app_name)
+AppId AppInfoManager::get_appid_by_name(const char* app_name)
 {
     AppInfoTableEntry* entry = find_app_info_by_name(app_name);
     return entry ? entry->appId : APP_ID_NONE;
@@ -505,90 +507,97 @@ void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config)
     snprintf(filepath, sizeof(filepath), "%s/odp/%s", mod_config->app_detector_dir,
         APP_MAPPING_FILE);
     FILE* tableFile = fopen(filepath, "r");
-    if (tableFile == nullptr)
+    if ( tableFile )
+    {
+        while (fgets(buf, sizeof(buf), tableFile))
+        {
+            AppId app_id;
+            uint32_t client_id, service_id, payload_id;
+            char* app_name;
+            char* context;
+
+            const char* token = strtok_r(buf, CONF_SEPARATORS, &context);
+            if (!token)
+            {
+                ErrorMessage("Could not read id for AppId\n");
+                continue;
+            }
+            app_id = strtol(token, nullptr, 10);
+
+            token = strtok_r(nullptr, CONF_SEPARATORS, &context);
+            if (!token)
+            {
+                ErrorMessage("Could not read app_name. Line %s\n", buf);
+                continue;
+            }
+            app_name = snort_strdup(token);
+
+            token = strtok_r(nullptr, CONF_SEPARATORS, &context);
+            if (!token)
+            {
+                ErrorMessage("Could not read service id for AppId\n");
+                snort_free(app_name);
+                continue;
+            }
+            service_id = strtol(token, nullptr, 10);
+
+            token = strtok_r(nullptr, CONF_SEPARATORS, &context);
+            if (!token)
+            {
+                ErrorMessage("Could not read client id for AppId\n");
+                snort_free(app_name);
+                continue;
+            }
+            client_id = strtol(token, nullptr, 10);
+
+            token = strtok_r(nullptr, CONF_SEPARATORS, &context);
+            if (!token)
+            {
+                ErrorMessage("Could not read payload id for AppId\n");
+                snort_free(app_name);
+                continue;
+            }
+            payload_id = strtol(token, nullptr, 10);
+
+            AppInfoTableEntry* entry = new AppInfoTableEntry(app_id, app_name, service_id,
+                client_id, payload_id);
+
+            /* snort service key, if it exists */
+            token = strtok_r(nullptr, CONF_SEPARATORS, &context);
+            if (token)
+                entry->snortId = AppIdInspector::get_inspector()->add_appid_protocol_reference(token);
+
+            if ((app_id = get_static_app_info_entry(entry->appId)))
+            {
+                app_info_table[app_id] = entry;
+                AppIdPegCounts::add_app_peg_info(*entry, app_id);
+            }
+
+            if ((app_id = get_static_app_info_entry(entry->serviceId)))
+                app_info_service_table[app_id] = entry;
+            if ((app_id = get_static_app_info_entry(entry->clientId)))
+                app_info_client_table[app_id] = entry;
+            if ((app_id = get_static_app_info_entry(entry->payloadId)))
+                app_info_payload_table[app_id] = entry;
+
+            if ( !add_entry_to_app_info_name_table(entry->app_name_key, entry) )
+                delete entry;
+        }
+        fclose(tableFile);
+
+        snprintf(filepath, sizeof(filepath), "%s/odp/%s", mod_config->app_detector_dir,
+            APP_CONFIG_FILE);
+        load_appid_config (mod_config, filepath);
+        snprintf(filepath, sizeof(filepath), "%s/custom/%s", mod_config->app_detector_dir,
+            USR_CONFIG_FILE);
+        load_appid_config (mod_config, filepath);
+    }
+    else
     {
         ParseWarning(WARN_RULES,
             "Could not open AppMapping Table file: %s, no AppId rule support", filepath);
-        return;
     }
 
-    while (fgets(buf, sizeof(buf), tableFile))
-    {
-        AppId app_id;
-        uint32_t client_id, service_id, payload_id;
-        char* app_name;
-        char* context;
-
-        const char* token = strtok_r(buf, CONF_SEPARATORS, &context);
-        if (!token)
-        {
-            ErrorMessage("Could not read id for AppId\n");
-            continue;
-        }
-        app_id = strtol(token, nullptr, 10);
-
-        token = strtok_r(nullptr, CONF_SEPARATORS, &context);
-        if (!token)
-        {
-            ErrorMessage("Could not read app_name. Line %s\n", buf);
-            continue;
-        }
-        app_name = snort_strdup(token);
-
-        token = strtok_r(nullptr, CONF_SEPARATORS, &context);
-        if (!token)
-        {
-            ErrorMessage("Could not read service id for AppId\n");
-            snort_free(app_name);
-            continue;
-        }
-        service_id = strtol(token, nullptr, 10);
-
-        token = strtok_r(nullptr, CONF_SEPARATORS, &context);
-        if (!token)
-        {
-            ErrorMessage("Could not read client id for AppId\n");
-            snort_free(app_name);
-            continue;
-        }
-        client_id = strtol(token, nullptr, 10);
-
-        token = strtok_r(nullptr, CONF_SEPARATORS, &context);
-        if (!token)
-        {
-            ErrorMessage("Could not read payload id for AppId\n");
-            snort_free(app_name);
-            continue;
-        }
-        payload_id = strtol(token, nullptr, 10);
-
-        AppInfoTableEntry* entry = new AppInfoTableEntry(app_id, app_name, service_id,
-            client_id, payload_id);
-
-        /* snort service key, if it exists */
-        token = strtok_r(nullptr, CONF_SEPARATORS, &context);
-        if (token)
-            entry->snortId = AppIdInspector::get_inspector()->add_appid_protocol_reference(token);
-
-        if ((app_id = get_static_app_info_entry(entry->appId)))
-            app_info_table[app_id] = entry;
-        if ((app_id = get_static_app_info_entry(entry->serviceId)))
-            app_info_service_table[app_id] = entry;
-        if ((app_id = get_static_app_info_entry(entry->clientId)))
-            app_info_client_table[app_id] = entry;
-        if ((app_id = get_static_app_info_entry(entry->payloadId)))
-            app_info_payload_table[app_id] = entry;
-
-        if ( !add_entry_to_app_info_name_table(entry->app_name_key, entry) )
-            delete entry;
-    }
-    fclose(tableFile);
-
-    snprintf(filepath, sizeof(filepath), "%s/odp/%s", mod_config->app_detector_dir,
-        APP_CONFIG_FILE);
-    load_appid_config (mod_config, filepath);
-    snprintf(filepath, sizeof(filepath), "%s/custom/%s", mod_config->app_detector_dir,
-        USR_CONFIG_FILE);
-    load_appid_config (mod_config, filepath);
+    AppIdPegCounts::set_detectors_configured();
 }
 

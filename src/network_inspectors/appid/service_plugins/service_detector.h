@@ -36,10 +36,8 @@ public:
     virtual void do_custom_init() override { }
     virtual void register_appid(AppId, unsigned extractsInfo) override;
     int service_inprocess(AppIdSession*, const Packet*, int dir);
-    int add_service(AppIdSession*, const Packet*, int dir, AppId, const char* vendor,
-        const char* version);
-    int add_service(AppIdSession*, const Packet*, int dir, AppId, const char* vendor,
-        const char* version, const AppIdServiceSubtype*);
+    int add_service(AppIdSession*, const Packet*, int dir, AppId, const char* vendor = nullptr,
+        const char* version = nullptr, const AppIdServiceSubtype* = nullptr);
     int add_service_consume_subtype(AppIdSession*, const Packet*, int dir, AppId,
         const char* vendor, const char* version, AppIdServiceSubtype*);
     int incompatible_data(AppIdSession*, const Packet*, int dir);
@@ -56,6 +54,11 @@ public:
     }
 
     void initialize_expected_session(AppIdSession*, AppIdSession*, uint64_t flags);
+
+private:
+    int update_service_data(AppIdSession*, const Packet*, int dir, AppId, const char* vendor,
+        const char* version);
+
 };
 #endif
 

@@ -25,7 +25,6 @@
 
 #include "service_radius.h"
 
-#include "appid_module.h"
 #include "app_info_table.h"
 
 #define RADIUS_CODE_ACCESS_REQUEST       1
@@ -175,9 +174,7 @@ inprocess:
     return APPID_INPROCESS;
 
 success:
-    add_service(asd, args.pkt, dir, APP_ID_RADIUS, nullptr, nullptr, nullptr);
-    appid_stats.radius_flows++;
-    return APPID_SUCCESS;
+    return add_service(asd, args.pkt, dir, APP_ID_RADIUS);
 
 not_compatible:
     incompatible_data(asd, args.pkt, dir);
@@ -298,10 +295,7 @@ inprocess:
     return APPID_INPROCESS;
 
 success:
-    add_service(asd, args.pkt, dir,
-        APP_ID_RADIUS_ACCT, nullptr, nullptr, nullptr);
-    appid_stats.radius_flows++;
-    return APPID_SUCCESS;
+    return add_service(asd, args.pkt, dir, APP_ID_RADIUS_ACCT);
 
 not_compatible:
     incompatible_data(asd, args.pkt, dir);

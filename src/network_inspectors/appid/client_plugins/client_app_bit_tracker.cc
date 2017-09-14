@@ -27,7 +27,6 @@
 
 #include "app_info_table.h"
 #include "application_ids.h"
-#include "appid_module.h"
 
 #include "main/snort_debug.h"
 #include "protocols/packet.h"
@@ -206,8 +205,6 @@ inprocess:
 
 done:
     add_app(args.asd, APP_ID_BITTORRENT, APP_ID_BITTRACKER_CLIENT, nullptr);
-    args.asd->set_client_detected();
-    appid_stats.bittracker_clients++;
     return APPID_SUCCESS;
 }
 

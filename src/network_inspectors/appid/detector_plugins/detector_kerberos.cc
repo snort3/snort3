@@ -25,10 +25,10 @@
 
 #include "detector_kerberos.h"
 
-#include "appid_module.h"
 #include "app_info_table.h"
 #include "application_ids.h"
 
+#include "main/snort_debug.h"
 #include "protocols/packet.h"
 
 enum KerberosState
@@ -411,14 +411,9 @@ static int krb_walk_server_packet(KRBState* krbs, const uint8_t* s, const uint8_
         /*end of server response message */
         DebugFormat(DEBUG_APPID,"%p Valid\n", (void*)asd);
         if (krbs->flags & KRB_FLAG_SERVICE_DETECTED)
-        {
             if (!asd->is_service_detected() && pkt)
-            {
-                krb_service_detector->add_service(asd, pkt, dir, APP_ID_KERBEROS, nullptr,
-                    krbs->ver, nullptr);
-                asd->set_service_detected();
-            }
-        }
+                krb_service_detector->add_service(asd, pkt, dir, APP_ID_KERBEROS,
+                    nullptr, krbs->ver, nullptr);
 
         if (krbs->flags & KRB_FLAG_AUTH_FAILED)
         {
@@ -428,14 +423,10 @@ static int krb_walk_server_packet(KRBState* krbs, const uint8_t* s, const uint8_
                 krb_service_detector->add_user(asd,
                     (krbs->flags & KRB_FLAG_USER_DETECTED) ? krbs->cname : reqCname,
                     APP_ID_LDAP, false);
-                appid_stats.kerberos_users++;
             }
         }
         else if (krbs->flags & KRB_FLAG_USER_DETECTED)
-        {
             krb_service_detector->add_user(asd, krbs->cname, APP_ID_LDAP, true);
-            appid_stats.kerberos_users++;
-        }
 
         krbs->flags = 0;
     }
@@ -503,7 +494,7 @@ int KerberosServiceDetector::validate(AppIdDiscoveryArgs& args)
 
     // server side is seeing packets so no need for client side to process them
     args.asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
-    fd = krb_client_detector->get_common_data(args.asd, false);
+    fd = krb_client_detector->get_common_data(args.asd);
 
     if (fd->need_continue)
         args.asd->set_session_flags(APPID_SESSION_CONTINUE);
@@ -883,7 +874,7 @@ int KerberosClientDetector::krb_walk_client_packet(KRBState* krbs, const uint8_t
     return KRB_INPROCESS;
 }
 
-KerberosDetectorData* KerberosClientDetector::get_common_data(AppIdSession* asd, bool client)
+KerberosDetectorData* KerberosClientDetector::get_common_data(AppIdSession* asd)
 {
     KerberosDetectorData* dd = (KerberosDetectorData*)data_get(asd);
     if (!dd)
@@ -903,10 +894,6 @@ KerberosDetectorData* KerberosClientDetector::get_common_data(AppIdSession* asd,
 
         dd->need_continue = 1;
         asd->set_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
-
-        // FIXIT-M - why is this state increment here?
-        if( client )
-            appid_stats.kerberos_flows++;
     }
 
     return dd;
@@ -926,7 +913,7 @@ int KerberosClientDetector::validate(AppIdDiscoveryArgs& args)
     if (!args.size)
         return APPID_INPROCESS;
 
-    KerberosDetectorData* fd = get_common_data(args.asd, true);
+    KerberosDetectorData* fd = get_common_data(args.asd);
 
     if (args.dir == APP_ID_FROM_INITIATOR)
     {

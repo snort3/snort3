@@ -25,7 +25,6 @@
 
 #include "service_nntp.h"
 
-#include "appid_module.h"
 #include "application_ids.h"
 
 #define NNTP_PORT   119
@@ -352,9 +351,7 @@ inprocess:
     return APPID_INPROCESS;
 
 success:
-    add_service(asd, args.pkt, args.dir, APP_ID_NNTP, nullptr, nullptr, nullptr);
-    appid_stats.nntp_flows++;
-    return APPID_SUCCESS;
+    return add_service(asd, args.pkt, args.dir, APP_ID_NNTP);
 
 fail:
     fail_service(asd, args.pkt, args.dir);

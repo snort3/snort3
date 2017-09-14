@@ -25,7 +25,6 @@
 
 #include "client_app_ym.h"
 
-#include "appid_module.h"
 #include "app_info_table.h"
 #include "application_ids.h"
 
@@ -88,8 +87,6 @@ int YmDetector::validate(AppIdDiscoveryArgs& args)
 
     product_id = APP_ID_YAHOO;
     memset(&version,0,sizeof(version));
-
-    DebugFormat(DEBUG_LOG,"Found yahoo! client: %zu\n",sizeof(VERSIONID));
 
     if ( !args.data )
         return APPID_ENULL;
@@ -155,8 +152,6 @@ int YmDetector::validate(AppIdDiscoveryArgs& args)
 
 done:
     add_app(args.asd, APP_ID_YAHOO, product_id, (char*)version);
-    args.asd->set_client_detected();
-    appid_stats.yahoo_messenger_clients++;
     return APPID_SUCCESS;
 }
 

@@ -25,7 +25,6 @@
 
 #include "client_app_tns.h"
 
-#include "appid_module.h"
 #include "app_info_table.h"
 #include "application_ids.h"
 
@@ -372,8 +371,6 @@ done:
         username[user_size] = 0;
         add_user(args.asd, username, APP_ID_ORACLE_DATABASE, true);
     }
-    args.asd->set_client_detected();
-    appid_stats.tns_clients++;
     return APPID_SUCCESS;
 }
 

@@ -35,7 +35,7 @@ public:
     ~KerberosClientDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
-    KerberosDetectorData* get_common_data(AppIdSession*, bool client);
+    KerberosDetectorData* get_common_data(AppIdSession*);
 
     bool failed_login = false;
 

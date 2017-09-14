@@ -25,7 +25,6 @@
 
 #include "detector_sip.h"
 
-#include "appid_module.h"
 #include "appid_inspector.h"
 #include "app_info_table.h"
 #include "protocols/packet.h"
@@ -340,9 +339,9 @@ void SipServiceDetector::createRtpFlow(AppIdSession* asd, const Packet* pkt, con
         APPID_EARLY_SESSION_FLAG_FW_RULE);
     if ( fp )
     {
-        fp->client_app_id = asd->client_app_id;
-        fp->payload_app_id = asd->payload_app_id;
-        fp->service_app_id = APP_ID_RTP;
+        fp->client.set_id(asd->client.get_id());
+        fp->payload.set_id(asd->payload.get_id());
+        fp->service.set_id(APP_ID_RTP);
         initialize_expected_session(asd, fp, APPID_SESSION_IGNORE_ID_FLAGS);
     }
 
@@ -351,9 +350,9 @@ void SipServiceDetector::createRtpFlow(AppIdSession* asd, const Packet* pkt, con
         app_id, APPID_EARLY_SESSION_FLAG_FW_RULE);
     if ( fp2 )
     {
-        fp2->client_app_id = asd->client_app_id;
-        fp2->payload_app_id = asd->payload_app_id;
-        fp2->service_app_id = APP_ID_RTCP;
+        fp2->client.set_id(asd->client.get_id());
+        fp2->payload.set_id(asd->payload.get_id());
+        fp2->service.set_id(APP_ID_RTCP);
         initialize_expected_session(asd, fp2, APPID_SESSION_IGNORE_ID_FLAGS);
     }
 }
@@ -549,11 +548,7 @@ void SipEventHandler::client_handler(SipEvent& sip_event, AppIdSession* asd)
 
 success:
     if( !asd->is_client_detected() )
-    {
-        //client detection successful
         client->add_app(asd, APP_ID_SIP, ClientAppId, clientVersion);
-        appid_stats.sip_clients++;
-    }
 
     if ( fd->user_name.size() )
         client->add_user(asd, fd->user_name.c_str(), APP_ID_SIP, true);
@@ -600,8 +595,7 @@ void SipEventHandler::service_handler(SipEvent& sip_event, AppIdSession* asd)
         {
             asd->set_session_flags(APPID_SESSION_CONTINUE);
             service->add_service(asd, sip_event.get_packet(), direction, APP_ID_SIP,
-                ss->vendor[0] ? ss->vendor : nullptr, nullptr, nullptr);
-            appid_stats.sip_flows++;
+                ss->vendor[0] ? ss->vendor : nullptr);
         }
     }
 }

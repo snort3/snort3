@@ -25,8 +25,6 @@
 
 #include "service_bgp.h"
 
-#include "appid_module.h"
-
 static const unsigned BGP_PORT = 179;
 
 static const unsigned BGP_V1_TYPE_OPEN = 1;
@@ -226,8 +224,6 @@ fail:
     return APPID_NOMATCH;
 
 success:
-    add_service(asd, args.pkt, args.dir, APP_ID_BGP, nullptr, nullptr, nullptr);
-    appid_stats.bgp_flows++;
-    return APPID_SUCCESS;
+    return add_service(asd, args.pkt, args.dir, APP_ID_BGP);
 }
 

@@ -25,7 +25,6 @@
 
 #include "service_netbios.h"
 
-#include "appid_module.h"
 #include "app_info_table.h"
 #include "dcerpc.h"
 #include "protocols/packet.h"
@@ -551,9 +550,7 @@ int NbnsServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
 
 success:
-    add_service(asd, args.pkt, dir, APP_ID_NETBIOS_NS, nullptr, nullptr, nullptr);
-    appid_stats.netbios_ns_flows++;
-    return APPID_SUCCESS;
+    return add_service(asd, args.pkt, dir, APP_ID_NETBIOS_NS);
 
 inprocess:
     service_inprocess(asd, args.pkt, dir);
@@ -990,32 +987,22 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
             goto fail;
         }
     }
-    if (retval == -1)
+    if ( retval == -1 )
         goto inprocess;
 
-    if (!asd->is_service_detected())
-    {
-        if (add_service(asd, pkt, dir, nd->serviceAppId, nullptr, nullptr, nullptr) ==
-            APPID_SUCCESS)
-        {
+    if ( !asd->is_service_detected() )
+        if ( add_service(asd, pkt, dir, nd->serviceAppId) == APPID_SUCCESS )
             add_miscellaneous_info(asd, nd->miscAppId);
-        }
-        appid_stats.netbios_ssn_flows++;
-    }
     return APPID_SUCCESS;
 
 inprocess:
-    if (!asd->is_service_detected())
-    {
+    if ( !asd->is_service_detected() )
         service_inprocess(asd, pkt, dir);
-    }
     return APPID_INPROCESS;
 
 fail:
-    if (!asd->is_service_detected())
-    {
+    if ( !asd->is_service_detected() )
         fail_service(asd, pkt, dir);
-    }
     return APPID_NOMATCH;
 }
 
@@ -1172,7 +1159,7 @@ not_mailslot:
     }
 
 fail:
-    if (!asd->is_service_detected())
+    if (!asd->is_service_detected() )
     {
         fail_service(asd, pkt, dir);
     }
@@ -1180,25 +1167,19 @@ fail:
     return APPID_NOMATCH;
 
 success:
-    if (!asd->is_service_detected())
+    if ( !asd->is_service_detected() )
     {
-        if (dir == APP_ID_FROM_RESPONDER)
+        if ( dir == APP_ID_FROM_RESPONDER )
         {
-            if (add_service(asd, pkt, dir, serviceAppId, nullptr, nullptr, nullptr) ==
-                APPID_SUCCESS)
-            {
+            if ( add_service(asd, pkt, dir, serviceAppId) == APPID_SUCCESS )
                 add_miscellaneous_info(asd, miscAppId);
-            }
-            appid_stats.netbios_dgm_flows++;
         }
     }
     return APPID_SUCCESS;
 
 inprocess:
-    if (!asd->is_service_detected())
-    {
+    if ( !asd->is_service_detected() )
         service_inprocess(asd, pkt, dir);
-    }
     return APPID_INPROCESS;
 }
 
@@ -1207,10 +1188,10 @@ void NbdgmServiceDetector::add_smb_info(AppIdSession* asd, unsigned major, unsig
 {
     FpSMBData* sd;
 
-    if (flags & FINGERPRINT_UDP_FLAGS_XENIX)
+    if ( flags & FINGERPRINT_UDP_FLAGS_XENIX )
         return;
 
-    if (smb_data_free_list)
+    if ( smb_data_free_list )
     {
         sd = smb_data_free_list;
         smb_data_free_list = sd->next;
@@ -1218,7 +1199,7 @@ void NbdgmServiceDetector::add_smb_info(AppIdSession* asd, unsigned major, unsig
     else
         sd = (FpSMBData*)snort_calloc(sizeof(FpSMBData));
 
-    if (asd->add_flow_data(sd, APPID_SESSION_DATA_SMB_DATA, (AppIdFreeFCN)AppIdFreeSMBData))
+    if ( asd->add_flow_data(sd, APPID_SESSION_DATA_SMB_DATA, (AppIdFreeFCN)AppIdFreeSMBData) )
     {
         AppIdFreeSMBData(sd);
         return;
@@ -1232,7 +1213,7 @@ void NbdgmServiceDetector::add_smb_info(AppIdSession* asd, unsigned major, unsig
 
 void NbdgmServiceDetector::AppIdFreeSMBData(FpSMBData* sd)
 {
-    if (sd)
+    if ( sd )
     {
         sd->next = smb_data_free_list;
         smb_data_free_list = sd;

@@ -25,9 +25,9 @@
 
 #include "http_url_patterns.h"
 
-#include "appid_http_session.h"
-#include "appid_module.h"
 #include "app_info_table.h"
+#include "appid_module.h"
+#include "appid_http_session.h"
 #include "appid_session.h"
 #include "appid_utils/sf_mlmp.h"
 #include "log/messages.h"
@@ -1129,8 +1129,8 @@ static inline uint8_t* continue_buffer_scan(const uint8_t* start, const uint8_t*
         return ++bp;
 }
 
-void HttpPatternMatchers::identify_user_agent(const uint8_t* start, int size, AppId* serviceAppId,
-    AppId* ClientAppId, char** version)
+void HttpPatternMatchers::identify_user_agent(const uint8_t* start, int size, AppId& service_id,
+    AppId& client_id, char** version)
 {
     char temp_ver[MAX_VERSION_SIZE] = { 0 };
     MatchedPatterns* mp = nullptr;
@@ -1151,8 +1151,8 @@ void HttpPatternMatchers::identify_user_agent(const uint8_t* start, int size, Ap
         unsigned longest_misc_match = 0;
         unsigned i = 0;
 
-        *ClientAppId = APP_ID_NONE;
-        *serviceAppId = APP_ID_HTTP;
+        client_id = APP_ID_NONE;
+        service_id = APP_ID_HTTP;
         for (MatchedPatterns* tmp = mp; tmp; tmp = tmp->next)
         {
             DetectorHTTPPattern* match = (DetectorHTTPPattern*)tmp->mpattern;
@@ -1189,8 +1189,8 @@ void HttpPatternMatchers::identify_user_agent(const uint8_t* start, int size, Ap
                 // Pick firefox over some things, but pick a misc app over Firefox.
                 if (match->client_id == APP_ID_FIREFOX)
                     firefox_detected = 1;
-                *serviceAppId = APP_ID_HTTP;
-                *ClientAppId = match->client_id;
+                service_id = APP_ID_HTTP;
+                client_id = match->client_id;
                 break;
 
             case APP_ID_CHROME:
@@ -1211,8 +1211,8 @@ void HttpPatternMatchers::identify_user_agent(const uint8_t* start, int size, Ap
 
                 dominant_pattern_detected = 1;
                 temp_ver[i] = 0;
-                *serviceAppId = APP_ID_HTTP;
-                *ClientAppId = match->client_id;
+                service_id = APP_ID_HTTP;
+                client_id = match->client_id;
                 break;
 
             case APP_ID_ANDROID_BROWSER:
@@ -1256,8 +1256,8 @@ void HttpPatternMatchers::identify_user_agent(const uint8_t* start, int size, Ap
                     break;
 
                 temp_ver[i] = 0;
-                *serviceAppId = APP_ID_HTTP;
-                *ClientAppId = match->client_id;
+                service_id = APP_ID_HTTP;
+                client_id = match->client_id;
                 goto done;
 
             case APP_ID_GOOGLE_DESKTOP:
@@ -1282,8 +1282,8 @@ void HttpPatternMatchers::identify_user_agent(const uint8_t* start, int size, Ap
                         break;
                     temp_ver[i] = 0;
                 }
-                *serviceAppId = APP_ID_HTTP;
-                *ClientAppId = match->client_id;
+                service_id = APP_ID_HTTP;
+                client_id = match->client_id;
                 goto done;
 
             case APP_ID_SAFARI_MOBILE_DUMMY:
@@ -1309,8 +1309,8 @@ void HttpPatternMatchers::identify_user_agent(const uint8_t* start, int size, Ap
                     dominant_pattern_detected = !(buffPtr && strstr((char*)buffPtr,
                         SAFARI_PATTERN) != nullptr);
                     temp_ver[0] = 0;
-                    *serviceAppId = APP_ID_HTTP;
-                    *ClientAppId = match->client_id;
+                    service_id = APP_ID_HTTP;
+                    client_id = match->client_id;
                 }
                 i = 0;
                 break;
@@ -1324,8 +1324,8 @@ void HttpPatternMatchers::identify_user_agent(const uint8_t* start, int size, Ap
                     temp_ver[i++] = *buffPtr++;
                 }
                 temp_ver[i] = 0;
-                *serviceAppId = APP_ID_HTTP;
-                *ClientAppId = match->client_id;
+                service_id = APP_ID_HTTP;
+                client_id = match->client_id;
                 goto done;
 
             case APP_ID_BLACKBERRY_BROWSER:
@@ -1345,8 +1345,8 @@ void HttpPatternMatchers::identify_user_agent(const uint8_t* start, int size, Ap
                     break;
                 temp_ver[i] = 0;
 
-                *serviceAppId = APP_ID_HTTP;
-                *ClientAppId = match->client_id;
+                service_id = APP_ID_HTTP;
+                client_id = match->client_id;
                 goto done;
 
             case APP_ID_SKYPE:
@@ -1357,8 +1357,8 @@ void HttpPatternMatchers::identify_user_agent(const uint8_t* start, int size, Ap
                 break;
 
             case APP_ID_OPERA:
-                *serviceAppId = APP_ID_HTTP;
-                *ClientAppId = match->client_id;
+                service_id = APP_ID_HTTP;
+                client_id = match->client_id;
                 break;
 
             case FAKE_VERSION_APP_ID:
@@ -1416,37 +1416,36 @@ void HttpPatternMatchers::identify_user_agent(const uint8_t* start, int size, Ap
                         temp_ver[i] = 0;
                     }
                     dominant_pattern_detected = 1;
-                    *serviceAppId = APP_ID_HTTP;
-                    *ClientAppId = match->client_id;
+                    service_id = APP_ID_HTTP;
+                    client_id = match->client_id;
                 }
             }
         }
 
         if (mobileDetect && safariDetect && !dominant_pattern_detected)
         {
-            *serviceAppId = APP_ID_HTTP;
-            *ClientAppId = APP_ID_SAFARI_MOBILE;
+            service_id = APP_ID_HTTP;
+            client_id = APP_ID_SAFARI_MOBILE;
         }
         else if (safariDetect && !dominant_pattern_detected)
         {
-            *serviceAppId = APP_ID_HTTP;
-            *ClientAppId = APP_ID_SAFARI;
+            service_id = APP_ID_HTTP;
+            client_id = APP_ID_SAFARI;
         }
         else if (firefox_detected && !dominant_pattern_detected)
         {
-            *serviceAppId = APP_ID_HTTP;
-            *ClientAppId = APP_ID_FIREFOX;
+            service_id = APP_ID_HTTP;
+            client_id = APP_ID_FIREFOX;
         }
         else if (android_browser_detected && !dominant_pattern_detected)
         {
-            *serviceAppId = APP_ID_HTTP;
-            *ClientAppId = APP_ID_ANDROID_BROWSER;
+            service_id = APP_ID_HTTP;
+            client_id = APP_ID_ANDROID_BROWSER;
         }
-        /* Better to choose Skype over any other ID  */
-        else if (skypeDetect)
+        else if (skypeDetect)        // Better to choose Skype over any other ID
         {
-            *serviceAppId = APP_ID_SKYPE_AUTH;
-            *ClientAppId = APP_ID_SKYPE;
+            service_id = APP_ID_SKYPE_AUTH;
+            client_id = APP_ID_SKYPE;
         }
     }
 
@@ -1570,8 +1569,7 @@ bool HttpPatternMatchers::get_appid_from_url(char* host, char* url, char** versi
     {
         size_t scheme_len = strlen(url);
         if (scheme_len > URL_SCHEME_MAX_LEN)
-            scheme_len = URL_SCHEME_MAX_LEN;    // only need to search the first few bytes for
-                                                // scheme
+            scheme_len = URL_SCHEME_MAX_LEN;    // only search the first few bytes for scheme
         char* url_offset = (char*)service_strstr((uint8_t*)url, scheme_len,
             (uint8_t*)URL_SCHEME_END_PATTERN, sizeof(URL_SCHEME_END_PATTERN)-1);
         if (url_offset)
@@ -1613,13 +1611,13 @@ bool HttpPatternMatchers::get_appid_from_url(char* host, char* url, char** versi
     patterns[2].pattern = nullptr;
 
     HostUrlDetectorPattern* data = (HostUrlDetectorPattern*)mlmpMatchPatternUrl(matcher, patterns);
-    if (data)
+    if ( data )
     {
         payload_found = true;
-        if (url)
+        if ( url )
         {
             char* q = strchr(url, '?');
-            if (q != nullptr)
+            if ( q != nullptr )
             {
                 tMlpPattern query;
                 char temp_ver[MAX_VERSION_SIZE];
@@ -1642,9 +1640,9 @@ bool HttpPatternMatchers::get_appid_from_url(char* host, char* url, char** versi
     snort_free(temp_host);
 
     /* if referred_id feature id disabled, referer will be null */
-    if (referer && (!payload_found ||
-        AppInfoManager::get_instance().get_app_info_flags(data->payload_id,
-        APPINFO_FLAG_REFERRED)))
+    if ( referer && (!payload_found ||
+         AppInfoManager::get_instance().get_app_info_flags(data->payload_id,
+         APPINFO_FLAG_REFERRED)) )
     {
         char* referer_start = referer;
         size_t ref_len = strlen(referer);
@@ -1661,7 +1659,7 @@ bool HttpPatternMatchers::get_appid_from_url(char* host, char* url, char** versi
         const char* referer_path = strchr(referer_start, '/');
         int referer_path_len = 0;
 
-        if (referer_path)
+        if ( referer_path )
         {
             referer_path_len = strlen(referer_path);
             referer_len -= referer_path_len;
@@ -1680,9 +1678,9 @@ bool HttpPatternMatchers::get_appid_from_url(char* host, char* url, char** versi
             patterns[1].patternSize = referer_path_len;
             patterns[2].pattern = nullptr;
             HostUrlDetectorPattern* data = (HostUrlDetectorPattern*)mlmpMatchPatternUrl(matcher, patterns);
-            if (data != nullptr)
+            if ( data != nullptr )
             {
-                if (payload_found)
+                if ( payload_found )
                     *referredPayloadAppId = *payloadAppId;
                 else
                     payload_found = true;
@@ -1700,7 +1698,7 @@ void HttpPatternMatchers::get_server_vendor_version(const uint8_t* data, int len
     int vendor_len = len;
 
     const uint8_t* ver = (const uint8_t*)memchr(data, '/', len);
-    if (ver)
+    if ( ver )
     {
         const uint8_t* paren = nullptr;
         int version_len = 0;
@@ -1714,26 +1712,25 @@ void HttpPatternMatchers::get_server_vendor_version(const uint8_t* data, int len
 
         for (p = ver; *p && p < end; p++)
         {
-            if (*p == '(')
+            if ( *p == '(' )
             {
                 subname = nullptr;
                 paren = p;
             }
-            else if (*p == ')')
+            else if ( *p == ')' )
             {
                 subname = nullptr;
                 paren = nullptr;
             }
-            /* some admins put tags in their http response lines.
-               the anchors will cause problems for adaptive profiles in snort,
-               so let's just get rid of them */
+            /* some admins put tags in their http response lines. the anchors will cause problems
+             *  for adaptive profiles in snort, so let's just get rid of them */
             else if (*p == '<')
                 break;
-            else if (!paren)
+            else if ( !paren )
             {
                 if (*p == ' ' || *p == '\t')
                 {
-                    if (subname && subname_len > 0 && subver && *subname)
+                    if ( subname && subname_len > 0 && subver && *subname )
                     {
                         AppIdServiceSubtype* sub =
                             (AppIdServiceSubtype*)snort_calloc(sizeof(AppIdServiceSubtype));
@@ -1756,7 +1753,7 @@ void HttpPatternMatchers::get_server_vendor_version(const uint8_t* data, int len
                     subname_len = 0;
                     subver = nullptr;
                 }
-                else if (*p == '/' && subname)
+                else if ( *p == '/' && subname )
                 {
                     if (version_len <= 0)
                         version_len = subname - ver - 1;
@@ -1766,7 +1763,7 @@ void HttpPatternMatchers::get_server_vendor_version(const uint8_t* data, int len
             }
         }
 
-        if (subname && subname_len > 0 && subver && *subname)
+        if ( subname && subname_len > 0 && subver && *subname )
         {
             AppIdServiceSubtype* sub =
                 (AppIdServiceSubtype*)snort_calloc(sizeof(AppIdServiceSubtype));
@@ -1776,7 +1773,7 @@ void HttpPatternMatchers::get_server_vendor_version(const uint8_t* data, int len
             sub->service = tmp;
 
             int subver_len = p - subver;
-            if (subver_len > 0 && *subver)
+            if ( subver_len > 0 && *subver )
             {
                 tmp = (char*)snort_calloc(subver_len + 1);
                 memcpy(tmp, subver, subver_len);
@@ -1787,16 +1784,16 @@ void HttpPatternMatchers::get_server_vendor_version(const uint8_t* data, int len
             *subtype = sub;
         }
 
-        if (version_len <= 0)
+        if ( version_len <= 0 )
             version_len = p - ver;
-        if (version_len >= MAX_VERSION_SIZE)
+        if ( version_len >= MAX_VERSION_SIZE )
             version_len = MAX_VERSION_SIZE - 1;
         *version = (char*)snort_calloc(sizeof(char) * (version_len + 1));
         memcpy(*version, ver, version_len);
         *(*version + version_len) = '\0';
     }
 
-    if (vendor_len >= MAX_VERSION_SIZE)
+    if ( vendor_len >= MAX_VERSION_SIZE )
         vendor_len = MAX_VERSION_SIZE - 1;
     *vendor = (char*)snort_calloc(sizeof(char) * (vendor_len + 1));
     memcpy(*vendor, data, vendor_len);
@@ -1808,18 +1805,18 @@ uint32_t HttpPatternMatchers::parse_multiple_http_patterns(const char* pattern,
 {
     uint32_t partNum = 0;
 
-    if (!pattern)
+    if ( !pattern )
         return 0;
 
     const char* tmp = pattern;
     while (tmp && (partNum < numPartLimit))
     {
         const char* tmp2 = strstr(tmp, FP_OPERATION_AND);
-        if (tmp2)
+        if ( tmp2 )
         {
             parts[partNum].pattern = (uint8_t*)snort_strndup(tmp, tmp2-tmp);
             parts[partNum].patternSize = strlen((const char*)parts[partNum].pattern);
-            tmp = tmp2+strlen(FP_OPERATION_AND);
+            tmp = tmp2 + strlen(FP_OPERATION_AND);
         }
         else
         {
@@ -1829,7 +1826,7 @@ uint32_t HttpPatternMatchers::parse_multiple_http_patterns(const char* pattern,
         }
         parts[partNum].level = level;
 
-        if (!parts[partNum].pattern)
+        if ( !parts[partNum].pattern )
         {
             for (unsigned i = 0; i <= partNum; i++)
                 snort_free((void*)parts[i].pattern);

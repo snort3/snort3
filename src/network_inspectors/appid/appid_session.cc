@@ -28,10 +28,9 @@
 #include <string.h>
 
 #include "app_forecast.h"
+#include "app_info_table.h"
 #include "appid_http_session.h"
 #include "appid_inspector.h"
-#include "app_info_table.h"
-#include "appid_module.h"
 #include "appid_stats.h"
 #include "appid_utils/ip_funcs.h"
 #include "service_plugins/service_ssl.h"
@@ -141,6 +140,8 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t port)
     length_sequence.sequence_cnt = 0;
     memset(length_sequence.sequence, '\0', sizeof(length_sequence.sequence));
     session_logging_id[0] = '\0';
+
+    AppIdPegCounts::inc_disco_peg(AppIdPegCounts::DiscoveryPegs::TOTAL_SESSIONS);
 }
 
 AppIdSession::~AppIdSession()
@@ -258,13 +259,9 @@ void AppIdSession::reinit_session_data()
     //data
     if ( is_service_over_ssl(tp_app_id) )
     {
-        payload_app_id = referred_payload_app_id = tp_payload_app_id = APP_ID_NONE;
+        payload.reset();
+        referred_payload_app_id = tp_payload_app_id = APP_ID_NONE;
         clear_session_flags(APPID_SESSION_CONTINUE);
-        if ( payload_version )
-        {
-            snort_free(payload_version);
-            payload_version = nullptr;
-        }
         if ( hsession && hsession->url )
         {
             snort_free(hsession->url);
@@ -275,18 +272,8 @@ void AppIdSession::reinit_session_data()
     //service
     if ( !get_session_flags(APPID_SESSION_STICKY_SERVICE) )
     {
-        tp_app_id = service_app_id = port_service_id = APP_ID_NONE;
-        if ( service_vendor )
-        {
-            snort_free(service_vendor);
-            service_vendor = nullptr;
-        }
-        if ( service_version )
-        {
-            snort_free(service_version);
-            service_version = nullptr;
-        }
-
+        service.reset();
+        tp_app_id = APP_ID_NONE;
         service_ip.clear();
         service_port = 0;
         service_disco_state = APPID_DISCO_STATE_NONE;
@@ -295,12 +282,8 @@ void AppIdSession::reinit_session_data()
     }
 
     //client
-    client_app_id = client_service_app_id = APP_ID_NONE;
-    if ( client_version )
-    {
-        snort_free(client_version);
-        client_version = nullptr;
-    }
+    client.reset();
+    client_inferred_service_id = APP_ID_NONE;
     client_disco_state = APPID_DISCO_STATE_NONE;
     free_flow_data_by_mask(APPID_SESSION_DATA_CLIENT_MODSTATE_BIT);
 
@@ -396,11 +379,11 @@ void AppIdSession::check_app_detection_restart()
     if (get_session_flags(APPID_SESSION_ENCRYPTED) || isSsl)
     {
         set_session_flags(APPID_SESSION_DECRYPTED);
-        encrypted.service_app_id = service_id;
-        encrypted.payload_app_id = pick_payload_app_id();
-        encrypted.client_app_id = pick_client_app_id();
-        encrypted.misc_app_id = pick_misc_app_id();
-        encrypted.referred_app_id = pick_referred_payload_app_id();
+        encrypted.service_id = service_id;
+        encrypted.payload_id = pick_payload_app_id();
+        encrypted.client_id = pick_client_app_id();
+        encrypted.misc_id = pick_misc_app_id();
+        encrypted.referred_id = pick_referred_payload_app_id();
         reinit_session_data();
         if (session_logging_enabled)
             LogMessage("AppIdDbg %s SSL decryption is available, restarting app Detection\n",
@@ -463,52 +446,21 @@ void AppIdSession::update_encrypted_app_id(AppId service_id)
     }
 }
 
-void AppIdSession::set_client_app_id_data(AppId id, char* version)
-{
-    if ( id <= APP_ID_NONE || id == APP_ID_HTTP )
-        return;
-
-    if ( id != client_app_id )
-    {
-        if ( client_app_id )
-        {
-            unsigned prev_priority = app_info_mgr->get_app_info_priority(client_app_id);
-            unsigned curr_priority = app_info_mgr->get_app_info_priority(id);
-
-            if (prev_priority > curr_priority)
-                return;
-        }
-
-        client_app_id = id;
-
-        if ( client_version )
-            snort_free(client_version);
-        if (version)
-            client_version = snort_strdup(version);
-    }
-    else if ( version )
-    {
-        if ( client_version )
-            snort_free(client_version);
-        client_version = snort_strdup(version);
-    }
-}
-
 void AppIdSession::examine_ssl_metadata(Packet* p)
 {
     int ret;
-    AppId client_app_id = 0;
-    AppId payload_app_id = 0;
+    AppId client_id = 0;
+    AppId payload_id = 0;
 
     if ((scan_flags & SCAN_SSL_HOST_FLAG) && tsession->tls_host)
     {
         size_t size = strlen(tsession->tls_host);
         if ((ret = ssl_scan_hostname((const uint8_t*)tsession->tls_host, size,
-                &client_app_id, &payload_app_id)))
+                &client_id, &payload_id)))
         {
-            set_client_app_id_data(client_app_id, nullptr);
-            set_payload_app_id_data((ApplicationId)payload_app_id, nullptr);
-            setSSLSquelch(p, ret, (ret == 1 ? payload_app_id : client_app_id));
+            set_client_appid_data(client_id, nullptr);
+            set_payload_app_id_data((AppId)payload_id, nullptr);
+            setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id));
         }
         scan_flags &= ~SCAN_SSL_HOST_FLAG;
     }
@@ -516,11 +468,11 @@ void AppIdSession::examine_ssl_metadata(Packet* p)
     {
         size_t size = strlen(tsession->tls_cname);
         if ((ret = ssl_scan_cname((const uint8_t*)tsession->tls_cname, size,
-                &client_app_id, &payload_app_id)))
+                &client_id, &payload_id)))
         {
-            set_client_app_id_data(client_app_id, nullptr);
-            set_payload_app_id_data((ApplicationId)payload_app_id, nullptr);
-            setSSLSquelch(p, ret, (ret == 1 ? payload_app_id : client_app_id));
+            set_client_appid_data(client_id, nullptr);
+            set_payload_app_id_data((AppId)payload_id, nullptr);
+            setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id));
         }
         snort_free(tsession->tls_cname);
         tsession->tls_cname = nullptr;
@@ -529,11 +481,11 @@ void AppIdSession::examine_ssl_metadata(Packet* p)
     {
         size_t size = strlen(tsession->tls_orgUnit);
         if ((ret = ssl_scan_cname((const uint8_t*)tsession->tls_orgUnit, size,
-                &client_app_id, &payload_app_id)))
+                &client_id, &payload_id)))
         {
-            set_client_app_id_data(client_app_id, nullptr);
-            set_payload_app_id_data((ApplicationId)payload_app_id, nullptr);
-            setSSLSquelch(p, ret, (ret == 1 ? payload_app_id : client_app_id));
+            set_client_appid_data(client_id, nullptr);
+            set_payload_app_id_data((AppId)payload_id, nullptr);
+            setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id));
         }
         snort_free(tsession->tls_orgUnit);
         tsession->tls_orgUnit = nullptr;
@@ -564,16 +516,34 @@ void AppIdSession::examine_rtmp_metadata()
             &payload_id, &referred_payload_id, false) ) ) )
         {
             /* do not overwrite a previously-set client or service */
-            if (client_app_id <= APP_ID_NONE)
-                set_client_app_id_data(payload_id, nullptr);
-            if (service_app_id <= APP_ID_NONE)
+            if (client.get_id() <= APP_ID_NONE)
+                set_client_appid_data(payload_id, nullptr);
+            if (service.get_id() <= APP_ID_NONE)
                 set_service_appid_data(service_id, nullptr, nullptr);
 
             /* DO overwrite a previously-set data */
-            set_payload_app_id_data((ApplicationId)payload_app_id, nullptr);
+            set_payload_app_id_data((AppId)payload.get_id(), nullptr);
             set_referred_payload_app_id_data(referred_payload_id);
         }
     }
+}
+
+void AppIdSession::set_client_appid_data(AppId id, char* version)
+{
+    if ( id <= APP_ID_NONE || id == APP_ID_HTTP )
+        return;
+
+    AppId cur_id = client.get_id();
+    if ( id != cur_id )
+    {
+        if ( cur_id )
+            if ( app_info_mgr->get_priority(cur_id) > app_info_mgr->get_priority(id) )
+                return;
+
+        client.set_id(id);
+    }
+
+    client.set_version(version);
 }
 
 void AppIdSession::set_referred_payload_app_id_data(AppId id)
@@ -585,34 +555,15 @@ void AppIdSession::set_referred_payload_app_id_data(AppId id)
         referred_payload_app_id = id;
 }
 
-void AppIdSession::set_payload_app_id_data(ApplicationId id, char* version)
+void AppIdSession::set_payload_app_id_data(AppId id, char* version)
 {
     if ( id <= APP_ID_NONE )
         return;
 
-    if ( payload_app_id != id )
-    {
-        if ( payload_app_id )
-        {
-            unsigned prev_priority = app_info_mgr->get_app_info_priority(payload_app_id);
-            unsigned curr_priority = app_info_mgr->get_app_info_priority(id);
-            if (prev_priority > curr_priority)
-                return;
-        }
-
-        payload_app_id = id;
-
-        if ( payload_version )
-            snort_free(payload_version);
-        if (version)
-            payload_version = snort_strdup(version);
-    }
-    else if ( version )
-    {
-        if ( payload_version )
-            snort_free(payload_version);
-        payload_version = snort_strdup(version);
-    }
+    if ( app_info_mgr->get_priority(payload.get_id()) > app_info_mgr->get_priority(id) )
+            return;
+    payload.set_id(id);
+    payload.set_version(version);
 }
 
 void AppIdSession::set_service_appid_data(AppId id, char* vendor, char* version)
@@ -623,35 +574,12 @@ void AppIdSession::set_service_appid_data(AppId id, char* vendor, char* version)
     // 3rd party is in INIT state after processing first GET request.
     if (id == APP_ID_HTTP)
     {
-        if (client_service_app_id == APP_ID_NONE)
-            client_service_app_id = id;
+        if (client_inferred_service_id == APP_ID_NONE)
+            client_inferred_service_id = id;
         return;
     }
 
-    if (service_app_id != id)
-    {
-        service_app_id = id;
-
-        if (service_vendor)
-            snort_free(service_vendor);
-        service_vendor = vendor;
-
-        if (service_version)
-            snort_free(service_version);
-        if (version)
-            service_version = snort_strdup(version);
-    }
-    else if (vendor || version)
-    {
-        if (service_vendor)
-            snort_free(service_vendor);
-        service_vendor = vendor;
-
-        if (service_version)
-            snort_free(service_version);
-        if (version)
-            service_version = snort_strdup(version);
-    }
+    service.update(id, vendor, version);
 }
 
 void AppIdSession::free_dns_session_data()
@@ -685,12 +613,10 @@ void AppIdSession::free_tls_session_data()
 
 void AppIdSession::delete_session_data()
 {
-    snort_free(client_version);
-    snort_free(payload_version);
-    snort_free(service_vendor);
-    snort_free(service_version);
+    service.reset();
+    client.reset();
+    payload.reset();
     snort_free(netbios_name);
-    snort_free(username);
     snort_free(netbios_domain);
 
     AppIdServiceSubtype* rna_ss = subtype;
@@ -811,17 +737,17 @@ AppId AppIdSession::pick_service_app_id()
 
     if ( is_service_detected() )
     {
-        bool deferred = app_info_mgr->get_app_info_flags(service_app_id, APPINFO_FLAG_DEFER)
+        bool deferred = app_info_mgr->get_app_info_flags(service.get_id(), APPINFO_FLAG_DEFER)
             || app_info_mgr->get_app_info_flags(tp_app_id, APPINFO_FLAG_DEFER);
 
-        if (service_app_id > APP_ID_NONE && !deferred)
-            return service_app_id;
+        if (service.get_id() > APP_ID_NONE && !deferred)
+            return service.get_id();
         if (is_third_party_appid_available(tpsession))
         {
             if (tp_app_id > APP_ID_NONE)
                 return tp_app_id;
             else if (deferred)
-                return service_app_id;
+                return service.get_id();
             else
                 rval = APP_ID_UNKNOWN_UI;
         }
@@ -833,11 +759,11 @@ AppId AppIdSession::pick_service_app_id()
     else
         rval = APP_ID_NONE;
 
-    if (client_service_app_id > APP_ID_NONE)
-        return client_service_app_id;
+    if (client_inferred_service_id > APP_ID_NONE)
+        return client_inferred_service_id;
 
-    if (port_service_id > APP_ID_NONE)
-        return port_service_id;
+    if (service.get_port_service_id() > APP_ID_NONE)
+        return service.get_port_service_id();
 
     return rval;
 }
@@ -847,18 +773,18 @@ AppId AppIdSession::pick_only_service_app_id()
     if ( common.flow_type != APPID_FLOW_TYPE_NORMAL )
         return APP_ID_NONE;
 
-    bool deferred = app_info_mgr->get_app_info_flags(service_app_id, APPINFO_FLAG_DEFER)
+    bool deferred = app_info_mgr->get_app_info_flags(service.get_id(), APPINFO_FLAG_DEFER)
         || app_info_mgr->get_app_info_flags(tp_app_id, APPINFO_FLAG_DEFER);
 
-    if (service_app_id > APP_ID_NONE && !deferred)
-        return service_app_id;
+    if (service.get_id() > APP_ID_NONE && !deferred)
+        return service.get_id();
 
     if (is_third_party_appid_available(tpsession) && tp_app_id > APP_ID_NONE)
         return tp_app_id;
     else if (deferred)
-        return service_app_id;
+        return service.get_id();
 
-    if (service_app_id < APP_ID_NONE)
+    if (service.get_id() < APP_ID_NONE)
         return APP_ID_UNKNOWN_UI;
 
     return APP_ID_NONE;
@@ -877,8 +803,8 @@ AppId AppIdSession::pick_client_app_id()
 {
     if ( common.flow_type != APPID_FLOW_TYPE_NORMAL )
         return APP_ID_NONE;
-    if (client_app_id > APP_ID_NONE)
-        return client_app_id;
+    if (client.get_id() > APP_ID_NONE)
+        return client.get_id();
     return APP_ID_NONE;
 }
 
@@ -891,8 +817,8 @@ AppId AppIdSession::pick_payload_app_id()
     // we are not worried about the APP_ID_UNKNOWN case here
     if (app_info_mgr->get_app_info_flags(tp_payload_app_id, APPINFO_FLAG_DEFER_PAYLOAD))
         return tp_payload_app_id;
-    else if (payload_app_id > APP_ID_NONE)
-        return payload_app_id;
+    else if (payload.get_id() > APP_ID_NONE)
+        return payload.get_id();
     else if (tp_payload_app_id > APP_ID_NONE)
         return tp_payload_app_id;
 
@@ -903,16 +829,14 @@ AppId AppIdSession::pick_referred_payload_app_id()
 {
     if ( common.flow_type != APPID_FLOW_TYPE_NORMAL )
         return APP_ID_NONE;
-    if (referred_payload_app_id > APP_ID_NONE)
-        return referred_payload_app_id;
-    return APP_ID_NONE;
+    return (referred_payload_app_id > APP_ID_NONE) ? referred_payload_app_id : APP_ID_NONE;
 }
 
 AppId AppIdSession::pick_fw_service_app_id()
 {
     AppId appId = pick_service_app_id();
     if (appId == APP_ID_NONE || appId== APP_ID_UNKNOWN_UI)
-        appId = encrypted.service_app_id;
+        appId = encrypted.service_id;
     return appId;
 }
 
@@ -920,7 +844,7 @@ AppId AppIdSession::pick_fw_misc_app_id()
 {
     AppId appId = pick_misc_app_id();
     if (appId == APP_ID_NONE)
-        appId = encrypted.misc_app_id;
+        appId = encrypted.misc_id;
     return appId;
 }
 
@@ -934,7 +858,7 @@ AppId AppIdSession::pick_fw_payload_app_id()
 {
     AppId appId = pick_payload_app_id();
     if (appId == APP_ID_NONE)
-        appId = encrypted.payload_app_id;
+        appId = encrypted.payload_id;
     return appId;
 }
 
@@ -942,7 +866,7 @@ AppId AppIdSession::pick_fw_referred_payload_app_id()
 {
     AppId appId = pick_referred_payload_app_id();
     if (appId == APP_ID_NONE)
-        appId = encrypted.referred_app_id;
+        appId = encrypted.referred_id;
     return appId;
 }
 
@@ -972,17 +896,10 @@ bool AppIdSession::is_ssl_session_decrypted()
 void AppIdSession::reset_session_data()
 {
     delete_session_data();
-    client_version = nullptr;
-    payload_version = nullptr;
-    service_vendor = nullptr;
-    service_version = nullptr;
     netbios_name = nullptr;
     netbios_domain = nullptr;
-    username = nullptr;
     hsession = nullptr;
 
-    payload_app_id = APP_ID_UNKNOWN;
-    service_app_id = APP_ID_UNKNOWN;
     tp_payload_app_id = APP_ID_UNKNOWN;
     tp_app_id = APP_ID_UNKNOWN;
 
@@ -992,7 +909,7 @@ void AppIdSession::reset_session_data()
 
 bool AppIdSession::is_payload_appid_set()
 {
-    return ( payload_app_id || tp_payload_app_id );
+    return ( payload.get_id() || tp_payload_app_id );
 }
 
 void AppIdSession::clear_http_flags()

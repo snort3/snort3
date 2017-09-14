@@ -396,6 +396,7 @@ int ServiceDiscovery::identify_service(AppIdSession* asd, Packet* p, int dir)
     const SfIp* ip = nullptr;
     int ret = APPID_NOMATCH;
     uint16_t port = 0;
+    bool got_incompatible_services = false;
 
     /* Get packet info. */
     auto proto = asd->protocol;
@@ -449,7 +450,7 @@ int ServiceDiscovery::identify_service(AppIdSession* asd, Packet* p, int dir)
     {
         ret = asd->service_detector->validate(args);
         if (ret == APPID_NOT_COMPATIBLE)
-            asd->got_incompatible_services = true;
+            got_incompatible_services = true;
         if (asd->session_logging_enabled)
             LogMessage("AppIdDbg %s %s returned %d\n", asd->session_logging_id,
                 asd->service_detector->get_name().c_str(), ret);
@@ -474,7 +475,7 @@ int ServiceDiscovery::identify_service(AppIdSession* asd, Packet* p, int dir)
 
             result = service->validate(args);
             if ( result == APPID_NOT_COMPATIBLE )
-                asd->got_incompatible_services = true;
+                got_incompatible_services = true;
             if ( asd->session_logging_enabled )
                 LogMessage("AppIdDbg %s %s returned %d\n",
                     asd->session_logging_id, service->get_name().c_str(), result);
@@ -526,7 +527,7 @@ int ServiceDiscovery::identify_service(AppIdSession* asd, Packet* p, int dir)
         else
             tmp_ip = p->ptrs.ip_api.get_src();
 
-        if (asd->got_incompatible_services)
+        if (got_incompatible_services)
             sds->update_service_incompatiable(tmp_ip);
 
         sds->set_service_id_failed(asd, tmp_ip);
@@ -627,7 +628,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p, int di
             // job of it than we do, so stay out of its way, and don't
             // waste time (but we will still get the Snort callbacks
             // for any of our own future flows). Shut down our detectors.
-            asd.service_app_id = APP_ID_SIP;
+            asd.service.set_id(APP_ID_SIP);
             asd.stop_rna_service_inspection(p, direction);
             asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
         }
@@ -636,7 +637,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p, int di
         {
             // No need for anybody to keep wasting time once we've
             // found RTP - Shut down our detectors.
-            asd.service_app_id = asd.tp_app_id;
+            asd.service.set_id(asd.tp_app_id);
             asd.stop_rna_service_inspection(p, direction);
             asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
             //  - Shut down TP.
@@ -655,17 +656,17 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p, int di
             APPID_SESSION_CONTINUE) == APPID_SESSION_SERVICE_DETECTED)
             asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
 
-        if (asd.service_app_id == APP_ID_DNS && asd.config->mod_config->dns_host_reporting
+        if (asd.service.get_id() == APP_ID_DNS && asd.config->mod_config->dns_host_reporting
             && asd.dsession && asd.dsession->host)
         {
-            AppId client_app_id = APP_ID_NONE;
-            AppId payload_app_id = APP_ID_NONE;
+            AppId client_id = APP_ID_NONE;
+            AppId payload_id = APP_ID_NONE;
             size_t size = asd.dsession->host_len;
-            dns_host_scan_hostname((const uint8_t*)(asd.dsession->host), size, &client_app_id,
-                &payload_app_id);
-            asd.set_client_app_id_data(client_app_id, nullptr);
+            dns_host_scan_hostname((const uint8_t*)(asd.dsession->host), size, &client_id,
+                &payload_id);
+            asd.set_client_appid_data(client_id, nullptr);
         }
-        else if (asd.service_app_id == APP_ID_RTMP)
+        else if (asd.service.get_id() == APP_ID_RTMP)
             asd.examine_rtmp_metadata();
         else if (asd.get_session_flags(APPID_SESSION_SSL_SESSION) && asd.tsession)
             asd.examine_ssl_metadata(p);
@@ -674,7 +675,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p, int di
             APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE |
             APPID_SESSION_IGNORE_HOST) == APPID_SESSION_SERVICE_DETECTED)
         {
-            asd.sync_with_snort_id(asd.service_app_id, p);
+            asd.sync_with_snort_id(asd.service.get_id(), p);
         }
     }
 
@@ -703,7 +704,7 @@ int ServiceDiscovery::incompatible_data(AppIdSession* asd, const Packet* pkt, in
 
     asd->set_service_detected();
     asd->clear_session_flags(APPID_SESSION_CONTINUE);
-    asd->service_app_id = APP_ID_NONE;
+    asd->service.set_id(APP_ID_NONE);
 
     if ( asd->get_session_flags(APPID_SESSION_IGNORE_HOST | APPID_SESSION_UDP_REVERSED) )
         return APPID_SUCCESS;
@@ -736,7 +737,7 @@ int ServiceDiscovery::fail_service(AppIdSession* asd, const Packet* pkt, int dir
     if ( !asd->service_detector && asd->service_candidates.size() )
         return APPID_SUCCESS;
 
-    asd->service_app_id = APP_ID_NONE;
+    asd->service.set_id(APP_ID_NONE);
     asd->set_service_detected();
     asd->clear_session_flags(APPID_SESSION_CONTINUE);
 

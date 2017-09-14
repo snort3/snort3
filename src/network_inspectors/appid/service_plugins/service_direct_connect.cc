@@ -25,8 +25,6 @@
 
 #include "service_direct_connect.h"
 
-#include "appid_module.h"
-
 enum CONNECTION_STATES
 {
     CONN_STATE_INIT,
@@ -219,9 +217,7 @@ success:
         goto inprocess;
     }
 
-    add_service(asd, pkt, dir, APP_ID_DIRECT_CONNECT, nullptr, nullptr, nullptr);
-    appid_stats.direct_connect_flows++;
-    return APPID_SUCCESS;
+    return add_service(asd, pkt, dir, APP_ID_DIRECT_CONNECT);
 
 fail:
     fail_service(asd, pkt, dir);
@@ -269,9 +265,7 @@ success:
     }
 
 reportSuccess:
-    add_service(asd, pkt, dir, APP_ID_DIRECT_CONNECT, nullptr, nullptr, nullptr);
-    appid_stats.direct_connect_flows++;
-    return APPID_SUCCESS;
+    return add_service(asd, pkt, dir, APP_ID_DIRECT_CONNECT);
 
 fail:
     fail_service(asd, pkt, dir);

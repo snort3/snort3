@@ -31,7 +31,6 @@
 #include "utils/util.h"
 
 #include "application_ids.h"
-#include "appid_module.h"
 
 enum RTPState
 {
@@ -291,8 +290,6 @@ int RtpClientDetector::validate(AppIdDiscoveryArgs& args)
     }
 
     add_app(args.asd, APP_ID_RTP, APP_ID_RTP, nullptr);
-    args.asd->set_client_detected();
-    appid_stats.rtp_clients++;
     return APPID_SUCCESS;
 }
 

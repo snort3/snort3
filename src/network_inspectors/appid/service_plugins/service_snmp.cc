@@ -26,7 +26,6 @@
 #include "service_snmp.h"
 
 #include "appid_inspector.h"
-#include "appid_module.h"
 #include "app_info_table.h"
 #include "log/messages.h"
 #include "protocols/packet.h"
@@ -476,7 +475,7 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
         {
             asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE);
             asd->clear_session_flags(APPID_SESSION_CONTINUE);
-            asd->service_app_id = APP_ID_SNMP;
+            asd->service.set_id(APP_ID_SNMP);
             break;
         }
         sd->state = SNMP_STATE_RESPONSE;
@@ -575,9 +574,7 @@ success:
         version_str = nullptr;
         break;
     }
-    add_service(asd, pkt, dir, APP_ID_SNMP, SNMP_VENDOR_STR, version_str, nullptr);
-    appid_stats.snmp_flows++;
-    return APPID_SUCCESS;
+    return add_service(asd, pkt, dir, APP_ID_SNMP, SNMP_VENDOR_STR, version_str, nullptr);
 
 bail:
     incompatible_data(asd, pkt, dir);

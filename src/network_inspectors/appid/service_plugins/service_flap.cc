@@ -206,8 +206,7 @@ fail:
     return APPID_NOMATCH;
 
 success:
-    add_service(asd, args.pkt, args.dir, APP_ID_AOL_INSTANT_MESSENGER, nullptr, nullptr, nullptr);
-    return APPID_SUCCESS;
+    return add_service(asd, args.pkt, args.dir, APP_ID_AOL_INSTANT_MESSENGER);
 
 inprocess:
     service_inprocess(asd, args.pkt, args.dir);

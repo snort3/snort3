@@ -26,7 +26,6 @@
 #include "service_rexec.h"
 
 #include "appid_inspector.h"
-#include "appid_module.h"
 #include "app_info_table.h"
 #include "protocols/packet.h"
 
@@ -52,6 +51,10 @@ struct ServiceREXECData
     struct ServiceREXECData* parent;
     struct ServiceREXECData* child;
 };
+
+static const uint64_t REXEC_EXPECTED_SESSION_FLAGS = APPID_SESSION_CONTINUE |
+    APPID_SESSION_REXEC_STDERR | APPID_SESSION_NO_TPI | APPID_SESSION_SERVICE_DETECTED |
+    APPID_SESSION_NOT_A_SERVICE | APPID_SESSION_PORT_SERVICE_DONE;
 
 RexecServiceDetector::RexecServiceDetector(ServiceDiscovery* sd)
 {
@@ -103,27 +106,23 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     int i = 0;
     uint32_t port = 0;
-    AppIdSession* pf = nullptr;
-    AppIdSession* asd = args.asd;
     const uint8_t* data = args.data;
-    Packet* pkt = args.pkt;
-    const int dir = args.dir;
     uint16_t size = args.size;
 
-    ServiceREXECData* rd = (ServiceREXECData*)data_get(asd);
+    ServiceREXECData* rd = (ServiceREXECData*)data_get(args.asd);
     if (!rd)
     {
         if (!size)
             goto inprocess;
         rd = (ServiceREXECData*)snort_calloc(sizeof(ServiceREXECData));
-        data_add(asd, rd, &rexec_free_state);
+        data_add(args.asd, rd, &rexec_free_state);
         rd->state = REXEC_STATE_PORT;
     }
 
     switch (rd->state)
     {
     case REXEC_STATE_PORT:
-        if (dir != APP_ID_FROM_INITIATOR)
+        if (args.dir != APP_ID_FROM_INITIATOR)
             goto bail;
         if (size > REXEC_MAX_PORT_PACKET)
             goto bail;
@@ -139,14 +138,14 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
         }
         if (port > 65535)
             goto bail;
-        if (port && pkt)
+        if (port && args.pkt)
         {
             const SfIp* sip;
             const SfIp* dip;
 
-            dip = pkt->ptrs.ip_api.get_dst();
-            sip = pkt->ptrs.ip_api.get_src();
-            pf = AppIdSession::create_future_session(pkt, dip, 0, sip, (uint16_t)port,
+            dip = args.pkt->ptrs.ip_api.get_dst();
+            sip = args.pkt->ptrs.ip_api.get_src();
+            AppIdSession* pf = AppIdSession::create_future_session(args.pkt, dip, 0, sip, (uint16_t)port,
                 IpProtocol::TCP, app_id, APPID_EARLY_SESSION_FLAG_FW_RULE);
             if (pf)
             {
@@ -167,13 +166,7 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
                 rd->state = REXEC_STATE_SERVER_CONNECT;
                 pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
                 pf->scan_flags |= SCAN_HOST_PORT_FLAG;
-                initialize_expected_session(asd, pf,
-                    APPID_SESSION_CONTINUE |
-                    APPID_SESSION_REXEC_STDERR |
-                    APPID_SESSION_NO_TPI |
-                    APPID_SESSION_SERVICE_DETECTED |
-                    APPID_SESSION_NOT_A_SERVICE |
-                    APPID_SESSION_PORT_SERVICE_DONE);
+                initialize_expected_session(args.asd, pf, REXEC_EXPECTED_SESSION_FLAGS);
                 pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
             }
             else
@@ -190,7 +183,7 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
     case REXEC_STATE_USERNAME:
         if (!size)
             break;
-        if (dir != APP_ID_FROM_INITIATOR)
+        if (args.dir != APP_ID_FROM_INITIATOR)
             goto bail;
         for (i=0; i<size && data[i]; i++)
             if (!isprint(data[i]) || isspace(data[i]))
@@ -205,7 +198,7 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
     case REXEC_STATE_PASSWORD:
         if (!size)
             break;
-        if (dir != APP_ID_FROM_INITIATOR)
+        if (args.dir != APP_ID_FROM_INITIATOR)
             goto bail;
         for (i=0; i<size && data[i]; i++)
             if (!isprint(data[i]))
@@ -220,7 +213,7 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
     case REXEC_STATE_COMMAND:
         if (!size)
             break;
-        if (dir != APP_ID_FROM_INITIATOR)
+        if (args.dir != APP_ID_FROM_INITIATOR)
             goto bail;
         for (i=0; i<size && data[i]; i++)
             if (!isprint(data[i]))
@@ -252,7 +245,7 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
     case REXEC_STATE_REPLY:
         if (!size)
             goto inprocess;
-        if (dir != APP_ID_FROM_RESPONDER)
+        if (args.dir != APP_ID_FROM_RESPONDER)
             goto fail;
         if (size != 1)
             goto fail;
@@ -265,7 +258,7 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
         if (rd->parent && rd->parent->state == REXEC_STATE_SERVER_CONNECT)
         {
             rd->parent->state = REXEC_STATE_USERNAME;
-            asd->clear_session_flags(APPID_SESSION_REXEC_STDERR);
+            args.asd->clear_session_flags(APPID_SESSION_REXEC_STDERR);
         }
         goto bail;
     default:
@@ -273,32 +266,24 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
 
 inprocess:
-    if (!asd->is_service_detected())
-        service_inprocess(asd, pkt, dir);
+    if (!args.asd->is_service_detected())
+        service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 
 success:
-    if (!asd->is_service_detected())
-    {
-        add_service(asd, pkt, dir, APP_ID_EXEC, nullptr, nullptr, nullptr);
-        appid_stats.rexec_flows++;
-    }
-    return APPID_SUCCESS;
+    if (!args.asd->is_service_detected())
+        return add_service(args.asd, args.pkt, args.dir, APP_ID_EXEC);
 
 bail:
-    if (!asd->is_service_detected())
-    {
-        incompatible_data(asd, pkt, dir);
-    }
-    asd->clear_session_flags(APPID_SESSION_CONTINUE);
+    if (!args.asd->is_service_detected())
+        incompatible_data(args.asd, args.pkt, args.dir);
+    args.asd->clear_session_flags(APPID_SESSION_CONTINUE);
     return APPID_NOT_COMPATIBLE;
 
 fail:
-    if (!asd->is_service_detected())
-    {
-        fail_service(asd, pkt, dir);
-    }
-    asd->clear_session_flags(APPID_SESSION_CONTINUE);
+    if (!args.asd->is_service_detected())
+        fail_service(args.asd, args.pkt, args.dir);
+    args.asd->clear_session_flags(APPID_SESSION_CONTINUE);
     return APPID_NOMATCH;
 }
 

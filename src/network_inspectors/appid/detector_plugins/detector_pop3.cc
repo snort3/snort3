@@ -25,7 +25,6 @@
 
 #include "detector_pop3.h"
 
-#include "appid_module.h"
 #include "app_info_table.h"
 
 enum POP3ClientState
@@ -330,7 +329,6 @@ static int pop3_server_validate(POP3DetectorData* dd, const uint8_t* data, uint1
                 asd->set_session_flags(APPID_SESSION_ENCRYPTED);
                 asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
                 pop3_client_detector->add_app(asd, APP_ID_POP3S, APP_ID_POP3S, nullptr);
-                appid_stats.pop3s_clients++;
             }
         }
         else if (dd->client.username) // possible only with non-TLS auth, therefore APP_ID_POP3
@@ -701,7 +699,6 @@ int Pop3ClientDetector::validate(AppIdDiscoveryArgs& args)
             {
                 // Still in non-secure mode and received a TRANSACTION-state command: POP3 found
                 add_app(args.asd, APP_ID_POP3, APP_ID_POP3, nullptr);
-                appid_stats.pop3_clients++;
                 fd->detected = 1;
             }
             else
@@ -779,10 +776,7 @@ int Pop3ServiceDetector::validate(AppIdDiscoveryArgs& args)
     {
         args.asd->clear_session_flags(APPID_SESSION_CONTINUE);
         if (args.asd->is_service_detected())
-        {
-            appid_stats.pop_flows++;
             return APPID_SUCCESS;
-        }
     }
 
     if (!pop3_server_validate(dd, args.data, args.size, args.asd, 1))
@@ -794,7 +788,6 @@ int Pop3ServiceDetector::validate(AppIdDiscoveryArgs& args)
                 dd->client.state == POP3_CLIENT_STATE_STLS_CMD ? APP_ID_POP3S : APP_ID_POP3,
                 pd->vendor, pd->version[0] ? pd->version : nullptr, pd->subtype);
             pd->subtype = nullptr;
-            appid_stats.pop_flows++;
             return APPID_SUCCESS;
         }
     }
@@ -806,7 +799,6 @@ int Pop3ServiceDetector::validate(AppIdDiscoveryArgs& args)
     else
     {
         args.asd->clear_session_flags(APPID_SESSION_CONTINUE);
-        appid_stats.pop_flows++;
         return APPID_SUCCESS;
     }
 
