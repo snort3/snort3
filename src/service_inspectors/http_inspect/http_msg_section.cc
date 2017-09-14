@@ -152,10 +152,30 @@ const Field& HttpMsgSection::get_classic_buffer(unsigned id, uint64_t sub_id, ui
         HttpMsgRequest* request = transaction->get_request();
         return (request != nullptr) ? request->get_method() : Field::FIELD_NULL;
       }
+    case HTTP_BUFFER_RAW_BODY:
+      {
+        HttpMsgBody* body = transaction->get_body();
+        return (body != nullptr) ? body->msg_text : Field::FIELD_NULL;
+      }
     case HTTP_BUFFER_RAW_HEADER:
       {
         HttpMsgHeader* header = transaction->get_header(buffer_side);
         return (header != nullptr) ? header->get_classic_raw_header() : Field::FIELD_NULL;
+      }
+    case HTTP_BUFFER_RAW_REQUEST:
+      {
+        HttpMsgRequest* request = transaction->get_request();
+        return (request != nullptr) ? request->msg_text : Field::FIELD_NULL;
+      }
+    case HTTP_BUFFER_RAW_STATUS:
+      {
+        HttpMsgStatus* status = transaction->get_status();
+        return (status != nullptr) ? status->msg_text : Field::FIELD_NULL;
+      }
+    case HTTP_BUFFER_RAW_TRAILER:
+      {
+        HttpMsgTrailer* trailer = transaction->get_trailer(buffer_side);
+        return (trailer != nullptr) ? trailer->get_classic_raw_header() : Field::FIELD_NULL;
       }
     case HTTP_BUFFER_STAT_CODE:
       {
@@ -167,8 +187,8 @@ const Field& HttpMsgSection::get_classic_buffer(unsigned id, uint64_t sub_id, ui
         HttpMsgStatus* status = transaction->get_status();
         return (status != nullptr) ? status->get_reason_phrase() : Field::FIELD_NULL;
       }
-    case HTTP_BUFFER_RAW_URI:
     case HTTP_BUFFER_URI:
+    case HTTP_BUFFER_RAW_URI:
       {
         const bool raw = (id == HTTP_BUFFER_RAW_URI);
         HttpMsgRequest* request = transaction->get_request();
@@ -202,26 +222,6 @@ const Field& HttpMsgSection::get_classic_buffer(unsigned id, uint64_t sub_id, ui
         HttpMsgStart* start = (buffer_side == SRC_CLIENT) ?
             (HttpMsgStart*)transaction->get_request() : (HttpMsgStart*)transaction->get_status();
         return (start != nullptr) ? start->get_version() : Field::FIELD_NULL;
-      }
-    case HTTP_BUFFER_RAW_REQUEST:
-      {
-        HttpMsgRequest* request = transaction->get_request();
-        return (request != nullptr) ? request->msg_text : Field::FIELD_NULL;
-      }
-    case HTTP_BUFFER_RAW_STATUS:
-      {
-        HttpMsgStatus* status = transaction->get_status();
-        return (status != nullptr) ? status->msg_text : Field::FIELD_NULL;
-      }
-    case HTTP_BUFFER_RAW_TRAILER:
-      {
-        HttpMsgTrailer* trailer = transaction->get_trailer(buffer_side);
-        return (trailer != nullptr) ? trailer->get_classic_raw_header() : Field::FIELD_NULL;
-      }
-    case HTTP_BUFFER_RAW_BODY:
-      {
-        HttpMsgBody* body = transaction->get_body();
-        return (body != nullptr) ? body->msg_text : Field::FIELD_NULL;
       }
     default:
         assert(false);

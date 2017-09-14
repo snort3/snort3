@@ -40,18 +40,18 @@ const char* HttpApi::classic_buffer_names[] =
     "http_cookie",
     "http_header",
     "http_method",
+    "http_raw_body",
     "http_raw_cookie",
     "http_raw_header",
+    "http_raw_request",
+    "http_raw_status",
+    "http_raw_trailer",
     "http_raw_uri",
     "http_stat_code",
     "http_stat_msg",
+    "http_trailer",
     "http_uri",
     "http_version",
-    "http_trailer",
-    "http_raw_trailer",
-    "http_raw_request",
-    "http_raw_status",
-    "http_raw_body",
     nullptr
 };
 
@@ -83,22 +83,22 @@ const InspectApi HttpApi::http_api =
     nullptr
 };
 
-extern const BaseApi* ips_http_uri;
 extern const BaseApi* ips_http_client_body;
-extern const BaseApi* ips_http_method;
 extern const BaseApi* ips_http_cookie;
-extern const BaseApi* ips_http_stat_code;
-extern const BaseApi* ips_http_stat_msg;
-extern const BaseApi* ips_http_raw_uri;
-extern const BaseApi* ips_http_raw_header;
-extern const BaseApi* ips_http_raw_cookie;
-extern const BaseApi* ips_http_version;
 extern const BaseApi* ips_http_header;
-extern const BaseApi* ips_http_trailer;
-extern const BaseApi* ips_http_raw_trailer;
+extern const BaseApi* ips_http_method;
+extern const BaseApi* ips_http_raw_body;
+extern const BaseApi* ips_http_raw_cookie;
+extern const BaseApi* ips_http_raw_header;
 extern const BaseApi* ips_http_raw_request;
 extern const BaseApi* ips_http_raw_status;
-extern const BaseApi* ips_http_raw_body;
+extern const BaseApi* ips_http_raw_trailer;
+extern const BaseApi* ips_http_raw_uri;
+extern const BaseApi* ips_http_stat_code;
+extern const BaseApi* ips_http_stat_msg;
+extern const BaseApi* ips_http_trailer;
+extern const BaseApi* ips_http_uri;
+extern const BaseApi* ips_http_version;
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
@@ -107,22 +107,22 @@ const BaseApi* sin_http[] =
 #endif
 {
     &HttpApi::http_api.base,
-    ips_http_uri,
     ips_http_client_body,
-    ips_http_method,
     ips_http_cookie,
-    ips_http_stat_code,
-    ips_http_stat_msg,
-    ips_http_raw_uri,
-    ips_http_raw_header,
-    ips_http_raw_cookie,
-    ips_http_version,
     ips_http_header,
-    ips_http_trailer,
-    ips_http_raw_trailer,
+    ips_http_method,
+    ips_http_raw_body,
+    ips_http_raw_cookie,
+    ips_http_raw_header,
     ips_http_raw_request,
     ips_http_raw_status,
-    ips_http_raw_body,
+    ips_http_raw_trailer,
+    ips_http_raw_uri,
+    ips_http_stat_code,
+    ips_http_stat_msg,
+    ips_http_trailer,
+    ips_http_uri,
+    ips_http_version,
     nullptr
 };
 

@@ -52,6 +52,7 @@
 #include "packet_io/active.h"
 #include "packet_io/intf.h"
 #include "packet_io/sfdaq.h"
+#include "service_inspectors/http_inspect/http_enum.h"
 
 using namespace std;
 
@@ -249,7 +250,8 @@ void FastLogger::alert(Packet* p, const char* msg, const Event& event)
         if ( buffers )
         {
             InspectionBuffer buf;
-            const std::vector<unsigned>& idv = gadget->get_buf(15, p, buf) ? rsp_ids : req_ids;
+            const std::vector<unsigned>& idv = gadget->get_buf(HttpEnums::HTTP_BUFFER_RAW_STATUS,
+                p, buf) ? rsp_ids : req_ids;
             bool rsp = (idv == rsp_ids);
 
             for ( auto id : idv )
