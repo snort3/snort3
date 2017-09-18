@@ -331,6 +331,9 @@ static const Parameter s_params[] =
     { "--help-signals", Parameter::PT_IMPLIED, nullptr, nullptr,
       "dump available control signals" },
 
+    { "--id-offset", Parameter::PT_INT, "0:65535", "0",
+      "offset to add to instance IDs when logging to files" },
+
     { "--id-subdir", Parameter::PT_IMPLIED, nullptr, nullptr,
       "create/use instance subdirectories in logdir instead of instance filename prefix" },
 
@@ -768,6 +771,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--help-signals") )
         help_signals(sc, v.get_string());
+
+    else if ( v.is("--id-offset") )
+        sc->id_offset = v.get_long();
 
     else if ( v.is("--id-subdir") )
         sc->id_subdir = true;

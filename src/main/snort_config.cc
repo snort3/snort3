@@ -337,6 +337,7 @@ void SnortConfig::merge(SnortConfig* cmd_line)
         log_dir = DEFAULT_LOG_DIR;
 
     run_prefix = cmd_line->run_prefix;
+    id_offset = cmd_line->id_offset;
     id_subdir = cmd_line->id_subdir;
     id_zero = cmd_line->id_zero;
 

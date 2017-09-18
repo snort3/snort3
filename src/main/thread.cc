@@ -103,7 +103,7 @@ const char* get_instance_file(std::string& file, const char* name)
     if ( (ThreadConfig::get_instance_max() > 1) || snort_conf->id_zero )
     {
         char id[8];
-        snprintf(id, sizeof(id), "%u", get_instance_id());
+        snprintf(id, sizeof(id), "%u", get_instance_id() + snort_conf->id_offset);
         file += id;
         sep = true;
     }

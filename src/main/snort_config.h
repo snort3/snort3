@@ -274,6 +274,7 @@ public:
     //------------------------------------------------------
     // FIXIT-L non-module stuff - separate config from derived state?
     std::string run_prefix;
+    uint16_t id_offset = 0;
     bool id_subdir = false;
     bool id_zero = false;
 
