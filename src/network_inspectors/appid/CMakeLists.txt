@@ -1,6 +1,7 @@
 set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -fno-strict-aliasing" )
 
 set (APPID_INCLUDES
+    appid_api.h
     application_ids.h
 )
 
