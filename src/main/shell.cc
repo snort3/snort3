@@ -29,6 +29,8 @@
 
 #include "log/messages.h"
 #include "lua/lua.h"
+#include "main/policy.h"
+#include "main/snort_config.h"
 #include "managers/module_manager.h"
 
 using namespace std;
@@ -171,7 +173,21 @@ void Shell::configure(SnortConfig* sc)
 {
     assert(file.size());
     ModuleManager::set_config(sc);
+
+    //set_*_policy can set to null. this is used
+    //to tell which pieces to pick from sub policy
+    auto pt = sc->policy_map->shell_map.find(this);
+    if ( pt == sc->policy_map->shell_map.end() )
+        set_default_policy(sc);
+    else
+    {
+        set_inspection_policy(pt->second->inspection);
+        set_ips_policy(pt->second->ips);
+        set_network_policy(pt->second->network);
+    }
+
     config_lua(lua, file.c_str(), overrides);
+    set_default_policy(sc);
     ModuleManager::set_config(nullptr);
     loaded = true;
 }

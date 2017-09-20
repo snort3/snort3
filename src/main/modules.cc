@@ -1137,7 +1137,7 @@ public:
     { return DETECT; }
 };
 
-bool IpsModule::set(const char*, Value& v, SnortConfig*)
+bool IpsModule::set(const char*, Value& v, SnortConfig* sc)
 {
     IpsPolicy* p = get_ips_policy();
 
@@ -1145,7 +1145,10 @@ bool IpsModule::set(const char*, Value& v, SnortConfig*)
         p->enable_builtin_rules = v.get_bool();
 
     else if ( v.is("id") )
+    {
         p->user_policy_id = v.get_long();
+        sc->policy_map->set_user_ips(p);
+    }
 
     else if ( v.is("include") )
         p->include = v.get_string();

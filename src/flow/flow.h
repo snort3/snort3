@@ -325,7 +325,9 @@ public:  // FIXIT-M privatize if possible
     LwState ssn_state;
     LwState previous_ssn_state;
     FlowState flow_state;
-    unsigned policy_id;
+    unsigned inspection_policy_id;
+    unsigned ips_policy_id;
+    unsigned network_policy_id;
 
     int32_t iface_in;
     int32_t iface_out;

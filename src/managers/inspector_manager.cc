@@ -833,13 +833,13 @@ bool InspectorManager::configure(SnortConfig* sc, bool cloned)
         if ( cloned and idx )
             break;
 
-        set_policies(sc, idx);
+        set_inspection_policy(sc, idx);
         InspectionPolicy* p = sc->policy_map->inspection_policy[idx];
         p->configure();
         ok = ::configure(sc, p->framework_policy, cloned) && ok;
     }
 
-    set_policies(sc);
+    set_inspection_policy(sc);
     return ok;
 }
 

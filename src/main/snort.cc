@@ -191,7 +191,9 @@ static MainHook_f main_hook = pass_pkts;
 static void set_policy(Packet* p)  // FIXIT-M delete this?
 {
     set_default_policy();
-    p->user_policy_id = get_ips_policy()->user_policy_id;
+    p->user_inspection_policy_id = get_inspection_policy()->user_policy_id;
+    p->user_ips_policy_id = get_ips_policy()->user_policy_id;
+    p->user_network_policy_id = get_network_policy()->user_policy_id;
 }
 
 static void show_source(const char* pcap)
@@ -658,7 +660,7 @@ SnortConfig* Snort::get_updated_policy(SnortConfig* other_conf, const char* fnam
             sc->cloned = true;
             InspectorManager::update_policy(other_conf);
             delete sc;
-            set_policies(other_conf);
+            set_default_policy(other_conf);
             reloading = false;
             return nullptr;
         }
@@ -671,7 +673,7 @@ SnortConfig* Snort::get_updated_policy(SnortConfig* other_conf, const char* fnam
             sc->cloned = true;
             InspectorManager::update_policy(other_conf);
             delete sc;
-            set_policies(other_conf);
+            set_default_policy(other_conf);
             reloading = false;
             return nullptr;
         }
@@ -682,7 +684,7 @@ SnortConfig* Snort::get_updated_policy(SnortConfig* other_conf, const char* fnam
         sc->cloned = true;
         InspectorManager::update_policy(other_conf);
         delete sc;
-        set_policies(other_conf);
+        set_default_policy(other_conf);
         reloading = false;
         return nullptr;
     }

@@ -411,7 +411,11 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
     flow->session->precheck(p);
 
     if ( flow->flow_state != Flow::FlowState::SETUP )
-        set_policies(snort_conf, flow->policy_id);
+    {
+        set_inspection_policy(snort_conf, flow->inspection_policy_id);
+        set_ips_policy(snort_conf, flow->ips_policy_id);
+        set_network_policy(snort_conf, flow->network_policy_id);
+    }
 
     else
     {

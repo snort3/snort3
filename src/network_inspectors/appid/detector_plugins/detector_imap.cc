@@ -25,6 +25,8 @@
 
 #include "detector_imap.h"
 
+#include <array>
+
 #include "app_info_table.h"
 #include "search_engines/search_tool.h"
 #include "utils/util.h"

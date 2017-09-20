@@ -45,7 +45,7 @@ public:
     void print_binding(bool should_print)
     { printed = !should_print; }
 
-    void set_when_policy_id(int id);
+    void set_when_ips_policy_id(int id);
     void set_when_service(std::string service);
     void set_when_role(std::string role);
     void set_when_proto(std::string proto);
@@ -54,8 +54,8 @@ public:
     void add_when_port(std::string port);
     void clear_ports();
 
-    bool has_policy_id() const
-    { return when_policy_id >= 0; }
+    bool has_ips_policy_id() const
+    { return when_ips_policy_id >= 0; }
 
     bool has_service() const
     { return !when_service.empty(); }
@@ -80,14 +80,13 @@ public:
     void set_use_file(std::string file_name);
     void set_use_service(std::string service_name);
     void set_use_action(std::string action);
-    void set_use_policy_id(std::string id);
 
 private:
     TableApi& table_api;
     bool printed; // ensures that the binding is added once,
                   // by either the destructor or user
 
-    int when_policy_id;
+    int when_ips_policy_id;
     std::string when_service;
     std::string when_role;
     std::string when_proto;
@@ -95,7 +94,6 @@ private:
     std::vector<std::string> nets;
     std::vector<std::string> ports;
 
-    std::string use_policy_id;
     std::string use_type;
     std::string use_name;
     std::string use_file;

@@ -358,7 +358,9 @@ static void dce2_fill_rpkt_info(Packet* rpkt, Packet* p)
     rpkt->proto_bits = p->proto_bits;
     rpkt->packet_flags = p->packet_flags;
     rpkt->packet_flags |= PKT_PSEUDO;
-    rpkt->user_policy_id = p->user_policy_id;
+    rpkt->user_inspection_policy_id = p->user_inspection_policy_id;
+    rpkt->user_ips_policy_id = p->user_ips_policy_id;
+    rpkt->user_network_policy_id = p->user_network_policy_id;
 }
 
 Packet* DCE2_GetRpkt(Packet* p,DCE2_RpktType rpkt_type,

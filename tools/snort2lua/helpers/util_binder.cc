@@ -24,9 +24,7 @@
 
 using namespace std;
 
-Binder::Binder(TableApi& t) :   table_api(t),
-    printed(false),
-    when_policy_id(-1)
+Binder::Binder(TableApi& t) : table_api(t), printed(false), when_ips_policy_id(-1)
 { }
 
 Binder::~Binder()
@@ -43,8 +41,9 @@ void Binder::add_to_configuration()
 
     table_api.open_table("when", true);
 
-    if ( has_policy_id() )
-        table_api.add_option("policy_id", when_policy_id);
+    //FIXIT-M this needs to be split out into ips, network, and inspection
+    if ( has_ips_policy_id() )
+        table_api.add_option("ips_policy_id", when_ips_policy_id);
 
     for ( auto s : vlans )
         table_api.add_list("vlans", s);
@@ -68,9 +67,6 @@ void Binder::add_to_configuration()
 
     table_api.open_table("use", true);
 
-    if (!use_policy_id.empty())
-        table_api.add_option("policy_id", use_policy_id);
-
     if (!use_action.empty())
         table_api.add_option("action", use_action);
 
@@ -92,8 +88,8 @@ void Binder::add_to_configuration()
     table_api.close_table();  // "binder"
 }
 
-void Binder::set_when_policy_id(int id)
-{ when_policy_id = id; }
+void Binder::set_when_ips_policy_id(int id)
+{ when_ips_policy_id = id; }
 
 void Binder::set_when_service(std::string service)
 { when_service = std::string(service); }
@@ -131,9 +127,6 @@ void Binder::set_use_service(std::string service_name)
 void Binder::set_use_action(std::string action)
 { use_action = std::string(action); }
 
-void Binder::set_use_policy_id(std::string id)
-{ use_policy_id = std::string(id); }
-
 /*  This operator is provided for STL compatible sorting. A Binder is considered
     less than another Binder if it should be printed first in the binder table,
     thus giving it higher priority. This is determined by checking for presence
@@ -141,10 +134,10 @@ void Binder::set_use_policy_id(std::string id)
     the highest-priority non-match is used to determine order.
     
     Example of ordering:
-    policy_id vlan net
-    policy_id vlan
-    policy_id net
-    policy_id
+    ips_policy_id vlan net
+    ips_policy_id vlan
+    ips_policy_id net
+    ips_policy_id
     vlan net
     vlan
     net
@@ -171,7 +164,7 @@ bool operator<(const shared_ptr<Binder> left, const shared_ptr<Binder> right)
     }
 
     //By priorities of options
-    FIRST_IF_GT(left->has_policy_id(), right->has_policy_id())
+    FIRST_IF_GT(left->has_ips_policy_id(), right->has_ips_policy_id())
     FIRST_IF_GT(left->has_vlans(), right->has_vlans())
     FIRST_IF_GT(left->has_service(), right->has_service())
     FIRST_IF_GT(left->has_nets(), right->has_nets())
@@ -190,8 +183,8 @@ bool operator<(const shared_ptr<Binder> left, const shared_ptr<Binder> right)
         FIRST_IF_LT(left->ports.size(), right->ports.size())
 
     //Sorted by value for readability if all else is equal
-    if ( left->has_policy_id() && right->has_policy_id() )
-        FIRST_IF_LT(left->when_policy_id, right->when_policy_id)
+    if ( left->has_ips_policy_id() && right->has_ips_policy_id() )
+        FIRST_IF_LT(left->when_ips_policy_id, right->when_ips_policy_id)
 
     if ( left->has_service() && right->has_service() )
         TRISTATE(left->when_service.compare(right->when_service))
@@ -220,7 +213,7 @@ void print_binder_priorities()
         binders.back()->print_binding(false);
         
         if ( i & (1 << 0) )
-            binders.back()->set_when_policy_id(1);
+            binders.back()->set_when_ips_policy_id(1);
         
         if ( i & (1 << 1) )
             binders.back()->add_when_vlan("a");
@@ -245,8 +238,8 @@ void print_binder_priorities()
 
     for ( auto& b : binders )
     {
-        if ( b->has_policy_id() )
-            cout << "policy_id ";
+        if ( b->has_ips_policy_id() )
+            cout << "ips_policy_id ";
 
         if ( b->has_vlans() )
             cout << "vlan ";

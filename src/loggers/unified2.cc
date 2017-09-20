@@ -172,9 +172,6 @@ static void alert_event(Packet* p, const char*, Unified2Config* config, const Ev
     u2_event.event_second = htonl(event->ref_time.tv_sec);
     u2_event.event_microsecond = htonl(event->ref_time.tv_usec);
 
-    u2_event.policy_id_context = 0;  // FIXIT-H define / use context ids
-    u2_event.policy_id_detect = 0;   // FIXIT-H define / use detect ids
-
     u2_event.rule_gid = htonl(event->sig_info->gid);
     u2_event.rule_sid = htonl(event->sig_info->sid);
     u2_event.rule_rev = htonl(event->sig_info->rev);
@@ -183,7 +180,9 @@ static void alert_event(Packet* p, const char*, Unified2Config* config, const Ev
 
     if ( p )
     {
-        u2_event.policy_id_inspect = htons(p->user_policy_id);  // FIXIT-H inspect id
+        u2_event.policy_id_detect = htonl(p->user_ips_policy_id);
+        u2_event.policy_id_inspect = htonl(p->user_inspection_policy_id);
+        u2_event.policy_id_context = htonl(p->user_network_policy_id);
 
         if ( p->ptrs.ip_api.is_ip() )
             copy_addr(*p->ptrs.ip_api.get_src(), *p->ptrs.ip_api.get_dst(), u2_event);
@@ -671,7 +670,7 @@ static void _AlertIP4_v2(Packet* p, const char*, Unified2Config* config, const E
         if (p->proto_bits & PROTO_BIT__VLAN)
             alertdata.vlanId = htons(layer::get_vlan_layer(p)->vid());
 
-        alertdata.pad2 = htons(p->user_policy_id);
+        alertdata.pad2 = htons((uint16_t)p->user_ips_policy_id);
 
         const char* app_name = p->flow ?
             appid_api.get_application_name(p->flow, p->is_from_client()) : nullptr;
@@ -757,7 +756,7 @@ static void _AlertIP6_v2(Packet* p, const char*, Unified2Config* config, const E
         if (p->proto_bits & PROTO_BIT__VLAN)
             alertdata.vlanId = htons(layer::get_vlan_layer(p)->vid());
 
-        alertdata.pad2 = htons(p->user_policy_id);
+        alertdata.pad2 = htons((uint16_t)p->user_ips_policy_id);
 
         const char* app_name = p->flow ?
             appid_api.get_application_name(p->flow, p->is_from_client()) : nullptr;

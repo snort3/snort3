@@ -41,7 +41,9 @@ static void set_fields(lua_State* L, int tindex, Packet& self)
     table.get_field("alt_dsize", self.alt_dsize);
     table.get_field("num_layers", self.num_layers);
     table.get_field("iplist_id", self.iplist_id);
-    table.get_field("user_policy_id", self.user_policy_id);
+    table.set_field("user_inspection_policy_id", self.user_inspection_policy_id);
+    table.set_field("user_ips_policy_id", self.user_ips_policy_id);
+    table.set_field("user_network_policy_id", self.user_network_policy_id);
 }
 
 static void get_fields(lua_State* L, int tindex, Packet& self)
@@ -54,7 +56,9 @@ static void get_fields(lua_State* L, int tindex, Packet& self)
     table.set_field("alt_dsize", self.alt_dsize);
     table.set_field("num_layers", self.num_layers);
     table.set_field("iplist_id", self.iplist_id);
-    table.set_field("user_policy_id", self.user_policy_id);
+    table.set_field("user_inspection_policy_id", self.user_inspection_policy_id);
+    table.set_field("user_ips_policy_id", self.user_ips_policy_id);
+    table.set_field("user_network_policy_id", self.user_network_policy_id);
 }
 
 static void set(lua_State* L, Packet& self, Lua::Args& args, int start)

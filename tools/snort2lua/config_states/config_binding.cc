@@ -112,7 +112,7 @@ void Binding::add_policy_id(const std::string& id,
             "IDs, but policy_id is " + id);
     }
 
-    bind.set_when_policy_id(policy_id);
+    bind.set_when_ips_policy_id(policy_id);
 }
 
 void Binding::add_net(const std::string& net,

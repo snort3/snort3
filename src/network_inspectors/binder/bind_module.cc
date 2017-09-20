@@ -33,6 +33,8 @@
 using namespace std;
 
 #define FILE_KEY ".file"
+#define INSPECTION_KEY ".inspection"
+#define IPS_KEY ".ips"
 
 THREAD_LOCAL BindStats bstats;
 
@@ -54,7 +56,8 @@ static const Parameter binder_when_params[] =
 {
     // FIXIT-L when.policy_id should be an arbitrary string auto converted
     // into index for binder matching and lookups
-    { "policy_id", Parameter::PT_INT, "0:", "0",
+
+    { "ips_policy_id", Parameter::PT_INT, "0:", "0",
       "unique ID for selection of this config by external logic" },
 
     { "ifaces", Parameter::PT_BIT_LIST, "255", nullptr,
@@ -88,6 +91,12 @@ static const Parameter binder_use_params[] =
 
     { "file", Parameter::PT_STRING, nullptr, nullptr,
       "use configuration in given file" },
+
+    { "inspection_policy", Parameter::PT_STRING, nullptr, nullptr,
+      "use inspection policy from given file" },
+
+    { "ips_policy", Parameter::PT_STRING, nullptr, nullptr,
+      "use ips policy from given file" },
 
     { "service", Parameter::PT_STRING, nullptr, nullptr,
       "override automatic service identification" },
@@ -124,6 +133,9 @@ BinderModule::~BinderModule()
 ProfileStats* BinderModule::get_profile() const
 { return &bindPerfStats; }
 
+static void file_name_type_error()
+{ ParseError("you can't set binder.use file, detection_policy, or inspection_policy with type or name"); }
+
 bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
 {
     if ( !work )
@@ -143,8 +155,8 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
     else if ( v.is("nets") )
         work->when.nets = sfip_var_from_string(v.get_string());
 
-    else if ( v.is("policy_id") )
-        work->when.id = v.get_long();
+    else if ( v.is("ips_policy_id") )
+        work->when.ips_id = v.get_long();
 
     else if ( v.is("proto") )
     {
@@ -171,22 +183,38 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
     else if ( v.is("file") )
     {
         if ( !work->use.name.empty() || !work->use.type.empty() )
-            ParseError("you can't set binder.use.file with type or name");
+            file_name_type_error();
 
         work->use.name = v.get_string();
         work->use.type = FILE_KEY;
     }
+    else if ( v.is("inspection_policy") )
+    {
+        if ( !work->use.name.empty() || !work->use.type.empty() )
+            file_name_type_error();
+
+        work->use.name = v.get_string();
+        work->use.type = INSPECTION_KEY;
+    }
+    else if ( v.is("ips_policy") )
+    {
+        if ( !work->use.name.empty() || !work->use.type.empty() )
+            file_name_type_error();
+
+        work->use.name = v.get_string();
+        work->use.type = IPS_KEY;
+    }
     else if ( v.is("name") )
     {
         if ( !work->use.name.empty() )
-            ParseError("you can't set binder.use.file with type or name");
+            file_name_type_error();
 
         work->use.name = v.get_string();
     }
     else if ( v.is("type") )
     {
         if ( !work->use.type.empty() )
-            ParseError("you can't set binder.use.file with type or name");
+            file_name_type_error();
 
         work->use.type = v.get_string();
     }
@@ -217,8 +245,22 @@ bool BinderModule::end(const char* fqn, int idx, SnortConfig* sc)
         if ( work->use.type == FILE_KEY )
         {
             Shell* sh = new Shell(work->use.name.c_str());
-            work->use.index = sc->policy_map->add_shell(sh) + 1;
+            auto policies = sc->policy_map->add_shell(sh);
+            work->use.inspection_index = policies->inspection->policy_id + 1;
+            work->use.ips_index = policies->ips->policy_id + 1;
+            work->use.network_index = policies->network->policy_id + 1;
         }
+        else if ( work->use.type == INSPECTION_KEY )
+        {
+            Shell* sh = new Shell(work->use.name.c_str());
+            work->use.inspection_index = sc->policy_map->add_inspection_shell(sh) + 1;
+        }
+        else if ( work->use.type == IPS_KEY )
+        {
+            Shell* sh = new Shell(work->use.name.c_str());
+            work->use.ips_index = sc->policy_map->add_ips_shell(sh) + 1;
+        }
+
         if ( !work->use.name.size() )
             work->use.name = work->use.type;
 

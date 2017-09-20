@@ -388,6 +388,9 @@ static bool set_var(const char* fqn, Value& val)
     if ( val.get_type() != Value::VT_STR )
         return false;
 
+    if ( get_ips_policy() == nullptr )
+        return true;
+
     trace("var", fqn, val);
     const char* s = val.get_string();
 
@@ -460,6 +463,12 @@ static bool set_value(const char* fqn, Value& v)
             ParseWarning(WARN_SYMBOLS, "unknown symbol %s", fqn);
         return found;
     }
+
+    if ( mod->get_usage() != Module::INSPECT && only_inspection_policy() )
+            return true;
+
+    if ( mod->get_usage() != Module::DETECT && only_ips_policy() )
+            return true;
 
     // now we must traverse the mod params to get the leaf
     string s = fqn;
@@ -672,6 +681,12 @@ SO_PUBLIC bool open_table(const char* s, int idx)
     Module* m = h->mod;
     const Parameter* p = nullptr;
 
+    if ( m->get_usage() != Module::INSPECT && only_inspection_policy() )
+        return true;
+
+    if ( m->get_usage() != Module::DETECT && only_ips_policy() )
+        return true;
+
     if ( strcmp(m->get_name(), s) )
     {
         std::string sfqn = s;
@@ -722,6 +737,12 @@ SO_PUBLIC void close_table(const char* s, int idx)
 
     if ( ModHook* h = get_hook(key.c_str()) )
     {
+        if ( h->mod->get_usage() != Module::INSPECT && only_inspection_policy() )
+            return;
+
+        if ( h->mod->get_usage() != Module::DETECT && only_ips_policy() )
+            return;
+
         if ( !end(h->mod, nullptr, s, idx) )
             ParseError("can't close %s", h->mod->get_name());
 

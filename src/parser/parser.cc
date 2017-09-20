@@ -462,10 +462,10 @@ SnortConfig* ParseSnortConf(const SnortConfig* boot_conf, const char* fname)
         if ( !sh )
             break;
 
-        set_policies(sc, i);
+        set_policies(sc, sh);
         parse_file(sc, sh);
     }
-    set_policies(sc);
+    set_default_policy(sc);
     return sc;
 }
 
@@ -541,7 +541,7 @@ void ParseRules(SnortConfig* sc)
 {
     for ( unsigned idx = 0; idx < sc->policy_map->ips_policy.size(); ++idx )
     {
-        set_policies(sc, idx);
+        set_ips_policy(sc, idx);
         IpsPolicy* p = sc->policy_map->ips_policy[idx];
 
         if ( p->enable_builtin_rules )

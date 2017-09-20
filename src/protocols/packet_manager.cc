@@ -632,7 +632,11 @@ int PacketManager::format_tcp(
 
     c->packet_flags |= PKT_PSEUDO;
     c->pseudo_type = type;
-    c->user_policy_id = p->user_policy_id;  // cooked packet gets same policy as raw
+
+    // cooked packet gets same policy as raw
+    c->user_inspection_policy_id = p->user_inspection_policy_id;
+    c->user_ips_policy_id = p->user_ips_policy_id;
+    c->user_network_policy_id = p->user_network_policy_id;
 
     // setup pkt capture header
     pkth->caplen = 0;
@@ -734,7 +738,11 @@ int PacketManager::encode_format(
     c->ip_proto_next = p->ip_proto_next;
     c->packet_flags |= PKT_PSEUDO;
     c->pseudo_type = type;
-    c->user_policy_id = p->user_policy_id;  // cooked packet gets same policy as raw
+
+    // cooked packet gets same policy as raw
+    c->user_inspection_policy_id = p->user_inspection_policy_id;
+    c->user_ips_policy_id = p->user_ips_policy_id;
+    c->user_network_policy_id = p->user_network_policy_id;
 
     // setup pkt capture header
     pkth->caplen = len;

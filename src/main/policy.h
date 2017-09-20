@@ -26,6 +26,9 @@
 // -- inspection - for flow handling
 // -- ips - for rule handling
 
+#include <memory>
+#include <unordered_map>
+
 #include "framework/data_bus.h"
 
 struct PortTable;
@@ -66,7 +69,7 @@ public:
 
 public:
     PolicyId policy_id;
-    uint32_t user_policy_id;
+    uint32_t user_policy_id = 0;
 
     uint8_t min_ttl;
     uint8_t new_ttl;
@@ -85,15 +88,22 @@ public:
 struct InspectionPolicy
 {
 public:
-    InspectionPolicy(InspectionPolicy* old_inspection_policy = nullptr);
+    InspectionPolicy(PolicyId = 0);
+    InspectionPolicy(InspectionPolicy* old_inspection_policy);
     ~InspectionPolicy();
 
     void configure();
 
 public:
+    PolicyId policy_id;
+    uint32_t user_policy_id = 0;
+
     struct FrameworkPolicy* framework_policy;
     DataBus dbus;
     bool cloned;
+
+private:
+    void init(InspectionPolicy* old_inspection_policy);
 };
 
 //-------------------------------------------------------------------------
@@ -117,7 +127,7 @@ public:
 
 public:
     PolicyId policy_id;
-    uint32_t user_policy_id;
+    uint32_t user_policy_id = 0;
 
     PolicyMode policy_mode;
     bool enable_builtin_rules;
@@ -141,24 +151,47 @@ public:
 
 class Shell;
 
+struct PolicyTuple
+{
+    InspectionPolicy* inspection = nullptr;
+    IpsPolicy* ips = nullptr;
+    NetworkPolicy* network = nullptr;
+
+    PolicyTuple(InspectionPolicy* ins_pol, IpsPolicy* ips_pol, NetworkPolicy* net_pol) :
+        inspection(ins_pol), ips(ips_pol), network(net_pol) { }
+};
+
 class PolicyMap
 {
 public:
     PolicyMap(PolicyMap* old_map = nullptr);
     ~PolicyMap();
 
-    unsigned add_shell(Shell*);
+    unsigned add_inspection_shell(Shell*);
+    unsigned add_ips_shell(Shell*);
+    std::shared_ptr<PolicyTuple> add_shell(Shell*);
     void clone(PolicyMap *old_map);
 
     Shell* get_shell(unsigned i = 0)
     { return i < shells.size() ? shells[i] : nullptr; }
+
+    void set_user_ips(IpsPolicy* p)
+    { user_ips[p->user_policy_id] = p; }
+
+    IpsPolicy* get_user_ips(unsigned user_id)
+    { return user_ips[user_id]; }
 
 public:  // FIXIT-M make impl private
     std::vector<Shell*> shells;
     std::vector<InspectionPolicy*> inspection_policy;
     std::vector<IpsPolicy*> ips_policy;
     std::vector<NetworkPolicy*> network_policy;
+    std::unordered_map<Shell*, std::shared_ptr<PolicyTuple>> shell_map;
+
     bool cloned = false;
+
+private:
+    std::unordered_map<unsigned, IpsPolicy*> user_ips;
 };
 
 //-------------------------------------------------------------------------
@@ -172,11 +205,20 @@ SO_PUBLIC InspectionPolicy* get_inspection_policy();
 SO_PUBLIC IpsPolicy* get_ips_policy();
 
 void set_network_policy(NetworkPolicy*);
-void set_inspection_policy(InspectionPolicy*);
-void set_ips_policy(IpsPolicy*);
+void set_network_policy(struct SnortConfig*, unsigned = 0);
 
-void set_policies(struct SnortConfig*, unsigned = 0);
+void set_inspection_policy(InspectionPolicy*);
+void set_inspection_policy(struct SnortConfig*, unsigned = 0);
+
+void set_ips_policy(IpsPolicy*);
+void set_ips_policy(struct SnortConfig*, unsigned = 0);
+
+void set_policies(struct SnortConfig*, Shell*);
 void set_default_policy();
+void set_default_policy(struct SnortConfig*);
+
+bool only_inspection_policy();
+bool only_ips_policy();
 
 #endif
 

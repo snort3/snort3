@@ -63,10 +63,11 @@ Binding::Binding()
     when.ports.set();
     when.ifaces.set();
 
-    when.id = 0;
+    when.ips_id = 0;
     when.role = BindWhen::BR_EITHER;
 
-    use.index = 0;
+    use.inspection_index = 0;
+    use.ips_index = 0;
     use.action = BindUse::BA_INSPECT;
 
     use.what = BindUse::BW_NONE;
@@ -79,12 +80,12 @@ Binding::~Binding()
         sfvar_free(when.nets);
 }
 
-bool Binding::check_policy(const Flow* flow) const
+bool Binding::check_ips_policy(const Flow* flow) const
 {
-    if ( !when.id )
+    if ( !when.ips_id )
         return true;
 
-    if ( when.id == flow->policy_id )
+    if ( when.ips_id == flow->ips_policy_id )
         return true;
 
     return false;
@@ -176,7 +177,7 @@ bool Binding::check_service(const Flow* flow) const
 
 bool Binding::check_all(const Flow* flow) const
 {
-    if ( !check_policy(flow) )
+    if ( !check_ips_policy(flow) )
         return false;
 
     if ( !check_iface(flow) )
@@ -454,7 +455,17 @@ bool Binder::configure(SnortConfig* sc)
     {
         pb = bindings[i];
 
-        if ( !pb->use.index )
+        // Update with actual policy indicies instead of user provided names
+        if ( pb->when.ips_id )
+        {
+            IpsPolicy* p = sc->policy_map->get_user_ips(pb->when.ips_id);
+            if ( p )
+                pb->when.ips_id = p->policy_id;
+            else
+                ParseError("can't bind. ips_policy_id %u does not exist", pb->when.ips_id);
+        }
+
+        if ( !pb->use.ips_index && !pb->use.inspection_index )
             set_binding(sc, pb);
     }
     return true;
@@ -480,8 +491,6 @@ void Binder::update(SnortConfig*, const char* name)
     }
 }
 
-// FIXIT-M need to consider binding of ips rules / policy
-// possibly split bindings into these categories
 void Binder::eval(Packet* p)
 {
     Flow* flow = p->flow;
@@ -601,7 +610,7 @@ void Binder::get_bindings(Flow* flow, Stuff& stuff)
         if ( !pb->check_all(flow) )
             continue;
 
-        if ( !pb->use.index )
+        if ( !pb->use.ips_index && !pb->use.inspection_index )
         {
             if ( stuff.update(pb) )
                 return;
@@ -609,10 +618,32 @@ void Binder::get_bindings(Flow* flow, Stuff& stuff)
                 continue;
         }
 
-        set_policies(snort_conf, pb->use.index - 1);
-        flow->policy_id = pb->use.index - 1;
+        if ( pb->use.inspection_index )
+        {
+            set_inspection_policy(snort_conf, pb->use.inspection_index - 1);
+            flow->inspection_policy_id = pb->use.inspection_index - 1;
+        }
+
+        if ( pb->use.ips_index )
+        {
+            set_ips_policy(snort_conf, pb->use.ips_index - 1);
+            flow->ips_policy_id = pb->use.ips_index - 1;
+        }
+
+        if ( pb->use.network_index )
+        {
+            set_network_policy(snort_conf, pb->use.network_index - 1);
+            flow->network_policy_id = pb->use.network_index - 1;
+        }
 
         Binder* sub = (Binder*)InspectorManager::get_binder();
+
+        // If selected sub-policy is IPS, inspection policy wont
+        // change and get_binder() will return this binder. Keep
+        // checking rules in case a new inspection policy is specified
+        // after.
+        if ( sub == this )
+            continue;
 
         if ( sub )
         {

@@ -25,6 +25,8 @@
 
 #include "detector_pop3.h"
 
+#include <array>
+
 #include "app_info_table.h"
 
 enum POP3ClientState

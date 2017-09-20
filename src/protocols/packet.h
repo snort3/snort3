@@ -131,8 +131,9 @@ struct SO_PUBLIC Packet
     PseudoPacketType pseudo_type;    // valid only when PKT_PSEUDO is set
     uint32_t iplist_id;
 
-    // for correlating configuration with event output
-    uint16_t user_policy_id;
+    uint32_t user_inspection_policy_id;
+    uint32_t user_ips_policy_id;
+    uint32_t user_network_policy_id;
 
     // IP_MAXPACKET is the minimum allowable max_dsize
     // there is no requirement that all data fit into an IP datagram

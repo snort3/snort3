@@ -32,7 +32,7 @@ struct BindWhen
     enum Role
     { BR_CLIENT, BR_SERVER, BR_EITHER, BR_MAX };
 
-    unsigned id;
+    unsigned ips_id;
     unsigned protos;
     Role role;
     std::string svc;
@@ -55,7 +55,9 @@ struct BindUse
     std::string name;
 
     Action action;
-    unsigned index;
+    unsigned network_index;
+    unsigned inspection_index;
+    unsigned ips_index;
     What what;
     void* object;
 };
@@ -74,7 +76,8 @@ struct Binding
     bool check_addr(const Flow*) const;
     bool check_proto(const Flow*) const;
     bool check_port(const Flow*) const;
-    bool check_policy(const Flow*) const;
+    bool check_inspection_policy(const Flow*) const;
+    bool check_ips_policy(const Flow*) const;
     bool check_service(const Flow*) const;
 };
 

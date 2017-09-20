@@ -65,7 +65,16 @@ public:
     { DetectionEngine::detect((Packet*)e.get_packet()); }  // FIXIT-L not const!
 };
 
+InspectionPolicy::InspectionPolicy(PolicyId id)
+{
+    policy_id = id;
+    init(nullptr);
+}
+
 InspectionPolicy::InspectionPolicy(InspectionPolicy* other_inspection_policy)
+{ init(other_inspection_policy); }
+
+void InspectionPolicy::init(InspectionPolicy* other_inspection_policy)
 {
     framework_policy = nullptr;
     cloned = false;
@@ -164,6 +173,7 @@ PolicyMap::~PolicyMap()
     inspection_policy.clear();
     ips_policy.clear();
     network_policy.clear();
+    shell_map.clear();
 }
 
 void PolicyMap::clone(PolicyMap *other_map)
@@ -183,14 +193,34 @@ void PolicyMap::clone(PolicyMap *other_map)
     }
 }
 
-unsigned PolicyMap::add_shell(Shell* sh)
+unsigned PolicyMap::add_inspection_shell(Shell* sh)
 {
-    unsigned idx = shells.size();
+    unsigned idx = inspection_policy.size();
     shells.push_back(sh);
-    inspection_policy.push_back(new InspectionPolicy);  // FIXIT-M need id?
-    ips_policy.push_back(new IpsPolicy(idx));
-    network_policy.push_back(new NetworkPolicy(idx));
+    inspection_policy.push_back(new InspectionPolicy(idx));
+
+    shell_map[sh] = std::make_shared<PolicyTuple>(inspection_policy.back(), nullptr, nullptr);
     return idx;
+}
+
+unsigned PolicyMap::add_ips_shell(Shell* sh)
+{
+    unsigned idx = ips_policy.size();
+    shells.push_back(sh);
+    ips_policy.push_back(new IpsPolicy(idx));
+    shell_map[sh] = std::make_shared<PolicyTuple>(nullptr, ips_policy.back(), nullptr);
+    return idx;
+}
+
+std::shared_ptr<PolicyTuple> PolicyMap::add_shell(Shell* sh)
+{
+    shells.push_back(sh);
+    inspection_policy.push_back(new InspectionPolicy(inspection_policy.size()));
+    ips_policy.push_back(new IpsPolicy(ips_policy.size()));
+    network_policy.push_back(new NetworkPolicy(network_policy.size()));
+
+    return shell_map[sh] = std::make_shared<PolicyTuple>(inspection_policy.back(),
+        ips_policy.back(), network_policy.back());
 }
 
 //-------------------------------------------------------------------------
@@ -213,28 +243,63 @@ IpsPolicy* get_ips_policy()
 void set_network_policy(NetworkPolicy* p)
 { s_traffic_policy = p; }
 
+void set_network_policy(SnortConfig* sc, unsigned i)
+{
+    PolicyMap* pm = sc->policy_map;
+
+    if ( i < pm->network_policy.size() )
+        set_network_policy(pm->network_policy[i]);
+}
+
 void set_inspection_policy(InspectionPolicy* p)
 { s_inspection_policy = p; }
+
+void set_inspection_policy(SnortConfig* sc, unsigned i)
+{
+    PolicyMap* pm = sc->policy_map;
+
+    if ( i < pm->inspection_policy.size() )
+        set_inspection_policy(pm->inspection_policy[i]);
+}
 
 void set_ips_policy(IpsPolicy* p)
 { s_detection_policy = p; }
 
-void set_policies(SnortConfig* sc, unsigned i)
+void set_ips_policy(SnortConfig* sc, unsigned i)
 {
     PolicyMap* pm = sc->policy_map;
 
-    if ( i < pm->shells.size() )
-    {
-        set_network_policy(pm->network_policy[i]);
-        set_inspection_policy(pm->inspection_policy[i]);
+    if ( i < pm->ips_policy.size() )
         set_ips_policy(pm->ips_policy[i]);
-    }
+}
+
+void set_policies(SnortConfig* sc, Shell* sh)
+{
+    auto policies = sc->policy_map->shell_map[sh];
+
+    if ( policies->inspection )
+        set_inspection_policy(policies->inspection);
+
+    if ( policies->ips )
+        set_ips_policy(policies->ips);
+
+    if ( policies->network )
+        set_network_policy(policies->network);
+}
+
+void set_default_policy(SnortConfig* sc)
+{
+    set_network_policy(sc->policy_map->network_policy[0]);
+    set_inspection_policy(sc->policy_map->inspection_policy[0]);
+    set_ips_policy(sc->policy_map->ips_policy[0]);
 }
 
 void set_default_policy()
-{
-    set_network_policy(snort_conf->policy_map->network_policy[0]);
-    set_ips_policy(snort_conf->policy_map->ips_policy[0]);
-    set_inspection_policy(snort_conf->policy_map->inspection_policy[0]);
-}
+{ set_default_policy(snort_conf); }
+
+bool only_inspection_policy()
+{ return get_inspection_policy() && !get_ips_policy() && !get_network_policy(); }
+
+bool only_ips_policy()
+{ return get_ips_policy() && !get_inspection_policy() && !get_network_policy(); }
 
