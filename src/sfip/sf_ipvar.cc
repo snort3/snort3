@@ -1201,7 +1201,7 @@ TEST_CASE("SfIpVarCopyAddCompare", "[SfIpVar]")
     // compare to original
     CHECK(SFIP_EQUAL == sfvar_compare(var1, var2));
 
-    // add a negate node to orignal list
+    // add a negate node to original list
     node = sfipnode_alloc("!192.168.3.2", NULL);
     CHECK(node != NULL);
     CHECK(SFIP_SUCCESS == sfvar_add_node(var1, node, 1));
@@ -1238,7 +1238,7 @@ TEST_CASE("SfIpVarAny", "[SfIpVar]")
     // try to add list to any
     CHECK(sfvt_add_str(table, "goo [ 255.255.241.0, 192.168.2.1] ", &var2) == SFIP_SUCCESS);
     CHECK(SFIP_SUCCESS == sfvar_add(var1, var2));
-    // adding somthing to any should not change any
+    // adding something to any should not change any
     print_var_list(var1->head);
     CHECK(!strcmp("any", sfipvar_test_buff));
 
@@ -1247,7 +1247,7 @@ TEST_CASE("SfIpVarAny", "[SfIpVar]")
     CHECK(node != NULL);
     CHECK(SFIP_SUCCESS == sfvar_add_node(var1, node, 0));
 
-    // after adding any, the orignal list should have any only
+    // after adding any, the original list should have any only
     print_var_list(var1->head);
     CHECK(!strcmp("any", sfipvar_test_buff));
     CHECK(var1->head_count == 1);

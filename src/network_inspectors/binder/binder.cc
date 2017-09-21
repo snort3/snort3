@@ -455,7 +455,7 @@ bool Binder::configure(SnortConfig* sc)
     {
         pb = bindings[i];
 
-        // Update with actual policy indicies instead of user provided names
+        // Update with actual policy indices instead of user provided names
         if ( pb->when.ips_id )
         {
             IpsPolicy* p = sc->policy_map->get_user_ips(pb->when.ips_id);
