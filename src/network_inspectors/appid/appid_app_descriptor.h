@@ -70,7 +70,7 @@ public:
 
     const char* get_vendor() const
     {
-        return my_vendor.c_str();
+        return my_vendor.empty() ? nullptr : my_vendor.c_str();
     }
 
     void set_vendor(const char* vendor)
@@ -81,7 +81,7 @@ public:
 
     const char* get_version() const
     {
-        return my_version.c_str();
+        return my_version.empty() ? nullptr : my_version.c_str();
     }
 
     void set_version(const char* version)
@@ -159,7 +159,7 @@ public:
 
     const char* get_username() const
     {
-        return my_username.c_str();
+        return my_username.empty() ? nullptr : my_username.c_str();
     }
 
     void update_stats(AppId id) override
