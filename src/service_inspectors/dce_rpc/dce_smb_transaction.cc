@@ -291,7 +291,7 @@ static DCE2_Ret DCE2_SmbNtTransactCreateReq(DCE2_SmbSsnData* ssd,
     DCE2_MOVE(param_ptr, param_len, pad);
 
     ssd->cur_rtracker->file_name =
-        DCE2_SmbGetString(param_ptr, file_name_length, unicode, false);
+      DCE2_SmbGetFileName(param_ptr, file_name_length, unicode, &ssd->cur_rtracker->file_name_size);
 
     return DCE2_RET__SUCCESS;
 }
@@ -1000,7 +1000,7 @@ static DCE2_Ret DCE2_SmbTrans2Open2Req(DCE2_SmbSsnData* ssd,
     DCE2_MOVE(param_ptr, param_len, sizeof(SmbTrans2Open2ReqParams));
 
     ssd->cur_rtracker->file_name =
-        DCE2_SmbGetString(param_ptr, param_len, unicode, false);
+      DCE2_SmbGetFileName(param_ptr, param_len, unicode, &ssd->cur_rtracker->file_name_size);
 
     return DCE2_RET__SUCCESS;
 }
@@ -1350,8 +1350,7 @@ DCE2_Ret DCE2_SmbTransaction2(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
             if (ftracker == nullptr)
                 return DCE2_RET__ERROR;
 
-            ftracker->file_name = ssd->cur_rtracker->file_name;
-            ssd->cur_rtracker->file_name = nullptr;
+            DCE2_Update_Ftracker_from_ReqTracker(ftracker, ssd->cur_rtracker);
 
             if (!ftracker->is_ipc)
             {
@@ -1599,8 +1598,7 @@ DCE2_Ret DCE2_SmbNtTransact(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         if (ftracker == nullptr)
             return DCE2_RET__ERROR;
 
-        ftracker->file_name = ssd->cur_rtracker->file_name;
-        ssd->cur_rtracker->file_name = nullptr;
+		DCE2_Update_Ftracker_from_ReqTracker(ftracker, ssd->cur_rtracker);
 
         if (!ftracker->is_ipc)
         {

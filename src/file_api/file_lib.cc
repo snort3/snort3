@@ -39,7 +39,9 @@
 #include "main/snort_config.h"
 #include "managers/inspector_manager.h"
 #include "utils/util.h"
+#include "utils/util_utf.h"
 
+#include "file_api.h"
 #include "file_capture.h"
 #include "file_config.h"
 #include "file_enforcer.h"
@@ -47,6 +49,41 @@
 #include "file_service.h"
 #include "file_segment.h"
 #include "file_stats.h"
+
+// Convert UTF16-LE file name to UTF-8.
+// Returns allocated name. Caller responsible for freeing the buffer.
+char* FileContext::get_UTF8_fname(size_t* converted_len)
+{
+    FileCharEncoding encoding = get_character_encoding(file_name.c_str(), file_name.length());
+    char* outbuf = nullptr;
+    if (encoding == SNORT_CHAR_ENCODING_UTF_16LE)
+    {
+#ifdef HAVE_ICONV
+        // UTF-16LE takes 2 or 4 bytes per charecter, UTF-8 can take max 4
+        const size_t outbytesleft = (file_name.length() - UTF_16_LE_BOM_LEN) * 2;
+        char* inbuf = (char*)snort_alloc(file_name.length());
+        memcpy(inbuf, file_name.c_str(), file_name.length());
+        outbuf = (char*)snort_alloc(outbytesleft + 1);
+        char* const buf_start = outbuf;
+        outbuf = UtfDecodeSession::convert_character_encoding("UTF-8", "UTF-16LE", inbuf + UTF_16_LE_BOM_LEN,
+            outbuf, file_name.length() - UTF_16_LE_BOM_LEN, outbytesleft, converted_len);
+        snort_free(inbuf);
+        if (outbuf == nullptr)
+        {
+            snort_free(buf_start);
+            return nullptr;
+        }
+#else
+        *converted_len = (file_name.length()- UTF_16_LE_BOM_LEN) >> 1;
+        outbuf = (char*)snort_alloc(*converted_len + 1);
+        uint32_t i, k= 0;
+        for ( i = UTF_16_LE_BOM_LEN; i < file_name.length(); i+=2, k++)
+            outbuf[k] = (char)file_name[i];
+        outbuf[k] = 0;
+#endif
+    }
+    return outbuf;
+}
 
 FileInfo::~FileInfo ()
 {
@@ -430,13 +467,13 @@ void FileContext::process_file_signature_sha256(const uint8_t* file_data, int si
             file_signature_context = snort_calloc(sizeof(SHA256_CTX));
         SHA256_Init((SHA256_CTX*)file_signature_context);
         SHA256_Update((SHA256_CTX*)file_signature_context, file_data, data_size);
-        if(file_state.sig_state == FILE_SIG_FLUSH)
+        if (file_state.sig_state == FILE_SIG_FLUSH)
         {
             static uint8_t file_signature_context_backup[sizeof(SHA256_CTX)];
             sha256 = (uint8_t*)snort_alloc(SHA256_HASH_SIZE);
             memcpy(file_signature_context_backup, file_signature_context, sizeof(SHA256_CTX));
 
-            SHA256_Final(sha256, (SHA256_CTX *)file_signature_context);
+            SHA256_Final(sha256, (SHA256_CTX*)file_signature_context);
             memcpy(file_signature_context, file_signature_context_backup, sizeof(SHA256_CTX));
         }
         break;
@@ -445,14 +482,14 @@ void FileContext::process_file_signature_sha256(const uint8_t* file_data, int si
         if (!file_signature_context)
             return;
         SHA256_Update((SHA256_CTX*)file_signature_context, file_data, data_size);
-        if(file_state.sig_state == FILE_SIG_FLUSH)
+        if (file_state.sig_state == FILE_SIG_FLUSH)
         {
             static uint8_t file_signature_context_backup[sizeof(SHA256_CTX)];
             if ( !sha256 )
                 sha256 = (uint8_t*)snort_alloc(SHA256_HASH_SIZE);
             memcpy(file_signature_context_backup, file_signature_context, sizeof(SHA256_CTX));
 
-            SHA256_Final(sha256, (SHA256_CTX *)file_signature_context);
+            SHA256_Final(sha256, (SHA256_CTX*)file_signature_context);
             memcpy(file_signature_context, file_signature_context_backup, sizeof(SHA256_CTX));
         }
 
@@ -643,9 +680,51 @@ void FileContext::print_file_sha256(std::ostream& log)
     log.flags(f);
 }
 
+void FileContext::print_file_name(std::ostream& log)
+{
+    if (file_name.length() <= 0)
+        return;
+
+    size_t fname_len = file_name.length();
+    char* outbuf = get_UTF8_fname(&fname_len);
+    const char* fname  = (outbuf != nullptr) ? outbuf : file_name.c_str();
+
+    log << "File name: ";
+
+    size_t pos = 0;
+    while (pos < fname_len)
+    {
+        if (isprint((int)fname[pos]))
+        {
+            log << fname[pos];
+            pos++;
+        }
+        else
+        {
+            log << "|";
+            bool add_space = false;
+            while ((pos < fname_len) && !isprint((int)fname[pos]))
+            {
+                int ch = 0xff & fname[pos];
+                if (add_space)
+                    log << " ";
+                else
+                    add_space = true;
+                log << std::uppercase << std::setfill('0') << std::setw(2) << std::hex << ch;
+                pos++;
+            }
+            log << "|" << std::dec;
+        }
+    }
+    log << std::endl;
+
+    if (outbuf)
+        snort_free(outbuf);
+}
+
 void FileContext::print(std::ostream& log)
 {
-    log << "File name: " << file_name << std::endl;
+    print_file_name(log);
     log << "File type: " << file_config->file_type_name(file_type_id)
         << '('<< file_type_id  << ')' << std::endl;
     log << "File size: " << file_size << std::endl;

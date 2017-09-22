@@ -41,51 +41,6 @@
 static void DCE2_Smb2Inspect(DCE2_SmbSsnData* ssd, const Smb2Hdr* smb_hdr,
     const uint8_t* end);
 
-static char* DCE2_Smb2GetFileName(const uint8_t* data,
-    uint32_t data_len, bool unicode, bool file_name_only)
-{
-    char* str;
-    uint32_t path_end, name_start, str_len = unicode ? data_len - 1 : data_len;
-    const uint8_t inc = unicode ? 2 : 1;
-
-    if (data_len < inc)
-        return nullptr;
-
-    // Move forward.  Don't know if the end of data is actually
-    // the end of the string.
-    for (path_end = 0, name_start = 0; path_end < str_len; path_end += inc)
-    {
-        uint16_t uchar = unicode ? alignedNtohs((uint16_t*)(data + path_end)) : data[path_end];
-
-        if (uchar == 0)
-            break;
-        else if (file_name_only && ((uchar == 0x002F) || (uchar == 0x005C)))  // slash and
-                                                                              // back-slash
-            name_start = path_end + inc;
-    }
-
-    // Only got a NULL byte or nothing after slash/back-slash or too big.
-    if ((path_end == 0) || (name_start == path_end)
-        || (file_name_only && (path_end > DCE2_SMB_MAX_COMP_LEN))
-        || (path_end > DCE2_SMB_MAX_PATH_LEN))
-        return nullptr;
-
-    str = (char*)snort_calloc(((path_end-name_start)>>(inc-1))+1);
-
-    uint32_t ind;
-    for (ind = 0; name_start < path_end; name_start += inc, ind++)
-    {
-        if ((int)data[name_start])
-            str[ind] = (char)data[name_start];
-        else
-            str[ind] = '.';
-    }
-
-    str[ind] = 0;
-
-    return str;
-}
-
 static inline uint32_t Smb2Tid(const Smb2Hdr* hdr)
 {
     return alignedNtohl(&(((Smb2SyncHdr*)hdr)->tree_id));
@@ -360,10 +315,10 @@ static void DCE2_Smb2CreateRequest(DCE2_SmbSsnData* ssd, const Smb2Hdr*,
         if (ssd->ftracker.file_name)
         {
             snort_free((void*)ssd->ftracker.file_name);
+            ssd->ftracker.file_name_size = 0;
         }
-        ssd->ftracker.file_name = DCE2_Smb2GetFileName(file_data, size, true, false);
-        if (ssd->ftracker.file_name)
-            ssd->ftracker.file_name_size = strlen(ssd->ftracker.file_name);
+        ssd->ftracker.file_name = DCE2_SmbGetFileName(file_data, size, true,
+            &ssd->ftracker.file_name_size);
     }
 }
 
@@ -843,7 +798,7 @@ DCE2_SmbVersion DCE2_Smb2Version(const Packet* p)
 {
     /* Only check reassembled SMB2 packet*/
     if ( p->has_paf_payload() and
-        (p->dsize > sizeof(NbssHdr) + 4) )  // DCE2_SMB_ID is u32
+        (p->dsize > sizeof(NbssHdr) + 4) ) // DCE2_SMB_ID is u32
     {
         Smb2Hdr* smb_hdr = (Smb2Hdr*)(p->data + sizeof(NbssHdr));
         uint32_t smb_version_id = SmbId((SmbNtHdr*)smb_hdr);

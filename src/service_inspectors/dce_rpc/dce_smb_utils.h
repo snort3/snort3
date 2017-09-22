@@ -125,7 +125,7 @@ inline bool DCE2_ComInfoCanProcessCommand(const DCE2_SmbComInfo* com_info)
  * Function prototypes
  ********************************************************************/
 bool DCE2_SmbIsTidIPC(DCE2_SmbSsnData*, const uint16_t);
-char* DCE2_SmbGetString(const uint8_t*, uint32_t, bool, bool);
+char* DCE2_SmbGetFileName(const uint8_t *data, uint32_t data_len, bool unicode, uint16_t *file_name_len);
 int DCE2_SmbUidTidFidCompare(const void*, const void*);
 DCE2_Ret DCE2_SmbFindUid(DCE2_SmbSsnData*, const uint16_t);
 void DCE2_SmbInsertUid(DCE2_SmbSsnData*, const uint16_t);
@@ -179,6 +179,7 @@ void DCE2_SmbProcessFileData(DCE2_SmbSsnData* ssd,
 void DCE2_FileDetect();
 FileVerdict DCE2_get_file_verdict(DCE2_SmbSsnData* );
 void DCE2_SmbInitDeletePdu(void);
+void DCE2_Update_Ftracker_from_ReqTracker(DCE2_SmbFileTracker*, DCE2_SmbRequestTracker*);
 
 /********************************************************************
  * Inline functions

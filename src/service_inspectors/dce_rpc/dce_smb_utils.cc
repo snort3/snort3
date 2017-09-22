@@ -27,6 +27,7 @@
 
 #include "detection/detection_engine.h"
 #include "detection/detection_util.h"
+#include "file_api/file_api.h"
 #include "main/snort.h"
 #include "packet_io/active.h"
 #include "utils/util.h"
@@ -95,67 +96,45 @@ bool DCE2_SmbIsTidIPC(DCE2_SmbSsnData* ssd, const uint16_t tid)
     return false;
 }
 
-/********************************************************************
- * Function: DCE2_SmbGetString()
- *
- * Purpose:
- *  Parses data passed in and returns an ASCII string.  True
- *  unicode characters are replaced with a '.'
- *
- * Arguments:
- *  const uint8_t *  - pointer to data
- *  uint32_t         - data length
- *  bool             - true if the data is unicode (UTF-16LE)
- *  bool             - true if the function should only return the
- *                     file name instead of the entire path
- *
- * Returns:
- *  char *  - NULL terminated ASCII string
- *
- ********************************************************************/
-char* DCE2_SmbGetString(const uint8_t* data,
-    uint32_t data_len, bool unicode, bool get_file)
+// Extract file name from data. Supports ASCII and UTF-16LE.
+// Returns byte stream (ASCII or UTF-16LE with BOM)
+char* DCE2_SmbGetFileName(const uint8_t* data, uint32_t data_len, bool unicode,
+    uint16_t* file_name_len)
 {
-    char* str;
-    uint32_t i, j, k = unicode ? data_len - 1 : data_len;
-    uint8_t inc = unicode ? 2 : 1;
-
+    const uint8_t inc = unicode ? 2 : 1;
     if (data_len < inc)
         return nullptr;
 
+    const uint32_t max_len =  unicode ? data_len - 1 : data_len;
     // Move forward.  Don't know if the end of data is actually
     // the end of the string.
-    for (i = 0, j = 0; i < k; i += inc)
+    uint32_t i;
+    for (i = 0; i < max_len; i += inc)
     {
         uint16_t uchar = unicode ? extract_16bits(data + i) : data[i];
-
         if (uchar == 0)
             break;
-        else if (get_file && ((uchar == 0x002F) || (uchar == 0x005C)))  // slash and back-slash
-            j = i + inc;
     }
 
-    // Only got a NULL byte or nothing after slash/back-slash or too big.
-    if ((i == 0) || (j == i)
-        || (get_file && (i > DCE2_SMB_MAX_COMP_LEN))
-        || (i > DCE2_SMB_MAX_PATH_LEN))
-        return nullptr;
+    char* fname = nullptr;
+    const uint32_t real_len = i;
 
-    str = (char*)snort_calloc(((i-j)>>(inc-1))+1);
-    if (str == nullptr)
-        return nullptr;
-
-    for (k = 0; j < i; j += inc, k++)
+    if (unicode)
     {
-        if (isprint((int)data[j]))
-            str[k] = (char)data[j];
-        else
-            str[k] = '.';
+        fname = (char*)snort_calloc(real_len + UTF_16_LE_BOM_LEN + 2);
+        memcpy(fname, UTF_16_LE_BOM, UTF_16_LE_BOM_LEN);//Prepend with BOM
+        memcpy(fname + UTF_16_LE_BOM_LEN, data, real_len);
+        *file_name_len = real_len + UTF_16_LE_BOM_LEN;
+    }
+    else
+    {
+        fname = (char*)snort_alloc(real_len + 1);
+        memcpy(fname, data, real_len);
+        fname[real_len] = 0;
+        *file_name_len = real_len;
     }
 
-    str[k] = 0;
-
-    return str;
+    return fname;
 }
 
 int DCE2_SmbUidTidFidCompare(const void* a, const void* b)
@@ -737,6 +716,7 @@ void DCE2_SmbCleanRequestTracker(DCE2_SmbRequestTracker* rtracker)
     {
         snort_free((void*)rtracker->file_name);
         rtracker->file_name = nullptr;
+        rtracker->file_name_size = 0;
     }
 }
 
@@ -1480,10 +1460,10 @@ FileVerdict DCE2_get_file_verdict(DCE2_SmbSsnData* ssd)
 
 void DCE2_SmbInitDeletePdu(void)
 {
-    NbssHdr *nb_hdr = (NbssHdr *)dce2_smb_delete_pdu;
-    SmbNtHdr *smb_hdr = (SmbNtHdr *)((uint8_t *)nb_hdr + sizeof(*nb_hdr));
-    SmbDeleteReq *del_req = (SmbDeleteReq *)((uint8_t *)smb_hdr + sizeof(*smb_hdr));
-    uint8_t *del_req_fmt = (uint8_t *)del_req + sizeof(*del_req);
+    NbssHdr* nb_hdr = (NbssHdr*)dce2_smb_delete_pdu;
+    SmbNtHdr* smb_hdr = (SmbNtHdr*)((uint8_t*)nb_hdr + sizeof(*nb_hdr));
+    SmbDeleteReq* del_req = (SmbDeleteReq*)((uint8_t*)smb_hdr + sizeof(*smb_hdr));
+    uint8_t* del_req_fmt = (uint8_t*)del_req + sizeof(*del_req);
     uint16_t smb_flg2 = 0x4001;
     uint16_t search_attrs = 0x0006;
 
@@ -1492,7 +1472,7 @@ void DCE2_SmbInitDeletePdu(void)
     nb_hdr->type = 0;
     nb_hdr->flags = 0;
 
-    memcpy((void *)smb_hdr->smb_idf, (void *)"\xffSMB", sizeof(smb_hdr->smb_idf));
+    memcpy((void*)smb_hdr->smb_idf, (void*)"\xffSMB", sizeof(smb_hdr->smb_idf));
     smb_hdr->smb_com = SMB_COM_DELETE;
     smb_hdr->smb_status.nt_status = 0;
     //smb_hdr->smb_flg = 0x18;
@@ -1508,26 +1488,39 @@ void DCE2_SmbInitDeletePdu(void)
     *del_req_fmt = SMB_FMT__ASCII;
 }
 
-static void DCE2_SmbInjectDeletePdu(DCE2_SmbSsnData *ssd, DCE2_SmbFileTracker *ftracker)
+static void DCE2_SmbInjectDeletePdu(DCE2_SmbSsnData* ssd, DCE2_SmbFileTracker* ftracker)
 {
     Packet* inject_pkt = Snort::get_packet();
-    if( inject_pkt->flow != ssd->sd.wire_pkt->flow )
+    if ( inject_pkt->flow != ssd->sd.wire_pkt->flow )
         return;
 
-    NbssHdr *nb_hdr = (NbssHdr *)dce2_smb_delete_pdu;
-    SmbNtHdr *smb_hdr = (SmbNtHdr *)((uint8_t *)nb_hdr + sizeof(*nb_hdr));
-    SmbDeleteReq *del_req = (SmbDeleteReq *)((uint8_t *)smb_hdr + sizeof(*smb_hdr));
-    char *del_filename = (char *)((uint8_t *)del_req + sizeof(*del_req) + 1);
-    uint16_t file_name_len = strlen(ftracker->file_name) + 1;
+    NbssHdr* nb_hdr = (NbssHdr*)dce2_smb_delete_pdu;
+    SmbNtHdr* smb_hdr = (SmbNtHdr*)((uint8_t*)nb_hdr + sizeof(*nb_hdr));
+    SmbDeleteReq* del_req = (SmbDeleteReq*)((uint8_t*)smb_hdr + sizeof(*smb_hdr));
+    char* del_filename = (char*)((uint8_t*)del_req + sizeof(*del_req) + 1);
+    FileCharEncoding encoding = get_character_encoding(ftracker->file_name,
+        ftracker->file_name_size);
+    uint16_t file_name_len;
+
+    if (encoding == SNORT_CHAR_ENCODING_UTF_16LE)
+    {
+        file_name_len = ftracker->file_name_size - UTF_16_LE_BOM_LEN + 2;
+        uint16_t smb_flg2 = 0xC001;
+        smb_hdr->smb_flg2 = SmbHtons(&smb_flg2);
+    }
+    else
+    {
+        file_name_len = ftracker->file_name_size + 1;
+    }
 
     nb_hdr->length = htons(sizeof(*smb_hdr) + sizeof(*del_req) + 1 + file_name_len);
     uint32_t len = ntohs(nb_hdr->length) + sizeof(*nb_hdr);
     smb_hdr->smb_tid = SmbHtons(&ftracker->tid_v1);
     smb_hdr->smb_uid = SmbHtons(&ftracker->uid_v1);
     del_req->smb_bcc = 1 + file_name_len;
-    memcpy(del_filename, ftracker->file_name, file_name_len);
+    memcpy(del_filename, ftracker->file_name + UTF_16_LE_BOM_LEN, file_name_len);
 
-    Active::inject_data(inject_pkt, 0, (uint8_t *)nb_hdr, len);
+    Active::inject_data(inject_pkt, 0, (uint8_t*)nb_hdr, len);
 }
 
 static FileVerdict DCE2_SmbLookupFileVerdict(DCE2_SmbSsnData* ssd)
@@ -1559,7 +1552,6 @@ static void DCE2_SmbFinishFileBlockVerdict(DCE2_SmbSsnData* ssd)
 
     ssd->fb_ftracker = nullptr;
     ssd->block_pdus = false;
-
 }
 
 static void DCE2_SmbFinishFileAPI(DCE2_SmbSsnData* ssd)
@@ -1651,8 +1643,7 @@ static DCE2_Ret DCE2_SmbFileAPIProcess(DCE2_SmbSsnData* ssd,
         DCE2_SmbIsVerdictSuspend(upload, position)))
     {
         DebugFormat(DEBUG_DCE_SMB, "File API returned FAILURE "
-            "for \"%s\" (0x%02X) %s\n", ftracker->file_name,
-            ftracker->fid_v1, upload ? "UPLOAD" : "DOWNLOAD");
+            "for (0x%02X) %s\n", ftracker->fid_v1, upload ? "UPLOAD" : "DOWNLOAD");
 
         // Failure.  Abort tracking this file under file API
         return DCE2_RET__ERROR;
@@ -1660,13 +1651,12 @@ static DCE2_Ret DCE2_SmbFileAPIProcess(DCE2_SmbSsnData* ssd,
     else
     {
         DebugFormat(DEBUG_DCE_SMB, "File API returned SUCCESS "
-            "for \"%s\" (0x%02X) %s\n", ftracker->file_name,
-            ftracker->fid_v1, upload ? "UPLOAD" : "DOWNLOAD");
+            "for (0x%02X) %s\n", ftracker->fid_v1, upload ? "UPLOAD" : "DOWNLOAD");
 
         if (((position == SNORT_FILE_START) || (position == SNORT_FILE_FULL))
-            && (strlen(ftracker->file_name) != 0))
+            && (ftracker->file_name_size != 0))
         {
-            file_flows->set_file_name((uint8_t*)ftracker->file_name, strlen(ftracker->file_name));
+            file_flows->set_file_name((uint8_t*)ftracker->file_name, ftracker->file_name_size);
         }
 
         if ((position == SNORT_FILE_FULL) || (position == SNORT_FILE_END))
@@ -1676,7 +1666,7 @@ static DCE2_Ret DCE2_SmbFileAPIProcess(DCE2_SmbSsnData* ssd,
                 FileVerdict verdict = DCE2_get_file_verdict(ssd);
 
                 if ((verdict == FILE_VERDICT_BLOCK) || (verdict == FILE_VERDICT_REJECT)
-                        || (verdict == FILE_VERDICT_PENDING))
+                    || (verdict == FILE_VERDICT_PENDING))
                 {
                     ssd->fb_ftracker = ftracker;
                 }
@@ -2009,5 +1999,14 @@ static void DCE2_SmbSetNewFileAPIFileTracker(DCE2_SmbSsnData* ssd)
             ftracker = (DCE2_SmbFileTracker*)DCE2_ListNext(ssd->ftrackers);
     }
     ssd->fapi_ftracker = ftracker;
+}
+
+void DCE2_Update_Ftracker_from_ReqTracker(DCE2_SmbFileTracker* ftracker,
+    DCE2_SmbRequestTracker* cur_rtracker)
+{
+    ftracker->file_name = cur_rtracker->file_name;
+    ftracker->file_name_size = cur_rtracker->file_name_size;
+    cur_rtracker->file_name = nullptr;
+    cur_rtracker->file_name_size = 0;
 }
 

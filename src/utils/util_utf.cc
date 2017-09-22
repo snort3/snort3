@@ -28,6 +28,10 @@
 #include <cassert>
 #include <cstring>
 
+#ifdef HAVE_ICONV
+#include <iconv.h>
+#endif
+
 #define DSTATE_FIRST 0
 #define DSTATE_SECOND 1
 #define DSTATE_THIRD 2
@@ -78,8 +82,8 @@ bool UtfDecodeSession::is_utf_encoding_present()
  * returns: true or false
  */
 
-bool UtfDecodeSession::DecodeUTF16LE(const uint8_t* src, unsigned int src_len, uint8_t* dst, unsigned int dst_len,
-    int* bytes_copied)
+bool UtfDecodeSession::DecodeUTF16LE(const uint8_t* src, unsigned int src_len, uint8_t* dst,
+    unsigned int dst_len, int* bytes_copied)
 {
     const uint8_t* src_index = src;
     uint8_t* dst_index = dst;
@@ -121,8 +125,8 @@ bool UtfDecodeSession::DecodeUTF16LE(const uint8_t* src, unsigned int src_len, u
  * returns: true or false
  */
 
-bool UtfDecodeSession::DecodeUTF16BE(const uint8_t* src, unsigned int src_len, uint8_t* dst, unsigned int dst_len,
-    int* bytes_copied)
+bool UtfDecodeSession::DecodeUTF16BE(const uint8_t* src, unsigned int src_len, uint8_t* dst,
+    unsigned int dst_len, int* bytes_copied)
 {
     const uint8_t* src_index = src;
     uint8_t* dst_index = dst;
@@ -164,8 +168,8 @@ bool UtfDecodeSession::DecodeUTF16BE(const uint8_t* src, unsigned int src_len, u
  * returns: true or false
  */
 
-bool UtfDecodeSession::DecodeUTF32LE(const uint8_t* src, unsigned int src_len, uint8_t* dst, unsigned int dst_len,
-    int* bytes_copied)
+bool UtfDecodeSession::DecodeUTF32LE(const uint8_t* src, unsigned int src_len, uint8_t* dst,
+    unsigned int dst_len, int* bytes_copied)
 {
     const uint8_t* src_index = src;
     uint8_t* dst_index = dst;
@@ -212,8 +216,8 @@ bool UtfDecodeSession::DecodeUTF32LE(const uint8_t* src, unsigned int src_len, u
  * returns: true or false
  */
 
-bool UtfDecodeSession::DecodeUTF32BE(const uint8_t* src, unsigned int src_len, uint8_t* dst, unsigned int dst_len,
-    int* bytes_copied)
+bool UtfDecodeSession::DecodeUTF32BE(const uint8_t* src, unsigned int src_len, uint8_t* dst,
+    unsigned int dst_len, int* bytes_copied)
 {
     const uint8_t* src_index = src;
     uint8_t* dst_index = dst;
@@ -246,7 +250,7 @@ bool UtfDecodeSession::DecodeUTF32BE(const uint8_t* src, unsigned int src_len, u
     return result;
 }
 
-void UtfDecodeSession::determine_charset(const uint8_t** src, unsigned int *src_len)
+void UtfDecodeSession::determine_charset(const uint8_t** src, unsigned int* src_len)
 {
     CharsetCode charset;
     if (dstate.charset == CHARSET_UNKNOWN)
@@ -277,7 +281,6 @@ void UtfDecodeSession::determine_charset(const uint8_t** src, unsigned int *src_
                 charset = CHARSET_UTF16LE;
                 size = 2;
             }
-
             //  BOM (Byte Order Mark) was missing. Try to guess the encoding.
             else if (((*src)[0] == '\0') && ((*src)[2] == '\0') && ((*src)[3] != '\0'))
             {
@@ -318,13 +321,13 @@ void UtfDecodeSession::determine_charset(const uint8_t** src, unsigned int *src_
             charset = CHARSET_DEFAULT; // ensure we don't try again
         }
         set_decode_utf_state_charset(charset);
-
     }
 }
 
 /* Wrapper function for DecodeUTF{16,32}{LE,BE} */
 bool UtfDecodeSession::decode_utf(
-    const uint8_t* src, unsigned int src_len, uint8_t* dst, unsigned int dst_len, int* bytes_copied)
+    const uint8_t* src, unsigned int src_len, uint8_t* dst, unsigned int dst_len,
+    int* bytes_copied)
 {
     *bytes_copied = 0;
 
@@ -349,4 +352,35 @@ bool UtfDecodeSession::decode_utf(
 
     return true;
 }
+
+#ifdef HAVE_ICONV
+
+char* UtfDecodeSession::convert_character_encoding(const char* to_code, const char* from_code,
+    char* in_buf, char* out_buf, size_t in_bytes, size_t out_bytes, size_t* out_buf_length)
+{
+    iconv_t convert_encoding = iconv_open(to_code, from_code);
+    if (convert_encoding == (iconv_t)-1)
+        return nullptr;
+
+    char* out = out_buf;
+    size_t iconv_rval = iconv(convert_encoding, &in_buf, &in_bytes, &out, &out_bytes);
+    if (iconv_rval == (size_t)-1)
+        return nullptr;
+
+    *out = '\0';
+    *out_buf_length = (out - out_buf);
+
+    iconv_close(convert_encoding);
+    return out_buf;
+}
+
+#else
+
+char* UtfDecodeSession::convert_character_encoding(const char*, const char*,
+    char*, char*, size_t, size_t, size_t*)
+{
+    return nullptr;
+}
+
+#endif
 

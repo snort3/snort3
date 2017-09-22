@@ -131,8 +131,10 @@ public:
     uint64_t get_processed_bytes();
 
     void print_file_sha256(std::ostream&);
+    void print_file_name(std::ostream&);
     static void print_file_data(FILE* fp, const uint8_t* data, int len, int max_depth);
     void print(std::ostream&);
+    char* get_UTF8_fname(size_t* converted_len);
 
 private:
     bool file_type_enabled = false;

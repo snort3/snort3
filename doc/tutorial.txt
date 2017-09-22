@@ -48,6 +48,9 @@ Optional:
 * hyperscan >= 4.4.0 from https://github.com/01org/hyperscan to build new
   the regex and sd_pattern rule options and hyperscan search engine
 
+* iconv from https://ftp.gnu.org/pub/gnu/libiconv/ for converting
+  UTF16-LE filenames to UTF8 (usually included in glibc)
+
 * lzma >= 5.1.2 from http://tukaani.org/xz/ for decompression of SWF and
   PDF files
 

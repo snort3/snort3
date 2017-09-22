@@ -394,6 +394,7 @@ struct DCE2_SmbRequestTracker
     // Used for requests to cache data that will ultimately end up in
     // the file tracker upon response.
     char* file_name;
+    uint16_t file_name_size;
     uint64_t file_size;
     uint64_t file_offset;
     bool sequential_only;

@@ -12,7 +12,7 @@
 # enables
 # unit tests
 # required libs (daq / sfbpf, dnet, hwloc, luajit, openssl / crypto, pcap, pcre, zlib)
-# optional libs (hyperscan, lzma, safec)
+# optional libs (hyperscan, iconv, lzma, safec)
 # outputs
 #
 # if you add an AC_DEFINE() for a symbol that appears in an exported
@@ -26,6 +26,7 @@
 AC_INIT([snort],[3.0.0],[snort-team@cisco.com])
 AC_PREREQ([2.69])
 
+AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_SRCDIR([src/main.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h src/framework/api_options.h])
@@ -1014,6 +1015,11 @@ if test "x$HS_LIB" != "xno"; then
 fi
 
 AM_CONDITIONAL([HAVE_HYPERSCAN], [test "x$HS_HEADERS" = "xyes" -a "x$HS_LIB" = "xyes"])
+
+#--------------------------------------------------------------------------
+# iconv (optional)
+#--------------------------------------------------------------------------
+AM_ICONV
 
 #--------------------------------------------------------------------------
 # lzma (optional)

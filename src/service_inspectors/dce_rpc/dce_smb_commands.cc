@@ -542,8 +542,7 @@ DCE2_Ret DCE2_SmbOpen(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         if (ftracker == nullptr)
             return DCE2_RET__ERROR;
 
-        ftracker->file_name = ssd->cur_rtracker->file_name;
-        ssd->cur_rtracker->file_name = nullptr;
+        DCE2_Update_Ftracker_from_ReqTracker(ftracker, ssd->cur_rtracker);
 
         if (!ftracker->is_ipc)
         {
@@ -566,7 +565,8 @@ DCE2_Ret DCE2_SmbOpen(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         DCE2_MOVE(nb_ptr, nb_len, 1);
 
         ssd->cur_rtracker->file_name =
-            DCE2_SmbGetString(nb_ptr, nb_len, SmbUnicode(smb_hdr), false);
+            DCE2_SmbGetFileName(nb_ptr, nb_len, SmbUnicode(smb_hdr),
+            &ssd->cur_rtracker->file_name_size);
     }
 
     return DCE2_RET__SUCCESS;
@@ -588,8 +588,7 @@ DCE2_Ret DCE2_SmbCreate(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         if (ftracker == nullptr)
             return DCE2_RET__ERROR;
 
-        ftracker->file_name = ssd->cur_rtracker->file_name;
-        ssd->cur_rtracker->file_name = nullptr;
+        DCE2_Update_Ftracker_from_ReqTracker(ftracker, ssd->cur_rtracker);
 
         // Command creates or opens and truncates file to 0 so assume
         // upload.
@@ -623,7 +622,8 @@ DCE2_Ret DCE2_SmbCreate(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         DCE2_MOVE(nb_ptr, nb_len, 1);
 
         ssd->cur_rtracker->file_name =
-            DCE2_SmbGetString(nb_ptr, nb_len, SmbUnicode(smb_hdr), false);
+            DCE2_SmbGetFileName(nb_ptr, nb_len, SmbUnicode(smb_hdr),
+            &ssd->cur_rtracker->file_name_size);
     }
 
     return DCE2_RET__SUCCESS;
@@ -816,8 +816,7 @@ DCE2_Ret DCE2_SmbCreateNew(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         if (ftracker == nullptr)
             return DCE2_RET__ERROR;
 
-        ftracker->file_name = ssd->cur_rtracker->file_name;
-        ssd->cur_rtracker->file_name = nullptr;
+        DCE2_Update_Ftracker_from_ReqTracker(ftracker, ssd->cur_rtracker);
 
         // Command creates a new file so assume upload.
         if (!ftracker->is_ipc)
@@ -850,7 +849,8 @@ DCE2_Ret DCE2_SmbCreateNew(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         DCE2_MOVE(nb_ptr, nb_len, 1);
 
         ssd->cur_rtracker->file_name =
-            DCE2_SmbGetString(nb_ptr, nb_len, SmbUnicode(smb_hdr), false);
+            DCE2_SmbGetFileName(nb_ptr, nb_len, SmbUnicode(smb_hdr),
+            &ssd->cur_rtracker->file_name_size);
     }
 
     return DCE2_RET__SUCCESS;
@@ -1010,8 +1010,7 @@ DCE2_Ret DCE2_SmbOpenAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
                 return DCE2_RET__ERROR;
         }
 
-        ftracker->file_name = ssd->cur_rtracker->file_name;
-        ssd->cur_rtracker->file_name = nullptr;
+        DCE2_Update_Ftracker_from_ReqTracker(ftracker, ssd->cur_rtracker);
 
         if (!ftracker->is_ipc)
         {
@@ -1061,7 +1060,7 @@ DCE2_Ret DCE2_SmbOpenAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         if (ssd->cur_rtracker->file_name == nullptr)
         {
             ssd->cur_rtracker->file_name =
-                DCE2_SmbGetString(nb_ptr, nb_len, unicode, false);
+                DCE2_SmbGetFileName(nb_ptr, nb_len, unicode, &ssd->cur_rtracker->file_name_size);
         }
     }
 
@@ -1946,11 +1945,7 @@ DCE2_Ret DCE2_SmbNtCreateAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
                 return DCE2_RET__ERROR;
         }
 
-        ftracker->file_name = ssd->cur_rtracker->file_name;
-        ssd->cur_rtracker->file_name = nullptr;
-
-        DebugFormat(DEBUG_DCE_SMB, "File name: %s\n",
-            (ftracker->file_name == nullptr) ? "nullptr" : ftracker->file_name);
+        DCE2_Update_Ftracker_from_ReqTracker(ftracker, ssd->cur_rtracker);
 
         if (!ftracker->is_ipc)
         {
@@ -2016,7 +2011,8 @@ DCE2_Ret DCE2_SmbNtCreateAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         if (ssd->cur_rtracker->file_name == nullptr)
         {
             ssd->cur_rtracker->file_name =
-                DCE2_SmbGetString(nb_ptr, file_name_length, unicode, false);
+                DCE2_SmbGetFileName(nb_ptr, file_name_length, unicode,
+                &ssd->cur_rtracker->file_name_size);
         }
 
         if (is_ipc)

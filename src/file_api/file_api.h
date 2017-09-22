@@ -27,6 +27,7 @@
 // and configurations.
 
 #include <string>
+#include <cstring>
 
 #include "main/snort_types.h"
 
@@ -36,9 +37,11 @@
 #define     FILE_ALL_ON                          0xFFFFFFFF
 #define     FILE_ALL_OFF                         0x00000000
 
-
 #define     FILE_RESUME_BLOCK                    0x01
 #define     FILE_RESUME_LOG                      0x02
+
+#define UTF_16_LE_BOM "\xFF\xFE"
+#define UTF_16_LE_BOM_LEN 2
 
 enum FileVerdict
 {
@@ -90,8 +93,14 @@ enum FileProcessType
 
 enum FileDirection
 {
-   FILE_DOWNLOAD,
-   FILE_UPLOAD
+    FILE_DOWNLOAD,
+    FILE_UPLOAD
+};
+
+enum FileCharEncoding
+{
+    SNORT_CHAR_ENCODING_ASCII,
+    SNORT_CHAR_ENCODING_UTF_16LE
 };
 
 struct FileState
@@ -136,6 +145,18 @@ inline bool isFileStart(FilePosition position)
 inline bool isFileEnd(FilePosition position)
 {
     return ((position == SNORT_FILE_END) || (position == SNORT_FILE_FULL));
+}
+
+inline FileCharEncoding get_character_encoding(const char* file_name, size_t length)
+{
+    FileCharEncoding encoding = SNORT_CHAR_ENCODING_ASCII;
+    if (length >= UTF_16_LE_BOM_LEN)
+    {
+        if (memcmp(file_name, UTF_16_LE_BOM, UTF_16_LE_BOM_LEN) == 0)
+            encoding = SNORT_CHAR_ENCODING_UTF_16LE;
+    }
+
+    return encoding;
 }
 
 SO_PUBLIC uint64_t get_file_processed_size(class Flow* flow);

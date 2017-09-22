@@ -238,6 +238,8 @@
 
 #cmakedefine HAVE_FLATBUFFERS 1
 
+#cmakedefine HAVE_ICONV 1
+
 /* Library specific functions */
 
 

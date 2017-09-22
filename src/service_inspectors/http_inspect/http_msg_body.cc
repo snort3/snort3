@@ -241,7 +241,7 @@ void HttpMsgBody::do_file_processing(Field& file_data)
             {
                 if (request != nullptr)
                 {
-                    const Field& transaction_uri = request->get_uri_norm_classic();
+                    const Field& transaction_uri = request->get_uri();
                     if (transaction_uri.length() > 0)
                     {
                         file_flows->set_file_name(transaction_uri.start(),

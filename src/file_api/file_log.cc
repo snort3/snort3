@@ -95,28 +95,43 @@ void LogHandler::log_file_name(TextLog* log, FileContext* file)
     if (name.length() <= 0)
         return;
 
-    size_t start = name.rfind('/');
-
-    // Move beyond /
-    if (start)
-        start++;
+    size_t fname_len = name.length();
+    char* outbuf = file->get_UTF8_fname(&fname_len);
+    const char* fname = (outbuf != nullptr) ? outbuf : name.c_str();
 
     TextLog_Puts(log, "[Name: ");
     TextLog_Putc(log, '"');
 
-    for (size_t i = start; i < name.length(); i++)
+    size_t pos = 0;
+    while (pos < fname_len)
     {
-        if ( name[i] > 0x1F && name[i] < 0x7F) /* printable */
+        if (isprint((int)fname[pos]))
         {
-            TextLog_Putc(log, name[i]);
+            TextLog_Putc(log, fname[pos]);
+            pos++;
         }
-        else /* not printable */
+        else
         {
-            TextLog_Putc(log, '.');
+            TextLog_Putc(log, '|');
+            bool add_space = false;
+            while ((pos < fname_len) && !isprint((int)fname[pos]))
+            {
+                if (add_space)
+                    TextLog_Print(log, " %02X", (uint8_t)fname[pos]);
+                else
+                {
+                    TextLog_Print(log, "%02X", (uint8_t)fname[pos]);
+                    add_space = true;
+                }
+                pos++;
+            }
+            TextLog_Putc(log, '|');
         }
     }
 
     TextLog_Puts(log, "\"] ");
+    if (outbuf)
+        snort_free(outbuf);
 }
 
 void LogHandler::handle(DataEvent&, Flow* f)
@@ -291,7 +306,7 @@ static const InspectApi fl_api
         mod_dtor
     },
     IT_PASSIVE,
-    (uint16_t) PktType::NONE,
+    (uint16_t)PktType::NONE,
     nullptr, // buffers
     nullptr, // service
     nullptr, // pinit

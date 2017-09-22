@@ -120,19 +120,19 @@ int DisplayBanner()
                            " All rights reserved.\n");
     LogMessage("           Copyright (C) 1998-2013 Sourcefire, Inc., et al.\n");
     LogMessage("           Using DAQ version %s\n", daq_version_string());
-    LogMessage("           Using %s\n", pcap_lib_version());
     LogMessage("           Using LuaJIT version %s\n", ljv);
+    LogMessage("           Using %s\n", SSLeay_version(SSLEAY_VERSION));
+    LogMessage("           Using %s\n", pcap_lib_version());
     LogMessage("           Using PCRE version %s\n", pcre_version());
     LogMessage("           Using ZLIB version %s\n", zlib_version);
-#ifdef HAVE_LZMA
-    LogMessage("           Using LZMA version %s\n", lzma_version_string());
+#ifdef HAVE_FLATBUFFERS
+    LogMessage("           Using %s\n", flatbuffers::flatbuffer_version_string);
 #endif
-    LogMessage("           Using %s\n", SSLeay_version(SSLEAY_VERSION));
 #ifdef HAVE_HYPERSCAN
     LogMessage("           Using Hyperscan version %s\n", hs_version());
 #endif
-#ifdef HAVE_FLATBUFFERS
-    LogMessage("           Using %s\n", flatbuffers::flatbuffer_version_string);
+#ifdef HAVE_LZMA
+    LogMessage("           Using LZMA version %s\n", lzma_version_string());
 #endif
     LogMessage("\n");
 
