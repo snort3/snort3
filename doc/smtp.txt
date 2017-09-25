@@ -1,0 +1,253 @@
+SMTP inspector is a service inspector for SMTP protocol.
+
+==== Overview
+
+The SMTP inspector examines SMTP connections looking for commands and 
+responses. It also identifies the command, header and body sections, TLS 
+data and extracts the MIME attachments. This inspector also identifies and 
+whitelists the SMTP traffic.
+
+SMTP inspector logs the filename, email addresses, attachment names when 
+configured.
+
+==== Configuration
+
+SMTP command lines can be normalized to remove extraneous spaces. 
+TLS-encrypted traffic can be ignored, which improves performance.  In 
+addition, plain-text mail data can be ignored for an additional 
+performance boost.
+
+The configuration options are described below:
+
+
+===== normalize and normalize_cmds
+
+Normalization checks for more than one space character after a command. 
+Space characters are defined as space (ASCII 0x20) or tab (ASCII 0x09). 
+"normalize" provides options all|none|cmds, 'all' checks all commands, 
+'none' turns off normalization for all commands. 'cmds' just checks 
+commands listed with the "normalize_cmds" parameter.
+For example:
+
+    smtp = { normalize = 'cmds', normalize_cmds = 'RCPT VRFY EXPN' }
+
+
+===== ignore_data
+
+Set it to true to ignore data section of mail (except for mail headers) 
+when processing rules.
+
+===== ignore_tls_data
+
+Set it to true to ignore TLS-encrypted data when processing rules.
+
+===== max_command_line_len
+
+Alert if an SMTP command line is longer than this value.  Absence of this 
+option or a "0" means never alert on command line length. RFC 2821 
+recommends 512 as a maximum command line length.
+
+===== max_header_line_len
+
+Alert if an SMTP DATA header line is longer than this value.  Absence of 
+this option or a "0" means never alert on data header line length. RFC 
+2821 recommends 1024 as a maximum data header line length.
+
+===== max_response_line_len
+
+Alert if an SMTP response line is longer than this value.  Absence of this 
+option or a "0" means never alert on response line length. RFC 2821 
+recommends 512 as a maximum response line length.
+
+===== alt_max_command_line_len
+
+Overrides max_command_line_len for specific commands
+For example:
+
+    alt_max_command_line_len =
+    {
+        {
+            command = 'MAIL',
+            length = 260,
+        },
+        {
+            command = 'RCPT',
+            length = 300,
+        },
+    }
+
+===== invalid_cmds
+
+Alert if this command is sent from client side.
+
+===== valid_cmds
+
+List of valid commands.  We do not alert on commands in this list.
+
+DEFAULT empty list, but SMTP inspector has this list hard-coded:
+[[ ATRN AUTH BDAT DATA DEBUG EHLO EMAL ESAM ESND ESOM ETRN EVFY EXPN
+ HELO HELP IDENT MAIL NOOP ONEX QUEU QUIT RCPT RSET SAML SEND SIZE
+ STARTTLS SOML TICK TIME TURN TURNME VERB VRFY X-EXPS X-LINK2STATE
+ XADR XAUTH XCIR XEXCH50 XGEN XLICENSE XQUE XSTA XTRN XUSR ]]
+
+===== data_cmds
+
+List of commands that initiate sending of data with an end of data 
+delimiter the same as that of the DATA command per RFC 5321 - 
+"<CRLF>.<CRLF>".
+
+===== binary_data_cmds
+
+List of commands that initiate sending of data and use a length value 
+after the command to indicate the amount of data to be sent, similar to 
+that of the BDAT command per RFC 3030.
+
+===== auth_cmds
+
+List of commands that initiate an authentication exchange between client 
+and server.
+
+===== xlink2state
+
+Enable/disable xlink2state alert, options are {disable | alert | drop}. 
+See CVE-2005-0560 for a description of the vulnerability.
+
+
+===== b64_decode_depth
+
+This config option is used to turn off/on or set the base64 decoding depth 
+used to decode the base64 encoded MIME attachments. The value ranges from 
+-1 to 65535. A value of -1 turns off the base64 decoding of MIME 
+attachments. The value of 0 
+sets the decoding of base64 encoded MIME attachments to unlimited. A value 
+other than 0 or -1 restricts the decoding of base64 MIME attachments, and 
+applies per attachment. 
+
+===== qp_decode_depth
+
+This config option is used to turn off/on or set the Quoted-Printable 
+decoding depth used to decode the Quoted-Printable(QP) encoded MIME 
+attachments. The value ranges from -1 to 65535. A value of -1 turns off 
+the QP decoding of MIME attachments. 
+The value of 0 sets the decoding of QP encoded MIME attachments to 
+unlimited. A value other than 0 or -1 restricts the decoding of QP MIME 
+attachments, and applies per attachment.
+
+===== bitenc_decode_depth * default to 25
+
+This config option is used to turn off/on or set the non-encoded MIME 
+extraction depth used to extract the non-encoded MIME attachments. The 
+value ranges from -1 to 65535. A value of -1 turns off the extraction of 
+these MIME attachments. 
+The value of 0 sets the extraction of these MIME attachments to unlimited. 
+A value other than 0 or -1 restricts the extraction of these MIME 
+attachments, and applies per attachment.
+
+===== uu_decode_depth
+
+This config option is used to turn off/on or set the Unix-to-Unix decoding 
+depth used to decode the Unix-to-Unix(UU) encoded attachments. The value 
+ranges from -1 to 65535. A value of -1 turns off the UU decoding of SMTP 
+attachments. 
+The value of 0 sets the decoding of UU encoded SMTP attachments to 
+unlimited. A value other than 0 or -1 restricts the decoding of UU SMTP 
+attachments, and applies per attachment.
+
+===== Log Options
+
+Following log options allow SMTP inspector to log email addresses and 
+filenames.
+Please note, this is logged only with the unified2 output and is not 
+logged with the console output (-A cmg). u2spewfoo can be used to read 
+this data from the unified2.
+
+_log_mailfrom_
+
+This option enables SMTP inspector to parse and log the sender's email 
+address extracted from the "MAIL FROM" command along with all the 
+generated events for that session. The maximum number of bytes logged for 
+this option is 1024.
+
+_log_rcptto_
+
+This option enables SMTP inspector to parse and log the recipient email 
+addresses extracted from the "RCPT TO" command along with all the 
+generated events for that session. Multiple recipients are appended with 
+commas. The maximum number of bytes logged for this option is 1024.
+
+_log_filename_
+
+This option enables SMTP inspector to parse and log the MIME attachment 
+filenames extracted from the Content-Disposition header within the MIME 
+body along with all the generated events for that session. Multiple 
+filenames are appended with commas. The maximum number of bytes logged for 
+this option is 1024.
+
+_log_email_hdrs_
+
+This option enables SMTP inspector to parse and log the SMTP email headers 
+extracted from SMTP data along with all generated events for that session. 
+The number of bytes extracted and logged depends upon the 
+email_hdrs_log_depth.
+
+_email_hdrs_log_depth_
+
+This option specifies the depth for logging email headers. The allowed 
+range for this option is 0 - 20480. A value of 0 will disable email 
+headers logging. The default value for this option is 1464. 
+
+
+==== Example
+
+
+    smtp =
+    {
+        normalize = 'cmds',
+        normalize_cmds = 'EXPN VRFY RCPT',
+        b64_decode_depth = 0,
+        qp_decode_depth = 0,
+        bitenc_decode_depth = 0,
+        uu_decode_depth = 0,
+        log_mailfrom = true,
+        log_rcptto = true,
+        log_filename = true,
+        log_email_hdrs = true,
+        max_command_line_len = 512,
+        max_header_line_len = 1000,
+        max_response_line_len = 512,
+        max_auth_command_line_len = 50,
+        xlink2state = 'alert',
+        alt_max_command_line_len =
+        {
+            {
+                command = 'MAIL',
+                length = 260,
+            },
+            {
+                command = 'RCPT',
+                length = 300,
+            },
+            {
+                command = 'HELP',
+                length = 500,
+            },
+            {
+                command = 'HELO',
+                length = 500,
+            },
+            {
+                command = 'ETRN',
+                length = 500,
+            },
+            {
+                command = 'EXPN',
+                length = 255,
+            },
+            {
+                command = 'VRFY',
+                length = 255,
+            },
+        },
+    }
+
+

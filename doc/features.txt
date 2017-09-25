@@ -56,9 +56,17 @@ include::http_inspect.txt[]
 
 include::perf_monitor.txt[]
 
+=== POP and IMAP
+
+include::pop_imap.txt[]
+
 === Sensitive Data Filtering
 
 include::sensitive_data.txt[]
+
+=== SMTP
+
+include::smtp.txt[]
 
 === Wizard
 

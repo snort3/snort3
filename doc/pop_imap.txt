@@ -1,0 +1,91 @@
+POP inspector is a service inspector for POP3 protocol and IMAP inspector 
+is for IMAP4 protocol.
+
+==== Overview
+
+POP and IMAP inspectors examine data traffic and find POP and IMAP 
+commands and responses. The inspectors also identify the command, header, 
+body sections and extract the MIME attachments and decode it 
+appropriately. The pop and imap also identify and whitelist the pop and 
+imap traffic.
+
+==== Configuration
+
+POP inspector and IMAP inspector offer same set of configuration options 
+for MIME decoding depth:
+
+===== b64_decode_depth
+
+This config option is used to turn off/on or set the base64 decoding depth 
+used to decode the base64 encoded MIME attachments. The value ranges from 
+-1 to 65535. A value of -1 turns off the base64 decoding of MIME 
+attachments. The value of 0 sets the decoding of base64 encoded MIME 
+attachments to unlimited. A value other than 0 or -1 restricts the 
+decoding of base64 MIME attachments, and applies per attachment. The 
+default value is 1460.
+
+===== qp_decode_depth
+
+This config option is used to turn off/on or set the Quoted-Printable 
+decoding depth used to decode the Quoted-Printable(QP) encoded MIME 
+attachments. The value ranges from -1 to 65535. A value of -1 turns off 
+the QP decoding of MIME attachments. 
+The value of 0 sets the decoding of QP encoded MIME attachments to 
+unlimited. A value other than 0 or -1 restricts the decoding of QP MIME 
+attachments, and applies per attachment.
+
+===== bitenc_decode_depth
+
+This config option is used to turn off/on or set the non-encoded MIME 
+extraction depth used to extract the non-encoded MIME attachments. The 
+value ranges from -1 to 65535. A value of -1 turns off the extraction of 
+these MIME attachments. 
+The value of 0 sets the extraction of these MIME attachments to unlimited. 
+A value other than 0 or -1 restricts the extraction of these MIME 
+attachments, and applies per attachment.
+
+===== uu_decode_depth
+
+This config option is used to turn off/on or set the Unix-to-Unix decoding 
+depth used to decode the Unix-to-Unix(UU) encoded attachments. The value 
+ranges from -1 to 65535. A value of -1 turns off the UU decoding of POP 
+attachments. 
+The value of 0 sets the decoding of UU encoded POP attachments to 
+unlimited. A value other than 0 or -1 restricts the decoding of UU POP 
+attachments, and applies per attachment.
+
+===== Examples
+
+
+    stream = { }
+
+    stream_tcp = { }
+
+    stream_ip = { }
+
+    binder =
+    {
+        {
+            {
+                when = { proto = 'tcp', ports = '110', },
+                use = { type = 'pop', },
+            },
+            {
+                when = { proto = 'tcp', ports = '143', },
+                use =  { type = 'imap', },
+            },
+        },
+    }
+
+    imap =
+    {
+        qp_decode_depth = 15,
+    }
+
+    pop =
+    {
+        qp_decode_depth = 0,
+        b64_decode_depth = 10,
+    }
+
+

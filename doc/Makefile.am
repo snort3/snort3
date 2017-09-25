@@ -50,9 +50,11 @@ http_inspect.txt \
 overview.txt \
 params.txt \
 perf_monitor.txt \
+pop_imap.txt \
 reference.txt \
 sensitive_data.txt \
 side_channel.txt \
+smtp.txt \
 snort2lua.txt \
 snort2x.png \
 snort3x.png \
