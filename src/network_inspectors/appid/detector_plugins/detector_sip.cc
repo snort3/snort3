@@ -342,6 +342,9 @@ void SipServiceDetector::createRtpFlow(AppIdSession* asd, const Packet* pkt, con
         fp->client.set_id(asd->client.get_id());
         fp->payload.set_id(asd->payload.get_id());
         fp->service.set_id(APP_ID_RTP);
+        // FIXIT-H : snort 2.9.x updated the flag to APPID_SESSION_EXPECTED_EVALUATE.
+        // Check if it is needed here as well.
+        //initialize_expected_session(asd, fp, APPID_SESSION_EXPECTED_EVALUATE);
         initialize_expected_session(asd, fp, APPID_SESSION_IGNORE_ID_FLAGS);
     }
 
@@ -353,6 +356,8 @@ void SipServiceDetector::createRtpFlow(AppIdSession* asd, const Packet* pkt, con
         fp2->client.set_id(asd->client.get_id());
         fp2->payload.set_id(asd->payload.get_id());
         fp2->service.set_id(APP_ID_RTCP);
+        // FIXIT-H : same comment as above
+        //initialize_expected_session(asd, fp2, APPID_SESSION_EXPECTED_EVALUATE);
         initialize_expected_session(asd, fp2, APPID_SESSION_IGNORE_ID_FLAGS);
     }
 }
@@ -569,13 +574,13 @@ void SipEventHandler::service_handler(SipEvent& sip_event, AppIdSession* asd)
 
     if ( direction == APP_ID_FROM_RESPONDER )
     {
-        if ( sip_event.get_user_agent() )
+        if ( sip_event.get_user_agent_len() )
         {
             memcpy(ss->vendor, sip_event.get_user_agent(),
                 sip_event.get_user_agent_len() > (MAX_VENDOR_SIZE - 1) ?  (MAX_VENDOR_SIZE - 1) :
                 sip_event.get_user_agent_len());
         }
-        else if ( sip_event.get_server() )
+        else if ( sip_event.get_server_len() )
         {
             memcpy(ss->vendor, sip_event.get_server(),
                 sip_event.get_server_len() > (MAX_VENDOR_SIZE - 1) ?  (MAX_VENDOR_SIZE - 1) :

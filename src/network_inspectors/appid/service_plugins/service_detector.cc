@@ -55,7 +55,7 @@ void ServiceDetector::register_appid(AppId appId, unsigned extractsInfo)
     extractsInfo &= (APPINFO_FLAG_SERVICE_ADDITIONAL | APPINFO_FLAG_SERVICE_UDP_REVERSED);
     if (!extractsInfo)
     {
-        DebugFormat(DEBUG_APPID, "Ignoring direct service without info for AppId %d", appId);
+        DebugFormat(DEBUG_APPID, "Ignoring direct service without info for AppId %d\n", appId);
         return;
     }
     pEntry->service_detector = this;

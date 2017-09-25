@@ -59,7 +59,7 @@ char* FileContext::get_UTF8_fname(size_t* converted_len)
     if (encoding == SNORT_CHAR_ENCODING_UTF_16LE)
     {
 #ifdef HAVE_ICONV
-        // UTF-16LE takes 2 or 4 bytes per charecter, UTF-8 can take max 4
+        // UTF-16LE takes 2 or 4 bytes per character, UTF-8 can take max 4
         const size_t outbytesleft = (file_name.length() - UTF_16_LE_BOM_LEN) * 2;
         char* inbuf = (char*)snort_alloc(file_name.length());
         memcpy(inbuf, file_name.c_str(), file_name.length());
