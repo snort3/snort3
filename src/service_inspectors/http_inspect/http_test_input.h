@@ -35,6 +35,7 @@ public:
     void flush(uint32_t num_octets);
     void reassemble(uint8_t** buffer, unsigned& length, HttpEnums::SourceId source_id,
         bool& tcp_close);
+    bool finish();
 
 private:
     FILE* test_data_file;
@@ -63,7 +64,7 @@ private:
     // number of octets that have been flushed and must be sent by reassemble
     uint32_t flush_octets = 0;
 
-    // number of characters in the buffer previously shown to PAF but not flushed yet
+    // number of characters in the buffer previously shown to splitter but not flushed yet
     uint32_t previous_offset = 0;
 
     // number of characters in the buffer
@@ -74,6 +75,9 @@ private:
 
     // Close notification already provided
     bool close_notified = false;
+
+    // tcp_close notification given and we are waiting for a HttpStreamSplitter::finish() call.
+    bool finish_expected = false;
 
     void reset();
 };

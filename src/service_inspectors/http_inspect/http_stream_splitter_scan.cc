@@ -40,15 +40,17 @@ void HttpStreamSplitter::prepare_flush(HttpFlowData* session_data, uint32_t* flu
     session_data->octets_expected[source_id] = octets_seen + num_flushed;
     session_data->strict_length[source_id] = strict_length;
 
-#ifdef REG_TEST
-    if (HttpTestManager::use_test_input())
+    if (flush_offset != nullptr)
     {
-        HttpTestManager::get_test_input_source()->flush(num_flushed);
-    }
-    else
+#ifdef REG_TEST
+        if (HttpTestManager::use_test_input())
+        {
+            HttpTestManager::get_test_input_source()->flush(num_flushed);
+        }
+        else
 #endif
-
-    *flush_offset = num_flushed;
+        *flush_offset = num_flushed;
+    }
 }
 
 HttpCutter* HttpStreamSplitter::get_cutter(SectionType type,
@@ -134,10 +136,9 @@ StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data,
         // not support no headers. Processing this imaginary status line and empty headers allows
         // us to overcome this limitation and reuse the entire HTTP infrastructure.
         type = SEC_BODY_OLD;
-        uint32_t not_used;
-        prepare_flush(session_data, &not_used, SEC_STATUS, 14, 0, 0, false, 0, 14, true);
+        prepare_flush(session_data, nullptr, SEC_STATUS, 14, 0, 0, false, 0, 14, true);
         my_inspector->process((const uint8_t*)"HTTP/0.9 200 .", 14, flow, SRC_SERVER, false);
-        prepare_flush(session_data, &not_used, SEC_HEADER, 0, 0, 0, false, 0, 0, true);
+        prepare_flush(session_data, nullptr, SEC_HEADER, 0, 0, 0, false, 0, 0, true);
         my_inspector->process((const uint8_t*)"", 0, flow, SRC_SERVER, false);
     }
 

@@ -564,6 +564,22 @@ void TcpReassembler::prep_pdu(Flow* flow, Packet* p, uint32_t pkt_flags, Packet*
     }
 }
 
+Packet* TcpReassembler::initialize_pdu(Packet* p, uint32_t pkt_flags, struct timeval tv)
+{
+    DetectionEngine::onload(session->flow);
+    Packet* pdu = DetectionEngine::set_next_packet();
+
+    EncodeFlags enc_flags = 0;
+    DAQ_PktHdr_t pkth;
+    session->GetPacketHeaderFoo(&pkth, pkt_flags);
+    PacketManager::format_tcp(enc_flags, p, pdu, PSEUDO_PKT_TCP, &pkth, pkth.opaque);
+    prep_pdu(session->flow, p, pkt_flags, pdu);
+    ((DAQ_PktHdr_t*)pdu->pkth)->ts = tv;
+    pdu->dsize = 0;
+    pdu->data = nullptr;
+    return pdu;
+}
+
 int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
 {
     Profile profile(s5TcpFlushPerfStats);
@@ -596,27 +612,11 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
             /* this is as much as we can pack into a stream buffer */
             footprint = pdu->max_dsize;
 
-        DetectionEngine::onload(session->flow);
-        pdu = DetectionEngine::set_next_packet();
-
-        DAQ_PktHdr_t pkth;
-        session->GetPacketHeaderFoo(&pkth, pkt_flags);
-
-        EncodeFlags enc_flags = 0;
-        PacketManager::format_tcp(enc_flags, p, pdu, PSEUDO_PKT_TCP, &pkth, pkth.opaque);
-        prep_pdu(session->flow, p, pkt_flags, pdu);
-
-        ((DAQ_PktHdr_t*)pdu->pkth)->ts = seglist.next->tv;
-
-        /* setup the pseudopacket payload */
-        pdu->dsize = 0;
-        pdu->data = nullptr;
-
         if ( tracker->splitter->is_paf() and ( tracker->get_tf_flags() & TF_MISSING_PREV_PKT ) )
             fallback();
 
+        Packet* pdu = initialize_pdu(p, pkt_flags, seglist.next->tv);
         int32_t flushed_bytes = flush_data_segments(p, footprint, pdu);
-
         if ( flushed_bytes == 0 )
             break; /* No more data... bail */
 
@@ -630,8 +630,7 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
             else
                 pdu->packet_flags |= ( PKT_REBUILT_STREAM | PKT_STREAM_EST );
 
-            // FIXIT-H this came with merge should it be here? YES
-            //pdu->application_protocol_ordinal = p->application_protocol_ordinal;
+            pdu->set_application_protocol(p->get_application_protocol());
             show_rebuilt_packet(pdu);
             tcpStats.rebuilt_packets++;
             tcpStats.rebuilt_bytes += flushed_bytes;
@@ -708,6 +707,34 @@ int TcpReassembler::flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
     return _flush_to_seq(bytes, p, pkt_flags);
 }
 
+// flush a seglist up to the given point, generate a pseudopacket, and fire it thru the system.
+int TcpReassembler::do_zero_byte_flush(Packet* p, uint32_t pkt_flags)
+{
+    unsigned bytes_copied = 0;
+
+    const StreamBuffer sb = tracker->splitter->reassemble(session->flow, 0, 0, nullptr, 0,
+        (PKT_PDU_HEAD | PKT_PDU_TAIL), bytes_copied);
+
+     if ( sb.data )
+     {
+        Packet* pdu = initialize_pdu(p, pkt_flags, ((DAQ_PktHdr_t*)p->pkth)->ts);
+        /* setup the pseudopacket payload */
+        pdu->data = sb.data;
+        pdu->dsize = sb.length;
+        pdu->packet_flags |= ( PKT_REBUILT_STREAM | PKT_STREAM_EST | PKT_PDU_HEAD | PKT_PDU_TAIL );
+        pdu->set_application_protocol(p->get_application_protocol());
+        flush_count++;
+
+        show_rebuilt_packet(pdu);
+        ProfileExclude profile_exclude(s5TcpFlushPerfStats);
+        Snort::inspect(pdu);
+        if ( tracker->splitter )
+            tracker->splitter->update();
+     }
+
+     return bytes_copied;
+}
+
 // get the footprint for the current seglist, the difference
 // between our base sequence and the last ack'd sequence we received
 
@@ -766,7 +793,7 @@ uint32_t TcpReassembler::get_q_sequenced()
 // FIXIT-L flush_stream() calls should be replaced with calls to
 // CheckFlushPolicyOn*() with the exception that for the *OnAck() case,
 // any available ackd data must be flushed in both directions.
-int TcpReassembler::flush_stream(Packet* p, uint32_t dir)
+int TcpReassembler::flush_stream(Packet* p, uint32_t dir, bool final_flush)
 {
     // this is not always redundant; stream_reassemble rule option causes trouble
     if ( !tracker->flush_policy or !tracker->splitter )
@@ -779,14 +806,19 @@ int TcpReassembler::flush_stream(Packet* p, uint32_t dir)
     else
         bytes = get_q_footprint( );
 
-    return flush_to_seq(bytes, p, dir);
+    if ( bytes )
+        return flush_to_seq(bytes, p, dir);
+    else if( final_flush )
+        return do_zero_byte_flush(p, dir);
+
+    return 0;
 }
 
 void TcpReassembler::final_flush(Packet* p, uint32_t dir)
 {
     tracker->set_tf_flags(TF_FORCE_FLUSH);
 
-    if ( flush_stream(p, dir) )
+    if ( flush_stream(p, dir, true) )
         purge_flushed_ackd( );
 
     tracker->clear_tf_flags(TF_FORCE_FLUSH);
@@ -823,8 +855,6 @@ static Packet* set_packet(Flow* flow, uint32_t flags, bool c2s)
 
 void TcpReassembler::flush_queued_segments(Flow* flow, bool clear, Packet* p)
 {
-    bool data = p or seglist.head;
-
     if ( !p )
     {
         // this packet is required if we call finish and/or final_flush
@@ -839,7 +869,7 @@ void TcpReassembler::flush_queued_segments(Flow* flow, bool clear, Packet* p)
     bool pending = clear and paf_initialized(&tracker->paf_state)
         and (!tracker->splitter or tracker->splitter->finish(flow) );
 
-    if ( pending and data and !(flow->ssn_state.ignore_direction & ignore_dir) )
+    if ( pending and !(flow->ssn_state.ignore_direction & ignore_dir) )
     {
         final_flush(p, packet_dir);
     }

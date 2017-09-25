@@ -60,6 +60,7 @@ void HttpTestInput::reset()
     end_offset = 0;
     close_pending = false;
     close_notified = false;
+    finish_expected = false;
     need_break = false;
     if (include_file != nullptr)
     {
@@ -113,7 +114,7 @@ void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, u
             // we run out of buffer space.
             memmove(msg_buf, msg_buf+flush_octets, end_offset);
             flush_octets = 0;
-            length = end_offset - previous_offset;
+            length = end_offset;
             return;
         }
         // If we reach here then StreamSplitter has already flushed all data read so far
@@ -429,9 +430,12 @@ void HttpTestInput::reassemble(uint8_t** buffer, unsigned& length, SourceId sour
             // There is no more data. Clean up and notify caller about close.
             just_flushed = true;
             flushed = false;
+            end_offset = 0;
+            previous_offset = 0;
             close_pending = false;
             tcp_closed = false;
             tcp_close = true;
+            finish_expected = true;
         }
         else if (!flushed)
         {
@@ -440,6 +444,7 @@ void HttpTestInput::reassemble(uint8_t** buffer, unsigned& length, SourceId sour
             previous_offset = end_offset;
             tcp_close = true;
             close_notified = true;
+            finish_expected = true;
         }
         else if (flush_octets == end_offset)
         {
@@ -466,6 +471,7 @@ void HttpTestInput::reassemble(uint8_t** buffer, unsigned& length, SourceId sour
             flush_octets = end_offset;
             tcp_close = true;
             close_notified = true;
+            finish_expected = true;
         }
         return;
     }
@@ -492,6 +498,16 @@ void HttpTestInput::reassemble(uint8_t** buffer, unsigned& length, SourceId sour
     }
     just_flushed = true;
     flushed = false;
+}
+
+bool HttpTestInput::finish()
+{
+    if (finish_expected)
+    {
+        finish_expected = false;
+        return true;
+    }
+    return false;
 }
 
 #endif

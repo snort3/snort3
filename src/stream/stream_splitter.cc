@@ -40,12 +40,15 @@ const StreamBuffer StreamSplitter::reassemble(
     Flow*, unsigned, unsigned offset, const uint8_t* p,
     unsigned n, uint32_t flags, unsigned& copied)
 {
+    copied = n;
+    if (n == 0)
+        return { nullptr, 0 };
+
     unsigned max;
     uint8_t* pdu_buf = DetectionEngine::get_next_buffer(max);
 
     assert(offset + n < max);
     memcpy(pdu_buf+offset, p, n);
-    copied = n;
 
     if ( flags & PKT_PDU_TAIL )
         return { pdu_buf, offset + n };

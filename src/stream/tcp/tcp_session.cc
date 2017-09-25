@@ -1135,6 +1135,9 @@ void TcpSession::flush()
     if ( ( server->reassembler->is_segment_pending_flush() ) ||
         (client->reassembler->is_segment_pending_flush() ) )
     {
+       // FIXIT-L flush_queued_segments is basically a noop when the 'clear' parameter
+       //         is passed in as false... review what happens in 2.9.x probably related
+       //         to ssl encryption support
         server->reassembler->flush_queued_segments(flow, false);
         client->reassembler->flush_queued_segments(flow, false);
     }

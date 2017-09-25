@@ -40,11 +40,19 @@ bool HttpStreamSplitter::finish(Flow* flow)
         return false;
 
 #ifdef REG_TEST
-    if (HttpTestManager::use_test_output() && !HttpTestManager::use_test_input())
+    if (HttpTestManager::use_test_output())
     {
-        printf("Finish from flow data %" PRIu64 " direction %d\n", session_data->seq_num,
-            source_id);
-        fflush(stdout);
+        if (HttpTestManager::use_test_input())
+        {
+            if (!HttpTestManager::get_test_input_source()->finish())
+                return false;
+        }
+        else
+        {
+            printf("Finish from flow data %" PRIu64 " direction %d\n", session_data->seq_num,
+                source_id);
+            fflush(stdout);
+        }
     }
 #endif
 
@@ -79,6 +87,24 @@ bool HttpStreamSplitter::finish(Flow* flow)
             session_data->cutter[source_id]->get_num_good_chunks(),
             session_data->cutter[source_id]->get_octets_seen(),
             true);
+        return true;
+    }
+
+    // If the message has been truncated immediately following the start line or immediately
+    // following the headers (a body was expected) then we need to process an empty section to
+    // provide an inspection section. Otherwise the start line and headers won't go through
+    // detection.
+    if (((session_data->type_expected[source_id] == SEC_HEADER)     ||
+         (session_data->type_expected[source_id] == SEC_BODY_CL)    ||
+         (session_data->type_expected[source_id] == SEC_BODY_CHUNK) ||
+         (session_data->type_expected[source_id] == SEC_BODY_OLD))     &&
+        (session_data->cutter[source_id] == nullptr)                   &&
+        (session_data->section_type[source_id] == SEC__NOT_COMPUTE))
+    {
+        // Set up to process empty message section
+        uint32_t not_used;
+        prepare_flush(session_data, &not_used, session_data->type_expected[source_id], 0, 0, 0,
+            false, 0, 0, true);
         return true;
     }
 

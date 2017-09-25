@@ -35,7 +35,7 @@ public:
 
     virtual int queue_packet_for_reassembly(TcpSegmentDescriptor&);
     virtual void purge_segment_list();
-    virtual int flush_stream(Packet* p, uint32_t dir);
+    virtual int flush_stream(Packet* p, uint32_t dir, bool final_flush = false);
     virtual int purge_flushed_ackd();
     virtual void flush_queued_segments(Flow* flow, bool clear, Packet* p = nullptr);
     virtual bool is_segment_pending_flush();
@@ -143,8 +143,10 @@ protected:
     uint32_t get_flush_data_len(TcpSegmentNode*, uint32_t to_seq, unsigned max);
     int flush_data_segments(Packet*, uint32_t total, Packet* pdu);
     void prep_pdu(Flow*, Packet*, uint32_t pkt_flags, Packet* pdu);
+    Packet* initialize_pdu(Packet* p, uint32_t pkt_flags, struct timeval tv);
     int _flush_to_seq(uint32_t bytes, Packet*, uint32_t pkt_flags);
     int flush_to_seq(uint32_t bytes, Packet*, uint32_t pkt_flags);
+    int do_zero_byte_flush(Packet* p, uint32_t pkt_flags);
     uint32_t get_q_footprint();
     uint32_t get_q_sequenced();
     void final_flush(Packet*, uint32_t dir);

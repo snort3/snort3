@@ -263,6 +263,13 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total, un
     }
 #endif
 
+    // Sometimes it is necessary to reassemble zero bytes when a connection is closing to trigger
+    // proper clean up. But even a zero-length buffer cannot be processed with a nullptr lest we
+    // get in trouble with memcpy() (undefined behavior) or some library.
+    assert((data != nullptr) || (len == 0));
+    if (data == nullptr)
+        data = (const uint8_t*)"";
+
     // FIXIT-H Workaround for TP Bug 149662
     if (session_data->section_type[source_id] == SEC__NOT_COMPUTE)
     {
