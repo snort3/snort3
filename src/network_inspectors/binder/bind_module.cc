@@ -69,11 +69,23 @@ static const Parameter binder_when_params[] =
     { "nets", Parameter::PT_ADDR_LIST, nullptr, nullptr,
       "list of networks" },
 
+    { "src_nets", Parameter::PT_ADDR_LIST, nullptr, nullptr,
+      "list of source networks" },
+
+    { "dst_nets", Parameter::PT_ADDR_LIST, nullptr, nullptr,
+      "list of destination networks" },
+
     { "proto", Parameter::PT_ENUM, "any | ip | icmp | tcp | udp | user | file", nullptr,
       "protocol" },
 
     { "ports", Parameter::PT_BIT_LIST, "65535", nullptr,
       "list of ports" },
+
+    { "src_ports", Parameter::PT_BIT_LIST, "65535", nullptr,
+      "list of source ports" },
+
+    { "dst_ports", Parameter::PT_BIT_LIST, "65535", nullptr,
+      "list of destination ports" },
 
     { "role", Parameter::PT_ENUM, "client | server | any", "any",
       "use the given configuration on one or any end of a session" },
@@ -133,8 +145,20 @@ BinderModule::~BinderModule()
 ProfileStats* BinderModule::get_profile() const
 { return &bindPerfStats; }
 
-static void file_name_type_error()
-{ ParseError("you can't set binder.use file, detection_policy, or inspection_policy with type or name"); }
+void BinderModule::add_file(const char* name, const char* type)
+{
+    work->use.name = name;
+    work->use.type = type;
+    use_name_count++;
+    use_type_count++;
+}
+
+static void set_ip_var(sfip_var_t*& var, const char* val)
+{
+    if ( var )
+        sfvar_free(var);
+    var = sfip_var_from_string(val);
+}
 
 bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
 {
@@ -153,8 +177,20 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
         v.get_bits(work->when.ifaces);
 
     else if ( v.is("nets") )
-        work->when.nets = sfip_var_from_string(v.get_string());
-
+    {
+        set_ip_var(work->when.src_nets, v.get_string());
+        unsplit_nets = true;
+    }
+    else if ( v.is("src_nets") )
+    {
+        set_ip_var(work->when.src_nets, v.get_string());
+        work->when.split_nets = true;
+    }
+    else if ( v.is("dst_nets") )
+    {
+        set_ip_var(work->when.dst_nets, v.get_string());
+        work->when.split_nets = true;
+    }
     else if ( v.is("ips_policy_id") )
         work->when.ips_id = v.get_long();
 
@@ -168,7 +204,20 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
         work->when.protos = (unsigned)mask[v.get_long()];
     }
     else if ( v.is("ports") )
-        v.get_bits(work->when.ports);
+    {
+        v.get_bits(work->when.src_ports);
+        unsplit_ports = true;
+    }
+    else if ( v.is("src_ports") )
+    {
+        v.get_bits(work->when.src_ports);
+        work->when.split_ports = true;
+    }
+    else if ( v.is("dst_ports") )
+    {
+        v.get_bits(work->when.dst_ports);
+        work->when.split_ports = true;
+    }
 
     else if ( v.is("role") )
         work->when.role = (BindWhen::Role)v.get_long();
@@ -181,42 +230,23 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
         work->use.action = (BindUse::Action)(v.get_long());
 
     else if ( v.is("file") )
-    {
-        if ( !work->use.name.empty() || !work->use.type.empty() )
-            file_name_type_error();
+        add_file(v.get_string(), FILE_KEY);
 
-        work->use.name = v.get_string();
-        work->use.type = FILE_KEY;
-    }
     else if ( v.is("inspection_policy") )
-    {
-        if ( !work->use.name.empty() || !work->use.type.empty() )
-            file_name_type_error();
+        add_file(v.get_string(), INSPECTION_KEY);
 
-        work->use.name = v.get_string();
-        work->use.type = INSPECTION_KEY;
-    }
     else if ( v.is("ips_policy") )
-    {
-        if ( !work->use.name.empty() || !work->use.type.empty() )
-            file_name_type_error();
+        add_file(v.get_string(), IPS_KEY);
 
-        work->use.name = v.get_string();
-        work->use.type = IPS_KEY;
-    }
     else if ( v.is("name") )
     {
-        if ( !work->use.name.empty() )
-            file_name_type_error();
-
         work->use.name = v.get_string();
+        use_name_count++;
     }
     else if ( v.is("type") )
     {
-        if ( !work->use.type.empty() )
-            file_name_type_error();
-
         work->use.type = v.get_string();
+        use_type_count++;
     }
     else
         return false;
@@ -227,10 +257,24 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
 bool BinderModule::begin(const char* fqn, int idx, SnortConfig*)
 {
     if ( idx && !strcmp(fqn, BIND_NAME) )
+    {
         work = new Binding;
+        unsplit_nets = false;
+        use_name_count = 0;
+        use_type_count = 0;
+    }
 
     return true;
 }
+
+static void file_name_type_error()
+{ ParseError("you can't set binder.use file, detection_policy, or inspection_policy with type or name"); }
+
+static void split_nets_warning()
+{ ParseWarning(WARN_CONF, "src_nets and dst_nets override nets"); }
+
+static void split_ports_warning()
+{ ParseWarning(WARN_CONF, "src_ports and dst_ports override ports"); }
 
 bool BinderModule::end(const char* fqn, int idx, SnortConfig* sc)
 {
@@ -241,6 +285,15 @@ bool BinderModule::end(const char* fqn, int idx, SnortConfig* sc)
             ParseError("invalid %s[%d]", fqn, idx);
             return true;
         }
+
+        if ( unsplit_nets && work->when.split_nets )
+            split_nets_warning();
+
+        if ( unsplit_ports && work->when.split_ports )
+            split_ports_warning();
+
+        if ( use_type_count > 1 || use_name_count > 1 )
+            file_name_type_error();
 
         if ( work->use.type == FILE_KEY )
         {

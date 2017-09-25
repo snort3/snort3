@@ -36,10 +36,17 @@ struct BindWhen
     unsigned protos;
     Role role;
     std::string svc;
-    sfip_var_t* nets;
+
+    bool split_nets;
+    sfip_var_t* src_nets;
+    sfip_var_t* dst_nets;
+
     ByteBitSet ifaces;
     VlanBitSet vlans;
-    PortBitSet ports;
+
+    bool split_ports;
+    PortBitSet src_ports;
+    PortBitSet dst_ports;
 };
 
 struct BindUse
@@ -64,6 +71,9 @@ struct BindUse
 
 struct Binding
 {
+    enum DirResult
+    { DR_NO_MATCH, DR_ANY_MATCH, DR_CLIENT_SRC, DR_SERVER_SRC };
+
     BindWhen when;
     BindUse use;
 
@@ -71,13 +81,14 @@ struct Binding
     ~Binding();
 
     bool check_all(const Flow*) const;
+    bool check_ips_policy(const Flow*) const;
     bool check_iface(const Flow*) const;
     bool check_vlan(const Flow*) const;
     bool check_addr(const Flow*) const;
+    DirResult check_split_addr(const Flow*) const;
     bool check_proto(const Flow*) const;
     bool check_port(const Flow*) const;
-    bool check_inspection_policy(const Flow*) const;
-    bool check_ips_policy(const Flow*) const;
+    bool check_split_port(const Flow*, const DirResult) const;
     bool check_service(const Flow*) const;
 };
 

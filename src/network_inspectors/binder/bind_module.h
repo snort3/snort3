@@ -64,6 +64,12 @@ public:
 private:
     Binding* work;
     std::vector<Binding*> bindings;
+    bool unsplit_nets;
+    bool unsplit_ports;
+    unsigned use_name_count;
+    unsigned use_type_count;
+
+    void add_file(const char* name, const char* type);
 };
 
 #endif

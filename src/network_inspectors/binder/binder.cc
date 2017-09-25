@@ -56,11 +56,16 @@ THREAD_LOCAL ProfileStats bindPerfStats;
 
 Binding::Binding()
 {
-    when.nets = nullptr;
-    when.protos = (unsigned)PktType::ANY;
+    when.split_nets = false;
+    when.src_nets = nullptr;
+    when.dst_nets = nullptr;
 
+    when.split_ports = false;
+    when.src_ports.set();
+    when.dst_ports.set();
+
+    when.protos = (unsigned)PktType::ANY;
     when.vlans.set();
-    when.ports.set();
     when.ifaces.set();
 
     when.ips_id = 0;
@@ -76,8 +81,11 @@ Binding::Binding()
 
 Binding::~Binding()
 {
-    if ( when.nets )
-        sfvar_free(when.nets);
+    if ( when.src_nets )
+        sfvar_free(when.src_nets);
+
+    if ( when.dst_nets )
+        sfvar_free(when.dst_nets);
 }
 
 bool Binding::check_ips_policy(const Flow* flow) const
@@ -93,30 +101,53 @@ bool Binding::check_ips_policy(const Flow* flow) const
 
 bool Binding::check_addr(const Flow* flow) const
 {
-    if ( !when.nets )
+    if ( when.split_nets )
+        return true;
+
+    if ( !when.src_nets )
         return true;
 
     switch ( when.role )
     {
         case BindWhen::BR_SERVER:
-            if ( sfvar_ip_in(when.nets, &flow->server_ip) )
+            if ( sfvar_ip_in(when.src_nets, &flow->server_ip) )
                 return true;
-            break;
+
         case BindWhen::BR_CLIENT:
-            if ( sfvar_ip_in(when.nets, &flow->client_ip) )
+            if ( sfvar_ip_in(when.src_nets, &flow->client_ip) )
                 return true;
-            break;
+
         case BindWhen::BR_EITHER:
-            if ( sfvar_ip_in(when.nets, &flow->client_ip) or
-                    sfvar_ip_in(when.nets, &flow->server_ip) )
+            if ( sfvar_ip_in(when.src_nets, &flow->client_ip) or
+                   sfvar_ip_in(when.src_nets, &flow->server_ip) )
                 return true;
-            break;
+
         default:
             break;
     }
-
-
     return false;
+}
+
+Binding::DirResult Binding::check_split_addr(const Flow* flow) const
+{
+    if ( !when.split_nets )
+        return Binding::DR_ANY_MATCH;
+
+    if ( !when.src_nets && !when.dst_nets )
+        return Binding::DR_ANY_MATCH;
+
+    bool client_in_src = !when.src_nets or sfvar_ip_in(when.src_nets, &flow->client_ip);
+    bool client_in_dst = !when.dst_nets or sfvar_ip_in(when.dst_nets, &flow->client_ip);
+    bool server_in_src = !when.src_nets or sfvar_ip_in(when.src_nets, &flow->server_ip);
+    bool server_in_dst = !when.dst_nets or sfvar_ip_in(when.dst_nets, &flow->server_ip);
+
+    if ( client_in_src and server_in_dst )
+        return Binding::DR_CLIENT_SRC;
+    
+    if ( server_in_src and client_in_dst )
+        return Binding::DR_SERVER_SRC;
+
+    return Binding::DR_NO_MATCH;
 }
 
 bool Binding::check_proto(const Flow* flow) const
@@ -150,14 +181,52 @@ bool Binding::check_vlan(const Flow* flow) const
 
 bool Binding::check_port(const Flow* flow) const
 {
+    if ( when.split_ports )
+        return true;
+
     switch ( when.role )
     {
         case BindWhen::BR_SERVER:
-            return when.ports.test(flow->server_port);
+            return when.src_ports.test(flow->server_port);
         case BindWhen::BR_CLIENT:
-            return when.ports.test(flow->client_port);
+            return when.src_ports.test(flow->client_port);
         case BindWhen::BR_EITHER:
-            return (when.ports.test(flow->client_port) or when.ports.test(flow->server_port) );
+            return (when.src_ports.test(flow->client_port) or when.src_ports.test(flow->server_port) );
+        default:
+            break;
+    }
+    return false;
+}
+
+bool Binding::check_split_port(const Flow* flow, const DirResult dr) const
+{
+    if ( !when.split_ports )
+        return true;
+
+    bool client_in_src = false;
+    bool client_in_dst = false;
+    bool server_in_src = false;
+    bool server_in_dst = false;
+
+    switch ( dr )
+    {
+        case Binding::DR_ANY_MATCH:
+            client_in_src = when.src_ports.test(flow->client_port);
+            client_in_dst = when.dst_ports.test(flow->client_port);
+            server_in_src = when.src_ports.test(flow->server_port);
+            server_in_dst = when.dst_ports.test(flow->server_port);
+            return ( client_in_src and server_in_dst ) or ( server_in_src and client_in_dst );
+
+        case Binding::DR_CLIENT_SRC:
+            client_in_src = when.src_ports.test(flow->client_port);
+            server_in_dst = when.dst_ports.test(flow->server_port);
+            return client_in_src and server_in_dst;
+
+        case Binding::DR_SERVER_SRC:
+            server_in_src = when.src_ports.test(flow->server_port);
+            client_in_dst = when.dst_ports.test(flow->client_port);
+            return server_in_src and client_in_dst;
+
         default:
             break;
     }
@@ -190,10 +259,17 @@ bool Binding::check_all(const Flow* flow) const
     if ( !check_addr(flow) )
         return false;
 
+    auto dir = check_split_addr(flow);
+    if ( dir == Binding::DR_NO_MATCH )
+        return false;
+
     if ( !check_proto(flow) )
         return false;
 
     if ( !check_port(flow) )
+        return false;
+
+    if ( !check_split_port(flow, dir) )
         return false;
 
     if ( !check_service(flow) )
