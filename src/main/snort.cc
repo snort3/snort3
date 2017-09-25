@@ -873,7 +873,11 @@ DAQ_Verdict Snort::process_packet(
     }
 
     // process flow verdicts here
-    if ( Active::session_was_blocked() )
+    if ( Active::packet_retry_requested() )
+    {
+        return DAQ_VERDICT_RETRY;
+    }
+    else if ( Active::session_was_blocked() )
     {
         if ( !Active::can_block() )
             return DAQ_VERDICT_PASS;

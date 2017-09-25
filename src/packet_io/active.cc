@@ -413,6 +413,23 @@ void Active::daq_drop_packet(const Packet* p)
     daq_update_status(p);
 }
 
+bool Active::daq_retry_packet(const Packet *p)
+{
+    bool retry_queued = false;
+
+    // FIXIT-M may need to confirm this packet is not a retransmit...2.9.x has a check for that
+    if ( !p->is_rebuilt() && ( active_action == ACT_PASS ) && SFDAQ::can_retry() )
+    {
+        if ( SFDAQ::forwarding_packet(p->pkth) )
+        {
+            active_action = ACT_RETRY;
+            retry_queued = true;
+        }
+    }
+
+    return retry_queued;
+}
+
 void Active::block_session(const Packet* p, bool force)
 {
     update_status(p, force);

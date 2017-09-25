@@ -125,13 +125,10 @@ public:
     NetworkSet* net_list = nullptr;
     std::array<NetworkSet*, MAX_ZONES> net_list_by_zone;
 #endif
-    std::array<AppId, APP_ID_PORT_ARRAY_SIZE> tcp_port_only;     ///< Service IDs for port-only TCP
-                                                                 // services
-    std::array<AppId, APP_ID_PORT_ARRAY_SIZE> udp_port_only;     ///< Service IDs for port-only UDP
-                                                                 // services
-    std::array<AppId, 255> ip_protocol;         ///< Service IDs for non-TCP / UDP protocol
-                                                // services
-    SF_LIST client_app_args;                ///< List of Client App arguments
+    std::array<AppId, APP_ID_PORT_ARRAY_SIZE> tcp_port_only;     // port-only TCP services
+    std::array<AppId, APP_ID_PORT_ARRAY_SIZE> udp_port_only;     // port-only UDP services
+    std::array<AppId, 255> ip_protocol;         // non-TCP / UDP protocol services
+    SF_LIST client_app_args;                    // List of Client App arguments
     // for each potential port, an sflist of PortExclusion structs
     AppIdPortExclusions tcp_port_exclusions_src;
     AppIdPortExclusions udp_port_exclusions_src;

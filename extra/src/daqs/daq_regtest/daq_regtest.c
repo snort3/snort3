@@ -22,12 +22,10 @@
 #include "config.h"
 #endif
 
+#include <daq.h>
+#include <daq_api.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pcap.h>
-
-#include "daq.h"
-#include "daq_api.h"
 
 #define DAQ_MOD_VERSION 0
 #define DAQ_NAME "regtest"
@@ -49,14 +47,25 @@ typedef struct
     int daq_config_reads;
     const DAQ_Module_t* module;
     void *handle;
-    struct
-    {
-        int skip;
-        int trace;
-        void* user;
-        DAQ_Analysis_Func_t orig_daq_packet_callback;
-    } packt_tracer_cfg;
+    int skip;
+    int trace;
+    DAQ_PktHdr_t retry_hdr;
+    uint8_t* retry_data;
+    unsigned packets_before_retry;
+    unsigned retry_packet_countdown;
+    void* user;
+    DAQ_Analysis_Func_t wrapped_packet_callback;
 }DAQRegTestContext;
+
+static const DAQ_Verdict verdict_translation_table[MAX_DAQ_VERDICT] = {
+    DAQ_VERDICT_PASS,       /* DAQ_VERDICT_PASS */
+    DAQ_VERDICT_BLOCK,      /* DAQ_VERDICT_BLOCK */
+    DAQ_VERDICT_PASS,       /* DAQ_VERDICT_REPLACE */
+    DAQ_VERDICT_PASS,       /* DAQ_VERDICT_WHITELIST */
+    DAQ_VERDICT_BLOCK,      /* DAQ_VERDICT_BLACKLIST */
+    DAQ_VERDICT_PASS,       /* DAQ_VERDICT_IGNORE */
+    DAQ_VERDICT_BLOCK       /* DAQ_VERDICT_RETRY */
+};
 
 // packet tracer configuration from command line daq-var skip and trace
 // --daq-var skip=10 --daq-var trace=5 would trace packets 11 through 15 only
@@ -64,17 +73,23 @@ static void daq_regtest_get_vars(DAQRegTestContext* context, const DAQ_Config_t*
 {
     DAQ_Dict* entry;
 
-    context->packt_tracer_cfg.skip = 0;
-    context->packt_tracer_cfg.trace = 0;
+    context->skip = 0;
+    context->trace = 0;
+    context->packets_before_retry = 0;
+
     for ( entry = cfg->values; entry; entry = entry->next)
     {
         if ( !strcmp(entry->key, "skip") )
         {
-            context->packt_tracer_cfg.skip = atoi(entry->value);
+            context->skip = atoi(entry->value);
         }
         else if ( !strcmp(entry->key, "trace") )
         {
-            context->packt_tracer_cfg.trace = atoi(entry->value);
+            context->trace = atoi(entry->value);
+        }
+        else if ( !strcmp(entry->key, "packets_before_retry") )
+        {
+            context->packets_before_retry = atoi(entry->value);
         }
     }
 }
@@ -111,7 +126,7 @@ static int daq_regtest_parse_config(DAQRegTestContext *context, DAQRegTestConfig
         return DAQ_ERROR_NOMEM;
     }
     rewind(fh);
-    if ( fgets(config->buf , size, fh) == NULL )
+    if ( fgets(config->buf, size, fh) == NULL )
     {
         if ( errBuf )
             snprintf(errBuf, errMax, "%s: failed to read daq_regtest config file", DAQ_NAME);
@@ -149,6 +164,7 @@ static void daq_regtest_cleanup(DAQRegTestContext* context)
 
     free(context);
 }
+
 //-------------------------------------------------------------------------
 // daq
 //-------------------------------------------------------------------------
@@ -246,33 +262,84 @@ static int daq_regtest_inject (
     return context->module->inject(context->handle, hdr, buf, len, reverse);
 }
 
+static DAQ_Verdict daq_handle_retry_request(DAQRegTestContext* context, const DAQ_PktHdr_t* hdr,
+    const uint8_t* data)
+{
+    // FIXIT-L for current reg test needs or snort only 1 pending retry is required so if we
+    //         get a 2nd request we just let it pass.  future support for >1 pending retries
+    //         can be implemented with a list holding the hdr & data for each retry packet.
+    if ( !context->retry_data )
+    {
+        context->retry_hdr = *hdr;
+        context->retry_data = malloc(hdr->caplen);
+        if ( context->retry_data )
+        {
+            memcpy(context->retry_data, data, hdr->caplen);
+            context->retry_packet_countdown = context->packets_before_retry;
+            return DAQ_VERDICT_BLOCK;
+        }
+    }
+
+    return DAQ_VERDICT_PASS;
+}
+
+static void daq_handle_pending_retry(DAQRegTestContext* context)
+{
+    if ( !context->retry_packet_countdown )
+    {
+        context->retry_hdr.flags |= DAQ_PKT_FLAG_RETRY_PACKET;
+        DAQ_Verdict verdict = context->wrapped_packet_callback(context->user,
+            &context->retry_hdr, context->retry_data);
+
+        if (verdict >= MAX_DAQ_VERDICT)
+            verdict = DAQ_VERDICT_PASS;
+        verdict = verdict_translation_table[verdict];
+        if ( verdict == DAQ_VERDICT_PASS )
+            context->module->inject(context->handle, &context->retry_hdr, context->retry_data,
+                context->retry_hdr.pktlen, 0);
+        free(context->retry_data);
+        context->retry_data = NULL;
+    }
+    else
+        context->retry_packet_countdown--;
+}
+
 //-------------------------------------------------------------------------
 static DAQ_Verdict daq_regtest_packet_callback(void* user, const DAQ_PktHdr_t* hdr,
     const uint8_t* data)
 {
     DAQRegTestContext* context = (DAQRegTestContext*)user;
 
-    if (context->packt_tracer_cfg.skip == 0 && context->packt_tracer_cfg.trace >0)
+    if ( context->skip == 0 && context->trace > 0 )
     {
         DAQ_PktHdr_t* pkthdr = (DAQ_PktHdr_t*)hdr;
         pkthdr->flags |= DAQ_PKT_FLAG_TRACE_ENABLED;
     }
 
-    if (context->packt_tracer_cfg.skip > 0)
-        context->packt_tracer_cfg.skip--;
-    else if (context->packt_tracer_cfg.trace > 0)
-        context->packt_tracer_cfg.trace--;
+    if ( context->skip > 0 )
+        context->skip--;
+    else if ( context->trace > 0 )
+        context->trace--;
 
-    return context->packt_tracer_cfg.orig_daq_packet_callback(context->packt_tracer_cfg.user,
+    if ( context->retry_data )
+        daq_handle_pending_retry(context);
+
+    DAQ_Verdict verdict = context->wrapped_packet_callback(context->user,
         hdr, data);
+    if ( verdict == DAQ_VERDICT_RETRY )
+        verdict = daq_handle_retry_request(context, hdr, data);
+
+    return verdict;
 }
 
 static int daq_regtest_acquire (
     void* handle, int cnt, DAQ_Analysis_Func_t callback, DAQ_Meta_Func_t meta, void* user)
 {
     DAQRegTestContext* context = (DAQRegTestContext*)handle;
-    context->packt_tracer_cfg.orig_daq_packet_callback = callback;
-    context->packt_tracer_cfg.user = user;
+    context->wrapped_packet_callback = callback;
+    context->user = user;
+    context->retry_data = NULL;
+
     return context->module->acquire(context->handle, cnt, daq_regtest_packet_callback, meta, handle);
 }
 
@@ -311,7 +378,9 @@ static int daq_regtest_get_snaplen (void* handle)
 static uint32_t daq_regtest_get_capabilities (void* handle)
 {
     DAQRegTestContext* context = (DAQRegTestContext*)handle;
-    return context->module->get_capabilities(context->handle);
+    uint32_t caps = context->module->get_capabilities(context->handle);
+    caps |= DAQ_CAPA_RETRY;
+    return caps;
 }
 
 static int daq_regtest_get_datalink_type(void *handle)

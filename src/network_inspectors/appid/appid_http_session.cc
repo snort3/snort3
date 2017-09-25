@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2017 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2017-2017 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -76,9 +76,9 @@ AppIdHttpSession::~AppIdHttpSession()
                 snort_free(new_field[i]);
 }
 
-void AppIdHttpSession::free_chp_matches(ChpMatchDescriptor& cmd, unsigned max_matches)
+void AppIdHttpSession::free_chp_matches(ChpMatchDescriptor& cmd, unsigned num_matches)
 {
-    for (unsigned i = 0; i <= max_matches; i++)
+    for (unsigned i = 0; i <= num_matches; i++)
         if ( cmd.chp_matches[i].size() )
             cmd.chp_matches[i].clear();
 }
@@ -277,7 +277,7 @@ void AppIdHttpSession::process_chp_buffers()
             }
         }
 
-        free_chp_matches(cmd, NUMBER_OF_PTYPES-1);
+        free_chp_matches(cmd, MAX_PATTERN_TYPE);
 
         if ( !chp_candidate )
         {

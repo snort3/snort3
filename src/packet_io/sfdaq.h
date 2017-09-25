@@ -55,6 +55,7 @@ public:
     bool can_inject();
     bool can_inject_raw();
     bool can_replace();
+    bool can_retry();
     bool can_start_unprivileged();
     bool can_whitelist();
 
@@ -100,6 +101,7 @@ public:
     static bool can_inject();
     static bool can_inject_raw();
     static bool can_replace();
+    static bool can_retry();
 
     // FIXIT-M X Temporary thread-local instance helpers to be removed when no longer needed
     static void set_local_instance(SFDAQInstance*);

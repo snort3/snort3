@@ -246,6 +246,11 @@ bool SFDAQ::can_replace()
     return local_instance && local_instance->can_replace();
 }
 
+bool SFDAQ::can_retry()
+{
+    return local_instance && local_instance->can_retry();
+}
+
 int SFDAQ::inject(const DAQ_PktHdr_t* hdr, int rev, const uint8_t* buf, uint32_t len)
 {
     return local_instance->inject(hdr, rev, buf, len);
@@ -420,6 +425,11 @@ bool SFDAQInstance::can_inject_raw()
 bool SFDAQInstance::can_replace()
 {
     return (daq_get_capabilities(daq_mod, daq_hand) & DAQ_CAPA_REPLACE) != 0;
+}
+
+bool SFDAQInstance::can_retry()
+{
+    return (daq_get_capabilities(daq_mod, daq_hand) & DAQ_CAPA_RETRY) != 0;
 }
 
 bool SFDAQInstance::can_start_unprivileged()

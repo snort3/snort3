@@ -48,6 +48,7 @@ src/daqs/daq_regtest/Makefile \
 src/inspectors/Makefile \
 src/inspectors/data_log/Makefile \
 src/inspectors/dpx/Makefile \
+src/inspectors/reg_test/Makefile \
 src/ips_options/Makefile \
 src/ips_options/find/Makefile \
 src/ips_options/ips_pkt_num/Makefile \

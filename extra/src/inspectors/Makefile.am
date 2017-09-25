@@ -1,6 +1,7 @@
 SUBDIRS = \
 data_log \
-dpx
+dpx \
+reg_test
 
 AM_CPPFLAGS = @AM_CPPFLAGS@
 AM_CFLAGS= @AM_CFLAGS@
