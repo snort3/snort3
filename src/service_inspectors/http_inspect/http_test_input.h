@@ -39,8 +39,8 @@ public:
 
 private:
     FILE* test_data_file;
-    uint8_t msg_buf[2 * HttpEnums::MAX_OCTETS];
-    FILE* include_file = nullptr;
+    uint8_t msg_buf[2][2 * HttpEnums::MAX_OCTETS];
+    FILE* include_file[2] = { nullptr, nullptr };
 
     // break command has been read and we are waiting for a new flow to start
     bool need_break = false;
@@ -65,10 +65,10 @@ private:
     uint32_t flush_octets = 0;
 
     // number of characters in the buffer previously shown to splitter but not flushed yet
-    uint32_t previous_offset = 0;
+    uint32_t previous_offset[2] = { 0, 0 };
 
     // number of characters in the buffer
-    uint32_t end_offset = 0;
+    uint32_t end_offset[2] = { 0, 0 };
 
     // Need to send close with next pass through reassemble()
     bool close_pending = false;

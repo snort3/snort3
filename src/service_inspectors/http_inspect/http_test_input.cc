@@ -56,16 +56,20 @@ void HttpTestInput::reset()
     just_flushed = true;
     tcp_closed = false;
     flush_octets = 0;
-    previous_offset = 0;
-    end_offset = 0;
     close_pending = false;
     close_notified = false;
     finish_expected = false;
     need_break = false;
-    if (include_file != nullptr)
+
+    for (int k = 0; k <= 1; k++)
     {
-        fclose(include_file);
-        include_file = nullptr;
+        previous_offset[k] = 0;
+        end_offset[k] = 0;
+        if (include_file[k] != nullptr)
+        {
+            fclose(include_file[k]);
+            include_file[k] = nullptr;
+        }
     }
 
     // Each test needs separate peg counts
@@ -103,18 +107,20 @@ void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, u
         // reassemble(). There may or may not be leftover data from the last paragraph that was not
         // flushed.
         just_flushed = false;
-        data = msg_buf;
+        data = msg_buf[last_source_id];
         // compute the leftover data
-        end_offset = (flush_octets <= end_offset) ? (end_offset - flush_octets) : 0;
-        previous_offset = 0;
-        if (end_offset > 0)
+        end_offset[last_source_id] = (flush_octets <= end_offset[last_source_id]) ?
+            (end_offset[last_source_id] - flush_octets) : 0;
+        previous_offset[last_source_id] = 0;
+        if (end_offset[last_source_id] > 0)
         {
             // Must present unflushed leftovers to StreamSplitter again. If we don't take this
             // opportunity to left justify our data in the buffer we may "walk" to the right until
             // we run out of buffer space.
-            memmove(msg_buf, msg_buf+flush_octets, end_offset);
+            memmove(msg_buf[last_source_id], msg_buf[last_source_id]+flush_octets,
+                end_offset[last_source_id]);
             flush_octets = 0;
-            length = end_offset;
+            length = end_offset[last_source_id];
             return;
         }
         // If we reach here then StreamSplitter has already flushed all data read so far
@@ -123,8 +129,8 @@ void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, u
     else
     {
         // The data we gave StreamSplitter last time was not flushed
-        previous_offset = end_offset;
-        data = msg_buf + previous_offset;
+        previous_offset[last_source_id] = end_offset[last_source_id];
+        data = msg_buf[last_source_id] + previous_offset[last_source_id];
     }
 
     // Now we need to move forward by reading more data from the file
@@ -161,7 +167,7 @@ void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, u
             {
                 state = PARAGRAPH;
                 ending = false;
-                msg_buf[end_offset++] = (uint8_t)new_char;
+                msg_buf[last_source_id][end_offset[last_source_id]++] = (uint8_t)new_char;
             }
             break;
         case COMMENT:
@@ -177,7 +183,6 @@ void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, u
                 if ((command_length == strlen("request")) && !memcmp(command_value, "request",
                     strlen("request")))
                 {
-                    assert(end_offset == 0);
                     last_source_id = SRC_CLIENT;
                     if (!skip_to_break)
                     {
@@ -188,7 +193,6 @@ void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, u
                 else if ((command_length == strlen("response")) && !memcmp(command_value,
                     "response", strlen("response")))
                 {
-                    assert(end_offset == 0);
                     last_source_id = SRC_SERVER;
                     if (!skip_to_break)
                     {
@@ -219,13 +223,13 @@ void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, u
                     for (unsigned k = 0; k < amount; k++)
                     {
                         // auto-fill ABCDEFGHIJABCD ...
-                        msg_buf[end_offset++] = 'A' + k%10;
+                        msg_buf[last_source_id][end_offset[last_source_id]++] = 'A' + k%10;
                     }
                     if (skip_to_break)
-                        end_offset = 0;
+                        end_offset[last_source_id] = 0;
                     else
                     {
-                        length = end_offset - previous_offset;
+                        length = end_offset[last_source_id] - previous_offset[last_source_id];
                         return;
                     }
                 }
@@ -242,9 +246,9 @@ void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, u
                         include_file_name[k] = command_value[k+offset];
                     }
                     include_file_name[k] = '\0';
-                    if (include_file != nullptr)
-                        fclose(include_file);
-                    if ((include_file = fopen(include_file_name, "r")) == nullptr)
+                    if (include_file[last_source_id] != nullptr)
+                        fclose(include_file[last_source_id]);
+                    if ((include_file[last_source_id] = fopen(include_file_name, "r")) == nullptr)
                         throw std::runtime_error("Cannot open test file to be included");
                 }
                 else if ((command_length > strlen("fileread")) && !memcmp(command_value,
@@ -257,15 +261,15 @@ void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, u
                     assert((amount > 0) && (amount <= MAX_OCTETS));
                     for (unsigned k=0; k < amount; k++)
                     {
-                        const int new_octet = getc(include_file);
+                        const int new_octet = getc(include_file[last_source_id]);
                         assert(new_octet != EOF);
-                        msg_buf[end_offset++] = new_octet;
+                        msg_buf[last_source_id][end_offset[last_source_id]++] = new_octet;
                     }
                     if (skip_to_break)
-                        end_offset = 0;
+                        end_offset[last_source_id] = 0;
                     else
                     {
-                        length = end_offset - previous_offset;
+                        length = end_offset[last_source_id] - previous_offset[last_source_id];
                         return;
                     }
                 }
@@ -278,16 +282,16 @@ void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, u
                     assert(amount > 0);
                     for (unsigned k=0; k < amount; k++)
                     {
-                        getc(include_file);
+                        getc(include_file[last_source_id]);
                     }
                 }
                 else if ((command_length == strlen("fileclose")) && !memcmp(command_value,
                     "fileclose", strlen("fileclose")))
                 {
-                    if (include_file != nullptr)
+                    if (include_file[last_source_id] != nullptr)
                     {
-                        fclose(include_file);
-                        include_file = nullptr;
+                        fclose(include_file[last_source_id]);
+                        include_file[last_source_id] = nullptr;
                     }
                 }
                 else if (command_length > 0)
@@ -341,34 +345,59 @@ void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, u
                 // Found the second consecutive blank line that ends the paragraph.
                 else if (skip_to_break)
                 {
-                    end_offset = 0;
+                    end_offset[last_source_id] = 0;
                     ending = false;
                     state = WAITING;
                 }
                 else
                 {
-                    length = end_offset - previous_offset;
+                    length = end_offset[last_source_id] - previous_offset[last_source_id];
                     return;
                 }
             }
             else
             {
                 ending = false;
-                msg_buf[end_offset++] = (uint8_t)new_char;
+                msg_buf[last_source_id][end_offset[last_source_id]++] = (uint8_t)new_char;
             }
             break;
         case ESCAPE:
             switch (new_char)
             {
-            case 'n':  state = PARAGRAPH; msg_buf[end_offset++] = '\n'; break;
-            case 'r':  state = PARAGRAPH; msg_buf[end_offset++] = '\r'; break;
-            case 't':  state = PARAGRAPH; msg_buf[end_offset++] = '\t'; break;
-            case '#':  state = PARAGRAPH; msg_buf[end_offset++] = '#';  break;
-            case '@':  state = PARAGRAPH; msg_buf[end_offset++] = '@';  break;
-            case '\\': state = PARAGRAPH; msg_buf[end_offset++] = '\\'; break;
+            case 'n':
+                state = PARAGRAPH;
+                msg_buf[last_source_id][end_offset[last_source_id]++] = '\n';
+                break;
+            case 'r':
+                state = PARAGRAPH;
+                msg_buf[last_source_id][end_offset[last_source_id]++] = '\r';
+                break;
+            case 't':
+                state = PARAGRAPH;
+                msg_buf[last_source_id][end_offset[last_source_id]++] = '\t';
+                break;
+            case '#':
+                state = PARAGRAPH;
+                msg_buf[last_source_id][end_offset[last_source_id]++] = '#';
+                break;
+            case '@':
+                state = PARAGRAPH;
+                msg_buf[last_source_id][end_offset[last_source_id]++] = '@';
+                break;
+            case '\\':
+                state = PARAGRAPH;
+                msg_buf[last_source_id][end_offset[last_source_id]++] = '\\';
+                break;
             case 'x':
-            case 'X':  state = HEXVAL; hex_val = 0; num_digits = 0; break;
-            default:   assert(false); state = PARAGRAPH; break;
+            case 'X':
+                state = HEXVAL;
+                hex_val = 0;
+                num_digits = 0;
+                break;
+            default:
+                assert(false);
+                state = PARAGRAPH;
+                break;
             }
             break;
         case HEXVAL:
@@ -382,24 +411,24 @@ void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, u
                 assert(false);
             if (++num_digits == 2)
             {
-                msg_buf[end_offset++] = hex_val;
+                msg_buf[last_source_id][end_offset[last_source_id]++] = hex_val;
                 state = PARAGRAPH;
             }
             break;
         }
         // Don't allow a buffer overrun.
-        assert(end_offset < sizeof(msg_buf));
+        assert(end_offset[last_source_id] < sizeof(msg_buf[last_source_id]));
     }
     // End-of-file. Return everything we have so far.
     if (skip_to_break)
-        end_offset = 0;
-    length = end_offset - previous_offset;
+        end_offset[last_source_id] = 0;
+    length = end_offset[last_source_id] - previous_offset[last_source_id];
     return;
 }
 
 void HttpTestInput::flush(uint32_t num_octets)
 {
-    flush_octets = previous_offset + num_octets;
+    flush_octets = previous_offset[last_source_id] + num_octets;
     assert(flush_octets <= MAX_OCTETS);
     flushed = true;
 }
@@ -423,15 +452,15 @@ void HttpTestInput::reassemble(uint8_t** buffer, unsigned& length, SourceId sour
     // 2. exactly equal - process data now and signal the close next time around
     // 3. more than whole buffer - signal the close now and truncate and send next time around
     // 4. there was no flush - signal the close now and send the leftovers next time around
-    if (tcp_closed && (!flushed || (flush_octets >= end_offset)))
+    if (tcp_closed && (!flushed || (flush_octets >= end_offset[last_source_id])))
     {
         if (close_pending)
         {
             // There is no more data. Clean up and notify caller about close.
             just_flushed = true;
             flushed = false;
-            end_offset = 0;
-            previous_offset = 0;
+            end_offset[last_source_id] = 0;
+            previous_offset[last_source_id] = 0;
             close_pending = false;
             tcp_closed = false;
             tcp_close = true;
@@ -441,16 +470,16 @@ void HttpTestInput::reassemble(uint8_t** buffer, unsigned& length, SourceId sour
         {
             // Failure to flush means scan() reached end of paragraph and returned PAF_SEARCH.
             // Notify caller about close and they will do a zero-length flush().
-            previous_offset = end_offset;
+            previous_offset[last_source_id] = end_offset[last_source_id];
             tcp_close = true;
             close_notified = true;
             finish_expected = true;
         }
-        else if (flush_octets == end_offset)
+        else if (flush_octets == end_offset[last_source_id])
         {
             // The flush point is the end of the paragraph. Supply the data now and if necessary
             // notify the caller about close next time or otherwise just clean up.
-            *buffer = msg_buf;
+            *buffer = msg_buf[last_source_id];
             length = flush_octets;
             if (close_notified)
             {
@@ -468,7 +497,7 @@ void HttpTestInput::reassemble(uint8_t** buffer, unsigned& length, SourceId sour
         {
             // Flushed more body data than is actually available. Truncate the size of the flush,
             // notify caller about close, and supply the data next time.
-            flush_octets = end_offset;
+            flush_octets = end_offset[last_source_id];
             tcp_close = true;
             close_notified = true;
             finish_expected = true;
@@ -477,22 +506,22 @@ void HttpTestInput::reassemble(uint8_t** buffer, unsigned& length, SourceId sour
     }
 
     // Normal case with no TCP close or at least not yet
-    *buffer = msg_buf;
+    *buffer = msg_buf[last_source_id];
     length = flush_octets;
-    if (flush_octets > end_offset)
+    if (flush_octets > end_offset[last_source_id])
     {
         // We need to generate additional data to fill out the body or chunk section.
-        for (uint32_t k = end_offset; k < flush_octets; k++)
+        for (uint32_t k = end_offset[last_source_id]; k < flush_octets; k++)
         {
-            if (include_file == nullptr)
+            if (include_file[last_source_id] == nullptr)
             {
-                msg_buf[k] = 'A' + k % 26;
+                msg_buf[last_source_id][k] = 'A' + k % 26;
             }
             else
             {
-                int new_octet = getc(include_file);
+                int new_octet = getc(include_file[last_source_id]);
                 assert(new_octet != EOF);
-                msg_buf[k] = new_octet;
+                msg_buf[last_source_id][k] = new_octet;
             }
         }
     }
