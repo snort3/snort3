@@ -44,6 +44,7 @@ class ConversionState
 {
 public:
     ConversionState(Converter& c) : cv(c),
+        // FIXIT-L these should be removed and accessed through cv
         data_api(c.get_data_api()),
         table_api(c.get_table_api()),
         rule_api(c.get_rule_api())
@@ -292,8 +293,6 @@ protected:
          */
         return true;
     }
-
-private:
 };
 
 template<std::string* config_header>

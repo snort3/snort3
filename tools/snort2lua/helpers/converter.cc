@@ -19,6 +19,7 @@
 
 #include <algorithm>
 #include <stdexcept>
+#include <unordered_map>
 
 #include "helpers/converter.h"
 #include "conversion_state.h"
@@ -28,6 +29,13 @@
 #include "helpers/s2l_util.h"
 #include "init_state.h"
 
+TableDelegation table_delegation = 
+{
+    { "binder", true },
+    { "ips", true },
+    { "network", true },
+};
+
 bool Converter::parse_includes = true;
 bool Converter::empty_args = false;
 bool Converter::convert_rules_mult_files = true;
@@ -35,6 +43,7 @@ bool Converter::convert_conf_mult_files = true;
 
 Converter::Converter()
     :   state(nullptr),
+    table_api(&top_table_api, table_delegation),
     error(false),
     multiline_state(false)
 {
@@ -46,9 +55,11 @@ Converter::~Converter()
         delete state;
 }
 
-void Converter::set_state(ConversionState* c)
+void Converter::set_state(ConversionState* c, bool delete_old)
 {
-    delete state;
+    if ( delete_old && state )
+        delete state;
+
     state = c;
 }
 
@@ -153,7 +164,7 @@ int Converter::parse_include_file(std::string input_file)
     return rc;
 }
 
-int Converter::parse_file(std::string input_file)
+int Converter::parse_file(std::string input_file, bool reset)
 {
     std::ifstream in;
     std::string orig_text;
@@ -161,7 +172,8 @@ int Converter::parse_file(std::string input_file)
     // theoretically, I can save this state.  But there's
     // no need since any function calling this method
     // will set the state when it's done anyway.
-    reset_state();
+    if ( reset )
+        reset_state();
 
     if (!util::file_exists(input_file))
         return -1;
@@ -235,7 +247,7 @@ int Converter::parse_file(std::string input_file)
 
             orig_text.clear();
 
-            if ( !multiline_state )
+            if ( reset && !multiline_state )
                 reset_state();
         }
     }
@@ -269,6 +281,59 @@ Binder& Converter::make_binder()
     return *binders.back();
 }
 
+Binder& Converter::make_pending_binder(int ips_policy_id)
+{
+    PendingBinder b(ips_policy_id, std::shared_ptr<Binder>(new Binder(table_api)));
+    pending_binders.push_back(b);
+    return *pending_binders.back().second;
+}
+
+void Converter::add_bindings()
+{
+    std::unordered_map<int, std::shared_ptr<Binder>> policy_map;
+    for ( auto& b : binders )
+    {
+        if ( b->has_ips_policy_id() )
+            policy_map[b->get_when_ips_policy_id()] = b;
+    }
+
+    for ( auto it = pending_binders.rbegin(); it != pending_binders.rend(); it++ )
+    {
+        auto& pb = *it;
+        auto result = policy_map.find(pb.first);
+
+        if ( result == policy_map.end() )
+        {
+            pb.second->print_binding(false);
+            data_api.error("Unable to satisfy pending binding for policy id " +
+                std::to_string(pb.first));
+
+            continue;
+        }
+
+        auto b = result->second;
+        b->print_binding(false); //FIXIT-M is it desired to keep this around? it isn't for nap case
+
+        // FIXIT-M as of writing, this assumes pending is only for nap rules
+        pb.second->set_use_file(b->get_use_file().first, Binder::IT_INSPECTION);
+
+        pb.second->set_use_type(b->get_use_type());
+        pb.second->set_use_name(b->get_use_name());
+        pb.second->set_use_service(b->get_use_service());
+        pb.second->set_use_action(b->get_use_action());
+
+        binders.push_back(pb.second);
+    }
+    pending_binders.clear();
+    policy_map.clear();
+
+    // vector::clear()'s ordering isn't deterministic but this is
+    // keep in place for stable regressions
+    std::stable_sort(binders.rbegin(), binders.rend());
+    while ( binders.size() )
+        binders.pop_back();
+}
+
 int Converter::convert(std::string input,
     std::string output_file,
     std::string rule_file,
@@ -279,11 +344,7 @@ int Converter::convert(std::string input,
 
     rc = parse_file(input);
 
-    // vector::clear()'s ordering isn't deterministic but this is
-    // keep in place for stable regressions
-    std::stable_sort(binders.rbegin(), binders.rend());
-    while ( binders.size() )
-        binders.pop_back();
+    add_bindings();
 
     if (rule_file.empty())
         rule_file = output_file;
@@ -293,6 +354,7 @@ int Converter::convert(std::string input,
 
     if (!rule_api.empty() &&
         table_api.empty() &&
+        top_table_api.empty() &&
         data_api.empty())
     {
         std::ofstream rules;
@@ -316,7 +378,8 @@ int Converter::convert(std::string input,
 
         rules.close();
     }
-    else if (!rule_api.empty() || !table_api.empty() || !data_api.empty())
+    else if (!rule_api.empty() || !table_api.empty() ||
+             !top_table_api.empty() || !data_api.empty())
     {
         // finally, lets print the converter to file
         std::ofstream out;
@@ -378,6 +441,7 @@ int Converter::convert(std::string input,
         }
 
         table_api.print_tables(out);
+        top_table_api.print_tables(out);
         data_api.print_unsupported(out);
         data_api.print_comments(out);
 

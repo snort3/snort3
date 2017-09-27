@@ -32,6 +32,11 @@ class Converter;
 class Binder
 {
 public:
+    enum IncludeType
+    { IT_FILE, IT_INSPECTION, IT_IPS, IT_NETWORK};
+
+    typedef std::pair<std::string, IncludeType> IncludeTypePair;
+
     //Only use Converter to instantiate Binders through make_binder()
     //This ensures only one binder tables is created per policy
     friend class Converter;
@@ -45,14 +50,21 @@ public:
     void print_binding(bool should_print)
     { printed = !should_print; }
 
-    void set_when_ips_policy_id(int id);
-    void set_when_service(std::string service);
-    void set_when_role(std::string role);
-    void set_when_proto(std::string proto);
-    void add_when_vlan(std::string vlan);
-    void add_when_net(std::string net);
-    void add_when_port(std::string port);
+    void set_when_ips_policy_id(int);
+    void set_when_service(std::string);
+    void set_when_role(std::string);
+    void set_when_proto(std::string);
+    void add_when_vlan(std::string);
+    void add_when_net(std::string);
+    void add_when_src_net(std::string);
+    void add_when_dst_net(std::string);
+    void add_when_port(std::string);
+    void add_when_src_port(std::string);
+    void add_when_dst_port(std::string);
     void clear_ports();
+
+    int get_when_ips_policy_id() const
+    { return when_ips_policy_id; }
 
     bool has_ips_policy_id() const
     { return when_ips_policy_id >= 0; }
@@ -69,17 +81,44 @@ public:
     bool has_vlans() const
     { return !vlans.empty(); }
 
+    bool has_src_nets() const
+    { return !src_nets.empty(); }
+
+    bool has_dst_nets() const
+    { return !dst_nets.empty(); }
+
     bool has_nets() const
     { return !nets.empty(); }
+
+    bool has_src_ports() const
+    { return !src_ports.empty(); }
+
+    bool has_dst_ports() const
+    { return !dst_ports.empty(); }
 
     bool has_ports() const
     { return !ports.empty(); }
 
     void set_use_type(std::string module_name);
     void set_use_name(std::string struct_name);
-    void set_use_file(std::string file_name);
+    void set_use_file(std::string file_name, IncludeType = IT_FILE);
     void set_use_service(std::string service_name);
     void set_use_action(std::string action);
+
+    std::string get_use_type() const
+    { return use_type; }
+
+    std::string get_use_name() const
+    { return use_name; }
+
+    IncludeTypePair get_use_file() const
+    { return IncludeTypePair(use_file, use_file_type); }
+
+    std::string get_use_service() const
+    { return use_service; }
+
+    std::string get_use_action() const
+    { return use_action; }
 
 private:
     TableApi& table_api;
@@ -92,11 +131,16 @@ private:
     std::string when_proto;
     std::vector<std::string> vlans;
     std::vector<std::string> nets;
+    std::vector<std::string> src_nets;
+    std::vector<std::string> dst_nets;
     std::vector<std::string> ports;
+    std::vector<std::string> src_ports;
+    std::vector<std::string> dst_ports;
 
     std::string use_type;
     std::string use_name;
     std::string use_file;
+    IncludeType use_file_type;
     std::string use_service;
     std::string use_action;
 

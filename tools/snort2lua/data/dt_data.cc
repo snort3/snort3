@@ -241,6 +241,12 @@ std::string DataApi::get_file_line()
     return error_string;
 }
 
+void DataApi::error(const std::string error)
+{
+    errors->add_text(error);
+    errors_count++;
+}
+
 void DataApi::failed_conversion(const std::istringstream& stream, const std::string unknown_option)
 {
     // we only need to go through this once.

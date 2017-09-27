@@ -121,7 +121,6 @@ static ConversionState* config_string_ctor(Converter& c)
 
 static const std::string alerts = "alerts";
 static const std::string daq = "daq";
-static const std::string ips = "ips";
 static const std::string mode = "mode";
 static const std::string packets = "packets";
 static const std::string process = "process";

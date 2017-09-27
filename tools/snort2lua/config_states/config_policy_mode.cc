@@ -44,20 +44,20 @@ bool PolicyMode::convert(std::istringstream& data_stream)
 
     if ( data_stream >> mode)
     {
-        table_api.open_table("ips");
+        cv.get_table_api().open_table("ips");
 
         if ( !mode.compare("tap"))
         {
-            table_api.add_option("mode", "tap");
+            cv.get_table_api().add_option("mode", "tap");
         }
         else if ( !mode.compare("inline") )
         {
-            table_api.add_option("mode", "inline");
+            cv.get_table_api().add_option("mode", "inline");
         }
         else if ( !mode.compare("inline_test") )
         {
-            table_api.add_diff_option_comment("inline_test", "inline-test");
-            table_api.add_option("mode", "inline-test");
+            cv.get_table_api().add_diff_option_comment("inline_test", "inline-test");
+            cv.get_table_api().add_option("mode", "inline-test");
         }
         else
         {
@@ -65,7 +65,7 @@ bool PolicyMode::convert(std::istringstream& data_stream)
             data_api.failed_conversion(data_stream, mode);
         }
 
-        table_api.close_table();
+        cv.get_table_api().close_table();
     }
 
     return retval;

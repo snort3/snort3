@@ -114,6 +114,7 @@ public:
     // stream == the stringstream object which failed to convert
     // unknown_option is the specific option which caused the failure.
     void failed_conversion(const std::istringstream& stream, const std::string unkown_option = "");
+    void error(const std::string);
 
     void set_current_file(std::string& file)
     { current_file = &file; }

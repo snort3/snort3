@@ -42,13 +42,13 @@ bool PolicyId::convert(std::istringstream& data_stream)
 
     if (data_stream >> policy_id)
     {
-        table_api.open_table("ips");
-        table_api.add_option("id", policy_id);
-        table_api.close_table();
+        cv.get_table_api().open_table("ips");
+        cv.get_table_api().add_option("id", policy_id);
+        cv.get_table_api().close_table();
 
-        table_api.open_table("network");
-        table_api.add_option("id", policy_id);
-        table_api.close_table();
+        cv.get_table_api().open_table("network");
+        cv.get_table_api().add_option("id", policy_id);
+        cv.get_table_api().close_table();
     }
     else
     {

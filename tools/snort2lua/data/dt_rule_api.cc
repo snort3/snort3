@@ -208,6 +208,9 @@ std::ostream& operator<<(std::ostream& out, const RuleApi& data)
 
 void RuleApi::print_rules(std::ostream& out, bool in_rule_file)
 {
+    if ( empty() )
+        return;
+
     if (!in_rule_file)
         out << "local_rules =\n[[\n";
 

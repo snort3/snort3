@@ -23,6 +23,7 @@
 
 #include <string>
 #include <iostream>
+#include <unordered_map>
 #include <vector>
 #include <stack>
 
@@ -31,7 +32,7 @@
 * As a heads up to whoever reads this file.  This one API is
 * really three distinct API's rolled into one.  One API for rules,
 * one api for misc data (variables, includes, etcs), one api
-* for creating tables. Hoever, the reason they are
+* for creating tables. However, the reason they are
 * together is because this class is not static, and I did not
 * want to be pass three pointers to the three API's when
 * creating new conversion states.  There are comments in
@@ -48,17 +49,19 @@
 class Table;
 class TableApi;
 
+typedef std::unordered_map<std::string, bool> TableDelegation;
 class TableApi
 {
 public:
-    TableApi();
+    TableApi() { }
+    TableApi(TableApi* d, TableDelegation& td) : delegate(d), delegations(td) {}
     virtual ~TableApi();
 
     void reset_state();
     friend std::ostream& operator<<(std::ostream& out, const TableApi& table);
-    void print_tables(std::ostream& out);
+    void print_tables(std::ostream& out) const;
 
-    inline bool empty()
+    inline bool empty() const
     { return tables.empty(); }
 
 /*
@@ -134,13 +137,25 @@ public:
     bool get_option_value(const std::string name, std::string& value);
 
 private:
+    template<typename T>
+    bool do_add_option(const std::string opt_name, const T val, const std::string s_val);
+
+    template<typename T> 
+    void do_append_option(const std::string opt_name, const T val, const std::string s_val);
+
     void create_append_data(std::string& fqn, Table*& t);
+    bool should_delegate() const;
+    bool should_delegate(const std::string& table_name) const;
 
 // Data
     std::vector<Table*> tables;
     std::stack<Table*> open_tables;
     std::stack<unsigned> top_level_tables;
-    bool curr_data_bad;
+    bool curr_data_bad = false;
+
+    TableApi* delegate = nullptr;
+    TableDelegation delegations;
+    unsigned delegating = 0; // Treat as stack position
 };
 
 #endif

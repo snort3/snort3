@@ -28,6 +28,11 @@
 #include "data/dt_rule_api.h"
 #include "util_binder.h"
 
+typedef std::pair<unsigned, std::shared_ptr<Binder>> PendingBinder;
+
+
+extern TableDelegation table_delegation;
+
 class Converter
 {
 public:
@@ -60,6 +65,7 @@ public:
 
     Binder& make_binder(Binder&);
     Binder& make_binder();
+    Binder& make_pending_binder(int ips_policy_id);
 
     int convert(std::string input,
         std::string output,
@@ -70,11 +76,11 @@ public:
     int parse_include_file(std::string input_file);
 
     // set the next parsing state.
-    void set_state(ConversionState* c);
+    void set_state(ConversionState* c, bool delete_old = true);
     // reset the current parsing state
     void reset_state();
     // parse an include file.  Use this function to ensure all set options are properly
-    int parse_file(std::string file);
+    int parse_file(std::string file, bool reset = true);
 
     bool failed_conversions() const
     { return data_api.failed_conversions() || rule_api.failed_conversions(); }
@@ -101,9 +107,19 @@ private:
     static bool empty_args;
 
     DataApi data_api;
+
+    // For the top-level file in an include chain.
+    // If there a multiple snort 2 config items that create a particular table
+    // then this must be used for handling that table to ensure one instance
+    // of a table doesn't overwrite another when loaded
+    TableApi top_table_api;
+
+    // For the current file in an include chain
     TableApi table_api;
+
     RuleApi rule_api;
     std::vector<std::shared_ptr<Binder>> binders;
+    std::vector<PendingBinder> pending_binders;
 
     // the current parsing state.
     ConversionState* state;
@@ -112,6 +128,8 @@ private:
 
     // initialize data class
     bool initialize();
+
+    void add_bindings();
 };
 
 #endif

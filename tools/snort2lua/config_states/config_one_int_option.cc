@@ -29,6 +29,21 @@ namespace config
 {
 namespace
 {
+/*************************************************
+ ************** LUA  STRUCT_NAMES  ***************
+ *************************************************/
+
+static const std::string attribute_table = "attribute_table";
+static const std::string alerts = "alerts";
+static const std::string daq = "daq";
+static const std::string detection = "detection";
+static const std::string mpls = "mpls";
+static const std::string network = "network";
+static const std::string output = "output";
+static const std::string packets = "packets";
+static const std::string process = "process";
+static const std::string stream_tcp = "stream_tcp";
+
 // Yes, this looks rather ugly. However, when using Templates,
 // I always got warnings.  Since we've got zero tolerance policy
 // for such things (and I wanted to keep my checks in Snort2Lua
@@ -94,21 +109,6 @@ static ConversionState* config_int_ctor(Converter& c)
     return new ConfigIntOption(c, snort_option, lua_table, lua_option);
 }
 } // namespace
-
-/*************************************************
- ************** LUA  STRUCT_NAMES  ***************
- *************************************************/
-
-static const std::string attribute_table = "attribute_table";
-static const std::string alerts = "alerts";
-static const std::string daq = "daq";
-static const std::string detection = "detection";
-static const std::string mpls = "mpls";
-static const std::string network = "network";
-static const std::string output = "output";
-static const std::string packets = "packets";
-static const std::string process = "process";
-static const std::string stream_tcp = "stream_tcp";
 
 /*************************************************
  *********************  asn1  ********************
