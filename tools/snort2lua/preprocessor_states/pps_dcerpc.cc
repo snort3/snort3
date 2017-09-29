@@ -31,18 +31,18 @@ public:
     virtual bool convert(std::istringstream& data);
 
 private:
-    bool add_deleted_comment_to_defaults(std::string option);
-    bool add_option_to_all(std::string option, const bool val, bool co_only);
-    bool add_option_to_all(std::string option, const int val, bool co_only);
-    bool add_option_to_type(std::string type, std::string option, std::string value);
-    bool add_option_to_type(std::string type, std::string option);
-    bool parse_int_and_add_to_all(std::string opt_name, std::istringstream& stream, bool co_only);
-    bool parse_string_and_add_to_type(std::string type, std::string opt_name,
+    bool add_deleted_comment_to_defaults(const std::string& option);
+    bool add_option_to_all(const std::string& option, const bool val, bool co_only);
+    bool add_option_to_all(const std::string& option, const int val, bool co_only);
+    bool add_option_to_type(const std::string& type, const std::string& option, const std::string& value);
+    bool add_option_to_type(const std::string& type, const std::string& option);
+    bool parse_int_and_add_to_all(const std::string& opt_name, std::istringstream& stream, bool co_only);
+    bool parse_string_and_add_to_type(const std::string& type, const std::string& opt_name,
         std::istringstream& stream);
 };
 
 
-bool Dcerpc::add_option_to_all(std::string option, const bool val, bool co_only)
+bool Dcerpc::add_option_to_all(const std::string& option, const bool val, bool co_only)
 {
     bool tmpval = true;
 
@@ -62,7 +62,7 @@ bool Dcerpc::add_option_to_all(std::string option, const bool val, bool co_only)
     return tmpval;
 }
 
-bool Dcerpc::add_option_to_all(std::string option, const int val, bool co_only)
+bool Dcerpc::add_option_to_all(const std::string& option, const int val, bool co_only)
 {
     bool tmpval = true;
 
@@ -83,11 +83,9 @@ bool Dcerpc::add_option_to_all(std::string option, const int val, bool co_only)
     return tmpval;
 }
 
-bool Dcerpc::add_option_to_type(std::string type, std::string option, const std::string val)
+bool Dcerpc::add_option_to_type(const std::string& type, const std::string& option, const std::string& val)
 {
-    bool tmpval = true;
-
-    tmpval = add_option_to_table(table_api, "dce_" + type, option, val);
+    bool tmpval = add_option_to_table(table_api, "dce_" + type, option, val);
     for (int i=0; i < DcerpcServer::get_binding_id(); i++)
     {
         tmpval = add_option_to_table(table_api, "dce_" + type + std::to_string(i), option, val) &&
@@ -97,7 +95,7 @@ bool Dcerpc::add_option_to_type(std::string type, std::string option, const std:
     return tmpval;
 }
 
-bool Dcerpc::add_option_to_type(std::string type, std::string option)
+bool Dcerpc::add_option_to_type(const std::string& type, const std::string& option)
 {
     bool tmpval = add_option_to_table(table_api, "dce_" + type, option, true);
     for (int i=0; i < DcerpcServer::get_binding_id(); i++)
@@ -109,7 +107,7 @@ bool Dcerpc::add_option_to_type(std::string type, std::string option)
     return tmpval;
 }
 
-bool Dcerpc::add_deleted_comment_to_defaults(std::string option)
+bool Dcerpc::add_deleted_comment_to_defaults(const std::string& option)
 {
     bool tmpval = true;
 
@@ -120,7 +118,7 @@ bool Dcerpc::add_deleted_comment_to_defaults(std::string option)
     return tmpval;
 }
 
-bool Dcerpc::parse_int_and_add_to_all(std::string opt_name, std::istringstream& stream, bool
+bool Dcerpc::parse_int_and_add_to_all(const std::string& opt_name, std::istringstream& stream, bool
     co_only)
 {
     int val;
@@ -133,7 +131,7 @@ bool Dcerpc::parse_int_and_add_to_all(std::string opt_name, std::istringstream& 
     return false;
 }
 
-bool Dcerpc::parse_string_and_add_to_type(std::string type, std::string opt_name,
+bool Dcerpc::parse_string_and_add_to_type(const std::string& type, const std::string& opt_name,
     std::istringstream& stream)
 {
     std::string val;

@@ -21,13 +21,13 @@
 #include "data/dt_data.h"
 #include "helpers/s2l_util.h"
 
-Variable::Variable(std::string name, int depth)
+Variable::Variable(const std::string& name, int depth)
 {
     this->name = name;
     this->depth = depth;
 }
 
-Variable::Variable(std::string name)
+Variable::Variable(const std::string& name)
 {
     this->name = name;
     this->depth = 0;
@@ -130,7 +130,7 @@ bool Variable::add_value(std::string elem)
 
 static inline void print_newline(std::ostream& out,
     std::size_t& count,
-    std::string whitespace)
+    const std::string& whitespace)
 {
     out << "\n" << whitespace;
     count = whitespace.size();

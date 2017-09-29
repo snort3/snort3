@@ -19,7 +19,7 @@
 
 #include "data/data_types/dt_include.h"
 
-Include::Include(std::string include_name) : file_name(include_name) { }
+Include::Include(const std::string& include_name) : file_name(include_name) { }
 Include::~Include() { }
 
 // overloading operators

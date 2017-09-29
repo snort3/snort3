@@ -64,8 +64,8 @@ std::map <std::string, std::vector<uint16_t> > default_ports
 // Utility functions
 ////////////////////////
 
-bool add_option_to_table(TableApi& table_api,std::string table_name, std::string
-    option, const std::string val)
+bool add_option_to_table(TableApi& table_api, const std::string& table_name,
+    const std::string& option, const std::string& val)
 {
     table_api.open_table(table_name);
     bool tmpval = table_api.add_option(option, val);
@@ -74,8 +74,8 @@ bool add_option_to_table(TableApi& table_api,std::string table_name, std::string
     return tmpval;
 }
 
-bool add_option_to_table(TableApi& table_api,std::string table_name, std::string
-    option, const int val)
+bool add_option_to_table(TableApi& table_api, const std::string& table_name,
+    const std::string& option, const int val)
 {
     table_api.open_table(table_name);
     bool tmpval = table_api.add_option(option, val);
@@ -84,8 +84,8 @@ bool add_option_to_table(TableApi& table_api,std::string table_name, std::string
     return tmpval;
 }
 
-bool add_option_to_table(TableApi& table_api,std::string table_name, std::string
-    option, const bool val)
+bool add_option_to_table(TableApi& table_api, const std::string& table_name,
+    const std::string& option, const bool val)
 {
     table_api.open_table(table_name);
     bool tmpval = table_api.add_option(option, val);
@@ -94,7 +94,8 @@ bool add_option_to_table(TableApi& table_api,std::string table_name, std::string
     return tmpval;
 }
 
-bool add_deleted_comment_to_table(TableApi& table_api, std::string table_name, std::string option)
+bool add_deleted_comment_to_table(TableApi& table_api, const std::string& table_name,
+    const std::string& option)
 {
     table_api.open_table(table_name);
     bool tmpval = table_api.add_deleted_comment(option);
@@ -223,7 +224,7 @@ bool DcerpcServer::parse_smb_file_inspection(std::istringstream& data_stream)
     return tmpval;
 }
 
-void DcerpcServer::add_default_ports(std::string type,  std::map<std::string,Binder*> bind)
+void DcerpcServer::add_default_ports(const std::string& type,  std::map<std::string,Binder*> bind)
 {
     for (auto port : default_ports[type])
     {
@@ -232,7 +233,7 @@ void DcerpcServer::add_default_ports(std::string type,  std::map<std::string,Bin
 }
 
 // add single port / range
-bool DcerpcServer::parse_and_add_ports(std::string ports, std::string type, std::map<std::string,
+bool DcerpcServer::parse_and_add_ports(const std::string& ports, const std::string& type, std::map<std::string,
     Binder*> bind, bool bind_port_to_tcp)
 {
     if (ports.empty())
@@ -459,14 +460,14 @@ bool DcerpcServer::parse_detect(std::istringstream& data_stream,
 
         case DCE_DETECT_LIST_STATE__PORTS_END:
         {
-            char c;
-
             if (one_type)
             {
                 return true;
             }
             else // wait for list terminator or item separator
             {
+                char c;
+
                 if (!data_stream.get(c))
                     return false;
 
@@ -615,7 +616,7 @@ bool DcerpcServer::parse_nets(std::istringstream& data_stream, std::map<std::str
     return true;
 }
 
-bool DcerpcServer::add_option_to_transports(std::string option, std::string value, bool co_only)
+bool DcerpcServer::add_option_to_transports(const std::string& option, const std::string& value, bool co_only)
 {
     bool retval = true;
 

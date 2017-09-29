@@ -36,7 +36,7 @@ Option::Option(std::string val, int d)
     }
 }
 
-Option::Option(std::string n, int val, int d)
+Option::Option(const std::string& n, int val, int d)
 {
     this->name = n;
     this->value = std::to_string(val);
@@ -44,7 +44,7 @@ Option::Option(std::string n, int val, int d)
     this->type = OptionType::INT;
 }
 
-Option::Option(std::string n, bool v, int d)
+Option::Option(const std::string& n, bool v, int d)
 {
     this->name = n;
     this->value = (v) ? "true" : "false";
@@ -52,7 +52,7 @@ Option::Option(std::string n, bool v, int d)
     this->type = OptionType::BOOL;
 }
 
-Option::Option(std::string opt_name, std::string val, int d)
+Option::Option(const std::string& opt_name, std::string val, int d)
 {
     this->name = opt_name;
     this->depth = d;

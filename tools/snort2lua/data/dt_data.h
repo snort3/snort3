@@ -66,7 +66,7 @@ public:
     inline static bool is_difference_mode() { return mode == PrintMode::DIFFERENCES; }
 
     // For problems with the Snort2Lua code, NOT with the snort configuration
-    static void developer_error(std::string comment);
+    static void developer_error(const std::string& comment);
 
     // given a Snort-style string, replace all of the variables with their values.
     std::string expand_vars(const std::string&);
@@ -113,10 +113,10 @@ public:
     // Call when failed to convert a line.
     // stream == the stringstream object which failed to convert
     // unknown_option is the specific option which caused the failure.
-    void failed_conversion(const std::istringstream& stream, const std::string unkown_option = "");
-    void error(const std::string);
+    void failed_conversion(const std::istringstream& stream, const std::string& unkown_option = "");
+    void error(const std::string&);
 
-    void set_current_file(std::string& file)
+    void set_current_file(const std::string& file)
     { current_file = &file; }
 
     void set_current_line(unsigned line)
@@ -142,7 +142,7 @@ private:
     Comments* unsupported;
 
     bool curr_data_bad;  // keep track whether current 'conversion' is already bad
-    std::string* current_file;
+    const std::string* current_file;
     unsigned current_line;
 
     std::string get_file_line();

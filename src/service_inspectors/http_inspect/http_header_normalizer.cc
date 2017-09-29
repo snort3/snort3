@@ -99,10 +99,8 @@ void HeaderNormalizer::normalize(const HeaderId head_id, const int count,
     // number of normalization functions is odd or even, the initial buffer is chosen so that the
     // final normalization leaves the normalized header value in norm_value.
 
-    uint8_t* const norm_value = new uint8_t[buffer_length];
-    uint8_t* const temp_space = new uint8_t[buffer_length];
-    memset(norm_value, 0, buffer_length);
-    memset(temp_space, 0, buffer_length);
+    uint8_t* const norm_value = new uint8_t[buffer_length]();
+    uint8_t* const temp_space = new uint8_t[buffer_length]();
     uint8_t* const norm_start = (num_normalizers%2 == 0) ? norm_value : temp_space;
     uint8_t* working = norm_start;
     int32_t data_length = 0;

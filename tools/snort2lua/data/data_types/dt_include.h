@@ -27,7 +27,7 @@ class Include
 {
 public:
 
-    Include(std::string file_name);
+    Include(const std::string& file_name);
     virtual ~Include();
 
     // overloading operators

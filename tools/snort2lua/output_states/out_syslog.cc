@@ -73,11 +73,6 @@ bool AlertSyslog::convert(std::istringstream& data_stream)
             table_api.add_diff_option_comment("log_auth", "facility = auth");
             tmpval = table_api.add_option("facility", "auth");
         }
-        else if (!keyword.compare("log_auth"))
-        {
-            table_api.add_diff_option_comment("log_auth", "facility = auth");
-            tmpval = table_api.add_option("facility", "auth");
-        }
         else if (!keyword.compare("log_authpriv"))
         {
             table_api.add_diff_option_comment("log_authpriv", "facility = authpriv");

@@ -67,20 +67,20 @@ public:
     Binder& make_binder();
     Binder& make_pending_binder(int ips_policy_id);
 
-    int convert(std::string input,
-        std::string output,
+    int convert(const std::string& input,
+        const std::string& output,
         std::string rules,         // defaults to output_file
         std::string errors);         // defaults to output_file
 
     // parse a file without creating an entirely new Lua configuration
-    int parse_include_file(std::string input_file);
+    int parse_include_file(const std::string& input_file);
 
     // set the next parsing state.
     void set_state(ConversionState* c, bool delete_old = true);
     // reset the current parsing state
     void reset_state();
     // parse an include file.  Use this function to ensure all set options are properly
-    int parse_file(std::string file, bool reset = true);
+    int parse_file(const std::string& file, bool reset = true);
 
     bool failed_conversions() const
     { return data_api.failed_conversions() || rule_api.failed_conversions(); }

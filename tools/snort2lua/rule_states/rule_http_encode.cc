@@ -40,9 +40,8 @@ public:
 
 bool HttpEncode::convert(std::istringstream& data_stream)
 {
-    std::string tmp;
     rule_api.add_comment("option deleted: http_encode");
-    tmp = util::get_rule_option_args(data_stream);
+    util::get_rule_option_args(data_stream);
     return set_next_rule_state(data_stream);
 }
 

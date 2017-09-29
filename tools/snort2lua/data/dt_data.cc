@@ -84,7 +84,6 @@ std::string DataApi::expand_vars(const std::string& string)
     char varmodifier;
     const char* varcontents;
     std::size_t varname_completed, i, j, iv, jv, l_string, name_only;
-    char c;
     int quote_toggle = 0;
 
     if (string.empty() || string.rfind('$') == std::string::npos)
@@ -95,7 +94,7 @@ std::string DataApi::expand_vars(const std::string& string)
 
     while (i < l_string && j < std::string::npos)
     {
-        c = string[i++];
+        char c = string[i++];
 
         if (c == '"')
         {
@@ -241,13 +240,13 @@ std::string DataApi::get_file_line()
     return error_string;
 }
 
-void DataApi::error(const std::string error)
+void DataApi::error(const std::string& error)
 {
     errors->add_text(error);
     errors_count++;
 }
 
-void DataApi::failed_conversion(const std::istringstream& stream, const std::string unknown_option)
+void DataApi::failed_conversion(const std::istringstream& stream, const std::string& unknown_option)
 {
     // we only need to go through this once.
     if (!curr_data_bad)
@@ -289,7 +288,7 @@ bool DataApi::add_include_file(std::string file_name)
     return true;
 }
 
-void DataApi::developer_error(std::string error_string)
+void DataApi::developer_error(const std::string& error_string)
 {
     dev_warnings++;
 

@@ -102,21 +102,21 @@ public:
  * The add_option variants without an option name are used to add "anonymous" options
  * for the purpose of creating arrays.
  */
-    bool add_option(const std::string val);
+    bool add_option(const std::string& val);
     bool add_option(const char* const v);
-    bool add_option(const std::string opt_name, const std::string val);
-    bool add_option(const std::string opt_name, const int val);
-    bool add_option(const std::string opt_name, const bool val);
-    bool add_option(const std::string opt_name, const char* const v);
+    bool add_option(const std::string& opt_name, const std::string& val);
+    bool add_option(const std::string& opt_name, const int val);
+    bool add_option(const std::string& opt_name, const bool val);
+    bool add_option(const std::string& opt_name, const char* const v);
 
 // sometimes, you may need to create a default option, before overwriting that
 // option later. For instance, if you have a default table, and then you
 // need to overwrite a single option in that default table, you can use these
 // methods to overwrite that option.
-    void append_option(const std::string opt_name, const std::string val);
-    void append_option(const std::string opt_name, const int val);
-    void append_option(const std::string opt_name, const bool val);
-    void append_option(const std::string opt_name, const char* const v);
+    void append_option(const std::string& opt_name, const std::string& val);
+    void append_option(const std::string& opt_name, const int val);
+    void append_option(const std::string& opt_name, const bool val);
+    void append_option(const std::string& opt_name, const char* const v);
 
 // add an option with a list of variables -->  table = { name = 'elem1 elem2 ...' }
 // corresponds to Parameter::PT_MULTI
@@ -131,17 +131,17 @@ public:
     bool add_unsupported_comment(std::string unsupported_var);
 
 // return true if this name exists as an option name for the selected table
-    bool option_exists(const std::string name);
+    bool option_exists(const std::string& name);
 // return true if this name exists as an option name for the selected table
 // and value updated successfully
-    bool get_option_value(const std::string name, std::string& value);
+    bool get_option_value(const std::string& name, std::string& value);
 
 private:
     template<typename T>
-    bool do_add_option(const std::string opt_name, const T val, const std::string s_val);
+    bool do_add_option(const std::string& opt_name, const T val, const std::string& s_val);
 
     template<typename T> 
-    void do_append_option(const std::string opt_name, const T val, const std::string s_val);
+    void do_append_option(const std::string& opt_name, const T val, const std::string& s_val);
 
     void create_append_data(std::string& fqn, Table*& t);
     bool should_delegate() const;

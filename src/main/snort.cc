@@ -978,7 +978,7 @@ DAQ_Verdict Snort::packet_callback(
     int inject = 0;
     verdict = update_verdict(verdict, inject);
 
-    PacketTracer::log("NAP id %d, IPS id %d, Verdict %s\n",
+    PacketTracer::log("NAP id %u, IPS id %u, Verdict %s\n",
         get_network_policy()->policy_id, get_ips_policy()->policy_id,
         SFDAQ::verdict_to_string(verdict));
 

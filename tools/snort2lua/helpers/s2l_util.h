@@ -72,7 +72,7 @@ bool file_exists(const std::string& name);
  */
 bool get_string(std::istringstream& data_stream,
     std::string& option,
-    const std::string delimiters);
+    const std::string& delimiters);
 
 /*
  * Returns the rest of the data_streams data as one argument.
@@ -100,7 +100,7 @@ std::string get_rule_option_args(std::istringstream& data_stream);
  *
  */
 std::string rule_option_find_val(std::istringstream& data_stream,
-    std::string opt_name);
+    const std::string& opt_name);
 
 // remove any ']]' and double spaces from this string.
 std::string& sanitize_lua_string(std::string& s);
@@ -108,7 +108,7 @@ std::string& sanitize_lua_string(std::string& s);
 // find the location of the first space before max_str_length.
 // if no space exists before max_str_length, return the first space
 // after max_length. Otherwise, return std::string::npos
-std::size_t get_substr_length(std::string s, std::size_t max_length);
+std::size_t get_substr_length(const std::string& s, std::size_t max_length);
 
 bool case_compare(std::string, std::string);
 bool is_regular_file(std::string& path);

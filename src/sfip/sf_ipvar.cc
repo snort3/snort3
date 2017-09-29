@@ -31,7 +31,7 @@
 
 #include "sf_ipvar.h"
 
-#include <assert.h>
+#include <cassert>
 #include "utils/util.h"
 
 #include "sf_cidr.h"
@@ -39,7 +39,9 @@
 
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"
+#include "utils/util_cstring.h"
 #endif
+
 #define LIST_OPEN '['
 #define LIST_CLOSE ']'
 
@@ -1085,8 +1087,7 @@ bool sfvar_ip_in(sfip_var_t* var, const SfIp* ip)
 #ifdef UNIT_TEST
 #define SFIPVAR_TEST_BUFF_LEN 512
 static char sfipvar_test_buff[SFIPVAR_TEST_BUFF_LEN];
-extern int safe_snprintf(char* s, size_t n, const char* format, ... );
-void print_var_list(sfip_node_t* var_list, bool print_bits = false)
+static void print_var_list(sfip_node_t* var_list, bool print_bits = false)
 {
     int n = 0;
     for(sfip_node_t* p = var_list; p; p = p->next)

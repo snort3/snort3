@@ -79,7 +79,6 @@ bool Gtp::convert(std::istringstream& data_stream)
 
         if (!keyword.compare("ports"))
         {
-            std::string tmp = "";
             table_api.add_diff_option_comment("ports", "bindings");
 
             if ((data_stream >> keyword) && !keyword.compare("{"))

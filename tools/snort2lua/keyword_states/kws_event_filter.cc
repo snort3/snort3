@@ -31,7 +31,7 @@ namespace
 class Filter : public ConversionState
 {
 public:
-    Filter(Converter& c, std::string s) : ConversionState(c), type(s) { }
+    Filter(Converter& c, const std::string& s) : ConversionState(c), type(s) { }
     virtual ~Filter() { }
     virtual bool convert(std::istringstream& data_stream);
 

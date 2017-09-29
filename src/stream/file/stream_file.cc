@@ -36,12 +36,12 @@ public:
     StreamFile(bool b)
     { config.upload = b; }
 
-    void eval(Packet*) override;
+    NORETURN_ASSERT void eval(Packet*) override;
 
     StreamFileConfig config;
 };
 
-void StreamFile::eval(Packet*)
+NORETURN_ASSERT void StreamFile::eval(Packet*)
 {
     // session::process() instead
     assert(false);

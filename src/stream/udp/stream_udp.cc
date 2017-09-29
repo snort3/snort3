@@ -62,7 +62,7 @@ public:
     ~StreamUdp();
 
     void show(SnortConfig*);
-    void eval(Packet*);
+    NORETURN_ASSERT void eval(Packet*);
 
 public:
     StreamUdpConfig* config;
@@ -84,7 +84,7 @@ void StreamUdp::show(SnortConfig*)
         udp_show(config);
 }
 
-void StreamUdp::eval(Packet*)
+NORETURN_ASSERT void StreamUdp::eval(Packet*)
 {
     // session::process() instead
     assert(false);

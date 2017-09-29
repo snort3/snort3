@@ -47,7 +47,7 @@ using namespace std;
 
 string Shell::fatal;
 
-int Shell::panic(lua_State* L)
+[[noreturn]] int Shell::panic(lua_State* L)
 {
     fatal = lua_tostring(L, -1);
     throw runtime_error(fatal);

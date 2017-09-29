@@ -281,7 +281,7 @@ void HttpInspect::eval(Packet* p)
     {
         if (HttpTestManager::use_test_output())
         {
-            fprintf(HttpTestManager::get_output_file(), "Sent to detection %u octets\n\n",
+            fprintf(HttpTestManager::get_output_file(), "Sent to detection %hu octets\n\n",
                 p->dsize);
             fflush(HttpTestManager::get_output_file());
         }

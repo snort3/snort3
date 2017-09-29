@@ -177,7 +177,6 @@ bool StreamTcp::parse_ports(std::istringstream& arg_stream)
 bool StreamTcp::parse_protocol(std::istringstream& arg_stream)
 {
     std::string dir;
-    std::string lua_dir;
     std::string protocol;
     std::vector<std::string>* protocols;
     Binder* bind;

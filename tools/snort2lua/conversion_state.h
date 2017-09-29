@@ -93,7 +93,7 @@ protected:
         return false;
     }
 
-    inline bool parse_string_option(std::string opt_name,
+    inline bool parse_string_option(const std::string& opt_name,
         std::istringstream& stream)
     {
         std::string val;
@@ -107,11 +107,11 @@ protected:
             return true;
         }
 
-        table_api.add_comment("snort.conf missing argument for: " + opt_name + " <int>");
+        table_api.add_comment("snort.conf missing argument for: " + opt_name + " <string>");
         return false;
     }
 
-    inline bool parse_int_option(std::string opt_name,
+    inline bool parse_int_option(const std::string& opt_name,
         std::istringstream& stream, bool append)
     {
         int val;
@@ -130,7 +130,7 @@ protected:
     }
 
     // parse and add a curly bracketed list to the table
-    inline bool parse_curly_bracket_list(std::string list_name, std::istringstream& stream)
+    inline bool parse_curly_bracket_list(const std::string& list_name, std::istringstream& stream)
     {
         std::string elem;
         bool retval = true;
@@ -145,14 +145,14 @@ protected:
     }
 
     // parse and add a yes/no boolean option.
-    inline bool parse_yn_bool_option(std::string opt_name, std::istringstream& stream, bool append)
+    inline bool parse_yn_bool_option(const std::string& opt_name, std::istringstream& stream, bool append, const char* yes = "yes", const char* no = "no")
     {
         std::string val;
 
         if (!(stream >> val))
             return false;
 
-        else if (!val.compare("yes"))
+        else if (!val.compare(yes))
         {
             if (append)
             {
@@ -162,7 +162,7 @@ protected:
             else
                 return table_api.add_option(opt_name, true);
         }
-        else if (!val.compare("no"))
+        else if (!val.compare(no))
         {
             if (append)
             {
@@ -178,7 +178,7 @@ protected:
     }
 
     // parse a curly bracketed bit and add it to the table
-    inline bool parse_bracketed_byte_list(std::string list_name, std::istringstream& stream)
+    inline bool parse_bracketed_byte_list(const std::string& list_name, std::istringstream& stream)
     {
         std::string elem;
         bool retval = true;
@@ -216,7 +216,7 @@ protected:
     }
 
     // parse and add a curly bracket list '{...}' which is currently unsupported in Snort++
-    inline bool parse_bracketed_unsupported_list(std::string list_name, std::istringstream& stream)
+    inline bool parse_bracketed_unsupported_list(const std::string& list_name, std::istringstream& stream)
     {
         std::string tmp = "";
         std::string elem;
@@ -234,7 +234,7 @@ protected:
         return table_api.add_option("--" + list_name, tmp);
     }
 
-    inline bool parse_deleted_option(std::string opt_name,
+    inline bool parse_deleted_option(const std::string& opt_name,
         std::istringstream& stream)
     {
         std::string val;

@@ -29,11 +29,11 @@ class DataApi;
 class Variable
 {
 public:
-    Variable(std::string name, int depth);
-    Variable(std::string name);
+    Variable(const std::string& name, int depth);
+    Variable(const std::string& name);
     virtual ~Variable();
 
-    inline std::string get_name() { return name; }
+    inline const std::string& get_name() { return name; }
     std::string get_value(DataApi*);
     bool add_value(std::string);
     

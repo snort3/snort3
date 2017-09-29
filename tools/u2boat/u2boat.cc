@@ -304,6 +304,7 @@ int main(int argc, char* argv[])
     }
     if ((output_file = fopen(output_filename, "w")) == NULL)
     {
+        fclose(input_file);
         fprintf(stderr, "Unable to open/create file: %s\n", output_filename);
         return FAILURE;
     }

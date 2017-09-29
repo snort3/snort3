@@ -47,14 +47,14 @@ private:
     bool parse_smb_file_inspection(std::istringstream& data_stream);
     bool parse_detect(std::istringstream& data_stream, std::map<std::string, Binder*> bind, bool
         is_detect);
-    void add_default_ports(std::string type, std::map<std::string, Binder*> bind);
-    bool parse_and_add_ports(std::string ports, std::string type,  std::map<std::string,
+    void add_default_ports(const std::string& type, std::map<std::string, Binder*> bind);
+    bool parse_and_add_ports(const std::string& ports, const std::string& type,  std::map<std::string,
         Binder*> bind, bool bind_port_to_tcp);
     bool init_net_created_table();
     bool init_new_tables(bool is_default);
     bool parse_nets(std::istringstream& data_stream, std::map<std::string,
         Binder*> bind);
-    bool add_option_to_transports(std::string option, std::string value, bool co_only);
+    bool add_option_to_transports(const std::string& option, const std::string& value, bool co_only);
     std::map<std::string, bool> detect_ports_set;
     std::map<std::string, bool> autodetect_ports_set;
     std::map<std::string, std::string> table_name;
@@ -62,16 +62,16 @@ private:
 };
 
 bool add_option_to_table(
-    TableApi&, std::string table_name, std::string option, const std::string val);
+    TableApi&, const std::string& table_name, const std::string& option, const std::string& val);
 
 bool add_option_to_table(
-    TableApi&, std::string table_name, std::string option, const int val);
+    TableApi&, const std::string& table_name, const std::string& option, const int val);
 
 bool add_option_to_table(
-    TableApi&, std::string table_name, std::string option, const bool val);
+    TableApi&, const std::string& table_name, const std::string& option, const bool val);
 
 bool add_deleted_comment_to_table(
-    TableApi&, std::string table_name, std::string option);
+    TableApi&, const std::string& table_name, const std::string& option);
 } // namespace dce
 } // namespace preprocessors
 

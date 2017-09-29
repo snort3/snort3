@@ -178,7 +178,7 @@ void LogMessage(FILE* fh, const char* format,...)
     va_list ap;
     va_start(ap, format);
 
-    WriteLogMessage(fh, fh != stdout, format, ap);
+    WriteLogMessage(fh, (fh != stdout && fh != stderr), format, ap);
 
     va_end(ap);
 }
@@ -303,7 +303,7 @@ void ErrorMessage(const char* format,...)
     }
 }
 
-void log_safec_error(const char* msg, void*, int e)
+NORETURN_ASSERT void log_safec_error(const char* msg, void*, int e)
 {
     static THREAD_LOCAL unsigned safec_errors = 0;
 

@@ -27,8 +27,8 @@
 class RuleSubOption
 {
 public:
-    RuleSubOption(std::string name);
-    RuleSubOption(std::string name, std::string val);
+    RuleSubOption(const std::string& name);
+    RuleSubOption(const std::string& name, const std::string& val);
     virtual ~RuleSubOption();
 
     // overloading operators

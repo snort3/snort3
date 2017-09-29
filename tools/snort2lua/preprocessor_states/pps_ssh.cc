@@ -97,7 +97,6 @@ bool Ssh::convert(std::istringstream& data_stream)
 
         else if (!keyword.compare("server_ports"))
         {
-            std::string tmp = "";
             table_api.add_diff_option_comment("server_ports", "bindings");
 
             if ((data_stream >> keyword) && !keyword.compare("{"))

@@ -41,7 +41,9 @@ namespace memory
 // metadata
 // -----------------------------------------------------------------------------
 
-struct Metadata
+// NOTE: This structure must be aligned to max_align_t as long as we are prepending
+//       it to memory allocations so that the returned memory is also aligned.
+struct alignas(max_align_t) Metadata
 {
 #if defined(REG_TEST) || defined(UNIT_TEST)
     static constexpr size_t SANITY_CHECK_VALUE = 0xabcdef;

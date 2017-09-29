@@ -23,7 +23,7 @@
 #include "data/data_types/dt_var.h"
 #include "data/data_types/dt_comment.h"
 
-static inline Table* find_table(std::vector<Table*> vec, std::string name)
+static inline Table* find_table(std::vector<Table*> vec, const std::string& name)
 {
     if (name.empty())
         return nullptr;
@@ -43,7 +43,7 @@ Table::Table(int d)
         Comments::CommentType::SINGLE_LINE);
 }
 
-Table::Table(std::string table_name, int d)
+Table::Table(const std::string& table_name, int d)
 {
     this->name = table_name;
     this->depth = d;
@@ -87,7 +87,7 @@ Table* Table::open_table()
     return t;
 }
 
-Table* Table::open_table(std::string table_name)
+Table* Table::open_table(const std::string& table_name)
 {
     Table* t = find_table(tables, table_name);
 
@@ -99,14 +99,14 @@ Table* Table::open_table(std::string table_name)
     return t;
 }
 
-bool Table::add_option(std::string value)
+bool Table::add_option(const std::string& value)
 {
     Option* o = new Option(value, depth + 1);
     options.push_back(o);
     return true;
 }
 
-bool Table::add_option(std::string opt_name, int value)
+bool Table::add_option(const std::string& opt_name, int value)
 {
     if (has_option(opt_name, value))
         return true;
@@ -116,7 +116,7 @@ bool Table::add_option(std::string opt_name, int value)
     return true;
 }
 
-bool Table::add_option(std::string opt_name, bool value)
+bool Table::add_option(const std::string& opt_name, bool value)
 {
     if (has_option(opt_name, value))
         return true;
@@ -126,7 +126,7 @@ bool Table::add_option(std::string opt_name, bool value)
     return true;
 }
 
-bool Table::add_option(std::string opt_name, std::string value)
+bool Table::add_option(const std::string& opt_name, const std::string& value)
 {
     if (has_option(opt_name, value))
         return true;
@@ -136,7 +136,7 @@ bool Table::add_option(std::string opt_name, std::string value)
     return true;
 }
 
-void Table::append_option(std::string opt_name, int value)
+void Table::append_option(const std::string& opt_name, int value)
 {
     if (!has_option(opt_name, value))
     {
@@ -145,7 +145,7 @@ void Table::append_option(std::string opt_name, int value)
     }
 }
 
-void Table::append_option(std::string opt_name, bool value)
+void Table::append_option(const std::string& opt_name, bool value)
 {
     if (!has_option(opt_name, value))
     {
@@ -154,7 +154,7 @@ void Table::append_option(std::string opt_name, bool value)
     }
 }
 
-void Table::append_option(std::string opt_name, std::string value)
+void Table::append_option(const std::string& opt_name, const std::string& value)
 {
     if (!has_option(opt_name, value))
     {
@@ -163,7 +163,7 @@ void Table::append_option(std::string opt_name, std::string value)
     }
 }
 
-bool Table::add_list(std::string list_name, std::string next_elem)
+bool Table::add_list(const std::string& list_name, const std::string& next_elem)
 {
     for (auto l : lists)
         if (l->get_name() == list_name)
@@ -174,7 +174,7 @@ bool Table::add_list(std::string list_name, std::string next_elem)
     return var->add_value(next_elem);
 }
 
-bool Table::has_option(const std::string opt_name)
+bool Table::has_option(const std::string& opt_name)
 {
     for (Option* o : options)
         if (!opt_name.compare(o->get_name()))
@@ -187,7 +187,7 @@ bool Table::has_option(const std::string opt_name)
     return false;
 }
 
-bool Table::get_option(const std::string opt_name, std::string& value)
+bool Table::get_option(const std::string& opt_name, std::string& value)
 {
     for (Option* o : options)
         if (!opt_name.compare(o->get_name()))
@@ -206,7 +206,7 @@ bool Table::get_option(const std::string opt_name, std::string& value)
     return false;
 }
 
-bool Table::has_option(Option opt)
+bool Table::has_option(const Option& opt)
 {
     for (Option* o : options)
         if ( (*o) == opt)
@@ -219,25 +219,25 @@ bool Table::has_option(Option opt)
     return false;
 }
 
-bool Table::has_option(std::string opt_name, int val)
+bool Table::has_option(const std::string& opt_name, int val)
 {
     Option opt(opt_name, val, depth + 1);
     return has_option(opt);
 }
 
-bool Table::has_option(std::string opt_name, bool val)
+bool Table::has_option(const std::string& opt_name, bool val)
 {
     Option opt(opt_name, val, depth + 1);
     return has_option(opt);
 }
 
-bool Table::has_option(std::string opt_name, std::string val)
+bool Table::has_option(const std::string& opt_name, const std::string& val)
 {
     Option opt(opt_name, val, depth + 1);
     return has_option(opt);
 }
 
-void Table::add_comment(std::string c)
+void Table::add_comment(const std::string& c)
 {
     comments->add_sorted_text(c);
 }

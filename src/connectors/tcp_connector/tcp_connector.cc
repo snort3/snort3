@@ -429,7 +429,7 @@ static Connector* tcp_connector_tinit(ConnectorConfig* config)
         return nullptr;
     }
 
-    sprintf(port_string, "%5d", (cfg->base_port + instance));
+    snprintf(port_string, sizeof(port_string), "%5hu", static_cast<uint16_t>(cfg->base_port + instance));
 
     TcpConnector* tcp_connector;
 

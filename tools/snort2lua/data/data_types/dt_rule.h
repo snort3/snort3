@@ -33,15 +33,15 @@ public:
     Rule();
     virtual ~Rule();
 
-    bool add_hdr_data(std::string data);
-    void add_option(std::string keyword);
-    void add_option(std::string keyword, std::string data);
-    void add_suboption(std::string keyword);
-    void add_suboption(std::string keyword, std::string val);
-    void set_curr_options_buffer(std::string buffer, bool add_option);
-    void update_rule_action(std::string);
+    bool add_hdr_data(const std::string& data);
+    void add_option(const std::string& keyword);
+    void add_option(const std::string& keyword, const std::string& data);
+    void add_suboption(const std::string& keyword);
+    void add_suboption(const std::string& keyword, const std::string& val);
+    void set_curr_options_buffer(const std::string& buffer, bool add_option);
+    void update_rule_action(const std::string&);
 
-    void add_comment(std::string comment);
+    void add_comment(const std::string& comment);
     void bad_rule();
     void make_comment();
 

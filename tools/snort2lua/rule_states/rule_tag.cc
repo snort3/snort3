@@ -42,11 +42,6 @@ bool Tag::convert(std::istringstream& data_stream)
     std::string args;
     std::string value;
     std::string type;
-    int seconds = 0;
-    int bytes = 0;
-    int packets = 0;
-    bool is_host = false;
-    bool valid = true;
 
     args = util::get_rule_option_args(data_stream);
     std::istringstream arg_stream(args);
@@ -59,6 +54,12 @@ bool Tag::convert(std::istringstream& data_stream)
     }
     else
     {
+        int seconds = 0;
+        int bytes = 0;
+        int packets = 0;
+        bool is_host = false;
+        bool valid = true;
+
         if (!value.compare("host"))
             is_host = true;
 
@@ -84,7 +85,7 @@ bool Tag::convert(std::istringstream& data_stream)
                     {
                         opt_val = std::stoi(value);
                     }
-                    catch (std::exception e)
+                    catch (std::exception &e)
                     {
                         rule_api.bad_rule(data_stream, "can't convert " + value + ":" + e.what());
                         valid = false;

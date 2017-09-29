@@ -64,7 +64,7 @@ static void help()
          << "-t: Tail mode for reading live files\n";
 }
 
-static void error(string e)
+static void error(const string& e)
 {
     if( done )
         return;

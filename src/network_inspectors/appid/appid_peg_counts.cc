@@ -52,8 +52,8 @@ void AppIdPegCounts::cleanup_pegs()
     delete appid_peg_counts;
 }
 
-void AppIdPegCounts::init_detector_peg_info(std::string& app_name, std::string name_suffix,
-    std::string help_suffix)
+void AppIdPegCounts::init_detector_peg_info(const std::string& app_name, const std::string& name_suffix,
+    const std::string& help_suffix)
 {
     std::string name = app_name + name_suffix;
     std::string help = "count of ";

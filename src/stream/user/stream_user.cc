@@ -55,7 +55,7 @@ public:
 
     void show(SnortConfig*) override;
 
-    void eval(Packet*) override;
+    NORETURN_ASSERT void eval(Packet*) override;
 
 public:
     StreamUserConfig* config;
@@ -76,7 +76,7 @@ void StreamUser::show(SnortConfig*)
     user_show(config);
 }
 
-void StreamUser::eval(Packet*)
+NORETURN_ASSERT void StreamUser::eval(Packet*)
 {
     // session::process() instead
     assert(false);

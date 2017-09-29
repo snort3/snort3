@@ -47,7 +47,7 @@ public:
     { return loaded; }
 
 private:
-    static int panic(lua_State*);
+    [[noreturn]] static int panic(lua_State*);
     static std::string fatal;
 
 private:

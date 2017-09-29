@@ -15,7 +15,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// out_sfunified2.cc author Carter Waxman <cwaxman@cisco.com>
+// out_sfunified2.cc author Michael Altizer <mialtize@cisco.com>
 
 #include <sstream>
 
@@ -28,25 +28,77 @@ namespace output
 {
     namespace
     {
-        //FIXIT-L add when available
-        static std::string header = "output sf_unified2: ";
-
-        template<std::string* header_text>
-        static ConversionState* unified2_ctor(Converter& c)
-        { return new UnsupportedState<header_text>(c); }
+        class SfUnified2 : public ConversionState
+        {
+        public:
+            SfUnified2(Converter& c) : ConversionState(c) { }
+            virtual ~SfUnified2() { }
+            virtual bool convert(std::istringstream& data_stream);
+        };
 
     } // namespace
+
+
+    bool SfUnified2::convert(std::istringstream& data_stream)
+    {
+        std::string args;
+        bool retval = true;
+
+        table_api.open_table("firewall_logging");
+
+        while (std::getline(data_stream, args, ','))
+        {
+            bool tmpval = true;
+            std::string keyword;
+
+            std::istringstream arg_stream(args);
+            arg_stream >> keyword;
+
+            if (keyword.empty())
+                continue;
+
+            else if (!keyword.compare("nostamp"))
+                tmpval = table_api.add_option("no_timestamp", true);
+
+            else if (!keyword.compare("mpls_event_types"))
+                tmpval = table_api.add_option("mpls_event_types", true);
+
+            else if (!keyword.compare("vlan_event_types"))
+                tmpval = table_api.add_option("vlan_event_types", true);
+
+            else if (!keyword.compare("filename"))
+                tmpval = parse_string_option("filename", arg_stream);
+
+            else if (!keyword.compare("limit"))
+                tmpval = parse_int_option("file_size_limit", arg_stream, false);
+
+            else
+                tmpval = false;
+
+            if (retval)
+                retval = tmpval;
+        }
+
+        return retval;
+    }
 
     /**************************
      *******  A P I ***********
      **************************/
 
-    static const ConvertMap unified2_api =
+    static ConversionState* ctor(Converter& c)
+    {
+        c.get_table_api().open_top_level_table("firewall_logging"); // in case there are no arguments
+        c.get_table_api().close_table();
+        return new SfUnified2(c);
+    }
+
+    static const ConvertMap sfunified2_api =
     {
         "sf_unified2",
-        unified2_ctor<&header>,
+        ctor,
     };
 
-    const ConvertMap* sfunified2_map = &unified2_api;
+    const ConvertMap* sfunified2_map = &sfunified2_api;
 } // output namespace
 

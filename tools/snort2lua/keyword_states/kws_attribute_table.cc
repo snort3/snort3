@@ -278,8 +278,6 @@ void AttributeTable::parse_os()
                     "hosts.tcp_policy = hpux11");
                 table_api.add_option("tcp_policy", "hpux11");
             }
-            else if (!policy.compare("macos"))
-                table_api.add_option("tcp_policy", "macos");
 
             else if (!policy.compare("unknown"))
                 table_api.add_deleted_comment("<STREAM_POLICY>unknown</STREAM_POLICY>");

@@ -42,8 +42,8 @@ bool Converter::convert_rules_mult_files = true;
 bool Converter::convert_conf_mult_files = true;
 
 Converter::Converter()
-    :   state(nullptr),
-    table_api(&top_table_api, table_delegation),
+    :   table_api(&top_table_api, table_delegation),
+    state(nullptr),
     error(false),
     multiline_state(false)
 {
@@ -74,7 +74,7 @@ void Converter::reset_state()
     rule_api.reset_state();
 }
 
-int Converter::parse_include_file(std::string input_file)
+int Converter::parse_include_file(const std::string& input_file)
 {
     std::vector<Variable*> vars;
     std::vector<Table*> tables;
@@ -164,7 +164,7 @@ int Converter::parse_include_file(std::string input_file)
     return rc;
 }
 
-int Converter::parse_file(std::string input_file, bool reset)
+int Converter::parse_file(const std::string& input_file, bool reset)
 {
     std::ifstream in;
     std::string orig_text;
@@ -334,8 +334,8 @@ void Converter::add_bindings()
         binders.pop_back();
 }
 
-int Converter::convert(std::string input,
-    std::string output_file,
+int Converter::convert(const std::string& input,
+    const std::string& output_file,
     std::string rule_file,
     std::string error_file)
 {

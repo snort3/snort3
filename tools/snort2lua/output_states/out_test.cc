@@ -42,7 +42,6 @@ bool AlertTest::convert(std::istringstream& data_stream)
     std::string keyword;
     std::string args = std::string();
     bool retval = true;
-    std::string units;
 
     table_api.open_top_level_table("alert_test");
 

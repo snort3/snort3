@@ -164,7 +164,7 @@ void TableApi::close_table()
 }
 
 template<typename T>
-bool TableApi::do_add_option(const std::string opt_name, T val, const std::string s_val)
+bool TableApi::do_add_option(const std::string& opt_name, T val, const std::string& s_val)
 {
     if ( should_delegate() )
         return delegate->add_option(opt_name, val);
@@ -181,7 +181,7 @@ bool TableApi::do_add_option(const std::string opt_name, T val, const std::strin
     return true;
 }
 
-bool TableApi::add_option(const std::string val)
+bool TableApi::add_option(const std::string& val)
 {
     if ( should_delegate() )
         return delegate->add_option(val);
@@ -198,13 +198,13 @@ bool TableApi::add_option(const std::string val)
     return true;
 }
 
-bool TableApi::add_option(const std::string option_name, const std::string val)
+bool TableApi::add_option(const std::string& option_name, const std::string& val)
 { return do_add_option(option_name, val, val); }
 
-bool TableApi::add_option(const std::string option_name, const int val)
+bool TableApi::add_option(const std::string& option_name, const int val)
 { return do_add_option(option_name, val, std::to_string(val)); }
 
-bool TableApi::add_option(const std::string option_name, const bool val)
+bool TableApi::add_option(const std::string& option_name, const bool val)
 { return do_add_option(option_name, val, std::to_string(val)); }
 
 // compilers are fickle and dangerous creatures.  Ensure a literal gets
@@ -212,7 +212,7 @@ bool TableApi::add_option(const std::string option_name, const bool val)
 bool TableApi::add_option(const char* const v)
 { return add_option(std::string(v)); }
 
-bool TableApi::add_option(const std::string name, const char* const v)
+bool TableApi::add_option(const std::string& name, const char* const v)
 { return add_option(name, std::string(v)); }
 
 void TableApi::create_append_data(std::string& fqn, Table*& t)
@@ -238,7 +238,7 @@ void TableApi::create_append_data(std::string& fqn, Table*& t)
 }
 
 template<typename T>
-void TableApi::do_append_option(const std::string option_name, const T val, const std::string s_val)
+void TableApi::do_append_option(const std::string& option_name, const T val, const std::string& s_val)
 {
     if ( should_delegate() )
     {
@@ -264,16 +264,16 @@ void TableApi::do_append_option(const std::string option_name, const T val, cons
             + option_name + " = " + s_val);
 }
 
-void TableApi::append_option(const std::string option_name, const std::string val)
+void TableApi::append_option(const std::string& option_name, const std::string& val)
 { do_append_option(option_name, val, val); }
 
-void TableApi::append_option(const std::string option_name, const int val)
+void TableApi::append_option(const std::string& option_name, const int val)
 { do_append_option(option_name, val, std::to_string(val)); }
 
-void TableApi::append_option(const std::string option_name, const bool val)
+void TableApi::append_option(const std::string& option_name, const bool val)
 { do_append_option(option_name, val, std::to_string(val)); }
 
-void TableApi::append_option(const std::string name, const char* const v)
+void TableApi::append_option(const std::string& name, const char* const v)
 { append_option(name, std::string(v)); }
 
 bool TableApi::add_list(std::string list_name, std::string next_elem)
@@ -321,7 +321,7 @@ bool TableApi::add_comment(std::string comment)
     return true;
 }
 
-bool TableApi::option_exists(const std::string name)
+bool TableApi::option_exists(const std::string& name)
 {
     if ( should_delegate() )
         return delegate->option_exists(name);
@@ -411,7 +411,7 @@ void TableApi::swap_tables(std::vector<Table*>& new_tables)
     tables.swap(new_tables);
 }
 
-bool TableApi::get_option_value(const std::string name, std::string& value)
+bool TableApi::get_option_value(const std::string& name, std::string& value)
 {
     if ( should_delegate() )
         return delegate->get_option_value(name, value);

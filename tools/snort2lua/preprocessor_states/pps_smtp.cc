@@ -71,7 +71,6 @@ bool Smtp::parse_alt_max_cmd(std::istringstream& stream)
 {
     int len;
     std::string elem;
-    std::string format = std::string();
 
     if (!(stream >> len))
         return false;
@@ -303,7 +302,6 @@ bool Smtp::convert(std::istringstream& data_stream)
         }
         else if (!keyword.compare("ports"))
         {
-            std::string tmp = "";
             table_api.add_diff_option_comment("ports", "bindings");
 
             if ((data_stream >> keyword) && !keyword.compare("{"))

@@ -79,7 +79,6 @@ bool FtpServer::parse_alt_max_cmd(std::istringstream& stream)
 {
     int len;
     std::string elem;
-    std::string format = std::string();
 
     if (!(stream >> len))
         return false;

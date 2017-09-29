@@ -222,7 +222,6 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
     while ( extract_payload(arg_stream, keyword) )
     {
         std::istringstream opts(keyword);
-        std::string tmp_str;
         val = "";
 
         opts >> keyword;  // guaranteed to work since get_string is true

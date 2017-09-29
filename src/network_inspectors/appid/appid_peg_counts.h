@@ -131,7 +131,7 @@ private:
      static std::vector<PegInfo> appid_pegs;
      static THREAD_LOCAL std::vector<PegCount>* appid_peg_counts;
 
-     static void init_detector_peg_info(std::string& app_name, std::string name_suffix,
-         std::string help_suffix);
+     static void init_detector_peg_info(const std::string& app_name, const std::string& name_suffix,
+         const std::string& help_suffix);
 };
 #endif

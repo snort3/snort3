@@ -56,20 +56,20 @@ public:
     void swap_rules(std::vector<Rule*>&); // FIXIT-L ?
 
     // include a snort-style rule file!
-    void include_rule_file(std::string file_name);
+    void include_rule_file(const std::string& file_name);
 
     // Create a given rule
-    void add_hdr_data(std::string data);
-    void update_rule_action(std::string new_type);
-    void add_option(std::string keyword);
-    void add_option(std::string keyword, std::string val);
-    void add_suboption(std::string keyword);
-    void add_suboption(std::string keyword, std::string val);
-    void set_curr_options_buffer(std::string buffer, bool add_option=false);
+    void add_hdr_data(const std::string& data);
+    void update_rule_action(const std::string& new_type);
+    void add_option(const std::string& keyword);
+    void add_option(const std::string& keyword, const std::string& val);
+    void add_suboption(const std::string& keyword);
+    void add_suboption(const std::string& keyword, const std::string& val);
+    void set_curr_options_buffer(const std::string& buffer, bool add_option=false);
 
-    void add_comment(std::string coment);
+    void add_comment(const std::string& comment);
     void make_rule_a_comment();
-    void bad_rule(std::istringstream& stream, std::string bad_option);
+    void bad_rule(std::istringstream& stream, const std::string& bad_option);
 
 private:
     static std::size_t error_count;

@@ -29,7 +29,7 @@
  **************  MAIN FILES  *****************
  *********************************************/
 
-static void print_line(std::string s)
+static void print_line(const std::string& s)
 {
     if (!DataApi::is_quiet_mode())
         std::cout << s << std::endl;

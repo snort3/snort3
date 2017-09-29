@@ -105,7 +105,7 @@ static inline void fpLogOther(
     if ( EventTrace_IsEnabled() )
         EventTrace_Log(p, otn, action);
 
-    PacketTracer::log("Event: %d:%d:%d, Action %s\n",
+    PacketTracer::log("Event: %u:%u:%u, Action %s\n",
         otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev,
         get_action_string((RuleType)action));
 

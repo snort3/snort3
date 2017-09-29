@@ -44,7 +44,7 @@ public:
     void tinit() override;
     void tterm() override;
 
-    void eval(Packet*) override;
+    NORETURN_ASSERT void eval(Packet*) override;
 
 public:
     TcpStreamConfig* config;
@@ -81,7 +81,7 @@ void StreamTcp::tterm()
     TcpHAManager::tterm();
 }
 
-void StreamTcp::eval(Packet*)
+NORETURN_ASSERT void StreamTcp::eval(Packet*)
 {
     // uses session::process() instead
     assert(false);

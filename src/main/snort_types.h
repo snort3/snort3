@@ -40,6 +40,12 @@ typedef uint16_t Port;
 
 #define UNUSED(x) (void)(x)
 
+#ifdef NDEBUG
+#define NORETURN_ASSERT
+#else
+#define NORETURN_ASSERT [[noreturn]]
+#endif
+
 #ifndef SO_PUBLIC
 #if defined _WIN32 || defined __CYGWIN__
 #  ifdef __GNUC__

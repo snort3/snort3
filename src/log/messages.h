@@ -61,7 +61,7 @@ SO_PUBLIC void ErrorMessage(const char*, ...) __attribute__((format (printf, 1, 
 // FIXIT-M do not call FatalError() during runtime
 [[noreturn]] SO_PUBLIC void FatalError(const char*, ...) __attribute__((format (printf, 1, 2)));
 
-[[noreturn]] void log_safec_error(const char*, void*, int);
+NORETURN_ASSERT void log_safec_error(const char*, void*, int);
 
 class Dumper
 {

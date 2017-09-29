@@ -93,12 +93,6 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
             tmpval = parse_int_option("max_sessions", arg_stream, false);
             table_api.close_table();
         }
-        else if (!keyword.compare("max_tcp"))
-        {
-            table_api.open_table("tcp_cache");
-            tmpval = parse_int_option("max_sessions", arg_stream, false);
-            table_api.close_table();
-        }
         else if (!keyword.compare("tcp_cache_nominal_timeout"))
         {
             table_api.open_table("tcp_cache");

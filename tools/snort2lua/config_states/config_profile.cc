@@ -37,7 +37,7 @@ public:
     virtual bool convert(std::istringstream& data_stream);
 
     template<typename T>
-    bool add_or_append(const std::string opt_name, T val)
+    bool add_or_append(const std::string& opt_name, T val)
     {
         if ( table_api.option_exists(opt_name) )
         {
@@ -50,7 +50,7 @@ public:
     }
 
     template<typename T>
-    bool append_if_exists(const std::string opt_name, T val)
+    bool append_if_exists(const std::string& opt_name, T val)
     {
         if ( table_api.option_exists(opt_name) )
         {

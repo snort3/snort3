@@ -29,14 +29,14 @@ class RuleSubOption;
 class RuleOption
 {
 public:
-    RuleOption(std::string name);
-    RuleOption(std::string name, std::string val);
+    RuleOption(const std::string& name);
+    RuleOption(const std::string& name, const std::string& val);
     virtual ~RuleOption();
 
-    inline std::string get_name() { return name; }
+    inline const std::string& get_name() { return name; }
 
-    bool add_suboption(std::string name);
-    bool add_suboption(std::string name, std::string val);
+    bool add_suboption(const std::string& name);
+    bool add_suboption(const std::string& name, const std::string& val);
 
     // overloading operators
     friend std::ostream& operator<<(std::ostream&, const RuleOption&);

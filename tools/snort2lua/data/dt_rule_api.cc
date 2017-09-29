@@ -87,7 +87,7 @@ void RuleApi::make_rule_a_comment()
     curr_rule->make_comment();
 }
 
-void RuleApi::bad_rule(std::istringstream& stream, std::string bad_option)
+void RuleApi::bad_rule(std::istringstream& stream, const std::string& bad_option)
 {
     if (!curr_rule)
         begin_rule();
@@ -104,7 +104,7 @@ void RuleApi::bad_rule(std::istringstream& stream, std::string bad_option)
     bad_rules->add_text("^^^^ unknown_option=" + bad_option);
 }
 
-void RuleApi::include_rule_file(std::string file_name)
+void RuleApi::include_rule_file(const std::string& file_name)
 {
     if (curr_rule)
     {
@@ -119,7 +119,7 @@ void RuleApi::include_rule_file(std::string file_name)
     }
 }
 
-void RuleApi::add_hdr_data(std::string data)
+void RuleApi::add_hdr_data(const std::string& data)
 {
     if (!curr_rule)
         begin_rule();
@@ -127,7 +127,7 @@ void RuleApi::add_hdr_data(std::string data)
     curr_rule->add_hdr_data(data);
 }
 
-void RuleApi::update_rule_action(std::string new_type)
+void RuleApi::update_rule_action(const std::string& new_type)
 {
     if (!curr_rule)
     {
@@ -140,7 +140,7 @@ void RuleApi::update_rule_action(std::string new_type)
     }
 }
 
-void RuleApi::add_option(std::string opt_name)
+void RuleApi::add_option(const std::string& opt_name)
 {
     if (!curr_rule)
         begin_rule();
@@ -148,7 +148,7 @@ void RuleApi::add_option(std::string opt_name)
     curr_rule->add_option(opt_name);
 }
 
-void RuleApi::add_option(std::string opt_name, std::string val)
+void RuleApi::add_option(const std::string& opt_name, const std::string& val)
 {
     if (!curr_rule)
         begin_rule();
@@ -156,7 +156,7 @@ void RuleApi::add_option(std::string opt_name, std::string val)
     curr_rule->add_option(opt_name, val);
 }
 
-void RuleApi::add_suboption(std::string keyword)
+void RuleApi::add_suboption(const std::string& keyword)
 {
     if (curr_rule)
         curr_rule->add_suboption(keyword);
@@ -164,8 +164,8 @@ void RuleApi::add_suboption(std::string keyword)
         DataApi::developer_error("Add some header data before adding content!!");
 }
 
-void RuleApi::add_suboption(std::string keyword,
-    std::string val)
+void RuleApi::add_suboption(const std::string& keyword,
+    const std::string& val)
 {
     if (curr_rule)
         curr_rule->add_suboption(keyword, val);
@@ -173,7 +173,7 @@ void RuleApi::add_suboption(std::string keyword,
         DataApi::developer_error("Add some header data before adding content!!");
 }
 
-void RuleApi::set_curr_options_buffer(std::string buffer, bool add_option)
+void RuleApi::set_curr_options_buffer(const std::string& buffer, bool add_option)
 {
     if (curr_rule)
         curr_rule->set_curr_options_buffer(buffer, add_option);
@@ -181,7 +181,7 @@ void RuleApi::set_curr_options_buffer(std::string buffer, bool add_option)
         DataApi::developer_error("Add some header data before adding content!!");
 }
 
-void RuleApi::add_comment(std::string comment)
+void RuleApi::add_comment(const std::string& comment)
 {
     if (!curr_rule)
         begin_rule();

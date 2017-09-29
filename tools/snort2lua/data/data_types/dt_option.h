@@ -28,15 +28,15 @@ class Option
 {
 public:
     Option(std::string val, int depth);
-    Option(std::string name, int val, int depth);
-    Option(std::string name, bool val, int depth);
-    Option(std::string name, std::string val, int depth);
+    Option(const std::string& name, int val, int depth);
+    Option(const std::string& name, bool val, int depth);
+    Option(const std::string& name, std::string val, int depth);
     virtual ~Option();
 
-    inline std::string get_name()
+    inline const std::string& get_name()
     { return name; }
 
-    inline std::string get_value()
+    inline const std::string& get_value()
     { return value; }
 
     void set_print_whitespace(bool w)

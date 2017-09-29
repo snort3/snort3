@@ -34,7 +34,7 @@ Rule::~Rule()
         delete ro;
 }
 
-bool Rule::add_hdr_data(std::string data)
+bool Rule::add_hdr_data(const std::string& data)
 {
     if (num_hdr_data < hdr_data.size())
     {
@@ -49,37 +49,37 @@ bool Rule::add_hdr_data(std::string data)
     }
 }
 
-void Rule::update_rule_action(std::string new_type)
+void Rule::update_rule_action(const std::string& new_type)
 { hdr_data[0] = new_type; }
 
 void Rule::bad_rule()
 { is_bad_rule = true; }
 
-void Rule::add_comment(std::string new_comment)
+void Rule::add_comment(const std::string& new_comment)
 { comments.push_back("# " + new_comment); }
 
 void Rule::make_comment()
 { is_comment = true; }
 
-void Rule::add_option(std::string keyword)
+void Rule::add_option(const std::string& keyword)
 {
     RuleOption* r = new RuleOption(keyword);
     options.push_back(r);
 }
 
-void Rule::add_option(std::string keyword, std::string data)
+void Rule::add_option(const std::string& keyword, const std::string& data)
 {
     RuleOption* r = new RuleOption(keyword, data);
     options.push_back(r);
 }
 
-void Rule::add_suboption(std::string keyword)
+void Rule::add_suboption(const std::string& keyword)
 { options.back()->add_suboption(keyword); }
 
-void Rule::add_suboption(std::string keyword, std::string val)
+void Rule::add_suboption(const std::string& keyword, const std::string& val)
 { options.back()->add_suboption(keyword, val); }
 
-void Rule::set_curr_options_buffer(std::string new_buffer, bool add_option)
+void Rule::set_curr_options_buffer(const std::string& new_buffer, bool add_option)
 {
     /* set the buffer if
      * 1) No buffer has been set and this is not the default "pkt_data" buffer

@@ -143,7 +143,7 @@ std::string& sanitize_lua_string(std::string& s)
     return s;
 }
 
-std::size_t get_substr_length(std::string str, std::size_t max_length)
+std::size_t get_substr_length(const std::string& str, std::size_t max_length)
 {
     std::size_t str_len;
 
@@ -164,7 +164,7 @@ std::size_t get_substr_length(std::string str, std::size_t max_length)
 
 bool get_string(std::istringstream& stream,
     std::string& option,
-    const std::string delimiters)
+    const std::string& delimiters)
 {
     if (delimiters.empty() || !stream.good())
     {
@@ -247,7 +247,7 @@ std::string get_rule_option_args(std::istringstream& stream)
 }
 
 std::string rule_option_find_val(std::istringstream& data_stream,
-    std::string opt_name)
+    const std::string& opt_name)
 {
     std::string rule_keyword;
     std::string val = std::string();

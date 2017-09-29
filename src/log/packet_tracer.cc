@@ -166,7 +166,7 @@ void PacketTracer::add_header_info(Packet* p)
         p->ptrs.ip_api.get_src()->ntop(sipstr, sizeof(sipstr));
         p->ptrs.ip_api.get_dst()->ntop(dipstr, sizeof(dipstr));
 
-        log("%s:%u -> %s:%u proto %u\n",
+        log("%s:%hu -> %s:%hu proto %u\n",
             sipstr, p->ptrs.sp, dipstr, p->ptrs.dp, (unsigned)p->ptrs.ip_api.proto());
         log("Packet: %s", p->get_type());
         if (p->type() == PktType::TCP)
