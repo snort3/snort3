@@ -121,6 +121,7 @@ public:
     void set_port_service_id(AppId id)
     {
         port_service_id = id;
+        AppIdPegCounts::inc_service_count(id);
     }
 
 private:
@@ -148,7 +149,7 @@ public:
         if ( my_user_id != app_id )
         {
             my_user_id = app_id;
-            update_user_stats(app_id);
+            AppIdPegCounts::inc_user_count(app_id);
         }
     }
 
@@ -165,11 +166,6 @@ public:
     void update_stats(AppId id) override
     {
         AppIdPegCounts::inc_client_count(id);
-    }
-
-    void update_user_stats(AppId id)
-    {
-        AppIdPegCounts::inc_user_count(id);
     }
 
 private:

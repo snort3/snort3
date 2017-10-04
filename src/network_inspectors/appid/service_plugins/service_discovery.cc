@@ -512,7 +512,7 @@ int ServiceDiscovery::identify_service(AppIdSession* asd, Packet* p, int dir)
     else if ( dir == APP_ID_FROM_RESPONDER )    // bidirectional exchange unknown service
     {
         if (asd->session_logging_enabled)
-            LogMessage("AppIdDbg %s no RNA service detector\n", asd->session_logging_id);
+            LogMessage("AppIdDbg %s no service detector\n", asd->session_logging_id);
 
         fail_service(asd, p, dir, nullptr);
         ret = APPID_NOMATCH;
