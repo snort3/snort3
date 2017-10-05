@@ -482,7 +482,7 @@ class Binder : public Inspector
 {
 public:
     Binder(vector<Binding*>&);
-    ~Binder();
+    ~Binder() override;
 
     void show(SnortConfig*) override
     { LogMessage("Binder\n"); }

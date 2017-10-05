@@ -25,7 +25,7 @@
 #include "sfrt_flat.h" // FIXIT-L these includes are circular
 #include "sfrt_flat_dir.h"
 
-#include <stdarg.h>
+#include <cstdarg>
 
 #if SIZEOF_UNSIGNED_LONG_INT == 8
 #define ARCH_WIDTH 64

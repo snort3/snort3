@@ -75,7 +75,7 @@ static SSHData* SetNewSSHData(Packet* p)
 static SSHData* get_session_data(Flow* flow)
 {
     SshFlowData* fd = (SshFlowData*)flow->get_flow_data(SshFlowData::inspector_id);
-    return fd ? &fd->session : NULL;
+    return fd ? &fd->session : nullptr;
 }
 
 static void PrintSshConf(SSH_PROTO_CONF* config)
@@ -102,7 +102,7 @@ static void PrintSshConf(SSH_PROTO_CONF* config)
  * p: Pointer to the SSH packet.
  * buflen: the size of packet buffer.
 */
-static unsigned int SSHPacket_GetLength(SSH2Packet* p, size_t buflen)
+static unsigned int SSHPacket_GetLength(const SSH2Packet* p, size_t buflen)
 {
     unsigned int ssh_length;
 
@@ -139,7 +139,7 @@ static void snort_ssh(SSH_PROTO_CONF* config, Packet* p)
     // Attempt to get a previously allocated SSH block.
     SSHData* sessp = get_session_data(p->flow);
 
-    if (sessp == NULL)
+    if (sessp == nullptr)
     {
         /* Check the stream session. If it does not currently
          * have our SSH data-block attached, create one.
@@ -292,7 +292,7 @@ static void snort_ssh(SSH_PROTO_CONF* config, Packet* p)
  * returns 1 otherwise.
 */
 
-static inline int SSHCheckStrlen(char* str, int max)
+static inline int SSHCheckStrlen(const char* str, int max)
 {
     if ( memchr(str, '\0', max) )
         return 0;           /* str size is <= max bytes */
@@ -315,9 +315,9 @@ static inline int SSHCheckStrlen(char* str, int max)
 static unsigned int ProcessSSHProtocolVersionExchange(SSH_PROTO_CONF* config, SSHData* sessionp,
     Packet* p, uint8_t direction)
 {
-    char* version_stringp = (char*)p->data;
+    const char* version_stringp = (const char*)p->data;
     uint8_t version;
-    char* version_end;
+    const char* version_end;
 
     /* Get the version. */
     if ( p->dsize >= 6 &&
@@ -395,7 +395,7 @@ static unsigned int ProcessSSHProtocolVersionExchange(SSH_PROTO_CONF* config, SS
 static unsigned int ProcessSSHKeyInitExchange(SSHData* sessionp, Packet* p,
     uint8_t direction, unsigned int offset)
 {
-    SSH2Packet* ssh2p = NULL;
+    const SSH2Packet* ssh2p = nullptr;
     uint16_t dsize = p->dsize;
     const unsigned char* data = p->data;
     unsigned int ssh_length = 0;
@@ -461,7 +461,7 @@ static unsigned int ProcessSSHKeyInitExchange(SSHData* sessionp, Packet* p,
             return 0;
         }
 
-        message_type = *( (uint8_t*)(data + padding_length + 4));
+        message_type = *( (const uint8_t*)(data + padding_length + 4));
 
         switch ( message_type )
         {
@@ -518,7 +518,7 @@ static unsigned int ProcessSSHKeyInitExchange(SSHData* sessionp, Packet* p,
         }
 
         /* Overlay the SSH2 binary data packet struct on the packet */
-        ssh2p = (SSH2Packet*)data;
+        ssh2p = (const SSH2Packet*)data;
         if ( dsize < SSH2_HEADERLEN + 1)
         {
             /* Invalid packet length. */
@@ -572,7 +572,7 @@ static unsigned int ProcessSSHKeyInitExchange(SSHData* sessionp, Packet* p,
 static unsigned int ProcessSSHKeyExchange(SSHData* sessionp, Packet* p,
     uint8_t direction, unsigned int offset)
 {
-    SSH2Packet* ssh2p = NULL;
+    const SSH2Packet* ssh2p = nullptr;
     uint16_t dsize = p->dsize;
     const unsigned char* data = p->data;
     unsigned int ssh_length;
@@ -590,7 +590,7 @@ static unsigned int ProcessSSHKeyExchange(SSHData* sessionp, Packet* p,
 
     while (next_packet)
     {
-        ssh2p = (SSH2Packet*)(data + npacket_offset);
+        ssh2p = (const SSH2Packet*)(data + npacket_offset);
         ssh_length = SSHPacket_GetLength(ssh2p, dsize);
 
         if (ssh_length == 0)
@@ -738,7 +738,7 @@ class Ssh : public Inspector
 {
 public:
     Ssh(SSH_PROTO_CONF*);
-    ~Ssh();
+    ~Ssh() override;
 
     void show(SnortConfig*) override;
     void eval(Packet*) override;

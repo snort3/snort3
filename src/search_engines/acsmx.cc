@@ -60,7 +60,7 @@
 #include "main/thread.h"
 #include "utils/util.h"
 
-#define MEMASSERT(p,s) if (!p) { fprintf(stderr,"ACSM-No Memory: %s\n",s); exit(0); }
+#define MEMASSERT(p,s) if (!(p)) { fprintf(stderr,"ACSM-No Memory: %s\n",s); exit(0); }
 
 static int max_memory = 0;
 
@@ -116,7 +116,7 @@ static ACSM_PATTERN* CopyMatchListEntry(ACSM_PATTERN* px)
     MEMASSERT(p, "CopyMatchListEntry");
     memcpy(p, px, sizeof (ACSM_PATTERN));
     px->udata->ref_count++;
-    p->next = 0;
+    p->next = nullptr;
     return p;
 }
 
@@ -173,8 +173,8 @@ static void AddPatternStates(ACSM_STRUCT* acsm, ACSM_PATTERN* p)
 */
 static void Build_NFA(ACSM_STRUCT* acsm)
 {
-    ACSM_PATTERN* mlist=0;
-    ACSM_PATTERN* px=0;
+    ACSM_PATTERN* mlist=nullptr;
+    ACSM_PATTERN* px=nullptr;
 
     std::list<int> queue;
 
@@ -224,7 +224,7 @@ static void Build_NFA(ACSM_STRUCT* acsm)
                  *  else we could just manipulate pointers to fake the copy.
                  */
                 for (mlist  = acsm->acsmStateTable[next].MatchList;
-                    mlist != NULL;
+                    mlist != nullptr;
                     mlist  = mlist->next)
                 {
                     px = CopyMatchListEntry (mlist);
@@ -323,7 +323,7 @@ static void acsmBuildMatchStateTrees(SnortConfig* sc, ACSM_STRUCT* acsm)
     /* Find the states that have a MatchList */
     for (int i = 0; i < acsm->acsmMaxStates; i++)
     {
-        for ( mlist=acsm->acsmStateTable[i].MatchList; mlist!=NULL; mlist=mlist->next )
+        for ( mlist=acsm->acsmStateTable[i].MatchList; mlist!=nullptr; mlist=mlist->next )
         {
             if (mlist->udata->id)
             {
@@ -343,7 +343,7 @@ static void acsmBuildMatchStateTrees(SnortConfig* sc, ACSM_STRUCT* acsm)
         if (acsm->acsmStateTable[i].MatchList)
         {
             /* Last call to finalize the tree */
-            acsm->agent->build_tree(sc, NULL,
+            acsm->agent->build_tree(sc, nullptr,
                 &acsm->acsmStateTable[i].MatchList->rule_option_tree);
         }
     }
@@ -359,7 +359,7 @@ static inline int _acsmCompile(ACSM_STRUCT* acsm)
 
     /* Count number of states */
     acsm->acsmMaxStates = 1;
-    for (plist = acsm->acsmPatterns; plist != NULL; plist = plist->next)
+    for (plist = acsm->acsmPatterns; plist != nullptr; plist = plist->next)
     {
         acsm->acsmMaxStates += plist->n;
     }
@@ -380,7 +380,7 @@ static inline int _acsmCompile(ACSM_STRUCT* acsm)
     }
 
     /* Add each Pattern to the State Table */
-    for (plist = acsm->acsmPatterns; plist != NULL; plist = plist->next)
+    for (plist = acsm->acsmPatterns; plist != nullptr; plist = plist->next)
     {
         AddPatternStates (acsm, plist);
     }
@@ -448,7 +448,7 @@ int acsmSearch(
     {
         state = StateTable[state].NextState[*T];
 
-        if ( StateTable[state].MatchList != NULL )
+        if ( StateTable[state].MatchList != nullptr )
         {
             mlist = StateTable[state].MatchList;
             index = T + 1 - Tc;

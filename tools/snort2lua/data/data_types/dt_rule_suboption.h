@@ -29,7 +29,7 @@ class RuleSubOption
 public:
     RuleSubOption(const std::string& name);
     RuleSubOption(const std::string& name, const std::string& val);
-    virtual ~RuleSubOption();
+    virtual ~RuleSubOption() = default;
 
     // overloading operators
     friend std::ostream& operator<<(std::ostream&, const RuleSubOption&);

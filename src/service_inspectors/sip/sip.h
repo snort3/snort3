@@ -40,7 +40,7 @@ class SipFlowData : public FlowData
 {
 public:
     SipFlowData();
-    ~SipFlowData();
+    ~SipFlowData() override;
 
     static void init()
     { inspector_id = FlowData::create_flow_data_id(); }

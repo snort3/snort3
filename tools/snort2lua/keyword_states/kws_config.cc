@@ -33,8 +33,7 @@ class Config : public ConversionState
 {
 public:
     Config(Converter& c) : ConversionState(c) { }
-    virtual ~Config() { }
-    virtual bool convert(std::istringstream& data);
+    bool convert(std::istringstream& data) override;
 };
 } // namespace
 

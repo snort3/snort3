@@ -89,7 +89,7 @@ public:
     static void release_plugins();
 
     virtual void initialize() = 0;
-    virtual void register_detector(std::string, AppIdDetector*,  IpProtocol);
+    virtual void register_detector(const std::string&, AppIdDetector*,  IpProtocol);
     virtual void add_pattern_data(AppIdDetector*, SearchTool*, int position,
         const uint8_t* const pattern, unsigned size, unsigned nocase);
     virtual void register_tcp_pattern(AppIdDetector*, const uint8_t* const pattern, unsigned size,

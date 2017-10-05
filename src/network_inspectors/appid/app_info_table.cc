@@ -25,7 +25,7 @@
 
 #include "app_info_table.h"
 
-#include <limits.h>
+#include <climits>
 #include <string>
 
 #include "appid_api.h"

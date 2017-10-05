@@ -22,7 +22,7 @@
 #include "config.h"
 #endif
 
-#include <string.h>
+#include <cstring>
 
 #include "catch/catch.hpp"
 #include "catch/unit_test.h"
@@ -119,24 +119,24 @@ static FuncTest ftests[] =
     { "sfip_pton", "::",
       "0000:0000:0000:0000:0000:0000:0000:0000", SFIP_SUCCESS },
 
-    { "sfip_is_set", "8::", NULL, SFIP_SUCCESS },
-    { "sfip_is_set", "::1", NULL, SFIP_SUCCESS },
-    { "sfip_is_set", "::", NULL, SFIP_FAILURE },
+    { "sfip_is_set", "8::", nullptr, SFIP_SUCCESS },
+    { "sfip_is_set", "::1", nullptr, SFIP_SUCCESS },
+    { "sfip_is_set", "::", nullptr, SFIP_FAILURE },
 
-    { "sfip_is_loopback", "127.0.0.0", NULL, SFIP_SUCCESS },
-    { "sfip_is_loopback", "127.255.255.255", NULL, SFIP_SUCCESS },
-    { "sfip_is_loopback", "128.0.0.0", NULL, SFIP_FAILURE },
-    { "sfip_is_loopback", "::1", NULL, SFIP_SUCCESS },
-    { "sfip_is_loopback", "::2", NULL, SFIP_FAILURE },
-    { "sfip_is_loopback", "::7f00:0/104", NULL, SFIP_SUCCESS },
-    { "sfip_is_loopback", "::ffff:127.0.0.0/104", NULL, SFIP_SUCCESS },
-    { "sfip_is_loopback", "::127.0.0.0", NULL, SFIP_SUCCESS },
-    { "sfip_is_loopback", "::128.0.0.1", NULL, SFIP_FAILURE },
-    { "sfip_is_loopback", "::ffff:0.0.0.1", NULL, SFIP_FAILURE },
+    { "sfip_is_loopback", "127.0.0.0", nullptr, SFIP_SUCCESS },
+    { "sfip_is_loopback", "127.255.255.255", nullptr, SFIP_SUCCESS },
+    { "sfip_is_loopback", "128.0.0.0", nullptr, SFIP_FAILURE },
+    { "sfip_is_loopback", "::1", nullptr, SFIP_SUCCESS },
+    { "sfip_is_loopback", "::2", nullptr, SFIP_FAILURE },
+    { "sfip_is_loopback", "::7f00:0/104", nullptr, SFIP_SUCCESS },
+    { "sfip_is_loopback", "::ffff:127.0.0.0/104", nullptr, SFIP_SUCCESS },
+    { "sfip_is_loopback", "::127.0.0.0", nullptr, SFIP_SUCCESS },
+    { "sfip_is_loopback", "::128.0.0.1", nullptr, SFIP_FAILURE },
+    { "sfip_is_loopback", "::ffff:0.0.0.1", nullptr, SFIP_FAILURE },
 
-    { "sfip_ismapped", "::ffff:c000:280", NULL, SFIP_SUCCESS },
-    { "sfip_ismapped", "8::ffff:c000:280", NULL, SFIP_FAILURE },
-    { "sfip_ismapped", "::fffe:c000:280", NULL, SFIP_FAILURE },
+    { "sfip_ismapped", "::ffff:c000:280", nullptr, SFIP_SUCCESS },
+    { "sfip_ismapped", "8::ffff:c000:280", nullptr, SFIP_FAILURE },
+    { "sfip_ismapped", "::fffe:c000:280", nullptr, SFIP_FAILURE },
 
     // v6<->v6 Comparisons
     { "sfip_compare", "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7:8", SFIP_EQUAL },

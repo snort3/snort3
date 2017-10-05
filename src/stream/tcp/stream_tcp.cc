@@ -36,7 +36,7 @@ class StreamTcp : public Inspector
 {
 public:
     StreamTcp(TcpStreamConfig*);
-    ~StreamTcp();
+    ~StreamTcp() override;
 
     void show(SnortConfig*) override;
     bool configure(SnortConfig*) override;

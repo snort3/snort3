@@ -32,8 +32,7 @@ class Classification : public ConversionState
 {
 public:
     Classification(Converter& c) : ConversionState(c) { }
-    virtual ~Classification() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 

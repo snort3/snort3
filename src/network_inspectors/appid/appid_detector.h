@@ -104,8 +104,8 @@ enum APPID_STATUS_CODE
 class AppIdDetector
 {
 public:
-    AppIdDetector();
-    virtual ~AppIdDetector();
+    AppIdDetector() = default;
+    virtual ~AppIdDetector() = default;
 
     virtual int initialize();
     virtual void do_custom_init() = 0;
@@ -178,11 +178,11 @@ protected:
 };
 
 #if defined(WORDS_BIGENDIAN)
-#define LETOHS(p)   BYTE_SWAP_16(*((uint16_t*)(p)))
-#define LETOHL(p)   BYTE_SWAP_32(*((uint32_t*)(p)))
+#define LETOHS(p)   BYTE_SWAP_16(*((const uint16_t*)(p)))
+#define LETOHL(p)   BYTE_SWAP_32(*((const uint32_t*)(p)))
 #else
-#define LETOHS(p)   (*((uint16_t*)(p)))
-#define LETOHL(p)   (*((uint32_t*)(p)))
+#define LETOHS(p)   (*((const uint16_t*)(p)))
+#define LETOHL(p)   (*((const uint32_t*)(p)))
 #endif
 
 #endif

@@ -46,7 +46,7 @@ void PrintAllInterfaces()
     printf("Index\tDevice\tPhysical Address\tIP Address\tDescription\n");
     printf("-----\t------\t----------------\t----------\t-----------\n");
 
-    for (dev = alldevs; dev != NULL; dev = dev->next, j++)
+    for (dev = alldevs; dev != nullptr; dev = dev->next, j++)
     {
         printf("%5d", j);
         printf("\t%s", dev->name);

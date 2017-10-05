@@ -33,8 +33,7 @@ class Metadata : public ConversionState
 {
 public:
     Metadata(Converter& c) : ConversionState(c) { }
-    virtual ~Metadata() { }
-    virtual bool convert(std::istringstream& data);
+    bool convert(std::istringstream& data) override;
 };
 } // namespace
 
@@ -43,8 +42,8 @@ bool Metadata::convert(std::istringstream& data_stream)
     std::string keyword;
     std::string tmp;
     std::string value;
-    std::string soid_val = "";
-    std::string service = "";
+    std::string soid_val;
+    std::string service;
 
     bool add_opt = true;
 
@@ -73,19 +72,19 @@ bool Metadata::convert(std::istringstream& data_stream)
         if (value.back() == ',')
             value.pop_back();
 
-        if (!keyword.compare("rule-flushing"))
+        if (keyword == "rule-flushing")
             rule_api.add_comment("metadata: rule-flushing - deprecated");
 
-        else if (!keyword.compare("soid"))
+        else if (keyword == "soid")
             soid_val = value;  // add this after metadata to keep ordering
 
-        else if (!keyword.compare("service"))
+        else if (keyword == "service")
         {
             if ( service.length() )
                 service += ", ";
             service += value;  // add this after metadata to keep ordering
         }
-        else if (!keyword.compare("engine"))
+        else if (keyword == "engine")
         {
             rule_api.make_rule_a_comment();
             rule_api.add_comment("metadata: engine - deprecated");

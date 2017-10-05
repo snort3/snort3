@@ -24,8 +24,9 @@
 
 #include "perf_tracker.h"
 
-#include <limits.h>
 #include <sys/stat.h>
+
+#include <climits>
 
 #include "log/messages.h"
 #include "main/snort_config.h"
@@ -321,7 +322,7 @@ static bool rotate_file(const char* old_file, FILE* old_fh,
                 }
             }
         }
-        while (0);
+        while (false);
 
         if (rotate_fh)
             fclose(rotate_fh);

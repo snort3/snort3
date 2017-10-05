@@ -52,9 +52,9 @@ SNORT_CATCH_FORCED_INCLUSION_DEFINITION(sfthd_test);
 
 #define LOG_OK  0              // event is loggable
 #define LOG_NO  1              // event was filtered
-#define LOG_SU -1              // event was suppressed
+#define LOG_SU (-1)              // event was suppressed
 
-#define MEM_DEFAULT 1024*1024  // default if not re"config"ed
+#define MEM_DEFAULT (1024*1024)  // default if not re"config"ed
 #define MEM_MINIMUM 0          // forces use of minimum
 
 // priority should not be exposed as implemented ...
@@ -90,9 +90,9 @@ typedef struct
     int expect;
 } EventData;
 
-static THD_STRUCT* pThd = NULL;
-static ThresholdObjects* pThdObjs = NULL;
-static SFXHASH* dThd = NULL;
+static THD_STRUCT* pThd = nullptr;
+static ThresholdObjects* pThdObjs = nullptr;
+static SFXHASH* dThd = nullptr;
 
 //---------------------------------------------------------------
 
@@ -757,7 +757,7 @@ static void Init(ThreshData* base, int max)
 
         if ( p->type != THD_TYPE_DETECT )
         {
-            sfip_var_t* set = p->ip ? sfip_var_from_string(p->ip) : NULL;
+            sfip_var_t* set = p->ip ? sfip_var_from_string(p->ip) : nullptr;
 
             p->create = sfthd_create_threshold(nullptr,
                 pThdObjs, p->gid, p->sid, p->tracking, p->type, PRIORITY,
@@ -795,9 +795,9 @@ static void InitDetect()
 static void Term()
 {
     sfthd_objs_free(pThdObjs);
-    pThdObjs = NULL;
+    pThdObjs = nullptr;
     sfthd_free(pThd);
-    pThd = NULL;
+    pThd = nullptr;
 
     for ( unsigned i = 0; i < NUM_RULS; i++ )
     {

@@ -27,8 +27,7 @@ class Dcerpc : public ConversionState
 {
 public:
     Dcerpc(Converter& c) : ConversionState(c) { }
-    virtual ~Dcerpc() { }
-    virtual bool convert(std::istringstream& data);
+    bool convert(std::istringstream& data) override;
 
 private:
     bool add_deleted_comment_to_defaults(const std::string& option);
@@ -46,11 +45,11 @@ bool Dcerpc::add_option_to_all(const std::string& option, const bool val, bool c
 {
     bool tmpval = true;
 
-    for (auto type : transport)
+    for (const auto& type : transport)
     {
-        if ( (type.compare("http_proxy") == 0) || (type.compare("http_server") == 0) )
+        if ( (type == "http_proxy") || (type == "http_server") )
             continue;
-        if (co_only && (type.compare("udp") == 0))
+        if (co_only && (type == "udp"))
             continue;
         tmpval = add_option_to_table(table_api, "dce_" + type, option, val);
         for (int i=0; i < DcerpcServer::get_binding_id(); i++)
@@ -66,12 +65,12 @@ bool Dcerpc::add_option_to_all(const std::string& option, const int val, bool co
 {
     bool tmpval = true;
 
-    for (auto type : transport)
+    for (const auto& type : transport)
     {
-        if ( (type.compare("http_proxy") == 0) || (type.compare("http_server") == 0) )
+        if ( (type == "http_proxy") || (type == "http_server") )
             continue;
 
-        if (co_only && (type.compare("udp") == 0))
+        if (co_only && (type == "udp"))
             continue;
         tmpval = add_option_to_table(table_api, "dce_" + type, option, val);
         for (int i=0; i < DcerpcServer::get_binding_id(); i++)
@@ -111,7 +110,7 @@ bool Dcerpc::add_deleted_comment_to_defaults(const std::string& option)
 {
     bool tmpval = true;
 
-    for (auto type : transport)
+    for (const auto& type : transport)
     {
         tmpval = add_deleted_comment_to_table(table_api,"dce_" + type, option) && tmpval;
     }
@@ -163,18 +162,18 @@ bool Dcerpc::convert(std::istringstream& data_stream)
         if (keyword.empty())
             continue;
 
-        if (!keyword.compare("memcap"))
+        if (keyword == "memcap")
         {
             add_deleted_comment_to_defaults("memcap");
             tmpval = eat_option(data_stream);
         }
-        else if (!keyword.compare("disable_defrag"))
+        else if (keyword == "disable_defrag")
             tmpval = add_option_to_all("disable_defrag", true, false);
 
-        else if (!keyword.compare("max_frag_len"))
+        else if (keyword == "max_frag_len")
             tmpval = parse_int_and_add_to_all("max_frag_len", data_stream, false);
 
-        else if (!keyword.compare("events"))
+        else if (keyword == "events")
         {
             std::string events;
 
@@ -199,16 +198,16 @@ bool Dcerpc::convert(std::istringstream& data_stream)
                 while (events.find(']') == std::string::npos);
             }
         }
-        else if (!keyword.compare("reassemble_threshold"))
+        else if (keyword == "reassemble_threshold")
             tmpval = parse_int_and_add_to_all("reassemble_threshold", data_stream, true);
 
-        else if (!keyword.compare("disabled"))
+        else if (keyword == "disabled")
             tmpval = add_deleted_comment_to_defaults("disabled");
 
-        else if (!keyword.compare("smb_fingerprint_policy"))
+        else if (keyword == "smb_fingerprint_policy")
             tmpval = parse_string_and_add_to_type("smb", "smb_fingerprint_policy", data_stream);
 
-        else if (!keyword.compare("smb_legacy_mode"))
+        else if (keyword == "smb_legacy_mode")
             tmpval = add_option_to_type("smb", "smb_legacy_mode");
         else
         {

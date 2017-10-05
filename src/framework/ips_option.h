@@ -61,7 +61,7 @@ enum RuleDirection
 class SO_PUBLIC IpsOption
 {
 public:
-    virtual ~IpsOption() { }
+    virtual ~IpsOption() = default;
 
     // main thread
     virtual uint32_t hash() const;

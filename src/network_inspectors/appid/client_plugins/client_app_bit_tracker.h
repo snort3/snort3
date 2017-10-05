@@ -28,7 +28,6 @@ class BitTrackerClientDetector : public ClientDetector
 {
 public:
     BitTrackerClientDetector(ClientDiscovery*);
-    ~BitTrackerClientDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

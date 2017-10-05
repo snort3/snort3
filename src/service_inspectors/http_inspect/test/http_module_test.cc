@@ -55,14 +55,14 @@ bool HttpTestManager::print_hex {};
 HttpJsNorm::HttpJsNorm(int, const HttpParaList::UriParam& uri_param_) :
     max_javascript_whitespaces(0), uri_param(uri_param_), javascript_search_mpse(nullptr),
     htmltype_search_mpse(nullptr) {}
-HttpJsNorm::~HttpJsNorm() {}
+HttpJsNorm::~HttpJsNorm() = default;
 void HttpJsNorm::configure(){}
 
 TEST_GROUP(http_peg_count_test)
 {
     HttpModule mod;
 
-    void setup()
+    void setup() override
     {
         PegCount* counts = mod.get_counts();
         for (unsigned k=0; k < PEG_COUNT_MAX; k++)
@@ -71,7 +71,7 @@ TEST_GROUP(http_peg_count_test)
         }
     }
 
-    void teardown()
+    void teardown() override
     {
         PegCount* counts = mod.get_counts();
         for (unsigned k=0; k < PEG_COUNT_MAX; k++)

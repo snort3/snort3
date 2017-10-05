@@ -158,7 +158,6 @@ static TcpConnectorMsgHandle* read_message(int sock_fd)
 
 void TcpConnector::process_receive()
 {
-    TcpConnectorMsgHdr hdr;
     struct pollfd pfds[1];
     int rval;
 
@@ -308,7 +307,7 @@ static TcpConnector* tcp_connector_tinit_call(TcpConnectorConfig* cfg, const cha
 {
     struct addrinfo hints;
     struct addrinfo *result, *rp;
-    int sfd, s;
+    int sfd = -1, s;
 
     memset(&hints, 0, sizeof(struct addrinfo));
     hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
@@ -327,7 +326,7 @@ static TcpConnector* tcp_connector_tinit_call(TcpConnectorConfig* cfg, const cha
        If socket(or connect fails, we (close the socket
        and) try the next address. */
 
-    for (rp = result; rp != NULL; rp = rp->ai_next)
+    for (rp = result; rp != nullptr; rp = rp->ai_next)
     {
         sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
         if (sfd == -1)
@@ -341,7 +340,7 @@ static TcpConnector* tcp_connector_tinit_call(TcpConnectorConfig* cfg, const cha
 
     freeaddrinfo(result);           /* No longer needed */
 
-    if (rp == NULL)
+    if (rp == nullptr)
     {               /* No address succeeded */
         ErrorMessage("Could not connect\n");
         return nullptr;
@@ -355,19 +354,18 @@ static TcpConnector* tcp_connector_tinit_answer(TcpConnectorConfig* cfg, const c
 {
     struct addrinfo hints;
     struct addrinfo *result, *rp;
-    int sfd, s, peer_sfd;
-
+    int sfd = -1, s, peer_sfd;
 
     memset(&hints, 0, sizeof(struct addrinfo));
     hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;    /* For wildcard IP address */
     hints.ai_protocol = 0;          /* Any protocol */
-    hints.ai_canonname = NULL;
-    hints.ai_addr = NULL;
-    hints.ai_next = NULL;
+    hints.ai_canonname = nullptr;
+    hints.ai_addr = nullptr;
+    hints.ai_next = nullptr;
 
-    if ( (s = getaddrinfo(NULL, port, &hints, &result)) != 0 )
+    if ( (s = getaddrinfo(nullptr, port, &hints, &result)) != 0 )
     {
         ErrorMessage("getaddrinfo: %s\n", gai_strerror(s));
         return nullptr;
@@ -378,7 +376,7 @@ static TcpConnector* tcp_connector_tinit_answer(TcpConnectorConfig* cfg, const c
        If socket) (or bind)) fails, we (close the socket
        and) try the next address. */
 
-    for (rp = result; rp != NULL; rp = rp->ai_next) {
+    for (rp = result; rp != nullptr; rp = rp->ai_next) {
         sfd = socket(rp->ai_family, rp->ai_socktype,
                 rp->ai_protocol);
         if (sfd == -1)
@@ -392,7 +390,7 @@ static TcpConnector* tcp_connector_tinit_answer(TcpConnectorConfig* cfg, const c
 
     freeaddrinfo(result);           /* No longer needed */
 
-    if (rp == NULL)
+    if (rp == nullptr)
     {
         ErrorMessage("Could not bind\n");
         return nullptr;

@@ -58,9 +58,7 @@ struct HostApplicationEntry
 
     static const Protocol UNKNOWN_PROTOCOL = 0;
 
-    HostApplicationEntry()
-    {
-    }
+    HostApplicationEntry() = default;
 
     HostApplicationEntry(Protocol ipproto_param, Port port_param, Protocol protocol_param) :
         port(port_param),

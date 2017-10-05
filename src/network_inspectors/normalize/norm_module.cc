@@ -393,7 +393,7 @@ void NormalizeModule::add_test_peg(const PegInfo& norm) const
 
 const PegInfo* NormalizeModule::get_pegs() const
 {
-    if ( test_pegs.size() )
+    if ( !test_pegs.empty() )
         return &test_pegs[0];
 
     const PegInfo* p = Norm_GetPegs();

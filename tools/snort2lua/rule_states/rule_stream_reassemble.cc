@@ -33,8 +33,7 @@ class StreamReassemble : public ConversionState
 {
 public:
     StreamReassemble(Converter& c) : ConversionState(c) { }
-    virtual ~StreamReassemble() { }
-    virtual bool convert(std::istringstream& data);
+    bool convert(std::istringstream& data) override;
 };
 } // namespace
 
@@ -57,15 +56,15 @@ bool StreamReassemble::convert(std::istringstream& data_stream)
         return set_next_rule_state(data_stream);
     }
 
-    if ( action.compare("enable") && action.compare("disable") )
+    if ( action != "enable" && action != "disable" )
     {
         rule_api.bad_rule(data_stream, "stream_reassemble: " +
             action + " must be either 'enable' or 'disable'");
     }
 
-    if (direction.compare("client") &&
-        direction.compare("server") &&
-        direction.compare("both") )
+    if (direction != "client" &&
+        direction != "server" &&
+        direction != "both" )
     {
         rule_api.bad_rule(data_stream, "stream_reassemble: " +
             direction + " must be either 'client', 'server', or 'both'");
@@ -79,10 +78,10 @@ bool StreamReassemble::convert(std::istringstream& data_stream)
     std::string keyword;
     while ( util::get_string(arg_stream, keyword, ",") )
     {
-        if (!keyword.compare("noalert"))
+        if (keyword == "noalert")
             rule_api.add_suboption("noalert");
 
-        else if (!keyword.compare("fastpath"))
+        else if (keyword == "fastpath")
             rule_api.add_suboption("fastpath");
 
         else

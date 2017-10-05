@@ -100,6 +100,5 @@ void get_last_token(const Field& input, Field& last_token, char ichar)
     for (; (last_start >= input.start()) && (*last_start != ichar); last_start--);
     last_start++;
     last_token.set(input.length() - (last_start - input.start()), last_start);
-    return;
 }
 

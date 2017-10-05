@@ -56,8 +56,6 @@ Flow::Flow()
     memset(this, 0, sizeof(*this));
 }
 
-Flow::~Flow()
-{ }
 
 void Flow::init(PktType type)
 {

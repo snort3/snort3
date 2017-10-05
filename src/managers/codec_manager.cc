@@ -58,7 +58,7 @@ static const uint16_t IP_ID_COUNT = 8192;
 static THREAD_LOCAL std::array<uint16_t, IP_ID_COUNT> s_id_pool {
     { 0 }
 };
-static THREAD_LOCAL rand_t* s_rand = NULL;
+static THREAD_LOCAL rand_t* s_rand = nullptr;
 
 /*
  * Begin search from index 1.  0 is a special case in that it is the default
@@ -204,7 +204,7 @@ void CodecManager::thread_init(SnortConfig* sc)
             wrap.api->tinit();
 
     int daq_dlt = SFDAQ::get_base_protocol();
-    for (int i = 0; s_protocols[i] != 0; i++)
+    for (int i = 0; s_protocols[i] != nullptr; i++)
     {
         Codec* cd = s_protocols[i];
         std::vector<int> data_link_types;
@@ -223,7 +223,7 @@ void CodecManager::thread_init(SnortConfig* sc)
                 std::vector<ProtocolId> ids;
                 s_protocols[i]->get_protocol_ids(ids);
 
-                grinder_id = ( ids.size() > 0 ) ? ids[0] : ProtocolId::FINISHED_DECODE;
+                grinder_id = ( !ids.empty() ) ? ids[0] : ProtocolId::FINISHED_DECODE;
                 grinder = (uint8_t)i;
             }
         }
@@ -259,7 +259,7 @@ void CodecManager::thread_term()
     if ( s_rand )
     {
         rand_close(s_rand);
-        s_rand = NULL;
+        s_rand = nullptr;
     }
 }
 

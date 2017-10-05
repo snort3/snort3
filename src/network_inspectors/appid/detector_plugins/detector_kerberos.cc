@@ -472,9 +472,6 @@ KerberosServiceDetector::KerberosServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-KerberosServiceDetector::~KerberosServiceDetector()
-{
-}
 
 int KerberosServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
@@ -555,9 +552,6 @@ KerberosClientDetector::KerberosClientDetector(ClientDiscovery* cdm)
     handler->register_detector(name, this, proto);
 }
 
-KerberosClientDetector::~KerberosClientDetector()
-{
-}
 
 int KerberosClientDetector::krb_walk_client_packet(KRBState* krbs, const uint8_t* s,
     const  uint8_t* end, AppIdSession* asd)

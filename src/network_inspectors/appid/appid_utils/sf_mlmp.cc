@@ -93,7 +93,7 @@ static int patternMatcherCallback(void* id, void* unused_tree, int match_end_pos
 
 static uint32_t gPatternId = 1;
 
-tMlmpTree* mlmpCreate(void)
+tMlmpTree* mlmpCreate()
 {
     tMlmpTree* root = (tMlmpTree*)snort_calloc(sizeof(tMlmpTree));
     root->level = 0;
@@ -148,7 +148,7 @@ static void* mlmpMatchPatternCustom(tMlmpTree* rootNode, tMlmpPattern* inputPatt
     if (!rootNode || !pattern || !pattern->pattern)
         return nullptr;
 
-    rootNode->patternTree->find_all((char*)pattern->pattern, pattern->patternSize,
+    rootNode->patternTree->find_all((const char*)pattern->pattern, pattern->patternSize,
         patternMatcherCallback, false, (void*)&mp);
 
     primaryNode = (tPatternPrimaryNode*)callback(mp, pattern->pattern);
@@ -187,8 +187,8 @@ void mlmpDump(tMlmpTree* root)
  */
 static int compareMlmpPatterns(const void* p1, const void* p2)
 {
-    tMlmpPattern* pat1 = (tMlmpPattern*)p1;
-    tMlmpPattern* pat2 = (tMlmpPattern*)p2;
+    const tMlmpPattern* pat1 = (const tMlmpPattern*)p1;
+    const tMlmpPattern* pat2 = (const tMlmpPattern*)p2;
     int rValue;
     size_t minSize;
 
@@ -299,7 +299,7 @@ static void dumpTreesRecursively(tMlmpTree* rootNode)
             DebugFormat(DEBUG_APPID, "%s\t part %u/%u: Pattern %s, size %u\n", prefix,
                 ddPatternNode->partNum,
                 ddPatternNode->partTotal,
-                (char*)ddPatternNode->pattern.pattern,
+                (const char*)ddPatternNode->pattern.pattern,
                 (uint32_t)ddPatternNode->pattern.patternSize);
         }
 

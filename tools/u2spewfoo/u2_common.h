@@ -21,8 +21,8 @@
 #ifndef U2BOAT_H
 #define U2BOAT_H
 
-#include <stdio.h>
-#include <stdint.h>
+#include <cstdio>
+#include <cstdint>
 #include "log/unified2.h"
 
 struct u2record

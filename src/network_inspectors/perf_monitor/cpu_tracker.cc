@@ -133,7 +133,7 @@ public:
 
 protected:
     void get_clocks(struct timeval& user_time,
-        struct timeval& sys_time, struct timeval& wall_time)
+        struct timeval& sys_time, struct timeval& wall_time) override
     {
         user_time = user;
         sys_time = sys;

@@ -64,7 +64,6 @@ public:
     Base64DecodeOption(const Base64DecodeData& c) : IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_USE)
     { config = c; }
 
-    ~Base64DecodeOption() { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -100,7 +99,7 @@ bool Base64DecodeOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    Base64DecodeOption& rhs = (Base64DecodeOption&)ips;
+    const Base64DecodeOption& rhs = (const Base64DecodeOption&)ips;
     const Base64DecodeData* left = &config;
     const Base64DecodeData* right = &rhs.config;
 
@@ -143,7 +142,7 @@ int Base64DecodeOption::eval(Cursor& c, Packet*)
     uint8_t base64_buf[DECODE_BLEN];
     uint32_t base64_size = 0;
 
-    if (sf_unfold_header(start_ptr, size, base64_buf, sizeof(base64_buf), &base64_size, 0, 0) != 0)
+    if (sf_unfold_header(start_ptr, size, base64_buf, sizeof(base64_buf), &base64_size, 0, nullptr) != 0)
         return DETECTION_OPTION_NO_MATCH;
 
     if (idx->bytes_to_decode && (base64_size > idx->bytes_to_decode))

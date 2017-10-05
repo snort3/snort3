@@ -26,7 +26,7 @@
 #include "appid_config.h"
 
 #include <glob.h>
-#include <limits.h>
+#include <climits>
 
 #include "app_info_table.h"
 #include "appid_session.h"

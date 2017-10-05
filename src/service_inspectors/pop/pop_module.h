@@ -45,7 +45,7 @@ class PopModule : public Module
 {
 public:
     PopModule();
-    ~PopModule();
+    ~PopModule() override;
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;

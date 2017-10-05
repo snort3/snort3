@@ -70,7 +70,7 @@ int ControlConn::shell_execute(int& current_fd, Request*& current_request)
     std::string rsp;
     sh->execute(request->get(), rsp);
 
-    if ( rsp.size() and !is_blocked() )
+    if ( !rsp.empty() and !is_blocked() )
         request->respond(rsp.c_str());
 
     if ( fd >= 0 and !is_blocked() )

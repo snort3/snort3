@@ -28,7 +28,6 @@ class AimClientDetector : public ClientDetector
 {
 public:
     AimClientDetector(ClientDiscovery*);
-    ~AimClientDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

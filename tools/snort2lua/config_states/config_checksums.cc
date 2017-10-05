@@ -42,8 +42,7 @@ public:
     {
     }
 
-    virtual ~ConfigChecksum() { }
-    virtual bool convert(std::istringstream& stream)
+    bool convert(std::istringstream& stream) override
     {
         std::string val;
         bool retval = true;

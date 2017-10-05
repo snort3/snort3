@@ -88,7 +88,7 @@ int Dce2StubDataOption::eval(Cursor& c, Packet* p)
 
     if (ropts->stub_data != nullptr)
     {
-        c.set(s_name,(uint8_t*)ropts->stub_data, (uint16_t)(p->dsize - (ropts->stub_data -
+        c.set(s_name, ropts->stub_data, (uint16_t)(p->dsize - (ropts->stub_data -
             p->data)));
         return DETECTION_OPTION_MATCH;
     }

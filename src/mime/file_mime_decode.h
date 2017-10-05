@@ -62,7 +62,7 @@ public:
     DecodeResult decode_data(const uint8_t* start, const uint8_t* end);
 
     // Retrieve the decoded data the previous decode_data() call
-    int get_decoded_data(uint8_t** buf,  uint32_t* size);
+    int get_decoded_data(const uint8_t** buf,  uint32_t* size);
 
     int get_detection_depth();
 

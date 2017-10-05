@@ -33,8 +33,7 @@ class RuleHeader : public ConversionState
 {
 public:
     explicit RuleHeader(Converter& c) : ConversionState(c) { }
-    virtual ~RuleHeader() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 

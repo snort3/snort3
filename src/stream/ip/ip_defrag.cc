@@ -577,7 +577,7 @@ static void FragRebuild(FragTracker* ft, Packet* p)
     PacketManager::encode_format(ENC_FLAG_DEF|ENC_FLAG_FWD, p, dpkt, PSEUDO_PKT_IP);
 
     // the encoder ensures enough space for a maximum datagram
-    uint8_t* rebuild_ptr = (uint8_t*)dpkt->data;
+    uint8_t* rebuild_ptr = const_cast<uint8_t*>(dpkt->data);
 
     if (p->ptrs.ip_api.is_ip4())
     {
@@ -811,7 +811,7 @@ static inline void delete_node(FragTracker* ft, Fragment* node)
 static void delete_tracker(FragTracker* ft)
 {
     Fragment* idx = ft->fraglist;  /* pointer to the fraglist to delete */
-    Fragment* dump_me = NULL;      /* ptr to the Fragment element to drop */
+    Fragment* dump_me = nullptr;      /* ptr to the Fragment element to drop */
 
     trace_logf(stream_ip,
         "delete_tracker %d nodes to dump\n", ft->fraglist_count);
@@ -825,11 +825,11 @@ static void delete_tracker(FragTracker* ft)
         idx = idx->next;
         delete_frag(dump_me);
     }
-    ft->fraglist = NULL;
+    ft->fraglist = nullptr;
     if (ft->ip_options_data)
     {
         snort_free(ft->ip_options_data);
-        ft->ip_options_data = NULL;
+        ft->ip_options_data = nullptr;
     }
 
     ip_stats.trackers_cleared++;
@@ -1081,11 +1081,11 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
     int ret = FRAG_INSERT_OK;
     unsigned char lastfrag = 0; /* Set to 1 when this is the 'last' frag */
     unsigned char alerted_overlap = 0; /* Set to 1 when alerted */
-    Fragment* right = NULL; /* frag ptr for right-side overlap loop */
-    Fragment* newfrag = NULL;  /* new frag container */
-    Fragment* left = NULL;     /* left-side overlap fragment ptr */
-    Fragment* idx = NULL;      /* indexing fragment pointer for loops */
-    Fragment* dump_me = NULL;  /* frag ptr for complete overlaps to dump */
+    Fragment* right = nullptr; /* frag ptr for right-side overlap loop */
+    Fragment* newfrag = nullptr;  /* new frag container */
+    Fragment* left = nullptr;     /* left-side overlap fragment ptr */
+    Fragment* idx = nullptr;      /* indexing fragment pointer for loops */
+    Fragment* dump_me = nullptr;  /* frag ptr for complete overlaps to dump */
     const uint8_t* fragStart;
     int16_t fragLength;
     const uint16_t net_frag_offset = p->ptrs.ip_api.off();
@@ -1246,8 +1246,8 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
     /*
      * null things out if we walk to the end of the list
      */
-    if (idx == NULL)
-        right = NULL;
+    if (idx == nullptr)
+        right = nullptr;
 
     /*
      * handle forward (left-side) overlaps...
@@ -1781,7 +1781,7 @@ right_overlap_last:
  */
 int Defrag::new_tracker(Packet* p, FragTracker* ft)
 {
-    Fragment* f = NULL;
+    Fragment* f = nullptr;
     //int ret = 0;
     const uint8_t* fragStart;
     uint16_t fragLength;
@@ -1836,7 +1836,7 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
     ft->frag_time.tv_usec = p->pkth->ts.tv_usec;
     ft->alert_count = 0;
     ft->ip_options_len = 0;
-    ft->ip_options_data = NULL;
+    ft->ip_options_data = nullptr;
     ft->copied_ip_options_len = 0;
     ft->ordinal = 0;
     ft->frag_policy = p->flow->ssn_policy ? p->flow->ssn_policy : engine.frag_policy;
@@ -1858,7 +1858,7 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
     ip_stats.nodes_created++;
 
     /* initialize the fragment list */
-    ft->fraglist = NULL;
+    ft->fraglist = nullptr;
 
     /*
      * setup the Fragment struct with the current packet's data
@@ -1949,7 +1949,7 @@ int Defrag::add_frag_node(
     Fragment* left,
     Fragment** retFrag)
 {
-    Fragment* newfrag = NULL;  /* new frag container */
+    Fragment* newfrag = nullptr;  /* new frag container */
     int16_t newSize = len - slide - trunc;
 
     if (newSize <= 0)
@@ -2058,7 +2058,7 @@ int Defrag::add_frag_node(
  */
 int Defrag::dup_frag_node( FragTracker* ft, Fragment* left, Fragment** retFrag)
 {
-    Fragment* newfrag = NULL;  /* new frag container */
+    Fragment* newfrag = nullptr;  /* new frag container */
 
     /*
      * grab/generate a new frag node

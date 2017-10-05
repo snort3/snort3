@@ -133,7 +133,6 @@ class UdpCodec : public Codec
 {
 public:
     UdpCodec() : Codec(CD_UDP_NAME) { }
-    ~UdpCodec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
@@ -181,7 +180,7 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         const uint16_t ip_len = snort.ip_api.get_ip6h()->len();
         /* subtract the distance from udp header to 1st ip6 extension
            This gives the length of the UDP "payload", when fragmented */
-        uhlen = ip_len - ((uint8_t*)udph - snort.ip_api.ip_data());
+        uhlen = ip_len - ((const uint8_t*)udph - snort.ip_api.ip_data());
         fragmented_udp_flag = true;
     }
     else
@@ -234,7 +233,7 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
                 ph.protocol = ip4h->proto();
                 ph.len = udph->uh_len;
 
-                csum = checksum::udp_cksum((uint16_t*)(udph), uhlen, &ph);
+                csum = checksum::udp_cksum((const uint16_t*)(udph), uhlen, &ph);
             }
             else
             {
@@ -265,7 +264,7 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
                 ph6.protocol = codec.ip6_csum_proto;
                 ph6.len = htons((u_short)raw.len);
 
-                csum = checksum::udp_cksum((uint16_t*)(udph), uhlen, &ph6);
+                csum = checksum::udp_cksum((const uint16_t*)(udph), uhlen, &ph6);
             }
             else
             {
@@ -416,7 +415,7 @@ void UdpCodec::update(const ip::IpApi& ip_api, const EncodeFlags flags,
             ps.len = htons((uint16_t)updated_len);
             h->uh_chk = checksum::udp_cksum((uint16_t*)h, updated_len, &ps);
         }
-        else
+        else if (ip_api.is_ip6())
         {
             checksum::Pseudoheader6 ps6;
             const ip::IP6Hdr* const ip6h = ip_api.get_ip6h();

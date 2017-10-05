@@ -167,7 +167,7 @@ class ImapFlowData : public FlowData
 {
 public:
     ImapFlowData();
-    ~ImapFlowData();
+    ~ImapFlowData() override;
 
     static void init()
     { inspector_id = FlowData::create_flow_data_id(); }

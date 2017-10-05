@@ -38,7 +38,7 @@ static inline bool store_boundary(MimeDataPafInfo* data_info,  uint8_t val)
     if (!data_info->boundary_search)
     {
         if ((val == '.') || isspace (val))
-            data_info->boundary_search = (char*)&boundary_str[0];
+            data_info->boundary_search = boundary_str;
         return false;
     }
 
@@ -84,7 +84,7 @@ static inline bool store_boundary(MimeDataPafInfo* data_info,  uint8_t val)
     else
     {
         if ((val == '.') || isspace (val))
-            data_info->boundary_search = (char*)&boundary_str[0];
+            data_info->boundary_search = boundary_str;
         else
             data_info->boundary_search = nullptr;
     }

@@ -78,9 +78,6 @@ NtpServiceDetector::NtpServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-NtpServiceDetector::~NtpServiceDetector()
-{
-}
 
 int NtpServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
@@ -96,7 +93,7 @@ int NtpServiceDetector::validate(AppIdDiscoveryArgs& args)
     if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    nh = (ServiceNTPHeader*)data;
+    nh = (const ServiceNTPHeader*)data;
 
     mode = nh->LVM & 0x07;
     if (mode == 0 || mode == 7 || mode == 3)

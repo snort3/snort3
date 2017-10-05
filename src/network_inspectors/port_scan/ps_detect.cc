@@ -1063,8 +1063,6 @@ void PortScan::ps_alert_ip(PS_PROTO* scanner, PS_PROTO* scanned)
     {
         return;
     }
-
-    return;
 }
 
 void PortScan::ps_alert_udp(PS_PROTO* scanner, PS_PROTO* scanned)

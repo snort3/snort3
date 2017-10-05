@@ -41,11 +41,11 @@ void SMTP_GetEOL(const uint8_t* ptr, const uint8_t* end,
 
     /* XXX maybe should fatal error here since none of these
      * pointers should be NULL */
-    if (ptr == NULL || end == NULL || eol == NULL || eolm == NULL)
+    if (ptr == nullptr || end == nullptr || eol == nullptr || eolm == nullptr)
         return;
 
     tmp_eol = (uint8_t*)memchr(ptr, '\n', end - ptr);
-    if (tmp_eol == NULL)
+    if (tmp_eol == nullptr)
     {
         tmp_eol = end;
         tmp_eolm = end;

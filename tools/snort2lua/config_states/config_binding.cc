@@ -37,8 +37,7 @@ class Binding : public ConversionState
 {
 public:
     Binding(Converter& c) : ConversionState(c) { }
-    virtual ~Binding() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 
 private:
     void add_vlan(const std::string& vlan, Binder&);
@@ -132,13 +131,13 @@ bool Binding::convert(std::istringstream& data_stream)
         (!(data_stream >> binding_type)))
         return false;
 
-    if (!binding_type.compare("policy_id"))
+    if (binding_type == "policy_id")
         func = &Binding::add_policy_id;
 
-    else if (!binding_type.compare("vlan"))
+    else if (binding_type == "vlan")
         func = &Binding::add_vlan;
 
-    else if (!binding_type.compare("net"))
+    else if (binding_type == "net")
         func = &Binding::add_net;
 
     else

@@ -64,7 +64,7 @@ void TableApi::reset_state()
     curr_data_bad = false;
 }
 
-void TableApi::open_top_level_table(std::string table_name, bool one_line)
+void TableApi::open_top_level_table(const std::string& table_name, bool one_line)
 {
     if ( should_delegate(table_name) )
     {
@@ -89,7 +89,7 @@ void TableApi::open_top_level_table(std::string table_name, bool one_line)
         top_level_tables.push(open_tables.size());
 }
 
-void TableApi::open_table(std::string table_name, bool one_line)
+void TableApi::open_table(const std::string& table_name, bool one_line)
 {
     if ( should_delegate(table_name) )
     {
@@ -101,7 +101,7 @@ void TableApi::open_table(std::string table_name, bool one_line)
     Table* t;
 
     // if no open tables, create a top-level table
-    if (open_tables.size() > 0)
+    if (!open_tables.empty())
     {
         t = open_tables.top()->open_table(table_name);
     }
@@ -130,7 +130,7 @@ void TableApi::open_table(bool one_line)
     }
 
     // if no open tables, create a top-level table
-    if (open_tables.size() == 0)
+    if (open_tables.empty())
     {
         DataApi::developer_error("A nameless table must be nested inside a table!!");
     }
@@ -151,7 +151,7 @@ void TableApi::close_table()
         return;
     }
 
-    if (open_tables.size() == 0)
+    if (open_tables.empty())
         DataApi::developer_error("No open tables to close!!");
     else
     {
@@ -169,7 +169,7 @@ bool TableApi::do_add_option(const std::string& opt_name, T val, const std::stri
     if ( should_delegate() )
         return delegate->add_option(opt_name, val);
 
-    if (open_tables.size() == 0)
+    if (open_tables.empty())
     {
         DataApi::developer_error("Must open table before adding an option!!: " +
             opt_name + " = " + s_val);
@@ -186,7 +186,7 @@ bool TableApi::add_option(const std::string& val)
     if ( should_delegate() )
         return delegate->add_option(val);
 
-    if (open_tables.size() == 0)
+    if (open_tables.empty())
     {
         DataApi::developer_error("Must open table before adding an option!!: "
             "<anonymous> = " + val);
@@ -246,7 +246,7 @@ void TableApi::do_append_option(const std::string& option_name, const T val, con
         return;
     }
 
-    if (open_tables.size() == 0)
+    if (open_tables.empty())
     {
         DataApi::developer_error("Must open table before adding an option!!: " +
             option_name + " = " + s_val);
@@ -276,12 +276,12 @@ void TableApi::append_option(const std::string& option_name, const bool val)
 void TableApi::append_option(const std::string& name, const char* const v)
 { append_option(name, std::string(v)); }
 
-bool TableApi::add_list(std::string list_name, std::string next_elem)
+bool TableApi::add_list(const std::string& list_name, const std::string& next_elem)
 {
     if ( should_delegate() )
         return delegate->add_list(list_name, next_elem);
 
-    if (open_tables.size() == 0)
+    if (open_tables.empty())
     {
         DataApi::developer_error("Must open table before adding an option!!: " +
             list_name + " = " + next_elem);
@@ -303,12 +303,12 @@ bool TableApi::add_list(std::string list_name, std::string next_elem)
     }
 }
 
-bool TableApi::add_comment(std::string comment)
+bool TableApi::add_comment(const std::string& comment)
 {
     if ( should_delegate() )
         return delegate->add_comment(comment);
 
-    if (open_tables.size() == 0)
+    if (open_tables.empty())
     {
         DataApi::developer_error("Must open table before adding comment !!: '" +
             comment + "'");
@@ -326,7 +326,7 @@ bool TableApi::option_exists(const std::string& name)
     if ( should_delegate() )
         return delegate->option_exists(name);
 
-    if (open_tables.size() == 0)
+    if (open_tables.empty())
     {
         DataApi::developer_error("Must open table before calling option_exists() !!");
         return false;
@@ -335,7 +335,7 @@ bool TableApi::option_exists(const std::string& name)
     return open_tables.top()->has_option(name);
 }
 
-bool TableApi::add_diff_option_comment(std::string orig_var, std::string new_var)
+bool TableApi::add_diff_option_comment(const std::string& orig_var, const std::string& new_var)
 {
     if ( should_delegate() )
         return delegate->add_diff_option_comment(orig_var, new_var);
@@ -343,7 +343,7 @@ bool TableApi::add_diff_option_comment(std::string orig_var, std::string new_var
     std::string error_string = "option change: '" + orig_var + "' --> '"
         + new_var + "'";
 
-    if (open_tables.size() == 0)
+    if (open_tables.empty())
     {
         DataApi::developer_error("Must open table before adding an option!!: " +
             orig_var + " = " + new_var);
@@ -354,14 +354,14 @@ bool TableApi::add_diff_option_comment(std::string orig_var, std::string new_var
     return true;
 }
 
-bool TableApi::add_deleted_comment(std::string dep_var)
+bool TableApi::add_deleted_comment(const std::string& dep_var)
 {
     if ( should_delegate() )
         return delegate->add_deleted_comment(dep_var);
 
     std::string error_string = "option deleted: '" + dep_var + "'";
 
-    if (open_tables.size() == 0)
+    if (open_tables.empty())
     {
         DataApi::developer_error("Must open a table before adding "
             "deprecated comment!!: " + dep_var);
@@ -372,7 +372,7 @@ bool TableApi::add_deleted_comment(std::string dep_var)
     return true;
 }
 
-bool TableApi::add_unsupported_comment(std::string unsupported_var)
+bool TableApi::add_unsupported_comment(const std::string& unsupported_var)
 {
     if ( should_delegate() )
         return delegate->add_unsupported_comment(unsupported_var);
@@ -380,7 +380,7 @@ bool TableApi::add_unsupported_comment(std::string unsupported_var)
     std::string unsupported_str = "option '" + unsupported_var +
         "' is currently unsupported";
 
-    if (open_tables.size() == 0)
+    if (open_tables.empty())
     {
         DataApi::developer_error("Must open a table before adding an "
             "'unsupported' comment");
@@ -416,7 +416,7 @@ bool TableApi::get_option_value(const std::string& name, std::string& value)
     if ( should_delegate() )
         return delegate->get_option_value(name, value);
 
-    if (open_tables.size() == 0)
+    if (open_tables.empty())
     {
         DataApi::developer_error("Must open table before calling option_exists() !!");
         return false;

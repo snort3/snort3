@@ -73,7 +73,7 @@ bool IcodeOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    IcodeOption& rhs = (IcodeOption&)ips;
+    const IcodeOption& rhs = (const IcodeOption&)ips;
     return ( config == rhs.config );
 }
 

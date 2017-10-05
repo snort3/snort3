@@ -178,7 +178,7 @@ void DCE2_SmbProcessFileData(DCE2_SmbSsnData* ssd,
     uint32_t data_len, bool upload);
 void DCE2_FileDetect();
 FileVerdict DCE2_get_file_verdict(DCE2_SmbSsnData* );
-void DCE2_SmbInitDeletePdu(void);
+void DCE2_SmbInitDeletePdu();
 void DCE2_Update_Ftracker_from_ReqTracker(DCE2_SmbFileTracker*, DCE2_SmbRequestTracker*);
 
 /********************************************************************

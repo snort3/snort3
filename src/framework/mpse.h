@@ -41,7 +41,7 @@ struct ProfileStats;
 class SO_PUBLIC Mpse
 {
 public:
-    virtual ~Mpse() { }
+    virtual ~Mpse() = default;
 
     struct PatternDescriptor
     {

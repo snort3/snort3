@@ -57,14 +57,14 @@ POPToken pop_known_cmds[] =
     { "TOP",           3, CMD_TOP },
     { "UIDL",          4, CMD_UIDL },
     { "USER",          4, CMD_USER },
-    { NULL,            0, 0 }
+    { nullptr,            0, 0 }
 };
 
 POPToken pop_resps[] =
 {
     { "+OK",   3,  RESP_OK },   /* SUCCESS */
     { "-ERR",  4,  RESP_ERR },  /* FAILURE */
-    { NULL,   0,  0 }
+    { nullptr,   0,  0 }
 };
 
 SearchTool* pop_resp_search_mpse = nullptr;
@@ -73,7 +73,7 @@ SearchTool* pop_cmd_search_mpse = nullptr;
 POPSearch pop_resp_search[RESP_LAST];
 POPSearch pop_cmd_search[CMD_LAST];
 
-static THREAD_LOCAL const POPSearch* pop_current_search = NULL;
+static THREAD_LOCAL const POPSearch* pop_current_search = nullptr;
 static THREAD_LOCAL POPSearchInfo pop_search_info;
 
 const PegInfo pop_peg_names[] =
@@ -119,7 +119,7 @@ unsigned PopFlowData::inspector_id = 0;
 static POPData* get_session_data(Flow* flow)
 {
     PopFlowData* fd = (PopFlowData*)flow->get_flow_data(PopFlowData::inspector_id);
-    return fd ? &fd->session : NULL;
+    return fd ? &fd->session : nullptr;
 }
 
 static POPData* SetNewPOPData(POP_PROTO_CONF* config, Packet* p)
@@ -151,7 +151,7 @@ static void POP_SearchInit()
         return;
     pop_cmd_search_mpse = new SearchTool;
 
-    for (tmp = &pop_known_cmds[0]; tmp->name != NULL; tmp++)
+    for (tmp = &pop_known_cmds[0]; tmp->name != nullptr; tmp++)
     {
         pop_cmd_search[tmp->search_id].name = tmp->name;
         pop_cmd_search[tmp->search_id].name_len = tmp->name_len;
@@ -160,7 +160,7 @@ static void POP_SearchInit()
     pop_cmd_search_mpse->prep();
     pop_resp_search_mpse = new SearchTool;
 
-    for (tmp = &pop_resps[0]; tmp->name != NULL; tmp++)
+    for (tmp = &pop_resps[0]; tmp->name != nullptr; tmp++)
     {
         pop_resp_search[tmp->search_id].name = tmp->name;
         pop_resp_search[tmp->search_id].name_len = tmp->name_len;
@@ -171,10 +171,10 @@ static void POP_SearchInit()
 
 static void POP_SearchFree()
 {
-    if (pop_cmd_search_mpse != NULL)
+    if (pop_cmd_search_mpse != nullptr)
         delete pop_cmd_search_mpse;
 
-    if (pop_resp_search_mpse != NULL)
+    if (pop_resp_search_mpse != nullptr)
         delete pop_resp_search_mpse;
 }
 
@@ -195,7 +195,7 @@ static void POP_GetEOL(const uint8_t* ptr, const uint8_t* end,
     const uint8_t* tmp_eolm;
 
     tmp_eol = (uint8_t*)memchr(ptr, '\n', end - ptr);
-    if (tmp_eol == NULL)
+    if (tmp_eol == nullptr)
     {
         tmp_eol = end;
         tmp_eolm = end;
@@ -223,7 +223,7 @@ static void POP_GetEOL(const uint8_t* ptr, const uint8_t* end,
 
 static void PrintPopConf(POP_PROTO_CONF* config)
 {
-    if (config == NULL)
+    if (config == nullptr)
         return;
 
     LogMessage("POP config: \n");
@@ -433,7 +433,7 @@ static void POP_ProcessServerPacket(Packet* p, POPData* pop_ssn)
     const uint8_t* eolm;
     const uint8_t* eol;
     int resp_line_len;
-    const char* tmp = NULL;
+    const char* tmp = nullptr;
 
     ptr = p->data;
     end = p->data + p->dsize;
@@ -446,7 +446,7 @@ static void POP_ProcessServerPacket(Packet* p, POPData* pop_ssn)
             //ptr = POP_HandleData(p, ptr, end);
             FilePosition position = get_file_position(p);
             int len = end - ptr;
-            ptr = pop_ssn->mime_ssn->process_mime_data(p->flow, ptr, len, 0, position);
+            ptr = pop_ssn->mime_ssn->process_mime_data(p->flow, ptr, len, false, position);
             continue;
         }
         POP_GetEOL(ptr, end, &eol, &eolm);
@@ -465,7 +465,7 @@ static void POP_ProcessServerPacket(Packet* p, POPData* pop_ssn)
             {
             case RESP_OK:
                 tmp = SnortStrcasestr((const char*)cmd_start, (eol - cmd_start), "octets");
-                if (tmp != NULL)
+                if (tmp != nullptr)
                     pop_ssn->state = STATE_DATA;
                 else
                 {
@@ -530,7 +530,7 @@ static void snort_pop(POP_PROTO_CONF* config, Packet* p)
     /* Attempt to get a previously allocated POP block. */
     POPData* pop_ssn = get_session_data(p->flow);
 
-    if (pop_ssn == NULL)
+    if (pop_ssn == nullptr)
     {
         /* Check the stream session. If it does not currently
          * have our POP data-block attached, create one.
@@ -667,7 +667,7 @@ class Pop : public Inspector
 {
 public:
     Pop(POP_PROTO_CONF*);
-    ~Pop();
+    ~Pop() override;
 
     bool configure(SnortConfig*) override;
     void show(SnortConfig*) override;

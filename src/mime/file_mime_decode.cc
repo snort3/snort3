@@ -120,7 +120,7 @@ int MimeDecode::get_detection_depth()
     return (decoder ? decoder->get_detection_depth() : 0);
 }
 
-int MimeDecode::get_decoded_data(uint8_t** buf,  uint32_t* size)
+int MimeDecode::get_decoded_data(const uint8_t** buf,  uint32_t* size)
 {
     return (decoder ? decoder->get_decoded_data(buf, size) : 0);
 }

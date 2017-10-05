@@ -116,9 +116,6 @@ BgpServiceDetector::BgpServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-BgpServiceDetector::~BgpServiceDetector()
-{
-}
 
 int BgpServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
@@ -153,12 +150,12 @@ int BgpServiceDetector::validate(AppIdDiscoveryArgs& args)
             bh->v1.marker == 0xFFFF &&
             bh->v1.version == 0x01 && bh->v1.type == BGP_V1_TYPE_OPEN)
         {
-            ServiceBGPV1Open* open;
+            const ServiceBGPV1Open* open;
 
             len = ntohs(bh->v1.len);
             if (len > 1024)
                 goto fail;
-            open = (ServiceBGPV1Open*)(data + sizeof(bh->v1));
+            open = (const ServiceBGPV1Open*)(data + sizeof(bh->v1));
             if (open->link > BGP_OPEN_LINK_MAX)
                 goto fail;
             bd->v1 = 1;
@@ -170,12 +167,12 @@ int BgpServiceDetector::validate(AppIdDiscoveryArgs& args)
             bh->v.marker[3] == 0xFFFFFFFF &&
             bh->v.type == BGP_TYPE_OPEN)
         {
-            ServiceBGPOpen* open;
+            const ServiceBGPOpen* open;
 
             len = ntohs(bh->v.len);
             if (len > 4096)
                 goto fail;
-            open = (ServiceBGPOpen*)(data + sizeof(bh->v));
+            open = (const ServiceBGPOpen*)(data + sizeof(bh->v));
             if (open->version > BGP_VERSION_MAX ||
                 open->version < BGP_VERSION_MIN)
             {

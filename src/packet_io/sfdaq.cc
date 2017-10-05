@@ -92,7 +92,7 @@ void SFDAQ::unload()
 
 void SFDAQ::print_types(ostream& ostr)
 {
-    DAQ_Module_Info_t* list = NULL;
+    DAQ_Module_Info_t* list = nullptr;
     int i, nMods = daq_get_module_list(&list);
 
     if (nMods)
@@ -148,7 +148,7 @@ void SFDAQ::init(const SnortConfig* sc)
 
     const char* type = DAQ_DEFAULT;
 
-    if (sc->daq_config->module_name.size())
+    if (!sc->daq_config->module_name.empty())
         type = sc->daq_config->module_name.c_str();
 
     daq_mod = daq_find_module(type);
@@ -269,10 +269,10 @@ const DAQ_Stats_t* SFDAQ::get_stats()
 const char* SFDAQ::get_input_spec(const SnortConfig* sc, unsigned instance_id)
 {
     auto it = sc->daq_config->instances.find(instance_id);
-    if (it != sc->daq_config->instances.end() && it->second->input_spec.size())
+    if (it != sc->daq_config->instances.end() && !it->second->input_spec.empty())
         return it->second->input_spec.c_str();
 
-    if (sc->daq_config->input_spec.size())
+    if (!sc->daq_config->input_spec.empty())
         return sc->daq_config->input_spec.c_str();
 
     return nullptr;
@@ -325,7 +325,7 @@ bool SFDAQInstance::configure(const SnortConfig* sc)
 
     memset(&cfg, 0, sizeof(cfg));
 
-    cfg.name = (char*) interface_spec.c_str();
+    cfg.name = const_cast<char*>(interface_spec.c_str());
     cfg.snaplen = snap;
     cfg.timeout = sc->daq_config->timeout;
     cfg.mode = daq_mode;
@@ -335,7 +335,7 @@ bool SFDAQInstance::configure(const SnortConfig* sc)
     for (auto& kvp : sc->daq_config->variables)
     {
         daq_config_set_value(&cfg, kvp.first.c_str(),
-                kvp.second.length() ? kvp.second.c_str() : NULL);
+                kvp.second.length() ? kvp.second.c_str() : nullptr);
     }
 
     auto it = sc->daq_config->instances.find(get_instance_id());
@@ -344,7 +344,7 @@ bool SFDAQInstance::configure(const SnortConfig* sc)
         for (auto& kvp : it->second->variables)
         {
             daq_config_set_value(&cfg, kvp.first.c_str(),
-                    kvp.second.length() ? kvp.second.c_str() : NULL);
+                    kvp.second.length() ? kvp.second.c_str() : nullptr);
         }
     }
 
@@ -354,9 +354,9 @@ bool SFDAQInstance::configure(const SnortConfig* sc)
             cfg.flags |= DAQ_CFG_PROMISC;
     }
 
-    // ideally this would be configurable ...
+    // FIXIT-M - This is sort of an abomination and would ideally be configurable ...
     if (!strcasecmp(type, "dump") or !strcasecmp(type, "regtest"))
-        cfg.extra = (char*)daq_find_module("pcap");
+        cfg.extra = reinterpret_cast<char*>(const_cast<DAQ_Module_t*>(daq_find_module("pcap")));
 
     err = daq_initialize(daq_mod, &cfg, &daq_hand, buf, sizeof(buf));
     if (err)
@@ -374,7 +374,7 @@ bool SFDAQInstance::configure(const SnortConfig* sc)
     return true;
 }
 
-void SFDAQInstance::reload(void)
+void SFDAQInstance::reload()
 {
     void* old_config = nullptr;
     void* new_config = nullptr;
@@ -510,7 +510,7 @@ void SFDAQInstance::set_metacallback(DAQ_Meta_Func_t meta_callback)
 
 int SFDAQInstance::acquire(int max, DAQ_Analysis_Func_t callback)
 {
-    int err = daq_acquire_with_meta(daq_mod, daq_hand, max, callback, daq_meta_callback, NULL);
+    int err = daq_acquire_with_meta(daq_mod, daq_hand, max, callback, daq_meta_callback, nullptr);
 
     if (err && err != DAQ_READFILE_EOF)
         LogMessage("Can't acquire (%d) - %s\n", err, daq_get_error(daq_mod, daq_hand));
@@ -525,7 +525,7 @@ int SFDAQInstance::acquire(int max, DAQ_Analysis_Func_t callback)
 
 int SFDAQInstance::inject(const DAQ_PktHdr_t* h, int rev, const uint8_t* buf, uint32_t len)
 {
-    int err = daq_inject(daq_mod, daq_hand, (DAQ_PktHdr_t*)h, buf, len, rev);
+    int err = daq_inject(daq_mod, daq_hand, h, buf, len, rev);
 #ifdef DEBUG_MSGS
     if (err)
         LogMessage("Can't inject (%d) - %s\n", err, daq_get_error(daq_mod, daq_hand));
@@ -640,5 +640,5 @@ int SFDAQInstance::add_expected(const Packet* ctrlPkt, const SfIp* cliIP, uint16
         daq_params.flags |= DAQ_DATA_CHANNEL_PERSIST;
 */
 
-    return daq_dp_add_dc(daq_mod, daq_hand, ctrlPkt->pkth, &dp_key, NULL, &daq_params);
+    return daq_dp_add_dc(daq_mod, daq_hand, ctrlPkt->pkth, &dp_key, nullptr, &daq_params);
 }

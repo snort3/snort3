@@ -38,7 +38,7 @@ protected:
         tcp_ips_data = Normalize_GetMode(NORM_TCP_IPS);
     }
 
-    virtual ~SegmentOverlapEditor() { }
+    virtual ~SegmentOverlapEditor() = default;
 
     void init_soe(TcpSegmentDescriptor& tsd, TcpSegmentNode* left, TcpSegmentNode* right)
     {

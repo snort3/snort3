@@ -96,9 +96,9 @@ bool FlowCheckOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    FlowCheckOption& rhs = (FlowCheckOption&)ips;
-    FlowCheckData* left = (FlowCheckData*)&config;
-    FlowCheckData* right = (FlowCheckData*)&rhs.config;
+    const FlowCheckOption& rhs = (const FlowCheckOption&)ips;
+    const FlowCheckData* left = &config;
+    const FlowCheckData* right = &rhs.config;
 
     if (( left->from_server == right->from_server) &&
         ( left->from_client == right->from_client) &&

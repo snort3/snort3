@@ -31,29 +31,21 @@
 #include "lua_detector_api.h"
 #include "protocols/packet.h"
 
-AppIdDetector::AppIdDetector()
-{
-}
-
-AppIdDetector::~AppIdDetector()
-{
-}
-
 int AppIdDetector::initialize()
 {
-    if ( tcp_patterns.size() )
+    if ( !tcp_patterns.empty() )
         for (auto& pat : tcp_patterns)
             handler->register_tcp_pattern(this, pat.pattern, pat.length, pat.index, pat.nocase);
 
-    if ( udp_patterns.size() )
+    if ( !udp_patterns.empty() )
         for (auto& pat : udp_patterns)
             handler->register_udp_pattern(this, pat.pattern, pat.length, pat.index, pat.nocase);
 
-    if (appid_registry.size())
+    if (!appid_registry.empty())
         for (auto& id : appid_registry)
             register_appid(id.appId, id.additionalInfo);
 
-    if (service_ports.size())
+    if (!service_ports.empty())
         for (auto& port: service_ports)
             handler->add_service_port(this, port);
 

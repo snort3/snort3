@@ -35,7 +35,6 @@ class Ipv6FragCodec : public Codec
 {
 public:
     Ipv6FragCodec() : Codec(CD_IPV6_FRAG_NAME) { }
-    ~Ipv6FragCodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 

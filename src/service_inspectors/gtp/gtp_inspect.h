@@ -30,7 +30,7 @@ struct GTP_Roptions
 {
     uint8_t gtp_type;
     uint8_t gtp_version;
-    uint8_t* gtp_header;
+    const uint8_t* gtp_header;
     uint32_t msg_id;  /* used to associate to current msg */
     GTP_IEData* gtp_infoElements;
 };
@@ -39,7 +39,7 @@ class GtpFlowData : public FlowData
 {
 public:
     GtpFlowData();
-    ~GtpFlowData();
+    ~GtpFlowData() override;
 
     static void init();
 

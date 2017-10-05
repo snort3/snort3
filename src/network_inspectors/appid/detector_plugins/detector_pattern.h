@@ -74,7 +74,7 @@ class PatternClientDetector : public ClientDetector
 {
 public:
     PatternClientDetector(ClientDiscovery*);
-    ~PatternClientDetector();
+    ~PatternClientDetector() override;
 
     static void insert_client_port_pattern(PortPatternNode*);
     static void finalize_client_port_patterns();
@@ -87,15 +87,15 @@ private:
 
     PortPatternNode* luaInjectedPatterns = nullptr;
     PatternService* servicePortPattern = nullptr;
-    SearchTool* tcp_patterns = nullptr;
-    SearchTool* udp_patterns = nullptr;
+    SearchTool* tcp_pattern_matcher = nullptr;
+    SearchTool* udp_pattern_matcher = nullptr;
 };
 
 class PatternServiceDetector : public ServiceDetector
 {
 public:
     PatternServiceDetector(ServiceDiscovery*);
-    ~PatternServiceDetector();
+    ~PatternServiceDetector() override;
 
     static void insert_service_port_pattern(PortPatternNode*);
     static void finalize_service_port_patterns();
@@ -109,8 +109,8 @@ private:
 
     PortPatternNode* luaInjectedPatterns = nullptr;
     PatternService* servicePortPattern = nullptr;
-    SearchTool* tcp_patterns = nullptr;
-    SearchTool* udp_patterns = nullptr;
+    SearchTool* tcp_pattern_matcher = nullptr;
+    SearchTool* udp_pattern_matcher = nullptr;
     SearchTool* tcpPortPatternTree[65536] = { nullptr };
     SearchTool* udpPortPatternTree[65536] = { nullptr };
 };

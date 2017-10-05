@@ -121,7 +121,7 @@ class PopFlowData : public FlowData
 {
 public:
     PopFlowData();
-    ~PopFlowData();
+    ~PopFlowData() override;
 
     static void init()
     { inspector_id = FlowData::create_flow_data_id(); }

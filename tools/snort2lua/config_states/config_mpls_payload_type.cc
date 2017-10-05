@@ -32,8 +32,7 @@ class MplsPayloadType : public ConversionState
 {
 public:
     MplsPayloadType(Converter& c) : ConversionState(c) { }
-    virtual ~MplsPayloadType() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 
@@ -47,19 +46,19 @@ bool MplsPayloadType::convert(std::istringstream& data_stream)
 
     table_api.open_table("mpls");
 
-    if (!type.compare("ethernet"))
+    if (type == "ethernet")
     {
         table_api.add_diff_option_comment("config mpls_payload_type: ethernet",
             "mpls_payload_type = eth");
         retval = table_api.add_option("mpls_payload_type", "eth");
     }
-    else if (!type.compare("ipv4"))
+    else if (type == "ipv4")
     {
         table_api.add_diff_option_comment("config mpls_payload_type: ipv4",
             "mpls_payload_type = ip4");
         retval = table_api.add_option("mpls_payload_type", "ip4");
     }
-    else if (!type.compare("ipv6"))
+    else if (type == "ipv6")
     {
         table_api.add_diff_option_comment("config mpls_payload_type: ipv6",
             "mpls_payload_type = ip6");

@@ -31,7 +31,7 @@ public:
     Option(const std::string& name, int val, int depth);
     Option(const std::string& name, bool val, int depth);
     Option(const std::string& name, std::string val, int depth);
-    virtual ~Option();
+    virtual ~Option() = default;
 
     inline const std::string& get_name()
     { return name; }

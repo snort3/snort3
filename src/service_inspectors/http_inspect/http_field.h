@@ -20,9 +20,9 @@
 #ifndef HTTP_FIELD_H
 #define HTTP_FIELD_H
 
-#include <stdint.h>
-#include <stdio.h>
-#include <assert.h>
+#include <cstdint>
+#include <cstdio>
+#include <cassert>
 
 #include "http_enum.h"
 

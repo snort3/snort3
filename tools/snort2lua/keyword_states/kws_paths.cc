@@ -34,8 +34,7 @@ class Paths : public ConversionState
 public:
     Paths(Converter& c) : ConversionState(c) { }
 
-    virtual ~Paths() { }
-    virtual bool convert(std::istringstream& data_stream)
+    bool convert(std::istringstream& data_stream) override
     {
         std::string arg1;
         std::string arg2;
@@ -60,10 +59,10 @@ public:
         }
         else
         {
-            if (!arg1.compare("directory"))
+            if (arg1 == "directory")
                 table_api.add_option("--plugin_path", arg2);
 
-            else if (!arg1.compare("file"))
+            else if (arg1 == "file")
                 table_api.add_comment("Cannot add specific files to Snort++"
                     " plugin path.  Use 'plugin_path = "
                     "<dir>' instead of adding specific file: " + arg1);

@@ -21,7 +21,8 @@
 #define PS_DETECT_H
 
 #include <sys/time.h>
-#include <time.h>
+
+#include <ctime>
 
 #include "sfip/sf_ip.h"
 #include "ipobj.h"

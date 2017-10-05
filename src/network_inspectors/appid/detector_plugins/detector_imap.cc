@@ -519,7 +519,7 @@ void ImapClientDetector::do_custom_init()
     unsigned index = 0;
     cmd_matcher = new SearchTool("ac_full", true);
 
-    if ( tcp_patterns.size() )
+    if ( !tcp_patterns.empty() )
         for (auto& pat : tcp_patterns)
         {
             cmd_matcher->add(pat.pattern, pat.length, index++);
@@ -632,7 +632,7 @@ int ImapClientDetector::validate(AppIdDiscoveryArgs& args)
         cmd = nullptr;
         pattern_index = num_imap_client_patterns;
         length = end - s;
-        cmd_matcher->find_all((char*)s, (length > longest_pattern ? longest_pattern : length),
+        cmd_matcher->find_all((const char*)s, (length > longest_pattern ? longest_pattern : length),
             &pattern_match, false, (void*)&pattern_index);
 
         if (pattern_index < num_imap_client_patterns)
@@ -844,9 +844,6 @@ ImapServiceDetector::ImapServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-ImapServiceDetector::~ImapServiceDetector()
-{
-}
 
 int ImapServiceDetector::validate(AppIdDiscoveryArgs& args)
 {

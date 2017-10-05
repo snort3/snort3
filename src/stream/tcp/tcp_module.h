@@ -117,7 +117,6 @@ class StreamTcpModule : public Module
 {
 public:
     StreamTcpModule();
-    ~StreamTcpModule();
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;

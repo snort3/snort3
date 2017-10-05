@@ -111,9 +111,6 @@ TnsServiceDetector::TnsServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-TnsServiceDetector::~TnsServiceDetector()
-{
-}
 
 int TnsServiceDetector::validate(AppIdDiscoveryArgs& args)
 {

@@ -84,7 +84,7 @@ class RegexOption : public IpsOption
 {
 public:
     RegexOption(const RegexConfig&);
-    ~RegexOption();
+    ~RegexOption() override;
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -182,7 +182,7 @@ int RegexOption::eval(Cursor& c, Packet*)
     s_to = 0;
 
     hs_error_t stat = hs_scan(
-        config.db, (char*)c.buffer()+pos, c.size()-pos, 0,
+        config.db, (const char*)c.buffer()+pos, c.size()-pos, 0,
         (hs_scratch_t*)ss->regex_scratch, hs_match, nullptr);
 
     if ( s_to and stat == HS_SCAN_TERMINATED )
@@ -230,7 +230,7 @@ class RegexModule : public Module
 {
 public:
     RegexModule() : Module(s_name, s_help, s_params) { }
-    ~RegexModule();
+    ~RegexModule() override;
 
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;

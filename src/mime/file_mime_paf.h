@@ -59,7 +59,7 @@ struct MimeDataPafInfo
     MimeDataState data_state;
     char boundary[ MAX_MIME_BOUNDARY_LEN + 1];  /* MIME boundary string + '\0' */
     int boundary_len;
-    char* boundary_search;
+    const char* boundary_search;
     MimeBoundaryState boundary_state;
 };
 

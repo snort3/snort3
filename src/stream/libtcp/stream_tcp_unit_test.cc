@@ -75,7 +75,7 @@ DAQ_PktHdr_t daqHdr;
 
 static DAQ_PktHdr_t* initDaqHdr( )
 {
-    gettimeofday(&daqHdr.ts, NULL);
+    gettimeofday(&daqHdr.ts, nullptr);
     return &daqHdr;
 }
 

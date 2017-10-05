@@ -38,7 +38,6 @@ THREAD_LOCAL TcpStats tcpStats;
 THREAD_LOCAL SnortConfig* snort_conf = nullptr;
 
 Flow::Flow( void ) {}
-Flow::~Flow( void ) {}
 
 class FlowMock : public Flow
 {

@@ -34,7 +34,7 @@ int sfDynArrayCheckBounds(  // FIXIT-L replace with vector
     unsigned int* maxElements
     )
 {
-    void* ppTmp = NULL;
+    void* ppTmp = nullptr;
 
     if (index >= *maxElements)
     {

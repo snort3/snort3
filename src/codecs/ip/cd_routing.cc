@@ -35,7 +35,6 @@ class Ipv6RoutingCodec : public Codec
 {
 public:
     Ipv6RoutingCodec() : Codec(CD_IPV6_ROUTING_NAME) { }
-    ~Ipv6RoutingCodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 

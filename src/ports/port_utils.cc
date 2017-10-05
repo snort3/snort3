@@ -48,7 +48,7 @@ int PortObjectBits(PortBitSet& parray, PortObject* po)
     SF_LNODE* pos;
 
     for (poi=(PortObjectItem*)sflist_first(po->item_list,&pos);
-        poi != 0;
+        poi != nullptr;
         poi=(PortObjectItem*)sflist_next(&pos) )
     {
         /* Add ports that are not NOT'd */
@@ -65,13 +65,13 @@ int PortObjectBits(PortBitSet& parray, PortObject* po)
         {
             if ( !parray[i] )
                 cnt++;
-            parray[i] = 1;
+            parray[i] = true;
         }
     }
 
     /* Remove any NOT'd ports that may have been added above */
     for (poi=(PortObjectItem*)sflist_first(po->item_list,&pos);
-        poi != 0;
+        poi != nullptr;
         poi=(PortObjectItem*)sflist_next(&pos) )
     {
         if ( !poi->negate  )
@@ -84,7 +84,7 @@ int PortObjectBits(PortBitSet& parray, PortObject* po)
         {
             if ( parray[i] )
                 cnt--;
-            parray[i] = 0;
+            parray[i] = false;
         }
     }
 
@@ -97,7 +97,7 @@ int PortObjectBits(PortBitSet& parray, PortObject* po)
 
         /* disable the NOT'd ports */
         for (poi=(PortObjectItem*)sflist_first(po->item_list,&pos);
-            poi != 0;
+            poi != nullptr;
             poi=(PortObjectItem*)sflist_next(&pos) )
         {
             if ( !poi->negate  )
@@ -110,7 +110,7 @@ int PortObjectBits(PortBitSet& parray, PortObject* po)
             {
                 if ( parray[i] )
                     cnt--;
-                parray[i] = 0;
+                parray[i] = false;
             }
         }
     }
@@ -124,7 +124,7 @@ SF_LIST* PortObjectItemListFromBits(const PortBitSet& parray, int n)
     int nports = parray.count();
 
     if ( !plist )
-        return 0;
+        return nullptr;
 
     for (int i = 0; i < n && nports > 0; i++)
     {
@@ -153,7 +153,7 @@ SF_LIST* PortObjectItemListFromBits(const PortBitSet& parray, int n)
         if ( !poi )
         {
             sflist_free_all(plist, snort_free);
-            return 0;
+            return nullptr;
         }
 
         poi->lport =(unsigned short)lport;
@@ -170,10 +170,10 @@ SF_LIST* PortObjectItemListFromBits(const PortBitSet& parray, int n)
 
 int integer_compare(const void* arg1, const void* arg2)
 {
-    if ( *(int*)arg1 <  *(int*)arg2 )
+    if ( *(const int*)arg1 <  *(const int*)arg2 )
         return -1;
 
-    if ( *(int*)arg1 >  *(int*)arg2 )
+    if ( *(const int*)arg1 >  *(const int*)arg2 )
         return 1;
 
     return 0;
@@ -181,21 +181,21 @@ int integer_compare(const void* arg1, const void* arg2)
 
 int* RuleListToSortedArray(SF_LIST* rl)
 {
-    SF_LNODE* pos = NULL;
+    SF_LNODE* pos = nullptr;
     int* prid;
     int* ra;
     int k=0;
 
     if ( !rl )
-        return 0;
+        return nullptr;
 
     if (!rl->count)
-        return NULL;
+        return nullptr;
 
     ra = (int*)snort_calloc(rl->count, sizeof(int));
 
     for ( prid = (int*)sflist_first(rl,&pos);
-        prid!= 0 && k < (int)rl->count;
+        prid!= nullptr && k < (int)rl->count;
         prid = (int*)sflist_next(&pos) )
     {
         ra[k++] = *prid;

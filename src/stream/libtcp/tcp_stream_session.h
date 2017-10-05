@@ -38,7 +38,7 @@ class TcpStreamSession : public Session
 {
 public:
     TcpStreamSession(Flow*);
-    virtual ~TcpStreamSession();
+    ~TcpStreamSession() override;
 
     bool setup(Packet*) override;
     void clear() override;

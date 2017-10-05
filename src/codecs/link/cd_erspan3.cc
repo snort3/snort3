@@ -40,7 +40,7 @@ class Erspan3Module : public CodecModule
 public:
     Erspan3Module() : CodecModule(CD_ERSPAN3_NAME, CD_ERSPAN3_HELP) { }
 
-    const RuleMap* get_rules() const
+    const RuleMap* get_rules() const override
     { return erspan3_rules; }
 };
 
@@ -48,7 +48,6 @@ class Erspan3Codec : public Codec
 {
 public:
     Erspan3Codec() : Codec(CD_ERSPAN3_NAME) { }
-    ~Erspan3Codec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;

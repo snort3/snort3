@@ -232,7 +232,7 @@ ListHead* get_rule_list(SnortConfig* sc, const char* s)
 
 void AddRuleState(SnortConfig* sc, const RuleState& rs)  // FIXIT-L move to snort config
 {
-    if (sc == NULL)
+    if (sc == nullptr)
         return;
 
     RuleState* state = (RuleState*)snort_calloc(sizeof(RuleState));

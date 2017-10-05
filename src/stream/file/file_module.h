@@ -39,7 +39,6 @@ class StreamFileModule : public Module
 {
 public:
     StreamFileModule();
-    ~StreamFileModule();
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;

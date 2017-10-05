@@ -33,15 +33,14 @@ class Resp : public ConversionState
 {
 public:
     Resp(Converter& c) : ConversionState(c) { }
-    virtual ~Resp() { }
-    virtual bool convert(std::istringstream& data);
+    bool convert(std::istringstream& data) override;
 
 private:
-    void add_diff_comment(std::string, std::string);
+    void add_diff_comment(const std::string&, const std::string&);
 };
 } // namespace
 
-void Resp::add_diff_comment(std::string old_v, std::string new_v)
+void Resp::add_diff_comment(const std::string& old_v, const std::string& new_v)
 {
     table_api.add_diff_option_comment("rule_type - resp:" + old_v,
         "reject - " + new_v);
@@ -61,7 +60,7 @@ bool Resp::convert(std::istringstream& data_stream)
     {
         // a colon will have been parsed when retrieving the keyword.
         // Therefore, if a colon is present, we are in the next rule option.
-        if (args.find(":") != std::string::npos)
+        if (args.find(':') != std::string::npos)
         {
             data_stream.seekg(pos);
         }
@@ -72,16 +71,16 @@ bool Resp::convert(std::istringstream& data_stream)
             std::istringstream arg_stream(args);
             util::get_string(arg_stream, tmp, ",");
 
-            if (!tmp.compare("reset_dest") ||
-                !tmp.compare("reset_both") ||
-                !tmp.compare("rst_snd") ||
-                !tmp.compare("rst_rcv") ||
-                !tmp.compare("rst_all") ||
-                !tmp.compare("icmp_net") ||
-                !tmp.compare("icmp_host") ||
-                !tmp.compare("icmp_all") ||
-                !tmp.compare("reset_source") ||
-                !tmp.compare("icmp_port"))
+            if (tmp == "reset_dest" ||
+                tmp == "reset_both" ||
+                tmp == "rst_snd" ||
+                tmp == "rst_rcv" ||
+                tmp == "rst_all" ||
+                tmp == "icmp_net" ||
+                tmp == "icmp_host" ||
+                tmp == "icmp_all" ||
+                tmp == "reset_source" ||
+                tmp == "icmp_port")
             {
                 // Now that we have confirmed this is a valid option, parse it!!
                 table_api.open_table("reject");
@@ -90,52 +89,52 @@ bool Resp::convert(std::istringstream& data_stream)
                 {
                     // FIXIT-L once bindings added for reject, this MUST change!
 
-                    if (!tmp.compare("reset_dest"))
+                    if (tmp == "reset_dest")
                     {
                         add_diff_comment("reset_dest", "reset: dest");
                         table_api.add_option("reset", "dest");
                     }
-                    else if (!tmp.compare("rst_rcv"))
+                    else if (tmp == "rst_rcv")
                     {
                         add_diff_comment("rst_rcv", "reset: dest");
                         table_api.add_option("reset", "dest");
                     }
-                    else if (!tmp.compare("reset_both"))
+                    else if (tmp == "reset_both")
                     {
                         add_diff_comment("reset_both", "reset: both");
                         table_api.add_option("reset", "both");
                     }
-                    else if (!tmp.compare("rst_all"))
+                    else if (tmp == "rst_all")
                     {
                         add_diff_comment("rst_all", "reset: both");
                         table_api.add_option("reset", "both");
                     }
-                    else if (!tmp.compare("rst_snd"))
+                    else if (tmp == "rst_snd")
                     {
                         add_diff_comment("rst_snd", "reset: source");
                         table_api.add_option("reset", "source");
                     }
-                    else if (!tmp.compare("reset_source"))
+                    else if (tmp == "reset_source")
                     {
                         add_diff_comment("reset_source", "reset: source");
                         table_api.add_option("reset", "source");
                     }
-                    else if (!tmp.compare("icmp_net"))
+                    else if (tmp == "icmp_net")
                     {
                         add_diff_comment("icmp_net", "control: network");
                         table_api.add_option("control", "network");
                     }
-                    else if (!tmp.compare("icmp_host"))
+                    else if (tmp == "icmp_host")
                     {
                         add_diff_comment("icmp_host", "control: host");
                         table_api.add_option("control", "host");
                     }
-                    else if (!tmp.compare("icmp_all"))
+                    else if (tmp == "icmp_all")
                     {
                         add_diff_comment("icmp_all", "control: all");
                         table_api.add_option("control", "all");
                     }
-                    else if (!tmp.compare("icmp_port"))
+                    else if (tmp == "icmp_port")
                     {
                         add_diff_comment("icmp_port", "control: port");
                         table_api.add_option("control", "port");

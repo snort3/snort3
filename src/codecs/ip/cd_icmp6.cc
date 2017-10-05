@@ -94,7 +94,6 @@ class Icmp6Codec : public Codec
 {
 public:
     Icmp6Codec() : Codec(CD_ICMP6_NAME) { }
-    ~Icmp6Codec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
@@ -133,7 +132,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         ph6.protocol = codec.ip6_csum_proto;
         ph6.len = htons((u_short)raw.len);
 
-        uint16_t csum = checksum::icmp_cksum((uint16_t*)(icmp6h), raw.len, &ph6);
+        uint16_t csum = checksum::icmp_cksum((const uint16_t*)(icmp6h), raw.len, &ph6);
 
         if (csum && !codec.is_cooked())
         {
@@ -167,7 +166,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     case icmp::Icmp6Types::PACKET_TOO_BIG:
         if (dsize >= sizeof(icmp::ICMP6TooBig))
         {
-            icmp::ICMP6TooBig* too_big = (icmp::ICMP6TooBig*)raw.data;
+            const icmp::ICMP6TooBig* too_big = (const icmp::ICMP6TooBig*)raw.data;
 
             if (ntohl(too_big->mtu) < 1280)
                 codec_event(codec, DECODE_ICMPV6_TOO_BIG_BAD_MTU);
@@ -208,7 +207,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     case icmp::Icmp6Types::ROUTER_ADVERTISEMENT:
         if (dsize >= (sizeof(icmp::ICMP6RouterAdvertisement) - icmp::ICMP6_HEADER_MIN_LEN))
         {
-            icmp::ICMP6RouterAdvertisement* ra = (icmp::ICMP6RouterAdvertisement*)raw.data;
+            const icmp::ICMP6RouterAdvertisement* ra = (const icmp::ICMP6RouterAdvertisement*)raw.data;
 
             if (icmp6h->code != icmp::Icmp6Code::ADVERTISEMENT)
                 codec_event(codec, DECODE_ICMPV6_ADVERT_BAD_CODE);
@@ -228,7 +227,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     case icmp::Icmp6Types::ROUTER_SOLICITATION:
         if (dsize >= (sizeof(icmp::ICMP6RouterSolicitation) - icmp::ICMP6_HEADER_MIN_LEN))
         {
-            icmp::ICMP6RouterSolicitation* rs = (icmp::ICMP6RouterSolicitation*)raw.data;
+            const icmp::ICMP6RouterSolicitation* rs = (const icmp::ICMP6RouterSolicitation*)raw.data;
             if (rs->code != 0)
                 codec_event(codec, DECODE_ICMPV6_SOLICITATION_BAD_CODE);
 
@@ -248,7 +247,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     case icmp::Icmp6Types::NODE_INFORMATION_RESPONSE:
         if (dsize >= (sizeof(icmp::ICMP6NodeInfo) - icmp::ICMP6_HEADER_MIN_LEN))
         {
-            icmp::ICMP6NodeInfo* ni = (icmp::ICMP6NodeInfo*)raw.data;
+            const icmp::ICMP6NodeInfo* ni = (const icmp::ICMP6NodeInfo*)raw.data;
             if (ni->code > 2)
                 codec_event(codec, DECODE_ICMPV6_NODE_INFO_BAD_CODE);
 

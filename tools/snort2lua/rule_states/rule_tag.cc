@@ -32,8 +32,7 @@ class Tag : public ConversionState
 {
 public:
     Tag(Converter& c) : ConversionState(c) { }
-    virtual ~Tag() { }
-    virtual bool convert(std::istringstream& data);
+    bool convert(std::istringstream& data) override;
 };
 } // namespace
 
@@ -60,10 +59,10 @@ bool Tag::convert(std::istringstream& data_stream)
         bool is_host = false;
         bool valid = true;
 
-        if (!value.compare("host"))
+        if (value == "host")
             is_host = true;
 
-        else if (!value.compare("session"))
+        else if (value == "session")
             is_host = false;
 
         else
@@ -98,13 +97,13 @@ bool Tag::convert(std::istringstream& data_stream)
             }
             else
             {
-                if (!value.compare("seconds"))
+                if (value == "seconds")
                     seconds = opt_val;
 
-                else if (!value.compare("bytes"))
+                else if (value == "bytes")
                     bytes = opt_val;
 
-                else if (!value.compare("packets"))
+                else if (value == "packets")
                     packets = opt_val;
 
                 else
@@ -115,10 +114,10 @@ bool Tag::convert(std::istringstream& data_stream)
 
         if (is_host)
         {
-            if (!value.compare("src"))
+            if (value == "src")
                 type = "host_src";
 
-            else if (!value.compare("dst"))
+            else if (value == "dst")
                 type = "host_dst";
 
             else
@@ -131,7 +130,7 @@ bool Tag::convert(std::istringstream& data_stream)
         {
             type = "session";
 
-            if (!value.compare("exclusive"))
+            if (value == "exclusive")
                 rule_api.add_comment("tag: [,exclusive] is currently unsupported");
         }
 

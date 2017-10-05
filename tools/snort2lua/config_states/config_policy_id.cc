@@ -30,8 +30,7 @@ class PolicyId : public ConversionState
 {
 public:
     PolicyId(Converter& c) : ConversionState(c) { }
-    virtual ~PolicyId() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 

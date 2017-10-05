@@ -36,8 +36,7 @@ class FtpServer : public ConversionState
 {
 public:
     FtpServer(Converter& c) : ConversionState(c) { }
-    virtual ~FtpServer() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 
 private:
     struct Command
@@ -57,7 +56,7 @@ private:
 
     bool parse_alt_max_cmd(std::istringstream& data_stream);
     bool parse_cmd_validity_cmd(std::istringstream& data_stream);
-    std::vector<Command>::iterator get_command(std::string cmd_name,
+    std::vector<Command>::iterator get_command(const std::string& cmd_name,
         std::vector<FtpServer::Command>::iterator it);
 };
 }  // namespace
@@ -65,11 +64,11 @@ private:
 int FtpServer::ftpsever_binding_id = 1;
 
 std::vector<FtpServer::Command>::iterator FtpServer::get_command(
-    std::string cmd_name,
+    const std::string& cmd_name,
     std::vector<FtpServer::Command>::iterator it)
 {
     for (; it != commands.end(); ++it)
-        if (!cmd_name.compare((*it).name))
+        if (cmd_name == (*it).name)
             return it;
 
     return commands.end();
@@ -87,10 +86,10 @@ bool FtpServer::parse_alt_max_cmd(std::istringstream& stream)
     table_api.add_diff_option_comment("alt_max_param_len", "cmd_validity");
     table_api.close_table();
 
-    if (!(stream >> elem) || (elem.compare("{")))
+    if (!(stream >> elem) || elem != "{")
         return false;
 
-    while (stream >> elem && elem.compare("}"))
+    while (stream >> elem && elem != "}")
     {
         auto it = get_command(elem, commands.begin()); // it == iterator
 
@@ -115,7 +114,7 @@ bool FtpServer::parse_alt_max_cmd(std::istringstream& stream)
         }
     }
 
-    if (!elem.compare("}"))
+    if (elem == "}")
         return true;
     return false;
 }
@@ -127,15 +126,15 @@ bool FtpServer::parse_cmd_validity_cmd(std::istringstream& data_stream)
 
     if (!(data_stream >> command) ||
         !(data_stream >> elem) ||
-        (elem.compare("<")))
+        (elem != "<"))
         return false;
 
     std::string format = "<";
-    while ((data_stream >> elem) && (elem.compare(">")))
+    while ((data_stream >> elem) && (elem != ">"))
         format += " " + elem;
 
     // last element must be a '>'
-    if (elem.compare(">"))
+    if (elem != ">")
         return false;
 
     format += " >";
@@ -154,7 +153,7 @@ bool FtpServer::parse_cmd_validity_cmd(std::istringstream& data_stream)
         it->format = std::string(format);
     }
     // command && format exists, but format is different. create new command
-    else if (format.compare(it->format))
+    else if (format != it->format)
     {
         Command c;
         c.name = std::string(command);
@@ -182,7 +181,7 @@ bool FtpServer::convert(std::istringstream& data_stream)
 
     if (data_stream >> keyword)
     {
-        if (!keyword.compare("default"))
+        if (keyword == "default")
         {
             table_api.open_table("ftp_server");
         }
@@ -193,11 +192,11 @@ bool FtpServer::convert(std::istringstream& data_stream)
             table_api.open_table(table_name);
             ftpsever_binding_id++;
 
-            if (!keyword.compare("{"))
+            if (keyword == "{")
             {
                 std::string tmp;
 
-                while (data_stream >> tmp && tmp.compare("}"))
+                while (data_stream >> tmp && tmp != "}")
                     bind.add_when_net(tmp);
 
                 if (!data_stream.good())
@@ -218,61 +217,61 @@ bool FtpServer::convert(std::istringstream& data_stream)
     {
         bool tmpval = true;
 
-        if (!keyword.compare("print_cmds"))
+        if (keyword == "print_cmds")
             tmpval = table_api.add_option("print_cmds", true);
 
-        else if (!keyword.compare("def_max_param_len"))
+        else if (keyword == "def_max_param_len")
             tmpval = parse_int_option("def_max_param_len", data_stream, false);
 
-        else if (!keyword.compare("telnet_cmds"))
+        else if (keyword == "telnet_cmds")
             tmpval = parse_yn_bool_option("telnet_cmds", data_stream, false);
 
-        else if (!keyword.compare("ignore_telnet_erase_cmds"))
+        else if (keyword == "ignore_telnet_erase_cmds")
             tmpval = parse_yn_bool_option("ignore_telnet_erase_cmds", data_stream, false);
 
-        else if (!keyword.compare("ignore_data_chan"))
+        else if (keyword == "ignore_data_chan")
             tmpval = parse_yn_bool_option("ignore_data_chan", data_stream, false);
 
-        else if (!keyword.compare("ftp_cmds"))
+        else if (keyword == "ftp_cmds")
             tmpval = parse_curly_bracket_list("ftp_cmds", data_stream);
 
-        else if (!keyword.compare("chk_str_fmt"))
+        else if (keyword == "chk_str_fmt")
             tmpval = parse_curly_bracket_list("chk_str_fmt", data_stream);
 
-        else if (!keyword.compare("alt_max_param_len"))
+        else if (keyword == "alt_max_param_len")
             tmpval = parse_alt_max_cmd(data_stream);
 
-        else if (!keyword.compare("cmd_validity"))
+        else if (keyword == "cmd_validity")
             tmpval = parse_cmd_validity_cmd(data_stream);
 
-        else if (!keyword.compare("data_chan_cmds"))
+        else if (keyword == "data_chan_cmds")
             tmpval = parse_curly_bracket_list("data_chan_cmds", data_stream);
 
-        else if (!keyword.compare("data_rest_cmds"))
+        else if (keyword == "data_rest_cmds")
             tmpval = parse_curly_bracket_list("data_rest_cmds", data_stream);
 
-        else if (!keyword.compare("data_xfer_cmds"))
+        else if (keyword == "data_xfer_cmds")
             tmpval = parse_curly_bracket_list("data_xfer_cmds", data_stream);
 
-        else if (!keyword.compare("file_put_cmds"))
+        else if (keyword == "file_put_cmds")
             tmpval = parse_curly_bracket_list("file_put_cmds", data_stream);
 
-        else if (!keyword.compare("file_get_cmds"))
+        else if (keyword == "file_get_cmds")
             tmpval = parse_curly_bracket_list("file_get_cmds", data_stream);
 
-        else if (!keyword.compare("data_chan"))
+        else if (keyword == "data_chan")
         {
             table_api.add_diff_option_comment("data_chan", "ignore_data_chan");
             tmpval = table_api.add_option("ignore_data_chan", true);
         }
-        else if (!keyword.compare("ports"))
+        else if (keyword == "ports")
         {
             table_api.add_diff_option_comment("ports", "bindings");
             table_api.add_comment("check bindings table for port information");
 
-            if ((data_stream >> keyword) && !keyword.compare("{"))
+            if ((data_stream >> keyword) && keyword == "{")
             {
-                while (data_stream >> keyword && keyword.compare("}"))
+                while (data_stream >> keyword && keyword != "}")
                 {
                     bind.add_when_port(keyword);
                     ports_set = true;
@@ -346,8 +345,7 @@ class FtpClient : public ConversionState
 {
 public:
     FtpClient(Converter& c) : ConversionState(c) { }
-    virtual ~FtpClient() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 
 private:
     static int ftpclient_binding_id;
@@ -366,7 +364,7 @@ bool FtpClient::convert(std::istringstream& data_stream)
 
     if (data_stream >> keyword)
     {
-        if (!keyword.compare("default"))
+        if (keyword == "default")
         {
             bind.set_when_service("ftp");
             table_api.open_table("ftp_client");
@@ -379,11 +377,11 @@ bool FtpClient::convert(std::istringstream& data_stream)
             table_api.open_table(table_name);
             ftpclient_binding_id++;
 
-            if (!keyword.compare("{"))
+            if (keyword == "{")
             {
                 std::string tmp;
 
-                while (data_stream >> tmp && tmp.compare("}"))
+                while (data_stream >> tmp && tmp != "}")
                     bind.add_when_net(tmp);
 
                 if (!data_stream.good())
@@ -404,23 +402,23 @@ bool FtpClient::convert(std::istringstream& data_stream)
     {
         bool tmpval = true;
 
-        if (!keyword.compare("telnet_cmds"))
+        if (keyword == "telnet_cmds")
             tmpval = parse_yn_bool_option("telnet_cmds", data_stream, false);
 
-        else if (!keyword.compare("ignore_telnet_erase_cmds"))
+        else if (keyword == "ignore_telnet_erase_cmds")
             tmpval = parse_yn_bool_option("ignore_telnet_erase_cmds", data_stream, false);
 
-        else if (!keyword.compare("max_resp_len"))
+        else if (keyword == "max_resp_len")
             tmpval = parse_int_option("max_resp_len", data_stream, false);
 
-        else if (!keyword.compare("bounce"))
+        else if (keyword == "bounce")
             tmpval = parse_yn_bool_option("bounce", data_stream, false);
 
         // add bounce_to as a commented list
-        else if (!keyword.compare("bounce_to"))
+        else if (keyword == "bounce_to")
         {
             // get rid of the "{"
-            if (!(data_stream >> keyword) && keyword.compare("{"))
+            if (!(data_stream >> keyword) && keyword != "{")
             {
                 data_api.failed_conversion(data_stream, "bounce_to");
                 retval = false;
@@ -429,7 +427,7 @@ bool FtpClient::convert(std::istringstream& data_stream)
             {
                 table_api.open_table("bounce_to");
 
-                while (data_stream >> keyword && keyword.compare("}"))
+                while (data_stream >> keyword && keyword != "}")
                 {
                     std::istringstream bounce_stream(keyword);
                     std::string data;
@@ -483,8 +481,7 @@ class Telnet : public ConversionState
 {
 public:
     Telnet(Converter& c) : ConversionState(c) { }
-    virtual ~Telnet() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 
@@ -503,13 +500,13 @@ bool Telnet::convert(std::istringstream& data_stream)
     {
         bool tmpval = true;
 
-        if (!keyword.compare("normalize"))
+        if (keyword == "normalize")
             tmpval = table_api.add_option("normalize", true);
 
-        else if (!keyword.compare("detect_anomalies"))
+        else if (keyword == "detect_anomalies")
             table_api.add_deleted_comment("detect_anomalies");
 
-        else if (!keyword.compare("ayt_attack_thresh"))
+        else if (keyword == "ayt_attack_thresh")
         {
             int i_val;
 
@@ -518,13 +515,13 @@ bool Telnet::convert(std::istringstream& data_stream)
             else
                 tmpval = false;
         }
-        else if (!keyword.compare("ports"))
+        else if (keyword == "ports")
         {
             table_api.add_diff_option_comment("ports", "bindings");
             table_api.add_comment("check bindings table for port information");
 
             // adding ports to the binding.
-            if ((data_stream >> keyword) && !keyword.compare("{"))
+            if ((data_stream >> keyword) && keyword == "{")
             {
                 while (data_stream >> keyword && keyword != "}")
                 {
@@ -567,8 +564,7 @@ class FtpTelnetProtocol : public ConversionState
 {
 public:
     FtpTelnetProtocol(Converter& c) : ConversionState(c) { }
-    virtual ~FtpTelnetProtocol() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 
@@ -578,18 +574,18 @@ bool FtpTelnetProtocol::convert(std::istringstream& data_stream)
 
     if (data_stream >> protocol)
     {
-        if (!protocol.compare("telnet"))
+        if (protocol == "telnet")
         {
             cv.set_state(new Telnet(cv));
         }
-        else if (!protocol.compare("ftp"))
+        else if (protocol == "ftp")
         {
             if (data_stream >> protocol)
             {
-                if (!protocol.compare("client"))
+                if (protocol == "client")
                     cv.set_state(new FtpClient(cv));
 
-                else if (!protocol.compare("server"))
+                else if (protocol == "server")
                     cv.set_state(new FtpServer(cv));
 
                 else

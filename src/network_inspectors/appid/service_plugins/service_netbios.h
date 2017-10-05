@@ -31,7 +31,6 @@ class NbssServiceDetector : public ServiceDetector
 {
 public:
     NbssServiceDetector(ServiceDiscovery*);
-    ~NbssServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };
@@ -40,7 +39,6 @@ class NbnsServiceDetector : public ServiceDetector
 {
 public:
     NbnsServiceDetector(ServiceDiscovery*);
-    ~NbnsServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };
@@ -49,7 +47,7 @@ class NbdgmServiceDetector : public ServiceDetector
 {
 public:
     NbdgmServiceDetector(ServiceDiscovery*);
-    ~NbdgmServiceDetector();
+    ~NbdgmServiceDetector() override;
 
     int validate(AppIdDiscoveryArgs&) override;
 

@@ -81,7 +81,6 @@ class Ipv6Codec : public Codec
 {
 public:
     Ipv6Codec() : Codec(CD_IPV6_NAME) { }
-    ~Ipv6Codec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;

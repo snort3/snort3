@@ -154,13 +154,13 @@ int BootpServiceDetector::validate(AppIdDiscoveryArgs& args)
     {
         if (size > sizeof(ServiceBOOTPHeader) + 4)
         {
-            if (ntohl(*((uint32_t*)(data + sizeof(ServiceBOOTPHeader)))) ==
+            if (ntohl(*((const uint32_t*)(data + sizeof(ServiceBOOTPHeader)))) ==
                 DHCP_MAGIC_COOKIE)
             {
                 int option53 = 0;
                 for (i=sizeof(ServiceBOOTPHeader)+sizeof(uint32_t); i<size; )
                 {
-                    op = (ServiceDHCPOption*)&data[i];
+                    op = (const ServiceDHCPOption*)&data[i];
                     if (op->option == 0xff)
                     {
                         const eth::EtherHdr* eh = layer::get_eth_layer(pkt);
@@ -218,7 +218,7 @@ int BootpServiceDetector::validate(AppIdDiscoveryArgs& args)
 
     if (size > sizeof(ServiceBOOTPHeader) + 4)
     {
-        if (ntohl(*((uint32_t*)(data + sizeof(ServiceBOOTPHeader)))) ==
+        if (ntohl(*((const uint32_t*)(data + sizeof(ServiceBOOTPHeader)))) ==
             DHCP_MAGIC_COOKIE)
         {
             int option53 = 0;
@@ -230,7 +230,7 @@ int BootpServiceDetector::validate(AppIdDiscoveryArgs& args)
                 i<size;
                 )
             {
-                op = (ServiceDHCPOption*)&data[i];
+                op = (const ServiceDHCPOption*)&data[i];
                 if (op->option == 0xff)
                 {
                     const eth::EtherHdr* eh = layer::get_eth_layer(pkt);

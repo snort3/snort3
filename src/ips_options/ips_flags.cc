@@ -96,9 +96,9 @@ bool TcpFlagOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    TcpFlagOption& rhs = (TcpFlagOption&)ips;
-    TcpFlagCheckData* left = (TcpFlagCheckData*)&config;
-    TcpFlagCheckData* right = (TcpFlagCheckData*)&rhs.config;
+    const TcpFlagOption& rhs = (const TcpFlagOption&)ips;
+    const TcpFlagCheckData* left = &config;
+    const TcpFlagCheckData* right = &rhs.config;
 
     if ((left->mode == right->mode) &&
         (left->tcp_flags == right->tcp_flags) &&
@@ -199,7 +199,7 @@ static void flags_parse_test(const char* rule, TcpFlagCheckData* idx)
     fptr = rule;
 
     /* make sure there is at least a split pointer */
-    if (fptr == NULL)
+    if (fptr == nullptr)
     {
         ParseError("flags missing in TCP flag rule");
         return;
@@ -302,7 +302,7 @@ static void flags_parse_mask(const char* rule, TcpFlagCheckData* idx)
     fptr = rule;
 
     /* make sure there is at least a split pointer */
-    if (fptr == NULL)
+    if (fptr == nullptr)
     {
         ParseError("flags missing in TCP flag rule");
         return;

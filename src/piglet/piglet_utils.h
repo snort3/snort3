@@ -92,7 +92,7 @@ struct Test
 
     std::vector<std::string> messages;
 
-    inline void set_error(std::string s)
+    inline void set_error(const std::string& s)
     {
         result = ERROR;
         messages.push_back(s);

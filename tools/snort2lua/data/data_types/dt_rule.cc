@@ -85,8 +85,8 @@ void Rule::set_curr_options_buffer(const std::string& new_buffer, bool add_optio
      * 1) No buffer has been set and this is not the default "pkt_data" buffer
      * 2) The sticky buffer is set and is not equal to the new buffer
      */
-    if ( (sticky_buffer.empty() && new_buffer.compare("pkt_data")) ||
-        (!sticky_buffer.empty() && sticky_buffer.compare(new_buffer)) )
+    if ( (sticky_buffer.empty() && new_buffer != "pkt_data") ||
+        (!sticky_buffer.empty() && sticky_buffer != new_buffer) )
     {
         RuleOption* new_opt = new RuleOption(new_buffer);
         if ( add_option )
@@ -104,7 +104,7 @@ std::ostream& operator<<(std::ostream& out, const Rule& rule)
     // don't print comment and tag in quiet mode
     if (!DataApi::is_quiet_mode())
     {
-        for (std::string s : rule.comments)
+        for (const std::string& s : rule.comments)
             out << s << "\n";
     }
 

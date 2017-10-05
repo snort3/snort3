@@ -32,8 +32,7 @@ class PafMax : public ConversionState
 {
 public:
     PafMax(Converter& c) : ConversionState(c) { }
-    virtual ~PafMax() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 

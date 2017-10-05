@@ -30,7 +30,7 @@ class TcpSession : public TcpStreamSession
 {
 public:
     TcpSession(Flow*);
-    ~TcpSession();
+    ~TcpSession() override;
 
     bool setup(Packet*) override;
     void restart(Packet* p) override;
@@ -43,7 +43,7 @@ public:
     void flush_talker(Packet*, bool final_flush = false) override;
     void flush_listener(Packet*, bool final_flush = false) override;
 
-    virtual void clear_session(bool free_flow_data, bool flush_segments, bool restart, Packet* p = nullptr) override;
+    void clear_session(bool free_flow_data, bool flush_segments, bool restart, Packet* p = nullptr) override;
 
     void set_extra_data(Packet*, uint32_t /*flag*/) override;
 

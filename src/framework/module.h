@@ -38,9 +38,9 @@
 // lists in snort_defaults.lua or some such.  Each list item, however, will
 // have any defaults applied.
 
+#include <cassert>
 #include <string>
 #include <vector>
-#include <assert.h>
 
 #include "framework/counts.h"
 #include "framework/parameter.h"
@@ -73,7 +73,7 @@ struct SnortConfig;
 class SO_PUBLIC Module
 {
 public:
-    virtual ~Module() { }
+    virtual ~Module() = default;
 
     // configuration:
     // for lists (tables with numeric indices):

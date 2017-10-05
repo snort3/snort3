@@ -72,7 +72,7 @@ char** mSplit(const char* str, const char* sep_chars, const int max_toks,
     char* toks_buf[TOKS_BUF_SIZE];
     size_t toks_buf_size = TOKS_BUF_SIZE;
     int toks_buf_size_increment = 10;
-    char** toks_alloc = NULL;   /* Used if the static buf isn't enough */
+    char** toks_alloc = nullptr;   /* Used if the static buf isn't enough */
     char** toks = toks_buf;     /* Pointer to one of the two above */
     char** retstr;
     const char* whitespace = " \t";
@@ -84,9 +84,9 @@ char** mSplit(const char* str, const char* sep_chars, const int max_toks,
     size_t str_length = strlen(str);
 
     if (str_length == 0)
-        return NULL;
+        return nullptr;
 
-    if (sep_chars == NULL)
+    if (sep_chars == nullptr)
         sep_chars = whitespace;
 
     size_t sep_length = strlen(sep_chars);
@@ -95,7 +95,7 @@ char** mSplit(const char* str, const char* sep_chars, const int max_toks,
     for (i = 0; i < sep_length; i++)
     {
         if (sep_chars[i] == meta_char)
-            return NULL;
+            return nullptr;
     }
 
     /* Move past initial separator characters and whitespace */
@@ -118,7 +118,7 @@ char** mSplit(const char* str, const char* sep_chars, const int max_toks,
     if (i == str_length)
     {
         /* Nothing but separator characters or whitespace in string */
-        return NULL;
+        return nullptr;
     }
 
     /* User only wanted one tok so return the rest of the string in
@@ -215,7 +215,7 @@ char** mSplit(const char* str, const char* sep_chars, const int max_toks,
             {
                 char** tmp;
 
-                if (toks_alloc != NULL)
+                if (toks_alloc != nullptr)
                     tmp = toks_alloc;
                 else
                     tmp = toks_buf;
@@ -278,7 +278,7 @@ char** mSplit(const char* str, const char* sep_chars, const int max_toks,
         if (toks == toks_alloc)
             snort_free(toks_alloc);
 
-        return NULL;
+        return nullptr;
     }
 
     /* Trim whitespace at end of last tok */
@@ -403,7 +403,7 @@ void mSplitFree(char*** pbuf, int num_toks)
     int i;
     char** buf;  /* array of string pointers */
 
-    if ( pbuf==NULL || *pbuf==NULL )
+    if ( pbuf==nullptr || *pbuf==nullptr )
     {
         return;
     }
@@ -412,14 +412,14 @@ void mSplitFree(char*** pbuf, int num_toks)
 
     for ( i=0; i<num_toks; i++ )
     {
-        if ( buf[i] != NULL )
+        if ( buf[i] != nullptr )
         {
             snort_free(buf[i]);
-            buf[i] = NULL;
+            buf[i] = nullptr;
         }
     }
 
     snort_free(buf);
-    *pbuf = NULL;
+    *pbuf = nullptr;
 }
 

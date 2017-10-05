@@ -64,12 +64,11 @@ class SmtpSplitter : public StreamSplitter
 {
 public:
     SmtpSplitter(bool c2s, int max_auth_cmd_line_len);
-    ~SmtpSplitter();
 
     Status scan(Flow*, const uint8_t* data, uint32_t len,
         uint32_t flags, uint32_t* fp) override;
 
-    virtual bool is_paf() override { return true; }
+    bool is_paf() override { return true; }
 
 public:
     SmtpPafData state;

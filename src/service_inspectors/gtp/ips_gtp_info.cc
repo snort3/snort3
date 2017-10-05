@@ -46,7 +46,7 @@ static THREAD_LOCAL ProfileStats gtp_info_prof;
 class GtpInfoOption : public IpsOption
 {
 public:
-    GtpInfoOption(uint8_t*);
+    GtpInfoOption(const uint8_t*);
 
     CursorActionType get_cursor_type() const override
     { return CAT_SET_OTHER; }
@@ -62,7 +62,7 @@ public:
     uint8_t types[MAX_GTP_VERSION_CODE + 1];
 };
 
-GtpInfoOption::GtpInfoOption(uint8_t* t) : IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_SET)
+GtpInfoOption::GtpInfoOption(const uint8_t* t) : IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_SET)
 {
     for ( int v = 0; v <= MAX_GTP_VERSION_CODE; ++v )
         types[v] = t[v];
@@ -87,7 +87,7 @@ bool GtpInfoOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    GtpInfoOption& rhs = (GtpInfoOption&)ips;
+    const GtpInfoOption& rhs = (const GtpInfoOption&)ips;
 
     for ( int v = 0; v <= MAX_GTP_VERSION_CODE; ++v )
         if ( types[v] != rhs.types[v] )
@@ -122,7 +122,7 @@ int GtpInfoOption::eval(Cursor& c, Packet* p)
     if ( ieData->msg_id != ropts.msg_id )
         return DETECTION_OPTION_NO_MATCH;
 
-    c.set(s_name, ieData->shift + (uint8_t*)ropts.gtp_header, ieData->length);
+    c.set(s_name, ieData->shift + ropts.gtp_header, ieData->length);
     return DETECTION_OPTION_MATCH;
 }
 

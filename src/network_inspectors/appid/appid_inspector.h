@@ -37,7 +37,7 @@ class AppIdInspector : public Inspector
 public:
 
     AppIdInspector(AppIdModule&);
-    ~AppIdInspector();
+    ~AppIdInspector() override;
     static AppIdInspector* get_inspector();
 
     bool configure(SnortConfig*) override;

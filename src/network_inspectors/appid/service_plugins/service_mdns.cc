@@ -81,10 +81,10 @@ static THREAD_LOCAL MatchedPatterns* patternFreeList;
 
 static MdnsPattern patterns[] =
 {
-    { (uint8_t*)PATTERN_STR_LOCAL_1, sizeof(PATTERN_STR_LOCAL_1) - 1 },
-    { (uint8_t*)PATTERN_STR_LOCAL_2, sizeof(PATTERN_STR_LOCAL_2) - 1 },
-    { (uint8_t*)PATTERN_STR_ARPA_1, sizeof(PATTERN_STR_ARPA_1) - 1 },
-    { (uint8_t*)PATTERN_STR_ARPA_2, sizeof(PATTERN_STR_ARPA_2) - 1 },
+    { (const uint8_t*)PATTERN_STR_LOCAL_1, sizeof(PATTERN_STR_LOCAL_1) - 1 },
+    { (const uint8_t*)PATTERN_STR_LOCAL_2, sizeof(PATTERN_STR_LOCAL_2) - 1 },
+    { (const uint8_t*)PATTERN_STR_ARPA_1, sizeof(PATTERN_STR_ARPA_1) - 1 },
+    { (const uint8_t*)PATTERN_STR_ARPA_2, sizeof(PATTERN_STR_ARPA_2) - 1 },
 };
 
 MdnsServiceDetector::MdnsServiceDetector(ServiceDiscovery* sd)
@@ -106,7 +106,7 @@ MdnsServiceDetector::MdnsServiceDetector(ServiceDiscovery* sd)
 
     matcher = new SearchTool("ac_full", true);
     for (unsigned i = 0; i < sizeof(patterns) / sizeof(*patterns); i++)
-        matcher->add((char*)patterns[i].pattern, patterns[i].length, &patterns[i]);
+        matcher->add((const char*)patterns[i].pattern, patterns[i].length, &patterns[i]);
     matcher->prep();
 
     handler->register_detector(name, this, proto);
@@ -257,16 +257,16 @@ int MdnsServiceDetector::reference_pointer(const char* start_ptr, const char** r
 int MdnsServiceDetector::analyze_user(AppIdSession* asd, const Packet* pkt, uint16_t size)
 {
     char user_name[MAX_LENGTH_SERVICE_NAME] = "";
-    char* user_name_bkp = nullptr;
+    const char* user_name_bkp = nullptr;
     int start_index = 0;
     int processed_ans = 0;
     uint8_t user_name_len = 0;
     uint16_t data_size = size;
 
     /* Scan for MDNS response, decided on Query value */
-    const char* query_val = (char*)pkt->data + QUERY_OFFSET;
+    const char* query_val = (const char*)pkt->data + QUERY_OFFSET;
     int query_val_int = (short)(query_val[0]<<SHIFT_BITS  | query_val[1]);
-    const char* answers = (char*)pkt->data + ANSWER_OFFSET;
+    const char* answers = (const char*)pkt->data + ANSWER_OFFSET;
     int ans_count =  (short)(answers[0]<< SHIFT_BITS | (answers[1] ));
 
     if ( query_val_int == 0)
@@ -274,9 +274,9 @@ int MdnsServiceDetector::analyze_user(AppIdSession* asd, const Packet* pkt, uint
         const char* resp_endptr;
         const char* user_original;
 
-        const char* srv_original  = (char*)pkt->data + RECORD_OFFSET;
+        const char* srv_original  = (const char*)pkt->data + RECORD_OFFSET;
         create_match_list(srv_original, size - RECORD_OFFSET);
-        const char* end_srv_original  = (char*)pkt->data + RECORD_OFFSET + data_size;
+        const char* end_srv_original  = (const char*)pkt->data + RECORD_OFFSET + data_size;
         for (processed_ans = 0; processed_ans < ans_count && data_size <= size && size > 0;
             processed_ans++ )
         {
@@ -318,7 +318,7 @@ int MdnsServiceDetector::analyze_user(AppIdSession* asd, const Packet* pkt, uint
             // Find the  length to Jump to the next response
             if ((resp_endptr  + NEXT_MESSAGE_OFFSET  ) < (srv_original + data_size))
             {
-                uint8_t* data_len_str = (uint8_t*)(resp_endptr+ LENGTH_OFFSET);
+                const uint8_t* data_len_str = (const uint8_t*)(resp_endptr+ LENGTH_OFFSET);
                 uint16_t data_len =  (short)( data_len_str[0]<< SHIFT_BITS | ( data_len_str[1] ));
                 data_size = data_size - (resp_endptr  + NEXT_MESSAGE_OFFSET + data_len -
                     srv_original);
@@ -337,7 +337,7 @@ int MdnsServiceDetector::analyze_user(AppIdSession* asd, const Packet* pkt, uint
                     if (user_original )
                     {
                         user_name_len = user_original - srv_original - start_index;
-                        user_name_bkp = (char*)(srv_original + start_index);
+                        user_name_bkp = srv_original + start_index;
                         /* Non-Printable characters in the beginning */
 
                         while (user_index < user_name_len)
@@ -433,7 +433,7 @@ unsigned MdnsServiceDetector::create_match_list(const char* data, uint16_t dataS
     if (patternList)
         destroy_match_list();
 
-    matcher->find_all((char*)data, dataSize, mdns_pattern_match, false, (void*)&patternList);
+    matcher->find_all((const char*)data, dataSize, mdns_pattern_match, false, (void*)&patternList);
 
     if (patternList)
         return 1;

@@ -36,16 +36,15 @@
 class InspectorPiglet : public Piglet::BasePlugin
 {
 public:
-    InspectorPiglet(Lua::State&, std::string, Module*, SnortConfig*);
-    virtual ~InspectorPiglet() override;
-    virtual bool setup() override;
+    InspectorPiglet(Lua::State&, const std::string&, Module*, SnortConfig*);
+    bool setup() override;
 
 private:
     Inspector* instance;
 };
 
 InspectorPiglet::InspectorPiglet(
-    Lua::State& state, std::string target, Module* m, SnortConfig* sc) :
+    Lua::State& state, const std::string& target, Module* m, SnortConfig* sc) :
     BasePlugin(state, target, m, sc)
 {
     FlushBucket::set(0);
@@ -56,7 +55,6 @@ InspectorPiglet::InspectorPiglet(
     instance = InspectorManager::instantiate(target.c_str(), module, snort_conf);
 }
 
-InspectorPiglet::~InspectorPiglet() { }
 
 bool InspectorPiglet::setup()
 {
@@ -82,7 +80,7 @@ bool InspectorPiglet::setup()
 // API foo
 // -----------------------------------------------------------------------------
 static Piglet::BasePlugin* ctor(
-    Lua::State& state, std::string target, Module* m, SnortConfig* sc)
+    Lua::State& state, const std::string& target, Module* m, SnortConfig* sc)
 { return new InspectorPiglet(state, target, m, sc); }
 
 static void dtor(Piglet::BasePlugin* p)

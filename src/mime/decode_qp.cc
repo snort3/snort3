@@ -97,7 +97,7 @@ QPDecode::~QPDecode()
         delete buffer;
 }
 
-int sf_qpdecode(char* src, uint32_t slen, char* dst, uint32_t dlen, uint32_t* bytes_read,
+int sf_qpdecode(const char* src, uint32_t slen, char* dst, uint32_t dlen, uint32_t* bytes_read,
     uint32_t* bytes_copied)
 {
     char ch;

@@ -109,7 +109,7 @@ TEST_CASE( "chunk initialization", "[chunk]" )
 
         SECTION( "init is not defined" )
         {
-            string test_init_not_defined_chunk = "";
+            string test_init_not_defined_chunk;
             CHECK(
                 init_chunk(lua, test_init_not_defined_chunk,
                     test_name, test_args_table)

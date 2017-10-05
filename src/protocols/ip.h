@@ -90,10 +90,10 @@ public:
     { return is_ip4() or is_ip6(); }
 
     inline const IP4Hdr* get_ip4h() const
-    { return (type == IAT_4) ? (IP4Hdr*)iph : nullptr; }
+    { return (type == IAT_4) ? (const IP4Hdr*)iph : nullptr; }
 
     inline const IP6Hdr* get_ip6h() const
-    { return (type == IAT_6) ? (IP6Hdr*)iph : nullptr; }
+    { return (type == IAT_6) ? (const IP6Hdr*)iph : nullptr; }
 
     inline const SfIp* get_src() const
     { return (type != IAT_NONE) ? &src : nullptr; }
@@ -103,17 +103,17 @@ public:
 
     // only relevant to IP4
     inline uint8_t get_ip_opt_len() const
-    { return (type == IAT_4) ? ((IP4Hdr*)iph)->get_opt_len() : 0; }
+    { return (type == IAT_4) ? ((const IP4Hdr*)iph)->get_opt_len() : 0; }
 
     // only relevant to IP4
     inline const uint8_t* get_ip_opt_data() const
     { return (type == IAT_4) ? reinterpret_cast<const uint8_t*>(iph) + IP4_HEADER_LEN : nullptr; }
 
     inline const snort_in6_addr* get_ip6_src() const
-    { return (type == IAT_6) ? ((IP6Hdr*)iph)->get_src() : nullptr; }
+    { return (type == IAT_6) ? ((const IP6Hdr*)iph)->get_src() : nullptr; }
 
     inline const snort_in6_addr* get_ip6_dst() const
-    { return (type == IAT_6) ? ((IP6Hdr*)iph)->get_dst() : nullptr; }
+    { return (type == IAT_6) ? ((const IP6Hdr*)iph)->get_dst() : nullptr; }
 
     uint16_t tos() const;
     uint8_t ttl() const;

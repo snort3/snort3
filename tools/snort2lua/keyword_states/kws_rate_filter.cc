@@ -32,8 +32,7 @@ class RateFilter : public ConversionState
 {
 public:
     RateFilter(Converter& c) : ConversionState(c) { }
-    virtual ~RateFilter() { }
-    virtual bool convert(std::istringstream& data);
+    bool convert(std::istringstream& data) override;
 
 private:
     void fix_separators(std::istringstream& stream);
@@ -91,33 +90,33 @@ bool RateFilter::convert(std::istringstream& data_stream)
         if (keyword.empty())
             continue;
 
-        else if (!keyword.compare("track"))
+        else if (keyword == "track")
             tmpval = parse_string_option("track", arg_stream);
 
-        else if (!keyword.compare("count"))
+        else if (keyword == "count")
             tmpval = parse_int_option("count", arg_stream, false);
 
-        else if (!keyword.compare("seconds"))
+        else if (keyword == "seconds")
             tmpval = parse_int_option("seconds", arg_stream, false);
 
-        else if (!keyword.compare("timeout"))
+        else if (keyword == "timeout")
             tmpval = parse_int_option("timeout", arg_stream, false);
 
-        else if (!keyword.compare("new_action"))
+        else if (keyword == "new_action")
             tmpval = parse_string_option("new_action", arg_stream);
 
-        else if (!keyword.compare("apply_to"))
+        else if (keyword == "apply_to")
         {
             std::getline(arg_stream, keyword);
             util::trim(keyword);
             table_api.add_option("apply_to", keyword);
         }
-        else if (!keyword.compare("gen_id"))
+        else if (keyword == "gen_id")
         {
             table_api.add_diff_option_comment("gen_id", "gid");
             tmpval = parse_int_option("gid", arg_stream, false);
         }
-        else if (!keyword.compare("sig_id"))
+        else if (keyword == "sig_id")
         {
             table_api.add_diff_option_comment("sig_id", "sid");
             tmpval = parse_int_option("sid", arg_stream, false);

@@ -31,10 +31,9 @@ class ServiceDetector : public AppIdDetector
 {
 public:
     ServiceDetector();
-    virtual ~ServiceDetector() { }
 
-    virtual void do_custom_init() override { }
-    virtual void register_appid(AppId, unsigned extractsInfo) override;
+    void do_custom_init() override { }
+    void register_appid(AppId, unsigned extractsInfo) override;
     int service_inprocess(AppIdSession*, const Packet*, int dir);
     int add_service(AppIdSession*, const Packet*, int dir, AppId, const char* vendor = nullptr,
         const char* version = nullptr, const AppIdServiceSubtype* = nullptr);

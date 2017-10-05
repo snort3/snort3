@@ -29,7 +29,6 @@ class HttpClientDetector : public ClientDetector
 {
 public:
     HttpClientDetector(ClientDiscovery*);
-    ~HttpClientDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };
@@ -38,7 +37,6 @@ class HttpServiceDetector : public ServiceDetector
 {
 public:
     HttpServiceDetector(ServiceDiscovery*);
-    ~HttpServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

@@ -32,8 +32,7 @@ class LogTcpDump : public ConversionState
 {
 public:
     LogTcpDump(Converter& c) : ConversionState(c) { }
-    virtual ~LogTcpDump() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 

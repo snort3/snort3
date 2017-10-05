@@ -34,7 +34,6 @@ class SunNdCodec : public Codec
 {
 public:
     SunNdCodec() : Codec(CD_SUN_ND_NAME) { }
-    ~SunNdCodec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>&) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;

@@ -40,7 +40,7 @@ class SoOption : public IpsOption
 {
 public:
     SoOption(const char*, const char*, SoEvalFunc f, void* v);
-    ~SoOption();
+    ~SoOption() override;
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -81,7 +81,7 @@ uint32_t SoOption::hash() const
 
 bool SoOption::operator==(const IpsOption& ips) const
 {
-    SoOption& rhs = (SoOption&)ips;
+    const SoOption& rhs = (const SoOption&)ips;
 
     if ( strcmp(soid, rhs.soid) )
         return false;

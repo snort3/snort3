@@ -47,8 +47,8 @@
 #define FTPP_UI_CONFIG_STATELESS 0
 #define FTPP_UI_CONFIG_STATEFUL  1
 
-#define FTPP_UI_CONFIG_TELNET_DEF_AYT_THRESHOLD -1
-#define FTPP_UI_CONFIG_FTP_DEF_RESP_MSG_MAX -1
+#define FTPP_UI_CONFIG_TELNET_DEF_AYT_THRESHOLD (-1)
+#define FTPP_UI_CONFIG_FTP_DEF_RESP_MSG_MAX (-1)
 #define FTPP_UI_CONFIG_FTP_DEF_CMD_PARAM_MAX 100
 
 #define MIN_CMD 3
@@ -210,16 +210,16 @@ typedef struct s_FTP_BOUNCE_TO
  */
 struct FTP_CLIENT_PROTO_CONF
 {
-    unsigned int max_resp_len;
+    unsigned int max_resp_len = FTPP_UI_CONFIG_FTP_DEF_RESP_MSG_MAX;
 
-    bool data_chan;
-    bool bounce;
-    bool telnet_cmds;
-    bool ignore_telnet_erase_cmds;
+    bool data_chan = false;
+    bool bounce = false;
+    bool telnet_cmds = false;
+    bool ignore_telnet_erase_cmds = false;
 
     // allow_bounce to IP/mask port|port-range
     // FIXIT-P change this to use a quick find of IP/mask
-    BOUNCE_LOOKUP* bounce_lookup;
+    BOUNCE_LOOKUP* bounce_lookup = nullptr;
 
     FTP_CLIENT_PROTO_CONF();
     ~FTP_CLIENT_PROTO_CONF();

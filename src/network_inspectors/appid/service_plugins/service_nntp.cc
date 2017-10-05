@@ -72,8 +72,8 @@ NntpServiceDetector::NntpServiceDetector(ServiceDiscovery* sd)
 
     tcp_patterns =
     {
-        { (uint8_t*)NNTP_PATTERN1, sizeof(NNTP_PATTERN1) - 1, 0, 0, 0 },
-        { (uint8_t*)NNTP_PATTERN2, sizeof(NNTP_PATTERN2) - 1, 0, 0, 0 },
+        { (const uint8_t*)NNTP_PATTERN1, sizeof(NNTP_PATTERN1) - 1, 0, 0, 0 },
+        { (const uint8_t*)NNTP_PATTERN2, sizeof(NNTP_PATTERN2) - 1, 0, 0, 0 },
     };
 
     appid_registry =
@@ -89,9 +89,6 @@ NntpServiceDetector::NntpServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-NntpServiceDetector::~NntpServiceDetector()
-{
-}
 
 static int nntp_validate_reply(const uint8_t* data, uint16_t* offset,
     uint16_t size)
@@ -116,7 +113,7 @@ static int nntp_validate_reply(const uint8_t* data, uint16_t* offset,
         return 0;
     }
 
-    code_hdr = (ServiceNNTPCode*)(data + *offset);
+    code_hdr = (const ServiceNNTPCode*)(data + *offset);
 
     if (code_hdr->sp != ' ')
         return -1;

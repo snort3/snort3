@@ -30,7 +30,6 @@ class TftpServiceDetector : public ServiceDetector
 {
 public:
     TftpServiceDetector(ServiceDiscovery*);
-    ~TftpServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 

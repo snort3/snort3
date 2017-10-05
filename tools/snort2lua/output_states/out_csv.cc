@@ -32,8 +32,7 @@ class AlertCsv : public ConversionState
 {
 public:
     AlertCsv(Converter& c) : ConversionState(c) { }
-    virtual ~AlertCsv() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 
@@ -62,144 +61,144 @@ bool AlertCsv::convert(std::istringstream& data_stream)
     {
         bool tmpval = true;
 
-        if (!val.compare("default"))
+        if (val == "default")
             table_api.add_deleted_comment("default");
 
-        else if (!val.compare("timestamp"))
+        else if (val == "timestamp")
             tmpval = table_api.add_list("fields", "timestamp");
 
-        else if (!val.compare("msg"))
+        else if (val == "msg")
             tmpval = table_api.add_list("fields", "msg");
 
-        else if (!val.compare("proto"))
+        else if (val == "proto")
             tmpval = table_api.add_list("fields", "proto");
 
-        else if (!val.compare("ttl"))
+        else if (val == "ttl")
             tmpval = table_api.add_list("fields", "ttl");
 
-        else if (!val.compare("tos"))
+        else if (val == "tos")
             tmpval = table_api.add_list("fields", "tos");
 
-        else if (!val.compare("trheader"))
+        else if (val == "trheader")
             tmpval = table_api.add_deleted_comment("trheader");
 
-        else if (!val.compare("dst"))
+        else if (val == "dst")
         {
             table_api.add_diff_option_comment("dst", "dst_addr");
             tmpval = table_api.add_list("fields", "dst_addr");
         }
-        else if (!val.compare("src"))
+        else if (val == "src")
         {
             table_api.add_diff_option_comment("src", "src_addr");
             tmpval = table_api.add_list("fields", "src_addr");
         }
-        else if (!val.compare("sig_generator"))
+        else if (val == "sig_generator")
         {
             table_api.add_diff_option_comment("sig_generator", "gid");
             tmpval = table_api.add_list("fields", "gid");
         }
-        else if (!val.compare("sig_id"))
+        else if (val == "sig_id")
         {
             table_api.add_diff_option_comment("sig_id", "sid");
             tmpval = table_api.add_list("fields", "sid");
         }
-        else if (!val.compare("sig_rev"))
+        else if (val == "sig_rev")
         {
             table_api.add_diff_option_comment("sig_rev", "rev");
             tmpval = table_api.add_list("fields", "rev");
         }
-        else if (!val.compare("srcport"))
+        else if (val == "srcport")
         {
             table_api.add_diff_option_comment("srcport", "src_port");
             tmpval = table_api.add_list("fields", "src_port");
         }
-        else if (!val.compare("dstport"))
+        else if (val == "dstport")
         {
             table_api.add_diff_option_comment("dstport", "dst_port");
             tmpval = table_api.add_list("fields", "dst_port");
         }
-        else if (!val.compare("ethsrc"))
+        else if (val == "ethsrc")
         {
             table_api.add_diff_option_comment("ethsrc", "eth_src");
             tmpval = table_api.add_list("fields", "eth_src");
         }
-        else if (!val.compare("ethdst"))
+        else if (val == "ethdst")
         {
             table_api.add_diff_option_comment("ethdst", "eth_dst");
             tmpval = table_api.add_list("fields", "eth_dst");
         }
-        else if (!val.compare("ethlen"))
+        else if (val == "ethlen")
         {
             table_api.add_diff_option_comment("ethlen", "eth_len");
             tmpval = table_api.add_list("fields", "eth_len");
         }
-        else if (!val.compare("ethtype"))
+        else if (val == "ethtype")
         {
             table_api.add_diff_option_comment("ethtype", "eth_type");
             tmpval = table_api.add_list("fields", "eth_type");
         }
-        else if (!val.compare("tcpflags"))
+        else if (val == "tcpflags")
         {
             table_api.add_diff_option_comment("tcpflags", "tcp_flags");
             tmpval = table_api.add_list("fields", "tcp_flags");
         }
-        else if (!val.compare("tcpseq"))
+        else if (val == "tcpseq")
         {
             table_api.add_diff_option_comment("tcpseq", "tcp_seq");
             tmpval = table_api.add_list("fields", "tcp_seq");
         }
-        else if (!val.compare("tcpack"))
+        else if (val == "tcpack")
         {
             table_api.add_diff_option_comment("tcpack", "tcp_ack");
             tmpval = table_api.add_list("fields", "tcp_ack");
         }
-        else if (!val.compare("tcplen"))
+        else if (val == "tcplen")
         {
             table_api.add_diff_option_comment("tcplen", "tcp_len");
             tmpval = table_api.add_list("fields", "tcp_len");
         }
-        else if (!val.compare("tcpwindow"))
+        else if (val == "tcpwindow")
         {
             table_api.add_diff_option_comment("tcpwindow", "tcp_win");
             tmpval = table_api.add_list("fields", "tcp_win");
         }
-        else if (!val.compare("dgmlen"))
+        else if (val == "dgmlen")
         {
             table_api.add_diff_option_comment("dgmlen", "pkt_len");
             tmpval = table_api.add_list("fields", "pkt_len");
         }
 
-        else if (!val.compare("id"))
+        else if (val == "id")
         {
             table_api.add_diff_option_comment("id", "ip_id");
             tmpval = table_api.add_list("fields", "ip_id");
         }
-        else if (!val.compare("iplen"))
+        else if (val == "iplen")
         {
             table_api.add_diff_option_comment("iplen", "ip_len");
             tmpval = table_api.add_list("fields", "ip_len");
         }
-        else if (!val.compare("icmptype"))
+        else if (val == "icmptype")
         {
             table_api.add_diff_option_comment("icmptype", "icmp_type");
             tmpval = table_api.add_list("fields", "icmp_type");
         }
-        else if (!val.compare("icmpcode"))
+        else if (val == "icmpcode")
         {
             table_api.add_diff_option_comment("icmpcode", "icmp_code");
             tmpval = table_api.add_list("fields", "icmp_code");
         }
-        else if (!val.compare("icmpid"))
+        else if (val == "icmpid")
         {
             table_api.add_diff_option_comment("icmpid", "icmp_id");
             tmpval = table_api.add_list("fields", "icmp_id");
         }
-        else if (!val.compare("icmpseq"))
+        else if (val == "icmpseq")
         {
             table_api.add_diff_option_comment("icmpseq", "icmp_seq");
             tmpval = table_api.add_list("fields", "icmp_seq");
         }
-        else if (!val.compare("udplength"))
+        else if (val == "udplength")
         {
             table_api.add_diff_option_comment("udplength", "udp_len");
             tmpval = table_api.add_list("fields", "udp_len");

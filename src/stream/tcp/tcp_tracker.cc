@@ -45,7 +45,7 @@ TcpTracker::~TcpTracker()
     delete reassembler;
 }
 
-void TcpTracker::init_tcp_state(void )
+void TcpTracker::init_tcp_state( )
 {
     tcp_state = ( client_tracker ) ?
         TcpStreamTracker::TCP_STATE_NONE : TcpStreamTracker::TCP_LISTEN;
@@ -115,7 +115,7 @@ void TcpTracker::set_splitter(const Flow* flow)
         set_splitter(new AtomSplitter(!client_tracker) );
 }
 
-void TcpTracker::reset_splitter( void )
+void TcpTracker::reset_splitter( )
 {
     if ( splitter )
         splitter->reset();

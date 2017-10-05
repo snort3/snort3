@@ -42,7 +42,7 @@ class AuthModule : public CodecModule
 public:
     AuthModule() : CodecModule(CD_AUTH_NAME, CD_AUTH_HELP) { }
 
-    const RuleMap* get_rules() const
+    const RuleMap* get_rules() const override
     { return auth_rules; }
 };
 
@@ -54,7 +54,6 @@ class AuthCodec : public Codec
 {
 public:
     AuthCodec() : Codec(CD_AUTH_NAME) { }
-    ~AuthCodec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;

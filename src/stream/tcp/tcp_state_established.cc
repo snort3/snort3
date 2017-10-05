@@ -33,9 +33,6 @@ TcpStateEstablished::TcpStateEstablished(TcpStateMachine& tsm) :
 {
 }
 
-TcpStateEstablished::~TcpStateEstablished()
-{
-}
 
 bool TcpStateEstablished::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {

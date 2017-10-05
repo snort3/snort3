@@ -37,7 +37,7 @@ class AppIdModule : public Module
 {
 public:
     AppIdModule();
-    ~AppIdModule();
+    ~AppIdModule() override;
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;

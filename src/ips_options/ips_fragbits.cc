@@ -310,9 +310,9 @@ bool FragBitsOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    FragBitsOption& rhs = (FragBitsOption&)ips;
-    FragBitsData* left = (FragBitsData*)&fragBitsData;
-    FragBitsData* right = (FragBitsData*)&rhs.fragBitsData;
+    const FragBitsOption& rhs = (const FragBitsOption&)ips;
+    const FragBitsData* left = &fragBitsData;
+    const FragBitsData* right = &rhs.fragBitsData;
 
     if ((left->get_mode() == right->get_mode()) &&
         (left->get_frag_bits() == right->get_frag_bits()))

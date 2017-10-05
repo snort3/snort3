@@ -1515,7 +1515,7 @@ class RateFilterModule : public Module
 public:
     RateFilterModule() : Module("rate_filter", rate_filter_help, rate_filter_params, true)
     { thdx.applyTo = nullptr; }
-    ~RateFilterModule();
+    ~RateFilterModule() override;
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
@@ -1689,7 +1689,7 @@ class HostsModule : public Module
 public:
     HostsModule() : Module("hosts", hosts_help, hosts_params, true)
     { app = nullptr; host = nullptr; }
-    ~HostsModule() { assert(!host && !app); }
+    ~HostsModule() override { assert(!host && !app); }
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;

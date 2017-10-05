@@ -30,7 +30,6 @@ class SshServiceDetector : public ServiceDetector
 {
 public:
     SshServiceDetector(ServiceDiscovery*);
-    ~SshServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

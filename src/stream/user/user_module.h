@@ -41,7 +41,7 @@ class StreamUserModule : public Module
 {
 public:
     StreamUserModule();
-    ~StreamUserModule();
+    ~StreamUserModule() override;
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;

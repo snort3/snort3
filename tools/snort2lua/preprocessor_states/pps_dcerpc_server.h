@@ -36,8 +36,7 @@ class DcerpcServer : public ConversionState
 {
 public:
     DcerpcServer(Converter& c);
-    virtual ~DcerpcServer() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
     static int get_binding_id()
     { return binding_id; }
 

@@ -85,8 +85,8 @@ uint16_t IpApi::tos() const
 {
     switch ( type )
     {
-    case IAT_4: return ((IP4Hdr*)iph)->tos();
-    case IAT_6: return ((IP6Hdr*)iph)->tos();
+    case IAT_4: return ((const IP4Hdr*)iph)->tos();
+    case IAT_6: return ((const IP6Hdr*)iph)->tos();
     default: break;
     }
     return 0;
@@ -96,8 +96,8 @@ uint8_t IpApi::ttl() const
 {
     switch ( type )
     {
-    case IAT_4: return ((IP4Hdr*)iph)->ttl();
-    case IAT_6: return ((IP6Hdr*)iph)->hop_lim();
+    case IAT_4: return ((const IP4Hdr*)iph)->ttl();
+    case IAT_6: return ((const IP6Hdr*)iph)->hop_lim();
     default: break;
     }
     return 0;
@@ -111,8 +111,8 @@ IpProtocol IpApi::proto() const
 {
     switch ( type )
     {
-    case IAT_4: return ((IP4Hdr*)iph)->proto();
-    case IAT_6: return ((IP6Hdr*)iph)->next();
+    case IAT_4: return ((const IP4Hdr*)iph)->proto();
+    case IAT_6: return ((const IP6Hdr*)iph)->next();
     default: break;
     }
     return IpProtocol::PROTO_NOT_SET;
@@ -124,8 +124,8 @@ uint16_t IpApi::raw_len() const
 {
     switch ( type )
     {
-    case IAT_4: return ((IP4Hdr*)iph)->raw_len();
-    case IAT_6: return ((IP6Hdr*)iph)->raw_len();
+    case IAT_4: return ((const IP4Hdr*)iph)->raw_len();
+    case IAT_6: return ((const IP6Hdr*)iph)->raw_len();
     default: break;
     }
     return 0;
@@ -135,8 +135,8 @@ uint8_t IpApi::hlen() const
 {
     switch ( type )
     {
-    case IAT_4: return ((IP4Hdr*)iph)->hlen();
-    case IAT_6: return ((IP6Hdr*)iph)->hlen();
+    case IAT_4: return ((const IP4Hdr*)iph)->hlen();
+    case IAT_6: return ((const IP6Hdr*)iph)->hlen();
     default: break;
     }
     return 0;
@@ -146,8 +146,8 @@ uint8_t IpApi::ver() const
 {
     switch ( type )
     {
-    case IAT_4: return ((IP4Hdr*)iph)->ver();
-    case IAT_6: return ((IP6Hdr*)iph)->ver();
+    case IAT_4: return ((const IP4Hdr*)iph)->ver();
+    case IAT_6: return ((const IP6Hdr*)iph)->ver();
     default: break;
     }
     return 0;
@@ -168,7 +168,7 @@ bool operator!=(const IpApi& lhs, const IpApi& rhs)
 uint32_t IpApi::id() const
 {
     if ( type == IAT_4 )
-        return (uint32_t)((IP4Hdr*)iph)->id();
+        return (uint32_t)((const IP4Hdr*)iph)->id();
 
     if ( type != IAT_6 )
         return 0;
@@ -184,7 +184,7 @@ uint32_t IpApi::id() const
 uint16_t IpApi::off() const
 {
     if ( type == IAT_4 )
-        return (uint32_t)((IP4Hdr*)iph)->off();
+        return (uint32_t)((const IP4Hdr*)iph)->off();
 
     if ( type != IAT_6 )
         return 0;
@@ -200,7 +200,7 @@ uint16_t IpApi::off() const
 uint16_t IpApi::off_w_flags() const
 {
     if ( type == IAT_4 )
-        return (uint32_t)((IP4Hdr*)iph)->off_w_flags();
+        return (uint32_t)((const IP4Hdr*)iph)->off_w_flags();
 
     if ( type != IAT_6 )
         return 0;
@@ -217,8 +217,8 @@ const uint8_t* IpApi::ip_data() const
 {
     switch ( type )
     {
-    case IAT_4: return reinterpret_cast<const uint8_t*>(iph) + ((IP4Hdr*)iph)->hlen();
-    case IAT_6: return reinterpret_cast<const uint8_t*>(iph) + ((IP6Hdr*)iph)->hlen();
+    case IAT_4: return reinterpret_cast<const uint8_t*>(iph) + ((const IP4Hdr*)iph)->hlen();
+    case IAT_6: return reinterpret_cast<const uint8_t*>(iph) + ((const IP6Hdr*)iph)->hlen();
     default: break;
     }
     return nullptr;
@@ -228,8 +228,8 @@ uint16_t IpApi::actual_ip_len() const
 {
     switch ( type )
     {
-    case IAT_4: return ((IP4Hdr*)iph)->len();
-    case IAT_6: return ((IP6Hdr*)iph)->len();
+    case IAT_4: return ((const IP4Hdr*)iph)->len();
+    case IAT_6: return ((const IP6Hdr*)iph)->len();
     default: break;
     }
     return 0;
@@ -239,8 +239,8 @@ uint16_t IpApi::dgram_len() const
 {
     switch ( type )
     {
-    case IAT_4: return ((IP4Hdr*)iph)->len();
-    case IAT_6: return ((IP6Hdr*)iph)->len() + IP6_HEADER_LEN;
+    case IAT_4: return ((const IP4Hdr*)iph)->len();
+    case IAT_6: return ((const IP6Hdr*)iph)->len() + IP6_HEADER_LEN;
     default: break;
     }
     return 0;
@@ -250,8 +250,8 @@ uint16_t IpApi::pay_len() const
 {
     switch ( type )
     {
-    case IAT_4: return ((IP4Hdr*)iph)->len() - ((IP4Hdr*)iph)->hlen();
-    case IAT_6: return ((IP6Hdr*)iph)->len();
+    case IAT_4: return ((const IP4Hdr*)iph)->len() - ((const IP4Hdr*)iph)->hlen();
+    case IAT_6: return ((const IP6Hdr*)iph)->len();
     default: break;
     }
     return 0;
@@ -290,8 +290,8 @@ bool IpApi::is_src_loopback() const
 {
     switch ( type )
     {
-    case IAT_4: return is_loopback(ntohl(((IP4Hdr*)iph)->get_src()));
-    case IAT_6: return is_loopback(((IP6Hdr*)iph)->get_src());
+    case IAT_4: return is_loopback(ntohl(((const IP4Hdr*)iph)->get_src()));
+    case IAT_6: return is_loopback(((const IP6Hdr*)iph)->get_src());
     default: break;
     }
     return false;
@@ -302,8 +302,8 @@ bool IpApi::is_dst_loopback() const
 {
     switch ( type )
     {
-    case IAT_4: return ((ntohl(((IP4Hdr*)iph)->get_dst())) >> 24) == 0x7F;
-    case IAT_6: return is_loopback(((IP6Hdr*)iph)->get_dst());
+    case IAT_4: return ((ntohl(((const IP4Hdr*)iph)->get_dst())) >> 24) == 0x7F;
+    case IAT_6: return is_loopback(((const IP6Hdr*)iph)->get_dst());
     default: break;
     }
     return false;

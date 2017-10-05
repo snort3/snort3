@@ -28,15 +28,12 @@ FlowData::FlowData(unsigned, Inspector*)
     id = 222;
 }
 
-FlowData::~FlowData()
-{
-}
+FlowData::~FlowData() = default;
 
 FlowData* mock_flow_data = nullptr;
 
 typedef int32_t AppId;
-Flow::Flow() { }
-Flow::~Flow() { }
+Flow::Flow() = default;
 
 class FakeFlow : public Flow
 {

@@ -59,16 +59,16 @@ FileCaptureState FileCapture::error_capture(FileCaptureState state)
 // Only one writer thread supported
 void FileCapture::writer_thread()
 {
-    while (1)
+    while (true)
     {
         // Wait until there are files
         std::unique_lock<std::mutex> lk(capture_mutex);
-        capture_cv.wait(lk, [] { return !running or files_waiting.size(); });
+        capture_cv.wait(lk, [] { return !running or !files_waiting.empty(); });
 
         // When !running we write out any remaining files before exiting.
         // FIXIT-L should take dirty_pig into account. But this thread does not have convenient
         // access to snort_conf.
-        if (!files_waiting.size())
+        if (files_waiting.empty())
             break;
 
         FileCapture* file = files_waiting.front();
@@ -82,7 +82,7 @@ void FileCapture::writer_thread()
 
 FileCapture::FileCapture(int64_t min_size, int64_t max_size)
 {
-    reserved = 0;
+    reserved = false;
     capture_size = 0;
     last = head = nullptr;
     current_data = nullptr;
@@ -246,7 +246,7 @@ inline FileCaptureState FileCapture::save_to_file_buffer(const uint8_t* file_dat
         file_current += available_bytes;
 
         /* We can support any file capture block size */
-        while (1)
+        while (true)
         {
             /*get another block*/
             new_block = (FileCaptureBlock*)create_file_buffer();

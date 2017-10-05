@@ -44,12 +44,12 @@ PortVarTable* PortVarTableCreate()
      */
     h = sfghash_new(1000,0,0,PortObjectFree);
     if ( !h )
-        return 0;
+        return nullptr;
 
     /* Create default port objects */
     po = PortObjectNew();
     if ( !po )
-        return 0;
+        return nullptr;
 
     /* Default has an ANY port */
     PortObjectAddPortAny(po);
@@ -95,7 +95,7 @@ int PortVarTableAdd(PortVarTable* h, PortObject* po)
 PortObject* PortVarTableFind(PortVarTable* h, const char* name)
 {
     if (!h || !name)
-        return NULL;
+        return nullptr;
 
     return (PortObject*)sfghash_find(h,name);
 }

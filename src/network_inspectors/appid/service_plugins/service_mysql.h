@@ -30,7 +30,6 @@ class MySqlServiceDetector : public ServiceDetector
 {
 public:
     MySqlServiceDetector(ServiceDiscovery*);
-    ~MySqlServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

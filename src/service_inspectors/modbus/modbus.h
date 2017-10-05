@@ -44,7 +44,7 @@ class ModbusFlowData : public FlowData
 {
 public:
     ModbusFlowData();
-    ~ModbusFlowData();
+    ~ModbusFlowData() override;
 
     static void init();
 

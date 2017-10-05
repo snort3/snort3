@@ -30,7 +30,6 @@ class SslServiceDetector : public ServiceDetector
 {
 public:
     SslServiceDetector(ServiceDiscovery*);
-    ~SslServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

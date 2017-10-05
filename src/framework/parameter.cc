@@ -254,7 +254,7 @@ static bool valid_multi(Value& v, const char* r)
 
     unsigned mask = 0;
 
-    for ( auto p : list )
+    for ( const auto& p : list )
     {
         const char* t = find(r, p.c_str());
         if ( !t )
@@ -391,7 +391,7 @@ bool Parameter::validate(Value& v) const
     case PT_ENUM:
         return valid_enum(v, (const char*)range);
     case PT_DYNAMIC:
-        return valid_select(v, (*((RangeQuery*)range))());
+        return valid_select(v, (*((const RangeQuery*)range))());
 
     // address values
     case PT_MAC:
@@ -439,12 +439,12 @@ const char* Parameter::get_range() const
         return nullptr;
 
     case PT_DYNAMIC:
-        return (*((RangeQuery*)range))();
+        return (*((const RangeQuery*)range))();
 
     default:
         break;
     }
-    return (char*)range;
+    return (const char*)range;
 }
 
 bool Parameter::get_bool() const

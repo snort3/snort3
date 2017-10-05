@@ -33,8 +33,8 @@ class RpcDecode : public ConversionState
 {
 public:
     RpcDecode(Converter& c);
-    virtual ~RpcDecode();
-    virtual bool convert(std::istringstream& data_stream);
+    ~RpcDecode() override;
+    bool convert(std::istringstream& data_stream) override;
 
 private:
     bool converted_args;
@@ -76,16 +76,16 @@ bool RpcDecode::convert(std::istringstream& data_stream)
 
     while (data_stream >> keyword)
     {
-        if (!keyword.compare("no_alert_multiple_requests"))
+        if (keyword == "no_alert_multiple_requests")
             table_api.add_deleted_comment("no_alert_multiple_requests");
 
-        else if (!keyword.compare("alert_fragments"))
+        else if (keyword == "alert_fragments")
             table_api.add_deleted_comment("alert_fragments");
 
-        else if (!keyword.compare("no_alert_large_fragments"))
+        else if (keyword == "no_alert_large_fragments")
             table_api.add_deleted_comment("no_alert_large_fragments");
 
-        else if (!keyword.compare("no_alert_incomplete"))
+        else if (keyword == "no_alert_incomplete")
             table_api.add_deleted_comment("no_alert_incomplete");
 
         else if (isdigit(keyword[0]))

@@ -53,7 +53,7 @@
 
 #include "sfeventq.h"
 
-#include <assert.h>
+#include <cassert>
 #include "utils/util.h"
 
 /*
@@ -64,7 +64,7 @@
 SF_EVENTQ* sfeventq_new(int max_nodes, int log_nodes, int event_size)
 {
     if ((max_nodes <= 0) || (log_nodes <= 0) || (event_size <= 0))
-        return NULL;
+        return nullptr;
 
     SF_EVENTQ* eq = (SF_EVENTQ*)snort_calloc(sizeof(SF_EVENTQ));
 
@@ -102,11 +102,11 @@ void* sfeventq_event_alloc(SF_EVENTQ* eq)
 
     if (eq->cur_events >= eq->max_nodes)
     {
-        if (eq->reserve_event == NULL)
-            return NULL;
+        if (eq->reserve_event == nullptr)
+            return nullptr;
 
         event = (void*)eq->reserve_event;
-        eq->reserve_event = NULL;
+        eq->reserve_event = nullptr;
 
         return event;
     }
@@ -126,7 +126,7 @@ unsigned sfeventq_reset(SF_EVENTQ* eq)
 {
     unsigned fails = eq->fails;
     eq->fails = 0;
-    eq->head = NULL;
+    eq->head = nullptr;
     eq->cur_nodes = 0;
     eq->cur_events = 0;
     eq->reserve_event = (char*)(&eq->event_mem[eq->max_nodes * eq->event_size]);
@@ -135,20 +135,20 @@ unsigned sfeventq_reset(SF_EVENTQ* eq)
 
 void sfeventq_free(SF_EVENTQ* eq)
 {
-    if (eq == NULL)
+    if (eq == nullptr)
         return;
 
     /* Free the memory for the nodes that were in use. */
-    if (eq->node_mem != NULL)
+    if (eq->node_mem != nullptr)
     {
         snort_free(eq->node_mem);
-        eq->node_mem = NULL;
+        eq->node_mem = nullptr;
     }
 
-    if (eq->event_mem != NULL)
+    if (eq->event_mem != nullptr)
     {
         snort_free(eq->event_mem);
-        eq->event_mem = NULL;
+        eq->event_mem = nullptr;
     }
 
     snort_free(eq);
@@ -173,7 +173,7 @@ void sfeventq_free(SF_EVENTQ* eq)
 static SF_EVENTQ_NODE* get_eventq_node(SF_EVENTQ* eq, void*)
 {
     if (eq->cur_nodes >= eq->max_nodes)
-        return NULL;
+        return nullptr;
 
     //  We grab the next node from the node memory.
     return &eq->node_mem[eq->cur_nodes++];
@@ -209,8 +209,8 @@ int sfeventq_add(SF_EVENTQ* eq, void* event)
     }
 
     node->event = event;
-    node->next  = NULL;
-    node->prev  = NULL;
+    node->next  = nullptr;
+    node->prev  = nullptr;
 
     if (eq->cur_nodes == 1)
     {
@@ -243,13 +243,13 @@ int sfeventq_action(SF_EVENTQ* eq, int (* action_func)(void*, void*), void* user
     SF_EVENTQ_NODE* node;
     int logged = 0;
 
-    if (action_func == NULL)
+    if (action_func == nullptr)
         return -1;
 
-    if (eq->head == NULL)
+    if (eq->head == nullptr)
         return 0;
 
-    for (node = eq->head; node != NULL; node = node->next)
+    for (node = eq->head; node != nullptr; node = node->next)
     {
         if (logged >= eq->log_nodes)
             return 1;

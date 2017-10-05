@@ -87,8 +87,7 @@ class Ip4Normalizer : public ConversionState
 {
 public:
     Ip4Normalizer(Converter& c) : ConversionState(c) { }
-    virtual ~Ip4Normalizer() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 
@@ -101,16 +100,16 @@ bool Ip4Normalizer::convert(std::istringstream& data_stream)
 
     while (util::get_string(data_stream, keyword, " ,"))
     {
-        if (!keyword.compare("df"))
+        if (keyword == "df")
             table_api.add_option("df", true);
 
-        else if (!keyword.compare("rf"))
+        else if (keyword == "rf")
             table_api.add_option("rf", true);
 
-        else if (!keyword.compare("tos"))
+        else if (keyword == "tos")
             table_api.add_option("tos", true);
 
-        else if (!keyword.compare("trim"))
+        else if (keyword == "trim")
             table_api.add_option("trim", true);
 
         else
@@ -151,8 +150,7 @@ class TcpNormalizer : public ConversionState
 {
 public:
     TcpNormalizer(Converter& c) : ConversionState(c) { }
-    virtual ~TcpNormalizer() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 
@@ -167,78 +165,78 @@ bool TcpNormalizer::convert(std::istringstream& data_stream)
 
     while (util::get_string(data_stream, keyword, " ,"))
     {
-        if (!keyword.compare("ips"))
+        if (keyword == "ips")
             table_api.add_option("ips", true);
 
-        else if (!keyword.compare("trim"))
+        else if (keyword == "trim")
             table_api.add_option("trim", true);
 
-        else if (!keyword.compare("opts"))
+        else if (keyword == "opts")
             table_api.add_option("opts", true);
 
-        else if (!keyword.compare("urp"))
+        else if (keyword == "urp")
             table_api.add_option("urp", true);
 
-        else if (!keyword.compare("rsv"))
+        else if (keyword == "rsv")
             table_api.add_option("rsv", true);
 
-        else if (!keyword.compare("pad"))
+        else if (keyword == "pad")
             table_api.add_option("pad", true);
 
-        else if (!keyword.compare("block"))
+        else if (keyword == "block")
             table_api.add_option("block", true);
 
-        else if (!keyword.compare("req_urg"))
+        else if (keyword == "req_urg")
             table_api.add_option("req_urg", true);
 
-        else if (!keyword.compare("req_pay"))
+        else if (keyword == "req_pay")
             table_api.add_option("req_pay", true);
 
-        else if (!keyword.compare("req_urp"))
+        else if (keyword == "req_urp")
             table_api.add_option("req_urp", true);
 
-        else if (!keyword.compare("trim_syn"))
+        else if (keyword == "trim_syn")
             table_api.add_option("trim_syn", true);
 
-        else if (!keyword.compare("trim_rst"))
+        else if (keyword == "trim_rst")
             table_api.add_option("trim_rst", true);
 
-        else if (!keyword.compare("trim_win"))
+        else if (keyword == "trim_win")
             table_api.add_option("trim_win", true);
 
-        else if (!keyword.compare("trim_mss"))
+        else if (keyword == "trim_mss")
             table_api.add_option("trim_mss", true);
 
-        else if (!keyword.compare("ecn"))
+        else if (keyword == "ecn")
         {
             if (util::get_string(data_stream, value, " ,"))
                 table_api.add_option("ecn", value);
             else
                 data_api.failed_conversion(data_stream, "ecn[, ]missing_argument");
         }
-        else if (!keyword.compare("allow"))
+        else if (keyword == "allow")
         {
             // loop until we break or reach end of stream
             while (util::get_string(data_stream, keyword, " ,"))
             {
                 std::streamoff pos = data_stream.tellg();
 
-                if (!keyword.compare("sack"))
+                if (keyword == "sack")
                     table_api.add_list("allow_names", "sack");
 
-                else if (!keyword.compare("echo"))
+                else if (keyword == "echo")
                     table_api.add_list("allow_names", "echo");
 
-                else if (!keyword.compare("partial_order"))
+                else if (keyword == "partial_order")
                     table_api.add_list("allow_names", "partial_order");
 
-                else if (!keyword.compare("conn_count"))
+                else if (keyword == "conn_count")
                     table_api.add_list("allow_names", "conn_count");
 
-                else if (!keyword.compare("alt_checksum"))
+                else if (keyword == "alt_checksum")
                     table_api.add_list("allow_names", "alt_checksum");
 
-                else if (!keyword.compare("md5"))
+                else if (keyword == "md5")
                     table_api.add_list("allow_names", "md5");
 
                 else if (isdigit(keyword[0]))

@@ -40,7 +40,7 @@ class IgmpModule : public CodecModule
 public:
     IgmpModule() : CodecModule(CD_IGMP_NAME, CD_IGMP_HELP) { }
 
-    const RuleMap* get_rules() const
+    const RuleMap* get_rules() const override
     { return igmp_rules; }
 };
 
@@ -48,7 +48,6 @@ class IgmpCodec : public Codec
 {
 public:
     IgmpCodec() : Codec(CD_IGMP_NAME) { }
-    ~IgmpCodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void get_protocol_ids(std::vector<ProtocolId>&) override;

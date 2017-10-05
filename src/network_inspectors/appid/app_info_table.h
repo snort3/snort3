@@ -90,7 +90,6 @@ typedef std::unordered_map<std::string, AppInfoTableEntry*> AppInfoNameTable;
 class AppInfoManager
 {
 public:
-    ~AppInfoManager() { }
     static AppInfoManager& get_instance()
     {
         static AppInfoManager instance;
@@ -144,7 +143,7 @@ public:
     void dump_app_info_table();
 
 private:
-    AppInfoManager() { }
+    AppInfoManager() = default;
     void load_appid_config(AppIdModuleConfig*, const char* path);
     AppInfoTableEntry* get_app_info_entry(AppId appId, const AppInfoTable&);
     std::mutex app_info_tables_rw_mutex;

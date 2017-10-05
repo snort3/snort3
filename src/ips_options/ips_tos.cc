@@ -72,7 +72,7 @@ bool IpTosOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    IpTosOption& rhs = (IpTosOption&)ips;
+    const IpTosOption& rhs = (const IpTosOption&)ips;
     return ( config == rhs.config );
 }
 

@@ -314,7 +314,7 @@ bool BinderModule::end(const char* fqn, int idx, SnortConfig* sc)
             work->use.ips_index = sc->policy_map->add_ips_shell(sh) + 1;
         }
 
-        if ( !work->use.name.size() )
+        if ( work->use.name.empty() )
             work->use.name = work->use.type;
 
         bindings.push_back(work);

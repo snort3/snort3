@@ -36,13 +36,13 @@
 class SO_PUBLIC IpsContextData
 {
 public:
-    virtual ~IpsContextData() { }
+    virtual ~IpsContextData() = default;
 
     static unsigned get_ips_id();
     static unsigned get_max_id();
 
 protected:
-    IpsContextData() { }
+    IpsContextData() = default;
 };
 
 class SO_PUBLIC IpsContext

@@ -111,7 +111,7 @@ public:
     ContentOption(ContentData* c) : IpsOption(s_name, RULE_OPTION_TYPE_CONTENT)
     { config = c; }
 
-    ~ContentOption();
+    ~ContentOption() override;
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -149,7 +149,7 @@ ContentOption::~ContentOption()
         return;
 
     if ( cd->pmd.pattern_buf )
-        snort_free((char*)cd->pmd.pattern_buf);
+        snort_free(const_cast<char*>(cd->pmd.pattern_buf));
 
     if ( cd->pmd.last_check )
         snort_free(cd->pmd.last_check);
@@ -451,7 +451,7 @@ static void parse_offset(ContentData* cd, const char* data)
         return;
     }
 
-    if (data == NULL)
+    if (data == nullptr)
     {
         ParseError("missing argument to 'offset' option");
         return;
@@ -483,7 +483,7 @@ static void parse_depth(ContentData* cd, const char* data)
         return;
     }
 
-    if (data == NULL)
+    if (data == nullptr)
     {
         ParseError("missing argument to 'depth' option");
         return;
@@ -523,7 +523,7 @@ static void parse_distance(ContentData* cd, const char* data)
         return;
     }
 
-    if (data == NULL)
+    if (data == nullptr)
     {
         ParseError("missing argument to 'distance' option");
         return;
@@ -555,7 +555,7 @@ static void parse_within(ContentData* cd, const char* data)
         return;
     }
 
-    if (data == NULL)
+    if (data == nullptr)
     {
         ParseError("missing argument to 'within' option");
         return;
@@ -632,7 +632,7 @@ public:
     ContentModule() : Module(s_name, s_help, s_params)
     { cd = nullptr; }
 
-    ~ContentModule()
+    ~ContentModule() override
     { delete cd; }
 
     bool begin(const char*, int, SnortConfig*) override;
@@ -685,7 +685,7 @@ bool ContentModule::end(const char*, int, SnortConfig*)
     }
     if ( cd->pmd.is_no_case() )
     {
-        char* s = (char*)cd->pmd.pattern_buf;
+        char* s = const_cast<char*>(cd->pmd.pattern_buf);
 
         for ( unsigned i = 0; i < cd->pmd.pattern_size; i++ )
             s[i] = toupper(cd->pmd.pattern_buf[i]);

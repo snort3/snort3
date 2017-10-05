@@ -30,7 +30,6 @@ class RfbServiceDetector : public ServiceDetector
 {
 public:
     RfbServiceDetector(ServiceDiscovery*);
-    ~RfbServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

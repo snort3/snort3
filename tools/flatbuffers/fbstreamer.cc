@@ -36,7 +36,7 @@
 #include <byteswap.h>
 #include <netinet/in.h>
 
-#define ntohll(a) ( 1 == ntohl(1) ? a : bswap_64(a) )
+#define ntohll(a) ( 1 == ntohl(1) ? (a) : bswap_64(a) )
 #endif
 
 #define OPT_INFILE     0x1

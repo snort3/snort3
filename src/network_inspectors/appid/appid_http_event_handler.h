@@ -40,7 +40,7 @@ public:
         event_type = type;
     }
 
-    void handle(DataEvent&, Flow*);
+    void handle(DataEvent&, Flow*) override;
 
 private:
     HttpEventType event_type;

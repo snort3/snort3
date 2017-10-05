@@ -43,7 +43,7 @@ class TelnetModule : public Module
 {
 public:
     TelnetModule();
-    ~TelnetModule();
+    ~TelnetModule() override;
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;

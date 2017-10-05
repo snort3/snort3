@@ -54,10 +54,10 @@
 #define SWAP_BYTES(a)
 #endif
 
-static unsigned po_rule_hash_func(SFHASHFCN* p, unsigned char* k, int n)
+static unsigned po_rule_hash_func(SFHASHFCN* p, const unsigned char* k, int n)
 {
     unsigned char* key;
-    int ikey = *(int*)k;
+    int ikey = *(const int*)k;
 
     /* Since the input is really an int, put the bytes into a normalized
      * order so that the hash function returns consistent results across
@@ -78,15 +78,15 @@ static int* RuleHashToSortedArray(SFGHASH* rh)
     SFGHASH_NODE* node;
 
     if ( !rh )
-        return 0;
+        return nullptr;
 
     if (!rh->count)
-        return NULL;
+        return nullptr;
 
     ra = (int*)snort_calloc(rh->count, sizeof(int));
 
     for ( node = sfghash_findfirst(rh);
-        node != 0 && k < (int)rh->count;
+        node != nullptr && k < (int)rh->count;
         node = sfghash_findnext(rh) )
     {
         prid = (int*)node->data;
@@ -114,7 +114,7 @@ PortObject2* PortObject2New(int nrules)
     if ( !po->item_list )
     {
         snort_free(po);
-        return 0;
+        return nullptr;
     }
 
     po->rule_hash =(SFGHASH*)sfghash_new(nrules,sizeof(int), 0,
@@ -123,7 +123,7 @@ PortObject2* PortObject2New(int nrules)
     {
         sflist_free_all(po->item_list, snort_free);
         snort_free(po);
-        return 0;
+        return nullptr;
     }
 
     /* Use hash function defined above for hashing the key as an int. */
@@ -172,22 +172,22 @@ void PortObject2Finalize(PortObject2* po)
  */
 PortObject2* PortObject2Dup(PortObject* po)
 {
-    PortObject2* ponew = NULL;
-    PortObjectItem* poi = NULL;
-    PortObjectItem* poinew = NULL;
-    SF_LNODE* lpos = NULL;
-    int* prid = NULL;
-    int* prule = NULL;
+    PortObject2* ponew = nullptr;
+    PortObjectItem* poi = nullptr;
+    PortObjectItem* poinew = nullptr;
+    SF_LNODE* lpos = nullptr;
+    int* prid = nullptr;
+    int* prule = nullptr;
 
     if ( !po )
-        return NULL;
+        return nullptr;
 
     if ( !po->rule_list )
-        return NULL;
+        return nullptr;
 
     ponew = PortObject2New(po->rule_list->count + PO_EXTRA_RULE_CNT);
     if ( !ponew )
-        return NULL;
+        return nullptr;
 
     /* Dup the Name */
     if ( po->name )
@@ -199,7 +199,7 @@ PortObject2* PortObject2Dup(PortObject* po)
     if ( po->item_list )
     {
         for (poi =(PortObjectItem*)sflist_first(po->item_list,&lpos);
-            poi != NULL;
+            poi != nullptr;
             poi =(PortObjectItem*)sflist_next(&lpos) )
         {
             poinew = PortObjectItemDup(poi);
@@ -207,10 +207,10 @@ PortObject2* PortObject2Dup(PortObject* po)
             if (!poinew)
             {
                 PortObject2Free(ponew);
-                return NULL;
+                return nullptr;
             }
 
-            PortObjectAddItem( (PortObject*)ponew, poinew, NULL);
+            PortObjectAddItem( (PortObject*)ponew, poinew, nullptr);
         }
     }
 
@@ -218,7 +218,7 @@ PortObject2* PortObject2Dup(PortObject* po)
     if ( po->rule_list )
     {
         for (prid  = (int*)sflist_first(po->rule_list,&lpos);
-            prid != 0;
+            prid != nullptr;
             prid  = (int*)sflist_next(&lpos) )
         {
             prule = (int*)snort_calloc(sizeof(int));
@@ -259,7 +259,7 @@ PortObject2* PortObject2AppendPortObject(PortObject2* poa, PortObject* pob)
     SF_LNODE* lpos;
 
     for ( prid = (int*)sflist_first(pob->rule_list,&lpos);
-        prid!= 0;
+        prid!= nullptr;
         prid = (int*)sflist_next(&lpos) )
     {
         prid2 = (int*)snort_calloc(sizeof(int));
@@ -281,7 +281,7 @@ PortObject2* PortObject2AppendPortObject2(PortObject2* poa, PortObject2* pob)
     SFGHASH_NODE* node;
 
     for ( node = sfghash_findfirst(pob->rule_hash);
-        node!= NULL;
+        node!= nullptr;
         node = sfghash_findnext(pob->rule_hash) )
     {
         prid = (int*)node->data;
@@ -306,19 +306,19 @@ PortObject2* PortObjectAppendEx2(PortObject2* poa, PortObject* pob)
 {
     // LogMessage("PortObjectAppendEx: appending ports\n");
     if ( !PortObjectAppend((PortObject*)poa, pob) )
-        return 0;
+        return nullptr;
 
     //  LogMessage("PortObjectAppendEx: appending rules\n");
     if ( !PortObject2AppendPortObject(poa, pob) )
-        return 0;
+        return nullptr;
 
     return poa;
 }
 
 void PortObject2PrintPorts(PortObject2* po)
 {
-    PortObjectItem* poi = NULL;
-    SF_LNODE* pos = NULL;
+    PortObjectItem* poi = nullptr;
+    SF_LNODE* pos = nullptr;
     int bufsize = sizeof(po_print_buf);
 
     po_print_buf[0] = '\0';
@@ -341,7 +341,7 @@ void PortObject2PrintPorts(PortObject2* po)
     else
     {
         for (poi=(PortObjectItem*)sflist_first(po->item_list,&pos);
-            poi != 0;
+            poi != nullptr;
             poi=(PortObjectItem*)sflist_next(&pos) )
         {
             PortObjectItemPrint(poi, po_print_buf, bufsize);
@@ -355,10 +355,10 @@ void PortObject2PrintPorts(PortObject2* po)
 void PortObject2PrintEx(PortObject2* po,
     void (* print_index_map)(int index, char* buf, int bufsize) )
 {
-    PortObjectItem* poi = NULL;
-    SF_LNODE* pos = NULL;
+    PortObjectItem* poi = nullptr;
+    SF_LNODE* pos = nullptr;
     int k=0;
-    int* rlist = NULL;
+    int* rlist = nullptr;
     unsigned int i;
     int bufsize = sizeof(po_print_buf);
 
@@ -381,7 +381,7 @@ void PortObject2PrintEx(PortObject2* po,
     else
     {
         for (poi=(PortObjectItem*)sflist_first(po->item_list,&pos);
-            poi != 0;
+            poi != nullptr;
             poi=(PortObjectItem*)sflist_next(&pos) )
         {
             PortObjectItemPrint(poi, po_print_buf, bufsize);

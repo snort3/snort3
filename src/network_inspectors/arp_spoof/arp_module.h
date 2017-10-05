@@ -55,7 +55,7 @@ class ArpSpoofModule : public Module
 {
 public:
     ArpSpoofModule();
-    ~ArpSpoofModule();
+    ~ArpSpoofModule() override;
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;

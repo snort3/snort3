@@ -41,7 +41,7 @@ public:
     HostTrackerModule() : Module("host_tracker", host_tracker_help, host_tracker_params, true)
     { host = nullptr; }
 
-    ~HostTrackerModule()
+    ~HostTrackerModule() override
     { assert(!host); }
 
     const PegInfo* get_pegs() const override;

@@ -148,7 +148,7 @@ TEST(lru_cache_shared, remove_test)
     CHECK(0 == lru_cache.size());
 
     vec = lru_cache.get_all_data();
-    CHECK(0 == vec.size());
+    CHECK(vec.empty());
 }
 
 //  Test statistics counters.

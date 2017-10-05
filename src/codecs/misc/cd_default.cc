@@ -32,7 +32,6 @@ class DefaultCodec : public Codec
 {
 public:
     DefaultCodec() : Codec(CD_DEFAULT_NAME) { }
-    ~DefaultCodec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override
     { v.push_back(ProtocolId::FINISHED_DECODE); }

@@ -35,14 +35,13 @@ class NapRulesState : public ConversionState
 {
 public:
     NapRulesState(Converter& c) : ConversionState(c) { }
-    virtual ~NapRulesState() { }
 
 // We only care about rules. Format:
 // <rule id> <action> <in_zone> <src_net> <src_port> <out_zone> <dst_zone> <dst_port> <vlan> <proto>
-    virtual bool convert(std::istringstream& data_stream)
+    bool convert(std::istringstream& data_stream) override
     {
 #define TRY_FIELD(field) \
-        if ( !(data_stream >> field) ) \
+        if ( !(data_stream >> (field)) ) \
         { \
             data_api.failed_conversion(data_stream, "missing " #field); \
             return false; \
@@ -142,8 +141,7 @@ class NapSelectorState : public ConversionState
 {
 public:
     NapSelectorState(Converter& c) : ConversionState(c) { }
-    virtual ~NapSelectorState() { }
-    virtual bool convert(std::istringstream& data_stream)
+    bool convert(std::istringstream& data_stream) override
     {
         bool retval = true;
         std::string keyword;
@@ -151,7 +149,7 @@ public:
         while ( data_stream >> keyword )
         {
             bool tmpval = true;
-            if ( !keyword.compare("nap_rule_path" ) )
+            if ( keyword == "nap_rule_path" )
             {
                 std::string path;
                 if ( data_stream >> path )
@@ -184,7 +182,7 @@ public:
                     tmpval = false;
                 }
             }
-            else if ( !keyword.compare("nap_stats_time") )
+            else if ( keyword == "nap_stats_time" )
             {
                 cv.get_table_api().open_top_level_table("binder");
                 cv.get_table_api().add_deleted_comment("nap_stats_time");

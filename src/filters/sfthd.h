@@ -41,9 +41,9 @@ typedef struct sf_list SF_LIST;
 #define THD_GEN_ID_1_ROWS 4096
 #define THD_GEN_ID_ROWS   512
 
-#define THD_NO_THRESHOLD -1
+#define THD_NO_THRESHOLD (-1)
 
-#define THD_TOO_MANY_THDOBJ -15
+#define THD_TOO_MANY_THDOBJ (-15)
 
 /*!
    Type of Thresholding

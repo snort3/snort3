@@ -112,9 +112,9 @@ bool IsDataAtOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    IsDataAtOption& rhs = (IsDataAtOption&)ips;
-    IsDataAtData* left = (IsDataAtData*)&config;
-    IsDataAtData* right = (IsDataAtData*)&rhs.config;
+    const IsDataAtOption& rhs = (const IsDataAtOption&)ips;
+    const IsDataAtData* left = &config;
+    const IsDataAtData* right = &rhs.config;
 
     if (( left->offset == right->offset) &&
         ( left->flags == right->flags) &&

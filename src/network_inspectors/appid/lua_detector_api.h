@@ -61,7 +61,7 @@ struct ValidateParameters
 class LuaDetector
 {
 public:
-    LuaDetector() { }
+    LuaDetector() = default;
     virtual ~LuaDetector();
 
     ValidateParameters validate_params;
@@ -85,9 +85,8 @@ public:
         handler->register_detector(name, this, proto);
     }
 
-    virtual ~LuaServiceDetector() { }
 
-    virtual int validate(AppIdDiscoveryArgs&) override;
+    int validate(AppIdDiscoveryArgs&) override;
 };
 
 class LuaClientDetector : public LuaDetector, public ClientDetector
@@ -101,9 +100,8 @@ public:
         handler->register_detector(name, this, proto);
     }
 
-    virtual ~LuaClientDetector() { }
 
-    virtual int validate(AppIdDiscoveryArgs&) override;
+    int validate(AppIdDiscoveryArgs&) override;
 };
 
 int register_detector(lua_State*);

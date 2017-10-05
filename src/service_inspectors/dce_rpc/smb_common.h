@@ -23,7 +23,7 @@
 #ifndef SMB_COMMON_H
 #define SMB_COMMON_H
 
-#include <stdint.h>
+#include <cstdint>
 
 #define SMB_MAX_NUM_COMS   256
 
@@ -388,7 +388,7 @@ inline uint8_t NbssType(const NbssHdr* nb)
 
 inline uint32_t SmbId(const SmbNtHdr* hdr)
 {
-    uint8_t* idf = (uint8_t*)hdr->smb_idf;
+    const uint8_t* idf = (const uint8_t*)hdr->smb_idf;
     return *idf << 24 | *(idf + 1) << 16 | *(idf + 2) << 8 | *(idf + 3);
 }
 
@@ -403,7 +403,7 @@ inline uint16_t SmbBcc(const uint8_t* ptr, uint16_t com_size)
     if (com_size < sizeof(SmbEmptyCom))
         return 0;
 
-    return alignedNtohs((uint16_t*)(ptr + com_size - sizeof(uint16_t)));
+    return alignedNtohs((const uint16_t*)(ptr + com_size - sizeof(uint16_t)));
 }
 
 inline uint16_t SmbEmptyComBcc(const SmbEmptyCom* ec)

@@ -443,7 +443,7 @@ void SnortConfig::merge(SnortConfig* cmd_line)
 
     // config file vars are stored differently
     // FIXIT-M should cmd_line use the same var list / table?
-    var_list = NULL;
+    var_list = nullptr;
 
     snort_free(state);
     num_slots = ThreadConfig::get_instance_max();
@@ -869,7 +869,7 @@ void SnortConfig::set_tunnel_verdicts(const char* args)
     char* tmp, * tok;
 
     tmp = snort_strdup(args);
-    char* lasts = { 0 };
+    char* lasts = { nullptr };
     tok = strtok_r(tmp, " ,", &lasts);
 
     while (tok)
@@ -892,7 +892,7 @@ void SnortConfig::set_tunnel_verdicts(const char* args)
             return;
         }
 
-        tok = strtok_r(NULL, " ,", &lasts);
+        tok = strtok_r(nullptr, " ,", &lasts);
     }
     snort_free(tmp);
 }

@@ -33,8 +33,7 @@ class FileData : public ConversionState
 {
 public:
     FileData(Converter& c) : ConversionState(c) { }
-    virtual ~FileData() { }
-    virtual bool convert(std::istringstream& data);
+    bool convert(std::istringstream& data) override;
 };
 } // namespace
 
@@ -53,7 +52,7 @@ bool FileData::convert(std::istringstream& data_stream)
     {
         // a colon will have been parsed when retrieving the keyword.
         // Therefore, if a colon is present, we are in the next rule option.
-        if (args.find(":") != std::string::npos)
+        if (args.find(':') != std::string::npos)
         {
             data_stream.clear();
             data_stream.seekg(pos);
@@ -64,7 +63,7 @@ bool FileData::convert(std::istringstream& data_stream)
             // check the next option and ensure it matches 'mime'
             std::istringstream(args) >> tmp;
 
-            if (!tmp.compare("mime"))
+            if (tmp == "mime")
             {
                 rule_api.add_comment("file_data's 'mime' option has been deleted");
             }

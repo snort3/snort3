@@ -31,7 +31,6 @@ class TcpStreamTracker;
 class TcpReassembler : public SegmentOverlapEditor
 {
 public:
-    virtual ~TcpReassembler() { }
 
     virtual int queue_packet_for_reassembly(TcpSegmentDescriptor&);
     virtual void purge_segment_list();

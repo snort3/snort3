@@ -138,7 +138,7 @@ SshServiceDetector::SshServiceDetector(ServiceDiscovery* sd)
 
     tcp_patterns =
     {
-        { (uint8_t*)SSH_BANNER, sizeof(SSH_BANNER) - 1, 0, 0, 0 },
+        { (const uint8_t*)SSH_BANNER, sizeof(SSH_BANNER) - 1, 0, 0, 0 },
     };
 
     appid_registry =
@@ -154,9 +154,6 @@ SshServiceDetector::SshServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-SshServiceDetector::~SshServiceDetector()
-{
-}
 
 static int ssh_validate_pubkey(const uint8_t* data, uint16_t size,
     ServiceSSHData* ss)
@@ -395,7 +392,7 @@ int SshServiceDetector::validate(AppIdDiscoveryArgs& args)
         if (!ss->ssh_version)
         {
             if ((size_t)size > (sizeof(SSH_BANNER)-1+MINIMUM_SSH_VERS_LEN) &&
-                !strncmp(SSH_BANNER, (char*)data, sizeof(SSH_BANNER)-1))
+                !strncmp(SSH_BANNER, (const char*)data, sizeof(SSH_BANNER)-1))
             {
                 data += (sizeof(SSH_BANNER)-1);
                 if (!isdigit(*data))
@@ -436,7 +433,7 @@ int SshServiceDetector::validate(AppIdDiscoveryArgs& args)
             {
                 goto fail;
             }
-            if (!strncmp(SSH_BANNER, (char*)data+offset, sizeof(SSH_BANNER)-1))
+            if (!strncmp(SSH_BANNER, (const char*)data+offset, sizeof(SSH_BANNER)-1))
             {
                 unsigned blen = sizeof(SSH_BANNER)-1;
                 offset += sizeof(SSH_BANNER)-1;
@@ -457,7 +454,7 @@ int SshServiceDetector::validate(AppIdDiscoveryArgs& args)
                 {
                     goto fail;
                 }
-                ven = (char*)&data[offset];
+                ven = (const char*)&data[offset];
                 for (;
                     offset<size && blen<=SSH_MAX_BANNER_LENGTH;
                     offset++, blen++)
@@ -471,7 +468,7 @@ int SshServiceDetector::validate(AppIdDiscoveryArgs& args)
                             if (data[offset+1] != 0x0A)
                                 goto fail;
                         }
-                        end = (char*)&data[offset];
+                        end = (const char*)&data[offset];
                         if (ven == end)
                             goto inprocess;
                         for (ver=ven; ver < end && *ver && *ver != '_' && *ver != '-'; ver++)

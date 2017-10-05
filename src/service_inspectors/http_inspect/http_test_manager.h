@@ -23,7 +23,7 @@
 #if defined(REG_TEST) || defined(UNIT_TEST)
 
 #include <sys/types.h>
-#include <stdio.h>
+#include <cstdio>
 
 //-------------------------------------------------------------------------
 // HttpTestManager class

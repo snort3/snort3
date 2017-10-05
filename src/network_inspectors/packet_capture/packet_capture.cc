@@ -161,7 +161,7 @@ void PacketCapture::capture_term()
 void PacketCapture::write_packet(Packet* p)
 {
     //DAQ_PktHdr_t is compatible with pcap_pkthdr
-    pcap_dump((unsigned char*)dumper, (pcap_pkthdr*)p->pkth, p->pkt);
+    pcap_dump((unsigned char*)dumper, (const pcap_pkthdr*)p->pkth, p->pkt);
     pcap_dump_flush(dumper);
 }
 

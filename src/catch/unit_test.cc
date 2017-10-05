@@ -46,7 +46,7 @@ static bool run_catch()
 {
     Catch::Session session;
 
-    if ( test_tags.size() > 0 )
+    if ( !test_tags.empty() )
         session.configData().testsOrTags = test_tags;
 
     return session.run() == 0;

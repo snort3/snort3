@@ -34,7 +34,6 @@ class Ipv6NoNextCodec : public Codec
 {
 public:
     Ipv6NoNextCodec() : Codec(CD_NO_NEXT_NAME) { }
-    ~Ipv6NoNextCodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void get_protocol_ids(std::vector<ProtocolId>&) override;

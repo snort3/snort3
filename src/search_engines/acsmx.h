@@ -30,7 +30,7 @@
 #include "search_common.h"
 
 #define ALPHABET_SIZE    256
-#define ACSM_FAIL_STATE   -1
+#define ACSM_FAIL_STATE   (-1)
 
 struct ACSM_USERDATA
 {

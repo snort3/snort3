@@ -22,7 +22,7 @@
 
 #ifdef REG_TEST
 
-#include <stdio.h>
+#include <cstdio>
 
 #include "http_enum.h"
 #include "http_flow_data.h"

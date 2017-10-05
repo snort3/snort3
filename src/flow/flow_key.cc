@@ -293,12 +293,12 @@ bool FlowKey::init(
 // hash foo
 //-------------------------------------------------------------------------
 
-uint32_t FlowKey::hash(SFHASHFCN* hf, unsigned char* p, int)
+uint32_t FlowKey::hash(SFHASHFCN* hf, const unsigned char* p, int)
 {
     uint32_t a, b, c;
     a = b = c = hf->hardener;
 
-    const uint32_t* d = (uint32_t*)p;
+    const uint32_t* d = (const uint32_t*)p;
 
     a += d[0];   // IPv6 lo[0]
     b += d[1];   // IPv6 lo[1]
@@ -329,10 +329,10 @@ uint32_t FlowKey::hash(SFHASHFCN* hf, unsigned char* p, int)
 
 int FlowKey::compare(const void* s1, const void* s2, size_t)
 {
-    uint64_t* a,* b;
+    const uint64_t* a,* b;
 
-    a = (uint64_t*)s1;
-    b = (uint64_t*)s2;
+    a = (const uint64_t*)s1;
+    b = (const uint64_t*)s2;
     if (*a - *b)
         return 1;               /* Compares IPv4 lo/hi
                                    Compares IPv6 low[0,1] */

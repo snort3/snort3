@@ -86,7 +86,7 @@ enum DHPSequence
 
 struct DetectorHTTPPattern
 {
-    bool init(uint8_t* pat, unsigned len, DHPSequence seq, AppId service, AppId client, AppId payload, AppId app)
+    bool init(const uint8_t* pat, unsigned len, DHPSequence seq, AppId service, AppId client, AppId payload, AppId app)
     {
         if( !pat )
         {
@@ -101,7 +101,7 @@ struct DetectorHTTPPattern
         }
 
         pattern_size = len;
-        pattern = (uint8_t*)snort_strdup((const char*)pat);
+        pattern = (const uint8_t*)snort_strdup((const char*)pat);
         sequence = seq;
         service_id = service;
         client_id = client;
@@ -117,16 +117,16 @@ struct DetectorHTTPPattern
     AppId payload_id;
     AppId app_id;
     unsigned pattern_size;
-    uint8_t* pattern;
+    const uint8_t* pattern;
 };
 typedef std::vector<DetectorHTTPPattern> DetectorHTTPPatterns;
 
 #define CHP_APPID_BITS_FOR_INSTANCE  7
 #define CHP_APPID_INSTANCE_MAX (1 << CHP_APPID_BITS_FOR_INSTANCE)
 #define CHP_APPIDINSTANCE_TO_ID(_appIdInstance) \
-    (_appIdInstance >> CHP_APPID_BITS_FOR_INSTANCE)
+    ((_appIdInstance) >> CHP_APPID_BITS_FOR_INSTANCE)
 #define CHP_APPIDINSTANCE_TO_INSTANCE(_appIdInstance) \
-    (_appIdInstance & (CHP_APPID_INSTANCE_MAX-1))
+    ((_appIdInstance) & (CHP_APPID_INSTANCE_MAX-1))
 /*
   NOTE: The following structures have a field called appIdInstance.
     The low-order CHP_APPID_BITS_FOR_INSTANCE bits of appIdInstance field are used
@@ -135,7 +135,7 @@ typedef std::vector<DetectorHTTPPattern> DetectorHTTPPatterns;
     macro below.
 */
 #define CHP_APPID_SINGLE_INSTANCE(_appId) \
-    ((_appId << CHP_APPID_BITS_FOR_INSTANCE) + (CHP_APPID_INSTANCE_MAX-1))
+    (((_appId) << CHP_APPID_BITS_FOR_INSTANCE) + (CHP_APPID_INSTANCE_MAX-1))
 
 // These values are used in Lua code as raw numbers. Do NOT reassign new values.
 enum ActionType
@@ -266,7 +266,7 @@ struct HostUrlDetectorPattern
 {
     HostUrlDetectorPattern(const uint8_t* host_pattern, unsigned length)
     {
-        host.pattern = (uint8_t*)snort_strdup((char*)host_pattern);
+        host.pattern = (const uint8_t*)snort_strdup((const char*)host_pattern);
         host.patternSize = length;
     }
 
@@ -316,7 +316,7 @@ public:
             AppIdModuleConfig*);
     AppId scan_header_x_working_with(const uint8_t*, uint32_t, char**);
     int get_appid_by_pattern(const uint8_t*, unsigned, char**);
-    bool get_appid_from_url(char*, char*, char**, char*, AppId*, AppId*,
+    bool get_appid_from_url(char*, const char*, char**, const char*, AppId*, AppId*,
         AppId*, AppId*, bool);
     AppId get_appid_by_content_type(const uint8_t*, int);
     void get_server_vendor_version(const uint8_t*, int, char**, char**, AppIdServiceSubtype**);

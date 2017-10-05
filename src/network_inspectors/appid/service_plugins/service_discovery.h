@@ -61,7 +61,6 @@ enum SESSION_SERVICE_SEARCH_STATE
 class ServiceDiscovery : public AppIdDiscovery
 {
 public:
-    ~ServiceDiscovery();
     static ServiceDiscovery& get_instance();
 
     void finalize_service_patterns();

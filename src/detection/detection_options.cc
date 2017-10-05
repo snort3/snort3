@@ -80,9 +80,9 @@ struct detection_option_key_t
 static inline bool operator==(const struct timeval& a, const struct timeval& b)
 { return a.tv_sec == b.tv_sec && a.tv_usec == b.tv_usec; }
 
-static uint32_t detection_option_hash_func(SFHASHFCN*, unsigned char* k, int)
+static uint32_t detection_option_hash_func(SFHASHFCN*, const unsigned char* k, int)
 {
-    detection_option_key_t* key = (detection_option_key_t*)k;
+    const detection_option_key_t* key = (const detection_option_key_t*)k;
 
     if ( key->option_type != RULE_OPTION_TYPE_LEAF_NODE )
     {
@@ -94,8 +94,8 @@ static uint32_t detection_option_hash_func(SFHASHFCN*, unsigned char* k, int)
 
 static int detection_option_key_compare_func(const void* k1, const void* k2, size_t)
 {
-    const detection_option_key_t* key1 = (detection_option_key_t*)k1;
-    const detection_option_key_t* key2 = (detection_option_key_t*)k2;
+    const detection_option_key_t* key1 = (const detection_option_key_t*)k1;
+    const detection_option_key_t* key2 = (const detection_option_key_t*)k2;
 
     if ( !key1 || !key2 )
         return DETECTION_OPTION_NOT_EQUAL;
@@ -133,11 +133,11 @@ static SFXHASH* DetectionHashTableNew()
         0,                              /* Data size == 0, just store the ptr */
         0,                              /* Memcap */
         0,                              /* Auto node recovery */
-        NULL,                           /* Auto free function */
+        nullptr,                           /* Auto free function */
         detection_hash_free_func,                           /* User free function */
         1);                             /* Recycle nodes */
 
-    if (doht == NULL)
+    if (doht == nullptr)
         FatalError("Failed to create rule detection option hash table");
 
     sfxhash_set_keyops(doht, detection_option_hash_func, detection_option_key_compare_func);
@@ -147,7 +147,7 @@ static SFXHASH* DetectionHashTableNew()
 
 void DetectionHashTableFree(SFXHASH* doht)
 {
-    if (doht != NULL)
+    if (doht != nullptr)
         sfxhash_delete(doht);
 }
 
@@ -210,9 +210,9 @@ static uint32_t detection_option_tree_hash(detection_option_tree_node_t* node)
     return c;
 }
 
-static uint32_t detection_option_tree_hash_func(SFHASHFCN*, unsigned char* k, int)
+static uint32_t detection_option_tree_hash_func(SFHASHFCN*, const unsigned char* k, int)
 {
-    detection_option_key_t* key = (detection_option_key_t*)k;
+    const detection_option_key_t* key = (const detection_option_key_t*)k;
     detection_option_tree_node_t* node;
 
     if (!key || !key->option_data)
@@ -224,7 +224,7 @@ static uint32_t detection_option_tree_hash_func(SFHASHFCN*, unsigned char* k, in
 }
 
 static bool detection_option_tree_compare(
-    detection_option_tree_node_t* r, detection_option_tree_node_t* l)
+    const detection_option_tree_node_t* r, const detection_option_tree_node_t* l)
 {
     if ( !r and !l )
         return DETECTION_OPTION_EQUAL;
@@ -252,14 +252,14 @@ static bool detection_option_tree_compare(
 
 static int detection_option_tree_compare_func(const void* k1, const void* k2, size_t)
 {
-    detection_option_key_t* key_r = (detection_option_key_t*)k1;
-    detection_option_key_t* key_l = (detection_option_key_t*)k2;
+    const detection_option_key_t* key_r = (const detection_option_key_t*)k1;
+    const detection_option_key_t* key_l = (const detection_option_key_t*)k2;
 
     if ( !key_r or !key_l )
         return DETECTION_OPTION_NOT_EQUAL;
 
-    detection_option_tree_node_t* r = (detection_option_tree_node_t*)key_r->option_data;
-    detection_option_tree_node_t* l = (detection_option_tree_node_t*)key_l->option_data;
+    const detection_option_tree_node_t* r = (const detection_option_tree_node_t*)key_r->option_data;
+    const detection_option_tree_node_t* l = (const detection_option_tree_node_t*)key_l->option_data;
 
     return detection_option_tree_compare(r, l);
 }
@@ -273,7 +273,7 @@ static int detection_option_tree_free_func(void*, void* data)
 
 void DetectionTreeHashTableFree(SFXHASH* dtht)
 {
-    if (dtht != NULL)
+    if (dtht != nullptr)
         sfxhash_delete(dtht);
 }
 
@@ -285,11 +285,11 @@ static SFXHASH* DetectionTreeHashTableNew()
         0,      /* Data size == 0, just store the ptr */
         0,      /* Memcap */
         0,      /* Auto node recovery */
-        NULL,   /* Auto free function */
+        nullptr,   /* Auto free function */
         detection_option_tree_free_func,   /* User free function */
         1);     /* Recycle nodes */
 
-    if (dtht == NULL)
+    if (dtht == nullptr)
         FatalError("Failed to create rule detection option hash table");
 
     sfxhash_set_keyops(dtht, detection_option_tree_hash_func, detection_option_tree_compare_func);
@@ -864,7 +864,7 @@ void free_detection_option_root(void** existing_tree)
 
     delete[] root->latency_state;
     snort_free(root);
-    *existing_tree = NULL;
+    *existing_tree = nullptr;
 }
 
 detection_option_tree_node_t* new_node(option_type_t type, void* data)

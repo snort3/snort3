@@ -1,0 +1,1 @@
+Checks:             '-*,readability-redundant-*,readability-non-const-parameter,readability-container-size-empty,misc-string-compare,misc-macro-parentheses,bugprone-*,performance-*,modernize-use-equals-default,modernize-use-bool-literals,modernize-redundant-void-arg,modernize-make-shared,modernize-deprecated-headers,modernize-use-override,modernize-use-nullptr'

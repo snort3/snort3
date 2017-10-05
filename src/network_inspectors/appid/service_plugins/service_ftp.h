@@ -30,7 +30,6 @@ class FtpServiceDetector : public ServiceDetector
 {
 public:
     FtpServiceDetector(ServiceDiscovery*);
-    ~FtpServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 

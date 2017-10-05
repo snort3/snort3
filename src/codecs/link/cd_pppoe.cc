@@ -72,11 +72,10 @@ public:
 
 class PPPoECodec : public Codec
 {
-public: ~PPPoECodec() { }
-
-    bool decode(const RawData&, CodecData&, DecodeData&) override final;
+public:
+    bool decode(const RawData&, CodecData&, DecodeData&) final;
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
-        EncState&, Buffer&, Flow*) override final;
+        EncState&, Buffer&, Flow*) final;
 
 protected:
     PPPoECodec(const char* s, PppoepktType type) :
@@ -297,7 +296,6 @@ class PPPoEDiscCodec : public PPPoECodec
 {
 public:
     PPPoEDiscCodec() : PPPoECodec(CD_PPPOEPKT_DISC_NAME, PppoepktType::DISCOVERY) { }
-    ~PPPoEDiscCodec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override
     { v.push_back(ProtocolId::ETHERTYPE_PPPOE_DISC); }
@@ -307,7 +305,6 @@ class PPPoESessCodec : public PPPoECodec
 {
 public:
     PPPoESessCodec() : PPPoECodec(CD_PPPOEPKT_SESS_NAME, PppoepktType::SESSION) { }
-    ~PPPoESessCodec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override
     { v.push_back(ProtocolId::ETHERTYPE_PPPOE_SESS); }

@@ -230,7 +230,7 @@ ClientAppMatch* ClientDiscovery::find_detector_candidates(const Packet* pkt, IpP
         patterns = ClientDiscovery::get_instance().udp_patterns;
 
     if ( patterns )
-        patterns->find_all((char*)pkt->data, pkt->dsize, &pattern_match, false, (void*)&match_list);
+        patterns->find_all((const char*)pkt->data, pkt->dsize, &pattern_match, false, (void*)&match_list);
 
     return match_list;
 }
@@ -239,7 +239,7 @@ void ClientDiscovery::create_detector_candidates_list(AppIdSession& asd, Packet*
 {
     ClientAppMatch* match_list;
 
-    if ( !p->dsize || asd.client_detector != nullptr || asd.client_candidates.size() )
+    if ( !p->dsize || asd.client_detector != nullptr || !asd.client_candidates.empty() )
         return;
 
     match_list = find_detector_candidates(p, asd.protocol);
@@ -397,7 +397,7 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p, int dire
     {
         get_detector_candidates_list(asd, p, direction);
         isTpAppidDiscoveryDone = true;
-        if ( asd.client_candidates.size() )
+        if ( !asd.client_candidates.empty() )
         {
             int ret = 0;
             if ( direction == APP_ID_FROM_INITIATOR )

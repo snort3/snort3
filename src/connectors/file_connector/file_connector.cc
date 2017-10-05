@@ -97,7 +97,7 @@ bool FileConnector::transmit_message(ConnectorMsgHandle* msg)
 {
     DebugMessage(DEBUG_CONNECTORS,"FileConnector::transmit_message()\n");
     FileConnectorMsgHandle* fmsg = (FileConnectorMsgHandle*)msg;
-    FileConnectorConfig* cfg = (FileConnectorConfig*)config;
+    const FileConnectorConfig* cfg = (const FileConnectorConfig*)config;
 
     if ( cfg->text_format )
     {
@@ -214,7 +214,7 @@ ConnectorMsgHandle* FileConnector::receive_message(bool)
         return nullptr;
     else
     {
-        FileConnectorConfig* cfg = (FileConnectorConfig*)config;
+        const FileConnectorConfig* cfg = (const FileConnectorConfig*)config;
         if ( cfg->text_format )
         {
             return( receive_message_text() );

@@ -216,7 +216,7 @@ public:
     int eval(Cursor&, Packet*) override;
     PatternMatchData* get_pattern(int proto, RuleDirection direction) override;
     PatternMatchData* get_alternate_pattern() override;
-    ~Dce2IfaceOption();
+    ~Dce2IfaceOption() override;
 
 private:
     const RangeCheck version;
@@ -230,11 +230,11 @@ Dce2IfaceOption::~Dce2IfaceOption()
 {
     if ( pmd.pattern_buf)
     {
-        snort_free((char*)pmd.pattern_buf);
+        snort_free(const_cast<char*>(pmd.pattern_buf));
     }
     if ( alt_pmd.pattern_buf)
     {
-        snort_free((char*)alt_pmd.pattern_buf);
+        snort_free(const_cast<char*>(alt_pmd.pattern_buf));
     }
 }
 
@@ -467,7 +467,7 @@ bool Dce2IfaceModule::set(const char*, Value& v, SnortConfig*)
         any_frag = true;
     else if ( v.is("uuid") )
     {
-        char* token = (char*)v.get_string();
+        char* token = const_cast<char*>(v.get_string());
         token = DCE2_PruneWhiteSpace(token);
         return DCE2_ParseIface(token, &uuid);
     }

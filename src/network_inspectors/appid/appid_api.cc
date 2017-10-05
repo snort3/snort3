@@ -553,7 +553,7 @@ uint32_t AppIdApi::produce_ha_state(Flow* flow, uint8_t* buf)
 uint32_t AppIdApi::consume_ha_state(Flow* flow, const uint8_t* buf, uint8_t, IpProtocol proto,
     SfIp* ip, uint16_t port)
 {
-    AppIdSessionHA* appHA = (AppIdSessionHA*)buf;
+    const AppIdSessionHA* appHA = (const AppIdSessionHA*)buf;
     if (appHA->flags & APPID_HA_FLAGS_APP)
     {
         AppIdSession* asd =

@@ -31,21 +31,21 @@
 #include <CppUTest/TestHarness.h>
 
 // Stubs whose sole purpose is to make the test code link
-SnortConfig my_config;
+static SnortConfig my_config;
 THREAD_LOCAL SnortConfig *snort_conf = &my_config;
 SnortConfig::SnortConfig(SnortConfig*) 
 { snort_conf->run_flags = 0;} // run_flags is used indirectly from SFHASHFCN class by calling SnortConfig::static_hash()
-SnortConfig::~SnortConfig() {}
+SnortConfig::~SnortConfig() = default;
 // implement functions for virtual
 FileVerdict FilePolicy::type_lookup(Flow* , FileContext* ) { return FILE_VERDICT_UNKNOWN;}
 FileVerdict FilePolicy::type_lookup(Flow* , FileInfo* ) { return FILE_VERDICT_UNKNOWN;}
 FileVerdict FilePolicy::signature_lookup(Flow* , FileContext* ) { return FILE_VERDICT_UNKNOWN;}
 FileVerdict FilePolicy::signature_lookup(Flow* , FileInfo* ) { return FILE_VERDICT_UNKNOWN;}
 
-FileIdentifier::~FileIdentifier() {}
+FileIdentifier::~FileIdentifier() = default;
 
 // user free function
-void myfree(void* p)
+static void myfree(void* p)
 {
     snort_free(p);
 }

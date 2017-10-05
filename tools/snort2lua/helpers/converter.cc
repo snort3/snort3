@@ -18,6 +18,7 @@
 // converter.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <algorithm>
+#include <memory>
 #include <stdexcept>
 #include <unordered_map>
 
@@ -271,19 +272,19 @@ bool Converter::initialize()
 
 Binder& Converter::make_binder(Binder& b)
 {
-    binders.push_back(std::shared_ptr<Binder>(new Binder(b)));
+    binders.push_back(std::make_shared<Binder>(b));
     return *binders.back();
 }
 
 Binder& Converter::make_binder()
 {
-    binders.push_back(std::shared_ptr<Binder>(new Binder(table_api)));
+    binders.push_back(std::make_shared<Binder>(table_api));
     return *binders.back();
 }
 
 Binder& Converter::make_pending_binder(int ips_policy_id)
 {
-    PendingBinder b(ips_policy_id, std::shared_ptr<Binder>(new Binder(table_api)));
+    PendingBinder b(ips_policy_id, std::make_shared<Binder>(table_api));
     pending_binders.push_back(b);
     return *pending_binders.back().second;
 }
@@ -330,7 +331,7 @@ void Converter::add_bindings()
     // vector::clear()'s ordering isn't deterministic but this is
     // keep in place for stable regressions
     std::stable_sort(binders.rbegin(), binders.rend());
-    while ( binders.size() )
+    while ( !binders.empty() )
         binders.pop_back();
 }
 
@@ -363,7 +364,7 @@ int Converter::convert(const std::string& input,
 
         if (!DataApi::is_quiet_mode() && rule_api.failed_conversions())
         {
-            if (!error_file.compare(rule_file))
+            if (error_file == rule_file)
             {
                 rule_api.print_rejects(rules);
             }
@@ -418,7 +419,7 @@ int Converter::convert(const std::string& input,
 
         if (!rule_api.empty())
         {
-            if (rule_file.empty() || !rule_file.compare(output_file))
+            if (rule_file.empty() || rule_file == output_file)
             {
                 rule_api.print_rules(out, false);
 
@@ -447,7 +448,7 @@ int Converter::convert(const std::string& input,
 
         if ((failed_conversions()) && !DataApi::is_quiet_mode())
         {
-            if (!error_file.compare(output_file))
+            if (error_file == output_file)
             {
                 if (data_api.failed_conversions())
                     data_api.print_errors(out);

@@ -30,7 +30,7 @@
 #include "data/data_types/dt_rule_suboption.h"
 
 std::size_t RuleApi::error_count = 0;
-std::string RuleApi::remark = "";
+std::string RuleApi::remark;
 
 RuleApi::RuleApi()
     :   curr_rule(nullptr),

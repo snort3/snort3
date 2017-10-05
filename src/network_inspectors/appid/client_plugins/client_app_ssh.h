@@ -28,7 +28,6 @@ class SshClientDetector : public ClientDetector
 {
 public:
     SshClientDetector(ClientDiscovery*);
-    ~SshClientDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

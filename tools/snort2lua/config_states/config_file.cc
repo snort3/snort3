@@ -32,8 +32,7 @@ class File : public ConversionState
 {
 public:
     File(Converter& c) : ConversionState(c) { }
-    virtual ~File() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 
@@ -53,49 +52,49 @@ bool File::convert(std::istringstream& data_stream)
             tmpval = false;
 
         // vvvvvvvv -- UNSUPPORTED OPTIONS.  these options were added after 2.9.6
-        else if (!keyword.compare("file_capture_memcap"))
+        else if (keyword == "file_capture_memcap")
             table_api.add_unsupported_comment("file_capture_memcap");
 
-        else if (!keyword.compare("file_capture_max"))
+        else if (keyword == "file_capture_max")
             table_api.add_unsupported_comment("file_capture_max");
 
-        else if (!keyword.compare("file_capture_min"))
+        else if (keyword == "file_capture_min")
             table_api.add_unsupported_comment("file_capture_min");
 
-        else if (!keyword.compare("file_capture_block_size"))
+        else if (keyword == "file_capture_block_size")
             table_api.add_unsupported_comment("file_capture_block_size");
         // ^^^^^^^^^ -- UNSUPPORTED OPTIONS.  these options were added after 2.9.6
 
-        else if (!keyword.compare("show_data_depth"))
+        else if (keyword == "show_data_depth")
             tmpval = parse_int_option("show_data_depth", arg_stream, false);
 
-        else if (!keyword.compare("type_id"))
+        else if (keyword == "type_id")
         {
             table_api.add_diff_option_comment("config file: type_id", "enable_type");
             table_api.add_option("enable_type", true);
         }
-        else if (!keyword.compare("signature"))
+        else if (keyword == "signature")
         {
             table_api.add_diff_option_comment("config file: signature", "enable_signature");
             table_api.add_option("enable_signature", true);
         }
-        else if (!keyword.compare("file_type_depth"))
+        else if (keyword == "file_type_depth")
         {
             table_api.add_diff_option_comment("config file: file_type_depth", "type_depth");
             tmpval = parse_int_option("type_depth", arg_stream, false);
         }
-        else if (!keyword.compare("file_signature_depth"))
+        else if (keyword == "file_signature_depth")
         {
             table_api.add_diff_option_comment("config file: file_signature_depth",
                 "signature_depth");
             tmpval = parse_int_option("signature_depth", arg_stream, false);
         }
-        else if (!keyword.compare("file_block_timeout"))
+        else if (keyword == "file_block_timeout")
         {
             table_api.add_diff_option_comment("config file: file_block_timeout", "block_timeout");
             tmpval = parse_int_option("block_timeout", arg_stream, false);
         }
-        else if (!keyword.compare("file_lookup_timeout"))
+        else if (keyword == "file_lookup_timeout")
         {
             table_api.add_diff_option_comment("config file: file_lookup_timeout",
                 "lookup_timeout");

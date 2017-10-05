@@ -320,7 +320,7 @@ static void PrintIPPortSet(IP_PORT* p)
     if ( pr and pr->port_lo != 0 )
         SnortSnprintfAppend(output_str, sizeof(output_str), " : ");
 
-    for (; pr != 0;
+    for (; pr != nullptr;
         pr=(PORTRANGE*)sflist_next(&cursor) )
     {
         if ( pr->port_lo != 0)

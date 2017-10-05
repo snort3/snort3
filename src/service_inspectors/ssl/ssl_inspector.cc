@@ -94,12 +94,12 @@ static SSLData* SetNewSSLData(Packet* p)
 SSLData* get_ssl_session_data(Flow* flow)
 {
     SslFlowData* fd = (SslFlowData*)flow->get_flow_data(SslFlowData::inspector_id);
-    return fd ? &fd->session : NULL;
+    return fd ? &fd->session : nullptr;
 }
 
 static void PrintSslConf(SSL_PROTO_CONF* config)
 {
-    if (config == NULL)
+    if (config == nullptr)
         return;
     LogMessage("SSL config:\n");
     if ( config->trustservers )
@@ -303,7 +303,7 @@ static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
     /* Attempt to get a previously allocated SSL block. */
     SSLData* sd = get_ssl_session_data(p->flow);
 
-    if (sd == NULL)
+    if (sd == nullptr)
     {
         /* Check the stream session. If it does not currently
          * have our SSL data-block attached, create one.
@@ -424,7 +424,7 @@ class Ssl : public Inspector
 {
 public:
     Ssl(SSL_PROTO_CONF*);
-    ~Ssl();
+    ~Ssl() override;
 
     void show(SnortConfig*) override;
     void eval(Packet*) override;

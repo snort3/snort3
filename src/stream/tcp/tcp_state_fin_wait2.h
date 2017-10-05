@@ -30,7 +30,6 @@ class TcpStateFinWait2 : public TcpStateHandler
 {
 public:
     TcpStateFinWait2(TcpStateMachine&);
-    virtual ~TcpStateFinWait2();
 
     bool syn_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool syn_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;

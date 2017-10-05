@@ -50,7 +50,6 @@ class LlcCodec : public Codec
 {
 public:
     LlcCodec() : Codec(LLC_NAME) { }
-    ~LlcCodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;

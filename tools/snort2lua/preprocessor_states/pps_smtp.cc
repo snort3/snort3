@@ -32,8 +32,7 @@ class Smtp : public ConversionState
 {
 public:
     Smtp(Converter& c) : ConversionState(c) { }
-    virtual ~Smtp() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 
 private:
     struct Command
@@ -51,17 +50,17 @@ private:
     std::vector<Command> commands;
 
     bool parse_alt_max_cmd(std::istringstream& data_stream);
-    std::vector<Command>::iterator get_command(std::string cmd_name,
+    std::vector<Command>::iterator get_command(const std::string& cmd_name,
         std::vector<Smtp::Command>::iterator it);
 };
 } // namespace
 
 std::vector<Smtp::Command>::iterator Smtp::get_command(
-    std::string cmd_name,
+    const std::string& cmd_name,
     std::vector<Smtp::Command>::iterator it)
 {
     for (; it != commands.end(); ++it)
-        if (!cmd_name.compare((*it).name))
+        if (cmd_name == (*it).name)
             return it;
 
     return commands.end();
@@ -75,10 +74,10 @@ bool Smtp::parse_alt_max_cmd(std::istringstream& stream)
     if (!(stream >> len))
         return false;
 
-    if (!(stream >> elem) || (elem.compare("{")))
+    if (!(stream >> elem) || (elem != "{"))
         return false;
 
-    while (stream >> elem && elem.compare("}"))
+    while (stream >> elem && elem != "}")
     {
 
         auto it = get_command(elem, commands.begin());
@@ -103,7 +102,7 @@ bool Smtp::parse_alt_max_cmd(std::istringstream& stream)
         }
     }
 
-    if (!elem.compare("}"))
+    if (elem == "}")
         return true;
     return false;
 }
@@ -125,148 +124,148 @@ bool Smtp::convert(std::istringstream& data_stream)
     {
         bool tmpval = true;
 
-        if (!keyword.compare("disabled"))
+        if (keyword == "disabled")
         {
             table_api.add_deleted_comment("disabled");
         }
-        else if (!keyword.compare("inspection_type"))
+        else if (keyword == "inspection_type")
         {
             table_api.add_deleted_comment("inspection_type");
             data_stream >> keyword;
         }
-        else if (!keyword.compare("enable_mime_decoding"))
+        else if (keyword == "enable_mime_decoding")
         {
             table_api.add_deleted_comment("enable_mime_decoding");
         }
-        else if (!keyword.compare("max_mime_depth"))
+        else if (keyword == "max_mime_depth")
         {
             table_api.add_deleted_comment("max_mime_depth");
             data_stream >> keyword;
         }
-        else if (!keyword.compare("no_alerts"))
+        else if (keyword == "no_alerts")
         {
             table_api.add_deleted_comment("no_alerts");
         }
-        else if (!keyword.compare("print_cmds"))
+        else if (keyword == "print_cmds")
         {
             table_api.add_deleted_comment("print_cmds");
         }
-        else if (!keyword.compare("alert_unknown_cmds"))
+        else if (keyword == "alert_unknown_cmds")
         {
             table_api.add_deleted_comment("alert_unknown_cmds");
         }
-        else if (!keyword.compare("memcap"))
+        else if (keyword == "memcap")
         {
             table_api.add_deleted_comment("memcap");
             data_stream >> keyword;
         }
-        else if (!keyword.compare("max_mime_mem"))
+        else if (keyword == "max_mime_mem")
         {
             table_api.add_deleted_comment("max_mime_mem");
             data_stream >> keyword;
         }
-        else if (!keyword.compare("b64_decode_depth"))
+        else if (keyword == "b64_decode_depth")
         {
             tmpval = parse_int_option("b64_decode_depth", data_stream, false);
         }
-        else if (!keyword.compare("qp_decode_depth"))
+        else if (keyword == "qp_decode_depth")
         {
             tmpval = parse_int_option("qp_decode_depth", data_stream, false);
         }
-        else if (!keyword.compare("bitenc_decode_depth"))
+        else if (keyword == "bitenc_decode_depth")
         {
             tmpval = parse_int_option("bitenc_decode_depth", data_stream, false);
         }
-        else if (!keyword.compare("uu_decode_depth"))
+        else if (keyword == "uu_decode_depth")
         {
             tmpval = parse_int_option("uu_decode_depth", data_stream, false);
         }
-        else if (!keyword.compare("alt_max_command_line_len"))
+        else if (keyword == "alt_max_command_line_len")
         {
             tmpval = parse_alt_max_cmd(data_stream);
         }
-        else if (!keyword.compare("ignore_data"))
+        else if (keyword == "ignore_data")
         {
             tmpval = table_api.add_option("ignore_data", true);
         }
-        else if (!keyword.compare("ignore_tls_data"))
+        else if (keyword == "ignore_tls_data")
         {
             tmpval = table_api.add_option("ignore_tls_data", true);
         }
-        else if (!keyword.compare("log_filename"))
+        else if (keyword == "log_filename")
         {
             tmpval = table_api.add_option("log_filename", true);
         }
-        else if (!keyword.compare("log_mailfrom"))
+        else if (keyword == "log_mailfrom")
         {
             tmpval = table_api.add_option("log_mailfrom", true);
         }
-        else if (!keyword.compare("log_rcptto"))
+        else if (keyword == "log_rcptto")
         {
             tmpval = table_api.add_option("log_rcptto", true);
         }
-        else if (!keyword.compare("log_email_hdrs"))
+        else if (keyword == "log_email_hdrs")
         {
             tmpval = table_api.add_option("log_email_hdrs", true);
         }
-        else if (!keyword.compare("email_hdrs_log_depth"))
+        else if (keyword == "email_hdrs_log_depth")
         {
             tmpval = parse_int_option("email_hdrs_log_depth", data_stream, false);
         }
-        else if (!keyword.compare("max_auth_command_line_len"))
+        else if (keyword == "max_auth_command_line_len")
         {
             tmpval = parse_int_option("max_auth_command_line_len", data_stream, false);
         }
-        else if (!keyword.compare("max_command_line_len"))
+        else if (keyword == "max_command_line_len")
         {
             tmpval = parse_int_option("max_command_line_len", data_stream, false);
         }
-        else if (!keyword.compare("max_header_line_len"))
+        else if (keyword == "max_header_line_len")
         {
             tmpval = parse_int_option("max_header_line_len", data_stream, false);
         }
-        else if (!keyword.compare("max_response_line_len"))
+        else if (keyword == "max_response_line_len")
         {
             tmpval = parse_int_option("max_response_line_len", data_stream, false);
         }
-        else if (!keyword.compare("normalize"))
+        else if (keyword == "normalize")
         {
             std::string norm_type;
 
             if (!(data_stream >> norm_type))
                 data_api.failed_conversion(data_stream,  "smtp: normalize <missing_arg>");
 
-            else if (!norm_type.compare("none"))
+            else if (norm_type == "none")
                 table_api.add_option("normalize", "none");
-            else if (!norm_type.compare("all"))
+            else if (norm_type == "all")
                 table_api.add_option("normalize", "all");
-            else if (!norm_type.compare("cmds"))
+            else if (norm_type == "cmds")
                 table_api.add_option("normalize", "cmds");
             else
             {
                 data_api.failed_conversion(data_stream, "smtp: normalize " + norm_type);
             }
         }
-        else if (!keyword.compare("xlink2state"))
+        else if (keyword == "xlink2state")
         {
-            if ((data_stream >> keyword) && !keyword.compare("{"))
+            if ((data_stream >> keyword) && keyword == "{")
             {
                 std::string state_type;
 
                 if (!(data_stream >> state_type))
                     data_api.failed_conversion(data_stream,  "smtp: xlink2state <missing_arg>");
 
-                else if (!state_type.compare("disable"))
+                else if (state_type == "disable")
                     table_api.add_option("xlink2state", "disable");
-                else if (!state_type.compare("enabled"))
+                else if (state_type == "enabled")
                     table_api.add_option("xlink2state", "alert");
-                else if (!state_type.compare("drop"))
+                else if (state_type == "drop")
                     table_api.add_option("xlink2state", "drop");
                 else
                 {
                     data_api.failed_conversion(data_stream, "smtp: xlink2state " + state_type);
                 }
-                if ((data_stream >> keyword) && keyword.compare("}"))
+                if ((data_stream >> keyword) && keyword != "}")
                 {
                     data_api.failed_conversion(data_stream, "smtp: xlink2state " + state_type);
                 }
@@ -276,37 +275,37 @@ bool Smtp::convert(std::istringstream& data_stream)
                 data_api.failed_conversion(data_stream, "smtp: xlink2state " + keyword);
             }
         }
-        else if (!keyword.compare("auth_cmds"))
+        else if (keyword == "auth_cmds")
         {
             tmpval = parse_curly_bracket_list("auth_cmds", data_stream);
         }
-        else if (!keyword.compare("binary_data_cmds"))
+        else if (keyword == "binary_data_cmds")
         {
             tmpval = parse_curly_bracket_list("binary_data_cmds", data_stream);
         }
-        else if (!keyword.compare("data_cmds"))
+        else if (keyword == "data_cmds")
         {
             tmpval = parse_curly_bracket_list("data_cmds", data_stream);
         }
-        else if (!keyword.compare("normalize_cmds"))
+        else if (keyword == "normalize_cmds")
         {
             tmpval = parse_curly_bracket_list("normalize_cmds", data_stream);
         }
-        else if (!keyword.compare("invalid_cmds"))
+        else if (keyword == "invalid_cmds")
         {
             tmpval = parse_curly_bracket_list("invalid_cmds", data_stream);
         }
-        else if (!keyword.compare("valid_cmds"))
+        else if (keyword == "valid_cmds")
         {
             tmpval = parse_curly_bracket_list("valid_cmds", data_stream);
         }
-        else if (!keyword.compare("ports"))
+        else if (keyword == "ports")
         {
             table_api.add_diff_option_comment("ports", "bindings");
 
-            if ((data_stream >> keyword) && !keyword.compare("{"))
+            if ((data_stream >> keyword) && keyword == "{")
             {
-                while (data_stream >> keyword && keyword.compare("}"))
+                while (data_stream >> keyword && keyword != "}")
                 {
                     ports_set = true;
                     bind.add_when_port(keyword);

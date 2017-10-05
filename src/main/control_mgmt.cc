@@ -252,7 +252,7 @@ bool ControlMgmt::service_users(int& current_fd, Request*& current_request)
     timeout.tv_sec = 0;
     timeout.tv_usec = 0;
 
-    if ( select(max_fd+1, &inputs, NULL, NULL, &timeout) > 0 )
+    if ( select(max_fd+1, &inputs, nullptr, nullptr, &timeout) > 0 )
     {
         ret = process_control_commands(current_fd, current_request);
 

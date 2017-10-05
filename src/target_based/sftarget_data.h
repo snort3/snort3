@@ -25,7 +25,7 @@
 #include "sfip/sf_cidr.h"
 
 #define SFAT_OK 0
-#define SFAT_ERROR -1
+#define SFAT_ERROR (-1)
 #define SFAT_BUFSZ 1024
 
 enum ServiceClient

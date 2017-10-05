@@ -69,7 +69,7 @@ extern "C" {
 #define PATH_MAX_UTIL 1024
 #endif
 
-char** protocol_names = NULL;
+char** protocol_names = nullptr;
 
 /****************************************************************************
  * Store interesting data in memory that would not otherwise be visible
@@ -220,7 +220,7 @@ void ts_print(const struct timeval* tvp, char* timebuf)
 int gmt2local(time_t t)
 {
     if (t == 0)
-        t = time(NULL);
+        t = time(nullptr);
 
     struct tm gmt;
     gmtime_r(&t, &gmt);
@@ -241,8 +241,8 @@ int gmt2local(time_t t)
     return(dt);
 }
 
-static FILE* pid_lockfile = NULL;
-static FILE* pid_file = NULL;
+static FILE* pid_lockfile = nullptr;
+static FILE* pid_file = nullptr;
 
 void CreatePidFile(pid_t pid)
 {
@@ -316,12 +316,12 @@ void ClosePidFile()
     if (pid_file)
     {
         fclose(pid_file);
-        pid_file = NULL;
+        pid_file = nullptr;
     }
     if (pid_lockfile)
     {
         fclose(pid_lockfile);
-        pid_lockfile = NULL;
+        pid_lockfile = nullptr;
     }
 }
 
@@ -390,7 +390,7 @@ void InitGroups(int user_id, int group_id)
     {
         struct passwd* pw = getpwuid(user_id);  // main thread only
 
-        if (pw != NULL)
+        if (pw != nullptr)
         {
             /* getpwuid and initgroups may use the same static buffers */
             char* username = snort_strdup(pw->pw_name);
@@ -419,7 +419,7 @@ void InitProtoNames()
     {
         struct protoent* pt = getprotobynumber(i);  // main thread only
 
-        if (pt != NULL)
+        if (pt != nullptr)
         {
             protocol_names[i] = snort_strdup(pt->p_name);
 
@@ -437,18 +437,18 @@ void InitProtoNames()
 
 void CleanupProtoNames()
 {
-    if (protocol_names != NULL)
+    if (protocol_names != nullptr)
     {
         int i;
 
         for (i = 0; i < NUM_IP_PROTOS; i++)
         {
-            if (protocol_names[i] != NULL)
+            if (protocol_names[i] != nullptr)
                 snort_free(protocol_names[i]);
         }
 
         snort_free(protocol_names);
-        protocol_names = NULL;
+        protocol_names = nullptr;
     }
 }
 

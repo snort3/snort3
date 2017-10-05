@@ -54,7 +54,7 @@ DecodeResult BitDecode::decode_data(const uint8_t* start, const uint8_t* end)
     }
 
     decoded_bytes = act_size;
-    decodePtr = (uint8_t*)start;
+    decodePtr = start;
     decode_bytes_read += act_size;
 
     return DECODE_SUCCESS;
@@ -67,7 +67,4 @@ BitDecode::BitDecode(int max_depth, int detect_depth) : DataDecode(max_depth, de
     decoded_bytes = 0;
 }
 
-BitDecode::~BitDecode()
-{
-}
 

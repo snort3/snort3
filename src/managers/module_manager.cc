@@ -284,10 +284,10 @@ static void dump_field(string& key, const char* pfx, const Parameter* p, bool li
     }
     // we dump just one list entry
     if ( p->type == Parameter::PT_TABLE )
-        dump_table(key, pfx, (Parameter*)p->range);
+        dump_table(key, pfx, (const Parameter*)p->range);
 
     else if ( p->type == Parameter::PT_LIST )
-        dump_table(key, pfx, (Parameter*)p->range, true);
+        dump_table(key, pfx, (const Parameter*)p->range, true);
 
     else
     {

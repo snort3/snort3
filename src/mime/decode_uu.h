@@ -28,7 +28,7 @@ class UUDecode : public DataDecode
 {
 public:
     UUDecode(int max_depth, int detect_depth);
-    ~UUDecode();
+    ~UUDecode() override;
 
     // Main function to decode file data
     DecodeResult decode_data(const uint8_t* start, const uint8_t* end) override;

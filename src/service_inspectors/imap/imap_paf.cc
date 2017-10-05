@@ -49,7 +49,7 @@ static inline void reset_data_states(ImapPafData* pfdata)
 
     // reset fetch data information information
     pfdata->imap_data_info.paren_cnt = 0;
-    pfdata->imap_data_info.next_letter = 0;
+    pfdata->imap_data_info.next_letter = nullptr;
     pfdata->imap_data_info.length = 0;
 }
 
@@ -463,7 +463,7 @@ static StreamSplitter::Status imap_paf_client(const uint8_t* data, uint32_t len,
 
     pch = (char *)memchr (data, '\n', len);
 
-    if (pch != NULL)
+    if (pch != nullptr)
     {
         DebugMessage(DEBUG_IMAP, "IMAP PAF: Flushing client"
             " data!\n");
@@ -483,7 +483,6 @@ ImapSplitter::ImapSplitter(bool c2s) : StreamSplitter(c2s)
     reset_data_states(&state);
 }
 
-ImapSplitter::~ImapSplitter() { }
 
 /* Function: imap_paf()
 

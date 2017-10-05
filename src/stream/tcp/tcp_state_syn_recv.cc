@@ -36,9 +36,6 @@ TcpStateSynRecv::TcpStateSynRecv(TcpStateMachine& tsm) :
 {
 }
 
-TcpStateSynRecv::~TcpStateSynRecv()
-{
-}
 
 bool TcpStateSynRecv::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {

@@ -81,7 +81,7 @@ public:
     LogHandler(FileLogConfig& conf)
     { config = conf; }
 
-    void handle(DataEvent&, Flow*);
+    void handle(DataEvent&, Flow*) override;
 
 private:
     FileLogConfig config;
@@ -174,7 +174,7 @@ void LogHandler::handle(DataEvent&, Flow* f)
     TextLog_Print(tlog, "[Verdict: %s] ", VerdictName[file->verdict].c_str());
 
     std::string type_name =
-        file_type_name(file->get_file_type()).c_str();
+        file_type_name(file->get_file_type());
 
     TextLog_Print(tlog, "[Type: %s] ", type_name.c_str());
 

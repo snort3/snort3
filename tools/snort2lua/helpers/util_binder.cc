@@ -45,28 +45,28 @@ void Binder::add_to_configuration()
     if ( has_ips_policy_id() )
         table_api.add_option("ips_policy_id", when_ips_policy_id);
 
-    for ( auto s : vlans )
+    for ( const auto& s : vlans )
         table_api.add_list("vlans", s);
 
     if ( has_service() )
         table_api.add_option("service", when_service);
 
-    for ( auto n : src_nets )
+    for ( const auto& n : src_nets )
         table_api.add_list("src_nets", n);
 
-    for ( auto n : dst_nets )
+    for ( const auto& n : dst_nets )
         table_api.add_list("dst_nets", n);
 
-    for ( auto n : nets )
+    for ( const auto& n : nets )
         table_api.add_list("nets", n);
 
-    for ( auto p : src_ports )
+    for ( const auto& p : src_ports )
         table_api.add_list("src_ports", p);
 
-    for ( auto p : dst_ports )
+    for ( const auto& p : dst_ports )
         table_api.add_list("dst_ports", p);
 
-    for ( auto p : ports )
+    for ( const auto& p : ports )
         table_api.add_list("ports", p);
 
     if ( has_proto() )
@@ -125,56 +125,56 @@ void Binder::add_to_configuration()
 void Binder::set_when_ips_policy_id(int id)
 { when_ips_policy_id = id; }
 
-void Binder::set_when_service(std::string service)
-{ when_service = std::string(service); }
+void Binder::set_when_service(const std::string& service)
+{ when_service = service; }
 
-void Binder::set_when_role(std::string role)
-{ when_role = std::string(role); }
+void Binder::set_when_role(const std::string& role)
+{ when_role = role; }
 
-void Binder::set_when_proto(std::string proto)
-{ when_proto = std::string(proto); }
+void Binder::set_when_proto(const std::string& proto)
+{ when_proto = proto; }
 
-void Binder::add_when_vlan(std::string vlan)
-{ vlans.push_back(std::string(vlan)); }
+void Binder::add_when_vlan(const std::string& vlan)
+{ vlans.push_back(vlan); }
 
-void Binder::add_when_src_net(std::string net)
-{ src_nets.push_back(std::string(net)); }
+void Binder::add_when_src_net(const std::string& net)
+{ src_nets.push_back(net); }
 
-void Binder::add_when_dst_net(std::string net)
-{ dst_nets.push_back(std::string(net)); }
+void Binder::add_when_dst_net(const std::string& net)
+{ dst_nets.push_back(net); }
 
-void Binder::add_when_net(std::string net)
-{ nets.push_back(std::string(net)); }
+void Binder::add_when_net(const std::string& net)
+{ nets.push_back(net); }
 
-void Binder::add_when_src_port(std::string port)
-{ src_ports.push_back(std::string(port)); }
+void Binder::add_when_src_port(const std::string& port)
+{ src_ports.push_back(port); }
 
-void Binder::add_when_dst_port(std::string port)
-{ dst_ports.push_back(std::string(port)); }
+void Binder::add_when_dst_port(const std::string& port)
+{ dst_ports.push_back(port); }
 
-void Binder::add_when_port(std::string port)
-{ ports.push_back(std::string(port)); }
+void Binder::add_when_port(const std::string& port)
+{ ports.push_back(port); }
 
 void Binder::clear_ports()
 { ports.clear(); }
 
-void Binder::set_use_type(std::string module_name)
-{ use_type = std::string(module_name); }
+void Binder::set_use_type(const std::string& module_name)
+{ use_type = module_name; }
 
-void Binder::set_use_name(std::string struct_name)
-{ use_name = std::string(struct_name); }
+void Binder::set_use_name(const std::string& struct_name)
+{ use_name = struct_name; }
 
-void Binder::set_use_file(std::string file_name, IncludeType type)
+void Binder::set_use_file(const std::string& file_name, IncludeType type)
 {
-    use_file = std::string(file_name);
+    use_file = file_name;
     use_file_type = type;
 }
 
-void Binder::set_use_service(std::string service_name)
-{ use_service = std::string(service_name); }
+void Binder::set_use_service(const std::string& service_name)
+{ use_service = service_name; }
 
-void Binder::set_use_action(std::string action)
-{ use_action = std::string(action); }
+void Binder::set_use_action(const std::string& action)
+{ use_action = action; }
 
 /*  This operator is provided for STL compatible sorting. A Binder is considered
     less than another Binder if it should be printed first in the binder table,
@@ -192,7 +192,7 @@ void Binder::set_use_action(std::string action)
     net
 
 */
-bool operator<(const shared_ptr<Binder> left, const shared_ptr<Binder> right)
+bool operator<(const shared_ptr<Binder>& left, const shared_ptr<Binder>& right)
 {
     #define TRISTATE(v) \
     { \
@@ -261,6 +261,7 @@ bool operator<(const shared_ptr<Binder> left, const shared_ptr<Binder> right)
 
 #ifdef REG_TEST
 #include <iostream>
+#include <memory>
 
 void print_binder_priorities()
 {
@@ -270,7 +271,7 @@ void print_binder_priorities()
 
     for ( unsigned i = 0; i < num_combos; i++ )
     {
-        binders.push_back(shared_ptr<Binder>(new Binder(t)));
+        binders.push_back(std::make_shared<Binder>(t));
         binders.back()->print_binding(false);
 
         if ( i & (1 << 0) )

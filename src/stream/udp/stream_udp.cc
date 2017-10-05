@@ -59,10 +59,10 @@ class StreamUdp : public Inspector
 {
 public:
     StreamUdp(StreamUdpConfig*);
-    ~StreamUdp();
+    ~StreamUdp() override;
 
-    void show(SnortConfig*);
-    NORETURN_ASSERT void eval(Packet*);
+    void show(SnortConfig*) override;
+    NORETURN_ASSERT void eval(Packet*) override;
 
 public:
     StreamUdpConfig* config;

@@ -20,14 +20,14 @@
 #ifndef DCE_UTILS_H
 #define DCE_UTILS_H
 
-#include <ctype.h>
-#include <string.h>
+#include <cctype>
+#include <cstring>
 #include "main/snort_types.h"
 
 /********************************************************************
  * Macros
  ********************************************************************/
-#define DCE2_SENTINEL -1
+#define DCE2_SENTINEL (-1)
 #define DCE2_CFG_TOK__END            '\0'
 
 /********************************************************************
@@ -127,7 +127,7 @@ inline int DCE2_UuidCompare(const void*, const void*);
 /********************************************************************
  * Public function prototypes
  ********************************************************************/
-DCE2_Ret DCE2_GetValue(char*, char*, void*, int, DCE2_IntType, uint8_t);
+DCE2_Ret DCE2_GetValue(const char*, char*, void*, int, DCE2_IntType, uint8_t);
 void DCE2_PrintPktData(const uint8_t*, const uint16_t);
 DCE2_Buffer* DCE2_BufferNew(uint32_t, uint32_t);
 void* DCE2_ReAlloc(void*, uint32_t, uint32_t);
@@ -247,7 +247,7 @@ inline bool DCE2_IsEmptyStr(char* str)
     char* end;
 
     if (str == nullptr)
-        return 1;
+        return true;
 
     end = str + strlen(str);
 
@@ -262,8 +262,8 @@ inline bool DCE2_IsEmptyStr(char* str)
 
 inline int DCE2_UuidCompare(const void* data1, const void* data2)
 {
-    const Uuid* uuid1 = (Uuid*)data1;
-    const Uuid* uuid2 = (Uuid*)data2;
+    const Uuid* uuid1 = (const Uuid*)data1;
+    const Uuid* uuid2 = (const Uuid*)data2;
 
     if ((uuid1 == nullptr) || (uuid2 == nullptr))
         return -1;
@@ -393,7 +393,7 @@ inline void DCE2_BufferEmpty(DCE2_Buffer* buf)
 }
 
 #define DCE2_MOVE(data_ptr, data_len, amount) \
-    { data_len -= (amount); data_ptr = (uint8_t*)data_ptr + (amount); }
+    { (data_len) -= (amount); (data_ptr) = (const uint8_t*)(data_ptr) + (amount); }
 
 #endif
 

@@ -467,7 +467,7 @@ class Dce2SmbFlowData : public FlowData
 {
 public:
     Dce2SmbFlowData();
-    ~Dce2SmbFlowData();
+    ~Dce2SmbFlowData() override;
 
     static void init()
     {

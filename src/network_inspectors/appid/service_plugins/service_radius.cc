@@ -79,9 +79,6 @@ RadiusServiceDetector::RadiusServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-RadiusServiceDetector::~RadiusServiceDetector()
-{
-}
 
 int RadiusServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
@@ -206,9 +203,6 @@ RadiusAcctServiceDetector::RadiusAcctServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-RadiusAcctServiceDetector::~RadiusAcctServiceDetector()
-{
-}
 
 int RadiusAcctServiceDetector::validate(AppIdDiscoveryArgs& args)
 {

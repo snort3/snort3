@@ -39,7 +39,7 @@ public:
         : Mpse("ac_std")
     { obj = acsmNew(agent); }
 
-    ~AcMpse()
+    ~AcMpse() override
     { acsmFree(obj); }
 
     int add_pattern(

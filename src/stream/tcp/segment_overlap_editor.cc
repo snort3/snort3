@@ -168,7 +168,7 @@ int SegmentOverlapEditor::left_overlap_keep_first()
             if (tcp_ips_data == NORM_MODE_ON)
             {
                 unsigned offset = tsd->get_seg_seq() - left->seq;
-                memcpy((uint8_t*)tsd->get_pkt()->data, left->payload()+offset, tsd->get_seg_len());
+                memcpy(const_cast<uint8_t*>(tsd->get_pkt()->data), left->payload()+offset, tsd->get_seg_len());
                 tsd->get_pkt()->packet_flags |= PKT_MODIFIED;
             }
             tcp_norm_stats[PC_TCP_IPS_DATA][tcp_ips_data]++;
@@ -179,7 +179,7 @@ int SegmentOverlapEditor::left_overlap_keep_first()
             {
                 unsigned offset = tsd->get_seg_seq() - left->seq;
                 unsigned length = left->seq + left->payload_size - tsd->get_seg_seq();
-                memcpy((uint8_t*)tsd->get_pkt()->data, left->payload()+offset, length);
+                memcpy(const_cast<uint8_t*>(tsd->get_pkt()->data), left->payload()+offset, length);
                 tsd->get_pkt()->packet_flags |= PKT_MODIFIED;
             }
 
@@ -293,7 +293,7 @@ void SegmentOverlapEditor::right_overlap_truncate_new()
     {
         unsigned offset = right->seq - tsd->get_seg_seq();
         unsigned length = tsd->get_seg_seq() + tsd->get_seg_len() - right->seq;
-        memcpy((uint8_t*)tsd->get_pkt()->data + offset, right->payload(), length);
+        memcpy(const_cast<uint8_t*>(tsd->get_pkt()->data) + offset, right->payload(), length);
         tsd->get_pkt()->packet_flags |= PKT_MODIFIED;
     }
 
@@ -310,7 +310,7 @@ int SegmentOverlapEditor::full_right_overlap_truncate_new()
     if ( tcp_ips_data == NORM_MODE_ON )
     {
         unsigned offset = right->seq - tsd->get_seg_seq();
-        memcpy((uint8_t*)tsd->get_pkt()->data + offset, right->payload(), right->payload_size);
+        memcpy(const_cast<uint8_t*>(tsd->get_pkt()->data) + offset, right->payload(), right->payload_size);
         tsd->get_pkt()->packet_flags |= PKT_MODIFIED;
     }
 

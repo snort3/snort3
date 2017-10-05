@@ -61,7 +61,7 @@ bool HexBook::translate(const char* in, HexVector& out)
         else
             push = true;
 
-        if ( push && byte.size() )
+        if ( push && !byte.empty() )
         {
             int b = strtol(byte.c_str(), nullptr, 16);
             out.push_back((uint8_t)b);

@@ -157,7 +157,7 @@ struct MemoryTracker
     void update_deallocs(size_t n)
     { stats.update_deallocs(n); }
 
-    constexpr MemoryTracker() : stats() { }
+    constexpr MemoryTracker() = default;
     constexpr MemoryTracker(const CombinedMemoryStats &stats) : stats(stats) { }
 };
 

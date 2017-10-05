@@ -28,7 +28,6 @@ class YmDetector : public ClientDetector
 {
 public:
     YmDetector(ClientDiscovery*);
-    ~YmDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

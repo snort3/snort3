@@ -147,13 +147,13 @@ bool FileFlows::file_process(uint64_t file_id, const uint8_t* file_data,
 
     if ((file_depth < 0)or (offset > (uint64_t)file_depth))
     {
-        return 0;
+        return false;
     }
 
     FileContext* context = get_file_context(file_id, true);
 
     if (!context)
-        return 0;
+        return false;
 
     if (!context->get_processed_bytes())
     {

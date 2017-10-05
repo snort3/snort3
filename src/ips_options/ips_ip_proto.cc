@@ -90,9 +90,9 @@ bool IpProtoOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    IpProtoOption& rhs = (IpProtoOption&)ips;
-    IpProtoData* left = (IpProtoData*)&config;
-    IpProtoData* right = (IpProtoData*)&rhs.config;
+    const IpProtoOption& rhs = (const IpProtoOption&)ips;
+    const IpProtoData* left = &config;
+    const IpProtoData* right = &rhs.config;
 
     if ((left->protocol == right->protocol) &&
         (left->comparison_flag == right->comparison_flag))

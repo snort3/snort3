@@ -41,7 +41,7 @@ public:
     TestPiglet(Lua::State& state, const std::string& target) :
         BasePlugin(state, target) { }
 
-    virtual bool setup() override;
+    bool setup() override;
 };
 
 bool TestPiglet::setup()
@@ -66,7 +66,7 @@ bool TestPiglet::setup()
 // API foo
 // -----------------------------------------------------------------------------
 static Piglet::BasePlugin* ctor(
-    Lua::State& state, std::string target, Module*, SnortConfig*)
+    Lua::State& state, const std::string& target, Module*, SnortConfig*)
 { return new TestPiglet(state, target); }
 
 static void dtor(Piglet::BasePlugin* p)

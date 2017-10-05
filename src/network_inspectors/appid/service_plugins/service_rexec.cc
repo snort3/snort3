@@ -78,9 +78,6 @@ RexecServiceDetector::RexecServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-RexecServiceDetector::~RexecServiceDetector()
-{
-}
 
 static void rexec_free_state(void* data)
 {

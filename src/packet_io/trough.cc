@@ -241,10 +241,10 @@ void Trough::cleanup()
 
 const char* Trough::get_next()
 {
-    const char* pcap = NULL;
+    const char* pcap = nullptr;
 
     if (pcap_queue.empty() || pcap_queue_iter == pcap_queue.cend())
-        return NULL;
+        return nullptr;
 
     pcap = pcap_queue_iter->c_str();
     ++pcap_queue_iter;

@@ -160,7 +160,7 @@ static int create_detector_flow(lua_State* L)
     auto& detector_data = *UserData<LuaDetector>::check(L, DETECTOR, 1);
     assert(detector_data->validate_params.pkt);
 
-    char* pattern = (char*)lua_tostring(L, 2);
+    const char* pattern = lua_tostring(L, 2);
     size_t patternLen = lua_strlen (L, 2);
 
     if (patternLen == 16)
@@ -177,7 +177,7 @@ static int create_detector_flow(lua_State* L)
     {
         return 0;
     }
-    pattern = (char*)lua_tostring(L, 3);
+    pattern = lua_tostring(L, 3);
     patternLen = lua_strlen (L, 3);
 
     if (patternLen == 16)
@@ -401,7 +401,7 @@ static const luaL_Reg detector_flow_meta[] =
 {
     { "__gc",       gc_detector_flow },
     { "__tostring", detector_flow_tostring },
-    { 0, 0 }
+    { nullptr, nullptr }
 };
 
 /**Registers C functions as an API, enabling Lua detector to call these functions. This function

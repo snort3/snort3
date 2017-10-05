@@ -34,7 +34,6 @@ class PppEncap : public Codec
 {
 public:
     PppEncap() : Codec(CD_PPPENCAP_NAME) { }
-    ~PppEncap() { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
@@ -69,7 +68,7 @@ bool PppEncap::decode(const RawData& raw, CodecData& codec, DecodeData&)
     }
     else
     {
-        protocol = ntohs(*((uint16_t*)raw.data));
+        protocol = ntohs(*((const uint16_t*)raw.data));
         codec.lyr_len = 2;
     }
 
@@ -91,6 +90,7 @@ bool PppEncap::decode(const RawData& raw, CodecData& codec, DecodeData&)
             return false;
         }
 
+        // FIXIT-M X This is broken - it should not modify the packet data (which should be const).
         ((IP4Hdr*)(raw.data + codec.lyr_len))->set_proto(IpProtocol::TCP);
     /* fall through */
 

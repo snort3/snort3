@@ -73,7 +73,7 @@ bool TcpWinOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    TcpWinOption& rhs = (TcpWinOption&)ips;
+    const TcpWinOption& rhs = (const TcpWinOption&)ips;
     return ( config == rhs.config );
 }
 

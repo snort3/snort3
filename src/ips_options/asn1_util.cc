@@ -51,10 +51,10 @@
 /*
 **  Macros
 */
-#define SF_ASN1_CLASS(c)   (((u_char)c) & SF_ASN1_CLASS_MASK)
-#define SF_ASN1_FLAG(c)    (((u_char)c) & SF_ASN1_FLAG_MASK)
-#define SF_ASN1_TAG(c)     (((u_char)c) & SF_ASN1_TAG_MASK)
-#define SF_ASN1_LEN_EXT(c) (((u_char)c) & SF_BER_LEN_MASK)
+#define SF_ASN1_CLASS(c)   (((u_char)(c)) & SF_ASN1_CLASS_MASK)
+#define SF_ASN1_FLAG(c)    (((u_char)(c)) & SF_ASN1_FLAG_MASK)
+#define SF_ASN1_TAG(c)     (((u_char)(c)) & SF_ASN1_TAG_MASK)
+#define SF_ASN1_LEN_EXT(c) (((u_char)(c)) & SF_BER_LEN_MASK)
 
 #define ASN1_OOB(s,e,d)      (!(((s) <= (d)) && ((d) < (e))))
 #define ASN1_FATAL_ERR(e)    ((e) < 0)
@@ -94,8 +94,8 @@ static void asn1_init_node_index()
 */
 static ASN1_TYPE* asn1_node_alloc()
 {
-    if ((asn1_config.mem == NULL) || (asn1_config.num_nodes <= node_index))
-        return NULL;
+    if ((asn1_config.mem == nullptr) || (asn1_config.num_nodes <= node_index))
+        return nullptr;
 
     return &asn1_config.mem[node_index++];
 }
@@ -145,10 +145,10 @@ void asn1_init_mem(SnortConfig* sc)
 */
 void asn1_free_mem(SnortConfig*)
 {
-    if (asn1_config.mem != NULL)
+    if (asn1_config.mem != nullptr)
     {
         snort_free(asn1_config.mem);
-        asn1_config.mem = NULL;
+        asn1_config.mem = nullptr;
     }
 }
 
@@ -507,7 +507,7 @@ static int asn1_decode_type(const u_char** data, u_int* len, ASN1_TYPE** asn1_ty
     if (!*data)
         return ASN1_ERR_INVALID_ARG;
 
-    *asn1_type = NULL;
+    *asn1_type = nullptr;
 
     /*
     **  Check len first, because if it's 0, then we already decoded a valid
@@ -521,7 +521,7 @@ static int asn1_decode_type(const u_char** data, u_int* len, ASN1_TYPE** asn1_ty
         return ASN1_ERR_OOB;
 
     *asn1_type = asn1_node_alloc();
-    if (*asn1_type == NULL)
+    if (*asn1_type == nullptr)
     {
         return ASN1_ERR_MEM_ALLOC;
     }
@@ -652,7 +652,7 @@ valid:
 int asn1_decode(const u_char* data, u_int len, ASN1_TYPE** asn1_type)
 {
     ASN1_TYPE* cur;
-    ASN1_TYPE* child = NULL;
+    ASN1_TYPE* child = nullptr;
     ASN1_TYPE* indef;
     ASN1_TYPE* asnstack[ASN1_MAX_STACK];
 
@@ -718,14 +718,14 @@ int asn1_decode(const u_char* data, u_int len, ASN1_TYPE** asn1_type)
             */
             if (cur->cnext && cur->cnext->eoc)
             {
-                if (index && (indef = asnstack[--index]) != NULL)
+                if (index && (indef = asnstack[--index]) != nullptr)
                 {
                     if (indef->len.type == SF_BER_LEN_INDEF)
                     {
                         indef->len.size = data - indef->data - 2;
                         indef->data_len = indef->len.size;
 
-                        cur->cnext = NULL;
+                        cur->cnext = nullptr;
                         cur = indef;
                         break;
                     }
@@ -757,13 +757,13 @@ int asn1_decode(const u_char* data, u_int len, ASN1_TYPE** asn1_type)
             */
             while (cur->next && cur->next->eoc)
             {
-                if (index && (indef = asnstack[--index]) != NULL)
+                if (index && (indef = asnstack[--index]) != nullptr)
                 {
                     if (indef->len.type == SF_BER_LEN_INDEF)
                     {
                         indef->len.size = data - indef->data - 2;
                         indef->data_len = indef->len.size;
-                        cur->next = NULL;
+                        cur->next = nullptr;
                         cur = indef;
 
                         iRet = asn1_decode_type(&data, &len, &cur->next);
@@ -794,7 +794,7 @@ int asn1_decode(const u_char* data, u_int len, ASN1_TYPE** asn1_type)
         **  check for additional peers for each construct, depending on the
         **  length of the parent construct.
         */
-        while (index && (cur = asnstack[--index]) != NULL)
+        while (index && (cur = asnstack[--index]) != nullptr)
         {
             /*
             **  Get the construct length and set the length appropriately
@@ -824,7 +824,7 @@ int asn1_decode(const u_char* data, u_int len, ASN1_TYPE** asn1_type)
                 */
                 asnstack[index++] = cur;
                 cur   = child;
-                child = NULL;
+                child = nullptr;
             }
 
             iRet = asn1_decode_type(&data, &len, &cur->next);
@@ -835,13 +835,13 @@ int asn1_decode(const u_char* data, u_int len, ASN1_TYPE** asn1_type)
 
             if (cur->next && cur->next->eoc)
             {
-                if (index && (indef = asnstack[--index]) != NULL)
+                if (index && (indef = asnstack[--index]) != nullptr)
                 {
                     if (indef->len.type == SF_BER_LEN_INDEF)
                     {
                         indef->len.size = data - indef->data - 2;
                         indef->data_len = indef->len.size;
-                        cur->next = NULL;
+                        cur->next = nullptr;
                         cur = indef;
                     }
                     else
@@ -936,7 +936,7 @@ int asn1_traverse(ASN1_TYPE* asn1, void* user,
                 continue;
         }
 
-        while (index && (cur = asnstack[--index]) != NULL)
+        while (index && (cur = asnstack[--index]) != nullptr)
         {
             cur = cur->next;
             if (cur)

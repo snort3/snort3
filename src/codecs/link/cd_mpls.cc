@@ -111,10 +111,10 @@ public:
         return true;
     }
 
-    virtual const PegInfo* get_pegs() const override
+    const PegInfo* get_pegs() const override
     { return mpls_pegs; }
 
-    virtual PegCount* get_counts() const override
+    PegCount* get_counts() const override
     { return (PegCount*)&mpls_stats; }
 };
 
@@ -122,7 +122,6 @@ class MplsCodec : public Codec
 {
 public:
     MplsCodec() : Codec(CD_MPLS_NAME) { }
-    ~MplsCodec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
@@ -211,7 +210,7 @@ bool MplsCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         }
     }   /* while bos not 1, peel off more labels */
 
-    codec.lyr_len = (uint8_t*)tmpMplsHdr - raw.data;
+    codec.lyr_len = (const uint8_t*)tmpMplsHdr - raw.data;
 
     switch (iRet)
     {

@@ -66,7 +66,7 @@ static SIPData* SetNewSIPData(Packet* p)
 SIPData* get_sip_session_data(const Flow* flow)
 {
     SipFlowData* fd = (SipFlowData*)flow->get_flow_data(SipFlowData::inspector_id);
-    return fd ? &fd->session : NULL;
+    return fd ? &fd->session : nullptr;
 }
 
 static void FreeSipData(void* data)
@@ -80,7 +80,7 @@ static void FreeSipData(void* data)
 static void PrintSipConf(SIP_PROTO_CONF* config)
 {
     SIPMethodNode* method;
-    if (config == NULL)
+    if (config == nullptr)
         return;
     LogMessage("SIP config: \n");
     LogMessage("    Max number of dialogs in a session: %d %s \n",
@@ -139,7 +139,7 @@ static void PrintSipConf(SIP_PROTO_CONF* config)
         == SIP_METHOD_DEFAULT ?
         "(Default)" : "");
     method = config->methods;
-    while (NULL != method)
+    while (nullptr != method)
     {
         LogMessage(" %s", method->methodName);
         method = method->nextm;
@@ -162,8 +162,8 @@ static void PrintSipConf(SIP_PROTO_CONF* config)
 static inline int SIP_Process(Packet* p, SIPData* sessp, SIP_PROTO_CONF* config)
 {
     bool status;
-    char* sip_buff = (char*)p->data;
-    char* end;
+    const char* sip_buff = (const char*)p->data;
+    const char* end;
     SIP_Roptions* pRopts;
     SIPMsg sipMsg;
 
@@ -223,7 +223,7 @@ static void snort_sip(SIP_PROTO_CONF* config, Packet* p)
     /* Attempt to get a previously allocated SIP block. */
     SIPData* sessp = get_sip_session_data(p->flow);
 
-    if (sessp == NULL)
+    if (sessp == nullptr)
     {
         /* Check the stream session. If it does not currently
          * have our SIP data-block attached, create one.
@@ -250,7 +250,7 @@ class Sip : public Inspector
 {
 public:
     Sip(SIP_PROTO_CONF*);
-    ~Sip();
+    ~Sip() override;
 
     void show(SnortConfig*) override;
     void eval(Packet*) override;
@@ -294,7 +294,7 @@ bool Sip::get_buf(
 {
     SIPData* sd;
     SIP_Roptions* ropts;
-    const uint8_t* data = NULL;
+    const uint8_t* data = nullptr;
     unsigned len = 0;
 
     sd = get_sip_session_data(p->flow);

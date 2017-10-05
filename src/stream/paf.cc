@@ -349,7 +349,7 @@ int32_t paf_check (
             len -= shift;
         }
     }
-    while ( 1 );
+    while ( true );
 
     if ( ps->paf == StreamSplitter::ABORT )
         *flags = 0;

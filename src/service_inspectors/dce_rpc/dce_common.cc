@@ -367,6 +367,7 @@ Packet* DCE2_GetRpkt(Packet* p,DCE2_RpktType rpkt_type,
     const uint8_t* data, uint32_t data_len)
 {
     Packet* rpkt = DetectionEngine::set_next_packet();
+    uint8_t* wrdata = const_cast<uint8_t*>(rpkt->data);
     dce2_fill_rpkt_info(rpkt, p);
     uint16_t data_overhead = 0;
 
@@ -381,14 +382,14 @@ Packet* DCE2_GetRpkt(Packet* p,DCE2_RpktType rpkt_type,
         if (DCE2_SsnFromClient(p))
         {
             data_overhead = DCE2_MOCK_HDR_LEN__SMB_CLI;
-            memset((void*)rpkt->data, 0, data_overhead);
-            DCE2_SmbInitRdata((uint8_t*)rpkt->data, PKT_FROM_CLIENT);
+            memset(wrdata, 0, data_overhead);
+            DCE2_SmbInitRdata(wrdata, PKT_FROM_CLIENT);
         }
         else
         {
             data_overhead = DCE2_MOCK_HDR_LEN__SMB_SRV;
-            memset((void*)rpkt->data, 0, data_overhead);
-            DCE2_SmbInitRdata((uint8_t*)rpkt->data, PKT_FROM_SERVER);
+            memset(wrdata, 0, data_overhead);
+            DCE2_SmbInitRdata(wrdata, PKT_FROM_SERVER);
         }
         break;
 
@@ -397,14 +398,14 @@ Packet* DCE2_GetRpkt(Packet* p,DCE2_RpktType rpkt_type,
         if (DCE2_SsnFromClient(p))
         {
             data_overhead = DCE2_MOCK_HDR_LEN__SMB_CLI;
-            memset((void*)rpkt->data, 0, data_overhead);
-            DCE2_SmbInitRdata((uint8_t*)rpkt->data, PKT_FROM_CLIENT);
+            memset(wrdata, 0, data_overhead);
+            DCE2_SmbInitRdata(wrdata, PKT_FROM_CLIENT);
         }
         else
         {
             data_overhead = DCE2_MOCK_HDR_LEN__SMB_SRV;
-            memset((void*)rpkt->data, 0, data_overhead);
-            DCE2_SmbInitRdata((uint8_t*)rpkt->data, PKT_FROM_SERVER);
+            memset(wrdata, 0, data_overhead);
+            DCE2_SmbInitRdata(wrdata, PKT_FROM_SERVER);
         }
         break;
 
@@ -413,17 +414,17 @@ Packet* DCE2_GetRpkt(Packet* p,DCE2_RpktType rpkt_type,
         if (DCE2_SsnFromClient(p))
         {
             data_overhead = DCE2_MOCK_HDR_LEN__SMB_CLI + DCE2_MOCK_HDR_LEN__CO_CLI;
-            memset((void*)rpkt->data, 0, data_overhead);
-            DCE2_SmbInitRdata((uint8_t*)rpkt->data, PKT_FROM_CLIENT);
-            DCE2_CoInitRdata((uint8_t*)rpkt->data +
+            memset(wrdata, 0, data_overhead);
+            DCE2_SmbInitRdata(wrdata, PKT_FROM_CLIENT);
+            DCE2_CoInitRdata(wrdata +
                 DCE2_MOCK_HDR_LEN__SMB_CLI, PKT_FROM_CLIENT);
         }
         else
         {
             data_overhead = DCE2_MOCK_HDR_LEN__SMB_SRV + DCE2_MOCK_HDR_LEN__CO_SRV;
-            memset((void*)rpkt->data, 0, data_overhead);
-            DCE2_SmbInitRdata((uint8_t*)rpkt->data, PKT_FROM_SERVER);
-            DCE2_CoInitRdata((uint8_t*)rpkt->data +
+            memset(wrdata, 0, data_overhead);
+            DCE2_SmbInitRdata(wrdata, PKT_FROM_SERVER);
+            DCE2_CoInitRdata(wrdata +
                 DCE2_MOCK_HDR_LEN__SMB_SRV, PKT_FROM_SERVER);
         }
         break;
@@ -431,8 +432,8 @@ Packet* DCE2_GetRpkt(Packet* p,DCE2_RpktType rpkt_type,
     case DCE2_RPKT_TYPE__UDP_CL_FRAG:
         rpkt->pseudo_type = PSEUDO_PKT_DCE_FRAG;
         data_overhead = DCE2_MOCK_HDR_LEN__CL;
-        memset((void*)rpkt->data, 0, data_overhead);
-        DCE2_ClInitRdata((uint8_t*)rpkt->data);
+        memset(wrdata, 0, data_overhead);
+        DCE2_ClInitRdata(wrdata);
         break;
 
     case DCE2_RPKT_TYPE__TCP_CO_SEG:
@@ -443,14 +444,14 @@ Packet* DCE2_GetRpkt(Packet* p,DCE2_RpktType rpkt_type,
             if (DCE2_SsnFromClient(p))
             {
                 data_overhead = DCE2_MOCK_HDR_LEN__CO_CLI;
-                memset((void*)rpkt->data, 0, data_overhead);
-                DCE2_CoInitRdata((uint8_t*)rpkt->data, PKT_FROM_CLIENT);
+                memset(wrdata, 0, data_overhead);
+                DCE2_CoInitRdata(wrdata, PKT_FROM_CLIENT);
             }
             else
             {
                 data_overhead = DCE2_MOCK_HDR_LEN__CO_SRV;
-                memset((void*)rpkt->data, 0, data_overhead);
-                DCE2_CoInitRdata((uint8_t*)rpkt->data, PKT_FROM_SERVER);
+                memset(wrdata, 0, data_overhead);
+                DCE2_CoInitRdata(wrdata, PKT_FROM_SERVER);
             }
         }
         else

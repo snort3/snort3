@@ -39,9 +39,6 @@ public:
     {
     }
 
-    ~HttpEvent()
-    {
-    }
 
     const uint8_t* get_content_type(int32_t &length);
     const uint8_t* get_cookie(int32_t &length);

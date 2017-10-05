@@ -48,7 +48,7 @@ class SshModule : public Module
 {
 public:
     SshModule();
-    ~SshModule();
+    ~SshModule() override;
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;

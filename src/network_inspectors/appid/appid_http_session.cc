@@ -79,7 +79,7 @@ AppIdHttpSession::~AppIdHttpSession()
 void AppIdHttpSession::free_chp_matches(ChpMatchDescriptor& cmd, unsigned num_matches)
 {
     for (unsigned i = 0; i <= num_matches; i++)
-        if ( cmd.chp_matches[i].size() )
+        if ( !cmd.chp_matches[i].empty() )
             cmd.chp_matches[i].clear();
 }
 

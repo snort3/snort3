@@ -30,8 +30,8 @@
 
 struct SFHASHFCN;
 
-#define SFXHASH_NOMEM    -2
-#define SFXHASH_ERR      -1
+#define SFXHASH_NOMEM    (-2)
+#define SFXHASH_ERR      (-1)
 #define SFXHASH_OK        0
 #define SFXHASH_INTABLE   1
 
@@ -147,7 +147,7 @@ SO_PUBLIC void sfxhash_gmovetofront(SFXHASH* t, SFXHASH_NODE* hnode);
 SO_PUBLIC int sfxhash_free_node(SFXHASH* t, SFXHASH_NODE* node);
 
 SO_PUBLIC int sfxhash_set_keyops(SFXHASH* h,
-    unsigned (* hash_fcn)(SFHASHFCN* p, unsigned char* d, int n),
+    unsigned (* hash_fcn)(SFHASHFCN* p, const unsigned char* d, int n),
     int (* keycmp_fcn)(const void* s1, const void* s2, size_t n));
 
 SO_PUBLIC SFXHASH_NODE* sfxhash_gfindfirst(SFXHASH* t);

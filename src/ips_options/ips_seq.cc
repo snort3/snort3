@@ -73,7 +73,7 @@ bool TcpSeqOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    TcpSeqOption& rhs = (TcpSeqOption&)ips;
+    const TcpSeqOption& rhs = (const TcpSeqOption&)ips;
     return ( config == rhs.config );
 }
 

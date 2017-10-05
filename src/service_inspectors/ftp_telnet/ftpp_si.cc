@@ -89,7 +89,7 @@ TelnetFlowData::~TelnetFlowData()
 static inline int TelnetResetsession(TELNET_SESSION* session)
 {
     session->ft_ssn.proto = FTPP_SI_PROTO_TELNET;
-    session->telnet_conf = NULL;
+    session->telnet_conf = nullptr;
 
     session->consec_ayt = 0;
     session->encr_state = NO_STATE;
@@ -244,8 +244,8 @@ static int FTPInitConf(
      * We default to the no FTP traffic case
      */
     *piInspectMode = FTPP_SI_NO_MODE;
-    *ClientConf = NULL;
-    *ServerConf = NULL;
+    *ClientConf = nullptr;
+    *ServerConf = nullptr;
 
     /*
      * Depending on the type of packet direction we get from the
@@ -327,8 +327,8 @@ static int FTPInitConf(
 
     default:
         *piInspectMode = FTPP_SI_NO_MODE;
-        *ClientConf = NULL;
-        *ServerConf = NULL;
+        *ClientConf = nullptr;
+        *ServerConf = nullptr;
         break;
     }
 
@@ -386,13 +386,13 @@ static inline int FTPResetsession(FTP_SESSION* Ftpsession)
 {
     Ftpsession->ft_ssn.proto = FTPP_SI_PROTO_FTP;
 
-    Ftpsession->server.response.pipeline_req = 0;
+    Ftpsession->server.response.pipeline_req = nullptr;
     Ftpsession->server.response.state = 0;
-    Ftpsession->client.request.pipeline_req = 0;
-    Ftpsession->client.state = 0;
+    Ftpsession->client.request.pipeline_req = nullptr;
+    Ftpsession->client.state = nullptr;
 
-    Ftpsession->client_conf = NULL;
-    Ftpsession->server_conf = NULL;
+    Ftpsession->client_conf = nullptr;
+    Ftpsession->server_conf = nullptr;
 
     Ftpsession->encr_state = NO_STATE;
     Ftpsession->clientIP.clear();

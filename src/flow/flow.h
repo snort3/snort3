@@ -145,7 +145,6 @@ public:
         ALLOW
     };
     Flow();
-    ~Flow();
 
     void init(PktType);
     void term();

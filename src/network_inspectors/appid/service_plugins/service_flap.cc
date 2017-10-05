@@ -103,9 +103,6 @@ FlapServiceDetector::FlapServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-FlapServiceDetector::~FlapServiceDetector()
-{
-}
 
 int FlapServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
@@ -145,7 +142,7 @@ int FlapServiceDetector::validate(AppIdDiscoveryArgs& args)
             goto fail;
         if (size - sizeof(FLAPHeader) != 4)
             goto fail;
-        if (ntohl(*((uint32_t*)(data + sizeof(FLAPHeader)))) != 0x00000001)
+        if (ntohl(*((const uint32_t*)(data + sizeof(FLAPHeader)))) != 0x00000001)
             goto fail;
         goto inprocess;
     case FLAP_STATE_COOKIE:
@@ -157,10 +154,10 @@ int FlapServiceDetector::validate(AppIdDiscoveryArgs& args)
             goto fail;
         if (hdr->type == 0x02)
         {
-            ff = (FLAPFNAC*)(data + sizeof(FLAPHeader));
+            ff = (const FLAPFNAC*)(data + sizeof(FLAPHeader));
             if (ntohs(ff->family) == FNAC_SIGNON)
             {
-                FLAPFNACSignOn* ffs = (FLAPFNACSignOn*)((uint8_t*)ff + sizeof(FLAPFNAC));
+                const FLAPFNACSignOn* ffs = (const FLAPFNACSignOn*)((const uint8_t*)ff + sizeof(FLAPFNAC));
 
                 if (ntohs(ff->subtype) != FNAC_SUB_SIGNON_REPLY)
                     goto fail;
@@ -185,7 +182,7 @@ int FlapServiceDetector::validate(AppIdDiscoveryArgs& args)
             size -= sizeof(FLAPHeader);
             while (size >= sizeof(FLAPTLV))
             {
-                tlv = (FLAPTLV*)data;
+                tlv = (const FLAPTLV*)data;
                 data += sizeof(FLAPTLV);
                 size -= sizeof(FLAPTLV);
                 len = ntohs(tlv->len);

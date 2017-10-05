@@ -103,7 +103,7 @@ int SipIpsOption::eval(Cursor& c, Packet* p)
 
     SIPData* sd;
     SIP_Roptions* ropts;
-    const uint8_t* data = NULL;
+    const uint8_t* data = nullptr;
     unsigned len = 0;
 
     if ((!p->is_tcp() && !p->is_udp()) || !p->flow || !p->dsize)
@@ -131,7 +131,7 @@ int SipIpsOption::eval(Cursor& c, Packet* p)
         break;
     }
 
-    if (data != NULL)
+    if (data != nullptr)
     {
         c.set(key, data, len);
         return DETECTION_OPTION_MATCH;

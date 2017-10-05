@@ -32,8 +32,7 @@ class Ppm : public ConversionState
 {
 public:
     Ppm(Converter& c) : ConversionState(c) { }
-    virtual ~Ppm() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 
@@ -63,7 +62,7 @@ bool Ppm::convert(std::istringstream& data_stream)
         if (keyword.empty())
             continue;
 
-        if (!keyword.compare("threshold"))
+        if (keyword == "threshold")
         {
             table_api.add_diff_option_comment("threshold", "rule.suspend_threshold");
             table_api.open_table("rule");
@@ -71,7 +70,7 @@ bool Ppm::convert(std::istringstream& data_stream)
             table_api.close_table();
         }
 
-        else if (!keyword.compare("fastpath-expensive-packets"))
+        else if (keyword == "fastpath-expensive-packets")
         {
             table_api.add_diff_option_comment("fastpath-expensive-packets", "packet.fastpath");
             table_api.open_table("packet");
@@ -79,7 +78,7 @@ bool Ppm::convert(std::istringstream& data_stream)
             table_api.close_table();
         }
 
-        else if (!keyword.compare("max-pkt-time"))
+        else if (keyword == "max-pkt-time")
         {
             table_api.add_diff_option_comment("max-pkt-time", "packet.max_time");
             table_api.open_table("packet");
@@ -87,10 +86,10 @@ bool Ppm::convert(std::istringstream& data_stream)
             table_api.close_table();
         }
 
-        else if (!keyword.compare("debug-pkts"))
+        else if (keyword == "debug-pkts")
             table_api.add_deleted_comment("debug-pkts");
 
-        else if (!keyword.compare("max-rule-time"))
+        else if (keyword == "max-rule-time")
         {
             table_api.add_diff_option_comment("max-rule-time", "rule.max_time");
             table_api.open_table("rule");
@@ -98,7 +97,7 @@ bool Ppm::convert(std::istringstream& data_stream)
             table_api.close_table();
         }
 
-        else if (!keyword.compare("suspend-expensive-rules"))
+        else if (keyword == "suspend-expensive-rules")
         {
             table_api.add_diff_option_comment("suspend-expensive-rules", "rule.suspend");
             table_api.open_table("rule");
@@ -106,7 +105,7 @@ bool Ppm::convert(std::istringstream& data_stream)
             table_api.close_table();
         }
 
-        else if (!keyword.compare("suspend-timeout"))
+        else if (keyword == "suspend-timeout")
         {
             table_api.add_diff_option_comment("suspend-timeout", "max_suspend_time");
             table_api.open_table("rule");
@@ -126,7 +125,7 @@ bool Ppm::convert(std::istringstream& data_stream)
             table_api.close_table();
         }
 
-        else if (!keyword.compare("pkt-log"))
+        else if (keyword == "pkt-log")
         {
             table_api.add_diff_option_comment("pkt-log", "packet.action");
             table_api.open_table("packet");
@@ -158,7 +157,7 @@ bool Ppm::convert(std::istringstream& data_stream)
             table_api.close_table();
         }
 
-        else if (!keyword.compare("rule-log"))
+        else if (keyword == "rule-log")
         {
             table_api.add_diff_option_comment("rule-log", "rule.action");
             table_api.open_table("rule");

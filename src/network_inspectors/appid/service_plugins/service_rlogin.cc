@@ -64,9 +64,6 @@ RloginServiceDetector::RloginServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-RloginServiceDetector::~RloginServiceDetector()
-{
-}
 
 int RloginServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
@@ -111,7 +108,7 @@ int RloginServiceDetector::validate(AppIdDiscoveryArgs& args)
         {
             if (size != sizeof(RLOGIN_PASSWORD)-1)
                 goto fail;
-            if (strncmp((char*)data, RLOGIN_PASSWORD, sizeof(RLOGIN_PASSWORD)-1))
+            if (strncmp((const char*)data, RLOGIN_PASSWORD, sizeof(RLOGIN_PASSWORD)-1))
                 goto fail;
             rd->state = RLOGIN_STATE_CRLF;
         }

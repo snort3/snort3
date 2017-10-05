@@ -79,7 +79,7 @@ static inline void DCE2_OpnumSet(uint8_t*, const uint16_t);
 static inline void DCE2_OpnumSetRange(uint8_t*, uint16_t, uint16_t);
 static inline bool DCE2_OpnumIsSet(const uint8_t*, const uint16_t, const uint16_t, const uint16_t);
 static void DCE2_OpnumFreeMask(DCE2_Opnum* opnum);
-static DCE2_Ret DCE2_ParseOpnumList(char** ptr, char* end, uint8_t* opnum_mask);
+static DCE2_Ret DCE2_ParseOpnumList(char** ptr, const char* end, uint8_t* opnum_mask);
 static DCE2_Ret DCE2_OpnumParse(char* args, DCE2_Opnum* opnum);
 
 static THREAD_LOCAL ProfileStats dce2_opnum_perf_stats;
@@ -141,7 +141,7 @@ static void DCE2_OpnumFreeMask(DCE2_Opnum* opnum)
     }
 }
 
-static DCE2_Ret DCE2_ParseOpnumList(char** ptr, char* end, uint8_t* opnum_mask)
+static DCE2_Ret DCE2_ParseOpnumList(char** ptr, const char* end, uint8_t* opnum_mask)
 {
     char* lo_start = nullptr;
     char* hi_start = nullptr;
@@ -346,7 +346,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
     int eval(Cursor&, Packet*) override;
-    ~Dce2OpnumOption();
+    ~Dce2OpnumOption() override;
 
 private:
     DCE2_Opnum opnum;
@@ -378,7 +378,7 @@ bool Dce2OpnumOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    const Dce2OpnumOption& rhs = (Dce2OpnumOption&)ips;
+    const Dce2OpnumOption& rhs = (const Dce2OpnumOption&)ips;
 
     if ((opnum.mask_size != rhs.opnum.mask_size) ||
         (opnum.opnum_lo != rhs.opnum.opnum_lo) ||
@@ -465,7 +465,7 @@ public:
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
     ProfileStats* get_profile() const override;
-    ~Dce2OpnumModule();
+    ~Dce2OpnumModule() override;
 
     Usage get_usage() const override
     { return DETECT; }

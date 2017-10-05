@@ -33,8 +33,7 @@ class StreamTcp : public ConversionState
 {
 public:
     StreamTcp(Converter&);
-    virtual ~StreamTcp() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 
 private:
     Binder* bind_client;
@@ -82,7 +81,7 @@ bool StreamTcp::parse_small_segments(std::istringstream& stream)
 
     if (!(stream >> consec_segs) ||
         !(stream >> bytes) ||
-        bytes.compare("bytes") ||
+        bytes != "bytes" ||
         !(stream >> min_bytes))
         return false;
 
@@ -91,7 +90,7 @@ bool StreamTcp::parse_small_segments(std::istringstream& stream)
     table_api.add_option("maximum_size", min_bytes);
     table_api.close_table();
 
-    if ((stream >> ignore_ports) && !ignore_ports.compare("ignore_ports"))
+    if ((stream >> ignore_ports) && ignore_ports == "ignore_ports")
     {
         uint16_t port;
 
@@ -115,19 +114,19 @@ bool StreamTcp::parse_ports(std::istringstream& arg_stream)
     if (!(arg_stream >> dir))
         return false;
 
-    if ( !dir.compare("client"))
+    if ( dir == "client")
     {
         table_api.add_diff_option_comment("client ports",
             "binder.when.ports; binder.when.role = client");
         bind = bind_client;
     }
-    else if ( !dir.compare("server"))
+    else if ( dir == "server")
     {
         table_api.add_diff_option_comment("server ports",
             "binder.when.ports; binder.when.role = server");
         bind = bind_server;
     }
-    else if ( !dir.compare("both"))
+    else if ( dir == "both")
     {
         table_api.add_diff_option_comment("both ports",
             "binder.when.ports; binder.when.role = any");
@@ -154,11 +153,11 @@ bool StreamTcp::parse_ports(std::istringstream& arg_stream)
         ports_set = true;
 
         // don't set the ports variable for "all"
-        if (!port.compare("all"))
+        if (port == "all")
             void(0);
 
         // for none, don't print the binding
-        else if (!port.compare("none"))
+        else if (port == "none")
             bind->print_binding(false);
 
         else
@@ -187,21 +186,21 @@ bool StreamTcp::parse_protocol(std::istringstream& arg_stream)
     if (!(arg_stream >> dir))
         return true;
 
-    if (!dir.compare("client"))
+    if (dir == "client")
     {
         table_api.add_diff_option_comment("client protocol",
             "binder.when.proto; binder.when.role = client");
         bind = bind_client;
         protocols = &client_protocols;
     }
-    else if (!dir.compare("server"))
+    else if (dir == "server")
     {
         table_api.add_diff_option_comment("server protocol",
             "binder.when.proto; binder.when.role = server");
         bind = bind_server;
         protocols = &server_protocols;
     }
-    else if (!dir.compare("both"))
+    else if (dir == "both")
     {
         table_api.add_diff_option_comment("both protocol",
             "binder.when.proto; binder.when.role = any");
@@ -227,11 +226,11 @@ bool StreamTcp::parse_protocol(std::istringstream& arg_stream)
         protos_set = true;
 
         // for all, don't set the protos variable
-        if (!protocol.compare("all"))
+        if (protocol == "all")
             void(0);
 
         // for none, don't print the binding
-        else if (!protocol.compare("none"))
+        else if (protocol == "none")
             bind->print_binding(false);
 
         else
@@ -295,40 +294,40 @@ bool StreamTcp::convert(std::istringstream& data_stream)
         if (!(arg_stream >> keyword))
             tmpval = false;
 
-        if (!keyword.compare("overlap_limit"))
+        if (keyword == "overlap_limit")
             tmpval = parse_int_option("overlap_limit", arg_stream, false);
 
-        else if (!keyword.compare("max_window"))
+        else if (keyword == "max_window")
             tmpval = parse_int_option("max_window", arg_stream, false);
 
-        else if (!keyword.compare("small_segments"))
+        else if (keyword == "small_segments")
             tmpval = parse_small_segments(arg_stream);
 
-        else if (!keyword.compare("ignore_any_rules"))
+        else if (keyword == "ignore_any_rules")
             tmpval = table_api.add_option("ignore_any_rules", true);
 
-        else if (!keyword.compare("ports"))
+        else if (keyword == "ports")
             tmpval = parse_ports(arg_stream);
 
-        else if (!keyword.compare("detect_anomalies"))
+        else if (keyword == "detect_anomalies")
             table_api.add_deleted_comment("detect_anomalies");
 
-        else if (!keyword.compare("dont_store_large_packets"))
+        else if (keyword == "dont_store_large_packets")
             table_api.add_deleted_comment("dont_store_large_packets");
 
-        else if (!keyword.compare("check_session_hijacking"))
+        else if (keyword == "check_session_hijacking")
             table_api.add_deleted_comment("check_session_hijacking");
 
-        else if (!keyword.compare("log_asymmetric_traffic"))
+        else if (keyword == "log_asymmetric_traffic")
             table_api.add_deleted_comment("log_asymmetric_traffic");
 
-        else if (!keyword.compare("flush_factor"))
+        else if (keyword == "flush_factor")
             tmpval = parse_int_option("flush_factor", arg_stream, false);
 
-        else if (!keyword.compare("protocol"))
+        else if (keyword == "protocol")
             tmpval = parse_protocol(arg_stream);
 
-        else if (!keyword.compare("require_3whs"))
+        else if (keyword == "require_3whs")
         {
             int val;
 
@@ -337,7 +336,7 @@ bool StreamTcp::convert(std::istringstream& data_stream)
             else
                 table_api.add_option("require_3whs", 0);
         }
-        else if (!keyword.compare("bind_to"))
+        else if (keyword == "bind_to")
         {
             table_api.add_diff_option_comment("bind_to", "bindings");
 
@@ -355,12 +354,12 @@ bool StreamTcp::convert(std::istringstream& data_stream)
                 tmpval = false;
             }
         }
-        else if (!keyword.compare("dont_reassemble_async"))
+        else if (keyword == "dont_reassemble_async")
         {
             table_api.add_diff_option_comment("dont_reassemble_async", "reassemble_async");
             tmpval = table_api.add_option("reassemble_async", false);
         }
-        else if (!keyword.compare("use_static_footprint_sizes"))
+        else if (keyword == "use_static_footprint_sizes")
         {
             table_api.add_diff_option_comment("use_static_footprint_sizes",
                 "stream.footprint = 192");
@@ -368,93 +367,93 @@ bool StreamTcp::convert(std::istringstream& data_stream)
             table_api.add_option("footprint", 192);
             table_api.close_table();
         }
-        else if (!keyword.compare("timeout"))
+        else if (keyword == "timeout")
         {
             table_api.add_diff_option_comment("timeout", "session_timeout");
             tmpval = parse_int_option("session_timeout", arg_stream, false);
         }
-        else if (!keyword.compare("max_queued_segs"))
+        else if (keyword == "max_queued_segs")
         {
             table_api.add_diff_option_comment("max_queued_segs", "queue_limit.max_segments");
             table_api.open_table("queue_limit");
             tmpval = parse_int_option("max_segments", arg_stream, false);
             table_api.close_table();
         }
-        else if (!keyword.compare("max_queued_bytes"))
+        else if (keyword == "max_queued_bytes")
         {
             table_api.add_diff_option_comment("max_queued_bytes", "queue_limit.max_bytes");
             table_api.open_table("queue_limit");
             tmpval = parse_int_option("max_bytes", arg_stream, false);
             table_api.close_table();
         }
-        else if (!keyword.compare("policy"))
+        else if (keyword == "policy")
         {
             std::string policy;
 
             if (!(arg_stream >> policy))
                 data_api.failed_conversion(data_stream,  "stream5_tcp: policy <missing_arg>");
 
-            else if (!policy.compare("bsd"))
+            else if (policy == "bsd")
                 table_api.add_option("policy", "bsd");
 
-            else if (!policy.compare("first"))
+            else if (policy == "first")
                 table_api.add_option("policy", "first");
 
-            else if (!policy.compare("irix"))
+            else if (policy == "irix")
                 table_api.add_option("policy", "irix");
 
-            else if (!policy.compare("last"))
+            else if (policy == "last")
                 table_api.add_option("policy", "last");
 
-            else if (!policy.compare("linux"))
+            else if (policy == "linux")
                 table_api.add_option("policy", "linux");
 
-            else if (!policy.compare("macos"))
+            else if (policy == "macos")
                 table_api.add_option("policy", "macos");
 
-            else if (!policy.compare("old-linux"))
+            else if (policy == "old-linux")
                 table_api.add_option("policy", "old_linux");
 
-            else if (!policy.compare("solaris"))
+            else if (policy == "solaris")
                 table_api.add_option("policy", "solaris");
 
-            else if (!policy.compare("windows"))
+            else if (policy == "windows")
                 table_api.add_option("policy", "windows");
 
-            else if (!policy.compare("vista"))
+            else if (policy == "vista")
                 table_api.add_option("policy", "vista");
 
-            else if (!policy.compare("unknown"))
+            else if (policy == "unknown")
                 table_api.add_deleted_comment("policy unknown");
 
-            else if (!policy.compare("noack"))
+            else if (policy == "noack")
                 table_api.add_deleted_comment("policy noack");
 
-            else if (!policy.compare("hpux"))
+            else if (policy == "hpux")
             {
                 table_api.add_diff_option_comment("policy hpux", "stream_tcp.policy = hpux11");
                 table_api.add_option("policy", "hpux11");
             }
-            else if (!policy.compare("hpux10"))
+            else if (policy == "hpux10")
                 table_api.add_option("policy", "hpux10");
 
-            else if (!policy.compare("win2003"))
+            else if (policy == "win2003")
             {
                 table_api.add_diff_option_comment("policy win2003",
                     "stream_tcp.policy = win_2003");
                 table_api.add_option("policy", "win_2003");
             }
-            else if (!policy.compare("win2k3"))
+            else if (policy == "win2k3")
             {
                 table_api.add_diff_option_comment("policy win2k3",
                     "stream_tcp.policy = win_2003");
                 table_api.add_option("policy", "win_2003");
             }
-            else if (!policy.compare("hpux11"))
+            else if (policy == "hpux11")
             {
                 table_api.add_option("policy", "hpux11");
             }
-            else if (!policy.compare("grannysmith"))
+            else if (policy == "grannysmith")
             {
                 table_api.add_diff_option_comment("policy grannysmith",
                     "stream_tcp.policy = macos");
@@ -519,7 +518,7 @@ bool StreamTcp::convert(std::istringstream& data_stream)
 
     if (!client_protocols.empty())
     {
-        for (std::string s : client_protocols)
+        for (const std::string& s : client_protocols)
         {
             auto& b = cv.make_binder(client);
             b.set_when_service(s);
@@ -528,7 +527,7 @@ bool StreamTcp::convert(std::istringstream& data_stream)
 
     if (!server_protocols.empty())
     {
-        for (std::string s : server_protocols)
+        for (const std::string& s : server_protocols)
         {
             auto& b = cv.make_binder(server);
             b.set_when_service(s);
@@ -537,7 +536,7 @@ bool StreamTcp::convert(std::istringstream& data_stream)
 
     if (!any_protocols.empty())
     {
-        for (std::string s : any_protocols)
+        for (const std::string& s : any_protocols)
         {
             auto& b = cv.make_binder(any);
             b.set_when_service(s);

@@ -45,7 +45,7 @@ int DetectionEngine::queue_event(unsigned int, unsigned int, RuleType) { return 
 HttpJsNorm::HttpJsNorm(int, const HttpParaList::UriParam& uri_param_) :
     max_javascript_whitespaces(0), uri_param(uri_param_), javascript_search_mpse(nullptr),
     htmltype_search_mpse(nullptr) {}
-HttpJsNorm::~HttpJsNorm() {}
+HttpJsNorm::~HttpJsNorm() = default;
 void HttpJsNorm::configure() {}
 
 TEST_GROUP(http_inspect_uri_norm)
@@ -72,7 +72,7 @@ TEST_GROUP(http_double_decode_test)
     HttpInfractions infractions;
     HttpEventGen events;
 
-    void setup()
+    void setup() override
     {
         uri_param.percent_u = true;
         uri_param.iis_unicode = true;

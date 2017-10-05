@@ -44,7 +44,7 @@ struct Event
     struct sf_timeval32 ref_time = { 0, 0 };   /* reference time for the event reference */
     const char* alt_msg = nullptr;
 
-    Event() { }
+    Event() = default;
     Event(SigInfo& si)
     { sig_info = &si; }
 };

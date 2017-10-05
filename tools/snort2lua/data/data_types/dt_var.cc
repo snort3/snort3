@@ -41,7 +41,7 @@ Variable::~Variable()
 
 std::string Variable::get_value(DataApi* ld)
 {
-    std::string variable = "";
+    std::string variable;
     bool first_line = true;
 
     for (auto v : vars)

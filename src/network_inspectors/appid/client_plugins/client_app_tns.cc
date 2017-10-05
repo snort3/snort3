@@ -142,9 +142,6 @@ TnsClientDetector::TnsClientDetector(ClientDiscovery* cdm)
     handler->register_detector(name, this, proto);
 }
 
-TnsClientDetector::~TnsClientDetector()
-{
-}
 
 static int reset_flow_data(ClientTNSData* fd)
 {

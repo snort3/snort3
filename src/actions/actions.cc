@@ -43,7 +43,7 @@ static void alert(Packet* p, const OptTreeNode* otn)
 {
     RuleTreeNode* rtn = getRuntimeRtnFromOtn(otn);
 
-    if (rtn == NULL)
+    if (rtn == nullptr)
         return;
 
     /* Call OptTreeNode specific output functions */

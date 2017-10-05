@@ -278,7 +278,7 @@ ProtocolHA::~ProtocolHA()
         }
     }
 
-    if ( proto_map->size() == 0 )
+    if ( proto_map->empty() )
     {
         delete proto_map;
     }

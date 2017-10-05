@@ -30,7 +30,6 @@ class RloginServiceDetector : public ServiceDetector
 {
 public:
     RloginServiceDetector(ServiceDiscovery*);
-    ~RloginServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

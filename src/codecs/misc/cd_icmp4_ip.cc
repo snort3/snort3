@@ -39,7 +39,6 @@ class Icmp4IpCodec : public Codec
 {
 public:
     Icmp4IpCodec() : Codec(ICMP4_IP_NAME) { }
-    ~Icmp4IpCodec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>&) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;

@@ -26,7 +26,6 @@
 #include <cstring>
 
 FtpSplitter::FtpSplitter(bool c2s) : StreamSplitter(c2s) { }
-FtpSplitter::~FtpSplitter() { }
 
 // flush at last line feed in data
 // preproc will deal with any pipelined commands
@@ -38,9 +37,9 @@ StreamSplitter::Status FtpSplitter::scan(
     uint8_t* lf =  (uint8_t*)memrchr(data, '\n', len);
 #else
     uint32_t n = len;
-    uint8_t* lf = NULL, * tmp = (uint8_t*)data;
+    const uint8_t* lf = nullptr, * tmp = data;
 
-    while ( (tmp = (uint8_t*)memchr(tmp, '\n', n)) )
+    while ( (tmp = (const uint8_t*)memchr(tmp, '\n', n)) )
     {
         lf = tmp++;
         n = len - (tmp - data);

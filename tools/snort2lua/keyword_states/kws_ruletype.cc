@@ -49,8 +49,7 @@ public:
         entire_line("ruletype")
     { }
 
-    virtual ~RuleType() { }
-    virtual bool convert(std::istringstream& data);
+    bool convert(std::istringstream& data) override;
 
 private:
     ParseState state;
@@ -80,7 +79,7 @@ bool RuleType::convert(std::istringstream& stream)
             break;
 
         case ParseState::OPEN_BRACKET:
-            if ( val.compare("{") )
+            if ( val != "{" )
             {
                 std::istringstream tmp(entire_line);
                 data_api.failed_conversion(tmp, val);
@@ -90,7 +89,7 @@ bool RuleType::convert(std::istringstream& stream)
             break;
 
         case ParseState::TYPE_KEYWORD:
-            if ( val.compare("type") )
+            if ( val != "type" )
             {
                 std::istringstream tmp(entire_line);
                 data_api.failed_conversion(tmp, val);
@@ -105,7 +104,7 @@ bool RuleType::convert(std::istringstream& stream)
             break;
 
         case ParseState::OUTPUT_OR_BRACKET:
-            if ( !val.compare("}") )
+            if ( val == "}" )
             {
                 cv.end_multiline_parsing();
 
@@ -138,7 +137,7 @@ bool RuleType::convert(std::istringstream& stream)
                     return false;
                 }
             }
-            else if (!val.compare("output") )
+            else if (val == "output" )
             {
                 state = ParseState::OUTPUT_ARGS;
             }

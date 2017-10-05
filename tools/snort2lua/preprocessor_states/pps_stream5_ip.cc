@@ -32,8 +32,7 @@ class StreamIp : public ConversionState
 {
 public:
     StreamIp(Converter& c) : ConversionState(c) { }
-    virtual ~StreamIp() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 
@@ -54,7 +53,7 @@ bool StreamIp::convert(std::istringstream& data_stream)
         {
             tmpval = false;
         }
-        else if (!keyword.compare("timeout"))
+        else if (keyword == "timeout")
         {
             table_api.add_diff_option_comment("timeout", "session_timeout");
             tmpval = parse_int_option("session_timeout", arg_stream, false);

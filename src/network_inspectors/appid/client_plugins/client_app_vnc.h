@@ -28,7 +28,6 @@ class VncClientDetector : public ClientDetector
 {
 public:
     VncClientDetector(ClientDiscovery*);
-    ~VncClientDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

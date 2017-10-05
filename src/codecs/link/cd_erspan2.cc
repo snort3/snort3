@@ -49,7 +49,6 @@ class Erspan2Codec : public Codec
 {
 public:
     Erspan2Codec() : Codec(CD_ERSPAN2_NAME) { }
-    ~Erspan2Codec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;

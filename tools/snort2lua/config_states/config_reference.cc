@@ -32,8 +32,7 @@ class Reference : public ConversionState
 {
 public:
     Reference(Converter& c) : ConversionState(c) { }
-    virtual ~Reference() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 

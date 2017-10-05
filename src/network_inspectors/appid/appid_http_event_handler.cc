@@ -27,7 +27,7 @@
 
 #include "appid_http_event_handler.h"
 
-#include <assert.h>
+#include <cassert>
 
 #include "app_info_table.h"
 #include "appid_http_session.h"
@@ -89,7 +89,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
                 tmplen = sizeof(HTTP_PREFIX) + session->hsession->host_buflen +
                     session->hsession->uri_buflen + 1;
                 session->hsession->url = (char*)snort_calloc(tmplen);
-                strcpy(session->hsession->url, HTTP_PREFIX);
+                strncpy(session->hsession->url, HTTP_PREFIX, tmplen);
                 strncat(session->hsession->url, session->hsession->host,
                     session->hsession->host_buflen);
                 strncat(session->hsession->url, session->hsession->uri,

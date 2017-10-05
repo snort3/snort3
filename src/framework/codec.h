@@ -233,7 +233,7 @@ constexpr UpdateFlags UPD_REBUILT_FRAG = 0x08;
 class SO_PUBLIC Codec
 {
 public:
-    virtual ~Codec() { }
+    virtual ~Codec() = default;
 
     // PKT_MAX = ETHERNET_HEADER_LEN + VLAN_HEADER + ETHERNET_MTU + IP_MAXPACKET
 

@@ -135,7 +135,6 @@ class LuaJitLogger : public Logger
 {
 public:
     LuaJitLogger(const char* name, std::string& chunk, class LuaLogModule*);
-    ~LuaJitLogger();
 
     void alert(Packet*, const char*, const Event&) override;
 
@@ -165,8 +164,6 @@ LuaJitLogger::LuaJitLogger(const char* name, std::string& chunk, LuaLogModule* m
     }
 }
 
-LuaJitLogger::~LuaJitLogger()
-{ }
 
 void LuaJitLogger::alert(Packet* p, const char*, const Event& e)
 {

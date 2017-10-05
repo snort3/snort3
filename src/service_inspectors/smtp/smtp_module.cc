@@ -173,7 +173,7 @@ SmtpModule::~SmtpModule()
         if ( config->cmds )
         {
             for ( SMTPToken* tmp = config->cmds; tmp->name; tmp++)
-                snort_free((char *)tmp->name);
+                snort_free(const_cast<char *>(tmp->name));
 
             snort_free(config->cmds);
         }

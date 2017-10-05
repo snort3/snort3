@@ -65,9 +65,6 @@ MsnClientDetector::MsnClientDetector(ClientDiscovery* cdm)
     handler->register_detector(name, this, proto);
 }
 
-MsnClientDetector::~MsnClientDetector()
-{
-}
 
 int MsnClientDetector::validate(AppIdDiscoveryArgs& args)
 {

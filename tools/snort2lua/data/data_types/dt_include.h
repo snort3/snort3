@@ -28,7 +28,7 @@ class Include
 public:
 
     Include(const std::string& file_name);
-    virtual ~Include();
+    virtual ~Include() = default;
 
     // overloading operators
     friend std::ostream& operator<<(std::ostream&, const Include&);

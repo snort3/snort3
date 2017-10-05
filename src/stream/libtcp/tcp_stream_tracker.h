@@ -260,7 +260,7 @@ public:
         // FIXIT-H do we need this check? we've always seen something by the time we get here
         // If we haven't seen anything, ie, low & high are 0, return true
         if ( ( snd_una == 0 ) && ( snd_una == snd_nxt ) )
-            return 1;
+            return true;
 
         return ( SEQ_GEQ(cur, snd_una) && SEQ_LEQ(cur, snd_nxt) );
     }
@@ -336,7 +336,7 @@ public:
     virtual void init_flush_policy() =  0;
     virtual void set_splitter(StreamSplitter* ss) =  0;
     virtual void set_splitter(const Flow* flow) =  0;
-    virtual void reset_splitter( void ) = 0;
+    virtual void reset_splitter( ) = 0;
 
     virtual void init_on_syn_sent(TcpSegmentDescriptor&) =  0;
     virtual void init_on_syn_recv(TcpSegmentDescriptor&) =  0;

@@ -114,7 +114,7 @@ static int BitStringOverflow(ASN1_TYPE* asn1, void*)
 */
 static int DetectBitStringOverflow(ASN1_TYPE* asn1)
 {
-    return asn1_traverse(asn1, NULL, BitStringOverflow);
+    return asn1_traverse(asn1, nullptr, BitStringOverflow);
 }
 
 /*
@@ -172,7 +172,7 @@ static int DoubleOverflow(ASN1_TYPE* asn1, void*)
 */
 static int DetectDoubleOverflow(ASN1_TYPE* asn1)
 {
-    return asn1_traverse(asn1, NULL, DoubleOverflow);
+    return asn1_traverse(asn1, nullptr, DoubleOverflow);
 }
 
 /*
@@ -245,7 +245,7 @@ static int Asn1DetectFuncs(ASN1_TYPE* asn1, ASN1_CTXT* ctxt, int dec_ret_val)
     */
     if (ctxt->print)
     {
-        asn1_traverse(asn1, NULL, asn1_print_types);
+        asn1_traverse(asn1, nullptr, asn1_print_types);
         iRet = 1;
     }
 
@@ -311,12 +311,12 @@ int Asn1DoDetect(const uint8_t* data, uint16_t dsize, ASN1_CTXT* ctxt, const uin
     unsigned int size;
     const uint8_t* start;
     const uint8_t* end;
-    const uint8_t* offset = NULL;
+    const uint8_t* offset = nullptr;
 
     /*
     **  Failed if there is no data to decode.
     */
-    if (data == NULL)
+    if (data == nullptr)
         return 0;
 
     start = data;

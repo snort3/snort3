@@ -230,7 +230,7 @@ static uint8_t write_flow_key(Flow* flow, HAMessage* msg)
     msg->cursor += sizeof(key->ip_l[3]);
     memcpy(msg->cursor, &key->ip_h[3], sizeof(key->ip_h[3]));
     msg->cursor += sizeof(key->ip_h[3]);
-    memcpy(msg->cursor, ((uint8_t*)key) + 32, KEY_SIZE_IP4 - 8);
+    memcpy(msg->cursor, ((const uint8_t*)key) + 32, KEY_SIZE_IP4 - 8);
     msg->cursor += KEY_SIZE_IP4 - 8;
 
     return KEY_SIZE_IP4;

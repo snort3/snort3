@@ -70,8 +70,8 @@ tTargetBasedConfig::~tTargetBasedConfig()
     sfrt_free(lookupTable);
 }
 
-static THREAD_LOCAL tTargetBasedConfig* curr_cfg = NULL;
-static tTargetBasedConfig* next_cfg = NULL;
+static THREAD_LOCAL tTargetBasedConfig* curr_cfg = nullptr;
+static tTargetBasedConfig* next_cfg = nullptr;
 
 static bool sfat_grammar_error_printed = false;
 static bool sfat_insufficient_space_logged = false;
@@ -105,7 +105,7 @@ HostAttributeEntry* SFAT_CreateHostEntry()
 
 void FreeHostEntry(HostAttributeEntry* host)
 {
-    ApplicationEntry* app = NULL, * tmp_app;
+    ApplicationEntry* app = nullptr, * tmp_app;
 
     if (!host)
         return;
@@ -278,15 +278,15 @@ int SFAT_AddHostEntryToMap(HostAttributeEntry* host)
 HostAttributeEntry* SFAT_LookupHostEntryByIP(const SfIp* ipAddr)
 {
     if ( !curr_cfg )
-        return NULL;
+        return nullptr;
 
-    return (HostAttributeEntry*)sfrt_lookup((SfIp*)ipAddr, curr_cfg->lookupTable);
+    return (HostAttributeEntry*)sfrt_lookup((const SfIp*)ipAddr, curr_cfg->lookupTable);
 }
 
 HostAttributeEntry* SFAT_LookupHostEntryBySrc(Packet* p)
 {
     if (!p || !p->ptrs.ip_api.is_ip())
-        return NULL;
+        return nullptr;
 
     return SFAT_LookupHostEntryByIP(p->ptrs.ip_api.get_src());
 }
@@ -294,7 +294,7 @@ HostAttributeEntry* SFAT_LookupHostEntryBySrc(Packet* p)
 HostAttributeEntry* SFAT_LookupHostEntryByDst(Packet* p)
 {
     if (!p || !p->ptrs.ip_api.is_ip())
-        return NULL;
+        return nullptr;
 
     return SFAT_LookupHostEntryByIP(p->ptrs.ip_api.get_dst());
 }
@@ -368,7 +368,7 @@ void SFAT_UpdateApplicationProtocol(SfIp* ipAddr, uint16_t port, uint16_t protoc
             FreeHostEntry(host_entry);
             return;
         }
-        service = NULL;
+        service = nullptr;
     }
     else
     {

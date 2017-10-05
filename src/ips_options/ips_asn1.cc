@@ -133,7 +133,7 @@ bool Asn1Option::operator==(const IpsOption& rhs) const
     if ( !IpsOption::operator==(rhs) )
         return false;
 
-    Asn1Option& asn1 = (Asn1Option&)rhs;
+    const Asn1Option& asn1 = (const Asn1Option&)rhs;
 
     const ASN1_CTXT* left = &config;
     const ASN1_CTXT* right = &asn1.config;

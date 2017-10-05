@@ -115,7 +115,7 @@ FileRule& FilePolicy::match_file_rule(Flow*, FileInfo* file)
 {
     for (unsigned i = 0; i < file_rules.size(); i++)
     {
-        if (file_rules[i].when.sha256.size())
+        if (!file_rules[i].when.sha256.empty())
             continue;
         // No file type specified in rule or file type is matched
         if ((file_rules[i].when.type_id == 0)or

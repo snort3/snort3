@@ -224,7 +224,7 @@ SfIpRet SfIp::set(const char* src, uint16_t* srcBits)
         ip++;
 
     /* check for and extract a mask in CIDR form */
-    if ( (mask = strchr(ip, (int)'/')) != NULL )
+    if ( (mask = strchr(ip, (int)'/')) != nullptr )
     {
         /* NULL out this character so inet_pton will see the
          * correct ending to the IP string */
@@ -252,11 +252,11 @@ SfIpRet SfIp::set(const char* src, uint16_t* srcBits)
     }
     else if (
         /* If this is IPv4, ia ':' may used specified to indicate a netmask */
-        ((family == AF_INET) && (mask = strchr(ip, (int)':')) != NULL) ||
+        ((family == AF_INET) && (mask = strchr(ip, (int)':')) != nullptr) ||
 
         /* We've already skipped the leading whitespace, if there is more
          * whitespace, then there's probably a netmask specified after it. */
-        (mask = strchr(ip, (int)' ')) != NULL
+        (mask = strchr(ip, (int)' ')) != nullptr
         )
     {
         char* end = mask++;
@@ -330,7 +330,7 @@ SfIpRet SfIp::set(const void* src, int fam)
     {
         ip32[0] = ip32[1] = ip16[4] = 0;
         ip16[5] = 0xffff;
-        ip32[3] = *(uint32_t*)src;
+        ip32[3] = *(const uint32_t*)src;
     }
     else if (family == AF_INET6)
         memcpy(ip8, src, 16);
@@ -416,15 +416,15 @@ const char* snort_inet_ntop(int family, const void* ip_raw, char* buf, int bufsi
     if (family == AF_INET)
     {
         int i;
-        uint8_t* p = (uint8_t*)ip_raw;
+        const uint8_t* p = (const uint8_t*)ip_raw;
 
-        for (i=0; p < ((uint8_t*)ip_raw) + 4; p++)
+        for (i=0; p < ((const uint8_t*)ip_raw) + 4; p++)
         {
             i += sprintf(&buf[i], "%d", *p);
 
             /* If this is the last iteration, this could technically cause one
              *  extra byte to be written past the end. */
-            if (i < bufsize && ((p + 1) < ((uint8_t*)ip_raw+4)))
+            if (i < bufsize && ((p + 1) < ((const uint8_t*)ip_raw+4)))
                 buf[i] = '.';
 
             i++;
@@ -433,15 +433,15 @@ const char* snort_inet_ntop(int family, const void* ip_raw, char* buf, int bufsi
     else
     {
         int i;
-        uint16_t* p = (uint16_t*)ip_raw;
+        const uint16_t* p = (const uint16_t*)ip_raw;
 
-        for (i=0; p < ((uint16_t*)ip_raw) + 8; p++)
+        for (i=0; p < ((const uint16_t*)ip_raw) + 8; p++)
         {
             i += sprintf(&buf[i], "%04x", ntohs(*p));
 
             /* If this is the last iteration, this could technically cause one
              *  extra byte to be written past the end. */
-            if (i < bufsize && ((p + 1) < ((uint16_t*)ip_raw) + 8))
+            if (i < bufsize && ((p + 1) < ((const uint16_t*)ip_raw) + 8))
                 buf[i] = ':';
 
             i++;

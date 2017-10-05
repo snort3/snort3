@@ -33,8 +33,7 @@ class HttpEncode : public ConversionState
 {
 public:
     HttpEncode(Converter& c) : ConversionState(c) { }
-    virtual ~HttpEncode() { }
-    virtual bool convert(std::istringstream& data);
+    bool convert(std::istringstream& data) override;
 };
 } // namespace
 

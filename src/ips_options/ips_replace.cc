@@ -78,7 +78,7 @@ class ReplaceOption : public IpsOption
 {
 public:
     ReplaceOption(string&);
-    ~ReplaceOption();
+    ~ReplaceOption() override;
 
     int eval(Cursor&, Packet*) override;
     void action(Packet*) override;
@@ -146,7 +146,7 @@ bool ReplaceOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    ReplaceOption& rhs = (ReplaceOption&)ips;
+    const ReplaceOption& rhs = (const ReplaceOption&)ips;
 
     if ( repl != rhs.repl )
         return false;

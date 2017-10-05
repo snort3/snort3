@@ -68,7 +68,6 @@ class EspCodec : public Codec
 {
 public:
     EspCodec() : Codec(CD_ESP_NAME) { }
-    ~EspCodec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;

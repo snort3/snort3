@@ -188,7 +188,7 @@ bool WizardModule::begin(const char* fqn, int, SnortConfig*)
 
 void WizardModule::add_spells(MagicBook* b, string& service)
 {
-    for ( auto p : spells )
+    for ( const auto& p : spells )
         b->add_spell(p.c_str(), service.c_str());
 }
 

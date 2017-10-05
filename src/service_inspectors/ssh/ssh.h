@@ -46,7 +46,7 @@ class SshFlowData : public FlowData
 {
 public:
     SshFlowData();
-    ~SshFlowData();
+    ~SshFlowData() override;
 
     static void init()
     { inspector_id = FlowData::create_flow_data_id(); }

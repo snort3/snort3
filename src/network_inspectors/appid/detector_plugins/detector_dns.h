@@ -47,7 +47,7 @@ public:
         uint16_t id, bool host_reporting, AppIdSession*);
     int dns_validate_answer(const uint8_t* data, uint16_t* offset, uint16_t size,
         uint16_t id, uint8_t rcode, bool host_reporting, AppIdSession*);
-    int dns_validate_header(const int dir, DNSHeader*, bool host_reporting, AppIdSession*);
+    int dns_validate_header(const int dir, const DNSHeader*, bool host_reporting, AppIdSession*);
     int validate_packet(const uint8_t* data, uint16_t size, const int,
         bool host_reporting, AppIdSession*);
 };
@@ -56,7 +56,6 @@ class DnsTcpServiceDetector : public ServiceDetector, public DnsValidator
 {
 public:
     DnsTcpServiceDetector(ServiceDiscovery*);
-    ~DnsTcpServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };
@@ -65,7 +64,6 @@ class DnsUdpServiceDetector : public ServiceDetector, public DnsValidator
 {
 public:
     DnsUdpServiceDetector(ServiceDiscovery*);
-    ~DnsUdpServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

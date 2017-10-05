@@ -57,7 +57,7 @@ class FtpClientModule : public Module
 {
 public:
     FtpClientModule();
-    ~FtpClientModule();
+    ~FtpClientModule() override;
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
@@ -108,7 +108,7 @@ class FtpServerModule : public Module
 {
 public:
     FtpServerModule();
-    ~FtpServerModule();
+    ~FtpServerModule() override;
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;

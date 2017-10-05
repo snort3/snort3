@@ -27,7 +27,7 @@
 
 #include "packet.h"
 
-#define THREE_BYTE_LEN(x) (x[2] | x[1] << 8 | x[0] << 16)
+#define THREE_BYTE_LEN(x) ((x)[2] | (x)[1] << 8 | (x)[0] << 16)
 
 #define SSL_ERROR_FLAGS \
     (SSL_BOGUS_HS_DIR_FLAG | \
@@ -88,7 +88,7 @@ bool IsTlsServerHello(const uint8_t* ptr, const uint8_t* end)
 
 bool IsSSL(const uint8_t* ptr, int len, int pkt_flags)
 {
-    uint32_t ssl_flags = SSL_decode(ptr, len, pkt_flags, 0, NULL, NULL, 0);
+    uint32_t ssl_flags = SSL_decode(ptr, len, pkt_flags, 0, nullptr, nullptr, 0);
 
     if ((ssl_flags != SSL_ARG_ERROR_FLAG) &&
         !(ssl_flags & SSL_ERROR_FLAGS))
@@ -130,8 +130,8 @@ static uint32_t SSL_decode_version_v3(uint8_t major, uint8_t minor)
 static uint32_t SSL_decode_handshake_v3(const uint8_t* pkt, int size,
     uint32_t cur_flags, uint32_t pkt_flags)
 {
-    SSL_handshake_t* handshake;
-    SSL_handshake_hello_t* hello;
+    const SSL_handshake_t* handshake;
+    const SSL_handshake_hello_t* hello;
     uint32_t hs_len;
     uint32_t retval = 0;
 
@@ -145,7 +145,7 @@ static uint32_t SSL_decode_handshake_v3(const uint8_t* pkt, int size,
 
         /* Note, handhshake version field is optional depending on type
            Will recast to different type as necessary. */
-        handshake = (SSL_handshake_t*)pkt;
+        handshake = (const SSL_handshake_t*)pkt;
         pkt += SSL_HS_PAYLOAD_OFFSET;
         size -= SSL_HS_PAYLOAD_OFFSET;
 
@@ -172,7 +172,7 @@ static uint32_t SSL_decode_handshake_v3(const uint8_t* pkt, int size,
                 break;
             }
 
-            hello = (SSL_handshake_hello_t*)handshake;
+            hello = (const SSL_handshake_hello_t*)handshake;
             retval |= SSL_decode_version_v3(hello->major, hello->minor);
 
             /* Compare version of record with version of handshake */
@@ -194,7 +194,7 @@ static uint32_t SSL_decode_handshake_v3(const uint8_t* pkt, int size,
                 break;
             }
 
-            hello = (SSL_handshake_hello_t*)handshake;
+            hello = (const SSL_handshake_hello_t*)handshake;
             retval |= SSL_decode_version_v3(hello->major, hello->minor);
 
             /* Compare version of record with version of handshake */
@@ -257,12 +257,12 @@ static uint32_t SSL_decode_handshake_v3(const uint8_t* pkt, int size,
 static uint32_t SSL_decode_v3(const uint8_t* pkt, int size, uint32_t pkt_flags,
     uint8_t* alert_flags, uint16_t* partial_rec_len, int max_hb_len)
 {
-    SSL_record_t* record;
+    const SSL_record_t* record;
     uint32_t retval = 0;
     uint16_t reclen;
     uint16_t hblen;
     int ccs = 0;   /* Set if we see a Change Cipher Spec and reset after the next record */
-    SSL_heartbeat* heartbeat;
+    const SSL_heartbeat* heartbeat;
     uint16_t psize = 0;
 
     if ( size && partial_rec_len && *partial_rec_len > 0)
@@ -289,7 +289,7 @@ static uint32_t SSL_decode_v3(const uint8_t* pkt, int size, uint32_t pkt_flags,
             break;
         }
 
-        record = (SSL_record_t*)pkt;
+        record = (const SSL_record_t*)pkt;
         pkt += SSL_REC_PAYLOAD_OFFSET;
         size -= SSL_REC_PAYLOAD_OFFSET;
 
@@ -320,7 +320,7 @@ static uint32_t SSL_decode_v3(const uint8_t* pkt, int size, uint32_t pkt_flags,
             ccs = 0;
             if( size < 0 || (unsigned int)size < sizeof(SSL_heartbeat) || !max_hb_len || !alert_flags )
                 break;
-            heartbeat = (SSL_heartbeat*)pkt;
+            heartbeat = (const SSL_heartbeat*)pkt;
             if ((heartbeat->type) == SSL_HEARTBEAT_REQUEST)
             {
                 hblen = ntohs(heartbeat->length);
@@ -394,7 +394,7 @@ static uint32_t SSL_decode_v3(const uint8_t* pkt, int size, uint32_t pkt_flags,
 
 // See RFCs 6101, 2246, 4346 and 5246 for SSL 3.0, TLS 1.0, 1.1 and 1.2 respectively
 // Appendix E. Backward Compatibility With SSL
-static inline bool SSL_v3_back_compat_v2(SSLv2_chello_t* chello)
+static inline bool SSL_v3_back_compat_v2(const SSLv2_chello_t* chello)
 {
     if ((chello->major == 3) && (chello->minor <= 3))
         return true;
@@ -404,10 +404,10 @@ static inline bool SSL_v3_back_compat_v2(SSLv2_chello_t* chello)
 static uint32_t SSL_decode_v2(const uint8_t* pkt, int size, uint32_t pkt_flags)
 {
     uint16_t reclen;
-    SSLv2_chello_t* chello;
-    SSLv2_shello_t* shello;
+    const SSLv2_chello_t* chello;
+    const SSLv2_shello_t* shello;
     uint32_t retval = 0;
-    SSLv2_record_t* record = (SSLv2_record_t*)pkt;
+    const SSLv2_record_t* record = (const SSLv2_record_t*)pkt;
 
     while (size > 0)
     {
@@ -435,7 +435,7 @@ static uint32_t SSL_decode_v2(const uint8_t* pkt, int size, uint32_t pkt_flags)
                 break;
             }
 
-            chello = (SSLv2_chello_t*)pkt;
+            chello = (const SSLv2_chello_t*)pkt;
 
             // Check for SSLv3/TLS backward compatibility
             if (SSL_v3_back_compat_v2(chello))
@@ -457,7 +457,7 @@ static uint32_t SSL_decode_v2(const uint8_t* pkt, int size, uint32_t pkt_flags)
                 break;
             }
 
-            shello = (SSLv2_shello_t*)pkt;
+            shello = (const SSLv2_shello_t*)pkt;
 
             if (shello->minor != 2)
             {
@@ -489,7 +489,7 @@ uint32_t SSL_decode(
     const uint8_t* pkt, int size, uint32_t pkt_flags, uint32_t prev_flags,
     uint8_t* alert_flags, uint16_t* partial_rec_len, int max_hb_len)
 {
-    SSL_record_t* record;
+    const SSL_record_t* record;
     uint16_t reclen;
     uint32_t datalen;
 
@@ -530,7 +530,7 @@ uint32_t SSL_decode(
                       * with its record length */
                     datalen = THREE_BYTE_LEN( (pkt+6) );
 
-                    record = (SSL_record_t*)pkt;
+                    record = (const SSL_record_t*)pkt;
                     reclen = ntohs(record->length);
 
                     /* If these lengths match, it's v3
@@ -549,7 +549,7 @@ uint32_t SSL_decode(
              * record length */
             datalen = THREE_BYTE_LEN( (pkt+6) );
 
-            record = (SSL_record_t*)pkt;
+            record = (const SSL_record_t*)pkt;
             reclen = ntohs(record->length);
 
             /* If these lengths match, it's v3

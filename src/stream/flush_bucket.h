@@ -28,7 +28,7 @@
 class FlushBucket
 {
 public:
-    virtual ~FlushBucket() { }
+    virtual ~FlushBucket() = default;
     virtual uint16_t get_next() = 0;
 
     static uint16_t get_size();
@@ -36,7 +36,7 @@ public:
     static void clear();
 
 protected:
-    FlushBucket() { }
+    FlushBucket() = default;
 };
 
 class ConstFlushBucket : public FlushBucket
@@ -45,7 +45,7 @@ public:
     ConstFlushBucket(uint16_t fp)
     { pt = fp; }
 
-    uint16_t get_next()
+    uint16_t get_next() override
     { return pt; }
 
 private:
@@ -58,7 +58,7 @@ public:
     uint16_t get_next() override;
 
 protected:
-    VarFlushBucket() { }
+    VarFlushBucket() = default;
     void set_next(uint16_t);
 
 private:

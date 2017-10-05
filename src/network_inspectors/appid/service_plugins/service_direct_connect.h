@@ -32,7 +32,6 @@ class DirectConnectServiceDetector : public ServiceDetector
 {
 public:
     DirectConnectServiceDetector(ServiceDiscovery*);
-    ~DirectConnectServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 

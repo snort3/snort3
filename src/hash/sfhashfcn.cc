@@ -47,7 +47,7 @@ SFHASHFCN* sfhashfcn_new(int m)
 
     if ( one ) /* one time init */
     {
-        srand( (unsigned)time(0) );
+        srand( (unsigned)time(nullptr) );
         one = 0;
     }
 
@@ -80,7 +80,7 @@ void sfhashfcn_free(SFHASHFCN* p)
     }
 }
 
-unsigned sfhashfcn_hash(SFHASHFCN* p, unsigned char* d, int n)
+unsigned sfhashfcn_hash(SFHASHFCN* p, const unsigned char* d, int n)
 {
     unsigned hash = p->seed;
     while ( n )
@@ -100,7 +100,7 @@ unsigned sfhashfcn_hash(SFHASHFCN* p, unsigned char* d, int n)
  * @param keycmp_fcn user specified key comparison function
  */
 int sfhashfcn_set_keyops(SFHASHFCN* h,
-    unsigned (* hash_fcn)(SFHASHFCN* p, unsigned char* d, int n),
+    unsigned (* hash_fcn)(SFHASHFCN* p, const unsigned char* d, int n),
     int (* keycmp_fcn)(const void* s1, const void* s2, size_t n))
 {
     if (h && hash_fcn && keycmp_fcn)

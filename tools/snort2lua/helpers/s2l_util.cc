@@ -100,7 +100,7 @@ Table* find_table(const std::vector<Table*>& vec, const std::string& name)
         return nullptr;
 
     for ( auto* t : vec)
-        if (!name.compare(t->get_name()))
+        if (name == t->get_name())
             return t;
 
     return nullptr;
@@ -150,11 +150,11 @@ std::size_t get_substr_length(const std::string& str, std::size_t max_length)
     if (str.size() < max_length)
         return str.size();
 
-    str_len = str.rfind(" ", max_length);
+    str_len = str.rfind(' ', max_length);
 
     if (str_len == std::string::npos)
     {
-        str_len = str.find(" ");
+        str_len = str.find(' ');
 
         if (str_len == std::string::npos)
             return str.size();
@@ -277,7 +277,7 @@ std::string rule_option_find_val(std::istringstream& data_stream,
         // now, lets get the next option.
         util::trim(rule_keyword);
 
-        if (!rule_keyword.compare(opt_name))
+        if (rule_keyword == opt_name)
         {
             // Get the value if there is one!
             if (semi_colon_pos == std::string::npos)
@@ -323,7 +323,7 @@ bool case_compare(std::string arg1, std::string arg2)
     std::transform(arg1.begin(), arg1.end(), arg1.begin(), ::tolower);
     std::transform(arg2.begin(), arg2.end(), arg2.begin(), ::tolower);
 
-    if (!arg1.compare(arg2))
+    if (arg1 == arg2)
         return true;
     return false;
 }

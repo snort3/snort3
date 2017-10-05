@@ -119,7 +119,7 @@ void HttpMsgBody::do_pdf_swf_decompression(const Field& input, Field& output)
     uint8_t* buffer = new uint8_t[MAX_OCTETS];
     session_data->fd_alert_context.infractions = transaction->get_infractions(source_id);
     session_data->fd_alert_context.events = transaction->get_events(source_id);
-    session_data->fd_state->Next_In = (uint8_t*)input.start();
+    session_data->fd_state->Next_In = input.start();
     session_data->fd_state->Avail_In = (uint32_t)input.length();
     session_data->fd_state->Next_Out = buffer;
     session_data->fd_state->Avail_Out = MAX_OCTETS;

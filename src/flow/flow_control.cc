@@ -39,8 +39,7 @@
 #include "flow_cache.h"
 #include "session.h"
 
-FlowControl::FlowControl()
-{ }
+FlowControl::FlowControl() = default;
 
 FlowControl::~FlowControl()
 {
@@ -166,7 +165,7 @@ Flow* FlowControl::find_flow(const FlowKey* key)
     if ( cache )
         return cache->find(key);
 
-    return NULL;
+    return nullptr;
 }
 
 Flow* FlowControl::new_flow(const FlowKey* key)
@@ -174,7 +173,7 @@ Flow* FlowControl::new_flow(const FlowKey* key)
     FlowCache* cache = get_cache(key->pkt_type);
 
     if ( !cache )
-        return NULL;
+        return nullptr;
 
     return cache->get(key);
 }
@@ -219,7 +218,7 @@ bool FlowControl::prune_one(PruneReason reason, bool do_cleanup)
 
 void FlowControl::timeout_flows(time_t cur_time)
 {
-    if ( !types.size() )
+    if ( types.empty() )
         return;
 
     Active::suspend();

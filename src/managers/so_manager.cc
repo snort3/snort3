@@ -88,7 +88,7 @@ static const uint8_t* compress(const string& text, unsigned& len)
     if ( ret != Z_OK )
         return nullptr;
 
-    stream.next_in = (Bytef*)s;
+    stream.next_in = (z_const Bytef*)s;
     stream.avail_in = text.size();
 
     stream.next_out = so_buf;
@@ -121,7 +121,7 @@ static const char* expand(const uint8_t* data, unsigned len)
     if ( inflateInit2(&stream, window_bits) != Z_OK )
         return nullptr;
 
-    stream.next_in = (Bytef*)data;
+    stream.next_in = const_cast<z_const Bytef*>(data);
     stream.avail_in = (uInt)len;
 
     stream.next_out = (Bytef*)so_buf;
@@ -150,7 +150,7 @@ static void strvrt(const string& text, string& data)
     unsigned len = 0;
     const uint8_t* d = compress(text, len);
 
-    data.assign((char*)d, len);
+    data.assign((const char*)d, len);
 
     // generate xor key.  there is no hard core crypto requirement here but
     // rand() is known to be weak, especially in the lower bits nonetheless
@@ -171,15 +171,15 @@ static void strvrt(const string& text, string& data)
 static const char* revert(const uint8_t* data, unsigned len)
 {
     if ( !len )
-        return (char*)data;
+        return (const char*)data;
 
     uint8_t key = data[--len];
-    string s((char*)data, len);
+    string s((const char*)data, len);
 
     for ( unsigned i = 0; i < len; i++ )
         s[i] ^= key;
 
-    return expand((uint8_t*)s.c_str(), s.size());
+    return expand((const uint8_t*)s.c_str(), s.size());
 }
 
 //-------------------------------------------------------------------------
@@ -276,12 +276,12 @@ static void get_var(const string& s, string& v)
     if ( pos == string::npos )
         return;
 
-    pos = s.find("|", pos+1);
+    pos = s.find('|', pos+1);
 
     if ( pos == string::npos )
         return;
 
-    size_t end = s.find(";", ++pos);
+    size_t end = s.find(';', ++pos);
 
     if ( end == string::npos )
         return;
@@ -333,7 +333,7 @@ void SoManager::rule_to_text(const char*)
     string text = buffer.str();
 
     unsigned len = text.size(), idx;
-    const uint8_t* data = (uint8_t*)text.c_str();
+    const uint8_t* data = (const uint8_t*)text.c_str();
 
     string var;
     get_var(text, var);

@@ -53,13 +53,13 @@ public:
 
     Comments(CommentType);
     Comments(int depth, CommentType);
-    Comments(std::string name, int depth, CommentType);
-    virtual ~Comments();
+    Comments(const std::string& name, int depth, CommentType);
+    virtual ~Comments() = default;
 
-    void add_text(std::string new_text);
+    void add_text(const std::string& new_text);
     // insert this string before the first lexigraphically larger string.
     // will not add duplicates.
-    void add_sorted_text(std::string new_text);
+    void add_sorted_text(const std::string& new_text);
     bool empty() const;
     bool size() const;
 
@@ -72,10 +72,6 @@ private:
     bool prev_empty;
     bool header;  // true if a string was passed into constructor
     enum CommentType type;
-    static const std::size_t max_line_length = 80;
-    const std::string comment_line = "--";
-    const std::string start_multi_com = "--[[";
-    const std::string end_multi_com = "--]]";
 };
 
 #endif

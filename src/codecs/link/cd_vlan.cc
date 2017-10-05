@@ -50,7 +50,6 @@ class VlanCodec : public Codec
 {
 public:
     VlanCodec() : Codec(CD_VLAN_NAME) { }
-    ~VlanCodec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;

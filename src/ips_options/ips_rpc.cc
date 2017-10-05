@@ -22,7 +22,7 @@
 #include "config.h"
 #endif
 
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "detection/detection_defines.h"
 #include "framework/ips_option.h"
@@ -100,9 +100,9 @@ bool RpcOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    RpcOption& rhs = (RpcOption&)ips;
-    RpcCheckData* left = (RpcCheckData*)&config;
-    RpcCheckData* right = (RpcCheckData*)&rhs.config;
+    const RpcOption& rhs = (const RpcOption&)ips;
+    const RpcCheckData* left = &config;
+    const RpcCheckData* right = &rhs.config;
 
     if ((left->program == right->program) &&
         (left->version == right->version) &&

@@ -89,9 +89,6 @@ ServiceDiscovery::ServiceDiscovery()
     initialize();
 }
 
-ServiceDiscovery::~ServiceDiscovery()
-{
-}
 
 ServiceDiscovery& ServiceDiscovery::get_instance()
 {
@@ -196,8 +193,8 @@ int ServiceDiscovery::add_service_port(AppIdDetector* detector, const ServiceDet
 
 static int AppIdPatternPrecedence(const void* a, const void* b)
 {
-    const ServiceMatch* sm1 = (ServiceMatch*)a;
-    const ServiceMatch* sm2 = (ServiceMatch*)b;
+    const ServiceMatch* sm1 = (const ServiceMatch*)a;
+    const ServiceMatch* sm2 = (const ServiceMatch*)b;
 
     /*higher precedence should be before lower precedence */
     if (sm1->count != sm2->count)
@@ -256,14 +253,14 @@ void ServiceDiscovery::match_services_by_pattern(AppIdSession* asd, const Packet
     if (patterns)
     {
         ServiceMatch* match_list = nullptr;
-        patterns->find_all((char*)pkt->data, pkt->dsize, &pattern_match, false,
+        patterns->find_all((const char*)pkt->data, pkt->dsize, &pattern_match, false,
             (void*)&match_list);
 
         std::vector<ServiceMatch*> smOrderedList;
         for (ServiceMatch* sm = match_list; sm; sm = sm->next)
             smOrderedList.push_back(sm);
 
-        if (smOrderedList.size() )
+        if (!smOrderedList.empty() )
         {
             std::sort(smOrderedList.begin(), smOrderedList.end(), AppIdPatternPrecedence);
             for ( auto& sm : smOrderedList )
@@ -369,7 +366,7 @@ void ServiceDiscovery::get_next_service(const Packet* p, const int dir,
                     proto, p->ptrs.sp, asd->is_decrypted());
                 if ( rsds && rsds->get_service() )
                     asd->service_candidates.push_back(rsds->get_service());
-                else if ( udp_reversed_services[p->ptrs.sp].size() )
+                else if ( !udp_reversed_services[p->ptrs.sp].empty() )
                 {
                     asd->service_candidates.insert(asd->service_candidates.end(),
                         udp_reversed_services[p->ptrs.sp].begin(),
@@ -438,7 +435,7 @@ int ServiceDiscovery::identify_service(AppIdSession* asd, Packet* p, int dir)
             /* If a valid service already exists in host tracker, give it a try. */
             if ( sds->get_state() == SERVICE_ID_STATE::VALID )
                 asd->service_detector = sds->get_service();
-            else if ( !asd->service_candidates.size() )
+            else if ( asd->service_candidates.empty() )
             {
                 asd->service_detector = sds->select_detector_by_brute_force(proto);
             }
@@ -496,7 +493,7 @@ int ServiceDiscovery::identify_service(AppIdSession* asd, Packet* p, int dir)
         /* If we tried everything and found nothing, then fail. */
         if ( ret != APPID_SUCCESS )
         {
-            if ( ( asd->service_candidates.size() == 0 )
+            if ( ( asd->service_candidates.empty() )
                 && ( sds->get_state() == SERVICE_ID_STATE::SEARCHING_BRUTE_FORCE ) )
             {
                 fail_service(asd, p, dir, nullptr);
@@ -699,7 +696,7 @@ int ServiceDiscovery::incompatible_data(AppIdSession* asd, const Packet* pkt, in
     asd->free_flow_data_by_id(service->get_flow_data_index());
 
     // ignore fails while searching with port/pattern selected detectors
-    if ( !asd->service_detector && asd->service_candidates.size() )
+    if ( !asd->service_detector && !asd->service_candidates.empty() )
         return APPID_SUCCESS;
 
     asd->set_service_detected();
@@ -734,7 +731,7 @@ int ServiceDiscovery::fail_service(AppIdSession* asd, const Packet* pkt, int dir
     if ( service )
         asd->free_flow_data_by_id(service->get_flow_data_index());
 
-    if ( !asd->service_detector && asd->service_candidates.size() )
+    if ( !asd->service_detector && !asd->service_candidates.empty() )
         return APPID_SUCCESS;
 
     asd->service.set_id(APP_ID_NONE);

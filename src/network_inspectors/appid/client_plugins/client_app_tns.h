@@ -28,7 +28,6 @@ class TnsClientDetector : public ClientDetector
 {
 public:
     TnsClientDetector(ClientDiscovery*);
-    ~TnsClientDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

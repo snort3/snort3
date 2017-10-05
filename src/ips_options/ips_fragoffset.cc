@@ -72,7 +72,7 @@ bool FragOffsetOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    FragOffsetOption& rhs = (FragOffsetOption&)ips;
+    const FragOffsetOption& rhs = (const FragOffsetOption&)ips;
     return config == rhs.config;
 }
 

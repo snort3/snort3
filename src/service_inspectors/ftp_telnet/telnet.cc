@@ -100,7 +100,7 @@ static int snort_telnet(TELNET_PROTO_CONF* GlobalConf, Packet* p)
 {
     FTPP_SI_INPUT SiInput;
     int iInspectMode = FTPP_SI_NO_MODE;
-    FTP_TELNET_SESSION* ft_ssn = NULL;
+    FTP_TELNET_SESSION* ft_ssn = nullptr;
 
     /*
      * Set up the FTPP_SI_INPUT pointer.  This is what the session_inspection()
@@ -116,7 +116,7 @@ static int snort_telnet(TELNET_PROTO_CONF* GlobalConf, Packet* p)
 
         ft_ssn = fd ? &fd->session.ft_ssn : nullptr;
 
-        if (ft_ssn != NULL)
+        if (ft_ssn != nullptr)
         {
             SiInput.pproto = ft_ssn->proto;
 
@@ -147,10 +147,10 @@ static int snort_telnet(TELNET_PROTO_CONF* GlobalConf, Packet* p)
         }
     }
 
-    if (GlobalConf == NULL)
+    if (GlobalConf == nullptr)
         return 0;
 
-    if (ft_ssn == NULL)
+    if (ft_ssn == nullptr)
     {
         SiInput.pproto = FTPP_SI_PROTO_UNKNOWN;
         iInspectMode = FTPP_SI_NO_MODE;
@@ -161,7 +161,7 @@ static int snort_telnet(TELNET_PROTO_CONF* GlobalConf, Packet* p)
             return FTPP_INVALID_PROTO;
     }
 
-    if (ft_ssn != NULL)
+    if (ft_ssn != nullptr)
     {
         switch (SiInput.pproto)
         {
@@ -212,7 +212,7 @@ class Telnet : public Inspector
 {
 public:
     Telnet(TELNET_PROTO_CONF*);
-    ~Telnet();
+    ~Telnet() override;
 
     bool configure(SnortConfig*) override;
     void show(SnortConfig*) override;

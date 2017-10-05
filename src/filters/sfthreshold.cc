@@ -50,7 +50,7 @@
 #include "sfthd.h"
 
 /* Data */
-THD_STRUCT* thd_runtime = NULL;
+THD_STRUCT* thd_runtime = nullptr;
 
 static THREAD_LOCAL int thd_checked = 0; // per packet
 static THREAD_LOCAL int thd_answer = 0;  // per packet
@@ -72,13 +72,13 @@ ThresholdConfig* ThresholdConfigNew()
 
 void ThresholdConfigFree(ThresholdConfig* tc)
 {
-    if (tc == NULL)
+    if (tc == nullptr)
         return;
 
-    if (tc->thd_objs != NULL)
+    if (tc->thd_objs != nullptr)
     {
         sfthd_objs_free(tc->thd_objs);
-        tc->thd_objs = NULL;
+        tc->thd_objs = nullptr;
     }
 
     snort_free(tc);
@@ -258,10 +258,10 @@ void print_thresholding(ThresholdConfig*, unsigned)
 
 void sfthreshold_free()
 {
-    if (thd_runtime != NULL)
+    if (thd_runtime != nullptr)
         sfthd_free(thd_runtime);
 
-    thd_runtime = NULL;
+    thd_runtime = nullptr;
 }
 
 /*
@@ -272,17 +272,17 @@ void sfthreshold_free()
 int sfthreshold_create(
     SnortConfig* sc, ThresholdConfig* thd_config, THDX_STRUCT* thdx)
 {
-    if (thd_config == NULL)
+    if (thd_config == nullptr)
         return -1;
 
     if (!thd_config->enabled)
         return 0;
 
     /* Auto init - memcap must be set 1st, which is not really a problem */
-    if (thd_runtime == NULL)
+    if (thd_runtime == nullptr)
     {
         thd_runtime = sfthd_new(thd_config->memcap, thd_config->memcap);
-        if (thd_runtime == NULL)
+        if (thd_runtime == nullptr)
             return -1;
     }
 
@@ -316,7 +316,7 @@ int sfthreshold_test(
     const SfIp* sip, const SfIp* dip,
     long curtime)
 {
-    if ((snort_conf->threshold_config == NULL) ||
+    if ((snort_conf->threshold_config == nullptr) ||
         !snort_conf->threshold_config->enabled)
     {
         return 0;

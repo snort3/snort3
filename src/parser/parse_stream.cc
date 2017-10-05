@@ -578,7 +578,7 @@ static bool exec(
         rps.tbd = false;
         break;
     case FSM_END:
-        if ( rps.opt.size() )
+        if ( !rps.opt.empty() )
             parse_rule_opt_set(sc, rps.key.c_str(), rps.opt.c_str(), rps.val.c_str());
         parse_rule_opt_end(sc, rps.key.c_str(), rps.otn);
         rps.opt.clear();
@@ -591,7 +591,7 @@ static bool exec(
             rps.opt += tok;
         else
         {
-            if ( rps.val.size() )
+            if ( !rps.val.empty() )
                 rps.val += " ";
             rps.val += tok;
         }

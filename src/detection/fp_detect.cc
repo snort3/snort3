@@ -449,14 +449,14 @@ static int rule_tree_match(
 
 static int sortOrderByPriority(const void* e1, const void* e2)
 {
-    OptTreeNode* otn1;
-    OptTreeNode* otn2;
+    const OptTreeNode* otn1;
+    const OptTreeNode* otn2;
 
     if (!e1 || !e2)
         return 0;
 
-    otn1 = *(OptTreeNode**)e1;
-    otn2 = *(OptTreeNode**)e2;
+    otn1 = *(OptTreeNode* const*)e1;
+    otn2 = *(OptTreeNode* const*)e2;
 
     if ( otn1->sigInfo.priority < otn2->sigInfo.priority )
         return -1;
@@ -478,14 +478,14 @@ static int sortOrderByPriority(const void* e1, const void* e2)
 // non-literals
 static int sortOrderByContentLength(const void* e1, const void* e2)
 {
-    OptTreeNode* otn1;
-    OptTreeNode* otn2;
+    const OptTreeNode* otn1;
+    const OptTreeNode* otn2;
 
     if (!e1 || !e2)
         return 0;
 
-    otn1 = *(OptTreeNode**)e1;
-    otn2 = *(OptTreeNode**)e2;
+    otn1 = *(OptTreeNode* const*)e1;
+    otn2 = *(OptTreeNode* const*)e2;
 
     if (otn1->longestPatternLen < otn2->longestPatternLen)
         return +1;
@@ -985,10 +985,10 @@ static int fp_search(
 static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
     int check_ports, char ip_rule, int type, OtnxMatchData* omd)
 {
-    const uint8_t* tmp_payload;
+    const uint8_t* tmp_payload = nullptr;
     int8_t curr_ip_layer = 0;
     bool repeat = false;
-    uint16_t tmp_dsize;
+    uint16_t tmp_dsize = 0;
     FastPatternConfig* fp = snort_conf->fast_pattern_config;
 
     print_pkt_info(p);

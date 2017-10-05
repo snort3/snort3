@@ -52,7 +52,7 @@ int DataDecode::get_detection_depth()
         return (detection_depth + (int64_t )decoded_bytes - decode_bytes_read);
 }
 
-int DataDecode::get_decoded_data(uint8_t** buf,  uint32_t* size)
+int DataDecode::get_decoded_data(const uint8_t** buf,  uint32_t* size)
 {
     if (decoded_bytes > 0)
         *size = decoded_bytes;
@@ -72,9 +72,5 @@ DataDecode::DataDecode(int, int detect_depth)
     detection_depth = detect_depth;
     decode_bytes_read = 0;
     decoded_bytes = 0;
-}
-
-DataDecode::~DataDecode()
-{
 }
 

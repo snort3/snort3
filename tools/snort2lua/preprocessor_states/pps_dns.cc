@@ -32,8 +32,7 @@ class Dns : public ConversionState
 {
 public:
     Dns(Converter& c) : ConversionState(c) { }
-    virtual ~Dns() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 
 };
 } // namespace
@@ -56,22 +55,22 @@ bool Dns::convert(std::istringstream& data_stream)
     {
         bool tmpval = true;
 
-        if (!keyword.compare("enable_obsolete_types"))
+        if (keyword == "enable_obsolete_types")
             table_api.add_deleted_comment("enable_obsolete_types");
 
-        else if (!keyword.compare("enable_experimental_types"))
+        else if (keyword == "enable_experimental_types")
             table_api.add_deleted_comment("enable_experimental_types");
 
-        else if (!keyword.compare("enable_rdata_overflow"))
+        else if (keyword == "enable_rdata_overflow")
             table_api.add_deleted_comment("enable_rdata_overflow");
 
-        else if (!keyword.compare("ports"))
+        else if (keyword == "ports")
         {
             table_api.add_diff_option_comment("ports", "bindings");
 
-            if ((data_stream >> keyword) && !keyword.compare("{"))
+            if ((data_stream >> keyword) && keyword == "{")
             {
-                while (data_stream >> keyword && keyword.compare("}"))
+                while (data_stream >> keyword && keyword != "}")
                 {
                     ports_set = true;
                     bind.add_when_port(keyword);

@@ -77,12 +77,12 @@ FILE* OpenAlertFile(const char* filearg)
 
     DebugFormat(DEBUG_INIT,"Opening alert file: %s\n", filename);
 
-    if ((file = fopen(filename, "a")) == NULL)
+    if ((file = fopen(filename, "a")) == nullptr)
     {
         FatalError("OpenAlertFile() => fopen() alert file %s: %s\n",
             filename, get_error(errno));
     }
-    setvbuf(file, (char*)NULL, _IOLBF, (size_t)0);
+    setvbuf(file, (char*)nullptr, _IOLBF, (size_t)0);
 
     return file;
 }
@@ -101,7 +101,7 @@ FILE* OpenAlertFile(const char* filearg)
 int RollAlertFile(const char* filearg)
 {
     char newname[STD_BUF+1];
-    time_t now = time(NULL);
+    time_t now = time(nullptr);
 
     if ( !filearg )
         filearg = "alert.txt";
@@ -128,7 +128,7 @@ int RollAlertFile(const char* filearg)
 
 static std::mutex log_mutex;
 
-static TextLog* text_log = NULL;
+static TextLog* text_log = nullptr;
 
 void OpenLogger()
 {

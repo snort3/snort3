@@ -39,9 +39,8 @@ class UnchangedRuleOption : public ConversionState
 {
 public:
     UnchangedRuleOption(Converter& c) : ConversionState(c) { }
-    virtual ~UnchangedRuleOption() { }
 
-    virtual bool convert(std::istringstream& stream)
+    bool convert(std::istringstream& stream) override
     {
         if (has_suboptions)
         {

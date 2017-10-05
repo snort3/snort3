@@ -118,7 +118,7 @@ bool ModbusFuncOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    ModbusFuncOption& rhs = (ModbusFuncOption&)ips;
+    const ModbusFuncOption& rhs = (const ModbusFuncOption&)ips;
     return ( func == rhs.func );
 }
 

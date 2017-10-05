@@ -452,16 +452,16 @@ void Snort::term()
     if (snort_conf == snort_cmd_line_conf)
     {
         delete snort_cmd_line_conf;
-        snort_cmd_line_conf = NULL;
-        snort_conf = NULL;
+        snort_cmd_line_conf = nullptr;
+        snort_conf = nullptr;
     }
     else
     {
         delete snort_cmd_line_conf;
-        snort_cmd_line_conf = NULL;
+        snort_cmd_line_conf = nullptr;
 
         delete snort_conf;
-        snort_conf = NULL;
+        snort_conf = nullptr;
     }
     CleanupProtoNames();
     SideChannelManager::term();
@@ -584,7 +584,7 @@ SnortConfig* Snort::get_reload_config(const char* fname)
         parser_term(sc);
         delete sc;
         reloading = false;
-        return NULL;
+        return nullptr;
     }
 
     sc->setup();
@@ -598,7 +598,7 @@ SnortConfig* Snort::get_reload_config(const char* fname)
         parser_term(sc);
         delete sc;
         reloading = false;
-        return NULL;
+        return nullptr;
     }
 
     FlowbitResetCounts();  // FIXIT-L updates global hash, put in sc
@@ -611,11 +611,11 @@ SnortConfig* Snort::get_reload_config(const char* fname)
     {
         RuleListNode* cur = snort_conf->rule_lists;
 
-        for (; cur != NULL; cur = cur->next)
+        for (; cur != nullptr; cur = cur->next)
         {
             RuleListNode* rnew = sc->rule_lists;
 
-            for (; rnew != NULL; rnew = rnew->next)
+            for (; rnew != nullptr; rnew = rnew->next)
             {
                 if (strcasecmp(cur->name, rnew->name) == 0)
                 {

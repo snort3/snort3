@@ -64,7 +64,7 @@ public:
     ByteExtractOption(const ByteExtractData& c) : IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_USE)
     { config = c; }
 
-    ~ByteExtractOption()
+    ~ByteExtractOption() override
     { snort_free(config.name); }
 
     uint32_t hash() const override;
@@ -89,7 +89,7 @@ private:
 uint32_t ByteExtractOption::hash() const
 {
     uint32_t a,b,c;
-    const ByteExtractData* data = (ByteExtractData*)&config;
+    const ByteExtractData* data = &config;
 
     a = data->bytes_to_grab;
     b = data->offset;
@@ -119,9 +119,9 @@ bool ByteExtractOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    ByteExtractOption& rhs = (ByteExtractOption&)ips;
-    ByteExtractData* left = (ByteExtractData*)&config;
-    ByteExtractData* right = (ByteExtractData*)&rhs.config;
+    const ByteExtractOption& rhs = (const ByteExtractOption&)ips;
+    const ByteExtractData* left = &config;
+    const ByteExtractData* right = &rhs.config;
 
     if ((left->bytes_to_grab == right->bytes_to_grab) &&
         (left->offset == right->offset) &&
@@ -146,7 +146,7 @@ int ByteExtractOption::eval(Cursor& c, Packet* p)
 
     ByteExtractData* data = &config;
 
-    if (data == NULL || p == NULL)
+    if (data == nullptr || p == nullptr)
         return DETECTION_OPTION_NO_MATCH;
 
     const uint8_t* start = c.buffer();

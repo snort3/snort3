@@ -35,16 +35,16 @@
 class CodecPiglet : public Piglet::BasePlugin
 {
 public:
-    CodecPiglet(Lua::State&, std::string, Module*, SnortConfig*);
-    virtual ~CodecPiglet() override;
-    virtual bool setup() override;
+    CodecPiglet(Lua::State&, const std::string&, Module*, SnortConfig*);
+    ~CodecPiglet() override;
+    bool setup() override;
 
 private:
     CodecWrapper* wrapper;
 };
 
 CodecPiglet::CodecPiglet(
-    Lua::State& state, std::string target, Module* m, SnortConfig* sc) :
+    Lua::State& state, const std::string& target, Module* m, SnortConfig* sc) :
     BasePlugin(state, target, m, sc)
 { wrapper = CodecManager::instantiate(target.c_str(), module, snort_conf); }
 
@@ -75,7 +75,7 @@ bool CodecPiglet::setup()
 // API foo
 // -----------------------------------------------------------------------------
 static Piglet::BasePlugin* ctor(
-    Lua::State& state, std::string target, Module* m, SnortConfig* sc)
+    Lua::State& state, const std::string& target, Module* m, SnortConfig* sc)
 { return new CodecPiglet(state, target, m, sc); }
 
 static void dtor(Piglet::BasePlugin* p)

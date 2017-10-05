@@ -101,15 +101,15 @@ public:
     // FILE CREATION AND ADDITIONS
 
     // add a variable to this file
-    bool add_variable(std::string name, std::string value);
+    bool add_variable(const std::string& name, const std::string& value);
     // add a Snort style include file
-    bool add_include_file(std::string name);
+    bool add_include_file(const std::string& name);
     // add a 'comment' to the Lua file. should ONLY be used when
     // adding a comment from the original Snort file.
-    void add_comment(std::string);
+    void add_comment(const std::string&);
     // add a lua comment stating that the top-level item does not
     // exist yet (i.e. preprocessor X, where X doesn't exist)
-    void add_unsupported_comment(std::string);
+    void add_unsupported_comment(const std::string&);
     // Call when failed to convert a line.
     // stream == the stringstream object which failed to convert
     // unknown_option is the specific option which caused the failure.

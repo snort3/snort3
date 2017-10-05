@@ -29,7 +29,7 @@ class B64Decode : public DataDecode
 {
 public:
     B64Decode(int max_depth, int detect_depth);
-    ~B64Decode();
+    ~B64Decode() override;
 
     // Main function to decode file data
     DecodeResult decode_data(const uint8_t* start, const uint8_t* end) override;

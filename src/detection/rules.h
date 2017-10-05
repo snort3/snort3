@@ -45,7 +45,7 @@
 #define INTERNAL_EVENT_SESSION_ADD    2
 #define INTERNAL_EVENT_SESSION_DEL    3
 
-#define EventIsInternal(gid) (gid == GENERATOR_INTERNAL)
+#define EventIsInternal(gid) ((gid) == GENERATOR_INTERNAL)
 
 struct OutputSet;
 

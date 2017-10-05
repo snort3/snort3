@@ -33,7 +33,7 @@
 #include <byteswap.h>
 #include <netinet/in.h>
 
-#define htonll(a) ( 1 == ntohl(1) ? a : bswap_64(a) )
+#define htonll(a) ( 1 == ntohl(1) ? (a) : bswap_64(a) )
 #endif
 
 #ifdef UNIT_TEST
@@ -181,7 +181,7 @@ void FbsFormatter::finalize_fields()
 
             if( types[i][j] == FT_IDX_PEG_COUNT )
             {
-                auto field_name = lowercase(field_names[i][j].c_str()) + "_map";
+                auto field_name = lowercase(field_names[i][j]) + "_map";
                 field = module_table->fields()->LookupByKey(field_name.c_str());
                 vtable_offsets[i + 1].push_back(field->offset());
             }
@@ -254,7 +254,7 @@ void FbsFormatter::write(FILE* fh, time_t timestamp)
                         }
                     }
 
-                    if( map.size() )
+                    if( !map.empty() )
                     {
                         if( map.size() <= nz_break_even )
                         {

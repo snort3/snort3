@@ -32,7 +32,7 @@ class MdnsServiceDetector : public ServiceDetector
 {
 public:
     MdnsServiceDetector(ServiceDiscovery*);
-    ~MdnsServiceDetector();
+    ~MdnsServiceDetector() override;
 
     int validate(AppIdDiscoveryArgs&) override;
 

@@ -48,7 +48,7 @@ class EthModule : public CodecModule
 public:
     EthModule() : CodecModule(CD_ETH_NAME, CD_ETH_HELP) { }
 
-    const RuleMap* get_rules() const
+    const RuleMap* get_rules() const override
     { return eth_rules; }
 };
 
@@ -56,7 +56,6 @@ class EthCodec : public Codec
 {
 public:
     EthCodec() : Codec(CD_ETH_NAME) { }
-    ~EthCodec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>&) override;
     void get_data_link_type(std::vector<int>&) override;

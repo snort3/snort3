@@ -51,14 +51,14 @@ class TcpTracker : public TcpStreamTracker
 {
 public:
     TcpTracker(bool, class TcpSession*);
-    virtual ~TcpTracker();
+    ~TcpTracker() override;
 
     void init_tcp_state() override;
     void print() override;
     void init_flush_policy() override;
     void set_splitter(StreamSplitter* ss) override;
     void set_splitter(const Flow* flow) override;
-    void reset_splitter( void ) override;
+    void reset_splitter( ) override;
 
     void init_on_syn_sent(TcpSegmentDescriptor&) override;
     void init_on_syn_recv(TcpSegmentDescriptor&) override;

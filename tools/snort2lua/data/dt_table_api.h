@@ -53,7 +53,7 @@ typedef std::unordered_map<std::string, bool> TableDelegation;
 class TableApi
 {
 public:
-    TableApi() { }
+    TableApi() = default;
     TableApi(TableApi* d, TableDelegation& td) : delegate(d), delegations(td) {}
     virtual ~TableApi();
 
@@ -72,10 +72,10 @@ public:
     void open_top_level_table(const char* name, bool one_line = false)
     { open_top_level_table(std::string(name), one_line); }
 
-    void open_top_level_table(std::string name, bool one_line = false);
+    void open_top_level_table(const std::string& name, bool one_line = false);
 
 // open a nested named table --> 'name = {...}')
-    void open_table(std::string name, bool one_line = false);
+    void open_table(const std::string& name, bool one_line = false);
 
     void open_table(const char* name, bool one_line = false)
     { open_table(std::string(name), one_line); }
@@ -120,15 +120,15 @@ public:
 
 // add an option with a list of variables -->  table = { name = 'elem1 elem2 ...' }
 // corresponds to Parameter::PT_MULTI
-    bool add_list(std::string list_name, std::string next_elem);
+    bool add_list(const std::string& list_name, const std::string& next_elem);
 // add a comment to be printed in the table --> table = { -- comment \n ... }
-    bool add_comment(std::string comment);
+    bool add_comment(const std::string& comment);
 // add a comment about an option change to the table
-    bool add_diff_option_comment(std::string orig_var, std::string new_var);
+    bool add_diff_option_comment(const std::string& orig_var, const std::string& new_var);
 // attach a deprecated option comment to the current table
-    bool add_deleted_comment(std::string dep_var);
+    bool add_deleted_comment(const std::string& dep_var);
 // attach an unsupported option comment to the current table
-    bool add_unsupported_comment(std::string unsupported_var);
+    bool add_unsupported_comment(const std::string& unsupported_var);
 
 // return true if this name exists as an option name for the selected table
     bool option_exists(const std::string& name);

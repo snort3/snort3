@@ -34,7 +34,6 @@ class TransbridgeCodec : public Codec
 {
 public:
     TransbridgeCodec() : Codec(CD_TRANSBRIDGE_NAME) { }
-    ~TransbridgeCodec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;

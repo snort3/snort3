@@ -32,8 +32,7 @@ class DeadCode : public ConversionState
 {
 public:
     DeadCode(Converter& c) : ConversionState(c) { }
-    virtual ~DeadCode() { }
-    virtual bool convert(std::istringstream& data_stream)
+    bool convert(std::istringstream& data_stream) override
     {
         data_stream.setstate(std::ios::eofbit); // these deleted, not failures
         return true;

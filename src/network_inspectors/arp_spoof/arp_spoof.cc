@@ -104,7 +104,7 @@ static IPMacEntry* LookupIPMacEntryByIP(
 #ifdef DEBUG_MSGS
 static void PrintIPMacEntryList(IPMacEntryList& ipmel)
 {
-    if ( !ipmel.size() )
+    if ( ipmel.empty() )
         return;
 
     LogMessage("Arpspoof IPMacEntry List");
@@ -136,7 +136,7 @@ class ArpSpoof : public Inspector
 {
 public:
     ArpSpoof(ArpSpoofModule*);
-    ~ArpSpoof();
+    ~ArpSpoof() override;
 
     void show(SnortConfig*) override;
     void eval(Packet*) override;
@@ -189,27 +189,27 @@ void ArpSpoof::eval(Packet* p)
     switch (ntohs(ah->ea_hdr.ar_op))
     {
     case ARPOP_REQUEST:
-        if (memcmp((u_char*)eh->ether_dst, (u_char*)bcast, 6) != 0)
+        if (memcmp((const u_char*)eh->ether_dst, (const u_char*)bcast, 6) != 0)
         {
             DetectionEngine::queue_event(GID_ARP_SPOOF, ARPSPOOF_UNICAST_ARP_REQUEST);
             DebugMessage(DEBUG_INSPECTOR, "MODNAME: Unicast request\n");
         }
-        else if (memcmp((u_char*)eh->ether_src,
-            (u_char*)ah->arp_sha, 6) != 0)
+        else if (memcmp((const u_char*)eh->ether_src,
+            (const u_char*)ah->arp_sha, 6) != 0)
         {
             DetectionEngine::queue_event(GID_ARP_SPOOF, ARPSPOOF_ETHERFRAME_ARP_MISMATCH_SRC);
             DebugMessage(DEBUG_INSPECTOR, "MODNAME: Ethernet/ARP mismatch request\n");
         }
         break;
     case ARPOP_REPLY:
-        if (memcmp((u_char*)eh->ether_src,
-            (u_char*)ah->arp_sha, 6) != 0)
+        if (memcmp((const u_char*)eh->ether_src,
+            (const u_char*)ah->arp_sha, 6) != 0)
         {
             DetectionEngine::queue_event(GID_ARP_SPOOF, ARPSPOOF_ETHERFRAME_ARP_MISMATCH_SRC);
             DebugMessage(DEBUG_INSPECTOR, "MODNAME: Ethernet/ARP mismatch reply src\n");
         }
-        else if (memcmp((u_char*)eh->ether_dst,
-            (u_char*)ah->arp_tha, 6) != 0)
+        else if (memcmp((const u_char*)eh->ether_dst,
+            (const u_char*)ah->arp_tha, 6) != 0)
         {
             DetectionEngine::queue_event(GID_ARP_SPOOF, ARPSPOOF_ETHERFRAME_ARP_MISMATCH_DST);
             DebugMessage(DEBUG_INSPECTOR, "MODNAME: Ethernet/ARP mismatch reply dst\n");

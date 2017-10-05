@@ -41,9 +41,6 @@ TcpStateCloseWait::TcpStateCloseWait(TcpStateMachine& tsm) :
 {
 }
 
-TcpStateCloseWait::~TcpStateCloseWait()
-{
-}
 
 bool TcpStateCloseWait::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {

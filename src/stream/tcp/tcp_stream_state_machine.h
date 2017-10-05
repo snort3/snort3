@@ -27,10 +27,10 @@
 class TcpStreamStateMachine: public TcpStateMachine
 {
 public:
-    virtual ~TcpStreamStateMachine();
+    ~TcpStreamStateMachine() override;
 
 
-    static TcpStateMachine* get_instance( void )
+    static TcpStateMachine* get_instance( )
     {
         static TcpStreamStateMachine tsm;
         return &tsm;

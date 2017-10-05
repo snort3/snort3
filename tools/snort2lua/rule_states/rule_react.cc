@@ -33,8 +33,7 @@ class React : public ConversionState
 {
 public:
     React(Converter& c) : ConversionState(c) { }
-    virtual ~React() { }
-    virtual bool convert(std::istringstream& data);
+    bool convert(std::istringstream& data) override;
 };
 } // namespace
 
@@ -52,7 +51,7 @@ bool React::convert(std::istringstream& data_stream)
     {
         // a colon will have been parsed when retrieving the keyword.
         // Therefore, if a colon is present, we are in the next rule option.
-        if (args.find(":") != std::string::npos)
+        if (args.find(':') != std::string::npos)
         {
             data_stream.clear();
             data_stream.seekg(pos);
@@ -64,9 +63,9 @@ bool React::convert(std::istringstream& data_stream)
             std::istringstream arg_stream(args);
             util::get_string(arg_stream, tmp, ",");
 
-            if (!tmp.compare("msg") ||
-                !tmp.compare("warn") ||
-                !tmp.compare("block") ||
+            if (tmp == "msg" ||
+                tmp == "warn" ||
+                tmp == "block" ||
                 !tmp.compare(0, 5, "proxy"))
             {
                 // Now that we have confirmed this is a valid option, parse it!!
@@ -74,16 +73,16 @@ bool React::convert(std::istringstream& data_stream)
 
                 do
                 {
-                    if (!tmp.compare("warn"))
+                    if (tmp == "warn")
                         table_api.add_deleted_comment("warn");
 
-                    else if (!tmp.compare("block"))
+                    else if (tmp == "block")
                         table_api.add_deleted_comment("block");
 
                     else if (!tmp.compare(0, 5, "proxy"))
                         table_api.add_deleted_comment(tmp);
 
-                    else if (!tmp.compare("msg"))
+                    else if (tmp == "msg")
                     {
                         table_api.add_diff_option_comment(
                             "msg", "react.msg = true");

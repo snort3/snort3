@@ -22,7 +22,7 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
+#include <cassert>
 
 #include "signature.h"
 
@@ -104,7 +104,7 @@ void AddClassification(
     int max_id = 0;
     ClassType* current = sc->classifications;
 
-    while (current != NULL)
+    while (current != nullptr)
     {
         /* dup check */
         if (strcasecmp(current->type, type) == 0)

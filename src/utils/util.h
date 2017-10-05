@@ -43,13 +43,13 @@
 #define SECONDS_PER_MIN     60     /* number of seconds in a minute */
 
 #define COPY4(x, y) \
-    x[0] = y[0]; x[1] = y[1]; x[2] = y[2]; x[3] = y[3];
+    x[0] = (y)[0]; (x)[1] = (y)[1]; (x)[2] = (y)[2]; (x)[3] = (y)[3];
 
 #define COPY16(x,y) \
-    x[0] = y[0]; x[1] = y[1]; x[2] = y[2]; x[3] = y[3]; \
-    x[4] = y[4]; x[5] = y[5]; x[6] = y[6]; x[7] = y[7]; \
-    x[8] = y[8]; x[9] = y[9]; x[10] = y[10]; x[11] = y[11]; \
-    x[12] = y[12]; x[13] = y[13]; x[14] = y[14]; x[15] = y[15];
+    x[0] = (y)[0]; (x)[1] = (y)[1]; (x)[2] = (y)[2]; (x)[3] = (y)[3]; \
+    (x)[4] = (y)[4]; (x)[5] = (y)[5]; (x)[6] = (y)[6]; (x)[7] = (y)[7]; \
+    (x)[8] = (y)[8]; (x)[9] = (y)[9]; (x)[10] = (y)[10]; (x)[11] = (y)[11]; \
+    (x)[12] = (y)[12]; (x)[13] = (y)[13]; (x)[14] = (y)[14]; (x)[15] = (y)[15];
 
 // FIXIT-M provide getter function to for standardized access into the protocol_names array
 SO_PUBLIC extern char** protocol_names;

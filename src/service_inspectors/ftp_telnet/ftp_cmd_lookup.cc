@@ -62,7 +62,7 @@ int ftp_cmd_lookup_init(CMD_LOOKUP** CmdLookup)
 {
     KMAP* km = KMapNew((KMapUserFreeFunc)CleanupFTPCMDConf);
     *CmdLookup = km;
-    if (*CmdLookup == NULL)
+    if (*CmdLookup == nullptr)
     {
         return FTPP_MEM_ALLOC_FAIL;
     }
@@ -88,7 +88,7 @@ int ftp_cmd_lookup_cleanup(CMD_LOOKUP** CmdLookup)
 {
     KMAP* km;
 
-    if (CmdLookup == NULL)
+    if (CmdLookup == nullptr)
         return FTPP_INVALID_ARG;
 
     km = *CmdLookup;
@@ -96,7 +96,7 @@ int ftp_cmd_lookup_cleanup(CMD_LOOKUP** CmdLookup)
     if (km)
     {
         KMapDelete(km);
-        *CmdLookup = NULL;
+        *CmdLookup = nullptr;
     }
 
     return FTPP_SUCCESS;
@@ -174,17 +174,17 @@ int ftp_cmd_lookup_add(CMD_LOOKUP* CmdLookup, const char* cmd, int len,
 FTP_CMD_CONF* ftp_cmd_lookup_find(CMD_LOOKUP* CmdLookup,
     const char* cmd, int len, int* iError)
 {
-    FTP_CMD_CONF* FTPCmd = NULL;
+    FTP_CMD_CONF* FTPCmd = nullptr;
 
     if (!iError)
     {
-        return NULL;
+        return nullptr;
     }
 
     if (!CmdLookup)
     {
         *iError = FTPP_INVALID_ARG;
-        return NULL;
+        return nullptr;
     }
 
     *iError = FTPP_SUCCESS;
@@ -218,13 +218,13 @@ FTP_CMD_CONF* ftp_cmd_lookup_first(CMD_LOOKUP* CmdLookup,
 
     if (!iError)
     {
-        return NULL;
+        return nullptr;
     }
 
     if (!CmdLookup)
     {
         *iError = FTPP_INVALID_ARG;
-        return NULL;
+        return nullptr;
     }
 
     *iError = FTPP_SUCCESS;
@@ -261,13 +261,13 @@ FTP_CMD_CONF* ftp_cmd_lookup_next(CMD_LOOKUP* CmdLookup,
 
     if (!iError)
     {
-        return NULL;
+        return nullptr;
     }
 
     if (!CmdLookup)
     {
         *iError = FTPP_INVALID_ARG;
-        return NULL;
+        return nullptr;
     }
 
     *iError = FTPP_SUCCESS;

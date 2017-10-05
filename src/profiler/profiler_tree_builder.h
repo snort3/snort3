@@ -50,7 +50,7 @@ public:
 
     using IncludeFn = std::function<bool(const ProfilerNode&)>;
 
-    ProfilerBuilder(const IncludeFn include) :
+    ProfilerBuilder(const IncludeFn& include) :
         include(include) { }
 
     Entry build(const ProfilerNode& node)

@@ -32,8 +32,7 @@ class Filter : public ConversionState
 {
 public:
     Filter(Converter& c, const std::string& s) : ConversionState(c), type(s) { }
-    virtual ~Filter() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 
 private:
     std::string type;
@@ -48,7 +47,7 @@ bool Filter::convert(std::istringstream& data_stream)
 
     table_api.open_table("event_filter");
 
-    if ( warn && !type.compare("threshold"))
+    if ( warn && type == "threshold")
     {
         table_api.add_diff_option_comment("threshold", "event_filter");
         warn = false;
@@ -66,24 +65,24 @@ bool Filter::convert(std::istringstream& data_stream)
         if (keyword.empty())
             continue;
 
-        else if (!keyword.compare("count"))
+        else if (keyword == "count")
             tmpval = parse_int_option("count", arg_stream, false);
 
-        else if (!keyword.compare("seconds"))
+        else if (keyword == "seconds")
             tmpval = parse_int_option("seconds", arg_stream, false);
 
-        else if (!keyword.compare("type"))
+        else if (keyword == "type")
             tmpval = parse_string_option("type", arg_stream);
 
-        else if (!keyword.compare("track"))
+        else if (keyword == "track")
             tmpval = parse_string_option("track", arg_stream);
 
-        else if (!keyword.compare("gen_id"))
+        else if (keyword == "gen_id")
         {
             table_api.add_diff_option_comment("gen_id", "gid");
             tmpval = parse_int_option("gid", arg_stream, false);
         }
-        else if (!keyword.compare("sig_id"))
+        else if (keyword == "sig_id")
         {
             table_api.add_diff_option_comment("sig_id", "sid");
             tmpval = parse_int_option("sid", arg_stream, false);

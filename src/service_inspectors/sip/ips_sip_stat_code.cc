@@ -68,7 +68,7 @@ uint32_t SipStatCodeOption::hash() const
     unsigned n = 0;
     while ( n < SIP_NUM_STAT_CODE_MAX and ssod.stat_codes[n] ) ++n;
 
-    mix_str(a, b, c, (char*)ssod.stat_codes, n*sizeof(ssod.stat_codes[0]));
+    mix_str(a, b, c, (const char*)ssod.stat_codes, n*sizeof(ssod.stat_codes[0]));
     mix_str(a, b, c, get_name());
 
     return c;
@@ -79,7 +79,7 @@ bool SipStatCodeOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    const SipStatCodeOption& rhs = (SipStatCodeOption&)ips;
+    const SipStatCodeOption& rhs = (const SipStatCodeOption&)ips;
 
     if ( !memcmp(ssod.stat_codes, rhs.ssod.stat_codes, sizeof(ssod.stat_codes)) )
         return true;

@@ -32,7 +32,6 @@ class KerberosClientDetector : public ClientDetector
 {
 public:
     KerberosClientDetector(ClientDiscovery*);
-    ~KerberosClientDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
     KerberosDetectorData* get_common_data(AppIdSession*);
@@ -47,7 +46,6 @@ class KerberosServiceDetector : public ServiceDetector
 {
 public:
     KerberosServiceDetector(ServiceDiscovery*);
-    ~KerberosServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

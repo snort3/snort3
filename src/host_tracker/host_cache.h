@@ -38,9 +38,7 @@ struct HostIpKey
         uint64_t ip64[key_size/8];
     } ip_addr = {{0}}; //  Holds either IPv4 or IPv6 addr
 
-    HostIpKey()
-    {
-    }
+    HostIpKey() = default;
 
     HostIpKey(const uint8_t ip[key_size])
     {

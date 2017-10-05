@@ -31,7 +31,7 @@ class Pop3ClientDetector : public ClientDetector
 {
 public:
     Pop3ClientDetector(ClientDiscovery*);
-    ~Pop3ClientDetector();
+    ~Pop3ClientDetector() override;
 
     void do_custom_init() override;
     int validate(AppIdDiscoveryArgs&) override;
@@ -46,7 +46,6 @@ class Pop3ServiceDetector : public ServiceDetector
 {
 public:
     Pop3ServiceDetector(ServiceDiscovery*);
-    ~Pop3ServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

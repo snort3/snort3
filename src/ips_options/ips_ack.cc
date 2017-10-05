@@ -76,7 +76,7 @@ bool TcpAckOption::operator==(const IpsOption& ips) const
     if ( strcmp(s_name, ips.get_name()) )
         return false;
 
-    TcpAckOption& rhs = (TcpAckOption&)ips;
+    const TcpAckOption& rhs = (const TcpAckOption&)ips;
     return ( config == rhs.config );
 }
 

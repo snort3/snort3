@@ -242,11 +242,11 @@ static void send_sar(uint8_t* data, unsigned len)
 static OptTreeNode* OptTreeNode_Search(uint32_t, uint32_t sid)
 {
     SFGHASH_NODE* hashNode;
-    OptTreeNode* otn = NULL;
-    RuleTreeNode* rtn = NULL;
+    OptTreeNode* otn = nullptr;
+    RuleTreeNode* rtn = nullptr;
 
     if (sid == 0)
-        return NULL;
+        return nullptr;
 
     for (hashNode = sfghash_findfirst(snort_conf->otn_map);
         hashNode;
@@ -262,7 +262,7 @@ static OptTreeNode* OptTreeNode_Search(uint32_t, uint32_t sid)
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 //-------------------------------------------------------------------------

@@ -95,7 +95,7 @@ bool SipMethodOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    const SipMethodOption& rhs = (SipMethodOption&)ips;
+    const SipMethodOption& rhs = (const SipMethodOption&)ips;
 
     return methods == rhs.methods;
 }
@@ -115,7 +115,7 @@ int SipMethodOption::eval(Cursor&, Packet* p)
     SIP_Roptions* ropts = &sd->ropts;
 
     // Not response
-    if ( IsRequest(ropts) && methods.size() )
+    if ( IsRequest(ropts) && !methods.empty() )
     {
         if ( !ropts->method_data )
             return DETECTION_OPTION_NO_MATCH;
@@ -178,7 +178,7 @@ bool SipMethodModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("*method") )
     {
-        char* tok = (char*)v.get_string();
+        const char* tok = v.get_string();
 
         if (tok[0] == '!')
         {

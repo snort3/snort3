@@ -126,7 +126,7 @@
 
 #define printf LogMessage
 
-#define MEMASSERT(p,s) if (!p) { FatalError("ACSM-No Memory: %s\n",s); }
+#define MEMASSERT(p,s) if (!(p)) { FatalError("ACSM-No Memory: %s\n",s); }
 
 static int acsm2_total_memory = 0;
 static int acsm2_pattern_memory = 0;
@@ -293,7 +293,7 @@ static void* AC_MALLOC_DFA(int n, int sizeofstate)
 
 static void AC_FREE(void* p, int n, Acsm2MemoryType type)
 {
-    if (p != NULL)
+    if (p != nullptr)
     {
         switch (type)
         {
@@ -321,7 +321,7 @@ static void AC_FREE(void* p, int n, Acsm2MemoryType type)
 
 static void AC_FREE_DFA(void* p, int n, int sizeofstate)
 {
-    if (p != NULL)
+    if (p != nullptr)
     {
         switch (sizeofstate)
         {
@@ -483,14 +483,14 @@ static int List_FreeTransTable(ACSM_STRUCT2* acsm)
     int i;
     trans_node_t* t, * p;
 
-    if (acsm->acsmTransTable == NULL)
+    if (acsm->acsmTransTable == nullptr)
         return 0;
 
     for (i = 0; i < acsm->acsmMaxStates; i++)
     {
         t = acsm->acsmTransTable[i];
 
-        while (t != NULL)
+        while (t != nullptr)
         {
             p = t->next;
             AC_FREE(t, sizeof(trans_node_t), ACSM2_MEMORY_TYPE__TRANSTABLE);
@@ -501,7 +501,7 @@ static int List_FreeTransTable(ACSM_STRUCT2* acsm)
     AC_FREE(acsm->acsmTransTable, sizeof(void*) * acsm->acsmMaxStates,
         ACSM2_MEMORY_TYPE__TRANSTABLE);
 
-    acsm->acsmTransTable = NULL;
+    acsm->acsmTransTable = nullptr;
 
     return 0;
 }
@@ -515,10 +515,10 @@ static inline int List_ConvToFull(ACSM_STRUCT2* acsm, acstate_t state, acstate_t
     int tcnt = 0;
     trans_node_t* t = acsm->acsmTransTable[state];
 
-    if (t == NULL)
+    if (t == nullptr)
         return 0;
 
-    while (t != NULL)
+    while (t != nullptr)
     {
         switch (acsm->sizeofstate)
         {
@@ -799,7 +799,7 @@ static int Conv_List_To_Full(ACSM_STRUCT2* acsm)
     {
         p = (acstate_t*)AC_MALLOC_DFA(acsm->sizeofstate * (acsm->acsmAlphabetSize + 2),
             acsm->sizeofstate);
-        if (p == NULL)
+        if (p == nullptr)
             return -1;
 
         switch (acsm->sizeofstate)
@@ -992,7 +992,7 @@ static int Conv_Full_DFA_To_Banded(ACSM_STRUCT2* acsm)
 *  3    number of items in this band*  4    start index of this band
 *  5-   next-state values in this band...
 */
-static int calcSparseBands(acstate_t* next, int* begin, int* end, int asize, int zmax)
+static int calcSparseBands(const acstate_t* next, int* begin, int* end, int asize, int zmax)
 {
     int i, nbands,zcnt,last=0;
     acstate_t state;
@@ -1206,7 +1206,7 @@ static void acsmBuildMatchStateTrees2(SnortConfig* sc, ACSM_STRUCT2* acsm)
     /* Find the states that have a MatchList */
     for (int i = 0; i < acsm->acsmNumStates; i++)
     {
-        for ( mlist=MatchList[i]; mlist!=NULL; mlist=mlist->next )
+        for ( mlist=MatchList[i]; mlist!=nullptr; mlist=mlist->next )
         {
             if (mlist->udata)
             {
@@ -1224,7 +1224,7 @@ static void acsmBuildMatchStateTrees2(SnortConfig* sc, ACSM_STRUCT2* acsm)
         if (MatchList[i])
         {
             /* Last call to finalize the tree */
-            acsm->agent->build_tree(sc, NULL, &MatchList[i]->rule_option_tree);
+            acsm->agent->build_tree(sc, nullptr, &MatchList[i]->rule_option_tree);
         }
     }
 }
@@ -1234,7 +1234,7 @@ void acsmCompressStates(
     int flag
     )
 {
-    if (acsm == NULL)
+    if (acsm == nullptr)
         return;
     acsm->compress_states = flag;
 }
@@ -1247,7 +1247,7 @@ static inline int _acsmCompile2(ACSM_STRUCT2* acsm)
     ACSM_PATTERN2* plist;
 
     /* Count number of possible states */
-    for (plist = acsm->acsmPatterns; plist != NULL; plist = plist->next)
+    for (plist = acsm->acsmPatterns; plist != nullptr; plist = plist->next)
         acsm->acsmMaxStates += plist->n;
 
     acsm->acsmMaxStates++; /* one extra */
@@ -1268,7 +1268,7 @@ static inline int _acsmCompile2(ACSM_STRUCT2* acsm)
     acsm->acsmNumStates = 0;
 
     /* Add each Pattern to the State Table - This forms a keywords state table  */
-    for (plist = acsm->acsmPatterns; plist != NULL; plist = plist->next)
+    for (plist = acsm->acsmPatterns; plist != nullptr; plist = plist->next)
     {
         summary.num_patterns++;
         summary.num_characters += plist->n;
@@ -1327,7 +1327,7 @@ static inline int _acsmCompile2(ACSM_STRUCT2* acsm)
         AC_FREE(acsm->acsmFailState, sizeof(acstate_t) * acsm->acsmNumStates,
             ACSM2_MEMORY_TYPE__FAILSTATE);
 
-        acsm->acsmFailState = NULL;
+        acsm->acsmFailState = nullptr;
     }
 
     /* Select Final Transition Table Storage Mode */
@@ -1693,7 +1693,7 @@ int acsm_search_dfa_full(
     T = Tx;
     Tend = Tx + n;
 
-    if (current_state == NULL)
+    if (current_state == nullptr)
         return 0;
 
     state = *current_state;
@@ -1793,7 +1793,7 @@ int acsm_search_dfa_full_all(
     T = Tx;
     Tend = Tx + n;
 
-    if (current_state == NULL)
+    if (current_state == nullptr)
         return 0;
 
     state = *current_state;
@@ -1825,7 +1825,7 @@ int acsm_search_dfa_full_all(
 
     /* Check the last state for a pattern match */
     for ( mlist = MatchList[state];
-        mlist!= NULL;
+        mlist!= nullptr;
         mlist = mlist->next )
     {
         index = T - Tx;
@@ -2016,7 +2016,7 @@ void acsmFree2(ACSM_STRUCT2* acsm)
     {
         ACSM_PATTERN2* tmpPlist = plist->next;
 
-        if (acsm->agent && (plist->udata != NULL))
+        if (acsm->agent && (plist->udata != nullptr))
             acsm->agent->user_free(plist->udata);
 
         AC_FREE(plist->patrn, 0, ACSM2_MEMORY_TYPE__NONE);

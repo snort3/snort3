@@ -338,7 +338,7 @@ class Reputation : public Inspector
 {
 public:
     Reputation(ReputationConfig*);
-    ~Reputation();
+    ~Reputation() override;
 
     void show(SnortConfig*) override;
     void eval(Packet*) override;

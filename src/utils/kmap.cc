@@ -107,7 +107,7 @@ void KMapDelete(KMAP* km)
         {
             KMapFreeNode(km,r);
         }
-        km->root[i] = NULL;
+        km->root[i] = nullptr;
     }
 
     /* Free the node list */
@@ -124,7 +124,7 @@ static KEYNODE* KMapAddKeyNode(KMAP* km,void* key, int n, void* userdata)
     KEYNODE* knode;
 
     if (n <= 0)
-        return 0;
+        return nullptr;
 
     knode = (KEYNODE*)snort_calloc(sizeof(KEYNODE));
     knode->key = (unsigned char*)snort_calloc(n); // Alloc the key space
@@ -345,7 +345,7 @@ void* KMapFind(KMAP* ks, void* key, int n)
     /* Check if any keywords start with this character */
     root = ks->root[ *T ];
     if ( !root )
-        return NULL;
+        return nullptr;
 
     while ( n )
     {
@@ -381,7 +381,7 @@ void* KMapFind(KMAP* ks, void* key, int n)
             return root->knode->userdata; /* success */
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /*
@@ -393,7 +393,7 @@ void* KMapFindFirst(KMAP* km)
 
     if (!km->keynext)
     {
-        return NULL;
+        return nullptr;
     }
 
     return km->keynext->userdata;
@@ -405,12 +405,12 @@ void* KMapFindFirst(KMAP* km)
 void* KMapFindNext(KMAP* km)
 {
     if ( !km->keynext )
-        return 0;
+        return nullptr;
 
     km->keynext = km->keynext->next;
 
     if ( !km->keynext )
-        return 0;
+        return nullptr;
 
     return km->keynext->userdata;
 }

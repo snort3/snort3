@@ -371,7 +371,6 @@ PopSplitter::PopSplitter(bool c2s) : StreamSplitter(c2s)
     reset_data_states(&state);
 }
 
-PopSplitter::~PopSplitter() { }
 
 /* Function: pop_paf()
 

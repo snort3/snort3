@@ -93,7 +93,7 @@ typedef struct
     time_t revertTime;
 } tSFRFTrackingNode;
 
-SFXHASH* rf_hash = NULL;
+SFXHASH* rf_hash = nullptr;
 
 // private methods ...
 static int _checkThreshold(
@@ -152,8 +152,8 @@ static void SFRF_New(unsigned nbytes)
         sizeof(tSFRFTrackingNode),     /* data size */
         nbytes,                  /* memcap **/
         1,         /* ANR flag - true ?- Automatic Node Recovery=ANR */
-        0,         /* ANR callback - none */
-        0,         /* user freemem callback - none */
+        nullptr,         /* ANR callback - none */
+        nullptr,         /* user freemem callback - none */
         1);       /* Recycle nodes ?*/
 }
 
@@ -163,7 +163,7 @@ void SFRF_Delete()
         return;
 
     sfxhash_delete(rf_hash);
-    rf_hash = NULL;
+    rf_hash = nullptr;
 }
 
 void SFRF_Flush()
@@ -176,10 +176,10 @@ static void SFRF_ConfigNodeFree(void* item)
 {
     tSFRFConfigNode* node = (tSFRFConfigNode*)item;
 
-    if (node == NULL)
+    if (node == nullptr)
         return;
 
-    if (node->applyTo != NULL)
+    if (node->applyTo != nullptr)
     {
         sfvar_free(node->applyTo);
     }
@@ -226,15 +226,15 @@ int SFRF_ConfigAdd(
     PolicyId policy_id = get_network_policy()->policy_id;
 
     // Auto init - memcap must be set 1st, which is not really a problem
-    if ( rf_hash == NULL )
+    if ( rf_hash == nullptr )
     {
         SFRF_New(rf_config->memcap);
 
-        if ( rf_hash == NULL )
+        if ( rf_hash == nullptr )
             return -1;
     }
 
-    if ((rf_config == NULL) || (cfgNode == NULL))
+    if ((rf_config == nullptr) || (cfgNode == nullptr))
         return -1;
 
     if ( (cfgNode->sid == 0 ) || (cfgNode->gid == 0) )
@@ -363,7 +363,7 @@ static int SFRF_TestObject(
 
     dynNode = _getSFRFTrackingNode(ip, cfgNode->tid, curTime);
 
-    if ( dynNode == NULL )
+    if ( dynNode == nullptr )
         return retValue;
 
     if ( _checkSamplingPeriod(cfgNode, dynNode, curTime) != 0 )
@@ -517,7 +517,7 @@ int SFRF_TestThreshold(
     SF_LNODE* cursor;
 
     for ( cfgNode  = (tSFRFConfigNode*)sflist_first(pSidNode->configNodeList, &cursor);
-        cfgNode != 0;
+        cfgNode != nullptr;
         cfgNode  = (tSFRFConfigNode*)sflist_next(&cursor) )
     {
         switch (cfgNode->tracking)
@@ -590,7 +590,7 @@ void SFRF_ShowObjects(RateFilterConfig* config)
         printf("...GEN_ID = %u\n",gid);
 
         for ( sidHashNode  = sfghash_findfirst(genHash);
-            sidHashNode != 0;
+            sidHashNode != nullptr;
             sidHashNode  = sfghash_findnext(genHash) )
         {
             /* Check for any Permanent sid objects for this gid */
@@ -605,7 +605,7 @@ void SFRF_ShowObjects(RateFilterConfig* config)
             SF_LNODE* cursor;
 
             for ( cfgNode  = (tSFRFConfigNode*)sflist_first(pSidnode->configNodeList, &cursor);
-                cfgNode != 0;
+                cfgNode != nullptr;
                 cfgNode = (tSFRFConfigNode*)sflist_next(&cursor) )
             {
                 printf(".........SFRF_ID  =%d\n",cfgNode->tid);
@@ -783,7 +783,7 @@ static tSFRFTrackingNode* _getSFRFTrackingNode(
     time_t curTime
     )
 {
-    tSFRFTrackingNode* dynNode = NULL;
+    tSFRFTrackingNode* dynNode = nullptr;
     tSFRFTrackingNodeKey key;
 
     /* Setup key */

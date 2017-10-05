@@ -132,9 +132,9 @@ bool CvsOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    CvsOption& rhs = (CvsOption&)ips;
-    CvsRuleOption* left = (CvsRuleOption*)&config;
-    CvsRuleOption* right = (CvsRuleOption*)&rhs.config;
+    const CvsOption& rhs = (const CvsOption&)ips;
+    const CvsRuleOption* left = &config;
+    const CvsRuleOption* right = &rhs.config;
 
     if (left->type == right->type)
     {
@@ -174,7 +174,7 @@ static int CvsDecode(const uint8_t* data, uint16_t data_len,
     CvsRuleOption* cvs_rule_option)
 {
     const uint8_t* line, * end;
-    const uint8_t* eol = NULL, * eolm = NULL;
+    const uint8_t* eol = nullptr, * eolm = nullptr;
     CvsCommand command;
     int ret;
 
@@ -191,15 +191,15 @@ static int CvsDecode(const uint8_t* data, uint16_t data_len,
         CvsGetCommand(line, eolm, &command);
 
         /* shouldn't happen as long as line < end, but ... */
-        if (command.cmd_str == NULL)
+        if (command.cmd_str == nullptr)
             return CVS_NO_ALERT;
 
         DebugFormat(DEBUG_IPS_OPTION, "CVS command\n"
             " command: %.*s\n"
             "argument: %.*s\n",
-            command.cmd_str_len, (char*)command.cmd_str,
-            command.cmd_arg == NULL ? 4 : command.cmd_arg_len,
-            command.cmd_arg == NULL ? "none" : (char*)command.cmd_arg);
+            command.cmd_str_len, (const char*)command.cmd_str,
+            command.cmd_arg == nullptr ? 4 : command.cmd_arg_len,
+            command.cmd_arg == nullptr ? "none" : (const char*)command.cmd_arg);
 
         switch (cvs_rule_option->type)
         {
@@ -275,15 +275,15 @@ static void CvsGetCommand(const uint8_t* line, const uint8_t* end, CvsCommand* c
 {
     const uint8_t* cmd_end;
 
-    if (cmd == NULL)
+    if (cmd == nullptr)
         return;
 
     /* no line, no command or args */
-    if (line == NULL)
+    if (line == nullptr)
     {
-        cmd->cmd_str = NULL;
+        cmd->cmd_str = nullptr;
         cmd->cmd_str_len = 0;
-        cmd->cmd_arg = NULL;
+        cmd->cmd_arg = nullptr;
         cmd->cmd_arg_len = 0;
 
         return;
@@ -292,7 +292,7 @@ static void CvsGetCommand(const uint8_t* line, const uint8_t* end, CvsCommand* c
     cmd->cmd_str = line;
 
     cmd_end = (const uint8_t*)memchr(line, CVS_COMMAND_SEPARATOR, end - line);
-    if (cmd_end != NULL)
+    if (cmd_end != nullptr)
     {
         cmd->cmd_str_len = cmd_end - line;
         cmd->cmd_arg = cmd_end + 1;
@@ -301,7 +301,7 @@ static void CvsGetCommand(const uint8_t* line, const uint8_t* end, CvsCommand* c
     else
     {
         cmd->cmd_str_len = end - line;
-        cmd->cmd_arg = NULL;
+        cmd->cmd_arg = nullptr;
         cmd->cmd_arg_len = 0;
     }
 }
@@ -327,7 +327,7 @@ static int CvsValidateEntry(const uint8_t* entry_arg, const uint8_t* end_arg)
 {
     int slashes = 0;
 
-    if ((entry_arg == NULL) || (end_arg == NULL))
+    if ((entry_arg == nullptr) || (end_arg == nullptr))
     {
         return CVS_ENTRY_VALID;
     }
@@ -348,7 +348,7 @@ static int CvsValidateEntry(const uint8_t* entry_arg, const uint8_t* end_arg)
         if (*entry_arg != '/')
         {
             entry_arg = (uint8_t*)memchr(entry_arg, '/', end_arg - entry_arg);
-            if (entry_arg == NULL)
+            if (entry_arg == nullptr)
                 break;
         }
 
@@ -375,7 +375,7 @@ static void CvsGetEOL(const uint8_t* ptr, const uint8_t* end,
     const uint8_t** eol, const uint8_t** eolm)
 {
     *eolm = (uint8_t*)memchr(ptr, CVS_COMMAND_DELIMITER, end - ptr);
-    if (*eolm == NULL)
+    if (*eolm == nullptr)
     {
         *eolm = end;
         *eol = end;

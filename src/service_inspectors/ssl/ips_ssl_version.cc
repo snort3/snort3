@@ -86,7 +86,7 @@ bool SslVersionOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    const SslVersionOption& rhs = (SslVersionOption&)ips;
+    const SslVersionOption& rhs = (const SslVersionOption&)ips;
 
     if ( (svod.flags == rhs.svod.flags) &&
         (svod.mask == rhs.svod.mask) )

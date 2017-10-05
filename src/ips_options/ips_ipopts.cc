@@ -83,9 +83,9 @@ bool IpOptOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    IpOptOption& rhs = (IpOptOption&)ips;
-    IpOptionData* left = (IpOptionData*)&config;
-    IpOptionData* right = (IpOptionData*)&rhs.config;
+    const IpOptOption& rhs = (const IpOptOption&)ips;
+    const IpOptionData* left = &config;
+    const IpOptionData* right = &rhs.config;
 
     if ((left->ip_option == right->ip_option) &&
         (left->any_flag == right->any_flag))

@@ -31,7 +31,7 @@ class Flow;
 class FileSegment
 {
 public:
-    FileSegment() { }
+    FileSegment() = default;
     ~FileSegment();
 
     // Use single list for simplicity

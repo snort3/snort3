@@ -42,7 +42,7 @@ extern THREAD_LOCAL ClientAppMatch* match_free_list;
 class ClientDiscovery : public AppIdDiscovery
 {
 public:
-    ~ClientDiscovery();
+    ~ClientDiscovery() override;
     static ClientDiscovery& get_instance();
 
     void finalize_client_plugins();

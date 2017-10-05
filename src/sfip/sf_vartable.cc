@@ -55,15 +55,15 @@ vartable_t* sfvt_alloc_table()
 static char* sfvt_expand_value(vartable_t* table, const char* value)
 {
     const char* ptr, * end;
-    char* tmp, * ret = NULL;
+    char* tmp, * ret = nullptr;
     int retlen = 0, retsize = 0;
     int escaped = 0;
 
-    if ((table == NULL) || (value == NULL))
-        return NULL;
+    if ((table == nullptr) || (value == nullptr))
+        return nullptr;
 
     if (strlen(value) == 0)
-        return NULL;
+        return nullptr;
 
     ptr = value;
     end = value + strlen(value);
@@ -72,7 +72,7 @@ static char* sfvt_expand_value(vartable_t* table, const char* value)
     while ((end > ptr) && isspace((int)*(end-1)))
         end--;
     if (ptr == end)
-        return NULL;
+        return nullptr;
 
     tmp = snort_strndup(ptr, end-ptr);
 
@@ -126,10 +126,10 @@ static char* sfvt_expand_value(vartable_t* table, const char* value)
             ipvar = sfvt_lookup_var(table, vartmp);
             snort_free(vartmp);
 
-            if (ipvar == NULL)
+            if (ipvar == nullptr)
                 goto sfvt_expand_value_error;
 
-            if (ipvar->value != NULL)
+            if (ipvar->value != nullptr)
             {
                 if ((int)(retlen + strlen(ipvar->value)) >= retsize)
                 {
@@ -138,7 +138,7 @@ static char* sfvt_expand_value(vartable_t* table, const char* value)
                     retsize = retlen + strlen(ipvar->value) + (end - ptr) + 1;
                     tmpalloc = (char*)snort_alloc(retsize);
                     memcpy(tmpalloc, ret, retlen);
-                    strcpy(tmpalloc + retlen, ipvar->value);
+                    strncpy(tmpalloc + retlen, ipvar->value, retsize - retlen);
                     snort_free(ret);
                     retlen += strlen(ipvar->value);
                     ret = tmpalloc;
@@ -176,7 +176,7 @@ static char* sfvt_expand_value(vartable_t* table, const char* value)
 sfvt_expand_value_error:
     snort_free(ret);
     snort_free(tmp);
-    return NULL;
+    return nullptr;
 }
 
 // XXX this implementation is just used to support
@@ -185,7 +185,7 @@ SfIpRet sfvt_define(vartable_t* table, const char* name, const char* value)
 {
     char* buf;
     int len;
-    sfip_var_t* ipret = NULL;
+    sfip_var_t* ipret = nullptr;
     SfIpRet ret;
 
     if (!name || !value)
@@ -216,7 +216,7 @@ SfIpRet sfvt_add_str(vartable_t* table, const char* str, sfip_var_t** ipret)
 
     /* Creates the variable */
     var = sfvar_alloc(table, str, &status);
-    if ( var == NULL )
+    if ( var == nullptr )
     {
         return SFIP_FAILURE;
     }
@@ -312,7 +312,7 @@ sfip_var_t* sfvt_lookup_var(vartable_t* table, const char* name)
     const char* end;
 
     if (!table || !name)
-        return NULL;
+        return nullptr;
 
     if (*name == '$')
         name++;
@@ -332,7 +332,7 @@ sfip_var_t* sfvt_lookup_var(vartable_t* table, const char* name)
             return p;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 void sfvt_free_table(vartable_t* table)
@@ -381,7 +381,7 @@ TEST_CASE("SfVarTable_Kitchen_Sink", "[SfVarTable]")
     CHECK(sfvt_add_str(table, " phlegm [sdfg ", &var) == SFIP_FAILURE);
     CHECK(sfvt_add_str(table, " phlegm [ sdfg, 12.123.1.4.5 }", &var) == SFIP_FAILURE);
     CHECK(sfvt_add_str(table, " [ 12.123.1.4.5 ]", &var) == SFIP_FAILURE);
-    CHECK(sfvt_add_str(table, NULL, &var) == SFIP_FAILURE);
+    CHECK(sfvt_add_str(table, nullptr, &var) == SFIP_FAILURE);
     CHECK(sfvt_add_str(table, "", &var) == SFIP_FAILURE);
 
     /* Containment tests */

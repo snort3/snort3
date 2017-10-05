@@ -32,8 +32,7 @@ class Ttl : public ConversionState
 {
 public:
     Ttl(Converter& c) : ConversionState(c) { }
-    virtual ~Ttl() { }
-    virtual bool convert(std::istringstream&);
+    bool convert(std::istringstream&) override;
 };
 } // namespace
 

@@ -54,8 +54,8 @@ bool Active::s_enabled = false;
 typedef int (* send_t) (
     const DAQ_PktHdr_t* h, int rev, const uint8_t* buf, uint32_t len);
 
-static THREAD_LOCAL eth_t* s_link = NULL;
-static THREAD_LOCAL ip_t* s_ipnet = NULL;
+static THREAD_LOCAL eth_t* s_link = nullptr;
+static THREAD_LOCAL ip_t* s_ipnet = nullptr;
 static THREAD_LOCAL send_t s_send = SFDAQ::inject;
 
 Active::ActiveStatus Active::get_status()
@@ -278,7 +278,7 @@ bool Active::send_data(
 
     plen = 0;
     flags = (flags & ~ENC_FLAG_VAL) | sent;
-    seg = PacketManager::encode_response(TcpResponse::FIN, flags, p, plen, NULL, 0);
+    seg = PacketManager::encode_response(TcpResponse::FIN, flags, p, plen, nullptr, 0);
 
     if ( !seg )
         return false;
@@ -340,17 +340,17 @@ bool Active::is_unreachable_candidate(const Packet* p)
     {
     case PktType::TCP:
     case PktType::UDP:
-        return 1;
+        return true;
 
     case PktType::ICMP:
         // FIXIT-L return false for icmp unreachables
-        return 1;
+        return true;
 
     default:
         break;
     }
 
-    return 0;
+    return false;
 }
 
 void Active::cant_drop()
@@ -524,8 +524,8 @@ void Active::close()
     if ( s_ipnet )
         ip_close(s_ipnet);
 
-    s_link = NULL;
-    s_ipnet = NULL;
+    s_link = nullptr;
+    s_ipnet = nullptr;
 }
 
 static const char* act_str[Active::ACT_MAX][Active::AST_MAX] =

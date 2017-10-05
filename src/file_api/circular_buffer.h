@@ -29,7 +29,7 @@
 #include "main/snort_types.h"
 
 #define CB_SUCCESS    0  // FIXIT-L use bool
-#define CB_FAIL      -1
+#define CB_FAIL      (-1)
 
 // Opaque buffer element type.  This would be defined by the application.
 typedef void* ElemType;

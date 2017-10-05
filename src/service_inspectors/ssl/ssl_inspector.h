@@ -40,7 +40,7 @@ class SslFlowData : public FlowData
 {
 public:
     SslFlowData();
-    ~SslFlowData();
+    ~SslFlowData() override;
 
     static void init()
     { inspector_id = FlowData::create_flow_data_id(); }

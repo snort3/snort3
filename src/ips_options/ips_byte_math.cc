@@ -80,7 +80,7 @@ public:
     ByteMathOption(const ByteMathData& c) : IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_USE),
         config(c) { }
 
-    ~ByteMathOption()
+    ~ByteMathOption() override
     { snort_free(config.result_name); }
 
     uint32_t hash() const override;
@@ -132,7 +132,7 @@ bool ByteMathOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    ByteMathOption& rhs = (ByteMathOption&)ips;
+    const ByteMathOption& rhs = (const ByteMathOption&)ips;
     const ByteMathData* left = &config;
     const ByteMathData* right = &rhs.config;
 

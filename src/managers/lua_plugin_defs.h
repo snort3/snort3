@@ -20,7 +20,7 @@
 #ifndef LUA_PLUGIN_DEFS_H
 #define LUA_PLUGIN_DEFS_H
 
-#include <stdint.h>
+#include <cstdint>
 
 struct SnortBuffer
 {

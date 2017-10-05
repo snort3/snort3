@@ -292,21 +292,21 @@ static int netbios_validate_name_and_decode(const uint8_t** data,
 
     if (end - *data < (int)sizeof(NBNSLabelLength))
         return -1;
-    lbl_len = (NBNSLabelLength*)(*data);
+    lbl_len = (const NBNSLabelLength*)(*data);
     switch (lbl_len->len & NBNS_LENGTH_FLAGS)
     {
     case 0x00:
-        lbl_data = (NBNSLabelData*)(*data);
+        lbl_data = (const NBNSLabelData*)(*data);
         if (end - *data < (int)sizeof(NBNSLabelData))
             return -1;
         *data += sizeof(NBNSLabelData);
         break;
     case 0xC0:
-        lbl_ptr = (NBNSLabelPtr*)(*data);
+        lbl_ptr = (const NBNSLabelPtr*)(*data);
         *data += sizeof(NBNSLabelPtr);
         if (begin + lbl_ptr->position + sizeof(NBNSLabelData) > end)
             return -1;
-        lbl_data = (NBNSLabelData*)(begin + lbl_ptr->position);
+        lbl_data = (const NBNSLabelData*)(begin + lbl_ptr->position);
         break;
     default:
         return -1;
@@ -348,21 +348,21 @@ static int netbios_validate_name(const uint8_t** data,
 
     if (end - *data < (int)sizeof(NBNSLabelLength))
         return -1;
-    lbl_len = (NBNSLabelLength*)(*data);
+    lbl_len = (const NBNSLabelLength*)(*data);
     switch (lbl_len->len & NBNS_LENGTH_FLAGS)
     {
     case 0x00:
-        lbl_data = (NBNSLabelData*)(*data);
+        lbl_data = (const NBNSLabelData*)(*data);
         if (end - *data < (int)sizeof(NBNSLabelData))
             return -1;
         *data += sizeof(NBNSLabelData);
         break;
     case 0xC0:
-        lbl_ptr = (NBNSLabelPtr*)(*data);
+        lbl_ptr = (const NBNSLabelPtr*)(*data);
         *data += sizeof(NBNSLabelPtr);
         if (begin + lbl_ptr->position + sizeof(NBNSLabelData) > end)
             return -1;
-        lbl_data = (NBNSLabelData*)(begin + lbl_ptr->position);
+        lbl_data = (const NBNSLabelData*)(begin + lbl_ptr->position);
         break;
     default:
         return -1;
@@ -385,7 +385,7 @@ static int netbios_validate_label(const uint8_t** data,
 
     if (end - *data < (int)sizeof(NBNSLabel))
         return -1;
-    lbl = (NBNSLabel*)(*data);
+    lbl = (const NBNSLabel*)(*data);
     *data += sizeof(NBNSLabel);
     tmp = ntohs(lbl->type);
     if (tmp != NBNS_NB && tmp != NBNS_NBSTAT)
@@ -452,9 +452,6 @@ NbnsServiceDetector::NbnsServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-NbnsServiceDetector::~NbnsServiceDetector()
-{
-}
 
 int NbnsServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
@@ -472,7 +469,7 @@ int NbnsServiceDetector::validate(AppIdDiscoveryArgs& args)
         goto inprocess;
     if (size < sizeof(NBNSHeader))
         goto fail;
-    hdr = (NBNSHeader*)data;
+    hdr = (const NBNSHeader*)data;
     if ((hdr->Opcode > NBNS_OPCODE_QUERY &&
         hdr->Opcode < NBNS_OPCODE_REGISTRATION) ||
         (hdr->Opcode > NBNS_OPCODE_REFRESHALT &&
@@ -637,7 +634,7 @@ static inline void smb_find_domain(const uint8_t* data, uint16_t size, const int
 
     if (size < sizeof(*smb) + sizeof(wc))
         return;
-    smb = (ServiceSMBHeader*)data;
+    smb = (const ServiceSMBHeader*)data;
     if (smb->status != SERVICE_SMB_STATUS_SUCCESS)
         return;
     if (!(smb->flags[0] & SERVICE_SMB_FLAGS_RESPONSE))
@@ -645,8 +642,8 @@ static inline void smb_find_domain(const uint8_t* data, uint16_t size, const int
     unicode = smb->flags[2] & SERVICE_SMB_FLAGS_UNICODE;
     data += sizeof(*smb);
     size -= sizeof(*smb);
-    resp = (ServiceSMBAndXResponse*)data;
-    np = (ServiceSMBNegotiateProtocolResponse*)data;
+    resp = (const ServiceSMBAndXResponse*)data;
+    np = (const ServiceSMBNegotiateProtocolResponse*)data;
     wc = 2 * (uint16_t)*data;
     offset = 1;
     data++;
@@ -789,9 +786,6 @@ NbssServiceDetector::NbssServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-NbssServiceDetector::~NbssServiceDetector()
-{
-}
 
 int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
@@ -829,7 +823,7 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
         case NBSS_STATE_CONNECTION:
             if (size < sizeof(NBSSHeader))
                 goto fail;
-            hdr = (NBSSHeader*)data;
+            hdr = (const NBSSHeader*)data;
             data += sizeof(NBSSHeader);
             nd->state = NBSS_STATE_ERROR;
             switch (hdr->type)
@@ -870,7 +864,7 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
                     }
                 }
                 else if (tmp >= 4 && nd->length >= 4 &&
-                    !(*((uint32_t*)data)) &&
+                    !(*((const uint32_t*)data)) &&
                     dcerpc_validate(data+4, ((int)min(tmp, nd->length)) - 4) > 0)
                 {
                     nd->serviceAppId = APP_ID_DCE_RPC;
@@ -904,7 +898,7 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
         case NBSS_STATE_FLOW:
             if (size < sizeof(NBSSHeader))
                 goto fail;
-            hdr = (NBSSHeader*)data;
+            hdr = (const NBSSHeader*)data;
             data += sizeof(NBSSHeader);
             switch (hdr->type)
             {
@@ -932,7 +926,7 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
                     }
                 }
                 else if (tmp >= 4 && nd->length >= 4 &&
-                    !(*((uint32_t*)data)) &&
+                    !(*((const uint32_t*)data)) &&
                     !(dcerpc_validate(data+4, ((int)min(tmp, nd->length)) - 4) > 0))
                 {
                     nd->serviceAppId = APP_ID_DCE_RPC;
@@ -1066,7 +1060,7 @@ int NbdgmServiceDetector::validate(AppIdDiscoveryArgs& args)
     source_name[0] = 0;
     end = data + size;
 
-    hdr = (NBDgmHeader*)data;
+    hdr = (const NBDgmHeader*)data;
     data += sizeof(NBDgmHeader);
     if (hdr->zero)
         goto fail;
@@ -1106,13 +1100,13 @@ int NbdgmServiceDetector::validate(AppIdDiscoveryArgs& args)
             data += sizeof(NB_SMB_BANNER);
             if (end-data < (int)sizeof(ServiceSMBHeader))
                 goto not_mailslot;
-            smb = (ServiceSMBHeader*)data;
+            smb = (const ServiceSMBHeader*)data;
             data += sizeof(ServiceSMBHeader);
             if (smb->command != SERVICE_SMB_TRANSACTION_COMMAND)
                 goto not_mailslot;
             if (end-data < (int)sizeof(ServiceSMBTransactionHeader))
                 goto not_mailslot;
-            trans = (ServiceSMBTransactionHeader*)data;
+            trans = (const ServiceSMBTransactionHeader*)data;
             data += sizeof(ServiceSMBTransactionHeader);
             if (trans->wc == SERVICE_SMB_NOT_TRANSACTION_WC)
                 goto not_mailslot;
@@ -1120,14 +1114,14 @@ int NbdgmServiceDetector::validate(AppIdDiscoveryArgs& args)
                 sizeof(ServiceSMBBrowserHeader))
                 goto not_mailslot;
             data += (trans->sc*2);
-            len = *((uint16_t*)data);
+            len = *((const uint16_t*)data);
             data += sizeof(uint16_t);
             if (end-data < len)
                 goto not_mailslot;
             if (memcmp(data, mailslot, sizeof(mailslot)))
                 goto not_mailslot;
             data += sizeof(mailslot);
-            browser = (ServiceSMBBrowserHeader*)data;
+            browser = (const ServiceSMBBrowserHeader*)data;
             if (browser->command != SERVICE_SMB_MAILSLOT_HOST &&
                 browser->command != SERVICE_SMB_MAILSLOT_LOCAL_MASTER)
             {
@@ -1144,7 +1138,7 @@ not_mailslot:
     case NBDGM_TYPE_ERROR:
         if (end-data < (int)sizeof(NBDgmError))
             goto fail;
-        err = (NBDgmError*)data;
+        err = (const NBDgmError*)data;
         data += sizeof(NBDgmError);
         if (end != data)
             goto fail;

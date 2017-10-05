@@ -35,7 +35,7 @@ struct StreamBuffer
 class SO_PUBLIC StreamSplitter
 {
 public:
-    virtual ~StreamSplitter() { }
+    virtual ~StreamSplitter() = default;
 
     enum Status
     {
@@ -103,7 +103,6 @@ class AtomSplitter : public StreamSplitter
 {
 public:
     AtomSplitter(bool, uint16_t size = 0);
-    ~AtomSplitter() = default;
 
     Status scan(Flow*, const uint8_t*, uint32_t, uint32_t, uint32_t*) override;
     void reset() override;

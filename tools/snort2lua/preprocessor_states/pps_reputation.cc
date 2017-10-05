@@ -31,8 +31,7 @@ class Reputation : public ConversionState
 {
 public:
     Reputation(Converter& c) : ConversionState(c) { }
-    virtual ~Reputation() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 
@@ -53,13 +52,13 @@ bool Reputation::convert(std::istringstream& data_stream)
         if (!(arg_stream >> keyword))
             tmpval = false;
 
-        else if (!keyword.compare("shared_mem"))
+        else if (keyword == "shared_mem")
             table_api.add_deleted_comment("shared_mem");
 
-        else if (!keyword.compare("shared_refresh"))
+        else if (keyword == "shared_refresh")
             table_api.add_deleted_comment("shared_refresh");
 
-        else if (!keyword.compare("blacklist"))
+        else if (keyword == "blacklist")
         {
             std::string file_name;
             if( arg_stream >> file_name)
@@ -72,59 +71,59 @@ bool Reputation::convert(std::istringstream& data_stream)
                 tmpval = false;
             }
         }
-        else if (!keyword.compare("memcap"))
+        else if (keyword == "memcap")
         {
             tmpval = parse_int_option("memcap", arg_stream, false);
         }
-        else if (!keyword.compare("nested_ip"))
+        else if (keyword == "nested_ip")
         {
             std::string val;
             if (!(arg_stream >> val))
                 data_api.failed_conversion(arg_stream,  "reputation: nested_ip <missing_arg>");
-            else if (!val.compare("inner"))
+            else if (val == "inner")
                 table_api.add_option("nested_ip", "inner");
-            else if (!val.compare("outer"))
+            else if (val == "outer")
                 table_api.add_option("nested_ip", "outer");
-            else if (!val.compare("both"))
+            else if (val == "both")
                 table_api.add_option("nested_ip", "all");
             else
             {
                 data_api.failed_conversion(arg_stream, "reputation: nested_ip " + val);
             }
         }
-        else if (!keyword.compare("priority"))
+        else if (keyword == "priority")
         {
             std::string val;
             if (!(arg_stream >> val))
                 data_api.failed_conversion(arg_stream,  "reputation: priority <missing_arg>");
-            else if (!val.compare("whitelist"))
+            else if (val == "whitelist")
                 table_api.add_option("priority", "whitelist");
-            else if (!val.compare("blacklist"))
+            else if (val == "blacklist")
                 table_api.add_option("priority", "blacklist");
             else
             {
                 data_api.failed_conversion(arg_stream, "reputation: priority " + val);
             }
         }
-        else if (!keyword.compare("scan_local"))
+        else if (keyword == "scan_local")
         {
             tmpval = table_api.add_option("scan_local", true);
         }
-        else if (!keyword.compare("white"))
+        else if (keyword == "white")
         {
             std::string val;
             if (!(arg_stream >> val))
                 data_api.failed_conversion(arg_stream,  "reputation: white <missing_arg>");
-            else if (!val.compare("unblack"))
+            else if (val == "unblack")
                 table_api.add_option("white", "unblack");
-            else if (!val.compare("trust"))
+            else if (val == "trust")
                 table_api.add_option("white", "trust");
             else
             {
                 data_api.failed_conversion(arg_stream, "reputation: white " + val);
             }
         }
-        else if (!keyword.compare("whitelist"))
+        else if (keyword == "whitelist")
         {
             std::string file_name;
             if( arg_stream >> file_name)

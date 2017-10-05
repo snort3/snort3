@@ -30,7 +30,6 @@ class TcpStateEstablished : public TcpStateHandler
 {
 public:
     TcpStateEstablished(TcpStateMachine&);
-    virtual ~TcpStateEstablished();
 
     bool syn_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool syn_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;

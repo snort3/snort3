@@ -222,7 +222,7 @@ void init_signals()
 
     sigemptyset(&set);
     // FIXIT-L this is undefined for multithreaded apps
-    sigprocmask(SIG_SETMASK, &set, NULL);
+    sigprocmask(SIG_SETMASK, &set, nullptr);
 
     /* Make this prog behave nicely when signals come along.
      * Windows doesn't like all of these signals, and will

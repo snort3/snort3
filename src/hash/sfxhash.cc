@@ -179,7 +179,7 @@ SFXHASH* sfxhash_new(int nrows, int keysize, int datasize, unsigned long maxmem,
     {
         snort_free(h->sfhashfcn);
         snort_free(h);
-        return 0;
+        return nullptr;
     }
 
     for ( int i = 0; i < nrows; i++ )
@@ -194,10 +194,10 @@ SFXHASH* sfxhash_new(int nrows, int keysize, int datasize, unsigned long maxmem,
     h->nrows    = nrows;
     h->max_nodes = 0;
     h->crow     = 0;
-    h->cnode    = 0;
+    h->cnode    = nullptr;
     h->count    = 0;
-    h->ghead    = 0;
-    h->gtail    = 0;
+    h->ghead    = nullptr;
+    h->gtail    = nullptr;
     h->anr_count= 0;
     h->anr_tries= 0;
     h->anr_flag = anr_flag;
@@ -345,7 +345,7 @@ static void sfxhash_save_free_node(SFXHASH* t, SFXHASH_NODE* hnode)
     /* Add A Node to the Free Node List */
     if ( t->fhead ) /* add the node to head of the the existing list */
     {
-        hnode->gprev    = 0;
+        hnode->gprev    = nullptr;
         hnode->gnext    = t->fhead;
         t->fhead->gprev = hnode;
         t->fhead        = hnode;
@@ -353,8 +353,8 @@ static void sfxhash_save_free_node(SFXHASH* t, SFXHASH_NODE* hnode)
     }
     else /* 1st node in this list */
     {
-        hnode->gprev = 0;
-        hnode->gnext = 0;
+        hnode->gprev = nullptr;
+        hnode->gnext = nullptr;
         t->fhead    = hnode;
         t->ftail    = hnode;
     }
@@ -371,10 +371,10 @@ static SFXHASH_NODE* sfxhash_get_free_node(SFXHASH* t)
     {
         t->fhead = t->fhead->gnext;
         if ( t->fhead )
-            t->fhead->gprev = 0;
+            t->fhead->gprev = nullptr;
 
         if ( t->ftail  == node ) /* no more nodes - clear the tail */
-            t->ftail  =  0;
+            t->ftail  =  nullptr;
     }
 
     return node;
@@ -385,7 +385,7 @@ static void sfxhash_glink_node(SFXHASH* t, SFXHASH_NODE* hnode)
     /* Add The Node */
     if ( t->ghead ) /* add the node to head of the the existing list */
     {
-        hnode->gprev    = 0;
+        hnode->gprev    = nullptr;
         hnode->gnext    = t->ghead;
         t->ghead->gprev = hnode;
         t->ghead        = hnode;
@@ -393,8 +393,8 @@ static void sfxhash_glink_node(SFXHASH* t, SFXHASH_NODE* hnode)
     }
     else /* 1st node in this list */
     {
-        hnode->gprev = 0;
-        hnode->gnext = 0;
+        hnode->gprev = nullptr;
+        hnode->gnext = nullptr;
         t->ghead    = hnode;
         t->gtail    = hnode;
     }
@@ -412,7 +412,7 @@ static void sfxhash_gunlink_node(SFXHASH* t, SFXHASH_NODE* hnode)
     {
         t->ghead = t->ghead->gnext;
         if ( t->ghead )
-            t->ghead->gprev = 0;
+            t->ghead->gprev = nullptr;
     }
 
     if ( hnode->gprev )
@@ -443,15 +443,15 @@ static void sfxhash_link_node(SFXHASH* t, SFXHASH_NODE* hnode)
     /* Add The Node to the Hash Table Row List */
     if ( t->table[hnode->rindex] ) /* add the node to the existing list */
     {
-        hnode->prev = 0;  // insert node as head node
+        hnode->prev = nullptr;  // insert node as head node
         hnode->next=t->table[hnode->rindex];
         t->table[hnode->rindex]->prev = hnode;
         t->table[hnode->rindex] = hnode;
     }
     else /* 1st node in this list */
     {
-        hnode->prev=0;
-        hnode->next=0;
+        hnode->prev=nullptr;
+        hnode->next=nullptr;
         t->table[hnode->rindex] = hnode;
     }
 }
@@ -468,7 +468,7 @@ static void sfxhash_unlink_node(SFXHASH* t, SFXHASH_NODE* hnode)
     {
         t->table[hnode->rindex] = t->table[hnode->rindex]->next;
         if ( t->table[hnode->rindex] )
-            t->table[hnode->rindex]->prev = 0;
+            t->table[hnode->rindex]->prev = nullptr;
     }
 }
 
@@ -569,7 +569,7 @@ static SFXHASH_NODE* sfxhash_newnode(SFXHASH* t)
 
 static SFXHASH_NODE* sfxhash_find_node_row(SFXHASH* t, const void* key, int* rindex)
 {
-    unsigned hashkey = t->sfhashfcn->hash_fcn(t->sfhashfcn, (unsigned char*)key, t->keysize);
+    unsigned hashkey = t->sfhashfcn->hash_fcn(t->sfhashfcn, (const unsigned char*)key, t->keysize);
 
 /*     printf("hashkey: %u t->keysize: %d\n", hashkey, t->keysize);
        flowkey_fprint(stdout, key);
@@ -1025,7 +1025,7 @@ SFXHASH_NODE* sfxhash_findnext(SFXHASH* t)
  */
 
 int sfxhash_set_keyops(SFXHASH* h,
-    unsigned (* hash_fcn)(SFHASHFCN* p, unsigned char* d, int n),
+    unsigned (* hash_fcn)(SFHASHFCN* p, const unsigned char* d, int n),
     int (* keycmp_fcn)(const void* s1, const void* s2, size_t n))
 {
     if (h && hash_fcn && keycmp_fcn)

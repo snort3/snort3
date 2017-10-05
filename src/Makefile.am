@@ -110,7 +110,8 @@ connectors/file_connector/libfile_connector.a \
 connectors/tcp_connector/libtcp_connector.a \
 side_channel/libside_channel.a \
 ports/libports.a \
-utils/libutils.a
+utils/libutils.a \
+@LTLIBICONV@
 
 SUBDIRS = \
 actions \

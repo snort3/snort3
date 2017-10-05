@@ -62,7 +62,7 @@ static struct sig_map_s
 #ifdef HAVE_LZMA
     { SWF_LZMA_Sig, sizeof(SWF_LZMA_Sig), false, FILE_TYPE_SWF, FILE_COMPRESSION_TYPE_LZMA },
 #endif
-    { NULL, 0, false, FILE_TYPE_NONE, FILE_COMPRESSION_TYPE_NONE }
+    { nullptr, 0, false, FILE_TYPE_NONE, FILE_COMPRESSION_TYPE_NONE }
 };
 
 /* Define the elements of the Sig_State value (packed for storage efficiency */
@@ -82,7 +82,7 @@ static fd_status_t Locate_Sig_Here(fd_session_t* SessionPtr)
 
     /* If there's no new input, we don't change state */
     if ( (SessionPtr->Avail_In == 0) ||
-        (SessionPtr->Next_In == NULL) || (SessionPtr->Next_Out == NULL) )
+        (SessionPtr->Next_In == nullptr) || (SessionPtr->Next_Out == nullptr) )
         return( File_Decomp_Error );
 
     if ( SessionPtr->Avail_Out < MAX_SIG_LENGTH )
@@ -116,11 +116,11 @@ static fd_status_t Locate_Sig_Here(fd_session_t* SessionPtr)
               is valid for the current implementation where the signature only
               occurs at the beginning of the file.  For the generic case of the sig
               begin embedded with the file, the search will need to modified.*/
-    while ( 1 )
+    while ( true )
     {
         /* if we get to the end of the sig table (or the table is empty),
            indicate that we didn't match a sig */
-        if ( Signature_Map[Sig_Index].Sig == NULL )
+        if ( Signature_Map[Sig_Index].Sig == nullptr )
             return( File_Decomp_NoSig );
 
         /* Get next char and see if it matches next char in sig */
@@ -130,7 +130,7 @@ static fd_status_t Locate_Sig_Here(fd_session_t* SessionPtr)
             /* Check to see if we are at the end of the sig string. */
             if ( Char_Index == (Signature_Map[Sig_Index].Sig_Length-1) )
             {
-                uint8_t* Sig = (uint8_t*)Signature_Map[Sig_Index].Sig;
+                const uint8_t* Sig = (const uint8_t*)Signature_Map[Sig_Index].Sig;
                 uint16_t Len = (uint16_t)Signature_Map[Sig_Index].Sig_Length;
 
                 SessionPtr->File_Type = Signature_Map[Sig_Index].File_Type;
@@ -138,7 +138,7 @@ static fd_status_t Locate_Sig_Here(fd_session_t* SessionPtr)
 
                 if (SessionPtr->File_Type == FILE_TYPE_SWF)
                 {
-                    Sig = (uint8_t*)SWF_Uncomp_Sig;
+                    Sig = (const uint8_t*)SWF_Uncomp_Sig;
                     Len = (uint16_t)sizeof( SWF_Uncomp_Sig );
                 }
                 /* The following is safe as we can only be here is there are
@@ -237,14 +237,14 @@ fd_status_t File_Decomp_Init(fd_session_t* SessionPtr)
 {
     int Sig;
 
-    if ( SessionPtr == NULL )
+    if ( SessionPtr == nullptr )
         return( File_Decomp_Error );
 
     SessionPtr->State = STATE_READY;
     SessionPtr->File_Type = FILE_TYPE_NONE;
     SessionPtr->Decomp_Type = FILE_COMPRESSION_TYPE_NONE;
 
-    for ( Sig=0; Signature_Map[Sig].Sig != NULL; Sig++ )
+    for ( Sig=0; Signature_Map[Sig].Sig != nullptr; Sig++ )
     {
         if ( (Signature_Map[Sig].File_Type == FILE_TYPE_PDF ) &&
             ((SessionPtr->Modes & FILE_PDF_ANY) != 0) )
@@ -276,9 +276,9 @@ fd_session_t* File_Decomp_New()
     New_Session->Total_In = 0;
     New_Session->Total_Out = 0;
     New_Session->Avail_In = 0;
-    New_Session->Next_In = NULL;
+    New_Session->Next_In = nullptr;
     New_Session->Avail_Out = 0;
-    New_Session->Next_Out = NULL;
+    New_Session->Next_Out = nullptr;
 
     return New_Session;
 }
@@ -290,8 +290,8 @@ fd_status_t File_Decomp(fd_session_t* SessionPtr)
 {
     fd_status_t Return_Code;
 
-    if ( (SessionPtr == NULL) || (SessionPtr->State == STATE_NEW) ||
-        (SessionPtr->Next_In == NULL) || (SessionPtr->Next_Out == NULL) )
+    if ( (SessionPtr == nullptr) || (SessionPtr->State == STATE_NEW) ||
+        (SessionPtr->Next_In == nullptr) || (SessionPtr->Next_Out == nullptr) )
         return( File_Decomp_Error );
 
     /* STATE_NEW: Look for one of the configured file signatures. */
@@ -322,7 +322,7 @@ fd_status_t File_Decomp(fd_session_t* SessionPtr)
 
 fd_status_t File_Decomp_End(fd_session_t* SessionPtr)
 {
-    if ( SessionPtr == NULL )
+    if ( SessionPtr == nullptr )
         return( File_Decomp_Error );
 
     switch ( SessionPtr->File_Type )
@@ -344,7 +344,7 @@ fd_status_t File_Decomp_Reset(fd_session_t* SessionPtr)
 {
     fd_status_t Ret_Code;
 
-    if ( SessionPtr == NULL )
+    if ( SessionPtr == nullptr )
         return( File_Decomp_Error );
 
     Ret_Code = File_Decomp_End(SessionPtr);
@@ -356,7 +356,7 @@ fd_status_t File_Decomp_Reset(fd_session_t* SessionPtr)
 
 fd_status_t File_Decomp_StopFree(fd_session_t* SessionPtr)
 {
-    if ( SessionPtr == NULL )
+    if ( SessionPtr == nullptr )
         return( File_Decomp_Error );
 
     File_Decomp_End(SessionPtr);
@@ -387,7 +387,7 @@ void File_Decomp_Free(fd_session_t* SessionPtr)
 
 void File_Decomp_Alert(fd_session_t* SessionPtr, int Event)
 {
-    if ( (SessionPtr != NULL) && (SessionPtr->Alert_Callback != NULL) &&
+    if ( (SessionPtr != nullptr) && (SessionPtr->Alert_Callback != nullptr) &&
         (SessionPtr->Alert_Context) )
         (SessionPtr->Alert_Callback)(SessionPtr->Alert_Context, Event);
 }
@@ -400,22 +400,22 @@ void File_Decomp_Alert(fd_session_t* SessionPtr, int Event)
 
 TEST_CASE("File_Decomp_StopFree-null", "[file_decomp]")
 {
-    REQUIRE((File_Decomp_StopFree((fd_session_t*)NULL) == File_Decomp_Error));
+    REQUIRE((File_Decomp_StopFree((fd_session_t*)nullptr) == File_Decomp_Error));
 }
 
 TEST_CASE("File_Decomp_Reset-null", "[file_decomp]")
 {
-    REQUIRE((File_Decomp_Reset((fd_session_t*)NULL) == File_Decomp_Error));
+    REQUIRE((File_Decomp_Reset((fd_session_t*)nullptr) == File_Decomp_Error));
 }
 
 TEST_CASE("File_Decomp_End-null", "[file_decomp]")
 {
-    REQUIRE((File_Decomp_End((fd_session_t*)NULL) == File_Decomp_Error));
+    REQUIRE((File_Decomp_End((fd_session_t*)nullptr) == File_Decomp_Error));
 }
 
 TEST_CASE("File_Decomp_Init-null", "[file_decomp]")
 {
-    REQUIRE((File_Decomp_Init((fd_session_t*)NULL) == File_Decomp_Error));
+    REQUIRE((File_Decomp_Init((fd_session_t*)nullptr) == File_Decomp_Error));
 }
 
 TEST_CASE("File_Decomp_New", "[file_decomp]")
@@ -436,7 +436,7 @@ TEST_CASE("File_Decomp_New", "[file_decomp]")
 
 TEST_CASE("File_Decomp-null", "[file_decomp]")
 {
-    REQUIRE((File_Decomp((fd_session_t*)NULL) == File_Decomp_Error));
+    REQUIRE((File_Decomp((fd_session_t*)nullptr) == File_Decomp_Error));
 }
 
 TEST_CASE("File_Decomp-not_active", "[file_decomp]")

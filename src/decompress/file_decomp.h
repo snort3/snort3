@@ -104,9 +104,8 @@ struct fd_session_t
         struct fd_SWF_t* SWF;
     };
 
-    // FIXIT-L Next_In should be const uint8_t*
-    uint8_t* Next_In;    // next input byte
-    uint8_t* Next_Out;   // next output byte should be put there
+    const uint8_t* Next_In;     // next input byte
+    uint8_t* Next_Out;          // next output byte should be put there
 
     // Alerting callback
     void (* Alert_Callback)(void* Context, int Event);
@@ -139,22 +138,22 @@ struct fd_session_t
    of the underlying decompression engine context. */
 #ifndef SYNC_IN
 #define SYNC_IN(dest) \
-    dest->next_in = SessionPtr->Next_In; \
-    dest->avail_in = SessionPtr->Avail_In; \
-    dest->total_in = SessionPtr->Total_In; \
-    dest->next_out = SessionPtr->Next_Out; \
-    dest->avail_out = SessionPtr->Avail_Out; \
-    dest->total_out = SessionPtr->Total_Out;
+    dest->next_in = const_cast<z_const Bytef*>(SessionPtr->Next_In); \
+    (dest)->avail_in = SessionPtr->Avail_In; \
+    (dest)->total_in = SessionPtr->Total_In; \
+    (dest)->next_out = SessionPtr->Next_Out; \
+    (dest)->avail_out = SessionPtr->Avail_Out; \
+    (dest)->total_out = SessionPtr->Total_Out;
 #endif
 
 #ifndef SYNC_OUT
 #define SYNC_OUT(src) \
-    SessionPtr->Next_In = (uint8_t*)src->next_in; \
-    SessionPtr->Avail_In = src->avail_in; \
-    SessionPtr->Total_In = src->total_in; \
-    SessionPtr->Next_Out = (uint8_t*)src->next_out; \
-    SessionPtr->Avail_Out = src->avail_out; \
-    SessionPtr->Total_Out = src->total_out;
+    SessionPtr->Next_In = (const uint8_t*)(src)->next_in; \
+    SessionPtr->Avail_In = (src)->avail_in; \
+    SessionPtr->Total_In = (src)->total_in; \
+    SessionPtr->Next_Out = (uint8_t*)(src)->next_out; \
+    SessionPtr->Avail_Out = (src)->avail_out; \
+    SessionPtr->Total_Out = (src)->total_out;
 #endif
 
 /* Inline Functions */
@@ -162,7 +161,7 @@ struct fd_session_t
 /* If available, look at the next available byte in the input queue */
 inline bool Peek_1(fd_session_t* SessionPtr, uint8_t* c)
 {
-    if ( (SessionPtr->Next_In != NULL) && (SessionPtr->Avail_In > 0) )
+    if ( (SessionPtr->Next_In != nullptr) && (SessionPtr->Avail_In > 0) )
     {
         *c = *(SessionPtr->Next_In);
         return( true );
@@ -174,7 +173,7 @@ inline bool Peek_1(fd_session_t* SessionPtr, uint8_t* c)
 /* If available, get a byte from the input queue */
 inline bool Get_1(fd_session_t* SessionPtr, uint8_t* c)
 {
-    if ( (SessionPtr->Next_In != NULL) && (SessionPtr->Avail_In > 0) )
+    if ( (SessionPtr->Next_In != nullptr) && (SessionPtr->Avail_In > 0) )
     {
         *c = *(SessionPtr->Next_In)++;
         SessionPtr->Avail_In -= 1;
@@ -187,9 +186,9 @@ inline bool Get_1(fd_session_t* SessionPtr, uint8_t* c)
 
 /* If available, get N bytes from the input queue.  All N must be
    available for this call to succeed. */
-inline bool Get_N(fd_session_t* SessionPtr, uint8_t** c, uint16_t N)
+inline bool Get_N(fd_session_t* SessionPtr, const uint8_t** c, uint16_t N)
 {
-    if ( (SessionPtr->Next_In != NULL) && (SessionPtr->Avail_In >= N) )
+    if ( (SessionPtr->Next_In != nullptr) && (SessionPtr->Avail_In >= N) )
     {
         *c = SessionPtr->Next_In;
         SessionPtr->Next_In += N;
@@ -204,7 +203,7 @@ inline bool Get_N(fd_session_t* SessionPtr, uint8_t** c, uint16_t N)
 /* If there's room in the output queue, put one byte. */
 inline bool Put_1(fd_session_t* SessionPtr, uint8_t c)
 {
-    if ( (SessionPtr->Next_Out != NULL) && (SessionPtr->Avail_Out > 0) )
+    if ( (SessionPtr->Next_Out != nullptr) && (SessionPtr->Avail_Out > 0) )
     {
         *(SessionPtr->Next_Out)++ = c;
         SessionPtr->Avail_Out -= 1;
@@ -217,9 +216,9 @@ inline bool Put_1(fd_session_t* SessionPtr, uint8_t c)
 
 /* If the output queue has room available, place N bytes onto the queue.
    The output queue must have space for N bytes for this call to succeed. */
-inline bool Put_N(fd_session_t* SessionPtr, uint8_t* c, uint16_t N)
+inline bool Put_N(fd_session_t* SessionPtr, const uint8_t* c, uint16_t N)
 {
-    if ( (SessionPtr->Next_Out != NULL) && (SessionPtr->Avail_Out >= N) )
+    if ( (SessionPtr->Next_Out != nullptr) && (SessionPtr->Avail_Out >= N) )
     {
         strncpy( (char*)SessionPtr->Next_Out, (const char*)c, N);
         SessionPtr->Next_Out += N;
@@ -235,8 +234,8 @@ inline bool Put_N(fd_session_t* SessionPtr, uint8_t* c, uint16_t N)
    space for at least one byte in the output queue, then move one byte. */
 inline bool Move_1(fd_session_t* SessionPtr)
 {
-    if ( (SessionPtr->Next_Out != NULL) && (SessionPtr->Avail_Out > 0) &&
-        (SessionPtr->Next_In != NULL) && (SessionPtr->Avail_In > 0) )
+    if ( (SessionPtr->Next_Out != nullptr) && (SessionPtr->Avail_Out > 0) &&
+        (SessionPtr->Next_In != nullptr) && (SessionPtr->Avail_In > 0) )
     {
         *(SessionPtr->Next_Out) = *(SessionPtr->Next_In);
         SessionPtr->Next_Out += 1;
@@ -255,8 +254,8 @@ inline bool Move_1(fd_session_t* SessionPtr)
    space for at least N bytes in the output queue, then move all N bytes. */
 inline bool Move_N(fd_session_t* SessionPtr, uint16_t N)
 {
-    if ( (SessionPtr->Next_Out != NULL) && (SessionPtr->Avail_Out >= N) &&
-        (SessionPtr->Next_In != NULL) && (SessionPtr->Avail_In >= N) )
+    if ( (SessionPtr->Next_Out != nullptr) && (SessionPtr->Avail_Out >= N) &&
+        (SessionPtr->Next_In != nullptr) && (SessionPtr->Avail_In >= N) )
     {
         strncpy( (char*)SessionPtr->Next_Out, (const char*)SessionPtr->Next_In, N);
         SessionPtr->Next_Out += N;

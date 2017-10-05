@@ -95,7 +95,7 @@ int normalize_telnet(
     int iMode, char ignoreEraseCmds)
 {
     int ret = FTPP_NORMALIZED;
-    const unsigned char* read_ptr, * sb_start = NULL;
+    const unsigned char* read_ptr, * sb_start = nullptr;
     int saw_ayt = 0;
     unsigned char* write_ptr;
     const unsigned char* end;
@@ -200,7 +200,7 @@ int normalize_telnet(
             (*(read_ptr + 1) != (unsigned char)TNC_SB))
         {
             /* NOPs are two bytes long */
-            switch (*((unsigned char*)(read_ptr + 1)))
+            switch (*((const unsigned char*)(read_ptr + 1)))
             {
             case TNC_NOP:
                 read_ptr += 2;
@@ -366,7 +366,7 @@ int normalize_telnet(
                 if ((*read_ptr == (unsigned char)TNC_IAC) &&
                     (*(read_ptr+1) == (unsigned char)TNC_SE))
                 {
-                    sb_start = NULL;
+                    sb_start = nullptr;
                     break;
                 }
                 read_ptr++;
@@ -411,7 +411,7 @@ int normalize_telnet(
                 (unsigned char)(*read_ptr & 0xFF), *read_ptr);
 
             /* overwrite the negotiation bytes with the follow-on bytes */
-            switch (*((unsigned char*)(read_ptr)))
+            switch (*((const unsigned char*)(read_ptr)))
             {
             case 0x7F: /* Delete */
             case 0x08: /* Backspace/Ctrl-H */

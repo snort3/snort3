@@ -24,7 +24,7 @@
 
 #include "regex_offload.h"
 
-#include <assert.h>
+#include <cassert>
 
 #include <atomic>
 #include <chrono>

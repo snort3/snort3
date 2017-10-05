@@ -28,7 +28,6 @@ class TimbuktuClientDetector : public ClientDetector
 {
 public:
     TimbuktuClientDetector(ClientDiscovery*);
-    ~TimbuktuClientDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

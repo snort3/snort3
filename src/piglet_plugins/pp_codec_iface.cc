@@ -86,6 +86,7 @@ static const luaL_Reg methods[] =
             //  Lua templates happy.
             //  FIXIT-L  add support for ProtocolId in Lua code.
             std::vector<uint16_t> tmp;
+            tmp.reserve(ret.size());
             for(auto a: ret)
                 tmp.push_back(to_utype(a));
 

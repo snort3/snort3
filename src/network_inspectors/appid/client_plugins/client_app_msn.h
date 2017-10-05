@@ -28,7 +28,6 @@ class MsnClientDetector : public ClientDetector
 {
 public:
     MsnClientDetector(ClientDiscovery*);
-    ~MsnClientDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

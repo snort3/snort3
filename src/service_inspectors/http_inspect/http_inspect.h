@@ -37,7 +37,7 @@ class HttpInspect : public Inspector
 {
 public:
     HttpInspect(const HttpParaList* params_);
-    ~HttpInspect() { delete params; }
+    ~HttpInspect() override { delete params; }
 
     bool get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b) override;
     bool get_buf(unsigned id, Packet* p, InspectionBuffer& b) override;

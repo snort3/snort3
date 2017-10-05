@@ -34,7 +34,7 @@
 #define SIP_STATUS_CODE_LEN (3)
 #define SIP_CONTENT_LEN (5)
 
-#define METHOD_NOT_FOUND -1
+#define METHOD_NOT_FOUND (-1)
 
 #define SIP_SESSION_SAVED   (1)
 #define SIP_SESSION_INIT    (0)

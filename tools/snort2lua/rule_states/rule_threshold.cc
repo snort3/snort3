@@ -33,8 +33,7 @@ class Threshold : public ConversionState
 {
 public:
     Threshold(Converter& c) : ConversionState(c) { }
-    virtual ~Threshold() { }
-    virtual bool convert(std::istringstream& data);
+    bool convert(std::istringstream& data) override;
 };
 } // namespace
 
@@ -59,16 +58,16 @@ bool Threshold::convert(std::istringstream& data_stream)
         if (!(subopt_stream >> keyword) || !(subopt_stream >> val))
             rule_api.bad_rule(data_stream, "threshold: " + keyword + " <missing_value>");
 
-        else if (!(keyword.compare("count")))
+        else if (keyword == "count")
             table_api.add_option("count", std::stoi(val));
 
-        else if (!(keyword.compare("seconds")))
+        else if (keyword == "seconds")
             table_api.add_option("seconds", std::stoi(val));
 
-        else if (!(keyword.compare("type")))
+        else if (keyword == "type")
             table_api.add_option("type", val);
 
-        else if (!(keyword.compare("track")))
+        else if (keyword == "track")
             table_api.add_option("track", val);
 
         else
@@ -104,13 +103,13 @@ bool Threshold::convert(std::istringstream& data_stream)
         // now, lets get the next option.
         util::trim(rule_keyword);
 
-        if (!rule_keyword.compare("sid"))
+        if (rule_keyword == "sid")
         {
             std::string val = util::get_rule_option_args(data_stream);
             table_api.add_option("sid", std::stoi(val));
             found_sid = true;
         }
-        else if (!rule_keyword.compare("gid"))
+        else if (rule_keyword == "gid")
         {
             std::string val = util::get_rule_option_args(data_stream);
             table_api.add_option("gid", std::stoi(val));

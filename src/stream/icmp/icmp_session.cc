@@ -61,7 +61,7 @@ static int ProcessIcmpUnreach(Packet* p)
 {
     /* Handle ICMP unreachable */
     FlowKey skey;
-    Flow* ssn = NULL;
+    Flow* ssn = nullptr;
     uint16_t sport;
     uint16_t dport;
     const SfIp* src;

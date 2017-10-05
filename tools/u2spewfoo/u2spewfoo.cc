@@ -19,26 +19,22 @@
 //--------------------------------------------------------------------------
 // u2spewfoo.cc author Adam Keeton
 
-#include "u2_common.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <ctype.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
+
+#include <cctype>
+#include <cerrno>
+#include <cstdlib>
+#include <cstring>
+
+#include "u2_common.h"
 
 static long s_pos = 0, s_off = 0;
 
-#define TO_IP(x) x >> 24, (x >> 16)& 0xff, (x >> 8)& 0xff, x& 0xff
+#define TO_IP(x) x >> 24, ((x) >> 16)& 0xff, ((x) >> 8)& 0xff, (x)& 0xff
 
 static u2iterator* new_iterator(char* filename)
 {
@@ -49,7 +45,7 @@ static u2iterator* new_iterator(char* filename)
     {
         printf("ERROR: Failed to open file: %s\n\tErrno: %s\n",
             filename, strerror(errno));
-        return NULL;
+        return nullptr;
     }
 
     ret = (u2iterator*)malloc(sizeof(u2iterator));
@@ -58,7 +54,7 @@ static u2iterator* new_iterator(char* filename)
     {
         printf("ERROR: Failed to initialize iterator\n");
         fclose(f);
-        return NULL;
+        return nullptr;
     }
 
     ret->file = f;
@@ -68,7 +64,7 @@ static u2iterator* new_iterator(char* filename)
         printf("ERROR: Failed to initialize iterator for %s\n", filename);
         free(ret);
         fclose(f);
-        return NULL;
+        return nullptr;
     }
     return ret;
 }

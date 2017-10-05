@@ -101,7 +101,6 @@ class Ipv4Codec : public Codec
 {
 public:
     Ipv4Codec() : Codec(CD_IPV4_NAME) { }
-    ~Ipv4Codec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
@@ -119,7 +118,7 @@ private:
 };
 
 const uint16_t IP_ID_COUNT = 8192;
-static THREAD_LOCAL rand_t* s_rand = 0;
+static THREAD_LOCAL rand_t* s_rand = nullptr;
 static THREAD_LOCAL uint16_t s_id_index = 0;
 static THREAD_LOCAL std::array<uint16_t, IP_ID_COUNT> s_id_pool {
     { 0 }
@@ -231,7 +230,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
          * need to check them (should make this a command line/config
          * option
          */
-        int16_t csum = checksum::ip_cksum((uint16_t*)iph, hlen);
+        int16_t csum = checksum::ip_cksum((const uint16_t*)iph, hlen);
 
         if (csum && !codec.is_cooked())
         {

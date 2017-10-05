@@ -603,7 +603,7 @@ static void set_hdr(
     if ( !phdr )
         phdr = p->pkth;
 
-    DAQ_PktHdr_t* pkth = (DAQ_PktHdr_t*)c->pkth;
+    DAQ_PktHdr_t* pkth = const_cast<DAQ_PktHdr_t*>(c->pkth);
     pkth->ingress_index = phdr->ingress_index;
     pkth->ingress_group = phdr->ingress_group;
     pkth->egress_index = phdr->egress_index;
@@ -627,7 +627,6 @@ int PacketManager::format_tcp(
     const DAQ_PktHdr_t* phdr, uint32_t opaque)
 {
     c->reset();
-    DAQ_PktHdr_t* pkth = (DAQ_PktHdr_t*)c->pkth;
     set_hdr(p, c, phdr, opaque);
 
     c->packet_flags |= PKT_PSEUDO;
@@ -639,6 +638,7 @@ int PacketManager::format_tcp(
     c->user_network_policy_id = p->user_network_policy_id;
 
     // setup pkt capture header
+    DAQ_PktHdr_t* pkth = const_cast<DAQ_PktHdr_t*>(c->pkth);
     pkth->caplen = 0;
     pkth->pktlen = 0;
     pkth->ts = p->pkth->ts;
@@ -655,7 +655,6 @@ int PacketManager::encode_format(
     int len;
     bool update_ip4_len = false;
     uint8_t num_layers = p->num_layers;
-    DAQ_PktHdr_t* pkth = (DAQ_PktHdr_t*)c->pkth;
 
     if ( num_layers <= 0 )
         return -1;
@@ -715,7 +714,7 @@ int PacketManager::encode_format(
 
         lyr->prot_id = p->layers[i].prot_id;
         lyr->length = p->layers[i].length;
-        lyr->start = (uint8_t*)b;
+        lyr->start = b;
 
         // NOTE: this must always go from outer to inner
         //       to ensure a valid ip header
@@ -745,6 +744,7 @@ int PacketManager::encode_format(
     c->user_network_policy_id = p->user_network_policy_id;
 
     // setup pkt capture header
+    DAQ_PktHdr_t* pkth = const_cast<DAQ_PktHdr_t*>(c->pkth);
     pkth->caplen = len;
     pkth->pktlen = len;
     pkth->ts = p->pkth->ts;
@@ -850,7 +850,7 @@ void PacketManager::dump_stats()
     for (unsigned int i = 0; i < stat_names.size(); i++)
         pkt_names.push_back(stat_names[i]);
 
-    for (int i = 0; CodecManager::s_protocols[i] != 0; i++)
+    for (int i = 0; CodecManager::s_protocols[i] != nullptr; i++)
         pkt_names.push_back(CodecManager::s_protocols[i]->get_name());
 
     show_percent_stats((PegCount*)&g_stats, &pkt_names[0],

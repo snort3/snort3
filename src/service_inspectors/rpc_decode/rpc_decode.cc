@@ -55,7 +55,7 @@ using namespace std;
 
 #define RPC_MAX_BUF_SIZE   256
 #define RPC_FRAG_HDR_SIZE  sizeof(uint32_t)
-#define RPC_FRAG_LEN(ptr)  (ntohl(*((uint32_t*)ptr)) & 0x7FFFFFFF)
+#define RPC_FRAG_LEN(ptr)  (ntohl(*((const uint32_t*)(ptr))) & 0x7FFFFFFF)
 
 struct RpcDecodeConfig
 {
@@ -83,7 +83,7 @@ class RpcFlowData : public FlowData
 {
 public:
     RpcFlowData();
-    ~RpcFlowData();
+    ~RpcFlowData() override;
 
     static void init()
     { inspector_id = FlowData::create_flow_data_id(); }
@@ -138,10 +138,10 @@ static inline void RpcBufClean(RpcBuffer*);
 static inline void RpcPreprocEvent(
     RpcDecodeConfig* rconfig, RpcSsnData* rsdata, int event)
 {
-    if (rconfig == NULL)
+    if (rconfig == nullptr)
         return;
 
-    if (rsdata != NULL)
+    if (rsdata != nullptr)
     {
         /* Only log one event of the same type per session */
         if (rsdata->events & (1 << event))
@@ -491,12 +491,12 @@ static RpcStatus RpcHandleFrag(RpcDecodeConfig* rconfig,
 
 static inline uint32_t RpcBufLen(RpcBuffer* buf)
 {
-    return buf == NULL ? 0 : buf->len;
+    return buf == nullptr ? 0 : buf->len;
 }
 
 static inline uint8_t* RpcBufData(RpcBuffer* buf)
 {
-    return buf == NULL ? NULL : buf->data;
+    return buf == nullptr ? nullptr : buf->data;
 }
 
 static RpcStatus RpcBufAdd(RpcBuffer* buf, const uint8_t* data, uint32_t dsize)
@@ -504,7 +504,7 @@ static RpcStatus RpcBufAdd(RpcBuffer* buf, const uint8_t* data, uint32_t dsize)
     const uint32_t min_alloc = flush_size;
     uint32_t alloc_size = dsize;
 
-    if (buf == NULL)
+    if (buf == nullptr)
         return RPC_STATUS__ERROR;
 
     if (dsize == 0)
@@ -513,7 +513,7 @@ static RpcStatus RpcBufAdd(RpcBuffer* buf, const uint8_t* data, uint32_t dsize)
     if (alloc_size < min_alloc)
         alloc_size = min_alloc;
 
-    if (buf->data == NULL)
+    if (buf->data == nullptr)
     {
         buf->data = (uint8_t*)snort_calloc(alloc_size);
         buf->size = alloc_size;
@@ -554,10 +554,10 @@ static RpcStatus RpcBufAdd(RpcBuffer* buf, const uint8_t* data, uint32_t dsize)
 
 static inline void RpcBufClean(RpcBuffer* buf)
 {
-    if (buf->data != NULL)
+    if (buf->data != nullptr)
     {
         snort_free(buf->data);
-        buf->data = NULL;
+        buf->data = nullptr;
     }
 
     buf->len = 0;
@@ -566,7 +566,7 @@ static inline void RpcBufClean(RpcBuffer* buf)
 
 static inline void RpcSsnSetInactive(RpcSsnData* rsdata, Packet*)
 {
-    if (rsdata == NULL)
+    if (rsdata == nullptr)
         return;
 
     DebugFormat(DEBUG_RPC, "STATEFUL: Deactivating session: %p\n",
@@ -577,14 +577,14 @@ static inline void RpcSsnSetInactive(RpcSsnData* rsdata, Packet*)
 
 static inline int RpcSsnIsActive(RpcSsnData* rsdata)
 {
-    if (rsdata == NULL)
+    if (rsdata == nullptr)
         return 0;
     return rsdata->active;
 }
 
 static inline void RpcSsnClean(RpcSsnData* rsdata)
 {
-    if (rsdata == NULL)
+    if (rsdata == nullptr)
         return;
 
     rsdata->active = 0;
@@ -668,8 +668,8 @@ static int ConvertRPC(RpcDecodeConfig* rconfig, RpcSsnData* rsdata, Packet* p)
     const uint8_t* data = p->data;
     uint32_t psize = p->dsize;
     uint8_t* norm_index;
-    uint8_t* data_index;     /* this is the index pointer to walk thru the data */
-    uint8_t* data_end;       /* points to the end of the payload for loop control */
+    const uint8_t* data_index;     /* this is the index pointer to walk thru the data */
+    const uint8_t* data_end;       /* points to the end of the payload for loop control */
     uint32_t length;          /* length of current fragment */
     int last_fragment = 0; /* have we seen the last fragment sign? */
     uint32_t decoded_len; /* our decoded length is always at least a 0 byte header */
@@ -725,8 +725,8 @@ static int ConvertRPC(RpcDecodeConfig* rconfig, RpcSsnData* rsdata, Packet* p)
     }
 
     norm_index = buf.data;
-    data_index = (uint8_t*)data;
-    data_end = (uint8_t*)data + psize;
+    data_index = (const uint8_t*)data;
+    data_end = (const uint8_t*)data + psize;
 
     /* now we know it's in fragmented records, 4 bytes of
      * header(of which the most sig bit fragment (0=yes 1=no).
@@ -878,7 +878,6 @@ class RpcSplitter : public StreamSplitter
 {
 public:
     RpcSplitter(bool c2s) : StreamSplitter(c2s) { }
-    ~RpcSplitter() { }
 
     Status scan(Flow*, const uint8_t*, uint32_t,
         uint32_t, uint32_t*) override

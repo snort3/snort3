@@ -93,10 +93,10 @@ FtpServiceDetector::FtpServiceDetector(ServiceDiscovery* sd)
 
     tcp_patterns =
     {
-        { (uint8_t*)FTP_PATTERN1, sizeof(FTP_PATTERN1) - 1, 0,  0, 0 },
-        { (uint8_t*)FTP_PATTERN2, sizeof(FTP_PATTERN2) - 1, 0,  0, 0 },
-        { (uint8_t*)FTP_PATTERN3, sizeof(FTP_PATTERN3) - 1, -1, 0, 0 },
-        { (uint8_t*)FTP_PATTERN4, sizeof(FTP_PATTERN4) - 1, -1, 0, 0 }
+        { (const uint8_t*)FTP_PATTERN1, sizeof(FTP_PATTERN1) - 1, 0,  0, 0 },
+        { (const uint8_t*)FTP_PATTERN2, sizeof(FTP_PATTERN2) - 1, 0,  0, 0 },
+        { (const uint8_t*)FTP_PATTERN3, sizeof(FTP_PATTERN3) - 1, -1, 0, 0 },
+        { (const uint8_t*)FTP_PATTERN4, sizeof(FTP_PATTERN4) - 1, -1, 0, 0 }
     };
 
     appid_registry =
@@ -115,9 +115,6 @@ FtpServiceDetector::FtpServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-FtpServiceDetector::~FtpServiceDetector()
-{
-}
 
 static inline void CopyVendorString(ServiceFTPData* fd, const uint8_t* vendor, unsigned int
     vendorLen)
@@ -318,7 +315,7 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t* offset,
             if (size - (*offset) < (int)sizeof(ServiceFTPCode))
                 return -1;
 
-            code_hdr = (ServiceFTPCode*)(data + *offset);
+            code_hdr = (const ServiceFTPCode*)(data + *offset);
 
             if (code_hdr->sp == '-')
                 fd->rstate = FTP_REPLY_MULTI;
@@ -456,7 +453,7 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t* offset,
             }
             else
             {
-                code_hdr = (ServiceFTPCode*)(data + *offset);
+                code_hdr = (const ServiceFTPCode*)(data + *offset);
                 if (size - (*offset) >= (int)sizeof(ServiceFTPCode) &&
                     (code_hdr->sp == ' ' || code_hdr->sp == 0x09) &&
                     code_hdr->code[0] >= '1' && code_hdr->code[0] <= '5' &&
@@ -872,7 +869,7 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
             goto inprocess;
 
         if (size > sizeof(FTP_PORT_CMD)-1 &&
-            strncasecmp((char*)data, FTP_PORT_CMD, sizeof(FTP_PORT_CMD)-1) == 0)
+            strncasecmp((const char*)data, FTP_PORT_CMD, sizeof(FTP_PORT_CMD)-1) == 0)
         {
             if (ftp_validate_port(data+(sizeof(FTP_PORT_CMD)-1),
                 size-(sizeof(FTP_PORT_CMD)-1),
@@ -885,7 +882,7 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
             }
         }
         else if (size > sizeof(FTP_EPRT_CMD)-1 &&
-            strncasecmp((char*)data, FTP_EPRT_CMD, sizeof(FTP_EPRT_CMD)-1) == 0)
+            strncasecmp((const char*)data, FTP_EPRT_CMD, sizeof(FTP_EPRT_CMD)-1) == 0)
         {
             if (ftp_validate_eprt(data+(sizeof(FTP_EPRT_CMD)-1),
                 size-(sizeof(FTP_EPRT_CMD)-1),
@@ -898,8 +895,8 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
             }
         }
         else if ( size > sizeof(FTP_PASV_CMD)-1 &&
-            ( strncasecmp((char*)data, FTP_PASV_CMD, sizeof(FTP_PASV_CMD)-1) == 0 ||
-            strncasecmp((char*)data, FTP_EPSV_CMD, sizeof(FTP_EPSV_CMD)-1) == 0 )
+            ( strncasecmp((const char*)data, FTP_PASV_CMD, sizeof(FTP_PASV_CMD)-1) == 0 ||
+            strncasecmp((const char*)data, FTP_EPSV_CMD, sizeof(FTP_EPSV_CMD)-1) == 0 )
             )
         {
             WatchForCommandResult(fd, asd, FTP_CMD_PASV_EPSV);

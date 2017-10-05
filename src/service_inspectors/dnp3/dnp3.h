@@ -85,14 +85,14 @@
 #define DNP3_TPDU_MAX  250
 #define DNP3_LPDU_MAX  292
 
-#define DNP3_TRANSPORT_FIN(x) (x & 0x80)
-#define DNP3_TRANSPORT_FIR(x) (x & 0x40)
-#define DNP3_TRANSPORT_SEQ(x) (x & 0x3F)
+#define DNP3_TRANSPORT_FIN(x) ((x) & 0x80)
+#define DNP3_TRANSPORT_FIR(x) ((x) & 0x40)
+#define DNP3_TRANSPORT_SEQ(x) ((x) & 0x3F)
 
 /* Yep, the locations of FIR and FIN are switched at this layer... */
-#define DNP3_APP_FIR(x) (x & 0x80)
-#define DNP3_APP_FIN(x) (x & 0x40)
-#define DNP3_APP_SEQ(x) (x & 0x0F)
+#define DNP3_APP_FIR(x) ((x) & 0x80)
+#define DNP3_APP_FIN(x) ((x) & 0x40)
+#define DNP3_APP_SEQ(x) ((x) & 0x0F)
 
 #define DNP3_OK true
 #define DNP3_FAIL false
@@ -171,7 +171,7 @@ class Dnp3FlowData : public FlowData
 {
 public:
     Dnp3FlowData();
-    ~Dnp3FlowData();
+    ~Dnp3FlowData() override;
 
     static void init()
     {

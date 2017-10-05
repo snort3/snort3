@@ -48,7 +48,7 @@ class SipUdpClientDetector : public ClientDetector
 {
 public:
     SipUdpClientDetector(ClientDiscovery*);
-    ~SipUdpClientDetector();
+    ~SipUdpClientDetector() override;
 
     int validate(AppIdDiscoveryArgs&) override;
 
@@ -61,7 +61,6 @@ class SipTcpClientDetector : public ClientDetector
 {
 public:
     SipTcpClientDetector(ClientDiscovery*);
-    ~SipTcpClientDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };
@@ -70,7 +69,6 @@ class SipServiceDetector : public ServiceDetector
 {
 public:
     SipServiceDetector(ServiceDiscovery*);
-    ~SipServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
     void addFutureRtpFlows(SipEvent&, AppIdSession*);
@@ -83,7 +81,6 @@ private:
 class SipEventHandler : public DataHandler
 {
 public:
-    ~SipEventHandler() { }
 
     static SipEventHandler* create()
     {
@@ -100,7 +97,7 @@ public:
     void handle(DataEvent&, Flow*) override;
 
 private:
-    SipEventHandler() { }
+    SipEventHandler() = default;
     void client_handler(SipEvent&, AppIdSession*);
     void service_handler(SipEvent&, AppIdSession*);
 

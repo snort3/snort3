@@ -86,7 +86,7 @@ bool GtpTypeOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    GtpTypeOption& rhs = (GtpTypeOption&)ips;
+    const GtpTypeOption& rhs = (const GtpTypeOption&)ips;
 
     for ( int v = 0; v <= MAX_GTP_VERSION_CODE; ++v )
         if ( types[v] != rhs.types[v] )

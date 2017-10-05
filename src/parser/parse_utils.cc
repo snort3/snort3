@@ -125,7 +125,7 @@ bool parse_byte_code(const char* in, bool& negate, std::string& out)
 int parse_int(const char* data, const char* tag, int low, int high)
 {
     int32_t value = 0;
-    char* endptr = NULL;
+    char* endptr = nullptr;
 
     value = SnortStrtol(data, &endptr, 10);
 

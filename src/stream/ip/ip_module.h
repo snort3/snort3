@@ -99,7 +99,7 @@ class StreamIpModule : public Module
 {
 public:
     StreamIpModule();
-    ~StreamIpModule();
+    ~StreamIpModule() override;
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;

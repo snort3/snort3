@@ -65,7 +65,6 @@ struct NetworkPolicy
 {
 public:
     NetworkPolicy(PolicyId = 0);
-    ~NetworkPolicy();
 
 public:
     PolicyId policy_id;

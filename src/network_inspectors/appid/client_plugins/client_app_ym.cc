@@ -53,9 +53,6 @@ YmDetector::YmDetector(ClientDiscovery* cdm)
     handler->register_detector(name, this, proto);
 }
 
-YmDetector::~YmDetector()
-{
-}
 
 static const uint8_t* skip_separator(const uint8_t* data, const uint8_t* end)
 {
@@ -98,7 +95,7 @@ int YmDetector::validate(AppIdDiscoveryArgs& args)
     if ( args.size < 10 )
         return APPID_ENULL;
 
-    len = *((uint16_t*)(args.data + 8));
+    len = *((const uint16_t*)(args.data + 8));
     len = ntohs(len);
 
     if ( len != (args.size - HEADERSIZE) )

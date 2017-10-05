@@ -35,13 +35,13 @@ class DataDecode
 {
 public:
     DataDecode(int max_depth, int detect_depth);
-    virtual ~DataDecode();
+    virtual ~DataDecode() = default;
 
     // Main function to decode file data
     virtual DecodeResult decode_data(const uint8_t* start, const uint8_t* end) = 0;
 
     // Retrieve the decoded data the previous decode_data() call
-    int get_decoded_data(uint8_t** buf,  uint32_t* size);
+    int get_decoded_data(const uint8_t** buf,  uint32_t* size);
 
     virtual void reset_decoded_bytes();
 
@@ -53,7 +53,7 @@ public:
 protected:
     uint32_t decoded_bytes = 0;
     uint32_t decode_bytes_read;
-    uint8_t* decodePtr = nullptr;
+    const uint8_t* decodePtr = nullptr;
     int detection_depth;
 };
 

@@ -100,11 +100,11 @@
  *
  */
 
-static char* maxToken = NULL;
+static char* maxToken = nullptr;
 
 static char* mystrtok(char* s, const char* delim)
 {
-    static char* last = NULL;
+    static char* last = nullptr;
     if ( s || last )
         last = strtok(s, delim);
     return last;
@@ -112,9 +112,9 @@ static char* mystrtok(char* s, const char* delim)
 
 static char* NextToken(const char* delimiters)
 {
-    char* retTok = mystrtok(NULL, delimiters);
+    char* retTok = mystrtok(nullptr, delimiters);
     if ( maxToken && retTok > maxToken)
-        return NULL;
+        return nullptr;
 
     return retTok;
 }
@@ -482,7 +482,7 @@ static int DoNextFormat(FTP_PARAM_FMT* ThisFmt, int allocated,
         NextFmt->type = e_date;
         DateFmt = (FTP_DATE_FMT*)snort_calloc(sizeof(FTP_DATE_FMT));
         NextFmt->format.date_fmt = DateFmt;
-        iRet = ProcessDateFormat(DateFmt, NULL, &format);
+        iRet = ProcessDateFormat(DateFmt, nullptr, &format);
 
         if (iRet)
         {
@@ -558,8 +558,8 @@ int ProcessFTPCmdValidity(
     const char* cmd, const char* fmt,
     char* ErrorString, int ErrStrLen)
 {
-    FTP_CMD_CONF* FTPCmd = NULL;
-    FTP_PARAM_FMT* HeadFmt = NULL;
+    FTP_CMD_CONF* FTPCmd = nullptr;
+    FTP_PARAM_FMT* HeadFmt = nullptr;
 
     assert(fmt);
 
@@ -598,11 +598,11 @@ int ProcessFTPCmdValidity(
         return FTPP_FATAL_ERR;
     }
 
-    SetOptionalsNext(HeadFmt, NULL, NULL, 0);
+    SetOptionalsNext(HeadFmt, nullptr, nullptr, 0);
 
     FTPCmd = ftp_cmd_lookup_find(ServerConf->cmd_lookup, cmd,
         strlen(cmd), &iRet);
-    if (FTPCmd == NULL)
+    if (FTPCmd == nullptr)
     {
         /* Add it to the list  */
         // note that struct includes 1 byte for null, so just add len
@@ -617,7 +617,7 @@ int ProcessFTPCmdValidity(
     if (FTPCmd->param_format)
     {
         ftpp_ui_config_reset_ftp_cmd_format(FTPCmd->param_format);
-        FTPCmd->param_format = NULL;
+        FTPCmd->param_format = nullptr;
     }
     FTPCmd->param_format = HeadFmt;
 

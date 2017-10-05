@@ -234,7 +234,7 @@ int fpCreateServiceMaps(SnortConfig* sc)
 {
     RuleTreeNode* rtn;
     SFGHASH_NODE* hashNode;
-    OptTreeNode* otn  = NULL;
+    OptTreeNode* otn  = nullptr;
     PolicyId policyId = 0;
     unsigned int svc_idx;
 

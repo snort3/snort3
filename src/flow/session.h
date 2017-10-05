@@ -32,7 +32,7 @@ class Flow;
 class Session
 {
 public:
-    virtual ~Session() { }
+    virtual ~Session() = default;
 
     virtual bool setup(Packet*) { return true; }
     virtual void update_direction(char /*dir*/, const SfIp*, uint16_t /*port*/) { }
@@ -97,8 +97,8 @@ public:
 // To obtain max over the entire run, determine the maximum of reported max pegs.
 #define SESSION_STATS_ADD(stats) \
     { \
-        stats.sessions++; \
-        stats.created++; \
+        (stats).sessions++; \
+        (stats).created++; \
         if ( (stats).max < (stats).sessions ) \
             (stats).max = (stats).sessions; \
     }

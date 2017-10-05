@@ -33,16 +33,15 @@ class Unified2 : public ConversionState
 {
 public:
     Unified2(Converter& c) : ConversionState(c) { }
-    virtual ~Unified2() { }
 
-    virtual bool convert(std::istringstream& data_stream)
+    bool convert(std::istringstream& data_stream) override
     {
         std::string args;
         bool retval = true;
 
         table_api.open_table("unified2");
 
-        if (!(*output_name).compare("unified2"))
+        if ((*output_name) == "unified2")
             table_api.add_diff_option_comment("output " + (*output_name), "unified2");
 
         while (std::getline(data_stream, args, ','))
@@ -56,19 +55,19 @@ public:
             if (keyword.empty())
                 continue;
 
-            else if (!keyword.compare("nostamp"))
+            else if (keyword == "nostamp")
                 tmpval = table_api.add_option("nostamp", true);
 
-            else if (!keyword.compare("mpls_event_types"))
+            else if (keyword == "mpls_event_types")
                 table_api.add_deleted_comment("mpls_event_types");
 
-            else if (!keyword.compare("vlan_event_types"))
+            else if (keyword == "vlan_event_types")
                 tmpval = table_api.add_deleted_comment("vlan_event_types");
 
-            else if (!keyword.compare("filename"))
+            else if (keyword == "filename")
                 table_api.add_deleted_comment("filename");
 
-            else if (!keyword.compare("limit"))
+            else if (keyword == "limit")
                 tmpval = parse_int_option("limit", arg_stream, false);
 
             else

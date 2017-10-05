@@ -29,8 +29,7 @@ class InitState : public ConversionState
 {
 public:
     InitState(Converter&);
-    virtual ~InitState() { }
-    virtual bool convert(std::istringstream& data);
+    bool convert(std::istringstream& data) override;
 };
 
 inline ConversionState* init_state_ctor(Converter& c)

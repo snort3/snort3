@@ -40,7 +40,7 @@ class FabricPathModule : public CodecModule
 public:
     FabricPathModule() : CodecModule(CD_FABRICPATH_NAME, CD_FABRICPATH_HELP) { }
 
-    const RuleMap* get_rules() const
+    const RuleMap* get_rules() const override
     { return fabricpath_rules; }
 };
 
@@ -48,7 +48,6 @@ class FabricPathCodec : public Codec
 {
 public:
     FabricPathCodec() : Codec(CD_FABRICPATH_NAME) { }
-    ~FabricPathCodec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;

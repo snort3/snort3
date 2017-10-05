@@ -65,7 +65,7 @@ public:
     { type = VT_STR; str = s; num = 0; }
 
     void set(const uint8_t* s, unsigned len)
-    { type = VT_STR; str.assign((char*)s, len); num = 0; }
+    { type = VT_STR; str.assign((const char*)s, len); num = 0; }
 
     void set(const Parameter* p)
     { param = p; }
@@ -92,7 +92,7 @@ public:
     { return num; }
 
     const uint8_t* get_buffer(unsigned& n) const
-    { n = str.size(); return (uint8_t*)str.data(); }
+    { n = str.size(); return (const uint8_t*)str.data(); }
 
     const char* get_string() const
     { return str.c_str(); }

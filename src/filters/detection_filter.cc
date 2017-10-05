@@ -30,7 +30,7 @@
 
 #include "sfthd.h"
 
-static THREAD_LOCAL SFXHASH* detection_filter_hash = NULL;
+static THREAD_LOCAL SFXHASH* detection_filter_hash = nullptr;
 
 DetectionFilterConfig* DetectionFilterConfigNew()
 {
@@ -45,7 +45,7 @@ DetectionFilterConfig* DetectionFilterConfigNew()
 
 void DetectionFilterConfigFree(DetectionFilterConfig* config)
 {
-    if (config == NULL)
+    if (config == nullptr)
         return;
 
     snort_free(config);
@@ -59,7 +59,7 @@ int detection_filter_test(
     const SfIp* sip, const SfIp* dip,
     long curtime)
 {
-    if (pv == NULL)
+    if (pv == nullptr)
         return 0;
 
     return sfthd_test_rule(detection_filter_hash, (THD_NODE*)pv,
@@ -68,11 +68,11 @@ int detection_filter_test(
 
 THD_NODE* detection_filter_create(DetectionFilterConfig* df_config, THDX_STRUCT* thdx)
 {
-    if (df_config == NULL)
-        return NULL;
+    if (df_config == nullptr)
+        return nullptr;
 
     if (!df_config->enabled)
-        return NULL;
+        return nullptr;
 
     df_config->count++;
 
@@ -100,6 +100,6 @@ void detection_filter_term()
         return;
 
     sfxhash_delete(detection_filter_hash);
-    detection_filter_hash = NULL;
+    detection_filter_hash = nullptr;
 }
 

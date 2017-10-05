@@ -30,7 +30,6 @@ class RtmpServiceDetector : public ServiceDetector
 {
 public:
     RtmpServiceDetector(ServiceDiscovery*);
-    ~RtmpServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

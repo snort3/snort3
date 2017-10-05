@@ -20,7 +20,7 @@
 #ifndef HTTP_CUTTER_H
 #define HTTP_CUTTER_H
 
-#include <assert.h>
+#include <cassert>
 
 #include "http_enum.h"
 #include "http_event_gen.h"

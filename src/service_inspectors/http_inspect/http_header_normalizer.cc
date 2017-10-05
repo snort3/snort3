@@ -156,6 +156,5 @@ void HeaderNormalizer::normalize(const HeaderId head_id, const int count,
     }
     delete[] temp_space;
     result_field.set(data_length, norm_value, true);
-    return;
 }
 

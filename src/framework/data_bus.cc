@@ -56,7 +56,7 @@ private:
     const Packet* packet;
 };
 
-DataBus::DataBus() { }
+DataBus::DataBus() = default;
 
 DataBus::~DataBus()
 {

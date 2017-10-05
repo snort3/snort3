@@ -20,8 +20,8 @@
 #ifndef HTTP_INFRACTIONS_H
 #define HTTP_INFRACTIONS_H
 
-#include <assert.h>
 #include <bitset>
+#include <cassert>
 
 #include "http_enum.h"
 

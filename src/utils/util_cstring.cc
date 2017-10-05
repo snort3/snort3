@@ -40,7 +40,7 @@ int SnortSnprintf(char* buf, size_t buf_size, const char* format, ...)
     va_list ap;
     int ret;
 
-    if (buf == NULL || buf_size == 0 || format == NULL)
+    if (buf == nullptr || buf_size == 0 || format == nullptr)
         return SNORT_SNPRINTF_ERROR;
 
     /* zero first byte in case an error occurs with
@@ -81,7 +81,7 @@ int SnortSnprintfAppend(char* buf, size_t buf_size, const char* format, ...)
     int ret;
     va_list ap;
 
-    if (buf == NULL || buf_size == 0 || format == NULL)
+    if (buf == nullptr || buf_size == 0 || format == nullptr)
         return SNORT_SNPRINTF_ERROR;
 
     str_len = SnortStrnlen(buf, buf_size);
@@ -133,9 +133,9 @@ int SnortSnprintfAppend(char* buf, size_t buf_size, const char* format, ...)
  */
 int SnortStrncpy(char* dst, const char* src, size_t dst_size)
 {
-    char* ret = NULL;
+    char* ret = nullptr;
 
-    if (dst == NULL || src == NULL || dst_size == 0)
+    if (dst == nullptr || src == nullptr || dst_size == 0)
         return SNORT_STRNCPY_ERROR;
 
     dst[dst_size - 1] = '\0';
@@ -144,7 +144,7 @@ int SnortStrncpy(char* dst, const char* src, size_t dst_size)
 
     /* Not sure if this ever happens but might as
      * well be on the safe side */
-    if (ret == NULL)
+    if (ret == nullptr)
         return SNORT_STRNCPY_ERROR;
 
     if (dst[dst_size - 1] != '\0')
@@ -167,7 +167,7 @@ int SnortStrnlen(const char* buf, int buf_size)
 {
     int i = 0;
 
-    if (buf == NULL || buf_size <= 0)
+    if (buf == nullptr || buf_size <= 0)
         return SNORT_STRNLEN_ERROR;
 
     for (i = 0; i < buf_size; i++)
@@ -194,7 +194,7 @@ const char* SnortStrnPbrk(const char* s, int slen, const char* accept)
     char ch;
     const char* s_end;
     if (!s || (slen == 0) || !*s || !accept)
-        return NULL;
+        return nullptr;
 
     s_end = s + slen;
     while (s < s_end)
@@ -204,7 +204,7 @@ const char* SnortStrnPbrk(const char* s, int slen, const char* accept)
             return s;
         s++;
     }
-    return NULL;
+    return nullptr;
 }
 
 /*
@@ -217,7 +217,7 @@ const char* SnortStrnStr(const char* s, int slen, const char* searchstr)
     char ch, nc;
     int len;
     if (!s || (slen == 0) || !*s || !searchstr)
-        return NULL;
+        return nullptr;
 
     if ((ch = *searchstr++) != 0)
     {
@@ -228,15 +228,15 @@ const char* SnortStrnStr(const char* s, int slen, const char* searchstr)
             {
                 if ((nc = *s++) == 0)
                 {
-                    return NULL;
+                    return nullptr;
                 }
                 slen--;
                 if (slen == 0)
-                    return NULL;
+                    return nullptr;
             }
             while (nc != ch);
             if (slen - len < 0)
-                return NULL;
+                return nullptr;
         }
         while (memcmp(s, searchstr, len) != 0);
         s--;
@@ -253,7 +253,7 @@ const char* SnortStrcasestr(const char* s, int slen, const char* substr)
     int len;
 
     if (!s || (slen == 0) || !*s || !substr)
-        return NULL;
+        return nullptr;
 
     if ((ch = *substr++) != 0)
     {
@@ -265,15 +265,15 @@ const char* SnortStrcasestr(const char* s, int slen, const char* substr)
             {
                 if ((nc = *s++) == 0)
                 {
-                    return NULL;
+                    return nullptr;
                 }
                 slen--;
                 if (slen == 0)
-                    return NULL;
+                    return nullptr;
             }
             while ((char)tolower((uint8_t)nc) != ch);
             if (slen - len < 0)
-                return NULL;
+                return nullptr;
         }
         while (strncasecmp(s, substr, len) != 0);
         s--;

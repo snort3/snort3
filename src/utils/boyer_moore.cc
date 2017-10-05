@@ -149,7 +149,7 @@ int* make_shift(const char* ptrn, int plen)
  *
  ****************************************************************/
 int mSearch(
-    const char* buf, int blen, const char* ptrn, int plen, int* skip, int* shift)
+    const char* buf, int blen, const char* ptrn, int plen, const int* skip, const int* shift)
 {
     DebugFormat(DEBUG_PATTERN_MATCH,"buf: %p  blen: %d  ptrn: %p  "
         "plen: %d\n", buf, blen, ptrn, plen);
@@ -198,7 +198,7 @@ int mSearch(
  *
  ****************************************************************/
 int mSearchCI(
-    const char* buf, int blen, const char* ptrn, int plen, int* skip, int* shift)
+    const char* buf, int blen, const char* ptrn, int plen, const int* skip, const int* shift)
 {
     int b_idx = plen;
 

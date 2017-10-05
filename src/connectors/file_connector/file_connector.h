@@ -62,16 +62,16 @@ class FileConnector : public Connector
 {
 public:
     FileConnector(FileConnectorConfig*);
-    ~FileConnector();
-    ConnectorMsgHandle* alloc_message(const uint32_t, const uint8_t**);
-    void discard_message(ConnectorMsgHandle*);
-    bool transmit_message(ConnectorMsgHandle*);
-    ConnectorMsgHandle* receive_message(bool);
+    ~FileConnector() override;
+    ConnectorMsgHandle* alloc_message(const uint32_t, const uint8_t**) override;
+    void discard_message(ConnectorMsgHandle*) override;
+    bool transmit_message(ConnectorMsgHandle*) override;
+    ConnectorMsgHandle* receive_message(bool) override;
 
-    ConnectorMsg* get_connector_msg(ConnectorMsgHandle* handle)
+    ConnectorMsg* get_connector_msg(ConnectorMsgHandle* handle) override
     { return( &((FileConnectorMsgHandle*)handle)->connector_msg ); }
-    Direction get_connector_direction()
-    { return( ((FileConnectorConfig*)config)->direction ); }
+    Direction get_connector_direction() override
+    { return( ((const FileConnectorConfig*)config)->direction ); }
 
     std::fstream file;
 

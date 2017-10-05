@@ -65,9 +65,6 @@ MySqlServiceDetector::MySqlServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-MySqlServiceDetector::~MySqlServiceDetector()
-{
-}
 
 int MySqlServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
@@ -120,7 +117,7 @@ int MySqlServiceDetector::validate(AppIdDiscoveryArgs& args)
     data += 6;
     if (data >= end)
         goto fail;
-    return add_service(asd, args.pkt, args.dir, APP_ID_MYSQL, nullptr, (char*)p, nullptr);
+    return add_service(asd, args.pkt, args.dir, APP_ID_MYSQL, nullptr, (const char*)p, nullptr);
 
 inprocess:
     service_inprocess(asd, args.pkt, args.dir);

@@ -53,7 +53,7 @@ class SO_PUBLIC UtfDecodeSession
 {
 public:
     UtfDecodeSession();
-    virtual ~UtfDecodeSession() { }
+    virtual ~UtfDecodeSession() = default;
     void init_decode_utf_state();
     void set_decode_utf_state_charset(CharsetCode charset);
     CharsetCode get_decode_utf_state_charset();

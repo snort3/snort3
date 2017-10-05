@@ -96,9 +96,6 @@ BitServiceDetector::BitServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-BitServiceDetector::~BitServiceDetector()
-{
-}
 
 int BitServiceDetector::validate(AppIdDiscoveryArgs& args)
 {

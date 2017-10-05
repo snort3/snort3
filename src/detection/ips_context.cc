@@ -24,7 +24,7 @@
 
 #include "ips_context.h"
 
-#include <assert.h>
+#include <cassert>
 #include "events/event_queue.h"
 #include "events/sfeventq.h"
 #include "main/snort_config.h"
@@ -111,7 +111,7 @@ public:
     TestData()
     { ++count; }
 
-    ~TestData()
+    ~TestData() override
     { --count; }
 
     static int count;

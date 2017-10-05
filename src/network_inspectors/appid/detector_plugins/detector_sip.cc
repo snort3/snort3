@@ -209,9 +209,6 @@ SipTcpClientDetector::SipTcpClientDetector(ClientDiscovery* cdm)
     handler->register_detector(name, this, proto);
 }
 
-SipTcpClientDetector::~SipTcpClientDetector()
-{
-}
 
 int SipTcpClientDetector::validate(AppIdDiscoveryArgs& args)
 {
@@ -315,7 +312,7 @@ static int get_sip_client_app(void* patternMatcher, const char* pattern, uint32_
     if ( !pattern )
         return 0;
 
-    patterns[0].pattern = (uint8_t*)pattern;
+    patterns[0].pattern = (const uint8_t*)pattern;
     patterns[0].patternSize = patternLen;
     patterns[1].pattern = nullptr;
 
@@ -435,9 +432,6 @@ SipServiceDetector::SipServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-SipServiceDetector::~SipServiceDetector()
-{
-}
 
 int SipServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
@@ -532,14 +526,14 @@ void SipEventHandler::client_handler(SipEvent& sip_event, AppIdSession* asd)
             fd->user_agent = sip_event.get_user_agent();
     }
 
-    if ( fd->user_agent.size() )
+    if ( !fd->user_agent.empty() )
     {
         if ( get_sip_client_app(detector_sip_config.sip_ua_matcher,
             fd->user_agent.c_str(), fd->user_agent.size(), &ClientAppId, &clientVersion) )
             goto success;
     }
 
-    if ( fd->from.size() && !(fd->flags & SIP_FLAG_SERVER_CHECKED) )
+    if ( !fd->from.empty() && !(fd->flags & SIP_FLAG_SERVER_CHECKED) )
     {
         fd->flags |= SIP_FLAG_SERVER_CHECKED;
 
@@ -555,7 +549,7 @@ success:
     if( !asd->is_client_detected() )
         client->add_app(asd, APP_ID_SIP, ClientAppId, clientVersion);
 
-    if ( fd->user_name.size() )
+    if ( !fd->user_name.empty() )
         client->add_user(asd, fd->user_name.c_str(), APP_ID_SIP, true);
 }
 

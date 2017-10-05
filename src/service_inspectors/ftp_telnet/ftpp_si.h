@@ -58,7 +58,7 @@
 #define FTPP_SI_PROTO_FTP       2
 #define FTPP_SI_PROTO_FTP_DATA  3
 
-#define FTPP_FILE_IGNORE    -1
+#define FTPP_FILE_IGNORE    (-1)
 #define FTPP_FILE_UNKNOWN    0
 
 /* Macros for testing the type of FTP_TELNET_SESSION */
@@ -97,7 +97,7 @@ class TelnetFlowData : public FlowData
 {
 public:
     TelnetFlowData();
-    ~TelnetFlowData();
+    ~TelnetFlowData() override;
 
     static void init()
     { inspector_id = FlowData::create_flow_data_id(); }
@@ -180,7 +180,7 @@ class FtpFlowData : public FlowData
 {
 public:
     FtpFlowData();
-    ~FtpFlowData();
+    ~FtpFlowData() override;
 
     static void init()
     { inspector_id = FlowData::create_flow_data_id(); }
@@ -214,7 +214,7 @@ class FtpDataFlowData : public FlowData
 {
 public:
     FtpDataFlowData(Packet*);
-    ~FtpDataFlowData();
+    ~FtpDataFlowData() override;
 
     static void init()
     { inspector_id = FlowData::create_flow_data_id(); }

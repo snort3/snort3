@@ -51,7 +51,7 @@ public:
         if ( obj ) obj->bnfaMethod = 1;
     }
 
-    ~AcBnfaMpse()
+    ~AcBnfaMpse() override
     {
         if (obj)
             bnfaFree(obj);

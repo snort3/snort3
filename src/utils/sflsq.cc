@@ -60,7 +60,7 @@ static void s_free(void* p)
 void sflist_init(SF_LIST* s)
 {
     s->count=0;
-    s->head = s->tail = 0;
+    s->head = s->tail = nullptr;
 }
 
 /*
@@ -117,15 +117,15 @@ void sflist_add_head(SF_LIST* s, NODE_DATA ndata)
     {
         q = s->tail = s->head = (SF_LNODE*)s_alloc (sizeof (SF_LNODE));
         q->ndata = (NODE_DATA)ndata;
-        q->next = 0;
-        q->prev = 0;
+        q->next = nullptr;
+        q->prev = nullptr;
     }
     else
     {
         q = (SF_LNODE*)s_alloc (sizeof (SF_LNODE));
         q->ndata = ndata;
         q->next = s->head;
-        q->prev = 0;
+        q->prev = nullptr;
         s->head->prev = q;
         s->head = q;
     }
@@ -142,14 +142,14 @@ void sflist_add_tail(SF_LIST* s, NODE_DATA ndata)
     {
         q = s->tail = s->head = (SF_LNODE*)s_alloc (sizeof (SF_LNODE));
         q->ndata = (NODE_DATA)ndata;
-        q->next = 0;
-        q->prev = 0;
+        q->next = nullptr;
+        q->prev = nullptr;
     }
     else
     {
         q = (SF_LNODE*)s_alloc (sizeof (SF_LNODE));
         q->ndata = ndata;
-        q->next = 0;
+        q->next = nullptr;
         q->prev = s->tail;
         s->tail->next = q;
         s->tail = q;
@@ -196,7 +196,7 @@ NODE_DATA sflist_next(SF_LNODE** v)
 */
 NODE_DATA sflist_remove_head(SF_LIST* s)
 {
-    NODE_DATA ndata = 0;
+    NODE_DATA ndata = nullptr;
     SF_QNODE* q;
     if ( s && s->head  )
     {
@@ -220,7 +220,7 @@ NODE_DATA sflist_remove_head(SF_LIST* s)
 */
 NODE_DATA sflist_remove_tail(SF_LIST* s)
 {
-    NODE_DATA ndata = 0;
+    NODE_DATA ndata = nullptr;
     SF_QNODE* q;
     if (s && s->tail)
     {
@@ -263,7 +263,7 @@ void sflist_remove_node(SF_LIST* s, SF_LNODE* n)
         s->count--;
 
         if (!s->tail )
-            s->head = 0;
+            s->head = nullptr;
         else
             s->tail->next = nullptr;
 
@@ -272,7 +272,7 @@ void sflist_remove_node(SF_LIST* s, SF_LNODE* n)
     }
 
     for (cur = s->head;
-        cur!= NULL;
+        cur!= nullptr;
         cur = cur->next )
     {
         if ( n == cur )

@@ -68,9 +68,6 @@ SFDAQModule::SFDAQModule() : Module("daq", sfdaq_help, s_params)
     instance_config = nullptr;
 }
 
-SFDAQModule::~SFDAQModule()
-{
-}
 
 bool SFDAQModule::begin(const char* fqn, int idx, SnortConfig*)
 {

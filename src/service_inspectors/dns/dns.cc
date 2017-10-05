@@ -80,7 +80,7 @@ static DNSData* SetNewDNSData(Packet* p)
     DnsFlowData* fd;
 
     if (p->is_udp())
-        return NULL;
+        return nullptr;
 
     fd = new DnsFlowData;
 
@@ -95,17 +95,17 @@ static DNSData* get_dns_session_data(Packet* p, bool from_server)
     if (p->is_udp())
     {
         if(p->dsize > MAX_UDP_PAYLOAD)
-            return NULL;
+            return nullptr;
 
         if(!from_server)
         {
             if (p->dsize < (sizeof(DNSHdr) + sizeof(DNSQuestion) + 2))
-                return NULL;
+                return nullptr;
         }
         else
         {
             if (p->dsize < (sizeof(DNSHdr)))
-                return NULL;
+                return nullptr;
         }
 
         memset(&udpSessionData, 0, sizeof(udpSessionData));
@@ -113,7 +113,7 @@ static DNSData* get_dns_session_data(Packet* p, bool from_server)
     }
 
     fd = (DnsFlowData*)((p->flow)->get_flow_data(DnsFlowData::inspector_id));
-    return fd ? &fd->session : NULL;
+    return fd ? &fd->session : nullptr;
 }
 
 static uint16_t ParseDNSHeader(
@@ -991,7 +991,7 @@ static void snort_dns(Packet* p)
     // Attempt to get a previously allocated DNS block.
     DNSData* dnsSessionData = get_dns_session_data(p, from_server);
 
-    if (dnsSessionData == NULL)
+    if (dnsSessionData == nullptr)
     {
         // Check the stream session. If it does not currently
         // have our DNS data-block attached, create one.

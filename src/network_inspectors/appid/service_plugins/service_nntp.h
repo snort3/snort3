@@ -30,7 +30,6 @@ class NntpServiceDetector : public ServiceDetector
 {
 public:
     NntpServiceDetector(ServiceDiscovery*);
-    ~NntpServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

@@ -31,7 +31,7 @@
 #define MIN_LOG_MEMCAP                3276
 #define MIN_MIME_MEM                  3276
 #define MAX_DEPTH                     65535
-#define MIN_DEPTH                     -1
+#define MIN_DEPTH                     (-1)
 
 class SO_PUBLIC DecodeConfig
 {

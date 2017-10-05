@@ -28,15 +28,14 @@ class Sdf : public ConversionState
 {
 public:
     Sdf(Converter& c) : ConversionState(c) { }
-    virtual ~Sdf() { }
-    virtual bool convert(std::istringstream& data_stream)
+    bool convert(std::istringstream& data_stream) override
     {
         std::string keyword;
 
         // skip over `preprocessor sensitive_data` because it is now a rule option.
         while (data_stream >> keyword)
         {
-            if ( !keyword.compare("mask_output"))
+            if ( keyword == "mask_output")
             {
                 table_api.open_table("output");
                 table_api.add_option("obfuscate_pii", true);

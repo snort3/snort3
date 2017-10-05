@@ -77,7 +77,7 @@ bool ServiceModule::set(const char*, Value& v, SnortConfig*)
 
     std::string svc = v.get_string();
 
-    for ( auto p : services )
+    for ( const auto& p : services )
     {
         if ( p == svc )
         {
@@ -108,7 +108,7 @@ static IpsOption* service_ctor(Module* p, OptTreeNode* otn)
 {
     ServiceModule* m = (ServiceModule*)p;
 
-    for ( auto service : m->services )
+    for ( const auto& service : m->services )
         add_service_to_otn(m->snort_config, otn, service.c_str());
 
     return nullptr;

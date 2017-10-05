@@ -145,7 +145,7 @@ public:
     InspectorData(T* t)
     { data = t; }
 
-    ~InspectorData()
+    ~InspectorData() override
     { delete data; }
 
     void eval(Packet*) override { }

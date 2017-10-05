@@ -38,9 +38,6 @@ TcpStateFinWait1::TcpStateFinWait1(TcpStateMachine& tsm) :
 {
 }
 
-TcpStateFinWait1::~TcpStateFinWait1()
-{
-}
 
 bool TcpStateFinWait1::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {

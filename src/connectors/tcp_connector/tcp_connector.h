@@ -37,7 +37,7 @@
 class __attribute__((__packed__)) TcpConnectorMsgHdr
 {
 public:
-    TcpConnectorMsgHdr() {}
+    TcpConnectorMsgHdr() = default;
     TcpConnectorMsgHdr(uint32_t length)
     { version = TCP_FORMAT_VERSION; connector_msg_length = length; }
 
@@ -66,15 +66,15 @@ public:
     typedef Ring<TcpConnectorMsgHandle*> ReceiveRing;
 
     TcpConnector(TcpConnectorConfig*, int sock_fd);
-    ~TcpConnector();
-    ConnectorMsgHandle* alloc_message(const uint32_t, const uint8_t**);
-    void discard_message(ConnectorMsgHandle*);
-    bool transmit_message(ConnectorMsgHandle*);
-    ConnectorMsgHandle* receive_message(bool);
+    ~TcpConnector() override;
+    ConnectorMsgHandle* alloc_message(const uint32_t, const uint8_t**) override;
+    void discard_message(ConnectorMsgHandle*) override;
+    bool transmit_message(ConnectorMsgHandle*) override;
+    ConnectorMsgHandle* receive_message(bool) override;
 
-    ConnectorMsg* get_connector_msg(ConnectorMsgHandle* handle)
+    ConnectorMsg* get_connector_msg(ConnectorMsgHandle* handle) override
     { return( &((TcpConnectorMsgHandle*)handle)->connector_msg ); }
-    Direction get_connector_direction()
+    Direction get_connector_direction() override
     { return Connector::CONN_DUPLEX; }
     void process_receive();
 

@@ -46,7 +46,7 @@ void config_set_var(SnortConfig* sc, const char* val)
         const char* equal_ptr = strchr(val, '=');
         VarNode* node;
 
-        if (equal_ptr == NULL)
+        if (equal_ptr == nullptr)
         {
             ParseError("Format for command line variable definitions "
                 "is:\n -S var=value\n");
@@ -58,11 +58,11 @@ void config_set_var(SnortConfig* sc, const char* val)
         node = (VarNode*)snort_calloc(sizeof(VarNode));
 
         /* Make sure it's not already in the list */
-        if (sc->var_list != NULL)
+        if (sc->var_list != nullptr)
         {
             VarNode* tmp = sc->var_list;
 
-            while (tmp != NULL)
+            while (tmp != nullptr)
             {
                 if (strncasecmp(tmp->name, val, equal_ptr - val) == 0)
                 {
@@ -88,19 +88,19 @@ void config_set_var(SnortConfig* sc, const char* val)
 
 void FreeVarList(VarNode* head)
 {
-    while (head != NULL)
+    while (head != nullptr)
     {
         VarNode* tmp = head;
 
         head = head->next;
 
-        if (tmp->name != NULL)
+        if (tmp->name != nullptr)
             snort_free(tmp->name);
 
-        if (tmp->value != NULL)
+        if (tmp->value != nullptr)
             snort_free(tmp->value);
 
-        if (tmp->line != NULL)
+        if (tmp->line != nullptr)
             snort_free(tmp->line);
 
         snort_free(tmp);
@@ -223,24 +223,24 @@ int VarIsIpAddr(vartable_t* ip_vartable, const char* value)
 
     /* Check for dotted-quad */
     if ( isdigit((int)*value) &&
-        ((tmp = strchr(value, (int)'.')) != NULL) &&
-        ((tmp = strchr(tmp+1, (int)'.')) != NULL) &&
-        (strchr(tmp+1, (int)'.') != NULL))
+        ((tmp = strchr(value, (int)'.')) != nullptr) &&
+        ((tmp = strchr(tmp+1, (int)'.')) != nullptr) &&
+        (strchr(tmp+1, (int)'.') != nullptr))
         return 1;
 
     /* IPv4 with a mask, and fewer than 4 fields */
     else if ( isdigit((int)*value) &&
-        (strchr(value+1, (int)':') == NULL) &&
-        ((tmp = strchr(value+1, (int)'/')) != NULL) &&
+        (strchr(value+1, (int)':') == nullptr) &&
+        ((tmp = strchr(value+1, (int)'/')) != nullptr) &&
         isdigit((int)(*(tmp+1))) )
         return 1;
 
     /* IPv6 */
-    else if ((tmp = strchr(value, (int)':')) != NULL)
+    else if ((tmp = strchr(value, (int)':')) != nullptr)
     {
         const char* tmp2;
 
-        if ((tmp2 = strchr(tmp+1, (int)':')) == NULL)
+        if ((tmp2 = strchr(tmp+1, (int)':')) == nullptr)
             return 0;
 
         for (tmp++; tmp < tmp2; tmp++)
@@ -335,10 +335,10 @@ int VarIsIpList(vartable_t* ip_vartable, const char* value)
      * We just strip out the IP delimiters and process each one. */
     char* lasts = nullptr;
     item = strtok_r(copy, "[],!", &lasts);
-    while ((item != NULL) && item_is_ip)
+    while ((item != nullptr) && item_is_ip)
     {
         item_is_ip = VarIsIpAddr(ip_vartable, item);
-        item = strtok_r(NULL, "[],!", &lasts);
+        item = strtok_r(nullptr, "[],!", &lasts);
     }
 
     snort_free(copy);
@@ -391,7 +391,7 @@ void DisallowCrossTableDuplicateVars(
         break;
 
     case VAR_TYPE__PORTVAR:
-        if (var_table != NULL)
+        if (var_table != nullptr)
         {
             do
             {
@@ -414,7 +414,7 @@ void DisallowCrossTableDuplicateVars(
         break;
 
     case VAR_TYPE__IPVAR:
-        if (var_table != NULL)
+        if (var_table != nullptr)
         {
             do
             {
@@ -462,7 +462,7 @@ VarEntry* VarDefine(
     VarEntry* p;
     uint32_t var_id = 0;
 
-    if (value == NULL)
+    if (value == nullptr)
     {
         ParseAbort("bad value in variable definition.  Make sure you don't "
             "have a '$' in the var name.");
@@ -472,8 +472,8 @@ VarEntry* VarDefine(
     {
         SfIpRet ret;
 
-        if (ip_vartable == NULL)
-            return NULL;
+        if (ip_vartable == nullptr)
+            return nullptr;
 
         /* Verify a variable by this name is not already used as either a
          * portvar or regular var.  Enforcing this mutual exclusion prevents the
@@ -505,16 +505,16 @@ VarEntry* VarDefine(
                 ParseAbort("failed to parse the IP address: %s.", value);
             }
         }
-        return NULL;
+        return nullptr;
     }
     /* Check if this is a variable that stores an IP */
     else if (*value == '$')
     {
         sfip_var_t* var;
-        if ((var = sfvt_lookup_var(ip_vartable, value)) != NULL)
+        if ((var = sfvt_lookup_var(ip_vartable, value)) != nullptr)
         {
             sfvt_define(ip_vartable, name, value);
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -522,7 +522,7 @@ VarEntry* VarDefine(
         "VarDefine: name=%s value=%s\n",name,value);
 
     /* Check to see if this variable is just being aliased */
-    if (var_table != NULL)
+    if (var_table != nullptr)
     {
         VarEntry* tmp = var_table;
 
@@ -551,7 +551,7 @@ VarEntry* VarDefine(
 
     DisallowCrossTableDuplicateVars(sc, name, VAR_TYPE__DEFAULT);
 
-    if (var_table == NULL)
+    if (var_table == nullptr)
     {
         p = VarAlloc();
         p->name  = snort_strdup(name);
@@ -574,7 +574,7 @@ VarEntry* VarDefine(
     {
         if (strcasecmp(p->name, name) == 0)
         {
-            if (p->value != NULL)
+            if (p->value != nullptr)
                 snort_free(p->value);
 
             p->value = snort_strdup(value);
@@ -656,14 +656,14 @@ const char* VarSearch(SnortConfig* sc, const char* name)
     vartable_t* ip_vartable = dp->ip_vartable;
     sfip_var_t* ipvar;
 
-    if ((ipvar = sfvt_lookup_var(ip_vartable, name)) != NULL)
+    if ((ipvar = sfvt_lookup_var(ip_vartable, name)) != nullptr)
         return ExpandVars(sc, ipvar->value);
 
     /* XXX Return a string value */
     if (PortVarTableFind(portVarTable, name))
         return name;
 
-    if (var_table != NULL)
+    if (var_table != nullptr)
     {
         VarEntry* p = var_table;
         do
@@ -675,7 +675,7 @@ const char* VarSearch(SnortConfig* sc, const char* name)
         while (p != var_table);
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /****************************************************************************
@@ -766,7 +766,7 @@ const char* ExpandVars(SnortConfig* sc, const char* string)
 
                 i = iv;
 
-                varcontents = NULL;
+                varcontents = nullptr;
 
                 memset((char*)varname, 0, sizeof(varname));
                 memset((char*)varaux, 0, sizeof(varaux));
@@ -862,7 +862,7 @@ void AddVarToTable(SnortConfig* sc, const char* name, const char* value)
 TEST_CASE("config_set_var-success", "[vars]")
 {
     SnortConfig sc;
-    sc.var_list = NULL;
+    sc.var_list = nullptr;
     config_set_var(&sc, "A=B");
 
     REQUIRE(sc.var_list->name[0] == 'A');

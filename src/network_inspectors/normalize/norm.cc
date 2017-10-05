@@ -186,7 +186,7 @@ static int Norm_IP4(
         {
             if ( mode == NORM_MODE_ON )
             {
-                ((DAQ_PktHdr_t*)p->pkth)->pktlen = (len < ETH_MIN_LEN) ? ETH_MIN_LEN : len;
+                (const_cast<DAQ_PktHdr_t*>(p->pkth))->pktlen = (len < ETH_MIN_LEN) ? ETH_MIN_LEN : len;
                 p->packet_flags |= PKT_RESIZED;
                 changes++;
             }
@@ -272,7 +272,7 @@ static int Norm_IP4(
 static int Norm_ICMP4(
     NormalizerConfig* c, Packet* p, uint8_t layer, int changes)
 {
-    ICMPHdr* h = (ICMPHdr*)(p->layers[layer].start);
+    ICMPHdr* h = reinterpret_cast<ICMPHdr*>(const_cast<uint8_t*>(p->layers[layer].start));
     const NormMode mode = get_norm_mode(c, p);
 
     if ( (h->type == ICMP_ECHO || h->type == ICMP_ECHOREPLY) &&

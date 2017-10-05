@@ -35,19 +35,19 @@
  * Note: end point to the location start + length,
  *       not necessary the real end of string if not end with \0
  */
-int SIP_TrimSP(const char* start, const char* end, char** new_start, char** new_end)
+int SIP_TrimSP(const char* start, const char* end, const char** new_start, const char** new_end)
 {
-    char* before;
-    char* after;
+    const char* before;
+    const char* after;
 
     if (start >= end )
     {
-        *new_start = (char*)start;
+        *new_start = start;
         *new_end = *new_start;
         return 0;
     }
 
-    before = (char*)start;
+    before = start;
 
     // Trim the starting spaces
     while ((before < end) && isspace((int)*before))
@@ -57,13 +57,13 @@ int SIP_TrimSP(const char* start, const char* end, char** new_start, char** new_
     // This is an empty string
     if (before == end)
     {
-        *new_start = (char*)end;
+        *new_start = end;
         *new_end = *new_start;
         return 0;
     }
 
     // Trim the ending spaces
-    after = (char*)end - 1;
+    after = end - 1;
     while ((before < after) && isspace((int)*after))
     {
         after--;
@@ -91,7 +91,7 @@ int SIP_TrimSP(const char* start, const char* end, char** new_start, char** new_
 SIPMethodNode* SIP_FindMethod(SIPMethodlist methods, const char* methodName, unsigned int length)
 {
     SIPMethodNode* method = methods;
-    while (NULL != method)
+    while (nullptr != method)
     {
         if ((length == strlen(method->methodName))&&
             (strncasecmp(method->methodName, methodName, length) == 0))

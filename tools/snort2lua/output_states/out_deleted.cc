@@ -32,8 +32,7 @@ class Deleted : public ConversionState
 {
 public:
     Deleted(Converter& c) : ConversionState(c) { }
-    virtual ~Deleted() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 

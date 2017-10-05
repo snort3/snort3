@@ -322,13 +322,13 @@ TEST_CASE( "profiler node map", "[profiler]" )
         SECTION( "register module" )
         {
             tree.register_node("foo", nullptr, &m);
-            CHECK( find_node(tree, "foo").name != "" );
+            CHECK( !find_node(tree, "foo").name.empty() );
         }
 
         SECTION( "register function")
         {
             tree.register_node("foo", nullptr, s_profiler_stats_getter);
-            CHECK( find_node(tree, "foo").name != "" );
+            CHECK( !find_node(tree, "foo").name.empty() );
         }
 
         SECTION( "register child -> parent" )

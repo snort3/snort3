@@ -49,7 +49,7 @@ public:
         table_api(c.get_table_api()),
         rule_api(c.get_rule_api())
     { }
-    virtual ~ConversionState() { }
+    virtual ~ConversionState() = default;
     virtual bool convert(std::istringstream& data)=0;
 
 protected:
@@ -152,7 +152,7 @@ protected:
         if (!(stream >> val))
             return false;
 
-        else if (!val.compare(yes))
+        else if (val == yes)
         {
             if (append)
             {
@@ -162,7 +162,7 @@ protected:
             else
                 return table_api.add_option(opt_name, true);
         }
-        else if (!val.compare(no))
+        else if (val == no)
         {
             if (append)
             {
@@ -218,7 +218,7 @@ protected:
     // parse and add a curly bracket list '{...}' which is currently unsupported in Snort++
     inline bool parse_bracketed_unsupported_list(const std::string& list_name, std::istringstream& stream)
     {
-        std::string tmp = "";
+        std::string tmp;
         std::string elem;
 
         if (!(stream >> elem) || (elem != "{"))
@@ -228,7 +228,7 @@ protected:
             tmp += " " + elem;
 
         // remove the extra space at the beginning of the string
-        if (tmp.size() > 0)
+        if (!tmp.empty())
             tmp.erase(tmp.begin());
 
         return table_api.add_option("--" + list_name, tmp);
@@ -300,9 +300,8 @@ class UnsupportedState : public ConversionState
 {
 public:
     UnsupportedState(Converter& c) : ConversionState(c) {}
-    virtual ~UnsupportedState() {}
 
-    bool convert(std::istringstream& data_stream)
+    bool convert(std::istringstream& data_stream) override
     {
         data_api.add_unsupported_comment(*config_header +
             std::string(std::istreambuf_iterator<char>(data_stream), {}));

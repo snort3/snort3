@@ -170,7 +170,7 @@ class DnsFlowData : public FlowData
 {
 public:
     DnsFlowData();
-    ~DnsFlowData();
+    ~DnsFlowData() override;
 
     static void init()
     { inspector_id = FlowData::create_flow_data_id(); }

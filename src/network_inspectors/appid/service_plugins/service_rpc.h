@@ -32,7 +32,7 @@ class RpcServiceDetector : public ServiceDetector
 {
 public:
     RpcServiceDetector(ServiceDiscovery*);
-    ~RpcServiceDetector();
+    ~RpcServiceDetector() override;
 
     int validate(AppIdDiscoveryArgs&) override;
 

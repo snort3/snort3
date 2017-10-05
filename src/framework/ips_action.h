@@ -53,7 +53,7 @@ struct SnortConfig;
 class SO_PUBLIC IpsAction
 {
 public:
-    virtual ~IpsAction() { }
+    virtual ~IpsAction() = default;
 
     virtual void exec(Packet*) = 0;
 

@@ -26,7 +26,6 @@ class FileSession : public Session
 {
 public:
     FileSession(Flow*);
-    ~FileSession();
 
     bool setup(Packet*) override;
     void clear() override;

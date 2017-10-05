@@ -57,7 +57,7 @@ SfIp expected_addr;
 
 TEST_GROUP(host_tracker_module)
 {
-    void setup()
+    void setup() override
     {
         Value ip_val("10.23.45.56");
         Value frag_val((double)FRAG_POLICY);
@@ -111,7 +111,7 @@ TEST_GROUP(host_tracker_module)
         ip_val.get_addr(expected_addr);
     }
 
-    void teardown()
+    void teardown() override
     {
         memset(&host_tracker_stats, 0, sizeof(host_tracker_stats));
         host_cache.clear();    //  Free HostTracker objects

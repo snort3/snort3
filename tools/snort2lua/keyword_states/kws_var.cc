@@ -32,8 +32,7 @@ class Var : public ConversionState
 {
 public:
     Var(Converter& c) : ConversionState(c) { }
-    virtual ~Var() { }
-    virtual bool convert(std::istringstream& data);
+    bool convert(std::istringstream& data) override;
 };
 } // namespace
 
@@ -68,7 +67,7 @@ bool Var::convert(std::istringstream& data_stream)
 
         util::split(ports, ',', port_list);
 
-        for (std::string elem : port_list)
+        for (const std::string& elem : port_list)
             retval = data_api.add_variable(keyword, elem) && retval;
 
         return retval;

@@ -30,7 +30,6 @@ class RegTestServiceDetector : public ServiceDetector
 {
 public:
     RegTestServiceDetector(ServiceDiscovery*);
-    ~RegTestServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };
@@ -39,7 +38,6 @@ class RegTestServiceDetector1 : public ServiceDetector
 {
 public:
     RegTestServiceDetector1(ServiceDiscovery*);
-    ~RegTestServiceDetector1();
 
     int validate(AppIdDiscoveryArgs&) override;
 };
@@ -48,7 +46,6 @@ class RegTestServiceDetector2 : public ServiceDetector
 {
 public:
     RegTestServiceDetector2(ServiceDiscovery*);
-    ~RegTestServiceDetector2();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

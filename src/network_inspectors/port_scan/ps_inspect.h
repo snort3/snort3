@@ -37,7 +37,7 @@ class PortScan : public Inspector
 {
 public:
     PortScan(class PortScanModule*);
-    ~PortScan();
+    ~PortScan() override;
 
     void show(SnortConfig*) override;
     void eval(Packet*) override;

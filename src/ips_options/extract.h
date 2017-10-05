@@ -31,7 +31,7 @@
 #define MAX_BYTES_TO_GRAB 4
 
 #define NUM_IPS_OPTIONS_VARS 3
-#define IPS_OPTIONS_NO_VAR -1
+#define IPS_OPTIONS_NO_VAR (-1)
 #define INVALID_VAR_ERR_STR "%s uses an undefined rule option variable (%s)"
 
 SO_PUBLIC int string_extract(

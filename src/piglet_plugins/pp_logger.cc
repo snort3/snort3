@@ -34,16 +34,16 @@
 class LoggerPiglet : public Piglet::BasePlugin
 {
 public:
-    LoggerPiglet(Lua::State&, std::string, Module*, SnortConfig*);
-    virtual ~LoggerPiglet() override;
-    virtual bool setup() override;
+    LoggerPiglet(Lua::State&, const std::string&, Module*, SnortConfig*);
+    ~LoggerPiglet() override;
+    bool setup() override;
 
 private:
     LoggerWrapper* wrapper;
 };
 
 LoggerPiglet::LoggerPiglet(
-    Lua::State& state, std::string target, Module* m, SnortConfig* sc) :
+    Lua::State& state, const std::string& target, Module* m, SnortConfig* sc) :
     BasePlugin(state, target, m, sc)
 {
     // FIXIT-M does Logger need module?
@@ -77,7 +77,7 @@ bool LoggerPiglet::setup()
 // API foo
 // -----------------------------------------------------------------------------
 static Piglet::BasePlugin* ctor(
-    Lua::State& state, std::string target, Module* m, SnortConfig* sc)
+    Lua::State& state, const std::string& target, Module* m, SnortConfig* sc)
 { return new LoggerPiglet(state, target, m, sc); }
 
 static void dtor(Piglet::BasePlugin* p)

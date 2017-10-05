@@ -24,7 +24,7 @@
 
 #include "context_switcher.h"
 
-#include <assert.h>
+#include <cassert>
 
 #include "main/modules.h"
 #include "main/snort_debug.h"
@@ -73,7 +73,7 @@ IpsContext* ContextSwitcher::pop()
 void ContextSwitcher::start()
 {
     assert(busy.empty());
-    assert(idle.size() > 0);
+    assert(!idle.empty());
     trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::start %u (i=%zu, b=%zu)\n",
         pc.total_from_daq, idle.back()->get_slot(), idle.size(), busy.size());
     busy.push_back(idle.back());

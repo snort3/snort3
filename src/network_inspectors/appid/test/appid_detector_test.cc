@@ -54,8 +54,7 @@ AppIdSession* mock_session = nullptr;
 class TestDetector : public AppIdDetector
 {
 public:
-    TestDetector() { }
-    ~TestDetector() { }
+    TestDetector() = default;
 
     void do_custom_init() override { }
     int validate(AppIdDiscoveryArgs&) override { return 0; }
@@ -64,7 +63,7 @@ public:
 
 TEST_GROUP(appid_detector_tests)
 {
-    void setup()
+    void setup() override
     {
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         flow = new Flow;
@@ -73,7 +72,7 @@ TEST_GROUP(appid_detector_tests)
         flow->set_flow_data(mock_session);
     }
 
-    void teardown()
+    void teardown() override
     {
         delete mock_session;
         delete flow;

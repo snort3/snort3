@@ -189,23 +189,23 @@ struct SSLv2_shello_t
 
 #define SSL_HS_PAYLOAD_OFFSET (sizeof(uint8_t) * 4) /* Type and length fields */
 
-#define SSL_BAD_HS(x) (x & SSL_BOGUS_HS_DIR_FLAG)
+#define SSL_BAD_HS(x) ((x) & SSL_BOGUS_HS_DIR_FLAG)
 
 #define SSL_IS_HANDSHAKE(x) \
-    (x & (SSL_CLIENT_HELLO_FLAG | SSL_SERVER_HELLO_FLAG | \
+    ((x) & (SSL_CLIENT_HELLO_FLAG | SSL_SERVER_HELLO_FLAG | \
     SSL_CERTIFICATE_FLAG | SSL_SERVER_KEYX_FLAG | \
     SSL_CLIENT_KEYX_FLAG | SSL_CIPHER_SPEC_FLAG))
 
-#define SSL_IS_CHELLO(x) (x & SSL_CLIENT_HELLO_FLAG)
-#define SSL_IS_SHELLO(x) (x & SSL_SERVER_HELLO_FLAG)
-#define SSL_IS_CKEYX(x) (x & SSL_CLIENT_KEYX_FLAG)
-#define SSL_IS_APP(x) ((x & SSL_SAPP_FLAG) || (x & SSL_CAPP_FLAG))
-#define SSL_IS_ALERT(x) (x & SSL_ALERT_FLAG)
+#define SSL_IS_CHELLO(x) ((x) & SSL_CLIENT_HELLO_FLAG)
+#define SSL_IS_SHELLO(x) ((x) & SSL_SERVER_HELLO_FLAG)
+#define SSL_IS_CKEYX(x) ((x) & SSL_CLIENT_KEYX_FLAG)
+#define SSL_IS_APP(x) (((x) & SSL_SAPP_FLAG) || ((x) & SSL_CAPP_FLAG))
+#define SSL_IS_ALERT(x) ((x) & SSL_ALERT_FLAG)
 #define SSL_CLEAR_TEMPORARY_FLAGS(x) x &= ~SSL_STATEFLAGS;
 
 /* Verifies that the error flags haven't been triggered */
 #define SSL_IS_CLEAN(x) \
-    !(x & (SSL_BOGUS_HS_DIR_FLAG | SSL_TRUNCATED_FLAG | \
+    !((x) & (SSL_BOGUS_HS_DIR_FLAG | SSL_TRUNCATED_FLAG | \
     SSL_BAD_VER_FLAG | SSL_BAD_TYPE_FLAG | \
     SSL_TRAILING_GARB_FLAG | SSL_UNKNOWN_FLAG))
 

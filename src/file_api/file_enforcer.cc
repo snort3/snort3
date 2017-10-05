@@ -167,21 +167,21 @@ bool FileEnforcer::apply_verdict(Flow* flow, FileInfo* file, FileVerdict verdict
     if (verdict == FILE_VERDICT_BLOCK)
     {
         // can't block session inside a session
-        Active::set_delayed_action(Active::ACT_BLOCK, 1);
+        Active::set_delayed_action(Active::ACT_BLOCK, true);
         store_verdict(flow, file);
         return true;
     }
     else if (verdict == FILE_VERDICT_REJECT)
     {
         // can't reset session inside a session
-        Active::set_delayed_action(Active::ACT_RESET, 1);
+        Active::set_delayed_action(Active::ACT_RESET, true);
         store_verdict(flow, file);
         return true;
     }
     else if (verdict == FILE_VERDICT_PENDING)
     {
         /*Take the cached verdict*/
-        Active::set_delayed_action(Active::ACT_DROP, 1);
+        Active::set_delayed_action(Active::ACT_DROP, true);
         return true;
     }
 

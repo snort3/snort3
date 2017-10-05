@@ -29,16 +29,16 @@
 class SearchEnginePiglet : public Piglet::BasePlugin
 {
 public:
-    SearchEnginePiglet(Lua::State&, std::string, Module*, SnortConfig*);
-    virtual ~SearchEnginePiglet() override;
-    virtual bool setup() override;
+    SearchEnginePiglet(Lua::State&, const std::string&, Module*, SnortConfig*);
+    ~SearchEnginePiglet() override;
+    bool setup() override;
 
 private:
     MpseWrapper* wrapper;
 };
 
 SearchEnginePiglet::SearchEnginePiglet(
-    Lua::State& state, std::string target, Module* m, SnortConfig* sc) :
+    Lua::State& state, const std::string& target, Module* m, SnortConfig* sc) :
     BasePlugin(state, target, m, sc)
 { wrapper = MpseManager::instantiate(target.c_str(), module, snort_conf); }
 
@@ -62,7 +62,7 @@ bool SearchEnginePiglet::setup()
 // API foo
 // -----------------------------------------------------------------------------
 static Piglet::BasePlugin* ctor(
-    Lua::State& state, std::string target, Module* m, SnortConfig* sc)
+    Lua::State& state, const std::string& target, Module* m, SnortConfig* sc)
 { return new SearchEnginePiglet(state, target, m, sc); }
 
 static void dtor(Piglet::BasePlugin* p)

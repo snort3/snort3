@@ -97,7 +97,7 @@ bool ReassembleOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    const ReassembleOption& rhs = (ReassembleOption&)ips;
+    const ReassembleOption& rhs = (const ReassembleOption&)ips;
 
     if ( (srod.enable == rhs.srod.enable) &&
         (srod.direction == rhs.srod.direction) &&

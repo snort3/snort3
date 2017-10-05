@@ -33,8 +33,7 @@ class Frag3Engine : public ConversionState
 {
 public:
     explicit Frag3Engine(Converter& c) : ConversionState(c) { }
-    virtual ~Frag3Engine() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 
 private:
     std::string choose_table_name(std::istringstream& data_stream);
@@ -49,7 +48,7 @@ std::string Frag3Engine::choose_table_name(std::istringstream& data_stream)
 
     while (data_stream >> keyword)
     {
-        if (!keyword.compare("bind_to"))
+        if (keyword == "bind_to")
         {
             data_stream.clear();
             data_stream.seekg(pos);
@@ -78,10 +77,10 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
         if (keyword.empty())
             continue;
 
-        if (!keyword.compare("detect_anomalies"))
+        if (keyword == "detect_anomalies")
             table_api.add_deleted_comment("detect_anomalies");
 
-        else if (!keyword.compare("bind_to"))
+        else if (keyword == "bind_to")
         {
             std::string ip_list;
 
@@ -98,7 +97,7 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
                 b.set_use_name(table_name);
             }
         }
-        else if (!keyword.compare("min_ttl"))
+        else if (keyword == "min_ttl")
         {
             if (!parse_int_option("min_ttl", data_stream, false))
             {
@@ -106,7 +105,7 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
                 retval = false;
             }
         }
-        else if (!keyword.compare("overlap_limit"))
+        else if (keyword == "overlap_limit")
         {
             if (!parse_int_option("max_overlaps", data_stream, false))
             {
@@ -116,7 +115,7 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
 
             table_api.add_diff_option_comment("overlap_limit", "max_overlaps");
         }
-        else if (!keyword.compare("min_fragment_length"))
+        else if (keyword == "min_fragment_length")
         {
             if (!parse_int_option("min_frag_length", data_stream, false))
             {
@@ -125,7 +124,7 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
             }
             table_api.add_diff_option_comment("min_fragment_length", "min_frag_length");
         }
-        else if (!keyword.compare("timeout"))
+        else if (keyword == "timeout")
         {
             std::string val;
             table_api.add_diff_option_comment("timeout", "session_timeout");
@@ -145,7 +144,7 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
                 }
             }
         }
-        else if (!keyword.compare("policy"))
+        else if (keyword == "policy")
         {
             std::string policy;
 
@@ -154,25 +153,25 @@ bool Frag3Engine::convert(std::istringstream& data_stream)
                 data_api.failed_conversion(data_stream, "policy <missing_policy>");
                 retval = false;
             }
-            else if (!policy.compare("first"))
+            else if (policy == "first")
                 table_api.add_option("policy", "first");
 
-            else if (!policy.compare("bsd"))
+            else if (policy == "bsd")
                 table_api.add_option("policy", "bsd");
 
-            else if (!policy.compare("last"))
+            else if (policy == "last")
                 table_api.add_option("policy", "last");
 
-            else if (!policy.compare("windows"))
+            else if (policy == "windows")
                 table_api.add_option("policy", "windows");
 
-            else if (!policy.compare("linux"))
+            else if (policy == "linux")
                 table_api.add_option("policy", "linux");
 
-            else if (!policy.compare("solaris"))
+            else if (policy == "solaris")
                 table_api.add_option("policy", "solaris");
 
-            else if (!policy.compare("bsd-right"))
+            else if (policy == "bsd-right")
             {
                 table_api.add_diff_option_comment("policy bsd-right", "policy = bsd_right");
                 table_api.add_option("policy", "bsd_right");

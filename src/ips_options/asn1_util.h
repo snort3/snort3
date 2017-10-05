@@ -136,13 +136,13 @@ struct SnortConfig;
 
 #define ASN1_OK      0
 
-#define ASN1_ERR_NULL_MEM            -1
-#define ASN1_ERR_INVALID_BER_TAG_LEN -3
-#define ASN1_ERR_MEM_ALLOC           -4
-#define ASN1_ERR_FATAL               -5
-#define ASN1_ERR_INVALID_INDEF_LEN   -6
-#define ASN1_ERR_INVALID_ARG         -7
-#define ASN1_ERR_STACK               -8
+#define ASN1_ERR_NULL_MEM            (-1)
+#define ASN1_ERR_INVALID_BER_TAG_LEN (-3)
+#define ASN1_ERR_MEM_ALLOC           (-4)
+#define ASN1_ERR_FATAL               (-5)
+#define ASN1_ERR_INVALID_INDEF_LEN   (-6)
+#define ASN1_ERR_INVALID_ARG         (-7)
+#define ASN1_ERR_STACK               (-8)
 
 void asn1_init_mem(SnortConfig*);
 void asn1_free_mem(SnortConfig*);

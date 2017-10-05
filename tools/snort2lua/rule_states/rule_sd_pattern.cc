@@ -33,8 +33,7 @@ class SDPattern : public ConversionState
 {
 public:
     SDPattern(Converter& c) : ConversionState(c) { }
-    virtual ~SDPattern() { }
-    virtual bool convert(std::istringstream& data);
+    bool convert(std::istringstream& data) override;
 };
 } // namespace
 

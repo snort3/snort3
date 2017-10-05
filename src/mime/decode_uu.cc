@@ -125,9 +125,10 @@ UUDecode::~UUDecode()
 int sf_uudecode(uint8_t* src, uint32_t slen, uint8_t* dst, uint32_t dlen, uint32_t* bytes_read,
     uint32_t* bytes_copied, bool* begin_found, bool* end_found)
 {
-    uint8_t* sod;
+    const uint8_t* sod;
     int sol = 1, length = 0;
-    uint8_t* ptr, * end, * dptr, * dend;
+    const uint8_t* ptr;
+    uint8_t* end, * dptr, * dend;
 
     if (!src || !slen || !dst || !dlen ||  !bytes_read || !bytes_copied || !begin_found ||
         !end_found )
@@ -149,12 +150,12 @@ int sf_uudecode(uint8_t* src, uint32_t slen, uint8_t* dst, uint32_t dlen, uint32
         }
         else
         {
-            sod = (uint8_t*)SnortStrnStr((const char*)src, 5, "begin");
+            sod = (const uint8_t*)SnortStrnStr((const char*)src, 5, "begin");
             if (sod)
             {
                 *begin_found = true;
                 /*begin str found. Move to the actual data*/
-                ptr = (uint8_t*)SnortStrnStr((const char*)(sod), (end - sod), "\n");
+                ptr = (const uint8_t*)SnortStrnStr((const char*)(sod), (end - sod), "\n");
                 if ( !ptr )
                 {
                     *bytes_read = slen;

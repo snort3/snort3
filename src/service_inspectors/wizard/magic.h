@@ -68,10 +68,9 @@ class SpellBook : public MagicBook
 {
 public:
     SpellBook();
-    ~SpellBook() { }
 
-    bool add_spell(const char*, const char*);
-    const char* find_spell(const uint8_t*, unsigned len, const MagicPage*&) const;
+    bool add_spell(const char*, const char*) override;
+    const char* find_spell(const uint8_t*, unsigned len, const MagicPage*&) const override;
 
 private:
     bool translate(const char*, HexVector&);
@@ -87,11 +86,10 @@ private:
 class HexBook : public MagicBook
 {
 public:
-    HexBook() { }
-    ~HexBook() { }
+    HexBook() = default;
 
-    bool add_spell(const char*, const char*);
-    const char* find_spell(const uint8_t*, unsigned len, const MagicPage*&) const;
+    bool add_spell(const char*, const char*) override;
+    const char* find_spell(const uint8_t*, unsigned len, const MagicPage*&) const override;
 
 private:
     bool translate(const char*, HexVector&);

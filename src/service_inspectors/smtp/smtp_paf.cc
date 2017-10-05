@@ -53,7 +53,7 @@ const SmtpPAFToken smtp_paf_tokens[] =
     { "BDAT",         4, SMTP_PAF_BDAT_CMD, true },
     { "DATA",         4, SMTP_PAF_DATA_CMD, true },
     { "XEXCH50",      7, SMTP_PAF_XEXCH50_CMD, true },
-    { NULL,           0, 0, false }
+    { nullptr,           0, 0, false }
 };
 
 /* State tracker for SMTP PAF */
@@ -91,7 +91,7 @@ static inline StreamSplitter::Status smtp_paf_server(SmtpPafData* pfdata,
     pfdata->smtp_state = SMTP_PAF_CMD_STATE;
     pch = (const char*)memchr (data, '\n', len);
 
-    if (pch != NULL)
+    if (pch != nullptr)
     {
         DebugMessage(DEBUG_SMTP, "Find end of line!\n");
         *fp = (uint32_t)(pch - (const char*)data) + 1;
@@ -101,7 +101,7 @@ static inline StreamSplitter::Status smtp_paf_server(SmtpPafData* pfdata,
 }
 
 /* Initialize command search based on first byte of command*/
-static inline char* init_cmd_search(SmtpCmdSearchInfo* search_info,  uint8_t ch)
+static inline const char* init_cmd_search(SmtpCmdSearchInfo* search_info,  uint8_t ch)
 {
     /* Use the first byte to choose data command)*/
     switch (ch)
@@ -127,10 +127,10 @@ static inline char* init_cmd_search(SmtpCmdSearchInfo* search_info,  uint8_t ch)
         search_info->search_id = SMTP_PAF_XEXCH50_CMD;
         break;
     default:
-        search_info->search_state = NULL;
+        search_info->search_state = nullptr;
         break;
     }
-    return (char *)search_info->search_state;
+    return search_info->search_state;
 }
 
 /* Validate whether the command is a data command*/
@@ -146,14 +146,14 @@ static inline void validate_command(SmtpCmdSearchInfo* search_info,  uint8_t val
             /* Found data command, change to SMTP_PAF_CMD_DATA_LENGTH_STATE */
             if (*(search_info->search_state) == '\0')
             {
-                search_info->search_state = NULL;
+                search_info->search_state = nullptr;
                 search_info->cmd_state = SMTP_PAF_CMD_DATA_LENGTH_STATE;
                 return;
             }
         }
         else
         {
-            search_info->search_state = NULL;
+            search_info->search_state = nullptr;
             search_info->cmd_state = SMTP_PAF_CMD_UNKNOWN;
             return;
         }
@@ -212,7 +212,7 @@ static inline bool process_command(SmtpPafData* pfdata,  uint8_t val)
         }
 
         pfdata->cmd_info.cmd_state = SMTP_PAF_CMD_START;
-        return 1;
+        return true;
     }
 
     switch (pfdata->cmd_info.cmd_state)
@@ -245,7 +245,7 @@ static inline bool process_command(SmtpPafData* pfdata,  uint8_t val)
         break;
     }
 
-    return 0;
+    return false;
 }
 
 /* Flush based on data length*/
@@ -354,7 +354,6 @@ SmtpSplitter::SmtpSplitter(bool c2s, int len) : StreamSplitter(c2s)
     max_auth_command_line_len = len;
 }
 
-SmtpSplitter::~SmtpSplitter() { }
 
 /* Function: smtp_paf()
 

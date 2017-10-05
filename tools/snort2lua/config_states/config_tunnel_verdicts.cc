@@ -32,8 +32,7 @@ class TunnelVerdicts : public ConversionState
 {
 public:
     TunnelVerdicts(Converter& c) : ConversionState(c) { }
-    virtual ~TunnelVerdicts() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 

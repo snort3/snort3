@@ -85,7 +85,7 @@ inline bool DCE2_TcpAutodetect(Packet* p)
 {
     if (p->dsize >= sizeof(DceRpcCoHdr))
     {
-        DceRpcCoHdr* co_hdr = (DceRpcCoHdr*)p->data;
+        const DceRpcCoHdr* co_hdr = (const DceRpcCoHdr*)p->data;
 
         if ((DceRpcCoVersMaj(co_hdr) == DCERPC_PROTO_MAJOR_VERS__5)
             && (DceRpcCoVersMin(co_hdr) == DCERPC_PROTO_MINOR_VERS__0)
@@ -116,7 +116,7 @@ class Dce2TcpFlowData : public FlowData
 {
 public:
     Dce2TcpFlowData();
-    ~Dce2TcpFlowData();
+    ~Dce2TcpFlowData() override;
 
     static void init()
     {

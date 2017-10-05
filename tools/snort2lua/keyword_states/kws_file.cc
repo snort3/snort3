@@ -34,8 +34,7 @@ class File : public ConversionState
 {
 public:
     File(Converter& c) : ConversionState(c) { }
-    virtual ~File() { }
-    virtual bool convert(std::istringstream& data);
+    bool convert(std::istringstream& data) override;
 
 private:
 };

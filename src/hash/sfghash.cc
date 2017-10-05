@@ -104,7 +104,7 @@ SFGHASH* sfghash_new(int nrows, int keysize, int userkeys, SfgHashFree userfree)
 
     for ( int i = 0; i < nrows; i++ )
     {
-        h->table[i] = 0;
+        h->table[i] = nullptr;
     }
 
     h->userkey = userkeys;
@@ -114,7 +114,7 @@ SFGHASH* sfghash_new(int nrows, int keysize, int userkeys, SfgHashFree userfree)
     h->userfree = userfree;
 
     h->crow = 0; // findfirst/next current row
-    h->cnode = 0; // findfirst/next current node ptr
+    h->cnode = nullptr; // findfirst/next current node ptr
 
     return h;
 }
@@ -145,7 +145,7 @@ void sfghash_delete(SFGHASH* h)
                 node  = node->next;
 
                 if ( !h->userkey && onode->key )
-                    snort_free((void*)onode->key);
+                    snort_free(const_cast<void*>(onode->key));
 
                 if ( h->userfree && onode->data )
                     h->userfree(onode->data); /* free users data, with users function */
@@ -154,7 +154,7 @@ void sfghash_delete(SFGHASH* h)
             }
         }
         snort_free(h->table);
-        h->table = 0;
+        h->table = nullptr;
     }
 
     snort_free(h);
@@ -201,10 +201,10 @@ int sfghash_add(SFGHASH* t, const void* const key, void* const data)
     else
     {
         /* need the null byte for strcmp() in sfghash_find() */
-        klen = strlen( (char*)key) + 1;
+        klen = strlen( (const char*)key) + 1;
     }
 
-    hashkey = t->sfhashfcn->hash_fcn(t->sfhashfcn, (unsigned char*)key, klen);
+    hashkey = t->sfhashfcn->hash_fcn(t->sfhashfcn, (const unsigned char*)key, klen);
 
     index = hashkey % t->nrows;
 
@@ -250,13 +250,13 @@ int sfghash_add(SFGHASH* t, const void* const key, void* const data)
         hnode->key = snort_alloc(klen);
 
         /* Copy key  */
-        memcpy((void*)hnode->key,key,klen);
+        memcpy(const_cast<void*>(hnode->key),key,klen);
     }
 
     /* Add The Node */
     if ( t->table[index] ) /* add the node to the existing list */
     {
-        hnode->prev = 0;  // insert node as head node
+        hnode->prev = nullptr;  // insert node as head node
         hnode->next=t->table[index];
         hnode->data=data;
         t->table[index]->prev = hnode;
@@ -264,8 +264,8 @@ int sfghash_add(SFGHASH* t, const void* const key, void* const data)
     }
     else /* 1st node in this list */
     {
-        hnode->prev=0;
-        hnode->next=0;
+        hnode->prev=nullptr;
+        hnode->next=nullptr;
         hnode->data=data;
         t->table[index] = hnode;
     }
@@ -292,10 +292,10 @@ static SFGHASH_NODE* sfghash_find_node(SFGHASH* t, const void* const key)
     }
     else
     {
-        klen = strlen( (char*)key) + 1;
+        klen = strlen( (const char*)key) + 1;
     }
 
-    hashkey = t->sfhashfcn->hash_fcn(t->sfhashfcn, (unsigned char*)key, klen);
+    hashkey = t->sfhashfcn->hash_fcn(t->sfhashfcn, (const unsigned char*)key, klen);
 
     index = hashkey % t->nrows;
 
@@ -303,7 +303,7 @@ static SFGHASH_NODE* sfghash_find_node(SFGHASH* t, const void* const key)
     {
         if ( t->keysize == 0 )
         {
-            if ( !strcmp((char*)hnode->key,(char*)key) )
+            if ( !strcmp((const char*)hnode->key,(const char*)key) )
             {
                 return hnode;
             }
@@ -317,7 +317,7 @@ static SFGHASH_NODE* sfghash_find_node(SFGHASH* t, const void* const key)
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /*
@@ -334,7 +334,7 @@ void* sfghash_find(SFGHASH* t, const void* const key)
     if ( hnode )
         return hnode->data;
 
-    return NULL;
+    return nullptr;
 }
 
 /*
@@ -345,9 +345,9 @@ static int sfghash_free_node(SFGHASH* t, unsigned index, SFGHASH_NODE* hnode)
     assert(t);
 
     if ( !t->userkey && hnode->key )
-        snort_free((void*)hnode->key);
+        snort_free(const_cast<void*>(hnode->key));
 
-    hnode->key = 0;
+    hnode->key = nullptr;
 
     if ( t->userfree)
         t->userfree(hnode->data);  /* free users data, with users function */
@@ -362,7 +362,7 @@ static int sfghash_free_node(SFGHASH* t, unsigned index, SFGHASH_NODE* hnode)
     {
         t->table[index] = t->table[index]->next;
         if ( t->table[index] )
-            t->table[index]->prev = 0;
+            t->table[index]->prev = nullptr;
     }
 
     snort_free(hnode);
@@ -392,10 +392,10 @@ int sfghash_remove(SFGHASH* t, const void* const key)
     }
     else
     {
-        klen = strlen((char*)key) + 1;
+        klen = strlen((const char*)key) + 1;
     }
 
-    hashkey = t->sfhashfcn->hash_fcn(t->sfhashfcn, (unsigned char*)key, klen);
+    hashkey = t->sfhashfcn->hash_fcn(t->sfhashfcn, (const unsigned char*)key, klen);
 
     index = hashkey % t->nrows;
 
@@ -467,7 +467,7 @@ SFGHASH_NODE* sfghash_findfirst(SFGHASH* t)
             return n;
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 /*
@@ -483,7 +483,7 @@ SFGHASH_NODE* sfghash_findnext(SFGHASH* t)
 
     if ( !n ) /* Done, no more entries */
     {
-        return NULL;
+        return nullptr;
     }
 
     /*
@@ -502,7 +502,7 @@ SFGHASH_NODE* sfghash_findnext(SFGHASH* t)
  * @param keycmp_fcn user specified key comparison function
  */
 int sfghash_set_keyops(SFGHASH* h,
-    unsigned (* hash_fcn)(SFHASHFCN* p, unsigned char* d, int n),
+    unsigned (* hash_fcn)(SFHASHFCN* p, const unsigned char* d, int n),
     int (* keycmp_fcn)(const void* s1, const void* s2, size_t n))
 {
     assert(h && hash_fcn && keycmp_fcn);

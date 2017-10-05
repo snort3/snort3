@@ -30,7 +30,6 @@
 class HttpMsgBody : public HttpMsgSection
 {
 public:
-    virtual ~HttpMsgBody() = default;
     void analyze() override;
     HttpEnums::InspectSection get_inspection_section() const override
         { return detection_section ? HttpEnums::IS_DETECTION : HttpEnums::IS_BODY; }

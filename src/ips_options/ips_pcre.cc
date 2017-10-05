@@ -110,7 +110,7 @@ static void pcre_check_anchored(PcreData* pcre_data)
     int rc;
     unsigned long int options = 0;
 
-    if ((pcre_data == NULL) || (pcre_data->re == NULL) || (pcre_data->pe == NULL))
+    if ((pcre_data == nullptr) || (pcre_data->re == nullptr) || (pcre_data->pe == nullptr))
         return;
 
     rc = pcre_fullinfo(pcre_data->re, pcre_data->pe, PCRE_INFO_OPTIONS, (void*)&options);
@@ -164,7 +164,7 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
     int erroffset;
     int compile_flags = 0;
 
-    if (data == NULL)
+    if (data == nullptr)
     {
         ParseError("pcre requires a regular expression");
         return;
@@ -217,7 +217,7 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
 
     /* find ending delimiter, trim delimit chars */
     opts = strrchr(re, delimit);
-    if (opts == NULL)
+    if (opts == nullptr)
         goto syntax;
 
     if (!((opts - re) > 1)) /* empty regex(m||) or missing delim not OK */
@@ -258,9 +258,9 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
 
     /* now compile the re */
     DebugFormat(DEBUG_PATTERN_MATCH, "pcre: compiling %s\n", re);
-    pcre_data->re = pcre_compile(re, compile_flags, &error, &erroffset, NULL);
+    pcre_data->re = pcre_compile(re, compile_flags, &error, &erroffset, nullptr);
 
-    if (pcre_data->re == NULL)
+    if (pcre_data->re == nullptr)
     {
         ParseError(": pcre compile of '%s' failed at offset "
             "%d : %s", re, erroffset, error);
@@ -326,7 +326,7 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
         }
     }
 
-    if (error != NULL)
+    if (error != nullptr)
     {
         ParseError("pcre study failed : %s", error);
         return;
@@ -370,10 +370,10 @@ static bool pcre_search(
     bool matched;
     int result;
 
-    if (pcre_data == NULL
-        || buf == NULL
+    if (pcre_data == nullptr
+        || buf == nullptr
         || len <= 0
-        || found_offset == NULL)
+        || found_offset == nullptr)
     {
         DebugMessage(DEBUG_PATTERN_MATCH,
             "Returning 0 because we didn't have the required parameters!\n");
@@ -450,7 +450,7 @@ public:
         IpsOption(s_name, RULE_OPTION_TYPE_CONTENT)
     { config = c; }
 
-    ~PcreOption();
+    ~PcreOption() override;
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -556,7 +556,7 @@ bool PcreOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    PcreOption& rhs = (PcreOption&)ips;
+    const PcreOption& rhs = (const PcreOption&)ips;
     PcreData* left = config;
     PcreData* right = rhs.config;
 
@@ -672,7 +672,7 @@ public:
     PcreModule() : Module(s_name, s_help, s_params)
     { data = nullptr; }
 
-    ~PcreModule()
+    ~PcreModule() override
     { delete data; }
 
     bool begin(const char*, int, SnortConfig*) override;

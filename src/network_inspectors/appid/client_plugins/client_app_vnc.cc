@@ -70,9 +70,6 @@ VncClientDetector::VncClientDetector(ClientDiscovery* cdm)
     handler->register_detector(name, this, proto);
 }
 
-VncClientDetector::~VncClientDetector()
-{
-}
 
 int VncClientDetector::validate(AppIdDiscoveryArgs& args)
 {

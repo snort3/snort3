@@ -32,8 +32,7 @@ class PolicyMode : public ConversionState
 {
 public:
     PolicyMode(Converter& c) : ConversionState(c) { }
-    virtual ~PolicyMode() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 
@@ -46,15 +45,15 @@ bool PolicyMode::convert(std::istringstream& data_stream)
     {
         cv.get_table_api().open_table("ips");
 
-        if ( !mode.compare("tap"))
+        if ( mode == "tap")
         {
             cv.get_table_api().add_option("mode", "tap");
         }
-        else if ( !mode.compare("inline") )
+        else if ( mode == "inline" )
         {
             cv.get_table_api().add_option("mode", "inline");
         }
-        else if ( !mode.compare("inline_test") )
+        else if ( mode == "inline_test" )
         {
             cv.get_table_api().add_diff_option_comment("inline_test", "inline-test");
             cv.get_table_api().add_option("mode", "inline-test");

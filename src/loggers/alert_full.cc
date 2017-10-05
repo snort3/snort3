@@ -161,7 +161,7 @@ void FullLogger::alert(Packet* p, const char* msg, const Event& event)
         TextLog_Print(full_log, " <%s> ", iface);
     }
 
-    if (msg != NULL)
+    if (msg != nullptr)
     {
         TextLog_Puts(full_log, msg);
         TextLog_Puts(full_log, " [**]\n");

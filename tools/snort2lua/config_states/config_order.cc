@@ -32,8 +32,7 @@ class Order : public ConversionState
 {
 public:
     Order(Converter& c) : ConversionState(c) { }
-    virtual ~Order() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 

@@ -23,7 +23,7 @@
 
 #include "stream.h"
 
-#include <assert.h>
+#include <cassert>
 
 #include "detection/detection_engine.h"
 #include "flow/flow_control.h"

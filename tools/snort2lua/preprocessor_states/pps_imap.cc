@@ -32,8 +32,7 @@ class Imap : public ConversionState
 {
 public:
     Imap(Converter& c) : ConversionState(c) { }
-    virtual ~Imap() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 
 };
 } // namespace
@@ -56,50 +55,50 @@ bool Imap::convert(std::istringstream& data_stream)
     {
         bool tmpval = true;
 
-        if (!keyword.compare("disabled"))
+        if (keyword == "disabled")
         {
             table_api.add_deleted_comment("disabled");
         }
 
-        else if (!keyword.compare("memcap"))
+        else if (keyword == "memcap")
         {
             table_api.add_deleted_comment("memcap");
             data_stream >> keyword;
         }
 
-        else if (!keyword.compare("max_mime_mem"))
+        else if (keyword == "max_mime_mem")
         {
             table_api.add_deleted_comment("max_mime_mem");
             data_stream >> keyword;
         }
 
-        else if (!keyword.compare("b64_decode_depth"))
+        else if (keyword == "b64_decode_depth")
         {
             tmpval = parse_int_option("b64_decode_depth", data_stream, false);
         }
 
-        else if (!keyword.compare("qp_decode_depth"))
+        else if (keyword == "qp_decode_depth")
         {
             tmpval = parse_int_option("qp_decode_depth", data_stream, false);
         }
 
-        else if (!keyword.compare("bitenc_decode_depth"))
+        else if (keyword == "bitenc_decode_depth")
         {
             tmpval = parse_int_option("bitenc_decode_depth", data_stream, false);
         }
 
-        else if (!keyword.compare("uu_decode_depth"))
+        else if (keyword == "uu_decode_depth")
         {
             tmpval = parse_int_option("uu_decode_depth", data_stream, false);
         }
 
-        else if (!keyword.compare("ports"))
+        else if (keyword == "ports")
         {
             table_api.add_diff_option_comment("ports", "bindings");
 
-            if ((data_stream >> keyword) && !keyword.compare("{"))
+            if ((data_stream >> keyword) && keyword == "{")
             {
-                while (data_stream >> keyword && keyword.compare("}"))
+                while (data_stream >> keyword && keyword != "}")
                 {
                     ports_set = true;
                     bind.add_when_port(keyword);

@@ -339,7 +339,7 @@ class Dce2Smb : public Inspector
 {
 public:
     Dce2Smb(dce2SmbProtoConf&);
-    ~Dce2Smb();
+    ~Dce2Smb() override;
 
     void show(SnortConfig*) override;
     void eval(Packet*) override;

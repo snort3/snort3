@@ -33,7 +33,7 @@
 
 #define LOG_CHARS 16
 
-static THREAD_LOCAL TextLog* tlog = NULL;
+static THREAD_LOCAL TextLog* tlog = nullptr;
 static THREAD_LOCAL unsigned nEvents = 0;
 
 static void LogBuffer(const char* s, const uint8_t* p, unsigned n)
@@ -104,7 +104,7 @@ void EventTrace_Init()
 {
     if ( snort_conf->event_trace_max > 0 )
     {
-        time_t now = time(NULL);
+        time_t now = time(nullptr);
         char time_buf[26];
         ctime_r(&now, time_buf);
 
@@ -118,7 +118,7 @@ void EventTrace_Term()
 {
     if ( tlog )
     {
-        time_t now = time(NULL);
+        time_t now = time(nullptr);
         char time_buf[26];
         ctime_r(&now, time_buf);
 

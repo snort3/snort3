@@ -62,7 +62,7 @@ public:
         CONN_DUPLEX
     };
 
-    virtual ~Connector() { }
+    virtual ~Connector() = default;
 
     virtual ConnectorMsgHandle* alloc_message(const uint32_t, const uint8_t**) = 0;
     virtual void discard_message(ConnectorMsgHandle*) = 0;
@@ -75,7 +75,7 @@ public:
     const ConnectorConfig* config;
 
 protected:
-    Connector() { }
+    Connector() = default;
 };
 
 class ConnectorConfig

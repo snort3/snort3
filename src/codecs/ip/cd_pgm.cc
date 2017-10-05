@@ -43,7 +43,7 @@ class PgmModule : public CodecModule
 public:
     PgmModule() : CodecModule(CD_PGM_NAME, CD_PGM_HELP) { }
 
-    const RuleMap* get_rules() const
+    const RuleMap* get_rules() const override
     { return pgm_rules; }
 };
 
@@ -51,7 +51,6 @@ class PgmCodec : public Codec
 {
 public:
     PgmCodec() : Codec(CD_PGM_NAME) { }
-    ~PgmCodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void get_protocol_ids(std::vector<ProtocolId>&) override;
@@ -125,7 +124,7 @@ static inline int pgm_nak_detect(const RawData& raw)
         if (header->checksum != 0)
         {
             const uint16_t checksum =
-                checksum::cksum_add((uint16_t*)raw.data, raw.len);
+                checksum::cksum_add((const uint16_t*)raw.data, raw.len);
 
             if (checksum != 0)
                 return PGM_NAK_ERR;

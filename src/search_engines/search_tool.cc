@@ -43,12 +43,12 @@ SearchTool::~SearchTool()
 
 void SearchTool::add(const char* pat, unsigned len, int id, bool no_case)
 {
-    add((uint8_t*)pat, len, id, no_case);
+    add((const uint8_t*)pat, len, id, no_case);
 }
 
 void SearchTool::add(const char* pat, unsigned len, void* id, bool no_case)
 {
-    add((uint8_t*)pat, len, id, no_case);
+    add((const uint8_t*)pat, len, id, no_case);
 }
 
 void SearchTool::add(const uint8_t* pat, unsigned len, int id, bool no_case)

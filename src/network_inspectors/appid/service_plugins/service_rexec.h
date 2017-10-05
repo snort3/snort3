@@ -30,7 +30,6 @@ class RexecServiceDetector : public ServiceDetector
 {
 public:
     RexecServiceDetector(ServiceDiscovery*);
-    ~RexecServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 

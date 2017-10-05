@@ -36,9 +36,8 @@ class CommaListRuleOption : public ConversionState
 {
 public:
     CommaListRuleOption(Converter& c) : ConversionState(c) { }
-    virtual ~CommaListRuleOption() { }
 
-    virtual bool convert(std::istringstream& stream)
+    bool convert(std::istringstream& stream) override
     {
         std::string val = util::get_rule_option_args(stream);
 

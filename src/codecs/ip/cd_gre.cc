@@ -56,7 +56,6 @@ class GreCodec : public Codec
 {
 public:
     GreCodec() : Codec(CD_GRE_NAME) { }
-    ~GreCodec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
@@ -74,15 +73,15 @@ static const uint32_t GRE_SRE_HEADER_LEN = 4;
    static const uint32_t GRE_V1_HEADER_LEN == GRE_HEADER_LEN + GRE_KEY_LEN; */
 static const uint32_t GRE_V1_ACK_LEN = 4;
 
-#define GRE_V1_FLAGS(x)   (x->version & 0x78)
-#define GRE_V1_ACK(x)     (x->version & 0x80)
-#define GRE_CHKSUM(x)  (x->flags & 0x80)
-#define GRE_ROUTE(x)   (x->flags & 0x40)
-#define GRE_KEY(x)     (x->flags & 0x20)
-#define GRE_SEQ(x)     (x->flags & 0x10)
-#define GRE_SSR(x)     (x->flags & 0x08)
-#define GRE_RECUR(x)   (x->flags & 0x07)
-#define GRE_FLAGS(x)   (x->version & 0xF8)
+#define GRE_V1_FLAGS(x)   ((x)->version & 0x78)
+#define GRE_V1_ACK(x)     ((x)->version & 0x80)
+#define GRE_CHKSUM(x)  ((x)->flags & 0x80)
+#define GRE_ROUTE(x)   ((x)->flags & 0x40)
+#define GRE_KEY(x)     ((x)->flags & 0x20)
+#define GRE_SEQ(x)     ((x)->flags & 0x10)
+#define GRE_SSR(x)     ((x)->flags & 0x08)
+#define GRE_RECUR(x)   ((x)->flags & 0x07)
+#define GRE_FLAGS(x)   ((x)->version & 0xF8)
 } // anonymous namespace
 
 void GreCodec::get_protocol_ids(std::vector<ProtocolId>& v)
@@ -137,18 +136,18 @@ bool GreCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 
             sre_ptr = raw.data + len;
 
-            while (1)
+            while (true)
             {
                 len += GRE_SRE_HEADER_LEN;
                 if (len > raw.len)
                     break;
 
-                sre_addrfamily = ntohs(*((uint16_t*)sre_ptr));
+                sre_addrfamily = ntohs(*((const uint16_t*)sre_ptr));
                 sre_ptr += sizeof(sre_addrfamily);
 
                 sre_ptr += sizeof(sre_offset);
 
-                sre_length = *((uint8_t*)sre_ptr);
+                sre_length = *((const uint8_t*)sre_ptr);
                 sre_ptr += sizeof(sre_length);
 
                 if ((sre_addrfamily == 0) && (sre_length == 0))

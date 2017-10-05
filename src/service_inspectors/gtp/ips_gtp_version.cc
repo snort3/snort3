@@ -71,7 +71,7 @@ bool GtpVersionOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    GtpVersionOption& rhs = (GtpVersionOption&)ips;
+    const GtpVersionOption& rhs = (const GtpVersionOption&)ips;
     return ( version == rhs.version );
 }
 

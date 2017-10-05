@@ -70,7 +70,7 @@ public:
         IpsOption(s, RULE_OPTION_TYPE_BUFFER_USE)
     { config = c; hashf = f; size = n; idx = hpi; assert(n <= MAX_HASH_SIZE); }
 
-    ~HashOption() { delete config; }
+    ~HashOption() override { delete config; }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -121,7 +121,7 @@ bool HashOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    HashOption& rhs = (HashOption&)ips;
+    const HashOption& rhs = (const HashOption&)ips;
 
     if (
         config->hash == rhs.config->hash &&
@@ -230,7 +230,7 @@ static void parse_hash(HashMatchData* hmd, const char* rule)
 // FIXIT-L refactor for general use?
 static void parse_offset(HashMatchData* hmd, const char* data)
 {
-    if (data == NULL)
+    if (data == nullptr)
     {
         ParseError("missing argument to 'offset' option");
         return;
@@ -281,7 +281,7 @@ public:
         Module(s, s_help, s_params)
     { hmd = nullptr; idx = hpi; }
 
-    ~HashModule()
+    ~HashModule() override
     { delete hmd; }
 
     bool begin(const char*, int, SnortConfig*) override;

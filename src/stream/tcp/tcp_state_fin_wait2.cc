@@ -35,9 +35,6 @@ TcpStateFinWait2::TcpStateFinWait2(TcpStateMachine& tsm) :
 {
 }
 
-TcpStateFinWait2::~TcpStateFinWait2()
-{
-}
 
 bool TcpStateFinWait2::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {

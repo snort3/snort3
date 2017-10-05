@@ -32,8 +32,7 @@ class Sip : public ConversionState
 {
 public:
     Sip(Converter& c) : ConversionState(c) { }
-    virtual ~Sip() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 
 };
 } // namespace
@@ -61,74 +60,74 @@ bool Sip::convert(std::istringstream& data_stream)
         if (!(arg_stream >> keyword))
             tmpval = false;
 
-        else if (!keyword.compare("disabled"))
+        else if (keyword == "disabled")
             table_api.add_deleted_comment("disabled");
 
-        else if (!keyword.compare("ignore_call_channel"))
+        else if (keyword == "ignore_call_channel")
         {
             tmpval = table_api.add_option("ignore_call_channel", true);
         }
 
-        else if (!keyword.compare("methods"))
+        else if (keyword == "methods")
             tmpval = parse_curly_bracket_list("methods", arg_stream);
 
-        else if (!keyword.compare("max_call_id_len"))
+        else if (keyword == "max_call_id_len")
         {
             tmpval = parse_int_option("max_call_id_len", arg_stream, false);
         }
 
-        else if (!keyword.compare("max_contact_len"))
+        else if (keyword == "max_contact_len")
         {
             tmpval = parse_int_option("max_contact_len", arg_stream, false);
         }
 
-        else if (!keyword.compare("max_content_len"))
+        else if (keyword == "max_content_len")
         {
             tmpval = parse_int_option("max_content_len", arg_stream, false);
         }
 
-        else if (!keyword.compare("max_dialogs"))
+        else if (keyword == "max_dialogs")
         {
             tmpval = parse_int_option("max_dialogs", arg_stream, false);
         }
 
-        else if (!keyword.compare("max_from_len"))
+        else if (keyword == "max_from_len")
         {
             tmpval = parse_int_option("max_from_len", arg_stream, false);
         }
 
-        else if (!keyword.compare("max_requestName_len"))
+        else if (keyword == "max_requestName_len")
         {
             tmpval = parse_int_option("max_requestName_len", arg_stream, false);
         }
 
-        else if (!keyword.compare("max_sessions"))
+        else if (keyword == "max_sessions")
         {
             table_api.add_deleted_comment("max_sessions");
         }
 
-        else if (!keyword.compare("max_to_len"))
+        else if (keyword == "max_to_len")
         {
             tmpval = parse_int_option("max_to_len", arg_stream, false);
         }
 
-        else if (!keyword.compare("max_uri_len"))
+        else if (keyword == "max_uri_len")
         {
             tmpval = parse_int_option("max_uri_len", arg_stream, false);
         }
 
-        else if (!keyword.compare("max_via_len"))
+        else if (keyword == "max_via_len")
         {
             tmpval = parse_int_option("max_via_len", arg_stream, false);
         }
 
-        else if (!keyword.compare("ports"))
+        else if (keyword == "ports")
         {
             table_api.add_diff_option_comment("ports", "bindings");
 
-            if ((arg_stream >> keyword) && !keyword.compare("{"))
+            if ((arg_stream >> keyword) && keyword == "{")
             {
-                while (arg_stream >> keyword && keyword.compare("}"))
+                while (arg_stream >> keyword && keyword != "}")
                 {
                     ports_set = true;
                     bind.add_when_port(keyword);

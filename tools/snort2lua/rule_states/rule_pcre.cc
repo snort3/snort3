@@ -33,8 +33,7 @@ class Pcre : public ConversionState
 {
 public:
     Pcre(Converter& c) : ConversionState(c) { }
-    virtual ~Pcre() { }
-    virtual bool convert(std::istringstream& data);
+    bool convert(std::istringstream& data) override;
 };
 } // namespace
 
@@ -46,8 +45,8 @@ bool Pcre::convert(std::istringstream& data_stream)
 
     char delim = '/';
     std::string pcre_str = util::get_rule_option_args(data_stream);
-    std::string pattern = "";
-    std::string new_opts = "";
+    std::string pattern;
+    std::string new_opts;
     std::string options;
 
     if (pcre_str.front() == '!')

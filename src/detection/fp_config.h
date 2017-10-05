@@ -38,7 +38,6 @@ class FastPatternConfig
 {
 public:
     FastPatternConfig();
-    ~FastPatternConfig();
 
     void set_debug_mode()
     { debug = true; }
@@ -146,20 +145,20 @@ public:
 private:
     const struct MpseApi* search_api;
 
-    bool inspect_stream_insert;
+    bool inspect_stream_insert = false;
     bool trim;
-    bool split_any_any;
-    bool debug_print_fast_pattern;
-    bool debug;
+    bool split_any_any = false;
+    bool debug_print_fast_pattern = false;
+    bool debug = false;
 
-    unsigned max_queue_events;
-    unsigned bleedover_port_limit;
+    unsigned max_queue_events = 5;
+    unsigned bleedover_port_limit = 1024;
 
-    int search_opt;
-    int portlists_flags;
-    int max_pattern_len;
-    int num_patterns_truncated;  // due to max_pattern_len
-    int num_patterns_trimmed;    // due to zero byte prefix
+    int search_opt = 0;
+    int portlists_flags = 0;
+    int max_pattern_len = 0;
+    int num_patterns_truncated = 0;  // due to max_pattern_len
+    int num_patterns_trimmed = 0;    // due to zero byte prefix
 };
 
 #endif

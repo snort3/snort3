@@ -162,7 +162,7 @@ const struct Output pretty_output =  // FIXIT-L don't want to include this
         if ( t.result != Test::PASSED )
         {
             printf("\x1b[35m");
-            for ( auto m : t.messages )
+            for ( const auto& m : t.messages )
                 printf("    %s\n", m.c_str());
 
             printf("\x1b[0m");
@@ -200,7 +200,7 @@ const struct Output verbose_output =
 
     [](const Test& t, unsigned) -> void
     {
-        for ( auto msg : t.messages )
+        for ( const auto& msg : t.messages )
             printf("    %s\n", msg.c_str());
 
         printf("  %s\n", get_result_long(t.result));

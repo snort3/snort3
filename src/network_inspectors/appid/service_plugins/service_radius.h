@@ -30,7 +30,6 @@ class RadiusServiceDetector : public ServiceDetector
 {
 public:
     RadiusServiceDetector(ServiceDiscovery*);
-    ~RadiusServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };
@@ -39,7 +38,6 @@ class RadiusAcctServiceDetector : public ServiceDetector
 {
 public:
     RadiusAcctServiceDetector(ServiceDiscovery*);
-    ~RadiusAcctServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

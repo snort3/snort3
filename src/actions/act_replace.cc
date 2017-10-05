@@ -67,7 +67,7 @@ void Replace_QueueChange(const std::string& s, unsigned off)
 
 static inline void Replace_ApplyChange(Packet* p, Replacement* r)
 {
-    uint8_t* start = (uint8_t*)p->data + r->offset;
+    uint8_t* start = const_cast<uint8_t*>(p->data) + r->offset;
     const uint8_t* end = p->data + p->dsize;
     unsigned len;
 

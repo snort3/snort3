@@ -174,7 +174,7 @@ static int getIP1639(
     /* first we just try to get a sequence of csv bytes */
     while ( nBytes < sizeof(bytes) && tok < last_char )
     {
-        char* endPtr = (char*)tok;
+        char* endPtr;
         unsigned long val = strtoul(tok, &endPtr, 10);
 
         if (
@@ -1747,9 +1747,9 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                 }
                 else if ((ftpssn->flags & FTP_FLG_MALWARE) && CmdConf->data_rest_cmd)
                 {
-                    if ((req->param_begin != NULL) && (req->param_size > 0))
+                    if ((req->param_begin != nullptr) && (req->param_size > 0))
                     {
-                        char *return_ptr = 0;
+                        char *return_ptr = nullptr;
                         errno = 0;
                         unsigned long offset = strtoul(req->param_begin, &return_ptr, 10);
                         if ((errno == ERANGE || errno == EINVAL) || (offset > 0))

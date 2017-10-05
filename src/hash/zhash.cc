@@ -200,7 +200,7 @@ void ZHash::move_to_front(ZHashNode* node)
 ZHashNode* ZHash::find_node_row(const void* key, int* rindex)
 {
     unsigned hashkey = sfhashfcn->hash_fcn(
-        sfhashfcn, (unsigned char*)key, keysize);
+        sfhashfcn, (const unsigned char*)key, keysize);
 
     // Modulus is slow; use a table size that is a power of 2.
     int index = hashkey & (nrows - 1);
@@ -416,7 +416,7 @@ bool ZHash::remove(const void* key)
 }
 
 int ZHash::set_keyops(
-    unsigned (* hash_fcn)(SFHASHFCN* p, unsigned char* d, int n),
+    unsigned (* hash_fcn)(SFHASHFCN* p, const unsigned char* d, int n),
     int (* keycmp_fcn)(const void* s1, const void* s2, size_t n))
 {
     if ( hash_fcn && keycmp_fcn )

@@ -31,10 +31,9 @@ class ClientDetector : public AppIdDetector
 {
 public:
     ClientDetector();
-    virtual ~ClientDetector() { }
 
-    virtual void do_custom_init() override { }
-    virtual void register_appid(AppId, unsigned extractsInfo) override;
+    void do_custom_init() override { }
+    void register_appid(AppId, unsigned extractsInfo) override;
 };
 #endif
 

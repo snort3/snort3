@@ -18,7 +18,7 @@
 // markup.cc author Russ Combs <rucombs@cisco.com>
 
 #include "s2l_markup.h"
-#include <string.h>
+#include <cstring>
 
 using namespace std;
 

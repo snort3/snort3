@@ -55,7 +55,7 @@ SIPMethod StandardMethods[] =
     { "message", SIP_METHOD_MESSAGE },
     { "notify", SIP_METHOD_NOTIFY },
     { "prack", SIP_METHOD_PRACK },
-    { NULL, SIP_METHOD_NULL }
+    { nullptr, SIP_METHOD_NULL }
 };
 
 static SIPMethodsFlag currentUseDefineMethod = SIP_METHOD_USER_DEFINE;
@@ -63,7 +63,7 @@ static SIPMethodsFlag currentUseDefineMethod = SIP_METHOD_USER_DEFINE;
 static int SIP_findMethod(const char* token, SIPMethod* methods)
 {
     int i = 0;
-    while (NULL != methods[i].name)
+    while (nullptr != methods[i].name)
     {
         if ((strlen(token) == strlen(methods[i].name))&&
             (strncasecmp(methods[i].name, token, strlen(token)) == 0))
@@ -85,7 +85,7 @@ void SIP_SetDefaultMethods(SIP_PROTO_CONF* config)
     for (i = 0; i < 6; i++)
     {
         if (SIP_AddMethodToList(StandardMethods[i].name,
-            StandardMethods[i].methodFlag, &config->methods) == NULL)
+            StandardMethods[i].methodFlag, &config->methods) == nullptr)
         {
             FatalError("Failed to add SIP default method: %s.\n", StandardMethods[i].name);
         }
@@ -124,14 +124,14 @@ void SIP_ParseMethods(const char* cur_tokenp, uint32_t* methodsConfig, SIPMethod
     {
         *methodsConfig |= 1 << (StandardMethods[i_method].methodFlag - 1);
         if (SIP_AddMethodToList(cur_tokenp,
-            StandardMethods[i_method].methodFlag, pmethods) == NULL)
+            StandardMethods[i_method].methodFlag, pmethods) == nullptr)
         {
             ParseError("Failed to add SIP method: %s.", cur_tokenp);
         }
     }
     else
     {
-        if (SIP_AddUserDefinedMethod(cur_tokenp, methodsConfig, pmethods) == NULL)
+        if (SIP_AddUserDefinedMethod(cur_tokenp, methodsConfig, pmethods) == nullptr)
         {
             ParseError("Failed to add user defined SIP method: %s.", cur_tokenp);
         }
@@ -195,18 +195,18 @@ SIPMethodNode* SIP_AddUserDefinedMethod(
     /*Check whether all the chars are defined by RFC2616*/
     while (methodName[i])
     {
-        if (iscntrl(methodName[i])|(NULL != strchr(SIP_SEPERATORS,methodName[i]))| (methodName[i] <
+        if (iscntrl(methodName[i])|(nullptr != strchr(SIP_SEPERATORS,methodName[i]))| (methodName[i] <
             0) )
         {
             ParseError("Bad character included in the User defined method \n");
-            return NULL;
+            return nullptr;
         }
         i++;
     }
     if (currentUseDefineMethod > SIP_METHOD_USER_DEFINE_MAX)
     {
         ParseError("Exceeded max number of user defined methods \n");
-        return NULL;
+        return nullptr;
     }
     *methodsConfig |= 1 << (currentUseDefineMethod - 1);
     method = SIP_AddMethodToList(methodName, currentUseDefineMethod, pmethods);

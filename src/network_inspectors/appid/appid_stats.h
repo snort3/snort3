@@ -22,8 +22,8 @@
 #ifndef APPID_STATS_H
 #define APPID_STATS_H
 
-#include <stdio.h>
-#include <time.h>
+#include <cstdio>
+#include <ctime>
 
 #include "appid_utils/fw_avltree.h"
 #include "utils/sflsq.h"
@@ -67,7 +67,7 @@ private:
         bucketEnd = bucketStart + bucketInterval;
     }
 
-    void end_stats_period(void);
+    void end_stats_period();
     StatsBucket* get_stats_bucket(time_t);
     void open_stats_log_file();
     void dump_statistics();

@@ -113,7 +113,7 @@ public:
         ++instances;
     }
 
-    ~HyperscanMpse()
+    ~HyperscanMpse() override
     {
         if ( hs_db )
             hs_free_database(hs_db);
@@ -208,7 +208,7 @@ void HyperscanMpse::user_dtor()
 
 int HyperscanMpse::prep_patterns(SnortConfig* sc)
 {
-    if ( !pvector.size() )
+    if ( pvector.empty() )
         return -1;
 
     if ( hs_valid_platform() != HS_SUCCESS )
@@ -283,7 +283,7 @@ int HyperscanMpse::_search(
     // scratch is null for the degenerate case w/o patterns
     assert(!hs_db or ss->hyperscan_scratch);
 
-    hs_scan(hs_db, (char*)buf, n, 0, (hs_scratch_t*)ss->hyperscan_scratch,
+    hs_scan(hs_db, (const char*)buf, n, 0, (hs_scratch_t*)ss->hyperscan_scratch,
         HyperscanMpse::match, this);
 
     return nfound;

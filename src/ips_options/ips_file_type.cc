@@ -42,7 +42,6 @@ class FileTypeOption : public IpsOption
 {
 public:
     FileTypeOption(TypeBitSet &);
-    ~FileTypeOption() { }
 
     CursorActionType get_cursor_type() const override
     { return CAT_NONE; }

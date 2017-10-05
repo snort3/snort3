@@ -233,7 +233,7 @@ bool PerfMonModule::end(const char* fqn, int idx, SnortConfig*)
 {
     if ( !idx )
     {
-        if ( !config.modules.size() )
+        if ( config.modules.empty() )
         {
             auto modules = ModuleManager::get_all_modules();
             std::string empty;
@@ -247,7 +247,7 @@ bool PerfMonModule::end(const char* fqn, int idx, SnortConfig*)
         return true;
     }
 
-    if ( !strcmp(fqn, "perf_monitor.modules") && mod_name.size() > 0 )
+    if ( !strcmp(fqn, "perf_monitor.modules") && !mod_name.empty() )
         return add_module(config, ModuleManager::get_module(mod_name.c_str()), mod_pegs);
 
     return true;

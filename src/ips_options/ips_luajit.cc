@@ -116,7 +116,7 @@ class LuaJitOption : public IpsOption
 {
 public:
     LuaJitOption(const char* name, std::string& chunk, LuaJitModule*);
-    ~LuaJitOption();
+    ~LuaJitOption() override;
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -168,7 +168,7 @@ bool LuaJitOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    LuaJitOption& rhs = (LuaJitOption&)ips;
+    const LuaJitOption& rhs = (const LuaJitOption&)ips;
 
     if ( config != rhs.config )
         return false;

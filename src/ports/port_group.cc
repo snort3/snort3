@@ -41,10 +41,10 @@ void PortGroup::free(PortGroup* pg)
 
     for (int i = PM_TYPE_PKT; i < PM_TYPE_MAX; i++)
     {
-        if (pg->mpse[i] != NULL)
+        if (pg->mpse[i] != nullptr)
         {
             MpseManager::delete_search_engine(pg->mpse[i]);
-            pg->mpse[i] = NULL;
+            pg->mpse[i] = nullptr;
         }
     }
 

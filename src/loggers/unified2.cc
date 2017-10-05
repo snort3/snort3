@@ -110,7 +110,7 @@ static void Unified2InitFile(Unified2Config* config)
     char filepath[STD_BUF];
     char* fname_ptr;
 
-    u2.timestamp = (uint32_t)time(NULL);
+    u2.timestamp = (uint32_t)time(nullptr);
 
     if (!config->nostamp)
     {
@@ -127,7 +127,7 @@ static void Unified2InitFile(Unified2Config* config)
         fname_ptr = u2.filepath;
     }
 
-    if ((u2.stream = fopen(fname_ptr, "wb")) == NULL)
+    if ((u2.stream = fopen(fname_ptr, "wb")) == nullptr)
     {
         FatalError("unified2 could not open %s: %s\n", fname_ptr, get_error(errno));
     }
@@ -255,7 +255,7 @@ static void _WriteExtraData(Unified2Config* config,
     SerialUnified2ExtraData alertdata;
     Unified2ExtraDataHdr alertHdr;
     uint8_t write_buffer[MAX_XDATA_WRITE_BUF_LEN];
-    uint8_t* ptr = NULL;
+    uint8_t* ptr = nullptr;
 
     uint32_t write_len = sizeof(hdr) + sizeof(alertHdr);
 
@@ -309,7 +309,7 @@ static void AlertExtraData(
     Unified2Config* config = (Unified2Config*)data;
     uint32_t xid;
 
-    if ((config == NULL) || !xtradata_mask || !event_second)
+    if ((config == nullptr) || !xtradata_mask || !event_second)
         return;
 
     xid = ffs(xtradata_mask);
@@ -343,7 +343,7 @@ static void _Unified2LogPacketAlert(
     logheader.sensor_id = 0;
     logheader.linktype = u2.base_proto;
 
-    if (event != NULL)
+    if (event != nullptr)
     {
         logheader.event_id = htonl(event->event_reference);
         logheader.event_second = htonl(event->ref_time.tv_sec);
@@ -451,7 +451,7 @@ static void Unified2Write(uint8_t* buf, uint32_t buf_len, Unified2Config* config
     int ffstatus = 0;
 
     /* Nothing to write or nothing to write to */
-    if ((buf == NULL) || (config == NULL) || (u2.stream == NULL))
+    if ((buf == nullptr) || (config == nullptr) || (u2.stream == nullptr))
         return;
 
     /* Don't use fsync().  It is a total performance killer */
@@ -720,21 +720,21 @@ static void _AlertIP6_v2(Packet* p, const char*, Unified2Config* config, const E
         {
             const SfIp* ip;
             ip = p->ptrs.ip_api.get_src();
-            alertdata.ip_source = *(struct in6_addr*)ip->get_ip6_ptr();
+            alertdata.ip_source = *(const struct in6_addr*)ip->get_ip6_ptr();
             ip = p->ptrs.ip_api.get_dst();
-            alertdata.ip_destination = *(struct in6_addr*)ip->get_ip6_ptr();
+            alertdata.ip_destination = *(const struct in6_addr*)ip->get_ip6_ptr();
         }
         else if (p->flow)
         {
             if (p->is_from_client())
             {
-                alertdata.ip_source = *(struct in6_addr*)p->flow->client_ip.get_ip6_ptr();
-                alertdata.ip_destination = *(struct in6_addr*)p->flow->server_ip.get_ip6_ptr();
+                alertdata.ip_source = *(const struct in6_addr*)p->flow->client_ip.get_ip6_ptr();
+                alertdata.ip_destination = *(const struct in6_addr*)p->flow->server_ip.get_ip6_ptr();
             }
             else
             {
-                alertdata.ip_source = *(struct in6_addr*)p->flow->server_ip.get_ip6_ptr();
-                alertdata.ip_destination = *(struct in6_addr*)p->flow->client_ip.get_ip6_ptr();
+                alertdata.ip_source = *(const struct in6_addr*)p->flow->server_ip.get_ip6_ptr();
+                alertdata.ip_destination = *(const struct in6_addr*)p->flow->client_ip.get_ip6_ptr();
             }
         }
 
@@ -852,7 +852,6 @@ class U2Logger : public Logger
 {
 public:
     U2Logger(U2Module*);
-    ~U2Logger();
 
     void open() override;
     void close() override;
@@ -875,8 +874,6 @@ U2Logger::U2Logger(U2Module* m)
     config.legacy_events = m->legacy_events;
 }
 
-U2Logger::~U2Logger()
-{ }
 
 void U2Logger::open()
 {

@@ -41,10 +41,8 @@ Packet::Packet(bool packet_data)
     }
     else
     {
-        uint8_t* b = new uint8_t[sizeof(*pkth) + Codec::PKT_MAX];
-        pkth = (DAQ_PktHdr_t*)b;
-        b += sizeof(*pkth);
-        pkt = b;
+        pkth = new DAQ_PktHdr_t();
+        pkt = new uint8_t[Codec::PKT_MAX];
     }
 
     obfuscator = nullptr;
@@ -58,7 +56,10 @@ Packet::~Packet()
     release_helpers();
 
     if (allocated)
-        delete[] (uint8_t*)pkth;
+    {
+        delete pkth;
+        delete[] pkt;
+    }
 
     delete[] layers;
 }

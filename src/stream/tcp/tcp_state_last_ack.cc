@@ -35,9 +35,6 @@ TcpStateLastAck::TcpStateLastAck(TcpStateMachine& tsm) :
 {
 }
 
-TcpStateLastAck::~TcpStateLastAck()
-{
-}
 
 bool TcpStateLastAck::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {

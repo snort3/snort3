@@ -151,10 +151,10 @@ void SFDAQConfig::overlay(const SFDAQConfig* other)
     if (!other->module_dirs.empty())
         module_dirs = other->module_dirs;
 
-    if (other->module_name.size())
+    if (!other->module_name.empty())
         module_name = other->module_name;
 
-    if (other->input_spec.size())
+    if (!other->input_spec.empty())
         input_spec = other->input_spec;
 
     if (!other->variables.empty())
@@ -171,7 +171,7 @@ void SFDAQConfig::overlay(const SFDAQConfig* other)
         if (it != instances.end())
         {
             ic = it->second;
-            if (oic->input_spec.size())
+            if (!oic->input_spec.empty())
                 ic->input_spec = oic->input_spec;
             if (!oic->variables.empty())
                 ic->variables = oic->variables;

@@ -121,12 +121,12 @@ static struct timeval starttime, endtime;
 
 void TimeStart()
 {
-    gettimeofday(&starttime, NULL);
+    gettimeofday(&starttime, nullptr);
 }
 
 void TimeStop()
 {
-    gettimeofday(&endtime, NULL);
+    gettimeofday(&endtime, nullptr);
 }
 
 static void timing_stats()

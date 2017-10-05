@@ -34,8 +34,7 @@ class AttributeTable : public ConversionState
 {
 public:
     AttributeTable(Converter& c) : ConversionState(c) { }
-    virtual ~AttributeTable() { }
-    virtual bool convert(std::istringstream& data);
+    bool convert(std::istringstream& data) override;
 
 private:
     std::istringstream* stream; // so I can call ld->failed_conversion
@@ -85,54 +84,50 @@ void AttributeTable::parse_service()
     table_api.open_table("services");
     table_api.open_table();
 
-    while (get_next_element(elem) &&
-        elem.compare("/SERVICE"))
+    while (get_next_element(elem) && elem != "/SERVICE")
     {
-        if (!elem.compare("PROTOCOL"))
+        if (elem == "PROTOCOL")
         {
-            while (get_next_element(elem) &&
-                elem.compare("/PROTOCOL"))
+            while (get_next_element(elem) && elem != "/PROTOCOL")
             {
-                if (!elem.compare("ATTRIBUTE_VALUE"))
+                if (elem == "ATTRIBUTE_VALUE")
                 {
                     get_next_element(elem);
                     table_api.add_option("name", elem);
                 }
-                else if (!elem.compare("ATTRIBUTE_ID"))
+                else if (elem == "ATTRIBUTE_ID")
                 {
                     get_next_element(elem);
                     table_api.add_option("name", attr_map[elem]);
                 }
             } // while("/PROTOCOL")
         }
-        else if (!elem.compare("IPPROTO"))
+        else if (elem == "IPPROTO")
         {
-            while (get_next_element(elem) &&
-                elem.compare("/IPPROTO"))
+            while (get_next_element(elem) && elem != "/IPPROTO")
             {
-                if (!elem.compare("ATTRIBUTE_VALUE"))
+                if (elem == "ATTRIBUTE_VALUE")
                 {
                     get_next_element(elem);
                     table_api.add_option("proto", elem);
                 }
-                else if (!elem.compare("ATTRIBUTE_ID"))
+                else if (elem == "ATTRIBUTE_ID")
                 {
                     get_next_element(elem);
                     table_api.add_option("proto", attr_map[elem]);
                 }
             } // while("/IPPROTO")
         }
-        else if (!elem.compare("PORT"))
+        else if (elem == "PORT")
         {
-            while (get_next_element(elem) &&
-                elem.compare("/PORT"))
+            while (get_next_element(elem) && elem != "/PORT")
             {
-                if (!elem.compare("ATTRIBUTE_VALUE"))
+                if (elem == "ATTRIBUTE_VALUE")
                 {
                     get_next_element(elem);
                     table_api.add_option("port", std::stoi(elem));
                 }
-                else if (!elem.compare("ATTRIBUTE_ID"))
+                else if (elem == "ATTRIBUTE_ID")
                 {
                     get_next_element(elem);
                     table_api.add_option("port", std::stoi(attr_map[elem]));
@@ -152,11 +147,10 @@ void AttributeTable::parse_services()
 {
     std::string elem;
 
-    while (get_next_element(elem) &&
-        elem.compare("/SERVICES"))
+    while (get_next_element(elem) && elem != "/SERVICES")
     {
         // every element in an attribute table should be a host
-        if (!elem.compare("SERVICE"))
+        if (elem == "SERVICE")
             parse_service();
         else
             data_api.failed_conversion(*stream, "AttributeTable: <SERVICES>"
@@ -168,10 +162,9 @@ void AttributeTable::parse_os()
 {
     std::string elem;
 
-    while (get_next_element(elem) &&
-        elem.compare("/OPERATING_SYSTEM"))
+    while (get_next_element(elem) && elem != "/OPERATING_SYSTEM")
     {
-        if (!elem.compare("FRAG_POLICY"))
+        if (elem == "FRAG_POLICY")
         {
             std::string policy;
 
@@ -179,37 +172,37 @@ void AttributeTable::parse_os()
                 data_api.failed_conversion(*stream,  "AttributeTable:"
                     " <FRAG_POLICY>**missing policy**</FRAG_POLICY>");
 
-            else if (!policy.compare("unknown"))
+            else if (policy == "unknown")
                 table_api.add_deleted_comment("<FRAG_POLICY>unknown</FRAG_POLICY>");
 
-            else if (!policy.compare("hpux"))
+            else if (policy == "hpux")
                 table_api.add_deleted_comment("<FRAG_POLICY>hpux</FRAG_POLICY>");
 
-            else if (!policy.compare("irix"))
+            else if (policy == "irix")
                 table_api.add_deleted_comment("<FRAG_POLICY>irix</FRAG_POLICY>");
 
-            else if (!policy.compare("old-linux"))
+            else if (policy == "old-linux")
                 table_api.add_deleted_comment("<FRAG_POLICY>old-linux</FRAG_POLICY>");
 
-            else if (!policy.compare("bsd"))
+            else if (policy == "bsd")
                 table_api.add_option("frag_policy", "bsd");
 
-            else if (!policy.compare("first"))
+            else if (policy == "first")
                 table_api.add_option("frag_policy", "first");
 
-            else if (!policy.compare("last"))
+            else if (policy == "last")
                 table_api.add_option("frag_policy", "last");
 
-            else if (!policy.compare("linux"))
+            else if (policy == "linux")
                 table_api.add_option("frag_policy", "linux");
 
-            else if (!policy.compare("solaris"))
+            else if (policy == "solaris")
                 table_api.add_option("frag_policy", "solaris");
 
-            else if (!policy.compare("windows"))
+            else if (policy == "windows")
                 table_api.add_option("frag_policy", "windows");
 
-            else if (!policy.compare("bsd-right"))
+            else if (policy == "bsd-right")
             {
                 // keep this on one line so data miner can find it
                 table_api.add_diff_option_comment("<FRAG_POLICY>bsd-right</FRAG_POLICY>",
@@ -222,7 +215,7 @@ void AttributeTable::parse_os()
                     policy + "</FRAG_POLICY>");
             }
         }
-        else if (!elem.compare("STREAM_POLICY"))
+        else if (elem == "STREAM_POLICY")
         {
             std::string policy;
 
@@ -230,77 +223,77 @@ void AttributeTable::parse_os()
                 data_api.failed_conversion(*stream,  "AttributeTable:"
                     " <STREAM_POLICY>**missing policy**</STREAM_POLICY>");
 
-            else if (!policy.compare("bsd"))
+            else if (policy == "bsd")
                 table_api.add_option("tcp_policy", "bsd");
 
-            else if (!policy.compare("first"))
+            else if (policy == "first")
                 table_api.add_option("tcp_policy", "first");
 
-            else if (!policy.compare("irix"))
+            else if (policy == "irix")
                 table_api.add_option("tcp_policy", "irix");
 
-            else if (!policy.compare("last"))
+            else if (policy == "last")
                 table_api.add_option("tcp_policy", "last");
 
-            else if (!policy.compare("linux"))
+            else if (policy == "linux")
                 table_api.add_option("tcp_policy", "linux");
 
-            else if (!policy.compare("macos"))
+            else if (policy == "macos")
                 table_api.add_option("tcp_policy", "macos");
 
-            else if (!policy.compare("old-linux"))
+            else if (policy == "old-linux")
             {
                 table_api.add_diff_option_comment("<STREAM_POLICY>old-linux</STREAM_POLICY>",
                     "hosts.tcp_policy = old_linux");
                 table_api.add_option("tcp_policy", "old_linux");
             }
-            else if (!policy.compare("solaris"))
+            else if (policy == "solaris")
                 table_api.add_option("tcp_policy", "solaris");
 
-            else if (!policy.compare("windows"))
+            else if (policy == "windows")
                 table_api.add_option("tcp_policy", "windows");
 
-            else if (!policy.compare("win-2003"))
+            else if (policy == "win-2003")
             {
                 table_api.add_diff_option_comment("<STREAM_POLICY>win-2003</STREAM_POLICY>",
                     "hosts.tcp_policy = win_2003");
                 table_api.add_option("tcp_policy", "win_2003");
             }
-            else if (!policy.compare("vista"))
+            else if (policy == "vista")
                 table_api.add_option("tcp_policy", "vista");
 
-            else if (!policy.compare("hpux10"))
+            else if (policy == "hpux10")
                 table_api.add_option("tcp_policy", "hpux10");
 
-            else if (!policy.compare("hpux"))
+            else if (policy == "hpux")
             {
                 table_api.add_diff_option_comment("<STREAM_POLICY>hpux</STREAM_POLICY>",
                     "hosts.tcp_policy = hpux11");
                 table_api.add_option("tcp_policy", "hpux11");
             }
 
-            else if (!policy.compare("unknown"))
+            else if (policy == "unknown")
                 table_api.add_deleted_comment("<STREAM_POLICY>unknown</STREAM_POLICY>");
 
-            else if (!policy.compare("noack"))
+            else if (policy == "noack")
                 table_api.add_deleted_comment("<STREAM_POLICY>noack</STREAM_POLICY>");
 
-            else if (!policy.compare("hpux11"))
+            else if (policy == "hpux11")
                 table_api.add_option("tcp_policy", "hpux11");
 
-            else if (!policy.compare("win2003"))
+            else if (policy == "win2003")
             {
                 table_api.add_diff_option_comment("<STREAM_POLICY>win2003</STREAM_POLICY>",
                     "hosts.tcp_policy = win_2003");
                 table_api.add_option("tcp_policy", "win_2003");
             }
-            else if (!policy.compare("win2k3"))
+            else if (policy == "win2k3")
             {
                 table_api.add_diff_option_comment("<STREAM_POLICY>win2k3</STREAM_POLICY>",
                     "hosts.tcp_policy = win_2003");
                 table_api.add_option("tcp_policy", "win_2003");
             }
-            else if (!policy.compare("grannysmith"))
+            else if (policy == "grannysmith")
             {
                 table_api.add_diff_option_comment("<STREAM_POLICY>grannysmith</STREAM_POLICY>",
                     "hosts.tcp_policy = macos");
@@ -326,18 +319,17 @@ void AttributeTable::parse_host()
 
     std::string elem;
 
-    while (get_next_element(elem) &&
-        elem.compare("/HOST"))
+    while (get_next_element(elem) && elem != "/HOST")
     {
-        if (!elem.compare("OPERATING_SYSTEM"))
+        if (elem == "OPERATING_SYSTEM")
         {
             parse_os();
         }
-        else if (!elem.compare("SERVICES"))
+        else if (elem == "SERVICES")
         {
             parse_services();
         }
-        else if (!elem.compare("IP"))
+        else if (elem == "IP")
         {
             std::string ip;
             if (get_next_element(ip))
@@ -356,11 +348,10 @@ void AttributeTable::parse_attr_table()
 {
     std::string elem;
 
-    while (get_next_element(elem) &&
-        elem.compare("/ATTRIBUTE_TABLE"))
+    while (get_next_element(elem) && elem != "/ATTRIBUTE_TABLE")
     {
         // every element in an attribute table should be a host
-        if (elem.compare("HOST"))
+        if (elem != "HOST")
             data_api.failed_conversion(*stream, "AttributeTable: <ATTRIBUTE_TABLE>"
                 " should only contain <HOST> elements!");
         else
@@ -377,16 +368,15 @@ void AttributeTable::parse_entry()
     std::string id = std::string();
     std::string value = std::string();
 
-    while (get_next_element(elem) &&
-        elem.compare("/ENTRY"))
+    while (get_next_element(elem) && elem != "/ENTRY")
     {
-        if (!elem.compare("ID"))
+        if (elem == "ID")
         {
             if (!get_next_element(id))
                 data_api.failed_conversion(*stream, "AttributeTable:"
                     " <ID>**missing option**</ID>");
         }
-        else if (!elem.compare("VALUE"))
+        else if (elem == "VALUE")
         {
             if (!get_next_element(value))
                 data_api.failed_conversion(*stream, "AttributeTable:"
@@ -403,8 +393,7 @@ void AttributeTable::parse_map_entries()
 {
     std::string elem;
 
-    while (get_next_element(elem) &&
-        elem.compare("/ATTRIBUTE_MAP"))
+    while (get_next_element(elem) && elem != "/ATTRIBUTE_MAP")
     {
         parse_entry();
     }
@@ -418,7 +407,7 @@ bool AttributeTable::convert(std::istringstream& data_stream)
     if (!(data_stream >> file))
         return false;
 
-    if (file.compare("filename"))
+    if (file != "filename")
         return false;
 
     if (!(data_stream >> file))
@@ -457,10 +446,10 @@ bool AttributeTable::convert(std::istringstream& data_stream)
     std::string elem;
     while (get_next_element(elem))
     {
-        if (!elem.compare("ATTRIBUTE_MAP"))
+        if (elem == "ATTRIBUTE_MAP")
             parse_map_entries();
 
-        else if (!elem.compare("ATTRIBUTE_TABLE"))
+        else if (elem == "ATTRIBUTE_TABLE")
             parse_attr_table();
 
         /*

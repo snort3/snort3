@@ -35,20 +35,19 @@ class Content : public ConversionState
 {
 public:
     Content(Converter& c, bool val) : ConversionState(c), sticky_buffer_set(val) { }
-    virtual ~Content() { }
-    virtual bool convert(std::istringstream& data);
+    bool convert(std::istringstream& data) override;
 
 private:
     bool sticky_buffer_set;
-    bool parse_options(std::istringstream&, std::string, std::string);
-    void add_sticky_buffer(std::istringstream&, std::string buffer);
+    bool parse_options(std::istringstream&, const std::string&, std::string);
+    void add_sticky_buffer(std::istringstream&, const std::string& buffer);
     bool extract_payload(std::istringstream& data_stream,
         std::string& option);
 };
 } // namespace
 
 template<const std::string* option_name>
-void Content<option_name>::add_sticky_buffer(std::istringstream& data_stream, std::string buffer)
+void Content<option_name>::add_sticky_buffer(std::istringstream& data_stream, const std::string& buffer)
 {
     if (sticky_buffer_set)
     {
@@ -63,70 +62,70 @@ void Content<option_name>::add_sticky_buffer(std::istringstream& data_stream, st
 template<const std::string* option_name>
 bool Content<option_name>::parse_options(
     std::istringstream& data_stream,
-    std::string keyword,
+    const std::string& keyword,
     std::string val)
 {
-    if (!keyword.compare("offset"))
+    if (keyword == "offset")
         rule_api.add_suboption("offset", val);
 
-    else if (!keyword.compare("distance"))
+    else if (keyword == "distance")
         rule_api.add_suboption("distance", val);
 
-    else if (!keyword.compare("within"))
+    else if (keyword == "within")
         rule_api.add_suboption("within", val);
 
-    else if (!keyword.compare("depth"))
+    else if (keyword == "depth")
         rule_api.add_suboption("depth", val);
 
-    else if (!keyword.compare("nocase"))
+    else if (keyword == "nocase")
         rule_api.add_suboption("nocase");
 
-    else if (!keyword.compare("hash"))   // PROTECTED CONTENT
+    else if (keyword == "hash")   // PROTECTED CONTENT
         rule_api.add_suboption("hash", val);
 
-    else if (!keyword.compare("length"))  // PROTECTED CONTENT
+    else if (keyword == "length")  // PROTECTED CONTENT
         rule_api.add_suboption("length", val);
 
-    else if (!keyword.compare("rawbytes"))
+    else if (keyword == "rawbytes")
         add_sticky_buffer(data_stream, "pkt_data");
 
-    else if (!keyword.compare("http_client_body"))
+    else if (keyword == "http_client_body")
         add_sticky_buffer(data_stream, "http_client_body");
 
-    else if (!keyword.compare("http_cookie"))
+    else if (keyword == "http_cookie")
         add_sticky_buffer(data_stream, "http_cookie");
 
-    else if (!keyword.compare("http_raw_cookie"))
+    else if (keyword == "http_raw_cookie")
         add_sticky_buffer(data_stream, "http_raw_cookie");
 
-    else if (!keyword.compare("http_header"))
+    else if (keyword == "http_header")
         add_sticky_buffer(data_stream, "http_header");
 
-    else if (!keyword.compare("http_raw_header"))
+    else if (keyword == "http_raw_header")
         add_sticky_buffer(data_stream, "http_raw_header");
 
-    else if (!keyword.compare("http_method"))
+    else if (keyword == "http_method")
         add_sticky_buffer(data_stream, "http_method");
 
-    else if (!keyword.compare("http_uri"))
+    else if (keyword == "http_uri")
         add_sticky_buffer(data_stream, "http_uri");
 
-    else if (!keyword.compare("http_raw_uri"))
+    else if (keyword == "http_raw_uri")
         add_sticky_buffer(data_stream, "http_raw_uri");
 
-    else if (!keyword.compare("http_stat_code"))
+    else if (keyword == "http_stat_code")
         add_sticky_buffer(data_stream, "http_stat_code");
 
-    else if (!keyword.compare("http_stat_msg"))
+    else if (keyword == "http_stat_msg")
         add_sticky_buffer(data_stream, "http_stat_msg");
 
-    else if (!keyword.compare("fast_pattern"))
+    else if (keyword == "fast_pattern")
     {
         if (val.empty())
         {
             rule_api.add_suboption("fast_pattern");
         }
-        else if (!val.compare("only"))
+        else if (val == "only")
         {
             static bool not_printed = true;
             if ( not_printed )
@@ -203,7 +202,7 @@ bool Content<option_name>::convert(std::istringstream& data_stream)
     std::string val;
     std::streamoff pos;
 
-    if (!(*option_name).compare("protected_content"))
+    if ((*option_name) == "protected_content")
         rule_api.bad_rule(data_stream, "protected_content is currently unsupported");
 
     std::string arg = util::get_rule_option_args(data_stream);

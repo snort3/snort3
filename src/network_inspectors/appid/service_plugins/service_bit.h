@@ -30,7 +30,6 @@ class BitServiceDetector : public ServiceDetector
 {
 public:
     BitServiceDetector(ServiceDiscovery*);
-    ~BitServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

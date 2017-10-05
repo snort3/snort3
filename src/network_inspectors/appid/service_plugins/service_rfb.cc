@@ -39,7 +39,7 @@ RfbServiceDetector::RfbServiceDetector(ServiceDiscovery* sd)
 
     tcp_patterns =
     {
-        { (uint8_t*)RFB_BANNER, sizeof(RFB_BANNER) - 1, 0, 0, 0 },
+        { (const uint8_t*)RFB_BANNER, sizeof(RFB_BANNER) - 1, 0, 0, 0 },
     };
 
     appid_registry =
@@ -63,9 +63,6 @@ RfbServiceDetector::RfbServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-RfbServiceDetector::~RfbServiceDetector()
-{
-}
 
 int RfbServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
@@ -84,7 +81,7 @@ int RfbServiceDetector::validate(AppIdDiscoveryArgs& args)
 
     if (size != RFB_BANNER_SIZE)
         goto fail;
-    if (strncmp(RFB_BANNER, (char*)data, sizeof(RFB_BANNER)-1))
+    if (strncmp(RFB_BANNER, (const char*)data, sizeof(RFB_BANNER)-1))
         goto fail;
     if (data[7] != '.' || data[RFB_BANNER_SIZE-1] != 0x0A)
         goto fail;

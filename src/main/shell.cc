@@ -118,7 +118,7 @@ static void config_lua(
     if ( file && *file )
         load_config(L, file);
 
-    if ( s.size() )
+    if ( !s.empty() )
         load_overrides(L, s);
 
     run_config(L, "_G");
@@ -152,7 +152,7 @@ Shell::~Shell()
 
 void Shell::set_file(const char* s)
 {
-    assert(!file.size());
+    assert(file.empty());
     file = s;
 }
 
@@ -215,7 +215,7 @@ void Shell::execute(const char* cmd, string& rsp)
     }
     catch (...)
     {
-        rsp = fatal.c_str();
+        rsp = fatal;
     }
 
     if (err)

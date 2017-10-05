@@ -71,7 +71,7 @@ class StreamIp : public Inspector
 {
 public:
     StreamIp(StreamIpConfig*);
-    ~StreamIp();
+    ~StreamIp() override;
 
     bool configure(SnortConfig*) override;
     void show(SnortConfig*) override;

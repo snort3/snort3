@@ -26,7 +26,7 @@
 
 #include "sip_config.h"
 
-int SIP_TrimSP(const char*, const char*, char**, char**);
+int SIP_TrimSP(const char*, const char*, const char**, const char**);
 SIPMethodNode* SIP_FindMethod(SIPMethodlist, const char* method, unsigned int);
 uint32_t strToHash(const char*, int);
 

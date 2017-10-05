@@ -30,7 +30,6 @@ class FlapServiceDetector : public ServiceDetector
 {
 public:
     FlapServiceDetector(ServiceDiscovery*);
-    ~FlapServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

@@ -87,7 +87,7 @@ void AppIdDiscovery::release_plugins()
 }
 
 
-void AppIdDiscovery::register_detector(std::string name, AppIdDetector* cd,  IpProtocol proto)
+void AppIdDiscovery::register_detector(const std::string& name, AppIdDetector* cd,  IpProtocol proto)
 {
     // FIXIT-L - check for dup name?
     if ( proto == IpProtocol::TCP )

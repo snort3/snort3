@@ -35,8 +35,8 @@
 class ApplicationDescriptor
 {
 public:
-    ApplicationDescriptor() {}
-    virtual ~ApplicationDescriptor() {}
+    ApplicationDescriptor() = default;
+    virtual ~ApplicationDescriptor() = default;
 
     virtual void reset()
     {
@@ -99,8 +99,7 @@ private:
 class ServiceAppDescriptor : public ApplicationDescriptor
 {
 public:
-    ServiceAppDescriptor() {}
-    ~ServiceAppDescriptor() {}
+    ServiceAppDescriptor() = default;
 
     void reset() override
     {
@@ -131,8 +130,7 @@ private:
 class ClientAppDescriptor : public ApplicationDescriptor
 {
 public:
-    ClientAppDescriptor() {}
-    ~ClientAppDescriptor() {}
+    ClientAppDescriptor() = default;
 
     void reset() override
     {
@@ -143,7 +141,7 @@ public:
 
     void update_user(AppId app_id, const char* username)
     {
-        if ( my_username.compare(username) )
+        if ( my_username != username )
             my_username = username;
 
         if ( my_user_id != app_id )
@@ -176,8 +174,7 @@ private:
 class PayloadAppDescriptor : public ApplicationDescriptor
 {
 public:
-    PayloadAppDescriptor() {}
-    ~PayloadAppDescriptor() {}
+    PayloadAppDescriptor() = default;
 
     void reset() override
     {

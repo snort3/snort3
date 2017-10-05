@@ -30,7 +30,6 @@ class TnsServiceDetector : public ServiceDetector
 {
 public:
     TnsServiceDetector(ServiceDiscovery*);
-    ~TnsServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

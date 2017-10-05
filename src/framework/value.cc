@@ -275,7 +275,7 @@ TEST_CASE("mac addr negative test", "[Value]")
 
 TEST_CASE("get addr test", "[Value]")
 {
-    uint8_t * test_str;
+    const uint8_t* test_str;
     unsigned int num_chars;
     uint8_t addr[16];
     uint8_t zero[16];
@@ -285,7 +285,7 @@ TEST_CASE("get addr test", "[Value]")
     SECTION("valid value")
     {
         Value test_val("1234567890123456");
-        test_str = (uint8_t*)test_val.get_buffer(num_chars);
+        test_str = (const uint8_t*)test_val.get_buffer(num_chars);
         REQUIRE((num_chars == 16));
 
         test_val.get_addr(addr);
@@ -305,7 +305,7 @@ TEST_CASE("get addr test", "[Value]")
 
 TEST_CASE("get addr IPv4 test", "[Value]")
 {
-    uint8_t* test_str ;
+    const uint8_t* test_str;
     unsigned int num_chars;
     uint8_t addr[4];
     uint8_t zero[4];
@@ -315,7 +315,7 @@ TEST_CASE("get addr IPv4 test", "[Value]")
     SECTION("valid value")
     {
         Value test_val("1234");
-        test_str = (uint8_t*)test_val.get_buffer(num_chars);
+        test_str = (const uint8_t*)test_val.get_buffer(num_chars);
         REQUIRE((num_chars == 4));
 
         test_val.get_addr_ip4(addr);
@@ -334,7 +334,7 @@ TEST_CASE("get addr IPv4 test", "[Value]")
 
 TEST_CASE("get addr IPv6 test", "[Value]")
 {
-    uint8_t * test_str;
+    const uint8_t * test_str;
     unsigned int num_chars;
     uint8_t addr[16];
     uint8_t zero[16];
@@ -344,7 +344,7 @@ TEST_CASE("get addr IPv6 test", "[Value]")
     SECTION("valid value")
     {
         Value test_val("1234567890123456");
-        test_str = (uint8_t *)test_val.get_buffer(num_chars);
+        test_str = (const uint8_t *)test_val.get_buffer(num_chars);
         REQUIRE((num_chars == 16));
 
         test_val.get_addr_ip6(addr);
@@ -364,7 +364,7 @@ TEST_CASE("get addr IPv6 test", "[Value]")
 TEST_CASE("token test", "[Value]")
 {
     string test_str;
-    char * str_val;
+    const char * str_val;
 
     Value test_val("123456");
     test_val.set_first_token();
@@ -373,26 +373,26 @@ TEST_CASE("token test", "[Value]")
 
 
     CHECK(test_val.get_next_csv_token(test_str));
-    str_val = (char *)test_str.c_str();
-    CHECK((str_val !=NULL));
+    str_val = (const char *)test_str.c_str();
+    CHECK((str_val !=nullptr));
     CHECK((strcmp(str_val,"123456")==0));
 
 }
 
 TEST_CASE("get as string", "[Value]")
 {
-    char * str_val;
+    const char* str_val;
     bool bool_val = true;
     double num_val = 6;
 
     Value test_val(bool_val);
-    str_val = (char *)test_val.get_as_string();
-    CHECK((str_val !=NULL));
+    str_val = (const char *)test_val.get_as_string();
+    CHECK((str_val !=nullptr));
     CHECK((strcmp(str_val,"true")==0));
 
     test_val.set(num_val);
-    str_val = (char *)test_val.get_as_string();
-    CHECK((str_val !=NULL));
+    str_val = (const char *)test_val.get_as_string();
+    CHECK((str_val !=nullptr));
     CHECK((strcmp(str_val,"6")==0));
 
 }

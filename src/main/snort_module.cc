@@ -831,7 +831,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         Trough::set_loop_count(v.get_long());
 
     else if ( v.is("--pcap-no-filter") )
-        Trough::set_filter(NULL);
+        Trough::set_filter(nullptr);
 
     else if ( v.is("--pcap-reload") )
         sc->run_flags |= RUN_FLAG__PCAP_RELOAD;

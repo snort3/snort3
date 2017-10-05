@@ -30,7 +30,7 @@
 
 using namespace HttpEnums;
 
-static unsigned convert_num_octets(char buffer[], unsigned length)
+static unsigned convert_num_octets(const char buffer[], unsigned length)
 {
     unsigned amount = 0;
     for (unsigned k = 0; k < length; k++)
@@ -423,7 +423,6 @@ void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, u
     if (skip_to_break)
         end_offset[last_source_id] = 0;
     length = end_offset[last_source_id] - previous_offset[last_source_id];
-    return;
 }
 
 void HttpTestInput::flush(uint32_t num_octets)

@@ -125,9 +125,6 @@ SnmpServiceDetector::SnmpServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-SnmpServiceDetector::~SnmpServiceDetector()
-{
-}
 
 static int snmp_ans1_length(const uint8_t** const data,
     const uint8_t* const end,

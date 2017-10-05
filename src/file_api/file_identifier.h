@@ -84,7 +84,8 @@ typedef std::list<void* >  IDMemoryBlocks;
 
 class FileIdentifier
 {
-public: ~FileIdentifier();
+public:
+    ~FileIdentifier();
     uint32_t memory_usage() { return memory_used; }
     void insert_file_rule(FileMagicRule& rule);
     uint32_t find_file_type_id(const uint8_t* buf, int len, uint64_t offset, void** context);

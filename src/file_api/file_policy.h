@@ -46,7 +46,6 @@ public:
     FileVerdictUse use;
 
     FileRule();
-    ~FileRule() { }
     void clear();
 };
 
@@ -55,8 +54,7 @@ class FileInfo;
 class FilePolicy
 {
 public:
-    FilePolicy() { }
-    ~FilePolicy() { }
+    FilePolicy() = default;
 
     // This is called when a new flow is queried for the first time
     // Check & update what file policy is enabled on this flow/file

@@ -49,9 +49,8 @@
 class TcpEventLogger
 {
 public:
-    TcpEventLogger() { }
+    TcpEventLogger() = default;
 
-    ~TcpEventLogger() { }
 
     void clear_tcp_events()
     {

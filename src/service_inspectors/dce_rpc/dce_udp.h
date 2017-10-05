@@ -197,7 +197,7 @@ class Dce2UdpFlowData : public FlowData
 {
 public:
     Dce2UdpFlowData();
-    ~Dce2UdpFlowData();
+    ~Dce2UdpFlowData() override;
 
     static void init()
     {

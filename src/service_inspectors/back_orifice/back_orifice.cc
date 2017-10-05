@@ -383,7 +383,7 @@ static int BoGetDirection(Packet* p, const char* pkt_data)
     pkt_data++;
 
     /* check to make sure we don't run off end of packet */
-    if ((uint32_t)(p->dsize - ((uint8_t*)pkt_data - p->data)) < len)
+    if ((uint32_t)(p->dsize - ((const uint8_t*)pkt_data - p->data)) < len)
     {
         /* We don't have enough data to inspect */
         return BO_FROM_UNKNOWN;
@@ -443,7 +443,7 @@ static int BoGetDirection(Packet* p, const char* pkt_data)
 class BackOrifice : public Inspector
 {
 public:
-    BackOrifice() { }
+    BackOrifice() = default;
 
     void show(SnortConfig*) override;
     void eval(Packet*) override;

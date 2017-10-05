@@ -70,7 +70,7 @@ class Dce2SmbModule : public Module
 {
 public:
     Dce2SmbModule();
-    ~Dce2SmbModule();
+    ~Dce2SmbModule() override;
 
     bool set(const char*, Value&, SnortConfig*) override;
 

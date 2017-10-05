@@ -95,7 +95,7 @@ void HttpJsNorm::normalize(const Field& input, Field& output, HttpInfractions* i
         if (javascript_search_mpse->find(ptr, end-ptr, search_js_found, false, &mindex) > 0)
         {
             const char* js_start = ptr + mindex;
-            const char* const angle_bracket = (char*)SnortStrnStr(js_start, end - js_start, ">");
+            const char* const angle_bracket = (const char*)SnortStrnStr(js_start, end - js_start, ">");
             if (angle_bracket == nullptr)
                 break;
 
@@ -141,8 +141,8 @@ void HttpJsNorm::normalize(const Field& input, Field& output, HttpInfractions* i
                 continue;
 
             // FIXIT-L need to fix this library so we don't have to cast away const here.
-            JSNormalizeDecode((char*)js_start, (uint16_t)(end-js_start), (char*)buffer+index,
-                (uint16_t)(input.length() - index), (char**)&ptr, &bytes_copied, &js,
+            JSNormalizeDecode(js_start, (uint16_t)(end-js_start), (char*)buffer+index,
+                (uint16_t)(input.length() - index), &ptr, &bytes_copied, &js,
                 uri_param.iis_unicode ? uri_param.unicode_map : nullptr);
             index += bytes_copied;
         }

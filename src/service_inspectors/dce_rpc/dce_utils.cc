@@ -59,7 +59,7 @@
  *      DCE2_RET__ERROR if an error occurred in parsing.
  *
  ********************************************************************/
-DCE2_Ret DCE2_GetValue(char* start, char* end, void* int_value, int negate,
+DCE2_Ret DCE2_GetValue(const char* start, char* end, void* int_value, int negate,
     DCE2_IntType int_type, uint8_t base)
 {
     uint64_t value = 0;

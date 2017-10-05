@@ -87,7 +87,7 @@ IMAPToken imap_known_cmds[] =
     { "UNSELECT",        8, CMD_UNSELECT },
     { "UNSUBSCRIBE",     11, CMD_UNSUBSCRIBE },
     { "X",               1, CMD_X },
-    { NULL,              0, 0 }
+    { nullptr,              0, 0 }
 };
 
 IMAPToken imap_resps[] =
@@ -109,7 +109,7 @@ IMAPToken imap_resps[] =
     { "PREAUTH",         7, RESP_PREAUTH },
     { "ENVELOPE",        8, RESP_ENVELOPE },
     { "UID",             3, RESP_UID },
-    { NULL,   0,  0 }
+    { nullptr,   0,  0 }
 };
 
 SearchTool* imap_resp_search_mpse = nullptr;
@@ -118,7 +118,7 @@ SearchTool* imap_cmd_search_mpse = nullptr;
 IMAPSearch imap_resp_search[RESP_LAST];
 IMAPSearch imap_cmd_search[CMD_LAST];
 
-static THREAD_LOCAL const IMAPSearch* imap_current_search = NULL;
+static THREAD_LOCAL const IMAPSearch* imap_current_search = nullptr;
 static THREAD_LOCAL IMAPSearchInfo imap_search_info;
 
 const PegInfo imap_peg_names[] =
@@ -160,7 +160,7 @@ unsigned ImapFlowData::inspector_id = 0;
 static IMAPData* get_session_data(Flow* flow)
 {
     ImapFlowData* fd = (ImapFlowData*)flow->get_flow_data(ImapFlowData::inspector_id);
-    return fd ? &fd->session : NULL;
+    return fd ? &fd->session : nullptr;
 }
 
 static IMAPData* SetNewIMAPData(IMAP_PROTO_CONF* config, Packet* p)
@@ -194,7 +194,7 @@ static void IMAP_SearchInit()
         return;
     imap_cmd_search_mpse = new SearchTool;
 
-    for (tmp = &imap_known_cmds[0]; tmp->name != NULL; tmp++)
+    for (tmp = &imap_known_cmds[0]; tmp->name != nullptr; tmp++)
     {
         imap_cmd_search[tmp->search_id].name = tmp->name;
         imap_cmd_search[tmp->search_id].name_len = tmp->name_len;
@@ -203,7 +203,7 @@ static void IMAP_SearchInit()
     imap_cmd_search_mpse->prep();
     imap_resp_search_mpse = new SearchTool;
 
-    for (tmp = &imap_resps[0]; tmp->name != NULL; tmp++)
+    for (tmp = &imap_resps[0]; tmp->name != nullptr; tmp++)
     {
         imap_resp_search[tmp->search_id].name = tmp->name;
         imap_resp_search[tmp->search_id].name_len = tmp->name_len;
@@ -214,10 +214,10 @@ static void IMAP_SearchInit()
 
 static void IMAP_SearchFree()
 {
-    if (imap_cmd_search_mpse != NULL)
+    if (imap_cmd_search_mpse != nullptr)
         delete imap_cmd_search_mpse;
 
-    if (imap_resp_search_mpse != NULL)
+    if (imap_resp_search_mpse != nullptr)
         delete imap_resp_search_mpse;
 }
 
@@ -238,7 +238,7 @@ static void IMAP_GetEOL(const uint8_t* ptr, const uint8_t* end,
     const uint8_t* tmp_eolm;
 
     tmp_eol = (uint8_t*)memchr(ptr, '\n', end - ptr);
-    if (tmp_eol == NULL)
+    if (tmp_eol == nullptr)
     {
         tmp_eol = end;
         tmp_eolm = end;
@@ -266,7 +266,7 @@ static void IMAP_GetEOL(const uint8_t* ptr, const uint8_t* end,
 
 static void PrintImapConf(IMAP_PROTO_CONF* config)
 {
-    if (config == NULL)
+    if (config == nullptr)
         return;
 
     LogMessage("IMAP config: \n");
@@ -448,8 +448,8 @@ static void IMAP_ProcessServerPacket(Packet* p, IMAPData* imap_ssn)
     const uint8_t *eolm;
     const uint8_t *eol;
     int resp_line_len;
-    const char *tmp = NULL;
-    uint8_t *body_start = NULL;
+    const char *tmp = nullptr;
+    const uint8_t *body_start = nullptr;
     char *eptr;
 
     ptr = p->data;
@@ -475,7 +475,7 @@ static void IMAP_ProcessServerPacket(Packet* p, IMAPData* imap_ssn)
                 FilePosition position = get_file_position(p);
 
                 int data_len = end - ptr;
-                ptr = imap_ssn->mime_ssn->process_mime_data(p->flow, ptr, data_len, 0,
+                ptr = imap_ssn->mime_ssn->process_mime_data(p->flow, ptr, data_len, false,
                     position);
                 if ( ptr < data_end)
                     len = len - (data_end - ptr);
@@ -508,12 +508,12 @@ static void IMAP_ProcessServerPacket(Packet* p, IMAPData* imap_ssn)
                 imap_ssn->body_len = imap_ssn->body_read = 0;
                 imap_ssn->state = STATE_DATA;
                 tmp = SnortStrcasestr((const char*)cmd_start, (eol - cmd_start), "BODY");
-                if (tmp != NULL)
+                if (tmp != nullptr)
                     imap_ssn->state = STATE_DATA;
                 else
                 {
                     tmp = SnortStrcasestr((const char*)cmd_start, (eol - cmd_start), "RFC822");
-                    if (tmp != NULL)
+                    if (tmp != nullptr)
                         imap_ssn->state = STATE_DATA;
                     else
                         imap_ssn->state = STATE_UNKNOWN;
@@ -524,14 +524,14 @@ static void IMAP_ProcessServerPacket(Packet* p, IMAPData* imap_ssn)
             }
             if (imap_ssn->state == STATE_DATA)
             {
-                body_start = (uint8_t*)memchr((char*)ptr, '{', (eol - ptr));
-                if ( body_start == NULL )
+                body_start = (const uint8_t*)memchr((const char*)ptr, '{', (eol - ptr));
+                if ( body_start == nullptr )
                 {
                     imap_ssn->state = STATE_UNKNOWN;
                 }
                 else
                 {
-                    if ( (body_start + 1) < (uint8_t*)eol )
+                    if ( (body_start + 1) < eol )
                     {
                         uint32_t len =
                             (uint32_t)SnortStrtoul((const char*)(body_start + 1), &eptr, 10);
@@ -592,7 +592,7 @@ static void snort_imap(IMAP_PROTO_CONF* config, Packet* p)
     /* Attempt to get a previously allocated IMAP block. */
     IMAPData* imap_ssn = get_session_data(p->flow);
 
-    if (imap_ssn == NULL)
+    if (imap_ssn == nullptr)
     {
         /* Check the stream session. If it does not currently
          * have our IMAP data-block attached, create one.
@@ -729,7 +729,7 @@ class Imap : public Inspector
 {
 public:
     Imap(IMAP_PROTO_CONF*);
-    ~Imap();
+    ~Imap() override;
 
     bool configure(SnortConfig*) override;
     void show(SnortConfig*) override;

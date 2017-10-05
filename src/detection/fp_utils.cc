@@ -164,7 +164,7 @@ int flp_trim(const char* p, int plen, const char** buff)
 
     if ( buff && (size==0) )
     {
-        *buff = 0;
+        *buff = nullptr;
     }
     else if ( buff )
     {

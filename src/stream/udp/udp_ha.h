@@ -30,7 +30,7 @@ class UdpHA : public ProtocolHA
 {
 public:
     UdpHA() : ProtocolHA(PktType::UDP) { }
-    Flow* create_session(FlowKey*);
+    Flow* create_session(FlowKey*) override;
 
 private:
 };

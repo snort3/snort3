@@ -46,9 +46,7 @@
 
 FTP_CLIENT_PROTO_CONF::FTP_CLIENT_PROTO_CONF()
 {
-    memset(this, 0, sizeof(*this));
     ftp_bounce_lookup_init(&bounce_lookup);
-    max_resp_len = FTPP_UI_CONFIG_FTP_DEF_RESP_MSG_MAX;
 }
 
 FTP_CLIENT_PROTO_CONF::~FTP_CLIENT_PROTO_CONF()
@@ -74,9 +72,9 @@ FTP_SERVER_PROTO_CONF::~FTP_SERVER_PROTO_CONF()
 
 TELNET_PROTO_CONF::TELNET_PROTO_CONF()
 {
-    normalize = check_encrypted_data = 0;
+    normalize = check_encrypted_data = false;
     ayt_threshold = FTPP_UI_CONFIG_TELNET_DEF_AYT_THRESHOLD;
-    detect_encrypted = 0;
+    detect_encrypted = false;
 }
 
 /*
@@ -138,8 +136,8 @@ void ftpp_ui_config_reset_ftp_cmd_format(FTP_PARAM_FMT* ThisFmt)
     {
         /* Don't free this one twice if its after an optional */
         FTP_PARAM_FMT* next = ThisFmt->next_param_fmt;
-        ThisFmt->next_param_fmt->prev_param_fmt->next_param_fmt = NULL;
-        ThisFmt->next_param_fmt = NULL;
+        ThisFmt->next_param_fmt->prev_param_fmt->next_param_fmt = nullptr;
+        ThisFmt->next_param_fmt = nullptr;
         ftpp_ui_config_reset_ftp_cmd_format(next);
     }
 

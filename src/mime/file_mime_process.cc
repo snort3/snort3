@@ -399,15 +399,15 @@ static const uint8_t* GetDataEnd(const uint8_t* data_start,
 {
     /* '\r\n' + '--' + MIME boundary string */
     const int Max_Search = 4 + MAX_MIME_BOUNDARY_LEN;
-    uint8_t* start;
+    const uint8_t* start;
     /*Exclude 2 bytes because either \r\n or '--'  at the end */
-    uint8_t* end = (uint8_t*)data_end_marker - 2;
+    const uint8_t* end = data_end_marker - 2;
 
     /*Search for the start of boundary, should be less than boundary length*/
     if (end > data_start + Max_Search)
         start = end - Max_Search;
     else
-        start = (uint8_t*)data_start;
+        start = data_start;
 
     while (end > start)
     {
@@ -572,7 +572,7 @@ const uint8_t* MimeSession::process_mime_data_paf(
     if ((decode_state) != nullptr)
     {
         DecodeConfig* conf= decode_conf;
-        uint8_t* buffer = nullptr;
+        const uint8_t* buffer = nullptr;
         uint32_t buf_size = 0;
 
         decode_state->get_decoded_data(&buffer, &buf_size);

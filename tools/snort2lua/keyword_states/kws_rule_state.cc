@@ -32,8 +32,7 @@ class RuleState : public ConversionState
 {
 public:
     RuleState(Converter& c) : ConversionState(c) { }
-    virtual ~RuleState() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 
@@ -59,12 +58,12 @@ bool RuleState::convert(std::istringstream& data_stream)
             count++;
             break;
         case 2:
-            if (!arg.compare("enabled"))
+            if (arg == "enabled")
             {
                 table_api.add_diff_option_comment("enabled", "enable");
                 table_api.add_option("enable", true);
             }
-            else if (!arg.compare("disabled"))
+            else if (arg == "disabled")
             {
                 table_api.add_diff_option_comment("disabled", "enable");
                 table_api.add_option("enable", false);

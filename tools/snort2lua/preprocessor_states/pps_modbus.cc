@@ -34,8 +34,8 @@ public:
     Modbus(Converter& c) : ConversionState(c)
     { converted_args = false; }
 
-    virtual ~Modbus();
-    virtual bool convert(std::istringstream& data_stream);
+    ~Modbus() override;
+    bool convert(std::istringstream& data_stream) override;
 
 private:
     bool converted_args;
@@ -75,13 +75,13 @@ bool Modbus::convert(std::istringstream& data_stream)
     {
         bool tmpval = true;
 
-        if (!keyword.compare("ports"))
+        if (keyword == "ports")
         {
             table_api.add_diff_option_comment("ports", "bindings");
 
-            if ((data_stream >> keyword) && !keyword.compare("{"))
+            if ((data_stream >> keyword) && keyword == "{")
             {
-                while (data_stream >> keyword && keyword.compare("}"))
+                while (data_stream >> keyword && keyword != "}")
                 {
                     ports_set = true;
                     bind.add_when_port(keyword);

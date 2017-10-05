@@ -87,9 +87,6 @@ TimbuktuClientDetector::TimbuktuClientDetector(ClientDiscovery* cdm)
     handler->register_detector(name, this, proto);
 }
 
-TimbuktuClientDetector::~TimbuktuClientDetector()
-{
-}
 
 int TimbuktuClientDetector::validate(AppIdDiscoveryArgs& args)
 {

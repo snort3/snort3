@@ -26,7 +26,7 @@ class Swapper;
 class AnalyzerCommand
 {
 public:
-    virtual ~AnalyzerCommand() { }
+    virtual ~AnalyzerCommand() = default;
     virtual void execute(Analyzer&) = 0;
     virtual const char* stringify() = 0;
     unsigned get() { return ++ref_count; }
@@ -40,7 +40,7 @@ class ACGetStats : public AnalyzerCommand
 public:
     void execute(Analyzer&) override;
     const char* stringify() override { return "GET_STATS"; }
-    ~ACGetStats();
+    ~ACGetStats() override;
 };
 
 class ACPause : public AnalyzerCommand
@@ -96,7 +96,7 @@ public:
     ACSwap(Swapper* ps);
     void execute(Analyzer&) override;
     const char* stringify() override { return "SWAP"; }
-    ~ACSwap();
+    ~ACSwap() override;
 private:
     Swapper *ps;
 };
@@ -106,7 +106,7 @@ class ACDAQSwap : public AnalyzerCommand
 public:
     void execute(Analyzer&) override;
     const char* stringify() override { return "DAQ_SWAP"; }
-    ~ACDAQSwap();
+    ~ACDAQSwap() override;
 };
 
 #endif

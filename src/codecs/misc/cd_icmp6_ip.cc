@@ -40,7 +40,6 @@ class Icmp6IpCodec : public Codec
 {
 public:
     Icmp6IpCodec() : Codec(ICMP6_IP_NAME) { }
-    ~Icmp6IpCodec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>&) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;

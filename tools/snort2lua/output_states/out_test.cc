@@ -32,8 +32,7 @@ class AlertTest : public ConversionState
 {
 public:
     AlertTest(Converter& c) : ConversionState(c) { }
-    virtual ~AlertTest() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 
@@ -58,19 +57,19 @@ bool AlertTest::convert(std::istringstream& data_stream)
             continue;
         }
 
-        if (!keyword.compare("stdout"))
+        if (keyword == "stdout")
             tmpval = table_api.add_deleted_comment("stdout");
 
-        else if (!keyword.compare("session"))
+        else if (keyword == "session")
             tmpval = table_api.add_option("session", true);
 
-        else if (!keyword.compare("rebuilt"))
+        else if (keyword == "rebuilt")
             tmpval = table_api.add_option("rebuilt", true);
 
-        else if (!keyword.compare("msg"))
+        else if (keyword == "msg")
             tmpval = table_api.add_option("msg", true);
 
-        else if (!keyword.compare("file"))
+        else if (keyword == "file")
             table_api.add_deleted_comment("file");
 
         else

@@ -135,8 +135,8 @@ SmtpClientDetector::SmtpClientDetector(ClientDiscovery* cdm)
 
     tcp_patterns =
     {
-        { (uint8_t*)HELO, sizeof(HELO)-1, -1, 0, APP_ID_SMTP },
-        { (uint8_t*)EHLO, sizeof(EHLO)-1, -1, 0, APP_ID_SMTP },
+        { (const uint8_t*)HELO, sizeof(HELO)-1, -1, 0, APP_ID_SMTP },
+        { (const uint8_t*)EHLO, sizeof(EHLO)-1, -1, 0, APP_ID_SMTP },
         { APP_SMTP_OUTLOOK,         sizeof(APP_SMTP_OUTLOOK)-1,        -1, 0, APP_ID_OUTLOOK },
         { APP_SMTP_OUTLOOK_EXPRESS, sizeof(APP_SMTP_OUTLOOK_EXPRESS)-1,-1, 0, APP_ID_OUTLOOK_EXPRESS },
         { APP_SMTP_IMO,             sizeof(APP_SMTP_IMO)-1,            -1, 0, APP_ID_SMTP_IMO },
@@ -174,9 +174,6 @@ SmtpClientDetector::SmtpClientDetector(ClientDiscovery* cdm)
     handler->register_detector(name, this, proto);
 }
 
-SmtpClientDetector::~SmtpClientDetector()
-{
-}
 
 /*
  *    product - The product data should not include any characters
@@ -626,10 +623,10 @@ SmtpServiceDetector::SmtpServiceDetector(ServiceDiscovery* sd)
 
     tcp_patterns =
     {
-        { (uint8_t*)SMTP_PATTERN1, sizeof(SMTP_PATTERN1) - 1, -1, 0, 0 },
-        { (uint8_t*)SMTP_PATTERN2, sizeof(SMTP_PATTERN2) - 1, -1, 0, 0 },
-        { (uint8_t*)SMTP_PATTERN3, sizeof(SMTP_PATTERN3) - 1, -1, 0, 0 },
-        { (uint8_t*)SMTP_PATTERN4, sizeof(SMTP_PATTERN4) - 1, -1, 0, 0 },
+        { (const uint8_t*)SMTP_PATTERN1, sizeof(SMTP_PATTERN1) - 1, -1, 0, 0 },
+        { (const uint8_t*)SMTP_PATTERN2, sizeof(SMTP_PATTERN2) - 1, -1, 0, 0 },
+        { (const uint8_t*)SMTP_PATTERN3, sizeof(SMTP_PATTERN3) - 1, -1, 0, 0 },
+        { (const uint8_t*)SMTP_PATTERN4, sizeof(SMTP_PATTERN4) - 1, -1, 0, 0 },
     };
 
     appid_registry =
@@ -647,9 +644,6 @@ SmtpServiceDetector::SmtpServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-SmtpServiceDetector::~SmtpServiceDetector()
-{
-}
 
 static inline int smtp_validate_reply(const uint8_t* data, uint16_t* offset, uint16_t size,
     int* multi, int* code)
@@ -671,7 +665,7 @@ static inline int smtp_validate_reply(const uint8_t* data, uint16_t* offset, uin
         return 0;
     }
 
-    const ServiceSMTPCode* code_hdr = (ServiceSMTPCode* )(data + *offset);
+    const ServiceSMTPCode* code_hdr = (const ServiceSMTPCode* )(data + *offset);
 
     if (code_hdr->code[0] < '1' || code_hdr->code[0] > '5')
         return -1;
@@ -718,7 +712,7 @@ static inline int smtp_validate_reply(const uint8_t* data, uint16_t* offset, uin
                 if (size - (*offset + 1) < (int)sizeof(ServiceSMTPCode))
                     return -1;
 
-                code_hdr = (ServiceSMTPCode*)(data + *offset + 1);
+                code_hdr = (const ServiceSMTPCode*)(data + *offset + 1);
 
                 if (code_hdr->code[0] < '1' || code_hdr->code[0] > '5')
                     return -1;

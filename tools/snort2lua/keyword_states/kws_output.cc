@@ -33,8 +33,7 @@ class Output : public ConversionState
 {
 public:
     Output(Converter& c) : ConversionState(c) { }
-    virtual ~Output() { }
-    virtual bool convert(std::istringstream& data);
+    bool convert(std::istringstream& data) override;
 };
 } // namespace
 

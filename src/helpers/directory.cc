@@ -24,10 +24,10 @@
 #include "directory.h"
 
 #include <fnmatch.h>
-#include <limits.h>
 #include <sys/stat.h>
 
 #include <cerrno>
+#include <climits>
 #include <cstring>
 
 Directory::Directory(const char* s, const char* f)
@@ -105,7 +105,7 @@ const char* Directory::next()
         {
             continue;
         }
-        else if ( filter.size() && fnmatch(filter.c_str(), de.d_name, 0) )
+        else if ( !filter.empty() && fnmatch(filter.c_str(), de.d_name, 0) )
         {
             continue;
         }

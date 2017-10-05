@@ -38,7 +38,7 @@ class SO_PUBLIC FileFlows : public FlowData
 public:
 
     FileFlows(Flow* f) : FlowData(file_flow_data_id), flow(f) { }
-    ~FileFlows();
+    ~FileFlows() override;
     static void init()
     { file_flow_data_id = FlowData::create_flow_data_id(); }
 
@@ -88,7 +88,7 @@ class FileInspect : public Inspector
 {
 public:
     FileInspect(FileIdModule*);
-    ~FileInspect();
+    ~FileInspect() override;
     void eval(Packet*) override { }
 
     FileConfig* config;

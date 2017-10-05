@@ -30,7 +30,6 @@ class BgpServiceDetector : public ServiceDetector
 {
 public:
     BgpServiceDetector(ServiceDiscovery*);
-    ~BgpServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

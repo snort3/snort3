@@ -142,7 +142,7 @@ TEST_CASE("b64 decode", "[Base64Encoder]")
     }
     SECTION("zero length data")
     {
-        CHECK(!b64.encode((uint8_t*)"ignore", 0, buf));
+        CHECK(!b64.encode((const uint8_t*)"ignore", 0, buf));
         CHECK(!b64.finish(buf));
     }
     SECTION("finish states")
@@ -154,7 +154,7 @@ TEST_CASE("b64 decode", "[Base64Encoder]")
 
         for ( unsigned i = 0; i < to_do; ++i )
         {
-            unsigned n = b64.encode((uint8_t*)txt[i], strlen(txt[i]), buf);
+            unsigned n = b64.encode((const uint8_t*)txt[i], strlen(txt[i]), buf);
             n += b64.finish(buf+n);
 
             REQUIRE(n < sizeof(buf));
@@ -166,7 +166,7 @@ TEST_CASE("b64 decode", "[Base64Encoder]")
     }
     SECTION("one shot")
     {
-        unsigned n = b64.encode((uint8_t*)text, strlen(text), buf);
+        unsigned n = b64.encode((const uint8_t*)text, strlen(text), buf);
         n += b64.finish(buf+n);
 
         REQUIRE(n < sizeof(buf));
@@ -187,7 +187,7 @@ TEST_CASE("b64 decode", "[Base64Encoder]")
             while ( offset < len )
             {
                 unsigned k = (offset + chunk > len) ? len - offset : chunk;
-                n += b64.encode((uint8_t*)text+offset, k, buf+n);
+                n += b64.encode((const uint8_t*)text+offset, k, buf+n);
                 offset += k;
             }
             n += b64.finish(buf+n);

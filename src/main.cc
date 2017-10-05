@@ -618,7 +618,7 @@ static void service_check()
     if ( house_keeping() )
         return;
 
-    nanosleep(&main_sleep, NULL);
+    nanosleep(&main_sleep, nullptr);
 }
 
 //-------------------------------------------------------------------------

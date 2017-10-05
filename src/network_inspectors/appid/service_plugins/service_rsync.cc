@@ -51,7 +51,7 @@ RsyncServiceDetector::RsyncServiceDetector(ServiceDiscovery* sd)
 
     tcp_patterns =
     {
-        { (uint8_t*)RSYNC_BANNER, sizeof(RSYNC_BANNER)-1, 0, 0, 0 }
+        { (const uint8_t*)RSYNC_BANNER, sizeof(RSYNC_BANNER)-1, 0, 0, 0 }
     };
 
     appid_registry =
@@ -67,9 +67,6 @@ RsyncServiceDetector::RsyncServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-RsyncServiceDetector::~RsyncServiceDetector()
-{
-}
 
 int RsyncServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
@@ -100,7 +97,7 @@ int RsyncServiceDetector::validate(AppIdDiscoveryArgs& args)
             goto fail;
         if (data[size-1] != 0x0A)
             goto fail;
-        if (strncmp((char*)data, RSYNC_BANNER, sizeof(RSYNC_BANNER)-1))
+        if (strncmp((const char*)data, RSYNC_BANNER, sizeof(RSYNC_BANNER)-1))
             goto fail;
         data += sizeof(RSYNC_BANNER) - 1;
         size -= sizeof(RSYNC_BANNER) - 1;

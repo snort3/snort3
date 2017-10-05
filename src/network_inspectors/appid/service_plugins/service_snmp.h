@@ -30,7 +30,6 @@ class SnmpServiceDetector : public ServiceDetector
 {
 public:
     SnmpServiceDetector(ServiceDiscovery*);
-    ~SnmpServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 

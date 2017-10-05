@@ -131,7 +131,7 @@ static void LogTcpdumpSingle(
     if ( data->limit && (context.size + dumpSize > data->limit) )
         TcpdumpRollLogFile(data);
 
-    pcap_dump((u_char*)context.dumpd,(struct pcap_pkthdr*)p->pkth,p->pkt);
+    pcap_dump((u_char*)context.dumpd, reinterpret_cast<const struct pcap_pkthdr*>(p->pkth), p->pkt);
     context.size += dumpSize;
 
     if (!SnortConfig::line_buffered_logging())  // FIXIT-L misnomer
@@ -153,7 +153,7 @@ static void TcpdumpInitLogFile(LtdConfig*, bool no_timestamp)
     string filename;
     char timestamp[16];
 
-    context.lastTime = time(NULL);
+    context.lastTime = time(nullptr);
     context.log_cnt = 0;
 
     filename += F_NAME;
@@ -178,9 +178,9 @@ static void TcpdumpInitLogFile(LtdConfig*, bool no_timestamp)
     if ( !pcap )
         FatalError("%s: can't get pcap context\n", S_NAME);
 
-    context.dumpd = pcap ? pcap_dump_open(pcap, file.c_str()) : NULL;
+    context.dumpd = pcap ? pcap_dump_open(pcap, file.c_str()) : nullptr;
 
-    if (context.dumpd == NULL)
+    if (context.dumpd == nullptr)
     {
         FatalError("%s: can't open %s: %s\n",
             S_NAME, file.c_str(), pcap_geterr(pcap));
@@ -193,7 +193,7 @@ static void TcpdumpInitLogFile(LtdConfig*, bool no_timestamp)
 
 static void TcpdumpRollLogFile(LtdConfig* data)
 {
-    time_t now = time(NULL);
+    time_t now = time(nullptr);
 
     /* don't roll over any sooner than resolution
      * of filename discriminator
@@ -202,10 +202,10 @@ static void TcpdumpRollLogFile(LtdConfig* data)
         return;
 
     /* close the output file */
-    if ( context.dumpd != NULL )
+    if ( context.dumpd != nullptr )
     {
         pcap_dump_close(context.dumpd);
-        context.dumpd = NULL;
+        context.dumpd = nullptr;
         context.size = 0;
         snort_free(context.file);
         context.file = nullptr;
@@ -242,7 +242,7 @@ class PcapLogger : public Logger
 {
 public:
     PcapLogger(TcpdumpModule*);
-    ~PcapLogger();
+    ~PcapLogger() override;
 
     void open() override;
     void close() override;

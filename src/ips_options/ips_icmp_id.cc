@@ -96,7 +96,7 @@ bool IcmpIdOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    IcmpIdOption& rhs = (IcmpIdOption&)ips;
+    const IcmpIdOption& rhs = (const IcmpIdOption&)ips;
     return ( config == rhs.config );
 }
 

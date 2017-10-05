@@ -347,7 +347,7 @@ static int _bnfa_list_free_table(bnfa_struct_t* bnfa)
     {
         BNFA_FREE(bnfa->bnfaTransTable,sizeof(bnfa_trans_node_t*)*bnfa->bnfaMaxStates,
             bnfa->list_memory);
-        bnfa->bnfaTransTable = 0;
+        bnfa->bnfaTransTable = nullptr;
     }
 
     return 0;
@@ -361,7 +361,7 @@ static void bnfaBuildMatchStateTrees(SnortConfig* sc, bnfa_struct_t* bnfa)
 
     for (int i=0; i<bnfa->bnfaNumStates; i++)
     {
-        for (mn = MatchList[i]; mn!= NULL; mn = mn->next )
+        for (mn = MatchList[i]; mn!= nullptr; mn = mn->next )
         {
             patrn = (bnfa_pattern_t*)mn->data;
 
@@ -381,7 +381,7 @@ static void bnfaBuildMatchStateTrees(SnortConfig* sc, bnfa_struct_t* bnfa)
         /* Last call to finalize the tree */
         if (MatchList[i])
         {
-            bnfa->agent->build_tree(sc, NULL, &MatchList[i]->rule_option_tree);
+            bnfa->agent->build_tree(sc, nullptr, &MatchList[i]->rule_option_tree);
         }
     }
 }
@@ -1058,7 +1058,7 @@ void bnfaPrint(bnfa_struct_t* bnfa)
     bnfa_match_node_t** MatchList;
     bnfa_match_node_t* mlist;
     int ps_index=0;
-    bnfa_state_t* ps=0;
+    bnfa_state_t* ps=nullptr;
 
     if ( !bnfa )
         return;
@@ -1172,7 +1172,7 @@ void bnfaPrint(bnfa_struct_t* bnfa)
             printf("---MatchList For State %d\n",k);
 
         for ( mlist = MatchList[k];
-            mlist!= NULL;
+            mlist!= nullptr;
             mlist = mlist->next )
         {
             bnfa_pattern_t* pat;
@@ -1190,7 +1190,7 @@ bnfa_struct_t* bnfaNew(const MpseAgent* agent)
     int bnfa_memory=0;
     bnfa_struct_t* p = (bnfa_struct_t*)BNFA_MALLOC(sizeof(bnfa_struct_t),bnfa_memory);
     if (!p)
-        return 0;
+        return nullptr;
 
     if ( p )
     {
@@ -1251,7 +1251,7 @@ void bnfaFree(bnfa_struct_t* bnfa)
 
             BNFA_FREE(ilist,sizeof(bnfa_match_node_t),bnfa->matchlist_memory);
         }
-        bnfa->bnfaMatchList[i] = 0;
+        bnfa->bnfaMatchList[i] = nullptr;
 
 #ifdef ALLOW_NFA_FULL
         /* free next state entries */
@@ -1339,7 +1339,7 @@ static inline int _bnfaCompile(bnfa_struct_t* bnfa)
     int i;
 
     /* Count number of states */
-    for (plist = bnfa->bnfaPatterns; plist != NULL; plist = plist->next)
+    for (plist = bnfa->bnfaPatterns; plist != nullptr; plist = plist->next)
     {
         bnfa->bnfaMaxStates += plist->n;
     }
@@ -1363,7 +1363,7 @@ static inline int _bnfaCompile(bnfa_struct_t* bnfa)
 
     /* Add each Pattern to the State Table - This forms a keyword trie using lists */
     bnfa->bnfaNumStates = 0;
-    for (plist = bnfa->bnfaPatterns; plist != NULL; plist = plist->next)
+    for (plist = bnfa->bnfaPatterns; plist != nullptr; plist = plist->next)
     {
         _bnfa_add_pattern_states (bnfa, plist);
     }
@@ -1424,7 +1424,7 @@ static inline int _bnfaCompile(bnfa_struct_t* bnfa)
         }
         BNFA_FREE(bnfa->bnfaFailState,sizeof(bnfa_state_t)*bnfa->bnfaNumStates,
             bnfa->failstate_memory);
-        bnfa->bnfaFailState=0;
+        bnfa->bnfaFailState=nullptr;
     }
 #ifdef ALLOW_NFA_FULL
     else if ( bnfa->bnfaFormat == BNFA_FULL )
@@ -1732,7 +1732,7 @@ static inline unsigned _bnfa_search_full_nfa_nocase(
     val is tested against the high 8 bits of the 'a' array entry,
     this is particular to the storage format we are using.
 */
-static inline int _bnfa_binearch(bnfa_state_t* a, int a_len, int val)
+static inline int _bnfa_binearch(const bnfa_state_t* a, int a_len, int val)
 {
     int m, l, r;
     int c;

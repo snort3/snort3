@@ -32,8 +32,7 @@ class EventQueue : public ConversionState
 {
 public:
     EventQueue(Converter& c) : ConversionState(c) { }
-    virtual ~EventQueue() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 
@@ -48,10 +47,10 @@ bool EventQueue::convert(std::istringstream& data_stream)
     {
         bool tmpval = true;
 
-        if (!keyword.compare("process_all_events"))
+        if (keyword == "process_all_events")
             tmpval = table_api.add_option("process_all_events", true);
 
-        else if (!keyword.compare("max_queue"))
+        else if (keyword == "max_queue")
         {
             std::string val;
 
@@ -60,7 +59,7 @@ bool EventQueue::convert(std::istringstream& data_stream)
             else
                 tmpval = false;
         }
-        else if (!keyword.compare("log"))
+        else if (keyword == "log")
         {
             std::string val;
 
@@ -69,7 +68,7 @@ bool EventQueue::convert(std::istringstream& data_stream)
             else
                 tmpval = false;
         }
-        else if (!keyword.compare("order_events"))
+        else if (keyword == "order_events")
         {
             std::string val;
             if (util::get_string(data_stream, val, ", "))

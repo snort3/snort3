@@ -32,7 +32,7 @@ class ImapClientDetector : public ClientDetector
 {
 public:
     ImapClientDetector(ClientDiscovery*);
-    ~ImapClientDetector();
+    ~ImapClientDetector() override;
 
     void do_custom_init() override;
     int validate(AppIdDiscoveryArgs&) override;
@@ -47,7 +47,6 @@ class ImapServiceDetector : public ServiceDetector
 {
 public:
     ImapServiceDetector(ServiceDiscovery*);
-    ~ImapServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

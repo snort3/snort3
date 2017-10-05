@@ -161,7 +161,7 @@ public:
 TEST_CASE("no protocol", "[FlowTracker]")
 {
     Packet p;
-    uint32_t* len_ptr = (uint32_t*) &p.pkth->caplen;
+    uint32_t* len_ptr = &const_cast<DAQ_PktHdr_t*>(p.pkth)->caplen;
 
     PerfConfig config;
     config.format = PERF_MOCK;
@@ -206,7 +206,7 @@ TEST_CASE("icmp", "[FlowTracker]")
 {
     Packet p;
     icmp::ICMPHdr icmp;
-    uint32_t* len_ptr = (uint32_t*) &p.pkth->caplen;
+    uint32_t* len_ptr = &const_cast<DAQ_PktHdr_t*>(p.pkth)->caplen;
     uint8_t* type_ptr = (uint8_t*) &icmp.type;
 
     PerfConfig config;
@@ -251,7 +251,7 @@ TEST_CASE("tcp", "[FlowTracker]")
 {
     Packet p;
     tcp::TCPHdr tcp;
-    uint32_t* len_ptr = (uint32_t*) &p.pkth->caplen;
+    uint32_t* len_ptr = &const_cast<DAQ_PktHdr_t*>(p.pkth)->caplen;
 
     PerfConfig config;
     config.format = PERF_MOCK;
@@ -305,7 +305,7 @@ TEST_CASE("udp", "[FlowTracker]")
 {
     Packet p;
     udp::UDPHdr udp;
-    uint32_t* len_ptr = (uint32_t*) &p.pkth->caplen;
+    uint32_t* len_ptr = &const_cast<DAQ_PktHdr_t*>(p.pkth)->caplen;
 
     PerfConfig config;
     config.format = PERF_MOCK;

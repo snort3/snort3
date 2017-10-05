@@ -29,7 +29,7 @@
 /*point to the start of the unused memory*/
 static MEM_OFFSET unused_ptr = 0;
 static size_t unused_mem = 0;
-static void* base_ptr = NULL;
+static void* base_ptr = nullptr;
 
 size_t segment_unusedmem()
 {

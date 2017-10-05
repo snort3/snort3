@@ -158,7 +158,7 @@ int TcpReassembler::delete_reassembly_segment(TcpSegmentNode* tsn)
     }
 
     if (seglist.next == tsn)
-        seglist.next = NULL;
+        seglist.next = nullptr;
 
     tsn->term( );
     seg_count--;
@@ -574,7 +574,7 @@ Packet* TcpReassembler::initialize_pdu(Packet* p, uint32_t pkt_flags, struct tim
     session->GetPacketHeaderFoo(&pkth, pkt_flags);
     PacketManager::format_tcp(enc_flags, p, pdu, PSEUDO_PKT_TCP, &pkth, pkth.opaque);
     prep_pdu(session->flow, p, pkt_flags, pdu);
-    ((DAQ_PktHdr_t*)pdu->pkth)->ts = tv;
+    (const_cast<DAQ_PktHdr_t*>(pdu->pkth))->ts = tv;
     pdu->dsize = 0;
     pdu->data = nullptr;
     return pdu;
@@ -717,7 +717,7 @@ int TcpReassembler::do_zero_byte_flush(Packet* p, uint32_t pkt_flags)
 
      if ( sb.data )
      {
-        Packet* pdu = initialize_pdu(p, pkt_flags, ((DAQ_PktHdr_t*)p->pkth)->ts);
+        Packet* pdu = initialize_pdu(p, pkt_flags, p->pkth->ts);
         /* setup the pseudopacket payload */
         pdu->data = sb.data;
         pdu->dsize = sb.length;
@@ -829,7 +829,7 @@ static Packet* set_packet(Flow* flow, uint32_t flags, bool c2s)
     Packet* p = DetectionEngine::get_current_packet();
     p->reset();
 
-    DAQ_PktHdr_t* ph = (DAQ_PktHdr_t*)p->pkth;
+    DAQ_PktHdr_t* ph = const_cast<DAQ_PktHdr_t*>(p->pkth);
     memset(ph, 0, sizeof(*ph));
     packet_gettimeofday(&ph->ts);
 
@@ -1197,7 +1197,7 @@ void TcpReassembler::insert_segment_in_empty_seglist(TcpSegmentDescriptor& tsd)
     }
 
     // BLOCK add new block to seglist containing data
-    add_reassembly_segment(tsd, tsd.get_seg_len(), overlap, 0, tsd.get_seg_seq() + overlap, NULL);
+    add_reassembly_segment(tsd, tsd.get_seg_len(), overlap, 0, tsd.get_seg_seq() + overlap, nullptr);
 
     DebugFormat(DEBUG_STREAM_STATE,
         "Attached new queue to seglist, %u bytes queued, base_seq 0x%X\n",
@@ -1212,7 +1212,7 @@ void TcpReassembler::init_overlap_editor(TcpSegmentDescriptor& tsd)
     int32_t dist_head;
     int32_t dist_tail;
     DEBUG_WRAP(
-        TcpSegmentNode *lastptr = NULL;
+        TcpSegmentNode *lastptr = nullptr;
         uint32_t base_seq = seglist_base_seq;
         int last = 0;
         );

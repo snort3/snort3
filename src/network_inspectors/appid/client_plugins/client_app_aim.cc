@@ -93,9 +93,6 @@ AimClientDetector::AimClientDetector(ClientDiscovery* cdm)
     handler->register_detector(name, this, proto);
 }
 
-AimClientDetector::~AimClientDetector()
-{
-}
 
 template<typename Hdr>
 static inline const Hdr* advance(const uint8_t*& cur, const uint8_t* const end)
@@ -208,15 +205,15 @@ int AimClientDetector::validate(AppIdDiscoveryArgs& args)
                     break;
                 case 0x0017:
                     got_id = true;
-                    major = ntohs(*(uint16_t*)cur);
+                    major = ntohs(*(const uint16_t*)cur);
                     break;
                 case 0x0018:
                     got_id = true;
-                    minor = ntohs(*(uint16_t*)cur);
+                    minor = ntohs(*(const uint16_t*)cur);
                     break;
                 case 0x0019:
                     got_id = true;
-                    lesser = ntohs(*(uint16_t*)cur);
+                    lesser = ntohs(*(const uint16_t*)cur);
                     break;
                 default:
                     break;

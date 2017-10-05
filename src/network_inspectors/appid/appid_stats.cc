@@ -50,7 +50,7 @@ static void delete_record(void* record)
     snort_free(record);
 }
 
-void AppIdStatistics::end_stats_period(void)
+void AppIdStatistics::end_stats_period()
 {
     SF_LIST* bucketList = logBuckets;
     logBuckets = currBuckets;

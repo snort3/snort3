@@ -29,7 +29,7 @@ struct BaseApi;
 class LuaApi
 {
 public:
-    virtual ~LuaApi() { }
+    virtual ~LuaApi() = default;
     virtual const BaseApi* get_base() const = 0;
 
     std::string name;

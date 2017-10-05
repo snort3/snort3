@@ -64,7 +64,7 @@ static int GetChecksumFlags(const char* args)
     int got_negative_flag = 0;
     int ret_flags = 0;
 
-    if (args == NULL)
+    if (args == nullptr)
         return CHECKSUM_FLAG__ALL;
 
     toks = mSplit(args, " \t", 10, &num_toks, 0);
@@ -191,7 +191,7 @@ void SetSnortConfDir(const char* file)
         const char* path_sep = strrchr(file, '/');
 
         /* is there a directory separator in the filename */
-        if (path_sep != NULL)
+        if (path_sep != nullptr)
         {
             path_sep++;  /* include path separator */
             snort_conf_dir.assign(file, path_sep - file);

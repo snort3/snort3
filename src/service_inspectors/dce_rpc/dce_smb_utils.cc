@@ -610,8 +610,8 @@ void DCE2_SmbCleanFileTracker(DCE2_SmbFileTracker* ftracker)
 
     if (ftracker->is_ipc)
     {
-        ftracker->fp_used = 0;
-        ftracker->fp_byte_mode = 0;
+        ftracker->fp_used = false;
+        ftracker->fp_byte_mode = false;
 
         if (ftracker->fp_writex_raw != nullptr)
         {
@@ -1290,7 +1290,7 @@ Packet* DCE2_SmbGetRpkt(DCE2_SmbSsnData* ssd,
             header_len = DCE2_MOCK_HDR_LEN__SMB_CLI;
         else
             header_len = DCE2_MOCK_HDR_LEN__SMB_SRV;
-        DCE2_SmbSetRdata(ssd, (uint8_t*)rpkt->data,
+        DCE2_SmbSetRdata(ssd, const_cast<uint8_t*>(rpkt->data),
             (uint16_t)(rpkt->dsize - header_len));
         DCE2_MOVE(*data, *data_len, header_len);
         break;
@@ -1458,7 +1458,7 @@ FileVerdict DCE2_get_file_verdict(DCE2_SmbSsnData* ssd)
     return file->verdict;
 }
 
-void DCE2_SmbInitDeletePdu(void)
+void DCE2_SmbInitDeletePdu()
 {
     NbssHdr* nb_hdr = (NbssHdr*)dce2_smb_delete_pdu;
     SmbNtHdr* smb_hdr = (SmbNtHdr*)((uint8_t*)nb_hdr + sizeof(*nb_hdr));
@@ -1639,7 +1639,7 @@ static DCE2_Ret DCE2_SmbFileAPIProcess(DCE2_SmbSsnData* ssd,
 
     Profile profile(dce2_smb_pstat_smb_file_api);
     FileFlows* file_flows = FileFlows::get_file_flows(ssd->sd.wire_pkt->flow);
-    if (!file_flows->file_process((uint8_t*)data_ptr, (int)data_len, position, upload,
+    if (!file_flows->file_process(data_ptr, (int)data_len, position, upload,
         DCE2_SmbIsVerdictSuspend(upload, position)))
     {
         DebugFormat(DEBUG_DCE_SMB, "File API returned FAILURE "
@@ -1683,8 +1683,8 @@ static DCE2_Ret DCE2_SmbFileAPIProcess(DCE2_SmbSsnData* ssd,
 
 static int DCE2_SmbFileOffsetCompare(const void* a, const void* b)
 {
-    const DCE2_SmbFileChunk* x = (DCE2_SmbFileChunk*)a;
-    const DCE2_SmbFileChunk* y = (DCE2_SmbFileChunk*)b;
+    const DCE2_SmbFileChunk* x = (const DCE2_SmbFileChunk*)a;
+    const DCE2_SmbFileChunk* y = (const DCE2_SmbFileChunk*)b;
 
     if (x->offset > y->offset)
         return 1;

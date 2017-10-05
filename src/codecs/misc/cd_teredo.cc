@@ -36,7 +36,6 @@ class TeredoCodec : public Codec
 {
 public:
     TeredoCodec() : Codec(CD_TEREDO_NAME) { }
-    ~TeredoCodec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
@@ -56,7 +55,7 @@ bool TeredoCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort
         return false;
 
     /* Decode indicators. If both are present, Auth always comes before Origin. */
-    if ( ntohs(*(uint16_t*)raw_pkt) == teredo::INDICATOR_AUTH )
+    if ( ntohs(*(const uint16_t*)raw_pkt) == teredo::INDICATOR_AUTH )
     {
         if ( raw.len < teredo::INDICATOR_AUTH_MIN_LEN )
             return false;
@@ -72,7 +71,7 @@ bool TeredoCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort
         codec.lyr_len = (teredo::INDICATOR_AUTH_MIN_LEN + client_id_length + auth_data_length);
     }
 
-    if ( ntohs(*(uint16_t*)raw_pkt) == teredo::INDICATOR_ORIGIN )
+    if ( ntohs(*(const uint16_t*)raw_pkt) == teredo::INDICATOR_ORIGIN )
     {
         if ( raw.len < teredo::INDICATOR_ORIGIN_LEN )
             return false;

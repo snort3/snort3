@@ -363,11 +363,11 @@ static bool get_instance(
     for ( it = fp->ilist.begin(); it != fp->ilist.end(); ++it )
     {
         PHInstance* p = *it;
-        if ( p->name.size() && p->name == keyword )
+        if ( !p->name.empty() && p->name == keyword )
             return true;
 
         else if ( !strcmp(p->pp_class.api.base.name, keyword) )
-            return (!p->name.size() || !dflt_only) ? true : false;
+            return (p->name.empty() || !dflt_only) ? true : false;
 
         else if ( p->pp_class.api.service && !strcmp(p->pp_class.api.service, keyword) )
             return true;
@@ -406,7 +406,7 @@ static PHInstance* get_new(
     if ( !p->handler )
     {
         delete p;
-        return NULL;
+        return nullptr;
     }
 
     if ( Snort::is_reloading() )
@@ -455,7 +455,7 @@ void InspectorManager::delete_policy(InspectionPolicy* pi, bool cloned)
 
 void InspectorManager::update_policy(SnortConfig* sc)
 {
-    if ( sc->policy_map->inspection_policy.size() )
+    if ( !sc->policy_map->inspection_policy.empty() )
     {
         InspectionPolicy* pi = sc->policy_map->inspection_policy[0];
         for ( auto* p : pi->framework_policy->ilist )
@@ -518,7 +518,7 @@ InspectorType InspectorManager::get_type(const char* key)
 bool InspectorManager::delete_inspector(SnortConfig* sc, const char* iname)
 {
     bool ok = false;
-    if ( sc->policy_map->inspection_policy.size() )
+    if ( !sc->policy_map->inspection_policy.empty() )
     {
         FrameworkPolicy* fp = sc->policy_map->inspection_policy[0]->framework_policy;
         std::vector<PHInstance*>::iterator old_it;
@@ -594,7 +594,7 @@ static PHClass* get_class(const char* keyword, FrameworkConfig* fc)
             fc->clist.push_back(ppc);
             return ppc;
         }
-    return NULL;
+    return nullptr;
 }
 
 void InspectorManager::thread_init(SnortConfig* sc)

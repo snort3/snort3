@@ -37,9 +37,6 @@ TcpStateTimeWait::TcpStateTimeWait(TcpStateMachine& tsm) :
 {
 }
 
-TcpStateTimeWait::~TcpStateTimeWait()
-{
-}
 
 bool TcpStateTimeWait::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {

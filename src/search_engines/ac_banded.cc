@@ -42,7 +42,7 @@ public:
         obj = acsmNew2(agent, ACF_BANDED);
     }
 
-    ~AcbMpse()
+    ~AcbMpse() override
     { acsmFree2(obj); }
 
     void set_opt(int) override

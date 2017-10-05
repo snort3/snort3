@@ -72,7 +72,7 @@ bool Dnp3IndOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    const Dnp3IndOption& rhs = (Dnp3IndOption&)ips;
+    const Dnp3IndOption& rhs = (const Dnp3IndOption&)ips;
 
     return (flags == rhs.flags);
 }

@@ -32,8 +32,7 @@ class StreamUdp : public ConversionState
 {
 public:
     StreamUdp(Converter& c) : ConversionState(c) { }
-    virtual ~StreamUdp() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 
@@ -54,10 +53,10 @@ bool StreamUdp::convert(std::istringstream& data_stream)
         if (keyword.empty())
             continue;
 
-        if (!keyword.compare("ignore_any_rules"))
+        if (keyword == "ignore_any_rules")
             tmpval = table_api.add_option("ignore_any_rules", true);
 
-        else if (!keyword.compare("timeout"))
+        else if (keyword == "timeout")
         {
             table_api.add_diff_option_comment("timeout", "session_timeout");
             tmpval = parse_int_option("session_timeout", data_stream, false);

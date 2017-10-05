@@ -75,7 +75,7 @@ public:
         opt_data = c;
     }
 
-    ~AppIdIpsOption()
+    ~AppIdIpsOption() override
     {
         for (auto& appid_info : opt_data.appid_table)
             snort_free(appid_info.appid_name);
@@ -116,7 +116,7 @@ bool AppIdIpsOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const AppIdIpsOption& rhs = (AppIdIpsOption&)ips;
+    const AppIdIpsOption& rhs = (const AppIdIpsOption&)ips;
 
     if ( opt_data.appid_table.size() != rhs.opt_data.appid_table.size() )
         return false;

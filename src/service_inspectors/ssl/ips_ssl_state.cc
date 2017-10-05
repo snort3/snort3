@@ -86,7 +86,7 @@ bool SslStateOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    const SslStateOption& rhs = (SslStateOption&)ips;
+    const SslStateOption& rhs = (const SslStateOption&)ips;
 
     if ( (ssod.flags == rhs.ssod.flags) &&
         (ssod.mask == rhs.ssod.mask) )

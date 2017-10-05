@@ -105,7 +105,7 @@ static char get_xlink_keyword(const uint8_t* ptr, const uint8_t* end)
 {
     int len;
 
-    if (ptr == NULL || end == NULL)
+    if (ptr == nullptr || end == nullptr)
         return XLINK_OTHER;
 
     ptr += XLINK_LEN;
@@ -179,12 +179,12 @@ static char get_xlink_keyword(const uint8_t* ptr, const uint8_t* end)
  */
 int ParseXLink2State(SMTP_PROTO_CONF* config, Packet* p, SMTPData* smtp_ssn, const uint8_t* ptr)
 {
-    uint8_t* lf = NULL;
+    const uint8_t* lf = nullptr;
     uint32_t len = 0;
     char x_keyword;
     const uint8_t* end;
 
-    if (p == NULL || ptr == NULL)
+    if (p == nullptr || ptr == nullptr)
         return 0;
 
     /* If we got a FIRST chunk on this stream, this is not an exploit */
@@ -206,8 +206,8 @@ int ParseXLink2State(SMTP_PROTO_CONF* config, Packet* p, SMTPData* smtp_ssn, con
         return 0;
     }
 
-    ptr = (uint8_t*)memchr((char*)ptr, '=', end - ptr);
-    if (ptr == NULL)
+    ptr = (const uint8_t*)memchr((const char*)ptr, '=', end - ptr);
+    if (ptr == nullptr)
         return 0;
 
     /* move past '=' and make sure we're within bounds */
@@ -233,8 +233,8 @@ int ParseXLink2State(SMTP_PROTO_CONF* config, Packet* p, SMTPData* smtp_ssn, con
     }
     else
     {
-        lf = (uint8_t*)memchr((char*)ptr, '\n', end - ptr);
-        if (lf == NULL)
+        lf = (const uint8_t*)memchr((const char*)ptr, '\n', end - ptr);
+        if (lf == nullptr)
             return 0;
 
         len = lf - ptr;
@@ -254,8 +254,8 @@ int ParseXLink2State(SMTP_PROTO_CONF* config, Packet* p, SMTPData* smtp_ssn, con
     }
 
     /* Check for more than one command in packet */
-    ptr = (uint8_t*)memchr((char*)ptr, '\n', end - ptr);
-    if (ptr == NULL)
+    ptr = (const uint8_t*)memchr((const char*)ptr, '\n', end - ptr);
+    if (ptr == nullptr)
         return 0;
 
     /* move past '\n' */

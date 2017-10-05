@@ -65,7 +65,7 @@ void CleanupFTPCMDConf(void* ftpCmd)
 void CleanupFTPServerConf(void* serverConf)
 {
     FTP_SERVER_PROTO_CONF* ServerConf = (FTP_SERVER_PROTO_CONF*)serverConf;
-    if (ServerConf == NULL)
+    if (ServerConf == nullptr)
         return;
 
     /* Iterate through each cmd_lookup for this server */

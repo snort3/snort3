@@ -44,7 +44,7 @@ class Manager
 public:
     static void init();
 
-    static void add_plugin(Api*);
+    static void add_plugin(const Api*);
 
     static BasePlugin* instantiate(
         Lua::State&, const std::string&,
@@ -52,7 +52,7 @@ public:
 
     static void destroy(BasePlugin*);
 
-    static void add_chunk(std::string, std::string, std::string);
+    static void add_chunk(const std::string&, const std::string&, const std::string&);
     static const std::vector<Chunk>& get_chunks();
 };
 } // namespace Piglet

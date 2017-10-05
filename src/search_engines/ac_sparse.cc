@@ -41,7 +41,7 @@ public:
         obj = acsmNew2(agent, ACF_SPARSE);
     }
 
-    ~AcsMpse()
+    ~AcsMpse() override
     { if (obj) acsmFree2(obj); }
 
     void set_opt(int) override

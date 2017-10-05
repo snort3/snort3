@@ -63,7 +63,7 @@ int ftp_bounce_lookup_init(BOUNCE_LOOKUP** BounceLookup)
 {
     KMAP* km = KMapNew((KMapUserFreeFunc)CleanupFTPBounceTo);
     *BounceLookup = km;
-    if (*BounceLookup == NULL)
+    if (*BounceLookup == nullptr)
     {
         return FTPP_MEM_ALLOC_FAIL;
     }
@@ -89,7 +89,7 @@ int ftp_bounce_lookup_cleanup(BOUNCE_LOOKUP** BounceLookup)
 {
     KMAP* km;
 
-    if (BounceLookup == NULL)
+    if (BounceLookup == nullptr)
         return FTPP_INVALID_ARG;
 
     km = *BounceLookup;
@@ -97,7 +97,7 @@ int ftp_bounce_lookup_cleanup(BOUNCE_LOOKUP** BounceLookup)
     if (km)
     {
         KMapDelete(km);
-        *BounceLookup = NULL;
+        *BounceLookup = nullptr;
     }
 
     return FTPP_SUCCESS;
@@ -170,17 +170,17 @@ int ftp_bounce_lookup_add(BOUNCE_LOOKUP* BounceLookup,
 FTP_BOUNCE_TO* ftp_bounce_lookup_find(
     BOUNCE_LOOKUP* BounceLookup, const SfIp* Ip, int* iError)
 {
-    FTP_BOUNCE_TO* BounceTo = NULL;
+    FTP_BOUNCE_TO* BounceTo = nullptr;
 
     if (!iError)
     {
-        return NULL;
+        return nullptr;
     }
 
     if (!BounceLookup)
     {
         *iError = FTPP_INVALID_ARG;
-        return NULL;
+        return nullptr;
     }
 
     *iError = FTPP_SUCCESS;

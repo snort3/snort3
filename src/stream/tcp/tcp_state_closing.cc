@@ -41,9 +41,6 @@ TcpStateClosing::TcpStateClosing(TcpStateMachine& tsm) :
 {
 }
 
-TcpStateClosing::~TcpStateClosing()
-{
-}
 
 bool TcpStateClosing::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {

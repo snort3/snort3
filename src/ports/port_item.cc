@@ -54,11 +54,11 @@ PortObjectItem* PortObjectItemDup(PortObjectItem* poi)
     PortObjectItem* poinew;
 
     if ( !poi )
-        return 0;
+        return nullptr;
 
     poinew = PortObjectItemNew();
     if ( !poinew )
-        return 0;
+        return nullptr;
 
     memcpy(poinew,poi,sizeof(PortObjectItem));
 

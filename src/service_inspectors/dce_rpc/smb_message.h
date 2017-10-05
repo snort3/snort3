@@ -23,7 +23,7 @@
 #ifndef SMB_MESSAGE_H
 #define SMB_MESSAGE_H
 
-#include <stdint.h>
+#include <cstdint>
 
 /********************************************************************
  * SMB_COM_OPEN
@@ -1327,10 +1327,10 @@ struct SmbTrans2Open2Resp
 // See MS-SMB Section 2.2.2.3.5
 // For added value, see below from MS-FSCC
 #define SMB_INFO_PASSTHROUGH  0x03e8
-#define SMB_INFO_PT_FILE_STANDARD_INFO  SMB_INFO_PASSTHROUGH+5
-#define SMB_INFO_PT_FILE_ALL_INFO       SMB_INFO_PASSTHROUGH+18
-#define SMB_INFO_PT_FILE_STREAM_INFO    SMB_INFO_PASSTHROUGH+22
-#define SMB_INFO_PT_NETWORK_OPEN_INFO   SMB_INFO_PASSTHROUGH+34
+#define SMB_INFO_PT_FILE_STANDARD_INFO  (SMB_INFO_PASSTHROUGH+5)
+#define SMB_INFO_PT_FILE_ALL_INFO       (SMB_INFO_PASSTHROUGH+18)
+#define SMB_INFO_PT_FILE_STREAM_INFO    (SMB_INFO_PASSTHROUGH+22)
+#define SMB_INFO_PT_NETWORK_OPEN_INFO   (SMB_INFO_PASSTHROUGH+34)
 
 struct SmbTrans2QueryFileInfoReqParams
 {
@@ -1523,8 +1523,8 @@ struct SmbTrans2QueryFileInformationResp
 #define SMB_SET_FILE_END_OF_FILE_INFO  0x0104
 
 // For added value, see above File Information Classes
-#define SMB_INFO_PT_SET_FILE_BASIC_FILE_INFO   SMB_INFO_PASSTHROUGH+4
-#define SMB_INFO_PT_SET_FILE_END_OF_FILE_INFO  SMB_INFO_PASSTHROUGH+20
+#define SMB_INFO_PT_SET_FILE_BASIC_FILE_INFO   (SMB_INFO_PASSTHROUGH+4)
+#define SMB_INFO_PT_SET_FILE_END_OF_FILE_INFO  (SMB_INFO_PASSTHROUGH+20)
 
 struct SmbTrans2SetFileInfoReqParams
 {

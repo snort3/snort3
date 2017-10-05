@@ -70,7 +70,7 @@ AppIdSession* mock_session = nullptr;
 
 TEST_GROUP(appid_api)
 {
-    void setup()
+    void setup() override
     {
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         flow = new Flow;
@@ -79,7 +79,7 @@ TEST_GROUP(appid_api)
         flow->set_flow_data(mock_session);
     }
 
-    void teardown()
+    void teardown() override
     {
         delete mock_session;
         delete flow;
@@ -408,7 +408,7 @@ TEST(appid_api, get_http_xff_addr)
     expected_ip_xff.pton(AF_INET, APPID_UT_XFF_IP_ADDR);
 
     SfIp* val = appid_api.get_http_xff_addr(nullptr);
-    CHECK_TRUE(val == 0);
+    CHECK_TRUE(val == nullptr);
     val = appid_api.get_http_xff_addr(mock_session);
     CHECK_TRUE(val->fast_eq4(expected_ip_xff));
 }
@@ -428,7 +428,7 @@ TEST(appid_api, get_service_ip)
     expected_ip.pton(AF_INET, APPID_UT_SERVICE_IP_ADDR);
 
     SfIp* val = appid_api.get_service_ip(nullptr);
-    CHECK_TRUE(val == 0);
+    CHECK_TRUE(val == nullptr);
     val = appid_api.get_service_ip(mock_session);
     CHECK_TRUE(val->fast_eq4(expected_ip));
 }
@@ -440,7 +440,7 @@ TEST(appid_api, get_initiator_ip)
     expected_ip.pton(AF_INET, APPID_UT_INITIATOR_IP_ADDR);
 
     SfIp* val = appid_api.get_initiator_ip(nullptr);
-    CHECK_TRUE(val == 0);
+    CHECK_TRUE(val == nullptr);
     val = appid_api.get_initiator_ip(mock_session);
     CHECK_TRUE(val->fast_eq4(expected_ip));
 }

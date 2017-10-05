@@ -62,16 +62,16 @@
 /*
  * Fatal errors are negative
  */
-#define FTPP_FATAL_ERR         -1
-#define FTPP_INVALID_ARG       -2
-#define FTPP_MEM_ALLOC_FAIL    -3
-#define FTPP_NOT_FOUND         -4
-#define FTPP_INVALID_FILE      -5
+#define FTPP_FATAL_ERR         (-1)
+#define FTPP_INVALID_ARG       (-2)
+#define FTPP_MEM_ALLOC_FAIL    (-3)
+#define FTPP_NOT_FOUND         (-4)
+#define FTPP_INVALID_FILE      (-5)
 
-#define FTPP_ALERT             -6
+#define FTPP_ALERT             (-6)
 
-#define FTPP_INVALID_DATE      -100
-#define FTPP_INVALID_PARAM     -101
+#define FTPP_INVALID_DATE      (-100)
+#define FTPP_INVALID_PARAM     (-101)
 
 #endif
 

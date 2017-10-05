@@ -20,13 +20,15 @@
 #include "config.h"
 #endif
 
+#include "helpers/parse_cmd_line.h"
+
 #include <syslog.h>
+
+#include <cstring>
+#include <iomanip>
 #include <iostream>
 #include <string>
-#include <string.h>
-#include <iomanip>
 
-#include "helpers/parse_cmd_line.h"
 #include "data/dt_data.h"
 #include "helpers/converter.h"
 #include "helpers/s2l_util.h"
@@ -195,7 +197,7 @@ static void parse_config_file(const char* key, const char* val)
     else
     {
         conf_file = std::string(val);
-        std::size_t path_sep = conf_file.find_last_of("/");
+        std::size_t path_sep = conf_file.find_last_of('/');
 
         /* is there a directory separator in the filename */
         if (path_sep != std::string::npos)

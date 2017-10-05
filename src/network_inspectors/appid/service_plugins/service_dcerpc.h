@@ -31,7 +31,6 @@ class DceRpcServiceDetector : public ServiceDetector
 {
 public:
     DceRpcServiceDetector(ServiceDiscovery*);
-    ~DceRpcServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 

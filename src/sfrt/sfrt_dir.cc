@@ -33,7 +33,7 @@
 #include "sfrt.h"  // FIXIT-L these includes are circular
 #include "sfrt_dir.h"
 
-#include <stdarg.h>
+#include <cstdarg>
 
 #include "utils/util.h"
 
@@ -60,7 +60,7 @@ static dir_sub_table_t* _sub_table_new(dir_table_t* root, uint32_t dimension,
         sizeof(word) * len + len ) ||
         bit_length > 128)
     {
-        return NULL;
+        return nullptr;
     }
 
     /* Set up the initial prefilled "sub table" */
@@ -135,7 +135,7 @@ dir_table_t* sfrt_dir_new(uint32_t mem_cap, int count,...)
     {
         snort_free(table->dimensions);
         snort_free(table);
-        return NULL;
+        return nullptr;
     }
 
     table->allocated += sizeof(dir_table_t) + sizeof(int)*count;

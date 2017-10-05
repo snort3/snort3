@@ -84,7 +84,7 @@ enum PseudoPacketType
 
 /* default mpls flags */
 #define DEFAULT_MPLS_PAYLOADTYPE      MPLS_PAYLOADTYPE_IPV4
-#define DEFAULT_LABELCHAIN_LENGTH    -1
+#define DEFAULT_LABELCHAIN_LENGTH    (-1)
 
 constexpr int32_t MAX_PORTS = 65536;
 constexpr uint16_t NUM_IP_PROTOS = 256;
@@ -257,18 +257,18 @@ private:
 #define SEQ_GEQ(a,b) ((int)((a) - (b)) >= 0)
 #define SEQ_EQ(a,b)  ((int)((a) - (b)) == 0)
 
-#define BIT(i) (0x1 << (i-1))
+#define BIT(i) (0x1 << ((i)-1))
 
 inline void SetExtraData(Packet* p, const uint32_t xid) { p->xtradata_mask |= BIT(xid); }
 
 inline uint16_t extract_16bits(const uint8_t* const p)
-{ return ntohs(*(uint16_t*)(p)); }
+{ return ntohs(*(const uint16_t*)(p)); }
 
 inline uint32_t extract_32bits(const uint8_t* p)
 {
     assert(p);
 
-    return ntohl(*(uint32_t*)p);
+    return ntohl(*(const uint32_t*)p);
 }
 
 inline uint16_t alignedNtohs(const uint16_t* ptr)
@@ -308,7 +308,7 @@ inline uint64_t alignedNtohq(const uint64_t* ptr)
 {
     uint64_t value;
 
-    if (ptr == NULL)
+    if (ptr == nullptr)
         return 0;
 
     value = *ptr;

@@ -34,8 +34,7 @@ class Dsize : public ConversionState
 {
 public:
     Dsize(Converter& c) : ConversionState(c) { }
-    virtual ~Dsize() { }
-    virtual bool convert(std::istringstream& data);
+    bool convert(std::istringstream& data) override;
 };
 } // namespace
 

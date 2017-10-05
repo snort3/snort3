@@ -86,7 +86,7 @@ PegInfo* AppIdPegCounts::get_peg_info()
 {
     if ( detectors_configured )
     {
-        if ( appid_detectors_peg_info.size() )
+        if ( !appid_detectors_peg_info.empty() )
             appid_pegs.insert( appid_pegs.end(), appid_detectors_peg_info.begin(), appid_detectors_peg_info.end());
 
         // add the sentinel entry at the end

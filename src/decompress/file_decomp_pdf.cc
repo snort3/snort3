@@ -73,8 +73,8 @@
 #define CHR_SPACE          ' '
 #define CHR_NAME_SEP       '/'
 
-#define IS_WHITESPACE(c) ((strchr((char*)WHITESPACE_STRING, (int)c) != NULL) || (c == 0))
-#define IS_EOL(c) ((c == CHR_CR) || (c == CHR_LF))
+#define IS_WHITESPACE(c) ((strchr((const char*)WHITESPACE_STRING, (int)(c)) != NULL) || ((c) == 0))
+#define IS_EOL(c) (((c) == CHR_CR) || ((c) == CHR_LF))
 
 /* Define the parser states */
 typedef enum p_states
@@ -126,7 +126,7 @@ static struct filters_s
     { TOK_DICT_FLATE, (sizeof(TOK_DICT_FLATE)-1), FILE_COMPRESSION_TYPE_DEFLATE },
     { TOK_DICT_FLATE_ALT, (sizeof(TOK_DICT_FLATE_ALT)-1), FILE_COMPRESSION_TYPE_DEFLATE },
     { TOK_DICT_NULL, (sizeof(TOK_DICT_NULL)-1), FILE_COMPRESSION_TYPE_NONE },
-    { NULL, 0, FILE_COMPRESSION_TYPE_NONE }
+    { nullptr, 0, FILE_COMPRESSION_TYPE_NONE }
 };
 
 /* Given a pointer to a /Filter value token, return the
@@ -137,7 +137,7 @@ static inline uint8_t Get_Decomp_Type(uint8_t* Token, uint8_t Length)
 
     Index=0;
 
-    while ( Filter_Map[Index].Token != NULL )
+    while ( Filter_Map[Index].Token != nullptr )
     {
         if ( (Filter_Map[Index].Length == Length) &&
             (strncmp( (const char*)Token, Filter_Map[Index].Token, Length) == 0 ) )
@@ -197,20 +197,20 @@ static fd_status_t Process_Filter_Spec(fd_session_t* SessionPtr)
 
     /* Assume the 'no compression' result */
     SessionPtr->Decomp_Type = FILE_COMPRESSION_TYPE_NONE;
-    Filter = NULL;
+    Filter = nullptr;
     Length = 0;
 
     for ( Index=0; Index<p->Filter_Spec_Index; Index++ )
     {
         c = p->Filter_Spec_Buf[Index];
 
-        if ( (c == 0) || (strchr( (char*)Delim_Str, (int)c) != 0) )
+        if ( (c == 0) || (strchr( (const char*)Delim_Str, (int)c) != nullptr) )
         {
             if ( c == CHR_ARRAY_OPEN )
             {
                 /* Looks like an array starting, but we are already
                    in an array, or have seen a filter spec already.  */
-                if ( Found_Array || Found_Token || (Filter != NULL) )
+                if ( Found_Array || Found_Token || (Filter != nullptr) )
                 {
                     Ret_Code = File_Decomp_Error;
                     break;
@@ -218,7 +218,7 @@ static fd_status_t Process_Filter_Spec(fd_session_t* SessionPtr)
                 else
                 {
                     Found_Array = true;
-                    Filter = NULL;
+                    Filter = nullptr;
                     Length = 0;
                     continue;  // Nothing else to do, goto next char
                 }
@@ -236,17 +236,17 @@ static fd_status_t Process_Filter_Spec(fd_session_t* SessionPtr)
 
             /* The white-space or other separator terminates the
                current filter name we are parsing. */
-            if ( (Filter != NULL) && (Length > 0) )
+            if ( (Filter != nullptr) && (Length > 0) )
             {
                 Process_One_Filter(SessionPtr, Filter, Length);
-                Filter = NULL;
+                Filter = nullptr;
                 Length = 0;
             }
         }
         else  // non-separator character
         {
             /* Start a token if we haven't already. */
-            if ( Filter == NULL )
+            if ( Filter == nullptr )
             {
                 Found_Token = true;  // Used in the array syntax checking
                 Filter = &(p->Filter_Spec_Buf[Index]);
@@ -268,7 +268,7 @@ static fd_status_t Process_Filter_Spec(fd_session_t* SessionPtr)
         SessionPtr->Decomp_Type = FILE_COMPRESSION_TYPE_NONE;
     /* Look for case where the filter name ends at the
        last character of the filter_spec. */
-    else if ( (Filter != NULL) && (Length > 0) )
+    else if ( (Filter != nullptr) && (Length > 0) )
         Process_One_Filter(SessionPtr, Filter, Length);
 
     return( Ret_Code );
@@ -282,7 +282,7 @@ static inline void Init_Parser(fd_session_t* SessionPtr)
        and the signature is syntactically a comment. */
     p->State = P_COMMENT;
     p->Parse_Stack_Index = 0; // Stack is empty
-    p->xref_tok = (uint8_t*)TOK_XRF_STARTXREF;
+    p->xref_tok = (const uint8_t*)TOK_XRF_STARTXREF;
 }
 
 static inline fd_status_t Push_State(fd_PDF_Parse_p_t p)
@@ -320,7 +320,7 @@ static inline fd_status_t Pop_State(fd_PDF_Parse_p_t p)
 static inline fd_PDF_Parse_Stack_p_t Get_Previous_State(fd_PDF_Parse_p_t p)
 {
     if ( p->Parse_Stack_Index == 0 )
-        return( (fd_PDF_Parse_Stack_p_t)NULL );
+        return( (fd_PDF_Parse_Stack_p_t)nullptr );
 
     return( &(p->Parse_Stack[(p->Parse_Stack_Index)-1]) );
 }
@@ -489,7 +489,7 @@ static inline fd_status_t Handle_State_DICT_OBJECT(fd_session_t* SessionPtr, uin
             {
                 fd_PDF_Parse_Stack_p_t StckPtr;
 
-                if ( (StckPtr = Get_Previous_State(p)) == NULL )
+                if ( (StckPtr = Get_Previous_State(p)) == nullptr )
                 {
                     /* There MUST be a previous state that got us here. */
                     return( File_Decomp_Error );
@@ -569,7 +569,7 @@ static inline fd_status_t Handle_State_IND_OBJ(fd_session_t* SessionPtr, uint8_t
         {
             uint32_t Value;
             p->Elem_Buf[p->Elem_Index] = '\0';
-            Value = (uint32_t)strtoul( (const char*)p->Elem_Buf, NULL, 10);
+            Value = (uint32_t)strtoul( (const char*)p->Elem_Buf, nullptr, 10);
             if ( p->Sub_State == P_OBJ_NUMBER )
             {
                 p->Obj_Number = Value;
@@ -726,7 +726,7 @@ static inline fd_status_t Handle_State_XREF(fd_session_t* SessionPtr, uint8_t c)
         p->Sub_State = P_XREF_TOKEN;
         p->Elem_Index = 1;  // already matched the first char in START state
         p->State = P_XREF;
-        p->xref_tok = (uint8_t*)((c == TOK_XRF_XREF[0]) ? TOK_XRF_XREF : TOK_XRF_STARTXREF);
+        p->xref_tok = (const uint8_t*)((c == TOK_XRF_XREF[0]) ? TOK_XRF_XREF : TOK_XRF_STARTXREF);
         return( File_Decomp_OK );
     }
 
@@ -825,7 +825,7 @@ static fd_status_t Locate_Stream_Beginning(fd_session_t* SessionPtr)
     fd_status_t Ret_Code = File_Decomp_OK;
     uint8_t c;
 
-    while ( 1 )
+    while ( true )
     {
         /* No reason to parse if there's no input or
            room for output. */
@@ -908,8 +908,8 @@ static fd_status_t Init_Stream(fd_session_t* SessionPtr)
 
         memset( (char*)z_s, 0, sizeof(z_stream));
 
-        z_s->zalloc = (alloc_func)NULL;
-        z_s->zfree = (free_func)NULL;
+        z_s->zalloc = (alloc_func)nullptr;
+        z_s->zfree = (free_func)nullptr;
         SYNC_IN(z_s)
 
         z_ret = inflateInit2(z_s, 47);
@@ -991,7 +991,7 @@ fd_status_t File_Decomp_End_PDF(fd_session_t* SessionPtr)
 {
     fd_PDF_p_t StPtr;
 
-    if ( SessionPtr == NULL )
+    if ( SessionPtr == nullptr )
         return( File_Decomp_Error );
 
     StPtr = SessionPtr->PDF;
@@ -1027,7 +1027,7 @@ fd_status_t File_Decomp_End_PDF(fd_session_t* SessionPtr)
 /* From caller, initialize PDF state machine. */
 fd_status_t File_Decomp_Init_PDF(fd_session_t* SessionPtr)
 {
-    if ( SessionPtr == NULL )
+    if ( SessionPtr == nullptr )
         return( File_Decomp_Error );
 
     SessionPtr->PDF = (fd_PDF_t*)snort_calloc(sizeof(fd_PDF_t));
@@ -1049,11 +1049,11 @@ fd_status_t File_Decomp_PDF(fd_session_t* SessionPtr)
 {
     fd_status_t Ret_Code;
 
-    if ( (SessionPtr == NULL) || (SessionPtr->File_Type != FILE_TYPE_PDF) )
+    if ( (SessionPtr == nullptr) || (SessionPtr->File_Type != FILE_TYPE_PDF) )
         return( File_Decomp_Error );
 
     /* Process all data until blocked */
-    while ( 1 )
+    while ( true )
     {
         switch ( SessionPtr->PDF->State )
         {
@@ -1147,17 +1147,17 @@ fd_status_t File_Decomp_PDF(fd_session_t* SessionPtr)
 
 TEST_CASE("File_Decomp_PDF-null", "[file_decomp_pdf]")
 {
-    REQUIRE((File_Decomp_PDF((fd_session_t*)NULL) == File_Decomp_Error));
+    REQUIRE((File_Decomp_PDF((fd_session_t*)nullptr) == File_Decomp_Error));
 }
 
 TEST_CASE("File_Decomp_Init_PDF-null", "[file_decomp_pdf]")
 {
-    REQUIRE((File_Decomp_Init_PDF((fd_session_t*)NULL) == File_Decomp_Error));
+    REQUIRE((File_Decomp_Init_PDF((fd_session_t*)nullptr) == File_Decomp_Error));
 }
 
 TEST_CASE("File_Decomp_End_PDF-null", "[file_decomp_pdf]")
 {
-    REQUIRE((File_Decomp_End_PDF((fd_session_t*)NULL) == File_Decomp_Error));
+    REQUIRE((File_Decomp_End_PDF((fd_session_t*)nullptr) == File_Decomp_Error));
 }
 
 TEST_CASE("File_Decomp_PDF-not_pdf-error", "[file_decomp_pdf]")

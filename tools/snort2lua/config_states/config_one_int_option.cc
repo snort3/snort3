@@ -62,9 +62,8 @@ public:
     {
     }
 
-    virtual ~ConfigIntOption() { }
 
-    virtual bool convert(std::istringstream& stream)
+    bool convert(std::istringstream& stream) override
     {
         if ((snort_option == nullptr) ||
             (snort_option->empty()) ||

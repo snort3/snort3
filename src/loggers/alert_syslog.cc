@@ -200,18 +200,18 @@ static void AlertSyslog(
     char event_string[STD_BUF];
     event_string[0] = '\0';
 
-    if ((p != NULL) && p->ptrs.ip_api.is_valid())
+    if ((p != nullptr) && p->ptrs.ip_api.is_valid())
     {
         SnortSnprintfAppend(event_string, sizeof(event_string),
             "[%u:%u:%u] ", event.sig_info->gid, event.sig_info->sid, event.sig_info->rev);
 
-        if (msg != NULL)
+        if (msg != nullptr)
             SnortSnprintfAppend(event_string, sizeof(event_string), "%s ", msg);
         else
             SnortSnprintfAppend(event_string, sizeof(event_string), "ALERT ");
 
-        if ((event.sig_info->class_type != NULL)
-            && (event.sig_info->class_type->name != NULL))
+        if ((event.sig_info->class_type != nullptr)
+            && (event.sig_info->class_type->name != nullptr))
         {
             SnortSnprintfAppend(event_string, sizeof(event_string),
                 "[Classification: %s] ", event.sig_info->class_type->name);
@@ -229,10 +229,10 @@ static void AlertSyslog(
                 "<%s> ", PRINT_INTERFACE(SFDAQ::get_interface_spec()));
         }
     }
-    if ((p != NULL) && p->ptrs.ip_api.is_ip())
+    if ((p != nullptr) && p->ptrs.ip_api.is_ip())
     {
         IpProtocol ip_proto = p->get_ip_proto_next();
-        if (protocol_names[to_utype(ip_proto)] != NULL)
+        if (protocol_names[to_utype(ip_proto)] != nullptr)
         {
             SnortSnprintfAppend(event_string, sizeof(event_string),
                 "{%s} ", protocol_names[to_utype(ip_proto)]);
@@ -295,7 +295,7 @@ static void AlertSyslog(
     }
     else
     {
-        syslog(priority, "%s", msg == NULL ? "ALERT" : msg);
+        syslog(priority, "%s", msg == nullptr ? "ALERT" : msg);
     }
 }
 
@@ -307,7 +307,6 @@ class SyslogLogger : public Logger
 {
 public:
     SyslogLogger(SyslogModule*);
-    ~SyslogLogger();
 
     void alert(Packet*, const char* msg, const Event&) override;
 
@@ -324,8 +323,6 @@ SyslogLogger::SyslogLogger(SyslogModule* m)
 }
 
 // do not closelog() here since it has other uses
-SyslogLogger::~SyslogLogger()
-{ }
 
 void SyslogLogger::alert(Packet* p, const char* msg, const Event& event)
 {

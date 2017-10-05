@@ -32,8 +32,7 @@ class DecodeEsp : public ConversionState
 {
 public:
     DecodeEsp(Converter& c) : ConversionState(c) { }
-    virtual ~DecodeEsp() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 
@@ -47,20 +46,20 @@ bool DecodeEsp::convert(std::istringstream& data_stream)
 
     table_api.open_table("esp");
 
-    if (!type.compare("1") ||
-        !type.compare("on") ||
-        !type.compare("yes") ||
-        !type.compare("true") ||
-        !type.compare("enable"))
+    if (type == "1" ||
+        type == "on" ||
+        type == "yes" ||
+        type == "true" ||
+        type == "enable")
     {
         table_api.add_diff_option_comment("config decode_esp: " + type, "decode_esp = true");
         retval = table_api.add_option("decode_esp", true);
     }
-    else if (!type.compare("0") ||
-        !type.compare("no") ||
-        !type.compare("off") ||
-        !type.compare("false") ||
-        !type.compare("disable"))
+    else if (type == "0" ||
+        type == "no" ||
+        type == "off" ||
+        type == "false" ||
+        type == "disable")
     {
         table_api.add_diff_option_comment("config decode_esp: " + type, "decode_esp = false");
         retval = table_api.add_option("decode_esp", false);

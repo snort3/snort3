@@ -51,7 +51,7 @@ class StreamUser : public Inspector
 {
 public:
     StreamUser(StreamUserConfig*);
-    ~StreamUser();
+    ~StreamUser() override;
 
     void show(SnortConfig*) override;
 

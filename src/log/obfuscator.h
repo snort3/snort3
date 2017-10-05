@@ -35,8 +35,7 @@ struct ObfuscatorBlock
     { }
 
     // Used for iterations
-    ObfuscatorBlock()
-    { }
+    ObfuscatorBlock() = default;
 
     uint32_t offset;
     size_t length;

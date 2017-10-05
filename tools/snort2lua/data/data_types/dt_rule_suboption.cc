@@ -32,10 +32,6 @@ RuleSubOption::RuleSubOption(const std::string& n, const std::string& v)
 {
 }
 
-RuleSubOption::~RuleSubOption()
-{
-}
-
 // overloading operators
 std::ostream& operator<<(std::ostream& out, const RuleSubOption& subopt)
 {

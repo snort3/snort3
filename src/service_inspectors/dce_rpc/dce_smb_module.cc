@@ -308,8 +308,8 @@ ProfileStats* Dce2SmbModule::get_profile(
 
 static int smb_invalid_share_compare(const void* a, const void* b)
 {
-    dce2SmbShare* ashare = (dce2SmbShare*)a;
-    dce2SmbShare* bshare = (dce2SmbShare*)b;
+    const dce2SmbShare* ashare = (const dce2SmbShare*)a;
+    const dce2SmbShare* bshare = (const dce2SmbShare*)b;
 
     if ((ashare == nullptr) || (bshare == nullptr))
         return -1;
@@ -374,7 +374,7 @@ static bool set_smb_invalid_shares(dce2SmbProtoConf& config, Value& v)
         dce2SmbShare* smb_share_key;
         int i, j;
         DCE2_Ret status;
-        char* share  = (char*)tok.c_str();
+        const char* share  = tok.c_str();
         int share_len= strlen(share);
 
         smb_share = (dce2SmbShare*)snort_calloc(sizeof(dce2SmbShare));

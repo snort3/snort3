@@ -64,7 +64,7 @@ static inline FwAvlNode* get_last(FwAvlNode* node)
 
 FwAvlNode* fwAvlFirst(const FwAvlTree* tree)
 {
-    if ((tree != 0) && (tree->root != 0))
+    if ((tree != nullptr) && (tree->root != nullptr))
         return get_first(tree->root);
     else
         return nullptr;
@@ -72,7 +72,7 @@ FwAvlNode* fwAvlFirst(const FwAvlTree* tree)
 
 FwAvlNode* fwAvlLast(const FwAvlTree* tree)
 {
-    if ((tree != 0) && (tree->root != 0))
+    if ((tree != nullptr) && (tree->root != nullptr))
         return get_last(tree->root);
     else
         return nullptr;
@@ -213,7 +213,7 @@ void* fwAvlLookup(const uint32_t key, const FwAvlTree* tree)
     FwAvlNode* unbalanced;
     int is_left;
 
-    if (tree == 0)
+    if (tree == nullptr)
     {
         return nullptr;
     }

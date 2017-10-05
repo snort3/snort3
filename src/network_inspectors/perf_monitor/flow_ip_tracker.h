@@ -60,7 +60,7 @@ class FlowIPTracker : public PerfTracker
 {
 public:
     FlowIPTracker(PerfConfig* perf);
-    ~FlowIPTracker();
+    ~FlowIPTracker() override;
 
     void reset() override;
     void update(Packet*) override;

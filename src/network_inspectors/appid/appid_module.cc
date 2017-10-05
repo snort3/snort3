@@ -25,7 +25,7 @@
 
 #include "appid_module.h"
 
-#include <limits.h>
+#include <climits>
 
 #include "app_info_table.h"
 #include "appid_peg_counts.h"

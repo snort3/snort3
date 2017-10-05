@@ -75,7 +75,7 @@ bool LenOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    LenOption& rhs = (LenOption&)ips;
+    const LenOption& rhs = (const LenOption&)ips;
     return ( config == rhs.config );
 }
 

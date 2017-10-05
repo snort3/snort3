@@ -31,7 +31,7 @@ class BootpServiceDetector : public ServiceDetector
 {
 public:
     BootpServiceDetector(ServiceDiscovery*);
-    ~BootpServiceDetector();
+    ~BootpServiceDetector() override;
 
     int validate(AppIdDiscoveryArgs&) override;
 

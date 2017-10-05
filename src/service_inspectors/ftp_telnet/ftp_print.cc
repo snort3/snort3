@@ -251,7 +251,7 @@ int PrintFTPServerConf(FTP_SERVER_PROTO_CONF* ServerConf)
         LogMessage("    FTP Commands:\n");
 
         FTPCmd = ftp_cmd_lookup_first(ServerConf->cmd_lookup, &iRet);
-        while (FTPCmd != NULL)
+        while (FTPCmd != nullptr)
         {
             memset(buf, 0, BUF_SIZE+1);
             snprintf(buf, BUF_SIZE, "        %s { %u ",
@@ -268,7 +268,7 @@ int PrintFTPServerConf(FTP_SERVER_PROTO_CONF* ServerConf)
             if (FTPCmd->check_validity)
             {
                 FTP_PARAM_FMT* CmdFmt = FTPCmd->param_format;
-                while (CmdFmt != NULL)
+                while (CmdFmt != nullptr)
                 {
                     PrintCmdFmt(buf, CmdFmt);
 

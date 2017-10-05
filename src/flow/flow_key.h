@@ -67,7 +67,7 @@ struct FlowKey
     void init_address_space(uint16_t);
 
     // XXX If this data structure changes size, compare must be updated!
-    static uint32_t hash(SFHASHFCN*, unsigned char* d, int);
+    static uint32_t hash(SFHASHFCN*, const unsigned char* d, int);
     static int compare(const void* s1, const void* s2, size_t);
 
 private:

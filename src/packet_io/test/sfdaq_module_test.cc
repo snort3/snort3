@@ -102,7 +102,7 @@ TEST_CASE("Kitchen Sink", "[SFDAQModule]")
     CHECK(cfg->variables[0].first == "foo");
     CHECK(cfg->variables[0].second == "bar");
     CHECK(cfg->variables[1].first == "debug");
-    CHECK(cfg->variables[1].second == "");
+    CHECK(cfg->variables[1].second.empty());
     CHECK(cfg->variables[2].first == "hello");
     CHECK(cfg->variables[2].second == "world");
 
@@ -118,7 +118,7 @@ TEST_CASE("Kitchen Sink", "[SFDAQModule]")
         CHECK(icfg->variables[0].first == "instance5_var1");
         CHECK(icfg->variables[0].second == "foo");
         CHECK(icfg->variables[1].first == instance_var2.get_string());
-        CHECK(icfg->variables[1].second == "");
+        CHECK(icfg->variables[1].second.empty());
     }
 
     /* Secondary config to overlay from, for example, the command line */
@@ -126,11 +126,11 @@ TEST_CASE("Kitchen Sink", "[SFDAQModule]")
 
     sc2.daq_config->add_module_dir("cli_module_dir");
     sc2.daq_config->set_module_name("cli_module_name");
-    sc2.daq_config->set_input_spec(NULL);
+    sc2.daq_config->set_input_spec(nullptr);
     sc2.daq_config->set_input_spec("cli_input_spec");
     sc2.daq_config->set_variable("cli_global_variable=abc");
     sc2.daq_config->set_mru_size(3333);
-    sc2.daq_config->set_input_spec(NULL, 2);
+    sc2.daq_config->set_input_spec(nullptr, 2);
     sc2.daq_config->set_input_spec("cli_instance_2_input", 2);
     sc2.daq_config->set_input_spec("cli_instance_5_input", 5);
     sc2.daq_config->set_variable("cli_instance_5_var1=def", 5);
@@ -153,7 +153,7 @@ TEST_CASE("Kitchen Sink", "[SFDAQModule]")
         {
             SFDAQInstanceConfig* icfg = it.second;
             CHECK(icfg->input_spec == "cli_instance_2_input");
-            CHECK(icfg->variables.size() == 0);
+            CHECK(icfg->variables.empty());
         }
         else if (it.first == 5)
         {

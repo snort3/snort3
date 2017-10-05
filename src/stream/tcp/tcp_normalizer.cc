@@ -154,7 +154,7 @@ void TcpNormalizer::ecn_stripper(Packet* p)
     {
         if (strip_ecn == NORM_MODE_ON)
         {
-            ((tcp::TCPHdr*)p->ptrs.tcph)->th_flags &= ~(TH_ECE | TH_CWR);
+            (const_cast<tcp::TCPHdr*>(p->ptrs.tcph))->th_flags &= ~(TH_ECE | TH_CWR);
             p->packet_flags |= PKT_MODIFIED;
         }
 

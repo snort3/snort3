@@ -31,16 +31,16 @@
 class IpsActionPiglet : public Piglet::BasePlugin
 {
 public:
-    IpsActionPiglet(Lua::State&, std::string, Module*, SnortConfig*);
-    virtual ~IpsActionPiglet() override;
-    virtual bool setup() override;
+    IpsActionPiglet(Lua::State&, const std::string&, Module*, SnortConfig*);
+    ~IpsActionPiglet() override;
+    bool setup() override;
 
 private:
     IpsActionWrapper* wrapper;
 };
 
 IpsActionPiglet::IpsActionPiglet(
-    Lua::State& state, std::string target, Module* m, SnortConfig* sc) :
+    Lua::State& state, const std::string& target, Module* m, SnortConfig* sc) :
     BasePlugin(state, target, m, sc)
 {
     if ( module )
@@ -70,7 +70,7 @@ bool IpsActionPiglet::setup()
 // API foo
 // -----------------------------------------------------------------------------
 static Piglet::BasePlugin* ctor(
-    Lua::State& state, std::string target, Module* m, SnortConfig* sc)
+    Lua::State& state, const std::string& target, Module* m, SnortConfig* sc)
 { return new IpsActionPiglet(state, target, m, sc); }
 
 static void dtor(Piglet::BasePlugin* p)

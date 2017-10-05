@@ -32,8 +32,7 @@ class Ssh : public ConversionState
 {
 public:
     Ssh(Converter& c) : ConversionState(c) { }
-    virtual ~Ssh() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 
 };
 } // namespace
@@ -56,52 +55,52 @@ bool Ssh::convert(std::istringstream& data_stream)
     {
         bool tmpval = true;
 
-        if (!keyword.compare("autodetect"))
+        if (keyword == "autodetect")
             table_api.add_deleted_comment("autodetect");
 
-        else if (!keyword.compare("enable_respoverflow"))
+        else if (keyword == "enable_respoverflow")
             table_api.add_deleted_comment("enable_respoverflow");
 
-        else if (!keyword.compare("enable_ssh1crc32"))
+        else if (keyword == "enable_ssh1crc32")
             table_api.add_deleted_comment("enable_ssh1crc32");
 
-        else if (!keyword.compare("enable_srvoverflow"))
+        else if (keyword == "enable_srvoverflow")
             table_api.add_deleted_comment("enable_srvoverflow");
 
-        else if (!keyword.compare("enable_protomismatch"))
+        else if (keyword == "enable_protomismatch")
             table_api.add_deleted_comment("enable_protomismatch");
 
-        else if (!keyword.compare("enable_badmsgdir"))
+        else if (keyword == "enable_badmsgdir")
             table_api.add_deleted_comment("enable_badmsgdir");
 
-        else if (!keyword.compare("enable_paysize"))
+        else if (keyword == "enable_paysize")
             table_api.add_deleted_comment("enable_paysize");
 
-        else if (!keyword.compare("enable_recognition"))
+        else if (keyword == "enable_recognition")
             table_api.add_deleted_comment("enable_recognition");
 
-        else if (!keyword.compare("max_client_bytes"))
+        else if (keyword == "max_client_bytes")
         {
             tmpval = parse_int_option("max_client_bytes", data_stream, false);
         }
 
-        else if (!keyword.compare("max_encrypted_packets"))
+        else if (keyword == "max_encrypted_packets")
         {
             tmpval = parse_int_option("max_encrypted_packets", data_stream, false);
         }
 
-        else if (!keyword.compare("max_server_version_len"))
+        else if (keyword == "max_server_version_len")
         {
             tmpval = parse_int_option("max_server_version_len", data_stream, false);
         }
 
-        else if (!keyword.compare("server_ports"))
+        else if (keyword == "server_ports")
         {
             table_api.add_diff_option_comment("server_ports", "bindings");
 
-            if ((data_stream >> keyword) && !keyword.compare("{"))
+            if ((data_stream >> keyword) && keyword == "{")
             {
-                while (data_stream >> keyword && keyword.compare("}"))
+                while (data_stream >> keyword && keyword != "}")
                 {
                     ports_set = true;
                     bind.add_when_port(keyword);

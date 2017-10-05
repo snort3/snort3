@@ -32,8 +32,7 @@ class Base64Decode : public ConversionState
 {
 public:
     Base64Decode(Converter& c) : ConversionState(c) { }
-    virtual ~Base64Decode() { }
-    virtual bool convert(std::istringstream& data);
+    bool convert(std::istringstream& data) override;
 };
 } // namespace
 
@@ -51,7 +50,7 @@ bool Base64Decode::convert(std::istringstream& data_stream)
     {
         // a colon will have been parsed when retrieving the keyword.
         // Therefore, if a colon is present, we are in the next rule option.
-        if (args.find(":") != std::string::npos)
+        if (args.find(':') != std::string::npos)
         {
             rule_api.add_option("base64_decode");
             data_stream.clear();
@@ -64,9 +63,9 @@ bool Base64Decode::convert(std::istringstream& data_stream)
             std::istringstream arg_stream(args);
             util::get_string(arg_stream, tmp, ", ");
 
-            if (!tmp.compare("bytes") ||
-                !tmp.compare("offset") ||
-                !tmp.compare("relative"))
+            if (tmp == "bytes" ||
+                tmp == "offset" ||
+                tmp == "relative")
             {
                 rule_api.add_option("base64_decode", args);
             }

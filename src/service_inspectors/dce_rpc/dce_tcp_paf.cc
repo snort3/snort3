@@ -74,7 +74,7 @@ static StreamSplitter::Status dce2_tcp_paf(DCE2_PafTcpData* ds, Flow* flow, cons
 
         if (len >= sizeof(DceRpcCoHdr))
         {
-            DceRpcCoHdr* co_hdr = (DceRpcCoHdr*)data;
+            const DceRpcCoHdr* co_hdr = (const DceRpcCoHdr*)data;
 
             if ((DceRpcCoVersMaj(co_hdr) == DCERPC_PROTO_MAJOR_VERS__5)
                 && (DceRpcCoVersMin(co_hdr) == DCERPC_PROTO_MINOR_VERS__0)

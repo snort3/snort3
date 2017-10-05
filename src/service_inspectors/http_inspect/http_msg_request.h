@@ -36,7 +36,7 @@ public:
     HttpMsgRequest(const uint8_t* buffer, const uint16_t buf_size, HttpFlowData* session_data_,
         HttpEnums::SourceId source_id_, bool buf_owner, Flow* flow_,
         const HttpParaList* params_);
-    ~HttpMsgRequest() { delete uri; }
+    ~HttpMsgRequest() override { delete uri; }
     void gen_events() override;
     void update_flow() override;
     const Field& get_method() { return method; }

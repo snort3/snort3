@@ -279,7 +279,7 @@ static DCE2_Ret DCE2_SmbWriteAndXRawRequest(DCE2_SmbSsnData* ssd, const SmbNtHdr
         "Processing WriteAndX with raw mode flags\n");
 
     // Set this now for possible reassembled packet
-    uint16_t fid = SmbWriteAndXReqFid((SmbWriteAndXReq*)nb_ptr);
+    uint16_t fid = SmbWriteAndXReqFid((const SmbWriteAndXReq*)nb_ptr);
     DCE2_SmbFileTracker* ftracker = DCE2_SmbGetFileTracker(ssd, fid);
     ssd->cur_rtracker->ftracker = ftracker;
     if (ftracker == nullptr)
@@ -288,8 +288,8 @@ static DCE2_Ret DCE2_SmbWriteAndXRawRequest(DCE2_SmbSsnData* ssd, const SmbNtHdr
     // Got request to write in raw mode without having gotten the initial
     // raw mode request or got initial raw mode request and then another
     // without having finished the first.
-    bool start_write_raw = SmbWriteAndXReqStartRaw((SmbWriteAndXReq*)nb_ptr);
-    bool continue_write_raw = SmbWriteAndXReqRaw((SmbWriteAndXReq*)nb_ptr);
+    bool start_write_raw = SmbWriteAndXReqStartRaw((const SmbWriteAndXReq*)nb_ptr);
+    bool continue_write_raw = SmbWriteAndXReqRaw((const SmbWriteAndXReq*)nb_ptr);
     DCE2_Policy policy = DCE2_SsnGetServerPolicy(&ssd->sd);
     if ((start_write_raw && (ftracker->fp_writex_raw != nullptr)
         && (ftracker->fp_writex_raw->remaining != 0))
@@ -326,18 +326,18 @@ static DCE2_Ret DCE2_SmbWriteAndXRawRequest(DCE2_SmbSsnData* ssd, const SmbNtHdr
 
     uint16_t com_size = DCE2_ComInfoCommandSize(com_info);
     uint16_t byte_count = DCE2_ComInfoByteCount(com_info);
-    uint16_t doff = SmbWriteAndXReqDataOff((SmbWriteAndXReq*)nb_ptr);
-    uint32_t dcnt = SmbWriteAndXReqDataCnt((SmbWriteAndXReq*)nb_ptr);
-    uint16_t remaining = SmbWriteAndXReqRemaining((SmbWriteAndXReq*)nb_ptr);
+    uint16_t doff = SmbWriteAndXReqDataOff((const SmbWriteAndXReq*)nb_ptr);
+    uint32_t dcnt = SmbWriteAndXReqDataCnt((const SmbWriteAndXReq*)nb_ptr);
+    uint16_t remaining = SmbWriteAndXReqRemaining((const SmbWriteAndXReq*)nb_ptr);
 
     DCE2_MOVE(nb_ptr, nb_len, com_size);
 
-    if (DCE2_SmbCheckData(ssd, (uint8_t*)smb_hdr, nb_ptr, nb_len,
+    if (DCE2_SmbCheckData(ssd, (const uint8_t*)smb_hdr, nb_ptr, nb_len,
         byte_count, dcnt, doff) != DCE2_RET__SUCCESS)
         return DCE2_RET__ERROR;
 
     // This may move backwards
-    DCE2_MOVE(nb_ptr, nb_len, ((uint8_t*)smb_hdr + doff) - nb_ptr);
+    DCE2_MOVE(nb_ptr, nb_len, ((const uint8_t*)smb_hdr + doff) - nb_ptr);
 
     // If a "raw" write is requested there will be two bytes after the
     // header/pad and before the data which is supposed to represent a
@@ -533,12 +533,12 @@ DCE2_Ret DCE2_SmbOpen(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         DCE2_SmbFileTracker* ftracker;
 
         if (!DCE2_SmbIsTidIPC(ssd, ssd->cur_rtracker->tid)
-            && (SmbFileAttrsDirectory(SmbOpenRespFileAttrs((SmbOpenResp*)nb_ptr))
-            || SmbOpenForWriting(SmbOpenRespAccessMode((SmbOpenResp*)nb_ptr))))
+            && (SmbFileAttrsDirectory(SmbOpenRespFileAttrs((const SmbOpenResp*)nb_ptr))
+            || SmbOpenForWriting(SmbOpenRespAccessMode((const SmbOpenResp*)nb_ptr))))
             return DCE2_RET__SUCCESS;
 
         ftracker = DCE2_SmbNewFileTracker(ssd, ssd->cur_rtracker->uid,
-            ssd->cur_rtracker->tid, SmbOpenRespFid((SmbOpenResp*)nb_ptr));
+            ssd->cur_rtracker->tid, SmbOpenRespFid((const SmbOpenResp*)nb_ptr));
         if (ftracker == nullptr)
             return DCE2_RET__ERROR;
 
@@ -547,7 +547,7 @@ DCE2_Ret DCE2_SmbOpen(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         if (!ftracker->is_ipc)
         {
             // This command can only be used to open an existing file
-            ftracker->ff_file_size = SmbOpenRespFileSize((SmbOpenResp*)nb_ptr);
+            ftracker->ff_file_size = SmbOpenRespFileSize((const SmbOpenResp*)nb_ptr);
         }
     }
     else
@@ -583,7 +583,7 @@ DCE2_Ret DCE2_SmbCreate(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
     {
         DCE2_SmbFileTracker* ftracker = DCE2_SmbNewFileTracker(
             ssd, ssd->cur_rtracker->uid, ssd->cur_rtracker->tid,
-            SmbCreateRespFid((SmbCreateResp*)nb_ptr));
+            SmbCreateRespFid((const SmbCreateResp*)nb_ptr));
 
         if (ftracker == nullptr)
             return DCE2_RET__ERROR;
@@ -599,7 +599,7 @@ DCE2_Ret DCE2_SmbCreate(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
     {
         if (!DCE2_SmbIsTidIPC(ssd, ssd->cur_rtracker->tid))
         {
-            uint16_t file_attrs = SmbCreateReqFileAttrs((SmbCreateReq*)nb_ptr);
+            uint16_t file_attrs = SmbCreateReqFileAttrs((const SmbCreateReq*)nb_ptr);
 
             if (SmbAttrDirectory(file_attrs))
                 return DCE2_RET__IGNORE;
@@ -638,12 +638,12 @@ DCE2_Ret DCE2_SmbClose(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
 
     if (DCE2_ComInfoIsRequest(com_info))
     {
-        uint16_t fid = SmbCloseReqFid((SmbCloseReq*)nb_ptr);
+        uint16_t fid = SmbCloseReqFid((const SmbCloseReq*)nb_ptr);
 
         // Set this for response
         ssd->cur_rtracker->ftracker = DCE2_SmbGetFileTracker(ssd, fid);
 
-        if ((ssd->fb_ftracker != NULL) && (ssd->fb_ftracker == ssd->cur_rtracker->ftracker))
+        if ((ssd->fb_ftracker != nullptr) && (ssd->fb_ftracker == ssd->cur_rtracker->ftracker))
         {
             FileVerdict verdict = DCE2_get_file_verdict(ssd);
 
@@ -689,7 +689,7 @@ DCE2_Ret DCE2_SmbRename(DCE2_SmbSsnData*, const SmbNtHdr* smb_hdr,
         {
             for (i = 0; i < (nb_len - 1); i += 2)
             {
-                if (*((uint16_t*)(nb_ptr + i)) == 0)
+                if (*((const uint16_t*)(nb_ptr + i)) == 0)
                 {
                     i += 2;  // move past null terminating bytes
                     break;
@@ -732,12 +732,12 @@ DCE2_Ret DCE2_SmbRead(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
     if (DCE2_ComInfoIsRequest(com_info))
     {
         DCE2_SmbFileTracker* ftracker =
-            DCE2_SmbGetFileTracker(ssd, SmbReadReqFid((SmbReadReq*)nb_ptr));
+            DCE2_SmbGetFileTracker(ssd, SmbReadReqFid((const SmbReadReq*)nb_ptr));
 
         // Set this for response since response doesn't have the Fid
         ssd->cur_rtracker->ftracker = ftracker;
         if ((ftracker != nullptr) && !ftracker->is_ipc)
-            ssd->cur_rtracker->file_offset = SmbReadReqOffset((SmbReadReq*)nb_ptr);
+            ssd->cur_rtracker->file_offset = SmbReadReqOffset((const SmbReadReq*)nb_ptr);
     }
     else
     {
@@ -745,9 +745,9 @@ DCE2_Ret DCE2_SmbRead(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
 
         uint16_t com_size = DCE2_ComInfoCommandSize(com_info);
         uint16_t byte_count = DCE2_ComInfoByteCount(com_info);
-        uint16_t com_dcnt = SmbReadRespCount((SmbReadResp*)nb_ptr);
+        uint16_t com_dcnt = SmbReadRespCount((const SmbReadResp*)nb_ptr);
         uint8_t fmt = *(nb_ptr + com_size);
-        uint16_t fmt_dcnt = alignedNtohs((uint16_t*)(nb_ptr + com_size + 1));
+        uint16_t fmt_dcnt = alignedNtohs((const uint16_t*)(nb_ptr + com_size + 1));
 
         DCE2_MOVE(nb_ptr, nb_len, (com_size + 3));
 
@@ -776,10 +776,10 @@ DCE2_Ret DCE2_SmbWrite(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
         uint16_t com_size = DCE2_ComInfoCommandSize(com_info);
         uint16_t byte_count = DCE2_ComInfoByteCount(com_info);
         uint8_t fmt = *(nb_ptr + com_size);
-        uint16_t com_dcnt = SmbWriteReqCount((SmbWriteReq*)nb_ptr);
-        uint16_t fmt_dcnt = alignedNtohs((uint16_t*)(nb_ptr + com_size + 1));
-        uint16_t fid = SmbWriteReqFid((SmbWriteReq*)nb_ptr);
-        uint32_t offset = SmbWriteReqOffset((SmbWriteReq*)nb_ptr);
+        uint16_t com_dcnt = SmbWriteReqCount((const SmbWriteReq*)nb_ptr);
+        uint16_t fmt_dcnt = alignedNtohs((const uint16_t*)(nb_ptr + com_size + 1));
+        uint16_t fid = SmbWriteReqFid((const SmbWriteReq*)nb_ptr);
+        uint32_t offset = SmbWriteReqOffset((const SmbWriteReq*)nb_ptr);
 
         DCE2_MOVE(nb_ptr, nb_len, (com_size + 3));
 
@@ -811,7 +811,7 @@ DCE2_Ret DCE2_SmbCreateNew(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
     {
         DCE2_SmbFileTracker* ftracker = DCE2_SmbNewFileTracker(
             ssd, ssd->cur_rtracker->uid, ssd->cur_rtracker->tid,
-            SmbCreateNewRespFid((SmbCreateNewResp*)nb_ptr));
+            SmbCreateNewRespFid((const SmbCreateNewResp*)nb_ptr));
 
         if (ftracker == nullptr)
             return DCE2_RET__ERROR;
@@ -826,7 +826,7 @@ DCE2_Ret DCE2_SmbCreateNew(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
     {
         if (!DCE2_SmbIsTidIPC(ssd, ssd->cur_rtracker->tid))
         {
-            uint16_t file_attrs = SmbCreateNewReqFileAttrs((SmbCreateNewReq*)nb_ptr);
+            uint16_t file_attrs = SmbCreateNewReqFileAttrs((const SmbCreateNewReq*)nb_ptr);
 
             if (SmbAttrDirectory(file_attrs))
                 return DCE2_RET__IGNORE;
@@ -867,14 +867,14 @@ DCE2_Ret DCE2_SmbLockAndRead(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
     {
         DCE2_SmbFileTracker* ftracker =
             DCE2_SmbFindFileTracker(ssd, ssd->cur_rtracker->uid,
-            ssd->cur_rtracker->tid, SmbLockAndReadReqFid((SmbLockAndReadReq*)nb_ptr));
+            ssd->cur_rtracker->tid, SmbLockAndReadReqFid((const SmbLockAndReadReq*)nb_ptr));
 
         // No sense in tracking response
         if (ftracker == nullptr)
             return DCE2_RET__ERROR;
 
         if (!ftracker->is_ipc)
-            ssd->cur_rtracker->file_offset = SmbLockAndReadReqOffset((SmbLockAndReadReq*)nb_ptr);
+            ssd->cur_rtracker->file_offset = SmbLockAndReadReqOffset((const SmbLockAndReadReq*)nb_ptr);
 
         // Set this for response
         ssd->cur_rtracker->ftracker = ftracker;
@@ -885,8 +885,8 @@ DCE2_Ret DCE2_SmbLockAndRead(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
         uint16_t com_size = DCE2_ComInfoCommandSize(com_info);
         uint16_t byte_count = DCE2_ComInfoByteCount(com_info);
         uint8_t fmt = *(nb_ptr + com_size);
-        uint16_t com_dcnt = SmbLockAndReadRespCount((SmbLockAndReadResp*)nb_ptr);
-        uint16_t fmt_dcnt = alignedNtohs((uint16_t*)(nb_ptr + com_size + 1));
+        uint16_t com_dcnt = SmbLockAndReadRespCount((const SmbLockAndReadResp*)nb_ptr);
+        uint16_t fmt_dcnt = alignedNtohs((const uint16_t*)(nb_ptr + com_size + 1));
 
         DCE2_MOVE(nb_ptr, nb_len, (com_size + 3));
 
@@ -940,10 +940,10 @@ DCE2_Ret DCE2_SmbWriteAndUnlock(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         uint16_t com_size = DCE2_ComInfoCommandSize(com_info);
         uint16_t byte_count = DCE2_ComInfoByteCount(com_info);
         uint8_t fmt = *(nb_ptr + com_size);
-        uint16_t com_dcnt = SmbWriteAndUnlockReqCount((SmbWriteAndUnlockReq*)nb_ptr);
-        uint16_t fmt_dcnt = alignedNtohs((uint16_t*)(nb_ptr + com_size + 1));
-        uint16_t fid = SmbWriteAndUnlockReqFid((SmbWriteAndUnlockReq*)nb_ptr);
-        uint32_t offset = SmbWriteAndUnlockReqOffset((SmbWriteAndUnlockReq*)nb_ptr);
+        uint16_t com_dcnt = SmbWriteAndUnlockReqCount((const SmbWriteAndUnlockReq*)nb_ptr);
+        uint16_t fmt_dcnt = alignedNtohs((const uint16_t*)(nb_ptr + com_size + 1));
+        uint16_t fid = SmbWriteAndUnlockReqFid((const SmbWriteAndUnlockReq*)nb_ptr);
+        uint32_t offset = SmbWriteAndUnlockReqOffset((const SmbWriteAndUnlockReq*)nb_ptr);
 
         DCE2_MOVE(nb_ptr, nb_len, (com_size + 3));
 
@@ -973,13 +973,13 @@ DCE2_Ret DCE2_SmbOpenAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
     if (DCE2_ComInfoIsResponse(com_info))
     {
-        const uint16_t fid = SmbOpenAndXRespFid((SmbOpenAndXResp*)nb_ptr);
-        const uint16_t file_attrs = SmbOpenAndXRespFileAttrs((SmbOpenAndXResp*)nb_ptr);
-        const uint16_t resource_type = SmbOpenAndXRespResourceType((SmbOpenAndXResp*)nb_ptr);
+        const uint16_t fid = SmbOpenAndXRespFid((const SmbOpenAndXResp*)nb_ptr);
+        const uint16_t file_attrs = SmbOpenAndXRespFileAttrs((const SmbOpenAndXResp*)nb_ptr);
+        const uint16_t resource_type = SmbOpenAndXRespResourceType((const SmbOpenAndXResp*)nb_ptr);
         DCE2_SmbFileTracker* ftracker = nullptr;
 
         // Set request tracker's current file tracker in case of chained commands
-        switch (SmbAndXCom2((SmbAndXCommon*)nb_ptr))
+        switch (SmbAndXCom2((const SmbAndXCommon*)nb_ptr))
         {
         // This is in case in the request a write was chained to an open
         // in which case the write will be to the newly opened file
@@ -1014,11 +1014,11 @@ DCE2_Ret DCE2_SmbOpenAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
         if (!ftracker->is_ipc)
         {
-            const uint16_t open_results = SmbOpenAndXRespOpenResults((SmbOpenAndXResp*)nb_ptr);
+            const uint16_t open_results = SmbOpenAndXRespOpenResults((const SmbOpenAndXResp*)nb_ptr);
 
             if (SmbOpenResultRead(open_results))
             {
-                ftracker->ff_file_size = SmbOpenAndXRespFileSize((SmbOpenAndXResp*)nb_ptr);
+                ftracker->ff_file_size = SmbOpenAndXRespFileSize((const SmbOpenAndXResp*)nb_ptr);
             }
             else
             {
@@ -1037,12 +1037,12 @@ DCE2_Ret DCE2_SmbOpenAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
         if (!DCE2_SmbIsTidIPC(ssd, ssd->cur_rtracker->tid))
         {
-            uint16_t file_attrs = SmbOpenAndXReqFileAttrs((SmbOpenAndXReq*)nb_ptr);
+            uint16_t file_attrs = SmbOpenAndXReqFileAttrs((const SmbOpenAndXReq*)nb_ptr);
 
             if (SmbEvasiveFileAttrs(file_attrs))
                 dce_alert(GID_DCE2, DCE2_SMB_EVASIVE_FILE_ATTRS,
                     (dce2CommonStats*)&dce2_smb_stats);
-            ssd->cur_rtracker->file_size = SmbOpenAndXReqAllocSize((SmbOpenAndXReq*)nb_ptr);
+            ssd->cur_rtracker->file_size = SmbOpenAndXReqAllocSize((const SmbOpenAndXReq*)nb_ptr);
         }
 
         DCE2_MOVE(nb_ptr, nb_len, DCE2_ComInfoCommandSize(com_info));
@@ -1077,14 +1077,14 @@ DCE2_Ret DCE2_SmbReadAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
     if (DCE2_ComInfoIsRequest(com_info))
     {
         DCE2_SmbFileTracker* ftracker =
-            DCE2_SmbGetFileTracker(ssd, SmbReadAndXReqFid((SmbReadAndXReq*)nb_ptr));
+            DCE2_SmbGetFileTracker(ssd, SmbReadAndXReqFid((const SmbReadAndXReq*)nb_ptr));
 
         // No sense in tracking response
         if (ftracker == nullptr)
             return DCE2_RET__ERROR;
 
         if (!ftracker->is_ipc)
-            ssd->cur_rtracker->file_offset = SmbReadAndXReqOffset((SmbReadAndXExtReq*)nb_ptr);
+            ssd->cur_rtracker->file_offset = SmbReadAndXReqOffset((const SmbReadAndXExtReq*)nb_ptr);
 
         // Set this for response
         ssd->cur_rtracker->ftracker = ftracker;
@@ -1093,17 +1093,17 @@ DCE2_Ret DCE2_SmbReadAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
     {
         uint16_t com_size = DCE2_ComInfoCommandSize(com_info);
         uint16_t byte_count = DCE2_ComInfoByteCount(com_info);
-        uint16_t doff = SmbReadAndXRespDataOff((SmbReadAndXResp*)nb_ptr);
-        uint32_t dcnt = SmbReadAndXRespDataCnt((SmbReadAndXResp*)nb_ptr);
+        uint16_t doff = SmbReadAndXRespDataOff((const SmbReadAndXResp*)nb_ptr);
+        uint32_t dcnt = SmbReadAndXRespDataCnt((const SmbReadAndXResp*)nb_ptr);
 
         DCE2_MOVE(nb_ptr, nb_len, com_size);
 
-        if (DCE2_SmbCheckData(ssd, (uint8_t*)smb_hdr, nb_ptr, nb_len,
+        if (DCE2_SmbCheckData(ssd, (const uint8_t*)smb_hdr, nb_ptr, nb_len,
             byte_count, dcnt, doff) != DCE2_RET__SUCCESS)
             return DCE2_RET__ERROR;
 
         // This may move backwards
-        DCE2_MOVE(nb_ptr, nb_len, ((uint8_t*)smb_hdr + doff) - nb_ptr);
+        DCE2_MOVE(nb_ptr, nb_len, ((const uint8_t*)smb_hdr + doff) - nb_ptr);
 
         if (dcnt > nb_len)
             dcnt = nb_len;
@@ -1133,11 +1133,11 @@ DCE2_Ret DCE2_SmbWriteAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
     }
 
     if (DCE2_ComInfoIsRequest(com_info)
-        && (SmbWriteAndXReqStartRaw((SmbWriteAndXReq*)nb_ptr)
-        || SmbWriteAndXReqRaw((SmbWriteAndXReq*)nb_ptr)))
+        && (SmbWriteAndXReqStartRaw((const SmbWriteAndXReq*)nb_ptr)
+        || SmbWriteAndXReqRaw((const SmbWriteAndXReq*)nb_ptr)))
     {
         DCE2_SmbFileTracker* ftracker =
-            DCE2_SmbGetFileTracker(ssd, SmbWriteAndXReqFid((SmbWriteAndXReq*)nb_ptr));
+            DCE2_SmbGetFileTracker(ssd, SmbWriteAndXReqFid((const SmbWriteAndXReq*)nb_ptr));
 
         // Raw mode is only applicable to named pipes.
         if ((ftracker != nullptr) && ftracker->is_ipc)
@@ -1148,19 +1148,19 @@ DCE2_Ret DCE2_SmbWriteAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
     {
         uint16_t com_size = DCE2_ComInfoCommandSize(com_info);
         uint16_t byte_count = DCE2_ComInfoByteCount(com_info);
-        uint16_t fid = SmbWriteAndXReqFid((SmbWriteAndXReq*)nb_ptr);
-        uint16_t doff = SmbWriteAndXReqDataOff((SmbWriteAndXReq*)nb_ptr);
-        uint32_t dcnt = SmbWriteAndXReqDataCnt((SmbWriteAndXReq*)nb_ptr);
-        uint64_t offset = SmbWriteAndXReqOffset((SmbWriteAndXExtReq*)nb_ptr);
+        uint16_t fid = SmbWriteAndXReqFid((const SmbWriteAndXReq*)nb_ptr);
+        uint16_t doff = SmbWriteAndXReqDataOff((const SmbWriteAndXReq*)nb_ptr);
+        uint32_t dcnt = SmbWriteAndXReqDataCnt((const SmbWriteAndXReq*)nb_ptr);
+        uint64_t offset = SmbWriteAndXReqOffset((const SmbWriteAndXExtReq*)nb_ptr);
 
         DCE2_MOVE(nb_ptr, nb_len, com_size);
 
-        if (DCE2_SmbCheckData(ssd, (uint8_t*)smb_hdr, nb_ptr, nb_len,
+        if (DCE2_SmbCheckData(ssd, (const uint8_t*)smb_hdr, nb_ptr, nb_len,
             byte_count, dcnt, doff) != DCE2_RET__SUCCESS)
             return DCE2_RET__ERROR;
 
         // This may move backwards
-        DCE2_MOVE(nb_ptr, nb_len, ((uint8_t*)smb_hdr + doff) - nb_ptr);
+        DCE2_MOVE(nb_ptr, nb_len, ((const uint8_t*)smb_hdr + doff) - nb_ptr);
 
         if (dcnt > nb_len)
         {
@@ -1188,7 +1188,7 @@ DCE2_Ret DCE2_SmbSessionSetupAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
     if (DCE2_ComInfoIsRequest(com_info))
     {
         uint16_t max_multiplex =
-            SmbSessionSetupAndXReqMaxMultiplex((SmbLm10_SessionSetupAndXReq*)nb_ptr);
+            SmbSessionSetupAndXReqMaxMultiplex((const SmbLm10_SessionSetupAndXReq*)nb_ptr);
 
         if (max_multiplex < ssd->max_outstanding_requests)
             ssd->max_outstanding_requests = max_multiplex;
@@ -1212,9 +1212,9 @@ DCE2_Ret DCE2_SmbSessionSetupAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
             if (word_count == 13)
             {
                 uint16_t oem_pass_len =
-                    SmbNt10SessionSetupAndXReqOemPassLen((SmbNt10_SessionSetupAndXReq*)nb_ptr);
+                    SmbNt10SessionSetupAndXReqOemPassLen((const SmbNt10_SessionSetupAndXReq*)nb_ptr);
                 uint16_t uni_pass_len =
-                    SmbNt10SessionSetupAndXReqUnicodePassLen((SmbNt10_SessionSetupAndXReq*)nb_ptr);
+                    SmbNt10SessionSetupAndXReqUnicodePassLen((const SmbNt10_SessionSetupAndXReq*)nb_ptr);
 
                 DCE2_MOVE(nb_ptr, nb_len, com_size);
 
@@ -1233,7 +1233,7 @@ DCE2_Ret DCE2_SmbSessionSetupAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
             else  // Extended security blob version, word count of 12
             {
                 uint16_t blob_len =
-                    SmbSessionSetupAndXReqBlobLen((SmbNt10_SessionSetupAndXExtReq*)nb_ptr);
+                    SmbSessionSetupAndXReqBlobLen((const SmbNt10_SessionSetupAndXExtReq*)nb_ptr);
 
                 DCE2_MOVE(nb_ptr, nb_len, com_size);
 
@@ -1422,7 +1422,7 @@ DCE2_Ret DCE2_SmbSessionSetupAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
             else  // Only valid word counts are 3 and 4
             {
                 uint16_t blob_len = SmbSessionSetupAndXRespBlobLen(
-                    (SmbNt10_SessionSetupAndXExtResp*)nb_ptr);
+                    (const SmbNt10_SessionSetupAndXExtResp*)nb_ptr);
 
                 DCE2_MOVE(nb_ptr, nb_len, DCE2_ComInfoCommandSize(com_info));
 
@@ -1696,7 +1696,7 @@ DCE2_Ret DCE2_SmbNegotiate(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
     else
     {
         const uint16_t dialect_index =
-            SmbNegotiateRespDialectIndex((SmbCore_NegotiateProtocolResp*)nb_ptr);
+            SmbNegotiateRespDialectIndex((const SmbCore_NegotiateProtocolResp*)nb_ptr);
 
         if ((ssd->dialect_index != DCE2_SENTINEL) && (dialect_index != ssd->dialect_index))
             dce_alert(GID_DCE2, DCE2_SMB_DEPR_DIALECT_NEGOTIATED,
@@ -1707,12 +1707,12 @@ DCE2_Ret DCE2_SmbNegotiate(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
         if (DCE2_ComInfoWordCount(com_info) == 17)
         {
             ssd->max_outstanding_requests =
-                SmbNt_NegotiateRespMaxMultiplex((SmbNt_NegotiateProtocolResp*)nb_ptr);
+                SmbNt_NegotiateRespMaxMultiplex((const SmbNt_NegotiateProtocolResp*)nb_ptr);
         }
         else if (DCE2_ComInfoWordCount(com_info) == 13)
         {
             ssd->max_outstanding_requests =
-                SmbLm_NegotiateRespMaxMultiplex((SmbLm10_NegotiateProtocolResp*)nb_ptr);
+                SmbLm_NegotiateRespMaxMultiplex((const SmbLm10_NegotiateProtocolResp*)nb_ptr);
         }
         else
         {
@@ -1736,7 +1736,7 @@ DCE2_Ret DCE2_SmbTreeConnectAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
     {
         if (DCE2_ScSmbInvalidShares((dce2SmbProtoConf*)ssd->sd.config) != nullptr)
         {
-            uint16_t pass_len = SmbTreeConnectAndXReqPassLen((SmbTreeConnectAndXReq*)nb_ptr);
+            uint16_t pass_len = SmbTreeConnectAndXReqPassLen((const SmbTreeConnectAndXReq*)nb_ptr);
             DCE2_MOVE(nb_ptr, nb_len, com_size);
             if (pass_len >= nb_len)
                 return DCE2_RET__ERROR;
@@ -1898,11 +1898,11 @@ DCE2_Ret DCE2_SmbNtCreateAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
     if (DCE2_ComInfoIsResponse(com_info))
     {
-        const uint16_t fid = SmbNtCreateAndXRespFid((SmbNtCreateAndXResp*)nb_ptr);
+        const uint16_t fid = SmbNtCreateAndXRespFid((const SmbNtCreateAndXResp*)nb_ptr);
         DCE2_SmbFileTracker* ftracker = nullptr;
 
         // Set request tracker's current file tracker in case of chained commands
-        switch (SmbAndXCom2((SmbAndXCommon*)nb_ptr))
+        switch (SmbAndXCom2((const SmbAndXCommon*)nb_ptr))
         {
         // This is in case in the request a write was chained to an open
         // in which case the write will be to the newly opened file
@@ -1918,9 +1918,9 @@ DCE2_Ret DCE2_SmbNtCreateAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
         if (!DCE2_SmbIsTidIPC(ssd, ssd->cur_rtracker->tid))
         {
-            const bool is_directory = SmbNtCreateAndXRespDirectory((SmbNtCreateAndXResp*)nb_ptr);
+            const bool is_directory = SmbNtCreateAndXRespDirectory((const SmbNtCreateAndXResp*)nb_ptr);
             const uint16_t resource_type =
-                SmbNtCreateAndXRespResourceType((SmbNtCreateAndXResp*)nb_ptr);
+                SmbNtCreateAndXRespResourceType((const SmbNtCreateAndXResp*)nb_ptr);
 
             if (is_directory || !SmbResourceTypeDisk(resource_type))
             {
@@ -1950,12 +1950,12 @@ DCE2_Ret DCE2_SmbNtCreateAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         if (!ftracker->is_ipc)
         {
             const uint32_t create_disposition =
-                SmbNtCreateAndXRespCreateDisposition((SmbNtCreateAndXResp*)nb_ptr);
+                SmbNtCreateAndXRespCreateDisposition((const SmbNtCreateAndXResp*)nb_ptr);
 
             if (SmbCreateDispositionRead(create_disposition))
             {
                 ftracker->ff_file_size =
-                    SmbNtCreateAndXRespEndOfFile((SmbNtCreateAndXResp*)nb_ptr);
+                    SmbNtCreateAndXRespEndOfFile((const SmbNtCreateAndXResp*)nb_ptr);
             }
             else
             {
@@ -1971,24 +1971,24 @@ DCE2_Ret DCE2_SmbNtCreateAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
     else
     {
         bool is_ipc = DCE2_SmbIsTidIPC(ssd, ssd->cur_rtracker->tid);
-        uint8_t smb_com2 = SmbAndXCom2((SmbAndXCommon*)nb_ptr);
+        uint8_t smb_com2 = SmbAndXCom2((const SmbAndXCommon*)nb_ptr);
         uint16_t file_name_length =
-            SmbNtCreateAndXReqFileNameLen((SmbNtCreateAndXReq*)nb_ptr);
+            SmbNtCreateAndXReqFileNameLen((const SmbNtCreateAndXReq*)nb_ptr);
 
         if (!is_ipc)
         {
             uint32_t ext_file_attrs =
-                SmbNtCreateAndXReqFileAttrs((SmbNtCreateAndXReq*)nb_ptr);
+                SmbNtCreateAndXReqFileAttrs((const SmbNtCreateAndXReq*)nb_ptr);
 
             if (SmbEvasiveFileAttrs(ext_file_attrs))
                 dce_alert(GID_DCE2, DCE2_SMB_EVASIVE_FILE_ATTRS,
                     (dce2CommonStats*)&dce2_smb_stats);
             // If the file is going to be accessed sequentially, track it.
-            if (SmbNtCreateAndXReqSequentialOnly((SmbNtCreateAndXReq*)nb_ptr))
+            if (SmbNtCreateAndXReqSequentialOnly((const SmbNtCreateAndXReq*)nb_ptr))
                 ssd->cur_rtracker->sequential_only = true;
 
             ssd->cur_rtracker->file_size = SmbNtCreateAndXReqAllocSize(
-                (SmbNtCreateAndXReq*)nb_ptr);
+                (const SmbNtCreateAndXReq*)nb_ptr);
         }
 
         DCE2_MOVE(nb_ptr, nb_len, DCE2_ComInfoCommandSize(com_info));
@@ -2092,12 +2092,12 @@ DCE2_Ret DCE2_SmbReadRaw(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
     {
         DCE2_SmbFileTracker* ftracker =
             DCE2_SmbFindFileTracker(ssd, ssd->cur_rtracker->uid,
-            ssd->cur_rtracker->tid, SmbReadRawReqFid((SmbReadRawReq*)nb_ptr));
+            ssd->cur_rtracker->tid, SmbReadRawReqFid((const SmbReadRawReq*)nb_ptr));
 
         ssd->cur_rtracker->ftracker = ftracker;
         ssd->pdu_state = DCE2_SMB_PDU_STATE__RAW_DATA;
         if ((ftracker != nullptr) && !ftracker->is_ipc)
-            ssd->cur_rtracker->file_offset = SmbReadRawReqOffset((SmbReadRawExtReq*)nb_ptr);
+            ssd->cur_rtracker->file_offset = SmbReadRawReqOffset((const SmbReadRawExtReq*)nb_ptr);
     }
     else
     {
@@ -2122,24 +2122,24 @@ DCE2_Ret DCE2_SmbWriteRaw(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
     {
         uint16_t com_size = DCE2_ComInfoCommandSize(com_info);
         uint16_t byte_count = DCE2_ComInfoByteCount(com_info);
-        uint16_t fid = SmbWriteRawReqFid((SmbWriteRawReq*)nb_ptr);
-        uint16_t tdcnt = SmbWriteRawReqTotalCount((SmbWriteRawReq*)nb_ptr);
-        bool writethrough = SmbWriteRawReqWriteThrough((SmbWriteRawReq*)nb_ptr);
-        uint16_t doff = SmbWriteRawReqDataOff((SmbWriteRawReq*)nb_ptr);
-        uint16_t dcnt = SmbWriteRawReqDataCnt((SmbWriteRawReq*)nb_ptr);
-        uint64_t offset = SmbWriteRawReqOffset((SmbWriteRawExtReq*)nb_ptr);
+        uint16_t fid = SmbWriteRawReqFid((const SmbWriteRawReq*)nb_ptr);
+        uint16_t tdcnt = SmbWriteRawReqTotalCount((const SmbWriteRawReq*)nb_ptr);
+        bool writethrough = SmbWriteRawReqWriteThrough((const SmbWriteRawReq*)nb_ptr);
+        uint16_t doff = SmbWriteRawReqDataOff((const SmbWriteRawReq*)nb_ptr);
+        uint16_t dcnt = SmbWriteRawReqDataCnt((const SmbWriteRawReq*)nb_ptr);
+        uint64_t offset = SmbWriteRawReqOffset((const SmbWriteRawExtReq*)nb_ptr);
 
         DCE2_MOVE(nb_ptr, nb_len, com_size);
 
         if (DCE2_SmbCheckTotalCount(tdcnt, dcnt, 0) != DCE2_RET__SUCCESS)
             return DCE2_RET__ERROR;
 
-        if (DCE2_SmbCheckData(ssd, (uint8_t*)smb_hdr, nb_ptr, nb_len,
+        if (DCE2_SmbCheckData(ssd, (const uint8_t*)smb_hdr, nb_ptr, nb_len,
             byte_count, dcnt, doff) != DCE2_RET__SUCCESS)
             return DCE2_RET__ERROR;
 
         // This may move backwards
-        DCE2_MOVE(nb_ptr, nb_len, ((uint8_t*)smb_hdr + doff) - nb_ptr);
+        DCE2_MOVE(nb_ptr, nb_len, ((const uint8_t*)smb_hdr + doff) - nb_ptr);
 
         if (dcnt > nb_len)
         {
@@ -2212,13 +2212,13 @@ DCE2_Ret DCE2_SmbWriteAndClose(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
         uint16_t com_size = DCE2_ComInfoCommandSize(com_info);
         uint16_t byte_count = DCE2_ComInfoByteCount(com_info);
-        uint16_t dcnt = SmbWriteAndCloseReqCount((SmbWriteAndCloseReq*)nb_ptr);
-        uint16_t fid = SmbWriteAndCloseReqFid((SmbWriteAndCloseReq*)nb_ptr);
-        uint32_t offset = SmbWriteAndCloseReqOffset((SmbWriteAndCloseReq*)nb_ptr);
+        uint16_t dcnt = SmbWriteAndCloseReqCount((const SmbWriteAndCloseReq*)nb_ptr);
+        uint16_t fid = SmbWriteAndCloseReqFid((const SmbWriteAndCloseReq*)nb_ptr);
+        uint32_t offset = SmbWriteAndCloseReqOffset((const SmbWriteAndCloseReq*)nb_ptr);
 
         DCE2_MOVE(nb_ptr, nb_len, (com_size + 1));
 
-        if (DCE2_SmbCheckData(ssd, (uint8_t*)smb_hdr, nb_ptr, nb_len,
+        if (DCE2_SmbCheckData(ssd, (const uint8_t*)smb_hdr, nb_ptr, nb_len,
             byte_count, dcnt,
             (uint16_t)(sizeof(SmbNtHdr) + com_size + 1)) != DCE2_RET__SUCCESS)
             return DCE2_RET__ERROR;

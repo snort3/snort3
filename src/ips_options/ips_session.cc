@@ -114,9 +114,9 @@ bool SessionOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    SessionOption& rhs = (SessionOption&)ips;
-    SessionData* left = (SessionData*)&config;
-    SessionData* right = (SessionData*)&rhs.config;
+    const SessionOption& rhs = (const SessionOption&)ips;
+    const SessionData* left = &config;
+    const SessionData* right = &rhs.config;
 
     if (left->session_flag == right->session_flag)
     {
@@ -166,7 +166,7 @@ static FILE* OpenSessionFile(Packet* p)
 
     if (p->ptrs.decode_flags & DECODE_FRAG)
     {
-        return NULL;
+        return nullptr;
     }
 
     memset((char*)session_file, 0, STD_BUF);
@@ -239,7 +239,7 @@ static FILE* OpenSessionFile(Packet* p)
 
     ret = fopen(session_file, "a");
 
-    if (ret == NULL)
+    if (ret == nullptr)
     {
         FatalError("OpenSessionFile() => fopen(%s) session file: %s\n",
             session_file, get_error(errno));
@@ -254,7 +254,7 @@ static void DumpSessionData(FILE* fp, Packet* p, SessionData* sessionData)
     const u_char* end;
     char conv[] = "0123456789ABCDEF"; /* xlation lookup table */
 
-    if (p->dsize == 0 || p->data == NULL || (p->ptrs.decode_flags & DECODE_FRAG))
+    if (p->dsize == 0 || p->data == nullptr || (p->ptrs.decode_flags & DECODE_FRAG))
         return;
 
     idx = p->data;

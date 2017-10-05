@@ -34,8 +34,8 @@ public:
     Dnp3(Converter& c) : ConversionState(c)
     { converted_args = false; }
 
-    virtual ~Dnp3();
-    virtual bool convert(std::istringstream& data_stream);
+    ~Dnp3() override;
+    bool convert(std::istringstream& data_stream) override;
 
 private:
     bool converted_args;
@@ -83,26 +83,26 @@ bool Dnp3::convert(std::istringstream& data_stream)
     {
         bool tmpval = true;
 
-        if (!keyword.compare("disabled"))
+        if (keyword == "disabled")
         {
             table_api.add_deleted_comment("disabled");
         }
-        else if (!keyword.compare("memcap"))
+        else if (keyword == "memcap")
         {
             table_api.add_deleted_comment("memcap");
             data_stream >> keyword;
         }
-        else if (!keyword.compare("check_crc"))
+        else if (keyword == "check_crc")
         {
             table_api.add_option("check_crc", true);
         }
-        else if (!keyword.compare("ports"))
+        else if (keyword == "ports")
         {
             table_api.add_diff_option_comment("ports", "bindings");
 
-            if ((data_stream >> keyword) && !keyword.compare("{"))
+            if ((data_stream >> keyword) && keyword == "{")
             {
-                while (data_stream >> keyword && keyword.compare("}"))
+                while (data_stream >> keyword && keyword != "}")
                 {
                     ports_set = true;
                     tcp_bind.add_when_port(keyword);

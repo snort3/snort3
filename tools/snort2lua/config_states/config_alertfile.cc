@@ -31,8 +31,7 @@ class Alertfile : public ConversionState
 {
 public:
     Alertfile(Converter& c) : ConversionState(c) { }
-    virtual ~Alertfile() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 

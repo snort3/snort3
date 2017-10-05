@@ -528,7 +528,7 @@ static PortObject* ParsePortListTcpUdpPort(
         DebugFormat(DEBUG_PORTLISTS,
             "parser.c->PortObjectParseString: parsing '%s'\n",port_str);
 
-        portobject = PortObjectParseString(pvt, &poparser, 0, port_str, 0);
+        portobject = PortObjectParseString(pvt, &poparser, nullptr, port_str, 0);
 
         DebugFormat(DEBUG_PORTLISTS,
             "parser.c->PortObjectParseString: '%s' done.\n",port_str);

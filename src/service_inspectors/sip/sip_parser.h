@@ -54,7 +54,7 @@ struct SIPMsg
     uint32_t content_len;
     SIP_DialogID dlgID;
     SIP_MediaSession* mediaSession;
-    char* authorization;
+    const char* authorization;
     const uint8_t* header;
     const uint8_t* body_data; // Set to NULL if not applicable
     uint64_t cseqnum;
@@ -66,19 +66,19 @@ struct SIPMsg
 
     // nothing after this point is zeroed ...  Input parameters
     unsigned char isTcp;
-    char* method;
-    char* uri;
-    char* call_id;
-    char* cseqName;
-    char* from;
-    char* from_tag;
-    char* to;
-    char* to_tag;
-    char* via;
-    char* contact;
+    const char* method;
+    const char* uri;
+    const char* call_id;
+    const char* cseqName;
+    const char* from;
+    const char* from_tag;
+    const char* to;
+    const char* to_tag;
+    const char* via;
+    const char* contact;
 
-    char* content_type;
-    char* content_encode;
+    const char* content_type;
+    const char* content_encode;
 
     const char* userAgent;
     const char* userName;
@@ -90,7 +90,7 @@ struct SIPMsg
 #define MAX_STAT_CODE      999
 #define MIN_STAT_CODE      100
 
-bool sip_parse(SIPMsg*, const char*, char*, SIP_PROTO_CONF*);
+bool sip_parse(SIPMsg*, const char*, const char*, SIP_PROTO_CONF*);
 void sip_freeMsg(SIPMsg* msg);
 void sip_freeMediaSession(SIP_MediaSession*);
 void sip_freeMediaList(SIP_MediaList medias);

@@ -48,9 +48,6 @@ NetworkPolicy::NetworkPolicy(PolicyId id)
     checksum_drop = CHECKSUM_FLAG__DEF;
 }
 
-NetworkPolicy::~NetworkPolicy()
-{
-}
 
 //-------------------------------------------------------------------------
 // inspection policy
@@ -59,9 +56,9 @@ NetworkPolicy::~NetworkPolicy()
 class AltPktHandler : public DataHandler
 {
 public:
-    AltPktHandler() { }
+    AltPktHandler() = default;
 
-    void handle(DataEvent& e, Flow*)
+    void handle(DataEvent& e, Flow*) override
     { DetectionEngine::detect((Packet*)e.get_packet()); }  // FIXIT-L not const!
 };
 
@@ -147,7 +144,7 @@ PolicyMap::~PolicyMap()
 {
     if ( cloned )
     {
-        if ( inspection_policy.size() )
+        if ( !inspection_policy.empty() )
         {
             InspectionPolicy* default_policy = inspection_policy[0];
             default_policy->cloned = true;

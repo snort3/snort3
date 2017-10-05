@@ -287,40 +287,40 @@ static void add_plugin(Plugin& p)
     switch ( p.api->type )
     {
     case PT_CODEC:
-        CodecManager::add_plugin((CodecApi*)p.api);
+        CodecManager::add_plugin((const CodecApi*)p.api);
         break;
 
     case PT_INSPECTOR:
-        InspectorManager::add_plugin((InspectApi*)p.api);
+        InspectorManager::add_plugin((const InspectApi*)p.api);
         break;
 
     case PT_IPS_ACTION:
-        ActionManager::add_plugin((ActionApi*)p.api);
+        ActionManager::add_plugin((const ActionApi*)p.api);
         break;
 
     case PT_IPS_OPTION:
-        IpsManager::add_plugin((IpsApi*)p.api);
+        IpsManager::add_plugin((const IpsApi*)p.api);
         break;
 
     case PT_SEARCH_ENGINE:
-        MpseManager::add_plugin((MpseApi*)p.api);
+        MpseManager::add_plugin((const MpseApi*)p.api);
         break;
 
     case PT_SO_RULE:
-        SoManager::add_plugin((SoApi*)p.api);
+        SoManager::add_plugin((const SoApi*)p.api);
         break;
 
     case PT_LOGGER:
-        EventManager::add_plugin((LogApi*)p.api);
+        EventManager::add_plugin((const LogApi*)p.api);
         break;
 
     case PT_CONNECTOR:
-        ConnectorManager::add_plugin((ConnectorApi*)p.api);
+        ConnectorManager::add_plugin((const ConnectorApi*)p.api);
         break;
 
 #ifdef PIGLET
     case PT_PIGLET:
-        Piglet::Manager::add_plugin((Piglet::Api*)p.api);
+        Piglet::Manager::add_plugin((const Piglet::Api*)p.api);
         break;
 #endif
 
@@ -489,15 +489,15 @@ void PluginManager::instantiate(
     switch ( api->type )
     {
     case PT_CODEC:
-        CodecManager::instantiate((CodecApi*)api, mod, sc);
+        CodecManager::instantiate((const CodecApi*)api, mod, sc);
         break;
 
     case PT_INSPECTOR:
-        InspectorManager::instantiate((InspectApi*)api, mod, sc);
+        InspectorManager::instantiate((const InspectApi*)api, mod, sc);
         break;
 
     case PT_IPS_ACTION:
-        ActionManager::instantiate((ActionApi*)api, mod, sc);
+        ActionManager::instantiate((const ActionApi*)api, mod, sc);
         break;
 
     case PT_IPS_OPTION:
@@ -506,11 +506,11 @@ void PluginManager::instantiate(
         break;
 
     case PT_SEARCH_ENGINE:
-        MpseManager::instantiate((MpseApi*)api, mod, sc);
+        MpseManager::instantiate((const MpseApi*)api, mod, sc);
         break;
 
     case PT_CONNECTOR:
-        ConnectorManager::instantiate((ConnectorApi*)api, mod, sc);
+        ConnectorManager::instantiate((const ConnectorApi*)api, mod, sc);
         break;
 
     case PT_SO_RULE:
@@ -519,7 +519,7 @@ void PluginManager::instantiate(
         break;
 
     case PT_LOGGER:
-        EventManager::instantiate((LogApi*)api, mod, sc);
+        EventManager::instantiate((const LogApi*)api, mod, sc);
         break;
 
     default:
@@ -532,7 +532,7 @@ void PluginManager::instantiate(
     const BaseApi* api, Module* mod, SnortConfig* sc, const char* name)
 {
     if ( api->type == PT_INSPECTOR )
-        InspectorManager::instantiate((InspectApi*)api, mod, sc, name);
+        InspectorManager::instantiate((const InspectApi*)api, mod, sc, name);
 
     else
         assert(false);

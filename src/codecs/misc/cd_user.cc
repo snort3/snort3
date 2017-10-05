@@ -35,7 +35,6 @@ class UserCodec : public Codec
 {
 public:
     UserCodec() : Codec(CD_NAME) { }
-    ~UserCodec() { }
 
     void get_data_link_type(std::vector<int>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;

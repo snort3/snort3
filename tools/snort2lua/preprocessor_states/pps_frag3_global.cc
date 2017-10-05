@@ -30,8 +30,7 @@ class Frag3Global : public ConversionState
 {
 public:
     Frag3Global(Converter& c) : ConversionState(c) { }
-    virtual ~Frag3Global() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 
@@ -51,19 +50,19 @@ bool Frag3Global::convert(std::istringstream& data_stream)
         std::istringstream args_stream(keyword);
         args_stream >> keyword;
 
-        if (!keyword.compare("disabled"))
+        if (keyword == "disabled")
             table_api.add_deleted_comment("disabled");
 
-        else if (!keyword.compare("max_frags"))
+        else if (keyword == "max_frags")
             tmpval = parse_int_option("max_frags", args_stream, false);
 
-        else if (!keyword.compare("memcap"))
+        else if (keyword == "memcap")
             tmpval = parse_deleted_option("memcap", args_stream);
 
-        else if (!keyword.compare("prealloc_memcap"))
+        else if (keyword == "prealloc_memcap")
             tmpval = parse_deleted_option("prealloc_memcap", args_stream);
 
-        else if (!keyword.compare("prealloc_frags"))
+        else if (keyword == "prealloc_frags")
             tmpval = parse_deleted_option("prealloc_frags", args_stream);
 
         else

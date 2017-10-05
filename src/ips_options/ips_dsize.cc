@@ -40,7 +40,6 @@ public:
         IpsOption(s_name)
     { config = c; }
 
-    ~DsizeOption() { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -75,7 +74,7 @@ bool DsizeOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    DsizeOption& rhs = (DsizeOption&)ips;
+    const DsizeOption& rhs = (const DsizeOption&)ips;
     return config == rhs.config;
 }
 

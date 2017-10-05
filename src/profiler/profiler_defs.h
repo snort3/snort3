@@ -53,7 +53,7 @@ struct SO_PUBLIC ProfileStats
 
     ProfileStats& operator+=(const ProfileStats&);
 
-    constexpr ProfileStats() : time(), memory() { }
+    constexpr ProfileStats() = default;
     constexpr ProfileStats(const TimeProfilerStats& time, const MemoryTracker& memory) :
         time(time), memory(memory) { }
 };
@@ -84,7 +84,7 @@ class SO_PUBLIC ProfileExclude
 {
 public:
     ProfileExclude(ProfileStats& stats) : ProfileExclude(stats.time, stats.memory) { }
-    ProfileExclude(TimeProfilerStats& time, MemoryTracker&) : time(time), memory() { }
+    ProfileExclude(TimeProfilerStats& time, MemoryTracker&) : time(time) { }
 
 private:
     TimeExclude time;

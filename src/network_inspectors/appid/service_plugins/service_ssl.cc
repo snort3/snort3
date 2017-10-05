@@ -210,9 +210,9 @@ static std::mutex crypto_lib_mutex;
 
 /* Convert 3-byte lengths in TLS headers to integers. */
 #define ntoh3(msb_ptr) \
-    ((uint32_t)(   (uint32_t)(((uint8_t*)msb_ptr)[0] << 16)    \
-    + (uint32_t)(((uint8_t*)msb_ptr)[1] <<  8)    \
-    + (uint32_t)(((uint8_t*)msb_ptr)[2]      ) ))
+    ((uint32_t)(   (uint32_t)(((const uint8_t*)(msb_ptr))[0] << 16)    \
+    + (uint32_t)(((const uint8_t*)(msb_ptr))[1] <<  8)    \
+    + (uint32_t)(((const uint8_t*)(msb_ptr))[2]      ) ))
 
 static int ssl_cert_pattern_match(void* id, void*, int match_end_pos, void* data, void*)
 {
@@ -330,9 +330,6 @@ SslServiceDetector::SslServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-SslServiceDetector::~SslServiceDetector()
-{
-}
 
 static void ssl_free(void* ss)    /* AppIdFreeFCN */
 {
@@ -354,7 +351,7 @@ static void parse_client_initiation(const uint8_t* data, uint16_t size, ServiceS
     /* Sanity check header stuff. */
     if (size < sizeof(ServiceSSLV3Hdr))
         return;
-    hdr3 = (ServiceSSLV3Hdr*)data;
+    hdr3 = (const ServiceSSLV3Hdr*)data;
     ver = ntohs(hdr3->version);
     if (hdr3->type != SSL_HANDSHAKE ||
         (ver != 0x0300 &&
@@ -369,7 +366,7 @@ static void parse_client_initiation(const uint8_t* data, uint16_t size, ServiceS
 
     if (size < sizeof(ServiceSSLV3Record))
         return;
-    rec = (ServiceSSLV3Record*)data;
+    rec = (const ServiceSSLV3Record*)data;
     ver = ntohs(rec->version);
     if (rec->type != SSL_CLIENT_HELLO ||
         (ver != 0x0300 &&
@@ -389,7 +386,7 @@ static void parse_client_initiation(const uint8_t* data, uint16_t size, ServiceS
     /* Session ID (1-byte length). */
     if (size < 1)
         return;
-    length = *((uint8_t*)data);
+    length = *((const uint8_t*)data);
     data += length + 1;
     if (size < (length + 1))
         return;
@@ -398,7 +395,7 @@ static void parse_client_initiation(const uint8_t* data, uint16_t size, ServiceS
     /* Cipher Suites (2-byte length). */
     if (size < 2)
         return;
-    length = ntohs(*((uint16_t*)data));
+    length = ntohs(*((const uint16_t*)data));
     data += length + 2;
     if (size < (length + 2))
         return;
@@ -407,7 +404,7 @@ static void parse_client_initiation(const uint8_t* data, uint16_t size, ServiceS
     /* Compression Methods (1-byte length). */
     if (size < 1)
         return;
-    length = *((uint8_t*)data);
+    length = *((const uint8_t*)data);
     data += length + 1;
     if (size < (length + 1))
         return;
@@ -416,7 +413,7 @@ static void parse_client_initiation(const uint8_t* data, uint16_t size, ServiceS
     /* Extensions (2-byte length) */
     if (size < 2)
         return;
-    length = ntohs(*((uint16_t*)data));
+    length = ntohs(*((const uint16_t*)data));
     data += 2;
     size -= 2;
     if (size < length)
@@ -425,7 +422,7 @@ static void parse_client_initiation(const uint8_t* data, uint16_t size, ServiceS
     // We need at least type (2 bytes) and length (2 bytes) fields in the extension
     while (length >= 4)
     {
-        ServiceSSLV3ExtensionServerName* ext = (ServiceSSLV3ExtensionServerName*)data;
+        const ServiceSSLV3ExtensionServerName* ext = (const ServiceSSLV3ExtensionServerName*)data;
         if (ntohs(ext->type) == SSL_EXT_SERVER_NAME)
         {
             /* Found server host name. */
@@ -457,7 +454,7 @@ static bool parse_certificates(ServiceSSLData* ss)
     if (ss->certs_data && ss->certs_len)
     {
         /* Pull out certificates from block of data. */
-        uint8_t* data = ss->certs_data;
+        const uint8_t* data = ss->certs_data;
         int len  = ss->certs_len;
         ServiceSSLCertificate* certs_head = nullptr;
         ServiceSSLCertificate* certs_curr = nullptr;
@@ -493,7 +490,7 @@ static bool parse_certificates(ServiceSSLData* ss)
             certs_head       = certs_curr;
             num_certs++;
 
-            certs_curr->cert_name = X509_NAME_oneline(X509_get_subject_name(cert), NULL, 0);
+            certs_curr->cert_name = X509_NAME_oneline(X509_get_subject_name(cert), nullptr, 0);
             char* start = strstr(certs_curr->cert_name, COMMON_NAME_STR);
             if (start)
             {
@@ -654,9 +651,9 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
     {
     case SSL_STATE_CONNECTION:
         ss->state = SSL_STATE_DONE;
-        pct = (ServiceSSLPCTHdr*)data;
-        hdr2 = (ServiceSSLV2Hdr*)data;
-        hdr3 = (ServiceSSLV3Hdr*)data;
+        pct = (const ServiceSSLPCTHdr*)data;
+        hdr2 = (const ServiceSSLV2Hdr*)data;
+        hdr3 = (const ServiceSSLV3Hdr*)data;
         if (size >= sizeof(ServiceSSLPCTHdr) && pct->len >= 0x80 &&
             pct->type == PCT_SERVER_HELLO && ntohs(pct->version) == 0x8001)
         {
@@ -692,7 +689,7 @@ not_v2:     ;
         }
         data += sizeof(ServiceSSLV3Hdr);
         size -= sizeof(ServiceSSLV3Hdr);
-        rec = (ServiceSSLV3Record*)data;
+        rec = (const ServiceSSLV3Record*)data;
         if (size < sizeof(ServiceSSLV3Record) ||
             rec->type != SSL_SERVER_HELLO ||
             (ntohs(rec->version) != 0x0300 &&
@@ -728,7 +725,7 @@ not_v2:     ;
                  * previous was completely consumed. */
                 if (ss->tot_length == 0)
                 {
-                    hdr3 = (ServiceSSLV3Hdr*)data;
+                    hdr3 = (const ServiceSSLV3Hdr*)data;
                     ver = ntohs(hdr3->version);
                     if (size < sizeof(ServiceSSLV3Hdr) ||
                         hdr3->type != SSL_HANDSHAKE ||
@@ -744,7 +741,7 @@ not_v2:     ;
                     ss->tot_length = ntohs(hdr3->len);
                 }
 
-                rec = (ServiceSSLV3Record*)data;
+                rec = (const ServiceSSLV3Record*)data;
                 if (size < offsetof(ServiceSSLV3Record, version) ||
                     rec->length_msb)
                 {
@@ -756,7 +753,7 @@ not_v2:     ;
                     /* Start pulling out certificates. */
                     if (!ss->certs_data)
                     {
-                        certs_rec = (ServiceSSLV3CertsRecord*)data;
+                        certs_rec = (const ServiceSSLV3CertsRecord*)data;
                         ss->certs_len = ntoh3(certs_rec->certs_len);
                         ss->certs_data = (uint8_t*)snort_alloc(ss->certs_len);
                         if ((size - sizeof(ServiceSSLV3CertsRecord)) < ss->certs_len)
@@ -1002,7 +999,7 @@ static int ssl_scan_patterns(SearchTool* matcher, const uint8_t* data, size_t si
     if (!matcher)
         return 0;
 
-    matcher->find_all((char*)data, size, ssl_cert_pattern_match, false, &mp);
+    matcher->find_all((const char*)data, size, ssl_cert_pattern_match, false, &mp);
 
     if (!mp)
         return 0;

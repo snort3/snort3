@@ -31,8 +31,7 @@ class AppId : public ConversionState
 {
 public:
     AppId(Converter& c) : ConversionState(c) { }
-    virtual ~AppId() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 
@@ -52,7 +51,7 @@ bool AppId::convert(std::istringstream& data_stream)
         // should be guaranteed to happen.  Checking for error just cause
         if (!(arg_stream >> keyword))
             tmpval = false;
-        else if (!keyword.compare("conf"))
+        else if (keyword == "conf")
         {
             std::string file_name;
             if( arg_stream >> file_name)
@@ -65,29 +64,29 @@ bool AppId::convert(std::istringstream& data_stream)
                 tmpval = false;
             }
         }
-        else if (!keyword.compare("memcap"))
+        else if (keyword == "memcap")
         {
             tmpval = parse_int_option("memcap", arg_stream, false);
         }
-        else if (!keyword.compare("debug"))
+        else if (keyword == "debug")
         {
             std::string val;
             if (!(arg_stream >> val))
                 data_api.failed_conversion(arg_stream,  "appid: debug <missing_arg>");
-            else if (!val.compare("yes"))
+            else if (val == "yes")
                 table_api.add_option("debug", true);
             else
                 table_api.add_option("debug", false);
         }
-        else if (!keyword.compare("dump_ports"))
+        else if (keyword == "dump_ports")
         {
             table_api.add_option("dump_ports", true);
         }
-        else if (!keyword.compare("instance_id"))
+        else if (keyword == "instance_id")
         {
             tmpval = parse_int_option("instance_id", arg_stream, false);
         }
-        else if (!keyword.compare("app_stats_filename"))
+        else if (keyword == "app_stats_filename")
         {
             std::string file_name;
             if (arg_stream >> file_name)
@@ -100,19 +99,19 @@ bool AppId::convert(std::istringstream& data_stream)
                 tmpval = false;
             }
         }
-        else if (!keyword.compare("app_stats_period"))
+        else if (keyword == "app_stats_period")
         {
             tmpval = parse_int_option("app_stats_period", arg_stream, false);
         }
-        else if (!keyword.compare("app_stats_rollover_size"))
+        else if (keyword == "app_stats_rollover_size")
         {
             tmpval = parse_int_option("app_stats_rollover_size", arg_stream, false);
         }
-        else if (!keyword.compare("app_stats_rollover_time"))
+        else if (keyword == "app_stats_rollover_time")
         {
             tmpval = parse_int_option("app_stats_rollover_time", arg_stream, false);
         }
-        else if (!keyword.compare("app_detector_dir"))
+        else if (keyword == "app_detector_dir")
         {
             std::string file_name;
             if (arg_stream >> file_name)
@@ -125,7 +124,7 @@ bool AppId::convert(std::istringstream& data_stream)
                 tmpval = false;
             }
         }
-        else if (!keyword.compare("thirdparty_appid_dir"))
+        else if (keyword == "thirdparty_appid_dir")
         {
             std::string file_name;
             if (arg_stream >> file_name)

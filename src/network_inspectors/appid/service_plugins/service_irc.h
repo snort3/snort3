@@ -30,7 +30,6 @@ class IrcServiceDetector : public ServiceDetector
 {
 public:
     IrcServiceDetector(ServiceDiscovery*);
-    ~IrcServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

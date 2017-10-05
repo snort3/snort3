@@ -45,7 +45,7 @@ class ImapModule : public Module
 {
 public:
     ImapModule();
-    ~ImapModule();
+    ~ImapModule() override;
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;

@@ -29,7 +29,7 @@ static inline Table* find_table(std::vector<Table*> vec, const std::string& name
         return nullptr;
 
     for ( auto* t : vec)
-        if (!name.compare(t->get_name()))
+        if (name == t->get_name())
             return t;
 
     return nullptr;
@@ -177,11 +177,11 @@ bool Table::add_list(const std::string& list_name, const std::string& next_elem)
 bool Table::has_option(const std::string& opt_name)
 {
     for (Option* o : options)
-        if (!opt_name.compare(o->get_name()))
+        if (opt_name == o->get_name())
             return true;
 
     for (Option* a : append_options)
-        if (!opt_name.compare(a->get_name()))
+        if (opt_name == a->get_name())
             return true;
 
     return false;
@@ -190,14 +190,14 @@ bool Table::has_option(const std::string& opt_name)
 bool Table::get_option(const std::string& opt_name, std::string& value)
 {
     for (Option* o : options)
-        if (!opt_name.compare(o->get_name()))
+        if (opt_name == o->get_name())
         {
             value = o->get_value();
             return true;
         }
 
     for (Option* a : append_options)
-        if (!opt_name.compare(a->get_name()))
+        if (opt_name == a->get_name())
         {
             value = a->get_value();
             return true;
@@ -244,7 +244,7 @@ void Table::add_comment(const std::string& c)
 
 std::ostream& operator<<(std::ostream& out, const Table& t)
 {
-    std::string whitespace = "";
+    std::string whitespace;
 
     for (int i = 0; i < t.depth; i++)
         whitespace += "    ";

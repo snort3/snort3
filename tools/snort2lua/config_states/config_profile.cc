@@ -33,8 +33,7 @@ class Profilers : public ConversionState
 {
 public:
     Profilers(Converter& c) : ConversionState(c) { }
-    virtual ~Profilers() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 
     template<typename T>
     bool add_or_append(const std::string& opt_name, T val)
@@ -81,10 +80,10 @@ bool Profilers<table_name>::convert(std::istringstream& data_stream)
         if (!(arg_stream >> keyword))
             tmpval = false;
 
-        else if (!keyword.compare("filename"))
+        else if (keyword == "filename")
             table_api.add_deleted_comment("profile_*: filename ...");
 
-        else if (!keyword.compare("print"))
+        else if (keyword == "print")
         {
             table_api.add_diff_option_comment("print", "count");
 
@@ -92,7 +91,7 @@ bool Profilers<table_name>::convert(std::istringstream& data_stream)
             if (!(arg_stream >> tmp_string))
                 tmpval = false;
 
-            else if (!tmp_string.compare("all"))
+            else if (tmp_string == "all")
             {
                 // count = 0 is the default, so we don't need
                 // to specify unless we're overriding a previously
@@ -128,36 +127,36 @@ bool Profilers<table_name>::convert(std::istringstream& data_stream)
             else
                 tmpval = false;
         }
-        else if (!keyword.compare("sort"))
+        else if (keyword == "sort")
         {
             std::string val;
 
             if (!(arg_stream >> val))
                 tmpval = false;
 
-            else if (!val.compare("avg_ticks"))
+            else if (val == "avg_ticks")
             {
                 table_api.add_diff_option_comment("sort avg_ticks", "sort = avg_check");
                 add_or_append("sort", "avg_check");
             }
-            else if (!val.compare("total_ticks"))
+            else if (val == "total_ticks")
             {
                 table_api.add_diff_option_comment("sort total_ticks", "sort = total_time");
                 add_or_append("sort", "total_time");
             }
-            else if (!val.compare("avg_ticks_per_match"))
+            else if (val == "avg_ticks_per_match")
             {
                 table_api.add_diff_option_comment("sort avg_ticks_per_match",
                     "sort = avg_match");
                 add_or_append("sort", "avg_match");
             }
-            else if (!val.compare("avg_ticks_per_nomatch"))
+            else if (val == "avg_ticks_per_nomatch")
             {
                 table_api.add_diff_option_comment("sort avg_ticks_per_nomatch",
                     "sort = avg_no_match");
                 add_or_append("sort", "avg_no_match");
             }
-            else if (!val.compare("nomatches"))
+            else if (val == "nomatches")
             {
                 table_api.add_diff_option_comment("sort nomatches",
                     "sort = no_matches");

@@ -25,12 +25,13 @@
 
 #include "service_telnet.h"
 
-#include <ctype.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stddef.h>
 #include <sys/types.h>
 #include <netinet/in.h>
+
+#include <cctype>
+#include <cstring>
+#include <cstdlib>
+#include <cstddef>
 
 #include "appid_session.h"
 #include "application_ids.h"
@@ -92,9 +93,6 @@ TelnetServiceDetector::TelnetServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-TelnetServiceDetector::~TelnetServiceDetector()
-{
-}
 
 int TelnetServiceDetector::validate(AppIdDiscoveryArgs& args)
 {

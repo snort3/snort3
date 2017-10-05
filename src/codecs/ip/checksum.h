@@ -159,7 +159,7 @@ inline uint16_t cksum_add(const uint16_t* buf, std::size_t len, uint32_t cksum)
     }
 
     if (len & 1)
-        cksum += (*(unsigned char*)sp);
+        cksum += (*(const unsigned char*)sp);
 
     cksum  = (cksum >> 16) + (cksum & 0x0000ffff);
     cksum += (cksum >> 16);

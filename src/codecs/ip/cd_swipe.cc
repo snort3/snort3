@@ -33,7 +33,6 @@ class SwipeCodec : public Codec
 {
 public:
     SwipeCodec() : Codec(CD_SWIPE_NAME) { }
-    ~SwipeCodec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;

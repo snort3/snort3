@@ -32,8 +32,7 @@ class Ssl : public ConversionState
 {
 public:
     Ssl(Converter& c) : ConversionState(c) { }
-    virtual ~Ssl() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 
@@ -59,25 +58,25 @@ bool Ssl::convert(std::istringstream& data_stream)
         if (!(arg_stream >> keyword))
             tmpval = false;
 
-        else if (!keyword.compare("noinspect_encrypted"))
+        else if (keyword == "noinspect_encrypted")
             table_api.add_deleted_comment("noinspect_encrypted");
 
-        else if (!keyword.compare("trustservers"))
+        else if (keyword == "trustservers")
             tmpval = table_api.add_option("trust_servers", true);
 
-        else if (!keyword.compare("max_heartbeat_length"))
+        else if (keyword == "max_heartbeat_length")
         {
             tmpval = parse_int_option("max_heartbeat_length", arg_stream, false);
         }
-        else if (!keyword.compare("ports"))
+        else if (keyword == "ports")
         {
             table_api.add_diff_option_comment("ports", "bindings");
 
             if (arg_stream >> keyword)
             {
-                if (!keyword.compare("{"))
+                if (keyword == "{")
                 {
-                    while (arg_stream >> keyword && keyword.compare("}"))
+                    while (arg_stream >> keyword && keyword != "}")
                     {
                         ports_set = true;
                         bind.add_when_port(keyword);

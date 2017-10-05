@@ -70,13 +70,9 @@ Option::Option(const std::string& opt_name, std::string val, int d)
     }
 }
 
-Option::~Option()
-{
-}
-
 std::ostream& operator<<(std::ostream& out, const Option& o)
 {
-    std::string whitespace = "";
+    std::string whitespace;
 
     for (int i = 0; i < o.depth; i++)
         whitespace += "    ";
@@ -84,7 +80,7 @@ std::ostream& operator<<(std::ostream& out, const Option& o)
     if ( o.print_whitespace )
         out << whitespace;
 
-    if (o.name.size())
+    if (!o.name.empty())
         out << o.name << " = ";
 
     switch (o.type)
@@ -104,9 +100,9 @@ std::ostream& operator<<(std::ostream& out, const Option& o)
 
 bool operator==(const Option& lhs, const Option& rhs)
 {
-    return ((!lhs.name.compare(rhs.name)) &&
+    return ((lhs.name == rhs.name) &&
            lhs.type == rhs.type &&
-           (!lhs.value.compare(rhs.value)));
+           (lhs.value == rhs.value));
 }
 
 bool operator!=(const Option& lhs, const Option& rhs)

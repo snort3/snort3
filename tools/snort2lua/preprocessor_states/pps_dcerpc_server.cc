@@ -112,7 +112,7 @@ int DcerpcServer::binding_id = 0;
 
 DcerpcServer::DcerpcServer(Converter& c) : ConversionState(c)
 {
-    for (auto type: transport)
+    for (const auto& type: transport)
     {
         detect_ports_set[type] = false;
     }
@@ -244,7 +244,7 @@ bool DcerpcServer::parse_and_add_ports(const std::string& ports, const std::stri
     std::vector<std::string> port_list;
 
     util::split(ports, ',', port_list);
-    for (std::string port : port_list)
+    for (const std::string& port : port_list)
     {
         size_t pos = port.find(':');
         if (pos == std::string::npos)
@@ -340,9 +340,9 @@ bool DcerpcServer::parse_detect(std::istringstream& data_stream,
                 }
             }
 
-            if (!type.compare("none"))
+            if (type == "none")
             {
-                for (auto transport_type: transport)
+                for (const auto& transport_type: transport)
                 {
                     if (is_detect)
                     {
@@ -422,12 +422,12 @@ bool DcerpcServer::parse_detect(std::istringstream& data_stream,
                 state = DCE_DETECT_LIST_STATE__PORTS_END;
             }
 
-            if (type.compare("rpc-over-http-server") == 0)
+            if (type == "rpc-over-http-server")
             {
                 type = "http_server";
                 bind_port_to_tcp = true;
             }
-            else if (type.compare("rpc-over-http-proxy") == 0)
+            else if (type == "rpc-over-http-proxy")
             {
                 type = "http_proxy";
                 bind_port_to_tcp = true;
@@ -503,9 +503,9 @@ bool DcerpcServer::init_net_created_table()
     if (table_api.option_exists("disable_defrag"))
     {
         table_api.close_table();
-        for (auto type : transport)
+        for (const auto& type : transport)
         {
-            if ( (type.compare("http_proxy") == 0) || (type.compare("http_server") == 0) )
+            if ( (type == "http_proxy") || (type == "http_server") )
                 continue;
             tmpval = add_option_to_table(table_api, table_name[type], "disable_defrag", true) &&
                 tmpval;
@@ -520,9 +520,9 @@ bool DcerpcServer::init_net_created_table()
         }
 
         table_api.close_table();
-        for (auto type : transport)
+        for (const auto& type : transport)
         {
-            if ( (type.compare("http_proxy") == 0) || (type.compare("http_server") == 0) )
+            if ( (type == "http_proxy") || (type == "http_server") )
                 continue;
             tmpval = add_option_to_table(table_api,table_name[type], "max_frag_len", std::stoi(
                 val)) && tmpval;
@@ -537,10 +537,10 @@ bool DcerpcServer::init_net_created_table()
         }
 
         table_api.close_table();
-        for (auto type : transport)
+        for (const auto& type : transport)
         {
-            if ( (type.compare("http_proxy") == 0) || (type.compare("http_server") == 0) ||
-                (type.compare("udp") == 0) )
+            if ( (type == "http_proxy") || (type == "http_server") ||
+                (type == "udp") )
                 continue;
             tmpval = add_option_to_table(table_api,table_name[type], "reassemble_threshold",
                 std::stoi(val)) && tmpval;
@@ -572,7 +572,7 @@ bool DcerpcServer::init_net_created_table()
 
 bool DcerpcServer::init_new_tables(bool is_default)
 {
-    for (auto type : transport)
+    for (const auto& type : transport)
     {
         if (!is_default)
             table_name[type] = "dce_" + type + std::to_string(binding_id);
@@ -607,7 +607,7 @@ bool DcerpcServer::parse_nets(std::istringstream& data_stream, std::map<std::str
         return false;
     }
 
-    for (auto type : transport)
+    for (const auto& type : transport)
     {
         bind[type]->set_use_name(table_name[type]);
         bind[type]->add_when_net(nets);
@@ -620,11 +620,11 @@ bool DcerpcServer::add_option_to_transports(const std::string& option, const std
 {
     bool retval = true;
 
-    for (auto type: transport)
+    for (const auto& type: transport)
     {
-        if ( (type.compare("http_proxy") == 0) || (type.compare("http_server") == 0) )
+        if ( (type == "http_proxy") || (type == "http_server") )
             continue;
-        if (co_only && (type.compare("udp") == 0))
+        if (co_only && (type == "udp"))
             continue;
         table_api.open_table(table_name[type]);
         retval = table_api.add_option(option, value) && retval;
@@ -653,7 +653,7 @@ bool DcerpcServer::convert(std::istringstream& data_stream)
     bind["http_proxy"] = &bind_http_proxy;
     bind["http_server"] = &bind_http_server;
 
-    for (auto type : transport)
+    for (const auto& type : transport)
     {
         bind[type]->set_when_proto("tcp");
         bind[type]->set_use_type("dce_" + type);
@@ -667,7 +667,7 @@ bool DcerpcServer::convert(std::istringstream& data_stream)
     if (keyword.back() == ',')
         keyword.pop_back();
 
-    if (!keyword.compare("default"))
+    if (keyword == "default")
     {
         if (!init_new_tables(true))
         {
@@ -676,7 +676,7 @@ bool DcerpcServer::convert(std::istringstream& data_stream)
     }
     else
     {
-        if (keyword.compare("net"))
+        if (keyword != "net")
         {
             return false;
         }
@@ -702,7 +702,7 @@ bool DcerpcServer::convert(std::istringstream& data_stream)
         if (keyword.empty())
             continue;
 
-        if (!keyword.compare("policy"))
+        if (keyword == "policy")
         {
             std::string policy;
 
@@ -714,19 +714,19 @@ bool DcerpcServer::convert(std::istringstream& data_stream)
 
             tmpval = add_option_to_transports("policy", policy, true);
         }
-        else if (!keyword.compare("detect"))
+        else if (keyword == "detect")
         {
             tmpval = parse_detect(data_stream, bind, true);
         }
-        else if (!keyword.compare("autodetect"))
+        else if (keyword == "autodetect")
         {
             tmpval = parse_detect(data_stream, bind, false);
         }
-        else if (!keyword.compare("no_autodetect_http_proxy_ports"))
+        else if (keyword == "no_autodetect_http_proxy_ports")
         {
             add_deleted_comment_to_table(table_api, table_name["http_proxy"], "no_autodetect_http_proxy_ports");
         }
-        else if (!keyword.compare("smb_invalid_shares"))
+        else if (keyword == "smb_invalid_shares")
         {
             std::string invalid_shares;
 
@@ -737,13 +737,13 @@ bool DcerpcServer::convert(std::istringstream& data_stream)
             tmpval = table_api.add_option("smb_invalid_shares", invalid_shares);
             table_api.close_table();
         }
-        else if (!keyword.compare("smb_max_chain"))
+        else if (keyword == "smb_max_chain")
         {
             table_api.open_table(table_name["smb"]);
             tmpval = parse_int_option("smb_max_chain", data_stream, false);
             table_api.close_table();
         }
-        else if (!keyword.compare("smb_file_inspection"))
+        else if (keyword == "smb_file_inspection")
         {
             std::string val;
             table_api.open_table(table_name["smb"]);
@@ -755,7 +755,7 @@ bool DcerpcServer::convert(std::istringstream& data_stream)
             else
             {
                 table_api.close_table();
-                if ( val.compare("on") == 0 )
+                if ( val == "on" )
                 {
                     table_api.open_table("file_id");
                     table_api.add_option("enable_type", true);
@@ -764,13 +764,13 @@ bool DcerpcServer::convert(std::istringstream& data_stream)
             }
 
         }
-        else if (!keyword.compare("smb2_max_compound"))
+        else if (keyword == "smb2_max_compound")
         {
             table_api.open_table(table_name["smb"]);
             tmpval = parse_int_option("smb_max_compound", data_stream, false);
             table_api.close_table();
         }
-        else if (!keyword.compare("valid_smb_versions"))
+        else if (keyword == "valid_smb_versions")
         {
             std::string versions;
 
@@ -793,7 +793,7 @@ bool DcerpcServer::convert(std::istringstream& data_stream)
         }
     }
 
-    for (auto type : transport)
+    for (const auto& type : transport)
     {
         if (!detect_ports_set[type])
         {

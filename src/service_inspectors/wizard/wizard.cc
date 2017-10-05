@@ -82,7 +82,7 @@ class MagicSplitter : public StreamSplitter
 {
 public:
     MagicSplitter(bool, class Wizard*);
-    ~MagicSplitter();
+    ~MagicSplitter() override;
 
     Status scan(Flow*, const uint8_t* data, uint32_t len,
         uint32_t flags, uint32_t* fp) override;
@@ -98,7 +98,7 @@ class Wizard : public Inspector
 {
 public:
     Wizard(WizardModule*);
-    ~Wizard();
+    ~Wizard() override;
 
     void show(SnortConfig*) override
     { LogMessage("Wizard\n"); }

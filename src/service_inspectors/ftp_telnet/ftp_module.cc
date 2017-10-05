@@ -97,7 +97,7 @@ bool FtpClientModule::set(const char*, Value& v, SnortConfig*)
     {
         unsigned n;
         const uint8_t* b = v.get_buffer(n);
-        address.assign((char*)b, n);
+        address.assign((const char*)b, n);
     }
     else if ( v.is("bounce") )
         conf->bounce = v.get_bool();
@@ -175,7 +175,7 @@ bool FtpClientModule::end(const char* fqn, int idx, SnortConfig*)
 
     if ( idx && !strcmp(fqn, "ftp_client.bounce_to") )
     {
-        if ( !address.size() || (last_port && (port > last_port)) )
+        if ( address.empty() || (last_port && (port > last_port)) )
         {
             ParseError("bad ftp_client.bounce_to [%d]", idx);
             return false;

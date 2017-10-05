@@ -38,7 +38,6 @@ public:
         last_seg_size = 1448;  // FIXIT-H base this off mss or snaplen
     }
 
-    ~FtpDataSplitter() = default;
 
     Status scan(Flow*, const uint8_t*, uint32_t len, uint32_t flags, uint32_t* fp ) override;
     bool finish(Flow*) override;

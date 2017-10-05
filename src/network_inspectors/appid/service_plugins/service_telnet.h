@@ -30,7 +30,6 @@ class TelnetServiceDetector : public ServiceDetector
 {
 public:
     TelnetServiceDetector(ServiceDiscovery*);
-    ~TelnetServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

@@ -42,7 +42,6 @@ static THREAD_LOCAL ProfileStats file_ssn_stats;
 
 FileSession::FileSession(Flow* flow) : Session(flow) { }
 
-FileSession::~FileSession() { }
 
 bool FileSession::setup(Packet*)
 {
@@ -78,11 +77,11 @@ int FileSession::process(Packet* p)
     FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
 
     if (file_flows &&
-        file_flows->file_process((uint8_t*)p->data, p->dsize, position(p), c->upload))
+        file_flows->file_process(p->data, p->dsize, position(p), c->upload))
     {
         const char* file_name = SFDAQ::get_interface_spec();
         if (file_name)
-            file_flows->set_file_name((uint8_t*)file_name, strlen(file_name));
+            file_flows->set_file_name((const uint8_t*)file_name, strlen(file_name));
     }
     set_file_data(p->data, p->dsize);
 

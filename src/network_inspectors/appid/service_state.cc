@@ -144,7 +144,7 @@ void ServiceDiscoveryState::set_service_id_failed(AppIdSession* asd, const SfIp*
     }
     else if ( ( state == SERVICE_ID_STATE::SEARCHING_PORT_PATTERN ) &&
         ( asd->service_search_state == SESSION_SERVICE_SEARCH_STATE::PENDING ) &&
-        ( !asd->service_candidates.size() ) )
+        ( asd->service_candidates.empty() ) )
     {
         state = SEARCHING_BRUTE_FORCE;
     }
@@ -214,7 +214,7 @@ void AppIdServiceState::initialize()
     service_state_cache = new std::map<AppIdServiceStateKey, ServiceDiscoveryState*>;
 }
 
-void AppIdServiceState::clean(void)
+void AppIdServiceState::clean()
 {
     if ( service_state_cache )
     {
@@ -312,7 +312,7 @@ void AppIdServiceState::check_reset(AppIdSession* asd, const SfIp* ip, uint16_t 
     }
 }
 
-void AppIdServiceState::dump_stats(void)
+void AppIdServiceState::dump_stats()
 {
     // FIXIT-L - do we need to keep ipv4 and ipv6 separate?
 #if 0

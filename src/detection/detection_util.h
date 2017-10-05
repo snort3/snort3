@@ -43,10 +43,10 @@ struct DataBuffer
 
 #define SetDetectLimit(pktPtr, altLen) \
 { \
-    pktPtr->alt_dsize = altLen; \
+    (pktPtr)->alt_dsize = altLen; \
 }
 
-#define IsLimitedDetect(pktPtr) (pktPtr->packet_flags & PKT_HTTP_DECODE)
+#define IsLimitedDetect(pktPtr) ((pktPtr)->packet_flags & PKT_HTTP_DECODE)
 
 // FIXIT-L event trace should be placed in its own files
 void EventTrace_Init();

@@ -30,7 +30,6 @@ class RshellServiceDetector : public ServiceDetector
 {
 public:
     RshellServiceDetector(ServiceDiscovery*);
-    ~RshellServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 

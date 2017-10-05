@@ -61,12 +61,12 @@ BattleFieldServiceDetector::BattleFieldServiceDetector(ServiceDiscovery* sd)
 
     tcp_patterns =
     {
-        { (uint8_t*)PATTERN_HELLO, sizeof(PATTERN_HELLO) - 1,  5, 0, 0 },
-        { (uint8_t*)PATTERN_2, sizeof(PATTERN_2) - 1,  0, 0, 0 },
-        { (uint8_t*)PATTERN_3, sizeof(PATTERN_3) - 1,  0, 0, 0 },
-        { (uint8_t*)PATTERN_4, sizeof(PATTERN_4) - 1,  0, 0, 0 },
-        { (uint8_t*)PATTERN_5, sizeof(PATTERN_5) - 1,  0, 0, 0 },
-        { (uint8_t*)PATTERN_6, sizeof(PATTERN_6) - 1,  0, 0, 0 }
+        { (const uint8_t*)PATTERN_HELLO, sizeof(PATTERN_HELLO) - 1,  5, 0, 0 },
+        { (const uint8_t*)PATTERN_2, sizeof(PATTERN_2) - 1,  0, 0, 0 },
+        { (const uint8_t*)PATTERN_3, sizeof(PATTERN_3) - 1,  0, 0, 0 },
+        { (const uint8_t*)PATTERN_4, sizeof(PATTERN_4) - 1,  0, 0, 0 },
+        { (const uint8_t*)PATTERN_5, sizeof(PATTERN_5) - 1,  0, 0, 0 },
+        { (const uint8_t*)PATTERN_6, sizeof(PATTERN_6) - 1,  0, 0, 0 }
     };
 
     appid_registry =
@@ -89,9 +89,6 @@ BattleFieldServiceDetector::BattleFieldServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-BattleFieldServiceDetector::~BattleFieldServiceDetector()
-{
-}
 
 static inline uint32_t get_message_id(const uint8_t* msg)
 {

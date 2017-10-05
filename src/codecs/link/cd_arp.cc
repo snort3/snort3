@@ -50,7 +50,6 @@ class ArpCodec : public Codec
 {
 public:
     ArpCodec() : Codec(CD_ARP_NAME) { }
-    ~ArpCodec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;

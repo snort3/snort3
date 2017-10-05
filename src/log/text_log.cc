@@ -124,10 +124,10 @@ TextLog* TextLog_Init(
 
     txt = (TextLog*)snort_alloc(sizeof(TextLog)+maxBuf);
 
-    txt->name = name ? snort_strdup(name) : NULL;
+    txt->name = name ? snort_strdup(name) : nullptr;
     txt->file = TextLog_Open(txt->name);
     txt->size = TextLog_Size(txt->file);
-    txt->last = time(NULL);
+    txt->last = time(nullptr);
     txt->maxFile = maxFile;
 
     txt->maxBuf = maxBuf;
@@ -163,14 +163,14 @@ static void TextLog_Roll(TextLog* const txt)
 {
     if ( txt->file == stdout )
         return;
-    if ( txt->last >= time(NULL) )
+    if ( txt->last >= time(nullptr) )
         return;
 
     TextLog_Close(txt->file);
     RollAlertFile(txt->name);
     txt->file = TextLog_Open(txt->name);
 
-    txt->last = time(NULL);
+    txt->last = time(nullptr);
     txt->size = 0;
 }
 

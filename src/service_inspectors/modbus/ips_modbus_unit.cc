@@ -70,7 +70,7 @@ bool ModbusUnitOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    ModbusUnitOption& rhs = (ModbusUnitOption&)ips;
+    const ModbusUnitOption& rhs = (const ModbusUnitOption&)ips;
     return ( unit == rhs.unit );
 }
 

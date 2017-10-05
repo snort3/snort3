@@ -456,8 +456,8 @@ static int service_add_service(lua_State* L)
     auto& ud = *UserData<LuaServiceDetector>::check(L, DETECTOR, 1);
     assert(ud->validate_params.pkt && ud->validate_params.asd);
     AppId service_id = lua_tonumber(L, 2);
-    char* vendor = (char*)luaL_optstring(L, 3, nullptr);
-    char* version = (char*)luaL_optstring(L, 4, nullptr);
+    const char* vendor = luaL_optstring(L, 3, nullptr);
+    const char* version = luaL_optstring(L, 4, nullptr);
 
     /*Phase2 - discuss AppIdServiceSubtype will be maintained on lua side therefore the last
       parameter on the following call is nullptr. Subtype is not displayed on DC at present. */
@@ -575,7 +575,7 @@ static int detector_get_pcre_groups(lua_State* L)
     int erroffset;
 
     auto& ud = *UserData<LuaDetector>::check(L, DETECTOR, 1);
-    char* pattern = (char*)lua_tostring(L, 2);
+    const char* pattern = lua_tostring(L, 2);
     unsigned int offset = lua_tonumber(L, 3);     /*offset can be zero, no check necessary. */
 
     /*compile the regular expression pattern, and handle errors */
@@ -595,7 +595,7 @@ static int detector_get_pcre_groups(lua_State* L)
     /*pattern match against the subject string. */
     int rc = pcre_exec(re,                                 // compiled pattern
         nullptr,                                           // no extra data
-        (char*)ud->validate_params.data,                    // subject string
+        (const char*)ud->validate_params.data,                    // subject string
         ud->validate_params.size,                           // length of the subject
         offset,                                            // offset 0
         0,                                                 // default options
@@ -616,7 +616,7 @@ static int detector_get_pcre_groups(lua_State* L)
         lua_checkstack(L, rc);
         for (int i = 0; i < rc; i++)
         {
-            lua_pushlstring(L, (char*)ud->validate_params.data + ovector[2*i], ovector[2*i+1] -
+            lua_pushlstring(L, (const char*)ud->validate_params.data + ovector[2*i], ovector[2*i+1] -
                 ovector[2*i]);
         }
     }
@@ -647,10 +647,10 @@ static int detector_memcmp(lua_State* L)
 {
     auto& ud = *UserData<LuaDetector>::check(L, DETECTOR, 1);
 
-    char* pattern = (char*)lua_tostring(L, 2);
+    const char* pattern = lua_tostring(L, 2);
     unsigned int patternLen = lua_tonumber(L, 3);
     unsigned int offset = lua_tonumber(L, 4);     /*offset can be zero, no check necessary. */
-    int rc = memcmp((char*)ud->validate_params.data + offset, pattern, patternLen);
+    int rc = memcmp(ud->validate_params.data + offset, pattern, patternLen);
     lua_checkstack (L, 1);
     lua_pushnumber(L, rc);
     return 1;
@@ -940,7 +940,7 @@ static int detector_add_http_pattern(lua_State* L)
     /*uint32_t payload_type    =*/ lua_tointeger(L, ++index);
 
     size_t pattern_size = 0;
-    uint8_t* pattern_str = (uint8_t*)lua_tolstring(L, ++index, &pattern_size);
+    const uint8_t* pattern_str = (const uint8_t*)lua_tolstring(L, ++index, &pattern_size);
     uint32_t app_id = lua_tointeger(L, ++index);
     DetectorHTTPPattern pattern;
     if( pattern.init(pattern_str, pattern_size, seq, service_id, client_id,
@@ -1371,7 +1371,7 @@ static int detector_add_chp_action(lua_State* L)
 static int detector_create_chp_multi_application(lua_State* L)
 {
     UserData<LuaDetector>* ud;
-    AppId appIdInstance;
+    AppId appIdInstance = APP_ID_UNKNOWN;
     int instance;
     int index = 1;
 
@@ -1903,7 +1903,7 @@ static int add_http_pattern(lua_State* L)
     uint32_t payload_id = lua_tointeger(L, ++index);
 
     size_t pattern_size = 0;
-    uint8_t* pattern_str = (uint8_t*)lua_tolstring(L, ++index, &pattern_size);
+    const uint8_t* pattern_str = (const uint8_t*)lua_tolstring(L, ++index, &pattern_size);
     DetectorHTTPPattern pattern;
     if( pattern.init(pattern_str, pattern_size, seq, service_id, client_id,
         payload_id, APP_ID_NONE) )
@@ -2140,13 +2140,13 @@ static int create_future_flow(lua_State* L)
     auto& ud = *UserData<LuaDetector>::check(L, DETECTOR, 1);
     assert(ud->validate_params.pkt);
 
-    char* pattern = (char*)lua_tostring(L, 2);
+    const char* pattern = lua_tostring(L, 2);
     if (!convert_string_to_address(pattern, &client_addr))
         return 0;
 
     uint16_t client_port = lua_tonumber(L, 3);
 
-    pattern = (char*)lua_tostring(L, 4);
+    pattern = lua_tostring(L, 4);
     if (!convert_string_to_address(pattern, &server_addr))
         return 0;
 
@@ -2326,7 +2326,7 @@ static const luaL_Reg Detector_meta[] =
 {
     { "__gc",       Detector_gc },
     { "__tostring", Detector_tostring },
-    { 0, 0 }
+    { nullptr, nullptr }
 };
 
 /**Registers C functions as an API, enabling Lua detector to call these functions. This function

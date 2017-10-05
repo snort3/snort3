@@ -30,8 +30,6 @@
 
 #include "side_channel.h"
 
-extern THREAD_LOCAL SimpleStats sc_stats;
-extern THREAD_LOCAL ProfileStats sc_perf_stats;
 
 //-------------------------------------------------------------------------
 // side_channel module
@@ -64,7 +62,7 @@ static const Parameter sc_params[] =
 static bool validate_config(SideChannelConfig* config)
 {
     // Also need to have at least one connector
-    if ( config->connectors.size() == 0 )
+    if ( config->connectors.empty() )
     {
         ParseWarning(WARN_CONF, "Illegal SideChannel configuration: must have connectors");
         return false;

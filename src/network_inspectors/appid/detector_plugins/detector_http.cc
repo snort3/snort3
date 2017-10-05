@@ -59,9 +59,6 @@ HttpClientDetector::HttpClientDetector(ClientDiscovery* cdm)
     handler->register_detector(name, this, proto);
 }
 
-HttpClientDetector::~HttpClientDetector()
-{
-}
 
 int HttpClientDetector::validate(AppIdDiscoveryArgs& args)
 {
@@ -93,9 +90,6 @@ HttpServiceDetector::HttpServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-HttpServiceDetector::~HttpServiceDetector()
-{
-}
 
 int HttpServiceDetector::validate(AppIdDiscoveryArgs&)
 {

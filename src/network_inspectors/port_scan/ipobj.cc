@@ -123,7 +123,7 @@ int ipset_contains(IPSET* ipc, const SfIp* ip, void* port)
     SF_LNODE* cur_ip;
 
     for (p =(IP_PORT*)sflist_first(&ipc->ip_list, &cur_ip);
-        p!=0;
+        p!=nullptr;
         p =(IP_PORT*)sflist_next(&cur_ip) )
     {
         if (p->ip.contains(ip) == SFIP_CONTAINS)
@@ -131,7 +131,7 @@ int ipset_contains(IPSET* ipc, const SfIp* ip, void* port)
             SF_LNODE* cur_port;
 
             for ( pr=(PORTRANGE*)sflist_first(&p->portset.port_list, &cur_port);
-                pr != 0;
+                pr != nullptr;
                 pr=(PORTRANGE*)sflist_next(&cur_port) )
             {
                 /*
@@ -165,7 +165,7 @@ int ipset_print(IPSET* ipc)
         SF_LNODE* cur_ip;
 
         for ( p =(IP_PORT*)sflist_first(&ipc->ip_list, &cur_ip);
-            p!=0;
+            p!=nullptr;
             p =(IP_PORT*)sflist_next(&cur_ip) )
         {
             SnortSnprintf(ip_str, 80, "%s", p->ip.get_addr()->ntoa());
@@ -173,7 +173,7 @@ int ipset_print(IPSET* ipc)
             SF_LNODE* cur_port;
 
             for ( pr=(PORTRANGE*)sflist_first(&p->portset.port_list, &cur_port);
-                pr != 0;
+                pr != nullptr;
                 pr=(PORTRANGE*)sflist_next(&cur_port) )
             {
                 printf("  %u", pr->port_lo);

@@ -34,7 +34,6 @@ class Ipv6DSTOptsCodec : public Codec
 {
 public:
     Ipv6DSTOptsCodec() : Codec(CD_DSTOPTS_NAME) { }
-    ~Ipv6DSTOptsCodec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;

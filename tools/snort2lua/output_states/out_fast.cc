@@ -32,8 +32,7 @@ class AlertFast : public ConversionState
 {
 public:
     AlertFast(Converter& c) : ConversionState(c) { }
-    virtual ~AlertFast() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 
@@ -52,7 +51,7 @@ bool AlertFast::convert(std::istringstream& data_stream)
     if (!(data_stream >> keyword))
         return retval;
 
-    if (!keyword.compare("packet"))
+    if (keyword == "packet")
     {
         retval = table_api.add_option("packet", true) && retval;
 

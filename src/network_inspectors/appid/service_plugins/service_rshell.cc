@@ -73,9 +73,6 @@ RshellServiceDetector::RshellServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-RshellServiceDetector::~RshellServiceDetector()
-{
-}
 
 static void rshell_free_state(void* data)
 {

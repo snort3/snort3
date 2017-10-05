@@ -43,7 +43,7 @@ struct Packet;
 class DataEvent
 {
 public:
-    virtual ~DataEvent() { }
+    virtual ~DataEvent() = default;
 
     virtual const Packet* get_packet()
     { return nullptr; }
@@ -55,18 +55,18 @@ public:
     { return get_data(len); }
 
 protected:
-    DataEvent() { }
+    DataEvent() = default;
 };
 
 class DataHandler
 {
 public:
-    virtual ~DataHandler() { }
+    virtual ~DataHandler() = default;
 
     virtual void handle(DataEvent&, Flow*) { }
 
 protected:
-    DataHandler() { }
+    DataHandler() = default;
 };
 
 class SO_PUBLIC DataBus

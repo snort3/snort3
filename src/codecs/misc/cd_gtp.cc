@@ -56,7 +56,6 @@ class GtpCodec : public Codec
 {
 public:
     GtpCodec() : Codec(CD_GTP_NAME) { }
-    ~GtpCodec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;

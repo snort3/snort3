@@ -59,7 +59,7 @@
 #define TCP_MAXSEG    0x02    /* set maximum segment size */
 #define SOL_TCP        6    /* TCP level */
 
-#define GET_PKT_SEQ(p) (ntohl(p->ptrs.tcph->th_seq))
+#define GET_PKT_SEQ(p) (ntohl((p)->ptrs.tcph->th_seq))
 
 namespace tcp
 {

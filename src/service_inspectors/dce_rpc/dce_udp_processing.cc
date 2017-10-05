@@ -81,12 +81,12 @@ struct DCE2_ClActTracker
  * Private function prototypes
  ********************************************************************/
 static DCE2_Ret DCE2_ClHdrChecks(DCE2_SsnData*, const DceRpcClHdr*);
-static DCE2_ClActTracker* DCE2_ClGetActTracker(DCE2_ClTracker*, DceRpcClHdr*);
-static DCE2_ClActTracker* DCE2_ClInsertActTracker(DCE2_ClTracker*, DceRpcClHdr*);
-static void DCE2_ClRequest(DCE2_SsnData*, DCE2_ClActTracker*, DceRpcClHdr*,
+static DCE2_ClActTracker* DCE2_ClGetActTracker(DCE2_ClTracker*, const DceRpcClHdr*);
+static DCE2_ClActTracker* DCE2_ClInsertActTracker(DCE2_ClTracker*, const DceRpcClHdr*);
+static void DCE2_ClRequest(DCE2_SsnData*, DCE2_ClActTracker*, const DceRpcClHdr*,
     const uint8_t*, uint16_t);
 static void DCE2_ClHandleFrag(DCE2_SsnData*, DCE2_ClActTracker*,
-    DceRpcClHdr*, const uint8_t*, uint16_t);
+    const DceRpcClHdr*, const uint8_t*, uint16_t);
 static void DCE2_ClFragReassemble(DCE2_SsnData*, DCE2_ClActTracker*, const DceRpcClHdr*);
 static void DCE2_ClResetFragTracker(DCE2_ClFragTracker*);
 static void DCE2_ClSetRdata(DCE2_ClActTracker*, const DceRpcClHdr*, uint8_t*, uint16_t);
@@ -102,7 +102,7 @@ static void DCE2_ClFragDataFree(void*);
 // along to client or server handling.
 void DCE2_ClProcess(DCE2_SsnData* sd, DCE2_ClTracker* clt)
 {
-    DceRpcClHdr* cl_hdr;
+    const DceRpcClHdr* cl_hdr;
     DCE2_ClActTracker* at;
     const uint8_t* data_ptr = sd->wire_pkt->data;
     uint16_t data_len = sd->wire_pkt->dsize;
@@ -115,7 +115,7 @@ void DCE2_ClProcess(DCE2_SsnData* sd, DCE2_ClTracker* clt)
         return;
     }
 
-    cl_hdr = (DceRpcClHdr*)data_ptr;
+    cl_hdr = (const DceRpcClHdr*)data_ptr;
 
     DCE2_MOVE(data_ptr, data_len, sizeof(DceRpcClHdr));
 
@@ -252,7 +252,7 @@ static DCE2_Ret DCE2_ClHdrChecks(DCE2_SsnData*, const DceRpcClHdr* cl_hdr)
 
 // Searches for activity tracker in list using activity UUID in
 // packet.
-static DCE2_ClActTracker* DCE2_ClGetActTracker(DCE2_ClTracker* clt, DceRpcClHdr* cl_hdr)
+static DCE2_ClActTracker* DCE2_ClGetActTracker(DCE2_ClTracker* clt, const DceRpcClHdr* cl_hdr)
 {
     DCE2_ClActTracker* at = nullptr;
 
@@ -284,7 +284,7 @@ static DCE2_ClActTracker* DCE2_ClGetActTracker(DCE2_ClTracker* clt, DceRpcClHdr*
     return at;
 }
 
-static DCE2_ClActTracker* DCE2_ClInsertActTracker(DCE2_ClTracker* clt, DceRpcClHdr* cl_hdr)
+static DCE2_ClActTracker* DCE2_ClInsertActTracker(DCE2_ClTracker* clt, const DceRpcClHdr* cl_hdr)
 {
     Uuid* uuid = (Uuid*)snort_calloc(sizeof(Uuid));
     DCE2_ClActTracker* at = (DCE2_ClActTracker*)snort_calloc(sizeof(DCE2_ClActTracker));
@@ -303,7 +303,7 @@ static DCE2_ClActTracker* DCE2_ClInsertActTracker(DCE2_ClTracker* clt, DceRpcClH
     return at;
 }
 
-static void DCE2_ClRequest(DCE2_SsnData* sd, DCE2_ClActTracker* at, DceRpcClHdr* cl_hdr,
+static void DCE2_ClRequest(DCE2_SsnData* sd, DCE2_ClActTracker* at, const DceRpcClHdr* cl_hdr,
     const uint8_t* data_ptr, uint16_t data_len)
 {
     const uint32_t seq_num = DceRpcClSeqNum(cl_hdr);
@@ -364,7 +364,7 @@ static void DCE2_ClRequest(DCE2_SsnData* sd, DCE2_ClActTracker* at, DceRpcClHdr*
     DCE2_CopyUuid(&sd->ropts.iface, DceRpcClIface(cl_hdr), DceRpcClByteOrder(cl_hdr));
     sd->ropts.iface_vers = DceRpcClIfaceVers(cl_hdr);
     sd->ropts.opnum = DceRpcClOpnum(cl_hdr);
-    sd->ropts.stub_data = (uint8_t*)cl_hdr + sizeof(DceRpcClHdr);
+    sd->ropts.stub_data = (const uint8_t*)cl_hdr + sizeof(DceRpcClHdr);
     DceEndianness* endianness = (DceEndianness*)sd->wire_pkt->endianness;
     endianness->hdr_byte_order = DceRpcClByteOrder(cl_hdr);
     endianness->data_byte_order = DceRpcClByteOrder(cl_hdr);
@@ -394,7 +394,7 @@ static void DCE2_ClActKeyFree(void* key)
 // Handles connectionless fragments.  Creates a new fragment list
 // if necessary and inserts fragment into list.  Sets rule option
 // values based on the fragment.
-static void DCE2_ClHandleFrag(DCE2_SsnData* sd, DCE2_ClActTracker* at, DceRpcClHdr* cl_hdr,
+static void DCE2_ClHandleFrag(DCE2_SsnData* sd, DCE2_ClActTracker* at, const DceRpcClHdr* cl_hdr,
     const uint8_t* data_ptr, uint16_t data_len)
 {
     DCE2_ClFragTracker* ft = &at->frag_tracker;
@@ -515,7 +515,7 @@ static void DCE2_ClHandleFrag(DCE2_SsnData* sd, DCE2_ClActTracker* at, DceRpcClH
     else
         sd->ropts.opnum = DceRpcClOpnum(cl_hdr);
 
-    sd->ropts.stub_data = (uint8_t*)cl_hdr + sizeof(DceRpcClHdr);
+    sd->ropts.stub_data = (const uint8_t*)cl_hdr + sizeof(DceRpcClHdr);
 
     DCE2_Detect(sd);
 }
@@ -559,7 +559,7 @@ static void DCE2_ClFragReassemble(
 {
     uint8_t dce2_cl_rbuf[IP_MAXPACKET];
     DCE2_ClFragTracker* ft = &at->frag_tracker;
-    uint8_t* rdata = dce2_cl_rbuf;
+    const uint8_t* rdata = dce2_cl_rbuf;
     uint16_t rlen = sizeof(dce2_cl_rbuf);
     DCE2_ClFragNode* fnode;
     uint32_t stub_len = 0;
@@ -578,7 +578,7 @@ static void DCE2_ClFragReassemble(
             break;
         }
 
-        memcpy(rdata, fnode->frag_data, fnode->frag_len);
+        memcpy(const_cast<uint8_t*>(rdata), fnode->frag_data, fnode->frag_len);
         DCE2_MOVE(rdata, rlen, fnode->frag_len);
         stub_len += fnode->frag_len;
     }
@@ -589,7 +589,7 @@ static void DCE2_ClFragReassemble(
     if ( !rpkt )
         return;
 
-    DCE2_ClSetRdata(at, cl_hdr, (uint8_t*)rpkt->data,
+    DCE2_ClSetRdata(at, cl_hdr, const_cast<uint8_t*>(rpkt->data),
         (uint16_t)(rpkt->dsize - DCE2_MOCK_HDR_LEN__CL));
 
     const uint8_t* stub_data = rpkt->data + DCE2_MOCK_HDR_LEN__CL;

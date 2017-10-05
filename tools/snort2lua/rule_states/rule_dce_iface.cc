@@ -32,8 +32,7 @@ class DCEIface : public ConversionState
 {
 public:
     DCEIface(Converter& c) : ConversionState(c) { }
-    virtual ~DCEIface() { }
-    virtual bool convert(std::istringstream& data);
+    bool convert(std::istringstream& data) override;
 };
 } // namespace
 

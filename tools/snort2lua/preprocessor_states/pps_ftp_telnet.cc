@@ -32,16 +32,15 @@ class FtpTelnet : public ConversionState
 {
 public:
     FtpTelnet(Converter& c) : ConversionState(c) { }
-    virtual ~FtpTelnet() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 
 private:
-    bool add_ftp_n_telnet_option(std::string opt_name, bool val);
-    void add_ftp_n_telnet_deprecated(std::istringstream&, std::string opt_name);
+    bool add_ftp_n_telnet_option(const std::string& opt_name, bool val);
+    void add_ftp_n_telnet_deprecated(std::istringstream&, const std::string& opt_name);
 };
 } // namespace
 
-bool FtpTelnet::add_ftp_n_telnet_option(std::string opt_name, bool val)
+bool FtpTelnet::add_ftp_n_telnet_option(const std::string& opt_name, bool val)
 {
     bool retval;
 
@@ -55,7 +54,7 @@ bool FtpTelnet::add_ftp_n_telnet_option(std::string opt_name, bool val)
 }
 
 void FtpTelnet::add_ftp_n_telnet_deprecated(std::istringstream& data_stream,
-    std::string opt_name)
+    const std::string& opt_name)
 {
     std::string tmp;
     data_stream >> tmp;  // eat the next word
@@ -78,7 +77,7 @@ bool FtpTelnet::convert(std::istringstream& data_stream)
 
     if (data_stream >> keyword)
     {
-        if (keyword.compare("global"))
+        if (keyword != "global")
         {
             data_api.failed_conversion(data_stream, "'global' keyword required");
             return false;
@@ -89,20 +88,20 @@ bool FtpTelnet::convert(std::istringstream& data_stream)
     {
         bool tmpval = true;
 
-        if (!keyword.compare("check_encrypted"))
+        if (keyword == "check_encrypted")
             tmpval = add_ftp_n_telnet_option("check_encrypted", true);
 
-        else if (!keyword.compare("inspection_type"))
+        else if (keyword == "inspection_type")
             add_ftp_n_telnet_deprecated(data_stream, "inspection_type");
 
-        else if (!keyword.compare("memcap"))
+        else if (keyword == "memcap")
             add_ftp_n_telnet_deprecated(data_stream, "memcap");
 
-        else if (!keyword.compare("encrypted_traffic"))
+        else if (keyword == "encrypted_traffic")
         {
             data_stream >> s_value;
 
-            if (!s_value.compare("yes"))
+            if (s_value == "yes")
                 tmpval = add_ftp_n_telnet_option("encrypted_traffic", true);
             else
                 tmpval = add_ftp_n_telnet_option("encrypted_traffic", false);

@@ -424,7 +424,6 @@ void UserSession::restart(Packet* p)
 
 UserSession::UserSession(Flow* flow) : Session(flow) { }
 
-UserSession::~UserSession() { }
 
 bool UserSession::setup(Packet*)
 {

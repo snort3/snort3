@@ -52,7 +52,7 @@ class StreamIcmp : public Inspector
 {
 public:
     StreamIcmp(StreamIcmpConfig*);
-    ~StreamIcmp();
+    ~StreamIcmp() override;
 
     void show(SnortConfig*) override;
     NORETURN_ASSERT void eval(Packet*) override;

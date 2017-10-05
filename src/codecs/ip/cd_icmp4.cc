@@ -103,7 +103,6 @@ class Icmp4Codec : public Codec
 {
 public:
     Icmp4Codec() : Codec(CD_ICMP4_NAME) { }
-    ~Icmp4Codec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>&) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
@@ -179,7 +178,7 @@ bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,DecodeData& snort)
 
     if (SnortConfig::icmp_checksums())
     {
-        uint16_t csum = checksum::cksum_add((uint16_t*)icmph, raw.len);
+        uint16_t csum = checksum::cksum_add((const uint16_t*)icmph, raw.len);
 
         if (csum && !codec.is_cooked())
         {

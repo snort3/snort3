@@ -50,7 +50,7 @@ static THREAD_LOCAL SimpleStats fdstats;
 //-------------------------------------------------------------------------
 
 static void FTPDataProcess(
-    Packet* p, FTP_DATA_SESSION* data_ssn, uint8_t* file_data, uint16_t data_length)
+    Packet* p, FTP_DATA_SESSION* data_ssn, const uint8_t* file_data, uint16_t data_length)
 {
     int status;
 
@@ -82,7 +82,7 @@ static void FTPDataProcess(
         FtpFlowData* fd = (FtpFlowData*)Stream::get_flow_data(
                             &data_ssn->ftp_key, FtpFlowData::inspector_id);
 
-        FTP_SESSION* ftp_ssn = fd ? &fd->session : NULL;
+        FTP_SESSION* ftp_ssn = fd ? &fd->session : nullptr;
 
         if (PROTO_IS_FTP(ftp_ssn))
             ftp_ssn->flags |= FTP_FLG_MALWARE;
@@ -128,7 +128,7 @@ static int SnortFTPData(Packet* p)
         FtpFlowData* ffd = (FtpFlowData*)Stream::get_flow_data(
             &data_ssn->ftp_key, FtpFlowData::inspector_id);
 
-        FTP_SESSION* ftp_ssn = ffd ? &ffd->session : NULL;
+        FTP_SESSION* ftp_ssn = ffd ? &ffd->session : nullptr;
 
         if (!PROTO_IS_FTP(ftp_ssn))
         {
@@ -160,7 +160,7 @@ static int SnortFTPData(Packet* p)
             data_ssn->file_xfer_info = ftp_ssn->file_xfer_info;
             ftp_ssn->file_xfer_info  = 0;
             data_ssn->filename  = ftp_ssn->filename;
-            ftp_ssn->filename   = NULL;
+            ftp_ssn->filename   = nullptr;
             break;
         }
     }
@@ -177,7 +177,7 @@ static int SnortFTPData(Packet* p)
         initFilePosition(&data_ssn->position, get_file_processed_size(p->flow));
     }
 
-    FTPDataProcess(p, data_ssn, (uint8_t*)p->data, p->dsize);
+    FTPDataProcess(p, data_ssn, p->data, p->dsize);
     return 0;
 }
 
@@ -232,8 +232,7 @@ void FtpDataFlowData::handle_eof(Packet* p)
 class FtpData : public Inspector
 {
 public:
-    FtpData() { }
-    ~FtpData() { }
+    FtpData() = default;
 
     void eval(Packet*) override;
     StreamSplitter* get_splitter(bool to_server) override;

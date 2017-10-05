@@ -27,7 +27,7 @@ class SO_PUBLIC Endianness
 {
 public:
     Endianness() = default;
-    virtual ~Endianness() { }
+    virtual ~Endianness() = default;
     virtual bool get_offset_endianness(int32_t offset, uint8_t& endian) = 0;
 };
 

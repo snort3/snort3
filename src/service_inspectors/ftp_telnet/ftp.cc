@@ -127,7 +127,7 @@ static int snort_ftp(Packet* p)
 {
     FTPP_SI_INPUT SiInput;
     int iInspectMode = FTPP_SI_NO_MODE;
-    FTP_TELNET_SESSION* ft_ssn = NULL;
+    FTP_TELNET_SESSION* ft_ssn = nullptr;
 
     /*
      * Set up the FTPP_SI_INPUT pointer.  This is what the session_inspection()
@@ -141,7 +141,7 @@ static int snort_ftp(Packet* p)
         FtpFlowData* fd = (FtpFlowData*)p->flow->get_flow_data(FtpFlowData::inspector_id);
         ft_ssn = fd ? &fd->session.ft_ssn : nullptr;
 
-        if (ft_ssn != NULL)
+        if (ft_ssn != nullptr)
         {
             SiInput.pproto = ft_ssn->proto;
 
@@ -177,7 +177,7 @@ static int snort_ftp(Packet* p)
         }
     }
 
-    if (ft_ssn == NULL)
+    if (ft_ssn == nullptr)
     {
         SiInput.pproto = FTPP_SI_PROTO_UNKNOWN;
         iInspectMode = FTPP_SI_NO_MODE;
@@ -188,7 +188,7 @@ static int snort_ftp(Packet* p)
             return FTPP_INVALID_PROTO;
     }
 
-    if (ft_ssn != NULL)
+    if (ft_ssn != nullptr)
     {
         switch (SiInput.pproto)
         {
@@ -238,7 +238,7 @@ static int ProcessFTPDataChanCmdsList(
     FTP_CMD_CONF* FTPCmd =
         ftp_cmd_lookup_find(ServerConf->cmd_lookup, cmd, strlen(cmd), &iRet);
 
-    if (FTPCmd == NULL)
+    if (FTPCmd == nullptr)
     {
         /* Add it to the list */
         // note that struct includes 1 byte for null, so just add len
@@ -319,7 +319,7 @@ class FtpServer : public Inspector
 {
 public:
     FtpServer(FTP_SERVER_PROTO_CONF*);
-    ~FtpServer();
+    ~FtpServer() override;
 
     bool configure(SnortConfig*) override;
     void show(SnortConfig*) override;
@@ -410,7 +410,7 @@ static Inspector* fc_ctor(Module* m)
     while ( const BounceTo* bt = mod->get_bounce(i++) )
     {
         ProcessFTPAllowBounce(
-            gc, (uint8_t*)bt->address.c_str(), bt->address.size(), bt->low, bt->high);
+            gc, (const uint8_t*)bt->address.c_str(), bt->address.size(), bt->low, bt->high);
     }
     return new FtpClient(gc);
 }

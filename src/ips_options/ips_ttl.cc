@@ -73,7 +73,7 @@ bool TtlOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    TtlOption& rhs = (TtlOption&)ips;
+    const TtlOption& rhs = (const TtlOption&)ips;
     return ( config == rhs.config );
 }
 

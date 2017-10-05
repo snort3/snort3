@@ -45,7 +45,7 @@ bool Debug::enabled(uint64_t flag)
 
         mask = (p ? strtoul(p, nullptr, 0) : 0);
         mask <<= 32;
-        mask |= (b ? strtoul(b, NULL, 0) : 0);
+        mask |= (b ? strtoul(b, nullptr, 0) : 0);
 
         init = true;
     }

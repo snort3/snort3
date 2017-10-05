@@ -59,7 +59,7 @@ DataApi::~DataApi()
 std::string DataApi::translate_variable(const std::string& var_name)
 {
     for (auto v : vars)
-        if (!var_name.compare(v->get_name()))
+        if (var_name == v->get_name())
             return v->get_value(this);
 
     return std::string();
@@ -143,7 +143,7 @@ std::string DataApi::expand_vars(const std::string& string)
 
                 i = iv;
 
-                varcontents = NULL;
+                varcontents = nullptr;
 
                 std::memset((char*)varname, 0, sizeof(varname));
                 std::memset((char*)varaux, 0, sizeof(varaux));
@@ -257,14 +257,14 @@ void DataApi::failed_conversion(const std::istringstream& stream, const std::str
         curr_data_bad = true;
         errors_count++;
     }
-    if ( unknown_option.size() )
+    if ( !unknown_option.empty() )
         errors->add_text("^^^^ unknown_syntax=" + unknown_option);
 }
 
-bool DataApi::add_variable(std::string name, std::string value)
+bool DataApi::add_variable(const std::string& name, const std::string& value)
 {
     for (auto v : vars)
-        if (!name.compare(v->get_name()))
+        if (name == v->get_name())
             return v->add_value(value);
 
     Variable* var = new Variable(name);
@@ -277,7 +277,7 @@ void DataApi::reset_state()
     curr_data_bad = false;
 }
 
-bool DataApi::add_include_file(std::string file_name)
+bool DataApi::add_include_file(const std::string& file_name)
 {
     Include* incl = new Include(file_name);
 
@@ -296,10 +296,10 @@ void DataApi::developer_error(const std::string& error_string)
         std::cout << "RUNTIME ERROR: " << error_string << std::endl;
 }
 
-void DataApi::add_comment(std::string c)
+void DataApi::add_comment(const std::string& c)
 { comments->add_text(c); }
 
-void DataApi::add_unsupported_comment(std::string c)
+void DataApi::add_unsupported_comment(const std::string& c)
 { unsupported->add_text(c); }
 
 void DataApi::print_errors(std::ostream& out)

@@ -111,7 +111,7 @@ public:
 
     void open() override;
     void close() override;
-    virtual void log(Packet*, const char*, Event*) override;
+    void log(Packet*, const char*, Event*) override;
 
 public:
     std::string file;
@@ -137,7 +137,7 @@ void CodecLogger::log(Packet* p, const char* msg, Event* e)
 {
     TextLog_Print(test_file, "pkt:" STDu64 "\t", pc.total_from_daq);
 
-    if (e != NULL)
+    if (e != nullptr)
     {
         TextLog_Print(test_file, "    gid:%u    sid:%u    rev:%u\t",
             e->sig_info->gid, e->sig_info->sid, e->sig_info->rev);
@@ -145,7 +145,7 @@ void CodecLogger::log(Packet* p, const char* msg, Event* e)
 
     if (flags & ALERT_FLAG_MSG)
     {
-        if (msg != NULL)
+        if (msg != nullptr)
             TextLog_Print(test_file, "%s\t", msg);
     }
 

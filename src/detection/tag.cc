@@ -167,7 +167,7 @@ static TagNode* TagAlloc(
     SFXHASH* hash
     )
 {
-    TagNode* tag_node = NULL;
+    TagNode* tag_node = nullptr;
 
     if (tag_memory_usage + memory_per_node(hash) > TAG_MEMCAP)
     {
@@ -190,7 +190,7 @@ static TagNode* TagAlloc(
 
             /* unlikely to happen since memcap has been reached */
             if (pruned_nodes == 0)
-                return NULL;
+                return nullptr;
         }
     }
 
@@ -211,7 +211,7 @@ static void TagFree(
     TagNode* node
     )
 {
-    if (node == NULL)
+    if (node == nullptr)
         return;
 
     if ( node->metric & TAG_METRIC_SESSION )
@@ -272,7 +272,7 @@ void InitTag()
         0,                                  /* size of the storage node */
         0,                                  /* disable memcap*/
         0,                                  /* use auto node recovery */
-        NULL,                               /* anr free function */
+        nullptr,                               /* anr free function */
         TagFreeSessionNodeFunc,             /* user free function */
         0);                                 /* recycle node flag */
 
@@ -282,7 +282,7 @@ void InitTag()
         0,                           /* size of the storage node */
         0,                           /* disable memcap*/
         0,                           /* use auto node recovery */
-        NULL,                        /* anr free function */
+        nullptr,                        /* anr free function */
         TagFreeHostNodeFunc,         /* user free function */
         0);                          /* recycle node flag */
 }
@@ -334,7 +334,7 @@ static void AddTagNode(Packet* p, TagData* tag, int mode, uint32_t now,
 {
     TagNode* idx;  /* index pointer */
     TagNode* returned;
-    SFXHASH* tag_cache_ptr = NULL;
+    SFXHASH* tag_cache_ptr = nullptr;
 
     DebugMessage(DEBUG_FLOW, "Adding new Tag Head\n");
 
@@ -363,7 +363,7 @@ static void AddTagNode(Packet* p, TagData* tag, int mode, uint32_t now,
 
     /* If a TagNode couldn't be allocated, just write an error message
      * and return - won't be able to track this one. */
-    if (idx == NULL)
+    if (idx == nullptr)
     {
         ErrorMessage("AddTagNode(): Unable to allocate %u bytes of memory for new TagNode\n",
             (unsigned)sizeof(TagNode));
@@ -404,7 +404,7 @@ static void AddTagNode(Packet* p, TagData* tag, int mode, uint32_t now,
     /* check for duplicates */
     returned = (TagNode*)sfxhash_find(tag_cache_ptr, idx);
 
-    if (returned == NULL)
+    if (returned == nullptr)
     {
         DebugMessage(DEBUG_FLOW,"Looking the other way!!\n");
         SwapTag(idx);
@@ -412,7 +412,7 @@ static void AddTagNode(Packet* p, TagData* tag, int mode, uint32_t now,
         SwapTag(idx);
     }
 
-    if (returned == NULL)
+    if (returned == nullptr)
     {
         DebugMessage(DEBUG_FLOW,"Inserting a New Tag!\n");
 
@@ -449,8 +449,8 @@ static void AddTagNode(Packet* p, TagData* tag, int mode, uint32_t now,
 int CheckTagList(Packet* p, Event& event, void** log_list)
 {
     TagNode idx;
-    TagNode* returned = NULL;
-    SFXHASH* taglist = NULL;
+    TagNode* returned = nullptr;
+    SFXHASH* taglist = nullptr;
     char create_event = 1;
 
     /* check for active tags */
@@ -459,7 +459,7 @@ int CheckTagList(Packet* p, Event& event, void** log_list)
         return 0;
     }
 
-    if(p == NULL || !p->ptrs.ip_api.is_ip())
+    if(p == nullptr || !p->ptrs.ip_api.is_ip())
     {
         DebugMessage(DEBUG_FLOW, "bailing from CheckTagList, p->iph == NULL\n");
         return 0;
@@ -478,7 +478,7 @@ int CheckTagList(Packet* p, Event& event, void** log_list)
     /* check for session tags... */
     returned = (TagNode*)sfxhash_find(ssn_tag_cache_ptr, &idx);
 
-    if (returned == NULL)
+    if (returned == nullptr)
     {
         idx.key.dip.set(*p->ptrs.ip_api.get_src());
         idx.key.sip.set(*p->ptrs.ip_api.get_dst());
@@ -488,14 +488,14 @@ int CheckTagList(Packet* p, Event& event, void** log_list)
         DebugMessage(DEBUG_FLOW, "   Checking session tag list (reverse)...\n");
         returned = (TagNode*)sfxhash_find(ssn_tag_cache_ptr, &idx);
 
-        if (returned == NULL)
+        if (returned == nullptr)
         {
             DebugMessage(DEBUG_FLOW, "   Checking host tag list "
                 "(forward)...\n");
 
             returned = (TagNode*)sfxhash_find(host_tag_cache_ptr, &idx);
 
-            if (returned == NULL)
+            if (returned == nullptr)
             {
                 /*
                 **  Only switch sip, because that's all we check for
@@ -506,7 +506,7 @@ int CheckTagList(Packet* p, Event& event, void** log_list)
                 returned = (TagNode*)sfxhash_find(host_tag_cache_ptr, &idx);
             }
 
-            if (returned != NULL)
+            if (returned != nullptr)
             {
                 DebugMessage(DEBUG_FLOW,"   [*!*] Found host node\n");
                 taglist = host_tag_cache_ptr;
@@ -524,7 +524,7 @@ int CheckTagList(Packet* p, Event& event, void** log_list)
         taglist = ssn_tag_cache_ptr;
     }
 
-    if (returned != NULL)
+    if (returned != nullptr)
     {
         DebugMessage(DEBUG_FLOW, "    ! Found tag node !\n");
 
@@ -628,12 +628,12 @@ static int PruneTagCache(uint32_t thetime, int mustdie)
     }
     else
     {
-        TagNode* lru_node = NULL;
+        TagNode* lru_node = nullptr;
 
         while (pruned < mustdie &&
             (sfxhash_count(ssn_tag_cache_ptr) > 0 || sfxhash_count(host_tag_cache_ptr) > 0))
         {
-            if ((lru_node = (TagNode*)sfxhash_lru(ssn_tag_cache_ptr)) != NULL)
+            if ((lru_node = (TagNode*)sfxhash_lru(ssn_tag_cache_ptr)) != nullptr)
             {
                 if (sfxhash_remove(ssn_tag_cache_ptr, lru_node) != SFXHASH_OK)
                 {
@@ -641,7 +641,7 @@ static int PruneTagCache(uint32_t thetime, int mustdie)
                 }
                 pruned++;
             }
-            if ((lru_node = (TagNode*)sfxhash_lru(host_tag_cache_ptr)) != NULL)
+            if ((lru_node = (TagNode*)sfxhash_lru(host_tag_cache_ptr)) != nullptr)
             {
                 if (sfxhash_remove(host_tag_cache_ptr, lru_node) != SFXHASH_OK)
                 {
@@ -658,9 +658,9 @@ static int PruneTagCache(uint32_t thetime, int mustdie)
 static int PruneTime(SFXHASH* tree, uint32_t thetime)
 {
     int pruned = 0;
-    TagNode* lru_node = NULL;
+    TagNode* lru_node = nullptr;
 
-    while ((lru_node = (TagNode*)sfxhash_lru(tree)) != NULL)
+    while ((lru_node = (TagNode*)sfxhash_lru(tree)) != nullptr)
     {
         if ((lru_node->last_access + TAG_PRUNE_QUANTUM) < thetime)
         {
@@ -683,12 +683,12 @@ void SetTags(Packet* p, const OptTreeNode* otn, uint16_t event_id)
 {
     DebugMessage(DEBUG_FLOW, "Setting tags\n");
 
-    if (otn != NULL && otn->tag != NULL)
+    if (otn != nullptr && otn->tag != nullptr)
     {
         if (otn->tag->tag_type != 0)
         {
             RuleTreeNode* rtn = getRuntimeRtnFromOtn(otn);
-            void* log_list = rtn ? rtn->listhead : NULL;
+            void* log_list = rtn ? rtn->listhead : nullptr;
 
             switch (otn->tag->tag_type)
             {

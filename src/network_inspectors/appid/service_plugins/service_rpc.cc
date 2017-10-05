@@ -301,7 +301,7 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, int 
             rd->once = 1;
             if (size < sizeof(ServiceRPC))
                 return APPID_NOMATCH;
-            rpc = (ServiceRPC*)data;
+            rpc = (const ServiceRPC*)data;
             if (ntohl(rpc->type) == RPC_TYPE_REPLY)
             {
                 asd->set_session_flags(APPID_SESSION_UDP_REVERSED);
@@ -323,7 +323,7 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, int 
         rd->state = RPC_STATE_DONE;
         if (size < sizeof(ServiceRPCCall))
             return APPID_NOT_COMPATIBLE;
-        call = (ServiceRPCCall*)data;
+        call = (const ServiceRPCCall*)data;
         if (ntohl(call->header.type) != RPC_TYPE_CALL)
             return APPID_NOT_COMPATIBLE;
         if (ntohl(call->version) != 2)
@@ -334,7 +334,7 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, int 
         if (sizeof(ServiceRPCCall)+tmp > size)
             return APPID_NOT_COMPATIBLE;
         data += (sizeof(ServiceRPCCall) - sizeof(ServiceRPCAuth)) + tmp;
-        a = (ServiceRPCAuth*)data;
+        a = (const ServiceRPCAuth*)data;
         tmp = ntohl(a->length);
         if (tmp+sizeof(ServiceRPCAuth) > (unsigned)(end-data))
             return APPID_NOT_COMPATIBLE;
@@ -349,7 +349,7 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, int 
             case RPC_PORTMAP_GETPORT:
                 if (end-data < (int)sizeof(ServiceRPCPortmap))
                     return APPID_NOT_COMPATIBLE;
-                pm = (ServiceRPCPortmap*)data;
+                pm = (const ServiceRPCPortmap*)data;
                 rd->proto = pm->proto;
                 break;
             default:
@@ -368,7 +368,7 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, int 
         rd->state = RPC_STATE_DONE;
         if (size < sizeof(ServiceRPCReply))
             return APPID_NOMATCH;
-        reply = (ServiceRPCReply*)data;
+        reply = (const ServiceRPCReply*)data;
         if (ntohl(reply->header.type) != RPC_TYPE_REPLY)
             return APPID_NOMATCH;
         if (rd->xid != reply->header.xid && rd->xid != 0xFFFFFFFF)
@@ -397,7 +397,7 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, int 
                 case RPC_PORTMAP_GETPORT:
                     if (end-data < (int)sizeof(ServiceRPCPortmapReply))
                         return APPID_NOMATCH;
-                    pmr = (ServiceRPCPortmapReply*)data;
+                    pmr = (const ServiceRPCPortmapReply*)data;
                     if (pmr->port)
                     {
                         const SfIp* dip = pkt->ptrs.ip_api.get_dst();
@@ -590,7 +590,7 @@ int RpcServiceDetector::rpc_tcp_validate(AppIdDiscoveryArgs& args)
         case RPC_TCP_STATE_FRAG:
             if (size < sizeof(ServiceRPCFragment))
                 goto bail;
-            frag = (ServiceRPCFragment*)data;
+            frag = (const ServiceRPCFragment*)data;
             data += sizeof(ServiceRPCFragment);
             size -= sizeof(ServiceRPCFragment);
 

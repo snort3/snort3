@@ -48,7 +48,7 @@ struct LogApi;
 class SO_PUBLIC Logger
 {
 public:
-    virtual ~Logger() { }
+    virtual ~Logger() = default;
 
     virtual void open() { }
     virtual void close() { }
@@ -64,7 +64,7 @@ public:
     { return api; }
 
 protected:
-    Logger() { }
+    Logger() = default;
 
 private:
     const LogApi* api;

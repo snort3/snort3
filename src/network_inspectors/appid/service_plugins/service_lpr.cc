@@ -79,9 +79,6 @@ LprServiceDetector::LprServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-LprServiceDetector::~LprServiceDetector()
-{
-}
 
 int LprServiceDetector::validate(AppIdDiscoveryArgs& args)
 {

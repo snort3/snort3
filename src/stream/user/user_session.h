@@ -75,7 +75,6 @@ class UserSession : public Session
 {
 public:
     UserSession(Flow*);
-    ~UserSession();
 
     bool setup(Packet*) override;
     void clear() override;

@@ -30,7 +30,6 @@ class TcpStateCloseWait : public TcpStateHandler
 {
 public:
     TcpStateCloseWait(TcpStateMachine&);
-    virtual ~TcpStateCloseWait();
 
     bool syn_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool syn_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;

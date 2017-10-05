@@ -28,8 +28,8 @@
 
 struct SFHASHFCN;
 
-#define SFGHASH_NOMEM    -2
-#define SFGHASH_ERR      -1
+#define SFGHASH_NOMEM    (-2)
+#define SFGHASH_ERR      (-1)
 #define SFGHASH_OK        0
 #define SFGHASH_INTABLE   1
 
@@ -72,7 +72,7 @@ SO_PUBLIC void* sfghash_find(SFGHASH*, const void* const key);
 SO_PUBLIC SFGHASH_NODE* sfghash_findfirst(SFGHASH*);
 SO_PUBLIC SFGHASH_NODE* sfghash_findnext(SFGHASH*);
 SO_PUBLIC int sfghash_set_keyops(SFGHASH*,
-    unsigned (* hash_fcn)(SFHASHFCN* p, unsigned char* d, int n),
+    unsigned (* hash_fcn)(SFHASHFCN* p, const unsigned char* d, int n),
     int (* keycmp_fcn)(const void* s1, const void* s2, size_t n));
 
 #endif

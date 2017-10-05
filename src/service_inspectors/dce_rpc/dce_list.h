@@ -165,10 +165,10 @@ inline bool DCE2_ListIsEmpty(DCE2_List* list)
 inline bool DCE2_QueueIsEmpty(DCE2_Queue* queue)
 {
     if (queue == nullptr)
-        return 1;
+        return true;
     if (queue->num_nodes == 0)
-        return 1;
-    return 0;
+        return true;
+    return false;
 }
 
 #endif

@@ -84,7 +84,7 @@ bool SizeOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    const SizeOption& rhs = (SizeOption&)ips;
+    const SizeOption& rhs = (const SizeOption&)ips;
 
     if ( (direction == rhs.direction) && (ssod == rhs.ssod) )
         return true;

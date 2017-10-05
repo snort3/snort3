@@ -33,7 +33,6 @@ class SmtpClientDetector : public ClientDetector
 {
 public:
     SmtpClientDetector(ClientDiscovery*);
-    ~SmtpClientDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
     SMTPDetectorData* get_common_data(AppIdSession*);
@@ -50,7 +49,6 @@ class SmtpServiceDetector : public ServiceDetector
 {
 public:
     SmtpServiceDetector(ServiceDiscovery*);
-    ~SmtpServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

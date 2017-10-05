@@ -97,7 +97,7 @@ struct ReactData
     char* resp_buf;      // response to send
 };
 
-static char* s_page = NULL;
+static char* s_page = nullptr;
 
 class ReactAction : public IpsAction
 {
@@ -105,7 +105,7 @@ public:
     ReactAction(ReactData* c) : IpsAction(s_name, ACT_PROXY)
     { config = c; }
 
-    ~ReactAction();
+    ~ReactAction() override;
 
     void exec(Packet*) override;
 

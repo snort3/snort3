@@ -33,7 +33,7 @@ struct GTP_IEData
 
 struct GTPMsg
 {
-    uint8_t* gtp_header;
+    const uint8_t* gtp_header;
     GTP_IEData* info_elements;
 
     uint16_t msg_length;

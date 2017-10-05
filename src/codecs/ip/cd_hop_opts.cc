@@ -34,7 +34,6 @@ class Ipv6HopOptsCodec : public Codec
 {
 public:
     Ipv6HopOptsCodec() : Codec(CD_HOPOPTS_NAME) { }
-    ~Ipv6HopOptsCodec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;

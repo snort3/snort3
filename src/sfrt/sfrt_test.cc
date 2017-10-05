@@ -82,7 +82,7 @@ static void test_sfrt_remove_after_insert()
         SfCidr ip;
         SfIp ip2;
         int val;
-        int* result = NULL;
+        int* result = nullptr;
 
         IP_entry* ip_entry =  &(ip_lists[index]);
         /*Parse IP*/

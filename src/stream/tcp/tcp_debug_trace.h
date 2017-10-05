@@ -27,8 +27,8 @@
 #ifndef REG_TEST
 #define S5TraceTCP(pkt, flow, tsd, evt)
 #else
-#define LCL(p, x)    (p->x() - p->get_iss())
-#define RMT(p, x, q) (p->x - (q ? q->get_iss() : 0))
+#define LCL(p, x)    ((p)->x() - (p)->get_iss())
+#define RMT(p, x, q) ((p)->x - ((q) ? (q)->get_iss() : 0))
 
 static const char* const statext[] =
 {
@@ -105,8 +105,8 @@ inline void TraceState(const TcpStreamTracker* a, const TcpStreamTracker* b, con
 inline void TraceTCP(const Packet* p, const Flow* lws, TcpSegmentDescriptor* tsd, int event)
 {
     const TcpSession* ssn = (TcpSession*)lws->session;
-    const TcpStreamTracker* srv = ssn ? ssn->server : NULL;
-    const TcpStreamTracker* cli = ssn ? ssn->client : NULL;
+    const TcpStreamTracker* srv = ssn ? ssn->server : nullptr;
+    const TcpStreamTracker* cli = ssn ? ssn->client : nullptr;
 
     const char* cdir = "?", * sdir = "?";
     uint32_t txd = 0, rxd = 0;

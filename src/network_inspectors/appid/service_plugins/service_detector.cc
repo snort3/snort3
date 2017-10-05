@@ -85,9 +85,8 @@ int ServiceDetector::update_service_data(AppIdSession* asd, const Packet* pkt, i
     const SfIp* ip = nullptr;
 
     asd->service_detector = this;
-    // FIXIT-H - fix func prototypes to not need this (char*) type conversion from const char*
-    asd->service.set_vendor((char*)vendor);
-    asd->service.set_version((char*)version);
+    asd->service.set_vendor(vendor);
+    asd->service.set_version(version);
 
     asd->set_service_detected();
     asd->service.set_id(appId);

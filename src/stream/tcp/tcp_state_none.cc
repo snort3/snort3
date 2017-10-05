@@ -33,9 +33,6 @@ TcpStateNone::TcpStateNone(TcpStateMachine& tsm) :
 {
 }
 
-TcpStateNone::~TcpStateNone()
-{
-}
 
 bool TcpStateNone::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {

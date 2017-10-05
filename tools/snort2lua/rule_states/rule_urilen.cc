@@ -33,8 +33,7 @@ class Urilen : public ConversionState
 {
 public:
     Urilen(Converter& c) : ConversionState(c) { }
-    virtual ~Urilen() { }
-    virtual bool convert(std::istringstream& data);
+    bool convert(std::istringstream& data) override;
 };
 } // namespace
 
@@ -54,10 +53,10 @@ bool Urilen::convert(std::istringstream& data_stream)
 
         if (util::get_string(arg_stream, value, ","))
         {
-            if (!value.compare("raw"))
+            if (value == "raw")
                 rule_api.set_curr_options_buffer("http_raw_uri");
 
-            else if (!value.compare("norm"))
+            else if (value == "norm")
                 rule_api.set_curr_options_buffer("http_uri");
 
             else

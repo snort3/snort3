@@ -20,8 +20,9 @@
 #ifndef HTTP_FLOW_DATA_H
 #define HTTP_FLOW_DATA_H
 
-#include <stdio.h>
 #include <zlib.h>
+
+#include <cstdio>
 
 #include "flow/flow.h"
 #include "mime/file_mime_process.h"
@@ -40,7 +41,7 @@ class HttpFlowData : public FlowData
 {
 public:
     HttpFlowData();
-    ~HttpFlowData();
+    ~HttpFlowData() override;
     static unsigned inspector_id;
     static void init() { inspector_id = FlowData::create_flow_data_id(); }
 

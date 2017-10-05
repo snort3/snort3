@@ -88,7 +88,7 @@ class HttpModule : public Module
 {
 public:
     HttpModule() : Module(HTTP_NAME, HTTP_HELP, http_params) { }
-    ~HttpModule() { delete params; }
+    ~HttpModule() override { delete params; }
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
@@ -104,9 +104,9 @@ public:
     const PegInfo* get_pegs() const override { return peg_names; }
     PegCount* get_counts() const override { return peg_counts; }
     static void increment_peg_counts(HttpEnums::PEG_COUNT counter)
-        { peg_counts[counter]++; return; }
+        { peg_counts[counter]++; }
     static void decrement_peg_counts(HttpEnums::PEG_COUNT counter)
-        { peg_counts[counter]--; return; }
+        { peg_counts[counter]--; }
     static PegCount get_peg_counts(HttpEnums::PEG_COUNT counter)
         { return peg_counts[counter]; }
 

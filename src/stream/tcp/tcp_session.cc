@@ -573,7 +573,7 @@ bool TcpSession::handle_syn_on_reset_session(TcpSegmentDescriptor& tsd)
             tcpStats.resyns++;
             listener = server;
             talker = client;
-            listener->normalizer->ecn_tracker( (tcp::TCPHdr*)tcph, config->require_3whs() );
+            listener->normalizer->ecn_tracker( tcph, config->require_3whs() );
             flow->update_session_flags(SSNFLAG_SEEN_CLIENT);
         }
         else if (tcph->is_syn_ack())
@@ -589,7 +589,7 @@ bool TcpSession::handle_syn_on_reset_session(TcpSegmentDescriptor& tsd)
 
             listener = client;
             talker = server;
-            listener->normalizer->ecn_tracker( (tcp::TCPHdr*)tcph, config->require_3whs() );
+            listener->normalizer->ecn_tracker( tcph, config->require_3whs() );
             flow->update_session_flags(SSNFLAG_SEEN_SERVER);
         }
     }

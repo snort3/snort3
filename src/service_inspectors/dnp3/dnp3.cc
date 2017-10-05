@@ -67,10 +67,10 @@ static const uint8_t* dnp3_get_alt_buffer(Packet* p, unsigned& len)
 {
     dnp3_session_data_t* dnp3_sess = get_session_data(p->flow);
     len = 0;
-    dnp3_reassembly_data_t* rdata;
 
     if (dnp3_sess)
     {
+        dnp3_reassembly_data_t* rdata;
         /* rdata->buffer will be the alt decode buffer.
            This will be returned via the get_buf inspector API*/
 
@@ -81,9 +81,10 @@ static const uint8_t* dnp3_get_alt_buffer(Packet* p, unsigned& len)
         if (rdata->state == DNP3_REASSEMBLY_STATE__DONE)
         {
             len = rdata->buflen;
+            return (const uint8_t*)rdata->buffer;
         }
     }
-    return len ? (const uint8_t*)rdata->buffer : nullptr;
+    return nullptr;
 }
 
 static void dnp3_reset_alt_buffer(const Packet* p)
@@ -113,12 +114,12 @@ static bool dnp3_process_udp(dnp3ProtoConf& config, dnp3_session_data_t* dnp3_se
 
     while (bytes_processed < p->dsize)
     {
-        uint8_t* pdu_start;
+        const uint8_t* pdu_start;
         uint16_t user_data, num_crcs, pdu_length;
-        dnp3_link_header_t* link;
+        const dnp3_link_header_t* link;
 
-        pdu_start = (uint8_t*)(p->data + bytes_processed);
-        link = (dnp3_link_header_t*)pdu_start;
+        pdu_start = (const uint8_t*)(p->data + bytes_processed);
+        link = (const dnp3_link_header_t*)pdu_start;
 
         /*Stop if the start bytes are not 0x0564 */
         if ((p->dsize < bytes_processed + 2)
@@ -197,7 +198,7 @@ static void process_dnp3(dnp3ProtoConf& config, Packet* p)
     {
         ++dnp3_stats.tcp_pdus;
         /* Single PDU. PAF already split them up into separate pseudo-packets. */
-        dnp3_full_reassembly(config, dnp3_sess, p,(uint8_t*)p->data,p->dsize);
+        dnp3_full_reassembly(config, dnp3_sess, p,(const uint8_t*)p->data,p->dsize);
     }
     else if (p->has_udp_data())
     {
@@ -214,7 +215,6 @@ class Dnp3 : public Inspector
 {
 public:
     Dnp3(dnp3ProtoConf&);
-    ~Dnp3();
 
     void show(SnortConfig*) override;
     void eval(Packet*) override;
@@ -235,9 +235,6 @@ Dnp3::Dnp3(dnp3ProtoConf& pc)
     config.check_crc = pc.check_crc;
 }
 
-Dnp3::~Dnp3()
-{
-}
 
 void Dnp3::show(SnortConfig*)
 {

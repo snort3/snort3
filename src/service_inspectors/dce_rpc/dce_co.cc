@@ -529,7 +529,7 @@ static DCE2_CoCtxIdNode* dce_co_process_ctx_id(DCE2_SsnData* sd,DCE2_CoTracker* 
     const Uuid* iface;
     uint16_t if_vers_maj;
     uint16_t if_vers_min;
-    DceRpcCoContElem* ctx_elem = (DceRpcCoContElem*)frag_ptr;
+    const DceRpcCoContElem* ctx_elem = (const DceRpcCoContElem*)frag_ptr;
     dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
 
     int j;
@@ -792,12 +792,12 @@ static void DCE2_CoBindAck(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     const DceRpcCoHdr* co_hdr, const uint8_t* frag_ptr, uint16_t frag_len)
 {
     DCE2_Policy policy = DCE2_SsnGetServerPolicy(sd);
-    DceRpcCoBindAck* bind_ack = (DceRpcCoBindAck*)frag_ptr;
+    const DceRpcCoBindAck* bind_ack = (const DceRpcCoBindAck*)frag_ptr;
     uint16_t sec_addr_len;
     const uint8_t* ctx_data;
     uint16_t ctx_len;
     uint16_t pad = 0;
-    DceRpcCoContResultList* ctx_list;
+    const DceRpcCoContResultList* ctx_list;
     uint8_t num_ctx_results;
     unsigned int i;
     uint16_t max_recv_frag;
@@ -849,14 +849,14 @@ static void DCE2_CoBindAck(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         return;
     }
 
-    ctx_list = (DceRpcCoContResultList*)ctx_data;
+    ctx_list = (const DceRpcCoContResultList*)ctx_data;
     num_ctx_results = DceRpcCoContNumResults(ctx_list);
 
     DCE2_MOVE(ctx_data, ctx_len, sizeof(DceRpcCoContResultList));
 
     for (i = 0; i < num_ctx_results; i++)
     {
-        DceRpcCoContResult* ctx_result;
+        const DceRpcCoContResult* ctx_result;
         uint16_t result;
 
         if (ctx_len < sizeof(DceRpcCoContResult))
@@ -864,7 +864,7 @@ static void DCE2_CoBindAck(DCE2_SsnData* sd, DCE2_CoTracker* cot,
             dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE,dce_common_stats);
             return;
         }
-        ctx_result = (DceRpcCoContResult*)ctx_data;
+        ctx_result = (const DceRpcCoContResult*)ctx_data;
         result = DceRpcCoContRes(co_hdr, ctx_result);
 
         DCE2_MOVE(ctx_data, ctx_len, sizeof(DceRpcCoContResult));
@@ -889,7 +889,7 @@ static void DCE2_CoBind(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     const DceRpcCoHdr* co_hdr, const uint8_t* frag_ptr, uint16_t frag_len)
 {
     DCE2_Policy policy = DCE2_SsnGetServerPolicy(sd);
-    DceRpcCoBind* bind = (DceRpcCoBind*)frag_ptr;
+    const DceRpcCoBind* bind = (const DceRpcCoBind*)frag_ptr;
     dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
 
     if (frag_len < sizeof(DceRpcCoBind))
@@ -955,7 +955,7 @@ static void DCE2_CoAlterCtx(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     const DceRpcCoHdr* co_hdr, const uint8_t* frag_ptr, uint16_t frag_len)
 {
     DCE2_Policy policy = DCE2_SsnGetServerPolicy(sd);
-    DceRpcCoAltCtx* alt_ctx = (DceRpcCoAltCtx*)frag_ptr;
+    const DceRpcCoAltCtx* alt_ctx = (const DceRpcCoAltCtx*)frag_ptr;
     dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
 
     if (frag_len < sizeof(DceRpcCoAltCtx))
@@ -1001,14 +1001,14 @@ static void DCE2_CoAlterCtx(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     }
 
     /* Alter context is typedef'ed as a bind */
-    DCE2_CoCtxReq(sd, cot, co_hdr, DceRpcCoNumCtxItems((DceRpcCoBind*)alt_ctx), frag_ptr,
+    DCE2_CoCtxReq(sd, cot, co_hdr, DceRpcCoNumCtxItems((const DceRpcCoBind*)alt_ctx), frag_ptr,
         frag_len);
 }
 
 static int DCE2_CoGetAuthLen(DCE2_SsnData* sd, const DceRpcCoHdr* co_hdr,
     const uint8_t* frag_ptr, uint16_t frag_len)
 {
-    DceRpcCoAuthVerifier* auth_hdr;
+    const DceRpcCoAuthVerifier* auth_hdr;
     uint16_t auth_len = DceRpcCoAuthLen(co_hdr);
     dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
 
@@ -1024,7 +1024,7 @@ static int DCE2_CoGetAuthLen(DCE2_SsnData* sd, const DceRpcCoHdr* co_hdr,
         return -1;
     }
 
-    auth_hdr = (DceRpcCoAuthVerifier*)(frag_ptr + (frag_len - auth_len));
+    auth_hdr = (const DceRpcCoAuthVerifier*)(frag_ptr + (frag_len - auth_len));
     if (DceRpcCoAuthLevel(auth_hdr) == DCERPC_CO_AUTH_LEVEL__PKT_PRIVACY)
     {
         /* Data is encrypted - don't inspect */
@@ -1179,7 +1179,7 @@ static Packet* DCE2_CoGetRpkt(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         /* Need to just extract the stub data from the seg buffer
          * if there is enough data there */
         // FIXIT-L PORT_IF_NEEDED seg len check
-        DceRpcCoHdr* co_hdr = (DceRpcCoHdr*)seg_data;
+        const DceRpcCoHdr* co_hdr = (const DceRpcCoHdr*)seg_data;
 
         /* Don't use it if it's not a request and therefore doesn't
          * belong with the frag data.  This is an insanity check -
@@ -1223,10 +1223,8 @@ static Packet* DCE2_CoGetRpkt(DCE2_SsnData* sd, DCE2_CoTracker* cot,
 }
 
 static Packet* dce_co_reassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot,
-    DCE2_CoRpktType co_rtype,DceRpcCoHdr** co_hdr)
+    DCE2_CoRpktType co_rtype, const DceRpcCoHdr** co_hdr)
 {
-    DCE2_RpktType rpkt_type;
-    Packet* rpkt;
     dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
     int co_hdr_len = DCE2_SsnFromClient(sd->wire_pkt) ? DCE2_MOCK_HDR_LEN__CO_CLI :
         DCE2_MOCK_HDR_LEN__CO_SRV;
@@ -1242,23 +1240,25 @@ static Packet* dce_co_reassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         Profile profile(dce2_smb_pstat_co_reass);
     }
 
-    rpkt = DCE2_CoGetRpkt(sd, cot, co_rtype, &rpkt_type);
+    DCE2_RpktType rpkt_type;
+    Packet* rpkt = DCE2_CoGetRpkt(sd, cot, co_rtype, &rpkt_type);
     if (rpkt == nullptr)
     {
         DebugMessage(DEBUG_DCE_COMMON, "Could not create DCE/RPC frag reassembled buffer.\n");
         return nullptr;
     }
+    uint8_t *wrdata = const_cast<uint8_t*>(rpkt->data);
 
     switch (rpkt_type)
     {
     case DCE2_RPKT_TYPE__SMB_CO_FRAG:
     case DCE2_RPKT_TYPE__SMB_CO_SEG:
-        DCE2_SmbSetRdata((DCE2_SmbSsnData*)sd, (uint8_t*)rpkt->data,
+        DCE2_SmbSetRdata((DCE2_SmbSsnData*)sd, wrdata,
             (uint16_t)(rpkt->dsize - smb_hdr_len));
 
         if (rpkt_type == DCE2_RPKT_TYPE__SMB_CO_FRAG)
         {
-            DCE2_CoSetRdata(sd, cot, (uint8_t*)rpkt->data + smb_hdr_len,
+            DCE2_CoSetRdata(sd, cot, wrdata + smb_hdr_len,
                 (uint16_t)(rpkt->dsize - (smb_hdr_len + co_hdr_len)));
 
             if (DCE2_SsnFromClient(sd->wire_pkt))
@@ -1274,7 +1274,7 @@ static Packet* dce_co_reassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot,
                 dce_common_stats->co_srv_seg_reassembled++;
         }
 
-        *co_hdr = (DceRpcCoHdr*)(rpkt->data + smb_hdr_len);
+        *co_hdr = (const DceRpcCoHdr*)(rpkt->data + smb_hdr_len);
         cot->stub_data = rpkt->data + smb_hdr_len + co_hdr_len;
         return rpkt;
 
@@ -1282,7 +1282,7 @@ static Packet* dce_co_reassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     case DCE2_RPKT_TYPE__TCP_CO_SEG:
         if (rpkt_type == DCE2_RPKT_TYPE__TCP_CO_FRAG)
         {
-            DCE2_CoSetRdata(sd, cot, (uint8_t*)rpkt->data, (uint16_t)(rpkt->dsize - co_hdr_len));
+            DCE2_CoSetRdata(sd, cot, wrdata, (uint16_t)(rpkt->dsize - co_hdr_len));
 
             if (DCE2_SsnFromClient(sd->wire_pkt))
                 dce_common_stats->co_cli_frag_reassembled++;
@@ -1297,7 +1297,7 @@ static Packet* dce_co_reassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot,
                 dce_common_stats->co_cli_seg_reassembled++;
         }
 
-        *co_hdr = (DceRpcCoHdr*)rpkt->data;
+        *co_hdr = (const DceRpcCoHdr*)rpkt->data;
         cot->stub_data = rpkt->data + co_hdr_len;
         return rpkt;
 
@@ -1318,7 +1318,7 @@ static Packet* dce_co_reassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot,
  ********************************************************************/
 static void DCE2_CoReassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot, DCE2_CoRpktType co_rtype)
 {
-    DceRpcCoHdr* co_hdr = nullptr;
+    const DceRpcCoHdr* co_hdr = nullptr;
     Packet* rpkt = dce_co_reassemble(sd,cot,co_rtype,&co_hdr);
 
     if ( !rpkt )
@@ -1499,7 +1499,7 @@ static void DCE2_CoHandleFrag(DCE2_SsnData* sd, DCE2_CoTracker* cot,
 static void DCE2_CoRequest(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     const DceRpcCoHdr* co_hdr, const uint8_t* frag_ptr, uint16_t frag_len)
 {
-    DceRpcCoRequest* rhdr = (DceRpcCoRequest*)frag_ptr;
+    const DceRpcCoRequest* rhdr = (const DceRpcCoRequest*)frag_ptr;
     uint16_t req_size = sizeof(DceRpcCoRequest);
     DCE2_Policy policy = DCE2_SsnGetServerPolicy(sd);
     dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
@@ -1696,7 +1696,7 @@ static void DCE2_CoRequest(DCE2_SsnData* sd, DCE2_CoTracker* cot,
 static void DCE2_CoResponse(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     const DceRpcCoHdr* co_hdr, const uint8_t* frag_ptr, uint16_t frag_len)
 {
-    DceRpcCoResponse* rhdr = (DceRpcCoResponse*)frag_ptr;
+    const DceRpcCoResponse* rhdr = (const DceRpcCoResponse*)frag_ptr;
     uint16_t ctx_id;
     DCE2_Policy policy = DCE2_SsnGetServerPolicy(sd);
     dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
@@ -1810,7 +1810,7 @@ static void DCE2_CoDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     const uint8_t* frag_ptr, uint16_t frag_len)
 {
     /* Already checked that we have enough data for header */
-    const DceRpcCoHdr* co_hdr = (DceRpcCoHdr*)frag_ptr;
+    const DceRpcCoHdr* co_hdr = (const DceRpcCoHdr*)frag_ptr;
     int pdu_type = DceRpcCoPduType(co_hdr);
     dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
 
@@ -2004,13 +2004,13 @@ static DCE2_Ret DCE2_CoSegEarlyRequest(DCE2_CoTracker* cot,
     if (seg_len < sizeof(DceRpcCoHdr))
         return DCE2_RET__ERROR;
 
-    const DceRpcCoHdr* co_hdr = (DceRpcCoHdr*)seg_ptr;
+    const DceRpcCoHdr* co_hdr = (const DceRpcCoHdr*)seg_ptr;
     DCE2_MOVE(seg_ptr, seg_len, sizeof(DceRpcCoHdr));
 
     if (DceRpcCoPduType(co_hdr) != DCERPC_PDU_TYPE__REQUEST)
         return DCE2_RET__ERROR;
 
-    const DceRpcCoRequest* rhdr = (DceRpcCoRequest*)seg_ptr;
+    const DceRpcCoRequest* rhdr = (const DceRpcCoRequest*)seg_ptr;
 
     /* Account for possible object uuid */
     if (DceRpcCoObjectFlag(co_hdr))
@@ -2137,7 +2137,7 @@ static Packet* DCE2_CoGetSegRpkt(DCE2_SsnData* sd,
         if ( !rpkt )
             return nullptr;
 
-        DCE2_SmbSetRdata((DCE2_SmbSsnData*)sd, (uint8_t*)rpkt->data,
+        DCE2_SmbSetRdata((DCE2_SmbSsnData*)sd, const_cast<uint8_t*>(rpkt->data),
             (uint16_t)(rpkt->dsize - smb_hdr_len));
         break;
 
@@ -2355,10 +2355,10 @@ void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
                 break;
             }
 
-            if (DCE2_CoHdrChecks(sd, cot, (DceRpcCoHdr*)data_ptr) != DCE2_RET__SUCCESS)
+            if (DCE2_CoHdrChecks(sd, cot, (const DceRpcCoHdr*)data_ptr) != DCE2_RET__SUCCESS)
                 return;
 
-            frag_len = DceRpcCoFragLen((DceRpcCoHdr*)data_ptr);
+            frag_len = DceRpcCoFragLen((const DceRpcCoHdr*)data_ptr);
 
             /* Not enough data left for the pdu. */
             if (data_len < frag_len)
@@ -2385,7 +2385,7 @@ void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
                 DCE2_Detect(sd);
 
             /* Reset if this is a last frag */
-            if (DceRpcCoLastFrag((DceRpcCoHdr*)frag_ptr))
+            if (DceRpcCoLastFrag((const DceRpcCoHdr*)frag_ptr))
                 num_frags = 0;
         }
         else  /* We've already buffered data */
@@ -2417,7 +2417,7 @@ void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
                     data_back = -data_used;
                     DCE2_MOVE(data_ptr, data_len, data_back);
                     /*Check the original packet*/
-                    if (DCE2_CoHdrChecks(sd, cot, (DceRpcCoHdr*)data_ptr) != DCE2_RET__SUCCESS)
+                    if (DCE2_CoHdrChecks(sd, cot, (const DceRpcCoHdr*)data_ptr) != DCE2_RET__SUCCESS)
                         return;
                     else
                     {
@@ -2445,7 +2445,7 @@ void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
 
             /* Do this before calling DCE2_CoSegDecode since it will empty
              * seg buffer */
-            if (DceRpcCoLastFrag((DceRpcCoHdr*)seg->buf->data))
+            if (DceRpcCoLastFrag((const DceRpcCoHdr*)seg->buf->data))
                 num_frags = 0;
 
             /* Got the full DCE/RPC pdu. Need to create new packet before decoding */

@@ -59,13 +59,13 @@ DirectConnectServiceDetector::DirectConnectServiceDetector(ServiceDiscovery* sd)
 
     tcp_patterns =
     {
-        { (uint8_t*)PATTERN1, sizeof(PATTERN1) - 1, 0, 0, 0 },
-        { (uint8_t*)PATTERN2, sizeof(PATTERN2) - 1, 0, 0, 0 },
-        { (uint8_t*)PATTERN3, sizeof(PATTERN3) - 1, 0, 0, 0 },
-        { (uint8_t*)PATTERN4, sizeof(PATTERN4) - 1, 0, 0, 0 },
-        { (uint8_t*)PATTERN5, sizeof(PATTERN5) - 1, 0, 0, 0 },
-        { (uint8_t*)PATTERN6, sizeof(PATTERN6) - 1, 0, 0, 0 },
-        { (uint8_t*)PATTERN7, sizeof(PATTERN7) - 1, 0, 0, 0 }
+        { (const uint8_t*)PATTERN1, sizeof(PATTERN1) - 1, 0, 0, 0 },
+        { (const uint8_t*)PATTERN2, sizeof(PATTERN2) - 1, 0, 0, 0 },
+        { (const uint8_t*)PATTERN3, sizeof(PATTERN3) - 1, 0, 0, 0 },
+        { (const uint8_t*)PATTERN4, sizeof(PATTERN4) - 1, 0, 0, 0 },
+        { (const uint8_t*)PATTERN5, sizeof(PATTERN5) - 1, 0, 0, 0 },
+        { (const uint8_t*)PATTERN6, sizeof(PATTERN6) - 1, 0, 0, 0 },
+        { (const uint8_t*)PATTERN7, sizeof(PATTERN7) - 1, 0, 0, 0 }
     };
 
     appid_registry =
@@ -88,9 +88,6 @@ DirectConnectServiceDetector::DirectConnectServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-DirectConnectServiceDetector::~DirectConnectServiceDetector()
-{
-}
 
 int DirectConnectServiceDetector::validate(AppIdDiscoveryArgs& args)
 {

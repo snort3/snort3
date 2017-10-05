@@ -50,10 +50,10 @@ SNORT_CATCH_FORCED_INCLUSION_DEFINITION(sfrf_test);
 #define IP4_SET1 "[1.2.3.4,1.2.3.5]"
 #define IP4_SET2 "[1.2.0.0/16,![1.2.3.4,1.2.3.5]]"
 
-#define RULE_ORIG  -1          // original action applies
+#define RULE_ORIG  (-1)          // original action applies
 #define RULE_NEW    0          // new_action when not orig
 
-#define MEM_DEFAULT 1024*1024  // default if not re"config"ed
+#define MEM_DEFAULT (1024*1024)  // default if not re"config"ed
 #define MEM_MINIMUM 0          // forces use of minimum
 
 typedef struct
@@ -912,7 +912,7 @@ static void Init(unsigned cap)
         cfg.seconds = p->seconds;
         cfg.newAction = (RuleType)RULE_NEW;
         cfg.timeout = p->timeout;
-        cfg.applyTo = p->ip ? sfip_var_from_string(p->ip) : NULL;
+        cfg.applyTo = p->ip ? sfip_var_from_string(p->ip) : nullptr;
 
         p->create = SFRF_ConfigAdd(nullptr, rfc, &cfg);
     }

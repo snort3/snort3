@@ -50,12 +50,12 @@ struct DCERPCHeader
 // FIXIT-L - see if this can be moved to a file of common functions
 int dcerpc_validate(const uint8_t* data, int size)
 {
-    DCERPCHeader* hdr;
+    const DCERPCHeader* hdr;
     uint16_t len;
 
     if (size < (int)sizeof(DCERPCHeader))
         return -1;
-    hdr = (DCERPCHeader*)data;
+    hdr = (const DCERPCHeader*)data;
     if (hdr->version != 5)
         return -1;
     if (hdr->minor_version > 1)

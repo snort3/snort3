@@ -30,7 +30,7 @@ class IpHA : public ProtocolHA
 {
 public:
     IpHA() : ProtocolHA(PktType::IP) { }
-    Flow* create_session(FlowKey*);
+    Flow* create_session(FlowKey*) override;
 
 private:
 };

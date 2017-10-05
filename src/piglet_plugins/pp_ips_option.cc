@@ -33,9 +33,9 @@
 class IpsOptionPiglet : public Piglet::BasePlugin
 {
 public:
-    IpsOptionPiglet(Lua::State&, std::string, Module*);
-    virtual ~IpsOptionPiglet() override;
-    virtual bool setup() override;
+    IpsOptionPiglet(Lua::State&, const std::string&, Module*);
+    ~IpsOptionPiglet() override;
+    bool setup() override;
 
 private:
     IpsOptionWrapper* wrapper;
@@ -43,7 +43,7 @@ private:
 };
 
 IpsOptionPiglet::IpsOptionPiglet(
-    Lua::State& state, std::string target, Module* m) :
+    Lua::State& state, const std::string& target, Module* m) :
     BasePlugin(state, target, m)
 {
     if ( !module )
@@ -85,7 +85,7 @@ bool IpsOptionPiglet::setup()
 // API foo
 // -----------------------------------------------------------------------------
 static Piglet::BasePlugin* ctor(
-    Lua::State& state, std::string target, Module* m, SnortConfig*)
+    Lua::State& state, const std::string& target, Module* m, SnortConfig*)
 { return new IpsOptionPiglet(state, target, m); }
 
 static void dtor(Piglet::BasePlugin* p)

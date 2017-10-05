@@ -98,7 +98,7 @@ bool Dnp3ObjOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    const Dnp3ObjOption& rhs = (Dnp3ObjOption&)ips;
+    const Dnp3ObjOption& rhs = (const Dnp3ObjOption&)ips;
 
     return ((group == rhs.group) &&
            (var == rhs.var));

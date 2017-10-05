@@ -108,7 +108,7 @@ struct SMTPCmdConfig
 
 struct SMTPSearch
 {
-    char* name;
+    const char* name;
     int name_len;
 };
 

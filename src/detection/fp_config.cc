@@ -38,19 +38,11 @@
 
 FastPatternConfig::FastPatternConfig()
 {
-    memset(this, 0, sizeof(*this));
-
-    inspect_stream_insert = false;
-    max_queue_events = 5;
-    bleedover_port_limit = 1024;
-
     search_api = MpseManager::get_search_api("ac_bnfa");
     assert(search_api);
     trim = MpseManager::search_engine_trim(search_api);
 }
 
-FastPatternConfig::~FastPatternConfig()
-{ }
 
 bool FastPatternConfig::set_search_method(const char* method)
 {

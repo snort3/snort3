@@ -86,16 +86,13 @@ TftpServiceDetector::TftpServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-TftpServiceDetector::~TftpServiceDetector()
-{
-}
 
 static int tftp_verify_header(const uint8_t* data, uint16_t size,
     uint16_t* block)
 {
     if (size < sizeof(ServiceTFTPHeader))
         return -1;
-    const ServiceTFTPHeader* hdr = (ServiceTFTPHeader*)data;
+    const ServiceTFTPHeader* hdr = (const ServiceTFTPHeader*)data;
     switch (ntohs(hdr->opcode))
     {
     case 3:
@@ -162,7 +159,7 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
     case TFTP_STATE_CONNECTION:
         if (size < 6)
             goto bail;
-        tmp = ntohs(*((uint16_t*)data));
+        tmp = ntohs(*((const uint16_t*)data));
         if (tmp != 0x0001 && tmp != 0x0002)
             goto bail;
         data += sizeof(uint16_t);
@@ -182,7 +179,7 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
             goto bail;
         if (data[size-1])
             goto bail;
-        if (strcasecmp((char*)data, "netascii") && strcasecmp((char*)data, "octet"))
+        if (strcasecmp((const char*)data, "netascii") && strcasecmp((const char*)data, "octet"))
             goto bail;
 
         tmp_td = (ServiceTFTPData*)snort_calloc(sizeof(ServiceTFTPData));

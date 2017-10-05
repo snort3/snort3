@@ -43,7 +43,7 @@ class SO_PUBLIC FileInfo
 {
 public:
     virtual ~FileInfo();
-    FileInfo() { }
+    FileInfo() = default;
     FileInfo(const FileInfo& other);
     FileInfo& operator=(const FileInfo& other);
     uint32_t get_file_type() const;
@@ -79,7 +79,7 @@ class SO_PUBLIC FileContext : public FileInfo
 {
 public:
     FileContext();
-    ~FileContext();
+    ~FileContext() override;
 
     void check_policy(Flow*, FileDirection);
 

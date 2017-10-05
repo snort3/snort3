@@ -90,9 +90,6 @@ BitTrackerClientDetector::BitTrackerClientDetector(ClientDiscovery* cdm)
     handler->register_detector(name, this, proto);
 }
 
-BitTrackerClientDetector::~BitTrackerClientDetector()
-{
-}
 
 int BitTrackerClientDetector::validate(AppIdDiscoveryArgs& args)
 {

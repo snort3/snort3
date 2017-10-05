@@ -132,9 +132,9 @@ typedef struct _FLOWBITS_GRP
 
 static std::forward_list<const FLOWBITS_OP*> op_list;
 
-static SFGHASH* flowbits_hash = NULL;
-static SFGHASH* flowbits_grp_hash = NULL;
-static SF_QUEUE* flowbits_bit_queue = NULL;
+static SFGHASH* flowbits_hash = nullptr;
+static SFGHASH* flowbits_grp_hash = nullptr;
+static SF_QUEUE* flowbits_bit_queue = nullptr;
 
 static unsigned flowbits_count = 0;
 static unsigned flowbits_grp_count = 0;
@@ -151,7 +151,7 @@ public:
         IpsOption(s_name, RULE_OPTION_TYPE_FLOWBIT)
     { config = c; }
 
-    ~FlowBitsOption();
+    ~FlowBitsOption() override;
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -229,7 +229,7 @@ bool FlowBitsOption::operator==(const IpsOption& ips) const
     if ( strcmp(get_name(), ips.get_name()) )
         return false;
 
-    FlowBitsOption& rhs = (FlowBitsOption&)ips;
+    const FlowBitsOption& rhs = (const FlowBitsOption&)ips;
 
     if ( (config->num_ids != rhs.config->num_ids) or
         (config->eval != rhs.config->eval) or
@@ -269,7 +269,7 @@ static inline BitOp* get_flow_bitop(const Packet* p)
     Flow* flow = p->flow;
 
     if (!flow)
-        return NULL;
+        return nullptr;
 
     if ( !flow->bitop )
         flow->bitop = new BitOp(flowbits_count);
@@ -367,7 +367,7 @@ static inline int is_set_flowbits(
 
     case FLOWBITS_ALL:
         flowbits_grp = (FLOWBITS_GRP*)sfghash_find(flowbits_grp_hash, group);
-        if ( flowbits_grp == NULL )
+        if ( flowbits_grp == nullptr )
             return 0;
         for ( i = 0; i <= (unsigned int)(flowbits_grp->max_id >>3); i++ )
         {
@@ -380,7 +380,7 @@ static inline int is_set_flowbits(
 
     case FLOWBITS_ANY:
         flowbits_grp = (FLOWBITS_GRP*)sfghash_find(flowbits_grp_hash, group);
-        if ( flowbits_grp == NULL )
+        if ( flowbits_grp == nullptr )
             return 0;
         for ( i = 0; i <= (unsigned int)(flowbits_grp->max_id >>3); i++ )
         {
@@ -522,11 +522,11 @@ void FlowbitResetCounts()
     SFGHASH_NODE* n;
     FLOWBITS_OBJECT* fb;
 
-    if (flowbits_hash == NULL)
+    if (flowbits_hash == nullptr)
         return;
 
     for (n = sfghash_findfirst(flowbits_hash);
-        n != NULL;
+        n != nullptr;
         n = sfghash_findnext(flowbits_hash))
     {
         fb = (FLOWBITS_OBJECT*)n->data;
@@ -560,7 +560,7 @@ static bool validateName(char* name)
 
     for (i=0; i<strlen(name); i++)
     {
-        if (!isalnum(name[i])&&(NULL == strchr(ALLOWED_SPECIAL_CHARS,name[i])))
+        if (!isalnum(name[i])&&(nullptr == strchr(ALLOWED_SPECIAL_CHARS,name[i])))
             return false;
     }
     return true;
@@ -579,7 +579,7 @@ static FLOWBITS_OBJECT* getFlowBitItem(char* flowbitName, FLOWBITS_OP* flowbits)
 
     flowbits_item = (FLOWBITS_OBJECT*)sfghash_find(flowbits_hash, flowbitName);
 
-    if (flowbits_item == NULL)
+    if (flowbits_item == nullptr)
     {
         flowbits_item = (FLOWBITS_OBJECT*)snort_calloc(sizeof(FLOWBITS_OBJECT));
 
@@ -645,9 +645,9 @@ static void processFlowbits(
 
     flowbits_name = snort_strdup(flowbits_names);
 
-    if (NULL != strchr(flowbits_name, '|'))
+    if (nullptr != strchr(flowbits_name, '|'))
     {
-        if (NULL != strchr(flowbits_name, '&'))
+        if (nullptr != strchr(flowbits_name, '&'))
         {
             ParseError("%s: tag id opcode '|' and '&' are used together.", s_name);
             return;
@@ -663,7 +663,7 @@ static void processFlowbits(
         flowbits->eval = FLOWBITS_OR;
         mSplitFree(&toks, num_toks);
     }
-    else if (NULL != strchr(flowbits_name, '&'))
+    else if (nullptr != strchr(flowbits_name, '&'))
     {
         toks = mSplit(flowbits_name, "&", 0, &num_toks, 0);
         flowbits->ids = (uint16_t*)snort_calloc(num_toks, sizeof(*(flowbits->ids)));
@@ -756,14 +756,14 @@ static void validateFlowbitsSyntax(FLOWBITS_OP* flowbits)
         return;
 
     case FLOWBITS_RESET:
-        if (flowbits->ids == NULL)
+        if (flowbits->ids == nullptr)
             break;
         ParseError(
             "%s: operation unset uses syntax: flowbits:reset OR flowbits:reset, group.", s_name);
         return;
 
     case FLOWBITS_NOALERT:
-        if ((flowbits->ids == NULL) && (flowbits->group == NULL))
+        if ((flowbits->ids == nullptr) && (flowbits->group == nullptr))
             break;
         ParseError("%s: operation noalert uses syntax: flowbits:noalert.", s_name);
         return;
@@ -777,10 +777,10 @@ static void validateFlowbitsSyntax(FLOWBITS_OP* flowbits)
 static FLOWBITS_GRP* getFlowBitGroup(char* groupName)
 {
     int hstatus;
-    FLOWBITS_GRP* flowbits_grp = NULL;
+    FLOWBITS_GRP* flowbits_grp = nullptr;
 
     if (!groupName)
-        return NULL;
+        return nullptr;
 
     if (!validateName(groupName))
     {
@@ -848,9 +848,9 @@ static FLOWBITS_OP* flowbits_parse(const char* data)
 {
     char** toks;
     int num_toks;
-    char* typeName = NULL;
-    char* groupName = NULL;
-    char* flowbitsName = NULL;
+    char* typeName = nullptr;
+    char* groupName = nullptr;
+    char* flowbitsName = nullptr;
     FLOWBITS_GRP* flowbits_grp;
 
     FLOWBITS_OP* flowbits = (FLOWBITS_OP*)snort_calloc(sizeof(*flowbits));
@@ -900,7 +900,7 @@ static FLOWBITS_OP* flowbits_parse(const char* data)
         }
 
         flowbits->type = FLOWBITS_NOALERT;
-        flowbits->ids = NULL;
+        flowbits->ids = nullptr;
         flowbits->num_ids = 0;
         flowbits->name = snort_strdup(typeName);
 
@@ -923,7 +923,7 @@ static FLOWBITS_OP* flowbits_parse(const char* data)
             flowbits->group_id = flowbits_grp->group_id;
         }
         flowbits->type = FLOWBITS_RESET;
-        flowbits->ids = NULL;
+        flowbits->ids = nullptr;
         flowbits->num_ids = 0;
         flowbits->name = snort_strdup(typeName);
         mSplitFree(&toks, num_toks);
@@ -971,7 +971,7 @@ static void init_groups()
         return;
 
     for ( SFGHASH_NODE* n = sfghash_findfirst(flowbits_grp_hash);
-        n != NULL;
+        n != nullptr;
         n= sfghash_findnext(flowbits_grp_hash) )
     {
         FLOWBITS_GRP* fbg = (FLOWBITS_GRP*)n->data;
@@ -999,11 +999,11 @@ static void FlowBitsVerify()
     unsigned num_flowbits = 0;
     unsigned unchecked = 0, unset = 0;
 
-    if (flowbits_hash == NULL)
+    if (flowbits_hash == nullptr)
         return;
 
     for (n = sfghash_findfirst(flowbits_hash);
-        n != NULL;
+        n != nullptr;
         n= sfghash_findnext(flowbits_hash))
     {
         fb = (FLOWBITS_OBJECT*)n->data;
@@ -1018,13 +1018,13 @@ static void FlowBitsVerify()
         if ((fb->set > 0) && (fb->isset == 0))
         {
             ParseWarning(WARN_FLOWBITS, "%s key '%s' is set but not checked.",
-                s_name, (char*)n->key);
+                s_name, (const char*)n->key);
             unchecked++;
         }
         else if ((fb->isset > 0) && (fb->set == 0))
         {
             ParseWarning(WARN_FLOWBITS, "%s key '%s' is checked but not ever set.",
-                s_name, (char*)n->key);
+                s_name, (const char*)n->key);
             unset++;
         }
         else if ((fb->set == 0) && (fb->isset == 0))
@@ -1092,19 +1092,19 @@ static void flowbits_gterm(SnortConfig*)
     if ( flowbits_hash )
     {
         sfghash_delete(flowbits_hash);
-        flowbits_hash = NULL;
+        flowbits_hash = nullptr;
     }
 
     if ( flowbits_grp_hash )
     {
         sfghash_delete(flowbits_grp_hash);
-        flowbits_grp_hash = NULL;
+        flowbits_grp_hash = nullptr;
     }
 
     if ( flowbits_bit_queue )
     {
-        sfqueue_free_all(flowbits_bit_queue, NULL);
-        flowbits_bit_queue = NULL;
+        sfqueue_free_all(flowbits_bit_queue, nullptr);
+        flowbits_bit_queue = nullptr;
     }
 }
 

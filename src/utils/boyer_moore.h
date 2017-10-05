@@ -29,8 +29,8 @@
 SO_PUBLIC int* make_skip(const char*, int);
 SO_PUBLIC int* make_shift(const char*, int);
 
-SO_PUBLIC int mSearch(const char*, int, const char*, int, int*, int*);
-SO_PUBLIC int mSearchCI(const char*, int, const char*, int, int*, int*);
+SO_PUBLIC int mSearch(const char*, int, const char*, int, const int*, const int*);
+SO_PUBLIC int mSearchCI(const char*, int, const char*, int, const int*, const int*);
 
 #endif
 

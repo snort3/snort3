@@ -112,7 +112,6 @@ public:
     {
     }
 
-    ~TcpCodec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
@@ -135,7 +134,7 @@ private:
         const CodecData& codec);
 };
 
-static sfip_var_t* SynToMulticastDstIp = NULL;
+static sfip_var_t* SynToMulticastDstIp = nullptr;
 } // namespace
 
 void TcpCodec::get_protocol_ids(std::vector<ProtocolId>& v)
@@ -190,7 +189,7 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
             /* if we're being "stateless" we probably don't care about the TCP
              * checksum, but it's not bad to keep around for shits and giggles */
             /* calculate the checksum */
-            csum = checksum::tcp_cksum((uint16_t*)(tcph), raw.len, &ph);
+            csum = checksum::tcp_cksum((const uint16_t*)(tcph), raw.len, &ph);
         }
         /* IPv6 traffic */
         else
@@ -204,7 +203,7 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
             ph6.protocol = codec.ip6_csum_proto;
             ph6.len = htons((uint16_t)raw.len);
 
-            csum = checksum::tcp_cksum((uint16_t*)(tcph), raw.len, &ph6);
+            csum = checksum::tcp_cksum((const uint16_t*)(tcph), raw.len, &ph6);
         }
 
         if (csum && !codec.is_cooked())
@@ -264,7 +263,7 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     uint16_t tcp_opt_len = (uint16_t)(tcph->hlen() - tcp::TCP_MIN_HEADER_LEN);
 
     if (tcp_opt_len > 0)
-        DecodeTCPOptions((uint8_t*)(raw.data + tcp::TCP_MIN_HEADER_LEN), tcp_opt_len, codec);
+        DecodeTCPOptions((const uint8_t*)(raw.data + tcp::TCP_MIN_HEADER_LEN), tcp_opt_len, codec);
 
     int dsize = raw.len - tcph->hlen();
     if (dsize < 0)
@@ -398,7 +397,7 @@ void TcpCodec::DecodeTCPOptions(const uint8_t* start, uint32_t o_len, CodecData&
 
         case tcp::TcpOptCode::MD5SIG:
             /* RFC 5925 obsoletes this option (see below) */
-            obsolete_option_found = 1;
+            obsolete_option_found = true;
             code = OptLenValidate(opt, end_ptr, TCPOLEN_MD5SIG);
             break;
 

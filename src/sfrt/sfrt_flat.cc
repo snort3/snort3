@@ -66,7 +66,7 @@ table_flat_t* sfrt_flat_new(char table_flat_type, char ip_type,  long data_size,
 #endif
     {
         segment_free(table_ptr);
-        return NULL;
+        return nullptr;
     }
 
     /* mem_cap is specified in megabytes, but internally uses bytes. Convert */
@@ -87,7 +87,7 @@ table_flat_t* sfrt_flat_new(char table_flat_type, char ip_type,  long data_size,
     if (!table->data)
     {
         segment_free(table_ptr);
-        return NULL;
+        return nullptr;
     }
 
     table->allocated = sizeof(table_flat_t) + sizeof(INFO) * table->max_size;
@@ -158,7 +158,7 @@ table_flat_t* sfrt_flat_new(char table_flat_type, char ip_type,  long data_size,
             sfrt_dir_flat_free(table->rt6);
         segment_free(table->data);
         segment_free(table_ptr);
-        return NULL;
+        return nullptr;
     }
 
     return table;
@@ -221,12 +221,12 @@ GENERIC sfrt_flat_lookup(const SfIp* ip, table_flat_t* table)
 
     if (!ip)
     {
-        return NULL;
+        return nullptr;
     }
 
     if (!table)
     {
-        return NULL;
+        return nullptr;
     }
 
     if (ip->is_ip4())
@@ -242,20 +242,20 @@ GENERIC sfrt_flat_lookup(const SfIp* ip, table_flat_t* table)
         rt = table->rt6;
     }
     else
-        return NULL;
+        return nullptr;
 
     tuple = sfrt_dir_flat_lookup(addr, numAddrDwords, rt);
 
     if (tuple.index >= table->num_ent)
     {
-        return NULL;
+        return nullptr;
     }
     base = (uint8_t*)segment_basePtr();
     data = (INFO*)(&base[table->data]);
     if (data[tuple.index])
         return (GENERIC)&base[data[tuple.index]];
     else
-        return NULL;
+        return nullptr;
 }
 
 /* Insert "ip", of length "len", into "table", and have it point to "ptr" */
@@ -405,7 +405,7 @@ GENERIC sfrt_flat_dir8x_lookup(const SfIp* ip, table_flat_t* table)
     DIR_Entry* entry;
     uint8_t* base = (uint8_t*)table;
     int i;
-    dir_table_flat_t* rt = NULL;
+    dir_table_flat_t* rt = nullptr;
     int index;
     INFO* data = (INFO*)(&base[table->data]);
 
@@ -414,50 +414,50 @@ GENERIC sfrt_flat_dir8x_lookup(const SfIp* ip, table_flat_t* table)
         rt = (dir_table_flat_t*)(&base[table->rt]);
         subtable = (dir_sub_table_flat_t*)(&base[rt->sub_table]);
         /* 16 bits*/
-        index = ntohs(((uint16_t*) ip->get_ip4_ptr())[0]);
+        index = ntohs(((const uint16_t*) ip->get_ip4_ptr())[0]);
         entry = (DIR_Entry*)(&base[subtable->entries]);
         if ( !entry[index].value || entry[index].length)
         {
             if (data[entry[index].value])
                 return (GENERIC)&base[data[entry[index].value]];
             else
-                return NULL;
+                return nullptr;
         }
         subtable = (dir_sub_table_flat_t*)(&base[entry[index].value]);
 
         /* 8 bits*/
-        index = ((uint8_t*) ip->get_ip4_ptr())[2];
+        index = ((const uint8_t*) ip->get_ip4_ptr())[2];
         entry = (DIR_Entry*)(&base[subtable->entries]);
         if ( !entry[index].value || entry[index].length)
         {
             if (data[entry[index].value])
                 return (GENERIC)&base[data[entry[index].value]];
             else
-                return NULL;
+                return nullptr;
         }
         subtable = (dir_sub_table_flat_t*)(&base[entry[index].value]);
 
         /* 4 bits */
-        index = ((uint8_t*) ip->get_ip4_ptr())[3] >> 4;
+        index = ((const uint8_t*) ip->get_ip4_ptr())[3] >> 4;
         entry = (DIR_Entry*)(&base[subtable->entries]);
         if ( !entry[index].value || entry[index].length)
         {
             if (data[entry[index].value])
                 return (GENERIC)&base[data[entry[index].value]];
             else
-                return NULL;
+                return nullptr;
         }
         subtable = (dir_sub_table_flat_t*)(&base[entry[index].value]);
 
         /* 4 bits */
-        index = ((uint8_t*) ip->get_ip4_ptr())[3] & 0xF;
+        index = ((const uint8_t*) ip->get_ip4_ptr())[3] & 0xF;
         entry = (DIR_Entry*)(&base[subtable->entries]);
         if ( !entry[index].value || entry[index].length)
         {
             if (data[entry[index].value])
                 return (GENERIC)&base[data[entry[index].value]];
             else
-                return NULL;
+                return nullptr;
         }
     }
     else if (ip->is_ip6())
@@ -466,18 +466,18 @@ GENERIC sfrt_flat_dir8x_lookup(const SfIp* ip, table_flat_t* table)
         subtable = (dir_sub_table_flat_t*)(&base[rt->sub_table]);
         for (i = 0; i < 16; i++)
         {
-            index = ((uint8_t*) ip->get_ip6_ptr())[i];
+            index = ((const uint8_t*) ip->get_ip6_ptr())[i];
             entry = (DIR_Entry*)(&base[subtable->entries]);
             if ( !entry[index].value || entry[index].length)
             {
                 if (data[entry[index].value])
                     return (GENERIC)&base[data[entry[index].value]];
                 else
-                    return NULL;
+                    return nullptr;
             }
             subtable = (dir_sub_table_flat_t*)(&base[entry[index].value]);
         }
     }
-    return NULL;
+    return nullptr;
 }
 

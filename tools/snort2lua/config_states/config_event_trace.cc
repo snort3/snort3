@@ -32,8 +32,7 @@ class EventTrace : public ConversionState
 {
 public:
     EventTrace(Converter& c) : ConversionState(c) { }
-    virtual ~EventTrace() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 };
 } // namespace
 
@@ -51,10 +50,10 @@ bool EventTrace::convert(std::istringstream& data_stream)
     {
         bool tmpval = true;
 
-        if (!keyword.compare("file"))
+        if (keyword == "file")
             table_api.add_deleted_comment("file");
 
-        else if (!keyword.compare("max_data"))
+        else if (keyword == "max_data")
             tmpval = table_api.add_option("max_data", std::stoi(arg));
 
         else

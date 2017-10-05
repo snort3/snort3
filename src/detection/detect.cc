@@ -59,7 +59,7 @@ void snort_ignore(Packet*) { }
 void snort_log(Packet* p)
 {
     pc.log_pkts++;
-    EventManager::call_loggers(NULL, p, NULL, NULL);
+    EventManager::call_loggers(nullptr, p, nullptr, nullptr);
 }
 
 void CallLogFuncs(Packet* p, ListHead* head, Event* event, const char* msg)
@@ -69,7 +69,7 @@ void CallLogFuncs(Packet* p, ListHead* head, Event* event, const char* msg)
     DetectionEngine::set_check_tags(false);
     pc.log_pkts++;
 
-    OutputSet* idx = head ? head->LogList : NULL;
+    OutputSet* idx = head ? head->LogList : nullptr;
     EventManager::call_loggers(idx, p, msg, event);
 }
 
@@ -77,7 +77,8 @@ void CallLogFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
 {
     Event event;
 
-    event.sig_info = (SigInfo*)&otn->sigInfo;
+    // FIXIT-L this and the same below should be refactored to not need const_cast
+    event.sig_info = const_cast<SigInfo*>(&otn->sigInfo);
     event.ref_time.tv_sec = p->pkth->ts.tv_sec;
     event.ref_time.tv_usec = p->pkth->ts.tv_usec;
     event.event_id = event_id | SnortConfig::get_event_log_id();
@@ -86,7 +87,7 @@ void CallLogFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
     DetectionEngine::set_check_tags(false);
     pc.log_pkts++;
 
-    OutputSet* idx = head ? head->LogList : NULL;
+    OutputSet* idx = head ? head->LogList : nullptr;
     EventManager::call_loggers(idx, p, otn->sigInfo.message, &event);
 }
 
@@ -94,7 +95,7 @@ void CallAlertFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
 {
     Event event;
 
-    event.sig_info = (SigInfo*)&otn->sigInfo;
+    event.sig_info = const_cast<SigInfo*>(&otn->sigInfo);
     event.ref_time.tv_sec = p->pkth->ts.tv_sec;
     event.ref_time.tv_usec = p->pkth->ts.tv_usec;
     event.event_id = event_id | SnortConfig::get_event_log_id();
@@ -111,7 +112,7 @@ void CallAlertFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
     }
 #endif
 
-    OutputSet* idx = head ? head->AlertList : NULL;
+    OutputSet* idx = head ? head->AlertList : nullptr;
     EventManager::call_alerters(idx, p, otn->sigInfo.message, event);
 }
 
@@ -131,7 +132,7 @@ void check_tags(Packet* p)
 
     if ( DetectionEngine::get_check_tags() and !(p->packet_flags & PKT_REBUILT_STREAM) )
     {
-        void* listhead = NULL;
+        void* listhead = nullptr;
         DebugMessage(DEBUG_FLOW, "calling CheckTagList\n");
 
         if (CheckTagList(p, event, &listhead))

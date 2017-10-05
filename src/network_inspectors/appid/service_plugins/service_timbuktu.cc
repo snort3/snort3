@@ -82,9 +82,6 @@ TimbuktuServiceDetector::TimbuktuServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-TimbuktuServiceDetector::~TimbuktuServiceDetector()
-{
-}
 
 int TimbuktuServiceDetector::validate(AppIdDiscoveryArgs& args)
 {

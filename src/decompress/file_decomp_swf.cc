@@ -154,7 +154,7 @@ static fd_status_t Decomp(fd_session_t* SessionPtr)
 
 fd_status_t File_Decomp_End_SWF(fd_session_t* SessionPtr)
 {
-    if ( SessionPtr == NULL )
+    if ( SessionPtr == nullptr )
         return( File_Decomp_Error );
 
     switch ( SessionPtr->Decomp_Type )
@@ -193,7 +193,7 @@ fd_status_t File_Decomp_End_SWF(fd_session_t* SessionPtr)
 
 fd_status_t File_Decomp_Init_SWF(fd_session_t* SessionPtr)
 {
-    if ( SessionPtr == NULL )
+    if ( SessionPtr == nullptr )
         return( File_Decomp_Error );
 
     SessionPtr->SWF = (fd_SWF_t*)snort_calloc(sizeof(fd_SWF_t));
@@ -217,8 +217,8 @@ fd_status_t File_Decomp_Init_SWF(fd_session_t* SessionPtr)
 
         memset( (char*)z_s, 0, sizeof(z_stream));
 
-        z_s->zalloc = (alloc_func)NULL;
-        z_s->zfree = (free_func)NULL;
+        z_s->zalloc = (alloc_func)nullptr;
+        z_s->zfree = (free_func)nullptr;
         SYNC_IN(z_s)
 
         z_ret = inflateInit(z_s);
@@ -268,7 +268,7 @@ fd_status_t File_Decomp_SWF(fd_session_t* SessionPtr)
 {
     fd_status_t Ret_Code;
 
-    if ( (SessionPtr == NULL) || (SessionPtr->File_Type != FILE_TYPE_SWF) )
+    if ( (SessionPtr == nullptr) || (SessionPtr->File_Type != FILE_TYPE_SWF) )
         return( File_Decomp_Error );
 
     /* Are we still looking for the balance of the uncompressed header? */
@@ -336,17 +336,17 @@ fd_status_t File_Decomp_SWF(fd_session_t* SessionPtr)
 
 TEST_CASE("File_Decomp_SWF-null", "[file_decomp_swf]")
 {
-    REQUIRE((File_Decomp_SWF((fd_session_t*)NULL) == File_Decomp_Error));
+    REQUIRE((File_Decomp_SWF((fd_session_t*)nullptr) == File_Decomp_Error));
 }
 
 TEST_CASE("File_Decomp_Init_SWF-null", "[file_decomp_swf]")
 {
-    REQUIRE((File_Decomp_Init_SWF((fd_session_t*)NULL) == File_Decomp_Error));
+    REQUIRE((File_Decomp_Init_SWF((fd_session_t*)nullptr) == File_Decomp_Error));
 }
 
 TEST_CASE("File_Decomp_End_SWF-null", "[file_decomp_swf]")
 {
-    REQUIRE((File_Decomp_End_SWF((fd_session_t*)NULL) == File_Decomp_Error));
+    REQUIRE((File_Decomp_End_SWF((fd_session_t*)nullptr) == File_Decomp_Error));
 }
 
 TEST_CASE("File_Decomp_SWF-not_swf-error", "[file_decomp_swf]")

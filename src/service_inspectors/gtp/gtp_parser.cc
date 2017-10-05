@@ -128,14 +128,14 @@ static void printInfoElements(GTP_IEData* info_elements, GTPMsg* msg)
 static int gtp_processInfoElements(
     const GTPConfig& config, GTPMsg* msg, const uint8_t* buff, uint16_t len)
 {
-    uint8_t* start;
+    const uint8_t* start;
     uint8_t type;
     int32_t unprocessed_len;
     uint8_t previous_type;
 
     DEBUG_WRAP(DebugFormat(DEBUG_GTP, "Information elements: length: %d\n", len); );
 
-    start = (uint8_t*)buff;
+    start = buff;
     previous_type = (uint8_t)*start;
     unprocessed_len = len;
 
@@ -149,7 +149,7 @@ static int gtp_processInfoElements(
         const GTP_InfoElement* ie = &config.infov[msg->version][type];
         uint16_t length;
 
-        if ( NULL == ie )
+        if ( nullptr == ie )
         {
             DEBUG_WRAP(DebugMessage(DEBUG_GTP, "Unsupported Information elements!\n"); );
             gtp_stats.unknownIEs++;
@@ -163,14 +163,14 @@ static int gtp_processInfoElements(
         }
         else /*For variable length, use the length field*/
         {
-            GTP_IE_Hdr* ieHdr;
+            const GTP_IE_Hdr* ieHdr;
             /*check the length before reading*/
             if (sizeof(*ieHdr) > (unsigned)unprocessed_len)
             {
                 alert(GTP_EVENT_BAD_IE_LEN);
                 return false;
             }
-            ieHdr = (GTP_IE_Hdr*)start;
+            ieHdr = (const GTP_IE_Hdr*)start;
             length = ntohs(ieHdr->length);
             /*Check the length */
             if (length > UINT16_MAX - GTP_MIN_HEADER_LEN - sizeof(*ieHdr))
@@ -243,11 +243,11 @@ static int gtp_processInfoElements(
 
 static int gtp_parse_v0(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
 {
-    GTP_C_Hdr* hdr;
+    const GTP_C_Hdr* hdr;
 
     DEBUG_WRAP(DebugMessage(DEBUG_GTP, "This is a GTP v0 packet.\n"); );
 
-    hdr = (GTP_C_Hdr*)buff;
+    hdr = (const GTP_C_Hdr*)buff;
 
     msg->header_len = GTP_HEADER_LEN_V0;
 
@@ -294,11 +294,11 @@ static int gtp_parse_v0(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
 static int gtp_parse_v1(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
 {
     uint8_t next_hdr_type;
-    GTP_C_Hdr* hdr;
+    const GTP_C_Hdr* hdr;
 
     DEBUG_WRAP(DebugMessage(DEBUG_GTP, "This ia a GTP v1 packet.\n"); );
 
-    hdr = (GTP_C_Hdr*)buff;
+    hdr = (const GTP_C_Hdr*)buff;
 
     /*Check the length based on optional fields and extension header*/
     if (hdr->flag & 0x07)
@@ -386,11 +386,11 @@ static int gtp_parse_v1(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
  ********************************************************************/
 static int gtp_parse_v2(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
 {
-    GTP_C_Hdr* hdr;
+    const GTP_C_Hdr* hdr;
 
     DEBUG_WRAP(DebugMessage(DEBUG_GTP, "This ia a GTP v2 packet.\n"); );
 
-    hdr = (GTP_C_Hdr*)buff;
+    hdr = (const GTP_C_Hdr*)buff;
 
     if (hdr->flag & 0x8)
         msg->header_len = GTP_HEADER_LEN_EPC_V2;
@@ -433,10 +433,10 @@ int gtp_parse(const GTPConfig& config, GTPMsg* msg, const uint8_t* buff, uint16_
         return false;
 
     /*The first 3 bits are version number*/
-    GTP_C_Hdr* hdr = (GTP_C_Hdr*)buff;
+    const GTP_C_Hdr* hdr = (const GTP_C_Hdr*)buff;
     msg->version = (hdr->flag & 0xE0) >> 5;
     msg->msg_type = hdr->type;
-    msg->gtp_header = (uint8_t*)buff;
+    msg->gtp_header = buff;
 
     if (msg->version > MAX_GTP_VERSION_CODE)
     {
@@ -452,7 +452,7 @@ int gtp_parse(const GTPConfig& config, GTPMsg* msg, const uint8_t* buff, uint16_
 
     const GTP_MsgType* msgType = &config.msgv[msg->version][msg->msg_type];
 
-    if ( NULL == msgType )
+    if ( nullptr == msgType )
     {
         DEBUG_WRAP(DebugFormat(DEBUG_GTP, "Unsupported GTP message type: %d!\n",msg->msg_type); );
         gtp_stats.unknownTypes++;

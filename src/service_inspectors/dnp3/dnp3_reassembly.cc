@@ -77,7 +77,7 @@ static uint16_t crcLookUpTable[256] =
 */
 static bool dnp3_queue_segment(dnp3_reassembly_data_t* rdata, char* buf, uint16_t buflen)
 {
-    if (rdata == NULL || buf == NULL)
+    if (rdata == nullptr || buf == nullptr)
         return false;
 
     /* We checked for DNP3_MAX_TRANSPORT_LEN earlier. */
@@ -113,7 +113,7 @@ static bool dnp3_reassemble_transport(dnp3_reassembly_data_t* rdata, char* buf, 
 {
     dnp3_transport_header_t* trans_header;
 
-    if (rdata == NULL || buf == NULL || buflen < sizeof(dnp3_transport_header_t) ||
+    if (rdata == nullptr || buf == nullptr || buflen < sizeof(dnp3_transport_header_t) ||
         (buflen > DNP3_MAX_TRANSPORT_LEN))
     {
         return false;
@@ -214,16 +214,16 @@ static void dnp3_check_reserved_function(dnp3_session_data_t* session)
    for rule option evaluation. */
 static bool dnp3_process_application(dnp3_session_data_t* session)
 {
-    dnp3_reassembly_data_t* rdata = NULL;
+    dnp3_reassembly_data_t* rdata = nullptr;
 
-    if (session == NULL)
+    if (session == nullptr)
         return false;
 
     /* Master and Outstation use slightly different Application-layer headers.
        Only the outstation sends Internal Indications. */
     if (session->direction == DNP3_CLIENT)
     {
-        dnp3_app_request_header_t* request = NULL;
+        dnp3_app_request_header_t* request = nullptr;
         rdata = &(session->client_rdata);
 
         if (rdata->buflen < sizeof(dnp3_app_request_header_t))
@@ -235,7 +235,7 @@ static bool dnp3_process_application(dnp3_session_data_t* session)
     }
     else if (session->direction == DNP3_SERVER)
     {
-        dnp3_app_response_header_t* response = NULL;
+        dnp3_app_response_header_t* response = nullptr;
         rdata = &(session->server_rdata);
 
         if (rdata->buflen < sizeof(dnp3_app_response_header_t))
@@ -261,7 +261,7 @@ static inline void compute_crc(unsigned char data, uint16_t* crcAccum)
         (*crcAccum >> 8) ^ crcLookUpTable[(*crcAccum ^ data) & 0xFF];
 }
 
-static bool dnp3_check_crc(unsigned char* buf, uint16_t buflen)
+static bool dnp3_check_crc(const unsigned char* buf, uint16_t buflen)
 {
     uint16_t idx;
     uint16_t crc = 0;
@@ -280,22 +280,22 @@ static bool dnp3_check_crc(unsigned char* buf, uint16_t buflen)
 }
 
 /* Check CRCs in a Link-Layer Frame, then fill a buffer containing just the user data  */
-static bool dnp3_check_remove_crc(dnp3ProtoConf& config, uint8_t* pdu_start,
+static bool dnp3_check_remove_crc(dnp3ProtoConf& config, const uint8_t* pdu_start,
     uint16_t pdu_length, char* buf, uint16_t* buflen)
 {
-    char* cursor;
+    const char* cursor;
     uint16_t bytes_left;
     uint16_t curlen = 0;
 
     /* Check Header CRC */
     if ((config.check_crc) &&
-        (dnp3_check_crc((unsigned char*)pdu_start, sizeof(dnp3_link_header_t)+2) == false))
+        (dnp3_check_crc((const unsigned char*)pdu_start, sizeof(dnp3_link_header_t)+2) == false))
     {
         DetectionEngine::queue_event(GID_DNP3, DNP3_BAD_CRC);
         return false;
     }
 
-    cursor = (char*)pdu_start + sizeof(dnp3_link_header_t) + 2;
+    cursor = (const char*)pdu_start + sizeof(dnp3_link_header_t) + 2;
     bytes_left = pdu_length - sizeof(dnp3_link_header_t) - 2;
 
     /* Process whole 16-byte chunks (plus 2-byte CRC) */
@@ -303,7 +303,7 @@ static bool dnp3_check_remove_crc(dnp3ProtoConf& config, uint8_t* pdu_start,
         (curlen + DNP3_CHUNK_SIZE < *buflen) )
     {
         if ((config.check_crc) &&
-            (dnp3_check_crc((unsigned char*)cursor, (DNP3_CHUNK_SIZE+DNP3_CRC_SIZE)) == false))
+            (dnp3_check_crc((const unsigned char*)cursor, (DNP3_CHUNK_SIZE+DNP3_CRC_SIZE)) == false))
         {
             DetectionEngine::queue_event(GID_DNP3, DNP3_BAD_CRC);
             return false;
@@ -318,7 +318,7 @@ static bool dnp3_check_remove_crc(dnp3ProtoConf& config, uint8_t* pdu_start,
     if ( (bytes_left > DNP3_CRC_SIZE) &&
         (curlen + bytes_left < *buflen) )
     {
-        if ((config.check_crc) && (dnp3_check_crc((unsigned char*)cursor, bytes_left) == false))
+        if ((config.check_crc) && (dnp3_check_crc((const unsigned char*)cursor, bytes_left) == false))
         {
             DetectionEngine::queue_event(GID_DNP3, DNP3_BAD_CRC);
             return false;
@@ -332,7 +332,7 @@ static bool dnp3_check_remove_crc(dnp3ProtoConf& config, uint8_t* pdu_start,
     return true;
 }
 
-static bool dnp3_check_reserved_addrs(dnp3_link_header_t* link)
+static bool dnp3_check_reserved_addrs(const dnp3_link_header_t* link)
 {
     uint16_t src = ntohs(link->src);
     uint16_t dst = ntohs(link->dest);
@@ -353,11 +353,11 @@ static bool dnp3_check_reserved_addrs(dnp3_link_header_t* link)
 
 /* Main DNP3 Reassembly function. */
 bool dnp3_full_reassembly(dnp3ProtoConf& config, dnp3_session_data_t* session, Packet* packet,
-    uint8_t* pdu_start, uint16_t pdu_length)
+    const uint8_t* pdu_start, uint16_t pdu_length)
 {
     char buf[DNP3_TPDU_MAX];
     uint16_t buflen = sizeof(buf);
-    dnp3_link_header_t* link;
+    const dnp3_link_header_t* link;
     dnp3_reassembly_data_t* rdata;
 
     if (pdu_length < (sizeof(dnp3_link_header_t) + sizeof(dnp3_transport_header_t) + 2))
@@ -370,7 +370,7 @@ bool dnp3_full_reassembly(dnp3ProtoConf& config, dnp3_session_data_t* session, P
     ++dnp3_stats.dnp3_link_layer_frames;
 
     /* Step 1: Decode header and skip to data */
-    link = (dnp3_link_header_t*)pdu_start;
+    link = (const dnp3_link_header_t*)pdu_start;
 
     if (link->len < DNP3_MIN_TRANSPORT_LEN)
     {

@@ -48,12 +48,12 @@ void RateFilter_ConfigFree(RateFilterConfig* config)
 {
     int i;
 
-    if (config == NULL)
+    if (config == nullptr)
         return;
 
     for (i = 0; i < SFRF_MAX_GENID; i++)
     {
-        if (config->genHash[i] != NULL)
+        if (config->genHash[i] != nullptr)
             sfghash_delete(config->genHash[i]);
     }
 
@@ -73,7 +73,7 @@ int RateFilter_Create(
 {
     int error;
 
-    if (rf_config == NULL)
+    if (rf_config == nullptr)
         return -1;
 
 #ifdef RF_DBG
@@ -126,7 +126,7 @@ int RateFilter_Test(
         dip = &cleared;
     }
 
-    if ((snort_conf == NULL) || (snort_conf->rate_filter_config == NULL))
+    if ((snort_conf == nullptr) || (snort_conf->rate_filter_config == nullptr))
     {
         /* this should not happen, see the create fcn */
         return -1;

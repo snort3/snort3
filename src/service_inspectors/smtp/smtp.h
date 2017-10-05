@@ -166,7 +166,7 @@ class SmtpFlowData : public FlowData
 {
 public:
     SmtpFlowData();
-    ~SmtpFlowData();
+    ~SmtpFlowData() override;
 
     static void init()
     { inspector_id = FlowData::create_flow_data_id(); }

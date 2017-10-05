@@ -52,9 +52,6 @@ RegTestServiceDetector::RegTestServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-RegTestServiceDetector::~RegTestServiceDetector()
-{
-}
 
 int RegTestServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
@@ -67,7 +64,7 @@ int RegTestServiceDetector::validate(AppIdDiscoveryArgs& args)
     if (!args.size || (args.dir != APP_ID_FROM_RESPONDER))
         goto inprocess;
 
-    if (strncmp(REGTEST_BANNER, (char*)args.data, v_off))
+    if (strncmp(REGTEST_BANNER, (const char*)args.data, v_off))
         goto fail;
 
     if (!isdigit(args.data[v_off]) || !isdigit(args.data[v_off + 1]) || !isdigit(args.data[v_off +
@@ -103,7 +100,7 @@ RegTestServiceDetector1::RegTestServiceDetector1(ServiceDiscovery* sd)
 
     tcp_patterns =
     {
-        { (uint8_t*)REGTEST1_BANNER, sizeof(REGTEST1_BANNER) - 1, 0, 0, 0 },
+        { (const uint8_t*)REGTEST1_BANNER, sizeof(REGTEST1_BANNER) - 1, 0, 0, 0 },
     };
 
     appid_registry =
@@ -114,9 +111,6 @@ RegTestServiceDetector1::RegTestServiceDetector1(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-RegTestServiceDetector1::~RegTestServiceDetector1()
-{
-}
 
 int RegTestServiceDetector1::validate(AppIdDiscoveryArgs& args)
 {
@@ -128,7 +122,7 @@ int RegTestServiceDetector1::validate(AppIdDiscoveryArgs& args)
     if (!args.size || (args.dir != APP_ID_FROM_RESPONDER))
         goto inprocess;
 
-    if (strncmp(REGTEST1_BANNER, (char*)args.data, v_off))
+    if (strncmp(REGTEST1_BANNER, (const char*)args.data, v_off))
         goto fail;
 
     if (!isdigit(args.data[v_off]) || !isdigit(args.data[v_off + 1]) || !isdigit(args.data[v_off +
@@ -170,9 +164,6 @@ RegTestServiceDetector2::RegTestServiceDetector2(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-RegTestServiceDetector2::~RegTestServiceDetector2()
-{
-}
 
 int RegTestServiceDetector2::validate(AppIdDiscoveryArgs& args)
 {
@@ -184,7 +175,7 @@ int RegTestServiceDetector2::validate(AppIdDiscoveryArgs& args)
     if (!args.size || (args.dir != APP_ID_FROM_RESPONDER))
         goto inprocess;
 
-    if (strncmp(REGTEST2_BANNER, (char*)args.data, v_off))
+    if (strncmp(REGTEST2_BANNER, (const char*)args.data, v_off))
         goto fail;
 
     if (!isdigit(args.data[v_off]) || !isdigit(args.data[v_off + 1]) || !isdigit(args.data[v_off +

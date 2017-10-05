@@ -82,9 +82,6 @@ IrcServiceDetector::IrcServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-IrcServiceDetector::~IrcServiceDetector()
-{
-}
 
 int IrcServiceDetector::validate(AppIdDiscoveryArgs& args)
 {

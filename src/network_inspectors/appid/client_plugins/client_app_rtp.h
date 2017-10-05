@@ -28,7 +28,6 @@ class RtpClientDetector : public ClientDetector
 {
 public:
     RtpClientDetector(ClientDiscovery*);
-    ~RtpClientDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

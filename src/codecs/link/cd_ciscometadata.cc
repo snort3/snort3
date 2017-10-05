@@ -51,7 +51,6 @@ class CiscoMetaDataCodec : public Codec
 {
 public:
     CiscoMetaDataCodec() : Codec(CD_CISCOMETADATA_NAME) { }
-    ~CiscoMetaDataCodec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
@@ -136,7 +135,7 @@ bool CiscoMetaDataCodec::decode(const RawData& raw, CodecData& codec, DecodeData
 
     //The last 2 octets of the header will be the real ethtype
     codec.next_prot_id = static_cast<ProtocolId>
-        (ntohs(*((uint16_t*)(raw.data + codec.lyr_len - sizeof(uint16_t)))));
+        (ntohs(*((const uint16_t*)(raw.data + codec.lyr_len - sizeof(uint16_t)))));
 
     codec.codec_flags |= CODEC_ETHER_NEXT;
     return true;

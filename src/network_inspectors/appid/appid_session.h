@@ -163,7 +163,7 @@ class AppIdSession : public FlowData
 {
 public:
     AppIdSession(IpProtocol, const SfIp*, uint16_t port);
-    ~AppIdSession();
+    ~AppIdSession() override;
 
     static AppIdSession* allocate_session(const Packet*, IpProtocol, int);
     static AppIdSession* create_future_session(const Packet*, const SfIp*, uint16_t, const SfIp*,

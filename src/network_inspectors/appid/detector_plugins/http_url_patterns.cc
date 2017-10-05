@@ -150,118 +150,118 @@ struct MatchedPatterns
 static DetectorHTTPPatterns static_content_type_patterns =
 {
     { SINGLE, 0, APP_ID_QUICKTIME, 0,
-        APP_ID_QUICKTIME, sizeof(QUICKTIME_BANNER)-1, (uint8_t*)QUICKTIME_BANNER },
+        APP_ID_QUICKTIME, sizeof(QUICKTIME_BANNER)-1, (const uint8_t*)QUICKTIME_BANNER },
     { SINGLE, 0, APP_ID_MPEG, 0,
-        APP_ID_MPEG, sizeof(MPEG_BANNER)-1, (uint8_t*)MPEG_BANNER },
+        APP_ID_MPEG, sizeof(MPEG_BANNER)-1, (const uint8_t*)MPEG_BANNER },
     { SINGLE, 0, APP_ID_MPEG, 0,
-        APP_ID_MPEG, sizeof(MPA_BANNER)-1, (uint8_t*)MPA_BANNER },
+        APP_ID_MPEG, sizeof(MPA_BANNER)-1, (const uint8_t*)MPA_BANNER },
     { SINGLE, 0, APP_ID_MPEG, 0,
-        APP_ID_MPEG, sizeof(MP4A_BANNER)-1, (uint8_t*)MP4A_BANNER },
+        APP_ID_MPEG, sizeof(MP4A_BANNER)-1, (const uint8_t*)MP4A_BANNER },
     { SINGLE, 0, APP_ID_MPEG, 0,
-        APP_ID_MPEG, sizeof(ROBUST_MPA_BANNER)-1, (uint8_t*)ROBUST_MPA_BANNER },
+        APP_ID_MPEG, sizeof(ROBUST_MPA_BANNER)-1, (const uint8_t*)ROBUST_MPA_BANNER },
     { SINGLE, 0, APP_ID_MPEG, 0,
-        APP_ID_MPEG, sizeof(XSCPLS_BANNER)-1, (uint8_t*)XSCPLS_BANNER },
+        APP_ID_MPEG, sizeof(XSCPLS_BANNER)-1, (const uint8_t*)XSCPLS_BANNER },
     { SINGLE, 0, APP_ID_SHOCKWAVE, 0,
-        APP_ID_SHOCKWAVE, sizeof(SHOCKWAVE_BANNER)-1, (uint8_t*)SHOCKWAVE_BANNER },
+        APP_ID_SHOCKWAVE, sizeof(SHOCKWAVE_BANNER)-1, (const uint8_t*)SHOCKWAVE_BANNER },
     { SINGLE, 0, APP_ID_RSS, 0,
-        APP_ID_RSS, sizeof(RSS_BANNER)-1, (uint8_t*)RSS_BANNER },
+        APP_ID_RSS, sizeof(RSS_BANNER)-1, (const uint8_t*)RSS_BANNER },
     { SINGLE, 0, APP_ID_ATOM, 0,
-        APP_ID_ATOM, sizeof(ATOM_BANNER)-1, (uint8_t*)ATOM_BANNER },
+        APP_ID_ATOM, sizeof(ATOM_BANNER)-1, (const uint8_t*)ATOM_BANNER },
     { SINGLE, 0, APP_ID_MP4, 0,
-        APP_ID_MP4, sizeof(MP4_BANNER)-1, (uint8_t*)MP4_BANNER },
+        APP_ID_MP4, sizeof(MP4_BANNER)-1, (const uint8_t*)MP4_BANNER },
     { SINGLE, 0, APP_ID_WMV, 0,
-        APP_ID_WMV, sizeof(WMV_BANNER)-1, (uint8_t*)WMV_BANNER },
+        APP_ID_WMV, sizeof(WMV_BANNER)-1, (const uint8_t*)WMV_BANNER },
     { SINGLE, 0, APP_ID_WMA, 0,
-        APP_ID_WMA, sizeof(WMA_BANNER)-1, (uint8_t*)WMA_BANNER },
+        APP_ID_WMA, sizeof(WMA_BANNER)-1, (const uint8_t*)WMA_BANNER },
     { SINGLE, 0, APP_ID_WAV, 0,
-        APP_ID_WAV, sizeof(WAV_BANNER)-1, (uint8_t*)WAV_BANNER },
+        APP_ID_WAV, sizeof(WAV_BANNER)-1, (const uint8_t*)WAV_BANNER },
     { SINGLE, 0, APP_ID_WAV, 0,
-        APP_ID_WAV, sizeof(X_WAV_BANNER)-1, (uint8_t*)X_WAV_BANNER },
+        APP_ID_WAV, sizeof(X_WAV_BANNER)-1, (const uint8_t*)X_WAV_BANNER },
     { SINGLE, 0, APP_ID_WAV, 0,
-        APP_ID_WAV, sizeof(VND_WAV_BANNER)-1, (uint8_t*)VND_WAV_BANNER },
+        APP_ID_WAV, sizeof(VND_WAV_BANNER)-1, (const uint8_t*)VND_WAV_BANNER },
     { SINGLE, 0, APP_ID_FLASH_VIDEO, 0,
-        APP_ID_FLASH_VIDEO, sizeof(FLV_BANNER)-1, (uint8_t*)FLV_BANNER },
+        APP_ID_FLASH_VIDEO, sizeof(FLV_BANNER)-1, (const uint8_t*)FLV_BANNER },
     { SINGLE, 0, APP_ID_FLASH_VIDEO, 0,
-        APP_ID_FLASH_VIDEO, sizeof(M4V_BANNER)-1, (uint8_t*)M4V_BANNER },
+        APP_ID_FLASH_VIDEO, sizeof(M4V_BANNER)-1, (const uint8_t*)M4V_BANNER },
     { SINGLE, 0, APP_ID_FLASH_VIDEO, 0,
-        APP_ID_FLASH_VIDEO, sizeof(GPP_BANNER)-1, (uint8_t*)GPP_BANNER },
+        APP_ID_FLASH_VIDEO, sizeof(GPP_BANNER)-1, (const uint8_t*)GPP_BANNER },
     { SINGLE, 0, APP_ID_GENERIC, 0,
-        APP_ID_GENERIC, sizeof(VIDEO_BANNER)-1, (uint8_t*)VIDEO_BANNER },
+        APP_ID_GENERIC, sizeof(VIDEO_BANNER)-1, (const uint8_t*)VIDEO_BANNER },
     { SINGLE, 0, APP_ID_GENERIC, 0,
-        APP_ID_GENERIC, sizeof(AUDIO_BANNER)-1, (uint8_t*)AUDIO_BANNER },
+        APP_ID_GENERIC, sizeof(AUDIO_BANNER)-1, (const uint8_t*)AUDIO_BANNER },
 };
 
 static DetectorHTTPPatterns static_via_http_detector_patterns =
 {
-    { SINGLE, APP_ID_SQUID, 0, 0, APP_ID_SQUID, SQUID_PATTERN_SIZE, (uint8_t*)SQUID_PATTERN },
+    { SINGLE, APP_ID_SQUID, 0, 0, APP_ID_SQUID, SQUID_PATTERN_SIZE, (const uint8_t*)SQUID_PATTERN },
 };
 
 static DetectorHTTPPatterns static_http_host_payload_patterns =
 {
     { SINGLE, 0, 0, APP_ID_MYSPACE,
-        APP_ID_MYSPACE, MYSPACE_PATTERN_SIZE, (uint8_t*)MYSPACE_PATTERN },
+        APP_ID_MYSPACE, MYSPACE_PATTERN_SIZE, (const uint8_t*)MYSPACE_PATTERN },
     { SINGLE, 0, 0, APP_ID_GMAIL,
-        APP_ID_GMAIL, GMAIL_PATTERN_SIZE, (uint8_t*)GMAIL_PATTERN },
+        APP_ID_GMAIL, GMAIL_PATTERN_SIZE, (const uint8_t*)GMAIL_PATTERN },
     { SINGLE, 0, 0, APP_ID_GMAIL,
-        APP_ID_GMAIL, GMAIL_PATTERN2_SIZE, (uint8_t*)GMAIL_PATTERN2 },
+        APP_ID_GMAIL, GMAIL_PATTERN2_SIZE, (const uint8_t*)GMAIL_PATTERN2 },
     { SINGLE, 0, 0, APP_ID_AOL_EMAIL,
-        APP_ID_AOL_EMAIL, AOL_PATTERN_SIZE, (uint8_t*)AOL_PATTERN },
+        APP_ID_AOL_EMAIL, AOL_PATTERN_SIZE, (const uint8_t*)AOL_PATTERN },
     { SINGLE, 0, 0, APP_ID_MICROSOFT_UPDATE,
-        APP_ID_MICROSOFT_UPDATE, MSUP_PATTERN_SIZE, (uint8_t*)MSUP_PATTERN },
+        APP_ID_MICROSOFT_UPDATE, MSUP_PATTERN_SIZE, (const uint8_t*)MSUP_PATTERN },
     { SINGLE, 0, 0, APP_ID_MICROSOFT_UPDATE,
-        APP_ID_MICROSOFT_UPDATE,MSUP_PATTERN2_SIZE, (uint8_t*)MSUP_PATTERN2 },
+        APP_ID_MICROSOFT_UPDATE,MSUP_PATTERN2_SIZE, (const uint8_t*)MSUP_PATTERN2 },
     { SINGLE, 0, 0, APP_ID_YAHOOMAIL,
-        APP_ID_YAHOOMAIL, YAHOO_MAIL_PATTERN_SIZE, (uint8_t*)YAHOO_MAIL_PATTERN },
+        APP_ID_YAHOOMAIL, YAHOO_MAIL_PATTERN_SIZE, (const uint8_t*)YAHOO_MAIL_PATTERN },
     { SINGLE, 0, 0, APP_ID_YAHOO_TOOLBAR,
-        APP_ID_YAHOO_TOOLBAR, YAHOO_TB_PATTERN_SIZE, (uint8_t*)YAHOO_TB_PATTERN },
+        APP_ID_YAHOO_TOOLBAR, YAHOO_TB_PATTERN_SIZE, (const uint8_t*)YAHOO_TB_PATTERN },
     { SINGLE, 0, 0, APP_ID_ADOBE_UPDATE,
-        APP_ID_ADOBE_UPDATE, ADOBE_UP_PATTERN_SIZE, (uint8_t*)ADOBE_UP_PATTERN },
+        APP_ID_ADOBE_UPDATE, ADOBE_UP_PATTERN_SIZE, (const uint8_t*)ADOBE_UP_PATTERN },
     { SINGLE, 0, 0, APP_ID_HOTMAIL,
-        APP_ID_HOTMAIL, HOTMAIL_PATTERN1_SIZE, (uint8_t*)HOTMAIL_PATTERN1 },
+        APP_ID_HOTMAIL, HOTMAIL_PATTERN1_SIZE, (const uint8_t*)HOTMAIL_PATTERN1 },
     { SINGLE, 0, 0, APP_ID_HOTMAIL,
-        APP_ID_HOTMAIL, HOTMAIL_PATTERN2_SIZE, (uint8_t*)HOTMAIL_PATTERN2 },
+        APP_ID_HOTMAIL, HOTMAIL_PATTERN2_SIZE, (const uint8_t*)HOTMAIL_PATTERN2 },
     { SINGLE, 0, 0, APP_ID_GOOGLE_TOOLBAR,
-        APP_ID_GOOGLE_TOOLBAR, GOOGLE_TB_PATTERN_SIZE, (uint8_t*)GOOGLE_TB_PATTERN },
+        APP_ID_GOOGLE_TOOLBAR, GOOGLE_TB_PATTERN_SIZE, (const uint8_t*)GOOGLE_TB_PATTERN },
 };
 
 static DetectorHTTPPatterns static_client_agent_patterns =
 {
     { USER_AGENT_HEADER, 0, FAKE_VERSION_APP_ID, 0,
-        FAKE_VERSION_APP_ID, VERSION_PATTERN_SIZE, (uint8_t*)VERSION_PATTERN },
+        FAKE_VERSION_APP_ID, VERSION_PATTERN_SIZE, (const uint8_t*)VERSION_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_INTERNET_EXPLORER, 0,
-        APP_ID_INTERNET_EXPLORER, sizeof(MSIE_PATTERN)-1, (uint8_t*)MSIE_PATTERN },
+        APP_ID_INTERNET_EXPLORER, sizeof(MSIE_PATTERN)-1, (const uint8_t*)MSIE_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_KONQUEROR, 0,
-        APP_ID_KONQUEROR, sizeof(KONQUEROR_PATTERN)-1, (uint8_t*)KONQUEROR_PATTERN },
+        APP_ID_KONQUEROR, sizeof(KONQUEROR_PATTERN)-1, (const uint8_t*)KONQUEROR_PATTERN },
     { USER_AGENT_HEADER, APP_ID_SKYPE_AUTH, APP_ID_SKYPE, 0,
-        APP_ID_SKYPE, sizeof(SKYPE_PATTERN)-1, (uint8_t*)SKYPE_PATTERN },
+        APP_ID_SKYPE, sizeof(SKYPE_PATTERN)-1, (const uint8_t*)SKYPE_PATTERN },
     { USER_AGENT_HEADER, APP_ID_BITTORRENT, APP_ID_BITTORRENT, 0,
-        APP_ID_BITTORRENT, sizeof(BITTORRENT_PATTERN)-1, (uint8_t*)BITTORRENT_PATTERN },
+        APP_ID_BITTORRENT, sizeof(BITTORRENT_PATTERN)-1, (const uint8_t*)BITTORRENT_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_FIREFOX, 0,
-        APP_ID_FIREFOX, sizeof(FIREFOX_PATTERN)-1, (uint8_t*)FIREFOX_PATTERN },
+        APP_ID_FIREFOX, sizeof(FIREFOX_PATTERN)-1, (const uint8_t*)FIREFOX_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_WGET, 0,
-        APP_ID_WGET, sizeof(WGET_PATTERN)-1, (uint8_t*)WGET_PATTERN },
+        APP_ID_WGET, sizeof(WGET_PATTERN)-1, (const uint8_t*)WGET_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_CURL, 0,
-        APP_ID_CURL, sizeof(CURL_PATTERN)-1, (uint8_t*)CURL_PATTERN },
+        APP_ID_CURL, sizeof(CURL_PATTERN)-1, (const uint8_t*)CURL_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_GOOGLE_DESKTOP, 0,
-        APP_ID_GOOGLE_DESKTOP, sizeof(GOOGLE_DESKTOP_PATTERN)-1, (uint8_t*)GOOGLE_DESKTOP_PATTERN },
+        APP_ID_GOOGLE_DESKTOP, sizeof(GOOGLE_DESKTOP_PATTERN)-1, (const uint8_t*)GOOGLE_DESKTOP_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_PICASA, 0,
-        APP_ID_PICASA, sizeof(PICASA_PATTERN)-1, (uint8_t*)PICASA_PATTERN },
+        APP_ID_PICASA, sizeof(PICASA_PATTERN)-1, (const uint8_t*)PICASA_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_SAFARI, 0,
-        APP_ID_SAFARI, sizeof(SAFARI_PATTERN)-1, (uint8_t*)SAFARI_PATTERN },
+        APP_ID_SAFARI, sizeof(SAFARI_PATTERN)-1, (const uint8_t*)SAFARI_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_OPERA, 0,
-        APP_ID_OPERA, sizeof(OPERA_PATTERN)-1, (uint8_t*)OPERA_PATTERN },
+        APP_ID_OPERA, sizeof(OPERA_PATTERN)-1, (const uint8_t*)OPERA_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_CHROME, 0,
-        APP_ID_CHROME, sizeof(CHROME_PATTERN)-1, (uint8_t*)CHROME_PATTERN },
+        APP_ID_CHROME, sizeof(CHROME_PATTERN)-1, (const uint8_t*)CHROME_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_SAFARI_MOBILE_DUMMY, 0,
-        APP_ID_SAFARI_MOBILE_DUMMY, sizeof(MOBILE_PATTERN)-1, (uint8_t*)MOBILE_PATTERN },
+        APP_ID_SAFARI_MOBILE_DUMMY, sizeof(MOBILE_PATTERN)-1, (const uint8_t*)MOBILE_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_BLACKBERRY_BROWSER, 0,
-        APP_ID_BLACKBERRY_BROWSER, sizeof(BLACKBERRY_PATTERN)-1, (uint8_t*)BLACKBERRY_PATTERN },
+        APP_ID_BLACKBERRY_BROWSER, sizeof(BLACKBERRY_PATTERN)-1, (const uint8_t*)BLACKBERRY_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_ANDROID_BROWSER, 0,
-        APP_ID_ANDROID_BROWSER, sizeof(ANDROID_PATTERN)-1, (uint8_t*)ANDROID_PATTERN },
+        APP_ID_ANDROID_BROWSER, sizeof(ANDROID_PATTERN)-1, (const uint8_t*)ANDROID_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_WINDOWS_MEDIA_PLAYER, 0,
-        APP_ID_WINDOWS_MEDIA_PLAYER, sizeof(MEDIAPLAYER_PATTERN)-1, (uint8_t*)MEDIAPLAYER_PATTERN },
+        APP_ID_WINDOWS_MEDIA_PLAYER, sizeof(MEDIAPLAYER_PATTERN)-1, (const uint8_t*)MEDIAPLAYER_PATTERN },
     { USER_AGENT_HEADER, APP_ID_HTTP, APP_ID_APPLE_EMAIL, 0,
-        APP_ID_APPLE_EMAIL, sizeof(APPLE_EMAIL_PATTERN)-1, (uint8_t*)APPLE_EMAIL_PATTERN },
+        APP_ID_APPLE_EMAIL, sizeof(APPLE_EMAIL_PATTERN)-1, (const uint8_t*)APPLE_EMAIL_PATTERN },
 };
 
 static int match_query_elements(tMlpPattern* packetData, tMlpPattern* userPattern,
@@ -317,13 +317,13 @@ static void free_app_url_patterns(std::vector<DetectorAppUrlPattern*>& url_patte
     for (auto* pattern: url_patterns)
     {
         if (pattern->userData.query.pattern)
-            snort_free(*(void**)&pattern->userData.query.pattern);
+            snort_free(const_cast<uint8_t*>(pattern->userData.query.pattern));
         if (pattern->patterns.host.pattern)
-            snort_free(*(void**)&pattern->patterns.host.pattern);
+            snort_free(const_cast<uint8_t*>(pattern->patterns.host.pattern));
         if (pattern->patterns.path.pattern)
-            snort_free(*(void**)&pattern->patterns.path.pattern);
+            snort_free(const_cast<uint8_t*>(pattern->patterns.path.pattern));
         if (pattern->patterns.scheme.pattern)
-            snort_free(*(void**)&pattern->patterns.scheme.pattern);
+            snort_free(const_cast<uint8_t*>(pattern->patterns.scheme.pattern));
         snort_free(pattern);
     }
     url_patterns.clear();
@@ -333,7 +333,7 @@ static void free_http_patterns(DetectorHTTPPatterns& patterns)
 {
     for (auto& pat: patterns)
         if (pat.pattern)
-            snort_free(pat.pattern);
+            snort_free(const_cast<uint8_t*>(pat.pattern));
 }
 
 void HttpPatternMatchers::free_chp_app_elements()
@@ -427,7 +427,7 @@ void HttpPatternMatchers::remove_http_patterns_for_id(AppId id)
 
             // 1) unlink the struct, 2) free strings and then 3) free the struct.
             chpa = tmp_chpa; // preserve this pointer to be freed at the end.
-            if (prev_chpa == NULL)
+            if (prev_chpa == nullptr)
             {
                 // Remove from head
                 chpList = tmp_chpa->next;
@@ -510,13 +510,13 @@ int HttpPatternMatchers::add_mlmp_pattern(tMlmpTree* matcher, DetectorAppUrlPatt
 
     if (pattern.patterns.path.pattern)
     {
-        detector->path.pattern = (uint8_t*)snort_strdup((char*)pattern.patterns.path.pattern);
+        detector->path.pattern = (uint8_t*)snort_strdup((const char*)pattern.patterns.path.pattern);
         detector->path.patternSize = pattern.patterns.path.patternSize;
     }
 
     if (pattern.userData.query.pattern)
     {
-        detector->query.pattern = (uint8_t*)snort_strdup((char*)pattern.userData.query.pattern);
+        detector->query.pattern = (uint8_t*)snort_strdup((const char*)pattern.userData.query.pattern);
         detector->query.patternSize = pattern.userData.query.patternSize;
     }
 
@@ -691,18 +691,18 @@ int HttpPatternMatchers::process_chp_list(CHPListElement* chplist)
 
 typedef struct _FIELD_PATTERN
 {
+    const uint8_t* data;
     PatternType patternType;
-    uint8_t* data;
     unsigned length;
 } FieldPattern;
 
 static FieldPattern http_field_patterns[] =
 {
-    { URI_PT, (uint8_t*)HTTP_FIELD_PREFIX_URI, HTTP_FIELD_PREFIX_URI_SIZE },
-    { HOST_PT, (uint8_t*)HTTP_FIELD_PREFIX_HOST,HTTP_FIELD_PREFIX_HOST_SIZE },
-    { REFERER_PT, (uint8_t*)HTTP_FIELD_PREFIX_REFERER, HTTP_FIELD_PREFIX_REFERER_SIZE },
-    { COOKIE_PT, (uint8_t*)HTTP_FIELD_PREFIX_COOKIE, HTTP_FIELD_PREFIX_COOKIE_SIZE },
-    { AGENT_PT, (uint8_t*)HTTP_FIELD_PREFIX_USER_AGENT,HTTP_FIELD_PREFIX_USER_AGENT_SIZE },
+    { (const uint8_t*)HTTP_FIELD_PREFIX_URI, URI_PT, HTTP_FIELD_PREFIX_URI_SIZE },
+    { (const uint8_t*)HTTP_FIELD_PREFIX_HOST, HOST_PT, HTTP_FIELD_PREFIX_HOST_SIZE },
+    { (const uint8_t*)HTTP_FIELD_PREFIX_REFERER, REFERER_PT, HTTP_FIELD_PREFIX_REFERER_SIZE },
+    { (const uint8_t*)HTTP_FIELD_PREFIX_COOKIE, COOKIE_PT, HTTP_FIELD_PREFIX_COOKIE_SIZE },
+    { (const uint8_t*)HTTP_FIELD_PREFIX_USER_AGENT, AGENT_PT, HTTP_FIELD_PREFIX_USER_AGENT_SIZE },
 };
 
 static SearchTool* process_http_field_patterns(FieldPattern* patternList, size_t patternListCount)
@@ -710,7 +710,7 @@ static SearchTool* process_http_field_patterns(FieldPattern* patternList, size_t
     SearchTool* patternMatcher = new SearchTool("ac_full", true);
 
     for (size_t i=0; i < patternListCount; i++)
-        patternMatcher->add( (char*)patternList[i].data, patternList[i].length,
+        patternMatcher->add( (const char*)patternList[i].data, patternList[i].length,
             &patternList[i], false);
 
     patternMatcher->prep();
@@ -764,7 +764,7 @@ static int http_field_pattern_match(void* id, void*, int match_end_pos, void* da
     unsigned fieldOffset = match_end_pos;
     unsigned remainingLength = pFieldData->length - fieldOffset;
 
-    if (!(p = (uint8_t*)service_strstr(&pFieldData->payload[fieldOffset], remainingLength, crlf,
+    if (!(p = (const uint8_t*)service_strstr(&pFieldData->payload[fieldOffset], remainingLength, crlf,
             crlfLen)))
     {
         return 1;
@@ -780,7 +780,7 @@ void HttpPatternMatchers::get_http_offsets(Packet* pkt, AppIdHttpSession* hsessi
     constexpr auto MIN_HTTP_REQ_HEADER_SIZE = (sizeof("GET /\r\n\r\n") - 1);
     static const uint8_t crlfcrlf[] = "\r\n\r\n";
     static unsigned crlfcrlfLen = sizeof(crlfcrlf) - 1;
-    uint8_t* headerEnd;
+    const uint8_t* headerEnd;
     unsigned fieldId;
     FieldPatternData patternMatchData;
 
@@ -793,12 +793,12 @@ void HttpPatternMatchers::get_http_offsets(Packet* pkt, AppIdHttpSession* hsessi
     patternMatchData.hsession = hsession;
     patternMatchData.payload = pkt->data;
 
-    if (!(headerEnd = (uint8_t*)service_strstr(pkt->data, pkt->dsize, crlfcrlf, crlfcrlfLen)))
+    if (!(headerEnd = (const uint8_t*)service_strstr(pkt->data, pkt->dsize, crlfcrlf, crlfcrlfLen)))
         return;
 
     headerEnd += crlfcrlfLen;
     patternMatchData.length = (unsigned)(headerEnd - pkt->data);
-    field_matcher->find_all((char*)pkt->data, patternMatchData.length,
+    field_matcher->find_all((const char*)pkt->data, patternMatchData.length,
         &http_field_pattern_match, false, (void*)(&patternMatchData));
 }
 
@@ -1119,10 +1119,10 @@ static inline int replace_optional_string(char** optionalStr, const char* strToD
     return 0;
 }
 
-static inline uint8_t* continue_buffer_scan(const uint8_t* start, const uint8_t* end,
+static inline const uint8_t* continue_buffer_scan(const uint8_t* start, const uint8_t* end,
     MatchedPatterns* mp, DetectorHTTPPattern*)
 {
-    uint8_t* bp = (uint8_t*)(start) + mp->after_match_pos;
+    const uint8_t* bp = start + mp->after_match_pos;
     if ( (bp >= end) || (*bp != ' ' && *bp != 0x09 && *bp != '/') )
         return nullptr;
     else
@@ -1134,7 +1134,7 @@ void HttpPatternMatchers::identify_user_agent(const uint8_t* start, int size, Ap
 {
     char temp_ver[MAX_VERSION_SIZE] = { 0 };
     MatchedPatterns* mp = nullptr;
-    uint8_t* buffPtr = nullptr;
+    const uint8_t* buffPtr = nullptr;
 
     client_agent_matcher.find_all((const char*)start, size, &http_pattern_match,
         false, (void*)&mp);
@@ -1179,11 +1179,11 @@ void HttpPatternMatchers::identify_user_agent(const uint8_t* start, int size, Ap
 
                 /*compatibility check */
                 if (match->client_id == APP_ID_INTERNET_EXPLORER
-                    && strstr((char*)buffPtr, "SLCC2"))
+                    && strstr((const char*)buffPtr, "SLCC2"))
                 {
                     if ((MAX_VERSION_SIZE-i) >= (sizeof(COMPATIBLE_BROWSER_STRING) - 1))
                     {
-                        strcat(temp_ver, COMPATIBLE_BROWSER_STRING);
+                        strncat(temp_ver, COMPATIBLE_BROWSER_STRING, MAX_VERSION_SIZE - i);
                     }
                 }
                 // Pick firefox over some things, but pick a misc app over Firefox.
@@ -1261,7 +1261,7 @@ void HttpPatternMatchers::identify_user_agent(const uint8_t* start, int size, Ap
                 goto done;
 
             case APP_ID_GOOGLE_DESKTOP:
-                buffPtr = (uint8_t*)start + tmp->after_match_pos;
+                buffPtr = start + tmp->after_match_pos;
 
                 if (buffPtr >= end)
                     break;
@@ -1300,13 +1300,12 @@ void HttpPatternMatchers::identify_user_agent(const uint8_t* start, int size, Ap
                 appleEmailDetect = true;
                 for (i = 0; i < 3 && appleEmailDetect; i++)
                 {
-                    buffPtr = (uint8_t*)strstr((char*)start, (char*)APPLE_EMAIL_PATTERNS[i]);
-                    appleEmailDetect  = ((uint8_t*)buffPtr &&
-                        (i != 0 || buffPtr == ((uint8_t*)start)));
+                    buffPtr = (const uint8_t*)strstr((const char*)start, (const char*)APPLE_EMAIL_PATTERNS[i]);
+                    appleEmailDetect  = (buffPtr && (i != 0 || buffPtr == start));
                 }
                 if (appleEmailDetect)
                 {
-                    dominant_pattern_detected = !(buffPtr && strstr((char*)buffPtr,
+                    dominant_pattern_detected = !(buffPtr && strstr((const char*)buffPtr,
                         SAFARI_PATTERN) != nullptr);
                     temp_ver[0] = 0;
                     service_id = APP_ID_HTTP;
@@ -1316,7 +1315,7 @@ void HttpPatternMatchers::identify_user_agent(const uint8_t* start, int size, Ap
                 break;
 
             case APP_ID_WGET:
-                buffPtr = (uint8_t*)start + tmp->after_match_pos;
+                buffPtr = start + tmp->after_match_pos;
                 if (buffPtr >= end)
                     break;
                 while (i < MAX_VERSION_SIZE - 1 && buffPtr < end)
@@ -1367,7 +1366,7 @@ void HttpPatternMatchers::identify_user_agent(const uint8_t* start, int size, Ap
                     temp_ver[0] = 0;
                     i = 0;
                 }
-                buffPtr = (uint8_t*)start + tmp->after_match_pos;
+                buffPtr = start + tmp->after_match_pos;
 
                 if (buffPtr >= end)
                     break;
@@ -1396,7 +1395,7 @@ void HttpPatternMatchers::identify_user_agent(const uint8_t* start, int size, Ap
                     i = 0;
                     /* if we already collected temp_ver information after seeing 'Version', let's
                        use that*/
-                    buffPtr = (uint8_t*)start + tmp->after_match_pos;
+                    buffPtr = start + tmp->after_match_pos;
                     if (buffPtr >= end)
                         break;
                     /* we may have to enter the pattern with the / in it. */
@@ -1467,7 +1466,7 @@ int HttpPatternMatchers::get_appid_by_pattern(const uint8_t* data, unsigned size
         {
         case APP_ID_SQUID:
         {
-            const uint8_t* data_ptr = (uint8_t*)data + mp->after_match_pos;
+            const uint8_t* data_ptr = data + mp->after_match_pos;
             const uint8_t* end = data + size;
             unsigned i = 0;
 
@@ -1552,8 +1551,8 @@ AppId HttpPatternMatchers::get_appid_by_content_type(const uint8_t* data, int si
 #define URL_SCHEME_END_PATTERN "://"
 #define URL_SCHEME_MAX_LEN     (sizeof("https://")-1)
 
-bool HttpPatternMatchers::get_appid_from_url(char* host, char* url, char** version,
-    char* referer, AppId* ClientAppId, AppId* serviceAppId, AppId* payloadAppId,
+bool HttpPatternMatchers::get_appid_from_url(char* host, const char* url, char** version,
+    const char* referer, AppId* ClientAppId, AppId* serviceAppId, AppId* payloadAppId,
     AppId* referredPayloadAppId, bool from_rtmp)
 {
     char* temp_host = nullptr;
@@ -1562,7 +1561,7 @@ bool HttpPatternMatchers::get_appid_from_url(char* host, char* url, char** versi
     tMlmpTree* matcher = from_rtmp ? rtmp_host_url_matcher : host_url_matcher;
 
     if (!host && !url)
-        return 0;
+        return false;
 
     int url_len = 0;
     if (url)
@@ -1570,12 +1569,12 @@ bool HttpPatternMatchers::get_appid_from_url(char* host, char* url, char** versi
         size_t scheme_len = strlen(url);
         if (scheme_len > URL_SCHEME_MAX_LEN)
             scheme_len = URL_SCHEME_MAX_LEN;    // only search the first few bytes for scheme
-        char* url_offset = (char*)service_strstr((uint8_t*)url, scheme_len,
-            (uint8_t*)URL_SCHEME_END_PATTERN, sizeof(URL_SCHEME_END_PATTERN)-1);
+        const char* url_offset = (const char*)service_strstr((const uint8_t*)url, scheme_len,
+            (const uint8_t*)URL_SCHEME_END_PATTERN, sizeof(URL_SCHEME_END_PATTERN)-1);
         if (url_offset)
             url_offset += sizeof(URL_SCHEME_END_PATTERN)-1;
         else
-            return 0;
+            return false;
 
         url = url_offset;
         url_len = strlen(url);
@@ -1591,14 +1590,14 @@ bool HttpPatternMatchers::get_appid_from_url(char* host, char* url, char** versi
     }
     int host_len = strlen(host);
 
-    char* path = nullptr;
+    const char* path = nullptr;
     int path_len = 0;
     if (url_len)
     {
         if (url_len < host_len)
         {
             snort_free(temp_host);
-            return 0;
+            return false;
         }
         path_len = url_len - host_len;
         path = url + host_len;
@@ -1606,7 +1605,7 @@ bool HttpPatternMatchers::get_appid_from_url(char* host, char* url, char** versi
 
     patterns[0].pattern = (uint8_t*)host;
     patterns[0].patternSize = host_len;
-    patterns[1].pattern = (uint8_t*)path;
+    patterns[1].pattern = (const uint8_t*)path;
     patterns[1].patternSize = path_len;
     patterns[2].pattern = nullptr;
 
@@ -1616,7 +1615,7 @@ bool HttpPatternMatchers::get_appid_from_url(char* host, char* url, char** versi
         payload_found = true;
         if ( url )
         {
-            char* q = strchr(url, '?');
+            const char* q = strchr(url, '?');
             if ( q != nullptr )
             {
                 tMlpPattern query;
@@ -1644,14 +1643,14 @@ bool HttpPatternMatchers::get_appid_from_url(char* host, char* url, char** versi
          AppInfoManager::get_instance().get_app_info_flags(data->payload_id,
          APPINFO_FLAG_REFERRED)) )
     {
-        char* referer_start = referer;
+        const char* referer_start = referer;
         size_t ref_len = strlen(referer);
 
-        char* referer_offset = (char*)service_strstr((uint8_t*)referer_start, ref_len,
-            (uint8_t*)URL_SCHEME_END_PATTERN, sizeof(URL_SCHEME_END_PATTERN)-1);
+        const char* referer_offset = (const char*)service_strstr((const uint8_t*)referer_start, ref_len,
+            (const uint8_t*)URL_SCHEME_END_PATTERN, sizeof(URL_SCHEME_END_PATTERN)-1);
 
         if ( !referer_offset )
-            return 0;
+            return false;
 
         referer_offset += sizeof(URL_SCHEME_END_PATTERN)-1;
         referer_start = referer_offset;
@@ -1672,9 +1671,9 @@ bool HttpPatternMatchers::get_appid_from_url(char* host, char* url, char** versi
 
         if ( referer_len > 0 )
         {
-            patterns[0].pattern = (uint8_t*)referer_start;
+            patterns[0].pattern = (const uint8_t*)referer_start;
             patterns[0].patternSize = referer_len;
-            patterns[1].pattern = (uint8_t*)referer_path;
+            patterns[1].pattern = (const uint8_t*)referer_path;
             patterns[1].patternSize = referer_path_len;
             patterns[2].pattern = nullptr;
             HostUrlDetectorPattern* data = (HostUrlDetectorPattern*)mlmpMatchPatternUrl(matcher, patterns);

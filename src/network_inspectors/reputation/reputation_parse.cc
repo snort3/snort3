@@ -23,10 +23,10 @@
 
 #include "reputation_parse.h"
 
-#include <limits.h>
 #include <netinet/in.h>
 
 #include <cassert>
+#include <climits>
 #include <limits>
 
 #include "log/messages.h"

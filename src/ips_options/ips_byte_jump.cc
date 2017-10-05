@@ -118,7 +118,6 @@ public:
     ByteJumpOption(const ByteJumpData& c) : IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_USE)
     { config = c; }
 
-    ~ByteJumpOption() { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -176,9 +175,9 @@ bool ByteJumpOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    ByteJumpOption& rhs = (ByteJumpOption&)ips;
-    ByteJumpData* left = (ByteJumpData*)&config;
-    ByteJumpData* right = (ByteJumpData*)&rhs.config;
+    const ByteJumpOption& rhs = (const ByteJumpOption&)ips;
+    const ByteJumpData* left = &config;
+    const ByteJumpData* right = &rhs.config;
 
     if (( left->bytes_to_grab == right->bytes_to_grab) &&
         ( left->offset == right->offset) &&

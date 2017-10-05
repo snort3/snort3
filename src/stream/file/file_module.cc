@@ -40,7 +40,6 @@ static const Parameter s_params[] =
 StreamFileModule::StreamFileModule() :
     Module(MOD_NAME, MOD_HELP, s_params) { }
 
-StreamFileModule::~StreamFileModule() { }
 
 bool StreamFileModule::begin(const char*, int, SnortConfig*)
 {

@@ -139,7 +139,7 @@ IdentifierNode* FileIdentifier::create_trie_from_magic(FileMagicRule& rule, uint
     IdentifierNode* current;
     IdentifierNode* root = nullptr;
 
-    if (!rule.file_magics.size() || !type_id)
+    if (rule.file_magics.empty() || !type_id)
         return nullptr;
 
     /* Content magics are sorted based on offset, this

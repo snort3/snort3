@@ -85,9 +85,6 @@ BitClientDetector::BitClientDetector(ClientDiscovery* cdm)
     handler->register_detector(name, this, proto);
 }
 
-BitClientDetector::~BitClientDetector()
-{
-}
 
 int BitClientDetector::validate(AppIdDiscoveryArgs& args)
 {

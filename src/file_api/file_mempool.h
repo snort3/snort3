@@ -35,7 +35,7 @@
 #include "circular_buffer.h"
 
 #define FILE_MEM_SUCCESS    0  // FIXIT-L use bool
-#define FILE_MEM_FAIL      -1
+#define FILE_MEM_FAIL      (-1)
 
 class FileMemPool
 {

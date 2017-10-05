@@ -66,7 +66,7 @@ static int longest_pattern_match(void* id, void*, int match_end_pos, void* data,
     void*);
 static int url_pattern_match(void* id, void*, int match_end_pos, void* data, void*);
 
-void* mlpCreate(void)
+void* mlpCreate()
 {
     tPatternRootNode* root = (tPatternRootNode*)snort_calloc(sizeof(tPatternRootNode));
     root->level = 0;
@@ -124,7 +124,7 @@ void* mlpMatchPatternCustom(void* root, tMlpPattern** inputPatternList, int (* c
 
     mp.level = rootNode->level;
 
-    rootNode->patternTree->find_all((char*)pattern->pattern,
+    rootNode->patternTree->find_all((const char*)pattern->pattern,
         pattern->patternSize,
         callback,
         false,
@@ -159,8 +159,8 @@ void mlpDump(void* root)
 /*alphabetically ordering */
 static int compareAppUrlPatterns(const void* p1, const void* p2)
 {
-    tMlpPattern* pat1 = (tMlpPattern*)p1;
-    tMlpPattern* pat2 = (tMlpPattern*)p2;
+    const tMlpPattern* pat1 = (const tMlpPattern*)p1;
+    const tMlpPattern* pat2 = (const tMlpPattern*)p2;
     int rValue;
     size_t minSize;
 
@@ -246,7 +246,7 @@ static void dumpTreesRecursively(void* root, int level)
         patternNode = patternNode->nextPattern)
     {
         printf("%sPattern %s, size %u, userData %p\n", offset,
-            (char*)patternNode->pattern.pattern,
+            (const char*)patternNode->pattern.pattern,
             (uint32_t)patternNode->pattern.patternSize,
             patternNode->userData);
 
@@ -413,7 +413,7 @@ void* mlpGetPatternMatcherTree(void* root, tMlpPattern** inputPatternList)
 
     mp.level = rootNode->level;
 
-    rootNode->patternTree->find_all((char*)pattern->pattern,
+    rootNode->patternTree->find_all((const char*)pattern->pattern,
         pattern->patternSize,
         longest_pattern_match,
         false,

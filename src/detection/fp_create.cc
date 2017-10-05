@@ -111,7 +111,7 @@ static bool new_sig(int num_children, detection_option_tree_node_t** nodes, OptT
 
 static int otn_create_tree(OptTreeNode* otn, void** existing_tree)
 {
-    detection_option_tree_node_t* node = NULL, * child;
+    detection_option_tree_node_t* node = nullptr, * child;
     bool need_leaf = false;
 
     if (!existing_tree)
@@ -328,18 +328,18 @@ static void neg_list_free(void** list)
 {
     NCListNode* ncln;
 
-    if (list == NULL)
+    if (list == nullptr)
         return;
 
     ncln = (NCListNode*)*list;
-    while (ncln != NULL)
+    while (ncln != nullptr)
     {
         NCListNode* tmp = ncln->next;
         snort_free(ncln);
         ncln = tmp;
     }
 
-    *list = NULL;
+    *list = nullptr;
 }
 
 static int pmx_create_tree(SnortConfig* sc, void* id, void** existing_tree)
@@ -417,7 +417,7 @@ static int fpFinishPortGroupRule(
     Mpse::PatternDescriptor desc(
         pmd->is_no_case(), pmd->is_negated(), pmd->is_literal(), pmd->mpse_flags);
 
-    pg->mpse[pmd->pm_type]->add_pattern(sc, (uint8_t*)pattern, pattern_length, desc, pmx);
+    pg->mpse[pmd->pm_type]->add_pattern(sc, (const uint8_t*)pattern, pattern_length, desc, pmx);
 
     return 0;
 }
@@ -428,12 +428,12 @@ static int fpFinishPortGroup(
     int i;
     int rules = 0;
 
-    if ((pg == NULL) || (fp == NULL))
+    if ((pg == nullptr) || (fp == nullptr))
         return -1;
 
     for (i = PM_TYPE_PKT; i < PM_TYPE_MAX; i++)
     {
-        if (pg->mpse[i] != NULL)
+        if (pg->mpse[i] != nullptr)
         {
             if (pg->mpse[i]->get_pattern_count() != 0)
             {
@@ -450,7 +450,7 @@ static int fpFinishPortGroup(
             else
             {
                 MpseManager::delete_search_engine(pg->mpse[i]);
-                pg->mpse[i] = NULL;
+                pg->mpse[i] = nullptr;
             }
         }
     }
@@ -495,7 +495,7 @@ static void fpAddAlternatePatterns(SnortConfig* sc, PortGroup* pg,
         pmd->is_no_case(), pmd->is_negated(), pmd->is_literal(), pmd->mpse_flags);
 
     pg->mpse[pmd->pm_type]->add_pattern(
-        sc, (uint8_t*)pmd->pattern_buf, pmd->pattern_size, desc, pmx);
+        sc, (const uint8_t*)pmd->pattern_buf, pmd->pattern_size, desc, pmx);
 }
 
 static int fpAddPortGroupRule(
@@ -540,7 +540,7 @@ static int fpAddPortGroupRule(
     }
 
     // no fast pattern added
-    if (fpFinishPortGroupRule(sc, pg, otn, NULL, fp) != 0)
+    if (fpFinishPortGroupRule(sc, pg, otn, nullptr, fp) != 0)
         return -1;
 
     return 0;
@@ -718,31 +718,31 @@ static int fpCreateRuleMaps(SnortConfig* sc, RulePortTables* p)
 
 static void fpFreeRuleMaps(SnortConfig* sc)
 {
-    if (sc == NULL)
+    if (sc == nullptr)
         return;
 
-    if (sc->prmIpRTNX != NULL)
+    if (sc->prmIpRTNX != nullptr)
     {
         snort_free(sc->prmIpRTNX);
-        sc->prmIpRTNX = NULL;
+        sc->prmIpRTNX = nullptr;
     }
 
-    if (sc->prmIcmpRTNX != NULL)
+    if (sc->prmIcmpRTNX != nullptr)
     {
         snort_free(sc->prmIcmpRTNX);
-        sc->prmIcmpRTNX = NULL;
+        sc->prmIcmpRTNX = nullptr;
     }
 
-    if (sc->prmTcpRTNX != NULL)
+    if (sc->prmTcpRTNX != nullptr)
     {
         snort_free(sc->prmTcpRTNX);
-        sc->prmTcpRTNX = NULL;
+        sc->prmTcpRTNX = nullptr;
     }
 
-    if (sc->prmUdpRTNX != NULL)
+    if (sc->prmUdpRTNX != nullptr)
     {
         snort_free(sc->prmUdpRTNX);
-        sc->prmUdpRTNX = NULL;
+        sc->prmUdpRTNX = nullptr;
     }
 }
 
@@ -830,7 +830,7 @@ static void fpPortGroupPrintRuleCount(PortGroup* pg, const char* what)
 {
     int type;
 
-    if (pg == NULL)
+    if (pg == nullptr)
         return;
 
     LogMessage("PortGroup rule summary (%s):\n", what);
@@ -871,7 +871,7 @@ static int fpCreatePortObject2PortGroup(
     FastPatternConfig* fp = sc->fast_pattern_config;
 
     /* verify we have a port object */
-    if (po == NULL)
+    if (po == nullptr)
         return 0;
 
     po->group = nullptr;
@@ -880,7 +880,7 @@ static int fpCreatePortObject2PortGroup(
         PortObject2PrintPorts(po);
 
     /* Check if we have any rules */
-    if (po->rule_hash == NULL)
+    if (po->rule_hash == nullptr)
         return 0;
 
     /* create a port_group */
@@ -904,7 +904,7 @@ static int fpCreatePortObject2PortGroup(
      */
     pox = po;
 
-    while (pox != NULL)
+    while (pox != nullptr)
     {
         for (node = sfghash_findfirst(pox->rule_hash);
             node;
@@ -913,7 +913,7 @@ static int fpCreatePortObject2PortGroup(
             int* prindex = (int*)node->data;
 
             /* be safe - no rule index, ignore it */
-            if (prindex == NULL)
+            if (prindex == nullptr)
                 continue;
 
             /* look up gid:sid */
@@ -1026,7 +1026,7 @@ static int fpCreatePortGroups(SnortConfig* sc, RulePortTables* p)
     if (fp->get_debug_print_rule_group_build_details())
         LogMessage("\nIP-ANY ");
 
-    if (fpCreatePortObject2PortGroup(sc, po2, 0))
+    if (fpCreatePortObject2PortGroup(sc, po2, nullptr))
     {
         LogMessage("fpCreatePorTablePortGroups failed-ip any\n");
         return -1;
@@ -1063,7 +1063,7 @@ static int fpCreatePortGroups(SnortConfig* sc, RulePortTables* p)
     if (fp->get_debug_print_rule_group_build_details())
         LogMessage("\nICMP-ANY ");
 
-    if (fpCreatePortObject2PortGroup(sc, po2, 0))
+    if (fpCreatePortObject2PortGroup(sc, po2, nullptr))
     {
         LogMessage("fpCreatePorTablePortGroups failed-icmp any\n");
         return -1;
@@ -1099,7 +1099,7 @@ static int fpCreatePortGroups(SnortConfig* sc, RulePortTables* p)
     if (fp->get_debug_print_rule_group_build_details())
         LogMessage("\nTCP-ANY ");
 
-    if (fpCreatePortObject2PortGroup(sc, po2, 0))
+    if (fpCreatePortObject2PortGroup(sc, po2, nullptr))
     {
         LogMessage("fpCreatePorTablePortGroups failed-tcp any\n");
         return -1;
@@ -1136,7 +1136,7 @@ static int fpCreatePortGroups(SnortConfig* sc, RulePortTables* p)
     if (fp->get_debug_print_rule_group_build_details())
         LogMessage("\nUDP-ANY ");
 
-    if (fpCreatePortObject2PortGroup(sc, po2, 0))
+    if (fpCreatePortObject2PortGroup(sc, po2, nullptr))
     {
         LogMessage("fpCreatePorTablePortGroups failed-udp.src\n");
         return -1;
@@ -1153,7 +1153,7 @@ static int fpCreatePortGroups(SnortConfig* sc, RulePortTables* p)
     if (fp->get_debug_print_rule_group_build_details())
         LogMessage("\nSVC-ANY ");
 
-    if (fpCreatePortObject2PortGroup(sc, po2, 0))
+    if (fpCreatePortObject2PortGroup(sc, po2, nullptr))
     {
         LogMessage("fpCreatePorTablePortGroups failed-svc_any\n");
         return -1;
@@ -1223,7 +1223,7 @@ static void fpBuildServicePortGroups(
         n=sfghash_findnext(srm) )
     {
         SF_LIST* list = (SF_LIST*)n->data;
-        const char* srvc = (char*)n->key;
+        const char* srvc = (const char*)n->key;
 
         assert(list and srvc);
 
@@ -1311,7 +1311,7 @@ static void fpPrintServiceRuleMapTable(SFGHASH* p, const char* proto, const char
         if ( !n->key )
             continue;
 
-        LogCount((char*)n->key, list->count);
+        LogCount((const char*)n->key, list->count);
 
         fpPrintRuleList(list);
     }
@@ -1587,7 +1587,7 @@ int fpCreateFastPacketDetection(SnortConfig* sc)
 
 void fpDeleteFastPacketDetection(SnortConfig* sc)
 {
-    if (sc == NULL)
+    if (sc == nullptr)
         return;
 
     /* Cleanup the detection option tree */

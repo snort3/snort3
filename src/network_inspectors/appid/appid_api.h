@@ -177,8 +177,7 @@ struct SfIp;
 class SO_PUBLIC AppIdApi
 {
 public:
-    SO_PRIVATE AppIdApi() { }
-    SO_PRIVATE ~AppIdApi() { }
+    SO_PRIVATE AppIdApi() = default;
 
     AppIdSession* get_appid_session(Flow*);
     const char* get_application_name(AppId app_id);

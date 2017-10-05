@@ -78,7 +78,7 @@ class SipEvent : public DataEvent
 {
 public:
     SipEvent(const Packet*, const SIPMsg*, const SIP_DialogData*);
-    ~SipEvent();
+    ~SipEvent() override;
 
     const Packet* get_packet() override
     { return p; }

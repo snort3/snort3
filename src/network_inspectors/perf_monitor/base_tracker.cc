@@ -69,7 +69,7 @@ public:
             counts[i] = i;
     }
 
-    ~MockModule() { snort_free(counts); }
+    ~MockModule() override { snort_free(counts); }
 
     const PegInfo* get_pegs() const override { return pegs; }
 

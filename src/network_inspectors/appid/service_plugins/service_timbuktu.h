@@ -30,7 +30,6 @@ class TimbuktuServiceDetector : public ServiceDetector
 {
 public:
     TimbuktuServiceDetector(ServiceDiscovery*);
-    ~TimbuktuServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

@@ -30,7 +30,6 @@ class RsyncServiceDetector : public ServiceDetector
 {
 public:
     RsyncServiceDetector(ServiceDiscovery*);
-    ~RsyncServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

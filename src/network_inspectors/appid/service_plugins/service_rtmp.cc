@@ -95,9 +95,6 @@ RtmpServiceDetector::RtmpServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-RtmpServiceDetector::~RtmpServiceDetector()
-{
-}
 
 static void rtmp_free(void* ss)    /* AppIdFreeFCN */
 {

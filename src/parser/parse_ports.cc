@@ -130,18 +130,18 @@ static char* POParserName(POParser* pop)
 
     /* check if were done  */
     if ( !pop || !pop->s || !*(pop->s) )
-        return 0;
+        return nullptr;
 
     /* Start the name - skip space */
     c = POPGetChar2(pop);
     if ( !c )
-        return 0;
+        return nullptr;
 
     if ( c== '$' ) /* skip leading '$' - old Var indicator */
     {
         c = POPGetChar2(pop);
         if ( !c )
-            return 0;
+            return nullptr;
     }
 
     if ( isalnum(c) )
@@ -152,7 +152,7 @@ static char* POParserName(POParser* pop)
     else
     {
         POPUnGetChar(pop);
-        return 0; /* not a name */
+        return nullptr; /* not a name */
     }
 
     for ( c  = POPGetChar(pop);
@@ -235,7 +235,7 @@ static PortObject* _POParseVar(POParser* pop)
     {
         pop->pos++;
         pop->errflag = POPERR_NO_NAME;
-        return NULL;
+        return nullptr;
     }
 
     pox = PortVarTableFind(pop->pvTable, name);
@@ -244,7 +244,7 @@ static PortObject* _POParseVar(POParser* pop)
     if (!pox)
     {
         pop->errflag = POPERR_BAD_VARIABLE;
-        return NULL;
+        return nullptr;
     }
 
     pox = PortObjectDup(pox);
@@ -252,7 +252,7 @@ static PortObject* _POParseVar(POParser* pop)
     if (!pox)
     {
         pop->errflag = POPERR_MALLOC_FAILED;
-        return NULL;
+        return nullptr;
     }
 
     return pox;
@@ -267,7 +267,7 @@ static PortObject* _POParsePort(POParser* pop)
     if (!po)
     {
         pop->errflag = POPERR_MALLOC_FAILED;
-        return NULL;
+        return nullptr;
     }
 
     pop->token[0]=0;
@@ -278,7 +278,7 @@ static PortObject* _POParsePort(POParser* pop)
     if (pop->errflag)
     {
         PortObjectFree(po);
-        return NULL;
+        return nullptr;
     }
 
     c = POPPeekChar(pop);
@@ -301,7 +301,7 @@ static PortObject* _POParsePort(POParser* pop)
         {
             pop->errflag = POPERR_NOT_A_NUMBER;
             PortObjectFree(po);
-            return NULL;
+            return nullptr;
         }
 
         hport = POParserGetShort(pop);
@@ -309,14 +309,14 @@ static PortObject* _POParsePort(POParser* pop)
         if ( pop->errflag )
         {
             PortObjectFree(po);
-            return NULL;
+            return nullptr;
         }
 
         if (lport > hport)
         {
             pop->errflag = POPERR_INVALID_RANGE;
             PortObjectFree(po);
-            return NULL;
+            return nullptr;
         }
 
         PortObjectAddRange(po, lport, hport);
@@ -336,7 +336,7 @@ static PortObject* _POParsePort(POParser* pop)
 static PortObject* _POParseString(POParser* pop)
 {
     PortObject* po;
-    PortObject* potmp = NULL;
+    PortObject* potmp = nullptr;
     int local_neg = 0;
     char c;
     int list_count = 0;
@@ -346,7 +346,7 @@ static PortObject* _POParseString(POParser* pop)
     if (!po)
     {
         pop->errflag = POPERR_MALLOC_FAILED;
-        return NULL;
+        return nullptr;
     }
 
     while ( (c = POPGetChar2(pop)) != 0 )
@@ -372,11 +372,11 @@ static PortObject* _POParseString(POParser* pop)
 
             list_count++;
 
-            if ( (end = strrchr(pop->s, (int)']')) == NULL )
+            if ( (end = strrchr(pop->s, (int)']')) == nullptr )
             {
                 pop->errflag = POPERR_NO_ENDLIST_BRACKET;
                 PortObjectFree(po);
-                return NULL;
+                return nullptr;
             }
 
             tok = snort_strndup(pop->s, end - pop->s);
@@ -390,7 +390,7 @@ static PortObject* _POParseString(POParser* pop)
             {
                 pop->errflag = local_pop.errflag;
                 PortObjectFree(po);
-                return NULL;
+                return nullptr;
             }
 
             /* Advance "cursor" to end of this list */
@@ -405,7 +405,7 @@ static PortObject* _POParseString(POParser* pop)
             {
                 pop->errflag = POPERR_EXTRA_BRACKET;
                 PortObjectFree(po);
-                return NULL;
+                return nullptr;
             }
 
             continue;
@@ -420,7 +420,7 @@ static PortObject* _POParseString(POParser* pop)
         if (!potmp)
         {
             PortObjectFree(po);
-            return NULL;
+            return nullptr;
         }
 
         if (local_neg)
@@ -436,13 +436,13 @@ static PortObject* _POParseString(POParser* pop)
         {
             PortObjectFree(po);
             PortObjectFree(potmp);
-            return NULL;
+            return nullptr;
         }
 
         if (potmp)
         {
             PortObjectFree(potmp);
-            potmp = NULL;
+            potmp = nullptr;
         }
     }
 
@@ -455,7 +455,7 @@ static PortObject* _POParseString(POParser* pop)
             pop->errflag = POPERR_EXTRA_BRACKET;
 
         PortObjectFree(po);
-        return NULL;
+        return nullptr;
     }
 
     return po;

@@ -88,10 +88,10 @@ static void plx_print(plx_t* p)
 }
 #endif
 
-static unsigned plx_hash(SFHASHFCN* p, unsigned char* d, int)
+static unsigned plx_hash(SFHASHFCN* p, const unsigned char* d, int)
 {
     unsigned hash = p->seed;
-    plx_t* plx = *(plx_t**)d;
+    const plx_t* plx = *(plx_t* const*)d;
 
     for ( int i = 0; i < plx->n; i++ )
     {
@@ -109,10 +109,10 @@ static unsigned plx_hash(SFHASHFCN* p, unsigned char* d, int)
 /* for sorting an array of pointers */
 static inline int p_keycmp(const void* a, const void* b)
 {
-    if ( *(unsigned long**)a < *(unsigned long**)b )
+    if ( *(unsigned long* const*)a < *(unsigned long* const*)b )
         return -1;
 
-    if ( *(unsigned long**)a > *(unsigned long**)b )
+    if ( *(unsigned long* const*)a > *(unsigned long* const*)b )
         return 1;
 
     return 0; /* they are equal */
@@ -129,8 +129,8 @@ static inline int p_keycmp(const void* a, const void* b)
 */
 static int plx_keycmp(const void* a, const void* b, size_t)
 {
-    plx_t* pla = *(plx_t**)a;
-    plx_t* plb = *(plx_t**)b;
+    const plx_t* pla = *(plx_t* const*)a;
+    const plx_t* plb = *(plx_t* const*)b;
 
     if ( pla->n < plb->n )
         return -1;
@@ -158,7 +158,7 @@ static int plx_keycmp(const void* a, const void* b, size_t)
 */
 static int PortObject_keycmp(const void* a, const void* b, size_t)
 {
-    return !PortObjectEqual(*(PortObject**)a, *(PortObject**)b);
+    return !PortObjectEqual(*(PortObject* const*)a, *(PortObject* const*)b);
 }
 
 /*
@@ -170,10 +170,10 @@ static int PortObject_keycmp(const void* a, const void* b, size_t)
 
    Don't use this for type=ANY port objects
 */
-static unsigned PortObject_hash(SFHASHFCN* p, unsigned char* d, int)
+static unsigned PortObject_hash(SFHASHFCN* p, const unsigned char* d, int)
 {
     unsigned hash = p->seed;
-    PortObject* po = *(PortObject**)d;
+    const PortObject* po = *(PortObject* const*)d;
     SF_LNODE* pos;
 
     /* hash up each item */
@@ -589,7 +589,7 @@ static int PortTableCompileMergePortObjects(PortTable* p)
     PortObject** pol = upA.get();
 
     // Create a Merged Port Object Table - hash by ports, no user keys, don't free data
-    SFGHASH* mhash = sfghash_new(PO_HASH_TBL_ROWS, sizeof(PortObject*), 0, 0);
+    SFGHASH* mhash = sfghash_new(PO_HASH_TBL_ROWS, sizeof(PortObject*), 0, nullptr);
 
     /* Setup hashing function and key comparison function */
     sfhashfcn_set_keyops(mhash->sfhashfcn, PortObject_hash, PortObject_keycmp);
@@ -597,7 +597,7 @@ static int PortTableCompileMergePortObjects(PortTable* p)
     p->pt_mpo_hash = mhash;
 
     // Create a Merged Port Object Table - hash by pointers, no user keys, don't free data
-    SFGHASH* mhashx = sfghash_new(PO_HASH_TBL_ROWS, sizeof(plx_t*), 0, 0);
+    SFGHASH* mhashx = sfghash_new(PO_HASH_TBL_ROWS, sizeof(plx_t*), 0, nullptr);
 
     /* Setup hashing function and key comparison function */
     sfhashfcn_set_keyops(mhashx->sfhashfcn, plx_hash, plx_keycmp);
@@ -633,7 +633,7 @@ static int PortTableCompileMergePortObjects(PortTable* p)
                 pol[ pol_cnt++ ] = po;
             }
         }
-        p->pt_port_object[i] = 0;
+        p->pt_port_object[i] = nullptr;
 
         if ( !pol_cnt )
         {
@@ -891,7 +891,7 @@ PortTable* PortTableNew()
     if (!p->pt_polist )
     {
         snort_free(p);
-        return 0;
+        return nullptr;
     }
 
     p->pt_lrc = PTBL_LRC_DEFAULT; /* 10 rules, user should really control these */
@@ -945,7 +945,7 @@ PortObject* PortTableFindInputPortObjectPorts(PortTable* pt, PortObject* pox)
     SF_LNODE* lpos;
 
     for ( PortObject* po = (PortObject*)sflist_first(pt->pt_polist, &lpos);
-        po!=0;
+        po!=nullptr;
         po = (PortObject*)sflist_next(&lpos) )
     {
         if ( PortObjectEqual(po, pox) )
@@ -966,7 +966,7 @@ int PortTableAddObject(PortTable* p, PortObject* po)
 
     /* Search for the Port Object in the input list, by address */
     for ( PortObject* pox = (PortObject*)sflist_first(p->pt_polist, &lpos);
-        pox!=0;
+        pox!=nullptr;
         pox = (PortObject*)sflist_next(&lpos) )
     {
         if ( pox == po )
@@ -1034,7 +1034,7 @@ int PortTablePrintCompiledEx(PortTable* p, rim_print_f print_index_map)
         p->pt_mpo_hash->count);
 
     for ( SFGHASH_NODE* node = sfghash_findfirst(p->pt_mpo_hash);
-        node!= 0;
+        node!= nullptr;
         node = sfghash_findnext(p->pt_mpo_hash) )
     {
         PortObject2* po = (PortObject2*)node->data;
@@ -1050,7 +1050,7 @@ void PortTablePrintInput(PortTable* p)
     SF_LNODE* pos;
 
     for ( PortObject* po = (PortObject*)sflist_first(p->pt_polist, &pos);
-        po!=0;
+        po!=nullptr;
         po = (PortObject*)sflist_next(&pos) )
     {
         PortObjectPrint(po);
@@ -1068,7 +1068,7 @@ void PortTablePrintUserRules(PortTable* p)
     SF_LNODE* cursor;
 
     for ( PortObject* po = (PortObject*)sflist_first(p->pt_polist, &cursor);
-        po!= 0;
+        po!= nullptr;
         po = (PortObject*)sflist_next(&cursor) )
     {
         PortObjectPrint(po);
@@ -1086,7 +1086,7 @@ void PortTablePrintPortGroups(PortTable* p)
     LogMessage("   [ %d port groups ] \n\n", p->pt_mpo_hash->count);
 
     for ( SFGHASH_NODE* ponode = sfghash_findfirst(p->pt_mpo_hash);
-        ponode!= 0;
+        ponode!= nullptr;
         ponode = sfghash_findnext(p->pt_mpo_hash) )
     {
         PortObject2* po = (PortObject2*)ponode->data;

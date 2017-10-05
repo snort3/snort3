@@ -72,7 +72,7 @@ int SMTP_NormalizeCmd(Packet* p, const uint8_t* ptr, const uint8_t* eolm, const 
     const uint8_t* cmd_end;
     const uint8_t* args_start;
     const uint8_t* args_end;
-    const uint8_t* space = (uint8_t*)" ";
+    const uint8_t* space = (const uint8_t*)" ";
     int need_normalize = 0;
     int ret;
 

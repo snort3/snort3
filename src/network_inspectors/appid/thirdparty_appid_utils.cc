@@ -113,13 +113,13 @@ static int LoadCallback(const char* const path, int /* indent */)
 
 #endif
 
-static void getXffFields(void)
+static void getXffFields()
 {
     // FIXIT-M need to get xff fields from http config
-    char** xffFields = nullptr; // = _dpd.getHttpXffFields(&thirdpartyConfig.numXffFields);
+    const char** xffFields = nullptr; // = _dpd.getHttpXffFields(&thirdpartyConfig.numXffFields);
     if (!xffFields)
     {
-        xffFields = (char**)defaultXffFields;
+        xffFields = defaultXffFields;
         thirdpartyConfig.numXffFields = sizeof(defaultXffFields) / sizeof(defaultXffFields[0]);
     }
     thirdpartyConfig.xffFields = (char**)snort_alloc(thirdpartyConfig.numXffFields *
@@ -181,7 +181,7 @@ void ThirdPartyAppIDInit(AppIdModuleConfig* config)
         thirdparty_appid_module->module_name ? thirdparty_appid_module->module_name : ""); );
 }
 
-void ThirdPartyAppIDReconfigure(void)
+void ThirdPartyAppIDReconfigure()
 {
     int ret;
 
@@ -210,7 +210,7 @@ void ThirdPartyAppIDReconfigure(void)
         thirdparty_appid_module->module_name ? thirdparty_appid_module->module_name : ""); );
 }
 
-void ThirdPartyAppIDFini(void)
+void ThirdPartyAppIDFini()
 {
     int ret;
 

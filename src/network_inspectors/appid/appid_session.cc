@@ -25,7 +25,7 @@
 
 #include "appid_session.h"
 
-#include <string.h>
+#include <cstring>
 
 #include "app_forecast.h"
 #include "app_info_table.h"
@@ -623,9 +623,9 @@ void AppIdSession::delete_session_data()
     while ( rna_ss )
     {
         subtype = rna_ss->next;
-        snort_free(*(void**)&rna_ss->service);
-        snort_free(*(void**)&rna_ss->vendor);
-        snort_free(*(void**)&rna_ss->version);
+        snort_free(const_cast<char*>(rna_ss->service));
+        snort_free(const_cast<char*>(rna_ss->vendor));
+        snort_free(const_cast<char*>(rna_ss->version));
         snort_free(rna_ss);
         rna_ss = subtype;
     }

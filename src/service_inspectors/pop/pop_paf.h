@@ -66,12 +66,11 @@ class PopSplitter : public StreamSplitter
 {
 public:
     PopSplitter(bool c2s);
-    ~PopSplitter();
 
     Status scan(Flow*, const uint8_t* data, uint32_t len,
         uint32_t flags, uint32_t* fp) override;
 
-    virtual bool is_paf() override { return true; }
+    bool is_paf() override { return true; }
 
 public:
     PopPafData state;

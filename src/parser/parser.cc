@@ -104,7 +104,7 @@ static void FreeRuleTreeNodes(SnortConfig* sc)
     PolicyId policyId;
     SFGHASH_NODE* hashNode;
 
-    if (sc->otn_map == NULL)
+    if (sc->otn_map == nullptr)
         return;
 
     for (hashNode = sfghash_findfirst(sc->otn_map);
@@ -125,7 +125,7 @@ static void FreeRuleTreeNodes(SnortConfig* sc)
             rtn = getRtnFromOtn(otn, policyId);
             DestroyRuleTreeNode(rtn);
 
-            otn->proto_nodes[policyId] = NULL;
+            otn->proto_nodes[policyId] = nullptr;
         }
     }
 }
@@ -218,16 +218,16 @@ static void PortTablesFinish(RulePortTables* port_tables, FastPatternConfig* fp)
 
 static void OtnInit(SnortConfig* sc)
 {
-    if (sc == NULL)
+    if (sc == nullptr)
         return;
 
     /* Don't initialize this more than once */
-    if ( sc->otn_map != NULL )
+    if ( sc->otn_map != nullptr )
         return;
 
     /* Init sid-gid -> otn map */
     sc->otn_map = OtnLookupNew();
-    if (sc->otn_map == NULL)
+    if (sc->otn_map == nullptr)
         ParseAbort("ParseRulesFile otn_map sfghash_new failed.");
 }
 
@@ -248,12 +248,12 @@ typedef struct iface_var
  * Returns   : void function
  *
  ****************************************************************************/
-static void DefineIfaceVar(SnortConfig* sc, char* iname, uint8_t* network, uint8_t* netmask)
+static void DefineIfaceVar(SnortConfig* sc, char* iname, const uint8_t* network, const uint8_t* netmask)
 {
     char valbuf[32];
     char varbuf[BUFSIZ];
 
-    if ((network == NULL) || (*network == 0))
+    if ((network == nullptr) || (*network == 0))
         return;
 
     SnortSnprintf(varbuf, BUFSIZ, "%s_ADDRESS", iname);
@@ -306,7 +306,7 @@ static void DefineAllIfaceVars(SnortConfig* sc)
         if (pcap_findalldevs(&alldevs, errbuf) == -1)
             return;
 
-        for (dev = alldevs; dev != NULL; dev = dev->next)
+        for (dev = alldevs; dev != nullptr; dev = dev->next)
         {
             if (pcap_lookupnet(dev->name, &net, &netmask, errbuf) == 0)
             {
@@ -352,7 +352,7 @@ static RuleListNode* addNodeToOrderedList(RuleListNode* ordered_list,
         prev->next = node;
     }
 
-    node->next = NULL;
+    node->next = nullptr;
 
     return ordered_list;
 }
@@ -364,7 +364,7 @@ static void printRuleListOrder(RuleListNode* node)
 
     SnortSnprintf(buf, STD_BUF, "Rule application order: ");
 
-    while ( node != NULL )
+    while ( node != nullptr )
     {
         SnortSnprintfAppend(buf, STD_BUF, "%s%s",
             node == first_node ? "" : "->", node->name);
@@ -439,7 +439,7 @@ SnortConfig* ParseSnortConf(const SnortConfig* boot_conf, const char* fname)
 
     /* Add command line defined variables - duplicates will already
      * have been resolved */
-    while (tmp != NULL)
+    while (tmp != nullptr)
     {
         AddVarToTable(sc, tmp->name, tmp->value);
         tmp = tmp->next;
@@ -516,17 +516,17 @@ void SetRuleStates(SnortConfig* sc)
 {
     RuleState* rule_state;
 
-    if (sc == NULL)
+    if (sc == nullptr)
         return;
 
     /* First, cycle through the rule state list and update the
      * rule state for each one we find. */
-    for (rule_state = sc->rule_state_list; rule_state != NULL; rule_state = rule_state->next)
+    for (rule_state = sc->rule_state_list; rule_state != nullptr; rule_state = rule_state->next)
     {
         /* Lookup the OTN by ruleState->sid, ruleState->gid */
         OptTreeNode* otn = OtnLookup(sc->otn_map, rule_state->gid, rule_state->sid);
 
-        if (otn == NULL)
+        if (otn == nullptr)
         {
             ParseError("Rule state specified for invalid SID: %u GID: %u",
                 rule_state->sid, rule_state->gid);
@@ -598,14 +598,14 @@ ListHead* CreateRuleType(SnortConfig* sc, const char* name, RuleType mode)
     RuleListNode* node;
     int evalIndex = 0;
 
-    if (sc == NULL)
-        return NULL;
+    if (sc == nullptr)
+        return nullptr;
 
     node = (RuleListNode*)snort_calloc(sizeof(RuleListNode));
 
     /* If this is the first rule list node, then we need to
      * create a new list. */
-    if (sc->rule_lists == NULL)
+    if (sc->rule_lists == nullptr)
     {
         sc->rule_lists = node;
     }
@@ -620,14 +620,14 @@ ListHead* CreateRuleType(SnortConfig* sc, const char* name, RuleType mode)
             if (strcasecmp(tmp->name, name) == 0)
             {
                 snort_free(node);
-                return NULL;
+                return nullptr;
             }
 
             evalIndex++;
             last = tmp;
             tmp = tmp->next;
         }
-        while (tmp != NULL);
+        while (tmp != nullptr);
 
         last->next = node;
     }
@@ -650,7 +650,7 @@ void FreeRuleLists(SnortConfig* sc)
 
     RuleListNode* node = sc->rule_lists;
 
-    while (node != NULL)
+    while (node != nullptr)
     {
         RuleListNode* tmp = node;
         node = node->next;
@@ -664,7 +664,7 @@ void FreeRuleLists(SnortConfig* sc)
         snort_free(tmp);
     }
 
-    sc->rule_lists = NULL;
+    sc->rule_lists = nullptr;
 }
 
 void PrintRuleOrder(RuleListNode* rule_lists)
@@ -685,7 +685,7 @@ void OrderRuleLists(SnortConfig* sc, const char* order)
 {
     int i;
     int evalIndex = 0;
-    RuleListNode* ordered_list = NULL;
+    RuleListNode* ordered_list = nullptr;
     RuleListNode* prev;
     RuleListNode* node;
     char** toks;
@@ -695,14 +695,14 @@ void OrderRuleLists(SnortConfig* sc, const char* order)
 
     for ( i = 0; i < num_toks; i++ )
     {
-        prev = NULL;
+        prev = nullptr;
         node = sc->rule_lists;
 
-        while (node != NULL)
+        while (node != nullptr)
         {
             if (strcmp(toks[i], node->name) == 0)
             {
-                if (prev == NULL)
+                if (prev == nullptr)
                     sc->rule_lists = node->next;
                 else
                     prev->next = node->next;
@@ -720,7 +720,7 @@ void OrderRuleLists(SnortConfig* sc, const char* order)
             }
         }
 
-        if ( node == NULL )
+        if ( node == nullptr )
         {
             ParseError("ruletype '%s' does not exist or "
                 "has already been ordered.", toks[i]);
@@ -731,7 +731,7 @@ void OrderRuleLists(SnortConfig* sc, const char* order)
     mSplitFree(&toks, num_toks);
 
     /* anything left in the rule lists needs to be moved to the ordered lists */
-    while (sc->rule_lists != NULL)
+    while (sc->rule_lists != nullptr)
     {
         node = sc->rule_lists;
         sc->rule_lists = node->next;
@@ -779,10 +779,10 @@ RuleTreeNode* deleteRtnFromOtn(OptTreeNode* otn, SnortConfig* sc)
     return deleteRtnFromOtn(otn, get_ips_policy()->policy_id, sc);
 }
 
-static uint32_t rtn_hash_func(SFHASHFCN*, unsigned char *k, int)
+static uint32_t rtn_hash_func(SFHASHFCN*, const unsigned char *k, int)
 {
     uint32_t a,b,c;
-    RuleTreeNodeKey* rtnk = (RuleTreeNodeKey*)k;
+    const RuleTreeNodeKey* rtnk = (const RuleTreeNodeKey*)k;
     RuleTreeNode* rtn = rtnk->rtn;
 
     a = rtn->type;
@@ -802,8 +802,8 @@ static uint32_t rtn_hash_func(SFHASHFCN*, unsigned char *k, int)
 
 static int rtn_compare_func(const void *k1, const void *k2, size_t)
 {
-    RuleTreeNodeKey* rtnk1 = (RuleTreeNodeKey*)k1;
-    RuleTreeNodeKey* rtnk2 = (RuleTreeNodeKey*)k2;
+    const RuleTreeNodeKey* rtnk1 = (const RuleTreeNodeKey*)k1;
+    const RuleTreeNodeKey* rtnk2 = (const RuleTreeNodeKey*)k2;
 
     if (!rtnk1 || !rtnk2)
         return 1;

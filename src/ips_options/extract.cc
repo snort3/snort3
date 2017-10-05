@@ -53,7 +53,7 @@ int8_t GetVarByName(const char* name)
 
     for (i = 0; i < extracted_values_cnt; i++)
     {
-        if (variable_names[i].compare(name) == 0)
+        if (variable_names[i] == name)
             return i;
     }
 
@@ -69,7 +69,7 @@ int8_t AddVarNameToList(const char* name)
 
     for (i = 0; i < extracted_values_cnt; i++)
     {
-        if (variable_names[i].compare(name) == 0)
+        if (variable_names[i] == name)
             return i;
     }
 

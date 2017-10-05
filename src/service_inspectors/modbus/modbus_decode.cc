@@ -295,7 +295,7 @@ static void ModbusCheckResponseLengths(modbus_session_data_t* session, Packet* p
             uint16_t tmp_count_16;
 
             /* This function uses a 2-byte byte count!! */
-            tmp_count_16 = *(uint16_t*)(p->data + MODBUS_MIN_LEN);
+            tmp_count_16 = *(const uint16_t*)(p->data + MODBUS_MIN_LEN);
             tmp_count_16 = ntohs(tmp_count_16);
             if (modbus_payload_len == MODBUS_DOUBLE_BYTE_COUNT_SIZE + tmp_count_16)
                 check_passed = true;
@@ -366,7 +366,7 @@ static void ModbusCheckResponseLengths(modbus_session_data_t* session, Packet* p
         DetectionEngine::queue_event(GID_MODBUS, MODBUS_BAD_LENGTH);
 }
 
-static void ModbusCheckReservedFuncs(modbus_header_t* header, Packet* p)
+static void ModbusCheckReservedFuncs(const modbus_header_t* header, Packet* p)
 {
     switch (header->function_code)
     {
@@ -378,7 +378,7 @@ static void ModbusCheckReservedFuncs(modbus_header_t* header, Packet* p)
         if (p->dsize < MODBUS_MIN_LEN+2)
             break;
 
-        sub_func = *((uint16_t*)(p->data + MODBUS_MIN_LEN));
+        sub_func = *((const uint16_t*)(p->data + MODBUS_MIN_LEN));
         sub_func = ntohs(sub_func);
 
         if ((sub_func == 19) || (sub_func >= 21))
@@ -405,7 +405,7 @@ static void ModbusCheckReservedFuncs(modbus_header_t* header, Packet* p)
 
 bool ModbusDecode(Packet* p)
 {
-    modbus_header_t* header;
+    const modbus_header_t* header;
 
     if (p->dsize < MODBUS_MIN_LEN)
         return false;
@@ -414,7 +414,7 @@ bool ModbusDecode(Packet* p)
         (ModbusFlowData*)p->flow->get_flow_data(ModbusFlowData::inspector_id);
 
     /* Lay the header struct over the payload */
-    header = (modbus_header_t*)p->data;
+    header = (const modbus_header_t*)p->data;
 
     /* The protocol ID field should read 0x0000 for Modbus. It allows for
        multiplexing with some other protocols over serial line. */

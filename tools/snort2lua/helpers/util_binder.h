@@ -42,7 +42,7 @@ public:
     friend class Converter;
 
     //Binding order matters. This allows STL compatible sorting.
-    friend bool operator<(const std::shared_ptr<Binder>, const std::shared_ptr<Binder>);
+    friend bool operator<(const std::shared_ptr<Binder>&, const std::shared_ptr<Binder>&);
 
     Binder(TableApi&);
     ~Binder();
@@ -51,16 +51,16 @@ public:
     { printed = !should_print; }
 
     void set_when_ips_policy_id(int);
-    void set_when_service(std::string);
-    void set_when_role(std::string);
-    void set_when_proto(std::string);
-    void add_when_vlan(std::string);
-    void add_when_net(std::string);
-    void add_when_src_net(std::string);
-    void add_when_dst_net(std::string);
-    void add_when_port(std::string);
-    void add_when_src_port(std::string);
-    void add_when_dst_port(std::string);
+    void set_when_service(const std::string&);
+    void set_when_role(const std::string&);
+    void set_when_proto(const std::string&);
+    void add_when_vlan(const std::string&);
+    void add_when_net(const std::string&);
+    void add_when_src_net(const std::string&);
+    void add_when_dst_net(const std::string&);
+    void add_when_port(const std::string&);
+    void add_when_src_port(const std::string&);
+    void add_when_dst_port(const std::string&);
     void clear_ports();
 
     int get_when_ips_policy_id() const
@@ -99,11 +99,11 @@ public:
     bool has_ports() const
     { return !ports.empty(); }
 
-    void set_use_type(std::string module_name);
-    void set_use_name(std::string struct_name);
-    void set_use_file(std::string file_name, IncludeType = IT_FILE);
-    void set_use_service(std::string service_name);
-    void set_use_action(std::string action);
+    void set_use_type(const std::string& module_name);
+    void set_use_name(const std::string& struct_name);
+    void set_use_file(const std::string& file_name, IncludeType = IT_FILE);
+    void set_use_service(const std::string& service_name);
+    void set_use_action(const std::string& action);
 
     std::string get_use_type() const
     { return use_type; }
@@ -147,9 +147,8 @@ private:
     void add_to_configuration();
 };
 
-bool operator<(const std::shared_ptr<Binder>, const std::shared_ptr<Binder>);
 
-typedef void (Binder::* binder_func)(std::string);
+typedef void (Binder::* binder_func)(const std::string&);
 
 #ifdef REG_TEST
 void print_binder_priorities();

@@ -45,7 +45,7 @@ using namespace std;
 // Manager State
 // -----------------------------------------------------------------------------
 
-std::map<PlugType, Api*> plugins;
+std::map<PlugType, const Api*> plugins;
 vector<Chunk> chunks;
 
 // -----------------------------------------------------------------------------
@@ -121,7 +121,7 @@ void Manager::init()
 }
 
 // FIXIT-M deal with case where 2 plugins have the same target (version priority?)
-void Manager::add_plugin(Api* api)
+void Manager::add_plugin(const Api* api)
 { plugins[api->target] = api; }
 
 BasePlugin* Manager::instantiate(
@@ -134,7 +134,7 @@ BasePlugin* Manager::instantiate(
     if ( !type.empty() )
         pt = PluginManager::get_type(type.c_str());
     else if ( !name.empty() )
-        pt = PluginManager::get_type_from_name(target.c_str());
+        pt = PluginManager::get_type_from_name(target);
     else
     {
         ErrorMessage(
@@ -165,7 +165,7 @@ void Manager::destroy(BasePlugin* p)
     }
 }
 
-void Manager::add_chunk(string filename, string target, string chunk)
+void Manager::add_chunk(const string& filename, const string& target, const string& chunk)
 { chunks.push_back(Chunk(filename, target, chunk)); }
 
 const vector<Chunk>& Manager::get_chunks()

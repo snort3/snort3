@@ -118,7 +118,7 @@ table_t* sfrt_new(char table_type, char ip_type, long data_size, uint32_t mem_ca
 #endif
     {
         snort_free(table);
-        return NULL;
+        return nullptr;
     }
 
     /* mem_cap is specified in megabytes, but internally uses bytes. Convert */
@@ -135,8 +135,8 @@ table_t* sfrt_new(char table_type, char ip_type, long data_size, uint32_t mem_ca
     table->table_type = table_type;
 
     /* This will point to the actual table lookup algorithm */
-    table->rt = NULL;
-    table->rt6 = NULL;
+    table->rt = nullptr;
+    table->rt6 = nullptr;
 
     /* index 0 will be used for failed lookups, so set this to 1 */
     table->num_ent = 1;
@@ -167,7 +167,7 @@ table_t* sfrt_new(char table_type, char ip_type, long data_size, uint32_t mem_ca
     default:
         snort_free(table->data);
         snort_free(table);
-        return NULL;
+        return nullptr;
     }
 
     /* Allocate the user-specified DIR-n-m table */
@@ -226,7 +226,7 @@ table_t* sfrt_new(char table_type, char ip_type, long data_size, uint32_t mem_ca
             table->free(table->rt6);
         snort_free(table->data);
         snort_free(table);
-        return NULL;
+        return nullptr;
     }
 
     return table;
@@ -280,7 +280,7 @@ GENERIC sfrt_lookup(const SfIp* ip, table_t* table)
     void* rt ;
 
     if (!ip || !table || !table->lookup)
-        return NULL;
+        return nullptr;
 
     if (ip->is_ip4())
     {
@@ -296,12 +296,12 @@ GENERIC sfrt_lookup(const SfIp* ip, table_t* table)
     }
 
     if (!rt)
-        return NULL;
+        return nullptr;
 
     tuple = table->lookup(addr, numAddrDwords, rt);
 
     if (tuple.index >= table->max_size)
-        return NULL;
+        return nullptr;
 
     return table->data[tuple.index];
 }
@@ -415,7 +415,7 @@ void sfrt_cleanup2(
             /* cleanup_func is supposed to free memory associated with this
              * table->data[index].  Set that to NULL.
              */
-            table->data[index] = NULL;
+            table->data[index] = nullptr;
             if (++count == table->num_ent)
                 break;
         }
@@ -440,7 +440,7 @@ void sfrt_cleanup(table_t* table, sfrt_iterator_callback cleanup_func)
             /* cleanup_func is supposed to free memory associated with this
              * table->data[index].  Set that to NULL.
              */
-            table->data[index] = NULL;
+            table->data[index] = nullptr;
 
             if (++count == table->num_ent)
                 break;
@@ -455,8 +455,8 @@ GENERIC sfrt_search(const SfIp* ip, unsigned char len, table_t* table)
     tuple_t tuple;
     void* rt;
 
-    if ((ip == NULL) || (table == NULL) || (len == 0))
-        return NULL;
+    if ((ip == nullptr) || (table == nullptr) || (len == 0))
+        return nullptr;
 
     if (ip->is_ip4())
     {
@@ -471,23 +471,23 @@ GENERIC sfrt_search(const SfIp* ip, unsigned char len, table_t* table)
         rt = table->rt6;
     }
     else
-        return NULL;
+        return nullptr;
 
     /* FIXIT-M - Is is true that we don't support v6 yet? */
     /* IPv6 not yet supported */
     if (table->ip_type == IPv6)
-        return NULL;
+        return nullptr;
 
     if ( (table->ip_type == IPv4 && len > 32) ||
         (table->ip_type == IPv6 && len > 128) )
     {
-        return NULL;
+        return nullptr;
     }
 
     tuple = table->lookup(addr, numAddrDwords, rt);
 
     if (tuple.length != len)
-        return NULL;
+        return nullptr;
 
     return table->data[tuple.index];
 }
@@ -684,7 +684,7 @@ int sfrt_remove(SfCidr* cidr, unsigned char len, GENERIC* ptr,
     if (index)
     {
         *ptr = table->data[ index ];
-        table->data[ index ] = 0;
+        table->data[ index ] = nullptr;
         table->num_ent--;
     }
 

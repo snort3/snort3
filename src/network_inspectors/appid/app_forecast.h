@@ -22,7 +22,7 @@
 #ifndef APP_FORECAST_H
 #define APP_FORECAST_H
 
-#include <time.h>
+#include <ctime>
 #include "flow/flow.h"
 #include "application_ids.h"
 

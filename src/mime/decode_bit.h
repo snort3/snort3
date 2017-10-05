@@ -28,7 +28,6 @@ class BitDecode : public DataDecode
 {
 public:
     BitDecode(int max_depth, int detect_depth);
-    ~BitDecode();
 
     // Main function to decode file data
     DecodeResult decode_data(const uint8_t* start, const uint8_t* end) override;

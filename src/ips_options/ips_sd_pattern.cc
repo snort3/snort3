@@ -118,7 +118,7 @@ class SdPatternOption : public IpsOption
 {
 public:
     SdPatternOption(const SdPatternConfig&);
-    ~SdPatternOption();
+    ~SdPatternOption() override;
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;

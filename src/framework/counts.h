@@ -51,7 +51,7 @@ struct PegInfo
 
 SO_PUBLIC extern const struct PegInfo simple_pegs[];
 
-#define array_size(a) (sizeof(a)/sizeof(a[0]))
+#define array_size(a) (sizeof(a)/sizeof((a)[0]))
 
 #endif
 

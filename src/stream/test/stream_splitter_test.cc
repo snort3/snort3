@@ -39,7 +39,6 @@ static StreamSplitter* next_splitter = nullptr;
 static int flushed = 0;
 
 Flow::Flow() { }
-Flow::~Flow() { }
 
 struct Packet* DetectionEngine::get_current_packet()
 { return nullptr; }

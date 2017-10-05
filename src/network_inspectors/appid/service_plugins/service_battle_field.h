@@ -30,7 +30,6 @@ class BattleFieldServiceDetector : public ServiceDetector
 {
 public:
     BattleFieldServiceDetector(ServiceDiscovery*);
-    ~BattleFieldServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

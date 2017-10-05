@@ -63,7 +63,6 @@ public:
     static const uint8_t NEW_SESSION = 0x10;
 
     FlowHAState();
-    ~FlowHAState() {}
 
     void set_pending(FlowHAClientHandle);
     void clear_pending(FlowHAClientHandle);
@@ -108,7 +107,6 @@ class HAMessage
 public:
     HAMessage(SCMessage* msg)
     { sc_msg = msg; }
-    ~HAMessage() { }
 
     uint8_t* content()
     { return sc_msg->content; }
@@ -124,7 +122,7 @@ private:
 class FlowHAClient
 {
 public:
-    virtual ~FlowHAClient() { }
+    virtual ~FlowHAClient() = default;
     virtual bool consume(Flow*&, FlowKey*, HAMessage*) { return false; }
     virtual bool produce(Flow*, HAMessage*) { return false; }
     virtual bool is_update_required(Flow*) { return false; }

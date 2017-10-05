@@ -32,8 +32,7 @@ namespace output
         {
         public:
             SfUnified2(Converter& c) : ConversionState(c) { }
-            virtual ~SfUnified2() { }
-            virtual bool convert(std::istringstream& data_stream);
+            bool convert(std::istringstream& data_stream) override;
         };
 
     } // namespace
@@ -57,19 +56,19 @@ namespace output
             if (keyword.empty())
                 continue;
 
-            else if (!keyword.compare("nostamp"))
+            else if (keyword == "nostamp")
                 tmpval = table_api.add_option("no_timestamp", true);
 
-            else if (!keyword.compare("mpls_event_types"))
+            else if (keyword == "mpls_event_types")
                 tmpval = table_api.add_option("mpls_event_types", true);
 
-            else if (!keyword.compare("vlan_event_types"))
+            else if (keyword == "vlan_event_types")
                 tmpval = table_api.add_option("vlan_event_types", true);
 
-            else if (!keyword.compare("filename"))
+            else if (keyword == "filename")
                 tmpval = parse_string_option("filename", arg_stream);
 
-            else if (!keyword.compare("limit"))
+            else if (keyword == "limit")
                 tmpval = parse_int_option("file_size_limit", arg_stream, false);
 
             else

@@ -248,7 +248,7 @@ bool SipModule::begin(const char*, int, SnortConfig*)
     conf = new SIP_PROTO_CONF;
 
     conf->methodsConfig = SIP_METHOD_NULL;
-    conf->methods = NULL;
+    conf->methods = nullptr;
     sip_methods = default_methods;
 
     return true;

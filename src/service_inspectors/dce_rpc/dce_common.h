@@ -21,12 +21,13 @@
 #ifndef DCE_COMMON_H
 #define DCE_COMMON_H
 
+#include <cassert>
+
 #include "detection/detection_engine.h"
 #include "framework/counts.h"
 #include "framework/endianness.h"
 #include "framework/value.h"
 #include "protocols/packet.h"
-#include <assert.h>
 
 #include "dce_list.h"
 
@@ -217,7 +218,7 @@ public:
 
 public:
     DceEndianness();
-    virtual bool get_offset_endianness(int32_t offset, uint8_t& endian);
+    bool get_offset_endianness(int32_t offset, uint8_t& endian) override;
     void reset();
 };
 

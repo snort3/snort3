@@ -42,7 +42,7 @@ class BinderModule : public Module
 {
 public:
     BinderModule();
-    ~BinderModule();
+    ~BinderModule() override;
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;

@@ -68,7 +68,7 @@ class PerfFormatter
 public:
     PerfFormatter(const std::string& tracker_name)
     { this->tracker_name = tracker_name; }
-    virtual ~PerfFormatter() {}
+    virtual ~PerfFormatter() = default;
 
     virtual bool allow_append()
     { return true; }

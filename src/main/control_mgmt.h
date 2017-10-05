@@ -61,7 +61,7 @@ public:
     ACShellCmd(int fd, AnalyzerCommand* ac_cmd);
     void execute(Analyzer&) override;
     const char* stringify() override { return ac->stringify(); }
-    ~ACShellCmd();
+    ~ACShellCmd() override;
 private:
     int control_fd = -1;
     AnalyzerCommand* ac;

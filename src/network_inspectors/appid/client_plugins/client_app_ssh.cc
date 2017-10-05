@@ -176,9 +176,6 @@ SshClientDetector::SshClientDetector(ClientDiscovery* cdm)
     handler->register_detector(name, this, proto);
 }
 
-SshClientDetector::~SshClientDetector()
-{
-}
 
 static inline int ssh_client_validate_keyx(uint16_t offset, const uint8_t* data,
     uint16_t size, ClientSSHData* fd)

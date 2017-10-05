@@ -22,7 +22,7 @@
 
 /* This macro helps to simplify the differences between Win32 and
    non-Win32 code when printing out the name of the interface */
-#define PRINT_INTERFACE(i)  (i ? i : "NULL")
+#define PRINT_INTERFACE(i)  ((i) ? (i) : "NULL")
 
 void PrintAllInterfaces();
 

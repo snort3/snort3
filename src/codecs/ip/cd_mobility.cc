@@ -35,7 +35,6 @@ class MobilityCodec : public Codec
 {
 public:
     MobilityCodec() : Codec(CD_MOBILE_NAME) { }
-    ~MobilityCodec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>&) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;

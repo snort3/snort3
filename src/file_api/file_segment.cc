@@ -164,7 +164,7 @@ int FileSegments::process_all(Flow* flow)
     FileSegment* current_segment = head;
     while (current_segment && (current_offset == current_segment->offset))
     {
-        ret = process_one(flow, (uint8_t* )current_segment->data->data(),
+        ret = process_one(flow, (const uint8_t*)current_segment->data->data(),
             current_segment->data->size());
 
         if (!ret)

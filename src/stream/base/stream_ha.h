@@ -39,10 +39,10 @@ class StreamHAClient : public FlowHAClient
 {
 public:
     StreamHAClient() : FlowHAClient(sizeof(SessionHAContent), true) { }
-    bool consume(Flow*&, FlowKey*, HAMessage*);
-    bool produce(Flow*, HAMessage*);
-    bool is_update_required(Flow*);
-    bool is_delete_required(Flow*);
+    bool consume(Flow*&, FlowKey*, HAMessage*) override;
+    bool produce(Flow*, HAMessage*) override;
+    bool is_update_required(Flow*) override;
+    bool is_delete_required(Flow*) override;
 
 private:
 };

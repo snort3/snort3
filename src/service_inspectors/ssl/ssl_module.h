@@ -44,7 +44,7 @@ class SslModule : public Module
 {
 public:
     SslModule();
-    ~SslModule();
+    ~SslModule() override;
 
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;

@@ -28,7 +28,7 @@
 /* Per-Instance override configuration */
 struct SFDAQInstanceConfig
 {
-    SFDAQInstanceConfig() {}
+    SFDAQInstanceConfig() = default;
     SFDAQInstanceConfig(const SFDAQInstanceConfig&);
     void set_input_spec(const char*);
     void set_variable(const char* varkvp);

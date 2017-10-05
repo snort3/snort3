@@ -45,7 +45,7 @@ class TcpNormalizer
 {
 public:
 
-    virtual ~TcpNormalizer( ) { }
+    virtual ~TcpNormalizer( ) = default;
 
     virtual bool packet_dropper (TcpSegmentDescriptor&, NormFlags);
     virtual void trim_syn_payload(TcpSegmentDescriptor&, uint32_t max = 0);

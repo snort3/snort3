@@ -34,8 +34,7 @@ class Include : public ConversionState
 {
 public:
     Include(Converter& c) : ConversionState(c) { }
-    virtual ~Include() { }
-    virtual bool convert(std::istringstream& data);
+    bool convert(std::istringstream& data) override;
 };
 } // namespace
 

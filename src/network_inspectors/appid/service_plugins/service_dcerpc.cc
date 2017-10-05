@@ -58,9 +58,6 @@ DceRpcServiceDetector::DceRpcServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-DceRpcServiceDetector::~DceRpcServiceDetector()
-{
-}
 
 int DceRpcServiceDetector::validate(AppIdDiscoveryArgs& args)
 {

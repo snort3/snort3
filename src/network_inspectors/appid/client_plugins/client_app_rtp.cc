@@ -210,14 +210,11 @@ RtpClientDetector::RtpClientDetector(ClientDiscovery* cdm)
     handler->register_detector(name, this, proto);
 }
 
-RtpClientDetector::~RtpClientDetector()
-{
-}
 
 int RtpClientDetector::validate(AppIdDiscoveryArgs& args)
 {
     ClientRTPData* fd;
-    ClientRTPMsg* hdr;
+    const ClientRTPMsg* hdr;
 
     if (!args.size)
         return APPID_INPROCESS;
@@ -235,7 +232,7 @@ int RtpClientDetector::validate(AppIdDiscoveryArgs& args)
     case RTP_STATE_CONNECTION:
         if (args.size < sizeof(ClientRTPMsg))
             return APPID_EINVALID;
-        hdr = (ClientRTPMsg*)args.data;
+        hdr = (const ClientRTPMsg*)args.data;
         if (hdr->vers > 2 || hdr->payloadtype > 34)
             return APPID_EINVALID;
         if (args.dir == APP_ID_FROM_INITIATOR)
@@ -258,7 +255,7 @@ int RtpClientDetector::validate(AppIdDiscoveryArgs& args)
     case RTP_STATE_CONTINUE:
         if (args.size < sizeof(ClientRTPMsg))
             return APPID_EINVALID;
-        hdr = (ClientRTPMsg*)args.data;
+        hdr = (const ClientRTPMsg*)args.data;
         if (hdr->vers > 2)
             return APPID_EINVALID;
         if (hdr->payloadtype > 34)

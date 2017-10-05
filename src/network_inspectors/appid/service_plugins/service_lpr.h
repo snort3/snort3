@@ -30,7 +30,6 @@ class LprServiceDetector : public ServiceDetector
 {
 public:
     LprServiceDetector(ServiceDiscovery*);
-    ~LprServiceDetector();
 
     int validate(AppIdDiscoveryArgs&) override;
 };

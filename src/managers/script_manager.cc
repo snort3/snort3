@@ -65,7 +65,7 @@ class IpsLuaApi : public LuaApi
 public:
     IpsLuaApi(string& n, string& c, unsigned v);
 
-    const BaseApi* get_base() const
+    const BaseApi* get_base() const override
     { return &api.base; }
 
 public:
@@ -92,7 +92,7 @@ class LogLuaApi : public LuaApi
 public:
     LogLuaApi(string& n, string& c, unsigned v);
 
-    const BaseApi* get_base() const
+    const BaseApi* get_base() const override
     { return &api.base; }
 
 public:
@@ -247,13 +247,13 @@ void ScriptManager::load_scripts(const std::vector<std::string>& paths)
     if ( paths.empty() )
         return;
 
-    for ( auto path : paths )
+    for ( const auto& path : paths )
     {
-        size_t pos = path.find_first_not_of(":");
+        size_t pos = path.find_first_not_of(':');
 
         while ( pos != std::string::npos )
         {
-            size_t end_pos = path.find_first_of(":", pos);
+            size_t end_pos = path.find_first_of(':', pos);
 
             std::string d = path.substr(
                 pos, (end_pos == std::string::npos) ? end_pos : end_pos - pos);

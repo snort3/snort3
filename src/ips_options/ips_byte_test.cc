@@ -214,7 +214,6 @@ public:
     ByteTestOption(const ByteTestData& c) : IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_USE)
     { config = c; }
 
-    ~ByteTestOption() { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -235,7 +234,7 @@ private:
 uint32_t ByteTestOption::hash() const
 {
     uint32_t a,b,c;
-    const ByteTestData* data = (ByteTestData*)&config;
+    const ByteTestData* data = &config;
 
     a = data->bytes_to_compare;
     b = data->cmp_value;
@@ -268,7 +267,7 @@ bool ByteTestOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    ByteTestOption& rhs = (ByteTestOption&)ips;
+    const ByteTestOption& rhs = (const ByteTestOption&)ips;
     const ByteTestData* left = &config;
     const ByteTestData* right = &rhs.config;
 

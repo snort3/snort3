@@ -30,7 +30,6 @@
 
 #include "ha.h"
 
-extern THREAD_LOCAL ProfileStats ha_perf_stats;
 
 //-------------------------------------------------------------------------
 // ha module

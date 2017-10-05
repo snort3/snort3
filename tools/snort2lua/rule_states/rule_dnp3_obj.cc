@@ -32,8 +32,7 @@ class DNP3Obj : public ConversionState
 {
 public:
     DNP3Obj(Converter& c) : ConversionState(c) { }
-    virtual ~DNP3Obj() { }
-    virtual bool convert(std::istringstream& data);
+    bool convert(std::istringstream& data) override;
 };
 } // namespace
 

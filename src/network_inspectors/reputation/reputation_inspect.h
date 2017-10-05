@@ -34,7 +34,6 @@ class ReputationFlowData : public FlowData
 public:
     ReputationFlowData() : FlowData(inspector_id){}
 
-    ~ReputationFlowData() { }
 
     static void init()
     { inspector_id = FlowData::create_flow_data_id(); }

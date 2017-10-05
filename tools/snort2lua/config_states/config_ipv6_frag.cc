@@ -32,15 +32,14 @@ class Ipv6Frag : public ConversionState
 {
 public:
     Ipv6Frag(Converter& c) : ConversionState(c) { }
-    virtual ~Ipv6Frag() { }
-    virtual bool convert(std::istringstream& data_stream);
+    bool convert(std::istringstream& data_stream) override;
 
 private:
-    void add_deleted_option(std::string opt);
+    void add_deleted_option(const std::string& opt);
 };
 } // namespace
 
-void Ipv6Frag::add_deleted_option(std::string dlt_opt)
+void Ipv6Frag::add_deleted_option(const std::string& dlt_opt)
 {
     // see comment in Ipv6Frag::convert
     if (!DataApi::is_quiet_mode())
@@ -66,19 +65,19 @@ bool Ipv6Frag::convert(std::istringstream& data_stream)
         if (!(arg_stream >> keyword))
             tmpval = false;
 
-        else if (!keyword.compare("max_frag_sessions"))
+        else if (keyword == "max_frag_sessions")
             add_deleted_option("max_frag_sessions");
 
-        else if (!keyword.compare("bsd_icmp_frag_alert"))
+        else if (keyword == "bsd_icmp_frag_alert")
             add_deleted_option("config ipv6_frag: bsd_icmp_frag_alert");
 
-        else if (!keyword.compare("bad_ipv6_frag_alert"))
+        else if (keyword == "bad_ipv6_frag_alert")
             add_deleted_option("bad_ipv6_frag_alert");
 
-        else if (!keyword.compare("drop_bad_ipv6_frag"))
+        else if (keyword == "drop_bad_ipv6_frag")
             add_deleted_option("drop_bad_ipv6_frag");
 
-        else if (!keyword.compare("frag_timeout"))
+        else if (keyword == "frag_timeout")
         {
             table_api.open_top_level_table("ip_stream");
             tmpval = parse_int_option("session_timeout", arg_stream, false);

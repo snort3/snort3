@@ -169,7 +169,7 @@ AppIdSession* AppIdApi::get_appid_session(Flow*)
 
 TEST_GROUP(appid_http_event)
 {
-    void setup()
+    void setup() override
     {
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         flow = new Flow;
@@ -177,7 +177,7 @@ TEST_GROUP(appid_http_event)
         flow->set_flow_data(mock_session);
     }
 
-    void teardown()
+    void teardown() override
     {
         fake_msg_header = nullptr;
         delete mock_session;

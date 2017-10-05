@@ -33,11 +33,10 @@ class HttpInspect : public ConversionState
 {
 public:
     HttpInspect(Converter& c) : ConversionState(c) { }
-    ~HttpInspect() { }
     bool convert(std::istringstream& data) override;
 
 private:
-    bool add_decode_option(std::string opt_name,  std::istringstream& stream);
+    bool add_decode_option(const std::string& opt_name,  std::istringstream& stream);
 };
 } // namespace
 
@@ -51,7 +50,7 @@ bool HttpInspect::convert(std::istringstream& data_stream)
 
     if (data_stream >> keyword)
     {
-        if (keyword.compare("global"))
+        if (keyword != "global")
         {
             data_api.failed_conversion(data_stream, "'global' keyword required");
             return false;
@@ -63,43 +62,43 @@ bool HttpInspect::convert(std::istringstream& data_stream)
     {
         bool tmpval = true;
 
-        if (!keyword.compare("compress_depth"))
+        if (keyword == "compress_depth")
             parse_deleted_option("compress_depth", data_stream);
 
-        else if (!keyword.compare("decompress_depth"))
+        else if (keyword == "decompress_depth")
             parse_deleted_option("decompress_depth", data_stream);
 
-        else if (!keyword.compare("detect_anomalous_servers"))
+        else if (keyword == "detect_anomalous_servers")
             table_api.add_deleted_comment("detect_anomalous_servers");
 
-        else if (!keyword.compare("proxy_alert"))
+        else if (keyword == "proxy_alert")
             table_api.add_deleted_comment("proxy_alert");
 
-        else if (!keyword.compare("max_gzip_mem"))
+        else if (keyword == "max_gzip_mem")
             parse_deleted_option("max_gzip_mem", data_stream);
 
-        else if (!keyword.compare("memcap"))
+        else if (keyword == "memcap")
             parse_deleted_option("memcap", data_stream);
 
-        else if (!keyword.compare("disabled"))
+        else if (keyword == "disabled")
             table_api.add_deleted_comment("disabled");
 
-        else if (!keyword.compare("b64_decode_depth"))
+        else if (keyword == "b64_decode_depth")
             parse_deleted_option("b64_decode_depth", data_stream);
 
-        else if (!keyword.compare("bitenc_decode_depth"))
+        else if (keyword == "bitenc_decode_depth")
             parse_deleted_option("bitenc_decode_depth", data_stream);
 
-        else if (!keyword.compare("max_mime_mem"))
+        else if (keyword == "max_mime_mem")
             parse_deleted_option("max_mime_mem", data_stream);
 
-        else if (!keyword.compare("qp_decode_depth"))
+        else if (keyword == "qp_decode_depth")
             parse_deleted_option("qp_decode_depth", data_stream);
 
-        else if (!keyword.compare("uu_decode_depth"))
+        else if (keyword == "uu_decode_depth")
             parse_deleted_option("uu_decode_depth", data_stream);
 
-        else if (!keyword.compare("iis_unicode_map"))
+        else if (keyword == "iis_unicode_map")
         {
             std::string codemap;
             int code_page;
@@ -131,7 +130,7 @@ bool HttpInspect::convert(std::istringstream& data_stream)
     return retval;
 }
 
-bool HttpInspect::add_decode_option(std::string opt_name,  std::istringstream& stream)
+bool HttpInspect::add_decode_option(const std::string& opt_name,  std::istringstream& stream)
 {
     int val;
 

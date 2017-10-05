@@ -56,7 +56,7 @@
 void LogTimeStamp(TextLog* log, Packet* p)
 {
     char timestamp[TIMEBUF_SIZE];
-    ts_print((struct timeval*)&p->pkth->ts, timestamp);
+    ts_print((const struct timeval*)&p->pkth->ts, timestamp);
     TextLog_Puts(log, timestamp);
 }
 
@@ -70,8 +70,8 @@ void LogTimeStamp(TextLog* log, Packet* p)
  */
 void LogPriorityData(TextLog* log, const Event& e)
 {
-    if ((e.sig_info->class_type != NULL)
-        && (e.sig_info->class_type->name != NULL))
+    if ((e.sig_info->class_type != nullptr)
+        && (e.sig_info->class_type->name != nullptr))
     {
         TextLog_Print(log, "[Classification: %s] ", e.sig_info->class_type->name);
     }
@@ -134,7 +134,7 @@ static void LogGREHeader(TextLog* log, Packet* p)
 {
     const gre::GREHdr* greh = layer::get_gre_layer(p);
 
-    if (greh == NULL)
+    if (greh == nullptr)
         return;
 
     TextLog_Print(log, "GRE version:%u flags:0x%02X ether-type:0x%04X\n",
@@ -446,10 +446,10 @@ static void LogOuterIPHeader(TextLog* log, Packet* p)
  *-------------------------------------------------------------------
  */
 inline uint16_t extract_16_bits(const uint8_t* const buf)
-{ return ntohs(*((uint16_t*)(buf)) ); }
+{ return ntohs(*((const uint16_t*)(buf)) ); }
 
 inline uint32_t extract_32_bits(const uint8_t* const buf)
-{ return ntohl(*((uint32_t*)(buf)) ); }
+{ return ntohl(*((const uint32_t*)(buf)) ); }
 
 static void LogTcpOptions(TextLog* log, const tcp::TcpOptIterator& opt_iter)
 {
@@ -578,7 +578,7 @@ void LogTCPHeader(TextLog* log, Packet* p)
     char tcpFlags[9];
     const tcp::TCPHdr* tcph = p->ptrs.tcph;
 
-    if (tcph == NULL)
+    if (tcph == nullptr)
     {
         TextLog_Print(log, "TCP header truncated\n");
         return;
@@ -620,7 +620,7 @@ void LogTCPHeader(TextLog* log, Packet* p)
  */
 void LogUDPHeader(TextLog* log, Packet* p)
 {
-    if (p->ptrs.udph == NULL)
+    if (p->ptrs.udph == nullptr)
     {
         TextLog_Print(log, "UDP header truncated\n");
         return;
@@ -640,7 +640,7 @@ void LogUDPHeader(TextLog* log, Packet* p)
  */
 static void LogEmbeddedICMPHeader(TextLog* log, const ICMPHdr* icmph)
 {
-    if (log == NULL || icmph == NULL)
+    if (log == nullptr || icmph == nullptr)
         return;
 
     TextLog_Print(log, "Type: %d  Code: %d  Csum: %u",
@@ -694,7 +694,7 @@ static void LogEmbeddedICMPHeader(TextLog* log, const ICMPHdr* icmph)
  */
 static void LogICMPEmbeddedIP(TextLog* log, Packet* p)
 {
-    if (log == NULL || p == NULL)
+    if (log == nullptr || p == nullptr)
         return;
 
     // FIXIT-L -- Allocating a new Packet here is ridiculously excessive.
@@ -753,7 +753,7 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet* p)
             LogIPHeader(log, orig_p);
 
             const icmp::ICMPHdr* icmph = layer::get_icmp_embed_icmp(op.ptrs.ip_api);
-            if (icmph != NULL)
+            if (icmph != nullptr)
                 LogEmbeddedICMPHeader(log, icmph);
             break;
         }
@@ -793,7 +793,7 @@ void LogICMPHeader(TextLog* log, Packet* p)
     /* 32 digits plus 7 colons and a NULL byte */
     char buf[8*4 + 7 + 1];
 
-    if (p->ptrs.icmph == NULL)
+    if (p->ptrs.icmph == nullptr)
     {
         TextLog_Puts(log, "ICMP header truncated\n");
         return;
@@ -1308,14 +1308,14 @@ void LogIPPkt(TextLog* log, Packet* p)
         switch (p->type())
         {
         case PktType::TCP:
-            if ( p->ptrs.tcph != NULL )
+            if ( p->ptrs.tcph != nullptr )
                 LogTCPHeader(log, p);
             else
                 LogNetData(log, p->ptrs.ip_api.ip_data(), p->ptrs.ip_api.pay_len(), p);
             break;
 
         case PktType::UDP:
-            if ( p->ptrs.udph != NULL )
+            if ( p->ptrs.udph != nullptr )
             {
                 // for consistency, nothing to log (tcp doesn't log paylen)
                 LogUDPHeader(log, p);
@@ -1332,7 +1332,7 @@ void LogIPPkt(TextLog* log, Packet* p)
             if (p->is_ip6())
                 break;
 
-            if ( p->ptrs.icmph != NULL )
+            if ( p->ptrs.icmph != nullptr )
                 LogICMPHeader(log, p);
             else
                 LogNetData(log, p->ptrs.ip_api.ip_data(), p->ptrs.ip_api.pay_len(), p);

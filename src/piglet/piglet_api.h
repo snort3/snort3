@@ -51,7 +51,7 @@ public:
         L { lua.get_ptr() }, target { t },
         module { m }, snort_conf { sc } { }
 
-    virtual ~BasePlugin() { }
+    virtual ~BasePlugin() = default;
 
     // Setup the Lua environment for the test
     virtual bool setup()
@@ -85,7 +85,7 @@ private:
 // Plugin ctor/dtor
 //--------------------------------------------------------------------------
 
-using PluginCtor = BasePlugin* (*)(Lua::State&, std::string, Module*, SnortConfig*);
+using PluginCtor = BasePlugin* (*)(Lua::State&, const std::string&, Module*, SnortConfig*);
 using PluginDtor = void (*)(BasePlugin*);
 
 //--------------------------------------------------------------------------

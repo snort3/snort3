@@ -33,9 +33,6 @@ TcpStateListen::TcpStateListen(TcpStateMachine& tsm) :
 {
 }
 
-TcpStateListen::~TcpStateListen()
-{
-}
 
 bool TcpStateListen::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
