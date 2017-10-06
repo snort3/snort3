@@ -328,9 +328,6 @@ public:  // FIXIT-M privatize if possible
     unsigned ips_policy_id;
     unsigned network_policy_id;
 
-    int32_t iface_in;
-    int32_t iface_out;
-
     uint16_t client_port;
     uint16_t server_port;
 

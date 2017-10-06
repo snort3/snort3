@@ -24,7 +24,7 @@
 
 using namespace std;
 
-Binder::Binder(TableApi& t) : table_api(t), printed(false), when_ips_policy_id(-1)
+Binder::Binder(TableApi& t) : table_api(t)
 { }
 
 Binder::~Binder()
@@ -68,6 +68,12 @@ void Binder::add_to_configuration()
 
     for ( const auto& p : ports )
         table_api.add_list("ports", p);
+
+    if ( has_src_zone() )
+        table_api.add_option("src_zone", std::stoi(when_src_zone));
+
+    if ( has_dst_zone() )
+        table_api.add_option("dst_zone", std::stoi(when_dst_zone));
 
     if ( has_proto() )
         table_api.add_option("proto", when_proto);
@@ -122,6 +128,12 @@ void Binder::add_to_configuration()
     table_api.close_table();  // "binder"
 }
 
+void Binder::set_priority(unsigned p)
+{ priority = p; }
+
+unsigned Binder::get_priority()
+{ return priority; }
+
 void Binder::set_when_ips_policy_id(int id)
 { when_ips_policy_id = id; }
 
@@ -154,6 +166,12 @@ void Binder::add_when_dst_port(const std::string& port)
 
 void Binder::add_when_port(const std::string& port)
 { ports.push_back(port); }
+
+void Binder::set_when_src_zone(const std::string& zone)
+{ when_src_zone = zone; }
+
+void Binder::set_when_dst_zone(const std::string& zone)
+{ when_dst_zone = zone; }
 
 void Binder::clear_ports()
 { ports.clear(); }
@@ -212,8 +230,16 @@ bool operator<(const shared_ptr<Binder>& left, const shared_ptr<Binder>& right)
         if ( (left) > (right) ) return true; \
     }
 
-    //By priorities of options
+    // By predetermined order
+    FIRST_IF_LT(left->get_priority(), right->get_priority());
+
+    // By priorities of options
     FIRST_IF_GT(left->has_ips_policy_id(), right->has_ips_policy_id())
+    
+    auto left_zone_specs = left->has_src_zone() + left->has_dst_zone();
+    auto right_zone_specs = right->has_src_zone() + right->has_dst_zone();
+    FIRST_IF_GT(left_zone_specs, right_zone_specs);
+
     FIRST_IF_GT(left->has_vlans(), right->has_vlans())
     FIRST_IF_GT(left->has_service(), right->has_service())
 
@@ -231,7 +257,7 @@ bool operator<(const shared_ptr<Binder>& left, const shared_ptr<Binder>& right)
     FIRST_IF_GT(left->has_proto(), right->has_proto())
     FIRST_IF_GT(left->has_role(), right->has_role())
 
-    //By values of options. Fewer specs = more specific.
+    // By values of options. Fewer specs = more specific.
     if ( left->has_vlans() && right->has_vlans() )
         FIRST_IF_LT(left->vlans.size(), right->vlans.size())
 
@@ -243,7 +269,7 @@ bool operator<(const shared_ptr<Binder>& left, const shared_ptr<Binder>& right)
     if ( left->has_ports() && right->has_ports() )
         FIRST_IF_LT(left->ports.size(), right->ports.size())
 
-    //Sorted by value for readability if all else is equal
+    // Sorted by value for readability if all else is equal
     if ( left->has_ips_policy_id() && right->has_ips_policy_id() )
         FIRST_IF_LT(left->when_ips_policy_id, right->when_ips_policy_id)
 
@@ -265,7 +291,7 @@ bool operator<(const shared_ptr<Binder>& left, const shared_ptr<Binder>& right)
 
 void print_binder_priorities()
 {
-    static unsigned const num_combos = 2 << 10; 
+    static unsigned const num_combos = 2 << 12; 
     vector<shared_ptr<Binder>> binders;
     TableApi t;
 
@@ -278,33 +304,39 @@ void print_binder_priorities()
             binders.back()->set_when_ips_policy_id(1);
 
         if ( i & (1 << 1) )
-            binders.back()->add_when_vlan("a");
+            binders.back()->set_when_src_zone("0");
 
         if ( i & (1 << 2) )
-            binders.back()->set_when_service("a");
+            binders.back()->set_when_dst_zone("0");
 
         if ( i & (1 << 3) )
-            binders.back()->add_when_src_net("a");
+            binders.back()->add_when_vlan("a");
 
         if ( i & (1 << 4) )
-            binders.back()->add_when_dst_net("a");
+            binders.back()->set_when_service("a");
 
         if ( i & (1 << 5) )
-            binders.back()->add_when_net("a");
+            binders.back()->add_when_src_net("a");
 
         if ( i & (1 << 6) )
-            binders.back()->add_when_src_port("a");
+            binders.back()->add_when_dst_net("a");
 
         if ( i & (1 << 7) )
-            binders.back()->add_when_dst_port("a");
+            binders.back()->add_when_net("a");
 
         if ( i & (1 << 8) )
-            binders.back()->add_when_port("a");
+            binders.back()->add_when_src_port("a");
 
         if ( i & (1 << 9) )
-            binders.back()->set_when_proto("a");
+            binders.back()->add_when_dst_port("a");
 
         if ( i & (1 << 10) )
+            binders.back()->add_when_port("a");
+
+        if ( i & (1 << 11) )
+            binders.back()->set_when_proto("a");
+
+        if ( i & (1 << 12) )
             binders.back()->set_when_role("a");
     }
 
@@ -317,6 +349,12 @@ void print_binder_priorities()
 
         if ( b->has_vlans() )
             cout << "vlan ";
+
+        if ( b->has_src_zone() )
+            cout << "src_zone ";
+
+        if ( b->has_dst_zone() )
+            cout << "dst_zone ";
 
         if ( b->has_service() )
             cout << "service ";

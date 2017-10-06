@@ -52,6 +52,7 @@ static const PegInfo bind_pegs[] =
 // binder module
 //-------------------------------------------------------------------------
 
+#define INT32_MAX_STR "2147483647"
 static const Parameter binder_when_params[] =
 {
     // FIXIT-L when.policy_id should be an arbitrary string auto converted
@@ -86,6 +87,12 @@ static const Parameter binder_when_params[] =
 
     { "dst_ports", Parameter::PT_BIT_LIST, "65535", nullptr,
       "list of destination ports" },
+
+    { "src_zone", Parameter::PT_INT, "0:" INT32_MAX_STR, nullptr,
+      "source zone" },
+
+    { "dst_zone", Parameter::PT_INT, "0:" INT32_MAX_STR, nullptr,
+      "destination zone" },
 
     { "role", Parameter::PT_ENUM, "client | server | any", "any",
       "use the given configuration on one or any end of a session" },
@@ -218,6 +225,12 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
         v.get_bits(work->when.dst_ports);
         work->when.split_ports = true;
     }
+
+    else if ( v.is("src_zone") )
+        work->when.src_zone = v.get_long();
+
+    else if ( v.is("dst_zone") )
+        work->when.dst_zone = v.get_long();
 
     else if ( v.is("role") )
         work->when.role = (BindWhen::Role)v.get_long();

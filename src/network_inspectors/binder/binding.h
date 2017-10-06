@@ -26,7 +26,7 @@
 #include "sfip/sf_ipvar.h"
 
 class Flow;
-
+struct Packet;
 struct BindWhen
 {
     enum Role
@@ -47,6 +47,9 @@ struct BindWhen
     bool split_ports;
     PortBitSet src_ports;
     PortBitSet dst_ports;
+
+    int32_t src_zone;
+    int32_t dst_zone;
 };
 
 struct BindUse
@@ -72,7 +75,21 @@ struct BindUse
 struct Binding
 {
     enum DirResult
-    { DR_NO_MATCH, DR_ANY_MATCH, DR_CLIENT_SRC, DR_SERVER_SRC };
+    {
+        // Did not match
+        DR_NO_MATCH,
+
+        // Matched but direction could not be determined
+        DR_ANY_MATCH,
+
+        // On flow: src_* matched client, dst_* matched server
+        // On packet: src_* matched p->src_*, dst_* matched p->dst_*
+        DR_FORWARD,
+
+        // On flow: src_* matched server, dst_* matched client
+        // On packet: src_* matched p->dst_*, dst_* matched p->src_*
+        DR_REVERSE,
+    };
 
     BindWhen when;
     BindUse use;
@@ -80,16 +97,17 @@ struct Binding
     Binding();
     ~Binding();
 
-    bool check_all(const Flow*) const;
+    bool check_all(const Flow*, Packet*) const;
     bool check_ips_policy(const Flow*) const;
-    bool check_iface(const Flow*) const;
+    bool check_iface(const Packet*) const;
     bool check_vlan(const Flow*) const;
     bool check_addr(const Flow*) const;
-    DirResult check_split_addr(const Flow*) const;
+    DirResult check_split_addr(const Flow*, const Packet*, const DirResult) const;
     bool check_proto(const Flow*) const;
     bool check_port(const Flow*) const;
-    bool check_split_port(const Flow*, const DirResult) const;
+    DirResult check_split_port(const Flow*, const Packet*, const DirResult) const;
     bool check_service(const Flow*) const;
+    DirResult check_zone(const Packet*, const DirResult) const;
 };
 
 #endif

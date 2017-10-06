@@ -58,10 +58,10 @@ public:
             std::string ips_policy;
 
             TRY_FIELD(action);   // ignore since nap rules don't drop
-            TRY_FIELD(src_zone); // FIXIT-M parse zones when implemented
+            TRY_FIELD(src_zone);
             TRY_FIELD(src_net);
             TRY_FIELD(src_port);
-            TRY_FIELD(dst_zone); // FIXIT-M parse zones when implemented
+            TRY_FIELD(dst_zone);
             TRY_FIELD(dst_net);
             TRY_FIELD(dst_port);
             TRY_FIELD(vlan);
@@ -100,11 +100,19 @@ public:
 
             auto& bind = cv.make_pending_binder(policy_id);
 
+            bind.set_priority(order++);
+
+            if ( src_zone != "any" )
+                bind.set_when_src_zone(src_zone);
+
             if ( src_net != "any" )
                 bind.add_when_src_net(src_net);
 
             if ( src_port != "any" )
                 bind.add_when_src_port(src_port);
+
+            if ( dst_zone != "any" )
+                bind.set_when_dst_zone(dst_zone);
 
             if ( dst_net != "any" )
                 bind.add_when_dst_net(dst_net);
@@ -135,6 +143,9 @@ public:
 
         return true;
     }
+
+private:
+    unsigned order = 0;
 };
 
 class NapSelectorState : public ConversionState

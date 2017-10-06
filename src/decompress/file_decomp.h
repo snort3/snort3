@@ -138,7 +138,7 @@ struct fd_session_t
    of the underlying decompression engine context. */
 #ifndef SYNC_IN
 #define SYNC_IN(dest) \
-    dest->next_in = const_cast<z_const Bytef*>(SessionPtr->Next_In); \
+    dest->next_in = (Bytef*)(SessionPtr->Next_In); \
     (dest)->avail_in = SessionPtr->Avail_In; \
     (dest)->total_in = SessionPtr->Total_In; \
     (dest)->next_out = SessionPtr->Next_Out; \

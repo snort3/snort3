@@ -88,7 +88,7 @@ static const uint8_t* compress(const string& text, unsigned& len)
     if ( ret != Z_OK )
         return nullptr;
 
-    stream.next_in = (z_const Bytef*)s;
+    stream.next_in = (Bytef*)s;
     stream.avail_in = text.size();
 
     stream.next_out = so_buf;
@@ -121,7 +121,7 @@ static const char* expand(const uint8_t* data, unsigned len)
     if ( inflateInit2(&stream, window_bits) != Z_OK )
         return nullptr;
 
-    stream.next_in = const_cast<z_const Bytef*>(data);
+    stream.next_in = (Bytef*)data;
     stream.avail_in = (uInt)len;
 
     stream.next_out = (Bytef*)so_buf;

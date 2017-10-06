@@ -30,6 +30,8 @@
 #include "managers/inspector_manager.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
+#include "protocols/tcp.h"
+#include "protocols/udp.h"
 #include "stream/stream.h"
 #include "stream/stream_splitter.h"
 #include "target_based/sftarget_reader.h"
@@ -66,7 +68,10 @@ Binding::Binding()
 
     when.protos = (unsigned)PktType::ANY;
     when.vlans.set();
-    when.ifaces.set();
+    when.ifaces.reset();
+
+    when.src_zone = DAQ_PKTHDR_UNKNOWN;
+    when.dst_zone = DAQ_PKTHDR_UNKNOWN;
 
     when.ips_id = 0;
     when.role = BindWhen::BR_EITHER;
@@ -128,28 +133,6 @@ bool Binding::check_addr(const Flow* flow) const
     return false;
 }
 
-Binding::DirResult Binding::check_split_addr(const Flow* flow) const
-{
-    if ( !when.split_nets )
-        return Binding::DR_ANY_MATCH;
-
-    if ( !when.src_nets && !when.dst_nets )
-        return Binding::DR_ANY_MATCH;
-
-    bool client_in_src = !when.src_nets or sfvar_ip_in(when.src_nets, &flow->client_ip);
-    bool client_in_dst = !when.dst_nets or sfvar_ip_in(when.dst_nets, &flow->client_ip);
-    bool server_in_src = !when.src_nets or sfvar_ip_in(when.src_nets, &flow->server_ip);
-    bool server_in_dst = !when.dst_nets or sfvar_ip_in(when.dst_nets, &flow->server_ip);
-
-    if ( client_in_src and server_in_dst )
-        return Binding::DR_CLIENT_SRC;
-    
-    if ( server_in_src and client_in_dst )
-        return Binding::DR_SERVER_SRC;
-
-    return Binding::DR_NO_MATCH;
-}
-
 bool Binding::check_proto(const Flow* flow) const
 {
     if ( when.protos & (unsigned)flow->pkt_type )
@@ -158,16 +141,18 @@ bool Binding::check_proto(const Flow* flow) const
     return false;
 }
 
-bool Binding::check_iface(const Flow* flow) const
+bool Binding::check_iface(const Packet* p) const
 {
-    int i = flow->iface_in < 0 ? 0 : flow->iface_in;
-
-    if ( when.ifaces.test(i) )
+    if ( !p or when.ifaces.none() )
         return true;
 
-    i = flow->iface_out < 0 ? 0 : flow->iface_out;
+    auto in = p->pkth->ingress_index;
+    auto out = p->pkth->egress_index;
 
-    if ( when.ifaces.test(i) )
+    if ( in > 0 and when.ifaces.test(out) )
+        return true;
+
+    if ( out > 0 and when.ifaces.test(out) )
         return true;
 
     return false;
@@ -198,41 +183,6 @@ bool Binding::check_port(const Flow* flow) const
     return false;
 }
 
-bool Binding::check_split_port(const Flow* flow, const DirResult dr) const
-{
-    if ( !when.split_ports )
-        return true;
-
-    bool client_in_src = false;
-    bool client_in_dst = false;
-    bool server_in_src = false;
-    bool server_in_dst = false;
-
-    switch ( dr )
-    {
-        case Binding::DR_ANY_MATCH:
-            client_in_src = when.src_ports.test(flow->client_port);
-            client_in_dst = when.dst_ports.test(flow->client_port);
-            server_in_src = when.src_ports.test(flow->server_port);
-            server_in_dst = when.dst_ports.test(flow->server_port);
-            return ( client_in_src and server_in_dst ) or ( server_in_src and client_in_dst );
-
-        case Binding::DR_CLIENT_SRC:
-            client_in_src = when.src_ports.test(flow->client_port);
-            server_in_dst = when.dst_ports.test(flow->server_port);
-            return client_in_src and server_in_dst;
-
-        case Binding::DR_SERVER_SRC:
-            server_in_src = when.src_ports.test(flow->server_port);
-            client_in_dst = when.dst_ports.test(flow->client_port);
-            return server_in_src and client_in_dst;
-
-        default:
-            break;
-    }
-    return false;
-}
-
 bool Binding::check_service(const Flow* flow) const
 {
     if ( !flow->service )
@@ -244,12 +194,134 @@ bool Binding::check_service(const Flow* flow) const
     return false;
 }
 
-bool Binding::check_all(const Flow* flow) const
+// we want to correlate src_zone to src_nets and src_ports, and dst_zone to dst_nets and
+// dst_ports. it doesn't matter if the packet is actually moving in the opposite direction as
+// binder is only evaluated once per flow and we need to capture the correct binding from
+// either side of the conversation
+template<typename When, typename Traffic, typename Compare>
+Binding::DirResult directional_match(const When& when_src, const When& when_dst,
+    const Traffic& traffic_src, const Traffic& traffic_dst,
+    const Binding::DirResult dr, const Compare& compare)
 {
+    bool src_in_src = false;
+    bool src_in_dst = false;
+    bool dst_in_src = false;
+    bool dst_in_dst = false;
+    bool forward_match = false;
+    bool reverse_match = false;
+
+    switch ( dr )
+    {
+        case Binding::DR_ANY_MATCH:
+            src_in_src = compare(when_src, traffic_src);
+            src_in_dst = compare(when_dst, traffic_src);
+            dst_in_src = compare(when_src, traffic_dst);
+            dst_in_dst = compare(when_dst, traffic_dst);
+
+            forward_match = src_in_src and dst_in_dst;
+            reverse_match = dst_in_src and src_in_dst;
+
+            if ( forward_match and reverse_match )
+                return dr;
+
+            if ( forward_match )
+                return Binding::DR_FORWARD;
+            
+            if ( reverse_match )
+                return Binding::DR_REVERSE;
+
+            return Binding::DR_NO_MATCH;
+
+        case Binding::DR_FORWARD:
+            src_in_src = compare(when_src, traffic_src);
+            dst_in_dst = compare(when_dst, traffic_dst);
+            return src_in_src and dst_in_dst ? dr : Binding::DR_NO_MATCH;
+
+        case Binding::DR_REVERSE:
+            src_in_dst = compare(when_dst, traffic_src);
+            dst_in_src = compare(when_src, traffic_dst);
+            return src_in_dst and dst_in_src ? dr : Binding::DR_NO_MATCH;
+
+        default:
+            break;
+    }
+
+    return Binding::DR_NO_MATCH;
+}
+
+Binding::DirResult Binding::check_split_addr(const Flow* flow, const Packet* p,
+    const Binding::DirResult dr) const
+{
+    if ( !when.split_nets )
+        return dr;
+
+    if ( !when.src_nets && !when.dst_nets )
+        return dr;
+    
+    const SfIp* src_ip = &flow->client_ip;
+    const SfIp* dst_ip = &flow->server_ip;
+
+    if ( p && p->ptrs.ip_api.is_ip() )
+    {
+        src_ip = p->ptrs.ip_api.get_src();
+        dst_ip = p->ptrs.ip_api.get_dst();
+    }
+
+    return directional_match(when.src_nets, when.dst_nets, src_ip, dst_ip, dr,
+        [](sfip_var_t* when_val, const SfIp* traffic_val)
+        { return when_val ? sfvar_ip_in(when_val, traffic_val) : true; });
+
+}
+
+Binding::DirResult Binding::check_split_port(const Flow* flow, const Packet* p,
+    const Binding::DirResult dr) const
+{
+    if ( !when.split_ports )
+        return dr;
+    
+    uint16_t src_port = flow->client_port; 
+    uint16_t dst_port = flow->server_port; 
+
+    if ( p )
+    {
+        if ( p->is_tcp() )
+        {
+            src_port = p->ptrs.tcph->src_port();
+            dst_port = p->ptrs.tcph->dst_port();
+        }
+        else if ( p->is_udp() )
+        {
+            src_port = p->ptrs.udph->src_port();
+            dst_port = p->ptrs.udph->dst_port();
+        }
+        else
+            return dr;
+    }
+
+    return directional_match(when.src_ports, when.dst_ports, src_port, dst_port, dr,
+        [](const PortBitSet& when_val, uint16_t traffic_val)
+        { return when_val.test(traffic_val); });
+}
+
+Binding::DirResult Binding::check_zone(const Packet* p, const Binding::DirResult dr) const
+{
+    if ( !p )
+        return dr;
+
+    return directional_match(when.src_zone, when.dst_zone,
+        p->pkth->ingress_group, p->pkth->egress_group, dr,
+        [](int32_t when_val, int32_t zone)
+        { return when_val == DAQ_PKTHDR_UNKNOWN or when_val == zone; });
+}
+
+bool Binding::check_all(const Flow* flow, Packet* p) const
+{
+    Binding::DirResult dir = Binding::DR_ANY_MATCH;
+
     if ( !check_ips_policy(flow) )
         return false;
 
-    if ( !check_iface(flow) )
+    if ( !check_iface(p) )
         return false;
 
     if ( !check_vlan(flow) )
@@ -259,7 +331,7 @@ bool Binding::check_all(const Flow* flow) const
     if ( !check_addr(flow) )
         return false;
 
-    auto dir = check_split_addr(flow);
+    dir = check_split_addr(flow, p, dir);
     if ( dir == Binding::DR_NO_MATCH )
         return false;
 
@@ -269,10 +341,15 @@ bool Binding::check_all(const Flow* flow) const
     if ( !check_port(flow) )
         return false;
 
-    if ( !check_split_port(flow, dir) )
+    dir = check_split_port(flow, p, dir);
+    if ( dir == Binding::DR_NO_MATCH )
         return false;
 
     if ( !check_service(flow) )
+        return false;
+
+    dir = check_zone(p, dir);
+    if ( dir == Binding::DR_NO_MATCH )
         return false;
 
     return true;
@@ -501,7 +578,7 @@ private:
     void apply(const Stuff&, Flow*);
 
     void set_binding(SnortConfig*, Binding*);
-    void get_bindings(Flow*, Stuff&);
+    void get_bindings(Flow*, Stuff&, Packet* = nullptr); // may be null when dealing with HA flows
     void apply(Flow*, Stuff&);
     Inspector* find_gadget(Flow*);
     int exec_handle_gadget(void*);
@@ -569,12 +646,10 @@ void Binder::update(SnortConfig*, const char* name)
 
 void Binder::eval(Packet* p)
 {
-    Flow* flow = p->flow;
-    flow->iface_in = p->pkth->ingress_index;
-    flow->iface_out = p->pkth->egress_index;
-
     Stuff stuff;
-    get_bindings(flow, stuff);
+    Flow* flow = p->flow;
+
+    get_bindings(flow, stuff, p);
     apply(flow, stuff);
 
     ++bstats.verdicts[stuff.action];
@@ -674,7 +749,7 @@ void Binder::set_binding(SnortConfig*, Binding* pb)
 
 // FIXIT-P this is a simple linear search until functionality is nailed
 // down.  performance should be the focus of the next iteration.
-void Binder::get_bindings(Flow* flow, Stuff& stuff)
+void Binder::get_bindings(Flow* flow, Stuff& stuff, Packet* p)
 {
     Binding* pb;
     unsigned i, sz = bindings.size();
@@ -683,7 +758,7 @@ void Binder::get_bindings(Flow* flow, Stuff& stuff)
     {
         pb = bindings[i];
 
-        if ( !pb->check_all(flow) )
+        if ( !pb->check_all(flow, p) )
             continue;
 
         if ( !pb->use.ips_index && !pb->use.inspection_index )
@@ -723,7 +798,7 @@ void Binder::get_bindings(Flow* flow, Stuff& stuff)
 
         if ( sub )
         {
-            sub->get_bindings(flow, stuff);
+            sub->get_bindings(flow, stuff, p);
             return;
         }
     }
