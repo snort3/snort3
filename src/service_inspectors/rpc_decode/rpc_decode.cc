@@ -605,8 +605,8 @@ RpcFlowData::RpcFlowData() : FlowData(inspector_id)
 RpcFlowData::~RpcFlowData()
 {
     RpcSsnClean(&session);
-    if (rdstats.concurrent_sessions > 0)
-        rdstats.concurrent_sessions--;
+    assert(rdstats.concurrent_sessions > 0);
+    rdstats.concurrent_sessions--;
 }
 
 static RpcSsnData* RpcSsnDataNew(Packet* p)

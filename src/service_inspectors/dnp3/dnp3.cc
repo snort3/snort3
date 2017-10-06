@@ -44,8 +44,8 @@ Dnp3FlowData::Dnp3FlowData() : FlowData(inspector_id)
 
 Dnp3FlowData::~Dnp3FlowData()
 {
-    if (dnp3_stats.concurrent_sessions > 0)
-        dnp3_stats.concurrent_sessions--;
+    assert(dnp3_stats.concurrent_sessions > 0);
+    dnp3_stats.concurrent_sessions--;
 }
 
 unsigned Dnp3FlowData::inspector_id = 0;

@@ -191,8 +191,8 @@ SmtpFlowData::~SmtpFlowData()
     if ( session.auth_name )
         snort_free(session.auth_name);
 
-    if (smtpstats.concurrent_sessions > 0)
-        smtpstats.concurrent_sessions--;
+    assert(smtpstats.concurrent_sessions > 0);
+    smtpstats.concurrent_sessions--;
 }
 
 unsigned SmtpFlowData::inspector_id = 0;

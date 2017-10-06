@@ -41,8 +41,8 @@ Dce2TcpFlowData::Dce2TcpFlowData() : FlowData(inspector_id)
 Dce2TcpFlowData::~Dce2TcpFlowData()
 {
     DCE2_CoCleanTracker(&dce2_tcp_session.co_tracker);
-    if (dce2_tcp_stats.concurrent_sessions > 0)
-        dce2_tcp_stats.concurrent_sessions--;
+    assert(dce2_tcp_stats.concurrent_sessions > 0);
+    dce2_tcp_stats.concurrent_sessions--;
 }
 
 THREAD_LOCAL dce2TcpStats dce2_tcp_stats;

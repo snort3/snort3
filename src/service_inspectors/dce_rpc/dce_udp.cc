@@ -65,8 +65,8 @@ Dce2UdpFlowData::Dce2UdpFlowData() : FlowData(inspector_id)
 Dce2UdpFlowData::~Dce2UdpFlowData()
 {
     DCE2_ClCleanTracker(&dce2_udp_session.cl_tracker);
-    if (dce2_udp_stats.concurrent_sessions > 0)
-        dce2_udp_stats.concurrent_sessions--;
+    assert(dce2_udp_stats.concurrent_sessions > 0);
+    dce2_udp_stats.concurrent_sessions--;
 }
 
 unsigned Dce2UdpFlowData::inspector_id = 0;

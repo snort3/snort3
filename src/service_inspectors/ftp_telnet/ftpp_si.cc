@@ -69,8 +69,8 @@ TelnetFlowData::TelnetFlowData() : FlowData(inspector_id)
 
 TelnetFlowData::~TelnetFlowData()
 {
-    if (tnstats.concurrent_sessions > 0)
-        tnstats.concurrent_sessions--;
+    assert(tnstats.concurrent_sessions > 0);
+    tnstats.concurrent_sessions--;
 }
 
 /*
@@ -417,8 +417,8 @@ FtpFlowData::FtpFlowData() : FlowData(inspector_id)
 FtpFlowData::~FtpFlowData()
 {
     FTPFreesession(&session);
-    if (ftstats.concurrent_sessions > 0)
-        ftstats.concurrent_sessions--;
+    assert(ftstats.concurrent_sessions > 0);
+    ftstats.concurrent_sessions--;
 }
 
 /*

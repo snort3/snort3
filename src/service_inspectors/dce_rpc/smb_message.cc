@@ -1319,8 +1319,8 @@ Dce2SmbFlowData::Dce2SmbFlowData() : FlowData(inspector_id)
 Dce2SmbFlowData::~Dce2SmbFlowData()
 {
     DCE2_SmbDataFree(&dce2_smb_session);
-    if (dce2_smb_stats.concurrent_sessions > 0)
-        dce2_smb_stats.concurrent_sessions--;
+    assert(dce2_smb_stats.concurrent_sessions > 0);
+    dce2_smb_stats.concurrent_sessions--;
 }
 
 unsigned Dce2SmbFlowData::inspector_id = 0;

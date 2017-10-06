@@ -152,8 +152,8 @@ ImapFlowData::~ImapFlowData()
     if(session.mime_ssn)
         delete(session.mime_ssn);
 
-    if (imapstats.concurrent_sessions > 0)
-        imapstats.concurrent_sessions--;
+    assert(imapstats.concurrent_sessions > 0);
+    imapstats.concurrent_sessions--;
 }
 
 unsigned ImapFlowData::inspector_id = 0;
