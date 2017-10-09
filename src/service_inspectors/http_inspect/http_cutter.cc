@@ -282,7 +282,6 @@ ScanResult HttpBodyClCutter::cut(const uint8_t*, uint32_t length, HttpInfraction
     }
     else
     {
-        // FIXIT-M need to implement random increments
         num_flush = flow_target;
         remaining -= num_flush;
         return SCAN_FOUND_PIECE;
@@ -299,7 +298,6 @@ ScanResult HttpBodyOldCutter::cut(const uint8_t*, uint32_t, HttpInfractions*, Ht
         return SCAN_END;
     }
 
-    // FIXIT-M need to implement random increments
     num_flush = flow_target;
     return SCAN_FOUND_PIECE;
 }

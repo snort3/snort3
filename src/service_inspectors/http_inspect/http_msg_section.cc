@@ -30,6 +30,7 @@
 #include "http_msg_status.h"
 #include "http_msg_trailer.h"
 #include "http_test_manager.h"
+#include "stream/flush_bucket.h"
 
 using namespace HttpEnums;
 
@@ -78,17 +79,20 @@ void HttpMsgSection::update_depth() const
         return;
     }
 
+    const int random_increment = FlushBucket::get_size() - 192;
+    assert((random_increment >= -64) && (random_increment <= 63));
+
     switch (session_data->compression[source_id])
     {
     case CMP_NONE:
       {
-        session_data->section_size_target[source_id] = DATA_BLOCK_SIZE;
+        session_data->section_size_target[source_id] = DATA_BLOCK_SIZE + random_increment;
         session_data->section_size_max[source_id] = FINAL_BLOCK_SIZE;
         break;
       }
     case CMP_GZIP:
     case CMP_DEFLATE:
-        session_data->section_size_target[source_id] = GZIP_BLOCK_SIZE;
+        session_data->section_size_target[source_id] = GZIP_BLOCK_SIZE + random_increment;
         session_data->section_size_max[source_id] = FINAL_GZIP_BLOCK_SIZE;
         break;
     default:

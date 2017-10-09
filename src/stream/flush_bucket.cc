@@ -109,7 +109,8 @@ StaticFlushBucket::StaticFlushBucket()
 
 RandomFlushBucket::RandomFlushBucket()
 {
-    std::default_random_engine generator;
+    std::random_device random_dev;
+    std::default_random_engine generator(random_dev());
     std::uniform_int_distribution<int> distribution(128, 255);
 
     for ( int i = 0; i < NUM_FLUSH_POINTS; i++ )
