@@ -24,8 +24,10 @@
 
 #include "codecs/codec_module.h"
 #include "framework/codec.h"
-#include "protocols/gre.h"
 #include "log/text_log.h"
+#include "main/snort_config.h"
+#include "packet_io/active.h"
+#include "protocols/gre.h"
 
 #define CD_GRE_NAME "gre"
 #define CD_GRE_HELP "support for generic routing encapsulation"
@@ -204,6 +206,9 @@ bool GreCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         codec_event(codec, DECODE_GRE_DGRAM_LT_GREHDR);
         return false;
     }
+
+    if (SnortConfig::tunnel_bypass_enabled(TUNNEL_GRE))
+        Active::set_tunnel_bypass();
 
     codec.lyr_len = len;
     codec.next_prot_id = greh->proto();

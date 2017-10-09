@@ -107,7 +107,11 @@ enum TunnelFlags
     TUNNEL_GTP    = 0x01,
     TUNNEL_TEREDO = 0x02,
     TUNNEL_6IN4   = 0x04,
-    TUNNEL_4IN6   = 0x08
+    TUNNEL_4IN6   = 0x08,
+    TUNNEL_4IN4   = 0x10,
+    TUNNEL_6IN6   = 0x20,
+    TUNNEL_GRE    = 0x40,
+    TUNNEL_MPLS   = 0x80
 };
 
 struct srmm_table_t;

@@ -662,7 +662,7 @@ static const Parameter alerts_params[] =
       "don't alert w/o established session (note: rule action still taken)" },
 
     { "tunnel_verdicts", Parameter::PT_STRING, nullptr, nullptr,
-      "let DAQ handle non-allow verdicts for GTP|Teredo|6in4|4in6 traffic" },
+      "let DAQ handle non-allow verdicts for gtp|teredo|6in4|4in6|4in4|6in6|gre|mpls traffic" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

@@ -22,6 +22,7 @@
 
 // Provides facilities for displaying Snort exit stats
 
+#include <daq_common.h>
 #include <vector>
 
 #include "framework/counts.h"
@@ -77,12 +78,7 @@ struct AuxCount
 };
 
 //-------------------------------------------------------------------------
-// FIXIT-L 2.0.4 introduces the retry verdict
-// no way to reliably optionally leverage this with dynamic loaded daqs
-
 // FIXIT-L daq stats should be moved to sfdaq
-
-#define MAX_SFDAQ_VERDICT 6
 
 struct DAQStats
 {
@@ -93,7 +89,7 @@ struct DAQStats
     PegCount filtered;
     PegCount outstanding;
     PegCount injected;
-    PegCount verdicts[MAX_SFDAQ_VERDICT];
+    PegCount verdicts[MAX_DAQ_VERDICT];
     PegCount internal_blacklist;
     PegCount internal_whitelist;
     PegCount skipped;

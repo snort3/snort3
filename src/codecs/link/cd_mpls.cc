@@ -26,6 +26,7 @@
 #include "flow/flow.h"
 #include "framework/codec.h"
 #include "main/snort_config.h"
+#include "packet_io/active.h"
 #include "utils/safec.h"
 
 #define CD_MPLS_NAME "mpls"
@@ -209,6 +210,9 @@ bool MplsCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
             return false;
         }
     }   /* while bos not 1, peel off more labels */
+
+    if (SnortConfig::tunnel_bypass_enabled(TUNNEL_MPLS))
+        Active::set_tunnel_bypass();
 
     codec.lyr_len = (const uint8_t*)tmpMplsHdr - raw.data;
 

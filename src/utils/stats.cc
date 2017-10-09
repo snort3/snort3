@@ -177,6 +177,7 @@ const PegInfo daq_names[] =
     { CountType::SUM, "whitelist", "total whitelist verdicts" },
     { CountType::SUM, "blacklist", "total blacklist verdicts" },
     { CountType::SUM, "ignore", "total ignore verdicts" },
+    { CountType::SUM, "retry", "total retry verdicts" },
 
     // FIXIT-L these are not exactly DAQ counts - but they are related
     { CountType::SUM, "internal_blacklist",
@@ -241,13 +242,12 @@ void pc_sum()
     g_daq_stats.packets_filtered += daq_stats->packets_filtered;
     g_daq_stats.packets_injected += daq_stats->packets_injected;
 
-    for ( unsigned i = 0; i < MAX_SFDAQ_VERDICT; i++ )
+    for ( unsigned i = 0; i < MAX_DAQ_VERDICT; i++ )
         g_daq_stats.verdicts[i] += daq_stats->verdicts[i];
 
     sum_stats((PegCount*)&gaux, (PegCount*)&aux_counts, sizeof(aux_counts)/sizeof(PegCount));
 
-    //  FIXIT-H why do we set gaux in sum_stats then zero it here?
-    memset(&gaux, 0, sizeof(gaux));
+    memset(&aux_counts, 0, sizeof(aux_counts));
 }
 
 //-------------------------------------------------------------------------
@@ -271,7 +271,7 @@ void get_daq_stats(DAQStats& daq_stats)
     daq_stats.outstanding =  pkts_out;
     daq_stats.injected =  pkts_inj;
 
-    for ( unsigned i = 0; i < MAX_SFDAQ_VERDICT; i++ )
+    for ( unsigned i = 0; i < MAX_DAQ_VERDICT; i++ )
         daq_stats.verdicts[i] = g_daq_stats.verdicts[i];
 
     daq_stats.internal_blacklist = gaux.internal_blacklist;

@@ -886,6 +886,18 @@ void SnortConfig::set_tunnel_verdicts(const char* args)
         else if (!strcasecmp(tok, "4in6"))
             tunnel_mask |= TUNNEL_4IN6;
 
+        else if (!strcasecmp(tok, "4in4"))
+            tunnel_mask |= TUNNEL_4IN4;
+
+        else if (!strcasecmp(tok, "6in6"))
+            tunnel_mask |= TUNNEL_6IN6;
+
+        else if (!strcasecmp(tok, "gre"))
+            tunnel_mask |= TUNNEL_GRE;
+
+        else if (!strcasecmp(tok, "mpls"))
+            tunnel_mask |= TUNNEL_MPLS;
+
         else
         {
             ParseError("unknown tunnel bypass protocol");

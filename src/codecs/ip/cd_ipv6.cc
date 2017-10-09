@@ -177,6 +177,14 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         else if ( SnortConfig::tunnel_bypass_enabled(TUNNEL_6IN4) )
             Active::set_tunnel_bypass();
     }
+    else if (snort.ip_api.is_ip6())
+    {
+        /*  If Teredo or GRE seen, this is not an 6in6 tunnel */
+        if ( codec.codec_flags & CODEC_NON_IP_TUNNEL )
+            codec.codec_flags &= ~CODEC_NON_IP_TUNNEL;
+        else if (SnortConfig::tunnel_bypass_enabled(TUNNEL_6IN6))
+            Active::set_tunnel_bypass();
+    }
 
     IPV6CheckIsatap(ip6h, snort, codec); // check for isatap before overwriting the ip_api.
 
