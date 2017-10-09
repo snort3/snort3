@@ -18,6 +18,7 @@
 // pps_binder.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <algorithm>
+#include <cassert>
 
 #include "helpers/util_binder.h"
 #include "data/dt_table_api.h"
@@ -109,6 +110,10 @@ void Binder::add_to_configuration()
             case IT_NETWORK:
                 opt_name = "network_policy";
                 break;
+            
+            default:
+                // This should always be set explicitly if a file name exists.
+                assert(false);
         }
         table_api.add_option(opt_name, use_file);
     }

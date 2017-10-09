@@ -168,6 +168,7 @@ public:
 
     unsigned add_inspection_shell(Shell*);
     unsigned add_ips_shell(Shell*);
+    unsigned add_network_shell(Shell*);
     std::shared_ptr<PolicyTuple> add_shell(Shell*);
     void clone(PolicyMap *old_map);
 
@@ -218,6 +219,7 @@ void set_default_policy(struct SnortConfig*);
 
 bool only_inspection_policy();
 bool only_ips_policy();
+bool only_network_policy();
 
 #endif
 

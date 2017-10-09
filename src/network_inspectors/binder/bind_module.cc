@@ -35,6 +35,7 @@ using namespace std;
 #define FILE_KEY ".file"
 #define INSPECTION_KEY ".inspection"
 #define IPS_KEY ".ips"
+#define NETWORK_KEY ".network"
 
 THREAD_LOCAL BindStats bstats;
 
@@ -116,6 +117,9 @@ static const Parameter binder_use_params[] =
 
     { "ips_policy", Parameter::PT_STRING, nullptr, nullptr,
       "use ips policy from given file" },
+
+    { "network_policy", Parameter::PT_STRING, nullptr, nullptr,
+      "use network policy from given file" },
 
     { "service", Parameter::PT_STRING, nullptr, nullptr,
       "override automatic service identification" },
@@ -251,6 +255,9 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
     else if ( v.is("ips_policy") )
         add_file(v.get_string(), IPS_KEY);
 
+    else if ( v.is("network_policy") )
+        add_file(v.get_string(), NETWORK_KEY);
+
     else if ( v.is("name") )
     {
         work->use.name = v.get_string();
@@ -325,6 +332,11 @@ bool BinderModule::end(const char* fqn, int idx, SnortConfig* sc)
         {
             Shell* sh = new Shell(work->use.name.c_str());
             work->use.ips_index = sc->policy_map->add_ips_shell(sh) + 1;
+        }
+        else if ( work->use.type == NETWORK_KEY )
+        {
+            Shell* sh = new Shell(work->use.name.c_str());
+            work->use.network_index = sc->policy_map->add_network_shell(sh) + 1;
         }
 
         if ( work->use.name.empty() )

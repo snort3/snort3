@@ -78,6 +78,7 @@ Binding::Binding()
 
     use.inspection_index = 0;
     use.ips_index = 0;
+    use.network_index = 0;
     use.action = BindUse::BA_INSPECT;
 
     use.what = BindUse::BW_NONE;
@@ -117,15 +118,18 @@ bool Binding::check_addr(const Flow* flow) const
         case BindWhen::BR_SERVER:
             if ( sfvar_ip_in(when.src_nets, &flow->server_ip) )
                 return true;
+            break;
 
         case BindWhen::BR_CLIENT:
             if ( sfvar_ip_in(when.src_nets, &flow->client_ip) )
                 return true;
+            break;
 
         case BindWhen::BR_EITHER:
             if ( sfvar_ip_in(when.src_nets, &flow->client_ip) or
                    sfvar_ip_in(when.src_nets, &flow->server_ip) )
                 return true;
+            break;
 
         default:
             break;
@@ -618,7 +622,7 @@ bool Binder::configure(SnortConfig* sc)
                 ParseError("can't bind. ips_policy_id %u does not exist", pb->when.ips_id);
         }
 
-        if ( !pb->use.ips_index && !pb->use.inspection_index )
+        if ( !pb->use.ips_index and !pb->use.inspection_index and !pb->use.network_index )
             set_binding(sc, pb);
     }
     return true;
@@ -761,7 +765,7 @@ void Binder::get_bindings(Flow* flow, Stuff& stuff, Packet* p)
         if ( !pb->check_all(flow, p) )
             continue;
 
-        if ( !pb->use.ips_index && !pb->use.inspection_index )
+        if ( !pb->use.ips_index and !pb->use.inspection_index and !pb->use.network_index )
         {
             if ( stuff.update(pb) )
                 return;

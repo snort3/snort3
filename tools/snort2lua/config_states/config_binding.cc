@@ -148,6 +148,9 @@ bool Binding::convert(std::istringstream& data_stream)
         return false;
 
     auto& bind = cv.make_binder();
+    auto& net_bind = cv.make_binder();
+    net_bind.print_binding(false);
+
     bool rc = true;
 
     do
@@ -155,6 +158,7 @@ bool Binding::convert(std::istringstream& data_stream)
         try
         {
             (this->*func)(val, bind);
+            (this->*func)(val, net_bind);
         }
         catch (const std::invalid_argument& e)
         {
@@ -198,7 +202,23 @@ bool Binding::convert(std::istringstream& data_stream)
         }
     }
 
-    bind.set_use_file(file);
+    bool is_ips;
+
+    if ( cv.get_ips_pattern().empty() )
+        is_ips = false;
+    else if ( file.find(cv.get_ips_pattern()) != std::string::npos )
+        is_ips = true;
+    else
+        is_ips = false;
+
+    bind.set_use_file(file, is_ips ? Binder::IT_IPS : Binder::IT_FILE);
+
+    // FIXIT-H this resets network config by forcing network policy to swap with ips selection
+    if ( is_ips )
+    {
+        net_bind.set_use_file(file, Binder::IT_NETWORK);
+        net_bind.print_binding(true);
+    }
     return rc;
 }
 

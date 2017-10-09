@@ -37,6 +37,7 @@ TableDelegation table_delegation =
     { "network", true },
 };
 
+std::string Converter::ips_pattern = "";
 bool Converter::parse_includes = true;
 bool Converter::empty_args = false;
 bool Converter::convert_rules_mult_files = true;
@@ -294,7 +295,7 @@ void Converter::add_bindings()
     std::unordered_map<int, std::shared_ptr<Binder>> policy_map;
     for ( auto& b : binders )
     {
-        if ( b->has_ips_policy_id() )
+        if ( b->has_ips_policy_id() && b->get_use_file().second == Binder::IT_FILE )
             policy_map[b->get_when_ips_policy_id()] = b;
     }
 

@@ -63,6 +63,12 @@ public:
     inline static void set_empty_args(bool val)
     { empty_args = val; }
 
+    inline static void set_ips_pattern(std::string val)
+    { ips_pattern = val; }
+
+    inline static std::string get_ips_pattern()
+    { return ips_pattern; }
+
     Binder& make_binder(Binder&);
     Binder& make_binder();
     Binder& make_pending_binder(int ips_policy_id);
@@ -101,6 +107,7 @@ public:
     { return rule_api; }
 
 private:
+    static std::string ips_pattern;
     static bool parse_includes;
     static bool convert_rules_mult_files;
     static bool convert_conf_mult_files;

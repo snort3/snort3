@@ -278,6 +278,9 @@ static void dont_parse_includes(const char* /*key*/, const char* /*val*/)
 static void enable_markup(const char* /*key*/, const char* /*val*/)
 { Markup::enable(true); }
 
+static void set_ips_pattern(const char* /*key*/, const char* val)
+{ Converter::set_ips_pattern(val); }
+
 static void print_version(const char* /*key*/, const char* /*val*/)
 {
     std::cout << "Snort2Lua\t0.2.0";
@@ -386,6 +389,9 @@ static ConfigFunc basic_opts[] =
 
     { "help", help, "",
       "Same as '-h'. this overview of snort2lua" },
+
+    { "ips-policy-pattern", set_ips_pattern, "",
+      "Convert config bindings matching this path to ips policy bindings" },
 
     { "markup", enable_markup, "",
       "print help in asciidoc compatible format" },

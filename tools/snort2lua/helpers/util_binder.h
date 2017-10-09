@@ -34,7 +34,7 @@ class Binder
 {
 public:
     enum IncludeType
-    { IT_FILE, IT_INSPECTION, IT_IPS, IT_NETWORK};
+    { IT_NONE, IT_FILE, IT_INSPECTION, IT_IPS, IT_NETWORK };
 
     typedef std::pair<std::string, IncludeType> IncludeTypePair;
 
@@ -156,7 +156,7 @@ private:
     std::string use_type;
     std::string use_name;
     std::string use_file;
-    IncludeType use_file_type;
+    IncludeType use_file_type = IT_NONE;
     std::string use_service;
     std::string use_action;
 

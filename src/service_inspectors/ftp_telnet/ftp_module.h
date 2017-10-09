@@ -122,6 +122,9 @@ public:
     PegCount* get_counts() const override;
     ProfileStats* get_profile() const override;
 
+    Usage get_usage() const override
+    { return INSPECT; }
+
     FTP_SERVER_PROTO_CONF* get_data();
     const FtpCmd* get_cmd(unsigned idx);
 

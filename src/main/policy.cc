@@ -209,6 +209,15 @@ unsigned PolicyMap::add_ips_shell(Shell* sh)
     return idx;
 }
 
+unsigned PolicyMap::add_network_shell(Shell* sh)
+{
+    unsigned idx = network_policy.size();
+    shells.push_back(sh);
+    network_policy.push_back(new NetworkPolicy(idx));
+    shell_map[sh] = std::make_shared<PolicyTuple>(nullptr, nullptr, network_policy.back());
+    return idx;
+}
+
 std::shared_ptr<PolicyTuple> PolicyMap::add_shell(Shell* sh)
 {
     shells.push_back(sh);
@@ -299,4 +308,7 @@ bool only_inspection_policy()
 
 bool only_ips_policy()
 { return get_ips_policy() && !get_inspection_policy() && !get_network_policy(); }
+
+bool only_network_policy()
+{ return get_network_policy() && !get_ips_policy() && !get_inspection_policy(); }
 

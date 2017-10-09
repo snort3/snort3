@@ -470,6 +470,9 @@ static bool set_value(const char* fqn, Value& v)
     if ( mod->get_usage() != Module::DETECT && only_ips_policy() )
             return true;
 
+    if ( mod->get_usage() != Module::CONTEXT && only_network_policy() )
+            return true;
+
     // now we must traverse the mod params to get the leaf
     string s = fqn;
     const Parameter* p = get_params(s, mod->get_parameters());
@@ -687,6 +690,9 @@ SO_PUBLIC bool open_table(const char* s, int idx)
     if ( m->get_usage() != Module::DETECT && only_ips_policy() )
         return true;
 
+    if ( m->get_usage() != Module::CONTEXT && only_network_policy() )
+        return true;
+
     if ( strcmp(m->get_name(), s) )
     {
         std::string sfqn = s;
@@ -741,6 +747,9 @@ SO_PUBLIC void close_table(const char* s, int idx)
             return;
 
         if ( h->mod->get_usage() != Module::DETECT && only_ips_policy() )
+            return;
+
+        if ( h->mod->get_usage() != Module::CONTEXT && only_network_policy() )
             return;
 
         if ( !end(h->mod, nullptr, s, idx) )
