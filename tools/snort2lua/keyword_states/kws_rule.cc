@@ -17,13 +17,7 @@
 //--------------------------------------------------------------------------
 // kws_rule.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include <sstream>
-#include <vector>
-
 #include "conversion_state.h"
-#include "helpers/converter.h"
-#include "helpers/s2l_util.h"
-#include "rule_states/rule_api.h"
 
 namespace keywords
 {
@@ -113,8 +107,6 @@ static const std::string sblock = "sblock";
 static const std::string sdrop = "sdrop";
 static const std::string activate = "activate";
 static const std::string dynamic = "dynamic";
-static const std::string ftpbounce = "ftpbounce";
-static const std::string sameip = "sameip";
 
 static const ConvertMap alert_api = { alert, rule_ctor<& alert>};
 static const ConvertMap block_api = { block, rule_ctor<& block>};
@@ -126,8 +118,6 @@ static const ConvertMap sblock_api = { sblock, conv_rule_ctor<& block, &sblock>}
 static const ConvertMap sdrop_api = { sdrop, conv_rule_ctor<& block, &sdrop>};
 static const ConvertMap activate_api = { activate, dep_rule_ctor<& activate>};
 static const ConvertMap dynamic_api = { dynamic, dep_rule_ctor<& dynamic>};
-static const ConvertMap ftpbounce_api = { ftpbounce, dep_rule_ctor<& ftpbounce>};
-static const ConvertMap sameip_api = { sameip, dep_rule_ctor<& sameip>};
 
 const ConvertMap* alert_map = &alert_api;
 const ConvertMap* block_map = &block_api;
@@ -139,7 +129,5 @@ const ConvertMap* sblock_map = &sblock_api;
 const ConvertMap* sdrop_map = &sdrop_api;
 const ConvertMap* activate_map = &activate_api;
 const ConvertMap* dynamic_map = &dynamic_api;
-const ConvertMap* ftpbounce_map = &ftpbounce_api;
-const ConvertMap* sameip_map = &sameip_api;
 } // namespace keywords
 

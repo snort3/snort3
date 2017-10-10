@@ -20,13 +20,11 @@
 #ifndef UTILS_CONVERTER_H
 #define UTILS_CONVERTER_H
 
-#include <memory>
-#include <string>
 #include "conversion_defines.h"
 #include "data/dt_data.h"
-#include "data/dt_table_api.h"
 #include "data/dt_rule_api.h"
-#include "util_binder.h"
+#include "data/dt_table_api.h"
+#include "helpers/util_binder.h"
 
 typedef std::pair<unsigned, std::shared_ptr<Binder>> PendingBinder;
 

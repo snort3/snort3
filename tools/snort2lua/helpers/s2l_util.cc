@@ -17,20 +17,17 @@
 //--------------------------------------------------------------------------
 // s2l_util.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include <sstream>
-#include <algorithm>
-#include <functional>
-#include <cctype>
-#include <locale>
-#include <sys/stat.h>
-#include <iostream>
-#include <string>
-#include <cstring>
-#include <sstream>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "helpers/s2l_util.h"
+#include "s2l_util.h"
+
+#include <sys/stat.h>
+
+#include <algorithm>
+
 #include "conversion_state.h"
-#include "data/dt_data.h"
 #include "data/data_types/dt_table.h"
 
 namespace util

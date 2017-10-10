@@ -20,21 +20,11 @@
 #ifndef CONVERSION_STATE_H
 #define CONVERSION_STATE_H
 
-#include <string>
-#include <fstream>
 #include <sstream>
-#include <cctype>
-#include <iostream>
 
-#include "data/dt_data.h"
-#include "data/dt_table_api.h"
-#include "data/dt_rule_api.h"
-
-// the following three files are for the function 'set_next_rule_state'
+#include "helpers/converter.h"
 #include "helpers/s2l_util.h"
 #include "rule_states/rule_api.h"
-#include "helpers/converter.h"
-#include "conversion_defines.h"
 
 class DataApi;
 class RuleApi;

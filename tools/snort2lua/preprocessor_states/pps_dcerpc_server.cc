@@ -17,16 +17,14 @@
 //--------------------------------------------------------------------------
 // pps_dcerpc_server.cc author Maya Dagon <mdagon@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "pps_dcerpc_server.h"
 
-#include <sstream>
-#include <vector>
-#include <map>
+#include <algorithm>
 #include <cstring>
-
-#include "conversion_state.h"
-#include "helpers/s2l_util.h"
-#include "helpers/util_binder.h"
 
 namespace preprocessors
 {

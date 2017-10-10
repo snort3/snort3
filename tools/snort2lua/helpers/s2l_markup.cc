@@ -15,9 +15,14 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// markup.cc author Russ Combs <rucombs@cisco.com>
+// s2l_markup.cc author Russ Combs <rucombs@cisco.com>
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "s2l_markup.h"
+
 #include <cstring>
 
 using namespace std;

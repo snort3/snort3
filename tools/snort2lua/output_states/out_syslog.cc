@@ -17,13 +17,13 @@
 //--------------------------------------------------------------------------
 // out_syslog.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
-#include <sstream>
-#include <vector>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <algorithm>
 
 #include "conversion_state.h"
-#include "helpers/converter.h"
-#include "rule_states/rule_api.h"
-#include "helpers/s2l_util.h"
 
 namespace output
 {

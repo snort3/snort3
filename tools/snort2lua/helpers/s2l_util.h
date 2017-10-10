@@ -20,14 +20,9 @@
 #ifndef HELPERS_UTIL_H
 #define HELPERS_UTIL_H
 
+#include <memory>
 #include <string>
 #include <vector>
-#include <algorithm>
-#include <functional>
-#include <cctype>
-#include <locale>
-#include <sstream>
-#include <memory>
 
 struct ConvertMap;
 class Table;

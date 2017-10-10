@@ -15,12 +15,17 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// pps_binder.cc author Josh Rosenbaum <jrosenba@cisco.com>
+// util_binder.cc author Josh Rosenbaum <jrosenba@cisco.com>
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "util_binder.h"
 
 #include <algorithm>
 #include <cassert>
 
-#include "helpers/util_binder.h"
 #include "data/dt_table_api.h"
 
 using namespace std;

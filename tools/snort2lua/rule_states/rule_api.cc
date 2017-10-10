@@ -25,6 +25,8 @@
 namespace rules
 {
 extern const ConvertMap* ack_map;
+extern const ConvertMap* activated_by_map;
+extern const ConvertMap* activates_map;
 extern const ConvertMap* appid_map;
 extern const ConvertMap* asn1_map;
 extern const ConvertMap* base64_data_map;
@@ -35,6 +37,7 @@ extern const ConvertMap* byte_math_map;
 extern const ConvertMap* byte_test_map;
 extern const ConvertMap* classtype_map;
 extern const ConvertMap* content_map;
+extern const ConvertMap* count_map;
 extern const ConvertMap* cvs_map;
 extern const ConvertMap* dce_iface_map;
 extern const ConvertMap* dce_opnum_map;
@@ -51,6 +54,7 @@ extern const ConvertMap* flow_map;
 extern const ConvertMap* flowbits_map;
 extern const ConvertMap* fragbits_map;
 extern const ConvertMap* fragoffset_map;
+extern const ConvertMap* ftpbounce_map;
 extern const ConvertMap* gid_map;
 extern const ConvertMap* gtp_info_map;
 extern const ConvertMap* gtp_type_map;
@@ -80,6 +84,7 @@ extern const ConvertMap* replace_map;
 extern const ConvertMap* resp_map;
 extern const ConvertMap* rev_map;
 extern const ConvertMap* rpc_map;
+extern const ConvertMap* sameip_map;
 extern const ConvertMap* sd_pattern_map;
 extern const ConvertMap* seq_map;
 extern const ConvertMap* session_map;
@@ -103,6 +108,8 @@ extern const ConvertMap* window_map;
 const std::vector<const ConvertMap*> rule_options_api =
 {
     ack_map,
+    activated_by_map,
+    activates_map,
     appid_map,
     asn1_map,
     base64_data_map,
@@ -113,6 +120,7 @@ const std::vector<const ConvertMap*> rule_options_api =
     byte_test_map,
     classtype_map,
     content_map,
+    count_map,
     cvs_map,
     dce_iface_map,
     dce_opnum_map,
@@ -129,6 +137,7 @@ const std::vector<const ConvertMap*> rule_options_api =
     flowbits_map,
     fragbits_map,
     fragoffset_map,
+    ftpbounce_map,
     gid_map,
     gtp_info_map,
     gtp_type_map,
@@ -158,6 +167,7 @@ const std::vector<const ConvertMap*> rule_options_api =
     resp_map,
     rev_map,
     rpc_map,
+    sameip_map,
     sd_pattern_map,
     seq_map,
     session_map,

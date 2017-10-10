@@ -20,20 +20,14 @@
 #include "config.h"
 #endif
 
-#include "helpers/parse_cmd_line.h"
-
-#include <syslog.h>
+#include "parse_cmd_line.h"
 
 #include <cstring>
 #include <iomanip>
-#include <iostream>
-#include <string>
 
-#include "data/dt_data.h"
-#include "helpers/converter.h"
-#include "helpers/s2l_util.h"
-#include "helpers/s2l_markup.h"
-#include "helpers/util_binder.h"
+#include "converter.h"
+#include "s2l_markup.h"
+#include "s2l_util.h"
 
 namespace parser
 {

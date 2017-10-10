@@ -20,6 +20,7 @@ add_library( rule_states
     rule_ttl.cc
     rule_threshold.cc
     rule_unchanged.cc
+    rule_unsupported.cc
     rule_urilen.cc
     rule_api.cc
     rule_api.h
