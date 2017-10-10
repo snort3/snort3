@@ -24,10 +24,12 @@
 #include "policy.h"
 
 #include "detection/detection_engine.h"
+#include "log/messages.h"
 #include "managers/inspector_manager.h"
 #include "parser/vars.h"
 #include "ports/port_var_table.h"
 
+#include "modules.h"
 #include "shell.h"
 #include "snort_config.h"
 
@@ -270,6 +272,18 @@ void set_inspection_policy(SnortConfig* sc, unsigned i)
 
 void set_ips_policy(IpsPolicy* p)
 { s_detection_policy = p; }
+
+void set_user_ips_policy(unsigned policy_id)
+{
+    IpsPolicy *p = snort_conf->policy_map->get_user_ips(policy_id);
+    if(!p)
+    {
+        ips_module_stats.invalid_policy_ids++;
+        return;
+    }
+
+    s_detection_policy = p;
+}
 
 void set_ips_policy(SnortConfig* sc, unsigned i)
 {

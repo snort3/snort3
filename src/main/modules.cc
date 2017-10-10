@@ -1127,11 +1127,25 @@ static const Parameter ips_params[] =
 #define ips_help \
     "configure IPS rule processing"
 
+THREAD_LOCAL IpsModuleStats ips_module_stats;
+
+const PegInfo ips_module_pegs[] =
+{
+    { CountType::SUM, "invalid_policy_ids", "Number of times an invalid policy ID was provided" },
+    { CountType::END, nullptr, nullptr }
+};
+
 class IpsModule : public Module
 {
 public:
     IpsModule() : Module("ips", ips_help, ips_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
+
+    const PegInfo* get_pegs() const override
+    { return ips_module_pegs; }
+
+    PegCount* get_counts() const override
+    { return (PegCount*) &ips_module_stats; }
 
     Usage get_usage() const override
     { return DETECT; }

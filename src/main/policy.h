@@ -211,6 +211,7 @@ void set_inspection_policy(InspectionPolicy*);
 void set_inspection_policy(struct SnortConfig*, unsigned = 0);
 
 void set_ips_policy(IpsPolicy*);
+SO_PUBLIC void set_user_ips_policy(unsigned policy_id);
 void set_ips_policy(struct SnortConfig*, unsigned = 0);
 
 void set_policies(struct SnortConfig*, Shell*);

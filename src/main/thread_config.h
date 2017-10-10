@@ -21,7 +21,7 @@
 
 #include <map>
 
-#include "thread.h"
+#include "main/thread.h"
 
 struct CpuSet;
 
