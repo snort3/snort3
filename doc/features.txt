@@ -60,6 +60,10 @@ include::perf_monitor.txt[]
 
 include::pop_imap.txt[]
 
+=== Port Scan
+
+include::port_scan.txt[]
+
 === Sensitive Data Filtering
 
 include::sensitive_data.txt[]

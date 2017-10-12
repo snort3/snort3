@@ -60,6 +60,7 @@ set (
     pop_imap.txt
     reference.txt
     sensitive_data.txt
+    port_scan.txt
     side_channel.txt
     smtp.txt
     snort2lua.txt

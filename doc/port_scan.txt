@@ -1,0 +1,235 @@
+
+A module to detect port scanning
+
+==== Overview 
+
+This module is designed to detect the first phase in a network attack:
+Reconnaissance. In the Reconnaissance phase, an attacker determines
+what types of network protocols or services a host supports. This is
+the traditional place where a portscan takes place. This phase assumes
+the attacking host has no prior knowledge of what protocols or
+services are supported by the target, otherwise this phase would not
+be necessary.
+
+As the attacker has no beforehand knowledge of its intended target,
+most queries sent by the attacker will be negative (meaning that the
+services are closed). In the nature of legitimate network
+communications, negative responses from hosts are rare, and rarer
+still are multiple negative responses within a given amount of time.
+Our primary objective in detecting portscans is to detect and track
+these negative responses.
+
+One of the most common portscanning tools in use today is Nmap. Nmap
+encompasses many, if not all, of the current portscanning techniques.
+Portscan was designed to be able to detect the different types of
+scans Nmap can produce.
+
+The following are a list of the types of Nmap scans Portscan
+will currently alert for.
+
+* TCP Portscan
+* UDP Portscan
+* IP Portscan
+
+These alerts are for one to one portscans, which are the traditional
+types of scans; one host scans multiple ports on another host. Most of
+the port queries will be negative, since most hosts have relatively
+few services available.
+
+* TCP Decoy Portscan
+* UDP Decoy Portscan
+* IP Decoy Portscan
+
+Decoy portscans are much like regular, only the attacker has spoofed
+source address inter-mixed with the real scanning address. This tactic
+helps hide the true identity of the attacker.
+
+* TCP Distributed Portscan
+* UDP Distributed Portscan
+* IP Distributed Portscan
+
+These are many to one portscans. Distributed portscans occur when
+multiple hosts query one host for open services. This is used to evade
+an IDS and obfuscate command and control hosts.
+
+NOTE: Negative queries will be distributed among scanning hosts, so
+we track this type of scan through the scanned host.
+
+* TCP Portsweep
+* UDP Portsweep
+* IP Portsweep
+* ICMP Portsweep
+
+These alerts are for one to many portsweeps. One host scans a single
+port on multiple hosts. This usually occurs when a new exploit comes out
+and the attacker is looking for a specific service. 
+
+NOTE: The characteristics of a portsweep scan may not result in many
+negative responses. For example, if an attacker portsweeps a web farm
+for port 80, we will most likely not see many negative responses.
+
+* TCP Filtered Portscan
+* UDP Filtered Portscan
+* IP Filtered Portscan
+
+* TCP Filtered Decoy Portscan
+* UDP Filtered Decoy Portscan
+* IP Filtered Decoy Portscan
+
+* TCP Filtered Portsweep
+* UDP Filtered Portsweep
+* IP Filtered Portsweep
+* ICMP Filtered Portsweep
+
+* TCP Filtered Distributed Portscan
+* UDP Filtered Distributed Portscan
+* IP Filtered Distributed Portscan
+
+"Filtered" alerts indicate that there were no network errors (ICMP
+unreachables or TCP RSTs) or responses on closed ports have been
+suppressed. It's also a good indicator on whether the alert is just a
+very active legitimate host. Active hosts, such as NATs, can trigger
+these alerts because they can send out many connection attempts within
+a very small amount of time. A filtered alert may go off before
+responses from the remote hosts are received.
+
+Portscan only generates one alert for each host pair in question
+during the time window. On TCP scan alerts, Portscan
+will also display any open ports that were scanned. On TCP sweep alerts
+however, Portscan will only track open ports after the alert has been
+triggered. Open port events are not individual alerts, but tags based
+off the original scan alert.
+
+==== Scan levels
+
+There are 3 default scan levels that can be set.
+....
+1) default_hi_port_scan
+2) default_med_port_scan
+3) default_low_port_scan
+....
+Each of these default levels have separate options that can be edited
+to alter the scan sensitivity levels (scans, rejects, nets or ports)
+
+Example: 
+....
+port_scan = default_low_port_scan
+
+port_scan.tcp_decoy.ports = 1
+port_scan.tcp_decoy.scans = 1
+port_scan.tcp_decoy.rejects = 1
+port_scan.tcp_ports.nets = 1
+....
+The example above would change each of the individual settings to 1.
+
+NOTE:The default levels for scans, rejects, nets and ports can be 
+seen in the snort_defaults.lua file.
+
+The counts can be seen in the alert outputs (-Acmg shown below):
+....
+50 72 69 6F 72 69 74 79  20 43 6F 75 6E 74 3A 20  Priority  Count:
+30 0A 43 6F 6E 6E 65 63  74 69 6F 6E 20 43 6F 75  0.Connec tion Cou
+6E 74 3A 20 34 35 0A 49  50 20 43 6F 75 6E 74 3A  nt: 45.I P Count:
+20 31 0A 53 63 61 6E 6E  65 72 20 49 50 20 52 61  1.Scann er IP Ra
+6E 67 65 3A 20 31 2E 32  2E 33 2E 34 3A 31 2E 32  nge: 1.2 .3.4:1.2
+2E 33 2E 34 0A 50 6F 72  74 2F 50 72 6F 74 6F 20  .3.4.Por t/Proto
+43 6F 75 6E 74 3A 20 33  37 0A 50 6F 72 74 2F 50  Count: 3 7.Port/P
+72 6F 74 6F 20 52 61 6E  67 65 3A 20 31 3A 39 0A  roto Ran ge: 1:9.
+....
+
+"Low" alerts are only generated on error packets sent from the
+target host, and because of the nature of error responses, this
+setting should see very few false positives. However, this setting
+will never trigger a Filtered Scan alert because of a lack of error
+responses. This setting is based on a static time window of 60
+seconds, afterwhich this window is reset.
+
+"Medium" alerts track Connection Counts, and so will generate
+Filtered Scan alerts. This setting may false positive on active
+hosts (NATs, proxies, DNS caches, etc), so the user may need to
+deploy the use of Ignore directives to properly tune this directive.
+
+"High" alerts continuously track hosts on a network using a time
+window to evaluate portscan statistics for that host. A "High"
+setting will catch some slow scans because of the continuous
+monitoring, but is very sensitive to active hosts. This most
+definitely will require the user to tune Portscan.
+
+==== Tuning Portscan
+
+The most important aspect in detecting portscans is tuning the detection
+engine for your network(s).  Here are some tuning tips:
+
+Use the watch_ip, ignore_scanners, and ignore_scanned options.
+It's important to correctly set these options.  The watch_ip option
+is easy to understand.  The analyst should set this option to the
+list of Cidr blocks and IPs that they want to watch.  If no
+watch_ip is defined, Portscan will watch all network traffic.    
+The ignore_scanners and ignore_scanned options come into play in
+weeding out legitimate hosts that are very active on your network.
+Some of the most common examples are NAT IPs, DNS cache servers,
+syslog servers, and nfs servers.  Portscan may not generate false
+positives for these types of hosts, but be aware when first tuning
+Portscan for these IPs. Depending on the type of alert that the
+host generates, the analyst will know which to ignore it as.  If
+the host is generating portsweep events, then add it to the
+ignore_scanners option.  If the host is generating portscan alerts
+(and is the host that is being scanned), add it to the
+ignore_scanned option.
+  
+Filtered scan alerts are much more prone to false positives.
+When deteriming false positives, the alert type is very important.
+Most of the false positives that Portscan may generate are of the
+filtered scan alert type.  So be much more suspicious of filtered
+portscans.  Many times this just indicates that a host was very
+active during the time period in question.  If the host continually
+generates these types of alerts, add it to the ignore_scanners list
+or use a lower sensitivity level.
+   
+Make use of the Priority Count, Connection Count, IP Count, 
+Port Count, IP range, and Port range to determine false positives.
+The portscan alert details are vital in determining the scope of a
+portscan and also the confidence of the portscan.  In the future,
+we hope to automate much of this analysis in assigning a scope
+level and confidence level, but for now the user must manually do
+this.  The easiest way to determine false positives is through
+simple ratio estimations. The following is a list of ratios to
+estimate and the associated values that indicate a legitimate scan
+and not a false positive.
+     
+Connection Count / IP Count:  This ratio indicates an estimated
+average of connections per IP.  For portscans, this ratio should be
+high, the higher the better.  For portsweeps, this ratio should be
+low.
+     
+Port Count / IP Count:  This ratio indicates an estimated average
+of ports connected to per IP.  For portscans, this ratio should be
+high and indicates that the scanned host's ports were connected to
+by fewer IPs. For portsweeps, this ratio should be low, indicating
+that the scanning host connected to few ports but on many hosts.
+   
+Connection Count / Port Count:  This ratio indicates an estimated
+average of connections per port.  For portscans, this ratio should
+be low. This indicates that each connection was to a different
+port.  For portsweeps, this ratio should be high. This indicates
+that there were many connections to the same port.
+     
+The reason that Priority Count is not included, is because the
+priority count is included in the connection count and the above
+comparisons take that into consideration.  The Priority Count play
+an important role in tuning because the higher the priority count
+the more likely it is a real portscan or portsweep (unless the host
+is firewalled).
+
+If all else fails, lower the sensitivity level.
+If none of these other tuning techniques work or the analyst
+doesn't have the time for tuning, lower the sensitivity level. You
+get the best protection the higher the sensitivity level, but it's
+also important that the portscan detection engine generates alerts
+that the analyst will find informative. The low sensitivity level
+only generates alerts based on error responses. These responses
+indicate a portscan and the alerts generated by the low sensitivity
+level are highly accurate and require the least tuning. The low
+sensitivity level does not catch filtered scans, since these are
+more prone to false positives.
+
