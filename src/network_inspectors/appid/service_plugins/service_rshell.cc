@@ -162,7 +162,7 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
                 initialize_expected_session(asd, pf,
                     APPID_SESSION_CONTINUE | APPID_SESSION_REXEC_STDERR | APPID_SESSION_NO_TPI |
                     APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE |
-                    APPID_SESSION_PORT_SERVICE_DONE);
+                    APPID_SESSION_PORT_SERVICE_DONE, APP_ID_FROM_RESPONDER);
                 pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
             }
             else

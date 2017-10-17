@@ -115,7 +115,6 @@ FtpServiceDetector::FtpServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-
 static inline void CopyVendorString(ServiceFTPData* fd, const uint8_t* vendor, unsigned int
     vendorLen)
 {
@@ -794,12 +793,13 @@ static inline void WatchForCommandResult(ServiceFTPData* fd, AppIdSession* asd, 
     fd->cmd = command;
 }
 
-void FtpServiceDetector::create_expected_session(AppIdSession* asd,const Packet* pkt, const SfIp* cliIp,
+void FtpServiceDetector::create_expected_session(AppIdSession* asd,const Packet* pkt, const
+    SfIp* cliIp,
     uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol proto,
-    int16_t app_id, int flags)
+    int flags, APPID_SESSION_DIRECTION dir)
 {
     AppIdSession* fp = AppIdSession::create_future_session(pkt, cliIp, cliPort, srvIp, srvPort,
-        proto, app_id, flags);
+        proto, ftp_data_app_id, flags);
 
     if (fp) // initialize data session
     {
@@ -814,7 +814,7 @@ void FtpServiceDetector::create_expected_session(AppIdSession* asd,const Packet*
             fp->service.set_id(APP_ID_FTP_DATA);
         }
 
-        initialize_expected_session(asd, fp, APPID_SESSION_IGNORE_ID_FLAGS | flags);
+        initialize_expected_session(asd, fp, APPID_SESSION_IGNORE_ID_FLAGS | flags, dir);
     }
 }
 
@@ -1159,12 +1159,12 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
                     addr = htonl(address);
                     ip.set(&addr, AF_INET);
                     create_expected_session(asd, pkt, dip, 0, &ip, port, asd->protocol,
-                        ftp_data_app_id,  APPID_EARLY_SESSION_FLAG_FW_RULE);
+                        APPID_EARLY_SESSION_FLAG_FW_RULE, APP_ID_FROM_INITIATOR);
 
                     if (!ip.fast_eq6(*sip))
                     {
                         create_expected_session(asd, pkt, dip, 0, sip, port, asd->protocol,
-                            ftp_data_app_id, APPID_EARLY_SESSION_FLAG_FW_RULE);
+                            APPID_EARLY_SESSION_FLAG_FW_RULE, APP_ID_FROM_INITIATOR);
                     }
                     add_payload(asd, APP_ID_FTP_PASSIVE);
                 }
@@ -1184,7 +1184,7 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
                     dip = pkt->ptrs.ip_api.get_dst();
                     sip = pkt->ptrs.ip_api.get_src();
                     create_expected_session(asd, pkt, dip, 0, sip, port, asd->protocol,
-                        ftp_data_app_id, APPID_EARLY_SESSION_FLAG_FW_RULE);
+                        APPID_EARLY_SESSION_FLAG_FW_RULE, APP_ID_FROM_INITIATOR);
 
                     add_payload(asd, APP_ID_FTP_PASSIVE);
                 }

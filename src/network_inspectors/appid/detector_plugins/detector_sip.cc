@@ -342,7 +342,7 @@ void SipServiceDetector::createRtpFlow(AppIdSession* asd, const Packet* pkt, con
         // FIXIT-H : snort 2.9.x updated the flag to APPID_SESSION_EXPECTED_EVALUATE.
         // Check if it is needed here as well.
         //initialize_expected_session(asd, fp, APPID_SESSION_EXPECTED_EVALUATE);
-        initialize_expected_session(asd, fp, APPID_SESSION_IGNORE_ID_FLAGS);
+        initialize_expected_session(asd, fp, APPID_SESSION_IGNORE_ID_FLAGS, APP_ID_APPID_SESSION_DIRECTION_MAX);
     }
 
     // create an RTCP flow as well
@@ -355,7 +355,7 @@ void SipServiceDetector::createRtpFlow(AppIdSession* asd, const Packet* pkt, con
         fp2->service.set_id(APP_ID_RTCP);
         // FIXIT-H : same comment as above
         //initialize_expected_session(asd, fp2, APPID_SESSION_EXPECTED_EVALUATE);
-        initialize_expected_session(asd, fp2, APPID_SESSION_IGNORE_ID_FLAGS);
+        initialize_expected_session(asd, fp2, APPID_SESSION_IGNORE_ID_FLAGS, APP_ID_APPID_SESSION_DIRECTION_MAX);
     }
 }
 

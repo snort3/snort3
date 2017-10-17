@@ -22,6 +22,7 @@
 #define APPID_MOCK_SESSION_H_
 
 #include "appid_mock_flow.h"
+#include "appid_mock_http_session.h"
 
 bool is_session_decrypted = false;
 

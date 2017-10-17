@@ -21,6 +21,8 @@
 #ifndef APPID_MOCK_DEFINITIONS_H_
 #define APPID_MOCK_DEFINITIONS_H_
 
+#include "service_inspectors/http_inspect/http_msg_header.h"
+
 class Inspector;
 struct ThirdPartyAppIDModule;
 
@@ -54,9 +56,41 @@ Field global_field;
 void Debug::print(const char*, int, uint64_t, const char*, ...) { }
 #endif
 
+void ParseWarning(WarningGroup, char const*, ...) { }
+
 int ServiceDiscovery::add_ftp_service_state(AppIdSession&)
 {
     return 0;
+}
+
+// Stubs for app_info_table.h
+AppInfoTableEntry* AppInfoManager::get_app_info_entry(int)
+{
+  return nullptr;
+}
+
+// Stubs for service_state.h
+ServiceDiscoveryState* AppIdServiceState::get(SfIp const*, IpProtocol, unsigned short, bool)
+{
+  return nullptr;
+}
+
+ServiceDiscoveryState* AppIdServiceState::add(SfIp const*, IpProtocol, unsigned short, bool)
+{
+  return nullptr;
+}
+
+void ServiceDiscoveryState::set_service_id_valid(ServiceDetector*) { }
+
+// Stubs for service_plugins/service_discovery.h
+int ServiceDiscovery::incompatible_data(AppIdSession*, Packet const*, int, ServiceDetector*)
+{
+  return 0;
+}
+
+int ServiceDiscovery::fail_service(AppIdSession*, Packet const*, int, ServiceDetector*)
+{
+  return 0;
 }
 
 #endif

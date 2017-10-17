@@ -177,17 +177,38 @@ int ServiceDetector::fail_service(AppIdSession* asd, const Packet* pkt, int dir)
 }
 
 void ServiceDetector::initialize_expected_session(AppIdSession* parent,
-    AppIdSession* expected, uint64_t flags)
+    AppIdSession* expected, uint64_t flags, APPID_SESSION_DIRECTION dir)
 {
+    if (dir == APP_ID_FROM_INITIATOR)
+    {
+        expected->set_session_flags(flags |
+            parent->get_session_flags(
+            APPID_SESSION_INITIATOR_CHECKED |
+            APPID_SESSION_INITIATOR_MONITORED |
+            APPID_SESSION_RESPONDER_CHECKED |
+            APPID_SESSION_RESPONDER_MONITORED));
+    }
+    else if (dir == APP_ID_FROM_RESPONDER)
+    {
+        if (parent->get_session_flags(APPID_SESSION_INITIATOR_CHECKED))
+            flags |= APPID_SESSION_RESPONDER_CHECKED;
+
+        if (parent->get_session_flags(APPID_SESSION_INITIATOR_MONITORED))
+            flags |= APPID_SESSION_RESPONDER_MONITORED;
+
+        if (parent->get_session_flags(APPID_SESSION_RESPONDER_CHECKED))
+            flags |= APPID_SESSION_INITIATOR_CHECKED;
+
+        if (parent->get_session_flags(APPID_SESSION_RESPONDER_MONITORED))
+            flags |= APPID_SESSION_INITIATOR_MONITORED;
+    }
+
     expected->set_session_flags(flags |
-        parent->get_session_flags(APPID_SESSION_RESPONDER_MONITORED |
-        APPID_SESSION_INITIATOR_MONITORED |
+        parent->get_session_flags(
         APPID_SESSION_SPECIAL_MONITORED |
-        APPID_SESSION_RESPONDER_CHECKED |
-        APPID_SESSION_INITIATOR_CHECKED |
         APPID_SESSION_DISCOVER_APP |
         APPID_SESSION_DISCOVER_USER));
+
     expected->service_disco_state = APPID_DISCO_STATE_FINISHED;
     expected->client_disco_state = APPID_DISCO_STATE_FINISHED;
 }
-

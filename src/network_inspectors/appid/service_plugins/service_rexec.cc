@@ -163,7 +163,7 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
                 rd->state = REXEC_STATE_SERVER_CONNECT;
                 pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
                 pf->scan_flags |= SCAN_HOST_PORT_FLAG;
-                initialize_expected_session(args.asd, pf, REXEC_EXPECTED_SESSION_FLAGS);
+                initialize_expected_session(args.asd, pf, REXEC_EXPECTED_SESSION_FLAGS, APP_ID_FROM_RESPONDER);
                 pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
             }
             else

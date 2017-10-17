@@ -52,7 +52,7 @@ public:
         asd->misc_app_id = miscId;
     }
 
-    void initialize_expected_session(AppIdSession*, AppIdSession*, uint64_t flags);
+    void initialize_expected_session(AppIdSession*, AppIdSession*, uint64_t flags, APPID_SESSION_DIRECTION dir);
 
 private:
     int update_service_data(AppIdSession*, const Packet*, int dir, AppId, const char* vendor,

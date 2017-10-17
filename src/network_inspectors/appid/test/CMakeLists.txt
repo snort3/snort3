@@ -5,6 +5,7 @@ add_cpputest(appid_http_event_test appid_test_depends_on_lib)
 add_cpputest(appid_api_test appid_test_depends_on_lib)
 #add_cpputest(app_info_table_test appid_test_depends_on_lib)
 add_cpputest(appid_detector_test appid_test_depends_on_lib)
+add_cpputest(appid_expected_flags_test appid_test_depends_on_lib)
 
 include_directories ( appid PRIVATE ${APPID_INCLUDE_DIR} )
 
