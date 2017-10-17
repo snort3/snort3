@@ -14,7 +14,6 @@ alert_full.cc \
 alert_syslog.cc \
 log_hext.cc \
 log_pcap.cc \
-u2_packet.cc \
 unified2.cc
 
 if STATIC_LOGGERS
