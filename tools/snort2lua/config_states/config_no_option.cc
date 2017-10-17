@@ -46,7 +46,7 @@ static ConversionState* config_true_no_opt_ctor(Converter& c)
 {
     c.get_table_api().open_table(*lua_table);
 
-    if (snort_option->compare(*lua_option))
+    if (*snort_option != *lua_option)
     {
         c.get_table_api().add_diff_option_comment(
             "config " + *snort_option + ":", *lua_option);
@@ -75,7 +75,7 @@ static ConversionState* config_false_no_opt_ctor(Converter& c)
     c.get_table_api().open_table(*lua_table);
 
     // WARNING:  THIS WILL SEGFAULT if any variable is nullptr!!
-    if (snort_option->compare(*lua_option))
+    if (*snort_option != *lua_option)
         c.get_table_api().add_diff_option_comment("config " + *snort_option + ":", *lua_option);
 
     c.get_table_api().add_option(*lua_option, false);

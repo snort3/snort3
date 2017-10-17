@@ -32,7 +32,7 @@ class TcpStateHandler
 {
 public:
     TcpStateHandler(TcpStreamTracker::TcpState, TcpStateMachine&);
-    virtual ~TcpStateHandler();
+    virtual ~TcpStateHandler() = default;
 
     virtual bool eval(TcpSegmentDescriptor&, TcpStreamTracker&);
 

@@ -43,7 +43,7 @@ TableDelegation table_delegation =
     { "network", true },
 };
 
-std::string Converter::ips_pattern = "";
+std::string Converter::ips_pattern;
 bool Converter::parse_includes = true;
 bool Converter::empty_args = false;
 bool Converter::convert_rules_mult_files = true;

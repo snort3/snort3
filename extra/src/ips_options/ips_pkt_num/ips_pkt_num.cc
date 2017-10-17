@@ -69,7 +69,7 @@ bool PktNumOption::operator==(const IpsOption& ips) const
     if ( strcmp(s_name, ips.get_name()) )
         return false;
 
-    PktNumOption& rhs = (PktNumOption&)ips;
+    const PktNumOption& rhs = (const PktNumOption&)ips;
     return ( config == rhs.config );
 }
 

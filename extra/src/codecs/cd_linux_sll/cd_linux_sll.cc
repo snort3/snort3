@@ -32,7 +32,6 @@ class LinuxSllCodec : public Codec
 {
 public:
     LinuxSllCodec() : Codec(CD_LINUX_SLL_NAME) { }
-    ~LinuxSllCodec() { }
 
     void get_data_link_type(std::vector<int>&) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;

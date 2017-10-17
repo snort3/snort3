@@ -138,11 +138,5 @@ inline bool PatternMatchData::can_be_fp() const
     return true;
 }
 
-// pmd related utilities
-struct OptFpList;
-
-PatternMatchData* get_pmd(OptFpList*, int proto, RuleDirection);
-bool is_fast_pattern_only(OptFpList*);
-
 #endif
 

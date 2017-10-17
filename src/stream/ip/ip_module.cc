@@ -24,6 +24,7 @@
 
 #include "ip_module.h"
 
+#include "ip_session.h"
 #include "stream_ip.h"
 
 using namespace std;

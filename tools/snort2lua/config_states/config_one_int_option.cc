@@ -79,7 +79,7 @@ public:
         bool retval;
 
         // if the two names are not equal ...
-        if ((lua_option != nullptr) && snort_option->compare(*lua_option))
+        if ((lua_option != nullptr) && *snort_option != *lua_option)
         {
             retval = parse_int_option(*lua_option, stream, false);
             table_api.add_diff_option_comment("config " + *snort_option + ":", *lua_option);

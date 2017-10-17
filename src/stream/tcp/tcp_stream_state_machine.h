@@ -27,9 +27,6 @@
 class TcpStreamStateMachine: public TcpStateMachine
 {
 public:
-    ~TcpStreamStateMachine() override;
-
-
     static TcpStateMachine* get_instance( )
     {
         static TcpStreamStateMachine tsm;

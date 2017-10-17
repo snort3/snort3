@@ -607,7 +607,7 @@ int ProcessFTPCmdValidity(
         /* Add it to the list  */
         // note that struct includes 1 byte for null, so just add len
         FTPCmd = (FTP_CMD_CONF*)snort_calloc(sizeof(FTP_CMD_CONF)+strlen(cmd));
-        strcpy(FTPCmd->cmd_name, cmd);
+        strncpy(FTPCmd->cmd_name, cmd, strlen(cmd) + 1);
 
         FTPCmd->max_param_len = ServerConf->def_max_param_len;
         ftp_cmd_lookup_add(ServerConf->cmd_lookup, cmd, strlen(cmd), FTPCmd);

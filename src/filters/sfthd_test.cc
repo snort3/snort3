@@ -34,7 +34,7 @@
 
 SNORT_CATCH_FORCED_INCLUSION_DEFINITION(sfthd_test);
 
-#define IP_ANY   NULL          // used to get "unset"
+#define IP_ANY   nullptr          // used to get "unset"
 
 #define IP4_SRC  "1.2.3.4"
 #define IP4_DST  "1.2.3.5"

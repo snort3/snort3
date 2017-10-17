@@ -429,8 +429,8 @@ TEST_CASE("File_Decomp_New", "[file_decomp]")
     REQUIRE(p_s->Total_Out == 0);
     REQUIRE(p_s->Avail_In == 0);
     REQUIRE(p_s->Avail_Out == 0);
-    REQUIRE(p_s->Next_In == NULL);
-    REQUIRE(p_s->Next_Out == NULL);
+    REQUIRE(p_s->Next_In == nullptr);
+    REQUIRE(p_s->Next_Out == nullptr);
     File_Decomp_Free(p_s);
 }
 

@@ -57,7 +57,7 @@ static const SoApi so_api =
         nullptr,
         nullptr
     },
-    (uint8_t*)rule_18758,
+    (const uint8_t*)rule_18758,
     rule_18758_len,
     nullptr, // pinit
     nullptr, // pterm

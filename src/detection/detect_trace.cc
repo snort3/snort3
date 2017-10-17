@@ -24,18 +24,16 @@
 
 #include "detect_trace.h"
 
-#include <cctype>
-#include <string>
-
 #include "log/log.h"
 #include "main/snort_debug.h"
 #include "main/thread.h"
+#include "protocols/packet.h"
 #include "utils/stats.h"
 #include "utils/util.h"
-#include "packet_io/active.h"
 
+#include "detection_options.h"
 #include "fp_create.h"
-#include "treenodes.h"
+#include "pattern_match_data.h"
 
 using namespace std;
 

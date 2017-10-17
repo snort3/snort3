@@ -26,7 +26,7 @@
 
 using namespace std;
 
-void PerfFormatter::register_section(string name)
+void PerfFormatter::register_section(const string& name)
 {
     types.push_back(vector<FormatterType>());
     values.push_back(vector<FormatterValue>());
@@ -37,7 +37,7 @@ void PerfFormatter::register_section(string name)
     last_section++;
 }
 
-void PerfFormatter::register_field(string name, PegCount* val)
+void PerfFormatter::register_field(const string& name, PegCount* val)
 {
     FormatterValue fv;
     fv.pc = val;
@@ -48,7 +48,7 @@ void PerfFormatter::register_field(string name, PegCount* val)
     field_names[last_section].push_back(name);
 }
 
-void PerfFormatter::register_field(string name, const char* val)
+void PerfFormatter::register_field(const string& name, const char* val)
 {
     FormatterValue fv;
     fv.s = val;
@@ -59,7 +59,7 @@ void PerfFormatter::register_field(string name, const char* val)
     field_names[last_section].push_back(name);
 }
 
-void PerfFormatter::register_field(string name, vector<PegCount>* val)
+void PerfFormatter::register_field(const string& name, vector<PegCount>* val)
 {
     FormatterValue fv;
     fv.ipc = val;

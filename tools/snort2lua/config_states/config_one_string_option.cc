@@ -67,7 +67,7 @@ public:
 
         table_api.open_table(*lua_table);
 
-        if ((lua_option != nullptr) && snort_option->compare(*lua_option))
+        if ((lua_option != nullptr) && *snort_option != *lua_option)
         {
             table_api.add_diff_option_comment("config " + *snort_option +
                 ":", *lua_option);

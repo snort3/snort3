@@ -71,15 +71,15 @@ char const* RSP_BODY = "this is the body of the http response";
 void init_hsession_new_fields(AppIdHttpSession* hsession)
 {
     hsession->new_field_contents = true;
-    hsession->new_field[REQ_AGENT_FID] = snort_strdup((char*)(USERAGENT));
-    hsession->new_field[REQ_HOST_FID] = snort_strdup((char*)(HOST));
-    hsession->new_field[REQ_REFERER_FID] = snort_strdup((char*)(REFERER));
-    hsession->new_field[REQ_URI_FID] = snort_strdup((char*)(URI));
-    hsession->new_field[REQ_COOKIE_FID] = snort_strdup((char*)(NEW_COOKIE));
-    hsession->new_field[REQ_BODY_FID] = snort_strdup((char*)(REQ_BODY));
-    hsession->new_field[RSP_CONTENT_TYPE_FID] = snort_strdup((char*)(CONTENT_TYPE));
-    hsession->new_field[RSP_LOCATION_FID] = snort_strdup((char*)(LOCATION));
-    hsession->new_field[RSP_BODY_FID] = snort_strdup((char*)(RSP_BODY));
+    hsession->new_field[REQ_AGENT_FID] = snort_strdup(USERAGENT);
+    hsession->new_field[REQ_HOST_FID] = snort_strdup(HOST);
+    hsession->new_field[REQ_REFERER_FID] = snort_strdup(REFERER);
+    hsession->new_field[REQ_URI_FID] = snort_strdup(URI);
+    hsession->new_field[REQ_COOKIE_FID] = snort_strdup(NEW_COOKIE);
+    hsession->new_field[REQ_BODY_FID] = snort_strdup(REQ_BODY);
+    hsession->new_field[RSP_CONTENT_TYPE_FID] = snort_strdup(CONTENT_TYPE);
+    hsession->new_field[RSP_LOCATION_FID] = snort_strdup(LOCATION);
+    hsession->new_field[RSP_BODY_FID] = snort_strdup(RSP_BODY);
 }
 
 AppIdHttpSession* init_http_session(AppIdSession* asd)
@@ -88,20 +88,20 @@ AppIdHttpSession* init_http_session(AppIdSession* asd)
     SfIp* ip = new SfIp;
     ip->pton(AF_INET, APPID_UT_XFF_IP_ADDR);
     hsession->xffAddr = ip;
-    hsession->content_type = snort_strdup((char*)(CONTENT_TYPE));
-    hsession->cookie = snort_strdup((char*)(COOKIE));
-    hsession->host = snort_strdup((char*)(HOST));
-    hsession->location = snort_strdup((char*)(LOCATION));
-    hsession->referer = snort_strdup((char*)(REFERER));
-    hsession->response_code = snort_strdup((char*)(RESPONSE_CODE));
-    hsession->server = snort_strdup((char*)(SERVER));
-    hsession->url = snort_strdup((char*)(URL));
-    hsession->uri = snort_strdup((char*)(URI));
-    hsession->useragent = snort_strdup((char*)(USERAGENT));
-    hsession->via = snort_strdup((char*)(VIA));
-    hsession->x_working_with = snort_strdup((char*)(X_WORKING_WITH));
-    hsession->body = snort_strdup((char*)(RSP_BODY));
-    hsession->req_body = snort_strdup((char*)(REQ_BODY));
+    hsession->content_type = snort_strdup(CONTENT_TYPE);
+    hsession->cookie = snort_strdup(COOKIE);
+    hsession->host = snort_strdup(HOST);
+    hsession->location = snort_strdup(LOCATION);
+    hsession->referer = snort_strdup(REFERER);
+    hsession->response_code = snort_strdup(RESPONSE_CODE);
+    hsession->server = snort_strdup(SERVER);
+    hsession->url = snort_strdup(URL);
+    hsession->uri = snort_strdup(URI);
+    hsession->useragent = snort_strdup(USERAGENT);
+    hsession->via = snort_strdup(VIA);
+    hsession->x_working_with = snort_strdup(X_WORKING_WITH);
+    hsession->body = snort_strdup(RSP_BODY);
+    hsession->req_body = snort_strdup(REQ_BODY);
     hsession->fieldOffset[REQ_URI_FID] = URI_OFFSET;
     hsession->fieldEndOffset[REQ_URI_FID] = URI_OFFSET + strlen(URI);
     hsession->fieldOffset[REQ_COOKIE_FID] = COOKIE_OFFSET;

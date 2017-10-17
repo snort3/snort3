@@ -33,7 +33,6 @@ class SlipCodec : public Codec
 {
 public:
     SlipCodec() : Codec(CD_SLIP_NAME) { }
-    ~SlipCodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void get_data_link_type(std::vector<int>&) override;

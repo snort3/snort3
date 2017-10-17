@@ -36,10 +36,10 @@ public:
     bool allow_append() override
     { return false; }
 
-    void register_section(std::string) override;
-    void register_field(std::string, PegCount*) override;
-    void register_field(std::string, const char*) override;
-    void register_field(std::string, std::vector<PegCount>*) override;
+    void register_section(const std::string&) override;
+    void register_field(const std::string&, PegCount*) override;
+    void register_field(const std::string&, const char*) override;
+    void register_field(const std::string&, std::vector<PegCount>*) override;
     void finalize_fields() override;
     void init_output(FILE*) override;
     void write(FILE*, time_t) override;

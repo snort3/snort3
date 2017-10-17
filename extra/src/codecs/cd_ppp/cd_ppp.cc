@@ -31,7 +31,6 @@ class PPPCodec : public Codec
 {
 public:
     PPPCodec() : Codec(PPP_NAME) { }
-    ~PPPCodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void get_data_link_type(std::vector<int>&) override;

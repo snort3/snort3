@@ -45,7 +45,12 @@ void CSVFormatter::finalize_fields()
         string section = section_names[i];
 
         for( auto& field : field_names[i] )
-            header += "," + section + "." + field;
+        {
+            header += ",";
+            header += section;
+            header += ".";
+            header += field;
+        }
     }
     header += "\n";
     section_names.clear();

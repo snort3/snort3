@@ -127,7 +127,7 @@ public:
     void start();
     void stop();
 
-    bool queue_command(AnalyzerCommand*);
+    bool queue_command(AnalyzerCommand*, bool orphan = false);
     void reap_commands();
 
 private:
@@ -180,10 +180,14 @@ void Pig::stop()
     analyzer = nullptr;
 }
 
-bool Pig::queue_command(AnalyzerCommand* ac)
+bool Pig::queue_command(AnalyzerCommand* ac, bool orphan)
 {
     if (!analyzer || !athread)
+    {
+        if (orphan)
+            orphan_commands.push(ac);
         return false;
+    }
 
 #ifdef DEBUG_MSGS
     unsigned ac_ref_count = ac->get();
@@ -736,7 +740,7 @@ static void handle(Pig& pig, unsigned& swine, unsigned& pending_privileges)
         else
         {
             Snort::do_pidfile();
-            pig.queue_command(new ACStart());
+            pig.queue_command(new ACStart(), true);
         }
         break;
 
@@ -761,7 +765,7 @@ static void handle(Pig& pig, unsigned& swine, unsigned& pending_privileges)
         else
         {
             Snort::do_pidfile();
-            pig.queue_command(new ACRun(paused));
+            pig.queue_command(new ACRun(paused), true);
         }
         break;
 

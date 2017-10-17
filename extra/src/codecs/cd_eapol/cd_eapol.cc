@@ -47,7 +47,6 @@ class EapolCodec : public Codec
 {
 public:
     EapolCodec() : Codec(CD_EAPOL_NAME) { }
-    ~EapolCodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void get_protocol_ids(std::vector<ProtocolId>&) override;

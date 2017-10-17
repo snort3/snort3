@@ -26,6 +26,8 @@
 
 #include <cassert>
 
+#include "ftpp_si.h"
+
 using namespace std;
 
 //-------------------------------------------------------------------------

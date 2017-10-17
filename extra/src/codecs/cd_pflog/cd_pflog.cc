@@ -50,7 +50,6 @@ class PflogCodec : public Codec
 {
 public:
     PflogCodec() : Codec(PFLOG_NAME) { }
-    ~PflogCodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void get_data_link_type(std::vector<int>&) override;
@@ -156,7 +155,7 @@ bool PflogCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         return false;
 
     /* lay the pf header structure over the packet data */
-    switch (*((uint8_t*)raw.data))
+    switch (*((const uint8_t*)raw.data))
     {
     case PFLOG2_HDRMIN:
     {

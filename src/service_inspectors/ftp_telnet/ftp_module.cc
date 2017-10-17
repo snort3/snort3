@@ -26,6 +26,8 @@
 
 #include "log/messages.h"
 
+#include "ftpp_si.h"
+
 using namespace std;
 
 #define FTP_CLIENT "ftp_client"

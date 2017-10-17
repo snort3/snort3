@@ -55,7 +55,3 @@ TcpStreamStateMachine::TcpStreamStateMachine()
     new TcpStateTimeWait(*this);
 }
 
-TcpStreamStateMachine::~TcpStreamStateMachine()
-{
-    // base class dtor deletes all the state handlers...
-}

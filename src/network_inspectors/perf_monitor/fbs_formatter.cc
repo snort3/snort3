@@ -55,13 +55,13 @@ static string lowercase(string s)
     return s;
 }
 
-void FbsFormatter::register_field(std::string name, PegCount* value)
+void FbsFormatter::register_field(const std::string& name, PegCount* value)
 {
     non_offset_names.push_back(name);
     non_offset_values.push_back(value);
 }
 
-void FbsFormatter::register_field(std::string name, const char* value)
+void FbsFormatter::register_field(const std::string& name, const char* value)
 {
     FormatterValue fv;
     fv.s = value;
@@ -71,7 +71,7 @@ void FbsFormatter::register_field(std::string name, const char* value)
     offset_values.push_back(fv);
 }
 
-void FbsFormatter::register_field(std::string name, std::vector<PegCount>* value)
+void FbsFormatter::register_field(const std::string& name, std::vector<PegCount>* value)
 {
     FormatterValue fv;
     fv.ipc = value;
@@ -109,7 +109,7 @@ void FbsFormatter::commit_field_reorder()
     non_offset_values.clear();
 }
 
-void FbsFormatter::register_section(std::string section)
+void FbsFormatter::register_section(const std::string& section)
 {
     commit_field_reorder();
     PerfFormatter::register_section(section);

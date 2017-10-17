@@ -79,7 +79,6 @@ struct IpStats
 };
 
 extern const PegInfo ip_pegs[];
-extern THREAD_LOCAL struct IpStats ip_stats;
 extern THREAD_LOCAL ProfileStats ip_perf_stats;
 extern THREAD_LOCAL ProfileStats fragPerfStats;
 extern THREAD_LOCAL ProfileStats fragInsertPerfStats;

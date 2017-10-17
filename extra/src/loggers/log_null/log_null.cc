@@ -36,7 +36,7 @@
 class NullLogger : public Logger
 {
 public:
-    NullLogger() { }
+    NullLogger() = default;
 };
 
 static Logger* null_ctor(SnortConfig*, Module*)

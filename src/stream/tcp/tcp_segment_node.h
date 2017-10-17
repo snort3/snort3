@@ -35,7 +35,6 @@
 struct TcpSegmentNode
 {
     TcpSegmentNode();
-    ~TcpSegmentNode();
 
     static TcpSegmentNode* init(TcpSegmentDescriptor& tsd);
     static TcpSegmentNode* init(TcpSegmentNode& tsn);

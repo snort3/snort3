@@ -387,7 +387,7 @@ bool DcerpcServer::parse_detect(std::istringstream& data_stream,
                 {
                     return false;
                 }
-                ports = ports + tail;
+                ports += tail;
             }
 
             if (ports.back() == ',')

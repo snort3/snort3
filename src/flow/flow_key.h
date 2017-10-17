@@ -82,11 +82,6 @@ private:
         const SfIp *srcIP, uint16_t srcPort,
         const SfIp *dstIP, uint16_t dstPort,
         uint32_t mplsId, bool order = true);
-
-    void update_icmp4(const SfIp*& srcIP, uint16_t& srcPort,
-        const SfIp*& dstIP, uint16_t& dstPort);
-    void update_icmp6(const SfIp*& srcIP, uint16_t& srcPort,
-        const SfIp*& dstIP, uint16_t& dstPort);
 };
 PADDING_GUARD_END
 

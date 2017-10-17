@@ -33,7 +33,6 @@ class PimCodec : public Codec
 {
 public:
     PimCodec() : Codec(CD_PIM_NAME) { }
-    ~PimCodec() { }
 
     void get_protocol_ids(std::vector<ProtocolId>&) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;

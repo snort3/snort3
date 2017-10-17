@@ -79,10 +79,10 @@ public:
     virtual std::string get_tracker_name() final
     { return tracker_name; }
 
-    virtual void register_section(std::string);
-    virtual void register_field(std::string, PegCount*);
-    virtual void register_field(std::string, const char*);
-    virtual void register_field(std::string, std::vector<PegCount>*);
+    virtual void register_section(const std::string&);
+    virtual void register_field(const std::string&, PegCount*);
+    virtual void register_field(const std::string&, const char*);
+    virtual void register_field(const std::string&, std::vector<PegCount>*);
     virtual void finalize_fields() {}
     virtual void init_output(FILE*) {}
     virtual void write(FILE*, time_t) = 0;

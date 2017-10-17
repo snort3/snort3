@@ -243,7 +243,7 @@ static int ProcessFTPDataChanCmdsList(
         /* Add it to the list */
         // note that struct includes 1 byte for null, so just add len
         FTPCmd = (FTP_CMD_CONF*)snort_calloc(sizeof(FTP_CMD_CONF)+strlen(cmd));
-        strcpy(FTPCmd->cmd_name, cmd);
+        strncpy(FTPCmd->cmd_name, cmd, strlen(cmd) + 1);
 
         // FIXIT-L make sure pulled from server conf when used if not overridden
         //FTPCmd->max_param_len = ServerConf->def_max_param_len;

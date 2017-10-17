@@ -34,9 +34,11 @@
 // icmp foo
 //-------------------------------------------------------------------------
 
-static const ip::snort_in6_addr fixed_addr = { { { 0xFF, 0, 0, 0 } } };
+static const uint32_t empty_addr[4] = { 0, 0, 0, 0 };
+static const SfIp empty_ip4 = { (void*) &empty_addr, AF_INET };
+static const SfIp empty_ip6 = { (void*) &empty_addr, AF_INET6 };
 
-inline void FlowKey::update_icmp4(const SfIp*& srcIP, uint16_t& srcPort,
+static inline void update_icmp4(const SfIp*& srcIP, uint16_t& srcPort,
     const SfIp*& dstIP, uint16_t& dstPort)
 {
     if (srcPort == ICMP_ECHOREPLY)
@@ -49,18 +51,18 @@ inline void FlowKey::update_icmp4(const SfIp*& srcIP, uint16_t& srcPort,
     {
         dstPort = ICMP_ROUTER_SOLICIT; /* Treat ICMP router advertisement the same as solicitation */
         srcPort = 0;
-        srcIP = (SfIp *)&fixed_addr; /* Matching src address to solicit dest address */
+        srcIP = &empty_ip4; /* Matching src address to solicit dest address */
     }
     else
     {
         /* otherwise, every ICMP type gets different key */
         dstPort = 0;
         if (srcPort == ICMP_ROUTER_SOLICIT)
-            dstIP = (SfIp* )&fixed_addr; /* To get unique key, don't use multicast/broadcast addr (RFC 1256) */
+            dstIP = &empty_ip4; /* To get unique key, don't use multicast/broadcast addr (RFC 1256) */
     }
 }
 
-inline void FlowKey::update_icmp6(const SfIp*& srcIP, uint16_t& srcPort,
+static inline void update_icmp6(const SfIp*& srcIP, uint16_t& srcPort,
     const SfIp*& dstIP, uint16_t& dstPort)
 {
     if (srcPort == icmp::Icmp6Types::ECHO_REPLY)
@@ -73,14 +75,14 @@ inline void FlowKey::update_icmp6(const SfIp*& srcIP, uint16_t& srcPort,
     {
         dstPort = icmp::Icmp6Types::ROUTER_SOLICITATION; /* Treat ICMPv6 router advertisement the same as solicitation */
         srcPort = 0;
-        srcIP = (SfIp* )&fixed_addr; /* Matching src address to solicit dest address */
+        srcIP = &empty_ip6; /* Matching src address to solicit dest address */
     }
     else
     {
         /* otherwise, every ICMP type gets different key */
         dstPort = 0;
         if (srcPort == icmp::Icmp6Types::ROUTER_SOLICITATION)
-            dstIP = (SfIp* )&fixed_addr; /* To get unique key, don't use multicast addr (RFC 4861) */
+            dstIP = &empty_ip6; /* To get unique key, don't use multicast addr (RFC 4861) */
     }
 }
 

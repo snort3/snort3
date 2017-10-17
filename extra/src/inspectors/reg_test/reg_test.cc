@@ -17,7 +17,7 @@
 //--------------------------------------------------------------------------
 // rti_service.cc author davis mcpherson <davmcphe@cisco.com>
 
-#include <time.h>
+#include <ctime>
 
 #include "flow/flow.h"
 #include "framework/data_bus.h"

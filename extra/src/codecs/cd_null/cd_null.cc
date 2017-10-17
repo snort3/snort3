@@ -31,7 +31,6 @@ class NullCodec : public Codec
 {
 public:
     NullCodec() : Codec(CD_NULL_NAME) { }
-    ~NullCodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void get_data_link_type(std::vector<int>&) override;

@@ -17,7 +17,7 @@
 //--------------------------------------------------------------------------
 // data_log.cc author Russ Combs <rcombs@sourcefire.com>
 
-#include <time.h>
+#include <ctime>
 
 #include "flow/flow.h"
 #include "framework/data_bus.h"
@@ -44,7 +44,7 @@ public:
     LogHandler(const std::string& s)
     { key = s; }
 
-    void handle(DataEvent& e, Flow*);
+    void handle(DataEvent& e, Flow*) override;
 
 private:
     void log(const uint8_t*, int32_t);

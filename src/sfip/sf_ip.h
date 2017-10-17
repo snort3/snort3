@@ -35,6 +35,12 @@ struct SfCidr;
 struct SO_PUBLIC SfIp
 {
     /*
+     * Constructors
+     */
+    SfIp() = default;
+    SfIp(const void* src, int fam) { set(src, fam); }
+
+    /*
      * Modifiers
      */
     void clear();

@@ -73,7 +73,7 @@
 #define CHR_SPACE          ' '
 #define CHR_NAME_SEP       '/'
 
-#define IS_WHITESPACE(c) ((strchr((const char*)WHITESPACE_STRING, (int)(c)) != NULL) || ((c) == 0))
+#define IS_WHITESPACE(c) ((strchr((const char*)WHITESPACE_STRING, (int)(c)) != nullptr) || ((c) == 0))
 #define IS_EOL(c) (((c) == CHR_CR) || ((c) == CHR_LF))
 
 /* Define the parser states */

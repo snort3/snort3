@@ -203,7 +203,7 @@ bool Binding::check_service(const Flow* flow) const
 // binder is only evaluated once per flow and we need to capture the correct binding from
 // either side of the conversation
 template<typename When, typename Traffic, typename Compare>
-Binding::DirResult directional_match(const When& when_src, const When& when_dst,
+static Binding::DirResult directional_match(const When& when_src, const When& when_dst,
     const Traffic& traffic_src, const Traffic& traffic_dst,
     const Binding::DirResult dr, const Compare& compare)
 {

@@ -52,11 +52,6 @@ TcpStreamTracker::TcpStreamTracker(bool client) :
 {
 }
 
-TcpStreamTracker::~TcpStreamTracker()
-{
-    // TODO Auto-generated destructor stub
-}
-
 TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(TcpSegmentDescriptor& tsd)
 {
     bool talker;

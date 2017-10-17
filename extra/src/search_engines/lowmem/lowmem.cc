@@ -47,7 +47,7 @@ public:
         : Mpse("lowmem")
     { obj = KTrieNew(0, agent); }
 
-    ~LowmemMpse()
+    ~LowmemMpse() override
     { KTrieDelete(obj); }
 
     int add_pattern(

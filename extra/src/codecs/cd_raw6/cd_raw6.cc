@@ -31,7 +31,6 @@ class Raw6Codec : public Codec
 {
 public:
     Raw6Codec() : Codec(CD_RAW6_NAME) { }
-    ~Raw6Codec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void get_data_link_type(std::vector<int>&) override;

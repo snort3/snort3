@@ -295,7 +295,7 @@ TEST_CASE("IPS Stream Reassemble", "[ips_stream_reassemble][stream_tcp]")
     REQUIRE( ( ips_stream_reassemble->api_version == ((BASE_API_VERSION << 16) | 0) ) );
     REQUIRE( ( strcmp(ips_stream_reassemble->name, s_name) == 0 ) );
     ReassembleModule* reassembler = ( ReassembleModule* )ips_stream_reassemble->mod_ctor();
-    REQUIRE( ( reassembler != nullptr ) );
+    REQUIRE( reassembler != nullptr );
 
     Flow* flow = new Flow;
     Packet* pkt = get_syn_packet(flow);

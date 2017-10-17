@@ -86,7 +86,7 @@ public:
     enum FinSeqNumStatus { FIN_NOT_SEEN, FIN_WITH_SEQ_SEEN, FIN_WITH_SEQ_ACKED };
 
     TcpStreamTracker(bool);
-    virtual ~TcpStreamTracker();
+    virtual ~TcpStreamTracker() = default;
 
     bool is_client_tracker() const
     {

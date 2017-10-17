@@ -54,7 +54,7 @@ public:
 
         if (lua_option == nullptr)
             lua_option = snort_option;
-        else if (snort_option->compare(*lua_option))
+        else if (*snort_option != *lua_option)
             cv.get_table_api().add_diff_option_comment(*snort_option, *lua_option);
 
         while (stream >> val)

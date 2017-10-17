@@ -38,11 +38,6 @@ TcpSegmentNode::TcpSegmentNode() :
 {
 }
 
-TcpSegmentNode::~TcpSegmentNode()
-{
-    // TODO Auto-generated destructor stub
-}
-
 //-------------------------------------------------------------------------
 // TcpSegment stuff
 //-------------------------------------------------------------------------

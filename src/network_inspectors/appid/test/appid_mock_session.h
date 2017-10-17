@@ -60,10 +60,10 @@ AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t) : FlowData(inspect
     service_port = APPID_UT_SERVICE_PORT;
 
     client.update_user(APPID_UT_ID, APPID_UT_USERNAME);
-    client.set_version((char*)APPID_UT_CLIENT_VERSION);
+    client.set_version(APPID_UT_CLIENT_VERSION);
 
-    service.set_vendor((char*)APPID_UT_SERVICE_VENDOR);
-    service.set_version((char*)APPID_UT_SERVICE_VERSION);
+    service.set_vendor(APPID_UT_SERVICE_VENDOR);
+    service.set_version(APPID_UT_SERVICE_VERSION);
     subtype = &APPID_UT_SERVICE_SUBTYPE;
 
     search_support_type = UNKNOWN_SEARCH_ENGINE;
@@ -74,7 +74,7 @@ AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t) : FlowData(inspect
     service_ip.pton(AF_INET, APPID_UT_SERVICE_IP_ADDR);
     common.initiator_ip.pton(AF_INET, APPID_UT_INITIATOR_IP_ADDR);
 
-    netbios_name = (char*)snort_strdup(APPID_UT_NETBIOS_NAME);
+    netbios_name = snort_strdup(APPID_UT_NETBIOS_NAME);
 
     dsession = new DnsSession;
     dsession->host = (char*)APPID_ID_UT_DNS_HOST;

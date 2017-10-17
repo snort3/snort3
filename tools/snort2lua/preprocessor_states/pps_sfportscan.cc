@@ -55,7 +55,10 @@ bool PortScan::parse_ip_list(const std::string& list_name, std::istringstream& d
     prev = "[" + elem;
 
     while (data_stream >> elem && elem != "}")
-        prev = prev + ' ' + elem;
+    {
+        prev += ' ';
+        prev += elem;
+    }
 
     prev = prev + "]";
     return table_api.add_option(list_name, prev);

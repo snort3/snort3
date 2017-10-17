@@ -423,7 +423,7 @@ static int daq_regtest_modify_flow(void *handle, const DAQ_PktHdr_t *hdr, const 
         if (modify->length != sizeof(DAQ_ModFlowPktTrace_t))
             return DAQ_ERROR_INVAL;
 
-        DAQ_ModFlowPktTrace_t* mod_tr = (DAQ_ModFlowPktTrace_t *) modify->value;
+        const DAQ_ModFlowPktTrace_t* mod_tr = (const DAQ_ModFlowPktTrace_t *) modify->value;
         printf("DAQ_REGTEST_PKT_TRACE (%d)\n%s\n", mod_tr->pkt_trace_data_len,
             mod_tr->pkt_trace_data);
     }

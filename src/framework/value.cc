@@ -374,9 +374,8 @@ TEST_CASE("token test", "[Value]")
 
     CHECK(test_val.get_next_csv_token(test_str));
     str_val = (const char *)test_str.c_str();
-    CHECK((str_val !=nullptr));
+    REQUIRE(str_val != nullptr);
     CHECK((strcmp(str_val,"123456")==0));
-
 }
 
 TEST_CASE("get as string", "[Value]")
@@ -387,14 +386,13 @@ TEST_CASE("get as string", "[Value]")
 
     Value test_val(bool_val);
     str_val = (const char *)test_val.get_as_string();
-    CHECK((str_val !=nullptr));
+    REQUIRE(str_val != nullptr);
     CHECK((strcmp(str_val,"true")==0));
 
     test_val.set(num_val);
     str_val = (const char *)test_val.get_as_string();
-    CHECK((str_val !=nullptr));
+    REQUIRE(str_val != nullptr);
     CHECK((strcmp(str_val,"6")==0));
-
 }
 
 

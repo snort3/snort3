@@ -34,7 +34,7 @@
 
 SNORT_CATCH_FORCED_INCLUSION_DEFINITION(sfrf_test);
 
-#define IP_ANY   NULL          // used to get "unset"
+#define IP_ANY   nullptr          // used to get "unset"
 
 #define IP4_SRC  "1.2.3.4"
 #define IP4_DST  "1.2.3.5"
@@ -45,7 +45,6 @@ SNORT_CATCH_FORCED_INCLUSION_DEFINITION(sfrf_test);
 #define IP6_DST  "1:2::9"
 #define IP6_NET  "1:2::/32"
 #define IP6_EXT  "2:2::8"
-#define IP6_NONE NULL
 
 #define IP4_SET1 "[1.2.3.4,1.2.3.5]"
 #define IP4_SET2 "[1.2.0.0/16,![1.2.3.4,1.2.3.5]]"

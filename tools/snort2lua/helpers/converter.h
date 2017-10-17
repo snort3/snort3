@@ -61,7 +61,7 @@ public:
     inline static void set_empty_args(bool val)
     { empty_args = val; }
 
-    inline static void set_ips_pattern(std::string val)
+    inline static void set_ips_pattern(const std::string& val)
     { ips_pattern = val; }
 
     inline static std::string get_ips_pattern()

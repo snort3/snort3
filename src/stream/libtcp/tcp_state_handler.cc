@@ -49,11 +49,6 @@ TcpStateHandler::TcpStateHandler(TcpStreamTracker::TcpState state, TcpStateMachi
 //{
 //}
 
-TcpStateHandler::~TcpStateHandler()
-{
-    // TODO Auto-generated destructor stub
-}
-
 bool TcpStateHandler::do_pre_sm_packet_actions(TcpSegmentDescriptor&, TcpStreamTracker&)
 {
     return true;

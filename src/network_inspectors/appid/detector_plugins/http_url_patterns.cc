@@ -1621,7 +1621,7 @@ bool HttpPatternMatchers::get_appid_from_url(char* host, const char* url, char**
                 tMlpPattern query;
                 char temp_ver[MAX_VERSION_SIZE];
                 temp_ver[0] = 0;
-                query.pattern = (uint8_t*)++q;
+                query.pattern = (const uint8_t*)++q;
                 query.patternSize = strlen(q);
 
                 match_query_elements(&query, &data->query, temp_ver, MAX_VERSION_SIZE);

@@ -26,8 +26,8 @@
 #include "framework/cursor.h"
 #include "main/snort_types.h"
 
-#include "detection_options.h"
-#include "pattern_match_data.h"
+struct detection_option_tree_node_t;
+struct PatternMatchData;
 
 enum
 {

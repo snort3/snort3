@@ -63,7 +63,10 @@
 #include "tcp_reassemblers.h"
 #include "tcp_stream_state_machine.h"
 
-DEBUG_WRAP(static THREAD_LOCAL const char* t_name = NULL; static THREAD_LOCAL const char* l_name = NULL; )
+#ifdef DEBUG_MSGS
+static THREAD_LOCAL const char* t_name = nullptr;
+static THREAD_LOCAL const char* l_name = nullptr;
+#endif
 
 TcpSession::TcpSession(Flow* flow) : TcpStreamSession(flow)
 {

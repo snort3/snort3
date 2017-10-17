@@ -47,7 +47,6 @@ void SetRuleStates(SnortConfig*);
 
 void FreeRuleLists(SnortConfig*);
 void VarTablesFree(SnortConfig*);
-void PortTablesFree(struct RulePortTables*);
 
 void parser_append_rules(const char*);
 

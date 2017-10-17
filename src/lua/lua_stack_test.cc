@@ -218,6 +218,7 @@ static void test_cstring()
         s = nullptr;
         b = Lua::Stack<const char*>::validate(L, -1, s);
         CHECK(b);
+        REQUIRE(s);
         CHECK(!strcmp(s, "foo"));
     }
     lua_pop(L, 1);
@@ -230,6 +231,7 @@ static void test_cstring()
         s = nullptr;
         b = Lua::Stack<const char*>::validate(L, -1, s, len);
         CHECK(b);
+        REQUIRE(s);
         CHECK(!strncmp(s, "f\0b", 3));
     }
     lua_pop(L, 1);

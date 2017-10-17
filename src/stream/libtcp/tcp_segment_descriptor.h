@@ -31,7 +31,7 @@ class TcpSegmentDescriptor
 {
 public:
     TcpSegmentDescriptor(Flow*, Packet*, TcpEventLogger&);
-    virtual ~TcpSegmentDescriptor();
+    virtual ~TcpSegmentDescriptor() = default;
 
     uint32_t init_mss(uint16_t* value);
     uint32_t init_wscale(uint16_t* value);

@@ -53,11 +53,6 @@ TcpSegmentDescriptor::TcpSegmentDescriptor(Flow* flow, Packet* pkt, TcpEventLogg
     }
 }
 
-TcpSegmentDescriptor::~TcpSegmentDescriptor()
-{
-    // TODO Auto-generated destructor stub
-}
-
 uint32_t TcpSegmentDescriptor::init_mss(uint16_t* value)
 {
     DebugMessage(DEBUG_STREAM_STATE, "Getting MSS...\n");

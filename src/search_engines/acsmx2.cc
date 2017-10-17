@@ -1758,7 +1758,7 @@ int acsm_search_dfa_full(
         if (ps[1]) \
         { \
             for ( mlist = MatchList[state]; \
-                mlist!= NULL; \
+                mlist!= nullptr; \
                 mlist = mlist->next ) \
             { \
                 index = T - Tx; \

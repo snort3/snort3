@@ -23,7 +23,7 @@
 
 // ksearch.h - Trie based multi-pattern matcher
 
-#include <stdint.h>
+#include <cstdint>
 #include "search_engines/search_common.h"
 
 struct KTRIEPATTERN

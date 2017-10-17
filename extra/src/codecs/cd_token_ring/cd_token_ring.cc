@@ -52,7 +52,6 @@ class TrCodec : public Codec
 {
 public:
     TrCodec() : Codec(TR_NAME) { }
-    ~TrCodec() { }
 
     void get_data_link_type(std::vector<int>&) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;

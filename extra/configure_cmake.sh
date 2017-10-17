@@ -92,6 +92,7 @@ gen=""
 cmake $gen \
     -DCMAKE_CXX_FLAGS:STRING="$CXXFLAGS $CPPFLAGS" \
     -DCMAKE_C_FLAGS:STRING="$CFLAGS $CPPFLAGS" \
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
     $CMakeCacheEntries $sourcedir
 
 echo "# This is the command used to configure this build" > config.status

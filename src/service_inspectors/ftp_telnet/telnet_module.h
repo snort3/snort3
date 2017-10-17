@@ -34,9 +34,7 @@
 #define TEL_HELP "telnet inspection and normalization"
 
 struct SnortConfig;
-struct TelnetStats;
 
-extern THREAD_LOCAL TelnetStats tnstats;
 extern THREAD_LOCAL ProfileStats telnetPerfStats;
 
 class TelnetModule : public Module

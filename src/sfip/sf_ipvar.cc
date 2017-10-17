@@ -1204,7 +1204,7 @@ TEST_CASE("SfIpVarCopyAddCompare", "[SfIpVar]")
 
     // add a negate node to original list
     node = sfipnode_alloc("!192.168.3.2", nullptr);
-    CHECK(node != NULL);
+    CHECK(node != nullptr);
     CHECK(SFIP_SUCCESS == sfvar_add_node(var1, node, 1));
     print_var_list(var1->neg_head);
     CHECK(!strcmp("!192.168.3.2", sfipvar_test_buff));
@@ -1213,7 +1213,7 @@ TEST_CASE("SfIpVarCopyAddCompare", "[SfIpVar]")
 
     // add a node
     node = sfipnode_alloc("192.168.90.9", nullptr);
-    CHECK(node != NULL);
+    CHECK(node != nullptr);
     CHECK(SFIP_SUCCESS == sfvar_add_node(var1, node, 0));
     print_var_list(var1->head);
     CHECK(!strcmp("192.168.0.1,192.168.0.2,192.168.5.0,192.168.90.9,255.255.248.0",
@@ -1245,7 +1245,7 @@ TEST_CASE("SfIpVarAny", "[SfIpVar]")
 
     // create a list and add any to it
     node = sfipnode_alloc("any", nullptr);
-    CHECK(node != NULL);
+    CHECK(node != nullptr);
     CHECK(SFIP_SUCCESS == sfvar_add_node(var1, node, 0));
 
     // after adding any, the original list should have any only

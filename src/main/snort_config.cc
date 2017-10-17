@@ -50,6 +50,7 @@
 #include "packet_io/sfdaq_config.h"
 #include "parser/parser.h"
 #include "parser/vars.h"
+#include "ports/rule_port_tables.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "sfip/sf_ip.h"

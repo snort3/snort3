@@ -43,7 +43,7 @@ class WlanCodecModule : public CodecModule
 public:
     WlanCodecModule() : CodecModule(CD_WLAN_NAME, CD_WLAN_HELP) { }
 
-    const RuleMap* get_rules() const
+    const RuleMap* get_rules() const override
     { return wlan_rules; }
 };
 
@@ -51,7 +51,6 @@ class WlanCodec : public Codec
 {
 public:
     WlanCodec() : Codec(CD_WLAN_NAME) { }
-    ~WlanCodec() { }
 
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void get_data_link_type(std::vector<int>&) override;

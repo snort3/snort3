@@ -75,7 +75,7 @@ static void test_sfrt_remove_after_insert()
 
     dir = sfrt_new(DIR_16_4x4_16x5_4x4, IPv6, num_entries + 1, 200);
 
-    CHECK(dir != NULL); // "sfrt_new()"
+    CHECK(dir != nullptr); // "sfrt_new()"
 
     for (index=0; index<num_entries; index++)
     {
@@ -85,24 +85,15 @@ static void test_sfrt_remove_after_insert()
         int* result = nullptr;
 
         IP_entry* ip_entry =  &(ip_lists[index]);
+
         /*Parse IP*/
-        if (ip_entry->ip_str)
-        {
-            char* p;
-            char* ip2_str;
-
-            ip.set(ip_entry->ip_str);
-
-            ip2_str = snort_strdup(ip_entry->ip_str);
-            p = strchr(ip2_str, '/');
-
-            if (p)
-            {
-                *p = 0;
-            }
-            ip2.set(ip2_str);
-            snort_free(ip2_str);
-        }
+        ip.set(ip_entry->ip_str);
+        char* ip2_str = snort_strdup(ip_entry->ip_str);
+        char* p = strchr(ip2_str, '/');
+        if (p)
+            *p = '\0';
+        ip2.set(ip2_str);
+        snort_free(ip2_str);
 
         if ( s_debug )
         {
@@ -121,10 +112,10 @@ static void test_sfrt_remove_after_insert()
             if (result)
                 printf("value input: %d, output: %d\n", ip_entry->value, *result);
             else
-                printf("value input: %d, output: NULL\n", ip_entry->value);
+                printf("value input: %d, output: nullptr\n", ip_entry->value);
         }
 
-        CHECK(result != NULL); // "sfrt_lookup()"
+        CHECK(result != nullptr); // "sfrt_lookup()"
 
         if ( s_debug )
         {
@@ -133,14 +124,14 @@ static void test_sfrt_remove_after_insert()
         }
 
         CHECK(sfrt_remove(&ip, ip.get_bits(), (void**)&result, RT_FAVOR_TIME, dir) == RT_SUCCESS);
-        CHECK(result != NULL); //sfrt_remove()"
+        CHECK(result != nullptr); //sfrt_remove()"
 
         val = *result;
         if ( s_debug )
             printf("value expected: %d, actual: %d\n", ip_entry->value, val);
 
         CHECK(val == ip_entry->value); //sfrt_remove(): value return"
-        CHECK(sfrt_lookup(ip.get_addr(), dir) == NULL); // "sfrt_lookup(): value return"
+        CHECK(sfrt_lookup(ip.get_addr(), dir) == nullptr); // "sfrt_lookup(): value return"
     }
 
     if ( s_debug )
@@ -166,7 +157,7 @@ static void test_sfrt_remove_after_insert_all()
 
     dir = sfrt_new(DIR_16_4x4_16x5_4x4, IPv6, num_entries + 1, 200);
 
-    CHECK(dir != NULL); // "sfrt_new()"
+    CHECK(dir != nullptr); // "sfrt_new()"
 
     /*insert all entries*/
     for (index=0; index<num_entries; index++)
@@ -177,23 +168,13 @@ static void test_sfrt_remove_after_insert_all()
 
         IP_entry* ip_entry =  &(ip_lists[index]);
         /*Parse IP*/
-        if (ip_entry->ip_str)
-        {
-            char* p;
-            char* ip2_str;
-
-            ip.set(ip_entry->ip_str);
-
-            ip2_str = snort_strdup(ip_entry->ip_str);
-            p = strchr(ip2_str, '/');
-
-            if (p)
-            {
-                *p = 0;
-            }
-            ip2.set(ip2_str);
-            snort_free(ip2_str);
-        }
+        ip.set(ip_entry->ip_str);
+        char* ip2_str = snort_strdup(ip_entry->ip_str);
+        char* p = strchr(ip2_str, '/');
+        if (p)
+            *p = '\0';
+        ip2.set(ip2_str);
+        snort_free(ip2_str);
 
         CHECK(sfrt_insert(&ip, ip.get_bits(), &(ip_entry->value), RT_FAVOR_TIME, dir) ==
             RT_SUCCESS); // "sfrt_insert()"
@@ -203,7 +184,7 @@ static void test_sfrt_remove_after_insert_all()
         if ( s_debug )
             printf("value input: %d, output: %d\n", ip_entry->value, result ? *result : -1);
 
-        CHECK(result != NULL); // "sfrt_lookup()"
+        CHECK(result != nullptr); // "sfrt_lookup()"
     }
 
     if ( s_debug )
@@ -221,8 +202,7 @@ static void test_sfrt_remove_after_insert_all()
 
         IP_entry* ip_entry =  &(ip_lists[index]);
         /*Parse IP*/
-        if (ip_entry->ip_str)
-            ip.set(ip_entry->ip_str);
+        ip.set(ip_entry->ip_str);
 
         CHECK(sfrt_remove(&ip, ip.get_bits(), (void**)&result, RT_FAVOR_TIME, dir) == RT_SUCCESS);
 
@@ -238,8 +218,7 @@ static void test_sfrt_remove_after_insert_all()
         {
             ip_entry =  &(ip_lists[index + 1]);
             /*Parse IP*/
-            if (ip_entry->ip_str)
-                ip.set(ip_entry->ip_str);
+            ip.set(ip_entry->ip_str);
             CHECK(sfrt_lookup(ip.get_addr(), dir)); // "sfrt_lookup(): value return"
         }
     }

@@ -43,7 +43,7 @@ std::array<uint8_t, num_protocol_ids> CodecManager::s_proto_map {
     { 0 }
 };
 std::array<Codec*, UINT8_MAX> CodecManager::s_protocols {
-    { 0 }
+    { nullptr }
 };
 
 THREAD_LOCAL ProtocolId CodecManager::grinder_id = ProtocolId::ETHERTYPE_NOT_SET;
