@@ -49,6 +49,7 @@ typedef struct
     void *handle;
     int skip;
     int trace;
+    uint32_t caps_cfg;
     DAQ_PktHdr_t retry_hdr;
     uint8_t* retry_data;
     unsigned packets_before_retry;
@@ -76,7 +77,7 @@ static void daq_regtest_get_vars(DAQRegTestContext* context, const DAQ_Config_t*
     context->skip = 0;
     context->trace = 0;
     context->packets_before_retry = 0;
-
+    context->caps_cfg = 0;
     for ( entry = cfg->values; entry; entry = entry->next)
     {
         if ( !strcmp(entry->key, "skip") )
@@ -90,6 +91,11 @@ static void daq_regtest_get_vars(DAQRegTestContext* context, const DAQ_Config_t*
         else if ( !strcmp(entry->key, "packets_before_retry") )
         {
             context->packets_before_retry = atoi(entry->value);
+        }
+        else if ( !strcmp(entry->key, "caps") )
+        {
+            // DAQ capabilities in hex, e.g. caps=0x00004000
+            context->caps_cfg = strtol(entry->value, NULL, 0);
         }
     }
 }
@@ -380,6 +386,7 @@ static uint32_t daq_regtest_get_capabilities (void* handle)
     DAQRegTestContext* context = (DAQRegTestContext*)handle;
     uint32_t caps = context->module->get_capabilities(context->handle);
     caps |= DAQ_CAPA_RETRY;
+    caps |= context->caps_cfg;
     return caps;
 }
 

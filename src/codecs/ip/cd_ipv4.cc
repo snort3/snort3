@@ -209,7 +209,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
     if ( snort.ip_api.is_ip6() )
     {
-        /*  If Teredo or GRE seen, this is not an 4in6 tunnel */
+        /* If the previous layer was not IP-in-IP, this is not a 4-in-6 tunnel */
         if ( codec.codec_flags & CODEC_NON_IP_TUNNEL )
             codec.codec_flags &= ~CODEC_NON_IP_TUNNEL;
         else if ( SnortConfig::tunnel_bypass_enabled(TUNNEL_4IN6) )
@@ -217,7 +217,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     }
     else if (snort.ip_api.is_ip4())
     {
-        /*  If Teredo or GRE seen, this is not an 4in4 tunnel */
+        /* If the previous layer was not IP-in-IP, this is not a 4-in-4 tunnel */
         if ( codec.codec_flags & CODEC_NON_IP_TUNNEL )
             codec.codec_flags &= ~CODEC_NON_IP_TUNNEL;
         else if (SnortConfig::tunnel_bypass_enabled(TUNNEL_4IN4))

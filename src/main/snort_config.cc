@@ -46,6 +46,7 @@
 #include "managers/module_manager.h"
 #include "managers/mpse_manager.h"
 #include "memory/memory_config.h"
+#include "packet_io/sfdaq.h"
 #include "packet_io/sfdaq_config.h"
 #include "parser/parser.h"
 #include "parser/vars.h"
@@ -987,3 +988,7 @@ void SnortConfig::free_rule_state_list()
     rule_state_list = nullptr;
 }
 
+bool SnortConfig::tunnel_bypass_enabled(uint8_t proto)
+{
+    return (!((snort_conf->tunnel_mask & proto) or SFDAQ::get_tunnel_bypass(proto)));
+}

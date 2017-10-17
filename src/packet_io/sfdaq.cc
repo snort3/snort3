@@ -251,6 +251,11 @@ bool SFDAQ::can_retry()
     return local_instance && local_instance->can_retry();
 }
 
+bool SFDAQ::get_tunnel_bypass(uint8_t proto)
+{
+    return local_instance && local_instance->get_tunnel_bypass(proto);
+}
+
 int SFDAQ::inject(const DAQ_PktHdr_t* hdr, int rev, const uint8_t* buf, uint32_t len)
 {
     return local_instance->inject(hdr, rev, buf, len);
@@ -478,7 +483,56 @@ bool SFDAQInstance::start()
     else
         daq_dlt = daq_get_datalink_type(daq_mod, daq_hand);
 
+    get_tunnel_capabilities();
+
     return (err == DAQ_SUCCESS);
+}
+
+void SFDAQInstance::get_tunnel_capabilities()
+{
+    daq_tunnel_mask = 0;
+    if (daq_mod && daq_hand)
+    {
+        uint32_t caps = daq_get_capabilities(daq_mod, daq_hand);
+
+        if (caps & DAQ_CAPA_DECODE_GTP)
+        {
+            daq_tunnel_mask |= TUNNEL_GTP;
+        }
+        if (caps & DAQ_CAPA_DECODE_TEREDO)
+        {
+            daq_tunnel_mask |= TUNNEL_TEREDO;
+        }
+        if (caps & DAQ_CAPA_DECODE_GRE)
+        {
+            daq_tunnel_mask |= TUNNEL_GRE;
+        }
+        if (caps & DAQ_CAPA_DECODE_4IN4)
+        {
+            daq_tunnel_mask |= TUNNEL_4IN4;
+        }
+        if (caps & DAQ_CAPA_DECODE_6IN4)
+        {
+            daq_tunnel_mask |= TUNNEL_6IN4;
+        }
+        if (caps & DAQ_CAPA_DECODE_4IN6)
+        {
+            daq_tunnel_mask |= TUNNEL_4IN6;
+        }
+        if (caps & DAQ_CAPA_DECODE_6IN6)
+        {
+            daq_tunnel_mask |= TUNNEL_6IN6;
+        }
+        if (caps & DAQ_CAPA_DECODE_MPLS)
+        {
+            daq_tunnel_mask |= TUNNEL_MPLS;
+        }
+    }
+}
+
+bool SFDAQInstance::get_tunnel_bypass(uint8_t proto)
+{
+    return (daq_tunnel_mask & proto ? true : false);
 }
 
 bool SFDAQInstance::was_started()

@@ -492,8 +492,7 @@ public:
     static int get_default_rule_state()
     { return snort_conf->default_rule_state; }
 
-    static bool tunnel_bypass_enabled(uint8_t proto)
-    { return !(snort_conf->tunnel_mask & proto); }
+    SO_PUBLIC static bool tunnel_bypass_enabled(uint8_t proto);
 
     // checksum stuff
     static bool checksum_drop(uint16_t codec_cksum_err_flag)

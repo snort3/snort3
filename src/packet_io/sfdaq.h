@@ -70,8 +70,10 @@ public:
     int add_expected(const Packet* ctrlPkt, const SfIp* cliIP, uint16_t cliPort,
             const SfIp* srvIP, uint16_t srvPort, IpProtocol, unsigned timeout_ms,
             unsigned /* flags */);
+    bool get_tunnel_bypass(uint8_t proto);
 
 private:
+    void get_tunnel_capabilities();
     bool set_filter(const char*);
     std::string interface_spec;
     DAQ_Meta_Func_t daq_meta_callback;
@@ -79,6 +81,7 @@ private:
     int daq_dlt;
     int s_error;
     DAQ_Stats_t daq_stats;
+    uint8_t daq_tunnel_mask;
 };
 
 class SFDAQ
@@ -102,6 +105,7 @@ public:
     static bool can_inject_raw();
     static bool can_replace();
     static bool can_retry();
+    SO_PUBLIC static bool get_tunnel_bypass(uint8_t proto);
 
     // FIXIT-M X Temporary thread-local instance helpers to be removed when no longer needed
     static void set_local_instance(SFDAQInstance*);

@@ -205,6 +205,7 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& dd)
         else if (ip_ver == 0x60)
             codec.next_prot_id = ProtocolId::IPV6;
     }
+    codec.codec_flags |= CODEC_NON_IP_TUNNEL;
 
     return true;
 }
