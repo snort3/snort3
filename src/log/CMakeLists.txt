@@ -4,6 +4,7 @@ set (LOG_INCLUDES
     obfuscator.h
     text_log.h
     unified2.h
+    u2_packet.h
 )
 
 add_library ( log STATIC
@@ -17,6 +18,7 @@ add_library ( log STATIC
     packet_tracer.cc
     packet_tracer.h
     text_log.cc
+    u2_packet.cc
 )
 
 install(FILES ${LOG_INCLUDES}

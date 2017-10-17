@@ -39,6 +39,7 @@
 #include "log/messages.h"
 #include "log/obfuscator.h"
 #include "log/unified2.h"
+#include "log/u2_packet.h"
 #include "main/snort_config.h"
 #include "network_inspectors/appid/appid_api.h"
 #include "packet_io/active.h"
@@ -50,8 +51,6 @@
 #include "utils/safec.h"
 #include "utils/util.h"
 #include "utils/util_cstring.h"
-
-#include "u2_packet.h"
 
 using namespace std;
 
@@ -979,7 +978,7 @@ void U2Logger::log(Packet* p, const char* msg, Event* event)
 {
     assert(p);
 
-    // FIXIT-H convert to packet method if correct
+    // FIXIT-L convert to packet method
     if ( !p->is_cooked() or p->pseudo_type == PSEUDO_PKT_IP )
         _Unified2LogPacketAlert(p, msg, &config, event, UNIFIED2_PACKET);
 

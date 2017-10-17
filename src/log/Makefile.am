@@ -7,6 +7,7 @@ x_include_HEADERS = \
 messages.h \
 obfuscator.h \
 text_log.h \
+u2_packet.h \
 unified2.h
 
 liblog_a_SOURCES = \
@@ -18,7 +19,8 @@ messages.cc \
 obfuscator.cc \
 packet_tracer.cc \
 packet_tracer.h \
-text_log.cc
+text_log.cc \
+u2_packet.cc
 
 if ENABLE_UNIT_TESTS
 SUBDIRS = test

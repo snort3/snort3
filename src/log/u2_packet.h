@@ -29,9 +29,11 @@
 #include "protocols/ipv6.h"
 #include "protocols/tcp.h"
 
+#include "main/snort_types.h"
+
 struct Packet;
 
-class U2PseudoHeader
+class SO_PUBLIC U2PseudoHeader
 {
 public:
     U2PseudoHeader(const Packet*);
