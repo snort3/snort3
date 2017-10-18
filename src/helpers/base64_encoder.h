@@ -48,7 +48,5 @@ private:
     uint8_t state;
 };
 
-void keep_base64_encoder();
-
 #endif
 

@@ -29,9 +29,11 @@
 #include <limits>
 #include <string>
 
+#include "main/snort_types.h"
+
 #include "util.h"
 
-void keep_kmap_lib() { }
+SNORT_FORCED_INCLUSION_DEFINITION(kmap);
 
 KMAP* KMapNew(KMapUserFreeFunc userfree)
 {

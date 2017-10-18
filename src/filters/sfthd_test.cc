@@ -23,8 +23,8 @@
 #endif
 
 #include "catch/catch.hpp"
-#include "catch/unit_test.h"
 #include "hash/sfxhash.h"
+#include "main/snort_types.h"
 #include "parser/parse_ip.h"
 #include "sfip/sf_ip.h"
 
@@ -32,7 +32,7 @@
 
 //---------------------------------------------------------------
 
-SNORT_CATCH_FORCED_INCLUSION_DEFINITION(sfthd_test);
+SNORT_FORCED_INCLUSION_DEFINITION(sfthd_test);
 
 #define IP_ANY   nullptr          // used to get "unset"
 

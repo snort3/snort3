@@ -27,6 +27,7 @@
 #include <cstdlib>
 #include <cstring>
 
+#include "main/snort_types.h"
 #include "main/thread.h"
 
 #define INVALID_HEX_VAL (-1)
@@ -48,7 +49,7 @@
 
 #define ANY '\0'
 
-void keep_jsnorm_lib() { }
+SNORT_FORCED_INCLUSION_DEFINITION(jsnorm);
 
 typedef enum
 {

@@ -47,8 +47,6 @@ struct decode_utf_state_t
     CharsetCode charset;
 };
 
-void keep_utf_lib();  // FIXIT-L eliminate; required to keep symbols for dyn plugins
-
 class SO_PUBLIC UtfDecodeSession
 {
 public:

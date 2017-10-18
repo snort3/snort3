@@ -33,6 +33,7 @@
 #include "lua/lua.h"
 #include "main/analyzer.h"
 #include "main/analyzer_command.h"
+#include "main/inclusion.h"
 #include "main/request.h"
 #include "main/shell.h"
 #include "main/snort.h"

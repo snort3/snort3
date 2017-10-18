@@ -27,6 +27,7 @@
 #include <cassert>
 
 #include "detection/detection_util.h"
+#include "main/snort_types.h"
 #include "utils/util.h"
 
 #include "file_decomp_pdf.h"
@@ -35,6 +36,8 @@
 #ifdef UNIT_TEST
 #include "catch/catch.hpp"
 #endif
+
+SNORT_FORCED_INCLUSION_DEFINITION(file_decomp);
 
 static const char PDF_Sig[5] = { '%', 'P', 'D', 'F', '-' };
 static const char SWF_ZLIB_Sig[3] = { 'C', 'W', 'S' };
@@ -71,8 +74,6 @@ static struct sig_map_s
 #define SIG_SIG_INDEX_SHIFT (4)
 #define SIG_CHR_INDEX_MASK  (0x07)
 #define SIG_CHR_INDEX_SHIFT (0)
-
-void keep_decomp_lib() { }
 
 /* Look for possible sig at the current payload location.
    Do NOT beyond the current location (initial Next_In). */

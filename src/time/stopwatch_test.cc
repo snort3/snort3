@@ -23,12 +23,12 @@
 #endif
 
 #include "catch/catch.hpp"
-#include "catch/unit_test.h"
+#include "main/snort_types.h"
 
 #include "clock_defs.h"
 #include "stopwatch.h"
 
-SNORT_CATCH_FORCED_INCLUSION_DEFINITION(stopwatch_test);
+SNORT_FORCED_INCLUSION_DEFINITION(stopwatch_test);
 
 namespace t_stopwatch
 {

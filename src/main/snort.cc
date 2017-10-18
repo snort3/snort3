@@ -540,13 +540,6 @@ void Snort::setup(int argc, char* argv[])
 
     set_quick_exit(false);
 
-    // FIXIT-L eliminate keep_*() required for dynamic-only linkage
-    keep_base64_encoder();
-    keep_decomp_lib();
-    keep_jsnorm_lib();
-    keep_kmap_lib();
-    keep_utf_lib();
-
     memory::MemoryCap::calculate(ThreadConfig::get_instance_max());
     memory::MemoryCap::print();
 

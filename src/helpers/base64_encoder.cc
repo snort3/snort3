@@ -34,7 +34,7 @@
 #include "catch/catch.hpp"
 #endif
 
-void keep_base64_encoder() { }
+SNORT_FORCED_INCLUSION_DEFINITION(base64_encoder);
 
 static inline char b64(uint8_t idx)
 {

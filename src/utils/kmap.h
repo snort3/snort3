@@ -72,8 +72,6 @@ typedef struct _kmap
     int nocase;
 } KMAP;
 
-void keep_kmap_lib();  // FIXIT-L eliminate; required to keep symbols for dyn plugins
-
 SO_PUBLIC KMAP* KMapNew(KMapUserFreeFunc userfree);
 SO_PUBLIC void KMapDelete(KMAP* km);
 

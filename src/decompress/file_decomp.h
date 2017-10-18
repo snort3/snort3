@@ -272,8 +272,6 @@ inline bool Move_N(fd_session_t* SessionPtr, uint16_t N)
 
 /* API Functions */
 
-void keep_decomp_lib();  // FIXIT-L eliminate; required to keep symbols for dyn plugins
-
 /* Create a new decompression session object */
 SO_PUBLIC fd_session_t* File_Decomp_New();
 

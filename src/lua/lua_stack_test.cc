@@ -25,12 +25,12 @@
 #include <string>
 
 #include "catch/catch.hpp"
-#include "catch/unit_test.h"
+#include "main/snort_types.h"
 
 #include "lua_test_common.h"
 #include "lua/lua_stack.h"
 
-SNORT_CATCH_FORCED_INCLUSION_DEFINITION(lua_stack_test);
+SNORT_FORCED_INCLUSION_DEFINITION(lua_stack_test);
 
 static lua_State* L = nullptr;
 

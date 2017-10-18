@@ -32,6 +32,8 @@
 #include "protocols/protocol_ids.h"
 #include "utils/util.h"
 
+SNORT_FORCED_INCLUSION_DEFINITION(u2_pseudo_header);
+
 static const uint8_t u2_ttl = 64;
 
 //--------------------------------------------------------------------------

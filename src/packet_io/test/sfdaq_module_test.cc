@@ -27,12 +27,12 @@
 #endif
 
 #include "catch/catch.hpp"
-#include "catch/unit_test.h"
 #include "main/snort_config.h"
+#include "main/snort_types.h"
 #include "packet_io/sfdaq_config.h"
 #include "packet_io/sfdaq_module.h"
 
-SNORT_CATCH_FORCED_INCLUSION_DEFINITION(sfdaq_module_test);
+SNORT_FORCED_INCLUSION_DEFINITION(sfdaq_module_test);
 
 TEST_CASE("Kitchen Sink", "[SFDAQModule]")
 {

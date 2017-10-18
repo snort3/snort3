@@ -26,8 +26,6 @@
 
 #include "main/snort_types.h"
 
-#include "main/snort_types.h"
-
 class Flow;
 struct Packet;
 struct SnortConfig;

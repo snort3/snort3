@@ -18,6 +18,7 @@ analyzer_command.h \
 build.h \
 help.cc \
 help.h \
+inclusion.h \
 modules.cc \
 modules.h \
 policy.cc \
