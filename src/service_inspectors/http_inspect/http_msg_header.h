@@ -42,6 +42,7 @@ public:
     void gen_events() override;
     void publish() override;
     const Field& get_true_ip();
+    const Field& get_true_ip_addr();
 
 private:
     // Dummy configurations to support MIME processing
@@ -57,6 +58,7 @@ private:
     bool detection_section = true;
 
     Field true_ip;
+    Field true_ip_addr;
 
 #ifdef REG_TEST
     void print_section(FILE* output) override;

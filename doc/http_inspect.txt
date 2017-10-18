@@ -403,6 +403,13 @@ will be concatenated into a comma-separated list.
 Normalization for http_cookie is the same URI-style normalization applied
 to http_header when no specific header is specified.
 
+===== http_true_ip
+
+This provides the original IP address of the client sending the request as
+it was stored by a proxy in the request message headers. Specifically it
+is the last IP address listed in the X-Forwarded-For or True-Client-IP
+header. If both headers are present the former is used.
+
 ===== http_client_body
 
 This is the body of a request message such as POST or PUT. Normalization

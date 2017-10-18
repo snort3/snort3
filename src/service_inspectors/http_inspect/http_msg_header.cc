@@ -76,33 +76,51 @@ const Field& HttpMsgHeader::get_true_ip()
         }
     }
 
-    // This is potentially a comma-separated list of IP addresses. Just take the first one in
-    // the list. Since this is a normalized header field any whitespace will be an actual space.
-    uint8_t* addr_str = new uint8_t[header_to_use->length()+1];
+    // This is potentially a comma-separated list of IP addresses. Take the last one in the list.
+    // Since this is a normalized header field any whitespace will be an actual space.
     int32_t length;
     for (length = 0; length < header_to_use->length(); length++)
     {
-        if (is_sp_comma[header_to_use->start()[length]])
+        if (is_sp_comma[header_to_use->start()[header_to_use->length() - length - 1]])
             break;
-        addr_str[length] = header_to_use->start()[length];
     }
-    addr_str[length] = '\0';
+
+    true_ip.set(length, header_to_use->start() + (header_to_use->length() - length));
+    return true_ip;
+}
+
+const Field& HttpMsgHeader::get_true_ip_addr()
+{
+    if (true_ip_addr.length() != STAT_NOT_COMPUTE)
+        return true_ip_addr;
+
+    const Field& true_ip = get_true_ip();
+    if (true_ip.length() <= 0)
+    {
+        true_ip_addr.set(STAT_NOT_PRESENT);
+        return true_ip_addr;
+    }
+
+    // Need a temporary copy so we can add null termination
+    uint8_t* addr_str = new uint8_t[true_ip.length()+1];
+    memcpy(addr_str, true_ip.start(), true_ip.length());
+    addr_str[true_ip.length()] = '\0';
 
     SfIp tmp_sfip;
     const SfIpRet status = tmp_sfip.set((char*)addr_str);
     delete[] addr_str;
     if (status != SFIP_SUCCESS)
     {
-        true_ip.set(STAT_PROBLEMATIC);
+        true_ip_addr.set(STAT_PROBLEMATIC);
     }
     else
     {
         const size_t addr_length = (tmp_sfip.is_ip6() ? 4 : 1);
         uint32_t* const addr_buf = new uint32_t[addr_length];
         memcpy(addr_buf, tmp_sfip.get_ptr(), addr_length * sizeof(uint32_t));
-        true_ip.set(addr_length * sizeof(uint32_t), (uint8_t*)addr_buf, true);
+        true_ip_addr.set(addr_length * sizeof(uint32_t), (uint8_t*)addr_buf, true);
     }
-    return true_ip;
+    return true_ip_addr;
 }
 
 void HttpMsgHeader::gen_events()
@@ -490,6 +508,11 @@ void HttpMsgHeader::print_section(FILE* output)
         HttpApi::classic_buffer_names[HTTP_BUFFER_COOKIE-1]);
     get_classic_buffer(HTTP_BUFFER_HEADER, 0, 0).print(output,
         HttpApi::classic_buffer_names[HTTP_BUFFER_HEADER-1]);
+    if (source_id == SRC_CLIENT)
+    {
+        get_classic_buffer(HTTP_BUFFER_TRUE_IP, 0, 0).print(output,
+            HttpApi::classic_buffer_names[HTTP_BUFFER_TRUE_IP-1]);
+    }
     get_classic_buffer(HTTP_BUFFER_RAW_COOKIE, 0, 0).print(output,
         HttpApi::classic_buffer_names[HTTP_BUFFER_RAW_COOKIE-1]);
     get_classic_buffer(HTTP_BUFFER_RAW_HEADER, 0, 0).print(output,

@@ -175,7 +175,7 @@ int HttpInspect::get_xtra_trueip(Flow* flow, uint8_t** buf, uint32_t* len, uint3
     HttpMsgHeader* const req_header = transaction->get_header(SRC_CLIENT);
     if (req_header == nullptr)
         return 0;
-    const Field& true_ip = req_header->get_true_ip();
+    const Field& true_ip = req_header->get_true_ip_addr();
     if (true_ip.length() <= 0)
         return 0;
 

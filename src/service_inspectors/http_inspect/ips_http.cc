@@ -54,6 +54,7 @@ bool HttpCursorModule::begin(const char*, int, SnortConfig*)
     case HTTP_BUFFER_RAW_URI:
     case HTTP_BUFFER_STAT_CODE:
     case HTTP_BUFFER_STAT_MSG:
+    case HTTP_BUFFER_TRUE_IP:
     case HTTP_BUFFER_URI:
     case HTTP_BUFFER_VERSION:
         inspect_section = IS_DETECTION;
@@ -932,6 +933,55 @@ static const IpsApi trailer_api =
 };
 
 //-------------------------------------------------------------------------
+// http_true_ip
+//-------------------------------------------------------------------------
+
+static const Parameter http_true_ip_params[] =
+{
+    { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
+        "parts of this rule examine HTTP message body" },
+    { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
+        "parts of this rule examine HTTP message trailers" },
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+#undef IPS_OPT
+#define IPS_OPT "http_true_ip"
+#undef IPS_HELP
+#define IPS_HELP "rule option to set the detection cursor to the final client IP address"
+
+static Module* true_ip_mod_ctor()
+{
+    return new HttpCursorModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_TRUE_IP, CAT_SET_OTHER,
+        PSI_TRUE_IP, http_true_ip_params);
+}
+
+static const IpsApi true_ip_api =
+{
+    {
+        PT_IPS_OPTION,
+        sizeof(IpsApi),
+        IPSAPI_VERSION,
+        1,
+        API_RESERVED,
+        API_OPTIONS,
+        IPS_OPT,
+        IPS_HELP,
+        true_ip_mod_ctor,
+        HttpCursorModule::mod_dtor
+    },
+    OPT_TYPE_DETECTION,
+    0, PROTO_BIT__TCP,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    HttpIpsOption::opt_ctor,
+    HttpIpsOption::opt_dtor,
+    nullptr
+};
+
+//-------------------------------------------------------------------------
 // http_uri
 //-------------------------------------------------------------------------
 
@@ -1061,6 +1111,7 @@ const BaseApi* ips_http_raw_uri = &raw_uri_api.base;
 const BaseApi* ips_http_stat_code = &stat_code_api.base;
 const BaseApi* ips_http_stat_msg = &stat_msg_api.base;
 const BaseApi* ips_http_trailer = &trailer_api.base;
+const BaseApi* ips_http_true_ip = &true_ip_api.base;
 const BaseApi* ips_http_uri = &uri_api.base;
 const BaseApi* ips_http_version = &version_api.base;
 

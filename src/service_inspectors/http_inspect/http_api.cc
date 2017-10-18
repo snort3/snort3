@@ -50,6 +50,7 @@ const char* HttpApi::classic_buffer_names[] =
     "http_stat_code",
     "http_stat_msg",
     "http_trailer",
+    "http_true_ip",
     "http_uri",
     "http_version",
     nullptr
@@ -97,6 +98,7 @@ extern const BaseApi* ips_http_raw_uri;
 extern const BaseApi* ips_http_stat_code;
 extern const BaseApi* ips_http_stat_msg;
 extern const BaseApi* ips_http_trailer;
+extern const BaseApi* ips_http_true_ip;
 extern const BaseApi* ips_http_uri;
 extern const BaseApi* ips_http_version;
 
@@ -121,6 +123,7 @@ const BaseApi* sin_http[] =
     ips_http_stat_code,
     ips_http_stat_msg,
     ips_http_trailer,
+    ips_http_true_ip,
     ips_http_uri,
     ips_http_version,
     nullptr

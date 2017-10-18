@@ -191,6 +191,11 @@ const Field& HttpMsgSection::get_classic_buffer(unsigned id, uint64_t sub_id, ui
         HttpMsgStatus* status = transaction->get_status();
         return (status != nullptr) ? status->get_reason_phrase() : Field::FIELD_NULL;
       }
+    case HTTP_BUFFER_TRUE_IP:
+      {
+        HttpMsgHeader* header = transaction->get_header(SRC_CLIENT);
+        return (header != nullptr) ? header->get_true_ip() : Field::FIELD_NULL;
+      }
     case HTTP_BUFFER_URI:
     case HTTP_BUFFER_RAW_URI:
       {
