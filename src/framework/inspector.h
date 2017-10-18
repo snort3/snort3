@@ -153,16 +153,20 @@ public:
     T* data;
 };
 
+// at present there is no sequencing among like types except that appid
+// is always first among controls.
+
 enum InspectorType
 {
-    IT_PASSIVE,  // config only, or data consumer
+    IT_PASSIVE,  // config only, or data consumer (eg file_log, binder, ftp_client)
     IT_BINDER,   // maps config to traffic
     IT_WIZARD,   // guesses service inspector
-    IT_PACKET,   // processes raw packets
-    IT_NETWORK,  // process packets w/o service
-    IT_STREAM,   // flow tracking and reassembly
-    IT_SERVICE,  // reassemble and process service PDUs
-    IT_PROBE,    // process all packets after above
+    IT_PACKET,   // processes raw packets only (eg normalize, capture)
+    IT_STREAM,   // flow tracking and reassembly (eg ip, tcp, udp)
+    IT_NETWORK,  // process packets w/o service (eg arp, bo, rep)
+    IT_SERVICE,  // extract and analyze service PDUs (eg dce, http, ssl)
+    IT_CONTROL,  // process all packets before detection (eg appid)
+    IT_PROBE,    // process all packets after detection (eg perf_monitor, port_scan)
     IT_MAX
 };
 

@@ -472,28 +472,16 @@ void SipEventHandler::handle(DataEvent& event, Flow* flow)
     AppIdSession* asd = nullptr;
     SipEvent& sip_event = (SipEvent&)event;
 
-#ifdef DEBUG_APP_ID_SESSIONS
-    {
-        char src_ip[INET6_ADDRSTRLEN];
-        char dst_ip[INET6_ADDRSTRLEN];
-        const SfIp* ip;
-
-        src_ip[0] = 0;
-        ip = p->ptrs.ip_api.get_src();
-        sfip_ntop(ip, src_ip, sizeof(src_ip));
-        dst_ip[0] = 0;
-        ip = p->ptrs.ip_api.get_dst();
-        sfip_ntop(ip, dst_ip, sizeof(dst_ip));
-        fprintf(SF_DEBUG_FILE, "AppId Sip Snort Callback Session %s-%u -> %s-%u %d\n", src_ip,
-            (unsigned)p->src_port, dst_ip, (unsigned)p->dst_port, IsTCP(p) ? IpProtocol::TCP :
-            IpProtocol::UDP);
-    }
-#endif
     if ( flow )
         asd = appid_api.get_appid_session(flow);
 
     if ( !asd )
-        return;
+    {
+        const Packet* p = sip_event.get_packet();
+        IpProtocol protocol = p->is_tcp() ? IpProtocol::TCP : IpProtocol::UDP;
+        int direction = p->is_from_client() ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
+        asd = AppIdSession::allocate_session(p, protocol, direction);
+    }
 
     client_handler(sip_event, asd);
     service_handler(sip_event, asd);

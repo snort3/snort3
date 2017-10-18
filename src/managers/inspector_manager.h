@@ -62,7 +62,6 @@ public:
     SO_PUBLIC static Inspector* get_inspector(const char* key, bool dflt_only = false);
 
     SO_PUBLIC static Inspector* get_binder();
-    static Inspector* get_wizard();
 
     SO_PUBLIC static Inspector* acquire(const char* key, SnortConfig*);
     SO_PUBLIC static void release(Inspector*);
@@ -89,7 +88,7 @@ public:
 
 private:
     static void bumble(Packet*);
-    static bool full_inspection(FrameworkPolicy*, Packet*);
+    static void full_inspection(Packet*);
 };
 
 #endif

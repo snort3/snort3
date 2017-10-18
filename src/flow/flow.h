@@ -215,7 +215,7 @@ public:
     { return (ssn_state.session_flags & SSNFLAG_BLOCK) != 0; }
 
     bool full_inspection() const
-    { return flow_state <= FlowState::INSPECT; }
+    { return (flow_state <= FlowState::INSPECT) and !is_inspection_disabled(); }
 
     void set_state(FlowState fs)
     { flow_state = fs; }
@@ -269,14 +269,10 @@ public:
     }
 
     void disable_inspection()
-    {
-        disable_inspect = true;
-    }
+    { disable_inspect = true; }
 
-    bool is_inspection_disabled()
-    {
-        return disable_inspect;
-    }
+    bool is_inspection_disabled() const
+    { return disable_inspect; }
 
     bool is_offloaded() const
     { return flow_flags & FLOW_IS_OFFLOADED; }

@@ -301,13 +301,7 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
         Active::drop_packet(p, true);
         // disable all preproc analysis and detection for this packet
         DetectionEngine::disable_all(p);
-        p->disable_inspect = true;
-        if (p->flow)
-        {
-            p->flow->set_state(Flow::FlowState::BLOCK);
-            p->flow->disable_inspection();
-        }
-
+        Active::block_session(p, true);
         reputationstats.blacklisted++;
     }
     else if (MONITORED == decision)
@@ -320,12 +314,7 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
         DetectionEngine::queue_event(GID_REPUTATION, REPUTATION_EVENT_WHITELIST);
         p->packet_flags |= PKT_IGNORE;
         DetectionEngine::disable_all(p);
-        p->disable_inspect = true;
-        if (p->flow)
-        {
-            p->flow->set_state(Flow::FlowState::ALLOW);
-            p->flow->disable_inspection();
-        }
+        Active::allow_session(p);
         reputationstats.whitelisted++;
     }
 }

@@ -77,11 +77,8 @@ Buffer::Buffer(uint8_t* buf, uint32_t size) :
     off(0)
 { }
 
-void Codec::codec_event(const CodecData& codec, CodecSid sid)
+void Codec::codec_event(const CodecData&, CodecSid sid)
 {
-    if ( codec.codec_flags & CODEC_STREAM_REBUILT )
-        return;
-
     DetectionEngine::queue_event(GID_DECODE, sid);
 }
 

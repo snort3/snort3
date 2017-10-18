@@ -305,6 +305,8 @@ void Stream::block_flow(const Packet* p)
 
     // Postpone clear till inspection is completed
     flow->session_state |= STREAM_STATE_BLOCK_PENDING;
+
+    flow->disable_inspection();
 }
 
 void Stream::drop_flow(const Packet* p)

@@ -46,6 +46,7 @@ using namespace std;
 // FIXIT-L define module names just once
 #define bind_id "binder"
 #define wiz_id "wizard"
+#define app_id "appid"
 
 //-------------------------------------------------------------------------
 // list stuff
@@ -185,7 +186,27 @@ struct PHVector
 
     void add(PHInstance* p)
     { vec[num++] = p; }
+
+    void add_control(PHInstance*);
 };
+
+// FIXIT-L a more sophisticated approach to handling controls etc. may be
+// warranted such as a configuration or priority scheme (a la 2X).  for
+// now we only require that appid run first among controls.
+
+void PHVector::add_control(PHInstance* p)
+{
+    const char* name = p->pp_class.api.base.name;
+
+    if ( strcmp(name, app_id) or !num )
+        add(p);
+
+    else
+    {
+        add(vec[0]);
+        vec[0] = p;
+    }
+}
 
 struct FrameworkPolicy
 {
@@ -196,6 +217,7 @@ struct FrameworkPolicy
     PHVector network;
     PHVector session;
     PHVector service;
+    PHVector control;
     PHVector probe;
 
     Inspector* binder;
@@ -213,6 +235,7 @@ void FrameworkPolicy::vectorize()
     network.alloc(ilist.size());
     session.alloc(ilist.size());
     service.alloc(ilist.size());
+    control.alloc(ilist.size());
     probe.alloc(ilist.size());
 
     for ( auto* p : ilist )
@@ -246,6 +269,10 @@ void FrameworkPolicy::vectorize()
 
         case IT_WIZARD:
             wizard = p->handler;
+            break;
+
+        case IT_CONTROL:
+            control.add_control(p);
             break;
 
         case IT_PROBE:
@@ -477,16 +504,6 @@ Inspector* InspectorManager::get_binder()
         return nullptr;
 
     return pi->framework_policy->binder;
-}
-
-Inspector* InspectorManager::get_wizard()
-{
-    InspectionPolicy* pi = get_inspection_policy();
-
-    if ( !pi || !pi->framework_policy )
-        return nullptr;
-
-    return pi->framework_policy->wizard;
 }
 
 // FIXIT-P cache get_inspector() returns or provide indexed lookup
@@ -897,20 +914,14 @@ void InspectorManager::bumble(Packet* p)
         flow->session->restart(p);
 }
 
-bool InspectorManager::full_inspection(FrameworkPolicy* fp, Packet* p)
+void InspectorManager::full_inspection(Packet* p)
 {
     Flow* flow = p->flow;
 
-    if ( !flow->service )
-        ::execute(p, fp->network.vec, fp->network.num);
-
-    else if ( flow->clouseau and !p->is_cooked() )
+    if ( flow->service and flow->clouseau and !p->is_cooked() )
         bumble(p);
 
-    if ( p->disable_inspect )
-        return false;
-
-    else if ( !p->dsize )
+    if ( !p->dsize )
         DetectionEngine::disable_content(p);
 
     else if ( flow->gadget && flow->gadget->likes(p) )
@@ -918,34 +929,50 @@ bool InspectorManager::full_inspection(FrameworkPolicy* fp, Packet* p)
         flow->gadget->eval(p);
         s_clear = true;
     }
-
-    return true;
 }
+
+// FIXIT-M split stream base processing out of it_session so that flow lookup
+// can be done first to avoid executing it_packet on disabled flows.  also
+// leverage knowledge of flow creation so that reputation (possibly a new
+// it_xxx) is run just once per flow (and all non-flow packets).
 
 void InspectorManager::execute(Packet* p)
 {
     FrameworkPolicy* fp = get_inspection_policy()->framework_policy;
     assert(fp);
 
-    // FIXIT-M blocked flows should not be normalized
     if ( !p->is_cooked() )
         ::execute(p, fp->packet.vec, fp->packet.num);
 
     if ( !p->has_paf_payload() )
         ::execute(p, fp->session.vec, fp->session.num);
 
-    if( p->disable_inspect )
-        return;
+    // must check between each ::execute()
+    if ( p->disable_inspect )
+       return;
 
-    Flow* flow = p->flow;
-
-    if ( !flow )
+    if ( !p->flow )
+    {
         ::execute(p, fp->network.vec, fp->network.num);
 
-    else if ( flow->full_inspection() )
+        if ( p->disable_inspect )
+           return;
+
+        ::execute(p, fp->control.vec, fp->control.num);
+    }
+    else
     {
-        if(!full_inspection(fp, p))
-            return;
+        if ( !p->flow->service )
+            ::execute(p, fp->network.vec, fp->network.num);
+
+        if ( p->disable_inspect )
+           return;
+
+        if ( p->flow->full_inspection() )
+            full_inspection(p);
+
+        if ( !p->disable_inspect and !p->flow->is_inspection_disabled() )
+            ::execute(p, fp->control.vec, fp->control.num);
     }
 }
 

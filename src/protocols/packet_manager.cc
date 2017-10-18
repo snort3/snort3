@@ -279,8 +279,7 @@ void PacketManager::decode(
                 s_stats[other_codecs]++;
 
                 if ( (to_utype(ProtocolId::MIN_UNASSIGNED_IP_PROTO) <= to_utype(prev_prot_id)) &&
-                    (to_utype(prev_prot_id) <= std::numeric_limits<uint8_t>::max()) &&
-                    !(codec_data.codec_flags & CODEC_STREAM_REBUILT) )
+                    (to_utype(prev_prot_id) <= std::numeric_limits<uint8_t>::max()) )
                 {
                     DetectionEngine::queue_event(GID_DECODE, DECODE_IP_UNASSIGNED_PROTO);
                 }

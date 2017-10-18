@@ -430,16 +430,31 @@ bool Active::daq_retry_packet(const Packet *p)
     return retry_queued;
 }
 
-void Active::block_session(const Packet* p, bool force)
+void Active::allow_session(Packet* p)
+{
+    active_action = ACT_PASS;
+
+    if ( p->flow )
+    {
+        p->flow->set_state(Flow::FlowState::ALLOW);
+        p->flow->disable_inspection();
+    }
+
+    p->disable_inspect = true;
+}
+
+void Active::block_session(Packet* p, bool force)
 {
     update_status(p, force);
     active_action = ACT_BLOCK;
 
     if ( force or SnortConfig::inline_mode() or SnortConfig::treat_drop_as_ignore() )
         Stream::block_flow(p);
+
+    p->disable_inspect = true;
 }
 
-void Active::reset_session(const Packet* p, bool force)
+void Active::reset_session(Packet* p, bool force)
 {
     update_status(p, force);
     active_action = ACT_RESET;
@@ -457,6 +472,8 @@ void Active::reset_session(const Packet* p, bool force)
             p->flow->set_state(Flow::FlowState::RESET);
         }
     }
+
+    p->disable_inspect = true;
 }
 
 void Active::set_delayed_action(ActiveAction action, bool force)
@@ -467,7 +484,7 @@ void Active::set_delayed_action(ActiveAction action, bool force)
         active_status = AST_FORCE;
 }
 
-void Active::apply_delayed_action(const Packet* p)
+void Active::apply_delayed_action(Packet* p)
 {
     bool force = (active_status == AST_FORCE);
 

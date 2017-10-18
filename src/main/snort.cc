@@ -853,7 +853,7 @@ DAQ_Verdict Snort::process_packet(
 {
     aux_counts.rx_bytes += pkthdr->caplen;
 
-    PacketManager::decode(p, pkthdr, pkt);
+    PacketManager::decode(p, pkthdr, pkt, is_frag);
     assert(p->pkth && p->pkt);
 
     PacketTracer::add_header_info(p);

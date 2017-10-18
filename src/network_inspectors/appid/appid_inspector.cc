@@ -264,7 +264,7 @@ const InspectApi appid_inspector_api =
         mod_ctor,
         mod_dtor
     },
-    IT_NETWORK,
+    IT_CONTROL,
     (uint16_t)PktType::ANY_IP,
     nullptr, // buffers
     nullptr, // service

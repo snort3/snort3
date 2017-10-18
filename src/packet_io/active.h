@@ -85,10 +85,12 @@ public:
 
     static void drop_packet(const Packet*, bool force = false);
     static void daq_drop_packet(const Packet*);
-    static bool daq_retry_packet(const Packet *p);
+    static bool daq_retry_packet(const Packet*);
 
-    static void block_session(const Packet* p, bool force = false);
-    static void reset_session(const Packet* p, bool force = false);
+    static void allow_session(Packet*);
+
+    static void block_session(Packet*, bool force = false);
+    static void reset_session(Packet*, bool force = false);
 
     static void block_again()
     { active_action = ACT_BLOCK; }
@@ -125,7 +127,7 @@ public:
 
     static void set_delayed_action(ActiveAction, bool force = false);
 
-    static void apply_delayed_action(const Packet* p);
+    static void apply_delayed_action(Packet*);
 
 private:
     static bool open(const char*);
