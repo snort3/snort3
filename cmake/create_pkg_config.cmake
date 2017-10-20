@@ -56,6 +56,10 @@ if(PCRE_INCLUDE_DIR)
     set(PCRE_CPPFLAGS "-I${PCRE_INCLUDE_DIR}")
 endif()
 
+if(UUID_INCLUDE_DIR)
+    set(UUID_CPPFLAGS "-I${UUID_INCLUDE_DIR}")
+endif()
+
 # create & install pkgconfig file
 
 configure_file(

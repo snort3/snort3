@@ -90,6 +90,10 @@ Optional Packages:
                             flatbuffers include directory
     --with-flatbuffers-libraries=DIR
                             flatbuffers library directory
+    --with-uuid-includes=DIR
+                            libuuid include directory
+    --with-uuid-libraries=DIR
+                            libuuid library directory
 
 Some influential environment variables:
     SIGNAL_SNORT_RELOAD=<value>
@@ -350,6 +354,12 @@ while [ $# -ne 0 ]; do
             ;;
         --with-flatbuffers-libraries=*)
             append_cache_entry FLATBUFFERS_LIBRARIES_DIR_HINT PATH $optarg
+            ;;
+        --with-uuid-includes=*)
+            append_cache_entry UUID_INCLUDE_DIR_HINT PATH $optarg
+            ;;
+        --with-uuid-libraries=*)
+            append_cache_entry UUID_LIBRARIES_DIR_HINT PATH $optarg
             ;;
         SIGNAL_SNORT_RELOAD=*)
             append_cache_entry SIGNAL_SNORT_RELOAD STRING $optarg

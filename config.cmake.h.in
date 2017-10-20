@@ -240,6 +240,8 @@
 
 #cmakedefine HAVE_ICONV 1
 
+#cmakedefine HAVE_UUID 1
+
 /* Library specific functions */
 
 

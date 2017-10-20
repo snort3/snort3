@@ -116,8 +116,8 @@ extern const ConvertMap* pcre_match_limit_recursion_map;
 extern const ConvertMap* pkt_count_map;
 extern const ConvertMap* ppm_map;
 extern const ConvertMap* policy_id_map;
+extern const ConvertMap* policy_uuid_map;
 extern const ConvertMap* policy_mode_map;
-extern const ConvertMap* policy_version_map;
 extern const ConvertMap* profile_preprocs_map;
 extern const ConvertMap* profile_rules_map;
 extern const ConvertMap* protected_content_map;
@@ -235,8 +235,8 @@ const std::vector<const ConvertMap*> config_api =
     pkt_count_map,
     ppm_map,
     policy_id_map,
+    policy_uuid_map,
     policy_mode_map,
-    policy_version_map,
     profile_preprocs_map,
     profile_rules_map,
     protected_content_map,

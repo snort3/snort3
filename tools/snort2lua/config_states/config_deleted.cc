@@ -508,18 +508,6 @@ static const ConvertMap layer2resets_api =
 const ConvertMap* layer2resets_map = &layer2resets_api;
 
 /*************************************************
- ****************  policy_version  ***************
- *************************************************/
-
-static const std::string policy_version = "policy_version";
-static const ConvertMap policy_version_api =
-{
-    policy_version,
-    deleted_ctor<& policy_version>,
-};
-const ConvertMap* policy_version_map = &policy_version_api;
-
-/*************************************************
  ****************  so_rule_memcap  ***************
  *************************************************/
 

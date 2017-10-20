@@ -63,6 +63,8 @@ Optional:
 * w3m from http://sourceforge.net/projects/w3m/ to build the plain text
   manual
 
+* uuid from uuid-dev package for unique identifiers
+
 === Building
 
 * Optionally built features are listed in the reference section.

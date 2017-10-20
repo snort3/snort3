@@ -12,7 +12,7 @@
 # enables
 # unit tests
 # required libs (daq / sfbpf, dnet, hwloc, luajit, openssl / crypto, pcap, pcre, zlib)
-# optional libs (hyperscan, iconv, lzma, safec)
+# optional libs (hyperscan, iconv, lzma, safec, uuid)
 # outputs
 #
 # if you add an AC_DEFINE() for a symbol that appears in an exported
@@ -1079,6 +1079,54 @@ if test "x$SAFEC_LIB" != "xno"; then
 fi
 
 #--------------------------------------------------------------------------
+# uuid
+#--------------------------------------------------------------------------
+#
+AC_MSG_CHECKING([for uuid pkg-config presence])
+PKG_CHECK_EXISTS([uuid], [ have_uuid_pkgconfig="yes" ], [ have_uuid_pkgconfig="no" ])
+AC_MSG_RESULT(${have_uuid_pkgconfig})
+
+UUID_CPPFLAGS=""
+if test "${have_uuid_pkgconfig}" = "yes" ; then
+    UUID_CPPFLAGS=`${PKG_CONFIG} --cflags uuid`
+    UUID_LDFLAGS=`${PKG_CONFIG} --libs-only-L uuid`
+fi
+
+AC_ARG_WITH(uuid_includes,
+    AS_HELP_STRING([--with-uuid-includes=DIR],[uuid include directory]),
+    [with_uuid_includes="$withval"],[with_uuid_includes="no"])
+
+if test "x$with_uuid_includes" != "xno"; then
+    UUID_CPPFLAGS="-I${with_uuid_includes}"
+fi
+
+AC_ARG_WITH(uuid_libraries,
+    AS_HELP_STRING([--with-uuid-libraries=DIR],[uuid library directory]),
+    [with_uuid_libraries="$withval"],[with_uuid_libraries="no"])
+
+if test "x$with_uuid_libraries" != "xno"; then
+    UUID_LDFLAGS="-L${with_uuid_libraries}"
+fi
+
+CPPFLAGS="${CPPFLAGS} ${UUID_CPPFLAGS}"
+LDFLAGS="${LDFLAGS} ${UUID_LDFLAGS}"
+
+# Verify that we have the headers
+UUID_H=""
+AC_CHECK_HEADERS(uuid.h, UUID_H="yes")
+
+# Verify that we have the library
+UUID_L=""
+AC_CHECK_LIB(uuid, uuid_parse, UUID_L="yes")
+
+if test "x$UUID_L" = "xyes"; then
+    if test "x$UUID_H" = "xyes"; then
+        AC_DEFINE([HAVE_UUID],[1],[can build uuid code])
+        LIBS="${LIBS} -luuid"
+    fi
+fi
+
+#--------------------------------------------------------------------------
 # outputs
 #--------------------------------------------------------------------------
 
@@ -1119,6 +1167,7 @@ AC_SUBST(PCAP_CPPFLAGS)
 AC_SUBST(HWLOC_CPPFLAGS)
 AC_SUBST(LUAJIT_CPPFLAGS)
 AC_SUBST(PCRE_CPPFLAGS)
+AC_SUBST(UUID_CPPFLAGS)
 AC_SUBST(DNET_CPPFLAGS)
 AC_SUBST(DAQ_CPPFLAGS)
 AC_SUBST(FLATBUFFERS_CPPFLAGS)

@@ -26,6 +26,12 @@
 // -- inspection - for flow handling
 // -- ips - for rule handling
 
+#ifdef HAVE_UUID
+#include <uuid.h>
+#else
+typedef unsigned char uuid_t[16];
+#endif
+
 #include <memory>
 #include <unordered_map>
 
@@ -127,6 +133,7 @@ public:
 public:
     PolicyId policy_id;
     uint32_t user_policy_id = 0;
+    uuid_t uuid{};
 
     PolicyMode policy_mode;
     bool enable_builtin_rules;

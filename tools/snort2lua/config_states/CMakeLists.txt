@@ -23,6 +23,7 @@ add_library( config_states
     config_paf_max.cc
     config_policy_id.cc
     config_policy_mode.cc
+    config_policy_uuid.cc
     config_ppm.cc
     config_profile.cc
     config_reference.cc

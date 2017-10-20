@@ -1121,6 +1121,11 @@ static const Parameter ips_params[] =
     { "rules", Parameter::PT_STRING, nullptr, nullptr,
       "snort rules and includes" },
 
+#ifdef HAVE_UUID
+    { "uuid", Parameter::PT_STRING, nullptr, nullptr,
+      "IPS policy uuid" },
+#endif
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -1172,6 +1177,17 @@ bool IpsModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("rules") )
         p->rules = v.get_string();
+
+#ifdef HAVE_UUID
+    else if ( v.is("uuid") )
+    {
+        if(uuid_parse(v.get_string(), p->uuid) != 0)
+        {
+            ParseError("Invalid IPS UUID: %s", v.get_string());
+            uuid_clear(p->uuid);
+        }
+    }
+#endif
 
     else
         return false;
