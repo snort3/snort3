@@ -60,10 +60,10 @@ namespace output
                 tmpval = table_api.add_option("no_timestamp", true);
 
             else if (keyword == "mpls_event_types")
-                tmpval = table_api.add_option("mpls_event_types", true);
+                tmpval = table_api.add_deleted_comment("mpls_event_types");
 
             else if (keyword == "vlan_event_types")
-                tmpval = table_api.add_option("vlan_event_types", true);
+                tmpval = table_api.add_deleted_comment("vlan_event_types");
 
             else if (keyword == "filename")
                 tmpval = parse_string_option("filename", arg_stream);
