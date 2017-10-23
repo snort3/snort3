@@ -29,7 +29,6 @@
 
 #include <cassert>
 
-#include "detection/detection_defines.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -147,7 +146,7 @@ static void pcre_check_anchored(PcreData* pcre_data)
 
     if ((options & PCRE_ANCHORED) && !(options & PCRE_MULTILINE))
     {
-        /* This means that this pcre rule option shouldn't be reevaluated
+        /* This means that this pcre rule option shouldn't be EvalStatus
          * even if any of it's relative children should fail to match.
          * It is anchored to the cursor set by the previous cursor setting
          * rule option */
@@ -348,44 +347,25 @@ syntax:
     ParseError("unable to parse pcre %s", data);
 }
 
-/**
+/*
  * Perform a search of the PCRE data.
- *
- * @param pcre_data structure that options and patterns are passed in
- * @param buf buffer to search
- * @param len size of buffer
- * @param found_offset pointer to an integer so that we know where the search ended
- *
- * *found_offset will be set to -1 when the find is unsuccessful OR the routine is inverted
- *
- * @return 1 when we find the string, 0 when we don't (unless we've been passed a flag to invert)
+ * found_offset will be set to -1 when the find is unsuccessful OR the routine is inverted
  */
 static bool pcre_search(
     const PcreData* pcre_data,
     const uint8_t* buf,
-    int len,
-    int start_offset,
-    int* found_offset)
+    unsigned len,
+    unsigned start_offset,
+    int& found_offset)
 {
     bool matched;
-    int result;
 
-    if (pcre_data == nullptr
-        || buf == nullptr
-        || len <= 0
-        || found_offset == nullptr)
-    {
-        DebugMessage(DEBUG_PATTERN_MATCH,
-            "Returning 0 because we didn't have the required parameters!\n");
-        return false;
-    }
-
-    *found_offset = -1;
+    found_offset = -1;
 
     SnortState* ss = snort_conf->state + get_instance_id();
     assert(ss->pcre_ovector);
 
-    result = pcre_exec(
+    int result = pcre_exec(
         pcre_data->re,  /* result of pcre_compile() */
         pcre_data->pe,  /* result of pcre_study()   */
         (const char*)buf, /* the subject string */
@@ -418,7 +398,7 @@ static bool pcre_search(
          * and a single int for scratch space.
          */
 
-        *found_offset = ss->pcre_ovector[1];
+        found_offset = ss->pcre_ovector[1];
     }
     else if (result == PCRE_ERROR_NOMATCH)
     {
@@ -461,7 +441,7 @@ public:
     bool is_relative() override
     { return (config->options & SNORT_PCRE_RELATIVE) != 0; }
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
     bool retry() override;
 
     PcreData* get_data()
@@ -569,40 +549,35 @@ bool PcreOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int PcreOption::eval(Cursor& c, Packet*)
+IpsOption::EvalStatus PcreOption::eval(Cursor& c, Packet*)
 {
     Profile profile(pcrePerfStats);
 
-    PcreData* pcre_data = config;
-
     // short circuit this for testing pcre performance impact
-    if (SnortConfig::no_pcre())
-        return DETECTION_OPTION_NO_MATCH;
+    if ( SnortConfig::no_pcre() )
+        return NO_MATCH;
 
     unsigned pos = c.get_delta();
-
-    if ( !pos && is_relative() )
-        pos = c.get_pos();
+    unsigned adj = 0;
 
     if ( pos > c.size() )
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
+
+    if ( !pos && is_relative() )
+        adj = c.get_pos();
 
     int found_offset = -1; // where is the ending location of the pattern
-    bool matched = pcre_search(pcre_data, c.buffer(), c.size(), pos,
-        &found_offset);
 
-    if (matched)
+    if ( pcre_search(config, c.buffer()+adj, c.size()-adj, pos, found_offset) )
     {
         if ( found_offset > 0 )
         {
             c.set_pos(found_offset);
             c.set_delta(found_offset);
         }
-
-        return DETECTION_OPTION_MATCH;
+        return MATCH;
     }
-
-    return DETECTION_OPTION_NO_MATCH;
+    return NO_MATCH;
 }
 
 // we always advance by found_offset so no adjustments to cursor are done

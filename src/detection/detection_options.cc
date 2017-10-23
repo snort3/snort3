@@ -53,7 +53,6 @@
 #include "protocols/packet_manager.h"
 #include "utils/util.h"
 
-#include "detection_defines.h"
 #include "detection_engine.h"
 #include "detection_util.h"
 #include "detect_trace.h"
@@ -67,8 +66,8 @@
 #define HASH_RULE_OPTIONS 16384
 #define HASH_RULE_TREE     8192
 
-#define DETECTION_OPTION_EQUAL        0
-#define DETECTION_OPTION_NOT_EQUAL    1
+#define HASH_EQUAL        0
+#define HASH_NOT_EQUAL    1
 
 struct detection_option_key_t
 {
@@ -98,10 +97,10 @@ static int detection_option_key_compare_func(const void* k1, const void* k2, siz
     const detection_option_key_t* key2 = (const detection_option_key_t*)k2;
 
     if ( !key1 || !key2 )
-        return DETECTION_OPTION_NOT_EQUAL;
+        return HASH_NOT_EQUAL;
 
     if ( key1->option_type != key2->option_type )
-        return DETECTION_OPTION_NOT_EQUAL;
+        return HASH_NOT_EQUAL;
 
     if ( key1->option_type != RULE_OPTION_TYPE_LEAF_NODE )
     {
@@ -109,9 +108,9 @@ static int detection_option_key_compare_func(const void* k1, const void* k2, siz
         IpsOption* opt2 = (IpsOption*)key2->option_data;
 
         if ( *opt1 == *opt2 )
-            return DETECTION_OPTION_EQUAL;
+            return HASH_EQUAL;
     }
-    return DETECTION_OPTION_NOT_EQUAL;
+    return HASH_NOT_EQUAL;
 }
 
 static int detection_hash_free_func(void* option_key, void*)
@@ -227,27 +226,27 @@ static bool detection_option_tree_compare(
     const detection_option_tree_node_t* r, const detection_option_tree_node_t* l)
 {
     if ( !r and !l )
-        return DETECTION_OPTION_EQUAL;
+        return HASH_EQUAL;
 
     if ( !r or !l )
-        return DETECTION_OPTION_NOT_EQUAL;
+        return HASH_NOT_EQUAL;
 
     if ( r->option_data != l->option_data )
-        return DETECTION_OPTION_NOT_EQUAL;
+        return HASH_NOT_EQUAL;
 
     if ( r->num_children != l->num_children )
-        return DETECTION_OPTION_NOT_EQUAL;
+        return HASH_NOT_EQUAL;
 
     for ( int i=0; i<r->num_children; i++ )
     {
         /* Recurse & check the children for equality */
         int ret = detection_option_tree_compare(r->children[i], l->children[i]);
 
-        if ( ret != DETECTION_OPTION_EQUAL )
+        if ( ret != HASH_EQUAL )
             return ret;
     }
 
-    return DETECTION_OPTION_EQUAL;
+    return HASH_EQUAL;
 }
 
 static int detection_option_tree_compare_func(const void* k1, const void* k2, size_t)
@@ -256,7 +255,7 @@ static int detection_option_tree_compare_func(const void* k1, const void* k2, si
     const detection_option_key_t* key_l = (const detection_option_key_t*)k2;
 
     if ( !key_r or !key_l )
-        return DETECTION_OPTION_NOT_EQUAL;
+        return HASH_NOT_EQUAL;
 
     const detection_option_tree_node_t* r = (const detection_option_tree_node_t*)key_r->option_data;
     const detection_option_tree_node_t* l = (const detection_option_tree_node_t*)key_l->option_data;
@@ -354,7 +353,7 @@ int detection_option_node_evaluate(
     RuleContext profile(state);
 
     int result = 0;
-    int rval = DETECTION_OPTION_NO_MATCH;
+    int rval = (int)IpsOption::NO_MATCH;  // FIXIT-L refactor to eliminate casts to int
     char tmp_noalert_flag = 0;
     Cursor cursor = orig_cursor;
     bool continue_loop = true;
@@ -489,7 +488,7 @@ int detection_option_node_evaluate(
 
                         fpAddMatch((OtnxMatchData*)pomd, pattern_size, otn);
                     }
-                    result = rval = DETECTION_OPTION_MATCH;
+                    result = rval = (int)IpsOption::MATCH;
                 }
             }
 #ifdef DEBUG_MSGS
@@ -516,7 +515,7 @@ int detection_option_node_evaluate(
                         content_last->context_num == cur_eval_context_num &&
                         content_last->rebuild_flag == (p->packet_flags & PKT_REBUILT_STREAM) )
                     {
-                        rval = DETECTION_OPTION_NO_MATCH;
+                        rval = (int)IpsOption::NO_MATCH;
                         break;
                     }
                 }
@@ -534,7 +533,7 @@ int detection_option_node_evaluate(
 
                 if ( flowbits_setoperation )
                     // set to match so we don't bail early
-                    rval = DETECTION_OPTION_MATCH;
+                    rval = (int)IpsOption::MATCH;
 
                 else
                     rval = node->evaluate(node->option_data, cursor, eval_data->p);
@@ -549,13 +548,13 @@ int detection_option_node_evaluate(
             break;
         }
 
-        if ( rval == DETECTION_OPTION_NO_MATCH )
+        if ( rval == (int)IpsOption::NO_MATCH )
         {
             trace_log(detection, TRACE_RULE_EVAL, "no match\n");
             state.last_check.result = result;
             return result;
         }
-        else if ( rval == DETECTION_OPTION_FAILED_BIT )
+        else if ( rval == (int)IpsOption::FAILED_BIT )
         {
             trace_log(detection, TRACE_RULE_EVAL, "failed bit\n");
             eval_data->flowbit_failed = 1;
@@ -564,7 +563,7 @@ int detection_option_node_evaluate(
             state.last_check.result = result;
             return 0;
         }
-        else if ( rval == DETECTION_OPTION_NO_ALERT )
+        else if ( rval == (int)IpsOption::NO_ALERT )
         {
             // Cache the current flowbit_noalert flag, and set it
             // so nodes below this don't alert.
@@ -585,7 +584,7 @@ int detection_option_node_evaluate(
 
         if ( PacketLatency::fastpath() )
         {
-            profile.stop(result != DETECTION_OPTION_NO_MATCH);
+            profile.stop(result != (int)IpsOption::NO_MATCH);
             state.last_check.result = result;
             return result;
         }
@@ -608,7 +607,7 @@ int detection_option_node_evaluate(
 
                     if ( loop_count > 0 )
                     {
-                        if ( child_state->result == DETECTION_OPTION_NO_MATCH )
+                        if ( child_state->result == (int)IpsOption::NO_MATCH )
                         {
                             if ( !child_node->is_relative )
                             {
@@ -689,15 +688,13 @@ int detection_option_node_evaluate(
             }
         }
 
-        if ( rval == DETECTION_OPTION_NO_ALERT )
+        if ( rval == (int)IpsOption::NO_ALERT )
         {
             // Reset the flowbit_noalert flag in eval data
             eval_data->flowbit_noalert = tmp_noalert_flag;
         }
 
-        if ( continue_loop &&
-            rval == DETECTION_OPTION_MATCH &&
-            node->relative_children )
+        if ( continue_loop && rval == (int)IpsOption::MATCH && node->relative_children )
         {
             continue_loop = try_again;
         }
@@ -713,12 +710,12 @@ int detection_option_node_evaluate(
     }
     while ( continue_loop );
 
-    if ( flowbits_setoperation && result == DETECTION_OPTION_MATCH )
+    if ( flowbits_setoperation && result == (int)IpsOption::MATCH )
     {
         // Do any setting/clearing/resetting/toggling of flowbits here
         // given that other rule options matched
         rval = node->evaluate(node->option_data, cursor, p);
-        if ( rval != DETECTION_OPTION_MATCH )
+        if ( rval != (int)IpsOption::MATCH )
             result = rval;
     }
 
@@ -731,7 +728,7 @@ int detection_option_node_evaluate(
 
     state.last_check.result = result;
 
-    profile.stop(result != DETECTION_OPTION_NO_MATCH);
+    profile.stop(result != (int)IpsOption::NO_MATCH);
 
     return result;
 }
@@ -742,6 +739,7 @@ struct node_profile_stats
     hr_duration elapsed;
     hr_duration elapsed_match;
     hr_duration elapsed_no_match;
+
     uint64_t checks;
     uint64_t latency_timeouts;
     uint64_t latency_suspends;

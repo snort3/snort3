@@ -77,7 +77,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "framework/cursor.h"
 #include "framework/endianness.h"
 #include "framework/ips_option.h"
@@ -128,7 +127,7 @@ public:
     bool is_relative() override
     { return (config.relative_flag == 1); }
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 private:
     ByteJumpData config;
@@ -199,7 +198,7 @@ bool ByteJumpOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int ByteJumpOption::eval(Cursor& c, Packet* p)
+IpsOption::EvalStatus ByteJumpOption::eval(Cursor& c, Packet* p)
 {
     Profile profile(byteJumpPerfStats);
 
@@ -233,7 +232,7 @@ int ByteJumpOption::eval(Cursor& c, Packet* p)
     {
         if (!p->endianness ||
             !p->endianness->get_offset_endianness(base_ptr - p->data, endian))
-            return DETECTION_OPTION_NO_MATCH;
+            return NO_MATCH;
     }
 
     // Both of the extraction functions contain checks to ensure the data
@@ -245,7 +244,7 @@ int ByteJumpOption::eval(Cursor& c, Packet* p)
             if ( byte_extract(
                 endian, bjd->bytes_to_grab,
                 base_ptr, start_ptr, end_ptr, &jump) )
-                return DETECTION_OPTION_NO_MATCH;
+                return NO_MATCH;
 
             payload_bytes_grabbed = bjd->bytes_to_grab;
         }
@@ -256,7 +255,7 @@ int ByteJumpOption::eval(Cursor& c, Packet* p)
                 base_ptr, start_ptr, end_ptr, &jump);
 
             if (tmp < 0)
-                return DETECTION_OPTION_NO_MATCH;
+                return NO_MATCH;
 
             payload_bytes_grabbed = tmp;
         }
@@ -302,9 +301,9 @@ int ByteJumpOption::eval(Cursor& c, Packet* p)
     jump += bjd->post_offset;
 
     if ( !c.set_pos(jump) )
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
-    return DETECTION_OPTION_MATCH;
+    return MATCH;
 }
 
 //-------------------------------------------------------------------------

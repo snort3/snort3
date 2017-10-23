@@ -357,9 +357,17 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total, un
     {
         uint32_t& running_total = session_data->running_total[source_id];
         assert(running_total == total);
-        assert((session_data->octets_expected[source_id] == total) ||
-                (!session_data->strict_length[source_id] &&
-                (total <= session_data->octets_expected[source_id])));
+
+        // FIXIT-H this if should be an assert
+        if ( !((session_data->octets_expected[source_id] == total) ||
+            (!session_data->strict_length[source_id] &&
+            (total <= session_data->octets_expected[source_id]))) )
+        {
+#ifdef REG_TEST
+            assert(false);
+#endif
+            return http_buf;
+        }
         running_total = 0;
         const uint16_t buf_size =
             session_data->section_offset[source_id] - session_data->num_excess[source_id];

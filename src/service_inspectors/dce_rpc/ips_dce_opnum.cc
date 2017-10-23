@@ -23,7 +23,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/sfhashfcn.h"
@@ -345,7 +344,7 @@ public:
     { opnum = src_opnum; }
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
     ~Dce2OpnumOption() override;
 
 private:
@@ -397,34 +396,34 @@ bool Dce2OpnumOption::operator==(const IpsOption& ips) const
     return true;
 }
 
-int Dce2OpnumOption::eval(Cursor&, Packet* p)
+IpsOption::EvalStatus Dce2OpnumOption::eval(Cursor&, Packet* p)
 {
     Profile profile(dce2_opnum_perf_stats);
 
     if (p->dsize == 0)
     {
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
     }
 
     DCE2_SsnData* sd = get_dce2_session_data(p);
 
     if ((sd == nullptr) || DCE2_SsnNoInspect(sd))
     {
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
     }
 
     DCE2_Roptions* ropts = &sd->ropts;
 
     if (ropts->opnum == DCE2_SENTINEL)
     {
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
     }
 
     if (opnum.mask_size == 0)
     {
         if (ropts->opnum == opnum.opnum_lo)
         {
-            return DETECTION_OPTION_MATCH;
+            return MATCH;
         }
     }
     else
@@ -432,11 +431,11 @@ int Dce2OpnumOption::eval(Cursor&, Packet* p)
         if (DCE2_OpnumIsSet(opnum.mask, opnum.opnum_lo,
             opnum.opnum_hi, (uint16_t)ropts->opnum))
         {
-            return DETECTION_OPTION_MATCH;
+            return MATCH;
         }
     }
 
-    return DETECTION_OPTION_NO_MATCH;
+    return NO_MATCH;
 }
 
 Dce2OpnumOption::~Dce2OpnumOption()

@@ -37,6 +37,7 @@ ips_session.cc \
 ips_sid.cc \
 ips_soid.cc \
 ips_tag.cc \
+ips_target.cc \
 ips_tos.cc \
 ips_ttl.cc \
 ips_window.cc
@@ -247,15 +248,20 @@ ips_soid_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 ips_soid_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
 ips_soid_la_SOURCES = ips_soid.cc
 
-optlib_LTLIBRARIES += ips_tos.la
-ips_tos_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-ips_tos_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
-ips_tos_la_SOURCES = ips_tos.cc
-
 optlib_LTLIBRARIES += ips_tag.la
 ips_tag_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 ips_tag_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
 ips_tag_la_SOURCES = ips_tag.cc
+
+optlib_LTLIBRARIES += ips_target.la
+ips_target_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+ips_target_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
+ips_target_la_SOURCES = ips_target.cc
+
+optlib_LTLIBRARIES += ips_tos.la
+ips_tos_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+ips_tos_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
+ips_tos_la_SOURCES = ips_tos.cc
 
 optlib_LTLIBRARIES += ips_ttl.la
 ips_ttl_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO

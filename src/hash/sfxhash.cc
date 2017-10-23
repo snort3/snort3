@@ -93,8 +93,8 @@
 
 #include "sfxhash.h"
 
+#include <cassert>
 #include "utils/util.h"
-
 #include "sfhashfcn.h"
 
 /*
@@ -1016,24 +1016,12 @@ SFXHASH_NODE* sfxhash_findnext(SFXHASH* t)
     return n;
 }
 
-/**
- * Make sfhashfcn use a separate set of opcodes for the backend.
- *
- * h sfhashfcn ptr
- * hash_fcn user specified hash function
- * keycmp_fcn user specified key comparison function
- */
+// Make sfhashfcn use a separate set of opcodes for the backend.
 
-int sfxhash_set_keyops(SFXHASH* h,
-    unsigned (* hash_fcn)(SFHASHFCN* p, const unsigned char* d, int n),
-    int (* keycmp_fcn)(const void* s1, const void* s2, size_t n))
+void sfxhash_set_keyops(SFXHASH* h, hash_func hash_fcn, keycmp_func keycmp_fcn)
 {
-    if (h && hash_fcn && keycmp_fcn)
-    {
-        return sfhashfcn_set_keyops(h->sfhashfcn, hash_fcn, keycmp_fcn);
-    }
-
-    return -1;
+    assert(h and hash_fcn and keycmp_fcn);
+    sfhashfcn_set_keyops(h->sfhashfcn, hash_fcn, keycmp_fcn);
 }
 
 /*

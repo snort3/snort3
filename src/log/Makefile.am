@@ -4,6 +4,8 @@ noinst_LIBRARIES = liblog.a
 x_includedir = $(pkgincludedir)/log
 
 x_include_HEADERS = \
+log.h \
+log_text.h \
 messages.h \
 obfuscator.h \
 text_log.h \
@@ -12,9 +14,7 @@ unified2.h
 
 liblog_a_SOURCES = \
 log.cc \
-log.h \
 log_text.cc \
-log_text.h \
 messages.cc \
 obfuscator.cc \
 packet_tracer.cc \

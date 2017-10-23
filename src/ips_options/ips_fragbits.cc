@@ -48,7 +48,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/sfhashfcn.h"
@@ -280,7 +279,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 private:
     FragBitsData fragBitsData;
@@ -323,20 +322,20 @@ bool FragBitsOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int FragBitsOption::eval(Cursor&, Packet* p)
+IpsOption::EvalStatus FragBitsOption::eval(Cursor&, Packet* p)
 {
     Profile profile(fragBitsPerfStats);
 
     if ( !p->has_ip() )
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     bool is_match = fragBitsData.is_match(p);
 
     if(is_match)
-        return DETECTION_OPTION_MATCH;
+        return MATCH;
 
     // if the test isn't successful, this function *must* return 0
-    return DETECTION_OPTION_NO_MATCH;
+    return NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

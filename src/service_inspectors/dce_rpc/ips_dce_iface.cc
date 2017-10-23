@@ -25,7 +25,6 @@
 
 #include <cerrno>
 
-#include "detection/detection_defines.h"
 #include "detection/pattern_match_data.h"
 #include "framework/module.h"
 #include "framework/ips_option.h"
@@ -213,7 +212,7 @@ public:
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
     PatternMatchData* get_pattern(int proto, RuleDirection direction) override;
     PatternMatchData* get_alternate_pattern() override;
     ~Dce2IfaceOption() override;
@@ -363,37 +362,37 @@ bool Dce2IfaceOption::operator==(const IpsOption& ips) const
     return this == &ips;
 }
 
-int Dce2IfaceOption::eval(Cursor&, Packet* p)
+IpsOption::EvalStatus Dce2IfaceOption::eval(Cursor&, Packet* p)
 {
     Profile profile(dce2_iface_perf_stats);
 
     if (p->dsize == 0)
     {
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
     }
 
     DCE2_SsnData* sd= get_dce2_session_data(p);
 
     if ((sd == nullptr) || DCE2_SsnNoInspect(sd))
     {
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
     }
 
     DCE2_Roptions* ropts = &sd->ropts;
 
     if (ropts->first_frag == DCE2_SENTINEL)
     {
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
     }
 
     if (!any_frag && !ropts->first_frag)
     {
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
     }
 
     if (DCE2_UuidCompare((void*)&ropts->iface, &uuid) != 0)
     {
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
     }
 
     if (version.is_set())
@@ -402,19 +401,19 @@ int Dce2IfaceOption::eval(Cursor&, Packet* p)
         {
             if (!version.eval(ropts->iface_vers_maj))
             {
-                return DETECTION_OPTION_NO_MATCH;
+                return NO_MATCH;
             }
         }
         else
         {
             if (!version.eval(ropts->iface_vers))
             {
-                return DETECTION_OPTION_NO_MATCH;
+                return NO_MATCH;
             }
         }
     }
 
-    return DETECTION_OPTION_MATCH;
+    return MATCH;
 }
 
 //-------------------------------------------------------------------------

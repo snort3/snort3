@@ -23,7 +23,6 @@
 #endif
 
 #include "actions/act_replace.h"
-#include "detection/detection_defines.h"
 #include "detection/treenodes.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
@@ -80,7 +79,7 @@ public:
     ReplaceOption(string&);
     ~ReplaceOption() override;
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
     void action(Packet*) override;
 
     uint32_t hash() const override;
@@ -154,23 +153,23 @@ bool ReplaceOption::operator==(const IpsOption& ips) const
     return true;
 }
 
-int ReplaceOption::eval(Cursor& c, Packet* p)
+IpsOption::EvalStatus ReplaceOption::eval(Cursor& c, Packet* p)
 {
     Profile profile(replacePerfStats);
 
     if ( p->is_cooked() )
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     if ( !c.is("pkt_data") )
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     if ( c.get_pos() < repl.size() )
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     if ( replace_ok() )
         store(c.get_pos() - repl.size());
 
-    return DETECTION_OPTION_MATCH;
+    return MATCH;
 }
 
 void ReplaceOption::action(Packet*)

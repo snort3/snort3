@@ -22,7 +22,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "detection/detection_engine.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
@@ -41,14 +40,14 @@ public:
     CursorActionType get_cursor_type() const override
     { return CAT_SET_FILE; }
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 };
 
 //-------------------------------------------------------------------------
 // class methods
 //-------------------------------------------------------------------------
 
-int FileDataOption::eval(Cursor& c, Packet*)
+IpsOption::EvalStatus FileDataOption::eval(Cursor& c, Packet*)
 {
     Profile profile(fileDataPerfStats);
 
@@ -56,11 +55,11 @@ int FileDataOption::eval(Cursor& c, Packet*)
     DetectionEngine::get_file_data(dp);
 
     if ( !dp.data || !dp.len )
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     c.set(s_name, dp.data, dp.len);
 
-    return DETECTION_OPTION_MATCH;
+    return MATCH;
 }
 
 //-------------------------------------------------------------------------

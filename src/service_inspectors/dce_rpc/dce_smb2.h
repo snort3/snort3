@@ -19,8 +19,8 @@
 // SMB2 file processing
 // Author(s):  Hui Cao <huica@cisco.com>
 
-#ifndef _DCE_SMB2_H_
-#define _DCE_SMB2_H_
+#ifndef DCE_SMB2_H
+#define DCE_SMB2_H
 
 #include "dce_smb.h"
 

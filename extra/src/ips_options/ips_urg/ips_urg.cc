@@ -18,7 +18,6 @@
 
 // ips_urg.cc author Russ Combs <rucombs@cisco.com>
 
-#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "framework/range.h"
@@ -45,7 +44,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 private:
     RangeCheck config;
@@ -74,19 +73,17 @@ bool TcpUrgOption::operator==(const IpsOption& ips) const
     return ( config == rhs.config );
 }
 
-int TcpUrgOption::eval(Cursor&, Packet* p)
+IpsOption::EvalStatus TcpUrgOption::eval(Cursor&, Packet* p)
 {
     Profile profile(tcpUrgPerfStats);
-
-    int rval = DETECTION_OPTION_NO_MATCH;
 
     if ( p->ptrs.tcph and p->ptrs.tcph->are_flags_set(TH_URG) and
         config.eval(p->ptrs.tcph->urp()) )
     {
-        rval = DETECTION_OPTION_MATCH;
+        return MATCH;
     }
 
-    return rval;
+    return NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

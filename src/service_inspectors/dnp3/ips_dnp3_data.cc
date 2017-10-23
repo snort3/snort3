@@ -23,7 +23,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -51,7 +50,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 };
 
 uint32_t Dnp3DataOption::hash() const
@@ -69,17 +68,17 @@ bool Dnp3DataOption::operator==(const IpsOption& ips) const
     return !strcmp(get_name(), ips.get_name());
 }
 
-int Dnp3DataOption::eval(Cursor& c, Packet* p)
+IpsOption::EvalStatus Dnp3DataOption::eval(Cursor& c, Packet* p)
 {
     Profile profile(dnp3_data_perf_stats);
 
     if ((p->has_tcp_data() && !p->is_full_pdu()) || !p->flow || !p->dsize)
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     Dnp3FlowData* fd = (Dnp3FlowData*)p->flow->get_flow_data(Dnp3FlowData::inspector_id);
 
     if (!fd)
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     dnp3_session_data_t* dnp3_session = &fd->dnp3_session;
     dnp3_reassembly_data_t* rdata;
@@ -91,11 +90,11 @@ int Dnp3DataOption::eval(Cursor& c, Packet* p)
 
     /* Only evaluate rules against complete Application-layer fragments */
     if (rdata->state != DNP3_REASSEMBLY_STATE__DONE)
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     c.set(s_name,(uint8_t*)rdata->buffer, rdata->buflen);
 
-    return DETECTION_OPTION_MATCH;
+    return MATCH;
 }
 
 //-------------------------------------------------------------------------

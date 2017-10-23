@@ -75,9 +75,11 @@ public:
     // packet threads
     virtual bool is_relative() { return false; }
     virtual bool fp_research() { return false; }
-    virtual int eval(class Cursor&, Packet*) { return true; }
     virtual bool retry() { return false; }
     virtual void action(Packet*) { }
+
+    enum EvalStatus { NO_MATCH, MATCH, NO_ALERT, FAILED_BIT };
+    virtual EvalStatus eval(class Cursor&, Packet*) { return MATCH; }
 
     option_type_t get_type() const { return type; }
     const char* get_name() const { return name; }

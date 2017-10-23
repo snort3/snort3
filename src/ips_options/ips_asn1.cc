@@ -53,7 +53,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -93,7 +92,7 @@ public:
     bool is_relative() override
     { return ( config.offset_type == REL_OFFSET ); }
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 private:
     ASN1_CTXT config;
@@ -152,19 +151,18 @@ bool Asn1Option::operator==(const IpsOption& rhs) const
     return false;
 }
 
-int Asn1Option::eval(Cursor& c, Packet* p)
+IpsOption::EvalStatus Asn1Option::eval(Cursor& c, Packet* p)
 {
     Profile profile(asn1PerfStats);
 
     //  Failed if there is no data to decode.
     if (!p->data)
-        return DETECTION_OPTION_NO_MATCH;
-
+        return NO_MATCH;
 
     if ( Asn1DoDetect(c.buffer(), c.size(), &config, c.start()) )
-        return DETECTION_OPTION_MATCH;
+        return MATCH;
 
-    return DETECTION_OPTION_NO_MATCH;
+    return NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

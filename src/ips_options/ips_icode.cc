@@ -21,7 +21,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "framework/range.h"
@@ -44,7 +43,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 private:
     RangeCheck config;
@@ -77,18 +76,18 @@ bool IcodeOption::operator==(const IpsOption& ips) const
     return ( config == rhs.config );
 }
 
-int IcodeOption::eval(Cursor&, Packet* p)
+IpsOption::EvalStatus IcodeOption::eval(Cursor&, Packet* p)
 {
     Profile profile(icmpCodePerfStats);
 
     // return 0  if we don't have an icmp header
     if (!p->ptrs.icmph)
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     if ( config.eval(p->ptrs.icmph->code) )
-        return DETECTION_OPTION_MATCH;
+        return MATCH;
 
-    return DETECTION_OPTION_NO_MATCH;
+    return NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

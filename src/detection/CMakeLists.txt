@@ -1,7 +1,6 @@
 
 set (DETECTION_INCLUDES
     detect.h
-    detection_defines.h
     detection_engine.h
     detection_options.h
     detection_util.h

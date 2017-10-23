@@ -327,6 +327,22 @@ static void ff_src_port(Args& a)
         TextLog_Print(csv_log, "%u", a.pkt->ptrs.sp);
 }
 
+static void ff_target(Args& a)
+{
+    const char* addr;
+
+    if ( a.event.sig_info->target == TARGET_SRC )
+        addr = a.pkt->ptrs.ip_api.get_src()->ntoa();
+
+    else if ( a.event.sig_info->target == TARGET_DST )
+        addr = a.pkt->ptrs.ip_api.get_dst()->ntoa();
+
+    else
+        return;
+
+    TextLog_Print(csv_log, "%s", addr);
+}
+
 static void ff_tcp_ack(Args& a)
 {
     if (a.pkt->ptrs.tcph )
@@ -413,7 +429,7 @@ static const CsvFunc csv_func[] =
     ff_icmp_code, ff_icmp_id, ff_icmp_seq, ff_icmp_type, ff_iface, ff_ip_id,
     ff_ip_len, ff_msg, ff_mpls, ff_pkt_gen, ff_pkt_len, ff_pkt_num, ff_priority,
     ff_proto, ff_rev, ff_rule, ff_service, ff_sid, ff_src_addr, ff_src_ap,
-    ff_src_port, ff_tcp_ack, ff_tcp_flags, ff_tcp_len, ff_tcp_seq,
+    ff_src_port, ff_target, ff_tcp_ack, ff_tcp_flags, ff_tcp_len, ff_tcp_seq,
     ff_tcp_win, ff_timestamp, ff_tos, ff_ttl, ff_udp_len, ff_vlan
 };
 
@@ -423,7 +439,7 @@ static const CsvFunc csv_func[] =
     "icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | " \
     "ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority | " \
     "proto | rev | rule | service | sid | src_addr | src_ap | " \
-    "src_port | tcp_ack | tcp_flags | tcp_len | tcp_seq | " \
+    "src_port | target | tcp_ack | tcp_flags | tcp_len | tcp_seq | " \
     "tcp_win | timestamp | tos | ttl | udp_len | vlan"
 
 #define csv_deflt \

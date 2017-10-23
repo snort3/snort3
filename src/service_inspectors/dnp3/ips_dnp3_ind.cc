@@ -23,7 +23,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/sfhashfcn.h"
@@ -51,7 +50,7 @@ public:
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 private:
     uint16_t flags;
@@ -77,34 +76,34 @@ bool Dnp3IndOption::operator==(const IpsOption& ips) const
     return (flags == rhs.flags);
 }
 
-int Dnp3IndOption::eval(Cursor&, Packet* p)
+IpsOption::EvalStatus Dnp3IndOption::eval(Cursor&, Packet* p)
 {
     Profile profile(dnp3_ind_perf_stats);
 
     if ((p->has_tcp_data() && !p->is_full_pdu()) || !p->flow || !p->dsize)
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     Dnp3FlowData* fd = (Dnp3FlowData*)p->flow->get_flow_data(Dnp3FlowData::inspector_id);
 
     if (!fd)
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     dnp3_session_data_t* dnp3_session = &fd->dnp3_session;
 
     /* Internal Indications only apply to DNP3 responses, not requests. */
     if (dnp3_session->direction == DNP3_CLIENT)
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     dnp3_reassembly_data_t* rdata = &(dnp3_session->server_rdata);
 
     /* Only evaluate rules against complete Application-layer fragments */
     if (rdata->state != DNP3_REASSEMBLY_STATE__DONE)
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     if (dnp3_session->indications & flags)
-        return DETECTION_OPTION_MATCH;
+        return MATCH;
 
-    return DETECTION_OPTION_NO_MATCH;
+    return NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

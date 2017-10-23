@@ -365,20 +365,6 @@ static const ConvertMap rule_ip_proto =
 
 const ConvertMap* ip_proto_map = &rule_ip_proto;
 
-
-/************************************
- ************  LOG TO  **************
- ************************************/
-
-static const std::string logto = "logto";
-static const ConvertMap rule_logto =
-{
-    logto,
-    unchanged_rule_ctor<& logto>,
-};
-
-const ConvertMap* logto_map = &rule_logto;
-
 /************************************
  *************  SESSION  ************
  ************************************/

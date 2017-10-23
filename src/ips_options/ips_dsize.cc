@@ -21,7 +21,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "framework/range.h"
@@ -44,7 +43,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 private:
     RangeCheck config;
@@ -79,19 +78,19 @@ bool DsizeOption::operator==(const IpsOption& ips) const
 }
 
 // Test the packet's payload size against the rule payload size value
-int DsizeOption::eval(Cursor&, Packet* p)
+IpsOption::EvalStatus DsizeOption::eval(Cursor&, Packet* p)
 {
     Profile profile(dsizePerfStats);
 
     /* fake packet dsizes are always wrong
        (unless they are PDUs) */
     if ((p->packet_flags & PKT_REBUILT_STREAM) && !p->is_pdu_start())
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     if ( config.eval(p->dsize) )
-        return DETECTION_OPTION_MATCH;
+        return MATCH;
 
-    return DETECTION_OPTION_NO_MATCH;
+    return NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

@@ -21,7 +21,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "detection/treenodes.h"
 #include "framework/decode_data.h"
 #include "framework/ips_option.h"

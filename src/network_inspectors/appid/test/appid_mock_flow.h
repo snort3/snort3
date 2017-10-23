@@ -18,8 +18,8 @@
 
 // appid_mock_flow.h author davis mcpherson <davmcphe@cisco.com>
 
-#ifndef APPID_MOCK_FLOW_H_
-#define APPID_MOCK_FLOW_H_
+#ifndef APPID_MOCK_FLOW_H
+#define APPID_MOCK_FLOW_H
 
 FlowData::FlowData(unsigned, Inspector*)
 {

@@ -37,6 +37,7 @@ SET( PLUGIN_LIST
     ips_sid.cc
     ips_soid.cc
     ips_tag.cc
+    ips_target.cc
     ips_tos.cc
     ips_ttl.cc
     ips_window.cc
@@ -123,6 +124,7 @@ else (STATIC_IPS_OPTIONS)
     add_dynamic_module(ips_session ips_options ips_session.cc)
     add_dynamic_module(ips_soid ips_options ips_soid.cc)
     add_dynamic_module(ips_tag ips_options ips_tag.cc)
+    add_dynamic_module(ips_target ips_options ips_target.cc)
     add_dynamic_module(ips_tos ips_options ips_tos.cc)
     add_dynamic_module(ips_ttl ips_options ips_ttl.cc)
     add_dynamic_module(ips_window ips_options ips_window.cc)

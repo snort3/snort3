@@ -45,7 +45,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 private:
     const char* soid;
@@ -92,7 +92,7 @@ bool SoOption::operator==(const IpsOption& ips) const
     return true;
 }
 
-int SoOption::eval(Cursor& c, Packet* p)
+IpsOption::EvalStatus SoOption::eval(Cursor& c, Packet* p)
 {
     Profile profile(soPerfStats);
     return func(data, c, p);

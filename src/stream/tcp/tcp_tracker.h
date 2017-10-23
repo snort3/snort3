@@ -19,8 +19,8 @@
 // tcp_tracker.h author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Dec 1, 2015
 
-#ifndef TCP_TRACKER_H_
-#define TCP_TRACKER_H_
+#ifndef TCP_TRACKER_H
+#define TCP_TRACKER_H
 
 #include "stream/libtcp/tcp_stream_tracker.h"
 

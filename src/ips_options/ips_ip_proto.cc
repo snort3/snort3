@@ -23,7 +23,6 @@
 
 #include <netdb.h>
 
-#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/sfhashfcn.h"
@@ -57,7 +56,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
     IpProtoData* get_data()
     { return &config; }
@@ -103,7 +102,7 @@ bool IpProtoOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int IpProtoOption::eval(Cursor&, Packet* p)
+IpsOption::EvalStatus IpProtoOption::eval(Cursor&, Packet* p)
 {
     Profile profile(ipProtoPerfStats);
 
@@ -112,7 +111,7 @@ int IpProtoOption::eval(Cursor&, Packet* p)
     if (!p->has_ip())
     {
         DebugMessage(DEBUG_IPS_OPTION,"Not IP\n");
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
     }
 
     const IpProtocol ip_proto = p->get_ip_proto_next();
@@ -121,31 +120,31 @@ int IpProtoOption::eval(Cursor&, Packet* p)
     {
     case IP_PROTO__EQUAL:
         if (ip_proto == ipd->protocol)
-            return DETECTION_OPTION_MATCH;
+            return MATCH;
 
         break;
 
     case IP_PROTO__NOT_EQUAL:
         if (ip_proto != ipd->protocol)
-            return DETECTION_OPTION_MATCH;
+            return MATCH;
 
         break;
 
     case IP_PROTO__GREATER_THAN:
         if (ip_proto > ipd->protocol)
-            return DETECTION_OPTION_MATCH;
+            return MATCH;
 
         break;
 
     case IP_PROTO__LESS_THAN:
         if (ip_proto < ipd->protocol)
-            return DETECTION_OPTION_MATCH;
+            return MATCH;
 
         break;
     }
 
     /* if the test isn't successful, this function *must* return 0 */
-    return DETECTION_OPTION_NO_MATCH;
+    return NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

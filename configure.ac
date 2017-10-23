@@ -327,8 +327,8 @@ fi
 AM_CONDITIONAL(ENABLE_SHELL, test "x$enable_shell" = "xyes")
 
 AC_ARG_ENABLE(stdlog,
-    AS_HELP_STRING([--disable-stdlog],[do not prefer file descriptor 3 over stdout for alerts]),
-    enable_stdlog="$enableval", enable_stdlog="yes")
+    AS_HELP_STRING([--enable-stdlog],[use file descriptor 3 instead of stdout for alerts]),
+    enable_stdlog="$enableval", enable_stdlog="no")
 
 if test "x$enable_stdlog" = "xyes"; then
     AC_DEFINE(USE_STDLOG, [1], [enable stdlog])

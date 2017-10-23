@@ -23,7 +23,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "framework/cursor.h"
 #include "framework/endianness.h"
 #include "framework/ips_option.h"
@@ -92,7 +91,7 @@ public:
     bool is_relative() override
     { return config.relative_flag; }
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 private:
     const ByteMathData config;
@@ -159,12 +158,12 @@ bool ByteMathOption::operator==(const IpsOption& ips) const
 // api
 //-------------------------------------------------------------------------
 
-int ByteMathOption::eval(Cursor& c, Packet* p)
+IpsOption::EvalStatus ByteMathOption::eval(Cursor& c, Packet* p)
 {
     Profile profile(byteMathPerfStats);
 
     if (p == nullptr)
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     const uint8_t* start = c.buffer();
     int dsize = c.size();
@@ -178,7 +177,7 @@ int ByteMathOption::eval(Cursor& c, Packet* p)
     {
         GetVarValueByIndex(&rvalue, config.rvalue_var);
         if (rvalue == 0)
-            return DETECTION_OPTION_NO_MATCH;
+            return NO_MATCH;
     }
     else
         rvalue = config.rvalue;
@@ -202,14 +201,14 @@ int ByteMathOption::eval(Cursor& c, Packet* p)
 
     // check bounds
     if (ptr < start || ptr >= end)
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     uint8_t endian = config.endianess;
     if (config.endianess == ENDIAN_FUNC)
     {
         if (!p->endianness ||
             !p->endianness->get_offset_endianness(ptr - p->data, endian))
-            return DETECTION_OPTION_NO_MATCH;
+            return NO_MATCH;
     }
 
     // do the extraction
@@ -220,7 +219,7 @@ int ByteMathOption::eval(Cursor& c, Packet* p)
     {
         ret = byte_extract(endian, config.bytes_to_extract, ptr, start, end, &value);
         if (ret < 0)
-            return DETECTION_OPTION_NO_MATCH;
+            return NO_MATCH;
 
         bytes_read = config.bytes_to_extract;
     }
@@ -228,7 +227,7 @@ int ByteMathOption::eval(Cursor& c, Packet* p)
     {
         ret = string_extract(config.bytes_to_extract, config.base, ptr, start, end, &value);
         if (ret < 0)
-            return DETECTION_OPTION_NO_MATCH;
+            return NO_MATCH;
 
         bytes_read = ret;
     }
@@ -270,7 +269,7 @@ int ByteMathOption::eval(Cursor& c, Packet* p)
 
     SetVarValueByIndex(value, config.result_var);
 
-    return DETECTION_OPTION_MATCH;
+    return MATCH;
 }
 
 //-------------------------------------------------------------------------

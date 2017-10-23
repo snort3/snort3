@@ -30,7 +30,6 @@
 
 #include <cassert>
 
-#include "detection/detection_defines.h"
 #include "detection/pattern_match_data.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
@@ -100,7 +99,7 @@ public:
     PatternMatchData* get_pattern(int, RuleDirection) override
     { return &config.pmd; }
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 private:
     RegexConfig config;
@@ -164,7 +163,7 @@ static int hs_match(
     return 1;  // stop search
 }
 
-int RegexOption::eval(Cursor& c, Packet*)
+IpsOption::EvalStatus RegexOption::eval(Cursor& c, Packet*)
 {
     Profile profile(regex_perf_stats);
 
@@ -174,7 +173,7 @@ int RegexOption::eval(Cursor& c, Packet*)
         pos = c.get_pos();
 
     if ( pos > c.size() )
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     SnortState* ss = snort_conf->state + get_instance_id();
     assert(ss->regex_scratch);
@@ -189,9 +188,9 @@ int RegexOption::eval(Cursor& c, Packet*)
     {
         c.set_pos(s_to);
         c.set_delta(s_to);
-        return DETECTION_OPTION_MATCH;
+        return MATCH;
     }
-    return DETECTION_OPTION_NO_MATCH;
+    return NO_MATCH;
 }
 
 bool RegexOption::retry()

@@ -39,7 +39,6 @@
 
 #include <cstdlib>
 
-#include "detection/detection_defines.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -75,7 +74,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
     IsDataAtData* get_data()
     { return &config; }
@@ -126,26 +125,24 @@ bool IsDataAtOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int IsDataAtOption::eval(Cursor& c, Packet*)
+IpsOption::EvalStatus IsDataAtOption::eval(Cursor& c, Packet*)
 {
     Profile profile(isDataAtPerfStats);
-
-    IsDataAtData* isdata = &config;
 
     int offset;
 
     // Get values from byte_extract variables, if present.
-    if (isdata->offset_var >= 0 && isdata->offset_var < NUM_IPS_OPTIONS_VARS)
+    if (config.offset_var >= 0 && config.offset_var < NUM_IPS_OPTIONS_VARS)
     {
         uint32_t value;
-        GetVarValueByIndex(&(value), isdata->offset_var);
+        GetVarValueByIndex(&(value), config.offset_var);
         offset = (int)value;
     }
     else
-        offset = isdata->offset;
+        offset = config.offset;
 
     const uint8_t* start_ptr;
-    if ( isdata->flags & ISDATAAT_RELATIVE_FLAG )
+    if ( config.flags & ISDATAAT_RELATIVE_FLAG )
     {
         start_ptr = c.start();
     }
@@ -154,19 +151,13 @@ int IsDataAtOption::eval(Cursor& c, Packet*)
         start_ptr = c.buffer();
     }
     start_ptr += offset;
+    EvalStatus rval = NO_MATCH;
 
-    int rval = DETECTION_OPTION_NO_MATCH;
     if (inBounds(c.buffer(), c.endo(), start_ptr))
-    {
-        DebugMessage(DEBUG_PATTERN_MATCH,
-            "[*] IsDataAt succeeded!  there is data...\n");
-        rval = DETECTION_OPTION_MATCH;
-    }
+        rval = MATCH;
 
-    if (isdata->flags & ISDATAAT_NOT_FLAG)
-    {
-        rval = !rval;
-    }
+    if (config.flags & ISDATAAT_NOT_FLAG)
+        rval = (rval == MATCH) ? NO_MATCH : MATCH;
 
     // otherwise dump
     return rval;

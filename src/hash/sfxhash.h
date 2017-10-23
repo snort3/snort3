@@ -146,9 +146,12 @@ SO_PUBLIC void sfxhash_gmovetofront(SFXHASH* t, SFXHASH_NODE* hnode);
 
 SO_PUBLIC int sfxhash_free_node(SFXHASH* t, SFXHASH_NODE* node);
 
-SO_PUBLIC int sfxhash_set_keyops(SFXHASH* h,
-    unsigned (* hash_fcn)(SFHASHFCN* p, const unsigned char* d, int n),
-    int (* keycmp_fcn)(const void* s1, const void* s2, size_t n));
+typedef uint32_t (* hash_func)(SFHASHFCN*, const unsigned char* d, int n);
+
+// return 0 for ==, 1 for != ; FIXIT-L convert to bool
+typedef int (* keycmp_func)(const void* s1, const void* s2, size_t n);
+
+SO_PUBLIC void sfxhash_set_keyops(SFXHASH* h, hash_func, keycmp_func);
 
 SO_PUBLIC SFXHASH_NODE* sfxhash_gfindfirst(SFXHASH* t);
 SO_PUBLIC SFXHASH_NODE* sfxhash_gfindnext(SFXHASH* t);

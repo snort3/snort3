@@ -35,6 +35,7 @@ src/codecs/cd_eapol/Makefile \
 src/codecs/cd_linux_sll/Makefile \
 src/codecs/cd_null/Makefile \
 src/codecs/cd_pflog/Makefile \
+src/codecs/cd_pbb/Makefile \
 src/codecs/cd_pim/Makefile \
 src/codecs/cd_ppp/Makefile \
 src/codecs/cd_raw4/Makefile \
@@ -52,9 +53,12 @@ src/inspectors/reg_test/Makefile \
 src/ips_options/Makefile \
 src/ips_options/find/Makefile \
 src/ips_options/ips_pkt_num/Makefile \
+src/ips_options/ips_mss/Makefile \
 src/ips_options/ips_urg/Makefile \
+src/ips_options/ips_wscale/Makefile \
 src/loggers/Makefile \
 src/loggers/alert_ex/Makefile \
+src/loggers/alert_json/Makefile \
 src/loggers/alert_lua/Makefile \
 src/loggers/alert_unixsock/Makefile \
 src/loggers/log_null/Makefile \

@@ -26,7 +26,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/sfhashfcn.h"
@@ -55,7 +54,7 @@ public:
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 private:
     SipStatCodeRuleOptData ssod;
@@ -87,22 +86,22 @@ bool SipStatCodeOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int SipStatCodeOption::eval(Cursor&, Packet* p)
+IpsOption::EvalStatus SipStatCodeOption::eval(Cursor&, Packet* p)
 {
     Profile profile(sipStatCodeRuleOptionPerfStats);
 
     if ((!p->is_tcp() && !p->is_udp()) || !p->flow || !p->dsize)
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     SIPData* sd = get_sip_session_data(p->flow);
 
     if (!sd)
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     SIP_Roptions* ropts = &sd->ropts;
 
     if (0 == ropts->status_code)
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     // Match the stat code
     uint16_t short_code = ropts->status_code / 100;
@@ -114,10 +113,10 @@ int SipStatCodeOption::eval(Cursor&, Packet* p)
             break;
 
         if ( stat_code == short_code || stat_code == ropts->status_code )
-            return DETECTION_OPTION_MATCH;
+            return MATCH;
     }
 
-    return DETECTION_OPTION_NO_MATCH;
+    return NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

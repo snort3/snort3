@@ -23,7 +23,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "detection/detection_util.h"
 #include "detection/treenodes.h"
 #include "hash/sfhashfcn.h"
@@ -68,7 +67,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 private:
     Base64DecodeData config;
@@ -113,7 +112,7 @@ bool Base64DecodeOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int Base64DecodeOption::eval(Cursor& c, Packet*)
+IpsOption::EvalStatus Base64DecodeOption::eval(Cursor& c, Packet*)
 {
     Profile profile(base64PerfStats);
     base64_decode_size = 0;
@@ -134,7 +133,7 @@ int Base64DecodeOption::eval(Cursor& c, Packet*)
     }
 
     if ( idx->offset >= size )
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     start_ptr += idx->offset;
     size -= idx->offset;
@@ -143,7 +142,7 @@ int Base64DecodeOption::eval(Cursor& c, Packet*)
     uint32_t base64_size = 0;
 
     if (sf_unfold_header(start_ptr, size, base64_buf, sizeof(base64_buf), &base64_size, 0, nullptr) != 0)
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     if (idx->bytes_to_decode && (base64_size > idx->bytes_to_decode))
     {
@@ -152,9 +151,9 @@ int Base64DecodeOption::eval(Cursor& c, Packet*)
 
     if (sf_base64decode(base64_buf, base64_size, (uint8_t*)base64_decode_buf,
         sizeof(base64_decode_buf), &base64_decode_size) != 0)
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
-    return DETECTION_OPTION_MATCH;
+    return MATCH;
 }
 
 //-------------------------------------------------------------------------
@@ -281,19 +280,19 @@ public:
     CursorActionType get_cursor_type() const override
     { return CAT_SET_OTHER; }
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 };
 
-int Base64DataOption::eval(Cursor& c, Packet*)
+IpsOption::EvalStatus Base64DataOption::eval(Cursor& c, Packet*)
 {
     Profile profile(base64PerfStats);
 
     if ( !base64_decode_size )
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     c.set(s_data_name, base64_decode_buf, base64_decode_size);
 
-    return DETECTION_OPTION_MATCH;
+    return MATCH;
 }
 
 //-------------------------------------------------------------------------

@@ -26,20 +26,19 @@
 
 static const std::string start_comments =
     "\nCOMMENTS:\n"
-    "    these lines were commented "
-    "in the configuration file.\n\n";
+    "    These lines were commented in the configuration file:\n\n";
 
 static const std::string start_unsupported =
     "\nUNSUPPORTED:\n"
-    "    these configuration items are not currently supported\n\n";
+    "    These configuration items are not currently supported:\n\n";
 
 static const std::string start_errors =
     "\nERRORS:\n"
-    "    all of these occurred during the attempted conversion:\n\n";
+    "    All of these occurred during the attempted conversion:\n\n";
 
 static const std::string start_bad_rules =
     "\nFAILED RULES CONVERSIONS:\n"
-    "    These rules has invalid rule options\n\n";
+    "    These rules have invalid rule options:\n\n";
 
 class Comments
 {

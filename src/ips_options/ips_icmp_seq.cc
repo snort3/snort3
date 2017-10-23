@@ -43,7 +43,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "framework/range.h"
@@ -67,7 +66,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 private:
     RangeCheck config;
@@ -100,12 +99,12 @@ bool IcmpSeqOption::operator==(const IpsOption& ips) const
     return ( config == rhs.config );
 }
 
-int IcmpSeqOption::eval(Cursor&, Packet* p)
+IpsOption::EvalStatus IcmpSeqOption::eval(Cursor&, Packet* p)
 {
     Profile profile(icmpSeqPerfStats);
 
     if (!p->ptrs.icmph)
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     if ( (p->ptrs.icmph->type == ICMP_ECHO ||
         p->ptrs.icmph->type == ICMP_ECHOREPLY) ||
@@ -113,12 +112,11 @@ int IcmpSeqOption::eval(Cursor&, Packet* p)
         (uint8_t)p->ptrs.icmph->type == icmp::Icmp6Types::ECHO_REPLY) )
     {
         uint16_t icmp_seq = ntohs(p->ptrs.icmph->s_icmp_seq);
+
         if ( config.eval( icmp_seq ) )
-        {
-            return DETECTION_OPTION_MATCH;
-        }
+            return MATCH;
     }
-    return DETECTION_OPTION_NO_MATCH;
+    return NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

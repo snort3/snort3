@@ -19,8 +19,8 @@
 // tcp_stream_session.h author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Feb 18, 2016
 
-#ifndef TCP_STREAM_SESSION_H_
-#define TCP_STREAM_SESSION_H_
+#ifndef TCP_STREAM_SESSION_H
+#define TCP_STREAM_SESSION_H
 
 #include "detection/detection_engine.h"
 #include "flow/session.h"

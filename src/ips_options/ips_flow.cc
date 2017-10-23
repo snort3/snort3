@@ -24,7 +24,6 @@
 
 #include "ips_flow.h"
 
-#include "detection/detection_defines.h"
 #include "detection/treenodes.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -63,7 +62,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 //private:
     FlowCheckData config;  // FIXIT-L privatize
@@ -114,7 +113,7 @@ bool FlowCheckOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int FlowCheckOption::eval(Cursor&, Packet* p)
+IpsOption::EvalStatus FlowCheckOption::eval(Cursor&, Packet* p)
 {
     Profile profile(flowCheckPerfStats);
 
@@ -126,13 +125,13 @@ int FlowCheckOption::eval(Cursor&, Packet* p)
         {
             // This option requires an established connection and it isn't
             // in that state yet, so no match.
-            return DETECTION_OPTION_NO_MATCH;
+            return NO_MATCH;
         }
         else if ((fcd->unestablished == 1) && (p->packet_flags & PKT_STREAM_EST))
         {
             //  We're looking for an unestablished stream, and this is
             //  established, so don't continue processing.
-            return DETECTION_OPTION_NO_MATCH;
+            return NO_MATCH;
         }
     }
 
@@ -143,7 +142,7 @@ int FlowCheckOption::eval(Cursor&, Packet* p)
             if (!p->is_from_client() && p->is_from_server())
             {
                 // No match on from_client
-                return DETECTION_OPTION_NO_MATCH;
+                return NO_MATCH;
             }
         }
     }
@@ -155,7 +154,7 @@ int FlowCheckOption::eval(Cursor&, Packet* p)
             if (!p->is_from_server() && p->is_from_client())
             {
                 // No match on from_server
-                return DETECTION_OPTION_NO_MATCH;
+                return NO_MATCH;
             }
         }
     }
@@ -165,7 +164,7 @@ int FlowCheckOption::eval(Cursor&, Packet* p)
     {
         if (p->packet_flags & PKT_REBUILT_STREAM)
         {
-            return DETECTION_OPTION_NO_MATCH;
+            return NO_MATCH;
         }
     }
 
@@ -173,7 +172,7 @@ int FlowCheckOption::eval(Cursor&, Packet* p)
     {
         if (p->packet_flags & PKT_REBUILT_FRAG)
         {
-            return DETECTION_OPTION_NO_MATCH;
+            return NO_MATCH;
         }
     }
 
@@ -182,7 +181,7 @@ int FlowCheckOption::eval(Cursor&, Packet* p)
     {
         if ( !p->has_paf_payload() )
         {
-            return DETECTION_OPTION_NO_MATCH;
+            return NO_MATCH;
         }
     }
 
@@ -190,11 +189,11 @@ int FlowCheckOption::eval(Cursor&, Packet* p)
     {
         if (!(p->packet_flags & PKT_REBUILT_FRAG))
         {
-            return DETECTION_OPTION_NO_MATCH;
+            return NO_MATCH;
         }
     }
 
-    return DETECTION_OPTION_MATCH;
+    return MATCH;
 }
 
 //-------------------------------------------------------------------------

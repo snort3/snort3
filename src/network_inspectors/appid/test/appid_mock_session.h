@@ -18,8 +18,8 @@
 
 // appid_mock_session.h author davis mcpherson <davmcphe@cisco.com>
 
-#ifndef APPID_MOCK_SESSION_H_
-#define APPID_MOCK_SESSION_H_
+#ifndef APPID_MOCK_SESSION_H
+#define APPID_MOCK_SESSION_H
 
 #include "appid_mock_flow.h"
 #include "appid_mock_http_session.h"

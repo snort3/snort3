@@ -29,13 +29,13 @@
 
 #include "rtn_checks.h"
 
+#include "framework/ips_option.h"
 #include "main/snort_debug.h"
 #include "ports/port_object.h"
 #include "protocols/packet.h"
 #include "sfip/sf_ip.h"
 #include "sfip/sf_ipvar.h"
 
-#include "detection_defines.h"
 #include "rules.h"
 #include "treenodes.h"
 
@@ -439,6 +439,6 @@ int RuleListEnd(Packet*, RuleTreeNode*, RuleFpList*, int)
 
 int OptListEnd(void*, Cursor&, Packet*)
 {
-    return DETECTION_OPTION_MATCH;
+    return (int)IpsOption::MATCH;
 }
 

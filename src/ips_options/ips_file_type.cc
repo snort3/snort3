@@ -24,7 +24,6 @@
 
 #include <bitset>
 
-#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "file_api/file_flows.h"
@@ -46,7 +45,7 @@ public:
     CursorActionType get_cursor_type() const override
     { return CAT_NONE; }
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
     TypeBitSet types;
 };
@@ -60,30 +59,29 @@ FileTypeOption::FileTypeOption(TypeBitSet& t) : IpsOption(s_name)
     types = t;
 }
 
-int FileTypeOption::eval(Cursor&, Packet* pkt)
+IpsOption::EvalStatus FileTypeOption::eval(Cursor&, Packet* pkt)
 {
     Profile profile(fileTypePerfStats);
 
-    int ret = DETECTION_OPTION_NO_MATCH;
-
     if (!pkt->flow)
-        return ret;
+        return NO_MATCH;
 
     FileFlows* files = FileFlows::get_file_flows(pkt->flow);
 
     if (!files)
-        return ret;
+        return NO_MATCH;
 
     FileContext* file = files->get_current_file_context();
 
     if (!file)
-        return ret;
+        return NO_MATCH;
 
     uint32_t current_type = file->get_file_type();
-    if (current_type < types.size() and types[current_type] )
-        return DETECTION_OPTION_MATCH;
 
-    return ret;
+    if (current_type < types.size() and types[current_type] )
+        return MATCH;
+
+    return NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

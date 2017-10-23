@@ -5,7 +5,6 @@ x_includedir = $(pkgincludedir)/detection
 
 x_include_HEADERS = \
 detect.h \
-detection_defines.h \
 detection_engine.h \
 detection_options.h \
 detection_util.h \

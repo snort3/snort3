@@ -23,7 +23,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -50,7 +49,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 };
 
 uint32_t Dce2StubDataOption::hash() const
@@ -68,20 +67,20 @@ bool Dce2StubDataOption::operator==(const IpsOption& ips) const
     return !strcmp(get_name(), ips.get_name());
 }
 
-int Dce2StubDataOption::eval(Cursor& c, Packet* p)
+IpsOption::EvalStatus Dce2StubDataOption::eval(Cursor& c, Packet* p)
 {
     Profile profile(dce2_stub_data_perf_stats);
 
     if (p->dsize == 0)
     {
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
     }
 
     DCE2_SsnData* sd = get_dce2_session_data(p);
 
     if ((sd == nullptr) || DCE2_SsnNoInspect(sd))
     {
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
     }
 
     DCE2_Roptions* ropts = &sd->ropts;
@@ -90,10 +89,10 @@ int Dce2StubDataOption::eval(Cursor& c, Packet* p)
     {
         c.set(s_name, ropts->stub_data, (uint16_t)(p->dsize - (ropts->stub_data -
             p->data)));
-        return DETECTION_OPTION_MATCH;
+        return MATCH;
     }
 
-    return DETECTION_OPTION_NO_MATCH;
+    return NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

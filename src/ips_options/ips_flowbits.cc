@@ -43,7 +43,6 @@
 
 #include <forward_list>
 
-#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/sfghash.h"
@@ -140,7 +139,7 @@ static unsigned flowbits_count = 0;
 static unsigned flowbits_grp_count = 0;
 static int flowbits_toggle = 1;
 
-static int check_flowbits(
+static IpsOption::EvalStatus check_flowbits(
     uint8_t type, uint8_t evalType, uint16_t* ids, uint16_t num_ids,
     char* group, Packet* p);
 
@@ -156,7 +155,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
     bool is_set(uint8_t bits)
     { return (config->type & bits) != 0; }
@@ -246,14 +245,14 @@ bool FlowBitsOption::operator==(const IpsOption& ips) const
     return true;
 }
 
-int FlowBitsOption::eval(Cursor&, Packet* p)
+IpsOption::EvalStatus FlowBitsOption::eval(Cursor&, Packet* p)
 {
     Profile profile(flowBitsPerfStats);
 
     FLOWBITS_OP* flowbits = config;
 
     if (!flowbits)
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
 
     return check_flowbits(flowbits->type, (uint8_t)flowbits->eval,
@@ -395,10 +394,9 @@ static inline int is_set_flowbits(
     }
 }
 
-static int check_flowbits(
+static IpsOption::EvalStatus check_flowbits(
     uint8_t type, uint8_t evalType, uint16_t* ids, uint16_t num_ids, char* group, Packet* p)
 {
-    int rval = DETECTION_OPTION_NO_MATCH;
     Flowbits_eval eval = (Flowbits_eval)evalType;
     int result = 0;
     int i;
@@ -408,7 +406,7 @@ static int check_flowbits(
     if (!bitop)
     {
         assert(false);
-        return rval;
+        return IpsOption::NO_MATCH;
     }
 
     switch (type)
@@ -450,7 +448,7 @@ static int check_flowbits(
         }
         else
         {
-            rval = DETECTION_OPTION_FAILED_BIT;
+            return IpsOption::FAILED_BIT;
         }
 
         break;
@@ -462,7 +460,7 @@ static int check_flowbits(
         }
         else
         {
-            rval = DETECTION_OPTION_FAILED_BIT;
+            return IpsOption::FAILED_BIT;
         }
         break;
 
@@ -493,13 +491,13 @@ static int check_flowbits(
          **  in the detection chain, and still do bit ops after this
          **  option.
          */
-        return DETECTION_OPTION_NO_ALERT;
+        return IpsOption::NO_ALERT;
 
     default:
         /*
          **  Always return failure here.
          */
-        return rval;
+        return IpsOption::NO_MATCH;
     }
 
     /*
@@ -507,10 +505,10 @@ static int check_flowbits(
      */
     if (result == 1)
     {
-        rval = DETECTION_OPTION_MATCH;
+        return IpsOption::MATCH;
     }
 
-    return rval;
+    return IpsOption::NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

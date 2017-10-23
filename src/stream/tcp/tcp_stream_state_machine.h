@@ -19,8 +19,8 @@
 // tcp_stream_state_machine.h author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Apr 1, 2016
 
-#ifndef TCP_STREAM_STATE_MACHINE_H_
-#define TCP_STREAM_STATE_MACHINE_H_
+#ifndef TCP_STREAM_STATE_MACHINE_H
+#define TCP_STREAM_STATE_MACHINE_H
 
 #include "stream/libtcp/tcp_state_machine.h"
 

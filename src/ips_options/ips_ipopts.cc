@@ -22,7 +22,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/sfhashfcn.h"
@@ -50,7 +49,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
     IpOptionData* get_data()
     { return &config; }
@@ -96,41 +95,38 @@ bool IpOptOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int IpOptOption::eval(Cursor&, Packet* p)
+IpsOption::EvalStatus IpOptOption::eval(Cursor&, Packet* p)
 {
     Profile profile(ipOptionPerfStats);
-
-    IpOptionData* ipOptionData = &config;
-
-    DebugMessage(DEBUG_IPS_OPTION, "CheckIpOptions:");
 
     if ( !p->is_ip4() )
         // if error occurred while ip header
         // was processed, return 0 automatically.
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     const ip::IP4Hdr* const ip4h = p->ptrs.ip_api.get_ip4h();
     const uint8_t option_len = ip4h->get_opt_len();
 
-    if ((ipOptionData->any_flag == 1) && (option_len > 0))
+    if ((config.any_flag == 1) && (option_len > 0))
     {
         DebugMessage(DEBUG_IPS_OPTION, "Matched any ip options!\n");
-        return DETECTION_OPTION_MATCH;
+        return MATCH;
     }
 
     ip::IpOptionIterator iter(ip4h, p);
+
     for ( const ip::IpOptions& opt : iter)
     {
         DebugFormat(DEBUG_IPS_OPTION, "testing pkt(%d):rule(%d)\n",
-            static_cast<int>(ipOptionData->ip_option),
+            static_cast<int>(config.ip_option),
             static_cast<int>(opt.code));
 
-        if (ipOptionData->ip_option == opt.code)
-            return DETECTION_OPTION_MATCH;
+        if (config.ip_option == opt.code)
+            return MATCH;
 
     }
 
-    return DETECTION_OPTION_NO_MATCH;
+    return NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

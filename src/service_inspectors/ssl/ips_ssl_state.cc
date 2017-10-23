@@ -21,7 +21,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/sfhashfcn.h"
@@ -57,7 +56,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 private:
     SslStateRuleOptionData ssod;
@@ -95,25 +94,25 @@ bool SslStateOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int SslStateOption::eval(Cursor&, Packet* pkt)
+IpsOption::EvalStatus SslStateOption::eval(Cursor&, Packet* pkt)
 {
     Profile profile(sslStateRuleOptionPerfStats);
 
     if ( !(pkt->packet_flags & PKT_REBUILT_STREAM) && !pkt->is_full_pdu() )
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     if (!pkt->flow)
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     SSLData* sd = get_ssl_session_data(pkt->flow);
 
     if (!sd)
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     if ((ssod.flags & sd->ssn_flags) ^ ssod.mask)
-        return DETECTION_OPTION_MATCH;
+        return MATCH;
 
-    return DETECTION_OPTION_NO_MATCH;
+    return NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

@@ -43,7 +43,6 @@
 #include "stream/stream.h"
 #include "utils/stats.h"
 
-#include "detection_defines.h"
 #include "detection_engine.h"
 #include "fp_detect.h"
 #include "rules.h"

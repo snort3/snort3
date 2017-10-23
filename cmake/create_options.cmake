@@ -21,7 +21,7 @@ option ( ENABLE_PIGLET "enable piglet test harness" OFF )
 
 option ( ENABLE_COREFILES "Prevent Snort from generating core files" ON )
 option ( ENABLE_LARGE_PCAP "Enable support for pcaps larger than 2 GB" OFF )
-option ( ENABLE_STDLOG "Prefer file descriptor 3 over stdout for alerts" ON )
+option ( ENABLE_STDLOG "Use file descriptor 3 instead of stdout for alerts" OFF )
 option ( ENABLE_TSC_CLOCK "Use timestamp counter register clock (x86 only)" OFF )
 
 # documentation

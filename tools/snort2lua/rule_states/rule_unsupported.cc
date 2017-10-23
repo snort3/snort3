@@ -57,17 +57,20 @@ static const std::string activated_by = "activated_by";
 static const std::string activates = "activates";
 static const std::string count = "count";
 static const std::string ftpbounce = "ftpbounce";
+static const std::string logto = "logto";
 static const std::string sameip = "sameip";
 
 static const ConvertMap activated_by_api = { activated_by, unsupported_rule_ctor<&activated_by, true>};
 static const ConvertMap activates_api = { activates, unsupported_rule_ctor<&activates, true>};
 static const ConvertMap count_api = { count, unsupported_rule_ctor<&count, true>};
 static const ConvertMap ftpbounce_api = { ftpbounce, unsupported_rule_ctor<&ftpbounce, false>};
+static const ConvertMap logto_api = { logto, unsupported_rule_ctor<&logto, false>};
 static const ConvertMap sameip_api = { sameip, unsupported_rule_ctor<&sameip, false>};
 
 const ConvertMap* activated_by_map = &activated_by_api;
 const ConvertMap* activates_map = &activates_api;
 const ConvertMap* count_map = &count_api;
 const ConvertMap* ftpbounce_map = &ftpbounce_api;
+const ConvertMap* logto_map = &logto_api;
 const ConvertMap* sameip_map = &sameip_api;
 } // namespace rules

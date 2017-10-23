@@ -24,7 +24,6 @@
 
 // gtp_info rule option implementation
 
-#include "detection/detection_defines.h"
 #include "hash/sfhashfcn.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
@@ -54,7 +53,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 public:
     // byte n is for version n (named types can have 
@@ -96,17 +95,17 @@ bool GtpInfoOption::operator==(const IpsOption& ips) const
     return true;
 }
 
-int GtpInfoOption::eval(Cursor& c, Packet* p)
+IpsOption::EvalStatus GtpInfoOption::eval(Cursor& c, Packet* p)
 {
     Profile profile(gtp_info_prof);
 
     if ( !p or !p->flow )
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     GtpFlowData* gfd = (GtpFlowData*)p->flow->get_flow_data(GtpFlowData::inspector_id);
 
     if ( !gfd or !gfd->ropts.gtp_infoElements )
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     GTP_Roptions& ropts = gfd->ropts;
 
@@ -114,16 +113,16 @@ int GtpInfoOption::eval(Cursor& c, Packet* p)
     uint8_t ieType = types[ropts.gtp_version];
 
     if ( !ieType )
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     GTP_IEData* ieData = ropts.gtp_infoElements + ieType;
 
     // bail if the data is not up to date
     if ( ieData->msg_id != ropts.msg_id )
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     c.set(s_name, ieData->shift + ropts.gtp_header, ieData->length);
-    return DETECTION_OPTION_MATCH;
+    return MATCH;
 }
 
 //-------------------------------------------------------------------------

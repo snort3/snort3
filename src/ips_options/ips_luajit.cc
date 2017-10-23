@@ -21,7 +21,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "framework/cursor.h"
 #include "framework/decode_data.h"
 #include "framework/module.h"
@@ -121,7 +120,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*) override;
+    IpsOption::EvalStatus eval(Cursor&, Packet*) override;
 
 private:
     void init(const char*, const char*);
@@ -176,7 +175,7 @@ bool LuaJitOption::operator==(const IpsOption& ips) const
     return true;
 }
 
-int LuaJitOption::eval(Cursor& c, Packet*)
+IpsOption::EvalStatus LuaJitOption::eval(Cursor& c, Packet*)
 {
     Profile profile(luaIpsPerfStats);
 
@@ -193,13 +192,13 @@ int LuaJitOption::eval(Cursor& c, Packet*)
         {
             const char* err = lua_tostring(L, -1);
             ErrorMessage("%s\n", err);
-            return DETECTION_OPTION_NO_MATCH;
+            return NO_MATCH;
         }
 
         if ( lua_toboolean(L, -1) )
-            return DETECTION_OPTION_MATCH;
+            return MATCH;
 
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
     }
 }
 

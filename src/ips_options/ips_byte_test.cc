@@ -93,7 +93,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "framework/cursor.h"
 #include "framework/endianness.h"
 #include "framework/ips_option.h"
@@ -221,7 +220,7 @@ public:
     bool is_relative() override
     { return ( config.relative_flag == 1 ); }
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 private:
     ByteTestData config;
@@ -290,7 +289,7 @@ bool ByteTestOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int ByteTestOption::eval(Cursor& c, Packet* p)
+IpsOption::EvalStatus ByteTestOption::eval(Cursor& c, Packet* p)
 {
     Profile profile(byteTestPerfStats);
 
@@ -326,7 +325,7 @@ int ByteTestOption::eval(Cursor& c, Packet* p)
     {
         if (!p->endianness ||
             !p->endianness->get_offset_endianness(start_ptr - p->data, endian))
-            return DETECTION_OPTION_NO_MATCH;
+            return NO_MATCH;
     }
 
     uint32_t value = 0;
@@ -337,7 +336,7 @@ int ByteTestOption::eval(Cursor& c, Packet* p)
         if ( byte_extract(
             endian, btd->bytes_to_compare,
             start_ptr, c.buffer(), c.endo(), &value))
-            return DETECTION_OPTION_NO_MATCH;
+            return NO_MATCH;
 #ifdef DEBUG_MSGS
         payload_bytes_grabbed = (int)btd->bytes_to_compare;
 #endif
@@ -353,7 +352,7 @@ int ByteTestOption::eval(Cursor& c, Packet* p)
             DebugMessage(DEBUG_PATTERN_MATCH,
                 "String Extraction Failed\n");
 
-            return DETECTION_OPTION_NO_MATCH;
+            return NO_MATCH;
         }
     }
 
@@ -372,9 +371,9 @@ int ByteTestOption::eval(Cursor& c, Packet* p)
         payload_bytes_grabbed, btd->offset, value, value);
 
     if ( byte_test_check(btd->opcode, value, cmp_value, btd->not_flag) )
-        return DETECTION_OPTION_MATCH;
+        return MATCH;
 
-    return DETECTION_OPTION_NO_MATCH;
+    return NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

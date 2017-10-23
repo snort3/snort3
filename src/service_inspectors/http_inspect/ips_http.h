@@ -91,7 +91,7 @@ public:
         buffer_index(cm->buffer_index), cat(cm->cat), psi(cm->psi),
         inspect_section(cm->inspect_section), sub_id(cm->sub_id), form(cm->form) {}
     CursorActionType get_cursor_type() const override { return cat; }
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
     uint32_t hash() const override;
     bool operator==(const IpsOption& ips) const override;
     static IpsOption* opt_ctor(Module* m, OptTreeNode*)

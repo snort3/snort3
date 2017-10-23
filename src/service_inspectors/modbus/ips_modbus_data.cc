@@ -23,7 +23,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -49,7 +48,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 };
 
 uint32_t ModbusDataOption::hash() const
@@ -67,21 +66,22 @@ bool ModbusDataOption::operator==(const IpsOption& ips) const
     return !strcmp(get_name(), ips.get_name());
 }
 
-int ModbusDataOption::eval(Cursor& c, Packet* p)
+IpsOption::EvalStatus ModbusDataOption::eval(Cursor& c, Packet* p)
 {
     Profile profile(modbus_data_prof);
 
     if ( !p->flow )
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     if ( !p->is_full_pdu() )
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     if ( p->dsize < MODBUS_MIN_LEN )
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     c.set(s_name, p->data + MODBUS_MIN_LEN, p->dsize - MODBUS_MIN_LEN);
-    return DETECTION_OPTION_MATCH;
+
+    return MATCH;
 }
 
 //-------------------------------------------------------------------------

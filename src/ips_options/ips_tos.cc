@@ -21,7 +21,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "framework/range.h"
@@ -43,7 +42,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 public:
     RangeCheck config;
@@ -80,17 +79,17 @@ bool IpTosOption::operator==(const IpsOption& ips) const
  * value in the rule.  This is useful to detect things like the "bubonic" DoS tool.
  */
 
-int IpTosOption::eval(Cursor&, Packet* p)
+IpsOption::EvalStatus IpTosOption::eval(Cursor&, Packet* p)
 {
     Profile profile(ipTosPerfStats);
 
     if(!p->ptrs.ip_api.is_ip())
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     if ( config.eval(p->ptrs.ip_api.tos()) )
-        return DETECTION_OPTION_MATCH;
+        return MATCH;
 
-    return DETECTION_OPTION_NO_MATCH;
+    return NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

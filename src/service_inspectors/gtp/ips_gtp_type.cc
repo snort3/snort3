@@ -24,7 +24,6 @@
 
 // gtp_type rule option implementation
 
-#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/sfhashfcn.h"
@@ -53,7 +52,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 public:
     // set n is for version n (named types can have 
@@ -95,24 +94,24 @@ bool GtpTypeOption::operator==(const IpsOption& ips) const
     return true;
 }
 
-int GtpTypeOption::eval(Cursor&, Packet* p)
+IpsOption::EvalStatus GtpTypeOption::eval(Cursor&, Packet* p)
 {
     Profile profile(gtp_type_prof);
 
     if ( !p or !p->flow )
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     GtpFlowData* gfd = (GtpFlowData*)p->flow->get_flow_data(GtpFlowData::inspector_id);
 
     if ( !gfd )
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     GTP_Roptions& ropts = gfd->ropts;
 
     if ( !types[ropts.gtp_version].test(ropts.gtp_type) )
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
-    return DETECTION_OPTION_MATCH;
+    return MATCH;
 }
 
 //-------------------------------------------------------------------------

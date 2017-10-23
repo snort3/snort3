@@ -40,7 +40,7 @@ Optional Features:
     --disable-static-codecs do not include codecs in binary
     --enable-shell          enable command line shell support
     --enable-large-pcap     enable support for pcaps larger than 2 GB
-    --disable-stdlog        do not prefer file descriptor 3 over stdout for alerts
+    --enable-stdlog         use file descriptor 3 instead of stdout for alerts
     --enable-tsc-clock      use timestamp counter register clock (x86 only)
     --enable-debug-msgs     enable debug printing options (bugreports and
                             developers only)
@@ -229,8 +229,8 @@ while [ $# -ne 0 ]; do
         --enable-large-pcap)
             append_cache_entry ENABLE_LARGE_PCAP        BOOL true
             ;;
-        --disable-stdlog)
-            append_cache_entry ENABLE_STDLOG            BOOL false
+        --enable-stdlog)
+            append_cache_entry ENABLE_STDLOG            BOOL true
             ;;
         --enable-tsc-clock)
             append_cache_entry ENABLE_TSC_CLOCK         BOOL true

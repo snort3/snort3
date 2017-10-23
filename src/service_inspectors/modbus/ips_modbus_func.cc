@@ -23,7 +23,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/sfhashfcn.h"
@@ -97,7 +96,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 public:
     uint8_t func;
@@ -122,23 +121,23 @@ bool ModbusFuncOption::operator==(const IpsOption& ips) const
     return ( func == rhs.func );
 }
 
-int ModbusFuncOption::eval(Cursor&, Packet* p)
+IpsOption::EvalStatus ModbusFuncOption::eval(Cursor&, Packet* p)
 {
     Profile profile(modbus_func_prof);
 
     if ( !p->flow )
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     if ( !p->is_full_pdu() )
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     ModbusFlowData* mfd =
         (ModbusFlowData*)p->flow->get_flow_data(ModbusFlowData::inspector_id);
 
     if ( mfd and func == mfd->ssn_data.func )
-        return DETECTION_OPTION_MATCH;
+        return MATCH;
 
-    return DETECTION_OPTION_NO_MATCH;
+    return NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

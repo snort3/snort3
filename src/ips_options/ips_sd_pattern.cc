@@ -29,7 +29,6 @@
 #include <hs_compile.h>
 #include <hs_runtime.h>
 
-#include "detection/detection_defines.h"
 #include "detection/pattern_match_data.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
@@ -126,7 +125,7 @@ public:
     PatternMatchData* get_pattern(int, RuleDirection) override
     { return &config.pmd; }
 
-    int eval(Cursor&, Packet* p) override;
+    EvalStatus eval(Cursor&, Packet* p) override;
 
 private:
     unsigned SdSearch(Cursor&, Packet*);
@@ -266,20 +265,22 @@ unsigned SdPatternOption::SdSearch(Cursor& c, Packet* p)
     return ctx.count;
 }
 
-int SdPatternOption::eval(Cursor& c, Packet* p)
+IpsOption::EvalStatus SdPatternOption::eval(Cursor& c, Packet* p)
 {
     Profile profile(sd_pattern_perf_stats);
 
     unsigned matches = SdSearch(c, p);
 
     if ( matches >= config.threshold )
-        return DETECTION_OPTION_MATCH;
+        return MATCH;
+
     else if ( matches == 0 )
         ++s_stats.nomatch_notfound;
+
     else if ( matches > 0 && matches < config.threshold )
         ++s_stats.nomatch_threshold;
 
-    return DETECTION_OPTION_NO_MATCH;
+    return NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

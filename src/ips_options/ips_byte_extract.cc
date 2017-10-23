@@ -22,7 +22,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "detection/treenodes.h"
 #include "framework/cursor.h"
 #include "framework/endianness.h"
@@ -76,7 +75,7 @@ public:
     bool is_relative() override
     { return (config.relative_flag == 1); }
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 private:
     ByteExtractData config;
@@ -140,14 +139,14 @@ bool ByteExtractOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int ByteExtractOption::eval(Cursor& c, Packet* p)
+IpsOption::EvalStatus ByteExtractOption::eval(Cursor& c, Packet* p)
 {
     Profile profile(byteExtractPerfStats);
 
     ByteExtractData* data = &config;
 
     if (data == nullptr || p == nullptr)
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     const uint8_t* start = c.buffer();
     int dsize = c.size();
@@ -159,14 +158,14 @@ int ByteExtractOption::eval(Cursor& c, Packet* p)
 
     // check bounds
     if (ptr < start || ptr >= end)
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     uint8_t endian = data->endianness;
     if (data->endianness == ENDIAN_FUNC)
     {
         if (!p->endianness ||
             !p->endianness->get_offset_endianness(ptr - p->data, endian))
-            return DETECTION_OPTION_NO_MATCH;
+            return NO_MATCH;
     }
 
     // do the extraction
@@ -177,7 +176,7 @@ int ByteExtractOption::eval(Cursor& c, Packet* p)
     {
         ret = byte_extract(endian, data->bytes_to_grab, ptr, start, end, &value);
         if (ret < 0)
-            return DETECTION_OPTION_NO_MATCH;
+            return NO_MATCH;
 
         bytes_read = data->bytes_to_grab;
     }
@@ -185,7 +184,7 @@ int ByteExtractOption::eval(Cursor& c, Packet* p)
     {
         ret = string_extract(data->bytes_to_grab, data->base, ptr, start, end, &value);
         if (ret < 0)
-            return DETECTION_OPTION_NO_MATCH;
+            return NO_MATCH;
 
         bytes_read = ret;
     }
@@ -219,7 +218,7 @@ int ByteExtractOption::eval(Cursor& c, Packet* p)
     c.add_pos(bytes_read);
 
     /* this rule option always "matches" if the read is performed correctly */
-    return DETECTION_OPTION_MATCH;
+    return MATCH;
 }
 
 //-------------------------------------------------------------------------

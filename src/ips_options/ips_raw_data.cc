@@ -21,7 +21,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -40,15 +39,15 @@ public:
     CursorActionType get_cursor_type() const override
     { return CAT_SET_RAW; }
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 };
 
-int RawDataOption::eval(Cursor& c, Packet* p)
+IpsOption::EvalStatus RawDataOption::eval(Cursor& c, Packet* p)
 {
     Profile profile(rawDataPerfStats);
 
     c.set(s_name, p->data, p->dsize);
-    return DETECTION_OPTION_MATCH;
+    return MATCH;
 }
 
 //-------------------------------------------------------------------------

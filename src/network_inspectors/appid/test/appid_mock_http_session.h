@@ -18,8 +18,8 @@
 
 // appid_mock_http_session.h author davis mcpherson <davmcphe@cisco.com>
 
-#ifndef APPID_MOCK_HTTP_SESSION_H_
-#define APPID_MOCK_HTTP_SESSION_H_
+#ifndef APPID_MOCK_HTTP_SESSION_H
+#define APPID_MOCK_HTTP_SESSION_H
 
 AppIdHttpSession::AppIdHttpSession(AppIdSession* session) : asd(session) { }
 AppIdHttpSession::~AppIdHttpSession()

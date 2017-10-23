@@ -28,7 +28,6 @@
 
 #include <unordered_map>
 
-#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/sfhashfcn.h"
@@ -66,7 +65,7 @@ public:
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 private:
     MethodMap methods;
@@ -100,17 +99,17 @@ bool SipMethodOption::operator==(const IpsOption& ips) const
     return methods == rhs.methods;
 }
 
-int SipMethodOption::eval(Cursor&, Packet* p)
+IpsOption::EvalStatus SipMethodOption::eval(Cursor&, Packet* p)
 {
     Profile profile(sipMethodRuleOptionPerfStats);
 
     if ( !p->flow )
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     SIPData* sd = get_sip_session_data(p->flow);
 
     if ( !sd )
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     SIP_Roptions* ropts = &sd->ropts;
 
@@ -118,7 +117,7 @@ int SipMethodOption::eval(Cursor&, Packet* p)
     if ( IsRequest(ropts) && !methods.empty() )
     {
         if ( !ropts->method_data )
-            return DETECTION_OPTION_NO_MATCH;
+            return NO_MATCH;
 
         //FIXIT-P This should really be evaluated once per request instead of once
         //per rule option evaluation.
@@ -129,10 +128,10 @@ int SipMethodOption::eval(Cursor&, Packet* p)
         bool match = methods.find(method) != methods.cend(); 
 
         if ( negated ^ match )
-            return DETECTION_OPTION_MATCH;
+            return MATCH;
     }
 
-    return DETECTION_OPTION_NO_MATCH;
+    return NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

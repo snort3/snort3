@@ -1,9 +1,13 @@
 
+x_includedir = $(pkgincludedir)/helpers
+
 noinst_LIBRARIES = libhelpers.a
+
+x_include_HEADERS = \
+base64_encoder.h
 
 libhelpers_a_SOURCES = \
 base64_encoder.cc \
-base64_encoder.h \
 chunk.cc \
 chunk.h \
 directory.cc \

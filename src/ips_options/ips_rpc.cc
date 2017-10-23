@@ -24,7 +24,6 @@
 
 #include <cstdlib>
 
-#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/sfhashfcn.h"
@@ -55,7 +54,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 private:
     uint32_t get_int(const uint8_t*&);
@@ -115,17 +114,17 @@ bool RpcOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int RpcOption::eval(Cursor&, Packet* p)
+IpsOption::EvalStatus RpcOption::eval(Cursor&, Packet* p)
 {
     Profile profile(rpcCheckPerfStats);
 
     if ( !is_valid(p) )
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     if ( is_match(p) )
-        return DETECTION_OPTION_MATCH;
+        return MATCH;
 
-    return DETECTION_OPTION_NO_MATCH;
+    return NO_MATCH;
 }
 
 // check if there is a detection match

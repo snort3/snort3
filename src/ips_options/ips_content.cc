@@ -22,7 +22,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "detection/pattern_match_data.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
@@ -42,7 +41,7 @@
 
 static THREAD_LOCAL ProfileStats contentPerfStats;
 
-static int CheckANDPatternMatch(struct ContentData*, Cursor&);
+static IpsOption::EvalStatus CheckANDPatternMatch(struct ContentData*, Cursor&);
 
 //-------------------------------------------------------------------------
 // instance data
@@ -131,7 +130,7 @@ public:
     void set_data(ContentData* cd)
     { config = cd; }
 
-    int eval(Cursor& c, Packet*) override
+    EvalStatus eval(Cursor& c, Packet*) override
     { return CheckANDPatternMatch(config, c); }
 
     PatternMatchData* get_pattern(int, RuleDirection) override
@@ -356,7 +355,7 @@ static int uniSearchReal(ContentData* cd, Cursor& c)
     return 0;
 }
 
-static int CheckANDPatternMatch(ContentData* idx, Cursor& c)
+static IpsOption::EvalStatus CheckANDPatternMatch(ContentData* idx, Cursor& c)
 {
     Profile profile(contentPerfStats);
 
@@ -380,12 +379,12 @@ static int CheckANDPatternMatch(ContentData* idx, Cursor& c)
     if ( found )
     {
         DebugMessage(DEBUG_PATTERN_MATCH, "Pattern match found\n");
-        return DETECTION_OPTION_MATCH;
+        return IpsOption::MATCH;
     }
     else
     {
         DebugMessage(DEBUG_PATTERN_MATCH, "Pattern match failed\n");
-        return DETECTION_OPTION_NO_MATCH;
+        return IpsOption::NO_MATCH;
     }
 }
 

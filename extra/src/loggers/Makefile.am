@@ -1,5 +1,6 @@
 SUBDIRS = \
 alert_ex \
+alert_json \
 alert_lua \
 alert_unixsock \
 log_null

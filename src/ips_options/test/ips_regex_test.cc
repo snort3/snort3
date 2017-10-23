@@ -29,7 +29,6 @@
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
-#include "detection/detection_defines.h"
 #include "main/snort_config.h"
 #include "profiler/memory_profiler_defs.h"
 #include "protocols/packet.h"
@@ -320,7 +319,7 @@ TEST(ips_regex_option, match_absolute)
     pkt.dsize = strlen((char*)pkt.data);
 
     Cursor c(&pkt);
-    CHECK(opt->eval(c, &pkt) == DETECTION_OPTION_MATCH);
+    CHECK(opt->eval(c, &pkt) == IpsOption::MATCH);
     CHECK(!strcmp((char*)c.start(), " stew *"));
     CHECK(opt->retry());
 }
@@ -334,7 +333,7 @@ TEST(ips_regex_option, no_match_delta)
     Cursor c(&pkt);
     c.set_delta(3);
 
-    CHECK(opt->eval(c, &pkt) == DETECTION_OPTION_NO_MATCH);
+    CHECK(opt->eval(c, &pkt) == IpsOption::NO_MATCH);
 }
 
 //-------------------------------------------------------------------------
@@ -371,7 +370,7 @@ TEST(ips_regex_option_relative, no_match)
     c.add_pos(3);
 
     CHECK(opt->is_relative());
-    CHECK(opt->eval(c, &pkt) == DETECTION_OPTION_NO_MATCH);
+    CHECK(opt->eval(c, &pkt) == IpsOption::NO_MATCH);
     CHECK(!opt->retry());
 }
 

@@ -79,6 +79,9 @@ struct OtnKey
     uint32_t sid;
 };
 
+enum Target
+{ TARGET_NONE, TARGET_SRC, TARGET_DST, TARGET_MAX = TARGET_DST };
+
 struct SigInfo
 {
     char* message;
@@ -95,6 +98,7 @@ struct SigInfo
     uint32_t num_services;
 
     bool text_rule;
+    Target target;
 };
 
 SFGHASH* OtnLookupNew();

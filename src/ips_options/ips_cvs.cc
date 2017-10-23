@@ -39,7 +39,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/sfhashfcn.h"
@@ -102,7 +101,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 private:
     CvsRuleOption config;
@@ -144,26 +143,17 @@ bool CvsOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int CvsOption::eval(Cursor&, Packet* p)
+IpsOption::EvalStatus CvsOption::eval(Cursor&, Packet* p)
 {
-    int rval = DETECTION_OPTION_NO_MATCH;
-    CvsRuleOption* cvs_rule_option = &config;
-
     if ( !p->has_tcp_data() )
-    {
-        return rval;
-    }
+        return NO_MATCH;
 
-    DebugMessage(DEBUG_IPS_OPTION, "CVS begin detection\n");
-
-    int ret = CvsDecode(p->data, p->dsize, cvs_rule_option);
+    int ret = CvsDecode(p->data, p->dsize, &config);
 
     if (ret == CVS_ALERT)
-    {
-        rval = DETECTION_OPTION_MATCH;
-    }
+        return MATCH;
 
-    return rval;
+    return NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

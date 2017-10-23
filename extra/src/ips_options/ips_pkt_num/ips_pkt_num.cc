@@ -18,7 +18,6 @@
 
 // ips_pkt_num.cc author Russ Combs <rucombs@cisco.com>
 
-#include "detection/detection_defines.h"
 #include "framework/decode_data.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -44,7 +43,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 private:
     RangeCheck config;
@@ -73,14 +72,14 @@ bool PktNumOption::operator==(const IpsOption& ips) const
     return ( config == rhs.config );
 }
 
-int PktNumOption::eval(Cursor&, Packet*)
+IpsOption::EvalStatus PktNumOption::eval(Cursor&, Packet*)
 {
     ProfileContext profile(pkt_num_perf_stats);
 
     if ( config.eval(get_packet_number()) )
-        return DETECTION_OPTION_MATCH;
+        return MATCH;
 
-    return DETECTION_OPTION_NO_MATCH;
+    return NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

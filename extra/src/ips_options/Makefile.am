@@ -1,7 +1,9 @@
 SUBDIRS = \
 find \
 ips_pkt_num \
-ips_urg
+ips_mss \
+ips_urg \
+ips_wscale
 
 AM_CPPFLAGS = @AM_CPPFLAGS@
 AM_CFLAGS= @AM_CFLAGS@

@@ -21,7 +21,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "detection/detection_engine.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -64,7 +63,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 private:
     StreamReassembleRuleOptionData srod;
@@ -107,10 +106,10 @@ bool ReassembleOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int ReassembleOption::eval(Cursor&, Packet* pkt)
+IpsOption::EvalStatus ReassembleOption::eval(Cursor&, Packet* pkt)
 {
     if (!pkt->flow || !pkt->ptrs.tcph)
-        return 0;
+        return NO_MATCH;
 
     {
         Profile profile(streamReassembleRuleOptionPerfStats);
@@ -159,9 +158,9 @@ int ReassembleOption::eval(Cursor&, Packet* pkt)
     }
 
     if (srod.alert)
-        return DETECTION_OPTION_MATCH;
+        return MATCH;
 
-    return DETECTION_OPTION_NO_ALERT;
+    return NO_ALERT;
 }
 
 //-------------------------------------------------------------------------
@@ -317,7 +316,7 @@ TEST_CASE("IPS Stream Reassemble", "[ips_stream_reassemble][stream_tcp]")
         reassembler->srod.direction = SSN_DIR_FROM_SERVER;
         IpsOption* ropt = reassemble_api.ctor(reassembler, nullptr);
         int rc = ropt->eval(cursor, pkt);
-        CHECK( ( rc == DETECTION_OPTION_MATCH ) );
+        CHECK( ( rc == MATCH ) );
         StreamSplitter* ss = Stream::get_splitter(flow, true);
         CHECK( ( ss != nullptr ) );
         CHECK( ( !ss->is_paf() ) );

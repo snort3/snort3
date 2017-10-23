@@ -37,26 +37,26 @@ BLACK_LIST_PATH = '../lists'
 -- List of DNS servers on your network 
 DNS_SERVERS = HOME_NET
 
--- List of SMTP servers on your network
-SMTP_SERVERS = HOME_NET
+-- List of ftp servers on your network
+FTP_SERVERS = HOME_NET
 
 -- List of web servers on your network
 HTTP_SERVERS = HOME_NET
 
+-- List of sip servers on your network
+SIP_SERVERS = HOME_NET
+
+-- List of SMTP servers on your network
+SMTP_SERVERS = HOME_NET
+
 -- List of sql servers on your network 
 SQL_SERVERS = HOME_NET
-
--- List of telnet servers on your network
-TELNET_SERVERS = HOME_NET
 
 -- List of ssh servers on your network
 SSH_SERVERS = HOME_NET
 
--- List of ftp servers on your network
-FTP_SERVERS = HOME_NET
-
--- List of sip servers on your network
-SIP_SERVERS = HOME_NET
+-- List of telnet servers on your network
+TELNET_SERVERS = HOME_NET
 
 -- other variables, these should not be modified
 AIM_SERVERS =
@@ -76,8 +76,12 @@ AIM_SERVERS =
 ]]
 
 ---------------------------------------------------------------------------
--- default ports
+-- default ports - used in Talos rules
 ---------------------------------------------------------------------------
+
+-- List of ports you run ftp servers on
+FTP_PORTS = ' 21 2100 3535'
+
 -- List of ports you run web servers on
 HTTP_PORTS =
 [[
@@ -88,31 +92,20 @@ HTTP_PORTS =
     50002 55555 
 ]]
 
--- List of ports you want to look for SHELLCODE on.
-SHELLCODE_PORTS = ' !80'
+-- List of ports you run mail servers on
+MAIL_PORTS = ' 110 143'
 
 -- List of ports you might see oracle attacks on
 ORACLE_PORTS = ' 1024:'
 
--- List of ports you want to look for SSH connections on:
-SSH_PORTS = ' 22'
-
--- List of ports you run ftp servers on
-FTP_PORTS = ' 21 2100 3535'
-
 -- List of ports you run SIP servers on
 SIP_PORTS = ' 5060 5061 5600'
 
-MAIL_PORTS = ' 110 143'
+-- List of ports you want to look for SSH connections on
+SSH_PORTS = ' 22'
 
--- List of file data ports for file inspection
+-- List of ports for file inspection
 FILE_DATA_PORTS = HTTP_PORTS .. MAIL_PORTS
-
--- List of GTP ports for GTP preprocessor
-GTP_PORTS = ' 2123 2152 3386'
-
-RPC_PORTS = 
-    ' 111 32770 32771 32772 32773 32774 32775 32776 32777 32778 32779'
 
 ---------------------------------------------------------------------------
 -- default ftp server

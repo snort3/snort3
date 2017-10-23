@@ -79,6 +79,7 @@ extern const BaseApi* ips_seq[];
 extern const BaseApi* ips_session[];
 extern const BaseApi* ips_sid[];
 extern const BaseApi* ips_soid[];
+extern const BaseApi* ips_target[];
 extern const BaseApi* ips_tag[];
 extern const BaseApi* ips_tos[];
 extern const BaseApi* ips_ttl[];
@@ -148,6 +149,7 @@ void load_ips_options()
     PluginManager::load_plugins(ips_session);
     PluginManager::load_plugins(ips_sid);
     PluginManager::load_plugins(ips_soid);
+    PluginManager::load_plugins(ips_target);
     PluginManager::load_plugins(ips_tag);
     PluginManager::load_plugins(ips_tos);
     PluginManager::load_plugins(ips_ttl);

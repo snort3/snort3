@@ -21,7 +21,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -46,7 +45,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 private:
     RangeCheck config;
@@ -79,14 +78,14 @@ bool LenOption::operator==(const IpsOption& ips) const
     return ( config == rhs.config );
 }
 
-int LenOption::eval(Cursor& c, Packet*)
+IpsOption::EvalStatus LenOption::eval(Cursor& c, Packet*)
 {
     Profile profile(lenCheckPerfStats);
 
     if ( config.eval(c.length()) )
-        return DETECTION_OPTION_MATCH;
+        return MATCH;
 
-    return DETECTION_OPTION_NO_MATCH;
+    return NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

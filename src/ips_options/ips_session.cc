@@ -47,7 +47,6 @@
 
 #include <sys/stat.h>
 
-#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/sfhashfcn.h"
@@ -81,7 +80,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 private:
     SessionData config;
@@ -126,30 +125,28 @@ bool SessionOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int SessionOption::eval(Cursor&, Packet* p)
+IpsOption::EvalStatus SessionOption::eval(Cursor&, Packet* p)
 {
     Profile profile(sessionPerfStats);
 
-    SessionData* session_data = &config;
-
-    if ( !p || !p->dsize || !p->data )
-        return DETECTION_OPTION_MATCH;
+    if ( !p->dsize || !p->data )
+        return MATCH;
 
     if ( p->is_fragment() )
-        return DETECTION_OPTION_MATCH;
+        return MATCH;
 
     // FIXIT-L should wrap file open/close in a class to ensure cleanup
     {
         FILE* session = OpenSessionFile(p);
+
         if ( !session )
-            return DETECTION_OPTION_MATCH;
+            return MATCH;
 
-        DumpSessionData(session, p, session_data);
-
+        DumpSessionData(session, p, &config);
         fclose(session);
     }
 
-    return DETECTION_OPTION_MATCH;
+    return MATCH;
 }
 
 //-------------------------------------------------------------------------

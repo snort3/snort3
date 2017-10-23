@@ -18,8 +18,8 @@
 
 // appid_mock_definitions.h author davis mcpherson <davmcphe@cisco.com>
 
-#ifndef APPID_MOCK_DEFINITIONS_H_
-#define APPID_MOCK_DEFINITIONS_H_
+#ifndef APPID_MOCK_DEFINITIONS_H
+#define APPID_MOCK_DEFINITIONS_H
 
 #include "service_inspectors/http_inspect/http_msg_header.h"
 

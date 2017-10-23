@@ -26,7 +26,6 @@
 #include "app_info_table.h"
 #include "appid_session.h"
 
-#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/sfhashfcn.h"
@@ -83,7 +82,7 @@ public:
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 private:
     void map_names_to_ids();
@@ -150,7 +149,7 @@ int AppIdIpsOption::match_id_against_rule(int16_t id)
 // to determine if the application ids in the rule match the flow get the current
 // ids for payload/misc/service/client and compare against ids defined on the rule
 // first match wins...
-int AppIdIpsOption::eval(Cursor&, Packet* p)
+IpsOption::EvalStatus AppIdIpsOption::eval(Cursor&, Packet* p)
 {
     AppId app_ids[NUM_ID_TYPES];
 
@@ -162,7 +161,7 @@ int AppIdIpsOption::eval(Cursor&, Packet* p)
 
     AppIdSession* session = appid_api.get_appid_session(p->flow);
     if (!session)
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     // id order on stream api call is: service, client, payload, misc
     if ((p->packet_flags & PKT_FROM_CLIENT))
@@ -174,9 +173,9 @@ int AppIdIpsOption::eval(Cursor&, Packet* p)
 
     for ( unsigned i = 0; i < NUM_ID_TYPES; i++ )
         if ( match_id_against_rule(app_ids[i]) )
-            return DETECTION_OPTION_MATCH;
+            return MATCH;
 
-    return DETECTION_OPTION_NO_MATCH;
+    return NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

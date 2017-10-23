@@ -23,7 +23,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/sfhashfcn.h"
@@ -45,13 +44,13 @@
 
 static THREAD_LOCAL ProfileStats dnp3_obj_perf_stats;
 
-static int dnp3_decode_object(
+static IpsOption::EvalStatus dnp3_decode_object(
     uint8_t* buf, uint16_t buflen, uint8_t rule_group, uint8_t rule_var)
 {
     uint8_t group, var;
 
     if (buf == nullptr || buflen < DNP3_OBJ_HDR_MIN_LEN)
-        return DETECTION_OPTION_NO_MATCH;
+        return IpsOption::NO_MATCH;
 
     /* Decode group */
     group = *buf;
@@ -62,9 +61,9 @@ static int dnp3_decode_object(
 
     /* Match the rule option here, quit decoding if we found the right header. */
     if ((group == rule_group) && (var == rule_var))
-        return DETECTION_OPTION_MATCH;
+        return IpsOption::MATCH;
 
-    return DETECTION_OPTION_NO_MATCH;
+    return IpsOption::NO_MATCH;
 }
 
 class Dnp3ObjOption : public IpsOption
@@ -76,7 +75,7 @@ public:
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 private:
     uint8_t group;
@@ -104,19 +103,19 @@ bool Dnp3ObjOption::operator==(const IpsOption& ips) const
            (var == rhs.var));
 }
 
-int Dnp3ObjOption::eval(Cursor&, Packet* p)
+IpsOption::EvalStatus Dnp3ObjOption::eval(Cursor&, Packet* p)
 {
     Profile profile(dnp3_obj_perf_stats);
 
     size_t header_size;
 
     if ((p->has_tcp_data() && !p->is_full_pdu()) || !p->flow || !p->dsize)
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     Dnp3FlowData* fd = (Dnp3FlowData*)p->flow->get_flow_data(Dnp3FlowData::inspector_id);
 
     if (!fd)
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     dnp3_session_data_t* dnp3_session = &fd->dnp3_session;
     dnp3_reassembly_data_t* rdata;
@@ -134,12 +133,12 @@ int Dnp3ObjOption::eval(Cursor&, Packet* p)
 
     /* Only evaluate rules against complete Application-layer fragments */
     if (rdata->state != DNP3_REASSEMBLY_STATE__DONE)
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     /* Skip over the App request/response header.
        They are different sizes, depending on whether it is a request or response! */
     if (rdata->buflen < header_size)
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     uint8_t* obj_buffer = (uint8_t*)rdata->buffer + header_size;
     uint16_t obj_buflen = rdata->buflen - header_size;

@@ -23,7 +23,6 @@
 #include <array>
 #include <cassert>
 
-#include "detection/detection_defines.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -81,7 +80,7 @@ public:
     bool is_relative() override
     { return config->relative; }
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
     int match(Cursor&);
 
 private:
@@ -194,7 +193,7 @@ int HashOption::match(Cursor& c)
     return 0;
 }
 
-int HashOption::eval(Cursor& c, Packet*)
+IpsOption::EvalStatus HashOption::eval(Cursor& c, Packet*)
 {
     Profile profile(hash_ps[idx]);
 
@@ -213,9 +212,9 @@ int HashOption::eval(Cursor& c, Packet*)
         found ^= config->negated;
 
     if ( found )
-        return DETECTION_OPTION_MATCH;
+        return MATCH;
 
-    return DETECTION_OPTION_NO_MATCH;
+    return NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

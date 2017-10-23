@@ -21,7 +21,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "framework/range.h"
@@ -43,7 +42,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 private:
     RangeCheck config;
@@ -76,17 +75,17 @@ bool IpIdOption::operator==(const IpsOption& ips) const
     return ( config == rhs.config );
 }
 
-int IpIdOption::eval(Cursor&, Packet* p)
+IpsOption::EvalStatus IpIdOption::eval(Cursor&, Packet* p)
 {
     Profile profile(ipIdPerfStats);
 
     if (!p->has_ip())
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     if ( config.eval(p->ptrs.ip_api.id()) )
-        return DETECTION_OPTION_MATCH;
+        return MATCH;
 
-    return DETECTION_OPTION_NO_MATCH;
+    return NO_MATCH;
 }
 
 //-------------------------------------------------------------------------

@@ -19,12 +19,11 @@
 
 #include "sid_18758.h"
 
-#include "detection/detection_defines.h"
 #include "framework/so_rule.h"
 
-static int eval(void*, Cursor&, Packet*)
+static IpsOption::EvalStatus eval(void*, Cursor&, Packet*)
 {
-    return DETECTION_OPTION_MATCH;
+    return IpsOption::MATCH;
 }
 
 static SoEvalFunc ctor(const char* /*so*/, void** pv)

@@ -26,6 +26,7 @@
 // define its own rule options and any other plugins it may need.
 
 #include "framework/base_api.h"
+#include "framework/ips_option.h"
 #include "main/snort_types.h"
 
 struct Packet;
@@ -40,7 +41,7 @@ struct Packet;
 // ctor(<key>) returns eval func and optional data
 // data is freed with dtor(data)
 
-typedef int (* SoEvalFunc)(void*, class Cursor&, Packet*);
+typedef IpsOption::EvalStatus (* SoEvalFunc)(void*, class Cursor&, Packet*);
 typedef SoEvalFunc (* SoNewFunc)(const char* key, void**);
 typedef void (* SoDelFunc)(void*);
 typedef void (* SoAuxFunc)();

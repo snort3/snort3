@@ -21,7 +21,6 @@
 #include "config.h"
 #endif
 
-#include "detection/detection_defines.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "framework/range.h"
@@ -50,7 +49,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    int eval(Cursor&, Packet*) override;
+    EvalStatus eval(Cursor&, Packet*) override;
 
 private:
     RangeCheck ssod;
@@ -92,12 +91,12 @@ bool SizeOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-int SizeOption::eval(Cursor&, Packet* pkt)
+IpsOption::EvalStatus SizeOption::eval(Cursor&, Packet* pkt)
 {
     Profile profile(streamSizePerfStats);
 
     if (!pkt->flow || !pkt->ptrs.tcph)
-        return DETECTION_OPTION_NO_MATCH;
+        return NO_MATCH;
 
     Flow* lwssn = (Flow*)pkt->flow;
     TcpSession* tcpssn = (TcpSession*)lwssn->session;
@@ -127,35 +126,34 @@ int SizeOption::eval(Cursor&, Packet* pkt)
         server_size = tcpssn->server->get_iss() - tcpssn->server->get_snd_nxt();
     }
 
-    int result = DETECTION_OPTION_NO_MATCH;
-
     switch ( direction )
     {
     case SSN_DIR_FROM_CLIENT:
         if ( ssod.eval(client_size) )
-            result = DETECTION_OPTION_MATCH;
+            return MATCH;
         break;
 
     case SSN_DIR_FROM_SERVER:
         if ( ssod.eval(server_size) )
-            result = DETECTION_OPTION_MATCH;
+            return MATCH;
         break;
 
     case SSN_DIR_NONE: /* overloaded.  really, its an 'either' */
         if ( ssod.eval(client_size) || ssod.eval(server_size) )
-            result = DETECTION_OPTION_MATCH;
+            return MATCH;
         break;
 
     case SSN_DIR_BOTH:
         if ( ssod.eval(client_size) && ssod.eval(server_size) )
-            result = DETECTION_OPTION_MATCH;
+            return MATCH;
         break;
 
     default:
         break;
     }
 
-    return result;
+    return NO_MATCH;
+
 }
 
 //-------------------------------------------------------------------------

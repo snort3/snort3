@@ -32,17 +32,16 @@ namespace
 /*
  * Snort supports 3 versions of the OpenBSD pflog header:
  *
- * Pflog1_Hdr:  CVS = 1.3,  DLT_OLD_PFLOG = 17,  Length = 28
- * Pflog2_Hdr:  CVS = 1.8,  DLT_PFLOG     = 117, Length = 48
- * Pflog3_Hdr:  CVS = 1.12, DLT_PFLOG     = 117, Length = 64
- * Pflog3_Hdr:  CVS = 1.172, DLT_PFLOG     = 117, Length = 100
+ * Pflog1_Hdr:  CVS = 1.3,   DLT_OLD_PFLOG = 17,  Length = 28
+ * Pflog2_Hdr:  CVS = 1.8,   DLT_PFLOG     = 117, Length = 48
+ * Pflog3_Hdr:  CVS = 1.12,  DLT_PFLOG     = 117, Length = 64
+ * Pflog4_Hdr:  CVS = 1.172, DLT_PFLOG     = 117, Length = 100
  *
- * Since they have the same DLT, Pflog{2,3}Hdr are distinguished
+ * Since they have the same DLT, Pflog{2,3,4}Hdr are distinguished
  * by their actual length.  The minimum required length excludes
  * padding.
  */
-/* Old OpenBSD pf firewall pflog0 header
- * (information from pf source in kernel)
+/* Old OpenBSD pf firewall pflog0 header (information from pf source in kernel)
  * the rule, reason, and action codes tell why the firewall dropped it -fleck
  */
 

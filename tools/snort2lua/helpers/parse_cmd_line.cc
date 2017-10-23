@@ -503,7 +503,7 @@ static void help_args(const char* /*pfx*/, const char* /*val*/)
                     break;
             }
 
-            std::cout << *(Markup::add_newline()) << std::endl;
+            std::cout << Markup::add_newline() << std::endl;
         }
         ++p;
     }
