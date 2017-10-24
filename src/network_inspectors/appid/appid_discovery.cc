@@ -45,7 +45,8 @@
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
 
-AppIdDiscovery::AppIdDiscovery()
+AppIdDiscovery::AppIdDiscovery(AppIdInspector& ins)
+    : inspector(ins)
 {
     tcp_patterns = new SearchTool("ac_full", true);
     udp_patterns = new SearchTool("ac_full", true);
@@ -68,10 +69,10 @@ AppIdDiscovery::~AppIdDiscovery()
         delete kv.second;
 }
 
-void AppIdDiscovery::initialize_plugins()
+void AppIdDiscovery::initialize_plugins(AppIdInspector* ins)
 {
-    ServiceDiscovery::get_instance();
-    ClientDiscovery::get_instance();
+    ServiceDiscovery::get_instance(ins);
+    ClientDiscovery::get_instance(ins);
 }
 
 void AppIdDiscovery::finalize_plugins()
@@ -136,14 +137,14 @@ static inline int match_pe_network(const SfIp* pktAddr, const PortExclusion* pe)
            && ((pkt[3] & nm[3]) == peIP[3]));
 }
 
-static inline int check_port_exclusion(const Packet* pkt, bool reversed)
+static inline int check_port_exclusion(const Packet* pkt, bool reversed, AppIdInspector& inspector)
 {
     AppIdPortExclusions* src_port_exclusions;
     AppIdPortExclusions* dst_port_exclusions;
     SF_LIST* pe_list;
     PortExclusion* pe;
     const SfIp* s_ip;
-    AppIdConfig* config = AppIdInspector::get_inspector()->get_appid_config();
+    AppIdConfig* config = inspector.get_appid_config();
 
     if ( pkt->is_tcp() )
     {
@@ -350,7 +351,8 @@ static bool is_packet_ignored(AppIdSession* asd, Packet* p, int& direction)
     return false;
 }
 
-static uint64_t is_session_monitored(AppIdSession& asd, const Packet* p, int dir)
+static uint64_t is_session_monitored(AppIdSession& asd, const Packet* p, int dir,
+    AppIdInspector& inspector)
 {
     uint64_t flags = 0;
     uint64_t flow_flags = APPID_SESSION_DISCOVER_APP;
@@ -365,7 +367,7 @@ static uint64_t is_session_monitored(AppIdSession& asd, const Packet* p, int dir
     //           accordingly
     if ( asd.common.policyId != asd.config->appIdPolicyId )
     {
-        if (check_port_exclusion(p, dir == APP_ID_FROM_RESPONDER))
+        if ( check_port_exclusion(p, dir == APP_ID_FROM_RESPONDER, inspector) )
         {
             flow_flags |= APPID_SESSION_INITIATOR_SEEN | APPID_SESSION_RESPONDER_SEEN |
                 APPID_SESSION_INITIATOR_CHECKED | APPID_SESSION_RESPONDER_CHECKED;
@@ -483,7 +485,7 @@ static uint64_t is_session_monitored(AppIdSession& asd, const Packet* p, int dir
     return flow_flags;
 }
 
-static uint64_t is_session_monitored(const Packet* p, int dir)
+static uint64_t is_session_monitored(const Packet* p, int dir, AppIdInspector& inspector)
 {
     uint64_t flags = 0;
     uint64_t flow_flags = APPID_SESSION_DISCOVER_APP;
@@ -491,7 +493,7 @@ static uint64_t is_session_monitored(const Packet* p, int dir)
     flow_flags |= (dir == APP_ID_FROM_INITIATOR) ?
         APPID_SESSION_INITIATOR_SEEN : APPID_SESSION_RESPONDER_SEEN;
 
-    if (check_port_exclusion(p, false))
+    if ( check_port_exclusion(p, false, inspector) )
     {
         flow_flags |= APPID_SESSION_INITIATOR_SEEN | APPID_SESSION_RESPONDER_SEEN |
             APPID_SESSION_INITIATOR_CHECKED | APPID_SESSION_RESPONDER_CHECKED;
@@ -589,7 +591,7 @@ static void lookup_appid_by_host_port(AppIdSession* asd, Packet* p, IpProtocol p
     }
 }
 
-void AppIdDiscovery::do_application_discovery(Packet* p)
+void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspector)
 {
     IpProtocol protocol = IpProtocol::PROTO_NOT_SET;
     bool isTpAppidDiscoveryDone = false;
@@ -607,9 +609,9 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
 
     uint64_t flow_flags;
     if (asd)
-        flow_flags = is_session_monitored(*asd, p, direction);
+        flow_flags = is_session_monitored(*asd, p, direction, inspector);
     else
-        flow_flags = is_session_monitored(p, direction);
+        flow_flags = is_session_monitored(p, direction, inspector);
 
     if ( !( flow_flags & (APPID_SESSION_DISCOVER_APP | APPID_SESSION_SPECIAL_MONITORED) ) )
     {
@@ -625,7 +627,7 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
                 port = (direction == APP_ID_FROM_INITIATOR) ? p->ptrs.sp : p->ptrs.dp;
             }
 
-            AppIdSession* tmp_session = new AppIdSession(protocol, ip, port);
+            AppIdSession* tmp_session = new AppIdSession(protocol, ip, port, inspector);
 
             if ((flow_flags & APPID_SESSION_BIDIRECTIONAL_CHECKED) ==
                 APPID_SESSION_BIDIRECTIONAL_CHECKED)
@@ -633,8 +635,7 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
             else
                 tmp_session->common.flow_type = APPID_FLOW_TYPE_TMP;
             tmp_session->common.flags = flow_flags;
-            tmp_session->common.policyId =
-                AppIdInspector::get_inspector()->get_appid_config()->appIdPolicyId;
+            tmp_session->common.policyId = inspector.get_appid_config()->appIdPolicyId;
             p->flow->set_flow_data(tmp_session);
         }
         else
@@ -651,7 +652,8 @@ void AppIdDiscovery::do_application_discovery(Packet* p)
 
     if ( !asd || asd->common.flow_type == APPID_FLOW_TYPE_TMP )
     {
-        asd = AppIdSession::allocate_session(p, protocol, direction);
+        asd = AppIdSession::allocate_session(p, protocol, direction, inspector);
+
         if (asd->session_logging_enabled)
             LogMessage("AppIdDbg %s new session\n", asd->session_logging_id);
     }

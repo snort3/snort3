@@ -34,7 +34,9 @@
 #include "appid_peg_counts.h"
 #include "log/messages.h"
 #include "log/unified2.h"
+#include "main/snort_config.h"
 #include "main/snort_debug.h"
+#include "target_based/snort_protocols.h"
 #include "utils/util_cstring.h"
 
 static AppInfoTable app_info_table;
@@ -499,6 +501,15 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* config, const char* pa
     fclose(config_file);
 }
 
+int16_t AppInfoManager::add_appid_protocol_reference(const char* protocol)
+{
+    static std::mutex apr_mutex;
+
+    std::lock_guard<std::mutex> lock(apr_mutex);
+    int16_t id = snort_conf->proto_ref->add(protocol);
+    return id;
+}
+
 void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config)
 {
     char buf[MAX_TABLE_LINE_LEN];
@@ -565,7 +576,7 @@ void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config)
             /* snort service key, if it exists */
             token = strtok_r(nullptr, CONF_SEPARATORS, &context);
             if (token)
-                entry->snortId = AppIdInspector::get_inspector()->add_appid_protocol_reference(token);
+                entry->snortId = add_appid_protocol_reference(token);
 
             if ((app_id = get_static_app_info_entry(entry->appId)))
             {

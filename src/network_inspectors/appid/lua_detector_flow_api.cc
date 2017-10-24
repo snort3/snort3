@@ -26,6 +26,7 @@
 #include "lua_detector_flow_api.h"
 
 #include "appid_api.h"
+#include "appid_inspector.h"
 #include "lua_detector_api.h"
 #include "lua_detector_module.h"
 #include "lua_detector_util.h"
@@ -157,8 +158,8 @@ static int create_detector_flow(lua_State* L)
     SfIp saddr;
     SfIp daddr;
 
-    auto& detector_data = *UserData<LuaDetector>::check(L, DETECTOR, 1);
-    assert(detector_data->validate_params.pkt);
+    AppIdDetector* ud = *UserData<AppIdDetector>::check(L, DETECTOR, 1);
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
     const char* pattern = lua_tostring(L, 2);
     size_t patternLen = lua_strlen (L, 2);
@@ -208,8 +209,8 @@ static int create_detector_flow(lua_State* L)
 
     LuaDetectorManager::add_detector_flow(detector_flow);
 
-    detector_flow->asd = AppIdSession::create_future_session(detector_data->validate_params.pkt,
-        &saddr, sport, &daddr, dport, proto, 0, 0);
+    detector_flow->asd = AppIdSession::create_future_session(lsd->ldp.pkt, &saddr, sport,
+    		&daddr, dport, proto, 0, 0, ud->get_handler().get_inspector());
 
     if (!detector_flow->asd)
     {

@@ -62,70 +62,25 @@ public:
         NUM_APPID_DETECTOR_PEGS
     };
 
-    AppIdPegCounts();
-    ~AppIdPegCounts();
-
     static void add_app_peg_info(AppInfoTableEntry&, AppId);
     static PegCount* get_peg_counts();
     static PegInfo* get_peg_info();
     static void init_pegs();
     static void cleanup_pegs();
-    static void cleanup_peg_info()
-    {
-        for ( auto& app_info : appid_detectors_peg_info )
-        {
-            snort_free((void*)app_info.name);
-            snort_free((void*)app_info.help);
-        }
-    }
+    static void cleanup_peg_info();
 
-    static void inc_disco_peg(enum DiscoveryPegs stat)
-     {
-         (*appid_peg_counts)[stat]++;
-     }
-
-     static PegCount get_disco_peg(enum DiscoveryPegs stat)
-     {
-         return (*appid_peg_counts)[stat];
-     }
-
-     static void inc_service_count(AppId id)
-     {
-         if ( appid_detector_pegs_idx[id] )
-             (*appid_peg_counts)[appid_detector_pegs_idx[id] + DetectorPegs::SERVICE_DETECTS]++;
-     }
-
-     static void inc_client_count(AppId id)
-     {
-         if ( appid_detector_pegs_idx[id] )
-             (*appid_peg_counts)[appid_detector_pegs_idx[id] + DetectorPegs::CLIENT_DETECTS]++;
-     }
-
-     static void inc_user_count(AppId id)
-     {
-         if ( appid_detector_pegs_idx[id] )
-             (*appid_peg_counts)[appid_detector_pegs_idx[id] + DetectorPegs::USER_DETECTS]++;
-     }
-
-     static void inc_payload_count(AppId id)
-     {
-         if ( appid_detector_pegs_idx[id] )
-             (*appid_peg_counts)[appid_detector_pegs_idx[id] + DetectorPegs::PAYLOAD_DETECTS]++;
-     }
-
-     static void inc_misc_count(AppId id)
-     {
-         if ( appid_detector_pegs_idx[id] )
-             (*appid_peg_counts)[appid_detector_pegs_idx[id] + DetectorPegs::MISC_DETECTS]++;
-     }
-
-     static void set_detectors_configured()
-     {
-         detectors_configured = true;
-     }
+    static void inc_disco_peg(enum DiscoveryPegs stat);
+    static PegCount get_disco_peg(enum DiscoveryPegs stat);
+    static void inc_service_count(AppId id);
+    static void inc_client_count(AppId id);
+    static void inc_user_count(AppId id);
+    static void inc_payload_count(AppId id);
+    static void inc_misc_count(AppId id);
+    static void set_detectors_configured();
 
 private:
      static bool detectors_configured;
+     static uint32_t unknown_app_idx;
      static std::map<AppId, uint32_t> appid_detector_pegs_idx;
      static std::vector<PegInfo> appid_detectors_peg_info;
      static std::vector<PegInfo> appid_pegs;
@@ -133,5 +88,6 @@ private:
 
      static void init_detector_peg_info(const std::string& app_name, const std::string& name_suffix,
          const std::string& help_suffix);
+     static uint32_t get_stats_index(AppId id);
 };
 #endif

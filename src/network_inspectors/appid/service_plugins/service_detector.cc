@@ -40,6 +40,7 @@ static THREAD_LOCAL unsigned service_module_index = 0;
 ServiceDetector::ServiceDetector()
 {
     flow_data_index = service_module_index++ | APPID_SESSION_DATA_SERVICE_MODSTATE_BIT;
+    client = false;
 }
 
 void ServiceDetector::register_appid(AppId appId, unsigned extractsInfo)

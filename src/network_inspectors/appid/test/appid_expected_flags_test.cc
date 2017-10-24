@@ -22,6 +22,7 @@
 #include "network_inspectors/appid/service_plugins/service_detector.cc"
 
 #include "appid_mock_definitions.h"
+#include "appid_mock_inspector.h"
 #include "appid_mock_session.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
@@ -53,14 +54,16 @@ TEST_GROUP(appid_expected_flags)
     void setup()
     {
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
-        parent = new AppIdSession(IpProtocol::TCP, nullptr, 1492);
-        expected = new AppIdSession(IpProtocol::TCP, nullptr, 1492);
+        mock_init_appid_pegs();
+        parent = new AppIdSession(IpProtocol::TCP, nullptr, 1492, appid_inspector);
+        expected = new AppIdSession(IpProtocol::TCP, nullptr, 1492, appid_inspector);
     }
 
     void teardown()
     {
         delete parent;
         delete expected;
+        mock_cleanup_appid_pegs();
         MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };

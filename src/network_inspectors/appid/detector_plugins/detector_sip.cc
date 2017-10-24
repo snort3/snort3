@@ -154,7 +154,7 @@ SipUdpClientDetector::SipUdpClientDetector(ClientDiscovery* cdm)
         { APP_ID_SIP, APPINFO_FLAG_CLIENT_ADDITIONAL | APPINFO_FLAG_CLIENT_USER },
     };
 
-    AppIdInspector::get_inspector()->get_sip_event_handler().set_client(this);
+    handler->get_inspector().get_sip_event_handler().set_client(this);
     handler->register_detector(name, this, proto);
 }
 
@@ -333,7 +333,7 @@ void SipServiceDetector::createRtpFlow(AppIdSession* asd, const Packet* pkt, con
     AppIdSession* fp, * fp2;
 
     fp = AppIdSession::create_future_session(pkt, cliIp, cliPort, srvIp, srvPort, proto, app_id,
-        APPID_EARLY_SESSION_FLAG_FW_RULE);
+        APPID_EARLY_SESSION_FLAG_FW_RULE, handler->get_inspector());
     if ( fp )
     {
         fp->client.set_id(asd->client.get_id());
@@ -347,7 +347,7 @@ void SipServiceDetector::createRtpFlow(AppIdSession* asd, const Packet* pkt, con
 
     // create an RTCP flow as well
     fp2 = AppIdSession::create_future_session(pkt, cliIp, cliPort + 1, srvIp, srvPort + 1, proto,
-        app_id, APPID_EARLY_SESSION_FLAG_FW_RULE);
+        app_id, APPID_EARLY_SESSION_FLAG_FW_RULE, handler->get_inspector());
     if ( fp2 )
     {
         fp2->client.set_id(asd->client.get_id());
@@ -428,10 +428,11 @@ SipServiceDetector::SipServiceDetector(ServiceDiscovery* sd)
         { SIP_PORT, IpProtocol::TCP, false }
     };
 
-    AppIdInspector::get_inspector()->get_sip_event_handler().set_service(this);
+    // FIXIT - detector instance in each packet thread is calling this single sip event handler,
+    // last guy end wins, works now because it is all the same but this is not right...
+    handler->get_inspector().get_sip_event_handler().set_service(this);
     handler->register_detector(name, this, proto);
 }
-
 
 int SipServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
@@ -480,7 +481,8 @@ void SipEventHandler::handle(DataEvent& event, Flow* flow)
         const Packet* p = sip_event.get_packet();
         IpProtocol protocol = p->is_tcp() ? IpProtocol::TCP : IpProtocol::UDP;
         int direction = p->is_from_client() ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
-        asd = AppIdSession::allocate_session(p, protocol, direction);
+        asd = AppIdSession::allocate_session(p, protocol, direction,
+            client->get_handler().get_inspector());
     }
 
     client_handler(sip_event, asd);

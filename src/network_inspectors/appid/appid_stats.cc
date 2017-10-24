@@ -45,6 +45,8 @@ struct AppIdStatRecord
 
 static const char appid_stats_filename[] = "appid_stats.log";
 
+static THREAD_LOCAL AppIdStatistics* appid_stats_manager = nullptr;
+
 static void delete_record(void* record)
 {
     snort_free(record);
@@ -220,8 +222,15 @@ AppIdStatistics::~AppIdStatistics()
 
 AppIdStatistics* AppIdStatistics::initialize_manager(const AppIdModuleConfig& config)
 {
-    return new AppIdStatistics(config);
+    appid_stats_manager = new AppIdStatistics(config);
+    return appid_stats_manager;
 }
+
+AppIdStatistics* AppIdStatistics::get_stats_manager()
+{ return appid_stats_manager; }
+
+void AppIdStatistics::cleanup()
+{ delete appid_stats_manager; }
 
 static void update_stats(AppIdSession* asd, AppId app_id, StatsBucket* bucket)
 {

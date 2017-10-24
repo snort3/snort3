@@ -27,7 +27,6 @@
 #include "application_ids.h"
 #include "flow/flow.h"
 
-class AppIdStatistics;
 struct Packet;
 class SipEventHandler;
 struct SnortConfig;
@@ -38,7 +37,6 @@ public:
 
     AppIdInspector(AppIdModule&);
     ~AppIdInspector() override;
-    static AppIdInspector* get_inspector();
 
     bool configure(SnortConfig*) override;
     void show(SnortConfig*) override;
@@ -46,8 +44,6 @@ public:
     void tterm() override;
     void eval(Packet*) override;
     AppIdConfig* get_appid_config();
-    AppIdStatistics* get_stats_manager();
-    int16_t add_appid_protocol_reference(const char* protocol);
 
     SipEventHandler& get_sip_event_handler()
     {
@@ -57,7 +53,7 @@ public:
 private:
     const AppIdModuleConfig* config = nullptr;
     AppIdConfig* active_config = nullptr;
-    SipEventHandler* my_seh;
+    SipEventHandler* my_seh = nullptr;
 
 };
 

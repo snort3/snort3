@@ -56,7 +56,10 @@ Field global_field;
 void Debug::print(const char*, int, uint64_t, const char*, ...) { }
 #endif
 
-void ParseWarning(WarningGroup, char const*, ...) { }
+void ErrorMessage(const char*,...) { }
+void WarningMessage(const char*,...) { }
+void LogMessage(const char*,...) { }
+void ParseWarning(WarningGroup, const char*, ...) { }
 
 int ServiceDiscovery::add_ftp_service_state(AppIdSession&)
 {
@@ -93,5 +96,17 @@ int ServiceDiscovery::fail_service(AppIdSession*, Packet const*, int, ServiceDet
   return 0;
 }
 
+void mock_init_appid_pegs()
+{
+    AppIdPegCounts::set_detectors_configured();
+    AppIdPegCounts::get_peg_info();
+    AppIdPegCounts::init_pegs();
+}
+
+void mock_cleanup_appid_pegs()
+{
+    AppIdPegCounts::cleanup_pegs();
+    AppIdPegCounts::cleanup_peg_info();
+}
 #endif
 

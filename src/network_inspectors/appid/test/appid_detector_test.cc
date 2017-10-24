@@ -28,25 +28,13 @@
 
 #include "protocols/protocol_ids.h"
 
+#include "appid_mock_definitions.h"
 #include "appid_mock_http_session.h"
+#include "appid_mock_inspector.h"
 #include "appid_mock_session.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
-
-char* snort_strdup(const char* str)
-{
-    assert(str);
-    size_t n = strlen(str) + 1;
-    char* p = (char*)snort_alloc(n);
-    memcpy(p, str, n);
-    return p;
-}
-
-void ErrorMessage(const char*,...) { }
-void WarningMessage(const char*,...) { }
-void LogMessage(const char*,...) { }
-void ParseWarning(WarningGroup, const char*, ...) { }
 
 Flow* flow = nullptr;
 AppIdSession* mock_session = nullptr;
@@ -66,8 +54,9 @@ TEST_GROUP(appid_detector_tests)
     void setup() override
     {
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
+        mock_init_appid_pegs();
         flow = new Flow;
-        mock_session = new AppIdSession(IpProtocol::TCP, nullptr, 1492);
+        mock_session = new AppIdSession(IpProtocol::TCP, nullptr, 1492, appid_inspector);
         mock_session->hsession = init_http_session(mock_session);
         flow->set_flow_data(mock_session);
     }
@@ -76,6 +65,7 @@ TEST_GROUP(appid_detector_tests)
     {
         delete mock_session;
         delete flow;
+        mock_cleanup_appid_pegs();
         MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };

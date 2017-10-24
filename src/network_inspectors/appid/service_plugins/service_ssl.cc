@@ -1128,7 +1128,7 @@ void ssl_detector_free_patterns()
     ssl_patterns_free(&service_ssl_config.DetectorSSLCnamePatternList);
 }
 
-bool setSSLSquelch(Packet* p, int type, AppId appId)
+bool setSSLSquelch(Packet* p, int type, AppId appId, AppIdInspector& inspector)
 {
     AppIdSession* f = nullptr;
 
@@ -1139,7 +1139,7 @@ bool setSSLSquelch(Packet* p, int type, AppId appId)
     const SfIp* sip = p->ptrs.ip_api.get_src();
 
     if (!(f = AppIdSession::create_future_session(p, sip, 0, dip, p->ptrs.dp, IpProtocol::TCP,
-            appId, 0)))
+            appId, 0, inspector)))
         return false;
 
     switch (type)

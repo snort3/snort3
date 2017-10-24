@@ -30,7 +30,7 @@
 #include "flow/flow.h"
 
 class AppIdConfig;
-class LuaDetector;
+class LuaStateDescriptor;
 struct Packet;
 
 #define STATE_ID_MAX_VALID_COUNT 5
@@ -120,48 +120,39 @@ public:
     virtual void add_app(AppIdSession*, AppId, AppId, const char*);
 
     const std::string& get_name() const
-    {
-        return name;
-    }
+    { return name; }
 
     unsigned get_minimum_matches() const
-    {
-        return minimum_matches;
-    }
+    { return minimum_matches; }
 
     void set_minimum_matches(unsigned minimumMatches = 0)
-    {
-        minimum_matches = minimumMatches;
-    }
+    { minimum_matches = minimumMatches; }
 
     unsigned int get_precedence() const
-    {
-        return precedence;
-    }
+    { return precedence; }
 
     unsigned get_flow_data_index() const
-    {
-        return flow_data_index;
-    }
+    { return flow_data_index; }
 
     bool is_custom_detector() const
-    {
-        return custom_detector;
-    }
+    { return custom_detector; }
 
     void set_custom_detector(bool isCustom = false)
-    {
-        this->custom_detector = isCustom;
-    }
+    { this->custom_detector = isCustom; }
 
     AppIdDiscovery& get_handler() const
-    {
-        return *handler;
-    }
+    { return *handler; }
+
+	bool is_client() const
+	{ return client; }
+
+	virtual LuaStateDescriptor* validate_lua_state(bool /*packet_context*/)
+	{ return nullptr; }
 
 protected:
     AppIdDiscovery* handler = nullptr;
     std::string name;
+    bool client = false;
     bool enabled = true;
     bool custom_detector = false;
     IpProtocol proto = IpProtocol::PROTO_NOT_SET;

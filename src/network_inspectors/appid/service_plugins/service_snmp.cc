@@ -95,7 +95,7 @@ SnmpServiceDetector::SnmpServiceDetector(ServiceDiscovery* sd)
     proto = IpProtocol::UDP;
     detectorType = DETECTOR_TYPE_DECODER;
 
-    app_id = AppIdInspector::get_inspector()->add_appid_protocol_reference("snmp");
+    app_id = AppInfoManager::get_instance().add_appid_protocol_reference("snmp");
 
     udp_patterns =
     {
@@ -481,7 +481,7 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
         const SfIp* dip = pkt->ptrs.ip_api.get_dst();
         const SfIp* sip = pkt->ptrs.ip_api.get_src();
         pf = AppIdSession::create_future_session(pkt, dip, 0, sip, pkt->ptrs.sp, asd->protocol,
-            app_id, 0);
+            app_id, 0, handler->get_inspector());
         if (pf)
         {
             tmp_sd = (ServiceSNMPData*)snort_calloc(sizeof(ServiceSNMPData));

@@ -43,13 +43,13 @@ class ClientDiscovery : public AppIdDiscovery
 {
 public:
     ~ClientDiscovery() override;
-    static ClientDiscovery& get_instance();
+    static ClientDiscovery& get_instance(AppIdInspector* ins = nullptr);
 
     void finalize_client_plugins();
     bool do_client_discovery(AppIdSession&, Packet*, int direction);
 
 private:
-    ClientDiscovery();
+    ClientDiscovery(AppIdInspector& ins);
     void initialize() override;
     int exec_client_detectors(AppIdSession&, Packet*, int direction);
     ClientAppMatch* find_detector_candidates(const Packet* pkt, IpProtocol);

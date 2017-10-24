@@ -119,8 +119,11 @@ public:
 
     void set_port_service_id(AppId id)
     {
-        port_service_id = id;
-        AppIdPegCounts::inc_service_count(id);
+        if ( id != port_service_id )
+        {
+            port_service_id = id;
+            AppIdPegCounts::inc_service_count(id);
+        }
     }
 
 private:

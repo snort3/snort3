@@ -24,10 +24,20 @@
 
 #include <cstdint>
 #include <list>
+#include <string>
+
+#include <lua.hpp>
+#include <lua/lua.h>
+
+#include "protocols/protocol_ids.h"
 
 class AppIdConfig;
-class LuaDetector;
+class AppIdDetector;
 struct DetectorFlow;
+
+bool get_lua_field(lua_State* L, int table, const char* field, std::string& out);
+bool get_lua_field(lua_State* L, int table, const char* field, int& out);
+bool get_lua_field(lua_State* L, int table, const char* field, IpProtocol& out);
 
 class LuaDetectorManager
 {
@@ -47,7 +57,7 @@ private:
     void load_lua_detectors(const char* path, bool isCustom);
 
     AppIdConfig& config;
-    std::list<LuaDetector*> allocated_detectors;
+    std::list<AppIdDetector*> allocated_detectors;
 
     // FIXIT-L make these perf counters
     uint32_t lua_tracker_size = 0;

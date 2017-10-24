@@ -39,7 +39,6 @@ class AppIdSession;
 
 struct DetectorPackageInfo
 {
-    bool client_detector = false;
     std::string initFunctionName;
     std::string cleanFunctionName;
     std::string validateFunctionName;
@@ -48,7 +47,7 @@ struct DetectorPackageInfo
     IpProtocol proto;
 };
 
-struct ValidateParameters
+struct LuaDetectorParameters
 {
     const uint8_t* data = nullptr;
     uint16_t size = 0;
@@ -58,50 +57,41 @@ struct ValidateParameters
     uint8_t macAddress[6] = { 0 };
 };
 
-class LuaDetector
+class LuaStateDescriptor
 {
 public:
-    LuaDetector() = default;
-    virtual ~LuaDetector();
+	LuaStateDescriptor() = default;
+    virtual ~LuaStateDescriptor();
 
-    ValidateParameters validate_params;
+    LuaDetectorParameters ldp;
     lua_State* my_lua_state= nullptr;
     int detector_user_data_ref = 0;    // key into LUA_REGISTRYINDEX
     DetectorPackageInfo package_info;
-    bool is_client = false;
     unsigned int service_id = APP_ID_UNKNOWN;
 
     int lua_validate(AppIdDiscoveryArgs&);
 };
 
-class LuaServiceDetector : public LuaDetector, public ServiceDetector
+class LuaServiceDetector : public ServiceDetector
 {
 public:
-    LuaServiceDetector(AppIdDiscovery* sdm, const std::string& detector_name, IpProtocol protocol)
-    {
-        handler = sdm;
-        name = detector_name;
-        proto = protocol;
-        handler->register_detector(name, this, proto);
-    }
-
-
+    LuaServiceDetector(AppIdDiscovery* sdm, const std::string& detector_name, IpProtocol protocol,
+            lua_State* L);
     int validate(AppIdDiscoveryArgs&) override;
+    LuaStateDescriptor* validate_lua_state(bool packet_context) override;
+
+    LuaStateDescriptor lsd;
 };
 
-class LuaClientDetector : public LuaDetector, public ClientDetector
+class LuaClientDetector : public ClientDetector
 {
 public:
-    LuaClientDetector(AppIdDiscovery* cdm, const std::string& detector_name, IpProtocol protocol)
-    {
-        handler = cdm;
-        name = detector_name;
-        proto = protocol;
-        handler->register_detector(name, this, proto);
-    }
-
-
+    LuaClientDetector(AppIdDiscovery* cdm, const std::string& detector_name, IpProtocol protocol,
+        lua_State* L);
     int validate(AppIdDiscoveryArgs&) override;
+    LuaStateDescriptor* validate_lua_state(bool packet_context) override;
+
+    LuaStateDescriptor lsd;
 };
 
 int register_detector(lua_State*);

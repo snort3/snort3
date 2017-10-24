@@ -75,11 +75,13 @@ TEST_GROUP(app_info_table)
     void setup()
     {
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
+        mock_init_appid_pegs();
     }
 
     void teardown()
     {
         app_info_mgr.cleanup_appid_info_table();
+        mock_cleanup_appid_pegs();
         MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };

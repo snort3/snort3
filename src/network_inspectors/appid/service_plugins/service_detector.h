@@ -57,7 +57,6 @@ public:
 private:
     int update_service_data(AppIdSession*, const Packet*, int dir, AppId, const char* vendor,
         const char* version);
-
 };
 #endif
 

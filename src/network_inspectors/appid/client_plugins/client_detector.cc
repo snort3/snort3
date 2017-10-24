@@ -38,6 +38,7 @@ static THREAD_LOCAL unsigned client_module_index = 0;
 ClientDetector::ClientDetector()
 {
     flow_data_index = client_module_index++ | APPID_SESSION_DATA_CLIENT_MODSTATE_BIT;
+    client = true;
 }
 
 void ClientDetector::register_appid(AppId appId, unsigned extractsInfo)

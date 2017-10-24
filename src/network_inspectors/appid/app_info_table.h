@@ -141,6 +141,7 @@ public:
     void init_appid_info_table(AppIdModuleConfig*);
     void cleanup_appid_info_table();
     void dump_app_info_table();
+    int16_t add_appid_protocol_reference(const char* protocol);
 
 private:
     AppInfoManager() = default;

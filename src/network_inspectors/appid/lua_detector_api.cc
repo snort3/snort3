@@ -197,19 +197,13 @@ static int common_register_application_id(lua_State* L)
 {
     int index = 1;
 
-    auto& ud = *UserData<LuaDetector>::check(L, DETECTOR, index);
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, index);
     AppId appId = lua_tonumber(L, ++index);
 
-    if ( ud->package_info.client_detector )
-    {
-        auto& cd = *UserData<LuaClientDetector>::check(L, DETECTOR, ++index);
-        cd->register_appid(appId, APPINFO_FLAG_CLIENT_ADDITIONAL);
-    }
+    if ( ud->is_client() )
+        ud->register_appid(appId, APPINFO_FLAG_CLIENT_ADDITIONAL);
     else
-    {
-        auto& sd = *UserData<LuaServiceDetector>::check(L, DETECTOR, ++index);
-        sd->register_appid(appId, APPINFO_FLAG_SERVICE_ADDITIONAL);
-    }
+        ud->register_appid(appId, APPINFO_FLAG_SERVICE_ADDITIONAL);
 
     AppInfoManager::get_instance().set_app_info_active(appId);
 
@@ -281,9 +275,9 @@ static int detector_log_message(lua_State* L)
 //  4 - flags/stack - any flags
 static int service_analyze_payload(lua_State* L)
 {
-    auto& ud = *UserData<LuaDetector>::check(L, DETECTOR, 1);
-    assert(ud->validate_params.asd);
-    ud->validate_params.asd->payload.set_id(lua_tonumber(L, 2));
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, 1);
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
+    lsd->ldp.asd->payload.set_id(lua_tonumber(L, 2));
     return 0;
 }
 
@@ -301,9 +295,10 @@ static int service_analyze_payload(lua_State* L)
 // @return service_id/stack - service_id if successful, -1 otherwise.
 static int service_get_service_id(lua_State* L)
 {
-    auto ud = *UserData<LuaDetector>::check(L, DETECTOR, 1);
+    auto ud = *UserData<AppIdDetector>::check(L, DETECTOR, 1);
+    LuaStateDescriptor* lsd = ud->validate_lua_state(false);
 
-    lua_pushnumber(L, ud->service_id);
+    lua_pushnumber(L, lsd->service_id);
     return 1;
 }
 
@@ -418,7 +413,7 @@ static int service_set_validator(lua_State* L)
     }
 
     lua_pop(L, 1);
-    ud->package_info.validateFunctionName = pValidator;
+    ud->lsd.package_info.validateFunctionName = pValidator;
     lua_pushnumber(L, 0);
     return 1;
 }
@@ -434,9 +429,9 @@ static int service_set_validator(lua_State* L)
 static int service_add_data_id(lua_State* L)
 {
     auto& ud = *UserData<LuaServiceDetector>::check(L, DETECTOR, 1);
-    assert(ud->validate_params.asd);
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
     uint16_t sport = lua_tonumber(L, 2);
-    ud->validate_params.asd->add_flow_data_id(sport, ud);
+    lsd->ldp.asd->add_flow_data_id(sport, ud);
     lua_pushnumber(L, 0);
     return 1;
 }
@@ -454,15 +449,14 @@ static int service_add_data_id(lua_State* L)
 static int service_add_service(lua_State* L)
 {
     auto& ud = *UserData<LuaServiceDetector>::check(L, DETECTOR, 1);
-    assert(ud->validate_params.pkt && ud->validate_params.asd);
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
     AppId service_id = lua_tonumber(L, 2);
     const char* vendor = luaL_optstring(L, 3, nullptr);
     const char* version = luaL_optstring(L, 4, nullptr);
 
     /*Phase2 - discuss AppIdServiceSubtype will be maintained on lua side therefore the last
       parameter on the following call is nullptr. Subtype is not displayed on DC at present. */
-    unsigned int retValue = ud->add_service(ud->validate_params.asd,
-        ud->validate_params.pkt, ud->validate_params.dir,
+    unsigned int retValue = ud->add_service(lsd->ldp.asd, lsd->ldp.pkt, lsd->ldp.dir,
         AppInfoManager::get_instance().get_appid_by_service_id(service_id),
         vendor, version, nullptr);
 
@@ -480,10 +474,10 @@ static int service_add_service(lua_State* L)
 static int service_fail_service(lua_State* L)
 {
     auto& ud = *UserData<LuaServiceDetector>::check(L, DETECTOR, 1);
-    assert(ud->validate_params.pkt && ud->validate_params.asd);
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
     ServiceDiscovery& sdm = static_cast<ServiceDiscovery&>(ud->get_handler());
-    unsigned int retValue = sdm.fail_service(ud->validate_params.asd, ud->validate_params.pkt,
-        ud->validate_params.dir, nullptr);
+    unsigned int retValue = sdm.fail_service(lsd->ldp.asd, lsd->ldp.pkt,
+        lsd->ldp.dir, nullptr);
 
     lua_pushnumber(L, retValue);
     return 1;
@@ -499,10 +493,10 @@ static int service_fail_service(lua_State* L)
 static int service_in_process_service(lua_State* L)
 {
     auto& ud = *UserData<LuaServiceDetector>::check(L, DETECTOR, 1);
-    assert(ud->validate_params.pkt && ud->validate_params.asd);
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
-    unsigned int retValue = ud->service_inprocess(ud->validate_params.asd,
-        ud->validate_params.pkt, ud->validate_params.dir);
+    unsigned int retValue = ud->service_inprocess(lsd->ldp.asd,
+        lsd->ldp.pkt, lsd->ldp.dir);
 
     lua_pushnumber(L, retValue);
     return 1;
@@ -518,10 +512,10 @@ static int service_in_process_service(lua_State* L)
 static int service_set_incompatible_data(lua_State* L)
 {
     auto& ud = *UserData<LuaServiceDetector>::check(L, DETECTOR, 1);
-    assert(ud->validate_params.pkt && ud->validate_params.asd);
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
-    unsigned int retValue = ud->incompatible_data(ud->validate_params.asd,
-        ud->validate_params.pkt, ud->validate_params.dir);
+    unsigned int retValue = ud->incompatible_data(lsd->ldp.asd,
+        lsd->ldp.pkt, lsd->ldp.dir);
     lua_pushnumber(L, retValue);
     return 1;
 }
@@ -537,9 +531,10 @@ static int service_set_incompatible_data(lua_State* L)
  */
 static int detector_get_packet_size(lua_State* L)
 {
-    auto& ud = *UserData<LuaDetector>::check(L, DETECTOR, 1);
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, 1);
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
-    lua_pushnumber(L, ud->validate_params.size);
+    lua_pushnumber(L, lsd->ldp.size);
     return 1;
 }
 
@@ -553,9 +548,10 @@ static int detector_get_packet_size(lua_State* L)
  */
 static int detector_get_packet_direction(lua_State* L)
 {
-    auto& ud = *UserData<LuaDetector>::check(L, DETECTOR, 1);
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, 1);
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
-    lua_pushnumber(L, ud->validate_params.dir);
+    lua_pushnumber(L, lsd->ldp.dir);
     return 1;
 }
 
@@ -574,17 +570,18 @@ static int detector_get_pcre_groups(lua_State* L)
     const char* error;
     int erroffset;
 
-    auto& ud = *UserData<LuaDetector>::check(L, DETECTOR, 1);
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, 1);
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
+
     const char* pattern = lua_tostring(L, 2);
     unsigned int offset = lua_tonumber(L, 3);     /*offset can be zero, no check necessary. */
 
     /*compile the regular expression pattern, and handle errors */
-    pcre* re = pcre_compile(pattern,              /*the pattern */
-        PCRE_DOTALL,                        /*default options - dot matches everything including
-                                               newline */
-        &error,                             /*for error message */
-        &erroffset,                         /*for error offset */
-        nullptr);                           /*use default character tables */
+    pcre* re = pcre_compile(pattern,  // the pattern
+        PCRE_DOTALL,                  // default options - dot matches all inc \n
+        &error,                       // for error message
+        &erroffset,                   // for error offset
+        nullptr);                     // use default character tables
 
     if (re == nullptr)
     {
@@ -593,16 +590,14 @@ static int detector_get_pcre_groups(lua_State* L)
     }
 
     /*pattern match against the subject string. */
-    int rc = pcre_exec(re,                                 // compiled pattern
-        nullptr,                                           // no extra data
-        (const char*)ud->validate_params.data,                    // subject string
-        ud->validate_params.size,                           // length of the subject
-        offset,                                            // offset 0
-        0,                                                 // default options
-        ovector,                                           // output vector for substring
-                                                           // information
-        OVECCOUNT);                                        // number of elements in the output
-                                                           // vector
+    int rc = pcre_exec(re,            // compiled pattern
+        nullptr,                      // no extra data
+        (const char*)lsd->ldp.data,   // subject string
+        lsd->ldp.size,                 // length of the subject
+        offset,                       // offset 0
+        0,                            // default options
+        ovector,                      // output vector for substring information
+        OVECCOUNT);                   // number of elements in the output vector
 
     if ( rc >= 0 )
     {
@@ -616,7 +611,7 @@ static int detector_get_pcre_groups(lua_State* L)
         lua_checkstack(L, rc);
         for (int i = 0; i < rc; i++)
         {
-            lua_pushlstring(L, (const char*)ud->validate_params.data + ovector[2*i], ovector[2*i+1] -
+            lua_pushlstring(L, (const char*)lsd->ldp.data + ovector[2*i], ovector[2*i+1] -
                 ovector[2*i]);
         }
     }
@@ -645,12 +640,13 @@ static int detector_get_pcre_groups(lua_State* L)
  */
 static int detector_memcmp(lua_State* L)
 {
-    auto& ud = *UserData<LuaDetector>::check(L, DETECTOR, 1);
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, 1);
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
     const char* pattern = lua_tostring(L, 2);
     unsigned int patternLen = lua_tonumber(L, 3);
     unsigned int offset = lua_tonumber(L, 4);     /*offset can be zero, no check necessary. */
-    int rc = memcmp(ud->validate_params.data + offset, pattern, patternLen);
+    int rc = memcmp(lsd->ldp.data + offset, pattern, patternLen);
     lua_checkstack (L, 1);
     lua_pushnumber(L, rc);
     return 1;
@@ -664,10 +660,10 @@ static int detector_memcmp(lua_State* L)
  */
 static int detector_get_protocol_type(lua_State* L)
 {
-    auto& ud = *UserData<LuaDetector>::check(L, DETECTOR, 1);
-    assert(ud->validate_params.pkt);
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, 1);
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
-    if ( !ud->validate_params.pkt->has_ip() )
+    if ( !lsd->ldp.pkt->has_ip() )
     {
         // FIXIT-M J why the inconsistent use of checkstack?
         lua_checkstack (L, 1);
@@ -677,7 +673,7 @@ static int detector_get_protocol_type(lua_State* L)
 
     lua_checkstack (L, 1);
     // FIXIT-M is this conversion to double valid?
-    lua_pushnumber(L, (double)ud->validate_params.pkt->get_ip_proto_next() );
+    lua_pushnumber(L, (double)lsd->ldp.pkt->get_ip_proto_next() );
     return 1;
 }
 
@@ -690,10 +686,10 @@ static int detector_get_protocol_type(lua_State* L)
  */
 static int detector_get_packet_src_addr(lua_State* L)
 {
-    auto& ud = *UserData<LuaDetector>::check(L, DETECTOR, 1);
-    assert(ud->validate_params.pkt);
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, 1);
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
-    const SfIp* ipAddr = ud->validate_params.pkt->ptrs.ip_api.get_src();
+    const SfIp* ipAddr = lsd->ldp.pkt->ptrs.ip_api.get_src();
     lua_checkstack (L, 1);
     lua_pushnumber(L, ipAddr->get_ip4_value());
     return 1;
@@ -708,10 +704,10 @@ static int detector_get_packet_src_addr(lua_State* L)
  */
 static int detector_get_packet_dst_addr(lua_State* L)
 {
-    auto& ud = *UserData<LuaDetector>::check(L, DETECTOR, 1);
-    assert(ud->validate_params.pkt);
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, 1);
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
-    const SfIp* ipAddr = ud->validate_params.pkt->ptrs.ip_api.get_dst();
+    const SfIp* ipAddr = lsd->ldp.pkt->ptrs.ip_api.get_dst();
     lua_checkstack (L, 1);
     lua_pushnumber(L, ipAddr->get_ip4_value());
     return 1;
@@ -726,10 +722,10 @@ static int detector_get_packet_dst_addr(lua_State* L)
  */
 static int detector_get_packet_src_port(lua_State* L)
 {
-    auto& ud = *UserData<LuaDetector>::check(L, DETECTOR, 1);
-    assert(ud->validate_params.pkt);
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, 1);
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
-    unsigned int port = ud->validate_params.pkt->ptrs.sp;
+    unsigned int port = lsd->ldp.pkt->ptrs.sp;
     lua_checkstack (L, 1);
     lua_pushnumber(L, port);
     return 1;
@@ -744,10 +740,10 @@ static int detector_get_packet_src_port(lua_State* L)
  */
 static int detector_get_packet_dst_port(lua_State* L)
 {
-    auto& ud = *UserData<LuaDetector>::check(L, DETECTOR, 1);
-    assert(ud->validate_params.pkt);
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, 1);
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
-    unsigned int port = ud->validate_params.pkt->ptrs.dp;
+    unsigned int port = lsd->ldp.pkt->ptrs.dp;
     lua_checkstack (L, 1);
     lua_pushnumber(L, port);
     return 1;
@@ -816,7 +812,7 @@ static int client_init(lua_State*)
 static int service_add_client(lua_State* L)
 {
     auto& ud = *UserData<LuaClientDetector>::check(L, DETECTOR, 1);
-    assert(ud->validate_params.asd);
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
     AppId client_id = lua_tonumber(L, 2);
     AppId service_id = lua_tonumber(L, 3);
@@ -828,7 +824,7 @@ static int service_add_client(lua_State* L)
         return 1;
     }
 
-    ud->add_app(ud->validate_params.asd, service_id, client_id, version);
+    ud->add_app(lsd->ldp.asd, service_id, client_id, version);
 
     lua_pushnumber(L, 0);
     return 1;
@@ -837,12 +833,12 @@ static int service_add_client(lua_State* L)
 static int client_add_application(lua_State* L)
 {
     auto& ud = *UserData<LuaClientDetector>::check(L, DETECTOR, 1);
-    assert(ud->validate_params.asd);
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
     unsigned int service_id = lua_tonumber(L, 2);
     unsigned int productId = lua_tonumber(L, 4);
     const char* version = lua_tostring(L, 5);
-    ud->add_app(ud->validate_params.asd,
+    ud->add_app(lsd->ldp.asd,
         AppInfoManager::get_instance().get_appid_by_service_id(service_id),
         AppInfoManager::get_instance().get_appid_by_client_id(productId), version);
 
@@ -853,10 +849,10 @@ static int client_add_application(lua_State* L)
 static int client_add_info(lua_State* L)
 {
     auto& ud = *UserData<LuaClientDetector>::check(L, DETECTOR, 1);
-    assert(ud->validate_params.asd);
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
     const char* info = lua_tostring(L, 2);
-    ud->add_info(ud->validate_params.asd, info);
+    ud->add_info(lsd->ldp.asd, info);
 
     lua_pushnumber(L, 0);
     return 1;
@@ -865,12 +861,12 @@ static int client_add_info(lua_State* L)
 static int client_add_user(lua_State* L)
 {
     auto& ud = *UserData<LuaClientDetector>::check(L, DETECTOR, 1);
-    assert(ud->validate_params.asd);
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
     const char* userName = lua_tostring(L, 2);
     unsigned int service_id = lua_tonumber(L, 3);
 
-    ud->add_user(ud->validate_params.asd, userName,
+    ud->add_user(lsd->ldp.asd, userName,
         AppInfoManager::get_instance().get_appid_by_service_id(service_id), true);
 
     lua_pushnumber(L, 0);
@@ -880,10 +876,10 @@ static int client_add_user(lua_State* L)
 static int client_add_payload(lua_State* L)
 {
     auto& ud = *UserData<LuaClientDetector>::check(L, DETECTOR, 1);
-    assert(ud->validate_params.asd);
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
     unsigned int payloadId = lua_tonumber(L, 2);
 
-    ud->add_payload(ud->validate_params.asd,
+    ud->add_payload(lsd->ldp.asd,
         AppInfoManager::get_instance().get_appid_by_payload_id(payloadId));
 
     lua_pushnumber(L, 0);
@@ -902,11 +898,11 @@ static int client_add_payload(lua_State* L)
  */
 static int detector_get_flow(lua_State* L)
 {
-    auto& ud = *UserData<LuaDetector>::check(L, DETECTOR, 1);
-    assert(ud->validate_params.asd);
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, 1);
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
     auto df = new DetectorFlow();
-    df->asd = ud->validate_params.asd;
+    df->asd = lsd->ldp.asd;
     UserData<DetectorFlow>::push(L, DETECTORFLOW, df);
 
     df->myLuaState = L;
@@ -920,9 +916,9 @@ static int detector_get_flow(lua_State* L)
 static int detector_add_http_pattern(lua_State* L)
 {
     int index = 1;
-
     // Verify detector user data and that we are not in packet context
-    assert(!(*UserData<LuaDetector>::check(L, DETECTOR, index))->validate_params.pkt);
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, index);
+    ud->validate_lua_state(false);
 
     enum httpPatternType pat_type = (enum httpPatternType)lua_tointeger(L, ++index);
     if (pat_type < HTTP_PAYLOAD || pat_type > HTTP_URL)
@@ -960,9 +956,9 @@ static int detector_add_http_pattern(lua_State* L)
 static int detector_add_ssl_cert_pattern(lua_State* L)
 {
     int index = 1;
-
     // Verify detector user data and that we are not in packet context
-    assert(!(*UserData<LuaDetector>::check(L, DETECTOR, index))->validate_params.pkt);
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, index);
+    ud->validate_lua_state(false);
 
     uint8_t type = lua_tointeger(L, ++index);
     AppId app_id  = (AppId)lua_tointeger(L, ++index);
@@ -990,9 +986,9 @@ static int detector_add_ssl_cert_pattern(lua_State* L)
 static int detector_add_dns_host_pattern(lua_State* L)
 {
     int index = 1;
-
     // Verify detector user data and that we are not in packet context
-    assert(!(*UserData<LuaDetector>::check(L, DETECTOR, index))->validate_params.pkt);
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, index);
+    ud->validate_lua_state(false);
 
     uint8_t type = lua_tointeger(L, ++index);
     AppId app_id = (AppId)lua_tointeger(L, ++index);
@@ -1018,9 +1014,9 @@ static int detector_add_dns_host_pattern(lua_State* L)
 static int detector_add_ssl_cname_pattern(lua_State* L)
 {
     int index = 1;
-
     // Verify detector user data and that we are not in packet context
-    assert(!(*UserData<LuaDetector>::check(L, DETECTOR, index))->validate_params.pkt);
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, index);
+    ud->validate_lua_state(false);
 
     uint8_t type = lua_tointeger(L, ++index);
     AppId app_id  = (AppId)lua_tointeger(L, ++index);
@@ -1052,11 +1048,11 @@ static int detector_add_ssl_cname_pattern(lua_State* L)
 
 static int detector_add_host_port_application(lua_State* L)
 {
-    int index = 1;
     SfIp ip_addr;
-
+    int index = 1;
     // Verify detector user data and that we are not in packet context
-    assert(!(*UserData<LuaDetector>::check(L, DETECTOR, index))->validate_params.pkt);
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, index);
+    ud->validate_lua_state(false);
 
     uint8_t type = lua_tointeger(L, ++index);
     AppId app_id  = (AppId)lua_tointeger(L, ++index);
@@ -1084,11 +1080,11 @@ static int detector_add_host_port_application(lua_State* L)
 
 static int detector_add_content_type_pattern(lua_State* L)
 {
-    int index = 1;
     size_t stringSize = 0;
-
+    int index = 1;
     // Verify detector user data and that we are not in packet context
-    assert(!(*UserData<LuaDetector>::check(L, DETECTOR, index))->validate_params.pkt);
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, index);
+    ud->validate_lua_state(false);
 
     const char* tmp_string = lua_tolstring(L, ++index, &stringSize);
     if (!tmp_string || !stringSize)
@@ -1105,20 +1101,6 @@ static int detector_add_content_type_pattern(lua_State* L)
     detector.app_id = appId;
     HttpPatternMatchers::get_instance()->insert_content_type_pattern(detector);
     AppInfoManager::get_instance().set_app_info_active(appId);
-
-    return 0;
-}
-
-static inline int get_detector_user_data(lua_State* L, int index,
-    UserData<LuaDetector>** detector_user_data, const char* errorString)
-{
-    // Verify detector user data and that we are not in packet context
-    *detector_user_data = UserData<LuaDetector>::check(L, DETECTOR, index);
-    if (!*detector_user_data || (**detector_user_data)->validate_params.pkt)
-    {
-        ErrorMessage("%s", errorString);
-        return -1;
-    }
 
     return 0;
 }
@@ -1142,18 +1124,16 @@ static int create_chp_application(AppId appIdInstance, unsigned app_type_flags, 
 
 static int detector_chp_create_application(lua_State* L)
 {
-    UserData<LuaDetector>* ud;
     int index = 1;
-
-    if (get_detector_user_data(L, index, &ud,
-        "LuaDetectorApi:Invalid HTTP detector user data in CHPCreateApp."))
-        return 0;
+    // Verify detector user data and that we are not in packet context
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, index);
+    ud->validate_lua_state(false);
 
     AppId appId = lua_tointeger(L, ++index);
     AppId appIdInstance = CHP_APPID_SINGLE_INSTANCE(appId); // Last instance for the old API
 
-    unsigned app_type_flags =    lua_tointeger(L, ++index);
-    int num_matches =       lua_tointeger(L, ++index);
+    unsigned app_type_flags = lua_tointeger(L, ++index);
+    int num_matches = lua_tointeger(L, ++index);
 
     // We only want one of these for each appId.
     if (sfxhash_find(CHP_glossary, &appIdInstance))
@@ -1323,17 +1303,16 @@ static int add_chp_pattern_action(AppId appIdInstance, int isKeyPattern, Pattern
 
 static int detector_add_chp_action(lua_State* L)
 {
-    UserData<LuaDetector>* ud;
     PatternType ptype;
     size_t psize;
     char* pattern;
     ActionType action;
     char* action_data;
     int index = 1;
+    // Verify detector user data and that we are not in packet context
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, index);
+    ud->validate_lua_state(false);
 
-    if (get_detector_user_data(L, index, &ud,
-        "LuaDetectorApi:Invalid HTTP detector user data in CHPAddAction."))
-        return 0;
 
     // Parameter 1
     AppId appId = lua_tointeger(L, ++index);
@@ -1370,14 +1349,12 @@ static int detector_add_chp_action(lua_State* L)
 
 static int detector_create_chp_multi_application(lua_State* L)
 {
-    UserData<LuaDetector>* ud;
     AppId appIdInstance = APP_ID_UNKNOWN;
     int instance;
     int index = 1;
-
-    if (get_detector_user_data(L, index, &ud,
-        "LuaDetectorApi:Invalid HTTP detector user data in CHPMultiCreateApp."))
-        return 0;
+    // Verify detector user data and that we are not in packet context
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, index);
+    ud->validate_lua_state(false);
 
     AppId appId = lua_tointeger(L, ++index);
     unsigned app_type_flags = lua_tointeger(L, ++index);
@@ -1408,17 +1385,15 @@ static int detector_create_chp_multi_application(lua_State* L)
 
 static int detector_add_chp_multi_action(lua_State* L)
 {
-    UserData<LuaDetector>* ud;
     PatternType ptype;
     size_t psize;
     char* pattern;
     ActionType action;
     char* action_data;
     int index = 1;
-
-    if (get_detector_user_data(L, index, &ud,
-        "LuaDetectorApi:Invalid HTTP detector user data in CHPMultiAddAction."))
-        return 0;
+    // Verify detector user data and that we are not in packet context
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, index);
+    ud->validate_lua_state(false);
 
     // Parameter 1
     AppId appIdInstance = lua_tointeger(L, ++index);
@@ -1455,15 +1430,15 @@ static int detector_add_chp_multi_action(lua_State* L)
 static int detector_port_only_service(lua_State* L)
 {
     int index = 1;
-
     // Verify detector user data and that we are not in packet context
-    assert(!(*UserData<LuaDetector>::check(L, DETECTOR, index))->validate_params.pkt);
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, index);
+    ud->validate_lua_state(false);
 
     AppId appId = lua_tointeger(L, ++index);
     uint16_t port = lua_tointeger(L, ++index);
     uint8_t protocol = lua_tointeger(L, ++index);
-    AppIdConfig* config = AppIdInspector::get_inspector()->get_appid_config();
 
+    AppIdConfig* config = ud->get_handler().get_inspector().get_appid_config();
     if (port == 0)
         config->ip_protocol[protocol] = appId;
     else if (protocol == 6)
@@ -1477,8 +1452,7 @@ static int detector_port_only_service(lua_State* L)
 }
 
 /* Add a length-based detector.  This is done by adding a new length sequence
- * to the cache.  Note that this does not require a validate and is only used
- * as a fallback identification.
+ * to the cache.
  *
  * @param lua_State* - Lua state variable.
  * @param appId/stack        - App ID to use for this detector.
@@ -1501,7 +1475,7 @@ static int detector_add_length_app_cache(lua_State* L)
     LengthKey length_sequence;
     int index = 1;
 
-    UserData<LuaDetector>::check(L, DETECTOR, index);
+    UserData<AppIdDetector>::check(L, DETECTOR, index);
 
     AppId appId = lua_tonumber(L, ++index);
     IpProtocol proto = (IpProtocol)lua_tonumber(L, ++index);
@@ -1594,9 +1568,9 @@ static int detector_add_length_app_cache(lua_State* L)
 static int detector_add_af_application(lua_State* L)
 {
     int index = 1;
-
     // Verify detector user data and that we are not in packet context
-    assert(!(*UserData<LuaDetector>::check(L, DETECTOR, index))->validate_params.pkt);
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, index);
+    ud->validate_lua_state(false);
 
     AppId indicator = (AppId)lua_tointeger(L, ++index);
     AppId forecast  = (AppId)lua_tointeger(L, ++index);
@@ -1609,9 +1583,9 @@ static int detector_add_af_application(lua_State* L)
 static int detector_add_url_application(lua_State* L)
 {
     int index = 1;
-
     // Verify detector user data and that we are not in packet context
-    assert(!(*UserData<LuaDetector>::check(L, DETECTOR, index))->validate_params.pkt);
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, index);
+    ud->validate_lua_state(false);
 
     uint32_t service_id      = lua_tointeger(L, ++index);
     uint32_t client_app      = lua_tointeger(L, ++index);
@@ -1694,9 +1668,9 @@ static int detector_add_url_application(lua_State* L)
 static int detector_add_rtmp_url(lua_State* L)
 {
     int index = 1;
-
     // Verify detector user data and that we are not in packet context
-    assert(!(*UserData<LuaDetector>::check(L, DETECTOR, index))->validate_params.pkt);
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, index);
+    ud->validate_lua_state(false);
 
     uint32_t service_id      = lua_tointeger(L, ++index);
     uint32_t client_app      = lua_tointeger(L, ++index);
@@ -1779,9 +1753,9 @@ static int detector_add_rtmp_url(lua_State* L)
 static int detector_add_sip_user_agent(lua_State* L)
 {
     int index = 1;
-
     // Verify detector user data and that we are not in packet context
-    assert(!(*UserData<LuaDetector>::check(L, DETECTOR, index))->validate_params.pkt);
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, index);
+    ud->validate_lua_state(false);
 
     uint32_t client_app = lua_tointeger(L, ++index);
     const char* clientVersion = lua_tostring(L, ++index);
@@ -1809,9 +1783,9 @@ static int detector_add_sip_user_agent(lua_State* L)
 static int create_custom_application(lua_State* L)
 {
     int index = 1;
-
     // Verify detector user data and that we are not in packet context
-    assert(!(*UserData<LuaDetector>::check(L, DETECTOR, index))->validate_params.pkt);
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, index);
+    ud->validate_lua_state(false);
 
     /* Verify that host pattern is a valid string */
     size_t appNameLen = 0;
@@ -1834,11 +1808,11 @@ static int create_custom_application(lua_State* L)
 static int add_client_application(lua_State* L)
 {
     auto& ud = *UserData<LuaClientDetector>::check(L, DETECTOR, 1);
-    assert(ud->validate_params.pkt);
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
     unsigned int service_id = lua_tonumber(L, 2);
     unsigned int client_id = lua_tonumber(L, 3);
 
-    ud->add_app(ud->validate_params.asd, service_id, client_id, "");
+    ud->add_app(lsd->ldp.asd, service_id, client_id, "");
     lua_pushnumber(L, 0);
     return 1;
 }
@@ -1856,14 +1830,14 @@ static int add_client_application(lua_State* L)
 static int add_service_application(lua_State* L)
 {
     auto& ud = *UserData<LuaServiceDetector>::check(L, DETECTOR, 1);
-    assert(ud->validate_params.pkt && ud->validate_params.asd);
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
     unsigned service_id = lua_tonumber(L, 2);
 
     /*Phase2 - discuss AppIdServiceSubtype will be maintained on lua side therefore the last
       parameter on the following call is nullptr.
       Subtype is not displayed on DC at present. */
-    unsigned retValue = ud->add_service(ud->validate_params.asd, ud->validate_params.pkt,
-        ud->validate_params.dir, service_id);
+    unsigned retValue = ud->add_service(lsd->ldp.asd, lsd->ldp.pkt,
+        lsd->ldp.dir, service_id);
 
     lua_pushnumber(L, retValue);
     return 1;
@@ -1872,10 +1846,10 @@ static int add_service_application(lua_State* L)
 static int add_payload_application(lua_State* L)
 {
     auto& ud = *UserData<LuaClientDetector>::check(L, DETECTOR, 1);
-    assert(ud->validate_params.asd);
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
     unsigned payload_id = lua_tonumber(L, 2);
-    ud->add_payload(ud->validate_params.asd, payload_id);
+    ud->add_payload(lsd->ldp.asd, payload_id);
 
     lua_pushnumber(L, 0);
     return 1;
@@ -1884,9 +1858,9 @@ static int add_payload_application(lua_State* L)
 static int add_http_pattern(lua_State* L)
 {
     int index = 1;
-
     // Verify detector user data and that we are not in packet context
-    assert(!(*UserData<LuaDetector>::check(L, DETECTOR, index))->validate_params.pkt);
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, index);
+    ud->validate_lua_state(false);
 
     /* Verify valid pattern type */
     enum httpPatternType pat_type = (enum httpPatternType)lua_tointeger(L, ++index);
@@ -1921,9 +1895,9 @@ static int add_http_pattern(lua_State* L)
 static int add_url_pattern(lua_State* L)
 {
     int index = 1;
-
     // Verify detector user data and that we are not in packet context
-    assert(!(*UserData<LuaDetector>::check(L, DETECTOR, index))->validate_params.pkt);
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, index);
+    ud->validate_lua_state(false);
 
     uint32_t service_id = lua_tointeger(L, ++index);
     uint32_t clientAppId   = lua_tointeger(L, ++index);
@@ -2005,9 +1979,11 @@ static int add_url_pattern(lua_State* L)
  */
 static int add_port_pattern_client(lua_State* L)
 {
-    int index = 1;
     size_t patternSize = 0;
+    int index = 1;
+    // Verify detector user data and that we are not in packet context
     auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, index);
+    ud->validate_lua_state(false);
 
     IpProtocol protocol = (IpProtocol)lua_tonumber(L, ++index);
     uint16_t port = 0;      //port      = lua_tonumber(L, ++index);  FIXIT-L - why commented out?
@@ -2052,9 +2028,11 @@ static int add_port_pattern_client(lua_State* L)
  */
 static int add_port_pattern_service(lua_State* L)
 {
-    int index = 1;
     size_t patternSize = 0;
+    int index = 1;
+    // Verify detector user data and that we are not in packet context
     auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, index);
+    ud->validate_lua_state(false);
 
     IpProtocol protocol = (IpProtocol)lua_tonumber(L, ++index);
     uint16_t port = lua_tonumber(L, ++index);
@@ -2081,9 +2059,9 @@ static int add_port_pattern_service(lua_State* L)
 static int detector_add_sip_server(lua_State* L)
 {
     int index = 1;
-
     // Verify detector user data and that we are not in packet context
-    assert(!(*UserData<LuaDetector>::check(L, DETECTOR, index))->validate_params.pkt);
+    auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, index);
+    ud->validate_lua_state(false);
 
     uint32_t client_app = lua_tointeger(L, ++index);
     const char* clientVersion = lua_tostring(L, ++index);
@@ -2137,8 +2115,8 @@ static int create_future_flow(lua_State* L)
     SfIp client_addr;
     SfIp server_addr;
     int16_t snort_app_id = 0;
-    auto& ud = *UserData<LuaDetector>::check(L, DETECTOR, 1);
-    assert(ud->validate_params.pkt);
+    AppIdDetector* ud = *UserData<AppIdDetector>::check(L, DETECTOR, 1);
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
     const char* pattern = lua_tostring(L, 2);
     if (!convert_string_to_address(pattern, &client_addr))
@@ -2165,9 +2143,9 @@ static int create_future_flow(lua_State* L)
         snort_app_id = entry->snortId;
     }
 
-    AppIdSession* fp = AppIdSession::create_future_session(ud->validate_params.pkt,  &client_addr,
+    AppIdSession* fp = AppIdSession::create_future_session(lsd->ldp.pkt,  &client_addr,
         client_port, &server_addr, server_port, proto, snort_app_id,
-        APPID_EARLY_SESSION_FLAG_FW_RULE);
+        APPID_EARLY_SESSION_FLAG_FW_RULE, ud->get_handler().get_inspector());
     if (fp)
     {
         fp->service.set_id(service_id);
@@ -2318,7 +2296,7 @@ static int Detector_gc(lua_State*)
 /*convert detector to string for printing */
 static int Detector_tostring(lua_State* L)
 {
-    lua_pushfstring(L, "Detector (%p)", UserData<LuaDetector>::check(L, DETECTOR, 1));
+    lua_pushfstring(L, "Detector (%p)", UserData<AppIdDetector>::check(L, DETECTOR, 1));
     return 1;
 }
 
@@ -2359,29 +2337,29 @@ int register_detector(lua_State* L)
     return 1;                         /* return methods on the stack */
 }
 
-LuaDetector::~LuaDetector()
+LuaStateDescriptor::~LuaStateDescriptor()
 {
     // release the reference of the userdata on the lua side
     if ( detector_user_data_ref != LUA_REFNIL )
         luaL_unref(my_lua_state, LUA_REGISTRYINDEX, detector_user_data_ref);
 }
 
-int LuaDetector::lua_validate(AppIdDiscoveryArgs& args)
+int LuaStateDescriptor::lua_validate(AppIdDiscoveryArgs& args)
 {
     Profile lua_detector_context(luaCustomPerfStats);
 
-    validate_params.data = args.data;
-    validate_params.size = args.size;
-    validate_params.dir = args.dir;
-    validate_params.asd = args.asd;
-    validate_params.pkt = args.pkt;
+    ldp.data = args.data;
+    ldp.size = args.size;
+    ldp.dir = args.dir;
+    ldp.asd = args.asd;
+    ldp.pkt = args.pkt;
     const char* validateFn = package_info.validateFunctionName.c_str();
 
     if ( (!validateFn) || !lua_checkstack(my_lua_state, 1) )
     {
         ErrorMessage("lua detector %s: invalid LUA %s\n",
             package_info.name.c_str(), lua_tostring(my_lua_state, -1));
-        validate_params.pkt = nullptr;
+        ldp.pkt = nullptr;
         return APPID_ENULL;
     }
 
@@ -2396,7 +2374,7 @@ int LuaDetector::lua_validate(AppIdDiscoveryArgs& args)
         // that don't impact processing by other detectors or future packets by the same detector.
         ErrorMessage("lua detector %s: error validating %s\n",
             package_info.name.c_str(), lua_tostring(my_lua_state, -1));
-        validate_params.pkt = nullptr;
+        ldp.pkt = nullptr;
         return APPID_ENULL;
     }
 
@@ -2407,24 +2385,92 @@ int LuaDetector::lua_validate(AppIdDiscoveryArgs& args)
     if ( !lua_isnumber(my_lua_state, -1) )
     {
         ErrorMessage("lua detector %s: returned non-numeric value\n", package_info.name.c_str());
-        validate_params.pkt = nullptr;
+        ldp.pkt = nullptr;
         return APPID_ENULL;
     }
 
     int rc = lua_tonumber(my_lua_state, -1);
     lua_pop(my_lua_state, 1);
     DebugFormat(DEBUG_APPID, "lua detector %s: status: %d\n", package_info.name.c_str(), rc);
-    validate_params.pkt = nullptr;
+    ldp.pkt = nullptr;
     return rc;
+}
+
+static inline void init_lsd(LuaStateDescriptor* lsd, const std::string& detector_name, lua_State* L)
+{
+	lsd->service_id = APP_ID_UNKNOWN;
+	get_lua_field(L, -1, "init", lsd->package_info.initFunctionName);
+	get_lua_field(L, -1, "clean", lsd->package_info.cleanFunctionName);
+	get_lua_field(L, -1, "validate", lsd->package_info.validateFunctionName);
+	get_lua_field(L, -1, "minimum_matches", lsd->package_info.minimum_matches);
+	lsd->package_info.name = detector_name;
+    lua_pop(L, 1);    // pop client table
+    lua_pop(L, 1);    // pop DetectorPackageInfo table
+    lsd->my_lua_state = L;
+}
+
+static inline bool lua_params_validator(LuaDetectorParameters& ldp, bool packet_context)
+{
+	if ( packet_context )
+	{
+		assert(ldp.asd);
+		assert(ldp.pkt);
+	}
+	else
+	{
+		assert(!ldp.pkt);
+	}
+
+	return true;
+}
+
+LuaServiceDetector::LuaServiceDetector(AppIdDiscovery* sdm, const std::string& detector_name,
+    IpProtocol protocol, lua_State* L)
+{
+    handler = sdm;
+    name = detector_name;
+    proto = protocol;
+    handler->register_detector(name, this, proto);
+	init_lsd(&lsd, detector_name, L);
+    UserData<AppIdDetector>::push(L, DETECTOR, this);
+    // add a lua reference so the detector doesn't get garbage-collected
+    lua_pushvalue(L, -1);
+    lsd.detector_user_data_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+}
+
+LuaStateDescriptor* LuaServiceDetector::validate_lua_state(bool packet_context)
+{
+	lua_params_validator(lsd.ldp, packet_context);
+	return &lsd;
 }
 
 int LuaServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
-    return lua_validate(args);
+    return lsd.lua_validate(args);
+}
+
+LuaClientDetector::LuaClientDetector(AppIdDiscovery* cdm, const std::string& detector_name,
+    IpProtocol protocol, lua_State* L)
+ {
+     handler = cdm;
+     name = detector_name;
+     proto = protocol;
+     handler->register_detector(name, this, proto);
+     init_lsd(&lsd, detector_name, L);
+     UserData<AppIdDetector>::push(L, DETECTOR, this);
+     // add a lua reference so the detector doesn't get garbage-collected
+     lua_pushvalue(L, -1);
+     lsd.detector_user_data_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+ }
+
+LuaStateDescriptor* LuaClientDetector::validate_lua_state(bool packet_context)
+{
+	lua_params_validator(lsd.ldp, packet_context);
+	return &lsd;
 }
 
 int LuaClientDetector::validate(AppIdDiscoveryArgs& args)
 {
-    return lua_validate(args);
+    return lsd.lua_validate(args);
 }
 

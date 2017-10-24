@@ -18,6 +18,9 @@
 
 // appid_mock_inspector.h author davis mcpherson <davmcphe@cisco.com>
 
+typedef uint64_t Trace;
+class Value;
+
 Inspector::Inspector()
 {
     set_api(nullptr);
@@ -28,27 +31,25 @@ bool Inspector::likes(Packet*) { return true; }
 bool Inspector::get_buf(const char*, Packet*, InspectionBuffer&) { return true; }
 class StreamSplitter* Inspector::get_splitter(bool) { return nullptr; }
 
-Module::Module(const char*, const char*) { }
-void Module::sum_stats(bool ) {}
-void Module::show_interval_stats(IndexVec&, FILE*) {}
-void Module::show_stats() {}
-void Module::reset_stats() {}
+class AppIdModule
+{
+public:
+    AppIdModule() {}
+    ~AppIdModule() {}
 
-AppIdModule::~AppIdModule() {}
-AppIdModule::AppIdModule() : Module(nullptr, nullptr), config(nullptr) {}
-bool AppIdModule::begin(char const*, int, SnortConfig*) { return true; }
-bool AppIdModule::end(char const*, int, SnortConfig*) { return true; }
-bool AppIdModule::set(char const*, Value&, SnortConfig*) { return true; }
-const PegInfo* AppIdModule::get_pegs() const { return nullptr; }
-PegCount* AppIdModule::get_counts() const { return nullptr; }
-ProfileStats* AppIdModule::get_profile() const { return nullptr; }
+};
 
-AppIdInspector::AppIdInspector(AppIdModule& m) : appid_mod(m), my_seh(nullptr) { }
-AppIdInspector::~AppIdInspector() { }
-AppIdInspector* AppIdInspector::get_inspector() { AppIdModule aim; return new AppIdInspector(aim); }
-void AppIdInspector::eval(Packet*) { }
-int16_t AppIdInspector::add_appid_protocol_reference(char const*) { return 1066; }
-bool AppIdInspector::configure(SnortConfig*) { return true; }
-void AppIdInspector::show(SnortConfig*) { }
-void AppIdInspector::tinit() { }
-void AppIdInspector::tterm() { }
+class AppIdInspector : public Inspector
+{
+public:
+    AppIdInspector(AppIdModule& ) { }
+    ~AppIdInspector() { }
+    void eval(Packet*) { }
+    bool configure(SnortConfig*) { return true; }
+    void show(SnortConfig*) { }
+    void tinit() { }
+    void tterm() { }
+};
+
+AppIdModule appid_mod;
+AppIdInspector appid_inspector( appid_mod );

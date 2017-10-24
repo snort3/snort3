@@ -550,8 +550,10 @@ uint32_t AppIdApi::produce_ha_state(Flow* flow, uint8_t* buf)
     return sizeof(*appHA);
 }
 
-uint32_t AppIdApi::consume_ha_state(Flow* flow, const uint8_t* buf, uint8_t, IpProtocol proto,
-    SfIp* ip, uint16_t port)
+// FIXIT-H last param AppIdSession ctor is appid inspector, we need that but no good way to get it
+// at the moment...code to allocate session ifdef'ed out until this is resolved...
+uint32_t AppIdApi::consume_ha_state(Flow* flow, const uint8_t* buf, uint8_t, IpProtocol /*proto*/,
+    SfIp* /*ip*/, uint16_t /*port*/)
 {
     const AppIdSessionHA* appHA = (const AppIdSessionHA*)buf;
     if (appHA->flags & APPID_HA_FLAGS_APP)
@@ -559,9 +561,10 @@ uint32_t AppIdApi::consume_ha_state(Flow* flow, const uint8_t* buf, uint8_t, IpP
         AppIdSession* asd =
             (AppIdSession*)(flow->get_flow_data(AppIdSession::inspector_id));
 
+#ifdef APPID_HA_SUPPORT_ENABLED
         if (!asd)
         {
-            asd = new AppIdSession(proto, ip, port);
+            asd = new AppIdSession(proto, ip, port, nullptr);
             flow->set_flow_data(asd);
             asd->service.set_id(appHA->appId[1]);
             if (asd->service.get_id() == APP_ID_FTP_CONTROL)
@@ -580,14 +583,23 @@ uint32_t AppIdApi::consume_ha_state(Flow* flow, const uint8_t* buf, uint8_t, IpP
             if (thirdparty_appid_module)
                 thirdparty_appid_module->session_state_set(asd->tpsession, TP_STATE_HA);
         }
+#else
+        if ( !asd )
+        {
+            assert(false);
+            return sizeof(*appHA);
+        }
+#endif
 
         if ( ( appHA->flags & APPID_HA_FLAGS_TP_DONE ) && thirdparty_appid_module )
         {
             thirdparty_appid_module->session_state_set(asd->tpsession, TP_STATE_TERMINATED);
             asd->set_session_flags(APPID_SESSION_NO_TPI);
         }
+
         if (appHA->flags & APPID_HA_FLAGS_SVC_DONE)
             asd->set_service_detected();
+
         if (appHA->flags & APPID_HA_FLAGS_HTTP)
             asd->set_session_flags(APPID_SESSION_HTTP_SESSION);
 

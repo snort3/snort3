@@ -53,9 +53,9 @@ AppIdServiceSubtype APPID_UT_SERVICE_SUBTYPE = { nullptr, APPID_UT_SERVICE,
 
 unsigned AppIdSession::inspector_id = 0;
 
-AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t) : FlowData(inspector_id, nullptr)
+AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t, AppIdInspector& inspector)
+    : FlowData(inspector_id, &inspector), inspector(inspector)
 {
-    service.set_port_service_id(APPID_UT_ID);
     common.flow_type = APPID_FLOW_TYPE_NORMAL;
     service_port = APPID_UT_SERVICE_PORT;
 

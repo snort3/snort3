@@ -58,7 +58,7 @@ RshellServiceDetector::RshellServiceDetector(ServiceDiscovery* sd)
     name = "rshell";
     proto = IpProtocol::TCP;
     detectorType = DETECTOR_TYPE_DECODER;
-    app_id = AppIdInspector::get_inspector()->add_appid_protocol_reference("rsh-error");
+    app_id = AppInfoManager::get_instance().add_appid_protocol_reference("rsh-error");
 
     appid_registry =
     {
@@ -146,7 +146,8 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
             const SfIp* dip = pkt->ptrs.ip_api.get_dst();
             const SfIp* sip = pkt->ptrs.ip_api.get_src();
             pf = AppIdSession::create_future_session(pkt, dip, 0, sip, (uint16_t)port,
-                IpProtocol::TCP, app_id, APPID_EARLY_SESSION_FLAG_FW_RULE);
+                IpProtocol::TCP, app_id, APPID_EARLY_SESSION_FLAG_FW_RULE,
+                handler->get_inspector());
             if (pf)
             {
                 pf->client_disco_state = APPID_DISCO_STATE_FINISHED;

@@ -162,16 +162,16 @@ struct TlsSession
 class AppIdSession : public FlowData
 {
 public:
-    AppIdSession(IpProtocol, const SfIp*, uint16_t port);
+    AppIdSession(IpProtocol, const SfIp*, uint16_t port, AppIdInspector&);
     ~AppIdSession() override;
 
-    static AppIdSession* allocate_session(const Packet*, IpProtocol, int);
+    static AppIdSession* allocate_session(const Packet*, IpProtocol, int, AppIdInspector&);
     static AppIdSession* create_future_session(const Packet*, const SfIp*, uint16_t, const SfIp*,
-        uint16_t, IpProtocol, int16_t, int);
+        uint16_t, IpProtocol, int16_t, int, AppIdInspector&);
 
     uint32_t session_id = 0;
     Flow* flow = nullptr;
-    AppIdConfig* config = nullptr;
+    AppIdConfig* config;
     std::map<unsigned, AppIdFlowData*> flow_data;
     AppInfoManager* app_info_mgr = nullptr;
     CommonAppIdData common;
@@ -318,8 +318,7 @@ private:
 
     static THREAD_LOCAL uint32_t appid_flow_data_id;
     AppId application_ids[APP_PROTOID_MAX];
-
-
+    AppIdInspector& inspector;
 };
 
 #endif

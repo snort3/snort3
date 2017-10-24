@@ -33,6 +33,7 @@
 #include "flow/flow.h"
 #include "utils/util.h"
 
+class AppIdInspector;
 class AppIdSession;
 class AppIdDetector;
 class ServiceDetector;
@@ -82,9 +83,9 @@ typedef AppIdDetectors::iterator AppIdDetectorsIterator;
 class AppIdDiscovery
 {
 public:
-    AppIdDiscovery();
+    AppIdDiscovery(AppIdInspector& ins);
     virtual ~AppIdDiscovery();
-    static void initialize_plugins();
+    static void initialize_plugins(AppIdInspector* ins);
     static void finalize_plugins();
     static void release_plugins();
 
@@ -98,7 +99,7 @@ public:
         int position, unsigned nocase);
     virtual int add_service_port(AppIdDetector*, const ServiceDetectorPort&);
 
-    static void do_application_discovery(Packet* p);
+    static void do_application_discovery(Packet* p, AppIdInspector&);
 
     AppIdDetectors* get_tcp_detectors()
     {
@@ -110,7 +111,11 @@ public:
         return &udp_detectors;
     }
 
+    AppIdInspector& get_inspector()
+    { return inspector; }
+
 protected:
+    AppIdInspector& inspector;
     AppIdDetectors tcp_detectors;
     AppIdDetectors udp_detectors;
     SearchTool* tcp_patterns = nullptr;

@@ -183,7 +183,7 @@ RpcServiceDetector::RpcServiceDetector(ServiceDiscovery* sd)
     struct rpcent* rpc;
     RPCProgram* prog;
 
-    app_id = AppIdInspector::get_inspector()->add_appid_protocol_reference("sunrpc");
+    app_id = AppInfoManager::get_instance().add_appid_protocol_reference("sunrpc");
 
     if (!rpc_programs)
     {
@@ -404,7 +404,8 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, int 
                         const SfIp* sip = pkt->ptrs.ip_api.get_src();
                         tmp = ntohl(pmr->port);
                         pf = AppIdSession::create_future_session(pkt, dip, 0, sip, (uint16_t)tmp,
-                            (IpProtocol)ntohl((uint32_t)rd->proto), app_id, 0);
+                            (IpProtocol)ntohl((uint32_t)rd->proto), app_id, 0,
+                            handler->get_inspector());
                         if (pf)
                         {
                             pf->add_flow_data_id((uint16_t)tmp, this);

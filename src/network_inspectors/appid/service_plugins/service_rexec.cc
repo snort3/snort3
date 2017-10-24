@@ -63,7 +63,7 @@ RexecServiceDetector::RexecServiceDetector(ServiceDiscovery* sd)
     proto = IpProtocol::TCP;
     detectorType = DETECTOR_TYPE_DECODER;
 
-    app_id = AppIdInspector::get_inspector()->add_appid_protocol_reference("rexec");
+    app_id = AppInfoManager::get_instance().add_appid_protocol_reference("rexec");
 
     appid_registry =
     {
@@ -143,7 +143,7 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
             dip = args.pkt->ptrs.ip_api.get_dst();
             sip = args.pkt->ptrs.ip_api.get_src();
             AppIdSession* pf = AppIdSession::create_future_session(args.pkt, dip, 0, sip, (uint16_t)port,
-                IpProtocol::TCP, app_id, APPID_EARLY_SESSION_FLAG_FW_RULE);
+                IpProtocol::TCP, app_id, APPID_EARLY_SESSION_FLAG_FW_RULE, handler->get_inspector());
             if (pf)
             {
                 ServiceREXECData* tmp_rd = (ServiceREXECData*)snort_calloc(

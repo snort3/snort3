@@ -71,7 +71,7 @@ TftpServiceDetector::TftpServiceDetector(ServiceDiscovery* sd)
     proto = IpProtocol::UDP;
     detectorType = DETECTOR_TYPE_DECODER;
 
-    app_id = AppIdInspector::get_inspector()->add_appid_protocol_reference("tftp");
+    app_id = AppInfoManager::get_instance().add_appid_protocol_reference("tftp");
 
     appid_registry =
     {
@@ -187,7 +187,7 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
         dip = pkt->ptrs.ip_api.get_dst();
         sip = pkt->ptrs.ip_api.get_src();
         pf = AppIdSession::create_future_session(pkt, dip, 0, sip, pkt->ptrs.sp, asd->protocol,
-            app_id, APPID_EARLY_SESSION_FLAG_FW_RULE);
+            app_id, APPID_EARLY_SESSION_FLAG_FW_RULE, handler->get_inspector());
         if (pf)
         {
             data_add(pf, tmp_td, &snort_free);

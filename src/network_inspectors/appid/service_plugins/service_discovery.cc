@@ -84,17 +84,22 @@ static THREAD_LOCAL ServiceDetector* ftp_service = nullptr;
 
 ProfileStats serviceMatchPerfStats;
 
-ServiceDiscovery::ServiceDiscovery()
+ServiceDiscovery::ServiceDiscovery(AppIdInspector& ins)
+    : AppIdDiscovery(ins)
 {
     initialize();
 }
 
 
-ServiceDiscovery& ServiceDiscovery::get_instance()
+ServiceDiscovery& ServiceDiscovery::get_instance(AppIdInspector* ins)
 {
     static THREAD_LOCAL ServiceDiscovery* discovery_manager = nullptr;
     if (!discovery_manager)
-        discovery_manager = new ServiceDiscovery;
+    {
+        assert(ins);
+        discovery_manager = new ServiceDiscovery(*ins);
+    }
+
     return *discovery_manager;
 }
 

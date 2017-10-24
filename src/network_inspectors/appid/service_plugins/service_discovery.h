@@ -61,7 +61,7 @@ enum SESSION_SERVICE_SEARCH_STATE
 class ServiceDiscovery : public AppIdDiscovery
 {
 public:
-    static ServiceDiscovery& get_instance();
+    static ServiceDiscovery& get_instance(AppIdInspector* ins = nullptr);
 
     void finalize_service_patterns();
     int add_service_port(AppIdDetector*, const ServiceDetectorPort&) override;
@@ -77,7 +77,7 @@ public:
     static int add_ftp_service_state(AppIdSession&);
 
 private:
-    ServiceDiscovery();
+    ServiceDiscovery(AppIdInspector& ins);
     void initialize() override;
     void get_next_service(const Packet*, const int dir, AppIdSession*, ServiceDiscoveryState*);
     void get_port_based_services(IpProtocol, uint16_t port, AppIdSession*);

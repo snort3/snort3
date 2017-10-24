@@ -44,14 +44,10 @@
 #include "detector_plugins/detector_pattern.h"
 #include "log/messages.h"
 #include "log/packet_tracer.h"
-#include "main/snort_config.h"
 #include "managers/inspector_manager.h"
 #include "managers/module_manager.h"
 #include "protocols/packet.h"
 #include "profiler/profiler.h"
-#include "target_based/snort_protocols.h"
-
-static THREAD_LOCAL AppIdStatistics* appid_stats_manager = nullptr;
 
 // FIXIT-L - appid cleans up openssl now as it is the primary (only) user... eventually this
 //           should probably be done outside of appid
@@ -92,29 +88,9 @@ AppIdInspector::~AppIdInspector()
     delete config;
 }
 
-AppIdInspector* AppIdInspector::get_inspector()
-{
-    return (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME);
-}
-
 AppIdConfig* AppIdInspector::get_appid_config()
 {
     return active_config;
-}
-
-AppIdStatistics* AppIdInspector::get_stats_manager()
-{
-    return appid_stats_manager;
-}
-
-int16_t AppIdInspector::add_appid_protocol_reference(const char* protocol)
-{
-    static std::mutex apr_mutex;
-
-    apr_mutex.lock();
-    int16_t id = snort_conf->proto_ref->add(protocol);
-    apr_mutex.unlock();
-    return id;
 }
 
 bool AppIdInspector::configure(SnortConfig*)
@@ -158,12 +134,12 @@ void AppIdInspector::show(SnortConfig*)
 
 void AppIdInspector::tinit()
 {
-    appid_stats_manager = AppIdStatistics::initialize_manager(*config);
+    AppIdStatistics::initialize_manager(*config);
     HostPortCache::initialize();
     AppIdServiceState::initialize();
     init_appid_forecast();
     HttpPatternMatchers* http_matchers = HttpPatternMatchers::get_instance();
-    AppIdDiscovery::initialize_plugins();
+    AppIdDiscovery::initialize_plugins(this);
     init_length_app_cache();
     LuaDetectorManager::initialize(*active_config);
     PatternServiceDetector::finalize_service_port_patterns();
@@ -177,7 +153,7 @@ void AppIdInspector::tinit()
 
 void AppIdInspector::tterm()
 {
-    delete appid_stats_manager;
+    AppIdStatistics::cleanup();
     HostPortCache::terminate();
     clean_appid_forecast();
     service_dns_host_clean();
@@ -197,7 +173,7 @@ void AppIdInspector::eval(Packet* p)
     AppIdPegCounts::inc_disco_peg(AppIdPegCounts::DiscoveryPegs::PACKETS);
     if (p->flow)
     {
-        AppIdDiscovery::do_application_discovery(p);
+        AppIdDiscovery::do_application_discovery(p, *this);
         if (PacketTracer::get_enable())
             add_appid_to_packet_trace(p->flow);
     }
@@ -306,13 +282,13 @@ int sslAppGroupIdLookup(void*, const char*, const char*, AppId*, AppId*, AppId*)
     if (commonName)
     {
         ssl_scan_cname((const uint8_t*)commonName, strlen(commonName), client_id, payload_app_id,
-            &AppIdInspector::get_inspector()->get_appid_config()->serviceSslConfig);
+            &get_appid_config()->serviceSslConfig);
     }
     if (serverName)
     {
         ssl_scan_hostname((const uint8_t*)serverName, strlen(serverName), client_id,
             payload_app_id,
-            &AppIdInspector::get_inspector()->get_appid_config()->serviceSslConfig);
+            &get_appid_config()->serviceSslConfig);
     }
 
     if (ssnptr && (asd = appid_api.get_appid_session(ssnptr)))

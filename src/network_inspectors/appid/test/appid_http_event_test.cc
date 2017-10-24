@@ -33,6 +33,7 @@
 
 #include "appid_mock_definitions.h"
 #include "appid_mock_http_session.h"
+#include "appid_mock_inspector.h"
 #include "appid_mock_session.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
@@ -172,8 +173,9 @@ TEST_GROUP(appid_http_event)
     void setup() override
     {
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
+        mock_init_appid_pegs();
         flow = new Flow;
-        mock_session = new AppIdSession(IpProtocol::TCP, nullptr, 1492);
+        mock_session = new AppIdSession(IpProtocol::TCP, nullptr, 1492, appid_inspector);
         flow->set_flow_data(mock_session);
     }
 
@@ -182,6 +184,7 @@ TEST_GROUP(appid_http_event)
         fake_msg_header = nullptr;
         delete mock_session;
         delete flow;
+        mock_cleanup_appid_pegs();
         mock().clear();
         MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
