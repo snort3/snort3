@@ -62,7 +62,8 @@ public:
         NUM_APPID_DETECTOR_PEGS
     };
 
-    static void add_app_peg_info(AppInfoTableEntry&, AppId);
+    static void add_app_peg_info(std::string app_name, AppId);
+    static void add_unknown_app_peg();
     static PegCount* get_peg_counts();
     static PegInfo* get_peg_info();
     static void init_pegs();

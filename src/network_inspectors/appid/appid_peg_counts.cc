@@ -62,12 +62,23 @@ void AppIdPegCounts::init_detector_peg_info(const std::string& app_name, const s
     appid_detectors_peg_info.push_back({CountType::SUM, snort_strdup(name.c_str()), snort_strdup(help.c_str())});
 }
 
-void AppIdPegCounts::add_app_peg_info(AppInfoTableEntry& entry, AppId app_id )
+void AppIdPegCounts::add_app_peg_info(std::string app_name, AppId app_id )
 {
-    std::string app_name = entry.app_name_key;
     std::replace(app_name.begin(), app_name.end(), ' ', '_');
 
     appid_detector_pegs_idx[app_id] = appid_detectors_peg_info.size() + NUM_APPID_GLOBAL_PEGS;
+    init_detector_peg_info(app_name, "_flows", " services detected");
+    init_detector_peg_info(app_name, "_clients", " clients detected");
+    init_detector_peg_info(app_name, "_users", " users detected");
+    init_detector_peg_info(app_name, "_payloads", " payloads detected");
+    init_detector_peg_info(app_name, "_misc", " misc detected");
+}
+
+void AppIdPegCounts::add_unknown_app_peg()
+{
+    std::string app_name = "unknown_app";
+
+    AppIdPegCounts::unknown_app_idx = appid_detectors_peg_info.size() + NUM_APPID_GLOBAL_PEGS;
     init_detector_peg_info(app_name, "_flows", " services detected");
     init_detector_peg_info(app_name, "_clients", " clients detected");
     init_detector_peg_info(app_name, "_users", " users detected");
@@ -87,14 +98,6 @@ PegInfo* AppIdPegCounts::get_peg_info()
 {
     if ( AppIdPegCounts::detectors_configured )
     {
-        std::string app_name = "unknown_app";
-
-        AppIdPegCounts::unknown_app_idx = appid_detectors_peg_info.size() + NUM_APPID_GLOBAL_PEGS;
-        init_detector_peg_info(app_name, "_flows", " services detected");
-        init_detector_peg_info(app_name, "_clients", " clients detected");
-        init_detector_peg_info(app_name, "_users", " users detected");
-        init_detector_peg_info(app_name, "_payloads", " payloads detected");
-        init_detector_peg_info(app_name, "_misc", " misc detected");
         appid_pegs.insert( appid_pegs.end(), appid_detectors_peg_info.begin(), appid_detectors_peg_info.end());
 
         // add the sentinel entry at the end

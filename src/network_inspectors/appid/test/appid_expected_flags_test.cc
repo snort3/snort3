@@ -54,7 +54,6 @@ TEST_GROUP(appid_expected_flags)
     void setup()
     {
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
-        mock_init_appid_pegs();
         parent = new AppIdSession(IpProtocol::TCP, nullptr, 1492, appid_inspector);
         expected = new AppIdSession(IpProtocol::TCP, nullptr, 1492, appid_inspector);
     }
@@ -63,7 +62,6 @@ TEST_GROUP(appid_expected_flags)
     {
         delete parent;
         delete expected;
-        mock_cleanup_appid_pegs();
         MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };
@@ -140,6 +138,9 @@ TEST(appid_expected_flags, test6)
 
 int main(int argc, char** argv)
 {
-    return CommandLineTestRunner::RunAllTests(argc, argv);
+    mock_init_appid_pegs();
+    int rc = CommandLineTestRunner::RunAllTests(argc, argv);
+    mock_cleanup_appid_pegs();
+    return rc;
 }
 

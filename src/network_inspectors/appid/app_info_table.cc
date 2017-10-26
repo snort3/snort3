@@ -581,7 +581,7 @@ void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config)
             if ((app_id = get_static_app_info_entry(entry->appId)))
             {
                 app_info_table[app_id] = entry;
-                AppIdPegCounts::add_app_peg_info(*entry, app_id);
+                AppIdPegCounts::add_app_peg_info(entry->app_name_key, app_id);
             }
 
             if ((app_id = get_static_app_info_entry(entry->serviceId)))
@@ -596,6 +596,7 @@ void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config)
         }
         fclose(tableFile);
 
+        AppIdPegCounts::add_unknown_app_peg();
         snprintf(filepath, sizeof(filepath), "%s/odp/%s", mod_config->app_detector_dir,
             APP_CONFIG_FILE);
         load_appid_config (mod_config, filepath);

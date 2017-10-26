@@ -99,6 +99,7 @@ int ServiceDiscovery::fail_service(AppIdSession*, Packet const*, int, ServiceDet
 void mock_init_appid_pegs()
 {
     AppIdPegCounts::set_detectors_configured();
+    AppIdPegCounts::add_unknown_app_peg();
     AppIdPegCounts::get_peg_info();
     AppIdPegCounts::init_pegs();
 }

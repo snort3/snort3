@@ -76,7 +76,6 @@ TEST_GROUP(appid_api)
     void setup() override
     {
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
-        mock_init_appid_pegs();
         flow = new Flow;
         mock_session = new AppIdSession(IpProtocol::TCP, nullptr, 1492, appid_inspector);
         mock_session->hsession = init_http_session(mock_session);
@@ -87,8 +86,6 @@ TEST_GROUP(appid_api)
     {
         delete mock_session;
         delete flow;
-        mock_cleanup_appid_pegs();
-
         MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };
@@ -741,6 +738,9 @@ TEST(appid_api, produce_ha_state)
 
 int main(int argc, char** argv)
 {
-    return CommandLineTestRunner::RunAllTests(argc, argv);
+    mock_init_appid_pegs();
+    int rc = CommandLineTestRunner::RunAllTests(argc, argv);
+    mock_cleanup_appid_pegs();
+    return rc;
 }
 

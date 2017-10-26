@@ -75,13 +75,11 @@ TEST_GROUP(app_info_table)
     void setup()
     {
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
-        mock_init_appid_pegs();
     }
 
     void teardown()
     {
         app_info_mgr.cleanup_appid_info_table();
-        mock_cleanup_appid_pegs();
         MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };
@@ -147,7 +145,9 @@ TEST(app_info_table, get_static_app_info_entry)
 
 int main(int argc, char** argv)
 {
-    int return_value = CommandLineTestRunner::RunAllTests(argc, argv);
-    return return_value;
+    mock_init_appid_pegs();
+    int rc = CommandLineTestRunner::RunAllTests(argc, argv);
+    mock_cleanup_appid_pegs();
+    return rc;
 }
 
