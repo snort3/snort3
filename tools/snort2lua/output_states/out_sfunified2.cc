@@ -43,7 +43,7 @@ namespace output
         std::string args;
         bool retval = true;
 
-        table_api.open_table("firewall_logging");
+        table_api.open_table("sfunified2_logger");
 
         while (std::getline(data_stream, args, ','))
         {
@@ -87,7 +87,7 @@ namespace output
 
     static ConversionState* ctor(Converter& c)
     {
-        c.get_table_api().open_top_level_table("firewall_logging"); // in case there are no arguments
+        c.get_table_api().open_top_level_table("sfunified2_logger"); // in case there are no arguments
         c.get_table_api().close_table();
         return new SfUnified2(c);
     }
