@@ -608,14 +608,13 @@ uint64_t FileContext::get_processed_bytes()
 void FileContext::print_file_data(FILE* fp, const uint8_t* data, int len, int max_depth)
 {
     char str[18];
-    int i;
-    int pos;
-    char c;
+    int i, pos;
 
     if (max_depth < len)
         len = max_depth;
 
     fprintf(fp,"Show length: %d \n", len);
+
     for (i=0, pos=0; i<len; i++, pos++)
     {
         if (pos == 17)
@@ -630,7 +629,8 @@ void FileContext::print_file_data(FILE* fp, const uint8_t* data, int len, int ma
             pos++;
             fprintf(fp, "%s", " ");
         }
-        c = (char)data[i];
+        char c = (char)data[i];
+
         if (isprint(c) and (c == ' ' or !isspace(c)))
             str[pos] = c;
         else

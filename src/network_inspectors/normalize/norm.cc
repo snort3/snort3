@@ -122,7 +122,7 @@ int Norm_Packet(NormalizerConfig* c, Packet* p)
         p->packet_flags |= PKT_MODIFIED;
         return 1;
     }
-    if ( p->packet_flags & PKT_RESIZED )
+    if ( p->packet_flags & (PKT_RESIZED|PKT_MODIFIED) )
     {
         return 1;
     }
@@ -181,12 +181,13 @@ static int Norm_IP4(
         uint32_t len = p->layers[0].length + ntohs(h->ip_len);
 
         if ( (len < p->pkth->pktlen) &&
-            ( (len >= ETH_MIN_LEN) || (p->pkth->pktlen > ETH_MIN_LEN) )
-            )
+            ((len >= ETH_MIN_LEN) || (p->pkth->pktlen > ETH_MIN_LEN)) )
         {
             if ( mode == NORM_MODE_ON )
             {
-                (const_cast<DAQ_PktHdr_t*>(p->pkth))->pktlen = (len < ETH_MIN_LEN) ? ETH_MIN_LEN : len;
+                (const_cast<DAQ_PktHdr_t*>(p->pkth))->pktlen =
+                    (len < ETH_MIN_LEN) ? ETH_MIN_LEN : len;
+
                 p->packet_flags |= PKT_RESIZED;
                 changes++;
             }

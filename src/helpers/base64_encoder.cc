@@ -50,12 +50,12 @@ unsigned Base64Encoder::encode(
     const uint8_t* data = plain_text;
     const uint8_t* const data_end = plain_text + length;
     char* p = buf;
-    uint8_t fragment;
 
     switch (step)
     {
         while (true)
         {
+            uint8_t fragment;
     case step_A:
             if (data == data_end)
             {
@@ -66,6 +66,7 @@ unsigned Base64Encoder::encode(
             state = (fragment & 0x0fc) >> 2;
             *p++ = b64(state);
             state = (fragment & 0x003) << 4;
+            // fallthrough
     case step_B:
             if (data == data_end)
             {
@@ -76,6 +77,7 @@ unsigned Base64Encoder::encode(
             state |= (fragment & 0x0f0) >> 4;
             *p++ = b64(state);
             state = (fragment & 0x00f) << 2;
+            // fallthrough
     case step_C:
             if (data == data_end)
             {

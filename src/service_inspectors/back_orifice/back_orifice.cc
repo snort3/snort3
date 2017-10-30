@@ -232,22 +232,18 @@ static void PrecalcPrefix()
 {
     uint8_t cookie_cyphertext[BO_MAGIC_SIZE];
     const char* cookie_plaintext = "*!*QWTY?";
-    int key;
-    int cookie_index;
-    const char* cp_ptr;       /* cookie plaintext indexing pointer */
-    uint16_t cyphertext_referent;
 
     memset(lookup1, 0, sizeof(lookup1));
     memset(lookup2, 0, sizeof(lookup2));
 
-    for (key=0; key<65536; key++)
+    for (int key=0; key<65536; key++)
     {
         /* setup to generate cyphertext for this key */
         holdrand = key;
-        cp_ptr = cookie_plaintext;
+        const char* cp_ptr = cookie_plaintext;
 
         /* convert the plaintext cookie to cyphertext for this key */
-        for (cookie_index=0; cookie_index<BO_MAGIC_SIZE; cookie_index++)
+        for (int cookie_index=0; cookie_index<BO_MAGIC_SIZE; cookie_index++)
         {
             cookie_cyphertext[cookie_index] =(uint8_t)(*cp_ptr^(BoRand()));
             cp_ptr++;
@@ -257,6 +253,7 @@ static void PrecalcPrefix()
          * generate the key lookup mechanism from the first 2 characters of
          * the cyphertext
          */
+        uint16_t cyphertext_referent;
         cyphertext_referent = (uint16_t)(cookie_cyphertext[0] << 8) & 0xFF00;
         cyphertext_referent |= (uint16_t)(cookie_cyphertext[1]) & 0x00FF;
 

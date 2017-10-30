@@ -152,8 +152,8 @@ ProfilerNode& ProfilerNodeMap::get_node(const std::string& key)
 
 #ifdef UNIT_TEST
 
-static ProfileStats* s_profiler_stats;
-static const char* s_profiler_name;
+static ProfileStats* s_profiler_stats = nullptr;
+static const char* s_profiler_name = nullptr;
 
 static ProfileStats* s_profiler_stats_getter(const char* name)
 {
@@ -245,6 +245,8 @@ TEST_CASE( "get profile functor for function", "[profiler]" )
 
     GetProfileFromFunction functor("foo", s_profiler_stats_getter);
     CHECK( functor() == &the_stats );
+
+    s_profiler_stats = nullptr;
 }
 
 TEST_CASE( "profiler node", "[profiler]" )
@@ -279,6 +281,7 @@ TEST_CASE( "profiler node", "[profiler]" )
             f_node.set(s_profiler_stats_getter);
             f_node.accumulate();
             CHECK( f_node.get_stats() == the_stats );
+            s_profiler_stats = nullptr;
         }
     }
 

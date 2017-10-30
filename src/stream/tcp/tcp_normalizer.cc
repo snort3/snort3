@@ -75,7 +75,7 @@ void TcpNormalizer::trim_payload(
     {
         uint16_t fat = tsd.get_seg_len() - max;
         tsd.set_seg_len(max);
-        tsd.get_pkt()->packet_flags |= (PKT_MODIFIED | PKT_RESIZED);
+        tsd.get_pkt()->packet_flags |= PKT_RESIZED;
         tsd.set_end_seq(tsd.get_end_seq() - fat);
     }
 

@@ -183,13 +183,12 @@ static inline void sfip_node_freelist(sfip_node_t* root)
 
 static inline sfip_node_t* _sfvar_deep_copy_list(const sfip_node_t* idx)
 {
-    sfip_node_t* ret, * temp, * prev;
-
-    ret = temp = nullptr;
+    sfip_node_t* ret = nullptr;
+    sfip_node_t* temp = nullptr;
 
     for (; idx; idx = idx->next)
     {
-        prev = temp;
+        sfip_node_t* prev = temp;
 
         temp = (sfip_node_t*)snort_calloc(sizeof(*temp));
         temp->ip = new SfCidr();

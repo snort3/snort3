@@ -150,15 +150,14 @@ static void LogTcpdumpStream(
 static void TcpdumpInitLogFile(LtdConfig*, bool no_timestamp)
 {
     string file;
-    string filename;
-    char timestamp[16];
+    string filename = F_NAME;
 
     context.lastTime = time(nullptr);
     context.log_cnt = 0;
 
-    filename += F_NAME;
     if(!no_timestamp)
     {
+        char timestamp[16];
         snprintf(timestamp, sizeof(timestamp), ".%lu", context.lastTime);
         filename += timestamp;
     }

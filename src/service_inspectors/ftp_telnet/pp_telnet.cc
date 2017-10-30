@@ -96,7 +96,6 @@ int normalize_telnet(
 {
     int ret = FTPP_NORMALIZED;
     const unsigned char* read_ptr, * sb_start = nullptr;
-    int saw_ayt = 0;
     unsigned char* write_ptr;
     const unsigned char* end;
     int normalization_required = 0;
@@ -193,12 +192,13 @@ int normalize_telnet(
     while ((read_ptr < end) &&
         (write_ptr < ((unsigned char*)buf.data) + sizeof(buf.data)))
     {
-        saw_ayt = 0;
         /* if the following byte isn't a subnegotiation initialization */
         if (((read_ptr + 1) < end) &&
             (*read_ptr == (unsigned char)TNC_IAC) &&
             (*(read_ptr + 1) != (unsigned char)TNC_SB))
         {
+            int saw_ayt = 0;
+
             /* NOPs are two bytes long */
             switch (*((const unsigned char*)(read_ptr + 1)))
             {

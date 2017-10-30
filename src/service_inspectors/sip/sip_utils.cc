@@ -119,17 +119,18 @@ SIPMethodNode* SIP_FindMethod(SIPMethodlist methods, const char* methodName, uns
  ********************************************************************/
 uint32_t strToHash(const char* str, int length)
 {
-    uint32_t a,b,c,tmp;
-    int i,j,k,l;
-    a = b = c = 0;
+    uint32_t a = 0, b = 0, c = 0;
+    int i,j;
+
     for (i=0,j=0; i<length; i+=4)
     {
-        tmp = 0;
-        k = length - i;
+        uint32_t tmp = 0;
+        int k = length - i;
+
         if (k > 4)
             k=4;
 
-        for (l=0; l<k; l++)
+        for (int l=0; l<k; l++)
         {
             tmp |= *(str + i + l) << l*8;
         }

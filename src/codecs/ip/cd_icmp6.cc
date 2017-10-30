@@ -329,10 +329,10 @@ struct IcmpHdr
 } // namespace
 
 void Icmp6Codec::update(const ip::IpApi& api, const EncodeFlags flags,
-    uint8_t* raw_pkt, uint16_t /*lyr_len*/, uint32_t& updated_len)
+    uint8_t* raw_pkt, uint16_t lyr_len, uint32_t& updated_len)
 {
     IcmpHdr* h = reinterpret_cast<IcmpHdr*>(raw_pkt);
-    updated_len += sizeof(*h);
+    updated_len += lyr_len;
 
     if ( !(flags & UPD_COOKED) || (flags & UPD_REBUILT_FRAG) )
     {

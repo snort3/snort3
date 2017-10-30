@@ -46,6 +46,7 @@
 #include "hash/sfxhash.h"
 #include "log/messages.h"
 #include "main/snort_debug.h"
+#include "main/snort_types.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 
@@ -1471,7 +1472,6 @@ static int detector_add_length_app_cache(lua_State* L)
 {
     int i;
     const char* str_ptr;
-    uint16_t length;
     LengthKey length_sequence;
     int index = 1;
 
@@ -1527,7 +1527,8 @@ static int detector_add_length_app_cache(lua_State* L)
         }
         str_ptr++;
 
-        length = (uint16_t)atoi(str_ptr);
+        uint16_t length = (uint16_t)atoi(str_ptr);
+
         if (length == 0)
         {
             ErrorMessage("LuaDetectorApi:Invalid sequence string (\"%s\")!",
@@ -2420,6 +2421,10 @@ static inline bool lua_params_validator(LuaDetectorParameters& ldp, bool packet_
 	{
 		assert(!ldp.pkt);
 	}
+
+#ifdef NDEBUG
+    UNUSED(ldp);
+#endif
 
 	return true;
 }

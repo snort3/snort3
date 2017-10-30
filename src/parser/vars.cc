@@ -701,9 +701,6 @@ const char* ExpandVars(SnortConfig* sc, const char* string)
     static char estring[ 65536 ];  // FIXIT-L convert this foo to a std::string
 
     char rawvarname[128], varname[128], varaux[128], varbuffer[128];
-    char varmodifier;
-    const char* varcontents;
-    int varname_completed, c, i, j, iv, jv, l_string, name_only;
     int quote_toggle = 0;
 
     if (!string || !*string || !strchr(string, '$'))
@@ -711,13 +708,13 @@ const char* ExpandVars(SnortConfig* sc, const char* string)
 
     memset((char*)estring, 0, sizeof(estring));
 
-    i = j = 0;
-    l_string = strlen(string);
+    int i = 0, j = 0;
+    int l_string = strlen(string);
     DebugFormat(DEBUG_CONFIGRULES, "ExpandVars, Before: %s\n", string);
 
     while (i < l_string && j < (int)sizeof(estring) - 1)
     {
-        c = string[i++];
+        int c = string[i++];
 
         if (c == '"')
         {
@@ -729,10 +726,10 @@ const char* ExpandVars(SnortConfig* sc, const char* string)
         if (c == '$' && !quote_toggle)
         {
             memset((char*)rawvarname, 0, sizeof(rawvarname));
-            varname_completed = 0;
-            name_only = 1;
-            iv = i;
-            jv = 0;
+            int varname_completed = 0;
+            int name_only = 1;
+            int iv = i;
+            int jv = 0;
 
             if (string[i] == '(')
             {
@@ -762,17 +759,15 @@ const char* ExpandVars(SnortConfig* sc, const char* string)
 
             if (varname_completed || iv == l_string)
             {
-                char* p;
-
                 i = iv;
-
-                varcontents = nullptr;
+                const char* varcontents = nullptr;
 
                 memset((char*)varname, 0, sizeof(varname));
                 memset((char*)varaux, 0, sizeof(varaux));
-                varmodifier = ' ';
+                char varmodifier = ' ';
 
-                p = strchr(rawvarname, ':');
+                char* p = strchr(rawvarname, ':');
+
                 if (p)
                 {
                     SnortStrncpy(varname, rawvarname, p - rawvarname);

@@ -312,10 +312,8 @@ void print_option_tree(detection_option_tree_node_t* node, int level)
         opt = buf;
     }
 
-    unsigned int indent = level + strlen(opt);
-
     DebugFormatNoFileLine(DEBUG_DETECT, "%3d %3d  %p %*s\n",
-        level, node->num_children, node->option_data, indent, opt);
+        level, node->num_children, node->option_data, level + strlen(opt), opt);
 
     for ( int i=0; i<node->num_children; i++ )
         print_option_tree(node->children[i], level+1);
@@ -399,14 +397,11 @@ int detection_option_node_evaluate(
     state.last_check.rebuild_flag = p->packet_flags & PKT_REBUILT_STREAM;
 
     // Save some stuff off for repeated pattern tests
-    bool try_again = false;
     PmdLastCheck* content_last = nullptr;
 
     if ( node->option_type != RULE_OPTION_TYPE_LEAF_NODE )
     {
         IpsOption* opt = (IpsOption*)node->option_data;
-        try_again = opt->retry();
-
         PatternMatchData* pmd = opt->get_pattern(0, RULE_WO_DIR);
 
         if ( pmd and pmd->last_check )
@@ -696,7 +691,8 @@ int detection_option_node_evaluate(
 
         if ( continue_loop && rval == (int)IpsOption::MATCH && node->relative_children )
         {
-            continue_loop = try_again;
+            IpsOption* opt = (IpsOption*)node->option_data;
+            continue_loop = opt->retry(cursor);
         }
         else
             continue_loop = false;
@@ -727,7 +723,6 @@ int detection_option_node_evaluate(
     }
 
     state.last_check.result = result;
-
     profile.stop(result != (int)IpsOption::NO_MATCH);
 
     return result;

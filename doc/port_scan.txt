@@ -142,7 +142,7 @@ target host, and because of the nature of error responses, this
 setting should see very few false positives. However, this setting
 will never trigger a Filtered Scan alert because of a lack of error
 responses. This setting is based on a static time window of 60
-seconds, afterwhich this window is reset.
+seconds, after which this window is reset.
 
 "Medium" alerts track Connection Counts, and so will generate
 Filtered Scan alerts. This setting may false positive on active
@@ -178,7 +178,7 @@ ignore_scanners option.  If the host is generating portscan alerts
 ignore_scanned option.
   
 Filtered scan alerts are much more prone to false positives.
-When deteriming false positives, the alert type is very important.
+When determining false positives, the alert type is very important.
 Most of the false positives that Portscan may generate are of the
 filtered scan alert type.  So be much more suspicious of filtered
 portscans.  Many times this just indicates that a host was very

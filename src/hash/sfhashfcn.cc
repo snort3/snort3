@@ -165,17 +165,17 @@ void mix_str(
 
 size_t str_to_hash(const uint8_t *str, int length )
 {
-    size_t a,b,c,tmp;
-    int i,j,k,m;
-    a = b = c = 0;
-    for (i = 0, j = 0; i < length; i += 4)
+    size_t a = 0, b = 0, c = 0;
+
+    for (int i = 0, j = 0; i < length; i += 4)
     {
-        tmp = 0;
-        k = length - i;
+        size_t tmp = 0;
+        int k = length - i;
+
         if (k > 4)
             k=4;
 
-        for (m = 0; m < k; m++)
+        for (int m = 0; m < k; m++)
         {
             tmp |= *(str + i + m) << m*8;
         }

@@ -449,25 +449,23 @@ static bool sip_startline_parse(SIPMsg* msg, const char* buff, const char* end, 
  *  false
  *  true
  ********************************************************************/
-static bool sip_headers_parse(SIPMsg* msg, const char* buff, const char* end, const char** headEnd,
+static bool sip_headers_parse(
+    SIPMsg* msg, const char* buff, const char* end, const char** headEnd,
     SIP_PROTO_CONF* config)
 {
     const char* next;
-    const char* start;
-    int length;
-    int numOfLineBreaks;
+    const char* start = buff;
     int lastFieldIndex = SIP_PARSE_NOFOLDING;
 
-    start = buff;
     /*
      * The end of header is defined by two CRLFs, or CRCR, or LFLF
      */
-    numOfLineBreaks = sip_find_linebreak(start, end, &next);
+    int numOfLineBreaks = sip_find_linebreak(start, end, &next);
 
     while (numOfLineBreaks > 0)
     {
         /*Processing this line*/
-        length =  next - start - numOfLineBreaks;
+        int length =  next - start - numOfLineBreaks;
 
         DebugFormat(DEBUG_SIP, "Header line: %.*s\n", length, start);
         /*Process headers*/
@@ -508,15 +506,12 @@ static bool sip_headers_parse(SIPMsg* msg, const char* buff, const char* end, co
  ********************************************************************/
 static bool sip_body_parse(SIPMsg* msg, const char* buff, const char* end, const char** bodyEnd)
 {
-    int length;
-    const char* next;
-    const char* start;
-    int numOfLineBreaks;
-
 #ifdef DEBUG_MSGS
-    length = end - buff;
-    DebugFormat(DEBUG_SIP, "Body length: %d\n", length);
-    DebugFormat(DEBUG_SIP, "Body line: %.*s\n", length, buff);
+    {
+        int length = end - buff;
+        DebugFormat(DEBUG_SIP, "Body length: %d\n", length);
+        DebugFormat(DEBUG_SIP, "Body line: %.*s\n", length, buff);
+    }
 #endif
 
     // Initialize it
@@ -530,17 +525,18 @@ static bool sip_body_parse(SIPMsg* msg, const char* buff, const char* end, const
 
     // Create a media session
     msg->mediaSession = (SIP_MediaSession*)snort_calloc(sizeof(SIP_MediaSession));
-    start = buff;
+    const char* start = buff;
 
     /*
      * The end of body is defined by two CRLFs or CRCR or LFLF
      */
-    numOfLineBreaks = sip_find_linebreak(start, end, &next);
+    const char* next;
+    int numOfLineBreaks = sip_find_linebreak(start, end, &next);
 
     while (numOfLineBreaks > 0)
     {
         /*Processing this line*/
-        length =  next - start - numOfLineBreaks;
+        int length = next - start - numOfLineBreaks;
 
         DebugFormat(DEBUG_SIP, "Body line: %.*s\n", length, start);
         /*Process body fields*/

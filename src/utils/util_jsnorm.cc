@@ -673,7 +673,6 @@ static void WriteDecodedSFCC(SFCCState* s)
     char* end = s->output.data + s->output.size;
     uint16_t len = s->output.len;
     char* ptr = s->output.data + len;
-    int copy_len = 0;
 
     if (ptr < end)
     {
@@ -684,10 +683,13 @@ static void WriteDecodedSFCC(SFCCState* s)
         }
         else
         {
+            int copy_len = 0;
+
             if ((end - ptr) < s->buflen)
                 copy_len = end - ptr;
             else
                 copy_len = s->buflen;
+
             memcpy(ptr, s->buf, copy_len);
             ptr = ptr + copy_len;
         }
@@ -797,17 +799,14 @@ static int SFCC_scan_fsm(SFCCState* s, int c)
     return(SFCC_exec(s, (ActionSFCC)m->action, c));
 }
 
-static void StringFromCharCodeDecode(const char* src, uint16_t srclen, const char** ptr, char** dst,
+static void StringFromCharCodeDecode(
+    const char* src, uint16_t srclen, const char** ptr, char** dst,
     uint16_t* bytes_copied, JSState* js, uint8_t* iis_unicode_map)
 {
-    int iRet;
-    const char* start, * end;
+    const char* start = src;
+    const char* end = src + srclen;
+
     SFCCState s;
-    uint16_t alert = 0;
-
-    start = src;
-    end = src + srclen;
-
     s.buflen = 0;
     s.fsm = 0;
     s.output.data = decoded_out;
@@ -817,7 +816,8 @@ static void StringFromCharCodeDecode(const char* src, uint16_t srclen, const cha
 
     while (!outBounds(start, end, *ptr))
     {
-        iRet = SFCC_scan_fsm(&s, **ptr);
+        int iRet = SFCC_scan_fsm(&s, **ptr);
+
         if (iRet != RET_OK)
         {
             if ( (iRet == RET_INV) && ((*ptr - 1) > start ))
@@ -828,7 +828,7 @@ static void StringFromCharCodeDecode(const char* src, uint16_t srclen, const cha
         (*ptr)++;
     }
 
-    alert = s.alert_flags;
+    uint16_t alert = s.alert_flags;
 
     //alert mixed encodings
     if (alert != ( alert & -alert))
@@ -1062,14 +1062,10 @@ static int Unescape_scan_fsm(UnescapeState* s, int c, JSState* js)
 static void UnescapeDecode(const char* src, uint16_t srclen, const char** ptr, char** dst, uint16_t* bytes_copied,
     JSState* js, uint8_t* iis_unicode_map)
 {
-    int iRet;
-    const char* start, * end;
+    const char* start = src;
+    const char* end = src + srclen;
+
     UnescapeState s;
-    uint16_t alert = 0;
-
-    start = src;
-    end = src + srclen;
-
     s.iNorm = 0;
     s.fsm = 0;
     s.output.data = decoded_out;
@@ -1086,7 +1082,7 @@ static void UnescapeDecode(const char* src, uint16_t srclen, const char** ptr, c
 
     while (!outBounds(start, end, *ptr))
     {
-        iRet = Unescape_scan_fsm(&s, **ptr, js);
+        int iRet = Unescape_scan_fsm(&s, **ptr, js);
         if (iRet != RET_OK)
         {
             /*if( (iRet == RET_INV) && ((*ptr - 1) > start ))
@@ -1097,7 +1093,7 @@ static void UnescapeDecode(const char* src, uint16_t srclen, const char** ptr, c
         (*ptr)++;
     }
 
-    alert = s.alert_flags;
+    uint16_t alert = s.alert_flags;
 
     //alert mixed encodings
     if (alert != ( alert & -alert))

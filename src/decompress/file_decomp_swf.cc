@@ -295,8 +295,9 @@ fd_status_t File_Decomp_SWF(fd_session_t* SessionPtr)
         }
 
         SessionPtr->SWF->State = SWF_STATE_PROC_HEADER;
-        /* INTENTIONAL FALL-THROUGH INTO SWF_STATE_PROC_HEADER CASE. */
     }
+    // fallthrough
+
     case ( SWF_STATE_PROC_HEADER ):
     {
 #ifdef HAVE_LZMA
@@ -309,8 +310,9 @@ fd_status_t File_Decomp_SWF(fd_session_t* SessionPtr)
 #endif
 
         SessionPtr->SWF->State = SWF_STATE_DATA;
-        /* INTENTIONAL FALL-THROUGH INTO SWF_STATE_DATA CASE. */
     }
+    // fallthrough
+
     case ( SWF_STATE_DATA ):
     {
         Ret_Code = Decomp(SessionPtr);

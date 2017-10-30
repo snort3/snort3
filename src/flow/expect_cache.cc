@@ -130,9 +130,6 @@ ExpectNode* ExpectCache::find_node_by_packet(Packet* p, FlowKey &key)
     bool reversed_key = key.init(type, ip_proto, dstIP, p->ptrs.dp, srcIP, p->ptrs.sp,
             vlanId, mplsId, addressSpaceId);
 
-    uint16_t port1;
-    uint16_t port2;
-
     /*
         Lookup order:
             1. Full match.
@@ -149,6 +146,9 @@ ExpectNode* ExpectCache::find_node_by_packet(Packet* p, FlowKey &key)
         // FIXIT-M X This logic could fail if IPs were equal because the original key
         // would always have been created with a 0 for src or dst port and put the
         // known port in port_h.
+        uint16_t port1;
+        uint16_t port2;
+
         if (reversed_key)
         {
             port1 = key.port_l;

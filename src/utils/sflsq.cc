@@ -317,14 +317,12 @@ int sflist_count(SF_LIST* s)
 */
 void sflist_free_all(SF_LIST* s, void (* nfree)(void*) )
 {
-    void* p;
-
     if (!s)
         return;
 
     while ( s->count > 0 )
     {
-        p = sflist_remove_head (s);
+        void* p = sflist_remove_head (s);
 
         if ( p && nfree )
             nfree(p);
@@ -339,14 +337,12 @@ void sfqueue_free_all(SF_QUEUE* s,void (* nfree)(void*) )
 
 void sflist_static_free_all(SF_LIST* s, void (* nfree)(void*) )
 {
-    void* p;
-
     if (!s)
         return;
 
     while ( s->count > 0 )
     {
-        p = sflist_remove_head (s);
+        void* p = sflist_remove_head (s);
 
         if ( p && nfree )
             nfree(p);

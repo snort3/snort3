@@ -204,13 +204,9 @@ int PortObjectAddPortAny(PortObject* po)
  */
 PortObject* PortObjectDup(PortObject* po)
 {
-    PortObjectItem* poi = nullptr;
-    PortObjectItem* poinew = nullptr;
     SF_LNODE* lpos = nullptr;
-    int* prid = nullptr;
-    int* prule = nullptr;
-
     PortObject* ponew = PortObjectNew();
+
     if ( !ponew )
         return nullptr;
 
@@ -223,11 +219,12 @@ PortObject* PortObjectDup(PortObject* po)
     /* Dup the Item List */
     if ( po->item_list )
     {
-        for (poi =(PortObjectItem*)sflist_first(po->item_list,&lpos);
+        for (PortObjectItem* poi =(PortObjectItem*)sflist_first(po->item_list,&lpos);
             poi != nullptr;
             poi =(PortObjectItem*)sflist_next(&lpos) )
         {
-            poinew = PortObjectItemDup(poi);
+            PortObjectItem* poinew = PortObjectItemDup(poi);
+
             if (!poinew)
             {
                 PortObjectFree(ponew);
@@ -241,11 +238,11 @@ PortObject* PortObjectDup(PortObject* po)
     /* Dup the input rule list */
     if ( po->rule_list )
     {
-        for (prid  = (int*)sflist_first(po->rule_list,&lpos);
+        for (int* prid  = (int*)sflist_first(po->rule_list,&lpos);
             prid != nullptr;
             prid  = (int*)sflist_next(&lpos) )
         {
-            prule = (int*)snort_calloc(sizeof(int));
+            int* prule = (int*)snort_calloc(sizeof(int));
             *prule = *prid;
             sflist_add_tail(ponew->rule_list,prule);
         }
@@ -259,11 +256,9 @@ PortObject* PortObjectDup(PortObject* po)
  */
 PortObject* PortObjectDupPorts(PortObject* po)
 {
-    PortObjectItem* poi = nullptr;
-    PortObjectItem* poinew = nullptr;
     SF_LNODE* lpos = nullptr;
-
     PortObject* ponew = PortObjectNew();
+
     if ( !ponew )
         return nullptr;
 
@@ -276,11 +271,12 @@ PortObject* PortObjectDupPorts(PortObject* po)
     /* Dup the Item List */
     if ( po->item_list )
     {
-        for (poi =(PortObjectItem*)sflist_first(po->item_list,&lpos);
+        for (PortObjectItem* poi =(PortObjectItem*)sflist_first(po->item_list,&lpos);
             poi != nullptr;
             poi =(PortObjectItem*)sflist_next(&lpos) )
         {
-            poinew = PortObjectItemDup(poi);
+            PortObjectItem* poinew = PortObjectItemDup(poi);
+
             if (!poinew)
             {
                 PortObjectFree(ponew);
@@ -357,22 +353,20 @@ int PortObjectEqual(PortObject* a, PortObject* b)
 */
 int PortObjectPortCount(PortObject* po)
 {
-    PortObjectItem* poi;
     SF_LNODE* cursor;
     int cnt=0;
-    int nports;
 
     if ( !po )
         return 0;
 
-    for (poi=(PortObjectItem*)sflist_first(po->item_list, &cursor);
+    for (PortObjectItem* poi=(PortObjectItem*)sflist_first(po->item_list, &cursor);
         poi != nullptr;
         poi=(PortObjectItem*)sflist_next(&cursor) )
     {
         if ( poi->any() )
             return -1;
 
-        nports = poi->hport - poi->lport + 1;
+        int nports = poi->hport - poi->lport + 1;
 
         if ( poi->negate )
             cnt -= nports;
@@ -509,15 +503,13 @@ int PortObjectRemovePorts(PortObject* a,  PortObject* b)
 */
 PortObject* PortObjectAppend(PortObject* poa, PortObject* pob)
 {
-    PortObjectItem* poia;
-    PortObjectItem* poib;
     SF_LNODE* cursor;
 
-    for ( poib = (PortObjectItem*)sflist_first(pob->item_list, &cursor);
+    for ( PortObjectItem* poib = (PortObjectItem*)sflist_first(pob->item_list, &cursor);
         poib!= nullptr;
         poib = (PortObjectItem*)sflist_next(&cursor) )
     {
-        poia = PortObjectItemNew();
+        PortObjectItem* poia = PortObjectItemNew();
 
         if (!poia)
             return nullptr;

@@ -142,8 +142,6 @@ bool TcpStreamTracker::compare_mac_addresses(const uint8_t eth_addr[])
 
 void TcpStreamTracker::cache_mac_address(TcpSegmentDescriptor& tsd, uint8_t direction)
 {
-    int i;
-
     /* Not Ethernet based, nothing to do */
     if ( tsd.get_pkt()->is_eth() )
     {
@@ -153,19 +151,19 @@ void TcpStreamTracker::cache_mac_address(TcpSegmentDescriptor& tsd, uint8_t dire
         if ( direction == FROM_CLIENT )
         {
             if ( client_tracker )
-                for ( i = 0; i < 6; i++ )
+                for ( int i = 0; i < 6; i++ )
                     mac_addr[i] = eh->ether_src[i];
             else
-                for ( i = 0; i < 6; i++ )
+                for ( int i = 0; i < 6; i++ )
                     mac_addr[i] = eh->ether_dst[i];
         }
         else
         {
             if ( client_tracker )
-                for ( i = 0; i < 6; i++ )
+                for ( int i = 0; i < 6; i++ )
                     mac_addr[i] = eh->ether_dst[i];
             else
-                for ( i = 0; i < 6; i++ )
+                for ( int i = 0; i < 6; i++ )
                     mac_addr[i] = eh->ether_src[i];
         }
 

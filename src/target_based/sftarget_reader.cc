@@ -350,7 +350,6 @@ void SFAT_UpdateApplicationProtocol(SfIp* ipAddr, uint16_t port, uint16_t protoc
     HostAttributeEntry* host_entry;
     ApplicationEntry* service;
     unsigned service_count = 0;
-    int rval;
 
     host_entry = (HostAttributeEntry*)sfrt_lookup(ipAddr, curr_cfg->lookupTable);
 
@@ -362,8 +361,10 @@ void SFAT_UpdateApplicationProtocol(SfIp* ipAddr, uint16_t port, uint16_t protoc
         host_entry = (HostAttributeEntry*)snort_calloc(sizeof(*host_entry));
         host_entry->ipAddr.set(*ipAddr);
 
-        if ((rval = sfrt_insert(&host_entry->ipAddr, (unsigned char)host_entry->ipAddr.get_bits(), host_entry,
-                RT_FAVOR_SPECIFIC, curr_cfg->lookupTable)) != RT_SUCCESS)
+        int rval = sfrt_insert(&host_entry->ipAddr, (unsigned char)host_entry->ipAddr.get_bits(),
+            host_entry, RT_FAVOR_SPECIFIC, curr_cfg->lookupTable);
+
+        if ( rval != RT_SUCCESS)
         {
             FreeHostEntry(host_entry);
             return;

@@ -77,11 +77,11 @@ static void read_patterns(PortPatternNode* portPatternList, PatternService** ser
     char* lastName = nullptr;
     short lastPort = 0;
     IpProtocol lastProto = IpProtocol::PROTO_NOT_SET;
-    bool newPs;
 
     for (PortPatternNode* pNode = portPatternList; pNode; pNode = pNode->next)
     {
-        newPs = false;
+        bool newPs = false;
+
         if (!ps || !lastName || strcmp(lastName, pNode->detectorName)
             || lastProto != pNode->protocol)
         {

@@ -148,12 +148,7 @@ void MplsCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 
 bool MplsCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
-    uint32_t mpls_h;
-    uint32_t label;
-
-    uint8_t exp;
     uint8_t bos = 0;
-    uint8_t ttl;
     uint8_t chainLen = 0;
     uint32_t stack_len = raw.len;
 
@@ -173,12 +168,12 @@ bool MplsCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
             return false;
         }
 
-        mpls_h  = ntohl(*tmpMplsHdr);
-        ttl = (uint8_t)(mpls_h & 0x000000FF);
+        uint32_t mpls_h = ntohl(*tmpMplsHdr);
+        uint8_t ttl = (uint8_t)(mpls_h & 0x000000FF);
         mpls_h = mpls_h>>8;
         bos = (uint8_t)(mpls_h & 0x00000001);
-        exp = (uint8_t)(mpls_h & 0x0000000E);
-        label = (mpls_h>>4) & 0x000FFFFF;
+        uint8_t exp = (uint8_t)(mpls_h & 0x0000000E);
+        uint32_t label = (mpls_h>>4) & 0x000FFFFF;
 
         if ((label<NUM_RESERVED_LABELS)&&((iRet = checkMplsHdr(codec, label, bos)) < 0))
             return false;

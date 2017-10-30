@@ -44,10 +44,9 @@ static int POParserInit(POParser* pop, const char* s, PortVarTable* pvTable)
 */
 static int POPGetChar(POParser* pop)
 {
-    int c;
     if ( pop->slen > 0 )
     {
-        c = pop->s[0];
+        int c = pop->s[0];
         pop->slen--;
         pop->s++;
         pop->pos++;
@@ -260,8 +259,6 @@ static PortObject* _POParseVar(POParser* pop)
 
 static PortObject* _POParsePort(POParser* pop)
 {
-    uint16_t hport, lport;
-    char c;
     PortObject* po = PortObjectNew();
 
     if (!po)
@@ -270,10 +267,10 @@ static PortObject* _POParsePort(POParser* pop)
         return nullptr;
     }
 
-    pop->token[0]=0;
+    pop->token[0] = 0;
 
     /* The string in pop should only be of the form <port> or <port>:<port> */
-    lport = POParserGetShort(pop);
+    uint16_t lport = POParserGetShort(pop);
 
     if (pop->errflag)
     {
@@ -281,12 +278,13 @@ static PortObject* _POParsePort(POParser* pop)
         return nullptr;
     }
 
-    c = POPPeekChar(pop);
+    char c = POPPeekChar(pop);
 
     if ( c == ':' ) /* half open range */
     {
         POPGetChar(pop);
         c = POPPeekChar(pop);
+        uint16_t hport;
 
         if (((c == 0) && (pop->slen == 0)) ||
             (c == ','))

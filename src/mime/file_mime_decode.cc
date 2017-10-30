@@ -47,8 +47,6 @@ void MimeDecode::clear_decode_state()
 void MimeDecode::process_decode_type(const char* start, int length, bool cnt_xf,
     MimeStats* mime_stats)
 {
-    const char* tmp = nullptr;
-
     if (decoder)
         delete decoder;
 
@@ -58,8 +56,9 @@ void MimeDecode::process_decode_type(const char* start, int length, bool cnt_xf,
     {
         if (config->get_b64_depth() > -1)
         {
-            tmp = SnortStrcasestr(start, length, "base64");
-            if ( tmp != nullptr )
+            const char* tmp = SnortStrcasestr(start, length, "base64");
+
+            if ( tmp )
             {
                 decode_type = DECODE_B64;
                 if (mime_stats)
@@ -72,8 +71,9 @@ void MimeDecode::process_decode_type(const char* start, int length, bool cnt_xf,
 
         if (config->get_qp_depth() > -1)
         {
-            tmp = SnortStrcasestr(start, length, "quoted-printable");
-            if ( tmp != nullptr )
+            const char* tmp = SnortStrcasestr(start, length, "quoted-printable");
+
+            if ( tmp )
             {
                 decode_type = DECODE_QP;
                 if (mime_stats)
@@ -86,8 +86,9 @@ void MimeDecode::process_decode_type(const char* start, int length, bool cnt_xf,
 
         if (config->get_uu_depth() > -1)
         {
-            tmp = SnortStrcasestr(start, length, "uuencode");
-            if ( tmp != nullptr )
+            const char* tmp = SnortStrcasestr(start, length, "uuencode");
+
+            if ( tmp )
             {
                 decode_type = DECODE_UU;
                 if (mime_stats)

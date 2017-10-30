@@ -371,7 +371,6 @@ void AppIdHttpSession::process_chp_buffers()
 int AppIdHttpSession::process_http_packet(int direction)
 {
     Profile http_profile_context(httpPerfStats);
-    constexpr auto RESPONSE_CODE_LENGTH = 3;
     AppId service_id = APP_ID_NONE;
     AppId client_id = APP_ID_NONE;
     AppId payload_id = APP_ID_NONE;
@@ -391,6 +390,8 @@ int AppIdHttpSession::process_http_packet(int direction)
         if (response_code)
         {
             asd->set_session_flags(APPID_SESSION_RESPONSE_CODE_CHECKED);
+            constexpr auto RESPONSE_CODE_LENGTH = 3;
+
             if (response_code_buflen != RESPONSE_CODE_LENGTH)
             {
                 if (asd->session_logging_enabled)

@@ -90,12 +90,11 @@ struct Psuedoheader6Union
 inline uint16_t cksum_add(const uint16_t* buf, std::size_t len, uint32_t cksum)
 {
     const uint16_t* sp = buf;
-    std::size_t n, sn;
 
     if (len > 1 )
     {
-        sn = ((len / 2) & 0xF);  // == len/2 % 16
-        n = (((len / 2) + 15) / 16);   // ceiling of (len / 2) / 16
+        std::size_t sn = ((len / 2) & 0xF);  // == len/2 % 16
+        std::size_t n = (((len / 2) + 15) / 16);   // ceiling of (len / 2) / 16
 
         switch (sn)
         {

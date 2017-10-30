@@ -517,17 +517,14 @@ static IpsOption::EvalStatus check_flowbits(
 
 void FlowbitResetCounts()
 {
-    SFGHASH_NODE* n;
-    FLOWBITS_OBJECT* fb;
-
-    if (flowbits_hash == nullptr)
+    if ( !flowbits_hash )
         return;
 
-    for (n = sfghash_findfirst(flowbits_hash);
+    for (SFGHASH_NODE* n = sfghash_findfirst(flowbits_hash);
         n != nullptr;
         n = sfghash_findnext(flowbits_hash))
     {
-        fb = (FLOWBITS_OBJECT*)n->data;
+        FLOWBITS_OBJECT* fb = (FLOWBITS_OBJECT*)n->data;
         fb->set = 0;
         fb->isset = 0;
     }
@@ -567,7 +564,6 @@ static bool validateName(char* name)
 static FLOWBITS_OBJECT* getFlowBitItem(char* flowbitName, FLOWBITS_OP* flowbits)
 {
     FLOWBITS_OBJECT* flowbits_item;
-    int hstatus;
 
     if (!validateName(flowbitName))
     {
@@ -596,7 +592,7 @@ static FLOWBITS_OBJECT* getFlowBitItem(char* flowbitName, FLOWBITS_OP* flowbits)
             }
         }
 
-        hstatus = sfghash_add(flowbits_hash, flowbitName, flowbits_item);
+        int hstatus = sfghash_add(flowbits_hash, flowbitName, flowbits_item);
 
         if (hstatus != SFGHASH_OK)
             ParseError("Could not add flowbits key (%s) to hash.",flowbitName);
@@ -774,7 +770,6 @@ static void validateFlowbitsSyntax(FLOWBITS_OP* flowbits)
 
 static FLOWBITS_GRP* getFlowBitGroup(char* groupName)
 {
-    int hstatus;
     FLOWBITS_GRP* flowbits_grp = nullptr;
 
     if (!groupName)
@@ -793,7 +788,7 @@ static FLOWBITS_GRP* getFlowBitGroup(char* groupName)
     {
         // new group defined, add (bitop set later once we know size)
         flowbits_grp = (FLOWBITS_GRP*)snort_calloc(sizeof(*flowbits_grp));
-        hstatus = sfghash_add(flowbits_grp_hash, groupName, flowbits_grp);
+        int hstatus = sfghash_add(flowbits_grp_hash, groupName, flowbits_grp);
 
         if (hstatus != SFGHASH_OK)
             ParseAbort("Could not add flowbits group (%s) to hash.\n",groupName);
@@ -993,7 +988,6 @@ static void init_groups()
 static void FlowBitsVerify()
 {
     SFGHASH_NODE* n;
-    FLOWBITS_OBJECT* fb;
     unsigned num_flowbits = 0;
     unsigned unchecked = 0, unset = 0;
 
@@ -1004,7 +998,7 @@ static void FlowBitsVerify()
         n != nullptr;
         n= sfghash_findnext(flowbits_hash))
     {
-        fb = (FLOWBITS_OBJECT*)n->data;
+        FLOWBITS_OBJECT* fb = (FLOWBITS_OBJECT*)n->data;
 
         if (fb->toggle != flowbits_toggle)
         {

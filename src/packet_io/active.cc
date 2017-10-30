@@ -235,7 +235,6 @@ void Active::send_unreach(Packet* p, UnreachResponse type)
 bool Active::send_data(
     Packet* p, EncodeFlags flags, const uint8_t* buf, uint32_t blen)
 {
-    uint16_t toSend;
     const uint8_t* seg;
     uint32_t plen;
 
@@ -258,6 +257,7 @@ bool Active::send_data(
 
     if (maxPayload)
     {
+        uint16_t toSend;
         do
         {
             plen = 0;

@@ -442,7 +442,7 @@ public:
     { return (config->options & SNORT_PCRE_RELATIVE) != 0; }
 
     EvalStatus eval(Cursor&, Packet*) override;
-    bool retry() override;
+    bool retry(Cursor&) override;
 
     PcreData* get_data()
     { return config; }
@@ -478,23 +478,21 @@ PcreOption::~PcreOption()
 
 uint32_t PcreOption::hash() const
 {
-    int i,j,k,l,expression_len;
-    uint32_t a,b,c,tmp;
-    const PcreData* data = config;
-
-    expression_len = strlen(data->expression);
-    a = b = c = 0;
+    uint32_t a = 0, b = 0, c = 0;
+    int expression_len = strlen(config->expression);
+    int i, j;
 
     for (i=0,j=0; i<expression_len; i+=4)
     {
-        tmp = 0;
-        k = expression_len - i;
+        uint32_t tmp = 0;
+        int k = expression_len - i;
+
         if (k > 4)
             k=4;
 
-        for (l=0; l<k; l++)
+        for (int l=0; l<k; l++)
         {
-            tmp |= *(data->expression + i + l) << l*8;
+            tmp |= *(config->expression + i + l) << l*8;
         }
 
         switch (j)
@@ -523,7 +521,7 @@ uint32_t PcreOption::hash() const
         mix(a,b,c);
     }
 
-    a += data->options;
+    a += config->options;
 
     mix_str(a,b,c,get_name());
     finalize(a,b,c);
@@ -591,7 +589,7 @@ IpsOption::EvalStatus PcreOption::eval(Cursor& c, Packet*)
 // using content, but more advanced pcre won't work for the relative /
 // overlap case.
 
-bool PcreOption::retry()
+bool PcreOption::retry(Cursor&)
 {
     if ((config->options & (SNORT_PCRE_INVERT | SNORT_PCRE_ANCHORED)))
     {

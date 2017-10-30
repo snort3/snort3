@@ -212,15 +212,12 @@ void ThirdPartyAppIDReconfigure()
 
 void ThirdPartyAppIDFini()
 {
-    int ret;
-
     if (thirdparty_appid_module != nullptr)
     {
-        ret = thirdparty_appid_module->fini();
+        int ret = thirdparty_appid_module->fini();
+
         if (ret != 0)
-        {
             ErrorMessage("Could not finalize 3rd party AppID module (%d)!\n", ret);
-        }
 
         dlclose(module_handle);
         module_handle = nullptr;

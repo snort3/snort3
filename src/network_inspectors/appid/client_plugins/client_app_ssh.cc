@@ -374,11 +374,10 @@ static inline int ssh_client_sm(const uint8_t* data, uint16_t size,
     ClientSSHData* fd)
 {
     uint16_t offset = 0;
-    uint8_t d;
 
     while (offset < size)
     {
-        d = data[offset];
+        uint8_t d = data[offset];
         switch (fd->state)
         {
         case SSH_CLIENT_STATE_BANNER:

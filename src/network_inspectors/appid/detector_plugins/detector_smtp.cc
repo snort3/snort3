@@ -798,7 +798,8 @@ int SmtpServiceDetector::validate(AppIdDiscoveryArgs& args)
                 fd->state = SMTP_SERVICE_STATE_HELO;
                 break;
             case 421:
-                if (service_strstr(args.data, args.size, (const uint8_t*)SMTP_CLOSING_CONN, sizeof(SMTP_CLOSING_CONN)-1))
+                if (service_strstr(args.data, args.size,
+                    (const uint8_t*)SMTP_CLOSING_CONN, sizeof(SMTP_CLOSING_CONN)-1))
                     goto success;
             case 520:
             case 554:

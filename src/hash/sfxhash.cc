@@ -1070,7 +1070,7 @@ int main(int argc, char** argv)
     int i;
     SFXHASH* t;
     SFXHASH_NODE* n;
-    char strkey[256], strdata[256], * p;
+    char strkey[256], strdata[256];
     int num = 100;
     int mem = 0;
 
@@ -1119,9 +1119,7 @@ int main(int argc, char** argv)
         snprintf(strkey, sizeof(strkey) - 1, "KeyWord%5.5d",i+1);
         strkey[sizeof(strkey) - 1] = '\0';
 
-        p = (char*)sfxhash_find(t, strkey);
-
-        if (p)
+        if ( char* p = (char*)sfxhash_find(t, strkey) )
             printf("Hash-key=%*s, data=%*s\n", strlen(strkey),strkey, strlen(strkey), p);
     }
 

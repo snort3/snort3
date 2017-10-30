@@ -217,8 +217,6 @@ int SFRF_ConfigAdd(
     SnortConfig*, RateFilterConfig* rf_config, tSFRFConfigNode* cfgNode)
 {
     SFGHASH* genHash;
-    int nrows;
-    int hstatus;
     tSFRFSidNode* pSidNode;
     tSFRFConfigNode* pNewConfigNode;
     tSFRFGenHashKey key = { 0,0 };
@@ -260,6 +258,8 @@ int SFRF_ConfigAdd(
 
     if ( !genHash )
     {
+        int nrows;
+
         if ( cfgNode->gid == 1 ) /* patmatch rules gid, many rules */
         {
             nrows= SFRF_GEN_ID_1_ROWS;
@@ -298,8 +298,7 @@ int SFRF_ConfigAdd(
         }
 
         /* Add the pSidNode to the hash table */
-        hstatus = sfghash_add(genHash, (void*)&key, pSidNode);
-        if ( hstatus )
+        if ( sfghash_add(genHash, (void*)&key, pSidNode) )
         {
             sflist_free(pSidNode->configNodeList);
             snort_free(pSidNode);
@@ -573,7 +572,6 @@ int SFRF_TestThreshold(
  */
 void SFRF_ShowObjects(RateFilterConfig* config)
 {
-    SFGHASH* genHash;
     tSFRFSidNode* pSidnode;
     tSFRFConfigNode* cfgNode;
     unsigned int gid;
@@ -581,11 +579,10 @@ void SFRF_ShowObjects(RateFilterConfig* config)
 
     for ( gid=0; gid < SFRF_MAX_GENID; gid++ )
     {
-        genHash = config->genHash [ gid ];
+        SFGHASH* genHash = config->genHash [ gid ];
+
         if ( !genHash )
-        {
             continue;
-        }
 
         printf("...GEN_ID = %u\n",gid);
 
@@ -629,14 +626,12 @@ void SFRF_ShowObjects(RateFilterConfig* config)
 static int _checkSamplingPeriod(
     tSFRFConfigNode* cfgNode,
     tSFRFTrackingNode* dynNode,
-    time_t curTime
-    )
+    time_t curTime)
 {
-    unsigned dt;
-
     if ( cfgNode->seconds )
     {
-        dt = (unsigned)(curTime - dynNode->tstart);
+        unsigned dt = (unsigned)(curTime - dynNode->tstart);
+
         if ( dt >= cfgNode->seconds )
         {   // observation period is over, start a new one
             dynNode->tstart = curTime;

@@ -297,8 +297,6 @@ static int sfthd_create_threshold_local(
     THD_ITEM* sfthd_item;
     THD_NODE* sfthd_node;
     tThdItemKey key;
-    int nrows;
-    int hstatus;
 
     PolicyId policy_id = get_network_policy()->policy_id;
 
@@ -315,6 +313,8 @@ static int sfthd_create_threshold_local(
     /* Check for an existing 'gen_id' entry, if none found create one. */
     if (thd_objs->sfthd_array[config->gen_id] == nullptr)
     {
+        int nrows;
+
         if ( config->gen_id == 1 ) /* patmatch rules gen_id, many rules */
         {
             nrows= THD_GEN_ID_1_ROWS;
@@ -364,8 +364,7 @@ static int sfthd_create_threshold_local(
         }
 
         /* Add the sfthd_item to the hash table */
-        hstatus = sfghash_add(sfthd_hash, (void*)&key, sfthd_item);
-        if ( hstatus )
+        if ( sfghash_add(sfthd_hash, (void*)&key, sfthd_item) )
         {
             sflist_free(sfthd_item->sfthd_node_list);
             snort_free(sfthd_item);
@@ -1235,7 +1234,6 @@ global_test:
  */
 int sfthd_show_objects(ThresholdObjects* thd_objs)
 {
-    SFGHASH* sfthd_hash;
     THD_ITEM* sfthd_item;
     THD_NODE* sfthd_node;
     unsigned gen_id;
@@ -1243,8 +1241,9 @@ int sfthd_show_objects(ThresholdObjects* thd_objs)
 
     for (gen_id=0; gen_id < THD_MAX_GENID; gen_id++ )
     {
-        sfthd_hash = thd_objs->sfthd_array[gen_id];
-        if (sfthd_hash == NULL)
+        SFGHASH* sfthd_hash = thd_objs->sfthd_array[gen_id];
+
+        if ( !sfthd_hash )
             continue;
 
         printf("...GEN_ID = %u\n",gen_id);

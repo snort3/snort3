@@ -89,14 +89,13 @@ public:
 
     uint32_t clear()
     {
-        TcpSegmentNode* dump_me;
         int i = 0;
 
         DebugMessage(DEBUG_STREAM_STATE, "Clearing segment list.\n");
         while ( head )
         {
             i++;
-            dump_me = head;
+            TcpSegmentNode* dump_me = head;
             head = head->next;
             dump_me->term( );
         }

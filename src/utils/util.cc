@@ -255,7 +255,6 @@ void CreatePidFile(pid_t pid)
     {
         pid_lockfilename = snort_conf->pid_filename;
         pid_lockfilename += ".lck";
-        int lock_fd;
 
         /* First, lock the PID file */
         pid_lockfile = fopen(pid_lockfilename.c_str(), "w");
@@ -263,7 +262,7 @@ void CreatePidFile(pid_t pid)
         if ( pid_lockfile )
         {
             struct flock lock;
-            lock_fd = fileno(pid_lockfile);
+            int lock_fd = fileno(pid_lockfile);
 
             lock.l_type = F_WRLCK;
             lock.l_whence = SEEK_SET;

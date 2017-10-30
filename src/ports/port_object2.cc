@@ -72,31 +72,20 @@ static unsigned po_rule_hash_func(SFHASHFCN* p, const unsigned char* k, int n)
 
 static int* RuleHashToSortedArray(SFGHASH* rh)
 {
-    int* prid;
-    int* ra;
+    if ( !rh or !rh->count )
+        return nullptr;
+
+    int* ra = (int*)snort_calloc(rh->count, sizeof(int));
     int k = 0;
-    SFGHASH_NODE* node;
 
-    if ( !rh )
-        return nullptr;
-
-    if (!rh->count)
-        return nullptr;
-
-    ra = (int*)snort_calloc(rh->count, sizeof(int));
-
-    for ( node = sfghash_findfirst(rh);
+    for ( SFGHASH_NODE* node = sfghash_findfirst(rh);
         node != nullptr && k < (int)rh->count;
         node = sfghash_findnext(rh) )
     {
-        prid = (int*)node->data;
-        if ( prid )
-        {
+        if ( int* prid = (int*)node->data )
             ra[k++] = *prid;
-        }
     }
 
-    /* sort the array */
     qsort(ra,rh->count,sizeof(int),integer_compare);
 
     return ra;
@@ -254,21 +243,17 @@ void PortObject2Iterate(PortObject2* po, PortObjectIterator f, void* pv)
 /* Dup and append rule list numbers from pob to poa */
 PortObject2* PortObject2AppendPortObject(PortObject2* poa, PortObject* pob)
 {
-    int* prid;
-    int* prid2;
     SF_LNODE* lpos;
 
-    for ( prid = (int*)sflist_first(pob->rule_list,&lpos);
+    for ( int* prid = (int*)sflist_first(pob->rule_list,&lpos);
         prid!= nullptr;
         prid = (int*)sflist_next(&lpos) )
     {
-        prid2 = (int*)snort_calloc(sizeof(int));
+        int* prid2 = (int*)snort_calloc(sizeof(int));
         *prid2 = *prid;
 
         if ( sfghash_add(poa->rule_hash,prid2,prid2) != SFGHASH_OK )
-        {
             snort_free(prid2);
-        }
     }
     return poa;
 }
@@ -276,25 +261,20 @@ PortObject2* PortObject2AppendPortObject(PortObject2* poa, PortObject* pob)
 /* Dup and append rule list numbers from pob to poa */
 PortObject2* PortObject2AppendPortObject2(PortObject2* poa, PortObject2* pob)
 {
-    int* prid;
-    int* prid2;
-    SFGHASH_NODE* node;
-
-    for ( node = sfghash_findfirst(pob->rule_hash);
+    for (SFGHASH_NODE* node = sfghash_findfirst(pob->rule_hash);
         node!= nullptr;
         node = sfghash_findnext(pob->rule_hash) )
     {
-        prid = (int*)node->data;
+        int* prid = (int*)node->data;
+
         if ( !prid )
             continue;
 
-        prid2 = (int*)snort_calloc(sizeof(int));
+        int* prid2 = (int*)snort_calloc(sizeof(int));
         *prid2 = *prid;
 
         if ( sfghash_add(poa->rule_hash,prid2,prid2) != SFGHASH_OK )
-        {
             snort_free(prid2);
-        }
     }
     return poa;
 }

@@ -32,6 +32,7 @@
 #include "profiler/profiler.h"
 #include "utils/boyer_moore.h"
 #include "utils/util.h"
+#include "utils/stats.h"
 
 #include "extract.h"
 
@@ -121,8 +122,7 @@ public:
     bool is_relative() override
     { return config->pmd.is_relative(); }
 
-    bool retry() override
-    { return !config->pmd.is_negated(); }
+    bool retry(Cursor&) override;
 
     ContentData* get_data()
     { return config; }
@@ -160,6 +160,23 @@ ContentOption::~ContentOption()
         snort_free(cd->shift_stride);
 
     snort_free(cd);
+}
+
+bool ContentOption::retry(Cursor& c)
+{
+    if ( config->pmd.is_negated() )
+        return false;
+
+    if ( !config->pmd.depth )
+        return true;
+
+    // FIXIT-L consider moving adjusting delta from eval to retry
+    assert(c.get_delta() >= config->match_delta);
+
+    unsigned min = c.get_delta() + config->pmd.pattern_size;
+    unsigned max = c.get_delta() - config->match_delta + config->pmd.offset + config->pmd.depth;
+
+    return min <= max;
 }
 
 uint32_t ContentOption::hash() const

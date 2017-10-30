@@ -570,6 +570,8 @@ static DCE2_Ret DCE2_SmbUpdateTransRequest(DCE2_SmbSsnData* ssd,
         // Can at most do a DCE/RPC bind
         case TRANS_CALL_NMPIPE:
             dce_alert(GID_DCE2, DCE2_SMB_DEPR_COMMAND_USED, (dce2CommonStats*)&dce2_smb_stats);
+            // fallthrough
+
         // Aren't looking at these or the three above
         case TRANS_QUERY_NMPIPE_STATE:
         case TRANS_QUERY_NMPIPE_INFO:

@@ -245,21 +245,25 @@ public:
     static int contains_ex(NetworkSet* network_set, uint32_t ipaddr, unsigned* type)
     {
         int low=0;
-        int middle=0;
         int high=0;
-
         *type = 0;
+
         if (!network_set)
             return 0;
+
         if (!network_set->count)
             return 0;
+
         high = network_set->count - 1;
+
         if (ipaddr < network_set->pnetwork[low]->range_min || ipaddr >
             network_set->pnetwork[high]->range_max)
             return 0;
+
         while (low <= high)
         {
-            middle = low + ((high - low)>>1);
+            int middle = low + ((high - low)>>1);
+
             if (ipaddr < network_set->pnetwork[middle]->range_min)
                 high = middle - 1;
             else if (ipaddr > network_set->pnetwork[middle]->range_max)
@@ -276,15 +280,17 @@ public:
     static int contains6_ex(NetworkSet* network_set, NSIPv6Addr* ipaddr, unsigned* type)
     {
         int low=0;
-        int middle=0;
         int high=0;
-
         *type = 0;
+
         if (!network_set)
             return 0;
+
         if (!network_set->count6)
             return 0;
+
         high = network_set->count6 - 1;
+
         if (compare_ipv6_address(ipaddr, &network_set->pnetwork6[low]->range_min) < 0 ||
             compare_ipv6_address(ipaddr, &network_set->pnetwork6[high]->range_max) > 0)
         {
@@ -292,7 +298,8 @@ public:
         }
         while (low <= high)
         {
-            middle = low + ((high - low)>>1);
+            int middle = low + ((high - low)>>1);
+
             if (compare_ipv6_address(ipaddr, &network_set->pnetwork6[middle]->range_min) < 0)
                 high = middle - 1;
             else if (compare_ipv6_address(ipaddr, &network_set->pnetwork6[middle]->range_max) > 0)

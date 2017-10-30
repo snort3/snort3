@@ -160,12 +160,12 @@ bool SipStatCodeModule::begin(const char*, int, SnortConfig*)
 
 bool SipStatCodeModule::set(const char*, Value& v, SnortConfig*)
 {
-    unsigned long statCode;
     if (num_tokens < SIP_NUM_STAT_CODE_MAX)
     {
         if ( v.is("*code") )
         {
-            statCode = v.get_long();
+            unsigned long statCode = v.get_long();
+
             if ((statCode > MAX_STAT_CODE) || ((statCode > NUM_OF_RESPONSE_TYPES - 1) &&
                 (statCode < MIN_STAT_CODE)))
             {

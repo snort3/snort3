@@ -572,10 +572,8 @@ static unsigned int ProcessSSHKeyInitExchange(SSHData* sessionp, Packet* p,
 static unsigned int ProcessSSHKeyExchange(SSHData* sessionp, Packet* p,
     uint8_t direction, unsigned int offset)
 {
-    const SSH2Packet* ssh2p = nullptr;
     uint16_t dsize = p->dsize;
     const unsigned char* data = p->data;
-    unsigned int ssh_length;
     bool next_packet = true;
     unsigned int npacket_offset = 0;
 
@@ -590,8 +588,8 @@ static unsigned int ProcessSSHKeyExchange(SSHData* sessionp, Packet* p,
 
     while (next_packet)
     {
-        ssh2p = (const SSH2Packet*)(data + npacket_offset);
-        ssh_length = SSHPacket_GetLength(ssh2p, dsize);
+        const SSH2Packet* ssh2p = (const SSH2Packet*)(data + npacket_offset);
+        unsigned ssh_length = SSHPacket_GetLength(ssh2p, dsize);
 
         if (ssh_length == 0)
         {

@@ -84,9 +84,7 @@ void GtpCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 
 bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& dd)
 {
-    uint8_t next_hdr_type;
     uint8_t version;
-    uint8_t ip_ver;
     uint16_t len;
 
     const GTPHdr* const hdr = reinterpret_cast<const GTPHdr*>(raw.data);
@@ -137,7 +135,7 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& dd)
                 codec_event(codec, DECODE_GTP_BAD_LEN);
                 return false;
             }
-            next_hdr_type = *(raw.data + len - 1);
+            uint8_t next_hdr_type = *(raw.data + len - 1);
 
             /*Check extension headers*/
             while (next_hdr_type)
@@ -198,8 +196,8 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& dd)
     if (raw.len > 0)
     {
         codec.codec_flags |= CODEC_ENCAP_LAYER;
+        uint8_t ip_ver = *(raw.data + len) & 0xF0;
 
-        ip_ver = *(raw.data + len) & 0xF0;
         if (ip_ver == 0x40)
             codec.next_prot_id = ProtocolId::IPIP;
         else if (ip_ver == 0x60)

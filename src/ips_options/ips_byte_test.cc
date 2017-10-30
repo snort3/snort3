@@ -329,7 +329,7 @@ IpsOption::EvalStatus ByteTestOption::eval(Cursor& c, Packet* p)
     }
 
     uint32_t value = 0;
-    int payload_bytes_grabbed = 0;
+    int payload_bytes_grabbed = 0;  // FIXIT-L reduce scope
 
     if (!btd->data_string_convert_flag)
     {

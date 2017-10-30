@@ -55,9 +55,7 @@ void KMapSetNoCase(KMAP* km, int flag)
 */
 static int KMapFreeNodeList(KMAP* km)
 {
-    KEYNODE* k, * kold;
-
-    for ( k=km->keylist; k; )
+    for ( KEYNODE* k=km->keylist; k; )
     {
         if ( k->key )
         {
@@ -67,7 +65,7 @@ static int KMapFreeNodeList(KMAP* km)
         {
             km->userfree(k->userdata);
         }
-        kold = k;
+        KEYNODE* kold = k;
         k = k->next;
         snort_free(kold);
     }
@@ -98,23 +96,18 @@ static void KMapFreeNode(KMAP* km, KMAPNODE* r)
 */
 void KMapDelete(KMAP* km)
 {
-    KMAPNODE* r;
-    int i;
-
-    /* Free the tree - on root node at a time */
-    for (i=0; i<256; i++)
+    /* Free the tree - one root node at a time */
+    for (int i=0; i<256; i++)
     {
-        r = km->root[i];
+        KMAPNODE* r = km->root[i];
+
         if ( r )
-        {
             KMapFreeNode(km,r);
-        }
+
         km->root[i] = nullptr;
     }
 
-    /* Free the node list */
     KMapFreeNodeList(km);
-
     snort_free(km);
 }
 
@@ -172,10 +165,8 @@ static KMAPNODE* KMapCreateNode(KMAP* km)
 */
 int KMapAdd(KMAP* km, void* key, int n, void* userdata)
 {
-    int i,ksize;
     int type = 0;
     const unsigned char* P = (unsigned char*)key;
-    KMAPNODE* root;
     std::string xkey;
 
     if ( n <= 0 )
@@ -191,14 +182,15 @@ int KMapAdd(KMAP* km, void* key, int n, void* userdata)
     {
         xkey.resize(n);
 
-        for (i=0; i<n; i++)
+        for (int i=0; i<n; i++)
             xkey[i] = std::tolower(P[i]);
 
         P = (const unsigned char*)xkey.c_str();
     }
 
     /* Save key size */
-    ksize = n;
+    int ksize = n;
+    KMAPNODE* root;
 
     //printf("adding key='%.*s'\n",n,P);
 
@@ -320,10 +312,8 @@ int KMapAdd(KMAP* km, void* key, int n, void* userdata)
 */
 void* KMapFind(KMAP* ks, void* key, int n)
 {
-    const unsigned char* T = (unsigned char*)key;
-    KMAPNODE* root;
-    int i;
     std::string xkey;
+    const unsigned char* T = (unsigned char*)key;
 
     if ( n <= 0 )
     {
@@ -337,7 +327,8 @@ void* KMapFind(KMAP* ks, void* key, int n)
     if ( ks->nocase )
     {
         xkey.resize(n);
-        for (i=0; i<n; i++)
+
+        for (int i=0; i<n; i++)
             xkey[i] = std::tolower(T[i]);
 
         T = (const unsigned char*)xkey.c_str();
@@ -345,7 +336,7 @@ void* KMapFind(KMAP* ks, void* key, int n)
     //printf("finding key='%.*s'\n",n,T);
 
     /* Check if any keywords start with this character */
-    root = ks->root[ *T ];
+    KMAPNODE* root = ks->root[ *T ];
     if ( !root )
         return nullptr;
 

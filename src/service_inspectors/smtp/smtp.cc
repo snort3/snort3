@@ -363,27 +363,23 @@ static int GetCmdId(SMTP_PROTO_CONF* config, const char* name, SMTPCmdTypeEnum t
 
 static void SMTP_PrintConfig(SMTP_PROTO_CONF *config)
 {
-    const SMTPToken* cmd;
+    assert(config);
+
     char buf[8192];
-    int max_line_len_count = 0;
-    int max_line_len = 0;
     int alert_count = 0;
-
-    if (config == nullptr)
-        return;
-
-    memset(&buf[0], 0, sizeof(buf));
 
     LogMessage("SMTP Config:\n");
     snprintf(buf, sizeof(buf) - 1, "    Normalize: ");
 
     if(config->normalize == NORMALIZE_ALL)
         sfsnprintfappend(buf, sizeof(buf) - 1, "all");
+
     else if(config->normalize == NORMALIZE_NONE)
         sfsnprintfappend(buf, sizeof(buf) - 1, "none");
+
     else if(config->normalize == NORMALIZE_CMDS)
     {
-        for (cmd = config->cmds; cmd->name != nullptr; cmd++)
+        for (SMTPToken* cmd = config->cmds; cmd->name != nullptr; cmd++)
         {
             if (config->cmd_config[cmd->search_id].normalize)
             {
@@ -409,10 +405,11 @@ static void SMTP_PrintConfig(SMTP_PROTO_CONF *config)
 
     {
         snprintf(buf, sizeof(buf) - 1, "    Max Specific Command Line Length: ");
+        int max_line_len_count = 0;
 
-        for (cmd = config->cmds; cmd->name != nullptr; cmd++)
+        for (SMTPToken* cmd = config->cmds; cmd->name != nullptr; cmd++)
         {
-            max_line_len = config->cmd_config[cmd->search_id].max_line_len;
+            int max_line_len = config->cmd_config[cmd->search_id].max_line_len;
 
             if (max_line_len != 0)
             {
@@ -465,7 +462,7 @@ static void SMTP_PrintConfig(SMTP_PROTO_CONF *config)
 
     snprintf(buf, sizeof(buf) - 1, "    Alert on commands: ");
 
-    for (cmd = config->cmds; cmd->name != nullptr; cmd++)
+    for (SMTPToken* cmd = config->cmds; cmd->name != nullptr; cmd++)
     {
         if (config->cmd_config[cmd->search_id].alert)
         {
@@ -1060,23 +1057,13 @@ static void SMTP_ProcessClientPacket(SMTP_PROTO_CONF* config, Packet* p, SMTPDat
  *
  * @return  None
  */
-static void SMTP_ProcessServerPacket(SMTP_PROTO_CONF* config, Packet* p, SMTPData* smtp_ssn,
-    int* next_state)
+static void SMTP_ProcessServerPacket(
+    SMTP_PROTO_CONF* config, Packet* p, SMTPData* smtp_ssn, int* next_state)
 {
-    int resp_found;
-    const uint8_t* ptr;
-    const uint8_t* end;
-    const uint8_t* eolm;
-    const uint8_t* eol;
-    int resp_line_len;
-#ifdef DEBUG_MSGS
-    const uint8_t* dash;
-#endif
-
     *next_state = 0;
 
-    ptr = p->data;
-    end = p->data + p->dsize;
+    const uint8_t* ptr = p->data;
+    const uint8_t* end = p->data + p->dsize;
 
     if (smtp_ssn->state == STATE_TLS_SERVER_PEND)
     {
@@ -1105,13 +1092,17 @@ static void SMTP_ProcessServerPacket(SMTP_PROTO_CONF* config, Packet* p, SMTPDat
 
     while (ptr < end)
     {
+        const uint8_t* eol;
+        const uint8_t* eolm;
+
         SMTP_GetEOL(ptr, end, &eol, &eolm);
 
-        resp_line_len = eol - ptr;
+        int resp_line_len = eol - ptr;
 
         /* Check for response code */
         smtp_current_search = &smtp_resp_search[0];
-        resp_found = smtp_resp_search_mpse->find(
+
+        int resp_found = smtp_resp_search_mpse->find(
             (const char*)ptr, resp_line_len, SMTP_SearchStrFound);
 
         if (resp_found > 0)
@@ -1144,7 +1135,7 @@ static void SMTP_ProcessServerPacket(SMTP_PROTO_CONF* config, Packet* p, SMTPDat
             }
 
 #ifdef DEBUG_MSGS
-            dash = ptr + smtp_search_info.index + smtp_search_info.length;
+            const uint8_t* dash = ptr + smtp_search_info.index + smtp_search_info.length;
 
             /* only add response if not a dash after response code */
             if ((dash == eolm) || ((dash < eolm) && (*dash != '-')))
@@ -1378,14 +1369,11 @@ static void SMTP_RegXtraDataFuncs(SMTP_PROTO_CONF* config)
     config->xtra_ehdrs_id = Stream::reg_xtra_data_cb(SMTP_GetEmailHdrs);
 }
 
-int SmtpMime::handle_header_line(const uint8_t* ptr, const uint8_t* eol,
-    int max_header_len)
+int SmtpMime::handle_header_line(
+    const uint8_t* ptr, const uint8_t* eol, int max_header_len)
 {
-    int ret;
-    int header_line_len;
-    MimeSession* mime_ssn = (MimeSession*)this;
     /* get length of header line */
-    header_line_len = eol - ptr;
+    int header_line_len = eol - ptr;
 
     if (max_header_len)
         DetectionEngine::queue_event(GID_SMTP, SMTP_HEADER_NAME_OVERFLOW);
@@ -1401,16 +1389,17 @@ int SmtpMime::handle_header_line(const uint8_t* ptr, const uint8_t* eol,
      * currently the code does not normalize headers */
     if (smtp_normalizing)
     {
-        ret = SMTP_CopyToAltBuffer(nullptr, ptr, eol - ptr);
+        int ret = SMTP_CopyToAltBuffer(nullptr, ptr, eol - ptr);
+
         if (ret == -1)
             return (-1);
     }
 
     if (config->log_config.log_email_hdrs)
     {
-        if (mime_ssn->get_data_state() == STATE_DATA_HEADER)
+        if (get_data_state() == STATE_DATA_HEADER)
         {
-            mime_ssn->get_log_state()->log_email_hdrs(ptr, eol - ptr);
+            get_log_state()->log_email_hdrs(ptr, eol - ptr);
         }
     }
 

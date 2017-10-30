@@ -209,16 +209,19 @@ Pop3ClientDetector::~Pop3ClientDetector()
 
 void Pop3ClientDetector::do_custom_init()
 {
-    unsigned index = 0;
     cmd_matcher = new SearchTool("ac_full", true);
 
     if ( !tcp_patterns.empty() )
+    {
+        unsigned index = 0;
+
         for (auto& pat : tcp_patterns)
         {
             cmd_matcher->add(pat.pattern, pat.length, index++);
             if (pat.length > longest_pattern)
                 longest_pattern = pat.length;
         }
+    }
     cmd_matcher->prep();
 }
 

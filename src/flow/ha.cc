@@ -423,13 +423,13 @@ static void consume_receive_message(HAMessage* msg)
 
 HighAvailability::HighAvailability(PortBitSet* ports, bool)
 {
-    SCPort port;
     using namespace std::placeholders;
     DebugMessage(DEBUG_HA,"HighAvailability::HighAvailability()\n");
 
     // If we have ports, configure the side channel
     if ( ports != nullptr )
-        for ( port = 0; port < ports->size(); port++ )
+    {
+        for ( SCPort port = 0; port < ports->size(); port++ )
             if ( ports->test(port) )
             {
                 sc = SideChannelManager::get_side_channel(port);
@@ -448,7 +448,7 @@ HighAvailability::HighAvailability(PortBitSet* ports, bool)
                 }
                 break;
             }
-
+    }
     s_client_map = new ClientMap;
     for ( int i=0; i<MAX_CLIENTS; i++ )
         (*s_client_map)[i] = nullptr;

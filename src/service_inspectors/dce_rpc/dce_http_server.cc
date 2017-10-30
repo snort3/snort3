@@ -50,14 +50,16 @@ public:
 void DceHttpServer::clear(Packet* p)
 {
     Flow* flow = p->flow;
-    TcpStreamSession* session;
 
     if ( flow->session != nullptr)
     {
         if ( (flow->get_session_flags() & SSNFLAG_ABORT_SERVER) == 0 )
         {
-            session = (TcpStreamSession*)flow->session;
-            DceHttpServerSplitter* splitter = (DceHttpServerSplitter*)(session->get_splitter(false));
+            TcpStreamSession* session = (TcpStreamSession*)flow->session;
+
+            DceHttpServerSplitter* splitter =
+                (DceHttpServerSplitter*)(session->get_splitter(false));
+
             if ( splitter->cutover_inspector())
             {
                 dce_http_server_stats.http_server_sessions++;

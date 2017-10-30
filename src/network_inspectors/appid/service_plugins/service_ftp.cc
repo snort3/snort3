@@ -353,7 +353,6 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t* offset,
                         /* Look for (Vendor Version:  or  (Vendor Version) */
                         const unsigned char* end;
                         const unsigned char* p;
-                        const unsigned char* ven;
                         const unsigned char* ver;
                         end = &data[size-1];
                         for (p=&data[*offset]; p<end && *p && *p!='('; p++)
@@ -361,7 +360,8 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t* offset,
                         if (p < end)
                         {
                             p++;
-                            ven = p;
+                            const unsigned char* ven = p;
+
                             for (; p<end && *p && *p!=' '; p++)
                                 ;
                             if (p < end && *p)

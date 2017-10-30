@@ -141,8 +141,6 @@ FileContext* FileFlows::get_file_context(uint64_t file_id, bool to_create)
 bool FileFlows::file_process(uint64_t file_id, const uint8_t* file_data,
     int data_size, uint64_t offset, FileDirection dir)
 {
-    int ret = 0;
-
     int64_t file_depth = FileService::get_max_file_depth();
 
     if ((file_depth < 0)or (offset > (uint64_t)file_depth))
@@ -171,8 +169,7 @@ bool FileFlows::file_process(uint64_t file_id, const uint8_t* file_data,
         {
             /* Just check file type and signature */
             FilePosition position = SNORT_FILE_FULL;
-            ret = context->process(flow, file_data, data_size, position);
-            return ret;
+            return context->process(flow, file_data, data_size, position);
         }
     }
 

@@ -139,17 +139,16 @@ static void AddMatchListEntry(ACSM_STRUCT* acsm, int state, ACSM_PATTERN* px)
 */
 static void AddPatternStates(ACSM_STRUCT* acsm, ACSM_PATTERN* p)
 {
-    uint8_t* pattern;
-    int state=0, next, n;
-    n = p->n;
-    pattern = p->patrn;
+    int state = 0;
+    int n = p->n;
+    uint8_t* pattern = p->patrn;
 
     /*
      *  Match up pattern with existing states
      */
     for (; n > 0; pattern++, n--)
     {
-        next = acsm->acsmStateTable[state].NextState[*pattern];
+        int next = acsm->acsmStateTable[state].NextState[*pattern];
         if (next == ACSM_FAIL_STATE)
             break;
         state = next;
@@ -196,13 +195,13 @@ static void Build_NFA(ACSM_STRUCT* acsm)
         /* Find Final States for any Failure */
         for (int i = 0; i < ALPHABET_SIZE; i++)
         {
-            int next;
             int s = acsm->acsmStateTable[r].NextState[i];
 
             if ( s != ACSM_FAIL_STATE )
             {
                 queue.push_back(s);
                 int fs = acsm->acsmStateTable[r].FailState;
+                int next;
 
                 /*
                  *  Locate the next valid state for 'i' starting at s

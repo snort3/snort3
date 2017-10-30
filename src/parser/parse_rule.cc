@@ -100,8 +100,6 @@ static int FinishPortListRule(
     int proto, FastPatternConfig* fp)
 {
     int large_port_group = 0;
-    int src_cnt = 0;
-    int dst_cnt = 0;
     PortTable* dstTable;
     PortTable* srcTable;
     PortObject* aaObject;
@@ -165,6 +163,9 @@ static int FinishPortListRule(
     if (!fp->get_single_rule_group() &&
         (rtn->flags & (ANY_DST_PORT|ANY_SRC_PORT)) != (ANY_DST_PORT|ANY_SRC_PORT))
     {
+        int dst_cnt = 0;
+        int src_cnt = 0;
+
         if (!(rtn->flags & ANY_SRC_PORT))
         {
             src_cnt = PortObjectPortCount(rtn->src_portobject);

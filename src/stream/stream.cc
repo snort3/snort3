@@ -431,10 +431,9 @@ int16_t Stream::get_application_protocol_id(Flow* flow)
     /* Not caching the source and dest host_entry in the session so we can
      * swap the table out after processing this packet if we need
      * to.  */
-    int16_t protocol = 0;
 
     if (!flow)
-        return protocol;
+        return 0;
 
     if ( flow->ssn_state.application_protocol == -1 )
         return 0;

@@ -405,7 +405,6 @@ void LuaDetectorManager::list_lua_detectors()
 {
     // FIXIT-L make these perf counters
     size_t totalMem = 0;
-    size_t mem;
 
     if ( allocated_detectors.empty() )
         return;
@@ -415,7 +414,7 @@ void LuaDetectorManager::list_lua_detectors()
     for ( auto& ld : allocated_detectors )
     {
         LuaStateDescriptor* lsd = ld->validate_lua_state(false);
-        mem = lua_gc(lsd->my_lua_state, LUA_GCCOUNT, 0);
+        size_t mem = lua_gc(lsd->my_lua_state, LUA_GCCOUNT, 0);
         totalMem += mem;
         LogMessage("\tDetector %s: Lua Memory usage %zu kb\n", ld->get_name().c_str(), mem);
     }

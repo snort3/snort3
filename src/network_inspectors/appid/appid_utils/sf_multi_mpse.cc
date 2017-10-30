@@ -334,7 +334,6 @@ static int addPatternRecursively(void* root, const tMlpPattern** inputPatternLis
     tPatternList* newNode;
     const tMlpPattern* nextPattern;
     const tMlpPattern* patterns = *inputPatternList;
-    int rvalue;
 
     if (!rootNode || !patterns || !patterns->pattern)
         return -1;
@@ -343,9 +342,11 @@ static int addPatternRecursively(void* root, const tMlpPattern** inputPatternLis
         patternList;
         prevNode = patternList, patternList = patternList->nextPattern)
     {
-        rvalue = compareAppUrlPatterns(patterns, patternList);
+        int rvalue = compareAppUrlPatterns(patterns, patternList);
+
         if (rvalue < 0)
             continue;
+
         if (rvalue == 0)
         {
             nextPattern = *(inputPatternList+1);

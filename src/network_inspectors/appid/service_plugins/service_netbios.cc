@@ -288,7 +288,6 @@ static int netbios_validate_name_and_decode(const uint8_t** data,
     const NBNSLabelData* lbl_data;
     const NBNSLabelPtr* lbl_ptr;
     int i;
-    int j;
 
     if (end - *data < (int)sizeof(NBNSLabelLength))
         return -1;
@@ -317,7 +316,7 @@ static int netbios_validate_name_and_decode(const uint8_t** data,
         return -1;
     for (i=0; i<(NBNS_NAME_LEN/2); i++)
     {
-        j = 2 * i;
+        int j = 2 * i;
         if (lbl_data->data[j] < 'A' || lbl_data->data[j] > 'Z')
             return -1;
         name[i] = (uint8_t)(((uint8_t)(lbl_data->data[j] - 'A')) << 4);
@@ -410,7 +409,6 @@ static int nbns_validate_answer(const uint8_t** data, const uint8_t* const begin
     const uint8_t* const end)
 {
     int ret;
-    uint16_t tmp;
 
     ret = netbios_validate_name(data, begin, end);
     if (ret)
@@ -421,8 +419,10 @@ static int nbns_validate_answer(const uint8_t** data, const uint8_t* const begin
         const NBNSAnswerData* ad = (const NBNSAnswerData*)(*data);
         if (end - *data < (int)sizeof(NBNSAnswerData))
             return -1;
+
         *data += sizeof(NBNSAnswerData);
-        tmp = ntohs(ad->data_len);
+        uint16_t tmp = ntohs(ad->data_len);
+
         if (end - *data < tmp)
             return -1;
         *data += tmp;
@@ -626,7 +626,6 @@ static inline void smb_find_domain(const uint8_t* data, uint16_t size, const int
     char domain[NBNS_NAME_LEN+1];
     unsigned pos = 0;
     uint16_t byte_count;
-    uint16_t sec_len;
     uint16_t wc;
     uint8_t unicode;
     uint32_t capabilities;
@@ -663,7 +662,7 @@ static inline void smb_find_domain(const uint8_t* data, uint16_t size, const int
     {
         if (wc == 8)
         {
-            sec_len = LETOHS(&resp->sec_len);
+            uint16_t sec_len = LETOHS(&resp->sec_len);
             if (sec_len >= byte_count)
                 return;
             data += sec_len;

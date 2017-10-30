@@ -153,9 +153,6 @@ int ipset_contains(IPSET* ipc, const SfIp* ip, void* port)
 
 int ipset_print(IPSET* ipc)
 {
-    char ip_str[80];
-    PORTRANGE* pr;
-
     if ( !ipc )
         return 0;
 
@@ -168,11 +165,10 @@ int ipset_print(IPSET* ipc)
             p!=nullptr;
             p =(IP_PORT*)sflist_next(&cur_ip) )
         {
-            SnortSnprintf(ip_str, 80, "%s", p->ip.get_addr()->ntoa());
-            printf("CIDR BLOCK: %c%s", p->notflag ? '!' : ' ', ip_str);
+            printf("CIDR BLOCK: %c%s", p->notflag ? '!' : ' ', p->ip.get_addr()->ntoa());
             SF_LNODE* cur_port;
 
-            for ( pr=(PORTRANGE*)sflist_first(&p->portset.port_list, &cur_port);
+            for ( PORTRANGE* pr=(PORTRANGE*)sflist_first(&p->portset.port_list, &cur_port);
                 pr != nullptr;
                 pr=(PORTRANGE*)sflist_next(&cur_port) )
             {
@@ -210,71 +206,62 @@ static int portset_add(PORTSET* portset, unsigned port_lo, unsigned port_hi)
 
 static int port_parse(char* portstr, PORTSET* portset)
 {
-    unsigned port_lo = 0, port_hi = 0;
-    char* port1;
-    char* port_begin;
-    char* port_end;
-    char* port2;
+    char* port_begin = snort_strdup(portstr);
+    char* port1 = port_begin;
+    char* port2 = strstr(port_begin, "-");
 
-    port_begin = snort_strdup(portstr);
-
-    port1 = port_begin;
-    port2 = strstr(port_begin, "-");
-
+    if (*port1 == '\0')
     {
-        if (*port1 == '\0')
-        {
-            snort_free(port_begin);
-            return -1;
-        }
-
-        if (port2)
-        {
-            *port2 = '\0';
-            port2++;
-        }
-
-        port_lo = strtoul(port1, &port_end, 10);
-        if (port_end == port1)
-        {
-            snort_free(port_begin);
-            return -2;
-        }
-
-        if (port2)
-        {
-            port_hi = strtoul(port2, &port_end, 10);
-            if (port_end == port2)
-            {
-                snort_free(port_begin);
-                return -3;
-            }
-        }
-        else
-        {
-            port_hi = port_lo;
-        }
-
-        /* check to see if port is out of range */
-        if ( port_hi > MAX_PORTS-1 || port_lo > MAX_PORTS-1)
-        {
-            snort_free(port_begin);
-            return -4;
-        }
-
-        /* swap ports if necessary */
-        if (port_hi < port_lo)
-        {
-            unsigned tmp;
-
-            tmp = port_hi;
-            port_hi = port_lo;
-            port_lo = tmp;
-        }
-
-        portset_add(portset, port_lo, port_hi);
+        snort_free(port_begin);
+        return -1;
     }
 
+    if (port2)
+    {
+        *port2 = '\0';
+        port2++;
+    }
+
+    char* port_end;
+    unsigned port_lo = strtoul(port1, &port_end, 10);
+    unsigned port_hi = 0;
+
+    if (port_end == port1)
+    {
+        snort_free(port_begin);
+        return -2;
+    }
+
+    if (port2)
+    {
+        port_hi = strtoul(port2, &port_end, 10);
+        if (port_end == port2)
+        {
+            snort_free(port_begin);
+            return -3;
+        }
+    }
+    else
+    {
+        port_hi = port_lo;
+    }
+
+    /* check to see if port is out of range */
+    if ( port_hi > MAX_PORTS-1 || port_lo > MAX_PORTS-1)
+    {
+        snort_free(port_begin);
+        return -4;
+    }
+
+    /* swap ports if necessary */
+    if (port_hi < port_lo)
+    {
+        unsigned tmp = port_hi;
+        port_hi = port_lo;
+        port_lo = tmp;
+    }
+
+    portset_add(portset, port_lo, port_hi);
     snort_free(port_begin);
 
     return 0;
@@ -449,7 +436,6 @@ void test_ip4_parsing()
     unsigned host, mask, not_flag;
     PORTSET portset;
     char** curip;
-    int ret;
     IPADDRESS* adp;
     char* ips[] =
     {
@@ -469,7 +455,7 @@ void test_ip4_parsing()
         portset_init(&portset);
 
         /* network byte order stuff */
-        if ((ret = ip4_parse(curip[0], 1, &not_flag, &host, &mask, &portset)) != 0)
+        if (int ret = ip4_parse(curip[0], 1, &not_flag, &host, &mask, &portset))
         {
             fprintf(stderr, "Unable to parse %s with ret %d\n", curip[0], ret);
         }
@@ -482,7 +468,7 @@ void test_ip4_parsing()
         }
 
         /* host byte order stuff */
-        if ((ret = ip4_parse(curip[0], 0, &not_flag, &host, &mask, &portset)) != 0)
+        if (int ret = ip4_parse(curip[0], 0, &not_flag, &host, &mask, &portset))
         {
             fprintf(stderr, "Unable to parse %s with ret %d\n", curip[0], ret);
         }
@@ -500,7 +486,6 @@ void test_ip4_parsing()
 void test_ip4set_parsing()
 {
     char** curip;
-    int ret;
     char* ips[] =
     {
         "12.24.24.1/32,!24.24.24.1",
@@ -521,7 +506,7 @@ void test_ip4set_parsing()
         IPSET* ipset = ipset_new(IPV4_FAMILY);
 
         /* network byte order stuff */
-        if ((ret = ip4_setparse(ipset, curip[0])) != 0)
+        if (int ret = ip4_setparse(ipset, curip[0]))
         {
             ipset_free(ipset);
             fprintf(stderr, "Unable to parse %s with ret %d\n", curip[0], ret);

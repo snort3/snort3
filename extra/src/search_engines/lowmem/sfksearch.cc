@@ -408,13 +408,10 @@ static void Build_Bad_Character_Shifts(KTRIE_STRUCT* kt)
     */
     for ( plist=kt->patrn; plist; plist=plist->next )
     {
-        int shift, cindex;
-
         for ( int k=0; k<kt->bcSize; k++ )
         {
-            shift = kt->bcSize - 1 - k;
-
-            cindex = plist->P[ k ];
+            int shift = kt->bcSize - 1 - k;
+            int cindex = plist->P[ k ];
 
             if ( shift < kt->bcShift[ cindex ] )
             {
@@ -475,13 +472,13 @@ static int KTrieBuildMatchStateNode(
 
 static int KTrieBuildMatchStateTrees(SnortConfig* sc, KTRIE_STRUCT* ts)
 {
-    int i, cnt = 0;
-    KTRIENODE* root;
+    int cnt = 0;
 
     /* Find the states that have a MatchList */
-    for (i = 0; i < KTRIE_ROOT_NODES; i++)
+    for (int i = 0; i < KTRIE_ROOT_NODES; i++)
     {
-        root = ts->root[i];
+        KTRIENODE* root = ts->root[i];
+
         /* each and every prefix match at this root*/
         if ( root and ts->agent )
         {
@@ -643,7 +640,6 @@ static inline int KTrieSearchNoBC(
 static inline int KTrieSearchBC(
     KTRIE_STRUCT* ks, const uint8_t* Tx, int n, MpseMatch match, void* context)
 {
-    int tshift;
     const uint8_t* Tend;
     const uint8_t* T, * bT;
     int nfound  = 0;
@@ -661,6 +657,8 @@ static inline int KTrieSearchBC(
 
     for (; T <= Tend; n--, T++, Tx++ )
     {
+        int tshift;
+
         while ( (tshift = bcShift[ *( T + bcSize ) ]) > 0 )
         {
             T  += tshift;

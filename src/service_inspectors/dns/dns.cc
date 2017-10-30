@@ -346,16 +346,13 @@ static uint16_t ParseDNSName(
 static uint16_t ParseDNSQuestion(
     const unsigned char* data, uint16_t bytes_unused, DNSData* dnsSessionData)
 {
-    uint16_t bytes_used = 0;
-    uint16_t new_bytes_unused = 0;
-
     if ( !bytes_unused )
         return 0;
 
     if (dnsSessionData->curr_rec_state < DNS_RESP_STATE_Q_NAME_COMPLETE)
     {
-        new_bytes_unused = ParseDNSName(data, bytes_unused, dnsSessionData);
-        bytes_used = bytes_unused - new_bytes_unused;
+        uint16_t new_bytes_unused = ParseDNSName(data, bytes_unused, dnsSessionData);
+        uint16_t bytes_used = bytes_unused - new_bytes_unused;
 
         if (dnsSessionData->curr_txt.name_state == DNS_RESP_STATE_NAME_COMPLETE)
         {
@@ -416,16 +413,13 @@ static uint16_t ParseDNSQuestion(
 static uint16_t ParseDNSAnswer(
     const unsigned char* data, uint16_t bytes_unused, DNSData* dnsSessionData)
 {
-    uint16_t bytes_used = 0;
-    uint16_t new_bytes_unused = 0;
-
     if ( !bytes_unused )
         return 0;
 
     if (dnsSessionData->curr_rec_state < DNS_RESP_STATE_RR_NAME_COMPLETE)
     {
-        new_bytes_unused = ParseDNSName(data, bytes_unused, dnsSessionData);
-        bytes_used = bytes_unused - new_bytes_unused;
+        uint16_t new_bytes_unused = ParseDNSName(data, bytes_unused, dnsSessionData);
+        uint16_t bytes_used = bytes_unused - new_bytes_unused;
 
         if (dnsSessionData->curr_txt.name_state == DNS_RESP_STATE_NAME_COMPLETE)
         {

@@ -130,9 +130,7 @@ static uint32_t SSL_decode_version_v3(uint8_t major, uint8_t minor)
 static uint32_t SSL_decode_handshake_v3(const uint8_t* pkt, int size,
     uint32_t cur_flags, uint32_t pkt_flags)
 {
-    const SSL_handshake_t* handshake;
     const SSL_handshake_hello_t* hello;
-    uint32_t hs_len;
     uint32_t retval = 0;
 
     while (size > 0)
@@ -145,7 +143,7 @@ static uint32_t SSL_decode_handshake_v3(const uint8_t* pkt, int size,
 
         /* Note, handhshake version field is optional depending on type
            Will recast to different type as necessary. */
-        handshake = (const SSL_handshake_t*)pkt;
+        const SSL_handshake_t* handshake = (const SSL_handshake_t*)pkt;
         pkt += SSL_HS_PAYLOAD_OFFSET;
         size -= SSL_HS_PAYLOAD_OFFSET;
 
@@ -154,7 +152,7 @@ static uint32_t SSL_decode_handshake_v3(const uint8_t* pkt, int size,
          *      memcpy(&hs_len, handshake->length, 3);
          *      hs_len = ntohl(hs_len);
          * It was written this way for performance */
-        hs_len = THREE_BYTE_LEN(handshake->length);
+        uint32_t hs_len = THREE_BYTE_LEN(handshake->length);
 
         switch (handshake->type)
         {
@@ -257,9 +255,7 @@ static uint32_t SSL_decode_handshake_v3(const uint8_t* pkt, int size,
 static uint32_t SSL_decode_v3(const uint8_t* pkt, int size, uint32_t pkt_flags,
     uint8_t* alert_flags, uint16_t* partial_rec_len, int max_hb_len)
 {
-    const SSL_record_t* record;
     uint32_t retval = 0;
-    uint16_t reclen;
     uint16_t hblen;
     int ccs = 0;   /* Set if we see a Change Cipher Spec and reset after the next record */
     const SSL_heartbeat* heartbeat;
@@ -289,13 +285,13 @@ static uint32_t SSL_decode_v3(const uint8_t* pkt, int size, uint32_t pkt_flags,
             break;
         }
 
-        record = (const SSL_record_t*)pkt;
+        const SSL_record_t* record = (const SSL_record_t*)pkt;
         pkt += SSL_REC_PAYLOAD_OFFSET;
         size -= SSL_REC_PAYLOAD_OFFSET;
 
         retval |= SSL_decode_version_v3(record->major, record->minor);
 
-        reclen = ntohs(record->length);
+        uint16_t reclen = ntohs(record->length);
 
         psize = (size < reclen) ? (reclen - size) : 0;
 
@@ -403,7 +399,6 @@ static inline bool SSL_v3_back_compat_v2(const SSLv2_chello_t* chello)
 
 static uint32_t SSL_decode_v2(const uint8_t* pkt, int size, uint32_t pkt_flags)
 {
-    uint16_t reclen;
     const SSLv2_chello_t* chello;
     const SSLv2_shello_t* shello;
     uint32_t retval = 0;
@@ -419,7 +414,7 @@ static uint32_t SSL_decode_v2(const uint8_t* pkt, int size, uint32_t pkt_flags)
 
         /* Note: top bit has special meaning and is not included
          * with the length */
-        reclen = ntohs(record->length) & 0x7fff;
+        uint16_t reclen = ntohs(record->length) & 0x7fff;
 
         switch (record->type)
         {
@@ -489,10 +484,6 @@ uint32_t SSL_decode(
     const uint8_t* pkt, int size, uint32_t pkt_flags, uint32_t prev_flags,
     uint8_t* alert_flags, uint16_t* partial_rec_len, int max_hb_len)
 {
-    const SSL_record_t* record;
-    uint16_t reclen;
-    uint32_t datalen;
-
     if (!pkt || !size)
         return SSL_ARG_ERROR_FLAG;
 
@@ -528,10 +519,10 @@ uint32_t SSL_decode(
                     /* Saw a TLS version, but this could also be an SSHv2 length.
                       * If it is, check if a hypothetical TLS record-data length agrees
                       * with its record length */
-                    datalen = THREE_BYTE_LEN( (pkt+6) );
+                    uint32_t datalen = THREE_BYTE_LEN( (pkt+6) );
 
-                    record = (const SSL_record_t*)pkt;
-                    reclen = ntohs(record->length);
+                    const SSL_record_t* record = (const SSL_record_t*)pkt;
+                    uint16_t reclen = ntohs(record->length);
 
                     /* If these lengths match, it's v3
                        Otherwise, it's v2 */
@@ -547,10 +538,10 @@ uint32_t SSL_decode(
             /* A version of '2' at byte 7 overlaps with TLS record-data length.
              * Check if a hypothetical TLS record-data length agrees with its
              * record length */
-            datalen = THREE_BYTE_LEN( (pkt+6) );
+            uint32_t datalen = THREE_BYTE_LEN( (pkt+6) );
 
-            record = (const SSL_record_t*)pkt;
-            reclen = ntohs(record->length);
+            const SSL_record_t* record = (const SSL_record_t*)pkt;
+            uint16_t reclen = ntohs(record->length);
 
             /* If these lengths match, it's v3
                Otherwise, it's v2 */

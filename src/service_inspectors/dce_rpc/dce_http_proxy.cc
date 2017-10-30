@@ -50,15 +50,19 @@ public:
 void DceHttpProxy::clear(Packet* p)
 {
     Flow* flow = p->flow;
-    TcpStreamSession* session;
 
     if ( flow->session != nullptr)
     {
         if ( (flow->get_session_flags() & (SSNFLAG_ABORT_CLIENT | SSNFLAG_ABORT_SERVER)) == 0 )
         {
-            session = (TcpStreamSession*)flow->session;
-            DceHttpProxySplitter* c2s_splitter = (DceHttpProxySplitter*)(session->get_splitter(true));
-            DceHttpProxySplitter* s2c_splitter = (DceHttpProxySplitter*)(session->get_splitter(false));
+            TcpStreamSession* session = (TcpStreamSession*)flow->session;
+
+            DceHttpProxySplitter* c2s_splitter =
+                (DceHttpProxySplitter*)(session->get_splitter(true));
+
+            DceHttpProxySplitter* s2c_splitter =
+                (DceHttpProxySplitter*)(session->get_splitter(false));
+
             if ( c2s_splitter->cutover_inspector() && s2c_splitter->cutover_inspector() )
             {
                 dce_http_proxy_stats.http_proxy_sessions++;

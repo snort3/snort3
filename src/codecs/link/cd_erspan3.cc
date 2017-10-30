@@ -57,7 +57,7 @@ struct ERSpanType3Hdr
 {
     uint16_t ver_vlan;
     uint16_t flags_spanId;
-    uint32_t time_stamp; // adding an underscore so function can be called timestamp()
+    uint32_t timestamp;
     uint16_t pad0;
     uint16_t pad1;
     uint32_t pad2;
@@ -65,15 +65,6 @@ struct ERSpanType3Hdr
 
     inline uint16_t version() const
     { return ntohs(ver_vlan) >> 12; }
-
-    inline uint16_t vlan() const
-    { return ntohs(ver_vlan) & 0xfff; }
-
-    inline uint16_t span_id() const
-    { return ntohs(flags_spanId) & 0x03ff; }
-
-    inline uint32_t timestamp() const
-    { return ntohs(time_stamp); }
 };
 
 } // anonymous namespace

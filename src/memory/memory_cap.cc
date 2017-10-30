@@ -28,6 +28,7 @@
 
 #include "log/messages.h"
 #include "main/snort_config.h"
+#include "main/snort_types.h"
 #include "profiler/memory_profiler_active_context.h"
 #include "utils/stats.h"
 
@@ -220,8 +221,8 @@ void MemoryCap::print()
     if ( s_tracker.allocations )
     {
         LogMessage("    main thread usage: %zu\n", s_tracker.used());
-        LogMessage("    allocations: %zu\n", s_tracker.allocations);
-        LogMessage("    deallocations: %zu\n", s_tracker.deallocations);
+        LogMessage("    allocations: %" PRIu64 "\n", s_tracker.allocations);
+        LogMessage("    deallocations: %" PRIu64 "\n", s_tracker.deallocations);
         LogMessage("    thread cap: %zu\n", thread_cap);
         LogMessage("    preemptive threshold: %zu\n", preemptive_threshold);
     }

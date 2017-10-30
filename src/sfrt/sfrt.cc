@@ -720,18 +720,16 @@ static inline int allocateTableIndex(table_t* table)
 
 int main()
 {
-    table_t* dir;
     uint32_t ip_list[NUM_IPS];  /* entirely arbitrary */
     char data[NUM_DATA];     /* also entirely arbitrary */
-    uint32_t index, val;
 
-    for (index=0; index<NUM_IPS; index++)
+    for (uint32_t index=0; index<NUM_IPS; index++)
     {
         ip_list[index] = (uint32_t)rand()%NUM_IPS;
         data[index%NUM_DATA] = index%26 + 65;    /* Random letter */
     }
 
-    dir = sfrt_new(DIR_16x2, IPv4, NUM_IPS, 20);
+    table_t* dir = sfrt_new(DIR_16x2, IPv4, NUM_IPS, 20);
 
     if (!dir)
     {
@@ -739,7 +737,7 @@ int main()
         return 1;
     }
 
-    for (index=0; index < NUM_IPS; index++)
+    for (uint32_t index=0; index < NUM_IPS; index++)
     {
         if (sfrt_insert(&ip_list[index], 32, &data[index%NUM_DATA],
             RT_FAVOR_SPECIFIC, dir) != RT_SUCCESS)
@@ -752,9 +750,9 @@ int main()
             data[index%NUM_DATA], *(uint32_t*)sfrt_lookup(&ip_list[index], dir));
     }
 
-    for (index=0; index < NUM_IPS; index++)
+    for (uint32_t index=0; index < NUM_IPS; index++)
     {
-        val = *(uint32_t*)sfrt_lookup(&ip_list[index], dir);
+        uint32_t val = *(uint32_t*)sfrt_lookup(&ip_list[index], dir);
         printf("\t@%u\t%x: %c.  originally:\t%c\n",
             index, ip_list[index], val, data[index%NUM_DATA]);
     }

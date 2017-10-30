@@ -605,12 +605,11 @@ Binder::~Binder()
 
 bool Binder::configure(SnortConfig* sc)
 {
-    Binding* pb;
-    unsigned i, sz = bindings.size();
+    unsigned sz = bindings.size();
 
-    for ( i = 0; i < sz; i++ )
+    for ( unsigned i = 0; i < sz; i++ )
     {
-        pb = bindings[i];
+        Binding* pb = bindings[i];
 
         // Update with actual policy indices instead of user provided names
         if ( pb->when.ips_id )

@@ -622,13 +622,10 @@ static int _bnfa_conv_node_to_full(bnfa_trans_node_t* t, bnfa_state_t* full)
 #ifdef XXXX
 static int KcontainsJx(bnfa_trans_node_t* tk, bnfa_trans_node_t* tj)
 {
-    bnfa_trans_node_t* t;
-    int found;
-
     while ( tj )
     {
-        found=0;
-        for ( t=tk; t; t=t->next )
+        int found=0;
+        for ( bnfa_trans_node_t* t=tk; t; t=t->next )
         {
             if ( tj->key == t->key )
             {
@@ -673,12 +670,13 @@ static int _bnfa_opt_nfa(bnfa_struct_t* bnfa)
 #if 0
     int cnt=0;
 #endif
-    int k, fs, fr;
     bnfa_state_t* FailState = bnfa->bnfaFailState;
 
-    for (k=2; k<bnfa->bnfaNumStates; k++)
+    for (int k=2; k<bnfa->bnfaNumStates; k++)
     {
-        fr = fs = FailState[k];
+        int fs = FailState[k];
+        int fr = fs;
+
         while ( fs &&  KcontainsJ(bnfa->bnfaTransTable[k],bnfa->bnfaTransTable[fs]) )
         {
             fs = FailState[fs];
@@ -1138,22 +1136,17 @@ void bnfaPrint(bnfa_struct_t* bnfa)
 #ifdef ALLOW_NFA_FULL
         else if ( bnfa->bnfaFormat == BNFA_FULL )
         {
-            int i;
-            bnfa_state_t state;
-            bnfa_state_t* p;
-            bnfa_state_t** NextState;
+            bnfa_state_t** NextState = (bnfa_state_t**)bnfa->bnfaNextState;
 
-            NextState = (bnfa_state_t**)bnfa->bnfaNextState;
             if ( !NextState )
                 continue;
 
-            p = NextState[k];
-
+            bnfa_state_t* p = NextState[k];
             printf("fs=%-4d nc=256 ",bnfa->bnfaFailState[k]);
 
-            for ( i=0; i<bnfa->bnfaAlphabetSize; i++ )
+            for ( int i=0; i<bnfa->bnfaAlphabetSize; i++ )
             {
-                state = p[i];
+                bnfa_state_t state = p[i];
 
                 if ( state != 0 && state != BNFA_FAIL_STATE )
                 {
@@ -1227,18 +1220,18 @@ void bnfaSetCase(bnfa_struct_t* p, int flag)
 void bnfaFree(bnfa_struct_t* bnfa)
 {
     int i;
-    bnfa_pattern_t* patrn, * ipatrn;
-    bnfa_match_node_t* mlist, * ilist;
+    bnfa_pattern_t* patrn;
 
     for (i = 0; i < bnfa->bnfaNumStates; i++)
     {
         /* free match list entries */
-        mlist = bnfa->bnfaMatchList[i];
+        bnfa_match_node_t* mlist = bnfa->bnfaMatchList[i];
 
         while (mlist)
         {
-            ilist = mlist;
+            bnfa_match_node_t* ilist = mlist;
             mlist = mlist->next;
+
             if (ilist->rule_option_tree && bnfa->agent)
             {
                 bnfa->agent->tree_free(&(ilist->rule_option_tree));
@@ -1270,7 +1263,7 @@ void bnfaFree(bnfa_struct_t* bnfa)
     patrn = bnfa->bnfaPatterns;
     while (patrn)
     {
-        ipatrn=patrn;
+        bnfa_pattern_t* ipatrn=patrn;
         patrn=patrn->next;
         BNFA_FREE(ipatrn->casepatrn,ipatrn->n,bnfa->pat_memory);
         if (bnfa->agent && ipatrn->userdata)
@@ -1479,31 +1472,25 @@ static inline unsigned _bnfa_search_full_nfa(
     bnfa_struct_t* bnfa, uint8_t* Tx, int n, MpseMatch match,
     void* context, bnfa_state_t state, int* current_state)
 {
-    uint8_t* Tend;
-    uint8_t* T;
-    uint8_t Tchar;
-    unsigned index;
     bnfa_state_t** NextState= bnfa->bnfaNextState;
     bnfa_state_t* FailState= bnfa->bnfaFailState;
     bnfa_match_node_t** MatchList= bnfa->bnfaMatchList;
-    bnfa_state_t* pcs;
-    bnfa_match_node_t* mlist;
-    bnfa_pattern_t* patrn;
+
     unsigned nfound = 0;
-    int res;
     unsigned last_match=LAST_STATE_INIT;
     unsigned last_match_saved=LAST_STATE_INIT;
 
-    T    = Tx;
-    Tend = T + n;
+    uint8_t* T = Tx;
+    uint8_t* Tend = T + n;
 
     for (; T < Tend; T++ )
     {
-        Tchar = xlatcase[ *T ];
+        uint8_t Tchar = xlatcase[ *T ];
 
         for (;; )
         {
-            pcs = NextState[state];
+            bnfa_state_t* pcs = NextState[state];
+
             if ( pcs[Tchar] == 0 && state > 0 )
             {
                 state = FailState[state];
@@ -1524,19 +1511,19 @@ static inline unsigned _bnfa_search_full_nfa(
             last_match = state;
 
             {
-                mlist = MatchList[state];
+                bnfa_match_node_t* mlist = MatchList[state];
+
                 if (!mlist)
-                {
                     continue;
-                }
-                patrn = (bnfa_pattern_t*)mlist->data;
-                index = T - Tx + 1;
+
+                bnfa_pattern_t* patrn = (bnfa_pattern_t*)mlist->data;
+                unsigned index = T - Tx + 1;
                 nfound++;
                 /* Don't do anything specific for case sensitive patterns and not,
                  * since that will be covered by the rule tree itself.  Each tree
                  * might have both case sensitive & case insensitive patterns.
                  */
-                res = match(patrn->userdata, mlist->rule_option_tree, index, context,
+                int res = match(patrn->userdata, mlist->rule_option_tree, index, context,
                     mlist->neg_list);
                 if ( res > 0 )
                 {
@@ -1561,31 +1548,24 @@ static inline unsigned _bnfa_search_full_nfa_case(
     bnfa_struct_t* bnfa, uint8_t* Tx, int n, MpseMatch match,
     void* context, bnfa_state_t state, int* current_state)
 {
-    uint8_t* Tend;
-    uint8_t* T;
-    uint8_t Tchar;
-    unsigned index;
     bnfa_state_t** NextState= bnfa->bnfaNextState;
     bnfa_state_t* FailState= bnfa->bnfaFailState;
     bnfa_match_node_t** MatchList= bnfa->bnfaMatchList;
-    bnfa_state_t* pcs;
-    bnfa_match_node_t* mlist;
-    bnfa_pattern_t* patrn;
+
     unsigned nfound = 0;
     unsigned last_match=LAST_STATE_INIT;
     unsigned last_match_saved=LAST_STATE_INIT;
-    int res;
 
-    T    = Tx;
-    Tend = T + n;
+    uint8_t* T = Tx;
+    uint8_t* Tend = T + n;
 
     for (; T < Tend; T++ )
     {
-        Tchar = *T;
+        uint8_t Tchar = *T;
 
         for (;; )
         {
-            pcs = NextState[state];
+            bnfa_state_t* pcs = NextState[state];
             if ( pcs[Tchar] == 0 && state > 0 )
             {
                 state = FailState[state];
@@ -1606,19 +1586,19 @@ static inline unsigned _bnfa_search_full_nfa_case(
             last_match = state;
 
             {
-                mlist = MatchList[state];
+                bnfa_match_node_t* mlist = MatchList[state];
+
                 if (!mlist)
-                {
                     continue;
-                }
-                patrn = (bnfa_pattern_t*)mlist->data;
-                index = T - Tx + 1;
+
+                bnfa_pattern_t* patrn = (bnfa_pattern_t*)mlist->data;
+                unsigned index = T - Tx + 1;
                 nfound++;
                 /* Don't do anything specific for case (in)sensitive patterns
                  * since that will be covered by the rule tree itself.  Each
                  * tree might have both case sensitive & case insensitive patterns.
                  */
-                res = match(patrn->userdata, mlist->rule_option_tree, index, context,
+                int res = match(patrn->userdata, mlist->rule_option_tree, index, context,
                     mlist->neg_list);
                 if ( res > 0 )
                 {
@@ -1643,31 +1623,25 @@ static inline unsigned _bnfa_search_full_nfa_nocase(
     bnfa_struct_t* bnfa, uint8_t* Tx, int n, MpseMatch match,
     void* context, bnfa_state_t state, int* current_state)
 {
-    uint8_t* Tend;
-    uint8_t* T;
-    uint8_t Tchar;
-    unsigned index;
-    bnfa_state_t** NextState= bnfa->bnfaNextState;
-    bnfa_state_t* FailState= bnfa->bnfaFailState;
-    bnfa_match_node_t** MatchList= bnfa->bnfaMatchList;
-    bnfa_state_t* pcs;
-    bnfa_match_node_t* mlist;
-    bnfa_pattern_t* patrn;
+    bnfa_state_t** NextState = bnfa->bnfaNextState;
+    bnfa_state_t* FailState = bnfa->bnfaFailState;
+    bnfa_match_node_t** MatchList = bnfa->bnfaMatchList;
+
     unsigned nfound = 0;
     unsigned last_match=LAST_STATE_INIT;
     unsigned last_match_saved=LAST_STATE_INIT;
-    int res;
 
-    T    = Tx;
-    Tend = T + n;
+    uint8_t* T = Tx;
+    uint8_t* Tend = T + n;
 
     for (; T < Tend; T++ )
     {
-        Tchar = xlatcase[ *T ];
+        uint8_t Tchar = xlatcase[ *T ];
 
         for (;; )
         {
-            pcs = NextState[state];
+            bnfa_state_t* pcs = NextState[state];
+
             if ( pcs[Tchar] == 0 && state > 0 )
             {
                 state = FailState[state];
@@ -1688,18 +1662,19 @@ static inline unsigned _bnfa_search_full_nfa_nocase(
             last_match = state;
 
             {
-                mlist = MatchList[state];
+                bnfa_match_node_t* mlist = MatchList[state];
+
                 if (!mlist)
-                {
                     continue;
-                }
-                patrn = (bnfa_pattern_t*)mlist->data;
-                index = T - Tx + 1;
+
+                bnfa_pattern_t* patrn = (bnfa_pattern_t*)mlist->data;
+                unsigned index = T - Tx + 1;
+
                 /* Don't do anything specific for case sensitive patterns and not,
                  * since that will be covered by the rule tree itself.  Each tree
                  * might have both case sensitive & case insensitive patterns.
                  */
-                res = match(patrn->userdata, mlist->rule_option_tree, index, context,
+                int res = match(patrn->userdata, mlist->rule_option_tree, index, context,
                     mlist->neg_list);
                 if ( res > 0 )
                 {
@@ -1734,17 +1709,14 @@ static inline unsigned _bnfa_search_full_nfa_nocase(
 */
 static inline int _bnfa_binearch(const bnfa_state_t* a, int a_len, int val)
 {
-    int m, l, r;
-    int c;
-
-    l = 0;
-    r = a_len - 1;
+    int l = 0;
+    int r = a_len - 1;
 
     while ( r >= l )
     {
-        m = ( r + l ) >> 1;
+        int m = ( r + l ) >> 1;
 
-        c = a[m] >> BNFA_SPARSE_VALUE_SHIFT;
+        int c = a[m] >> BNFA_SPARSE_VALUE_SHIFT;
 
         if ( val == c )
         {
@@ -1843,25 +1815,19 @@ unsigned _bnfa_search_csparse_nfa(
     bnfa_struct_t* bnfa, const uint8_t* Tx, int n, MpseMatch match,
     void* context, unsigned sindex, int* current_state)
 {
-    bnfa_match_node_t* mlist;
-    const uint8_t* Tend;
-    const uint8_t* T;
-    uint8_t Tchar;
-    unsigned index;
     bnfa_match_node_t** MatchList = bnfa->bnfaMatchList;
-    bnfa_pattern_t* patrn;
     bnfa_state_t* transList = bnfa->bnfaTransList;
+
     unsigned nfound = 0;
     unsigned last_match=LAST_STATE_INIT;
     unsigned last_match_saved=LAST_STATE_INIT;
-    int res;
 
-    T    = Tx;
-    Tend = T + n;
+    const uint8_t* T = Tx;
+    const uint8_t* Tend = T + n;
 
     for (; T<Tend; T++)
     {
-        Tchar = xlatcase[ *T ];
+        uint8_t Tchar = xlatcase[ *T ];
 
         /* Transition to next state index */
         sindex = _bnfa_get_next_state_csparse_nfa(transList,sindex,Tchar);
@@ -1876,18 +1842,19 @@ unsigned _bnfa_search_csparse_nfa(
             last_match = sindex;
 
             {
-                mlist = MatchList[ transList[sindex] ];
+                bnfa_match_node_t* mlist = MatchList[ transList[sindex] ];
+
                 if ( !mlist )
                     return nfound;
 
-                patrn = (bnfa_pattern_t*)mlist->data;
-                index = T - Tx + 1;
+                bnfa_pattern_t* patrn = (bnfa_pattern_t*)mlist->data;
+                unsigned index = T - Tx + 1;
                 nfound++;
                 /* Don't do anything specific for case sensitive patterns and not,
                  * since that will be covered by the rule tree itself.  Each tree
                  * might have both case sensitive & case insensitive patterns.
                  */
-                res = match(patrn->userdata, mlist->rule_option_tree, index,
+                int res = match(patrn->userdata, mlist->rule_option_tree, index,
                     context, mlist->neg_list);
                 if ( res > 0 )
                 {
@@ -1980,25 +1947,19 @@ static inline unsigned _bnfa_search_csparse_nfa_nocase(
     bnfa_struct_t* bnfa, uint8_t* Tx, int n, MpseMatch match,
     void* context, unsigned sindex, int* current_state)
 {
-    bnfa_match_node_t* mlist;
-    uint8_t* Tend;
-    uint8_t* T;
-    uint8_t Tchar;
-    unsigned index;
     bnfa_match_node_t** MatchList = bnfa->bnfaMatchList;
-    bnfa_pattern_t* patrn;
     bnfa_state_t* transList = bnfa->bnfaTransList;
+
     unsigned nfound = 0;
     unsigned last_match=LAST_STATE_INIT;
     unsigned last_match_saved=LAST_STATE_INIT;
-    int res;
 
-    T    = Tx;
-    Tend = T + n;
+    uint8_t* T = Tx;
+    uint8_t* Tend = T + n;
 
     for (; T<Tend; T++)
     {
-        Tchar = xlatcase[ *T ];
+        uint8_t Tchar = xlatcase[ *T ];
 
         /* Transition to next state index */
         sindex = _bnfa_get_next_state_csparse_nfa(transList,sindex,Tchar);
@@ -2013,15 +1974,15 @@ static inline unsigned _bnfa_search_csparse_nfa_nocase(
             last_match = sindex;
 
             {
-                mlist = MatchList[ transList[sindex] ];
-                patrn = (bnfa_pattern_t*)mlist->data;
-                index = T - Tx + 1;
+                bnfa_match_node_t* mlist = MatchList[ transList[sindex] ];
+                bnfa_pattern_t* patrn = (bnfa_pattern_t*)mlist->data;
+                unsigned index = T - Tx + 1;
                 nfound++;
                 /* Don't do anything specific for case sensitive patterns and not,
                  * since that will be covered by the rule tree itself.  Each tree
                  * might have both case sensitive & case insensitive patterns.
                  */
-                res = match(patrn->userdata, mlist->rule_option_tree, index,
+                int res = match(patrn->userdata, mlist->rule_option_tree, index,
                     context, mlist->neg_list);
                 if ( res > 0 )
                 {

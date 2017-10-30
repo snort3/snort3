@@ -34,9 +34,6 @@ class HttpInspect : public ConversionState
 public:
     HttpInspect(Converter& c) : ConversionState(c) { }
     bool convert(std::istringstream& data) override;
-
-private:
-    bool add_decode_option(const std::string& opt_name,  std::istringstream& stream);
 };
 } // namespace
 
@@ -128,25 +125,6 @@ bool HttpInspect::convert(std::istringstream& data_stream)
     }
 
     return retval;
-}
-
-bool HttpInspect::add_decode_option(const std::string& opt_name,  std::istringstream& stream)
-{
-    int val;
-
-    if (stream >> val)
-    {
-        table_api.open_table("decode");
-        table_api.add_option(opt_name, val);
-        table_api.close_table();
-        return true;
-    }
-    else
-    {
-        table_api.add_comment("snort.conf missing argument for " +
-            opt_name + " <int>");
-        return false;
-    }
 }
 
 /**************************

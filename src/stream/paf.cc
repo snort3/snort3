@@ -326,14 +326,12 @@ int32_t paf_check (
     {
         px.ft = FT_NOP;
         uint32_t idx = px.idx;
-        uint32_t shift;
-        int32_t fp;
 
         bool cont = paf_eval(ss, ps, px, ssn, *flags, data, len);
 
         if ( px.ft != FT_NOP )
         {
-            fp = paf_flush(ps, px, flags);
+            int32_t fp = paf_flush(ps, px, flags);
             paf_jump(ps, fp);
             return fp;
         }
@@ -342,7 +340,7 @@ int32_t paf_check (
 
         if ( px.idx > idx )
         {
-            shift = px.idx - idx;
+            uint32_t shift = px.idx - idx;
             if ( shift > len )
                 shift = len;
             data += shift;

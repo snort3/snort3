@@ -228,7 +228,6 @@ static int asn1_decode_tag_num_ext(ASN1_DATA* asn1_data, u_int* tag_num)
 static int asn1_decode_ident(ASN1_TYPE* asn1_type, ASN1_DATA* asn1_data)
 {
     ASN1_IDENT* ident;
-    int iRet;
 
     if (!asn1_type || !asn1_data)
         return ASN1_ERR_NULL_MEM;
@@ -253,8 +252,7 @@ static int asn1_decode_ident(ASN1_TYPE* asn1_type, ASN1_DATA* asn1_data)
     {
         ident->tag_type = SF_ASN1_TAG_EXTENSION;
 
-        iRet = asn1_decode_tag_num_ext(asn1_data, &ident->tag);
-        if (iRet)
+        if ( asn1_decode_tag_num_ext(asn1_data, &ident->tag) )
         {
             //printf("** decode_ident: ext_len error\n");
             return ASN1_ERR_INVALID_BER_TAG_LEN;

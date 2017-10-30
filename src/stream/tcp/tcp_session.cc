@@ -689,8 +689,6 @@ void TcpSession::check_for_session_hijack(TcpSegmentDescriptor& tsd)
 {
     if (!(tsd.get_pkt()->pkth->flags & DAQ_PKT_FLAG_PRE_ROUTING))
     {
-        uint32_t event_code = 0;
-
         if ( tsd.get_pkt()->is_eth() )
         {
             // if flag is set, guaranteed to have an eth layer
@@ -704,6 +702,8 @@ void TcpSession::check_for_session_hijack(TcpSegmentDescriptor& tsd)
                 ( talker->compare_mac_addresses(eh->ether_dst) &&
                 listener->compare_mac_addresses(eh->ether_src) ) )
                 return;
+
+            uint32_t event_code = 0;
 
             if ( t_hijack )
             {

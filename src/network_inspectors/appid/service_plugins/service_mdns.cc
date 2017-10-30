@@ -256,10 +256,7 @@ int MdnsServiceDetector::reference_pointer(const char* start_ptr, const char** r
   MDNS User Analysis*/
 int MdnsServiceDetector::analyze_user(AppIdSession* asd, const Packet* pkt, uint16_t size)
 {
-    char user_name[MAX_LENGTH_SERVICE_NAME] = "";
-    const char* user_name_bkp = nullptr;
     int start_index = 0;
-    int processed_ans = 0;
     uint8_t user_name_len = 0;
     uint16_t data_size = size;
 
@@ -277,7 +274,7 @@ int MdnsServiceDetector::analyze_user(AppIdSession* asd, const Packet* pkt, uint
         const char* srv_original  = (const char*)pkt->data + RECORD_OFFSET;
         create_match_list(srv_original, size - RECORD_OFFSET);
         const char* end_srv_original  = (const char*)pkt->data + RECORD_OFFSET + data_size;
-        for (processed_ans = 0; processed_ans < ans_count && data_size <= size && size > 0;
+        for (int processed_ans = 0; processed_ans < ans_count && data_size <= size && size > 0;
             processed_ans++ )
         {
             // Call Decode Reference pointer function if referenced value instead of direct value
@@ -285,7 +282,6 @@ int MdnsServiceDetector::analyze_user(AppIdSession* asd, const Packet* pkt, uint
             int ret_value = reference_pointer(srv_original, &resp_endptr,  &start_index, data_size,
                 &user_name_len, size);
             int user_index =0;
-            int user_printable_index =0;
 
             if (ret_value == -1)
                 return -1;
@@ -299,6 +295,7 @@ int MdnsServiceDetector::analyze_user(AppIdSession* asd, const Packet* pkt, uint
                 }
                 user_name_len -=user_index;
 
+                char user_name[MAX_LENGTH_SERVICE_NAME] = "";
                 memcpy(user_name, srv_original + start_index, user_name_len);
                 user_name[user_name_len] = '\0';
 
@@ -337,7 +334,7 @@ int MdnsServiceDetector::analyze_user(AppIdSession* asd, const Packet* pkt, uint
                     if (user_original )
                     {
                         user_name_len = user_original - srv_original - start_index;
-                        user_name_bkp = srv_original + start_index;
+                        const char* user_name_bkp = srv_original + start_index;
                         /* Non-Printable characters in the beginning */
 
                         while (user_index < user_name_len)
@@ -348,7 +345,7 @@ int MdnsServiceDetector::analyze_user(AppIdSession* asd, const Packet* pkt, uint
                             user_index++;
                         }
 
-                        user_printable_index = user_index;
+                        int user_printable_index = user_index;
                         /* Non-Printable characters in the between  */
 
                         while (user_printable_index < user_name_len)
@@ -361,8 +358,9 @@ int MdnsServiceDetector::analyze_user(AppIdSession* asd, const Packet* pkt, uint
                         /* Copy  the user name if available */
                         if (( user_name_len - user_index ) < MAX_LENGTH_SERVICE_NAME )
                         {
-                            memcpy(user_name, user_name_bkp + user_index, user_name_len -
-                                user_index);
+                            char user_name[MAX_LENGTH_SERVICE_NAME];
+                            memcpy(user_name, user_name_bkp + user_index,
+                                user_name_len - user_index);
                             user_name[ user_name_len - user_index ] = '\0';
                             add_user(asd, user_name, APP_ID_MDNS, true);
                             return 1;

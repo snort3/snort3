@@ -227,7 +227,6 @@ int PrintFTPClientConf(FTP_CLIENT_PROTO_CONF* ClientConf)
 
 int PrintFTPServerConf(FTP_SERVER_PROTO_CONF* ServerConf)
 {
-    char buf[BUF_SIZE+1];
     int iRet;
     FTP_CMD_CONF* FTPCmd;
 
@@ -253,10 +252,12 @@ int PrintFTPServerConf(FTP_SERVER_PROTO_CONF* ServerConf)
         FTPCmd = ftp_cmd_lookup_first(ServerConf->cmd_lookup, &iRet);
         while (FTPCmd != nullptr)
         {
-            memset(buf, 0, BUF_SIZE+1);
+            char buf[BUF_SIZE+1];
             snprintf(buf, BUF_SIZE, "        %s { %u ",
                 FTPCmd->cmd_name, FTPCmd->max_param_len);
+
 #ifdef PRINT_DEFAULT_CONFIGS
+            // FIXIT-L should append, not overwrite
             if (FTPCmd->data_chan_cmd)
                 snprintf(buf, BUF_SIZE, "%s", "data_chan ");
             if (FTPCmd->data_xfer_cmd)

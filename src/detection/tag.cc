@@ -628,11 +628,11 @@ static int PruneTagCache(uint32_t thetime, int mustdie)
     }
     else
     {
-        TagNode* lru_node = nullptr;
-
         while (pruned < mustdie &&
             (sfxhash_count(ssn_tag_cache_ptr) > 0 || sfxhash_count(host_tag_cache_ptr) > 0))
         {
+            TagNode* lru_node;
+
             if ((lru_node = (TagNode*)sfxhash_lru(ssn_tag_cache_ptr)) != nullptr)
             {
                 if (sfxhash_remove(ssn_tag_cache_ptr, lru_node) != SFXHASH_OK)

@@ -131,25 +131,21 @@ bool GreCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
          * Source Route Entries */
         if (GRE_ROUTE(greh))
         {
-            uint16_t sre_addrfamily;
-            uint8_t sre_offset;
-            uint8_t sre_length;
-            const uint8_t* sre_ptr;
-
-            sre_ptr = raw.data + len;
+            const uint8_t* sre_ptr = raw.data + len;
 
             while (true)
             {
                 len += GRE_SRE_HEADER_LEN;
+
                 if (len > raw.len)
                     break;
 
-                sre_addrfamily = ntohs(*((const uint16_t*)sre_ptr));
+                uint16_t sre_addrfamily = ntohs(*((const uint16_t*)sre_ptr));
+
                 sre_ptr += sizeof(sre_addrfamily);
+                sre_ptr += sizeof(uint8_t);  // sre_offset
 
-                sre_ptr += sizeof(sre_offset);
-
-                sre_length = *((const uint8_t*)sre_ptr);
+                uint8_t sre_length = *((const uint8_t*)sre_ptr);
                 sre_ptr += sizeof(sre_length);
 
                 if ((sre_addrfamily == 0) && (sre_length == 0))

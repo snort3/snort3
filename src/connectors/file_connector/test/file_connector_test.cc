@@ -182,11 +182,6 @@ TEST_GROUP(file_connector_tinit_tterm)
     }
 };
 
-TEST(file_connector_tinit_tterm, null)
-{
-    CHECK(1==1);
-}
-
 TEST(file_connector_tinit_tterm, alloc_discard)
 {
     const uint8_t* data = nullptr;

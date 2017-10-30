@@ -57,18 +57,16 @@ static char get_xlink_keyword(const uint8_t*, const uint8_t*);
  */
 static uint32_t get_xlink_hex_value(const uint8_t* buf, const uint8_t* end)
 {
-    char c;
     uint32_t value = 0;
-    const uint8_t* hex_end;
 
     if ((end - buf) < 8)
         return 0;
 
-    hex_end = buf + 8;
+    const uint8_t* hex_end = buf + 8;
 
     while (buf < hex_end)
     {
-        c = toupper((int)*buf);
+        char c = toupper((int)*buf);
 
         /* Make sure it is a number or hex char; if not return with what we have */
         if (isdigit((int)c))

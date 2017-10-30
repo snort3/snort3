@@ -130,12 +130,13 @@ void RtiService::show(SnortConfig*)
 
 void RtiService::do_daq_packet_retry_test(Packet* p)
 {
-    static bool retry_packet = true;
-    static bool expect_retry_packet = false;
     if (p->dsize)
     {
         if (p->data[0] == 'A')
         {
+            static bool retry_packet = true;
+            static bool expect_retry_packet = false;
+
             if (retry_packet)
             {
                 Active::daq_retry_packet(p);

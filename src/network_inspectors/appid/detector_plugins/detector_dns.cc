@@ -323,16 +323,17 @@ void DnsValidator::reset_dns_info(AppIdSession* asd)
 int DnsValidator::dns_validate_label(const uint8_t* data, uint16_t* offset, uint16_t size,
     uint8_t* len, unsigned* len_valid)
 {
-    const DNSLabel* lbl;
     const DNSLabelPtr* lbl_ptr;
     const DNSLabelBitfield* lbl_bit;
     uint16_t tmp;
 
     *len = 0;
     *len_valid = 1;
+
     while ((size > *offset) && (size-(*offset)) >= (int)offsetof(DNSLabel, name))
     {
-        lbl = (const DNSLabel*)(data + (*offset));
+        const DNSLabel* lbl = (const DNSLabel*)(data + (*offset));
+
         switch (lbl->len & DNS_LENGTH_FLAGS)
         {
         case 0xC0:
@@ -388,19 +389,20 @@ int DnsValidator::dns_validate_query(const uint8_t* data, uint16_t* offset, uint
     uint8_t host_len;
     unsigned host_len_valid;
     uint16_t host_offset;
-    const DNSQueryFixed* query;
-    uint16_t record_type;
 
     host = data + *offset;
     host_offset = *offset;
     ret = dns_validate_label(data, offset, size, &host_len, &host_len_valid);
+
     if (ret == APPID_SUCCESS)
     {
-        query = (const DNSQueryFixed*)(data + *offset);
+        const DNSQueryFixed* query = (const DNSQueryFixed*)(data + *offset);
         *offset += sizeof(DNSQueryFixed);
+
         if (host_reporting)
         {
-            record_type = ntohs(query->QType);
+            uint16_t record_type = ntohs(query->QType);
+
             if ((host_len == 0) || (!host_len_valid))
             {
                 host        = nullptr;
@@ -434,12 +436,8 @@ int DnsValidator::dns_validate_answer(const uint8_t* data, uint16_t* offset, uin
     uint16_t id, uint8_t rcode, bool host_reporting, AppIdSession* asd)
 {
     int ret;
-    const uint8_t* host;
     uint8_t host_len;
     unsigned host_len_valid;
-    uint16_t host_offset;
-    uint16_t record_type;
-    uint32_t ttl;
     uint16_t r_data_offset;
 
     ret = dns_validate_label(data, offset, size, &host_len, &host_len_valid);
@@ -455,8 +453,9 @@ int DnsValidator::dns_validate_answer(const uint8_t* data, uint16_t* offset, uin
             return APPID_NOMATCH;
         if (host_reporting)
         {
-            record_type = ntohs(ad->type);
-            ttl         = ntohl(ad->ttl);
+            uint16_t record_type = ntohs(ad->type);
+            uint32_t ttl = ntohl(ad->ttl);
+
             switch (record_type)
             {
             case PATTERN_A_REC:
@@ -470,16 +469,22 @@ int DnsValidator::dns_validate_answer(const uint8_t* data, uint16_t* offset, uin
                 add_dns_response_info(asd, id, nullptr, 0, 0, rcode, ttl);
                 break;
             case PATTERN_PTR_REC:
-                host = data + r_data_offset;
-                host_offset = r_data_offset;
-                ret = dns_validate_label(data, &r_data_offset, size, &host_len, &host_len_valid);
-                if ((host_len == 0) || (!host_len_valid))
                 {
-                    host        = nullptr;
-                    host_len    = 0;
-                    host_offset = 0;
+                    const uint8_t* host = data + r_data_offset;
+                    uint16_t host_offset = r_data_offset;
+
+                    ret = dns_validate_label(
+                        data, &r_data_offset, size, &host_len, &host_len_valid);
+
+                    if ((host_len == 0) || (!host_len_valid))
+                    {
+                        host = nullptr;
+                        host_len = 0;
+                        host_offset = 0;
+                    }
+                    add_dns_response_info(
+                        asd, id, host, host_len, host_offset, rcode, ttl);
                 }
-                add_dns_response_info(asd, id, host, host_len, host_offset, rcode, ttl);
                 break;
             default:
                 break;
@@ -867,19 +872,17 @@ void dns_detector_free_patterns()
 
 char* dns_parse_host(const uint8_t* host, uint8_t host_len)
 {
-    char* str;
-    const uint8_t* src;
-    char* dst;
-    uint8_t len;
+    char* str = static_cast<char*>(snort_calloc(host_len + 1));    // plus '\0' at end
+    const uint8_t* src = host;
+    char* dst = str;
+
     uint32_t dstLen = 0;
 
-    str = static_cast<char*>(snort_calloc(host_len + 1));    // plus '\0' at end
-    src = host;
-    dst = str;
     while (*src != 0)
     {
-        len = *src;
+        uint8_t len = *src;
         src++;
+
         if ((dstLen + len) <= host_len)
             memcpy(dst, src, len);
         else

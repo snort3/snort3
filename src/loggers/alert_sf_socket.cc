@@ -242,8 +242,6 @@ static void send_sar(uint8_t* data, unsigned len)
 static OptTreeNode* OptTreeNode_Search(uint32_t, uint32_t sid)
 {
     SFGHASH_NODE* hashNode;
-    OptTreeNode* otn = nullptr;
-    RuleTreeNode* rtn = nullptr;
 
     if (sid == 0)
         return nullptr;
@@ -252,8 +250,8 @@ static OptTreeNode* OptTreeNode_Search(uint32_t, uint32_t sid)
         hashNode;
         hashNode = sfghash_findnext(snort_conf->otn_map))
     {
-        otn = (OptTreeNode*)hashNode->data;
-        rtn = getRuntimeRtnFromOtn(otn);
+        OptTreeNode* otn = (OptTreeNode*)hashNode->data;
+        RuleTreeNode* rtn = getRuntimeRtnFromOtn(otn);
 
         if ( rtn and is_network_protocol(rtn->proto) )
         {

@@ -159,7 +159,7 @@ void PacketTracer::add_header_info(Packet* p)
         log("%04X\n", (uint16_t)eh->ethertype());
     }
 
-    if (p->ptrs.ip_api.get_src() and p->ptrs.ip_api.get_src())
+    if (p->ptrs.ip_api.get_src() and p->ptrs.ip_api.get_dst())
     {
         char sipstr[INET6_ADDRSTRLEN], dipstr[INET6_ADDRSTRLEN];
 

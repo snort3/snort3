@@ -512,8 +512,7 @@ DCE2_SmbFileTracker* DCE2_SmbFindFileTracker(DCE2_SmbSsnData* ssd,
 
             break;
         }
-
-    // Fall through for Windows 2000 for first request to file
+        // fallthrough
 
     case DCE2_POLICY__WIN2003:
     case DCE2_POLICY__WINXP:

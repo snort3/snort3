@@ -127,9 +127,6 @@ SFGHASH* sfghash_new(int nrows, int keysize, int userkeys, SfgHashFree userfree)
 */
 void sfghash_delete(SFGHASH* h)
 {
-    int i;
-    SFGHASH_NODE* node, * onode;
-
     if ( !h )
         return;
 
@@ -137,11 +134,11 @@ void sfghash_delete(SFGHASH* h)
 
     if ( h->table )
     {
-        for (i=0; i<h->nrows; i++)
+        for (int i=0; i<h->nrows; i++)
         {
-            for ( node=h->table[i]; node; )
+            for ( SFGHASH_NODE* node=h->table[i]; node; )
             {
-                onode = node;
+                SFGHASH_NODE* onode = node;
                 node  = node->next;
 
                 if ( !h->userkey && onode->key )

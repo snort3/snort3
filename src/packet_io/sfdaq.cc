@@ -532,7 +532,7 @@ void SFDAQInstance::get_tunnel_capabilities()
 
 bool SFDAQInstance::get_tunnel_bypass(uint8_t proto)
 {
-    return (daq_tunnel_mask & proto ? true : false);
+    return (daq_tunnel_mask & proto) != 0;
 }
 
 bool SFDAQInstance::was_started()

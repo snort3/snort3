@@ -1294,17 +1294,16 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
 #define FTP_RESPONSE_2BCONT 2
 #define FTP_RESPONSE_CONT   3
 #define FTP_RESPONSE_ENDCONT 4
+
 int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
 {
     int iRet = FTPP_SUCCESS;
     int encrypted = 0;
     int space = 0;
-    long state = FTP_CMD_OK;
     int rsp_code = 0;
     FTP_CLIENT_REQ* req;
     FTP_CMD_CONF* CmdConf = nullptr;
 
-    const unsigned char* read_ptr;
     const unsigned char* end = p->data + p->dsize;
 
     if ( DecodeBuffer.len )
@@ -1325,11 +1324,10 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
 
     while (req->pipeline_req)
     {
-        state = FTP_CMD_OK;
+        long state = FTP_CMD_OK;
 
-        /* Starts at the beginning of the buffer/line,
-         * so next up is a command */
-        read_ptr = (const unsigned char*)req->pipeline_req;
+        /* Starts at the beginning of the buffer/line, so next up is a command */
+        const unsigned char* read_ptr = (const unsigned char*)req->pipeline_req;
 
         /* but first we ignore leading white space */
         while ( (read_ptr < end) &&

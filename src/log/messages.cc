@@ -135,8 +135,6 @@ void ParseError(const char* format, ...)
 
 static void WriteLogMessage(FILE* fh, bool prefer_fh, const char* format, va_list& ap)
 {
-    char buf[STD_BUF+1];
-
     if ( snort_conf && !prefer_fh )
     {
         if ( SnortConfig::log_quiet() )
@@ -144,6 +142,7 @@ static void WriteLogMessage(FILE* fh, bool prefer_fh, const char* format, va_lis
 
         if ( SnortConfig::log_syslog() )
         {
+            char buf[STD_BUF+1];
             vsnprintf(buf, STD_BUF, format, ap);
             buf[STD_BUF] = '\0';
             syslog(LOG_DAEMON | LOG_NOTICE, "%s", buf);
@@ -195,7 +194,6 @@ void LogMessage(FILE* fh, const char* format,...)
  */
 void WarningMessage(const char* format,...)
 {
-    char buf[STD_BUF+1];
     va_list ap;
 
     if ( snort_conf and SnortConfig::log_quiet() )
@@ -205,6 +203,7 @@ void WarningMessage(const char* format,...)
 
     if ( snort_conf and SnortConfig::log_syslog() )
     {
+        char buf[STD_BUF+1];
         vsnprintf(buf, STD_BUF, format, ap);
         buf[STD_BUF] = '\0';
         syslog(LOG_DAEMON | LOG_WARNING, "%s", buf);
@@ -229,13 +228,13 @@ void WarningMessage(const char* format,...)
  */
 void ErrorMessage(const char* format,...)
 {
-    char buf[STD_BUF+1];
     va_list ap;
 
     va_start(ap, format);
 
     if ( snort_conf and SnortConfig::log_syslog() )
     {
+        char buf[STD_BUF+1];
         vsnprintf(buf, STD_BUF, format, ap);
         buf[STD_BUF] = '\0';
         syslog(LOG_CONS | LOG_DAEMON | LOG_ERR, "%s", buf);

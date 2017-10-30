@@ -190,7 +190,6 @@ const uint8_t* MimeSession::process_mime_header(const uint8_t* ptr,
 
     while (ptr < data_end_marker)
     {
-        int header_name_len;
         int max_header_name_len = 0;
         get_mime_eol(ptr, data_end_marker, &eol, &eolm);
 
@@ -238,7 +237,8 @@ const uint8_t* MimeSession::process_mime_header(const uint8_t* ptr,
             }
 
             /* Check for Exim 4.32 exploit where number of chars before colon is greater than 64 */
-            header_name_len = colon - ptr;
+            int header_name_len = colon - ptr;
+
             if ((colon < eolm) && (header_name_len > MAX_HEADER_NAME_LEN))
             {
                 max_header_name_len = header_name_len;

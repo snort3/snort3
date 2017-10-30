@@ -98,11 +98,6 @@ static uint32_t estimateSizeFromEntries(uint32_t num_entries, uint32_t memcap)
 
 void IpListInit(uint32_t maxEntries, ReputationConfig* config)
 {
-    uint8_t* base;
-    ListInfo* whiteInfo;
-    ListInfo* blackInfo;
-    MEM_OFFSET list_ptr;
-
     if ( !config->iplist )
     {
         uint32_t mem_size;
@@ -110,7 +105,7 @@ void IpListInit(uint32_t maxEntries, ReputationConfig* config)
         config->reputation_segment = (uint8_t*)snort_alloc(mem_size);
 
         segment_meminit(config->reputation_segment, mem_size);
-        base = config->reputation_segment;
+        uint8_t* base = config->reputation_segment;
 
         /*DIR_16x7_4x4 for performance, but memory usage is high
          *Use  DIR_8x16 worst case IPV4 5K, IPV6 15K (bytes)
@@ -121,7 +116,7 @@ void IpListInit(uint32_t maxEntries, ReputationConfig* config)
         if ( !config->iplist )
             FatalError("Failed to create IP list.\n");
 
-        list_ptr = segment_snort_calloc((size_t)DECISION_MAX, sizeof(ListInfo));
+        MEM_OFFSET list_ptr = segment_snort_calloc((size_t)DECISION_MAX, sizeof(ListInfo));
 
         if ( !list_ptr )
             FatalError("Failed to create IP list.\n");
@@ -129,20 +124,21 @@ void IpListInit(uint32_t maxEntries, ReputationConfig* config)
         config->iplist->list_info = list_ptr;
 
         config->local_black_ptr = list_ptr + BLACKLISTED * sizeof(ListInfo);
-        blackInfo = (ListInfo*)&base[config->local_black_ptr];
+        ListInfo* blackInfo = (ListInfo*)&base[config->local_black_ptr];
         blackInfo->listType = BLACKLISTED;
         blackInfo->listIndex = BLACKLISTED + 1;
+
         if (UNBLACK == config->whiteAction)
         {
             config->local_white_ptr = list_ptr + WHITELISTED_UNBLACK * sizeof(ListInfo);
-            whiteInfo = (ListInfo*)&base[config->local_white_ptr];
+            ListInfo* whiteInfo = (ListInfo*)&base[config->local_white_ptr];
             whiteInfo->listType = WHITELISTED_UNBLACK;
             whiteInfo->listIndex = WHITELISTED_UNBLACK + 1;
         }
         else
         {
             config->local_white_ptr = list_ptr + WHITELISTED_TRUST * sizeof(ListInfo);
-            whiteInfo = (ListInfo*)&base[config->local_white_ptr];
+            ListInfo* whiteInfo = (ListInfo*)&base[config->local_white_ptr];
             whiteInfo->listType = WHITELISTED_TRUST;
             whiteInfo->listIndex = WHITELISTED_TRUST + 1;
         }

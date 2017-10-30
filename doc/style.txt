@@ -116,6 +116,11 @@ yet firm so feedback is welcome to get something we can live with.
 * Each header should have a comment immediately after the header guard to
   give an overview of the file so the reader knows what's going on.
 
+* Use the following comment on switch cases that intentionally fall through
+  to the next case to suppress compiler warning on known valid cases:
+
+    // fallthrough
+
 === Logging
 
 * Messages intended for the user should not look like debug messages. Eg,

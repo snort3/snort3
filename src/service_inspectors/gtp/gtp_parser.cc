@@ -83,14 +83,13 @@ struct GTP_IE_Hdr
 static void convertToHex(char* output, int outputSize, const uint8_t* input, int inputSize)
 {
     int i = 0;
-    int length;
     int numBytesInLine = 0;
     int totalBytes = outputSize;
     char* buf_ptr = output;
 
     while ((i < inputSize)&&(totalBytes > 0))
     {
-        length = safe_snprintf(buf_ptr, totalBytes, "%.2x ", (uint8_t)input[i]);
+        int length = safe_snprintf(buf_ptr, totalBytes, "%.2x ", (uint8_t)input[i]);
         buf_ptr += length;
         totalBytes -= length;
         if (totalBytes < 0)
@@ -110,13 +109,11 @@ static void convertToHex(char* output, int outputSize, const uint8_t* input, int
 /* Display the information elements*/
 static void printInfoElements(GTP_IEData* info_elements, GTPMsg* msg)
 {
-    int i;
-
-    for (i=0; i < MAX_GTP_IE_CODE + 1; i++)
+    for (int i=0; i < MAX_GTP_IE_CODE + 1; i++)
     {
-        char buf[STD_BUF];
         if (info_elements[i].msg_id == msg->msg_id)
         {
+            char buf[STD_BUF];
             convertToHex( (char*)buf, sizeof(buf),
                 msg->gtp_header + info_elements[i].shift, info_elements[i].length);
             DEBUG_WRAP(DebugFormat(DEBUG_GTP, "Info type: %.3d, content: %s\n", i, buf); );
@@ -128,22 +125,17 @@ static void printInfoElements(GTP_IEData* info_elements, GTPMsg* msg)
 static int gtp_processInfoElements(
     const GTPConfig& config, GTPMsg* msg, const uint8_t* buff, uint16_t len)
 {
-    const uint8_t* start;
-    uint8_t type;
-    int32_t unprocessed_len;
-    uint8_t previous_type;
+    const uint8_t* start = buff;
+    uint8_t previous_type = (uint8_t)*start;
+    int32_t unprocessed_len = len;
 
     DEBUG_WRAP(DebugFormat(DEBUG_GTP, "Information elements: length: %d\n", len); );
 
-    start = buff;
-    previous_type = (uint8_t)*start;
-    unprocessed_len = len;
-
     while ( unprocessed_len > 0)
     {
-        type =  *start;
+        uint8_t type = *start;
 
-        if (previous_type  >  type)
+        if (previous_type > type)
             alert(GTP_EVENT_OUT_OF_ORDER_IE);
 
         const GTP_InfoElement* ie = &config.infov[msg->version][type];
@@ -293,7 +285,6 @@ static int gtp_parse_v0(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
  ********************************************************************/
 static int gtp_parse_v1(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
 {
-    uint8_t next_hdr_type;
     const GTP_C_Hdr* hdr;
 
     DEBUG_WRAP(DebugMessage(DEBUG_GTP, "This ia a GTP v1 packet.\n"); );
@@ -311,7 +302,7 @@ static int gtp_parse_v1(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
             return false;
         }
 
-        next_hdr_type = *(buff + msg->header_len - 1);
+        uint8_t next_hdr_type = *(buff + msg->header_len - 1);
 
         /*Check extension headers*/
         while (next_hdr_type)

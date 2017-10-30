@@ -140,7 +140,6 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree)
         /* If child node does not match existing option_data,
          * Create a child branch from a given sub-node. */
         void* option_data = opt_fp->ips_opt;
-        char found_child_match = 0;
 
         if (opt_fp->type == RULE_OPTION_TYPE_LEAF_NODE)
         {
@@ -179,6 +178,8 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree)
         }
         else
         {
+            bool found_child_match = false;
+
             if (child->option_data != option_data)
             {
                 if (!node)
@@ -188,7 +189,7 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree)
                         child = root->children[i];
                         if (child->option_data == option_data)
                         {
-                            found_child_match = 1;
+                            found_child_match = true;
                             break;
                         }
                     }
@@ -200,7 +201,7 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree)
                         child = node->children[i];
                         if (child->option_data == option_data)
                         {
-                            found_child_match = 1;
+                            found_child_match = true;
                             break;
                         }
                     }
@@ -208,10 +209,10 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree)
             }
             else
             {
-                found_child_match = 1;
+                found_child_match = true;
             }
 
-            if (found_child_match == 0)
+            if ( !found_child_match )
             {
                 /* No matching child node, create a new and add to array */
                 detection_option_tree_node_t** tmp_children;

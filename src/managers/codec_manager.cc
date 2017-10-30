@@ -143,12 +143,11 @@ void CodecManager::release_plugins()
 
 void CodecManager::instantiate(CodecApiWrapper& wrap, Module* m, SnortConfig*)
 {
-    static std::size_t codec_id = 1;
-
     if (!wrap.init)
     {
         std::vector<ProtocolId> ids;
         const CodecApi* const cd_api = wrap.api;
+        static std::size_t codec_id = 1;
 
         if (codec_id >= s_protocols.size())
             ParseError("A maximum of 256 codecs can be registered");
@@ -158,6 +157,7 @@ void CodecManager::instantiate(CodecApiWrapper& wrap, Module* m, SnortConfig*)
 
         Codec* cd = cd_api->ctor(m);
         cd->get_protocol_ids(ids);
+
         for (auto id : ids)
         {
             if (s_proto_map[to_utype(id)] != 0)
@@ -166,7 +166,8 @@ void CodecManager::instantiate(CodecApiWrapper& wrap, Module* m, SnortConfig*)
                     s_protocols[s_proto_map[to_utype(id)]]->get_name(), cd->get_name(),
                     static_cast<uint16_t>(id), cd->get_name());
 
-            s_proto_map[to_utype(id)] = (decltype(s_proto_map[to_utype(id)]))codec_id; // future proofing
+            // future proofing
+            s_proto_map[to_utype(id)] = (decltype(s_proto_map[to_utype(id)]))codec_id;
         }
 
         wrap.init = true;

@@ -113,7 +113,6 @@ static TABLE_PTR _sub_table_flat_new(dir_table_flat_t* root, uint32_t dimension,
 TABLE_PTR sfrt_dir_flat_new(uint32_t mem_cap, int count,...)
 {
     va_list ap;
-    uint32_t val;
     int index;
     TABLE_PTR table_ptr;
     dir_table_flat_t* table;
@@ -137,7 +136,7 @@ TABLE_PTR sfrt_dir_flat_new(uint32_t mem_cap, int count,...)
 
     for (index=0; index < count; index++)
     {
-        val = va_arg(ap, int);
+        uint32_t val = va_arg(ap, int);
         table->dimensions[index] = val;
     }
 
@@ -363,7 +362,6 @@ static int _dir_sub_insert(IPLOOKUP* ip, int length, int cur_len, INFO ptr,
     INFO* data)
 {
     word index;
-    uint32_t fill;
     uint8_t* base = (uint8_t*)segment_basePtr();
     dir_sub_table_flat_t* sub_table = (dir_sub_table_flat_t*)(&base[sub_ptr]);
 
@@ -396,7 +394,7 @@ static int _dir_sub_insert(IPLOOKUP* ip, int length, int cur_len, INFO ptr,
         /* Calculate how many entries need to be filled
          * in this table. If the table is 24 bits wide, and the entry
          * is 20 bytes long, 2^4 entries need to be filled. */
-        fill = 1 << (sub_table->width - cur_len);
+        uint32_t fill = 1 << (sub_table->width - cur_len);
 
         index = (index >> (sub_table->width - cur_len)) <<
             (sub_table->width - cur_len);

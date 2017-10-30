@@ -105,23 +105,17 @@ static dir_sub_table_t* _sub_table_new(dir_table_t* root, uint32_t dimension,
 /* Create new dir-n-m root table with 'count' depth */
 dir_table_t* sfrt_dir_new(uint32_t mem_cap, int count,...)
 {
-    va_list ap;
-    uint32_t val;
-    int index;
-
     dir_table_t* table = (dir_table_t*)snort_alloc(sizeof(dir_table_t));
 
     table->allocated = 0;
     table->dimensions = (int*)snort_alloc(sizeof(int)*count);
     table->dim_size = count;
 
+    va_list ap;
     va_start(ap, count);
 
-    for (index=0; index < count; index++)
-    {
-        val = va_arg(ap, int);
-        table->dimensions[index] = val;
-    }
+    for (int index=0; index < count; index++)
+        table->dimensions[index] = va_arg(ap, int);
 
     va_end(ap);
 
@@ -367,7 +361,6 @@ static int _dir_sub_insert(IPLOOKUP* ip, int length, int cur_len, GENERIC ptr,
     dir_sub_table_t* sub_table, dir_table_t* root_table)
 {
     word index;
-    uint32_t fill;
     {
         uint32_t local_index, i;
         /* need to handle bits usage across multiple 32bit vals within IPv6. */
@@ -397,7 +390,7 @@ static int _dir_sub_insert(IPLOOKUP* ip, int length, int cur_len, GENERIC ptr,
         /* Calculate how many entries need to be filled
          * in this table. If the table is 24 bits wide, and the entry
          * is 20 bytes long, 2^4 entries need to be filled. */
-        fill = 1 << (sub_table->width - cur_len);
+        uint32_t fill = 1 << (sub_table->width - cur_len);
 
         index = (index >> (sub_table->width - cur_len)) <<
             (sub_table->width - cur_len);
@@ -644,7 +637,6 @@ static int _dir_sub_remove(IPLOOKUP* ip, int length, int cur_len,
     dir_sub_table_t* sub_table, dir_table_t* root_table)
 {
     word index;
-    uint32_t fill;
     uint32_t valueIndex = 0;
 
     {
@@ -676,7 +668,7 @@ static int _dir_sub_remove(IPLOOKUP* ip, int length, int cur_len,
         /* Calculate how many entries need to be removed (filled with 0)
          * in this table. If the table is 24 bits wide, and the entry
          * is 20 bytes long, 2^4 entries need to be filled. */
-        fill = 1 << (sub_table->width - cur_len);
+        uint32_t fill = 1 << (sub_table->width - cur_len);
 
         index = (index >> (sub_table->width - cur_len)) <<
             (sub_table->width - cur_len);

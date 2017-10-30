@@ -100,8 +100,6 @@ QPDecode::~QPDecode()
 int sf_qpdecode(const char* src, uint32_t slen, char* dst, uint32_t dlen, uint32_t* bytes_read,
     uint32_t* bytes_copied)
 {
-    char ch;
-
     if (!src || !slen || !dst || !dlen || !bytes_read || !bytes_copied )
         return -1;
 
@@ -110,8 +108,9 @@ int sf_qpdecode(const char* src, uint32_t slen, char* dst, uint32_t dlen, uint32
 
     while ( (*bytes_read < slen) && (*bytes_copied < dlen))
     {
-        ch = src[*bytes_read];
+        char ch = src[*bytes_read];
         *bytes_read += 1;
+
         if ( ch == '=' )
         {
             if ( (*bytes_read < slen))

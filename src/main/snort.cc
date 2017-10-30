@@ -893,27 +893,27 @@ DAQ_Verdict Snort::process_packet(
 // process (wire-only) packet verdicts here
 static DAQ_Verdict update_verdict(DAQ_Verdict verdict, int& inject)
 {
-    // FIXIT-M X PKT_RESIZED is a superset of PKT_MODIFIED, so this conditional is broken
     if ( Active::packet_was_dropped() and Active::can_block() )
     {
         if ( verdict == DAQ_VERDICT_PASS )
             verdict = DAQ_VERDICT_BLOCK;
+    }
+    else if ( s_packet->packet_flags & PKT_RESIZED )
+    {
+        // we never increase, only trim, but daq doesn't support resizing wire packet
+        PacketManager::encode_update(s_packet);
+
+        if ( !SFDAQ::inject(s_packet->pkth, 0, s_packet->pkt, s_packet->pkth->pktlen) )
+        {
+            inject = 1;
+            verdict = DAQ_VERDICT_BLOCK;
+        }
     }
     else if ( s_packet->packet_flags & PKT_MODIFIED )
     {
         // this packet was normalized and/or has replacements
         PacketManager::encode_update(s_packet);
         verdict = DAQ_VERDICT_REPLACE;
-    }
-    else if ( s_packet->packet_flags & PKT_RESIZED )
-    {
-        // we never increase, only trim, but
-        // daq doesn't support resizing wire packet
-        if ( !SFDAQ::inject(s_packet->pkth, 0, s_packet->pkt, s_packet->pkth->pktlen) )
-        {
-            inject = 1;
-            verdict = DAQ_VERDICT_BLOCK;
-        }
     }
     else if ( (s_packet->packet_flags & PKT_IGNORE) ||
         (s_packet->flow && s_packet->flow->get_ignore_direction( ) == SSN_DIR_BOTH) )

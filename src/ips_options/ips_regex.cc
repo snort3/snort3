@@ -94,7 +94,7 @@ public:
     bool is_relative() override
     { return config.pmd.is_relative(); }
 
-    bool retry() override;
+    bool retry(Cursor&) override;
 
     PatternMatchData* get_pattern(int, RuleDirection) override
     { return &config.pmd; }
@@ -193,7 +193,7 @@ IpsOption::EvalStatus RegexOption::eval(Cursor& c, Packet*)
     return NO_MATCH;
 }
 
-bool RegexOption::retry()
+bool RegexOption::retry(Cursor&)
 {
     return !is_relative();
 }

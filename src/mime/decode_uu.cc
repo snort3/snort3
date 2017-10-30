@@ -125,7 +125,6 @@ UUDecode::~UUDecode()
 int sf_uudecode(uint8_t* src, uint32_t slen, uint8_t* dst, uint32_t dlen, uint32_t* bytes_read,
     uint32_t* bytes_copied, bool* begin_found, bool* end_found)
 {
-    const uint8_t* sod;
     int sol = 1, length = 0;
     const uint8_t* ptr;
     uint8_t* end, * dptr, * dend;
@@ -150,7 +149,8 @@ int sf_uudecode(uint8_t* src, uint32_t slen, uint8_t* dst, uint32_t dlen, uint32
         }
         else
         {
-            sod = (const uint8_t*)SnortStrnStr((const char*)src, 5, "begin");
+            const uint8_t* sod = (const uint8_t*)SnortStrnStr((const char*)src, 5, "begin");
+
             if (sod)
             {
                 *begin_found = true;

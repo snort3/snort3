@@ -279,14 +279,11 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, int 
 {
     const ServiceRPCCall* call = nullptr;
     const ServiceRPCReply* reply = nullptr;
-    const ServiceRPC* rpc = nullptr;
     const ServiceRPCPortmap* pm = nullptr;
     const ServiceRPCAuth* a = nullptr;
-    const ServiceRPCPortmapReply* pmr = nullptr;
     uint32_t tmp = 0;
     uint32_t val = 0;
     const uint8_t* end = nullptr;
-    AppIdSession* pf = nullptr;
     const RPCProgram* rprog = nullptr;
 
     if (!size)
@@ -301,7 +298,9 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, int 
             rd->once = 1;
             if (size < sizeof(ServiceRPC))
                 return APPID_NOMATCH;
-            rpc = (const ServiceRPC*)data;
+
+            const ServiceRPC* rpc = (const ServiceRPC*)data;
+
             if (ntohl(rpc->type) == RPC_TYPE_REPLY)
             {
                 asd->set_session_flags(APPID_SESSION_UDP_REVERSED);
@@ -389,6 +388,8 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, int 
                 return APPID_INPROCESS;
             }
             *program = rd->program;
+            const ServiceRPCPortmapReply* pmr = nullptr;
+
             switch (rd->program)
             {
             case RPC_PROGRAM_PORTMAP:
@@ -403,7 +404,9 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, int 
                         const SfIp* dip = pkt->ptrs.ip_api.get_dst();
                         const SfIp* sip = pkt->ptrs.ip_api.get_src();
                         tmp = ntohl(pmr->port);
-                        pf = AppIdSession::create_future_session(pkt, dip, 0, sip, (uint16_t)tmp,
+
+                        AppIdSession* pf = AppIdSession::create_future_session(
+                            pkt, dip, 0, sip, (uint16_t)tmp,
                             (IpProtocol)ntohl((uint32_t)rd->proto), app_id, 0,
                             handler->get_inspector());
                         if (pf)

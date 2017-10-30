@@ -804,11 +804,9 @@ void HttpPatternMatchers::get_http_offsets(Packet* pkt, AppIdHttpSession* hsessi
 
 static inline void free_matched_patterns(MatchedPatterns* mp)
 {
-    MatchedPatterns* tmp;
-
     while (mp)
     {
-        tmp = mp;
+        MatchedPatterns* tmp = mp;
         mp = mp->next;
         snort_free(tmp);
     }
@@ -968,7 +966,6 @@ AppId HttpPatternMatchers::scan_chp(ChpMatchDescriptor& cmd, char** version, cha
 {
     MatchedCHPAction* insert_sweep2 = nullptr;
     bool inhibit_modify = false;
-    CHPAction* match = nullptr;
     AppId ret = APP_ID_NONE;
     unsigned pt = cmd.cur_ptype;
 
@@ -988,9 +985,11 @@ AppId HttpPatternMatchers::scan_chp(ChpMatchDescriptor& cmd, char** version, cha
 
     for ( auto& tmp: cmd.chp_matches[pt] )
     {
-        match = (CHPAction*)tmp.mpattern;
+        CHPAction* match = (CHPAction*)tmp.mpattern;
+
         if ( match->appIdInstance > hsession->chp_candidate )
             break; // because the list is sorted we know there are no more
+
         else if ( match->appIdInstance == hsession->chp_candidate )
         {
             switch (match->action)
@@ -1456,7 +1455,6 @@ done:
 int HttpPatternMatchers::get_appid_by_pattern(const uint8_t* data, unsigned size, char** version)
 {
     MatchedPatterns* mp = nullptr;
-    char temp_ver[MAX_VERSION_SIZE];
 
     via_matcher.find_all((const char*)data, size, &http_pattern_match, false, (void*)&mp);
     if (mp)
@@ -1466,6 +1464,7 @@ int HttpPatternMatchers::get_appid_by_pattern(const uint8_t* data, unsigned size
         {
         case APP_ID_SQUID:
         {
+            char temp_ver[MAX_VERSION_SIZE];
             const uint8_t* data_ptr = data + mp->after_match_pos;
             const uint8_t* end = data + size;
             unsigned i = 0;
@@ -1505,8 +1504,6 @@ int HttpPatternMatchers::get_appid_by_pattern(const uint8_t* data, unsigned size
 AppId HttpPatternMatchers::scan_header_x_working_with(const uint8_t* data, uint32_t size,
     char** version)
 {
-    uint32_t i;
-    const uint8_t* end;
     char temp_ver[MAX_VERSION_SIZE];
 
     temp_ver[0] = 0;
@@ -1515,8 +1512,10 @@ AppId HttpPatternMatchers::scan_header_x_working_with(const uint8_t* data, uint3
         &&  memcmp(data, HTTP_HEADER_WORKINGWITH_ASPROXY,
             sizeof(HTTP_HEADER_WORKINGWITH_ASPROXY) - 1) == 0)
     {
-        end = data + size;
+        const uint8_t* end = data + size;
         data += sizeof(HTTP_HEADER_WORKINGWITH_ASPROXY) - 1;
+        uint32_t i;
+
         for (i = 0;
             data < end && i < (MAX_VERSION_SIZE - 1) && *data != ')' && isprint(*data);
             data++)

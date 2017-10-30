@@ -993,7 +993,6 @@ static int ssl_scan_patterns(SearchTool* matcher, const uint8_t* data, size_t si
     AppId* ClientAppId, AppId* payloadId)
 {
     MatchedSSLPatterns* mp = nullptr;
-    MatchedSSLPatterns* tmpMp;
     SSLCertPattern* best_match;
 
     if (!matcher)
@@ -1019,7 +1018,7 @@ static int ssl_scan_patterns(SearchTool* matcher, const uint8_t* data, size_t si
                 best_match = mp->mpattern;
             }
         }
-        tmpMp = mp;
+        MatchedSSLPatterns* tmpMp = mp;
         mp = mp->next;
         snort_free(tmpMp);
     }

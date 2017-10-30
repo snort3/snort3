@@ -189,7 +189,6 @@ static fd_status_t Process_Filter_Spec(fd_session_t* SessionPtr)
     bool Found_Token = false;
     uint8_t* Filter;
     uint8_t Length;
-    uint8_t c;
     int Index;
 
     fd_status_t Ret_Code = File_Decomp_OK;
@@ -202,7 +201,7 @@ static fd_status_t Process_Filter_Spec(fd_session_t* SessionPtr)
 
     for ( Index=0; Index<p->Filter_Spec_Index; Index++ )
     {
-        c = p->Filter_Spec_Buf[Index];
+        const uint8_t c = p->Filter_Spec_Buf[Index];
 
         if ( (c == 0) || (strchr( (const char*)Delim_Str, (int)c) != nullptr) )
         {
@@ -332,7 +331,6 @@ static inline fd_PDF_Parse_Stack_p_t Get_Previous_State(fd_PDF_Parse_p_t p)
    only explore Dictionary objects within Indirect Objects.  */
 static inline fd_status_t Handle_State_DICT_OBJECT(fd_session_t* SessionPtr, uint8_t c)
 {
-    char Filter_Tok[] = TOK_DICT_FILT;
     fd_PDF_Parse_p_t p = &(SessionPtr->PDF->Parse);
 
     /* enter with c being an EOL from the ind obj state */
@@ -398,6 +396,8 @@ static inline fd_status_t Handle_State_DICT_OBJECT(fd_session_t* SessionPtr, uin
            and handles other diversion such as nested Dict objects.
            If the /Filter token doesn't exist then we don't fill the
            Filter_Spec_Buf[].  If in skip mode, no need to look for token. */
+        char Filter_Tok[] = TOK_DICT_FILT;
+
         if ( (p->Sub_State == P_DICT_ACTIVE) && c == Filter_Tok[p->Elem_Index++] )
         {
             if ( Filter_Tok[p->Elem_Index] == '\0' )
@@ -823,7 +823,6 @@ static fd_status_t Locate_Stream_Beginning(fd_session_t* SessionPtr)
 {
     fd_PDF_Parse_p_t p = &(SessionPtr->PDF->Parse);
     fd_status_t Ret_Code = File_Decomp_OK;
-    uint8_t c;
 
     while ( true )
     {
@@ -835,7 +834,7 @@ static fd_status_t Locate_Stream_Beginning(fd_session_t* SessionPtr)
             return( File_Decomp_BlockOut );
 
         /* Get next byte in input queue */
-        c = *SessionPtr->Next_In;
+        uint8_t c = *SessionPtr->Next_In;
 
         switch ( p->State )
         {
@@ -1080,10 +1079,9 @@ fd_status_t File_Decomp_PDF(fd_session_t* SessionPtr)
             else
             {
                 SessionPtr->PDF->State = PDF_STATE_INIT_STREAM;
-                /* If we've located the beginning of stream, set new state
-                   and fall into next state */
             }
         }
+        // fallthrough
 
         case ( PDF_STATE_INIT_STREAM ):
         {
@@ -1099,8 +1097,8 @@ fd_status_t File_Decomp_PDF(fd_session_t* SessionPtr)
             }
 
             SessionPtr->PDF->State = PDF_STATE_PROCESS_STREAM;
-            /* INTENTIONAL FALL-THROUGH INTO PDF_STATE_PROCESS_STREAM CASE. */
         }
+        // fallthrough
 
         case ( PDF_STATE_PROCESS_STREAM ):
         {

@@ -760,9 +760,8 @@ int PacketManager::encode_format(
 // checking each time if needed.
 //-------------------------------------------------------------------------
 
-static inline void add_flag(UpdateFlags& flags,
-    UpdateFlags flag_to_add,
-    const Packet* const p,
+static inline void add_flag(
+    UpdateFlags& flags, UpdateFlags flag_to_add, const Packet* const p,
     decltype(Packet::packet_flags)pkt_flag)  // future proofing.
 {
     if ( p->packet_flags & pkt_flag )
@@ -810,11 +809,7 @@ void PacketManager::encode_update(Packet* p)
     }
 
     // see IP6_Update() for an explanation of this ...
-    // FIXIT-L is this second statement really necessary?
-    // PKT_RESIZED include PKT_MODIFIED ... so get rid of that extra flag
-    if ( !(p->packet_flags & PKT_MODIFIED)
-        || (p->packet_flags & (PKT_RESIZED & ~PKT_MODIFIED))
-        )
+    if ( !(p->packet_flags & PKT_MODIFIED) || (p->packet_flags & PKT_RESIZED) )
     {
         DAQ_PktHdr_t* pkth = const_cast<DAQ_PktHdr_t*>(p->pkth);
         pkth->caplen = len;

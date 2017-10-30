@@ -40,7 +40,6 @@ THREAD_LOCAL FlowIPTracker* perf_flow_ip;
 FlowStateValue* FlowIPTracker::find_stats(const SfIp* src_addr, const SfIp* dst_addr,
     int* swapped)
 {
-    SFXHASH_NODE* node;
     FlowStateKey key;
     FlowStateValue* value;
 
@@ -60,7 +59,8 @@ FlowStateValue* FlowIPTracker::find_stats(const SfIp* src_addr, const SfIp* dst_
     value = (FlowStateValue*)sfxhash_find(ip_map, &key);
     if (!value)
     {
-        node = sfxhash_get_node(ip_map, &key);
+        SFXHASH_NODE* node = sfxhash_get_node(ip_map, &key);
+
         if (!node)
         {
             DEBUG_WRAP(DebugMessage(DEBUG_STREAM,

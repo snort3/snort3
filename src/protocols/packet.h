@@ -55,7 +55,7 @@
 
 #define PKT_PSEUDO           0x00020000  /* is a pseudo packet */
 #define PKT_MODIFIED         0x00040000  /* packet had normalizations, etc. */
-#define PKT_RESIZED          0x000c0000  /* packet has new size; must set modified too */
+#define PKT_RESIZED          0x00080000  /* packet has new size */
 
 // neither of these flags will be set for (full) retransmissions or non-data segments
 // a partial overlap results in out of sequence condition

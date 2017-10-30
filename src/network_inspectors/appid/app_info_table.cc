@@ -512,14 +512,16 @@ int16_t AppInfoManager::add_appid_protocol_reference(const char* protocol)
 
 void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config)
 {
-    char buf[MAX_TABLE_LINE_LEN];
     char filepath[PATH_MAX];
-
     snprintf(filepath, sizeof(filepath), "%s/odp/%s", mod_config->app_detector_dir,
         APP_MAPPING_FILE);
+
     FILE* tableFile = fopen(filepath, "r");
+
     if ( tableFile )
     {
+        char buf[MAX_TABLE_LINE_LEN];
+
         while (fgets(buf, sizeof(buf), tableFile))
         {
             AppId app_id;

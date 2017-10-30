@@ -409,14 +409,15 @@ FwQNode* fwAvlSerialize(FwAvlTree* tree)
 void fwAvlDeleteTree(FwAvlTree* tree, void (* dataDelete)(void* data))
 {
     FwQNode* node = fwAvlSerialize(tree);
-    FwQNode* tmp;
 
     while (node != nullptr)
     {
         if (dataDelete)
             dataDelete(node->treeNode->data);
+
         snort_free(node->treeNode);
-        tmp = node;
+
+        FwQNode* tmp = node;
         node = node->next;
         snort_free(tmp);
     }

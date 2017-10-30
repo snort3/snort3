@@ -516,16 +516,19 @@ ImapClientDetector::~ImapClientDetector()
 
 void ImapClientDetector::do_custom_init()
 {
-    unsigned index = 0;
     cmd_matcher = new SearchTool("ac_full", true);
 
     if ( !tcp_patterns.empty() )
+    {
+        unsigned index = 0;
+
         for (auto& pat : tcp_patterns)
         {
             cmd_matcher->add(pat.pattern, pat.length, index++);
             if (pat.length > longest_pattern)
                 longest_pattern = pat.length;
         }
+    }
     cmd_matcher->prep();
 }
 
@@ -669,7 +672,6 @@ int ImapClientDetector::validate(AppIdDiscoveryArgs& args)
                 {
                     char* p = fd->username;
                     char* p_end = p + sizeof(fd->username) - 1;
-                    int found_tick = 0;
 
                     if (*s == '"')
                     {
@@ -707,6 +709,8 @@ int ImapClientDetector::validate(AppIdDiscoveryArgs& args)
                     }
                     else
                     {
+                        bool found_tick = false;
+
                         for (; s < end && p < p_end; s++)
                         {
                             if (isalnum(*s) || *s == '.' || *s == '@' || *s == '-' || *s == '_')
@@ -718,7 +722,7 @@ int ImapClientDetector::validate(AppIdDiscoveryArgs& args)
                                 }
                             }
                             else if (*s == '`')
-                                found_tick = 1;
+                                found_tick = true;
                             else if (*s == ' ')
                             {
                                 fd->count++;

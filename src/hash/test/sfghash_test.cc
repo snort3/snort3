@@ -58,7 +58,7 @@ TEST_GROUP(sfghash)
 TEST(sfghash, create_find_delete_test)
 {
     int i;
-    char str[256], *p;
+    char str[256];
     int num=100;
 
     // Create a Hash Table
@@ -78,7 +78,7 @@ TEST(sfghash, create_find_delete_test)
         snprintf(str, sizeof(str), "KeyWord%d",i+1);
         str[sizeof(str) - 1] = '\0';
 
-        p = (char*)sfghash_find(t, str);
+        char* p = (char*)sfghash_find(t, str);
 
         CHECK(p != nullptr);
         CHECK(p == (void *)(str + (i+1)));
@@ -98,7 +98,7 @@ TEST(sfghash, create_find_delete_test)
 TEST(sfghash, collision_test)
 {
     int i;
-    char str[256], * p;
+    char str[256];
     int num=100;
 
     // Create a Hash Table with smaller entries
@@ -126,7 +126,7 @@ TEST(sfghash, collision_test)
         snprintf(str, sizeof(str), "KeyWord%d",i+1);
         str[sizeof(str) - 1] = '\0';
 
-        p = (char*)sfghash_find(t, str);
+        char* p = (char*)sfghash_find(t, str);
 
         CHECK(p != nullptr);
         CHECK(p == (void *)(str + (i+1)));

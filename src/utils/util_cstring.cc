@@ -191,15 +191,15 @@ int SnortStrnlen(const char* buf, int buf_size)
  */
 const char* SnortStrnPbrk(const char* s, int slen, const char* accept)
 {
-    char ch;
-    const char* s_end;
     if (!s || (slen == 0) || !*s || !accept)
         return nullptr;
 
-    s_end = s + slen;
+    const char* s_end = s + slen;
+
     while (s < s_end)
     {
-        ch = *s;
+        char ch = *s;
+
         if (strchr(accept, ch))
             return s;
         s++;
@@ -214,16 +214,17 @@ const char* SnortStrnPbrk(const char* s, int slen, const char* accept)
  */
 const char* SnortStrnStr(const char* s, int slen, const char* searchstr)
 {
-    char ch, nc;
-    int len;
     if (!s || (slen == 0) || !*s || !searchstr)
         return nullptr;
 
+    char ch;
+
     if ((ch = *searchstr++) != 0)
     {
-        len = strlen(searchstr);
+        int len = strlen(searchstr);
         do
         {
+            char nc;
             do
             {
                 if ((nc = *s++) == 0)
@@ -235,6 +236,7 @@ const char* SnortStrnStr(const char* s, int slen, const char* searchstr)
                     return nullptr;
             }
             while (nc != ch);
+
             if (slen - len < 0)
                 return nullptr;
         }
@@ -249,18 +251,19 @@ const char* SnortStrnStr(const char* s, int slen, const char* searchstr)
 */
 const char* SnortStrcasestr(const char* s, int slen, const char* substr)
 {
-    char ch, nc;
-    int len;
-
     if (!s || (slen == 0) || !*s || !substr)
         return nullptr;
+
+    char ch;
 
     if ((ch = *substr++) != 0)
     {
         ch = tolower((char)ch);
-        len = strlen(substr);
+        int len = strlen(substr);
+
         do
         {
+            char nc;
             do
             {
                 if ((nc = *s++) == 0)
@@ -272,6 +275,7 @@ const char* SnortStrcasestr(const char* s, int slen, const char* substr)
                     return nullptr;
             }
             while ((char)tolower((uint8_t)nc) != ch);
+
             if (slen - len < 0)
                 return nullptr;
         }

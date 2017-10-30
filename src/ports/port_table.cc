@@ -911,13 +911,12 @@ void PortTableFree(PortTable* p)
     }
     if (p->pt_mpo_hash)
     {
-        PortObject2* po;
 
         for ( SFGHASH_NODE* node = sfghash_findfirst(p->pt_mpo_hash);
             node;
             node = sfghash_findnext(p->pt_mpo_hash) )
         {
-            po = (PortObject2*)node->data;
+            PortObject2* po = (PortObject2*)node->data;
             PortObject2Free(po);
         }
         sfghash_delete(p->pt_mpo_hash);

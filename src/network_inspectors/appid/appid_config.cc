@@ -254,12 +254,9 @@ next:   ;
 #ifdef USE_RNA_CONFIG
 void AppIdConfig::configure_analysis_networks(char* toklist[], uint32_t flag)
 {
-    int zone;
     NetworkSet* my_net_list;
-    RNAIpAddrSet* ias;
     RNAIpv6AddrSet* ias6;
     char* p;
-    long tmp;
 
     if (toklist[0])
     {
@@ -271,10 +268,12 @@ void AppIdConfig::configure_analysis_networks(char* toklist[], uint32_t flag)
                 NSIPv6Addr six;
                 char min_ip[INET6_ADDRSTRLEN];
                 char max_ip[INET6_ADDRSTRLEN];
+                int zone;
 
                 if (toklist[1])
                 {
-                    tmp = strtol(toklist[1], &p, 10);
+                    long tmp = strtol(toklist[1], &p, 10);
+
                     if (!*toklist[1] || *p != 0 || tmp >= MAX_ZONES || tmp < -1)
                     {
                         ErrorMessage("Invalid Analyze: %s '%s'", toklist[0], toklist[1]);
@@ -324,12 +323,16 @@ void AppIdConfig::configure_analysis_networks(char* toklist[], uint32_t flag)
         }
         else
         {
-            ias = ParseIpCidr(toklist[0], app_id_netmasks);
+            RNAIpAddrSet* ias = ParseIpCidr(toklist[0], app_id_netmasks);
+
             if (ias)
             {
+                int zone;
+
                 if (toklist[1])
                 {
-                    tmp = strtol(toklist[1], &p, 10);
+                    unsigned long tmp = strtol(toklist[1], &p, 10);
+
                     if (!*toklist[1] || *p != 0 || tmp >= MAX_ZONES || tmp < -1)
                     {
                         ErrorMessage("Invalid Analyze: %s '%s'", toklist[0], toklist[1]);
@@ -413,7 +416,6 @@ void AppIdConfig::process_port_exclusion(char* toklist[])
 {
     int i = 1;
     char* p;
-    RNAIpAddrSet* ias;
     RNAIpv6AddrSet* ias6;
     IpProtocol proto;
     unsigned long dir;
@@ -495,7 +497,7 @@ void AppIdConfig::process_port_exclusion(char* toklist[])
     }
     else
     {
-        ias = ParseIpCidr(toklist[i], app_id_netmasks);
+        RNAIpAddrSet* ias = ParseIpCidr(toklist[i], app_id_netmasks);
         if (!ias || ias->addr_flags)
         {
             if (ias)
@@ -591,7 +593,6 @@ static int tokenize(char* data, char* toklist[])
     char** ap;
     int argcount = 0;
     int i = 0;
-    char* tok;
     int drop_further = 0;
 
     for (ap = (char**)toklist; ap < &toklist[MAX_TOKS] && (*ap = strsep(&data, " ")) != nullptr; )
@@ -608,7 +609,7 @@ static int tokenize(char* data, char* toklist[])
     /* scan for comments */
     while (i < argcount)
     {
-        tok = toklist[i];
+        char* tok = toklist[i];
 
         if (tok[0] == '#' && !drop_further)
         {
@@ -629,12 +630,8 @@ static int tokenize(char* data, char* toklist[])
 
 int AppIdConfig::load_analysis_config(const char* config_file, int reload, int instance_id)
 {
-    FILE* fp;
     char linebuffer[MAX_LINE];
-    char* cptr;
     char* toklist[MAX_TOKS];
-    int num_toks;
-    unsigned line = 0;
     NetworkSet* my_net_list;
 
     if (NetworkSetManager::create(&net_list))
@@ -658,18 +655,20 @@ int AppIdConfig::load_analysis_config(const char* config_file, int reload, int i
     else
     {
         DebugFormat(DEBUG_APPID, "Loading configuration file: %s", config_file);
+        FILE* fp;
 
         if (!(fp = fopen(config_file, "r")))
         {
             ErrorMessage("Unable to open %s", config_file);
             return -1;
         }
+        unsigned line = 0;
 
         while (fgets(linebuffer, MAX_LINE, fp) != nullptr)
         {
             line++;
             strip(linebuffer);
-            cptr = linebuffer;
+            char* cptr = linebuffer;
 
             while (isspace((int)*cptr))
                 cptr++;
@@ -677,8 +676,8 @@ int AppIdConfig::load_analysis_config(const char* config_file, int reload, int i
             if (*cptr && (*cptr != '#') && (*cptr != 0x0a))
             {
                 memset(toklist, 0, sizeof(toklist));
-                num_toks = tokenize(cptr, toklist);
-                if (num_toks < 2)
+
+                if (tokenize(cptr, toklist) < 2)
                 {
                     fclose(fp);
                     ErrorMessage("Invalid configuration file line %u", line);
