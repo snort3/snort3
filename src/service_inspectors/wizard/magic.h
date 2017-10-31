@@ -48,6 +48,9 @@ class MagicBook
 public:
     virtual ~MagicBook();
 
+    MagicBook(const MagicBook&) = delete;
+    MagicBook& operator=(const MagicBook&) = delete;
+
     virtual bool add_spell(const char* key, const char* val) = 0;
     virtual const char* find_spell(const uint8_t*, unsigned len, const MagicPage*&) const = 0;
 

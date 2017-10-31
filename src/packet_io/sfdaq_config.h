@@ -30,6 +30,9 @@ struct SFDAQInstanceConfig
 {
     SFDAQInstanceConfig() = default;
     SFDAQInstanceConfig(const SFDAQInstanceConfig&);
+
+    SFDAQInstanceConfig& operator=(const SFDAQInstanceConfig&) = delete;
+
     void set_input_spec(const char*);
     void set_variable(const char* varkvp);
 

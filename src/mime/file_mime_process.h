@@ -56,6 +56,9 @@ public:
     MimeSession(DecodeConfig*, MailLogConfig*);
     virtual ~MimeSession();
 
+    MimeSession(const MimeSession&) = delete;
+    MimeSession& operator=(const MimeSession&) = delete;
+
     static void init();
     static void exit();
 

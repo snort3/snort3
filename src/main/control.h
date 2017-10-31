@@ -31,6 +31,9 @@ public:
     ControlConn(int fd, bool local_control = false);
     ~ControlConn();
 
+    ControlConn(const ControlConn&) = delete;
+    ControlConn& operator=(const ControlConn&) = delete;
+
     int get_fd() const { return fd; }
     class Shell* get_shell() const { return sh; }
     class Request* get_request() const { return request; }

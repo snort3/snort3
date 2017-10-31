@@ -31,6 +31,9 @@ public:
     Ring<T>(int size);
     ~Ring<T>();
 
+    Ring<T>(const Ring<T>&) = delete;
+    Ring<T>& operator=(const Ring<T>&) = delete;
+
     T* read();
     bool pop();
 

@@ -75,6 +75,9 @@ public:
     ExpectCache(uint32_t max);
     ~ExpectCache();
 
+    ExpectCache(const ExpectCache&) = delete;
+    ExpectCache& operator=(const ExpectCache&) = delete;
+
     int add_flow(const Packet *ctrlPkt, PktType, IpProtocol,
         const SfIp* cliIP, uint16_t cliPort,
         const SfIp* srvIP, uint16_t srvPort,

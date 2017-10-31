@@ -146,6 +146,9 @@ public:
     };
     Flow();
 
+    Flow(const Flow&) = delete;
+    Flow& operator=(const Flow&) = delete;
+
     void init(PktType);
     void term();
 

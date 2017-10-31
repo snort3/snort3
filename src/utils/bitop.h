@@ -35,6 +35,9 @@ public:
     BitOp(size_t);
     ~BitOp();
 
+    BitOp(const BitOp&) = delete;
+    BitOp& operator=(const BitOp&) = delete;
+
     void reset();
     void set(unsigned int bit);
     bool is_set(unsigned int bit) const;

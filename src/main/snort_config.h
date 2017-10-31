@@ -148,6 +148,8 @@ public:
     SnortConfig(SnortConfig* other_conf = nullptr );
     ~SnortConfig();
 
+    SnortConfig(const SnortConfig&) = delete;
+
     void setup();
     void post_setup();
     bool verify();

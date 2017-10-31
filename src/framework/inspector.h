@@ -60,6 +60,9 @@ public:
     // main thread functions
     virtual ~Inspector();
 
+    Inspector(const Inspector&) = delete;
+    Inspector& operator=(const Inspector&) = delete;
+
     // access external dependencies here
     // return verification status
     virtual bool configure(SnortConfig*) { return true; }

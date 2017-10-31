@@ -1,3 +1,114 @@
+17/10/31 - build 240
+
+-- active: fix packet modify vs resize handling
+-- alert_csv: rename dgm_len to pkt_len
+-- alert_csv: add b64_data, class, priority, service, vlan, and mpls options
+-- alert_json: initial json event logger
+-- alerts: add log_references to store and log rule references with alert_full
+-- appid: enable SSL certificate pattern matching
+-- appid: fix build with LuaJIT 2.1
+-- appid: reorganize AppIdHttpSession to minimize padding
+-- appid: add count for applications detected by port only
+-- appid: create exptected flow immediately after ftp PORT command for active mode
+-- appid: handle sip events before packets
+-- appid: overhaul peg counting for discovered appids
+-- appid: use ac_full search method since it supports find_all; force enable dfa flag
+-- binder: added network policy selection
+-- binder: added zones
+-- binder: allow src and dst specifications for ports and nets
+-- binder: check interface on packet instead of flow
+-- binder: fixed nets check falling through on failure
+-- build: clean up a few ICC 2018 and GCC 7 warnings
+-- build: fix linking against external libiconv with autotools
+-- build: fix numerous analyzer errors and leaks
+-- build: fix numerous clang-tidy warnings
+-- build: fix numerous cppcheck warnings
+-- build: fix numerous valgrind errors
+-- build: fixed issues on OSX
+-- catch: update to Catch v1.10.0
+-- cd_icmp6: fix encoded cksum calculation
+-- cd_pbb: initial version of codec for 802.1ah; thanks to jan hugo prins <jhp@jhprins.org> for reporting the issue
+-- cd_pflog: fix comments; thanks to Markus Lude <markus.lude@gmx.de> for the 2X patch
+-- content: fix relative loop condition
+-- control: delete the old binder while reloading inspector
+-- control: update binder with new inspector
+-- daq: add support for DAQ_VERDICT_RETRY
+-- daq: add support for packet trace
+-- daq: add support tunnel bypass for IP 4IN4, IP 6IN6, GRE and MPLS by config and flags
+-- data_log: update to new http_inspect
+-- dce_rpc: remove connection-oriented rules from dce_smb module
+-- dce_smb: unicode filename support
+-- doc: add module usage and peg count type
+-- doc: add POP, IMAP and SMTP to user manual features
+-- doc: add port scan feature
+-- flow key: support associating router solicit/reply packets to a single session
+-- http_inspect: HTTP headers no longer avoid detection when message unexpectedly ends after status line or headers
+-- http_inspect: add random increment to message body division points
+-- http_inspect: added http_raw_buffer rule option
+-- http_inspect: create message sections with body data that has been dechunked and unzipped but not otherwise nortmalized
+-- http_inspect: handle borked reassembly gracefully; thanks to João Soares <joaopsys@gmail.com> for reporting the issue
+-- http_inspect: support for u2 extra data logging
+-- http_inspect: test tool improvements
+-- http_inspect: true IP enhancements
+-- inspectors: add control type and ensure appid is run ahead of other controls
+-- inspectors: add peg count for max concurrent sessions
+-- ips: add uuid
+-- loggers: add base64 encoder based on libb64 from devolve
+-- loggers: use standard year/mon/day format
+-- main: fix potential memory leak when queuing analyzer commands
+-- memory: align allocator metadata such that returned memory is also max_align_t-aligned
+-- memory: output basic startup heap stats
+-- messages: output startup warnings and errors to stderr instead of stdout
+-- messages: redirect stderr to syslog as well
+-- modules: add usage designating global, context, inspect, or detect policy applicability
+-- mss: add extra rule option to check mss
+-- parser: disallow invalid port range !:65535 (!any)
+-- parser: tweak performance
+-- pcre: fix relative search with ^
+-- pop: service name is pop3
+-- replace: fix activation sequence
+-- rules: warn only once per gid:sid of no fast pattern
+-- search_engine: port the optimized port table compilation from 2.9.12
+-- search_engines: Fix case sensitive ac_full DFA matching
+-- shell: delete inspector from the default inspection policy
+-- shell: fix --pause to accept control commands while in paused state
+-- sip: sip_method can use data from any sip inspector of any inspection policy
+-- snort.lua: align default conf closer to 2.X
+-- snort.lua: expand default conf for completeness and clarity
+-- snort_defaults.lua: update default servers and ports
+-- snort2lua: correctly identify ftpbounce and sameip as unsupported rule options
+-- snort2lua: added XFF configuration to unsupported list
+-- snort2lua: added config protected_content to deleted list
+-- snort2lua: added config_na_policy_mode to unsupported list
+-- snort2lua: added dynamicoutput to deleted list
+-- snort2lua: added firewall to unsupported list
+-- snort2lua: added nap.rules zone translation
+-- snort2lua: added nap_selector support
+-- snort2lua: added nap_selector to unsupported list
+-- snort2lua: added sf_unified2 to unsupported list and matching log/alert to deleted.
+-- snort2lua: bindings now merge and propagate to top level of corresponsing policy
+-- snort2lua: config policy_id converts to when ips_policy_id
+-- snort2lua: convert dsize:a<>b to dsize:a<=>b for consistency with other rule options
+-- snort2lua: do not convert sameip; handle same as ftpbounce (no longer supported)
+-- snort2lua: enforced ordering to bindings in binder table
+-- snort2lua: fix null char in -? output
+-- snort2lua: fixed extra whitespace generation
+-- snort2lua: logto is not supported
+-- snort2lua: removed port dce proxy bindings to fix http_inspect conflicts
+-- snort2lua: search_engine.split_any_any now defaults to true
+-- snort: -T does not compile mpse; --mem-check does
+-- snort: add warnings count to -T ouptut
+-- snort: add --dump-msg-map
+-- snort: exit with zero from usage
+-- snort: fix --dump-builtin-rules to accept optional module prefix
+-- stdlog: support snort 3> log for text alerts
+-- target: add rule option to indicate target of attack
+-- thread: add logging directory ID offset controlled by --id-offset option
+-- u2spewfoo: fix build on FreeBSD
+-- unified2: add legacy_events bool for out-of-date barnyard2
+-- unified2: log buffers as cooked packets with legacy events
+-- wscale: add extra rule option to check tcp window scaling
+
 17/07/25 - build 239
 
 -- rules: remove sample.rules; Talos will publish Snort 3 rules on snort.org

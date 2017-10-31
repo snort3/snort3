@@ -93,6 +93,9 @@ struct PHClass
         delete[] term;
     }
 
+    PHClass(const PHClass&) = delete;
+    PHClass& operator=(const PHClass&) = delete;
+
     static bool comp(PHClass* a, PHClass* b)
     { return ( a->api.type < b->api.type ); }
 };

@@ -100,6 +100,9 @@ struct SO_PUBLIC Packet
     Packet(bool packet_data = true);
     ~Packet();
 
+    Packet(const Packet&) = delete;
+    Packet& operator=(const Packet&) = delete;
+
     class Flow* flow;   /* for session tracking */
     class Endianness* endianness;
     class Obfuscator* obfuscator;

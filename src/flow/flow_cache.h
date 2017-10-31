@@ -38,8 +38,10 @@ class FlowCache
 {
 public:
     FlowCache(const FlowConfig&);
-
     ~FlowCache();
+
+    FlowCache(const FlowCache&) = delete;
+    FlowCache& operator=(const FlowCache&) = delete;
 
     void push(Flow*);
 

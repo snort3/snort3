@@ -36,6 +36,8 @@ public:
     Cursor(Packet*);
     Cursor(const Cursor&);
 
+    Cursor& operator=(const Cursor&) = default;
+
     const char* get_name() const
     { return name; }
 

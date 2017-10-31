@@ -56,6 +56,9 @@ public:
     DataApi();
     virtual ~DataApi();
 
+    DataApi(const DataApi&) = delete;
+    DataApi& operator=(const DataApi&) = delete;
+
     // set and retrieve various pieces of information from this Data object
     // getters are for other data classes.
     inline static void set_default_print() { mode = PrintMode::DEFAULT; }

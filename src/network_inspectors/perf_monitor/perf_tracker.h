@@ -60,6 +60,9 @@ public:
 
     virtual ~PerfTracker();
 
+    PerfTracker(const PerfTracker&) = delete;
+    PerfTracker& operator=(const PerfTracker&) = delete;
+
 protected:
     PerfConfig* config;
     PerfFormatter* formatter;

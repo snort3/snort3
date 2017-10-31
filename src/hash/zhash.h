@@ -31,6 +31,9 @@ public:
     ZHash(int nrows, int keysize);
     ~ZHash();
 
+    ZHash(const ZHash&) = delete;
+    ZHash& operator=(const ZHash&) = delete;
+
     void* push(void* p);
     void* pop();
 

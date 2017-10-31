@@ -85,6 +85,10 @@ class AppIdDiscovery
 public:
     AppIdDiscovery(AppIdInspector& ins);
     virtual ~AppIdDiscovery();
+
+    AppIdDiscovery(const AppIdDiscovery&) = delete;
+    AppIdDiscovery& operator=(const AppIdDiscovery&) = delete;
+
     static void initialize_plugins(AppIdInspector* ins);
     static void finalize_plugins();
     static void release_plugins();
