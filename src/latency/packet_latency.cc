@@ -187,7 +187,7 @@ inline bool Impl<Clock>::fastpath()
 static struct SnortConfigWrapper : public ConfigWrapper
 {
     const PacketLatencyConfig* operator->() const override
-    { return &snort_conf->latency->packet_latency; }
+    { return &SnortConfig::get_conf()->latency->packet_latency; }
 
 } config;
 

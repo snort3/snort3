@@ -1100,7 +1100,81 @@ bool NetworkModule::set(const char*, Value& v, SnortConfig* sc)
 }
 
 //-------------------------------------------------------------------------
-// detection policy module
+// inspection policy module
+//-------------------------------------------------------------------------
+
+static const Parameter inspection_params[] =
+{
+    { "id", Parameter::PT_INT, "0:65535", "0",
+      "correlate policy and events with other items in configuration" },
+
+#ifdef HAVE_UUID
+    { "uuid", Parameter::PT_STRING, nullptr, nullptr,
+      "correlate events by uuid" },
+#endif
+
+    { "mode", Parameter::PT_ENUM, "inline | inline-test", "inline-test",
+      "set policy mode" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+#define inspection_help \
+    "configure basic inspection policy parameters"
+
+class InspectionModule : public Module
+{
+public:
+    InspectionModule() : Module("inspection", inspection_help, inspection_params) { }
+    bool set(const char*, Value&, SnortConfig*) override;
+
+    Usage get_usage() const override
+    { return INSPECT; }
+};
+
+bool InspectionModule::set(const char*, Value& v, SnortConfig* sc)
+{
+    InspectionPolicy* p = get_inspection_policy();
+
+    if ( v.is("id") )
+    {
+        p->user_policy_id = v.get_long();
+        sc->policy_map->set_user_inspection(p);
+    }
+
+#ifdef HAVE_UUID
+    else if ( v.is("uuid") )
+    {
+        if(uuid_parse(v.get_string(), p->uuid) != 0)
+        {
+            ParseError("Invalid Inspection UUID: %s", v.get_string());
+            uuid_clear(p->uuid);
+        }
+    }
+#endif
+
+    else if ( v.is("mode") )
+    {
+        switch ( v.get_long() )
+        {
+            case 0:
+                p->policy_mode = POLICY_MODE__INLINE;
+                break;
+            case 1:
+                p->policy_mode = POLICY_MODE__INLINE_TEST;
+                break;
+            default:
+                break;
+        }
+    }
+
+    else
+        return false;
+
+    return true;
+}
+//-------------------------------------------------------------------------
+// Ips policy module
 //-------------------------------------------------------------------------
 
 static const Parameter ips_params[] =
@@ -1122,7 +1196,7 @@ static const Parameter ips_params[] =
       "snort rules and includes" },
 
 #ifdef HAVE_UUID
-    { "uuid", Parameter::PT_STRING, nullptr, nullptr,
+    { "uuid", Parameter::PT_STRING, nullptr, "00000000-0000-0000-0000-000000000000",
       "IPS policy uuid" },
 #endif
 
@@ -1832,6 +1906,7 @@ void module_init()
 
     // these are preliminary policies
     ModuleManager::add_module(new NetworkModule);
+    ModuleManager::add_module(new InspectionModule);
     ModuleManager::add_module(new IpsModule);
 
     // these modules replace config and hosts.xml

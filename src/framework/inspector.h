@@ -91,8 +91,8 @@ public:
     unsigned get_ref(unsigned i) { return ref_count[i]; }
     void set_ref(unsigned i, unsigned r) { ref_count[i] = r; }
 
-    void add_ref() { ++ref_count[slot]; }
-    void rem_ref() { --ref_count[slot]; }
+    void add_ref();
+    void rem_ref();
 
     bool is_inactive();
 

@@ -44,6 +44,14 @@ struct sfip_var_t;
 typedef unsigned int PolicyId;
 typedef struct SFGHASH PortVarTable;
 
+enum PolicyMode
+{
+    POLICY_MODE__PASSIVE,
+    POLICY_MODE__INLINE,
+    POLICY_MODE__INLINE_TEST,
+    POLICY_MODE__MAX
+};
+
 // FIXIT-L split into separate headers
 
 //-------------------------------------------------------------------------
@@ -101,7 +109,9 @@ public:
 
 public:
     PolicyId policy_id;
+    PolicyMode policy_mode = POLICY_MODE__INLINE_TEST;
     uint32_t user_policy_id = 0;
+    uuid_t uuid{};
 
     struct FrameworkPolicy* framework_policy;
     DataBus dbus;
@@ -114,14 +124,6 @@ private:
 //-------------------------------------------------------------------------
 // detection stuff
 //-------------------------------------------------------------------------
-
-enum PolicyMode
-{
-    POLICY_MODE__PASSIVE,
-    POLICY_MODE__INLINE,
-    POLICY_MODE__INLINE_TEST,
-    POLICY_MODE__MAX
-};
 
 // this is the ips policy post ac-split
 struct IpsPolicy
@@ -182,6 +184,9 @@ public:
     Shell* get_shell(unsigned i = 0)
     { return i < shells.size() ? shells[i] : nullptr; }
 
+    void set_user_inspection(InspectionPolicy* p)
+    { user_inspection[p->user_policy_id] = p; }
+
     void set_user_ips(IpsPolicy* p)
     { user_ips[p->user_policy_id] = p; }
 
@@ -198,6 +203,7 @@ public:  // FIXIT-M make impl private
     bool cloned = false;
 
 private:
+    std::unordered_map<unsigned, InspectionPolicy*> user_inspection;
     std::unordered_map<unsigned, IpsPolicy*> user_ips;
 };
 

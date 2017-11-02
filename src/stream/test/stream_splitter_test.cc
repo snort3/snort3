@@ -35,6 +35,9 @@
 //--------------------------------------------------------------------------
 
 THREAD_LOCAL SnortConfig* snort_conf = nullptr;
+SnortConfig* SnortConfig::get_conf()
+{ return snort_conf; }
+
 static StreamSplitter* next_splitter = nullptr;
 static int flushed = 0;
 

@@ -74,8 +74,9 @@ void TableApi::open_top_level_table(const std::string& table_name, bool one_line
     }
 
     Table* t = util::find_table(tables, table_name);
+    bool existed = (t != nullptr);
 
-    if (t == nullptr)
+    if ( !existed )
     {
         t = new Table(table_name, 0);
         tables.push_back(t);
@@ -85,8 +86,24 @@ void TableApi::open_top_level_table(const std::string& table_name, bool one_line
     open_tables.push(t);
 
     // ignore the initial table
-    if (open_tables.size() > 1)
+    if ( open_tables.size() > 1 )
         top_level_tables.push(open_tables.size());
+
+    if ( !existed )
+    {
+        auto p = pending.find(table_name);
+        if ( p != pending.end() )
+        {
+            auto& q = p->second;
+            while ( q.size() )
+            {
+                q.front()(*this);
+                q.pop();
+            }
+
+            pending.erase(p);
+        }
+    }
 }
 
 void TableApi::open_table(const std::string& table_name, bool one_line)
@@ -98,26 +115,15 @@ void TableApi::open_table(const std::string& table_name, bool one_line)
         return;
     }
 
-    Table* t;
-
     // if no open tables, create a top-level table
     if (!open_tables.empty())
     {
-        t = open_tables.top()->open_table(table_name);
+        Table* t = open_tables.top()->open_table(table_name);
+        t->set_one_line(one_line);
+        open_tables.push(t);
     }
     else
-    {
-        t = util::find_table(tables, table_name);
-
-        if (t == nullptr)
-        {
-            t = new Table(table_name, 0);
-            tables.push_back(t);
-        }
-    }
-
-    t->set_one_line(one_line);
-    open_tables.push(t);
+        open_top_level_table(table_name, one_line);
 }
 
 void TableApi::open_table(bool one_line)
@@ -425,3 +431,18 @@ bool TableApi::get_option_value(const std::string& name, std::string& value)
     return open_tables.top()->get_option(name, value);
 }
 
+void TableApi::run_when_exists(const char* table_name, PendingFunction action)
+{
+    if ( should_delegate(table_name) )
+        delegate->run_when_exists(table_name, action);
+
+    if ( util::find_table(tables, table_name) )
+        action(*this);
+    else
+    {
+        if ( pending.find(table_name) == pending.end() )
+            pending[table_name] = std::queue<PendingFunction>();
+
+        pending[table_name].push(action);
+    }
+}

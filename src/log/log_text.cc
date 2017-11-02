@@ -269,10 +269,10 @@ void LogIpAddrs(TextLog* log, Packet* p)
         if (SnortConfig::obfuscate())
         {
             ObfuscateIpToText(p->ptrs.ip_api.get_src(),
-                snort_conf->homenet, snort_conf->obfuscation_net, src);
+                SnortConfig::get_conf()->homenet, SnortConfig::get_conf()->obfuscation_net, src);
 
             ObfuscateIpToText(p->ptrs.ip_api.get_dst(),
-                snort_conf->homenet, snort_conf->obfuscation_net, dst);
+                SnortConfig::get_conf()->homenet, SnortConfig::get_conf()->obfuscation_net, dst);
 
             TextLog_Print(log, ip_fmt, src, dst);
         }
@@ -291,10 +291,10 @@ void LogIpAddrs(TextLog* log, Packet* p)
         if (SnortConfig::obfuscate())
         {
             ObfuscateIpToText(p->ptrs.ip_api.get_src(),
-                snort_conf->homenet, snort_conf->obfuscation_net, src);
+                SnortConfig::get_conf()->homenet, SnortConfig::get_conf()->obfuscation_net, src);
 
             ObfuscateIpToText(p->ptrs.ip_api.get_dst(),
-                snort_conf->homenet, snort_conf->obfuscation_net, dst);
+                SnortConfig::get_conf()->homenet, SnortConfig::get_conf()->obfuscation_net, dst);
 
             TextLog_Print(log, ip_fmt, src, p->ptrs.sp, dst, p->ptrs.dp);
         }
@@ -1203,7 +1203,7 @@ void LogNetData(
         buf_name = p->get_pseudo_type();
     }
 
-    const HexAsciiLayout& hal = snort_conf->output_wide_hex() ? hal_wide : hal_std;
+    const HexAsciiLayout& hal = SnortConfig::get_conf()->output_wide_hex() ? hal_wide : hal_std;
     const char* hdr_off = SnortConfig::verbose_byte_dump() ? hal.offset_hdr : "";
     const char* ins_name = p->flow and p->flow->gadget ?  p->flow->gadget->get_name() : "snort";
 

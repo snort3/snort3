@@ -87,6 +87,9 @@ SnortConfig::SnortConfig(SnortConfig*)
 
 SnortConfig::~SnortConfig() { }
 
+SnortConfig* SnortConfig::get_conf()
+{ return snort_conf; }
+
 unsigned get_instance_id()
 { return 0; }
 

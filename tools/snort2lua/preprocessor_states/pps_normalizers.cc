@@ -207,6 +207,9 @@ bool TcpNormalizer::convert(std::istringstream& data_stream)
         else if (keyword == "trim_mss")
             table_api.add_option("trim_mss", true);
 
+        else if (keyword == "ftp" )
+            table_api.add_deleted_comment(keyword);
+
         else if (keyword == "ecn")
         {
             if (util::get_string(data_stream, value, " ,"))

@@ -332,14 +332,14 @@ void IpsManager::setup_options()
 {
     for ( auto* p : s_options )
         if ( p->init && p->api->tinit )
-            p->api->tinit(snort_conf);
+            p->api->tinit(SnortConfig::get_conf());
 }
 
 void IpsManager::clear_options()
 {
     for ( auto* p : s_options )
         if ( p->init && p->api->tterm )
-            p->api->tterm(snort_conf);
+            p->api->tterm(SnortConfig::get_conf());
 }
 
 bool IpsManager::verify(SnortConfig* sc)

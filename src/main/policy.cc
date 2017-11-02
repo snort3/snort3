@@ -275,7 +275,7 @@ void set_ips_policy(IpsPolicy* p)
 
 void set_user_ips_policy(unsigned policy_id)
 {
-    IpsPolicy *p = snort_conf->policy_map->get_user_ips(policy_id);
+    IpsPolicy *p = SnortConfig::get_conf()->policy_map->get_user_ips(policy_id);
     if(!p)
     {
         ips_module_stats.invalid_policy_ids++;
@@ -315,7 +315,7 @@ void set_default_policy(SnortConfig* sc)
 }
 
 void set_default_policy()
-{ set_default_policy(snort_conf); }
+{ set_default_policy(SnortConfig::get_conf()); }
 
 bool only_inspection_policy()
 { return get_inspection_policy() && !get_ips_policy() && !get_network_policy(); }

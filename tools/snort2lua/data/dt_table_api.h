@@ -21,11 +21,13 @@
 #ifndef DATA_DT_TABLE_API_H
 #define DATA_DT_TABLE_API_H
 
-#include <string>
+#include <functional>
 #include <iostream>
+#include <queue>
+#include <stack>
+#include <string>
 #include <unordered_map>
 #include <vector>
-#include <stack>
 
 /*
 *
@@ -50,6 +52,8 @@ class Table;
 class TableApi;
 
 typedef std::unordered_map<std::string, bool> TableDelegation;
+typedef std::function<void(TableApi&)> PendingFunction;
+
 class TableApi
 {
 public:
@@ -136,6 +140,9 @@ public:
 // and value updated successfully
     bool get_option_value(const std::string& name, std::string& value);
 
+    // allows adding options to tables if they exist or once they are created
+    void run_when_exists(const char* table_name, PendingFunction action);
+
 private:
     template<typename T>
     bool do_add_option(const std::string& opt_name, const T val, const std::string& s_val);
@@ -151,6 +158,7 @@ private:
     std::vector<Table*> tables;
     std::stack<Table*> open_tables;
     std::stack<unsigned> top_level_tables;
+    std::unordered_map<std::string, std::queue<PendingFunction>> pending;
     bool curr_data_bad = false;
 
     TableApi* delegate = nullptr;

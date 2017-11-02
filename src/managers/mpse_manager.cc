@@ -98,8 +98,8 @@ Mpse* MpseManager::get_search_engine(
 
 Mpse* MpseManager::get_search_engine(const char* type)
 {
-    if ( !type and snort_conf->fast_pattern_config )
-        type = snort_conf->fast_pattern_config->get_search_method();
+    if ( !type and SnortConfig::get_conf()->fast_pattern_config )
+        type = SnortConfig::get_conf()->fast_pattern_config->get_search_method();
 
     if ( !type )
         type = "ac_bnfa";
@@ -113,7 +113,7 @@ Mpse* MpseManager::get_search_engine(const char* type)
     Mpse* eng = api->ctor(nullptr, mod, nullptr);
     eng->set_api(api);
 
-    if ( snort_conf->fast_pattern_config and snort_conf->fast_pattern_config->get_search_opt() )
+    if ( SnortConfig::get_conf()->fast_pattern_config and SnortConfig::get_conf()->fast_pattern_config->get_search_opt() )
         eng->set_opt(1);
 
     return eng;

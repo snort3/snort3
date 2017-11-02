@@ -150,8 +150,8 @@ bool PbbCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
         {
             memcpy(ho->ether_src, hi->ether_src, sizeof(ho->ether_src));
 
-            if ( snort_conf->eth_dst )
-                memcpy(ho->ether_dst, snort_conf->eth_dst, sizeof(ho->ether_dst));
+            if ( SnortConfig::get_conf()->eth_dst )
+                memcpy(ho->ether_dst, SnortConfig::get_conf()->eth_dst, sizeof(ho->ether_dst));
             else
                 memcpy(ho->ether_dst, hi->ether_dst, sizeof(ho->ether_dst));
         }
@@ -159,8 +159,8 @@ bool PbbCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
         {
             memcpy(ho->ether_src, hi->ether_dst, sizeof(ho->ether_src));
 
-            if ( snort_conf->eth_dst )
-                memcpy(ho->ether_dst, snort_conf->eth_dst, sizeof(ho->ether_dst));
+            if ( SnortConfig::get_conf()->eth_dst )
+                memcpy(ho->ether_dst, SnortConfig::get_conf()->eth_dst, sizeof(ho->ether_dst));
             else
                 memcpy(ho->ether_dst, hi->ether_src, sizeof(ho->ether_dst));
         }

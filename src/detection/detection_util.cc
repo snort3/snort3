@@ -45,8 +45,8 @@ static void LogBuffer(const char* s, const uint8_t* p, unsigned n)
     if ( !p )
         return;
 
-    if ( n > snort_conf->event_trace_max )
-        n = snort_conf->event_trace_max;
+    if ( n > SnortConfig::get_conf()->event_trace_max )
+        n = SnortConfig::get_conf()->event_trace_max;
 
     for ( idx = 0; idx < n; idx++)
     {
@@ -102,7 +102,7 @@ void EventTrace_Log(const Packet* p, const OptTreeNode* otn, int action)
 
 void EventTrace_Init()
 {
-    if ( snort_conf->event_trace_max > 0 )
+    if ( SnortConfig::get_conf()->event_trace_max > 0 )
     {
         time_t now = time(nullptr);
         char time_buf[26];
@@ -110,7 +110,7 @@ void EventTrace_Init()
 
         tlog = TextLog_Init ("event_trace.txt", 4*1024, 8*1024*1024);
         TextLog_Print(tlog, "\nTrace started at %s", time_buf);
-        TextLog_Print(tlog, "Trace max_data is %u bytes\n", snort_conf->event_trace_max);
+        TextLog_Print(tlog, "Trace max_data is %u bytes\n", SnortConfig::get_conf()->event_trace_max);
     }
 }
 

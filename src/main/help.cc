@@ -151,7 +151,7 @@ enum HelpType
 
 [[noreturn]] static void show_help(SnortConfig* sc, const char* val, HelpType ht)
 {
-    snort_conf = new SnortConfig;
+    SnortConfig::set_conf(new SnortConfig);
     ScriptManager::load_scripts(sc->script_paths);
     PluginManager::load_plugins(sc->plugin_path);
     ModuleManager::init();
@@ -207,7 +207,7 @@ enum HelpType
     ModuleManager::term();
     PluginManager::release_plugins();
     ScriptManager::release_scripts();
-    delete snort_conf;
+    delete SnortConfig::get_conf();
     exit(0);
 }
 

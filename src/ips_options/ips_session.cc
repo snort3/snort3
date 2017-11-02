@@ -174,9 +174,9 @@ static FILE* OpenSessionFile(Packet* p)
 
     const char* addr;
 
-    if (snort_conf->homenet.contains(dst) == SFIP_CONTAINS)
+    if (SnortConfig::get_conf()->homenet.contains(dst) == SFIP_CONTAINS)
     {
-        if (snort_conf->homenet.contains(src) == SFIP_NOT_CONTAINS)
+        if (SnortConfig::get_conf()->homenet.contains(src) == SFIP_NOT_CONTAINS)
         {
             addr = p->ptrs.ip_api.get_src()->ntoa();
         }
@@ -194,7 +194,7 @@ static FILE* OpenSessionFile(Packet* p)
     }
     else
     {
-        if (snort_conf->homenet.contains(src) == SFIP_CONTAINS)
+        if (SnortConfig::get_conf()->homenet.contains(src) == SFIP_CONTAINS)
         {
             addr = p->ptrs.ip_api.get_dst()->ntoa();
         }

@@ -44,7 +44,7 @@ static int file_cache_free_func(void*, void* data)
 
 FileCache::FileCache()
 {
-    int max_files = snort_conf->file_config.max_files_cached;
+    int max_files = SnortConfig::get_conf()->file_config.max_files_cached;
     fileHash = sfxhash_new(max_files, sizeof(FileHashKey), sizeof(FileNode),
         0, 1, nullptr, file_cache_free_func, 1);
     if (!fileHash)

@@ -47,7 +47,7 @@ bool Ipv6NoNextCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     if (raw.len < ip::MIN_EXT_LEN)
         return false;
 
-    if ( snort_conf->hit_ip6_maxopts(codec.ip6_extension_count) )
+    if ( SnortConfig::get_conf()->hit_ip6_maxopts(codec.ip6_extension_count) )
     {
         codec_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
         return false;

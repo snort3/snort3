@@ -285,7 +285,7 @@ inline void Impl<Clock, RuleTree>::handle(const Event& e)
 static struct SnortConfigWrapper : public ConfigWrapper
 {
     const RuleLatencyConfig* operator->() const override
-    { return &snort_conf->latency->rule_latency; }
+    { return &SnortConfig::get_conf()->latency->rule_latency; }
 
 } config;
 

@@ -453,7 +453,7 @@ static Module* fs_mod_ctor()
 
 static void fs_init()
 {
-    ftp_data_app_id = snort_conf->proto_ref->add("ftp-data");
+    ftp_data_app_id = SnortConfig::get_conf()->proto_ref->add("ftp-data");
     FtpFlowData::init();
 }
 

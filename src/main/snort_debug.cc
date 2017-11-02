@@ -62,7 +62,7 @@ void Debug::print(
     va_list ap;
     va_start(ap, fmt);
 
-    if ( snort_conf and SnortConfig::log_syslog() )
+    if ( SnortConfig::get_conf() and SnortConfig::log_syslog() )
     {
         char buf[STD_BUF];
         int buf_len = sizeof(buf);
@@ -135,7 +135,7 @@ static inline void trace_vprintf(const char* name, Trace mask, const char* file,
 
     vsnprintf(buf_ptr, buf_len, fmt, ap);
 
-    if ( snort_conf and SnortConfig::log_syslog() )
+    if ( SnortConfig::get_conf() and SnortConfig::log_syslog() )
         syslog(LOG_DAEMON | LOG_DEBUG, "%s", buf);
     else
         output(buf, stdout);

@@ -158,9 +158,12 @@ static int Norm_Eth(Packet* p, uint8_t layer, int changes)
 // ether header + min payload (excludes FCS, which makes it 64 total)
 #define ETH_MIN_LEN 60
 
-static inline NormMode get_norm_mode(const NormalizerConfig* const c, const Packet * const p)
+static inline NormMode get_norm_mode(const Packet * const p)
 {
-    NormMode mode = c->norm_mode;
+    NormMode mode = NORM_MODE_ON;
+
+    if ( get_inspection_policy()->policy_mode != POLICY_MODE__INLINE )
+        mode = NORM_MODE_TEST;
 
     if ( !SFDAQ::forwarding_packet(p->pkth) )
         mode = NORM_MODE_TEST;
@@ -174,7 +177,7 @@ static int Norm_IP4(
     IP4Hdr* h = (IP4Hdr*)const_cast<uint8_t*>(p->layers[layer].start);
     uint16_t fragbits = ntohs(h->ip_off);
     uint16_t origbits = fragbits;
-    const NormMode mode = get_norm_mode(c, p);
+    const NormMode mode = get_norm_mode(p);
 
     if ( Norm_IsEnabled(c, NORM_IP4_TRIM) && (layer == 1) )
     {
@@ -271,10 +274,10 @@ static int Norm_IP4(
 //-----------------------------------------------------------------------
 
 static int Norm_ICMP4(
-    NormalizerConfig* c, Packet* p, uint8_t layer, int changes)
+    NormalizerConfig*, Packet* p, uint8_t layer, int changes)
 {
     ICMPHdr* h = reinterpret_cast<ICMPHdr*>(const_cast<uint8_t*>(p->layers[layer].start));
-    const NormMode mode = get_norm_mode(c, p);
+    const NormMode mode = get_norm_mode(p);
 
     if ( (h->type == ICMP_ECHO || h->type == ICMP_ECHOREPLY) &&
         (h->code != icmp::IcmpCode::ECHO_CODE) )
@@ -301,7 +304,7 @@ static int Norm_IP6(
 
         if ( h->ip6_hoplim < SnortConfig::min_ttl() )
         {
-            const NormMode mode = get_norm_mode(c, p);
+            const NormMode mode = get_norm_mode(p);
 
             if ( mode == NORM_MODE_ON )
             {
@@ -318,7 +321,7 @@ static int Norm_IP6(
 //-----------------------------------------------------------------------
 
 static int Norm_ICMP6(
-    NormalizerConfig* c, Packet* p, uint8_t layer, int changes)
+    NormalizerConfig*, Packet* p, uint8_t layer, int changes)
 {
     ICMPHdr* h = reinterpret_cast<ICMPHdr*>(const_cast<uint8_t*>(p->layers[layer].start));
 
@@ -326,7 +329,7 @@ static int Norm_ICMP6(
         (uint16_t)h->type == icmp::Icmp6Types::ECHO_REPLY) &&
         (h->code != 0) )
     {
-        const NormMode mode = get_norm_mode(c, p);
+        const NormMode mode = get_norm_mode(p);
 
         if ( mode == NORM_MODE_ON )
         {
@@ -353,9 +356,9 @@ struct ExtOpt
 #define IP6_OPT_PAD_N 1
 
 static int Norm_IP6_Opts(
-    NormalizerConfig* c, Packet* p, uint8_t layer, int changes)
+    NormalizerConfig*, Packet* p, uint8_t layer, int changes)
 {
-    NormMode mode = get_norm_mode(c, p);
+    NormMode mode = get_norm_mode(p);
 
     if ( mode == NORM_MODE_ON )
     {
@@ -495,7 +498,7 @@ static int Norm_TCP(
     NormalizerConfig* c, Packet* p, uint8_t layer, int changes)
 {
     tcp::TCPHdr* h = reinterpret_cast<tcp::TCPHdr*>(const_cast<uint8_t*>(p->layers[layer].start));
-    const NormMode mode = get_norm_mode(c, p);
+    const NormMode mode = get_norm_mode(p);
 
     if ( Norm_IsEnabled(c, NORM_TCP_RSV) )
     {

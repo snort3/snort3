@@ -89,26 +89,26 @@ bool break_time()
 const char* get_instance_file(std::string& file, const char* name)
 {
     bool sep = false;
-    file = !snort_conf->log_dir.empty() ? snort_conf->log_dir : "./";
+    file = !SnortConfig::get_conf()->log_dir.empty() ? SnortConfig::get_conf()->log_dir : "./";
 
     if ( file.back() != '/' )
         file += '/';
 
-    if ( !snort_conf->run_prefix.empty() )
+    if ( !SnortConfig::get_conf()->run_prefix.empty() )
     {
-        file += snort_conf->run_prefix;
+        file += SnortConfig::get_conf()->run_prefix;
         sep = true;
     }
 
-    if ( (ThreadConfig::get_instance_max() > 1) || snort_conf->id_zero )
+    if ( (ThreadConfig::get_instance_max() > 1) || SnortConfig::get_conf()->id_zero )
     {
         char id[8];
-        snprintf(id, sizeof(id), "%u", get_instance_id() + snort_conf->id_offset);
+        snprintf(id, sizeof(id), "%u", get_instance_id() + SnortConfig::get_conf()->id_offset);
         file += id;
         sep = true;
     }
 
-    if ( snort_conf->id_subdir )
+    if ( SnortConfig::get_conf()->id_subdir )
     {
         file += '/';
         struct stat s;

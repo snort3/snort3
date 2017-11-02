@@ -90,7 +90,7 @@ struct tcp_event_sid tcp_event_sids[] =
 
 void TcpEventLogger::log_internal_event(uint32_t eventSid)
 {
-    if (is_internal_event_enabled(snort_conf->rate_filter_config, eventSid))
+    if (is_internal_event_enabled(SnortConfig::get_conf()->rate_filter_config, eventSid))
     {
         tcpStats.internalEvents++;
         DetectionEngine::queue_event(GENERATOR_INTERNAL, eventSid);

@@ -108,3 +108,8 @@ bool Inspector::likes(Packet* p)
     return true;
 }
 
+void Inspector::add_ref()
+{ ++ref_count[slot]; }
+
+void Inspector::rem_ref()
+{ --ref_count[slot]; }

@@ -81,7 +81,7 @@ void ParseMessage(const char* format, ...)
 
 void ParseWarning(WarningGroup wg, const char* format, ...)
 {
-    if ( !(snort_conf->warning_flags & (1 << wg)) )
+    if ( !(SnortConfig::get_conf()->warning_flags & (1 << wg)) )
         return;
 
     char buf[STD_BUF+1];
@@ -135,7 +135,7 @@ void ParseError(const char* format, ...)
 
 static void WriteLogMessage(FILE* fh, bool prefer_fh, const char* format, va_list& ap)
 {
-    if ( snort_conf && !prefer_fh )
+    if ( SnortConfig::get_conf() && !prefer_fh )
     {
         if ( SnortConfig::log_quiet() )
             return;
@@ -196,12 +196,12 @@ void WarningMessage(const char* format,...)
 {
     va_list ap;
 
-    if ( snort_conf and SnortConfig::log_quiet() )
+    if ( SnortConfig::get_conf() and SnortConfig::log_quiet() )
         return;
 
     va_start(ap, format);
 
-    if ( snort_conf and SnortConfig::log_syslog() )
+    if ( SnortConfig::get_conf() and SnortConfig::log_syslog() )
     {
         char buf[STD_BUF+1];
         vsnprintf(buf, STD_BUF, format, ap);
@@ -232,7 +232,7 @@ void ErrorMessage(const char* format,...)
 
     va_start(ap, format);
 
-    if ( snort_conf and SnortConfig::log_syslog() )
+    if ( SnortConfig::get_conf() and SnortConfig::log_syslog() )
     {
         char buf[STD_BUF+1];
         vsnprintf(buf, STD_BUF, format, ap);
@@ -276,7 +276,7 @@ void ErrorMessage(const char* format,...)
 
     buf[STD_BUF] = '\0';
 
-    if ( snort_conf and SnortConfig::log_syslog() )
+    if ( SnortConfig::get_conf() and SnortConfig::log_syslog() )
     {
         syslog(LOG_CONS | LOG_DAEMON | LOG_ERR, "FATAL ERROR: %s", buf);
     }

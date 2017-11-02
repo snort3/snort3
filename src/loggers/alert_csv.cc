@@ -264,7 +264,7 @@ static void ff_pkt_len(Args& a)
 
 static void ff_pkt_num(Args&)
 {
-    TextLog_Print(csv_log, STDu64, pc.total_from_daq);
+    TextLog_Print(csv_log, STDu64, get_packet_number());
 }
 
 static void ff_priority(Args& a)

@@ -266,7 +266,7 @@ OptTreeNode* OtnLookup(SFGHASH* otn_map, uint32_t gid, uint32_t sid)
 
 OptTreeNode* GetOTN(uint32_t gid, uint32_t sid)
 {
-    OptTreeNode* otn = OtnLookup(snort_conf->otn_map, gid, sid);
+    OptTreeNode* otn = OtnLookup(SnortConfig::get_conf()->otn_map, gid, sid);
 
     if ( !otn )
         return nullptr;

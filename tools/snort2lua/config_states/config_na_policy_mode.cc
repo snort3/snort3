@@ -26,12 +26,53 @@
 
 namespace config
 {
+namespace
+{
+class NaPolicyMode : public ConversionState
+{
+public:
+    NaPolicyMode(Converter& c) : ConversionState(c) { }
+    bool convert(std::istringstream& data_stream) override;
+};
+} // namespace
 
-//FIXIT-L add when snort supports separate inline mode and normalization inline mode
-static std::string header = "config na_policy_mode: ";
+bool NaPolicyMode::convert(std::istringstream& data_stream)
+{
+    bool retval = true;
+    std::string mode;
+
+    if ( data_stream >> mode)
+    {
+        if ( mode == "tap" || mode == "inline_test" )
+        {
+            table_api.open_top_level_table("inspection");
+            table_api.add_option("mode", "inline-test");
+            table_api.add_diff_option_comment("na_policy_mode", "mode");
+            table_api.close_table();
+        }
+        else if ( mode == "inline" )
+        {
+            table_api.open_top_level_table("inspection");
+            table_api.add_option("mode", "inline");
+            table_api.add_diff_option_comment("na_policy_mode", "mode");
+            table_api.close_table();
+        }
+        else
+        {
+            retval = false;
+            data_api.failed_conversion(data_stream, mode);
+        }
+    }
+
+    return retval;
+}
+
+/**************************
+ *******  A P I ***********
+ **************************/
 
 static ConversionState* ctor(Converter& c)
-{ return new UnsupportedState<&header>(c); }
+{ return new NaPolicyMode(c); }
 
 static const ConvertMap na_policy_mode_api =
 {
@@ -40,5 +81,6 @@ static const ConvertMap na_policy_mode_api =
 };
 
 const ConvertMap* na_policy_mode_map = &na_policy_mode_api;
+
 } // namespace config
 

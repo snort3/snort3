@@ -167,7 +167,7 @@ void ts_print(const struct timeval* tvp, char* timebuf)
         tvp = &tv;
     }
 
-    int localzone = snort_conf->thiszone;
+    int localzone = SnortConfig::get_conf()->thiszone;
 
     /*
     **  If we're doing UTC, then make sure that the timezone is correct.
@@ -246,14 +246,14 @@ static FILE* pid_file = nullptr;
 
 void CreatePidFile(pid_t pid)
 {
-    snort_conf->pid_filename = snort_conf->log_dir;
-    snort_conf->pid_filename += "/snort.pid";
+    SnortConfig::get_conf()->pid_filename = SnortConfig::get_conf()->log_dir;
+    SnortConfig::get_conf()->pid_filename += "/snort.pid";
 
     std::string pid_lockfilename;
 
     if ( !SnortConfig::no_lock_pid_file() )
     {
-        pid_lockfilename = snort_conf->pid_filename;
+        pid_lockfilename = SnortConfig::get_conf()->pid_filename;
         pid_lockfilename += ".lck";
 
         /* First, lock the PID file */
@@ -273,18 +273,18 @@ void CreatePidFile(pid_t pid)
             {
                 ClosePidFile();
                 ParseError("Failed to Lock PID File \"%s\" for PID \"%d\"",
-                    snort_conf->pid_filename.c_str(), (int)pid);
+                    SnortConfig::get_conf()->pid_filename.c_str(), (int)pid);
                 return;
             }
         }
     }
 
     /* Okay, were able to lock PID file, now open and write PID */
-    pid_file = fopen(snort_conf->pid_filename.c_str(), "w");
+    pid_file = fopen(SnortConfig::get_conf()->pid_filename.c_str(), "w");
     if (pid_file)
     {
         LogMessage("Writing PID \"%d\" to file \"%s\"\n", (int)pid,
-            snort_conf->pid_filename.c_str());
+            SnortConfig::get_conf()->pid_filename.c_str());
         fprintf(pid_file, "%d\n", (int)pid);
         fflush(pid_file);
     }
@@ -292,8 +292,8 @@ void CreatePidFile(pid_t pid)
     {
         const char* error = get_error(errno);
         ErrorMessage("Failed to create pid file %s, Error: %s",
-            snort_conf->pid_filename.c_str(), error);
-        snort_conf->pid_filename.clear();
+            SnortConfig::get_conf()->pid_filename.c_str(), error);
+        SnortConfig::get_conf()->pid_filename.clear();
     }
     if ( !pid_lockfilename.empty() )
         unlink(pid_lockfilename.c_str());
@@ -548,7 +548,7 @@ static char* GetAbsolutePath(const char* dir, PathBuf& buf)
 }
 
 /**
- * Chroot and adjust the snort_conf->log_dir reference
+ * Chroot and adjust the SnortConfig::get_conf()->log_dir reference
  */
 bool EnterChroot(std::string& root_dir, std::string& log_dir)
 {

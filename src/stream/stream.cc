@@ -334,8 +334,8 @@ void Stream::init_active_response(const Packet* p, Flow* flow)
 
     flow->response_count = 1;
 
-    if ( snort_conf->max_responses > 1 )
-        flow->set_expire(p, snort_conf->min_interval);
+    if ( SnortConfig::get_conf()->max_responses > 1 )
+        flow->set_expire(p, SnortConfig::get_conf()->min_interval);
 }
 
 void Stream::purge_flows()
@@ -573,7 +573,7 @@ uint8_t Stream::get_flow_ttl(Flow* flow, char dir, bool outer)
 // that we only send in the still active direction(s).
 static void active_response(Packet* p, Flow* lwssn)
 {
-    uint8_t max = snort_conf->max_responses;
+    uint8_t max = SnortConfig::get_conf()->max_responses;
 
     if ( p->is_from_client() )
         lwssn->session_state |= STREAM_STATE_DROP_CLIENT;
@@ -582,7 +582,7 @@ static void active_response(Packet* p, Flow* lwssn)
 
     if ( (lwssn->response_count < max) && lwssn->expired(p) )
     {
-        uint32_t delay = snort_conf->min_interval;
+        uint32_t delay = SnortConfig::get_conf()->min_interval;
         EncodeFlags flags =
             ( (lwssn->session_state & STREAM_STATE_DROP_CLIENT) &&
             (lwssn->session_state & STREAM_STATE_DROP_SERVER) ) ?

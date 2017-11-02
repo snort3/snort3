@@ -362,7 +362,7 @@ static bool pcre_search(
 
     found_offset = -1;
 
-    SnortState* ss = snort_conf->state + get_instance_id();
+    SnortState* ss = SnortConfig::get_conf()->state + get_instance_id();
     assert(ss->pcre_ovector);
 
     int result = pcre_exec(
@@ -373,7 +373,7 @@ static bool pcre_search(
         start_offset,   /* start at offset 0 in the subject */
         0,              /* options(handled at compile time */
         ss->pcre_ovector,      /* vector for substring information */
-        snort_conf->pcre_ovector_size); /* number of elements in the vector */
+        SnortConfig::get_conf()->pcre_ovector_size); /* number of elements in the vector */
 
     if (result >= 0)
     {

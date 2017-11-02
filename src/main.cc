@@ -149,7 +149,7 @@ void Pig::start()
     assert(!athread);
     LogMessage("++ [%u] %s\n", idx, analyzer->get_source());
 
-    Swapper* ps = new Swapper(snort_conf, SFAT_GetConfig());
+    Swapper* ps = new Swapper(SnortConfig::get_conf(), SFAT_GetConfig());
     athread = new std::thread(std::ref(*analyzer), ps, ++run_num);
 }
 
@@ -315,7 +315,7 @@ int main_reload_config(lua_State* L)
     }
 
     current_request->respond(".. reloading configuration\n");
-    SnortConfig* old = snort_conf;
+    SnortConfig* old = SnortConfig::get_conf();
     SnortConfig* sc = Snort::get_reload_config(fname);
 
     if ( !sc )
@@ -323,7 +323,7 @@ int main_reload_config(lua_State* L)
         current_request->respond("== reload failed\n");
         return 0;
     }
-    snort_conf = sc;
+    SnortConfig::set_conf(sc);
     proc_stats.conf_reloads++;
 
     bool from_shell = ( L != nullptr );
@@ -356,7 +356,7 @@ int main_reload_policy(lua_State* L)
         return 0;
     }
 
-    SnortConfig* old = snort_conf;
+    SnortConfig* old = SnortConfig::get_conf();
     SnortConfig* sc = Snort::get_updated_policy(old, fname, nullptr);
 
     if ( !sc )
@@ -364,7 +364,7 @@ int main_reload_policy(lua_State* L)
         current_request->respond("== reload failed\n");
         return 0;
     }
-    snort_conf = sc;
+    SnortConfig::set_conf(sc);
     proc_stats.policy_reloads++;
 
     bool from_shell = ( L != nullptr );
@@ -403,7 +403,7 @@ int main_reload_hosts(lua_State* L)
     }
 
     Shell sh = Shell(fname);
-    sh.configure(snort_conf);
+    sh.configure(SnortConfig::get_conf());
 
     tTargetBasedConfig* old = SFAT_GetConfig();
     tTargetBasedConfig* tc = SFAT_Swap();
@@ -444,7 +444,7 @@ int main_delete_inspector(lua_State* L)
         return 0;
     }
 
-    SnortConfig* old = snort_conf;
+    SnortConfig* old = SnortConfig::get_conf();
     SnortConfig* sc = Snort::get_updated_policy(old, nullptr, iname);
 
     if ( !sc )
@@ -452,7 +452,7 @@ int main_delete_inspector(lua_State* L)
         current_request->respond("== reload failed\n");
         return 0;
     }
-    snort_conf = sc;
+    SnortConfig::set_conf(sc);
     proc_stats.inspector_deletions++;
 
     bool from_shell = ( L != nullptr );
@@ -635,7 +635,7 @@ static bool just_validate()
     if ( SnortConfig::test_mode() )
         return true;
 
-    if ( use_shell(snort_conf) )
+    if ( use_shell(SnortConfig::get_conf()) )
         return false;
 
     /* FIXIT-L X This should really check if the DAQ module was unset as it could be explicitly
@@ -645,7 +645,7 @@ static bool just_validate()
         if ( SnortConfig::read_mode() && !Trough::get_queue_size() )
             return true;
 
-        if ( !SnortConfig::read_mode() && !SFDAQ::get_input_spec(snort_conf, 0) )
+        if ( !SnortConfig::read_mode() && !SFDAQ::get_input_spec(SnortConfig::get_conf(), 0) )
             return true;
     }
 
@@ -689,11 +689,11 @@ static bool set_mode()
             warnings);
 
         // force test mode to exit w/o stats
-        snort_conf->run_flags |= RUN_FLAG__TEST;
+        SnortConfig::get_conf()->run_flags |= RUN_FLAG__TEST;
         return false;
     }
 
-    if ( snort_conf->run_flags & RUN_FLAG__PAUSE )
+    if ( SnortConfig::get_conf()->run_flags & RUN_FLAG__PAUSE )
     {
         LogMessage("Paused; resume to start packet processing\n");
         paused = true;
@@ -702,7 +702,7 @@ static bool set_mode()
         LogMessage("Commencing packet processing\n");
 
 #ifdef SHELL
-    if ( use_shell(snort_conf) )
+    if ( use_shell(SnortConfig::get_conf()) )
     {
         LogMessage("Entering command shell\n");
         ControlMgmt::add_control(STDOUT_FILENO, true);
@@ -791,7 +791,7 @@ static void main_loop()
     if (!SnortConfig::read_mode())
     {
         for (swine = 0; swine < max_pigs; swine++)
-            pigs[swine].prep(SFDAQ::get_input_spec(snort_conf, swine));
+            pigs[swine].prep(SFDAQ::get_input_spec(SnortConfig::get_conf(), swine));
     }
 
     // Iterate over the drove, spawn them as allowed, and handle their deaths.

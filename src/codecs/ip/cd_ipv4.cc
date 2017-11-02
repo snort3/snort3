@@ -143,7 +143,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         return false;
     }
 
-    if ( snort_conf->hit_ip_maxlayers(codec.ip_layer_cnt) )
+    if ( SnortConfig::get_conf()->hit_ip_maxlayers(codec.ip_layer_cnt) )
     {
         codec_event(codec, DECODE_IP_MULTIPLE_ENCAPSULATION);
         return false;

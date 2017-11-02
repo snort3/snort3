@@ -64,22 +64,14 @@ public:
     static bool is_enabled();
     static void set_enabled(bool = true);
 
-    static void suspend()
-    { active_suspend = true; }
+    static void suspend();
+    static void resume();
+    static bool suspended();
 
-    static void resume()
-    { active_suspend = false; }
-
-    static bool suspended()
-    { return active_suspend; }
-
-    static ActiveAction get_action()
-    { return active_action; }
-
+    static ActiveAction get_action();
     static ActiveStatus get_status();
 
-    static bool can_block()
-    { return active_status == AST_ALLOW or active_status == AST_FORCE; }
+    static bool can_block();
 
     static const char* get_action_string();
 
@@ -92,41 +84,22 @@ public:
     static void block_session(Packet*, bool force = false);
     static void reset_session(Packet*, bool force = false);
 
-    static void block_again()
-    { active_action = ACT_BLOCK; }
+    static void block_again();
+    static void reset_again();
 
-    static void reset_again()
-    { active_action = ACT_RESET; }
+    static bool packet_was_dropped();
+    static bool packet_retry_requested();
+    static bool session_was_blocked();
+    static bool packet_would_be_dropped();
+    static bool packet_force_dropped();
 
-    static bool packet_was_dropped()
-    { return ( active_action >= ACT_DROP ); }
+    static void set_tunnel_bypass();
+    static void clear_tunnel_bypass();
+    static bool get_tunnel_bypass();
 
-    static bool packet_retry_requested()
-    { return ( active_action == ACT_RETRY ); }
-
-    static bool session_was_blocked()
-    { return ( active_action >= ACT_BLOCK); }
-
-    static bool packet_would_be_dropped()
-    { return (active_status == AST_WOULD ); }
-
-    static bool packet_force_dropped()
-    { return (active_status == AST_FORCE ); }
-
-    static void set_tunnel_bypass()
-    { active_tunnel_bypass++; }
-
-    static void clear_tunnel_bypass()
-    { active_tunnel_bypass--; }
-
-    static bool get_tunnel_bypass()
-    { return ( active_tunnel_bypass > 0 ); }
-
-    static uint64_t get_injects()
-    { return s_injects; }
+    static uint64_t get_injects();
 
     static void set_delayed_action(ActiveAction, bool force = false);
-
     static void apply_delayed_action(Packet*);
 
 private:

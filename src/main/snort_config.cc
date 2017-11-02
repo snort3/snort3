@@ -84,6 +84,7 @@
 #define OUTPUT_FAST "alert_fast"
 
 THREAD_LOCAL SnortConfig* snort_conf = nullptr;
+
 uint32_t SnortConfig::warning_flags = 0;
 
 //-------------------------------------------------------------------------
@@ -256,7 +257,7 @@ SnortConfig::~SnortConfig()
     if ( fast_pattern_config &&
         (!snort_conf || this == snort_conf ||
         (fast_pattern_config->get_search_api() !=
-        snort_conf->fast_pattern_config->get_search_api())) )
+        get_conf()->fast_pattern_config->get_search_api())) )
     {
         MpseManager::stop_search_engine(fast_pattern_config->get_search_api());
     }
@@ -454,36 +455,36 @@ void SnortConfig::merge(SnortConfig* cmd_line)
 
 bool SnortConfig::verify()
 {
-    if (snort_conf->asn1_mem != asn1_mem)
+    if (get_conf()->asn1_mem != asn1_mem)
     {
         ErrorMessage("Snort Reload: Changing the asn1 memory configuration "
             "requires a restart.\n");
         return false;
     }
 
-    if ( bpf_filter != snort_conf->bpf_filter )
+    if ( bpf_filter != get_conf()->bpf_filter )
     {
         ErrorMessage("Snort Reload: Changing the bpf filter configuration "
             "requires a restart.\n");
         return false;
     }
 
-    if ( respond_attempts != snort_conf->respond_attempts ||
-        respond_device != snort_conf->respond_device )
+    if ( respond_attempts != get_conf()->respond_attempts ||
+        respond_device != get_conf()->respond_device )
     {
         ErrorMessage("Snort Reload: Changing config response "
             "requires a restart.\n");
         return false;
     }
 
-    if (snort_conf->chroot_dir != chroot_dir)
+    if (get_conf()->chroot_dir != chroot_dir)
     {
         ErrorMessage("Snort Reload: Changing the chroot directory "
             "configuration requires a restart.\n");
         return false;
     }
 
-    if ((snort_conf->run_flags & RUN_FLAG__DAEMON) !=
+    if ((get_conf()->run_flags & RUN_FLAG__DAEMON) !=
         (run_flags & RUN_FLAG__DAEMON))
     {
         ErrorMessage("Snort Reload: Changing to or from daemon mode "
@@ -492,27 +493,27 @@ bool SnortConfig::verify()
     }
 
     /* Orig log dir because a chroot might have changed it */
-    if (snort_conf->orig_log_dir != orig_log_dir)
+    if (get_conf()->orig_log_dir != orig_log_dir)
     {
         ErrorMessage("Snort Reload: Changing the log directory "
             "configuration requires a restart.\n");
         return false;
     }
 
-    if (snort_conf->max_attribute_hosts != max_attribute_hosts)
+    if (get_conf()->max_attribute_hosts != max_attribute_hosts)
     {
         ErrorMessage("Snort Reload: Changing max_attribute_hosts "
             "configuration requires a restart.\n");
         return false;
     }
-    if (snort_conf->max_attribute_services_per_host != max_attribute_services_per_host)
+    if (get_conf()->max_attribute_services_per_host != max_attribute_services_per_host)
     {
         ErrorMessage("Snort Reload: Changing max_attribute_services_per_host "
             "configuration requires a restart.\n");
         return false;
     }
 
-    if ((snort_conf->run_flags & RUN_FLAG__NO_PROMISCUOUS) !=
+    if ((get_conf()->run_flags & RUN_FLAG__NO_PROMISCUOUS) !=
         (run_flags & RUN_FLAG__NO_PROMISCUOUS))
     {
         ErrorMessage("Snort Reload: Changing to or from promiscuous mode "
@@ -520,28 +521,28 @@ bool SnortConfig::verify()
         return false;
     }
 
-    if (snort_conf->group_id != group_id)
+    if (get_conf()->group_id != group_id)
     {
         ErrorMessage("Snort Reload: Changing the group id "
             "configuration requires a restart.\n");
         return false;
     }
 
-    if (snort_conf->user_id != user_id)
+    if (get_conf()->user_id != user_id)
     {
         ErrorMessage("Snort Reload: Changing the user id "
             "configuration requires a restart.\n");
         return false;
     }
 
-    if (snort_conf->daq_config->mru_size != daq_config->mru_size)
+    if (get_conf()->daq_config->mru_size != daq_config->mru_size)
     {
         ErrorMessage("Snort Reload: Changing the packet snaplen "
             "configuration requires a restart.\n");
         return false;
     }
 
-    if (snort_conf->threshold_config->memcap !=
+    if (get_conf()->threshold_config->memcap !=
         threshold_config->memcap)
     {
         ErrorMessage("Snort Reload: Changing the threshold memcap "
@@ -549,7 +550,7 @@ bool SnortConfig::verify()
         return false;
     }
 
-    if (snort_conf->rate_filter_config->memcap !=
+    if (get_conf()->rate_filter_config->memcap !=
         rate_filter_config->memcap)
     {
         ErrorMessage("Snort Reload: Changing the rate filter memcap "
@@ -557,7 +558,7 @@ bool SnortConfig::verify()
         return false;
     }
 
-    if (snort_conf->detection_filter_config->memcap !=
+    if (get_conf()->detection_filter_config->memcap !=
         detection_filter_config->memcap)
     {
         ErrorMessage("Snort Reload: Changing the detection filter memcap "
@@ -991,5 +992,11 @@ void SnortConfig::free_rule_state_list()
 
 bool SnortConfig::tunnel_bypass_enabled(uint8_t proto)
 {
-    return (!((snort_conf->tunnel_mask & proto) or SFDAQ::get_tunnel_bypass(proto)));
+    return (!((get_conf()->tunnel_mask & proto) or SFDAQ::get_tunnel_bypass(proto)));
 }
+
+SO_PUBLIC SnortConfig* SnortConfig::get_conf()
+{ return snort_conf; }
+
+void SnortConfig::set_conf(SnortConfig* conf)
+{ snort_conf = conf; }

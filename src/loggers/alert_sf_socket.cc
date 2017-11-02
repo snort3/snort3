@@ -246,9 +246,9 @@ static OptTreeNode* OptTreeNode_Search(uint32_t, uint32_t sid)
     if (sid == 0)
         return nullptr;
 
-    for (hashNode = sfghash_findfirst(snort_conf->otn_map);
+    for (hashNode = sfghash_findfirst(SnortConfig::get_conf()->otn_map);
         hashNode;
-        hashNode = sfghash_findnext(snort_conf->otn_map))
+        hashNode = sfghash_findnext(SnortConfig::get_conf()->otn_map))
     {
         OptTreeNode* otn = (OptTreeNode*)hashNode->data;
         RuleTreeNode* rtn = getRuntimeRtnFromOtn(otn);

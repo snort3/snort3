@@ -59,7 +59,7 @@ static THREAD_LOCAL uint64_t context_num = 0;
 //--------------------------------------------------------------------------
 
 void DetectionEngine::thread_init()
-{ offloader = new RegexOffload(snort_conf->offload_threads); }
+{ offloader = new RegexOffload(SnortConfig::get_conf()->offload_threads); }
 
 void DetectionEngine::thread_term()
 { delete offloader; }
@@ -257,7 +257,7 @@ bool DetectionEngine::offload(Packet* p)
 {
     ContextSwitcher* sw = Snort::get_switcher();
 
-    if ( p->type() != PktType::PDU or (p->dsize < snort_conf->offload_limit) or !sw->can_hold() )
+    if ( p->type() != PktType::PDU or (p->dsize < SnortConfig::get_conf()->offload_limit) or !sw->can_hold() )
     {
         fp_local(p);
         return false;
@@ -272,7 +272,7 @@ bool DetectionEngine::offload(Packet* p)
         pc.total_from_daq, id, offloader->count());
 
     p->flow->set_offloaded();
-    p->context->conf = snort_conf;
+    p->context->conf = SnortConfig::get_conf();
 
     offloader->put(id, p);
     pc.offloads++;

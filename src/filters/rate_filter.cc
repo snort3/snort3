@@ -126,7 +126,8 @@ int RateFilter_Test(
         dip = &cleared;
     }
 
-    if ((snort_conf == nullptr) || (snort_conf->rate_filter_config == nullptr))
+    if ((SnortConfig::get_conf() == nullptr) ||
+        (SnortConfig::get_conf()->rate_filter_config == nullptr))
     {
         /* this should not happen, see the create fcn */
         return -1;
@@ -139,13 +140,13 @@ int RateFilter_Test(
         if ( p->is_from_server() )
         {
             return SFRF_TestThreshold(
-                snort_conf->rate_filter_config, gid, sid, dip, sip,
+                SnortConfig::get_conf()->rate_filter_config, gid, sid, dip, sip,
                 p->pkth->ts.tv_sec, SFRF_COUNT_INCREMENT);
         }
     }
 
     return SFRF_TestThreshold(
-        snort_conf->rate_filter_config, gid, sid, sip, dip,
+        SnortConfig::get_conf()->rate_filter_config, gid, sid, sip, dip,
         p->pkth->ts.tv_sec, SFRF_COUNT_INCREMENT);
 }
 

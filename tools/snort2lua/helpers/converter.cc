@@ -41,6 +41,7 @@ TableDelegation table_delegation =
     { "binder", true },
     { "ips", true },
     { "network", true },
+    { "normalizer", true},
 };
 
 std::string Converter::ips_pattern;

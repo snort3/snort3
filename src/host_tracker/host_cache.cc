@@ -38,7 +38,7 @@ void host_cache_add_host_tracker(HostTracker* ht)
 bool host_cache_add_service(const SfIp& ipaddr, Protocol ipproto, Port port, const char* /*service*/)
 {
     HostIpKey ipkey((const uint8_t*) ipaddr.get_ip6_ptr());
-    uint16_t proto = 0; // FIXIT-M not safe with multithreads snort_conf->proto_ref->add(service));
+    uint16_t proto = 0; // FIXIT-M not safe with multithreads SnortConfig::get_conf()->proto_ref->add(service));
     HostApplicationEntry app_entry(ipproto, port, proto);
     std::shared_ptr<HostTracker> ht;
 

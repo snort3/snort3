@@ -251,7 +251,7 @@ unsigned SdPatternOption::SdSearch(Cursor& c, Packet* p)
     const uint8_t* buf = c.start();
     unsigned int buflen = c.length();
 
-    SnortState* ss = snort_conf->state + get_instance_id();
+    SnortState* ss = SnortConfig::get_conf()->state + get_instance_id();
     assert(ss->sdpattern_scratch);
 
     hsContext ctx(config, p, start, buf, buflen);

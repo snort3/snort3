@@ -56,7 +56,7 @@ void EventTrace_Log(const Packet*, const OptTreeNode*, int action);
 
 inline int EventTrace_IsEnabled()
 {
-    return ( snort_conf->event_trace_max > 0 );
+    return ( SnortConfig::get_conf()->event_trace_max > 0 );
 }
 
 #endif

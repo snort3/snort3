@@ -1087,6 +1087,14 @@ PKG_CHECK_EXISTS([uuid], [ have_uuid_pkgconfig="yes" ], [ have_uuid_pkgconfig="n
 AC_MSG_RESULT(${have_uuid_pkgconfig})
 
 UUID_CPPFLAGS=""
+if test "${macos}" = "yes"; then
+    UUID_CPPFLAGS="-I/usr/include/uuid"
+    UUID_LDFLAGS="-lSystem"
+    UUID_LIBNAME="System"
+else
+    UUID_LIBNAME="uuid"
+fi
+
 if test "${have_uuid_pkgconfig}" = "yes" ; then
     UUID_CPPFLAGS=`${PKG_CONFIG} --cflags uuid`
     UUID_LDFLAGS=`${PKG_CONFIG} --libs-only-L uuid`
@@ -1117,12 +1125,12 @@ AC_CHECK_HEADERS(uuid.h, UUID_H="yes")
 
 # Verify that we have the library
 UUID_L=""
-AC_CHECK_LIB(uuid, uuid_parse, UUID_L="yes")
+AC_CHECK_LIB("${UUID_LIBNAME}", uuid_parse, UUID_L="yes")
 
 if test "x$UUID_L" = "xyes"; then
     if test "x$UUID_H" = "xyes"; then
         AC_DEFINE([HAVE_UUID],[1],[can build uuid code])
-        LIBS="${LIBS} -luuid"
+        LIBS="${LIBS} -l${UUID_LIBNAME}"
     fi
 fi
 

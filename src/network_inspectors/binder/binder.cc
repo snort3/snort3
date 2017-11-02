@@ -393,7 +393,7 @@ static Inspector* get_gadget(Flow* flow)
     if ( !flow->ssn_state.application_protocol )
         return nullptr;
 
-    const char* s = snort_conf->proto_ref->get_name(flow->ssn_state.application_protocol);
+    const char* s = SnortConfig::get_conf()->proto_ref->get_name(flow->ssn_state.application_protocol);
 
     return InspectorManager::get_inspector(s);
 }
@@ -672,7 +672,7 @@ int Binder::exec_handle_gadget( void* pv )
         flow->ssn_state.application_protocol = ins->get_service();
     }
     else if ( flow->service )
-        flow->ssn_state.application_protocol = snort_conf->proto_ref->find(flow->service);
+        flow->ssn_state.application_protocol = SnortConfig::get_conf()->proto_ref->find(flow->service);
 
     if ( !flow->is_stream() )
         return 0;
@@ -774,19 +774,19 @@ void Binder::get_bindings(Flow* flow, Stuff& stuff, Packet* p)
 
         if ( pb->use.inspection_index )
         {
-            set_inspection_policy(snort_conf, pb->use.inspection_index - 1);
+            set_inspection_policy(SnortConfig::get_conf(), pb->use.inspection_index - 1);
             flow->inspection_policy_id = pb->use.inspection_index - 1;
         }
 
         if ( pb->use.ips_index )
         {
-            set_ips_policy(snort_conf, pb->use.ips_index - 1);
+            set_ips_policy(SnortConfig::get_conf(), pb->use.ips_index - 1);
             flow->ips_policy_id = pb->use.ips_index - 1;
         }
 
         if ( pb->use.network_index )
         {
-            set_network_policy(snort_conf, pb->use.network_index - 1);
+            set_network_policy(SnortConfig::get_conf(), pb->use.network_index - 1);
             flow->network_policy_id = pb->use.network_index - 1;
         }
 

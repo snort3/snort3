@@ -462,7 +462,7 @@ void Active::reset_session(Packet* p, bool force)
     if ( force or SnortConfig::inline_mode() or SnortConfig::treat_drop_as_ignore() )
         Stream::drop_flow(p);
 
-    if ( s_enabled and snort_conf->max_responses )
+    if ( s_enabled and SnortConfig::get_conf()->max_responses )
     {
         ActionManager::queue_reject(p);
 
@@ -558,3 +558,50 @@ const char* Active::get_action_string()
     return act_str[active_action][active_status];
 }
 
+void Active::suspend()
+{ active_suspend = true; }
+
+void Active::resume()
+{ active_suspend = false; }
+
+bool Active::suspended()
+{ return active_suspend; }
+
+Active::ActiveAction Active::get_action()
+{ return active_action; }
+
+bool Active::can_block()
+{ return active_status == AST_ALLOW or active_status == AST_FORCE; }
+
+void Active::block_again()
+{ active_action = ACT_BLOCK; }
+
+void Active::reset_again()
+{ active_action = ACT_RESET; }
+
+bool Active::packet_was_dropped()
+{ return ( active_action >= ACT_DROP ); }
+
+bool Active::packet_retry_requested()
+{ return ( active_action == ACT_RETRY ); }
+
+bool Active::session_was_blocked()
+{ return ( active_action >= ACT_BLOCK); }
+
+bool Active::packet_would_be_dropped()
+{ return (active_status == AST_WOULD ); }
+
+bool Active::packet_force_dropped()
+{ return (active_status == AST_FORCE ); }
+
+void Active::set_tunnel_bypass()
+{ active_tunnel_bypass++; }
+
+void Active::clear_tunnel_bypass()
+{ active_tunnel_bypass--; }
+
+bool Active::get_tunnel_bypass()
+{ return ( active_tunnel_bypass > 0 ); }
+
+uint64_t Active::get_injects()
+{ return s_injects; }

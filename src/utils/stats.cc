@@ -276,7 +276,7 @@ void get_daq_stats(DAQStats& daq_stats)
 
     daq_stats.internal_blacklist = gaux.internal_blacklist;
     daq_stats.internal_whitelist = gaux.internal_whitelist;
-    daq_stats.skipped = snort_conf->pkt_skip;
+    daq_stats.skipped = SnortConfig::get_conf()->pkt_skip;
     daq_stats.idle = gaux.idle;
     daq_stats.rx_bytes = gaux.rx_bytes;
 }
@@ -293,7 +293,7 @@ void DropStats()
 
     LogLabel("Module Statistics");
     const char* exclude = "daq snort";
-    ModuleManager::dump_stats(snort_conf, exclude);
+    ModuleManager::dump_stats(SnortConfig::get_conf(), exclude);
 
     file_stats_print();
 
@@ -312,19 +312,19 @@ void PrintStatistics()
     timing_stats();
 
     // FIXIT-L below stats need to be made consistent with above
-    print_thresholding(snort_conf->threshold_config, 1);
+    print_thresholding(SnortConfig::get_conf()->threshold_config, 1);
 
     {
         // FIXIT-L can do flag saving with RAII (much cleaner)
-        int save_quiet_flag = snort_conf->logging_flags & LOGGING_FLAG__QUIET;
+        int save_quiet_flag = SnortConfig::get_conf()->logging_flags & LOGGING_FLAG__QUIET;
 
-        snort_conf->logging_flags &= ~LOGGING_FLAG__QUIET;
+        SnortConfig::get_conf()->logging_flags &= ~LOGGING_FLAG__QUIET;
 
         // once more for the main thread
         Profiler::consolidate_stats();
         Profiler::show_stats();
 
-        snort_conf->logging_flags |= save_quiet_flag;
+        SnortConfig::get_conf()->logging_flags |= save_quiet_flag;
     }
 }
 

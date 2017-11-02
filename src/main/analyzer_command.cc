@@ -70,7 +70,7 @@ void ACGetStats::execute(Analyzer&)
     // FIXIT-P This incurs locking on all threads to retrieve stats.  It could be reimplemented to
     //  optimize for large thread counts by retrieving stats in the command and accumulating in the
     //  main thread.
-    ModuleManager::accumulate(snort_conf);
+    ModuleManager::accumulate(SnortConfig::get_conf());
 }
 
 ACGetStats::~ACGetStats()

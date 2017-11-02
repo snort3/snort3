@@ -316,8 +316,8 @@ int sfthreshold_test(
     const SfIp* sip, const SfIp* dip,
     long curtime)
 {
-    if ((snort_conf->threshold_config == nullptr) ||
-        !snort_conf->threshold_config->enabled)
+    if ((SnortConfig::get_conf()->threshold_config == nullptr) ||
+        !SnortConfig::get_conf()->threshold_config->enabled)
     {
         return 0;
     }
@@ -325,7 +325,7 @@ int sfthreshold_test(
     if (!thd_checked)
     {
         thd_checked = 1;
-        thd_answer = sfthd_test_threshold(snort_conf->threshold_config->thd_objs,
+        thd_answer = sfthd_test_threshold(SnortConfig::get_conf()->threshold_config->thd_objs,
             thd_runtime, gen_id, sig_id, sip, dip, curtime);
     }
 

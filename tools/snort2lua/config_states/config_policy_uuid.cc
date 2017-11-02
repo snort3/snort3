@@ -40,9 +40,14 @@ bool PolicyUuid::convert(std::istringstream& data_stream)
     std::string policy_version;
     std::string policy_revision;
 
+    // This could belong to either inspection or ips policy.
+    // binder[].use.*_policy logic in snort will apply these correctly
     if (data_stream >> policy_version >> policy_revision)
     {
         // Had both a base policy version and revision. Use revision UUID.
+        cv.get_table_api().open_table("inspection");
+        cv.get_table_api().add_option("uuid", policy_revision);
+        cv.get_table_api().close_table();
         cv.get_table_api().open_table("ips");
         cv.get_table_api().add_option("uuid", policy_revision);
         cv.get_table_api().close_table();
@@ -50,6 +55,9 @@ bool PolicyUuid::convert(std::istringstream& data_stream)
     else if (!policy_version.empty())
     {
         // Had only a base policy version.
+        cv.get_table_api().open_table("inspection");
+        cv.get_table_api().add_option("uuid", policy_version);
+        cv.get_table_api().close_table();
         cv.get_table_api().open_table("ips");
         cv.get_table_api().add_option("uuid", policy_version);
         cv.get_table_api().close_table();

@@ -121,7 +121,7 @@ static void exit_handler(int signal)
 
 static void dirty_handler(int signal)
 {
-    snort_conf->dirty_pig = true;
+    SnortConfig::get_conf()->dirty_pig = true;
     exit_handler(signal);
 }
 

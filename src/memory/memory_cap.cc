@@ -141,7 +141,7 @@ bool MemoryCap::free_space(size_t n)
     if ( !thread_cap )
         return true;
 
-    const auto& config = *snort_conf->memory;
+    const auto& config = *SnortConfig::get_conf()->memory;
     return memory::free_space(n, thread_cap, s_tracker, prune_handler) || config.soft;
 }
 
@@ -172,7 +172,7 @@ bool MemoryCap::over_threshold()
 void MemoryCap::calculate(unsigned num_threads)
 {
     assert(!is_packet_thread());
-    const MemoryConfig& config = *snort_conf->memory;
+    const MemoryConfig& config = *SnortConfig::get_conf()->memory;
 
     auto main_thread_used = s_tracker.used();
 
@@ -206,7 +206,7 @@ void MemoryCap::calculate(unsigned num_threads)
 
 void MemoryCap::print()
 {
-    const MemoryConfig& config = *snort_conf->memory;
+    const MemoryConfig& config = *SnortConfig::get_conf()->memory;
 
     if ( SnortConfig::log_verbose() or s_tracker.allocations )
         LogLabel("memory (heap)");

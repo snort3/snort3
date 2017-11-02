@@ -97,7 +97,7 @@ static int prmFindRuleGroup(
     /* If no Src/Dst rules - use the generic set, if any exist  */
     if ( p->prmGeneric and (p->prmGeneric->rule_count > 0) )
     {
-        if ( snort_conf->fast_pattern_config->get_split_any_any() or (!*src and !*dst) )
+        if ( SnortConfig::get_conf()->fast_pattern_config->get_split_any_any() or (!*src and !*dst) )
         {
             *gen = p->prmGeneric;
         }

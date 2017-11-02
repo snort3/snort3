@@ -247,7 +247,7 @@ void Snort::init(int argc, char** argv)
 
     /* chew up the command line */
     snort_cmd_line_conf = parse_cmd_line(argc, argv);
-    snort_conf = snort_cmd_line_conf;
+    SnortConfig::set_conf(snort_cmd_line_conf);
 
     LogMessage("--------------------------------------------------\n");
     LogMessage("%s  Snort++ %s-%s\n", get_prompt(), VERSION, BUILD);
@@ -264,7 +264,7 @@ void Snort::init(int argc, char** argv)
     ScriptManager::load_scripts(snort_cmd_line_conf->script_paths);
     PluginManager::load_plugins(snort_cmd_line_conf->plugin_path);
 
-    if ( snort_conf->logging_flags & LOGGING_FLAG__SHOW_PLUGINS )
+    if ( SnortConfig::get_conf()->logging_flags & LOGGING_FLAG__SHOW_PLUGINS )
     {
         ModuleManager::dump_modules();
         PluginManager::dump_plugins();
@@ -280,7 +280,7 @@ void Snort::init(int argc, char** argv)
      * command line overriding config file.
      * Set the global snort_conf that will be used during run time */
     sc->merge(snort_cmd_line_conf);
-    snort_conf = sc;
+    SnortConfig::set_conf(sc);
 
 #ifdef PIGLET
     if ( !Piglet::piglet_mode() )
@@ -290,38 +290,38 @@ void Snort::init(int argc, char** argv)
 #ifdef PIGLET
     if ( !Piglet::piglet_mode() )
 #endif
-    if ( !snort_conf->output.empty() )
-        EventManager::instantiate(snort_conf->output.c_str(), snort_conf);
+    if ( !SnortConfig::get_conf()->output.empty() )
+        EventManager::instantiate(SnortConfig::get_conf()->output.c_str(), SnortConfig::get_conf());
 
     if (SnortConfig::alert_before_pass())
     {
-        OrderRuleLists(snort_conf, "drop sdrop reject alert pass log");
+        OrderRuleLists(SnortConfig::get_conf(), "drop sdrop reject alert pass log");
     }
 
-    snort_conf->setup();
+    SnortConfig::get_conf()->setup();
 
     FileService::post_init();
 
     // Must be after CodecManager::instantiate()
-    if ( !InspectorManager::configure(snort_conf) )
+    if ( !InspectorManager::configure(SnortConfig::get_conf()) )
         ParseError("can't initialize inspectors");
     else if ( SnortConfig::log_verbose() )
-        InspectorManager::print_config(snort_conf);
+        InspectorManager::print_config(SnortConfig::get_conf());
 
-    ModuleManager::reset_stats(snort_conf);
+    ModuleManager::reset_stats(SnortConfig::get_conf());
 
-    if (snort_conf->file_mask != 0)
-        umask(snort_conf->file_mask);
+    if (SnortConfig::get_conf()->file_mask != 0)
+        umask(SnortConfig::get_conf()->file_mask);
     else
         umask(077);    /* set default to be sane */
 
     /* Need to do this after dynamic detection stuff is initialized, too */
-    IpsManager::global_init(snort_conf);
+    IpsManager::global_init(SnortConfig::get_conf());
 
-    snort_conf->post_setup();
+    SnortConfig::get_conf()->post_setup();
 
     MpseManager::activate_search_engine(
-        snort_conf->fast_pattern_config->get_search_api(), snort_conf);
+        SnortConfig::get_conf()->fast_pattern_config->get_search_api(), SnortConfig::get_conf());
 
     SFAT_Start();
 
@@ -332,13 +332,13 @@ void Snort::init(int argc, char** argv)
     Trough::setup();
 
     // FIXIT-L refactor stuff done here and in snort_config.cc::VerifyReload()
-    if ( snort_conf->bpf_filter.empty() && !snort_conf->bpf_file.empty() )
-        snort_conf->bpf_filter = read_infile("bpf_file", snort_conf->bpf_file.c_str());
+    if ( SnortConfig::get_conf()->bpf_filter.empty() && !SnortConfig::get_conf()->bpf_file.empty() )
+        SnortConfig::get_conf()->bpf_filter = read_infile("bpf_file", SnortConfig::get_conf()->bpf_file.c_str());
 
-    if ( !snort_conf->bpf_filter.empty() )
-        LogMessage("Snort BPF option: %s\n", snort_conf->bpf_filter.c_str());
+    if ( !SnortConfig::get_conf()->bpf_filter.empty() )
+        LogMessage("Snort BPF option: %s\n", SnortConfig::get_conf()->bpf_filter.c_str());
 
-    parser_term(snort_conf);
+    parser_term(SnortConfig::get_conf());
 }
 
 // this function should only include initialization that must be done as a
@@ -360,8 +360,8 @@ void Snort::init(int argc, char** argv)
 bool Snort::drop_privileges()
 {
     /* Enter the chroot jail if necessary. */
-    if (!snort_conf->chroot_dir.empty() &&
-        !EnterChroot(snort_conf->chroot_dir, snort_conf->log_dir))
+    if (!SnortConfig::get_conf()->chroot_dir.empty() &&
+        !EnterChroot(SnortConfig::get_conf()->chroot_dir, SnortConfig::get_conf()->log_dir))
         return false;
 
     /* Drop privileges if requested. */
@@ -416,7 +416,7 @@ void Snort::term()
     initializing = false;  // just in case we cut out early
 
     term_signals();
-    IpsManager::global_term(snort_conf);
+    IpsManager::global_term(SnortConfig::get_conf());
     SFAT_Cleanup();
     host_cache.clear();
 
@@ -428,14 +428,14 @@ void Snort::term()
     ClosePidFile();
 
     /* remove pid file */
-    if ( !snort_conf->pid_filename.empty() )
+    if ( !SnortConfig::get_conf()->pid_filename.empty() )
     {
-        int ret = unlink(snort_conf->pid_filename.c_str());
+        int ret = unlink(SnortConfig::get_conf()->pid_filename.c_str());
 
         if (ret != 0)
         {
             ErrorMessage("Could not remove pid file %s: %s\n",
-                snort_conf->pid_filename.c_str(), get_error(errno));
+                SnortConfig::get_conf()->pid_filename.c_str(), get_error(errno));
         }
     }
 
@@ -449,19 +449,19 @@ void Snort::term()
     Periodic::unregister_all();
 
     /* free allocated memory */
-    if (snort_conf == snort_cmd_line_conf)
+    if (SnortConfig::get_conf() == snort_cmd_line_conf)
     {
         delete snort_cmd_line_conf;
         snort_cmd_line_conf = nullptr;
-        snort_conf = nullptr;
+        SnortConfig::set_conf(nullptr);
     }
     else
     {
         delete snort_cmd_line_conf;
         snort_cmd_line_conf = nullptr;
 
-        delete snort_conf;
-        snort_conf = nullptr;
+        delete SnortConfig::get_conf();
+        SnortConfig::set_conf(nullptr);
     }
     CleanupProtoNames();
     SideChannelManager::term();
@@ -475,19 +475,19 @@ void Snort::clean_exit(int)
     SnortConfig tmp;
 
     // Have to trick LogMessage to log correctly after snort_conf is freed
-    if ( snort_conf )
+    if ( SnortConfig::get_conf() )
     {
         tmp.logging_flags |=
-            (snort_conf->logging_flags & LOGGING_FLAG__QUIET);
+            (SnortConfig::get_conf()->logging_flags & LOGGING_FLAG__QUIET);
 
-        tmp.run_flags |= (snort_conf->run_flags & RUN_FLAG__DAEMON);
+        tmp.run_flags |= (SnortConfig::get_conf()->run_flags & RUN_FLAG__DAEMON);
 
         tmp.logging_flags |=
-            (snort_conf->logging_flags & LOGGING_FLAG__SYSLOG);
+            (SnortConfig::get_conf()->logging_flags & LOGGING_FLAG__SYSLOG);
     }
 
     term();
-    snort_conf = &tmp;
+    SnortConfig::set_conf(&tmp);
 
     LogMessage("%s  Snort exiting\n", get_prompt());
     closelog();
@@ -527,7 +527,7 @@ void Snort::setup(int argc, char* argv[])
     init(argc, argv);
 
     LogMessage("%s\n", LOG_DIV);
-    SFDAQ::init(snort_conf);
+    SFDAQ::init(SnortConfig::get_conf());
 
     if ( SnortConfig::daemon_mode() )
         daemonize();
@@ -596,13 +596,13 @@ SnortConfig* Snort::get_reload_config(const char* fname)
 
     FlowbitResetCounts();  // FIXIT-L updates global hash, put in sc
 
-    if ((sc->file_mask != 0) && (sc->file_mask != snort_conf->file_mask))
+    if ((sc->file_mask != 0) && (sc->file_mask != SnortConfig::get_conf()->file_mask))
         umask(sc->file_mask);
 
     // FIXIT-L is this still needed?
     /* Transfer any user defined rule type outputs to the new rule list */
     {
-        RuleListNode* cur = snort_conf->rule_lists;
+        RuleListNode* cur = SnortConfig::get_conf()->rule_lists;
 
         for (; cur != nullptr; cur = cur->next)
         {
@@ -626,7 +626,7 @@ SnortConfig* Snort::get_reload_config(const char* fname)
     sc->post_setup();
 
     if ( sc->fast_pattern_config->get_search_api() !=
-        snort_conf->fast_pattern_config->get_search_api() )
+        SnortConfig::get_conf()->fast_pattern_config->get_search_api() )
     {
         MpseManager::activate_search_engine(sc->fast_pattern_config->get_search_api(), sc);
     }
@@ -733,12 +733,12 @@ bool Snort::thread_init_privileged(const char* intf)
 {
     show_source(intf);
 
-    snort_conf->thread_config->implement_thread_affinity(STHREAD_TYPE_PACKET, get_instance_id());
+    SnortConfig::get_conf()->thread_config->implement_thread_affinity(STHREAD_TYPE_PACKET, get_instance_id());
 
     // FIXIT-M the start-up sequence is a little off due to dropping privs
     SFDAQInstance *daq_instance = new SFDAQInstance(intf);
     SFDAQ::set_local_instance(daq_instance);
-    if (!daq_instance->configure(snort_conf))
+    if (!daq_instance->configure(SnortConfig::get_conf()))
     {
         SFDAQ::set_local_instance(nullptr);
         delete daq_instance;
@@ -762,24 +762,24 @@ void Snort::thread_init_unprivileged()
     for ( unsigned i = 0; i < max_contexts; ++i )
         s_switcher->push(new IpsContext);
 
-    CodecManager::thread_init(snort_conf);
+    CodecManager::thread_init(SnortConfig::get_conf());
 
     // this depends on instantiated daq capabilities
     // so it is done here instead of init()
-    Active::init(snort_conf);
+    Active::init(SnortConfig::get_conf());
 
     InitTag();
     EventTrace_Init();
-    detection_filter_init(snort_conf->detection_filter_config);
+    detection_filter_init(SnortConfig::get_conf()->detection_filter_config);
     DetectionEngine::thread_init();
 
     EventManager::open_outputs();
     IpsManager::setup_options();
-    ActionManager::thread_init(snort_conf);
+    ActionManager::thread_init(SnortConfig::get_conf());
     FileService::thread_init();
     SideChannelManager::thread_init();
     HighAvailabilityManager::thread_init(); // must be before InspectorManager::thread_init();
-    InspectorManager::thread_init(snort_conf);
+    InspectorManager::thread_init(SnortConfig::get_conf());
     PacketTracer::thread_init();
     if (SnortConfig::packet_trace_enabled())
         PacketTracer::enable_user_trace();
@@ -792,14 +792,14 @@ void Snort::thread_term()
 {
     HighAvailabilityManager::thread_term_beginning();
 
-    if ( !snort_conf->dirty_pig )
+    if ( !SnortConfig::get_conf()->dirty_pig )
         Stream::purge_flows();
 
     DetectionEngine::idle();
-    InspectorManager::thread_stop(snort_conf);
-    ModuleManager::accumulate(snort_conf);
-    InspectorManager::thread_term(snort_conf);
-    ActionManager::thread_term(snort_conf);
+    InspectorManager::thread_stop(SnortConfig::get_conf());
+    ModuleManager::accumulate(SnortConfig::get_conf());
+    InspectorManager::thread_term(SnortConfig::get_conf());
+    ActionManager::thread_term(SnortConfig::get_conf());
 
     IpsManager::clear_options();
     EventManager::close_outputs();
@@ -955,7 +955,7 @@ DAQ_Verdict Snort::packet_callback(
     pc.total_from_daq++;
     packet_time_update(&pkthdr->ts);
 
-    if ( snort_conf->pkt_skip && pc.total_from_daq <= snort_conf->pkt_skip )
+    if ( SnortConfig::get_conf()->pkt_skip && pc.total_from_daq <= SnortConfig::get_conf()->pkt_skip )
         return DAQ_VERDICT_PASS;
 
     s_switcher->start();
@@ -985,7 +985,7 @@ DAQ_Verdict Snort::packet_callback(
 
     s_packet->pkth = nullptr;  // no longer avail upon sig segv
 
-    if ( snort_conf->pkt_cnt && pc.total_from_daq >= snort_conf->pkt_cnt )
+    if ( SnortConfig::get_conf()->pkt_cnt && pc.total_from_daq >= SnortConfig::get_conf()->pkt_cnt )
         SFDAQ::break_loop(-1);
 
     else if ( break_time() )

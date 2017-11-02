@@ -124,8 +124,6 @@ struct LatencyConfig;
 struct SFDAQConfig;
 class ThreadConfig;
 
-SO_PUBLIC extern THREAD_LOCAL SnortConfig* snort_conf;
-
 // SnortState members are updated during runtime. an array in SnortConfig is
 // used instead of thread_locals because these must get changed on reload
 // FIXIT-L register this data to avoid explicit dependency
@@ -423,41 +421,41 @@ public:
     // Static convenience accessor methods
 
     static long int get_mpls_stack_depth()
-    { return snort_conf->mpls_stack_depth; }
+    { return get_conf()->mpls_stack_depth; }
 
     static long int get_mpls_payload_type()
-    { return snort_conf->mpls_payload_type; }
+    { return get_conf()->mpls_payload_type; }
 
     static bool mpls_overlapping_ip()
-    { return snort_conf->run_flags & RUN_FLAG__MPLS_OVERLAPPING_IP; }
+    { return get_conf()->run_flags & RUN_FLAG__MPLS_OVERLAPPING_IP; }
 
     static bool mpls_multicast()
-    { return snort_conf->run_flags & RUN_FLAG__MPLS_MULTICAST; }
+    { return get_conf()->run_flags & RUN_FLAG__MPLS_MULTICAST; }
 
     static bool deep_teredo_inspection()
-    { return snort_conf->enable_teredo; }
+    { return get_conf()->enable_teredo; }
 
     static bool gtp_decoding()
-    { return snort_conf->gtp_ports; }
+    { return get_conf()->gtp_ports; }
 
     static bool is_gtp_port(uint16_t port)
-    { return snort_conf->gtp_ports->test(port); }
+    { return get_conf()->gtp_ports->test(port); }
 
     static bool esp_decoding()
-    { return snort_conf->enable_esp; }
+    { return get_conf()->enable_esp; }
 
     // mode related
     static bool test_mode()
-    { return snort_conf->run_flags & RUN_FLAG__TEST; }
+    { return get_conf()->run_flags & RUN_FLAG__TEST; }
 
     static bool mem_check()
-    { return snort_conf->run_flags & RUN_FLAG__MEM_CHECK; }
+    { return get_conf()->run_flags & RUN_FLAG__MEM_CHECK; }
 
     static bool daemon_mode()
-    { return snort_conf->run_flags & RUN_FLAG__DAEMON; }
+    { return get_conf()->run_flags & RUN_FLAG__DAEMON; }
 
     static bool read_mode()
-    { return snort_conf->run_flags & RUN_FLAG__READ; }
+    { return get_conf()->run_flags & RUN_FLAG__READ; }
 
     static bool inline_mode()
     { return ::get_ips_policy()->policy_mode == POLICY_MODE__INLINE; }
@@ -466,33 +464,33 @@ public:
     { return ::get_ips_policy()->policy_mode == POLICY_MODE__INLINE_TEST; }
 
     static bool adaptor_inline_mode()
-    { return snort_conf->run_flags & RUN_FLAG__INLINE; }
+    { return get_conf()->run_flags & RUN_FLAG__INLINE; }
 
     static bool adaptor_inline_test_mode()
-    { return snort_conf->run_flags & RUN_FLAG__INLINE_TEST; }
+    { return get_conf()->run_flags & RUN_FLAG__INLINE_TEST; }
 
     // logging stuff
     static bool log_syslog()
-    { return snort_conf->logging_flags & LOGGING_FLAG__SYSLOG; }
+    { return get_conf()->logging_flags & LOGGING_FLAG__SYSLOG; }
 
     static bool log_verbose()
-    { return snort_conf->logging_flags & LOGGING_FLAG__VERBOSE; }
+    { return get_conf()->logging_flags & LOGGING_FLAG__VERBOSE; }
 
     static bool log_quiet()
-    { return snort_conf->logging_flags & LOGGING_FLAG__QUIET; }
+    { return get_conf()->logging_flags & LOGGING_FLAG__QUIET; }
 
     // event stuff
     static uint32_t get_event_log_id()
-    { return snort_conf->event_log_id; }
+    { return get_conf()->event_log_id; }
 
     static bool process_all_events()
-    { return snort_conf->event_queue_config->process_all_events; }
+    { return get_conf()->event_queue_config->process_all_events; }
 
     static int get_eval_index(RuleType type)
-    { return snort_conf->evalOrder[type]; }
+    { return get_conf()->evalOrder[type]; }
 
     static int get_default_rule_state()
-    { return snort_conf->default_rule_state; }
+    { return get_conf()->default_rule_state; }
 
     SO_PUBLIC static bool tunnel_bypass_enabled(uint8_t proto);
 
@@ -526,72 +524,72 @@ public:
 
     // output stuff
     static bool output_include_year()
-    { return snort_conf->output_flags & OUTPUT_FLAG__INCLUDE_YEAR; }
+    { return get_conf()->output_flags & OUTPUT_FLAG__INCLUDE_YEAR; }
 
     static bool output_use_utc()
-    { return snort_conf->output_flags & OUTPUT_FLAG__USE_UTC; }
+    { return get_conf()->output_flags & OUTPUT_FLAG__USE_UTC; }
 
     static bool output_datalink()
-    { return snort_conf->output_flags & OUTPUT_FLAG__SHOW_DATA_LINK; }
+    { return get_conf()->output_flags & OUTPUT_FLAG__SHOW_DATA_LINK; }
 
     static bool verbose_byte_dump()
-    { return snort_conf->output_flags & OUTPUT_FLAG__VERBOSE_DUMP; }
+    { return get_conf()->output_flags & OUTPUT_FLAG__VERBOSE_DUMP; }
 
     static bool obfuscate()
-    { return snort_conf->output_flags & OUTPUT_FLAG__OBFUSCATE; }
+    { return get_conf()->output_flags & OUTPUT_FLAG__OBFUSCATE; }
 
     static bool output_app_data()
-    { return snort_conf->output_flags & OUTPUT_FLAG__APP_DATA; }
+    { return get_conf()->output_flags & OUTPUT_FLAG__APP_DATA; }
 
     static bool output_char_data()
-    { return snort_conf->output_flags & OUTPUT_FLAG__CHAR_DATA; }
+    { return get_conf()->output_flags & OUTPUT_FLAG__CHAR_DATA; }
 
     static bool alert_interface()
-    { return snort_conf->output_flags & OUTPUT_FLAG__ALERT_IFACE; }
+    { return get_conf()->output_flags & OUTPUT_FLAG__ALERT_IFACE; }
 
     static bool output_no_timestamp()
-    { return snort_conf->output_flags & OUTPUT_FLAG__NO_TIMESTAMP; }
+    { return get_conf()->output_flags & OUTPUT_FLAG__NO_TIMESTAMP; }
 
     static bool line_buffered_logging()
-    { return snort_conf->output_flags & OUTPUT_FLAG__LINE_BUFFER; }
+    { return get_conf()->output_flags & OUTPUT_FLAG__LINE_BUFFER; }
 
     static bool output_wide_hex()
-    { return snort_conf->output_flags & OUTPUT_FLAG__WIDE_HEX; }
+    { return get_conf()->output_flags & OUTPUT_FLAG__WIDE_HEX; }
 
     static bool alert_refs()
-    { return snort_conf->output_flags & OUTPUT_FLAG__ALERT_REFS; }
+    { return get_conf()->output_flags & OUTPUT_FLAG__ALERT_REFS; }
 
     // run flags
     static bool no_lock_pid_file()
-    { return snort_conf->run_flags & RUN_FLAG__NO_LOCK_PID_FILE; }
+    { return get_conf()->run_flags & RUN_FLAG__NO_LOCK_PID_FILE; }
 
     static bool create_pid_file()
-    { return snort_conf->run_flags & RUN_FLAG__CREATE_PID_FILE; }
+    { return get_conf()->run_flags & RUN_FLAG__CREATE_PID_FILE; }
 
     static bool pcap_show()
-    { return snort_conf->run_flags & RUN_FLAG__PCAP_SHOW; }
+    { return get_conf()->run_flags & RUN_FLAG__PCAP_SHOW; }
 
     static bool treat_drop_as_alert()
-    { return snort_conf->run_flags & RUN_FLAG__TREAT_DROP_AS_ALERT; }
+    { return get_conf()->run_flags & RUN_FLAG__TREAT_DROP_AS_ALERT; }
 
     static bool treat_drop_as_ignore()
-    { return snort_conf->run_flags & RUN_FLAG__TREAT_DROP_AS_IGNORE; }
+    { return get_conf()->run_flags & RUN_FLAG__TREAT_DROP_AS_IGNORE; }
 
     static bool alert_before_pass()
-    { return snort_conf->run_flags & RUN_FLAG__ALERT_BEFORE_PASS; }
+    { return get_conf()->run_flags & RUN_FLAG__ALERT_BEFORE_PASS; }
 
     static bool no_pcre()
-    { return snort_conf->run_flags & RUN_FLAG__NO_PCRE; }
+    { return get_conf()->run_flags & RUN_FLAG__NO_PCRE; }
 
     static bool conf_error_out()
-    { return snort_conf->run_flags & RUN_FLAG__CONF_ERROR_OUT; }
+    { return get_conf()->run_flags & RUN_FLAG__CONF_ERROR_OUT; }
 
     static bool assure_established()
-    { return snort_conf->run_flags & RUN_FLAG__ASSURE_EST; }
+    { return get_conf()->run_flags & RUN_FLAG__ASSURE_EST; }
 
     // FIXIT-L snort_conf needed for static hash before initialized
     static bool static_hash()
-    { return snort_conf && snort_conf->run_flags & RUN_FLAG__STATIC_HASH; }
+    { return get_conf() && get_conf()->run_flags & RUN_FLAG__STATIC_HASH; }
 
     // other stuff
     static uint8_t min_ttl()
@@ -601,45 +599,49 @@ public:
     { return ::get_network_policy()->new_ttl; }
 
     static long int get_pcre_match_limit()
-    { return snort_conf->pcre_match_limit; }
+    { return get_conf()->pcre_match_limit; }
 
     static long int get_pcre_match_limit_recursion()
-    { return snort_conf->pcre_match_limit_recursion; }
+    { return get_conf()->pcre_match_limit_recursion; }
 
     static const ProfilerConfig* get_profiler()
-    { return snort_conf->profiler; }
+    { return get_conf()->profiler; }
 
     static long int get_tagged_packet_limit()
-    { return snort_conf->tagged_packet_limit; }
+    { return get_conf()->tagged_packet_limit; }
 
     static uint32_t get_max_attribute_hosts()
-    { return snort_conf->max_attribute_hosts; }
+    { return get_conf()->max_attribute_hosts; }
 
     static uint32_t get_max_services_per_host()
-    { return snort_conf->max_attribute_services_per_host; }
+    { return get_conf()->max_attribute_services_per_host; }
 
     static int get_uid()
-    { return snort_conf->user_id; }
+    { return get_conf()->user_id; }
 
     static int get_gid()
-    { return snort_conf->group_id; }
+    { return get_conf()->group_id; }
 
     static bool get_vlan_agnostic()
-    { return snort_conf->vlan_agnostic; }
+    { return get_conf()->vlan_agnostic; }
 
     static bool address_space_agnostic()
-    { return snort_conf->addressspace_agnostic; }
+    { return get_conf()->addressspace_agnostic; }
 
     static bool change_privileges()
     {
-        return snort_conf->user_id != -1 || snort_conf->group_id != -1 ||
-            !snort_conf->chroot_dir.empty();
+        return get_conf()->user_id != -1 || get_conf()->group_id != -1 ||
+            !get_conf()->chroot_dir.empty();
     }
 
     static bool packet_trace_enabled()
     {
-        return snort_conf->enable_packet_trace;
+        return get_conf()->enable_packet_trace;
     }
+
+    // Use this to access current thread's conf from other units
+    static void set_conf(SnortConfig*);
+    SO_PUBLIC static SnortConfig* get_conf();
 };
 
 #endif

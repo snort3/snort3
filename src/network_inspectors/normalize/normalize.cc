@@ -186,25 +186,18 @@ Normalizer::Normalizer(const NormalizerConfig& nc)
 // FIXIT-L this works with one normalizer per policy
 // but would be better if binder could select
 // in which case normal_mask must be moved to flow
+// from cwaxman - why can't normal_mask be applied directly from Normalizer?
 bool Normalizer::configure(SnortConfig*)
 {
-    PolicyMode mode = get_ips_policy()->policy_mode;
-    // FIXIT-L norm needs a nap policy mode
-    if ( mode == POLICY_MODE__PASSIVE )
-    {
-        config.normalizer_flags = 0;
-        return true;
-    }
-
+    // FIXIT-M move entire config to network policy? Leaving split loads the currently selected
+    // network policy with whichever instantiation of an inspection policy this normalize is in
     NetworkPolicy* nap = get_network_policy();
+
     nap->normal_mask = config.normalizer_flags;
 
     if ( nap->new_ttl && nap->new_ttl < nap->min_ttl )
-    {
         nap->new_ttl = nap->min_ttl;
-    }
 
-    config.norm_mode = (mode == POLICY_MODE__INLINE) ? NORM_MODE_ON : NORM_MODE_TEST;
     Norm_SetConfig(&config);
     return true;
 }
@@ -220,17 +213,15 @@ bool Normalize_IsEnabled(NormFlags nf)
     return ( (nap->normal_mask & nf) != 0 );
 }
 
+// FIXIT-L should return OFF if flag isn't set. Stream will need to handle that condition
 NormMode Normalize_GetMode(NormFlags nf)
 {
     if (Normalize_IsEnabled(nf))
     {
-        const PolicyMode mode = get_ips_policy()->policy_mode;
+        const PolicyMode mode = get_inspection_policy()->policy_mode;
 
         if ( mode == POLICY_MODE__INLINE )
             return NORM_MODE_ON;
-
-        else if ( mode == POLICY_MODE__INLINE_TEST )
-            return NORM_MODE_TEST;
     }
     return NORM_MODE_TEST;
 }

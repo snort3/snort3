@@ -65,9 +65,9 @@ int16_t snortId_for_http2;
 static void map_app_names_to_snort_ids()
 {
     /* init globals for snortId compares */
-    snortId_for_unsynchronized = snort_conf->proto_ref->add("unsynchronized");
-    snortId_for_ftp_data = snort_conf->proto_ref->add("ftp-data");
-    snortId_for_http2    = snort_conf->proto_ref->add("http2");
+    snortId_for_unsynchronized = SnortConfig::get_conf()->proto_ref->add("unsynchronized");
+    snortId_for_ftp_data = SnortConfig::get_conf()->proto_ref->add("ftp-data");
+    snortId_for_http2    = SnortConfig::get_conf()->proto_ref->add("http2");
 }
 
 AppIdModuleConfig::AppIdModuleConfig()

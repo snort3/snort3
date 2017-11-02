@@ -31,7 +31,7 @@
 #include "stream.h"
 
 unsigned StreamSplitter::max(Flow*)
-{ return snort_conf->max_pdu; }
+{ return SnortConfig::get_conf()->max_pdu; }
 
 uint16_t StreamSplitter::get_flush_bucket_size()
 { return FlushBucket::get_size(); }

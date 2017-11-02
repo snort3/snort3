@@ -59,7 +59,7 @@ tTargetBasedConfig::tTargetBasedConfig()
     // FIXIT-M 16k per host is no longer true
     // FIXIT-M init before snort_conf; move to filename and load separately
     // this is a hack to get it going
-    uint32_t max = snort_conf ?
+    uint32_t max = SnortConfig::get_conf() ?
         SnortConfig::get_max_attribute_hosts() : DEFAULT_MAX_ATTRIBUTE_HOSTS;
     lookupTable = sfrt_new(DIR_8x16, IPv6, max + 1, (max>>6) + 1);
 }
@@ -258,7 +258,7 @@ int SFAT_AddHostEntryToMap(HostAttributeEntry* host)
                     ret, SnortConfig::get_max_attribute_hosts());
                 sfat_insufficient_space_logged = true;
             }
-            /* Reset return value and continue w/ only snort_conf->max_attribute_hosts */
+            /* Reset return value and continue w/ only SnortConfig::get_conf()->max_attribute_hosts */
             ret = RT_SUCCESS;
         }
         else if ( !sfat_grammar_error_printed )

@@ -33,9 +33,15 @@
 // Stubs whose sole purpose is to make the test code link
 static SnortConfig my_config;
 THREAD_LOCAL SnortConfig *snort_conf = &my_config;
+
 SnortConfig::SnortConfig(SnortConfig*) 
 { snort_conf->run_flags = 0;} // run_flags is used indirectly from SFHASHFCN class by calling SnortConfig::static_hash()
+
 SnortConfig::~SnortConfig() = default;
+
+SnortConfig* SnortConfig::get_conf()
+{ return snort_conf; }
+
 // implement functions for virtual
 FileVerdict FilePolicy::type_lookup(Flow* , FileContext* ) { return FILE_VERDICT_UNKNOWN;}
 FileVerdict FilePolicy::type_lookup(Flow* , FileInfo* ) { return FILE_VERDICT_UNKNOWN;}

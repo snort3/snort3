@@ -205,7 +205,7 @@ FileContext::FileContext ()
     file_signature_context = nullptr;
     file_capture = nullptr;
     file_segments = nullptr;
-    inspector = (FileInspect*)InspectorManager::acquire(FILE_ID_NAME, snort_conf);
+    inspector = (FileInspect*)InspectorManager::acquire(FILE_ID_NAME, SnortConfig::get_conf());
     file_config = inspector->config;
 }
 

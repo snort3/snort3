@@ -252,11 +252,11 @@ static void AlertSyslog(
 
             if (SnortConfig::obfuscate())
             {
-                ObfuscateIpToText(p->ptrs.ip_api.get_src(), snort_conf->homenet,
-                    snort_conf->obfuscation_net, src);
+                ObfuscateIpToText(p->ptrs.ip_api.get_src(), SnortConfig::get_conf()->homenet,
+                    SnortConfig::get_conf()->obfuscation_net, src);
 
-                ObfuscateIpToText(p->ptrs.ip_api.get_dst(), snort_conf->homenet,
-                    snort_conf->obfuscation_net, dst);
+                ObfuscateIpToText(p->ptrs.ip_api.get_dst(), SnortConfig::get_conf()->homenet,
+                    SnortConfig::get_conf()->obfuscation_net, dst);
 
                 SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt, src, dst);
             }
@@ -274,11 +274,11 @@ static void AlertSyslog(
 
             if (SnortConfig::obfuscate())
             {
-                ObfuscateIpToText(p->ptrs.ip_api.get_src(), snort_conf->homenet,
-                    snort_conf->obfuscation_net, src);
+                ObfuscateIpToText(p->ptrs.ip_api.get_src(), SnortConfig::get_conf()->homenet,
+                    SnortConfig::get_conf()->obfuscation_net, src);
 
-                ObfuscateIpToText(p->ptrs.ip_api.get_dst(), snort_conf->homenet,
-                    snort_conf->obfuscation_net, dst);
+                ObfuscateIpToText(p->ptrs.ip_api.get_dst(), SnortConfig::get_conf()->homenet,
+                    SnortConfig::get_conf()->obfuscation_net, dst);
 
                 SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt,
                     src, p->ptrs.sp, dst, p->ptrs.dp);
