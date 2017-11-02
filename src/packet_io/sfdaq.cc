@@ -296,10 +296,12 @@ SFDAQInstance::SFDAQInstance(const char* intf)
 {
     if (intf)
         interface_spec = intf;
+    daq_meta_callback = nullptr;
     daq_hand = nullptr;
     daq_dlt = -1;
     s_error = DAQ_SUCCESS;
     memset(&daq_stats, 0, sizeof(daq_stats));
+    daq_tunnel_mask = 0;
 }
 
 SFDAQInstance::~SFDAQInstance()
