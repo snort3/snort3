@@ -78,7 +78,7 @@ inline bool is_third_party_appid_available(void* tp_session)
                || state == TP_STATE_MONITORING);
     }
 
-    return true;
+    return false;
 }
 
 #endif

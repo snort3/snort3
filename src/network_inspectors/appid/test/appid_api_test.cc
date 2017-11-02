@@ -540,7 +540,7 @@ TEST(appid_api, is_appid_available)
     bool val = appid_api.is_appid_available(nullptr);
     CHECK_TRUE(!val);
     val = appid_api.is_appid_available(mock_session);
-    CHECK_TRUE(val);
+    CHECK_FALSE(val);
     mock_session->set_session_flags(APPID_SESSION_NO_TPI);
     val = appid_api.is_appid_available(mock_session);
     CHECK_TRUE(val);

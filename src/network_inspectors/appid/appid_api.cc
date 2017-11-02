@@ -235,6 +235,9 @@ bool AppIdApi::is_appid_available(AppIdSession* asd)
     {
         if (asd->get_session_flags(APPID_SESSION_NO_TPI))
             return true;
+        // FIXIT-M: If a third-party module is not available then this
+        //          should probably check if an appId has been discovered
+        //          by the local AppId module.
         return is_third_party_appid_available(asd->tpsession);
     }
     return false;
