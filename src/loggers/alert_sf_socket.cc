@@ -241,14 +241,14 @@ static void send_sar(uint8_t* data, unsigned len)
 // (actually, the whole reason for doing this needs to be rethought)
 static OptTreeNode* OptTreeNode_Search(uint32_t, uint32_t sid)
 {
-    SFGHASH_NODE* hashNode;
+    GHashNode* hashNode;
 
     if (sid == 0)
         return nullptr;
 
-    for (hashNode = sfghash_findfirst(SnortConfig::get_conf()->otn_map);
+    for (hashNode = ghash_findfirst(SnortConfig::get_conf()->otn_map);
         hashNode;
-        hashNode = sfghash_findnext(SnortConfig::get_conf()->otn_map))
+        hashNode = ghash_findnext(SnortConfig::get_conf()->otn_map))
     {
         OptTreeNode* otn = (OptTreeNode*)hashNode->data;
         RuleTreeNode* rtn = getRuntimeRtnFromOtn(otn);

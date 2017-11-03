@@ -56,7 +56,7 @@
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
-#include "hash/sfhashfcn.h"
+#include "hash/hashfcn.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 

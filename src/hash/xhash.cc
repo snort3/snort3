@@ -53,16 +53,16 @@
  *
  *  Per Node Memory Usage:
  *  ----------------------
- *     SFXHASH_NODE bytes
+ *     XHashNode bytes
  *     KEYSIZE bytes
- *     [DATASIZE bytes] if datasize > 0 during call to sfxhash_new.
+ *     [DATASIZE bytes] if datasize > 0 during call to xhash_new.
  *
- *  The hash node memory (sfxhash_node,key,and data) is allocated with
+ *  The hash node memory (xhash_node,key,and data) is allocated with
  *  one call to s_alloc/memcap_alloc.
  *
  *  Author: Marc Norton
  *
- *  2003-06-03: cmg - added sfxhash_{l,m}ru to return {least,most}
+ *  2003-06-03: cmg - added xhash_{l,m}ru to return {least,most}
  *              recently used node from the global list
  *
  *              - added _anrcount function
@@ -81,7 +81,7 @@
  *  2003-06-30: rdempster
  *              fixed bug in that would anr from the freelist
  *
- *  2005-11-15: modified sfxhash_add to check if 'data' is zero before memcpy'ing.
+ *  2005-11-15: modified xhash_add to check if 'data' is zero before memcpy'ing.
  *              this allows user to pass null for data, and set up the data area
  *              themselves after the call - this is much more flexible.
  *  8/31/2006: man - changed to use prime table lookup.
@@ -91,30 +91,30 @@
 #include "config.h"
 #endif
 
-#include "sfxhash.h"
+#include "xhash.h"
 
 #include <cassert>
 #include "utils/util.h"
-#include "sfhashfcn.h"
+#include "hashfcn.h"
 
 /*
- * Implements SFXHASH as specialized hash container
+ * Implements XHash as specialized hash container
  */
 
 /*
 * Private Malloc - abstract the memory system
 */
-static inline void* s_alloc(SFXHASH* t, int n)
+static inline void* s_alloc(XHash* t, int n)
 {
     return sfmemcap_alloc(&t->mc, n);
 }
 
-static inline void s_free(SFXHASH* t, void* p)
+static inline void s_free(XHash* t, void* p)
 {
     sfmemcap_free(&t->mc, p);
 }
 
-static int sfxhash_nearest_powerof2(int nrows)
+static int xhash_nearest_powerof2(int nrows)
 {
     nrows -= 1;
     for (unsigned i=1; i<sizeof(nrows) * 8; i <<= 1)
@@ -137,9 +137,9 @@ static int sfxhash_nearest_powerof2(int nrows)
  * anrfree  users Automatic Node Recovery memory release function
  * usrfree  users standard memory release function
  *
- * return SFXHASH*
+ * return XHash*
  * retval  0 out of memory
- * retval !0 Valid SFXHASH pointer
+ * retval !0 Valid XHash pointer
  */
 /*
   Notes:
@@ -148,17 +148,17 @@ static int sfxhash_nearest_powerof2(int nrows)
   maxmem of 0 indicates no memory limits.
 
 */
-SFXHASH* sfxhash_new(int nrows, int keysize, int datasize, unsigned long maxmem,
+XHash* xhash_new(int nrows, int keysize, int datasize, unsigned long maxmem,
     int anr_flag,
-    SFXHASH_FREE_FCN anrfree,
-    SFXHASH_FREE_FCN usrfree,
+    XHash_FREE_FCN anrfree,
+    XHash_FREE_FCN usrfree,
     int recycle_flag)
 {
     if ( nrows > 0 ) /* make sure we have a prime number */
     {
         /* If nrows is not a power of two, need to find the
          * next highest power of two */
-        nrows = sfxhash_nearest_powerof2(nrows);
+        nrows = xhash_nearest_powerof2(nrows);
     }
     else   /* use the magnitude of nrows as is */
     {
@@ -166,18 +166,18 @@ SFXHASH* sfxhash_new(int nrows, int keysize, int datasize, unsigned long maxmem,
     }
 
     /* Allocate the table structure from general memory */
-    SFXHASH* h = (SFXHASH*)snort_calloc(sizeof(SFXHASH));
+    XHash* h = (XHash*)snort_calloc(sizeof(XHash));
 
     /* this has a default hashing function */
-    h->sfhashfcn = sfhashfcn_new(nrows);
+    h->hashfcn = hashfcn_new(nrows);
     sfmemcap_init(&h->mc, maxmem);
 
     /* Allocate the array of node ptrs */
-    h->table = (SFXHASH_NODE**)s_alloc(h, sizeof(SFXHASH_NODE*) * nrows);
+    h->table = (XHashNode**)s_alloc(h, sizeof(XHashNode*) * nrows);
 
     if ( !h->table )
     {
-        snort_free(h->sfhashfcn);
+        snort_free(h->hashfcn);
         snort_free(h);
         return nullptr;
     }
@@ -218,11 +218,11 @@ SFXHASH* sfxhash_new(int nrows, int keysize, int datasize, unsigned long maxmem,
  *  Set the maximum nodes used in this hash table.
  *  Specifying 0 is unlimited (or otherwise limited by memcap).
  *
- * h SFXHASH table pointer
+ * h XHash table pointer
  * max_nodes maximum nodes to allow.
  *
  */
-void sfxhash_set_max_nodes(SFXHASH* h, int max_nodes)
+void xhash_set_max_nodes(XHash* h, int max_nodes)
 {
     if (h)
     {
@@ -237,17 +237,17 @@ void sfxhash_set_max_nodes(SFXHASH* h, int max_nodes)
  *  No need to call the user free, since that should've been
  *  done when those nodes were put back in the free list.
  *
- * h SFXHASH table pointer
+ * h XHash table pointer
  */
-static void sfxhash_delete_free_list(SFXHASH* t)
+static void xhash_delete_free_list(XHash* t)
 {
     if (t == nullptr || t->fhead == nullptr)
         return;
 
-    SFXHASH_NODE* cur = t->fhead;
+    XHashNode* cur = t->fhead;
     while (cur != nullptr)
     {
-        SFXHASH_NODE* next = cur->gnext;
+        XHashNode* next = cur->gnext;
         s_free(t, (void*)cur);
         cur = next;
     }
@@ -261,24 +261,24 @@ static void sfxhash_delete_free_list(SFXHASH* t)
  *
  *  free key's, free node's, and free the users data.
  *
- * h SFXHASH table pointer
+ * h XHash table pointer
  *
  */
-void sfxhash_delete(SFXHASH* h)
+void xhash_delete(XHash* h)
 {
     if ( !h )
         return;
 
-    if ( h->sfhashfcn )
-        sfhashfcn_free(h->sfhashfcn);
+    if ( h->hashfcn )
+        hashfcn_free(h->hashfcn);
 
     if ( h->table )
     {
         for (unsigned i = 0; i < h->nrows; i++)
         {
-            for ( SFXHASH_NODE* node = h->table[i]; node; )
+            for ( XHashNode* node = h->table[i]; node; )
             {
-                SFXHASH_NODE* onode = node;
+                XHashNode* onode = node;
                 node  = node->next;
 
                 /* Notify user that we are about to free this node function */
@@ -292,7 +292,7 @@ void sfxhash_delete(SFXHASH* h)
         h->table = nullptr;
     }
 
-    sfxhash_delete_free_list(h);
+    xhash_delete_free_list(h);
 
     snort_free(h);   /* free the table from general memory */
 }
@@ -300,23 +300,23 @@ void sfxhash_delete(SFXHASH* h)
 /*!
  *  Empty out the hash table
  *
- * h SFXHASH table pointer
+ * h XHash table pointer
  *
  * return -1 on error
  */
-int sfxhash_make_empty(SFXHASH* h)
+int xhash_make_empty(XHash* h)
 {
-    SFXHASH_NODE* tmp = nullptr;
+    XHashNode* tmp = nullptr;
 
     if (h == nullptr)
         return -1;
 
     for (unsigned i = 0; i < h->nrows; i++)
     {
-        for (SFXHASH_NODE* n = h->table[i]; n != nullptr; n = tmp)
+        for (XHashNode* n = h->table[i]; n != nullptr; n = tmp)
         {
             tmp = n->next;
-            if (sfxhash_free_node(h, n) != SFXHASH_OK)
+            if (xhash_free_node(h, n) != XHASH_OK)
             {
                 return -1;
             }
@@ -340,7 +340,7 @@ int sfxhash_make_empty(SFXHASH* h)
 /** Save the freed node for later use (recylcing).
  *  Free List - uses the NODE gnext/gprev fields
  */
-static void sfxhash_save_free_node(SFXHASH* t, SFXHASH_NODE* hnode)
+static void xhash_save_free_node(XHash* t, XHashNode* hnode)
 {
     /* Add A Node to the Free Node List */
     if ( t->fhead ) /* add the node to head of the the existing list */
@@ -362,9 +362,9 @@ static void sfxhash_save_free_node(SFXHASH* t, SFXHASH_NODE* hnode)
 
 /**Get a previously freed node for reuse.
  */
-static SFXHASH_NODE* sfxhash_get_free_node(SFXHASH* t)
+static XHashNode* xhash_get_free_node(XHash* t)
 {
-    SFXHASH_NODE* node = t->fhead;
+    XHashNode* node = t->fhead;
 
     /* Remove A Node from the Free Node List - remove the head node */
     if ( t->fhead  )
@@ -380,7 +380,7 @@ static SFXHASH_NODE* sfxhash_get_free_node(SFXHASH* t)
     return node;
 }
 
-static void sfxhash_glink_node(SFXHASH* t, SFXHASH_NODE* hnode)
+static void xhash_glink_node(XHash* t, XHashNode* hnode)
 {
     /* Add The Node */
     if ( t->ghead ) /* add the node to head of the the existing list */
@@ -400,7 +400,7 @@ static void sfxhash_glink_node(SFXHASH* t, SFXHASH_NODE* hnode)
     }
 }
 
-static void sfxhash_gunlink_node(SFXHASH* t, SFXHASH_NODE* hnode)
+static void xhash_gunlink_node(XHash* t, XHashNode* hnode)
 {
     if ( t->gnode == hnode ) /* if this was the global next node */
     {
@@ -426,19 +426,19 @@ static void sfxhash_gunlink_node(SFXHASH* t, SFXHASH_NODE* hnode)
 
 /**Move node to the front of global list. Node movement is application specific.
  */
-void sfxhash_gmovetofront(SFXHASH* t, SFXHASH_NODE* hnode)
+void xhash_gmovetofront(XHash* t, XHashNode* hnode)
 {
     if ( hnode != t->ghead )
     {
-        sfxhash_gunlink_node(t, hnode);
-        sfxhash_glink_node(t, hnode);
+        xhash_gunlink_node(t, hnode);
+        xhash_glink_node(t, hnode);
     }
 }
 
 /*
  *
  */
-static void sfxhash_link_node(SFXHASH* t, SFXHASH_NODE* hnode)
+static void xhash_link_node(XHash* t, XHashNode* hnode)
 {
     /* Add The Node to the Hash Table Row List */
     if ( t->table[hnode->rindex] ) /* add the node to the existing list */
@@ -456,7 +456,7 @@ static void sfxhash_link_node(SFXHASH* t, SFXHASH_NODE* hnode)
     }
 }
 
-static void sfxhash_unlink_node(SFXHASH* t, SFXHASH_NODE* hnode)
+static void xhash_unlink_node(XHash* t, XHashNode* hnode)
 {
     if ( hnode->prev )  // definitely not the 1st node in the list
     {
@@ -475,22 +475,22 @@ static void sfxhash_unlink_node(SFXHASH* t, SFXHASH_NODE* hnode)
 /*
  *  move a node to the front of the row list at row = 'index'
  */
-static void movetofront(SFXHASH* t, SFXHASH_NODE* n)
+static void movetofront(XHash* t, XHashNode* n)
 {
     /* Modify Hash Node Row List */
     if ( t->table[n->rindex] != n ) // if not at front of list already...
     {
         /* Unlink the node */
-        sfxhash_unlink_node(t, n);
+        xhash_unlink_node(t, n);
 
         /* Link at front of list */
-        sfxhash_link_node(t, n);
+        xhash_link_node(t, n);
     }
 
     /* Move node in the global hash node list to the front */
     if (n == t->gnode)
         t->gnode = n->gnext;
-    sfxhash_gmovetofront(t, n);
+    xhash_gmovetofront(t, n);
 }
 
 /*
@@ -503,17 +503,17 @@ static void movetofront(SFXHASH* t, SFXHASH_NODE* n)
  * to the front of the list. The oldest node is just the tail node.
  *
  */
-static SFXHASH_NODE* sfxhash_newnode(SFXHASH* t)
+static XHashNode* xhash_newnode(XHash* t)
 {
     /* Recycle Old Nodes - if any */
-    SFXHASH_NODE* hnode = sfxhash_get_free_node(t);
+    XHashNode* hnode = xhash_get_free_node(t);
 
     /* Allocate memory for a node */
     if ( !hnode )
     {
         if ((t->max_nodes == 0) || (t->count < t->max_nodes))
         {
-            hnode = (SFXHASH_NODE*)s_alloc(t, sizeof(SFXHASH_NODE) + t->pad +
+            hnode = (XHashNode*)s_alloc(t, sizeof(XHashNode) + t->pad +
                 t->keysize + t->datasize);
         }
     }
@@ -542,8 +542,8 @@ static SFXHASH_NODE* sfxhash_newnode(SFXHASH* t)
                 /* YES, user said we can recycle this node */
             }
 
-            sfxhash_gunlink_node(t, hnode);   /* unlink from the global list */
-            sfxhash_unlink_node(t, hnode);   /* unlink from the row list */
+            xhash_gunlink_node(t, hnode);   /* unlink from the global list */
+            xhash_unlink_node(t, hnode);   /* unlink from the row list */
             t->count--;
             t->anr_count++; /* count # of ANR operations */
             break;
@@ -567,9 +567,9 @@ static SFXHASH_NODE* sfxhash_newnode(SFXHASH* t)
 #define hashsize(n) ((uint32_t)1<<(n))
 #define hashmask(n) (hashsize(n)-1)
 
-static SFXHASH_NODE* sfxhash_find_node_row(SFXHASH* t, const void* key, int* rindex)
+static XHashNode* xhash_find_node_row(XHash* t, const void* key, int* rindex)
 {
-    unsigned hashkey = t->sfhashfcn->hash_fcn(t->sfhashfcn, (const unsigned char*)key, t->keysize);
+    unsigned hashkey = t->hashfcn->hash_fcn(t->hashfcn, (const unsigned char*)key, t->keysize);
 
 /*     printf("hashkey: %u t->keysize: %d\n", hashkey, t->keysize);
        flowkey_fprint(stdout, key);
@@ -580,9 +580,9 @@ static SFXHASH_NODE* sfxhash_find_node_row(SFXHASH* t, const void* key, int* rin
     int index  = hashkey & (t->nrows - 1);
     *rindex = index;
 
-    for (SFXHASH_NODE* hnode = t->table[index]; hnode; hnode = hnode->next )
+    for (XHashNode* hnode = t->table[index]; hnode; hnode = hnode->next )
     {
-        if ( !t->sfhashfcn->keycmp_fcn(hnode->key, key, t->keysize) )
+        if ( !t->hashfcn->keycmp_fcn(hnode->key, key, t->keysize) )
         {
             if ( t->splay > 0 )
                 movetofront(t, hnode);
@@ -605,40 +605,40 @@ static SFXHASH_NODE* sfxhash_find_node_row(SFXHASH* t, const void* key, int* rin
  *
  *    This is done because of the successful find.
  *
- * t SFXHASH table pointer
+ * t XHash table pointer
  * key  users key pointer
  * data  users data pointer
  *
  * return integer
- * retval SFXHASH_OK      success
- * retval SFXHASH_INTABLE already in the table, t->cnode points to the node
- * retval SFXHASH_NOMEM   not enough memory
+ * retval XHASH_OK      success
+ * retval XHASH_INTABLE already in the table, t->cnode points to the node
+ * retval XHASH_NOMEM   not enough memory
  */
-static int sfxhash_add_ex(SFXHASH* t, const void* key, void* data, void** data_ptr)
+static int xhash_add_ex(XHash* t, const void* key, void* data, void** data_ptr)
 {
     int index = 0;
 
     /* Enforce uniqueness: Check for the key in the table */
-    SFXHASH_NODE* hnode = sfxhash_find_node_row(t, key, &index);
+    XHashNode* hnode = xhash_find_node_row(t, key, &index);
     if ( hnode )
     {
         t->cnode = hnode;
         if (data_ptr)
             *data_ptr = hnode->data;
-        return SFXHASH_INTABLE; /* found it - return it. */
+        return XHASH_INTABLE; /* found it - return it. */
     }
 
     /*
      *  Alloc new hash node - allocate key space and data space at the same time.
      */
-    hnode = sfxhash_newnode(t);
+    hnode = xhash_newnode(t);
     if ( !hnode )
     {
-        return SFXHASH_NOMEM;
+        return XHASH_NOMEM;
     }
 
     /* Set up the new key pointer */
-    hnode->key = (char*)hnode + sizeof(SFXHASH_NODE);
+    hnode->key = (char*)hnode + sizeof(XHashNode);
 
     /* Copy the key */
     memcpy(hnode->key,key,t->keysize);
@@ -650,7 +650,7 @@ static int sfxhash_add_ex(SFXHASH* t, const void* key, void* data, void** data_p
     if ( t->datasize )
     {
         /* Set up the new data pointer */
-        hnode->data= (char*)hnode + sizeof(SFXHASH_NODE) + t->pad + t->keysize;
+        hnode->data= (char*)hnode + sizeof(XHashNode) + t->pad + t->keysize;
 
         if (data)
         {
@@ -665,20 +665,20 @@ static int sfxhash_add_ex(SFXHASH* t, const void* key, void* data, void** data_p
     }
 
     /* Link the node into the table row list */
-    sfxhash_link_node (t, hnode);
+    xhash_link_node (t, hnode);
 
     /* Link at the front of the global node list */
-    sfxhash_glink_node(t, hnode);
+    xhash_glink_node(t, hnode);
 
     /* Track # active nodes */
     t->count++;
 
-    return SFXHASH_OK;
+    return XHASH_OK;
 }
 
-int sfxhash_add(SFXHASH* t, void* key, void* data)
+int xhash_add(XHash* t, void* key, void* data)
 {
-    return sfxhash_add_ex(t, key, data, nullptr);
+    return xhash_add_ex(t, key, data, nullptr);
 }
 
 /*!
@@ -690,20 +690,20 @@ int sfxhash_add(SFXHASH* t, void* key, void* data)
  *
  *    This is done because of the successful find.
  *
- * t SFXHASH table pointer
+ * t XHash table pointer
  * key  users key pointer
  *
  * return integer
- * retval SFXHASH_OK      success
- * retval SFXHASH_INTABLE already in the table, t->cnode points to the node
- * retval SFXHASH_NOMEM   not enough memory
+ * retval XHASH_OK      success
+ * retval XHASH_INTABLE already in the table, t->cnode points to the node
+ * retval XHASH_NOMEM   not enough memory
  */
-SFXHASH_NODE* sfxhash_get_node(SFXHASH* t, const void* key)
+XHashNode* xhash_get_node(XHash* t, const void* key)
 {
     int index = 0;
 
     /* Enforce uniqueness: Check for the key in the table */
-    SFXHASH_NODE* hnode = sfxhash_find_node_row(t, key, &index);
+    XHashNode* hnode = xhash_find_node_row(t, key, &index);
     if ( hnode )
     {
         t->cnode = hnode;
@@ -714,14 +714,14 @@ SFXHASH_NODE* sfxhash_get_node(SFXHASH* t, const void* key)
     /*
      *  Alloc new hash node - allocate key space and data space at the same time.
      */
-    hnode = sfxhash_newnode(t);
+    hnode = xhash_newnode(t);
     if ( !hnode )
     {
         return nullptr;
     }
 
     /* Set up the new key pointer */
-    hnode->key = (char*)hnode + sizeof(SFXHASH_NODE);
+    hnode->key = (char*)hnode + sizeof(XHashNode);
 
     /* Copy the key */
     memcpy(hnode->key,key,t->keysize);
@@ -733,7 +733,7 @@ SFXHASH_NODE* sfxhash_get_node(SFXHASH* t, const void* key)
     if ( t->datasize )
     {
         /* Set up the new data pointer */
-        hnode->data = (char*)hnode + sizeof(SFXHASH_NODE) + t->pad + t->keysize;
+        hnode->data = (char*)hnode + sizeof(XHashNode) + t->pad + t->keysize;
     }
     else
     {
@@ -741,10 +741,10 @@ SFXHASH_NODE* sfxhash_get_node(SFXHASH* t, const void* key)
     }
 
     /* Link the node into the table row list */
-    sfxhash_link_node (t, hnode);
+    xhash_link_node (t, hnode);
 
     /* Link at the front of the global node list */
-    sfxhash_glink_node(t, hnode);
+    xhash_glink_node(t, hnode);
 
     /* Track # active nodes */
     t->count++;
@@ -755,34 +755,34 @@ SFXHASH_NODE* sfxhash_get_node(SFXHASH* t, const void* key)
 /*!
  * Find a Node based on the key
  *
- * t SFXHASH table pointer
+ * t XHash table pointer
  * key  users key pointer
  *
- * return SFXHASH_NODE*   valid pointer to the hash node
+ * return XHashNode*   valid pointer to the hash node
  * retval 0               node not found
  *
  */
-SFXHASH_NODE* sfxhash_find_node(SFXHASH* t, const void* key)
+XHashNode* xhash_find_node(XHash* t, const void* key)
 {
     int rindex = 0;
 
-    return sfxhash_find_node_row(t, key, &rindex);
+    return xhash_find_node_row(t, key, &rindex);
 }
 
 /*!
  * Find the users data based associated with the key
  *
- * t SFXHASH table pointer
+ * t XHash table pointer
  * key  users key pointer
  *
  * return void*   valid pointer to the users data
  * retval 0       node not found
  *
  */
-void* sfxhash_find(SFXHASH* t, void* key)
+void* xhash_find(XHash* t, void* key)
 {
     int rindex = 0;
-    SFXHASH_NODE* hnode = sfxhash_find_node_row(t, key, &rindex);
+    XHashNode* hnode = xhash_find_node_row(t, key, &rindex);
     if ( hnode )
         return hnode->data;
 
@@ -796,7 +796,7 @@ void* sfxhash_find(SFXHASH* t, void* key)
  *
  * return the head of the list or nullptr
  */
-SFXHASH_NODE* sfxhash_ghead(SFXHASH* t)
+XHashNode* xhash_ghead(XHash* t)
 {
     if (t)
     {
@@ -813,9 +813,9 @@ SFXHASH_NODE* sfxhash_ghead(SFXHASH* t)
  *
  * return the next node in the list or nullptr when at the end
  */
-SFXHASH_NODE* sfxhash_gfindnext(SFXHASH* t)
+XHashNode* xhash_gfindnext(XHash* t)
 {
-    SFXHASH_NODE* n = t->gnode;
+    XHashNode* n = t->gnode;
     if (n)
         t->gnode = n->gnext;
     return n;
@@ -828,7 +828,7 @@ SFXHASH_NODE* sfxhash_gfindnext(SFXHASH* t)
  *
  * return the head of the list or nullptr
  */
-SFXHASH_NODE* sfxhash_gfindfirst(SFXHASH* t)
+XHashNode* xhash_gfindfirst(XHash* t)
 {
     if (t)
     {
@@ -844,15 +844,15 @@ SFXHASH_NODE* sfxhash_gfindfirst(SFXHASH* t)
 /*!
  * Return the most recently used data from the global list
  *
- * t SFXHASH table pointer
+ * t XHash table pointer
  *
  * return void*   valid pointer to the users data
  * retval 0       node not found
  *
  */
-void* sfxhash_mru(SFXHASH* t)
+void* xhash_mru(XHash* t)
 {
-    SFXHASH_NODE* hnode = sfxhash_ghead(t);
+    XHashNode* hnode = xhash_ghead(t);
     if ( hnode )
         return hnode->data;
 
@@ -862,15 +862,15 @@ void* sfxhash_mru(SFXHASH* t)
 /*!
  * Return the least recently used data from the global list
  *
- * t SFXHASH table pointer
+ * t XHash table pointer
  *
  * return void*   valid pointer to the users data
  * retval 0       node not found
  *
  */
-void* sfxhash_lru(SFXHASH* t)
+void* xhash_lru(XHash* t)
 {
-    SFXHASH_NODE* hnode = t->gtail;
+    XHashNode* hnode = t->gtail;
     if ( hnode )
         return hnode->data;
 
@@ -880,11 +880,11 @@ void* sfxhash_lru(SFXHASH* t)
 /*
  *  Unlink and free the node
  */
-int sfxhash_free_node(SFXHASH* t, SFXHASH_NODE* hnode)
+int xhash_free_node(XHash* t, XHashNode* hnode)
 {
-    sfxhash_unlink_node(t, hnode);   /* unlink from the hash table row list */
+    xhash_unlink_node(t, hnode);   /* unlink from the hash table row list */
 
-    sfxhash_gunlink_node(t, hnode);   /* unlink from global-hash-node list */
+    xhash_gunlink_node(t, hnode);   /* unlink from global-hash-node list */
 
     t->count--;
 
@@ -895,49 +895,49 @@ int sfxhash_free_node(SFXHASH* t, SFXHASH_NODE* hnode)
 
     if ( t->recycle_nodes )
     {
-        sfxhash_save_free_node(t, hnode);
+        xhash_save_free_node(t, hnode);
     }
     else
     {
         s_free(t, hnode);
     }
 
-    return SFXHASH_OK;
+    return XHASH_OK;
 }
 
 /*!
  * Remove a Key + Data Pair from the table.
  *
- * t SFXHASH table pointer
+ * t XHash table pointer
  * key  users key pointer
  *
  * return 0   success
  * retval !0  failed
  *
  */
-int sfxhash_remove(SFXHASH* t, void* key)
+int xhash_remove(XHash* t, void* key)
 {
-    unsigned hashkey = t->sfhashfcn->hash_fcn(t->sfhashfcn, (unsigned char*)key, t->keysize);
+    unsigned hashkey = t->hashfcn->hash_fcn(t->hashfcn, (unsigned char*)key, t->keysize);
 
 //    index = hashkey % t->nrows;
     /* Modulus is slow */
     unsigned index   = hashkey & (t->nrows - 1);
 
-    for ( SFXHASH_NODE* hnode = t->table[index]; hnode; hnode = hnode->next )
+    for ( XHashNode* hnode = t->table[index]; hnode; hnode = hnode->next )
     {
-        if ( !t->sfhashfcn->keycmp_fcn(hnode->key, key, t->keysize) )
+        if ( !t->hashfcn->keycmp_fcn(hnode->key, key, t->keysize) )
         {
-            return sfxhash_free_node(t, hnode);
+            return xhash_free_node(t, hnode);
         }
     }
 
-    return SFXHASH_ERR;
+    return XHASH_ERR;
 }
 
 /*
    Internal use only
 */
-static void sfxhash_next(SFXHASH* t)
+static void xhash_next(XHash* t)
 {
     if ( !t->cnode )
         return;
@@ -964,13 +964,13 @@ static void sfxhash_next(SFXHASH* t)
 /*!
  * Find and return the first hash table node
  *
- * t SFXHASH table pointer
+ * t XHash table pointer
  *
  * return 0   failed
- * retval !0  valid SFXHASH_NODE *
+ * retval !0  valid XHashNode *
  *
  */
-SFXHASH_NODE* sfxhash_findfirst(SFXHASH* t)
+XHashNode* xhash_findfirst(XHash* t)
 {
     if (!t)
         return nullptr;
@@ -982,8 +982,8 @@ SFXHASH_NODE* sfxhash_findfirst(SFXHASH* t)
         t->cnode = t->table[ t->crow ];
         if ( t->cnode )
         {
-            SFXHASH_NODE* n = t->cnode;
-            sfxhash_next(t);   // load t->cnode with the next entry
+            XHashNode* n = t->cnode;
+            xhash_next(t);   // load t->cnode with the next entry
             return n;
         }
     }
@@ -994,15 +994,15 @@ SFXHASH_NODE* sfxhash_findfirst(SFXHASH* t)
 /*!
  * Find and return the next hash table node
  *
- * t SFXHASH table pointer
+ * t XHash table pointer
  *
  * return 0   failed
- * retval !0  valid SFXHASH_NODE *
+ * retval !0  valid XHashNode *
  *
  */
-SFXHASH_NODE* sfxhash_findnext(SFXHASH* t)
+XHashNode* xhash_findnext(XHash* t)
 {
-    SFXHASH_NODE* n = t->cnode;
+    XHashNode* n = t->cnode;
     if ( !n ) /* Done, no more entries */
     {
         return nullptr;
@@ -1011,17 +1011,17 @@ SFXHASH_NODE* sfxhash_findnext(SFXHASH* t)
     /*
       Preload next node into current node
     */
-    sfxhash_next(t);
+    xhash_next(t);
 
     return n;
 }
 
-// Make sfhashfcn use a separate set of opcodes for the backend.
+// Make hashfcn use a separate set of opcodes for the backend.
 
-void sfxhash_set_keyops(SFXHASH* h, hash_func hash_fcn, keycmp_func keycmp_fcn)
+void xhash_set_keyops(XHash* h, hash_func hash_fcn, keycmp_func keycmp_fcn)
 {
     assert(h and hash_fcn and keycmp_fcn);
-    sfhashfcn_set_keyops(h->sfhashfcn, hash_fcn, keycmp_fcn);
+    hashfcn_set_keyops(h->hashfcn, hash_fcn, keycmp_fcn);
 }
 
 /*
@@ -1029,7 +1029,7 @@ void sfxhash_set_keyops(SFXHASH* h, hash_func hash_fcn, keycmp_func keycmp_fcn)
  *   Test Driver for Hashing
  * -----------------------------------------------------------------------------------------
  */
-#ifdef SFXHASH_MAIN
+#ifdef XHash_MAIN
 
 /*
    This is called when the user releases a node or kills the table
@@ -1068,8 +1068,8 @@ int anrfree(void* key, void* data)
 int main(int argc, char** argv)
 {
     int i;
-    SFXHASH* t;
-    SFXHASH_NODE* n;
+    XHash* t;
+    XHashNode* n;
     char strkey[256], strdata[256];
     int num = 100;
     int mem = 0;
@@ -1088,7 +1088,7 @@ int main(int argc, char** argv)
     }
 
     /* Create a Hash Table */
-    t = sfxhash_new(100,         /* one row per element in table, when possible */
+    t = xhash_new(100,         /* one row per element in table, when possible */
         20,                     /* key size :  padded with zeros */
         20,                     /* data size:  padded with zeros */
         mem,                    /* max bytes,  0=no max */
@@ -1109,7 +1109,7 @@ int main(int argc, char** argv)
         snprintf(strdata, sizeof(strdata), "KeyWord%5.5d",i+1);
         strdata[sizeof(strdata) - 1] = '\0';
         //strupr(strdata);
-        sfxhash_add(t, strkey /* user key */,  strdata /* user data */);
+        xhash_add(t, strkey /* user key */,  strdata /* user data */);
     }
 
     /* Find and Display Nodes in the Hash Table */
@@ -1119,7 +1119,7 @@ int main(int argc, char** argv)
         snprintf(strkey, sizeof(strkey) - 1, "KeyWord%5.5d",i+1);
         strkey[sizeof(strkey) - 1] = '\0';
 
-        if ( char* p = (char*)sfxhash_find(t, strkey) )
+        if ( char* p = (char*)xhash_find(t, strkey) )
             printf("Hash-key=%*s, data=%*s\n", strlen(strkey),strkey, strlen(strkey), p);
     }
 
@@ -1130,16 +1130,16 @@ int main(int argc, char** argv)
 
     /* Display All Nodes in the Hash Table findfirst/findnext */
     printf("\n...FINDFIRST / FINDNEXT TEST\n");
-    for ( n  = sfxhash_findfirst(t);
+    for ( n  = xhash_findfirst(t);
         n != 0;
-        n  = sfxhash_findnext(t) )
+        n  = xhash_findnext(t) )
     {
         printf("hash-findfirst/next: n=%p, key=%s, data=%s\n", n, n->key, n->data);
 
         /*
           remove node we are looking at, this is first/next safe.
         */
-        if ( sfxhash_remove(t,n->key) )
+        if ( xhash_remove(t,n->key) )
         {
             printf("...ERROR: Could not remove the key node\n");
         }
@@ -1153,9 +1153,9 @@ int main(int argc, char** argv)
         t->anr_count);
 
     /* Free the table and it's user data */
-    printf("...sfxhash_delete\n");
+    printf("...xhash_delete\n");
 
-    sfxhash_delete(t);
+    xhash_delete(t);
 
     printf("\nnormal pgm finish\n\n");
 

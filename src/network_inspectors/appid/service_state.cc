@@ -319,13 +319,13 @@ void AppIdServiceState::dump_stats()
     LogMessage("Service State:\n");
     if (serviceStateCache4)
     {
-        LogMessage("           IPv4 Count: %u\n", sfxhash_count(serviceStateCache4));
+        LogMessage("           IPv4 Count: %u\n", xhash_count(serviceStateCache4));
         LogMessage("    IPv4 Memory Limit: %lu\n", serviceStateCache4->mc.memcap);
         LogMessage("     IPv4 Memory Used: %lu\n", serviceStateCache4->mc.memused);
     }
     if (serviceStateCache6)
     {
-        LogMessage("           IPv6 Count: %u\n", sfxhash_count(serviceStateCache6));
+        LogMessage("           IPv6 Count: %u\n", xhash_count(serviceStateCache6));
         LogMessage("    IPv6 Memory Limit: %lu\n", serviceStateCache6->mc.memcap);
         LogMessage("     IPv6 Memory Used: %lu\n", serviceStateCache6->mc.memused);
     }

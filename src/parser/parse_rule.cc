@@ -29,7 +29,7 @@
 #include "detection/rtn_checks.h"
 #include "detection/treenodes.h"
 #include "framework/decode_data.h"
-#include "hash/sfxhash.h"
+#include "hash/xhash.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
@@ -690,7 +690,7 @@ static RuleTreeNode* findHeadNode(
     if ( sc->rtn_hash_table )
     {
         RuleTreeNodeKey key { testNode, policyId };
-        return (RuleTreeNode*)sfxhash_find(sc->rtn_hash_table, &key);
+        return (RuleTreeNode*)xhash_find(sc->rtn_hash_table, &key);
     }
 
     return nullptr;

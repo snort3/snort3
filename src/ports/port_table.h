@@ -22,7 +22,7 @@
 #ifndef PORT_TABLE_H
 #define PORT_TABLE_H
 
-#include "hash/sfghash.h"
+#include "hash/ghash.h"
 #include "ports/port_item.h"
 #include "ports/port_object.h"
 #include "ports/port_object2.h"
@@ -49,8 +49,8 @@ struct PortTable
     int pt_poid;
 
     /* Compiled / merged port object hash table */
-    SFGHASH* pt_mpo_hash;
-    SFGHASH* pt_mpxo_hash;
+    GHash* pt_mpo_hash;
+    GHash* pt_mpxo_hash;
 
     /*
     * Final Port/Rule Groupings, one port object per port, or null

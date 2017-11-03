@@ -43,7 +43,7 @@
 #include "detector_plugins/http_url_patterns.h"
 #include "detector_plugins/detector_sip.h"
 #include "detector_plugins/detector_pattern.h"
-#include "hash/sfxhash.h"
+#include "hash/xhash.h"
 #include "log/messages.h"
 #include "main/snort_debug.h"
 #include "main/snort_types.h"
@@ -66,7 +66,7 @@ ProfileStats luaDetectorsPerfStats;
 ProfileStats luaCiscoPerfStats;
 ProfileStats luaCustomPerfStats;
 
-static THREAD_LOCAL SFXHASH* CHP_glossary = nullptr;      // keep track of http multipatterns here
+static THREAD_LOCAL XHash* CHP_glossary = nullptr;      // keep track of http multipatterns here
 
 static int free_chp_data(void* /* key */, void* data)
 {
@@ -77,7 +77,7 @@ static int free_chp_data(void* /* key */, void* data)
 
 int init_chp_glossary()
 {
-    if (!(CHP_glossary = sfxhash_new(1024, sizeof(AppId), 0, 0, 0, nullptr, &free_chp_data, 0)))
+    if (!(CHP_glossary = xhash_new(1024, sizeof(AppId), 0, 0, 0, nullptr, &free_chp_data, 0)))
     {
         ErrorMessage("Config: failed to allocate memory for an sfxhash.");
         return 0;
@@ -89,7 +89,7 @@ int init_chp_glossary()
 void free_chp_glossary()
 {
     if (CHP_glossary)
-        sfxhash_delete(CHP_glossary);
+        xhash_delete(CHP_glossary);
     CHP_glossary = nullptr;
 }
 
@@ -1113,7 +1113,7 @@ static int create_chp_application(AppId appIdInstance, unsigned app_type_flags, 
     new_app->app_type_flags = app_type_flags;
     new_app->num_matches = num_matches;
 
-    if (sfxhash_add(CHP_glossary, &(new_app->appIdInstance), new_app))
+    if (xhash_add(CHP_glossary, &(new_app->appIdInstance), new_app))
     {
         ErrorMessage("LuaDetectorApi:Failed to add CHP for appId %d, instance %d",
             CHP_APPIDINSTANCE_TO_ID(appIdInstance), CHP_APPIDINSTANCE_TO_INSTANCE(appIdInstance));
@@ -1137,7 +1137,7 @@ static int detector_chp_create_application(lua_State* L)
     int num_matches = lua_tointeger(L, ++index);
 
     // We only want one of these for each appId.
-    if (sfxhash_find(CHP_glossary, &appIdInstance))
+    if (xhash_find(CHP_glossary, &appIdInstance))
     {
         ErrorMessage(
             "LuaDetectorApi:Attempt to add more than one CHP for appId %d - use CHPMultiCreateApp",
@@ -1216,7 +1216,7 @@ static int add_chp_pattern_action(AppId appIdInstance, int isKeyPattern, Pattern
     AppInfoManager& app_info_mgr = AppInfoManager::get_instance();
 
     //find the CHP App for this
-    if (!(chpapp = (decltype(chpapp))sfxhash_find(CHP_glossary, &appIdInstance)))
+    if (!(chpapp = (decltype(chpapp))xhash_find(CHP_glossary, &appIdInstance)))
     {
         ErrorMessage(
             "LuaDetectorApi:Invalid attempt to add a CHP action for unknown appId %d, instance %d. - pattern:\"%s\" - action \"%s\"\n",
@@ -1364,7 +1364,7 @@ static int detector_create_chp_multi_application(lua_State* L)
     for (instance=0; instance < CHP_APPID_INSTANCE_MAX; instance++ )
     {
         appIdInstance = (appId << CHP_APPID_BITS_FOR_INSTANCE) + instance;
-        if ( sfxhash_find(CHP_glossary, &appIdInstance) )
+        if ( xhash_find(CHP_glossary, &appIdInstance) )
             continue;
         break;
     }

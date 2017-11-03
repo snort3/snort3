@@ -17,8 +17,8 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#ifndef SFHASHFCN_H
-#define SFHASHFCN_H
+#ifndef HashFnc_H
+#define HashFnc_H
 
 #include "main/snort_types.h"
 
@@ -52,25 +52,25 @@ SO_PUBLIC void mix_str(
 
 SO_PUBLIC size_t str_to_hash(const uint8_t *str, int length);
 
-struct SFHASHFCN
+struct HashFnc
 {
     unsigned seed;
     unsigned scale;
     unsigned hardener;
     // FIXIT-H use types for these callbacks
-    unsigned (* hash_fcn)(SFHASHFCN*, const unsigned char* d, int n);
+    unsigned (* hash_fcn)(HashFnc*, const unsigned char* d, int n);
     int (* keycmp_fcn)(const void* s1, const void* s2, size_t n);
 };
 
-SFHASHFCN* sfhashfcn_new(int nrows);
-void sfhashfcn_free(SFHASHFCN*);
+HashFnc* hashfcn_new(int nrows);
+void hashfcn_free(HashFnc*);
 
-unsigned sfhashfcn_hash(SFHASHFCN*, const unsigned char* d, int n);
+unsigned hashfcn_hash(HashFnc*, const unsigned char* d, int n);
 
-int sfhashfcn_set_keyops(
-    SFHASHFCN*,
+int hashfcn_set_keyops(
+    HashFnc*,
     // FIXIT-H use types for these callbacks
-    unsigned (* hash_fcn)(SFHASHFCN* p, const unsigned char* d, int n),
+    unsigned (* hash_fcn)(HashFnc* p, const unsigned char* d, int n),
     int (* keycmp_fcn)(const void* s1, const void* s2, size_t n) );
 
 #endif

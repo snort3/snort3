@@ -29,7 +29,7 @@
 
 struct SnortConfig;
 struct OptTreeNode;
-struct SFGHASH;
+struct GHash;
 
 /* this contains a list of the URLs for various reference systems */
 struct ReferenceSystemNode
@@ -67,7 +67,7 @@ void AddClassification(SnortConfig*, const char* type, const char* name, int pri
 
 ClassType* ClassTypeLookupByType(SnortConfig*, const char*);
 
-struct ServiceInfo
+struct SignatureServiceInfo
 {
     char* service;
     int16_t service_ordinal;
@@ -87,7 +87,7 @@ struct SigInfo
     char* message;
     ClassType* class_type;
     ReferenceNode* refs;
-    ServiceInfo* services;
+    SignatureServiceInfo* services;
 
     uint32_t gid;
     uint32_t sid;
@@ -101,11 +101,11 @@ struct SigInfo
     Target target;
 };
 
-SFGHASH* OtnLookupNew();
-void OtnLookupAdd(SFGHASH*, OptTreeNode*);
-OptTreeNode* OtnLookup(SFGHASH*, uint32_t gid, uint32_t sid);
-void OtnLookupFree(SFGHASH*);
-void OtnRemove(SFGHASH*, OptTreeNode*);
+GHash* OtnLookupNew();
+void OtnLookupAdd(GHash*, OptTreeNode*);
+OptTreeNode* OtnLookup(GHash*, uint32_t gid, uint32_t sid);
+void OtnLookupFree(GHash*);
+void OtnRemove(GHash*, OptTreeNode*);
 
 void OtnDeleteData(void* data);
 void OtnFree(void* data);

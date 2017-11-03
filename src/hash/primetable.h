@@ -17,10 +17,10 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#ifndef SFPRIMETABLE_H
-#define SFPRIMETABLE_H
+#ifndef PRIMETABLE_H
+#define PRIMETABLE_H
 
-int sf_nearest_prime(int n);
+int nearest_prime(int n);
 
 #endif
 

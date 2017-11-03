@@ -151,7 +151,7 @@ ClassType* ClassTypeLookupByType(SnortConfig* sc, const char* type)
 
 /***************** Otn Utilities ***********************/
 
-void OtnRemove(SFGHASH* otn_map, OptTreeNode* otn)
+void OtnRemove(GHash* otn_map, OptTreeNode* otn)
 {
     assert(otn_map and otn);
 
@@ -159,7 +159,7 @@ void OtnRemove(SFGHASH* otn_map, OptTreeNode* otn)
     key.gid = otn->sigInfo.gid;
     key.sid = otn->sigInfo.sid;
 
-    sfghash_remove(otn_map, &key);
+    ghash_remove(otn_map, &key);
 }
 
 void OtnFree(void* data)
@@ -229,12 +229,12 @@ void OtnFree(void* data)
     snort_free(otn);
 }
 
-SFGHASH* OtnLookupNew()
+GHash* OtnLookupNew()
 {
-    return sfghash_new(10000, sizeof(OtnKey), 0, OtnFree);
+    return ghash_new(10000, sizeof(OtnKey), 0, OtnFree);
 }
 
-void OtnLookupAdd(SFGHASH* otn_map, OptTreeNode* otn)
+void OtnLookupAdd(GHash* otn_map, OptTreeNode* otn)
 {
     assert(otn_map);
 
@@ -242,16 +242,16 @@ void OtnLookupAdd(SFGHASH* otn_map, OptTreeNode* otn)
     key.gid = otn->sigInfo.gid;
     key.sid = otn->sigInfo.sid;
 
-    int status = sfghash_add(otn_map, &key, otn);
+    int status = ghash_add(otn_map, &key, otn);
 
-    if ( status == SFGHASH_OK )
+    if ( status == GHASH_OK )
         return;
 
-    assert(status == SFGHASH_INTABLE);
+    assert(status == GHASH_INTABLE);
     ParseError("duplicate rule with same gid (%u) and sid (%u)", key.gid, key.sid);
 }
 
-OptTreeNode* OtnLookup(SFGHASH* otn_map, uint32_t gid, uint32_t sid)
+OptTreeNode* OtnLookup(GHash* otn_map, uint32_t gid, uint32_t sid)
 {
     assert(otn_map);
 
@@ -259,7 +259,7 @@ OptTreeNode* OtnLookup(SFGHASH* otn_map, uint32_t gid, uint32_t sid)
     key.gid = gid;
     key.sid = sid;
 
-    OptTreeNode* otn = (OptTreeNode*)sfghash_find(otn_map, &key);
+    OptTreeNode* otn = (OptTreeNode*)ghash_find(otn_map, &key);
 
     return otn;
 }
@@ -281,9 +281,9 @@ OptTreeNode* GetOTN(uint32_t gid, uint32_t sid)
     return otn;
 }
 
-void OtnLookupFree(SFGHASH* otn_map)
+void OtnLookupFree(GHash* otn_map)
 {
     if ( otn_map )
-        sfghash_delete(otn_map);
+        ghash_delete(otn_map);
 }
 

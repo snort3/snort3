@@ -23,7 +23,7 @@
 
 #include "port_object2.h"
 
-#include "hash/sfhashfcn.h"
+#include "hash/hashfcn.h"
 #include "log/messages.h"
 #include "main/snort_debug.h"
 #include "parser/parser.h"
@@ -54,7 +54,7 @@
 #define SWAP_BYTES(a)
 #endif
 
-static unsigned po_rule_hash_func(SFHASHFCN* p, const unsigned char* k, int n)
+static unsigned po_rule_hash_func(HashFnc* p, const unsigned char* k, int n)
 {
     unsigned char* key;
     int ikey = *(const int*)k;
@@ -67,10 +67,10 @@ static unsigned po_rule_hash_func(SFHASHFCN* p, const unsigned char* k, int n)
     /* Set a pointer to the key to pass to the hashing function */
     key = (unsigned char*)&ikey;
 
-    return sfhashfcn_hash(p, key, n);
+    return hashfcn_hash(p, key, n);
 }
 
-static int* RuleHashToSortedArray(SFGHASH* rh)
+static int* RuleHashToSortedArray(GHash* rh)
 {
     if ( !rh or !rh->count )
         return nullptr;
@@ -78,9 +78,9 @@ static int* RuleHashToSortedArray(SFGHASH* rh)
     int* ra = (int*)snort_calloc(rh->count, sizeof(int));
     int k = 0;
 
-    for ( SFGHASH_NODE* node = sfghash_findfirst(rh);
+    for ( GHashNode* node = ghash_findfirst(rh);
         node != nullptr && k < (int)rh->count;
-        node = sfghash_findnext(rh) )
+        node = ghash_findnext(rh) )
     {
         if ( int* prid = (int*)node->data )
             ra[k++] = *prid;
@@ -106,7 +106,7 @@ PortObject2* PortObject2New(int nrules)
         return nullptr;
     }
 
-    po->rule_hash =(SFGHASH*)sfghash_new(nrules,sizeof(int), 0,
+    po->rule_hash =(GHash*)ghash_new(nrules,sizeof(int), 0,
         snort_free /* frees data - should be rule id ptrs == (int*) */);
     if ( !po->rule_hash )
     {
@@ -116,7 +116,7 @@ PortObject2* PortObject2New(int nrules)
     }
 
     /* Use hash function defined above for hashing the key as an int. */
-    sfghash_set_keyops(po->rule_hash, po_rule_hash_func, memcmp);
+    ghash_set_keyops(po->rule_hash, po_rule_hash_func, memcmp);
 
     return po;
 }
@@ -136,7 +136,7 @@ void PortObject2Free(PortObject2* po)
         sflist_free_all(po->item_list, snort_free);
 
     if ( po->rule_hash)
-        sfghash_delete(po->rule_hash);
+        ghash_delete(po->rule_hash);
 
     if (po->port_list)
         delete po->port_list;
@@ -152,7 +152,7 @@ void PortObject2Finalize(PortObject2* po)
     sflist_free_all(po->item_list, snort_free);
     po->item_list = nullptr;
 
-    sfghash_delete(po->rule_hash);
+    ghash_delete(po->rule_hash);
     po->rule_hash = nullptr;
 }
 
@@ -213,7 +213,7 @@ PortObject2* PortObject2Dup(PortObject* po)
             prule = (int*)snort_calloc(sizeof(int));
             *prule = *prid;
 
-            if ( sfghash_add(ponew->rule_hash, prule, prule) != SFGHASH_OK )
+            if ( ghash_add(ponew->rule_hash, prule, prule) != GHASH_OK )
             {
                 snort_free(prule);
             }
@@ -252,7 +252,7 @@ PortObject2* PortObject2AppendPortObject(PortObject2* poa, PortObject* pob)
         int* prid2 = (int*)snort_calloc(sizeof(int));
         *prid2 = *prid;
 
-        if ( sfghash_add(poa->rule_hash,prid2,prid2) != SFGHASH_OK )
+        if ( ghash_add(poa->rule_hash,prid2,prid2) != GHASH_OK )
             snort_free(prid2);
     }
     return poa;
@@ -261,9 +261,9 @@ PortObject2* PortObject2AppendPortObject(PortObject2* poa, PortObject* pob)
 /* Dup and append rule list numbers from pob to poa */
 PortObject2* PortObject2AppendPortObject2(PortObject2* poa, PortObject2* pob)
 {
-    for (SFGHASH_NODE* node = sfghash_findfirst(pob->rule_hash);
+    for (GHashNode* node = ghash_findfirst(pob->rule_hash);
         node!= nullptr;
-        node = sfghash_findnext(pob->rule_hash) )
+        node = ghash_findnext(pob->rule_hash) )
     {
         int* prid = (int*)node->data;
 
@@ -273,7 +273,7 @@ PortObject2* PortObject2AppendPortObject2(PortObject2* poa, PortObject2* pob)
         int* prid2 = (int*)snort_calloc(sizeof(int));
         *prid2 = *prid;
 
-        if ( sfghash_add(poa->rule_hash,prid2,prid2) != SFGHASH_OK )
+        if ( ghash_add(poa->rule_hash,prid2,prid2) != GHASH_OK )
             snort_free(prid2);
     }
     return poa;

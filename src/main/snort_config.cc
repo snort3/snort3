@@ -35,7 +35,7 @@
 #include "filters/rate_filter.h"
 #include "filters/sfrf.h"
 #include "filters/sfthreshold.h"
-#include "hash/sfxhash.h"
+#include "hash/xhash.h"
 #include "helpers/process.h"
 #include "ips_options/ips_pcre.h"
 #include "latency/latency_config.h"
@@ -246,7 +246,7 @@ SnortConfig::~SnortConfig()
     fpDeleteFastPacketDetection(this);
 
     if (rtn_hash_table)
-        sfxhash_delete(rtn_hash_table);
+        xhash_delete(rtn_hash_table);
 
     if (eth_dst )
         snort_free(eth_dst);

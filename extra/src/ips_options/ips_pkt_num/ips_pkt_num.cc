@@ -22,7 +22,7 @@
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "framework/range.h"
-#include "hash/sfhashfcn.h"
+#include "hash/hashfcn.h"
 #include "profiler/profiler.h"
 
 static const char* s_name = "pkt_num";

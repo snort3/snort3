@@ -26,7 +26,7 @@
 // to request the file data left. To block the new session, we use URL and IPs
 // to continue blocking the same file.
 
-#include "hash/sfxhash.h"
+#include "hash/xhash.h"
 #include "sfip/sf_ip.h"
 #include "utils/cpp_macros.h"
 
@@ -65,11 +65,11 @@ PADDING_GUARD_BEGIN
 PADDING_GUARD_END
 
     void update_file_node(FileNode*, FileInfo*);
-    FileVerdict check_verdict(Flow*, FileNode*, SFXHASH_NODE*, FilePolicy&);
+    FileVerdict check_verdict(Flow*, FileNode*, XHashNode*, FilePolicy&);
     int store_verdict(Flow*, FileInfo*);
 
     /* The hash table of expected files */
-    SFXHASH* fileHash = nullptr;
+    XHash* fileHash = nullptr;
     uint32_t timeout = DEFAULT_FILE_BLOCK_TIMEOUT;
 };
 

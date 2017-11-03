@@ -54,7 +54,7 @@ void RateFilter_ConfigFree(RateFilterConfig* config)
     for (i = 0; i < SFRF_MAX_GENID; i++)
     {
         if (config->genHash[i] != nullptr)
-            sfghash_delete(config->genHash[i]);
+            ghash_delete(config->genHash[i]);
     }
 
     snort_free(config);
@@ -210,17 +210,17 @@ static int _printThresholdContext(RateFilterConfig* config)
 
     for ( gid=0; gid < SFRF_MAX_GENID; gid++ )
     {
-        SFGHASH_NODE* item_hash_node;
-        SFGHASH* sfrf_hash = config->genHash [ gid ];
+        GHashNode* item_hash_node;
+        GHash* sfrf_hash = config->genHash [ gid ];
 
         if ( !sfrf_hash )
         {
             continue;
         }
 
-        for ( item_hash_node  = sfghash_findfirst(sfrf_hash);
+        for ( item_hash_node  = ghash_findfirst(sfrf_hash);
             item_hash_node != 0;
-            item_hash_node  = sfghash_findnext(sfrf_hash) )
+            item_hash_node  = ghash_findnext(sfrf_hash) )
         {
             tSFRFSidNode* sfrf_item;
             tSFRFConfigNode* sfrf_node;

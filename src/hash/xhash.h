@@ -17,10 +17,10 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// sfxhash.h author Marc Norton
+// xhash.h author Marc Norton
 
-#ifndef SFXHASH_H
-#define SFXHASH_H
+#ifndef XHASH_H
+#define XHASH_H
 
 // generic hash table - stores and maps key + data pairs
 // (supports memcap and automatic memory recovery when out of memory)
@@ -28,19 +28,19 @@
 #include "utils/sfmemcap.h"
 #include "main/snort_types.h"
 
-struct SFHASHFCN;
+struct HashFnc;
 
-#define SFXHASH_NOMEM    (-2)
-#define SFXHASH_ERR      (-1)
-#define SFXHASH_OK        0
-#define SFXHASH_INTABLE   1
+#define XHASH_NOMEM    (-2)
+#define XHASH_ERR      (-1)
+#define XHASH_OK        0
+#define XHASH_INTABLE   1
 
-struct SFXHASH_NODE
+struct XHashNode
 {
-    struct SFXHASH_NODE* gnext; // global node list - used for aging nodes
-    struct SFXHASH_NODE* gprev;
-    struct SFXHASH_NODE* next;  // row node list
-    struct SFXHASH_NODE* prev;
+    struct XHashNode* gnext; // global node list - used for aging nodes
+    struct XHashNode* gprev;
+    struct XHashNode* next;  // row node list
+    struct XHashNode* prev;
 
     int rindex;  // row index of table this node belongs to.
 
@@ -48,20 +48,20 @@ struct SFXHASH_NODE
     void* data; // Pointer to the users data, this is not copied !
 };
 
-typedef int (* SFXHASH_FREE_FCN)(void* key, void* data);
+typedef int (* XHash_FREE_FCN)(void* key, void* data);
 
-struct SFXHASH
+struct XHash
 {
-    SFHASHFCN* sfhashfcn;    // hash function
+    HashFnc* hashfcn;    // hash function
     int keysize;             // bytes in key, if <= 0 -> keys are strings
     int datasize;            // bytes in key, if == 0 -> user data
-    SFXHASH_NODE** table;    // array of node ptr's */
+    XHashNode** table;    // array of node ptr's */
     unsigned nrows;          // # rows int the hash table use a prime number 211, 9871
     unsigned count;          // total # nodes in table
 
     unsigned crow;           // findfirst/next row in table
     unsigned pad;
-    SFXHASH_NODE* cnode;     // findfirst/next node ptr
+    XHashNode* cnode;     // findfirst/next node ptr
     int splay;               // whether to splay nodes with same hash bucket
 
     unsigned max_nodes;      // maximum # of nodes within a hash
@@ -72,9 +72,9 @@ struct SFXHASH
     unsigned find_fail;
     unsigned find_success;
 
-    SFXHASH_NODE* ghead, * gtail;  // global - root of all nodes allocated in table
-    SFXHASH_NODE* fhead, * ftail;  // list of free nodes, which are recycled
-    SFXHASH_NODE* gnode;           // gfirst/gnext node ptr */
+    XHashNode* ghead, * gtail;  // global - root of all nodes allocated in table
+    XHashNode* fhead, * ftail;  // list of free nodes, which are recycled
+    XHashNode* gnode;           // gfirst/gnext node ptr */
     int recycle_nodes;             // recycle nodes. Nodes are not freed, but are used for
                                    // subsequent new nodes
 
@@ -86,75 +86,75 @@ struct SFXHASH
     unsigned anr_count;      // # ANR ops performed
     int anr_flag;            // 0=off, !0=on
 
-    SFXHASH_FREE_FCN anrfree;
-    SFXHASH_FREE_FCN usrfree;
+    XHash_FREE_FCN anrfree;
+    XHash_FREE_FCN usrfree;
 };
 
-SO_PUBLIC SFXHASH* sfxhash_new(int nrows, int keysize, int datasize, unsigned long memcap,
+SO_PUBLIC XHash* xhash_new(int nrows, int keysize, int datasize, unsigned long memcap,
     int anr_flag,
-    SFXHASH_FREE_FCN anrfunc,
-    SFXHASH_FREE_FCN usrfunc,
+    XHash_FREE_FCN anrfunc,
+    XHash_FREE_FCN usrfunc,
     int recycle_flag);
 
-SO_PUBLIC void sfxhash_set_max_nodes(SFXHASH* h, int max_nodes);
+SO_PUBLIC void xhash_set_max_nodes(XHash* h, int max_nodes);
 
-SO_PUBLIC void sfxhash_delete(SFXHASH* h);
-SO_PUBLIC int sfxhash_make_empty(SFXHASH*);
+SO_PUBLIC void xhash_delete(XHash* h);
+SO_PUBLIC int xhash_make_empty(XHash*);
 
-SO_PUBLIC int sfxhash_add(SFXHASH* h, void* key, void* data);
-SO_PUBLIC SFXHASH_NODE* sfxhash_get_node(SFXHASH* t, const void* key);
-SO_PUBLIC int sfxhash_remove(SFXHASH* h, void* key);
+SO_PUBLIC int xhash_add(XHash* h, void* key, void* data);
+SO_PUBLIC XHashNode* xhash_get_node(XHash* t, const void* key);
+SO_PUBLIC int xhash_remove(XHash* h, void* key);
 
 //  Get the # of Nodes in HASH the table
-inline unsigned sfxhash_count(SFXHASH* t)
+inline unsigned xhash_count(XHash* t)
 { return t->count; }
 
 //  Get the # auto recovery
-inline unsigned sfxhash_anr_count(SFXHASH* t)
+inline unsigned xhash_anr_count(XHash* t)
 { return t->anr_count; }
 
 //  Get the # finds
-inline unsigned sfxhash_find_total(SFXHASH* t)
+inline unsigned xhash_find_total(XHash* t)
 { return t->find_success + t->find_fail; }
 
 //  Get the # unsuccessful finds
-inline unsigned sfxhash_find_fail(SFXHASH* t)
+inline unsigned xhash_find_fail(XHash* t)
 { return t->find_fail; }
 
 //  Get the # successful finds
-inline unsigned sfxhash_find_success(SFXHASH* t)
+inline unsigned xhash_find_success(XHash* t)
 { return t->find_success; }
 
 //  Get the # of overhead bytes
-inline unsigned sfxhash_overhead_bytes(SFXHASH* t)
+inline unsigned xhash_overhead_bytes(XHash* t)
 { return t->overhead_bytes; }
 
 // Get the # of overhead blocks
-inline unsigned sfxhash_overhead_blocks(SFXHASH* t)
+inline unsigned xhash_overhead_blocks(XHash* t)
 { return t->overhead_blocks; }
 
-SO_PUBLIC void* sfxhash_mru(SFXHASH* t);
-SO_PUBLIC void* sfxhash_lru(SFXHASH* t);
-SO_PUBLIC void* sfxhash_find(SFXHASH* h, void* key);
-SO_PUBLIC SFXHASH_NODE* sfxhash_find_node(SFXHASH* t, const void* key);
+SO_PUBLIC void* xhash_mru(XHash* t);
+SO_PUBLIC void* xhash_lru(XHash* t);
+SO_PUBLIC void* xhash_find(XHash* h, void* key);
+SO_PUBLIC XHashNode* xhash_find_node(XHash* t, const void* key);
 
-SO_PUBLIC SFXHASH_NODE* sfxhash_findfirst(SFXHASH* h);
-SO_PUBLIC SFXHASH_NODE* sfxhash_findnext(SFXHASH* h);
+SO_PUBLIC XHashNode* xhash_findfirst(XHash* h);
+SO_PUBLIC XHashNode* xhash_findnext(XHash* h);
 
-SO_PUBLIC SFXHASH_NODE* sfxhash_ghead(SFXHASH* h);
-SO_PUBLIC void sfxhash_gmovetofront(SFXHASH* t, SFXHASH_NODE* hnode);
+SO_PUBLIC XHashNode* xhash_ghead(XHash* h);
+SO_PUBLIC void xhash_gmovetofront(XHash* t, XHashNode* hnode);
 
-SO_PUBLIC int sfxhash_free_node(SFXHASH* t, SFXHASH_NODE* node);
+SO_PUBLIC int xhash_free_node(XHash* t, XHashNode* node);
 
-typedef uint32_t (* hash_func)(SFHASHFCN*, const unsigned char* d, int n);
+typedef uint32_t (* hash_func)(HashFnc*, const unsigned char* d, int n);
 
 // return 0 for ==, 1 for != ; FIXIT-L convert to bool
 typedef int (* keycmp_func)(const void* s1, const void* s2, size_t n);
 
-SO_PUBLIC void sfxhash_set_keyops(SFXHASH* h, hash_func, keycmp_func);
+SO_PUBLIC void xhash_set_keyops(XHash* h, hash_func, keycmp_func);
 
-SO_PUBLIC SFXHASH_NODE* sfxhash_gfindfirst(SFXHASH* t);
-SO_PUBLIC SFXHASH_NODE* sfxhash_gfindnext(SFXHASH* t);
+SO_PUBLIC XHashNode* xhash_gfindfirst(XHash* t);
+SO_PUBLIC XHashNode* xhash_gfindnext(XHash* t);
 
 #endif
 

@@ -22,7 +22,7 @@
    This file contains functions that glue the generic thresholding2 code to
    snort.
 
-   dependent files:  sfthd sfxghash sfghash sflsq
+   dependent files:  sfthd sfxghash ghash sflsq
                      util mstring
 
    Marc Norton
@@ -43,7 +43,7 @@
 
 #include "sfthreshold.h"
 
-#include "hash/sfxhash.h"
+#include "hash/xhash.h"
 #include "main/snort_config.h"
 #include "utils/util.h"
 
@@ -203,11 +203,11 @@ static int print_thd_node(THD_NODE* p, PrintFormat type, unsigned* prnMode)
 
 static int print_thd_local(ThresholdObjects* thd_objs, PrintFormat type, unsigned* prnMode)
 {
-    SFGHASH* sfthd_hash;
+    GHash* sfthd_hash;
     THD_ITEM* sfthd_item;
     THD_NODE* sfthd_node;
     int gen_id;
-    SFGHASH_NODE* item_hash_node;
+    GHashNode* item_hash_node;
     int lcnt=0;
     PolicyId policyId;
 
@@ -221,9 +221,9 @@ static int print_thd_local(ThresholdObjects* thd_objs, PrintFormat type, unsigne
                 continue;
             }
 
-            for (item_hash_node  = sfghash_findfirst(sfthd_hash);
+            for (item_hash_node  = ghash_findfirst(sfthd_hash);
                 item_hash_node != 0;
-                item_hash_node  = sfghash_findnext(sfthd_hash) )
+                item_hash_node  = ghash_findnext(sfthd_hash) )
             {
                 /* Check for any Permanent sig_id objects for this gen_id */
                 sfthd_item = (THD_ITEM*)item_hash_node->data;

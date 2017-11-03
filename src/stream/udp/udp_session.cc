@@ -54,7 +54,7 @@ static void UdpSessionCleanup(Flow* lwssn)
 }
 
 static int ProcessUdp(
-    Flow* lwssn, Packet* p, StreamUdpConfig*, SFXHASH_NODE*)
+    Flow* lwssn, Packet* p, StreamUdpConfig*, XHashNode*)
 {
     assert(lwssn->pkt_type == PktType::UDP);
 

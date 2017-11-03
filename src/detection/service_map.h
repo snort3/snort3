@@ -33,14 +33,14 @@
 #include "target_based/snort_protocols.h"
 
 struct PortGroup;
-struct SFGHASH;
+struct GHash;
 struct SnortConfig;
 
 //  Service Rule Map Master Table
 struct srmm_table_t
 {
-    SFGHASH* to_srv[SNORT_PROTO_MAX];
-    SFGHASH* to_cli[SNORT_PROTO_MAX];
+    GHash* to_srv[SNORT_PROTO_MAX];
+    GHash* to_cli[SNORT_PROTO_MAX];
 };
 
 srmm_table_t* ServiceMapNew();

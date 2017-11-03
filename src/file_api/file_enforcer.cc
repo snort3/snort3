@@ -47,7 +47,7 @@ static int file_node_free_func(void*, void* data)
 
 FileEnforcer::FileEnforcer()
 {
-    fileHash = sfxhash_new(MAX_FILES_TRACKED, sizeof(FileHashKey), sizeof(FileNode),
+    fileHash = xhash_new(MAX_FILES_TRACKED, sizeof(FileHashKey), sizeof(FileNode),
         MAX_MEMORY_USED, 1, nullptr, file_node_free_func, 1);
     if (!fileHash)
         FatalError("Failed to create the expected channel hash table.\n");
@@ -57,7 +57,7 @@ FileEnforcer::~FileEnforcer()
 {
     if (fileHash)
     {
-        sfxhash_delete(fileHash);
+        xhash_delete(fileHash);
     }
 }
 
@@ -67,7 +67,7 @@ void FileEnforcer::update_file_node(FileNode* node, FileInfo* file)
 }
 
 FileVerdict FileEnforcer::check_verdict(Flow* flow, FileNode* node,
-    SFXHASH_NODE* hash_node, FilePolicy& inspect)
+    XHashNode* hash_node, FilePolicy& inspect)
 {
     assert(node->file);
 
@@ -87,7 +87,7 @@ FileVerdict FileEnforcer::check_verdict(Flow* flow, FileNode* node,
 
     if (verdict == FILE_VERDICT_LOG)
     {
-        sfxhash_free_node(fileHash, hash_node);
+        xhash_free_node(fileHash, hash_node);
     }
 
     return verdict;
@@ -109,11 +109,11 @@ int FileEnforcer::store_verdict(Flow* flow, FileInfo* file)
     hashKey.file_sig = file_sig;
 
     FileNode* node;
-    SFXHASH_NODE* hash_node = sfxhash_find_node(fileHash, &hashKey);
+    XHashNode* hash_node = xhash_find_node(fileHash, &hashKey);
     if (hash_node)
     {
         if (!(node = (FileNode*)hash_node->data))
-            sfxhash_free_node(fileHash, hash_node);
+            xhash_free_node(fileHash, hash_node);
     }
     else
         node = nullptr;
@@ -141,7 +141,7 @@ int FileEnforcer::store_verdict(Flow* flow, FileInfo* file)
         new_node.expires = now + timeout;
 
         /* Add it to the table */
-        if (sfxhash_add(fileHash, &hashKey, &new_node) != SFXHASH_OK)
+        if (xhash_add(fileHash, &hashKey, &new_node) != XHASH_OK)
         {
             /* Uh, shouldn't get here...
              * There is already a node or couldn't alloc space
@@ -192,11 +192,11 @@ FileVerdict FileEnforcer::cached_verdict_lookup(Flow* flow, FileInfo* file,
     FilePolicy& inspect)
 {
     FileVerdict verdict = FILE_VERDICT_UNKNOWN;
-    SFXHASH_NODE* hash_node;
+    XHashNode* hash_node;
     FileNode* node;
 
     /* No hash table, or its empty?  Get out of dodge.  */
-    if ((!fileHash) || (!sfxhash_count(fileHash)))
+    if ((!fileHash) || (!xhash_count(fileHash)))
     {
         DebugMessage(DEBUG_FILE, "No expected sessions\n");
         return verdict;
@@ -213,12 +213,12 @@ FileVerdict FileEnforcer::cached_verdict_lookup(Flow* flow, FileInfo* file,
     hashKey.padding = 0;
     hashKey.file_sig = file_sig;
 
-    hash_node = sfxhash_find_node(fileHash, &hashKey);
+    hash_node = xhash_find_node(fileHash, &hashKey);
 
     if (hash_node)
     {
         if (!(node = (FileNode*)hash_node->data))
-            sfxhash_free_node(fileHash, hash_node);
+            xhash_free_node(fileHash, hash_node);
     }
     else
         return verdict;
@@ -229,7 +229,7 @@ FileVerdict FileEnforcer::cached_verdict_lookup(Flow* flow, FileInfo* file,
         if (node->expires && packet_time() > node->expires)
         {
             DebugMessage(DEBUG_FILE, "File expired\n");
-            sfxhash_free_node(fileHash, hash_node);
+            xhash_free_node(fileHash, hash_node);
             return verdict;
         }
         /*Query the file policy in case verdict has been changed*/

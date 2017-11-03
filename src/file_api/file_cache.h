@@ -28,7 +28,7 @@
 
 #include "file_config.h"
 
-struct SFXHASH;
+struct XHash;
 
 class FileCache
 {
@@ -57,7 +57,7 @@ PADDING_GUARD_END
 
 private:
     /* The hash table of expected files */
-    SFXHASH* fileHash = nullptr;
+    XHash* fileHash = nullptr;
     uint32_t timeout = DEFAULT_FILE_BLOCK_TIMEOUT;
     std::mutex cache_mutex;
 };

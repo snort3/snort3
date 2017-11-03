@@ -26,17 +26,17 @@
 #include "length_app_cache.h"
 
 #include "application_ids.h"
-#include "hash/sfxhash.h"
+#include "hash/xhash.h"
 #include "log/messages.h"
 #include "main/thread.h"
 
 #define HASH_NUM_ROWS (1024)
 
-static THREAD_LOCAL SFXHASH* lengthCache = nullptr;
+static THREAD_LOCAL XHash* lengthCache = nullptr;
 
 void init_length_app_cache()
 {
-    if (!(lengthCache = sfxhash_new(HASH_NUM_ROWS, sizeof(LengthKey), sizeof(AppId),
+    if (!(lengthCache = xhash_new(HASH_NUM_ROWS, sizeof(LengthKey), sizeof(AppId),
             0, 0, nullptr, nullptr, 0)))
     {
         ErrorMessage("lengthAppCache: Failed to allocate length cache!");
@@ -47,14 +47,14 @@ void free_length_app_cache()
 {
     if (lengthCache)
     {
-        sfxhash_delete(lengthCache);
+        xhash_delete(lengthCache);
         lengthCache = nullptr;
     }
 }
 
 AppId find_length_app_cache(const LengthKey* key)
 {
-    AppId* val = (AppId*)sfxhash_find(lengthCache, (void*)key);
+    AppId* val = (AppId*)xhash_find(lengthCache, (void*)key);
     if (val == nullptr)
         return APP_ID_NONE;    /* no match */
     else
@@ -63,7 +63,7 @@ AppId find_length_app_cache(const LengthKey* key)
 
 bool add_length_app_cache(const LengthKey* key, AppId val)
 {
-    if (sfxhash_add(lengthCache, (void*)key, (void*)&val))
+    if (xhash_add(lengthCache, (void*)key, (void*)&val))
     {
         return false;
     }

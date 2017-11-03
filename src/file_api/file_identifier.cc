@@ -65,7 +65,7 @@ void FileMagicRule::clear()
 
 void FileIdentifier::init_merge_hash()
 {
-    identifier_merge_hash = sfghash_new(1000, sizeof(MergeNode), 0, nullptr);
+    identifier_merge_hash = ghash_new(1000, sizeof(MergeNode), 0, nullptr);
     assert(identifier_merge_hash);
 }
 
@@ -79,7 +79,7 @@ FileIdentifier::~FileIdentifier()
 
     if (identifier_merge_hash != nullptr)
     {
-        sfghash_delete(identifier_merge_hash);
+        ghash_delete(identifier_merge_hash);
     }
 }
 
@@ -192,7 +192,7 @@ bool FileIdentifier::update_next(IdentifierNode* start,IdentifierNode** next_ptr
         set_node_state_shared(append);
         return false;
     }
-    else if ((result = (IdentifierNode*)sfghash_find(identifier_merge_hash, &merge_node)))
+    else if ((result = (IdentifierNode*)ghash_find(identifier_merge_hash, &merge_node)))
     {
         /*the same pointer has been processed, reuse it*/
         *next_ptr = result;
@@ -217,7 +217,7 @@ bool FileIdentifier::update_next(IdentifierNode* start,IdentifierNode** next_ptr
 
             set_node_state_shared(next);
             next = node;
-            sfghash_add(identifier_merge_hash, &merge_node, next);
+            ghash_add(identifier_merge_hash, &merge_node, next);
         }
         else if (next->state == ID_NODE_SHARED)
         {
@@ -227,7 +227,7 @@ bool FileIdentifier::update_next(IdentifierNode* start,IdentifierNode** next_ptr
             merge_node.append_node = append;
             next = clone_node(current_next);
             set_node_state_shared(next);
-            sfghash_add(identifier_merge_hash, &merge_node, next);
+            ghash_add(identifier_merge_hash, &merge_node, next);
         }
 
         *next_ptr = next;

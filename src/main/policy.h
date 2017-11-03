@@ -42,7 +42,7 @@ struct vartable_t;
 struct sfip_var_t;
 
 typedef unsigned int PolicyId;
-typedef struct SFGHASH PortVarTable;
+typedef struct GHash PortVarTable;
 
 enum PolicyMode
 {

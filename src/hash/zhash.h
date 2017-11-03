@@ -22,7 +22,7 @@
 
 #include <cstddef>
 
-struct SFHASHFCN;
+struct HashFnc;
 struct ZHashNode;
 
 class ZHash
@@ -51,7 +51,7 @@ public:
     inline unsigned get_count() { return count; }
 
     int set_keyops(
-        unsigned (* hash_fcn)(SFHASHFCN* p, const unsigned char* d, int n),
+        unsigned (* hash_fcn)(HashFnc* p, const unsigned char* d, int n),
         int (* keycmp_fcn)(const void* s1, const void* s2, size_t n));
 
 private:
@@ -72,7 +72,7 @@ private:
     int nearest_powerof2(int nrows);
 
 private:
-    SFHASHFCN* sfhashfcn;
+    HashFnc* hashfcn;
     int keysize;
 
     unsigned nrows;

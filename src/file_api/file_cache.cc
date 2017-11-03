@@ -23,7 +23,7 @@
 
 #include "file_cache.h"
 
-#include "hash/sfxhash.h"
+#include "hash/xhash.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
@@ -45,18 +45,18 @@ static int file_cache_free_func(void*, void* data)
 FileCache::FileCache()
 {
     int max_files = SnortConfig::get_conf()->file_config.max_files_cached;
-    fileHash = sfxhash_new(max_files, sizeof(FileHashKey), sizeof(FileNode),
+    fileHash = xhash_new(max_files, sizeof(FileHashKey), sizeof(FileNode),
         0, 1, nullptr, file_cache_free_func, 1);
     if (!fileHash)
         FatalError("Failed to create the expected channel hash table.\n");
-    sfxhash_set_max_nodes(fileHash, max_files);
+    xhash_set_max_nodes(fileHash, max_files);
 }
 
 FileCache::~FileCache()
 {
     if (fileHash)
     {
-        sfxhash_delete(fileHash);
+        xhash_delete(fileHash);
     }
 }
 
@@ -75,7 +75,7 @@ FileContext* FileCache::add(const FileHashKey& hashKey)
 
     std::lock_guard<std::mutex> lock(cache_mutex);
 
-    if (sfxhash_add(fileHash, (void*)&hashKey, &new_node) != SFXHASH_OK)
+    if (xhash_add(fileHash, (void*)&hashKey, &new_node) != XHASH_OK)
     {
         /* Uh, shouldn't get here...
          * There is already a node or couldn't alloc space
@@ -95,13 +95,13 @@ FileContext* FileCache::find(const FileHashKey& hashKey)
     std::lock_guard<std::mutex> lock(cache_mutex);
 
     // No hash table, or its empty?  Get out of dodge.
-    if ((!fileHash) || (!sfxhash_count(fileHash)))
+    if ((!fileHash) || (!xhash_count(fileHash)))
     {
         DebugMessage(DEBUG_FILE, "No expected sessions\n");
         return nullptr;
     }
 
-    SFXHASH_NODE* hash_node = sfxhash_find_node(fileHash, &hashKey);
+    XHashNode* hash_node = xhash_find_node(fileHash, &hashKey);
 
     if (!hash_node)
         return nullptr;
@@ -109,7 +109,7 @@ FileContext* FileCache::find(const FileHashKey& hashKey)
     FileNode* node = (FileNode*)hash_node->data;
     if (!node)
     {
-        sfxhash_free_node(fileHash, hash_node);
+        xhash_free_node(fileHash, hash_node);
         return nullptr;
     }
 
@@ -118,7 +118,7 @@ FileContext* FileCache::find(const FileHashKey& hashKey)
     if (node->expires && now > node->expires)
     {
         DebugMessage(DEBUG_FILE, "File expired\n");
-        sfxhash_free_node(fileHash, hash_node);
+        xhash_free_node(fileHash, hash_node);
         return nullptr;
     }
 

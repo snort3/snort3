@@ -23,7 +23,7 @@
 * Prime number calculation via Table lookups.
 *
 * This was implemented for use with the hashing functions
-* in sfghash, and sfxhash.
+* in ghash, and sfxhash.
 *
 */
 
@@ -31,7 +31,7 @@
 #include "config.h"
 #endif
 
-#include "sfprimetable.h"
+#include "primetable.h"
 
 /* 0-8K, increments=8 */
 static unsigned prime_table0[1024]=
@@ -2101,7 +2101,7 @@ static unsigned prime_table3[1024]=
     134086639, /* 134086656 */       134217689, /* 134217728 */
 };
 
-int sf_nearest_prime(int n)
+int nearest_prime(int n)
 {
     if ( n < 0 )
         n = -n;

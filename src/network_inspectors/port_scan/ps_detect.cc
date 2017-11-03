@@ -33,7 +33,7 @@
 
 #include "ps_detect.h"
 
-#include "hash/sfxhash.h"
+#include "hash/xhash.h"
 #include "log/messages.h"
 #include "protocols/icmp4.h"
 #include "protocols/packet.h"
@@ -53,7 +53,7 @@ struct PS_HASH_KEY
 };
 PADDING_GUARD_END
 
-static THREAD_LOCAL SFXHASH* portscan_hash = nullptr;
+static THREAD_LOCAL XHash* portscan_hash = nullptr;
 
 PortscanConfig::PortscanConfig()
 {
@@ -102,7 +102,7 @@ void ps_cleanup()
 {
     if ( portscan_hash )
     {
-        sfxhash_delete(portscan_hash);
+        xhash_delete(portscan_hash);
         portscan_hash = nullptr;
     }
 }
@@ -117,7 +117,7 @@ void ps_init_hash(unsigned long memcap)
 
     int rows = memcap / ps_node_size();
 
-    portscan_hash = sfxhash_new(rows, sizeof(PS_HASH_KEY), sizeof(PS_TRACKER),
+    portscan_hash = xhash_new(rows, sizeof(PS_HASH_KEY), sizeof(PS_TRACKER),
         memcap, 1, ps_tracker_free, nullptr, 1);
 
     if ( !portscan_hash )
@@ -127,7 +127,7 @@ void ps_init_hash(unsigned long memcap)
 void ps_reset()
 {
     if ( portscan_hash )
-        sfxhash_make_empty(portscan_hash);
+        xhash_make_empty(portscan_hash);
 }
 
 //  Check scanner and scanned ips to see if we can filter them out.
@@ -267,15 +267,15 @@ bool PortScan::ps_filter_ignore(PS_PKT* ps_pkt)
 */
 static PS_TRACKER* ps_tracker_get(PS_HASH_KEY* key)
 {
-    PS_TRACKER* ht = (PS_TRACKER*)sfxhash_find(portscan_hash, (void*)key);
+    PS_TRACKER* ht = (PS_TRACKER*)xhash_find(portscan_hash, (void*)key);
 
     if ( ht )
         return ht;
 
-    if ( sfxhash_add(portscan_hash, (void*)key, nullptr) != SFXHASH_OK )
+    if ( xhash_add(portscan_hash, (void*)key, nullptr) != XHASH_OK )
         return nullptr;
 
-    ht = (PS_TRACKER*)sfxhash_mru(portscan_hash);
+    ht = (PS_TRACKER*)xhash_mru(portscan_hash);
 
     if ( ht )
         memset(ht, 0x00, sizeof(PS_TRACKER));

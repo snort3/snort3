@@ -35,14 +35,14 @@
 PortVarTable* PortVarTableCreate()
 {
     PortObject* po;
-    SFGHASH* h;
+    GHash* h;
 
     /*
      * This is used during parsing of config,
      * so 1000 entries is ok, worst that happens is somewhat slower
      * config/rule processing.
      */
-    h = sfghash_new(1000,0,0,PortObjectFree);
+    h = ghash_new(1000,0,0,PortObjectFree);
     if ( !h )
         return nullptr;
 
@@ -68,7 +68,7 @@ int PortVarTableFree(PortVarTable* pvt)
 {
     if ( pvt )
     {
-        sfghash_delete(pvt);
+        ghash_delete(pvt);
     }
     return 0;
 }
@@ -84,10 +84,10 @@ int PortVarTableFree(PortVarTable* pvt)
 int PortVarTableAdd(PortVarTable* h, PortObject* po)
 {
     int stat;
-    stat = sfghash_add(h,po->name,po);
-    if ( stat == SFGHASH_INTABLE )
+    stat = ghash_add(h,po->name,po);
+    if ( stat == GHASH_INTABLE )
         return 1;
-    if ( stat == SFGHASH_OK )
+    if ( stat == GHASH_OK )
         return 0;
     return -1;
 }
@@ -97,6 +97,6 @@ PortObject* PortVarTableFind(PortVarTable* h, const char* name)
     if (!h || !name)
         return nullptr;
 
-    return (PortObject*)sfghash_find(h,name);
+    return (PortObject*)ghash_find(h,name);
 }
 

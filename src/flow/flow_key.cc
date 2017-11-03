@@ -24,7 +24,7 @@
 
 #include "flow/flow_key.h"
 
-#include "hash/sfhashfcn.h"
+#include "hash/hashfcn.h"
 #include "main/snort_config.h"
 #include "protocols/icmp4.h"
 #include "protocols/icmp6.h"
@@ -295,7 +295,7 @@ bool FlowKey::init(
 // hash foo
 //-------------------------------------------------------------------------
 
-uint32_t FlowKey::hash(SFHASHFCN* hf, const unsigned char* p, int)
+uint32_t FlowKey::hash(HashFnc* hf, const unsigned char* p, int)
 {
     uint32_t a, b, c;
     a = b = c = hf->hardener;

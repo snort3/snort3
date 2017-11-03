@@ -37,7 +37,7 @@
 
 #include <cassert>
 
-#include "hash/sfghash.h"
+#include "hash/ghash.h"
 #include "ips_options/ips_flow.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
@@ -52,17 +52,17 @@
 // service map stuff
 //-------------------------------------------------------------------------
 
-static SFGHASH* alloc_srvmap()
+static GHash* alloc_srvmap()
 {
-    // nodes are lists,free them in sfghash_delete
-    SFGHASH* p = sfghash_new(1000, 0, 0, (void (*)(void*))sflist_free);
+    // nodes are lists,free them in ghash_delete
+    GHash* p = ghash_new(1000, 0, 0, (void (*)(void*))sflist_free);
     return p;
 }
 
-static void free_srvmap(SFGHASH* table)
+static void free_srvmap(GHash* table)
 {
     if ( table )
-        sfghash_delete(table);
+        ghash_delete(table);
 }
 
 srmm_table_t* ServiceMapNew()
@@ -102,19 +102,19 @@ void ServiceMapFree(srmm_table_t* table)
 static void delete_pg(void* pv)
 { PortGroup::free((PortGroup*)pv); }
 
-static SFGHASH* alloc_spgmm()
+static GHash* alloc_spgmm()
 {
     // 1000 rows, ascii key
-    SFGHASH* p = sfghash_new(1000, 0, 0, delete_pg);
+    GHash* p = ghash_new(1000, 0, 0, delete_pg);
     return p;
 }
 
-static void free_spgmm(SFGHASH* table)
+static void free_spgmm(GHash* table)
 {
     if ( !table )
         return;
 
-    sfghash_delete(table);
+    ghash_delete(table);
 }
 
 srmm_table_t* ServicePortGroupMapNew()
@@ -159,11 +159,11 @@ void ServicePortGroupMapFree(srmm_table_t* table)
  * otn - rule - may be content,-no-content, or uri-content
  *
  */
-static void ServiceMapAddOtnRaw(SFGHASH* table, const char* servicename, OptTreeNode* otn)
+static void ServiceMapAddOtnRaw(GHash* table, const char* servicename, OptTreeNode* otn)
 {
     SF_LIST* list;
 
-    list = (SF_LIST*)sfghash_find(table, servicename);
+    list = (SF_LIST*)ghash_find(table, servicename);
 
     if ( !list )
     {
@@ -173,7 +173,7 @@ static void ServiceMapAddOtnRaw(SFGHASH* table, const char* servicename, OptTree
             FatalError("service_rule_map: could not create a  service rule-list\n");
 
         /* add the service list to the table */
-        if ( sfghash_add(table, servicename, list) != SFGHASH_OK )
+        if ( ghash_add(table, servicename, list) != GHASH_OK )
         {
             FatalError("service_rule_map: could not add a rule to the rule-service-map\n");
         }
@@ -196,8 +196,8 @@ static int ServiceMapAddOtn(
     if ( proto > SNORT_PROTO_USER )
         proto = SNORT_PROTO_USER;
 
-    SFGHASH* to_srv = srmm->to_srv[proto];
-    SFGHASH* to_cli = srmm->to_cli[proto];
+    GHash* to_srv = srmm->to_srv[proto];
+    GHash* to_cli = srmm->to_cli[proto];
 
     if ( !OtnFlowFromClient(otn) )
         ServiceMapAddOtnRaw(to_cli, servicename, otn);
@@ -233,14 +233,14 @@ void fpPrintServicePortGroupSummary(SnortConfig* sc, srmm_table_t* srvc_pg_map)
 int fpCreateServiceMaps(SnortConfig* sc)
 {
     RuleTreeNode* rtn;
-    SFGHASH_NODE* hashNode;
+    GHashNode* hashNode;
     OptTreeNode* otn  = nullptr;
     PolicyId policyId = 0;
     unsigned int svc_idx;
 
-    for (hashNode = sfghash_findfirst(sc->otn_map);
+    for (hashNode = ghash_findfirst(sc->otn_map);
         hashNode;
-        hashNode = sfghash_findnext(sc->otn_map))
+        hashNode = ghash_findnext(sc->otn_map))
     {
         otn = (OptTreeNode*)hashNode->data;
         for ( policyId = 0;

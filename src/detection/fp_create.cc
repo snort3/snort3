@@ -35,7 +35,7 @@
 #include "fp_create.h"
 
 #include "framework/mpse.h"
-#include "hash/sfghash.h"
+#include "hash/ghash.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "managers/mpse_manager.h"
@@ -644,9 +644,9 @@ static int fpCreateInitRuleMap(
     /* Process src PORT groups */
     if ( src )
     {
-        for ( SFGHASH_NODE* node=sfghash_findfirst(src->pt_mpxo_hash);
+        for ( GHashNode* node=ghash_findfirst(src->pt_mpxo_hash);
             node;
-            node=sfghash_findnext(src->pt_mpxo_hash) )
+            node=ghash_findnext(src->pt_mpxo_hash) )
         {
             PortObject2* po = (PortObject2*)node->data;
 
@@ -668,9 +668,9 @@ static int fpCreateInitRuleMap(
     /* process destination port groups */
     if ( dst )
     {
-        for ( SFGHASH_NODE* node=sfghash_findfirst(dst->pt_mpxo_hash);
+        for ( GHashNode* node=ghash_findfirst(dst->pt_mpxo_hash);
             node;
-            node=sfghash_findnext(dst->pt_mpxo_hash) )
+            node=ghash_findnext(dst->pt_mpxo_hash) )
         {
             PortObject2* po = (PortObject2*)node->data;
 
@@ -864,7 +864,7 @@ static void fpDeletePMX(void* pv)
 static int fpCreatePortObject2PortGroup(
     SnortConfig* sc, PortObject2* po, PortObject2* poaa)
 {
-    SFGHASH_NODE* node;
+    GHashNode* node;
     unsigned sid, gid;
     OptTreeNode* otn;
     PortGroup* pg;
@@ -907,9 +907,9 @@ static int fpCreatePortObject2PortGroup(
 
     while (pox != nullptr)
     {
-        for (node = sfghash_findfirst(pox->rule_hash);
+        for (node = ghash_findfirst(pox->rule_hash);
             node;
-            node = sfghash_findnext(pox->rule_hash))
+            node = ghash_findnext(pox->rule_hash))
         {
             int* prindex = (int*)node->data;
 
@@ -952,16 +952,16 @@ static int fpCreatePortObject2PortGroup(
 static int fpCreatePortTablePortGroups(
     SnortConfig* sc, PortTable* p, PortObject2* poaa)
 {
-    SFGHASH_NODE* node;
+    GHashNode* node;
     int cnt=1;
     FastPatternConfig* fp = sc->fast_pattern_config;
 
     if (fp->get_debug_print_rule_group_build_details())
         LogMessage("%d Port Groups in Port Table\n",p->pt_mpo_hash->count);
 
-    for (node=sfghash_findfirst(p->pt_mpo_hash);
+    for (node=ghash_findfirst(p->pt_mpo_hash);
         node;
-        node=sfghash_findnext(p->pt_mpo_hash) )
+        node=ghash_findnext(p->pt_mpo_hash) )
     {
         PortObject2* po = (PortObject2*)node->data;
 
@@ -1177,7 +1177,7 @@ static int fpCreatePortGroups(SnortConfig* sc, RulePortTables* p)
 * list- list of otns for this service
 */
 static void fpBuildServicePortGroupByServiceOtnList(
-    SnortConfig* sc, SFGHASH* p, const char* srvc, SF_LIST* list, FastPatternConfig* fp)
+    SnortConfig* sc, GHash* p, const char* srvc, SF_LIST* list, FastPatternConfig* fp)
 {
     PortGroup* pg = PortGroup::alloc();
     s_group = srvc;
@@ -1200,7 +1200,7 @@ static void fpBuildServicePortGroupByServiceOtnList(
         return;
 
     /* Add the port_group using it's service name */
-    sfghash_add(p, srvc, pg);
+    ghash_add(p, srvc, pg);
 }
 
 /*
@@ -1217,11 +1217,11 @@ static void fpBuildServicePortGroupByServiceOtnList(
  *
  */
 static void fpBuildServicePortGroups(
-    SnortConfig* sc, SFGHASH* spg, PortGroupVector& sopg, SFGHASH* srm, FastPatternConfig* fp)
+    SnortConfig* sc, GHash* spg, PortGroupVector& sopg, GHash* srm, FastPatternConfig* fp)
 {
-    for ( SFGHASH_NODE* n = sfghash_findfirst(srm);
+    for ( GHashNode* n = ghash_findfirst(srm);
         n;
-        n=sfghash_findnext(srm) )
+        n=ghash_findnext(srm) )
     {
         SF_LIST* list = (SF_LIST*)n->data;
         const char* srvc = (const char*)n->key;
@@ -1231,7 +1231,7 @@ static void fpBuildServicePortGroups(
         fpBuildServicePortGroupByServiceOtnList(sc, spg, srvc, list, fp);
 
         /* Add this PortGroup to the protocol-ordinal -> port_group table */
-        PortGroup* pg = (PortGroup*)sfghash_find(spg, srvc);
+        PortGroup* pg = (PortGroup*)ghash_find(spg, srvc);
         if ( !pg )
         {
             ParseError("*** failed to create and find a port group for '%s'",srvc);
@@ -1286,9 +1286,9 @@ static void fpPrintRuleList(SF_LIST* list)
     }
 }
 
-static void fpPrintServiceRuleMapTable(SFGHASH* p, const char* proto, const char* dir)
+static void fpPrintServiceRuleMapTable(GHash* p, const char* proto, const char* dir)
 {
-    SFGHASH_NODE* n;
+    GHashNode* n;
 
     if ( !p || !p->count )
         return;
@@ -1299,9 +1299,9 @@ static void fpPrintServiceRuleMapTable(SFGHASH* p, const char* proto, const char
     label += dir;
     LogLabel(label.c_str());
 
-    for ( n = sfghash_findfirst(p);
+    for ( n = ghash_findfirst(p);
         n;
-        n = sfghash_findnext(p) )
+        n = ghash_findnext(p) )
     {
         SF_LIST* list;
 
@@ -1328,7 +1328,7 @@ static void fpPrintServiceRuleMaps(SnortConfig* sc, srmm_table_t* service_map)
     }
 }
 
-static void fp_print_service_rules(SnortConfig* sc, SFGHASH* cli, SFGHASH* srv, const char* msg)
+static void fp_print_service_rules(SnortConfig* sc, GHash* cli, GHash* srv, const char* msg)
 {
     if ( !cli->count and !srv->count )
         return;
@@ -1343,8 +1343,8 @@ static void fp_print_service_rules(SnortConfig* sc, SFGHASH* cli, SFGHASH* srv, 
 
     while ( const char* svc = sc->proto_ref->get_name_sorted(idx++) )
     {
-        SF_LIST* clist = (SF_LIST*)sfghash_find(cli, svc);
-        SF_LIST* slist = (SF_LIST*)sfghash_find(srv, svc);
+        SF_LIST* clist = (SF_LIST*)ghash_find(cli, svc);
+        SF_LIST* slist = (SF_LIST*)ghash_find(srv, svc);
 
         if ( !clist and !slist )
             continue;
@@ -1377,10 +1377,10 @@ static void fp_sum_port_groups(PortGroup* pg, unsigned c[PM_TYPE_MAX])
             c[i]++;
 }
 
-static void fp_sum_service_groups(SFGHASH* h, unsigned c[PM_TYPE_MAX])
+static void fp_sum_service_groups(GHash* h, unsigned c[PM_TYPE_MAX])
 {
-    for ( SFGHASH_NODE* node=sfghash_findfirst(h);
-        node; node=sfghash_findnext(h) )
+    for ( GHashNode* node=ghash_findfirst(h);
+        node; node=ghash_findnext(h) )
     {
         PortGroup* pg = (PortGroup*)node->data;
         fp_sum_port_groups(pg, c);
@@ -1416,8 +1416,8 @@ static void fp_print_service_groups(srmm_table_t* srmm)
 
 static void fp_sum_port_groups(PortTable* tab, unsigned c[PM_TYPE_MAX])
 {
-    for ( SFGHASH_NODE* node=sfghash_findfirst(tab->pt_mpxo_hash);
-        node; node=sfghash_findnext(tab->pt_mpxo_hash) )
+    for ( GHashNode* node=ghash_findfirst(tab->pt_mpxo_hash);
+        node; node=ghash_findnext(tab->pt_mpxo_hash) )
     {
         PortObject2* po = (PortObject2*)node->data;
         fp_sum_port_groups(po->group, c);

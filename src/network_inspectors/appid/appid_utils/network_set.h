@@ -26,7 +26,7 @@
 
 #include <cstdio>
 
-#include "hash/sfxhash.h"
+#include "hash/xhash.h"
 #include "protocols/ipv6.h"
 #include "utils/sflsq.h"
 
@@ -102,11 +102,11 @@ struct NetworkSet
 {
     NetworkSet* next;
     SF_LIST networks;
-    SFXHASH* ids;
+    XHash* ids;
     Network** pnetwork;
     unsigned count;
     SF_LIST networks6;
-    SFXHASH* ids6;
+    XHash* ids6;
     Network6** pnetwork6;
     unsigned count6;
 };

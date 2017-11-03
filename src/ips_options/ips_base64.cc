@@ -25,7 +25,7 @@
 
 #include "detection/detection_util.h"
 #include "detection/treenodes.h"
-#include "hash/sfhashfcn.h"
+#include "hash/hashfcn.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"

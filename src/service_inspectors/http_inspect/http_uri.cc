@@ -23,7 +23,7 @@
 
 #include "http_uri.h"
 
-#include "hash/sfhashfcn.h"
+#include "hash/hashfcn.h"
 
 using namespace HttpEnums;
 

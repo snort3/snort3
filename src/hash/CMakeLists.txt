@@ -1,9 +1,9 @@
 
 set (HASH_INCLUDES
     hashes.h
-    sfghash.h 
-    sfxhash.h 
-    sfhashfcn.h 
+    ghash.h 
+    xhash.h 
+    hashfcn.h 
 )
 
 set (HASH_SOURCES )
@@ -14,11 +14,11 @@ add_library( hash STATIC
     hashes.cc
     lru_cache_shared.h
     lru_cache_shared.cc
-    sfghash.cc 
-    sfhashfcn.cc 
-    sfprimetable.cc 
-    sfprimetable.h 
-    sfxhash.cc 
+    ghash.cc 
+    hashfcn.cc 
+    primetable.cc 
+    primetable.h 
+    xhash.cc 
     zhash.cc 
     zhash.h
 )

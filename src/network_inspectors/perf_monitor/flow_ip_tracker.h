@@ -22,7 +22,7 @@
 #define FLOW_IP_TRACKER_H
 
 #include "perf_tracker.h"
-#include "hash/sfxhash.h"
+#include "hash/xhash.h"
 
 enum FlowState
 {
@@ -70,7 +70,7 @@ public:
 
 private:
     FlowStateValue stats;
-    SFXHASH* ip_map;
+    XHash* ip_map;
     char ip_a[41], ip_b[41];
 
     FlowStateValue* find_stats(const SfIp* src_addr, const SfIp* dst_addr, int* swapped);

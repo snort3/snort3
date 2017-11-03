@@ -117,7 +117,7 @@ enum TunnelFlags
 struct srmm_table_t;
 struct sopg_table_t;
 struct PORT_RULE_MAP;
-struct SFXHASH;
+struct XHash;
 struct ProfilerConfig;
 struct MemoryConfig;
 struct LatencyConfig;
@@ -293,7 +293,7 @@ public:
     struct RuleState* rule_state_list = nullptr;
     struct ClassType* classifications = nullptr;
     struct ReferenceSystemNode* references = nullptr;
-    struct SFGHASH* otn_map = nullptr;
+    struct GHash* otn_map = nullptr;
 
     class ProtocolReference* proto_ref = nullptr;
 
@@ -323,9 +323,9 @@ public:
     srmm_table_t* spgmmTable = nullptr;  /* srvc port_group map master table */
     sopg_table_t* sopgTable = nullptr;   /* service-ordinal to port_group table */
 
-    SFXHASH* detection_option_hash_table = nullptr;
-    SFXHASH* detection_option_tree_hash_table = nullptr;
-    SFXHASH* rtn_hash_table = nullptr;
+    XHash* detection_option_hash_table = nullptr;
+    XHash* detection_option_tree_hash_table = nullptr;
+    XHash* rtn_hash_table = nullptr;
 
     PolicyMap* policy_map = nullptr;
     struct VarNode* var_list = nullptr;

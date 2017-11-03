@@ -25,7 +25,7 @@
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "framework/so_rule.h"
-#include "hash/sfhashfcn.h"
+#include "hash/hashfcn.h"
 #include "log/messages.h"
 #include "managers/so_manager.h"
 #include "profiler/profiler.h"

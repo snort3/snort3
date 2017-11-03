@@ -22,7 +22,7 @@
 #ifndef PORT_VAR_TABLE_H
 #define PORT_VAR_TABLE_H
 
-#include "hash/sfghash.h"
+#include "hash/ghash.h"
 #include "ports/port_object.h"
 #include "ports/port_table.h"
 
@@ -32,7 +32,7 @@
 // PortVars are internally stored in PortObjects
 //-------------------------------------------------------------------------
 
-typedef SFGHASH PortVarTable;
+typedef GHash PortVarTable;
 
 PortVarTable* PortVarTableCreate();
 int PortVarTableFree(PortVarTable* pvt);

@@ -19,7 +19,7 @@
 
 /*
 *
-*  sfghash.c
+*  ghash.c
 *
 *  Generic hash table library.
 *
@@ -56,14 +56,14 @@
 #include "config.h"
 #endif
 
-#include "sfghash.h"
+#include "ghash.h"
 
 #include <cassert>
 
 #include "utils/util.h"
 
-#include "sfhashfcn.h"
-#include "sfprimetable.h"
+#include "hashfcn.h"
+#include "primetable.h"
 
 /*
 *
@@ -82,25 +82,25 @@
 *               save the pointer to the key.
 *               ==0 => we should copy the keys and manage them internally
 *    userfree : routine to free users data, null if we should not
-*               free user data in sfghash_delete(). The routine
+*               free user data in ghash_delete(). The routine
 *               should be of the form 'void userfree(void * userdata)',
 *               'free' works for simple allocations.
 */
-SFGHASH* sfghash_new(int nrows, int keysize, int userkeys, SfgHashFree userfree)
+GHash* ghash_new(int nrows, int keysize, int userkeys, gHashFree userfree)
 {
     if ( nrows > 0 ) /* make sure we have a prime number */
     {
-        nrows = sf_nearest_prime(nrows);
+        nrows = nearest_prime(nrows);
     }
     else  /* use the magnitude or nrows as is */
     {
         nrows = -nrows;
     }
 
-    SFGHASH* h = (SFGHASH*)snort_calloc(sizeof(SFGHASH));
+    GHash* h = (GHash*)snort_calloc(sizeof(GHash));
 
-    h->sfhashfcn = sfhashfcn_new(nrows);
-    h->table = (SFGHASH_NODE**)snort_calloc(nrows, sizeof(SFGHASH_NODE*));
+    h->hashfcn = hashfcn_new(nrows);
+    h->table = (GHashNode**)snort_calloc(nrows, sizeof(GHashNode*));
 
     for ( int i = 0; i < nrows; i++ )
     {
@@ -125,20 +125,20 @@ SFGHASH* sfghash_new(int nrows, int keysize, int userkeys, SfgHashFree userfree)
 *  free key's, free node's, and free the users data, if they
 *  supply a free function
 */
-void sfghash_delete(SFGHASH* h)
+void ghash_delete(GHash* h)
 {
     if ( !h )
         return;
 
-    sfhashfcn_free(h->sfhashfcn);
+    hashfcn_free(h->hashfcn);
 
     if ( h->table )
     {
         for (int i=0; i<h->nrows; i++)
         {
-            for ( SFGHASH_NODE* node=h->table[i]; node; )
+            for ( GHashNode* node=h->table[i]; node; )
             {
-                SFGHASH_NODE* onode = node;
+                GHashNode* onode = node;
                 node  = node->next;
 
                 if ( !h->userkey && onode->key )
@@ -178,15 +178,15 @@ void sfghash_delete(SFGHASH* h)
 *  linked list of data items held by the node, or track a counter, or whatever.
 *
 */
-int sfghash_add(SFGHASH* t, const void* const key, void* const data)
+int ghash_add(GHash* t, const void* const key, void* const data)
 {
     unsigned hashkey;
     int klen;
     int index;
-    SFGHASH_NODE* hnode;
+    GHashNode* hnode;
 
     if (t == nullptr || key == nullptr)
-        return SFGHASH_ERR;
+        return GHASH_ERR;
 
     /*
     *   Get proper Key Size
@@ -197,11 +197,11 @@ int sfghash_add(SFGHASH* t, const void* const key, void* const data)
     }
     else
     {
-        /* need the null byte for strcmp() in sfghash_find() */
+        /* need the null byte for strcmp() in ghash_find() */
         klen = strlen( (const char*)key) + 1;
     }
 
-    hashkey = t->sfhashfcn->hash_fcn(t->sfhashfcn, (const unsigned char*)key, klen);
+    hashkey = t->hashfcn->hash_fcn(t->hashfcn, (const unsigned char*)key, klen);
 
     index = hashkey % t->nrows;
 
@@ -214,10 +214,10 @@ int sfghash_add(SFGHASH* t, const void* const key, void* const data)
     {
         if ( t->keysize > 0 )
         {
-            if ( !t->sfhashfcn->keycmp_fcn(hnode->key,key,klen) )
+            if ( !t->hashfcn->keycmp_fcn(hnode->key,key,klen) )
             {
                 t->cnode = hnode; /* save pointer to the node */
-                return SFGHASH_INTABLE; /* found it */
+                return GHASH_INTABLE; /* found it */
             }
         }
         else
@@ -225,7 +225,7 @@ int sfghash_add(SFGHASH* t, const void* const key, void* const data)
             if ( !strcmp((const char*)hnode->key,(const char*)key) )
             {
                 t->cnode = hnode; /* save pointer to the node */
-                return SFGHASH_INTABLE; /* found it */
+                return GHASH_INTABLE; /* found it */
             }
         }
     }
@@ -233,7 +233,7 @@ int sfghash_add(SFGHASH* t, const void* const key, void* const data)
     /*
     *  Create new node
     */
-    hnode = (SFGHASH_NODE*)snort_calloc(sizeof(SFGHASH_NODE));
+    hnode = (GHashNode*)snort_calloc(sizeof(GHashNode));
 
     /* Add the Key */
     if ( t->userkey )
@@ -269,17 +269,17 @@ int sfghash_add(SFGHASH* t, const void* const key, void* const data)
 
     t->count++;
 
-    return SFGHASH_OK;
+    return GHASH_OK;
 }
 
 /*
 *  Find a Node based on the key, return users data.
 */
-static SFGHASH_NODE* sfghash_find_node(SFGHASH* t, const void* const key)
+static GHashNode* ghash_find_node(GHash* t, const void* const key)
 {
     unsigned hashkey;
     int index, klen;
-    SFGHASH_NODE* hnode;
+    GHashNode* hnode;
 
     assert(t);
 
@@ -292,7 +292,7 @@ static SFGHASH_NODE* sfghash_find_node(SFGHASH* t, const void* const key)
         klen = strlen( (const char*)key) + 1;
     }
 
-    hashkey = t->sfhashfcn->hash_fcn(t->sfhashfcn, (const unsigned char*)key, klen);
+    hashkey = t->hashfcn->hash_fcn(t->hashfcn, (const unsigned char*)key, klen);
 
     index = hashkey % t->nrows;
 
@@ -307,7 +307,7 @@ static SFGHASH_NODE* sfghash_find_node(SFGHASH* t, const void* const key)
         }
         else
         {
-            if ( !t->sfhashfcn->keycmp_fcn(hnode->key,key,t->keysize) )
+            if ( !t->hashfcn->keycmp_fcn(hnode->key,key,t->keysize) )
             {
                 return hnode;
             }
@@ -320,13 +320,13 @@ static SFGHASH_NODE* sfghash_find_node(SFGHASH* t, const void* const key)
 /*
 *  Find a Node based on the key, return users data.
 */
-void* sfghash_find(SFGHASH* t, const void* const key)
+void* ghash_find(GHash* t, const void* const key)
 {
-    SFGHASH_NODE* hnode;
+    GHashNode* hnode;
 
     assert(t);
 
-    hnode = sfghash_find_node(t, key);
+    hnode = ghash_find_node(t, key);
 
     if ( hnode )
         return hnode->data;
@@ -337,7 +337,7 @@ void* sfghash_find(SFGHASH* t, const void* const key)
 /*
 *  Unlink and free the node
 */
-static int sfghash_free_node(SFGHASH* t, unsigned index, SFGHASH_NODE* hnode)
+static int ghash_free_node(GHash* t, unsigned index, GHashNode* hnode)
 {
     assert(t);
 
@@ -366,7 +366,7 @@ static int sfghash_free_node(SFGHASH* t, unsigned index, SFGHASH_NODE* hnode)
 
     t->count--;
 
-    return SFGHASH_OK;
+    return GHASH_OK;
 }
 
 /*
@@ -375,9 +375,9 @@ static int sfghash_free_node(SFGHASH* t, unsigned index, SFGHASH_NODE* hnode)
 *  returns : 0 - OK
 *           -1 - node not found
 */
-int sfghash_remove(SFGHASH* t, const void* const key)
+int ghash_remove(GHash* t, const void* const key)
 {
-    SFGHASH_NODE* hnode;
+    GHashNode* hnode;
     int klen;
     unsigned hashkey, index;
 
@@ -392,7 +392,7 @@ int sfghash_remove(SFGHASH* t, const void* const key)
         klen = strlen((const char*)key) + 1;
     }
 
-    hashkey = t->sfhashfcn->hash_fcn(t->sfhashfcn, (const unsigned char*)key, klen);
+    hashkey = t->hashfcn->hash_fcn(t->hashfcn, (const unsigned char*)key, klen);
 
     index = hashkey % t->nrows;
 
@@ -400,25 +400,25 @@ int sfghash_remove(SFGHASH* t, const void* const key)
     {
         if ( t->keysize > 0 )
         {
-            if ( !t->sfhashfcn->keycmp_fcn(hnode->key,key,klen) )
+            if ( !t->hashfcn->keycmp_fcn(hnode->key,key,klen) )
             {
-                return sfghash_free_node(t, index, hnode);
+                return ghash_free_node(t, index, hnode);
             }
         }
         else
         {
             if ( !strcmp((const char*)hnode->key,(const char*)key) )
             {
-                return sfghash_free_node(t, index, hnode);
+                return ghash_free_node(t, index, hnode);
             }
         }
     }
 
-    return SFGHASH_ERR;
+    return GHASH_ERR;
 }
 
 /* Internal use only */
-static void sfghash_next(SFGHASH* t)
+static void ghash_next(GHash* t)
 {
     assert(t and t->cnode);
 
@@ -444,9 +444,9 @@ static void sfghash_next(SFGHASH* t)
 /*
 *   Get First Hash Table Node
 */
-SFGHASH_NODE* sfghash_findfirst(SFGHASH* t)
+GHashNode* ghash_findfirst(GHash* t)
 {
-    SFGHASH_NODE* n;
+    GHashNode* n;
 
     assert(t);
     /* Start with 1st row */
@@ -459,7 +459,7 @@ SFGHASH_NODE* sfghash_findfirst(SFGHASH* t)
         {
             n = t->cnode;
 
-            sfghash_next(t); // load t->cnode with the next entry
+            ghash_next(t); // load t->cnode with the next entry
 
             return n;
         }
@@ -470,9 +470,9 @@ SFGHASH_NODE* sfghash_findfirst(SFGHASH* t)
 /*
 *   Get Next Hash Table Node
 */
-SFGHASH_NODE* sfghash_findnext(SFGHASH* t)
+GHashNode* ghash_findnext(GHash* t)
 {
-    SFGHASH_NODE* n;
+    GHashNode* n;
 
     assert(t);
 
@@ -486,23 +486,23 @@ SFGHASH_NODE* sfghash_findnext(SFGHASH* t)
     /*
        Preload next node into current node
     */
-    sfghash_next(t);
+    ghash_next(t);
 
     return n;
 }
 
 /**
- * Make sfhashfcn use a separate set of opcodes for the backend.
+ * Make hashfcn use a separate set of opcodes for the backend.
  *
- * @param h sfhashfcn ptr
+ * @param h hashfcn ptr
  * @param hash_fcn user specified hash function
  * @param keycmp_fcn user specified key comparison function
  */
-int sfghash_set_keyops(SFGHASH* h,
-    unsigned (* hash_fcn)(SFHASHFCN* p, const unsigned char* d, int n),
+int ghash_set_keyops(GHash* h,
+    unsigned (* hash_fcn)(HashFnc* p, const unsigned char* d, int n),
     int (* keycmp_fcn)(const void* s1, const void* s2, size_t n))
 {
     assert(h && hash_fcn && keycmp_fcn);
 
-    return sfhashfcn_set_keyops(h->sfhashfcn, hash_fcn, keycmp_fcn);
+    return hashfcn_set_keyops(h->hashfcn, hash_fcn, keycmp_fcn);
 }

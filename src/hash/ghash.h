@@ -17,63 +17,63 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// sfghash.h author Marc Norton
+// ghash.h author Marc Norton
 
-#ifndef SFGHASH_H
-#define SFGHASH_H
+#ifndef GHASH_H
+#define GHASH_H
 
 // generic hash table - stores and maps key + data pairs
 
 #include "main/snort_types.h"
 
-struct SFHASHFCN;
+struct HashFnc;
 
-#define SFGHASH_NOMEM    (-2)
-#define SFGHASH_ERR      (-1)
-#define SFGHASH_OK        0
-#define SFGHASH_INTABLE   1
+#define GHASH_NOMEM    (-2)
+#define GHASH_ERR      (-1)
+#define GHASH_OK        0
+#define GHASH_INTABLE   1
 
 // Flags for ghash_new: userkeys
 #define GH_COPYKEYS 0
 #define GH_USERKEYS 1
 
-struct SFGHASH_NODE
+struct GHashNode
 {
-    struct SFGHASH_NODE* next, * prev;
+    struct GHashNode* next, * prev;
 
     const void* key;  /* Copy of, or Pointer to, the Users key */
     void* data;       /* The users data, this is never copied! */
 };
 
-typedef void (* SfgHashFree)(void*);
+typedef void (* gHashFree)(void*);
 
-struct SFGHASH
+struct GHash
 {
-    SFHASHFCN* sfhashfcn;
+    HashFnc* hashfcn;
     int keysize;          /* bytes in key, if < 0 -> keys are strings */
     int userkey;          /* user owns the key */
 
-    SFGHASH_NODE** table; /* array of node ptr's */
+    GHashNode** table; /* array of node ptr's */
     int nrows;            /* # rows int the hash table use a prime number 211, 9871 */
 
     unsigned count;       /* total # nodes in table */
 
-    SfgHashFree userfree;
+    gHashFree userfree;
 
     int crow;             /* findfirst/next row in table */
-    SFGHASH_NODE* cnode;  /* findfirst/next node ptr */
+    GHashNode* cnode;  /* findfirst/next node ptr */
 };
 
-SO_PUBLIC SFGHASH* sfghash_new(int nrows, int keysize, int userkeys, SfgHashFree);
-SO_PUBLIC void sfghash_delete(SFGHASH*);
-SO_PUBLIC int sfghash_add(SFGHASH*, const void* const key, void* const data);
-SO_PUBLIC int sfghash_remove(SFGHASH*, const void* const key);
-SO_PUBLIC void* sfghash_find(SFGHASH*, const void* const key);
-SO_PUBLIC SFGHASH_NODE* sfghash_findfirst(SFGHASH*);
-SO_PUBLIC SFGHASH_NODE* sfghash_findnext(SFGHASH*);
-SO_PUBLIC int sfghash_set_keyops(SFGHASH*,
-    unsigned (* hash_fcn)(SFHASHFCN* p, const unsigned char* d, int n),
-    int (* keycmp_fcn)(const void* s1, const void* s2, size_t n));
+SO_PUBLIC GHash* ghash_new(int nrows, int keysize, int userkeys, gHashFree);
+SO_PUBLIC void ghash_delete(GHash*);
+SO_PUBLIC int ghash_add(GHash*, const void* const key, void* const data);
+SO_PUBLIC int ghash_remove(GHash*, const void* const key);
+SO_PUBLIC void* ghash_find(GHash*, const void* const key);
+SO_PUBLIC GHashNode* ghash_findfirst(GHash*);
+SO_PUBLIC GHashNode* ghash_findnext(GHash*);
+SO_PUBLIC int ghash_set_keyops(GHash*,
+unsigned (* hash_fcn)(HashFnc* p, const unsigned char* d, int n),
+int (* keycmp_fcn)(const void* s1, const void* s2, size_t n));
 
 #endif
 

@@ -25,29 +25,29 @@
 
 #include "app_forecast.h"
 
-#include "hash/sfxhash.h"
+#include "hash/xhash.h"
 #include "log/messages.h"
 #include "protocols/packet.h"
 #include "time/packet_time.h"
 #include "appid_session.h"
 
 static THREAD_LOCAL AFActKey master_key;
-static THREAD_LOCAL SFXHASH* AF_indicators = nullptr;     // list of "indicator apps"
-static THREAD_LOCAL SFXHASH* AF_actives = nullptr;        // list of hosts to watch
+static THREAD_LOCAL XHash* AF_indicators = nullptr;     // list of "indicator apps"
+static THREAD_LOCAL XHash* AF_actives = nullptr;        // list of hosts to watch
 
 int init_appid_forecast()
 {
-    if (!(AF_indicators = sfxhash_new(1024, sizeof(AppId), sizeof(AFElement),
+    if (!(AF_indicators = xhash_new(1024, sizeof(AppId), sizeof(AFElement),
             0, 0, nullptr, nullptr, 0)))
     {
         ErrorMessage("Config: failed to allocate memory for an AF Indicators hash.");
         return 0;
     }
 
-    if (!(AF_actives = sfxhash_new(1024, sizeof(AFActKey), sizeof(AFActVal),
-            (sizeof(SFXHASH_NODE)*2048), 1, nullptr,  nullptr, 1)))
+    if (!(AF_actives = xhash_new(1024, sizeof(AFActKey), sizeof(AFActVal),
+            (sizeof(XHashNode)*2048), 1, nullptr,  nullptr, 1)))
     {
-        sfxhash_delete(AF_indicators);
+        xhash_delete(AF_indicators);
         ErrorMessage("Config: failed to allocate memory for an AF Actives hash.");
         return 0;
     }
@@ -59,20 +59,20 @@ void clean_appid_forecast()
 {
     if (AF_indicators)
     {
-        sfxhash_delete(AF_indicators);
+        xhash_delete(AF_indicators);
         AF_indicators = nullptr;
     }
 
     if (AF_actives)
     {
-        sfxhash_delete(AF_actives);
+        xhash_delete(AF_actives);
         AF_actives = nullptr;
     }
 }
 
 void add_af_indicator(AppId indicator, AppId forecast, AppId target)
 {
-    if (sfxhash_find(AF_indicators, &indicator))
+    if (xhash_find(AF_indicators, &indicator))
     {
         ErrorMessage("LuaDetectorApi:Attempt to add more than one AFElement per appId %d",
             indicator);
@@ -83,7 +83,7 @@ void add_af_indicator(AppId indicator, AppId forecast, AppId target)
     val.indicator = indicator;
     val.forecast = forecast;
     val.target = target;
-    if (sfxhash_add(AF_indicators, &indicator, &val))
+    if (xhash_add(AF_indicators, &indicator, &val))
         ErrorMessage("LuaDetectorApi:Failed to add AFElement for appId %d", indicator);
 }
 
@@ -100,13 +100,13 @@ static inline void rekey_master_AF_key(Packet* p, int dir, AppId forecast)
 void check_session_for_AF_indicator(Packet* p, int dir, AppId indicator)
 {
     AFElement* ind_element;
-    if (!(ind_element = (AFElement*)sfxhash_find(AF_indicators, &indicator)))
+    if (!(ind_element = (AFElement*)xhash_find(AF_indicators, &indicator)))
         return;
 
     rekey_master_AF_key(p, dir, ind_element->forecast);
 
     AFActVal* test_active_value;
-    if ((test_active_value = (AFActVal*)sfxhash_find(AF_actives, &master_key)))
+    if ((test_active_value = (AFActVal*)xhash_find(AF_actives, &master_key)))
     {
         test_active_value->last = packet_time();
         test_active_value->target = ind_element->target;
@@ -117,7 +117,7 @@ void check_session_for_AF_indicator(Packet* p, int dir, AppId indicator)
     new_active_value.target = ind_element->target;
     new_active_value.last = packet_time();
 
-    sfxhash_add(AF_actives, &master_key, &new_active_value);
+    xhash_add(AF_actives, &master_key, &new_active_value);
 }
 
 AppId check_session_for_AF_forecast(AppIdSession* asd, Packet* p, int dir, AppId forecast)
@@ -127,7 +127,7 @@ AppId check_session_for_AF_forecast(AppIdSession* asd, Packet* p, int dir, AppId
     rekey_master_AF_key(p, dir, forecast);
 
     //get out if there is no value
-    if (!(check_act_val = (AFActVal*)sfxhash_find(AF_actives, &master_key)))
+    if (!(check_act_val = (AFActVal*)xhash_find(AF_actives, &master_key)))
         return APP_ID_UNKNOWN;
 
     //if the value is older than 5 minutes, remove it and get out
@@ -135,7 +135,7 @@ AppId check_session_for_AF_forecast(AppIdSession* asd, Packet* p, int dir, AppId
     age = packet_time() - check_act_val->last;
     if (age < 0 || age > 300)
     {
-        sfxhash_remove(AF_actives, &master_key);
+        xhash_remove(AF_actives, &master_key);
         return APP_ID_UNKNOWN;
     }
 

@@ -167,7 +167,7 @@ void add_service_to_otn(
 
     if ( !otn->sigInfo.services )
         otn->sigInfo.services =
-            (ServiceInfo*)snort_calloc(sc->max_metadata_services, sizeof(ServiceInfo));
+            (SignatureServiceInfo*)snort_calloc(sc->max_metadata_services, sizeof(SignatureServiceInfo));
 
     int idx = otn->sigInfo.num_services++;
 

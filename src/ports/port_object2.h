@@ -23,7 +23,7 @@
 #define PORT_OBJECT2_H
 
 #include "framework/bits.h"
-#include "hash/sfghash.h"
+#include "hash/ghash.h"
 #include "utils/sflsq.h"
 
 //-------------------------------------------------------------------------
@@ -40,7 +40,7 @@ struct PortObject2
     int id;                     /* internal tracking - compiling sets this value */
 
     SF_LIST* item_list;         /* list of port and port-range items */
-    SFGHASH* rule_hash;         /* hash of rule (rule-indexes) in use */
+    GHash* rule_hash;         /* hash of rule (rule-indexes) in use */
 
     PortBitSet* port_list;      /* for collecting ports that use this object */
     struct PortGroup* group;    /* PortGroup based on rule_hash  */

@@ -17,7 +17,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// zhash is based on sfxhash - see sfxhash.cc for details
+// zhash is based on sfxhash - see xhash.cc for details
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -27,7 +27,7 @@
 
 #include <cstring>
 
-#include "sfhashfcn.h"
+#include "hashfcn.h"
 
 //-------------------------------------------------------------------------
 // private stuff
@@ -199,8 +199,8 @@ void ZHash::move_to_front(ZHashNode* node)
 
 ZHashNode* ZHash::find_node_row(const void* key, int* rindex)
 {
-    unsigned hashkey = sfhashfcn->hash_fcn(
-        sfhashfcn, (const unsigned char*)key, keysize);
+    unsigned hashkey = hashfcn->hash_fcn(
+        hashfcn, (const unsigned char*)key, keysize);
 
     // Modulus is slow; use a table size that is a power of 2.
     int index = hashkey & (nrows - 1);
@@ -209,7 +209,7 @@ ZHashNode* ZHash::find_node_row(const void* key, int* rindex)
 
     for ( ZHashNode* node=table[index]; node; node=node->next )  // UNINITUSE
     {
-        if ( !sfhashfcn->keycmp_fcn(node->key,key,keysize) )
+        if ( !hashfcn->keycmp_fcn(node->key,key,keysize) )
         {
             move_to_front(node);
             find_success++;
@@ -241,7 +241,7 @@ ZHash::ZHash(int rows, int keysz)
     if ( rows > 0 )
     {
         // make sure we have a prime number
-        // rows = sf_nearest_prime(rows);
+        // rows = nearest_prime(rows);
 
         /* If rows is not a power of two, need to find the
          * next highest power of two */
@@ -253,7 +253,7 @@ ZHash::ZHash(int rows, int keysz)
     }
 
     /* this has a default hashing function */
-    sfhashfcn = sfhashfcn_new(rows);
+    hashfcn = hashfcn_new(rows);
 
     /* Allocate the array of node ptrs */
     table = new ZHashNode*[rows]();
@@ -268,8 +268,8 @@ ZHash::ZHash(int rows, int keysz)
 
 ZHash::~ZHash()
 {
-    if ( sfhashfcn )
-        sfhashfcn_free(sfhashfcn);
+    if ( hashfcn )
+        hashfcn_free(hashfcn);
 
     if ( table )
     {
@@ -416,11 +416,11 @@ bool ZHash::remove(const void* key)
 }
 
 int ZHash::set_keyops(
-    unsigned (* hash_fcn)(SFHASHFCN* p, const unsigned char* d, int n),
+    unsigned (* hash_fcn)(HashFnc* p, const unsigned char* d, int n),
     int (* keycmp_fcn)(const void* s1, const void* s2, size_t n))
 {
     if ( hash_fcn && keycmp_fcn )
-        return sfhashfcn_set_keyops(sfhashfcn, hash_fcn, keycmp_fcn);
+        return hashfcn_set_keyops(hashfcn, hash_fcn, keycmp_fcn);
 
     return -1;
 }

@@ -16,14 +16,14 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// sfg_hash_test.cc author Steven Baigal <sbaigal@cisco.com>
-// unit tests for sfghash utility functions
+// ghash_test.cc author Steven Baigal <sbaigal@cisco.com>
+// unit tests for ghash utility functions
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "hash/sfghash.h"
+#include "hash/ghash.h"
 
 #include "main/snort_config.h"
 
@@ -35,7 +35,7 @@ static SnortConfig my_config;
 THREAD_LOCAL SnortConfig *snort_conf = &my_config;
 
 SnortConfig::SnortConfig(SnortConfig*) 
-{ snort_conf->run_flags = 0;} // run_flags is used indirectly from SFHASHFCN class by calling SnortConfig::static_hash()
+{ snort_conf->run_flags = 0;} // run_flags is used indirectly from HashFnc class by calling SnortConfig::static_hash()
 
 SnortConfig::~SnortConfig() = default;
 
@@ -56,26 +56,26 @@ static void myfree(void* p)
     snort_free(p);
 }
 
-TEST_GROUP(sfghash)
+TEST_GROUP(ghash)
 {
 };
 
 //  Test create a hash table, add nodes, find and delete.
-TEST(sfghash, create_find_delete_test)
+TEST(ghash, create_find_delete_test)
 {
     int i;
     char str[256];
     int num=100;
 
     // Create a Hash Table
-    SFGHASH* t = sfghash_new(1000, 0, GH_COPYKEYS, nullptr);
+    GHash* t = ghash_new(1000, 0, GH_COPYKEYS, nullptr);
 
     // Add Nodes to the Hash Table
     for (i=0; i<num; i++)
     {
         snprintf(str, sizeof(str), "KeyWord%d",i+1);
         str[sizeof(str) - 1] = '\0';
-        sfghash_add(t, str, (void *)(str + (i+1)));
+        ghash_add(t, str, (void *)(str + (i+1)));
     }
 
     // find those nodes
@@ -84,31 +84,31 @@ TEST(sfghash, create_find_delete_test)
         snprintf(str, sizeof(str), "KeyWord%d",i+1);
         str[sizeof(str) - 1] = '\0';
 
-        char* p = (char*)sfghash_find(t, str);
+        char* p = (char*)ghash_find(t, str);
 
         CHECK(p != nullptr);
         CHECK(p == (void *)(str + (i+1)));
     }
 
-    for (SFGHASH_NODE* n = sfghash_findfirst(t); n; n = sfghash_findnext(t) )
+    for (GHashNode* n = ghash_findfirst(t); n; n = ghash_findnext(t) )
     {
-        i = sfghash_remove(t,n->key);
+        i = ghash_remove(t,n->key);
 
         CHECK(i==0);
     }
 
-    sfghash_delete(t);
+    ghash_delete(t);
 }
 
 // test to generate collisions and increase test code coverage
-TEST(sfghash, collision_test)
+TEST(ghash, collision_test)
 {
     int i;
     char str[256];
     int num=100;
 
     // Create a Hash Table with smaller entries
-    SFGHASH* t = sfghash_new(-10, 0, GH_COPYKEYS, nullptr);
+    GHash* t = ghash_new(-10, 0, GH_COPYKEYS, nullptr);
 
     CHECK(t != nullptr);
 
@@ -117,14 +117,14 @@ TEST(sfghash, collision_test)
     {
         snprintf(str, sizeof(str), "KeyWord%d",i+1);
         str[sizeof(str) - 1] = '\0';
-        sfghash_add(t, str, (void *)(str + (i+1)));
+        ghash_add(t, str, (void *)(str + (i+1)));
     }
 
     // try to add an existed entry
     snprintf(str, sizeof(str), "KeyWord%d",1);
     str[sizeof(str) - 1] = '\0';
-    i = sfghash_add(t, str, (void *)(str + (1)));
-    CHECK(i == SFGHASH_INTABLE);
+    i = ghash_add(t, str, (void *)(str + (1)));
+    CHECK(i == GHASH_INTABLE);
 
     // find those nodes
     for (i=num-1; i>=0; i--)
@@ -132,40 +132,40 @@ TEST(sfghash, collision_test)
         snprintf(str, sizeof(str), "KeyWord%d",i+1);
         str[sizeof(str) - 1] = '\0';
 
-        char* p = (char*)sfghash_find(t, str);
+        char* p = (char*)ghash_find(t, str);
 
         CHECK(p != nullptr);
         CHECK(p == (void *)(str + (i+1)));
     }
 
     // remove one node
-    SFGHASH_NODE* n = sfghash_findfirst(t);
+    GHashNode* n = ghash_findfirst(t);
     if (n)
     {
-        n = sfghash_findnext(t);
-        i = sfghash_remove(t,n->key);
+        n = ghash_findnext(t);
+        i = ghash_remove(t,n->key);
 
         CHECK(i==0);
     }
 
     // remove rest of nodes
-    for ( n = sfghash_findfirst(t); n; n = sfghash_findnext(t) )
+    for ( n = ghash_findfirst(t); n; n = ghash_findnext(t) )
     {
-        i = sfghash_remove(t,n->key);
+        i = ghash_remove(t,n->key);
 
         CHECK(i==0);
     }
 
-    sfghash_delete(t);
+    ghash_delete(t);
 }
 
-TEST(sfghash, userfree_test)
+TEST(ghash, userfree_test)
 {
     char str[256];
     int i;
 
     // Create a small Hash Table with user free
-    SFGHASH* t = sfghash_new(-5, 0, GH_COPYKEYS, myfree);
+    GHash* t = ghash_new(-5, 0, GH_COPYKEYS, myfree);
     // add 5 nodes
     for (i=0; i<5; i++)
     {
@@ -174,7 +174,7 @@ TEST(sfghash, userfree_test)
         char* p = (char*)snort_alloc(32);
         p[0] = (char)(i+1);
         p[1] = '\0';
-        sfghash_add(t, str, (void *)p);
+        ghash_add(t, str, (void *)p);
     }
 
     // find those nodes
@@ -183,7 +183,7 @@ TEST(sfghash, userfree_test)
         snprintf(str, sizeof(str), "KeyWord%d",i+1);
         str[sizeof(str) - 1] = '\0';
 
-        char *p = (char*)sfghash_find(t, str);
+        char *p = (char*)ghash_find(t, str);
 
         CHECK(p != nullptr);
         CHECK(p[0] == (i+1));
@@ -194,26 +194,26 @@ TEST(sfghash, userfree_test)
     str[sizeof(str) - 1] = '\0';
 
     // it should not be found
-    CHECK(sfghash_find(t, str) == nullptr);
+    CHECK(ghash_find(t, str) == nullptr);
     
     // try to remove a node that is not in the table
-    CHECK(sfghash_remove(t, str) == SFGHASH_ERR);
+    CHECK(ghash_remove(t, str) == GHASH_ERR);
 
-    for ( SFGHASH_NODE* n = sfghash_findfirst(t); n; n = sfghash_findnext(t) )
+    for ( GHashNode* n = ghash_findfirst(t); n; n = ghash_findnext(t) )
     {
         // user free should be called here, no memory leak should be detected
-        i = sfghash_remove(t,n->key);
+        i = ghash_remove(t,n->key);
 
         CHECK(i==0);
     }
 
-    sfghash_delete(t);
+    ghash_delete(t);
 }
 
-TEST(sfghash, nullptr_test)
+TEST(ghash, nullptr_test)
 {
-    CHECK(SFGHASH_ERR == sfghash_add(nullptr, nullptr, nullptr));
-    sfghash_delete(nullptr);
+    CHECK(GHASH_ERR == ghash_add(nullptr, nullptr, nullptr));
+    ghash_delete(nullptr);
 }
 
 int main(int argc, char** argv)

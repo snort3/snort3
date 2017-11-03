@@ -29,7 +29,7 @@
 #include <list>
 #include <vector>
 
-#include "hash/sfghash.h"
+#include "hash/ghash.h"
 
 #include "file_lib.h"
 
@@ -103,7 +103,7 @@ private:
     /*properties*/
     IdentifierNode* identifier_root = nullptr; /*Root of magic tries*/
     uint32_t memory_used = 0; /*Track memory usage*/
-    SFGHASH* identifier_merge_hash = nullptr;
+    GHash* identifier_merge_hash = nullptr;
     FileMagicRule file_magic_rules[FILE_ID_MAX + 1];
     IDMemoryBlocks id_memory_blocks;
 };

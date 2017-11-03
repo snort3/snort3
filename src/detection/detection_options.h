@@ -38,7 +38,7 @@
 
 struct Packet;
 struct RuleLatencyState;
-struct SFXHASH;
+struct XHash;
 
 typedef int (* eval_func_t)(void* option_data, class Cursor&, Packet*);
 
@@ -117,11 +117,11 @@ void* add_detection_option_tree(struct SnortConfig*, detection_option_tree_node_
 int detection_option_node_evaluate(
     detection_option_tree_node_t*, detection_option_eval_data_t*, class Cursor&);
 
-void DetectionHashTableFree(SFXHASH*);
-void DetectionTreeHashTableFree(SFXHASH*);
+void DetectionHashTableFree(XHash*);
+void DetectionTreeHashTableFree(XHash*);
 
 void print_option_tree(detection_option_tree_node_t*, int level);
-void detection_option_tree_update_otn_stats(SFXHASH*);
+void detection_option_tree_update_otn_stats(XHash*);
 
 detection_option_tree_root_t* new_root(OptTreeNode*);
 void free_detection_option_root(void** existing_tree);

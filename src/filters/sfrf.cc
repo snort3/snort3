@@ -27,8 +27,8 @@
 #include "sfrf.h"
 
 #include "detection/rules.h"
-#include "hash/sfghash.h"
-#include "hash/sfxhash.h"
+#include "hash/ghash.h"
+#include "hash/xhash.h"
 #include "sfip/sf_ip.h"
 #include "sfip/sf_ipvar.h"
 #include "utils/cpp_macros.h"
@@ -93,7 +93,7 @@ typedef struct
     time_t revertTime;
 } tSFRFTrackingNode;
 
-SFXHASH* rf_hash = nullptr;
+XHash* rf_hash = nullptr;
 
 // private methods ...
 static int _checkThreshold(
@@ -146,7 +146,7 @@ static void SFRF_New(unsigned nbytes)
     nrows = nbytes / (SFRF_BYTES);
 
     /* Create global hash table for all of the IP Nodes */
-    rf_hash = sfxhash_new(
+    rf_hash = xhash_new(
         nrows,  /* try one node per row - for speed */
         sizeof(tSFRFTrackingNodeKey), /* keys size */
         sizeof(tSFRFTrackingNode),     /* data size */
@@ -162,14 +162,14 @@ void SFRF_Delete()
     if ( !rf_hash )
         return;
 
-    sfxhash_delete(rf_hash);
+    xhash_delete(rf_hash);
     rf_hash = nullptr;
 }
 
 void SFRF_Flush()
 {
     if ( rf_hash )
-        sfxhash_make_empty(rf_hash);
+        xhash_make_empty(rf_hash);
 }
 
 static void SFRF_ConfigNodeFree(void* item)
@@ -216,7 +216,7 @@ static void SFRF_SidNodeFree(void* item)
 int SFRF_ConfigAdd(
     SnortConfig*, RateFilterConfig* rf_config, tSFRFConfigNode* cfgNode)
 {
-    SFGHASH* genHash;
+    GHash* genHash;
     tSFRFSidNode* pSidNode;
     tSFRFConfigNode* pNewConfigNode;
     tSFRFGenHashKey key = { 0,0 };
@@ -270,7 +270,7 @@ int SFRF_ConfigAdd(
         }
 
         /* Create the hash table for this gid */
-        genHash = sfghash_new(nrows, sizeof(tSFRFGenHashKey), 0, SFRF_SidNodeFree);
+        genHash = ghash_new(nrows, sizeof(tSFRFGenHashKey), 0, SFRF_SidNodeFree);
         if ( !genHash )
             return -2;
 
@@ -281,7 +281,7 @@ int SFRF_ConfigAdd(
     key.policyId = policy_id;
 
     /* Check if sid is already in the table - if not allocate and add it */
-    pSidNode = (tSFRFSidNode*)sfghash_find(genHash, (void*)&key);
+    pSidNode = (tSFRFSidNode*)ghash_find(genHash, (void*)&key);
     if ( !pSidNode )
     {
         /* Create the pSidNode hash node data */
@@ -298,7 +298,7 @@ int SFRF_ConfigAdd(
         }
 
         /* Add the pSidNode to the hash table */
-        if ( sfghash_add(genHash, (void*)&key, pSidNode) )
+        if ( ghash_add(genHash, (void*)&key, pSidNode) )
         {
             sflist_free(pSidNode->configNodeList);
             snort_free(pSidNode);
@@ -448,7 +448,7 @@ int SFRF_TestThreshold(
     SFRF_COUNT_OPERATION op
     )
 {
-    SFGHASH* genHash;
+    GHash* genHash;
     tSFRFSidNode* pSidNode;
     tSFRFConfigNode* cfgNode;
     int newStatus = -1;
@@ -489,7 +489,7 @@ int SFRF_TestThreshold(
     key.sid = sid;
     key.policyId = policy_id;
 
-    pSidNode = (tSFRFSidNode*)sfghash_find(genHash, (void*)&key);
+    pSidNode = (tSFRFSidNode*)ghash_find(genHash, (void*)&key);
     if ( !pSidNode )
     {
 #ifdef SFRF_DEBUG
@@ -575,20 +575,20 @@ void SFRF_ShowObjects(RateFilterConfig* config)
     tSFRFSidNode* pSidnode;
     tSFRFConfigNode* cfgNode;
     unsigned int gid;
-    SFGHASH_NODE* sidHashNode;
+    GHashNode* sidHashNode;
 
     for ( gid=0; gid < SFRF_MAX_GENID; gid++ )
     {
-        SFGHASH* genHash = config->genHash [ gid ];
+        GHash* genHash = config->genHash [ gid ];
 
         if ( !genHash )
             continue;
 
         printf("...GEN_ID = %u\n",gid);
 
-        for ( sidHashNode  = sfghash_findfirst(genHash);
+        for ( sidHashNode  = ghash_findfirst(genHash);
             sidHashNode != nullptr;
-            sidHashNode  = sfghash_findnext(genHash) )
+            sidHashNode  = ghash_findnext(genHash) )
         {
             /* Check for any Permanent sid objects for this gid */
             pSidnode = (tSFRFSidNode*)sidHashNode->data;
@@ -790,7 +790,7 @@ static tSFRFTrackingNode* _getSFRFTrackingNode(
     /*
      * Check for any Permanent sid objects for this gid or add this one ...
      */
-    SFXHASH_NODE* hnode = sfxhash_get_node(rf_hash, (void*)&key);
+    XHashNode* hnode = xhash_get_node(rf_hash, (void*)&key);
     if ( hnode && hnode->data )
     {
         dynNode = (tSFRFTrackingNode*)hnode->data;

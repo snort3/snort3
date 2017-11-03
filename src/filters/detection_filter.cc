@@ -23,14 +23,14 @@
 
 #include "detection_filter.h"
 
-#include "hash/sfxhash.h"
+#include "hash/xhash.h"
 #include "log/messages.h"
 #include "main/thread.h"
 #include "utils/util.h"
 
 #include "sfthd.h"
 
-static THREAD_LOCAL SFXHASH* detection_filter_hash = nullptr;
+static THREAD_LOCAL XHash* detection_filter_hash = nullptr;
 
 DetectionFilterConfig* DetectionFilterConfigNew()
 {
@@ -99,7 +99,7 @@ void detection_filter_term()
     if ( !detection_filter_hash )
         return;
 
-    sfxhash_delete(detection_filter_hash);
+    xhash_delete(detection_filter_hash);
     detection_filter_hash = nullptr;
 }
 

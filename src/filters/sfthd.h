@@ -27,8 +27,8 @@
 #include "sfip/sf_ip.h"
 #include "utils/cpp_macros.h"
 
-struct SFGHASH;
-struct SFXHASH;
+struct GHash;
+struct XHash;
 typedef struct sf_list SF_LIST;
 
 /*!
@@ -181,14 +181,14 @@ struct tThdItemKey
  */
 struct THD_STRUCT
 {
-    SFXHASH* ip_nodes;   /* Global hash of active IP's key=THD_IP_NODE_KEY, data=THD_IP_NODE */
-    SFXHASH* ip_gnodes;  /* Global hash of active IP's key=THD_IP_GNODE_KEY, data=THD_IP_GNODE */
+    XHash* ip_nodes;   /* Global hash of active IP's key=THD_IP_NODE_KEY, data=THD_IP_NODE */
+    XHash* ip_gnodes;  /* Global hash of active IP's key=THD_IP_GNODE_KEY, data=THD_IP_GNODE */
 };
 
 struct ThresholdObjects
 {
     int count;  /* Total number of thresholding/suppression objects */
-    SFGHASH* sfthd_array[THD_MAX_GENID];    /* Local Hash of THD_ITEM nodes,  lookup by key=sig_id
+    GHash* sfthd_array[THD_MAX_GENID];    /* Local Hash of THD_ITEM nodes,  lookup by key=sig_id
                                               */
 
     /* Double array of THD_NODE pointers. First index is policyId and therefore variable length.
@@ -208,13 +208,13 @@ struct ThresholdObjects
 // lbytes = local threshold memcap
 // gbytes = global threshold memcap (0 to disable global)
 THD_STRUCT* sfthd_new(unsigned lbytes, unsigned gbytes);
-SFXHASH* sfthd_local_new(unsigned bytes);
-SFXHASH* sfthd_global_new(unsigned bytes);
+XHash* sfthd_local_new(unsigned bytes);
+XHash* sfthd_global_new(unsigned bytes);
 void sfthd_free(THD_STRUCT*);
 ThresholdObjects* sfthd_objs_new();
 void sfthd_objs_free(ThresholdObjects*);
 
-int sfthd_test_rule(SFXHASH* rule_hash, THD_NODE* sfthd_node,
+int sfthd_test_rule(XHash* rule_hash, THD_NODE* sfthd_node,
     const SfIp* sip, const SfIp* dip, long curtime);
 
 THD_NODE* sfthd_create_rule_threshold(
@@ -252,10 +252,10 @@ int sfthd_test_threshold(
     const SfIp* dip,
     long curtime);
 
-SFXHASH* sfthd_new_hash(unsigned, size_t, size_t);
+XHash* sfthd_new_hash(unsigned, size_t, size_t);
 
 int sfthd_test_local(
-    SFXHASH* local_hash,
+    XHash* local_hash,
     THD_NODE* sfthd_node,
     const SfIp* sip,
     const SfIp* dip,

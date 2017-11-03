@@ -25,7 +25,7 @@
 
 #include <cstring>
 
-#include "hash/sfhashfcn.h"
+#include "hash/hashfcn.h"
 
 static const char* s_buffer = nullptr;
 

@@ -23,7 +23,7 @@
 #endif
 
 #include "catch/catch.hpp"
-#include "hash/sfxhash.h"
+#include "hash/xhash.h"
 #include "main/snort_types.h"
 #include "parser/parse_ip.h"
 #include "sfip/sf_ip.h"
@@ -92,7 +92,7 @@ typedef struct
 
 static THD_STRUCT* pThd = nullptr;
 static ThresholdObjects* pThdObjs = nullptr;
-static SFXHASH* dThd = nullptr;
+static XHash* dThd = nullptr;
 
 //---------------------------------------------------------------
 
@@ -809,7 +809,7 @@ static void Term()
             p->rule = nullptr;
         }
     }
-    sfxhash_delete(dThd);
+    xhash_delete(dThd);
 }
 
 static int SetupCheck(int i)

@@ -27,7 +27,7 @@
 #include "framework/endianness.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
-#include "hash/sfhashfcn.h"
+#include "hash/hashfcn.h"
 #include "log/messages.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"

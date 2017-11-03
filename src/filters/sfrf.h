@@ -133,7 +133,7 @@ struct RateFilterConfig
     /* Array of hash, indexed by gid. Each array element is a hash, which
      * is keyed on sid/policyId and data is a tSFRFSidNode node.
      */
-    struct SFGHASH* genHash [SFRF_MAX_GENID];
+    struct GHash* genHash [SFRF_MAX_GENID];
 
     // Number of DOS thresholds added.
     int count;

@@ -56,10 +56,10 @@ FlowStateValue* FlowIPTracker::find_stats(const SfIp* src_addr, const SfIp* dst_
         *swapped = 1;
     }
 
-    value = (FlowStateValue*)sfxhash_find(ip_map, &key);
+    value = (FlowStateValue*)xhash_find(ip_map, &key);
     if (!value)
     {
-        SFXHASH_NODE* node = sfxhash_get_node(ip_map, &key);
+        XHashNode* node = xhash_get_node(ip_map, &key);
 
         if (!node)
         {
@@ -113,7 +113,7 @@ FlowIPTracker::FlowIPTracker(PerfConfig* perf) :
         &stats.state_changes[SFS_STATE_UDP_CREATED]);
     formatter->finalize_fields();
 
-    ip_map = sfxhash_new(1021, sizeof(FlowStateKey), sizeof(FlowStateValue),
+    ip_map = xhash_new(1021, sizeof(FlowStateKey), sizeof(FlowStateValue),
         perfmon_config->flowip_memcap, 1, nullptr, nullptr, 1);
 
     if (!ip_map)
@@ -123,12 +123,12 @@ FlowIPTracker::FlowIPTracker(PerfConfig* perf) :
 FlowIPTracker::~FlowIPTracker()
 {
     if (ip_map)
-        sfxhash_delete(ip_map);
+        xhash_delete(ip_map);
 }
 
 void FlowIPTracker::reset()
 {
-    sfxhash_make_empty(ip_map);
+    xhash_make_empty(ip_map);
 }
 
 void FlowIPTracker::update(Packet* p)
@@ -170,7 +170,7 @@ void FlowIPTracker::update(Packet* p)
 
 void FlowIPTracker::process(bool)
 {
-    for (auto node = sfxhash_findfirst(ip_map); node; node = sfxhash_findnext(ip_map))
+    for (auto node = xhash_findfirst(ip_map); node; node = xhash_findnext(ip_map))
     {
         FlowStateKey* key = (FlowStateKey*)node->key;
         FlowStateValue* cur_stats = (FlowStateValue*)node->data;

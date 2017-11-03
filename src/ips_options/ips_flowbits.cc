@@ -45,8 +45,8 @@
 
 #include "framework/ips_option.h"
 #include "framework/module.h"
-#include "hash/sfghash.h"
-#include "hash/sfhashfcn.h"
+#include "hash/ghash.h"
+#include "hash/hashfcn.h"
 #include "log/messages.h"
 #include "parser/mstring.h"
 #include "protocols/packet.h"
@@ -131,8 +131,8 @@ typedef struct _FLOWBITS_GRP
 
 static std::forward_list<const FLOWBITS_OP*> op_list;
 
-static SFGHASH* flowbits_hash = nullptr;
-static SFGHASH* flowbits_grp_hash = nullptr;
+static GHash* flowbits_hash = nullptr;
+static GHash* flowbits_grp_hash = nullptr;
 static SF_QUEUE* flowbits_bit_queue = nullptr;
 
 static unsigned flowbits_count = 0;
@@ -284,7 +284,7 @@ static inline int clear_group_bit(BitOp* bitop, char* group)
     // FIXIT-M why is the hash lookup done at runtime for flowbits groups?
     // a pointer to flowbis_grp should be in flowbits config data
     // this *should* be safe but iff splay mode is disabled
-    auto flowbits_grp = (FLOWBITS_GRP*)sfghash_find(flowbits_grp_hash, group);
+    auto flowbits_grp = (FLOWBITS_GRP*)ghash_find(flowbits_grp_hash, group);
 
     if ( !flowbits_grp )
         return 0;
@@ -308,7 +308,7 @@ static inline int toggle_group_bit(BitOp* bitop, char* group)
     if ( !group  )
         return 0;
 
-    auto flowbits_grp = (FLOWBITS_GRP*)sfghash_find(flowbits_grp_hash, group);
+    auto flowbits_grp = (FLOWBITS_GRP*)ghash_find(flowbits_grp_hash, group);
 
     if ( !flowbits_grp )
         return 0;
@@ -365,7 +365,7 @@ static inline int is_set_flowbits(
         return 0;
 
     case FLOWBITS_ALL:
-        flowbits_grp = (FLOWBITS_GRP*)sfghash_find(flowbits_grp_hash, group);
+        flowbits_grp = (FLOWBITS_GRP*)ghash_find(flowbits_grp_hash, group);
         if ( flowbits_grp == nullptr )
             return 0;
         for ( i = 0; i <= (unsigned int)(flowbits_grp->max_id >>3); i++ )
@@ -378,7 +378,7 @@ static inline int is_set_flowbits(
         return 1;
 
     case FLOWBITS_ANY:
-        flowbits_grp = (FLOWBITS_GRP*)sfghash_find(flowbits_grp_hash, group);
+        flowbits_grp = (FLOWBITS_GRP*)ghash_find(flowbits_grp_hash, group);
         if ( flowbits_grp == nullptr )
             return 0;
         for ( i = 0; i <= (unsigned int)(flowbits_grp->max_id >>3); i++ )
@@ -520,9 +520,9 @@ void FlowbitResetCounts()
     if ( !flowbits_hash )
         return;
 
-    for (SFGHASH_NODE* n = sfghash_findfirst(flowbits_hash);
+    for (GHashNode* n = ghash_findfirst(flowbits_hash);
         n != nullptr;
-        n = sfghash_findnext(flowbits_hash))
+        n = ghash_findnext(flowbits_hash))
     {
         FLOWBITS_OBJECT* fb = (FLOWBITS_OBJECT*)n->data;
         fb->set = 0;
@@ -571,7 +571,7 @@ static FLOWBITS_OBJECT* getFlowBitItem(char* flowbitName, FLOWBITS_OP* flowbits)
             s_name, ALLOWED_SPECIAL_CHARS);
     }
 
-    flowbits_item = (FLOWBITS_OBJECT*)sfghash_find(flowbits_hash, flowbitName);
+    flowbits_item = (FLOWBITS_OBJECT*)ghash_find(flowbits_hash, flowbitName);
 
     if (flowbits_item == nullptr)
     {
@@ -592,9 +592,9 @@ static FLOWBITS_OBJECT* getFlowBitItem(char* flowbitName, FLOWBITS_OP* flowbits)
             }
         }
 
-        int hstatus = sfghash_add(flowbits_hash, flowbitName, flowbits_item);
+        int hstatus = ghash_add(flowbits_hash, flowbitName, flowbits_item);
 
-        if (hstatus != SFGHASH_OK)
+        if (hstatus != GHASH_OK)
             ParseError("Could not add flowbits key (%s) to hash.",flowbitName);
     }
     flowbits_item->toggle = flowbits_toggle;
@@ -782,15 +782,15 @@ static FLOWBITS_GRP* getFlowBitGroup(char* groupName)
             s_name, ALLOWED_SPECIAL_CHARS);
     }
 
-    flowbits_grp = (FLOWBITS_GRP*)sfghash_find(flowbits_grp_hash, groupName);
+    flowbits_grp = (FLOWBITS_GRP*)ghash_find(flowbits_grp_hash, groupName);
 
     if ( !flowbits_grp )
     {
         // new group defined, add (bitop set later once we know size)
         flowbits_grp = (FLOWBITS_GRP*)snort_calloc(sizeof(*flowbits_grp));
-        int hstatus = sfghash_add(flowbits_grp_hash, groupName, flowbits_grp);
+        int hstatus = ghash_add(flowbits_grp_hash, groupName, flowbits_grp);
 
-        if (hstatus != SFGHASH_OK)
+        if (hstatus != GHASH_OK)
             ParseAbort("Could not add flowbits group (%s) to hash.\n",groupName);
 
         flowbits_grp_count++;
@@ -963,9 +963,9 @@ static void init_groups()
     if ( !flowbits_hash or !flowbits_grp_hash )
         return;
 
-    for ( SFGHASH_NODE* n = sfghash_findfirst(flowbits_grp_hash);
+    for ( GHashNode* n = ghash_findfirst(flowbits_grp_hash);
         n != nullptr;
-        n= sfghash_findnext(flowbits_grp_hash) )
+        n= ghash_findnext(flowbits_grp_hash) )
     {
         FLOWBITS_GRP* fbg = (FLOWBITS_GRP*)n->data;
         fbg->GrpBitOp = new BitOp(flowbits_count);
@@ -975,7 +975,7 @@ static void init_groups()
     while ( !op_list.empty() )
     {
         const FLOWBITS_OP* fbop = op_list.front();
-        FLOWBITS_GRP* fbg = (FLOWBITS_GRP*)sfghash_find(flowbits_grp_hash, fbop->group);
+        FLOWBITS_GRP* fbg = (FLOWBITS_GRP*)ghash_find(flowbits_grp_hash, fbop->group);
         assert(fbg);
 
         for ( int i = 0; i < fbop->num_ids; ++i )
@@ -987,23 +987,23 @@ static void init_groups()
 
 static void FlowBitsVerify()
 {
-    SFGHASH_NODE* n;
+    GHashNode* n;
     unsigned num_flowbits = 0;
     unsigned unchecked = 0, unset = 0;
 
     if (flowbits_hash == nullptr)
         return;
 
-    for (n = sfghash_findfirst(flowbits_hash);
+    for (n = ghash_findfirst(flowbits_hash);
         n != nullptr;
-        n= sfghash_findnext(flowbits_hash))
+        n= ghash_findnext(flowbits_hash))
     {
         FLOWBITS_OBJECT* fb = (FLOWBITS_OBJECT*)n->data;
 
         if (fb->toggle != flowbits_toggle)
         {
             sfqueue_add(flowbits_bit_queue, (NODE_DATA)(uintptr_t)fb->id);
-            sfghash_remove(flowbits_hash, n->key);
+            ghash_remove(flowbits_hash, n->key);
             continue;
         }
 
@@ -1061,14 +1061,14 @@ static void FlowBitsGrpFree(void* d)
 
 static void flowbits_ginit(SnortConfig*)
 {
-    flowbits_hash = sfghash_new(10000, 0, 0, FlowItemFree);
+    flowbits_hash = ghash_new(10000, 0, 0, FlowItemFree);
 
     if ( !flowbits_hash )
         FatalError("Could not create flowbits hash.\n");
 
     // this is used during parse time and runtime so do NOT
     // enable splay mode (which is NOT useful here anyway)
-    flowbits_grp_hash = sfghash_new(10000, 0, 0, FlowBitsGrpFree);
+    flowbits_grp_hash = ghash_new(10000, 0, 0, FlowBitsGrpFree);
 
     if ( !flowbits_grp_hash )
         FatalError("could not create flowbits group hash.\n");
@@ -1083,13 +1083,13 @@ static void flowbits_gterm(SnortConfig*)
 {
     if ( flowbits_hash )
     {
-        sfghash_delete(flowbits_hash);
+        ghash_delete(flowbits_hash);
         flowbits_hash = nullptr;
     }
 
     if ( flowbits_grp_hash )
     {
-        sfghash_delete(flowbits_grp_hash);
+        ghash_delete(flowbits_grp_hash);
         flowbits_grp_hash = nullptr;
     }
 

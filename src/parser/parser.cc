@@ -33,8 +33,8 @@
 #include "filters/detection_filter.h"
 #include "filters/rate_filter.h"
 #include "filters/sfthreshold.h"
-#include "hash/sfhashfcn.h"
-#include "hash/sfxhash.h"
+#include "hash/hashfcn.h"
+#include "hash/xhash.h"
 #include "log/messages.h"
 #include "main/shell.h"
 #include "main/snort_config.h"
@@ -101,14 +101,14 @@ static void FreeRuleTreeNodes(SnortConfig* sc)
 {
     RuleTreeNode* rtn;
     PolicyId policyId;
-    SFGHASH_NODE* hashNode;
+    GHashNode* hashNode;
 
     if (sc->otn_map == nullptr)
         return;
 
-    for (hashNode = sfghash_findfirst(sc->otn_map);
+    for (hashNode = ghash_findfirst(sc->otn_map);
         hashNode;
-        hashNode = sfghash_findnext(sc->otn_map))
+        hashNode = ghash_findnext(sc->otn_map))
     {
         OptTreeNode* otn = (OptTreeNode*)hashNode->data;
 
@@ -227,7 +227,7 @@ static void OtnInit(SnortConfig* sc)
     /* Init sid-gid -> otn map */
     sc->otn_map = OtnLookupNew();
     if (sc->otn_map == nullptr)
-        ParseAbort("ParseRulesFile otn_map sfghash_new failed.");
+        ParseAbort("ParseRulesFile otn_map ghash_new failed.");
 }
 
 #define IFACE_VARS_MAX 128
@@ -761,7 +761,7 @@ RuleTreeNode* deleteRtnFromOtn(OptTreeNode* otn, PolicyId policyId, SnortConfig*
         {
             RuleTreeNodeKey key{ rtn, policyId };
             if ( sc && sc->rtn_hash_table )
-                sfxhash_remove(sc->rtn_hash_table, &key);
+                xhash_remove(sc->rtn_hash_table, &key);
         }
 
         return rtn;
@@ -775,7 +775,7 @@ RuleTreeNode* deleteRtnFromOtn(OptTreeNode* otn, SnortConfig* sc)
     return deleteRtnFromOtn(otn, get_ips_policy()->policy_id, sc);
 }
 
-static uint32_t rtn_hash_func(SFHASHFCN*, const unsigned char *k, int)
+static uint32_t rtn_hash_func(HashFnc*, const unsigned char *k, int)
 {
     uint32_t a,b,c;
     const RuleTreeNodeKey* rtnk = (const RuleTreeNodeKey*)k;
@@ -859,19 +859,19 @@ int addRtnToOtn(SnortConfig* sc, OptTreeNode* otn, RuleTreeNode* rtn, PolicyId p
 
     if (!sc->rtn_hash_table)
     {
-        sc->rtn_hash_table = sfxhash_new(10000, sizeof(RuleTreeNodeKey), 0, 0, 0, nullptr, nullptr, 1);
+        sc->rtn_hash_table = xhash_new(10000, sizeof(RuleTreeNodeKey), 0, 0, 0, nullptr, nullptr, 1);
 
         if (sc->rtn_hash_table == nullptr)
             FatalError("Failed to create rule tree node hash table\n");
 
-        sfxhash_set_keyops(sc->rtn_hash_table, rtn_hash_func, rtn_compare_func);
+        xhash_set_keyops(sc->rtn_hash_table, rtn_hash_func, rtn_compare_func);
     }
 
     RuleTreeNodeKey key;
     memset(&key, 0, sizeof(key));
     key.rtn = rtn;
     key.policyId = policyId;
-    sfxhash_add(sc->rtn_hash_table, &key, rtn);
+    xhash_add(sc->rtn_hash_table, &key, rtn);
 
     return 0; //success
 }

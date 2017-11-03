@@ -18,10 +18,10 @@
 //--------------------------------------------------------------------------
 
 /*
-     sfhashfcn.c
+     hashfcn.c
 
-     Each hash table must allocate it's own SFGHASH struct, this is because
-     sfghash_new uses the number of rows in the hash table to modulo the random
+     Each hash table must allocate it's own GHash struct, this is because
+     ghash_new uses the number of rows in the hash table to modulo the random
      values.
 
      Updates:
@@ -33,16 +33,16 @@
 #include "config.h"
 #endif
 
-#include "sfhashfcn.h"
+#include "hashfcn.h"
 
 #include "main/snort_config.h"
 #include "utils/util.h"
 
-#include "sfprimetable.h"
+#include "primetable.h"
 
-SFHASHFCN* sfhashfcn_new(int m)
+HashFnc* hashfcn_new(int m)
 {
-    SFHASHFCN* p;
+    HashFnc* p;
     static int one=1;
 
     if ( one ) /* one time init */
@@ -51,7 +51,7 @@ SFHASHFCN* sfhashfcn_new(int m)
         one = 0;
     }
 
-    p = (SFHASHFCN*)snort_calloc(sizeof(*p));
+    p = (HashFnc*)snort_calloc(sizeof(*p));
 
     if ( SnortConfig::static_hash() )
     {
@@ -61,18 +61,18 @@ SFHASHFCN* sfhashfcn_new(int m)
     }
     else
     {
-        p->seed     = sf_nearest_prime( (rand()%m)+3191);
-        p->scale    = sf_nearest_prime( (rand()%m)+709);
+        p->seed     = nearest_prime( (rand()%m)+3191);
+        p->scale    = nearest_prime( (rand()%m)+709);
         p->hardener = (rand()*rand()) + 133824503;
     }
 
-    p->hash_fcn   = &sfhashfcn_hash;
+    p->hash_fcn   = &hashfcn_hash;
     p->keycmp_fcn = &memcmp;
 
     return p;
 }
 
-void sfhashfcn_free(SFHASHFCN* p)
+void hashfcn_free(HashFnc* p)
 {
     if ( p )
     {
@@ -80,7 +80,7 @@ void sfhashfcn_free(SFHASHFCN* p)
     }
 }
 
-unsigned sfhashfcn_hash(SFHASHFCN* p, const unsigned char* d, int n)
+unsigned hashfcn_hash(HashFnc* p, const unsigned char* d, int n)
 {
     unsigned hash = p->seed;
     while ( n )
@@ -93,14 +93,14 @@ unsigned sfhashfcn_hash(SFHASHFCN* p, const unsigned char* d, int n)
 }
 
 /**
- * Make sfhashfcn use a separate set of opcodes for the backend.
+ * Make hashfcn use a separate set of opcodes for the backend.
  *
- * @param h sfhashfcn ptr
+ * @param h hashfcn ptr
  * @param hash_fcn user specified hash function
  * @param keycmp_fcn user specified key comparison function
  */
-int sfhashfcn_set_keyops(SFHASHFCN* h,
-    unsigned (* hash_fcn)(SFHASHFCN* p, const unsigned char* d, int n),
+int hashfcn_set_keyops(HashFnc* h,
+    unsigned (* hash_fcn)(HashFnc* p, const unsigned char* d, int n),
     int (* keycmp_fcn)(const void* s1, const void* s2, size_t n))
 {
     if (h && hash_fcn && keycmp_fcn)

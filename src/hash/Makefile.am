@@ -5,18 +5,18 @@ x_includedir = $(pkgincludedir)/hash
 
 x_include_HEADERS = \
 hashes.h \
-sfghash.h \
-sfxhash.h \
-sfhashfcn.h
+ghash.h \
+xhash.h \
+hashfcn.h
 
 libhash_a_SOURCES = \
 hashes.cc \
 lru_cache_shared.cc \
 lru_cache_shared.h \
-sfghash.cc \
-sfhashfcn.cc \
-sfprimetable.cc sfprimetable.h \
-sfxhash.cc \
+ghash.cc \
+hashfcn.cc \
+primetable.cc primetable.h \
+xhash.cc \
 zhash.cc zhash.h
 
 if BUILD_CPPUTESTS
