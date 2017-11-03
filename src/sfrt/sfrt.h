@@ -27,13 +27,13 @@
 
 #include "sfip/sf_ip.h"
 
-/* A 32-bit word is used to hold the bit patterns of
-   the addresses. In IPv6 this should be 128 bits.
-   The following typedef is machine dependent.
-   A word must be 32 bits long! */
+// A 32-bit word is used to hold the bit patterns of the addresses.
+// In IPv6 this should be 128 bits.  The following typedef is
+// machine dependent.  A word must be 32 bits long!
 typedef unsigned long word;
 
-typedef void* GENERIC;   /* To be replaced with a pointer to a policy */
+typedef void* GENERIC;  // To be replaced with a pointer to a policy
+
 struct tuple_t
 {
     word index;
@@ -70,9 +70,6 @@ enum return_codes
     RT_REMOVE_FAILURE
 };
 
-/* Defined in sfrt.c */
-extern const char* rt_error_messages[];
-
 enum
 {
     RT_FAVOR_TIME,
@@ -80,56 +77,59 @@ enum
     RT_FAVOR_ALL
 };
 
-/******************************************************************
-   Master table struct.  Abstracts DIR and LC-trie methods         */
-typedef struct
+extern const char* rt_error_messages[];
+
+typedef int (* table_insert)(
+    const uint32_t* addr, int numAddrDwords, int len, word index, int behavior, GENERIC);
+
+typedef word (* table_remove)(
+    const uint32_t* addr, int numAddrDwords, int len, int behavior, GENERIC);
+
+typedef tuple_t (* table_lookup)(const uint32_t* addr, int numAddrDwords, GENERIC);
+
+typedef uint32_t (* table_usage)(GENERIC);
+typedef void (* table_print)(GENERIC);
+typedef void (* table_free)(GENERIC);
+
+// Master table struct.  Abstracts DIR and LC-trie methods
+struct table_t
 {
-    GENERIC* data;      /* data table. Each IP points to an entry here */
-    uint32_t num_ent;  /* Number of entries in the policy table */
-    uint32_t max_size; /* Max size of policies array */
-    uint32_t lastAllocatedIndex; /* Index allocated last. Search for unused index
-                                    starts from this value and then wraps around at max_size.*/
-    char ip_type;       /* Only IPs of this family will be used */
+    GENERIC* data;               // data table. Each IP points to an entry here
+    uint32_t num_ent;            // Number of entries in the policy table
+    uint32_t max_size;           // Max size of policies array
+    uint32_t lastAllocatedIndex; // Index allocated last. Search for unused index
+                                 // starts from this value and then wraps around at max_size.
+    char ip_type;                // Only IPs of this family will be used
     char table_type;
     uint32_t allocated;
 
-    void* rt;            /* Actual "routing" table */
-    void* rt6;            /* Actual "routing" table */
+    void* rt;                    // Actual "routing" table
+    void* rt6;                   // Actual "routing" table
 
-    tuple_t (* lookup)(const uint32_t* addr, int numAddrDwords, GENERIC tbl);
-    int (* insert)(const uint32_t* addr, int numAddrDwords, int len, word index, int behavior, GENERIC tbl);
-    void (* free)(GENERIC tbl);
-    uint32_t (* usage)(GENERIC tbl);
-    void (* print)(GENERIC tbl);
-    word (* remove)(const uint32_t* addr, int numAddrDwords, int len, int behavior, GENERIC tbl);
-} table_t;
-/*******************************************************************/
+    table_insert insert;
+    table_remove remove;
+    table_lookup lookup;
+    table_usage usage;
+    table_print print;
+    table_free free;
+};
 
-/* Abstracted routing table API */
+// Abstracted routing table API
 table_t* sfrt_new(char type, char ip_type, long data_size, uint32_t mem_cap);
-void sfrt_free(table_t* table);
-GENERIC sfrt_lookup(const SfIp* ip, table_t* table);
-GENERIC sfrt_search(const SfIp* ip, unsigned char len, table_t* table);
+void sfrt_free(table_t*);
+
+GENERIC sfrt_lookup(const SfIp*, table_t*);
+GENERIC sfrt_search(const SfIp*, unsigned char len, table_t*);
+
 typedef void (* sfrt_iterator_callback)(void*);
-struct SnortConfig;
-typedef void (* sfrt_sc_iterator_callback)(SnortConfig*, void*);
-typedef int (* sfrt_sc_iterator_callback3)(SnortConfig*, void*);
-typedef void (* sfrt_iterator_callback2)(void*, void*);
-typedef int (* sfrt_iterator_callback3)(void*);
-void sfrt_iterate(table_t* table, sfrt_iterator_callback userfunc);
-void sfrt_iterate_with_snort_config(SnortConfig* sc, table_t* table, sfrt_sc_iterator_callback
-    userfunc);
-int sfrt_iterate2(table_t* table, sfrt_iterator_callback3 userfunc);
-int sfrt_iterate2_with_snort_config(SnortConfig* sc, table_t* table, sfrt_sc_iterator_callback3
-    userfunc);
-void sfrt_cleanup(table_t* table, sfrt_iterator_callback userfunc);
-void sfrt_cleanup2(table_t*, sfrt_iterator_callback2, void*);
-int sfrt_insert(SfCidr* cidr, unsigned char len, GENERIC ptr,
-    int behavior, table_t* table);
-int sfrt_remove(SfCidr* cidr, unsigned char len, GENERIC* ptr,
-    int behavior, table_t* table);
-uint32_t sfrt_usage(table_t* table);
-void sfrt_print(table_t* table);
-uint32_t sfrt_num_entries(table_t* table);
+void sfrt_cleanup(table_t*, sfrt_iterator_callback);
+
+int sfrt_insert(SfCidr*, unsigned char len, GENERIC, int behavior, table_t*);
+int sfrt_remove(SfCidr*, unsigned char len, GENERIC*, int behavior, table_t*);
+
+uint32_t sfrt_usage(table_t*);
+void sfrt_print(table_t*);
+uint32_t sfrt_num_entries(table_t*);
 
 #endif
+
