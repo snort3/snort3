@@ -24,6 +24,7 @@
 
 #include "detection/detection_engine.h"
 #include "flow/session.h"
+#include "protocols/ipv6.h"
 #include "stream/libtcp/tcp_stream_tracker.h"
 #include "stream/tcp/tcp_stream_config.h"
 
@@ -142,6 +143,12 @@ public:
     bool generate_3whs_alert = true;
     TcpStreamConfig* config = nullptr;
     TcpEventLogger tel;
+
+private:
+    ip::snort_in6_addr real_src_ip;
+    ip::snort_in6_addr real_dst_ip;
+    uint16_t real_src_port;
+    uint16_t real_dst_port;
 
 protected:
     virtual void set_os_policy() = 0;

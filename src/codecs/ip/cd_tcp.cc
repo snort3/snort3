@@ -277,8 +277,16 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     codec.lyr_len = tcph_len - codec.invalid_bytes; // set in DecodeTCPOptions()
     codec.proto_bits |= PROTO_BIT__TCP;
     snort.tcph = tcph;
-    snort.sp = tcph->src_port();
-    snort.dp = tcph->dst_port();
+    if ((raw.pkth->flags & DAQ_PKT_FLAG_REAL_ADDRESSES) and (codec.ip_layer_cnt == 1))
+    {
+        snort.sp = ntohs(raw.pkth->n_real_sPort);
+        snort.dp = ntohs(raw.pkth->n_real_dPort);
+    }
+    else
+    {
+        snort.sp = tcph->src_port();
+        snort.dp = tcph->dst_port();
+    }
     snort.set_pkt_type(PktType::TCP);
 
     TCPMiscTests(tcph, snort, codec);

@@ -49,6 +49,7 @@ public:
     void set(const IP6Hdr* h6);
     void set(const SfIp& src, const SfIp& dst);
     bool set(const uint8_t* raw_ip_data);
+    void update(const SfIp& sip, const SfIp& dip);
     void reset();
 
     // return the 16 bits associated with this IP layers frag_offset/flags

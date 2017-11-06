@@ -81,6 +81,12 @@ bool IpApi::set(const uint8_t* raw_ip_data)
     return false;
 }
 
+void IpApi::update(const SfIp& sip, const SfIp& dip)
+{
+    src.set(sip);
+    dst.set(dip);
+}
+
 uint16_t IpApi::tos() const
 {
     switch ( type )

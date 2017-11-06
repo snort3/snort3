@@ -610,6 +610,13 @@ static void set_hdr(
     pkth->flags = phdr->flags & (~DAQ_PKT_FLAG_HW_TCP_CS_GOOD);
     pkth->address_space_id = phdr->address_space_id;
     pkth->opaque = opaque;
+    if (pkth->flags & DAQ_PKT_FLAG_REAL_ADDRESSES)
+    {
+        pkth->n_real_sPort = phdr->n_real_sPort;
+        pkth->n_real_dPort = phdr->n_real_dPort;
+        pkth->real_sIP = phdr->real_sIP;
+        pkth->real_dIP = phdr->real_dIP;
+    }
 }
 
 //-------------------------------------------------------------------------

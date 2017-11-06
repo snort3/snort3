@@ -226,6 +226,17 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
     // set the api now since this layer has been verified as valid
     snort.ip_api.set(iph);
+    // update to real IP when needed
+    if ((raw.pkth->flags & DAQ_PKT_FLAG_REAL_ADDRESSES) and codec.ip_layer_cnt == 1)
+    {
+        SfIp real_src;
+        SfIp real_dst;
+        real_src.set(&raw.pkth->real_sIP,
+            ((raw.pkth->flags & DAQ_PKT_FLAG_REAL_SIP_V6) ? AF_INET6 : AF_INET));
+        real_dst.set(&raw.pkth->real_dIP,
+            ((raw.pkth->flags & DAQ_PKT_FLAG_REAL_DIP_V6) ? AF_INET6 : AF_INET));
+        snort.ip_api.update(real_src, real_dst);
+    }
 
     /*
      * IP Header tests: Land attack, and Loop back test
