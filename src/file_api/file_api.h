@@ -111,8 +111,29 @@ struct FileState
 
 class FileContext;
 struct FileCaptureInfo;
+class Flow;
+class FileInfo;
 
-#define DEFAULT_FILE_ID   0
+class SO_PUBLIC FilePolicyBase
+{
+public:
+
+    FilePolicyBase() = default;
+    // This is called when a new flow is queried for the first time
+    // Check & update what file policy is enabled on this flow/file
+    virtual void policy_check(Flow*, FileInfo* ) { }
+
+    // This is called after file type is known
+    virtual FileVerdict type_lookup(Flow*, FileInfo*)
+    { return FILE_VERDICT_UNKNOWN; }
+
+    // This is called after file signature is complete
+    virtual FileVerdict signature_lookup(Flow*, FileInfo*)
+    { return FILE_VERDICT_UNKNOWN; }
+
+    virtual void log_file_action(Flow*, int) { }
+
+};
 
 inline void initFilePosition(FilePosition* position, uint64_t processed_size)
 {

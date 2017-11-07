@@ -141,7 +141,7 @@ FileVerdict FilePolicy::match_file_signature(Flow*, FileInfo* file)
     return FILE_VERDICT_UNKNOWN;
 }
 
-void FilePolicy::policy_check(Flow*, FileContext* file)
+void FilePolicy::policy_check(Flow*, FileInfo* file)
 {
     // TODO: enable based on file policy rules on flow
     file->config_file_type(type_enabled);
@@ -154,31 +154,13 @@ FileVerdict FilePolicy::type_lookup(Flow* flow, FileInfo* file)
     FileRule rule = match_file_rule(nullptr, file);
     FileEnforcer* file_enforcer = FileService::get_file_enforcer();
     if (file_enforcer)
-        file_enforcer->apply_verdict(flow, file, rule.use.verdict);
-    return rule.use.verdict;
-}
-
-FileVerdict FilePolicy::type_lookup(Flow* flow, FileContext* file)
-{
-    type_lookup(flow, (FileInfo*)file);
-    FileRule rule = match_file_rule(nullptr, file);
+        file_enforcer->apply_verdict(flow, file, rule.use.verdict, false, this);
     file->config_file_signature(rule.use.signature_enabled);
     file->config_file_capture(rule.use.capture_enabled);
-
     return rule.use.verdict;
 }
 
 FileVerdict FilePolicy::signature_lookup(Flow* flow, FileInfo* file)
-{
-    FileVerdict verdict = match_file_signature(nullptr, file);
-    FileEnforcer* file_enforcer = FileService::get_file_enforcer();
-    if (file_enforcer)
-        file_enforcer->apply_verdict(flow, file, verdict);
-
-    return verdict;
-}
-
-FileVerdict FilePolicy::signature_lookup(Flow* flow, FileContext* file)
 {
     FileRule& rule = match_file_rule(nullptr, file);
 
@@ -192,6 +174,10 @@ FileVerdict FilePolicy::signature_lookup(Flow* flow, FileContext* file)
             delete captured;
     }
 
-    return (signature_lookup(flow, (FileInfo*)file));
-}
+    FileVerdict verdict = match_file_signature(nullptr, file);
+    FileEnforcer* file_enforcer = FileService::get_file_enforcer();
+    if (file_enforcer)
+        file_enforcer->apply_verdict(flow, file, verdict, false, this);
 
+    return verdict;
+}

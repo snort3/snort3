@@ -26,6 +26,7 @@
 #include "hash/ghash.h"
 
 #include "main/snort_config.h"
+#include "utils/util.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
@@ -41,14 +42,6 @@ SnortConfig::~SnortConfig() = default;
 
 SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
-
-// implement functions for virtual
-FileVerdict FilePolicy::type_lookup(Flow* , FileContext* ) { return FILE_VERDICT_UNKNOWN;}
-FileVerdict FilePolicy::type_lookup(Flow* , FileInfo* ) { return FILE_VERDICT_UNKNOWN;}
-FileVerdict FilePolicy::signature_lookup(Flow* , FileContext* ) { return FILE_VERDICT_UNKNOWN;}
-FileVerdict FilePolicy::signature_lookup(Flow* , FileInfo* ) { return FILE_VERDICT_UNKNOWN;}
-
-FileIdentifier::~FileIdentifier() = default;
 
 // user free function
 static void myfree(void* p)

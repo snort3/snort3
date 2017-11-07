@@ -116,20 +116,6 @@ static MpseAgent s_agent =
     [](void** ppl) { CHECK(*ppl == s_list); }
 };
 
-FileIdentifier::~FileIdentifier() { }
-
-FileVerdict FilePolicy::type_lookup(Flow*, FileContext*)
-{ return FILE_VERDICT_UNKNOWN; }
-
-FileVerdict FilePolicy::type_lookup(Flow*, FileInfo*)
-{ return FILE_VERDICT_UNKNOWN; }
-
-FileVerdict FilePolicy::signature_lookup(Flow*, FileContext*)
-{ return FILE_VERDICT_UNKNOWN; }
-
-FileVerdict FilePolicy::signature_lookup(Flow*, FileInfo*)
-{ return FILE_VERDICT_UNKNOWN; }
-
 //-------------------------------------------------------------------------
 // base tests
 //-------------------------------------------------------------------------

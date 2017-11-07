@@ -24,7 +24,6 @@
 // FIXIT-L privatize most of this stuff.
 
 #include "events/event_queue.h"
-#include "file_api/file_config.h"
 #include "framework/bits.h"
 #include "main/policy.h"
 #include "main/thread.h"
@@ -260,8 +259,6 @@ public:
     // various modules
     class FastPatternConfig* fast_pattern_config = nullptr;
     struct EventQueueConfig* event_queue_config = nullptr;
-
-    class FileConfig file_config;
 
     /* XXX XXX policy specific? */
     struct ThresholdConfig* threshold_config = nullptr;

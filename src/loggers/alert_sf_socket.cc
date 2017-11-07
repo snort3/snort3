@@ -30,6 +30,7 @@
 #include "events/event.h"
 #include "framework/logger.h"
 #include "framework/module.h"
+#include "hash/ghash.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "managers/event_manager.h"

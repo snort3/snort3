@@ -28,6 +28,7 @@
 
 #include "detection/rules.h"
 #include "detection/treenodes.h"
+#include "hash/ghash.h"
 #include "main/snort_config.h"
 #include "protocols/packet.h"
 #include "utils/util.h"

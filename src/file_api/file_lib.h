@@ -62,6 +62,20 @@ public:
     size_t get_file_id() const;
     FileVerdict verdict = FILE_VERDICT_UNKNOWN;
 
+    // Configuration functions
+    void config_file_type(bool enabled);
+    bool is_file_type_enabled();
+    void config_file_signature(bool enabled);
+    bool is_file_signature_enabled();
+    void config_file_capture(bool enabled);
+    bool is_file_capture_enabled();
+
+    // Preserve the file in memory until it is released
+    // The file reserved will be returned and it will be detached from file context/session
+    FileCaptureState reserve_file(FileCapture*& dest);
+
+    FileState get_file_state() { return file_state; }
+
 protected:
     std::string file_name;
     bool file_name_set = false;
@@ -70,6 +84,11 @@ protected:
     uint32_t file_type_id = SNORT_FILE_TYPE_CONTINUE;
     uint8_t* sha256 = nullptr;
     size_t file_id = 0;
+    FileCapture* file_capture = nullptr;
+    bool file_type_enabled = false;
+    bool file_signature_enabled = false;
+    bool file_capture_enabled = false;
+    FileState file_state = { FILE_CAPTURE_SUCCESS, FILE_SIG_PROCESSING };
 
 private:
     void copy(const FileInfo& other);
@@ -81,51 +100,29 @@ public:
     FileContext();
     ~FileContext() override;
 
-    void check_policy(Flow*, FileDirection);
+    void check_policy(Flow*, FileDirection, FilePolicyBase*);
 
     // main processing functions
 
     // Return:
     //    true: continue processing/log/block this file
     //    false: ignore this file
-    bool process(Flow*, const uint8_t* file_data, int data_size, FilePosition);
-    bool process(Flow*, const uint8_t* file_data, int data_size, uint64_t offset);
-    void process_file_type(const uint8_t* file_data, int data_size, FilePosition position);
-    void process_file_signature_sha256(const uint8_t* file_data, int data_size, FilePosition pos);
+    bool process(Flow*, const uint8_t* file_data, int data_size, FilePosition,
+        FileConfig*, FilePolicyBase*);
+    bool process(Flow*, const uint8_t* file_data, int data_size, uint64_t offset,
+        FileConfig*, FilePolicyBase*);
+    void process_file_type(const uint8_t* file_data, int data_size, FilePosition,
+        FileConfig*);
+    void process_file_signature_sha256(const uint8_t* file_data, int data_size,
+        FilePosition, FileConfig*);
     void update_file_size(int data_size, FilePosition position);
     void stop_file_capture();
     FileCaptureState process_file_capture(const uint8_t* file_data, int data_size,
-        FilePosition pos);
-    void log_file_event(Flow*);
+        FilePosition, FileConfig*);
+    void log_file_event(Flow*, FileConfig*);
     FileVerdict file_signature_lookup(Flow*);
 
-    // Preserve the file in memory until it is released
-    // The file reserved will be returned and it will be detached from file context/session
-    FileCaptureState reserve_file(FileCapture*& dest);
-
-    // Configuration functions
-    void config_file_type(bool enabled);
-    bool is_file_type_enabled();
-    void config_file_signature(bool enabled);
-    bool is_file_signature_enabled();
-    void config_file_capture(bool enabled);
-    bool is_file_capture_enabled();
-
-    void set_signature_state(bool gen_sig)
-    {
-        if ( gen_sig )
-        {
-            if ( sha256 )
-            {
-                snort_free(sha256);
-                sha256 = nullptr;
-            }
-
-            file_state.sig_state = FILE_SIG_FLUSH;
-        }
-        else
-            file_state.sig_state = FILE_SIG_PROCESSING;
-    }
+    void set_signature_state(bool gen_sig);
 
     //File properties
     uint64_t get_processed_bytes();
@@ -133,25 +130,19 @@ public:
     void print_file_sha256(std::ostream&);
     void print_file_name(std::ostream&);
     static void print_file_data(FILE* fp, const uint8_t* data, int len, int max_depth);
-    void print(std::ostream&);
+    void print(std::ostream&, FileConfig*);
     char* get_UTF8_fname(size_t* converted_len);
 
 private:
-    bool file_type_enabled = false;
-    bool file_signature_enabled = false;
-    bool file_capture_enabled = false;
     uint64_t processed_bytes = 0;
     void* file_type_context;
     void* file_signature_context;
-    FileConfig* file_config;
-    FileInspect* inspector;
-    FileCapture* file_capture;
     FileSegments* file_segments;
-    FileState file_state = { FILE_CAPTURE_SUCCESS, FILE_SIG_PROCESSING };
 
-    inline int get_data_size_from_depth_limit(FileProcessType type, int data_size);
+    inline int get_data_size_from_depth_limit(FileProcessType type, int data_size,
+        FileConfig*);
     inline void finalize_file_type();
-    inline void finish_signature_lookup(Flow*, bool);
+    inline void finish_signature_lookup(Flow*, bool, FileConfig*, FilePolicyBase*);
 };
 
 #endif

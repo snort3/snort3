@@ -37,6 +37,7 @@
 #include "detection/detection_options.h"  // ... FIXIT-W
 
 #include "detection/treenodes.h"
+#include "hash/ghash.h"
 #include "main/snort_config.h"
 #include "main/thread_config.h"
 #include "parser/parser.h"

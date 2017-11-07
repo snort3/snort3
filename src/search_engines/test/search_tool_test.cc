@@ -63,20 +63,6 @@ SnortConfig* SnortConfig::get_conf()
 unsigned get_instance_id()
 { return 0; }
 
-FileIdentifier::~FileIdentifier() { }
-
-FileVerdict FilePolicy::type_lookup(Flow*, FileContext*)
-{ return FILE_VERDICT_UNKNOWN; }
-
-FileVerdict FilePolicy::type_lookup(Flow*, FileInfo*)
-{ return FILE_VERDICT_UNKNOWN; }
-
-FileVerdict FilePolicy::signature_lookup(Flow*, FileContext*)
-{ return FILE_VERDICT_UNKNOWN; }
-
-FileVerdict FilePolicy::signature_lookup(Flow*, FileInfo*)
-{ return FILE_VERDICT_UNKNOWN; }
-
 void LogValue(const char*, const char*, FILE*)
 {
 }

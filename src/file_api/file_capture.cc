@@ -82,7 +82,6 @@ void FileCapture::writer_thread()
 
 FileCapture::FileCapture(int64_t min_size, int64_t max_size)
 {
-    reserved = false;
     capture_size = 0;
     last = head = nullptr;
     current_data = nullptr;
@@ -96,7 +95,7 @@ FileCapture::~FileCapture()
 {
     FileCaptureBlock* file_block = head;
 
-    if (reserved)
+    if (file_info)
         file_counts.files_released_total++;
     else
         file_counts.files_freed_total++;
@@ -104,7 +103,7 @@ FileCapture::~FileCapture()
     while (file_block)
     {
         FileCaptureBlock* next_block = file_block->next;
-        if (reserved)
+        if (file_info)
         {
             if (file_mempool->m_release(file_block) != FILE_MEM_SUCCESS)
                 file_counts.file_buffers_release_errors++;
@@ -404,8 +403,6 @@ FileCaptureState FileCapture::reserve_file(const FileInfo* file)
     file_counts.files_captured_total++;
 
     current_block = head;
-
-    reserved = true;
 
     file_info = new FileInfo(*file);
 

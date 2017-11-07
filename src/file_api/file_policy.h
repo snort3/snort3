@@ -51,34 +51,25 @@ public:
 
 class FileInfo;
 
-class FilePolicy
+class FilePolicy: public FilePolicyBase
 {
 public:
-    FilePolicy() = default;
 
-    // This is called when a new flow is queried for the first time
-    // Check & update what file policy is enabled on this flow/file
-    void policy_check(Flow* flow, FileContext* file);
+    FilePolicy() { }
+    ~FilePolicy() { }
 
-    // This is called after file type is known
-    virtual FileVerdict type_lookup(Flow* flow, FileContext* file);
+    void policy_check(Flow* flow, FileInfo* file) override;
 
     // This is called after file type is known
-    virtual FileVerdict type_lookup(Flow* flow, FileInfo* file);
+    FileVerdict type_lookup(Flow* flow, FileInfo* file) override;
 
     // This is called after file signature is complete
-    virtual FileVerdict signature_lookup(Flow* flow, FileContext* file);
-
-    // This is called after file signature is complete
-    virtual FileVerdict signature_lookup(Flow* flow, FileInfo* file);
+    FileVerdict signature_lookup(Flow* flow, FileInfo* file) override;
 
     void insert_file_rule(FileRule&);
     void set_file_type(bool enabled);
     void set_file_signature(bool enabled);
     void set_file_capture(bool enabled);
-    bool is_type_id_enabled() { return type_enabled; }
-    bool is_signature_enabled() { return signature_enabled; }
-    bool is_capture_enabled() { return capture_enabled; }
     void load();
 
 private:

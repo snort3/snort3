@@ -29,6 +29,7 @@
 
 #include "file_flows.h"
 
+#include "main/snort_config.h"
 #include "managers/inspector_manager.h"
 #include "protocols/packet.h"
 
@@ -47,13 +48,34 @@ FileFlows* FileFlows::get_file_flows(Flow* flow)
     if (fd)
         return fd;
 
-    if (FileService::is_file_service_enabled())
+    FileInspect* fi = (FileInspect*)InspectorManager::get_inspector(FILE_ID_NAME);
+
+    if (FileService::is_file_service_enabled() and fi)
     {
-        fd = new FileFlows(flow);
+        fd = new FileFlows(flow, fi);
         flow->set_flow_data(fd);
+    }
+    else
+        return fd;
+
+    FileConfig* fc = fi->config;
+    if (fc and fd)
+    {
+        fd->set_file_config(fc);
+        fd->set_file_policy(&(fc->get_file_policy()));
     }
 
     return fd;
+}
+
+FilePolicyBase* FileFlows::get_file_policy(Flow* flow)
+{
+    FileFlows* fd = (FileFlows*)flow->get_flow_data(FileFlows::file_flow_data_id);
+
+    if (fd)
+        return fd->get_file_policy(flow);
+
+    return nullptr;
 }
 
 void FileFlows::set_current_file_context(FileContext* ctx)
@@ -101,7 +123,7 @@ FileContext* FileFlows::find_main_file_context(FilePosition pos, FileDirection d
 
     context = new FileContext;
     main_context = context;
-    context->check_policy(flow, dir);
+    context->check_policy(flow, dir, file_policy);
 
     if (!index)
         context->set_file_id(get_new_file_instance());
@@ -155,25 +177,26 @@ bool FileFlows::file_process(uint64_t file_id, const uint8_t* file_data,
 
     if (!context->get_processed_bytes())
     {
-        context->check_policy(flow, dir);
+        context->check_policy(flow, dir, file_policy);
         context->set_file_id(file_id);
     }
 
     if (context->verdict != FILE_VERDICT_UNKNOWN)
     {
         /*A new file session, but policy might be different*/
-        context->check_policy(flow, dir);
+        context->check_policy(flow, dir, file_policy);
 
         if ((context->get_file_sig_sha256())
             || !context->is_file_signature_enabled())
         {
             /* Just check file type and signature */
             FilePosition position = SNORT_FILE_FULL;
-            return context->process(flow, file_data, data_size, position);
+            return context->process(flow, file_data, data_size, position,
+                file_config, file_policy);
         }
     }
 
-    return context->process(flow, file_data, data_size, offset);
+    return context->process(flow, file_data, data_size, offset, file_config, file_policy);
 }
 
 /*
@@ -198,7 +221,7 @@ bool FileFlows::file_process(const uint8_t* file_data, int data_size,
     set_current_file_context(context);
 
     context->set_signature_state(gen_signature);
-    return context->process(flow, file_data, data_size, position);
+    return context->process(flow, file_data, data_size, position, file_config, file_policy);
 }
 
 void FileFlows::set_file_name(const uint8_t* fname, uint32_t name_size)
@@ -212,7 +235,7 @@ void FileFlows::set_file_name(const uint8_t* fname, uint32_t name_size)
         if (fname and name_size)
             context->set_file_name((const char*)fname, name_size);
 
-        context->log_file_event(flow);
+        context->log_file_event(flow, file_config);
     }
 }
 

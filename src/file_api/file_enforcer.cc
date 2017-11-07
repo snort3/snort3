@@ -67,16 +67,16 @@ void FileEnforcer::update_file_node(FileNode* node, FileInfo* file)
 }
 
 FileVerdict FileEnforcer::check_verdict(Flow* flow, FileNode* node,
-    XHashNode* hash_node, FilePolicy& inspect)
+    XHashNode* hash_node, FilePolicyBase* policy)
 {
     assert(node->file);
 
-    FileVerdict verdict = inspect.type_lookup(flow, node->file);
+    FileVerdict verdict = policy->type_lookup(flow, node->file);
 
     if ((verdict == FILE_VERDICT_UNKNOWN) ||
         (verdict == FILE_VERDICT_STOP_CAPTURE))
     {
-        verdict = inspect.signature_lookup(flow, node->file);
+        verdict = policy->signature_lookup(flow, node->file);
     }
 
     if ((verdict == FILE_VERDICT_UNKNOWN) ||
@@ -157,18 +157,26 @@ int FileEnforcer::store_verdict(Flow* flow, FileInfo* file)
     return 0;
 }
 
-bool FileEnforcer::apply_verdict(Flow* flow, FileInfo* file, FileVerdict verdict)
+bool FileEnforcer::apply_verdict(Flow* flow, FileInfo* file, FileVerdict verdict,
+    bool resume, FilePolicyBase* policy)
 {
     if ( verdict == FILE_VERDICT_UNKNOWN )
         return false;
 
     file->verdict = verdict;
 
-    if (verdict == FILE_VERDICT_BLOCK)
+    if (verdict == FILE_VERDICT_LOG)
+    {
+        if (resume)
+            policy->log_file_action(flow, FILE_RESUME_LOG);
+    }
+    else if (verdict == FILE_VERDICT_BLOCK)
     {
         // can't block session inside a session
         Active::set_delayed_action(Active::ACT_BLOCK, true);
         store_verdict(flow, file);
+        if (resume)
+            policy->log_file_action(flow, FILE_RESUME_BLOCK);
         return true;
     }
     else if (verdict == FILE_VERDICT_REJECT)
@@ -176,12 +184,16 @@ bool FileEnforcer::apply_verdict(Flow* flow, FileInfo* file, FileVerdict verdict
         // can't reset session inside a session
         Active::set_delayed_action(Active::ACT_RESET, true);
         store_verdict(flow, file);
+        if (resume)
+            policy->log_file_action(flow, FILE_RESUME_BLOCK);
         return true;
     }
     else if (verdict == FILE_VERDICT_PENDING)
     {
         /*Take the cached verdict*/
         Active::set_delayed_action(Active::ACT_DROP, true);
+        if (resume)
+            policy->log_file_action(flow, FILE_RESUME_BLOCK);
         return true;
     }
 
@@ -189,7 +201,7 @@ bool FileEnforcer::apply_verdict(Flow* flow, FileInfo* file, FileVerdict verdict
 }
 
 FileVerdict FileEnforcer::cached_verdict_lookup(Flow* flow, FileInfo* file,
-    FilePolicy& inspect)
+    FilePolicyBase* policy)
 {
     FileVerdict verdict = FILE_VERDICT_UNKNOWN;
     XHashNode* hash_node;
@@ -233,7 +245,8 @@ FileVerdict FileEnforcer::cached_verdict_lookup(Flow* flow, FileInfo* file,
             return verdict;
         }
         /*Query the file policy in case verdict has been changed*/
-        verdict = check_verdict(flow, node, hash_node, inspect);
+        verdict = check_verdict(flow, node, hash_node, policy);
+        apply_verdict(flow, node->file, verdict, true, policy);
     }
 
     return verdict;

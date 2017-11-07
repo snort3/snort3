@@ -64,9 +64,6 @@ public:
     // Preserve the file in memory until it is released
     FileCaptureState reserve_file(const FileInfo*);
 
-    // Whether file is reserved for store or analysis
-    bool is_reserved() { return reserved; }
-
     // Get the file that is reserved in memory, this should be called repeatedly
     // until nullptr is returned to get the full file
     // Returns:
@@ -108,7 +105,6 @@ private:
     static std::queue<FileCapture*> files_waiting;
     static bool running;
 
-    bool reserved;
     uint64_t capture_size;
     FileCaptureBlock* last;  /* last block of file data */
     FileCaptureBlock* head;  /* first block of file data */

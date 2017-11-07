@@ -49,8 +49,8 @@ public:
 
     FileEnforcer();
     ~FileEnforcer();
-    FileVerdict cached_verdict_lookup(Flow*, FileInfo*, FilePolicy&);
-    bool apply_verdict(Flow*, FileInfo*, FileVerdict);
+    FileVerdict cached_verdict_lookup(Flow*, FileInfo*, FilePolicyBase*);
+    bool apply_verdict(Flow*, FileInfo*, FileVerdict, bool resume, FilePolicyBase*);
 
 private:
 // FIXIT-L Merge definition with duplicate in file_cache.h?
@@ -65,7 +65,7 @@ PADDING_GUARD_BEGIN
 PADDING_GUARD_END
 
     void update_file_node(FileNode*, FileInfo*);
-    FileVerdict check_verdict(Flow*, FileNode*, XHashNode*, FilePolicy&);
+    FileVerdict check_verdict(Flow*, FileNode*, XHashNode*, FilePolicyBase*);
     int store_verdict(Flow*, FileInfo*);
 
     /* The hash table of expected files */
