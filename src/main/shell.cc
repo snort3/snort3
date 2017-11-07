@@ -23,6 +23,8 @@
 
 #include "shell.h"
 
+#include <libgen.h>
+
 #include <cassert>
 #include <cstring>
 #include <stdexcept>
@@ -32,6 +34,7 @@
 #include "main/policy.h"
 #include "main/snort_config.h"
 #include "managers/module_manager.h"
+#include "parser/parser.h"
 
 using namespace std;
 
@@ -139,8 +142,11 @@ Shell::Shell(const char* s)
     lua_atpanic(lua, Shell::panic);
     luaL_openlibs(lua);
 
+    char pwd[PATH_MAX];
+    parse_from = getcwd(pwd, sizeof(pwd));
+
     if ( s )
-        file = s;
+        set_file(s);
 
     loaded = false;
 }
@@ -153,7 +159,14 @@ Shell::~Shell()
 void Shell::set_file(const char* s)
 {
     assert(file.empty());
-    file = s;
+
+    if ( s && s[0] != '/' && parsing_follows_files )
+    {
+        file += parse_from;
+        file += '/';
+    }
+
+    file += s;
 }
 
 void Shell::set_overrides(const char* s)
@@ -186,10 +199,14 @@ void Shell::configure(SnortConfig* sc)
         set_network_policy(pt->second->network);
     }
 
-    config_lua(lua, file.c_str(), overrides);
+    const char* base_name = push_relative_path(file.c_str());
+    config_lua(lua, base_name, overrides);
+
     set_default_policy(sc);
     ModuleManager::set_config(nullptr);
     loaded = true;
+
+    pop_relative_path();
 }
 
 void Shell::install(const char* name, const luaL_Reg* reg)

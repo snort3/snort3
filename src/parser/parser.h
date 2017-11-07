@@ -93,5 +93,6 @@ struct RuleTreeNodeKey
     PolicyId policyId;
 };
 
+extern bool parsing_follows_files;
 #endif
 

@@ -23,11 +23,13 @@
 
 #include "module_manager.h"
 
+#include <libgen.h>
 #include <lua.hpp>
 
 #include <cassert>
 #include <iostream>
 #include <mutex>
+#include <stack>
 #include <string>
 
 #include "framework/base_api.h"
@@ -784,6 +786,59 @@ SO_PUBLIC bool set_string(const char* fqn, const char* s)
     //printf("string %s %s\n", fqn, s);
     Value v(s);
     return set_value(fqn, v);
+}
+
+struct DirStackItem
+{
+    string previous_dir;
+    string base_name;
+};
+
+static std::stack<DirStackItem> dir_stack;
+
+SO_PUBLIC const char* push_relative_path(const char* file)
+{
+    if ( !parsing_follows_files )
+        return file;
+
+    dir_stack.push(DirStackItem());
+    DirStackItem& dsi = dir_stack.top();
+
+    char pwd[PATH_MAX];
+
+    if ( getcwd(pwd, sizeof(pwd)) == nullptr )
+        FatalError("Unable to determine process running directory\n");
+
+    dsi.previous_dir = pwd;
+
+    char* base_name_buf = snort_strdup(file);
+    dsi.base_name = basename(base_name_buf);
+    snort_free(base_name_buf);
+
+    char* dir_name_buf = snort_strdup(file);
+    char* dir_name = dirname(dir_name_buf);
+
+    if ( chdir(dir_name) != 0 )
+        FatalError("Unable to access %s\n", dir_name);
+
+    snort_free(dir_name_buf);
+
+    return dsi.base_name.c_str();
+}
+
+SO_PUBLIC void pop_relative_path()
+{
+    if ( !parsing_follows_files )
+        return;
+
+    assert( !dir_stack.empty() );
+
+    // We came from this directory, so it should still exist
+    const char* prev_dir = dir_stack.top().previous_dir.c_str();
+    if ( chdir(prev_dir) != 0 )
+        FatalError("Unable to access %s\n", prev_dir);
+
+    dir_stack.pop();
 }
 
 static bool comp_mods(const ModHook* l, const ModHook* r)

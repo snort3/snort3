@@ -54,6 +54,7 @@ private:
     bool loaded;
     lua_State* lua;
     std::string file;
+    std::string parse_from;
     std::string overrides;
 };
 

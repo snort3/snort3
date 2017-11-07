@@ -379,6 +379,9 @@ static const Parameter s_params[] =
     { "--pause", Parameter::PT_IMPLIED, nullptr, nullptr,
       "wait for resume/quit command before processing packets/terminating", },
 
+    { "--parsing-follows-files", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "parse relative paths from the perspective of the current configuration file" },
+
     { "--pcap-file", Parameter::PT_STRING, nullptr, nullptr,
       "<file> file that contains a list of pcaps to read - read mode is implied" },
 
@@ -813,6 +816,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--pause") )
         sc->run_flags |= RUN_FLAG__PAUSE;
+
+    else if ( v.is("--parsing-follows-files") )
+        parsing_follows_files = true;
 
     else if ( v.is("--pcap-file") )
     {

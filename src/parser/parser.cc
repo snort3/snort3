@@ -55,6 +55,8 @@
 #include "parse_stream.h"
 #include "vars.h"
 
+bool parsing_follows_files = false;
+
 static struct rule_index_map_t* ruleIndexMap = nullptr;
 
 static std::string s_aux_rules;
