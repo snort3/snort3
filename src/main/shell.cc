@@ -23,7 +23,7 @@
 
 #include "shell.h"
 
-#include <libgen.h>
+#include <unistd.h>
 
 #include <cassert>
 #include <cstring>

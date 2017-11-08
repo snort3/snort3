@@ -44,6 +44,7 @@
 #include "parser/parser.h"
 #include "parser/vars.h"
 #include "profiler/profiler.h"
+#include "utils/util.h"
 
 #include "plugin_manager.h"
 
