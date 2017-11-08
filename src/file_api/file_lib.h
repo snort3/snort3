@@ -107,19 +107,14 @@ public:
     // Return:
     //    true: continue processing/log/block this file
     //    false: ignore this file
-    bool process(Flow*, const uint8_t* file_data, int data_size, FilePosition,
-        FileConfig*, FilePolicyBase*);
-    bool process(Flow*, const uint8_t* file_data, int data_size, uint64_t offset,
-        FileConfig*, FilePolicyBase*);
-    void process_file_type(const uint8_t* file_data, int data_size, FilePosition,
-        FileConfig*);
-    void process_file_signature_sha256(const uint8_t* file_data, int data_size,
-        FilePosition, FileConfig*);
+    bool process(Flow*, const uint8_t* file_data, int data_size, FilePosition, FilePolicyBase*);
+    bool process(Flow*, const uint8_t* file_data, int data_size, uint64_t offset, FilePolicyBase*);
+    void process_file_type(const uint8_t* file_data, int data_size, FilePosition);
+    void process_file_signature_sha256(const uint8_t* file_data, int data_size, FilePosition);
     void update_file_size(int data_size, FilePosition position);
     void stop_file_capture();
-    FileCaptureState process_file_capture(const uint8_t* file_data, int data_size,
-        FilePosition, FileConfig*);
-    void log_file_event(Flow*, FileConfig*);
+    FileCaptureState process_file_capture(const uint8_t* file_data, int data_size, FilePosition);
+    void log_file_event(Flow*);
     FileVerdict file_signature_lookup(Flow*);
 
     void set_signature_state(bool gen_sig);
@@ -130,7 +125,7 @@ public:
     void print_file_sha256(std::ostream&);
     void print_file_name(std::ostream&);
     static void print_file_data(FILE* fp, const uint8_t* data, int len, int max_depth);
-    void print(std::ostream&, FileConfig*);
+    void print(std::ostream&);
     char* get_UTF8_fname(size_t* converted_len);
 
 private:
@@ -138,11 +133,12 @@ private:
     void* file_type_context;
     void* file_signature_context;
     FileSegments* file_segments;
+    FileInspect* inspector;
+    FileConfig*  config;
 
-    inline int get_data_size_from_depth_limit(FileProcessType type, int data_size,
-        FileConfig*);
+    inline int get_data_size_from_depth_limit(FileProcessType type, int data_size);
     inline void finalize_file_type();
-    inline void finish_signature_lookup(Flow*, bool, FileConfig*, FilePolicyBase*);
+    inline void finish_signature_lookup(Flow*, bool, FilePolicyBase*);
 };
 
 #endif

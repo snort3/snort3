@@ -52,7 +52,7 @@ public:
     // Process file segments with current_offset specified. If file segment is out of order,
     // it will be put into the file segments queue.
     int process(Flow*, const uint8_t* file_data, uint64_t data_size, uint64_t offset,
-        FileConfig*, FilePolicyBase*);
+        FilePolicyBase*);
 
 private:
     FileSegment* head = nullptr;
@@ -61,9 +61,8 @@ private:
 
     void add(const uint8_t* file_data, uint64_t data_size, uint64_t offset);
     FilePosition get_file_position(uint64_t data_size, uint64_t file_size);
-    int process_one(Flow*, const uint8_t* file_data, int data_size, FileConfig*,
-        FilePolicyBase*);
-    int process_all(Flow*, FileConfig*, FilePolicyBase*);
+    int process_one(Flow*, const uint8_t* file_data, int data_size, FilePolicyBase*);
+    int process_all(Flow*, FilePolicyBase*);
 };
 
 #endif

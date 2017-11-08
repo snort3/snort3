@@ -27,13 +27,11 @@
 #include "main/snort_types.h"
 
 #include "file_api.h"
-#include "file_config.h"
 #include "file_module.h"
 #include "file_policy.h"
 
 class FileContext;
 class Flow;
-class FileConfig;
 
 class FileInspect : public Inspector
 {
@@ -85,8 +83,6 @@ public:
     //void handle_retransmit(Packet*) override;
     static unsigned file_flow_data_id;
 
-    void set_file_config(FileConfig* fc) { file_config = fc; }
-
     void set_file_policy(FilePolicyBase* fp) { file_policy = fp; }
     FilePolicyBase* get_file_policy() { return file_policy; }
 
@@ -100,7 +96,6 @@ private:
     uint64_t current_file_id = 0;
     bool gen_signature = false;
     Flow* flow = nullptr;
-    FileConfig* file_config = nullptr;
     FilePolicyBase* file_policy = nullptr;
 };
 

@@ -61,7 +61,6 @@ FileFlows* FileFlows::get_file_flows(Flow* flow)
     FileConfig* fc = fi->config;
     if (fc and fd)
     {
-        fd->set_file_config(fc);
         fd->set_file_policy(&(fc->get_file_policy()));
     }
 
@@ -191,12 +190,11 @@ bool FileFlows::file_process(uint64_t file_id, const uint8_t* file_data,
         {
             /* Just check file type and signature */
             FilePosition position = SNORT_FILE_FULL;
-            return context->process(flow, file_data, data_size, position,
-                file_config, file_policy);
+            return context->process(flow, file_data, data_size, position, file_policy);
         }
     }
 
-    return context->process(flow, file_data, data_size, offset, file_config, file_policy);
+    return context->process(flow, file_data, data_size, offset, file_policy);
 }
 
 /*
@@ -221,7 +219,7 @@ bool FileFlows::file_process(const uint8_t* file_data, int data_size,
     set_current_file_context(context);
 
     context->set_signature_state(gen_signature);
-    return context->process(flow, file_data, data_size, position, file_config, file_policy);
+    return context->process(flow, file_data, data_size, position, file_policy);
 }
 
 void FileFlows::set_file_name(const uint8_t* fname, uint32_t name_size)
@@ -235,7 +233,7 @@ void FileFlows::set_file_name(const uint8_t* fname, uint32_t name_size)
         if (fname and name_size)
             context->set_file_name((const char*)fname, name_size);
 
-        context->log_file_event(flow, file_config);
+        context->log_file_event(flow);
     }
 }
 

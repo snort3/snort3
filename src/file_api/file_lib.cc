@@ -253,6 +253,8 @@ FileContext::FileContext ()
     file_signature_context = nullptr;
     file_capture = nullptr;
     file_segments = nullptr;
+    inspector = (FileInspect*)InspectorManager::acquire(FILE_ID_NAME, SnortConfig::get_conf());
+    config = inspector->config;
 }
 
 FileContext::~FileContext ()
@@ -263,10 +265,11 @@ FileContext::~FileContext ()
         stop_file_capture();
     if (file_segments)
         delete file_segments;
+    InspectorManager::release(inspector);
 }
 
 inline int FileContext::get_data_size_from_depth_limit(FileProcessType type, int
-    data_size, FileConfig* config)
+    data_size)
 {
     uint64_t max_depth;
 
@@ -298,7 +301,7 @@ inline void FileContext::finalize_file_type()
     file_type_context = nullptr;
 }
 
-void FileContext::log_file_event(Flow* flow, FileConfig* config)
+void FileContext::log_file_event(Flow* flow)
 {
     // wait for file name is set to log file event
     if ( is_file_name_set() )
@@ -322,7 +325,7 @@ void FileContext::log_file_event(Flow* flow, FileConfig* config)
             break;
         }
         if ( config->trace_type )
-            print(std::cout, config);
+            print(std::cout);
     }
 }
 
@@ -339,8 +342,7 @@ FileVerdict FileContext::file_signature_lookup(Flow* flow)
     return FILE_VERDICT_UNKNOWN;
 }
 
-void FileContext::finish_signature_lookup(Flow* flow, bool final_lookup,
-    FileConfig* config, FilePolicyBase* policy)
+void FileContext::finish_signature_lookup(Flow* flow, bool final_lookup, FilePolicyBase* policy)
 {
     if (get_file_sig_sha256())
     {
@@ -348,7 +350,7 @@ void FileContext::finish_signature_lookup(Flow* flow, bool final_lookup,
         FileVerdict verdict = policy->signature_lookup(flow, this);
         if ( verdict != FILE_VERDICT_UNKNOWN || final_lookup )
         {
-            log_file_event(flow, config);
+            log_file_event(flow);
             config_file_signature(false);
             file_stats->signatures_processed[get_file_type()][get_file_direction()]++;
         }
@@ -389,8 +391,9 @@ void FileContext::check_policy(Flow* flow, FileDirection dir, FilePolicyBase* po
  *    false: ignore this file
  */
 bool FileContext::process(Flow* flow, const uint8_t* file_data, int data_size,
-    FilePosition position, FileConfig* config, FilePolicyBase* policy)
+    FilePosition position, FilePolicyBase* policy)
 {
+
     if ( config->trace_stream )
     {
         FileContext::print_file_data(stdout, file_data, data_size,
@@ -412,7 +415,7 @@ bool FileContext::process(Flow* flow, const uint8_t* file_data, int data_size,
     /*file type id*/
     if (is_file_type_enabled())
     {
-        process_file_type(file_data, data_size, position, config);
+        process_file_type(file_data, data_size, position);
 
         /*Don't care unknown file type*/
         if (get_file_type() == SNORT_FILE_TYPE_UNKNOWN)
@@ -430,7 +433,7 @@ bool FileContext::process(Flow* flow, const uint8_t* file_data, int data_size,
             file_stats->files_processed[get_file_type()][get_file_direction()]++;
             //Check file type based on file policy
             policy->type_lookup(flow, this);
-            log_file_event(flow, config);
+            log_file_event(flow);
         }
     }
 
@@ -438,7 +441,7 @@ bool FileContext::process(Flow* flow, const uint8_t* file_data, int data_size,
     if (is_file_signature_enabled())
     {
         if (!sha256)
-            process_file_signature_sha256(file_data, data_size, position, config);
+            process_file_signature_sha256(file_data, data_size, position);
 
         file_stats->data_processed[get_file_type()][get_file_direction()]
             += data_size;
@@ -451,10 +454,10 @@ bool FileContext::process(Flow* flow, const uint8_t* file_data, int data_size,
         /*Fails to capture, when out of memory or size limit, need lookup*/
         if (is_file_capture_enabled())
         {
-            process_file_capture(file_data, data_size, position, config);
+            process_file_capture(file_data, data_size, position);
         }
 
-        finish_signature_lookup(flow, ( file_state.sig_state != FILE_SIG_FLUSH ), config, policy);
+        finish_signature_lookup(flow, ( file_state.sig_state != FILE_SIG_FLUSH ), policy);
     }
     else
     {
@@ -465,11 +468,11 @@ bool FileContext::process(Flow* flow, const uint8_t* file_data, int data_size,
 }
 
 bool FileContext::process(Flow* flow, const uint8_t* file_data, int data_size,
-    uint64_t offset, FileConfig* config, FilePolicyBase* policy)
+    uint64_t offset, FilePolicyBase* policy)
 {
     if (!file_segments)
         file_segments = new FileSegments(this);
-    return file_segments->process(flow, file_data, data_size, offset, config, policy);
+    return file_segments->process(flow, file_data, data_size, offset, policy);
 }
 
 /*
@@ -482,8 +485,7 @@ bool FileContext::process(Flow* flow, const uint8_t* file_data, int data_size,
  * 3) file magics are exhausted in depth
  *
  */
-void FileContext::process_file_type(const uint8_t* file_data, int size, FilePosition position,
-    FileConfig* config)
+void FileContext::process_file_type(const uint8_t* file_data, int size, FilePosition position)
 {
     int data_size;
 
@@ -492,7 +494,7 @@ void FileContext::process_file_type(const uint8_t* file_data, int size, FilePosi
         return;
 
     /* Check whether file type depth is reached*/
-    data_size = get_data_size_from_depth_limit(SNORT_FILE_TYPE_ID, size, config);
+    data_size = get_data_size_from_depth_limit(SNORT_FILE_TYPE_ID, size);
 
     if (data_size < 0)
     {
@@ -512,9 +514,9 @@ void FileContext::process_file_type(const uint8_t* file_data, int size, FilePosi
 }
 
 void FileContext::process_file_signature_sha256(const uint8_t* file_data, int size,
-    FilePosition position, FileConfig* config)
+    FilePosition position)
 {
-    int data_size = get_data_size_from_depth_limit(SNORT_FILE_SHA256, size, config);
+    int data_size = get_data_size_from_depth_limit(SNORT_FILE_SHA256, size);
 
     if (data_size != size)
     {
@@ -582,7 +584,7 @@ void FileContext::process_file_signature_sha256(const uint8_t* file_data, int si
 }
 
 FileCaptureState FileContext::process_file_capture(const uint8_t* file_data,
-    int data_size, FilePosition position, FileConfig* config)
+    int data_size, FilePosition position)
 {
     if (!file_capture)
     {
@@ -742,7 +744,7 @@ void FileContext::print_file_name(std::ostream& log)
         snort_free(outbuf);
 }
 
-void FileContext::print(std::ostream& log, FileConfig* config)
+void FileContext::print(std::ostream& log)
 {
     print_file_name(log);
     log << "File type: " << config->file_type_name(file_type_id)
