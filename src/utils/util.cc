@@ -33,6 +33,7 @@
 #include <pcre.h>
 #include <pwd.h>
 #include <sys/file.h>
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <zlib.h>
 
