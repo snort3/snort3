@@ -24,9 +24,10 @@
 #include "data_bus.h"
 
 #include "main/policy.h"
+#include "main/snort_config.h"
 #include "protocols/packet.h"
 
-DataBus& get_data_bus()
+static DataBus& get_data_bus()
 { return get_inspection_policy()->dbus; }
 
 class BufferEvent : public DataEvent
@@ -56,6 +57,10 @@ private:
     const Packet* packet;
 };
 
+//--------------------------------------------------------------------------
+// public methods
+//--------------------------------------------------------------------------
+
 DataBus::DataBus() = default;
 
 DataBus::~DataBus()
@@ -69,17 +74,21 @@ DataBus::~DataBus()
 // publication of given event
 void DataBus::subscribe(const char* key, DataHandler* h)
 {
-    DataList& v = map[key];
-    v.push_back(h);
+    get_data_bus()._subscribe(key, h);
 }
 
 // notify subscribers of event
 void DataBus::publish(const char* key, DataEvent& e, Flow* f)
 {
-    DataList& v = map[key];
+    InspectionPolicy* pi = get_inspection_policy();
+    pi->dbus._publish(key, e, f);
 
-    for ( auto* h : v )
-        h->handle(e, f);
+    // also publish to default policy to notify control subscribers such as appid
+    InspectionPolicy* di = get_default_inspection_policy(SnortConfig::get_conf());
+
+    // of course, only when current is not default
+    if ( di != pi )
+        di->dbus._publish(key, e, f);
 }
 
 void DataBus::publish(const char* key, const uint8_t* buf, unsigned len, Flow* f)
@@ -94,5 +103,24 @@ void DataBus::publish(const char* key, Packet* p, Flow* f)
     if ( !f )
         f = p->flow;
     publish(key, e, f);
+}
+
+//--------------------------------------------------------------------------
+// private methods
+//--------------------------------------------------------------------------
+
+void DataBus::_subscribe(const char* key, DataHandler* h)
+{
+    DataList& v = map[key];
+    v.push_back(h);
+}
+
+// notify subscribers of event
+void DataBus::_publish(const char* key, DataEvent& e, Flow* f)
+{
+    DataList& v = map[key];
+
+    for ( auto* h : v )
+        h->handle(e, f);
 }
 

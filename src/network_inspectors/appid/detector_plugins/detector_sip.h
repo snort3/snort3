@@ -89,10 +89,9 @@ public:
 
     void set_client(SipUdpClientDetector* cd) { SipEventHandler::client = cd; }
     void set_service(SipServiceDetector* sd) { SipEventHandler::service = sd; }
+
     void subscribe()
-    {
-        get_data_bus().subscribe(SIP_EVENT_TYPE_SIP_DIALOG_KEY, this);
-    }
+    { DataBus::subscribe(SIP_EVENT_TYPE_SIP_DIALOG_KEY, this); }
 
     void handle(DataEvent&, Flow*) override;
 

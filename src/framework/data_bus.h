@@ -75,20 +75,20 @@ public:
     DataBus();
     ~DataBus();
 
-    void subscribe(const char* key, DataHandler*);
-    void publish(const char* key, DataEvent&, Flow* = nullptr);
+    static void subscribe(const char* key, DataHandler*);
+    static void publish(const char* key, DataEvent&, Flow* = nullptr);
 
     // convenience methods
-    void publish(const char* key, const uint8_t*, unsigned, Flow* = nullptr);
-    void publish(const char* key, Packet*, Flow* = nullptr);
+    static void publish(const char* key, const uint8_t*, unsigned, Flow* = nullptr);
+    static void publish(const char* key, Packet*, Flow* = nullptr);
+
+private:
+    void _subscribe(const char* key, DataHandler*);
+    void _publish(const char* key, DataEvent&, Flow*);
 
 private:
     DataMap map;
 };
-
-// FIXIT-L this should be in snort_confg.h or similar but that
-// requires refactoring to work as installed header
-SO_PUBLIC DataBus& get_data_bus();
 
 // common data events
 #define PACKET_EVENT "detection.packet"

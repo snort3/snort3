@@ -99,9 +99,10 @@ bool AppIdInspector::configure(SnortConfig*)
 
     active_config = new AppIdConfig( ( AppIdModuleConfig* )config);
 
-    get_data_bus().subscribe(HTTP_REQUEST_HEADER_EVENT_KEY, new HttpEventHandler(
+    DataBus::subscribe(HTTP_REQUEST_HEADER_EVENT_KEY, new HttpEventHandler(
         HttpEventHandler::REQUEST_EVENT));
-    get_data_bus().subscribe(HTTP_RESPONSE_HEADER_EVENT_KEY, new HttpEventHandler(
+
+    DataBus::subscribe(HTTP_RESPONSE_HEADER_EVENT_KEY, new HttpEventHandler(
         HttpEventHandler::RESPONSE_EVENT));
 
     my_seh = SipEventHandler::create();

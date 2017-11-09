@@ -205,7 +205,7 @@ public:
 
     bool configure(SnortConfig*) override
     {
-        get_data_bus().subscribe("file_event", new LogHandler(config));
+        DataBus::subscribe("file_event", new LogHandler(config));
         return true;
     }
 

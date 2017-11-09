@@ -274,7 +274,7 @@ static RpcStatus RpcStatefulInspection(RpcDecodeConfig* rconfig,
                     if (RpcPrepRaw(data, rsdata->frag_len, p) != RPC_STATUS__SUCCESS)
                         return RPC_STATUS__ERROR;
 
-                    get_data_bus().publish(PACKET_EVENT, p);
+                    DataBus::publish(PACKET_EVENT, p);
                 }
 
                 if ( (dsize > 0) )
@@ -359,7 +359,7 @@ static RpcStatus RpcStatefulInspection(RpcDecodeConfig* rconfig,
                 if ( (dsize > 0) )
                     RpcPreprocEvent(rconfig, rsdata, RPC_MULTIPLE_RECORD);
 
-                get_data_bus().publish(PACKET_EVENT, p);
+                DataBus::publish(PACKET_EVENT, p);
                 RpcBufClean(&rsdata->frag);
             }
 

@@ -45,14 +45,11 @@ HttpMsgHeader::HttpMsgHeader(const uint8_t* buffer, const uint16_t buf_size,
 void HttpMsgHeader::publish()
 {
     HttpEvent http_event(this);
-    if(source_id == SRC_CLIENT)
-    {
-        get_data_bus().publish(HTTP_REQUEST_HEADER_EVENT_KEY, http_event, flow);
-    }
-    else
-    {
-        get_data_bus().publish(HTTP_RESPONSE_HEADER_EVENT_KEY, http_event, flow);
-    }
+
+    const char* key = (source_id == SRC_CLIENT) ?
+        HTTP_REQUEST_HEADER_EVENT_KEY : HTTP_RESPONSE_HEADER_EVENT_KEY; 
+
+    DataBus::publish(key, http_event, flow);
 }
 
 const Field& HttpMsgHeader::get_true_ip()

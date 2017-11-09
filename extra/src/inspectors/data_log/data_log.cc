@@ -116,7 +116,7 @@ public:
 
     bool configure(SnortConfig*) override
     {
-        get_data_bus().subscribe(key.c_str(), new LogHandler(key));
+        DataBus::subscribe(key.c_str(), new LogHandler(key));
         return true;
     }
 

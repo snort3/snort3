@@ -183,7 +183,7 @@ int FTPCheckConfigs(SnortConfig* sc, void* pData)
 
 void do_detection(Packet* p)
 {
-    get_data_bus().publish(PACKET_EVENT, p);
+    DataBus::publish(PACKET_EVENT, p);
     DetectionEngine::disable_all(p);
 }
 

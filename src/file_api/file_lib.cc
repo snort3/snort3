@@ -310,16 +310,16 @@ void FileContext::log_file_event(Flow* flow)
         {
         case FILE_VERDICT_LOG:
             // Log file event through data bus
-            get_data_bus().publish("file_event", (const uint8_t*)"LOG", 3, flow);
+            DataBus::publish("file_event", (const uint8_t*)"LOG", 3, flow);
             break;
 
         case FILE_VERDICT_BLOCK:
             // can't block session inside a session
-            get_data_bus().publish("file_event", (const uint8_t*)"BLOCK", 5, flow);
+            DataBus::publish("file_event", (const uint8_t*)"BLOCK", 5, flow);
             break;
 
         case FILE_VERDICT_REJECT:
-            get_data_bus().publish("file_event", (const uint8_t*)"RESET", 5, flow);
+            DataBus::publish("file_event", (const uint8_t*)"RESET", 5, flow);
             break;
         default:
             break;

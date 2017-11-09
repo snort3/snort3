@@ -248,6 +248,9 @@ InspectionPolicy* get_inspection_policy()
 IpsPolicy* get_ips_policy()
 { return s_detection_policy; }
 
+InspectionPolicy* get_default_inspection_policy(SnortConfig* sc)
+{ return sc->policy_map->inspection_policy[0]; }
+
 void set_network_policy(NetworkPolicy* p)
 { s_traffic_policy = p; }
 
