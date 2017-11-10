@@ -88,6 +88,8 @@ public:
 
     static int64_t get_block_size() { return capture_block_size; }
 
+    FileInfo* get_file_info() { return file_info; }
+
 private:
 
     static void init_mempool(int64_t max_file_mem, int64_t block_size);
