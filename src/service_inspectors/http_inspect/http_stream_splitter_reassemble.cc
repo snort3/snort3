@@ -279,6 +279,29 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total, un
     assert(session_data->section_type[source_id] != SEC__NOT_COMPUTE);
     assert(total <= MAX_OCTETS);
 
+    // FIXIT-H this is a precaution/workaround for stream issues. When they are fixed replace this
+    // block with an assert.
+    if ( !((session_data->octets_expected[source_id] == total) ||
+        (!session_data->strict_length[source_id] &&
+        (total <= session_data->octets_expected[source_id]))) )
+    {
+        if (session_data->octets_expected[source_id] == 0)
+        {
+            // FIXIT-H This is a known problem. No data was scanned and yet somehow stream can
+            // give us data when we ask for an empty message section. Dropping the unexpected data
+            // enables us to send the HTTP headers through detection as originally planned.
+            total = 0;
+            len = 0;
+        }
+        else
+        {
+#ifdef REG_TEST
+            assert(false);
+#endif
+            return http_buf;
+        }
+    }
+
     session_data->running_total[source_id] += len;
     assert(session_data->running_total[source_id] <= total);
 
@@ -296,10 +319,6 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total, un
         if (flags & PKT_PDU_TAIL)
         {
             assert(session_data->running_total[source_id] == total);
-            assert(
-                (session_data->octets_expected[source_id] == total) ||
-                    (!session_data->strict_length[source_id] &&
-                    (total <= session_data->octets_expected[source_id])));
             session_data->running_total[source_id] = 0;
             session_data->section_type[source_id] = SEC__NOT_COMPUTE;
 
@@ -357,17 +376,6 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total, un
     {
         uint32_t& running_total = session_data->running_total[source_id];
         assert(running_total == total);
-
-        // FIXIT-H this if should be an assert
-        if ( !((session_data->octets_expected[source_id] == total) ||
-            (!session_data->strict_length[source_id] &&
-            (total <= session_data->octets_expected[source_id]))) )
-        {
-#ifdef REG_TEST
-            assert(false);
-#endif
-            return http_buf;
-        }
         running_total = 0;
         const uint16_t buf_size =
             session_data->section_offset[source_id] - session_data->num_excess[source_id];

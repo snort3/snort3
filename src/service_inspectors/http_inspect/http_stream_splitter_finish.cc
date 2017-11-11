@@ -142,6 +142,6 @@ bool HttpStreamSplitter::finish(Flow* flow)
         return false;
     }
 
-    return true;
+    return session_data->section_type[source_id] != SEC__NOT_COMPUTE;
 }
 
