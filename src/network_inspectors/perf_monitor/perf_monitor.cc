@@ -336,34 +336,34 @@ TEST_CASE("Process timing logic", "[perfmon]")
     config.pkt_cnt = 0;
     config.sample_interval = 0;
     pkth.ts.tv_sec = 0;
-    REQUIRE(ready_to_process(&p) == true);
+    REQUIRE((ready_to_process(&p) == true));
     pkth.ts.tv_sec = 1;
-    REQUIRE(ready_to_process(&p) == true);
+    REQUIRE((ready_to_process(&p) == true));
 
     config.pkt_cnt = 2;
     config.sample_interval = 0;
     pkth.ts.tv_sec = 2;
-    REQUIRE(ready_to_process(&p) == false);
+    REQUIRE((ready_to_process(&p) == false));
     pkth.ts.tv_sec = 3;
-    REQUIRE(ready_to_process(&p) == true);
+    REQUIRE((ready_to_process(&p) == true));
 
     config.pkt_cnt = 0;
     config.sample_interval = 2;
     pkth.ts.tv_sec = 4;
-    REQUIRE(ready_to_process(&p) == false);
+    REQUIRE((ready_to_process(&p) == false));
     pkth.ts.tv_sec = 8;
-    REQUIRE(ready_to_process(&p) == true);
+    REQUIRE((ready_to_process(&p) == true));
     pkth.ts.tv_sec = 10;
-    REQUIRE(ready_to_process(&p) == true);
+    REQUIRE((ready_to_process(&p) == true));
 
     config.pkt_cnt = 5;
     config.sample_interval = 4;
     pkth.ts.tv_sec = 11;
-    REQUIRE(ready_to_process(&p) == false);
+    REQUIRE((ready_to_process(&p) == false));
     pkth.ts.tv_sec = 14;
-    REQUIRE(ready_to_process(&p) == false);
-    REQUIRE(ready_to_process(&p) == false);
-    REQUIRE(ready_to_process(&p) == false);
-    REQUIRE(ready_to_process(&p) == true);
+    REQUIRE((ready_to_process(&p) == false));
+    REQUIRE((ready_to_process(&p) == false));
+    REQUIRE((ready_to_process(&p) == false));
+    REQUIRE((ready_to_process(&p) == true));
 }
 #endif

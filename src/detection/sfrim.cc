@@ -100,14 +100,14 @@ TEST_CASE("basic", "[RuleIndexMap]")
 
     SECTION("valid")
     {
-        CHECK(RuleIndexMapGet(rim, 1, gid, sid));
+        CHECK((RuleIndexMapGet(rim, 1, gid, sid) == true));
 
         CHECK((gid == 2));
         CHECK((sid == 4));
     }
     SECTION("invalid")
     {
-        CHECK(!RuleIndexMapGet(rim, 3, gid, sid));
+        CHECK((RuleIndexMapGet(rim, 3, gid, sid) == false));
 
         CHECK((gid == 0));
         CHECK((sid == 0));

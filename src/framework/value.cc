@@ -275,7 +275,6 @@ TEST_CASE("mac addr negative test", "[Value]")
 
 TEST_CASE("get addr test", "[Value]")
 {
-    const uint8_t* test_str;
     unsigned int num_chars;
     uint8_t addr[16];
     uint8_t zero[16];
@@ -285,7 +284,7 @@ TEST_CASE("get addr test", "[Value]")
     SECTION("valid value")
     {
         Value test_val("1234567890123456");
-        test_str = (const uint8_t*)test_val.get_buffer(num_chars);
+        const uint8_t* test_str = test_val.get_buffer(num_chars);
         REQUIRE((num_chars == 16));
 
         test_val.get_addr(addr);
@@ -305,7 +304,6 @@ TEST_CASE("get addr test", "[Value]")
 
 TEST_CASE("get addr IPv4 test", "[Value]")
 {
-    const uint8_t* test_str;
     unsigned int num_chars;
     uint8_t addr[4];
     uint8_t zero[4];
@@ -315,7 +313,7 @@ TEST_CASE("get addr IPv4 test", "[Value]")
     SECTION("valid value")
     {
         Value test_val("1234");
-        test_str = (const uint8_t*)test_val.get_buffer(num_chars);
+        const uint8_t* test_str = test_val.get_buffer(num_chars);
         REQUIRE((num_chars == 4));
 
         test_val.get_addr_ip4(addr);
@@ -334,7 +332,6 @@ TEST_CASE("get addr IPv4 test", "[Value]")
 
 TEST_CASE("get addr IPv6 test", "[Value]")
 {
-    const uint8_t * test_str;
     unsigned int num_chars;
     uint8_t addr[16];
     uint8_t zero[16];
@@ -344,7 +341,7 @@ TEST_CASE("get addr IPv6 test", "[Value]")
     SECTION("valid value")
     {
         Value test_val("1234567890123456");
-        test_str = (const uint8_t *)test_val.get_buffer(num_chars);
+        const uint8_t * test_str = test_val.get_buffer(num_chars);
         REQUIRE((num_chars == 16));
 
         test_val.get_addr_ip6(addr);

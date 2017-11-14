@@ -93,7 +93,7 @@ TEST_CASE( "chunk initialization", "[chunk]" )
 
     SECTION( "normal initialization" )
     {
-        CHECK( init_chunk(lua, test_chunk, test_name, test_args_table) );
+        CHECK((init_chunk(lua, test_chunk, test_name, test_args_table) == true));
     }
 
     SECTION( "init() edge cases" )
@@ -102,8 +102,8 @@ TEST_CASE( "chunk initialization", "[chunk]" )
         {
             string test_init_not_a_function_chunk = "init = 1";
             CHECK(
-                init_chunk(lua, test_init_not_a_function_chunk,
-                    test_name, test_args_table)
+                (init_chunk(lua, test_init_not_a_function_chunk,
+                    test_name, test_args_table) == true)
             );
         }
 
@@ -111,8 +111,8 @@ TEST_CASE( "chunk initialization", "[chunk]" )
         {
             string test_init_not_defined_chunk;
             CHECK(
-                init_chunk(lua, test_init_not_defined_chunk,
-                    test_name, test_args_table)
+                (init_chunk(lua, test_init_not_defined_chunk,
+                    test_name, test_args_table) == true)
             );
         }
     }
@@ -123,8 +123,7 @@ TEST_CASE( "chunk initialization", "[chunk]" )
         {
             string test_malformed_chunk = "function init()";
             CHECK_FALSE(
-                init_chunk(
-                    lua, test_malformed_chunk, test_name, test_args_table)
+                (init_chunk(lua, test_malformed_chunk, test_name, test_args_table) == true)
             );
         }
 
@@ -132,8 +131,7 @@ TEST_CASE( "chunk initialization", "[chunk]" )
         {
             string test_malformed_args_table = "args = {";
             CHECK_FALSE(
-                init_chunk(
-                    lua, test_chunk, test_name, test_malformed_args_table)
+                (init_chunk(lua, test_chunk, test_name, test_malformed_args_table) == true)
             );
         }
 
@@ -143,8 +141,8 @@ TEST_CASE( "chunk initialization", "[chunk]" )
                 "function init() return false end";
 
             CHECK_FALSE(
-                init_chunk(lua, test_init_returns_false_chunk,
-                    test_name, test_args_table)
+                (init_chunk(lua, test_init_returns_false_chunk,
+                    test_name, test_args_table) == true)
             );
         }
     }

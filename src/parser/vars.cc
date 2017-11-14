@@ -807,15 +807,12 @@ const char* ExpandVars(SnortConfig* sc, const char* string)
                 if (!varcontents || !strlen(varcontents))
                     ParseAbort("undefined variable name: %s.", varname);
 
-                if (varcontents)
-                {
-                    int l_varcontents = strlen(varcontents);
+                int l_varcontents = strlen(varcontents);
 
-                    iv = 0;
+                iv = 0;
 
-                    while (iv < l_varcontents && j < (int)sizeof(estring) - 1)
-                        estring[j++] = varcontents[iv++];
-                }
+                while (iv < l_varcontents && j < (int)sizeof(estring) - 1)
+                    estring[j++] = varcontents[iv++];
             }
             else
             {

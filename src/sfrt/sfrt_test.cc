@@ -198,13 +198,15 @@ static void test_sfrt_remove_after_insert_all()
     {
         SfCidr ip;
         int val;
-        int* result;
+        int* result = nullptr;
 
         IP_entry* ip_entry =  &(ip_lists[index]);
         /*Parse IP*/
         ip.set(ip_entry->ip_str);
 
         CHECK(sfrt_remove(&ip, ip.get_bits(), (void**)&result, RT_FAVOR_TIME, dir) == RT_SUCCESS);
+
+        REQUIRE(result != nullptr);
 
         val = *result;
         if ( s_debug )

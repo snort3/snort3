@@ -77,7 +77,7 @@ void AppIdSession::set_session_logging_state(const Packet* pkt, int direction)
         if ( !pkt->ptrs.ip_api.get_dst()->equals(config->mod_config->session_log_filter.dip) )
             return;
 
-        if ( !( pkt->ptrs.dp == config->mod_config->session_log_filter.dport ) )
+        if ( !( pkt->ptrs.sp == config->mod_config->session_log_filter.sport ) )
             return;
 
         if ( !( pkt->ptrs.dp == config->mod_config->session_log_filter.dport ) )

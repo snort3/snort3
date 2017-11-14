@@ -43,7 +43,7 @@ TEST_CASE( "bitop", "[bitop]" )
 
     SECTION( "zero-initialized" )
     {
-        CHECK( t_bitop_buffer_zero(bitop) );
+        CHECK( (t_bitop_buffer_zero(bitop) == true) );
     }
 
     SECTION( "reset" )
@@ -51,7 +51,7 @@ TEST_CASE( "bitop", "[bitop]" )
         bitop.get_buf_element(0) = 0xff;
         bitop.reset();
 
-        CHECK( t_bitop_buffer_zero(bitop) );
+        CHECK( (t_bitop_buffer_zero(bitop) == true) );
     }
 
     SECTION( "set/is_set/clear" )

@@ -253,7 +253,7 @@ static void print_single_entry(const View& v, unsigned n)
 }
 
 // FIXIT-L logic duplicated from ProfilerPrinter
-static void print_entries(std::vector<View>& entries, ProfilerSorter<View> sort, unsigned count)
+static void print_entries(std::vector<View>& entries, ProfilerSorter<View>& sort, unsigned count)
 {
     std::ostringstream ss;
 

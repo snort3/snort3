@@ -389,15 +389,15 @@ TEST_CASE("SfVarTable_Kitchen_Sink", "[SfVarTable]")
     ip = (SfIp *)snort_alloc(sizeof(SfIp));
     status = ip->set("192.168.248.255");
     CHECK(SFIP_SUCCESS == status);
-    CHECK(!sfvar_ip_in(var, ip));
+    CHECK((sfvar_ip_in(var, ip) == false));
 
     /* Check against the 'any' variable */
     var = sfvt_lookup_var(table, "moo");
-    CHECK(sfvar_ip_in(var, ip));
+    CHECK((sfvar_ip_in(var, ip) == true));
 
     /* Verify it's not in this variable */
     var = sfvt_lookup_var(table, "foo");
-    CHECK(!sfvar_ip_in(var, ip));
+    CHECK((sfvar_ip_in(var, ip) == false));
 
     /* Check boundary cases */
     var = sfvt_lookup_var(table, "goo");
@@ -405,12 +405,12 @@ TEST_CASE("SfVarTable_Kitchen_Sink", "[SfVarTable]")
     ip = (SfIp *)snort_alloc(sizeof(SfIp));
     status = ip->set("192.168.0.3");
     CHECK(SFIP_SUCCESS == status);
-    CHECK(!sfvar_ip_in(var, ip));
+    CHECK((sfvar_ip_in(var, ip) == false));
     snort_free(ip);
     ip = (SfIp *)snort_alloc(sizeof(SfIp));
     status = ip->set("192.168.0.2");
     CHECK(SFIP_SUCCESS == status);
-    CHECK(sfvar_ip_in(var, ip));
+    CHECK((sfvar_ip_in(var, ip) == true));
     snort_free(ip);
 
     sfvt_free_table(table);

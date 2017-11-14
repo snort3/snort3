@@ -64,12 +64,6 @@ extern "C" {
 
 #include "util_cstring.h"
 
-#ifdef PATH_MAX
-#define PATH_MAX_UTIL PATH_MAX
-#else
-#define PATH_MAX_UTIL 1024
-#endif
-
 char** protocol_names = nullptr;
 
 /****************************************************************************
@@ -523,7 +517,7 @@ char* snort_strdup(const char* str)
     return p;
 }
 
-typedef char PathBuf[PATH_MAX_UTIL+1];
+typedef char PathBuf[PATH_MAX+1];
 
 static const char* CurrentWorkingDir(PathBuf& buf)
 {

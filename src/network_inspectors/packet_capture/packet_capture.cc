@@ -288,25 +288,25 @@ TEST_CASE("lazy init", "[PacketCapture]")
     auto mod = (CaptureModule*)mod_ctor();
     auto real_cap = (PacketCapture*)pc_ctor(mod);
 
-    CHECK ( !capture_initialized() );
+    CHECK ( (capture_initialized() == false) );
 
     real_cap->eval(null_packet);
-    CHECK ( !capture_initialized() );
+    CHECK ( (capture_initialized() == false) );
 
     pc_dtor(real_cap);
     MockPacketCapture cap(mod);
 
     packet_capture_enable("");
-    CHECK ( !capture_initialized() );
+    CHECK ( (capture_initialized() == false) );
 
     cap.eval(null_packet);
-    CHECK ( capture_initialized() );
+    CHECK ( (capture_initialized() == true) );
 
     packet_capture_disable();
-    CHECK ( capture_initialized() );
+    CHECK ( (capture_initialized() == true) );
 
     cap.eval(null_packet);
-    CHECK ( !capture_initialized() );
+    CHECK ( (capture_initialized() == false) );
 
     mod_dtor(mod);
 }
@@ -347,7 +347,7 @@ TEST_CASE("bad filter", "[PacketCapture]")
 
     packet_capture_enable("this is garbage");
     cap.eval(null_packet);
-    CHECK ( !capture_initialized() );
+    CHECK ( (capture_initialized() == false) );
 
     packet_capture_enable(
     "port 0 "
@@ -372,7 +372,7 @@ TEST_CASE("bad filter", "[PacketCapture]")
     "port 19 "
     );
     cap.eval(null_packet);
-    CHECK ( !capture_initialized() );
+    CHECK ( (capture_initialized() == false) );
 }
 
 TEST_CASE("bpf filter", "[PacketCapture]")

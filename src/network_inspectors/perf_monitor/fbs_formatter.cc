@@ -368,7 +368,7 @@ TEST_CASE("peg schema", "[FbsFormatter]")
     f.finalize_fields();
     f.init_output(fh);
 
-    CHECK( test_file(fh, cooked) );
+    CHECK((test_file(fh, cooked) == true));
 
     fclose(fh);
     snort_free(cooked);
@@ -394,7 +394,7 @@ TEST_CASE("string schema", "[FbsFormatter]")
     f.finalize_fields();
     f.init_output(fh);
 
-    CHECK( test_file(fh, cooked) );
+    CHECK((test_file(fh, cooked) == true));
 
     fclose(fh);
     snort_free(cooked);
@@ -419,7 +419,7 @@ TEST_CASE("vector schema", "[FbsFormatter]")
     f.finalize_fields();
     f.init_output(fh);
 
-    CHECK( test_file(fh, cooked) );
+    CHECK((test_file(fh, cooked) == true));
 
     fclose(fh);
     snort_free(cooked);
@@ -448,7 +448,7 @@ TEST_CASE("mixed schema", "[FbsFormatter]")
     f.finalize_fields();
     f.init_output(fh);
 
-    CHECK( test_file(fh, cooked) );
+    CHECK((test_file(fh, cooked) == true));
 
     fclose(fh);
     snort_free(cooked);
