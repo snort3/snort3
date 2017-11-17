@@ -169,7 +169,8 @@ static int krb_walk_server_packet(KRBState* krbs, const uint8_t* s, const uint8_
                 return KRB_FAILED;
             krbs->state = KRB_STATE_VERSION_2;
             krbs->pos = 0;
-        case KRB_STATE_VERSION_2:
+            // fallthrough
+       case KRB_STATE_VERSION_2:
             if (*s != KRB_SERVER_VERSION[krbs->pos])
                 return KRB_FAILED;
             krbs->pos++;
@@ -252,7 +253,8 @@ static int krb_walk_server_packet(KRBState* krbs, const uint8_t* s, const uint8_
             if (krbs->msg_len < krbs->len)
                 return KRB_FAILED;
             krbs->state = KRB_STATE_FIELD_DATA_2;
-        case KRB_STATE_FIELD_DATA_2:
+            // fallthrough
+       case KRB_STATE_FIELD_DATA_2:
             if (krbs->len <= 1)
             {
                 if (krbs->msg_len <= 1)
@@ -282,7 +284,8 @@ static int krb_walk_server_packet(KRBState* krbs, const uint8_t* s, const uint8_
                 return KRB_FAILED;
             krbs->state = KRB_STATE_CNAME_TYPE_2;
             krbs->pos = 0;
-        case KRB_STATE_CNAME_TYPE_2:
+            // fallthrough
+       case KRB_STATE_CNAME_TYPE_2:
             if (*s != KRB_CNAME_TYPE[krbs->pos])
                 return KRB_FAILED;
             krbs->pos++;
@@ -323,7 +326,8 @@ static int krb_walk_server_packet(KRBState* krbs, const uint8_t* s, const uint8_
                 return KRB_FAILED;
             krbs->state = KRB_STATE_CNAME_PRINCIPAL_DATA_2;
             krbs->pos = 0;
-        case KRB_STATE_CNAME_PRINCIPAL_DATA_2:
+            // fallthrough
+       case KRB_STATE_CNAME_PRINCIPAL_DATA_2:
             if (krbs->len)
             {
                 if (krbs->pos < (sizeof(krbs->cname) - 2))
@@ -608,6 +612,7 @@ int KerberosClientDetector::krb_walk_client_packet(KRBState* krbs, const uint8_t
                 return KRB_FAILED;
             krbs->state = KRB_STATE_VERSION_2;
             krbs->pos = 0;
+            // fallthrough
         case KRB_STATE_VERSION_2:
             if (*s != KRB_CLIENT_VERSION[krbs->pos])
                 return KRB_FAILED;
@@ -657,7 +662,8 @@ int KerberosClientDetector::krb_walk_client_packet(KRBState* krbs, const uint8_t
             if (krbs->msg_len < krbs->len)
                 return KRB_FAILED;
             krbs->state = KRB_STATE_FIELD_DATA_2;
-        case KRB_STATE_FIELD_DATA_2:
+            // fallthrough
+       case KRB_STATE_FIELD_DATA_2:
             if (krbs->len <= 1)
             {
                 if (krbs->msg_len <= 1)
@@ -743,7 +749,8 @@ int KerberosClientDetector::krb_walk_client_packet(KRBState* krbs, const uint8_t
                 return KRB_FAILED;
             krbs->state = KRB_STATE_CNAME_TYPE_2;
             krbs->pos = 0;
-        case KRB_STATE_CNAME_TYPE_2:
+            // fallthrough
+       case KRB_STATE_CNAME_TYPE_2:
             if (*s != KRB_CNAME_TYPE[krbs->pos])
                 return KRB_FAILED;
             krbs->pos++;
@@ -784,7 +791,8 @@ int KerberosClientDetector::krb_walk_client_packet(KRBState* krbs, const uint8_t
                 return KRB_FAILED;
             krbs->state = KRB_STATE_CNAME_PRINCIPAL_DATA_2;
             krbs->pos = 0;
-        case KRB_STATE_CNAME_PRINCIPAL_DATA_2:
+            // fallthrough
+       case KRB_STATE_CNAME_PRINCIPAL_DATA_2:
             if (krbs->len)
             {
                 if (krbs->pos < (sizeof(krbs->cname) - 2))

@@ -64,7 +64,10 @@ public:
         if ( my_id != app_id )
         {
             my_id = app_id;
-            update_stats(app_id);
+            if ( app_id > APP_ID_NONE )
+                update_stats(app_id);
+            else if ( app_id == APP_ID_UNKNOWN )
+                AppIdPegCounts::inc_disco_peg(AppIdPegCounts::DiscoveryPegs::APPID_UNKNOWN);
         }
     }
 
@@ -122,7 +125,8 @@ public:
         if ( id != port_service_id )
         {
             port_service_id = id;
-            AppIdPegCounts::inc_service_count(id);
+            if ( id > APP_ID_NONE )
+                AppIdPegCounts::inc_service_count(id);
         }
     }
 
@@ -150,7 +154,8 @@ public:
         if ( my_user_id != app_id )
         {
             my_user_id = app_id;
-            AppIdPegCounts::inc_user_count(app_id);
+            if ( app_id > APP_ID_NONE )
+                AppIdPegCounts::inc_user_count(app_id);
         }
     }
 

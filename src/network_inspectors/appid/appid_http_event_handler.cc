@@ -168,9 +168,14 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     }
 
     session->hsession->process_http_packet(direction);
-    session->set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_HTTP_SESSION);
-    session->set_application_ids(session->pick_service_app_id(),
+    if (session->service.get_id() == APP_ID_HTTP)
+    {
+        session->set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_HTTP_SESSION);
+        session->set_application_ids(session->pick_service_app_id(),
         session->pick_client_app_id(), session->pick_payload_app_id(),
         session->pick_misc_app_id());
+        session->service_disco_state = APPID_DISCO_STATE_FINISHED;
+    }
+
 }
 

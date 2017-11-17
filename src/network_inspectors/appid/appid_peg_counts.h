@@ -49,6 +49,7 @@ public:
         PROCESSED_PACKETS,
         IGNORED_PACKETS,
         TOTAL_SESSIONS,
+        APPID_UNKNOWN,
         NUM_APPID_GLOBAL_PEGS
     };
 

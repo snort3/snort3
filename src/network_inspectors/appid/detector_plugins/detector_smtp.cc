@@ -801,7 +801,8 @@ int SmtpServiceDetector::validate(AppIdDiscoveryArgs& args)
                 if (service_strstr(args.data, args.size,
                     (const uint8_t*)SMTP_CLOSING_CONN, sizeof(SMTP_CLOSING_CONN)-1))
                     goto success;
-            case 520:
+                // fallthrough
+           case 520:
             case 554:
                 fd->state = SMTP_SERVICE_STATE_CONNECTION_ERROR;
                 break;

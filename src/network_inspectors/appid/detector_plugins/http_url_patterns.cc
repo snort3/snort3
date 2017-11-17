@@ -1239,7 +1239,8 @@ void HttpPatternMatchers::identify_user_agent(const uint8_t* start, int size, Ap
             case APP_ID_PICASA:
                 if (dominant_pattern_detected)
                     break;
-            case APP_ID_WINDOWS_MEDIA_PLAYER:
+                // fallthrough
+           case APP_ID_WINDOWS_MEDIA_PLAYER:
             case APP_ID_BITTORRENT:
                 buffPtr = continue_buffer_scan(start, end, tmp, match);
                 if (!buffPtr)

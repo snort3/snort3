@@ -713,6 +713,7 @@ int RpcServiceDetector::rpc_tcp_validate(AppIdDiscoveryArgs& args)
             {
                 break;
             }
+            // fallthrough
         case RPC_TCP_STATE_VERIFY_DATA:
             length = min(fragsize, rd->tcpauthsize[dir] - rd->tcppos[dir]);
             rd->tcppos[dir] += length;
@@ -790,6 +791,8 @@ int RpcServiceDetector::rpc_tcp_validate(AppIdDiscoveryArgs& args)
             {
                 break;
             }
+            // fallthrough
+
         case RPC_TCP_STATE_PARTIAL:
             if (rd->tcppos[dir] < RPC_MAX_TCP_PACKET_SIZE && fragsize)
             {

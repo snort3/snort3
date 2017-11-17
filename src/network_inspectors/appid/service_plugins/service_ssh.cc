@@ -180,6 +180,7 @@ static int ssh_validate_pubkey(const uint8_t* data, uint16_t size,
             else
                 ss->plen = 0;
             ss->oldhstate = OLD_SSH_HEADER_FIND_CODE;
+            // fallthrough
         case OLD_SSH_HEADER_FIND_CODE:
             if (ss->pos == ss->plen + sizeof(skx->len))
             {

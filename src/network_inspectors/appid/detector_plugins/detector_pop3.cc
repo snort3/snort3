@@ -293,6 +293,8 @@ static int pop3_server_validate(POP3DetectorData* dd, const uint8_t* data, uint1
     case POP3_STATE_CONNECT:
         pd->state = POP3_STATE_RESPONSE;
         begin = data;
+        // fallthrough
+
     case POP3_STATE_RESPONSE:
         if (!begin && data[0] == '+' && data[1] == ' ')
         {
@@ -514,7 +516,7 @@ ven_ver_done:;
             return 0;
         }
         pd->state = POP3_STATE_CONTINUE;
-    /* Fall through */
+        // fallthrough
 
     case POP3_STATE_CONTINUE:
         while (data < end)
@@ -596,7 +598,7 @@ int Pop3ClientDetector::validate(AppIdDiscoveryArgs& args)
         case POP3_CLIENT_STATE_STLS_CMD:
             /* We failed to transition to POP3S - fall back to normal POP3 AUTHORIZATION state */
             fd->state = POP3_CLIENT_STATE_AUTH;
-        // fall through
+            // fallthrough
 
         case POP3_CLIENT_STATE_AUTH:
             switch (pattern_index)
@@ -665,7 +667,8 @@ int Pop3ClientDetector::validate(AppIdDiscoveryArgs& args)
                 fd->state = POP3_CLIENT_STATE_TRANS; // look ahead for normal POP3 commands
                 for (; (s < end) && *s != '\r' && *s != '\n'; s++)
                     ;
-            // having skipped to the end of the line, fall through for the empty-line skip
+                // fallthrough
+                // for the empty-line skip
 
             case PATTERN_AUTHEOC:  // used with subsequent CAPA; no state change;
             case PATTERN_AUTHEOC2:
@@ -686,7 +689,8 @@ int Pop3ClientDetector::validate(AppIdDiscoveryArgs& args)
                         ;
                     break;
                 }
-            // fall through because we are not changing to TRANSACTION state, yet
+            // fallthrough
+            // we are not changing to TRANSACTION state, yet
             default:
             {
                 if (!eoc[pattern_index])

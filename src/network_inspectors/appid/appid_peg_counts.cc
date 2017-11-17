@@ -39,6 +39,7 @@ std::vector<PegInfo> AppIdPegCounts::appid_pegs =
     { CountType::SUM, "processed_packets", "count of packets processed" },
     { CountType::SUM, "ignored_packets", "count of packets ignored" },
     { CountType::SUM, "total_sessions", "count of sessions created" },
+    { CountType::SUM, "appid_unknown", "count of sessions where appid could not be determined" },
 };
 
 THREAD_LOCAL std::vector<PegCount>* AppIdPegCounts::appid_peg_counts;
