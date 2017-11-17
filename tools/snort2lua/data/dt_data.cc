@@ -261,6 +261,13 @@ void DataApi::failed_conversion(const std::istringstream& stream, const std::str
         errors->add_text("^^^^ unknown_syntax=" + unknown_option);
 }
 
+void DataApi::set_variable(const std::string& name, const std::string& value, bool quoted)
+{
+    Variable* var = new Variable(name);
+    vars.push_back(var);
+    var->set_value(value, quoted);
+}
+
 bool DataApi::add_variable(const std::string& name, const std::string& value)
 {
     for (auto v : vars)

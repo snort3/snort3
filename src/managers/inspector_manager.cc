@@ -814,7 +814,10 @@ static bool configure(SnortConfig* sc, FrameworkPolicy* fp, bool cloned)
     sort(fp->ilist.begin(), fp->ilist.end(), PHInstance::comp);
     fp->vectorize();
 
-    if ( fp->session.num && !fp->binder )
+    // FIXIT-M checking for wizard here would avoid fatals for
+    // can't bind wizard but this exposes other issues that must
+    // be fixed first.
+    if ( fp->session.num and !fp->binder /*and fp->wizard*/ )
         instantiate_binder(sc, fp);
 
     return ok;
@@ -934,23 +937,37 @@ void InspectorManager::full_inspection(Packet* p)
     }
 }
 
-// FIXIT-M split stream base processing out of it_session so that flow lookup
-// can be done first to avoid executing it_packet on disabled flows.  also
-// leverage knowledge of flow creation so that reputation (possibly a new
-// it_xxx) is run just once per flow (and all non-flow packets).
+void InspectorManager::execute_control(Packet* p)
+{
+    SnortConfig* sc = SnortConfig::get_conf();
+    FrameworkPolicy* fp = get_default_inspection_policy(sc)->framework_policy;
+    ::execute(p, fp->control.vec, fp->control.num);
+}
+
+// FIXIT-M leverage knowledge of flow creation so that reputation (possibly a
+// new it_xxx) is run just once per flow (and all non-flow packets).
 
 void InspectorManager::execute(Packet* p)
 {
     FrameworkPolicy* fp = get_inspection_policy()->framework_policy;
     assert(fp);
 
+    if ( !p->has_paf_payload() )
+    {
+        // FIXIT-L there is at most one in session; stream_base should
+        // be elevated from inspector to framework component (it is just
+        // a flow control wrapper) and use eval() instead of process()
+        // for stream_*.
+        ::execute(p, fp->session.vec, fp->session.num);
+        fp = get_inspection_policy()->framework_policy;
+    }
+    // must check between each ::execute()
+    if ( p->disable_inspect )
+       return;
+
     if ( !p->is_cooked() )
         ::execute(p, fp->packet.vec, fp->packet.num);
 
-    if ( !p->has_paf_payload() )
-        ::execute(p, fp->session.vec, fp->session.num);
-
-    // must check between each ::execute()
     if ( p->disable_inspect )
        return;
 
@@ -961,10 +978,13 @@ void InspectorManager::execute(Packet* p)
         if ( p->disable_inspect )
            return;
 
-        ::execute(p, fp->control.vec, fp->control.num);
+        execute_control(p);
     }
     else
     {
+        if ( !p->has_paf_payload() and p->flow->flow_state == Flow::FlowState::INSPECT )
+            p->flow->session->process(p);
+
         if ( !p->flow->service )
             ::execute(p, fp->network.vec, fp->network.num);
 
@@ -975,7 +995,7 @@ void InspectorManager::execute(Packet* p)
             full_inspection(p);
 
         if ( !p->disable_inspect and !p->flow->is_inspection_disabled() )
-            ::execute(p, fp->control.vec, fp->control.num);
+            execute_control(p);
     }
 }
 

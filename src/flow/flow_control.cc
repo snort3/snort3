@@ -449,7 +449,6 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
     case Flow::FlowState::INSPECT:
         assert(flow->ssn_client);
         assert(flow->ssn_server);
-        flow->session->process(p);
         break;
 
     case Flow::FlowState::ALLOW:
@@ -615,6 +614,8 @@ void FlowControl::process_tcp(Packet* p)
 
     tcp_count += process(flow, p);
 
+    // FIXIT-M refactor to unlink_uni immediately after session
+    // is processed by inspector manager (all flows)
     if ( flow->next && is_bidirectional(flow) )
         tcp_cache->unlink_uni(flow);
 }

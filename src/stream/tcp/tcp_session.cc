@@ -857,6 +857,9 @@ void TcpSession::check_for_repeated_syn(TcpSegmentDescriptor& tsd)
 
 void TcpSession::flush_server(Packet* p)
 {
+    if ( !tcp_init )
+        return;
+
     server->set_tf_flags(TF_FORCE_FLUSH);
 
     // If rebuilt packet, don't flush now because we'll overwrite the packet being processed.
@@ -875,6 +878,9 @@ void TcpSession::flush_server(Packet* p)
 
 void TcpSession::flush_client(Packet* p)
 {
+    if ( !tcp_init )
+        return;
+
     client->set_tf_flags(TF_FORCE_FLUSH);
 
     // If rebuilt packet, don't flush now because we'll overwrite the packet being processed.
@@ -890,9 +896,10 @@ void TcpSession::flush_client(Packet* p)
     client->clear_tf_flags(TF_FORCE_FLUSH);
 }
 
-void TcpSession::flush_tracker(TcpStreamTracker* tracker, Packet* p, uint32_t dir, bool final_flush)
+void TcpSession::flush_tracker(
+    TcpStreamTracker* tracker, Packet* p, uint32_t dir, bool final_flush)
 {
-    if( final_flush && ( !tracker->splitter || !tracker->splitter->finish(flow) ) )
+    if ( final_flush && ( !tracker->splitter || !tracker->splitter->finish(flow) ) )
          return;
 
      DebugFormat(DEBUG_STREAM_STATE, "Flushing tracker on packet from %s\n",

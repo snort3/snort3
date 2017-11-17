@@ -67,6 +67,12 @@ public:
     inline static std::string get_ips_pattern()
     { return ips_pattern; }
 
+    inline static void set_bind_wizard(bool val)
+    { bind_wizard = val; }
+
+    inline static bool get_bind_wizard()
+    { return bind_wizard; }
+
     Binder& make_binder(Binder&);
     Binder& make_binder();
     Binder& make_pending_binder(int ips_policy_id);
@@ -110,6 +116,7 @@ private:
     static bool convert_rules_mult_files;
     static bool convert_conf_mult_files;
     static bool empty_args;
+    static bool bind_wizard;
 
     DataApi data_api;
 

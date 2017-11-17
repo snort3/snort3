@@ -27,12 +27,6 @@ Variable::Variable(const std::string& name, int depth)
     this->depth = depth;
 }
 
-Variable::Variable(const std::string& name)
-{
-    this->name = name;
-    this->depth = 0;
-}
-
 Variable::~Variable()
 {
     for (VarData* v : vars)
@@ -58,6 +52,14 @@ std::string Variable::get_value(DataApi* ld)
     }
 
     return variable;
+}
+
+void Variable::set_value(std::string val, bool quoted)
+{
+    VarData* vd = new VarData();
+    vd->type = quoted ? VarType::STRING : VarType::VARIABLE;
+    vd->data = val;
+    vars.push_back(vd);
 }
 
 // does this need a new variable?

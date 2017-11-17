@@ -251,6 +251,9 @@ static void parse_rule_file(const char* key, const char* val)
 static void add_remark(const char* /*key*/, const char* val)
 { RuleApi::set_remark(val); }
 
+static void bind_wizard(const char* /*key*/, const char* /*val*/)
+{ Converter::set_bind_wizard(true); }
+
 static void print_all(const char* /*key*/, const char* /*val*/)
 { DataApi::set_default_print(); }
 
@@ -370,6 +373,9 @@ static ConfigFunc basic_opts[] =
 
     { "V", print_version, "",
       "Print the current Snort2Lua version" },
+
+    { "bind-wizard", bind_wizard, "",
+      "Add default wizard to bindings" },
 
     { "conf-file", parse_config_file, "",
       "Same as '-c'. A Snort <snort_conf> file which will be converted" },

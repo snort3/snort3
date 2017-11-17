@@ -44,11 +44,8 @@ bool Sip::convert(std::istringstream& data_stream)
     bool ports_set = false;
     auto& bind = cv.make_binder();
 
-    bind.set_when_proto("udp");
     bind.set_use_type("sip");
-
     table_api.open_table("sip");
-
 
     // parse the file configuration
     while (util::get_string(data_stream, keyword, ",;"))

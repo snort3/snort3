@@ -53,7 +53,7 @@ public:
     CurseBook* get_curse_book();
 
     Usage get_usage() const override
-    { return GLOBAL; }
+    { return INSPECT; }
 
 private:
     void add_spells(MagicBook*, std::string&);

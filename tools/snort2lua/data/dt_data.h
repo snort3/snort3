@@ -104,6 +104,7 @@ public:
     // FILE CREATION AND ADDITIONS
 
     // add a variable to this file
+    void set_variable(const std::string& name, const std::string& value, bool quoted);
     bool add_variable(const std::string& name, const std::string& value);
     // add a Snort style include file
     bool add_include_file(const std::string& name);

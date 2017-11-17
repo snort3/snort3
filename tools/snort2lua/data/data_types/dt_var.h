@@ -29,13 +29,13 @@ class DataApi;
 class Variable
 {
 public:
-    Variable(const std::string& name, int depth);
-    Variable(const std::string& name);
+    Variable(const std::string& name, int depth = 0);
     virtual ~Variable();
 
     inline const std::string& get_name() { return name; }
     std::string get_value(DataApi*);
     bool add_value(std::string);
+    void set_value(std::string, bool quoted);
     
     void set_print_whitespace(bool w)
     { print_whitespace = w; }

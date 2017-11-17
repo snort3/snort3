@@ -29,6 +29,7 @@
 #include "managers/inspector_manager.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
+#include "stream/stream_splitter.h"
 
 #include "sip_module.h"
 #include "sip_utils.h"
@@ -255,6 +256,11 @@ public:
     void show(SnortConfig*) override;
     void eval(Packet*) override;
     bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&) override;
+
+    // FIXIT-M implement a sip aware splitter
+    // this will work for single segment PDUs only
+    class StreamSplitter* get_splitter(bool to_server) override
+    { return new LogSplitter(to_server); }
 
 private:
     SIP_PROTO_CONF* config;

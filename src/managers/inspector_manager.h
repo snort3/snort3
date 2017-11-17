@@ -89,6 +89,7 @@ public:
 private:
     static void bumble(Packet*);
     static void full_inspection(Packet*);
+    static void execute_control(Packet*);
 };
 
 #endif

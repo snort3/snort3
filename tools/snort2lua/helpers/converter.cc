@@ -49,6 +49,7 @@ bool Converter::parse_includes = true;
 bool Converter::empty_args = false;
 bool Converter::convert_rules_mult_files = true;
 bool Converter::convert_conf_mult_files = true;
+bool Converter::bind_wizard = false;
 
 Converter::Converter()
     :   table_api(&top_table_api, table_delegation),
@@ -321,7 +322,7 @@ void Converter::add_bindings()
         }
 
         auto b = result->second;
-        b->print_binding(false); //FIXIT-M is it desired to keep this around? it isn't for nap case
+        b->print_binding(false);  // FIXIT-M is it desired to keep this around? not for nap case
 
         // FIXIT-M as of writing, this assumes pending is only for nap rules
         pb.second->set_use_file(b->get_use_file().first, Binder::IT_INSPECTION);
@@ -352,6 +353,17 @@ int Converter::convert(const std::string& input,
     initialize();
 
     rc = parse_file(input);
+
+    if ( bind_wizard )
+    {
+        // FIXIT-H this should create wizard = { } but need wizard = default_wizard
+        //table_api.open_top_level_table("wizard");
+        //table_api.close_table();
+        data_api.set_variable("wizard", "default_wizard", false);
+
+        auto& wiz = make_binder();
+        wiz.set_use_type("wizard");
+    }
 
     add_bindings();
 
