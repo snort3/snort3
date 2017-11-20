@@ -343,9 +343,13 @@ IpsOption::EvalStatus ByteTestOption::eval(Cursor& c, Packet* p)
     }
     else
     {
+        unsigned len = btd->relative_flag ? c.length() : c.size();
+
+        if ( len > btd->bytes_to_compare )
+            len = btd->bytes_to_compare;
+
         payload_bytes_grabbed = string_extract(
-            btd->bytes_to_compare, btd->base,
-            start_ptr, c.buffer(), c.endo(), &value);
+            len, btd->base, start_ptr, c.buffer(), c.endo(), &value);
 
         if ( payload_bytes_grabbed < 0 )
         {

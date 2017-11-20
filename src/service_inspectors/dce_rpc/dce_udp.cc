@@ -230,7 +230,7 @@ const InspectApi dce2_udp_api =
     IT_SERVICE,
     (uint16_t)PktType::UDP,
     nullptr,  // buffers
-    "dce_udp",
+    "dcerpc",
     dce2_udp_init,
     nullptr, // pterm
     nullptr, // tinit

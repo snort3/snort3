@@ -130,7 +130,10 @@ void UserTracker::init()
 void UserTracker::term()
 {
     if ( splitter )
+    {
         delete splitter;
+        splitter = nullptr;
+    }
 
     for ( auto* p : seg_list )
         snort_free(p);

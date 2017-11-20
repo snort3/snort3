@@ -86,8 +86,9 @@ void HttpMsgSection::update_depth() const
     {
     case CMP_NONE:
       {
-        session_data->section_size_target[source_id] = DATA_BLOCK_SIZE + random_increment;
-        session_data->section_size_max[source_id] = FINAL_BLOCK_SIZE;
+        unsigned max_pdu = SnortConfig::get_conf()->max_pdu;
+        session_data->section_size_target[source_id] = max_pdu + random_increment;
+        session_data->section_size_max[source_id] = max_pdu + (max_pdu >> 1);
         break;
       }
     case CMP_GZIP:

@@ -34,6 +34,7 @@
 #include "data/data_types/dt_rule.h"
 #include "data/data_types/dt_table.h"
 #include "helpers/s2l_util.h"
+#include "helpers/util_binder.h"
 #include "init_state.h"
 
 TableDelegation table_delegation = 
@@ -51,13 +52,12 @@ bool Converter::convert_rules_mult_files = true;
 bool Converter::convert_conf_mult_files = true;
 bool Converter::bind_wizard = false;
 
-Converter::Converter()
-    :   table_api(&top_table_api, table_delegation),
+Converter::Converter() :
+    table_api(&top_table_api, table_delegation),
     state(nullptr),
     error(false),
     multiline_state(false)
-{
-}
+{ }
 
 Converter::~Converter()
 {
@@ -356,13 +356,13 @@ int Converter::convert(const std::string& input,
 
     if ( bind_wizard )
     {
-        // FIXIT-H this should create wizard = { } but need wizard = default_wizard
-        //table_api.open_top_level_table("wizard");
-        //table_api.close_table();
+        // add wizard = default_wizard before binder
         data_api.set_variable("wizard", "default_wizard", false);
 
+        // add binding for wizard at bottom of table
         auto& wiz = make_binder();
         wiz.set_use_type("wizard");
+        wiz.set_priority(Binder::MAX_PRIORITY);
     }
 
     add_bindings();

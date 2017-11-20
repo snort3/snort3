@@ -462,7 +462,7 @@ const InspectApi dce2_smb_api =
     IT_SERVICE,
     (uint16_t)PktType::PDU,
     nullptr,  // buffers
-    "dce_smb",
+    "netbios-ssn",
     dce2_smb_init,
     nullptr, // pterm
     nullptr, // tinit

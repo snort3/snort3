@@ -200,6 +200,9 @@ const char* SoManager::get_so_options(const char* soid)
     if ( !api )
         return nullptr;
 
+    if ( !api->length )
+        return ")";  // plain stub is full rule
+
     const char* rule = revert(api->rule, api->length);
 
     if ( !rule )
@@ -271,17 +274,14 @@ void SoManager::dump_rule_stubs(const char*)
 static void get_var(const string& s, string& v)
 {
     v.clear();
-    size_t pos = s.find("soid");
+    size_t pos = s.find("soid:");
 
     if ( pos == string::npos )
         return;
 
-    pos = s.find('|', pos+1);
+    pos += 5;
 
-    if ( pos == string::npos )
-        return;
-
-    size_t end = s.find(';', ++pos);
+    size_t end = s.find(';', pos);
 
     if ( end == string::npos )
         return;
@@ -304,7 +304,7 @@ void SoManager::rule_to_hex(const char*)
     string var;
     get_var(text, var);
 
-    cout << "const uint8_t rule_" << var;
+    cout << "static const uint8_t rule_" << var;
     cout << "[] =" << endl;
     cout << "{" << endl << "   ";
     cout << hex << uppercase;
@@ -322,7 +322,7 @@ void SoManager::rule_to_hex(const char*)
 
     cout << dec;
     cout << "};" << endl;
-    cout << "const unsigned rule_" << var << "_len = ";
+    cout << "static const unsigned rule_" << var << "_len = ";
     cout << data.size() << ";" << endl;
 }
 
@@ -338,7 +338,7 @@ void SoManager::rule_to_text(const char*)
     string var;
     get_var(text, var);
 
-    cout << "const uint8_t rule_" << var;
+    cout << "static const uint8_t rule_" << var;
     cout << "[] =" << endl;
     cout << "{" << endl << "   ";
     cout << hex << uppercase;
@@ -356,7 +356,7 @@ void SoManager::rule_to_text(const char*)
 
     cout << dec;
     cout << "};" << endl;
-    cout << "const unsigned rule_" << var;
+    cout << "static const unsigned rule_" << var;
     cout << "_len = 0;" << endl;
 }
 

@@ -239,7 +239,7 @@ const InspectApi dce2_tcp_api =
     IT_SERVICE,
     (uint16_t)PktType::PDU,
     nullptr,  // buffers
-    "dce_tcp",
+    "dcerpc",
     dce2_tcp_init,
     nullptr, // pterm
     nullptr, // tinit

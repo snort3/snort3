@@ -514,17 +514,14 @@ int detection_option_node_evaluate(
                         break;
                     }
                 }
-
                 rval = node->evaluate(node->option_data, cursor, p);
             }
-
             break;
 
         case RULE_OPTION_TYPE_FLOWBIT:
             if ( node->evaluate )
             {
-                flowbits_setoperation =
-                    FlowBits_SetOperation(node->option_data);
+                flowbits_setoperation = FlowBits_SetOperation(node->option_data);
 
                 if ( flowbits_setoperation )
                     // set to match so we don't bail early
@@ -533,13 +530,11 @@ int detection_option_node_evaluate(
                 else
                     rval = node->evaluate(node->option_data, cursor, eval_data->p);
             }
-
             break;
 
         default:
             if ( node->evaluate )
                 rval = node->evaluate(node->option_data, cursor, p);
-
             break;
         }
 
@@ -591,11 +586,8 @@ int detection_option_node_evaluate(
             {
                 for ( int i = 0; i < node->num_children; ++i )
                 {
-                    detection_option_tree_node_t* child_node =
-                        node->children[i];
-
-                    dot_node_state_t* child_state =
-                        child_node->state + get_instance_id();
+                    detection_option_tree_node_t* child_node = node->children[i];
+                    dot_node_state_t* child_state = child_node->state + get_instance_id();
 
                     for ( int j = 0; j < NUM_IPS_OPTIONS_VARS; ++j )
                         SetVarValueByIndex(tmp_byte_extract_vars[j], (int8_t)j);
@@ -604,9 +596,9 @@ int detection_option_node_evaluate(
                     {
                         if ( child_state->result == (int)IpsOption::NO_MATCH )
                         {
-                            if ( !child_node->is_relative )
+                            if ( child_node->option_type == RULE_OPTION_TYPE_CONTENT )
                             {
-                                if ( child_node->option_type == RULE_OPTION_TYPE_CONTENT )
+                                if ( !child_node->is_relative )
                                 {
                                     // If it's a non-relative content or pcre, no reason
                                     // to check again.  Only increment result once.
@@ -616,23 +608,23 @@ int detection_option_node_evaluate(
 
                                     continue;
                                 }
-                            }
-                            else if ( child_node->option_type == RULE_OPTION_TYPE_CONTENT )
-                            {
-                                // Check for an unbounded relative search.  If this
-                                // failed before, it's going to fail again so don't
-                                // go down this path again
-                                IpsOption* opt = (IpsOption*)node->option_data;
-                                PatternMatchData* pmd = opt->get_pattern(0, RULE_WO_DIR);
-
-                                if ( pmd->is_unbounded() )
+                                else
                                 {
-                                    // Only increment result once. Should hit this
-                                    // condition on first loop iteration
-                                    if (loop_count == 1)
-                                        ++result;
+                                    // Check for an unbounded relative search.  If this
+                                    // failed before, it's going to fail again so don't
+                                    // go down this path again
+                                    IpsOption* opt = (IpsOption*)child_node->option_data;
+                                    PatternMatchData* pmd = opt->get_pattern(0, RULE_WO_DIR);
 
-                                    continue;
+                                    if ( pmd and pmd->is_unbounded() )
+                                    {
+                                        // Only increment result once. Should hit this
+                                        // condition on first loop iteration
+                                        if (loop_count == 1)
+                                            ++result;
+
+                                        continue;
+                                    }
                                 }
                             }
                         }

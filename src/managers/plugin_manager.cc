@@ -368,10 +368,10 @@ static void unload_plugins()
         it->second.clear();
     }
 
+#ifndef REG_TEST
     for ( RefMap::iterator it = ref_map.begin(); it != ref_map.end(); ++it )
-    {
         dlclose(it->first);
-    }
+#endif
 }
 
 //-------------------------------------------------------------------------

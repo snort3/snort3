@@ -55,6 +55,8 @@ static const Parameter s_params[] =
 // memory module
 // -----------------------------------------------------------------------------
 
+bool MemoryModule::configured = false;
+
 MemoryModule::MemoryModule() :
     Module(s_name, s_help, s_params)
 { }
@@ -75,3 +77,13 @@ bool MemoryModule::set(const char*, Value& v, SnortConfig* sc)
 
     return true;
 }
+
+bool MemoryModule::end(const char*, int, SnortConfig*)
+{
+    configured = true;
+    return true;
+}
+
+bool MemoryModule::is_active()
+{ return configured; }
+

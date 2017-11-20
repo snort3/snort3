@@ -35,9 +35,8 @@ struct Packet;
 #define SOAPI_VERSION ((BASE_API_VERSION << 16) | 0)
 
 //-------------------------------------------------------------------------
-// rule format is:  header ( <stub opts>; soid:<tag>; <detect opts>; )
-// <stub opts> must include sid
-// <detect opts> may include so opts like so:<key>;
+// rule format is:  header ( [<stub opts>;] soid:<tag>; [<remaining opts>;] )
+// <remaining opts> may include so opts like so:<key>;
 // ctor(<key>) returns eval func and optional data
 // data is freed with dtor(data)
 

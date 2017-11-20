@@ -168,6 +168,11 @@ static IpsOption* so_ctor(Module* p, OptTreeNode* otn)
     SoModule* m = (SoModule*)p;
     const char* name = m->name.c_str();
 
+    if ( !otn->soid )
+    {
+        ParseError("no soid before so:%s", name);
+        return nullptr;
+    }
     SoEvalFunc func = SoManager::get_so_eval(otn->soid, name, &data);
 
     if ( !func )

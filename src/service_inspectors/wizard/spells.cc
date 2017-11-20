@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <cassert>
+
 #include "magic.h"
 
 using namespace std;
@@ -143,8 +145,9 @@ const MagicPage* SpellBook::find_spell(
                     return q;
                 ++i;
             }
+            return p->any;
         }
-        break;
+        return p->value.empty() ? nullptr : p;
     }
     return p;
 }
@@ -153,14 +156,15 @@ const char* SpellBook::find_spell(
     const uint8_t* data, unsigned len, const MagicPage*& p) const
 {
     // FIXIT-L make configurable upper bound to limit globbing
-    unsigned max = 16;
+    unsigned max = 64;
+    assert(p);
 
     if ( len > max )
         len = max;
 
     p = find_spell(data, len, p, 0);
 
-    if ( !p->value.empty() )
+    if ( p and !p->value.empty() )
         return p->value.c_str();
 
     return nullptr;

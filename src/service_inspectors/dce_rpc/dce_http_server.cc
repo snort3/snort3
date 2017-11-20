@@ -63,7 +63,7 @@ void DceHttpServer::clear(Packet* p)
             if ( splitter->cutover_inspector())
             {
                 dce_http_server_stats.http_server_sessions++;
-                dce_http_bind(flow, "dce_tcp");
+                dce_http_bind(flow, "dcerpc");
             }
             else
                 dce_http_server_stats.http_server_session_failures++;

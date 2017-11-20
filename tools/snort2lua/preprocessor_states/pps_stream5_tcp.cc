@@ -502,12 +502,10 @@ bool StreamTcp::convert(std::istringstream& data_stream)
 
     if (!protos_set)
     {
-        const std::vector<std::string> default_protos = { "ftp", "telnet",
-                                                          "smtp", "nameserver", "dns", "http",
-                                                          "pop3", "sunrpc", "dcerpc",
-                                                          "netbios-ssn", "imap", "login", "shell",
-                                                          "mssql", "oracle", "cvs",
-                                                          "mysql" };
+        const std::vector<std::string> default_protos =
+        { "ftp", "telnet", "smtp", "nameserver", "dns", "http",
+          "pop3", "sunrpc", "dcerpc", "netbios-ssn", "imap",
+          "login", "shell", "mssql", "oracle", "cvs", "mysql" };
 
         for (const std::string& s : default_protos)
         {

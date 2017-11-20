@@ -66,7 +66,7 @@ void DceHttpProxy::clear(Packet* p)
             if ( c2s_splitter->cutover_inspector() && s2c_splitter->cutover_inspector() )
             {
                 dce_http_proxy_stats.http_proxy_sessions++;
-                dce_http_bind(flow, "dce_tcp");
+                dce_http_bind(flow, "dcerpc");
             }
             else
                 dce_http_proxy_stats.http_proxy_session_failures++;

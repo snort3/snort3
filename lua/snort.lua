@@ -133,17 +133,19 @@ wizard = default_wizard
 
 binder =
 {
-    -- these protocols do not yet have wizard support
+    -- port bindings required for protocols without wizard support
     { when = { proto = 'udp', ports = '53' },  use = { type = 'dns' } },
     { when = { proto = 'tcp', ports = '111' }, use = { type = 'rpc_decode' } },
     { when = { proto = 'tcp', ports = '502' }, use = { type = 'modbus' } },
     { when = { proto = 'tcp', ports = '2123 2152 3386' }, use = { type = 'gtp' } },
 
+    { when = { proto = 'tcp', service = 'dcerpc' }, use = { type = 'dce_tcp' } },
+    { when = { proto = 'udp', service = 'dcerpc' }, use = { type = 'dce_udp' } },
+
+    { when = { service = 'netbios-ssn' },      use = { type = 'dce_smb' } },
     { when = { service = 'dce_http_server' },  use = { type = 'dce_http_server' } },
     { when = { service = 'dce_http_proxy' },   use = { type = 'dce_http_proxy' } },
-    { when = { service = 'dce_smb' },          use = { type = 'dce_smb' } },
-    { when = { service = 'dce_udp' },          use = { type = 'dce_udp' } },
-    { when = { service = 'dce_tcp' },          use = { type = 'dce_tcp' } },
+
     { when = { service = 'dnp3' },             use = { type = 'dnp3' } },
     { when = { service = 'dns' },              use = { type = 'dns' } },
     { when = { service = 'ftp' },              use = { type = 'ftp_server' } },

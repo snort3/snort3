@@ -253,17 +253,17 @@ static bool dce_smb_curse(const uint8_t* data, unsigned len, CurseTracker* track
 // map between service and curse details
 static vector<CurseDetails> curse_map
 {
-    // service_name    alg        is_tcp
-    { "dce_udp", dce_udp_curse, false },
-    { "dce_tcp", dce_tcp_curse, true },
-    { "dce_smb", dce_smb_curse, true },
+    // name      service        alg            is_tcp
+    { "dce_udp", "dcerpc",      dce_udp_curse, false },
+    { "dce_tcp", "dcerpc",      dce_tcp_curse, true  },
+    { "dce_smb", "netbios-ssn", dce_smb_curse, true  },
 };
 
 bool CurseBook::add_curse(const char* key)
 {
     for (const CurseDetails& curse : curse_map)
     {
-        if (curse.service == key)
+        if (curse.name == key)
         {
             if (curse.is_tcp)
                 tcp_curses.push_back(&curse);

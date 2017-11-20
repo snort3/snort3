@@ -266,7 +266,7 @@ default_smtp =
 
 http_methods =  -- build from default_http_methods
 {
-    'OPTIONS', 'GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'TRACE', 'CONNECT',
+    'GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'TRACE', 'CONNECT',
     'VERSION_CONTROL', 'REPORT', 'CHECKOUT', 'CHECKIN', 'UNCHECKOUT',
     'MKWORKSPACE', 'UPDATE', 'LABEL', 'MERGE', 'BASELINE_CONTROL',
     'MKACTIVITY', 'ORDERPATCH', 'ACL', 'PATCH', 'BIND', 'LINK',
@@ -275,25 +275,14 @@ http_methods =  -- build from default_http_methods
     'MOVE', 'LOCK', 'UNLOCK', 'SEARCH', 'BCOPY', 'BDELETE', 'BMOVE',
     'BPROPFIND', 'BPROPPATCH', 'NOTIFY', 'POLL', 'SUBSCRIBE',
     'UNSUBSCRIBE', 'X_MS_ENUMATTS',
-}
-
-ftp_commands =  -- build from ftp_default_cmds
-{
-    'ABOR', 'ACCT', 'ADAT', 'ALLO', 'APPE', 'AUTH', 'CCC', 'CDUP', 'CEL',
-    'CLNT', 'CMD', 'CONF', 'CWD', 'DELE', 'ENC', 'EPRT', 'EPSV', 'ESTA',
-    'ESTP', 'FEAT', 'HELP', 'LANG', 'LIST', 'LPRT', 'LPSV', 'MACB', 'MAIL',
-    'MDTM', 'MIC', 'MKD', 'MLSD', 'MLST', 'MODE', 'NLST', 'NOOP', 'OPTS',
-    'PASS', 'PASV', 'PBSZ', 'PORT', 'PROT', 'PWD', 'QUIT', 'REIN', 'REST',
-    'RETR', 'RMD', 'RNFR', 'RNTO', 'SDUP', 'SITE', 'SIZE', 'SMNT', 'STAT',
-    'STOR', 'STOU', 'STRU', 'SYST', 'TEST', 'TYPE', 'USER', 'XCUP', 'XCRC',
-    'XCWD', 'XMAS', 'XMD5', 'XMKD', 'XPWD', 'XRCP', 'XRMD', 'XRSQ', 'XSEM',
-    'XSEN', 'XSHA1', 'XSHA256'
+    --'OPTIONS',
 }
 
 sip_methods =
 {
-    'INVITE', 'CANCEL', 'ACK', 'BYE', 'REGISTER', 'OPTIONS', 'REFER', 'SUBSCRIBE',
+    'INVITE', 'CANCEL', 'ACK', 'BYE', 'REGISTER', 'REFER', 'SUBSCRIBE',
     'UPDATE', 'JOIN', 'INFO', 'MESSAGE', 'NOTIFY', 'PRACK'
+    --'OPTIONS',
 }
 
 telnet_commands =
@@ -309,23 +298,21 @@ default_wizard =
     spells =
     {
         { service = 'ftp', proto = 'tcp', client_first = false,
-          to_server = ftp_commands, to_client = { '220*FTP' } },
+          to_client = { '220*FTP' } },
 
         { service = 'http', proto = 'tcp', client_first = true,
           to_server = http_methods, to_client = { 'HTTP/' } },
 
         { service = 'imap', proto = 'tcp', client_first = false,
-          to_server = { 'LOGIN', 'AUTHENTICATE', 'STARTTLS' },
-          to_client = { '** OK', '** BYE' } },
+          to_client = { '** OK', '** BYE', '** PREAUTH' } },
 
         { service = 'pop3', proto = 'tcp', client_first = false,
-          to_server = { 'USER', 'APOP' },
           to_client = { '+OK', '-ERR' } },
 
-        { service = 'sip', proto = 'tcp', client_first = true,
+        { service = 'sip', client_first = true,
           to_server = sip_methods, to_client = { 'SIP/' } },
 
-        { service = 'smtp', proto = 'tcp', client_first = false,
+        { service = 'smtp', proto = 'tcp', client_first = true,
           to_server = { 'HELO', 'EHLO' },
           to_client = { '220*SMTP', '220*MAIL' } },
 

@@ -95,11 +95,10 @@ IpsOption::EvalStatus SizeOption::eval(Cursor&, Packet* pkt)
 {
     Profile profile(streamSizePerfStats);
 
-    if (!pkt->flow || !pkt->ptrs.tcph)
+    if ( !pkt->flow || pkt->flow->pkt_type != PktType::TCP )
         return NO_MATCH;
 
-    Flow* lwssn = (Flow*)pkt->flow;
-    TcpSession* tcpssn = (TcpSession*)lwssn->session;
+    TcpSession* tcpssn = (TcpSession*)pkt->flow->session;
 
     uint32_t client_size;
     uint32_t server_size;

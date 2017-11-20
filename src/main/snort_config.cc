@@ -125,23 +125,23 @@ static void FreeReferences(ReferenceSystemNode* head)
     }
 }
 
-static void init_policy_mode(IpsPolicy* p)
+static PolicyMode init_policy_mode(PolicyMode mode)
 {
-    switch ( p->policy_mode )
+    switch ( mode )
     {
     case POLICY_MODE__PASSIVE:
         if ( SnortConfig::adaptor_inline_test_mode() )
-            p->policy_mode = POLICY_MODE__INLINE_TEST;
+            return POLICY_MODE__INLINE_TEST;
         break;
 
     case POLICY_MODE__INLINE:
         if ( SnortConfig::adaptor_inline_test_mode() )
-            p->policy_mode = POLICY_MODE__INLINE_TEST;
+            return POLICY_MODE__INLINE_TEST;
 
         else if (!SnortConfig::adaptor_inline_mode())
         {
             ParseWarning(WARN_DAQ, "adapter is in passive mode; switching policy mode to tap.");
-            p->policy_mode = POLICY_MODE__PASSIVE;
+            return POLICY_MODE__PASSIVE;
         }
         break;
 
@@ -150,17 +150,21 @@ static void init_policy_mode(IpsPolicy* p)
 
     case POLICY_MODE__MAX:
         if ( SnortConfig::adaptor_inline_mode() )
-            p->policy_mode = POLICY_MODE__INLINE;
+            return POLICY_MODE__INLINE;
         else
-            p->policy_mode = POLICY_MODE__PASSIVE;
+            return POLICY_MODE__PASSIVE;
         break;
     }
+    return mode;
 }
 
 static void init_policies(SnortConfig* sc)
 {
     for ( auto p : sc->policy_map->ips_policy )
-        init_policy_mode(p);
+        p->policy_mode = init_policy_mode(p->policy_mode);
+
+    for ( auto p : sc->policy_map->inspection_policy )
+        p->policy_mode = init_policy_mode(p->policy_mode);
 }
 
 //-------------------------------------------------------------------------

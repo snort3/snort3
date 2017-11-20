@@ -25,8 +25,6 @@
 namespace HttpEnums
 {
 static const int MAX_OCTETS = 63780;
-static const int DATA_BLOCK_SIZE = 16384;
-static const int FINAL_BLOCK_SIZE = 24576;
 static const int GZIP_BLOCK_SIZE = 2048;
 static const int FINAL_GZIP_BLOCK_SIZE = 2304; // compromise value, too big causes gzip overruns
                                                // too small leaves too many little end sections

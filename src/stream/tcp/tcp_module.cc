@@ -161,7 +161,7 @@ static const Parameter s_params[] =
     { "overlap_limit", Parameter::PT_INT, "0:255", "0",
       "maximum number of allowed overlapping segments per session" },
 
-    { "max_pdu", Parameter::PT_INT, "1460:65535", "16384",
+    { "max_pdu", Parameter::PT_INT, "1460:32768", "16384",
       "maximum reassembled PDU size" },
 
     { "policy", Parameter::PT_ENUM, TCP_POLICIES, "bsd",

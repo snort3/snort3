@@ -43,6 +43,14 @@ bool Urilen::convert(std::istringstream& data_stream)
     std::string value;
 
     args = util::get_rule_option_args(data_stream);
+
+    size_t ltgt = args.find("<>");
+
+    if ( ltgt != std::string::npos )
+    {
+        rule_api.add_comment("urilen: option change: '<>' --> '<=>'");
+        args.insert(ltgt+1, "=");
+    }
     std::istringstream arg_stream(args);
 
     // if there are no arguments, the option had a colon before a semicolon.

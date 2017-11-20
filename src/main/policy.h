@@ -109,7 +109,7 @@ public:
 
 public:
     PolicyId policy_id;
-    PolicyMode policy_mode = POLICY_MODE__INLINE_TEST;
+    PolicyMode policy_mode = POLICY_MODE__MAX;
     uint32_t user_policy_id = 0;
     uuid_t uuid{};
 
@@ -137,7 +137,7 @@ public:
     uint32_t user_policy_id = 0;
     uuid_t uuid{};
 
-    PolicyMode policy_mode;
+    PolicyMode policy_mode = POLICY_MODE__MAX;
     bool enable_builtin_rules;
 
     std::string include;

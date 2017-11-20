@@ -51,6 +51,8 @@ public:
     void print_binding(bool should_print)
     { printed = !should_print; }
 
+    static const unsigned MAX_PRIORITY = UINT_MAX;
+
     void set_priority(unsigned);
     unsigned get_priority();
 
@@ -137,7 +139,7 @@ private:
     bool printed = false; // ensures that the binding is added once,
                           // by either the destructor or user
 
-    unsigned priority = UINT_MAX;
+    unsigned priority = MAX_PRIORITY;
     
     int when_ips_policy_id = -1;
     std::string when_service;

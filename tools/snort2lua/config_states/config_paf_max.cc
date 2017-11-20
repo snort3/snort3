@@ -60,8 +60,13 @@ bool PafMax::convert(std::istringstream& data_stream)
 
         if (val < 1460)
         {
-            data_api.add_comment("option change: 'paf_max [0:63780]' --> 'max_pdu [1460:63780]'");
+            data_api.add_comment("option change: 'paf_max [0:63780]' --> 'max_pdu [1460:32768]'");
             val = 1460;
+        }
+        else if (val > 32768)
+        {
+            data_api.add_comment("option change: 'paf_max [0:63780]' --> 'max_pdu [1460:32768]'");
+            val = 32768;
         }
         data_api.add_comment("stream_tcp.max_pdu = " + std::to_string(val));
 #endif

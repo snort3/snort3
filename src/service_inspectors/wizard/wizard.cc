@@ -108,6 +108,7 @@ public:
     StreamSplitter* get_splitter(bool) override;
 
     void reset(Wand&, bool tcp, bool c2s);
+    bool finished(Wand&);
     bool cast_spell(Wand&, Flow*, const uint8_t*, unsigned);
     bool spellbind(const MagicPage*&, Flow*, const uint8_t*, unsigned);
     bool cursebind(vector<CurseServiceTracker>&, Flow*, const uint8_t*, unsigned);
@@ -155,6 +156,10 @@ StreamSplitter::Status MagicSplitter::scan(
     if ( wizard->cast_spell(wand, f, data, len) )
         ++tstats.tcp_hits;
 
+    else if ( wizard->finished(wand) )
+        return ABORT;
+
+    // ostensibly continue but splitter will be swapped out upon hit
     return SEARCH;
 }
 
@@ -279,6 +284,18 @@ bool Wizard::cast_spell(
         return true;
 
     return false;
+}
+
+bool Wizard::finished(Wand& w)
+{
+    if ( w.hex or w.spell )
+        return false;
+
+    // FIXTHIS-L how to know curses are done?
+    if ( !w.curse_tracker.empty() )
+        return false;
+
+    return true;
 }
 
 //-------------------------------------------------------------------------

@@ -36,7 +36,7 @@
 static const Parameter s_params[] =
 {
     { "~", Parameter::PT_STRING, nullptr, nullptr,
-      "SO rule ID has <gid>|<sid> format, like 3|12345" },
+      "SO rule ID is unique key, eg <gid>_<sid>_<rev> like 3_45678_9" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

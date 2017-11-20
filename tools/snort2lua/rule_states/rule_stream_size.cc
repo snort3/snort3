@@ -89,26 +89,24 @@ bool StreamSize::convert(std::istringstream& data_stream)
 
     else if (dir == "client")
     {
-        rule_api.add_suboption("to_client");
+        rule_api.add_suboption("to_server");
 
         static bool printed_client = false;
         if (!printed_client)
         {
             printed_client = true;
-            rule_api.add_comment("stream_size: option change: 'client'"
-                " --> 'to_client'");
+            rule_api.add_comment("stream_size: option change: 'client' --> 'to_server'");
         }
     }
     else if (dir == "server")
     {
-        rule_api.add_suboption("to_server");
+        rule_api.add_suboption("to_client");
 
         static bool printed_server = false;
         if (!printed_server)
         {
             printed_server = true;
-            rule_api.add_comment("stream_size: option change: 'server'"
-                " --> 'to_server'");
+            rule_api.add_comment("stream_size: option change: 'server' --> 'to_client'");
         }
     }
     else

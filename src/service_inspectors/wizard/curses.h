@@ -52,6 +52,7 @@ typedef bool (* curse_alg)(const uint8_t* data, unsigned len, CurseTracker*);
 
 struct CurseDetails
 {
+    std::string name;
     std::string service;
     curse_alg alg;
     bool is_tcp;

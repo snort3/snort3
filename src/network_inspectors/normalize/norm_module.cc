@@ -409,8 +409,8 @@ const PegInfo* NormalizeModule::get_pegs() const
 
     while ( p->name )
     {
-        test_pegs.push_back(*p);
         add_test_peg(*p);
+        test_pegs.push_back(*p);
         p++;
     }
 
@@ -419,8 +419,8 @@ const PegInfo* NormalizeModule::get_pegs() const
 
     while ( p->name )
     {
-        test_pegs.push_back(*p);
         add_test_peg(*p);
+        test_pegs.push_back(*p);
         p++;
     }
 

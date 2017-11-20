@@ -209,11 +209,13 @@ bool Normalize_IsEnabled(NormFlags nf)
     if ( !(t_flags & nf) )
         return false;
 
+    if ( get_inspection_policy()->policy_mode != POLICY_MODE__INLINE )
+        return false;
+
     NetworkPolicy* nap = get_network_policy();
     return ( (nap->normal_mask & nf) != 0 );
 }
 
-// FIXIT-L should return OFF if flag isn't set. Stream will need to handle that condition
 NormMode Normalize_GetMode(NormFlags nf)
 {
     if (Normalize_IsEnabled(nf))

@@ -206,6 +206,9 @@ void MemoryCap::calculate(unsigned num_threads)
 
 void MemoryCap::print()
 {
+    if ( !MemoryModule::is_active() )
+        return;
+
     const MemoryConfig& config = *SnortConfig::get_conf()->memory;
 
     if ( SnortConfig::log_verbose() or s_tracker.allocations )

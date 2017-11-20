@@ -29,9 +29,15 @@ public:
     MemoryModule();
 
     bool set(const char*, Value&, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
     Usage get_usage() const override
     { return GLOBAL; }
+
+    static bool is_active();
+
+private:
+    static bool configured;
 };
 
 #endif
