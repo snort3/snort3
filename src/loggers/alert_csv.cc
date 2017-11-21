@@ -89,6 +89,8 @@ static void ff_b64_data(Args& a)
     unsigned nin = 0;
     Base64Encoder b64;
 
+    TextLog_Putc(csv_log, '"');
+
     while ( nin < a.pkt->dsize )
     {
         unsigned kin = min(a.pkt->dsize-nin, block_size);
@@ -99,6 +101,8 @@ static void ff_b64_data(Args& a)
 
     if ( unsigned kout = b64.finish(out) )
         TextLog_Write(csv_log, out, kout);
+
+    TextLog_Putc(csv_log, '"');
 }
 
 static void ff_dir(Args& a)
@@ -158,7 +162,7 @@ static void ff_eth_len(Args& a)
     if ( !(a.pkt->proto_bits & PROTO_BIT__ETH) )
         return;
 
-    TextLog_Print(csv_log, "0x%X", a.pkt->pkth->pktlen);
+    TextLog_Print(csv_log, "%u", a.pkt->pkth->pktlen);
 }
 
 static void ff_eth_src(Args& a)
@@ -230,7 +234,7 @@ static void ff_ip_len(Args& a)
 
 static void ff_msg(Args& a)
 {
-    TextLog_Quote(csv_log, a.msg);
+    TextLog_Puts(csv_log, a.msg);
 }
 
 static void ff_mpls(Args& a)
@@ -286,6 +290,11 @@ static void ff_rule(Args& a)
 {
     TextLog_Print(csv_log, "%u:%u:%u",
         a.event.sig_info->gid, a.event.sig_info->sid, a.event.sig_info->rev);
+}
+
+static void ff_seconds(Args& a)
+{
+    TextLog_Print(csv_log, "%u",  a.pkt->pkth->ts.tv_sec);
 }
 
 static void ff_service(Args& a)
@@ -428,7 +437,7 @@ static const CsvFunc csv_func[] =
     ff_dst_port, ff_eth_dst, ff_eth_len, ff_eth_src, ff_eth_type, ff_gid,
     ff_icmp_code, ff_icmp_id, ff_icmp_seq, ff_icmp_type, ff_iface, ff_ip_id,
     ff_ip_len, ff_msg, ff_mpls, ff_pkt_gen, ff_pkt_len, ff_pkt_num, ff_priority,
-    ff_proto, ff_rev, ff_rule, ff_service, ff_sid, ff_src_addr, ff_src_ap,
+    ff_proto, ff_rev, ff_rule, ff_seconds, ff_service, ff_sid, ff_src_addr, ff_src_ap,
     ff_src_port, ff_target, ff_tcp_ack, ff_tcp_flags, ff_tcp_len, ff_tcp_seq,
     ff_tcp_win, ff_timestamp, ff_tos, ff_ttl, ff_udp_len, ff_vlan
 };
@@ -438,7 +447,7 @@ static const CsvFunc csv_func[] =
     "dst_port | eth_dst | eth_len | eth_src | eth_type | gid | " \
     "icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | " \
     "ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority | " \
-    "proto | rev | rule | service | sid | src_addr | src_ap | " \
+    "proto | rev | rule | seconds | service | sid | src_addr | src_ap | " \
     "src_port | target | tcp_ack | tcp_flags | tcp_len | tcp_seq | " \
     "tcp_win | timestamp | tos | ttl | udp_len | vlan"
 

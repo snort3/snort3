@@ -362,7 +362,7 @@ int Converter::convert(const std::string& input,
         // add binding for wizard at bottom of table
         auto& wiz = make_binder();
         wiz.set_use_type("wizard");
-        wiz.set_priority(Binder::MAX_PRIORITY);
+        wiz.set_priority(Binder::PRIORITY_LAST);
     }
 
     add_bindings();

@@ -1274,6 +1274,9 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
     if ( !otn_dup )
         otn->ruleIndex = parser_get_rule_index(otn->sigInfo.gid, otn->sigInfo.sid);
 
+    if ( !otn->sigInfo.message )
+        otn->sigInfo.message = snort_strdup("\"no msg in rule\"");  // yes, stored as "msg"
+
     OptFpList* fpl = AddOptFuncToList(OptListEnd, otn);
     fpl->type = RULE_OPTION_TYPE_LEAF_NODE;
 

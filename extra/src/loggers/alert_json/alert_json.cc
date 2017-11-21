@@ -202,7 +202,7 @@ static bool ff_eth_len(Args& a)
         return false;
 
     print_label(a, "eth_len");
-    TextLog_Print(json_log, "0x%X", a.pkt->pkth->pktlen);
+    TextLog_Print(json_log, "%u", a.pkt->pkth->pktlen);
     return true;
 }
 
@@ -228,7 +228,7 @@ static bool ff_eth_type(Args& a)
     const eth::EtherHdr* eh = layer::get_eth_layer(a.pkt);
 
     print_label(a, "eth_type");
-    TextLog_Print(json_log, "0x%X", ntohs(eh->ether_type));
+    TextLog_Print(json_log, "\"0x%X\"", ntohs(eh->ether_type));
     return true;
 }
 
@@ -315,7 +315,7 @@ static bool ff_ip_len(Args& a)
 static bool ff_msg(Args& a)
 {
     print_label(a, "msg");
-    TextLog_Quote(json_log, a.msg);
+    TextLog_Puts(json_log, a.msg);
     return true;
 }
 
@@ -391,6 +391,13 @@ static bool ff_rule(Args& a)
     TextLog_Print(json_log, "\"%u:%u:%u\"",
         a.event.sig_info->gid, a.event.sig_info->sid, a.event.sig_info->rev);
 
+    return true;
+}
+
+static bool ff_seconds(Args& a)
+{
+    print_label(a, "seconds");
+    TextLog_Print(json_log, "%u",  a.pkt->pkth->ts.tv_sec);
     return true;
 }
 
@@ -599,7 +606,7 @@ static const JsonFunc json_func[] =
     ff_dst_port, ff_eth_dst, ff_eth_len, ff_eth_src, ff_eth_type, ff_gid,
     ff_icmp_code, ff_icmp_id, ff_icmp_seq, ff_icmp_type, ff_iface, ff_ip_id,
     ff_ip_len, ff_msg, ff_mpls, ff_pkt_gen, ff_pkt_len, ff_pkt_num, ff_priority,
-    ff_proto, ff_rev, ff_rule, ff_service, ff_sid, ff_src_addr, ff_src_ap,
+    ff_proto, ff_rev, ff_rule, ff_seconds, ff_service, ff_sid, ff_src_addr, ff_src_ap,
     ff_src_port, ff_target, ff_tcp_ack, ff_tcp_flags, ff_tcp_len, ff_tcp_seq,
     ff_tcp_win, ff_timestamp, ff_tos, ff_ttl, ff_udp_len, ff_vlan
 };
@@ -609,7 +616,7 @@ static const JsonFunc json_func[] =
     "dst_port | eth_dst | eth_len | eth_src | eth_type | gid | " \
     "icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | " \
     "ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority | " \
-    "proto | rev | rule | service | sid | src_addr | src_ap | " \
+    "proto | rev | rule | seconds | service | sid | src_addr | src_ap | " \
     "src_port | target | tcp_ack | tcp_flags | tcp_len | tcp_seq | " \
     "tcp_win | timestamp | tos | ttl | udp_len | vlan"
 
