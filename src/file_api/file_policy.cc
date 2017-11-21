@@ -152,9 +152,6 @@ void FilePolicy::policy_check(Flow*, FileInfo* file)
 FileVerdict FilePolicy::type_lookup(Flow* flow, FileInfo* file)
 {
     FileRule rule = match_file_rule(nullptr, file);
-    FileEnforcer* file_enforcer = FileService::get_file_enforcer();
-    if (file_enforcer)
-        file_enforcer->apply_verdict(flow, file, rule.use.verdict, false, this);
     file->config_file_signature(rule.use.signature_enabled);
     file->config_file_capture(rule.use.capture_enabled);
     return rule.use.verdict;

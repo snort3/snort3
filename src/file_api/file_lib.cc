@@ -432,7 +432,14 @@ bool FileContext::process(Flow* flow, const uint8_t* file_data, int data_size,
             config_file_type(false);
             file_stats->files_processed[get_file_type()][get_file_direction()]++;
             //Check file type based on file policy
-            policy->type_lookup(flow, this);
+            FileVerdict v = policy->type_lookup(flow, this);
+            if ( v != FILE_VERDICT_UNKNOWN )
+            {
+                FileEnforcer* file_enforcer = FileService::get_file_enforcer();
+                if (file_enforcer)
+                    file_enforcer->apply_verdict(flow, this, v, false, policy);
+            }
+
             log_file_event(flow);
         }
     }
