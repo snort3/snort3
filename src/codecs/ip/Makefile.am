@@ -9,6 +9,7 @@ cd_tcp.cc
 
 plugin_list = \
 cd_auth.cc \
+cd_bad_proto.cc \
 cd_dst_opts.cc \
 cd_esp.cc \
 cd_frag.cc \
@@ -21,8 +22,6 @@ cd_mobility.cc \
 cd_no_next.cc \
 cd_pgm.cc \
 cd_routing.cc \
-cd_sun_nd.cc \
-cd_swipe.cc \
 cd_udp.cc \
 checksum.h
 
@@ -38,6 +37,11 @@ ehlib_LTLIBRARIES = cd_auth.la
 cd_auth_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 cd_auth_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
 cd_auth_la_SOURCES = cd_auth.cc
+
+ehlib_LTLIBRARIES += cd_bad_proto.la
+cd_bad_proto_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
+cd_bad_proto_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
+cd_bad_proto_la_SOURCES = cd_bad_proto.cc
 
 ehlib_LTLIBRARIES += cd_esp.la
 cd_esp_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
@@ -79,11 +83,6 @@ cd_pgm_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 cd_pgm_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
 cd_pgm_la_SOURCES = cd_pgm.cc checksum.h
 
-ehlib_LTLIBRARIES += cd_sun_nd.la
-cd_sun_nd_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-cd_sun_nd_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
-cd_sun_nd_la_SOURCES = cd_sun_nd.cc
-
 ehlib_LTLIBRARIES += cd_dst_opts.la
 cd_dst_opts_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 cd_dst_opts_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
@@ -103,11 +102,6 @@ ehlib_LTLIBRARIES += cd_routing.la
 cd_routing_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
 cd_routing_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
 cd_routing_la_SOURCES = cd_routing.cc
-
-ehlib_LTLIBRARIES += cd_swipe.la
-cd_swipe_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO
-cd_swipe_la_LDFLAGS = $(AM_LDFLAGS) -module -export-dynamic -avoid-version -shared
-cd_swipe_la_SOURCES = cd_swipe.cc
 
 ehlib_LTLIBRARIES += cd_udp.la
 cd_udp_la_CXXFLAGS = $(AM_CXXFLAGS) -DBUILDING_SO

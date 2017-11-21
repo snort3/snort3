@@ -36,7 +36,6 @@ src/codecs/cd_linux_sll/Makefile \
 src/codecs/cd_null/Makefile \
 src/codecs/cd_pflog/Makefile \
 src/codecs/cd_pbb/Makefile \
-src/codecs/cd_pim/Makefile \
 src/codecs/cd_ppp/Makefile \
 src/codecs/cd_raw4/Makefile \
 src/codecs/cd_raw6/Makefile \

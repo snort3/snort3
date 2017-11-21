@@ -35,6 +35,7 @@ extern const BaseApi* cd_tcp[];     // static because only file that specific fu
 #ifdef STATIC_CODECS
 extern const BaseApi* cd_ah[];
 extern const BaseApi* cd_arp[];
+extern const BaseApi* cd_bad_proto[];
 extern const BaseApi* cd_ciscometadata[];
 extern const BaseApi* cd_dstopts[];
 extern const BaseApi* cd_erspan2[];
@@ -59,8 +60,6 @@ extern const BaseApi* cd_pgm[];
 extern const BaseApi* cd_pppencap[];
 extern const BaseApi* cd_pppoepkt[];
 extern const BaseApi* cd_routing[];
-extern const BaseApi* cd_sun_nd[];
-extern const BaseApi* cd_swipe[];
 extern const BaseApi* cd_teredo[];
 extern const BaseApi* cd_transbridge[];
 extern const BaseApi* cd_udp[];
@@ -77,6 +76,7 @@ void load_codecs()
 #ifdef STATIC_CODECS
     PluginManager::load_plugins(cd_ah);
     PluginManager::load_plugins(cd_arp);
+    PluginManager::load_plugins(cd_bad_proto);
     PluginManager::load_plugins(cd_ciscometadata);
     PluginManager::load_plugins(cd_dstopts);
     PluginManager::load_plugins(cd_erspan2);
@@ -101,8 +101,6 @@ void load_codecs()
     PluginManager::load_plugins(cd_pppencap);
     PluginManager::load_plugins(cd_pppoepkt);
     PluginManager::load_plugins(cd_routing);
-    PluginManager::load_plugins(cd_sun_nd);
-    PluginManager::load_plugins(cd_swipe);
     PluginManager::load_plugins(cd_teredo);
     PluginManager::load_plugins(cd_transbridge);
     PluginManager::load_plugins(cd_udp);

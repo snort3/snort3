@@ -137,6 +137,7 @@ struct IP6Hdr
         case IpProtocol::FRAGMENT:
         case IpProtocol::MPLS_IP:
         case IpProtocol::GRE:
+        case IpProtocol::MOBILITY_IPV6:
             return true;
         default:
             break;

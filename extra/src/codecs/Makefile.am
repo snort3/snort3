@@ -4,7 +4,6 @@ cd_linux_sll \
 cd_null \
 cd_pflog \
 cd_pbb \
-cd_pim \
 cd_ppp \
 cd_raw4 \
 cd_raw6 \

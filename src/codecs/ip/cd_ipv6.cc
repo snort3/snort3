@@ -65,6 +65,8 @@ static const RuleMap ipv6_rules[] =
     { DECODE_IPV6_BAD_FRAG_PKT, "bogus fragmentation packet, possible BSD attack" },
     { DECODE_IPV6_ROUTE_ZERO, "IPv6 routing type 0 extension header" },
     { DECODE_IP6_EXCESS_EXT_HDR, "too many IPv6 extension headers" },
+    { DECODE_MIPV6_BAD_PAYLOAD_PROTO,
+      "IPv6 mobility header includes an invalid value for the 'payload protocol' field" },
     { 0, nullptr }
 };
 

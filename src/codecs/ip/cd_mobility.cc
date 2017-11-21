@@ -39,24 +39,51 @@ public:
     void get_protocol_ids(std::vector<ProtocolId>&) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
 };
+
+struct MobileIPV6Header  // RFC 6275
+{
+    IpProtocol payload_proto;
+    uint8_t header_len;
+    uint8_t mh_type;
+    uint8_t reserved;
+    uint16_t checksum;
+};
 } // namespace
 
 void MobilityCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
-    v.push_back(ProtocolId::MOBILITY);
+    v.push_back(ProtocolId::MOBILITY_IPV6);
 }
 
-bool MobilityCodec::decode(const RawData&, CodecData& codec, DecodeData&)
+bool MobilityCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
+    const MobileIPV6Header* const mip6 = reinterpret_cast<const MobileIPV6Header*>(raw.data);
     if ( SnortConfig::get_conf()->hit_ip6_maxopts(codec.ip6_extension_count) )
     {
         codec_event(codec, DECODE_IP6_EXCESS_EXT_HDR);
         return false;
     }
 
-    codec_event(codec, DECODE_IP_BAD_PROTO);
-    codec.proto_bits |= PROTO_BIT__IP6_EXT; // check for any IP related rules
+    codec.lyr_len = ip::MIN_EXT_LEN + (mip6->header_len << 3);
+    if (codec.lyr_len > raw.len)
+    {
+        codec_event(codec, DECODE_IPV6_TRUNCATED_EXT);
+        return false;
+    }
+
+    codec.proto_bits |= PROTO_BIT__IP6_EXT; // check ip proto rules against this layer
     codec.ip6_extension_count++;
+    // RFC 6275, 6.1.1 and 9.2, payload protocol must be IPPROTO_NONE (59 decimal)
+    if (mip6->payload_proto != IpProtocol::NONEXT)
+        codec_event(codec, DECODE_MIPV6_BAD_PAYLOAD_PROTO);
+
+    codec.next_prot_id = (ProtocolId)mip6->payload_proto;
+    codec.ip6_csum_proto = mip6->payload_proto;
+
+    // must be called AFTER setting next_prot_id
+    // Mobility Header must always be the last header in the header chain of an IPv6 packet
+    CheckIPv6ExtensionOrder(codec, IpProtocol::MOBILITY_IPV6);
+    
     return true;
 }
 

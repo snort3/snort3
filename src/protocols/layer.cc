@@ -302,7 +302,7 @@ bool set_inner_ip_api(const Packet* const p,
         case ProtocolId::FRAGMENT:
         case ProtocolId::AUTH:
         case ProtocolId::ESP:
-        case ProtocolId::MOBILITY:
+        case ProtocolId::MOBILITY_IPV6:
         case ProtocolId::NONEXT:
             break;
 

@@ -2,6 +2,7 @@
 if( STATIC_CODECS )
     set( PLUGIN_SOURCES
         cd_auth.cc
+        cd_bad_proto.cc
         cd_dst_opts.cc
         cd_esp.cc
         cd_frag.cc
@@ -14,13 +15,12 @@ if( STATIC_CODECS )
         cd_mobility.cc
         cd_pgm.cc
         cd_routing.cc
-        cd_sun_nd.cc
-        cd_swipe.cc
         cd_udp.cc
     )
 
 else()
     add_dynamic_module(cd_auth codecs cd_auth.cc)
+    add_dynamic_module(cd_bad_proto codecs cd_bad_proto.cc)
     add_dynamic_module(cd_dst_opts codecs cd_dst_opts.cc)
     add_dynamic_module(cd_esp codecs cd_esp.cc)
     add_dynamic_module(cd_frag codecs cd_frag.cc)
@@ -35,8 +35,6 @@ else()
     add_dynamic_module(cd_no_next codecs cd_no_next.cc)
     add_dynamic_module(cd_pgm codecs cd_pgm.cc checksum.h)
     add_dynamic_module(cd_routing codecs cd_routing.cc)
-    add_dynamic_module(cd_sun_nd codecs cd_sun_nd.cc)
-    add_dynamic_module(cd_swipe codecs cd_swipe.cc)
 #    add_dynamic_module(cd_tcp codecs cd_tcp.cc checksum.h)
     add_dynamic_module(cd_udp codecs cd_udp.cc checksum.h)
 

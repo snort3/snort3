@@ -72,7 +72,9 @@ enum class IpProtocol : std::uint8_t
     NONEXT = 59,
     DSTOPTS = 60,
     SUN_ND = 77,
+    PIM = 103,
     PGM = 113,
+    MOBILITY_IPV6 = 135,
     MPLS_IP = 137,
     /* Last updated 3/31/2016.
        Source: http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xml */
@@ -106,7 +108,9 @@ enum class ProtocolId : std::uint16_t
     NONEXT = 59,
     DSTOPTS = 60,
     SUN_ND = 77,
+    PIM = 103,
     PGM = 113,
+    MOBILITY_IPV6 = 135,
     MPLS_IP = 137,
 
     /* Last updated 3/31/2016.
@@ -185,7 +189,7 @@ inline bool is_ip6_extension(const ProtocolId prot_id)
     case ProtocolId::FRAGMENT:
     case ProtocolId::AUTH:
     case ProtocolId::ESP:
-    case ProtocolId::MOBILITY:
+    case ProtocolId::MOBILITY_IPV6:
     case ProtocolId::NONEXT:
         return true;
     default:
