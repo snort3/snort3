@@ -450,10 +450,7 @@ void PortScan::eval(Packet* p)
         return;
 
     ++spstats.total_packets;
-
-    PS_PKT ps_pkt;
-    memset(&ps_pkt, 0x00, sizeof(PS_PKT));
-    ps_pkt.pkt = p;
+    PS_PKT ps_pkt(p);
 
     ps_detect(&ps_pkt);
 

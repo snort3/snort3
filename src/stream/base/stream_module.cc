@@ -45,12 +45,12 @@ static const Parameter name[] = \
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr } \
 }
 
-CACHE_PARAMS(ip_params,    "16384",  "30", "180", "5");
-CACHE_PARAMS(icmp_params,  "65536",  "30", "180", "5");
-CACHE_PARAMS(tcp_params,  "262144",  "30", "180", "5");
-CACHE_PARAMS(udp_params,  "131072",  "30", "180", "5");
-CACHE_PARAMS(user_params,   "1024",  "30", "180", "5");
-CACHE_PARAMS(file_params,    "128",  "30", "180", "5");
+CACHE_PARAMS(ip_params,    "16384",  "30",  "180", "5");
+CACHE_PARAMS(icmp_params,  "65536",  "30",  "180", "5");
+CACHE_PARAMS(tcp_params,  "262144",  "30", "3600", "5");
+CACHE_PARAMS(udp_params,  "131072",  "30",  "180", "5");
+CACHE_PARAMS(user_params,   "1024",  "30",  "180", "5");
+CACHE_PARAMS(file_params,    "128",  "30",  "180", "5");
 
 #define CACHE_TABLE(cache, proto, params) \
     { cache, Parameter::PT_TABLE, params, nullptr, \

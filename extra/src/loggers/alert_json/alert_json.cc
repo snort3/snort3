@@ -481,7 +481,7 @@ static bool ff_tcp_ack(Args& a)
     if (a.pkt->ptrs.tcph )
     {
         print_label(a, "tcp_ack");
-        TextLog_Print(json_log, "0x%lX", (u_long)ntohl(a.pkt->ptrs.tcph->th_ack));
+        TextLog_Print(json_log, "%u", ntohl(a.pkt->ptrs.tcph->th_ack));
         return true;
     }
     return false;
@@ -517,7 +517,7 @@ static bool ff_tcp_seq(Args& a)
     if (a.pkt->ptrs.tcph )
     {
         print_label(a, "tcp_seq");
-        TextLog_Print(json_log, "0x%lX", (u_long)ntohl(a.pkt->ptrs.tcph->th_seq));
+        TextLog_Print(json_log, "%u", ntohl(a.pkt->ptrs.tcph->th_seq));
         return true;
     }
     return false;
@@ -528,7 +528,7 @@ static bool ff_tcp_win(Args& a)
     if (a.pkt->ptrs.tcph )
     {
         print_label(a, "tcp_win");
-        TextLog_Print(json_log, "0x%X", ntohs(a.pkt->ptrs.tcph->th_win));
+        TextLog_Print(json_log, "%u", ntohs(a.pkt->ptrs.tcph->th_win));
         return true;
     }
     return false;

@@ -74,6 +74,9 @@ static const Parameter ps_params[] =
     { "ignore_scanned", Parameter::PT_STRING, nullptr, nullptr,
       "list of CIDRs with optional ports to ignore if the destination of scan alerts" },
 
+    { "alert_all", Parameter::PT_BOOL, nullptr, "false",
+      "alert on all events over threshold within window if true; else alert on first only" },
+
     { "include_midstream", Parameter::PT_BOOL, nullptr, "false",
       "list of CIDRs with optional ports" },
 
@@ -246,6 +249,9 @@ bool PortScanModule::set(const char* fqn, Value& v, SnortConfig*)
             u = PS_TYPE_ALL;
         config->detect_scan_type = u;
     }
+    else if ( v.is("alert_all") )
+        config->alert_all = v.get_bool();
+
     else if ( v.is("include_midstream") )
         config->include_midstream = v.get_bool();
 

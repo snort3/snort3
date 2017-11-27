@@ -426,9 +426,6 @@ bool TcpTracker::update_on_3whs_ack(TcpSegmentDescriptor& tsd)
         update_tracker_ack_recv(tsd);
         flow->set_session_flags(SSNFLAG_ESTABLISHED);
         flow->session_state |= ( STREAM_STATE_ACK | STREAM_STATE_ESTABLISHED );
-
-        /* Indicate this packet completes 3-way handshake */
-        tsd.get_pkt()->packet_flags |= PKT_STREAM_TWH;
         tcp_state = TcpStreamTracker::TCP_ESTABLISHED;
     }
     else

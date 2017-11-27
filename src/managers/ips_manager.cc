@@ -262,15 +262,22 @@ bool IpsManager::option_end(
     current_module = nullptr;
     current_params = nullptr;
 
-    if ( mod && !mod->end(key, 0, sc) )
+    Option* opt = get_opt(key);
+    assert(opt);
+
+    if ( !mod and opt->api->base.mod_ctor )
+    {
+        ParseError("unknown option %s", key);
+        current_keyword.clear();
+        return false;
+    }
+
+    if ( mod and !mod->end(key, 0, sc) )
     {
         ParseError("can't finalize %s", key);
         current_keyword.clear();
         return false;
     }
-
-    Option* opt = get_opt(key);
-    assert(opt);
 
     IpsOption* ips = opt->api->ctor(mod, otn);
     type = opt->api->type;

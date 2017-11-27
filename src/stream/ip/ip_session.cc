@@ -139,16 +139,18 @@ void IpSession::clear()
     IpHAManager::process_deletion(flow);
 }
 
-bool IpSession::setup(Packet*)
+bool IpSession::setup(Packet* p)
 {
-    DebugMessage(DEBUG_STREAM,
-        "Stream IP session created!\n");
+    DebugMessage(DEBUG_STREAM, "Stream IP session created!\n");
 
-    memset(&tracker, 0, sizeof(tracker));
     SESSION_STATS_ADD(ip_stats);
-    ip_stats.trackers_created++;
-    ip_stats.current_frags++;
+    memset(&tracker, 0, sizeof(tracker));
 
+    if ( p->ptrs.decode_flags & DECODE_FRAG )
+    {
+        ip_stats.trackers_created++;
+        ip_stats.current_frags++;
+    }
 #ifdef ENABLE_EXPECTED_IP
     if ( Stream::expected_flow(flow, p) )
     {

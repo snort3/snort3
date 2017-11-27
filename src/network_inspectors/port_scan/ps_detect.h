@@ -80,6 +80,7 @@ struct PortscanConfig
     int include_midstream;
     int print_tracker;
 
+    bool alert_all;
     bool logfile;
 
     unsigned tcp_window;
@@ -151,6 +152,8 @@ struct PS_PKT
 
     int proto;
     int reverse_pkt;
+
+    PS_PKT(Packet*);
 };
 
 void ps_cleanup();

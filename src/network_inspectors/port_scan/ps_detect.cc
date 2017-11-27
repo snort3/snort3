@@ -41,6 +41,7 @@
 #include "stream/stream.h"
 #include "time/packet_time.h"
 #include "utils/cpp_macros.h"
+#include "utils/stats.h"
 
 #include "ps_inspect.h"
 
@@ -54,6 +55,13 @@ struct PS_HASH_KEY
 PADDING_GUARD_END
 
 static THREAD_LOCAL XHash* portscan_hash = nullptr;
+
+PS_PKT::PS_PKT(Packet* p)
+{
+    pkt = p;
+    scanner = scanned = nullptr;
+    proto = reverse_pkt = 0;
+}
 
 PortscanConfig::PortscanConfig()
 {
@@ -226,7 +234,7 @@ bool PortScan::ps_filter_ignore(PS_PKT* ps_pkt)
     {
         reverse_pkt = 1;
     }
-    else if (p->ptrs.udph && p->flow)
+    else if (p->ptrs.udph and p->flow )
     {
         if (Stream::get_packet_direction(p) & PKT_FROM_SERVER)
             reverse_pkt = 1;
@@ -575,11 +583,12 @@ void PortScan::ps_tracker_update_tcp(PS_PKT* ps_pkt, PS_TRACKER* scanner,
     **  picked up midstream, then we don't care about the MIDSTREAM flag.
     **  Otherwise, only consider streams not picked up midstream.
     */
-    if ( p->flow )
+    // FIXIT-H using SSNFLAG_COUNTED_INITIALIZE is a hack to get parity with 2.X
+    // this should be completely redone and port_scan should require stream_tcp
+    if ( p->flow and (p->flow->ssn_state.session_flags & SSNFLAG_COUNTED_INITIALIZE) )
+    {
         session_flags = p->flow->get_session_flags();
 
-    if ( session_flags & (SSNFLAG_SEEN_CLIENT|SSNFLAG_SEEN_SERVER) )
-    {
         if ((session_flags & SSNFLAG_SEEN_CLIENT) &&
             !(session_flags & SSNFLAG_SEEN_SERVER) &&
             (config->include_midstream || !(session_flags & SSNFLAG_MIDSTREAM)))
@@ -745,8 +754,8 @@ void PortScan::ps_tracker_update_ip(PS_PKT* ps_pkt, PS_TRACKER* scanner,
     }
 }
 
-void PortScan::ps_tracker_update_udp(PS_PKT* ps_pkt, PS_TRACKER* scanner,
-    PS_TRACKER* scanned)
+void PortScan::ps_tracker_update_udp(
+    PS_PKT* ps_pkt, PS_TRACKER* scanner, PS_TRACKER* scanned)
 {
     Packet* p = (Packet*)ps_pkt->pkt;
     unsigned win = config->udp_window;
@@ -1120,13 +1129,15 @@ bool PortScan::ps_tracker_alert(
 
     if ( scanner )
     {
-        scanner->proto.alerts = 0;
+        if ( config->alert_all )
+            scanner->proto.alerts = 0;
         scanner_proto = &scanner->proto;
     }
 
     if ( scanned )
     {
-        scanned->proto.alerts = 0;
+        if ( config->alert_all )
+            scanned->proto.alerts = 0;
         scanned_proto = &scanned->proto;
     }
 
@@ -1179,15 +1190,13 @@ int PortScan::ps_detect(PS_PKT* ps_pkt)
     PS_TRACKER* scanner = nullptr;
     PS_TRACKER* scanned = nullptr;
     int check_tcp_rst_other_dir = 1;
-    Packet* p;
 
-    if (!ps_pkt || !ps_pkt->pkt)
-        return -1;
+    assert(ps_pkt and ps_pkt->pkt);
 
     if (ps_filter_ignore(ps_pkt))
         return 0;
 
-    p = (Packet*)ps_pkt->pkt;
+    Packet* p = (Packet*)ps_pkt->pkt;
 
     do
     {
@@ -1202,7 +1211,7 @@ int PortScan::ps_detect(PS_PKT* ps_pkt)
 
         /* This is added to address the case of no
          * session and a RST packet going back from the Server. */
-        if ( p->ptrs.tcph && (p->ptrs.tcph->th_flags & TH_RST) && !p->flow )
+        if ( p->ptrs.tcph and (p->ptrs.tcph->th_flags & TH_RST) and !p->flow )
         {
             if (ps_pkt->reverse_pkt == 1)
                 check_tcp_rst_other_dir = 0;
