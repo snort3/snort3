@@ -301,11 +301,13 @@ inline void FileContext::finalize_file_type()
     file_type_context = nullptr;
 }
 
-void FileContext::log_file_event(Flow* flow)
+void FileContext::log_file_event(Flow* flow, FilePolicyBase* policy)
 {
     // wait for file name is set to log file event
     if ( is_file_name_set() )
     {
+        bool log_needed = true;
+
         switch (verdict)
         {
         case FILE_VERDICT_LOG:
@@ -322,8 +324,13 @@ void FileContext::log_file_event(Flow* flow)
             DataBus::publish("file_event", (const uint8_t*)"RESET", 5, flow);
             break;
         default:
+            log_needed = false;
             break;
         }
+
+        if (policy and log_needed)
+            policy->log_file_action(flow, this, FILE_ACTION_DEFAULT);
+
         if ( config->trace_type )
             print(std::cout);
     }
@@ -350,7 +357,7 @@ void FileContext::finish_signature_lookup(Flow* flow, bool final_lookup, FilePol
         FileVerdict verdict = policy->signature_lookup(flow, this);
         if ( verdict != FILE_VERDICT_UNKNOWN || final_lookup )
         {
-            log_file_event(flow);
+            log_file_event(flow, policy);
             config_file_signature(false);
             file_stats->signatures_processed[get_file_type()][get_file_direction()]++;
         }
@@ -440,7 +447,7 @@ bool FileContext::process(Flow* flow, const uint8_t* file_data, int data_size,
                     file_enforcer->apply_verdict(flow, this, v, false, policy);
             }
 
-            log_file_event(flow);
+            log_file_event(flow, policy);
         }
     }
 

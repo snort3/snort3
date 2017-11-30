@@ -233,7 +233,7 @@ void FileFlows::set_file_name(const uint8_t* fname, uint32_t name_size)
         if (fname and name_size)
             context->set_file_name((const char*)fname, name_size);
 
-        context->log_file_event(flow);
+        context->log_file_event(flow, file_policy);
     }
 }
 

@@ -114,7 +114,7 @@ public:
     void update_file_size(int data_size, FilePosition position);
     void stop_file_capture();
     FileCaptureState process_file_capture(const uint8_t* file_data, int data_size, FilePosition);
-    void log_file_event(Flow*);
+    void log_file_event(Flow*, FilePolicyBase*);
     FileVerdict file_signature_lookup(Flow*);
 
     void set_signature_state(bool gen_sig);

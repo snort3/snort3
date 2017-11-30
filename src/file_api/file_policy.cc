@@ -149,7 +149,7 @@ void FilePolicy::policy_check(Flow*, FileInfo* file)
     file->config_file_capture(capture_enabled);
 }
 
-FileVerdict FilePolicy::type_lookup(Flow* flow, FileInfo* file)
+FileVerdict FilePolicy::type_lookup(Flow*, FileInfo* file)
 {
     FileRule rule = match_file_rule(nullptr, file);
     file->config_file_signature(rule.use.signature_enabled);

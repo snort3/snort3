@@ -37,8 +37,12 @@
 #define     FILE_ALL_ON                          0xFFFFFFFF
 #define     FILE_ALL_OFF                         0x00000000
 
-#define     FILE_RESUME_BLOCK                    0x01
-#define     FILE_RESUME_LOG                      0x02
+enum FileAction
+{
+    FILE_ACTION_DEFAULT = 0,
+    FILE_RESUME_BLOCK,
+    FILE_RESUME_LOG
+};
 
 #define UTF_16_LE_BOM "\xFF\xFE"
 #define UTF_16_LE_BOM_LEN 2
@@ -131,7 +135,7 @@ public:
     virtual FileVerdict signature_lookup(Flow*, FileInfo*)
     { return FILE_VERDICT_UNKNOWN; }
 
-    virtual void log_file_action(Flow*, int) { }
+    virtual void log_file_action(Flow*, FileInfo*, FileAction) { }
 
 };
 

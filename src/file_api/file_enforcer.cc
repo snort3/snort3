@@ -168,7 +168,7 @@ bool FileEnforcer::apply_verdict(Flow* flow, FileInfo* file, FileVerdict verdict
     if (verdict == FILE_VERDICT_LOG)
     {
         if (resume)
-            policy->log_file_action(flow, FILE_RESUME_LOG);
+            policy->log_file_action(flow, file, FILE_RESUME_LOG);
     }
     else if (verdict == FILE_VERDICT_BLOCK)
     {
@@ -176,7 +176,7 @@ bool FileEnforcer::apply_verdict(Flow* flow, FileInfo* file, FileVerdict verdict
         Active::set_delayed_action(Active::ACT_BLOCK, true);
         store_verdict(flow, file);
         if (resume)
-            policy->log_file_action(flow, FILE_RESUME_BLOCK);
+            policy->log_file_action(flow, file, FILE_RESUME_BLOCK);
         return true;
     }
     else if (verdict == FILE_VERDICT_REJECT)
@@ -185,7 +185,7 @@ bool FileEnforcer::apply_verdict(Flow* flow, FileInfo* file, FileVerdict verdict
         Active::set_delayed_action(Active::ACT_RESET, true);
         store_verdict(flow, file);
         if (resume)
-            policy->log_file_action(flow, FILE_RESUME_BLOCK);
+            policy->log_file_action(flow, file, FILE_RESUME_BLOCK);
         return true;
     }
     else if (verdict == FILE_VERDICT_PENDING)
@@ -193,7 +193,7 @@ bool FileEnforcer::apply_verdict(Flow* flow, FileInfo* file, FileVerdict verdict
         /*Take the cached verdict*/
         Active::set_delayed_action(Active::ACT_DROP, true);
         if (resume)
-            policy->log_file_action(flow, FILE_RESUME_BLOCK);
+            policy->log_file_action(flow, file, FILE_RESUME_BLOCK);
         return true;
     }
 
