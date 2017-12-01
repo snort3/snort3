@@ -60,6 +60,7 @@ void FileMagicRule::clear()
     id = 0;
     category.clear();
     version.clear();
+    groups.clear();
     file_magics.clear();
 }
 

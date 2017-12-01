@@ -122,6 +122,21 @@ std::string& trim(std::string& s)
     return ltrim(rtrim(s));
 }
 
+std::string& trim_quotes(std::string& s)
+{
+    if(s.length() < 2)
+        return s;
+
+    if((s.front() == '"' and s.back() == '"') or
+       (s.front() == '\'' and s.back() == '\''))
+    {
+        s.erase(0,1);
+        s.pop_back();
+    }
+
+    return s;
+}
+
 std::string& sanitize_lua_string(std::string& s)
 {
     std::size_t found = s.find("]]");

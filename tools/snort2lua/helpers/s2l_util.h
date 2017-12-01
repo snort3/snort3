@@ -47,6 +47,13 @@ std::string& rtrim(std::string& s);
 // trim from both ends
 std::string& trim(std::string& s);
 
+// trim single or double quotes from the beginning and end of string.
+// Only removes quotes if they're the first and last character.
+// "words in quotes" => words in quotes
+// 'words in quotes' => words in quotes
+// "quotes in "'string'"" => quotes in "'string'"
+std::string& trim_quotes(std::string& s);
+
 // return true if this file exists. False otherwise.
 bool file_exists(const std::string& name);
 

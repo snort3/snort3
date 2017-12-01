@@ -69,6 +69,7 @@ public:
     std::string type;
     std::string category;
     std::string version;
+    std::vector<std::string> groups;
     FileMagics file_magics;
 };
 

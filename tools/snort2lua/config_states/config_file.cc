@@ -107,6 +107,9 @@ bool File::convert(std::istringstream& data_stream)
             retval = false;
     }
 
+    // Always add the file_rules option to reference the file magic rules.
+    table_api.add_option("file_rules", "$file_magic");
+
     return retval;
 }
 

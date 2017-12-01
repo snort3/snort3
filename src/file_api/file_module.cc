@@ -61,6 +61,9 @@ static const Parameter file_rule_params[] =
     { "category", Parameter::PT_STRING, nullptr, nullptr,
       "file type category" },
 
+    { "group", Parameter::PT_STRING, nullptr, nullptr,
+      "comma separated list of groups associated with file type" },
+
     { "version", Parameter::PT_STRING, nullptr, nullptr,
       "file type version" },
 
@@ -289,6 +292,16 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("category") )
         rule.category = v.get_string();
+
+    else if ( v.is("group") )
+    {
+        std::istringstream stream(v.get_string());
+        std::string tmpstr;
+        while(std::getline(stream, tmpstr, ','))
+        {
+            rule.groups.push_back(tmpstr);
+        }
+    }
 
     else if ( v.is("version") )
         rule.version = v.get_string();
