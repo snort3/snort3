@@ -162,6 +162,15 @@ const eth::EtherHdr* get_eth_layer(const Packet* const p)
     return eh ? eh : reinterpret_cast<const eth::EtherHdr*>(get_root_layer(p));
 }
 
+const wlan::WifiHdr* get_wifi_layer(const Packet* const p)
+{
+    uint8_t num_layers = p->num_layers;
+    const Layer* lyr = p->layers;
+
+    return reinterpret_cast<const wlan::WifiHdr*>(
+        find_inner_layer(lyr, num_layers, ProtocolId::ETHERNET_802_11));
+}
+
 const ip::IP6Frag* get_inner_ip6_frag()
 { return get_inner_ip6_frag(curr_pkt); }
 

@@ -78,6 +78,7 @@
 #include "protocols/arp.h"
 #include "protocols/eth.h"
 #include "protocols/packet.h"
+#include "protocols/wlan.h"
 #include "sfip/sf_ip.h"
 
 #include "arp_module.h"
@@ -171,13 +172,45 @@ void ArpSpoof::eval(Packet* p)
 
     // precondition - what we registered for
     assert(p->type() == PktType::ARP);
+    const uint8_t* dst_mac_addr;
+    const uint8_t* src_mac_addr;
 
-    // 802.11 not supported
-    if ((p->proto_bits & PROTO_BIT__ETH) == 0)
-        return;
+    if (p->proto_bits & PROTO_BIT__ETH)
+    {
+        const eth::EtherHdr* eh = layer::get_eth_layer(p);
+        src_mac_addr = eh->ether_src;
+        dst_mac_addr = eh->ether_dst;
+    }
+    else
+    {
+        const wlan::WifiHdr* wifih = layer::get_wifi_layer(p);
+        if (wifih == nullptr)
+            return;
+
+        if ((wifih->frame_control & WLAN_FLAG_TODS) &&
+             (wifih->frame_control & WLAN_FLAG_FROMDS))
+         {
+             dst_mac_addr = wifih->addr3;
+             src_mac_addr = wifih->addr4;
+         }
+         else if (wifih->frame_control & WLAN_FLAG_TODS)
+         {
+             src_mac_addr = wifih->addr2;
+             dst_mac_addr = wifih->addr3;
+         }
+         else if (wifih->frame_control & WLAN_FLAG_FROMDS)
+         {
+             dst_mac_addr = wifih->addr1;
+             src_mac_addr = wifih->addr3;
+         }
+         else
+         {
+             dst_mac_addr = wifih->addr1;
+             src_mac_addr = wifih->addr2;
+         }
+    }
 
     const arp::EtherARP* ah = layer::get_arp_layer(p);
-    const eth::EtherHdr* eh = layer::get_eth_layer(p);
 
     /* is the ARP protocol type IP and the ARP hardware type Ethernet? */
     if ((ntohs(ah->ea_hdr.ar_hrd) != 0x0001) ||
@@ -189,12 +222,12 @@ void ArpSpoof::eval(Packet* p)
     switch (ntohs(ah->ea_hdr.ar_op))
     {
     case ARPOP_REQUEST:
-        if (memcmp((const u_char*)eh->ether_dst, (const u_char*)bcast, 6) != 0)
+        if (memcmp((const u_char*)dst_mac_addr, (const u_char*)bcast, 6) != 0)
         {
             DetectionEngine::queue_event(GID_ARP_SPOOF, ARPSPOOF_UNICAST_ARP_REQUEST);
             DebugMessage(DEBUG_INSPECTOR, "MODNAME: Unicast request\n");
         }
-        else if (memcmp((const u_char*)eh->ether_src,
+        else if (memcmp((const u_char*)src_mac_addr,
             (const u_char*)ah->arp_sha, 6) != 0)
         {
             DetectionEngine::queue_event(GID_ARP_SPOOF, ARPSPOOF_ETHERFRAME_ARP_MISMATCH_SRC);
@@ -202,13 +235,13 @@ void ArpSpoof::eval(Packet* p)
         }
         break;
     case ARPOP_REPLY:
-        if (memcmp((const u_char*)eh->ether_src,
+        if (memcmp((const u_char*)src_mac_addr,
             (const u_char*)ah->arp_sha, 6) != 0)
         {
             DetectionEngine::queue_event(GID_ARP_SPOOF, ARPSPOOF_ETHERFRAME_ARP_MISMATCH_SRC);
             DebugMessage(DEBUG_INSPECTOR, "MODNAME: Ethernet/ARP mismatch reply src\n");
         }
-        else if (memcmp((const u_char*)eh->ether_dst,
+        else if (memcmp((const u_char*)dst_mac_addr,
             (const u_char*)ah->arp_tha, 6) != 0)
         {
             DetectionEngine::queue_event(GID_ARP_SPOOF, ARPSPOOF_ETHERFRAME_ARP_MISMATCH_DST);
@@ -227,7 +260,7 @@ void ArpSpoof::eval(Packet* p)
         DebugFormat(DEBUG_INSPECTOR,
             "MODNAME: LookupIPMacEntryByIP returned %p\n", (void*)ipme);
 
-        auto cmp_ether_src = memcmp(eh->ether_src, ipme->mac_addr, 6);
+        auto cmp_ether_src = memcmp(src_mac_addr, ipme->mac_addr, 6);
         auto cmp_arp_sha = memcmp(ah->arp_sha, ipme->mac_addr, 6);
 
         // If the Ethernet source address or the ARP source hardware address

@@ -74,6 +74,11 @@ namespace udp
 struct UDPHdr;
 }
 
+namespace wlan
+{
+struct WifiHdr;
+}
+
 namespace icmp
 {
 struct ICMPHdr;
@@ -94,6 +99,7 @@ SO_PUBLIC const vlan::VlanTagHdr* get_vlan_layer(const Packet*);
 SO_PUBLIC const gre::GREHdr* get_gre_layer(const Packet*);
 SO_PUBLIC const eapol::EtherEapol* get_eapol_layer(const Packet*);
 SO_PUBLIC const eth::EtherHdr* get_eth_layer(const Packet*);
+SO_PUBLIC const wlan::WifiHdr* get_wifi_layer(const Packet*);
 SO_PUBLIC const uint8_t* get_root_layer(const Packet* const);
 /* return a pointer to the outermost UDP layer */
 SO_PUBLIC const udp::UDPHdr* get_outer_udp_lyr(const Packet* const);
