@@ -56,8 +56,6 @@ void TcpTracker::init_tcp_state( )
     small_seg_count = wscale = mss = 0;
     tf_flags = 0;
     alert_count = 0;
-    memset(&alerts, 0, sizeof(alerts));
-    memset(&mac_addr, 0, sizeof(mac_addr));
     mac_addr_valid = false;
     fin_final_seq = 0;
     fin_seq_status = TcpStreamTracker::FIN_NOT_SEEN;
@@ -143,11 +141,8 @@ void TcpTracker::init_on_syn_sent(TcpSegmentDescriptor& tsd)
     tf_flags |= tsd.init_wscale(&wscale);
 
     cache_mac_address(tsd, FROM_CLIENT);
-    set_splitter(tsd.get_flow() );
-    init_flush_policy( );
-
-    tcpStats.sessions_on_syn++;
     tcp_state = TcpStreamTracker::TCP_SYN_SENT;
+    tcpStats.sessions_on_syn++;
 }
 
 void TcpTracker::init_on_syn_recv(TcpSegmentDescriptor& tsd)
@@ -161,9 +156,6 @@ void TcpTracker::init_on_syn_recv(TcpSegmentDescriptor& tsd)
     reassembler->set_seglist_base_seq(tsd.get_seg_seq() + 1);
 
     cache_mac_address(tsd, FROM_CLIENT);
-    set_splitter(tsd.get_flow() );
-    init_flush_policy( );
-
     tcp_state = TcpStreamTracker::TCP_SYN_RECV;
 }
 
@@ -196,11 +188,8 @@ void TcpTracker::init_on_synack_sent(TcpSegmentDescriptor& tsd)
     tf_flags |= tsd.init_wscale(&wscale);
 
     cache_mac_address(tsd, FROM_SERVER);
-    set_splitter(tsd.get_flow() );
-    init_flush_policy();
-
-    tcpStats.sessions_on_syn_ack++;
     tcp_state = TcpStreamTracker::TCP_SYN_RECV;
+    tcpStats.sessions_on_syn_ack++;
 }
 
 void TcpTracker::init_on_synack_recv(TcpSegmentDescriptor& tsd)
@@ -217,9 +206,6 @@ void TcpTracker::init_on_synack_recv(TcpSegmentDescriptor& tsd)
     reassembler->set_seglist_base_seq(tsd.get_seg_seq() + 1);
 
     cache_mac_address(tsd, FROM_SERVER);
-    set_splitter(tsd.get_flow() );
-    init_flush_policy();
-
     tcp_state = TcpStreamTracker::TCP_ESTABLISHED;
 }
 
@@ -249,8 +235,6 @@ void TcpTracker::init_on_3whs_ack_sent(TcpSegmentDescriptor& tsd)
     tf_flags |= tsd.init_wscale(&wscale);
 
     cache_mac_address(tsd, FROM_CLIENT);
-    set_splitter(tsd.get_flow() );
-    init_flush_policy();
     tcp_state = TcpStreamTracker::TCP_ESTABLISHED;
 }
 
@@ -268,11 +252,8 @@ void TcpTracker::init_on_3whs_ack_recv(TcpSegmentDescriptor& tsd)
     reassembler->set_seglist_base_seq(tsd.get_seg_seq() + 1);
 
     cache_mac_address(tsd, FROM_CLIENT);
-    set_splitter(tsd.get_flow() );
-    init_flush_policy();
-
-    tcpStats.sessions_on_3way++;
     tcp_state = TcpStreamTracker::TCP_ESTABLISHED;
+    tcpStats.sessions_on_3way++;
 }
 
 void TcpTracker::init_on_data_seg_sent(TcpSegmentDescriptor& tsd)
@@ -305,8 +286,6 @@ void TcpTracker::init_on_data_seg_sent(TcpSegmentDescriptor& tsd)
     tf_flags |= ( tsd.init_mss(&mss) | tsd.init_wscale(&wscale) );
 
     cache_mac_address(tsd, tsd.get_direction() );
-    set_splitter(tsd.get_flow() );
-    init_flush_policy();
     tcp_state = TcpStreamTracker::TCP_ESTABLISHED;
 }
 
@@ -325,11 +304,8 @@ void TcpTracker::init_on_data_seg_recv(TcpSegmentDescriptor& tsd)
     reassembler->set_seglist_base_seq(tsd.get_seg_seq());
 
     cache_mac_address(tsd, tsd.get_direction() );
-    set_splitter(tsd.get_flow() );
-    init_flush_policy();
-
-    tcpStats.sessions_on_data++;
     tcp_state = TcpStreamTracker::TCP_ESTABLISHED;
+    tcpStats.sessions_on_data++;
 }
 
 void TcpTracker::finish_server_init(TcpSegmentDescriptor& tsd)

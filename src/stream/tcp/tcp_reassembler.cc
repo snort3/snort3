@@ -280,7 +280,6 @@ int TcpReassembler::purge_alerts(Flow* flow)
     {
         StreamAlertInfo* ai = tracker->alerts + i;
         Stream::log_extra_data(flow, xtradata_mask, ai->event_id, ai->event_second);
-        memset(ai, 0, sizeof(*ai));
     }
     tracker->alert_count = 0;
 

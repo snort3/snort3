@@ -41,7 +41,6 @@ public:
     bool data_seg_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool fin_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool fin_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
-    bool rst_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool rst_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
 };
 

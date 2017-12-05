@@ -24,6 +24,7 @@
 #include <bitset>
 
 #include "framework/module.h"
+#include "profiler/profiler.h"
 
 #include "http_enum.h"
 
@@ -110,6 +111,11 @@ public:
     static PegCount get_peg_counts(HttpEnums::PEG_COUNT counter)
         { return peg_counts[counter]; }
 
+    ProfileStats* get_profile() const override;
+
+    static ProfileStats& get_profile_stats()
+    { return http_profile; }
+
     Usage get_usage() const override
     { return INSPECT; }
 
@@ -127,6 +133,7 @@ private:
     static const RuleMap http_events[];
     HttpParaList* params = nullptr;
     static const PegInfo peg_names[];
+    static THREAD_LOCAL ProfileStats http_profile;
     static THREAD_LOCAL PegCount peg_counts[];
 };
 

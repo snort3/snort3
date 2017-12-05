@@ -61,138 +61,50 @@ bool TcpStateHandler::do_post_sm_packet_actions(TcpSegmentDescriptor&, TcpStream
 
 bool TcpStateHandler::eval(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
 {
-    bool handled = false;
-
     switch ( tracker.get_tcp_event() )
     {
     case TcpStreamTracker::TCP_SYN_SENT_EVENT:
-        handled = syn_sent(tsd, tracker);
-        break;
+        return syn_sent(tsd, tracker);
 
     case TcpStreamTracker::TCP_SYN_RECV_EVENT:
-        handled = syn_recv(tsd, tracker);
-        break;
+        return syn_recv(tsd, tracker);
 
     case TcpStreamTracker::TCP_SYN_ACK_SENT_EVENT:
-        handled = syn_ack_sent(tsd, tracker);
-        break;
+        return syn_ack_sent(tsd, tracker);
 
     case TcpStreamTracker::TCP_SYN_ACK_RECV_EVENT:
-        handled = syn_ack_recv(tsd, tracker);
-        break;
+        return syn_ack_recv(tsd, tracker);
 
     case TcpStreamTracker::TCP_ACK_SENT_EVENT:
-        handled = ack_sent(tsd, tracker);
-        break;
+        return ack_sent(tsd, tracker);
 
     case TcpStreamTracker::TCP_ACK_RECV_EVENT:
-        handled = ack_recv(tsd, tracker);
-        break;
+        return ack_recv(tsd, tracker);
 
     case TcpStreamTracker::TCP_DATA_SEG_SENT_EVENT:
-        handled = data_seg_sent(tsd, tracker);
-        break;
+        return data_seg_sent(tsd, tracker);
 
     case TcpStreamTracker::TCP_DATA_SEG_RECV_EVENT:
-        handled = data_seg_recv(tsd, tracker);
-        break;
+        return data_seg_recv(tsd, tracker);
 
     case TcpStreamTracker::TCP_FIN_SENT_EVENT:
-        handled = fin_sent(tsd, tracker);
-        break;
+        return fin_sent(tsd, tracker);
 
     case TcpStreamTracker::TCP_FIN_RECV_EVENT:
-        handled = fin_recv(tsd, tracker);
-        break;
+        return fin_recv(tsd, tracker);
 
     case TcpStreamTracker::TCP_RST_SENT_EVENT:
-        handled = rst_sent(tsd, tracker);
-        break;
+        return rst_sent(tsd, tracker);
 
     case TcpStreamTracker::TCP_RST_RECV_EVENT:
-        handled = rst_recv(tsd, tracker);
-        break;
+        return rst_recv(tsd, tracker);
 
-    case TcpStreamTracker::TCP_MAX_EVENTS:
     default:
-        cout << "Invalid Tcp Event " << tracker.get_tcp_event() << endl;
         break;
     }
 
-    return handled;
-}
-
-bool TcpStateHandler::default_state_action(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
-{
-#ifdef DEBUG_MSGS
-    DebugFormat(DEBUG_STREAM_STATE, "tsd: %p tracker: %p state: %u event: %u\n",
-        (void*) &tsd, (void*) &tracker, tracker.get_tcp_state(), tracker.get_tcp_event() );
-#else
-    UNUSED(tsd);
-    UNUSED(tracker);
-#endif
-
-    return true;
-}
-
-bool TcpStateHandler::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
-{
-    return default_state_action(tsd, tracker);
-}
-
-bool TcpStateHandler::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
-{
-    return default_state_action(tsd, tracker);
-}
-
-bool TcpStateHandler::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
-{
-    return default_state_action(tsd, tracker);
-}
-
-bool TcpStateHandler::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
-{
-    return default_state_action(tsd, tracker);
-}
-
-bool TcpStateHandler::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
-{
-    return default_state_action(tsd, tracker);
-}
-
-bool TcpStateHandler::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
-{
-    return default_state_action(tsd, tracker);
-}
-
-bool TcpStateHandler::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
-{
-    return default_state_action(tsd, tracker);
-}
-
-bool TcpStateHandler::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
-{
-    return default_state_action(tsd, tracker);
-}
-
-bool TcpStateHandler::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
-{
-    return default_state_action(tsd, tracker);
-}
-
-bool TcpStateHandler::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
-{
-    return default_state_action(tsd, tracker);
-}
-
-bool TcpStateHandler::rst_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
-{
-    return default_state_action(tsd, tracker);
-}
-
-bool TcpStateHandler::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
-{
-    return default_state_action(tsd, tracker);
+    assert(false);
+    return false;
 }
 
 // FIXIT-H get the unit test working again

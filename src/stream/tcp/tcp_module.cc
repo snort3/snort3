@@ -231,7 +231,7 @@ ProfileStats* StreamTcpModule::get_profile(
     {
     case 0:
         name = MOD_NAME;
-        parent = "stream";
+        parent = nullptr;
         return &s5TcpPerfStats;
 
     case 1:

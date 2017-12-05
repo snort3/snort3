@@ -151,6 +151,7 @@ StreamSplitter::Status MagicSplitter::scan(
     Flow* f, const uint8_t* data, uint32_t len,
     uint32_t, uint32_t*)
 {
+    Profile profile(wizPerfStats);
     ++tstats.tcp_scans;
 
     if ( wizard->cast_spell(wand, f, data, len) )
@@ -217,6 +218,8 @@ void Wizard::reset(Wand& w, bool tcp, bool c2s)
 
 void Wizard::eval(Packet* p)
 {
+    Profile profile(wizPerfStats);
+
     if ( !p->is_udp() )
         return;
 

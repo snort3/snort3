@@ -82,6 +82,7 @@ private:
     void flush_tracker(TcpStreamTracker*, Packet*, uint32_t dir, bool final_flush);
 
     TcpStateMachine* tsm;
+    bool splitter_init;
 };
 
 #endif

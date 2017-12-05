@@ -41,12 +41,6 @@ TcpStateCloseWait::TcpStateCloseWait(TcpStateMachine& tsm) :
 {
 }
 
-
-bool TcpStateCloseWait::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
-{
-    return default_state_action(tsd, trk);
-}
-
 bool TcpStateCloseWait::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.normalizer->ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs() );
@@ -54,54 +48,39 @@ bool TcpStateCloseWait::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tr
     if ( tsd.get_seg_len() )
         trk.session->handle_data_on_syn(tsd);
 
-    return default_state_action(tsd, trk);
-}
-
-bool TcpStateCloseWait::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
-{
-    return default_state_action(tsd, trk);
-}
-
-bool TcpStateCloseWait::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
-{
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateCloseWait::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.update_tracker_ack_sent(tsd);
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateCloseWait::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.update_tracker_ack_recv(tsd);
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateCloseWait::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.update_tracker_ack_sent(tsd);
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateCloseWait::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.update_tracker_ack_recv(tsd);
     trk.session->handle_data_segment(tsd);
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateCloseWait::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.update_on_fin_sent(tsd);
     trk.set_tcp_state(TcpStreamTracker::TCP_LAST_ACK);
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateCloseWait::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
@@ -110,7 +89,7 @@ bool TcpStateCloseWait::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tr
     if( trk.process_inorder_fin() )
     {
         trk.update_on_fin_recv(tsd);
-        return default_state_action(tsd, trk);
+        return true;
     }
 
     trk.update_tracker_ack_recv(tsd);
@@ -129,13 +108,7 @@ bool TcpStateCloseWait::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tr
         if ( tsd.get_seg_len() > 0 )
             trk.session->handle_data_segment(tsd);
     }
-
-    return default_state_action(tsd, trk);
-}
-
-bool TcpStateCloseWait::rst_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
-{
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateCloseWait::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
@@ -151,8 +124,7 @@ bool TcpStateCloseWait::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tr
     {
         trk.session->tel.set_tcp_event(EVENT_BAD_RST);
     }
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateCloseWait::do_pre_sm_packet_actions(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)

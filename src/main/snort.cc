@@ -448,6 +448,8 @@ void Snort::term()
 
     Periodic::unregister_all();
 
+    LogMessage("%s  Snort exiting\n", get_prompt());
+
     /* free allocated memory */
     if (SnortConfig::get_conf() == snort_cmd_line_conf)
     {
@@ -463,6 +465,7 @@ void Snort::term()
         delete SnortConfig::get_conf();
         SnortConfig::set_conf(nullptr);
     }
+
     CleanupProtoNames();
     SideChannelManager::term();
     ModuleManager::term();
@@ -472,24 +475,7 @@ void Snort::term()
 
 void Snort::clean_exit(int)
 {
-    SnortConfig tmp;
-
-    // Have to trick LogMessage to log correctly after snort_conf is freed
-    if ( SnortConfig::get_conf() )
-    {
-        tmp.logging_flags |=
-            (SnortConfig::get_conf()->logging_flags & LOGGING_FLAG__QUIET);
-
-        tmp.run_flags |= (SnortConfig::get_conf()->run_flags & RUN_FLAG__DAEMON);
-
-        tmp.logging_flags |=
-            (SnortConfig::get_conf()->logging_flags & LOGGING_FLAG__SYSLOG);
-    }
-
     term();
-    SnortConfig::set_conf(&tmp);
-
-    LogMessage("%s  Snort exiting\n", get_prompt());
     closelog();
 }
 

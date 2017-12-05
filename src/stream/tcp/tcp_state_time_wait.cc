@@ -37,15 +37,11 @@ TcpStateTimeWait::TcpStateTimeWait(TcpStateMachine& tsm) :
 {
 }
 
-
 bool TcpStateTimeWait::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.session->check_for_repeated_syn(tsd);
-
-    return default_state_action(tsd, trk);
+    return true;
 }
-
-
 
 bool TcpStateTimeWait::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
@@ -56,26 +52,10 @@ bool TcpStateTimeWait::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
     return true;
 }
 
-bool TcpStateTimeWait::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
-{
-    return default_state_action(tsd, trk);
-}
-
-bool TcpStateTimeWait::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
-{
-    return default_state_action(tsd, trk);
-}
-
 bool TcpStateTimeWait::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.update_tracker_ack_sent(tsd);
-
-    return default_state_action(tsd, trk);
-}
-
-bool TcpStateTimeWait::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
-{
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateTimeWait::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
@@ -83,17 +63,7 @@ bool TcpStateTimeWait::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker
     // data on a segment when we shouldn't be sending data any more alert!
     trk.session->tel.set_tcp_event(EVENT_DATA_ON_CLOSED);
     trk.session->mark_packet_for_drop(tsd);
-    return default_state_action(tsd, trk);
-}
-
-bool TcpStateTimeWait::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
-{
-    return default_state_action(tsd, trk);
-}
-
-bool TcpStateTimeWait::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
-{
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateTimeWait::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
@@ -109,12 +79,7 @@ bool TcpStateTimeWait::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
     else if ( tsd.get_seg_len() > 0 )
         trk.session->handle_data_segment(tsd);
 
-    return default_state_action(tsd, trk);
-}
-
-bool TcpStateTimeWait::rst_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
-{
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateTimeWait::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
@@ -135,7 +100,7 @@ bool TcpStateTimeWait::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
     if ( tsd.get_seg_len() > 0 )
         trk.session->tel.set_tcp_event(EVENT_DATA_AFTER_RST_RCVD);
 
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateTimeWait::do_pre_sm_packet_actions(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)

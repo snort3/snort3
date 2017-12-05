@@ -26,17 +26,16 @@
 #include <cassert>
 #include <utility>
 
+#include "log/messages.h"
+
 namespace Lua
 {
 State::State(bool openlibs)
 {
     state = luaL_newstate();
 
-    // Without exceptions, there is no easy way to handle this,
-    // so we must assert().
-    // If this assert is removed,
-    // the destructor should be modified to check for nullptr
-    assert(state);
+    if ( !state )
+        FatalError("Lua state instantiation failed\n");
 
     if ( openlibs )
         luaL_openlibs(state);

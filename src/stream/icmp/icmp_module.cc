@@ -46,14 +46,8 @@ StreamIcmpModule::StreamIcmpModule() :
     config = nullptr;
 }
 
-ProfileStats* StreamIcmpModule::get_profile(
-    unsigned index, const char*& name, const char*& parent) const
+ProfileStats* StreamIcmpModule::get_profile() const
 {
-    if ( index )
-        return nullptr;
-
-    name = MOD_NAME;
-    parent = "stream";
     return &icmp_perf_stats;
 }
 

@@ -36,61 +36,33 @@ TcpStateClosed::TcpStateClosed(TcpStateMachine& tsm) :
 {
 }
 
-
-bool TcpStateClosed::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateClosed::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
     trk.session->check_for_repeated_syn(tsd);
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
-bool TcpStateClosed::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateClosed::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
     Flow* flow = tsd.get_flow();
-
     flow->set_expire(tsd.get_pkt(), trk.session->config->session_timeout);
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
-bool TcpStateClosed::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateClosed::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
-    return default_state_action(tsd, trk);
-}
-
-bool TcpStateClosed::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
-{
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
-    return default_state_action(tsd, trk);
-}
-
-bool TcpStateClosed::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
-{
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
     trk.update_tracker_ack_sent(tsd);
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
-bool TcpStateClosed::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateClosed::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
     trk.update_tracker_ack_recv(tsd);
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
-bool TcpStateClosed::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateClosed::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
     Flow* flow = tsd.get_flow();
 
     trk.update_tracker_ack_sent(tsd);
@@ -106,26 +78,19 @@ bool TcpStateClosed::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
         trk.session->tel.set_tcp_event(EVENT_DATA_ON_CLOSED);
 
     trk.session->mark_packet_for_drop(tsd);
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
-bool TcpStateClosed::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateClosed::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
     trk.update_tracker_ack_recv(tsd);
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
-bool TcpStateClosed::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateClosed::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
     trk.update_tracker_ack_sent(tsd);
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateClosed::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
@@ -139,21 +104,11 @@ bool TcpStateClosed::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
         else
             trk.session->tel.set_tcp_event(EVENT_DATA_AFTER_RST_RCVD);
     }
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
-bool TcpStateClosed::rst_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
+bool TcpStateClosed::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
-    return default_state_action(tsd, trk);
-}
-
-bool TcpStateClosed::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
-{
-    auto& trk = static_cast< TcpStreamTracker& >( tracker );
-
     if ( trk.update_on_rst_recv(tsd) )
     {
         trk.session->update_session_on_rst(tsd, false);
@@ -164,8 +119,7 @@ bool TcpStateClosed::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& track
     {
         trk.session->tel.set_tcp_event(EVENT_BAD_RST);
     }
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateClosed::do_pre_sm_packet_actions(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)

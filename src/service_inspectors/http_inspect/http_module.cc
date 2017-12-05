@@ -86,6 +86,11 @@ const Parameter HttpModule::http_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+THREAD_LOCAL ProfileStats HttpModule::http_profile;
+
+ProfileStats* HttpModule::get_profile() const
+{ return &http_profile; }
+
 THREAD_LOCAL PegCount HttpModule::peg_counts[PEG_COUNT_MAX] = { 0 };
 
 bool HttpModule::begin(const char*, int, SnortConfig*)

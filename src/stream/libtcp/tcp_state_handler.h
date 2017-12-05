@@ -55,20 +55,18 @@ public:
     virtual bool do_post_sm_packet_actions(TcpSegmentDescriptor&, TcpStreamTracker&);
 
 protected:
-    virtual bool syn_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
-    virtual bool syn_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
-    virtual bool syn_ack_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
-    virtual bool syn_ack_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
-    virtual bool ack_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
-    virtual bool ack_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
-    virtual bool data_seg_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
-    virtual bool data_seg_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
-    virtual bool fin_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
-    virtual bool fin_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
-    virtual bool rst_sent(TcpSegmentDescriptor&, TcpStreamTracker&);
-    virtual bool rst_recv(TcpSegmentDescriptor&, TcpStreamTracker&);
-
-    bool default_state_action(TcpSegmentDescriptor&, TcpStreamTracker&);
+    virtual bool syn_sent(TcpSegmentDescriptor&, TcpStreamTracker&) { return true; }
+    virtual bool syn_recv(TcpSegmentDescriptor&, TcpStreamTracker&) { return true; }
+    virtual bool syn_ack_sent(TcpSegmentDescriptor&, TcpStreamTracker&) { return true; }
+    virtual bool syn_ack_recv(TcpSegmentDescriptor&, TcpStreamTracker&) { return true; }
+    virtual bool ack_sent(TcpSegmentDescriptor&, TcpStreamTracker&) { return true; }
+    virtual bool ack_recv(TcpSegmentDescriptor&, TcpStreamTracker&) { return true; }
+    virtual bool data_seg_sent(TcpSegmentDescriptor&, TcpStreamTracker&) { return true; }
+    virtual bool data_seg_recv(TcpSegmentDescriptor&, TcpStreamTracker&) { return true; }
+    virtual bool fin_sent(TcpSegmentDescriptor&, TcpStreamTracker&) { return true; }
+    virtual bool fin_recv(TcpSegmentDescriptor&, TcpStreamTracker&) { return true; }
+    virtual bool rst_sent(TcpSegmentDescriptor&, TcpStreamTracker&) { return true; }
+    virtual bool rst_recv(TcpSegmentDescriptor&, TcpStreamTracker&) { return true; }
 
     const TcpStateMachine* tsm;
     TcpStreamTracker::TcpState tcp_state;

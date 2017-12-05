@@ -137,7 +137,7 @@ Shell::Shell(const char* s)
     lua = luaL_newstate();
 
     if ( !lua )
-        FatalError("lua state instantiation failed\n");
+        FatalError("Lua state instantiation failed\n");
 
     lua_atpanic(lua, Shell::panic);
     luaL_openlibs(lua);

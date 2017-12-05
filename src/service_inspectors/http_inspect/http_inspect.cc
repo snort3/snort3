@@ -24,6 +24,10 @@
 #include "http_inspect.h"
 
 #include "detection/detection_engine.h"
+#include "log/unified2.h"
+#include "protocols/packet.h"
+#include "stream/stream.h"
+
 #include "http_js_norm.h"
 #include "http_msg_body.h"
 #include "http_msg_body_chunk.h"
@@ -34,9 +38,6 @@
 #include "http_msg_status.h"
 #include "http_msg_trailer.h"
 #include "http_test_manager.h"
-#include "log/unified2.h"
-#include "protocols/packet.h"
-#include "stream/stream.h"
 
 using namespace HttpEnums;
 
@@ -262,6 +263,8 @@ int HttpInspect::get_xtra_jsnorm(Flow* flow, uint8_t** buf, uint32_t* len, uint3
 
 void HttpInspect::eval(Packet* p)
 {
+    Profile profile(HttpModule::get_profile_stats());
+
     const SourceId source_id = p->is_from_client() ? SRC_CLIENT : SRC_SERVER;
 
     HttpFlowData* session_data =

@@ -28,6 +28,8 @@
 #include <glob.h>
 #include <libgen.h>
 
+#include <cassert>
+
 #include "appid_config.h"
 #include "lua_detector_util.h"
 #include "lua_detector_api.h"
@@ -86,6 +88,10 @@ bool get_lua_field(lua_State* L, int table, const char* field, IpProtocol& out)
 static lua_State* create_lua_state(AppIdModuleConfig* mod_config)
 {
     auto L = luaL_newstate();
+
+    if ( !L )
+        return L;
+
     luaL_openlibs(L);
 
     register_detector(L);
@@ -310,9 +316,15 @@ void LuaDetectorManager::load_detector(char* detector_filename, bool isCustom)
     char detectorName[MAX_LUA_DETECTOR_FILENAME_LEN];
 
     lua_State* L = create_lua_state(config.mod_config);
+
     if ( !L )
     {
-        ErrorMessage("can not create new luaState");
+        static bool logged = false;
+        if ( !logged )
+        {
+            ErrorMessage("Error can not create new luaState\n");
+            logged = true;
+        }
         return;
     }
 

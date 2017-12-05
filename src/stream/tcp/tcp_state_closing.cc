@@ -41,12 +41,10 @@ TcpStateClosing::TcpStateClosing(TcpStateMachine& tsm) :
 {
 }
 
-
 bool TcpStateClosing::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.session->check_for_repeated_syn(tsd);
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateClosing::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
@@ -54,25 +52,13 @@ bool TcpStateClosing::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     trk.normalizer->ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs() );
     if ( tsd.get_seg_len() )
         trk.session->handle_data_on_syn(tsd);
-
-    return default_state_action(tsd, trk);
-}
-
-bool TcpStateClosing::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
-{
-    return default_state_action(tsd, trk);
-}
-
-bool TcpStateClosing::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
-{
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateClosing::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.update_tracker_ack_sent(tsd);
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateClosing::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
@@ -80,15 +66,13 @@ bool TcpStateClosing::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     trk.update_tracker_ack_recv(tsd);
     if ( SEQ_GEQ(tsd.get_end_seq(), trk.r_nxt_ack) )
         trk.set_tcp_state(TcpStreamTracker::TCP_TIME_WAIT);
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateClosing::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.update_tracker_ack_sent(tsd);
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateClosing::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
@@ -96,15 +80,13 @@ bool TcpStateClosing::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker&
     trk.update_tracker_ack_recv(tsd);
     if ( SEQ_GEQ(tsd.get_end_seq(), trk.r_nxt_ack) )
         trk.set_tcp_state(TcpStreamTracker::TCP_TIME_WAIT);
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateClosing::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.update_tracker_ack_sent(tsd);
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateClosing::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
@@ -125,13 +107,7 @@ bool TcpStateClosing::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
     if ( SEQ_EQ(tsd.get_seg_ack(), trk.get_snd_nxt() ) )
         trk.set_tcp_state(TcpStreamTracker::TCP_TIME_WAIT);
-
-    return default_state_action(tsd, trk);
-}
-
-bool TcpStateClosing::rst_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
-{
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateClosing::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
@@ -147,8 +123,7 @@ bool TcpStateClosing::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     {
         trk.session->tel.set_tcp_event(EVENT_BAD_RST);
     }
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateClosing::do_pre_sm_packet_actions(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)

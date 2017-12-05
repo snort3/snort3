@@ -77,7 +77,7 @@ yet firm so feedback is welcome to get something we can live with.
   comments can be obviated with better code.  Clear code is better than a
   comment.
 
-* Heed Tim Ottinger's Rule on Comments (https://disqus.com/by/tim_ottinger/):
+* Heed Tim Ottinger's Rules on Comments (https://disqus.com/by/tim_ottinger/):
 
     1. Comments should only say what the code is incapable of saying.
     2. Comments that repeat (or pre-state) what the code is doing must be

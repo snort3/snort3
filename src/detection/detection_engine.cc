@@ -361,7 +361,6 @@ void DetectionEngine::inspect(Packet* p)
         InspectorManager::probe(p);
     }
 
-    Profile profile(eventqPerfStats);
     log_events(p);
     Active::apply_delayed_action(p);
 
@@ -464,6 +463,7 @@ static int log_events(void* event, void* user)
 */
 int DetectionEngine::log_events(Packet* p)
 {
+    Profile profile(eventqPerfStats);
     SF_EVENTQ* pq = p->context->equeue;
     sfeventq_action(pq, ::log_events, (void*)p);
     return 0;

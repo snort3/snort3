@@ -277,6 +277,8 @@ bool TcpStreamSession::add_alert(Packet* p, uint32_t gid, uint32_t sid)
     ai->gid = gid;
     ai->sid = sid;
     ai->seq = 0;
+    ai->event_id = 0;
+    ai->event_second = 0;
 
     st->alert_count++;
 

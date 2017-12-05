@@ -87,6 +87,7 @@ TcpSession::~TcpSession()
 bool TcpSession::setup(Packet* p)
 {
     TcpStreamSession::setup(p);
+    splitter_init = false;
 
     client->init_toolbox();
     server->init_toolbox();
@@ -1027,6 +1028,17 @@ bool TcpSession::do_packet_analysis_pre_checks(Packet* p, TcpSegmentDescriptor& 
 {
     if ( !is_flow_handling_packets(p) )
         return false;
+
+    if ( !splitter_init and tsd.get_seg_len() > 0 )
+    {
+        client->set_splitter(tsd.get_flow());
+        server->set_splitter(tsd.get_flow());
+
+        client->init_flush_policy();
+        server->init_flush_policy();
+
+        splitter_init = true;
+    }
 
     pkt_action_mask = ACTION_NOTHING;
     tel.clear_tcp_events();

@@ -94,7 +94,7 @@ Binding::~Binding()
         sfvar_free(when.dst_nets);
 }
 
-bool Binding::check_ips_policy(const Flow* flow) const
+inline bool Binding::check_ips_policy(const Flow* flow) const
 {
     if ( !when.ips_id )
         return true;
@@ -105,7 +105,7 @@ bool Binding::check_ips_policy(const Flow* flow) const
     return false;
 }
 
-bool Binding::check_addr(const Flow* flow) const
+inline bool Binding::check_addr(const Flow* flow) const
 {
     if ( when.split_nets )
         return true;
@@ -137,7 +137,7 @@ bool Binding::check_addr(const Flow* flow) const
     return false;
 }
 
-bool Binding::check_proto(const Flow* flow) const
+inline bool Binding::check_proto(const Flow* flow) const
 {
     if ( when.protos & (unsigned)flow->pkt_type )
         return true;
@@ -145,7 +145,7 @@ bool Binding::check_proto(const Flow* flow) const
     return false;
 }
 
-bool Binding::check_iface(const Packet* p) const
+inline bool Binding::check_iface(const Packet* p) const
 {
     if ( !p or when.ifaces.none() )
         return true;
@@ -156,19 +156,19 @@ bool Binding::check_iface(const Packet* p) const
     if ( in > 0 and when.ifaces.test(out) )
         return true;
 
-    if ( out > 0 and when.ifaces.test(out) )
+    if ( out > 0 and when.ifaces.test(in) )
         return true;
 
     return false;
 }
 
-bool Binding::check_vlan(const Flow* flow) const
+inline bool Binding::check_vlan(const Flow* flow) const
 {
     unsigned v = flow->key->vlan_tag;
     return when.vlans.test(v);
 }
 
-bool Binding::check_port(const Flow* flow) const
+inline bool Binding::check_port(const Flow* flow) const
 {
     if ( when.split_ports )
         return true;
@@ -180,14 +180,15 @@ bool Binding::check_port(const Flow* flow) const
         case BindWhen::BR_CLIENT:
             return when.src_ports.test(flow->client_port);
         case BindWhen::BR_EITHER:
-            return (when.src_ports.test(flow->client_port) or when.src_ports.test(flow->server_port) );
+            return (when.src_ports.test(flow->client_port) or
+                when.src_ports.test(flow->server_port) );
         default:
             break;
     }
     return false;
 }
 
-bool Binding::check_service(const Flow* flow) const
+inline bool Binding::check_service(const Flow* flow) const
 {
     if ( !flow->service )
         return when.svc.empty();
@@ -253,8 +254,8 @@ static Binding::DirResult directional_match(const When& when_src, const When& wh
     return Binding::DR_NO_MATCH;
 }
 
-Binding::DirResult Binding::check_split_addr(const Flow* flow, const Packet* p,
-    const Binding::DirResult dr) const
+inline Binding::DirResult Binding::check_split_addr(
+    const Flow* flow, const Packet* p, const Binding::DirResult dr) const
 {
     if ( !when.split_nets )
         return dr;
@@ -262,52 +263,54 @@ Binding::DirResult Binding::check_split_addr(const Flow* flow, const Packet* p,
     if ( !when.src_nets && !when.dst_nets )
         return dr;
     
-    const SfIp* src_ip = &flow->client_ip;
-    const SfIp* dst_ip = &flow->server_ip;
+    const SfIp* src_ip;
+    const SfIp* dst_ip;
 
     if ( p && p->ptrs.ip_api.is_ip() )
     {
         src_ip = p->ptrs.ip_api.get_src();
         dst_ip = p->ptrs.ip_api.get_dst();
     }
+    else
+    {
+        src_ip = &flow->client_ip;
+        dst_ip = &flow->server_ip;
+    }
 
     return directional_match(when.src_nets, when.dst_nets, src_ip, dst_ip, dr,
         [](sfip_var_t* when_val, const SfIp* traffic_val)
         { return when_val ? sfvar_ip_in(when_val, traffic_val) : true; });
-
 }
 
-Binding::DirResult Binding::check_split_port(const Flow* flow, const Packet* p,
-    const Binding::DirResult dr) const
+inline Binding::DirResult Binding::check_split_port(
+    const Flow* flow, const Packet* p, const Binding::DirResult dr) const
 {
     if ( !when.split_ports )
         return dr;
     
-    uint16_t src_port = flow->client_port; 
-    uint16_t dst_port = flow->server_port; 
+    uint16_t src_port;
+    uint16_t dst_port;
 
-    if ( p )
+    if ( !p )
     {
-        if ( p->is_tcp() )
-        {
-            src_port = p->ptrs.tcph->src_port();
-            dst_port = p->ptrs.tcph->dst_port();
-        }
-        else if ( p->is_udp() )
-        {
-            src_port = p->ptrs.udph->src_port();
-            dst_port = p->ptrs.udph->dst_port();
-        }
-        else
-            return dr;
+        src_port = flow->client_port; 
+        dst_port = flow->server_port; 
     }
+    else if ( p->is_tcp() or p->is_udp() )
+    {
+        src_port = p->ptrs.sp;
+        dst_port = p->ptrs.dp;
+    }
+    else
+        return dr;
 
     return directional_match(when.src_ports, when.dst_ports, src_port, dst_port, dr,
         [](const PortBitSet& when_val, uint16_t traffic_val)
         { return when_val.test(traffic_val); });
 }
 
-Binding::DirResult Binding::check_zone(const Packet* p, const Binding::DirResult dr) const
+inline Binding::DirResult Binding::check_zone(
+    const Packet* p, const Binding::DirResult dr) const
 {
     if ( !p )
         return dr;
@@ -649,6 +652,7 @@ void Binder::update(SnortConfig*, const char* name)
 
 void Binder::eval(Packet* p)
 {
+    Profile profile(bindPerfStats);
     Stuff stuff;
     Flow* flow = p->flow;
 
@@ -706,6 +710,8 @@ int Binder::exec_eval_standby_flow( void* pv )
 
 int Binder::exec(int operation, void* pv)
 {
+    Profile profile(bindPerfStats);
+
     switch( operation )
     {
         case BinderSpace::ExecOperation::HANDLE_GADGET:

@@ -33,7 +33,6 @@ TcpStateListen::TcpStateListen(TcpStateMachine& tsm) :
 {
 }
 
-
 bool TcpStateListen::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     if ( trk.session->config->require_3whs() || tsd.has_wscale() || ( tsd.get_seg_len() > 0 ) )
@@ -42,8 +41,7 @@ bool TcpStateListen::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
         if ( tsd.get_pkt()->is_from_server() )
             trk.session->tel.set_tcp_event(EVENT_4WHS);
     }
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateListen::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
@@ -53,14 +51,12 @@ bool TcpStateListen::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     trk.session->set_pkt_action_flag(trk.normalizer->handle_paws(tsd) );
     if ( tsd.get_seg_len() > 0 )
         trk.session->handle_data_on_syn(tsd);
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateListen::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     Flow* flow = tsd.get_flow();
-
     flow->session_state |= ( STREAM_STATE_SYN | STREAM_STATE_SYN_ACK );
 
     if ( trk.session->config->midstream_allowed(tsd.get_pkt() ) )
@@ -74,13 +70,13 @@ bool TcpStateListen::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& t
         trk.session->generate_no_3whs_event();
         return false;
     }
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateListen::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( !trk.session->config->require_3whs() || trk.session->config->midstream_allowed(tsd.get_pkt() ) )
+    if ( !trk.session->config->require_3whs() or
+         trk.session->config->midstream_allowed(tsd.get_pkt() ) )
     {
         trk.init_on_synack_recv(tsd);
         if ( tsd.get_seg_len() > 0 )
@@ -91,8 +87,7 @@ bool TcpStateListen::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& t
         trk.session->generate_no_3whs_event();
         return false;
     }
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateListen::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
@@ -115,8 +110,7 @@ bool TcpStateListen::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
         trk.session->generate_no_3whs_event();
         return false;
     }
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateListen::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
@@ -137,8 +131,7 @@ bool TcpStateListen::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
         trk.session->generate_no_3whs_event();
         return false;
     }
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateListen::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
@@ -161,8 +154,7 @@ bool TcpStateListen::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
         trk.session->generate_no_3whs_event();
         return false;
     }
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateListen::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
@@ -182,22 +174,19 @@ bool TcpStateListen::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
         trk.session->generate_no_3whs_event();
         return false;
     }
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateListen::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( trk.session->config->midstream_allowed(tsd.get_pkt() ) )
+    if ( !trk.session->config->midstream_allowed(tsd.get_pkt()) and
+        trk.session->config->require_3whs() )
     {
-    }
-    else if ( trk.session->config->require_3whs() )
-    {
+        // FIXIT-L listen gets fin triggers 129:20 ??
         trk.session->generate_no_3whs_event();
         return false;
     }
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateListen::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
@@ -211,23 +200,12 @@ bool TcpStateListen::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
         trk.session->generate_no_3whs_event();
         return false;
     }
-
-    return default_state_action(tsd, trk);
-}
-
-bool TcpStateListen::rst_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
-{
-    if ( trk.session->config->midstream_allowed(tsd.get_pkt() ) )
-    {
-    }
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateListen::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.normalizer->trim_rst_payload(tsd);
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 

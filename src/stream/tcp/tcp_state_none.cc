@@ -33,31 +33,29 @@ TcpStateNone::TcpStateNone(TcpStateMachine& tsm) :
 {
 }
 
-
 bool TcpStateNone::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     Flow* flow = tsd.get_flow();
-
     flow->ssn_state.direction = FROM_CLIENT;
-
     flow->session_state |= STREAM_STATE_SYN;
+
     trk.init_on_syn_sent(tsd);
     trk.session->init_new_tcp_session(tsd);
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
-bool TcpStateNone::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
+bool TcpStateNone::syn_recv(TcpSegmentDescriptor&, TcpStreamTracker&)
 {
     // FIXIT-H syn received on undefined client, figure this out and do the right thing
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateNone::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     Flow* flow = tsd.get_flow();
 
-    if ( !trk.session->config->require_3whs() || trk.session->config->midstream_allowed(tsd.get_pkt() ) )
+    if ( !trk.session->config->require_3whs() or
+         trk.session->config->midstream_allowed(tsd.get_pkt() ) )
     {
         flow->session_state |= ( STREAM_STATE_SYN | STREAM_STATE_SYN_ACK );
         trk.init_on_synack_sent(tsd);
@@ -69,8 +67,7 @@ bool TcpStateNone::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
         trk.session->generate_no_3whs_event();
         return false;
     }
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateNone::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
@@ -87,8 +84,7 @@ bool TcpStateNone::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
         trk.session->generate_no_3whs_event();
         return false;
     }
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateNone::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
@@ -111,8 +107,7 @@ bool TcpStateNone::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
         trk.session->generate_no_3whs_event();
         return false;
     }
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateNone::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
@@ -133,8 +128,7 @@ bool TcpStateNone::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
         trk.session->generate_no_3whs_event();
         return false;
     }
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateNone::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
@@ -157,8 +151,7 @@ bool TcpStateNone::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tr
         trk.session->generate_no_3whs_event();
         return false;
     }
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateNone::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
@@ -179,8 +172,7 @@ bool TcpStateNone::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tr
         trk.session->generate_no_3whs_event();
         return false;
     }
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateNone::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
@@ -194,8 +186,7 @@ bool TcpStateNone::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
         trk.session->generate_no_3whs_event();
         return false;
     }
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateNone::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
@@ -209,8 +200,7 @@ bool TcpStateNone::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
         trk.session->generate_no_3whs_event();
         return false;
     }
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateNone::rst_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
@@ -219,8 +209,7 @@ bool TcpStateNone::rst_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     {
         // FIXIT-H handle RST on midstream
     }
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 bool TcpStateNone::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
@@ -235,8 +224,7 @@ bool TcpStateNone::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     {
         trk.session->tel.set_tcp_event(EVENT_BAD_RST);
     }
-
-    return default_state_action(tsd, trk);
+    return true;
 }
 
 #ifdef FOO  // FIXIT-H UNIT_TEST need work
