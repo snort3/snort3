@@ -256,11 +256,14 @@ bool ControlMgmt::service_users(int& current_fd, Request*& current_request)
     {
         ret = process_control_commands(current_fd, current_request);
 
-        if ( FD_ISSET(listener, &inputs) )
+        if ( listener >= 0 )
         {
-            if ( !socket_conn() )
+            if ( FD_ISSET(listener, &inputs) )
             {
-                ret = true;
+                if ( !socket_conn() )
+                {
+                    ret = true;
+                }
             }
         }
     }
