@@ -157,7 +157,7 @@ FileVerdict FilePolicy::type_lookup(Flow*, FileInfo* file)
     return rule.use.verdict;
 }
 
-FileVerdict FilePolicy::signature_lookup(Flow* flow, FileInfo* file)
+FileVerdict FilePolicy::signature_lookup(Flow*, FileInfo* file)
 {
     FileRule& rule = match_file_rule(nullptr, file);
 
@@ -171,10 +171,5 @@ FileVerdict FilePolicy::signature_lookup(Flow* flow, FileInfo* file)
             delete captured;
     }
 
-    FileVerdict verdict = match_file_signature(nullptr, file);
-    FileEnforcer* file_enforcer = FileService::get_file_enforcer();
-    if (file_enforcer)
-        file_enforcer->apply_verdict(flow, file, verdict, false, this);
-
-    return verdict;
+    return match_file_signature(nullptr, file);
 }

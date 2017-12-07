@@ -354,9 +354,12 @@ void FileContext::finish_signature_lookup(Flow* flow, bool final_lookup, FilePol
     if (get_file_sig_sha256())
     {
         //Check file type based on file policy
-        FileVerdict verdict = policy->signature_lookup(flow, this);
+        verdict = policy->signature_lookup(flow, this);
         if ( verdict != FILE_VERDICT_UNKNOWN || final_lookup )
         {
+            FileEnforcer* file_enforcer = FileService::get_file_enforcer();
+            if (file_enforcer)
+                file_enforcer->apply_verdict(flow, this, verdict, false, policy);
             log_file_event(flow, policy);
             config_file_signature(false);
             file_stats->signatures_processed[get_file_type()][get_file_direction()]++;
