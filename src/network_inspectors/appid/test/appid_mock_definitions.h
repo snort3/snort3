@@ -72,6 +72,9 @@ AppInfoTableEntry* AppInfoManager::get_app_info_entry(int)
   return nullptr;
 }
 
+bool AppInfoManager::configured()
+{ return false; }
+
 // Stubs for service_state.h
 ServiceDiscoveryState* AppIdServiceState::get(SfIp const*, IpProtocol, unsigned short, bool)
 {

@@ -104,6 +104,7 @@ public:
     void set_app_info_active(AppId);
     const char* get_app_name(AppId);
     int32_t get_appid_by_name(const char* app_name);
+    bool configured();
 
     void set_app_info_flags(AppId appId, unsigned flags)
     {

@@ -322,7 +322,7 @@ void LuaDetectorManager::load_detector(char* detector_filename, bool isCustom)
         static bool logged = false;
         if ( !logged )
         {
-            ErrorMessage("Error can not create new luaState\n");
+            ErrorMessage("Error - appid: can not create new luaState\n");
             logged = true;
         }
         return;
@@ -330,8 +330,8 @@ void LuaDetectorManager::load_detector(char* detector_filename, bool isCustom)
 
     if ( luaL_loadfile(L, detector_filename) || lua_pcall(L, 0, 0, 0) )
     {
-        ErrorMessage("Error loading Lua detector: %s : %s\n", detector_filename, lua_tostring(L,
-            -1));
+        ErrorMessage("Error - appid: loading Lua detector: %s : %s\n",
+            detector_filename, lua_tostring(L, -1));
         lua_close(L);
         return;
     }
@@ -361,19 +361,25 @@ void LuaDetectorManager::load_lua_detectors(const char* path, bool isCustom)
         globfree(&globs);
     }
     else if (rval == GLOB_NOMATCH)
-        ParseWarning(WARN_CONF, "No lua detectors found in directory '%s'\n", pattern);
+        ParseWarning(WARN_CONF, "appid: no lua detectors found in directory '%s'", pattern);
     else
-        ParseWarning(WARN_CONF, "Error reading lua detectors directory '%s'. Error Code: %d\n",
+        ParseWarning(WARN_CONF,
+            "appid: error reading lua detectors directory '%s'. Error Code: %d",
             pattern, rval);
 }
 
 void LuaDetectorManager::initialize_lua_detectors()
 {
     char path[PATH_MAX];
+    const char* dir = config.mod_config->app_detector_dir;
 
-    snprintf(path, sizeof(path), "%s/odp/lua", config.mod_config->app_detector_dir);
+    if ( !dir )
+        return;
+
+    snprintf(path, sizeof(path), "%s/odp/lua", dir);
     load_lua_detectors(path, false);
-    snprintf(path, sizeof(path), "%s/custom/lua", config.mod_config->app_detector_dir);
+
+    snprintf(path, sizeof(path), "%s/custom/lua", dir);
     load_lua_detectors(path, true);
 }
 

@@ -175,9 +175,13 @@ bool AppIdModule::begin(const char* /*fqn*/, int, SnortConfig*)
 
 bool AppIdModule::end(const char*, int, SnortConfig*)
 {
-    if ( (config == nullptr) || (config->app_detector_dir == nullptr) )
-        ParseWarning(WARN_CONF,"no app_detector_dir present.  No support for appid in rules.\n");
+    assert(config);
 
+    if ( !config->app_detector_dir )
+    {
+        ParseWarning(WARN_CONF,
+            "appid: app_detector_dir not configured; no support for appids in rules.\n");
+    }
     return true;
 }
 

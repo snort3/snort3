@@ -138,6 +138,11 @@ static AppId get_static_app_info_entry(AppId appid)
     return 0;
 }
 
+bool AppInfoManager::configured()
+{
+    return !app_info_table.empty();
+}
+
 AppInfoTableEntry* AppInfoManager::get_app_info_entry(AppId appId, const
     AppInfoTable& lookup_table)
 {
@@ -257,7 +262,7 @@ void AppInfoManager::set_app_info_active(AppId appId)
     if (entry)
         entry->flags |= APPINFO_FLAG_ACTIVE;
     else
-        WarningMessage("AppInfo: AppId %d has no entry in application info table\n", appId);
+        ParseWarning(WARN_PLUGINS, "appid: no entry in %s for %d", APP_MAPPING_FILE, appId);
 }
 
 void AppInfoManager::load_appid_config(AppIdModuleConfig* config, const char* path)
@@ -512,13 +517,23 @@ int16_t AppInfoManager::add_appid_protocol_reference(const char* protocol)
 
 void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config)
 {
+    if ( !mod_config->app_detector_dir )
+    {
+        AppIdPegCounts::set_detectors_configured();
+        return;  // no lua detectors, no rule support, already warned
+    }
+
     char filepath[PATH_MAX];
     snprintf(filepath, sizeof(filepath), "%s/odp/%s", mod_config->app_detector_dir,
         APP_MAPPING_FILE);
 
     FILE* tableFile = fopen(filepath, "r");
 
-    if ( tableFile )
+    if ( !tableFile )
+    {
+        ParseError("appid: could not open %s", filepath);
+    }
+    else
     {
         char buf[MAX_TABLE_LINE_LEN];
 
@@ -605,11 +620,6 @@ void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config)
         snprintf(filepath, sizeof(filepath), "%s/custom/%s", mod_config->app_detector_dir,
             USR_CONFIG_FILE);
         load_appid_config (mod_config, filepath);
-    }
-    else
-    {
-        ParseWarning(WARN_RULES,
-            "Could not open AppMapping Table file: %s, no AppId rule support", filepath);
     }
 
     AppIdPegCounts::set_detectors_configured();

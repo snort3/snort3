@@ -48,9 +48,12 @@ void ServiceDetector::register_appid(AppId appId, unsigned extractsInfo)
     AppInfoTableEntry* pEntry = AppInfoManager::get_instance().get_app_info_entry(appId);
     if (!pEntry)
     {
-        ParseWarning(WARN_RULES,
-            "AppId: ID to Name mapping entry missing for AppId: %d. No rule support for this ID.",
-            appId);
+        if ( AppInfoManager::get_instance().configured() )
+        {
+            ParseWarning(WARN_RULES,
+                "appid: no entry for %d in appMapping.data; no rule support for this ID.",
+                appId);
+        }
         return;
     }
     extractsInfo &= (APPINFO_FLAG_SERVICE_ADDITIONAL | APPINFO_FLAG_SERVICE_UDP_REVERSED);

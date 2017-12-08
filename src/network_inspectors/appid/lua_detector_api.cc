@@ -2343,6 +2343,7 @@ LuaStateDescriptor::~LuaStateDescriptor()
     // release the reference of the userdata on the lua side
     if ( detector_user_data_ref != LUA_REFNIL )
         luaL_unref(my_lua_state, LUA_REGISTRYINDEX, detector_user_data_ref);
+    lua_close(my_lua_state);
 }
 
 int LuaStateDescriptor::lua_validate(AppIdDiscoveryArgs& args)

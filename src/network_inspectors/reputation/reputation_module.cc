@@ -150,8 +150,8 @@ bool ReputationModule::end(const char*, int, SnortConfig*)
     EstimateNumEntries(conf);
     if (conf->numEntries <= 0)
     {
-        ParseWarning(WARN_CONF, "Can't find any whitelist/blacklist entries. "
-            "Reputation Preprocessor disabled.\n");
+        ParseWarning(WARN_CONF,
+            "reputation: can't find any whitelist/blacklist entries; disabled.");
         return true;
     }
 
