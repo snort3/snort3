@@ -68,6 +68,7 @@ public:
     bool trace_type = false;
     bool trace_signature = false;
     bool trace_stream = false;
+    int64_t verdict_delay = 0;
 
 private:
     FileIdentifier fileIdentifier;

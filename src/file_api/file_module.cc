@@ -174,6 +174,9 @@ static const Parameter file_id_params[] =
     { "trace_stream", Parameter::PT_BOOL, nullptr, "false",
       "enable runtime dump of file data" },
 
+    { "verdict_delay", Parameter::PT_INT, "0:", "0",
+      "number of queries to return final verdict" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -274,6 +277,12 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("trace_stream") )
         fc->trace_stream = v.get_bool();
+
+    else if ( v.is("verdict_delay") )
+    {
+        fc->verdict_delay = v.get_long();
+        fp.set_verdict_delay(fc->verdict_delay);
+    }
 
     else if ( v.is("file_rules") )
         return true;

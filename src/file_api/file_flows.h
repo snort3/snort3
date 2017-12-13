@@ -52,6 +52,8 @@ public:
     static void init()
     { file_flow_data_id = FlowData::create_flow_data_id(); }
 
+    void handle_retransmit(Packet*) override;
+
     // Factory method to get file flows
     static FileFlows* get_file_flows(Flow*);
     static FilePolicyBase* get_file_policy(Flow*);

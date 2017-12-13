@@ -71,6 +71,7 @@ public:
     void set_file_signature(bool enabled);
     void set_file_capture(bool enabled);
     void load();
+    void set_verdict_delay(int64_t delay) { verdict_delay = delay; }
 
 private:
     FileRule& match_file_rule(Flow*, FileInfo* file);
@@ -80,6 +81,8 @@ private:
     bool type_enabled = false;
     bool signature_enabled = false;
     bool capture_enabled = false;
+    int64_t verdict_delay = 0;
+
 };
 
 #endif

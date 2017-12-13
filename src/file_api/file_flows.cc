@@ -35,10 +35,27 @@
 
 #include "file_cache.h"
 #include "file_config.h"
+#include "file_enforcer.h"
 #include "file_lib.h"
 #include "file_service.h"
 
 unsigned FileFlows::file_flow_data_id = 0;
+
+void FileFlows::handle_retransmit (Packet*)
+{
+    if (file_policy == nullptr)
+        return;
+
+    FileContext* file = get_current_file_context();
+    if ((file == nullptr) or (file->verdict != FILE_VERDICT_PENDING))
+        return;
+
+    FileVerdict verdict = file_policy->signature_lookup(flow, file);
+    FileEnforcer* file_enforcer = FileService::get_file_enforcer();
+    if (file_enforcer)
+        file_enforcer->apply_verdict(flow, file, verdict, false,file_policy);
+    file->log_file_event(flow, file_policy);
+}
 
 FileFlows* FileFlows::get_file_flows(Flow* flow)
 {

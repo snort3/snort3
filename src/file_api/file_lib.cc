@@ -338,7 +338,7 @@ void FileContext::log_file_event(Flow* flow, FilePolicyBase* policy)
 
 FileVerdict FileContext::file_signature_lookup(Flow* flow)
 {
-    if (get_file_sig_sha256() && is_file_signature_enabled())
+    if (get_file_sig_sha256())
     {
         FilePolicyBase* policy = FileFlows::get_file_policy(flow);
 
@@ -353,7 +353,6 @@ void FileContext::finish_signature_lookup(Flow* flow, bool final_lookup, FilePol
 {
     if (get_file_sig_sha256())
     {
-        //Check file type based on file policy
         verdict = policy->signature_lookup(flow, this);
         if ( verdict != FILE_VERDICT_UNKNOWN || final_lookup )
         {

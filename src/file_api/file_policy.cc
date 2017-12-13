@@ -135,7 +135,15 @@ FileVerdict FilePolicy::match_file_signature(Flow*, FileInfo* file)
 
         auto search = file_shas.find(sha);
         if (search != file_shas.end())
-            return search->second;
+        {
+            if (verdict_delay > 0)
+            {
+                verdict_delay--;
+                return FILE_VERDICT_PENDING;
+            }
+            else
+                return search->second;
+        }
     }
 
     return FILE_VERDICT_UNKNOWN;
