@@ -779,7 +779,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0 (Build 239) from 2.9.8-383
+o"  )~   Version 3.0.0 (Build 240) from 2.9.8-383
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2017 Cisco and/or its affiliates. All rights reserved.
@@ -7087,6 +7087,30 @@ port <strong>hosts[].services[].port</strong>: port number
 </ul></div>
 </div>
 <div class="sect2">
+<h3 id="_inspection">inspection</h3>
+<div class="paragraph"><p>What: configure basic inspection policy parameters</p></div>
+<div class="paragraph"><p>Type: basic</p></div>
+<div class="paragraph"><p>Usage: inspect</p></div>
+<div class="paragraph"><p>Configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+int <strong>inspection.id</strong> = 0: correlate policy and events with other items in configuration { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+string <strong>inspection.uuid</strong>: correlate events by uuid
+</p>
+</li>
+<li>
+<p>
+enum <strong>inspection.mode</strong> = inline-test: set policy mode { inline | inline-test }
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
 <h3 id="_ips">ips</h3>
 <div class="paragraph"><p>What: configure IPS rule processing</p></div>
 <div class="paragraph"><p>Type: basic</p></div>
@@ -7120,7 +7144,7 @@ string <strong>ips.rules</strong>: snort rules and includes
 </li>
 <li>
 <p>
-string <strong>ips.uuid</strong>: IPS policy uuid
+string <strong>ips.uuid</strong> = 00000000-0000-0000-0000-000000000000: IPS policy uuid
 </p>
 </li>
 </ul></div>
@@ -8192,6 +8216,11 @@ implied <strong>snort.--pause</strong>: wait for resume/quit command before proc
 </li>
 <li>
 <p>
+implied <strong>snort.--parsing-follows-files</strong>: parse relative paths from the perspective of the current configuration file
+</p>
+</li>
+<li>
+<p>
 string <strong>snort.--pcap-file</strong>: &lt;file&gt; file that contains a list of pcaps to read - read mode is implied
 </p>
 </li>
@@ -9236,6 +9265,11 @@ bool <strong>esp.decode_esp</strong> = false: enable for inspection of esp traff
 <li>
 <p>
 <strong>116:456</strong> (ipv6) too many IPv6 extension headers
+</p>
+</li>
+<li>
+<p>
+<strong>116:475</strong> (ipv6) IPv6 mobility header includes an invalid value for the <em>payload protocol</em> field
 </p>
 </li>
 </ul></div>
@@ -11296,6 +11330,11 @@ string <strong>file_id.file_rules[].category</strong>: file type category
 </li>
 <li>
 <p>
+string <strong>file_id.file_rules[].group</strong>: comma separated list of groups associated with file type
+</p>
+</li>
+<li>
+<p>
 string <strong>file_id.file_rules[].version</strong>: file type version
 </p>
 </li>
@@ -11352,6 +11391,11 @@ bool <strong>file_id.trace_signature</strong> = false: enable runtime dump of si
 <li>
 <p>
 bool <strong>file_id.trace_stream</strong> = false: enable runtime dump of file data
+</p>
+</li>
+<li>
+<p>
+int <strong>file_id.verdict_delay</strong> = 0: number of queries to return final verdict { 0: }
 </p>
 </li>
 </ul></div>
@@ -12783,17 +12827,12 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 <div class="ulist"><ul>
 <li>
 <p>
-<strong>normalizer.ip4_trim</strong>: eth packets trimmed to datagram size (sum)
-</p>
-</li>
-<li>
-<p>
 <strong>normalizer.test_ip4_trim</strong>: test eth packets trimmed to datagram size (sum)
 </p>
 </li>
 <li>
 <p>
-<strong>normalizer.ip4_tos</strong>: type of service normalizations (sum)
+<strong>normalizer.ip4_trim</strong>: eth packets trimmed to datagram size (sum)
 </p>
 </li>
 <li>
@@ -12803,7 +12842,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.ip4_df</strong>: don&#8217;t frag bit normalizations (sum)
+<strong>normalizer.ip4_tos</strong>: type of service normalizations (sum)
 </p>
 </li>
 <li>
@@ -12813,7 +12852,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.ip4_rf</strong>: reserved flag bit clears (sum)
+<strong>normalizer.ip4_df</strong>: don&#8217;t frag bit normalizations (sum)
 </p>
 </li>
 <li>
@@ -12823,7 +12862,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.ip4_ttl</strong>: time-to-live normalizations (sum)
+<strong>normalizer.ip4_rf</strong>: reserved flag bit clears (sum)
 </p>
 </li>
 <li>
@@ -12833,7 +12872,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.ip4_opts</strong>: ip4 options cleared (sum)
+<strong>normalizer.ip4_ttl</strong>: time-to-live normalizations (sum)
 </p>
 </li>
 <li>
@@ -12843,7 +12882,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.icmp4_echo</strong>: icmp4 ping normalizations (sum)
+<strong>normalizer.ip4_opts</strong>: ip4 options cleared (sum)
 </p>
 </li>
 <li>
@@ -12853,7 +12892,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.ip6_hops</strong>: ip6 hop limit normalizations (sum)
+<strong>normalizer.icmp4_echo</strong>: icmp4 ping normalizations (sum)
 </p>
 </li>
 <li>
@@ -12863,7 +12902,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.ip6_options</strong>: ip6 options cleared (sum)
+<strong>normalizer.ip6_hops</strong>: ip6 hop limit normalizations (sum)
 </p>
 </li>
 <li>
@@ -12873,7 +12912,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.icmp6_echo</strong>: icmp6 echo normalizations (sum)
+<strong>normalizer.ip6_options</strong>: ip6 options cleared (sum)
 </p>
 </li>
 <li>
@@ -12883,7 +12922,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.tcp_syn_options</strong>: SYN only options cleared from non-SYN packets (sum)
+<strong>normalizer.icmp6_echo</strong>: icmp6 echo normalizations (sum)
 </p>
 </li>
 <li>
@@ -12893,7 +12932,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.tcp_options</strong>: packets with options cleared (sum)
+<strong>normalizer.tcp_syn_options</strong>: SYN only options cleared from non-SYN packets (sum)
 </p>
 </li>
 <li>
@@ -12903,7 +12942,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.tcp_padding</strong>: packets with padding cleared (sum)
+<strong>normalizer.tcp_options</strong>: packets with options cleared (sum)
 </p>
 </li>
 <li>
@@ -12913,7 +12952,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.tcp_reserved</strong>: packets with reserved bits cleared (sum)
+<strong>normalizer.tcp_padding</strong>: packets with padding cleared (sum)
 </p>
 </li>
 <li>
@@ -12923,7 +12962,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.tcp_nonce</strong>: packets with nonce bit cleared (sum)
+<strong>normalizer.tcp_reserved</strong>: packets with reserved bits cleared (sum)
 </p>
 </li>
 <li>
@@ -12933,7 +12972,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.tcp_urgent_ptr</strong>: packets without data with urgent pointer cleared (sum)
+<strong>normalizer.tcp_nonce</strong>: packets with nonce bit cleared (sum)
 </p>
 </li>
 <li>
@@ -12943,7 +12982,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.tcp_ecn_pkt</strong>: packets with ECN bits cleared (sum)
+<strong>normalizer.tcp_urgent_ptr</strong>: packets without data with urgent pointer cleared (sum)
 </p>
 </li>
 <li>
@@ -12953,7 +12992,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.tcp_ts_ecr</strong>: timestamp cleared on non-ACKs (sum)
+<strong>normalizer.tcp_ecn_pkt</strong>: packets with ECN bits cleared (sum)
 </p>
 </li>
 <li>
@@ -12963,7 +13002,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.tcp_req_urg</strong>: cleared urgent pointer when urgent flag is not set (sum)
+<strong>normalizer.tcp_ts_ecr</strong>: timestamp cleared on non-ACKs (sum)
 </p>
 </li>
 <li>
@@ -12973,7 +13012,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.tcp_req_pay</strong>: cleared urgent pointer and urgent flag when there is no payload (sum)
+<strong>normalizer.tcp_req_urg</strong>: cleared urgent pointer when urgent flag is not set (sum)
 </p>
 </li>
 <li>
@@ -12983,7 +13022,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.tcp_req_urp</strong>: cleared the urgent flag if the urgent pointer is not set (sum)
+<strong>normalizer.tcp_req_pay</strong>: cleared urgent pointer and urgent flag when there is no payload (sum)
 </p>
 </li>
 <li>
@@ -12993,7 +13032,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.tcp_trim_syn</strong>: tcp segments trimmed on SYN (sum)
+<strong>normalizer.tcp_req_urp</strong>: cleared the urgent flag if the urgent pointer is not set (sum)
 </p>
 </li>
 <li>
@@ -13003,7 +13042,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.tcp_trim_rst</strong>: RST packets with data trimmed (sum)
+<strong>normalizer.tcp_trim_syn</strong>: tcp segments trimmed on SYN (sum)
 </p>
 </li>
 <li>
@@ -13013,7 +13052,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.tcp_trim_win</strong>: data trimmed to window (sum)
+<strong>normalizer.tcp_trim_rst</strong>: RST packets with data trimmed (sum)
 </p>
 </li>
 <li>
@@ -13023,7 +13062,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.tcp_trim_mss</strong>: data trimmed to MSS (sum)
+<strong>normalizer.tcp_trim_win</strong>: data trimmed to window (sum)
 </p>
 </li>
 <li>
@@ -13033,7 +13072,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.tcp_ecn_session</strong>: ECN bits cleared (sum)
+<strong>normalizer.tcp_trim_mss</strong>: data trimmed to MSS (sum)
 </p>
 </li>
 <li>
@@ -13043,7 +13082,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.tcp_ts_nop</strong>: timestamp options cleared (sum)
+<strong>normalizer.tcp_ecn_session</strong>: ECN bits cleared (sum)
 </p>
 </li>
 <li>
@@ -13053,7 +13092,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.tcp_ips_data</strong>: normalized segments (sum)
+<strong>normalizer.tcp_ts_nop</strong>: timestamp options cleared (sum)
 </p>
 </li>
 <li>
@@ -13063,12 +13102,17 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 </li>
 <li>
 <p>
-<strong>normalizer.tcp_block</strong>: blocked segments (sum)
+<strong>normalizer.tcp_ips_data</strong>: normalized segments (sum)
 </p>
 </li>
 <li>
 <p>
 <strong>normalizer.test_tcp_block</strong>: test blocked segments (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>normalizer.tcp_block</strong>: blocked segments (sum)
 </p>
 </li>
 </ul></div>
@@ -13360,6 +13404,11 @@ string <strong>port_scan.ignore_scanners</strong>: list of CIDRs with optional p
 <li>
 <p>
 string <strong>port_scan.ignore_scanned</strong>: list of CIDRs with optional ports to ignore if the destination of scan alerts
+</p>
+</li>
+<li>
+<p>
+bool <strong>port_scan.alert_all</strong> = false: alert on all events over threshold within window if true; else alert on first only
 </p>
 </li>
 <li>
@@ -14878,7 +14927,7 @@ int <strong>stream.tcp_cache.pruning_timeout</strong> = 30: minimum inactive tim
 </li>
 <li>
 <p>
-int <strong>stream.tcp_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
+int <strong>stream.tcp_cache.idle_timeout</strong> = 3600: maximum inactive time before retiring session tracker { 1: }
 </p>
 </li>
 <li>
@@ -15491,7 +15540,7 @@ int <strong>stream_tcp.overlap_limit</strong> = 0: maximum number of allowed ove
 </li>
 <li>
 <p>
-int <strong>stream_tcp.max_pdu</strong> = 16384: maximum reassembled PDU size { 1460:65535 }
+int <strong>stream_tcp.max_pdu</strong> = 16384: maximum reassembled PDU size { 1460:32768 }
 </p>
 </li>
 <li>
@@ -15977,7 +16026,7 @@ bool <strong>telnet.normalize</strong> = false: eliminate escape sequences
 <h3 id="_wizard_2">wizard</h3>
 <div class="paragraph"><p>What: inspector that implements port-independent protocol identification</p></div>
 <div class="paragraph"><p>Type: inspector</p></div>
-<div class="paragraph"><p>Usage: global</p></div>
+<div class="paragraph"><p>Usage: inspect</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -17989,7 +18038,7 @@ string <strong>so.~func</strong>: name of eval function
 <div class="ulist"><ul>
 <li>
 <p>
-string <strong>soid.~</strong>: SO rule ID has &lt;gid&gt;|&lt;sid&gt; format, like 3|12345
+string <strong>soid.~</strong>: SO rule ID is unique key, eg &lt;gid&gt;_&lt;sid&gt;_&lt;rev&gt; like 3_45678_9
 </p>
 </li>
 </ul></div>
@@ -18310,7 +18359,7 @@ bool <strong>alert_csv.file</strong> = false: output to alert_csv.txt instead of
 </li>
 <li>
 <p>
-multi <strong>alert_csv.fields</strong> = timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | class | b64_data | dir | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | gid | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority | proto | rev | rule | service | sid | src_addr | src_ap | src_port | target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len | vlan }
+multi <strong>alert_csv.fields</strong> = timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | class | b64_data | dir | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | gid | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority | proto | rev | rule | seconds | service | sid | src_addr | src_ap | src_port | target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len | vlan }
 </p>
 </li>
 <li>
@@ -18396,7 +18445,7 @@ bool <strong>alert_json.file</strong> = false: output to alert_json.txt instead 
 </li>
 <li>
 <p>
-multi <strong>alert_json.fields</strong> = timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | class | b64_data | dir | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | gid | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority | proto | rev | rule | service | sid | src_addr | src_ap | src_port | target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len | vlan }
+multi <strong>alert_json.fields</strong> = timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | class | b64_data | dir | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | gid | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority | proto | rev | rule | seconds | service | sid | src_addr | src_ap | src_port | target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len | vlan }
 </p>
 </li>
 <li>
@@ -19926,6 +19975,11 @@ options into a Snort++ configuration file</p></div>
 <li>
 <p>
 <strong>-V</strong>                Print the current Snort2Lua version
+</p>
+</li>
+<li>
+<p>
+<strong>--bind-wizard</strong>     Add default wizard to bindings
 </p>
 </li>
 <li>
@@ -21552,7 +21606,7 @@ Write comments sparingly with a mind towards future proofing.  Often the
 </li>
 <li>
 <p>
-Heed Tim Ottinger&#8217;s Rule on Comments (<a href="https://disqus.com/by/tim_ottinger/">https://disqus.com/by/tim_ottinger/</a>):
+Heed Tim Ottinger&#8217;s Rules on Comments (<a href="https://disqus.com/by/tim_ottinger/">https://disqus.com/by/tim_ottinger/</a>):
 </p>
 <div class="olist arabic"><ol class="arabic">
 <li>
@@ -22482,6 +22536,11 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
+<strong>--parsing-follows-files</strong> parse relative paths from the perspective of the current configuration file
+</p>
+</li>
+<li>
+<p>
 <strong>--pause</strong> wait for resume/quit command before processing packets/terminating
 </p>
 </li>
@@ -22792,7 +22851,7 @@ int <strong>active.min_interval</strong> = 255: minimum number of seconds betwee
 </li>
 <li>
 <p>
-multi <strong>alert_csv.fields</strong> = timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | class | b64_data | dir | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | gid | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority | proto | rev | rule | service | sid | src_addr | src_ap | src_port | target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len | vlan }
+multi <strong>alert_csv.fields</strong> = timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | class | b64_data | dir | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | gid | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority | proto | rev | rule | seconds | service | sid | src_addr | src_ap | src_port | target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len | vlan }
 </p>
 </li>
 <li>
@@ -22842,7 +22901,7 @@ int <strong>alert_full.limit</strong> = 0: set maximum size in MB before rollove
 </li>
 <li>
 <p>
-multi <strong>alert_json.fields</strong> = timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | class | b64_data | dir | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | gid | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority | proto | rev | rule | service | sid | src_addr | src_ap | src_port | target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len | vlan }
+multi <strong>alert_json.fields</strong> = timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action: selected fields will be output in given order left to right { action | class | b64_data | dir | dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | eth_type | gid | icmp_code | icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num | priority | proto | rev | rule | seconds | service | sid | src_addr | src_ap | src_port | target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len | vlan }
 </p>
 </li>
 <li>
@@ -23962,6 +24021,11 @@ string <strong>file_id.file_rules[].category</strong>: file type category
 </li>
 <li>
 <p>
+string <strong>file_id.file_rules[].group</strong>: comma separated list of groups associated with file type
+</p>
+</li>
+<li>
+<p>
 int <strong>file_id.file_rules[].id</strong> = 0: file type id { 0: }
 </p>
 </li>
@@ -24033,6 +24097,11 @@ bool <strong>file_id.trace_type</strong> = false: enable runtime dump of type in
 <li>
 <p>
 int <strong>file_id.type_depth</strong> = 1460: stop type ID at this point { 0: }
+</p>
+</li>
+<li>
+<p>
+int <strong>file_id.verdict_delay</strong> = 0: number of queries to return final verdict { 0: }
 </p>
 </li>
 <li>
@@ -24852,6 +24921,21 @@ int <strong>imap.uu_decode_depth</strong> = 1460: Unix-to-Unix decoding depth { 
 </li>
 <li>
 <p>
+int <strong>inspection.id</strong> = 0: correlate policy and events with other items in configuration { 0:65535 }
+</p>
+</li>
+<li>
+<p>
+enum <strong>inspection.mode</strong> = inline-test: set policy mode { inline | inline-test }
+</p>
+</li>
+<li>
+<p>
+string <strong>inspection.uuid</strong>: correlate events by uuid
+</p>
+</li>
+<li>
+<p>
 select <strong>ipopts.~opt</strong>: output format { rr|eol|nop|ts|sec|esec|lsrr|lsrre|ssrr|satid|any }
 </p>
 </li>
@@ -24887,7 +24971,7 @@ string <strong>ips.rules</strong>: snort rules and includes
 </li>
 <li>
 <p>
-string <strong>ips.uuid</strong>: IPS policy uuid
+string <strong>ips.uuid</strong> = 00000000-0000-0000-0000-000000000000: IPS policy uuid
 </p>
 </li>
 <li>
@@ -25433,6 +25517,11 @@ int <strong>pop.qp_decode_depth</strong> = 1460:  Quoted Printable decoding dept
 <li>
 <p>
 int <strong>pop.uu_decode_depth</strong> = 1460:  Unix-to-Unix decoding depth { -1:65535 }
+</p>
+</li>
+<li>
+<p>
+bool <strong>port_scan.alert_all</strong> = false: alert on all events over threshold within window if true; else alert on first only
 </p>
 </li>
 <li>
@@ -26717,6 +26806,11 @@ string <strong>snort.-?</strong>: &lt;option prefix&gt; output matching command 
 </li>
 <li>
 <p>
+implied <strong>snort.--parsing-follows-files</strong>: parse relative paths from the perspective of the current configuration file
+</p>
+</li>
+<li>
+<p>
 implied <strong>snort.--pause</strong>: wait for resume/quit command before processing packets/terminating
 </p>
 </li>
@@ -26997,7 +27091,7 @@ string <strong>so.~func</strong>: name of eval function
 </li>
 <li>
 <p>
-string <strong>soid.~</strong>: SO rule ID has &lt;gid&gt;|&lt;sid&gt; format, like 3|12345
+string <strong>soid.~</strong>: SO rule ID is unique key, eg &lt;gid&gt;_&lt;sid&gt;_&lt;rev&gt; like 3_45678_9
 </p>
 </li>
 <li>
@@ -27257,7 +27351,7 @@ interval <strong>stream_size.~range</strong>: check if the stream size is in the
 </li>
 <li>
 <p>
-int <strong>stream.tcp_cache.idle_timeout</strong> = 180: maximum inactive time before retiring session tracker { 1: }
+int <strong>stream.tcp_cache.idle_timeout</strong> = 3600: maximum inactive time before retiring session tracker { 1: }
 </p>
 </li>
 <li>
@@ -27282,7 +27376,7 @@ bool <strong>stream_tcp.ignore_any_rules</strong> = false: process tcp content r
 </li>
 <li>
 <p>
-int <strong>stream_tcp.max_pdu</strong> = 16384: maximum reassembled PDU size { 1460:65535 }
+int <strong>stream_tcp.max_pdu</strong> = 16384: maximum reassembled PDU size { 1460:32768 }
 </p>
 </li>
 <li>
@@ -31487,6 +31581,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>116:475</strong> (ipv6) IPv6 mobility header includes an invalid value for the <em>payload protocol</em> field
+</p>
+</li>
+<li>
+<p>
 <strong>119:1</strong> (http_inspect) ascii encoding
 </p>
 </li>
@@ -33993,6 +34092,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>inspection</strong> (basic): configure basic inspection policy parameters
+</p>
+</li>
+<li>
+<p>
 <strong>ip_proto</strong> (ips_option): rule option to check the IP protocol number
 </p>
 </li>
@@ -34523,6 +34627,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>codec::bad_proto</strong>: bad protocol id
+</p>
+</li>
+<li>
+<p>
 <strong>codec::ciscometadata</strong>: support for cisco metadata
 </p>
 </li>
@@ -34668,11 +34777,6 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
-<strong>codec::pim</strong>: support for protocol independent multicast
-</p>
-</li>
-<li>
-<p>
 <strong>codec::ppp</strong>: support for point-to-point encapsulation (DLT 9)
 </p>
 </li>
@@ -34704,16 +34808,6 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <li>
 <p>
 <strong>codec::slip</strong>: support for slip protocol (DLT 8)
-</p>
-</li>
-<li>
-<p>
-<strong>codec::sun_nd</strong>: support for Sun ND
-</p>
-</li>
-<li>
-<p>
-<strong>codec::swipe</strong>: support for Swipe
 </p>
 </li>
 <li>
@@ -36449,7 +36543,7 @@ Note that on OpenBSD, divert sockets don&#8217;t work with bridges!
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-10-31 00:00:56 EDT
+Last updated 2017-12-14 00:01:02 EST
 </div>
 </div>
 </body>

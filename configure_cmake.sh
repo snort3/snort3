@@ -153,6 +153,9 @@ while [ $# -ne 0 ]; do
         --builddir=*)
             builddir=$optarg
             ;;
+        --define=*)
+            CMakeCacheEntries="$CMakeCacheEntries -D$optarg"
+            ;;
         --generator=*)
             CMakeGenerator="$optarg"
             ;;

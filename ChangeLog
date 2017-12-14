@@ -1,3 +1,98 @@
+17/12/15 - build 241
+
+-- add back the ref count for file config
+-- alert_csv: various fixes to match alert_json
+-- alert_json: tcp_ack, tcp_seq, and tcp_win are (base 10) integers
+-- alert_json: various fixes
+   thanks to Noah Dietrich <noah_dietrich@86penny.org> for reporting the issues
+-- appid: close all Lua states when thread exits
+-- appid: gracefully handle failed Lua state instantiation
+   thanks to Noah Dietrich <noah_dietrich@86penny.org> for reporting the issue.
+-- appid: only update session flags and discovery state if service id actually set to http
+-- appid: patch to update the appid discovery state when an http event results in setting of the service id for a flow
+-- appid: return false from is_third_party_appid_available when no third party module is available.
+-- appid: tweak warnings and errors
+-- binder: activate profiler support
+-- binder: add FIXIT re creating default bindings when the wizard is not configured
+-- binder: fix ingress / egress test
+-- binder: minor perf and readability tweaks
+-- build: fixed build issues on OSX with clang with cd_pbb, alert_json
+-- build: fixed several dyanmic modules on OSX / clang
+-- build: suppress appid warnings for valid case statement fall throughs
+-- byte_test: fix string bounds check
+-- catch: Update to Catch v2.0.1
+-- cmake: add --define to configure_cmake.sh for arbitrary defines
+-- codec: added wlan support for arp_spoof
+-- codec: updated MIPv6 and merged cd_pim.cc, cd_swpie.cc and cd_sun_ud.cc to cd_bad_proto.cc
+-- conf: remove OPTIONS from SIP and HTTP spells to avoid confusion with RTSP
+-- conf: remove client to server spells for FTP, IMAP, POP, and SMTP to avoid false pickups
+-- control: must execute from default policy only
+-- control: process flow first
+-- cppcheck: More miscellaneous fixes, mostly for new Catch
+-- daq: explicitly initialize more fields in SFDAQInstance constructor
+-- daq: handle real IP and port
+-- data_bus: also publish to default policy
+-- data_bus: refactor basic access for pub / sub
+-- dce: use service names from rules (dce_smb = netbios-ssn; dce_tcp / dce_udp = dcerpc)
+-- detection: fix option tree looping issue
+-- detection: rename ServiceInfo to SignatureServiceInfo
+-- doc: fix type in style section
+-- doc: update default manuals
+-- file api: move file verdict enforcement out of file policy
+-- file api: support file verdict delay during signature lookup
+-- file policy and file config update to allow user define customized file policy through file api
+-- file policy: add support for file event logging
+-- file_api: Set the FileContext verdict, not a local verdict
+-- file_id: add interface to access file info from file capture
+-- file_id: support groups
+-- hash: Rename SFGHASH, SFXHASH, SFHASHFCN to something resonable
+-- http_inspect: add profiler support
+-- http_inspect: fix bugs related to stream interaction
+-- http_inspect: use configured max_pdu as base target reassembly size
+-- inspection: default policy mode depends on adaptor mode
+-- ips options: error if lookup fails due to bad case, typos, etc.
+   thanks to Noah Dietrich <noah_dietrich@86penny.org> for reporting the issue
+-- memory: no stats output unless configured
+-- normalizer: added test mode
+-- normalizer: fix enable checks
+-- parsing: resolve paths from the current config directory instead of process directory
+-- policy: added inspection policy config.
+-- port_scan: add alert_all to make alerting on all events in window optional
+-- port_scan: fix flow checks
+-- profiler: fix focus of eventq
+-- reputation: tweak warning message
+-- rules: default msg = "no msg in rule"
+-- sfrt: remove cruft and reformat header
+-- shell: fixed crash when issuing control commands
+-- sip: use log splitter for tcp
+-- snort2lua: --bind-wizard will add a trailing binding to the default wizard in each binder
+-- snort2lua: Convert file_magic.conf to Lua format.
+-- snort2lua: added inspection uuid
+-- snort2lua: added na_policy_mode. added ability amend tables if created.
+-- snort2lua: added normalize_tcp: ftp
+-- snort2lua: fix stream_size: to_client, to_server conversion
+-- snort2lua: future proof --bind-wizard binding order
+-- snort2lua: no sticky buffer for relative pcre
+-- snort2lua: remove when udp from binding to support tcp too
+-- snort2lua: tweak const name for clarity (internal)
+-- snort2lua: urilen:<> --> bufferlen:<=>
+-- snort: do not dlclose plugins at shutdown during REG_TEST to avoid borked backtraces from LeakSanitizer
+-- soid: allow stub to contain any or all options
+-- --rule-to-*: use whole soid arg as suffix to rule and len identifiers; make static
+-- stream: change tcp idle timeout to 3600 to match 2.X nominal timeout
+-- stream_*: separate session profiler data from flow cache profiler data
+-- stream_ip: fix non-frag counting
+-- stream_size: fix eval packet checks
+-- stream_tcp: delete superfluous memsets to zero
+-- stream_tcp: ignore flush requests on unitialized sessions (early abort condition)
+-- stream_tcp: instantiate wizard only when needed
+-- stream_tcp: remove empty default state action
+-- stream_user: clear splitter properly
+-- target_based: Install header
+-- wizard: abort if no match
+-- wizard: activate profiler support
+-- wizard: usage is inspect
+
 17/10/31 - build 240
 
 -- active: fix packet modify vs resize handling

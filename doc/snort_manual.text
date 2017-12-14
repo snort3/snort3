@@ -82,21 +82,22 @@ Table of Contents
     6.11. host_cache
     6.12. host_tracker
     6.13. hosts
-    6.14. ips
-    6.15. latency
-    6.16. memory
-    6.17. network
-    6.18. output
-    6.19. packets
-    6.20. process
-    6.21. profiler
-    6.22. rate_filter
-    6.23. references
-    6.24. rule_state
-    6.25. search_engine
-    6.26. side_channel
-    6.27. snort
-    6.28. suppress
+    6.14. inspection
+    6.15. ips
+    6.16. latency
+    6.17. memory
+    6.18. network
+    6.19. output
+    6.20. packets
+    6.21. process
+    6.22. profiler
+    6.23. rate_filter
+    6.24. references
+    6.25. rule_state
+    6.26. search_engine
+    6.27. side_channel
+    6.28. snort
+    6.29. suppress
 
 7. Codec Modules
 
@@ -371,7 +372,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.0 (Build 239) from 2.9.8-383
+o"  )~   Version 3.0.0 (Build 240) from 2.9.8-383
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2017 Cisco and/or its affiliates. All rights reserved.
@@ -5144,7 +5145,26 @@ Configuration:
   * port hosts[].services[].port: port number
 
 
-6.14. ips
+6.14. inspection
+
+--------------
+
+What: configure basic inspection policy parameters
+
+Type: basic
+
+Usage: inspect
+
+Configuration:
+
+  * int inspection.id = 0: correlate policy and events with other
+    items in configuration { 0:65535 }
+  * string inspection.uuid: correlate events by uuid
+  * enum inspection.mode = inline-test: set policy mode { inline |
+    inline-test }
+
+
+6.15. ips
 
 --------------
 
@@ -5163,7 +5183,8 @@ Configuration:
   * string ips.include: legacy snort rules and includes
   * enum ips.mode: set policy mode { tap | inline | inline-test }
   * string ips.rules: snort rules and includes
-  * string ips.uuid: IPS policy uuid
+  * string ips.uuid = 00000000-0000-0000-0000-000000000000: IPS
+    policy uuid
 
 Peg counts:
 
@@ -5171,7 +5192,7 @@ Peg counts:
     provided (sum)
 
 
-6.15. latency
+6.16. latency
 
 --------------
 
@@ -5217,7 +5238,7 @@ Peg counts:
   * latency.rule_tree_enables: rule tree re-enables (sum)
 
 
-6.16. memory
+6.17. memory
 
 --------------
 
@@ -5237,7 +5258,7 @@ Configuration:
     preemptive cleanup actions (percent, 0 to disable) { 0: }
 
 
-6.17. network
+6.18. network
 
 --------------
 
@@ -5272,7 +5293,7 @@ Configuration:
     unlimited) { 0:255 }
 
 
-6.18. output
+6.19. output
 
 --------------
 
@@ -5310,7 +5331,7 @@ Configuration:
     state that determined packet verdict
 
 
-6.19. packets
+6.20. packets
 
 --------------
 
@@ -5334,7 +5355,7 @@ Configuration:
     is used to track fragments and connections
 
 
-6.20. process
+6.21. process
 
 --------------
 
@@ -5360,7 +5381,7 @@ Configuration:
     timestamps
 
 
-6.21. profiler
+6.22. profiler
 
 --------------
 
@@ -5395,7 +5416,7 @@ Configuration:
     avg_match | avg_no_match }
 
 
-6.22. rate_filter
+6.23. rate_filter
 
 --------------
 
@@ -5421,7 +5442,7 @@ Configuration:
     according to track
 
 
-6.23. references
+6.24. references
 
 --------------
 
@@ -5437,7 +5458,7 @@ Configuration:
   * string references[].url: where this reference is defined
 
 
-6.24. rule_state
+6.25. rule_state
 
 --------------
 
@@ -5455,7 +5476,7 @@ Configuration:
     policies
 
 
-6.25. search_engine
+6.26. search_engine
 
 --------------
 
@@ -5513,7 +5534,7 @@ Peg counts:
   * search_engine.searched_bytes: total bytes searched (sum)
 
 
-6.26. side_channel
+6.27. side_channel
 
 --------------
 
@@ -5535,7 +5556,7 @@ Peg counts:
   * side_channel.packets: total packets (sum)
 
 
-6.27. snort
+6.28. snort
 
 --------------
 
@@ -5674,6 +5695,8 @@ Configuration:
   * implied snort.--nolock-pidfile: do not try to lock Snort PID file
   * implied snort.--pause: wait for resume/quit command before
     processing packets/terminating
+  * implied snort.--parsing-follows-files: parse relative paths from
+    the perspective of the current configuration file
   * string snort.--pcap-file: <file> file that contains a list of
     pcaps to read - read mode is implied
   * string snort.--pcap-list: <list> a space separated list of pcaps
@@ -5774,7 +5797,7 @@ Peg counts:
   * snort.attribute_table_hosts: total number of hosts in table (sum)
 
 
-6.28. suppress
+6.29. suppress
 
 --------------
 
@@ -6172,6 +6195,8 @@ Rules:
   * 116:458 (ipv6) bogus fragmentation packet, possible BSD attack
   * 116:461 (ipv6) IPv6 routing type 0 extension header
   * 116:456 (ipv6) too many IPv6 extension headers
+  * 116:475 (ipv6) IPv6 mobility header includes an invalid value for
+    the payload protocol field
 
 
 7.17. llc
@@ -7114,6 +7139,8 @@ Configuration:
   * string file_id.file_rules[].type: file type name
   * int file_id.file_rules[].id = 0: file type id { 0: }
   * string file_id.file_rules[].category: file type category
+  * string file_id.file_rules[].group: comma separated list of groups
+    associated with file type
   * string file_id.file_rules[].version: file type version
   * string file_id.file_rules[].magic[].content: file magic content
   * int file_id.file_rules[].magic[].offset = 0: file magic offset {
@@ -7134,6 +7161,8 @@ Configuration:
     signature info
   * bool file_id.trace_stream = false: enable runtime dump of file
     data
+  * int file_id.verdict_delay = 0: number of queries to return final
+    verdict { 0: }
 
 Peg counts:
 
@@ -7675,84 +7704,84 @@ Configuration:
 
 Peg counts:
 
-  * normalizer.ip4_trim: eth packets trimmed to datagram size (sum)
   * normalizer.test_ip4_trim: test eth packets trimmed to datagram
     size (sum)
-  * normalizer.ip4_tos: type of service normalizations (sum)
+  * normalizer.ip4_trim: eth packets trimmed to datagram size (sum)
   * normalizer.test_ip4_tos: test type of service normalizations
     (sum)
-  * normalizer.ip4_df: don’t frag bit normalizations (sum)
+  * normalizer.ip4_tos: type of service normalizations (sum)
   * normalizer.test_ip4_df: test don’t frag bit normalizations (sum)
-  * normalizer.ip4_rf: reserved flag bit clears (sum)
+  * normalizer.ip4_df: don’t frag bit normalizations (sum)
   * normalizer.test_ip4_rf: test reserved flag bit clears (sum)
-  * normalizer.ip4_ttl: time-to-live normalizations (sum)
+  * normalizer.ip4_rf: reserved flag bit clears (sum)
   * normalizer.test_ip4_ttl: test time-to-live normalizations (sum)
-  * normalizer.ip4_opts: ip4 options cleared (sum)
+  * normalizer.ip4_ttl: time-to-live normalizations (sum)
   * normalizer.test_ip4_opts: test ip4 options cleared (sum)
-  * normalizer.icmp4_echo: icmp4 ping normalizations (sum)
+  * normalizer.ip4_opts: ip4 options cleared (sum)
   * normalizer.test_icmp4_echo: test icmp4 ping normalizations (sum)
-  * normalizer.ip6_hops: ip6 hop limit normalizations (sum)
+  * normalizer.icmp4_echo: icmp4 ping normalizations (sum)
   * normalizer.test_ip6_hops: test ip6 hop limit normalizations (sum)
-  * normalizer.ip6_options: ip6 options cleared (sum)
+  * normalizer.ip6_hops: ip6 hop limit normalizations (sum)
   * normalizer.test_ip6_options: test ip6 options cleared (sum)
-  * normalizer.icmp6_echo: icmp6 echo normalizations (sum)
+  * normalizer.ip6_options: ip6 options cleared (sum)
   * normalizer.test_icmp6_echo: test icmp6 echo normalizations (sum)
-  * normalizer.tcp_syn_options: SYN only options cleared from non-SYN
-    packets (sum)
+  * normalizer.icmp6_echo: icmp6 echo normalizations (sum)
   * normalizer.test_tcp_syn_options: test SYN only options cleared
     from non-SYN packets (sum)
-  * normalizer.tcp_options: packets with options cleared (sum)
+  * normalizer.tcp_syn_options: SYN only options cleared from non-SYN
+    packets (sum)
   * normalizer.test_tcp_options: test packets with options cleared
     (sum)
-  * normalizer.tcp_padding: packets with padding cleared (sum)
+  * normalizer.tcp_options: packets with options cleared (sum)
   * normalizer.test_tcp_padding: test packets with padding cleared
     (sum)
-  * normalizer.tcp_reserved: packets with reserved bits cleared (sum)
+  * normalizer.tcp_padding: packets with padding cleared (sum)
   * normalizer.test_tcp_reserved: test packets with reserved bits
     cleared (sum)
-  * normalizer.tcp_nonce: packets with nonce bit cleared (sum)
+  * normalizer.tcp_reserved: packets with reserved bits cleared (sum)
   * normalizer.test_tcp_nonce: test packets with nonce bit cleared
     (sum)
-  * normalizer.tcp_urgent_ptr: packets without data with urgent
-    pointer cleared (sum)
+  * normalizer.tcp_nonce: packets with nonce bit cleared (sum)
   * normalizer.test_tcp_urgent_ptr: test packets without data with
     urgent pointer cleared (sum)
-  * normalizer.tcp_ecn_pkt: packets with ECN bits cleared (sum)
+  * normalizer.tcp_urgent_ptr: packets without data with urgent
+    pointer cleared (sum)
   * normalizer.test_tcp_ecn_pkt: test packets with ECN bits cleared
     (sum)
-  * normalizer.tcp_ts_ecr: timestamp cleared on non-ACKs (sum)
+  * normalizer.tcp_ecn_pkt: packets with ECN bits cleared (sum)
   * normalizer.test_tcp_ts_ecr: test timestamp cleared on non-ACKs
     (sum)
-  * normalizer.tcp_req_urg: cleared urgent pointer when urgent flag
-    is not set (sum)
+  * normalizer.tcp_ts_ecr: timestamp cleared on non-ACKs (sum)
   * normalizer.test_tcp_req_urg: test cleared urgent pointer when
     urgent flag is not set (sum)
-  * normalizer.tcp_req_pay: cleared urgent pointer and urgent flag
-    when there is no payload (sum)
+  * normalizer.tcp_req_urg: cleared urgent pointer when urgent flag
+    is not set (sum)
   * normalizer.test_tcp_req_pay: test cleared urgent pointer and
     urgent flag when there is no payload (sum)
-  * normalizer.tcp_req_urp: cleared the urgent flag if the urgent
-    pointer is not set (sum)
+  * normalizer.tcp_req_pay: cleared urgent pointer and urgent flag
+    when there is no payload (sum)
   * normalizer.test_tcp_req_urp: test cleared the urgent flag if the
     urgent pointer is not set (sum)
-  * normalizer.tcp_trim_syn: tcp segments trimmed on SYN (sum)
+  * normalizer.tcp_req_urp: cleared the urgent flag if the urgent
+    pointer is not set (sum)
   * normalizer.test_tcp_trim_syn: test tcp segments trimmed on SYN
     (sum)
-  * normalizer.tcp_trim_rst: RST packets with data trimmed (sum)
+  * normalizer.tcp_trim_syn: tcp segments trimmed on SYN (sum)
   * normalizer.test_tcp_trim_rst: test RST packets with data trimmed
     (sum)
-  * normalizer.tcp_trim_win: data trimmed to window (sum)
+  * normalizer.tcp_trim_rst: RST packets with data trimmed (sum)
   * normalizer.test_tcp_trim_win: test data trimmed to window (sum)
-  * normalizer.tcp_trim_mss: data trimmed to MSS (sum)
+  * normalizer.tcp_trim_win: data trimmed to window (sum)
   * normalizer.test_tcp_trim_mss: test data trimmed to MSS (sum)
-  * normalizer.tcp_ecn_session: ECN bits cleared (sum)
+  * normalizer.tcp_trim_mss: data trimmed to MSS (sum)
   * normalizer.test_tcp_ecn_session: test ECN bits cleared (sum)
-  * normalizer.tcp_ts_nop: timestamp options cleared (sum)
+  * normalizer.tcp_ecn_session: ECN bits cleared (sum)
   * normalizer.test_tcp_ts_nop: test timestamp options cleared (sum)
-  * normalizer.tcp_ips_data: normalized segments (sum)
+  * normalizer.tcp_ts_nop: timestamp options cleared (sum)
   * normalizer.test_tcp_ips_data: test normalized segments (sum)
-  * normalizer.tcp_block: blocked segments (sum)
+  * normalizer.tcp_ips_data: normalized segments (sum)
   * normalizer.test_tcp_block: test blocked segments (sum)
+  * normalizer.tcp_block: blocked segments (sum)
 
 
 9.24. packet_capture
@@ -7896,6 +7925,8 @@ Configuration:
     ports to ignore if the source of scan alerts
   * string port_scan.ignore_scanned: list of CIDRs with optional
     ports to ignore if the destination of scan alerts
+  * bool port_scan.alert_all = false: alert on all events over
+    threshold within window if true; else alert on first only
   * bool port_scan.include_midstream = false: list of CIDRs with
     optional ports
   * int port_scan.tcp_ports.scans = 100: scan attempts { 0: }
@@ -8434,7 +8465,7 @@ Configuration:
     sessions tracked before pruning { 2: }
   * int stream.tcp_cache.pruning_timeout = 30: minimum inactive time
     before being eligible for pruning { 1: }
-  * int stream.tcp_cache.idle_timeout = 180: maximum inactive time
+  * int stream.tcp_cache.idle_timeout = 3600: maximum inactive time
     before retiring session tracker { 1: }
   * int stream.udp_cache.max_sessions = 131072: maximum simultaneous
     sessions tracked before pruning { 2: }
@@ -8661,7 +8692,7 @@ Configuration:
   * int stream_tcp.overlap_limit = 0: maximum number of allowed
     overlapping segments per session { 0:255 }
   * int stream_tcp.max_pdu = 16384: maximum reassembled PDU size {
-    1460:65535 }
+    1460:32768 }
   * enum stream_tcp.policy = bsd: determines operating system
     characteristics like reassembly { first | last | linux |
     old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 |
@@ -8853,7 +8884,7 @@ identification
 
 Type: inspector
 
-Usage: global
+Usage: inspect
 
 Configuration:
 
@@ -10519,7 +10550,8 @@ Usage: detect
 
 Configuration:
 
-  * string soid.~: SO rule ID has <gid>|<sid> format, like 3|12345
+  * string soid.~: SO rule ID is unique key, eg <gid>_<sid>_<rev>
+    like 3_45678_9
 
 
 11.89. ssl_state
@@ -10783,9 +10815,10 @@ Configuration:
     dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src |
     eth_type | gid | icmp_code | icmp_id | icmp_seq | icmp_type |
     iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num
-    | priority | proto | rev | rule | service | sid | src_addr |
-    src_ap | src_port | target | tcp_ack | tcp_flags | tcp_len |
-    tcp_seq | tcp_win | timestamp | tos | ttl | udp_len | vlan }
+    | priority | proto | rev | rule | seconds | service | sid |
+    src_addr | src_ap | src_port | target | tcp_ack | tcp_flags |
+    tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len |
+    vlan }
   * int alert_csv.limit = 0: set maximum size in MB before rollover
     (0 is unlimited) { 0: }
   * string alert_csv.separator = , : separate fields with this
@@ -10865,9 +10898,10 @@ Configuration:
     dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src |
     eth_type | gid | icmp_code | icmp_id | icmp_seq | icmp_type |
     iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num
-    | priority | proto | rev | rule | service | sid | src_addr |
-    src_ap | src_port | target | tcp_ack | tcp_flags | tcp_len |
-    tcp_seq | tcp_win | timestamp | tos | ttl | udp_len | vlan }
+    | priority | proto | rev | rule | seconds | service | sid |
+    src_addr | src_ap | src_port | target | tcp_ack | tcp_flags |
+    tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len |
+    vlan }
   * int alert_json.limit = 0: set maximum size in MB before rollover
     (0 is unlimited) { 0: }
   * string alert_json.separator = , : separate fields with this
@@ -11737,6 +11771,7 @@ Converts the Snort configuration file specified by the -c or
     information, excluding rules, to <out_file>. Meaningless if -i
     provided
   * -V Print the current Snort2Lua version
+  * --bind-wizard Add default wizard to bindings
   * --conf-file Same as -c. A Snort <snort_conf> file which will be
     converted
   * --dont-parse-includes Same as -p. if <snort_conf> file contains
@@ -12604,7 +12639,7 @@ with.
   * Write comments sparingly with a mind towards future proofing.
     Often the comments can be obviated with better code. Clear code
     is better than a comment.
-  * Heed Tim Ottinger’s Rule on Comments (https://disqus.com/by/
+  * Heed Tim Ottinger’s Rules on Comments (https://disqus.com/by/
     tim_ottinger/):
 
      1. Comments should only say what the code is incapable of
@@ -13043,6 +13078,8 @@ these libraries see the Getting Started section of the manual.
   * -O obfuscate the logged IP addresses
   * -? <option prefix> output matching command line option quick help
     (same as --help-options) (optional)
+  * --parsing-follows-files parse relative paths from the perspective
+    of the current configuration file
   * --pause wait for resume/quit command before processing packets/
     terminating
   * --pcap-dir <dir> a directory to recurse to look for pcaps - read
@@ -13139,9 +13176,10 @@ these libraries see the Getting Started section of the manual.
     dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src |
     eth_type | gid | icmp_code | icmp_id | icmp_seq | icmp_type |
     iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num
-    | priority | proto | rev | rule | service | sid | src_addr |
-    src_ap | src_port | target | tcp_ack | tcp_flags | tcp_len |
-    tcp_seq | tcp_win | timestamp | tos | ttl | udp_len | vlan }
+    | priority | proto | rev | rule | seconds | service | sid |
+    src_addr | src_ap | src_port | target | tcp_ack | tcp_flags |
+    tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len |
+    vlan }
   * bool alert_csv.file = false: output to alert_csv.txt instead of
     stdout
   * int alert_csv.limit = 0: set maximum size in MB before rollover
@@ -13165,9 +13203,10 @@ these libraries see the Getting Started section of the manual.
     dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src |
     eth_type | gid | icmp_code | icmp_id | icmp_seq | icmp_type |
     iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | pkt_num
-    | priority | proto | rev | rule | service | sid | src_addr |
-    src_ap | src_port | target | tcp_ack | tcp_flags | tcp_len |
-    tcp_seq | tcp_win | timestamp | tos | ttl | udp_len | vlan }
+    | priority | proto | rev | rule | seconds | service | sid |
+    src_addr | src_ap | src_port | target | tcp_ack | tcp_flags |
+    tcp_len | tcp_seq | tcp_win | timestamp | tos | ttl | udp_len |
+    vlan }
   * bool alert_json.file = false: output to alert_json.txt instead of
     stdout
   * int alert_json.limit = 0: set maximum size in MB before rollover
@@ -13527,6 +13566,8 @@ these libraries see the Getting Started section of the manual.
     file type in file magic rule { 0: }
   * string file_id.file_policy[].when.sha256: SHA 256
   * string file_id.file_rules[].category: file type category
+  * string file_id.file_rules[].group: comma separated list of groups
+    associated with file type
   * int file_id.file_rules[].id = 0: file type id { 0: }
   * string file_id.file_rules[].magic[].content: file magic content
   * int file_id.file_rules[].magic[].offset = 0: file magic offset {
@@ -13548,6 +13589,8 @@ these libraries see the Getting Started section of the manual.
     data
   * bool file_id.trace_type = false: enable runtime dump of type info
   * int file_id.type_depth = 1460: stop type ID at this point { 0: }
+  * int file_id.verdict_delay = 0: number of queries to return final
+    verdict { 0: }
   * bool file_log.log_pkt_time = true: log the packet time when event
     generated
   * bool file_log.log_sys_time = false: log the system time when
@@ -13832,6 +13875,11 @@ these libraries see the Getting Started section of the manual.
     { -1:65535 }
   * int imap.uu_decode_depth = 1460: Unix-to-Unix decoding depth {
     -1:65535 }
+  * int inspection.id = 0: correlate policy and events with other
+    items in configuration { 0:65535 }
+  * enum inspection.mode = inline-test: set policy mode { inline |
+    inline-test }
+  * string inspection.uuid: correlate events by uuid
   * select ipopts.~opt: output format { rr|eol|nop|ts|sec|esec|lsrr|
     lsrre|ssrr|satid|any }
   * string ip_proto.~proto: [!|>|<] name or number
@@ -13842,7 +13890,8 @@ these libraries see the Getting Started section of the manual.
   * string ips.include: legacy snort rules and includes
   * enum ips.mode: set policy mode { tap | inline | inline-test }
   * string ips.rules: snort rules and includes
-  * string ips.uuid: IPS policy uuid
+  * string ips.uuid = 00000000-0000-0000-0000-000000000000: IPS
+    policy uuid
   * string isdataat.~length: num | !num
   * implied isdataat.relative: offset from cursor instead of start of
     buffer
@@ -14035,6 +14084,8 @@ these libraries see the Getting Started section of the manual.
     -1:65535 }
   * int pop.uu_decode_depth = 1460: Unix-to-Unix decoding depth {
     -1:65535 }
+  * bool port_scan.alert_all = false: alert on all events over
+    threshold within window if true; else alert on first only
   * int port_scan.icmp_sweep.nets = 25: number of times address
     changed from prior attempt { 0: }
   * int port_scan.icmp_sweep.ports = 25: number of times port (or
@@ -14466,6 +14517,8 @@ these libraries see the Getting Started section of the manual.
   * implied snort.-O: obfuscate the logged IP addresses
   * string snort.-?: <option prefix> output matching command line
     option quick help (same as --help-options) { (optional) }
+  * implied snort.--parsing-follows-files: parse relative paths from
+    the perspective of the current configuration file
   * implied snort.--pause: wait for resume/quit command before
     processing packets/terminating
   * string snort.--pcap-dir: <dir> a directory to recurse to look for
@@ -14557,7 +14610,8 @@ these libraries see the Getting Started section of the manual.
     as --max-packet-threads); 0 gets the number of CPU cores reported
     by the system; default is 1 { 0: }
   * string so.~func: name of eval function
-  * string soid.~: SO rule ID has <gid>|<sid> format, like 3|12345
+  * string soid.~: SO rule ID is unique key, eg <gid>_<sid>_<rev>
+    like 3_45678_9
   * int ssh.max_client_bytes = 19600: number of unanswered bytes
     before alerting on challenge-response overflow or CRC32 { 0:65535
     }
@@ -14645,7 +14699,7 @@ these libraries see the Getting Started section of the manual.
     direction(s) { either|to_server|to_client|both }
   * interval stream_size.~range: check if the stream size is in the
     given range { 0: }
-  * int stream.tcp_cache.idle_timeout = 180: maximum inactive time
+  * int stream.tcp_cache.idle_timeout = 3600: maximum inactive time
     before retiring session tracker { 1: }
   * int stream.tcp_cache.max_sessions = 262144: maximum simultaneous
     sessions tracked before pruning { 2: }
@@ -14656,7 +14710,7 @@ these libraries see the Getting Started section of the manual.
   * bool stream_tcp.ignore_any_rules = false: process tcp content
     rules w/o ports only if rules with ports are present
   * int stream_tcp.max_pdu = 16384: maximum reassembled PDU size {
-    1460:65535 }
+    1460:32768 }
   * int stream_tcp.max_window = 0: maximum allowed tcp window {
     0:1073725440 }
   * int stream_tcp.overlap_limit = 0: maximum number of allowed
@@ -15744,6 +15798,8 @@ these libraries see the Getting Started section of the manual.
   * 116:472 (decode) too many protocols present
   * 116:473 (decode) ether type out of range
   * 116:474 (icmp6) ICMPv6 not encapsulated in IPv6
+  * 116:475 (ipv6) IPv6 mobility header includes an invalid value for
+    the payload protocol field
   * 119:1 (http_inspect) ascii encoding
   * 119:2 (http_inspect) double decoding attack
   * 119:3 (http_inspect) u encoding
@@ -16622,6 +16678,7 @@ deleted -> unified2: 'filename'
   * id (ips_option): rule option to check the IP ID field
   * igmp (codec): support for Internet group management protocol
   * imap (inspector): imap inspection
+  * inspection (basic): configure basic inspection policy parameters
   * ip_proto (ips_option): rule option to check the IP protocol
     number
   * ipopts (ips_option): rule option to check for IP options
@@ -16766,6 +16823,7 @@ deleted -> unified2: 'filename'
 
   * codec::arp: support for address resolution protocol
   * codec::auth: support for IP authentication header
+  * codec::bad_proto: bad protocol id
   * codec::ciscometadata: support for cisco metadata
   * codec::eapol: support for extensible authentication protocol over
     LAN
@@ -16799,7 +16857,6 @@ deleted -> unified2: 'filename'
   * codec::pbb: support for 802.1ah protocol
   * codec::pflog: support for OpenBSD PF log (DLT 117)
   * codec::pgm: support for pragmatic general multicast
-  * codec::pim: support for protocol independent multicast
   * codec::ppp: support for point-to-point encapsulation (DLT 9)
   * codec::ppp_encap: support for point-to-point encapsulation
   * codec::pppoe_disc: support for point-to-point discovery
@@ -16807,8 +16864,6 @@ deleted -> unified2: 'filename'
   * codec::raw4: support for unencapsulated IPv4 (DLT 12) (DLT 228)
   * codec::raw6: support for unencapsulated IPv6 (DLT 229)
   * codec::slip: support for slip protocol (DLT 8)
-  * codec::sun_nd: support for Sun ND
-  * codec::swipe: support for Swipe
   * codec::tcp: support for transmission control protocol
   * codec::teredo: support for teredo
   * codec::token_ring: support for token ring decoding
