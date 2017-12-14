@@ -73,8 +73,10 @@ void CPUTracker::get_clocks(struct timeval& user_time,
     struct rusage usage;
 #ifdef RUSAGE_LWP
     getrusage(RUSAGE_LWP, &usage);
-#else
+#elif defined(RUSAGE_THREAD)
     getrusage(RUSAGE_THREAD, &usage);
+#else
+    getrusage(RUSAGE_SELF, &usage);
 #endif
     user_time = usage.ru_utime;
     sys_time = usage.ru_stime;
