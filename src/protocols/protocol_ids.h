@@ -67,7 +67,7 @@ enum class IpProtocol : std::uint8_t
     ESP = 50,
     AUTH = 51, // RFC 4302
     SWIPE = 53,
-    MOBILITY = 55,
+    MOBILITY = 135,
     ICMPV6 = 58,
     NONEXT = 59,
     DSTOPTS = 60,
@@ -103,7 +103,7 @@ enum class ProtocolId : std::uint16_t
     ESP = 50,
     AUTH = 51, // RFC 4302
     SWIPE = 53,
-    MOBILITY = 55,
+    MOBILITY = 135,
     ICMPV6 = 58,
     NONEXT = 59,
     DSTOPTS = 60,
