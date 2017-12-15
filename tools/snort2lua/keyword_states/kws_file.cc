@@ -177,7 +177,14 @@ bool File::convert(std::istringstream& data_stream)
                 retval = false;
             }
         }
+
+        if(sub_table_open)
+            table_api.close_table();
+        table_api.close_table();
     }
+
+    table_api.close_table();
+    table_api.close_table();
 
     return retval;
 }

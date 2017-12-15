@@ -206,7 +206,8 @@ static inline FileContext* get_file_context(DCE2_SmbSsnData* ssd, uint64_t file_
 {
     assert(ssd->sd.wire_pkt);
     FileFlows* file_flows = FileFlows::get_file_flows((ssd->sd.wire_pkt)->flow);
-    assert(file_flows);
+    if(!file_flows)
+        return nullptr;
     return file_flows->get_file_context(file_id, true);
 }
 
@@ -236,6 +237,8 @@ static inline void DCE2_Smb2ProcessFileData(DCE2_SmbSsnData* ssd, const uint8_t*
 
     assert(ssd->sd.wire_pkt);
     FileFlows* file_flows = FileFlows::get_file_flows((ssd->sd.wire_pkt)->flow);
+    if(!file_flows)
+        return;
 
     file_flows->file_process(ssd->ftracker.fid_v2, file_data, data_size,
         ssd->ftracker.tracker.file.file_offset, dir);
@@ -739,9 +742,6 @@ void DCE2_Smb2Process(DCE2_SmbSsnData* ssd)
     Packet* p = ssd->sd.wire_pkt;
     const uint8_t* data_ptr = p->data;
     uint16_t data_len = p->dsize;
-
-    if (!FileService::is_file_service_enabled())
-        return;
 
     /*Check header length*/
     if (data_len < sizeof(NbssHdr) + SMB2_HEADER_LENGTH)
