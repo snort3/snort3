@@ -512,7 +512,12 @@ Inspector* InspectorManager::get_binder()
 // FIXIT-P cache get_inspector() returns or provide indexed lookup
 Inspector* InspectorManager::get_inspector(const char* key, bool dflt_only)
 {
-    InspectionPolicy* pi = get_inspection_policy();
+    InspectionPolicy* pi;
+    
+    if (dflt_only)
+        pi = get_default_inspection_policy(SnortConfig::get_conf());
+    else
+        pi = get_inspection_policy();
 
     if ( !pi || !pi->framework_policy )
         return nullptr;
@@ -823,9 +828,9 @@ static bool configure(SnortConfig* sc, FrameworkPolicy* fp, bool cloned)
     return ok;
 }
 
-Inspector* InspectorManager::acquire(const char* key, SnortConfig* sc)
+Inspector* InspectorManager::acquire(const char* key, bool dflt_only)
 {
-    Inspector* pi = get_inspector(key, sc);
+    Inspector* pi = get_inspector(key, dflt_only);
 
     if ( !pi )
         FatalError("unconfigured inspector: '%s'.\n", key);

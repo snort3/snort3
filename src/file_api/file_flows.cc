@@ -65,7 +65,7 @@ FileFlows* FileFlows::get_file_flows(Flow* flow)
     if (fd)
         return fd;
 
-    FileInspect* fi = (FileInspect*)InspectorManager::get_inspector(FILE_ID_NAME);
+    FileInspect* fi = (FileInspect*)InspectorManager::get_inspector(FILE_ID_NAME, true);
 
     if (FileService::is_file_service_enabled() and fi)
     {

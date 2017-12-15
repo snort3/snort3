@@ -63,7 +63,7 @@ public:
 
     SO_PUBLIC static Inspector* get_binder();
 
-    SO_PUBLIC static Inspector* acquire(const char* key, SnortConfig*);
+    SO_PUBLIC static Inspector* acquire(const char* key, bool dflt_only = false);
     SO_PUBLIC static void release(Inspector*);
 
     static bool configure(SnortConfig*, bool cloned = false);
