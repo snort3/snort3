@@ -1,5 +1,5 @@
 
-add_library( port_scan
+add_library( port_scan STATIC
     port_scan.cc
     ps_detect.cc
     ps_detect.h
