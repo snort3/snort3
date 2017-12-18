@@ -1,4 +1,5 @@
 set (PUB_SUB_INCLUDES
+    expect_events.h
     http_events.h
     sip_events.h
 )

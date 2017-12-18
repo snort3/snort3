@@ -27,6 +27,7 @@
 #include "packet_io/sfdaq.h"
 #include "protocols/packet.h"
 #include "protocols/vlan.h"
+#include "pub_sub/expect_events.h"
 #include "sfip/sf_ip.h"
 #include "stream/stream.h"      // FIXIT-M bad dependency
 #include "time/packet_time.h"
@@ -38,15 +39,6 @@
 #define MAX_DATA    4
 #define MAX_WAIT  300
 #define MAX_PRUNE   5
-
-struct ExpectFlow
-{
-    struct ExpectFlow* next;
-    FlowData* data;
-
-    ~ExpectFlow();
-    void clear();
-};
 
 ExpectFlow::~ExpectFlow()
 {
@@ -62,6 +54,30 @@ void ExpectFlow::clear()
         delete fd;
     }
     data = nullptr;
+}
+
+int ExpectFlow::add_flow_data(FlowData* fd)
+{
+    if (data)
+    {
+        FlowData* prev_fd;
+        for (prev_fd = data; prev_fd && prev_fd->next; prev_fd = prev_fd->next);
+
+        prev_fd->next = fd;
+    }
+    else
+        data = fd;
+    return 0;
+}
+
+FlowData* ExpectFlow::get_flow_data(unsigned id)
+{
+    for (FlowData* p = data; p; p = p->next)
+    {
+        if (p->get_id() == id)
+            return p;
+    }
+    return nullptr;
 }
 
 struct ExpectNode
@@ -369,6 +385,7 @@ int ExpectCache::add_flow(const Packet *ctrlPkt,
                     ip_proto, 1000, 0);
     }
 
+    bool new_expect_flow = false;
     if (!last)
     {
         if (node->count >= MAX_LIST)
@@ -387,21 +404,17 @@ int ExpectCache::add_flow(const Packet *ctrlPkt,
 
         node->tail = last;
         last->next = nullptr;
-
         node->count++;
+        new_expect_flow = true;
     }
-    if (last->data)
-    {
-        FlowData* prev_fd;
-        for (prev_fd = last->data; prev_fd && prev_fd->next; prev_fd = prev_fd->next);
-        prev_fd->next = fd;
-    }
-    else
-        last->data = fd;
-
+    last->add_flow_data(fd);
     node->expires = packet_time() + MAX_WAIT;
     ++expects;
-
+    if (new_expect_flow)
+    {
+        ExpectEvent event(ctrlPkt, last, fd);
+        DataBus::publish(EXPECT_EVENT_TYPE_EARLY_SESSION_CREATE_KEY, event, ctrlPkt->flow);
+    }
     return 0;
 }
 

@@ -19,13 +19,14 @@
 
 #include <ctime>
 
+#include "flow/expect_cache.h"
 #include "flow/flow.h"
 #include "framework/data_bus.h"
 #include "framework/inspector.h"
 #include "framework/module.h"
 #include "log/messages.h"
 #include "packet_io/active.h"
-#include "pub_sub/http_events.h"
+#include "pub_sub/expect_events.h"
 #include "time/packet_time.h"
 
 static const char* s_name = "reg_test";
@@ -91,6 +92,81 @@ bool RtiServiceModule::set(const char*, Value& v, SnortConfig*)
 }
 
 //-------------------------------------------------------------------------
+// flow data stuff
+//-------------------------------------------------------------------------
+class RegTestFlowData : public FlowData
+{
+public:
+    RegTestFlowData();
+    ~RegTestFlowData() override;
+    static void init()
+    { inspector_id = FlowData::create_flow_data_id(); }
+
+    void handle_expected(Packet*) override;
+
+public:
+    static unsigned inspector_id;
+    unsigned test_id;
+    static unsigned test_id_counter;
+};
+
+unsigned RegTestFlowData::inspector_id = 0;
+unsigned RegTestFlowData::test_id_counter = 100;
+
+RegTestFlowData::RegTestFlowData() : FlowData(inspector_id)
+{
+    test_id = test_id_counter++;
+}
+
+RegTestFlowData::~RegTestFlowData()
+{
+    LogMessage("Reg test: delete flow data, test_id=%d\n", test_id);
+}
+
+void RegTestFlowData::handle_expected(Packet*)
+{
+    LogMessage("Reg test: handle expected, test_id=%d\n", test_id);
+}
+
+//-------------------------------------------------------------------------
+// event handler stuff
+//-------------------------------------------------------------------------
+class ExpectEventHandler : public DataHandler
+{
+public:
+    ExpectEventHandler()
+    {  }
+
+    void handle(DataEvent&, Flow*) override;
+};
+
+
+void ExpectEventHandler::handle(DataEvent& event, Flow*)
+{
+    ExpectEvent* expect_event = (ExpectEvent*)&event;
+    char cstr[INET6_ADDRSTRLEN], sstr[INET6_ADDRSTRLEN];
+    expect_event->get_packet()->flow->client_ip.ntop(cstr, sizeof(cstr));
+    expect_event->get_packet()->flow->server_ip.ntop(sstr, sizeof(sstr));
+    LogMessage("Reg test: received expect event. packet %s:%d -> %s:%d\n",
+        cstr, expect_event->get_packet()->flow->client_port,
+        sstr, expect_event->get_packet()->flow->server_port);
+    ExpectFlow* flow = expect_event->get_expect_flow();
+    RegTestFlowData* fd = (RegTestFlowData*)flow->get_flow_data(RegTestFlowData::inspector_id);
+    if (!fd)
+    {
+        fd = new RegTestFlowData();
+        LogMessage("Reg test: created a new flow data, test_id=%d, adding ... ", fd->test_id);
+        unsigned added_test_id = fd->test_id;
+        flow->add_flow_data(fd);
+        fd = (RegTestFlowData*)flow->get_flow_data(RegTestFlowData::inspector_id);
+        if (fd && fd->test_id == added_test_id)
+            LogMessage("succeed!\n");
+        else
+            LogMessage("failed!\n");
+    }
+}
+
+//-------------------------------------------------------------------------
 // inspector stuff
 //-------------------------------------------------------------------------
 
@@ -102,7 +178,10 @@ public:
     void show(SnortConfig*) override;
     void eval(Packet* p) override;
     bool configure(SnortConfig*) override
-    { return true; }
+    {
+        DataBus::subscribe(EXPECT_EVENT_TYPE_EARLY_SESSION_CREATE_KEY, new ExpectEventHandler());
+        return true;
+    }
 
 private:
     bool test_daq_retry;
@@ -159,6 +238,10 @@ void RtiService::do_daq_packet_retry_test(Packet* p)
 //-------------------------------------------------------------------------
 // api stuff
 //-------------------------------------------------------------------------
+static void reg_test_init()
+{
+    RegTestFlowData::init();
+}
 
 static Module* mod_ctor()
 { return new RtiServiceModule; }
@@ -190,7 +273,7 @@ static const InspectApi rti_api
     (uint16_t)PktType::TCP | (uint16_t)PktType::UDP | (uint16_t)PktType::PDU,
     nullptr, // buffers
     s_name,  // service
-    nullptr, // pinit
+    reg_test_init, // pinit
     nullptr, // pterm
     nullptr, // tinit,
     nullptr, // tterm,

@@ -3,11 +3,12 @@ noinst_LIBRARIES = libflow.a
 x_includedir = $(pkgincludedir)/flow
 
 x_include_HEADERS = \
+expect_cache.h \
 flow.h \
 flow_key.h
 
 libflow_a_SOURCES = \
-expect_cache.cc expect_cache.h \
+expect_cache.cc \
 flow.cc \
 flow_key.cc \
 flow_cache.cc flow_cache.h \

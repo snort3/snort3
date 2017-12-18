@@ -66,8 +66,18 @@
 class Flow;
 class FlowData;
 struct Packet;
-struct ExpectFlow;
 struct ExpectNode;
+
+struct SO_PUBLIC ExpectFlow
+{
+    struct ExpectFlow* next;
+    FlowData* data;
+
+    ~ExpectFlow();
+    void clear();
+    int add_flow_data(FlowData*);
+    FlowData* get_flow_data(unsigned);
+};
 
 class ExpectCache
 {

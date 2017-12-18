@@ -1,4 +1,5 @@
 set (FLOW_INCLUDES
+    expect_cache.h
     flow.h
     flow_key.h
 )
@@ -6,7 +7,6 @@ set (FLOW_INCLUDES
 add_library (flow STATIC
     ${FLOW_INCLUDES}
     expect_cache.cc
-    expect_cache.h
     flow.cc
     flow_cache.cc
     flow_cache.h
