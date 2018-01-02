@@ -49,6 +49,9 @@ struct FileLogStats
 
 static THREAD_LOCAL FileLogStats fl_stats;
 
+static const std::string VerdictName[] =
+{"Unknown", "Log", "Stop", "Block", "Reset", "Pending", "Stop Capture", "INVALID"};
+
 static const PegInfo fl_pegs[] =
 {
     { CountType::SUM, "total_events", "total file events" },

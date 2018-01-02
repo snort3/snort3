@@ -57,14 +57,14 @@ public:
     bool can_replace();
     bool can_retry();
     bool can_start_unprivileged();
-    bool can_whitelist();
+    SO_PUBLIC bool can_whitelist();
 
     int acquire(int max, DAQ_Analysis_Func_t);
     int inject(const DAQ_PktHdr_t*, int rev, const uint8_t* buf, uint32_t len);
     bool break_loop(int error);
 
     SO_PUBLIC int query_flow(const DAQ_PktHdr_t*, DAQ_QueryFlow_t*);
-    int modify_flow_opaque(const DAQ_PktHdr_t*, uint32_t opaque);
+    SO_PUBLIC int modify_flow_opaque(const DAQ_PktHdr_t*, uint32_t opaque);
     int modify_flow_pkt_trace(const DAQ_PktHdr_t*, DAQ_Verdict,
         uint8_t* buff, uint32_t buff_len);
     int add_expected(const Packet* ctrlPkt, const SfIp* cliIP, uint16_t cliPort,
