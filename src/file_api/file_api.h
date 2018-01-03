@@ -120,6 +120,8 @@ class SO_PUBLIC FilePolicyBase
 public:
 
     FilePolicyBase() = default;
+    virtual ~FilePolicyBase() = default;
+
     // This is called when a new flow is queried for the first time
     // Check & update what file policy is enabled on this flow/file
     virtual void policy_check(Flow*, FileInfo* ) { }
