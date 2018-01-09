@@ -56,8 +56,7 @@ namespace preprocessors
             else if (keyword == "url_rule_path")
                 tmpval = parse_string_option("url_rule_path", data_stream);
             else if (keyword == "file_rule_path")
-                // FIXIT-L This is currently just not implemented, not actually deleted
-                tmpval = parse_deleted_option("file_rule_path", data_stream);
+                tmpval = parse_string_option("file_rule_path", data_stream);
             else if (keyword == "whitelist")
                 tmpval = parse_string_option("whitelist_path", data_stream);
             else if (keyword == "blacklist")
@@ -67,7 +66,22 @@ namespace preprocessors
             else if (keyword == "fw_log_time")
                 tmpval = parse_int_option("fw_roll_log_interval", data_stream, false);
             else if (keyword == "fw_log_size")
-                tmpval = parse_int_option("max_log_file_size", data_stream, false);
+            {
+                int val;
+
+                if (data_stream >> val)
+                {
+                    // fw_log_size was in megabytes, max_log_file_size is in bytes
+                    val = val * 1024 * 1024;
+                    table_api.add_option("max_log_file_size", val);
+                    tmpval = true;
+                }
+                else
+                {
+                    table_api.add_comment("snort.conf missing argument for: " + keyword + " <int>");
+                    tmpval = false;
+                }
+            }
             else if (keyword == "fw_log_dns")
                 tmpval = table_api.add_option("dns_log_enabled", true);
             else if (keyword == "fw_log_url")
