@@ -28,6 +28,7 @@
 #include "packet_io/active.h"
 #include "pub_sub/expect_events.h"
 #include "time/packet_time.h"
+#include "utils/util_cstring.h"
 
 static const char* s_name = "reg_test";
 static const char* s_help = "The regression test inspector (rti) is used when special packet handling is required for a reg test";
@@ -131,6 +132,7 @@ void RegTestFlowData::handle_expected(Packet*)
 //-------------------------------------------------------------------------
 // event handler stuff
 //-------------------------------------------------------------------------
+#define LOG_BUFF_SIZE 1024
 class ExpectEventHandler : public DataHandler
 {
 public:
@@ -155,7 +157,7 @@ void ExpectEventHandler::handle(DataEvent& event, Flow*)
     if (!fd)
     {
         fd = new RegTestFlowData();
-        LogMessage("Reg test: created a new flow data, test_id=%d, adding ... ", fd->test_id);
+        LogMessage("Reg test: created a new flow data, test_id=%u, adding ... ", fd->test_id);
         unsigned added_test_id = fd->test_id;
         flow->add_flow_data(fd);
         fd = (RegTestFlowData*)flow->get_flow_data(RegTestFlowData::inspector_id);
@@ -164,6 +166,16 @@ void ExpectEventHandler::handle(DataEvent& event, Flow*)
         else
             LogMessage("failed!\n");
     }
+
+    char buff[LOG_BUFF_SIZE];
+    safe_snprintf(buff, LOG_BUFF_SIZE, "Expected flows triggered by packet:");
+    for (auto ef : ExpectFlow::get_expect_flows())
+    {
+        RegTestFlowData* fd = (RegTestFlowData*)ef->get_flow_data(RegTestFlowData::inspector_id);
+        if (fd)
+           sfsnprintfappend(buff, LOG_BUFF_SIZE, " %u", fd->test_id);
+    }
+    LogMessage("%s\n", buff);
 }
 
 //-------------------------------------------------------------------------

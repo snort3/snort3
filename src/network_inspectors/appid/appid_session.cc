@@ -209,8 +209,6 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
 {
     char src_ip[INET6_ADDRSTRLEN];
     char dst_ip[INET6_ADDRSTRLEN];
-    // FIXIT-M not needed  until crtlPkt expectedSession is supported
-    //struct _ExpectNode** node;
     enum PktType type = get_pkt_type_from_ip_proto(proto);
 
     assert(type != PktType::NONE);
@@ -220,11 +218,6 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
     AppIdSession* asd = new AppIdSession(proto, cliIp, 0, inspector);
     asd->common.policyId = asd->config->appIdPolicyId;
 
-    // FIXIT-M expect session control packet support not ported to snort3 yet
-    //node = (flags & APPID_EARLY_SESSION_FLAG_FW_RULE) ? &ctrlPkt->expectedSession : nullptr;
-
-    // FIXIT-M 2.9.x set_application_protocol_id_expected has several new parameters, need to look
-    // into what is required to support those here.
     if ( Stream::set_application_protocol_id_expected(ctrlPkt, type, proto, cliIp, cliPort, srvIp,
         srvPort, app_id, asd) )
     {

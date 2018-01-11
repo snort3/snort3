@@ -60,13 +60,19 @@
 //    (this would make pruning a little harder unless we add linkage
 //    a la FlowCache)
 //-------------------------------------------------------------------------
-
+#include <vector>
 #include "flow/flow_key.h"
 
 class Flow;
 class FlowData;
 struct Packet;
 struct ExpectNode;
+struct ExpectFlow;
+
+struct ExpectFlows
+{
+    std::vector<ExpectFlow*> expect_flows;
+};
 
 struct SO_PUBLIC ExpectFlow
 {
@@ -77,6 +83,8 @@ struct SO_PUBLIC ExpectFlow
     void clear();
     int add_flow_data(FlowData*);
     FlowData* get_flow_data(unsigned);
+    static std::vector<ExpectFlow*>& get_expect_flows();
+    static void reset_expect_flows();
 };
 
 class ExpectCache

@@ -40,6 +40,8 @@
 #define MAX_WAIT  300
 #define MAX_PRUNE   5
 
+static THREAD_LOCAL ExpectFlows* packet_expect_flows = nullptr;
+
 ExpectFlow::~ExpectFlow()
 {
     clear();
@@ -68,6 +70,18 @@ int ExpectFlow::add_flow_data(FlowData* fd)
     else
         data = fd;
     return 0;
+}
+
+std::vector<ExpectFlow*>& ExpectFlow::get_expect_flows()
+{
+    assert(packet_expect_flows);
+    return packet_expect_flows->expect_flows;
+}
+
+void ExpectFlow::reset_expect_flows()
+{
+    if(packet_expect_flows)
+        packet_expect_flows->expect_flows.clear();
 }
 
 FlowData* ExpectFlow::get_flow_data(unsigned id)
@@ -277,6 +291,8 @@ ExpectCache::ExpectCache(uint32_t max)
 
     expects = realized = 0;
     prunes = overflows = 0;
+    if (packet_expect_flows == nullptr)
+        packet_expect_flows = new ExpectFlows();
 }
 
 ExpectCache::~ExpectCache()
@@ -284,6 +300,8 @@ ExpectCache::~ExpectCache()
     delete hash_table;
     delete[] nodes;
     delete[] pool;
+    delete packet_expect_flows;
+    packet_expect_flows = nullptr;
 }
 
 /**Either expect or expect future session.
@@ -412,6 +430,9 @@ int ExpectCache::add_flow(const Packet *ctrlPkt,
     ++expects;
     if (new_expect_flow)
     {
+        // chain all expected flows created by this packet
+        packet_expect_flows->expect_flows.push_back(last);
+
         ExpectEvent event(ctrlPkt, last, fd);
         DataBus::publish(EXPECT_EVENT_TYPE_EARLY_SESSION_CREATE_KEY, event, ctrlPkt->flow);
     }

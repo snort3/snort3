@@ -23,6 +23,7 @@
 
 #include "packet.h"
 
+#include "flow/expect_cache.h"
 #include "framework/endianness.h"
 #include "log/obfuscator.h"
 #include "managers/codec_manager.h"
@@ -74,6 +75,7 @@ void Packet::reset()
     num_layers = 0;
     ip_proto_next = IpProtocol::PROTO_NOT_SET;
     disable_inspect = false;
+    ExpectFlow::reset_expect_flows();
 
     release_helpers();
     ptrs.reset();
