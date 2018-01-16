@@ -40,7 +40,7 @@
 #define MAX_WAIT  300
 #define MAX_PRUNE   5
 
-static THREAD_LOCAL ExpectFlows* packet_expect_flows = nullptr;
+static THREAD_LOCAL std::vector<ExpectFlow*>* packet_expect_flows = nullptr;
 
 ExpectFlow::~ExpectFlow()
 {
@@ -75,13 +75,13 @@ int ExpectFlow::add_flow_data(FlowData* fd)
 std::vector<ExpectFlow*>& ExpectFlow::get_expect_flows()
 {
     assert(packet_expect_flows);
-    return packet_expect_flows->expect_flows;
+    return *packet_expect_flows;
 }
 
 void ExpectFlow::reset_expect_flows()
 {
     if(packet_expect_flows)
-        packet_expect_flows->expect_flows.clear();
+        packet_expect_flows->clear();
 }
 
 FlowData* ExpectFlow::get_flow_data(unsigned id)
@@ -292,7 +292,7 @@ ExpectCache::ExpectCache(uint32_t max)
     expects = realized = 0;
     prunes = overflows = 0;
     if (packet_expect_flows == nullptr)
-        packet_expect_flows = new ExpectFlows();
+        packet_expect_flows = new std::vector<ExpectFlow*>;
 }
 
 ExpectCache::~ExpectCache()
@@ -431,7 +431,7 @@ int ExpectCache::add_flow(const Packet *ctrlPkt,
     if (new_expect_flow)
     {
         // chain all expected flows created by this packet
-        packet_expect_flows->expect_flows.push_back(last);
+        packet_expect_flows->push_back(last);
 
         ExpectEvent event(ctrlPkt, last, fd);
         DataBus::publish(EXPECT_EVENT_TYPE_EARLY_SESSION_CREATE_KEY, event, ctrlPkt->flow);

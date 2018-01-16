@@ -69,11 +69,6 @@ struct Packet;
 struct ExpectNode;
 struct ExpectFlow;
 
-struct ExpectFlows
-{
-    std::vector<ExpectFlow*> expect_flows;
-};
-
 struct SO_PUBLIC ExpectFlow
 {
     struct ExpectFlow* next;
