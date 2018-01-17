@@ -200,9 +200,12 @@ int Converter::parse_file(const std::string& input_file, bool reset)
         data_api.set_current_line(++line_num);
 
         std::size_t first_non_white_char = tmp.find_first_not_of(' ');
-        if ((first_non_white_char == std::string::npos) ||
+        bool commented_rule = false;
+        if ( tmp.length() > first_non_white_char + 7 )
+            commented_rule = tmp.compare(first_non_white_char, 7, "# alert") == 0;
+        if ( !commented_rule && ((first_non_white_char == std::string::npos) ||
             (tmp[first_non_white_char] == '#') ||
-            (tmp[first_non_white_char] == ';'))      // no, i did not know that semicolons made a
+            (tmp[first_non_white_char] == ';')))     // no, i did not know that semicolons made a
                                                      // line a comment
         {
             util::trim(tmp);
@@ -227,6 +230,12 @@ int Converter::parse_file(const std::string& input_file, bool reset)
             orig_text += tmp;
             std::istringstream data_stream(orig_text);
 
+            if (commented_rule)
+            {
+                std::string hash_char;
+                data_stream >> hash_char;
+            }
+
             try
             {
                 while (data_stream.peek() != EOF)
@@ -237,6 +246,8 @@ int Converter::parse_file(const std::string& input_file, bool reset)
                         break;
                     }
                 }
+                if (commented_rule)
+                    get_rule_api().make_rule_a_comment();
                 if(empty_args)
                 {
                     set_empty_args(false);

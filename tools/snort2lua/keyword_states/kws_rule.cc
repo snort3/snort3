@@ -98,6 +98,7 @@ static ConversionState* drop_rule_ctor(Converter& c)
 }
 
 static const std::string alert = "alert";
+static const std::string c_alert = "# alert";
 static const std::string block = "block";
 static const std::string log = "log";
 static const std::string pass = "pass";
@@ -111,6 +112,7 @@ static const std::string activate = "activate";
 static const std::string dynamic = "dynamic";
 
 static const ConvertMap alert_api = { alert, rule_ctor<& alert>};
+static const ConvertMap c_alert_api = { c_alert, rule_ctor<& c_alert>};
 static const ConvertMap block_api = { block, rule_ctor<& block>};
 static const ConvertMap log_api = { log, rule_ctor<& log>};
 static const ConvertMap pass_api = { pass, rule_ctor<& pass>};
@@ -124,6 +126,7 @@ static const ConvertMap activate_api = { activate, dep_rule_ctor<& activate>};
 static const ConvertMap dynamic_api = { dynamic, dep_rule_ctor<& dynamic>};
 
 const ConvertMap* alert_map = &alert_api;
+const ConvertMap* c_alert_map = &c_alert_api;
 const ConvertMap* block_map = &block_api;
 const ConvertMap* log_map = &log_api;
 const ConvertMap* pass_map = &pass_api;

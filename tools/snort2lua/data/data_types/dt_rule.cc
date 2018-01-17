@@ -109,7 +109,7 @@ std::ostream& operator<<(std::ostream& out, const Rule& rule)
     }
 
     if (rule.is_bad_rule || rule.is_comment)
-        out << "#";
+        out << "# ";
 
     for (std::size_t i = 0; i < rule.num_hdr_data; i++)
     {
