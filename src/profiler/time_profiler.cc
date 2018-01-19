@@ -31,7 +31,7 @@
 #include "time_profiler_defs.h"
 
 #ifdef UNIT_TEST
-#include "catch/catch.hpp"
+#include "catch/snort_catch.h"
 #endif
 
 #define s_time_table_title "module profile"

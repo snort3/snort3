@@ -34,7 +34,7 @@
 #include "file_decomp_swf.h"
 
 #ifdef UNIT_TEST
-#include "catch/catch.hpp"
+#include "catch/snort_catch.h"
 #endif
 
 SNORT_FORCED_INCLUSION_DEFINITION(file_decomp);

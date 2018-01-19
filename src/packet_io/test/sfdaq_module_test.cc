@@ -26,7 +26,7 @@
 #include "config.h"
 #endif
 
-#include "catch/catch.hpp"
+#include "catch/snort_catch.h"
 #include "main/snort_config.h"
 #include "main/snort_types.h"
 #include "packet_io/sfdaq_config.h"

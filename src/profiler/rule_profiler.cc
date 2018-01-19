@@ -48,7 +48,7 @@
 #include "rule_profiler_defs.h"
 
 #ifdef UNIT_TEST
-#include "catch/catch.hpp"
+#include "catch/snort_catch.h"
 #endif
 
 #define s_rule_table_title "rule profile"

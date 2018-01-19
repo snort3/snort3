@@ -24,7 +24,7 @@
 #include <cstring>
 #include <string>
 
-#include "catch/catch.hpp"
+#include "catch/snort_catch.h"
 #include "main/snort_types.h"
 
 #include "lua_test_common.h"

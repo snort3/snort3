@@ -41,7 +41,7 @@
 #include "flow_tracker.h"
 
 #ifdef UNIT_TEST
-#include "catch/catch.hpp"
+#include "catch/snort_catch.h"
 #endif
 
 THREAD_LOCAL SimpleStats pmstats;

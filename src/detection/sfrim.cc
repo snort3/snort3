@@ -30,7 +30,7 @@
 #include <vector>
 
 #ifdef UNIT_TEST
-#include "catch/catch.hpp"
+#include "catch/snort_catch.h"
 #endif
 
 struct rule_number_t

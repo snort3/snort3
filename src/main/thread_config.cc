@@ -29,7 +29,7 @@
 #include "utils/util.h"
 
 #ifdef UNIT_TEST
-#include "catch/catch.hpp"
+#include "catch/snort_catch.h"
 #endif
 
 static hwloc_topology_t topology = nullptr;

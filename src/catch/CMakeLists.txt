@@ -1,8 +1,17 @@
 
 if ( ENABLE_UNIT_TESTS )
 
-add_library(catch_tests STATIC
+set (CATCH_INCLUDES
     catch.hpp
+    snort_catch.h
+)
+
+install (FILES ${CATCH_INCLUDES}
+    DESTINATION "${INCLUDE_INSTALL_PATH}/catch"
+)
+
+add_library(catch_tests STATIC
+    ${CATCH_INCLUDES}
     unit_test.cc
     unit_test.h
 )

@@ -148,7 +148,7 @@ void trace_vprintf(const char* name, Trace mask, const char* file, int line,
 }
 
 #ifdef UNIT_TEST
-#include <catch/catch.hpp>
+#include <catch/snort_catch.h>
 
 //stringify the expansion of the macro
 #define sx(code) sm(code)

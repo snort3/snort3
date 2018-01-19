@@ -37,7 +37,7 @@
 #include "prune_handler.h"
 
 #ifdef UNIT_TEST
-#include "catch/catch.hpp"
+#include "catch/snort_catch.h"
 #endif
 
 namespace memory

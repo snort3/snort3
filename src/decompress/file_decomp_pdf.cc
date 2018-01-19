@@ -28,7 +28,7 @@
 #include "utils/util.h"
 
 #ifdef UNIT_TEST
-#include "catch/catch.hpp"
+#include "catch/snort_catch.h"
 #endif
 
 /* Define characters and tokens in PDF grammar */

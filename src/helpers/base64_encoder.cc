@@ -31,7 +31,7 @@
 
 #ifdef UNIT_TEST
 #include <cstring>
-#include "catch/catch.hpp"
+#include "catch/snort_catch.h"
 #endif
 
 SNORT_FORCED_INCLUSION_DEFINITION(base64_encoder);

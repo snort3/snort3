@@ -27,7 +27,7 @@
 
 #ifdef UNIT_TEST
 #include <vector>
-#include "catch/catch.hpp"
+#include "catch/snort_catch.h"
 #endif
 
 struct PeriodicHookNode

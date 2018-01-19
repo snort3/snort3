@@ -34,7 +34,7 @@
 #include "protocols/tcp.h"
 
 #ifdef UNIT_TEST
-#include "catch/catch.hpp"
+#include "catch/snort_catch.h"
 #endif
 
 #define PACKET_TRACER_USER_ENABLED  0x00000001

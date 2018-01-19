@@ -31,7 +31,7 @@
 #include <vector>
 
 #ifdef UNIT_TEST
-#include "catch/catch.hpp"
+#include "catch/snort_catch.h"
 #endif
 
 static std::vector<IdleHook> s_idle_handlers;

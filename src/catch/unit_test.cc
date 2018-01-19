@@ -24,7 +24,7 @@
 #include "unit_test.h"
 
 #define CATCH_CONFIG_RUNNER
-#include "catch.hpp"
+#include "snort_catch.h"
 
 static bool s_catch = false;
 static std::vector<std::string> test_tags;
@@ -60,3 +60,10 @@ int catch_test()
     return 0;
 }
 
+// This isn't in snort_catch.cc because the linker may exclude the file if no static components
+// reference TestCaseInstaller
+SO_PUBLIC TestCaseInstaller::TestCaseInstaller(void(*fun)(), const char* name)
+{ REGISTER_TEST_CASE(fun, name); }
+
+SO_PUBLIC TestCaseInstaller::TestCaseInstaller(void(*fun)(), const char* name, const char* group)
+{ REGISTER_TEST_CASE(fun, name, group); }

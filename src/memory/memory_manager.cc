@@ -31,7 +31,7 @@
 #include "memory_cap.h"
 
 #ifdef UNIT_TEST
-#include "catch/catch.hpp"
+#include "catch/snort_catch.h"
 #endif
 
 namespace memory

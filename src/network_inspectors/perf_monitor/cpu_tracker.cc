@@ -33,7 +33,7 @@
 #endif
 
 #ifdef UNIT_TEST
-#include "catch/catch.hpp"
+#include "catch/snort_catch.h"
 #endif
 
 #define TRACKER_NAME PERF_NAME "_cpu"

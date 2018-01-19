@@ -37,7 +37,7 @@
 #include "latency_util.h"
 
 #ifdef UNIT_TEST
-#include "catch/catch.hpp"
+#include "catch/snort_catch.h"
 #endif
 
 static THREAD_LOCAL uint64_t elapsed = 0;

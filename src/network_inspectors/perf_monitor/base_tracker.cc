@@ -25,7 +25,7 @@
 #include "base_tracker.h"  // FIXIT-W Returning null reference (from <vector>)
 
 #ifdef UNIT_TEST
-#include "catch/catch.hpp"
+#include "catch/snort_catch.h"
 #include "utils/util.h"
 #endif
 

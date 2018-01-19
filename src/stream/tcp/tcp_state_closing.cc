@@ -31,7 +31,7 @@
 #include "tcp_session.h"
 
 #ifdef UNIT_TEST
-#include "catch/catch.hpp"
+#include "catch/snort_catch.h"
 #endif
 
 using namespace std;

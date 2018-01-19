@@ -22,7 +22,7 @@
 #include "config.h"
 #endif
 
-#include "catch/catch.hpp"
+#include "catch/snort_catch.h"
 #include "hash/xhash.h"
 #include "main/snort_types.h"
 #include "parser/parse_ip.h"

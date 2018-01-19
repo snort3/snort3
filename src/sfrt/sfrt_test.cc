@@ -22,7 +22,7 @@
 #include "config.h"
 #endif
 
-#include "catch/catch.hpp"
+#include "catch/snort_catch.h"
 #include "main/snort_types.h"
 #include "sfip/sf_cidr.h"
 #include "utils/util.h"

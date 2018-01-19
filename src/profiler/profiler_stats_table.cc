@@ -27,9 +27,10 @@
 #include <cassert>
 #include <cstring>
 #include <iomanip>
+#include <sstream>
 
 #ifdef UNIT_TEST
-#include "catch/catch.hpp"
+#include "catch/snort_catch.h"
 #endif
 
 static constexpr unsigned WIDTH = 50;

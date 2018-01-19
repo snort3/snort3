@@ -32,7 +32,7 @@
 #include "memory_profiler_active_context.h"
 
 #ifdef UNIT_TEST
-#include "catch/catch.hpp"
+#include "catch/snort_catch.h"
 #endif
 
 // -----------------------------------------------------------------------------

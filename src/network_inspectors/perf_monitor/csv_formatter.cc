@@ -30,7 +30,7 @@
 #include <cstdio>
 #include <cstring>
 
-#include "catch/catch.hpp"
+#include "catch/snort_catch.h"
 #include "utils/util.h"
 #endif
 

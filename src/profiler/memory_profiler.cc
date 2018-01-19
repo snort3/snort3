@@ -29,7 +29,7 @@
 #include "memory_defs.h"
 
 #ifdef UNIT_TEST
-#include "catch/catch.hpp"
+#include "catch/snort_catch.h"
 #endif
 
 // -----------------------------------------------------------------------------

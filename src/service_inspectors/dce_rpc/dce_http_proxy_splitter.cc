@@ -29,7 +29,7 @@
 #include "dce_http_proxy_module.h"
 
 #ifdef UNIT_TEST
-#include "catch/catch.hpp"
+#include "catch/snort_catch.h"
 #endif
 
 // NOTE:  These strings must have a length of at least one character

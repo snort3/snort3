@@ -36,7 +36,7 @@
 #include "utils/util_cstring.h"
 
 #ifdef UNIT_TEST
-#include "catch/catch.hpp"
+#include "catch/snort_catch.h"
 #endif
 
 vartable_t* sfvt_alloc_table()
