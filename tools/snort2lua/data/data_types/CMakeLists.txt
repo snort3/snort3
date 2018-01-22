@@ -1,5 +1,5 @@
 
-add_library( data_types
+add_library( data_types STATIC
     dt_comment.h
     dt_comment.cc
     dt_include.h

@@ -1,5 +1,5 @@
 
-add_library( snort2lua_helpers
+add_library( snort2lua_helpers STATIC
     converter.h
     converter.cc
     s2l_util.h

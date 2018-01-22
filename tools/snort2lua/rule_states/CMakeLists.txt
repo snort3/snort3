@@ -1,5 +1,5 @@
 
-add_library( rule_states
+add_library( rule_states STATIC
     rule_base64_decode.cc
     rule_content.cc
     rule_convert_comma_list.cc

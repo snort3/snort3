@@ -1,5 +1,5 @@
 
-add_library(preprocessor_states
+add_library(preprocessor_states STATIC
     pps_appid.cc
     pps_arpspoof.cc
     pps_bo.cc

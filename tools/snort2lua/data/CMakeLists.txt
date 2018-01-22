@@ -1,7 +1,7 @@
 
 add_subdirectory (data_types)
 
-add_library( conversion_data
+add_library( conversion_data STATIC
     dt_data.h
     dt_data.cc
     dt_table_api.h
