@@ -163,7 +163,7 @@ engine for your network(s).  Here are some tuning tips:
 Use the watch_ip, ignore_scanners, and ignore_scanned options.
 It's important to correctly set these options.  The watch_ip option
 is easy to understand.  The analyst should set this option to the
-list of Cidr blocks and IPs that they want to watch.  If no
+list of CIDR blocks and IPs that they want to watch.  If no
 watch_ip is defined, Portscan will watch all network traffic.    
 The ignore_scanners and ignore_scanned options come into play in
 weeding out legitimate hosts that are very active on your network.
