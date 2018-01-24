@@ -24,17 +24,12 @@
 
 #include "fbs_formatter.h"
 
-#include <flatbuffers/idl.h>
-#include <flatbuffers/reflection.h>
 #include <queue>
 
-// To simplify builds between OS X and Linux
-#ifndef __APPLE__
-#include <byteswap.h>
-#include <netinet/in.h>
+#include <flatbuffers/idl.h>
+#include <flatbuffers/reflection.h>
 
-#define htonll(a) ( 1 == ntohl(1) ? (a) : bswap_64(a) )
-#endif
+#include "utils/endian.h"
 
 #ifdef UNIT_TEST
 #include <cstdio>

@@ -6,6 +6,7 @@ x_includedir = $(pkgincludedir)/utils
 x_include_HEADERS = \
 bitop.h \
 cpp_macros.h \
+endian.h \
 kmap.h  \
 safec.h \
 segment_mem.h \

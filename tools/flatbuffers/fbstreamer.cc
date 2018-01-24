@@ -31,13 +31,7 @@
 #include <flatbuffers/idl.h>
 #include <flatbuffers/reflection.h>
 
-// To simplify builds between OS X and Linux
-#ifndef __APPLE__
-#include <byteswap.h>
-#include <netinet/in.h>
-
-#define ntohll(a) ( 1 == ntohl(1) ? (a) : bswap_64(a) )
-#endif
+#include "src/utils/endian.h"
 
 #define OPT_INFILE     0x1
 #define OPT_BEFORE     0x2

@@ -2,6 +2,7 @@
 set( UTIL_INCLUDES
     bitop.h
     cpp_macros.h
+    endian.h
     kmap.h
     safec.h
     segment_mem.h
