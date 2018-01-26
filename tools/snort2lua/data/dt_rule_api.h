@@ -44,6 +44,7 @@ public:
     std::size_t num_errors() const;
     bool empty() const;
     void reset_state();
+    void clear();
 
     friend std::ostream& operator<<(std::ostream&, const RuleApi&);
     void print_rules(std::ostream&, bool in_rule_file);

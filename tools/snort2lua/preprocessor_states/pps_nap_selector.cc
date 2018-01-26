@@ -177,7 +177,7 @@ public:
                         cv.set_state(s, false);
                         // FIXIT-L if there is an error on this line after nap_rule_path
                         // the error message will reference path, not this conf file
-                        tmpval = (cv.parse_file(path, false) == 0);
+                        tmpval = (cv.parse_file(path, nullptr, false) == 0);
                         cv.set_state(this);
 
                         cv.get_table_api().open_top_level_table("binder");

@@ -66,6 +66,14 @@ std::size_t RuleApi::num_errors() const
 bool RuleApi::empty() const
 { return rules.empty(); }
 
+void RuleApi::clear()
+{
+    for (auto r : rules)
+        delete r;
+
+    rules.clear();
+}
+
 void RuleApi::set_remark(const char* s)
 { remark = s; }
 

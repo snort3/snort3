@@ -89,8 +89,9 @@ public:
     void set_state(ConversionState* c, bool delete_old = true);
     // reset the current parsing state
     void reset_state();
-    // parse an include file.  Use this function to ensure all set options are properly
-    int parse_file(const std::string& file, bool reset = true);
+    // parse an include file.  Use this function to ensure all options are set properly.
+    int parse_file(const std::string& in_file, const std::string* out_file = nullptr,
+        bool reset = true);
 
     bool failed_conversions() const
     { return data_api.failed_conversions() || rule_api.failed_conversions(); }

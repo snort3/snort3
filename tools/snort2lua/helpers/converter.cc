@@ -174,11 +174,23 @@ int Converter::parse_include_file(const std::string& input_file)
     return rc;
 }
 
-int Converter::parse_file(const std::string& input_file, bool reset)
+int Converter::parse_file(
+    const std::string& input_file,
+    const std::string* rule_file,
+    bool reset)
 {
     std::ifstream in;
+    std::ofstream rules;
     std::string orig_text;
 
+    bool line_by_line = rule_file and input_file.length() >= 6 and
+        input_file.substr(input_file.length() - 6) == ".rules";
+
+    if ( line_by_line )
+    {
+        rules.open(*rule_file, std::ifstream::out);
+        rule_api.print_rules(rules, true);
+    }
     // theoretically, I can save this state.  But there's
     // no need since any function calling this method
     // will set the state when it's done anyway.
@@ -190,6 +202,7 @@ int Converter::parse_file(const std::string& input_file, bool reset)
 
     in.open(input_file, std::ifstream::in);
     unsigned line_num = 0;
+
     while (!in.eof())
     {
         std::string tmp;
@@ -200,14 +213,16 @@ int Converter::parse_file(const std::string& input_file, bool reset)
         data_api.set_current_line(++line_num);
 
         std::size_t first_non_white_char = tmp.find_first_not_of(' ');
-        bool commented_rule = false;
-        if ( tmp.length() > first_non_white_char + 7 )
-            commented_rule = tmp.compare(first_non_white_char, 7, "# alert") == 0;
-        if ( !commented_rule && ((first_non_white_char == std::string::npos) ||
-            (tmp[first_non_white_char] == '#') ||
-            (tmp[first_non_white_char] == ';')))     // no, i did not know that semicolons made a
-                                                     // line a comment
+
+        // no, i did not know that semicolons made a line a comment
+        bool comment = (tmp[first_non_white_char] == '#') || (tmp[first_non_white_char] == ';');
+        bool commented_rule = tmp.substr(0, 7) == "# alert";
+
+        if ( !commented_rule && ((first_non_white_char == std::string::npos) || comment) )
         {
+            if ( line_by_line )
+                rules << tmp << std::endl;
+
             util::trim(tmp);
 
             if (!tmp.empty())
@@ -216,7 +231,6 @@ int Converter::parse_file(const std::string& input_file, bool reset)
                 tmp.erase(tmp.begin());
                 util::ltrim(tmp);
             }
-
             data_api.add_comment(tmp);
         }
         else if ( tmp[tmp.find_last_not_of(' ')] == '\\')
@@ -247,7 +261,14 @@ int Converter::parse_file(const std::string& input_file, bool reset)
                     }
                 }
                 if (commented_rule)
-                    get_rule_api().make_rule_a_comment();
+                    rule_api.make_rule_a_comment();
+
+                if ( line_by_line )
+                {
+                    rule_api.print_rules(rules, true);
+                    rule_api.clear();
+                }
+
                 if(empty_args)
                 {
                     set_empty_args(false);
@@ -271,6 +292,11 @@ int Converter::parse_file(const std::string& input_file, bool reset)
             if ( reset && !multiline_state )
                 reset_state();
         }
+    }
+    if ( line_by_line )
+    {
+        rules.close();
+        rule_api.reset_state();
     }
 
     // this is set by parse_include_file
@@ -355,7 +381,8 @@ void Converter::add_bindings()
         binders.pop_back();
 }
 
-int Converter::convert(const std::string& input,
+int Converter::convert(
+    const std::string& input,
     const std::string& output_file,
     std::string rule_file,
     std::string error_file)
@@ -363,7 +390,10 @@ int Converter::convert(const std::string& input,
     int rc;
     initialize();
 
-    rc = parse_file(input);
+    if (rule_file.empty())
+        rule_file = output_file;
+
+    rc = parse_file(input, &rule_file);
 
     if ( bind_wizard )
     {
@@ -377,9 +407,6 @@ int Converter::convert(const std::string& input,
     }
 
     add_bindings();
-
-    if (rule_file.empty())
-        rule_file = output_file;
 
     if (error_file.empty())
         error_file = output_file + ".rej";
