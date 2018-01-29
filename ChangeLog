@@ -1,3 +1,28 @@
+18/01/29 - build 242
+
+-- build: add STATIC to add_library call of port_scan to build it statically
+   otherwise link will fail (Makefile.am already build only the static version)
+   thanks to Fabrice Fontaine <fontaine.fabrice@gmail.com>
+-- doc: update snort2lua for .rules files
+-- doc: fixed some typos
+-- expect: removed a single-element structure ExpectFlows
+-- file_api: give FilePolicyBase a default virtual destructor
+-- file: gracefully handle not having file policy configured in dce_smb
+-- flow: provided access to all expected flows created by a packet
+-- inspection events: added mandatory expected flow pub sub support
+-- inspector_manager: fix acquire and use of default policy
+-- profiler: fixed missing include
+-- sfdaq: export can_whitelist() and modify_flow_opaque()file_api:
+   move VerdictName array out of file_api.h
+-- snort2lua: fix file_rule_path and fw_log_size handling in firewall preprocessor
+-- snort2lua: make sure file_magic table comes before file_id table.
+-- snort2lua: detect commented 'alert' rules and convert them from snort to snort3 format.
+   Leave the rules commented out in the snort3 rules file.
+-- snort2lua: convert *.rules files line-by-line
+-- unit tests: updated Catch
+-- unit tests: added ability to run Catch tests from dynamic modules
+-- utils, flatbuffers: added a uniform interface for 64-bit endian swaps
+
 17/12/15 - build 241
 
 -- add back the ref count for file config
