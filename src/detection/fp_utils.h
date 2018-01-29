@@ -36,7 +36,7 @@ int flp_trim(const char* p, int plen, const char** buff);
 bool set_fp_content(OptTreeNode*);
 
 std::vector <PatternMatchData*> get_fp_content(
-    OptTreeNode*, OptFpList*&, bool srvc, bool only_literals);
+    OptTreeNode*, OptFpList*&, bool srvc, bool only_literals, bool& exclude);
 
 #endif
 

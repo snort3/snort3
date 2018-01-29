@@ -240,7 +240,7 @@ FpSelector::FpSelector(CursorActionType c, PatternMatchData* p)
 }
 
 bool FpSelector::is_better_than(
-    FpSelector& rhs, bool srvc, RuleDirection dir, bool only_literals)
+    FpSelector& rhs, bool /*srvc*/, RuleDirection /*dir*/, bool only_literals)
 {
     if ( !pmd_can_be_fp(pmd, cat, only_literals) )
     {
@@ -255,22 +255,6 @@ bool FpSelector::is_better_than(
     if ( !rhs.pmd )
         return true;
 
-    if ( !srvc )
-    {
-        if ( cat == CAT_SET_RAW and rhs.cat != CAT_SET_RAW )
-            return true;
-
-        if ( cat != CAT_SET_RAW and rhs.cat == CAT_SET_RAW )
-            return false;
-    }
-    else if ( dir == RULE_FROM_SERVER )
-    {
-        if ( cat != CAT_SET_KEY and rhs.cat == CAT_SET_KEY )
-            return true;
-
-        if ( cat == CAT_SET_KEY and rhs.cat != CAT_SET_KEY )
-            return false;
-    }
     if ( pmd->is_fast_pattern() )
     {
         if ( rhs.pmd->is_fast_pattern() )
@@ -299,7 +283,7 @@ bool FpSelector::is_better_than(
 //--------------------------------------------------------------------------
 
 PatternMatchVector get_fp_content(
-    OptTreeNode* otn, OptFpList*& next, bool srvc, bool only_literals)
+    OptTreeNode* otn, OptFpList*& next, bool srvc, bool only_literals, bool& exclude)
 {
     CursorActionType curr_cat = CAT_SET_RAW;
     FpSelector best;
@@ -348,6 +332,14 @@ PatternMatchVector get_fp_content(
             pmds.push_back(best.pmd);
         }
     }
+
+    if ( best.pmd and best.cat != CAT_SET_RAW and !srvc and otn->sigInfo.num_services > 0 )
+    {
+        pmds.clear();  // just include in service group
+        exclude = true;
+    }
+    else
+        exclude = false;
 
     if ( best.pmd and otn->proto == SNORT_PROTO_FILE and best.cat != CAT_SET_FILE )
     {
@@ -494,7 +486,7 @@ TEST_CASE("fp_cat2", "[FastPatternSelect]")
     set_pmd(p1, 0x0, "foo");
     FpSelector s1(CAT_SET_FILE, &p1);
 
-    CHECK(s0.is_better_than(s1, false, RULE_WO_DIR));
+    CHECK(!s0.is_better_than(s1, false, RULE_WO_DIR));
     CHECK(!s1.is_better_than(s0, false, RULE_WO_DIR));
 }
 
@@ -534,7 +526,7 @@ TEST_CASE("fp_pkt_key_port", "[FastPatternSelect]")
     set_pmd(p1, 0x0, "longer");
     FpSelector s1(CAT_SET_KEY, &p1);
 
-    CHECK(s0.is_better_than(s1, false, RULE_WO_DIR));
+    CHECK(!s0.is_better_than(s1, false, RULE_WO_DIR));
 }
 
 TEST_CASE("fp_pkt_key_port_user", "[FastPatternSelect]")
@@ -612,8 +604,8 @@ TEST_CASE("fp_pkt_key_srvc_rsp", "[FastPatternSelect]")
     set_pmd(p1, 0x0, "longer");
     FpSelector s1(CAT_SET_KEY, &p1);
 
-    CHECK(s0.is_better_than(s1, true, RULE_FROM_SERVER));
-    CHECK(!s1.is_better_than(s0, true, RULE_FROM_SERVER));
+    CHECK(!s0.is_better_than(s1, true, RULE_FROM_SERVER));
+    CHECK(s1.is_better_than(s0, true, RULE_FROM_SERVER));
 }
 #endif
 

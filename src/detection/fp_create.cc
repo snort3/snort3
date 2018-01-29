@@ -513,8 +513,8 @@ static int fpAddPortGroupRule(
         return -1;
 
     OptFpList* next = nullptr;
-    bool only_literal = !MpseManager::is_regex_capable(fp->get_search_api());
-    pmv = get_fp_content(otn, next, srvc, only_literal);
+    bool exclude, only_literal = !MpseManager::is_regex_capable(fp->get_search_api());
+    pmv = get_fp_content(otn, next, srvc, only_literal, exclude);
 
     if ( !pmv.empty() )
     {
@@ -539,6 +539,9 @@ static int fpAddPortGroupRule(
             return 0;
         }
     }
+
+    if ( exclude )
+        return 0;
 
     // no fast pattern added
     if (fpFinishPortGroupRule(sc, pg, otn, nullptr, fp) != 0)
@@ -1183,7 +1186,7 @@ static void fpBuildServicePortGroupByServiceOtnList(
     s_group = srvc;
 
     /*
-     * add each rule to the port group pattern matchers,
+     * add each rule to the service group pattern matchers,
      * or to the no-content rule list
      */
     SF_LNODE* cursor;
@@ -1192,8 +1195,7 @@ static void fpBuildServicePortGroupByServiceOtnList(
         otn;
         otn = (OptTreeNode*)sflist_next(&cursor) )
     {
-        if (fpAddPortGroupRule(sc, pg, otn, fp, true) != 0)
-            continue;
+        fpAddPortGroupRule(sc, pg, otn, fp, true);
     }
 
     if (fpFinishPortGroup(sc, pg, fp) != 0)
