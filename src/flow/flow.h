@@ -63,6 +63,8 @@
 #define SSNFLAG_CLIENT_SWAPPED      0x00400000
 
 #define SSNFLAG_PROXIED             0x01000000
+#define SSNFLAG_NO_DETECT_TO_CLIENT 0x02000000
+#define SSNFLAG_NO_DETECT_TO_SERVER 0x04000000
 
 #define SSNFLAG_ABORT_CLIENT        0x10000000
 #define SSNFLAG_ABORT_SERVER        0x20000000
@@ -185,6 +187,10 @@ public:
 
     uint32_t clear_session_flags(uint32_t flags)
     { return ssn_state.session_flags &= ~flags; }
+
+    void set_to_client_detection(bool enable);
+    void set_to_server_detection(bool enable);
+    bool is_detection_enabled(bool to_server);
 
     int get_ignore_direction()
     { return ssn_state.ignore_direction; }
@@ -342,6 +348,30 @@ public:  // FIXIT-M privatize if possible
 private:
     void clean();
 };
+
+inline void Flow::set_to_client_detection(bool enable)
+{
+    if ( enable )
+        ssn_state.session_flags &= ~SSNFLAG_NO_DETECT_TO_CLIENT;
+    else
+        ssn_state.session_flags |= SSNFLAG_NO_DETECT_TO_CLIENT;
+}
+
+inline void Flow::set_to_server_detection(bool enable)
+{
+    if ( enable )
+        ssn_state.session_flags &= ~SSNFLAG_NO_DETECT_TO_SERVER;
+    else
+        ssn_state.session_flags |= SSNFLAG_NO_DETECT_TO_SERVER;
+}
+
+inline bool Flow::is_detection_enabled(bool to_server)
+{
+    if ( to_server )
+        return !(ssn_state.session_flags & SSNFLAG_NO_DETECT_TO_SERVER);
+
+    return !(ssn_state.session_flags & SSNFLAG_NO_DETECT_TO_CLIENT);
+}
 
 #endif
 

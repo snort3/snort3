@@ -379,6 +379,19 @@ void HttpInspect::clear(Packet* p)
 
     const SourceId source_id = (p->is_from_client()) ? SRC_CLIENT : SRC_SERVER;
 
+    if (session_data->detection_status[source_id] == DET_DEACTIVATING)
+    {
+        if (source_id == SRC_CLIENT)
+        {
+            p->flow->set_to_server_detection(false);
+        }
+        else
+        {
+            p->flow->set_to_client_detection(false);
+        }
+        session_data->detection_status[source_id] = DET_OFF;
+    }
+
     if (session_data->transaction[source_id] == nullptr)
         return;
 

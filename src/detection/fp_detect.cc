@@ -970,25 +970,16 @@ static int fp_search(
     return 0;
 }
 
-/*
-**  DESCRIPTION
-**    This function does a set-wise match on content, and walks an otn list
-**    for non-content.  The otn list search will eventually be redone for
-**    for performance purposes.
-**
-**  FORMAL INPUTS
-**    PortGroup * - the port group to inspect
-**    Packet *     - the packet to inspect
-**    int          - whether src/dst ports should be checked (udp/tcp or icmp)
-**    char         - whether the rule is an IP rule (change the packet payload pointer)
-**
-**  FORMAL OUTPUTS
-**    int - 0 for failed pattern match
-**          1 for successful pattern match
-*/
+//  This function does a set-wise match on content, and walks an otn list
+//  for non-content.  The otn list search will eventually be redone for
+//  for performance purposes.
+
 static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
     int check_ports, char ip_rule, int type, OtnxMatchData* omd)
 {
+    if ( p->flow and !p->flow->is_detection_enabled(p->packet_flags & PKT_FROM_CLIENT) )
+        return 0;
+
     const uint8_t* tmp_payload = nullptr;
     int8_t curr_ip_layer = 0;
     bool repeat = false;

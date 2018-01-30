@@ -103,6 +103,8 @@ void HttpFlowData::half_reset(SourceId source_id)
     section_size_max[source_id] = 0;
     file_depth_remaining[source_id] = STAT_NOT_PRESENT;
     detect_depth_remaining[source_id] = STAT_NOT_PRESENT;
+    detection_status[source_id] = DET_REACTIVATING;
+
     compression[source_id] = CMP_NONE;
     if (compress_stream[source_id] != nullptr)
     {
@@ -155,6 +157,7 @@ void HttpFlowData::trailer_prep(SourceId source_id)
         delete compress_stream[source_id];
         compress_stream[source_id] = nullptr;
     }
+    detection_status[source_id] = DET_REACTIVATING;
 }
 
 bool HttpFlowData::add_to_pipeline(HttpTransaction* latest)

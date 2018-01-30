@@ -70,6 +70,12 @@ void HttpMsgSection::create_event(int sid)
 
 void HttpMsgSection::update_depth() const
 {
+    if ((session_data->detect_depth_remaining[source_id] <= 0) &&
+        (session_data->detection_status[source_id] == DET_ON))
+    {
+        session_data->detection_status[source_id] = DET_DEACTIVATING;
+    }
+
     if ((session_data->file_depth_remaining[source_id] <= 0) &&
         (session_data->detect_depth_remaining[source_id] <= 0))
     {
