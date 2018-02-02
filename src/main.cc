@@ -255,7 +255,7 @@ static Pig* get_lazy_pig(unsigned max)
 // main commands
 //-------------------------------------------------------------------------
 
-static void broadcast(AnalyzerCommand* ac)
+void main_broadcast_command(AnalyzerCommand* ac)
 {
     unsigned dispatched = 0;
 
@@ -287,7 +287,7 @@ int main_dump_stats(lua_State* L)
 {
     bool from_shell = ( L != nullptr );
     current_request->respond("== dumping stats\n", from_shell);
-    broadcast(get_command(new ACGetStats(), from_shell));
+    main_broadcast_command(get_command(new ACGetStats(), from_shell));
     return 0;
 }
 
@@ -295,7 +295,7 @@ int main_rotate_stats(lua_State* L)
 {
     bool from_shell = ( L != nullptr );
     current_request->respond("== rotating stats\n", from_shell);
-    broadcast(get_command(new ACRotate(), from_shell));
+    main_broadcast_command(get_command(new ACRotate(), from_shell));
     return 0;
 }
 
@@ -328,7 +328,7 @@ int main_reload_config(lua_State* L)
 
     bool from_shell = ( L != nullptr );
     current_request->respond(".. swapping configuration\n", from_shell);
-    broadcast(get_command(new ACSwap(new Swapper(old, sc)), from_shell));
+    main_broadcast_command(get_command(new ACSwap(new Swapper(old, sc)), from_shell));
 
     return 0;
 }
@@ -369,7 +369,7 @@ int main_reload_policy(lua_State* L)
 
     bool from_shell = ( L != nullptr );
     current_request->respond(".. swapping policy\n", from_shell);
-    broadcast(get_command(new ACSwap(new Swapper(old, sc)), from_shell));
+    main_broadcast_command(get_command(new ACSwap(new Swapper(old, sc)), from_shell));
 
     return 0;
 }
@@ -378,7 +378,7 @@ int main_reload_daq(lua_State* L)
 {
     bool from_shell = ( L != nullptr );
     current_request->respond(".. reloading daq module\n", from_shell);
-    broadcast(get_command(new ACDAQSwap(), from_shell));
+    main_broadcast_command(get_command(new ACDAQSwap(), from_shell));
     proc_stats.daq_reloads++;
 
     return 0;
@@ -416,7 +416,7 @@ int main_reload_hosts(lua_State* L)
 
     bool from_shell = ( L != nullptr );
     current_request->respond(".. swapping hosts table\n", from_shell);
-    broadcast(get_command(new ACSwap(new Swapper(old, tc)), from_shell));
+    main_broadcast_command(get_command(new ACSwap(new Swapper(old, tc)), from_shell));
 
     return 0;
 }
@@ -457,7 +457,7 @@ int main_delete_inspector(lua_State* L)
 
     bool from_shell = ( L != nullptr );
     current_request->respond(".. deleted inspector\n", from_shell);
-    broadcast(get_command(new ACSwap(new Swapper(old, sc)), from_shell));
+    main_broadcast_command(get_command(new ACSwap(new Swapper(old, sc)), from_shell));
 
     return 0;
 }
@@ -479,7 +479,7 @@ int main_pause(lua_State* L)
 {
     bool from_shell = ( L != nullptr );
     current_request->respond("== pausing\n", from_shell);
-    broadcast(get_command(new ACPause(), from_shell));
+    main_broadcast_command(get_command(new ACPause(), from_shell));
     paused = true;
     return 0;
 }
@@ -488,7 +488,7 @@ int main_resume(lua_State* L)
 {
     bool from_shell = ( L != nullptr );
     current_request->respond("== resuming\n", from_shell);
-    broadcast(get_command(new ACResume(), from_shell));
+    main_broadcast_command(get_command(new ACResume(), from_shell));
     paused = false;
     return 0;
 }
@@ -512,7 +512,7 @@ int main_quit(lua_State* L)
 {
     bool from_shell = ( L != nullptr );
     current_request->respond("== stopping\n", from_shell);
-    broadcast(get_command(new ACStop(), from_shell));
+    main_broadcast_command(get_command(new ACStop(), from_shell));
     exit_requested = true;
     return 0;
 }
@@ -736,7 +736,7 @@ static void handle(Pig& pig, unsigned& swine, unsigned& pending_privileges)
                 FatalError("Failed to drop privileges!\n");
 
             Snort::do_pidfile();
-            broadcast(new ACStart());
+            main_broadcast_command(new ACStart());
         }
         else
         {
@@ -761,7 +761,7 @@ static void handle(Pig& pig, unsigned& swine, unsigned& pending_privileges)
                 FatalError("Failed to drop privileges!\n");
 
             Snort::do_pidfile();
-            broadcast(new ACRun(paused));
+            main_broadcast_command(new ACRun(paused));
         }
         else
         {

@@ -374,8 +374,8 @@ else
 fi
 
 AC_ARG_ENABLE(gdb,
-    AS_HELP_STRING([--enable-gdb],[enable gdb debugging information]),
-    enable_gdb="$enableval", enable_gdb="no")
+    AS_HELP_STRING([--disable-gdb],[disable gdb debugging information]),
+    enable_gdb="$enableval", enable_gdb="yes")
 
 if test "x$enable_gdb" = "xyes"; then
     CFLAGS="$CFLAGS -g -ggdb"

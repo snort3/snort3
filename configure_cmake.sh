@@ -46,7 +46,7 @@ Optional Features:
                             developers only)
     --enable-debug          enable debugging options (bugreports and developers
                             only)
-    --enable-gdb            enable gdb debugging information
+    --disable-gdb           disable gdb debugging information
     --enable-gprof-profile  enable gprof profiling options (developers only)
     --disable-corefiles     prevent Snort from generating core files
     --enable-address-sanitizer

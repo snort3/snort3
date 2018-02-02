@@ -4,6 +4,7 @@ x_includedir = $(pkgincludedir)/main
 noinst_LIBRARIES = libmain.a
 
 x_include_HEADERS = \
+analyzer_command.h \
 policy.h \
 snort_config.h \
 snort_debug.h \
@@ -14,7 +15,6 @@ libmain_a_SOURCES = \
 analyzer.cc \
 analyzer.h \
 analyzer_command.cc \
-analyzer_command.h \
 build.h \
 help.cc \
 help.h \

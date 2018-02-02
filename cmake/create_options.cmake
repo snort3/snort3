@@ -37,7 +37,7 @@ option ( ENABLE_SAFEC "Use bounds checked functions provided by libsafec" ON )
 # debugging
 option ( ENABLE_DEBUG_MSGS "Enable debug printing options (bugreports and developers only)" OFF )
 option ( ENABLE_DEBUG "Enable debugging options (bugreports and developers only)" OFF )
-option ( ENABLE_GDB "Enable gdb debugging information" OFF )
+option ( ENABLE_GDB "Enable gdb debugging information" ON )
 option ( ENABLE_PROFILE "Enable profiling options (developers only)" OFF )
 option ( ENABLE_ADDRESS_SANITIZER "enable address sanitizer support" OFF )
 option ( ENABLE_THREAD_SANITIZER "enable thread sanitizer support" OFF )

@@ -20,6 +20,8 @@
 #ifndef ANALYZER_COMMANDS_H
 #define ANALYZER_COMMANDS_H
 
+#include "main/snort_types.h"
+
 class Analyzer;
 class Swapper;
 
@@ -108,6 +110,8 @@ public:
     const char* stringify() override { return "DAQ_SWAP"; }
     ~ACDAQSwap() override;
 };
+
+SO_PUBLIC void main_broadcast_command(AnalyzerCommand* ac);   // From main.cc
 
 #endif
 
