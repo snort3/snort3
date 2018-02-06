@@ -914,14 +914,9 @@ static int fp_search(
         // ports search raw packet only
         if ( Mpse* so = port_group->mpse[PM_TYPE_PKT] )
         {
-            uint16_t pattern_match_size = p->dsize;
-
-            if ( IsLimitedDetect(p) && (p->alt_dsize < p->dsize) )
-                pattern_match_size = p->alt_dsize;
-
-            if ( pattern_match_size )
+            if ( uint16_t pattern_match_size = p->get_detect_limit() )
             {
-                trace_logf(detection, TRACE_FP_SEARCH, "%ld fp %s[%d]\n",
+                trace_logf(detection, TRACE_FP_SEARCH, "%ld fp %s[%u]\n",
                     pc.total_from_daq, pm_type_strings[PM_TYPE_PKT], pattern_match_size);
 
                 search_data(so, omd, p->data, pattern_match_size, pc.pkt_searches);

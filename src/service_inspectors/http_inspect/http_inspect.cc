@@ -24,6 +24,7 @@
 #include "http_inspect.h"
 
 #include "detection/detection_engine.h"
+#include "detection/detection_util.h"
 #include "log/unified2.h"
 #include "protocols/packet.h"
 #include "stream/stream.h"
@@ -273,6 +274,13 @@ void HttpInspect::eval(Packet* p)
     // FIXIT-H Workaround for unexpected eval() calls
     if (session_data->section_type[source_id] == SEC__NOT_COMPUTE)
         return;
+
+    // Limit alt_dsize of message body sections to request/response depth
+    if ((session_data->detect_depth_remaining[source_id] > 0) &&
+        (session_data->detect_depth_remaining[source_id] < p->dsize))
+    {
+        p->set_detect_limit(session_data->detect_depth_remaining[source_id]);
+    }
 
     const int remove_workaround = session_data->zero_byte_workaround[source_id] ? 1 : 0;
     if (!process(p->data, p->dsize - remove_workaround, p->flow, source_id, true))

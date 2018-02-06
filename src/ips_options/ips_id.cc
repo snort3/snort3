@@ -97,7 +97,7 @@ IpsOption::EvalStatus IpIdOption::eval(Cursor&, Packet* p)
 static const Parameter s_params[] =
 {
     { "~range", Parameter::PT_INTERVAL, RANGE, nullptr,
-      "check if the ip id is in the given range" },
+      "check if the IP ID is in the given range" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

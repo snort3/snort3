@@ -42,12 +42,13 @@ private:
 
 bool PerfMonitor::convert(std::istringstream& data_stream)
 {
-    std::string keyword;
-    bool retval = true;
-
     table_api.open_table("perf_monitor");
-    retval |= table_api.add_option("base", true);
-    retval |= table_api.add_option("cpu", true);
+
+    bool retval =
+        table_api.add_option("base", true) and
+        table_api.add_option("cpu", true);
+
+    std::string keyword;
 
     while (data_stream >> keyword)
     {

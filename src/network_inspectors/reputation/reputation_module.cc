@@ -43,13 +43,13 @@ using namespace std;
 static const Parameter s_params[] =
 {
     { "blacklist", Parameter::PT_STRING, nullptr, nullptr,
-      "blacklist file name with ip lists" },
+      "blacklist file name with IP lists" },
 
     { "memcap", Parameter::PT_INT, "1:4095", "500",
       "maximum total MB of memory allocated" },
 
     { "nested_ip", Parameter::PT_ENUM, "inner|outer|all", "inner",
-      "ip to use when there is IP encapsulation" },
+      "IP to use when there is IP encapsulation" },
 
     { "priority", Parameter::PT_ENUM, "blacklist|whitelist", "whitelist",
       "defines priority when there is a decision conflict during run-time" },
@@ -61,7 +61,7 @@ static const Parameter s_params[] =
       "specify the meaning of whitelist" },
 
     { "whitelist", Parameter::PT_STRING, nullptr, nullptr,
-      "whitelist file name with ip lists" },
+      "whitelist file name with IP lists" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

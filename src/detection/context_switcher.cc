@@ -240,7 +240,7 @@ TEST_CASE("ContextSwitcher normal", "[ContextSwitcher]")
         mgr.set_context_data(1, a);
         mgr.interrupt();
         CHECK(mgr.idle_count() == max-2);
-        CHECK(mgr.busy_count() == 2);
+        CHECK((mgr.busy_count() == 2));
 
         unsigned u = mgr.suspend();
         CHECK(mgr.idle_count() == max-2);
@@ -249,7 +249,7 @@ TEST_CASE("ContextSwitcher normal", "[ContextSwitcher]")
 
         mgr.resume(u);
         CHECK(mgr.idle_count() == max-2);
-        CHECK(mgr.busy_count() == 2);
+        CHECK((mgr.busy_count() == 2));
         CHECK(mgr.hold_count() == 0);
 
         mgr.complete();
@@ -291,7 +291,7 @@ TEST_CASE("ContextSwitcher abort", "[ContextSwitcher]")
         CHECK(mgr.idle_count() == max-3);
 
         mgr.suspend();
-        CHECK(mgr.busy_count() == 2);
+        CHECK((mgr.busy_count() == 2));
         CHECK(mgr.hold_count() == 1);
 
         mgr.abort();

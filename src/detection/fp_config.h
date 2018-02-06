@@ -145,7 +145,7 @@ public:
 private:
     const struct MpseApi* search_api;
 
-    bool inspect_stream_insert = false;
+    bool inspect_stream_insert = true;
     bool trim;
     bool split_any_any = false;
     bool debug_print_fast_pattern = false;

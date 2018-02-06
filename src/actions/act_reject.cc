@@ -127,10 +127,10 @@ void RejectAction::send(Packet* p)
 static const Parameter s_params[] =
 {
     { "reset", Parameter::PT_ENUM, "source|dest|both", nullptr,
-      "send tcp reset to one or both ends" },
+      "send TCP reset to one or both ends" },
 
     { "control", Parameter::PT_ENUM, "network|host|port|all", nullptr,
-      "send icmp unreachable(s)" },
+      "send ICMP unreachable(s)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

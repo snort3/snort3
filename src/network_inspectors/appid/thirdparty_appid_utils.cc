@@ -117,7 +117,7 @@ static void getXffFields()
 {
     // FIXIT-M need to get xff fields from http config
     const char** xffFields = nullptr; // = _dpd.getHttpXffFields(&thirdpartyConfig.numXffFields);
-    if (!xffFields)
+    //if (!xffFields)  FIXIT-W always true
     {
         xffFields = defaultXffFields;
         thirdpartyConfig.numXffFields = sizeof(defaultXffFields) / sizeof(defaultXffFields[0]);

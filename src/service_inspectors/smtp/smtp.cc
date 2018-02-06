@@ -1215,7 +1215,6 @@ static void snort_smtp(SMTP_PROTO_CONF* config, Packet* p)
 
     /* reset normalization stuff */
     smtp_normalizing = false;
-    SetDetectLimit(p, 0);
 
     if (pkt_dir == SMTP_PKT_FROM_SERVER)
     {

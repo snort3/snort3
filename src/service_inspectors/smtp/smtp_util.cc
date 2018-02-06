@@ -99,7 +99,6 @@ int SMTP_CopyToAltBuffer(Packet* p, const uint8_t* start, int length)
 
     if ((unsigned long)length > alt_size - buf.len)
     {
-        //SetDetectLimit(p, 0);
         smtp_normalizing = false;
         return -1;
     }

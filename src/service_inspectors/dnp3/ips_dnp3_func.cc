@@ -38,7 +38,7 @@
 
 #define s_name "dnp3_func"
 #define s_help \
-    "detection option to check dnp3 function code"
+    "detection option to check DNP3 function code"
 
 static THREAD_LOCAL ProfileStats dnp3_func_perf_stats;
 
@@ -112,7 +112,7 @@ IpsOption::EvalStatus Dnp3FuncOption::eval(Cursor&, Packet* p)
 static const Parameter s_params[] =
 {
     { "~", Parameter::PT_STRING, nullptr, nullptr,
-      "match dnp3 function code or name" },
+      "match DNP3 function code or name" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

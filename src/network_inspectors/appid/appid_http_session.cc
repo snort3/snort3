@@ -435,7 +435,7 @@ int AppIdHttpSession::process_http_packet(int direction)
             {
                 if ( asd->service.get_id() == APP_ID_NONE || asd->service.get_id() == APP_ID_HTTP )
                 {
-                    AppIdServiceSubtype* local_subtype = nullptr;
+                    //AppIdServiceSubtype* local_subtype = nullptr;
                     char* vendorVersion = nullptr;
                     char* vendor = nullptr;
 
@@ -450,7 +450,8 @@ int AppIdHttpSession::process_http_packet(int direction)
                         snort_free(vendor);
                         snort_free(vendorVersion);
                     }
-                    if (local_subtype)
+#if 0
+                    if (local_subtype)  // FIXIT-W always false
                     {
                         AppIdServiceSubtype** tmpSubtype;
 
@@ -460,6 +461,7 @@ int AppIdHttpSession::process_http_packet(int direction)
 
                         *tmpSubtype = local_subtype;
                     }
+#endif
                 }
             }
 

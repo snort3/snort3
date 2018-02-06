@@ -102,7 +102,7 @@ static const Parameter s_params[] =
 };
 
 #define s_help \
-    "rule option to check gtp version"
+    "rule option to check GTP version"
 
 class GtpVersionModule : public Module
 {

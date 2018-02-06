@@ -59,7 +59,7 @@ CACHE_PARAMS(file_params,    "128",  "30",  "180", "5");
 static const Parameter s_params[] =
 {
     { "footprint", Parameter::PT_INT, "0:", "0",
-      "use zero for production, non-zero for testing at given size (for tcp and user)" },
+      "use zero for production, non-zero for testing at given size (for TCP and user)" },
 
     { "ip_frags_only", Parameter::PT_BOOL, nullptr, "false",
       "don't process non-frag flows" },

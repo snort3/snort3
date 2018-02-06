@@ -98,7 +98,7 @@ IpsOption::EvalStatus TcpSeqOption::eval(Cursor&, Packet* p)
 static const Parameter s_params[] =
 {
     { "~range", Parameter::PT_INTERVAL, RANGE, nullptr,
-      "check if tcp sequence number is in given range" },
+      "check if TCP sequence number is in given range" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

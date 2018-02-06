@@ -270,19 +270,18 @@ static void destroyTreesRecursively(tMlmpTree* rootNode)
 
 static void dumpTreesRecursively(tMlmpTree* rootNode)
 {
-    tPatternPrimaryNode* primaryPatternNode;
-    tPatternNode* ddPatternNode;
-    char prefix[41];
-    uint32_t prefixSize;
+#ifdef DEBUG
+    uint32_t prefixSize = 4 * (rootNode->level) + 2;
 
-    prefixSize = 4 * (rootNode->level) + 2;
     if (prefixSize > 40)
         prefixSize = 40;
 
+    char prefix[41];
     memset(prefix, ' ', prefixSize);
     prefix[prefixSize] = '\0';
+#endif
 
-    for (primaryPatternNode = rootNode->patternList;
+    for (tPatternPrimaryNode* primaryPatternNode = rootNode->patternList;
         primaryPatternNode;
         primaryPatternNode = primaryPatternNode->nextPrimaryNode)
     {
@@ -292,7 +291,7 @@ static void dumpTreesRecursively(tMlmpTree* rootNode)
             primaryPatternNode->patternNode.partTotal,
             primaryPatternNode->patternNode.userData);
 
-        for (ddPatternNode = &primaryPatternNode->patternNode;
+        for (tPatternNode* ddPatternNode = &primaryPatternNode->patternNode;
             ddPatternNode;
             ddPatternNode = ddPatternNode->nextPattern)
         {

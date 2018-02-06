@@ -90,6 +90,23 @@ public:
     bool is_paf() override { return true; }
 
 private:
+    void count_scan(const Flow* f)
+    {
+        if ( f->pkt_type == PktType::TCP )
+            ++tstats.tcp_scans;
+        else
+            ++tstats.user_scans;
+    }
+
+    void count_hit(const Flow* f)
+    {
+        if ( f->pkt_type == PktType::TCP )
+            ++tstats.tcp_hits;
+        else
+            ++tstats.user_hits;
+    }
+
+private:
     Wizard* wizard;
     Wand wand;
 };
@@ -152,10 +169,10 @@ StreamSplitter::Status MagicSplitter::scan(
     uint32_t, uint32_t*)
 {
     Profile profile(wizPerfStats);
-    ++tstats.tcp_scans;
+    count_scan(f);
 
     if ( wizard->cast_spell(wand, f, data, len) )
-        ++tstats.tcp_hits;
+        count_hit(f);
 
     else if ( wizard->finished(wand) )
         return ABORT;

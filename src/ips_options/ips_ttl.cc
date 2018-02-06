@@ -98,7 +98,7 @@ IpsOption::EvalStatus TtlOption::eval(Cursor&, Packet* p)
 static const Parameter s_params[] =
 {
     { "~range", Parameter::PT_INTERVAL, RANGE, nullptr,
-      "check if ip ttl is in the given range" },
+      "check if IP TTL is in the given range" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

@@ -513,7 +513,9 @@ static int fpAddPortGroupRule(
         return -1;
 
     OptFpList* next = nullptr;
-    bool exclude, only_literal = !MpseManager::is_regex_capable(fp->get_search_api());
+    bool only_literal = !MpseManager::is_regex_capable(fp->get_search_api());
+    bool exclude;
+
     pmv = get_fp_content(otn, next, srvc, only_literal, exclude);
 
     if ( !pmv.empty() )
@@ -1265,11 +1267,7 @@ static void fpCreateServiceMapPortGroups(SnortConfig* sc)
         fpBuildServicePortGroups(sc, sc->spgmmTable->to_cli[i],
             sc->sopgTable->to_cli[i], sc->srmmTable->to_cli[i], fp);
     }
-    if ( !sc->sopgTable->set_user_mode() )
-    {
-        fp->set_stream_insert(true);
-        ParseWarning(WARN_RULES, "legacy mode fast pattern searching enabled");
-    }
+    sc->sopgTable->set_user_mode();
 }
 
 /*

@@ -42,7 +42,7 @@
 
 #define PKT_PDU_HEAD         0x00000100  /* start of PDU */
 #define PKT_PDU_TAIL         0x00000200  /* end of PDU */
-#define PKT_HTTP_DECODE      0x00000400  /* this packet has normalized http */
+#define PKT_DETECT_LIMIT     0x00000400  /* alt_dsize is valid */
 
 #define PKT_ALLOW_MULTIPLE_DETECT 0x00000800  /* packet has either pipelined mime attachments
                                                  or pipeline http requests */
@@ -111,7 +111,7 @@ struct SO_PUBLIC Packet
     uint32_t xtradata_mask;
 
     uint16_t proto_bits;        /* protocols contained within this packet */
-    uint16_t alt_dsize;         /* the dsize of a packet before munging (used for log)*/
+    uint16_t alt_dsize;         /* size for detection (iff PKT_DETECT_LIMIT) */
 
     uint8_t num_layers;         /* index into layers for next encap */
     // FIXIT-M Consider moving ip_proto_next below `pkth`.
@@ -187,6 +187,15 @@ struct SO_PUBLIC Packet
     /* Get general, non-boolean information */
     inline PktType type() const
     { return ptrs.get_pkt_type(); } // defined in codec.h
+
+    void set_detect_limit(uint16_t n)
+    {
+        alt_dsize = n;
+        packet_flags |= PKT_DETECT_LIMIT;
+    }
+
+    uint16_t get_detect_limit()
+    { return (packet_flags & PKT_DETECT_LIMIT) ? alt_dsize : dsize; }
 
     const char* get_type() const;
     const char* get_pseudo_type() const;

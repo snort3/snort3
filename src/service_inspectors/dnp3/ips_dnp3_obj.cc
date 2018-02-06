@@ -37,7 +37,7 @@
 
 #define s_name "dnp3_obj"
 #define s_help \
-    "detection option to check dnp3 object headers"
+    "detection option to check DNP3 object headers"
 
 /* Object decoding constants */
 #define DNP3_OBJ_HDR_MIN_LEN 3 /* group, var, qualifier */
@@ -153,9 +153,9 @@ IpsOption::EvalStatus Dnp3ObjOption::eval(Cursor&, Packet* p)
 static const Parameter s_params[] =
 {
     { "group", Parameter::PT_INT, "0:255", "0",
-      "match given dnp3 object header group" },
+      "match given DNP3 object header group" },
     { "var", Parameter::PT_INT, "0:255", "0",
-      "match given dnp3 object header var" },
+      "match given DNP3 object header var" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 

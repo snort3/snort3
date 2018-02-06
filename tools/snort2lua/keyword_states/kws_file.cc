@@ -72,8 +72,6 @@ bool File::convert(std::istringstream& data_stream)
     while(util::get_string(data_stream, key_value_pair, ";"))
     {
         std::istringstream arg_stream(key_value_pair);
-        std::vector<std::string> word_list;
-
         util::trim(key_value_pair);
 
         size_t pos = key_value_pair.find_first_of(':');

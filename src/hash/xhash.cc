@@ -1053,7 +1053,7 @@ int anrfree(void* key, void* data)
 
     /* Decide if we can free this node. */
 
-    //bx++; if(bx == 4 )bx=0;       /* for testing */
+    bx++; if(bx == 4 )bx=0;       /* for testing */
 
     /* if we are allowing the node to die, kill it */
     if ( !bx )

@@ -38,7 +38,7 @@ static const Parameter s_params[] =
       "session tracking timeout" },
 
     { "ignore_any_rules", Parameter::PT_BOOL, nullptr, "false",
-      "process udp content rules w/o ports only if rules with ports are present" },
+      "process UDP content rules w/o ports only if rules with ports are present" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

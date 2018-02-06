@@ -99,13 +99,13 @@ IpsOption::EvalStatus ModbusUnitOption::eval(Cursor&, Packet* p)
 static const Parameter s_params[] =
 {
     { "~", Parameter::PT_INT, "0:255", nullptr,
-      "modbus unit ID" },
+      "Modbus unit ID" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 #define s_help \
-    "rule option to check modbus unit ID"
+    "rule option to check Modbus unit ID"
 
 class ModbusUnitModule : public Module
 {

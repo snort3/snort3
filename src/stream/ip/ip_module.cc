@@ -111,7 +111,7 @@ static const Parameter s_params[] =
       "alert if fragment length is below this limit before or after trimming" },
 
     { "min_ttl", Parameter::PT_INT, "1:255", "1",
-      "discard fragments with ttl below the minimum" },
+      "discard fragments with TTL below the minimum" },
 
     { "policy", Parameter::PT_ENUM, IP_POLICIES, "linux",
       "fragment reassembly policy" },

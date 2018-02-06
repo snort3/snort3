@@ -44,12 +44,12 @@ THREAD_LOCAL ProfileStats appidPerfStats;
 static const Parameter session_log_filter[] =
 {
     { "src_ip", Parameter::PT_ADDR, nullptr, "0.0.0.0/32",
-      "source ip address in CIDR format" },
+      "source IP address in CIDR format" },
     { "dst_ip", Parameter::PT_ADDR, nullptr, "0.0.0.0/32",
-      "destination ip address in CIDR format" },
+      "destination IP address in CIDR format" },
     { "src_port", Parameter::PT_PORT, "1:", nullptr, "source port" },
     { "dst_port", Parameter::PT_PORT, "1:", nullptr, "destination port" },
-    { "protocol", Parameter::PT_STRING, nullptr, nullptr,"ip protocol" },
+    { "protocol", Parameter::PT_STRING, nullptr, nullptr,"IP protocol" },
     { "log_all_sessions", Parameter::PT_BOOL, nullptr, "false",
       "enable logging for all appid sessions" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }

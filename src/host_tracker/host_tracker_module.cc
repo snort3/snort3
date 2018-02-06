@@ -44,7 +44,7 @@ const Parameter HostTrackerModule::service_params[] =
       "service identifier" },
 
     { "proto", Parameter::PT_ENUM, "tcp | udp", "tcp",
-      "ip protocol" },
+      "IP protocol" },
 
     { "port", Parameter::PT_PORT, nullptr, nullptr,
       "port number" },
@@ -54,14 +54,14 @@ const Parameter HostTrackerModule::service_params[] =
 
 const Parameter HostTrackerModule::host_tracker_params[] =
 {
-    { "ip", Parameter::PT_ADDR, nullptr, "0.0.0.0/32",
+    { "IP", Parameter::PT_ADDR, nullptr, "0.0.0.0/32",
       "hosts address / cidr" },
 
     { "frag_policy", Parameter::PT_ENUM, IP_POLICIES, nullptr,
       "defragmentation policy" },
 
     { "tcp_policy", Parameter::PT_ENUM, TCP_POLICIES, nullptr,
-      "tcp reassembly policy" },
+      "TCP reassembly policy" },
 
     { "services", Parameter::PT_LIST, HostTrackerModule::service_params, nullptr,
       "list of service parameters" },

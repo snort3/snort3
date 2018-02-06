@@ -176,7 +176,7 @@ static const Parameter s_params[] =
 
 #ifdef SHELL
     { "-j", Parameter::PT_PORT, nullptr, nullptr,
-      "<port> to listen for telnet connections" },
+      "<port> to listen for Telnet connections" },
 #endif
 
     { "-k", Parameter::PT_ENUM, "all|noip|notcp|noudp|noicmp|none", "all",

@@ -22,8 +22,7 @@
 #define DETECTION_UTIL_H
 
 // this is a legacy junk-drawer file that needs to be refactored
-// it provides file and alt data pointers, event trace foo, and
-// some http stuff.
+// it provides file and alt data and event trace foo.
 
 #include "main/snort_config.h"
 
@@ -40,13 +39,6 @@ struct DataBuffer
     uint8_t data[DECODE_BLEN];
     unsigned len;
 };
-
-#define SetDetectLimit(pktPtr, altLen) \
-{ \
-    (pktPtr)->alt_dsize = altLen; \
-}
-
-#define IsLimitedDetect(pktPtr) ((pktPtr)->packet_flags & PKT_HTTP_DECODE)
 
 // FIXIT-L event trace should be placed in its own files
 void EventTrace_Init();

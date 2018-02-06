@@ -153,10 +153,10 @@ static const Parameter s_params[] =
       "flush upon seeing a drop in segment size after given number of non-decreasing segments" },
 
     { "ignore_any_rules", Parameter::PT_BOOL, nullptr, "false",
-      "process tcp content rules w/o ports only if rules with ports are present" },
+      "process TCP content rules w/o ports only if rules with ports are present" },
 
     { "max_window", Parameter::PT_INT, "0:1073725440", "0",
-      "maximum allowed tcp window" },
+      "maximum allowed TCP window" },
 
     { "overlap_limit", Parameter::PT_INT, "0:255", "0",
       "maximum number of allowed overlapping segments per session" },

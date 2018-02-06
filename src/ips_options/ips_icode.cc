@@ -99,7 +99,7 @@ IpsOption::EvalStatus IcodeOption::eval(Cursor&, Packet* p)
 static const Parameter s_params[] =
 {
     { "~range", Parameter::PT_INTERVAL, RANGE, nullptr,
-      "check if icmp code is in given range is" },
+      "check if ICMP code is in given range is" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

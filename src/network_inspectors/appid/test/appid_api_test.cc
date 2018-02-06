@@ -530,7 +530,7 @@ TEST(appid_api, get_user_name)
     CHECK_TRUE(service == APPID_UT_ID);
     CHECK_TRUE(!isLoginSuccessful);
     mock_session->set_session_flags(APPID_SESSION_LOGIN_SUCCEEDED);
-    val = appid_api.get_user_name(mock_session, &service, &isLoginSuccessful);
+    appid_api.get_user_name(mock_session, &service, &isLoginSuccessful);
     CHECK_TRUE(service == APPID_UT_ID);
     CHECK_TRUE(isLoginSuccessful);
 }
@@ -704,7 +704,7 @@ TEST(appid_api, produce_ha_state)
     mock_flow_data= nullptr;
     SfIp ip;
     ip.pton(AF_INET, "192.168.1.222");
-    val = appid_api.consume_ha_state(flow, (uint8_t*)&appHA, 0, IpProtocol::TCP, &ip, 1066);
+    appid_api.consume_ha_state(flow, (uint8_t*)&appHA, 0, IpProtocol::TCP, &ip, 1066);
     mock_session = (AppIdSession*)flow->get_flow_data(AppIdSession::inspector_id);
     CHECK_TRUE(mock_session);
     CHECK_TRUE(mock_session->tp_app_id == appHA.appId[0]);
@@ -723,7 +723,7 @@ TEST(appid_api, produce_ha_state)
     delete mock_session;
     mock_session = nullptr;
     mock_flow_data= nullptr;
-    val = appid_api.consume_ha_state(flow, (uint8_t*)&appHA, 0, IpProtocol::TCP, &ip, 1066);
+    appid_api.consume_ha_state(flow, (uint8_t*)&appHA, 0, IpProtocol::TCP, &ip, 1066);
     mock_session = (AppIdSession*)flow->get_flow_data(AppIdSession::inspector_id);
     CHECK_TRUE(mock_session);
     uint64_t flags = mock_session->get_session_flags(APPID_SESSION_CLIENT_DETECTED |

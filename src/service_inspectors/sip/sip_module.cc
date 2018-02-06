@@ -90,7 +90,7 @@ static const Parameter s_params[] =
       "maximum via field size" },
 
     { "methods", Parameter::PT_STRING, nullptr, default_methods,
-      "list of methods to check in sip messages" },
+      "list of methods to check in SIP messages" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -133,8 +133,8 @@ static const PegInfo sip_pegs[] =
 {
     { CountType::SUM, "packets", "total packets" },
     { CountType::SUM, "sessions", "total sessions" },
-    { CountType::NOW, "concurrent_sessions", "total concurrent sip sessions" },
-    { CountType::MAX, "max_concurrent_sessions", "maximum concurrent sip sessions" },
+    { CountType::NOW, "concurrent_sessions", "total concurrent SIP sessions" },
+    { CountType::MAX, "max_concurrent_sessions", "maximum concurrent SIP sessions" },
     { CountType::SUM, "events", "events generated" },
     { CountType::SUM, "dialogs", "total dialogs" },
     { CountType::SUM, "ignored_channels", "total channels ignored" },

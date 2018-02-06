@@ -158,7 +158,7 @@ bool LruCacheShared<Key, Data, Hash>::set_max_size(size_t newsize)
     list_iter=list.end();
     while (current_size > newsize)
     {
-        list_iter--;
+        --list_iter;
         current_size--;
         map.erase(list_iter->first);
         list.erase(list_iter);
@@ -199,7 +199,7 @@ void LruCacheShared<Key, Data, Hash>::insert(const Key& key, const Data& data)
     {
         LruListIter list_iter;
         list_iter = list.end();
-        list_iter--;
+        --list_iter;
         map.erase(list_iter->first);
         list.erase(list_iter);
         stats.prunes++;

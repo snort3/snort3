@@ -38,7 +38,7 @@
 
 #define s_name "dnp3_ind"
 #define s_help \
-    "detection option to check dnp3 indicator flags"
+    "detection option to check DNP3 indicator flags"
 
 static THREAD_LOCAL ProfileStats dnp3_ind_perf_stats;
 
@@ -113,7 +113,7 @@ IpsOption::EvalStatus Dnp3IndOption::eval(Cursor&, Packet* p)
 static const Parameter s_params[] =
 {
     { "~", Parameter::PT_STRING, nullptr, nullptr,
-      "match given dnp3 indicator flags" },
+      "match given DNP3 indicator flags" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

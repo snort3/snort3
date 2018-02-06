@@ -98,7 +98,7 @@ IpsOption::EvalStatus TcpAckOption::eval(Cursor&, Packet* p)
 static const Parameter s_params[] =
 {
     { "~range", Parameter::PT_INTERVAL, RANGE, nullptr,
-      "check if tcp ack value is 'value | min<>max | <max | >min'" },
+      "check if TCP ack value is 'value | min<>max | <max | >min'" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

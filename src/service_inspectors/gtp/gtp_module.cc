@@ -107,7 +107,7 @@ static const Parameter gtp_info_params[] =
 static const Parameter gtp_params[] =
 {
     { "version", Parameter::PT_INT, "0:2", "2",
-      "gtp version" },
+      "GTP version" },
 
     { "messages", Parameter::PT_LIST, gtp_msg_params, nullptr,
       "message dictionary" },

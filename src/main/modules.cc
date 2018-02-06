@@ -238,8 +238,8 @@ static const Parameter search_engine_params[] =
     { "max_queue_events", Parameter::PT_INT, "2:100", "5",  // upper bound is MAX_EVENT_MATCH
       "maximum number of matching fast pattern states to queue per packet" },
 
-    { "inspect_stream_inserts", Parameter::PT_BOOL, nullptr, "false",
-      "inspect reassembled payload - disabling is good for performance, bad for detection" },
+    { "detect_raw_tcp", Parameter::PT_BOOL, nullptr, "true",
+      "detect on TCP payload before reassembly" },
 
     { "search_method", Parameter::PT_DYNAMIC, (void*)&get_search_methods, "ac_bnfa",
       "set fast pattern algorithm - choose available search engine" },
@@ -337,7 +337,7 @@ bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("max_queue_events") )
         fp->set_max_queue_events(v.get_long());
 
-    else if ( v.is("inspect_stream_inserts") )
+    else if ( v.is("detect_raw_tcp") )
         fp->set_stream_insert(v.get_bool());
 
     else if ( v.is("search_method") )
@@ -1029,7 +1029,7 @@ static const Parameter network_params[] =
       "correlate unified2 events with configuration" },
 
     { "min_ttl", Parameter::PT_INT, "1:255", "1",
-      "alert / normalize packets with lower ttl / hop limit "
+      "alert / normalize packets with lower TTL / hop limit "
       "(you must enable rules and / or normalization also)" },
 
     { "new_ttl", Parameter::PT_INT, "1:255", "1",
@@ -1760,7 +1760,7 @@ static const Parameter service_params[] =
       "service identifier" },
 
     { "proto", Parameter::PT_ENUM, "tcp | udp", "tcp",
-      "ip protocol" },
+      "IP protocol" },
 
     { "port", Parameter::PT_PORT, nullptr, nullptr,
       "port number" },
@@ -1771,13 +1771,13 @@ static const Parameter service_params[] =
 static const Parameter hosts_params[] =
 {
     { "ip", Parameter::PT_ADDR, nullptr, "0.0.0.0/32",
-      "hosts address / cidr" },
+      "hosts address / CIDR" },
 
     { "frag_policy", Parameter::PT_ENUM, IP_POLICIES, nullptr,
       "defragmentation policy" },
 
     { "tcp_policy", Parameter::PT_ENUM, TCP_POLICIES, nullptr,
-      "tcp reassembly policy" },
+      "TCP reassembly policy" },
 
     { "services", Parameter::PT_LIST, service_params, nullptr,
       "list of service parameters" },
