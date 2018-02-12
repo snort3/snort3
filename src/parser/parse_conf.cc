@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2017 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2018 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2002-2013 Sourcefire, Inc.
 // Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
 // Copyright (C) 2000,2001 Andrew R. Baker <andrewb@uab.edu>
@@ -95,6 +95,7 @@ void inc_parse_position()
 void parse_include(SnortConfig* sc, const char* arg)
 {
     struct stat file_stat;  /* for include path testing */
+    arg = ExpandVars(sc, arg);
     char* fname = snort_strdup(arg);
 
     /* Stat the file.  If that fails, make it relative to the directory

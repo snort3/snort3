@@ -372,7 +372,7 @@ Table of Contents
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.0 (Build 240) from 2.9.8-383
+o"  )~   Version 3.0.0 (Build 242) from 2.9.11
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2017 Cisco and/or its affiliates. All rights reserved.
@@ -4273,7 +4273,7 @@ detection engine for your network(s). Here are some tuning tips:
 
 Use the watch_ip, ignore_scanners, and ignore_scanned options. It’s
 important to correctly set these options. The watch_ip option is easy
-to understand. The analyst should set this option to the list of Cidr
+to understand. The analyst should set this option to the list of CIDR
 blocks and IPs that they want to watch. If no watch_ip is defined,
 Portscan will watch all network traffic. The ignore_scanners and
 ignore_scanned options come into play in weeding out legitimate hosts
@@ -5104,14 +5104,14 @@ Usage: global
 
 Configuration:
 
-  * addr host_tracker[].ip = 0.0.0.0/32: hosts address / cidr
+  * addr host_tracker[].IP = 0.0.0.0/32: hosts address / cidr
   * enum host_tracker[].frag_policy: defragmentation policy { first |
     linux | bsd | bsd_right | last | windows | solaris }
-  * enum host_tracker[].tcp_policy: tcp reassembly policy { first |
+  * enum host_tracker[].tcp_policy: TCP reassembly policy { first |
     last | linux | old_linux | bsd | macos | solaris | irix | hpux11
     | hpux10 | windows | win_2003 | vista | proxy }
   * string host_tracker[].services[].name: service identifier
-  * enum host_tracker[].services[].proto = tcp: ip protocol { tcp |
+  * enum host_tracker[].services[].proto = tcp: IP protocol { tcp |
     udp }
   * port host_tracker[].services[].port: port number
 
@@ -5134,14 +5134,14 @@ Usage: global
 
 Configuration:
 
-  * addr hosts[].ip = 0.0.0.0/32: hosts address / cidr
+  * addr hosts[].ip = 0.0.0.0/32: hosts address / CIDR
   * enum hosts[].frag_policy: defragmentation policy { first | linux
     | bsd | bsd_right | last | windows | solaris }
-  * enum hosts[].tcp_policy: tcp reassembly policy { first | last |
+  * enum hosts[].tcp_policy: TCP reassembly policy { first | last |
     linux | old_linux | bsd | macos | solaris | irix | hpux11 |
     hpux10 | windows | win_2003 | vista | proxy }
   * string hosts[].services[].name: service identifier
-  * enum hosts[].services[].proto = tcp: ip protocol { tcp | udp }
+  * enum hosts[].services[].proto = tcp: IP protocol { tcp | udp }
   * port hosts[].services[].port: port number
 
 
@@ -5278,7 +5278,7 @@ Configuration:
     the decoder
   * int network.id = 0: correlate unified2 events with configuration
     { 0:65535 }
-  * int network.min_ttl = 1: alert / normalize packets with lower ttl
+  * int network.min_ttl = 1: alert / normalize packets with lower TTL
     / hop limit (you must enable rules and / or normalization also) {
     1:255 }
   * int network.new_ttl = 1: use this value for responses and when
@@ -5507,9 +5507,8 @@ Configuration:
     compiling into state machine (0 means no maximum) { 0: }
   * int search_engine.max_queue_events = 5: maximum number of
     matching fast pattern states to queue per packet { 2:100 }
-  * bool search_engine.inspect_stream_inserts = false: inspect
-    reassembled payload - disabling is good for performance, bad for
-    detection
+  * bool search_engine.detect_raw_tcp = true: detect on TCP payload
+    before reassembly
   * dynamic search_engine.search_method = ac_bnfa: set fast pattern
     algorithm - choose available search engine { ac_banded | ac_bnfa
     | ac_full | ac_sparse | ac_sparse_bands | ac_std | hyperscan }
@@ -5585,7 +5584,7 @@ Configuration:
     after initialization
   * implied snort.-H: make hash tables deterministic
   * string snort.-i: <iface>… list of interfaces
-  * port snort.-j: <port> to listen for telnet connections
+  * port snort.-j: <port> to listen for Telnet connections
   * enum snort.-k = all: <mode> checksum mode; default is all { all|
     noip|notcp|noudp|noicmp|none }
   * string snort.-L: <mode> logging mode (none, dump, pcap, or log_*)
@@ -6509,13 +6508,13 @@ Configuration:
   * bool appid.debug = false: enable appid debug logging
   * bool appid.dump_ports = false: enable dump of appid port
     information
-  * addr appid.session_log_filter.src_ip = 0.0.0.0/32: source ip
+  * addr appid.session_log_filter.src_ip = 0.0.0.0/32: source IP
     address in CIDR format
-  * addr appid.session_log_filter.dst_ip = 0.0.0.0/32: destination ip
+  * addr appid.session_log_filter.dst_ip = 0.0.0.0/32: destination IP
     address in CIDR format
   * port appid.session_log_filter.src_port: source port { 1: }
   * port appid.session_log_filter.dst_port: destination port { 1: }
-  * string appid.session_log_filter.protocol: ip protocol
+  * string appid.session_log_filter.protocol: IP protocol
   * bool appid.session_log_filter.log_all_sessions = false: enable
     logging for all appid sessions
   * bool appid.log_all_sessions = false: enable logging of all appid
@@ -7207,17 +7206,17 @@ Usage: inspect
 Configuration:
 
   * bool ftp_client.bounce = false: check for bounces
-  * addr ftp_client.bounce_to[].address = 1.0.0.0/32: allowed ip
+  * addr ftp_client.bounce_to[].address = 1.0.0.0/32: allowed IP
     address in CIDR format
   * port ftp_client.bounce_to[].port = 20: allowed port { 1: }
   * port ftp_client.bounce_to[].last_port: optional allowed range
     from port to last_port inclusive { 0: }
   * bool ftp_client.ignore_telnet_erase_cmds = false: ignore erase
     character and erase line commands when normalizing
-  * int ftp_client.max_resp_len = -1: maximum ftp response accepted
+  * int ftp_client.max_resp_len = -1: maximum FTP response accepted
     by client { -1: }
-  * bool ftp_client.telnet_cmds = false: detect telnet escape
-    sequences on ftp control channel
+  * bool ftp_client.telnet_cmds = false: detect Telnet escape
+    sequences on FTP control channel
 
 
 9.17. ftp_data
@@ -7275,17 +7274,17 @@ Configuration:
   * int ftp_server.def_max_param_len = 100: default maximum length of
     commands handled by server; 0 is unlimited { 1: }
   * bool ftp_server.encrypted_traffic = false: check for encrypted
-    telnet and ftp
+    Telnet and FTP
   * string ftp_server.ftp_cmds: specify additional commands supported
     by server beyond RFC 959
-  * bool ftp_server.ignore_data_chan = false: do not inspect ftp data
+  * bool ftp_server.ignore_data_chan = false: do not inspect FTP data
     channels
   * bool ftp_server.ignore_telnet_erase_cmds = false: ignore erase
     character and erase line commands when normalizing
   * bool ftp_server.print_cmds = false: print command configurations
     on start up
-  * bool ftp_server.telnet_cmds = false: detect telnet escape
-    sequences of ftp control channel
+  * bool ftp_server.telnet_cmds = false: detect Telnet escape
+    sequences of FTP control channel
 
 Rules:
 
@@ -7304,9 +7303,9 @@ Rules:
 Peg counts:
 
   * ftp_server.total_packets: total packets (sum)
-  * ftp_server.concurrent_sessions: total concurrent ftp sessions
+  * ftp_server.concurrent_sessions: total concurrent FTP sessions
     (now)
-  * ftp_server.max_concurrent_sessions: maximum concurrent ftp
+  * ftp_server.max_concurrent_sessions: maximum concurrent FTP
     sessions (max)
 
 
@@ -7322,7 +7321,7 @@ Usage: inspect
 
 Configuration:
 
-  * int gtp_inspect[].version = 2: gtp version { 0:2 }
+  * int gtp_inspect[].version = 2: GTP version { 0:2 }
   * int gtp_inspect[].messages[].type = 0: message type code { 0:255
     }
   * string gtp_inspect[].messages[].name: message name
@@ -8020,13 +8019,13 @@ Configuration:
     changed from prior attempt { 0: }
   * int port_scan.icmp_sweep.ports = 25: number of times port (or
     proto) changed from prior attempt { 0: }
-  * int port_scan.tcp_window = 0: detection interval for all tcp
+  * int port_scan.tcp_window = 0: detection interval for all TCP
     scans { 0: }
-  * int port_scan.udp_window = 0: detection interval for all udp
+  * int port_scan.udp_window = 0: detection interval for all UDP
     scans { 0: }
-  * int port_scan.ip_window = 0: detection interval for all ip scans
+  * int port_scan.ip_window = 0: detection interval for all IP scans
     { 0: }
-  * int port_scan.icmp_window = 0: detection interval for all icmp
+  * int port_scan.icmp_window = 0: detection interval for all ICMP
     scans { 0: }
 
 Rules:
@@ -8099,10 +8098,10 @@ Usage: global
 
 Configuration:
 
-  * string reputation.blacklist: blacklist file name with ip lists
+  * string reputation.blacklist: blacklist file name with IP lists
   * int reputation.memcap = 500: maximum total MB of memory allocated
     { 1:4095 }
-  * enum reputation.nested_ip = inner: ip to use when there is IP
+  * enum reputation.nested_ip = inner: IP to use when there is IP
     encapsulation { inner|outer|all }
   * enum reputation.priority = whitelist: defines priority when there
     is a decision conflict during run-time { blacklist|whitelist }
@@ -8110,7 +8109,7 @@ Configuration:
     in RFC 1918
   * enum reputation.white = unblack: specify the meaning of whitelist
     { unblack|trust }
-  * string reputation.whitelist: whitelist file name with ip lists
+  * string reputation.whitelist: whitelist file name with IP lists
 
 Rules:
 
@@ -8184,7 +8183,7 @@ Configuration:
     0:65535 }
   * int sip.max_via_len = 1024: maximum via field size { 0:65535 }
   * string sip.methods = invite cancel ack bye register options: list
-    of methods to check in sip messages
+    of methods to check in SIP messages
 
 Rules:
 
@@ -8219,8 +8218,8 @@ Peg counts:
 
   * sip.packets: total packets (sum)
   * sip.sessions: total sessions (sum)
-  * sip.concurrent_sessions: total concurrent sip sessions (now)
-  * sip.max_concurrent_sessions: maximum concurrent sip sessions
+  * sip.concurrent_sessions: total concurrent SIP sessions (now)
+  * sip.max_concurrent_sessions: maximum concurrent SIP sessions
     (max)
   * sip.events: events generated (sum)
   * sip.dialogs: total dialogs (sum)
@@ -8447,7 +8446,7 @@ Usage: global
 Configuration:
 
   * int stream.footprint = 0: use zero for production, non-zero for
-    testing at given size (for tcp and user) { 0: }
+    testing at given size (for TCP and user) { 0: }
   * bool stream.ip_frags_only = false: don’t process non-frag flows
   * int stream.ip_cache.max_sessions = 16384: maximum simultaneous
     sessions tracked before pruning { 2: }
@@ -8617,7 +8616,7 @@ Configuration:
     datagram; 0 is unlimited { 0: }
   * int stream_ip.min_frag_length = 0: alert if fragment length is
     below this limit before or after trimming { 0: }
-  * int stream_ip.min_ttl = 1: discard fragments with ttl below the
+  * int stream_ip.min_ttl = 1: discard fragments with TTL below the
     minimum { 1:255 }
   * enum stream_ip.policy = linux: fragment reassembly policy { first
     | linux | bsd | bsd_right | last | windows | solaris }
@@ -8685,9 +8684,9 @@ Configuration:
 
   * int stream_tcp.flush_factor = 0: flush upon seeing a drop in
     segment size after given number of non-decreasing segments { 0: }
-  * bool stream_tcp.ignore_any_rules = false: process tcp content
+  * bool stream_tcp.ignore_any_rules = false: process TCP content
     rules w/o ports only if rules with ports are present
-  * int stream_tcp.max_window = 0: maximum allowed tcp window {
+  * int stream_tcp.max_window = 0: maximum allowed TCP window {
     0:1073725440 }
   * int stream_tcp.overlap_limit = 0: maximum number of allowed
     overlapping segments per session { 0:255 }
@@ -8809,7 +8808,7 @@ Configuration:
 
   * int stream_udp.session_timeout = 30: session tracking timeout {
     1:86400 }
-  * bool stream_udp.ignore_any_rules = false: process udp content
+  * bool stream_udp.ignore_any_rules = false: process UDP content
     rules w/o ports only if rules with ports are present
 
 Peg counts:
@@ -8853,25 +8852,25 @@ Usage: inspect
 Configuration:
 
   * int telnet.ayt_attack_thresh = -1: alert on this number of
-    consecutive telnet AYT commands { -1: }
+    consecutive Telnet AYT commands { -1: }
   * bool telnet.check_encrypted = false: check for end of encryption
-  * bool telnet.encrypted_traffic = false: check for encrypted telnet
-    and ftp
+  * bool telnet.encrypted_traffic = false: check for encrypted Telnet
+    and FTP
   * bool telnet.normalize = false: eliminate escape sequences
 
 Rules:
 
-  * 126:1 (telnet) consecutive telnet AYT commands beyond threshold
-  * 126:2 (telnet) telnet traffic encrypted
-  * 126:3 (telnet) telnet subnegotiation begin command without
+  * 126:1 (telnet) consecutive Telnet AYT commands beyond threshold
+  * 126:2 (telnet) Telnet traffic encrypted
+  * 126:3 (telnet) Telnet subnegotiation begin command without
     subnegotiation end
 
 Peg counts:
 
   * telnet.total_packets: total packets (sum)
-  * telnet.concurrent_sessions: total concurrent telnet sessions
+  * telnet.concurrent_sessions: total concurrent Telnet sessions
     (now)
-  * telnet.max_concurrent_sessions: maximum concurrent telnet
+  * telnet.max_concurrent_sessions: maximum concurrent Telnet
     sessions (max)
 
 
@@ -8963,9 +8962,9 @@ Usage: detect
 
 Configuration:
 
-  * enum reject.reset: send tcp reset to one or both ends { source|
+  * enum reject.reset: send TCP reset to one or both ends { source|
     dest|both }
-  * enum reject.control: send icmp unreachable(s) { network|host|port
+  * enum reject.control: send ICMP unreachable(s) { network|host|port
     |all }
 
 
@@ -9006,7 +9005,7 @@ Usage: detect
 
 Configuration:
 
-  * interval ack.~range: check if tcp ack value is value | min<>max |
+  * interval ack.~range: check if TCP ack value is value | min<>max |
     <max | >min { 0: }
 
 
@@ -9365,7 +9364,7 @@ Usage: detect
 
 --------------
 
-What: detection option to check dnp3 function code
+What: detection option to check DNP3 function code
 
 Type: ips_option
 
@@ -9373,14 +9372,14 @@ Usage: detect
 
 Configuration:
 
-  * string dnp3_func.~: match dnp3 function code or name
+  * string dnp3_func.~: match DNP3 function code or name
 
 
 11.19. dnp3_ind
 
 --------------
 
-What: detection option to check dnp3 indicator flags
+What: detection option to check DNP3 indicator flags
 
 Type: ips_option
 
@@ -9388,14 +9387,14 @@ Usage: detect
 
 Configuration:
 
-  * string dnp3_ind.~: match given dnp3 indicator flags
+  * string dnp3_ind.~: match given DNP3 indicator flags
 
 
 11.20. dnp3_obj
 
 --------------
 
-What: detection option to check dnp3 object headers
+What: detection option to check DNP3 object headers
 
 Type: ips_option
 
@@ -9403,9 +9402,9 @@ Usage: detect
 
 Configuration:
 
-  * int dnp3_obj.group = 0: match given dnp3 object header group {
+  * int dnp3_obj.group = 0: match given DNP3 object header group {
     0:255 }
-  * int dnp3_obj.var = 0: match given dnp3 object header var { 0:255
+  * int dnp3_obj.var = 0: match given DNP3 object header var { 0:255
     }
 
 
@@ -9590,7 +9589,7 @@ Configuration:
 
 --------------
 
-What: rule option to check gtp version
+What: rule option to check GTP version
 
 Type: ips_option
 
@@ -9950,7 +9949,7 @@ Usage: detect
 
 Configuration:
 
-  * interval icmp_id.~range: check if icmp id is in given range {
+  * interval icmp_id.~range: check if ICMP ID is in given range {
     0:65535 }
 
 
@@ -9966,7 +9965,7 @@ Usage: detect
 
 Configuration:
 
-  * interval icmp_seq.~range: check if icmp sequence number is in
+  * interval icmp_seq.~range: check if ICMP sequence number is in
     given range { 0:65535 }
 
 
@@ -9982,7 +9981,7 @@ Usage: detect
 
 Configuration:
 
-  * interval icode.~range: check if icmp code is in given range is {
+  * interval icode.~range: check if ICMP code is in given range is {
     0:255 }
 
 
@@ -9998,7 +9997,7 @@ Usage: detect
 
 Configuration:
 
-  * interval id.~range: check if the ip id is in the given range { 0:
+  * interval id.~range: check if the IP ID is in the given range { 0:
     }
 
 
@@ -10062,7 +10061,7 @@ Usage: detect
 
 Configuration:
 
-  * interval itype.~range: check if icmp type is in given range {
+  * interval itype.~range: check if ICMP type is in given range {
     0:255 }
 
 
@@ -10133,7 +10132,7 @@ Configuration:
 
 --------------
 
-What: rule option to check modbus unit ID
+What: rule option to check Modbus unit ID
 
 Type: ips_option
 
@@ -10141,7 +10140,7 @@ Usage: detect
 
 Configuration:
 
-  * int modbus_unit.~: modbus unit ID { 0:255 }
+  * int modbus_unit.~: Modbus unit ID { 0:255 }
 
 
 11.63. msg
@@ -10381,7 +10380,7 @@ Usage: detect
 
 Configuration:
 
-  * interval seq.~range: check if tcp sequence number is in given
+  * interval seq.~range: check if TCP sequence number is in given
     range { 0: }
 
 
@@ -10696,7 +10695,7 @@ Usage: detect
 
 Configuration:
 
-  * interval tos.~range: check if ip tos is in given range { 0:255 }
+  * interval tos.~range: check if IP TOS is in given range { 0:255 }
 
 
 11.96. ttl
@@ -10711,7 +10710,7 @@ Usage: detect
 
 Configuration:
 
-  * interval ttl.~range: check if ip ttl is in the given range {
+  * interval ttl.~range: check if IP TTL is in the given range {
     0:255 }
 
 
@@ -10743,7 +10742,7 @@ Usage: detect
 
 Configuration:
 
-  * interval window.~range: check if tcp window size is in given
+  * interval window.~range: check if TCP window size is in given
     range { 0:65535 }
 
 
@@ -11701,17 +11700,28 @@ syntax, Snort2Lua may fail to parse the configuration file or create
 an invalid Snort 3 configuration file.
 
 There are a also few peculiarities of Snort2Lua that may be confusing
-to a first time user. Specifically, aside from an initial
-configuration file (which is specified from the command line or as
-the file in ‘config binding’), every file that is included into Snort
-3 must be either a Lua file or a rule file; the file cannot contain
-both rules and Lua syntax. Therefore, when parsing a file specified
-with the ‘include’ command, Snort2Lua will output both a Lua file and
-a rule file. Additionally, any line that is a comment in a
-configuration file will be added in to a comments section at the
-bottom of the main configuration file. Finally, rules that contain
-unsupported options will be converted to the best of Snort2Lua’s
-capability and then printed as a comment in the rule file.
+to a first time user:
+
+  * Aside from an initial configuration file (which is specified from
+    the command line or as the file in ‘config binding’), every file
+    that is included into Snort 3 must be either a Lua file or a rule
+    file; the file cannot contain both rules and Lua syntax.
+    Therefore, when parsing a file specified with the ‘include’
+    command, Snort2Lua will output both a Lua file and a rule file.
+  * Any line that is a comment in a configuration file will be added
+    in to a comments section at the bottom of the main configuration
+    file.
+  * Rules that contain unsupported options will be converted to the
+    best of Snort2Lua’s capability and then printed as a comment in
+    the rule file.
+  * Files with a .rules suffix are assumed to be Talos 2.X rules
+    files and converted line-by-line. In this case, lines starting
+    with alert are converted as usual but lines starting with # alert
+    are assumed to be commented out rules which are converted to 3.0
+    format and remain comments in the output file. All other comments
+    are passed through directly. There is no support for other
+    commented rule actions since these do not appear in Talos rules
+    files.
 
 
 17.1. Snort2Lua Command Line
@@ -13050,7 +13060,7 @@ these libraries see the Getting Started section of the manual.
   * --id-zero use id prefix / subdirectory even with one packet
     thread
   * -i <iface>… list of interfaces
-  * -j <port> to listen for telnet connections
+  * -j <port> to listen for Telnet connections
   * -k <mode> checksum mode; default is all (all|noip|notcp|noudp|
     noicmp|none)
   * --list-buffers output available inspection buffers
@@ -13160,7 +13170,7 @@ these libraries see the Getting Started section of the manual.
 
 --------------
 
-  * interval ack.~range: check if tcp ack value is value | min<>max |
+  * interval ack.~range: check if TCP ack value is value | min<>max |
     <max | >min { 0: }
   * int active.attempts = 0: number of TCP packets sent per response
     (with varying sequence numbers) { 0:20 }
@@ -13261,13 +13271,13 @@ these libraries see the Getting Started section of the manual.
   * bool appid.log_stats = false: enable logging of appid statistics
   * int appid.memcap = 0: disregard - not implemented { 0: }
   * string appids.~: comma separated list of application names
-  * addr appid.session_log_filter.dst_ip = 0.0.0.0/32: destination ip
+  * addr appid.session_log_filter.dst_ip = 0.0.0.0/32: destination IP
     address in CIDR format
   * port appid.session_log_filter.dst_port: destination port { 1: }
   * bool appid.session_log_filter.log_all_sessions = false: enable
     logging for all appid sessions
-  * string appid.session_log_filter.protocol: ip protocol
-  * addr appid.session_log_filter.src_ip = 0.0.0.0/32: source ip
+  * string appid.session_log_filter.protocol: IP protocol
+  * addr appid.session_log_filter.src_ip = 0.0.0.0/32: source IP
     address in CIDR format
   * port appid.session_log_filter.src_port: source port { 1: }
   * ip4 arp_spoof.hosts[].ip: host ip address
@@ -13504,11 +13514,11 @@ these libraries see the Getting Started section of the manual.
   * int detection.trace: mask for enabling debug traces in module
   * bool dnp3.check_crc = false: validate checksums in DNP3 link
     layer frames
-  * string dnp3_func.~: match dnp3 function code or name
-  * string dnp3_ind.~: match given dnp3 indicator flags
-  * int dnp3_obj.group = 0: match given dnp3 object header group {
+  * string dnp3_func.~: match DNP3 function code or name
+  * string dnp3_ind.~: match given DNP3 indicator flags
+  * int dnp3_obj.group = 0: match given DNP3 object header group {
     0:255 }
-  * int dnp3_obj.var = 0: match given dnp3 object header var { 0:255
+  * int dnp3_obj.var = 0: match given DNP3 object header var { 0:255
     }
   * int dpx.max = 0: maximum payload before alert { 0:65535 }
   * port dpx.port: port to check
@@ -13617,17 +13627,17 @@ these libraries see the Getting Started section of the manual.
   * interval fragoffset.~range: check if ip fragment offset is in
     given range { 0:8192 }
   * bool ftp_client.bounce = false: check for bounces
-  * addr ftp_client.bounce_to[].address = 1.0.0.0/32: allowed ip
+  * addr ftp_client.bounce_to[].address = 1.0.0.0/32: allowed IP
     address in CIDR format
   * port ftp_client.bounce_to[].last_port: optional allowed range
     from port to last_port inclusive { 0: }
   * port ftp_client.bounce_to[].port = 20: allowed port { 1: }
   * bool ftp_client.ignore_telnet_erase_cmds = false: ignore erase
     character and erase line commands when normalizing
-  * int ftp_client.max_resp_len = -1: maximum ftp response accepted
+  * int ftp_client.max_resp_len = -1: maximum FTP response accepted
     by client { -1: }
-  * bool ftp_client.telnet_cmds = false: detect telnet escape
-    sequences on ftp control channel
+  * bool ftp_client.telnet_cmds = false: detect Telnet escape
+    sequences on FTP control channel
   * bool ftp_server.check_encrypted = false: check for end of
     encryption
   * string ftp_server.chk_str_fmt: check the formatting of the given
@@ -13650,14 +13660,14 @@ these libraries see the Getting Started section of the manual.
   * string ftp_server.encr_cmds: check the formatting of the given
     commands
   * bool ftp_server.encrypted_traffic = false: check for encrypted
-    telnet and ftp
+    Telnet and FTP
   * string ftp_server.file_get_cmds: check the formatting of the
     given commands
   * string ftp_server.file_put_cmds: check the formatting of the
     given commands
   * string ftp_server.ftp_cmds: specify additional commands supported
     by server beyond RFC 959
-  * bool ftp_server.ignore_data_chan = false: do not inspect ftp data
+  * bool ftp_server.ignore_data_chan = false: do not inspect FTP data
     channels
   * bool ftp_server.ignore_telnet_erase_cmds = false: ignore erase
     character and erase line commands when normalizing
@@ -13665,8 +13675,8 @@ these libraries see the Getting Started section of the manual.
     commands
   * bool ftp_server.print_cmds = false: print command configurations
     on start up
-  * bool ftp_server.telnet_cmds = false: detect telnet escape
-    sequences of ftp control channel
+  * bool ftp_server.telnet_cmds = false: detect Telnet escape
+    sequences of FTP control channel
   * int gid.~: generator id { 1: }
   * string gtp_info.~: info element to match
   * int gtp_inspect[].infos[].length = 0: information element type
@@ -13677,7 +13687,7 @@ these libraries see the Getting Started section of the manual.
   * string gtp_inspect[].messages[].name: message name
   * int gtp_inspect[].messages[].type = 0: message type code { 0:255
     }
-  * int gtp_inspect[].version = 2: gtp version { 0:2 }
+  * int gtp_inspect[].version = 2: GTP version { 0:2 }
   * string gtp_type.~: list of types to match
   * int gtp_version.~: version to match { 0:2 }
   * bool high_availability.daq_channel = false: enable use of daq
@@ -13692,21 +13702,21 @@ these libraries see the Getting Started section of the manual.
   * int host_cache[].size: size of host cache
   * enum hosts[].frag_policy: defragmentation policy { first | linux
     | bsd | bsd_right | last | windows | solaris }
-  * addr hosts[].ip = 0.0.0.0/32: hosts address / cidr
+  * addr hosts[].ip = 0.0.0.0/32: hosts address / CIDR
   * string hosts[].services[].name: service identifier
   * port hosts[].services[].port: port number
-  * enum hosts[].services[].proto = tcp: ip protocol { tcp | udp }
-  * enum hosts[].tcp_policy: tcp reassembly policy { first | last |
+  * enum hosts[].services[].proto = tcp: IP protocol { tcp | udp }
+  * enum hosts[].tcp_policy: TCP reassembly policy { first | last |
     linux | old_linux | bsd | macos | solaris | irix | hpux11 |
     hpux10 | windows | win_2003 | vista | proxy }
   * enum host_tracker[].frag_policy: defragmentation policy { first |
     linux | bsd | bsd_right | last | windows | solaris }
-  * addr host_tracker[].ip = 0.0.0.0/32: hosts address / cidr
+  * addr host_tracker[].IP = 0.0.0.0/32: hosts address / cidr
   * string host_tracker[].services[].name: service identifier
   * port host_tracker[].services[].port: port number
-  * enum host_tracker[].services[].proto = tcp: ip protocol { tcp |
+  * enum host_tracker[].services[].proto = tcp: IP protocol { tcp |
     udp }
-  * enum host_tracker[].tcp_policy: tcp reassembly policy { first |
+  * enum host_tracker[].tcp_policy: TCP reassembly policy { first |
     last | linux | old_linux | bsd | macos | solaris | irix | hpux11
     | hpux10 | windows | win_2003 | vista | proxy }
   * implied http_cookie.request: match against the cookie from the
@@ -13859,13 +13869,13 @@ these libraries see the Getting Started section of the manual.
     message body
   * implied http_version.with_trailer: parts of this rule examine
     HTTP message trailers
-  * interval icmp_id.~range: check if icmp id is in given range {
+  * interval icmp_id.~range: check if ICMP ID is in given range {
     0:65535 }
-  * interval icmp_seq.~range: check if icmp sequence number is in
+  * interval icmp_seq.~range: check if ICMP sequence number is in
     given range { 0:65535 }
-  * interval icode.~range: check if icmp code is in given range is {
+  * interval icode.~range: check if ICMP code is in given range is {
     0:255 }
-  * interval id.~range: check if the ip id is in the given range { 0:
+  * interval id.~range: check if the IP ID is in the given range { 0:
     }
   * int imap.b64_decode_depth = 1460: base64 decoding depth {
     -1:65535 }
@@ -13895,7 +13905,7 @@ these libraries see the Getting Started section of the manual.
   * string isdataat.~length: num | !num
   * implied isdataat.relative: offset from cursor instead of start of
     buffer
-  * interval itype.~range: check if icmp type is in given range {
+  * interval itype.~range: check if ICMP type is in given range {
     0:255 }
   * enum latency.packet.action = none: event action if packet times
     out and is fastpathed { none | alert | log | alert_and_log }
@@ -13940,7 +13950,7 @@ these libraries see the Getting Started section of the manual.
   * string metadata.*: comma-separated list of arbitrary name value
     pairs
   * string modbus_func.~: function code to match
-  * int modbus_unit.~: modbus unit ID { 0:255 }
+  * int modbus_unit.~: Modbus unit ID { 0:255 }
   * bool mpls.enable_mpls_multicast = false: enables support for MPLS
     multicast
   * bool mpls.enable_mpls_overlapping_ip = false: enable if private
@@ -13968,7 +13978,7 @@ these libraries see the Getting Started section of the manual.
   * int network.max_ip_layers = 0: the maximum number of IP layers
     Snort will process for a given packet before raising 116:293 (0 =
     unlimited) { 0:255 }
-  * int network.min_ttl = 1: alert / normalize packets with lower ttl
+  * int network.min_ttl = 1: alert / normalize packets with lower TTL
     / hop limit (you must enable rules and / or normalization also) {
     1:255 }
   * int network.new_ttl = 1: use this value for responses and when
@@ -14093,7 +14103,7 @@ these libraries see the Getting Started section of the manual.
   * int port_scan.icmp_sweep.rejects = 15: scan attempts with
     negative response { 0: }
   * int port_scan.icmp_sweep.scans = 100: scan attempts { 0: }
-  * int port_scan.icmp_window = 0: detection interval for all icmp
+  * int port_scan.icmp_window = 0: detection interval for all ICMP
     scans { 0: }
   * string port_scan.ignore_scanned: list of CIDRs with optional
     ports to ignore if the destination of scan alerts
@@ -14129,7 +14139,7 @@ these libraries see the Getting Started section of the manual.
   * int port_scan.ip_sweep.rejects = 15: scan attempts with negative
     response { 0: }
   * int port_scan.ip_sweep.scans = 100: scan attempts { 0: }
-  * int port_scan.ip_window = 0: detection interval for all ip scans
+  * int port_scan.ip_window = 0: detection interval for all IP scans
     { 0: }
   * int port_scan.memcap = 1048576: maximum tracker memory in bytes {
     1: }
@@ -14166,7 +14176,7 @@ these libraries see the Getting Started section of the manual.
   * int port_scan.tcp_sweep.rejects = 15: scan attempts with negative
     response { 0: }
   * int port_scan.tcp_sweep.scans = 100: scan attempts { 0: }
-  * int port_scan.tcp_window = 0: detection interval for all tcp
+  * int port_scan.tcp_window = 0: detection interval for all TCP
     scans { 0: }
   * int port_scan.udp_decoy.nets = 25: number of times address
     changed from prior attempt { 0: }
@@ -14196,7 +14206,7 @@ these libraries see the Getting Started section of the manual.
   * int port_scan.udp_sweep.rejects = 15: scan attempts with negative
     response { 0: }
   * int port_scan.udp_sweep.scans = 100: scan attempts { 0: }
-  * int port_scan.udp_window = 0: detection interval for all udp
+  * int port_scan.udp_window = 0: detection interval for all UDP
     scans { 0: }
   * string port_scan.watch_ip: list of CIDRs with optional ports to
     watch
@@ -14266,22 +14276,22 @@ these libraries see the Getting Started section of the manual.
     instead of start of buffer
   * bool reg_test.test_daq_retry = true: test daq packet retry
     feature
-  * enum reject.control: send icmp unreachable(s) { network|host|port
+  * enum reject.control: send ICMP unreachable(s) { network|host|port
     |all }
-  * enum reject.reset: send tcp reset to one or both ends { source|
+  * enum reject.reset: send TCP reset to one or both ends { source|
     dest|both }
   * string rem.~: comment
   * string replace.~: byte code to replace with
-  * string reputation.blacklist: blacklist file name with ip lists
+  * string reputation.blacklist: blacklist file name with IP lists
   * int reputation.memcap = 500: maximum total MB of memory allocated
     { 1:4095 }
-  * enum reputation.nested_ip = inner: ip to use when there is IP
+  * enum reputation.nested_ip = inner: IP to use when there is IP
     encapsulation { inner|outer|all }
   * enum reputation.priority = whitelist: defines priority when there
     is a decision conflict during run-time { blacklist|whitelist }
   * bool reputation.scan_local = false: inspect local address defined
     in RFC 1918
-  * string reputation.whitelist: whitelist file name with ip lists
+  * string reputation.whitelist: whitelist file name with IP lists
   * enum reputation.white = unblack: specify the meaning of whitelist
     { unblack|trust }
   * int rev.~: revision { 1: }
@@ -14309,11 +14319,10 @@ these libraries see the Getting Started section of the manual.
     prints compiled rule group information
   * bool search_engine.debug_print_rule_groups_uncompiled = false:
     prints uncompiled rule group information
+  * bool search_engine.detect_raw_tcp = true: detect on TCP payload
+    before reassembly
   * bool search_engine.enable_single_rule_group = false: put all
     rules into one group
-  * bool search_engine.inspect_stream_inserts = false: inspect
-    reassembled payload - disabling is good for performance, bad for
-    detection
   * int search_engine.max_pattern_len = 0: truncate patterns when
     compiling into state machine (0 means no maximum) { 0: }
   * int search_engine.max_queue_events = 5: maximum number of
@@ -14328,7 +14337,7 @@ these libraries see the Getting Started section of the manual.
     info for each rule
   * bool search_engine.split_any_any = true: evaluate any-any rules
     separately to save memory
-  * interval seq.~range: check if tcp sequence number is in given
+  * interval seq.~range: check if TCP sequence number is in given
     range { 0: }
   * string service.*: one or more comma-separated service names
   * enum session.~mode: output format { printable|binary|all }
@@ -14368,7 +14377,7 @@ these libraries see the Getting Started section of the manual.
   * int sip.max_via_len = 1024: maximum via field size { 0:65535 }
   * string sip_method.*method: sip method
   * string sip.methods = invite cancel ack bye register options: list
-    of methods to check in sip messages
+    of methods to check in SIP messages
   * int sip_stat_code.*code: stat code { 1:999 }
   * string smtp.alt_max_command_line_len[].command: command string
   * int smtp.alt_max_command_line_len[].length = 0: specify
@@ -14485,7 +14494,7 @@ these libraries see the Getting Started section of the manual.
   * implied snort.--id-zero: use id prefix / subdirectory even with
     one packet thread
   * string snort.-i: <iface>… list of interfaces
-  * port snort.-j: <port> to listen for telnet connections
+  * port snort.-j: <port> to listen for Telnet connections
   * enum snort.-k = all: <mode> checksum mode; default is all { all|
     noip|notcp|noudp|noicmp|none }
   * implied snort.--list-buffers: output available inspection buffers
@@ -14659,7 +14668,7 @@ these libraries see the Getting Started section of the manual.
     before being eligible for pruning { 1: }
   * bool stream_file.upload = false: indicate file transfer direction
   * int stream.footprint = 0: use zero for production, non-zero for
-    testing at given size (for tcp and user) { 0: }
+    testing at given size (for TCP and user) { 0: }
   * int stream.icmp_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1: }
   * int stream.icmp_cache.max_sessions = 65536: maximum simultaneous
@@ -14681,7 +14690,7 @@ these libraries see the Getting Started section of the manual.
     datagram; 0 is unlimited { 0: }
   * int stream_ip.min_frag_length = 0: alert if fragment length is
     below this limit before or after trimming { 0: }
-  * int stream_ip.min_ttl = 1: discard fragments with ttl below the
+  * int stream_ip.min_ttl = 1: discard fragments with TTL below the
     minimum { 1:255 }
   * enum stream_ip.policy = linux: fragment reassembly policy { first
     | linux | bsd | bsd_right | last | windows | solaris }
@@ -14707,11 +14716,11 @@ these libraries see the Getting Started section of the manual.
     before being eligible for pruning { 1: }
   * int stream_tcp.flush_factor = 0: flush upon seeing a drop in
     segment size after given number of non-decreasing segments { 0: }
-  * bool stream_tcp.ignore_any_rules = false: process tcp content
+  * bool stream_tcp.ignore_any_rules = false: process TCP content
     rules w/o ports only if rules with ports are present
   * int stream_tcp.max_pdu = 16384: maximum reassembled PDU size {
     1460:32768 }
-  * int stream_tcp.max_window = 0: maximum allowed tcp window {
+  * int stream_tcp.max_window = 0: maximum allowed TCP window {
     0:1073725440 }
   * int stream_tcp.overlap_limit = 0: maximum number of allowed
     overlapping segments per session { 0:255 }
@@ -14741,7 +14750,7 @@ these libraries see the Getting Started section of the manual.
     sessions tracked before pruning { 2: }
   * int stream.udp_cache.pruning_timeout = 30: minimum inactive time
     before being eligible for pruning { 1: }
-  * bool stream_udp.ignore_any_rules = false: process udp content
+  * bool stream_udp.ignore_any_rules = false: process UDP content
     rules w/o ports only if rules with ports are present
   * int stream_udp.session_timeout = 30: session tracking timeout {
     1:86400 }
@@ -14772,13 +14781,13 @@ these libraries see the Getting Started section of the manual.
   * string tcp_connector.connector: connector name
   * enum tcp_connector.setup: stream establishment { call | answer }
   * int telnet.ayt_attack_thresh = -1: alert on this number of
-    consecutive telnet AYT commands { -1: }
+    consecutive Telnet AYT commands { -1: }
   * bool telnet.check_encrypted = false: check for end of encryption
-  * bool telnet.encrypted_traffic = false: check for encrypted telnet
-    and ftp
+  * bool telnet.encrypted_traffic = false: check for encrypted Telnet
+    and FTP
   * bool telnet.normalize = false: eliminate escape sequences
-  * interval tos.~range: check if ip tos is in given range { 0:255 }
-  * interval ttl.~range: check if ip ttl is in the given range {
+  * interval tos.~range: check if IP TOS is in given range { 0:255 }
+  * interval ttl.~range: check if IP TTL is in the given range {
     0:255 }
   * bool udp.deep_teredo_inspection = false: look for Teredo on all
     UDP ports (default is only 3544)
@@ -14792,7 +14801,7 @@ these libraries see the Getting Started section of the manual.
     (in Unix Epoch format)
   * interval urg.~range: check if tcp urgent offset is in given range
     { 0:65535 }
-  * interval window.~range: check if tcp window size is in given
+  * interval window.~range: check if TCP window size is in given
     range { 0:65535 }
   * multi wizard.curses: enable service identification based on
     internal algorithm { dce_smb | dce_udp | dce_tcp }
@@ -15055,9 +15064,9 @@ these libraries see the Getting Started section of the manual.
   * file_id.total_files: number of files processed (sum)
   * file_log.total_events: total file events (sum)
   * ftp_data.packets: total packets (sum)
-  * ftp_server.concurrent_sessions: total concurrent ftp sessions
+  * ftp_server.concurrent_sessions: total concurrent FTP sessions
     (now)
-  * ftp_server.max_concurrent_sessions: maximum concurrent ftp
+  * ftp_server.max_concurrent_sessions: maximum concurrent FTP
     sessions (max)
   * ftp_server.total_packets: total packets (sum)
   * gtp_inspect.concurrent_sessions: total concurrent gtp sessions
@@ -15287,7 +15296,7 @@ these libraries see the Getting Started section of the manual.
   * sip.code_7xx: 7xx (sum)
   * sip.code_8xx: 8xx (sum)
   * sip.code_9xx: 9xx (sum)
-  * sip.concurrent_sessions: total concurrent sip sessions (now)
+  * sip.concurrent_sessions: total concurrent SIP sessions (now)
   * sip.dialogs: total dialogs (sum)
   * sip.events: events generated (sum)
   * sip.ignored_channels: total channels ignored (sum)
@@ -15295,7 +15304,7 @@ these libraries see the Getting Started section of the manual.
   * sip.info: info (sum)
   * sip.invite: invite (sum)
   * sip.join: join (sum)
-  * sip.max_concurrent_sessions: maximum concurrent sip sessions
+  * sip.max_concurrent_sessions: maximum concurrent SIP sessions
     (max)
   * sip.message: message (sum)
   * sip.notify: notify (sum)
@@ -15522,9 +15531,9 @@ these libraries see the Getting Started section of the manual.
   * tcp.bad_tcp4_checksum: nonzero tcp over ip checksums (sum)
   * tcp.bad_tcp6_checksum: nonzero tcp over ipv6 checksums (sum)
   * tcp_connector.messages: total messages (sum)
-  * telnet.concurrent_sessions: total concurrent telnet sessions
+  * telnet.concurrent_sessions: total concurrent Telnet sessions
     (now)
-  * telnet.max_concurrent_sessions: maximum concurrent telnet
+  * telnet.max_concurrent_sessions: maximum concurrent Telnet
     sessions (max)
   * telnet.total_packets: total packets (sum)
   * udp.bad_udp4_checksum: nonzero udp over ipv4 checksums (sum)
@@ -15980,9 +15989,9 @@ these libraries see the Getting Started section of the manual.
   * 125:8 (ftp_server) FTP bounce attempt
   * 125:9 (ftp_server) evasive (incomplete) TELNET cmd on FTP command
     channel
-  * 126:1 (telnet) consecutive telnet AYT commands beyond threshold
-  * 126:2 (telnet) telnet traffic encrypted
-  * 126:3 (telnet) telnet subnegotiation begin command without
+  * 126:1 (telnet) consecutive Telnet AYT commands beyond threshold
+  * 126:2 (telnet) Telnet traffic encrypted
+  * 126:3 (telnet) Telnet subnegotiation begin command without
     subnegotiation end
   * 128:1 (ssh) challenge-response overflow exploit
   * 128:2 (ssh) SSH1 CRC32 exploit
@@ -16585,11 +16594,11 @@ deleted -> unified2: 'filename'
     hits before a rule generates an event
   * dnp3 (inspector): dnp3 inspection
   * dnp3_data (ips_option): sets the cursor to dnp3 data
-  * dnp3_func (ips_option): detection option to check dnp3 function
+  * dnp3_func (ips_option): detection option to check DNP3 function
     code
-  * dnp3_ind (ips_option): detection option to check dnp3 indicator
+  * dnp3_ind (ips_option): detection option to check DNP3 indicator
     flags
-  * dnp3_obj (ips_option): detection option to check dnp3 object
+  * dnp3_obj (ips_option): detection option to check DNP3 object
     headers
   * dns (inspector): dns inspection
   * dpx (inspector): dynamic inspector example
@@ -16629,7 +16638,7 @@ deleted -> unified2: 'filename'
   * gtp_info (ips_option): rule option to check gtp info element
   * gtp_inspect (inspector): gtp control channel inspection
   * gtp_type (ips_option): rule option to check gtp types
-  * gtp_version (ips_option): rule option to check gtp version
+  * gtp_version (ips_option): rule option to check GTP version
   * high_availability (basic): implement flow tracking high
     availability
   * host_cache (basic): configure hosts
@@ -16702,7 +16711,7 @@ deleted -> unified2: 'filename'
     data
   * modbus_func (ips_option): rule option to check modbus function
     code
-  * modbus_unit (ips_option): rule option to check modbus unit ID
+  * modbus_unit (ips_option): rule option to check Modbus unit ID
   * mpls (codec): support for multiprotocol label switching
   * msg (ips_option): rule option summarizing rule purpose output
     with events
@@ -16963,11 +16972,11 @@ deleted -> unified2: 'filename'
   * ips_option::detection_filter: rule option to require multiple
     hits before a rule generates an event
   * ips_option::dnp3_data: sets the cursor to dnp3 data
-  * ips_option::dnp3_func: detection option to check dnp3 function
+  * ips_option::dnp3_func: detection option to check DNP3 function
     code
-  * ips_option::dnp3_ind: detection option to check dnp3 indicator
+  * ips_option::dnp3_ind: detection option to check DNP3 indicator
     flags
-  * ips_option::dnp3_obj: detection option to check dnp3 object
+  * ips_option::dnp3_obj: detection option to check DNP3 object
     headers
   * ips_option::dsize: rule option to test payload size
   * ips_option::file_data: rule option to set detection cursor to
@@ -16982,7 +16991,7 @@ deleted -> unified2: 'filename'
   * ips_option::gid: rule option specifying rule generator
   * ips_option::gtp_info: rule option to check gtp info element
   * ips_option::gtp_type: rule option to check gtp types
-  * ips_option::gtp_version: rule option to check gtp version
+  * ips_option::gtp_version: rule option to check GTP version
   * ips_option::http_client_body: rule option to set the detection
     cursor to the request body
   * ips_option::http_cookie: rule option to set the detection cursor
@@ -17032,7 +17041,7 @@ deleted -> unified2: 'filename'
   * ips_option::modbus_data: rule option to set cursor to modbus data
   * ips_option::modbus_func: rule option to check modbus function
     code
-  * ips_option::modbus_unit: rule option to check modbus unit ID
+  * ips_option::modbus_unit: rule option to check Modbus unit ID
   * ips_option::msg: rule option summarizing rule purpose output with
     events
   * ips_option::mss: detection for TCP maximum segment size

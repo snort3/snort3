@@ -779,7 +779,7 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0 (Build 240) from 2.9.8-383
+o"  )~   Version 3.0.0 (Build 242) from 2.9.11
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2017 Cisco and/or its affiliates. All rights reserved.
@@ -5825,7 +5825,7 @@ engine for your network(s).  Here are some tuning tips:</p></div>
 <div class="paragraph"><p>Use the watch_ip, ignore_scanners, and ignore_scanned options.
 It&#8217;s important to correctly set these options.  The watch_ip option
 is easy to understand.  The analyst should set this option to the
-list of Cidr blocks and IPs that they want to watch.  If no
+list of CIDR blocks and IPs that they want to watch.  If no
 watch_ip is defined, Portscan will watch all network traffic.
 The ignore_scanners and ignore_scanned options come into play in
 weeding out legitimate hosts that are very active on your network.
@@ -6999,7 +6999,7 @@ int <strong>host_cache[].size</strong>: size of host cache
 <div class="ulist"><ul>
 <li>
 <p>
-addr <strong>host_tracker[].ip</strong> = 0.0.0.0/32: hosts address / cidr
+addr <strong>host_tracker[].IP</strong> = 0.0.0.0/32: hosts address / cidr
 </p>
 </li>
 <li>
@@ -7009,7 +7009,7 @@ enum <strong>host_tracker[].frag_policy</strong>: defragmentation policy { first
 </li>
 <li>
 <p>
-enum <strong>host_tracker[].tcp_policy</strong>: tcp reassembly policy { first | last | linux | old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | windows | win_2003 | vista | proxy }
+enum <strong>host_tracker[].tcp_policy</strong>: TCP reassembly policy { first | last | linux | old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | windows | win_2003 | vista | proxy }
 </p>
 </li>
 <li>
@@ -7019,7 +7019,7 @@ string <strong>host_tracker[].services[].name</strong>: service identifier
 </li>
 <li>
 <p>
-enum <strong>host_tracker[].services[].proto</strong> = tcp: ip protocol { tcp | udp }
+enum <strong>host_tracker[].services[].proto</strong> = tcp: IP protocol { tcp | udp }
 </p>
 </li>
 <li>
@@ -7056,7 +7056,7 @@ port <strong>host_tracker[].services[].port</strong>: port number
 <div class="ulist"><ul>
 <li>
 <p>
-addr <strong>hosts[].ip</strong> = 0.0.0.0/32: hosts address / cidr
+addr <strong>hosts[].ip</strong> = 0.0.0.0/32: hosts address / CIDR
 </p>
 </li>
 <li>
@@ -7066,7 +7066,7 @@ enum <strong>hosts[].frag_policy</strong>: defragmentation policy { first | linu
 </li>
 <li>
 <p>
-enum <strong>hosts[].tcp_policy</strong>: tcp reassembly policy { first | last | linux | old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | windows | win_2003 | vista | proxy }
+enum <strong>hosts[].tcp_policy</strong>: TCP reassembly policy { first | last | linux | old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | windows | win_2003 | vista | proxy }
 </p>
 </li>
 <li>
@@ -7076,7 +7076,7 @@ string <strong>hosts[].services[].name</strong>: service identifier
 </li>
 <li>
 <p>
-enum <strong>hosts[].services[].proto</strong> = tcp: ip protocol { tcp | udp }
+enum <strong>hosts[].services[].proto</strong> = tcp: IP protocol { tcp | udp }
 </p>
 </li>
 <li>
@@ -7315,7 +7315,7 @@ int <strong>network.id</strong> = 0: correlate unified2 events with configuratio
 </li>
 <li>
 <p>
-int <strong>network.min_ttl</strong> = 1: alert / normalize packets with lower ttl / hop limit (you must enable rules and / or normalization also) { 1:255 }
+int <strong>network.min_ttl</strong> = 1: alert / normalize packets with lower TTL / hop limit (you must enable rules and / or normalization also) { 1:255 }
 </p>
 </li>
 <li>
@@ -7717,7 +7717,7 @@ int <strong>search_engine.max_queue_events</strong> = 5: maximum number of match
 </li>
 <li>
 <p>
-bool <strong>search_engine.inspect_stream_inserts</strong> = false: inspect reassembled payload - disabling is good for performance, bad for detection
+bool <strong>search_engine.detect_raw_tcp</strong> = true: detect on TCP payload before reassembly
 </p>
 </li>
 <li>
@@ -7886,7 +7886,7 @@ string <strong>snort.-i</strong>: &lt;iface&gt;&#8230; list of interfaces
 </li>
 <li>
 <p>
-port <strong>snort.-j</strong>: &lt;port&gt; to listen for telnet connections
+port <strong>snort.-j</strong>: &lt;port&gt; to listen for Telnet connections
 </p>
 </li>
 <li>
@@ -9815,12 +9815,12 @@ bool <strong>appid.dump_ports</strong> = false: enable dump of appid port inform
 </li>
 <li>
 <p>
-addr <strong>appid.session_log_filter.src_ip</strong> = 0.0.0.0/32: source ip address in CIDR format
+addr <strong>appid.session_log_filter.src_ip</strong> = 0.0.0.0/32: source IP address in CIDR format
 </p>
 </li>
 <li>
 <p>
-addr <strong>appid.session_log_filter.dst_ip</strong> = 0.0.0.0/32: destination ip address in CIDR format
+addr <strong>appid.session_log_filter.dst_ip</strong> = 0.0.0.0/32: destination IP address in CIDR format
 </p>
 </li>
 <li>
@@ -9835,7 +9835,7 @@ port <strong>appid.session_log_filter.dst_port</strong>: destination port { 1: }
 </li>
 <li>
 <p>
-string <strong>appid.session_log_filter.protocol</strong>: ip protocol
+string <strong>appid.session_log_filter.protocol</strong>: IP protocol
 </p>
 </li>
 <li>
@@ -11459,7 +11459,7 @@ bool <strong>ftp_client.bounce</strong> = false: check for bounces
 </li>
 <li>
 <p>
-addr <strong>ftp_client.bounce_to[].address</strong> = 1.0.0.0/32: allowed ip address in CIDR format
+addr <strong>ftp_client.bounce_to[].address</strong> = 1.0.0.0/32: allowed IP address in CIDR format
 </p>
 </li>
 <li>
@@ -11479,12 +11479,12 @@ bool <strong>ftp_client.ignore_telnet_erase_cmds</strong> = false: ignore erase 
 </li>
 <li>
 <p>
-int <strong>ftp_client.max_resp_len</strong> = -1: maximum ftp response accepted by client { -1: }
+int <strong>ftp_client.max_resp_len</strong> = -1: maximum FTP response accepted by client { -1: }
 </p>
 </li>
 <li>
 <p>
-bool <strong>ftp_client.telnet_cmds</strong> = false: detect telnet escape sequences on ftp control channel
+bool <strong>ftp_client.telnet_cmds</strong> = false: detect Telnet escape sequences on FTP control channel
 </p>
 </li>
 </ul></div>
@@ -11587,7 +11587,7 @@ int <strong>ftp_server.def_max_param_len</strong> = 100: default maximum length 
 </li>
 <li>
 <p>
-bool <strong>ftp_server.encrypted_traffic</strong> = false: check for encrypted telnet and ftp
+bool <strong>ftp_server.encrypted_traffic</strong> = false: check for encrypted Telnet and FTP
 </p>
 </li>
 <li>
@@ -11597,7 +11597,7 @@ string <strong>ftp_server.ftp_cmds</strong>: specify additional commands support
 </li>
 <li>
 <p>
-bool <strong>ftp_server.ignore_data_chan</strong> = false: do not inspect ftp data channels
+bool <strong>ftp_server.ignore_data_chan</strong> = false: do not inspect FTP data channels
 </p>
 </li>
 <li>
@@ -11612,7 +11612,7 @@ bool <strong>ftp_server.print_cmds</strong> = false: print command configuration
 </li>
 <li>
 <p>
-bool <strong>ftp_server.telnet_cmds</strong> = false: detect telnet escape sequences of ftp control channel
+bool <strong>ftp_server.telnet_cmds</strong> = false: detect Telnet escape sequences of FTP control channel
 </p>
 </li>
 </ul></div>
@@ -11673,12 +11673,12 @@ bool <strong>ftp_server.telnet_cmds</strong> = false: detect telnet escape seque
 </li>
 <li>
 <p>
-<strong>ftp_server.concurrent_sessions</strong>: total concurrent ftp sessions (now)
+<strong>ftp_server.concurrent_sessions</strong>: total concurrent FTP sessions (now)
 </p>
 </li>
 <li>
 <p>
-<strong>ftp_server.max_concurrent_sessions</strong>: maximum concurrent ftp sessions (max)
+<strong>ftp_server.max_concurrent_sessions</strong>: maximum concurrent FTP sessions (max)
 </p>
 </li>
 </ul></div>
@@ -11692,7 +11692,7 @@ bool <strong>ftp_server.telnet_cmds</strong> = false: detect telnet escape seque
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>gtp_inspect[].version</strong> = 2: gtp version { 0:2 }
+int <strong>gtp_inspect[].version</strong> = 2: GTP version { 0:2 }
 </p>
 </li>
 <li>
@@ -13678,22 +13678,22 @@ int <strong>port_scan.icmp_sweep.ports</strong> = 25: number of times port (or p
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_window</strong> = 0: detection interval for all tcp scans { 0: }
+int <strong>port_scan.tcp_window</strong> = 0: detection interval for all TCP scans { 0: }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_window</strong> = 0: detection interval for all udp scans { 0: }
+int <strong>port_scan.udp_window</strong> = 0: detection interval for all UDP scans { 0: }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_window</strong> = 0: detection interval for all ip scans { 0: }
+int <strong>port_scan.ip_window</strong> = 0: detection interval for all IP scans { 0: }
 </p>
 </li>
 <li>
 <p>
-int <strong>port_scan.icmp_window</strong> = 0: detection interval for all icmp scans { 0: }
+int <strong>port_scan.icmp_window</strong> = 0: detection interval for all ICMP scans { 0: }
 </p>
 </li>
 </ul></div>
@@ -13885,7 +13885,7 @@ bool <strong>reg_test.test_daq_retry</strong> = true: test daq packet retry feat
 <div class="ulist"><ul>
 <li>
 <p>
-string <strong>reputation.blacklist</strong>: blacklist file name with ip lists
+string <strong>reputation.blacklist</strong>: blacklist file name with IP lists
 </p>
 </li>
 <li>
@@ -13895,7 +13895,7 @@ int <strong>reputation.memcap</strong> = 500: maximum total MB of memory allocat
 </li>
 <li>
 <p>
-enum <strong>reputation.nested_ip</strong> = inner: ip to use when there is IP encapsulation { inner|outer|all }
+enum <strong>reputation.nested_ip</strong> = inner: IP to use when there is IP encapsulation { inner|outer|all }
 </p>
 </li>
 <li>
@@ -13915,7 +13915,7 @@ enum <strong>reputation.white</strong> = unblack: specify the meaning of whiteli
 </li>
 <li>
 <p>
-string <strong>reputation.whitelist</strong>: whitelist file name with ip lists
+string <strong>reputation.whitelist</strong>: whitelist file name with IP lists
 </p>
 </li>
 </ul></div>
@@ -14077,7 +14077,7 @@ int <strong>sip.max_via_len</strong> = 1024: maximum via field size { 0:65535 }
 </li>
 <li>
 <p>
-string <strong>sip.methods</strong> = invite cancel ack  bye register options: list of methods to check in sip messages
+string <strong>sip.methods</strong> = invite cancel ack  bye register options: list of methods to check in SIP messages
 </p>
 </li>
 </ul></div>
@@ -14228,12 +14228,12 @@ string <strong>sip.methods</strong> = invite cancel ack  bye register options: l
 </li>
 <li>
 <p>
-<strong>sip.concurrent_sessions</strong>: total concurrent sip sessions (now)
+<strong>sip.concurrent_sessions</strong>: total concurrent SIP sessions (now)
 </p>
 </li>
 <li>
 <p>
-<strong>sip.max_concurrent_sessions</strong>: maximum concurrent sip sessions (max)
+<strong>sip.max_concurrent_sessions</strong>: maximum concurrent SIP sessions (max)
 </p>
 </li>
 <li>
@@ -14877,7 +14877,7 @@ int <strong>ssl.max_heartbeat_length</strong> = 0: maximum length of heartbeat r
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>stream.footprint</strong> = 0: use zero for production, non-zero for testing at given size (for tcp and user) { 0: }
+int <strong>stream.footprint</strong> = 0: use zero for production, non-zero for testing at given size (for TCP and user) { 0: }
 </p>
 </li>
 <li>
@@ -15305,7 +15305,7 @@ int <strong>stream_ip.min_frag_length</strong> = 0: alert if fragment length is 
 </li>
 <li>
 <p>
-int <strong>stream_ip.min_ttl</strong> = 1: discard fragments with ttl below the minimum { 1:255 }
+int <strong>stream_ip.min_ttl</strong> = 1: discard fragments with TTL below the minimum { 1:255 }
 </p>
 </li>
 <li>
@@ -15525,12 +15525,12 @@ int <strong>stream_tcp.flush_factor</strong> = 0: flush upon seeing a drop in se
 </li>
 <li>
 <p>
-bool <strong>stream_tcp.ignore_any_rules</strong> = false: process tcp content rules w/o ports only if rules with ports are present
+bool <strong>stream_tcp.ignore_any_rules</strong> = false: process TCP content rules w/o ports only if rules with ports are present
 </p>
 </li>
 <li>
 <p>
-int <strong>stream_tcp.max_window</strong> = 0: maximum allowed tcp window { 0:1073725440 }
+int <strong>stream_tcp.max_window</strong> = 0: maximum allowed TCP window { 0:1073725440 }
 </p>
 </li>
 <li>
@@ -15895,7 +15895,7 @@ int <strong>stream_udp.session_timeout</strong> = 30: session tracking timeout {
 </li>
 <li>
 <p>
-bool <strong>stream_udp.ignore_any_rules</strong> = false: process udp content rules w/o ports only if rules with ports are present
+bool <strong>stream_udp.ignore_any_rules</strong> = false: process UDP content rules w/o ports only if rules with ports are present
 </p>
 </li>
 </ul></div>
@@ -15966,7 +15966,7 @@ int <strong>stream_user.trace</strong>: mask for enabling debug traces in module
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>telnet.ayt_attack_thresh</strong> = -1: alert on this number of consecutive telnet AYT commands { -1: }
+int <strong>telnet.ayt_attack_thresh</strong> = -1: alert on this number of consecutive Telnet AYT commands { -1: }
 </p>
 </li>
 <li>
@@ -15976,7 +15976,7 @@ bool <strong>telnet.check_encrypted</strong> = false: check for end of encryptio
 </li>
 <li>
 <p>
-bool <strong>telnet.encrypted_traffic</strong> = false: check for encrypted telnet and ftp
+bool <strong>telnet.encrypted_traffic</strong> = false: check for encrypted Telnet and FTP
 </p>
 </li>
 <li>
@@ -15989,17 +15989,17 @@ bool <strong>telnet.normalize</strong> = false: eliminate escape sequences
 <div class="ulist"><ul>
 <li>
 <p>
-<strong>126:1</strong> (telnet) consecutive telnet AYT commands beyond threshold
+<strong>126:1</strong> (telnet) consecutive Telnet AYT commands beyond threshold
 </p>
 </li>
 <li>
 <p>
-<strong>126:2</strong> (telnet) telnet traffic encrypted
+<strong>126:2</strong> (telnet) Telnet traffic encrypted
 </p>
 </li>
 <li>
 <p>
-<strong>126:3</strong> (telnet) telnet subnegotiation begin command without subnegotiation end
+<strong>126:3</strong> (telnet) Telnet subnegotiation begin command without subnegotiation end
 </p>
 </li>
 </ul></div>
@@ -16012,12 +16012,12 @@ bool <strong>telnet.normalize</strong> = false: eliminate escape sequences
 </li>
 <li>
 <p>
-<strong>telnet.concurrent_sessions</strong>: total concurrent telnet sessions (now)
+<strong>telnet.concurrent_sessions</strong>: total concurrent Telnet sessions (now)
 </p>
 </li>
 <li>
 <p>
-<strong>telnet.max_concurrent_sessions</strong>: maximum concurrent telnet sessions (max)
+<strong>telnet.max_concurrent_sessions</strong>: maximum concurrent Telnet sessions (max)
 </p>
 </li>
 </ul></div>
@@ -16158,12 +16158,12 @@ string <strong>react.page</strong>: file containing HTTP response (headers and b
 <div class="ulist"><ul>
 <li>
 <p>
-enum <strong>reject.reset</strong>: send tcp reset to one or both ends { source|dest|both }
+enum <strong>reject.reset</strong>: send TCP reset to one or both ends { source|dest|both }
 </p>
 </li>
 <li>
 <p>
-enum <strong>reject.control</strong>: send icmp unreachable(s) { network|host|port|all }
+enum <strong>reject.control</strong>: send ICMP unreachable(s) { network|host|port|all }
 </p>
 </li>
 </ul></div>
@@ -16197,7 +16197,7 @@ bool <strong>rewrite.disable_replace</strong> = false: disable replace of packet
 <div class="ulist"><ul>
 <li>
 <p>
-interval <strong>ack.~range</strong>: check if tcp ack value is <em>value | min&lt;&gt;max | &lt;max | &gt;min</em> { 0: }
+interval <strong>ack.~range</strong>: check if TCP ack value is <em>value | min&lt;&gt;max | &lt;max | &gt;min</em> { 0: }
 </p>
 </li>
 </ul></div>
@@ -16752,47 +16752,47 @@ int <strong>detection_filter.seconds</strong>: length of interval to count hits 
 </div>
 <div class="sect2">
 <h3 id="_dnp3_func">dnp3_func</h3>
-<div class="paragraph"><p>What: detection option to check dnp3 function code</p></div>
+<div class="paragraph"><p>What: detection option to check DNP3 function code</p></div>
 <div class="paragraph"><p>Type: ips_option</p></div>
 <div class="paragraph"><p>Usage: detect</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-string <strong>dnp3_func.~</strong>: match dnp3 function code or name
+string <strong>dnp3_func.~</strong>: match DNP3 function code or name
 </p>
 </li>
 </ul></div>
 </div>
 <div class="sect2">
 <h3 id="_dnp3_ind">dnp3_ind</h3>
-<div class="paragraph"><p>What: detection option to check dnp3 indicator flags</p></div>
+<div class="paragraph"><p>What: detection option to check DNP3 indicator flags</p></div>
 <div class="paragraph"><p>Type: ips_option</p></div>
 <div class="paragraph"><p>Usage: detect</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-string <strong>dnp3_ind.~</strong>: match given dnp3 indicator flags
+string <strong>dnp3_ind.~</strong>: match given DNP3 indicator flags
 </p>
 </li>
 </ul></div>
 </div>
 <div class="sect2">
 <h3 id="_dnp3_obj">dnp3_obj</h3>
-<div class="paragraph"><p>What: detection option to check dnp3 object headers</p></div>
+<div class="paragraph"><p>What: detection option to check DNP3 object headers</p></div>
 <div class="paragraph"><p>Type: ips_option</p></div>
 <div class="paragraph"><p>Usage: detect</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>dnp3_obj.group</strong> = 0: match given dnp3 object header group { 0:255 }
+int <strong>dnp3_obj.group</strong> = 0: match given DNP3 object header group { 0:255 }
 </p>
 </li>
 <li>
 <p>
-int <strong>dnp3_obj.var</strong> = 0: match given dnp3 object header var { 0:255 }
+int <strong>dnp3_obj.var</strong> = 0: match given DNP3 object header var { 0:255 }
 </p>
 </li>
 </ul></div>
@@ -17010,7 +17010,7 @@ string <strong>gtp_type.~</strong>: list of types to match
 </div>
 <div class="sect2">
 <h3 id="_gtp_version">gtp_version</h3>
-<div class="paragraph"><p>What: rule option to check gtp version</p></div>
+<div class="paragraph"><p>What: rule option to check GTP version</p></div>
 <div class="paragraph"><p>Type: ips_option</p></div>
 <div class="paragraph"><p>Usage: detect</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
@@ -17433,7 +17433,7 @@ implied <strong>http_version.with_trailer</strong>: parts of this rule examine H
 <div class="ulist"><ul>
 <li>
 <p>
-interval <strong>icmp_id.~range</strong>: check if icmp id is in given range { 0:65535 }
+interval <strong>icmp_id.~range</strong>: check if ICMP ID is in given range { 0:65535 }
 </p>
 </li>
 </ul></div>
@@ -17447,7 +17447,7 @@ interval <strong>icmp_id.~range</strong>: check if icmp id is in given range { 0
 <div class="ulist"><ul>
 <li>
 <p>
-interval <strong>icmp_seq.~range</strong>: check if icmp sequence number is in given range { 0:65535 }
+interval <strong>icmp_seq.~range</strong>: check if ICMP sequence number is in given range { 0:65535 }
 </p>
 </li>
 </ul></div>
@@ -17461,7 +17461,7 @@ interval <strong>icmp_seq.~range</strong>: check if icmp sequence number is in g
 <div class="ulist"><ul>
 <li>
 <p>
-interval <strong>icode.~range</strong>: check if icmp code is in given range is { 0:255 }
+interval <strong>icode.~range</strong>: check if ICMP code is in given range is { 0:255 }
 </p>
 </li>
 </ul></div>
@@ -17475,7 +17475,7 @@ interval <strong>icode.~range</strong>: check if icmp code is in given range is 
 <div class="ulist"><ul>
 <li>
 <p>
-interval <strong>id.~range</strong>: check if the ip id is in the given range { 0: }
+interval <strong>id.~range</strong>: check if the IP ID is in the given range { 0: }
 </p>
 </li>
 </ul></div>
@@ -17536,7 +17536,7 @@ implied <strong>isdataat.relative</strong>: offset from cursor instead of start 
 <div class="ulist"><ul>
 <li>
 <p>
-interval <strong>itype.~range</strong>: check if icmp type is in given range { 0:255 }
+interval <strong>itype.~range</strong>: check if ICMP type is in given range { 0:255 }
 </p>
 </li>
 </ul></div>
@@ -17606,14 +17606,14 @@ string <strong>modbus_func.~</strong>: function code to match
 </div>
 <div class="sect2">
 <h3 id="_modbus_unit">modbus_unit</h3>
-<div class="paragraph"><p>What: rule option to check modbus unit ID</p></div>
+<div class="paragraph"><p>What: rule option to check Modbus unit ID</p></div>
 <div class="paragraph"><p>Type: ips_option</p></div>
 <div class="paragraph"><p>Usage: detect</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-int <strong>modbus_unit.~</strong>: modbus unit ID { 0:255 }
+int <strong>modbus_unit.~</strong>: Modbus unit ID { 0:255 }
 </p>
 </li>
 </ul></div>
@@ -17870,7 +17870,7 @@ int <strong>sd_pattern.threshold</strong>: number of matches before alerting { 1
 <div class="ulist"><ul>
 <li>
 <p>
-interval <strong>seq.~range</strong>: check if tcp sequence number is in given range { 0: }
+interval <strong>seq.~range</strong>: check if TCP sequence number is in given range { 0: }
 </p>
 </li>
 </ul></div>
@@ -18261,7 +18261,7 @@ enum <strong>target.~</strong>: indicate the target of the attack { src_ip | dst
 <div class="ulist"><ul>
 <li>
 <p>
-interval <strong>tos.~range</strong>: check if ip tos is in given range { 0:255 }
+interval <strong>tos.~range</strong>: check if IP TOS is in given range { 0:255 }
 </p>
 </li>
 </ul></div>
@@ -18275,7 +18275,7 @@ interval <strong>tos.~range</strong>: check if ip tos is in given range { 0:255 
 <div class="ulist"><ul>
 <li>
 <p>
-interval <strong>ttl.~range</strong>: check if ip ttl is in the given range { 0:255 }
+interval <strong>ttl.~range</strong>: check if IP TTL is in the given range { 0:255 }
 </p>
 </li>
 </ul></div>
@@ -18303,7 +18303,7 @@ interval <strong>urg.~range</strong>: check if tcp urgent offset is in given ran
 <div class="ulist"><ul>
 <li>
 <p>
-interval <strong>window.~range</strong>: check if tcp window size is in given range { 0:65535 }
+interval <strong>window.~range</strong>: check if TCP window size is in given range { 0:65535 }
 </p>
 </li>
 </ul></div>
@@ -19842,14 +19842,14 @@ value over gid:138 rules and was difficult to interpret the result of.</p></div>
 <div class="sectionbody">
 <div class="paragraph"><p>One of the major differences between Snort 2 and Snort 3 is the
 configuration. Snort 2 configuration files are written in Snort-specific
-syntax while Snort 3 configuration files are written in Lua. Snort2Lua is
-a program specifically designed to convert valid Snort 2 configuration files
+syntax while Snort 3 configuration files are written in Lua. Snort2Lua is a
+program specifically designed to convert valid Snort 2 configuration files
 into Lua files that Snort 3 can understand.</p></div>
 <div class="paragraph"><p>Snort2Lua reads your legacy Snort conf file(s) and generates Snort 3 Lua
-and rules files. When running this program, the only mandatory option is
-to provide Snort2Lua with a Snort 2 configuration file. The default
-output file file is snort.lua, the default error file will be snort.rej,
-and the default rule file is the output file (default is snort.lua).  When
+and rules files. When running this program, the only mandatory option is to
+provide Snort2Lua with a Snort 2 configuration file. The default output
+file file is snort.lua, the default error file will be snort.rej, and the
+default rule file is the output file (default is snort.lua).  When
 Snort2Lua finishes running, the resulting configuration file can be
 successfully run as the Snort3.0 configuration file.  The sole exception to
 this rule is when Snort2Lua cannot find an included file.  If that occurs,
@@ -19857,42 +19857,68 @@ the file will still be included in the output file and you will need to
 manually adjust or comment the file name. Additionally, if the exit code is
 not zero, some of the information may not be successfully converted.  Check
 the error file for all of the conversion problems.</p></div>
-<div class="paragraph"><p>Those errors can occur for a multitude of reasons and are not
-necessarily bad. Snort2Lua expects a valid Snort 2 configuration.
-Therefore, if the configuration is invalid or has questionable syntax,
-Snort2Lua may fail to parse the configuration file or create an invalid
-Snort 3 configuration file.</p></div>
+<div class="paragraph"><p>Those errors can occur for a multitude of reasons and are not necessarily
+bad. Snort2Lua expects a valid Snort 2 configuration.  Therefore, if the
+configuration is invalid or has questionable syntax, Snort2Lua may fail to
+parse the configuration file or create an invalid Snort 3 configuration
+file.</p></div>
 <div class="paragraph"><p>There are a also few peculiarities of Snort2Lua that may be confusing to a
-first time user. Specifically, aside from an initial configuration file
-(which is specified from the command line or as the file in ‘config
-binding’), every file that is included into Snort 3 must be either a Lua
-file or a rule file; the file cannot contain both rules and Lua syntax.
-Therefore, when parsing a file specified with the ‘include’ command,
-Snort2Lua will output both a Lua file and a rule file.  Additionally, any
-line that is a comment in a configuration file will be added in to a
-comments section at the bottom of the main configuration file.  Finally,
-rules that contain unsupported options will be converted to the best of
-Snort2Lua’s capability and then printed as a comment in the rule file.</p></div>
+first time user:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Aside from an initial configuration file (which is specified from the
+  command line or as the file in ‘config binding’), every file that is
+  included into Snort 3 must be either a Lua file or a rule file; the file
+  cannot contain both rules and Lua syntax.  Therefore, when parsing a file
+  specified with the ‘include’ command, Snort2Lua will output both a Lua
+  file and a rule file.
+</p>
+</li>
+<li>
+<p>
+Any line that is a comment in a configuration file will be added in to a
+  comments section at the bottom of the main configuration file.
+</p>
+</li>
+<li>
+<p>
+Rules that contain unsupported options will be converted to the best of
+  Snort2Lua’s capability and then printed as a comment in the rule file.
+</p>
+</li>
+<li>
+<p>
+Files with a <em>.rules</em> suffix are assumed to be Talos 2.X rules files and
+  converted line-by-line.  In this case, lines starting with <em>alert</em> are
+  converted as usual but lines starting with <em># alert</em> are
+  assumed to be commented out rules which are converted to 3.0 format and
+  remain comments in the output file.  All other comments are passed
+  through directly.  There is no support for other commented rule actions
+  since these do not appear in Talos rules files.
+</p>
+</li>
+</ul></div>
 <div class="sect2">
 <h3 id="_snort2lua_command_line">Snort2Lua Command Line</h3>
 <div class="paragraph"><p>By default, Snort2Lua will attempt to parse every ‘include’ file and every
 ‘binding’ file.  There is an option to change this functionality.</p></div>
 <div class="paragraph"><p>When specifying a rule file with one of the command line options, Snort2Lua
-will output all of the converted rules to that specified rule file.
-This is especially useful when you are only interesting in
-converting rules since there is no Lua syntax in rule files.  There is also
-an option that tells Snort2Lua to output every rule for a given
-configuration into a single rule file.  Similarly, there is an option
-pull all of the Lua syntax from every ‘include’ file into the output file.</p></div>
+will output all of the converted rules to that specified rule file.  This
+is especially useful when you are only interesting in converting rules
+since there is no Lua syntax in rule files.  There is also an option that
+tells Snort2Lua to output every rule for a given configuration into a
+single rule file.  Similarly, there is an option pull all of the Lua syntax
+from every ‘include’ file into the output file.</p></div>
 <div class="paragraph"><p>There are currently three output modes: default, quiet, and differences.
 As expected, quiet mode produces a Snort configuration.  All errors (aside
 from Fatal Snort2Lua errors), differences, and comments will omitted from
 the final output file.  Default mode will print everything. That mean you
-will be able to see exactly what changes have occurred between Snort 2
-and Snort 3 in addition to the new syntax, the original file&#8217;s comments,
-and all errors that have occurred.  Finally, differences mode will not
-actually output a valid Snort 3 configuration.  Instead, you can see the
-exact options from the input configuration that have changed.</p></div>
+will be able to see exactly what changes have occurred between Snort 2 and
+Snort 3 in addition to the new syntax, the original file&#8217;s comments, and
+all errors that have occurred.  Finally, differences mode will not actually
+output a valid Snort 3 configuration.  Instead, you can see the exact
+options from the input configuration that have changed.</p></div>
 <div class="sect3">
 <h4 id="_usage_snort2lua_options_8230_c_lt_snort_conf_gt_8230">Usage: snort2lua [OPTIONS]&#8230; -c &lt;snort_conf&gt; &#8230;</h4>
 <div class="paragraph"><p>Converts the Snort configuration file specified by the -c or --conf-file
@@ -20118,52 +20144,53 @@ A Snort configuration file to convert. Set with either <em>-c</em> or <em>--conf
 <div class="ulist"><ul>
 <li>
 <p>
-Any Snort 2 ‘string’ which is dependent on a variable will no longer have
-that variable in the Lua string.
+Any Snort 2 ‘string’ which is dependent on a variable will no longer
+   have that variable in the Lua string.
 </p>
 </li>
 <li>
 <p>
 Snort2Lua currently does not handle variables well. First, that means
-variables will not always be parsed correctly.  Second, sometimes a
-variables value will be output in the lua file rather than a variable
-For instance, if Snort2Lua attempted to convert the line
-<em>include $RULE_PATH/example.rule</em>, the output may output
-<em>include /etc/rules/example.rule</em> instead.
+   variables will not always be parsed correctly.  Second, sometimes a
+   variables value will be output in the lua file rather than a variable
+   For instance, if Snort2Lua attempted to convert the line <em>include
+   $RULE_PATH/example.rule</em>, the output may output <em>include
+   /etc/rules/example.rule</em> instead.
 </p>
 </li>
 <li>
 <p>
 When Snort2Lua parses a ‘binding’ configuration file, the rules and
-configuration will automatically be combined into the same file.  Also, the
-new files name will automatically become the old file’s name with a .lua
-extension.  There is currently no way to specify or change that files name.
+   configuration will automatically be combined into the same file.  Also,
+   the new files name will automatically become the old file’s name with a
+   .lua extension.  There is currently no way to specify or change that
+   files name.
 </p>
 </li>
 <li>
 <p>
-If a rule&#8217;s action is a custom ruletype, that rule action will be silently
-converted to the rultype&#8217;s <em>type</em>. No warnings or errors are currently
-emitted. Additionally, the custom ruletypes outputs will be silently
-discarded.
+If a rule&#8217;s action is a custom ruletype, that rule action will be
+   silently converted to the rultype&#8217;s <em>type</em>. No warnings or errors are
+   currently emitted. Additionally, the custom ruletypes outputs will be
+   silently discarded.
 </p>
 </li>
 <li>
 <p>
 If the original configuration contains a binding that points to another
-file and the binding file contains an error, Snort2Lua will output the
-number of rejects for the binding file in addition to the number of
-rejects in the main file.  The two numbers will eventually be combined into
-one output.
+   file and the binding file contains an error, Snort2Lua will output the
+   number of rejects for the binding file in addition to the number of
+   rejects in the main file.  The two numbers will eventually be combined
+   into one output.
 </p>
 </li>
 </ul></div>
 </div>
 <div class="sect2">
 <h3 id="_usage_2">Usage</h3>
-<div class="paragraph"><p>Snort2Lua is included in the Snort 3 distribution. The Snort2Lua source code
-is located in the tools/snort2lua directory. The program is automatically built
-and installed.</p></div>
+<div class="paragraph"><p>Snort2Lua is included in the Snort 3 distribution. The Snort2Lua source
+code is located in the tools/snort2lua directory. The program is
+automatically built and installed.</p></div>
 <div class="paragraph"><p>Translating your configuration</p></div>
 <div class="paragraph"><p>To run Snort2Lua, the only requirement is a file containing Snort 2 syntax.
 Assuming your configuration file is named snort.conf, run the command</p></div>
@@ -20171,37 +20198,39 @@ Assuming your configuration file is named snort.conf, run the command</p></div>
 <div class="content">
 <pre><code>snort2lua –c snort.conf</code></pre>
 </div></div>
-<div class="paragraph"><p>Snort2Lua will output a file named snort.lua. Assuming your snort.conf file is
-a valid Snort 2 configuration file, than the resulting snort.lua file will
-always be a valid Snort 3 configuration file; any errors that occur are
-because Snort 3 currently does not support all of the Snort 2 options.</p></div>
-<div class="paragraph"><p>Every keyword from the Snort configuration can be found in the output file. If
-the option or keyword has changed, then a comment containing both the option or
-keyword’s old name and new name will be present in the output file.</p></div>
+<div class="paragraph"><p>Snort2Lua will output a file named snort.lua. Assuming your snort.conf file
+is a valid Snort 2 configuration file, than the resulting snort.lua file
+will always be a valid Snort 3 configuration file; any errors that occur
+are because Snort 3 currently does not support all of the Snort 2 options.</p></div>
+<div class="paragraph"><p>Every keyword from the Snort configuration can be found in the output file.
+If the option or keyword has changed, then a comment containing both the
+option or keyword’s old name and new name will be present in the output
+file.</p></div>
 <div class="paragraph"><p>Translating a rule file</p></div>
-<div class="paragraph"><p>Snort2Lua can also accommodate translating individual rule files. Assuming the
-Snort 2 rule file is named snort.rules and you want the new rule file to be
-name updated.rules, run the command</p></div>
+<div class="paragraph"><p>Snort2Lua can also accommodate translating individual rule files. Assuming
+the Snort 2 rule file is named snort.rules and you want the new rule file
+to be name updated.rules, run the command</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><code>snort2lua –c snort.rules -r updated.rules</code></pre>
 </div></div>
 <div class="paragraph"><p>Snort2Lua will output a file named updated.rules. That file, updated.rules,
-will always be a valid Snort 3 rule file. Any rule that contains unsupported
-options will be a comment in the output file.</p></div>
+will always be a valid Snort 3 rule file. Any rule that contains
+unsupported options will be a comment in the output file.</p></div>
 <div class="paragraph"><p>Understanding the Output</p></div>
-<div class="paragraph"><p>Although Snort2Lua outputs very little to the console, there are several things
-that occur when Snort2Lua runs.  This is a list of Snort2Lua outputs.</p></div>
-<div class="paragraph"><p><em>The console</em>.   Every line that Snort2Lua is unable to translate from the Snort
-2.X format to the Snort 3 format is considered an error. Upon exiting,
-Snort2Lua will print the number of errors that occurred. Snort2Lua will also
-print the name of the error file.</p></div>
-<div class="paragraph"><p><em>The output file</em>.  As previously mentioned, Snort2Lua will create a Lua file
-with valid Snort 3 syntax.  The default Lua file is named snort.lua.  This
-file is the equivalent of your main Snort 2 configuration file.</p></div>
+<div class="paragraph"><p>Although Snort2Lua outputs very little to the console, there are several
+things that occur when Snort2Lua runs.  This is a list of Snort2Lua
+outputs.</p></div>
+<div class="paragraph"><p><em>The console</em>.   Every line that Snort2Lua is unable to translate from the
+Snort 2.X format to the Snort 3 format is considered an error. Upon
+exiting, Snort2Lua will print the number of errors that occurred. Snort2Lua
+will also print the name of the error file.</p></div>
+<div class="paragraph"><p><em>The output file</em>.  As previously mentioned, Snort2Lua will create a Lua
+file with valid Snort 3 syntax.  The default Lua file is named snort.lua.
+This file is the equivalent of your main Snort 2 configuration file.</p></div>
 <div class="paragraph"><p><em>The rule file</em>.   By default, all rules will be printed to the Lua file.
-However, if a rule file is specified on the command line, any rules found in
-the Snort 2 configuration will be written to the rule file instead</p></div>
+However, if a rule file is specified on the command line, any rules found
+in the Snort 2 configuration will be written to the rule file instead</p></div>
 <div class="paragraph"><p><em>The error file</em>.  By default, the error file is snort.rej. It will only be
 created if errors exist.  Every error referenced on the command line can be
 found in this file.  There are two reasons an error can occur.</p></div>
@@ -20225,10 +20254,11 @@ The Snort 2 configuration file contains preprocessors and rule options
 </p>
 </li>
 </ul></div>
-<div class="paragraph"><p>Additional .lua and .rules files. Every time Snort2Lua parses the include or
-binding keyword, the program will attempt to parse the file referenced by the
-keyword.  Snort2Lua will then create one or two new files.  The new files will
-have a .lua or .rules extension appended to the original filename.</p></div>
+<div class="paragraph"><p>Additional .lua and .rules files. Every time Snort2Lua parses the include
+or binding keyword, the program will attempt to parse the file referenced
+by the keyword.  Snort2Lua will then create one or two new files.  The new
+files will have a .lua or .rules extension appended to the original
+filename.</p></div>
 </div>
 </div>
 </div>
@@ -22431,7 +22461,7 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>-j</strong> &lt;port&gt; to listen for telnet connections
+<strong>-j</strong> &lt;port&gt; to listen for Telnet connections
 </p>
 </li>
 <li>
@@ -22821,7 +22851,7 @@ these libraries see the Getting Started section of the manual.</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-interval <strong>ack.~range</strong>: check if tcp ack value is <em>value | min&lt;&gt;max | &lt;max | &gt;min</em> { 0: }
+interval <strong>ack.~range</strong>: check if TCP ack value is <em>value | min&lt;&gt;max | &lt;max | &gt;min</em> { 0: }
 </p>
 </li>
 <li>
@@ -23056,7 +23086,7 @@ string <strong>appids.~</strong>: comma separated list of application names
 </li>
 <li>
 <p>
-addr <strong>appid.session_log_filter.dst_ip</strong> = 0.0.0.0/32: destination ip address in CIDR format
+addr <strong>appid.session_log_filter.dst_ip</strong> = 0.0.0.0/32: destination IP address in CIDR format
 </p>
 </li>
 <li>
@@ -23071,12 +23101,12 @@ bool <strong>appid.session_log_filter.log_all_sessions</strong> = false: enable 
 </li>
 <li>
 <p>
-string <strong>appid.session_log_filter.protocol</strong>: ip protocol
+string <strong>appid.session_log_filter.protocol</strong>: IP protocol
 </p>
 </li>
 <li>
 <p>
-addr <strong>appid.session_log_filter.src_ip</strong> = 0.0.0.0/32: source ip address in CIDR format
+addr <strong>appid.session_log_filter.src_ip</strong> = 0.0.0.0/32: source IP address in CIDR format
 </p>
 </li>
 <li>
@@ -23826,22 +23856,22 @@ bool <strong>dnp3.check_crc</strong> = false: validate checksums in DNP3 link la
 </li>
 <li>
 <p>
-string <strong>dnp3_func.~</strong>: match dnp3 function code or name
+string <strong>dnp3_func.~</strong>: match DNP3 function code or name
 </p>
 </li>
 <li>
 <p>
-string <strong>dnp3_ind.~</strong>: match given dnp3 indicator flags
+string <strong>dnp3_ind.~</strong>: match given DNP3 indicator flags
 </p>
 </li>
 <li>
 <p>
-int <strong>dnp3_obj.group</strong> = 0: match given dnp3 object header group { 0:255 }
+int <strong>dnp3_obj.group</strong> = 0: match given DNP3 object header group { 0:255 }
 </p>
 </li>
 <li>
 <p>
-int <strong>dnp3_obj.var</strong> = 0: match given dnp3 object header var { 0:255 }
+int <strong>dnp3_obj.var</strong> = 0: match given DNP3 object header var { 0:255 }
 </p>
 </li>
 <li>
@@ -24216,7 +24246,7 @@ bool <strong>ftp_client.bounce</strong> = false: check for bounces
 </li>
 <li>
 <p>
-addr <strong>ftp_client.bounce_to[].address</strong> = 1.0.0.0/32: allowed ip address in CIDR format
+addr <strong>ftp_client.bounce_to[].address</strong> = 1.0.0.0/32: allowed IP address in CIDR format
 </p>
 </li>
 <li>
@@ -24236,12 +24266,12 @@ bool <strong>ftp_client.ignore_telnet_erase_cmds</strong> = false: ignore erase 
 </li>
 <li>
 <p>
-int <strong>ftp_client.max_resp_len</strong> = -1: maximum ftp response accepted by client { -1: }
+int <strong>ftp_client.max_resp_len</strong> = -1: maximum FTP response accepted by client { -1: }
 </p>
 </li>
 <li>
 <p>
-bool <strong>ftp_client.telnet_cmds</strong> = false: detect telnet escape sequences on ftp control channel
+bool <strong>ftp_client.telnet_cmds</strong> = false: detect Telnet escape sequences on FTP control channel
 </p>
 </li>
 <li>
@@ -24306,7 +24336,7 @@ string <strong>ftp_server.encr_cmds</strong>: check the formatting of the given 
 </li>
 <li>
 <p>
-bool <strong>ftp_server.encrypted_traffic</strong> = false: check for encrypted telnet and ftp
+bool <strong>ftp_server.encrypted_traffic</strong> = false: check for encrypted Telnet and FTP
 </p>
 </li>
 <li>
@@ -24326,7 +24356,7 @@ string <strong>ftp_server.ftp_cmds</strong>: specify additional commands support
 </li>
 <li>
 <p>
-bool <strong>ftp_server.ignore_data_chan</strong> = false: do not inspect ftp data channels
+bool <strong>ftp_server.ignore_data_chan</strong> = false: do not inspect FTP data channels
 </p>
 </li>
 <li>
@@ -24346,7 +24376,7 @@ bool <strong>ftp_server.print_cmds</strong> = false: print command configuration
 </li>
 <li>
 <p>
-bool <strong>ftp_server.telnet_cmds</strong> = false: detect telnet escape sequences of ftp control channel
+bool <strong>ftp_server.telnet_cmds</strong> = false: detect Telnet escape sequences of FTP control channel
 </p>
 </li>
 <li>
@@ -24386,7 +24416,7 @@ int <strong>gtp_inspect[].messages[].type</strong> = 0: message type code { 0:25
 </li>
 <li>
 <p>
-int <strong>gtp_inspect[].version</strong> = 2: gtp version { 0:2 }
+int <strong>gtp_inspect[].version</strong> = 2: GTP version { 0:2 }
 </p>
 </li>
 <li>
@@ -24436,7 +24466,7 @@ enum <strong>hosts[].frag_policy</strong>: defragmentation policy { first | linu
 </li>
 <li>
 <p>
-addr <strong>hosts[].ip</strong> = 0.0.0.0/32: hosts address / cidr
+addr <strong>hosts[].ip</strong> = 0.0.0.0/32: hosts address / CIDR
 </p>
 </li>
 <li>
@@ -24451,12 +24481,12 @@ port <strong>hosts[].services[].port</strong>: port number
 </li>
 <li>
 <p>
-enum <strong>hosts[].services[].proto</strong> = tcp: ip protocol { tcp | udp }
+enum <strong>hosts[].services[].proto</strong> = tcp: IP protocol { tcp | udp }
 </p>
 </li>
 <li>
 <p>
-enum <strong>hosts[].tcp_policy</strong>: tcp reassembly policy { first | last | linux | old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | windows | win_2003 | vista | proxy }
+enum <strong>hosts[].tcp_policy</strong>: TCP reassembly policy { first | last | linux | old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | windows | win_2003 | vista | proxy }
 </p>
 </li>
 <li>
@@ -24466,7 +24496,7 @@ enum <strong>host_tracker[].frag_policy</strong>: defragmentation policy { first
 </li>
 <li>
 <p>
-addr <strong>host_tracker[].ip</strong> = 0.0.0.0/32: hosts address / cidr
+addr <strong>host_tracker[].IP</strong> = 0.0.0.0/32: hosts address / cidr
 </p>
 </li>
 <li>
@@ -24481,12 +24511,12 @@ port <strong>host_tracker[].services[].port</strong>: port number
 </li>
 <li>
 <p>
-enum <strong>host_tracker[].services[].proto</strong> = tcp: ip protocol { tcp | udp }
+enum <strong>host_tracker[].services[].proto</strong> = tcp: IP protocol { tcp | udp }
 </p>
 </li>
 <li>
 <p>
-enum <strong>host_tracker[].tcp_policy</strong>: tcp reassembly policy { first | last | linux | old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | windows | win_2003 | vista | proxy }
+enum <strong>host_tracker[].tcp_policy</strong>: TCP reassembly policy { first | last | linux | old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | windows | win_2003 | vista | proxy }
 </p>
 </li>
 <li>
@@ -24881,22 +24911,22 @@ implied <strong>http_version.with_trailer</strong>: parts of this rule examine H
 </li>
 <li>
 <p>
-interval <strong>icmp_id.~range</strong>: check if icmp id is in given range { 0:65535 }
+interval <strong>icmp_id.~range</strong>: check if ICMP ID is in given range { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-interval <strong>icmp_seq.~range</strong>: check if icmp sequence number is in given range { 0:65535 }
+interval <strong>icmp_seq.~range</strong>: check if ICMP sequence number is in given range { 0:65535 }
 </p>
 </li>
 <li>
 <p>
-interval <strong>icode.~range</strong>: check if icmp code is in given range is { 0:255 }
+interval <strong>icode.~range</strong>: check if ICMP code is in given range is { 0:255 }
 </p>
 </li>
 <li>
 <p>
-interval <strong>id.~range</strong>: check if the ip id is in the given range { 0: }
+interval <strong>id.~range</strong>: check if the IP ID is in the given range { 0: }
 </p>
 </li>
 <li>
@@ -24986,7 +25016,7 @@ implied <strong>isdataat.relative</strong>: offset from cursor instead of start 
 </li>
 <li>
 <p>
-interval <strong>itype.~range</strong>: check if icmp type is in given range { 0:255 }
+interval <strong>itype.~range</strong>: check if ICMP type is in given range { 0:255 }
 </p>
 </li>
 <li>
@@ -25111,7 +25141,7 @@ string <strong>modbus_func.~</strong>: function code to match
 </li>
 <li>
 <p>
-int <strong>modbus_unit.~</strong>: modbus unit ID { 0:255 }
+int <strong>modbus_unit.~</strong>: Modbus unit ID { 0:255 }
 </p>
 </li>
 <li>
@@ -25181,7 +25211,7 @@ int <strong>network.max_ip_layers</strong> = 0: the maximum number of IP layers 
 </li>
 <li>
 <p>
-int <strong>network.min_ttl</strong> = 1: alert / normalize packets with lower ttl / hop limit (you must enable rules and / or normalization also) { 1:255 }
+int <strong>network.min_ttl</strong> = 1: alert / normalize packets with lower TTL / hop limit (you must enable rules and / or normalization also) { 1:255 }
 </p>
 </li>
 <li>
@@ -25546,7 +25576,7 @@ int <strong>port_scan.icmp_sweep.scans</strong> = 100: scan attempts { 0: }
 </li>
 <li>
 <p>
-int <strong>port_scan.icmp_window</strong> = 0: detection interval for all icmp scans { 0: }
+int <strong>port_scan.icmp_window</strong> = 0: detection interval for all ICMP scans { 0: }
 </p>
 </li>
 <li>
@@ -25646,7 +25676,7 @@ int <strong>port_scan.ip_sweep.scans</strong> = 100: scan attempts { 0: }
 </li>
 <li>
 <p>
-int <strong>port_scan.ip_window</strong> = 0: detection interval for all ip scans { 0: }
+int <strong>port_scan.ip_window</strong> = 0: detection interval for all IP scans { 0: }
 </p>
 </li>
 <li>
@@ -25746,7 +25776,7 @@ int <strong>port_scan.tcp_sweep.scans</strong> = 100: scan attempts { 0: }
 </li>
 <li>
 <p>
-int <strong>port_scan.tcp_window</strong> = 0: detection interval for all tcp scans { 0: }
+int <strong>port_scan.tcp_window</strong> = 0: detection interval for all TCP scans { 0: }
 </p>
 </li>
 <li>
@@ -25831,7 +25861,7 @@ int <strong>port_scan.udp_sweep.scans</strong> = 100: scan attempts { 0: }
 </li>
 <li>
 <p>
-int <strong>port_scan.udp_window</strong> = 0: detection interval for all udp scans { 0: }
+int <strong>port_scan.udp_window</strong> = 0: detection interval for all UDP scans { 0: }
 </p>
 </li>
 <li>
@@ -26051,12 +26081,12 @@ bool <strong>reg_test.test_daq_retry</strong> = true: test daq packet retry feat
 </li>
 <li>
 <p>
-enum <strong>reject.control</strong>: send icmp unreachable(s) { network|host|port|all }
+enum <strong>reject.control</strong>: send ICMP unreachable(s) { network|host|port|all }
 </p>
 </li>
 <li>
 <p>
-enum <strong>reject.reset</strong>: send tcp reset to one or both ends { source|dest|both }
+enum <strong>reject.reset</strong>: send TCP reset to one or both ends { source|dest|both }
 </p>
 </li>
 <li>
@@ -26071,7 +26101,7 @@ string <strong>replace.~</strong>: byte code to replace with
 </li>
 <li>
 <p>
-string <strong>reputation.blacklist</strong>: blacklist file name with ip lists
+string <strong>reputation.blacklist</strong>: blacklist file name with IP lists
 </p>
 </li>
 <li>
@@ -26081,7 +26111,7 @@ int <strong>reputation.memcap</strong> = 500: maximum total MB of memory allocat
 </li>
 <li>
 <p>
-enum <strong>reputation.nested_ip</strong> = inner: ip to use when there is IP encapsulation { inner|outer|all }
+enum <strong>reputation.nested_ip</strong> = inner: IP to use when there is IP encapsulation { inner|outer|all }
 </p>
 </li>
 <li>
@@ -26096,7 +26126,7 @@ bool <strong>reputation.scan_local</strong> = false: inspect local address defin
 </li>
 <li>
 <p>
-string <strong>reputation.whitelist</strong>: whitelist file name with ip lists
+string <strong>reputation.whitelist</strong>: whitelist file name with IP lists
 </p>
 </li>
 <li>
@@ -26191,12 +26221,12 @@ bool <strong>search_engine.debug_print_rule_groups_uncompiled</strong> = false: 
 </li>
 <li>
 <p>
-bool <strong>search_engine.enable_single_rule_group</strong> = false: put all rules into one group
+bool <strong>search_engine.detect_raw_tcp</strong> = true: detect on TCP payload before reassembly
 </p>
 </li>
 <li>
 <p>
-bool <strong>search_engine.inspect_stream_inserts</strong> = false: inspect reassembled payload - disabling is good for performance, bad for detection
+bool <strong>search_engine.enable_single_rule_group</strong> = false: put all rules into one group
 </p>
 </li>
 <li>
@@ -26231,7 +26261,7 @@ bool <strong>search_engine.split_any_any</strong> = true: evaluate any-any rules
 </li>
 <li>
 <p>
-interval <strong>seq.~range</strong>: check if tcp sequence number is in given range { 0: }
+interval <strong>seq.~range</strong>: check if TCP sequence number is in given range { 0: }
 </p>
 </li>
 <li>
@@ -26361,7 +26391,7 @@ string <strong>sip_method.*method</strong>: sip method
 </li>
 <li>
 <p>
-string <strong>sip.methods</strong> = invite cancel ack  bye register options: list of methods to check in sip messages
+string <strong>sip.methods</strong> = invite cancel ack  bye register options: list of methods to check in SIP messages
 </p>
 </li>
 <li>
@@ -26701,7 +26731,7 @@ string <strong>snort.-i</strong>: &lt;iface&gt;&#8230; list of interfaces
 </li>
 <li>
 <p>
-port <strong>snort.-j</strong>: &lt;port&gt; to listen for telnet connections
+port <strong>snort.-j</strong>: &lt;port&gt; to listen for Telnet connections
 </p>
 </li>
 <li>
@@ -27241,7 +27271,7 @@ bool <strong>stream_file.upload</strong> = false: indicate file transfer directi
 </li>
 <li>
 <p>
-int <strong>stream.footprint</strong> = 0: use zero for production, non-zero for testing at given size (for tcp and user) { 0: }
+int <strong>stream.footprint</strong> = 0: use zero for production, non-zero for testing at given size (for TCP and user) { 0: }
 </p>
 </li>
 <li>
@@ -27301,7 +27331,7 @@ int <strong>stream_ip.min_frag_length</strong> = 0: alert if fragment length is 
 </li>
 <li>
 <p>
-int <strong>stream_ip.min_ttl</strong> = 1: discard fragments with ttl below the minimum { 1:255 }
+int <strong>stream_ip.min_ttl</strong> = 1: discard fragments with TTL below the minimum { 1:255 }
 </p>
 </li>
 <li>
@@ -27371,7 +27401,7 @@ int <strong>stream_tcp.flush_factor</strong> = 0: flush upon seeing a drop in se
 </li>
 <li>
 <p>
-bool <strong>stream_tcp.ignore_any_rules</strong> = false: process tcp content rules w/o ports only if rules with ports are present
+bool <strong>stream_tcp.ignore_any_rules</strong> = false: process TCP content rules w/o ports only if rules with ports are present
 </p>
 </li>
 <li>
@@ -27381,7 +27411,7 @@ int <strong>stream_tcp.max_pdu</strong> = 16384: maximum reassembled PDU size { 
 </li>
 <li>
 <p>
-int <strong>stream_tcp.max_window</strong> = 0: maximum allowed tcp window { 0:1073725440 }
+int <strong>stream_tcp.max_window</strong> = 0: maximum allowed TCP window { 0:1073725440 }
 </p>
 </li>
 <li>
@@ -27451,7 +27481,7 @@ int <strong>stream.udp_cache.pruning_timeout</strong> = 30: minimum inactive tim
 </li>
 <li>
 <p>
-bool <strong>stream_udp.ignore_any_rules</strong> = false: process udp content rules w/o ports only if rules with ports are present
+bool <strong>stream_udp.ignore_any_rules</strong> = false: process UDP content rules w/o ports only if rules with ports are present
 </p>
 </li>
 <li>
@@ -27551,7 +27581,7 @@ enum <strong>tcp_connector.setup</strong>: stream establishment { call | answer 
 </li>
 <li>
 <p>
-int <strong>telnet.ayt_attack_thresh</strong> = -1: alert on this number of consecutive telnet AYT commands { -1: }
+int <strong>telnet.ayt_attack_thresh</strong> = -1: alert on this number of consecutive Telnet AYT commands { -1: }
 </p>
 </li>
 <li>
@@ -27561,7 +27591,7 @@ bool <strong>telnet.check_encrypted</strong> = false: check for end of encryptio
 </li>
 <li>
 <p>
-bool <strong>telnet.encrypted_traffic</strong> = false: check for encrypted telnet and ftp
+bool <strong>telnet.encrypted_traffic</strong> = false: check for encrypted Telnet and FTP
 </p>
 </li>
 <li>
@@ -27571,12 +27601,12 @@ bool <strong>telnet.normalize</strong> = false: eliminate escape sequences
 </li>
 <li>
 <p>
-interval <strong>tos.~range</strong>: check if ip tos is in given range { 0:255 }
+interval <strong>tos.~range</strong>: check if IP TOS is in given range { 0:255 }
 </p>
 </li>
 <li>
 <p>
-interval <strong>ttl.~range</strong>: check if ip ttl is in the given range { 0:255 }
+interval <strong>ttl.~range</strong>: check if IP TTL is in the given range { 0:255 }
 </p>
 </li>
 <li>
@@ -27616,7 +27646,7 @@ interval <strong>urg.~range</strong>: check if tcp urgent offset is in given ran
 </li>
 <li>
 <p>
-interval <strong>window.~range</strong>: check if tcp window size is in given range { 0:65535 }
+interval <strong>window.~range</strong>: check if TCP window size is in given range { 0:65535 }
 </p>
 </li>
 <li>
@@ -28531,12 +28561,12 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>ftp_server.concurrent_sessions</strong>: total concurrent ftp sessions (now)
+<strong>ftp_server.concurrent_sessions</strong>: total concurrent FTP sessions (now)
 </p>
 </li>
 <li>
 <p>
-<strong>ftp_server.max_concurrent_sessions</strong>: maximum concurrent ftp sessions (max)
+<strong>ftp_server.max_concurrent_sessions</strong>: maximum concurrent FTP sessions (max)
 </p>
 </li>
 <li>
@@ -29426,7 +29456,7 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>sip.concurrent_sessions</strong>: total concurrent sip sessions (now)
+<strong>sip.concurrent_sessions</strong>: total concurrent SIP sessions (now)
 </p>
 </li>
 <li>
@@ -29466,7 +29496,7 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>sip.max_concurrent_sessions</strong>: maximum concurrent sip sessions (max)
+<strong>sip.max_concurrent_sessions</strong>: maximum concurrent SIP sessions (max)
 </p>
 </li>
 <li>
@@ -30381,12 +30411,12 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>telnet.concurrent_sessions</strong>: total concurrent telnet sessions (now)
+<strong>telnet.concurrent_sessions</strong>: total concurrent Telnet sessions (now)
 </p>
 </li>
 <li>
 <p>
-<strong>telnet.max_concurrent_sessions</strong>: maximum concurrent telnet sessions (max)
+<strong>telnet.max_concurrent_sessions</strong>: maximum concurrent Telnet sessions (max)
 </p>
 </li>
 <li>
@@ -32371,17 +32401,17 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>126:1</strong> (telnet) consecutive telnet AYT commands beyond threshold
+<strong>126:1</strong> (telnet) consecutive Telnet AYT commands beyond threshold
 </p>
 </li>
 <li>
 <p>
-<strong>126:2</strong> (telnet) telnet traffic encrypted
+<strong>126:2</strong> (telnet) Telnet traffic encrypted
 </p>
 </li>
 <li>
 <p>
-<strong>126:3</strong> (telnet) telnet subnegotiation begin command without subnegotiation end
+<strong>126:3</strong> (telnet) Telnet subnegotiation begin command without subnegotiation end
 </p>
 </li>
 <li>
@@ -33772,17 +33802,17 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
-<strong>dnp3_func</strong> (ips_option): detection option to check dnp3 function code
+<strong>dnp3_func</strong> (ips_option): detection option to check DNP3 function code
 </p>
 </li>
 <li>
 <p>
-<strong>dnp3_ind</strong> (ips_option): detection option to check dnp3 indicator flags
+<strong>dnp3_ind</strong> (ips_option): detection option to check DNP3 indicator flags
 </p>
 </li>
 <li>
 <p>
-<strong>dnp3_obj</strong> (ips_option): detection option to check dnp3 object headers
+<strong>dnp3_obj</strong> (ips_option): detection option to check DNP3 object headers
 </p>
 </li>
 <li>
@@ -33937,7 +33967,7 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
-<strong>gtp_version</strong> (ips_option): rule option to check gtp version
+<strong>gtp_version</strong> (ips_option): rule option to check GTP version
 </p>
 </li>
 <li>
@@ -34187,7 +34217,7 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
-<strong>modbus_unit</strong> (ips_option): rule option to check modbus unit ID
+<strong>modbus_unit</strong> (ips_option): rule option to check Modbus unit ID
 </p>
 </li>
 <li>
@@ -35182,17 +35212,17 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
-<strong>ips_option::dnp3_func</strong>: detection option to check dnp3 function code
+<strong>ips_option::dnp3_func</strong>: detection option to check DNP3 function code
 </p>
 </li>
 <li>
 <p>
-<strong>ips_option::dnp3_ind</strong>: detection option to check dnp3 indicator flags
+<strong>ips_option::dnp3_ind</strong>: detection option to check DNP3 indicator flags
 </p>
 </li>
 <li>
 <p>
-<strong>ips_option::dnp3_obj</strong>: detection option to check dnp3 object headers
+<strong>ips_option::dnp3_obj</strong>: detection option to check DNP3 object headers
 </p>
 </li>
 <li>
@@ -35252,7 +35282,7 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
-<strong>ips_option::gtp_version</strong>: rule option to check gtp version
+<strong>ips_option::gtp_version</strong>: rule option to check GTP version
 </p>
 </li>
 <li>
@@ -35402,7 +35432,7 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
-<strong>ips_option::modbus_unit</strong>: rule option to check modbus unit ID
+<strong>ips_option::modbus_unit</strong>: rule option to check Modbus unit ID
 </p>
 </li>
 <li>
@@ -36543,7 +36573,7 @@ Note that on OpenBSD, divert sockets don&#8217;t work with bridges!
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-12-14 00:01:02 EST
+Last updated 2018-02-10 00:01:09 EST
 </div>
 </div>
 </body>

@@ -1,3 +1,26 @@
+18/02/12 - build 243
+
+-- build: enable gdb debugging info by default
+-- build: fix cppcheck warnings
+-- build: fix static analysis issue
+-- comments: fix 6isco typos
+-- copyright: update year to 2018
+-- detection: use detection limit (alt_dsize)
+-- detection: trace fast pattern searches with 0x20
+-- detection: do not change search_engine.inspect_stream_inserts configuration
+-- doc: update default manuals
+-- flow: support episodic detection
+-- help: upper case proto acronyms etc.
+-- http_inspect: apply request/response depth to packet data
+-- http_inspect: suppress raw packet inspection beyond request/response depth
+-- main: Export AnalyzerCommand and main_broadcast_command()
+-- rules: fix path variable expansion
+-- search_engine: rename inspect_stream_inserts to detect_raw_tcp for clarity
+   default to true for 2.X rule sets
+-- rules: update fast pattern selection to exclude redundant port groups
+   when service groups are present
+-- wizard: count user scans and hits separate from tcp
+
 18/01/29 - build 242
 
 -- build: add STATIC to add_library call of port_scan to build it statically
