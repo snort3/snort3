@@ -169,11 +169,15 @@ void ExpectEventHandler::handle(DataEvent& event, Flow*)
 
     char buff[LOG_BUFF_SIZE];
     safe_snprintf(buff, LOG_BUFF_SIZE, "Expected flows triggered by packet:");
-    for (auto ef : ExpectFlow::get_expect_flows())
+    std::vector<ExpectFlow*>* expected_flows = ExpectFlow::get_expect_flows();
+    if(expected_flows)
     {
-        RegTestFlowData* fd = (RegTestFlowData*)ef->get_flow_data(RegTestFlowData::inspector_id);
-        if (fd)
-           sfsnprintfappend(buff, LOG_BUFF_SIZE, " %u", fd->test_id);
+        for (auto ef : *expected_flows)
+        {
+            RegTestFlowData* fd = (RegTestFlowData*)ef->get_flow_data(RegTestFlowData::inspector_id);
+            if (fd)
+               sfsnprintfappend(buff, LOG_BUFF_SIZE, " %u", fd->test_id);
+        }
     }
     LogMessage("%s\n", buff);
 }

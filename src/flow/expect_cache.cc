@@ -72,10 +72,9 @@ int ExpectFlow::add_flow_data(FlowData* fd)
     return 0;
 }
 
-std::vector<ExpectFlow*>& ExpectFlow::get_expect_flows()
+std::vector<ExpectFlow*>* ExpectFlow::get_expect_flows()
 {
-    assert(packet_expect_flows);
-    return *packet_expect_flows;
+    return packet_expect_flows;
 }
 
 void ExpectFlow::reset_expect_flows()
