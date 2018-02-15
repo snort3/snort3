@@ -86,26 +86,24 @@ TimbuktuServiceDetector::TimbuktuServiceDetector(ServiceDiscovery* sd)
 int TimbuktuServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     ServiceTIMBUKTUData* ss;
-    AppIdSession* asd = args.asd;
     const uint8_t* data = args.data;
-    uint16_t size = args.size;
     uint16_t offset=0;
 
-    if (!size)
+    if (!args.size)
         goto inprocess;
     if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    ss = (ServiceTIMBUKTUData*)data_get(asd);
+    ss = (ServiceTIMBUKTUData*)data_get(args.asd);
     if (!ss)
     {
         ss = (ServiceTIMBUKTUData*)snort_calloc(sizeof(ServiceTIMBUKTUData));
-        data_add(asd, ss, &snort_free);
+        data_add(args.asd, ss, &snort_free);
         ss->state = TIMBUKTU_STATE_BANNER;
     }
 
     offset = 0;
-    while (offset < size)
+    while (offset < args.size)
     {
         switch (ss->state)
         {
@@ -122,13 +120,13 @@ int TimbuktuServiceDetector::validate(AppIdDiscoveryArgs& args)
             break;
         case TIMBUKTU_STATE_MESSAGE_LEN:
             ss->pos++;
-            if (ss->pos >= offsetof(ServiceTIMBUKTUMsg, message))
+            if ( ss->pos >= offsetof(ServiceTIMBUKTUMsg, message) )
             {
                 ss->stringlen = data[offset];
                 ss->state = TIMBUKTU_STATE_MESSAGE_DATA;
                 if (!ss->stringlen)
                 {
-                    if (offset == size-1)
+                    if ( offset == (args.size - 1) )
                         goto success;
                     goto fail;
                 }
@@ -138,9 +136,9 @@ int TimbuktuServiceDetector::validate(AppIdDiscoveryArgs& args)
 
         case TIMBUKTU_STATE_MESSAGE_DATA:
             ss->pos++;
-            if (ss->pos == ss->stringlen)
+            if ( ss->pos == ss->stringlen )
             {
-                if (offset == (size-1))
+                if ( offset == (args.size - 1) )
                     goto success;
                 goto fail;
             }
@@ -152,14 +150,14 @@ int TimbuktuServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
 
 inprocess:
-    service_inprocess(asd, args.pkt, args.dir);
+    service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 
 success:
-    return add_service(asd, args.pkt, args.dir, APP_ID_TIMBUKTU);
+    return add_service(args.asd, args.pkt, args.dir, APP_ID_TIMBUKTU);
 
 fail:
-    fail_service(asd, args.pkt, args.dir);
+    fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 }
 

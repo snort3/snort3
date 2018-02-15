@@ -2,6 +2,8 @@ set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -fno-strict-aliasing" )
 
 set (APPID_INCLUDES
     appid_api.h
+    appid_dns_session.h
+    appid_http_session.h
     application_ids.h
 )
 
@@ -153,6 +155,7 @@ set ( APPID_SOURCES
     appid_detector.h
     appid_discovery.cc
     appid_discovery.h
+    appid_dns_session.h
     appid_http_session.cc
     appid_http_session.h
     appid_peg_counts.h

@@ -98,20 +98,16 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     int i = 0;
     uint32_t port = 0;
-    AppIdSession* pf = nullptr;
-    AppIdSession* asd = args.asd;
     const uint8_t* data = args.data;
-    Packet* pkt = args.pkt;
-    const int dir = args.dir;
     uint16_t size = args.size;
 
-    ServiceRSHELLData* rd = (ServiceRSHELLData*)data_get(asd);
+    ServiceRSHELLData* rd = (ServiceRSHELLData*)data_get(args.asd);
     if (!rd)
     {
         if (!size)
             goto inprocess;
         rd = (ServiceRSHELLData*)snort_calloc(sizeof(ServiceRSHELLData));
-        data_add(asd, rd, &rshell_free_state);
+        data_add(args.asd, rd, &rshell_free_state);
         rd->state = RSHELL_STATE_PORT;
     }
 
@@ -121,7 +117,7 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
     switch (rd->state)
     {
     case RSHELL_STATE_PORT:
-        if (dir != APP_ID_FROM_INITIATOR)
+        if (args.dir != APP_ID_FROM_INITIATOR)
             goto fail;
         if (size > RSHELL_MAX_PORT_PACKET)
             goto bail;
@@ -143,15 +139,15 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
                 sizeof(ServiceRSHELLData));
             tmp_rd->state = RSHELL_STATE_STDERR_CONNECT_SYN;
             tmp_rd->parent = rd;
-            const SfIp* dip = pkt->ptrs.ip_api.get_dst();
-            const SfIp* sip = pkt->ptrs.ip_api.get_src();
-            pf = AppIdSession::create_future_session(pkt, dip, 0, sip, (uint16_t)port,
-                IpProtocol::TCP, app_id, APPID_EARLY_SESSION_FLAG_FW_RULE,
+            const SfIp* dip = args.pkt->ptrs.ip_api.get_dst();
+            const SfIp* sip = args.pkt->ptrs.ip_api.get_src();
+            AppIdSession* pf = AppIdSession::create_future_session(args.pkt, dip, 0, sip,
+                (uint16_t)port, IpProtocol::TCP, app_id, APPID_EARLY_SESSION_FLAG_FW_RULE,
                 handler->get_inspector());
             if (pf)
             {
                 pf->client_disco_state = APPID_DISCO_STATE_FINISHED;
-                data_add(pf, tmp_rd, &rshell_free_state);
+                data_add(*pf, tmp_rd, &rshell_free_state);
                 if (pf->add_flow_data_id((uint16_t)port, this))
                 {
                     pf->service_disco_state = APPID_DISCO_STATE_FINISHED;
@@ -160,7 +156,7 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
                     return APPID_ENOMEM;
                 }
                 pf->scan_flags |= SCAN_HOST_PORT_FLAG;
-                initialize_expected_session(asd, pf,
+                initialize_expected_session(args.asd, *pf,
                     APPID_SESSION_CONTINUE | APPID_SESSION_REXEC_STDERR | APPID_SESSION_NO_TPI |
                     APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE |
                     APPID_SESSION_PORT_SERVICE_DONE, APP_ID_FROM_RESPONDER);
@@ -185,7 +181,7 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
     case RSHELL_STATE_USERNAME:
         if (!size)
             break;
-        if (dir != APP_ID_FROM_INITIATOR)
+        if (args.dir != APP_ID_FROM_INITIATOR)
             goto fail;
         for (i=0; i<size && data[i]; i++)
             if (!isprint(data[i]) || isspace(data[i]))
@@ -200,7 +196,7 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
     case RSHELL_STATE_USERNAME2:
         if (!size)
             break;
-        if (dir != APP_ID_FROM_INITIATOR)
+        if (args.dir != APP_ID_FROM_INITIATOR)
             goto fail;
         for (i=0; i<size && data[i]; i++)
             if (!isprint(data[i]) || isspace(data[i]))
@@ -215,7 +211,7 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
     case RSHELL_STATE_COMMAND:
         if (!size)
             break;
-        if (dir != APP_ID_FROM_INITIATOR)
+        if (args.dir != APP_ID_FROM_INITIATOR)
             goto fail;
         for (i=0; i<size && data[i]; i++)
             if (!isprint(data[i]))
@@ -247,7 +243,7 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
     case RSHELL_STATE_REPLY:
         if (!size)
             goto inprocess;
-        if (dir != APP_ID_FROM_RESPONDER)
+        if (args.dir != APP_ID_FROM_RESPONDER)
             goto fail;
         if (size == 1)
             goto success;
@@ -270,25 +266,25 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
     case RSHELL_STATE_STDERR_CONNECT_SYN_ACK:
         if (rd->parent && rd->parent->state == RSHELL_STATE_SERVER_CONNECT)
             rd->parent->state = RSHELL_STATE_USERNAME;
-        asd->set_service_detected();    // FIXIT-M why is this set here and not when add_service is called?
+        args.asd.set_service_detected();    // FIXIT-M why is this set here and not when add_service is called?
         return APPID_SUCCESS;
     default:
         goto bail;
     }
 
 inprocess:
-    service_inprocess(asd, pkt, dir);
+    service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 
 success:
-    return add_service(asd, pkt, dir, APP_ID_SHELL);
+    return add_service(args.asd, args.pkt, args.dir, APP_ID_SHELL);
 
 bail:
-    incompatible_data(asd, pkt, dir);
+    incompatible_data(args.asd, args.pkt, args.dir);
     return APPID_NOT_COMPATIBLE;
 
 fail:
-    fail_service(asd, pkt, dir);
+    fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 }
 

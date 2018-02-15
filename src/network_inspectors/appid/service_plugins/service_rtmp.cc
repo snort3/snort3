@@ -616,7 +616,7 @@ int RtmpServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
 
     /* Give up if it's taking us too long to figure out this thing. */
-    if (args.asd->session_packet_count >= args.asd->config->mod_config->rtmp_max_packets)
+    if (args.asd.session_packet_count >= args.asd.config->mod_config->rtmp_max_packets)
     {
         goto fail;
     }
@@ -633,35 +633,29 @@ fail:
     return APPID_NOMATCH;
 
 success:
-    if (ss->swfUrl != nullptr)
+    AppIdHttpSession* hsession = args.asd.get_http_session();
+    if ( ss->swfUrl )
     {
-        if (!args.asd->hsession)
-            args.asd->hsession = new AppIdHttpSession(args.asd);
-
-        if (args.asd->hsession->url == nullptr)
+        if ( !hsession->get_url() )
         {
-            args.asd->hsession->url = ss->swfUrl;
-            args.asd->scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
+            hsession->set_url(ss->swfUrl);
+            args.asd.scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
         }
-        else
-            snort_free(ss->swfUrl);
 
+        snort_free(ss->swfUrl);
         ss->swfUrl = nullptr;
     }
 
-    if (ss->pageUrl != nullptr)
+    if ( ss->pageUrl )
     {
-        if (!args.asd->hsession)
-            args.asd->hsession = new AppIdHttpSession(args.asd);
+        if ( !hsession->get_referer() &&
+             !args.asd.config->mod_config->referred_appId_disabled )
+            hsession->set_referer(ss->pageUrl);
 
-        if (!args.asd->config->mod_config->referred_appId_disabled &&
-            (args.asd->hsession->referer == nullptr))
-            args.asd->hsession->referer = ss->pageUrl;
-        else
-            snort_free(ss->pageUrl);
-
+        snort_free(ss->pageUrl);
         ss->pageUrl = nullptr;
     }
+
     return add_service(args.asd, args.pkt, args.dir, APP_ID_RTMP);
 }
 

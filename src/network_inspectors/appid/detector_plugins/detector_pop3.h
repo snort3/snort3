@@ -35,7 +35,7 @@ public:
 
     void do_custom_init() override;
     int validate(AppIdDiscoveryArgs&) override;
-    POP3DetectorData* get_common_data(AppIdSession*);
+    POP3DetectorData* get_common_data(AppIdSession&);
 
 private:
     SearchTool* cmd_matcher = nullptr;

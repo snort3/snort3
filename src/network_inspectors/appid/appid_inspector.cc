@@ -56,7 +56,7 @@ static void openssl_cleanup()
     CRYPTO_cleanup_all_ex_data();
 }
 
-static void add_appid_to_packet_trace(Flow* flow)
+static void add_appid_to_packet_trace(Flow& flow)
 {
     AppIdSession* session = appid_api.get_appid_session(flow);
     if (session)
@@ -97,7 +97,7 @@ bool AppIdInspector::configure(SnortConfig*)
 {
     assert(!active_config);
 
-    active_config = new AppIdConfig( ( AppIdModuleConfig* )config);
+    active_config = new AppIdConfig((AppIdModuleConfig*)config);
 
     DataBus::subscribe(HTTP_REQUEST_HEADER_EVENT_KEY, new HttpEventHandler(
         HttpEventHandler::REQUEST_EVENT));
@@ -113,7 +113,6 @@ bool AppIdInspector::configure(SnortConfig*)
 
     // FIXIT-M some of this stuff may be needed in some fashion...
 #ifdef REMOVED_WHILE_NOT_IN_USE
-    _dpd.registerGeAppId(getOpenAppId);
     _dpd.registerSslAppIdLookup(sslAppGroupIdLookup);
 #endif
 }
@@ -176,7 +175,7 @@ void AppIdInspector::eval(Packet* p)
     {
         AppIdDiscovery::do_application_discovery(p, *this);
         if (PacketTracer::get_enable())
-            add_appid_to_packet_trace(p->flow);
+            add_appid_to_packet_trace(*(p->flow));
     }
     else
         AppIdPegCounts::inc_disco_peg(AppIdPegCounts::DiscoveryPegs::IGNORED_PACKETS);
@@ -313,11 +312,4 @@ int sslAppGroupIdLookup(void*, const char*, const char*, AppId*, AppId*, AppId*)
 #endif
 
     return 0;
-}
-
-AppId getOpenAppId(Flow* flow)
-{
-    assert(flow);
-    AppIdSession* asd = appid_api.get_appid_session(flow);
-    return asd->payload.get_id();
 }

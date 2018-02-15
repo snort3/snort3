@@ -109,10 +109,9 @@ int FlapServiceDetector::validate(AppIdDiscoveryArgs& args)
     ServiceFLAPData* sf;
     const uint8_t* data = args.data;
     const FLAPHeader* hdr = (const FLAPHeader*)args.data;
+    uint16_t size = args.size;
     const FLAPFNAC* ff;
     const FLAPTLV* tlv;
-    AppIdSession* asd = args.asd;
-    uint16_t size = args.size;
     uint16_t len;
 
     if (!size)
@@ -120,11 +119,11 @@ int FlapServiceDetector::validate(AppIdDiscoveryArgs& args)
     if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    sf = (ServiceFLAPData*)data_get(asd);
+    sf = (ServiceFLAPData*)data_get(args.asd);
     if (!sf)
     {
         sf = (ServiceFLAPData*)snort_calloc(sizeof(ServiceFLAPData));
-        data_add(asd, sf, &snort_free);
+        data_add(args.asd, sf, &snort_free);
         sf->state = FLAP_STATE_ACK;
     }
 
@@ -199,14 +198,14 @@ int FlapServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
 
 fail:
-    fail_service(asd, args.pkt, args.dir);
+    fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 
 success:
-    return add_service(asd, args.pkt, args.dir, APP_ID_AOL_INSTANT_MESSENGER);
+    return add_service(args.asd, args.pkt, args.dir, APP_ID_AOL_INSTANT_MESSENGER);
 
 inprocess:
-    service_inprocess(asd, args.pkt, args.dir);
+    service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 }
 

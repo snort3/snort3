@@ -35,14 +35,14 @@ public:
     SmtpClientDetector(ClientDiscovery*);
 
     int validate(AppIdDiscoveryArgs&) override;
-    SMTPDetectorData* get_common_data(AppIdSession*);
+    SMTPDetectorData* get_common_data(AppIdSession&);
 
 private:
     int extract_version_and_add_client_app(AppId, const int prefix_len,
         const uint8_t* product, const uint8_t* product_end, ClientSMTPData* const,
-        AppIdSession*, AppId);
+        AppIdSession&, AppId);
     int identify_client_version(ClientSMTPData* const, const uint8_t* product,
-        const uint8_t* data_end, AppIdSession*, Packet*);
+        const uint8_t* data_end, AppIdSession&, Packet*);
 };
 
 class SmtpServiceDetector : public ServiceDetector

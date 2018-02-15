@@ -4,6 +4,8 @@ x_includedir = $(pkgincludedir)/network_inspectors/appid
 
 x_include_HEADERS = \
 appid_api.h \
+appid_dns_session.h \
+appid_http_session.h \
 application_ids.h
 
 AM_CPPFLAGS+=-I$(top_srcdir)/src/network_inspectors/appid -fno-strict-aliasing
@@ -148,6 +150,7 @@ appid_detector.cc \
 appid_detector.h \
 appid_discovery.cc \
 appid_discovery.h \
+appid_dns_session.h \
 appid_http_session.cc \
 appid_http_session.h \
 appid_peg_counts.h \

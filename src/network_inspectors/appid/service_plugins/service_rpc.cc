@@ -255,7 +255,7 @@ RpcServiceDetector::~RpcServiceDetector()
 
 int RpcServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
-    if (args.asd->protocol == IpProtocol::UDP)
+    if (args.asd.protocol == IpProtocol::UDP)
         return rpc_udp_validate(args);
     else
         return rpc_tcp_validate(args);
@@ -274,8 +274,7 @@ static const RPCProgram* FindRPCProgram(uint32_t program)
 }
 
 int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, int dir,
-    AppIdSession* asd,
-    Packet* pkt, ServiceRPCData* rd, const char** pname, uint32_t* program)
+    AppIdSession& asd, Packet* pkt, ServiceRPCData* rd, const char** pname, uint32_t* program)
 {
     const ServiceRPCCall* call = nullptr;
     const ServiceRPCReply* reply = nullptr;
@@ -291,7 +290,7 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, int 
 
     end = data + size;
 
-    if (asd->protocol == IpProtocol::UDP)
+    if (asd.protocol == IpProtocol::UDP)
     {
         if (!rd->once)
         {
@@ -303,12 +302,12 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, int 
 
             if (ntohl(rpc->type) == RPC_TYPE_REPLY)
             {
-                asd->set_session_flags(APPID_SESSION_UDP_REVERSED);
+                asd.set_session_flags(APPID_SESSION_UDP_REVERSED);
                 rd->state = RPC_STATE_REPLY;
                 dir = APP_ID_FROM_RESPONDER;
             }
         }
-        else if (asd->get_session_flags(APPID_SESSION_UDP_REVERSED))
+        else if (asd.get_session_flags(APPID_SESSION_UDP_REVERSED))
         {
             dir = (dir == APP_ID_FROM_RESPONDER) ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
         }
@@ -413,7 +412,7 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, int 
                         {
                             pf->add_flow_data_id((uint16_t)tmp, this);
                             pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
-                            pf->set_session_flags(asd->get_session_flags(
+                            pf->set_session_flags(asd.get_session_flags(
                                 APPID_SESSION_RESPONDER_MONITORED |
                                 APPID_SESSION_INITIATOR_MONITORED |
                                 APPID_SESSION_SPECIAL_MONITORED |
@@ -460,7 +459,6 @@ int RpcServiceDetector::rpc_udp_validate(AppIdDiscoveryArgs& args)
     uint32_t program = 0;
     const char* pname = nullptr;
     int rval;
-    AppIdSession* asd = args.asd;
     const uint8_t* data = args.data;
     Packet* pkt = args.pkt;
     const int dir = args.dir;
@@ -472,37 +470,37 @@ int RpcServiceDetector::rpc_udp_validate(AppIdDiscoveryArgs& args)
         goto done;
     }
 
-    rd = (ServiceRPCData*)data_get(asd);
+    rd = (ServiceRPCData*)data_get(args.asd);
     if (!rd)
     {
         rd = (ServiceRPCData*)snort_calloc(sizeof(ServiceRPCData));
-        data_add(asd, rd, &snort_free);
+        data_add(args.asd, rd, &snort_free);
         rd->state = (dir == APP_ID_FROM_INITIATOR) ? RPC_STATE_CALL : RPC_STATE_REPLY;
         rd->xid = 0xFFFFFFFF;
     }
 
 #ifdef APPID_DEBUG_RPC
     fprintf(SF_DEBUG_FILE, "Begin %u -> %u %u %d state %d\n", pkt->src_port, pkt->dst_port,
-        asd->proto, dir, rd->state);
+        args.asd.proto, dir, rd->state);
 #endif
 
-    rval = validate_packet(data, size, dir, asd, pkt, rd, &pname, &program);
+    rval = validate_packet(data, size, dir, args.asd, pkt, rd, &pname, &program);
 
 #ifdef APPID_DEBUG_RPC
     fprintf(SF_DEBUG_FILE, "End %u -> %u %u %d state %d rval %d\n", pkt->src_port, pkt->dst_port,
-        asd->proto, dir, rd->state, rval);
+        args.asd.proto, dir, rd->state, rval);
 #endif
 
 done:
     switch (rval)
     {
     case APPID_INPROCESS:
-        if (!asd->is_service_detected())
-            service_inprocess(asd, pkt, dir);
+        if (!args.asd.is_service_detected())
+            service_inprocess(args.asd, pkt, dir);
         return APPID_INPROCESS;
 
     case APPID_SUCCESS:
-        if (!asd->is_service_detected())
+        if (!args.asd.is_service_detected())
         {
             if (pname && *pname)
             {
@@ -520,25 +518,25 @@ done:
             else
                 subtype = nullptr;
 
-            add_service(asd, pkt, dir, APP_ID_SUN_RPC, nullptr, nullptr, subtype);
+            add_service(args.asd, pkt, dir, APP_ID_SUN_RPC, nullptr, nullptr, subtype);
         }
-        asd->set_session_flags(APPID_SESSION_CONTINUE);
+        args.asd.set_session_flags(APPID_SESSION_CONTINUE);
         return APPID_SUCCESS;
 
     case APPID_NOT_COMPATIBLE:
-        if (!asd->is_service_detected())
+        if (!args.asd.is_service_detected())
         {
-            incompatible_data(asd, pkt, dir);
+            incompatible_data(args.asd, pkt, dir);
         }
-        asd->clear_session_flags(APPID_SESSION_CONTINUE);
+        args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
         return APPID_NOT_COMPATIBLE;
 
     case APPID_NOMATCH:
-        if (!asd->is_service_detected())
+        if (!args.asd.is_service_detected())
         {
-            fail_service(asd, pkt, dir);
+            fail_service(args.asd, pkt, dir);
         }
-        asd->clear_session_flags(APPID_SESSION_CONTINUE);
+        args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
         return APPID_NOMATCH;
     default:
         return rval;
@@ -561,8 +559,6 @@ int RpcServiceDetector::rpc_tcp_validate(AppIdDiscoveryArgs& args)
     AppIdServiceSubtype* subtype;
     uint32_t program = 0;
     const char* pname = nullptr;
-
-    AppIdSession* asd = args.asd;
     const uint8_t* data = args.data;
     Packet* pkt = args.pkt;
     const int dir = args.dir;
@@ -571,11 +567,11 @@ int RpcServiceDetector::rpc_tcp_validate(AppIdDiscoveryArgs& args)
     if (!size)
         goto inprocess;
 
-    rd = (ServiceRPCData*)data_get(asd);
+    rd = (ServiceRPCData*)data_get(args.asd);
     if (!rd)
     {
         rd = (ServiceRPCData*)snort_calloc(sizeof(ServiceRPCData));
-        data_add(asd, rd, &snort_free);
+        data_add(args.asd, rd, &snort_free);
         rd->state = RPC_STATE_CALL;
         for (ret=0; ret<APP_ID_APPID_SESSION_DIRECTION_MAX; ret++)
         {
@@ -734,15 +730,15 @@ int RpcServiceDetector::rpc_tcp_validate(AppIdDiscoveryArgs& args)
                         {
 #ifdef APPID_DEBUG_RPC
                             fprintf(SF_DEBUG_FILE, "V Begin %u -> %u %u %d state %d\n",
-                                pkt->src_port, pkt->dst_port, asd->proto, dir, rd->state);
+                                pkt->src_port, pkt->dst_port, args.asd.proto, dir, rd->state);
 #endif
 
-                            ret = validate_packet(rd->tcpdata[dir], rd->tcppos[dir], dir, asd,
+                            ret = validate_packet(rd->tcpdata[dir], rd->tcppos[dir], dir, args.asd,
                                 pkt, rd, &pname, &program);
 
 #ifdef APPID_DEBUG_RPC
                             fprintf(SF_DEBUG_FILE, "V End %u -> %u %u %d state %d rval %d\n",
-                                pkt->src_port, pkt->dst_port, asd->proto, dir, rd->state, ret);
+                                pkt->src_port, pkt->dst_port, args.asd.proto, dir, rd->state, ret);
 #endif
 
                             if (retval == -1)
@@ -813,15 +809,15 @@ int RpcServiceDetector::rpc_tcp_validate(AppIdDiscoveryArgs& args)
                 {
 #ifdef APPID_DEBUG_RPC
                     fprintf(SF_DEBUG_FILE, "P Begin %u -> %u %u %d state %d\n", pkt->src_port,
-                        pkt->dst_port, asd->proto, dir, rd->state);
+                        pkt->dst_port, args.asd.proto, dir, rd->state);
 #endif
 
-                    ret = validate_packet(rd->tcpdata[dir], rd->tcppos[dir], dir, asd, pkt,
+                    ret = validate_packet(rd->tcpdata[dir], rd->tcppos[dir], dir, args.asd, pkt,
                         rd, &pname, &program);
 
 #ifdef APPID_DEBUG_RPC
                     fprintf(SF_DEBUG_FILE, "P End %u -> %u %u %d state %d rval %d\n",
-                        pkt->src_port, pkt->dst_port, asd->proto, dir, rd->state, ret);
+                        pkt->src_port, pkt->dst_port, args.asd.proto, dir, rd->state, ret);
 #endif
 
                     if (retval == -1)
@@ -839,7 +835,7 @@ int RpcServiceDetector::rpc_tcp_validate(AppIdDiscoveryArgs& args)
                 goto fail;
             else
             {
-                asd->clear_session_flags(APPID_SESSION_CONTINUE);
+                args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
                 goto done;
             }
         }
@@ -861,12 +857,12 @@ done:
     {
     case APPID_INPROCESS:
 inprocess:
-        if (!asd->is_service_detected())
-            service_inprocess(asd, pkt, dir);
+        if (!args.asd.is_service_detected())
+            service_inprocess(args.asd, pkt, dir);
         return APPID_INPROCESS;
 
     case APPID_SUCCESS:
-        if (!asd->is_service_detected())
+        if (!args.asd.is_service_detected())
         {
             if (pname && *pname)
             {
@@ -883,29 +879,29 @@ inprocess:
             }
             else
                 subtype = nullptr;
-            add_service(asd, pkt, dir, APP_ID_SUN_RPC, nullptr, nullptr, subtype);
+            add_service(args.asd, pkt, dir, APP_ID_SUN_RPC, nullptr, nullptr, subtype);
         }
-        asd->set_session_flags(APPID_SESSION_CONTINUE);
+        args.asd.set_session_flags(APPID_SESSION_CONTINUE);
         return APPID_SUCCESS;
 
     case APPID_NOT_COMPATIBLE:
-        if (!asd->is_service_detected())
-            incompatible_data(asd, pkt, dir);
-        asd->clear_session_flags(APPID_SESSION_CONTINUE);
+        if (!args.asd.is_service_detected())
+            incompatible_data(args.asd, pkt, dir);
+        args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
         return APPID_NOT_COMPATIBLE;
 
     case APPID_NOMATCH:
 fail:
-        if (!asd->is_service_detected())
-            fail_service(asd, pkt, dir);
-        asd->clear_session_flags(APPID_SESSION_CONTINUE);
+        if (!args.asd.is_service_detected())
+            fail_service(args.asd, pkt, dir);
+        args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
         return APPID_NOMATCH;
     default:
         return retval;
     }
 
 bail:
-    asd->clear_session_flags(APPID_SESSION_CONTINUE);
+    args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
     rd->tcpstate[APP_ID_FROM_INITIATOR] = RPC_TCP_STATE_DONE;
     rd->tcpstate[APP_ID_FROM_RESPONDER] = RPC_TCP_STATE_DONE;
     if (dir == APP_ID_FROM_INITIATOR)

@@ -58,7 +58,6 @@ private:
 };
 
 int sslAppGroupIdLookup(void*, const char*, const char*, AppId*, AppId*, AppId*);
-AppId getOpenAppId(Flow*);
 
 #endif
 

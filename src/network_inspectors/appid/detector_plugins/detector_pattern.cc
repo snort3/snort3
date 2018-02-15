@@ -471,7 +471,7 @@ int PatternServiceDetector::validate(AppIdDiscoveryArgs& args)
         return APPID_INPROCESS;
     }
 
-    if (args.asd->protocol == IpProtocol::UDP)
+    if (args.asd.protocol == IpProtocol::UDP)
     {
         patternTree = udpPortPatternTree[args.pkt->ptrs.sp];
         if (!patternTree)
@@ -543,7 +543,7 @@ int PatternClientDetector::validate(AppIdDiscoveryArgs& args)
     if (!args.size || args.dir == APP_ID_FROM_RESPONDER)
         return APPID_INPROCESS;
 
-    SearchTool* patternTree = (args.asd->protocol == IpProtocol::UDP) ?
+    SearchTool* patternTree = (args.asd.protocol == IpProtocol::UDP) ?
         udp_pattern_matcher : tcp_pattern_matcher;
     AppId id = csd_pattern_tree_search(args.data, args.size, patternTree);
     if (!id)

@@ -68,37 +68,34 @@ RloginServiceDetector::RloginServiceDetector(ServiceDiscovery* sd)
 int RloginServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     ServiceRLOGINData* rd;
-    AppIdSession* asd = args.asd;
-    Packet* pkt = args.pkt;
     const uint8_t* data = args.data;
-    uint16_t size = args.size;
 
-    if (!size)
+    if (!args.size)
         goto inprocess;
     if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    rd = (ServiceRLOGINData*)data_get(asd);
+    rd = (ServiceRLOGINData*)data_get(args.asd);
     if (!rd)
     {
         rd = (ServiceRLOGINData*)snort_calloc(sizeof(ServiceRLOGINData));
-        data_add(asd, rd, &snort_free);
+        data_add(args.asd, rd, &snort_free);
         rd->state = RLOGIN_STATE_HANDSHAKE;
     }
 
     switch (rd->state)
     {
     case RLOGIN_STATE_HANDSHAKE:
-        if (size != 1)
+        if (args.size != 1)
             goto fail;
         if (*data)
             goto fail;
         rd->state = RLOGIN_STATE_PASSWORD;
         break;
     case RLOGIN_STATE_PASSWORD:
-        if (pkt->ptrs.tcph->are_flags_set(TH_URG) && size >= pkt->ptrs.tcph->urp())
+        if (args.pkt->ptrs.tcph->are_flags_set(TH_URG) && args.size >= args.pkt->ptrs.tcph->urp())
         {
-            if (size != 1)
+            if (args.size != 1)
                 goto fail;
             if (*data != 0x80)
                 goto fail;
@@ -106,7 +103,7 @@ int RloginServiceDetector::validate(AppIdDiscoveryArgs& args)
         }
         else
         {
-            if (size != sizeof(RLOGIN_PASSWORD)-1)
+            if (args.size != sizeof(RLOGIN_PASSWORD)-1)
                 goto fail;
             if (strncmp((const char*)data, RLOGIN_PASSWORD, sizeof(RLOGIN_PASSWORD)-1))
                 goto fail;
@@ -114,7 +111,7 @@ int RloginServiceDetector::validate(AppIdDiscoveryArgs& args)
         }
         break;
     case RLOGIN_STATE_CRLF:
-        if (size != 2)
+        if (args.size != 2)
             goto fail;
         if (*data != 0x0A || *(data+1) != 0x0D)
             goto fail;
@@ -128,14 +125,14 @@ int RloginServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
 
 inprocess:
-    service_inprocess(asd, pkt, args.dir);
+    service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 
 success:
-    return add_service(asd, pkt, args.dir, APP_ID_RLOGIN);
+    return add_service(args.asd, args.pkt, args.dir, APP_ID_RLOGIN);
 
 fail:
-    fail_service(asd, pkt, args.dir);
+    fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 }
 

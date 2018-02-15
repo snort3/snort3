@@ -73,21 +73,19 @@ int MySqlServiceDetector::validate(AppIdDiscoveryArgs& args)
     uint32_t len;
     const uint8_t* end;
     const uint8_t* p = nullptr;
-    AppIdSession* asd = args.asd;
-    uint16_t size = args.size;
 
-    if (!size)
+    if (!args.size)
         goto inprocess;
     if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
-    if (size < sizeof(ServiceMYSQLHdr))
+    if (args.size < sizeof(ServiceMYSQLHdr))
         goto fail;
 
     len = hdr->l.p.len[0];
     len |= hdr->l.p.len[1] << 8;
     len |= hdr->l.p.len[2] << 16;
     len += 4;
-    if (len > size)
+    if (len > args.size)
         goto fail;
     if (hdr->l.p.packet)
         goto fail;
@@ -117,14 +115,14 @@ int MySqlServiceDetector::validate(AppIdDiscoveryArgs& args)
     data += 6;
     if (data >= end)
         goto fail;
-    return add_service(asd, args.pkt, args.dir, APP_ID_MYSQL, nullptr, (const char*)p, nullptr);
+    return add_service(args.asd, args.pkt, args.dir, APP_ID_MYSQL, nullptr, (const char*)p, nullptr);
 
 inprocess:
-    service_inprocess(asd, args.pkt, args.dir);
+    service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 
 fail:
-    fail_service(asd, args.pkt, args.dir);
+    fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 }
 

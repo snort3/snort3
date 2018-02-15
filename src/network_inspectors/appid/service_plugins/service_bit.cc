@@ -100,26 +100,24 @@ BitServiceDetector::BitServiceDetector(ServiceDiscovery* sd)
 int BitServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     ServiceBITData* ss;
-    AppIdSession* asd = args.asd;
     const uint8_t* data = args.data;
-    uint16_t size = args.size;
     uint16_t offset;
 
-    if (!size)
+    if (!args.size)
         goto inprocess;
     if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    ss = (ServiceBITData*)data_get(asd);
+    ss = (ServiceBITData*)data_get(args.asd);
     if (!ss)
     {
         ss = (ServiceBITData*)snort_calloc(sizeof(ServiceBITData));
-        data_add(asd, ss, &snort_free);
+        data_add(args.asd, ss, &snort_free);
         ss->state = BIT_STATE_BANNER;
     }
 
     offset = 0;
-    while (offset < size)
+    while (offset < args.size)
     {
         switch (ss->state)
         {
@@ -148,7 +146,7 @@ int BitServiceDetector::validate(AppIdDiscoveryArgs& args)
                 ss->state = BIT_STATE_MESSAGE_DATA;
                 if (!ss->stringlen)
                 {
-                    if (offset == size-1)
+                    if (offset == args.size-1)
                         goto success;
                     goto fail;
                 }
@@ -168,14 +166,14 @@ int BitServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
 
 inprocess:
-    service_inprocess(asd, args.pkt, args.dir);
+    service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 
 success:
-    return add_service(asd, args.pkt, args.dir, APP_ID_BITTORRENT);
+    return add_service(args.asd, args.pkt, args.dir, APP_ID_BITTORRENT);
 
 fail:
-    fail_service(asd, args.pkt, args.dir);
+    fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 }
 

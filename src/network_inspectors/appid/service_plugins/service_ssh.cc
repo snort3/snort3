@@ -155,8 +155,7 @@ SshServiceDetector::SshServiceDetector(ServiceDiscovery* sd)
 }
 
 
-static int ssh_validate_pubkey(const uint8_t* data, uint16_t size,
-    ServiceSSHData* ss)
+static int ssh_validate_pubkey(const uint8_t* data, uint16_t size, ServiceSSHData* ss)
 {
     uint16_t offset = 0;
     const ServiceSSHMsg* skx;
@@ -217,8 +216,7 @@ static int ssh_validate_pubkey(const uint8_t* data, uint16_t size,
     return APPID_INPROCESS;
 }
 
-static int ssh_validate_keyx(const uint8_t* data, uint16_t size,
-    ServiceSSHData* ss)
+static int ssh_validate_keyx(const uint8_t* data, uint16_t size, ServiceSSHData* ss)
 {
     uint16_t offset = 0;
     const ServiceSSHMsg* skx;
@@ -371,18 +369,17 @@ int SshServiceDetector::validate(AppIdDiscoveryArgs& args)
     const char* end;
     unsigned len;
     int client_major;
-    AppIdSession* asd = args.asd;
     const uint8_t* data = args.data;
     uint16_t size = args.size;
 
     if (!size)
         goto inprocess;
 
-    ss = (ServiceSSHData*)data_get(asd);
+    ss = (ServiceSSHData*)data_get(args.asd);
     if (!ss)
     {
         ss = (ServiceSSHData*)snort_calloc(sizeof(ServiceSSHData));
-        data_add(asd, ss, &ssh_free_state);
+        data_add(args.asd, ss, &ssh_free_state);
         ss->state = SSH_STATE_BANNER;
         ss->hstate = SSH_HEADER_BEGIN;
         ss->oldhstate = OLD_SSH_HEADER_BEGIN;
@@ -536,19 +533,19 @@ done:
     {
     case APPID_INPROCESS:
 inprocess:
-        service_inprocess(asd, args.pkt, args.dir);
+        service_inprocess(args.asd, args.pkt, args.dir);
         return APPID_INPROCESS;
 
     case APPID_SUCCESS:
-        return add_service(asd, args.pkt, args.dir, APP_ID_SSH, ss->vendor, ss->version, nullptr);
+        return add_service(args.asd, args.pkt, args.dir, APP_ID_SSH, ss->vendor, ss->version, nullptr);
 
     case APPID_NOMATCH:
 fail:
-        fail_service(asd, args.pkt, args.dir);
+        fail_service(args.asd, args.pkt, args.dir);
         return APPID_NOMATCH;
 
 not_compatible:
-        incompatible_data(asd, args.pkt, args.dir);
+        incompatible_data(args.asd, args.pkt, args.dir);
         return APPID_NOT_COMPATIBLE;
 
     default:

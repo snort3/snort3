@@ -53,44 +53,45 @@ int AppIdDetector::initialize()
     return APPID_SUCCESS;
 }
 
-void* AppIdDetector::data_get(AppIdSession* asd)
+void* AppIdDetector::data_get(AppIdSession& asd)
 {
-    return asd->get_flow_data(flow_data_index);
+    return asd.get_flow_data(flow_data_index);
 }
 
-int AppIdDetector::data_add(AppIdSession* asd, void* data, AppIdFreeFCN fcn)
+int AppIdDetector::data_add(AppIdSession& asd, void* data, AppIdFreeFCN fcn)
 {
-    return asd->add_flow_data(data, flow_data_index, fcn);
+    return asd.add_flow_data(data, flow_data_index, fcn);
 }
 
-void AppIdDetector::add_info(AppIdSession* asd, const char* info)
+void AppIdDetector::add_info(AppIdSession& asd, const char* info)
 {
-    if (asd->hsession && !asd->hsession->url)
-        asd->hsession->url = snort_strdup(info);
+    AppIdHttpSession* hsession = asd.get_http_session();
+
+    if ( !hsession->get_url() )
+        hsession->set_url(info);
 }
 
-void AppIdDetector::add_user(AppIdSession* asd, const char* username, AppId appId, bool success)
+void AppIdDetector::add_user(AppIdSession& asd, const char* username, AppId appId, bool success)
 {
-    asd->client.update_user( appId, username);
+    asd.client.update_user( appId, username);
     if ( success )
-        asd->set_session_flags(APPID_SESSION_LOGIN_SUCCEEDED);
+        asd.set_session_flags(APPID_SESSION_LOGIN_SUCCEEDED);
     else
-        asd->clear_session_flags(APPID_SESSION_LOGIN_SUCCEEDED);
+        asd.clear_session_flags(APPID_SESSION_LOGIN_SUCCEEDED);
 
 }
 
-void AppIdDetector::add_payload(AppIdSession* asd, AppId payload_id)
+void AppIdDetector::add_payload(AppIdSession& asd, AppId payload_id)
 {
-    asd->payload.set_id(payload_id);
+    asd.payload.set_id(payload_id);
 }
 
-void AppIdDetector::add_app(AppIdSession* asd, AppId service_id, AppId client_id, const char* version)
+void AppIdDetector::add_app(AppIdSession& asd, AppId service_id, AppId client_id, const char* version)
 {
-    if (version)
-        asd->client.set_version(version);
+    if ( version )
+        asd.client.set_version(version);
 
-    asd->set_client_detected();
-    asd->client_inferred_service_id = service_id;
-    asd->client.set_id(client_id);
+    asd.set_client_detected();
+    asd.client_inferred_service_id = service_id;
+    asd.client.set_id(client_id);
 }
-

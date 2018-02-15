@@ -22,7 +22,11 @@
 #ifndef THIRDPARTY_APPID_TYPES_H
 #define THIRDPARTY_APPID_TYPES_H
 
+#define BUILD_NAVL_SUPPORT 1
+
 #include <cstdint>
+
+#include "appid_http_session.h"
 
 #define TP_SESSION_FLAG_DPI        0x00000001
 #define TP_SESSION_FLAG_MUTABLE    0x00000002
@@ -50,12 +54,6 @@ enum TPSessionAttr
     TP_ATTR_COPY_RESPONSE_CONTENT   = (1 << 1),
     TP_ATTR_COPY_RESPONSE_LOCATION  = (1 << 2),
     TP_ATTR_COPY_RESPONSE_BODY      = (1 << 3),
-};
-
-struct XffFieldValue
-{
-    char* field;
-    char* value;
 };
 
 struct ThirdPartyAppIDAttributeData

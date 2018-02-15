@@ -49,10 +49,19 @@ struct DetectorPackageInfo
 
 struct LuaDetectorParameters
 {
+    void init(AppIdDiscoveryArgs& args)
+    {
+        data = args.data;
+        size = args.size;
+        dir = args.dir;
+        asd = &args.asd;
+        pkt = args.pkt;
+    }
+
     const uint8_t* data = nullptr;
     uint16_t size = 0;
     int dir = 0;
-    AppIdSession* asd = nullptr;
+    AppIdSession* asd;
     Packet* pkt = nullptr;
     uint8_t macAddress[6] = { 0 };
 };

@@ -86,38 +86,35 @@ int RadiusServiceDetector::validate(AppIdDiscoveryArgs& args)
     const RADIUSHeader* hdr = (const RADIUSHeader*)args.data;
     uint16_t len;
     int new_dir;
-    AppIdSession* asd = args.asd;
-    const int dir = args.dir;
-    uint16_t size = args.size;
 
-    if (!size)
+    if (!args.size)
         goto inprocess;
-    if (size < sizeof(RADIUSHeader))
+    if (args.size < sizeof(RADIUSHeader))
         goto fail;
 
-    rd = (ServiceRADIUSData*)data_get(asd);
+    rd = (ServiceRADIUSData*)data_get(args.asd);
     if (!rd)
     {
         rd = (ServiceRADIUSData*)snort_calloc(sizeof(ServiceRADIUSData));
-        data_add(asd, rd, &snort_free);
+        data_add(args.asd, rd, &snort_free);
         rd->state = RADIUS_STATE_REQUEST;
     }
 
-    new_dir = dir;
+    new_dir = args.dir;
     if (rd->state == RADIUS_STATE_REQUEST)
     {
         if (hdr->code == RADIUS_CODE_ACCESS_ACCEPT ||
             hdr->code == RADIUS_CODE_ACCESS_REJECT ||
             hdr->code == RADIUS_CODE_ACCESS_CHALLENGE)
         {
-            asd->set_session_flags(APPID_SESSION_UDP_REVERSED);
+            args.asd.set_session_flags(APPID_SESSION_UDP_REVERSED);
             rd->state = RADIUS_STATE_RESPONSE;
             new_dir = APP_ID_FROM_RESPONDER;
         }
     }
-    else if (asd->get_session_flags(APPID_SESSION_UDP_REVERSED))
+    else if (args.asd.get_session_flags(APPID_SESSION_UDP_REVERSED))
     {
-        new_dir = (dir == APP_ID_FROM_RESPONDER) ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
+        new_dir = (args.dir == APP_ID_FROM_RESPONDER) ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
     }
 
     switch (rd->state)
@@ -130,7 +127,7 @@ int RadiusServiceDetector::validate(AppIdDiscoveryArgs& args)
             goto not_compatible;
         }
         len = ntohs(hdr->length);
-        if (len > size)
+        if (len > args.size)
         {
             goto not_compatible;
         }
@@ -152,7 +149,7 @@ int RadiusServiceDetector::validate(AppIdDiscoveryArgs& args)
             goto fail;
         }
         len = ntohs(hdr->length);
-        if (len > size)
+        if (len > args.size)
             goto fail;
         /* Must contain a username attribute */
         if (len < sizeof(RADIUSHeader))
@@ -167,18 +164,18 @@ int RadiusServiceDetector::validate(AppIdDiscoveryArgs& args)
         goto fail;
     }
 inprocess:
-    service_inprocess(asd, args.pkt, dir);
+    service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 
 success:
-    return add_service(asd, args.pkt, dir, APP_ID_RADIUS);
+    return add_service(args.asd, args.pkt, args.dir, APP_ID_RADIUS);
 
 not_compatible:
-    incompatible_data(asd, args.pkt, dir);
+    incompatible_data(args.asd, args.pkt, args.dir);
     return APPID_NOT_COMPATIBLE;
 
 fail:
-    fail_service(asd, args.pkt, dir);
+    fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 }
 
@@ -210,36 +207,33 @@ int RadiusAcctServiceDetector::validate(AppIdDiscoveryArgs& args)
     const RADIUSHeader* hdr = (const RADIUSHeader*)args.data;
     uint16_t len;
     int new_dir;
-    AppIdSession* asd = args.asd;
-    const int dir = args.dir;
-    uint16_t size = args.size;
 
-    if (!size)
+    if (!args.size)
         goto inprocess;
-    if (size < sizeof(RADIUSHeader))
+    if (args.size < sizeof(RADIUSHeader))
         goto fail;
 
-    rd = (ServiceRADIUSData*)data_get(asd);
+    rd = (ServiceRADIUSData*)data_get(args.asd);
     if (!rd)
     {
         rd = (ServiceRADIUSData*)snort_calloc(sizeof(ServiceRADIUSData));
-        data_add(asd, rd, &snort_free);
+        data_add(args.asd, rd, &snort_free);
         rd->state = RADIUS_STATE_REQUEST;
     }
 
-    new_dir = dir;
+    new_dir = args.dir;
     if (rd->state == RADIUS_STATE_REQUEST)
     {
         if (hdr->code == RADIUS_CODE_ACCOUNTING_RESPONSE)
         {
-            asd->set_session_flags(APPID_SESSION_UDP_REVERSED);
+            args.asd.set_session_flags(APPID_SESSION_UDP_REVERSED);
             rd->state = RADIUS_STATE_RESPONSE;
             new_dir = APP_ID_FROM_RESPONDER;
         }
     }
-    else if (asd->get_session_flags(APPID_SESSION_UDP_REVERSED))
+    else if (args.asd.get_session_flags(APPID_SESSION_UDP_REVERSED))
     {
-        new_dir = (dir == APP_ID_FROM_RESPONDER) ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
+        new_dir = (args.dir == APP_ID_FROM_RESPONDER) ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
     }
 
     switch (rd->state)
@@ -252,7 +246,7 @@ int RadiusAcctServiceDetector::validate(AppIdDiscoveryArgs& args)
             goto not_compatible;
         }
         len = ntohs(hdr->length);
-        if (len > size)
+        if (len > args.size)
         {
             goto not_compatible;
         }
@@ -270,7 +264,7 @@ int RadiusAcctServiceDetector::validate(AppIdDiscoveryArgs& args)
         if (hdr->code != RADIUS_CODE_ACCOUNTING_RESPONSE)
             goto fail;
         len = ntohs(hdr->length);
-        if (len > size)
+        if (len > args.size)
             goto fail;
         /* Must contain a NAS-IP-Address or NAS-Identifier attribute */
         if (len < sizeof(RADIUSHeader))
@@ -285,18 +279,18 @@ int RadiusAcctServiceDetector::validate(AppIdDiscoveryArgs& args)
         goto fail;
     }
 inprocess:
-    service_inprocess(asd, args.pkt, dir);
+    service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 
 success:
-    return add_service(asd, args.pkt, dir, APP_ID_RADIUS_ACCT);
+    return add_service(args.asd, args.pkt, args.dir, APP_ID_RADIUS_ACCT);
 
 not_compatible:
-    incompatible_data(asd, args.pkt, dir);
+    incompatible_data(args.asd, args.pkt, args.dir);
     return APPID_NOT_COMPATIBLE;
 
 fail:
-    fail_service(asd, args.pkt, dir);
+    fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 }
 

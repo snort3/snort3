@@ -21,6 +21,7 @@
 #ifndef APPID_MOCK_SESSION_H
 #define APPID_MOCK_SESSION_H
 
+#include "appid_dns_session.h"
 #include "appid_mock_flow.h"
 #include "appid_mock_http_session.h"
 
@@ -53,6 +54,19 @@ AppIdServiceSubtype APPID_UT_SERVICE_SUBTYPE = { nullptr, APPID_UT_SERVICE,
 
 unsigned AppIdSession::inspector_id = 0;
 
+class MockAppIdDnsSession : public AppIdDnsSession
+{
+public:
+    MockAppIdDnsSession()
+    {
+        host = (char*)APPID_ID_UT_DNS_HOST;
+        host_offset = APPID_UT_DNS_HOST_OFFSET;
+        record_type = APPID_UT_DNS_PATTERN_CNAME_REC;
+        response_type = APPID_UT_DNS_NOERROR;
+        ttl = APPID_UT_DNS_TTL;
+    }
+};
+
 AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t, AppIdInspector& inspector)
     : FlowData(inspector_id, &inspector), inspector(inspector)
 {
@@ -76,14 +90,7 @@ AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t, AppIdInspector& in
 
     netbios_name = snort_strdup(APPID_UT_NETBIOS_NAME);
 
-    dsession = new DnsSession;
-    dsession->host = (char*)APPID_ID_UT_DNS_HOST;
-    dsession->host_len = strlen(APPID_ID_UT_DNS_HOST);
-    dsession->host_offset = APPID_UT_DNS_HOST_OFFSET;
-    dsession->record_type = APPID_UT_DNS_PATTERN_CNAME_REC;
-    dsession->response_type = APPID_UT_DNS_NOERROR;
-    dsession->ttl = APPID_UT_DNS_TTL;
-
+    dsession = new MockAppIdDnsSession;
     tp_app_id = APPID_UT_ID;
     service.set_id(APPID_UT_ID + 1);
     client_inferred_service_id = APPID_UT_ID + 2;
@@ -218,6 +225,20 @@ AppId AppIdSession::pick_only_service_app_id()
 bool AppIdSession::is_ssl_session_decrypted()
 {
     return is_session_decrypted;
+}
+
+AppIdHttpSession* AppIdSession::get_http_session()
+{
+    if ( !hsession )
+        hsession = new MockAppIdHttpSession(*this);
+    return hsession;
+}
+
+AppIdDnsSession* AppIdSession::get_dns_session()
+{
+    if ( !dsession )
+        dsession = new MockAppIdDnsSession();
+    return dsession;
 }
 
 #endif

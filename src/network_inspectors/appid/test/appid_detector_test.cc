@@ -55,14 +55,11 @@ TEST_GROUP(appid_detector_tests)
     {
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         flow = new Flow;
-        mock_session = new AppIdSession(IpProtocol::TCP, nullptr, 1492, appid_inspector);
-        mock_session->hsession = init_http_session(mock_session);
         flow->set_flow_data(mock_session);
     }
 
     void teardown() override
     {
-        delete mock_session;
         delete flow;
         MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
@@ -72,12 +69,12 @@ TEST(appid_detector_tests, add_info)
 {
     const char* info_url = "https://tools.ietf.org/html/rfc793";
     AppIdDetector* ad = new TestDetector;
-    ad->add_info(mock_session, info_url);
-    STRCMP_EQUAL(mock_session->hsession->url, URL);
-    snort_free(mock_session->hsession->url);
-    mock_session->hsession->url = nullptr;
-    ad->add_info(mock_session, info_url);
-    STRCMP_EQUAL(mock_session->hsession->url, info_url);
+    MockAppIdHttpSession* hsession = (MockAppIdHttpSession*)mock_session->get_http_session();
+    ad->add_info(*mock_session, info_url);
+    STRCMP_EQUAL(hsession->get_url(), URL);
+    hsession->reset();
+    ad->add_info(*mock_session, info_url);
+    STRCMP_EQUAL(mock_session->get_http_session()->get_url(), info_url);
     delete ad;
 }
 
@@ -85,7 +82,7 @@ TEST(appid_detector_tests, add_user)
 {
     const char* username = "snorty";
     AppIdDetector* ad = new TestDetector;
-    ad->add_user(mock_session, username, APPID_UT_ID, true);
+    ad->add_user(*mock_session, username, APPID_UT_ID, true);
     STRCMP_EQUAL(mock_session->client.get_username(), username);
     CHECK_TRUE((mock_session->client.get_user_id() == APPID_UT_ID));
     CHECK_TRUE((mock_session->get_session_flags(APPID_SESSION_LOGIN_SUCCEEDED)
@@ -96,8 +93,9 @@ TEST(appid_detector_tests, add_user)
 int main(int argc, char** argv)
 {
     mock_init_appid_pegs();
+    mock_session = new AppIdSession(IpProtocol::TCP, nullptr, 1492, appid_inspector);
+    mock_session->get_http_session();
     int rc = CommandLineTestRunner::RunAllTests(argc, argv);
     mock_cleanup_appid_pegs();
     return rc;
 }
-

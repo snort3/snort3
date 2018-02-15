@@ -120,27 +120,23 @@ MdnsServiceDetector::~MdnsServiceDetector()
 int MdnsServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     int ret_val;
-    AppIdSession* asd = args.asd;
-    const uint8_t* data = args.data;
-    Packet* pkt = args.pkt;
-    uint16_t size = args.size;
 
-    ServiceMDNSData* fd = (ServiceMDNSData*)data_get(asd);
+    ServiceMDNSData* fd = (ServiceMDNSData*)data_get(args.asd);
     if (!fd)
     {
         fd = (ServiceMDNSData*)snort_calloc(sizeof(ServiceMDNSData));
-        data_add(asd, fd, &snort_free);
+        data_add(args.asd, fd, &snort_free);
         fd->state = MDNS_STATE_CONNECTION;
     }
 
-    if (pkt->ptrs.dp == MDNS_PORT || pkt->ptrs.sp == MDNS_PORT )
+    if (args.pkt->ptrs.dp == MDNS_PORT || args.pkt->ptrs.sp == MDNS_PORT )
     {
-        ret_val = validate_reply(data, size);
+        ret_val = validate_reply(args.data, args.size);
         if (ret_val == 1)
         {
             if (args.config->mod_config->mdns_user_reporting)
             {
-                analyze_user(asd, pkt, size);
+                analyze_user(args.asd, args.pkt, args.size);
                 destroy_match_list();
                 goto success;
             }
@@ -153,10 +149,10 @@ int MdnsServiceDetector::validate(AppIdDiscoveryArgs& args)
         goto fail;
 
 success:
-    return add_service(asd, pkt, args.dir, APP_ID_MDNS);
+    return add_service(args.asd, args.pkt, args.dir, APP_ID_MDNS);
 
 fail:
-    fail_service(asd, pkt, args.dir);
+    fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 }
 
@@ -254,7 +250,7 @@ int MdnsServiceDetector::reference_pointer(const char* start_ptr, const char** r
                2. Calls the function which scans for pattern to identify the user
                3. Calls the function which does the Username reporting along with the host
   MDNS User Analysis*/
-int MdnsServiceDetector::analyze_user(AppIdSession* asd, const Packet* pkt, uint16_t size)
+int MdnsServiceDetector::analyze_user(AppIdSession& asd, const Packet* pkt, uint16_t size)
 {
     int start_index = 0;
     uint8_t user_name_len = 0;

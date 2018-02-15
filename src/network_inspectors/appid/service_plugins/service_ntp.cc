@@ -84,17 +84,13 @@ int NtpServiceDetector::validate(AppIdDiscoveryArgs& args)
     const ServiceNTPHeader* nh;
     uint8_t ver;
     uint8_t mode;
-    AppIdSession* asd = args.asd;
-    const uint8_t* data = args.data;
-    uint16_t size = args.size;
 
-    if (!size)
+    if (!args.size)
         goto inprocess;
     if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    nh = (const ServiceNTPHeader*)data;
-
+    nh = (const ServiceNTPHeader*)args.data;
     mode = nh->LVM & 0x07;
     if (mode == 0 || mode == 7 || mode == 3)
         goto fail;
@@ -105,11 +101,11 @@ int NtpServiceDetector::validate(AppIdDiscoveryArgs& args)
     {
         if (ver < 0x18)
         {
-            if (size != sizeof(ServiceNTPHeader))
+            if (args.size != sizeof(ServiceNTPHeader))
                 goto fail;
         }
-        else if (size < sizeof(ServiceNTPHeader) ||
-            size > sizeof(ServiceNTPHeader)+sizeof(ServiceNTPOptional))
+        else if (args.size < sizeof(ServiceNTPHeader) ||
+            args.size > sizeof(ServiceNTPHeader)+sizeof(ServiceNTPOptional))
         {
             goto fail;
         }
@@ -123,7 +119,7 @@ int NtpServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
     else
     {
-        if (size < 2)
+        if (args.size < 2)
             goto fail;
         if (!(nh->stratum & 0x80))
             goto fail;
@@ -131,14 +127,14 @@ int NtpServiceDetector::validate(AppIdDiscoveryArgs& args)
             goto fail;
     }
 
-    return add_service(asd, args.pkt, args.dir, APP_ID_NTP);
+    return add_service(args.asd, args.pkt, args.dir, APP_ID_NTP);
 
 inprocess:
-    service_inprocess(asd, args.pkt, args.dir);
+    service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 
 fail:
-    fail_service(asd, args.pkt, args.dir);
+    fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 }
 

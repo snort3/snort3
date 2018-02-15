@@ -159,7 +159,7 @@ IpsOption::EvalStatus AppIdIpsOption::eval(Cursor&, Packet* p)
     if ( !opt_data.ids_mapped )
         map_names_to_ids();
 
-    AppIdSession* session = appid_api.get_appid_session(p->flow);
+    AppIdSession* session = appid_api.get_appid_session(*(p->flow));
     if (!session)
         return NO_MATCH;
 

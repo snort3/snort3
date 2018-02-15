@@ -193,9 +193,6 @@ public:
     {
         AppIdPegCounts::inc_payload_count(id);
     }
-
-private:
-
 };
 
 #endif

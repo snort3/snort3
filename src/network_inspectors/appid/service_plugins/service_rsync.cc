@@ -72,8 +72,6 @@ int RsyncServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     ServiceRSYNCData* rd;
     int i;
-
-    AppIdSession* asd = args.asd;
     const uint8_t* data = args.data;
     uint16_t size = args.size;
 
@@ -82,11 +80,11 @@ int RsyncServiceDetector::validate(AppIdDiscoveryArgs& args)
     if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    rd = (ServiceRSYNCData*)data_get(asd);
+    rd = (ServiceRSYNCData*)data_get(args.asd);
     if (!rd)
     {
         rd = (ServiceRSYNCData*)snort_calloc(sizeof(ServiceRSYNCData));
-        data_add(asd, rd, &snort_free);
+        data_add(args.asd, rd, &snort_free);
         rd->state = RSYNC_STATE_BANNER;
     }
 
@@ -101,7 +99,7 @@ int RsyncServiceDetector::validate(AppIdDiscoveryArgs& args)
             goto fail;
         data += sizeof(RSYNC_BANNER) - 1;
         size -= sizeof(RSYNC_BANNER) - 1;
-        for (i=0; i<size-1; i++)
+        for (i=0; i < size - 1; i++)
             if (!isdigit(data[i]) && data[i] != '.')
                 goto fail;
         rd->state = RSYNC_STATE_MOTD;
@@ -109,7 +107,7 @@ int RsyncServiceDetector::validate(AppIdDiscoveryArgs& args)
     case RSYNC_STATE_MOTD:
         if (data[size-1] != 0x0A)
             goto fail;
-        for (i=0; i<size-1; i++)
+        for (i=0; i < size - 1; i++)
             if (!isprint(data[i]) && !isspace(data[i]))
                 goto fail;
         rd->state = RSYNC_STATE_DONE;
@@ -119,14 +117,14 @@ int RsyncServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
 
 inprocess:
-    service_inprocess(asd, args.pkt, args.dir);
+    service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 
 success:
-    return add_service(asd, args.pkt, args.dir, APP_ID_RSYNC);
+    return add_service(args.asd, args.pkt, args.dir, APP_ID_RSYNC);
 
 fail:
-    fail_service(asd, args.pkt, args.dir);
+    fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 }
 

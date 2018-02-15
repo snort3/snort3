@@ -43,7 +43,7 @@ private:
     void destroy_match_list();
     void destory_matcher();
     int validate_reply(const uint8_t* data, uint16_t size);
-    int analyze_user(AppIdSession*, const Packet*, uint16_t size);
+    int analyze_user(AppIdSession&, const Packet*, uint16_t size);
     int reference_pointer(const char* start_ptr, const char** resp_endptr, int* start_index,
         uint16_t data_size, uint8_t* user_name_len, unsigned size);
 

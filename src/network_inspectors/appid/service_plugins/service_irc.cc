@@ -90,26 +90,23 @@ int IrcServiceDetector::validate(AppIdDiscoveryArgs& args)
     IRCState* state;
     unsigned* pos;
     const char** command;
-    AppIdSession* asd = args.asd;
     const uint8_t* data = args.data;
-    const int dir = args.dir;
-    uint16_t size = args.size;
 
-    if (!size)
+    if (!args.size)
         goto inprocess;
 
-    id = (ServiceIRCData*)data_get(asd);
+    id = (ServiceIRCData*)data_get(args.asd);
     if (!id)
     {
         id =  (ServiceIRCData*)snort_calloc(sizeof(ServiceIRCData));
-        data_add(asd, id, &snort_free);
+        data_add(args.asd, id, &snort_free);
         id->initiator_state = IRC_STATE_BEGIN;
         id->state = IRC_STATE_BEGIN;
     }
 
-    end = (const uint8_t*)(data + size);
+    end = (const uint8_t*)(data + args.size);
 
-    if (dir == APP_ID_FROM_RESPONDER)
+    if (args.dir == APP_ID_FROM_RESPONDER)
     {
         state = &id->state;
         pos = &id->pos;
@@ -144,7 +141,7 @@ int IrcServiceDetector::validate(AppIdDiscoveryArgs& args)
             }
             else
             {
-                if (dir == APP_ID_FROM_RESPONDER)
+                if (args.dir == APP_ID_FROM_RESPONDER)
                 {
                     if (*data == IRC_NOTICE[0])
                         *command = IRC_NOTICE;
@@ -183,7 +180,7 @@ int IrcServiceDetector::validate(AppIdDiscoveryArgs& args)
             (*pos)++;
             if (!(*command)[*pos])
             {
-                if (dir == APP_ID_FROM_RESPONDER)
+                if (args.dir == APP_ID_FROM_RESPONDER)
                 {
                     *state = IRC_STATE_LINE;
                 }
@@ -199,7 +196,7 @@ int IrcServiceDetector::validate(AppIdDiscoveryArgs& args)
             else if (*data == 0x0A)
             {
                 *state = IRC_STATE_BEGIN;
-                if (dir == APP_ID_FROM_RESPONDER)
+                if (args.dir == APP_ID_FROM_RESPONDER)
                 {
                     id->count++;
                     if (id->count >= IRC_COUNT_THRESHOLD && id->initiator_state ==
@@ -212,7 +209,7 @@ int IrcServiceDetector::validate(AppIdDiscoveryArgs& args)
             if (*data != 0x0A)
                 goto fail;
             *state = IRC_STATE_BEGIN;
-            if (dir == APP_ID_FROM_RESPONDER)
+            if (args.dir == APP_ID_FROM_RESPONDER)
             {
                 id->count++;
                 if (id->count >= IRC_COUNT_THRESHOLD && id->initiator_state ==
@@ -282,20 +279,20 @@ int IrcServiceDetector::validate(AppIdDiscoveryArgs& args)
         }
     }
 inprocess:
-    service_inprocess(asd, args.pkt, dir);
+    service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 
 success:
-    return add_service(asd, args.pkt, dir, APP_ID_IRCD);
+    return add_service(args.asd, args.pkt, args.dir, APP_ID_IRCD);
 
 fail:
-    if (dir == APP_ID_FROM_RESPONDER)
+    if (args.dir == APP_ID_FROM_RESPONDER)
     {
-        fail_service(asd, args.pkt, dir);
+        fail_service(args.asd, args.pkt, args.dir);
     }
     else
     {
-        incompatible_data(asd, args.pkt, dir);
+        incompatible_data(args.asd, args.pkt, args.dir);
     }
     return APPID_NOMATCH;
 }

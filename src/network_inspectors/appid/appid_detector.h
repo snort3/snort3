@@ -69,18 +69,18 @@ typedef std::vector<ServiceDetectorPort> ServiceDetectorPorts;
 class AppIdDiscoveryArgs
 {
 public:
-    AppIdDiscoveryArgs(const uint8_t* data, uint16_t size, int dir, AppIdSession* asd, Packet* p)
+    AppIdDiscoveryArgs(const uint8_t* data, uint16_t size, int dir, AppIdSession& asd, Packet* p)
         : data(data), size(size), dir(dir), asd(asd), pkt(p)
     {
-        config = asd->config;
-        session_logging_enabled = asd->session_logging_enabled;
-        session_logging_id = asd->session_logging_id;
+        config = asd.config;
+        session_logging_enabled = asd.session_logging_enabled;
+        session_logging_id = asd.session_logging_id;
     }
 
     const uint8_t* data;
     uint16_t size;
     int dir;
-    AppIdSession* asd;
+    AppIdSession& asd;
     Packet* pkt;
     const AppIdConfig* config = nullptr;
     bool session_logging_enabled = false;
@@ -112,12 +112,12 @@ public:
     virtual int validate(AppIdDiscoveryArgs&) = 0;
     virtual void register_appid(AppId, unsigned extractsInfo) = 0;
 
-    virtual void* data_get(AppIdSession*);
-    virtual int data_add(AppIdSession*, void*, AppIdFreeFCN);
-    virtual void add_info(AppIdSession*, const char*);
-    virtual void add_user(AppIdSession*, const char*, AppId, bool);
-    virtual void add_payload(AppIdSession*, AppId);
-    virtual void add_app(AppIdSession*, AppId, AppId, const char*);
+    virtual void* data_get(AppIdSession&);
+    virtual int data_add(AppIdSession&, void*, AppIdFreeFCN);
+    virtual void add_info(AppIdSession&, const char*);
+    virtual void add_user(AppIdSession&, const char*, AppId, bool);
+    virtual void add_payload(AppIdSession&, AppId);
+    virtual void add_app(AppIdSession&, AppId, AppId, const char*);
 
     const std::string& get_name() const
     { return name; }

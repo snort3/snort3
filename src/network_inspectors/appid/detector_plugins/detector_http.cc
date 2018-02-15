@@ -63,12 +63,12 @@ HttpClientDetector::HttpClientDetector(ClientDiscovery* cdm)
 int HttpClientDetector::validate(AppIdDiscoveryArgs& args)
 {
     add_app(args.asd, APP_ID_HTTP, APP_ID_HTTP + GENERIC_APP_OFFSET, nullptr);
-    args.asd->client_disco_state = APPID_DISCO_STATE_FINISHED;
+    args.asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
     http_service_detector->add_service(args.asd, args.pkt, args.dir, APP_ID_HTTP);
-    args.asd->service_disco_state = APPID_DISCO_STATE_FINISHED;
-    args.asd->set_session_flags(APPID_SESSION_CLIENT_DETECTED | APPID_SESSION_SERVICE_DETECTED);
-    args.asd->clear_session_flags(APPID_SESSION_CONTINUE);
-    args.asd->is_http2 = true;
+    args.asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
+    args.asd.set_session_flags(APPID_SESSION_CLIENT_DETECTED | APPID_SESSION_SERVICE_DETECTED);
+    args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
+    args.asd.is_http2 = true;
 
     return APPID_SUCCESS;
 }

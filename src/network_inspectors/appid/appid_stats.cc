@@ -232,7 +232,7 @@ AppIdStatistics* AppIdStatistics::get_stats_manager()
 void AppIdStatistics::cleanup()
 { delete appid_stats_manager; }
 
-static void update_stats(AppIdSession* asd, AppId app_id, StatsBucket* bucket)
+static void update_stats(AppIdSession& asd, AppId app_id, StatsBucket* bucket)
 {
     AppIdStatRecord* record = (AppIdStatRecord*)(fwAvlLookup(app_id, bucket->appsTree));
     if ( !record )
@@ -253,12 +253,12 @@ static void update_stats(AppIdSession* asd, AppId app_id, StatsBucket* bucket)
 
     if ( record )
     {
-        record->initiatorBytes += asd->stats.initiator_bytes;
-        record->responderBytes += asd->stats.responder_bytes;
+        record->initiatorBytes += asd.stats.initiator_bytes;
+        record->responderBytes += asd.stats.responder_bytes;
     }
 }
 
-void AppIdStatistics::update(AppIdSession* asd)
+void AppIdStatistics::update(AppIdSession& asd)
 {
     if ( !enabled )
         return;
@@ -272,25 +272,25 @@ void AppIdStatistics::update(AppIdSession* asd)
         start_stats_period(now);
     }
 
-    time_t bucketTime = asd->stats.first_packet_second -
-        (asd->stats.first_packet_second % bucketInterval);
+    time_t bucketTime = asd.stats.first_packet_second -
+        (asd.stats.first_packet_second % bucketInterval);
 
     StatsBucket* bucket = get_stats_bucket(bucketTime);
     if ( !bucket )
         return;
 
-    bucket->totalStats.txByteCnt += asd->stats.initiator_bytes;
-    bucket->totalStats.rxByteCnt += asd->stats.responder_bytes;
+    bucket->totalStats.txByteCnt += asd.stats.initiator_bytes;
+    bucket->totalStats.rxByteCnt += asd.stats.responder_bytes;
 
-    AppId web_app_id = asd->pick_payload_app_id();
+    AppId web_app_id = asd.pick_payload_app_id();
     if ( web_app_id > APP_ID_NONE )
         update_stats(asd, web_app_id, bucket);
 
-    AppId service_id = asd->pick_service_app_id();
+    AppId service_id = asd.pick_service_app_id();
     if ( service_id && ( service_id != web_app_id ) )
         update_stats(asd, service_id, bucket);
 
-    AppId client_id = asd->pick_client_app_id();
+    AppId client_id = asd.pick_client_app_id();
     if ( client_id > APP_ID_NONE && client_id != service_id
         && client_id != web_app_id )
         update_stats(asd, client_id, bucket);

@@ -26,6 +26,9 @@
 #include "flow/flow.h"
 
 enum class IpProtocol : uint8_t;
+class AppIdDnsSession;
+class AppIdHttpSession;
+class AppIdSession;
 
 #define APPID_SESSION_RESPONDER_MONITORED   (1ULL << 0)
 #define APPID_SESSION_INITIATOR_MONITORED   (1ULL << 1)
@@ -90,8 +93,6 @@ enum class IpProtocol : uint8_t;
     APPID_SESSION_PORT_SERVICE_DONE)
 const uint64_t APPID_SESSION_ALL_FLAGS = 0xFFFFFFFFFFFFFFFFULL;
 
-class AppIdSession;
-
 enum APPID_FLOW_TYPE
 {
     APPID_FLOW_TYPE_IGNORE,
@@ -154,20 +155,6 @@ enum SEARCH_SUPPORT_TYPE
     UNKNOWN_SEARCH_ENGINE,
 };
 
-enum HTTP_FIELD_ID
-{
-    REQ_AGENT_FID       = 0,
-    REQ_HOST_FID        = 1,
-    REQ_REFERER_FID     = 2,
-    REQ_URI_FID         = 3,
-    REQ_COOKIE_FID      = 4,
-    REQ_BODY_FID        = 5,
-    RSP_CONTENT_TYPE_FID = 6,
-    RSP_LOCATION_FID    = 7,
-    RSP_BODY_FID        = 8,
-    HTTP_FIELD_MAX      = RSP_BODY_FID
-};
-
 // -----------------------------------------------------------------------------
 // AppId API
 // -----------------------------------------------------------------------------
@@ -179,74 +166,49 @@ class SO_PUBLIC AppIdApi
 public:
     SO_PRIVATE AppIdApi() = default;
 
-    AppIdSession* get_appid_session(Flow*);
+    AppIdSession* get_appid_session(Flow&);
     const char* get_application_name(AppId app_id);
     const char* get_application_name(Flow*, bool from_client);
     AppId get_application_id(const char* appName);
-    AppId get_service_app_id(AppIdSession*);
-    AppId get_port_service_app_id(AppIdSession*);
-    AppId get_only_service_app_id(AppIdSession*);
-    AppId get_misc_app_id(AppIdSession*);
-    AppId get_client_app_id(AppIdSession*);
-    AppId get_payload_app_id(AppIdSession*);
-    AppId get_referred_app_id(AppIdSession*);
-    AppId get_fw_service_app_id(AppIdSession*);
-    AppId get_fw_misc_app_id(AppIdSession*);
-    AppId get_fw_client_app_id(AppIdSession*);
-    AppId get_fw_payload_app_id(AppIdSession*);
-    AppId get_fw_referred_app_id(AppIdSession*);
-    bool is_ssl_session_decrypted(AppIdSession*);
-    bool is_appid_inspecting_session(AppIdSession*);
-    bool is_appid_available(AppIdSession*);
-    const char* get_user_name(AppIdSession*, AppId* service, bool* isLoginSuccessful);
-    const char* get_client_version(AppIdSession*);
-    uint64_t get_appid_session_attribute(AppIdSession*, uint64_t flag);
-    APPID_FLOW_TYPE get_flow_type(AppIdSession*);
-    void get_service_info(AppIdSession*, const char** vendor, const char** version,
+    AppId get_service_app_id(Flow&);
+    AppId get_port_service_app_id(Flow&);
+    AppId get_only_service_app_id(Flow&);
+    AppId get_misc_app_id(Flow&);
+    AppId get_client_app_id(Flow&);
+    AppId get_payload_app_id(Flow&);
+    AppId get_referred_app_id(Flow&);
+    AppId get_fw_service_app_id(Flow&);
+    AppId get_fw_misc_app_id(Flow&);
+    AppId get_fw_client_app_id(Flow&);
+    AppId get_fw_payload_app_id(Flow&);
+    AppId get_fw_referred_app_id(Flow&);
+    bool is_ssl_session_decrypted(Flow&);
+    bool is_appid_inspecting_session(Flow&);
+    bool is_appid_available(Flow&);
+    const char* get_user_name(Flow&, AppId* service, bool* isLoginSuccessful);
+    const char* get_client_version(Flow&);
+    uint64_t get_appid_session_attribute(Flow&, uint64_t flag);
+    APPID_FLOW_TYPE get_flow_type(Flow&);
+    void get_service_info(Flow&, const char** vendor, const char** version,
         AppIdServiceSubtype**);
-    short get_service_port(AppIdSession*);
-    SfIp* get_service_ip(AppIdSession*);
-    SfIp* get_initiator_ip(AppIdSession*);
-    char* get_http_user_agent(AppIdSession*);
-    char* get_http_host(AppIdSession*);
-    char* get_http_url(AppIdSession*);
-    char* get_http_referer(AppIdSession*);
-    char* get_http_new_url(AppIdSession*);
-    char* get_http_uri(AppIdSession*);
-    char* get_http_response_code(AppIdSession*);
-    char* get_http_cookie(AppIdSession*);
-    char* get_http_new_cookie(AppIdSession*);
-    char* get_http_content_type(AppIdSession*);
-    char* get_http_location(AppIdSession*);
-    char* get_http_body(AppIdSession*);
-    char* get_http_request_body(AppIdSession*);
-    uint16_t get_http_uri_offset(AppIdSession*);
-    uint16_t get_http_uri_end_offset(AppIdSession*);
-    uint16_t get_http_cookie_offset(AppIdSession*);
-    uint16_t get_http_cookie_end_offset(AppIdSession*);
-    SEARCH_SUPPORT_TYPE get_http_search(AppIdSession*);
-    SfIp* get_http_xff_addr(AppIdSession*);
-    char* get_tls_host(AppIdSession*);
-    DHCPData* get_dhcp_fp_data(AppIdSession*);
-    void free_dhcp_fp_data(AppIdSession*, DHCPData*);
-    DHCPInfo* get_dhcp_info(AppIdSession*);
-    void free_dhcp_info(AppIdSession*, DHCPInfo*);
-    FpSMBData* get_smb_fp_data(AppIdSession*);
-    void free_smb_fp_data(AppIdSession*, FpSMBData*);
-    char* get_netbios_name(AppIdSession*);
-    uint32_t produce_ha_state(Flow* flow, uint8_t* buf);
-    uint32_t consume_ha_state(Flow* flow, const uint8_t* buf, uint8_t length, IpProtocol,
+    short get_service_port(Flow&);
+    SfIp* get_service_ip(Flow&);
+    SfIp* get_initiator_ip(Flow&);
+    AppIdDnsSession* get_dns_session(Flow&);
+    AppIdHttpSession* get_http_session(Flow&);
+    SEARCH_SUPPORT_TYPE get_http_search(Flow&);
+    char* get_tls_host(Flow&);
+    DHCPData* get_dhcp_fp_data(Flow&);
+    void free_dhcp_fp_data(Flow&, DHCPData*);
+    DHCPInfo* get_dhcp_info(Flow&);
+    void free_dhcp_info(Flow&, DHCPInfo*);
+    FpSMBData* get_smb_fp_data(Flow&);
+    void free_smb_fp_data(Flow&, FpSMBData*);
+    char* get_netbios_name(Flow&);
+    uint32_t produce_ha_state(Flow& flow, uint8_t* buf);
+    uint32_t consume_ha_state(Flow& flow, const uint8_t* buf, uint8_t length, IpProtocol,
         SfIp*, uint16_t initiatorPort);
-    char* get_dns_query(AppIdSession*, uint8_t* query_len);
-    uint16_t get_dns_query_offset(AppIdSession*);
-    uint16_t get_dns_record_type(AppIdSession*);
-    uint8_t get_dns_response_type(AppIdSession*);
-    uint32_t get_dns_ttl(AppIdSession*);
-    char* get_http_new_field(AppIdSession*, HTTP_FIELD_ID);
-    void free_http_new_field(AppIdSession*, HTTP_FIELD_ID);
-    uint16_t get_http_field_offset(AppIdSession*, HTTP_FIELD_ID);
-    uint16_t get_http_field_end_offset(AppIdSession*, HTTP_FIELD_ID);
-    bool is_http_inspection_done(AppIdSession*);
+    bool is_http_inspection_done(Flow&);
 };
 
 SO_PUBLIC extern AppIdApi appid_api;

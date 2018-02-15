@@ -70,16 +70,14 @@ int RfbServiceDetector::validate(AppIdDiscoveryArgs& args)
     unsigned i;
     char* v;
     const unsigned char* p;
-    AppIdSession* asd = args.asd;
     const uint8_t* data = args.data;
-    uint16_t size = args.size;
 
-    if (!size)
+    if (!args.size)
         goto inprocess;
     if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    if (size != RFB_BANNER_SIZE)
+    if (args.size != RFB_BANNER_SIZE)
         goto fail;
     if (strncmp(RFB_BANNER, (const char*)data, sizeof(RFB_BANNER)-1))
         goto fail;
@@ -99,14 +97,14 @@ int RfbServiceDetector::validate(AppIdDiscoveryArgs& args)
         p++;
     }
     *v = 0;
-    return add_service(asd, args.pkt, args.dir, APP_ID_VNC_RFB, nullptr, version, nullptr);
+    return add_service(args.asd, args.pkt, args.dir, APP_ID_VNC_RFB, nullptr, version, nullptr);
 
 inprocess:
-    service_inprocess(asd, args.pkt, args.dir);
+    service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 
 fail:
-    fail_service(asd, args.pkt, args.dir);
+    fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 }
 

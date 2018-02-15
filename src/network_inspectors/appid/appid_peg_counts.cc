@@ -73,6 +73,8 @@ void AppIdPegCounts::add_app_peg_info(std::string app_name, AppId app_id )
     init_detector_peg_info(app_name, "_users", " users detected");
     init_detector_peg_info(app_name, "_payloads", " payloads detected");
     init_detector_peg_info(app_name, "_misc", " misc detected");
+    init_detector_peg_info(app_name, "_incompatible", " incompatible");
+    init_detector_peg_info(app_name, "_failed", " failed");
 }
 
 void AppIdPegCounts::add_unknown_app_peg()

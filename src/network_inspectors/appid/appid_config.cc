@@ -33,6 +33,7 @@
 #include "thirdparty_appid_utils.h"
 #ifdef USE_RNA_CONFIG
 #include "appid_utils/network_set.h"
+#include "appid_utils/ip_funcs.h"
 #endif
 #include "main/snort_debug.h"
 #include "main/snort_config.h"

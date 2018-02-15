@@ -92,38 +92,37 @@ DirectConnectServiceDetector::DirectConnectServiceDetector(ServiceDiscovery* sd)
 int DirectConnectServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     ServiceData* fd;
-    AppIdSession* asd = args.asd;
     const uint8_t* data = args.data;
     uint16_t size = args.size;
 
     if (!size)
     {
-        service_inprocess(asd, args.pkt, args.dir);
+        service_inprocess(args.asd, args.pkt, args.dir);
         return APPID_INPROCESS;
     }
 
-    fd = (ServiceData*)data_get(asd);
+    fd = (ServiceData*)data_get(args.asd);
     if (!fd)
     {
         fd = (ServiceData*)snort_calloc(sizeof(ServiceData));
-        data_add(asd, fd, &snort_free);
+        data_add(args.asd, fd, &snort_free);
     }
 
-    if (asd->protocol == IpProtocol::TCP)
-        return tcp_validate(data, size, args.dir, asd, args.pkt, fd);
+    if (args.asd.protocol == IpProtocol::TCP)
+        return tcp_validate(data, size, args.dir, args.asd, args.pkt, fd);
     else
-        return udp_validate(data, size, args.dir, asd, args.pkt, fd);
+        return udp_validate(data, size, args.dir, args.asd, args.pkt, fd);
 }
 
 int DirectConnectServiceDetector::tcp_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, const Packet* pkt, ServiceData* serviceData)
+    AppIdSession& asd, const Packet* pkt, ServiceData* serviceData)
 {
     switch (serviceData->state)
     {
     case CONN_STATE_INIT:
         if (size > 6
-            && data[size-2] == '|'
-            && data[size-1] == '$')
+            && data[size-1] == '|'
+            /*&& data[size-1] == '$'*/)
         {
             if (memcmp(data, PATTERN1, sizeof(PATTERN1)-1) == 0)
             {
@@ -222,7 +221,7 @@ fail:
 }
 
 int DirectConnectServiceDetector::udp_validate(const uint8_t* data, uint16_t size, const int dir,
-    AppIdSession* asd, const Packet* pkt, ServiceData* serviceData)
+    AppIdSession& asd, const Packet* pkt, ServiceData* serviceData)
 {
     if (dir == APP_ID_FROM_RESPONDER && serviceData->state == CONN_STATE_SERVICE_DETECTED)
     {

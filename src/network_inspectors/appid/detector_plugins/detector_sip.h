@@ -71,10 +71,10 @@ public:
     SipServiceDetector(ServiceDiscovery*);
 
     int validate(AppIdDiscoveryArgs&) override;
-    void addFutureRtpFlows(SipEvent&, AppIdSession*);
+    void addFutureRtpFlows(SipEvent&, AppIdSession&);
 
 private:
-    void createRtpFlow(AppIdSession*, const Packet*, const SfIp* cliIp,
+    void createRtpFlow(AppIdSession&, const Packet*, const SfIp* cliIp,
         uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol, int16_t app_id);
 };
 
@@ -97,8 +97,8 @@ public:
 
 private:
     SipEventHandler() = default;
-    void client_handler(SipEvent&, AppIdSession*);
-    void service_handler(SipEvent&, AppIdSession*);
+    void client_handler(SipEvent&, AppIdSession&);
+    void service_handler(SipEvent&, AppIdSession&);
 
     static THREAD_LOCAL SipUdpClientDetector* client;
     static THREAD_LOCAL SipServiceDetector* service;

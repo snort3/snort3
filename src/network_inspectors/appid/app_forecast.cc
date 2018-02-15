@@ -120,7 +120,7 @@ void check_session_for_AF_indicator(Packet* p, int dir, AppId indicator)
     xhash_add(AF_actives, &master_key, &new_active_value);
 }
 
-AppId check_session_for_AF_forecast(AppIdSession* asd, Packet* p, int dir, AppId forecast)
+AppId check_session_for_AF_forecast(AppIdSession& asd, Packet* p, int dir, AppId forecast)
 {
     AFActVal* check_act_val;
 
@@ -139,7 +139,7 @@ AppId check_session_for_AF_forecast(AppIdSession* asd, Packet* p, int dir, AppId
         return APP_ID_UNKNOWN;
     }
 
-    asd->payload.set_id(check_act_val->target);
+    asd.payload.set_id(check_act_val->target);
     return forecast;
 }
 

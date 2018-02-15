@@ -89,12 +89,12 @@ ServiceDiscoveryState* AppIdServiceState::add(SfIp const*, IpProtocol, unsigned 
 void ServiceDiscoveryState::set_service_id_valid(ServiceDetector*) { }
 
 // Stubs for service_plugins/service_discovery.h
-int ServiceDiscovery::incompatible_data(AppIdSession*, Packet const*, int, ServiceDetector*)
+int ServiceDiscovery::incompatible_data(AppIdSession&, const Packet*, int, ServiceDetector*)
 {
   return 0;
 }
 
-int ServiceDiscovery::fail_service(AppIdSession*, Packet const*, int, ServiceDetector*)
+int ServiceDiscovery::fail_service(AppIdSession&, const Packet*, int, ServiceDetector*)
 {
   return 0;
 }

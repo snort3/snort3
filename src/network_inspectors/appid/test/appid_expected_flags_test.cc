@@ -70,7 +70,7 @@ TEST(appid_expected_flags, test1)
 {
     // Test 1 - expected flow same direction as parent, initiator monitored
     parent->set_session_flags(APPID_SESSION_INITIATOR_CHECKED | APPID_SESSION_INITIATOR_MONITORED);
-    test_detector.initialize_expected_session(parent, expected, 0, APP_ID_FROM_INITIATOR);
+    test_detector.initialize_expected_session(*parent, *expected, 0, APP_ID_FROM_INITIATOR);
 
     CHECK(expected->get_session_flags(allFlags) ==
         (APPID_SESSION_INITIATOR_CHECKED | APPID_SESSION_INITIATOR_MONITORED));
@@ -82,7 +82,7 @@ TEST(appid_expected_flags, test2)
 {
     // Test 2 - expected flow same direction as parent, responder monitored
     parent->set_session_flags(APPID_SESSION_RESPONDER_CHECKED | APPID_SESSION_RESPONDER_MONITORED);
-    test_detector.initialize_expected_session(parent, expected, 0, APP_ID_FROM_INITIATOR);
+    test_detector.initialize_expected_session(*parent, *expected, 0, APP_ID_FROM_INITIATOR);
 
     CHECK(expected->get_session_flags(allFlags) ==
         (APPID_SESSION_RESPONDER_CHECKED | APPID_SESSION_RESPONDER_MONITORED));
@@ -94,7 +94,7 @@ TEST(appid_expected_flags, test3)
 {
     // Test 3 - expected flow same direction as parent, all flags set
     parent->set_session_flags(allFlags);
-    test_detector.initialize_expected_session(parent, expected, 0, APP_ID_FROM_INITIATOR);
+    test_detector.initialize_expected_session(*parent, *expected, 0, APP_ID_FROM_INITIATOR);
 
     CHECK(expected->get_session_flags(allFlags) == allFlags);
 
@@ -105,7 +105,7 @@ TEST(appid_expected_flags, test4)
 {
     // Test 4 - expected flow opposite direction as parent, initiator monitored
     parent->set_session_flags(APPID_SESSION_INITIATOR_CHECKED | APPID_SESSION_INITIATOR_MONITORED);
-    test_detector.initialize_expected_session(parent, expected, 0, APP_ID_FROM_RESPONDER);
+    test_detector.initialize_expected_session(*parent, *expected, 0, APP_ID_FROM_RESPONDER);
 
     CHECK(expected->get_session_flags(allFlags) ==
         (APPID_SESSION_RESPONDER_CHECKED | APPID_SESSION_RESPONDER_MONITORED));
@@ -117,7 +117,7 @@ TEST(appid_expected_flags, test5)
 {
     // Test 5 - expected flow opposite direction as parent, responder monitored
     parent->set_session_flags(APPID_SESSION_RESPONDER_CHECKED | APPID_SESSION_RESPONDER_MONITORED);
-    test_detector.initialize_expected_session(parent, expected, 0, APP_ID_FROM_RESPONDER);
+    test_detector.initialize_expected_session(*parent, *expected, 0, APP_ID_FROM_RESPONDER);
 
     CHECK(expected->get_session_flags(allFlags) ==
         (APPID_SESSION_INITIATOR_CHECKED | APPID_SESSION_INITIATOR_MONITORED));
@@ -129,7 +129,7 @@ TEST(appid_expected_flags, test6)
 {
     // Test 6 - expected flow opposite direction as parent, all flags set
     parent->set_session_flags(allFlags);
-    test_detector.initialize_expected_session(parent, expected, 0, APP_ID_FROM_RESPONDER);
+    test_detector.initialize_expected_session(*parent, *expected, 0, APP_ID_FROM_RESPONDER);
 
     CHECK(expected->get_session_flags(allFlags) == allFlags);
 

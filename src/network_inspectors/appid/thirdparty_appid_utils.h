@@ -35,15 +35,12 @@ struct ThirdPartyAppIDModule;
 struct ThirdPartyAppIDAttributeData;
 struct Packet;
 
-extern THREAD_LOCAL ThirdPartyAppIDModule* thirdparty_appid_module;    // nullptr means no 3rd
-                                                                       // party AppID module
-void ThirdPartyAppIDInit(AppIdModuleConfig*);
+extern THREAD_LOCAL ThirdPartyAppIDModule* thirdparty_appid_module;
+
+void ThirdPartyAppIDInit(const AppIdModuleConfig*);
 void ThirdPartyAppIDReconfigure();
 void ThirdPartyAppIDFini();
-void ProcessThirdPartyResults(Packet*, int, AppId*, ThirdPartyAppIDAttributeData*);
-void checkTerminateTpModule(AppIdSession*, uint16_t tpPktCount);
-bool do_third_party_discovery(AppIdSession*, IpProtocol, const SfIp*,  Packet*, int&);
-void pickHttpXffAddress(AppIdSession*, Packet*, ThirdPartyAppIDAttributeData*);
+bool do_third_party_discovery(AppIdSession&, IpProtocol, const SfIp*,  Packet*, int&);
 
 inline bool is_third_party_appid_done(void* tp_session)
 {

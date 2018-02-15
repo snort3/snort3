@@ -116,7 +116,6 @@ int TnsServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     ServiceTNSData* ss;
     uint16_t offset;
-    AppIdSession* asd = args.asd;
     const uint8_t* data = args.data;
     uint16_t size = args.size;
 
@@ -125,11 +124,11 @@ int TnsServiceDetector::validate(AppIdDiscoveryArgs& args)
     if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    ss = (ServiceTNSData*)data_get(asd);
+    ss = (ServiceTNSData*)data_get(args.asd);
     if (!ss)
     {
         ss = (ServiceTNSData*)snort_calloc(sizeof(ServiceTNSData));
-        data_add(asd, ss, &snort_free);
+        data_add(args.asd, ss, &snort_free);
         ss->state = TNS_STATE_MESSAGE_LEN;
     }
 
@@ -273,15 +272,15 @@ int TnsServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
 
 inprocess:
-    service_inprocess(asd, args.pkt, args.dir);
+    service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 
 success:
-    return add_service(asd, args.pkt, args.dir, APP_ID_ORACLE_TNS,
+    return add_service(args.asd, args.pkt, args.dir, APP_ID_ORACLE_TNS,
         nullptr, ss->version ? ss->version : nullptr, nullptr);
 
 fail:
-    fail_service(asd, args.pkt, args.dir);
+    fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 }
 

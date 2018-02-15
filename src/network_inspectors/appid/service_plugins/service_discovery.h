@@ -71,17 +71,17 @@ public:
     ServiceDetector* get_next_udp_detector(AppIdDetectorsIterator&);
 
     bool do_service_discovery(AppIdSession&, Packet*, int);
-    int identify_service(AppIdSession*, Packet*, int dir);
-    int fail_service(AppIdSession*, const Packet*, int dir, ServiceDetector*);
-    int incompatible_data(AppIdSession*, const Packet*, int dir, ServiceDetector*);
+    int identify_service(AppIdSession&, Packet*, int dir);
+    int fail_service(AppIdSession&, const Packet*, int dir, ServiceDetector*);
+    int incompatible_data(AppIdSession&, const Packet*, int dir, ServiceDetector*);
     static int add_ftp_service_state(AppIdSession&);
 
 private:
     ServiceDiscovery(AppIdInspector& ins);
     void initialize() override;
-    void get_next_service(const Packet*, const int dir, AppIdSession*, ServiceDiscoveryState*);
-    void get_port_based_services(IpProtocol, uint16_t port, AppIdSession*);
-    void match_services_by_pattern(AppIdSession*, const Packet*, IpProtocol);
+    void get_next_service(const Packet*, const int dir, AppIdSession&, ServiceDiscoveryState*);
+    void get_port_based_services(IpProtocol, uint16_t port, AppIdSession&);
+    void match_by_pattern(AppIdSession&, const Packet*, IpProtocol);
 
     std::map<uint16_t, std::vector<ServiceDetector*> > tcp_services;
     std::map<uint16_t, std::vector<ServiceDetector*> > udp_services;

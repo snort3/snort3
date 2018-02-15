@@ -125,32 +125,29 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
     int mode = 0;
     uint16_t block = 0;
     uint16_t tmp = 0;
-    AppIdSession* pf = nullptr;
     const SfIp* sip = nullptr;
     const SfIp* dip = nullptr;
-    AppIdSession* asd = args.asd;
+    AppIdSession* pf = nullptr;
     const uint8_t* data = args.data;
-    Packet* pkt = args.pkt;
-    const int dir = args.dir;
     uint16_t size = args.size;
 
     if (!size)
         goto inprocess;
 
-    td = (ServiceTFTPData*)data_get(asd);
+    td = (ServiceTFTPData*)data_get(args.asd);
     if (!td)
     {
         td = (ServiceTFTPData*)snort_calloc(sizeof(ServiceTFTPData));
-        data_add(asd, td, &snort_free);
+        data_add(args.asd, td, &snort_free);
         td->state = TFTP_STATE_CONNECTION;
     }
     if (args.session_logging_enabled)
         LogMessage("AppIdDbg %s tftp state %d\n", args.session_logging_id, td->state);
 
-    if (td->state == TFTP_STATE_CONNECTION && dir == APP_ID_FROM_RESPONDER)
+    if (td->state == TFTP_STATE_CONNECTION && args.dir == APP_ID_FROM_RESPONDER)
         goto fail;
     if ((td->state == TFTP_STATE_TRANSFER || td->state == TFTP_STATE_DATA) &&
-        dir == APP_ID_FROM_INITIATOR)
+        args.dir == APP_ID_FROM_INITIATOR)
     {
         goto inprocess;
     }
@@ -184,21 +181,22 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
 
         tmp_td = (ServiceTFTPData*)snort_calloc(sizeof(ServiceTFTPData));
         tmp_td->state = TFTP_STATE_TRANSFER;
-        dip = pkt->ptrs.ip_api.get_dst();
-        sip = pkt->ptrs.ip_api.get_src();
-        pf = AppIdSession::create_future_session(pkt, dip, 0, sip, pkt->ptrs.sp, asd->protocol,
-            app_id, APPID_EARLY_SESSION_FLAG_FW_RULE, handler->get_inspector());
+        dip = args.pkt->ptrs.ip_api.get_dst();
+        sip = args.pkt->ptrs.ip_api.get_src();
+        pf = AppIdSession::create_future_session(args.pkt, dip, 0, sip,
+            args.pkt->ptrs.sp, args.asd.protocol, app_id, APPID_EARLY_SESSION_FLAG_FW_RULE,
+            handler->get_inspector());
         if (pf)
         {
-            data_add(pf, tmp_td, &snort_free);
-            if (pf->add_flow_data_id(pkt->ptrs.dp, this))
+            data_add(*pf, tmp_td, &snort_free);
+            if (pf->add_flow_data_id(args.pkt->ptrs.dp, this))
             {
                 pf->set_session_flags(APPID_SESSION_SERVICE_DETECTED);
                 pf->clear_session_flags(APPID_SESSION_CONTINUE);
                 tmp_td->state = TFTP_STATE_ERROR;
                 return APPID_ENOMEM;
             }
-            initialize_expected_session(asd, pf, APPID_SESSION_EXPECTED_EVALUATE, APP_ID_FROM_RESPONDER);
+            initialize_expected_session(args.asd, *pf, APPID_SESSION_EXPECTED_EVALUATE, APP_ID_FROM_RESPONDER);
             pf->common.initiator_ip = *sip;
             pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
             pf->scan_flags |= SCAN_HOST_PORT_FLAG;
@@ -252,7 +250,7 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
     case TFTP_STATE_ACK:
         if ((mode=tftp_verify_header(data, size, &block)) < 0)
         {
-            if (dir == APP_ID_FROM_RESPONDER)
+            if (args.dir == APP_ID_FROM_RESPONDER)
                 goto fail;
             else
             {
@@ -268,15 +266,15 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
             td->state = TFTP_STATE_TRANSFER;
             break;
         }
-        if (dir == APP_ID_FROM_INITIATOR && mode != TFTP_STATE_DATA)
+        if (args.dir == APP_ID_FROM_INITIATOR && mode != TFTP_STATE_DATA)
         {
             if (args.session_logging_enabled)
                 LogMessage("AppIdDbg %s tftp bad mode\n", args.session_logging_id);
             goto bail;
         }
-        if (dir == APP_ID_FROM_RESPONDER && mode != TFTP_STATE_ACK)
+        if (args.dir == APP_ID_FROM_RESPONDER && mode != TFTP_STATE_ACK)
             goto fail;
-        if (dir == APP_ID_FROM_INITIATOR)
+        if (args.dir == APP_ID_FROM_INITIATOR)
         {
             if (size < sizeof(ServiceTFTPHeader) + TFTP_MAX_PACKET_SIZE)
                 td->last = 1;
@@ -315,20 +313,20 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
 
 inprocess:
-    service_inprocess(asd, pkt, dir);
+    service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 
 success:
     if (args.session_logging_enabled)
         LogMessage("AppIdDbg %s tftp success\n", args.session_logging_id);
-    return add_service(asd, pkt, dir, APP_ID_TFTP);
+    return add_service(args.asd, args.pkt, args.dir, APP_ID_TFTP);
 
 bail:
-    incompatible_data(asd, pkt, dir);
+    incompatible_data(args.asd, args.pkt, args.dir);
     return APPID_NOT_COMPATIBLE;
 
 fail:
-    fail_service(asd, pkt, dir);
+    fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 }
 

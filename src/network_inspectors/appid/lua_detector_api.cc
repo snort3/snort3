@@ -457,7 +457,7 @@ static int service_add_service(lua_State* L)
 
     /*Phase2 - discuss AppIdServiceSubtype will be maintained on lua side therefore the last
       parameter on the following call is nullptr. Subtype is not displayed on DC at present. */
-    unsigned int retValue = ud->add_service(lsd->ldp.asd, lsd->ldp.pkt, lsd->ldp.dir,
+    unsigned int retValue = ud->add_service(*lsd->ldp.asd, lsd->ldp.pkt, lsd->ldp.dir,
         AppInfoManager::get_instance().get_appid_by_service_id(service_id),
         vendor, version, nullptr);
 
@@ -477,9 +477,8 @@ static int service_fail_service(lua_State* L)
     auto& ud = *UserData<LuaServiceDetector>::check(L, DETECTOR, 1);
     LuaStateDescriptor* lsd = ud->validate_lua_state(true);
     ServiceDiscovery& sdm = static_cast<ServiceDiscovery&>(ud->get_handler());
-    unsigned int retValue = sdm.fail_service(lsd->ldp.asd, lsd->ldp.pkt,
+    unsigned int retValue = sdm.fail_service(*lsd->ldp.asd, lsd->ldp.pkt,
         lsd->ldp.dir, nullptr);
-
     lua_pushnumber(L, retValue);
     return 1;
 }
@@ -496,9 +495,8 @@ static int service_in_process_service(lua_State* L)
     auto& ud = *UserData<LuaServiceDetector>::check(L, DETECTOR, 1);
     LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
-    unsigned int retValue = ud->service_inprocess(lsd->ldp.asd,
+    unsigned int retValue = ud->service_inprocess(*lsd->ldp.asd,
         lsd->ldp.pkt, lsd->ldp.dir);
-
     lua_pushnumber(L, retValue);
     return 1;
 }
@@ -515,7 +513,7 @@ static int service_set_incompatible_data(lua_State* L)
     auto& ud = *UserData<LuaServiceDetector>::check(L, DETECTOR, 1);
     LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
-    unsigned int retValue = ud->incompatible_data(lsd->ldp.asd,
+    unsigned int retValue = ud->incompatible_data(*lsd->ldp.asd,
         lsd->ldp.pkt, lsd->ldp.dir);
     lua_pushnumber(L, retValue);
     return 1;
@@ -825,8 +823,7 @@ static int service_add_client(lua_State* L)
         return 1;
     }
 
-    ud->add_app(lsd->ldp.asd, service_id, client_id, version);
-
+    ud->add_app(*lsd->ldp.asd, service_id, client_id, version);
     lua_pushnumber(L, 0);
     return 1;
 }
@@ -839,7 +836,7 @@ static int client_add_application(lua_State* L)
     unsigned int service_id = lua_tonumber(L, 2);
     unsigned int productId = lua_tonumber(L, 4);
     const char* version = lua_tostring(L, 5);
-    ud->add_app(lsd->ldp.asd,
+    ud->add_app(*lsd->ldp.asd,
         AppInfoManager::get_instance().get_appid_by_service_id(service_id),
         AppInfoManager::get_instance().get_appid_by_client_id(productId), version);
 
@@ -851,10 +848,8 @@ static int client_add_info(lua_State* L)
 {
     auto& ud = *UserData<LuaClientDetector>::check(L, DETECTOR, 1);
     LuaStateDescriptor* lsd = ud->validate_lua_state(true);
-
     const char* info = lua_tostring(L, 2);
-    ud->add_info(lsd->ldp.asd, info);
-
+    ud->add_info(*lsd->ldp.asd, info);
     lua_pushnumber(L, 0);
     return 1;
 }
@@ -863,13 +858,10 @@ static int client_add_user(lua_State* L)
 {
     auto& ud = *UserData<LuaClientDetector>::check(L, DETECTOR, 1);
     LuaStateDescriptor* lsd = ud->validate_lua_state(true);
-
     const char* userName = lua_tostring(L, 2);
     unsigned int service_id = lua_tonumber(L, 3);
-
-    ud->add_user(lsd->ldp.asd, userName,
+    ud->add_user(*lsd->ldp.asd, userName,
         AppInfoManager::get_instance().get_appid_by_service_id(service_id), true);
-
     lua_pushnumber(L, 0);
     return 1;
 }
@@ -880,7 +872,7 @@ static int client_add_payload(lua_State* L)
     LuaStateDescriptor* lsd = ud->validate_lua_state(true);
     unsigned int payloadId = lua_tonumber(L, 2);
 
-    ud->add_payload(lsd->ldp.asd,
+    ud->add_payload(*lsd->ldp.asd,
         AppInfoManager::get_instance().get_appid_by_payload_id(payloadId));
 
     lua_pushnumber(L, 0);
@@ -905,11 +897,9 @@ static int detector_get_flow(lua_State* L)
     auto df = new DetectorFlow();
     df->asd = lsd->ldp.asd;
     UserData<DetectorFlow>::push(L, DETECTORFLOW, df);
-
     df->myLuaState = L;
     lua_pushvalue(L, -1);
     df->userDataRef = luaL_ref(L, LUA_REGISTRYINDEX);
-
     LuaDetectorManager::add_detector_flow(df);
     return 1;
 }
@@ -1030,18 +1020,13 @@ static int detector_add_ssl_cname_pattern(lua_State* L)
         return 0;
     }
 
-#ifdef REMOVED_WHILE_NOT_IN_USE
     uint8_t* pattern_str = (uint8_t*)snort_strdup(tmp_string);
-    if (!ssl_add_cname_pattern(pattern_str, pattern_size, type, app_id,
-        &ud->appid_config->serviceSslConfig))
+    if (!ssl_add_cname_pattern(pattern_str, pattern_size, type, app_id))
     {
         snort_free(pattern_str);
         ErrorMessage("Failed to add an SSL pattern list member");
         return 0;
     }
-#else
-    UNUSED(type);
-#endif
 
     AppInfoManager::get_instance().set_app_info_active(app_id);
     return 0;
@@ -1154,10 +1139,10 @@ static inline int get_chp_key_pattern_boolean(lua_State* L, int index)
     return (0 != lua_tointeger(L, index));
 }
 
-static inline int get_chp_pattern_type(lua_State* L, int index, PatternType* pattern_type)
+static inline int get_chp_pattern_type(lua_State* L, int index, HttpFieldIds* pattern_type)
 {
-    *pattern_type = (PatternType)lua_tointeger(L, index);
-    if (*pattern_type < AGENT_PT || *pattern_type > MAX_PATTERN_TYPE)
+    *pattern_type = (HttpFieldIds)lua_tointeger(L, index);
+    if ( *pattern_type > MAX_PATTERN_TYPE )
     {
         ErrorMessage("LuaDetectorApi:Invalid CHP Action pattern type.");
         return -1;
@@ -1208,7 +1193,7 @@ static inline int get_chp_action_data(lua_State* L, int index, char** action_dat
     return 0;
 }
 
-static int add_chp_pattern_action(AppId appIdInstance, int isKeyPattern, PatternType patternType,
+static int add_chp_pattern_action(AppId appIdInstance, int isKeyPattern, HttpFieldIds patternType,
     size_t patternSize, char* patternData, ActionType actionType, char* optionalActionData)
 {
     CHPListElement* chpa;
@@ -1256,11 +1241,11 @@ static int add_chp_pattern_action(AppId appIdInstance, int isKeyPattern, Pattern
         switch (patternType)
         {
         // permitted pattern type (modifiable HTTP/SPDY request field)
-        case AGENT_PT:
-        case HOST_PT:
-        case REFERER_PT:
-        case URI_PT:
-        case COOKIE_PT:
+        case REQ_AGENT_FID:
+        case REQ_HOST_FID:
+        case REQ_REFERER_FID:
+        case REQ_URI_FID:
+        case REQ_COOKIE_FID:
             break;
         default:
             ErrorMessage(
@@ -1304,7 +1289,7 @@ static int add_chp_pattern_action(AppId appIdInstance, int isKeyPattern, Pattern
 
 static int detector_add_chp_action(lua_State* L)
 {
-    PatternType ptype;
+    HttpFieldIds ptype;
     size_t psize;
     char* pattern;
     ActionType action;
@@ -1386,7 +1371,7 @@ static int detector_create_chp_multi_application(lua_State* L)
 
 static int detector_add_chp_multi_action(lua_State* L)
 {
-    PatternType ptype;
+    HttpFieldIds ptype;
     size_t psize;
     char* pattern;
     ActionType action;
@@ -1813,7 +1798,7 @@ static int add_client_application(lua_State* L)
     unsigned int service_id = lua_tonumber(L, 2);
     unsigned int client_id = lua_tonumber(L, 3);
 
-    ud->add_app(lsd->ldp.asd, service_id, client_id, "");
+    ud->add_app(*lsd->ldp.asd, service_id, client_id, "");
     lua_pushnumber(L, 0);
     return 1;
 }
@@ -1837,7 +1822,7 @@ static int add_service_application(lua_State* L)
     /*Phase2 - discuss AppIdServiceSubtype will be maintained on lua side therefore the last
       parameter on the following call is nullptr.
       Subtype is not displayed on DC at present. */
-    unsigned retValue = ud->add_service(lsd->ldp.asd, lsd->ldp.pkt,
+    unsigned retValue = ud->add_service(*lsd->ldp.asd, lsd->ldp.pkt,
         lsd->ldp.dir, service_id);
 
     lua_pushnumber(L, retValue);
@@ -1850,8 +1835,7 @@ static int add_payload_application(lua_State* L)
     LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
     unsigned payload_id = lua_tonumber(L, 2);
-    ud->add_payload(lsd->ldp.asd, payload_id);
-
+    ud->add_payload(*lsd->ldp.asd, payload_id);
     lua_pushnumber(L, 0);
     return 1;
 }
@@ -2353,7 +2337,7 @@ int LuaStateDescriptor::lua_validate(AppIdDiscoveryArgs& args)
     ldp.data = args.data;
     ldp.size = args.size;
     ldp.dir = args.dir;
-    ldp.asd = args.asd;
+    ldp.asd = &args.asd;
     ldp.pkt = args.pkt;
     const char* validateFn = package_info.validateFunctionName.c_str();
 

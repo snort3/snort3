@@ -36,6 +36,7 @@
 struct AppIdServiceSubtype;
 class ClientDetector;
 class ServiceDetector;
+class AppIdDnsSession;
 class AppIdHttpSession;
 
 using AppIdFreeFCN = void (*)(void*);
@@ -44,7 +45,6 @@ const uint8_t* service_strstr(const uint8_t* haystack, unsigned haystack_len,
     const uint8_t* needle, unsigned needle_len);
 
 #define MAX_ATTR_LEN           1024
-#define HTTP_PREFIX "http://"
 
 #define SF_DEBUG_FILE   stdout
 #define MIN_SFTP_PACKET_COUNT   30
@@ -131,23 +131,6 @@ struct CommonAppIdData
     uint16_t initiator_port = 0;
 };
 
-// For dnsSession.state:
-#define DNS_GOT_QUERY    0x01
-#define DNS_GOT_RESPONSE 0x02
-
-struct DnsSession
-{
-    uint8_t state = 0;              // state
-    uint8_t host_len = 0;           // for host
-    uint8_t response_type = 0;      // response: RCODE
-    uint16_t id = 0;                // DNS msg ID
-    uint16_t host_offset = 0;       // for host
-    uint16_t record_type = 0;       // query: QTYPE
-    uint32_t ttl = 0;               // response: TTL
-    char* host = nullptr;           // host (usually query, but could be response for reverse
-                                    // lookup)
-};
-
 struct TlsSession
 {
     char* tls_host = nullptr;
@@ -158,7 +141,6 @@ struct TlsSession
     int tls_orgUnit_strlen = 0;
 };
 
-
 class AppIdSession : public FlowData
 {
 public:
@@ -168,6 +150,11 @@ public:
     static AppIdSession* allocate_session(const Packet*, IpProtocol, int, AppIdInspector&);
     static AppIdSession* create_future_session(const Packet*, const SfIp*, uint16_t, const SfIp*,
         uint16_t, IpProtocol, int16_t, int, AppIdInspector&);
+
+    AppIdInspector& get_inspector() const
+    {
+        return inspector;
+    }
 
     uint32_t session_id = 0;
     Flow* flow = nullptr;
@@ -210,7 +197,6 @@ public:
     char* netbios_name = nullptr;
     char* netbios_domain = nullptr;
 
-    AppIdHttpSession* hsession = nullptr;
     TlsSession* tsession = nullptr;
     unsigned scan_flags = 0;
     void* tpsession = nullptr;
@@ -230,9 +216,6 @@ public:
         uint64_t responder_bytes;
     } stats = { 0, 0, 0, 0 };
 
-    // Policy and rule ID for related flows (e.g. ftp-data)
-    AppIdSession* expectedFlow = nullptr;
-
     //appIds picked from encrypted session.
     struct
     {
@@ -242,9 +225,6 @@ public:
         AppId misc_id;
         AppId referred_id;
     } encrypted = { APP_ID_NONE, APP_ID_NONE, APP_ID_NONE, APP_ID_NONE, APP_ID_NONE };
-
-    // New fields introduced for DNS Blacklisting
-    DnsSession* dsession = nullptr;
 
     void* firewall_early_data = nullptr;
     AppId past_indicator = APP_ID_NONE;
@@ -274,7 +254,6 @@ public:
     void* remove_flow_data(unsigned id);
     void free_flow_data_by_id(unsigned id);
     void free_flow_data_by_mask(unsigned mask);
-    void free_dns_session_data();
     void free_tls_session_data();
     void free_flow_data();
 
@@ -297,7 +276,7 @@ public:
     void set_client_appid_data(AppId, char*);
     void set_service_appid_data(AppId, char*, char*);
     void set_referred_payload_app_id_data(AppId);
-    void set_payload_app_id_data(AppId, char*);
+    void set_payload_appid_data(AppId, char*);
     void check_app_detection_restart();
     void update_encrypted_app_id(AppId);
     void examine_rtmp_metadata();
@@ -308,7 +287,13 @@ public:
     void clear_http_flags();
     void reset_session_data();
 
+    AppIdHttpSession* get_http_session();
+    AppIdDnsSession* get_dns_session();
+
 private:
+    AppIdHttpSession* hsession = nullptr;
+    AppIdDnsSession* dsession = nullptr;
+
     void reinit_session_data();
     void delete_session_data();
     bool is_ssl_decryption_enabled();

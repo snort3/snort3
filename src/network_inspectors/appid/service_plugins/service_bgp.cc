@@ -121,24 +121,22 @@ int BgpServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     ServiceBGPData* bd;
     const ServiceBGPHeader* bh;
-    AppIdSession* asd = args.asd;
     const uint8_t* data = args.data;
-    uint16_t size = args.size;
     uint16_t len;
 
-    if (!size)
+    if (!args.size)
         goto inprocess;
     if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    if (size < sizeof(ServiceBGPHeader))
+    if (args.size < sizeof(ServiceBGPHeader))
         goto fail;
 
-    bd = (ServiceBGPData*)data_get(asd);
+    bd = (ServiceBGPData*)data_get(args.asd);
     if (!bd)
     {
         bd = (ServiceBGPData*)snort_calloc(sizeof(ServiceBGPData));
-        data_add(asd, bd, &snort_free);
+        data_add(args.asd, bd, &snort_free);
         bd->state = BGP_STATE_CONNECTION;
     }
 
@@ -146,7 +144,7 @@ int BgpServiceDetector::validate(AppIdDiscoveryArgs& args)
     switch (bd->state)
     {
     case BGP_STATE_CONNECTION:
-        if (size >= sizeof(bh->v1) + sizeof(ServiceBGPV1Open) &&
+        if (args.size >= sizeof(bh->v1) + sizeof(ServiceBGPV1Open) &&
             bh->v1.marker == 0xFFFF &&
             bh->v1.version == 0x01 && bh->v1.type == BGP_V1_TYPE_OPEN)
         {
@@ -160,7 +158,7 @@ int BgpServiceDetector::validate(AppIdDiscoveryArgs& args)
                 goto fail;
             bd->v1 = 1;
         }
-        else if (size >= sizeof(bh->v) + sizeof(ServiceBGPOpen) &&
+        else if (args.size >= sizeof(bh->v) + sizeof(ServiceBGPOpen) &&
             bh->v.marker[0] == 0xFFFFFFFF &&
             bh->v.marker[1] == 0xFFFFFFFF &&
             bh->v.marker[2] == 0xFFFFFFFF &&
@@ -187,7 +185,7 @@ int BgpServiceDetector::validate(AppIdDiscoveryArgs& args)
     case BGP_STATE_OPENSENT:
         if (bd->v1)
         {
-            if (size >= sizeof(bh->v1) && bh->v1.marker == 0xFFFF &&
+            if (args.size >= sizeof(bh->v1) && bh->v1.marker == 0xFFFF &&
                 bh->v1.version == 0x01 &&
                 bh->v1.type == BGP_V1_TYPE_OPEN_CONFIRM)
             {
@@ -199,7 +197,7 @@ int BgpServiceDetector::validate(AppIdDiscoveryArgs& args)
         }
         else
         {
-            if (size >= sizeof(bh->v) &&
+            if (args.size >= sizeof(bh->v) &&
                 bh->v.type == BGP_TYPE_KEEPALIVE)
             {
                 len = ntohs(bh->v.len);
@@ -213,14 +211,14 @@ int BgpServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
 
 inprocess:
-    service_inprocess(asd, args.pkt, args.dir);
+    service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 
 fail:
-    fail_service(asd, args.pkt, args.dir);
+    fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 
 success:
-    return add_service(asd, args.pkt, args.dir, APP_ID_BGP);
+    return add_service(args.asd, args.pkt, args.dir, APP_ID_BGP);
 }
 

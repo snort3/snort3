@@ -32,8 +32,8 @@
 #include "thirdparty_appid_api.h"
 
 #include "appid_mock_definitions.h"
-#include "appid_mock_http_session.h"
 #include "appid_mock_inspector.h"
+#include "appid_mock_http_session.h"
 #include "appid_mock_session.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
@@ -162,7 +162,7 @@ bool HttpEvent::contains_webdav_method()
 Flow* flow = nullptr;
 AppIdSession* mock_session = nullptr;
 
-AppIdSession* AppIdApi::get_appid_session(Flow*)
+AppIdSession* AppIdApi::get_appid_session(Flow&)
 {
     mock().actualCall("get_appid_session");
     return mock_session;
@@ -252,27 +252,27 @@ static void run_event_handler(TestData test_data, TestData* expect_data = nullpt
 
     mock().strictOrder();
     mock().expectOneCall("get_appid_session");
+    MockAppIdHttpSession* hsession = (MockAppIdHttpSession*)mock_session->get_http_session();
+    hsession->reset();
     event_handler.handle(event, flow);
     LONGS_EQUAL(expect_data->scan_flags, mock_session->scan_flags);
-    STRCMP_EQUAL(expect_data->host, mock_session->hsession->host);
-    STRCMP_EQUAL(expect_data->uri, mock_session->hsession->uri);
-    STRCMP_EQUAL(expect_data->content_type, mock_session->hsession->content_type);
-    STRCMP_EQUAL(expect_data->cookie, mock_session->hsession->cookie);
-    STRCMP_EQUAL(expect_data->location, mock_session->hsession->location);
-    STRCMP_EQUAL(expect_data->referer, mock_session->hsession->referer);
-    STRCMP_EQUAL(expect_data->server, mock_session->hsession->server);
-    STRCMP_EQUAL(expect_data->x_working_with, mock_session->hsession->x_working_with);
-    STRCMP_EQUAL(expect_data->useragent, mock_session->hsession->useragent);
-    STRCMP_EQUAL(expect_data->via, mock_session->hsession->via);
-    if (nullptr == mock_session->hsession->response_code)
+    STRCMP_EQUAL(expect_data->host, hsession->get_host());
+    STRCMP_EQUAL(expect_data->uri, hsession->get_uri());
+    STRCMP_EQUAL(expect_data->content_type, hsession->get_content_type());
+    STRCMP_EQUAL(expect_data->cookie, hsession->get_cookie());
+    STRCMP_EQUAL(expect_data->location, hsession->get_location());
+    STRCMP_EQUAL(expect_data->referer, hsession->get_referer());
+    STRCMP_EQUAL(expect_data->server, hsession->get_server());
+    STRCMP_EQUAL(expect_data->x_working_with, hsession->get_x_working_with());
+    STRCMP_EQUAL(expect_data->useragent, hsession->get_user_agent());
+    STRCMP_EQUAL(expect_data->via, hsession->get_via());
+    if (nullptr == hsession->get_response_code())
     {
         LONGS_EQUAL(0, expect_data->response_code);
     }
     else
     {
-        LONGS_EQUAL(expect_data->response_code, strtol(mock_session->hsession->response_code,
-            nullptr,
-            10));
+        LONGS_EQUAL(expect_data->response_code, strtol(hsession->get_response_code(), nullptr, 10));
     }
     mock().checkExpectations();
 }

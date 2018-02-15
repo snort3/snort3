@@ -26,6 +26,7 @@
 #include "detector_dns.h"
 
 #include "appid_config.h"
+#include "appid_dns_session.h"
 #include "app_info_table.h"
 #include "application_ids.h"
 
@@ -252,71 +253,54 @@ DnsUdpServiceDetector::DnsUdpServiceDetector(ServiceDiscovery* sd)
 }
 
 
-void DnsValidator::add_dns_query_info(AppIdSession* asd, uint16_t id, const uint8_t* host, uint8_t
+void DnsValidator::add_dns_query_info(AppIdSession& asd, uint16_t id, const uint8_t* host, uint8_t
     host_len, uint16_t host_offset, uint16_t record_type)
 {
-    if ( asd->dsession )
-    {
-        if ( ( asd->dsession->state != 0 ) && ( asd->dsession->id != id ) )
-            reset_dns_info(asd);
-    }
-    else
-        asd->dsession = (DnsSession*)snort_calloc(sizeof(DnsSession));
+    AppIdDnsSession* dsession = asd.get_dns_session();
+    if ( ( dsession->get_state() != 0 ) && ( dsession->get_id() != id ) )
+        dsession->reset();
 
-    if (asd->dsession->state & DNS_GOT_QUERY)
+    if (dsession->get_state() & DNS_GOT_QUERY)
         return;
-    asd->dsession->state |= DNS_GOT_QUERY;
+    dsession->set_state(dsession->get_state() | DNS_GOT_QUERY);
 
-    asd->dsession->id          = id;
-    asd->dsession->record_type = record_type;
+    dsession->set_id(id);
+    dsession->set_record_type(record_type);
 
-    if (!asd->dsession->host)
+    if (!dsession->get_host())
     {
         if ((host != nullptr) && (host_len > 0) && (host_offset > 0))
         {
-            asd->dsession->host_len    = host_len;
-            asd->dsession->host_offset = host_offset;
-            asd->dsession->host        = dns_parse_host(host, host_len);
-        }
+            char* new_host = dns_parse_host(host, host_len);
+            dsession->set_host(new_host);
+            dsession->set_host_offset(host_offset);
+       }
     }
 }
 
-void DnsValidator::add_dns_response_info(AppIdSession* asd, uint16_t id, const uint8_t* host,
+void DnsValidator::add_dns_response_info(AppIdSession& asd, uint16_t id, const uint8_t* host,
     uint8_t host_len, uint16_t host_offset, uint8_t response_type, uint32_t ttl)
 {
-    if ( asd->dsession )
-    {
-        if ( ( asd->dsession->state != 0 ) && ( asd->dsession->id != id ) )
-            reset_dns_info(asd);
-    }
-    else
-        asd->dsession = (DnsSession*)snort_calloc(sizeof(*asd->dsession));
+    AppIdDnsSession* dsession = asd.get_dns_session();
+        if ( ( dsession->get_state() != 0 ) && ( dsession->get_id() != id ) )
+            dsession->reset();
 
-    if (asd->dsession->state & DNS_GOT_RESPONSE)
+    if (dsession->get_state() & DNS_GOT_RESPONSE)
         return;
-    asd->dsession->state |= DNS_GOT_RESPONSE;
+    dsession->set_state(dsession->get_state() | DNS_GOT_RESPONSE);
 
-    asd->dsession->id            = id;
-    asd->dsession->response_type = response_type;
-    asd->dsession->ttl           = ttl;
+    dsession->set_id(id);
+    dsession->set_ttl(ttl);
+    dsession->set_response_type(response_type);
 
-    if (!asd->dsession->host)
+    if (!dsession->get_host())
     {
         if ((host != nullptr) && (host_len > 0) && (host_offset > 0))
         {
-            asd->dsession->host_len    = host_len;
-            asd->dsession->host_offset = host_offset;
-            asd->dsession->host        = dns_parse_host(host, host_len);
+            char* new_host = dns_parse_host(host, host_len);
+            dsession->set_host(new_host);
+            dsession->set_host_offset(host_offset);
         }
-    }
-}
-
-void DnsValidator::reset_dns_info(AppIdSession* asd)
-{
-    if (asd->dsession)
-    {
-        snort_free(asd->dsession->host);
-        memset(asd->dsession, 0, sizeof(*(asd->dsession)));
     }
 }
 
@@ -382,7 +366,7 @@ int DnsValidator::dns_validate_label(const uint8_t* data, uint16_t* offset, uint
 }
 
 int DnsValidator::dns_validate_query(const uint8_t* data, uint16_t* offset, uint16_t size,
-    uint16_t id, bool host_reporting, AppIdSession* asd)
+    uint16_t id, bool host_reporting, AppIdSession& asd)
 {
     int ret;
     const uint8_t* host;
@@ -433,7 +417,7 @@ int DnsValidator::dns_validate_query(const uint8_t* data, uint16_t* offset, uint
 }
 
 int DnsValidator::dns_validate_answer(const uint8_t* data, uint16_t* offset, uint16_t size,
-    uint16_t id, uint8_t rcode, bool host_reporting, AppIdSession* asd)
+    uint16_t id, uint8_t rcode, bool host_reporting, AppIdSession& asd)
 {
     int ret;
     uint8_t host_len;
@@ -495,7 +479,7 @@ int DnsValidator::dns_validate_answer(const uint8_t* data, uint16_t* offset, uin
 }
 
 int DnsValidator::dns_validate_header(const int dir, const DNSHeader* hdr,
-    bool host_reporting, AppIdSession* asd)
+    bool host_reporting, AppIdSession& asd)
 {
     if (hdr->Opcode > MAX_OPCODE || hdr->Opcode == INVALID_OPCODE)
         return APPID_NOMATCH;
@@ -506,7 +490,7 @@ int DnsValidator::dns_validate_header(const int dir, const DNSHeader* hdr,
     else if (!hdr->QR)        // Query.
     {
         if (host_reporting)
-            reset_dns_info(asd);
+            asd.get_dns_session()->reset();
         return dir == APP_ID_FROM_INITIATOR ? APPID_SUCCESS : APPID_REVERSED;
     }
     else     // Response.
@@ -514,7 +498,7 @@ int DnsValidator::dns_validate_header(const int dir, const DNSHeader* hdr,
 }
 
 int DnsValidator::validate_packet(const uint8_t* data, uint16_t size, const int,
-    bool host_reporting, AppIdSession* asd)
+    bool host_reporting, AppIdSession& asd)
 {
     uint16_t i;
     uint16_t count;
@@ -603,7 +587,7 @@ int DnsUdpServiceDetector::validate(AppIdDiscoveryArgs& args)
         {
             if (args.dir == APP_ID_FROM_RESPONDER)
             {
-                if (args.asd->get_session_flags(APPID_SESSION_UDP_REVERSED))
+                if (args.asd.get_session_flags(APPID_SESSION_UDP_REVERSED))
                 {
                     // To get here, we missed the initial query, got a
                     // response, and now we've got another query.
@@ -622,7 +606,7 @@ int DnsUdpServiceDetector::validate(AppIdDiscoveryArgs& args)
                     args.config->mod_config->dns_host_reporting, args.asd);
                 if (rval == APPID_SUCCESS)
                 {
-                    args.asd->set_session_flags(APPID_SESSION_UDP_REVERSED);
+                    args.asd.set_session_flags(APPID_SESSION_UDP_REVERSED);
                     goto success;
                 }
                 goto nomatch;
@@ -642,7 +626,7 @@ udp_done:
     {
     case APPID_SUCCESS:
 success:
-        args.asd->set_session_flags(APPID_SESSION_CONTINUE);
+        args.asd.set_session_flags(APPID_SESSION_CONTINUE);
         return add_service(args.asd, args.pkt, args.dir, APP_ID_DNS);
 
     case APPID_INVALID_CLIENT:
@@ -738,7 +722,7 @@ tcp_done:
     }
 
 success:
-    args.asd->set_session_flags(APPID_SESSION_CONTINUE);
+    args.asd.set_session_flags(APPID_SESSION_CONTINUE);
     return add_service(args.asd, args.pkt, args.dir, APP_ID_DNS);
 
 not_compatible:

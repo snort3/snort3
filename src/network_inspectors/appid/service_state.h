@@ -77,8 +77,8 @@ public:
     ~ServiceDiscoveryState();
     ServiceDetector* select_detector_by_brute_force(IpProtocol proto);
     void set_service_id_valid(ServiceDetector* sd);
-    void set_service_id_failed(AppIdSession* asd, const SfIp* client_ip, unsigned invalid_delta =
-        0);
+    void set_service_id_failed(AppIdSession& asd, const SfIp* client_ip,
+        unsigned invalid_delta = 0);
     void update_service_incompatiable(const SfIp* ip);
 
     SERVICE_ID_STATE get_state() const
@@ -138,7 +138,7 @@ public:
     static ServiceDiscoveryState* add(const SfIp*, IpProtocol, uint16_t port, bool decrypted);
     static ServiceDiscoveryState* get(const SfIp*, IpProtocol, uint16_t port, bool decrypted);
     static void remove(const SfIp*, IpProtocol, uint16_t port, bool decrypted);
-    static void check_reset(AppIdSession* asd, const SfIp* ip, uint16_t port);
+    static void check_reset(AppIdSession& asd, const SfIp* ip, uint16_t port);
 
     static void dump_stats();
 };

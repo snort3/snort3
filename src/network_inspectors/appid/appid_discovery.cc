@@ -28,6 +28,7 @@
 #include "appid_config.h"
 #include "appid_detector.h"
 #include "app_forecast.h"
+#include "appid_dns_session.h"
 #include "appid_http_session.h"
 #include "appid_inspector.h"
 #include "appid_session.h"
@@ -205,7 +206,7 @@ static inline unsigned get_ipfuncs_flags(const Packet* p, bool dst)
 #ifdef USE_RNA_CONFIG
     NSIPv6Addr ip6;
     NetworkSet* net_list;
-    AppIdConfig* config = AppIdConfig::get_appid_config();
+    AppIdConfig* config = AppIdInspector::get_inspector()->get_appid_config();
 #endif
 
     if (!dst)
@@ -331,21 +332,24 @@ static bool is_packet_ignored(AppIdSession* asd, Packet* p, int& direction)
     }
     else if ( p->is_rebuilt() && !p->flow->is_proxied() )
     {
-        if ( direction == APP_ID_FROM_INITIATOR &&
-            asd && asd->hsession && asd->hsession->get_offsets_from_rebuilt )
+        if ( asd )
         {
-            HttpPatternMatchers::get_instance()->get_http_offsets(p, asd->hsession);
-            if (asd->session_logging_enabled)
-                LogMessage(
+            AppIdHttpSession* hsession = asd->get_http_session();
+            if ( direction == APP_ID_FROM_INITIATOR && hsession && hsession->is_rebuilt_offsets() )
+            {
+                HttpPatternMatchers::get_instance()->get_http_offsets(p, hsession);
+                if (asd->session_logging_enabled)
+                    LogMessage(
                     "AppIdDbg %s offsets from rebuilt packet: uri: %u-%u cookie: %u-%u\n",
                     asd->session_logging_id,
-                    asd->hsession->fieldOffset[REQ_URI_FID],
-                    asd->hsession->fieldEndOffset[REQ_URI_FID],
-                    asd->hsession->fieldOffset[REQ_COOKIE_FID],
-                    asd->hsession->fieldEndOffset[REQ_COOKIE_FID]);
+                    hsession->get_field_offset(REQ_URI_FID),
+                    hsession->get_field_end_offset(REQ_URI_FID),
+                    hsession->get_field_offset(REQ_COOKIE_FID),
+                    hsession->get_field_end_offset(REQ_COOKIE_FID));
         }
         AppIdPegCounts::inc_disco_peg(AppIdPegCounts::DiscoveryPegs::IGNORED_PACKETS);
         return true;
+        }
     }
 
     return false;
@@ -549,13 +553,13 @@ static uint64_t is_session_monitored(const Packet* p, int dir, AppIdInspector& i
     return flow_flags;
 }
 
-static void lookup_appid_by_host_port(AppIdSession* asd, Packet* p, IpProtocol protocol,
+static void lookup_appid_by_host_port(AppIdSession& asd, Packet* p, IpProtocol protocol,
     int direction)
 {
     HostPortVal* hv = nullptr;
     uint16_t port = 0;
     const SfIp* ip = nullptr;
-    asd->scan_flags |= SCAN_HOST_PORT_FLAG;
+    asd.scan_flags |= SCAN_HOST_PORT_FLAG;
     if (direction == APP_ID_FROM_INITIATOR)
     {
         ip = p->ptrs.ip_api.get_dst();
@@ -571,22 +575,22 @@ static void lookup_appid_by_host_port(AppIdSession* asd, Packet* p, IpProtocol p
         switch (hv->type)
         {
         case 1:
-            asd->client.set_id(hv->appId);
-            asd->client_disco_state = APPID_DISCO_STATE_FINISHED;
+            asd.client.set_id(hv->appId);
+            asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
             break;
         case 2:
-            asd->payload.set_id(hv->appId);
+            asd.payload.set_id(hv->appId);
             break;
         default:
-            asd->service.set_id(hv->appId);
-            asd->sync_with_snort_id(hv->appId, p);
-            asd->service_disco_state = APPID_DISCO_STATE_FINISHED;
-            asd->client_disco_state = APPID_DISCO_STATE_FINISHED;
-            asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED);
+            asd.service.set_id(hv->appId);
+            asd.sync_with_snort_id(hv->appId, p);
+            asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
+            asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
+            asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED);
             if (thirdparty_appid_module)
-                thirdparty_appid_module->session_delete(asd->tpsession, 1);
+                thirdparty_appid_module->session_delete(asd.tpsession, 1);
 
-            asd->tpsession = nullptr;
+            asd.tpsession = nullptr;
         }
     }
 }
@@ -706,7 +710,7 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
                 port = p->ptrs.sp;
             }
 
-            AppIdServiceState::check_reset(asd, ip, port);
+            AppIdServiceState::check_reset(*asd, ip, port);
         }
 
         asd->previous_tcp_flags = p->ptrs.tcph->th_flags;
@@ -714,7 +718,7 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
 
     /*HostPort based AppId.  */
     if ( !(asd->scan_flags & SCAN_HOST_PORT_FLAG) )
-        lookup_appid_by_host_port(asd, p, protocol, direction);
+        lookup_appid_by_host_port(*asd, p, protocol, direction);
 
     asd->check_app_detection_restart();
 
@@ -776,14 +780,14 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
     /* exceptions for rexec and any other service detector that needs to see SYN and SYN/ACK */
     if (asd->get_session_flags(APPID_SESSION_REXEC_STDERR))
     {
-        ServiceDiscovery::get_instance().identify_service(asd, p, direction);
+        ServiceDiscovery::get_instance().identify_service(*asd, p, direction);
+        AppIdDnsSession* dsession = asd->get_dns_session();
+
         if (asd->service.get_id() == APP_ID_DNS &&
-            asd->config->mod_config->dns_host_reporting &&
-            asd->dsession && asd->dsession->host )
+            asd->config->mod_config->dns_host_reporting && dsession->get_host() )
         {
-            size_t size = asd->dsession->host_len;
             AppId client_id = APP_ID_NONE, payload_id = APP_ID_NONE;
-            dns_host_scan_hostname((const uint8_t*)asd->dsession->host, size,
+            dns_host_scan_hostname((const uint8_t*)dsession->get_host(), dsession->get_host_len(),
                 &client_id, &payload_id);
             asd->set_client_appid_data(client_id, nullptr);
         }
@@ -873,7 +877,7 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
         if (asd->payload.get_id() == APP_ID_NONE && asd->past_forecast != service_id &&
             asd->past_forecast != APP_ID_UNKNOWN)
         {
-            asd->past_forecast = check_session_for_AF_forecast(asd, p, direction,
+            asd->past_forecast = check_session_for_AF_forecast(*asd, p, direction,
                 (AppId)service_id);
         }
     }

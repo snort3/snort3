@@ -60,7 +60,7 @@ int init_appid_forecast();
 void clean_appid_forecast();
 void add_af_indicator(AppId, AppId, AppId);
 void check_session_for_AF_indicator(Packet*, int, AppId);
-AppId check_session_for_AF_forecast(AppIdSession*, Packet*, int, AppId);
+AppId check_session_for_AF_forecast(AppIdSession&, Packet*, int, AppId);
 
 #endif
 

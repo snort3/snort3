@@ -237,7 +237,7 @@ int AimClientDetector::validate(AppIdDiscoveryArgs& args)
 
 bail:
     // FIXIT-L - why are we setting client detected here?
-    args.asd->set_client_detected();
+    args.asd.set_client_detected();
     return APPID_SUCCESS;
 }
 

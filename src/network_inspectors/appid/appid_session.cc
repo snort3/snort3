@@ -29,6 +29,7 @@
 
 #include "app_forecast.h"
 #include "app_info_table.h"
+#include "appid_dns_session.h"
 #include "appid_http_session.h"
 #include "appid_inspector.h"
 #include "appid_stats.h"
@@ -151,7 +152,7 @@ AppIdSession::~AppIdSession()
     {
         AppIdStatistics* stats_mgr = AppIdStatistics::get_stats_manager();
         if ( stats_mgr )
-            stats_mgr->update(this);
+            stats_mgr->update(*this);
 
         // fail any service detection that is in process for this flow
         if (flow &&
@@ -162,10 +163,10 @@ AppIdSession::~AppIdSession()
             if ( sds )
             {
                 if (flow->server_ip.fast_eq6(service_ip))
-                    sds->set_service_id_failed(this, &flow->client_ip,
+                    sds->set_service_id_failed(*this, &flow->client_ip,
                         STATE_ID_INCONCLUSIVE_SERVICE_WEIGHT);
                 else
-                    sds->set_service_id_failed(this, &flow->server_ip,
+                    sds->set_service_id_failed(*this, &flow->server_ip,
                         STATE_ID_INCONCLUSIVE_SERVICE_WEIGHT);
             }
         }
@@ -256,11 +257,8 @@ void AppIdSession::reinit_session_data()
         payload.reset();
         referred_payload_app_id = tp_payload_app_id = APP_ID_NONE;
         clear_session_flags(APPID_SESSION_CONTINUE);
-        if ( hsession && hsession->url )
-        {
-            snort_free(hsession->url);
-            hsession->url = nullptr;
-        }
+        if ( hsession )
+            hsession->set_url(nullptr);
     }
 
     //service
@@ -453,7 +451,7 @@ void AppIdSession::examine_ssl_metadata(Packet* p)
                 &client_id, &payload_id)))
         {
             set_client_appid_data(client_id, nullptr);
-            set_payload_app_id_data((AppId)payload_id, nullptr);
+            set_payload_appid_data((AppId)payload_id, nullptr);
             setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id), inspector);
         }
         scan_flags &= ~SCAN_SSL_HOST_FLAG;
@@ -465,7 +463,7 @@ void AppIdSession::examine_ssl_metadata(Packet* p)
                 &client_id, &payload_id)))
         {
             set_client_appid_data(client_id, nullptr);
-            set_payload_app_id_data((AppId)payload_id, nullptr);
+            set_payload_appid_data((AppId)payload_id, nullptr);
             setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id), inspector);
         }
         snort_free(tsession->tls_cname);
@@ -478,7 +476,7 @@ void AppIdSession::examine_ssl_metadata(Packet* p)
                 &client_id, &payload_id)))
         {
             set_client_appid_data(client_id, nullptr);
-            set_payload_app_id_data((AppId)payload_id, nullptr);
+            set_payload_appid_data((AppId)payload_id, nullptr);
             setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id), inspector);
         }
         snort_free(tsession->tls_orgUnit);
@@ -495,18 +493,18 @@ void AppIdSession::examine_rtmp_metadata()
     char* version = nullptr;
 
     if ( !hsession )
-        hsession = new AppIdHttpSession(this);
+        hsession = new AppIdHttpSession(*this);
 
-    if ( hsession->url )
+    if ( const char* url = hsession->get_url() )
     {
         HttpPatternMatchers* http_matchers = HttpPatternMatchers::get_instance();
 
-        if ( ( ( http_matchers->get_appid_from_url(nullptr, hsession->url, &version,
-            hsession->referer, &client_id, &service_id,
+        if ( ( ( http_matchers->get_appid_from_url(nullptr, url, &version,
+            hsession->get_referer(), &client_id, &service_id,
             &payload_id, &referred_payload_id, true) )
             ||
-            ( http_matchers->get_appid_from_url(nullptr, hsession->url, &version,
-            hsession->referer, &client_id, &service_id,
+            ( http_matchers->get_appid_from_url(nullptr, url, &version,
+            hsession->get_referer(), &client_id, &service_id,
             &payload_id, &referred_payload_id, false) ) ) )
         {
             /* do not overwrite a previously-set client or service */
@@ -516,7 +514,7 @@ void AppIdSession::examine_rtmp_metadata()
                 set_service_appid_data(service_id, nullptr, nullptr);
 
             /* DO overwrite a previously-set data */
-            set_payload_app_id_data((AppId)payload.get_id(), nullptr);
+            set_payload_appid_data((AppId)payload.get_id(), nullptr);
             set_referred_payload_app_id_data(referred_payload_id);
         }
     }
@@ -549,7 +547,7 @@ void AppIdSession::set_referred_payload_app_id_data(AppId id)
         referred_payload_app_id = id;
 }
 
-void AppIdSession::set_payload_app_id_data(AppId id, char* version)
+void AppIdSession::set_payload_appid_data(AppId id, char* version)
 {
     if ( id <= APP_ID_NONE )
         return;
@@ -574,20 +572,6 @@ void AppIdSession::set_service_appid_data(AppId id, char* vendor, char* version)
     }
 
     service.update(id, vendor, version);
-}
-
-void AppIdSession::free_dns_session_data()
-{
-    if (dsession )
-    {
-        if (dsession->host)
-        {
-            snort_free(dsession->host);
-            dsession->host = nullptr;
-        }
-        snort_free(dsession);
-        dsession = nullptr;
-    }
 }
 
 void AppIdSession::free_tls_session_data()
@@ -626,7 +610,7 @@ void AppIdSession::delete_session_data()
 
     delete hsession;
     free_tls_session_data();
-    free_dns_session_data();
+    delete dsession;
 }
 
 
@@ -917,3 +901,16 @@ void AppIdSession::clear_http_flags()
     }
 }
 
+AppIdHttpSession* AppIdSession::get_http_session()
+{
+    if ( !hsession )
+        hsession = new AppIdHttpSession(*this);
+    return hsession;
+}
+
+AppIdDnsSession* AppIdSession::get_dns_session()
+{
+    if ( !dsession )
+        dsession = new AppIdDnsSession();
+    return dsession;
+}

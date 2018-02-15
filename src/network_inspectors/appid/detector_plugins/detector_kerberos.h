@@ -34,12 +34,12 @@ public:
     KerberosClientDetector(ClientDiscovery*);
 
     int validate(AppIdDiscoveryArgs&) override;
-    KerberosDetectorData* get_common_data(AppIdSession*);
+    KerberosDetectorData* get_common_data(AppIdSession&);
 
     bool failed_login = false;
 
 private:
-    int krb_walk_client_packet(KRBState*, const uint8_t*, const uint8_t*, AppIdSession*);
+    int krb_walk_client_packet(KRBState*, const uint8_t*, const uint8_t*, AppIdSession&);
 };
 
 class KerberosServiceDetector : public ServiceDetector

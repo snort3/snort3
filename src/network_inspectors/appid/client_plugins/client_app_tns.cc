@@ -95,32 +95,6 @@ struct ClientTNSMsg
 };
 #pragma pack()
 
-#ifdef REMOVED_WHILE_NOT_IN_USE
-static const char* msg_type[] =
-{
-    nullptr,
-    "Connect",
-    "Accept",
-    "Acknowledge",
-    "Refuse",
-    "Redirect",
-    "Data",
-    "Null",
-    nullptr,
-    "Abort",
-    nullptr,
-    "Resend",
-    "Marker",
-    "Attention",
-    "Control",
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr
-};
-#endif
-
 TnsClientDetector::TnsClientDetector(ClientDiscovery* cdm)
 {
     handler = cdm;

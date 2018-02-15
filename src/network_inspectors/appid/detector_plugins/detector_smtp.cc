@@ -184,7 +184,7 @@ SmtpClientDetector::SmtpClientDetector(ClientDiscovery* cdm)
 // FIXIT-M - refactor this to reduce the number of function parameters
 int SmtpClientDetector::extract_version_and_add_client_app(AppId clientId, const int prefix_len,
     const uint8_t* product, const uint8_t* product_end, ClientSMTPData* const client_data,
-    AppIdSession* asd, AppId appId)
+    AppIdSession& asd, AppId appId)
 {
     uint8_t* v_end = client_data->version + MAX_VERSION_SIZE - 1;
 
@@ -207,7 +207,7 @@ int SmtpClientDetector::extract_version_and_add_client_app(AppId clientId, const
  *  Returns 0 if a recognized product is found.  Otherwise returns 1.
  */
 int SmtpClientDetector::identify_client_version(ClientSMTPData* const fd, const uint8_t* product,
-    const uint8_t* data_end, AppIdSession* asd, Packet*)
+    const uint8_t* data_end, AppIdSession& asd, Packet*)
 {
     const uint8_t* p;
     AppId appId = (fd->flags & CLIENT_FLAG_SMTPS) ?  APP_ID_SMTPS : APP_ID_SMTP;
@@ -351,7 +351,7 @@ static void smtp_free_state(void* data)
     }
 }
 
-SMTPDetectorData* SmtpClientDetector::get_common_data(AppIdSession* asd)
+SMTPDetectorData* SmtpClientDetector::get_common_data(AppIdSession& asd)
 {
     SMTPDetectorData* dd = (SMTPDetectorData*)data_get(asd);
     if (!dd)
@@ -361,7 +361,7 @@ SMTPDetectorData* SmtpClientDetector::get_common_data(AppIdSession* asd)
         dd->server.state = SMTP_SERVICE_STATE_CONNECTION;
         dd->client.state = SMTP_CLIENT_STATE_HELO;
         dd->need_continue = 1;
-        asd->set_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+        asd.set_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
     }
 
     return dd;
@@ -378,7 +378,7 @@ int SmtpClientDetector::validate(AppIdDiscoveryArgs& args)
         return APPID_INPROCESS;
 
     ClientSMTPData* fd = &dd->client;
-    if (args.asd->get_session_flags(APPID_SESSION_ENCRYPTED | APPID_SESSION_DECRYPTED) == APPID_SESSION_ENCRYPTED)
+    if (args.asd.get_session_flags(APPID_SESSION_ENCRYPTED | APPID_SESSION_DECRYPTED) == APPID_SESSION_ENCRYPTED)
     {
         if ((fd->flags & CLIENT_FLAG_STARTTLS_SUCCESS))
         {
@@ -386,7 +386,7 @@ int SmtpClientDetector::validate(AppIdDiscoveryArgs& args)
             if (!fd->decryption_countdown)
             {
                 fd->flags |= CLIENT_FLAG_SMTPS; // report as SMTPS
-                args.asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+                args.asd.clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
                 /* Because we can't see any further info without decryption we settle for
                    plain APP_ID_SMTPS instead of perhaps finding data that would make calling
                    ExtractVersion() worthwhile, So set the appid and call it good. */
@@ -591,7 +591,7 @@ int SmtpClientDetector::validate(AppIdDiscoveryArgs& args)
 
 done:
     dd->need_continue = 0;
-    args.asd->set_client_detected();
+    args.asd.set_client_detected();
     return APPID_SUCCESS;
 }
 
@@ -761,17 +761,17 @@ int SmtpServiceDetector::validate(AppIdDiscoveryArgs& args)
     if (!args.size)
         goto inprocess;
 
-    args.asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+    args.asd.clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
 
     // Whether this is bound for the client detector or not, if client doesn't care
     //  then clear the APPID_SESSION_CONTINUE flag and we will be done sooner.
     if (dd->need_continue == 0)
     {
         dd->need_continue--; // don't come through again.
-        args.asd->clear_session_flags(APPID_SESSION_CONTINUE);
+        args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
         if ( dd->client.flags & CLIENT_FLAG_SMTPS )    // encrypted session client side gave up
             return add_service(args.asd, args.pkt, args.dir,  APP_ID_SMTPS);
-        else if ( args.asd->is_service_detected() )    // client done, so we are too
+        else if ( args.asd.is_service_detected() )    // client done, so we are too
             return APPID_SUCCESS;
         // We arrive here because the service side is not done yet.
     }
@@ -835,7 +835,7 @@ int SmtpServiceDetector::validate(AppIdDiscoveryArgs& args)
             fd->state = SMTP_SERVICE_STATE_HELO;
             if (fd->code == 220)
             {
-                args.asd->set_session_flags(APPID_SESSION_ENCRYPTED);
+                args.asd.set_session_flags(APPID_SESSION_ENCRYPTED);
                 // Now we wonder if the decryption mechanism is in place, so...
                 dd->client.flags |= CLIENT_FLAG_STARTTLS_SUCCESS;
                 dd->client.decryption_countdown = SSL_WAIT_PACKETS; // start a countdown
@@ -857,7 +857,7 @@ inprocess:
 
 success:
     if (dd->need_continue > 0)
-        args.asd->set_session_flags(APPID_SESSION_CONTINUE);
+        args.asd.set_session_flags(APPID_SESSION_CONTINUE);
 
     return add_service(args.asd, args.pkt, args.dir,
         (fd->state == SMTP_SERVICE_STATE_STARTTLS) ? APP_ID_SMTPS : APP_ID_SMTP);

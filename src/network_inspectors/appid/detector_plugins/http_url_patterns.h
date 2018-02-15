@@ -160,22 +160,22 @@ enum ActionType
 };
 
 // These values are used in Lua code as raw numbers. Do NOT reassign new values.
-enum PatternType
+enum HttpFieldIds : uint8_t
 {
     // Request-side headers
-    AGENT_PT,          // 0
-    HOST_PT,           // 1
-    REFERER_PT,        // 2
-    URI_PT,            // 3
-    COOKIE_PT,         // 4
-    REQ_BODY_PT,       // 5
+    REQ_AGENT_FID,          // 0
+    REQ_HOST_FID,           // 1
+    REQ_REFERER_FID,        // 2
+    REQ_URI_FID,            // 3
+    REQ_COOKIE_FID,         // 4
+    REQ_BODY_FID,           // 5
     // Response-side headers
-    CONTENT_TYPE_PT,   // 6
-    LOCATION_PT,       // 7
-    BODY_PT,           // 8
-    NUMBER_OF_PTYPES,  // 9
-    MAX_PATTERN_TYPE = BODY_PT,
-    MAX_KEY_PATTERN = URI_PT,
+    RSP_CONTENT_TYPE_FID,   // 6
+    RSP_LOCATION_FID,       // 7
+    RSP_BODY_FID,           // 8
+    MAX_HTTP_FIELD_ID,      // 9
+    MAX_PATTERN_TYPE = RSP_BODY_FID,
+    MAX_KEY_PATTERN = REQ_URI_FID,
 };
 
 struct CHPApp
@@ -186,9 +186,9 @@ struct CHPApp
     int num_scans;
     int key_pattern_count;
     int key_pattern_length_sum;
-    int ptype_scan_counts[NUMBER_OF_PTYPES];
-    int ptype_req_counts[NUMBER_OF_PTYPES];
-    int ptype_rewrite_insert_used[NUMBER_OF_PTYPES]; // boolean
+    int ptype_scan_counts[MAX_HTTP_FIELD_ID];
+    int ptype_req_counts[MAX_HTTP_FIELD_ID];
+    int ptype_rewrite_insert_used[MAX_HTTP_FIELD_ID]; // boolean
 };
 
 struct CHPAction
@@ -196,7 +196,7 @@ struct CHPAction
     AppId appIdInstance; // * see note above
     unsigned precedence; // order of creation
     int key_pattern;
-    PatternType ptype;
+    HttpFieldIds ptype;
     int psize;
     char* pattern;
     ActionType action;
@@ -226,14 +226,15 @@ struct CHPMatchCandidate
 
 typedef std::vector<CHPMatchCandidate> CHPMatchTally;
 
-struct ChpMatchDescriptor
+class ChpMatchDescriptor
 {
+public:
     void free_rewrite_buffers()
     {
-        for (unsigned i = 0; i < NUMBER_OF_PTYPES; i++)
+        for (unsigned i = 0; i < MAX_HTTP_FIELD_ID; i++)
             if (chp_rewritten[i])
             {
-                snort_free(chp_rewritten[i]);
+                snort_free((void*)chp_rewritten[i]);
                 chp_rewritten[i] = nullptr;
             }
     }
@@ -243,11 +244,11 @@ struct ChpMatchDescriptor
         chp_matches[cur_ptype].sort(ChpMatchDescriptor::comp_chp_actions);
     }
 
-    PatternType cur_ptype;
-    char* buffer[NUMBER_OF_PTYPES] = { nullptr };
-    uint16_t length[NUMBER_OF_PTYPES] = { 0 };
-    char* chp_rewritten[NUMBER_OF_PTYPES] = { nullptr };
-    std::list<MatchedCHPAction> chp_matches[NUMBER_OF_PTYPES];
+    HttpFieldIds cur_ptype;
+    const char* buffer[MAX_HTTP_FIELD_ID] = { nullptr };
+    uint16_t length[MAX_HTTP_FIELD_ID] = { 0 };
+    const char* chp_rewritten[MAX_HTTP_FIELD_ID] = { nullptr };
+    std::list<MatchedCHPAction> chp_matches[MAX_HTTP_FIELD_ID];
     CHPMatchTally match_tally;
 
 private:
@@ -262,8 +263,9 @@ private:
     }
 };
 
-struct HostUrlDetectorPattern
+class HostUrlDetectorPattern
 {
+public:
     HostUrlDetectorPattern(const uint8_t* host_pattern, unsigned length)
     {
         host.pattern = (const uint8_t*)snort_strdup((const char*)host_pattern);
@@ -313,14 +315,14 @@ public:
 
     void scan_key_chp(ChpMatchDescriptor&);
     AppId scan_chp(ChpMatchDescriptor&, char**, char**, int*, AppIdHttpSession*,
-            AppIdModuleConfig*);
-    AppId scan_header_x_working_with(const uint8_t*, uint32_t, char**);
-    int get_appid_by_pattern(const uint8_t*, unsigned, char**);
+           const AppIdModuleConfig*);
+    AppId scan_header_x_working_with(const char*, uint32_t, char**);
+    int get_appid_by_pattern(const char*, unsigned, char**);
     bool get_appid_from_url(char*, const char*, char**, const char*, AppId*, AppId*,
         AppId*, AppId*, bool);
-    AppId get_appid_by_content_type(const uint8_t*, int);
-    void get_server_vendor_version(const uint8_t*, int, char**, char**, AppIdServiceSubtype**);
-    void identify_user_agent(const uint8_t*, int, AppId&, AppId&, char**);
+    AppId get_appid_by_content_type(const char*, int);
+    void get_server_vendor_version(const char*, int, char**, char**, AppIdServiceSubtype**);
+    void identify_user_agent(const char*, int, AppId&, AppId&, char**);
     void get_http_offsets(Packet*, AppIdHttpSession*);
     uint32_t parse_multiple_http_patterns(const char* pattern, tMlmpPattern*,
         uint32_t numPartLimit, int level);

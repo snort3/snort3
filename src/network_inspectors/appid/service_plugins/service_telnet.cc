@@ -98,7 +98,6 @@ int TelnetServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     ServiceTelnetData* td;
     const uint8_t* end;
-    AppIdSession* asd = args.asd;
     const uint8_t* data = args.data;
     uint16_t size = args.size;
 
@@ -107,11 +106,11 @@ int TelnetServiceDetector::validate(AppIdDiscoveryArgs& args)
     if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    td = (ServiceTelnetData*)data_get(asd);
+    td = (ServiceTelnetData*)data_get(args.asd);
     if (!td)
     {
         td = (ServiceTelnetData*)snort_calloc(sizeof(ServiceTelnetData));
-        data_add(asd, td, &snort_free);
+        data_add(args.asd, td, &snort_free);
     }
 
     for (end=(data+size); data<end; data++)
@@ -141,14 +140,14 @@ int TelnetServiceDetector::validate(AppIdDiscoveryArgs& args)
         }
     }
 inprocess:
-    service_inprocess(asd, args.pkt, args.dir);
+    service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 
 success:
-    return add_service(asd, args.pkt, args.dir, APP_ID_TELNET);
+    return add_service(args.asd, args.pkt, args.dir, APP_ID_TELNET);
 
 fail:
-    fail_service(asd, args.pkt, args.dir);
+    fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 }
 

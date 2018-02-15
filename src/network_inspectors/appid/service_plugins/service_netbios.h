@@ -54,7 +54,7 @@ public:
     static void AppIdFreeSMBData(FpSMBData*);
 
 private:
-    void add_smb_info(AppIdSession*, unsigned major, unsigned minor, uint32_t flags);
+    void add_smb_info(AppIdSession&, unsigned major, unsigned minor, uint32_t flags);
 };
 #endif
 

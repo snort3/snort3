@@ -281,7 +281,7 @@ static int pop3_check_line(const uint8_t** data, const uint8_t* end)
 }
 
 static int pop3_server_validate(POP3DetectorData* dd, const uint8_t* data, uint16_t size,
-    AppIdSession* asd, int server)
+    AppIdSession& asd, int server)
 {
     ServicePOP3Data* pd = &dd->server;
     const uint8_t* begin = nullptr;
@@ -333,8 +333,8 @@ static int pop3_server_validate(POP3DetectorData* dd, const uint8_t* data, uint1
             else
             {
                 // we are potentially overriding the APP_ID_POP3 assessment that was made earlier.
-                asd->set_session_flags(APPID_SESSION_ENCRYPTED);
-                asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+                asd.set_session_flags(APPID_SESSION_ENCRYPTED);
+                asd.clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
                 pop3_client_detector->add_app(asd, APP_ID_POP3S, APP_ID_POP3S, nullptr);
             }
         }
@@ -352,10 +352,10 @@ static int pop3_server_validate(POP3DetectorData* dd, const uint8_t* data, uint1
                 snort_free(dd->client.username);
                 dd->client.username = nullptr;
                 dd->need_continue = 0;
-                asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+                asd.clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
                 dd->client.got_user = 1;
                 if (dd->client.detected)
-                    asd->set_client_detected();
+                    asd.set_client_detected();
             }
         }
         if (server && begin)
@@ -536,7 +536,7 @@ ven_ver_done:;
     return 0;
 }
 
-POP3DetectorData* Pop3ClientDetector::get_common_data(AppIdSession* asd)
+POP3DetectorData* Pop3ClientDetector::get_common_data(AppIdSession& asd)
 {
     POP3DetectorData* dd = (POP3DetectorData*)data_get(asd);
     if (!dd)
@@ -546,7 +546,7 @@ POP3DetectorData* Pop3ClientDetector::get_common_data(AppIdSession* asd)
         dd->server.state = POP3_STATE_CONNECT;
         dd->client.state = POP3_CLIENT_STATE_AUTH;
         dd->need_continue = 1;
-        asd->set_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+        asd.set_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
     }
 
     return dd;
@@ -571,7 +571,7 @@ int Pop3ClientDetector::validate(AppIdDiscoveryArgs& args)
     if (args.dir == APP_ID_FROM_RESPONDER)
     {
         if (pop3_server_validate(dd, args.data, args.size, args.asd, 0))
-            args.asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+            args.asd.clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
         return APPID_INPROCESS;
     }
 
@@ -589,7 +589,7 @@ int Pop3ClientDetector::validate(AppIdDiscoveryArgs& args)
         if (!cmd)
         {
             dd->need_continue = 0;
-            args.asd->set_client_detected();
+            args.asd.set_client_detected();
             return APPID_SUCCESS;
         }
         s += cmd->length;
@@ -774,21 +774,21 @@ int Pop3ServiceDetector::validate(AppIdDiscoveryArgs& args)
     pd = &dd->server;
 
     // server side is seeing packets so no need for client side to process them
-    args.asd->clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+    args.asd.clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
 
     if (dd->need_continue)
-        args.asd->set_session_flags(APPID_SESSION_CONTINUE);
+        args.asd.set_session_flags(APPID_SESSION_CONTINUE);
     else
     {
-        args.asd->clear_session_flags(APPID_SESSION_CONTINUE);
-        if (args.asd->is_service_detected())
+        args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
+        if (args.asd.is_service_detected())
             return APPID_SUCCESS;
     }
 
     if (!pop3_server_validate(dd, args.data, args.size, args.asd, 1))
     {
         if (pd->count >= POP3_COUNT_THRESHOLD
-            && !args.asd->is_service_detected())
+            && !args.asd.is_service_detected())
         {
             add_service_consume_subtype(args.asd, args.pkt, args.dir,
                 dd->client.state == POP3_CLIENT_STATE_STLS_CMD ? APP_ID_POP3S : APP_ID_POP3,
@@ -797,14 +797,14 @@ int Pop3ServiceDetector::validate(AppIdDiscoveryArgs& args)
             return APPID_SUCCESS;
         }
     }
-    else if (!args.asd->is_service_detected())
+    else if (!args.asd.is_service_detected())
     {
         fail_service(args.asd, args.pkt, args.dir);
         return APPID_NOMATCH;
     }
     else
     {
-        args.asd->clear_session_flags(APPID_SESSION_CONTINUE);
+        args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
         return APPID_SUCCESS;
     }
 

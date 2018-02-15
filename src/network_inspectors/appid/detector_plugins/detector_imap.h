@@ -36,7 +36,7 @@ public:
 
     void do_custom_init() override;
     int validate(AppIdDiscoveryArgs&) override;
-    ImapDetectorData* get_common_data(AppIdSession*);
+    ImapDetectorData* get_common_data(AppIdSession&);
 
 private:
     SearchTool* cmd_matcher = nullptr;

@@ -460,7 +460,6 @@ int NbnsServiceDetector::validate(AppIdDiscoveryArgs& args)
     const NBNSHeader* hdr;
     const uint8_t* begin;
     const uint8_t* end;
-    AppIdSession* asd = args.asd;
     const uint8_t* data = args.data;
     const int dir = args.dir;
     uint16_t size = args.size;
@@ -490,7 +489,7 @@ int NbnsServiceDetector::validate(AppIdDiscoveryArgs& args)
     {
         if (dir == APP_ID_FROM_RESPONDER)
         {
-            if (asd->get_session_flags(APPID_SESSION_UDP_REVERSED))
+            if (args.asd.get_session_flags(APPID_SESSION_UDP_REVERSED))
                 goto success;
             goto fail;
         }
@@ -542,23 +541,23 @@ int NbnsServiceDetector::validate(AppIdDiscoveryArgs& args)
 
     if (dir == APP_ID_FROM_INITIATOR)
     {
-        asd->set_session_flags(APPID_SESSION_UDP_REVERSED);
+        args.asd.set_session_flags(APPID_SESSION_UDP_REVERSED);
         goto inprocess;
     }
 
 success:
-    return add_service(asd, args.pkt, dir, APP_ID_NETBIOS_NS);
+    return add_service(args.asd, args.pkt, dir, APP_ID_NETBIOS_NS);
 
 inprocess:
-    service_inprocess(asd, args.pkt, dir);
+    service_inprocess(args.asd, args.pkt, dir);
     return APPID_INPROCESS;
 
 fail:
-    fail_service(asd, args.pkt, dir);
+    fail_service(args.asd, args.pkt, dir);
     return APPID_NOMATCH;
 
 not_compatible:
-    incompatible_data(asd, args.pkt, dir);
+    incompatible_data(args.asd, args.pkt, dir);
     return APPID_NOT_COMPATIBLE;
 }
 
@@ -618,7 +617,7 @@ static inline void smb_domain_skip_string(const uint8_t** data, uint16_t* size, 
 }
 
 static inline void smb_find_domain(const uint8_t* data, uint16_t size, const int,
-    AppIdSession* asd)
+    AppIdSession& asd)
 {
     const ServiceSMBHeader* smb;
     const ServiceSMBAndXResponse* resp;
@@ -754,8 +753,8 @@ static inline void smb_find_domain(const uint8_t* data, uint16_t size, const int
             return;
     }
 
-    if ( pos && (!asd->netbios_domain) )
-        asd->netbios_domain = snort_strdup(domain);
+    if ( pos && (!asd.netbios_domain) )
+        asd.netbios_domain = snort_strdup(domain);
 }
 
 NbssServiceDetector::NbssServiceDetector(ServiceDiscovery* sd)
@@ -793,8 +792,6 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
     const uint8_t* end;
     uint32_t tmp;
     int retval = -1;
-    AppIdSession* asd = args.asd;
-    Packet* pkt = args.pkt;
     const uint8_t* data = args.data;
     const int dir = args.dir;
     uint16_t size = args.size;
@@ -804,11 +801,11 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
     if (!size)
         goto inprocess;
 
-    nd = (ServiceNBSSData*)data_get(asd);
+    nd = (ServiceNBSSData*)data_get(args.asd);
     if (!nd)
     {
         nd = (ServiceNBSSData*)snort_calloc(sizeof(ServiceNBSSData));
-        data_add(asd, nd, &nbss_free_state);
+        data_add(args.asd, nd, &nbss_free_state);
         nd->state = NBSS_STATE_CONNECTION;
         nd->serviceAppId = APP_ID_NETBIOS_SSN;
         nd->miscAppId = APP_ID_NONE;
@@ -859,7 +856,7 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
                     if (nd->length <= tmp)
                     {
                         smb_find_domain(data + sizeof(NB_SMB_BANNER),
-                            nd->length - sizeof(NB_SMB_BANNER), dir, asd);
+                            nd->length - sizeof(NB_SMB_BANNER), dir, args.asd);
                     }
                 }
                 else if (tmp >= 4 && nd->length >= 4 &&
@@ -921,7 +918,7 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
                     }
                     if (nd->length <= tmp)
                     {
-                        smb_find_domain(data + sizeof(NB_SMB_BANNER), nd->length, dir, asd);
+                        smb_find_domain(data + sizeof(NB_SMB_BANNER), nd->length, dir, args.asd);
                     }
                 }
                 else if (tmp >= 4 && nd->length >= 4 &&
@@ -983,19 +980,19 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
     if ( retval == -1 )
         goto inprocess;
 
-    if ( !asd->is_service_detected() )
-        if ( add_service(asd, pkt, dir, nd->serviceAppId) == APPID_SUCCESS )
-            add_miscellaneous_info(asd, nd->miscAppId);
+    if ( !args.asd.is_service_detected() )
+        if ( add_service(args.asd, args.pkt, dir, nd->serviceAppId) == APPID_SUCCESS )
+            add_miscellaneous_info(args.asd, nd->miscAppId);
     return APPID_SUCCESS;
 
 inprocess:
-    if ( !asd->is_service_detected() )
-        service_inprocess(asd, pkt, dir);
+    if ( !args.asd.is_service_detected() )
+        service_inprocess(args.asd, args.pkt, dir);
     return APPID_INPROCESS;
 
 fail:
-    if ( !asd->is_service_detected() )
-        fail_service(asd, pkt, dir);
+    if ( !args.asd.is_service_detected() )
+        fail_service(args.asd, args.pkt, dir);
     return APPID_NOMATCH;
 }
 
@@ -1043,9 +1040,7 @@ int NbdgmServiceDetector::validate(AppIdDiscoveryArgs& args)
     uint32_t server_type;
     AppId serviceAppId = APP_ID_NETBIOS_DGM;
     AppId miscAppId = APP_ID_NONE;
-    AppIdSession* asd = args.asd;
     const uint8_t* data = args.data;
-    Packet* pkt = args.pkt;
     const int dir = args.dir;
     uint16_t size = args.size;
 
@@ -1053,7 +1048,7 @@ int NbdgmServiceDetector::validate(AppIdDiscoveryArgs& args)
         goto inprocess;
     if (size < sizeof(NBDgmHeader))
         goto fail;
-    if (pkt->ptrs.sp != pkt->ptrs.dp)
+    if (args.pkt->ptrs.sp != args.pkt->ptrs.dp)
         goto fail;
 
     source_name[0] = 0;
@@ -1093,7 +1088,7 @@ int NbdgmServiceDetector::validate(AppIdDiscoveryArgs& args)
         if (end-data >= (int)sizeof(NB_SMB_BANNER) &&
             !memcmp(data, NB_SMB_BANNER, sizeof(NB_SMB_BANNER)))
         {
-            if (!asd->is_service_detected())
+            if (!args.asd.is_service_detected())
                 serviceAppId = APP_ID_NETBIOS_DGM;
 
             data += sizeof(NB_SMB_BANNER);
@@ -1127,12 +1122,12 @@ int NbdgmServiceDetector::validate(AppIdDiscoveryArgs& args)
                 goto not_mailslot;
             }
             server_type = LETOHL(&browser->server_type);
-            add_smb_info(asd, browser->major, browser->minor, server_type);
+            add_smb_info(args.asd, browser->major, browser->minor, server_type);
         }
 not_mailslot:
         if (source_name[0])
-            add_host_info(asd, SERVICE_HOST_INFO_NETBIOS_NAME, source_name);
-        asd->set_session_flags(APPID_SESSION_CONTINUE);
+            add_host_info(args.asd, SERVICE_HOST_INFO_NETBIOS_NAME, source_name);
+        args.asd.set_session_flags(APPID_SESSION_CONTINUE);
         goto success;
     case NBDGM_TYPE_ERROR:
         if (end-data < (int)sizeof(NBDgmError))
@@ -1152,32 +1147,32 @@ not_mailslot:
     }
 
 fail:
-    if (!asd->is_service_detected() )
+    if (!args.asd.is_service_detected() )
     {
-        fail_service(asd, pkt, dir);
+        fail_service(args.asd, args.pkt, dir);
     }
-    asd->clear_session_flags(APPID_SESSION_CONTINUE);
+    args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
     return APPID_NOMATCH;
 
 success:
-    if ( !asd->is_service_detected() )
+    if ( !args.asd.is_service_detected() )
     {
         if ( dir == APP_ID_FROM_RESPONDER )
         {
-            if ( add_service(asd, pkt, dir, serviceAppId) == APPID_SUCCESS )
-                add_miscellaneous_info(asd, miscAppId);
+            if ( add_service(args.asd, args.pkt, dir, serviceAppId) == APPID_SUCCESS )
+                add_miscellaneous_info(args.asd, miscAppId);
         }
     }
     return APPID_SUCCESS;
 
 inprocess:
-    if ( !asd->is_service_detected() )
-        service_inprocess(asd, pkt, dir);
+    if ( !args.asd.is_service_detected() )
+        service_inprocess(args.asd, args.pkt, dir);
     return APPID_INPROCESS;
 }
 
-void NbdgmServiceDetector::add_smb_info(AppIdSession* asd, unsigned major, unsigned minor, uint32_t
-    flags)
+void NbdgmServiceDetector::add_smb_info(AppIdSession& asd, unsigned major, unsigned minor,
+    uint32_t flags)
 {
     FpSMBData* sd;
 
@@ -1192,13 +1187,13 @@ void NbdgmServiceDetector::add_smb_info(AppIdSession* asd, unsigned major, unsig
     else
         sd = (FpSMBData*)snort_calloc(sizeof(FpSMBData));
 
-    if ( asd->add_flow_data(sd, APPID_SESSION_DATA_SMB_DATA, (AppIdFreeFCN)AppIdFreeSMBData) )
+    if ( asd.add_flow_data(sd, APPID_SESSION_DATA_SMB_DATA, (AppIdFreeFCN)AppIdFreeSMBData) )
     {
         AppIdFreeSMBData(sd);
         return;
     }
 
-    asd->set_session_flags(APPID_SESSION_HAS_SMB_INFO);
+    asd.set_session_flags(APPID_SESSION_HAS_SMB_INFO);
     sd->major = major;
     sd->minor = minor;
     sd->flags = flags & FINGERPRINT_UDP_FLAGS_MASK;

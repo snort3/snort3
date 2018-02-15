@@ -84,26 +84,24 @@ int LprServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     ServiceLPRData* ld;
     int i;
-    AppIdSession* asd = args.asd;
     const uint8_t* data = args.data;
-    const int dir = args.dir;
     uint16_t size = args.size;
 
     if (!size)
         goto inprocess;
 
-    ld = (ServiceLPRData*)data_get(asd);
+    ld = (ServiceLPRData*)data_get(args.asd);
     if (!ld)
     {
         ld = (ServiceLPRData*)snort_calloc(sizeof(ServiceLPRData));
-        data_add(asd, ld, &snort_free);
+        data_add(args.asd, ld, &snort_free);
         ld->state = LPR_STATE_COMMAND;
     }
 
     switch (ld->state)
     {
     case LPR_STATE_COMMAND:
-        if (dir != APP_ID_FROM_INITIATOR)
+        if (args.dir != APP_ID_FROM_INITIATOR)
             goto bail;
         if (size < 3)
             goto bail;
@@ -135,7 +133,7 @@ int LprServiceDetector::validate(AppIdDiscoveryArgs& args)
         }
         break;
     case LPR_STATE_RECEIVE:
-        if (dir != APP_ID_FROM_INITIATOR)
+        if (args.dir != APP_ID_FROM_INITIATOR)
             goto inprocess;
         if (size < 2)
             goto bail;
@@ -178,7 +176,7 @@ int LprServiceDetector::validate(AppIdDiscoveryArgs& args)
         }
         break;
     case LPR_STATE_REPLY1:
-        if (dir != APP_ID_FROM_RESPONDER)
+        if (args.dir != APP_ID_FROM_RESPONDER)
             goto inprocess;
         if (size != 1)
             goto fail;
@@ -191,7 +189,7 @@ int LprServiceDetector::validate(AppIdDiscoveryArgs& args)
         ld->state = LPR_STATE_REPLY;
         break;
     case LPR_STATE_REPLY:
-        if (dir != APP_ID_FROM_RESPONDER)
+        if (args.dir != APP_ID_FROM_RESPONDER)
             goto inprocess;
         if (size != 1)
             goto fail;
@@ -209,18 +207,18 @@ int LprServiceDetector::validate(AppIdDiscoveryArgs& args)
         goto bail;
     }
 inprocess:
-    service_inprocess(asd, args.pkt, dir);
+    service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 
 success:
-    return add_service(asd, args.pkt, dir, APP_ID_PRINTSRV);
+    return add_service(args.asd, args.pkt, args.dir, APP_ID_PRINTSRV);
 
 fail:
-    fail_service(asd, args.pkt, dir);
+    fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 
 bail:
-    incompatible_data(asd, args.pkt, dir);
+    incompatible_data(args.asd, args.pkt, args.dir);
     return APPID_NOT_COMPATIBLE;
 }
 

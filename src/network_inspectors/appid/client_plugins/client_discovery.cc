@@ -282,7 +282,7 @@ int ClientDiscovery::exec_client_detectors(AppIdSession& asd, Packet* p, int dir
 
     if (asd.client_detector != nullptr)
     {
-        AppIdDiscoveryArgs disco_args(p->data, p->dsize, direction, &asd, p);
+        AppIdDiscoveryArgs disco_args(p->data, p->dsize, direction, asd, p);
         ret = asd.client_detector->validate(disco_args);
         if (asd.session_logging_enabled)
             LogMessage("AppIdDbg %s %s client detector returned %d\n",
@@ -292,7 +292,7 @@ int ClientDiscovery::exec_client_detectors(AppIdSession& asd, Packet* p, int dir
     {
         for ( auto kv = asd.client_candidates.begin(); kv != asd.client_candidates.end(); )
         {
-            AppIdDiscoveryArgs disco_args(p->data, p->dsize, direction, &asd, p);
+            AppIdDiscoveryArgs disco_args(p->data, p->dsize, direction, asd, p);
             int result = kv->second->validate(disco_args);
             if (asd.session_logging_enabled)
                 LogMessage("AppIdDbg %s %s client detector returned %d\n",

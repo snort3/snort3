@@ -21,29 +21,17 @@
 #ifndef APPID_MOCK_HTTP_SESSION_H
 #define APPID_MOCK_HTTP_SESSION_H
 
-AppIdHttpSession::AppIdHttpSession(AppIdSession* session) : asd(session) { }
+AppIdHttpSession::AppIdHttpSession(AppIdSession& session)
+    : asd(session)
+{
+    http_fields.reserve(MAX_HTTP_FIELD_ID);
+    ptype_req_counts.assign(MAX_HTTP_FIELD_ID, 0);
+    ptype_scan_counts.assign(MAX_HTTP_FIELD_ID, 0);
+}
+
 AppIdHttpSession::~AppIdHttpSession()
 {
-    snort_free(body);
-    snort_free(content_type);
-    snort_free(cookie);
-    snort_free(host);
-    snort_free(location);
-    snort_free(referer);
-    snort_free(req_body);
-    snort_free(response_code);
-    snort_free(server);
-    snort_free(uri);
-    snort_free(url);
-    snort_free(useragent);
-    snort_free(via);
-    snort_free(x_working_with);
-    delete xffAddr;
-
-    if (new_field_contents)
-        for ( unsigned i = 0; i < NUMBER_OF_PTYPES; i++)
-            if (nullptr != new_field[i])
-                snort_free(new_field[i]);
+    delete xff_addr;
 }
 
 int AppIdHttpSession::process_http_packet(int) { return 0; }
@@ -68,47 +56,164 @@ char const* RSP_BODY = "this is the body of the http response";
 #define URI_OFFSET 22
 #define COOKIE_OFFSET 44
 
-void init_hsession_new_fields(AppIdHttpSession* hsession)
+static void replace_header_data(std::string& header, const uint8_t* content, int32_t clen)
 {
-    hsession->new_field_contents = true;
-    hsession->new_field[REQ_AGENT_FID] = snort_strdup(USERAGENT);
-    hsession->new_field[REQ_HOST_FID] = snort_strdup(HOST);
-    hsession->new_field[REQ_REFERER_FID] = snort_strdup(REFERER);
-    hsession->new_field[REQ_URI_FID] = snort_strdup(URI);
-    hsession->new_field[REQ_COOKIE_FID] = snort_strdup(NEW_COOKIE);
-    hsession->new_field[REQ_BODY_FID] = snort_strdup(REQ_BODY);
-    hsession->new_field[RSP_CONTENT_TYPE_FID] = snort_strdup(CONTENT_TYPE);
-    hsession->new_field[RSP_LOCATION_FID] = snort_strdup(LOCATION);
-    hsession->new_field[RSP_BODY_FID] = snort_strdup(RSP_BODY);
+    if (clen <= 0)
+        return;
+
+    header.clear();
+    header.append((char*)content, clen);
 }
 
-AppIdHttpSession* init_http_session(AppIdSession* asd)
+void AppIdHttpSession::update_host(const uint8_t* new_host, int32_t len)
 {
-    AppIdHttpSession* hsession = new AppIdHttpSession(asd);
-    SfIp* ip = new SfIp;
-    ip->pton(AF_INET, APPID_UT_XFF_IP_ADDR);
-    hsession->xffAddr = ip;
-    hsession->content_type = snort_strdup(CONTENT_TYPE);
-    hsession->cookie = snort_strdup(COOKIE);
-    hsession->host = snort_strdup(HOST);
-    hsession->location = snort_strdup(LOCATION);
-    hsession->referer = snort_strdup(REFERER);
-    hsession->response_code = snort_strdup(RESPONSE_CODE);
-    hsession->server = snort_strdup(SERVER);
-    hsession->url = snort_strdup(URL);
-    hsession->uri = snort_strdup(URI);
-    hsession->useragent = snort_strdup(USERAGENT);
-    hsession->via = snort_strdup(VIA);
-    hsession->x_working_with = snort_strdup(X_WORKING_WITH);
-    hsession->body = snort_strdup(RSP_BODY);
-    hsession->req_body = snort_strdup(REQ_BODY);
-    hsession->fieldOffset[REQ_URI_FID] = URI_OFFSET;
-    hsession->fieldEndOffset[REQ_URI_FID] = URI_OFFSET + strlen(URI);
-    hsession->fieldOffset[REQ_COOKIE_FID] = COOKIE_OFFSET;
-    hsession->fieldEndOffset[REQ_COOKIE_FID] = COOKIE_OFFSET + strlen(NEW_COOKIE);
-
-    return hsession;
+    replace_header_data(host, new_host, len);
 }
+
+void AppIdHttpSession::update_uri(const uint8_t* new_uri, int32_t len)
+{
+    replace_header_data(uri, new_uri, len);
+}
+
+void AppIdHttpSession::update_url()
+{
+    url = "http://";
+    url += host + uri;
+}
+
+void AppIdHttpSession::update_useragent(const uint8_t* new_ua, int32_t len)
+{
+    replace_header_data(useragent, new_ua, len);
+}
+
+void AppIdHttpSession::update_cookie(const uint8_t* new_cookie, int32_t len)
+{
+    replace_header_data(cookie, new_cookie, len);
+}
+
+void AppIdHttpSession::update_referer(const uint8_t* new_referer, int32_t len)
+{
+    replace_header_data(referer, new_referer, len);
+}
+
+void AppIdHttpSession::update_x_working_with(const uint8_t* new_xww, int32_t len)
+{
+    replace_header_data(x_working_with, new_xww, len);
+}
+
+void AppIdHttpSession::update_content_type(const uint8_t* new_content_type, int32_t len)
+{
+    replace_header_data(content_type, new_content_type, len);
+}
+
+void AppIdHttpSession::update_location(const uint8_t* new_location, int32_t len)
+{
+    replace_header_data(location, new_location, len);
+}
+
+void AppIdHttpSession::update_server(const uint8_t* new_server, int32_t len)
+{
+    replace_header_data(server, new_server, len);
+}
+
+void AppIdHttpSession::update_via(const uint8_t* new_via, int32_t len)
+{
+    replace_header_data(via, new_via, len);
+}
+
+void AppIdHttpSession::update_body(const uint8_t* new_body, int32_t len)
+{
+    replace_header_data(body, new_body, len);
+}
+
+void AppIdHttpSession::update_req_body(const uint8_t* new_req_body, int32_t len)
+{
+    replace_header_data(req_body, new_req_body, len);
+}
+
+void AppIdHttpSession::update_response_code(const char* new_rc)
+{
+    response_code = new_rc;
+}
+
+void AppIdHttpSession::set_url(const char* url)
+{
+    if ( url )
+        this->url = url;
+    else
+        this->url.clear();
+}
+
+class MockAppIdHttpSession : public AppIdHttpSession
+{
+public:
+    MockAppIdHttpSession(AppIdSession& asd)
+        : AppIdHttpSession(asd)
+    {
+        SfIp* ip = new SfIp;
+        ip->pton(AF_INET, APPID_UT_XFF_IP_ADDR);
+        xff_addr = ip;
+        content_type = CONTENT_TYPE;
+        cookie = COOKIE;
+        host = HOST;
+        location = LOCATION;
+        referer = REFERER;
+        response_code = RESPONSE_CODE;
+        server = SERVER;
+        url = URL;
+        uri = URI;
+        useragent = USERAGENT;
+        via = VIA;
+        x_working_with = X_WORKING_WITH;
+        body = RSP_BODY;
+        req_body = REQ_BODY;
+        http_fields[REQ_URI_FID].start_offset = URI_OFFSET;
+        http_fields[REQ_URI_FID].end_offset = URI_OFFSET + strlen(URI);
+        http_fields[REQ_COOKIE_FID].start_offset = COOKIE_OFFSET;
+        http_fields[REQ_COOKIE_FID].end_offset = COOKIE_OFFSET + strlen(NEW_COOKIE);
+    }
+
+    void init_hsession_new_fields()
+    {
+        http_fields[REQ_AGENT_FID].field = USERAGENT;
+        http_fields[REQ_HOST_FID].field = HOST;
+        http_fields[REQ_REFERER_FID].field = REFERER;
+        http_fields[REQ_URI_FID].field = URI;
+        http_fields[REQ_COOKIE_FID].field = NEW_COOKIE;
+        http_fields[REQ_BODY_FID].field = REQ_BODY;
+        http_fields[RSP_CONTENT_TYPE_FID].field = CONTENT_TYPE;
+        http_fields[RSP_LOCATION_FID].field = LOCATION;
+        http_fields[RSP_BODY_FID].field = RSP_BODY;
+    }
+
+    void reset()
+    {
+        content_type.clear();
+        cookie.clear();
+        host.clear();
+        location.clear();
+        referer.clear();
+        response_code.clear();
+        server.clear();
+        url.clear();
+        uri.clear();
+        useragent.clear();
+        via.clear();
+        x_working_with.clear();
+        body.clear();
+        req_body.clear();
+    }
+
+    static AppIdHttpSession* init_http_session(AppIdSession& asd)
+    {
+        AppIdHttpSession* hsession = new MockAppIdHttpSession(asd);
+
+        return hsession;
+    }
+
+
+
+};
 
 #endif
 

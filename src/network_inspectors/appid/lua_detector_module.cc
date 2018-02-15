@@ -85,7 +85,7 @@ bool get_lua_field(lua_State* L, int table, const char* field, IpProtocol& out)
     return result;
 }
 
-static lua_State* create_lua_state(AppIdModuleConfig* mod_config)
+static lua_State* create_lua_state(const AppIdModuleConfig* mod_config)
 {
     auto L = luaL_newstate();
 

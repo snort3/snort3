@@ -615,19 +615,17 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
     const ServiceSSLV3Record* rec;
     const ServiceSSLV3CertsRecord* certs_rec;
     uint16_t ver;
-    AppIdSession* asd = args.asd;
     const uint8_t* data = args.data;
-    const int dir = args.dir;
     uint16_t size = args.size;
 
     if (!size)
         goto inprocess;
 
-    ss = (ServiceSSLData*)data_get(asd);
+    ss = (ServiceSSLData*)data_get(args.asd);
     if (!ss)
     {
         ss = (ServiceSSLData*)snort_calloc(sizeof(ServiceSSLData));
-        data_add(asd, ss, &ssl_free);
+        data_add(args.asd, ss, &ssl_free);
         ss->state = SSL_STATE_INITIATE;
     }
     /* Start off with a Client Hello from client to server. */
@@ -635,14 +633,14 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
     {
         ss->state = SSL_STATE_CONNECTION;
 
-        if (dir == APP_ID_FROM_INITIATOR)
+        if (args.dir == APP_ID_FROM_INITIATOR)
         {
             parse_client_initiation(data, size, ss);
             goto inprocess;
         }
     }
 
-    if (dir != APP_ID_FROM_RESPONDER)
+    if (args.dir != APP_ID_FROM_RESPONDER)
     {
         goto inprocess;
     }
@@ -851,7 +849,7 @@ not_v2:     ;
     }
 
 inprocess:
-    service_inprocess(asd, args.pkt, dir);
+    service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 
 fail:
@@ -861,7 +859,7 @@ fail:
     snort_free(ss->org_name);
     ss->certs_data = nullptr;
     ss->host_name = ss->common_name = ss->org_name = nullptr;
-    fail_service(asd, args.pkt, dir);
+    fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 
 success:
@@ -873,54 +871,54 @@ success:
         }
     }
 
-    asd->set_session_flags(APPID_SESSION_SSL_SESSION);
+    args.asd.set_session_flags(APPID_SESSION_SSL_SESSION);
     if (ss->host_name || ss->common_name || ss->org_name)
     {
-        if (!asd->tsession)
-            asd->tsession = (TlsSession*)snort_calloc(sizeof(TlsSession));
+        if (!args.asd.tsession)
+            args.asd.tsession = (TlsSession*)snort_calloc(sizeof(TlsSession));
 
         /* TLS Host */
         if (ss->host_name)
         {
-            if (asd->tsession->tls_host)
-                snort_free(asd->tsession->tls_host);
-            asd->tsession->tls_host = ss->host_name;
-            asd->tsession->tls_host_strlen = ss->host_name_strlen;
-            asd->scan_flags |= SCAN_SSL_HOST_FLAG;
+            if (args.asd.tsession->tls_host)
+                snort_free(args.asd.tsession->tls_host);
+            args.asd.tsession->tls_host = ss->host_name;
+            args.asd.tsession->tls_host_strlen = ss->host_name_strlen;
+            args.asd.scan_flags |= SCAN_SSL_HOST_FLAG;
         }
         else if (ss->common_name)
         {
             // use common name (from server) if we didn't see host name (from client)
             char* common_name = snort_strdup(ss->common_name);
 
-            if (asd->tsession->tls_host)
-                snort_free(asd->tsession->tls_host);
-            asd->tsession->tls_host = common_name;
-            asd->tsession->tls_host_strlen = ss->common_name_strlen;
-            asd->scan_flags |= SCAN_SSL_HOST_FLAG;
+            if (args.asd.tsession->tls_host)
+                snort_free(args.asd.tsession->tls_host);
+            args.asd.tsession->tls_host = common_name;
+            args.asd.tsession->tls_host_strlen = ss->common_name_strlen;
+            args.asd.scan_flags |= SCAN_SSL_HOST_FLAG;
         }
 
         /* TLS Common Name */
         if (ss->common_name)
         {
-            if (asd->tsession->tls_cname)
-                snort_free(asd->tsession->tls_cname);
-            asd->tsession->tls_cname = ss->common_name;
-            asd->tsession->tls_cname_strlen = ss->common_name_strlen;
+            if (args.asd.tsession->tls_cname)
+                snort_free(args.asd.tsession->tls_cname);
+            args.asd.tsession->tls_cname = ss->common_name;
+            args.asd.tsession->tls_cname_strlen = ss->common_name_strlen;
         }
 
         /* TLS Org Unit */
         if (ss->org_name)
         {
-            if (asd->tsession->tls_orgUnit)
-                snort_free(asd->tsession->tls_orgUnit);
-            asd->tsession->tls_orgUnit = ss->org_name;
-            asd->tsession->tls_orgUnit_strlen = ss->org_name_strlen;
+            if (args.asd.tsession->tls_orgUnit)
+                snort_free(args.asd.tsession->tls_orgUnit);
+            args.asd.tsession->tls_orgUnit = ss->org_name;
+            args.asd.tsession->tls_orgUnit_strlen = ss->org_name_strlen;
         }
 
         ss->host_name = ss->common_name = ss->org_name = nullptr;
     }
-    return add_service(asd, args.pkt, dir, getSslServiceAppId(args.pkt->ptrs.sp));
+    return add_service(args.asd, args.pkt, args.dir, getSslServiceAppId(args.pkt->ptrs.sp));
 }
 
 AppId getSslServiceAppId(short srcPort)
@@ -1129,31 +1127,33 @@ void ssl_detector_free_patterns()
 
 bool setSSLSquelch(Packet* p, int type, AppId appId, AppIdInspector& inspector)
 {
-    AppIdSession* f = nullptr;
-
     if (!AppInfoManager::get_instance().get_app_info_flags(appId, APPINFO_FLAG_SSL_SQUELCH))
         return false;
 
     const SfIp* dip = p->ptrs.ip_api.get_dst();
     const SfIp* sip = p->ptrs.ip_api.get_src();
-
-    if (!(f = AppIdSession::create_future_session(p, sip, 0, dip, p->ptrs.dp, IpProtocol::TCP,
-            appId, 0, inspector)))
-        return false;
-
-    switch (type)
+    AppIdSession* asd = AppIdSession::create_future_session(p, sip, 0, dip, p->ptrs.dp, IpProtocol::TCP,
+        appId, 0, inspector);
+    if ( asd )
     {
-    case 1:
-        f->payload.set_id(appId);
-        break;
-    case 2:
-        f->client.set_id(appId);
-        f->client_disco_state = APPID_DISCO_STATE_FINISHED;
-        break;
-    default:
-        return false;
-    }
+        switch (type)
+        {
+        case 1:
+            asd->payload.set_id(appId);
+            break;
 
-    return true;
+        case 2:
+            asd->client.set_id(appId);
+            asd->client_disco_state = APPID_DISCO_STATE_FINISHED;
+            break;
+
+        default:
+            return false;
+        }
+
+        return true;
+    }
+    else
+        return false;
 }
 

@@ -66,39 +66,38 @@ void ServiceDetector::register_appid(AppId appId, unsigned extractsInfo)
     pEntry->flags |= extractsInfo;
 }
 
-int ServiceDetector::service_inprocess(AppIdSession* asd, const Packet* pkt, int dir)
+int ServiceDetector::service_inprocess(AppIdSession& asd, const Packet* pkt, int dir)
 {
     if (dir == APP_ID_FROM_INITIATOR ||
-        asd->get_session_flags(APPID_SESSION_IGNORE_HOST | APPID_SESSION_UDP_REVERSED))
+        asd.get_session_flags(APPID_SESSION_IGNORE_HOST | APPID_SESSION_UDP_REVERSED))
         return APPID_SUCCESS;
 
-    if (!asd->service_ip.is_set())
+    if (!asd.service_ip.is_set())
     {
-        asd->service_ip = *(pkt->ptrs.ip_api.get_src());
-        if (!asd->service_port)
-            asd->service_port = pkt->ptrs.sp;
+        asd.service_ip = *(pkt->ptrs.ip_api.get_src());
+        if (!asd.service_port)
+            asd.service_port = pkt->ptrs.sp;
     }
 
     return APPID_SUCCESS;
 }
 
-int ServiceDetector::update_service_data(AppIdSession* asd, const Packet* pkt, int dir, AppId appId,
+int ServiceDetector::update_service_data(AppIdSession& asd, const Packet* pkt, int dir, AppId appId,
     const char* vendor, const char* version)
 {
     uint16_t port = 0;
     const SfIp* ip = nullptr;
 
-    asd->service_detector = this;
-    asd->service.set_vendor(vendor);
-    asd->service.set_version(version);
+    asd.service_detector = this;
+    asd.service.set_vendor(vendor);
+    asd.service.set_version(version);
+    asd.set_service_detected();
+    asd.service.set_id(appId);
 
-    asd->set_service_detected();
-    asd->service.set_id(appId);
-
-    if (asd->get_session_flags(APPID_SESSION_IGNORE_HOST))
+    if (asd.get_session_flags(APPID_SESSION_IGNORE_HOST))
         return APPID_SUCCESS;
 
-    if (!asd->get_session_flags(APPID_SESSION_UDP_REVERSED))
+    if (!asd.get_session_flags(APPID_SESSION_UDP_REVERSED))
     {
         if (dir == APP_ID_FROM_INITIATOR)
         {
@@ -110,8 +109,8 @@ int ServiceDetector::update_service_data(AppIdSession* asd, const Packet* pkt, i
             ip = pkt->ptrs.ip_api.get_src();
             port = pkt->ptrs.sp;
         }
-        if (asd->service_port)
-            port = asd->service_port;
+        if (asd.service_port)
+            port = asd.service_port;
     }
     else
     {
@@ -127,25 +126,25 @@ int ServiceDetector::update_service_data(AppIdSession* asd, const Packet* pkt, i
         }
     }
 
-    asd->service_ip = *ip;
-    asd->service_port = port;
-    ServiceDiscoveryState* sds = AppIdServiceState::get(ip, asd->protocol, port,
-        asd->is_decrypted());
+    asd.service_ip = *ip;
+    asd.service_port = port;
+    ServiceDiscoveryState* sds = AppIdServiceState::get(ip, asd.protocol, port,
+        asd.is_decrypted());
     if ( !sds )
-        sds = AppIdServiceState::add(ip, asd->protocol, port, asd->is_decrypted());
+        sds = AppIdServiceState::add(ip, asd.protocol, port, asd.is_decrypted());
     sds->set_service_id_valid(this);
 
     return APPID_SUCCESS;
 }
 
-int ServiceDetector::add_service_consume_subtype(AppIdSession* asd, const Packet* pkt, int dir,
+int ServiceDetector::add_service_consume_subtype(AppIdSession& asd, const Packet* pkt, int dir,
     AppId appId, const char* vendor, const char* version, AppIdServiceSubtype* subtype)
 {
-    asd->subtype = subtype;
+    asd.subtype = subtype;
     return update_service_data(asd, pkt, dir, appId, vendor, version);
 }
 
-int ServiceDetector::add_service(AppIdSession* asd, const Packet* pkt, int dir, AppId appId,
+int ServiceDetector::add_service(AppIdSession& asd, const Packet* pkt, int dir, AppId appId,
     const char* vendor, const char* version, const AppIdServiceSubtype* subtype)
 {
     AppIdServiceSubtype* new_subtype = nullptr;
@@ -166,27 +165,27 @@ int ServiceDetector::add_service(AppIdSession* asd, const Packet* pkt, int dir, 
         tmp_subtype->next = new_subtype;
         new_subtype = tmp_subtype;
     }
-    asd->subtype = new_subtype;
+    asd.subtype = new_subtype;
     return update_service_data(asd, pkt, dir, appId, vendor, version);
 }
 
-int ServiceDetector::incompatible_data(AppIdSession* asd, const Packet* pkt, int dir)
+int ServiceDetector::incompatible_data(AppIdSession& asd, const Packet* pkt, int dir)
 {
     return static_cast<ServiceDiscovery*>(handler)->incompatible_data(asd, pkt, dir, this);
 }
 
-int ServiceDetector::fail_service(AppIdSession* asd, const Packet* pkt, int dir)
+int ServiceDetector::fail_service(AppIdSession& asd, const Packet* pkt, int dir)
 {
     return static_cast<ServiceDiscovery*>(handler)->fail_service(asd, pkt, dir, this);
 }
 
-void ServiceDetector::initialize_expected_session(AppIdSession* parent,
-    AppIdSession* expected, uint64_t flags, APPID_SESSION_DIRECTION dir)
+void ServiceDetector::initialize_expected_session(AppIdSession& parent, AppIdSession& expected,
+    uint64_t flags, APPID_SESSION_DIRECTION dir)
 {
     if (dir == APP_ID_FROM_INITIATOR)
     {
-        expected->set_session_flags(flags |
-            parent->get_session_flags(
+        expected.set_session_flags(flags |
+            parent.get_session_flags(
             APPID_SESSION_INITIATOR_CHECKED |
             APPID_SESSION_INITIATOR_MONITORED |
             APPID_SESSION_RESPONDER_CHECKED |
@@ -194,25 +193,25 @@ void ServiceDetector::initialize_expected_session(AppIdSession* parent,
     }
     else if (dir == APP_ID_FROM_RESPONDER)
     {
-        if (parent->get_session_flags(APPID_SESSION_INITIATOR_CHECKED))
+        if (parent.get_session_flags(APPID_SESSION_INITIATOR_CHECKED))
             flags |= APPID_SESSION_RESPONDER_CHECKED;
 
-        if (parent->get_session_flags(APPID_SESSION_INITIATOR_MONITORED))
+        if (parent.get_session_flags(APPID_SESSION_INITIATOR_MONITORED))
             flags |= APPID_SESSION_RESPONDER_MONITORED;
 
-        if (parent->get_session_flags(APPID_SESSION_RESPONDER_CHECKED))
+        if (parent.get_session_flags(APPID_SESSION_RESPONDER_CHECKED))
             flags |= APPID_SESSION_INITIATOR_CHECKED;
 
-        if (parent->get_session_flags(APPID_SESSION_RESPONDER_MONITORED))
+        if (parent.get_session_flags(APPID_SESSION_RESPONDER_MONITORED))
             flags |= APPID_SESSION_INITIATOR_MONITORED;
     }
 
-    expected->set_session_flags(flags |
-        parent->get_session_flags(
+    expected.set_session_flags(flags |
+        parent.get_session_flags(
         APPID_SESSION_SPECIAL_MONITORED |
         APPID_SESSION_DISCOVER_APP |
         APPID_SESSION_DISCOVER_USER));
 
-    expected->service_disco_state = APPID_DISCO_STATE_FINISHED;
-    expected->client_disco_state = APPID_DISCO_STATE_FINISHED;
+    expected.service_disco_state = APPID_DISCO_STATE_FINISHED;
+    expected.client_disco_state = APPID_DISCO_STATE_FINISHED;
 }

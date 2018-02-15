@@ -783,18 +783,18 @@ static int ftp_validate_eprt(const uint8_t* data, uint16_t size, SfIp* address, 
     return 0;
 }
 
-static inline void WatchForCommandResult(ServiceFTPData* fd, AppIdSession* asd, FTPCmd command)
+static inline void WatchForCommandResult(ServiceFTPData* fd, AppIdSession& asd, FTPCmd command)
 {
     if (fd->state != FTP_STATE_MONITOR)
     {
-        asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_CONTINUE);
+        asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_CONTINUE);
         fd->state = FTP_STATE_MONITOR;
     }
     fd->cmd = command;
 }
 
-void FtpServiceDetector::create_expected_session(AppIdSession* asd, const Packet* pkt,
-    const SfIp* cliIp, uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol proto,
+void FtpServiceDetector::create_expected_session(AppIdSession& asd, const Packet* pkt, const SfIp* cliIp,
+    uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol proto,
     int flags, APPID_SESSION_DIRECTION dir)
 {
     AppIdSession* fp = AppIdSession::create_future_session(pkt, cliIp, cliPort, srvIp, srvPort,
@@ -802,7 +802,7 @@ void FtpServiceDetector::create_expected_session(AppIdSession* asd, const Packet
 
     if (fp) // initialize data session
     {
-        uint64_t flags = asd->get_session_flags(APPID_SESSION_ENCRYPTED | APPID_SESSION_DECRYPTED);
+        uint64_t flags = asd.get_session_flags(APPID_SESSION_ENCRYPTED | APPID_SESSION_DECRYPTED);
         if (flags == APPID_SESSION_ENCRYPTED)
         {
             fp->service.set_id(APP_ID_FTPSDATA);
@@ -813,7 +813,7 @@ void FtpServiceDetector::create_expected_session(AppIdSession* asd, const Packet
             fp->service.set_id(APP_ID_FTP_DATA);
         }
 
-        initialize_expected_session(asd, fp, APPID_SESSION_IGNORE_ID_FLAGS | flags, dir);
+        initialize_expected_session(asd, *fp, APPID_SESSION_IGNORE_ID_FLAGS | flags, dir);
     }
 }
 
@@ -831,10 +831,7 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
     uint32_t address = 0;
     uint16_t port = 0;
     int retval = APPID_INPROCESS;
-    AppIdSession* asd = args.asd;
     const uint8_t* data = args.data;
-    Packet* pkt = args.pkt;
-    const int dir = args.dir;
     uint16_t size = args.size;
 
     if (!size)
@@ -844,25 +841,25 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
     //to direct traffic to SSL detector to extract payload from certs. This will require
     // maintaining
     //two detector states at the same time.
-    if (asd->get_session_flags(APPID_SESSION_ENCRYPTED))
+    if (args.asd.get_session_flags(APPID_SESSION_ENCRYPTED))
     {
-        if (!asd->get_session_flags(APPID_SESSION_DECRYPTED))
+        if (!args.asd.get_session_flags(APPID_SESSION_DECRYPTED))
         {
             goto inprocess;
         }
     }
 
-    fd = (ServiceFTPData*)data_get(asd);
+    fd = (ServiceFTPData*)data_get(args.asd);
     if (!fd)
     {
         fd = (ServiceFTPData*)snort_calloc(sizeof(ServiceFTPData));
-        data_add(asd, fd, &snort_free);
+        data_add(args.asd, fd, &snort_free);
         fd->state = FTP_STATE_CONNECTION;
         fd->rstate = FTP_REPLY_BEGIN;
         fd->cmd = FTP_CMD_NONE;
     }
 
-    if (dir != APP_ID_FROM_RESPONDER)
+    if (args.dir != APP_ID_FROM_RESPONDER)
     {
         if (data[size-1] != 0x0a)
             goto inprocess;
@@ -874,10 +871,10 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
                 size-(sizeof(FTP_PORT_CMD)-1),
                 &fd->address, &fd->port) == 0)
             {
-                const SfIp* dip = pkt->ptrs.ip_api.get_dst();
-                create_expected_session(asd, pkt, dip, 0, &fd->address, fd->port, asd->protocol,
+                const SfIp* dip = args.pkt->ptrs.ip_api.get_dst();
+                create_expected_session(args.asd, args.pkt, dip, 0, &fd->address, fd->port, args.asd.protocol,
                     APPID_EARLY_SESSION_FLAG_FW_RULE, APP_ID_FROM_RESPONDER);
-                WatchForCommandResult(fd, asd, FTP_CMD_PORT_EPRT);
+                WatchForCommandResult(fd, args.asd, FTP_CMD_PORT_EPRT);
             }
         }
         else if (size > sizeof(FTP_EPRT_CMD)-1 &&
@@ -887,10 +884,10 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
                 size-(sizeof(FTP_EPRT_CMD)-1),
                 &fd->address, &fd->port) == 0)
             {
-                const SfIp* dip = pkt->ptrs.ip_api.get_dst();
-                create_expected_session(asd, pkt, dip, 0, &fd->address, fd->port, asd->protocol,
+                const SfIp* dip = args.pkt->ptrs.ip_api.get_dst();
+                create_expected_session(args.asd, args.pkt, dip, 0, &fd->address, fd->port, args.asd.protocol,
                     APPID_EARLY_SESSION_FLAG_FW_RULE, APP_ID_FROM_RESPONDER);
-                WatchForCommandResult(fd, asd, FTP_CMD_PORT_EPRT);
+                WatchForCommandResult(fd, args.asd, FTP_CMD_PORT_EPRT);
             }
         }
         else if ( size > sizeof(FTP_PASV_CMD)-1 &&
@@ -898,7 +895,7 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
             strncasecmp((const char*)data, FTP_EPSV_CMD, sizeof(FTP_EPSV_CMD)-1) == 0 )
             )
         {
-            WatchForCommandResult(fd, asd, FTP_CMD_PASV_EPSV);
+            WatchForCommandResult(fd, args.asd, FTP_CMD_PASV_EPSV);
         }
         goto inprocess;
     }
@@ -955,7 +952,7 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
             case 551: /*requested action aborted :page type unknown */
             case 552: /*requested action aborted */
             case 553: /*requested action not taken file name is not allowed */
-                asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_CONTINUE);
+                args.asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_CONTINUE);
                 fd->state = FTP_STATE_MONITOR;
                 break;
             case 221: /*good bye */
@@ -977,20 +974,20 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
                     fd->state = FTP_STATE_CONNECTION_ERROR;
                     break;
                 case 230:
-                    asd->set_session_flags(APPID_SESSION_CONTINUE);
+                    args.asd.set_session_flags(APPID_SESSION_CONTINUE);
                     fd->state = FTP_STATE_MONITOR;
                     retval = APPID_SUCCESS;
                     break;
                 case 234:
                 {
-                    asd->set_session_flags(APPID_SESSION_CONTINUE);
+                    args.asd.set_session_flags(APPID_SESSION_CONTINUE);
                     retval = APPID_SUCCESS;
                     /*
                     // we do not set the state to FTP_STATE_MONITOR here because we don't know
                     // if there will be SSL decryption to allow us to see what we are interested in.
                     // Let the WatchForCommandResult() usage elsewhere take care of it.
                     */
-                    asd->set_session_flags(APPID_SESSION_CONTINUE | APPID_SESSION_ENCRYPTED |
+                    args.asd.set_session_flags(APPID_SESSION_CONTINUE | APPID_SESSION_ENCRYPTED |
                         APPID_SESSION_STICKY_SERVICE);
                 }
                 break;
@@ -1041,7 +1038,7 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
                     break;
                 case 202:
                 case 230:
-                    asd->set_session_flags(APPID_SESSION_CONTINUE);
+                    args.asd.set_session_flags(APPID_SESSION_CONTINUE);
                     fd->state = FTP_STATE_MONITOR;
                     retval = APPID_SUCCESS;
                 default:
@@ -1094,7 +1091,7 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
                 {
                 case 202:
                 case 230:
-                    asd->set_session_flags(APPID_SESSION_CONTINUE);
+                    args.asd.set_session_flags(APPID_SESSION_CONTINUE);
                     fd->state = FTP_STATE_MONITOR;
                     retval = APPID_SUCCESS;
                 default:
@@ -1153,19 +1150,21 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
                     const SfIp* dip;
                     uint32_t addr;
 
-                    dip = pkt->ptrs.ip_api.get_dst();
-                    sip = pkt->ptrs.ip_api.get_src();
+                    dip = args.pkt->ptrs.ip_api.get_dst();
+                    sip = args.pkt->ptrs.ip_api.get_src();
                     addr = htonl(address);
                     ip.set(&addr, AF_INET);
-                    create_expected_session(asd, pkt, dip, 0, &ip, port, asd->protocol,
-                        APPID_EARLY_SESSION_FLAG_FW_RULE, APP_ID_FROM_INITIATOR);
+                    create_expected_session(args.asd, args.pkt, dip, 0, &ip, port,
+                        args.asd.protocol, APPID_EARLY_SESSION_FLAG_FW_RULE,
+                        APP_ID_FROM_INITIATOR);
 
                     if (!ip.fast_eq6(*sip))
                     {
-                        create_expected_session(asd, pkt, dip, 0, sip, port, asd->protocol,
-                            APPID_EARLY_SESSION_FLAG_FW_RULE, APP_ID_FROM_INITIATOR);
+                        create_expected_session(args.asd, args.pkt, dip, 0, sip, port,
+                            args.asd.protocol, APPID_EARLY_SESSION_FLAG_FW_RULE,
+                            APP_ID_FROM_INITIATOR);
                     }
-                    add_payload(asd, APP_ID_FTP_PASSIVE);
+                    add_payload(args.asd, APP_ID_FTP_PASSIVE);
                 }
                 else if (code < 0)
                     goto fail;
@@ -1178,14 +1177,12 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
 
                 if (!code)
                 {
-                    const SfIp* sip;
-                    const SfIp* dip;
-                    dip = pkt->ptrs.ip_api.get_dst();
-                    sip = pkt->ptrs.ip_api.get_src();
-                    create_expected_session(asd, pkt, dip, 0, sip, port, asd->protocol,
+                    const SfIp* dip = args.pkt->ptrs.ip_api.get_dst();
+                    const SfIp* sip = args.pkt->ptrs.ip_api.get_src();
+                    create_expected_session(args.asd, args.pkt, dip, 0, sip, port, args.asd.protocol,
                         APPID_EARLY_SESSION_FLAG_FW_RULE, APP_ID_FROM_INITIATOR);
 
-                    add_payload(asd, APP_ID_FTP_PASSIVE);
+                    add_payload(args.asd, APP_ID_FTP_PASSIVE);
                 }
                 else if (code < 0)
                     goto fail;
@@ -1195,7 +1192,7 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
                 if (fd->cmd == FTP_CMD_PORT_EPRT)
                 {
                     // Expected session is created on PORT/EPRT command
-                    add_payload(asd, APP_ID_FTP_ACTIVE); // Active mode FTP
+                    add_payload(args.asd, APP_ID_FTP_ACTIVE); // Active mode FTP
                     // is reported as a payload id
                 }
                 break;
@@ -1215,18 +1212,18 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
     default:
     case APPID_INPROCESS:
 inprocess:
-        if (!asd->is_service_detected())
-            service_inprocess(asd, pkt, dir);
+        if (!args.asd.is_service_detected())
+            service_inprocess(args.asd, args.pkt, args.dir);
         return APPID_INPROCESS;
 
     case APPID_SUCCESS:
-        if (!asd->is_service_detected())
+        if (!args.asd.is_service_detected())
         {
-            uint64_t flags = asd->get_session_flags(APPID_SESSION_ENCRYPTED
+            uint64_t flags = args.asd.get_session_flags(APPID_SESSION_ENCRYPTED
                 | APPID_SESSION_DECRYPTED);
 
             // FTPS only when encrypted==1 decrypted==0
-            add_service(asd, pkt, dir, flags == APPID_SESSION_ENCRYPTED ?
+            add_service(args.asd, args.pkt, args.dir, flags == APPID_SESSION_ENCRYPTED ?
                 APP_ID_FTPS : APP_ID_FTP_CONTROL,
                 fd->vendor[0] ? fd->vendor : nullptr,
                 fd->version[0] ? fd->version : nullptr, nullptr);
@@ -1235,9 +1232,9 @@ inprocess:
 
     case APPID_NOMATCH:
 fail:
-        if (!asd->is_service_detected())
-            fail_service(asd, pkt, dir);
-        asd->clear_session_flags(APPID_SESSION_CONTINUE);
+        if (!args.asd.is_service_detected())
+            fail_service(args.asd, args.pkt, args.dir);
+        args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
         return APPID_NOMATCH;
     }
 }

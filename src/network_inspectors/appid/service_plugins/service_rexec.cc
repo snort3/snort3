@@ -151,7 +151,7 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
                 tmp_rd->state = REXEC_STATE_STDERR_CONNECT_SYN;
                 tmp_rd->parent = rd;
 
-                data_add(pf, tmp_rd, &rexec_free_state);
+                data_add(*pf, tmp_rd, &rexec_free_state);
                 if (pf->add_flow_data_id((uint16_t)port, this))
                 {
                     pf->service_disco_state = APPID_DISCO_STATE_FINISHED;
@@ -163,7 +163,7 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
                 rd->state = REXEC_STATE_SERVER_CONNECT;
                 pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
                 pf->scan_flags |= SCAN_HOST_PORT_FLAG;
-                initialize_expected_session(args.asd, pf, REXEC_EXPECTED_SESSION_FLAGS, APP_ID_FROM_RESPONDER);
+                initialize_expected_session(args.asd, *pf, REXEC_EXPECTED_SESSION_FLAGS, APP_ID_FROM_RESPONDER);
                 pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
             }
             else
@@ -255,7 +255,7 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
         if (rd->parent && rd->parent->state == REXEC_STATE_SERVER_CONNECT)
         {
             rd->parent->state = REXEC_STATE_USERNAME;
-            args.asd->clear_session_flags(APPID_SESSION_REXEC_STDERR);
+            args.asd.clear_session_flags(APPID_SESSION_REXEC_STDERR);
         }
         goto bail;
     default:
@@ -263,24 +263,24 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
 
 inprocess:
-    if (!args.asd->is_service_detected())
+    if (!args.asd.is_service_detected())
         service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 
 success:
-    if (!args.asd->is_service_detected())
+    if (!args.asd.is_service_detected())
         return add_service(args.asd, args.pkt, args.dir, APP_ID_EXEC);
 
 bail:
-    if (!args.asd->is_service_detected())
+    if (!args.asd.is_service_detected())
         incompatible_data(args.asd, args.pkt, args.dir);
-    args.asd->clear_session_flags(APPID_SESSION_CONTINUE);
+    args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
     return APPID_NOT_COMPATIBLE;
 
 fail:
-    if (!args.asd->is_service_detected())
+    if (!args.asd.is_service_detected())
         fail_service(args.asd, args.pkt, args.dir);
-    args.asd->clear_session_flags(APPID_SESSION_CONTINUE);
+    args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
     return APPID_NOMATCH;
 }
 

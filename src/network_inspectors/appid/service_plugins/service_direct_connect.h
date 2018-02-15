@@ -36,9 +36,9 @@ public:
     int validate(AppIdDiscoveryArgs&) override;
 
 private:
-    int tcp_validate(const uint8_t* data, uint16_t size, const int dir, AppIdSession*,
+    int tcp_validate(const uint8_t* data, uint16_t size, const int dir, AppIdSession&,
         const Packet*, ServiceData*);
-    int udp_validate(const uint8_t* data, uint16_t size, const int dir, AppIdSession*,
+    int udp_validate(const uint8_t* data, uint16_t size, const int dir, AppIdSession&,
         const Packet*, ServiceData*);
 };
 

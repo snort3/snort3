@@ -60,6 +60,8 @@ public:
         USER_DETECTS,
         PAYLOAD_DETECTS,
         MISC_DETECTS,
+        INCOMPATIBLE,
+        FAILED,
         NUM_APPID_DETECTOR_PEGS
     };
 
@@ -70,7 +72,6 @@ public:
     static void init_pegs();
     static void cleanup_pegs();
     static void cleanup_peg_info();
-
     static void inc_disco_peg(enum DiscoveryPegs stat);
     static PegCount get_disco_peg(enum DiscoveryPegs stat);
     static void inc_service_count(AppId id);
@@ -79,6 +80,18 @@ public:
     static void inc_payload_count(AppId id);
     static void inc_misc_count(AppId id);
     static void set_detectors_configured();
+
+    static void inc_incompatible_count(AppId id)
+    {
+        if ( appid_detector_pegs_idx[id] )
+            (*appid_peg_counts)[appid_detector_pegs_idx[id] + DetectorPegs::INCOMPATIBLE]++;
+    }
+
+    static void inc_failed_count(AppId id)
+    {
+        if ( appid_detector_pegs_idx[id] )
+            (*appid_peg_counts)[appid_detector_pegs_idx[id] + DetectorPegs::FAILED]++;
+    }
 
 private:
      static bool detectors_configured;
