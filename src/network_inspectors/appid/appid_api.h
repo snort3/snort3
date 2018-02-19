@@ -204,7 +204,7 @@ public:
     void free_dhcp_info(Flow&, DHCPInfo*);
     FpSMBData* get_smb_fp_data(Flow&);
     void free_smb_fp_data(Flow&, FpSMBData*);
-    char* get_netbios_name(Flow&);
+    const char* get_netbios_name(Flow&);
     uint32_t produce_ha_state(Flow& flow, uint8_t* buf);
     uint32_t consume_ha_state(Flow& flow, const uint8_t* buf, uint8_t length, IpProtocol,
         SfIp*, uint16_t initiatorPort);

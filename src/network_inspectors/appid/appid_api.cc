@@ -369,17 +369,12 @@ void AppIdApi::free_smb_fp_data(Flow& flow, FpSMBData* data)
     }
 }
 
-char* AppIdApi::get_netbios_name(Flow& flow)
+const char* AppIdApi::get_netbios_name(Flow& flow)
 {
-    char* netbiosName = nullptr;
-
     if ( AppIdSession* asd = get_appid_session(flow) )
-    {
-        netbiosName = asd->netbios_name;
-        asd->netbios_name = nullptr; //FIXIT-M this is hokey ...transfer ownership to caller.
-    }
-
-    return netbiosName;
+        return asd->netbios_name;
+    else
+        return nullptr;
 }
 
 #define APPID_HA_FLAGS_APP ( 1 << 0 )

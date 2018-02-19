@@ -230,7 +230,6 @@ TEST(appid_api, get_netbios_name)
     const char* val;
     val = appid_api.get_netbios_name(*flow);
     STRCMP_EQUAL(val, APPID_UT_NETBIOS_NAME);
-    snort_free((void*)val);
 }
 
 TEST(appid_api, is_ssl_session_decrypted)
