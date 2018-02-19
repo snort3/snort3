@@ -421,7 +421,7 @@ static const Parameter s_params[] =
     { "--rule-to-hex", Parameter::PT_IMPLIED, nullptr, nullptr,
       "output so rule header to stdout for text rule on stdin" },
 
-    { "--rule-to-text", Parameter::PT_IMPLIED, nullptr, nullptr,
+    { "--rule-to-text", Parameter::PT_STRING, "16", "[SnortFoo]",
       "output plain so rule header to stdout for text rule on stdin" },
 
     { "--run-prefix", Parameter::PT_STRING, nullptr, nullptr,
