@@ -20,13 +20,14 @@
 
 #include <errno.h>
 #include <netinet/in.h>
+// putting types.h here because of Bug in FreeBSD
+#include <sys/types.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <sys/socket.h>
-#include <sys/types.h>
 #include <sys/time.h>
 #include <sys/unistd.h>
 
