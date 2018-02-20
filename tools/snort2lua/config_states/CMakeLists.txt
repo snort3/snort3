@@ -1,5 +1,5 @@
 
-add_library( config_states
+add_library( config_states STATIC
     config_alertfile.cc
     config_binding.cc
     config_checksums.cc

@@ -1,5 +1,5 @@
 
-add_library(output_states
+add_library(output_states STATIC
     out_csv.cc
     out_deleted.cc
     out_fast.cc

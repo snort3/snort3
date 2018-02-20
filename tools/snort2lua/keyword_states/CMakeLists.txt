@@ -1,5 +1,5 @@
 
-add_library( keyword_states
+add_library( keyword_states STATIC
     kws_attribute_table.cc
     kws_config.cc
     kws_deleted.cc
