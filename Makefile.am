@@ -4,8 +4,12 @@ SUBDIRS = \
 src \
 lua \
 tools \
-doc \
 daqs
+
+if MAKE_DOC
+SUBDIRS += \
+doc
+endif
 
 EXTRA_DIST = \
 snort.pc.in \

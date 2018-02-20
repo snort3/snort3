@@ -25,6 +25,7 @@ option ( ENABLE_STDLOG "Use file descriptor 3 instead of stdout for alerts" OFF 
 option ( ENABLE_TSC_CLOCK "Use timestamp counter register clock (x86 only)" OFF )
 
 # documentation
+option ( MAKE_DOC "Create the documentation" ON )
 option ( MAKE_HTML_DOC "Create the HTML documentation" ON )
 option ( MAKE_PDF_DOC "Create the PDF documentation" ON )
 option ( MAKE_TEXT_DOC "Create the text documentation" ON )

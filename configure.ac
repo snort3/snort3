@@ -256,6 +256,12 @@ fi
 
 AM_CONDITIONAL(LINUX, [test "x$linux" = "xyes"])
 
+AC_ARG_ENABLE(doc,
+    AS_HELP_STRING([--disable-doc],[do not make doc ]),
+    make_doc="$enableval", make_doc="yes")
+
+AM_CONDITIONAL(MAKE_DOC, [test "x$make_doc" = "xyes"])
+
 AC_ARG_ENABLE(static-ips-actions,
     AS_HELP_STRING([--disable-static-ips-actions],[do not include ips actions in binary ]),
     static_ips_actions="$enableval", static_ips_actions="yes")

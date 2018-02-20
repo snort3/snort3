@@ -53,7 +53,9 @@ endif (ENABLE_UNIT_TESTS)
 add_subdirectory (src)
 add_subdirectory (tools)
 add_subdirectory (lua)
+if (MAKE_DOC)
 add_subdirectory (doc)
+endif (MAKE_DOC)
 add_subdirectory (daqs)
 
 # Miscellaneous stuff.  Does NOT directly effect snort's building environment
