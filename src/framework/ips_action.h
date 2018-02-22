@@ -76,7 +76,7 @@ typedef void (* ActDelFunc)(IpsAction*);
 struct ActionApi
 {
     BaseApi base;
-    RuleType type;
+    Actions::Type type;
 
     IpsActFunc pinit;
     IpsActFunc pterm;

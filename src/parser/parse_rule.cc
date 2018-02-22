@@ -1054,7 +1054,7 @@ void parse_rule_type(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
     memset(&rtn, 0, sizeof(rtn));
     rtn.type = get_rule_type(s);
 
-    if ( rtn.type == RULE_TYPE__NONE )
+    if ( rtn.type == Actions::NONE )
     {
         s_ignore = true;
         return;

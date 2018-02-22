@@ -342,7 +342,7 @@ static const ActionApi react_api =
         mod_ctor,
         mod_dtor
     },
-    RULE_TYPE__DROP,
+    Actions::DROP,
     nullptr,  // pinit
     nullptr,  // pterm
     nullptr,  // tinit

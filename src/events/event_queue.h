@@ -38,7 +38,7 @@ struct EventNode
 {
     const struct OptTreeNode* otn;
     const struct RuleTreeNode* rtn;
-    RuleType type;
+    Actions::Type type;
 };
 
 EventQueueConfig* EventQueueConfigNew();

@@ -77,8 +77,8 @@ public:
     static void inspect(Packet*);
 
     static int queue_event(const struct OptTreeNode*);
-    static int queue_event(unsigned gid, unsigned sid, RuleType = RULE_TYPE__NONE);
-
+    static int queue_event(unsigned gid, unsigned sid, Actions::Type = Actions::NONE);
+    
     static void disable_all(Packet*);
     static bool all_disabled(Packet*);
 

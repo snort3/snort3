@@ -201,7 +201,7 @@ static ActionApi rep_api
         mod_ctor,
         mod_dtor
     },
-    RULE_TYPE__ALERT,
+    Actions::ALERT,
     nullptr,
     nullptr,
     rep_tinit,

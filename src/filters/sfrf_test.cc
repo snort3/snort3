@@ -909,7 +909,7 @@ static void Init(unsigned cap)
         cfg.tracking = p->track;
         cfg.count = p->count;
         cfg.seconds = p->seconds;
-        cfg.newAction = (RuleType)RULE_NEW;
+        cfg.newAction = (Actions::Type)RULE_NEW;
         cfg.timeout = p->timeout;
         cfg.applyTo = p->ip ? sfip_var_from_string(p->ip) : nullptr;
 
@@ -950,8 +950,8 @@ static int EventTest(EventData* p)
     status = SFRF_TestThreshold(
         rfc, p->gid, p->sid, &sip, &dip, curtime, op);
 
-    if ( status >= RULE_TYPE__MAX )
-        status -= RULE_TYPE__MAX;
+    if ( status >= Actions::MAX )
+        status -= Actions::MAX;
 
     return status;
 }

@@ -91,12 +91,12 @@ void parser_term(SnortConfig* sc)
 
 static void CreateDefaultRules(SnortConfig* sc)
 {
-    CreateRuleType(sc, ACTION_LOG, RULE_TYPE__LOG);
-    CreateRuleType(sc, ACTION_PASS, RULE_TYPE__PASS);
-    CreateRuleType(sc, ACTION_ALERT, RULE_TYPE__ALERT);
-    CreateRuleType(sc, ACTION_DROP, RULE_TYPE__DROP);
-    CreateRuleType(sc, ACTION_BLOCK, RULE_TYPE__BLOCK);
-    CreateRuleType(sc, ACTION_RESET, RULE_TYPE__RESET);
+    CreateRuleType(sc, Actions::get_string(Actions::LOG), Actions::LOG);
+    CreateRuleType(sc, Actions::get_string(Actions::PASS), Actions::PASS);
+    CreateRuleType(sc, Actions::get_string(Actions::ALERT), Actions::ALERT);
+    CreateRuleType(sc, Actions::get_string(Actions::DROP), Actions::DROP);
+    CreateRuleType(sc, Actions::get_string(Actions::BLOCK), Actions::BLOCK);
+    CreateRuleType(sc, Actions::get_string(Actions::RESET), Actions::RESET);
 }
 
 static void FreeRuleTreeNodes(SnortConfig* sc)
@@ -594,7 +594,7 @@ void ParseRules(SnortConfig* sc)
  * Returns: the ListHead for the rule type
  *
  ***************************************************************************/
-ListHead* CreateRuleType(SnortConfig* sc, const char* name, RuleType mode)
+ListHead* CreateRuleType(SnortConfig* sc, const char* name, Actions::Type mode)
 {
     RuleListNode* node;
     int evalIndex = 0;

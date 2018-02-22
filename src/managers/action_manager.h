@@ -63,7 +63,7 @@ public:
     static void release_plugins();
     static void dump_plugins();
 
-    static RuleType get_action_type(const char*);
+    static Actions::Type get_action_type(const char*);
 
     static void instantiate(const ActionApi*, Module*, SnortConfig*);
 

@@ -296,7 +296,7 @@ public:
 
     int num_rule_types = 0;
     struct RuleListNode* rule_lists = nullptr;
-    int evalOrder[RULE_TYPE__MAX + 1];
+    int evalOrder[Actions::MAX + 1];
 
     struct FrameworkConfig* framework_config = nullptr;
 
@@ -483,7 +483,7 @@ public:
     static bool process_all_events()
     { return get_conf()->event_queue_config->process_all_events; }
 
-    static int get_eval_index(RuleType type)
+    static int get_eval_index(Actions::Type type)
     { return get_conf()->evalOrder[type]; }
 
     static int get_default_rule_state()

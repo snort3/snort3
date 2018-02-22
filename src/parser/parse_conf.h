@@ -36,7 +36,7 @@ void parse_include(SnortConfig*, const char*);
 void AddRuleState(SnortConfig*, const RuleState&);
 void add_service_to_otn(SnortConfig*, OptTreeNode*, const char*);
 
-RuleType get_rule_type(const char*);
+Actions::Type get_rule_type(const char*);
 ListHead* get_rule_list(SnortConfig*, const char*);
 
 #endif

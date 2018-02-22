@@ -228,7 +228,7 @@ static const ActionApi rej_api =
         mod_ctor,
         mod_dtor
     },
-    RULE_TYPE__RESET,
+    Actions::RESET,
     nullptr,
     nullptr,
     nullptr,

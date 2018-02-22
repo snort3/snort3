@@ -148,7 +148,7 @@ struct RuleTreeNode
 
     uint32_t flags;     /* control flags */
 
-    RuleType type;
+    Actions::Type type;
 
     // reference count from otn.
     // Multiple OTNs can reference this RTN with the same policy.

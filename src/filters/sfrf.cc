@@ -405,7 +405,7 @@ static int SFRF_TestObject(
     // if the count were not incremented in such cases, the
     // threshold would never be exceeded.
     if ( !cfgNode->seconds && dynNode->count > cfgNode->count )
-        if ( cfgNode->newAction == RULE_TYPE__DROP )
+        if ( cfgNode->newAction == Actions::DROP )
             dynNode->count--;
 
 #ifdef SFRF_DEBUG
@@ -744,7 +744,7 @@ static int _checkThreshold(
     fflush(stdout);
 #endif
 
-    return RULE_TYPE__MAX + cfgNode->newAction;
+    return Actions::MAX + cfgNode->newAction;
 }
 
 static void _updateDependentThresholds(

@@ -23,40 +23,28 @@
 
 #include <cstdint>
 
-#define ACTION_LOG      "log"
-#define ACTION_PASS     "pass"
-#define ACTION_ALERT    "alert"
-#define ACTION_DROP     "drop"
-#define ACTION_BLOCK    "block"
-#define ACTION_RESET    "reset"
+#include "main/snort_types.h"
 
 struct Packet;
 struct OptTreeNode;
 
-// FIXIT-L if RuleType is changed, RateFilterModule must be updated
-enum RuleType  // FIXIT-L convert to a scoped enum
+class SO_PUBLIC Actions
 {
-    RULE_TYPE__NONE = 0,
-    RULE_TYPE__LOG,
-    RULE_TYPE__PASS,
-    RULE_TYPE__ALERT,
-    RULE_TYPE__DROP,
-    RULE_TYPE__BLOCK,
-    RULE_TYPE__RESET,
-    RULE_TYPE__MAX
+public:
+    // FIXIT-L if Type is changed, RateFilterModule and type in actions.cc must be updated
+    enum Type
+    { NONE = 0, LOG, PASS, ALERT, DROP, BLOCK, RESET, MAX };
+
+    static const char* get_string(Type);
+    static Type get_type(const char*);
+
+    static void execute(Type, struct Packet*, const struct OptTreeNode*,
+        uint16_t event_id);
+
+    static void apply(Type, struct Packet*);
+
+    static inline bool is_pass(Type a)
+    { return ( a == PASS ); }
 };
-
-// FIXIT-L these functions could be static methods of class enclosing RuleType enum
-const char* get_action_string(RuleType);
-RuleType get_action_type(const char*);
-
-void action_execute(RuleType, struct Packet*, const struct OptTreeNode*,
-    uint16_t event_id);
-
-void action_apply(RuleType, struct Packet*);
-
-inline bool pass_action(RuleType a)
-{ return ( a == RULE_TYPE__PASS ); }
-
 #endif
 

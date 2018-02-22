@@ -57,78 +57,78 @@ static void alert(Packet* p, const OptTreeNode* otn)
     CallLogFuncs(p, otn, rtn->listhead);
 }
 
-static const char* const rule_type[RULE_TYPE__MAX] =
+static const char* const type[Actions::MAX] =
 {
     "none", "log", "pass", "alert", "drop", "block", "reset"
 };
 
-const char* get_action_string(RuleType action)
+const char* Actions::get_string(Actions::Type action)
 {
-    if ( action < RULE_TYPE__MAX )
-        return rule_type[action];
+    if ( action < Actions::MAX )
+        return type[action];
 
     return "ERROR";
 }
 
-RuleType get_action_type(const char* s)
+Actions::Type Actions::get_type(const char* s)
 {
     if ( !s )
-        return RULE_TYPE__NONE;
+        return Actions::NONE;
 
-    else if ( !strcasecmp(s, ACTION_LOG) )
-        return RULE_TYPE__LOG;
+    else if ( !strcasecmp(s, Actions::get_string(Actions::LOG)) )
+        return Actions::LOG;
 
-    else if ( !strcasecmp(s, ACTION_PASS) )
-        return RULE_TYPE__PASS;
+    else if ( !strcasecmp(s, Actions::get_string(Actions::PASS)) )
+        return Actions::PASS;
 
-    else if ( !strcasecmp(s, ACTION_ALERT) )
-        return RULE_TYPE__ALERT;
+    else if ( !strcasecmp(s, Actions::get_string(Actions::ALERT)) )
+        return Actions::ALERT;
 
-    else if ( !strcasecmp(s, ACTION_DROP) )
-        return RULE_TYPE__DROP;
+    else if ( !strcasecmp(s, Actions::get_string(Actions::DROP)) )
+        return Actions::DROP;
 
-    else if ( !strcasecmp(s, ACTION_BLOCK) )
-        return RULE_TYPE__BLOCK;
+    else if ( !strcasecmp(s, Actions::get_string(Actions::BLOCK)) )
+        return Actions::BLOCK;
 
-    else if ( !strcasecmp(s, ACTION_RESET) )
-        return RULE_TYPE__RESET;
+    else if ( !strcasecmp(s, Actions::get_string(Actions::RESET)) )
+        return Actions::RESET;
 
-    return RULE_TYPE__NONE;
+    return Actions::NONE;
 }
 
-void action_execute(RuleType action, Packet* p, const OptTreeNode* otn,
+void Actions::execute(Actions::Type action, Packet* p, const OptTreeNode* otn,
     uint16_t event_id)
 {
     switch (action)
     {
-    case RULE_TYPE__PASS:
+    case Actions::PASS:
         pass();
         SetTags(p, otn, event_id);
         break;
 
-    case RULE_TYPE__ALERT:
+    case Actions::ALERT:
         alert(p, otn);
         SetTags(p, otn, event_id);
         break;
 
-    case RULE_TYPE__LOG:
+    case Actions::LOG:
         log(p, otn);
         SetTags(p, otn, event_id);
         break;
 
-    case RULE_TYPE__DROP:
+    case Actions::DROP:
         Active::drop_packet(p);
         alert(p, otn);
         SetTags(p, otn, event_id);
         break;
 
-    case RULE_TYPE__BLOCK:
+    case Actions::BLOCK:
         Active::block_session(p);
         alert(p, otn);
         SetTags(p, otn, event_id);
         break;
 
-    case RULE_TYPE__RESET:
+    case Actions::RESET:
         Active::reset_session(p);
         alert(p, otn);
         SetTags(p, otn, event_id);
@@ -139,19 +139,19 @@ void action_execute(RuleType action, Packet* p, const OptTreeNode* otn,
     }
 }
 
-void action_apply(RuleType action, Packet* p)
+void Actions::apply(Actions::Type action, Packet* p)
 {
     switch ( action )
     {
-    case RULE_TYPE__DROP:
+    case Actions::DROP:
         Active::drop_packet(p);
         break;
 
-    case RULE_TYPE__BLOCK:
+    case Actions::BLOCK:
         Active::block_session(p);
         break;
 
-    case RULE_TYPE__RESET:
+    case Actions::RESET:
         Active::reset_session(p);
         break;
 

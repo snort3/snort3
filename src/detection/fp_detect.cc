@@ -107,7 +107,7 @@ static inline void fpLogOther(
 
     PacketTracer::log("Event: %u:%u:%u, Action %s\n",
         otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev,
-        get_action_string((RuleType)action));
+        Actions::get_string((Actions::Type)action));
 
     // rule option actions are queued here (eg replace)
     otn_trigger_actions(otn, p);
@@ -128,7 +128,7 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
     int action = -1, rateAction = -1;
     int override, filterEvent = 0;
 
-    if ( pass_action(rtn->type) )
+    if ( Actions::is_pass(rtn->type) )
         p->packet_flags |= PKT_PASS_RULE;
 
     if ( otn->stateless )
@@ -151,16 +151,16 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
     {
         // We still want to drop packets that are drop rules.
         // We just don't want to see the alert.
-        action_apply(rtn->type, p);
+        Actions::apply(rtn->type, p);
         fpLogOther(p, rtn, otn, rtn->type);
         return 1;
     }
 
     // perform rate filtering tests - impacts action taken
     rateAction = RateFilter_Test(otn, p);
-    override = ( rateAction >= RULE_TYPE__MAX );
+    override = ( rateAction >= Actions::MAX );
     if ( override )
-        rateAction -= RULE_TYPE__MAX;
+        rateAction -= Actions::MAX;
 
     // internal events are no-ops
     if ( (rateAction < 0) && EventIsInternal(otn->sigInfo.gid) )
@@ -194,7 +194,7 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
         **  If InlineMode is on, then we still want to drop packets
         **  that are drop rules.  We just don't want to see the alert.
         */
-        action_apply((RuleType)action, p);
+        Actions::apply((Actions::Type)action, p);
         fpLogOther(p, rtn, otn, action);
         pc.event_limit++;
         return 1;
@@ -205,7 +205,7 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
      * If its order is lower than 'pass', it should have been passed.
      * This is consistent with other detection rules */
     if ( (p->packet_flags & PKT_PASS_RULE)
-        &&(SnortConfig::get_eval_index(rtn->type) > SnortConfig::get_eval_index(RULE_TYPE__PASS)))
+        &&(SnortConfig::get_eval_index(rtn->type) > SnortConfig::get_eval_index(Actions::PASS)))
     {
         fpLogOther(p, rtn, otn, rtn->type);
         return 1;
@@ -214,7 +214,7 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
     otn->state[get_instance_id()].alerts++;
 
     event_id++;
-    action_execute((RuleType)action, p, otn, event_id);
+    Actions::execute((Actions::Type)action, p, otn, event_id);
     fpLogOther(p, rtn, otn, action);
 
     return 0;
@@ -672,7 +672,7 @@ static inline int fpFinalSelectEvent(OtnxMatchData* o, Packet* p)
                 otn = o->matchInfo[i].MatchArray[j];
                 rtn = getRtnFromOtn(otn);
 
-                if (otn && rtn && pass_action(rtn->type))
+                if (otn && rtn && Actions::is_pass(rtn->type))
                 {
                     /* Already acted on rules, so just don't act on anymore */
                     if ( tcnt > 0 )
@@ -713,7 +713,7 @@ static inline int fpFinalSelectEvent(OtnxMatchData* o, Packet* p)
                 }
 
                 /* only log/count one pass */
-                if ( otn && rtn && pass_action(rtn->type))
+                if ( otn && rtn && Actions::is_pass(rtn->type))
                 {
                     p->packet_flags |= PKT_PASS_RULE;
                     return 1;

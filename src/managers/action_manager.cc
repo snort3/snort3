@@ -94,14 +94,14 @@ static void store(const ActionApi* api, IpsAction* act)
 
 //-------------------------------------------------------------------------
 
-RuleType ActionManager::get_action_type(const char* s)
+Actions::Type ActionManager::get_action_type(const char* s)
 {
     for ( auto& p : s_actors )
     {
         if ( !strcmp(p.api->base.name, s) )
             return p.api->type;
     }
-    return RULE_TYPE__NONE;
+    return Actions::NONE;
 }
 
 void ActionManager::instantiate(

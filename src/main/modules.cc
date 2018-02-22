@@ -1597,7 +1597,7 @@ static const Parameter rate_filter_params[] =
       "count interval" },
 
     { "new_action", Parameter::PT_ENUM,
-      // FIXIT-L new_action options must match RuleType and
+      // FIXIT-L new_action options must match Actions::Type and
       // should include pluggable actions as well
       "log | pass | alert | drop | block | reset", "alert",
       "take this action on future hits until timeout" },
@@ -1661,7 +1661,7 @@ bool RateFilterModule::set(const char*, Value& v, SnortConfig*)
         thdx.applyTo = sfip_var_from_string(v.get_string());
 
     else if ( v.is("new_action") )
-        thdx.newAction = (RuleType)(v.get_long() + 1);
+        thdx.newAction = (Actions::Type)(v.get_long() + 1);
 
     else
         return false;

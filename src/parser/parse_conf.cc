@@ -191,27 +191,27 @@ static inline int ScLoadAsDropRules()
     return ( SnortConfig::inline_test_mode() || SnortConfig::adaptor_inline_test_mode() );
 }
 
-RuleType get_rule_type(const char* s)
+Actions::Type get_rule_type(const char* s)
 {
-    RuleType rt = get_action_type(s);
+    Actions::Type rt = Actions::get_type(s);
 
-    if ( rt == RULE_TYPE__NONE )
+    if ( rt == Actions::NONE )
         rt = ActionManager::get_action_type(s);
 
     switch ( rt )
     {
-    case RULE_TYPE__DROP:
-    case RULE_TYPE__BLOCK:
-    case RULE_TYPE__RESET:
+    case Actions::DROP:
+    case Actions::BLOCK:
+    case Actions::RESET:
         if ( SnortConfig::treat_drop_as_alert() )
-            return RULE_TYPE__ALERT;
+            return Actions::ALERT;
 
         if ( ScKeepDropRules() || ScLoadAsDropRules() )
             return rt;
 
-        return RULE_TYPE__NONE;
+        return Actions::NONE;
 
-    case RULE_TYPE__NONE:
+    case Actions::NONE:
         ParseError("unknown rule type '%s'", s);
         break;
 
