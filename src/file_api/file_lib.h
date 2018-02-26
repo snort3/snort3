@@ -58,8 +58,8 @@ public:
     FileDirection get_file_direction() const;
     uint8_t* get_file_sig_sha256() const;
     std::string sha_to_string(const uint8_t* sha256);
-    void set_file_id(size_t index);
-    size_t get_file_id() const;
+    void set_file_id(uint64_t index);
+    uint64_t get_file_id() const;
     FileVerdict verdict = FILE_VERDICT_UNKNOWN;
 
     // Configuration functions
@@ -83,7 +83,7 @@ protected:
     FileDirection direction = FILE_DOWNLOAD;
     uint32_t file_type_id = SNORT_FILE_TYPE_CONTINUE;
     uint8_t* sha256 = nullptr;
-    size_t file_id = 0;
+    uint64_t file_id = 0;
     FileCapture* file_capture = nullptr;
     bool file_type_enabled = false;
     bool file_signature_enabled = false;

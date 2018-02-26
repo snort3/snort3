@@ -160,12 +160,12 @@ uint32_t FileInfo::get_file_type() const
     return file_type_id;
 }
 
-void FileInfo::set_file_id(size_t id)
+void FileInfo::set_file_id(uint64_t id)
 {
     file_id = id;
 }
 
-size_t FileInfo::get_file_id() const
+uint64_t FileInfo::get_file_id() const
 {
     return file_id;
 }

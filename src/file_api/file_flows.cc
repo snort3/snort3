@@ -40,6 +40,7 @@
 #include "file_service.h"
 
 unsigned FileFlows::file_flow_data_id = 0;
+static THREAD_LOCAL uint32_t max_file_id = 0;
 
 void FileFlows::handle_retransmit (Packet*)
 {
@@ -108,9 +109,10 @@ FileContext* FileFlows::get_current_file_context()
     return current_context;
 }
 
-uint32_t FileFlows::get_new_file_instance()
+uint64_t FileFlows::get_new_file_instance()
 {
-    return max_file_id++;
+    uint64_t thread_id = get_instance_id();
+    return ((thread_id << 32) | max_file_id++);
 }
 
 FileFlows::~FileFlows()

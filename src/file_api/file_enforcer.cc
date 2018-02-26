@@ -96,7 +96,7 @@ FileVerdict FileEnforcer::check_verdict(Flow* flow, FileNode* node,
 int FileEnforcer::store_verdict(Flow* flow, FileInfo* file)
 {
     assert(file);
-    size_t file_sig = file->get_file_id();
+    uint64_t file_sig = file->get_file_id();
 
     if (!file_sig)
         return 0;
@@ -215,7 +215,7 @@ FileVerdict FileEnforcer::cached_verdict_lookup(Flow* flow, FileInfo* file,
     }
 
     assert(file);
-    size_t file_sig = file->get_file_id();
+    uint64_t file_sig = file->get_file_id();
     if (!file_sig)
         return verdict;
 
