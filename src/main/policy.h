@@ -179,6 +179,7 @@ public:
     unsigned add_ips_shell(Shell*);
     unsigned add_network_shell(Shell*);
     std::shared_ptr<PolicyTuple> add_shell(Shell*);
+    std::shared_ptr<PolicyTuple> get_policies(Shell* sh);
     void clone(PolicyMap *old_map);
 
     Shell* get_shell(unsigned i = 0)
@@ -193,18 +194,38 @@ public:
     IpsPolicy* get_user_ips(unsigned user_id)
     { return user_ips[user_id]; }
 
-public:  // FIXIT-M make impl private
+    InspectionPolicy* get_inspection_policy(unsigned i = 0)
+    { return i < inspection_policy.size() ? inspection_policy[i] : nullptr; }
+
+    IpsPolicy* get_ips_policy(unsigned i = 0)
+    { return i < ips_policy.size() ? ips_policy[i] : nullptr; }
+
+    NetworkPolicy* get_network_policy(unsigned i = 0)
+    { return i < network_policy.size() ? network_policy[i] : nullptr; }
+
+    unsigned inspection_policy_count()
+    { return inspection_policy.size(); }
+
+    unsigned ips_policy_count()
+    { return ips_policy.size(); }
+
+    unsigned network_policy_count()
+    { return network_policy.size(); }
+
+    void set_cloned(bool state)
+    { cloned = state; }
+
+private:
     std::vector<Shell*> shells;
     std::vector<InspectionPolicy*> inspection_policy;
     std::vector<IpsPolicy*> ips_policy;
     std::vector<NetworkPolicy*> network_policy;
     std::unordered_map<Shell*, std::shared_ptr<PolicyTuple>> shell_map;
+    std::unordered_map<unsigned, InspectionPolicy*> user_inspection;
+    std::unordered_map<unsigned, IpsPolicy*> user_ips;
 
     bool cloned = false;
 
-private:
-    std::unordered_map<unsigned, InspectionPolicy*> user_inspection;
-    std::unordered_map<unsigned, IpsPolicy*> user_ips;
 };
 
 //-------------------------------------------------------------------------

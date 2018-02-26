@@ -540,10 +540,10 @@ void SetRuleStates(SnortConfig* sc)
 
 void ParseRules(SnortConfig* sc)
 {
-    for ( unsigned idx = 0; idx < sc->policy_map->ips_policy.size(); ++idx )
+    for ( unsigned idx = 0; idx < sc->policy_map->ips_policy_count(); ++idx )
     {
         set_ips_policy(sc, idx);
-        IpsPolicy* p = sc->policy_map->ips_policy[idx];
+        IpsPolicy* p = sc->policy_map->get_ips_policy(idx);
 
         if ( p->enable_builtin_rules )
             ModuleManager::load_rules(sc);

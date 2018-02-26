@@ -189,14 +189,14 @@ void Shell::configure(SnortConfig* sc)
 
     //set_*_policy can set to null. this is used
     //to tell which pieces to pick from sub policy
-    auto pt = sc->policy_map->shell_map.find(this);
-    if ( pt == sc->policy_map->shell_map.end() )
+    auto pt = sc->policy_map->get_policies(this);
+    if ( pt.get() == nullptr )
         set_default_policy(sc);
     else
     {
-        set_inspection_policy(pt->second->inspection);
-        set_ips_policy(pt->second->ips);
-        set_network_policy(pt->second->network);
+        set_inspection_policy(pt->inspection);
+        set_ips_policy(pt->ips);
+        set_network_policy(pt->network);
     }
 
     const char* base_name = push_relative_path(file.c_str());

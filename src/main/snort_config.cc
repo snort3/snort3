@@ -160,11 +160,20 @@ static PolicyMode init_policy_mode(PolicyMode mode)
 
 static void init_policies(SnortConfig* sc)
 {
-    for ( auto p : sc->policy_map->ips_policy )
-        p->policy_mode = init_policy_mode(p->policy_mode);
+    IpsPolicy* ips_policy = nullptr;
+    InspectionPolicy* inspection_policy = nullptr;
 
-    for ( auto p : sc->policy_map->inspection_policy )
-        p->policy_mode = init_policy_mode(p->policy_mode);
+    for ( unsigned idx = 0; idx <  sc->policy_map->ips_policy_count(); ++idx )
+    {
+        ips_policy = sc->policy_map->get_ips_policy(idx);
+        ips_policy->policy_mode = init_policy_mode(ips_policy->policy_mode);
+    }
+
+    for ( unsigned idx = 0; idx < sc->policy_map->inspection_policy_count(); ++idx )
+    {
+        inspection_policy = sc->policy_map->get_inspection_policy(idx);
+        inspection_policy->policy_mode = init_policy_mode(inspection_policy->policy_mode);
+    }
 }
 
 //-------------------------------------------------------------------------
@@ -211,16 +220,16 @@ SnortConfig::SnortConfig(SnortConfig* other_conf)
         policy_map = new PolicyMap(other_conf->policy_map);
     }
 
-    set_inspection_policy(get_inspection_policy());
-    set_ips_policy(get_ips_policy());
-    set_network_policy(get_network_policy());
+    set_inspection_policy(policy_map->get_inspection_policy());
+    set_ips_policy(policy_map->get_ips_policy());
+    set_network_policy(policy_map->get_network_policy());
 }
 
 SnortConfig::~SnortConfig()
 {
     if ( cloned )
     {
-        policy_map->cloned = true;
+        policy_map->set_cloned(true);
         delete policy_map;
         return;
     }
@@ -364,16 +373,20 @@ void SnortConfig::merge(SnortConfig* cmd_line)
     /* Merge checksum flags.  If command line modified them, use from the
      * command line, else just use from config_file. */
 
-    int cl_chk = cmd_line->get_network_policy()->checksum_eval;
-    int cl_drop = cmd_line->get_network_policy()->checksum_drop;
+    int cl_chk = cmd_line->policy_map->get_network_policy()->checksum_eval;
+    int cl_drop = cmd_line->policy_map->get_network_policy()->checksum_drop;
+    
+    NetworkPolicy* nw_policy = nullptr;
 
-    for ( auto p : policy_map->network_policy )
+    for ( unsigned idx = 0; idx < policy_map->network_policy_count(); ++idx )
     {
+        nw_policy = policy_map->get_network_policy(idx);
+
         if ( !(cl_chk & CHECKSUM_FLAG__DEF) )
-            p->checksum_eval = cl_chk;
+            nw_policy->checksum_eval = cl_chk;
 
         if ( !(cl_drop & CHECKSUM_FLAG__DEF) )
-            p->checksum_drop = cl_drop;
+            nw_policy->checksum_drop = cl_drop;
     }
 
     /* FIXIT-L do these belong in network policy? */

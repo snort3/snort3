@@ -485,12 +485,9 @@ void InspectorManager::delete_policy(InspectionPolicy* pi, bool cloned)
 
 void InspectorManager::update_policy(SnortConfig* sc)
 {
-    if ( !sc->policy_map->inspection_policy.empty() )
-    {
-        InspectionPolicy* pi = sc->policy_map->inspection_policy[0];
-        for ( auto* p : pi->framework_policy->ilist )
-            p->set_reloaded(RELOAD_TYPE_NONE);
-    }
+    InspectionPolicy* pi = sc->policy_map->get_inspection_policy();
+    for ( auto* p : pi->framework_policy->ilist )
+        p->set_reloaded(RELOAD_TYPE_NONE);
 }
 // FIXIT-M create a separate list for meta handlers?  is there really more than one?
 void InspectorManager::dispatch_meta(FrameworkPolicy* fp, int type, const uint8_t* data)
@@ -543,21 +540,18 @@ InspectorType InspectorManager::get_type(const char* key)
 bool InspectorManager::delete_inspector(SnortConfig* sc, const char* iname)
 {
     bool ok = false;
-    if ( !sc->policy_map->inspection_policy.empty() )
-    {
-        FrameworkPolicy* fp = sc->policy_map->inspection_policy[0]->framework_policy;
-        std::vector<PHInstance*>::iterator old_it;
+    FrameworkPolicy* fp = sc->policy_map->get_inspection_policy()->framework_policy;
+    std::vector<PHInstance*>::iterator old_it;
 
-        if ( get_instance(fp, iname, false, old_it) )
+    if ( get_instance(fp, iname, false, old_it) )
+    {
+        (*old_it)->set_reloaded(RELOAD_TYPE_DELETED);
+        fp->ilist.erase(old_it);
+        ok = true;
+        std::vector<PHInstance*>::iterator bind_it;
+        if ( get_instance(fp, "binder", false, bind_it) )
         {
-            (*old_it)->set_reloaded(RELOAD_TYPE_DELETED);
-            fp->ilist.erase(old_it);
-            ok = true;
-            std::vector<PHInstance*>::iterator bind_it;
-            if ( get_instance(fp, "binder", false, bind_it) )
-            {
-                (*bind_it)->handler->update(sc, iname);
-            }
+            (*bind_it)->handler->update(sc, iname);
         }
     }
 
@@ -856,13 +850,13 @@ bool InspectorManager::configure(SnortConfig* sc, bool cloned)
     }
     bool ok = true;
 
-    for ( unsigned idx = 0; idx < sc->policy_map->inspection_policy.size(); ++idx )
+    for ( unsigned idx = 0; idx < sc->policy_map->inspection_policy_count(); ++idx )
     {
         if ( cloned and idx )
             break;
 
         set_inspection_policy(sc, idx);
-        InspectionPolicy* p = sc->policy_map->inspection_policy[idx];
+        InspectionPolicy* p = sc->policy_map->get_inspection_policy(idx);
         p->configure();
         ok = ::configure(sc, p->framework_policy, cloned) && ok;
     }

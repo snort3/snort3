@@ -357,16 +357,6 @@ public:
     bool cloned = false;
 
     //------------------------------------------------------
-    // policy access
-    InspectionPolicy* get_inspection_policy()
-    { return policy_map->inspection_policy[0]; }
-
-    IpsPolicy* get_ips_policy()
-    { return policy_map->ips_policy[0]; }
-
-    NetworkPolicy* get_network_policy()
-    { return policy_map->network_policy[0]; }
-
     // decoding related
     uint8_t get_num_layers() const
     { return num_layers; }
