@@ -59,7 +59,6 @@ StreamSplitter::Status FtpDataSplitter::scan(Flow* flow, const uint8_t*, uint32_
 
         if ( segs >= 2 && bytes >= min )
         {
-            set_ftp_flush_flag(flow);
             restart_scan();
             *fp = len;
             return FLUSH;
