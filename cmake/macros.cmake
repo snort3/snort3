@@ -24,7 +24,7 @@ macro (add_dynamic_module libname install_path)
     install (
         TARGETS ${libname}
         LIBRARY
-            DESTINATION "lib/${CMAKE_PROJECT_NAME}/${install_path}"
+            DESTINATION "${CMAKE_INSTALL_LIBDIR}/${CMAKE_PROJECT_NAME}/${install_path}"
     )
 endmacro (add_dynamic_module)
 

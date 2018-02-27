@@ -197,10 +197,10 @@ set_target_properties(
 
 install (TARGETS snort
     EXPORT snortexe
-    RUNTIME DESTINATION bin
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
 install (EXPORT snortexe
-    DESTINATION lib/snort
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/snort
     FILE snort.cmake
 )

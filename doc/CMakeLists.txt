@@ -315,7 +315,7 @@ install (
     ${BUILT_DIST}
     ${UNBUILT_SOURCES}
     DESTINATION
-    ${SNORT_DATA_DIR}
+    ${CMAKE_INSTALL_DOCDIR}
 )
 
 set (

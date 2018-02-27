@@ -13,9 +13,9 @@ target_link_libraries( u2boat
 )
 
 install (TARGETS u2boat
-    RUNTIME DESTINATION bin
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
 install(FILES README.u2boat
-    DESTINATION "${SNORT_DATA_DIR}"
+    DESTINATION "${CMAKE_INSTALL_DOCDIR}"
 )

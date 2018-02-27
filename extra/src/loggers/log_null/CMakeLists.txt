@@ -37,5 +37,5 @@ target_include_directories (
 install (
     TARGETS log_null
     LIBRARY
-        DESTINATION "lib/${CMAKE_PROJECT_NAME}/loggers"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/${CMAKE_PROJECT_NAME}/loggers"
 )

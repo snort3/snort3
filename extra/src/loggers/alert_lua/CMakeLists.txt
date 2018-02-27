@@ -3,5 +3,5 @@ project ( alert_lua )
 
 install (
     FILES alert.lua
-    DESTINATION "lib/${CMAKE_PROJECT_NAME}/loggers"
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/${CMAKE_PROJECT_NAME}/loggers"
 )

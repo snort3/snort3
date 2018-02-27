@@ -37,5 +37,5 @@ target_include_directories (
 install (
     TARGETS cd_null
     LIBRARY
-        DESTINATION "lib/${CMAKE_PROJECT_NAME}/codecs"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/${CMAKE_PROJECT_NAME}/codecs"
 )

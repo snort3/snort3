@@ -48,13 +48,13 @@ target_include_directories (
 install (
     TARGETS <%= @project.libname %>
     LIBRARY
-        DESTINATION "lib/${CMAKE_PROJECT_NAME}/<%= @project.dirname %>"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/${CMAKE_PROJECT_NAME}/<%= @project.dirname %>"
 )
 %end
 %if !@project.scripts.empty?
 
 install (
     FILES<% for script in @project.scripts %> <%= script %><% end %>
-    DESTINATION "lib/${CMAKE_PROJECT_NAME}/<%= @project.dirname %>"
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/${CMAKE_PROJECT_NAME}/<%= @project.dirname %>"
 )
 %end

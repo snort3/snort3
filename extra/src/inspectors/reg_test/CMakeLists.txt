@@ -37,5 +37,5 @@ target_include_directories (
 install (
     TARGETS reg_test
     LIBRARY
-        DESTINATION "lib/${CMAKE_PROJECT_NAME}/inspectors"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/${CMAKE_PROJECT_NAME}/inspectors"
 )

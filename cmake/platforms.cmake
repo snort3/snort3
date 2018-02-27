@@ -11,7 +11,6 @@ endif()
 
 set (CMAKE_SKIP_RPATH ON)
 
-
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.8")
         message(FATAL_ERROR "G++ version 4.8 or greater required")
