@@ -3,5 +3,5 @@ project ( find )
 
 install (
     FILES find.lua
-    DESTINATION "lib/${CMAKE_PROJECT_NAME}/ips_options"
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/${CMAKE_PROJECT_NAME}/ips_options"
 )

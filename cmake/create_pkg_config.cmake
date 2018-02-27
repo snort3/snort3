@@ -5,7 +5,7 @@
 set(prefix "${CMAKE_INSTALL_PREFIX}")
 set(exec_prefix "\${prefix}")
 set(bindir "\${exec_prefix}/bin")
-set(libdir "\${exec_prefix}/lib")
+set(libdir "\${prefix}/${CMAKE_INSTALL_LIBDIR}")
 set(includedir "\${prefix}/include")
 set(datarootdir "\${prefix}/share")
 set(datadir "\${datarootdir}")
@@ -69,5 +69,5 @@ configure_file(
 )
 
 install (FILES ${CMAKE_BINARY_DIR}/snort.pc
-    DESTINATION "lib/pkgconfig/"
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig/"
 )

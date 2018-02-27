@@ -33,5 +33,5 @@ target_link_libraries( snort2lua
 )
 
 install (TARGETS snort2lua
-    RUNTIME DESTINATION bin
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )

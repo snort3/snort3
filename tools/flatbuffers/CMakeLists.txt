@@ -12,7 +12,7 @@ if ( FLATBUFFERS_FOUND )
     )
 
     install (TARGETS fbstreamer
-        RUNTIME DESTINATION bin
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
 endif()
 

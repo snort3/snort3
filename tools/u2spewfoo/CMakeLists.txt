@@ -10,6 +10,6 @@ target_include_directories( u2spewfoo
 )
 
 install (TARGETS u2spewfoo
-    RUNTIME DESTINATION bin
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 

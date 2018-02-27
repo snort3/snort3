@@ -7,8 +7,11 @@ set (VERSION_BUILD 0)
 set (VERSION
     "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_BUILD}")
 
+# Pull in definitions of various install directories
+include(GNUInstallDirs)
+
 set (INCLUDE_SUFFIX "${CMAKE_PROJECT_NAME}")
-set (INCLUDE_INSTALL_PATH "include/${INCLUDE_SUFFIX}")
+set (INCLUDE_INSTALL_PATH "${CMAKE_INSTALL_INCLUDEDIR}/${INCLUDE_SUFFIX}")
 
 set (CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
