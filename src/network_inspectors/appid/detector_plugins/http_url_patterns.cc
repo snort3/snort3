@@ -1577,16 +1577,28 @@ bool HttpPatternMatchers::get_appid_from_url(char* host, const char* url, char**
         url_len = strlen(url);
     }
 
-    // FIXIT-M - This logic that fiddles with host is very dicey, should refactor to improve this
+    int host_len;
     if (!host)
     {
-        temp_host = host = snort_strdup(url);
-        host  = strchr(host, '/');
+        host = (char *)strchr(url, '/');
         if (host != nullptr)
-            *host = '\0';
-        host = temp_host;
+            host_len = host - url;
+        else
+            host_len = url_len;
+        if (host_len > 0)
+        {
+            temp_host = snort_strndup(url, host_len);
+            if (!temp_host)
+            {
+                host_len = 0;
+                host = nullptr;
+            }
+            else
+                host = temp_host;
+        }
     }
-    int host_len = strlen(host);
+    else
+        host_len = strlen(host);
 
     const char* path = nullptr;
     int path_len = 0;

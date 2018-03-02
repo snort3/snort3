@@ -121,6 +121,8 @@ struct DetectorHTTPPattern
 };
 typedef std::vector<DetectorHTTPPattern> DetectorHTTPPatterns;
 
+// CHP (Complex HTTP Pattern) uses more than one HTTP pattern
+// to do appid detection and/or perform other actions
 #define CHP_APPID_BITS_FOR_INSTANCE  7
 #define CHP_APPID_INSTANCE_MAX (1 << CHP_APPID_BITS_FOR_INSTANCE)
 #define CHP_APPIDINSTANCE_TO_ID(_appIdInstance) \
