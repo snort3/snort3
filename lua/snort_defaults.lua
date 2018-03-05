@@ -324,12 +324,15 @@ default_wizard =
 
         { service = 'dce_http_proxy', proto = 'tcp', client_first = true,
           to_server = { 'RPC_CONNECT' } },
- 
+
     },
     hexes =
     {
         { service = 'dnp3', proto = 'tcp', client_first = true, 
           to_server = { '|05 64|' }, to_client = { '|05 64|' } },
+
+        { service = 'http2', proto = 'tcp', client_first = true,
+          to_server = { '|50 52 49 20 2a 20 48 54 54 50 2f 32 2e 30 0d 0a 0d 0a 53 4d 0d 0a 0d 0a|' } },
 --[[
         { service = 'modbus', proto = 'tcp', client_first = true,
           to_server = { '??|0 0|' } },

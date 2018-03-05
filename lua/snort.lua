@@ -80,6 +80,7 @@ back_orifice = { }
 dnp3 = { }
 dns = { }
 http_inspect = { }
+http2_inspect = { }
 imap = { }
 modbus = { }
 normalizer = { }
@@ -153,6 +154,7 @@ binder =
     { when = { service = 'gtp' },              use = { type = 'gtp_inspect' } },
     { when = { service = 'imap' },             use = { type = 'imap' } },
     { when = { service = 'http' },             use = { type = 'http_inspect' } },
+    { when = { service = 'http2' },            use = { type = 'http2_inspect' } },
     { when = { service = 'modbus' },           use = { type = 'modbus' } },
     { when = { service = 'pop3' },             use = { type = 'pop' } },
     { when = { service = 'ssh' },              use = { type = 'ssh' } },

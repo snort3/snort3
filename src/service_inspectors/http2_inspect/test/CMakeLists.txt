@@ -1,0 +1,3 @@
+add_cpputest(http2_inspect_impl_test http2_inspect framework)
+add_cpputest(http2_stream_splitter_impl_test http2_inspect framework)
+

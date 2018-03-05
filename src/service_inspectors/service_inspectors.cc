@@ -31,6 +31,7 @@ extern const BaseApi* sin_smtp;
 
 extern const BaseApi* sin_file[];
 extern const BaseApi* sin_http[];
+extern const BaseApi* sin_http2[];
 extern const BaseApi* sin_sip[];
 extern const BaseApi* sin_ssl[];
 
@@ -78,6 +79,7 @@ void load_service_inspectors()
 
     PluginManager::load_plugins(sin_file);
     PluginManager::load_plugins(sin_http);
+    PluginManager::load_plugins(sin_http2);
     PluginManager::load_plugins(sin_sip);
     PluginManager::load_plugins(sin_ssl);
 

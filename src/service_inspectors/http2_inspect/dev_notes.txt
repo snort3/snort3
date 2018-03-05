@@ -1,0 +1,6 @@
+The HTTP/2 inspector (H2I) will convert HTTP/2 frames into HTTP/1.1 message sections and feed them
+to the new HTTP inspector (NHI) for further processing.
+
+The current implementation is the very first step. It splits an HTTP/2 stream into frames and
+forwards them for inspection. It does not interface with NHI, does not provide error detection and
+handling, and does not address the multiplexed nature of HTTP/2.

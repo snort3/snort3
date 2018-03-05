@@ -58,6 +58,7 @@ network_inspectors/perf_monitor/libperf_monitor.a \
 network_inspectors/reputation/libreputation.a \
 service_inspectors/libservice_inspectors.a \
 service_inspectors/http_inspect/libhttp_inspect.a \
+service_inspectors/http2_inspect/libhttp2_inspect.a \
 service_inspectors/sip/libsip.a \
 $(lib_list) \
 pub_sub/libpub_sub.a \

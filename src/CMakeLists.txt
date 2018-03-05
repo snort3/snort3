@@ -89,6 +89,7 @@ target_link_libraries( snort
 # include only those with otherwise unresolved dependencies
     appid
     http_inspect
+    http2_inspect
     sip
     reputation
     stream

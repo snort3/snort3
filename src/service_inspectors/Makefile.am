@@ -10,6 +10,7 @@ service_inspectors.h
 #back_orifice/libback_orifice.a \
 #ftp_telnet/libftp_telnet.a \
 #http_inspect/libhttp_inspect.a \
+#http_inspect2/libhttp2_inspect.a \
 #rpc_decode/librpc_decode.a
 #wizard/libwizard.a
 
@@ -23,6 +24,7 @@ gtp \
 imap \
 modbus \
 http_inspect \
+http2_inspect \
 pop \
 rpc_decode \
 sip \
