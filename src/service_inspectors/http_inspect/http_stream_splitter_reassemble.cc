@@ -45,7 +45,9 @@ void HttpStreamSplitter::chunk_spray(HttpFlowData* session_data, uint8_t* buffer
         switch (curr_state)
         {
         case CHUNK_NEWLINES:
-            if (!is_cr_lf[data[k]])
+        case CHUNK_LEADING_WS:
+            // Cases are combined in reassemble(). CHUNK_LEADING_WS here to avoid compiler warning.
+            if (!is_sp_tab_cr_lf[data[k]])
             {
                 curr_state = CHUNK_NUMBER;
                 k--;
@@ -64,13 +66,13 @@ void HttpStreamSplitter::chunk_spray(HttpFlowData* session_data, uint8_t* buffer
             else if (data[k] == ';')
                 curr_state = CHUNK_OPTIONS;
             else if (is_sp_tab[data[k]])
-                curr_state = CHUNK_WHITESPACE;
+                curr_state = CHUNK_TRAILING_WS;
             else
                 expected = expected * 16 + as_hex[data[k]];
             break;
+        case CHUNK_TRAILING_WS:
         case CHUNK_OPTIONS:
-        case CHUNK_WHITESPACE:
-            // No practical difference between white space and options in reassemble()
+            // No practical difference between trailing white space and options in reassemble()
             if (data[k] == '\r')
                 curr_state = CHUNK_HCRLF;
             else if (data[k] == '\n')

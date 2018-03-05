@@ -327,8 +327,25 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
                 events->create_event(EVENT_CHUNK_BAD_SEP);
                 break;
             }
-            curr_state = CHUNK_ZEROS;
+            curr_state = CHUNK_LEADING_WS;
             k--; // Reprocess this octet in the next state
+            break;
+        case CHUNK_LEADING_WS:
+            // Looking for whitespace before the chunk size
+            if (is_sp_tab[buffer[k]])
+            {
+                *infractions += INF_CHUNK_LEADING_WS;
+                events->create_event(EVENT_CHUNK_WHITESPACE);
+                num_leading_ws++;
+                if (num_leading_ws == 5)
+                {
+                    events->create_event(EVENT_BROKEN_CHUNK);
+                    curr_state = CHUNK_BAD;
+                }
+                break;
+            }
+            curr_state = CHUNK_ZEROS;
+            k--;
             break;
         case CHUNK_ZEROS:
             // Looking for leading zeros in the chunk size.
@@ -362,7 +379,7 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
             {
                 *infractions += INF_CHUNK_WHITESPACE;
                 events->create_event(EVENT_CHUNK_WHITESPACE);
-                curr_state = CHUNK_WHITESPACE;
+                curr_state = CHUNK_TRAILING_WS;
             }
             else if (buffer[k] == ';')
             {
@@ -389,7 +406,7 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
                 }
             }
             break;
-        case CHUNK_WHITESPACE:
+        case CHUNK_TRAILING_WS:
             // Skipping over improper whitespace following the chunk size
             if (buffer[k] == '\r')
             {
@@ -507,6 +524,7 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
         case CHUNK_DCRLF2:
             // The LF from the end-of-chunk CRLF should be here
             num_good_chunks++;
+            num_leading_ws = 0;
             num_zeros = 0;
             expected = 0;
             digits_seen = 0;

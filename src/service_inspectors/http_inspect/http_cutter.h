@@ -125,6 +125,7 @@ private:
     uint32_t data_seen = 0;
     HttpEnums::ChunkState curr_state = HttpEnums::CHUNK_NEWLINES;
     uint32_t expected = 0;
+    uint32_t num_leading_ws = 0;
     uint32_t num_zeros = 0;
     uint32_t digits_seen = 0;
     bool new_section = false;
