@@ -354,7 +354,7 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total, un
         if (is_body)
             buffer = new uint8_t[MAX_OCTETS];
         else
-            buffer = new uint8_t[total];
+            buffer = new uint8_t[(total > 0) ? total : 1];
         session_data->section_total[source_id] = total;
     }
     else
