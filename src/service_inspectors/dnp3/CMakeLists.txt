@@ -18,7 +18,7 @@ set( FILE_LIST
 )
 
 if (STATIC_INSPECTORS)
-    add_library(dnp3 STATIC ${FILE_LIST})
+    add_library(dnp3 OBJECT ${FILE_LIST})
 
 else (STATIC_INSPECTORS)
     add_dynamic_module(dnp3 inspectors ${FILE_LIST})

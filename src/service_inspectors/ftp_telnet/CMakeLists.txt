@@ -37,8 +37,7 @@ set (FILE_LIST
 )
 
 if (STATIC_INSPECTORS)
-    add_library(ftp_telnet STATIC ${FILE_LIST})
-    target_link_libraries(ftp_telnet utils)
+    add_library(ftp_telnet OBJECT ${FILE_LIST})
 
 else (STATIC_INSPECTORS)
    add_dynamic_module(ftp_telnet inspectors ${FILE_LIST})

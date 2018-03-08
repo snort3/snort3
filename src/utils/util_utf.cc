@@ -32,14 +32,10 @@
 #include <iconv.h>
 #endif
 
-#include "main/snort_types.h"
-
 #define DSTATE_FIRST 0
 #define DSTATE_SECOND 1
 #define DSTATE_THIRD 2
 #define DSTATE_FOURTH 3
-
-SNORT_FORCED_INCLUSION_DEFINITION(utf);
 
 UtfDecodeSession::UtfDecodeSession()
 {

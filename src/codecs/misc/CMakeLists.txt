@@ -19,12 +19,8 @@ else(STATIC_CODECS)
 
 endif(STATIC_CODECS)
 
-add_library( misc_codecs STATIC
+add_library( misc_codecs OBJECT
     cd_default.cc
     ${PLUGIN_LIST}
 )
 
-target_link_libraries( misc_codecs
-    protocols
-    codec_module
-)

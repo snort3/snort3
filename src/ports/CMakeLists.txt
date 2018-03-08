@@ -1,5 +1,5 @@
 
-ADD_LIBRARY( ports STATIC
+ADD_LIBRARY( ports OBJECT
     port_group.cc
     port_group.h
     port_item.cc
@@ -17,10 +17,4 @@ ADD_LIBRARY( ports STATIC
     rule_port_tables.cc
     rule_port_tables.h
 )
-
-target_link_libraries(ports
-    log
-)
-
-list(APPEND PACKAGED_DIST "readme.txt")
 

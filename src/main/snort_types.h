@@ -70,14 +70,5 @@ typedef uint16_t Port;
 #define __attribute__(x)    /* delete __attribute__ if non-gcc or gcc1 */
 #endif
 
-#define SNORT_FORCED_INCLUSION_SYMBOL( name ) \
-    __snort_include_##name
-
-#define SNORT_FORCED_INCLUSION_DEFINITION( name ) \
-    bool SNORT_FORCED_INCLUSION_SYMBOL( name )
-
-#define SNORT_FORCED_INCLUSION_EXTERN( name ) \
-    extern SNORT_FORCED_INCLUSION_DEFINITION( name )
-
 #endif
 

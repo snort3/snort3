@@ -55,8 +55,8 @@ class FilePolicy: public FilePolicyBase
 {
 public:
 
-    FilePolicy() { }
-    ~FilePolicy() { }
+    FilePolicy() = default;
+    ~FilePolicy() override = default;
 
     void policy_check(Flow* flow, FileInfo* file) override;
 

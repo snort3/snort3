@@ -1,9 +1,20 @@
-cmake_minimum_required ( VERSION 2.8.11 )
+cmake_minimum_required ( VERSION 3.4.3 )
 project( snort_extra CXX C )
 
 set (EXTRA_VERSION_MAJOR 1)
 set (EXTRA_VERSION_MINOR 0)
 set (EXTRA_VERSION_BUILD 0-a4)
+
+set (CMAKE_CXX_STANDARD 11)
+set (CMAKE_CXX_STANDARD_REQUIRED ON)
+set (CMAKE_CXX_EXTENSIONS OFF)
+
+set (CMAKE_C_STANDARD 99)
+set (CMAKE_C_STANDARD_REQUIRED ON)
+set (CMAKE_C_EXTENSIONS ON)
+
+# Pull in definitions of various install directories
+include (GNUInstallDirs)
 
 set (AUTOTOOL_FILES "autom4te.cache;m4;configure.ac;Makefile.am")
 

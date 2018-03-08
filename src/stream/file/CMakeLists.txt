@@ -1,5 +1,5 @@
 
-add_library( stream_file STATIC
+add_library( stream_file OBJECT
     file_module.cc
     file_module.h
     file_session.cc

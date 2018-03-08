@@ -1,5 +1,9 @@
-cmake_minimum_required ( VERSION 2.8.11 )
+cmake_minimum_required ( VERSION 3.4.3 )
 project ( sid_18758 CXX )
+
+set (CMAKE_CXX_STANDARD 11)
+set (CMAKE_CXX_STANDARD_REQUIRED ON)
+set (CMAKE_CXX_EXTENSIONS OFF)
 
 if ( APPLE )
     set ( CMAKE_MACOSX_RPATH OFF )
@@ -28,8 +32,6 @@ set_target_properties (
         PREFIX ""
 )
 
-set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
-
 target_include_directories (
     sid_18758 PUBLIC
     ${SNORT3_INCLUDE_DIRS}
@@ -38,5 +40,5 @@ target_include_directories (
 install (
     TARGETS sid_18758
     LIBRARY
-        DESTINATION "lib/${CMAKE_PROJECT_NAME}/so_rules"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/${CMAKE_PROJECT_NAME}/so_rules"
 )

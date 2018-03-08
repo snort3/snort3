@@ -34,8 +34,6 @@
 #include "catch/snort_catch.h"
 #endif
 
-SNORT_FORCED_INCLUSION_DEFINITION(base64_encoder);
-
 static inline char b64(uint8_t idx)
 {
     static const char* encoding =

@@ -6,5 +6,5 @@ set (LUA_SCRIPTS
 )
 
 install (FILES ${LUA_SCRIPTS}
-    DESTINATION "etc/snort"
+    DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/snort"
 )

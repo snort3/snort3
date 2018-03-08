@@ -9,7 +9,7 @@ if ( ENABLE_UNIT_TESTS )
     set(TEST_FILES sfip_test.cc)
 endif()
 
-add_library ( sfip STATIC
+add_library ( sfip OBJECT
     ${SFIP_INCLUDES}
     ${TEST_FILES}
     sf_cidr.cc

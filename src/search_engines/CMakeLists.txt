@@ -43,7 +43,7 @@ set (SEARCH_ENGINE_SOURCES
 )
 
 if ( STATIC_SEARCH_ENGINES )
-    add_library(search_engines STATIC
+    add_library(search_engines OBJECT
         ${ACSMX_SOURCES}
         ${ACSMX2_SOURCES}
         ${INTEL_SOURCES}
@@ -52,7 +52,7 @@ if ( STATIC_SEARCH_ENGINES )
     )
 
 else ( STATIC_SEARCH_ENGINES)
-    add_library(search_engines STATIC
+    add_library(search_engines OBJECT
         ${SEARCH_ENGINE_SOURCES}
         ${SEARCH_ENGINE_INCLUDES}
     )
@@ -66,3 +66,5 @@ endif (STATIC_SEARCH_ENGINES)
 install(FILES ${SEARCH_ENGINE_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/search_engines"
 )
+
+add_subdirectory(test)

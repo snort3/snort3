@@ -70,7 +70,7 @@ bool TcpMssOption::operator==(const IpsOption& ips) const
     if ( strcmp(s_name, ips.get_name()) )
         return false;
 
-    TcpMssOption& rhs = (TcpMssOption&)ips;
+    const TcpMssOption& rhs = (const TcpMssOption&)ips;
     return ( config == rhs.config );
 }
 

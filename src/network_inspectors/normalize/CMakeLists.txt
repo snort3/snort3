@@ -1,5 +1,5 @@
 
-add_library( normalize STATIC
+add_library( normalize OBJECT
     normalize.cc
     normalize.h
     norm_module.cc

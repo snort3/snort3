@@ -20,7 +20,7 @@ if ( ENABLE_UNIT_TESTS )
     set(TEST_FILES bitop_test.cc)
 endif()
 
-ADD_LIBRARY( utils STATIC
+add_library ( utils OBJECT
     ${UTIL_INCLUDES}
     ${SNPRINTF_SOURCES}
     boyer_moore.cc 
@@ -47,10 +47,6 @@ ADD_LIBRARY( utils STATIC
 if ( FLATBUFFERS_FOUND )
     target_include_directories( utils PRIVATE ${FLATBUFFERS_INCLUDE_DIR} )
 endif()
-
-target_link_libraries(utils
-    log
-)
 
 install (FILES ${UTIL_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/utils"

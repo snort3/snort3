@@ -1,5 +1,5 @@
 
-add_library( reputation STATIC
+add_library( reputation OBJECT
     reputation_config.h
     reputation_inspect.h
     reputation_inspect.cc

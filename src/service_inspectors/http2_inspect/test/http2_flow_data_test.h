@@ -28,6 +28,7 @@
 // Stubs whose sole purpose is to make the test code link
 FlowData::FlowData(unsigned u, Inspector* ph) : next(nullptr), prev(nullptr), handler(ph), id(u) {}
 FlowData::~FlowData() {}
+unsigned FlowData::flow_data_id = 0;
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) { }
 void show_stats(SimpleStats*, const char*) { }

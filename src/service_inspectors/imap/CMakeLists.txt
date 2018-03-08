@@ -11,7 +11,7 @@ set( FILE_LIST
 
 # can't be be linked dynamically yet
 #if (STATIC_INSPECTORS)
-    add_library( imap STATIC ${FILE_LIST})
+    add_library( imap OBJECT ${FILE_LIST})
 
 #else (STATIC_INSPECTORS)
     #add_dynamic_module(imap inspectors ${FILE_LIST})

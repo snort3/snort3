@@ -22,7 +22,7 @@ set (FRAMEWORK_INCLUDES
     connector.h
 )
 
-add_library ( framework STATIC
+add_library ( framework OBJECT
     ${FRAMEWORK_INCLUDES}
     codec.cc
     cursor.cc
@@ -39,10 +39,6 @@ add_library ( framework STATIC
 install (FILES ${FRAMEWORK_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/api_options.h
     DESTINATION "${INCLUDE_INSTALL_PATH}/framework"
 )
-
-if ( ENABLE_UNIT_TESTS )
-    target_link_libraries ( framework catch_tests )
-endif ( ENABLE_UNIT_TESTS )
 
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/api_options.h

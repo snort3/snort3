@@ -66,7 +66,7 @@ set (FILE_LIST
 )
 
 #if (STATIC_INSPECTORS)
-    add_library(http_inspect STATIC ${FILE_LIST})
+    add_library(http_inspect OBJECT ${FILE_LIST})
 
 #else(STATIC_INSPECTORS)
     #add_dynamic_module(http_inspect inspectors ${FILE_LIST})

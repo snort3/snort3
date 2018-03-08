@@ -6,7 +6,7 @@ if ( ENABLE_UNIT_TESTS )
     )
 endif()
 
-add_library (filter STATIC
+add_library (filter OBJECT
     detection_filter.cc
     detection_filter.h
     rate_filter.cc

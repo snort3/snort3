@@ -17,14 +17,14 @@ set( PLUGIN_LIST
     )
 
 if (STATIC_IPS_ACTIONS)
-    add_library ( ips_actions STATIC
+    add_library ( ips_actions OBJECT
         ${IPS_ACTION_SOURCES}
         ${PLUGIN_LIST}
     )
 
 else (STATIC_IPS_ACTIONS)
 
-    add_library ( ips_actions STATIC
+    add_library ( ips_actions OBJECT
         ${IPS_ACTION_SOURCES}
     )
 

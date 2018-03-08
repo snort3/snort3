@@ -1,4 +1,3 @@
-set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -fno-strict-aliasing" )
 
 set (APPID_INCLUDES
     appid_api.h
@@ -195,7 +194,7 @@ set ( APPID_SOURCES
 
 
 #if (STATIC_INSPECTORS)
-    add_library(appid STATIC
+add_library(appid OBJECT
     	${APPID_SOURCES}
     	${CP_APPID_SOURCES}
     	${DP_APPID_SOURCES}

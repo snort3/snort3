@@ -92,7 +92,6 @@ set (
     ${PP_TEST_SOURCES}
 )
 
-add_library (
-    piglet_plugins STATIC
+add_library ( piglet_plugins OBJECT
     ${PP_SOURCES}
 )

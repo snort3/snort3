@@ -16,7 +16,7 @@ if ( ENABLE_SHELL )
     set ( SHELL_SOURCES control.cc control.h control_mgmt.cc control_mgmt.h )
 endif ( ENABLE_SHELL )
 
-add_library (main STATIC
+add_library (main OBJECT
     analyzer.cc
     analyzer.h
     analyzer_command.cc
@@ -43,14 +43,6 @@ add_library (main STATIC
     ${DEBUG_MSGS_SOURCES}
     ${INCLUDES}
     ${SHELL_SOURCES}
-)
-
-
-target_link_libraries(main
-    time
-    codecs
-    detection
-    packet_io
 )
 
 install (FILES ${INCLUDES}

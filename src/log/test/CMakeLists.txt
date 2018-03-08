@@ -1,1 +1,3 @@
-add_cpputest(obfuscator_test log)
+add_cpputest( obfuscator_test
+    SOURCES ../obfuscator.cc
+)

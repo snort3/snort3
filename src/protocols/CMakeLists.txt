@@ -26,7 +26,7 @@ set (PROTOCOL_HEADERS
     vlan.h
 )
 
-add_library (protocols STATIC
+add_library (protocols OBJECT
     ${PROTOCOL_HEADERS}
     layer.cc
     packet.cc

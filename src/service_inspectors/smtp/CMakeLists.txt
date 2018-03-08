@@ -17,7 +17,7 @@ set( FILE_LIST
 
 # can't be be linked dynamically yet
 #if (STATIC_INSPECTORS)
-    add_library( smtp STATIC ${FILE_LIST})
+    add_library( smtp OBJECT ${FILE_LIST})
 
 #else (STATIC_INSPECTORS)
     #add_dynamic_module(smtp inspectors ${FILE_LIST})

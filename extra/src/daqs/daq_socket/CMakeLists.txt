@@ -1,5 +1,9 @@
-cmake_minimum_required ( VERSION 2.8.11 )
+cmake_minimum_required ( VERSION 3.4.3 )
 project ( daq_socket C )
+
+set (CMAKE_C_STANDARD 99)
+set (CMAKE_C_STANDARD_REQUIRED ON)
+set (CMAKE_C_EXTENSIONS ON)
 
 if ( APPLE )
     set ( CMAKE_MACOSX_RPATH OFF )
@@ -27,8 +31,6 @@ set_target_properties (
         PREFIX ""
 )
 
-set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99" )
-
 target_include_directories (
     daq_socket PUBLIC
     ${SNORT3_INCLUDE_DIRS}
@@ -37,5 +39,5 @@ target_include_directories (
 install (
     TARGETS daq_socket
     LIBRARY
-        DESTINATION "lib/${CMAKE_PROJECT_NAME}/daqs"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/${CMAKE_PROJECT_NAME}/daqs"
 )

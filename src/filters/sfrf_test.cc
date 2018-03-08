@@ -23,7 +23,6 @@
 #endif
 
 #include "catch/snort_catch.h"
-#include "main/snort_types.h"
 #include "parser/parse_ip.h"
 #include "sfip/sf_ip.h"
 
@@ -31,8 +30,6 @@
 #include "sfrf.h"
 
 //---------------------------------------------------------------
-
-SNORT_FORCED_INCLUSION_DEFINITION(sfrf_test);
 
 #define IP_ANY   nullptr          // used to get "unset"
 

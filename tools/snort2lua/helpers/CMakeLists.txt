@@ -1,5 +1,5 @@
 
-add_library( snort2lua_helpers STATIC
+add_library( snort2lua_helpers OBJECT
     converter.h
     converter.cc
     s2l_util.h
@@ -12,6 +12,3 @@ add_library( snort2lua_helpers STATIC
     s2l_markup.cc
 )
 
-target_link_libraries( snort2lua_helpers
-    conversion_data
-)

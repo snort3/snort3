@@ -4,7 +4,7 @@ set( FILE_LIST
 )
 
 if (STATIC_INSPECTORS)
-    add_library( back_orifice STATIC ${FILE_LIST})
+    add_library( back_orifice OBJECT ${FILE_LIST})
 
 else (STATIC_INSPECTORS)
     add_dynamic_module(back_orifice inspectors ${FILE_LIST})

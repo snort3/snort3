@@ -1,5 +1,5 @@
 
-add_library( stream_user STATIC
+add_library( stream_user OBJECT
     user_module.cc
     user_module.h
     user_session.cc

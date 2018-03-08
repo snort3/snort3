@@ -18,7 +18,7 @@ set (PLUGIN_LIST
 )
 
 if (STATIC_LOGGERS)
-    add_library ( loggers STATIC
+    add_library ( loggers OBJECT
         ${LOGGER_SOURCES}
         ${PLUGIN_LIST}
     )
@@ -26,7 +26,7 @@ if (STATIC_LOGGERS)
 
 else (STATIC_LOGGERS)
 
-    add_library ( loggers STATIC
+    add_library ( loggers OBJECT
         ${LOGGER_SOURCES}
     )
 

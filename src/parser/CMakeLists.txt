@@ -1,5 +1,5 @@
 
-add_library (parser STATIC
+add_library (parser OBJECT
     arg_list.cc
     arg_list.h
     parser.cc
@@ -26,9 +26,3 @@ add_library (parser STATIC
     vars.h
 )
 
-target_link_libraries(parser
-    protocols
-    time
-    stream
-    codecs
-)

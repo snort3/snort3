@@ -1,5 +1,5 @@
 
-add_library( stream_ip STATIC
+add_library( stream_ip OBJECT
     ip_defrag.cc
     ip_defrag.h
     ip_ha.cc

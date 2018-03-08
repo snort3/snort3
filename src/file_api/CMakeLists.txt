@@ -11,7 +11,7 @@ set( FILE_API_INCLUDES
     file_service.h 
 )
 
-add_library ( file_api STATIC
+add_library ( file_api OBJECT
     ${FILE_API_INCLUDES}
     circular_buffer.cc 
     circular_buffer.h
@@ -35,8 +35,6 @@ add_library ( file_api STATIC
     file_stats.cc 
     file_stats.h
 )
-
-target_link_libraries(file_api mime)
 
 install (FILES ${FILE_API_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/file_api"

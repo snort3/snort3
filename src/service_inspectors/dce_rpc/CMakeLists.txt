@@ -57,7 +57,7 @@ set( FILE_LIST
 
 if (STATIC_INSPECTORS)
 
-    add_library(dce_rpc STATIC ${FILE_LIST})
+    add_library(dce_rpc OBJECT ${FILE_LIST})
 
 else (STATIC_INSPECTORS)
     add_dynamic_module(dce_rpc inspectors ${FILE_LIST})

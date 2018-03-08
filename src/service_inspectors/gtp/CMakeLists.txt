@@ -14,7 +14,7 @@ set( FILE_LIST
 )
 
 if (STATIC_INSPECTORS)
-    add_library(gtp_inspect STATIC ${FILE_LIST})
+    add_library(gtp_inspect OBJECT ${FILE_LIST})
 
 else (STATIC_INSPECTORS)
     add_dynamic_module(gtp_inspect inspectors ${FILE_LIST})

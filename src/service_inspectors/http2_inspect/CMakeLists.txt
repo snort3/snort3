@@ -19,7 +19,7 @@ set (FILE_LIST
 )
 
 #if (STATIC_INSPECTORS)
-    add_library(http2_inspect STATIC ${FILE_LIST})
+    add_library(http2_inspect OBJECT ${FILE_LIST})
 
 #else(STATIC_INSPECTORS)
     #add_dynamic_module(http2_inspect inspectors ${FILE_LIST})

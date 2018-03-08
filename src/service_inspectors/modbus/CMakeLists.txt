@@ -13,7 +13,7 @@ set( FILE_LIST
 )
 
 if (STATIC_INSPECTORS)
-    add_library(modbus STATIC ${FILE_LIST})
+    add_library(modbus OBJECT ${FILE_LIST})
 
 else (STATIC_INSPECTORS)
     add_dynamic_module(modbus inspectors ${FILE_LIST})

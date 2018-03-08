@@ -11,15 +11,16 @@ endif()
 
 set (CMAKE_SKIP_RPATH ON)
 
-
-if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-    if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.8")
-        message(FATAL_ERROR "G++ version 4.8 or greater required")
+if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+    set(GNUCXX_MINVER "4.8.1")
+    message(STATUS "g++ version ${CMAKE_CXX_COMPILER_VERSION}")
+    if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS GNUCXX_MINVER)
+        message(FATAL_ERROR "A minimum of g++ ${GNUCXX_MINVER} is required for C++11 support")
     endif()
 endif()
 
 
-# the Clang compiler on MacOS X may need the c++ library explicityly specified
+# the Clang compiler on MacOS X may need the c++ library explicitly specified
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
@@ -30,12 +31,18 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     endif()
 endif()
 
-
+include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
 
-set (CMAKE_REQUIRED_FLAGS "-fvisibility=hidden")
-check_cxx_compiler_flag (${CMAKE_REQUIRED_FLAGS} HAVE_VISIBILITY)
-if (HAVE_VISIBILITY)
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_REQUIRED_FLAGS}")
-endif ()
-unset(CMAKE_REQUIRED_FLAGS)
+CHECK_C_COMPILER_FLAG(-fvisibility=hidden HAS_C_HIDDEN)
+if (HAS_C_HIDDEN)
+    set(EXTRA_C_FLAGS "${EXTRA_C_FLAGS} -fvisibility=hidden")
+    set(HAVE_VISIBILITY 1)
+endif()
+
+CHECK_CXX_COMPILER_FLAG(-fvisibility=hidden HAS_CXX_HIDDEN)
+if (HAS_CXX_HIDDEN)
+    set(EXTRA_CXX_FLAGS "${EXTRA_CXX_FLAGS} -fvisibility=hidden")
+    set(HAVE_VISIBILITY 1)
+endif()
+

@@ -9,8 +9,8 @@ set ( MEMORY_SOURCES
     memory_manager.cc
     prune_handler.cc
     prune_handler.h
-    )
+)
 
-add_library ( memory STATIC
+add_library ( memory OBJECT
     ${MEMORY_SOURCES}
 )

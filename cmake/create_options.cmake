@@ -63,7 +63,3 @@ set (
     SIGNAL_SNORT_READ_ATTR_TBL "SIGURG"
     CACHE STRING "set the SNORT_READ_ATTR_TBL signal (must be a valid integer or signal name)"
 )
-
-#Setting default directories...appended to INSTALL_PREFIX unless a full path is provided
-set ( SNORT_DATA_DIR share/doc/${CMAKE_PROJECT_NAME} )
-

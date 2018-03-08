@@ -1,4 +1,3 @@
-include ( help.cmake )
 add_custom_target ( snort_manuals ALL )
 
 set (
@@ -79,6 +78,15 @@ set (
     usage.txt
     wizard.txt
 )
+
+function ( add_help_command generator_script output_file )
+    add_custom_command (
+        OUTPUT ${output_file}
+        COMMAND ${generator_script} $<TARGET_FILE:snort> ${output_file} $ENV{SNORT_PLUGIN_PATH}
+        DEPENDS snort
+        COMMENT "Documents: building ${output_file} with $ENV{SNORT_PLUGIN_PATH}"
+    )
+endfunction ( add_help_command )
 
 foreach ( output_file ${HELP_SOURCES} )
     add_help_command (
@@ -220,7 +228,6 @@ if ( MAKE_HTML_DOC )
     list (
         APPEND
         EXTRA_CLEAN
-        "${CMAKE_CURRENT_BINARY_DIR}/snort_manual.html"
         "${CMAKE_CURRENT_BINARY_DIR}/snort_manual.chunked"
         "${CMAKE_CURRENT_BINARY_DIR}/snort_manual.tgz"
     )
@@ -266,12 +273,6 @@ if ( MAKE_TEXT_DOC )
         COMMAND rm -rf ${TEXT_DOC_TMP}
         DEPENDS snort_manual.text
     )
-
-    list (
-        APPEND
-        EXTRA_CLEAN
-        "${CMAKE_CURRENT_BINARY_DIR}/snort_manual.text"
-    )
 endif ( MAKE_TEXT_DOC )
 
 if ( MAKE_PDF_DOC )
@@ -303,12 +304,6 @@ if ( MAKE_PDF_DOC )
         COMMAND rm -rf ${PDF_DOC_TMP}
         DEPENDS snort_manual.pdf
     )
-
-    list (
-        APPEND
-        EXTRA_CLEAN
-        "${CMAKE_CURRENT_BINARY_DIR}/snort_manual.pdf"
-    )
 endif ( MAKE_PDF_DOC )
 
 install (
@@ -316,15 +311,22 @@ install (
     ${BUILT_DIST}
     ${UNBUILT_SOURCES}
     DESTINATION
-    ${SNORT_DATA_DIR}
+    ${CMAKE_INSTALL_DOCDIR}
 )
 
 set (
     EXTRA_CLEAN
     ${EXTRA_CLEAN}
     ${BINARY_DIR_BUILT_SOURCES}
-    ${BINARY_DIR_UNBUILT_SOURCES}
 )
+
+if ( NOT CMAKE_CURRENT_LIST_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR )
+    list (
+        APPEND
+        EXTRA_CLEAN
+        ${BINARY_DIR_UNBUILT_SOURCES}
+    )
+endif ()
 
 if ( EXTRA_CLEAN )
     set_property (

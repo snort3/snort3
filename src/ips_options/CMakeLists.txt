@@ -78,7 +78,7 @@ endif ()
 
 if (STATIC_IPS_OPTIONS)
 
-    add_library ( ips_options STATIC
+    add_library ( ips_options OBJECT
         ${IPS_SOURCES}
         ${OPTION_LIST}
         ${PLUGIN_LIST}
@@ -86,7 +86,7 @@ if (STATIC_IPS_OPTIONS)
 
 else (STATIC_IPS_OPTIONS)
 
-    add_library ( ips_options STATIC
+    add_library ( ips_options OBJECT
         ${IPS_SOURCES}
         ${OPTION_LIST}
     )
@@ -131,8 +131,4 @@ else (STATIC_IPS_OPTIONS)
 
 endif (STATIC_IPS_OPTIONS)
 
-target_link_libraries(ips_options
-    framework
-    helpers
-    hash
-)
+add_subdirectory(test)

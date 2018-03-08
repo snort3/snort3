@@ -22,11 +22,8 @@
 #endif
 
 #include "catch/snort_catch.h"
-#include "main/snort_types.h"
 
 #include "bitop.h"
-
-SNORT_FORCED_INCLUSION_DEFINITION(bitop_test);
 
 static bool t_bitop_buffer_zero(BitOp& bitop)
 {

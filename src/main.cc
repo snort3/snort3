@@ -33,7 +33,6 @@
 #include "lua/lua.h"
 #include "main/analyzer.h"
 #include "main/analyzer_command.h"
-#include "main/inclusion.h"
 #include "main/request.h"
 #include "main/shell.h"
 #include "main/snort.h"
@@ -53,7 +52,7 @@
 #include "utils/safec.h"
 
 #ifdef UNIT_TEST
-#include "catch/unit_test_main.h"
+#include "catch/unit_test.h"
 #endif
 
 #ifdef PIGLET

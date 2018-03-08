@@ -71,7 +71,7 @@ SO_PUBLIC void LogMessage(const char*, ...)
 {
 }
 
-void FatalError(const char*,...)
+[[noreturn]] void FatalError(const char*,...)
 {
     exit(1);
 }

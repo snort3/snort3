@@ -23,12 +23,9 @@
 #endif
 
 #include "catch/snort_catch.h"
-#include "main/snort_types.h"
 
 #include "clock_defs.h"
 #include "stopwatch.h"
-
-SNORT_FORCED_INCLUSION_DEFINITION(stopwatch_test);
 
 namespace t_stopwatch
 {

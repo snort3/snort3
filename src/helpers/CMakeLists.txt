@@ -3,7 +3,7 @@ set (HELPERS_INCLUDES
     base64_encoder.h
 )
 
-add_library (helpers STATIC
+add_library (helpers OBJECT
     ${HELPERS_INCLUDES}
     base64_encoder.cc
     chunk.cc
@@ -17,11 +17,6 @@ add_library (helpers STATIC
     process.h
     ring.h
     ring_logic.h
-)
-
-target_link_libraries(helpers
-    log
-    utils
 )
 
 install (FILES ${HELPERS_INCLUDES}

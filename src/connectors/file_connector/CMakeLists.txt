@@ -1,5 +1,5 @@
 
-add_library( file_connector STATIC
+add_library( file_connector OBJECT
     file_connector.cc
     file_connector.h
     file_connector_config.h
@@ -7,4 +7,4 @@ add_library( file_connector STATIC
     file_connector_module.h
 )
 
-target_link_libraries(file_connector)
+add_subdirectory(test)

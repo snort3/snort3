@@ -42,42 +42,40 @@ if ( ENABLE_HARDENED_BUILD )
 
     check_cxx_compiler_flag ( "-Wdate-time" HAS_WDATE_TIME_CPPFLAG )
     if ( HAS_WDATE_TIME_CPPFLAG )
-        set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wdate-time" )
+        set ( HARDENED_CXX_FLAGS "${HARDENED_CXX_FLAGS} -Wdate-time" )
     endif ()
 
     check_cxx_compiler_flag ( "-D_FORTIFY_SOURCE=2" HAS_FORTIFY_SOURCE_2_CPPFLAG )
     if ( HAS_FORTIFY_SOURCE_2_CPPFLAG )
-        set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FORTIFY_SOURCE=2" )
+        set ( HARDENED_CXX_FLAGS "${HARDENED_CXX_FLAGS} -D_FORTIFY_SOURCE=2" )
     endif ()
 
     check_cxx_compiler_flag ( "-fstack-protector-strong" HAS_FSTACK_PROTECTOR_STRONG_CXXFLAG )
     if ( HAS_FSTACK_PROTECTOR_STRONG_CXXFLAG )
-        set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstack-protector-strong" )
+        set ( HARDENED_CXX_FLAGS "${HARDENED_CXX_FLAGS} -fstack-protector-strong" )
     endif ()
 
     check_cxx_compiler_flag ( "-Wformat" HAS_WFORMAT_CXXFLAG )
     if ( HAS_WFORMAT_CXXFLAG )
-        set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wformat" )
+        set ( HARDENED_CXX_FLAGS "${HARDENED_CXX_FLAGS} -Wformat" )
     endif ()
 
     check_cxx_compiler_flag ( "-Werror=format-security" HAS_WERROR_FORMAT_SECURITY_CXXFLAG )
     if ( HAS_WERROR_FORMAT_SECURITY_CXXFLAG )
-        set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror=format-security" )
+        set ( HARDENED_CXX_FLAGS "${HARDENED_CXX_FLAGS} -Werror=format-security" )
     endif ()
 
     set ( CMAKE_REQUIRED_FLAGS "-Wl,-z,relro" )
     check_cxx_compiler_flag ( "" HAS_ZRELRO_LDFLAG )
     if ( HAS_ZRELRO_LDFLAG )
-        set ( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-z,relro" )
-        set ( CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,-z,relro" )
+        set ( HARDENED_LINKER_FLAGS "${HARDENED_LINKER_FLAGS} -Wl,-z,relro" )
     endif ()
     unset ( CMAKE_REQUIRED_FLAGS )
 
     set ( CMAKE_REQUIRED_FLAGS "-Wl,-z,now" )
     check_cxx_compiler_flag ( "-Wl,-z,now" HAS_ZNOW_LDFLAG )
     if ( HAS_ZNOW_LDFLAG )
-        set ( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-z,now" )
-        set ( CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,-z,now" )
+        set ( HARDENED_LINKER_FLAGS "${HARDENED_LINKER_FLAGS} -Wl,-z,now" )
     endif ()
     unset ( CMAKE_REQUIRED_FLAGS )
 
@@ -86,9 +84,8 @@ endif ( ENABLE_HARDENED_BUILD )
 if ( ENABLE_PIE )
     check_cxx_compiler_flag ( "-fPIE -pie" HAS_PIE_SUPPORT )
     if ( HAS_PIE_SUPPORT )
-        set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIE" )
-        set ( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fPIE -pie" )
-        set ( CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fPIE -pie" )
+        set ( HARDENED_CXX_FLAGS "${HARDENED_CXX_FLAGS} -fPIE" )
+        set ( HARDENED_LINKER_FLAGS "${HARDENED_LINKER_FLAGS} -fPIE -pie" )
     endif ()
 endif ( ENABLE_PIE )
 
@@ -102,59 +99,60 @@ set ( DEBUG_MSGS ${ENABLE_DEBUG_MSGS} )
 
 set ( DEBUG ${ENABLE_DEBUG} )
 if ( ENABLE_DEBUG )
-    set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g" )
+    set ( DEBUGGING_C_FLAGS "${DEBUGGING_C_FLAGS} -g -DDEBUG" )
 endif ( ENABLE_DEBUG )
 
 if ( ENABLE_GDB )
-    set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -ggdb" )
+    set ( DEBUGGING_C_FLAGS "${DEBUGGING_C_FLAGS} -g -ggdb" )
 endif ( ENABLE_GDB )
 
 if ( ENABLE_PROFILE AND CMAKE_COMPILER_IS_GNUCXX )
-    set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg" )
+    set ( DEBUGGING_C_FLAGS "${DEBUGGING_C_FLAGS} -pg" )
 endif ( ENABLE_PROFILE AND CMAKE_COMPILER_IS_GNUCXX )
 
 if ( ENABLE_ADDRESS_SANITIZER )
-    set ( SANITIZER_FLAGS "-fsanitize=address -fno-omit-frame-pointer" )
+    set ( SANITIZER_CXX_FLAGS "-fsanitize=address -fno-omit-frame-pointer" )
 
-    set ( CMAKE_REQUIRED_FLAGS "${SANITIZER_LDFLAGS} -fsanitize=address" )
-    check_cxx_compiler_flag ( "${SANITIZER_FLAGS}" HAS_SANITIZE_ADDRESS_LDFLAG )
+    set ( CMAKE_REQUIRED_FLAGS "${SANITIZER_LINKER_FLAGS} -fsanitize=address" )
+    check_cxx_compiler_flag ( "${SANITIZER_CXX_FLAGS}" HAS_SANITIZE_ADDRESS_LDFLAG )
     if ( HAS_SANITIZE_ADDRESS_LDFLAG )
-        set ( SANITIZER_LDFLAGS "${SANITIZER_LDFLAGS} -fsanitize=address" )
-    endif ()
-    unset ( CMAKE_REQUIRED_FLAGS )
-
-    set ( CMAKE_REQUIRED_FLAGS "${SANITIZER_LDFLAGS} -static-libasan" )
-    check_cxx_compiler_flag ( "${SANITIZER_FLAGS}" HAS_STATIC_LIBASAN_LDFLAG )
-    if ( HAS_STATIC_LIBASAN_LDFLAG )
-        set ( SANITIZER_LDFLAGS "${SANITIZER_LDFLAGS} -static-libasan" )
+        set ( SANITIZER_LINKER_FLAGS "${SANITIZER_LINKER_FLAGS} -fsanitize=address" )
     endif ()
     unset ( CMAKE_REQUIRED_FLAGS )
 endif ( ENABLE_ADDRESS_SANITIZER )
 
 if ( ENABLE_THREAD_SANITIZER )
-    set ( SANITIZER_CXXFLAGS "-fsanitize=thread -fno-omit-frame-pointer" )
+    set ( SANITIZER_CXX_FLAGS "-fsanitize=thread -fno-omit-frame-pointer" )
 
-    set ( CMAKE_REQUIRED_FLAGS "${SANITIZER_LDFLAGS} -fsanitize=thread" )
-    check_cxx_compiler_flag ( "${SANITIZER_CXXFLAGS}" HAS_SANITIZE_THREAD_LDFLAG )
+    set ( CMAKE_REQUIRED_FLAGS "${SANITIZER_LINKER_FLAGS} -fsanitize=thread" )
+    check_cxx_compiler_flag ( "${SANITIZER_CXX_FLAGS}" HAS_SANITIZE_THREAD_LDFLAG )
     if ( HAS_SANITIZE_THREAD_LDFLAG )
-        set ( SANITIZER_LDFLAGS "${SANITIZER_LDFLAGS} -fsanitize=thread" )
-    endif ()
-    unset ( CMAKE_REQUIRED_FLAGS )
-
-    set ( CMAKE_REQUIRED_FLAGS "${SANITIZER_LDFLAGS} -static-libtsan" )
-    check_cxx_compiler_flag ( "${SANITIZER_CXXFLAGS}" HAS_STATIC_LIBTSAN_LDFLAG )
-    if ( HAS_STATIC_LIBTSAN_LDFLAG )
-        set ( SANITIZER_LDFLAGS "${SANITIZER_LDFLAGS} -static-libtsan" )
+        set ( SANITIZER_LINKER_FLAGS "${SANITIZER_LINKER_FLAGS} -fsanitize=thread" )
     endif ()
     unset ( CMAKE_REQUIRED_FLAGS )
 endif ( ENABLE_THREAD_SANITIZER )
 
 if ( ENABLE_CODE_COVERAGE )
-    set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -g -fprofile-arcs -ftest-coverage" )
-    set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -fprofile-arcs -ftest-coverage" )
-
-    if ( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" )
-        set ( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lgcov" )
-    endif ()
+    include(${CMAKE_MODULE_PATH}/CodeCoverage.cmake)
 endif ( ENABLE_CODE_COVERAGE )
 
+
+# Accumulate extra flags and libraries
+#[[
+message("
+    HARDENED_CXX_FLAGS = ${HARDENED_CXX_FLAGS}
+    HARDENED_LINKER_FLAGS = ${HARDENED_LINKER_FLAGS}
+    DEBUGGING_C_FLAGS = ${DEBUGGING_C_FLAGS}
+    SANITIZER_CXX_FLAGS = ${SANITIZER_CXX_FLAGS}
+    SANITIZER_LINKER_FLAGS = ${SANITIZER_LINKER_FLAGS}
+    COVERAGE_COMPILER_FLAGS = ${COVERAGE_COMPILER_FLAGS}
+    COVERAGE_LINKER_FLAGS = ${COVERAGE_LINKER_FLAGS}
+    COVERAGE_LIBRARIES = ${COVERAGE_LIBRARIES}
+")
+]]
+set ( EXTRA_C_FLAGS "${EXTRA_C_FLAGS} ${HARDENED_CXX_FLAGS} ${DEBUGGING_C_FLAGS} ${SANITIZER_CXX_FLAGS} ${COVERAGE_COMPILER_FLAGS}" )
+set ( EXTRA_CXX_FLAGS "${EXTRA_CXX_FLAGS} ${HARDENED_CXX_FLAGS} ${DEBUGGING_C_FLAGS} ${SANITIZER_CXX_FLAGS} ${COVERAGE_COMPILER_FLAGS}" )
+set ( EXTRA_LINKER_FLAGS "${EXTRA_LINKER_FLAGS} ${HARDENED_LINKER_FLAGS} ${SANITIZER_LINKER_FLAGS} ${COVERAGE_LINKER_FLAGS}" )
+foreach (EXTRA_LIBRARY IN LISTS COVERAGE_LIBRARIES)
+    list ( APPEND EXTRA_LIBRARIES ${EXTRA_LIBRARY} )
+endforeach ()

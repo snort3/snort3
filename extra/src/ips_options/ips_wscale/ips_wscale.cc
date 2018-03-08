@@ -70,7 +70,7 @@ bool TcpWscaleOption::operator==(const IpsOption& ips) const
     if ( strcmp(s_name, ips.get_name()) )
         return false;
 
-    TcpWscaleOption& rhs = (TcpWscaleOption&)ips;
+    const TcpWscaleOption& rhs = (const TcpWscaleOption&)ips;
     return ( config == rhs.config );
 }
 

@@ -1,5 +1,5 @@
 
-add_library( stream_base STATIC
+add_library( stream_base OBJECT
     stream_base.cc
     stream_ha.cc
     stream_ha.h

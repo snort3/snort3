@@ -41,7 +41,7 @@ else()
 endif()
 
 
-add_library( ip_codecs STATIC
+add_library( ip_codecs OBJECT
     cd_ipv4.cc # Static due to its dependence on fpdetect
     cd_hop_opts.cc  #  Ensured the symbols CheckIPV6HopOptions && CheckIPv6ExtensionOrder are in the binary.
     cd_tcp.cc  # Only file to use some functions.  Must be included in binary.
@@ -49,11 +49,3 @@ add_library( ip_codecs STATIC
     ${PLUGIN_SOURCES}
 )
 
-target_link_libraries( ip_codecs
-    protocols
-    framework
-    events
-    main
-    managers
-    codec_module
-)

@@ -1,5 +1,5 @@
 
-add_library( rule_states STATIC
+add_library( rule_states OBJECT
     rule_base64_decode.cc
     rule_content.cc
     rule_convert_comma_list.cc
@@ -26,7 +26,3 @@ add_library( rule_states STATIC
     rule_api.h
 )
 
-target_link_libraries( rule_states
-    snort2lua_helpers
-    conversion_data
-)

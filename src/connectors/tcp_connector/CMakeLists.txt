@@ -1,5 +1,5 @@
 
-add_library( tcp_connector STATIC
+add_library( tcp_connector OBJECT
     tcp_connector.cc
     tcp_connector.h
     tcp_connector_config.h
@@ -7,4 +7,4 @@ add_library( tcp_connector STATIC
     tcp_connector_module.h
 )
 
-target_link_libraries(tcp_connector)
+add_subdirectory(test)

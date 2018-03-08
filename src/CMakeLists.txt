@@ -31,6 +31,10 @@ set(EXTERNAL_INCLUDES
     ${ZLIB_INCLUDE_DIRS}
 )
 
+if ( FLATBUFFERS_FOUND )
+    LIST(APPEND EXTERNAL_LIBRARIES ${FLATBUFFERS_LIBRARIES})
+endif()
+
 if ( HS_FOUND )
     LIST(APPEND EXTERNAL_LIBRARIES ${HS_LIBRARIES})
     LIST(APPEND EXTERNAL_INCLUDES ${HS_INCLUDE_DIRS})
@@ -48,97 +52,17 @@ include_directories(AFTER ${EXTERNAL_INCLUDES})
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(BEFORE network_inspectors)
 
-if (STATIC_CODECS)
-    set (STATIC_CODEC_LIBRARIES
-        link_codecs
-        root_codecs
-    )
-endif()
-
 if (ENABLE_UNIT_TESTS)
     enable_testing()
-    set( UNIT_TESTS_LIBRARIES catch_tests)
+    set( UNIT_TESTS_LIBRARIES $<TARGET_OBJECTS:catch_tests>)
     add_subdirectory(catch)
 endif (ENABLE_UNIT_TESTS)
 
 if ( ENABLE_PIGLET )
-    set ( PIGLET_LIBRARIES piglet piglet_plugins )
+    set ( PIGLET_LIBRARIES $<TARGET_OBJECTS:piglet> $<TARGET_OBJECTS:piglet_plugins> )
     add_subdirectory ( piglet )
     add_subdirectory ( piglet_plugins )
 endif ( ENABLE_PIGLET )
-
-#  The main Snort executableRA
-add_executable( snort
-    main.h
-    main.cc
-)
-
-# order libs to avoid undefined symbols
-# from gnu linker
-target_link_libraries( snort
-    ${UNIT_TESTS_LIBRARIES}
-    managers
-    main
-    codecs
-    loggers
-    ip_codecs
-    misc_codecs
-    ${STATIC_CODEC_LIBRARIES}
-    network_inspectors
-    service_inspectors
-# include only those with otherwise unresolved dependencies
-    appid
-    http_inspect
-    http2_inspect
-    sip
-    reputation
-    stream
-    stream_base
-    stream_ip
-    stream_icmp
-    stream_tcp
-    stream_libtcp
-    stream_udp
-    stream_user
-    stream_file
-    stream_paf
-    mime
-    ips_options
-    search_engines
-    target_based
-    ${PIGLET_LIBRARIES}
-    codec_module
-    memory
-    host_tracker
-    pub_sub
-    parser
-    flow
-    side_channel
-    connectors
-    file_connector
-    control
-    filter
-    detection
-    framework
-    file_api
-    latency
-    profiler
-    time
-    ips_actions
-    events
-    hash
-    log
-    packet_io
-    helpers
-    lua
-    decompress
-    sfip
-    sfrt
-    protocols
-    ports
-    utils
-    ${EXTERNAL_LIBRARIES}
-)
 
 add_subdirectory(actions)
 add_subdirectory(codecs)
@@ -181,6 +105,81 @@ add_subdirectory(side_channel)
 add_subdirectory(connectors)
 
 
+# FIXIT-L Delegate building out the target objects list to subdirectories
+
+#  The main Snort executable
+add_executable( snort
+    main.h
+    main.cc
+    $<TARGET_OBJECTS:codecs>
+    $<TARGET_OBJECTS:connectors>
+    $<TARGET_OBJECTS:control>
+    $<TARGET_OBJECTS:decompress>
+    $<TARGET_OBJECTS:detection>
+    $<TARGET_OBJECTS:events>
+    $<TARGET_OBJECTS:file_api>
+    $<TARGET_OBJECTS:file_connector>
+    $<TARGET_OBJECTS:filter>
+    $<TARGET_OBJECTS:flow>
+    $<TARGET_OBJECTS:framework>
+    $<TARGET_OBJECTS:hash>
+    $<TARGET_OBJECTS:helpers>
+    $<TARGET_OBJECTS:host_tracker>
+    $<TARGET_OBJECTS:ips_actions>
+    $<TARGET_OBJECTS:ips_options>
+    $<TARGET_OBJECTS:latency>
+    $<TARGET_OBJECTS:log>
+    $<TARGET_OBJECTS:loggers>
+    $<TARGET_OBJECTS:lua>
+    $<TARGET_OBJECTS:main>
+    $<TARGET_OBJECTS:managers>
+    $<TARGET_OBJECTS:memory>
+    $<TARGET_OBJECTS:mime>
+    $<TARGET_OBJECTS:network_inspectors>
+    $<TARGET_OBJECTS:packet_io>
+    $<TARGET_OBJECTS:parser>
+    $<TARGET_OBJECTS:ports>
+    $<TARGET_OBJECTS:profiler>
+    $<TARGET_OBJECTS:protocols>
+    $<TARGET_OBJECTS:pub_sub>
+    $<TARGET_OBJECTS:search_engines>
+    $<TARGET_OBJECTS:service_inspectors>
+    $<TARGET_OBJECTS:sfip>
+    $<TARGET_OBJECTS:sfrt>
+    $<TARGET_OBJECTS:side_channel>
+    $<TARGET_OBJECTS:stream>
+    $<TARGET_OBJECTS:stream_base>
+    $<TARGET_OBJECTS:stream_ip>
+    $<TARGET_OBJECTS:stream_icmp>
+    $<TARGET_OBJECTS:stream_libtcp>
+    $<TARGET_OBJECTS:stream_tcp>
+    $<TARGET_OBJECTS:stream_udp>
+    $<TARGET_OBJECTS:stream_user>
+    $<TARGET_OBJECTS:stream_file>
+    $<TARGET_OBJECTS:stream_paf>
+    $<TARGET_OBJECTS:target_based>
+    $<TARGET_OBJECTS:tcp_connector>
+    $<TARGET_OBJECTS:time>
+    $<TARGET_OBJECTS:utils>
+    ${PIGLET_LIBRARIES}
+    ${STATIC_CODEC_PLUGINS}
+    ${STATIC_NETWORK_INSPECTOR_PLUGINS}
+    ${STATIC_SERVICE_INSPECTOR_PLUGINS}
+    ${UNIT_TESTS_LIBRARIES}
+)
+
+#[[
+message("
+    STATIC_CODEC_PLUGINS = ${STATIC_CODEC_PLUGINS}
+    STATIC_NETWORK_INSPECTOR_PLUGINS = ${STATIC_NETWORK_INSPECTOR_PLUGINS}
+    STATIC_SERVICE_INSPECTOR_PLUGINS = ${STATIC_SERVICE_INSPECTOR_PLUGINS}
+")
+]]
+
+target_link_libraries( snort
+    ${EXTERNAL_LIBRARIES}
+)
+
 #  setting export properties
 set_property(TARGET snort APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
     ${LUAJIT_INCLUDE_DIR}
@@ -190,18 +189,15 @@ set_property(TARGET snort APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
 
 set_property(TARGET snort APPEND PROPERTY INTERFACE_COMPILE_OPTIONS "${CMAKE_CXX_FLAGS}")
 
-set_target_properties(
-    snort
-    PROPERTIES
-        LINK_FLAGS "${SANITIZER_LDFLAGS}"
-)
+set_property(TARGET snort PROPERTY ENABLE_EXPORTS 1)
 
 install (TARGETS snort
-    EXPORT snortexe
-    RUNTIME DESTINATION bin
+    # EXPORT snortexe
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-install (EXPORT snortexe
-    DESTINATION lib/snort
-    FILE snort.cmake
-)
+# FIXIT-L Restore CMake export information
+#install (EXPORT snortexe
+#    DESTINATION ${CMAKE_INSTALL_LIBDIR}/snort
+#    FILE snort.cmake
+#)

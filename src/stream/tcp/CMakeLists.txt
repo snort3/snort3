@@ -1,4 +1,4 @@
-add_library( stream_tcp STATIC
+add_library( stream_tcp OBJECT
     ips_stream_reassemble.cc
     ips_stream_size.cc
     segment_overlap_editor.h

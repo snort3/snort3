@@ -8,7 +8,7 @@ set( FILE_LIST
 )
 
 if (STATIC_INSPECTORS)
-    add_library( ssh STATIC ${FILE_LIST})
+    add_library( ssh OBJECT ${FILE_LIST})
 
 else (STATIC_INSPECTORS)
     add_dynamic_module(ssh inspectors ${FILE_LIST})

@@ -223,6 +223,16 @@ void operator delete[](void* p) noexcept
 void operator delete[](void* p, const std::nothrow_t&) noexcept
 { ::operator delete[](p); }
 
+// C++14 delete operators are a special case and must be explicitly exported
+// since we're compiling as C++11 but must capture these for external libraries
+void operator delete(void* p, size_t) noexcept;
+SO_PUBLIC void operator delete(void* p, size_t) noexcept
+{ ::operator delete(p); }
+
+void operator delete[](void* p, size_t) noexcept;
+SO_PUBLIC void operator delete[](void* p, size_t) noexcept
+{ ::operator delete[](p); }
+
 // -----------------------------------------------------------------------------
 // unit tests
 // -----------------------------------------------------------------------------

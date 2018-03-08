@@ -3,7 +3,7 @@ if ( ENABLE_UNIT_TESTS )
     set(TEST_FILES lua_stack_test.cc)
 endif()
 
-add_library (lua STATIC
+add_library (lua OBJECT
     lua.cc
     lua.h
     lua_ref.cc

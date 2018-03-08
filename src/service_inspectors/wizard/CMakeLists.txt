@@ -12,7 +12,7 @@ set(FILE_LIST
 )
 
 if (STATIC_INSPECTORS)
-    add_library(wizard STATIC ${FILE_LIST})
+    add_library(wizard OBJECT ${FILE_LIST})
 
 else (STATIC_INSPECTORS)
     add_dynamic_module(wizard inspectors ${FILE_LIST})

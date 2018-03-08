@@ -23,7 +23,6 @@
 #endif
 
 #include "catch/snort_catch.h"
-#include "main/snort_types.h"
 #include "sfip/sf_cidr.h"
 #include "utils/util.h"
 
@@ -31,8 +30,6 @@
 
 #define NUM_IPS 32
 #define NUM_DATA 4
-
-SNORT_FORCED_INCLUSION_DEFINITION(sfrt_test);
 
 typedef struct
 {

@@ -6,7 +6,7 @@ set(FILE_LIST
 )
 
 if (STATIC_INSPECTORS)
-    add_library(arp_spoof STATIC
+    add_library(arp_spoof OBJECT
         ${FILE_LIST}
     )
 

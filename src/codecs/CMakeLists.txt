@@ -8,33 +8,28 @@ set (CODEC_INCLUDES
     codec_module.h
 )
 
-add_library (codecs STATIC
+add_library (codecs OBJECT
     ${CODEC_INCLUDES}
     codec_api.h
     codec_api.cc
-)
-
-add_library (codec_module STATIC
     codec_module.cc
 )
 
 if (STATIC_CODECS)
-    set (CODEC_PLUGIN_LIBRARIES
-        link_codecs
-        root_codecs
+    set (STATIC_CODEC_PLUGINS
+        $<TARGET_OBJECTS:ip_codecs>
+        $<TARGET_OBJECTS:link_codecs>
+        $<TARGET_OBJECTS:misc_codecs>
+        $<TARGET_OBJECTS:root_codecs>
+        CACHE INTERNAL "STATIC_CODEC_PLUGINS"
+    )
+else()
+    set (STATIC_CODEC_PLUGINS
+        $<TARGET_OBJECTS:ip_codecs>
+        $<TARGET_OBJECTS:misc_codecs>
+        CACHE INTERNAL "STATIC_CODEC_PLUGINS"
     )
 endif(STATIC_CODECS)
-
-target_link_libraries (codecs
-    ${CODEC_PLUGIN_LIBRARIES}
-    ip_codecs
-    misc_codecs
-    protocols
-    sfip
-    framework
-    main
-)
-
 
 install (FILES ${CODEC_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/codecs"

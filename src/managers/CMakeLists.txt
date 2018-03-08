@@ -9,7 +9,7 @@ set( MANAGERS_INCLUDES
     inspector_manager.h
 )
 
-add_library( managers STATIC
+add_library( managers OBJECT
     ${MANAGERS_INCLUDES}
     action_manager.h
     action_manager.cc
@@ -32,19 +32,6 @@ add_library( managers STATIC
     so_manager.h
     connector_manager.cc
     connector_manager.h
-)
-
-target_link_libraries(managers
-    framework
-    helpers
-    loggers
-    ips_options
-    network_inspectors
-    service_inspectors
-    search_engines
-    parser
-    codecs
-    ips_actions
 )
 
 install (FILES ${MANAGERS_INCLUDES}

@@ -1,5 +1,5 @@
 
-add_library( port_scan STATIC
+add_library( port_scan OBJECT
     port_scan.cc
     ps_detect.cc
     ps_detect.h
@@ -10,6 +10,3 @@ add_library( port_scan STATIC
     ipobj.h
 )
 
-target_link_libraries( port_scan
-    events
-)

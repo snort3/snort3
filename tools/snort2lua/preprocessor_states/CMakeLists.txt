@@ -1,5 +1,5 @@
 
-add_library(preprocessor_states STATIC
+add_library(preprocessor_states OBJECT
     pps_appid.cc
     pps_arpspoof.cc
     pps_bo.cc
@@ -38,7 +38,3 @@ add_library(preprocessor_states STATIC
     preprocessor_api.cc
 )
 
-target_link_libraries( preprocessor_states
-    snort2lua_helpers
-    conversion_data
-)

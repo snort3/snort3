@@ -12,13 +12,8 @@ endif (STATIC_CODECS)
 
 
 if (STATIC_CODECS)
-    add_library(root_codecs STATIC
+    add_library(root_codecs OBJECT
         ${PLUGIN_LIST}
         ${PCAP_INCLUDE_DIR}/pcap.h  # rebuild if a new libpcap is installed
     )
-
-    target_link_libraries( root_codecs
-        codec_module
-    )
-
 endif (STATIC_CODECS)

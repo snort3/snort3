@@ -4,7 +4,7 @@ if ( ENABLE_UNIT_TESTS )
 endif()
 
 
-add_library( stream_libtcp STATIC
+add_library( stream_libtcp OBJECT
 	tcp_segment_descriptor.cc
 	tcp_state_handler.cc
 	tcp_state_machine.cc

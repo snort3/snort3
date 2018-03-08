@@ -1,5 +1,5 @@
 
-add_library( config_states STATIC
+add_library( config_states OBJECT
     config_alertfile.cc
     config_binding.cc
     config_checksums.cc
@@ -33,7 +33,3 @@ add_library( config_states STATIC
     config_api.cc
 )
 
-target_link_libraries( config_states
-    snort2lua_helpers
-    conversion_data
-)

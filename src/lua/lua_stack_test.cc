@@ -25,12 +25,9 @@
 #include <string>
 
 #include "catch/snort_catch.h"
-#include "main/snort_types.h"
 
 #include "lua_test_common.h"
 #include "lua/lua_stack.h"
-
-SNORT_FORCED_INCLUSION_DEFINITION(lua_stack_test);
 
 static lua_State* L = nullptr;
 

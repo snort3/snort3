@@ -1,5 +1,9 @@
-cmake_minimum_required ( VERSION 2.8.11 )
+cmake_minimum_required ( VERSION 3.4.3 )
 project ( lowmem CXX )
+
+set (CMAKE_CXX_STANDARD 11)
+set (CMAKE_CXX_STANDARD_REQUIRED ON)
+set (CMAKE_CXX_EXTENSIONS OFF)
 
 if ( APPLE )
     set ( CMAKE_MACOSX_RPATH OFF )
@@ -30,8 +34,6 @@ set_target_properties (
         PREFIX ""
 )
 
-set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
-
 target_include_directories (
     lowmem PUBLIC
     ${SNORT3_INCLUDE_DIRS}
@@ -40,5 +42,5 @@ target_include_directories (
 install (
     TARGETS lowmem
     LIBRARY
-        DESTINATION "lib/${CMAKE_PROJECT_NAME}/search_engines"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/${CMAKE_PROJECT_NAME}/search_engines"
 )

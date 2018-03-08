@@ -14,7 +14,7 @@ set ( LATENCY_SOURCES
     rule_latency_state.h
     rule_latency.h
     rule_latency.cc
-    )
+)
 
-add_library ( latency STATIC ${LATENCY_SOURCES} )
+add_library ( latency OBJECT ${LATENCY_SOURCES} )
 

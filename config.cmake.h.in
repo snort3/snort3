@@ -48,12 +48,6 @@
 /* enalbe debug messages */
 #cmakedefine DEBUG_MSGS 1
 
-/* enable debug build */
-#cmakedefine DEBUG 1
-
-/* disable assertions */
-#cmakedefine NDEBUG 1
-
 /* enable profiling */
 #cmakedefine PROFILE 1
 
@@ -97,128 +91,17 @@
 
 /*  Print available system types and their sizes */
 
-/* Define to 1 if the system has the type `int16_t'. */
-#cmakedefine HAVE_INT16_T 1
-
-/* Define to 1 if the system has the type `int32_t'. */
-#cmakedefine HAVE_INT32_T 1
-
-/* Define to 1 if the system has the type `int64_t'. */
-#cmakedefine HAVE_INT64_T 1
-
-/* Define to 1 if the system has the type `int8_t'. */
-#cmakedefine HAVE_INT8_T 1
-
-/* Define to 1 if the system has the type `uint16_t'. */
-#cmakedefine HAVE_UINT16_T 1
-
-/* Define to 1 if the system has the type `uint32_t'. */
-#cmakedefine HAVE_UINT32_T 1
-
-/* Define to 1 if the system has the type `uint64_t'. */
-#cmakedefine HAVE_UINT64_T 1
-
-/* Define to 1 if the system has the type `uint8_t'. */
-#cmakedefine HAVE_UINT8_T 1
-
-/* The size of `char', as computed by sizeof. */
-#cmakedefine SIZEOF_CHAR @SIZEOF_CHAR@
-
-/* The size of `int', as computed by sizeof. */
-#cmakedefine SIZEOF_INT @SIZEOF_INT@
-
 /* The size of `long int', as computed by sizeof. */
 #cmakedefine SIZEOF_LONG_INT @SIZEOF_LONG_INT@
 
-/* The size of `long long int', as computed by sizeof. */
-#cmakedefine SIZEOF_LONG_LONG_INT @SIZEOF_LONG_LONG_INT@
-
-/* The size of `short', as computed by sizeof. */
-#cmakedefine SIZEOF_SHORT @SIZEOF_SHORT@
-
-/* The size of `unsigned int', as computed by sizeof. */
-#cmakedefine SIZEOF_UNSIGNED_INT @SIZEOF_UNSIGNED_INT@
-
 /* The size of `unsigned long int', as computed by sizeof. */
 #cmakedefine SIZEOF_UNSIGNED_LONG_INT @SIZEOF_UNSIGNED_LONG_INT@
-
-/* The size of `unsigned long long int', as computed by sizeof. */
-#cmakedefine SIZEOF_UNSIGNED_LONG_LONG_INT @SIZEOF_UNSIGNED_LONG_LONG_INT@
-
-/* Define to `unsigned int' if uid_t is undefined in the system */
-#cmakedefine uid_t unsigned int
-
-/* Define to `unsigned int' if pid_t is undefined in the system */
-#cmakedefine pid_t unsigned int
-
-/* Define to `unsigned int' if size_t is undefined in the system */
-#cmakedefine size_t unsigned int
-
-/* Define to `unsigned int' if ssize_t is undefined in the system */
-#cmakedefine ssize_t int
-
-/* Define to `int' if mode_t is undefined in the system */
-#cmakedefine mode_t int
 
 /* Define if words are big endian */
 #cmakedefine WORDS_BIGENDIAN 1
 
 
 /*  Header file definitions */
-
-/* Define to 1 if you have the <arpa/inet.h> header file. */
-#cmakedefine HAVE_ARPA_INET_H 1
-
-/* Define to 1 if you have the <fcntl.h> header file. */
-#cmakedefine HAVE_FCNTL_H 1
-
-/* Define to 1 if you have the <inttypes.h> header file. */
-#cmakedefine HAVE_INTTYPES_H 1
-
-/* Define to 1 if you have the <libintl.h> header file. */
-#cmakedefine HAVE_LIBINTL_H 1
-
-/* Define to 1 if you have the <limits.h> header file. */
-#cmakedefine HAVE_LIMITS_H 1
-
-/* Define to 1 if you have the <malloc.h> header file. */
-#cmakedefine HAVE_MALLOC_H 1
-
-/* Define to 1 if you have the <netdb.h> header file. */
-#cmakedefine HAVE_NETDB_H 1
-
-/* Define to 1 if you have the <netinet/in.h> header file. */
-#cmakedefine HAVE_NETINET_IN_H 1
-
-/* Define to 1 if you have the <stddef.h> header file. */
-#cmakedefine HAVE_STDDEF_H 1
-
-/* Define to 1 if you have the <stdint.h> header file. */
-#cmakedefine HAVE_STDINT_H 1
-
-/* Define to 1 if you have the <stdlib.h> header file. */
-#cmakedefine HAVE_STDLIB_H 1
-
-/* Define to 1 if you have the <string.h> header file. */
-#cmakedefine HAVE_STRING_H 1
-
-/* Define to 1 if you have the <strings.h> header file. */
-#cmakedefine HAVE_STRINGS_H 1
-
-/* Define to 1 if you have the <syslog.h> header file. */
-#cmakedefine HAVE_SYSLOG_H 1
-
-/* Define to 1 if you have the <sys/socket.h> header file. */
-#cmakedefine HAVE_SYS_SOCKET_H 1
-
-/* Define to 1 if you have the <sys/time.h> header file. */
-#cmakedefine HAVE_SYS_TIME_H 1
-
-/* Define to 1 if you have the <unistd.h> header file. */
-#cmakedefine HAVE_UNISTD_H 1
-
-/* Define to 1 if you have the <wchar.h> header file. */
-#cmakedefine HAVE_WCHAR_H 1
 
 /* Define to 1 if you have the <dumbnet.h> header file. */
 #cmakedefine HAVE_DUMBNET_H 1

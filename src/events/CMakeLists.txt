@@ -4,7 +4,7 @@ set (INCLUDES
     event_queue.h
 )
 
-add_library (events STATIC
+add_library (events OBJECT
     event.cc
     event_queue.cc 
     sfeventq.cc 

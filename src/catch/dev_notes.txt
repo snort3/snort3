@@ -4,12 +4,3 @@ This directory contains the unit-test interface.
 
 catch.hpp is from https://github.com/philsquared/Catch.
 
-If a source file contains only Catch unit tests, the linker must be tricked
-into not excluding the seemingly unneeded object file.  To do this, include
-unit_test.h in the source file and add this directive to the beginning of the
-source code:
-    SNORT_FORCED_INCLUSION_DEFINITION(source_file_name_less_extension)
-Additionally, edit unit_test_main.h to add the external definition with:
-    SNORT_FORCED_INCLUSION_EXTERN(source_file_name_less_extension)
-As well as the reference to it in catch_extern_tests[] with:
-    SNORT_FORCED_INCLUSION_SYMBOL(source_file_name_less_extension)

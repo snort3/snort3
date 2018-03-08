@@ -26,22 +26,12 @@ else(STATIC_CODECS)
 
 endif(STATIC_CODECS)
 
-
-
 # NOTE: if any static libraries need to built, this extra if()
 #       MUST be removed.  It is here because cmake sends out
 #       a warning if no files exist in the link codecs library
 
 if(STATIC_CODECS)
-    add_library( link_codecs STATIC
+    add_library( link_codecs OBJECT
         ${PLUGIN_SOURCES}
     )
-
-
-    target_link_libraries( link_codecs
-        events
-        managers
-        codec_module
-    )
-
 endif(STATIC_CODECS)

@@ -9,7 +9,7 @@ set (LOG_INCLUDES
     u2_packet.h
 )
 
-add_library ( log STATIC
+add_library ( log OBJECT
     ${LOG_INCLUDES}
     log.cc
     log_text.cc
@@ -23,11 +23,6 @@ add_library ( log STATIC
 
 install(FILES ${LOG_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/log"
-)
-
-target_link_libraries(log
-    utils
-    protocols
 )
 
 add_subdirectory ( test )

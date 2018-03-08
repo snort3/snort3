@@ -3,7 +3,7 @@ if ( ENABLE_UNIT_TESTS )
     set(TEST_FILES sfrt_test.cc)
 endif()
 
-add_library ( sfrt STATIC
+add_library ( sfrt OBJECT
     sfrt.cc
     sfrt.h
     sfrt_dir.cc

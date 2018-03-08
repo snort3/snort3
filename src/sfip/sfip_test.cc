@@ -25,13 +25,10 @@
 #include <cstring>
 
 #include "catch/snort_catch.h"
-#include "main/snort_types.h"
 
 #include "sf_cidr.h"
 
 //---------------------------------------------------------------
-
-SNORT_FORCED_INCLUSION_DEFINITION(sfip_test);
 
 static int s_debug = 0;
 

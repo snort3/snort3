@@ -1,4 +1,4 @@
-add_library( host_tracker STATIC
+add_library( host_tracker OBJECT
     host_cache.cc
     host_cache.h
     host_cache_module.cc

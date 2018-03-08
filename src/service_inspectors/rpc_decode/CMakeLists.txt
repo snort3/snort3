@@ -6,7 +6,7 @@ set( FILE_LIST
 )
 
 if (STATIC_INSPECTORS)
-    add_library( rpc_decode STATIC ${FILE_LIST})
+    add_library( rpc_decode OBJECT ${FILE_LIST})
 
 else (STATIC_INSPECTORS)
     add_dynamic_module(rpc_decode inspectors ${FILE_LIST})

@@ -1,7 +1,7 @@
 
 add_subdirectory (data_types)
 
-add_library( conversion_data STATIC
+add_library( conversion_data OBJECT
     dt_data.h
     dt_data.cc
     dt_table_api.h
@@ -10,6 +10,3 @@ add_library( conversion_data STATIC
     dt_rule_api.cc
 )
 
-target_link_libraries( conversion_data
-    data_types
-)

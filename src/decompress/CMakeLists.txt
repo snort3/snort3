@@ -3,18 +3,13 @@ set( DECOMPRESS_INCLUDES
     file_decomp.h
 )
 
-add_library (decompress STATIC
+add_library (decompress OBJECT
     ${DECOMPRESS_INCLUDES}
     file_decomp.cc
     file_decomp_pdf.cc
     file_decomp_pdf.h
     file_decomp_swf.cc
     file_decomp_swf.h
-)
-
-target_link_libraries(decompress
-    log
-    utils
 )
 
 install (FILES ${DECOMPRESS_INCLUDES}

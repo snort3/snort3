@@ -6,8 +6,7 @@ set ( FILE_LIST
 )
 
 if (STATIC_INSPECTORS)
-    add_library(packet_capture STATIC ${FILE_LIST})
-    target_link_libraries(packet_capture utils)
+    add_library(packet_capture OBJECT ${FILE_LIST})
 
 else (STATIC_INSPECTORS)
     add_dynamic_module(packet_capture inspectors ${FILE_LIST})

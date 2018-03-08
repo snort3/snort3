@@ -13,7 +13,7 @@ set (DETECTION_INCLUDES
     treenodes.h
 )
 
-add_library (detection STATIC
+add_library (detection OBJECT
     ${DETECTION_INCLUDES}
     context_switcher.cc
     context_switcher.h
@@ -46,11 +46,6 @@ add_library (detection STATIC
     treenodes.cc
     tag.cc
     tag.h
-)
-
-target_link_libraries( detection
-    framework
-    managers
 )
 
 install(FILES ${DETECTION_INCLUDES}

@@ -1,44 +1,50 @@
-cmake_minimum_required (VERSION 2.8.11)
+cmake_minimum_required (VERSION 3.4.3)
 project (snort CXX C)
 
 set (VERSION_MAJOR 3)
 set (VERSION_MINOR 0)
-set (VERSION_BUILD 0)
-set (VERSION
-    "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_BUILD}")
+set (VERSION_PATCH 0)
+set (VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
 
-set (INCLUDE_SUFFIX "${CMAKE_PROJECT_NAME}")
-set (INCLUDE_INSTALL_PATH "include/${INCLUDE_SUFFIX}")
+set (CMAKE_CXX_STANDARD 11)
+set (CMAKE_CXX_STANDARD_REQUIRED ON)
+set (CMAKE_CXX_EXTENSIONS OFF)
 
-set (CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+set (CMAKE_C_STANDARD 99)
+set (CMAKE_C_STANDARD_REQUIRED ON)
+set (CMAKE_C_EXTENSIONS ON)
 
-include (cmake/macros.cmake)
-include (cmake/create_options.cmake)
-include (cmake/include_libraries.cmake)
-include (cmake/platforms.cmake)
-include (cmake/configure_options.cmake)
-include (cmake/CheckCXX11Features.cmake)
-#include (cmake/compiler_features.cmake)
-include (cmake/sanity_checks.cmake)
+set (CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+# Pull in definitions of various install directories
+include (GNUInstallDirs)
+include (${CMAKE_MODULE_PATH}/macros.cmake)
+include (${CMAKE_MODULE_PATH}/create_options.cmake)
+include (${CMAKE_MODULE_PATH}/include_libraries.cmake)
+include (${CMAKE_MODULE_PATH}/platforms.cmake)
+include (${CMAKE_MODULE_PATH}/configure_options.cmake)
+#include (${CMAKE_MODULE_PATH}/compiler_features.cmake)
+include (${CMAKE_MODULE_PATH}/sanity_checks.cmake)
+
+set (INSTALL_SUFFIX "${CMAKE_PROJECT_NAME}")
+set (INCLUDE_INSTALL_PATH "${CMAKE_INSTALL_INCLUDEDIR}/${INSTALL_SUFFIX}")
+set (PLUGIN_INSTALL_PATH "${CMAKE_INSTALL_LIBDIR}/${INSTALL_SUFFIX}")
 
 configure_file (
     "${PROJECT_SOURCE_DIR}/config.cmake.h.in"
     "${PROJECT_BINARY_DIR}/config.h"
-    )
+)
 
 add_definitions( -DHAVE_CONFIG_H )
 
-# CMAKE_CXX_* properties aren't supported in 2.x :(
-# set (CMAKE_CXX_STANDARD 11)
-# set (CMAKE_CXX_STANDARD_REQUIRED ON)
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX11_COMPILER_FLAGS}")
-
-# FIXIT - there is probably a better way to do this
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99")
-
-# Apply sanitizer compiler and linker flags
-set ( CMAKE_C_FLAGS "${SANITIZER_CXXFLAGS} ${CMAKE_C_FLAGS}" )
-set ( CMAKE_CXX_FLAGS "${SANITIZER_CXXFLAGS} ${CMAKE_CXX_FLAGS}" )
+# Set these after all tests are done but *before* any subdirectories are included
+#  or other targets declared.
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${EXTRA_C_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${EXTRA_CXX_FLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${EXTRA_LINKER_FLAGS}")
+set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${EXTRA_LINKER_FLAGS}")
+foreach (EXTRA_LIBRARY IN LISTS EXTRA_LIBRARIES)
+    link_libraries(${EXTRA_LIBRARY})
+endforeach (EXTRA_LIBRARY)
 
 include_directories (${PROJECT_BINARY_DIR})
 include_directories (${PROJECT_SOURCE_DIR})
@@ -46,8 +52,6 @@ include_directories (${PROJECT_SOURCE_DIR})
 if (ENABLE_UNIT_TESTS)
     include(CTest)
     add_custom_target (check COMMAND ${CMAKE_CTEST_COMMAND})
-    add_dependencies (check snort)
-    #add_test (catch_tests ${CMAKE_CURRENT_BINARY_DIR}/src/snort --catch-test all)
 endif (ENABLE_UNIT_TESTS)
 
 add_subdirectory (src)
@@ -56,9 +60,9 @@ add_subdirectory (lua)
 add_subdirectory (doc)
 add_subdirectory (daqs)
 
-# Miscellaneous stuff.  Does NOT directly effect snort's building environment
-include (cmake/packaging_data.cmake)
-include (cmake/create_pkg_config.cmake)
+# Miscellaneous stuff.  Does NOT directly affect Snort's build environment.
+include (${CMAKE_MODULE_PATH}/packaging_data.cmake)
+include (${CMAKE_MODULE_PATH}/create_pkg_config.cmake)
 
 # uninstall target
 configure_file(
@@ -68,3 +72,73 @@ configure_file(
 
 add_custom_target(uninstall
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+
+message("
+-------------------------------------------------------
+${CMAKE_PROJECT_NAME} version ${VERSION}
+
+Install options:
+    prefix:     ${CMAKE_INSTALL_PREFIX}
+    includes:   ${CMAKE_INSTALL_FULL_INCLUDEDIR}/${INSTALL_SUFFIX}
+    plugins:    ${CMAKE_INSTALL_FULL_LIBDIR}/${INSTALL_SUFFIX}
+
+Compiler options:
+    CC:             ${CMAKE_C_COMPILER}
+    CXX:            ${CMAKE_CXX_COMPILER}
+    CFLAGS:         ${CMAKE_C_FLAGS}
+    CXXFLAGS:       ${CMAKE_CXX_FLAGS}
+    EXE_LDFLAGS:    ${CMAKE_EXE_LINKER_FLAGS}
+    MODULE_LDFLAGS: ${CMAKE_MODULE_LINKER_FLAGS}
+
+Feature options:\
+")
+
+if (HAVE_FLATBUFFERS)
+    message("\
+    Flatbuffers:    ON")
+else ()
+    message("\
+    Flatbuffers:    OFF")
+endif ()
+
+if (HAVE_HYPERSCAN)
+    message("\
+    Hyperscan:      ON")
+else ()
+    message("\
+    Hyperscan:      OFF")
+endif ()
+
+if (HAVE_ICONV)
+    message("\
+    ICONV:          ON")
+else ()
+    message("\
+    ICONV:          OFF")
+endif ()
+
+if (HAVE_LZMA)
+    message("\
+    LZMA:           ON")
+else ()
+    message("\
+    LZMA:           OFF")
+endif ()
+
+if (HAVE_SAFEC AND SAFEC_ENABLED)
+    message("\
+    SafeC:          ON")
+else ()
+    message("\
+    SafeC:          OFF")
+endif ()
+
+if (HAVE_UUID)
+    message("\
+    UUID:           ON")
+else ()
+    message("\
+    UUID:           OFF")
+endif ()
+
+message("-------------------------------------------------------\n")

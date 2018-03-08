@@ -1,5 +1,5 @@
 
-add_library( keyword_states STATIC
+add_library( keyword_states OBJECT
     kws_attribute_table.cc
     kws_config.cc
     kws_deleted.cc
@@ -19,11 +19,3 @@ add_library( keyword_states STATIC
     keywords_api.cc
 )
 
-target_link_libraries( keyword_states
-    snort2lua_helpers
-    conversion_data
-    output_states
-    preprocessor_states
-    config_states
-    rule_states
-)

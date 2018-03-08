@@ -26,7 +26,7 @@ set ( PROFILER_SOURCES
     time_profiler.h
     )
 
-add_library ( profiler STATIC
+add_library ( profiler OBJECT
     ${PROFILER_SOURCES}
     ${PROFILER_INCLUDES}
 )

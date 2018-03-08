@@ -1,6 +1,4 @@
-add_library (
-    piglet STATIC
-
+add_library ( piglet OBJECT
     piglet.cc
     piglet_manager.cc
     piglet_output.cc

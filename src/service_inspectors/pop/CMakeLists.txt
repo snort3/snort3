@@ -11,7 +11,7 @@ set( FILE_LIST
 
 # can't be be linked dynamically yet
 #if (STATIC_INSPECTORS)
-    add_library( pop STATIC ${FILE_LIST})
+    add_library( pop OBJECT ${FILE_LIST})
 
 #else (STATIC_INSPECTORS)
     #add_dynamic_module(pop inspectors ${FILE_LIST})

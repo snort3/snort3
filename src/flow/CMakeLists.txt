@@ -4,7 +4,7 @@ set (FLOW_INCLUDES
     flow_key.h
 )
 
-add_library (flow STATIC
+add_library (flow OBJECT
     ${FLOW_INCLUDES}
     expect_cache.cc
     flow.cc
@@ -22,10 +22,8 @@ add_library (flow STATIC
     session.h
 )
 
-target_link_libraries(flow
-    protocols
-)
-
 install(FILES ${FLOW_INCLUDES}
     DESTINATION ${INCLUDE_INSTALL_PATH}/flow
 )
+
+add_subdirectory(test)
