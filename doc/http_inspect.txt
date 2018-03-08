@@ -10,10 +10,6 @@ You can configure it by adding:
 to your snort.lua configuration file. Or you can read about it in the
 source code under src/service_inspectors/http_inspect.
 
-The classic HTTP preprocessor is still available in the alpha release
-under extra. It has been renamed http_server. Be sure not to configure
-both old and new HTTP inspectors at the same time.
-
 So why a new HTTP inspector?
 
 For starters it is object-oriented. That’s good for us because we maintain

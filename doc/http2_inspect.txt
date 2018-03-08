@@ -1,0 +1,43 @@
+Snort 3 is developing an inspector for HTTP/2.
+
+You can configure it by adding:
+
+    http2_inspect = {}
+
+to your snort.lua configuration file.
+
+Everything has a beginning and for http2_inspect this is the beginning of
+the beginning. Most of the protocol including HPACK decompression is not
+implemented yet.
+
+Currently http2_inspect will divide an HTTP/2 connection into individual
+frames and make them available for detection. Two new rule options are
+available for looking at HTTP/2 frames: http2_frame_header provides the
+9-octet frame header and http2_frame_data provides the frame content.
+
+    alert tcp any any -> any any (msg:"Frame type"; flow:established,
+    to_client; http2_frame_header; content:"|06|", offset 3, depth 1;
+    sid:1; rev:1; )
+
+This will match if the Type byte of the frame header is 6 (PING).
+
+    alert tcp any any -> any any ( msg:"Content of HTTP/2 frame";
+    flow:established, to_client; http2_frame_data; content:"peppermint";
+    sid:2; rev:1; )
+
+This will look for peppermint in the frame data but not the frame header.
+
+These can be combined:
+
+    alert tcp any any -> any any ( msg:"Search in message bodies";
+    flow:established, to_client;
+    http2_frame_header; content:"|00|", offset 3, depth 1;
+    http2_frame_data; content:"MaLwArE"; sid:3; rev:1; )
+
+Frame type 0 is DATA which carries the HTTP message body. This rule will
+search for MaLwArE inside an HTTP message body.
+
+In the future, http2_inspect will support HPACK header decompression and
+be fully integrated with http_inspect to provide full inspection of the
+individual HTTP/1.1 streams.
+

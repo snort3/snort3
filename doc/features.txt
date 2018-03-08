@@ -52,6 +52,10 @@ include::side_channel.txt[]
 
 include::http_inspect.txt[]
 
+=== HTTP/2 Inspector
+
+include::http2_inspect.txt[]
+
 === Performance Monitor
 
 include::perf_monitor.txt[]

@@ -54,6 +54,7 @@ set (
     file_processing.txt
     high_availability.txt
     http_inspect.txt
+    http2_inspect.txt
     overview.txt
     params.txt
     perf_monitor.txt
