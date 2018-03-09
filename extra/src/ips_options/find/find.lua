@@ -5,7 +5,7 @@
 --
 -- configure snort with
 --
---     ./configure --prefix my/prefix
+--     ./configure_cmake.sh --prefix=my/prefix
 --
 -- then set up the path as follows:
 --

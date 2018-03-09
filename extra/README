@@ -27,10 +27,9 @@ The following things are pluggable in Snort++:
 
 DOWNLOAD
 
-There are two extra tarballs, one for autotools and one for cmake:
+There is one extra tarball:
 
-    snort_extra-1.0.0-a1-130-auto.tar.gz
-    snort_extra-1.0.0-a1-130-cmake.tar.gz
+    snort_extra-1.0.0-a1-130.tar.gz
 
 If you cloned from github, you have already have everything.
 
@@ -55,23 +54,13 @@ Follow these steps:
 
 3.  Compile and install:
 
-* To build with autotools, simply do the usual from the top level directory:
-
-    ./configure --prefix=$my_path
-    make
-    make install
-
-* To build with cmake and make:
-
-    mkdir -p build
+    ./configure_cmake.sh
     cd build
-    cmake -DCMAKE_INSTALL_PREFIX=$my_path ..
     make
     make install
 
 Note:
 
-* If you are using autotools with a github clone, first do autoreconf -isvf.
 * cmake --help will list any available generators, such as Xcode.  Feel
   free to use one, however help with those will be provided separately.
 * each individual plugin directory is a standalone cmake project, and does

@@ -315,7 +315,7 @@ static void ProcessThirdPartyResults(AppIdSession& asd, int confidence,  AppId* 
                 url += "://";
                 url += attribute_data->spdyRequestHost;
                 url += attribute_data->spdyRequestPath;
-                hsession->set_url((char*)url.c_str());
+                hsession->set_url(url.c_str());
                 asd.scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
 
                 snort_free(attribute_data->spdyRequestScheme);
@@ -677,12 +677,12 @@ static void ProcessThirdPartyResults(AppIdSession& asd, int confidence,  AppId* 
             {
                 HttpPatternMatchers* http_matchers = HttpPatternMatchers::get_instance();
 
-                if ( ( ( http_matchers->get_appid_from_url(nullptr, (char*)hsession->get_url(),
-                    nullptr, (char*)hsession->get_referer(), &client_id, &serviceAppId,
+                if ( ( ( http_matchers->get_appid_from_url(nullptr, hsession->get_url(),
+                    nullptr, hsession->get_referer(), &client_id, &serviceAppId,
                     &payload_id, &referred_payload_app_id, 1) )
                     ||
-                    ( http_matchers->get_appid_from_url(nullptr, (char*)hsession->get_url(), nullptr,
-                        (char*)hsession->get_referer(), &client_id, &serviceAppId, &payload_id,
+                    ( http_matchers->get_appid_from_url(nullptr, hsession->get_url(), nullptr,
+                        hsession->get_referer(), &client_id, &serviceAppId, &payload_id,
                     &referred_payload_app_id, 0) ) ) == 1 )
                 {
                     // do not overwrite a previously-set client or service

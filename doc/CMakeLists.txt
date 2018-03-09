@@ -142,7 +142,7 @@ if ( RUBY_EXECUTABLE )
     )
     list ( APPEND BUILT_SOURCES config_changes.txt )
 
-elseif ( RUBY_EXECUTABLE )
+else ( RUBY_EXECUTABLE )
     list ( APPEND UNBUILT_SOURCES config_changes.txt )
 
 endif ( RUBY_EXECUTABLE )

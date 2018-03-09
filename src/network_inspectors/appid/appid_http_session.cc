@@ -759,7 +759,7 @@ static void replace_header_data(std::string& header, const uint8_t* content, int
         return;
 
     header.clear();
-    header.append((char*)content, clen);
+    header.append((const char*) content, clen);
 }
 
 void AppIdHttpSession::update_host(const uint8_t* new_host, int32_t len)

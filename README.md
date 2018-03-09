@@ -102,32 +102,24 @@ Follow these steps:
     cd snort-3.0.0*
     ```
     
-1.  Setup install path:
+2.  Setup install path:
 
     ```shell
     export my_path=/path/to/snorty
     ```
 
-1.  Compile and install:
+3.  Compile and install:
 
-  * To build with autotools, simply do the usual from the top level directory:
-
-    ```shell 
-    ./configure --prefix=$my_path
-    make -j 8 install
-    ```
-    
   * To build with cmake and make, run configure_cmake.sh.  It will automatically create and populate a new subdirectory named 'build'.
 
     ```shell
     ./configure_cmake.sh --prefix=$my_path
     cd build
-    make -j 8 install
+    make -j $(nproc) install
     ```
 
 **_Note_**:
 
-  * If you are using autotools with a github clone, first do autoreconf -isvf.
   * If you can do src/snort -V you built successfully.
   * If you are familiar with cmake, you can run cmake/ccmake instead of configure_cmake.sh.
   * cmake --help will list any available generators, such as Xcode.  Feel free to use one, however help with those will be provided separately.

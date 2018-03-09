@@ -15,7 +15,6 @@ EXPAND=${SCRIPT_PATH}/expand_template.rb
 
 boilerplate=(
   ${TEMPLATE_PATH}/CMakeLists.txt.erb
-  ${TEMPLATE_PATH}/Makefile.am.erb
 )
 
 [[ -n $DRY_RUN ]] && ECHO=echo || ECHO=

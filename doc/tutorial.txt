@@ -80,13 +80,7 @@ Optional:
 
 * Now do one of the following:
 
-a. To build with autotools, simply do the usual from the top level directory:
-
-    ./configure --prefix=$my_path
-    make -j 8
-    make install
-
-b. To build with cmake and make, run configure_cmake.sh.  It will
+a. To build with cmake and make, run configure_cmake.sh.  It will
    automatically create and populate a new subdirectory named 'build'.
 
     ./configure_cmake.sh --prefix=$my_path
@@ -95,11 +89,11 @@ b. To build with cmake and make, run configure_cmake.sh.  It will
     make install
     ln -s $my_path/conf $my_path/etc
 
-c. You can also specify a cmake project generator:
+b. You can also specify a cmake project generator:
 
     ./configure_cmake.sh --generator=Xcode --prefix=$my_path
 
-d. Or use ccmake directly to configure and generate from an arbitrary build
+c. Or use ccmake directly to configure and generate from an arbitrary build
    directory like one of these:
 
     ccmake -G Xcode /path/to/Snort++/tree
