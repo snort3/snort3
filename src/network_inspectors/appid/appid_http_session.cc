@@ -597,7 +597,7 @@ int AppIdHttpSession::process_http_packet(int direction)
     return 0;
 }
 
-// FIXIT-M - This function is unused and untested currently... need to figure who wants it
+// FIXIT-H - This function is unused and untested currently... need to figure who wants it
 // and what it should do
 void AppIdHttpSession::update_http_xff_address(struct XffFieldValue* xff_fields,
     uint32_t numXffFields)
@@ -620,9 +620,6 @@ void AppIdHttpSession::update_http_xff_address(struct XffFieldValue* xff_fields,
     }
 
     xffPrecedence = malloc(numXffFields * sizeof(char*));
-#else
-    char** xffPrecedence = nullptr;
-#endif
 
     for (unsigned j = 0; j < numXffFields; j++)
         xffPrecedence[j] = strndup(xffPrecedence[j], UINT8_MAX);
@@ -678,6 +675,7 @@ void AppIdHttpSession::update_http_xff_address(struct XffFieldValue* xff_fields,
         if (xff_addr)
             break;
     }
+#endif
 }
 
 void AppIdHttpSession::set_url(const char* url)

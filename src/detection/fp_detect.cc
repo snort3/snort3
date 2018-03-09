@@ -886,7 +886,7 @@ static inline int search_buffer(
     {
         if ( Mpse* so = omd->pg->mpse[pmt] )
         {
-            trace_logf(detection, TRACE_FP_SEARCH, "%ld fp %s.%s[%d]\n",
+            trace_logf(detection, TRACE_FP_SEARCH, "%" PRIu64 " fp %s.%s[%d]\n",
                 pc.total_from_daq, gadget->get_name(), pm_type_strings[pmt], buf.len);
 
             search_data(so, omd, buf.data, buf.len, cnt);
@@ -916,7 +916,7 @@ static int fp_search(
         {
             if ( uint16_t pattern_match_size = p->get_detect_limit() )
             {
-                trace_logf(detection, TRACE_FP_SEARCH, "%ld fp %s[%u]\n",
+                trace_logf(detection, TRACE_FP_SEARCH, "%" PRIu64 " fp %s[%u]\n",
                     pc.total_from_daq, pm_type_strings[PM_TYPE_PKT], pattern_match_size);
 
                 search_data(so, omd, p->data, pattern_match_size, pc.pkt_searches);
@@ -955,7 +955,7 @@ static int fp_search(
 
             if ( file_data.len )
             {
-                trace_logf(detection, TRACE_FP_SEARCH, "%ld fp search %s[%d]\n",
+                trace_logf(detection, TRACE_FP_SEARCH, "%" PRIu64 " fp search %s[%d]\n",
                     pc.total_from_daq, pm_type_strings[PM_TYPE_FILE], file_data.len);
 
                 search_data(so, omd, file_data.data, file_data.len, pc.file_searches);

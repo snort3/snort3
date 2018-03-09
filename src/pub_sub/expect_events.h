@@ -20,7 +20,7 @@
 #ifndef EXPECT_EVENTS_H
 #define EXPECT_EVENTS_H
 
-// This event conveys data published by the expcted sessions to be consumed
+// This event conveys data published by the expected sessions to be consumed
 // by data bus subscribers
 
 #include <list>

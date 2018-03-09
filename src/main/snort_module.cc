@@ -714,7 +714,13 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->daq_config->set_module_name(v.get_string());
 
     else if ( v.is("--daq-dir") )
-        sc->daq_config->add_module_dir(v.get_string());
+    {
+        stringstream ss { v.get_string() };
+        string path;
+
+        while( getline(ss, path, ':') )
+            sc->daq_config->add_module_dir(path.c_str());
+    }
 
     else if ( v.is("--daq-list") )
         list_daqs(sc);

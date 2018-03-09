@@ -48,6 +48,9 @@ public:
     virtual const Packet* get_packet()
     { return nullptr; }
 
+    virtual const uint8_t* get_data()
+    { return nullptr; }
+
     virtual const uint8_t* get_data(unsigned& len)
     { len = 0; return nullptr; }
 
@@ -81,6 +84,7 @@ public:
     // convenience methods
     static void publish(const char* key, const uint8_t*, unsigned, Flow* = nullptr);
     static void publish(const char* key, Packet*, Flow* = nullptr);
+    static void publish(const char* key, void* user, int type, const uint8_t* data);
 
 private:
     void _subscribe(const char* key, DataHandler*);
@@ -90,8 +94,31 @@ private:
     DataMap map;
 };
 
+class SO_PUBLIC DaqMetaEvent : public DataEvent
+{
+public:
+    DaqMetaEvent(void* user, int type, const uint8_t *data) :
+        user(user), type(type), data(data)
+    { }
+
+    void* get_user_data()
+    { return user; }
+
+    int get_type()
+    { return type; }
+
+    const uint8_t* get_data() override
+    { return data; }
+
+private:
+    void* user;
+    int type;
+    const uint8_t* data;
+};
+
 // common data events
 #define PACKET_EVENT "detection.packet"
+#define DAQ_META_EVENT "daq.metapacket"
 
 #endif
 

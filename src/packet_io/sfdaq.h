@@ -76,7 +76,6 @@ private:
     void get_tunnel_capabilities();
     bool set_filter(const char*);
     std::string interface_spec;
-    DAQ_Meta_Func_t daq_meta_callback;
     void* daq_hand;
     int daq_dlt;
     int s_error;

@@ -263,10 +263,13 @@ The available commands are:
 
     $packet <addr> <port> -> <addr> <port>
 
+    $sof <i32:ingressZone> <i32:egressZone> <i32:ingressIntf> <i32:egressIntf> <s:srcIp> <i16:srcPort> <s:destIp> <i16:dstPort> <u32:opaque> <u64:initiatorPkts> <u64:responderPkts> <u64:initiatorPktsDropped> <u64:responderPktsDropped> <u64:initiatorBytesDropped> <u64:responderBytesDropped> <u8:isQosAppliedOnSrcIntf> <timeval:sof_timestamp> <timeval:eof_timestamp> <u16:vlan> <u16:address_space_id> <u8:protocol> 
+    $eof <i32:ingressZone> <i32:egressZone> <i32:ingressIntf> <i32:egressIntf> <s:srcIp> <i16:srcPort> <s:destIp> <i16:dstPort> <u32:opaque> <u64:initiatorPkts> <u64:responderPkts> <u64:initiatorPktsDropped> <u64:responderPktsDropped> <u64:initiatorBytesDropped> <u64:responderBytesDropped> <u8:isQosAppliedOnSrcIntf> <timeval:sof_timestamp> <timeval:eof_timestamp> <u16:vlan> <u16:address_space_id> <u8:protocol> 
+
 Client and server are determined as follows.  $packet -> client indicates
 to the client (from server) and $packet -> server indicates a packet to the
 server (from client).  $packet followed by a 4-tuple uses the heuristic
-that the client is the side with the lower port number.
+that the client is the side with the greater port number.
 
 The default client and server are 192.168.1.1 12345 and 10.1.2.3 80
 respectively.  $packet commands with a 4-tuple do not change client and
@@ -276,6 +279,10 @@ $packet commands should be followed by packet data, which may contain any
 combination of hex and strings.  Data for a packet ends with the next
 command or a blank line.  Data after a blank line will start another packet
 with the same tuple as the prior one.
+
+$sof and $eof commands generate Start of Flow and End of Flow metapackets
+respectively. They are followed by a definition of a Flow_Stats_t data structure
+which will be fed into Snort via the metadata callback. 
 
 Strings may contain the following escape sequences:
 

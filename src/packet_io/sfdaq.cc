@@ -296,7 +296,6 @@ SFDAQInstance::SFDAQInstance(const char* intf)
 {
     if (intf)
         interface_spec = intf;
-    daq_meta_callback = nullptr;
     daq_hand = nullptr;
     daq_dlt = -1;
     s_error = DAQ_SUCCESS;
@@ -559,14 +558,15 @@ bool SFDAQInstance::stop()
     return (err == DAQ_SUCCESS);
 }
 
-void SFDAQInstance::set_metacallback(DAQ_Meta_Func_t meta_callback)
+static int metacallback(void *user, const DAQ_MetaHdr_t* hdr, const uint8_t* data)
 {
-    daq_meta_callback = meta_callback;
+    DataBus::publish(DAQ_META_EVENT, user, hdr->type, data);
+    return 0;
 }
 
 int SFDAQInstance::acquire(int max, DAQ_Analysis_Func_t callback)
 {
-    int err = daq_acquire_with_meta(daq_mod, daq_hand, max, callback, daq_meta_callback, nullptr);
+    int err = daq_acquire_with_meta(daq_mod, daq_hand, max, callback, metacallback, nullptr);
 
     if (err && err != DAQ_READFILE_EOF)
         LogMessage("Can't acquire (%d) - %s\n", err, daq_get_error(daq_mod, daq_hand));

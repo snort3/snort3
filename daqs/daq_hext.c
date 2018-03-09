@@ -27,9 +27,10 @@
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
+#include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 #include <arpa/inet.h>
 #include <sys/types.h>
@@ -51,9 +52,9 @@ typedef struct {
     char* name;
     FILE* fyle;
 
-    int start;
-    int stop;
-    int eof;
+    bool start;
+    bool stop;
+    bool eof;
     int dlt;
 
     unsigned snaplen;
@@ -68,6 +69,10 @@ typedef struct {
 
     DAQ_State state;
     DAQ_Stats_t stats;
+
+    bool meta;
+    DAQ_MetaHdr_t hdr;
+    Flow_Stats_t flow;
 } HextImpl;
 
 //-------------------------------------------------------------------------
@@ -126,6 +131,181 @@ static void parse_pci(HextImpl* impl, const char* s)
         impl->pci.flags |= DAQ_USR_FLAG_TO_SERVER;
     else
         impl->pci.flags &= ~DAQ_USR_FLAG_TO_SERVER;
+}
+
+enum Search {
+    I_ZONE,
+    E_ZONE,
+    I_INT,
+    E_INT,
+    SRC_HOST,
+    SRC_PORT,
+    DST_HOST,
+    DST_PORT,
+    OPAQUE,
+    I_PKTS,
+    R_PKTS,
+    I_DROPPED,
+    R_DROPPED,
+    I_BYTES,
+    R_BYTES,
+    IS_QOS,
+    SOF_TIME,
+    EOF_TIME,
+    VLAN_TAG,
+    ADDR_SPACE,
+    PROTO,
+    END
+};
+
+static void set_flowstats(Flow_Stats_t* f, enum Search state, const char* s)
+{
+    switch (state)
+    {
+        case I_ZONE:
+            f->ingressZone = atoi(s);
+            break;
+
+        case E_ZONE:
+            f->egressZone = atoi(s);
+            break;
+
+        case I_INT:
+            f->ingressIntf = atoi(s);
+            break;
+
+        case E_INT:
+            f->egressIntf = atoi(s);
+            break;
+
+        case SRC_HOST:
+            if (inet_pton(AF_INET, s, (uint32_t*)&f->initiatorIp) == 0)
+                inet_pton(AF_INET6, s, (uint32_t*)&f->initiatorIp);
+            break;
+
+        case DST_HOST:
+            if (inet_pton(AF_INET, s, (uint32_t*)&f->responderIp) == 0)
+                inet_pton(AF_INET6, s, (uint32_t*)&f->responderIp);
+            break;
+
+        case SRC_PORT:
+            f->initiatorPort = htons(atoi(s));
+            break;
+
+        case DST_PORT:
+            f->responderPort = htons(atoi(s));
+            break;
+
+        case OPAQUE:
+            f->opaque = atoi(s);
+            break;
+
+        case I_PKTS:
+            f->initiatorPkts = atoi(s);
+            break;
+
+        case R_PKTS:
+            f->responderPkts = atoi(s);
+            break;
+
+        case I_DROPPED:
+            f->initiatorPktsDropped = atoi(s);
+            break;
+
+        case R_DROPPED:
+            f->responderPktsDropped = atoi(s);
+            break;
+
+        case I_BYTES:
+            f->initiatorBytesDropped = atoi(s);
+            break;
+
+        case R_BYTES:
+            f->responderBytesDropped = atoi(s);
+            break;
+
+        case IS_QOS:
+            f->isQoSAppliedOnSrcIntf = atoi(s);
+            break;
+
+        case SOF_TIME:
+            f->sof_timestamp.tv_sec = atoi(s);
+            f->sof_timestamp.tv_usec = 0;
+            break;
+
+        case EOF_TIME:
+            f->eof_timestamp.tv_sec = atoi(s);
+            f->sof_timestamp.tv_usec = 0;
+            break;
+
+        case VLAN_TAG:
+            f->vlan_tag = atoi(s);
+            if (f->vlan_tag == 0)
+                f->vlan_tag = 0xfff;
+            break;
+
+        case ADDR_SPACE:
+            f->address_space_id = atoi(s);
+            break;
+
+        case PROTO:
+            f->protocol = atoi(s);
+            break;
+
+        default:
+            break;
+    }
+}
+
+static void parse_flowstats(HextImpl* impl, bool sof, const char* line)
+{
+    DAQ_MetaHdr_t* h = &impl->hdr;
+    Flow_Stats_t* f = &impl->flow;
+
+    char token[INET6_ADDRSTRLEN];
+    memset(token, 0, sizeof(token));
+
+    char* t = token;
+    const char* p = line;
+
+    if ( sof )
+        h->type = DAQ_METAHDR_TYPE_SOF;
+    else
+        h->type = DAQ_METAHDR_TYPE_EOF;
+
+    enum Search search;
+    for (search = I_ZONE; search != END; p++)
+    {
+        if (p[0] == '\0')
+            return;
+
+        if ((size_t)(t - token) >= sizeof(token) - 1)
+            return;
+
+        if (isspace(p[0]))
+        {
+            if (t != token)
+            {
+                set_flowstats(f, search, token);
+                memset(token, 0, sizeof(token));
+                t = token;
+                search++;
+            }
+
+            continue;
+        }
+        else
+        {
+            *t = *p;
+            t++;
+        }
+    }
+
+    if (t != token)
+        set_flowstats(f, search-1, token);
+
+    impl->meta = true;
+    impl->line[0] = '\0';
 }
 
 static unsigned flush(HextImpl* impl)
@@ -191,6 +371,12 @@ static void parse_command(HextImpl* impl, char* s)
 
     else if ( !strncmp(s, "server ", 7) )
         parse_host(s+7, &impl->cfg.dst_addr, &impl->cfg.dst_port);
+
+    else if ( !strncmp(s, "sof ", 4) )
+        parse_flowstats(impl, true, s+4);
+
+    else if ( !strncmp(s, "eof ", 4) )
+        parse_flowstats(impl, false, s+4);
 }
 
 // load quoted string data into buffer up to snaplen
@@ -274,7 +460,7 @@ static int hext_setup(HextImpl* impl)
 
     impl->cfg.ip_proto = impl->pci.ip_proto = IPPROTO_TCP;
     impl->cfg.flags = impl->pci.flags = DAQ_USR_FLAG_TO_SERVER;
-    impl->start = 1;
+    impl->start = true;
 
     return 0;
 }
@@ -295,6 +481,9 @@ static int hext_read(HextImpl* impl)
     {
         if ( (n = parse(impl)) )
             break;
+
+        if (impl->meta)
+            return 0;
     }
 
     if ( !n )
@@ -304,7 +493,7 @@ static int hext_read(HextImpl* impl)
     {
         if ( (impl->dlt == DLT_USER) && !impl->eof )
         {
-            impl->eof = 1;
+            impl->eof = true;
             return 1;  // <= zero won't make it :(
         }
         return DAQ_READFILE_EOF;
@@ -375,7 +564,7 @@ static void set_pkt_hdr(HextImpl* impl, DAQ_PktHdr_t* phdr, ssize_t len)
     if ( impl->start )
     {
         impl->pci.flags |= DAQ_USR_FLAG_START_FLOW;
-        impl->start = 0;
+        impl->start = false;
     }
     else if ( impl->eof )
         impl->pci.flags |= DAQ_USR_FLAG_END_FLOW;
@@ -384,10 +573,17 @@ static void set_pkt_hdr(HextImpl* impl, DAQ_PktHdr_t* phdr, ssize_t len)
 }
 
 static int hext_daq_process(
-    HextImpl* impl, DAQ_Analysis_Func_t cb, void* user)
+    HextImpl* impl, DAQ_Analysis_Func_t cb, DAQ_Meta_Func_t mb, void* user)
 {
     DAQ_PktHdr_t hdr;
     int n = hext_read(impl);
+
+    if (impl->meta && mb)
+    {
+        mb(user, (const DAQ_MetaHdr_t*)&impl->hdr, (const uint8_t*)&impl->flow);
+        impl->meta = false;
+        return 0;
+    }
 
     if ( n < 1 )
         return n;
@@ -503,15 +699,13 @@ static int hext_daq_inject (
 static int hext_daq_acquire (
     void* handle, int cnt, DAQ_Analysis_Func_t callback, DAQ_Meta_Func_t meta, void* user)
 {
-    (void)meta;
-
     HextImpl* impl = (HextImpl*)handle;
     int hit = 0, miss = 0;
-    impl->stop = 0;
+    impl->stop = false;
 
     while ( hit < cnt || cnt <= 0 )
     {
-        int status = hext_daq_process(impl, callback, user);
+        int status = hext_daq_process(impl, callback, meta, user);
 
         if ( status > 0 )
         {
@@ -532,7 +726,7 @@ static int hext_daq_acquire (
 static int hext_daq_breakloop (void* handle)
 {
     HextImpl* impl = (HextImpl*)handle;
-    impl->stop = 1;
+    impl->stop = true;
     return DAQ_SUCCESS;
 }
 

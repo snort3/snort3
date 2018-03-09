@@ -131,7 +131,7 @@ TEST(http_url_patterns_tests, get_http_offsets)
     hm->get_http_offsets(&pkt, &hsession);
     CHECK_EQUAL(true, test_field_offset_set_done);
 
-    // find_all is not called for bigger payload when sevice_strstr returns nullptr
+    // find_all is not called for bigger payload when service_strstr returns nullptr
     test_service_strstr_enabled = false;
     test_find_all_done = false;
     pkt.data = (const uint8_t*)"GET http://www.w3.org HTTP/1.1";
@@ -139,7 +139,7 @@ TEST(http_url_patterns_tests, get_http_offsets)
     hm->get_http_offsets(&pkt, &hsession);
     CHECK_EQUAL(false, test_find_all_done);
 
-    // find_all is called for bigger payload when sevice_strstr returns something
+    // find_all is called for bigger payload when service_strstr returns something
     test_service_strstr_enabled = true;
     hm->get_http_offsets(&pkt, &hsession);
     CHECK_EQUAL(true, test_find_all_done);
@@ -181,7 +181,7 @@ TEST(http_url_patterns_tests, rewrite_chp_same)
 
 TEST(http_url_patterns_tests, rewrite_chp_replace_null)
 {
-    // replace null aciton data in my_chp_rewritten
+    // replace null action data in my_chp_rewritten
     my_chp_rewritten = nullptr;
     my_buffer[REQ_AGENT_FID] = (const char*)"existing data";
     my_match.action_data = nullptr;
@@ -195,7 +195,7 @@ TEST(http_url_patterns_tests, rewrite_chp_replace_null)
 
 TEST(http_url_patterns_tests, rewrite_chp_replace_non_null)
 {
-    // replace non-null aciton data in my_chp_rewritten
+    // replace non-null action data in my_chp_rewritten
     my_chp_rewritten = nullptr;
     my_buffer[REQ_AGENT_FID] = (const char*)"existing data";
     my_match.action_data = (char*)"new data";

@@ -311,7 +311,7 @@ bool Wizard::finished(Wand& w)
     if ( w.hex or w.spell )
         return false;
 
-    // FIXTHIS-L how to know curses are done?
+    // FIXIT-L how to know curses are done?
     if ( !w.curse_tracker.empty() )
         return false;
 
