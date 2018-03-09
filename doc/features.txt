@@ -48,6 +48,10 @@ include::connectors.txt[]
 
 include::side_channel.txt[]
 
+=== FTP
+
+include::ftp.txt[]
+
 === HTTP Inspector
 
 include::http_inspect.txt[]
@@ -75,6 +79,10 @@ include::sensitive_data.txt[]
 === SMTP
 
 include::smtp.txt[]
+
+=== Telnet
+
+include::telnet.txt[]
 
 === Wizard
 

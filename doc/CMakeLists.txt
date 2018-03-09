@@ -51,6 +51,7 @@ set (
     extending.txt
     features.txt
     file_processing.txt
+    ftp.txt
     high_availability.txt
     http_inspect.txt
     http2_inspect.txt
@@ -72,6 +73,7 @@ set (
     snort_manual.txt
     snorty.png
     style.txt
+    telnet.txt
     terms.txt
     testing_numerical_values.txt
     tutorial.txt

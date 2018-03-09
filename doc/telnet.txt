@@ -1,0 +1,13 @@
+Given a telnet data buffer, Telnet will normalize the buffer with
+respect to telnet commands and option negotiation, eliminating telnet
+command sequences per RFC 854.  It will also determine when a
+telnet connection is encrypted, per the use of the telnet encryption
+option per RFC 2946.
+
+==== Configuring the inspector to block exploits and attacks
+
+ayt_attack_thresh number
+
+Detect and alert on consecutive are you there [AYT] commands beyond the
+threshold number specified.  This addresses a few specific vulnerabilities
+relating to bsd-based implementations of telnet.

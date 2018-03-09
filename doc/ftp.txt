@@ -1,0 +1,204 @@
+Given an FTP command channel buffer, FTP will interpret the data,
+identifying FTP commands and parameters, as well as FTP response codes
+and messages.  It will enforce correctness of the parameters, determine
+when an FTP command connection is encrypted, and determine when an FTP
+data channel is opened.
+
+==== Configuring the inspector to block exploits and attacks
+
+===== ftp_server configuration
+
+* ftp_cmds
+
+This specifies additional FTP commands outside of those checked by
+default within the inspector.  The inspector may be configured
+to generate an alert when it sees a command it does not recognize.
+
+Aside from the default commands recognized, it may be necessary to
+allow the use of the "X" commands, specified in RFC 775.  To do so, use
+the following ftp_cmds option.  Since these are rarely used by FTP
+client implementations, they are not included in the defaults.
+
+       ftp_cmds = [[ XPWD XCWD XCUP XMKD XRMD ]]
+
+
+* def_max_param_len
+
+This specifies the default maximum parameter length for all commands
+in bytes.  If the parameter for an FTP command exceeds that length,
+and the inspector is configured to do so, an alert will be generated.
+This is used to check for buffer overflow exploits within FTP servers.
+
+
+* cmd_validity
+
+This specifies the valid format and length for parameters of a given command.
+
+
+* cmd_validity[].len
+
+This specifies the maximum parameter length for the specified command
+in bytes, overriding the default.  If the parameter for that FTP command
+exceeds that length, and the inspector is configured to do so, an
+alert will be generated.  It can be used to restrict specific commands to
+small parameter values.  For example the USER command -- usernames may
+be no longer than 16 bytes, so the appropriate configuration would be:
+
+    cmd_validity =
+    {
+        {
+            command = 'USER',
+            length = 16,
+        }
+    }
+
+
+* cmd_validity[].format
+
+format is as follows:
+
+    int            	Param must be an integer
+    number         	Param must be an integer between 1 and 255
+    char <chars>    	Param must be a single char, and one of <chars>
+    date <datefmt>  	Param follows format specified where
+                   	# = Number, C=Char, []=optional, |=OR, {}=choice,
+                   	anything else=literal (i.e., .+- )
+    string         	Param is string (effectively unrestricted)
+    host_port      	Param must a host port specifier, per RFC 959.
+    long_host_port 	Parameter must be a long host port specified, per RFC 1639
+    extended_host_port 	Parameter must be an extended host port specified, per RFC 2428
+
+Examples of the cmd_validity option are shown below.  These examples
+are the default checks (per RFC 959 and others) performed by the
+inspector.
+
+    cmd_validity =
+    {
+        {
+            command = 'CWD',
+            length = 200,
+        },
+        {
+            command = 'MODE',
+            format = '< char SBC >',
+        },
+        {
+            command = 'STRU',
+            format = '< char FRP >',
+        },
+        {
+            command = 'ALLO',
+            format = '< int [ char R int ] >',
+        },
+        {
+            command = 'TYPE',
+            format = [[ < { char AE [ char NTC ] | char I | char L [ number ]
+                } > ]],
+        },
+        {
+            command = 'PORT',
+            format = '< host_port >',
+        },
+    }
+
+A cmd_validity entry in the configuration can be used to override these
+defaults and/or add a check for other commands.  A few examples follow.
+
+This allows additional modes, including mode Z which allows for
+zip-style compression:
+
+    cmd_validity =
+    {
+        {
+            command = 'MODE',
+            format = '< char ASBCZ >',
+        },
+    }
+
+Allow for a date in the MDTM command:
+
+    cmd_validity =
+    {
+        {
+            command = 'MDTM',
+            format = '< [ date nnnnnnnnnnnnnn[.n[n[n]]] ] string >',
+        },
+    }
+
+MDTM is an odd case that is worth discussing...
+
+While not part of an established standard, certain FTP servers accept
+MDTM commands that set the modification time on a file.  The most common
+among servers that do, accept a format using YYYYMMDDHHmmss[.uuu].  Some
+others accept a format using YYYYMMDDHHmmss[+|-]TZ format.  The example
+above is for the first case (time format as specified in
+http://www.ietf.org/internet-drafts/draft-ietf-ftpext-mlst-16.txt)
+
+To check validity for a server that uses the TZ format, use the following:
+
+    cmd_validity =
+    {
+        {
+            command = 'MDTM',
+            format = '< [ date nnnnnnnnnnnnnn[{+|-}n[n]] ] string >',
+        },
+    }
+
+
+* chk_str_fmt 
+
+This causes the inspector to check for string format attacks on
+the specified commands.
+
+
+* telnet_cmds
+
+Detect and alert when telnet cmds are seen on the FTP command channel.
+
+
+* ignore_telnet_erase_cmds
+
+This option allows Snort to ignore telnet escape sequences for erase character
+(TNC EAC) and erase line (TNC EAL) when normalizing FTP command channel.  Some
+FTP servers do not process those telnet escape sequences.
+
+
+* ignore_data_chan
+
+When set to true, causes the FTP inspector to force the rest of snort
+to ignore the FTP data channel connections. NO INSPECTION other than state
+(inspector AND rules) will be performed on that data channel. It can
+be turned on to improve performance -- especially with respect to large
+file transfers from a trusted source -- by ignoring traffic. If your rule
+set includes virus-type rules, it is recommended that this option not be used.
+
+
+===== ftp_client configuration
+
+* max_resp_len
+
+This specifies the maximum length for all response messages in bytes.
+If the message for an FTP response (everything after the 3 digit code)
+exceeds that length, and the inspector is configured to do so, an
+alert will be generated.  This is used to check for buffer overflow
+exploits within FTP clients.
+
+
+* telnet_cmds
+
+Detect and alert when telnet cmds are seen on the FTP command channel.
+
+
+* ignore_telnet_erase_cmds
+
+This option allows Snort to ignore telnet escape sequences for erase character
+(TNC EAC) and erase line (TNC EAL) when normalizing FTP command channel.  Some
+FTP clients do not process those telnet escape sequences.
+
+===== ftp_data
+
+In order to enable file inspection for ftp, the following should be added to the 
+configuration:
+
+   ftp_data = {}
+
