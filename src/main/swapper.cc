@@ -47,6 +47,15 @@ Swapper::Swapper(SnortConfig* sold, SnortConfig* snew)
     new_attribs = nullptr;
 }
 
+Swapper::Swapper(SnortConfig* sold, SnortConfig* snew, tTargetBasedConfig* told, tTargetBasedConfig* tnew)
+{
+    old_conf = sold;
+    new_conf = snew;
+
+    old_attribs = told;
+    new_attribs = tnew;
+}
+
 Swapper::Swapper(tTargetBasedConfig* told, tTargetBasedConfig* tnew)
 {
     old_conf = nullptr;

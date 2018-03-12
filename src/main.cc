@@ -322,12 +322,21 @@ int main_reload_config(lua_State* L)
         current_request->respond("== reload failed\n");
         return 0;
     }
+
+    tTargetBasedConfig* old_tc = SFAT_GetConfig();
+    tTargetBasedConfig* tc = SFAT_Swap();
+
+    if ( !tc )
+    {
+        current_request->respond("== reload failed\n");
+        return 0;
+    }
     SnortConfig::set_conf(sc);
     proc_stats.conf_reloads++;
 
     bool from_shell = ( L != nullptr );
     current_request->respond(".. swapping configuration\n", from_shell);
-    main_broadcast_command(get_command(new ACSwap(new Swapper(old, sc)), from_shell));
+    main_broadcast_command(get_command(new ACSwap(new Swapper(old, sc, old_tc, tc)), from_shell));
 
     return 0;
 }

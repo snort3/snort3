@@ -30,6 +30,7 @@ class Swapper
 public:
     Swapper(SnortConfig*, tTargetBasedConfig*);
     Swapper(SnortConfig*, SnortConfig*);
+    Swapper(SnortConfig*, SnortConfig*, tTargetBasedConfig*, tTargetBasedConfig*);
     Swapper(tTargetBasedConfig*, tTargetBasedConfig*);
     ~Swapper();
 
