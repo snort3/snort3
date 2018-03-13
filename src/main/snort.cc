@@ -769,7 +769,7 @@ void Snort::thread_init_unprivileged()
     InspectorManager::thread_init(SnortConfig::get_conf());
     PacketTracer::thread_init();
     if (SnortConfig::packet_trace_enabled())
-        PacketTracer::enable_user_trace();
+        PacketTracer::enable_user();
 
     // in case there are HA messages waiting, process them first
     HighAvailabilityManager::process_receive();
@@ -932,9 +932,9 @@ DAQ_Verdict Snort::packet_callback(
     void*, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt)
 {
     if (pkthdr->flags & DAQ_PKT_FLAG_TRACE_ENABLED)
-        PacketTracer::enable_daq_trace();
+        PacketTracer::enable_daq();
     else
-        PacketTracer::disable_daq_trace();
+        PacketTracer::disable_daq();
 
     set_default_policy();
     Profile profile(totalPerfStats);
@@ -962,7 +962,7 @@ DAQ_Verdict Snort::packet_callback(
         get_network_policy()->policy_id, get_ips_policy()->policy_id,
         SFDAQ::verdict_to_string(verdict));
 
-    PacketTracer::dump(pkthdr, verdict);
+    PacketTracer::dump(pkthdr);
 
     HighAvailabilityManager::process_update(s_packet->flow, pkthdr);
 

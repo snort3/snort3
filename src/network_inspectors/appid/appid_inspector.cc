@@ -51,6 +51,7 @@
 #include "profiler/profiler.h"
 
 using namespace snort;
+static THREAD_LOCAL PacketTracer::TracerMute appid_mute;
 
 // FIXIT-L - appid cleans up openssl now as it is the primary (only) user... eventually this
 //           should probably be done outside of appid
@@ -72,7 +73,8 @@ static void add_appid_to_packet_trace(Flow& flow)
         payload_app_name = appid_api.get_application_name(payload_id);
         misc_name = appid_api.get_application_name(misc_id);
 
-        PacketTracer::log("AppID: service: %s(%d), client: %s(%d), payload: %s(%d), misc: %s(%d)\n",
+        PacketTracer::log(appid_mute,
+            "AppID: service: %s(%d), client: %s(%d), payload: %s(%d), misc: %s(%d)\n",
             (service_app_name ? service_app_name : ""), service_id,
             (client_app_name ? client_app_name : ""), client_id,
             (payload_app_name ? payload_app_name : ""), payload_id,
@@ -137,6 +139,8 @@ void AppIdInspector::show(SnortConfig*)
 
 void AppIdInspector::tinit()
 {
+    appid_mute = PacketTracer::get_mute();
+
     AppIdStatistics::initialize_manager(*config);
     HostPortCache::initialize();
     AppIdServiceState::initialize();
@@ -177,8 +181,9 @@ void AppIdInspector::eval(Packet* p)
     if (p->flow)
     {
         AppIdDiscovery::do_application_discovery(p, *this);
-        if (PacketTracer::get_enable())
-            add_appid_to_packet_trace(*(p->flow));
+        // FIXIT-L tag verdict reason as appid for daq
+        if (PacketTracer::active())
+            add_appid_to_packet_trace(*p->flow);
     }
     else
         AppIdPegCounts::inc_disco_peg(AppIdPegCounts::DiscoveryPegs::IGNORED_PACKETS);
