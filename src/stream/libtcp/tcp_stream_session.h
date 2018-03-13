@@ -145,8 +145,8 @@ public:
     TcpEventLogger tel;
 
 private:
-    snort::ip::snort_in6_addr real_src_ip = { 0 };
-    snort::ip::snort_in6_addr real_dst_ip = { 0 };
+    snort::ip::snort_in6_addr real_src_ip;
+    snort::ip::snort_in6_addr real_dst_ip;
     uint16_t real_src_port = 0;
     uint16_t real_dst_port = 0;
 
