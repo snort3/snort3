@@ -468,14 +468,18 @@ static bool set_value(const char* fqn, Value& v)
         return found;
     }
 
+    if ( mod->get_usage() == Module::GLOBAL &&
+         only_inspection_policy() && !default_inspection_policy() )
+        return true;
+
     if ( mod->get_usage() != Module::INSPECT && only_inspection_policy() )
-            return true;
+        return true;
 
     if ( mod->get_usage() != Module::DETECT && only_ips_policy() )
-            return true;
+        return true;
 
     if ( mod->get_usage() != Module::CONTEXT && only_network_policy() )
-            return true;
+        return true;
 
     // now we must traverse the mod params to get the leaf
     string s = fqn;
@@ -688,6 +692,10 @@ SO_PUBLIC bool open_table(const char* s, int idx)
     Module* m = h->mod;
     const Parameter* p = nullptr;
 
+    if ( m->get_usage() == Module::GLOBAL &&
+         only_inspection_policy() && !default_inspection_policy() )
+        return true;
+
     if ( m->get_usage() != Module::INSPECT && only_inspection_policy() )
         return true;
 
@@ -747,6 +755,10 @@ SO_PUBLIC void close_table(const char* s, int idx)
 
     if ( ModHook* h = get_hook(key.c_str()) )
     {
+        if ( h->mod->get_usage() == Module::GLOBAL &&
+             only_inspection_policy() && !default_inspection_policy() )
+            return;
+
         if ( h->mod->get_usage() != Module::INSPECT && only_inspection_policy() )
             return;
 

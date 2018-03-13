@@ -278,10 +278,11 @@ static bool load_lib(const char* file)
 
 static void add_plugin(Plugin& p)
 {
+    Module* m = nullptr;
     if ( p.api->mod_ctor )
     {
         current_plugin = p.api->name;
-        Module* m = p.api->mod_ctor();
+        m = p.api->mod_ctor();
         ModuleManager::add_module(m, p.api);
     }
 
@@ -292,6 +293,11 @@ static void add_plugin(Plugin& p)
         break;
 
     case PT_INSPECTOR:
+        // probes must always be global. they run regardless of selected policy.
+        assert( (m && ((const InspectApi*)p.api)->type == IT_PROBE) ? 
+                m->get_usage() == Module::GLOBAL :
+                true );
+
         InspectorManager::add_plugin((const InspectApi*)p.api);
         break;
 

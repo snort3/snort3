@@ -21,7 +21,6 @@ add_library ( perf_monitor OBJECT
     perf_module.cc
     perf_module.h
     perf_monitor.cc
-    perf_monitor.h
     perf_tracker.cc
     perf_tracker.h
     text_formatter.cc

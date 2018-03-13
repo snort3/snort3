@@ -81,6 +81,9 @@ public:
     ~DataBus();
 
     static void subscribe(const char* key, DataHandler*);
+    static void subscribe_default(const char* key, DataHandler*);
+    static void unsubscribe(const char* key, DataHandler*);
+    static void unsubscribe_default(const char* key, DataHandler*);
     static void publish(const char* key, DataEvent&, Flow* = nullptr);
 
     // convenience methods
@@ -90,6 +93,7 @@ public:
 
 private:
     void _subscribe(const char* key, DataHandler*);
+    void _unsubscribe(const char* key, DataHandler*);
     void _publish(const char* key, DataEvent&, Flow*);
 
 private:
@@ -122,6 +126,9 @@ private:
 // common data events
 #define PACKET_EVENT "detection.packet"
 #define DAQ_META_EVENT "daq.metapacket"
+#define FLOW_STATE_EVENT "flow.state_change"
+#define THREAD_IDLE_EVENT "thread.idle"
+#define THREAD_ROTATE_EVENT "thread.rotate"
 
 #endif
 

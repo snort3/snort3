@@ -28,7 +28,6 @@ using namespace snort;
 
 extern const BaseApi* nin_binder;
 extern const BaseApi* nin_normalize;
-extern const BaseApi* nin_perf_monitor;
 extern const BaseApi* nin_reputation;
 
 extern const BaseApi* nin_appid[];
@@ -37,13 +36,13 @@ extern const BaseApi* nin_port_scan[];
 #ifdef STATIC_INSPECTORS
 extern const BaseApi* nin_arp_spoof[];
 extern const BaseApi* nin_packet_capture[];
+extern const BaseApi* nin_perf_monitor[];
 #endif
 
 static const BaseApi* network_inspectors[] =
 {
     nin_binder,
     nin_normalize,
-    nin_perf_monitor,
     nin_reputation,
     nullptr
 };
@@ -57,6 +56,7 @@ void load_network_inspectors()
 #ifdef STATIC_INSPECTORS
     PluginManager::load_plugins(nin_arp_spoof);
     PluginManager::load_plugins(nin_packet_capture);
+    PluginManager::load_plugins(nin_perf_monitor);
 #endif
 }
 

@@ -75,7 +75,6 @@
 #include "packet_io/trough.h"
 #include "parser/cmd_line.h"
 #include "parser/parser.h"
-#include "perf_monitor/perf_monitor.h"
 #include "profiler/profiler.h"
 #include "search_engines/search_engines.h"
 #include "service_inspectors/service_inspectors.h"
@@ -701,15 +700,16 @@ void Snort::capture_packet()
 
 void Snort::thread_idle()
 {
+    // FIXIT-L this whole thing could be pub-sub
+    DataBus::publish(THREAD_IDLE_EVENT, nullptr);
     Stream::timeout_flows(time(nullptr));
-    perf_monitor_idle_process();
     aux_counts.idle++;
     HighAvailabilityManager::process_receive();
 }
 
 void Snort::thread_rotate()
 {
-    SetRotatePerfFileFlag();
+    DataBus::publish(THREAD_ROTATE_EVENT, nullptr);
 }
 
 /*

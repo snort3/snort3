@@ -24,6 +24,7 @@
 
 #include "flow_ip_tracker.h"
 
+#include "framework/data_bus.h"
 #include "log/messages.h"
 #include "protocols/packet.h"
 
@@ -37,13 +38,43 @@ struct FlowStateKey
     SfIp ipB;
 };
 
-THREAD_LOCAL FlowIPTracker* perf_flow_ip;
+class FlowIPDataHandler : public DataHandler
+{
+public:
+    FlowIPDataHandler(FlowIPTracker& t) : tracker(t)
+    { DataBus::subscribe_default(FLOW_STATE_EVENT, this); }
+    
+    virtual void handle(DataEvent&, Flow* flow) override
+    {
+        FlowState state = SFS_STATE_MAX;
+
+        if ( flow->pkt_type == PktType::UDP )
+            state = SFS_STATE_UDP_CREATED;
+
+        if ( flow->pkt_type == PktType::TCP )
+        {
+            if ( flow->get_session_flags() & SSNFLAG_COUNTED_ESTABLISH )
+                state = SFS_STATE_TCP_ESTABLISHED;
+
+            if ( flow->get_session_flags() & SSNFLAG_COUNTED_CLOSED )
+                state = SFS_STATE_TCP_CLOSED;
+        }
+        
+        if ( state == SFS_STATE_MAX )
+            return;
+
+        tracker.update_state(&flow->client_ip, &flow->server_ip, state);
+    }
+
+private:
+    FlowIPTracker& tracker;
+};
 
 FlowStateValue* FlowIPTracker::find_stats(const SfIp* src_addr, const SfIp* dst_addr,
     int* swapped)
 {
     FlowStateKey key;
-    FlowStateValue* value;
+    FlowStateValue* value = nullptr;
 
     if (src_addr->less_than(*dst_addr))
     {
@@ -77,9 +108,10 @@ FlowStateValue* FlowIPTracker::find_stats(const SfIp* src_addr, const SfIp* dst_
     return value;
 }
 
-FlowIPTracker::FlowIPTracker(PerfConfig* perf) :
-    PerfTracker(perf, perf->output == PERF_FILE, TRACKER_NAME)
+FlowIPTracker::FlowIPTracker(PerfConfig* perf) : PerfTracker(perf, TRACKER_NAME)
 {
+    handler = new FlowIPDataHandler(*this);
+
     formatter->register_section("flow_ip");
     formatter->register_field("ip_a", ip_a);
     formatter->register_field("ip_b", ip_b);
@@ -116,7 +148,7 @@ FlowIPTracker::FlowIPTracker(PerfConfig* perf) :
     formatter->finalize_fields();
 
     ip_map = xhash_new(1021, sizeof(FlowStateKey), sizeof(FlowStateValue),
-        perfmon_config->flowip_memcap, 1, nullptr, nullptr, 1);
+        perf->flowip_memcap, 1, nullptr, nullptr, 1);
 
     if (!ip_map)
         FatalError("Unable to allocate memory for FlowIP stats\n");
@@ -124,7 +156,10 @@ FlowIPTracker::FlowIPTracker(PerfConfig* perf) :
 
 FlowIPTracker::~FlowIPTracker()
 {
-    if (ip_map)
+    DataBus::unsubscribe_default(FLOW_STATE_EVENT, handler);
+    delete handler;
+
+    if ( ip_map )
         xhash_delete(ip_map);
 }
 

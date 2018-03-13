@@ -259,6 +259,7 @@ void set_policies(snort::SnortConfig*, Shell*);
 void set_default_policy();
 void set_default_policy(snort::SnortConfig*);
 
+bool default_inspection_policy();
 bool only_inspection_policy();
 bool only_ips_policy();
 bool only_network_policy();

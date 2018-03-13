@@ -22,7 +22,9 @@
 #ifndef TCP_DEBUG_TRACE_H
 #define TCP_DEBUG_TRACE_H
 
-#include "stream/tcp/tcp_reassembler.h"
+#include "utils/stats.h"
+
+#include "tcp_reassembler.h"
 
 #ifndef REG_TEST
 #define S5TraceTCP(pkt, flow, tsd, evt)
@@ -67,7 +69,7 @@ inline void TraceEvent(const snort::Packet* p, TcpSegmentDescriptor*, uint32_t t
     uint32_t rack = ( rxd ) ? h->ack() - rxd : h->ack();
     fprintf(stdout, "\n" FMTu64("-3") " %s=0x%02x Seq=%-4u Ack=%-4u Win=%-4hu Len=%-4hu%s\n",
         //"\n" FMTu64("-3") " %s=0x%02x Seq=%-4u Ack=%-4u Win=%-4u Len=%-4u End=%-4u%s\n",
-        pc.total_from_daq, flags, h->th_flags, rseq, rack, h->win(), p->dsize, order);
+        get_packet_number(), flags, h->th_flags, rseq, rack, h->win(), p->dsize, order);
 }
 
 inline void TraceSession(const snort::Flow* lws)

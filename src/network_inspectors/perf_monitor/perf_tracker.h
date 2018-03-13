@@ -41,8 +41,12 @@
 #include <ctime>
 
 #include "perf_formatter.h"
-#include "perf_monitor.h"
+#include "perf_module.h"
 
+namespace snort
+{
+    class Packet;
+}
 class PerfTracker
 {
 public:
@@ -67,7 +71,7 @@ protected:
     PerfConfig* config;
     PerfFormatter* formatter;
 
-    PerfTracker(PerfConfig*, bool file, const char* tracker_name);
+    PerfTracker(PerfConfig*, const char* tracker_name);
     virtual void write() final;
 
 private:

@@ -59,25 +59,25 @@ static inline bool check_file_size(FILE* fh, uint64_t max_file_size)
     return false;
 }
 
-PerfTracker::PerfTracker(PerfConfig* config, bool file, const char* tracker_name)
+PerfTracker::PerfTracker(PerfConfig* config, const char* tracker_name)
 {
     this->config = config;
 
     switch (config->format)
     {
-        case PERF_CSV: formatter = new CSVFormatter(tracker_name); break;
-        case PERF_TEXT: formatter = new TextFormatter(tracker_name); break;
-        case PERF_JSON: formatter = new JSONFormatter(tracker_name); break;
+        case PerfFormat::CSV: formatter = new CSVFormatter(tracker_name); break;
+        case PerfFormat::TEXT: formatter = new TextFormatter(tracker_name); break;
+        case PerfFormat::JSON: formatter = new JSONFormatter(tracker_name); break;
 #ifdef HAVE_FLATBUFFERS
-        case PERF_FBS: formatter = new FbsFormatter(tracker_name); break;
+        case PerfFormat::FBS: formatter = new FbsFormatter(tracker_name); break;
 #endif
 #ifdef UNIT_TEST
-        case PERF_MOCK: formatter = new MockFormatter(tracker_name); break;
+        case PerfFormat::MOCK: formatter = new MockFormatter(tracker_name); break;
 #endif
         default: break;
     }
 
-    if (file)
+    if ( config->output == PerfOutput::TO_FILE )
     {
         string tracker_fname = tracker_name;
         tracker_fname += formatter->get_extension();

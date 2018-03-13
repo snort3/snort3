@@ -28,8 +28,7 @@
 #include "config.h"
 #endif
 
-#include "perf_monitor.h"
-
+#include "framework/data_bus.h"
 #include "log/messages.h"
 #include "managers/inspector_manager.h"
 #include "profiler/profiler.h"
@@ -39,6 +38,7 @@
 #include "cpu_tracker.h"
 #include "flow_ip_tracker.h"
 #include "flow_tracker.h"
+#include "perf_module.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -49,17 +49,14 @@ using namespace snort;
 THREAD_LOCAL SimpleStats pmstats;
 THREAD_LOCAL ProfileStats perfmonStats;
 
-THREAD_LOCAL bool perfmon_rotate_perf_file = false;
-static PerfConfig config;
-PerfConfig* perfmon_config = &config;   // FIXIT-M remove this after flowip can be decoupled.
 static THREAD_LOCAL std::vector<PerfTracker*>* trackers;
-
-static bool ready_to_process(Packet* p);
 
 //-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
 
+class PerfIdleHandler;
+class PerfRotateHandler;
 class PerfMonitor : public Inspector
 {
 public:
@@ -69,15 +66,48 @@ public:
     void show(SnortConfig*) override;
 
     void eval(Packet*) override;
+    bool ready_to_process(Packet* p);
 
     void tinit() override;
     void tterm() override;
+
+    void rotate();
+private:
+    PerfConfig& config;
+    PerfIdleHandler* idle_handler = nullptr;
+    PerfRotateHandler* rotate_handler = nullptr;
 };
 
-PerfMonitor::PerfMonitor(PerfMonModule* mod)
+class PerfIdleHandler : public DataHandler
 {
-    mod->get_config(config);
-    perfmon_config = &config;
+public:
+    PerfIdleHandler(PerfMonitor& p) : perf_monitor(p)
+    { DataBus::subscribe_default(THREAD_IDLE_EVENT, this); }
+
+    virtual void handle(DataEvent&, Flow*) override
+    { perf_monitor.eval(nullptr); }
+
+private:
+    PerfMonitor& perf_monitor;
+};
+
+class PerfRotateHandler : public DataHandler
+{
+public:
+    PerfRotateHandler(PerfMonitor& p) : perf_monitor(p)
+    { DataBus::subscribe_default(THREAD_ROTATE_EVENT, this); }
+
+    virtual void handle(DataEvent&, Flow*) override
+    { perf_monitor.rotate(); }
+
+private:
+    PerfMonitor& perf_monitor;
+};
+
+PerfMonitor::PerfMonitor(PerfMonModule* mod) : config(mod->get_config())
+{
+    idle_handler = new PerfIdleHandler(*this);
+    rotate_handler = new PerfRotateHandler(*this);
 }
 
 void PerfMonitor::show(SnortConfig*)
@@ -106,28 +136,28 @@ void PerfMonitor::show(SnortConfig*)
     }
     LogMessage("  CPU Stats:    %s\n",
         (config.perf_flags & PERF_CPU) ? "ACTIVE" : "INACTIVE");
-    switch(config.output)
+    switch ( config.output )
     {
-        case PERF_CONSOLE:
+        case PerfOutput::TO_CONSOLE:
             LogMessage("    Output Location:  console\n");
             break;
-        case PERF_FILE:
+        case PerfOutput::TO_FILE:
             LogMessage("    Output Location:  file\n");
             break;
     }
     switch(config.format)
     {
-        case PERF_TEXT:
+        case PerfFormat::TEXT:
             LogMessage("    Output Format:  text\n");
             break;
-        case PERF_CSV:
+        case PerfFormat::CSV:
             LogMessage("    Output Format:  csv\n");
             break;
-        case PERF_JSON:
+        case PerfFormat::JSON:
             LogMessage("    Output Format:  json\n");
             break;
 #ifdef HAVE_FLATBUFFERS
-        case PERF_FBS:
+        case PerfFormat::FBS:
             LogMessage("    Output Format:  flatbuffers\n");
             break;
 #endif
@@ -150,7 +180,10 @@ static void disable_tracker(size_t i)
 
 bool PerfMonitor::configure(SnortConfig*)
 {
-    return true;
+    idle_handler = new PerfIdleHandler(*this);
+    rotate_handler = new PerfRotateHandler(*this);
+
+    return config.resolve();
 }
 
 void PerfMonitor::tinit()
@@ -164,7 +197,7 @@ void PerfMonitor::tinit()
         trackers->push_back(new FlowTracker(&config));
 
     if (config.perf_flags & PERF_FLOWIP)
-        trackers->push_back(perf_flow_ip = new FlowIPTracker(&config));
+        trackers->push_back(new FlowIPTracker(&config));
 
     if (config.perf_flags & PERF_CPU )
         trackers->push_back(new CPUTracker(&config));
@@ -181,8 +214,6 @@ void PerfMonitor::tinit()
 
 void PerfMonitor::tterm()
 {
-    perf_flow_ip = nullptr;
-
     if (trackers)
     {
         while (!trackers->empty())
@@ -197,20 +228,16 @@ void PerfMonitor::tterm()
     }
 }
 
+void PerfMonitor::rotate()
+{
+    for ( unsigned i = 0; i < trackers->size(); i++ )
+        if ( !(*trackers)[i]->rotate() )
+            disable_tracker(i--);
+}
+
 void PerfMonitor::eval(Packet* p)
 {
     Profile profile(perfmonStats);
-
-    if (IsSetRotatePerfFileFlag())
-    {
-        for (unsigned i = 0; i < trackers->size(); i++)
-        {
-            if (!(*trackers)[i]->rotate())
-                disable_tracker(i--);
-        }
-
-        ClearRotatePerfFileFlag();
-    }
 
     if (p)
     {
@@ -238,17 +265,7 @@ void PerfMonitor::eval(Packet* p)
         ++pmstats.total_packets;
 }
 
-//FIXIT-M uncouple from Snort class when framework permits
-void perf_monitor_idle_process()
-{
-    PerfMonitor* pm =
-    (PerfMonitor*)InspectorManager::get_inspector("perf_monitor", true);
-
-    if ( pm )
-        pm->eval(nullptr);
-}
-
-static bool ready_to_process(Packet* p)
+bool PerfMonitor::ready_to_process(Packet* p)
 {
     static THREAD_LOCAL time_t sample_time = 0;
     static THREAD_LOCAL time_t cur_time = 0;
@@ -326,11 +343,23 @@ static const InspectApi pm_api =
     nullptr  // reset
 };
 
-const BaseApi* nin_perf_monitor = &pm_api.base;
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* nin_perf_monitor[] =
+#endif
+{
+    &pm_api.base,
+    nullptr
+};
 
 #ifdef UNIT_TEST
 TEST_CASE("Process timing logic", "[perfmon]")
 {
+    PerfMonModule mod;
+    PerfConfig& config = mod.get_config();
+    PerfMonitor perfmon(&mod);
+
     Packet p(false);
     DAQ_PktHdr_t pkth;
     p.pkth = &pkth;
@@ -338,34 +367,34 @@ TEST_CASE("Process timing logic", "[perfmon]")
     config.pkt_cnt = 0;
     config.sample_interval = 0;
     pkth.ts.tv_sec = 0;
-    REQUIRE((ready_to_process(&p) == true));
+    REQUIRE((perfmon.ready_to_process(&p) == true));
     pkth.ts.tv_sec = 1;
-    REQUIRE((ready_to_process(&p) == true));
+    REQUIRE((perfmon.ready_to_process(&p) == true));
 
     config.pkt_cnt = 2;
     config.sample_interval = 0;
     pkth.ts.tv_sec = 2;
-    REQUIRE((ready_to_process(&p) == false));
+    REQUIRE((perfmon.ready_to_process(&p) == false));
     pkth.ts.tv_sec = 3;
-    REQUIRE((ready_to_process(&p) == true));
+    REQUIRE((perfmon.ready_to_process(&p) == true));
 
     config.pkt_cnt = 0;
     config.sample_interval = 2;
     pkth.ts.tv_sec = 4;
-    REQUIRE((ready_to_process(&p) == false));
+    REQUIRE((perfmon.ready_to_process(&p) == false));
     pkth.ts.tv_sec = 8;
-    REQUIRE((ready_to_process(&p) == true));
+    REQUIRE((perfmon.ready_to_process(&p) == true));
     pkth.ts.tv_sec = 10;
-    REQUIRE((ready_to_process(&p) == true));
+    REQUIRE((perfmon.ready_to_process(&p) == true));
 
     config.pkt_cnt = 5;
     config.sample_interval = 4;
     pkth.ts.tv_sec = 11;
-    REQUIRE((ready_to_process(&p) == false));
+    REQUIRE((perfmon.ready_to_process(&p) == false));
     pkth.ts.tv_sec = 14;
-    REQUIRE((ready_to_process(&p) == false));
-    REQUIRE((ready_to_process(&p) == false));
-    REQUIRE((ready_to_process(&p) == false));
-    REQUIRE((ready_to_process(&p) == true));
+    REQUIRE((perfmon.ready_to_process(&p) == false));
+    REQUIRE((perfmon.ready_to_process(&p) == false));
+    REQUIRE((perfmon.ready_to_process(&p) == false));
+    REQUIRE((perfmon.ready_to_process(&p) == true));
 }
 #endif

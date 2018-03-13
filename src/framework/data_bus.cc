@@ -79,6 +79,22 @@ void DataBus::subscribe(const char* key, DataHandler* h)
     get_data_bus()._subscribe(key, h);
 }
 
+// for subscribers that need to receive events regardless of active inspection policy
+void DataBus::subscribe_default(const char* key, DataHandler* h)
+{
+    get_default_inspection_policy(SnortConfig::get_conf())->dbus._subscribe(key, h);
+}
+
+void DataBus::unsubscribe(const char* key, DataHandler* h)
+{
+    get_data_bus()._unsubscribe(key, h);
+}
+
+void DataBus::unsubscribe_default(const char* key, DataHandler* h)
+{
+    get_default_inspection_policy(SnortConfig::get_conf())->dbus._unsubscribe(key, h);
+}
+
 // notify subscribers of event
 void DataBus::publish(const char* key, DataEvent& e, Flow* f)
 {
@@ -102,7 +118,7 @@ void DataBus::publish(const char* key, const uint8_t* buf, unsigned len, Flow* f
 void DataBus::publish(const char* key, Packet* p, Flow* f)
 {
     PacketEvent e(p);
-    if ( !f )
+    if ( p && !f )
         f = p->flow;
     publish(key, e, f);
 }
@@ -121,6 +137,18 @@ void DataBus::_subscribe(const char* key, DataHandler* h)
 {
     DataList& v = map[key];
     v.push_back(h);
+}
+
+void DataBus::_unsubscribe(const char* key, DataHandler* h)
+{
+    DataList& v = map[key];
+
+    for ( unsigned i = 0; i < v.size(); i++ )
+        if ( v[i] == h )
+            v.erase(v.begin() + i--);
+
+    if ( v.empty() )
+        map.erase(key);
 }
 
 // notify subscribers of event

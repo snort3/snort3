@@ -24,7 +24,8 @@
 #include "udp_session.h"
 
 #include "flow/session.h"
-#include "perf_monitor/flow_ip_tracker.h"
+#include "framework/data_bus.h"
+#include "hash/xhash.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
 
@@ -123,11 +124,7 @@ bool UdpSession::setup(Packet* p)
 
     SESSION_STATS_ADD(udpStats);
 
-    if (perfmon_config && (perfmon_config->perf_flags & PERF_FLOWIP))
-    {
-        perf_flow_ip->update_state(&flow->client_ip,
-            &flow->server_ip, SFS_STATE_UDP_CREATED);
-    }
+    DataBus::publish(FLOW_STATE_EVENT, p);
 
     if ( Stream::expected_flow(flow, p) )
     {

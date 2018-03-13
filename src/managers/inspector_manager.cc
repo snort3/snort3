@@ -280,8 +280,13 @@ void FrameworkPolicy::vectorize()
             break;
 
         case IT_PROBE:
-            probe.add(p);
+        {
+            // probes always run
+            // add them to default so they can be found on InspectorManager::probe
+            SnortConfig* sc = SnortConfig::get_conf();
+            sc->policy_map->get_inspection_policy(0)->framework_policy->probe.add(p);
             break;
+        }
 
         case IT_MAX:
             break;
@@ -1001,7 +1006,8 @@ void InspectorManager::execute(Packet* p)
 
 void InspectorManager::probe(Packet* p)
 {
-    FrameworkPolicy* fp = snort::get_inspection_policy()->framework_policy;
+    InspectionPolicy* policy = snort::SnortConfig::get_conf()->policy_map->get_inspection_policy(0);
+    FrameworkPolicy* fp = policy->framework_policy;
     ::execute(p, fp->probe.vec, fp->probe.num);
 }
 

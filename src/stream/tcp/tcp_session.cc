@@ -51,7 +51,6 @@
 #include "detection/detection_engine.h"
 #include "detection/rules.h"
 #include "log/log.h"
-#include "perf_monitor/flow_ip_tracker.h"
 #include "profiler/profiler.h"
 #include "protocols/eth.h"
 
@@ -196,6 +195,8 @@ void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool re
 void TcpSession::update_perf_base_state(char newState)
 {
     uint32_t session_flags = flow->get_session_flags();
+    bool fire_event = false;
+
     switch ( newState )
     {
     case TcpStreamTracker::TCP_SYN_SENT:
@@ -210,11 +211,9 @@ void TcpSession::update_perf_base_state(char newState)
         if ( !( session_flags & SSNFLAG_COUNTED_ESTABLISH ) )
         {
             tcpStats.sessions_established++;
-            if ( perfmon_config && ( perfmon_config->perf_flags & PERF_FLOWIP ) )
-                perf_flow_ip->update_state(&flow->client_ip,
-                    &flow->server_ip, SFS_STATE_TCP_ESTABLISHED);
-
             session_flags |= SSNFLAG_COUNTED_ESTABLISH;
+            fire_event = true;
+
             tel.log_internal_event(INTERNAL_EVENT_SESSION_ADD);
             if ( ( session_flags & SSNFLAG_COUNTED_INITIALIZE )
                 && !( session_flags & SSNFLAG_COUNTED_CLOSING ) )
@@ -235,10 +234,6 @@ void TcpSession::update_perf_base_state(char newState)
             {
                 assert(tcpStats.sessions_established);
                 tcpStats.sessions_established--;
-
-                if (perfmon_config  && (perfmon_config->perf_flags & PERF_FLOWIP))
-                    perf_flow_ip->update_state(&flow->client_ip, &flow->server_ip,
-                        SFS_STATE_TCP_CLOSED);
             }
             else if ( session_flags & SSNFLAG_COUNTED_INITIALIZE )
             {
@@ -252,6 +247,7 @@ void TcpSession::update_perf_base_state(char newState)
         if ( !( session_flags & SSNFLAG_COUNTED_CLOSED ) )
         {
             session_flags |= SSNFLAG_COUNTED_CLOSED;
+            fire_event = true;
 
             if ( session_flags & SSNFLAG_COUNTED_CLOSING )
             {
@@ -262,10 +258,6 @@ void TcpSession::update_perf_base_state(char newState)
             {
                 assert(tcpStats.sessions_established);
                 tcpStats.sessions_established--;
-
-                if ( perfmon_config && ( perfmon_config->perf_flags & PERF_FLOWIP ) )
-                    perf_flow_ip->update_state(&flow->client_ip,
-                        &flow->server_ip, SFS_STATE_TCP_CLOSED);
             }
             else if ( session_flags & SSNFLAG_COUNTED_INITIALIZE )
             {
@@ -280,6 +272,9 @@ void TcpSession::update_perf_base_state(char newState)
     }
 
     flow->update_session_flags(session_flags);
+
+    if ( fire_event )
+        DataBus::publish(FLOW_STATE_EVENT, nullptr, flow);
 }
 
 bool TcpSession::flow_exceeds_config_thresholds(TcpSegmentDescriptor& tsd)

@@ -196,7 +196,7 @@ static const InspectApi pc_api =
         mod_ctor,
         mod_dtor
     },
-    IT_PACKET,
+    IT_PROBE,
     (uint16_t)PktType::ANY,
     nullptr, // buffers
     nullptr, // service

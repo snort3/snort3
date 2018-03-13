@@ -332,6 +332,17 @@ void set_default_policy(SnortConfig* sc)
 void set_default_policy()
 { set_default_policy(SnortConfig::get_conf()); }
 
+bool default_inspection_policy()
+{
+    if ( !get_inspection_policy() )
+        return false;
+    
+    if ( get_inspection_policy()->policy_id != 0 )
+        return false;
+
+    return true;
+}
+
 bool only_inspection_policy()
 { return get_inspection_policy() && !get_ips_policy() && !get_network_policy(); }
 

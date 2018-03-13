@@ -22,6 +22,7 @@
 #define FLOW_IP_TRACKER_H
 
 #include "perf_tracker.h"
+
 #include "hash/xhash.h"
 
 enum FlowState
@@ -51,11 +52,12 @@ struct TrafficStats
 struct FlowStateValue
 {
     TrafficStats traffic_stats[SFS_TYPE_MAX];
-    uint64_t total_packets;
-    uint64_t total_bytes;
-    uint32_t state_changes[SFS_STATE_MAX];
+    PegCount total_packets;
+    PegCount total_bytes;
+    PegCount state_changes[SFS_STATE_MAX];
 };
 
+class FlowIPDataHandler;
 class FlowIPTracker : public PerfTracker
 {
 public:
@@ -69,6 +71,7 @@ public:
     int update_state(const snort::SfIp* src_addr, const snort::SfIp* dst_addr, FlowState);
 
 private:
+    FlowIPDataHandler* handler;
     FlowStateValue stats;
     XHash* ip_map;
     char ip_a[41], ip_b[41];
@@ -77,7 +80,5 @@ private:
     void write_stats();
     void display_stats();
 };
-
-extern THREAD_LOCAL FlowIPTracker* perf_flow_ip;
 #endif
 

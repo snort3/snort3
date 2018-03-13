@@ -155,7 +155,8 @@ public:
     PortscanConfig* get_data();
 
     Usage get_usage() const override
-    { return CONTEXT; }
+    { return GLOBAL; } // FIXIT-M this should eventually be CONTEXT.
+                       // Set to GLOBAL so this isn't selected away when inspection policy switches
 
 private:
     PS_ALERT_CONF* get_alert_conf(const char* fqn);

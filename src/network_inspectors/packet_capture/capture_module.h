@@ -52,7 +52,7 @@ public:
     void get_config(CaptureConfig&);
 
     Usage get_usage() const override
-    { return CONTEXT; }
+    { return GLOBAL; }
 
 private:
     CaptureConfig config;
