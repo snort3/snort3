@@ -12,7 +12,7 @@ Here is a list of places where byte_extract variables can be used:
 
 * content/uricontent: offset, depth, distance, within
 * byte_test: offset, value
-* byte_jump: offset
+* byte_jump: offset, post_offset
 * isdataat: offset 
 
 ===== Examples
@@ -21,6 +21,11 @@ Here is a list of places where byte_extract variables can be used:
       byte_extract:1, 1, str_depth;
       content:"bad stuff", offset str_offset, depth str_depth;
       msg:"Bad Stuff detected within field";)
+
+  alert tcp (content:"START"; byte_extract:1, 0, myvar, relative;
+      byte_jump:1, 3, relative, post_offset myvar;
+      content:"END", distance 6, within 3;
+      msg: "byte_jump - pass variable to post_offset";)
 
 This example uses two variables.
 
