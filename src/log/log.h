@@ -25,19 +25,22 @@
 
 #include "main/snort_types.h"
 
-struct Packet;
+namespace snort
+{
 namespace tcp { struct TCPHdr; }
+struct Packet;
 
 SO_PUBLIC void CreateTCPFlagString(const tcp::TCPHdr* const, char*);
+}
 
 FILE* OpenAlertFile(const char*);
 int RollAlertFile(const char*);
 
 void OpenLogger();
 void CloseLogger();
-void LogIPPkt(Packet*);
-void LogFlow(Packet*);
-void LogNetData(const uint8_t* data, const int len, Packet*);
+void LogIPPkt(snort::Packet*);
+void LogFlow(snort::Packet*);
+void LogNetData(const uint8_t* data, const int len, snort::Packet*);
 
 #endif
 

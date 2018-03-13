@@ -33,6 +33,8 @@
 #include "modbus_module.h"
 #include "modbus_paf.h"
 
+using namespace snort;
+
 THREAD_LOCAL ModbusStats modbus_stats;
 
 //-------------------------------------------------------------------------

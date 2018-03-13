@@ -32,6 +32,7 @@
 #include "detector_plugins/http_url_patterns.h"
 #include "profiler/profiler.h"
 
+
 static const char* httpFieldName[ MAX_HTTP_FIELD_ID ] = // for use in debug messages
 {
     "useragent",
@@ -45,7 +46,7 @@ static const char* httpFieldName[ MAX_HTTP_FIELD_ID ] = // for use in debug mess
     "body",
 };
 
-ProfileStats httpPerfStats;
+snort::ProfileStats httpPerfStats;
 
 AppIdHttpSession::AppIdHttpSession(AppIdSession& asd)
     : asd(asd)
@@ -347,7 +348,7 @@ void AppIdHttpSession::process_chp_buffers()
 
 int AppIdHttpSession::process_http_packet(int direction)
 {
-    Profile http_profile_context(httpPerfStats);
+    snort::Profile http_profile_context(httpPerfStats);
     AppId service_id = APP_ID_NONE;
     AppId client_id = APP_ID_NONE;
     AppId payload_id = APP_ID_NONE;
@@ -599,8 +600,8 @@ int AppIdHttpSession::process_http_packet(int direction)
 
 // FIXIT-H - This function is unused and untested currently... need to figure who wants it
 // and what it should do
-void AppIdHttpSession::update_http_xff_address(struct XffFieldValue* xff_fields,
-    uint32_t numXffFields)
+void AppIdHttpSession::update_http_xff_address(struct XffFieldValue* /*xff_fields*/,
+    uint32_t /*numXffFields*/)
 {
 #if 0
     static const char* defaultXffPrecedence[] =
@@ -649,7 +650,7 @@ void AppIdHttpSession::update_http_xff_address(struct XffFieldValue* xff_fields,
 
                 // For a comma-separated list of addresses, pick the last address
                 // FIXIT-L: change to select last address port from 2.9.10-42..not tested
-                xff_addr = new SfIp();
+                xff_addr = new snort::SfIp();
                 char* xff_addr_str = nullptr;
                 char* tmp = strchr(xff_fields[j].value, ',');
 

@@ -25,6 +25,8 @@
 #include "codecs/codec_module.h"
 #include "framework/codec.h"
 
+using namespace snort;
+
 namespace
 {
 enum class PppoepktType

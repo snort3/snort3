@@ -35,6 +35,8 @@
 
 #include "checksum.h"
 
+using namespace snort;
+
 #define CD_TCP_NAME "tcp"
 #define CD_TCP_HELP "support for transmission control protocol"
 
@@ -658,7 +660,7 @@ bool TcpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
         checksum::Pseudoheader ps;
         int len = buf.size();
 
-        const IP4Hdr* const ip4h = ip_api.get_ip4h();
+        const ip::IP4Hdr* const ip4h = ip_api.get_ip4h();
         ps.sip = ip4h->get_src();
         ps.dip = ip4h->get_dst();
         ps.zero = 0;

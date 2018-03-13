@@ -68,7 +68,7 @@ struct HostInfo
 
 struct HostAttributeEntry
 {
-    SfCidr ipAddr;
+    snort::SfCidr ipAddr;
     HostInfo hostInfo;
     ApplicationEntry* services;
     ApplicationEntry* clients;

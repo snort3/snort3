@@ -49,6 +49,7 @@
 #include "protocols/vlan.h"
 #include "utils/stats.h"
 
+using namespace snort;
 using namespace std;
 
 #define LOG_BUFFER (4*K_BYTES)

@@ -26,11 +26,11 @@
 
 #include "framework/connector.h"
 
-class FileConnectorConfig : public ConnectorConfig
+class FileConnectorConfig : public snort::ConnectorConfig
 {
 public:
     FileConnectorConfig()
-    { direction = Connector::CONN_UNDEFINED; text_format = false; }
+    { direction = snort::Connector::CONN_UNDEFINED; text_format = false; }
 
     bool text_format;
     std::string name;

@@ -34,8 +34,11 @@
 #include "appid_utils/sf_multi_mpse.h"
 #include "appid_utils/sf_mlmp.h"
 
-struct Packet;
+namespace snort
+{
 struct AppIdServiceSubtype;
+struct Packet;
+}
 class AppIdHttpSession;
 class AppIdModuleConfig;
 
@@ -323,9 +326,9 @@ public:
     bool get_appid_from_url(char*, const char*, char**, const char*, AppId*, AppId*,
         AppId*, AppId*, bool);
     AppId get_appid_by_content_type(const char*, int);
-    void get_server_vendor_version(const char*, int, char**, char**, AppIdServiceSubtype**);
+    void get_server_vendor_version(const char*, int, char**, char**, snort::AppIdServiceSubtype**);
     void identify_user_agent(const char*, int, AppId&, AppId&, char**);
-    void get_http_offsets(Packet*, AppIdHttpSession*);
+    void get_http_offsets(snort::Packet*, AppIdHttpSession*);
     uint32_t parse_multiple_http_patterns(const char* pattern, tMlmpPattern*,
         uint32_t numPartLimit, int level);
 
@@ -339,12 +342,12 @@ private:
     std::vector<HostUrlDetectorPattern*> host_url_patterns;
     CHPListElement* chpList = nullptr;
 
-    SearchTool url_matcher;
-    SearchTool client_agent_matcher;
-    SearchTool via_matcher;
-    SearchTool content_type_matcher;
-    SearchTool* field_matcher = nullptr;
-    SearchTool* chp_matchers[MAX_PATTERN_TYPE + 1] = { nullptr };
+    snort::SearchTool url_matcher;
+    snort::SearchTool client_agent_matcher;
+    snort::SearchTool via_matcher;
+    snort::SearchTool content_type_matcher;
+    snort::SearchTool* field_matcher = nullptr;
+    snort::SearchTool* chp_matchers[MAX_PATTERN_TYPE + 1] = { nullptr };
     tMlmpTree* host_url_matcher = nullptr;
     tMlmpTree* rtmp_host_url_matcher = nullptr;
 

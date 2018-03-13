@@ -25,6 +25,8 @@
 
 #include "managers/plugin_manager.h"
 
+using namespace snort;
+
 // to ensure PacketManager::log_protocols() is built into Snort++
 extern const BaseApi* log_codecs[];
 

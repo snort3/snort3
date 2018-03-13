@@ -49,6 +49,8 @@
 #include "messages.h"
 #include "obfuscator.h"
 
+namespace snort
+{
 /*--------------------------------------------------------------------
  * utility functions
  *--------------------------------------------------------------------
@@ -243,13 +245,13 @@ static void LogIpOptions(TextLog* log, const ip::IpOptionIterator& options)
     TextLog_NewLine(log);
 }
 
-void LogIpOptions(TextLog* log, const IP4Hdr* ip4h, uint16_t valid_ip4_len)
+void LogIpOptions(TextLog* log, const ip::IP4Hdr* ip4h, uint16_t valid_ip4_len)
 {
     const ip::IpOptionIterator options(ip4h, valid_ip4_len);
     LogIpOptions(log, options);
 }
 
-static void LogIpOptions(TextLog* log, const IP4Hdr* ip4h, const Packet* const p)
+static void LogIpOptions(TextLog* log, const ip::IP4Hdr* ip4h, const Packet* const p)
 {
     const ip::IpOptionIterator options(ip4h, p);
     LogIpOptions(log, options);
@@ -1395,4 +1397,5 @@ void LogPayload(TextLog* log, Packet* p)
         LogNetData(log, p->pkt, p->pkth->caplen, p);
     }
 }
+} // namespace snort
 

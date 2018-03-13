@@ -26,6 +26,11 @@
 
 struct lua_State;
 
+namespace snort
+{
+struct SnortConfig;
+}
+
 class Shell
 {
 public:
@@ -36,7 +41,7 @@ public:
     void set_overrides(const char*);
     void set_overrides(Shell*);
 
-    void configure(struct SnortConfig*);
+    void configure(snort::SnortConfig*);
     void install(const char*, const struct luaL_Reg*);
     void execute(const char*, std::string&);
 

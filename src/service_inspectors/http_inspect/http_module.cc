@@ -28,6 +28,7 @@
 #include "http_js_norm.h"
 #include "http_uri_norm.h"
 
+using namespace snort;
 using namespace HttpEnums;
 
 const Parameter HttpModule::http_params[] =

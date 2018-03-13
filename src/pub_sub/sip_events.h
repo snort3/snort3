@@ -34,8 +34,11 @@ enum SipEventType
     SIP_EVENT_TYPE_SIP_DIALOG
 };
 
+namespace snort
+{
 struct Packet;
 struct SfIp;
+}
 struct SIPMsg;
 struct SIP_DialogData;
 struct SIP_MediaSession;
@@ -47,7 +50,7 @@ public:
     SipEventMediaData(SIP_MediaData* data)
     { this->data = data; }
 
-    const SfIp* get_address() const;
+    const snort::SfIp* get_address() const;
     uint16_t get_port() const;
 
 private:
@@ -74,13 +77,13 @@ private:
     SIP_MediaData* current_media_data = nullptr;
 };
 
-class SipEvent : public DataEvent
+class SipEvent : public snort::DataEvent
 {
 public:
-    SipEvent(const Packet*, const SIPMsg*, const SIP_DialogData*);
+    SipEvent(const snort::Packet*, const SIPMsg*, const SIP_DialogData*);
     ~SipEvent() override;
 
-    const Packet* get_packet() override
+    const snort::Packet* get_packet() override
     { return p; }
 
     const char* get_from() const
@@ -116,7 +119,7 @@ public:
     SipEventMediaSession* next_media_session();
 
 private:
-    const Packet* p;
+    const snort::Packet* p;
 
     const SIPMsg* msg;
     const SIP_DialogData* dialog;

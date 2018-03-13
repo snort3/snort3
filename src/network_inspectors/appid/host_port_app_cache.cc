@@ -28,7 +28,11 @@
 #include <map>
 
 #include "log/messages.h"
+#include "main/thread.h"
+#include "sfip/sf_ip.h"
 #include "utils/cpp_macros.h"
+
+using namespace snort;
 
 PADDING_GUARD_BEGIN
 struct HostPortKey

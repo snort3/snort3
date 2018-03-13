@@ -139,8 +139,8 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
                 sizeof(ServiceRSHELLData));
             tmp_rd->state = RSHELL_STATE_STDERR_CONNECT_SYN;
             tmp_rd->parent = rd;
-            const SfIp* dip = args.pkt->ptrs.ip_api.get_dst();
-            const SfIp* sip = args.pkt->ptrs.ip_api.get_src();
+            const snort::SfIp* dip = args.pkt->ptrs.ip_api.get_dst();
+            const snort::SfIp* sip = args.pkt->ptrs.ip_api.get_src();
             AppIdSession* pf = AppIdSession::create_future_session(args.pkt, dip, 0, sip,
                 (uint16_t)port, IpProtocol::TCP, app_id, APPID_EARLY_SESSION_FLAG_FW_RULE,
                 handler->get_inspector());

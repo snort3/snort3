@@ -45,6 +45,8 @@
 #include "target_based/snort_protocols.h"
 #include "time/packet_time.h"
 
+using namespace snort;
+
 unsigned AppIdSession::inspector_id = 0;
 THREAD_LOCAL uint32_t AppIdSession::appid_flow_data_id = 0;
 

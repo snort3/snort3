@@ -31,6 +31,8 @@
 #include "pp_raw_buffer_iface.h"
 #include "pp_stream_splitter_iface.h"
 
+using namespace snort;
+
 // FIXIT-H needs to be updated for addition of get_fp_buf()
 template<typename T>
 static inline bool get_buf(

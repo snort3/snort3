@@ -21,6 +21,8 @@
 
 #include "framework/codec.h"
 
+using namespace snort;
+
 #define CD_RAW4_NAME "raw4"
 #define CD_RAW4_HELP_STR "support for unencapsulated IPv4"
 #define CD_RAW4_HELP ADD_DLT(ADD_DLT(CD_RAW4_HELP_STR, DLT_RAW), DLT_IPV4)

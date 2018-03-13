@@ -220,10 +220,10 @@ void HttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& offset, cons
     offset += length;
 }
 
-const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total, unsigned,
+const snort::StreamBuffer HttpStreamSplitter::reassemble(snort::Flow* flow, unsigned total, unsigned,
     const uint8_t* data, unsigned len, uint32_t flags, unsigned& copied)
 {
-    StreamBuffer http_buf { nullptr, 0 };
+    snort::StreamBuffer http_buf { nullptr, 0 };
 
     copied = len;
 

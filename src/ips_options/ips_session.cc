@@ -57,6 +57,8 @@
 #include "utils/util.h"
 #include "utils/util_cstring.h"
 
+using namespace snort;
+
 #define s_name "session"
 
 static THREAD_LOCAL ProfileStats sessionPerfStats;

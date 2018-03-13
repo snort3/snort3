@@ -111,7 +111,10 @@ public:
     ~ACDAQSwap() override;
 };
 
+namespace snort
+{
 SO_PUBLIC void main_broadcast_command(AnalyzerCommand* ac);   // From main.cc
+}
 
 #endif
 

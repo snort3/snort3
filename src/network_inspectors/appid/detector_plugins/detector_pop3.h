@@ -38,7 +38,7 @@ public:
     POP3DetectorData* get_common_data(AppIdSession&);
 
 private:
-    SearchTool* cmd_matcher = nullptr;
+    snort::SearchTool* cmd_matcher = nullptr;
     unsigned longest_pattern = 0;
 };
 

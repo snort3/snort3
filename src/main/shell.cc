@@ -36,6 +36,7 @@
 #include "managers/module_manager.h"
 #include "parser/parser.h"
 
+using namespace snort;
 using namespace std;
 
 #define required "require('snort_config'); "

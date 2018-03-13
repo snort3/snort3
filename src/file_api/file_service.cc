@@ -38,6 +38,8 @@
 #include "file_flows.h"
 #include "file_stats.h"
 
+using namespace snort;
+
 bool FileService::file_type_id_enabled = false;
 bool FileService::file_signature_enabled = false;
 bool FileService::file_capture_enabled = false;
@@ -161,6 +163,8 @@ int64_t FileService::get_max_file_depth()
     }
 }
 
+namespace snort
+{
 uint64_t get_file_processed_size(Flow* flow)
 {
     FileFlows* file_flows = FileFlows::get_file_flows(flow);
@@ -175,4 +179,4 @@ uint64_t get_file_processed_size(Flow* flow)
 
     return context->get_processed_bytes();
 }
-
+}

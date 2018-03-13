@@ -36,11 +36,15 @@
 #include "detection/rule_option_types.h"
 #include "time/clock_defs.h"
 
+namespace snort
+{
 struct Packet;
+struct SnortConfig;
+}
 struct RuleLatencyState;
 struct XHash;
 
-typedef int (* eval_func_t)(void* option_data, class Cursor&, Packet*);
+typedef int (* eval_func_t)(void* option_data, class Cursor&, snort::Packet*);
 
 // this is per packet thread
 struct dot_node_state_t
@@ -105,14 +109,14 @@ struct detection_option_eval_data_t
 {
     void* pomd;
     void* pmd;
-    Packet* p;
+    snort::Packet* p;
     char flowbit_failed;
     char flowbit_noalert;
 };
 
 // return existing data or add given and return nullptr
-void* add_detection_option(struct SnortConfig*, option_type_t, void*);
-void* add_detection_option_tree(struct SnortConfig*, detection_option_tree_node_t*);
+void* add_detection_option(struct snort::SnortConfig*, option_type_t, void*);
+void* add_detection_option_tree(struct snort::SnortConfig*, detection_option_tree_node_t*);
 
 int detection_option_node_evaluate(
     detection_option_tree_node_t*, detection_option_eval_data_t*, class Cursor&);

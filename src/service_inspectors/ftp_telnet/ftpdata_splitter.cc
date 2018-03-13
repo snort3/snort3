@@ -26,6 +26,8 @@
 #include "file_api/file_flows.h"
 #include "ftpp_si.h"
 
+using namespace snort;
+
 void FtpDataSplitter::restart_scan()
 {
     bytes = segs = 0;

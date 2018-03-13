@@ -33,6 +33,8 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
+using namespace snort;
+
 void LogMessage(const char*,...) { }
 
 THREAD_LOCAL SimpleStats ha_stats;

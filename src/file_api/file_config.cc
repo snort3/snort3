@@ -98,7 +98,7 @@ std::string file_type_name(uint32_t id)
 
 FileConfig* get_file_config ()
 {
-    FileInspect* fi = (FileInspect*)InspectorManager::get_inspector(FILE_ID_NAME, true);
+    snort::FileInspect* fi = (snort::FileInspect*)snort::InspectorManager::get_inspector(FILE_ID_NAME, true);
 
     if (fi)
         return (fi->config);

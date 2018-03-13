@@ -30,6 +30,8 @@
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 
+using namespace snort;
+
 #define s_name "rpc"
 
 static THREAD_LOCAL ProfileStats rpcCheckPerfStats;

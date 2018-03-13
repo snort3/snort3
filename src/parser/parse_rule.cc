@@ -54,6 +54,8 @@
 #include "parse_conf.h"
 #include "parse_ports.h"
 
+using namespace snort;
+
 #define SRC  0
 #define DST  1
 
@@ -349,10 +351,9 @@ static int ValidateIPList(sfip_var_t* addrset, const char* token)
     return 0;
 }
 
-static int ProcessIP(
-    SnortConfig*, const char* addr, RuleTreeNode* rtn, int mode, int)
+static int ProcessIP(SnortConfig*, const char* addr, RuleTreeNode* rtn, int mode, int)
 {
-    vartable_t* ip_vartable = get_ips_policy()->ip_vartable;
+    vartable_t* ip_vartable = snort::get_ips_policy()->ip_vartable;
 
     assert(rtn);
     /* If a rule has a variable in it, we want to copy that variable's
@@ -869,7 +870,7 @@ static RuleTreeNode* ProcessHeadNode(
     SnortConfig* sc, RuleTreeNode* test_node, ListHead* list)
 {
     RuleTreeNode* rtn = findHeadNode(
-        sc, test_node, get_ips_policy()->policy_id);
+        sc, test_node, snort::get_ips_policy()->policy_id);
 
     /* if it doesn't match any of the existing nodes, make a new node and
      * stick it at the end of the list */
@@ -957,7 +958,7 @@ static int mergeDuplicateOtn(
     {
         RuleTreeNode* rtnTmp2 = deleteRtnFromOtn(otn_cur, i, sc, (rtn_cur != rtn_new));
 
-        if ( rtnTmp2 and (i != get_ips_policy()->policy_id) )
+        if ( rtnTmp2 and (i != snort::get_ips_policy()->policy_id) )
         {
             addRtnToOtn(sc, otn_new, rtnTmp2, i);
         }
@@ -1113,7 +1114,7 @@ void parse_rule_ports(
     if ( s_ignore )
         return;
 
-    IpsPolicy* p = get_ips_policy();
+    IpsPolicy* p = snort::get_ips_policy();
 
     if ( ParsePortList(&rtn, p->portVarTable, p->nonamePortVarTable, s, src ? SRC : DST) )
     {

@@ -26,6 +26,7 @@
 
 #include "stream_udp.h"
 
+using namespace snort;
 using namespace std;
 
 //-------------------------------------------------------------------------

@@ -40,6 +40,8 @@ struct MemoryProfilerConfig
     int max_depth = -1;
 };
 
+namespace snort
+{
 class SO_PUBLIC MemoryContext
 {
 public:
@@ -65,5 +67,5 @@ public:
 private:
     MemoryTracker* saved;
 };
-
+}
 #endif

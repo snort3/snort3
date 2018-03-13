@@ -32,6 +32,8 @@
 
 #include "stream_file.h"
 
+using namespace snort;
+
 #define DECODE_PDU (DECODE_SOF | DECODE_EOF)
 
 static THREAD_LOCAL ProfileStats file_ssn_stats;

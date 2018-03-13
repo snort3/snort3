@@ -40,7 +40,7 @@ private:
     int rpc_udp_validate(AppIdDiscoveryArgs&);
     int rpc_tcp_validate(AppIdDiscoveryArgs&);
     int validate_packet(const uint8_t* data, uint16_t size, int dir, AppIdSession&,
-        Packet*, ServiceRPCData*, const char** pname, uint32_t* program);
+        snort::Packet*, ServiceRPCData*, const char** pname, uint32_t* program);
     int16_t app_id = 0;
 };
 #endif

@@ -60,12 +60,12 @@ struct SmtpPafData
     bool end_of_data;
 };
 
-class SmtpSplitter : public StreamSplitter
+class SmtpSplitter : public snort::StreamSplitter
 {
 public:
     SmtpSplitter(bool c2s, int max_auth_cmd_line_len);
 
-    Status scan(Flow*, const uint8_t* data, uint32_t len,
+    Status scan(snort::Flow*, const uint8_t* data, uint32_t len,
         uint32_t flags, uint32_t* fp) override;
 
     bool is_paf() override { return true; }
@@ -78,6 +78,6 @@ private:
 };
 
 // Function: Check if IMAP data end is reached
-bool smtp_is_data_end(Flow* ssn);
+bool smtp_is_data_end(snort::Flow* ssn);
 
 #endif

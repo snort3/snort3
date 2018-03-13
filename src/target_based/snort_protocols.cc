@@ -35,6 +35,7 @@
 
 #include "sftarget_data.h"
 
+using namespace snort;
 using namespace std;
 
 int16_t ProtocolReference::get_count()

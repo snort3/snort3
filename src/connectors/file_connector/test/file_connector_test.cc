@@ -31,6 +31,8 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
+using namespace snort;
+
 extern const BaseApi* file_connector;
 ConnectorApi* fc_api = nullptr;
 

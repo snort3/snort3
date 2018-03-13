@@ -61,10 +61,10 @@
 #define FTPP_IGNORE_TNC_ERASE_CMDS 1
 
 /* list of function prototypes for this preprocessor */
-extern int normalize_telnet(TELNET_SESSION*, Packet*, int iMode, char ignoreEraseCmd);
+extern int normalize_telnet(TELNET_SESSION*, snort::Packet*, int iMode, char ignoreEraseCmd);
 
-void reset_telnet_buffer(Packet*);
-const uint8_t* get_telnet_buffer(Packet*, unsigned&);
+void reset_telnet_buffer(snort::Packet*);
+const uint8_t* get_telnet_buffer(snort::Packet*, unsigned&);
 
 #endif
 

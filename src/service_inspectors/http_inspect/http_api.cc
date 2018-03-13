@@ -25,6 +25,8 @@
 
 #include "http_inspect.h"
 
+using namespace snort;
+
 const char* HttpApi::http_my_name = HTTP_NAME;
 const char* HttpApi::http_help = "the new HTTP inspector!";
 

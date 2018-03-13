@@ -28,6 +28,7 @@
 
 #include "dce_udp.h"
 
+using namespace snort;
 using namespace std;
 
 static const Parameter s_params[] =

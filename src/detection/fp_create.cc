@@ -55,6 +55,7 @@
 #include "service_map.h"
 #include "treenodes.h"
 
+using namespace snort;
 using namespace std;
 
 static unsigned mpse_count = 0;

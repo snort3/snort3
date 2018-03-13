@@ -33,6 +33,8 @@
 #include "shell.h"
 #include "snort_config.h"
 
+using namespace snort;
+
 //-------------------------------------------------------------------------
 // traffic policy
 //-------------------------------------------------------------------------
@@ -246,6 +248,8 @@ static THREAD_LOCAL NetworkPolicy* s_traffic_policy = nullptr;
 static THREAD_LOCAL InspectionPolicy* s_inspection_policy = nullptr;
 static THREAD_LOCAL IpsPolicy* s_detection_policy = nullptr;
 
+namespace snort
+{
 NetworkPolicy* get_network_policy()
 { return s_traffic_policy; }
 
@@ -257,6 +261,19 @@ IpsPolicy* get_ips_policy()
 
 InspectionPolicy* get_default_inspection_policy(SnortConfig* sc)
 { return sc->policy_map->get_inspection_policy(0); }
+
+void set_user_ips_policy(unsigned policy_id)
+{
+    IpsPolicy *p = SnortConfig::get_conf()->policy_map->get_user_ips(policy_id);
+    if(!p)
+    {
+        snort::ips_module_stats.invalid_policy_ids++;
+        return;
+    }
+
+    s_detection_policy = p;
+}
+} // namespace snort
 
 void set_network_policy(NetworkPolicy* p)
 { s_traffic_policy = p; }
@@ -282,18 +299,6 @@ void set_inspection_policy(SnortConfig* sc, unsigned i)
 
 void set_ips_policy(IpsPolicy* p)
 { s_detection_policy = p; }
-
-void set_user_ips_policy(unsigned policy_id)
-{
-    IpsPolicy *p = SnortConfig::get_conf()->policy_map->get_user_ips(policy_id);
-    if(!p)
-    {
-        ips_module_stats.invalid_policy_ids++;
-        return;
-    }
-
-    s_detection_policy = p;
-}
 
 void set_ips_policy(SnortConfig* sc, unsigned i)
 {

@@ -33,6 +33,8 @@
 #include "utils/stats.h"
 #include "utils/util.h"
 
+using namespace snort;
+
 unsigned FlowData::flow_data_id = 0;
 
 FlowData::FlowData(unsigned u, Inspector* ph)

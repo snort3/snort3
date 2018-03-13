@@ -25,11 +25,11 @@
 class FileSession : public Session
 {
 public:
-    FileSession(Flow*);
+    FileSession(snort::Flow*);
 
-    bool setup(Packet*) override;
+    bool setup(snort::Packet*) override;
     void clear() override;
-    int process(Packet*) override;
+    int process(snort::Packet*) override;
 
     bool is_sequenced(uint8_t /*dir*/) override
     { return true; }
@@ -41,9 +41,9 @@ public:
     { return SSN_MISSING_NONE; }
 
 private:
-    void start(Packet*, Flow*);
-    void update(Packet*, Flow*);
-    void end(Packet*, Flow*);
+    void start(snort::Packet*, snort::Flow*);
+    void update(snort::Packet*, snort::Flow*);
+    void end(snort::Packet*, snort::Flow*);
 };
 
 #endif

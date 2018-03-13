@@ -21,9 +21,9 @@
 #include "framework/base_api.h"
 #include "main/snort_types.h"
 
-extern const BaseApi* se_lowmem;
+extern const snort::BaseApi* se_lowmem;
 
-SO_PUBLIC const BaseApi* snort_plugins[] =
+SO_PUBLIC const snort::BaseApi* snort_plugins[] =
 {
     se_lowmem,
     nullptr

@@ -25,6 +25,7 @@
 #include "framework/ips_option.h"
 #include "framework/module.h"
 
+using namespace snort;
 using namespace std;
 
 #define s_name "metadata"

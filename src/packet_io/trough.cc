@@ -76,14 +76,14 @@ int Trough::get_pcaps(std::vector<struct PcapReadObject> &pol)
                             continue;
 
                         /* do a quick check to make sure file exists */
-                        if (SnortConfig::read_mode() && stat(pcap_name.c_str(), &sb) == -1)
+                        if (snort::SnortConfig::read_mode() && stat(pcap_name.c_str(), &sb) == -1)
                         {
                             ErrorMessage("Error getting stat on pcap file: %s: %s\n",
                                     pcap_name.c_str(), get_error(errno));
                             pcap_list_file.close();
                             return -1;
                         }
-                        else if (SnortConfig::read_mode() && S_ISDIR(sb.st_mode))
+                        else if (snort::SnortConfig::read_mode() && S_ISDIR(sb.st_mode))
                         {
                             Directory pcap_dir(pcap_name.c_str(), filter.c_str());
                             std::vector<std::string> tmp_queue;
@@ -102,7 +102,7 @@ int Trough::get_pcaps(std::vector<struct PcapReadObject> &pol)
                             pcap_queue.reserve(pcap_queue.size() + tmp_queue.size());
                             pcap_queue.insert(pcap_queue.end(), tmp_queue.begin(), tmp_queue.end());
                         }
-                        else if (!SnortConfig::read_mode() || S_ISREG(sb.st_mode))
+                        else if (!snort::SnortConfig::read_mode() || S_ISREG(sb.st_mode))
                         {
                             if (filter.empty() ||
                                 (fnmatch(filter.c_str(), pcap_name.c_str(), 0) == 0))
@@ -147,7 +147,7 @@ int Trough::get_pcaps(std::vector<struct PcapReadObject> &pol)
                             i = ++pos;
                         }
                         /* do a quick check to make sure file exists */
-                        if (SnortConfig::read_mode())
+                        if (snort::SnortConfig::read_mode())
                         {
                             if (stat(pcap_name.c_str(), &sb) == -1)
                             {

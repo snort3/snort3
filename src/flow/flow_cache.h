@@ -31,7 +31,10 @@
 #include "flow_config.h"
 #include "prune_stats.h"
 
+namespace snort
+{
 class Flow;
+}
 struct FlowKey;
 
 class FlowCache
@@ -43,16 +46,16 @@ public:
     FlowCache(const FlowCache&) = delete;
     FlowCache& operator=(const FlowCache&) = delete;
 
-    void push(Flow*);
+    void push(snort::Flow*);
 
-    Flow* find(const FlowKey*);
-    Flow* get(const FlowKey*);
+    snort::Flow* find(const FlowKey*);
+    snort::Flow* get(const FlowKey*);
 
-    int release(Flow*, PruneReason = PruneReason::NONE, bool do_cleanup = true);
+    int release(snort::Flow*, PruneReason = PruneReason::NONE, bool do_cleanup = true);
 
     unsigned prune_unis();
-    unsigned prune_stale(uint32_t thetime, const Flow* save_me);
-    unsigned prune_excess(const Flow* save_me);
+    unsigned prune_stale(uint32_t thetime, const snort::Flow* save_me);
+    unsigned prune_excess(const snort::Flow* save_me);
     bool prune_one(PruneReason, bool do_cleanup);
     unsigned timeout(unsigned num_flows, time_t cur_time);
 
@@ -71,11 +74,11 @@ public:
     void reset_stats()
     { prune_stats = PruneStats(); }
 
-    void unlink_uni(Flow*);
+    void unlink_uni(snort::Flow*);
 
 private:
-    void link_uni(Flow*);
-    int remove(Flow*);
+    void link_uni(snort::Flow*);
+    int remove(snort::Flow*);
 
 private:
     static const unsigned cleanup_flows = 1;
@@ -84,7 +87,7 @@ private:
     uint32_t flags;
 
     class ZHash* hash_table;
-    Flow* uni_head, * uni_tail;
+    snort::Flow* uni_head, * uni_tail;
     PruneStats prune_stats;
 };
 

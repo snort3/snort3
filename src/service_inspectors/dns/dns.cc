@@ -35,6 +35,8 @@
 
 #include "dns_module.h"
 
+using namespace snort;
+
 #define MAX_UDP_PAYLOAD 0x1FFF
 #define DNS_RR_PTR 0xC0
 

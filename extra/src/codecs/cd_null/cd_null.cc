@@ -25,6 +25,8 @@
 #define CD_NULL_HELP_STR "support for null encapsulation"
 #define CD_NULL_HELP ADD_DLT(CD_NULL_HELP_STR, DLT_NULL)
 
+using namespace snort;
+
 namespace
 {
 class NullCodec : public Codec

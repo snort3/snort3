@@ -29,6 +29,7 @@
 #include "tcp_normalizer.h"
 #include "tcp_session.h"
 
+using namespace snort;
 using namespace std;
 
 TcpStateSynRecv::TcpStateSynRecv(TcpStateMachine& tsm) :

@@ -33,6 +33,14 @@
 
 #include "detection/detection_util.h"
 
+class MpseStash;
+struct OtnxMatchData;
+struct SF_EVENTQ;
+
+namespace snort
+{
+struct SnortConfig;
+
 class SO_PUBLIC IpsContextData
 {
 public:
@@ -72,10 +80,10 @@ public:
     DAQ_PktHdr_t* pkth;
     uint8_t* buf;
 
-    struct SnortConfig* conf;
-    class MpseStash* stash;
-    struct OtnxMatchData* otnx;
-    struct SF_EVENTQ* equeue;
+    SnortConfig* conf;
+    MpseStash* stash;
+    OtnxMatchData* otnx;
+    SF_EVENTQ* equeue;
 
     DataPointer file_data;
     DataBuffer alt_data;
@@ -90,6 +98,6 @@ private:
     std::vector<IpsContextData*> data;
     unsigned slot;
 };
-
+}
 #endif
 

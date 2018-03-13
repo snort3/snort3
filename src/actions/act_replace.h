@@ -21,8 +21,6 @@
 
 #include <string>
 
-struct Packet;
-
 // FIXIT-M these prevent dynamic ips replace option and action
 void Replace_ResetQueue();
 void Replace_QueueChange(const std::string&, unsigned);

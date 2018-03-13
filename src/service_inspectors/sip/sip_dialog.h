@@ -26,7 +26,10 @@
 
 #include "sip_parser.h"
 
+namespace snort
+{
 struct Packet;
+}
 
 #define TOTAL_RESPONSES 0
 #define RESPONSE1XX     1
@@ -54,7 +57,7 @@ struct SIP_DialogList
     uint32_t num_dialogs;
 };
 
-int SIP_updateDialog(SIPMsg* sipMsg, SIP_DialogList* dList, Packet* p, SIP_PROTO_CONF*);
+int SIP_updateDialog(SIPMsg* sipMsg, SIP_DialogList* dList, snort::Packet* p, SIP_PROTO_CONF*);
 void sip_freeDialogs(SIP_DialogList* list);
 
 #endif

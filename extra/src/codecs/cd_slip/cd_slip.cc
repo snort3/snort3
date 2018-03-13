@@ -21,6 +21,8 @@
 
 #include "framework/codec.h"
 
+using namespace snort;
+
 #define CD_SLIP_NAME "slip"
 #define CD_SLIP_HELP_STR "support for slip protocol"
 #define CD_SLIP_HELP ADD_DLT(CD_SLIP_HELP_STR, DLT_SLIP)

@@ -37,7 +37,7 @@ int* RuleListToSortedArray(SF_LIST*);
 int integer_compare(const void* int1, const void* int2);
 
 // global for printing so we don't put so many bytes on the stack
-extern char po_print_buf[MAX_PORTS];  // FIXIT-L delete this; replace with local stringstream
+extern char po_print_buf[snort::MAX_PORTS];  // FIXIT-L delete this; replace with local stringstream
 
 #endif
 

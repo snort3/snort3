@@ -36,6 +36,8 @@
 #include "profiler/profiler.h"
 #include "utils/util.h"
 
+using namespace snort;
+
 static THREAD_LOCAL ProfileStats luaIpsPerfStats;
 
 #define opt_eval "eval"

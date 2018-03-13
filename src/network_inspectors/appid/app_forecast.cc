@@ -31,6 +31,8 @@
 #include "time/packet_time.h"
 #include "appid_session.h"
 
+using namespace snort;
+
 static THREAD_LOCAL AFActKey master_key;
 static THREAD_LOCAL XHash* AF_indicators = nullptr;     // list of "indicator apps"
 static THREAD_LOCAL XHash* AF_actives = nullptr;        // list of hosts to watch

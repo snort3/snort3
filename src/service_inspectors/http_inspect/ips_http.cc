@@ -32,6 +32,7 @@
 #include "http_inspect.h"
 #include "http_msg_head_shared.h"
 
+using namespace snort;
 using namespace HttpEnums;
 
 THREAD_LOCAL std::array<ProfileStats, PSI_MAX> HttpCursorModule::http_ps;

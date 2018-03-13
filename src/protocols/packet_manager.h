@@ -30,8 +30,11 @@
 #include "managers/codec_manager.h"
 #include "protocols/packet.h"
 
-struct Packet;
 struct TextLog;
+
+namespace snort
+{
+struct Packet;
 
 enum class TcpResponse
 {
@@ -151,6 +154,6 @@ private:
     static std::array<PegCount, s_stats.size()> g_stats;
     static const std::array<const char*, stat_offset> stat_names;
 };
-
+}
 #endif
 

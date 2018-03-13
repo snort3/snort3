@@ -38,7 +38,10 @@
 
 #include "file_api.h"
 
+namespace snort
+{
 class FileInfo;
+}
 class FileMemPool;
 
 struct FileCaptureBlock
@@ -62,7 +65,7 @@ public:
         FilePosition pos);
 
     // Preserve the file in memory until it is released
-    FileCaptureState reserve_file(const FileInfo*);
+    FileCaptureState reserve_file(const snort::FileInfo*);
 
     // Get the file that is reserved in memory, this should be called repeatedly
     // until nullptr is returned to get the full file
@@ -88,7 +91,7 @@ public:
 
     static int64_t get_block_size() { return capture_block_size; }
 
-    FileInfo* get_file_info() { return file_info; }
+    snort::FileInfo* get_file_info() { return file_info; }
 
 private:
 
@@ -114,7 +117,7 @@ private:
     const uint8_t* current_data;  /*current file data*/
     uint32_t current_data_len;
     FileCaptureState capture_state;
-    FileInfo* file_info = nullptr;
+    snort::FileInfo* file_info = nullptr;
     int64_t capture_min_size;
     int64_t capture_max_size;
 };

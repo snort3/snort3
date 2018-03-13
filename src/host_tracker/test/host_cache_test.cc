@@ -28,6 +28,8 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
+using namespace snort;
+
 //  Fake AddProtocolReference to avoid bringing in a ton of dependencies.
 int16_t AddProtocolReference(const char* protocol)
 {

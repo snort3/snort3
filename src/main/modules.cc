@@ -58,6 +58,7 @@
 #include "snort_module.h"
 #include "thread_config.h"
 
+using namespace snort;
 using namespace std;
 
 //-------------------------------------------------------------------------
@@ -1064,7 +1065,7 @@ public:
 
 bool NetworkModule::set(const char*, Value& v, SnortConfig* sc)
 {
-    NetworkPolicy* p = get_network_policy();
+    NetworkPolicy* p = snort::get_network_policy();
 
     if ( v.is("checksum_drop") )
         ConfigChecksumDrop(v.get_string());
@@ -1134,7 +1135,7 @@ public:
 
 bool InspectionModule::set(const char*, Value& v, SnortConfig* sc)
 {
-    InspectionPolicy* p = get_inspection_policy();
+    InspectionPolicy* p = snort::get_inspection_policy();
 
     if ( v.is("id") )
     {
@@ -1206,7 +1207,7 @@ static const Parameter ips_params[] =
 #define ips_help \
     "configure IPS rule processing"
 
-THREAD_LOCAL IpsModuleStats ips_module_stats;
+THREAD_LOCAL IpsModuleStats snort::ips_module_stats;
 
 const PegInfo ips_module_pegs[] =
 {
@@ -1224,7 +1225,7 @@ public:
     { return ips_module_pegs; }
 
     PegCount* get_counts() const override
-    { return (PegCount*) &ips_module_stats; }
+    { return (PegCount*) &snort::ips_module_stats; }
 
     Usage get_usage() const override
     { return DETECT; }
@@ -1232,7 +1233,7 @@ public:
 
 bool IpsModule::set(const char*, Value& v, SnortConfig* sc)
 {
-    IpsPolicy* p = get_ips_policy();
+    IpsPolicy* p = snort::get_ips_policy();
 
     if ( v.is("enable_builtin_rules") )
         p->enable_builtin_rules = v.get_bool();

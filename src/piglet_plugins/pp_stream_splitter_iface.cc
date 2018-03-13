@@ -29,6 +29,8 @@
 #include "pp_flow_iface.h"
 #include "pp_raw_buffer_iface.h"
 
+using namespace snort;
+
 template<typename From, typename To>
 static inline void stack_push(lua_State* L, const From v)
 { Lua::Stack<To>::push(L, static_cast<To>(v)); }

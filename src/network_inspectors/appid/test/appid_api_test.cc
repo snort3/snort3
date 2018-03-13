@@ -41,6 +41,8 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
+using namespace snort;
+
 void BootpServiceDetector::AppIdFreeDhcpData(DHCPData* data)
 {
     delete data;

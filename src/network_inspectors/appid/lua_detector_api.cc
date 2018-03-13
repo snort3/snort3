@@ -50,6 +50,8 @@
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 
+using namespace snort;
+
 #define OVECCOUNT 30    /* should be a multiple of 3 */
 
 enum LuaLogLevels

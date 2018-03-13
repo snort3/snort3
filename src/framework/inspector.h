@@ -29,8 +29,12 @@
 #include "framework/base_api.h"
 #include "main/thread.h"
 
-struct Packet;
+class Session;
+
+namespace snort
+{
 struct SnortConfig;
+struct Packet;
 
 typedef int16_t ServiceId;
 
@@ -48,11 +52,13 @@ struct InspectionBuffer
     unsigned len;
 };
 
+
 struct InspectApi;
 
 //-------------------------------------------------------------------------
 // api for class
 //-------------------------------------------------------------------------
+
 
 class SO_PUBLIC Inspector
 {
@@ -176,7 +182,7 @@ enum InspectorType
 typedef Inspector* (* InspectNew)(Module*);
 typedef void (* InspectDelFunc)(Inspector*);
 typedef void (* InspectFunc)();
-typedef class Session* (* InspectSsnFunc)(class Flow*);
+typedef Session* (* InspectSsnFunc)(class Flow*);
 
 struct InspectApi
 {
@@ -199,6 +205,6 @@ struct InspectApi
 
 inline const char* Inspector::get_name()
 { return api->base.name; }
-
+}
 #endif
 

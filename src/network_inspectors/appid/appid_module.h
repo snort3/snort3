@@ -28,24 +28,24 @@
 #include "appid_config.h"
 #include "framework/module.h"
 
-extern THREAD_LOCAL ProfileStats appidPerfStats;
+extern THREAD_LOCAL snort::ProfileStats appidPerfStats;
 
 #define MOD_NAME "appid"
 #define MOD_HELP "application and service identification"
 
-class AppIdModule : public Module
+class AppIdModule : public snort::Module
 {
 public:
     AppIdModule();
     ~AppIdModule() override;
 
-    bool begin(const char*, int, SnortConfig*) override;
-    bool set(const char*, Value&, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
+    bool begin(const char*, int, snort::SnortConfig*) override;
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
+    bool end(const char*, int, snort::SnortConfig*) override;
 
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
-    ProfileStats* get_profile() const override;
+    snort::ProfileStats* get_profile() const override;
 
     const AppIdModuleConfig* get_data();
 

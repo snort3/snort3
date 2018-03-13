@@ -29,6 +29,8 @@
 
 #include "dce_smb.h"
 
+using namespace snort;
+
 /*********************************************************************
  * Function: DCE2_PafSmbIsValidNetbiosHdr()
  *

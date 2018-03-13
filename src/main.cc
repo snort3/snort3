@@ -65,6 +65,8 @@
 
 //-------------------------------------------------------------------------
 
+using namespace snort;
+
 static bool exit_requested = false;
 static int main_exit_code = 0;
 static bool paused = false;
@@ -254,7 +256,7 @@ static Pig* get_lazy_pig(unsigned max)
 // main commands
 //-------------------------------------------------------------------------
 
-void main_broadcast_command(AnalyzerCommand* ac)
+void snort::main_broadcast_command(AnalyzerCommand* ac)
 {
     unsigned dispatched = 0;
 

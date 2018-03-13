@@ -28,7 +28,7 @@
 
 using namespace Http2Enums;
 
-const RuleMap Http2Module::http2_events[] =
+const snort::RuleMap Http2Module::http2_events[] =
 {
     { 0, nullptr }
 };

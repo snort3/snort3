@@ -27,6 +27,7 @@
 #include "curses.h"
 #include "magic.h"
 
+using namespace snort;
 using namespace std;
 
 //-------------------------------------------------------------------------

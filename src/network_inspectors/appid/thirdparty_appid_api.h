@@ -25,7 +25,10 @@
 #include "application_ids.h"
 #include "thirdparty_appid_types.h"
 
+namespace snort
+{
 struct Packet;
+}
 
 #define THIRD_PARTY_APP_ID_API_VERSION 1
 
@@ -56,7 +59,7 @@ using ThirdPartyAppIDModReconfigure = int (*)(ThirdPartyConfig*);
 using ThirdPartyAppIDModFini = int (*)();
 using ThirdPartyAppIDSessionCreate = void*(*)();
 using ThirdPartyAppIDSessionDelete = int (*)(void* tpsession, int just_reset_state);
-using ThirdPartyAppIDSessionProcess = int (*)(void* tpsession, Packet*, int direction,                                  // in
+using ThirdPartyAppIDSessionProcess = int (*)(void* tpsession, snort::Packet*, int direction,                                  // in
     AppId*, int* confidence, AppId** proto_list, ThirdPartyAppIDAttributeData** attribute_data);
 using ThirdPartyAppIDPrintStats = int (*)();
 using ThirdPartyAppIDResetStats = int (*)();

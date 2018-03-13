@@ -30,6 +30,8 @@
 
 #include "smtp_module.h"
 
+using namespace snort;
+
 /* State tracker for MIME PAF */
 enum SmtpDataCMD
 {

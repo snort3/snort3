@@ -40,6 +40,8 @@
 #include "icmp4.h"
 #include "icmp6.h"
 
+using namespace snort;
+
 THREAD_LOCAL ProfileStats decodePerfStats;
 
 // Decoding statistics
@@ -497,16 +499,16 @@ const uint8_t* PacketManager::encode_reject(UnreachResponse type,
 
         switch (type)
         {
-        case UnreachResponse::NET:
+        case snort::UnreachResponse::NET:
             icmph->code = icmp::IcmpCode::NET_UNREACH;
             break;
-        case UnreachResponse::HOST:
+        case snort::UnreachResponse::HOST:
             icmph->code = icmp::IcmpCode::HOST_UNREACH;
             break;
-        case UnreachResponse::PORT:
+        case snort::UnreachResponse::PORT:
             icmph->code = icmp::IcmpCode::PORT_UNREACH;
             break;
-        case UnreachResponse::FWD:
+        case snort::UnreachResponse::FWD:
             icmph->code = icmp::IcmpCode::PKT_FILTERED;
             break;
         default:     // future proofing
@@ -553,16 +555,16 @@ const uint8_t* PacketManager::encode_reject(UnreachResponse type,
 
         switch (type)
         {
-        case UnreachResponse::NET:
+        case snort::UnreachResponse::NET:
             icmph->code = icmp::Icmp6Code::UNREACH_NET;
             break;
-        case UnreachResponse::HOST:
+        case snort::UnreachResponse::HOST:
             icmph->code = icmp::Icmp6Code::UNREACH_HOST;
             break;
-        case UnreachResponse::PORT:
+        case snort::UnreachResponse::PORT:
             icmph->code = icmp::Icmp6Code::UNREACH_PORT;
             break;
-        case UnreachResponse::FWD:
+        case snort::UnreachResponse::FWD:
             icmph->code = icmp::Icmp6Code::UNREACH_FILTER_PROHIB;
             break;
         default:     // future proofing

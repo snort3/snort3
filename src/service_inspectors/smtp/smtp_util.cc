@@ -33,6 +33,8 @@
 
 #include "smtp.h"
 
+using namespace snort;
+
 void SMTP_GetEOL(const uint8_t* ptr, const uint8_t* end,
     const uint8_t** eol, const uint8_t** eolm)
 {

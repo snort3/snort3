@@ -26,10 +26,10 @@
 #include "managers/plugin_manager.h"
 
 #ifdef STATIC_IPS_ACTIONS
-extern const BaseApi* act_react[];
-extern const BaseApi* act_reject[];
+extern const snort::BaseApi* act_react[];
+extern const snort::BaseApi* act_reject[];
 #endif
-extern const BaseApi* act_replace[];
+extern const snort::BaseApi* act_replace[];
 
 void load_actions()
 {

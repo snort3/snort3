@@ -122,12 +122,13 @@ bool PerfTracker::open(bool append)
                         file_name, mode, get_error(errno));
                 }
 
-                if (chown(file_name, SnortConfig::get_uid(), SnortConfig::get_gid()) != 0)
+                if (chown(file_name, snort::SnortConfig::get_uid(),
+                    snort::SnortConfig::get_gid()) != 0)
                 {
                     WarningMessage("perfmonitor: Unable to change permissions of "
                         "stats file '%s' to user:%d and group:%d: %s.\n",
-                        file_name, SnortConfig::get_uid(), SnortConfig::get_gid(), get_error(
-                        errno));
+                        file_name, snort::SnortConfig::get_uid(), snort::SnortConfig::get_gid(),
+                        get_error(errno));
                 }
             }
         }

@@ -36,17 +36,17 @@ struct BindStats
 };
 
 extern THREAD_LOCAL BindStats bstats;
-extern THREAD_LOCAL ProfileStats bindPerfStats;
+extern THREAD_LOCAL snort::ProfileStats bindPerfStats;
 
-class BinderModule : public Module
+class BinderModule : public snort::Module
 {
 public:
     BinderModule();
     ~BinderModule() override;
 
-    bool set(const char*, Value&, SnortConfig*) override;
-    bool begin(const char*, int, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
+    bool begin(const char*, int, snort::SnortConfig*) override;
+    bool end(const char*, int, snort::SnortConfig*) override;
 
     // used to create default binder
     void add(const char* service, const char* type);
@@ -54,7 +54,7 @@ public:
 
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
-    ProfileStats* get_profile() const override;
+    snort::ProfileStats* get_profile() const override;
 
     std::vector<Binding*>& get_data();
 

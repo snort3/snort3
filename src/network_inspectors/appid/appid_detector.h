@@ -31,7 +31,11 @@
 
 class AppIdConfig;
 class LuaStateDescriptor;
+
+namespace snort
+{
 struct Packet;
+}
 
 #define STATE_ID_MAX_VALID_COUNT 5
 
@@ -69,8 +73,8 @@ typedef std::vector<ServiceDetectorPort> ServiceDetectorPorts;
 class AppIdDiscoveryArgs
 {
 public:
-    AppIdDiscoveryArgs(const uint8_t* data, uint16_t size, int dir, AppIdSession& asd, Packet* p)
-        : data(data), size(size), dir(dir), asd(asd), pkt(p)
+    AppIdDiscoveryArgs(const uint8_t* data, uint16_t size, int dir, AppIdSession& asd,
+        snort::Packet* p) : data(data), size(size), dir(dir), asd(asd), pkt(p)
     {
         config = asd.config;
         session_logging_enabled = asd.session_logging_enabled;
@@ -81,7 +85,7 @@ public:
     uint16_t size;
     int dir;
     AppIdSession& asd;
-    Packet* pkt;
+    snort::Packet* pkt;
     const AppIdConfig* config = nullptr;
     bool session_logging_enabled = false;
     char* session_logging_id = nullptr;

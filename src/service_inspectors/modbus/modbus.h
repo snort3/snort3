@@ -40,7 +40,7 @@ struct modbus_session_data_t
     uint8_t unit;
 };
 
-class ModbusFlowData : public FlowData
+class ModbusFlowData : public snort::FlowData
 {
 public:
     ModbusFlowData();

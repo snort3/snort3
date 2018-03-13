@@ -166,7 +166,7 @@ DCE2_Ret DCE2_SmbProcessResponseData(DCE2_SmbSsnData*,
     const uint8_t*, uint32_t);
 void DCE2_SmbInitRdata(uint8_t*, int);
 void DCE2_SmbSetRdata(DCE2_SmbSsnData*, uint8_t*, uint16_t);
-Packet* DCE2_SmbGetRpkt(DCE2_SmbSsnData*, const uint8_t**,
+snort::Packet* DCE2_SmbGetRpkt(DCE2_SmbSsnData*, const uint8_t**,
     uint32_t*, DCE2_RpktType);
 DCE2_Ret DCE2_SmbHandleSegmentation(DCE2_Buffer**,
     const uint8_t*, uint32_t, uint32_t);
@@ -212,7 +212,7 @@ inline int DCE2_SmbType(DCE2_SmbSsnData* ssd)
 
 inline bool SmbUnicode(const SmbNtHdr* hdr)
 {
-    return (alignedNtohs(&hdr->smb_flg2) & SMB_FLG2__UNICODE) ? true : false;
+    return (snort::alignedNtohs(&hdr->smb_flg2) & SMB_FLG2__UNICODE) ? true : false;
 }
 
 inline bool SmbExtAttrReadOnly(const uint32_t ext_file_attrs)
@@ -250,14 +250,14 @@ inline uint8_t SmbCom(const SmbNtHdr* hdr)
 
 inline bool SmbStatusNtCodes(const SmbNtHdr* hdr)
 {
-    if (alignedNtohs(&hdr->smb_flg2) & SMB_FLG2__NT_CODES)
+    if (snort::alignedNtohs(&hdr->smb_flg2) & SMB_FLG2__NT_CODES)
         return true;
     return false;
 }
 
 inline uint32_t SmbNtStatus(const SmbNtHdr* hdr)
 {
-    return alignedNtohl(&hdr->smb_status.nt_status);
+    return snort::alignedNtohl(&hdr->smb_status.nt_status);
 }
 
 inline uint8_t SmbStatusClass(const SmbNtHdr* hdr)
@@ -267,7 +267,7 @@ inline uint8_t SmbStatusClass(const SmbNtHdr* hdr)
 
 inline uint16_t SmbStatusCode(const SmbNtHdr* hdr)
 {
-    return alignedNtohs(&hdr->smb_status.smb_status.smb_code);
+    return snort::alignedNtohs(&hdr->smb_status.smb_status.smb_code);
 }
 
 inline uint8_t SmbNtStatusSeverity(const SmbNtHdr* hdr)
@@ -277,22 +277,22 @@ inline uint8_t SmbNtStatusSeverity(const SmbNtHdr* hdr)
 
 inline uint16_t SmbPid(const SmbNtHdr* hdr)
 {
-    return alignedNtohs(&hdr->smb_pid);
+    return snort::alignedNtohs(&hdr->smb_pid);
 }
 
 inline uint16_t SmbMid(const SmbNtHdr* hdr)
 {
-    return alignedNtohs(&hdr->smb_mid);
+    return snort::alignedNtohs(&hdr->smb_mid);
 }
 
 inline uint16_t SmbUid(const SmbNtHdr* hdr)
 {
-    return alignedNtohs(&hdr->smb_uid);
+    return snort::alignedNtohs(&hdr->smb_uid);
 }
 
 inline uint16_t SmbTid(const SmbNtHdr* hdr)
 {
-    return alignedNtohs(&hdr->smb_tid);
+    return snort::alignedNtohs(&hdr->smb_tid);
 }
 
 inline bool SmbErrorInvalidDeviceRequest(const SmbNtHdr* hdr)

@@ -30,6 +30,8 @@
 
 #include "gtp.h"
 
+using namespace snort;
+
 THREAD_LOCAL ProfileStats gtp_inspect_prof;
 
 #define GTP_EVENT_BAD_MSG_LEN_STR        "message length is invalid"

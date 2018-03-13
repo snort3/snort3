@@ -44,11 +44,11 @@ struct DataBuffer
 void EventTrace_Init();
 void EventTrace_Term();
 
-void EventTrace_Log(const Packet*, const OptTreeNode*, int action);
+void EventTrace_Log(const snort::Packet*, const OptTreeNode*, int action);
 
 inline int EventTrace_IsEnabled()
 {
-    return ( SnortConfig::get_conf()->event_trace_max > 0 );
+    return ( snort::SnortConfig::get_conf()->event_trace_max > 0 );
 }
 
 #endif

@@ -42,6 +42,8 @@
 
 #include "sd_credit_card.h"
 
+using namespace snort;
+
 #define s_name "sd_pattern"
 #define s_help "rule option for detecting sensitive data"
 

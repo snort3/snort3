@@ -34,6 +34,8 @@
 #include "ps_inspect.h"
 #include "ps_module.h"
 
+using namespace snort;
+
 THREAD_LOCAL SimpleStats spstats;
 THREAD_LOCAL ProfileStats psPerfStats;
 

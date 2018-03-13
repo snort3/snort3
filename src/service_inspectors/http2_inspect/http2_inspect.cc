@@ -29,6 +29,7 @@
 #include "service_inspectors/http_inspect/http_test_manager.h"
 #include "stream/stream.h"
 
+using namespace snort;
 using namespace Http2Enums;
 
 Http2Inspect::Http2Inspect(const Http2ParaList* params_) : params(params_)

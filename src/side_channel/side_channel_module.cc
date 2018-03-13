@@ -30,6 +30,7 @@
 
 #include "side_channel.h"
 
+using namespace snort;
 
 //-------------------------------------------------------------------------
 // side_channel module

@@ -28,6 +28,8 @@
 
 #include "sfrt.h"
 
+using namespace snort;
+
 #define NUM_IPS 32
 #define NUM_DATA 4
 

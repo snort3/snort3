@@ -29,6 +29,8 @@
 #include "main/snort_types.h"
 #include "protocols/protocol_ids.h"
 
+namespace snort
+{
 struct Packet;
 struct SnortConfig;
 struct SfIp;
@@ -118,6 +120,6 @@ public:
     static bool forwarding_packet(const DAQ_PktHdr_t*);
     static bool break_loop(int error);
 };
-
+}
 #endif
 

@@ -50,6 +50,8 @@
 #include "file_segment.h"
 #include "file_stats.h"
 
+using namespace snort;
+
 // Convert UTF16-LE file name to UTF-8.
 // Returns allocated name. Caller responsible for freeing the buffer.
 char* FileContext::get_UTF8_fname(size_t* converted_len)

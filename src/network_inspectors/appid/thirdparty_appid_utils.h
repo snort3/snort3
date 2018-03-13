@@ -33,14 +33,17 @@ class AppIdModuleConfig;
 class AppIdSession;
 struct ThirdPartyAppIDModule;
 struct ThirdPartyAppIDAttributeData;
+namespace snort
+{
 struct Packet;
+}
 
 extern THREAD_LOCAL ThirdPartyAppIDModule* thirdparty_appid_module;
 
 void ThirdPartyAppIDInit(const AppIdModuleConfig*);
 void ThirdPartyAppIDReconfigure();
 void ThirdPartyAppIDFini();
-bool do_third_party_discovery(AppIdSession&, IpProtocol, const SfIp*,  Packet*, int&);
+bool do_third_party_discovery(AppIdSession&, IpProtocol, const snort::SfIp*,  snort::Packet*, int&);
 
 inline bool is_third_party_appid_done(void* tp_session)
 {

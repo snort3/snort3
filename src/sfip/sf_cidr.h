@@ -23,6 +23,8 @@
 
 #include "sfip/sf_ip.h"
 
+namespace snort
+{
 /*
  * NOTE: As much as I'd love to make this a subclass of SfIp, member layout
  * is undefined for POD inheritance.
@@ -174,5 +176,5 @@ inline SfIpRet SfCidr::compare(const SfCidr& cidr2) const
     }
     return ret;
 }
-
+}
 #endif

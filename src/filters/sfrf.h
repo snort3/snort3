@@ -29,7 +29,11 @@
 #include "actions/actions.h"
 #include "main/policy.h"
 
+namespace snort
+{
 struct SfIp;
+struct SnortConfig;
+}
 
 // define to use over rate threshold
 #define SFRF_OVER_RATE
@@ -89,7 +93,7 @@ struct tSFRFConfigNode
     unsigned seconds;
 
     // Action that replaces original rule action on reaching threshold
-    Actions::Type newAction;
+    snort::Actions::Type newAction;
 
     // Threshold action duration in seconds before reverting to original rule action
     unsigned timeout;
@@ -151,14 +155,14 @@ struct RateFilterConfig
  */
 void SFRF_Delete();
 void SFRF_Flush();
-int SFRF_ConfigAdd(struct SnortConfig*, RateFilterConfig*, tSFRFConfigNode*);
+int SFRF_ConfigAdd(snort::SnortConfig*, RateFilterConfig*, tSFRFConfigNode*);
 
 int SFRF_TestThreshold(
     RateFilterConfig *config,
     unsigned gid,
     unsigned sid,
-    const SfIp *sip,
-    const SfIp *dip,
+    const snort::SfIp *sip,
+    const snort::SfIp *dip,
     time_t curTime,
     SFRF_COUNT_OPERATION);
 

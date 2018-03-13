@@ -31,6 +31,8 @@
 
 #include "sfip/sf_ip.h"
 
+using namespace snort;
+
 //  Fake AddProtocolReference to avoid bringing in a ton of dependencies.
 int16_t AddProtocolReference(const char* protocol)
 {

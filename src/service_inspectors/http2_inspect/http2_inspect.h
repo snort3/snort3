@@ -33,19 +33,20 @@
 
 class Http2Api;
 
-class Http2Inspect : public Inspector
+class Http2Inspect : public snort::Inspector
 {
 public:
     Http2Inspect(const Http2ParaList* params_);
     ~Http2Inspect() override { delete params; }
 
-    bool get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b) override;
-    bool get_buf(unsigned id, Packet* p, InspectionBuffer& b) override;
-    bool get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b) override;
-    bool configure(SnortConfig*) override;
-    void show(SnortConfig*) override { LogMessage("Http2Inspect\n"); }
-    void eval(Packet* p) override;
-    void clear(Packet* p) override;
+    bool get_buf(snort::InspectionBuffer::Type ibt, snort::Packet* p, snort::InspectionBuffer& b) override;
+    bool get_buf(unsigned id, snort::Packet* p, snort::InspectionBuffer& b) override;
+    bool get_fp_buf(snort::InspectionBuffer::Type ibt, snort::Packet* p,
+        snort::InspectionBuffer& b) override;
+    bool configure(snort::SnortConfig*) override;
+    void show(snort::SnortConfig*) override { LogMessage("Http2Inspect\n"); }
+    void eval(snort::Packet* p) override;
+    void clear(snort::Packet* p) override;
     void tinit() override { }
     void tterm() override { }
     Http2StreamSplitter* get_splitter(bool is_client_to_server) override
@@ -60,7 +61,7 @@ private:
 };
 
 bool implement_get_buf(unsigned id, Http2FlowData* session_data, Http2Enums::SourceId source_id,
-    InspectionBuffer& b);
+    snort::InspectionBuffer& b);
 
 #endif
 

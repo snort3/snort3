@@ -36,6 +36,8 @@
 
 #include "file_service.h"
 
+using namespace snort;
+
 static int file_node_free_func(void*, void* data)
 {
     FileEnforcer::FileNode* node = (FileEnforcer::FileNode*)data;
@@ -66,7 +68,7 @@ void FileEnforcer::update_file_node(FileNode* node, FileInfo* file)
     *(node->file) = *file;
 }
 
-FileVerdict FileEnforcer::check_verdict(Flow* flow, FileNode* node,
+FileVerdict FileEnforcer::check_verdict(snort::Flow* flow, FileNode* node,
     XHashNode* hash_node, FilePolicyBase* policy)
 {
     assert(node->file);
@@ -93,7 +95,7 @@ FileVerdict FileEnforcer::check_verdict(Flow* flow, FileNode* node,
     return verdict;
 }
 
-int FileEnforcer::store_verdict(Flow* flow, FileInfo* file)
+int FileEnforcer::store_verdict(snort::Flow* flow, FileInfo* file)
 {
     assert(file);
     uint64_t file_sig = file->get_file_id();
@@ -173,7 +175,7 @@ bool FileEnforcer::apply_verdict(Flow* flow, FileInfo* file, FileVerdict verdict
     else if (verdict == FILE_VERDICT_BLOCK)
     {
         // can't block session inside a session
-        Active::set_delayed_action(Active::ACT_BLOCK, true);
+        snort::Active::set_delayed_action(Active::ACT_BLOCK, true);
         store_verdict(flow, file);
         if (resume)
             policy->log_file_action(flow, file, FILE_RESUME_BLOCK);
@@ -182,7 +184,7 @@ bool FileEnforcer::apply_verdict(Flow* flow, FileInfo* file, FileVerdict verdict
     else if (verdict == FILE_VERDICT_REJECT)
     {
         // can't reset session inside a session
-        Active::set_delayed_action(Active::ACT_RESET, true);
+        snort::Active::set_delayed_action(Active::ACT_RESET, true);
         store_verdict(flow, file);
         if (resume)
             policy->log_file_action(flow, file, FILE_RESUME_BLOCK);
@@ -191,7 +193,7 @@ bool FileEnforcer::apply_verdict(Flow* flow, FileInfo* file, FileVerdict verdict
     else if (verdict == FILE_VERDICT_PENDING)
     {
         /*Take the cached verdict*/
-        Active::set_delayed_action(Active::ACT_DROP, true);
+        snort::Active::set_delayed_action(Active::ACT_DROP, true);
         if (resume)
             policy->log_file_action(flow, file, FILE_RESUME_BLOCK);
         return true;
@@ -200,7 +202,7 @@ bool FileEnforcer::apply_verdict(Flow* flow, FileInfo* file, FileVerdict verdict
     return false;
 }
 
-FileVerdict FileEnforcer::cached_verdict_lookup(Flow* flow, FileInfo* file,
+FileVerdict FileEnforcer::cached_verdict_lookup(snort::Flow* flow, FileInfo* file,
     FilePolicyBase* policy)
 {
     FileVerdict verdict = FILE_VERDICT_UNKNOWN;

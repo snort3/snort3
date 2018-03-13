@@ -44,7 +44,7 @@ bool TcpStateClosed::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateClosed::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    Flow* flow = tsd.get_flow();
+    snort::Flow* flow = tsd.get_flow();
     flow->set_expire(tsd.get_pkt(), trk.session->config->session_timeout);
     return true;
 }
@@ -63,7 +63,7 @@ bool TcpStateClosed::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateClosed::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    Flow* flow = tsd.get_flow();
+    snort::Flow* flow = tsd.get_flow();
 
     trk.update_tracker_ack_sent(tsd);
     // data on a segment when we're not accepting data any more alert!
@@ -135,7 +135,7 @@ bool TcpStateClosed::do_post_sm_packet_actions(TcpSegmentDescriptor& tsd, TcpStr
     if ( trk.get_tcp_event() != TcpStreamTracker::TCP_FIN_RECV_EVENT )
     {
         TcpStreamTracker::TcpState talker_state = trk.session->get_talker_state();
-        Flow* flow = tsd.get_flow();
+        snort::Flow* flow = tsd.get_flow();
 
         if ( ( talker_state == TcpStreamTracker::TCP_TIME_WAIT ) || !flow->two_way_traffic() )
         {
@@ -157,7 +157,7 @@ bool TcpStateClosed::do_post_sm_packet_actions(TcpSegmentDescriptor& tsd, TcpStr
 TEST_CASE("TCP State Closed", "[tcp_closed_state][stream_tcp]")
 {
     // initialization code here
-    Flow* flow = new Flow;
+    snort::Flow* flow = new snort::Flow;
     TcpStreamTracker* ctrk = new TcpStreamTracker(true);
     TcpStreamTracker* strk = new TcpStreamTracker(false);
     TcpEventLogger* tel = new TcpEventLogger;

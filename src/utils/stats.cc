@@ -39,6 +39,8 @@
 
 #include "util.h"
 
+using namespace snort;
+
 #define STATS_SEPARATOR \
     "--------------------------------------------------"
 

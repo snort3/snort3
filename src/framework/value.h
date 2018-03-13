@@ -29,6 +29,8 @@
 #include "framework/parameter.h"
 #include "main/snort_types.h"
 
+namespace snort
+{
 struct SfCidr;
 struct SfIp;
 
@@ -150,6 +152,6 @@ private:
     std::stringstream* ss;
     const Parameter* param;
 };
-
+}
 #endif
 

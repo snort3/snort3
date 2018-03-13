@@ -29,22 +29,22 @@
 
 class HttpInspect;
 
-class HttpStreamSplitter : public StreamSplitter
+class HttpStreamSplitter : public snort::StreamSplitter
 {
 public:
     HttpStreamSplitter(bool is_client_to_server, HttpInspect* my_inspector_) :
-        StreamSplitter(is_client_to_server),
+        snort::StreamSplitter(is_client_to_server),
         source_id(is_client_to_server ? HttpEnums::SRC_CLIENT : HttpEnums::SRC_SERVER),
         my_inspector(my_inspector_) { }
-    Status scan(Flow* flow, const uint8_t* data, uint32_t length, uint32_t not_used,
+    Status scan(snort::Flow* flow, const uint8_t* data, uint32_t length, uint32_t not_used,
         uint32_t* flush_offset) override;
-    const StreamBuffer reassemble(Flow* flow, unsigned total, unsigned, const
+    const snort::StreamBuffer reassemble(snort::Flow* flow, unsigned total, unsigned, const
         uint8_t* data, unsigned len, uint32_t flags, unsigned& copied) override;
-    bool finish(Flow* flow) override;
+    bool finish(snort::Flow* flow) override;
     bool is_paf() override { return true; }
 
     // FIXIT-M should return actual packet buffer size
-    unsigned max(Flow*) override { return HttpEnums::MAX_OCTETS; }
+    unsigned max(snort::Flow*) override { return HttpEnums::MAX_OCTETS; }
 
 private:
     void prepare_flush(HttpFlowData* session_data, uint32_t* flush_offset, HttpEnums::SectionType

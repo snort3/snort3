@@ -27,6 +27,8 @@
 #include "detection/detection_engine.h"
 #include "events/event_queue.h"
 
+using namespace snort;
+
 EncState::EncState(const ip::IpApi& api, EncodeFlags f, IpProtocol pr,
     uint8_t t, uint16_t data_size) :
     ip_api(api),

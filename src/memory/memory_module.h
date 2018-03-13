@@ -23,13 +23,13 @@
 
 #include "framework/module.h"
 
-class MemoryModule : public Module
+class MemoryModule : public snort::Module
 {
 public:
     MemoryModule();
 
-    bool set(const char*, Value&, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
+    bool end(const char*, int, snort::SnortConfig*) override;
 
     Usage get_usage() const override
     { return GLOBAL; }

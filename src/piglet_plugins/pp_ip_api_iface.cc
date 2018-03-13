@@ -28,6 +28,8 @@
 
 #include "pp_raw_buffer_iface.h"
 
+using namespace snort;
+
 template<typename Header>
 static void set_header(lua_State* L, ip::IpApi& ip_api, RawBuffer& rb)
 {
@@ -76,7 +78,7 @@ static const luaL_Reg methods[] =
     {
         "set_ip4",
         [](lua_State* L)
-        { return set<IP4Hdr>(L); }
+        { return set<ip::IP4Hdr>(L); }
     },
     {
         "set_ip6",

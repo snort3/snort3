@@ -26,6 +26,14 @@
 #include "framework/decode_data.h"
 #include "main/snort_types.h"
 
+class Endianness;
+class Obfuscator;
+
+namespace snort
+{
+class Flow;
+class IpsContext;
+
 /* packet status flags */
 #define PKT_REBUILT_FRAG     0x00000001  /* is a rebuilt fragment */
 #define PKT_REBUILT_STREAM   0x00000002  /* is a rebuilt stream */
@@ -103,9 +111,9 @@ struct SO_PUBLIC Packet
     Packet(const Packet&) = delete;
     Packet& operator=(const Packet&) = delete;
 
-    class Flow* flow;   /* for session tracking */
-    class Endianness* endianness;
-    class Obfuscator* obfuscator;
+    Flow* flow;   /* for session tracking */
+    Endianness* endianness;
+    Obfuscator* obfuscator;
 
     uint32_t packet_flags;      /* special flags for the packet */
     uint32_t xtradata_mask;
@@ -120,7 +128,7 @@ struct SO_PUBLIC Packet
     // nothing after this point is zeroed ...
 
     // Everything beyond this point is set by PacketManager::decode()
-    class IpsContext* context;   // set by control
+    IpsContext* context;   // set by control
     const DAQ_PktHdr_t* pkth;    // packet meta data
     const uint8_t* pkt;          // raw packet data
 
@@ -334,6 +342,6 @@ inline uint64_t alignedNtohq(const uint64_t* ptr)
     return value;
 #endif
 }
-
+}
 #endif
 

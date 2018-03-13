@@ -28,6 +28,8 @@
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 
+using namespace snort;
+
 #define s_name "dsize"
 
 static THREAD_LOCAL ProfileStats dsizePerfStats;

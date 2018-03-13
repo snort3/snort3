@@ -26,6 +26,11 @@
 #include <cstdint>
 #include "search_engines/search_common.h"
 
+namespace snort
+{
+struct SnortConfig;
+}
+
 struct KTRIEPATTERN
 {
     KTRIEPATTERN* next; /* global list of all patterns*/
@@ -81,7 +86,7 @@ int KTrieAddPattern(
     KTRIE_STRUCT*, const uint8_t* P, unsigned n,
     bool nocase, bool negative, void* id);
 
-int KTrieCompile(struct SnortConfig*, KTRIE_STRUCT*);
+int KTrieCompile(snort::SnortConfig*, KTRIE_STRUCT*);
 
 int KTrieSearch(KTRIE_STRUCT*, const uint8_t* T,  int n, MpseMatch, void* context);
 

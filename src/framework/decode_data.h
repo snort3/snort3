@@ -25,19 +25,20 @@
 #include "protocols/ip.h"
 #include "protocols/mpls.h"
 
+namespace snort
+{
 namespace tcp
 {
 struct TCPHdr;
 }
-
 namespace udp
 {
 struct UDPHdr;
 }
-
 namespace icmp
 {
 struct ICMPHdr;
+}
 }
 
 /* NOTE: if A protocol is added, update DecodeFlags! */
@@ -111,9 +112,9 @@ struct DecodeData
      * these three pointers are each referenced literally
      * dozens if not hundreds of times.  NOTHING else should be added!!
      */
-    const tcp::TCPHdr* tcph;
-    const udp::UDPHdr* udph;
-    const icmp::ICMPHdr* icmph;
+    const snort::tcp::TCPHdr* tcph;
+    const snort::udp::UDPHdr* udph;
+    const snort::icmp::ICMPHdr* icmph;
 
     uint16_t sp;            /* source port (TCP/UDP) */
     uint16_t dp;            /* dest port (TCP/UDP) */
@@ -121,8 +122,8 @@ struct DecodeData
     uint16_t decode_flags;
     PktType type;
 
-    ip::IpApi ip_api;
-    mpls::MplsHdr mplsHdr;  // FIXIT-L need to zero this?
+    snort::ip::IpApi ip_api;
+    snort::mpls::MplsHdr mplsHdr;  // FIXIT-L need to zero this?
 
     inline void reset()
     {

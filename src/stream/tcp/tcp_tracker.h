@@ -56,30 +56,30 @@ public:
     void init_tcp_state() override;
     void print() override;
     void init_flush_policy() override;
-    void set_splitter(StreamSplitter* ss) override;
-    void set_splitter(const Flow* flow) override;
+    void set_splitter(snort::StreamSplitter* ss) override;
+    void set_splitter(const snort::Flow* flow) override;
     void reset_splitter( ) override;
 
     void init_on_syn_sent(TcpSegmentDescriptor&) override;
     void init_on_syn_recv(TcpSegmentDescriptor&) override;
-    void init_on_synack_sent(TcpSegmentDescriptor& tsd) override;
-    void init_on_synack_recv(TcpSegmentDescriptor& tsd) override;
-    void init_on_3whs_ack_sent(TcpSegmentDescriptor& tsd) override;
-    void init_on_3whs_ack_recv(TcpSegmentDescriptor& tsd) override;
-    void init_on_data_seg_sent(TcpSegmentDescriptor& tsd) override;
-    void init_on_data_seg_recv(TcpSegmentDescriptor& tsd) override;
-    void finish_server_init(TcpSegmentDescriptor& tsd) override;
-    void finish_client_init(TcpSegmentDescriptor& tsd) override;
+    void init_on_synack_sent(TcpSegmentDescriptor&) override;
+    void init_on_synack_recv(TcpSegmentDescriptor&) override;
+    void init_on_3whs_ack_sent(TcpSegmentDescriptor&) override;
+    void init_on_3whs_ack_recv(TcpSegmentDescriptor&) override;
+    void init_on_data_seg_sent(TcpSegmentDescriptor&) override;
+    void init_on_data_seg_recv(TcpSegmentDescriptor&) override;
+    void finish_server_init(TcpSegmentDescriptor&) override;
+    void finish_client_init(TcpSegmentDescriptor&) override;
 
-    void update_tracker_ack_recv(TcpSegmentDescriptor& tsd) override;
-    void update_tracker_ack_sent(TcpSegmentDescriptor& tsd) override;
-    bool update_on_3whs_ack(TcpSegmentDescriptor& tsd) override;
-    bool update_on_rst_recv(TcpSegmentDescriptor& tsd) override;
+    void update_tracker_ack_recv(TcpSegmentDescriptor&) override;
+    void update_tracker_ack_sent(TcpSegmentDescriptor&) override;
+    bool update_on_3whs_ack(TcpSegmentDescriptor&) override;
+    bool update_on_rst_recv(TcpSegmentDescriptor&) override;
     void update_on_rst_sent() override;
-    bool update_on_fin_recv(TcpSegmentDescriptor& tsd) override;
-    bool update_on_fin_sent(TcpSegmentDescriptor& tsd) override;
-    bool is_segment_seq_valid(TcpSegmentDescriptor& tsd) override;
-    void flush_data_on_fin_recv(TcpSegmentDescriptor& tsd) override;
+    bool update_on_fin_recv(TcpSegmentDescriptor&) override;
+    bool update_on_fin_sent(TcpSegmentDescriptor&) override;
+    bool is_segment_seq_valid(TcpSegmentDescriptor&) override;
+    void flush_data_on_fin_recv(TcpSegmentDescriptor&) override;
 
     void init_toolbox() override;
 };

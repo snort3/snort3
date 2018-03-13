@@ -19,8 +19,12 @@
 #ifndef IPS_SD_PATTERN_H
 #define IPS_SD_PATTERN_H
 
+namespace snort
+{
 struct SnortConfig;
-void sdpattern_setup(SnortConfig*);
-void sdpattern_cleanup(SnortConfig*);
+}
+
+void sdpattern_setup(snort::SnortConfig*);
+void sdpattern_cleanup(snort::SnortConfig*);
 
 #endif

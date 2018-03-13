@@ -32,6 +32,7 @@
 #include "packet_io/sfdaq.h"
 #include "utils/util.h"
 
+using namespace snort;
 using namespace std;
 
 /*

@@ -34,6 +34,8 @@
 
 #include "main/snort_types.h"
 
+namespace snort
+{
 class TestCaseInstaller
 {
 public:
@@ -57,10 +59,11 @@ public:
 */
 #define MAKE_SNORT_TEST_CASE(fun, ...) \
     static void fun(); \
-    static TestCaseInstaller INTERNAL_CATCH_UNIQUE_NAME(test_case_installer)(fun, __VA_ARGS__); \
+    static snort::TestCaseInstaller INTERNAL_CATCH_UNIQUE_NAME(test_case_installer)(fun, __VA_ARGS__); \
     static void fun()
 
 #undef TEST_CASE
 #define TEST_CASE(...) MAKE_SNORT_TEST_CASE(INTERNAL_CATCH_UNIQUE_NAME(snort_test), __VA_ARGS__)
+}
 
 #endif

@@ -41,6 +41,8 @@
 #include "file_mempool.h"
 #include "file_stats.h"
 
+using namespace snort;
+
 FileMemPool* FileCapture::file_mempool = nullptr;
 int64_t FileCapture::capture_block_size = 0;
 

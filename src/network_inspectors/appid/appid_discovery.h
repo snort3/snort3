@@ -38,7 +38,11 @@ class AppIdSession;
 class AppIdDetector;
 class ServiceDetector;
 struct ServiceDetectorPort;
+
+namespace snort
+{
 struct Packet;
+}
 
 #define SCAN_HTTP_VIA_FLAG          (1<<0)
 #define SCAN_HTTP_USER_AGENT_FLAG   (1<<1)
@@ -95,7 +99,7 @@ public:
 
     virtual void initialize() = 0;
     virtual void register_detector(const std::string&, AppIdDetector*,  IpProtocol);
-    virtual void add_pattern_data(AppIdDetector*, SearchTool*, int position,
+    virtual void add_pattern_data(AppIdDetector*, snort::SearchTool*, int position,
         const uint8_t* const pattern, unsigned size, unsigned nocase);
     virtual void register_tcp_pattern(AppIdDetector*, const uint8_t* const pattern, unsigned size,
         int position, unsigned nocase);
@@ -103,7 +107,7 @@ public:
         int position, unsigned nocase);
     virtual int add_service_port(AppIdDetector*, const ServiceDetectorPort&);
 
-    static void do_application_discovery(Packet* p, AppIdInspector&);
+    static void do_application_discovery(snort::Packet* p, AppIdInspector&);
 
     AppIdDetectors* get_tcp_detectors()
     {
@@ -122,9 +126,9 @@ protected:
     AppIdInspector& inspector;
     AppIdDetectors tcp_detectors;
     AppIdDetectors udp_detectors;
-    SearchTool* tcp_patterns = nullptr;
+    snort::SearchTool* tcp_patterns = nullptr;
     int tcp_pattern_count = 0;
-    SearchTool* udp_patterns = nullptr;
+    snort::SearchTool* udp_patterns = nullptr;
     int udp_pattern_count = 0;
     std::vector<AppIdPatternMatchNode*> pattern_data;
 };

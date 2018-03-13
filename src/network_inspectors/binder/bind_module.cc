@@ -30,6 +30,7 @@
 #include "parser/parse_ip.h"
 #include "protocols/packet.h"
 
+using namespace snort;
 using namespace std;
 
 #define FILE_KEY ".file"

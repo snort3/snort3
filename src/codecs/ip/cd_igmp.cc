@@ -24,6 +24,8 @@
 #include "framework/codec.h"
 #include "codecs/codec_module.h"
 
+using namespace snort;
+
 #define CD_IGMP_NAME "igmp"
 #define CD_IGMP_HELP "support for Internet group management protocol"
 

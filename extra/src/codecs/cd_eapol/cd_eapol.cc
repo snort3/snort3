@@ -24,6 +24,8 @@
 #define CD_EAPOL_NAME "eapol"
 #define CD_EAPOL_HELP "support for extensible authentication protocol over LAN"
 
+using namespace snort;
+
 namespace
 {
 static const RuleMap eapol_rules[] =

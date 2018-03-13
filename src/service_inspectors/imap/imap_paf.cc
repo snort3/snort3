@@ -28,6 +28,8 @@
 
 #include "imap.h"
 
+using namespace snort;
+
 extern IMAPToken imap_resps[];
 
 static inline ImapPafData* get_state(Flow* flow, bool c2s)

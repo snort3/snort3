@@ -31,6 +31,8 @@
 
 #include "treenodes.h"
 
+using namespace snort;
+
 #define LOG_CHARS 16
 
 static THREAD_LOCAL TextLog* tlog = nullptr;

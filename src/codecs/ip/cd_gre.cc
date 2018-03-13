@@ -29,6 +29,8 @@
 #include "packet_io/active.h"
 #include "protocols/gre.h"
 
+using namespace snort;
+
 #define CD_GRE_NAME "gre"
 #define CD_GRE_HELP "support for generic routing encapsulation"
 

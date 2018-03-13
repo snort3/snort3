@@ -25,7 +25,10 @@
 #include "framework/module.h"
 #include "main/snort_debug.h"
 
+namespace snort
+{
 struct SnortConfig;
+}
 
 #define GLOBAL_KEYWORD "defrag"
 #define ENGINE_KEYWORD "defrag_engine"
@@ -79,10 +82,10 @@ struct IpStats
 };
 
 extern const PegInfo ip_pegs[];
-extern THREAD_LOCAL ProfileStats ip_perf_stats;
-extern THREAD_LOCAL ProfileStats fragPerfStats;
-extern THREAD_LOCAL ProfileStats fragInsertPerfStats;
-extern THREAD_LOCAL ProfileStats fragRebuildPerfStats;
+extern THREAD_LOCAL snort::ProfileStats ip_perf_stats;
+extern THREAD_LOCAL snort::ProfileStats fragPerfStats;
+extern THREAD_LOCAL snort::ProfileStats fragInsertPerfStats;
+extern THREAD_LOCAL snort::ProfileStats fragRebuildPerfStats;
 extern Trace TRACE_NAME(stream_ip);
 
 //-------------------------------------------------------------------------
@@ -94,18 +97,18 @@ extern Trace TRACE_NAME(stream_ip);
 
 struct StreamIpConfig;
 
-class StreamIpModule : public Module
+class StreamIpModule : public snort::Module
 {
 public:
     StreamIpModule();
     ~StreamIpModule() override;
 
-    bool set(const char*, Value&, SnortConfig*) override;
-    bool begin(const char*, int, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
+    bool begin(const char*, int, snort::SnortConfig*) override;
+    bool end(const char*, int, snort::SnortConfig*) override;
 
-    const RuleMap* get_rules() const override;
-    ProfileStats* get_profile(unsigned, const char*&, const char*&) const override;
+    const snort::RuleMap* get_rules() const override;
+    snort::ProfileStats* get_profile(unsigned, const char*&, const char*&) const override;
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
     StreamIpConfig* get_data();

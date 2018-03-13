@@ -25,6 +25,8 @@
 
 #include <cstring>
 
+using namespace snort;
+
 FtpSplitter::FtpSplitter(bool c2s) : StreamSplitter(c2s) { }
 
 // flush at last line feed in data

@@ -48,6 +48,7 @@
 
 #include "plugin_manager.h"
 
+using namespace snort;
 using namespace std;
 
 struct ModHook
@@ -391,7 +392,7 @@ static bool set_var(const char* fqn, Value& val)
     if ( val.get_type() != Value::VT_STR )
         return false;
 
-    if ( get_ips_policy() == nullptr )
+    if ( snort::get_ips_policy() == nullptr )
         return true;
 
     trace("var", fqn, val);
@@ -680,7 +681,7 @@ SO_PUBLIC bool open_table(const char* s, int idx)
         return false;
 
     // FIXIT-M only basic modules and inspectors can be reloaded at present
-    if ( ( Snort::is_reloading() )
+    if ( ( snort::Snort::is_reloading() )
             and h->api and h->api->type != PT_INSPECTOR )
         return false;
 

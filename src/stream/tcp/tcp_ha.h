@@ -24,14 +24,17 @@
 
 //-------------------------------------------------------------------------
 
+namespace snort
+{
 class Flow;
+}
 
 class TcpHA : public ProtocolHA
 {
 public:
     TcpHA() : ProtocolHA(PktType::TCP) { }
-    Flow* create_session(FlowKey*) override;
-    void deactivate_session(Flow*) override;
+    snort::Flow* create_session(FlowKey*) override;
+    void deactivate_session(snort::Flow*) override;
 
 private:
 };
@@ -39,7 +42,7 @@ private:
 class TcpHAManager
 {
 public:
-    static void process_deletion(Flow* flow);
+    static void process_deletion(snort::Flow* flow);
     static void tinit();
     static void tterm();
     static THREAD_LOCAL TcpHA* tcp_ha;

@@ -26,6 +26,8 @@
 #include "framework/codec.h"
 #include "main/snort_config.h"
 
+using namespace snort;
+
 #define CD_ESP_NAME "esp"
 #define CD_ESP_HELP "support for encapsulating security payload"
 

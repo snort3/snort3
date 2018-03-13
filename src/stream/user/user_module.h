@@ -22,9 +22,12 @@
 
 #include "framework/module.h"
 
+namespace snort
+{
 struct SnortConfig;
+}
 
-extern THREAD_LOCAL ProfileStats user_perf_stats;
+extern THREAD_LOCAL snort::ProfileStats user_perf_stats;
 
 extern Trace TRACE_NAME(stream_user);
 
@@ -37,15 +40,15 @@ extern Trace TRACE_NAME(stream_user);
 
 struct StreamUserConfig;
 
-class StreamUserModule : public Module
+class StreamUserModule : public snort::Module
 {
 public:
     StreamUserModule();
     ~StreamUserModule() override;
 
-    bool set(const char*, Value&, SnortConfig*) override;
-    bool begin(const char*, int, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
+    bool begin(const char*, int, snort::SnortConfig*) override;
+    bool end(const char*, int, snort::SnortConfig*) override;
 
     Usage get_usage() const override
     { return INSPECT; }

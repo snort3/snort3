@@ -26,6 +26,8 @@
 #include "framework/codec.h"
 #include "managers/plugin_manager.h"
 
+using namespace snort;
+
 extern const BaseApi* cd_ipv4[];    // static due to dependence on fpdetect
 extern const BaseApi* cd_hopopts[]; // static to ensure the symbols CheckIPV6HopOptions
                                     // and CheckIPv6ExtensionOrder the final executable.

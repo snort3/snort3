@@ -26,6 +26,8 @@
 #include "log/text_log.h"
 #include "protocols/vlan.h"
 
+using namespace snort;
+
 #define CD_VLAN_NAME "vlan"
 #define CD_VLAN_HELP "support for local area network"
 

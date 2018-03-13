@@ -36,6 +36,7 @@
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 
+using namespace snort;
 using namespace std;
 
 static void replace_parse(const char* args, string& s)

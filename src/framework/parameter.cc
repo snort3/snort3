@@ -33,6 +33,7 @@
 
 #include "value.h"
 
+using namespace snort;
 using namespace std;
 
 static bool valid_bool(Value& v, const char*)

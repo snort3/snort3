@@ -55,6 +55,7 @@
 #include "utils/sflsq.h"
 #include "utils/util.h"
 
+using namespace snort;
 using namespace std;
 
 #define s_name "flowbits"

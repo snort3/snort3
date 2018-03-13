@@ -28,6 +28,8 @@
 #include "framework/module.h"
 #include "profiler/profiler.h"
 
+using namespace snort;
+
 #define s_name "file_data"
 
 static THREAD_LOCAL ProfileStats fileDataPerfStats;

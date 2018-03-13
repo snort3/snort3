@@ -28,6 +28,8 @@
 
 #include "modbus.h"
 
+using namespace snort;
+
 THREAD_LOCAL ProfileStats modbus_prof;
 
 //-------------------------------------------------------------------------

@@ -31,6 +31,8 @@
 
 #include "main/snort_types.h"
 
+namespace snort
+{
 struct Packet;
 
 class SO_PUBLIC U2PseudoHeader
@@ -76,6 +78,6 @@ private:
         uint8_t buf[max_size];
     } u;
 };
-
+}
 #endif
 

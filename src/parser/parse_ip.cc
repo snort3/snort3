@@ -35,7 +35,7 @@ sfip_var_t* sfip_var_from_string(const char* addr)
     int ret_code;
     vartable_t* ip_vartable;
 
-    ip_vartable = get_ips_policy()->ip_vartable;
+    ip_vartable = snort::get_ips_policy()->ip_vartable;
 
     DebugFormat(DEBUG_CONFIGRULES,"Got address string: %s\n", addr);
 

@@ -34,7 +34,11 @@
 #include <mutex>
 #include <thread>
 
+namespace snort
+{
+class Flow;
 struct Packet;
+}
 struct RegexRequest;
 
 class RegexOffload
@@ -48,10 +52,10 @@ public:
     unsigned count()
     { return busy.size(); }
 
-    void put(unsigned id, Packet*);
+    void put(unsigned id, snort::Packet*);
     bool get(unsigned& id);
 
-    bool on_hold(class Flow*);
+    bool on_hold(snort::Flow*);
 
 private:
     static void worker(RegexRequest*);

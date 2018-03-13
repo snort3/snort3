@@ -484,11 +484,11 @@ struct RuleParseState
     { otn = nullptr; }
 };
 
-static void parse_body(const char*, RuleParseState&, struct SnortConfig*);
+static void parse_body(const char*, RuleParseState&, struct snort::SnortConfig*);
 
 static bool exec(
     FsmAction act, string& tok,
-    RuleParseState& rps, SnortConfig* sc)
+    RuleParseState& rps, snort::SnortConfig* sc)
 {
     switch ( act )
     {
@@ -626,7 +626,7 @@ static int get_escape(const string& s)
 // parse_body() is called at the end of a stub rule to parse the detection
 // options in an so rule.  similar to parse_stream() except we start in a
 // different state.
-static void parse_body(const char* extra, RuleParseState& rps, struct SnortConfig* sc)
+static void parse_body(const char* extra, RuleParseState& rps, snort::SnortConfig* sc)
 {
     stringstream is(extra);
 
@@ -656,7 +656,7 @@ static void parse_body(const char* extra, RuleParseState& rps, struct SnortConfi
     }
 }
 
-void parse_stream(istream& is, struct SnortConfig* sc)
+void parse_stream(istream& is, snort::SnortConfig* sc)
 {
     string tok;
     TokenType type;

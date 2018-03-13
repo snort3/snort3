@@ -27,6 +27,7 @@
 #include "ip_session.h"
 #include "stream_ip.h"
 
+using namespace snort;
 using namespace std;
 
 #define DEFRAG_IPOPTIONS_STR \

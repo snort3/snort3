@@ -43,7 +43,7 @@ int ssl_scan_cname(const uint8_t*, size_t, AppId*, AppId*);
 int ssl_add_cert_pattern(uint8_t*, size_t, uint8_t, AppId);
 int ssl_add_cname_pattern(uint8_t*, size_t, uint8_t, AppId);
 void ssl_detector_free_patterns();
-bool setSSLSquelch(Packet*, int type, AppId, AppIdInspector& inspector);
+bool setSSLSquelch(snort::Packet*, int type, AppId, AppIdInspector& inspector);
 
 #endif
 

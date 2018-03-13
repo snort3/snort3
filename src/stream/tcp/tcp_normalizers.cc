@@ -27,6 +27,8 @@
 
 #include "tcp_module.h"
 
+using namespace snort;
+
 class TcpNormalizerFirst : public TcpNormalizer
 {
 public:

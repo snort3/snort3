@@ -29,23 +29,23 @@ class TcpEventLogger;
 class TcpSession : public TcpStreamSession
 {
 public:
-    TcpSession(Flow*);
+    TcpSession(snort::Flow*);
     ~TcpSession() override;
 
-    bool setup(Packet*) override;
-    void restart(Packet* p) override;
-    void precheck(Packet* p) override;
-    int process(Packet*) override;
+    bool setup(snort::Packet*) override;
+    void restart(snort::Packet* p) override;
+    void precheck(snort::Packet* p) override;
+    int process(snort::Packet*) override;
 
     void flush() override;
-    void flush_client(Packet*) override;
-    void flush_server(Packet*) override;
-    void flush_talker(Packet*, bool final_flush = false) override;
-    void flush_listener(Packet*, bool final_flush = false) override;
+    void flush_client(snort::Packet*) override;
+    void flush_server(snort::Packet*) override;
+    void flush_talker(snort::Packet*, bool final_flush = false) override;
+    void flush_listener(snort::Packet*, bool final_flush = false) override;
 
-    void clear_session(bool free_flow_data, bool flush_segments, bool restart, Packet* p = nullptr) override;
+    void clear_session(bool free_flow_data, bool flush_segments, bool restart, snort::Packet* p = nullptr) override;
 
-    void set_extra_data(Packet*, uint32_t /*flag*/) override;
+    void set_extra_data(snort::Packet*, uint32_t /*flag*/) override;
 
     void update_perf_base_state(char new_state) override;
     TcpStreamTracker::TcpState get_talker_state() override;
@@ -73,13 +73,13 @@ private:
     void swap_trackers();
     void NewTcpSessionOnSyn(TcpSegmentDescriptor&);
     void NewTcpSessionOnSynAck(TcpSegmentDescriptor&);
-    int process_dis(Packet*);
+    int process_dis(snort::Packet*);
     void update_on_3whs_complete(TcpSegmentDescriptor&);
-    bool is_flow_handling_packets(Packet*);
-    void cleanup_session_if_expired(Packet*);
-    bool do_packet_analysis_pre_checks(Packet*, TcpSegmentDescriptor&);
-    void do_packet_analysis_post_checks(Packet*);
-    void flush_tracker(TcpStreamTracker*, Packet*, uint32_t dir, bool final_flush);
+    bool is_flow_handling_packets(snort::Packet*);
+    void cleanup_session_if_expired(snort::Packet*);
+    bool do_packet_analysis_pre_checks(snort::Packet*, TcpSegmentDescriptor&);
+    void do_packet_analysis_post_checks(snort::Packet*);
+    void flush_tracker(TcpStreamTracker*, snort::Packet*, uint32_t dir, bool final_flush);
 
     TcpStateMachine* tsm;
     bool splitter_init;

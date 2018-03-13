@@ -27,6 +27,8 @@
 
 #include "udp_session.h"
 
+using namespace snort;
+
 Flow* UdpHA::create_session(FlowKey* key)
 {
     assert(key);

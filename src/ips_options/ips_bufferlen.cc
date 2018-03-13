@@ -28,6 +28,8 @@
 #include "hash/hashfcn.h"
 #include "profiler/profiler.h"
 
+using namespace snort;
+
 #define s_name "bufferlen"
 
 #define s_help \

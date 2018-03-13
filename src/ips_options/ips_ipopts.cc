@@ -29,6 +29,8 @@
 #include "protocols/ipv4_options.h"
 #include "protocols/packet.h"
 
+using namespace snort;
+
 #define s_name "ipopts"
 
 static THREAD_LOCAL ProfileStats ipOptionPerfStats;

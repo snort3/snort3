@@ -24,6 +24,8 @@
 #include "codecs/codec_module.h"
 #include "framework/codec.h"
 
+using namespace snort;
+
 #define CD_ERSPAN3_NAME "erspan3"
 #define CD_ERSPAN3_HELP "support for encapsulated remote switched port analyzer - type 3"
 

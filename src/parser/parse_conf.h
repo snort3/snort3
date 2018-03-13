@@ -26,18 +26,21 @@ void parse_conf_init();
 void parse_conf_term();
 void parse_conf_print();
 
+namespace snort
+{
 struct SnortConfig;
+}
 
-void ParseConfigFile(SnortConfig*, const char* fname);
-void ParseConfigString(SnortConfig*, const char* str);
+void ParseConfigFile(snort::SnortConfig*, const char* fname);
+void ParseConfigString(snort::SnortConfig*, const char* str);
 
-void parse_include(SnortConfig*, const char*);
+void parse_include(snort::SnortConfig*, const char*);
 
-void AddRuleState(SnortConfig*, const RuleState&);
-void add_service_to_otn(SnortConfig*, OptTreeNode*, const char*);
+void AddRuleState(snort::SnortConfig*, const RuleState&);
+void add_service_to_otn(snort::SnortConfig*, OptTreeNode*, const char*);
 
-Actions::Type get_rule_type(const char*);
-ListHead* get_rule_list(SnortConfig*, const char*);
+snort::Actions::Type get_rule_type(const char*);
+ListHead* get_rule_list(snort::SnortConfig*, const char*);
 
 #endif
 

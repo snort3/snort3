@@ -31,7 +31,7 @@
 
 class HttpMsgHeader;
 
-class SO_PUBLIC HttpEvent : public DataEvent
+class SO_PUBLIC HttpEvent : public snort::DataEvent
 {
 public:
     HttpEvent(HttpMsgHeader* http_msg_header_) :

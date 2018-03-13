@@ -35,6 +35,8 @@
 #include "ftpp_si.h"
 #include "ftpdata_splitter.h"
 
+using namespace snort;
+
 #define s_name "ftp_data"
 
 #define s_help \

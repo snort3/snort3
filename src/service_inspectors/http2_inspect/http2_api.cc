@@ -25,6 +25,8 @@
 
 #include "http2_inspect.h"
 
+using namespace snort;
+
 const char* Http2Api::http2_my_name = HTTP2_NAME;
 const char* Http2Api::http2_help = "the HTTP/2 inspector";
 

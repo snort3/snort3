@@ -44,6 +44,8 @@
 #include "main/thread_config.h"
 #endif
 
+using namespace snort;
+
 namespace rule_latency
 {
 // -----------------------------------------------------------------------------

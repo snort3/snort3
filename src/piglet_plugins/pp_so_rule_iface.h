@@ -22,8 +22,11 @@
 
 #include "lua/lua_iface.h"
 
+namespace snort
+{
 class SoRule;
+}
 
-extern const struct Lua::TypeInterface<SoRule> SoRuleIface;
+extern const struct Lua::TypeInterface<snort::SoRule> SoRuleIface;
 
 #endif

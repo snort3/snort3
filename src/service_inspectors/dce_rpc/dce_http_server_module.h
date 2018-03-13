@@ -26,9 +26,7 @@
 #include "framework/module.h"
 #include "main/thread.h"
 
-struct SnortConfig;
-
-class DceHttpServerModule : public Module
+class DceHttpServerModule : public snort::Module
 {
 public:
     DceHttpServerModule();

@@ -21,8 +21,12 @@
 #ifndef HYPERSCAN_H
 #define HYPERSCAN_H
 
+namespace snort
+{
 struct SnortConfig;
-void hyperscan_setup(SnortConfig*);
-void hyperscan_cleanup(SnortConfig*);
+}
+
+void hyperscan_setup(snort::SnortConfig*);
+void hyperscan_cleanup(snort::SnortConfig*);
 
 #endif

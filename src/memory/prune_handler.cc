@@ -31,7 +31,7 @@ namespace memory
 
 void prune_handler()
 {
-    Stream::prune_flows();
+    snort::Stream::prune_flows();
 }
 
 } // namespace memory

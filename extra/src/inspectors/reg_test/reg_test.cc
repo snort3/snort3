@@ -30,6 +30,8 @@
 #include "time/packet_time.h"
 #include "utils/util_cstring.h"
 
+using namespace snort;
+
 static const char* s_name = "reg_test";
 static const char* s_help = "The regression test inspector (rti) is used when special packet handling is required for a reg test";
 

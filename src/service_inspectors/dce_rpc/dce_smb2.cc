@@ -33,6 +33,8 @@
 #include "dce_smb_module.h"
 #include "dce_smb_utils.h"
 
+using namespace snort;
+
 #define   UNKNOWN_FILE_SIZE                  ~0
 
 // FIXIT-L port fileCache related code along with

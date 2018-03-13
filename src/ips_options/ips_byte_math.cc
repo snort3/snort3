@@ -36,6 +36,7 @@
 
 #include "extract.h"
 
+using namespace snort;
 using namespace std;
 
 #define s_name "byte_math"

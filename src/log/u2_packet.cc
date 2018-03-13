@@ -32,6 +32,8 @@
 #include "protocols/protocol_ids.h"
 #include "utils/util.h"
 
+using namespace snort;
+
 static const uint8_t u2_ttl = 64;
 
 //--------------------------------------------------------------------------

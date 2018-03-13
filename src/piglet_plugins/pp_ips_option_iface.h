@@ -22,8 +22,11 @@
 
 #include "lua/lua_iface.h"
 
+namespace snort
+{
 class IpsOption;
+}
 
-extern const struct Lua::InstanceInterface<IpsOption> IpsOptionIface;
+extern const struct Lua::InstanceInterface<snort::IpsOption> IpsOptionIface;
 
 #endif

@@ -80,7 +80,7 @@ private:
                                       //  shared object are safe.
 
     //  FIXIT-M do we need to use a host_id instead of SfIp as in sfrna?
-    SfIp ip_addr;
+    snort::SfIp ip_addr;
 
     //  Policies to apply to this host.
     Policy stream_policy = 0;
@@ -95,13 +95,13 @@ public:
         memset(&ip_addr, 0, sizeof(ip_addr));
     }
 
-    SfIp get_ip_addr()
+    snort::SfIp get_ip_addr()
     {
         std::lock_guard<std::mutex> lck(host_tracker_lock);
         return ip_addr;
     }
 
-    void set_ip_addr(const SfIp& new_ip_addr)
+    void set_ip_addr(const snort::SfIp& new_ip_addr)
     {
         std::lock_guard<std::mutex> lck(host_tracker_lock);
         std::memcpy(&ip_addr, &new_ip_addr, sizeof(ip_addr));

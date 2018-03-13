@@ -40,11 +40,11 @@ static const char* const flushxt[] = { "IGN", "FPR", "PRE", "PRO", "PAF" };
 
 static THREAD_LOCAL int s5_trace_enabled = -1;  // FIXIT-L should use module trace feature
 
-inline void TraceEvent(const Packet* p, TcpSegmentDescriptor*, uint32_t txd, uint32_t rxd)
+inline void TraceEvent(const snort::Packet* p, TcpSegmentDescriptor*, uint32_t txd, uint32_t rxd)
 {
     int i;
     char flags[7] = "UAPRSF";
-    const tcp::TCPHdr* h = p->ptrs.tcph;
+    const snort::tcp::TCPHdr* h = p->ptrs.tcph;
     const char* order = "";
 
     if (!h)
@@ -70,7 +70,7 @@ inline void TraceEvent(const Packet* p, TcpSegmentDescriptor*, uint32_t txd, uin
         pc.total_from_daq, flags, h->th_flags, rseq, rack, h->win(), p->dsize, order);
 }
 
-inline void TraceSession(const Flow* lws)
+inline void TraceSession(const snort::Flow* lws)
 {
     fprintf(stdout, "    LWS: ST=0x%x SF=0x%x CP=%hu SP=%hu\n", (unsigned)lws->session_state,
         lws->ssn_state.session_flags, lws->client_port, lws->server_port);
@@ -102,7 +102,7 @@ inline void TraceState(const TcpStreamTracker* a, const TcpStreamTracker* b, con
     fprintf(stdout, "\n");
 }
 
-inline void TraceTCP(const Packet* p, const Flow* lws, TcpSegmentDescriptor* tsd, int event)
+inline void TraceTCP(const snort::Packet* p, const snort::Flow* lws, TcpSegmentDescriptor* tsd, int event)
 {
     const TcpSession* ssn = (TcpSession*)lws->session;
     const TcpStreamTracker* srv = ssn ? ssn->server : nullptr;
@@ -139,7 +139,7 @@ inline void TraceTCP(const Packet* p, const Flow* lws, TcpSegmentDescriptor* tsd
     }
 }
 
-inline void S5TraceTCP(const Packet* p, const Flow* lws, TcpSegmentDescriptor* tsd, int event)
+inline void S5TraceTCP(const snort::Packet* p, const snort::Flow* lws, TcpSegmentDescriptor* tsd, int event)
 {
     if (!s5_trace_enabled)
         return;

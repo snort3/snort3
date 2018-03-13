@@ -92,7 +92,13 @@
 #define FLOW_IS_OFFLOADED              0x01
 #define FLOW_WAS_OFFLOADED             0x02  // FIXIT-L debug only
 
+class BitOp;
+class FlowHAState;
 struct FlowKey;
+class Session;
+
+namespace snort
+{
 struct Packet;
 
 typedef void (* StreamAppDataFree)(void*);
@@ -298,9 +304,9 @@ public:  // FIXIT-M privatize if possible
 
     // these fields are const after initialization
     const FlowKey* key;
-    class Session* session;
-    class BitOp* bitop;
-    class FlowHAState* ha_state;
+    Session* session;
+    BitOp* bitop;
+    FlowHAState* ha_state;
 
     uint8_t ip_proto; // FIXIT-M do we need both of these?
     PktType pkt_type; // ^^
@@ -372,6 +378,6 @@ inline bool Flow::is_detection_enabled(bool to_server)
 
     return !(ssn_state.session_flags & SSNFLAG_NO_DETECT_TO_CLIENT);
 }
-
+}
 #endif
 

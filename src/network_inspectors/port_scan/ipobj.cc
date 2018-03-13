@@ -29,6 +29,8 @@
 #include "utils/util.h"
 #include "utils/util_cstring.h"
 
+using namespace snort;
+
 /*
    IP COLLECTION INTERFACE
 

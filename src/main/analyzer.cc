@@ -36,6 +36,7 @@
 #include "snort_debug.h"
 #include "thread.h"
 
+using namespace snort;
 using namespace std;
 
 typedef DAQ_Verdict

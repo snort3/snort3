@@ -24,27 +24,30 @@
 
 #include <string>
 
-struct SnortConfig;
-struct ConnectorApi;
+namespace snort
+{
 class Connector;
+struct ConnectorApi;
 class Module;
+struct SnortConfig;
+}
 
 //-------------------------------------------------------------------------
 
 class ConnectorManager
 {
 public:
-    static void add_plugin(const ConnectorApi* api);
+    static void add_plugin(const snort::ConnectorApi* api);
     static void dump_plugins();
     static void release_plugins();
 
-    static void instantiate(const ConnectorApi*, Module*, SnortConfig*);
+    static void instantiate(const snort::ConnectorApi*, snort::Module*, snort::SnortConfig*);
 
     static void thread_init();
     static void thread_term();
 
     /* get_connector() returns the thread-specific object. */
-    static Connector* get_connector(const std::string& name);
+    static snort::Connector* get_connector(const std::string& name);
 };
 
 #endif

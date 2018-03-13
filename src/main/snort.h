@@ -26,6 +26,10 @@
 
 #include "main/snort_types.h"
 
+class ContextSwitcher;
+
+namespace snort
+{
 class Flow;
 struct Packet;
 struct SnortConfig;
@@ -63,7 +67,7 @@ public:
     static void inspect(Packet*);
 
     static void set_main_hook(MainHook_f);
-    static class ContextSwitcher* get_switcher();
+    static ContextSwitcher* get_switcher();
 
     SO_PUBLIC static Packet* get_packet();
 
@@ -77,6 +81,7 @@ private:
     static bool reloading;
     static bool privileges_dropped;
 };
+}
 
 #endif
 

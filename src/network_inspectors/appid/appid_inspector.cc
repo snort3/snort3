@@ -42,12 +42,15 @@
 #include "detector_plugins/http_url_patterns.h"
 #include "detector_plugins/detector_sip.h"
 #include "detector_plugins/detector_pattern.h"
+#include "flow/flow.h"
 #include "log/messages.h"
 #include "log/packet_tracer.h"
 #include "managers/inspector_manager.h"
 #include "managers/module_manager.h"
 #include "protocols/packet.h"
 #include "profiler/profiler.h"
+
+using namespace snort;
 
 // FIXIT-L - appid cleans up openssl now as it is the primary (only) user... eventually this
 //           should probably be done outside of appid

@@ -33,6 +33,8 @@
 #include "managers/connector_manager.h"
 #include "profiler/profiler_defs.h"
 
+using namespace snort;
+
 /* Globals ****************************************************************/
 
 THREAD_LOCAL SimpleStats sc_stats;

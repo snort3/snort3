@@ -26,6 +26,8 @@
 #include "framework/codec.h"
 #include "protocols/arp.h"
 
+using namespace snort;
+
 #define CD_ARP_NAME "arp"
 #define CD_ARP_HELP "support for address resolution protocol"
 

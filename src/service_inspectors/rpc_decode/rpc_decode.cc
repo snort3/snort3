@@ -51,6 +51,7 @@
 
 #include "rpc_module.h"
 
+using namespace snort;
 using namespace std;
 
 #define RPC_MAX_BUF_SIZE   256

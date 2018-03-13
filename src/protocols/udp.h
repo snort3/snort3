@@ -22,6 +22,8 @@
 
 #include <arpa/inet.h>
 
+namespace snort
+{
 namespace udp
 {
 constexpr uint8_t UDP_HEADER_LEN = 8;
@@ -59,7 +61,8 @@ struct UDPHdr
     inline uint16_t raw_cksum() const
     { return uh_chk; }
 };
-} // namespace
+} // namespace udp
+} // namespace snort
 
 #endif
 

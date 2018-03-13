@@ -34,12 +34,12 @@ public:
 
     virtual int queue_packet_for_reassembly(TcpSegmentDescriptor&);
     virtual void purge_segment_list();
-    virtual int flush_stream(Packet* p, uint32_t dir, bool final_flush = false);
+    virtual int flush_stream(snort::Packet* p, uint32_t dir, bool final_flush = false);
     virtual int purge_flushed_ackd();
-    virtual void flush_queued_segments(Flow* flow, bool clear, Packet* p = nullptr);
+    virtual void flush_queued_segments(snort::Flow* flow, bool clear, snort::Packet* p = nullptr);
     virtual bool is_segment_pending_flush();
-    virtual int flush_on_data_policy(Packet*);
-    virtual int flush_on_ack_policy(Packet*);
+    virtual int flush_on_data_policy(snort::Packet*);
+    virtual int flush_on_ack_policy(snort::Packet*);
     void set_seglist_base_seq(uint32_t seglist_base_seq)
     {
         this->seglist_base_seq = seglist_base_seq;
@@ -137,20 +137,20 @@ protected:
     void queue_reassembly_segment(TcpSegmentNode* prev, TcpSegmentNode*);
     void init_overlap_editor(TcpSegmentDescriptor&);
     bool is_segment_fasttrack(TcpSegmentNode* tail, TcpSegmentDescriptor&);
-    int purge_alerts(Flow*);
-    void show_rebuilt_packet(Packet*);
+    int purge_alerts(snort::Flow*);
+    void show_rebuilt_packet(snort::Packet*);
     uint32_t get_flush_data_len(TcpSegmentNode*, uint32_t to_seq, unsigned max);
-    int flush_data_segments(Packet*, uint32_t total, Packet* pdu);
-    void prep_pdu(Flow*, Packet*, uint32_t pkt_flags, Packet* pdu);
-    Packet* initialize_pdu(Packet* p, uint32_t pkt_flags, struct timeval tv);
-    int _flush_to_seq(uint32_t bytes, Packet*, uint32_t pkt_flags);
-    int flush_to_seq(uint32_t bytes, Packet*, uint32_t pkt_flags);
-    int do_zero_byte_flush(Packet* p, uint32_t pkt_flags);
+    int flush_data_segments(snort::Packet*, uint32_t total, snort::Packet* pdu);
+    void prep_pdu(snort::Flow*, snort::Packet*, uint32_t pkt_flags, snort::Packet* pdu);
+    snort::Packet* initialize_pdu(snort::Packet* p, uint32_t pkt_flags, struct timeval tv);
+    int _flush_to_seq(uint32_t bytes, snort::Packet*, uint32_t pkt_flags);
+    int flush_to_seq(uint32_t bytes, snort::Packet*, uint32_t pkt_flags);
+    int do_zero_byte_flush(snort::Packet* p, uint32_t pkt_flags);
     uint32_t get_q_footprint();
     uint32_t get_q_sequenced();
-    void final_flush(Packet*, uint32_t dir);
-    uint32_t get_reverse_packet_dir(const Packet*);
-    uint32_t get_forward_packet_dir(const Packet*);
+    void final_flush(snort::Packet*, uint32_t dir);
+    uint32_t get_reverse_packet_dir(const snort::Packet*);
+    uint32_t get_forward_packet_dir(const snort::Packet*);
     int32_t flush_pdu_ips(uint32_t*);
     void fallback();
     int32_t flush_pdu_ackd(uint32_t* flags);

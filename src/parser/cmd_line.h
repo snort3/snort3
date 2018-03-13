@@ -20,7 +20,12 @@
 #ifndef CMD_LINE_H
 #define CMD_LINE_H
 
-struct SnortConfig* parse_cmd_line(int argc, char* argv[]);
+namespace snort
+{
+struct SnortConfig;
+}
+
+snort::SnortConfig* parse_cmd_line(int argc, char* argv[]);
 
 #endif
 

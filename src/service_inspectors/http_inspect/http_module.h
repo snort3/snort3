@@ -85,16 +85,16 @@ public:
 #endif
 };
 
-class HttpModule : public Module
+class HttpModule : public snort::Module
 {
 public:
     HttpModule() : Module(HTTP_NAME, HTTP_HELP, http_params) { }
     ~HttpModule() override { delete params; }
-    bool begin(const char*, int, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
-    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, snort::SnortConfig*) override;
+    bool end(const char*, int, snort::SnortConfig*) override;
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
     unsigned get_gid() const override { return HttpEnums::HTTP_GID; }
-    const RuleMap* get_rules() const override { return http_events; }
+    const snort::RuleMap* get_rules() const override { return http_events; }
     const HttpParaList* get_once_params()
     {
         HttpParaList* ret_val = params;
@@ -111,9 +111,9 @@ public:
     static PegCount get_peg_counts(HttpEnums::PEG_COUNT counter)
         { return peg_counts[counter]; }
 
-    ProfileStats* get_profile() const override;
+    snort::ProfileStats* get_profile() const override;
 
-    static ProfileStats& get_profile_stats()
+    static snort::ProfileStats& get_profile_stats()
     { return http_profile; }
 
     Usage get_usage() const override
@@ -129,11 +129,11 @@ public:
 #endif
 
 private:
-    static const Parameter http_params[];
-    static const RuleMap http_events[];
+    static const snort::Parameter http_params[];
+    static const snort::RuleMap http_events[];
     HttpParaList* params = nullptr;
     static const PegInfo peg_names[];
-    static THREAD_LOCAL ProfileStats http_profile;
+    static THREAD_LOCAL snort::ProfileStats http_profile;
     static THREAD_LOCAL PegCount peg_counts[];
 };
 

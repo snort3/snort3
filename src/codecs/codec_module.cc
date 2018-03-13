@@ -23,6 +23,8 @@
 
 #include "codecs/codec_module.h"
 
+using namespace snort;
+
 #define codec_module_help \
     "general decoder rules"
 

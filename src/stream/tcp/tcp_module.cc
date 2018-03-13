@@ -26,6 +26,7 @@
 
 #include "profiler/profiler_defs.h"
 
+using namespace snort;
 using namespace std;
 
 //-------------------------------------------------------------------------

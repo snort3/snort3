@@ -25,6 +25,8 @@
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 
+using namespace snort;
+
 #define DPX_GID 256
 #define DPX_SID 1
 

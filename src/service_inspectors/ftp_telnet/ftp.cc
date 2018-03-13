@@ -41,6 +41,8 @@
 #include "pp_ftp.h"
 #include "telnet.h"
 
+using namespace snort;
+
 int16_t ftp_data_app_id = SFTARGET_UNKNOWN_PROTOCOL;
 
 #define client_key "ftp_client"

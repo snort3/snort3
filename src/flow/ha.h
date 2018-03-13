@@ -27,7 +27,10 @@
 
 //-------------------------------------------------------------------------
 
+namespace snort
+{
 class Flow;
+}
 struct FlowKey;
 
 // The FlowHAHandle is the dynamically allocated index used uniquely identify
@@ -123,10 +126,10 @@ class FlowHAClient
 {
 public:
     virtual ~FlowHAClient() = default;
-    virtual bool consume(Flow*&, FlowKey*, HAMessage*) { return false; }
-    virtual bool produce(Flow*, HAMessage*) { return false; }
-    virtual bool is_update_required(Flow*) { return false; }
-    virtual bool is_delete_required(Flow*) { return false; }
+    virtual bool consume(snort::Flow*&, FlowKey*, HAMessage*) { return false; }
+    virtual bool produce(snort::Flow*, HAMessage*) { return false; }
+    virtual bool is_update_required(snort::Flow*) { return false; }
+    virtual bool is_delete_required(snort::Flow*) { return false; }
     uint8_t get_message_size() { return header.length; }
     bool fit(HAMessage*, uint8_t);
     bool place(HAMessage*, uint8_t*, uint8_t);
@@ -147,8 +150,8 @@ public:
     HighAvailability(PortBitSet*,bool);
     ~HighAvailability();
 
-    void process_update(Flow*, const DAQ_PktHdr_t*);
-    void process_deletion(Flow*);
+    void process_update(snort::Flow*, const DAQ_PktHdr_t*);
+    void process_deletion(snort::Flow*);
     void process_receive();
 
 private:
@@ -173,15 +176,15 @@ public:
     static bool active();
 
     // Within the packet callback, analyze the packet and flow for potential update messages
-    static void process_update(Flow*, const DAQ_PktHdr_t*);
+    static void process_update(snort::Flow*, const DAQ_PktHdr_t*);
 
     // Anytime a flow is deleted, potentially generate a deletion message
-    static void process_deletion(Flow*);
+    static void process_deletion(snort::Flow*);
 
     // Look for and dispatch receive messages.
     static void process_receive();
-    static void set_modified(Flow*);
-    static bool in_standby(Flow*);
+    static void set_modified(snort::Flow*);
+    static bool in_standby(snort::Flow*);
 
 private:
     HighAvailabilityManager() = delete;

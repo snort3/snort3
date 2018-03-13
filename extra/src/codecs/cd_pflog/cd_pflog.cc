@@ -22,6 +22,8 @@
 
 #include "framework/codec.h"
 
+using namespace snort;
+
 #define PFLOG_NAME "pflog"
 #define PFLOG_HELP_STR "support for OpenBSD PF log"
 

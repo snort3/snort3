@@ -28,6 +28,7 @@
 
 #include "ftpp_si.h"
 
+using namespace snort;
 using namespace std;
 
 #define FTP_CLIENT "ftp_client"

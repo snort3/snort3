@@ -27,6 +27,11 @@
 #include "sfip/sf_ip.h"
 #include "ipobj.h"
 
+namespace snort
+{
+struct Packet;
+}
+
 #define PS_OPEN_PORTS 8
 
 #define PS_PROTO_NONE        0x00
@@ -124,9 +129,9 @@ struct PS_PROTO
     unsigned short low_p;
     unsigned short u_ports;
 
-    SfIp high_ip;
-    SfIp low_ip;
-    SfIp u_ips;
+    snort::SfIp high_ip;
+    snort::SfIp low_ip;
+    snort::SfIp u_ips;
 
     unsigned short open_ports[PS_OPEN_PORTS];
     unsigned char open_ports_cnt;
@@ -145,7 +150,7 @@ struct PS_TRACKER
 
 struct PS_PKT
 {
-    struct Packet* pkt;
+    snort::Packet* pkt;
 
     PS_TRACKER* scanner;
     PS_TRACKER* scanned;
@@ -153,7 +158,7 @@ struct PS_PKT
     int proto;
     int reverse_pkt;
 
-    PS_PKT(Packet*);
+    PS_PKT(snort::Packet*);
 };
 
 void ps_cleanup();

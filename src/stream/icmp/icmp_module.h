@@ -26,9 +26,12 @@
 
 extern const PegInfo icmp_pegs[];
 extern THREAD_LOCAL struct IcmpStats icmpStats;
-extern THREAD_LOCAL ProfileStats icmp_perf_stats;
+extern THREAD_LOCAL snort::ProfileStats icmp_perf_stats;
 
+namespace snort
+{
 struct SnortConfig;
+}
 
 struct IcmpStats
 {
@@ -44,15 +47,15 @@ struct IcmpStats
 
 struct StreamIcmpConfig;
 
-class StreamIcmpModule : public Module
+class StreamIcmpModule : public snort::Module
 {
 public:
     StreamIcmpModule();
-    bool set(const char*, Value&, SnortConfig*) override;
-    bool begin(const char*, int, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
+    bool begin(const char*, int, snort::SnortConfig*) override;
+    bool end(const char*, int, snort::SnortConfig*) override;
 
-    ProfileStats* get_profile() const override;
+    snort::ProfileStats* get_profile() const override;
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
 

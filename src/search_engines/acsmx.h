@@ -29,6 +29,11 @@
 
 #include "search_common.h"
 
+namespace snort
+{
+struct SnortConfig;
+}
+
 #define ALPHABET_SIZE    256
 #define ACSM_FAIL_STATE   (-1)
 
@@ -94,7 +99,7 @@ ACSM_STRUCT* acsmNew(const MpseAgent*);
 int acsmAddPattern(ACSM_STRUCT* p, const uint8_t* pat, unsigned n,
     bool nocase, bool negative, void* id);
 
-int acsmCompile(struct SnortConfig*, ACSM_STRUCT*);
+int acsmCompile(snort::SnortConfig*, ACSM_STRUCT*);
 
 int acsmSearch(ACSM_STRUCT * acsm, const uint8_t* T,
     int n, MpseMatch, void* context, int* current_state);

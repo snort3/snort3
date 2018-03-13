@@ -27,19 +27,19 @@
 #define NORM_NAME "normalizer"
 #define NORM_HELP "packet scrubbing for inline mode"
 
-extern THREAD_LOCAL ProfileStats norm_perf_stats;
+extern THREAD_LOCAL snort::ProfileStats norm_perf_stats;
 
-class NormalizeModule : public Module
+class NormalizeModule : public snort::Module
 {
 public:
     NormalizeModule();
     ~NormalizeModule() override;
 
-    bool set(const char*, Value&, SnortConfig*) override;
-    bool begin(const char*, int, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
+    bool begin(const char*, int, snort::SnortConfig*) override;
+    bool end(const char*, int, snort::SnortConfig*) override;
 
-    ProfileStats* get_profile() const override;
+    snort::ProfileStats* get_profile() const override;
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
 
@@ -50,8 +50,8 @@ public:
     { return INSPECT; }
 
 private:
-    bool set_ip4(const char*, Value&, SnortConfig*);
-    bool set_tcp(const char*, Value&, SnortConfig*);
+    bool set_ip4(const char*, snort::Value&, snort::SnortConfig*);
+    bool set_tcp(const char*, snort::Value&, snort::SnortConfig*);
 
     void add_test_peg(const PegInfo&) const;
 

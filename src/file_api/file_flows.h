@@ -30,6 +30,9 @@
 #include "file_module.h"
 #include "file_policy.h"
 
+
+namespace snort
+{
 class FileContext;
 class Flow;
 
@@ -98,6 +101,6 @@ private:
     Flow* flow = nullptr;
     FilePolicyBase* file_policy = nullptr;
 };
-
+}
 #endif
 

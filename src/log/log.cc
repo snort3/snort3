@@ -35,11 +35,14 @@
 #include "log_text.h"
 #include "messages.h"
 
+using namespace snort;
+
 #define DEFAULT_DAEMON_ALERT_FILE  "alert"
 
-/* Input is packet and an nine-byte (including NULL) character array.  Results
- * are put into the character array.
- */
+namespace snort
+{
+// Input is packet and an nine-byte (including NULL) character array.  Results
+// are put into the character array.
 void CreateTCPFlagString(const tcp::TCPHdr* const tcph, char* flagBuffer)
 {
     /* parse TCP flags */
@@ -52,6 +55,7 @@ void CreateTCPFlagString(const tcp::TCPHdr* const tcph, char* flagBuffer)
     *flagBuffer++ = (char)((tcph->th_flags & TH_SYN)  ? 'S' : '*');
     *flagBuffer++ = (char)((tcph->th_flags & TH_FIN)  ? 'F' : '*');
     *flagBuffer = '\0';
+}
 }
 
 /****************************************************************************

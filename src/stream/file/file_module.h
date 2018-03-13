@@ -22,11 +22,14 @@
 
 #include "framework/module.h"
 
+namespace snort
+{
 struct SnortConfig;
+}
 
 extern const PegInfo file_pegs[];
 extern THREAD_LOCAL struct FileStats file_stats;
-extern THREAD_LOCAL ProfileStats file_perf_stats;
+extern THREAD_LOCAL snort::ProfileStats file_perf_stats;
 
 //-------------------------------------------------------------------------
 // stream_file module
@@ -35,13 +38,13 @@ extern THREAD_LOCAL ProfileStats file_perf_stats;
 #define MOD_NAME "stream_file"
 #define MOD_HELP "stream inspector for file flow tracking and processing"
 
-class StreamFileModule : public Module
+class StreamFileModule : public snort::Module
 {
 public:
     StreamFileModule();
 
-    bool begin(const char*, int, SnortConfig*) override;
-    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, snort::SnortConfig*) override;
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
 
     Usage get_usage() const override
     { return INSPECT; }

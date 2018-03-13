@@ -28,8 +28,11 @@
 #include "main/snort_types.h"
 #include "time/clock_defs.h"
 
+namespace snort
+{
 class IpsOption;
 struct Packet;
+}
 struct RuleTreeNode;
 struct PortObject;
 struct OutputSet;
@@ -39,9 +42,9 @@ struct sfip_var_t;
 /* same as the rule header FP list */
 struct OptFpList
 {
-    IpsOption* ips_opt;
+    snort::IpsOption* ips_opt;
 
-    int (* OptTestFunc)(void* option_data, class Cursor&, Packet*);
+    int (* OptTestFunc)(void* option_data, class Cursor&, snort::Packet*);
 
     OptFpList* next;
 
@@ -76,7 +79,7 @@ struct OptTreeNode
     /* plugin/detection functions go here */
     OptFpList* opt_func;
     OutputSet* outputFuncs; /* per sid enabled output functions */
-    IpsOption* agent;
+    snort::IpsOption* agent;
 
     /* metadata about signature */
     SigInfo sigInfo;
@@ -124,7 +127,7 @@ struct RuleFpList
     void* context;
 
     /* rule check function pointer */
-    int (* RuleHeadFunc)(Packet*, RuleTreeNode*, RuleFpList*, int);
+    int (* RuleHeadFunc)(snort::Packet*, RuleTreeNode*, RuleFpList*, int);
 
     /* pointer to the next rule function node */
     RuleFpList* next;
@@ -148,14 +151,14 @@ struct RuleTreeNode
 
     uint32_t flags;     /* control flags */
 
-    Actions::Type type;
+    snort::Actions::Type type;
 
     // reference count from otn.
     // Multiple OTNs can reference this RTN with the same policy.
     unsigned int otnRefCount;
 };
 
-typedef int (* RuleOptEvalFunc)(void*, Cursor&, Packet*);
+typedef int (* RuleOptEvalFunc)(void*, Cursor&, snort::Packet*);
 OptFpList* AddOptFuncToList(RuleOptEvalFunc, OptTreeNode*);
 
 void* get_rule_type_data(OptTreeNode*, const char* name);
@@ -168,9 +171,9 @@ inline bool otn_has_plugin(OptTreeNode* otn, int id)
 inline void otn_set_plugin(OptTreeNode* otn, int id)
 { otn->plugins |= (0x1 << id); }
 
-bool otn_set_agent(OptTreeNode*, IpsOption*);
+bool otn_set_agent(OptTreeNode*, snort::IpsOption*);
 
-void otn_trigger_actions(const OptTreeNode*, Packet*);
+void otn_trigger_actions(const OptTreeNode*, snort::Packet*);
 
 #endif
 

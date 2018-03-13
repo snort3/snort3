@@ -36,6 +36,8 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
+using namespace snort;
+
 #if defined(__APPLE__)
 #define __THROW
 #define __SOCKADDR_ARG          struct sockaddr*

@@ -38,6 +38,8 @@
 #include "profiler/profiler.h"
 #include "utils/util.h"
 
+using namespace snort;
+
 #ifndef PCRE_STUDY_JIT_COMPILE
 #define PCRE_STUDY_JIT_COMPILE 0
 #endif

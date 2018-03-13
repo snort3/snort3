@@ -21,7 +21,7 @@
 
 #include "framework/inspector.h"
 
-extern const InspectApi tn_api;
+extern const snort::InspectApi tn_api;
 
 #endif
 

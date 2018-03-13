@@ -37,6 +37,8 @@
 #include "catch/snort_catch.h"
 #endif
 
+using namespace snort;
+
 #define PACKET_TRACER_USER_ENABLED  0x00000001
 #define PACKET_TRACER_DAQ_ENABLED   0x00000002
 

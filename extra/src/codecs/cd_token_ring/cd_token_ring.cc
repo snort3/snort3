@@ -25,6 +25,8 @@
 #include "framework/codec.h"
 #include "protocols/token_ring.h"
 
+using namespace snort;
+
 namespace
 {
 #define TR_NAME "token_ring"

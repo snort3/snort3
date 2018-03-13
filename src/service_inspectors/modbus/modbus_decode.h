@@ -22,10 +22,15 @@
 #ifndef MODBUS_DECODE_H
 #define MODBUS_DECODE_H
 
+namespace snort
+{
+struct Packet;
+}
+
 /* Need 8 bytes for MBAP Header + Function Code */
 #define MODBUS_MIN_LEN 8
 
-bool ModbusDecode(struct Packet*);
+bool ModbusDecode(snort::Packet*);
 
 #endif
 

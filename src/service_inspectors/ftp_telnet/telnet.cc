@@ -35,6 +35,8 @@
 #include "pp_telnet.h"
 #include "telnet_module.h"
 
+using namespace snort;
+
 THREAD_LOCAL ProfileStats telnetPerfStats;
 THREAD_LOCAL TelnetStats tnstats;
 

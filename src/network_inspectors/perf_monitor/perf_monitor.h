@@ -26,7 +26,10 @@
 
 #include "perf_module.h"
 
+namespace snort
+{
 struct Packet;
+}
 
 extern PerfConfig* perfmon_config;  // FIXIT-M shouldn't be needed externally
 extern THREAD_LOCAL bool perfmon_rotate_perf_file;

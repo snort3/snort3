@@ -28,6 +28,8 @@
 #include "main/snort_debug.h"
 #include "packet_io/active.h"
 
+using namespace snort;
+
 THREAD_LOCAL PegCount tcp_norm_stats[PC_TCP_MAX][NORM_MODE_MAX];
 
 static const PegInfo pegName[] =

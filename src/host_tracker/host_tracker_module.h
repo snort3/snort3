@@ -35,10 +35,10 @@
 #define host_tracker_help \
     "configure hosts"
 
-class HostTrackerModule : public Module
+class HostTrackerModule : public snort::Module
 {
 public:
-    HostTrackerModule() : Module("host_tracker", host_tracker_help, host_tracker_params, true)
+    HostTrackerModule() : snort::Module("host_tracker", host_tracker_help, host_tracker_params, true)
     { host = nullptr; }
 
     ~HostTrackerModule() override
@@ -47,16 +47,16 @@ public:
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
 
-    bool set(const char*, Value&, SnortConfig*) override;
-    bool begin(const char*, int, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
+    bool begin(const char*, int, snort::SnortConfig*) override;
+    bool end(const char*, int, snort::SnortConfig*) override;
 
     Usage get_usage() const override
     { return GLOBAL; }
 
 private:
-    static const Parameter host_tracker_params[];
-    static const Parameter service_params[];
+    static const snort::Parameter host_tracker_params[];
+    static const snort::Parameter service_params[];
 
     HostApplicationEntry app;
     HostTracker* host;

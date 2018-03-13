@@ -32,6 +32,8 @@
 #include "protocols/eth.h"
 #include "protocols/packet.h"
 
+using namespace snort;
+
 #define DHCP_MAGIC_COOKIE 0x63825363
 #define DHCP_OPTION55_LEN_MAX 255
 

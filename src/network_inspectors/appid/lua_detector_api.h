@@ -30,7 +30,10 @@
 #include "client_plugins/client_detector.h"
 #include "service_plugins/service_detector.h"
 
+namespace snort
+{
 struct Packet;
+}
 struct lua_State;
 class AppIdSession;
 
@@ -62,7 +65,7 @@ struct LuaDetectorParameters
     uint16_t size = 0;
     int dir = 0;
     AppIdSession* asd;
-    Packet* pkt = nullptr;
+    snort::Packet* pkt = nullptr;
     uint8_t macAddress[6] = { 0 };
 };
 

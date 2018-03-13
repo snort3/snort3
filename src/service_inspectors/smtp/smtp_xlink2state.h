@@ -26,6 +26,6 @@
 
 #include "smtp.h"
 
-int ParseXLink2State(SMTP_PROTO_CONF*, Packet*, SMTPData*, const uint8_t*);
+int ParseXLink2State(SMTP_PROTO_CONF*, snort::Packet*, SMTPData*, const uint8_t*);
 
 #endif

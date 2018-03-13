@@ -23,15 +23,18 @@
 #include "stream/flush_bucket.h"
 #include "stream/stream_splitter.h"
 
+namespace snort
+{
 class Flow;
+}
 
 //---------------------------------------------------------------------------------
 // FtpDataSplitter - flush when current seg size is different from previous segment
 //---------------------------------------------------------------------------------
-class FtpDataSplitter : public StreamSplitter
+class FtpDataSplitter : public snort::StreamSplitter
 {
 public:
-    FtpDataSplitter(bool b, uint16_t sz = 0) : StreamSplitter(b)
+    FtpDataSplitter(bool b, uint16_t sz = 0) : snort::StreamSplitter(b)
     {
         min = sz + get_flush_bucket_size();
         restart_scan();
@@ -39,8 +42,8 @@ public:
     }
 
 
-    Status scan(Flow*, const uint8_t*, uint32_t len, uint32_t flags, uint32_t* fp ) override;
-    bool finish(Flow*) override;
+    Status scan(snort::Flow*, const uint8_t*, uint32_t len, uint32_t flags, uint32_t* fp ) override;
+    bool finish(snort::Flow*) override;
 
 private:
     uint16_t min;

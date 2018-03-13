@@ -26,6 +26,7 @@
 #include "main/policy.h"
 #include "stream/tcp/tcp_normalizer.h"
 
+using namespace snort;
 using namespace std;
 
 static bool allow_names(NormalizerConfig* config, const char* s)
@@ -357,13 +358,13 @@ bool NormalizeModule::end(const char* fqn, int, SnortConfig* sc)
 {
     if ( !strcmp(fqn, NORM_NAME) )
     {
-        NetworkPolicy* policy = get_network_policy();
+        NetworkPolicy* policy = snort::get_network_policy();
 
         // FIXIT-M untangle these policies. this is a workaround for loading inspection-only confs
         if ( policy == nullptr )
         {
             set_network_policy(sc);
-            policy = get_network_policy();
+            policy = snort::get_network_policy();
             set_network_policy((NetworkPolicy*)nullptr);
         }
 

@@ -24,8 +24,12 @@
 #include "flow/flow_config.h"
 #include "framework/module.h"
 
-extern THREAD_LOCAL ProfileStats s5PerfStats;
+extern THREAD_LOCAL snort::ProfileStats s5PerfStats;
+
+namespace snort
+{
 struct SnortConfig;
+}
 
 //-------------------------------------------------------------------------
 // stream module
@@ -71,17 +75,17 @@ struct StreamModuleConfig
     bool ip_frags_only;
 };
 
-class StreamModule : public Module
+class StreamModule : public snort::Module
 {
 public:
     StreamModule();
 
-    bool begin(const char*, int, SnortConfig*) override;
-    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, snort::SnortConfig*) override;
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
 
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
-    ProfileStats* get_profile() const override;
+    snort::ProfileStats* get_profile() const override;
     const StreamModuleConfig* get_data();
 
     void sum_stats(bool) override;

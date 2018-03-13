@@ -42,7 +42,7 @@ void FlushBucket::set(unsigned sz)
     if ( sz )
         s_flush_bucket = new ConstFlushBucket(sz);
 
-    else if ( SnortConfig::static_hash() )
+    else if ( snort::SnortConfig::static_hash() )
         s_flush_bucket = new StaticFlushBucket;
 
     else

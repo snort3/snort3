@@ -36,6 +36,11 @@ class AppIdSession;
 class ServiceDetector;
 class ServiceDiscoveryState;
 
+namespace snort
+{
+struct Packet;
+}
+
 #define STATE_ID_INCONCLUSIVE_SERVICE_WEIGHT 3
 #define STATE_ID_INVALID_CLIENT_THRESHOLD    9
 #define STATE_ID_NEEDED_DUPE_DETRACT_COUNT   3
@@ -70,18 +75,18 @@ public:
     ServiceDetector* get_next_tcp_detector(AppIdDetectorsIterator&);
     ServiceDetector* get_next_udp_detector(AppIdDetectorsIterator&);
 
-    bool do_service_discovery(AppIdSession&, Packet*, int);
-    int identify_service(AppIdSession&, Packet*, int dir);
-    int fail_service(AppIdSession&, const Packet*, int dir, ServiceDetector*);
-    int incompatible_data(AppIdSession&, const Packet*, int dir, ServiceDetector*);
+    bool do_service_discovery(AppIdSession&, snort::Packet*, int);
+    int identify_service(AppIdSession&, snort::Packet*, int dir);
+    int fail_service(AppIdSession&, const snort::Packet*, int dir, ServiceDetector*);
+    int incompatible_data(AppIdSession&, const snort::Packet*, int dir, ServiceDetector*);
     static int add_ftp_service_state(AppIdSession&);
 
 private:
     ServiceDiscovery(AppIdInspector& ins);
     void initialize() override;
-    void get_next_service(const Packet*, const int dir, AppIdSession&, ServiceDiscoveryState*);
+    void get_next_service(const snort::Packet*, const int dir, AppIdSession&, ServiceDiscoveryState*);
     void get_port_based_services(IpProtocol, uint16_t port, AppIdSession&);
-    void match_by_pattern(AppIdSession&, const Packet*, IpProtocol);
+    void match_by_pattern(AppIdSession&, const snort::Packet*, IpProtocol);
 
     std::map<uint16_t, std::vector<ServiceDetector*> > tcp_services;
     std::map<uint16_t, std::vector<ServiceDetector*> > udp_services;

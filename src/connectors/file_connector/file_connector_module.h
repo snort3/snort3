@@ -28,22 +28,22 @@
 #define FILE_CONNECTOR_NAME "file_connector"
 #define FILE_CONNECTOR_HELP "implement the file based connector"
 
-class FileConnectorModule : public Module
+class FileConnectorModule : public snort::Module
 {
 public:
     FileConnectorModule();
     ~FileConnectorModule() override;
 
-    bool set(const char*, Value&, SnortConfig*) override;
-    bool begin(const char*, int, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
+    bool begin(const char*, int, snort::SnortConfig*) override;
+    bool end(const char*, int, snort::SnortConfig*) override;
 
     FileConnectorConfig::FileConnectorConfigSet* get_and_clear_config();
 
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
 
-    ProfileStats* get_profile() const override;
+    snort::ProfileStats* get_profile() const override;
 
     Usage get_usage() const override
     { return GLOBAL; }

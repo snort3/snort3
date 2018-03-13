@@ -27,6 +27,8 @@
 #include "framework/codec.h"
 #include "packet_io/sfdaq.h"
 
+using namespace snort;
+
 #define CD_NAME "user"
 #define CD_HELP_STR "support for user sessions"
 #define CD_HELP ADD_DLT(CD_HELP_STR, DLT_USER)

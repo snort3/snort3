@@ -27,6 +27,8 @@
 
 #include "pp_packet_iface.h"
 
+using namespace snort;
+
 static const luaL_Reg methods[] =
 {
     {

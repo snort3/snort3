@@ -21,6 +21,8 @@
 typedef uint64_t Trace;
 class Value;
 
+namespace snort
+{
 Inspector::Inspector()
 {
     set_api(nullptr);
@@ -30,6 +32,7 @@ Inspector::~Inspector() { }
 bool Inspector::likes(Packet*) { return true; }
 bool Inspector::get_buf(const char*, Packet*, InspectionBuffer&) { return true; }
 class StreamSplitter* Inspector::get_splitter(bool) { return nullptr; }
+}
 
 class AppIdModule
 {
@@ -39,14 +42,14 @@ public:
 
 };
 
-class AppIdInspector : public Inspector
+class AppIdInspector : public snort::Inspector
 {
 public:
     AppIdInspector(AppIdModule& ) { }
     ~AppIdInspector() { }
-    void eval(Packet*) { }
-    bool configure(SnortConfig*) { return true; }
-    void show(SnortConfig*) { }
+    void eval(snort::Packet*) { }
+    bool configure(snort::SnortConfig*) { return true; }
+    void show(snort::SnortConfig*) { }
     void tinit() { }
     void tterm() { }
 };

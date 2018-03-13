@@ -31,6 +31,8 @@
 #include "managers/inspector_manager.h"
 #include "stream/stream.h"
 
+using namespace snort;
+
 // HA Session flags helper macros
 #define HA_IGNORED_SESSION_FLAGS \
     (SSNFLAG_COUNTED_INITIALIZE | SSNFLAG_COUNTED_ESTABLISH | SSNFLAG_COUNTED_CLOSING)

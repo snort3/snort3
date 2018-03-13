@@ -35,6 +35,8 @@
 #include "flow.h"
 #include "flow_key.h"
 
+using namespace snort;
+
 static const uint8_t HA_MESSAGE_VERSION = 3;
 
 // define message size and content constants.

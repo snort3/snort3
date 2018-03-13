@@ -28,6 +28,8 @@
 
 #include "pp_raw_buffer_iface.h"
 
+using namespace snort;
+
 static const luaL_Reg methods[] =
 {
     {

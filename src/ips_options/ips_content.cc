@@ -36,6 +36,8 @@
 
 #include "extract.h"
 
+using namespace snort;
+
 #define MAX_PATTERN_SIZE 2048
 
 #define s_name "content"

@@ -31,6 +31,8 @@
 #include "protocols/eth.h"
 #include "protocols/packet_manager.h"
 
+using namespace snort;
+
 #define CD_ETH_NAME "eth"
 #define CD_ETH_HELP_STR "support for ethernet protocol"
 #define CD_ETH_HELP ADD_DLT(ADD_DLT(CD_ETH_HELP_STR, DLT_EN10MB), DLT_PPP_ETHER)

@@ -113,7 +113,7 @@ public:
         return tcp_event;
     }
 
-    TcpEvent set_tcp_event(TcpSegmentDescriptor& tsd);
+    TcpEvent set_tcp_event(TcpSegmentDescriptor&);
 
     void set_tcp_event(TcpEvent tcp_event)
     {
@@ -316,7 +316,7 @@ public:
         this->mss = mss;
     }
 
-    void cache_mac_address(TcpSegmentDescriptor& tsd, uint8_t direction);
+    void cache_mac_address(TcpSegmentDescriptor&, uint8_t direction);
     bool compare_mac_addresses(const uint8_t eth_addr[]);
 
     bool is_rst_pkt_sent() const
@@ -334,30 +334,30 @@ public:
 
     virtual void print() =  0;
     virtual void init_flush_policy() =  0;
-    virtual void set_splitter(StreamSplitter* ss) =  0;
-    virtual void set_splitter(const Flow* flow) =  0;
+    virtual void set_splitter(snort::StreamSplitter* ss) =  0;
+    virtual void set_splitter(const snort::Flow* flow) =  0;
     virtual void reset_splitter( ) = 0;
 
     virtual void init_on_syn_sent(TcpSegmentDescriptor&) =  0;
     virtual void init_on_syn_recv(TcpSegmentDescriptor&) =  0;
-    virtual void init_on_synack_sent(TcpSegmentDescriptor& tsd) =  0;
-    virtual void init_on_synack_recv(TcpSegmentDescriptor& tsd) =  0;
-    virtual void init_on_3whs_ack_sent(TcpSegmentDescriptor& tsd) =  0;
-    virtual void init_on_3whs_ack_recv(TcpSegmentDescriptor& tsd) =  0;
-    virtual void init_on_data_seg_sent(TcpSegmentDescriptor& tsd) =  0;
-    virtual void init_on_data_seg_recv(TcpSegmentDescriptor& tsd) =  0;
-    virtual void finish_server_init(TcpSegmentDescriptor& tsd) =  0;
-    virtual void finish_client_init(TcpSegmentDescriptor& tsd) =  0;
+    virtual void init_on_synack_sent(TcpSegmentDescriptor&) =  0;
+    virtual void init_on_synack_recv(TcpSegmentDescriptor&) =  0;
+    virtual void init_on_3whs_ack_sent(TcpSegmentDescriptor&) =  0;
+    virtual void init_on_3whs_ack_recv(TcpSegmentDescriptor&) =  0;
+    virtual void init_on_data_seg_sent(TcpSegmentDescriptor&) =  0;
+    virtual void init_on_data_seg_recv(TcpSegmentDescriptor&) =  0;
+    virtual void finish_server_init(TcpSegmentDescriptor&) =  0;
+    virtual void finish_client_init(TcpSegmentDescriptor&) =  0;
 
-    virtual void update_tracker_ack_recv(TcpSegmentDescriptor& tsd) =  0;
-    virtual void update_tracker_ack_sent(TcpSegmentDescriptor& tsd) =  0;
-    virtual bool update_on_3whs_ack(TcpSegmentDescriptor& tsd) =  0;
-    virtual bool update_on_rst_recv(TcpSegmentDescriptor& tsd) =  0;
+    virtual void update_tracker_ack_recv(TcpSegmentDescriptor&) =  0;
+    virtual void update_tracker_ack_sent(TcpSegmentDescriptor&) =  0;
+    virtual bool update_on_3whs_ack(TcpSegmentDescriptor&) =  0;
+    virtual bool update_on_rst_recv(TcpSegmentDescriptor&) =  0;
     virtual void update_on_rst_sent() =  0;
-    virtual bool update_on_fin_recv(TcpSegmentDescriptor& tsd) =  0;
-    virtual bool update_on_fin_sent(TcpSegmentDescriptor& tsd) =  0;
-    virtual bool is_segment_seq_valid(TcpSegmentDescriptor& tsd) =  0;
-    virtual void flush_data_on_fin_recv(TcpSegmentDescriptor& tsd) =  0;
+    virtual bool update_on_fin_recv(TcpSegmentDescriptor&) =  0;
+    virtual bool update_on_fin_sent(TcpSegmentDescriptor&) =  0;
+    virtual bool is_segment_seq_valid(TcpSegmentDescriptor&) =  0;
+    virtual void flush_data_on_fin_recv(TcpSegmentDescriptor&) =  0;
 
     bool client_tracker;
     TcpState tcp_state;
@@ -386,7 +386,7 @@ public:
     uint32_t r_win_base = 0; /* remote side window base sequence number
      * (i.e. the last ack we got) */
 
-    StreamSplitter* splitter = nullptr;
+    snort::StreamSplitter* splitter = nullptr;
     TcpNormalizer* normalizer = nullptr;
     TcpReassembler* reassembler = nullptr;
     TcpSession* session = nullptr;

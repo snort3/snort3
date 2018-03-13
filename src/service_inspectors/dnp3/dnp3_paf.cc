@@ -27,6 +27,8 @@
 
 #include "dnp3.h"
 
+using namespace snort;
+
 /* Function: dnp3_paf()
 
    Purpose: DNP3 PAF callback.

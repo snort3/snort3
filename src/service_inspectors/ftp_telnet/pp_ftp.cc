@@ -54,6 +54,8 @@
 #include "ftpp_return_codes.h"
 #include "pp_telnet.h"
 
+using namespace snort;
+
 #ifndef MAXHOSTNAMELEN /* Why doesn't Windows define this? */
 #define MAXHOSTNAMELEN 256
 #endif

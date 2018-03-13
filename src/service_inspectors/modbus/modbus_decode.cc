@@ -32,6 +32,8 @@
 #include "modbus.h"
 #include "modbus_module.h"
 
+using namespace snort;
+
 // FIXIT-L convert this stuff to a table and make configurable
 
 /* Modbus Function Codes */

@@ -22,8 +22,11 @@
 
 #include "lua/lua_iface.h"
 
+namespace snort
+{
 class Flow;
+}
 
-extern const struct Lua::TypeInterface<Flow> FlowIface;
+extern const struct Lua::TypeInterface<snort::Flow> FlowIface;
 
 #endif

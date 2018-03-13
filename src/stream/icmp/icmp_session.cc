@@ -36,6 +36,8 @@
 #include "icmp_module.h"
 #include "stream_icmp.h"
 
+using namespace snort;
+
 const PegInfo icmp_pegs[] =
 {
     SESSION_PEGS("icmp"),

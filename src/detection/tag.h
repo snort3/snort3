@@ -29,7 +29,11 @@
 
 #include <cstdint>
 
+namespace snort
+{
 struct Packet;
+}
+
 struct OptTreeNode;
 struct Event;
 
@@ -56,8 +60,8 @@ struct TagData
 
 void InitTag();
 void CleanupTag();
-int CheckTagList(Packet*, Event&, void**);
-void SetTags(Packet*, const OptTreeNode*, uint16_t);
+int CheckTagList(snort::Packet*, Event&, void**);
+void SetTags(snort::Packet*, const OptTreeNode*, uint16_t);
 
 #endif
 

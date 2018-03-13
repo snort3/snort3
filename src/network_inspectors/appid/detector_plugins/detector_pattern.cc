@@ -118,11 +118,11 @@ static void read_patterns(PortPatternNode* portPatternList, PatternService** ser
     }
 }
 
-static void register_pattern(SearchTool** patterns, Pattern* pattern)
+static void register_pattern(snort::SearchTool** patterns, Pattern* pattern)
 {
     if (!*patterns)
     {
-        *patterns = new SearchTool("ac_full", true);
+        *patterns = new snort::SearchTool("ac_full", true);
         if (!*patterns)
         {
             ErrorMessage("Error initializing the pattern table\n");
@@ -199,7 +199,7 @@ static int pattern_match(void* id, void*, int match_end_pos, void* data, void*)
     return 0;
 }
 
-static int csd_pattern_tree_search(const uint8_t* data, uint16_t size, SearchTool* patternTree)
+static int csd_pattern_tree_search(const uint8_t* data, uint16_t size, snort::SearchTool* patternTree)
 {
     PServiceMatch* matches = nullptr;
 
@@ -461,7 +461,7 @@ PatternServiceDetector::~PatternServiceDetector()
 
 int PatternServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
-    SearchTool* patternTree = nullptr;
+    snort::SearchTool* patternTree = nullptr;
 
     if (!args.data )
         return APPID_ENULL;
@@ -543,7 +543,7 @@ int PatternClientDetector::validate(AppIdDiscoveryArgs& args)
     if (!args.size || args.dir == APP_ID_FROM_RESPONDER)
         return APPID_INPROCESS;
 
-    SearchTool* patternTree = (args.asd.protocol == IpProtocol::UDP) ?
+    snort::SearchTool* patternTree = (args.asd.protocol == IpProtocol::UDP) ?
         udp_pattern_matcher : tcp_pattern_matcher;
     AppId id = csd_pattern_tree_search(args.data, args.size, patternTree);
     if (!id)

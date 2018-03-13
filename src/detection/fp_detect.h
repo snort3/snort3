@@ -33,19 +33,23 @@
 
 #define REBUILD_FLAGS (PKT_REBUILT_FRAG | PKT_REBUILT_STREAM)
 
+namespace snort
+{
+class IpsContext;
 struct Packet;
-struct PortGroup;
 struct ProfileStats;
+}
+struct PortGroup;
 struct OptTreeNode;
 
-extern THREAD_LOCAL ProfileStats rulePerfStats;
-extern THREAD_LOCAL ProfileStats ruleRTNEvalPerfStats;
-extern THREAD_LOCAL ProfileStats ruleOTNEvalPerfStats;
-extern THREAD_LOCAL ProfileStats ruleNFPEvalPerfStats;
+extern THREAD_LOCAL snort::ProfileStats rulePerfStats;
+extern THREAD_LOCAL snort::ProfileStats ruleRTNEvalPerfStats;
+extern THREAD_LOCAL snort::ProfileStats ruleOTNEvalPerfStats;
+extern THREAD_LOCAL snort::ProfileStats ruleNFPEvalPerfStats;
 
 struct RuleTreeNode;
-int fpLogEvent(const RuleTreeNode*, const OptTreeNode*, Packet*);
-int fpEvalRTN(RuleTreeNode*, Packet*, int check_ports);
+int fpLogEvent(const RuleTreeNode*, const OptTreeNode*, snort::Packet*);
+int fpEvalRTN(RuleTreeNode*, snort::Packet*, int check_ports);
 
 /*
 **  This define is for the number of unique events
@@ -78,7 +82,7 @@ struct MatchInfo
 struct OtnxMatchData
 {
     PortGroup* pg;
-    Packet* p;
+    snort::Packet* p;
 
     const uint8_t* data;
     unsigned size;
@@ -93,13 +97,12 @@ struct OtnxMatchData
 
 int fpAddMatch(OtnxMatchData*, int pLen, const OptTreeNode*);
 
-class IpsContext;
-void fp_set_context(IpsContext&);
-void fp_clear_context(IpsContext&);
+void fp_set_context(snort::IpsContext&);
+void fp_clear_context(snort::IpsContext&);
 
-void fp_local(Packet*);
-void fp_offload(Packet*);
-void fp_onload(Packet*);
+void fp_local(snort::Packet*);
+void fp_offload(snort::Packet*);
+void fp_onload(snort::Packet*);
 
 #endif
 

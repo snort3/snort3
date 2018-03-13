@@ -23,6 +23,7 @@
 
 #include "http2_module.h"
 
+using namespace snort;
 using namespace Http2Enums;
 
 const Parameter Http2Module::http2_params[] =

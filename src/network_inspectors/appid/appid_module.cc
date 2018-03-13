@@ -33,6 +33,7 @@
 #include "profiler/profiler.h"
 #include "utils/util.h"
 
+using namespace snort;
 using namespace std;
 
 //-------------------------------------------------------------------------

@@ -22,8 +22,11 @@
 
 #include "lua/lua_iface.h"
 
+namespace snort
+{
 struct CodecData;
+}
 
-extern const struct Lua::TypeInterface<CodecData> CodecDataIface;
+extern const struct Lua::TypeInterface<snort::CodecData> CodecDataIface;
 
 #endif

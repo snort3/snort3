@@ -25,40 +25,44 @@
 
 #include "stream/stream.h"
 
+namespace snort
+{
+class Flow;
 struct Packet;
 struct SfIp;
-class Flow;
+class StreamSplitter;
+}
 
 class Session
 {
 public:
     virtual ~Session() = default;
 
-    virtual bool setup(Packet*) { return true; }
-    virtual void update_direction(char /*dir*/, const SfIp*, uint16_t /*port*/) { }
-    virtual int process(Packet*) { return 0; }
+    virtual bool setup(snort::Packet*) { return true; }
+    virtual void update_direction(char /*dir*/, const snort::SfIp*, uint16_t /*port*/) { }
+    virtual int process(snort::Packet*) { return 0; }
 
-    virtual void restart(Packet*) { }
-    virtual void precheck(Packet*) { }
+    virtual void restart(snort::Packet*) { }
+    virtual void precheck(snort::Packet*) { }
     virtual void clear() = 0;
-    virtual void cleanup(Packet* = nullptr) { clear(); }
+    virtual void cleanup(snort::Packet* = nullptr) { clear(); }
 
-    virtual bool add_alert(Packet*, uint32_t /*gid*/, uint32_t /*sid*/) { return false; }
-    virtual bool check_alerted(Packet*, uint32_t /*gid*/, uint32_t /*sid*/) { return false; }
+    virtual bool add_alert(snort::Packet*, uint32_t /*gid*/, uint32_t /*sid*/) { return false; }
+    virtual bool check_alerted(snort::Packet*, uint32_t /*gid*/, uint32_t /*sid*/) { return false; }
 
     virtual int update_alert(
-        Packet*, uint32_t /*gid*/, uint32_t /*sid*/,
+        snort::Packet*, uint32_t /*gid*/, uint32_t /*sid*/,
         uint32_t /*event_id*/, uint32_t /*event_second*/) { return 0; }
 
-    virtual void flush_client(Packet*) { }
-    virtual void flush_server(Packet*) { }
-    virtual void flush_talker(Packet*, bool /*final_flush */ = false) { }
-    virtual void flush_listener(Packet*, bool /*final_flush */ = false) { }
+    virtual void flush_client(snort::Packet*) { }
+    virtual void flush_server(snort::Packet*) { }
+    virtual void flush_talker(snort::Packet*, bool /*final_flush */ = false) { }
+    virtual void flush_listener(snort::Packet*, bool /*final_flush */ = false) { }
 
-    virtual void set_splitter(bool /*c2s*/, StreamSplitter*) { }
-    virtual StreamSplitter* get_splitter(bool /*c2s*/) { return nullptr; }
+    virtual void set_splitter(bool /*c2s*/, snort::StreamSplitter*) { }
+    virtual snort::StreamSplitter* get_splitter(bool /*c2s*/) { return nullptr; }
 
-    virtual void set_extra_data(Packet*, uint32_t /*flag*/) { }
+    virtual void set_extra_data(snort::Packet*, uint32_t /*flag*/) { }
 
     virtual bool is_sequenced(uint8_t /*dir*/) { return true; }
     virtual bool are_packets_missing(uint8_t /*dir*/) { return true; }
@@ -67,10 +71,10 @@ public:
     virtual uint8_t missing_in_reassembled(uint8_t /*dir*/) { return SSN_MISSING_NONE; }
 
 protected:
-    Session(Flow* f) { flow = f; }
+    Session(snort::Flow* f) { flow = f; }
 
 public:
-    Flow* flow;  // FIXIT-L use reference?
+    snort::Flow* flow;  // FIXIT-L use reference?
 };
 
 /* These should be tracked by all Session subclasses. Add to top of peg list.

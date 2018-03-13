@@ -45,7 +45,7 @@ public:
         assert((sid > 0) && (sid <= MAX));
         if (!events_generated[sid-1])
         {
-            DetectionEngine::queue_event(HttpEnums::HTTP_GID, (uint32_t)sid);
+            snort::DetectionEngine::queue_event(HttpEnums::HTTP_GID, (uint32_t)sid);
             events_generated[sid-1] = true;
         }
     }

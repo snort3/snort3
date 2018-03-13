@@ -24,8 +24,11 @@
 
 #include <cstdint>
 
+namespace snort
+{
 struct Packet;
+}
 
-int SMTP_NormalizeCmd(Packet*, const uint8_t*, const uint8_t*, const uint8_t*);
+int SMTP_NormalizeCmd(snort::Packet*, const uint8_t*, const uint8_t*, const uint8_t*);
 
 #endif

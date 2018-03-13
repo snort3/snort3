@@ -63,24 +63,27 @@
 #include <vector>
 #include "flow/flow_key.h"
 
+struct ExpectNode;
+
+namespace snort
+{
 class Flow;
 class FlowData;
 struct Packet;
-struct ExpectNode;
-struct ExpectFlow;
 
 struct SO_PUBLIC ExpectFlow
 {
     struct ExpectFlow* next;
-    FlowData* data;
+    snort::FlowData* data;
 
     ~ExpectFlow();
     void clear();
-    int add_flow_data(FlowData*);
-    FlowData* get_flow_data(unsigned);
+    int add_flow_data(snort::FlowData*);
+    snort::FlowData* get_flow_data(unsigned);
     static std::vector<ExpectFlow*>* get_expect_flows();
     static void reset_expect_flows();
 };
+}
 
 class ExpectCache
 {
@@ -91,13 +94,13 @@ public:
     ExpectCache(const ExpectCache&) = delete;
     ExpectCache& operator=(const ExpectCache&) = delete;
 
-    int add_flow(const Packet *ctrlPkt, PktType, IpProtocol,
-        const SfIp* cliIP, uint16_t cliPort,
-        const SfIp* srvIP, uint16_t srvPort,
-        char direction, FlowData*, int16_t appId = 0);
+    int add_flow(const snort::Packet *ctrlPkt, PktType, IpProtocol,
+        const snort::SfIp* cliIP, uint16_t cliPort,
+        const snort::SfIp* srvIP, uint16_t srvPort,
+        char direction, snort::FlowData*, int16_t appId = 0);
 
-    bool is_expected(Packet*);
-    bool check(Packet*, Flow*);
+    bool is_expected(snort::Packet*);
+    bool check(snort::Packet*, snort::Flow*);
 
     unsigned long get_expects() { return expects; }
     unsigned long get_realized() { return realized; }
@@ -108,15 +111,15 @@ private:
     void prune();
 
     ExpectNode* get_node(FlowKey&, bool&);
-    ExpectFlow* get_flow(ExpectNode*, uint32_t, int16_t);
-    bool set_data(ExpectNode*, ExpectFlow*&, FlowData*);
-    ExpectNode* find_node_by_packet(Packet*, FlowKey&);
-    bool process_expected(ExpectNode*, FlowKey&, Packet*, Flow*);
+    snort::ExpectFlow* get_flow(ExpectNode*, uint32_t, int16_t);
+    bool set_data(ExpectNode*, snort::ExpectFlow*&, snort::FlowData*);
+    ExpectNode* find_node_by_packet(snort::Packet*, FlowKey&);
+    bool process_expected(ExpectNode*, FlowKey&, snort::Packet*, snort::Flow*);
 
 private:
     class ZHash* hash_table;
     ExpectNode* nodes;
-    ExpectFlow* pool, * free_list;
+    snort::ExpectFlow* pool, * free_list;
 
     unsigned long expects, realized;
     unsigned long prunes, overflows;

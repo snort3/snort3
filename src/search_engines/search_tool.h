@@ -22,6 +22,8 @@
 
 #include "framework/mpse.h"
 
+namespace snort
+{
 class SO_PUBLIC SearchTool
 {
 public:
@@ -50,6 +52,6 @@ private:
     class Mpse* mpse;
     unsigned max_len;
 };
-
+} // namespace snort
 #endif
 

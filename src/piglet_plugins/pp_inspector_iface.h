@@ -22,8 +22,11 @@
 
 #include "lua/lua_iface.h"
 
+namespace snort
+{
 class Inspector;
+}
 
-extern const struct Lua::InstanceInterface<Inspector> InspectorIface;
+extern const struct Lua::InstanceInterface<snort::Inspector> InspectorIface;
 
 #endif

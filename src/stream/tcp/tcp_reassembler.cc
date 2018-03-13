@@ -36,6 +36,8 @@
 #include "tcp_module.h"
 #include "tcp_normalizer.h"
 
+using namespace snort;
+
 ReassemblyPolicy stream_reassembly_policy_map[] =
 {
     ReassemblyPolicy::OS_INVALID,
@@ -635,7 +637,7 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
             tcpStats.rebuilt_bytes += flushed_bytes;
 
             ProfileExclude profile_exclude(s5TcpFlushPerfStats);
-            Snort::inspect(pdu);
+            snort::Snort::inspect(pdu);
         }
         else
         {
@@ -726,7 +728,7 @@ int TcpReassembler::do_zero_byte_flush(Packet* p, uint32_t pkt_flags)
 
         show_rebuilt_packet(pdu);
         ProfileExclude profile_exclude(s5TcpFlushPerfStats);
-        Snort::inspect(pdu);
+        snort::Snort::inspect(pdu);
         if ( tracker->splitter )
             tracker->splitter->update();
      }

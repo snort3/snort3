@@ -25,6 +25,8 @@
 #include "framework/codec.h"
 #include "main/snort_config.h"
 
+using namespace snort;
+
 namespace
 {
 #define CD_NO_NEXT_NAME "ipv6_no_next"

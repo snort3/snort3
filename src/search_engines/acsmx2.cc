@@ -1190,7 +1190,7 @@ static void acsmUpdateMatchStates(ACSM_STRUCT2* acsm)
     }
 }
 
-static void acsmBuildMatchStateTrees2(SnortConfig* sc, ACSM_STRUCT2* acsm)
+static void acsmBuildMatchStateTrees2(snort::SnortConfig* sc, ACSM_STRUCT2* acsm)
 {
     ACSM_PATTERN2** MatchList = acsm->acsmMatchList;
     ACSM_PATTERN2* mlist;
@@ -1363,8 +1363,7 @@ static inline int _acsmCompile2(ACSM_STRUCT2* acsm)
     return 0;
 }
 
-int acsmCompile2(
-    SnortConfig* sc, ACSM_STRUCT2* acsm)
+int acsmCompile2(snort::SnortConfig* sc, ACSM_STRUCT2* acsm)
 {
     if ( int rval = _acsmCompile2(acsm) )
         return rval;

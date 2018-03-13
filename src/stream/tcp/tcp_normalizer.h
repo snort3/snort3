@@ -52,14 +52,14 @@ public:
     virtual void trim_rst_payload(TcpSegmentDescriptor&, uint32_t max = 0);
     virtual void trim_win_payload(TcpSegmentDescriptor&, uint32_t max = 0);
     virtual void trim_mss_payload(TcpSegmentDescriptor&, uint32_t max = 0);
-    virtual void ecn_tracker(const tcp::TCPHdr*, bool req3way);
-    virtual void ecn_stripper(Packet*);
+    virtual void ecn_tracker(const snort::tcp::TCPHdr*, bool req3way);
+    virtual void ecn_stripper(snort::Packet*);
     virtual uint32_t get_stream_window(TcpSegmentDescriptor&);
     virtual uint32_t get_tcp_timestamp(TcpSegmentDescriptor&, bool strip);
     virtual int handle_paws(TcpSegmentDescriptor&);
     virtual bool validate_rst(TcpSegmentDescriptor&);
     virtual int handle_repeated_syn(TcpSegmentDescriptor&) = 0;
-    virtual uint16_t set_urg_offset(const tcp::TCPHdr* tcph, uint16_t dsize);
+    virtual uint16_t set_urg_offset(const snort::tcp::TCPHdr* tcph, uint16_t dsize);
 
     static const PegInfo* get_normalization_pegs();
     static NormPegs get_normalization_counts(unsigned&);
@@ -137,7 +137,7 @@ public:
 protected:
     TcpNormalizer(StreamPolicy, TcpSession*, TcpStreamTracker*);
     virtual void trim_payload(TcpSegmentDescriptor&, uint32_t, NormMode, TcpPegCounts);
-    virtual bool strip_tcp_timestamp(TcpSegmentDescriptor&, const tcp::TcpOption*, NormMode);
+    virtual bool strip_tcp_timestamp(TcpSegmentDescriptor&, const snort::tcp::TcpOption*, NormMode);
     virtual bool validate_rst_seq_geq(TcpSegmentDescriptor&);
     virtual bool validate_rst_end_seq_geq(TcpSegmentDescriptor&);
     virtual bool validate_rst_seq_eq(TcpSegmentDescriptor&);

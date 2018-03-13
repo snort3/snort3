@@ -22,6 +22,8 @@
 
 #include <cstdint>
 
+namespace snort
+{
 namespace wlan
 {
 /*
@@ -79,6 +81,7 @@ struct WifiHdr
 #define WLAN_FLAG_WEP       0x4000    /* Wep Enabled  00000010 */
 #define WLAN_FLAG_ORDER     0x8000    /* Strict Order 00000001 */
 } // namespace wlan
+} // namespace snort
 
 #endif
 

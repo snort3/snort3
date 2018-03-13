@@ -27,28 +27,28 @@
 
 class Http2Inspect;
 
-class Http2StreamSplitter : public StreamSplitter
+class Http2StreamSplitter : public snort::StreamSplitter
 {
 public:
-    Http2StreamSplitter(bool is_client_to_server) : StreamSplitter(is_client_to_server),
+    Http2StreamSplitter(bool is_client_to_server) : snort::StreamSplitter(is_client_to_server),
         source_id(is_client_to_server ? Http2Enums::SRC_CLIENT : Http2Enums::SRC_SERVER) { }
-    Status scan(Flow* flow, const uint8_t* data, uint32_t length, uint32_t not_used,
+    Status scan(snort::Flow* flow, const uint8_t* data, uint32_t length, uint32_t not_used,
         uint32_t* flush_offset) override;
-    const StreamBuffer reassemble(Flow* flow, unsigned total, unsigned offset, const
+    const snort::StreamBuffer reassemble(snort::Flow* flow, unsigned total, unsigned offset, const
         uint8_t* data, unsigned len, uint32_t flags, unsigned& copied) override;
-    bool finish(Flow* flow) override;
+    bool finish(snort::Flow* flow) override;
     bool is_paf() override { return true; }
 
     // FIXIT-M should return actual packet buffer size
-    unsigned max(Flow*) override { return Http2Enums::MAX_OCTETS; }
+    unsigned max(snort::Flow*) override { return Http2Enums::MAX_OCTETS; }
 
 private:
     const Http2Enums::SourceId source_id;
 };
 
-StreamSplitter::Status implement_scan(Http2FlowData* session_data, const uint8_t* data,
+snort::StreamSplitter::Status implement_scan(Http2FlowData* session_data, const uint8_t* data,
     uint32_t length, uint32_t* flush_offset, Http2Enums::SourceId source_id);
-const StreamBuffer implement_reassemble(Http2FlowData* session_data, unsigned total,
+const snort::StreamBuffer implement_reassemble(Http2FlowData* session_data, unsigned total,
     unsigned offset, const uint8_t* data, unsigned len, uint32_t flags, unsigned& copied,
     Http2Enums::SourceId source_id);
 

@@ -22,6 +22,8 @@
 
 #include "main/snort_types.h"
 
+namespace snort
+{
 class Flow;
 
 struct StreamBuffer
@@ -145,5 +147,6 @@ public:
 private:
     unsigned byte_count = 0;
 };
+}
 #endif
 

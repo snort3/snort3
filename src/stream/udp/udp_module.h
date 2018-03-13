@@ -24,7 +24,10 @@
 #include "flow/session.h"
 #include "framework/module.h"
 
+namespace snort
+{
 struct SnortConfig;
+}
 
 struct UdpStats
 {
@@ -34,7 +37,7 @@ struct UdpStats
 
 extern const PegInfo udp_pegs[];
 extern THREAD_LOCAL struct UdpStats udpStats;
-extern THREAD_LOCAL ProfileStats udp_perf_stats;
+extern THREAD_LOCAL snort::ProfileStats udp_perf_stats;
 
 //-------------------------------------------------------------------------
 // stream_udp module
@@ -45,15 +48,15 @@ extern THREAD_LOCAL ProfileStats udp_perf_stats;
 
 struct StreamUdpConfig;
 
-class StreamUdpModule : public Module
+class StreamUdpModule : public snort::Module
 {
 public:
     StreamUdpModule();
-    bool set(const char*, Value&, SnortConfig*) override;
-    bool begin(const char*, int, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
+    bool begin(const char*, int, snort::SnortConfig*) override;
+    bool end(const char*, int, snort::SnortConfig*) override;
 
-    ProfileStats* get_profile() const override;
+    snort::ProfileStats* get_profile() const override;
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
     StreamUdpConfig* get_data();

@@ -27,6 +27,7 @@
 #include "log/messages.h"
 #include "utils/util.h"
 
+using namespace snort;
 using namespace std;
 
 SmtpCmd::SmtpCmd(std::string& key, uint32_t flg, int num)

@@ -26,6 +26,8 @@
 #include "detection/detection_util.h"
 #include "protocols/packet.h"
 
+using namespace snort;
+
 Cursor::Cursor(Packet* p)
 {
     reset(p);

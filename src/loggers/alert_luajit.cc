@@ -35,6 +35,8 @@
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
 
+using namespace snort;
+
 static THREAD_LOCAL ProfileStats luaLogPerfStats;
 
 static THREAD_LOCAL const Event* event;

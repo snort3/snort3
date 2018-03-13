@@ -24,22 +24,22 @@
 #include "stream/stream_splitter.h"
 #include "http2_enum.h"
 
-class Http2FlowData : public FlowData
+class Http2FlowData : public snort::FlowData
 {
 public:
     Http2FlowData();
     ~Http2FlowData() override;
     static unsigned inspector_id;
-    static void init() { inspector_id = FlowData::create_flow_data_id(); }
+    static void init() { inspector_id = snort::FlowData::create_flow_data_id(); }
 
     friend class Http2Inspect;
     friend class Http2StreamSplitter;
-    friend const StreamBuffer implement_reassemble(Http2FlowData*, unsigned, unsigned,
+    friend const snort::StreamBuffer implement_reassemble(Http2FlowData*, unsigned, unsigned,
         const uint8_t*, unsigned, uint32_t, unsigned&, Http2Enums::SourceId);
-    friend StreamSplitter::Status implement_scan(Http2FlowData*, const uint8_t*, uint32_t,
+    friend snort::StreamSplitter::Status implement_scan(Http2FlowData*, const uint8_t*, uint32_t,
         uint32_t*, Http2Enums::SourceId);
     friend bool implement_get_buf(unsigned id, Http2FlowData*, Http2Enums::SourceId,
-        InspectionBuffer&);
+        snort::InspectionBuffer&);
 
 protected:
     // 0 element refers to client frame, 1 element refers to server frame

@@ -29,6 +29,8 @@
 #include "protocols/icmp4.h"
 #include "protocols/packet.h"
 
+using namespace snort;
+
 #define s_name "icode"
 
 static THREAD_LOCAL ProfileStats icmpCodePerfStats;

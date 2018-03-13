@@ -327,8 +327,9 @@ static int get_sip_client_app(void* patternMatcher, const char* pattern, uint32_
     return 1;
 }
 
-void SipServiceDetector::createRtpFlow(AppIdSession& asd, const Packet* pkt, const SfIp* cliIp,
-    uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol proto, int16_t app_id)
+void SipServiceDetector::createRtpFlow(AppIdSession& asd, const snort::Packet* pkt,
+    const snort::SfIp* cliIp, uint16_t cliPort, const snort::SfIp* srvIp, uint16_t srvPort,
+    IpProtocol proto, int16_t app_id)
 {
     AppIdSession* fp = AppIdSession::create_future_session(pkt, cliIp, cliPort, srvIp, srvPort,
         proto, app_id, APPID_EARLY_SESSION_FLAG_FW_RULE, handler->get_inspector());
@@ -463,17 +464,17 @@ int SipServiceDetector::validate(AppIdDiscoveryArgs& args)
 THREAD_LOCAL SipUdpClientDetector* SipEventHandler::client = nullptr;
 THREAD_LOCAL SipServiceDetector* SipEventHandler::service = nullptr;
 
-void SipEventHandler::handle(DataEvent& event, Flow* flow)
+void SipEventHandler::handle(snort::DataEvent& event, snort::Flow* flow)
 {
     SipEvent& sip_event = (SipEvent&)event;
     AppIdSession* asd = nullptr;
 
     if ( flow )
-        asd = appid_api.get_appid_session(*flow);
+        asd = snort::appid_api.get_appid_session(*flow);
 
     if ( !asd )
     {
-        const Packet* p = sip_event.get_packet();
+        const snort::Packet* p = sip_event.get_packet();
         IpProtocol protocol = p->is_tcp() ? IpProtocol::TCP : IpProtocol::UDP;
         int direction = p->is_from_client() ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
         asd = AppIdSession::allocate_session(p, protocol, direction,

@@ -31,6 +31,8 @@
 #include "pp_flow_iface.h"
 #include "pp_raw_buffer_iface.h"
 
+using namespace snort;
+
 static void set_fields(lua_State* L, int tindex, Packet& self)
 {
     Lua::Table table(L, tindex);

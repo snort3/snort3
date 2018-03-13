@@ -40,7 +40,7 @@
 #pragma pack(1)
 static inline void alert(int sid)
 {
-    DetectionEngine::queue_event(GID_GTP, sid);
+    snort::DetectionEngine::queue_event(GID_GTP, sid);
     gtp_stats.events++;
 }
 

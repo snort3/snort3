@@ -42,6 +42,8 @@
 #include "parse_stream.h"
 #include "vars.h"
 
+using namespace snort;
+
 struct Location
 {
     std::string file;
@@ -120,7 +122,7 @@ void parse_include(SnortConfig* sc, const char* arg)
 void ParseIpVar(SnortConfig* sc, const char* var, const char* val)
 {
     int ret;
-    IpsPolicy* p = get_ips_policy();  // FIXIT-M double check, see below
+    IpsPolicy* p = snort::get_ips_policy();  // FIXIT-M double check, see below
     DisallowCrossTableDuplicateVars(sc, var, VAR_TYPE__IPVAR);
 
     if ((ret = sfvt_define(p->ip_vartable, var, val)) != SFIP_SUCCESS)
@@ -152,8 +154,7 @@ void ParseIpVar(SnortConfig* sc, const char* var, const char* val)
     }
 }
 
-void add_service_to_otn(
-    SnortConfig* sc, OptTreeNode* otn, const char* svc_name)
+void add_service_to_otn(SnortConfig* sc, OptTreeNode* otn, const char* svc_name)
 {
     if (otn->sigInfo.num_services >= sc->max_metadata_services)
     {

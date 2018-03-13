@@ -26,6 +26,8 @@
 #include "sfip/sf_cidr.h"
 #include "util_cstring.h"
 
+namespace snort
+{
 char* ObfuscateIpToText(const SfIp* ip, SfCidr& homenet, SfCidr& obfunet, InetBuf& ab)
 {
     ab[0] = 0;
@@ -61,4 +63,4 @@ char* ObfuscateIpToText(const SfIp* ip, SfCidr& homenet, SfCidr& obfunet, InetBu
 
     return ab;
 }
-
+}

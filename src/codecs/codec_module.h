@@ -26,6 +26,8 @@
 #include "framework/module.h"
 #include "main/snort_types.h"
 
+namespace snort
+{
 constexpr int GID_DECODE = 116;
 
 //-----------------------------------------------------
@@ -236,6 +238,6 @@ public:
     Usage get_usage() const override
     { return CONTEXT; }
 };
-
+}
 #endif
 

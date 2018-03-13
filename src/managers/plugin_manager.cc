@@ -53,6 +53,7 @@
 #include "script_manager.h"
 #include "so_manager.h"
 
+using namespace snort;
 using namespace std;
 
 #define lib_pattern "*.so"

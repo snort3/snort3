@@ -138,18 +138,18 @@ struct SMTPAuthName
     char name[MAX_AUTH_NAME_LEN];
 };
 
-class SmtpMime : public MimeSession
+class SmtpMime : public snort::MimeSession
 {
 public:
-    using MimeSession::MimeSession;
+    using snort::MimeSession::MimeSession;
     SMTP_PROTO_CONF* config;
 private:
     int handle_header_line(const uint8_t* ptr, const uint8_t* eol,
         int max_header_len) override;
     int normalize_data(const uint8_t* ptr, const uint8_t* data_end) override;
     void decode_alert() override;
-    void reset_state(Flow* ssn) override;
-    bool is_end_of_data(Flow* ssn) override;
+    void reset_state(snort::Flow* ssn) override;
+    bool is_end_of_data(snort::Flow* ssn) override;
 };
 
 struct SMTPData
@@ -162,14 +162,14 @@ struct SMTPData
     SMTPAuthName* auth_name;
 };
 
-class SmtpFlowData : public FlowData
+class SmtpFlowData : public snort::FlowData
 {
 public:
     SmtpFlowData();
     ~SmtpFlowData() override;
 
     static void init()
-    { inspector_id = FlowData::create_flow_data_id(); }
+    { inspector_id = snort::FlowData::create_flow_data_id(); }
 
 public:
     static unsigned inspector_id;

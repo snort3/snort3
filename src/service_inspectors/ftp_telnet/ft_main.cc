@@ -145,8 +145,7 @@ static int CheckFTPCmdOptions(FTP_SERVER_PROTO_CONF* serverConf)
  * Returns: -1 on error
  *
  */
-int CheckFTPServerConfigs(
-    SnortConfig*, FTP_SERVER_PROTO_CONF* serverConf)
+int CheckFTPServerConfigs(snort::SnortConfig*, FTP_SERVER_PROTO_CONF* serverConf)
 {
     if (CheckFTPCmdOptions(serverConf))
     {
@@ -157,7 +156,7 @@ int CheckFTPServerConfigs(
 }
 
 // FIXIT-L eliminate legacy void* cruft
-int FTPCheckConfigs(SnortConfig* sc, void* pData)
+int FTPCheckConfigs(snort::SnortConfig* sc, void* pData)
 {
     FTP_SERVER_PROTO_CONF* config = (FTP_SERVER_PROTO_CONF*)pData;
 
@@ -181,9 +180,9 @@ int FTPCheckConfigs(SnortConfig* sc, void* pData)
     return 0;
 }
 
-void do_detection(Packet* p)
+void do_detection(snort::Packet* p)
 {
-    DataBus::publish(PACKET_EVENT, p);
-    DetectionEngine::disable_all(p);
+    snort::DataBus::publish(PACKET_EVENT, p);
+    snort::DetectionEngine::disable_all(p);
 }
 

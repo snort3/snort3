@@ -33,6 +33,7 @@
 #include "module_manager.h"
 #include "plugin_manager.h"
 
+using namespace snort;
 using namespace std;
 
 struct Option

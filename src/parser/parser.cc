@@ -55,6 +55,8 @@
 #include "parse_stream.h"
 #include "vars.h"
 
+using namespace snort;
+
 bool parsing_follows_files = false;
 
 static struct rule_index_map_t* ruleIndexMap = nullptr;
@@ -774,7 +776,7 @@ RuleTreeNode* deleteRtnFromOtn(OptTreeNode* otn, PolicyId policyId, SnortConfig*
 
 RuleTreeNode* deleteRtnFromOtn(OptTreeNode* otn, SnortConfig* sc)
 {
-    return deleteRtnFromOtn(otn, get_ips_policy()->policy_id, sc);
+    return deleteRtnFromOtn(otn, snort::get_ips_policy()->policy_id, sc);
 }
 
 static uint32_t rtn_hash_func(HashFnc*, const unsigned char *k, int)
@@ -880,7 +882,7 @@ int addRtnToOtn(SnortConfig* sc, OptTreeNode* otn, RuleTreeNode* rtn, PolicyId p
 
 int addRtnToOtn(SnortConfig*sc, OptTreeNode* otn, RuleTreeNode* rtn)
 {
-    return addRtnToOtn(sc, otn, rtn, get_ips_policy()->policy_id);
+    return addRtnToOtn(sc, otn, rtn, snort::get_ips_policy()->policy_id);
 }
 
 void rule_index_map_print_index(int index, char* buf, int bufsize)

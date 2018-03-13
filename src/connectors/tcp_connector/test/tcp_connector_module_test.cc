@@ -31,6 +31,8 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
+using namespace snort;
+
 THREAD_LOCAL SimpleStats tcp_connector_stats;
 THREAD_LOCAL ProfileStats tcp_connector_perfstats;
 

@@ -155,8 +155,8 @@ static inline uint64_t convert_flags_c_to_lua(uint64_t in)
  */
 static int create_detector_flow(lua_State* L)
 {
-    SfIp saddr;
-    SfIp daddr;
+    snort::SfIp saddr;
+    snort::SfIp daddr;
 
     AppIdDetector* ud = *UserData<AppIdDetector>::check(L, DETECTOR, 1);
     LuaStateDescriptor* lsd = ud->validate_lua_state(true);

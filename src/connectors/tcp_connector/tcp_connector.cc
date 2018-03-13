@@ -36,6 +36,8 @@
 
 #include "tcp_connector_module.h"
 
+using namespace snort;
+
 /* Globals ****************************************************************/
 
 THREAD_LOCAL SimpleStats tcp_connector_stats;

@@ -36,21 +36,21 @@ struct SIPData
     SIP_PROTO_CONF *sip_config;
 };
 
-class SipFlowData : public FlowData
+class SipFlowData : public snort::FlowData
 {
 public:
     SipFlowData();
     ~SipFlowData() override;
 
     static void init()
-    { inspector_id = FlowData::create_flow_data_id(); }
+    { inspector_id = snort::FlowData::create_flow_data_id(); }
 
 public:
     static unsigned inspector_id;
     SIPData session;
 };
 
-SIPData* get_sip_session_data(const Flow*);
+SIPData* get_sip_session_data(const snort::Flow*);
 SIPMethodNode* add_sip_method(const char*);
 
 #endif

@@ -22,6 +22,8 @@
 
 #include <arpa/inet.h>
 
+namespace snort
+{
 namespace gre
 {
 /* GRE related stuff */
@@ -41,6 +43,7 @@ struct GREHdr
     { return ether_type; }
 };
 } // namespace gre
+} // namespace snort
 
 #endif
 

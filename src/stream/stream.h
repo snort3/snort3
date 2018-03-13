@@ -26,6 +26,15 @@
 
 #include "flow/flow.h"
 
+
+struct HostAttributeEntry;
+
+namespace snort
+{
+class Flow;
+struct SfIp;
+class StreamSplitter;
+
 /* traffic direction identification */
 #define FROM_SERVER     0
 #define FROM_CLIENT     1
@@ -48,9 +57,6 @@
 #define TCP_POLICIES \
     "first | last | linux | old_linux | bsd | macos | solaris | irix | " \
     "hpux11 | hpux10 | windows | win_2003 | vista | proxy"
-
-class Flow;
-struct SfIp;
 
 typedef int (* LogFunction)(Flow*, uint8_t** buf, uint32_t* len, uint32_t* type);
 typedef void (* LogExtraData)(Flow*, void* config, LogFunction* funcs,
@@ -104,8 +110,8 @@ public:
     // n-tuple parameters specified.  Inspection will be turned off for this expected session
     // when it arrives.
     static int ignore_flow(
-        const Packet* ctrlPkt, PktType, IpProtocol, const SfIp* srcIP, uint16_t srcPort,
-        const SfIp* dstIP, uint16_t dstPort, char direction, uint32_t flowdata_id);
+        const Packet* ctrlPkt, PktType, IpProtocol, const snort::SfIp* srcIP, uint16_t srcPort,
+        const snort::SfIp* dstIP, uint16_t dstPort, char direction, uint32_t flowdata_id);
 
     // Resume inspection for flow.
     // FIXIT-L does resume work only for a flow that has been stopped by call to stop_inspection?
@@ -162,20 +168,20 @@ public:
     // initialize response count and expiration time
     static void init_active_response(const Packet*, Flow*);
 
-    static void set_splitter(Flow*, bool toServer, class StreamSplitter* = nullptr);
+    static void set_splitter(Flow*, bool toServer, StreamSplitter* = nullptr);
     static StreamSplitter* get_splitter(Flow*, bool toServer);
 
     // Turn off inspection for potential session. Adds session identifiers to a hash table.
     // TCP only.
     static int set_application_protocol_id_expected(
-        const Packet* ctrlPkt, PktType, IpProtocol, const SfIp* srcIP, uint16_t srcPort,
-        const SfIp* dstIP, uint16_t dstPort, int16_t appId, FlowData*);
+        const Packet* ctrlPkt, PktType, IpProtocol, const snort::SfIp* srcIP, uint16_t srcPort,
+        const snort::SfIp* dstIP, uint16_t dstPort, int16_t appId, FlowData*);
 
     // Get pointer to application data for a flow based on the lookup tuples for cases where
     // Snort does not have an active packet that is relevant.
     static FlowData* get_flow_data(
         PktType type, IpProtocol proto,
-        const SfIp* a1, uint16_t p1, const SfIp* a2, uint16_t p2,
+        const snort::SfIp* a1, uint16_t p1, const snort::SfIp* a2, uint16_t p2,
         uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId, unsigned flowdata_id);
 
     // Get pointer to application data for a flow using the FlowKey as the lookup criteria
@@ -185,7 +191,7 @@ public:
     // cases where Snort does not have an active packet that is relevant.
     static Flow* get_flow(
         PktType type, IpProtocol proto,
-        const SfIp* a1, uint16_t p1, const SfIp* a2, uint16_t p2,
+        const snort::SfIp* a1, uint16_t p1, const snort::SfIp* a2, uint16_t p2,
         uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId);
 
     // Delete the session if it is in the closed session state.
@@ -198,10 +204,10 @@ public:
     //  Populate a session key from the Packet
     static void populate_flow_key(Packet*, FlowKey*);
 
-    static void update_direction(Flow*, char dir, const SfIp* ip, uint16_t port);
+    static void update_direction(Flow*, char dir, const snort::SfIp* ip, uint16_t port);
 
     static void set_application_protocol_id(
-        Flow*, const struct HostAttributeEntry*, int direction);
+        Flow*, const HostAttributeEntry*, int direction);
 
     static bool is_midstream(Flow* flow)
     { return flow->ssn_state.session_flags & SSNFLAG_MIDSTREAM; }
@@ -225,6 +231,6 @@ public:
 private:
     static void set_ip_protocol(Flow*);
 };
-
+}
 #endif
 

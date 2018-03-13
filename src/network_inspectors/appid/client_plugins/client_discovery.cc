@@ -49,6 +49,8 @@
 #include "protocols/packet.h"
 #include "profiler/profiler.h"
 
+using namespace snort;
+
 #define MAX_CANDIDATE_CLIENTS 10
 
 ProfileStats clientMatchPerfStats;

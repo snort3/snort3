@@ -25,8 +25,11 @@
 
 #include "main/snort_types.h"
 
-struct Packet;
 struct OptTreeNode;
+
+namespace snort
+{
+struct Packet;
 
 class SO_PUBLIC Actions
 {
@@ -46,5 +49,6 @@ public:
     static inline bool is_pass(Type a)
     { return ( a == PASS ); }
 };
+}
 #endif
 

@@ -30,6 +30,8 @@
 
 #include "checksum.h"
 
+using namespace snort;
+
 #define CD_ICMP4_NAME "icmp4"
 #define CD_ICMP4_HELP "support for Internet control message protocol v4"
 

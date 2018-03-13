@@ -36,6 +36,8 @@
 #include "log/messages.h"
 #include "managers/mpse_manager.h"
 
+using namespace snort;
+
 FastPatternConfig::FastPatternConfig()
 {
     search_api = MpseManager::get_search_api("ac_bnfa");

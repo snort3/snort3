@@ -361,7 +361,7 @@ DCE2_Ret DCE2_SmbValidateTransactionFields(
 DCE2_Ret DCE2_SmbBufferTransactionData(DCE2_SmbTransactionTracker* ttracker,
     const uint8_t* data_ptr, uint16_t dcnt, uint16_t ddisp)
 {
-    Profile profile(dce2_smb_pstat_smb_req);
+    snort::Profile profile(dce2_smb_pstat_smb_req);
 
     DebugMessage(DEBUG_DCE_SMB, "Buffering transaction data.\n");
 
@@ -388,7 +388,7 @@ DCE2_Ret DCE2_SmbBufferTransactionData(DCE2_SmbTransactionTracker* ttracker,
 DCE2_Ret DCE2_SmbBufferTransactionParameters(DCE2_SmbTransactionTracker* ttracker,
     const uint8_t* param_ptr, uint16_t pcnt, uint16_t pdisp)
 {
-    Profile profile(dce2_smb_pstat_smb_req);
+    snort::Profile profile(dce2_smb_pstat_smb_req);
 
     DebugMessage(DEBUG_DCE_SMB, "Buffering transaction parameters.\n");
 

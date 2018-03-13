@@ -28,6 +28,7 @@
 
 #include "dnp3.h"
 
+using namespace snort;
 using namespace std;
 
 static const Parameter s_params[] =

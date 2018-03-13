@@ -20,9 +20,14 @@
 #ifndef PARSE_STREAM_H
 #define PARSE_STREAM_H
 
+namespace snort
+{
+struct SnortConfig;
+}
+
 #include <istream>
 
-void parse_stream(std::istream&, struct SnortConfig*);
+void parse_stream(std::istream&, snort::SnortConfig*);
 
 #endif
 

@@ -31,6 +31,7 @@
 
 #include "reputation_parse.h"
 
+using namespace snort;
 using namespace std;
 
 #define REPUTATION_EVENT_BLACKLIST_STR \

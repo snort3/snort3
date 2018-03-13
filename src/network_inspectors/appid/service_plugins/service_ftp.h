@@ -34,9 +34,9 @@ public:
     int validate(AppIdDiscoveryArgs&) override;
 
 private:
-    void create_expected_session(AppIdSession& asd,const Packet* pkt, const SfIp* cliIp,
-        uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol proto,
-        int flags, APPID_SESSION_DIRECTION dir);
+    void create_expected_session(AppIdSession& asd,const snort::Packet* pkt,
+        const snort::SfIp* cliIp, uint16_t cliPort, const snort::SfIp* srvIp, uint16_t srvPort,
+        IpProtocol proto, int flags, APPID_SESSION_DIRECTION dir);
 
     int16_t ftp_data_app_id = 0;
 };

@@ -26,6 +26,8 @@
 #include "framework/codec.h"
 #include "lua/lua_arg.h"
 
+using namespace snort;
+
 // FIXIT-M ip_api should also be its own object (copyable)
 static const class ip::IpApi ip_api {};
 

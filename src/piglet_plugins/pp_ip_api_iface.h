@@ -22,11 +22,14 @@
 
 #include "lua/lua_iface.h"
 
+namespace snort
+{
 namespace ip
 {
 class IpApi;
 }
+}
 
-extern const struct Lua::TypeInterface<ip::IpApi> IpApiIface;
+extern const struct Lua::TypeInterface<snort::ip::IpApi> IpApiIface;
 
 #endif

@@ -137,8 +137,8 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
             goto bail;
         if (port && args.pkt)
         {
-            const SfIp* sip;
-            const SfIp* dip;
+            const snort::SfIp* sip;
+            const snort::SfIp* dip;
 
             dip = args.pkt->ptrs.ip_api.get_dst();
             sip = args.pkt->ptrs.ip_api.get_src();

@@ -25,6 +25,8 @@
 #include "framework/codec.h"
 #include "main/snort_debug.h"
 
+using namespace snort;
+
 #define CD_PPPENCAP_NAME "ppp_encap"
 #define CD_PPPENCAP_HELP "support for point-to-point encapsulation"
 
@@ -91,7 +93,7 @@ bool PppEncap::decode(const RawData& raw, CodecData& codec, DecodeData&)
         }
 
         // FIXIT-M X This is broken - it should not modify the packet data (which should be const).
-        ((IP4Hdr*)(raw.data + codec.lyr_len))->set_proto(IpProtocol::TCP);
+        ((ip::IP4Hdr*)(raw.data + codec.lyr_len))->set_proto(IpProtocol::TCP);
     /* fall through */
 
     case PPP_IP:

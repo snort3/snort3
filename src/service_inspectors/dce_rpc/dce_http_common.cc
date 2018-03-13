@@ -28,12 +28,12 @@
 #include "binder/binder.h"
 #include "managers/inspector_manager.h"
 
-void dce_http_bind(Flow* flow, const char* service)
+void dce_http_bind(snort::Flow* flow, const char* service)
 {
     assert (flow);
     flow->service = service;
 
-    Inspector* ins = InspectorManager::get_binder();
+    snort::Inspector* ins = snort::InspectorManager::get_binder();
 
     if ( ins )
         ins->exec(BinderSpace::ExecOperation::HANDLE_GADGET, flow);

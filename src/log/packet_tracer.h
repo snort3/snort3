@@ -23,7 +23,10 @@
 
 #include <daq_common.h>
 
-struct Packet;
+namespace snort
+{
+    struct Packet;
+}
 
 class PacketTracer
 {
@@ -33,7 +36,7 @@ public:
     static void log(const char* format, ...) __attribute__((format (printf, 1, 2)));
     static void dump(char* output_buff, unsigned int len);
     static void dump(const DAQ_PktHdr_t* pkthdr, DAQ_Verdict verdict);
-    static void add_header_info(Packet* p);
+    static void add_header_info(snort::Packet* p);
     static bool get_enable(const uint32_t mask=0);
     static void enable_user_trace();
     static void enable_daq_trace();

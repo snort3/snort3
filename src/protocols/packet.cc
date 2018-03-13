@@ -30,6 +30,8 @@
 
 #include "packet_manager.h"
 
+namespace snort
+{
 Packet::Packet(bool packet_data)
 {
     layers = new Layer[CodecManager::get_max_layers()];
@@ -207,4 +209,5 @@ const char* Packet::get_pseudo_type() const
     }
     return "other";
 }
+} // namespace snort
 

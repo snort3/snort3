@@ -36,6 +36,8 @@
 #include "utils/stats.h"
 #include "utils/util.h"
 
+using namespace snort;
+
 #define ATTRIBUTE_MAP_MAX_ROWS 1024
 
 struct tTargetBasedConfig

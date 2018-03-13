@@ -30,6 +30,8 @@
 #include "mime/file_mime_log.h"
 #include "mime/file_mime_paf.h"
 
+namespace snort
+{
 /* state flags */
 #define MIME_FLAG_FOLDING                    0x00000001
 #define MIME_FLAG_IN_CONTENT_TYPE            0x00000002
@@ -96,6 +98,6 @@ private:
     const uint8_t* process_mime_data_paf(Flow*, const uint8_t* start, const uint8_t* end,
         bool upload, FilePosition);
 };
-
+}
 #endif
 

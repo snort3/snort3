@@ -24,6 +24,8 @@
 
 #include "protocols/ssl.h"
 
+using namespace snort;
+
 SslSplitter::SslSplitter(bool c2s) : StreamSplitter(c2s)
 {
     paf_state = SSL_PAF_STATES_START;

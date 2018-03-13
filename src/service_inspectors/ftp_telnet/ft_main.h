@@ -36,23 +36,26 @@
 
 #define BUF_SIZE 1024
 
+namespace snort
+{
 struct Packet;
 struct ProfileStats;
 struct SnortConfig;
+}
 
 extern int16_t ftp_data_app_id;
 
-void do_detection(Packet*);
+void do_detection(snort::Packet*);
 
 void CleanupFTPServerConf(void* serverConf);
 void CleanupFTPCMDConf(void* ftpCmd);
 void CleanupFTPBounceTo(void* ftpBounce);
 
-int CheckFTPServerConfigs(SnortConfig*, FTP_SERVER_PROTO_CONF*);
-int FTPCheckConfigs(SnortConfig*, void*);
+int CheckFTPServerConfigs(snort::SnortConfig*, FTP_SERVER_PROTO_CONF*);
+int FTPCheckConfigs(snort::SnortConfig*, void*);
 
-FTP_CLIENT_PROTO_CONF* get_ftp_client(Packet*);
-FTP_SERVER_PROTO_CONF* get_ftp_server(Packet*);
+FTP_CLIENT_PROTO_CONF* get_ftp_client(snort::Packet*);
+FTP_SERVER_PROTO_CONF* get_ftp_server(snort::Packet*);
 
 #endif
 

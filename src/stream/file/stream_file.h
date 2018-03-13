@@ -20,11 +20,16 @@
 #ifndef STREAM_FILE_H
 #define STREAM_FILE_H
 
+namespace snort
+{
+class Inspector;
+}
+
 struct StreamFileConfig
 {
     bool upload;
 };
 
-StreamFileConfig* get_file_cfg(class Inspector*);
+StreamFileConfig* get_file_cfg(snort::Inspector*);
 
 #endif

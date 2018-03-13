@@ -19,7 +19,10 @@
 #ifndef SEARCH_ENGINES_H
 #define SEARCH_ENGINES_H
 
+namespace snort
+{
 struct BaseApi;
+}
 
 void load_search_engines();
 

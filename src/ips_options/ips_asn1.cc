@@ -63,6 +63,8 @@
 #include "asn1_detect.h"
 #include "asn1_util.h"
 
+using namespace snort;
+
 #define BITSTRING_OPT  "bitstring_overflow"
 #define DOUBLE_OPT     "double_overflow"
 #define PRINT_OPT      "print"

@@ -30,16 +30,18 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
+using namespace snort;
+
 //--------------------------------------------------------------------------
 // mocks
 //--------------------------------------------------------------------------
-
+namespace snort
+{
 THREAD_LOCAL SnortConfig* snort_conf = nullptr;
 SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
 
 static StreamSplitter* next_splitter = nullptr;
-static int flushed = 0;
 
 Flow::Flow() { }
 
@@ -49,17 +51,22 @@ struct Packet* DetectionEngine::get_current_packet()
 uint8_t* DetectionEngine::get_next_buffer(unsigned int&)
 { return nullptr; }
 
-uint16_t FlushBucket::get_size()
-{ return 1; }
-
 StreamSplitter* Stream::get_splitter(Flow*, bool)
 { return next_splitter; }
+
+static int flushed = 0;
 
 void Stream::flush_client(Packet*)
 { flushed = 1; }
 
 void Stream::flush_server(Packet*)
 { flushed = 2; }
+}
+
+
+uint16_t FlushBucket::get_size()
+{ return 1; }
+
 
 //--------------------------------------------------------------------------
 // atom splitter tests

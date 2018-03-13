@@ -34,6 +34,7 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
+using namespace snort;
 using namespace Http2Enums;
 
 TEST_GROUP(http2_scan_test)

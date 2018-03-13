@@ -34,6 +34,8 @@
 
 #include "reputation_module.h"
 
+using namespace snort;
+
 THREAD_LOCAL ProfileStats reputationPerfStats;
 THREAD_LOCAL ReputationStats reputationstats;
 

@@ -35,6 +35,8 @@
 #include "main/snort_config.h"
 #include "utils/stats.h"
 
+using namespace snort;
+
 struct Pattern
 {
     std::string pat;

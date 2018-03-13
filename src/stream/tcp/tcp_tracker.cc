@@ -32,6 +32,8 @@
 #include "tcp_normalizer.h"
 #include "tcp_reassembler.h"
 
+using namespace snort;
+
 TcpTracker::TcpTracker(bool client, TcpSession* ssn) :
     TcpStreamTracker(client)
 {

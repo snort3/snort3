@@ -64,6 +64,8 @@ extern "C" {
 
 #include "util_cstring.h"
 
+using namespace snort;
+
 char** protocol_names = nullptr;
 
 /****************************************************************************

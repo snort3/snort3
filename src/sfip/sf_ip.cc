@@ -36,6 +36,8 @@
 
 #include "sf_cidr.h"
 
+using namespace snort;
+
 /* Support function */
 // note that an ip6 address may have a trailing dotted quad form
 // but that it always has at least 2 ':'s; furthermore there is
@@ -391,6 +393,16 @@ const char* SfIp::ntoa() const
     return buf;
 }
 
+bool SfIp::is_mapped() const
+{
+    if (ip32[0] || ip32[1] || ip16[4] || (ip16[5] != 0xffff && ip16[5]))
+        return false;
+
+    return true;
+}
+
+namespace snort
+{
 const char* snort_inet_ntop(int family, const void* ip_raw, char* buf, int bufsize)
 {
     if (!ip_raw || !buf ||
@@ -463,12 +475,4 @@ const char* sfip_ntop(const SfIp* ip, char* buf, int bufsize)
 
     return buf;
 }
-
-bool SfIp::is_mapped() const
-{
-    if (ip32[0] || ip32[1] || ip16[4] || (ip16[5] != 0xffff && ip16[5]))
-        return false;
-
-    return true;
 }
-

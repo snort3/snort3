@@ -88,6 +88,7 @@
 
 #include "extract.h"
 
+using namespace snort;
 using namespace std;
 
 static THREAD_LOCAL ProfileStats byteJumpPerfStats;

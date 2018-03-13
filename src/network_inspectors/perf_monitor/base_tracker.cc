@@ -29,6 +29,7 @@
 #include "utils/util.h"
 #endif
 
+using namespace snort;
 using namespace std;
 
 BaseTracker::BaseTracker(PerfConfig* perf)

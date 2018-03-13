@@ -27,6 +27,7 @@
 #include "protocols/packet.h"
 #include "http2_flow_data.h"
 
+using namespace snort;
 using namespace Http2Enums;
 
 StreamSplitter::Status implement_scan(Http2FlowData* session_data, const uint8_t* data,

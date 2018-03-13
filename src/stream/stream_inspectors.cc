@@ -25,6 +25,8 @@
 
 #include "managers/plugin_manager.h"
 
+using namespace snort;
+
 extern const BaseApi* nin_stream_base;
 extern const BaseApi* nin_stream_ip;
 extern const BaseApi* nin_stream_icmp;

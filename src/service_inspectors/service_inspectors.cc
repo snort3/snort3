@@ -25,6 +25,8 @@
 
 #include "managers/plugin_manager.h"
 
+using namespace snort;
+
 extern const BaseApi* sin_imap;
 extern const BaseApi* sin_pop;
 extern const BaseApi* sin_smtp;

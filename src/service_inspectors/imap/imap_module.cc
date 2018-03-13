@@ -28,6 +28,7 @@
 
 #include "log/messages.h"
 
+using namespace snort;
 using namespace std;
 
 #define IMAP_UNKNOWN_CMD_STR                 "unknown IMAP3 command"

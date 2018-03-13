@@ -35,6 +35,8 @@
 
 #include "treenodes.h"
 
+using namespace snort;
+
 /********************** Reference System Implementation ***********************/
 
 ReferenceSystemNode* ReferenceSystemAdd(

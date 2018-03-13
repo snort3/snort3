@@ -26,6 +26,8 @@
 #define CATCH_CONFIG_RUNNER
 #include "snort_catch.h"
 
+using namespace snort;
+
 static bool s_catch = false;
 static std::vector<std::string> test_tags;
 

@@ -48,7 +48,7 @@ class PerfTracker
 public:
     virtual void reset() {}
 
-    virtual void update(Packet*) {}
+    virtual void update(snort::Packet*) {}
     virtual void process(bool /*summary*/) {} // FIXIT-M get rid of this step.
 
     virtual void update_time(time_t time) final { cur_time = time; }

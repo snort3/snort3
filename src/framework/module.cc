@@ -23,6 +23,8 @@
 
 #include "module.h"
 
+using namespace snort;
+
 static const Parameter defaults[] =
 {
     { "trace", Parameter::PT_INT, nullptr, nullptr,

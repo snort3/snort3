@@ -46,6 +46,8 @@
 #include "libtcp/stream_tcp_unit_test.h"
 #endif
 
+using namespace snort;
+
 // this should not be publicly accessible
 extern THREAD_LOCAL class FlowControl* flow_con;
 

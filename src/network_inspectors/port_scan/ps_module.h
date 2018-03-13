@@ -131,23 +131,23 @@
 //-------------------------------------------------------------------------
 
 extern THREAD_LOCAL SimpleStats spstats;
-extern THREAD_LOCAL ProfileStats psPerfStats;
+extern THREAD_LOCAL snort::ProfileStats psPerfStats;
 
 struct PortscanConfig;
 
-class PortScanModule : public Module
+class PortScanModule : public snort::Module
 {
 public:
     PortScanModule();
     ~PortScanModule() override;
 
-    bool set(const char*, Value&, SnortConfig*) override;
-    bool begin(const char*, int, SnortConfig*) override;
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
+    bool begin(const char*, int, snort::SnortConfig*) override;
 
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
-    ProfileStats* get_profile() const override;
-    const RuleMap* get_rules() const override;
+    snort::ProfileStats* get_profile() const override;
+    const snort::RuleMap* get_rules() const override;
 
     unsigned get_gid() const override
     { return GID_PORT_SCAN; }

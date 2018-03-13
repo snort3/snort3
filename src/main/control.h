@@ -47,6 +47,7 @@ public:
     void configure() const;
     int shell_execute(int& current_fd, Request*& current_request);
     bool show_prompt() const;
+
 private:
     int fd;
     bool blocked = false;

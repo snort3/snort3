@@ -24,6 +24,8 @@
 #include "codecs/codec_module.h"
 #include "framework/codec.h"
 
+using namespace snort;
+
 #define CD_FABRICPATH_NAME "fabricpath"
 #define CD_FABRICPATH_HELP "support for fabricpath"
 

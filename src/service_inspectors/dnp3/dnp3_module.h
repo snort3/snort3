@@ -25,26 +25,29 @@
 
 #define GID_DNP3  145
 
+namespace snort
+{
 struct SnortConfig;
+}
 struct dnp3ProtoConf
 {
     bool check_crc;
 };
 
-class Dnp3Module : public Module
+class Dnp3Module : public snort::Module
 {
 public:
     Dnp3Module();
 
-    bool set(const char*, Value&, SnortConfig*) override;
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
 
     unsigned get_gid() const override
     { return GID_DNP3; }
 
-    const RuleMap* get_rules() const override;
+    const snort::RuleMap* get_rules() const override;
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
-    ProfileStats* get_profile() const override;
+    snort::ProfileStats* get_profile() const override;
 
     Usage get_usage() const override
     { return INSPECT; }

@@ -31,6 +31,8 @@
 #include "utils/util.h"
 #include "utils/util_cstring.h"
 
+using namespace snort;
+
 #define MAX_FILE                             1024
 #define MAX_EMAIL                            1024
 

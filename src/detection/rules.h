@@ -47,13 +47,17 @@
 
 #define EventIsInternal(gid) ((gid) == GENERATOR_INTERNAL)
 
+namespace snort
+{
+    class IpsAction;
+}
 struct OutputSet;
 
 struct ListHead
 {
     OutputSet* LogList;
     OutputSet* AlertList;
-    class IpsAction* action;
+    snort::IpsAction* action;
     struct RuleListNode* ruleListNode;
 };
 
@@ -61,7 +65,7 @@ struct ListHead
 struct RuleListNode
 {
     ListHead* RuleList;   /* The rule list associated with this node */
-    Actions::Type mode;        /* the rule mode */
+    snort::Actions::Type mode;        /* the rule mode */
     int evalIndex;        /* eval index for this rule set */
     char* name;           /* name of this rule list */
     RuleListNode* next;   /* the next RuleListNode */

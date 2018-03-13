@@ -27,6 +27,8 @@
 
 #include "protocols/packet_manager.h"
 
+namespace snort
+{
 struct Packet;
 struct SnortConfig;
 
@@ -54,7 +56,7 @@ public:
     static void kill_session(Packet*, EncodeFlags = ENC_FLAG_FWD);
 
     static void send_reset(Packet*, EncodeFlags);
-    static void send_unreach(Packet*, UnreachResponse);
+    static void send_unreach(Packet*, snort::UnreachResponse);
     static bool send_data(Packet*, EncodeFlags, const uint8_t* buf, uint32_t len);
     static void inject_data(Packet*, EncodeFlags, const uint8_t* buf, uint32_t len);
 
@@ -138,6 +140,6 @@ struct ActiveSuspendContext
     ActiveSuspendContext() { Active::suspend(); }
     ~ActiveSuspendContext() { Active::resume(); }
 };
-
+}
 #endif
 

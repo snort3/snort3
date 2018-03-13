@@ -31,6 +31,8 @@
 
 #include "file_stats.h"
 
+using namespace snort;
+
 static int file_cache_free_func(void*, void* data)
 {
     FileCache::FileNode* node = (FileCache::FileNode*)data;

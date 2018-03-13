@@ -25,6 +25,8 @@
 
 #include "search_engines.h"
 
+using namespace snort;
+
 extern const BaseApi* se_ac_banded;
 extern const BaseApi* se_ac_full;
 extern const BaseApi* se_ac_sparse;

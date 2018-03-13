@@ -39,6 +39,8 @@
 #include "file_lib.h"
 #include "file_service.h"
 
+using namespace snort;
+
 unsigned FileFlows::file_flow_data_id = 0;
 static THREAD_LOCAL uint32_t max_file_id = 0;
 
@@ -256,6 +258,8 @@ void FileFlows::set_file_name(const uint8_t* fname, uint32_t name_size)
     }
 }
 
+namespace snort
+{
 FilePosition get_file_position(Packet* pkt)
 {
     FilePosition position = SNORT_FILE_POSITION_UNKNOWN;
@@ -272,7 +276,7 @@ FilePosition get_file_position(Packet* pkt)
 
     return position;
 }
-
+}
 FileInspect::FileInspect(FileIdModule* fm)
 {
     fm->load_config(config);

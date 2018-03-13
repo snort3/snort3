@@ -166,14 +166,14 @@ struct DNSData
     uint8_t flags;
 };
 
-class DnsFlowData : public FlowData
+class DnsFlowData : public snort::FlowData
 {
 public:
     DnsFlowData();
     ~DnsFlowData() override;
 
     static void init()
-    { inspector_id = FlowData::create_flow_data_id(); }
+    { inspector_id = snort::FlowData::create_flow_data_id(); }
 
 public:
     static unsigned inspector_id;

@@ -26,6 +26,7 @@
 
 #include <cassert>
 
+using namespace snort;
 using namespace std;
 
 #define SIP_EVENT_EMPTY_REQUEST_URI_STR  "empty request URI"

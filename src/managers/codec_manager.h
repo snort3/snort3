@@ -33,21 +33,24 @@
 #include "framework/codec.h"
 #endif
 
-struct SnortConfig;
-struct CodecApi;
+namespace snort
+{
 class Codec;
+struct CodecApi;
 class Module;
 class PacketManager;
 struct ProfileStats;
+struct SnortConfig;
+}
 
 //-------------------------------------------------------------------------
 
-extern THREAD_LOCAL ProfileStats decodePerfStats;
+extern THREAD_LOCAL snort::ProfileStats decodePerfStats;
 
 #ifdef PIGLET
 struct CodecWrapper
 {
-    CodecWrapper(const CodecApi* a, Codec* p) :
+    CodecWrapper(const snort::CodecApi* a, snort::Codec* p) :
         api { a }, instance { p } { }
 
     ~CodecWrapper()
@@ -56,8 +59,8 @@ struct CodecWrapper
             api->dtor(instance);
     }
 
-    const CodecApi* api;
-    Codec* instance;
+    const snort::CodecApi* api;
+    snort::Codec* instance;
 };
 #endif
 
@@ -67,25 +70,25 @@ struct CodecWrapper
 class CodecManager
 {
 public:
-    friend class PacketManager;
+    friend class snort::PacketManager;
 
     // global plugin initializer
-    static void add_plugin(const struct CodecApi*);
+    static void add_plugin(const struct snort::CodecApi*);
     // instantiate a specific codec with a codec specific Module
-    static void instantiate(const CodecApi*, Module*, SnortConfig*);
+    static void instantiate(const snort::CodecApi*, snort::Module*, snort::SnortConfig*);
     // instantiate any codec for which a module has not been provided.
     static void instantiate();
     // destroy all global codec related information
     static void release_plugins();
     // initialize the current threads DLT and Packet struct
-    static void thread_init(SnortConfig*);
+    static void thread_init(snort::SnortConfig*);
     // destroy thread_local data
     static void thread_term();
     // print all of the codec plugins
     static void dump_plugins();
 
 #ifdef PIGLET
-    static CodecWrapper* instantiate(const char*, Module*, SnortConfig*);
+    static CodecWrapper* instantiate(const char*, snort::Module*, snort::SnortConfig*);
 #endif
 
     static uint8_t get_max_layers()
@@ -96,7 +99,7 @@ private:
 
     static std::vector<CodecApiWrapper> s_codecs;
     static std::array<ProtocolIndex, num_protocol_ids> s_proto_map;
-    static std::array<Codec*, UINT8_MAX> s_protocols;
+    static std::array<snort::Codec*, UINT8_MAX> s_protocols;
 
     static THREAD_LOCAL ProtocolId grinder_id;
     static THREAD_LOCAL ProtocolIndex grinder;
@@ -108,12 +111,12 @@ private:
      */
 
     // Private struct defined in an anonymous namespace.
-    static void instantiate(CodecApiWrapper&, Module*, SnortConfig*);
-    static CodecApiWrapper& get_api_wrapper(const CodecApi* cd_api);
+    static void instantiate(CodecApiWrapper&, snort::Module*, snort::SnortConfig*);
+    static CodecApiWrapper& get_api_wrapper(const snort::CodecApi* cd_api);
     static uint8_t get_codec(const char* const keyword);
 
 #ifdef PIGLET
-    static const CodecApi* find_api(const char*);
+    static const snort::CodecApi* find_api(const char*);
 #endif
 };
 

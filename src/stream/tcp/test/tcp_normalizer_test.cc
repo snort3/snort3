@@ -32,6 +32,8 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
+using namespace snort;
+
 NormMode mockNormMode = NORM_MODE_ON;
 bool norm_enabled = true;
 THREAD_LOCAL TcpStats tcpStats;

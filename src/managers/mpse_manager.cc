@@ -33,6 +33,7 @@
 
 #include "module_manager.h"
 
+using namespace snort;
 using namespace std;
 
 typedef list<const MpseApi*> EngineList;

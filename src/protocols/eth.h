@@ -26,6 +26,8 @@
 #define ETHERNET_HEADER_LEN 14
 #define ETHERNET_MTU        1500
 
+namespace snort
+{
 namespace eth
 {
 constexpr uint16_t MTU_LEN = 1500;
@@ -47,6 +49,7 @@ struct EtherHdr
     { return ether_type; }
 };
 } // namespace eth
+} // namespace snort
 
 #endif
 

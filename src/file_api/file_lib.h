@@ -36,8 +36,11 @@
 class FileCapture;
 class FileConfig;
 class FileSegments;
-class Flow;
+
+namespace snort
+{
 class FileInspect;
+class Flow;
 
 class SO_PUBLIC FileInfo
 {
@@ -140,6 +143,6 @@ private:
     inline void finalize_file_type();
     inline void finish_signature_lookup(Flow*, bool, FilePolicyBase*);
 };
-
+}
 #endif
 

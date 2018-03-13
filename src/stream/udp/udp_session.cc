@@ -32,6 +32,8 @@
 #include "udp_module.h"
 #include "stream_udp.h"
 
+using namespace snort;
+
 // NOTE:  sender is assumed to be client
 //        responder is assumed to be server
 

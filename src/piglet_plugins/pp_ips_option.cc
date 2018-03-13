@@ -30,6 +30,8 @@
 #include "pp_packet_iface.h"
 #include "pp_raw_buffer_iface.h"
 
+using namespace snort;
+
 class IpsOptionPiglet : public Piglet::BasePlugin
 {
 public:

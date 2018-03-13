@@ -26,6 +26,8 @@
 #include "framework/logger.h"
 #include "framework/module.h"
 
+using namespace snort;
+
 #define s_name "log_null"
 #define s_help "disable logging of packets"
 

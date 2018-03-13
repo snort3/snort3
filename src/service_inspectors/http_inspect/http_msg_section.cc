@@ -35,7 +35,7 @@
 using namespace HttpEnums;
 
 HttpMsgSection::HttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
-       HttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_,
+       HttpFlowData* session_data_, SourceId source_id_, bool buf_owner, snort::Flow* flow_,
        const HttpParaList* params_) :
     msg_text(buf_size, buffer, buf_owner),
     session_data(session_data_),
@@ -92,7 +92,7 @@ void HttpMsgSection::update_depth() const
     {
     case CMP_NONE:
       {
-        unsigned max_pdu = SnortConfig::get_conf()->max_pdu;
+        unsigned max_pdu = snort::SnortConfig::get_conf()->max_pdu;
         session_data->section_size_target[source_id] = max_pdu + random_increment;
         session_data->section_size_max[source_id] = max_pdu + (max_pdu >> 1);
         break;

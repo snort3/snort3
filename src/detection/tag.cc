@@ -38,6 +38,8 @@
 
 #include "treenodes.h"
 
+using namespace snort;
+
 /*  D E F I N E S  **************************************************/
 #define MAX_TAG_NODES   256
 

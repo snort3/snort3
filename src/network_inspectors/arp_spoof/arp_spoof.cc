@@ -83,6 +83,8 @@
 
 #include "arp_module.h"
 
+using namespace snort;
+
 static const uint8_t bcast[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 
 THREAD_LOCAL ProfileStats arpPerfStats;
@@ -183,7 +185,7 @@ void ArpSpoof::eval(Packet* p)
     }
     else
     {
-        const wlan::WifiHdr* wifih = layer::get_wifi_layer(p);
+        const snort::wlan::WifiHdr* wifih = snort::layer::get_wifi_layer(p);
         if (wifih == nullptr)
             return;
 
@@ -210,7 +212,7 @@ void ArpSpoof::eval(Packet* p)
          }
     }
 
-    const arp::EtherARP* ah = layer::get_arp_layer(p);
+    const snort::arp::EtherARP* ah = snort::layer::get_arp_layer(p);
 
     /* is the ARP protocol type IP and the ARP hardware type Ethernet? */
     if ((ntohs(ah->ea_hdr.ar_hrd) != 0x0001) ||

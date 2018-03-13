@@ -31,6 +31,8 @@
 
 #include "gtp_inspect.h"
 
+using namespace snort;
+
 #define GTPMSG_ZERO_LEN offsetof(GTPMsg, msg_id)
 
 THREAD_LOCAL GTP_Stats gtp_stats;

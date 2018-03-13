@@ -26,6 +26,7 @@
 
 #include "sfip/sf_cidr.h"
 
+using namespace snort;
 
 #define MINIMUM_TABLE_MEMORY (768 * 1024)
 

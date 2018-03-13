@@ -31,6 +31,8 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
+using namespace snort;
+
 // Stubs whose sole purpose is to make the test code link
 void ParseWarning(WarningGroup, const char*, ...) {}
 void ParseError(const char*, ...) {}

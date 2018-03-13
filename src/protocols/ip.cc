@@ -25,6 +25,8 @@
 
 #include "layer.h"
 
+namespace snort
+{
 namespace ip
 {
 void IpApi::reset()
@@ -315,4 +317,5 @@ bool IpApi::is_dst_loopback() const
     return false;
 }
 } // namespace ip
+} // namespace snort
 

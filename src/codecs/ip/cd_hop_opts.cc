@@ -25,6 +25,8 @@
 #include "framework/codec.h"
 #include "main/snort_config.h"
 
+using namespace snort;
+
 #define CD_HOPOPTS_NAME "ipv6_hop_opts"
 #define CD_HOPOPTS_HELP "support for IPv6 hop options"
 

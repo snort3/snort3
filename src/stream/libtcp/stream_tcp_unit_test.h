@@ -22,17 +22,20 @@
 #ifndef STREAM_LIBTCP_UNIT_TEST_H
 #define STREAM_LIBTCP_UNIT_TEST_H
 
+namespace snort
+{
 class Flow;
 struct Packet;
+}
 
-Packet* get_syn_packet(Flow*);
-Packet* get_syn_ack_packet(Flow*);
-Packet* get_ack_packet(Flow*);
-Packet* get_fin_packet(Flow*);
-Packet* get_rst_packet(Flow*);
-Packet* get_data_packet(Flow*);
+snort::Packet* get_syn_packet(snort::Flow*);
+snort::Packet* get_syn_ack_packet(snort::Flow*);
+snort::Packet* get_ack_packet(snort::Flow*);
+snort::Packet* get_fin_packet(snort::Flow*);
+snort::Packet* get_rst_packet(snort::Flow*);
+snort::Packet* get_data_packet(snort::Flow*);
 
-void release_packet(Packet*);
+void release_packet(snort::Packet*);
 
 #endif
 

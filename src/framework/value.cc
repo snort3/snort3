@@ -31,6 +31,7 @@
 #include "catch/snort_catch.h"
 #endif
 
+using namespace snort;
 using namespace std;
 
 Value::~Value()

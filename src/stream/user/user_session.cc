@@ -33,6 +33,8 @@
 #include "stream_user.h"
 #include "user_module.h"
 
+using namespace snort;
+
 THREAD_LOCAL ProfileStats user_perf_stats;
 
 // we always get exactly one copy of user data in order
@@ -158,7 +160,7 @@ void UserTracker::detect(
     up->packet_flags |= (p->packet_flags & (PKT_STREAM_EST|PKT_STREAM_UNEST_UNI));
 
     trace_logf(stream_user, "detect[%d]\n", up->dsize);
-    Snort::inspect(up);
+    snort::Snort::inspect(up);
 }
 
 int UserTracker::scan(Packet* p, uint32_t& flags)

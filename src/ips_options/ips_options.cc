@@ -25,6 +25,8 @@
 
 #include "managers/plugin_manager.h"
 
+using namespace snort;
+
 extern const BaseApi* ips_classtype;
 extern const BaseApi* ips_content;
 extern const BaseApi* ips_detection_filter;

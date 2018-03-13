@@ -25,6 +25,8 @@
 #include "framework/codec.h"
 #include "main/snort_config.h"
 
+using namespace snort;
+
 #define CD_AUTH_NAME "auth"
 #define CD_AUTH_HELP "support for IP authentication header"
 

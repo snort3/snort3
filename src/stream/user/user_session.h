@@ -59,14 +59,14 @@ struct UserTracker
     void init();
     void term();
 
-    void process(Packet*);
-    void add_data(Packet*);
-    int scan(Packet*, uint32_t&);
-    void flush(struct Packet*, unsigned, uint32_t);
-    void detect(const struct Packet*, const struct StreamBuffer&, uint32_t, Packet* up);
+    void process(snort::Packet*);
+    void add_data(snort::Packet*);
+    int scan(snort::Packet*, uint32_t&);
+    void flush(struct snort::Packet*, unsigned, uint32_t);
+    void detect(const struct snort::Packet*, const struct snort::StreamBuffer&, uint32_t, snort::Packet* up);
 
     std::list<UserSegment*> seg_list;
-    StreamSplitter* splitter;
+    snort::StreamSplitter* splitter;
     PAF_State paf_state;
     unsigned total;
 };
@@ -74,16 +74,16 @@ struct UserTracker
 class UserSession : public Session
 {
 public:
-    UserSession(Flow*);
+    UserSession(snort::Flow*);
 
-    bool setup(Packet*) override;
+    bool setup(snort::Packet*) override;
     void clear() override;
 
-    int process(Packet*) override;
+    int process(snort::Packet*) override;
 
-    void set_splitter(bool c2s, StreamSplitter*) override;
-    StreamSplitter* get_splitter(bool c2s) override;
-    void restart(Packet*) override;
+    void set_splitter(bool c2s, snort::StreamSplitter*) override;
+    snort::StreamSplitter* get_splitter(bool c2s) override;
+    void restart(snort::Packet*) override;
 
     bool is_sequenced(uint8_t /*dir*/) override
     { return true; }
@@ -95,24 +95,24 @@ public:
     { return SSN_MISSING_NONE; }
 
 private:
-    void start(Packet*, Flow*);
-    void update(Packet*, Flow*);
-    void end(Packet*, Flow*);
+    void start(snort::Packet*, snort::Flow*);
+    void update(snort::Packet*, snort::Flow*);
+    void end(snort::Packet*, snort::Flow*);
 
-    void update_direction(char dir, const SfIp*, uint16_t port) override;
+    void update_direction(char dir, const snort::SfIp*, uint16_t port) override;
 
-    bool add_alert(Packet*, uint32_t gid, uint32_t sid) override;
-    bool check_alerted(Packet*, uint32_t gid, uint32_t sid) override;
+    bool add_alert(snort::Packet*, uint32_t gid, uint32_t sid) override;
+    bool check_alerted(snort::Packet*, uint32_t gid, uint32_t sid) override;
 
     int update_alert(
-        Packet*, uint32_t gid, uint32_t sid, uint32_t event_id, uint32_t event_second) override;
+        snort::Packet*, uint32_t gid, uint32_t sid, uint32_t event_id, uint32_t event_second) override;
 
-    void flush_client(Packet*) override { }
-    void flush_server(Packet*) override { }
-    void flush_talker(Packet*, bool /*final_flush */ = false) override { }
-    void flush_listener(Packet*, bool /*final_flush */ = false) override { }
+    void flush_client(snort::Packet*) override { }
+    void flush_server(snort::Packet*) override { }
+    void flush_talker(snort::Packet*, bool /*final_flush */ = false) override { }
+    void flush_listener(snort::Packet*, bool /*final_flush */ = false) override { }
 
-    void set_extra_data(Packet*, uint32_t /* flag */) override { }
+    void set_extra_data(snort::Packet*, uint32_t /* flag */) override { }
 
     uint8_t get_reassembly_direction() override;
 

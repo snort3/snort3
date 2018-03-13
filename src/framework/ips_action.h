@@ -29,14 +29,17 @@
 #include "framework/base_api.h"
 #include "main/snort_types.h"
 
-struct Packet;
-
 // this is the current version of the api
 #define ACTAPI_VERSION ((BASE_API_VERSION << 16) | 0)
 
 //-------------------------------------------------------------------------
 // api for class
 //-------------------------------------------------------------------------
+
+namespace snort
+{
+struct Packet;
+struct SnortConfig;
 
 enum ActionType
 {
@@ -47,8 +50,6 @@ enum ActionType
     ACT_REMOTE,
     ACT_MAX
 };
-
-struct SnortConfig;
 
 class SO_PUBLIC IpsAction
 {
@@ -86,6 +87,6 @@ struct ActionApi
     ActNewFunc ctor;
     ActDelFunc dtor;
 };
-
+}
 #endif
 

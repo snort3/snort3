@@ -26,6 +26,7 @@
 
 #include "stream_icmp.h"
 
+using namespace snort;
 using namespace std;
 
 //-------------------------------------------------------------------------

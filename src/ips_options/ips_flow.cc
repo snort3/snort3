@@ -33,6 +33,8 @@
 #include "protocols/packet.h"
 #include "target_based/snort_protocols.h"
 
+using namespace snort;
+
 #define s_name "flow"
 
 static THREAD_LOCAL ProfileStats flowCheckPerfStats;

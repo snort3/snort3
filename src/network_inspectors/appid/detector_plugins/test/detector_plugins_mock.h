@@ -29,25 +29,27 @@ void ParseWarning(WarningGroup, const char*, ...) {}
 void Debug::print(const char*, int, uint64_t, const char*, ...) {}
 #endif
 
+namespace snort
+{
 // Stubs for packet
 Packet::Packet(bool) { }
 Packet::~Packet() { }
 
-// Stubs for inspectors
-unsigned AppIdSession::inspector_id = 0;
 Inspector::Inspector() {}
 Inspector::~Inspector() {}
 bool Inspector::likes(Packet*) { return true; }
 bool Inspector::get_buf(const char*, Packet*, InspectionBuffer&) { return true; }
 class StreamSplitter* Inspector::get_splitter(bool) { return nullptr; }
-class AppIdInspector : public Inspector
+}
+
+class AppIdInspector : public snort::Inspector
 {
 public:
     AppIdInspector(AppIdModule& ) {}
     ~AppIdInspector() {}
     void eval(Packet*) {}
-    bool configure(SnortConfig*) { return true; }
-    void show(SnortConfig*) {}
+    bool configure(snort::SnortConfig*) { return true; }
+    void show(snort::SnortConfig*) {}
     void tinit() {}
     void tterm() {}
 };
@@ -58,15 +60,15 @@ AppIdModuleConfig::~AppIdModuleConfig() {}
 AppIdModule::AppIdModule()
     : Module("a", "b") {}
 AppIdModule::~AppIdModule() {}
-bool AppIdModule::begin(const char*, int, SnortConfig*)
+bool AppIdModule::begin(const char*, int, snort::SnortConfig*)
 {
     return false;
 }
-bool AppIdModule::set(const char*, Value&, SnortConfig*)
+bool AppIdModule::set(const char*, snort::Value&, snort::SnortConfig*)
 {
     return false;
 }
-bool AppIdModule::end(const char*, int, SnortConfig*)
+bool AppIdModule::end(const char*, int, snort::SnortConfig*)
 {
     return false;
 }
@@ -78,7 +80,8 @@ PegCount* AppIdModule::get_counts() const
 {
     return nullptr;
 }
-ProfileStats* AppIdModule::get_profile() const
+
+snort::ProfileStats* AppIdModule::get_profile() const
 {
     return nullptr;
 }
@@ -87,10 +90,13 @@ void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*) {}
 void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) {}
 
 // Stubs for appid sessions
-FlowData::FlowData(unsigned, Inspector*) {}
-FlowData::~FlowData() = default;
+snort::FlowData::FlowData(unsigned, Inspector*) {}
+snort::FlowData::~FlowData() = default;
+
+// Stubs for inspectors
+unsigned AppIdSession::inspector_id = 0;
 AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t, AppIdInspector& inspector)
-    : FlowData(inspector_id, (Inspector*)&inspector), inspector(inspector) {}
+    : snort::FlowData(inspector_id, (snort::Inspector*)&inspector), inspector(inspector) {}
 AppIdSession::~AppIdSession() {}
 AppIdHttpSession::AppIdHttpSession(AppIdSession& session)
     : asd(session) {}
@@ -107,6 +113,8 @@ PegCount AppIdPegCounts::get_disco_peg(enum DiscoveryPegs)
     return 0;
 }
 
+namespace snort
+{
 // Stubs for search_tool.cc
 SearchTool::SearchTool(const char*, bool) {}
 SearchTool::~SearchTool() {}
@@ -124,6 +132,7 @@ int SearchTool::find_all(const char*, unsigned, MpseMatch, bool, void* mp_arg)
     if (test_find_all_enabled)
         memcpy(mp_arg, &mock_mp, sizeof(MatchedPatterns*));
     return 0;
+}
 }
 
 // Stubs for appid_session.cc

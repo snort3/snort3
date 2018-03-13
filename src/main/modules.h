@@ -38,7 +38,10 @@ struct IpsModuleStats
     PegCount invalid_policy_ids;
 };
 
+namespace snort
+{
 SO_PUBLIC extern THREAD_LOCAL IpsModuleStats ips_module_stats;
+}
 
 #endif
 

@@ -271,7 +271,7 @@ DCE2_Ret DCE2_Smb2InitFileTracker(DCE2_SmbFileTracker* ftracker,
     const bool is_ipc, const uint64_t fid);
 
 /* Check smb version based on smb header */
-DCE2_SmbVersion DCE2_Smb2Version(const Packet* p);
+DCE2_SmbVersion DCE2_Smb2Version(const snort::Packet* p);
 
 #endif  /* _DCE_SMB2_H_ */
 

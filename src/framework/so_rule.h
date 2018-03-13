@@ -29,7 +29,10 @@
 #include "framework/ips_option.h"
 #include "main/snort_types.h"
 
+namespace snort
+{
 struct Packet;
+}
 
 // this is the current version of the api
 #define SOAPI_VERSION ((BASE_API_VERSION << 16) | 0)
@@ -40,14 +43,14 @@ struct Packet;
 // ctor(<key>) returns eval func and optional data
 // data is freed with dtor(data)
 
-typedef IpsOption::EvalStatus (* SoEvalFunc)(void*, class Cursor&, Packet*);
+typedef snort::IpsOption::EvalStatus (* SoEvalFunc)(void*, class Cursor&, snort::Packet*);
 typedef SoEvalFunc (* SoNewFunc)(const char* key, void**);
 typedef void (* SoDelFunc)(void*);
 typedef void (* SoAuxFunc)();
 
 struct SoApi
 {
-    BaseApi base;
+    snort::BaseApi base;
 
     const uint8_t* rule;
     unsigned length;

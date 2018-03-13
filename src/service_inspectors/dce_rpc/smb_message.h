@@ -25,6 +25,11 @@
 
 #include <cstdint>
 
+namespace snort
+{
+struct Packet;
+}
+
 /********************************************************************
  * SMB_COM_OPEN
  ********************************************************************/
@@ -54,17 +59,17 @@ struct SmbOpenResp   /* smb_wct = 7 */
 
 inline uint16_t SmbOpenRespFid(const SmbOpenResp* resp)
 {
-    return alignedNtohs(&resp->smb_fid);
+    return snort::alignedNtohs(&resp->smb_fid);
 }
 
 inline uint32_t SmbOpenRespFileSize(const SmbOpenResp* resp)
 {
-    return alignedNtohl(&resp->smb_file_size);
+    return snort::alignedNtohl(&resp->smb_file_size);
 }
 
 inline uint16_t SmbOpenRespFileAttrs(const SmbOpenResp* resp)
 {
-    return alignedNtohs(&resp->smb_attr);
+    return snort::alignedNtohs(&resp->smb_attr);
 }
 
 inline bool SmbFileAttrsDirectory(const uint16_t file_attrs)
@@ -76,7 +81,7 @@ inline bool SmbFileAttrsDirectory(const uint16_t file_attrs)
 
 inline uint16_t SmbOpenRespAccessMode(const SmbOpenResp* resp)
 {
-    return alignedNtohs(&resp->smb_access);
+    return snort::alignedNtohs(&resp->smb_access);
 }
 
 inline bool SmbOpenForWriting(const uint16_t access_mode)
@@ -104,7 +109,7 @@ struct SmbCreateResp   /* smb_wct = 1 */
 
 inline uint16_t SmbCreateReqFileAttrs(const SmbCreateReq* req)
 {
-    return alignedNtohs(&req->smb_file_attrs);
+    return snort::alignedNtohs(&req->smb_file_attrs);
 }
 
 inline bool SmbAttrDirectory(const uint16_t file_attrs)
@@ -116,7 +121,7 @@ inline bool SmbAttrDirectory(const uint16_t file_attrs)
 
 inline uint16_t SmbCreateRespFid(const SmbCreateResp* resp)
 {
-    return alignedNtohs(&resp->smb_fid);
+    return snort::alignedNtohs(&resp->smb_fid);
 }
 
 /********************************************************************
@@ -139,7 +144,7 @@ struct SmbCloseResp   /* smb_wct = 0 */
 
 inline uint16_t SmbCloseReqFid(const SmbCloseReq* req)
 {
-    return alignedNtohs(&req->smb_fid);
+    return snort::alignedNtohs(&req->smb_fid);
 }
 
 /********************************************************************
@@ -175,17 +180,17 @@ struct SmbReadResp   /* smb_wct = 5 */
 
 inline uint16_t SmbReadReqFid(const SmbReadReq* req)
 {
-    return alignedNtohs(&req->smb_fid);
+    return snort::alignedNtohs(&req->smb_fid);
 }
 
 inline uint32_t SmbReadReqOffset(const SmbReadReq* req)
 {
-    return alignedNtohl(&req->smb_off);
+    return snort::alignedNtohl(&req->smb_off);
 }
 
 inline uint16_t SmbReadRespCount(const SmbReadResp* resp)
 {
-    return alignedNtohs(&resp->smb_cnt);
+    return snort::alignedNtohs(&resp->smb_cnt);
 }
 
 /********************************************************************
@@ -210,22 +215,22 @@ struct SmbWriteResp   /* smb_wct = 1 */
 
 inline uint16_t SmbWriteReqFid(const SmbWriteReq* req)
 {
-    return alignedNtohs(&req->smb_fid);
+    return snort::alignedNtohs(&req->smb_fid);
 }
 
 inline uint16_t SmbWriteReqCount(const SmbWriteReq* req)
 {
-    return alignedNtohs(&req->smb_cnt);
+    return snort::alignedNtohs(&req->smb_cnt);
 }
 
 inline uint32_t SmbWriteReqOffset(const SmbWriteReq* req)
 {
-    return alignedNtohl(&req->smb_offset);
+    return snort::alignedNtohl(&req->smb_offset);
 }
 
 inline uint16_t SmbWriteRespCount(const SmbWriteResp* resp)
 {
-    return alignedNtohs(&resp->smb_cnt);
+    return snort::alignedNtohs(&resp->smb_cnt);
 }
 
 /********************************************************************
@@ -248,12 +253,12 @@ struct SmbCreateNewResp   /* smb_wct = 1 */
 
 inline uint16_t SmbCreateNewReqFileAttrs(const SmbCreateNewReq* req)
 {
-    return alignedNtohs(&req->smb_file_attrs);
+    return snort::alignedNtohs(&req->smb_file_attrs);
 }
 
 inline uint16_t SmbCreateNewRespFid(const SmbCreateNewResp* resp)
 {
-    return alignedNtohs(&resp->smb_fid);
+    return snort::alignedNtohs(&resp->smb_fid);
 }
 
 /********************************************************************
@@ -279,17 +284,17 @@ struct SmbLockAndReadResp   /* smb_wct = 5 */
 
 inline uint16_t SmbLockAndReadReqFid(const SmbLockAndReadReq* req)
 {
-    return alignedNtohs(&req->smb_fid);
+    return snort::alignedNtohs(&req->smb_fid);
 }
 
 inline uint32_t SmbLockAndReadReqOffset(const SmbLockAndReadReq* req)
 {
-    return alignedNtohl(&req->smb_read_offset);
+    return snort::alignedNtohl(&req->smb_read_offset);
 }
 
 inline uint16_t SmbLockAndReadRespCount(const SmbLockAndReadResp* resp)
 {
-    return alignedNtohs(&resp->smb_cnt);
+    return snort::alignedNtohs(&resp->smb_cnt);
 }
 
 /********************************************************************
@@ -314,17 +319,17 @@ struct SmbWriteAndUnlockResp   /* smb_wct = 1 */
 
 inline uint16_t SmbWriteAndUnlockReqFid(const SmbWriteAndUnlockReq* req)
 {
-    return alignedNtohs(&req->smb_fid);
+    return snort::alignedNtohs(&req->smb_fid);
 }
 
 inline uint16_t SmbWriteAndUnlockReqCount(const SmbWriteAndUnlockReq* req)
 {
-    return alignedNtohs(&req->smb_cnt);
+    return snort::alignedNtohs(&req->smb_cnt);
 }
 
 inline uint32_t SmbWriteAndUnlockReqOffset(const SmbWriteAndUnlockReq* req)
 {
-    return alignedNtohl(&req->smb_write_offset);
+    return snort::alignedNtohl(&req->smb_write_offset);
 }
 
 /********************************************************************
@@ -376,32 +381,32 @@ struct SmbOpenAndXResp   /* smb_wct = 15 */
 
 inline uint32_t SmbOpenAndXReqAllocSize(const SmbOpenAndXReq* req)
 {
-    return alignedNtohl(&req->smb_size);
+    return snort::alignedNtohl(&req->smb_size);
 }
 
 inline uint16_t SmbOpenAndXReqFileAttrs(const SmbOpenAndXReq* req)
 {
-    return alignedNtohs(&req->smb_attr);
+    return snort::alignedNtohs(&req->smb_attr);
 }
 
 inline uint16_t SmbOpenAndXRespFid(const SmbOpenAndXResp* resp)
 {
-    return alignedNtohs(&resp->smb_fid);
+    return snort::alignedNtohs(&resp->smb_fid);
 }
 
 inline uint16_t SmbOpenAndXRespFileAttrs(const SmbOpenAndXResp* resp)
 {
-    return alignedNtohs(&resp->smb_attribute);
+    return snort::alignedNtohs(&resp->smb_attribute);
 }
 
 inline uint32_t SmbOpenAndXRespFileSize(const SmbOpenAndXResp* resp)
 {
-    return alignedNtohl(&resp->smb_size);
+    return snort::alignedNtohl(&resp->smb_size);
 }
 
 inline uint16_t SmbOpenAndXRespResourceType(const SmbOpenAndXResp* resp)
 {
-    return alignedNtohs(&resp->smb_type);
+    return snort::alignedNtohs(&resp->smb_type);
 }
 
 #define SMB_OPEN_RESULT__EXISTED    0x0001
@@ -410,7 +415,7 @@ inline uint16_t SmbOpenAndXRespResourceType(const SmbOpenAndXResp* resp)
 
 inline uint16_t SmbOpenAndXRespOpenResults(const SmbOpenAndXResp* resp)
 {
-    return alignedNtohs(&resp->smb_action);
+    return snort::alignedNtohs(&resp->smb_action);
 }
 
 inline bool SmbOpenResultRead(const uint16_t open_results)
@@ -475,26 +480,27 @@ struct SmbReadAndXResp    /* smb_wct = 12 */
 
 inline uint16_t SmbReadAndXReqFid(const SmbReadAndXReq* req)
 {
-    return alignedNtohs(&req->smb_fid);
+    return snort::alignedNtohs(&req->smb_fid);
 }
 
 inline uint64_t SmbReadAndXReqOffset(const SmbReadAndXExtReq* req)
 {
     if (req->smb_wct == 10)
-        return (uint64_t)alignedNtohl(&req->smb_offset);
-    return (uint64_t)alignedNtohl(&req->smb_off_high) << 32 | (uint64_t)alignedNtohl(
-        &req->smb_offset);
+        return (uint64_t)snort::alignedNtohl(&req->smb_offset);
+
+    return (uint64_t)snort::alignedNtohl(&req->smb_off_high) << 32
+                    | (uint64_t)snort::alignedNtohl(&req->smb_offset);
 }
 
 inline uint16_t SmbReadAndXRespDataOff(const SmbReadAndXResp* req)
 {
-    return alignedNtohs(&req->smb_doff);
+    return snort::alignedNtohs(&req->smb_doff);
 }
 
 inline uint32_t SmbReadAndXRespDataCnt(const SmbReadAndXResp* resp)
 {
-    return (uint32_t)alignedNtohs(&resp->smb_dsize_high) << 16 | (uint32_t)alignedNtohs(
-        &resp->smb_dsize);
+    return (uint32_t)snort::alignedNtohs(&resp->smb_dsize_high) << 16
+                    | (uint32_t)snort::alignedNtohs(&resp->smb_dsize);
 }
 
 /********************************************************************
@@ -558,51 +564,52 @@ struct SmbWriteAndXResp   /* smb_wct = 6 */
 
 inline uint16_t SmbWriteAndXReqFid(const SmbWriteAndXReq* req)
 {
-    return alignedNtohs(&req->smb_fid);
+    return snort::alignedNtohs(&req->smb_fid);
 }
 
 inline uint16_t SmbWriteAndXReqDataOff(const SmbWriteAndXReq* req)
 {
-    return alignedNtohs(&req->smb_doff);
+    return snort::alignedNtohs(&req->smb_doff);
 }
 
 inline uint16_t SmbWriteAndXReqRemaining(const SmbWriteAndXReq* req)
 {
-    return alignedNtohs(&req->smb_countleft);
+    return snort::alignedNtohs(&req->smb_countleft);
 }
 
 inline uint64_t SmbWriteAndXReqOffset(const SmbWriteAndXExtReq* req)
 {
     if (req->smb_wct == 12)
-        return (uint64_t)alignedNtohl(&req->smb_offset);
-    return (uint64_t)alignedNtohl(&req->smb_off_high) << 32 | (uint64_t)alignedNtohl(
-        &req->smb_offset);
+        return (uint64_t)snort::alignedNtohl(&req->smb_offset);
+
+    return (uint64_t)snort::alignedNtohl(&req->smb_off_high) << 32
+                    | (uint64_t)snort::alignedNtohl(&req->smb_offset);
 }
 
 inline uint32_t SmbWriteAndXReqDataCnt(const SmbWriteAndXReq* req)
 {
-    return (uint32_t)alignedNtohs(&req->smb_dsize_high) << 16 | (uint32_t)alignedNtohs(
-        &req->smb_dsize);
+    return (uint32_t)snort::alignedNtohs(&req->smb_dsize_high) << 16
+                    | (uint32_t)snort::alignedNtohs(&req->smb_dsize);
 }
 
 inline uint16_t SmbWriteAndXReqWriteMode(const SmbWriteAndXReq* req)
 {
-    return alignedNtohs(&req->smb_wmode);
+    return snort::alignedNtohs(&req->smb_wmode);
 }
 
 inline bool SmbWriteAndXReqStartRaw(const SmbWriteAndXReq* req)
 {
-    return ((alignedNtohs(&req->smb_wmode) & 0x000c) == 0x000c) ? true : false;
+    return ((snort::alignedNtohs(&req->smb_wmode) & 0x000c) == 0x000c) ? true : false;
 }
 
 inline bool SmbWriteAndXReqRaw(const SmbWriteAndXReq* req)
 {
-    return ((alignedNtohs(&req->smb_wmode) & 0x000c) == 0x0004) ? true : false;
+    return ((snort::alignedNtohs(&req->smb_wmode) & 0x000c) == 0x0004) ? true : false;
 }
 
 inline uint16_t SmbWriteAndXRespCnt(const SmbWriteAndXResp* resp)
 {
-    return alignedNtohs(&resp->smb_count);
+    return snort::alignedNtohs(&resp->smb_count);
 }
 
 /********************************************************************
@@ -625,7 +632,7 @@ struct SmbLm10_SessionSetupAndXReq   /* smb_wct = 10 */
 
 inline uint16_t SmbSessionSetupAndXReqMaxMultiplex(const SmbLm10_SessionSetupAndXReq* req)
 {
-    return alignedNtohs(&req->smb_mpxmax);
+    return snort::alignedNtohs(&req->smb_mpxmax);
 }
 
 /* Extended request as defined in NT LM 1.0 document */
@@ -648,12 +655,12 @@ struct SmbNt10_SessionSetupAndXReq   /* smb_wct = 13 */
 
 inline uint16_t SmbNt10SessionSetupAndXReqOemPassLen(const SmbNt10_SessionSetupAndXReq* req)
 {
-    return alignedNtohs(&req->smb_oem_passlen);
+    return snort::alignedNtohs(&req->smb_oem_passlen);
 }
 
 inline uint16_t SmbNt10SessionSetupAndXReqUnicodePassLen(const SmbNt10_SessionSetupAndXReq* req)
 {
-    return alignedNtohs(&req->smb_unicode_passlen);
+    return snort::alignedNtohs(&req->smb_unicode_passlen);
 }
 
 /* Extended request for security blob */
@@ -675,7 +682,7 @@ struct SmbNt10_SessionSetupAndXExtReq   /* smb_wct = 12 */
 
 inline uint16_t SmbSessionSetupAndXReqBlobLen(const SmbNt10_SessionSetupAndXExtReq* req)
 {
-    return alignedNtohs(&req->smb_blob_len);
+    return snort::alignedNtohs(&req->smb_blob_len);
 }
 
 /* Extended response for security blob */
@@ -693,7 +700,7 @@ struct SmbNt10_SessionSetupAndXExtResp   /* smb_wct = 4 */
 
 inline uint16_t SmbSessionSetupAndXRespBlobLen(const SmbNt10_SessionSetupAndXExtResp* resp)
 {
-    return alignedNtohs(&resp->smb_blob_len);
+    return snort::alignedNtohs(&resp->smb_blob_len);
 }
 
 /********************************************************************
@@ -746,12 +753,12 @@ struct SmbNt_NegotiateProtocolResp     /* smb_wct = 17 */
 
 inline uint16_t SmbLm_NegotiateRespMaxMultiplex(const SmbLm10_NegotiateProtocolResp* resp)
 {
-    return alignedNtohs(&resp->smb_maxmux);
+    return snort::alignedNtohs(&resp->smb_maxmux);
 }
 
 inline uint16_t SmbNt_NegotiateRespMaxMultiplex(const SmbNt_NegotiateProtocolResp* resp)
 {
-    return alignedNtohs(&resp->smb_maxmux);
+    return snort::alignedNtohs(&resp->smb_maxmux);
 }
 
 /* This is the Core Protocol response */
@@ -764,7 +771,7 @@ struct SmbCore_NegotiateProtocolResp    /* smb_wct = 1 */
 
 inline uint16_t SmbNegotiateRespDialectIndex(const SmbCore_NegotiateProtocolResp* resp)
 {
-    return alignedNtohs(&resp->smb_index);
+    return snort::alignedNtohs(&resp->smb_index);
 }
 
 /*********************************************************************
@@ -784,7 +791,7 @@ struct SmbTreeConnectAndXReq   /* smb_wct = 4 */
 
 inline uint16_t SmbTreeConnectAndXReqPassLen(const SmbTreeConnectAndXReq* req)
 {
-    return alignedNtohs(&req->smb_spasslen);
+    return snort::alignedNtohs(&req->smb_spasslen);
 }
 
 /********************************************************************
@@ -874,12 +881,12 @@ struct SmbNtCreateAndXExtResp    /* smb_wct = 42 */
 
 inline uint16_t SmbNtCreateAndXReqFileNameLen(const SmbNtCreateAndXReq* req)
 {
-    return alignedNtohs(&req->smb_name_len);
+    return snort::alignedNtohs(&req->smb_name_len);
 }
 
 inline uint32_t SmbNtCreateAndXReqCreateDisposition(const SmbNtCreateAndXReq* req)
 {
-    return alignedNtohl(&req->smb_create_disp);
+    return snort::alignedNtohl(&req->smb_create_disp);
 }
 
 inline bool SmbCreateDispositionRead(const uint32_t create_disposition)
@@ -890,27 +897,27 @@ inline bool SmbCreateDispositionRead(const uint32_t create_disposition)
 
 inline uint64_t SmbNtCreateAndXReqAllocSize(const SmbNtCreateAndXReq* req)
 {
-    return alignedNtohq(&req->smb_alloc_size);
+    return snort::alignedNtohq(&req->smb_alloc_size);
 }
 
 inline bool SmbNtCreateAndXReqSequentialOnly(const SmbNtCreateAndXReq* req)
 {
-    return (alignedNtohl(&req->smb_create_opts) & SMB_CREATE_OPTIONS__FILE_SEQUENTIAL_ONLY);
+    return (snort::alignedNtohl(&req->smb_create_opts) & SMB_CREATE_OPTIONS__FILE_SEQUENTIAL_ONLY);
 }
 
 inline uint32_t SmbNtCreateAndXReqFileAttrs(const SmbNtCreateAndXReq* req)
 {
-    return alignedNtohl(&req->smb_file_attrs);
+    return snort::alignedNtohl(&req->smb_file_attrs);
 }
 
 inline uint16_t SmbNtCreateAndXRespFid(const SmbNtCreateAndXResp* resp)
 {
-    return alignedNtohs(&resp->smb_fid);
+    return snort::alignedNtohs(&resp->smb_fid);
 }
 
 inline uint32_t SmbNtCreateAndXRespCreateDisposition(const SmbNtCreateAndXResp* resp)
 {
-    return alignedNtohl(&resp->smb_create_disposition);
+    return snort::alignedNtohl(&resp->smb_create_disposition);
 }
 
 inline bool SmbNtCreateAndXRespDirectory(const SmbNtCreateAndXResp* resp)
@@ -920,12 +927,12 @@ inline bool SmbNtCreateAndXRespDirectory(const SmbNtCreateAndXResp* resp)
 
 inline uint16_t SmbNtCreateAndXRespResourceType(const SmbNtCreateAndXResp* resp)
 {
-    return alignedNtohs(&resp->smb_resource_type);
+    return snort::alignedNtohs(&resp->smb_resource_type);
 }
 
 inline uint64_t SmbNtCreateAndXRespEndOfFile(const SmbNtCreateAndXResp* resp)
 {
-    return alignedNtohq(&resp->smb_eof);
+    return snort::alignedNtohq(&resp->smb_eof);
 }
 
 /********************************************************************
@@ -994,22 +1001,22 @@ struct SmbTransactionResp   /* smb_wct = 10 + value of smb_suwcnt */
 
 inline uint16_t SmbTransactionReqSubCom(const SmbTransactionReq* req)
 {
-    return alignedNtohs(&req->smb_setup1);
+    return snort::alignedNtohs(&req->smb_setup1);
 }
 
 inline uint16_t SmbTransactionReqFid(const SmbTransactionReq* req)
 {
-    return alignedNtohs(&req->smb_setup2);
+    return snort::alignedNtohs(&req->smb_setup2);
 }
 
 inline bool SmbTransactionReqDisconnectTid(const SmbTransactionReq* req)
 {
-    return (alignedNtohs(&req->smb_flags) & 0x0001) ? true : false;
+    return (snort::alignedNtohs(&req->smb_flags) & 0x0001) ? true : false;
 }
 
 inline bool SmbTransactionReqOneWay(const SmbTransactionReq* req)
 {
-    return (alignedNtohs(&req->smb_flags) & 0x0002) ? true : false;
+    return (snort::alignedNtohs(&req->smb_flags) & 0x0002) ? true : false;
 }
 
 inline uint8_t SmbTransactionReqSetupCnt(const SmbTransactionReq* req)
@@ -1019,72 +1026,72 @@ inline uint8_t SmbTransactionReqSetupCnt(const SmbTransactionReq* req)
 
 inline uint16_t SmbTransactionReqTotalDataCnt(const SmbTransactionReq* req)
 {
-    return alignedNtohs(&req->smb_tdscnt);
+    return snort::alignedNtohs(&req->smb_tdscnt);
 }
 
 inline uint16_t SmbTransactionReqDataCnt(const SmbTransactionReq* req)
 {
-    return alignedNtohs(&req->smb_dscnt);
+    return snort::alignedNtohs(&req->smb_dscnt);
 }
 
 inline uint16_t SmbTransactionReqDataOff(const SmbTransactionReq* req)
 {
-    return alignedNtohs(&req->smb_dsoff);
+    return snort::alignedNtohs(&req->smb_dsoff);
 }
 
 inline uint16_t SmbTransactionReqTotalParamCnt(const SmbTransactionReq* req)
 {
-    return alignedNtohs(&req->smb_tpscnt);
+    return snort::alignedNtohs(&req->smb_tpscnt);
 }
 
 inline uint16_t SmbTransactionReqParamCnt(const SmbTransactionReq* req)
 {
-    return alignedNtohs(&req->smb_pscnt);
+    return snort::alignedNtohs(&req->smb_pscnt);
 }
 
 inline uint16_t SmbTransactionReqParamOff(const SmbTransactionReq* req)
 {
-    return alignedNtohs(&req->smb_psoff);
+    return snort::alignedNtohs(&req->smb_psoff);
 }
 
 inline uint16_t SmbTransactionRespTotalDataCnt(const SmbTransactionResp* resp)
 {
-    return alignedNtohs(&resp->smb_tdrcnt);
+    return snort::alignedNtohs(&resp->smb_tdrcnt);
 }
 
 inline uint16_t SmbTransactionRespDataCnt(const SmbTransactionResp* resp)
 {
-    return alignedNtohs(&resp->smb_drcnt);
+    return snort::alignedNtohs(&resp->smb_drcnt);
 }
 
 inline uint16_t SmbTransactionRespDataOff(const SmbTransactionResp* resp)
 {
-    return alignedNtohs(&resp->smb_droff);
+    return snort::alignedNtohs(&resp->smb_droff);
 }
 
 inline uint16_t SmbTransactionRespDataDisp(const SmbTransactionResp* resp)
 {
-    return alignedNtohs(&resp->smb_drdisp);
+    return snort::alignedNtohs(&resp->smb_drdisp);
 }
 
 inline uint16_t SmbTransactionRespTotalParamCnt(const SmbTransactionResp* resp)
 {
-    return alignedNtohs(&resp->smb_tprcnt);
+    return snort::alignedNtohs(&resp->smb_tprcnt);
 }
 
 inline uint16_t SmbTransactionRespParamCnt(const SmbTransactionResp* resp)
 {
-    return alignedNtohs(&resp->smb_prcnt);
+    return snort::alignedNtohs(&resp->smb_prcnt);
 }
 
 inline uint16_t SmbTransactionRespParamOff(const SmbTransactionResp* resp)
 {
-    return alignedNtohs(&resp->smb_proff);
+    return snort::alignedNtohs(&resp->smb_proff);
 }
 
 inline uint16_t SmbTransactionRespParamDisp(const SmbTransactionResp* resp)
 {
-    return alignedNtohs(&resp->smb_prdisp);
+    return snort::alignedNtohs(&resp->smb_prdisp);
 }
 
 // Flags for TRANS_SET_NMPIPE_STATE parameters
@@ -1140,37 +1147,37 @@ struct SmbTransaction2Resp
 
 inline uint16_t SmbTransaction2ReqSubCom(const SmbTransaction2Req* req)
 {
-    return alignedNtohs(&req->smb_setup);
+    return snort::alignedNtohs(&req->smb_setup);
 }
 
 inline uint16_t SmbTransaction2ReqTotalParamCnt(const SmbTransaction2Req* req)
 {
-    return alignedNtohs(&req->smb_total_param_count);
+    return snort::alignedNtohs(&req->smb_total_param_count);
 }
 
 inline uint16_t SmbTransaction2ReqParamCnt(const SmbTransaction2Req* req)
 {
-    return alignedNtohs(&req->smb_param_count);
+    return snort::alignedNtohs(&req->smb_param_count);
 }
 
 inline uint16_t SmbTransaction2ReqParamOff(const SmbTransaction2Req* req)
 {
-    return alignedNtohs(&req->smb_param_offset);
+    return snort::alignedNtohs(&req->smb_param_offset);
 }
 
 inline uint16_t SmbTransaction2ReqTotalDataCnt(const SmbTransaction2Req* req)
 {
-    return alignedNtohs(&req->smb_total_data_count);
+    return snort::alignedNtohs(&req->smb_total_data_count);
 }
 
 inline uint16_t SmbTransaction2ReqDataCnt(const SmbTransaction2Req* req)
 {
-    return alignedNtohs(&req->smb_data_count);
+    return snort::alignedNtohs(&req->smb_data_count);
 }
 
 inline uint16_t SmbTransaction2ReqDataOff(const SmbTransaction2Req* req)
 {
-    return alignedNtohs(&req->smb_data_offset);
+    return snort::alignedNtohs(&req->smb_data_offset);
 }
 
 inline uint8_t SmbTransaction2ReqSetupCnt(const SmbTransaction2Req* req)
@@ -1180,42 +1187,42 @@ inline uint8_t SmbTransaction2ReqSetupCnt(const SmbTransaction2Req* req)
 
 inline uint16_t SmbTransaction2RespTotalParamCnt(const SmbTransaction2Resp* resp)
 {
-    return alignedNtohs(&resp->smb_total_param_count);
+    return snort::alignedNtohs(&resp->smb_total_param_count);
 }
 
 inline uint16_t SmbTransaction2RespParamCnt(const SmbTransaction2Resp* resp)
 {
-    return alignedNtohs(&resp->smb_param_count);
+    return snort::alignedNtohs(&resp->smb_param_count);
 }
 
 inline uint16_t SmbTransaction2RespParamOff(const SmbTransaction2Resp* resp)
 {
-    return alignedNtohs(&resp->smb_param_offset);
+    return snort::alignedNtohs(&resp->smb_param_offset);
 }
 
 inline uint16_t SmbTransaction2RespParamDisp(const SmbTransaction2Resp* resp)
 {
-    return alignedNtohs(&resp->smb_param_disp);
+    return snort::alignedNtohs(&resp->smb_param_disp);
 }
 
 inline uint16_t SmbTransaction2RespTotalDataCnt(const SmbTransaction2Resp* resp)
 {
-    return alignedNtohs(&resp->smb_total_data_count);
+    return snort::alignedNtohs(&resp->smb_total_data_count);
 }
 
 inline uint16_t SmbTransaction2RespDataCnt(const SmbTransaction2Resp* resp)
 {
-    return alignedNtohs(&resp->smb_data_count);
+    return snort::alignedNtohs(&resp->smb_data_count);
 }
 
 inline uint16_t SmbTransaction2RespDataOff(const SmbTransaction2Resp* resp)
 {
-    return alignedNtohs(&resp->smb_data_offset);
+    return snort::alignedNtohs(&resp->smb_data_offset);
 }
 
 inline uint16_t SmbTransaction2RespDataDisp(const SmbTransaction2Resp* resp)
 {
-    return alignedNtohs(&resp->smb_data_disp);
+    return snort::alignedNtohs(&resp->smb_data_disp);
 }
 
 struct SmbTrans2Open2ReqParams
@@ -1234,22 +1241,22 @@ typedef SmbTransaction2Req SmbTrans2Open2Req;
 
 inline uint16_t SmbTrans2Open2ReqAccessMode(const SmbTrans2Open2ReqParams* req)
 {
-    return alignedNtohs(&req->AccessMode);
+    return snort::alignedNtohs(&req->AccessMode);
 }
 
 inline uint16_t SmbTrans2Open2ReqFileAttrs(const SmbTrans2Open2ReqParams* req)
 {
-    return alignedNtohs(&req->FileAttributes);
+    return snort::alignedNtohs(&req->FileAttributes);
 }
 
 inline uint16_t SmbTrans2Open2ReqOpenMode(const SmbTrans2Open2ReqParams* req)
 {
-    return alignedNtohs(&req->OpenMode);
+    return snort::alignedNtohs(&req->OpenMode);
 }
 
 inline uint32_t SmbTrans2Open2ReqAllocSize(const SmbTrans2Open2ReqParams* req)
 {
-    return alignedNtohl(&req->AllocationSize);
+    return snort::alignedNtohl(&req->AllocationSize);
 }
 
 struct SmbTrans2Open2RespParams
@@ -1269,27 +1276,27 @@ struct SmbTrans2Open2RespParams
 
 inline uint16_t SmbTrans2Open2RespFid(const SmbTrans2Open2RespParams* resp)
 {
-    return alignedNtohs(&resp->smb_fid);
+    return snort::alignedNtohs(&resp->smb_fid);
 }
 
 inline uint16_t SmbTrans2Open2RespFileAttrs(const SmbTrans2Open2RespParams* resp)
 {
-    return alignedNtohs(&resp->file_attributes);
+    return snort::alignedNtohs(&resp->file_attributes);
 }
 
 inline uint32_t SmbTrans2Open2RespFileDataSize(const SmbTrans2Open2RespParams* resp)
 {
-    return alignedNtohl(&resp->file_data_size);
+    return snort::alignedNtohl(&resp->file_data_size);
 }
 
 inline uint16_t SmbTrans2Open2RespResourceType(const SmbTrans2Open2RespParams* resp)
 {
-    return alignedNtohs(&resp->resource_type);
+    return snort::alignedNtohs(&resp->resource_type);
 }
 
 inline uint16_t SmbTrans2Open2RespActionTaken(const SmbTrans2Open2RespParams* resp)
 {
-    return alignedNtohs(&resp->action_taken);
+    return snort::alignedNtohs(&resp->action_taken);
 }
 
 struct SmbTrans2Open2Resp
@@ -1340,12 +1347,12 @@ struct SmbTrans2QueryFileInfoReqParams
 
 inline uint16_t SmbTrans2QueryFileInfoReqFid(const SmbTrans2QueryFileInfoReqParams* req)
 {
-    return alignedNtohs(&req->fid);
+    return snort::alignedNtohs(&req->fid);
 }
 
 inline uint16_t SmbTrans2QueryFileInfoReqInfoLevel(const SmbTrans2QueryFileInfoReqParams* req)
 {
-    return alignedNtohs(&req->information_level);
+    return snort::alignedNtohs(&req->information_level);
 }
 
 struct SmbQueryInfoStandard
@@ -1363,7 +1370,7 @@ struct SmbQueryInfoStandard
 
 inline uint32_t SmbQueryInfoStandardFileDataSize(const SmbQueryInfoStandard* q)
 {
-    return alignedNtohl(&q->FileDataSize);
+    return snort::alignedNtohl(&q->FileDataSize);
 }
 
 struct SmbQueryInfoQueryEaSize
@@ -1382,7 +1389,7 @@ struct SmbQueryInfoQueryEaSize
 
 inline uint32_t SmbQueryInfoQueryEaSizeFileDataSize(const SmbQueryInfoQueryEaSize* q)
 {
-    return alignedNtohl(&q->FileDataSize);
+    return snort::alignedNtohl(&q->FileDataSize);
 }
 
 struct SmbQueryFileStandardInfo
@@ -1397,7 +1404,7 @@ struct SmbQueryFileStandardInfo
 
 inline uint64_t SmbQueryFileStandardInfoEndOfFile(const SmbQueryFileStandardInfo* q)
 {
-    return alignedNtohq(&q->EndOfFile);
+    return snort::alignedNtohq(&q->EndOfFile);
 }
 
 struct SmbQueryFileAllInfo
@@ -1421,7 +1428,7 @@ struct SmbQueryFileAllInfo
 
 inline uint64_t SmbQueryFileAllInfoEndOfFile(const SmbQueryFileAllInfo* q)
 {
-    return alignedNtohq(&q->EndOfFile);
+    return snort::alignedNtohq(&q->EndOfFile);
 }
 
 struct SmbQueryPTFileAllInfo
@@ -1466,7 +1473,7 @@ struct SmbQueryPTFileAllInfo
 
 inline uint64_t SmbQueryPTFileAllInfoEndOfFile(const SmbQueryPTFileAllInfo* q)
 {
-    return alignedNtohq(&q->EndOfFile);
+    return snort::alignedNtohq(&q->EndOfFile);
 }
 
 struct SmbQueryPTNetworkOpenInfo
@@ -1483,7 +1490,7 @@ struct SmbQueryPTNetworkOpenInfo
 
 inline uint64_t SmbQueryPTNetworkOpenInfoEndOfFile(const SmbQueryPTNetworkOpenInfo* q)
 {
-    return alignedNtohq(&q->EndOfFile);
+    return snort::alignedNtohq(&q->EndOfFile);
 }
 
 struct SmbQueryPTFileStreamInfo
@@ -1496,7 +1503,7 @@ struct SmbQueryPTFileStreamInfo
 
 inline uint64_t SmbQueryPTFileStreamInfoStreamSize(const SmbQueryPTFileStreamInfo* q)
 {
-    return alignedNtohq(&q->StreamSize);
+    return snort::alignedNtohq(&q->StreamSize);
 }
 
 struct SmbTrans2QueryFileInformationResp
@@ -1535,12 +1542,12 @@ struct SmbTrans2SetFileInfoReqParams
 
 inline uint16_t SmbTrans2SetFileInfoReqFid(const SmbTrans2SetFileInfoReqParams* req)
 {
-    return alignedNtohs(&req->fid);
+    return snort::alignedNtohs(&req->fid);
 }
 
 inline uint16_t SmbTrans2SetFileInfoReqInfoLevel(const SmbTrans2SetFileInfoReqParams* req)
 {
-    return alignedNtohs(&req->information_level);
+    return snort::alignedNtohs(&req->information_level);
 }
 
 inline bool SmbSetFileInfoEndOfFile(const uint16_t info_level)
@@ -1561,7 +1568,7 @@ struct SmbSetFileBasicInfo
 
 inline uint32_t SmbSetFileInfoExtFileAttrs(const SmbSetFileBasicInfo* info)
 {
-    return alignedNtohl(&info->ExtFileAttributes);
+    return snort::alignedNtohl(&info->ExtFileAttributes);
 }
 
 inline bool SmbSetFileInfoSetFileBasicInfo(const uint16_t info_level)
@@ -1615,7 +1622,7 @@ struct SmbNtTransactResp
 
 inline uint16_t SmbNtTransactReqSubCom(const SmbNtTransactReq* req)
 {
-    return alignedNtohs(&req->smb_function);
+    return snort::alignedNtohs(&req->smb_function);
 }
 
 inline uint8_t SmbNtTransactReqSetupCnt(const SmbNtTransactReq* req)
@@ -1625,72 +1632,72 @@ inline uint8_t SmbNtTransactReqSetupCnt(const SmbNtTransactReq* req)
 
 inline uint32_t SmbNtTransactReqTotalParamCnt(const SmbNtTransactReq* req)
 {
-    return alignedNtohl(&req->smb_total_param_count);
+    return snort::alignedNtohl(&req->smb_total_param_count);
 }
 
 inline uint32_t SmbNtTransactReqParamCnt(const SmbNtTransactReq* req)
 {
-    return alignedNtohl(&req->smb_param_count);
+    return snort::alignedNtohl(&req->smb_param_count);
 }
 
 inline uint32_t SmbNtTransactReqParamOff(const SmbNtTransactReq* req)
 {
-    return alignedNtohl(&req->smb_param_offset);
+    return snort::alignedNtohl(&req->smb_param_offset);
 }
 
 inline uint32_t SmbNtTransactReqTotalDataCnt(const SmbNtTransactReq* req)
 {
-    return alignedNtohl(&req->smb_total_data_count);
+    return snort::alignedNtohl(&req->smb_total_data_count);
 }
 
 inline uint32_t SmbNtTransactReqDataCnt(const SmbNtTransactReq* req)
 {
-    return alignedNtohl(&req->smb_data_count);
+    return snort::alignedNtohl(&req->smb_data_count);
 }
 
 inline uint32_t SmbNtTransactReqDataOff(const SmbNtTransactReq* req)
 {
-    return alignedNtohl(&req->smb_data_offset);
+    return snort::alignedNtohl(&req->smb_data_offset);
 }
 
 inline uint32_t SmbNtTransactRespTotalParamCnt(const SmbNtTransactResp* resp)
 {
-    return alignedNtohl(&resp->smb_total_param_count);
+    return snort::alignedNtohl(&resp->smb_total_param_count);
 }
 
 inline uint32_t SmbNtTransactRespParamCnt(const SmbNtTransactResp* resp)
 {
-    return alignedNtohl(&resp->smb_param_count);
+    return snort::alignedNtohl(&resp->smb_param_count);
 }
 
 inline uint32_t SmbNtTransactRespParamOff(const SmbNtTransactResp* resp)
 {
-    return alignedNtohl(&resp->smb_param_offset);
+    return snort::alignedNtohl(&resp->smb_param_offset);
 }
 
 inline uint32_t SmbNtTransactRespParamDisp(const SmbNtTransactResp* resp)
 {
-    return alignedNtohl(&resp->smb_param_disp);
+    return snort::alignedNtohl(&resp->smb_param_disp);
 }
 
 inline uint32_t SmbNtTransactRespTotalDataCnt(const SmbNtTransactResp* resp)
 {
-    return alignedNtohl(&resp->smb_total_data_count);
+    return snort::alignedNtohl(&resp->smb_total_data_count);
 }
 
 inline uint32_t SmbNtTransactRespDataCnt(const SmbNtTransactResp* resp)
 {
-    return alignedNtohl(&resp->smb_data_count);
+    return snort::alignedNtohl(&resp->smb_data_count);
 }
 
 inline uint32_t SmbNtTransactRespDataOff(const SmbNtTransactResp* resp)
 {
-    return alignedNtohl(&resp->smb_data_offset);
+    return snort::alignedNtohl(&resp->smb_data_offset);
 }
 
 inline uint32_t SmbNtTransactRespDataDisp(const SmbNtTransactResp* resp)
 {
-    return alignedNtohl(&resp->smb_data_disp);
+    return snort::alignedNtohl(&resp->smb_data_disp);
 }
 
 struct SmbNtTransactCreateReqParams
@@ -1712,22 +1719,22 @@ struct SmbNtTransactCreateReqParams
 
 inline uint64_t SmbNtTransactCreateReqAllocSize(const SmbNtTransactCreateReqParams* req)
 {
-    return alignedNtohq(&req->allocation_size);
+    return snort::alignedNtohq(&req->allocation_size);
 }
 
 inline uint32_t SmbNtTransactCreateReqFileNameLength(const SmbNtTransactCreateReqParams* req)
 {
-    return alignedNtohl(&req->name_length);
+    return snort::alignedNtohl(&req->name_length);
 }
 
 inline uint32_t SmbNtTransactCreateReqFileAttrs(const SmbNtTransactCreateReqParams* req)
 {
-    return alignedNtohl(&req->ext_file_attributes);
+    return snort::alignedNtohl(&req->ext_file_attributes);
 }
 
 inline bool SmbNtTransactCreateReqSequentialOnly(const SmbNtTransactCreateReqParams* req)
 {
-    return (alignedNtohl(&req->create_options) & SMB_CREATE_OPTIONS__FILE_SEQUENTIAL_ONLY);
+    return (snort::alignedNtohl(&req->create_options) & SMB_CREATE_OPTIONS__FILE_SEQUENTIAL_ONLY);
 }
 
 struct SmbNtTransactCreateReq
@@ -1769,22 +1776,22 @@ struct SmbNtTransactCreateRespParams
 
 inline uint16_t SmbNtTransactCreateRespFid(const SmbNtTransactCreateRespParams* resp)
 {
-    return alignedNtohs(&resp->smb_fid);
+    return snort::alignedNtohs(&resp->smb_fid);
 }
 
 inline uint32_t SmbNtTransactCreateRespCreateAction(const SmbNtTransactCreateRespParams* resp)
 {
-    return alignedNtohl(&resp->create_action);
+    return snort::alignedNtohl(&resp->create_action);
 }
 
 inline uint64_t SmbNtTransactCreateRespEndOfFile(const SmbNtTransactCreateRespParams* resp)
 {
-    return alignedNtohq(&resp->end_of_file);
+    return snort::alignedNtohq(&resp->end_of_file);
 }
 
 inline uint16_t SmbNtTransactCreateRespResourceType(const SmbNtTransactCreateRespParams* resp)
 {
-    return alignedNtohs(&resp->resource_type);
+    return snort::alignedNtohs(&resp->resource_type);
 }
 
 inline bool SmbNtTransactCreateRespDirectory(const SmbNtTransactCreateRespParams* resp)
@@ -1829,42 +1836,42 @@ struct SmbTransactionSecondaryReq   /* smb_wct = 8 */
 
 inline uint16_t SmbTransactionSecondaryReqTotalDataCnt(const SmbTransactionSecondaryReq* req)
 {
-    return alignedNtohs(&req->smb_tdscnt);
+    return snort::alignedNtohs(&req->smb_tdscnt);
 }
 
 inline uint16_t SmbTransactionSecondaryReqDataCnt(const SmbTransactionSecondaryReq* req)
 {
-    return alignedNtohs(&req->smb_dscnt);
+    return snort::alignedNtohs(&req->smb_dscnt);
 }
 
 inline uint16_t SmbTransactionSecondaryReqDataOff(const SmbTransactionSecondaryReq* req)
 {
-    return alignedNtohs(&req->smb_dsoff);
+    return snort::alignedNtohs(&req->smb_dsoff);
 }
 
 inline uint16_t SmbTransactionSecondaryReqDataDisp(const SmbTransactionSecondaryReq* req)
 {
-    return alignedNtohs(&req->smb_dsdisp);
+    return snort::alignedNtohs(&req->smb_dsdisp);
 }
 
 inline uint16_t SmbTransactionSecondaryReqTotalParamCnt(const SmbTransactionSecondaryReq* req)
 {
-    return alignedNtohs(&req->smb_tpscnt);
+    return snort::alignedNtohs(&req->smb_tpscnt);
 }
 
 inline uint16_t SmbTransactionSecondaryReqParamCnt(const SmbTransactionSecondaryReq* req)
 {
-    return alignedNtohs(&req->smb_pscnt);
+    return snort::alignedNtohs(&req->smb_pscnt);
 }
 
 inline uint16_t SmbTransactionSecondaryReqParamOff(const SmbTransactionSecondaryReq* req)
 {
-    return alignedNtohs(&req->smb_psoff);
+    return snort::alignedNtohs(&req->smb_psoff);
 }
 
 inline uint16_t SmbTransactionSecondaryReqParamDisp(const SmbTransactionSecondaryReq* req)
 {
-    return alignedNtohs(&req->smb_psdisp);
+    return snort::alignedNtohs(&req->smb_psdisp);
 }
 
 /********************************************************************
@@ -1889,42 +1896,42 @@ struct SmbTransaction2SecondaryReq
 
 inline uint16_t SmbTransaction2SecondaryReqTotalParamCnt(const SmbTransaction2SecondaryReq* req)
 {
-    return alignedNtohs(&req->smb_total_param_count);
+    return snort::alignedNtohs(&req->smb_total_param_count);
 }
 
 inline uint16_t SmbTransaction2SecondaryReqParamCnt(const SmbTransaction2SecondaryReq* req)
 {
-    return alignedNtohs(&req->smb_param_count);
+    return snort::alignedNtohs(&req->smb_param_count);
 }
 
 inline uint16_t SmbTransaction2SecondaryReqParamOff(const SmbTransaction2SecondaryReq* req)
 {
-    return alignedNtohs(&req->smb_param_offset);
+    return snort::alignedNtohs(&req->smb_param_offset);
 }
 
 inline uint16_t SmbTransaction2SecondaryReqParamDisp(const SmbTransaction2SecondaryReq* req)
 {
-    return alignedNtohs(&req->smb_param_disp);
+    return snort::alignedNtohs(&req->smb_param_disp);
 }
 
 inline uint16_t SmbTransaction2SecondaryReqTotalDataCnt(const SmbTransaction2SecondaryReq* req)
 {
-    return alignedNtohs(&req->smb_total_data_count);
+    return snort::alignedNtohs(&req->smb_total_data_count);
 }
 
 inline uint16_t SmbTransaction2SecondaryReqDataCnt(const SmbTransaction2SecondaryReq* req)
 {
-    return alignedNtohs(&req->smb_data_count);
+    return snort::alignedNtohs(&req->smb_data_count);
 }
 
 inline uint16_t SmbTransaction2SecondaryReqDataOff(const SmbTransaction2SecondaryReq* req)
 {
-    return alignedNtohs(&req->smb_data_offset);
+    return snort::alignedNtohs(&req->smb_data_offset);
 }
 
 inline uint16_t SmbTransaction2SecondaryReqDataDisp(const SmbTransaction2SecondaryReq* req)
 {
-    return alignedNtohs(&req->smb_data_disp);
+    return snort::alignedNtohs(&req->smb_data_disp);
 }
 
 /********************************************************************
@@ -1947,42 +1954,42 @@ struct SmbNtTransactSecondaryReq
 
 inline uint32_t SmbNtTransactSecondaryReqTotalParamCnt(const SmbNtTransactSecondaryReq* req)
 {
-    return alignedNtohl(&req->smb_total_param_count);
+    return snort::alignedNtohl(&req->smb_total_param_count);
 }
 
 inline uint32_t SmbNtTransactSecondaryReqParamCnt(const SmbNtTransactSecondaryReq* req)
 {
-    return alignedNtohl(&req->smb_param_count);
+    return snort::alignedNtohl(&req->smb_param_count);
 }
 
 inline uint32_t SmbNtTransactSecondaryReqParamOff(const SmbNtTransactSecondaryReq* req)
 {
-    return alignedNtohl(&req->smb_param_offset);
+    return snort::alignedNtohl(&req->smb_param_offset);
 }
 
 inline uint32_t SmbNtTransactSecondaryReqParamDisp(const SmbNtTransactSecondaryReq* req)
 {
-    return alignedNtohl(&req->smb_param_disp);
+    return snort::alignedNtohl(&req->smb_param_disp);
 }
 
 inline uint32_t SmbNtTransactSecondaryReqTotalDataCnt(const SmbNtTransactSecondaryReq* req)
 {
-    return alignedNtohl(&req->smb_total_data_count);
+    return snort::alignedNtohl(&req->smb_total_data_count);
 }
 
 inline uint32_t SmbNtTransactSecondaryReqDataCnt(const SmbNtTransactSecondaryReq* req)
 {
-    return alignedNtohl(&req->smb_data_count);
+    return snort::alignedNtohl(&req->smb_data_count);
 }
 
 inline uint32_t SmbNtTransactSecondaryReqDataOff(const SmbNtTransactSecondaryReq* req)
 {
-    return alignedNtohl(&req->smb_data_offset);
+    return snort::alignedNtohl(&req->smb_data_offset);
 }
 
 inline uint32_t SmbNtTransactSecondaryReqDataDisp(const SmbNtTransactSecondaryReq* req)
 {
-    return alignedNtohl(&req->smb_data_disp);
+    return snort::alignedNtohl(&req->smb_data_disp);
 }
 
 /********************************************************************
@@ -2017,15 +2024,16 @@ struct SmbReadRawExtReq   /* smb_wct = 10 */
 
 inline uint16_t SmbReadRawReqFid(const SmbReadRawReq* req)
 {
-    return alignedNtohs(&req->smb_fid);
+    return snort::alignedNtohs(&req->smb_fid);
 }
 
 inline uint64_t SmbReadRawReqOffset(const SmbReadRawExtReq* req)
 {
     if (req->smb_wct == 8)
-        return (uint64_t)alignedNtohl(&req->smb_offset);
-    return (uint64_t)alignedNtohl(&req->smb_off_high) << 32 | (uint64_t)alignedNtohl(
-        &req->smb_offset);
+        return (uint64_t)snort::alignedNtohl(&req->smb_offset);
+
+    return (uint64_t)snort::alignedNtohl(&req->smb_off_high) << 32
+                    | (uint64_t)snort::alignedNtohl(&req->smb_offset);
 }
 
 /********************************************************************
@@ -2075,40 +2083,41 @@ struct SmbWriteRawInterimResp
 
 inline uint16_t SmbWriteRawReqTotalCount(const SmbWriteRawReq* req)
 {
-    return alignedNtohs(&req->smb_tcount);
+    return snort::alignedNtohs(&req->smb_tcount);
 }
 
 inline bool SmbWriteRawReqWriteThrough(const SmbWriteRawReq* req)
 {
-    return alignedNtohs(&req->smb_wmode) & 0x0001;
+    return snort::alignedNtohs(&req->smb_wmode) & 0x0001;
 }
 
 inline uint16_t SmbWriteRawReqFid(const SmbWriteRawReq* req)
 {
-    return alignedNtohs(&req->smb_fid);
+    return snort::alignedNtohs(&req->smb_fid);
 }
 
 inline uint16_t SmbWriteRawReqDataOff(const SmbWriteRawReq* req)
 {
-    return alignedNtohs(&req->smb_doff);
+    return snort::alignedNtohs(&req->smb_doff);
 }
 
 inline uint16_t SmbWriteRawReqDataCnt(const SmbWriteRawReq* req)
 {
-    return alignedNtohs(&req->smb_dsize);
+    return snort::alignedNtohs(&req->smb_dsize);
 }
 
 inline uint64_t SmbWriteRawReqOffset(const SmbWriteRawExtReq* req)
 {
     if (req->smb_wct == 12)
-        return (uint64_t)alignedNtohl(&req->smb_offset);
-    return (uint64_t)alignedNtohl(&req->smb_off_high) << 32 | (uint64_t)alignedNtohl(
-        &req->smb_offset);
+        return (uint64_t)snort::alignedNtohl(&req->smb_offset);
+
+    return (uint64_t)snort::alignedNtohl(&req->smb_off_high) << 32 |
+                    (uint64_t)snort::alignedNtohl(&req->smb_offset);
 }
 
 inline uint16_t SmbWriteRawInterimRespRemaining(const SmbWriteRawInterimResp* resp)
 {
-    return alignedNtohs(&resp->smb_remaining);
+    return snort::alignedNtohs(&resp->smb_remaining);
 }
 
 /********************************************************************
@@ -2123,7 +2132,7 @@ struct SmbWriteCompleteResp
 
 inline uint16_t SmbWriteCompleteRespCount(const SmbWriteCompleteResp* resp)
 {
-    return alignedNtohs(&resp->smb_count);
+    return snort::alignedNtohs(&resp->smb_count);
 }
 
 /********************************************************************
@@ -2161,29 +2170,29 @@ struct SmbWriteAndCloseResp   /* smb_wct = 1 */
 
 inline uint16_t SmbWriteAndCloseReqFid(const SmbWriteAndCloseReq* req)
 {
-    return alignedNtohs(&req->smb_fid);
+    return snort::alignedNtohs(&req->smb_fid);
 }
 
 inline uint16_t SmbWriteAndCloseReqCount(const SmbWriteAndCloseReq* req)
 {
-    return alignedNtohs(&req->smb_count);
+    return snort::alignedNtohs(&req->smb_count);
 }
 
 inline uint32_t SmbWriteAndCloseReqOffset(const SmbWriteAndCloseReq* req)
 {
-    return alignedNtohl(&req->smb_offset);
+    return snort::alignedNtohl(&req->smb_offset);
 }
 
 inline uint16_t SmbWriteAndCloseRespCount(const SmbWriteAndCloseResp* resp)
 {
-    return alignedNtohs(&resp->smb_count);
+    return snort::alignedNtohs(&resp->smb_count);
 }
 
 #pragma pack()
 
 void DCE2_SmbInitGlobals();
 void DCE2_SmbProcess(struct DCE2_SmbSsnData*);
-DCE2_SmbSsnData* dce2_handle_smb_session(struct Packet*, struct dce2SmbProtoConf*);
+DCE2_SmbSsnData* dce2_handle_smb_session(snort::Packet*, struct dce2SmbProtoConf*);
 
 #endif
 

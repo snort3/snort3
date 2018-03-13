@@ -30,16 +30,19 @@
 #include "framework/mpse.h"
 #endif
 
+namespace snort
+{
 struct MpseApi;
 class Mpse;
 struct SnortConfig;
+}
 
 //-------------------------------------------------------------------------
 
 #ifdef PIGLET
 struct MpseWrapper
 {
-    MpseWrapper(const MpseApi* a, Mpse* p) :
+    MpseWrapper(const snort::MpseApi* a, snort::Mpse* p) :
         api { a }, instance { p } { }
 
     ~MpseWrapper()
@@ -48,37 +51,37 @@ struct MpseWrapper
             api->dtor(instance);
     }
 
-    const MpseApi* api;
-    Mpse* instance;
+    const snort::MpseApi* api;
+    snort::Mpse* instance;
 };
 #endif
 
 class MpseManager
 {
 public:
-    static void add_plugin(const MpseApi*);
+    static void add_plugin(const snort::MpseApi*);
     static void release_plugins();
     static void dump_plugins();
 
-    static void instantiate(const MpseApi*, Module*, SnortConfig*);
-    static const MpseApi* get_search_api(const char* type);
-    static void delete_search_engine(Mpse*);
+    static void instantiate(const snort::MpseApi*, snort::Module*, snort::SnortConfig*);
+    static const snort::MpseApi* get_search_api(const char* type);
+    static void delete_search_engine(snort::Mpse*);
 
-    static Mpse* get_search_engine(const char*);
-    static Mpse* get_search_engine(
-        SnortConfig* sc,const MpseApi* api, const struct MpseAgent*);
+    static snort::Mpse* get_search_engine(const char*);
+    static snort::Mpse* get_search_engine(
+        snort::SnortConfig* sc,const snort::MpseApi* api, const struct MpseAgent*);
 
-    static void activate_search_engine(const MpseApi*, SnortConfig*);
-    static void setup_search_engine(const MpseApi*, SnortConfig*);
-    static void start_search_engine(const MpseApi*);
-    static void stop_search_engine(const MpseApi*);
-    static bool search_engine_trim(const MpseApi*);
-    static bool is_regex_capable(const MpseApi*);
-    static void print_mpse_summary(const MpseApi*);
+    static void activate_search_engine(const snort::MpseApi*, snort::SnortConfig*);
+    static void setup_search_engine(const snort::MpseApi*, snort::SnortConfig*);
+    static void start_search_engine(const snort::MpseApi*);
+    static void stop_search_engine(const snort::MpseApi*);
+    static bool search_engine_trim(const snort::MpseApi*);
+    static bool is_regex_capable(const snort::MpseApi*);
+    static void print_mpse_summary(const snort::MpseApi*);
     static void print_search_engine_stats();
 
 #ifdef PIGLET
-    static MpseWrapper* instantiate(const char*, Module*, SnortConfig*);
+    static MpseWrapper* instantiate(const char*, snort::Module*, snort::SnortConfig*);
 #endif
 };
 

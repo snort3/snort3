@@ -29,6 +29,8 @@
 #include "protocols/packet.h"
 #include "utils/util.h"
 
+using namespace snort;
+
 #define UNSOCK_FILE "snort_alert"
 
 /* this is equivalent to the 32-bit pcap pkthdr struct

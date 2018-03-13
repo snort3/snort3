@@ -33,7 +33,12 @@
 #include "file_config.h"
 #include "file_policy.h"
 
+namespace snort
+{
 class FileInfo;
+class FilePolicyBase;
+class Flow;
+}
 
 #define MAX_FILES_TRACKED 16384
 #define MAX_MEMORY_USED (10*1024*1024)  // 10M
@@ -44,29 +49,29 @@ public:
     struct FileNode
     {
         time_t expires;
-        FileInfo* file;
+        snort::FileInfo* file;
     };
 
     FileEnforcer();
     ~FileEnforcer();
-    FileVerdict cached_verdict_lookup(Flow*, FileInfo*, FilePolicyBase*);
-    bool apply_verdict(Flow*, FileInfo*, FileVerdict, bool resume, FilePolicyBase*);
+    FileVerdict cached_verdict_lookup(snort::Flow*, snort::FileInfo*, snort::FilePolicyBase*);
+    bool apply_verdict(snort::Flow*, snort::FileInfo*, FileVerdict, bool resume, snort::FilePolicyBase*);
 
 private:
 // FIXIT-L Merge definition with duplicate in file_cache.h?
 PADDING_GUARD_BEGIN
     struct FileHashKey
     {
-        SfIp sip;
-        SfIp dip;
+        snort::SfIp sip;
+        snort::SfIp dip;
         uint32_t padding;
         uint64_t file_sig;
     };
 PADDING_GUARD_END
 
-    void update_file_node(FileNode*, FileInfo*);
-    FileVerdict check_verdict(Flow*, FileNode*, XHashNode*, FilePolicyBase*);
-    int store_verdict(Flow*, FileInfo*);
+    void update_file_node(FileNode*, snort::FileInfo*);
+    FileVerdict check_verdict(snort::Flow*, FileNode*, XHashNode*, snort::FilePolicyBase*);
+    int store_verdict(snort::Flow*, snort::FileInfo*);
 
     /* The hash table of expected files */
     XHash* fileHash = nullptr;

@@ -26,6 +26,8 @@
 #define CD_LINUX_SLL_HELP_STR "support for Linux SLL"
 #define CD_LINUX_SLL_HELP ADD_DLT(CD_LINUX_SLL_HELP_STR, DLT_LINUX_SLL)
 
+using namespace snort;
+
 namespace
 {
 class LinuxSllCodec : public Codec

@@ -32,6 +32,8 @@
 #include "file_flows.h"
 #include "file_lib.h"
 
+using namespace snort;
+
 static const char* s_name = "file_log";
 static const char* f_name = "file.log";
 static const char* s_help = "log file event to file.log";

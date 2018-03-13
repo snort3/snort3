@@ -25,6 +25,8 @@
 #include "framework/codec.h"
 #include "protocols/eth.h"
 
+using namespace snort;
+
 namespace
 {
 #define CD_TRANSBRIDGE_NAME "trans_bridge"

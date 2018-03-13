@@ -34,6 +34,8 @@
 #include "dce_tcp.h"
 #include "dce_tcp_module.h"
 
+using namespace snort;
+
 static THREAD_LOCAL int co_reassembled = 0;
 
 /********************************************************************

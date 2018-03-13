@@ -31,6 +31,8 @@
 #include "main/snort_config.h"
 #include "protocols/packet_manager.h"
 
+using namespace snort;
+
 static THREAD_LOCAL TextLog* test_file = nullptr;
 
 #define S_NAME "log_codecs"

@@ -28,6 +28,8 @@
 #include "main/snort_types.h"
 
 struct Event;
+namespace snort
+{
 struct Packet;
 
 // this is the current version of the api
@@ -80,6 +82,6 @@ struct LogApi
     LogNewFunc ctor;
     LogDelFunc dtor;
 };
-
+}
 #endif
 

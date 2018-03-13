@@ -30,7 +30,7 @@
 using namespace HttpEnums;
 
 HttpMsgStatus::HttpMsgStatus(const uint8_t* buffer, const uint16_t buf_size,
-    HttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_,
+    HttpFlowData* session_data_, SourceId source_id_, bool buf_owner, snort::Flow* flow_,
     const HttpParaList* params_) :
     HttpMsgStart(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_)
 {

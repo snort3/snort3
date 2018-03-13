@@ -207,7 +207,7 @@ int SmtpClientDetector::extract_version_and_add_client_app(AppId clientId, const
  *  Returns 0 if a recognized product is found.  Otherwise returns 1.
  */
 int SmtpClientDetector::identify_client_version(ClientSMTPData* const fd, const uint8_t* product,
-    const uint8_t* data_end, AppIdSession& asd, Packet*)
+    const uint8_t* data_end, AppIdSession& asd, snort::Packet*)
 {
     const uint8_t* p;
     AppId appId = (fd->flags & CLIENT_FLAG_SMTPS) ?  APP_ID_SMTPS : APP_ID_SMTP;

@@ -32,6 +32,8 @@
 
 #include "checksum.h"
 
+using namespace snort;
+
 #define CD_ICMP6_NAME "icmp6"
 #define CD_ICMP6_HELP "support for Internet control message protocol v6"
 

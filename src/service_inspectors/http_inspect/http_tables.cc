@@ -277,7 +277,7 @@ const HeaderNormalizer* const HttpMsgHeadShared::header_norms[HEAD__MAX_VALUE] =
 #pragma clang diagnostic pop
 #endif
 
-const RuleMap HttpModule::http_events[] =
+const snort::RuleMap HttpModule::http_events[] =
 {
     { EVENT_ASCII,                      "ascii encoding" },
     { EVENT_DOUBLE_DECODE,              "double decoding attack" },

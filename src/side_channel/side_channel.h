@@ -45,8 +45,8 @@ struct __attribute__((__packed__)) SCMsgHdr
 struct SCMessage
 {
     SideChannel* sc;
-    Connector* connector;
-    ConnectorMsgHandle* handle;
+    snort::Connector* connector;
+    snort::ConnectorMsgHandle* handle;
     SCMsgHdr* hdr;
     uint8_t* content;
     uint32_t content_length;
@@ -70,10 +70,10 @@ public:
     bool transmit_message(SCMessage* msg);
     void set_message_port(SCMessage* msg, SCPort port);
     void set_default_port(SCPort port);
-    Connector::Direction get_direction();
+    snort::Connector::Direction get_direction();
 
-    Connector* connector_receive;
-    Connector* connector_transmit;
+    snort::Connector* connector_receive;
+    snort::Connector* connector_transmit;
 
 private:
     SCSequence sequence;

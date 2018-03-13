@@ -24,6 +24,8 @@
 
 #include "managers/plugin_manager.h"
 
+using namespace snort;
+
 extern const BaseApi* nin_binder;
 extern const BaseApi* nin_normalize;
 extern const BaseApi* nin_perf_monitor;

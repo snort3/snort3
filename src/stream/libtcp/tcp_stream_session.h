@@ -38,22 +38,22 @@ extern const char* const flush_policy_names[];
 class TcpStreamSession : public Session
 {
 public:
-    TcpStreamSession(Flow*);
+    TcpStreamSession(snort::Flow* flow) : Session(flow) { }
     ~TcpStreamSession() override;
 
-    bool setup(Packet*) override;
+    bool setup(snort::Packet*) override;
     void clear() override;
-    void cleanup(Packet* = nullptr) override;
-    void set_splitter(bool, StreamSplitter*) override;
-    StreamSplitter* get_splitter(bool) override;
+    void cleanup(snort::Packet* = nullptr) override;
+    void set_splitter(bool, snort::StreamSplitter*) override;
+    snort::StreamSplitter* get_splitter(bool) override;
     bool is_sequenced(uint8_t /*dir*/) override;
     bool are_packets_missing(uint8_t /*dir*/) override;
     uint8_t get_reassembly_direction() override;
     uint8_t missing_in_reassembled(uint8_t /*dir*/) override;
-    void update_direction(char dir, const SfIp*, uint16_t port) override;
-    bool add_alert(Packet*, uint32_t gid, uint32_t sid) override;
-    bool check_alerted(Packet*, uint32_t gid, uint32_t sid) override;
-    int update_alert(Packet*, uint32_t /*gid*/, uint32_t /*sid*/,
+    void update_direction(char dir, const snort::SfIp*, uint16_t port) override;
+    bool add_alert(snort::Packet*, uint32_t gid, uint32_t sid) override;
+    bool check_alerted(snort::Packet*, uint32_t gid, uint32_t sid) override;
+    int update_alert(snort::Packet*, uint32_t /*gid*/, uint32_t /*sid*/,
         uint32_t /*event_id*/, uint32_t /*event_second*/) override;
 
     static void sinit();
@@ -63,28 +63,28 @@ public:
     void start_proxy();
     void print();
 
-    void SetPacketHeaderFoo(const Packet* p);
+    void SetPacketHeaderFoo(const snort::Packet* p);
     void GetPacketHeaderFoo(DAQ_PktHdr_t* pkth, uint32_t dir);
     void SwapPacketHeaderFoo();
 
     virtual void update_perf_base_state(char) { }
     virtual void clear_session(
-        bool free_flow_data, bool flush_segments, bool restart, Packet* p = nullptr) = 0;
+        bool free_flow_data, bool flush_segments, bool restart, snort::Packet* p = nullptr) = 0;
 
     // FIXIT-L these 2 function names convey no meaning afaict... figure out
     // why are they called and name appropriately...
-    virtual void retransmit_process(Packet* p)
+    virtual void retransmit_process(snort::Packet* p)
     {
         // Data has already been analyzed so don't bother looking at it again.
-        DetectionEngine::disable_content(p);
+        snort::DetectionEngine::disable_content(p);
     }
 
-    virtual void retransmit_handle(Packet* p)
+    virtual void retransmit_handle(snort::Packet* p)
     {
         flow->call_handlers(p, false);
     }
 
-    virtual void eof_handle(Packet* p)
+    virtual void eof_handle(snort::Packet* p)
     {
         flow->call_handlers(p, true);
     }
@@ -145,10 +145,10 @@ public:
     TcpEventLogger tel;
 
 private:
-    ip::snort_in6_addr real_src_ip;
-    ip::snort_in6_addr real_dst_ip;
-    uint16_t real_src_port;
-    uint16_t real_dst_port;
+    snort::ip::snort_in6_addr real_src_ip = { 0 };
+    snort::ip::snort_in6_addr real_dst_ip = { 0 };
+    uint16_t real_src_port = 0;
+    uint16_t real_dst_port = 0;
 
 protected:
     virtual void set_os_policy() = 0;

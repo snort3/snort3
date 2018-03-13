@@ -26,6 +26,8 @@
 #include "flow/flow.h"
 #include "lua/lua_arg.h"
 
+using namespace snort;
+
 static const luaL_Reg methods[] =
 {
     {

@@ -22,6 +22,8 @@
 
 #include <cstdint>
 
+namespace snort
+{
 namespace icmp
 {
 constexpr uint16_t ICMP6_HEADER_MIN_LEN = 4;
@@ -130,7 +132,8 @@ struct ICMP6NodeInfo
     uint16_t flags;
     uint64_t nonce;
 };
-}  // namespace icmp6
+}  // namespace icmp
+}  // namespace snort
 
 #endif
 

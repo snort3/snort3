@@ -118,14 +118,14 @@ struct table_t
 table_t* sfrt_new(char type, char ip_type, long data_size, uint32_t mem_cap);
 void sfrt_free(table_t*);
 
-GENERIC sfrt_lookup(const SfIp*, table_t*);
-GENERIC sfrt_search(const SfIp*, unsigned char len, table_t*);
+GENERIC sfrt_lookup(const snort::SfIp*, table_t*);
+GENERIC sfrt_search(const snort::SfIp*, unsigned char len, table_t*);
 
 typedef void (* sfrt_iterator_callback)(void*);
 void sfrt_cleanup(table_t*, sfrt_iterator_callback);
 
-int sfrt_insert(SfCidr*, unsigned char len, GENERIC, int behavior, table_t*);
-int sfrt_remove(SfCidr*, unsigned char len, GENERIC*, int behavior, table_t*);
+int sfrt_insert(snort::SfCidr*, unsigned char len, GENERIC, int behavior, table_t*);
+int sfrt_remove(snort::SfCidr*, unsigned char len, GENERIC*, int behavior, table_t*);
 
 uint32_t sfrt_usage(table_t*);
 void sfrt_print(table_t*);

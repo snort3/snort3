@@ -22,6 +22,8 @@
 
 #include <cstdint>
 
+namespace snort
+{
 namespace mpls
 {
 struct MplsHdr
@@ -37,6 +39,6 @@ struct MplsHdr
 constexpr int MPLS_PAYLOADTYPE_ETHERNET = 1;
 constexpr int MPLS_PAYLOADTYPE_IPV4 = 2;
 constexpr int MPLS_PAYLOADTYPE_IPV6 = 3;
-
+}
 #endif
 

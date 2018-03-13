@@ -28,6 +28,8 @@
 #include "tcp_normalizer.h"
 #include "tcp_session.h"
 
+using namespace snort;
+
 TcpStateListen::TcpStateListen(TcpStateMachine& tsm) :
     TcpStateHandler(TcpStreamTracker::TCP_LISTEN, tsm)
 {

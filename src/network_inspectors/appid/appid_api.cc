@@ -30,9 +30,14 @@
 #include "service_plugins/service_netbios.h"
 #include "utils/util.h"
 
+using namespace snort;
+
 #define SSL_WHITELIST_PKT_LIMIT 20
 
+namespace snort
+{
 AppIdApi appid_api;
+}
 
 AppIdSession* AppIdApi::get_appid_session(Flow& flow)
 {

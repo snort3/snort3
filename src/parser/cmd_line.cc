@@ -32,6 +32,7 @@
 
 #include "arg_list.h"
 
+using namespace snort;
 using namespace std;
 
 //-------------------------------------------------------------------------

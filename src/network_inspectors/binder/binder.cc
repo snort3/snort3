@@ -40,6 +40,7 @@
 #include "bind_module.h"
 #include "binding.h"
 
+using namespace snort;
 using namespace std;
 
 THREAD_LOCAL ProfileStats bindPerfStats;

@@ -28,6 +28,7 @@
 
 #include "log/messages.h"
 
+using namespace snort;
 using namespace std;
 
 #define POP_UNKNOWN_CMD_STR                 "unknown POP3 command"

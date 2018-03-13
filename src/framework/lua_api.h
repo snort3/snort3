@@ -24,13 +24,16 @@
 
 #include <string>
 
+namespace snort
+{
 struct BaseApi;
+}
 
 class LuaApi
 {
 public:
     virtual ~LuaApi() = default;
-    virtual const BaseApi* get_base() const = 0;
+    virtual const snort::BaseApi* get_base() const = 0;
 
     std::string name;
     std::string chunk;

@@ -28,6 +28,8 @@
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 
+using namespace snort;
+
 #define s_name "fragoffset"
 
 static THREAD_LOCAL ProfileStats fragOffsetPerfStats;

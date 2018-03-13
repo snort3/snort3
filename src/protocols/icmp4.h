@@ -23,6 +23,8 @@
 #include <cstdint>
 #include "protocols/ipv4.h" // for in_addr
 
+namespace snort
+{
 namespace icmp
 {
 constexpr uint32_t ICMP_BASE_LEN = 4;
@@ -172,7 +174,7 @@ struct ICMPHdr
         /* IP header for unreach */
         struct ih_ip
         {
-            ip::IP4Hdr* ip;
+            snort::ip::IP4Hdr* ip;
             /* options and then 64 bits of data */
         } ip;
 
@@ -195,8 +197,9 @@ struct ICMPHdr
 #define s_icmp_data       icmp_dun.data
 };
 } //namespace icmp
+} // namespace snort
 
-typedef icmp::ICMPHdr ICMPHdr;
+typedef snort::icmp::ICMPHdr ICMPHdr;
 
 #ifndef ICMP_ECHOREPLY
 constexpr uint8_t ICMP_ECHOREPLY = 0;    /* Echo Reply                   */

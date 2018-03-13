@@ -23,14 +23,17 @@
 
 #include "profiler_defs.h"
 
+namespace snort
+{
 class Module;
+}
 
 class Profiler
 {
 public:
-    static void register_module(Module*);
-    static void register_module(const char*, const char*, Module*);
-    static void register_module(const char*, const char*, get_profile_stats_fn);
+    static void register_module(snort::Module*);
+    static void register_module(const char*, const char*, snort::Module*);
+    static void register_module(const char*, const char*, snort::get_profile_stats_fn);
 
     // FIXIT-L do we need to call on main thread?
     // call from packet threads, just before thread termination

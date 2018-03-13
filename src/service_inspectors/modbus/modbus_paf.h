@@ -37,14 +37,13 @@ enum modbus_paf_state_t
     MODBUS_PAF_STATE__SET_FLUSH
 };
 
-class ModbusSplitter : public StreamSplitter
+class ModbusSplitter : public snort::StreamSplitter
 {
 public:
     ModbusSplitter(bool);
 
-    Status scan(
-        Flow*, const uint8_t* data, uint32_t len,
-        uint32_t flags, uint32_t* fp) override;
+    Status scan(snort::Flow*, const uint8_t* data, uint32_t len, uint32_t flags,
+        uint32_t* fp) override;
 
     bool is_paf() override { return true; }
 

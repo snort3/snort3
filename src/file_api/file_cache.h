@@ -37,8 +37,8 @@ public:
 PADDING_GUARD_BEGIN
     struct FileHashKey
     {
-        SfIp sip;
-        SfIp dip;
+        snort::SfIp sip;
+        snort::SfIp dip;
         uint32_t padding;
         uint64_t file_sig;
     };
@@ -47,13 +47,13 @@ PADDING_GUARD_END
     struct FileNode
     {
         time_t expires;
-        FileContext* file;
+        snort::FileContext* file;
     };
 
     FileCache();
     ~FileCache();
-    FileContext* add(const FileHashKey&);
-    FileContext* find(const FileHashKey&);
+    snort::FileContext* add(const FileHashKey&);
+    snort::FileContext* find(const FileHashKey&);
 
 private:
     /* The hash table of expected files */

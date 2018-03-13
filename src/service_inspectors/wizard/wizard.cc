@@ -32,6 +32,7 @@
 #include "magic.h"
 #include "wiz_module.h"
 
+using namespace snort;
 using namespace std;
 
 THREAD_LOCAL ProfileStats wizPerfStats;

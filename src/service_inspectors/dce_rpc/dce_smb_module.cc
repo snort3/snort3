@@ -30,6 +30,7 @@
 
 #include "dce_smb.h"
 
+using namespace snort;
 using namespace std;
 
 static const PegInfo dce2_smb_pegs[] =
@@ -423,7 +424,7 @@ static bool set_smb_invalid_shares(dce2SmbProtoConf& config, Value& v)
     return(true);
 }
 
-bool Dce2SmbModule::set(const char*, Value& v, SnortConfig*)
+bool Dce2SmbModule::set(const char*, snort::Value& v, snort::SnortConfig*)
 {
     if (dce2_set_co_config(v,config.common))
         return true;

@@ -22,6 +22,8 @@
 
 #include "main/snort_types.h"
 
+namespace snort
+{
 struct Packet;
 
 namespace ip
@@ -138,6 +140,6 @@ private:
     const uint8_t* start_ptr;
 };
 } // namespace ip
-
+} // namespace snort
 #endif
 

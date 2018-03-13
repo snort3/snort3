@@ -24,6 +24,7 @@
 #include "http2_inspect.h"
 #include "http2_flow_data.h"
 
+using namespace snort;
 using namespace Http2Enums;
 
 bool implement_get_buf(unsigned id, Http2FlowData* session_data, SourceId source_id,

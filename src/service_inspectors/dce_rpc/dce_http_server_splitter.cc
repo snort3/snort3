@@ -32,6 +32,8 @@
 #include "catch/snort_catch.h"
 #endif
 
+using namespace snort;
+
 // NOTE:  These strings must have a length of at least one character
 #define HTTP_SERVER_MARKER "ncacn_http/1.0"
 

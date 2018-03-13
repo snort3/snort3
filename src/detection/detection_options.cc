@@ -63,6 +63,8 @@
 #include "rules.h"
 #include "treenodes.h"
 
+using namespace snort;
+
 #define HASH_RULE_OPTIONS 16384
 #define HASH_RULE_TREE     8192
 

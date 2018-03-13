@@ -26,6 +26,7 @@
 #include "http2_stream_splitter.h"
 #include "http2_module.h"
 
+using namespace snort;
 using namespace Http2Enums;
 
 // Mindless scan() that just flushes whatever it is given

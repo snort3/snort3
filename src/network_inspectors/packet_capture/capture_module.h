@@ -38,16 +38,16 @@ struct CaptureStats
     PegCount matched;
 };
 
-class CaptureModule : public Module
+class CaptureModule : public snort::Module
 {
 public:
     CaptureModule();
 
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
-    ProfileStats* get_profile() const override;
-    const Command* get_commands() const override;
-    bool set(const char*, Value&, SnortConfig*) override;
+    snort::ProfileStats* get_profile() const override;
+    const snort::Command* get_commands() const override;
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
 
     void get_config(CaptureConfig&);
 
@@ -59,7 +59,7 @@ private:
 };
 
 extern THREAD_LOCAL CaptureStats cap_count_stats;
-extern THREAD_LOCAL ProfileStats cap_prof_stats;
+extern THREAD_LOCAL snort::ProfileStats cap_prof_stats;
 
 #endif
 

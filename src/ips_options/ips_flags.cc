@@ -30,6 +30,8 @@
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
 
+using namespace snort;
+
 #define M_NORMAL  0
 #define M_ALL     1
 #define M_ANY     2

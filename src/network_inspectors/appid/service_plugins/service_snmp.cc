@@ -474,8 +474,8 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
         sd->state = SNMP_STATE_RESPONSE;
 
         /*adding expected connection in case the server doesn't send from 161*/
-        const SfIp* dip = args.pkt->ptrs.ip_api.get_dst();
-        const SfIp* sip = args.pkt->ptrs.ip_api.get_src();
+        const snort::SfIp* dip = args.pkt->ptrs.ip_api.get_dst();
+        const snort::SfIp* sip = args.pkt->ptrs.ip_api.get_src();
         AppIdSession* pf = AppIdSession::create_future_session(args.pkt, dip, 0, sip,
             args.pkt->ptrs.sp, args.asd.protocol, app_id, 0, handler->get_inspector());
         if (pf)

@@ -29,6 +29,8 @@
 
 #include "dce_tcp.h"
 
+using namespace snort;
+
 /*********************************************************************
  * Function: dce2_tcp_paf()
  *

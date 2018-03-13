@@ -40,7 +40,12 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
+using namespace snort;
+
+namespace snort
+{
 AppIdApi appid_api;
+}
 
 const char* content_type = nullptr;
 const char* cookie = nullptr;

@@ -28,6 +28,8 @@
 #include "parser/parser.h"
 #include "utils/stats.h"
 
+using namespace snort;
+
 static void pass()
 {
     pc.pass_pkts++;

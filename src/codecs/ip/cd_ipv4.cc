@@ -37,6 +37,8 @@
 
 #include "checksum.h"
 
+using namespace snort;
+
 #define CD_IPV4_NAME "ipv4"
 #define CD_IPV4_HELP "support for Internet protocol v4"
 
@@ -112,8 +114,8 @@ public:
     void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
 
 private:
-    void IP4AddrTests(const IP4Hdr*, const CodecData&, DecodeData&);
-    void IPMiscTests(const IP4Hdr* const ip4h, const CodecData& codec, uint16_t len);
+    void IP4AddrTests(const ip::IP4Hdr*, const CodecData&, DecodeData&);
+    void IPMiscTests(const ip::IP4Hdr* const ip4h, const CodecData& codec, uint16_t len);
     void DecodeIPOptions(const uint8_t* start, uint8_t& o_len, CodecData& data);
 };
 
@@ -143,7 +145,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         return false;
     }
 
-    if ( SnortConfig::get_conf()->hit_ip_maxlayers(codec.ip_layer_cnt) )
+    if ( snort::SnortConfig::get_conf()->hit_ip_maxlayers(codec.ip_layer_cnt) )
     {
         codec_event(codec, DECODE_IP_MULTIPLE_ENCAPSULATION);
         return false;
@@ -151,7 +153,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
     ++codec.ip_layer_cnt;
     /* lay the IP struct over the raw data */
-    const IP4Hdr* const iph = reinterpret_cast<const IP4Hdr*>(raw.data);
+    const ip::IP4Hdr* const iph = reinterpret_cast<const ip::IP4Hdr*>(raw.data);
 
     /*
      * with datalink DLT_RAW it's impossible to differ ARP datagrams from IP.
@@ -212,7 +214,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         /* If the previous layer was not IP-in-IP, this is not a 4-in-6 tunnel */
         if ( codec.codec_flags & CODEC_NON_IP_TUNNEL )
             codec.codec_flags &= ~CODEC_NON_IP_TUNNEL;
-        else if ( SnortConfig::tunnel_bypass_enabled(TUNNEL_4IN6) )
+        else if ( snort::SnortConfig::tunnel_bypass_enabled(TUNNEL_4IN6) )
             Active::set_tunnel_bypass();
     }
     else if (snort.ip_api.is_ip4())
@@ -220,7 +222,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         /* If the previous layer was not IP-in-IP, this is not a 4-in-4 tunnel */
         if ( codec.codec_flags & CODEC_NON_IP_TUNNEL )
             codec.codec_flags &= ~CODEC_NON_IP_TUNNEL;
-        else if (SnortConfig::tunnel_bypass_enabled(TUNNEL_4IN4))
+        else if (snort::SnortConfig::tunnel_bypass_enabled(TUNNEL_4IN4))
             Active::set_tunnel_bypass();
     }
 
@@ -243,7 +245,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
      */
     IP4AddrTests(iph, codec, snort);
 
-    if (SnortConfig::ip_checksums())
+    if (snort::SnortConfig::ip_checksums())
     {
         /* routers drop packets with bad IP checksums, we don't really
          * need to check them (should make this a command line/config
@@ -345,7 +347,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 }
 
 void Ipv4Codec::IP4AddrTests(
-    const IP4Hdr* iph, const CodecData& codec, DecodeData& snort)
+    const ip::IP4Hdr* iph, const CodecData& codec, DecodeData& snort)
 {
     uint8_t msb_src, msb_dst;
 
@@ -398,7 +400,7 @@ void Ipv4Codec::IP4AddrTests(
 }
 
 /* IPv4-layer decoder rules */
-void Ipv4Codec::IPMiscTests(const IP4Hdr* const ip4h, const CodecData& codec, uint16_t len)
+void Ipv4Codec::IPMiscTests(const ip::IP4Hdr* const ip4h, const CodecData& codec, uint16_t len)
 {
     /* Yes, it's an ICMP-related vuln in IP options. */
     int cnt = 0;
@@ -553,10 +555,10 @@ struct ip4_addr
 void Ipv4Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     const uint16_t lyr_len)
 {
-    const IP4Hdr* const ip4h = reinterpret_cast<const IP4Hdr*>(raw_pkt);
+    const ip::IP4Hdr* const ip4h = reinterpret_cast<const ip::IP4Hdr*>(raw_pkt);
 
     // FIXIT-H this does NOT obfuscate correctly
-    if (SnortConfig::obfuscate())
+    if (snort::SnortConfig::obfuscate())
     {
         TextLog_Print(text_log, "xxx.xxx.xxx.xxx -> xxx.xxx.xxx.xxx");
     }
@@ -646,8 +648,8 @@ bool Ipv4Codec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
     if (!buf.allocate(ip::IP4_HEADER_LEN))
         return false;
 
-    const ip::IP4Hdr* const ip4h_in = reinterpret_cast<const IP4Hdr*>(raw_in);
-    ip::IP4Hdr* const ip4h_out = reinterpret_cast<IP4Hdr*>(buf.data());
+    const ip::IP4Hdr* const ip4h_in = reinterpret_cast<const ip::IP4Hdr*>(raw_in);
+    ip::IP4Hdr* const ip4h_out = reinterpret_cast<ip::IP4Hdr*>(buf.data());
 
     /* IPv4 encoded header is hardcoded 20 bytes */
     ip4h_out->ip_verhl = 0x45;
@@ -686,7 +688,7 @@ bool Ipv4Codec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
 void Ipv4Codec::update(const ip::IpApi&, const EncodeFlags flags,
     uint8_t* raw_pkt, uint16_t /*lyr_len*/, uint32_t& updated_len)
 {
-    IP4Hdr* h = reinterpret_cast<IP4Hdr*>(raw_pkt);
+    ip::IP4Hdr* h = reinterpret_cast<ip::IP4Hdr*>(raw_pkt);
     uint16_t hlen = h->hlen();
 
     updated_len += hlen;
@@ -701,7 +703,7 @@ void Ipv4Codec::update(const ip::IpApi&, const EncodeFlags flags,
 
 void Ipv4Codec::format(bool reverse, uint8_t* raw_pkt, DecodeData& snort)
 {
-    IP4Hdr* ip4h = reinterpret_cast<IP4Hdr*>(raw_pkt);
+    ip::IP4Hdr* ip4h = reinterpret_cast<ip::IP4Hdr*>(raw_pkt);
 
     if ( reverse )
     {

@@ -30,6 +30,8 @@
 #include "main/snort_config.h"
 #include "protocols/packet_manager.h"
 
+using namespace snort;
+
 #define CD_PBB_NAME "pbb"
 #define CD_PBB_HELP "support for 802.1ah protocol"
 

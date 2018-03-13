@@ -30,6 +30,8 @@
 class FileEnforcer;
 class FileCache;
 
+namespace snort
+{
 class SO_PUBLIC FileService
 {
 public:
@@ -66,6 +68,6 @@ private:
     static FileEnforcer* file_enforcer;
     static FileCache* file_cache;
 };
-
+} // namespace snort
 #endif
 

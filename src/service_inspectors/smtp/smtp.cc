@@ -41,6 +41,8 @@
 #include "smtp_util.h"
 #include "smtp_xlink2state.h"
 
+using namespace snort;
+
 THREAD_LOCAL ProfileStats smtpPerfStats;
 THREAD_LOCAL SmtpStats smtpstats;
 THREAD_LOCAL bool smtp_normalizing;

@@ -35,6 +35,7 @@
 #include "fp_create.h"
 #include "pattern_match_data.h"
 
+using namespace snort;
 using namespace std;
 
 Trace TRACE_NAME(detection);

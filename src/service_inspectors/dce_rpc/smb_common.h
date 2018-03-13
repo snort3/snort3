@@ -403,12 +403,12 @@ inline uint16_t SmbBcc(const uint8_t* ptr, uint16_t com_size)
     if (com_size < sizeof(SmbEmptyCom))
         return 0;
 
-    return alignedNtohs((const uint16_t*)(ptr + com_size - sizeof(uint16_t)));
+    return snort::alignedNtohs((const uint16_t*)(ptr + com_size - sizeof(uint16_t)));
 }
 
 inline uint16_t SmbEmptyComBcc(const SmbEmptyCom* ec)
 {
-    return alignedNtohs(&ec->smb_bcc);
+    return snort::alignedNtohs(&ec->smb_bcc);
 }
 
 inline int SmbType(const SmbNtHdr* hdr)
@@ -428,7 +428,7 @@ inline uint8_t SmbAndXCom2(const SmbAndXCommon* andx)
 
 inline uint16_t SmbAndXOff2(const SmbAndXCommon* andx)
 {
-    return alignedNtohs(&andx->smb_off2);
+    return snort::alignedNtohs(&andx->smb_off2);
 }
 
 /* SMB formats (smb_fmt) Dialect, Pathname and ASCII are all

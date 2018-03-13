@@ -25,12 +25,12 @@
 #include "dce_common.h"
 #include "stream/stream_splitter.h"
 
-class DceHttpServerSplitter : public StreamSplitter
+class DceHttpServerSplitter : public snort::StreamSplitter
 {
 public:
     DceHttpServerSplitter(bool c2s);
 
-    Status scan(Flow*, const uint8_t* data, uint32_t len,
+    Status scan(snort::Flow*, const uint8_t* data, uint32_t len,
         uint32_t flags, uint32_t* fp) override;
 //  FIXIT-M - Should be able to implement but framework does not permit
 /*    const StreamBuffer* reassemble(Flow*, unsigned, unsigned,

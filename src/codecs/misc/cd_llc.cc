@@ -25,6 +25,8 @@
 #include "framework/codec.h"
 #include "log/text_log.h"
 
+using namespace snort;
+
 #define LLC_NAME "llc"
 #define LLC_HELP "support for logical link control"
 

@@ -31,6 +31,8 @@
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 
+using namespace snort;
+
 typedef std::bitset<FILE_ID_MAX> TypeBitSet;
 
 #define s_name "file_type"

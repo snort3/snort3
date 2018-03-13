@@ -40,6 +40,8 @@
 #include "profiler/profiler.h"
 #include "stream/stream.h"
 
+using namespace snort;
+
 #define MODULE_SYMBOL "thirdparty_appid_impl_module"
 
 static THREAD_LOCAL void* module_handle = nullptr;

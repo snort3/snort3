@@ -26,6 +26,7 @@
 
 #include <cassert>
 
+using namespace snort;
 using namespace std;
 
 #define SSH_EVENT_RESPOVERFLOW_STR \

@@ -1,3 +1,4 @@
+
 //--------------------------------------------------------------------------
 // Copyright (C) 2014-2018 Cisco and/or its affiliates. All rights reserved.
 //
@@ -20,6 +21,8 @@
 #ifndef PROTOCOLS_ARP_H
 #define PROTOCOLS_ARP_H
 
+namespace snort
+{
 namespace arp
 {
 
@@ -48,6 +51,7 @@ struct EtherARP
 constexpr uint16_t ETHERARP_HDR_LEN = 28; /*  sizeof EtherARP != 28 */
 
 } // namespace arp
+} // namespace snort
 
 #ifndef ARPOP_REQUEST
 constexpr uint16_t ARPOP_REQUEST = 1;  /* ARP request  */

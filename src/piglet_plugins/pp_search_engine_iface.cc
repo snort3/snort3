@@ -30,7 +30,7 @@ static const luaL_Reg methods[] =
     { nullptr, nullptr }
 };
 
-const struct Lua::InstanceInterface<Mpse> SearchEngineIface =
+const struct Lua::InstanceInterface<snort::Mpse> SearchEngineIface =
 {
     "SearchEngine",
     methods

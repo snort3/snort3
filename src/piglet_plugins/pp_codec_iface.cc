@@ -36,6 +36,8 @@
 #include "pp_ip_api_iface.h"
 #include "pp_raw_buffer_iface.h"
 
+using namespace snort;
+
 // FIXIT-M delete this, and make the IpApi arg in codec.update required
 static const ip::IpApi default_ip_api {};
 

@@ -41,6 +41,7 @@
 #include "snort_config.h"
 #include "snort_module.h"
 
+using namespace snort;
 using namespace std;
 
 #define snort_help \

@@ -55,6 +55,8 @@
 #include "ftpp_return_codes.h"
 #include "telnet_module.h"
 
+using namespace snort;
+
 #define NUL 0x00
 #define CR 0x0d
 #define LF 0x0a

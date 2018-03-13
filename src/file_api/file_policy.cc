@@ -30,6 +30,8 @@
 #include "file_enforcer.h"
 #include "file_service.h"
 
+using namespace snort;
+
 static FileRule emptyRule;
 
 void FileRule::clear()
@@ -84,26 +86,26 @@ void FilePolicy::insert_file_rule(FileRule& rule)
     }
 
     // Enable file type for all other features
-    FileService::enable_file_type();
+    snort::FileService::enable_file_type();
     type_enabled = true;
 
     if (rule.use.signature_enabled)
-        FileService::enable_file_signature();
+        snort::FileService::enable_file_signature();
 
     if (rule.use.capture_enabled)
-        FileService::enable_file_capture();
+        snort::FileService::enable_file_capture();
 }
 
 void FilePolicy::load()
 {
     if (type_enabled)
-        FileService::enable_file_type();
+        snort::FileService::enable_file_type();
 
     if (signature_enabled)
-        FileService::enable_file_signature();
+        snort::FileService::enable_file_signature();
 
     if (capture_enabled)
-        FileService::enable_file_capture();
+        snort::FileService::enable_file_capture();
 
     // Use default global setting
     emptyRule.use.type_enabled = type_enabled;

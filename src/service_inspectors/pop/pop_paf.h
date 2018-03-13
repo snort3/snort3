@@ -62,12 +62,12 @@ struct PopPafData
     bool end_of_data;
 };
 
-class PopSplitter : public StreamSplitter
+class PopSplitter : public snort::StreamSplitter
 {
 public:
     PopSplitter(bool c2s);
 
-    Status scan(Flow*, const uint8_t* data, uint32_t len,
+    Status scan(snort::Flow*, const uint8_t* data, uint32_t len,
         uint32_t flags, uint32_t* fp) override;
 
     bool is_paf() override { return true; }
@@ -77,7 +77,7 @@ public:
 };
 
 // Function: Callback to check if POP data end is reached
-bool pop_is_data_end(Flow* ssn);
+bool pop_is_data_end(snort::Flow* ssn);
 
 #endif
 

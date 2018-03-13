@@ -21,7 +21,10 @@
 
 #include <cstdint>
 
+namespace snort
+{
 class Inspector;
+}
 
 struct StreamUdpConfig
 {
@@ -31,7 +34,7 @@ struct StreamUdpConfig
     StreamUdpConfig();
 };
 
-StreamUdpConfig* get_udp_cfg(Inspector*);
+StreamUdpConfig* get_udp_cfg(snort::Inspector*);
 
 #endif
 

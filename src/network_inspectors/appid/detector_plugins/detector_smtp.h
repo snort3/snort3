@@ -42,7 +42,7 @@ private:
         const uint8_t* product, const uint8_t* product_end, ClientSMTPData* const,
         AppIdSession&, AppId);
     int identify_client_version(ClientSMTPData* const, const uint8_t* product,
-        const uint8_t* data_end, AppIdSession&, Packet*);
+        const uint8_t* data_end, AppIdSession&, snort::Packet*);
 };
 
 class SmtpServiceDetector : public ServiceDetector

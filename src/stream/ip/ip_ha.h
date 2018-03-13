@@ -24,13 +24,16 @@
 
 //-------------------------------------------------------------------------
 
+namespace snort
+{
 class Flow;
+}
 
 class IpHA : public ProtocolHA
 {
 public:
     IpHA() : ProtocolHA(PktType::IP) { }
-    Flow* create_session(FlowKey*) override;
+    snort::Flow* create_session(FlowKey*) override;
 
 private:
 };
@@ -38,7 +41,7 @@ private:
 class IpHAManager
 {
 public:
-    static void process_deletion(Flow* flow);
+    static void process_deletion(snort::Flow* flow);
     static void tinit();
     static void tterm();
     static THREAD_LOCAL IpHA* ip_ha;

@@ -32,6 +32,8 @@
 #include "dnp3_paf.h"
 #include "dnp3_reassembly.h"
 
+using namespace snort;
+
 THREAD_LOCAL Dnp3Stats dnp3_stats;
 THREAD_LOCAL ProfileStats dnp3_perf_stats;
 

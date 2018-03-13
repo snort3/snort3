@@ -22,7 +22,7 @@
 #ifndef THIRDPARTY_APPID_TYPES_H
 #define THIRDPARTY_APPID_TYPES_H
 
-#define BUILD_NAVL_SUPPORT 1
+//#define BUILD_NAVL_SUPPORT 1
 
 #include <cstdint>
 

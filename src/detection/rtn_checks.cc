@@ -39,16 +39,15 @@
 #include "rules.h"
 #include "treenodes.h"
 
+using namespace snort;
+
 #define CHECK_SRC_IP         0x01
 #define CHECK_DST_IP         0x02
 #define INVERSE              0x04
 #define CHECK_SRC_PORT       0x08
 #define CHECK_DST_PORT       0x10
 
-static int CheckAddrPort(
-    sfip_var_t* rule_addr,
-    PortObject* po,
-    Packet* p,
+static int CheckAddrPort(sfip_var_t* rule_addr, PortObject* po, Packet* p,
     uint32_t flags, int mode)
 {
     const SfIp* pkt_addr;          /* packet IP address */

@@ -26,10 +26,13 @@
 #include "flow/flow.h"
 
 enum class IpProtocol : uint8_t;
+
 class AppIdDnsSession;
 class AppIdHttpSession;
 class AppIdSession;
 
+namespace snort
+{
 #define APPID_SESSION_RESPONDER_MONITORED   (1ULL << 0)
 #define APPID_SESSION_INITIATOR_MONITORED   (1ULL << 1)
 #define APPID_SESSION_SPECIAL_MONITORED     (1ULL << 2)
@@ -212,6 +215,6 @@ public:
 };
 
 SO_PUBLIC extern AppIdApi appid_api;
-
+}
 #endif
 

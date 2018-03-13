@@ -30,8 +30,12 @@
 #include <string>
 
 class AnalyzerCommand;
-class SFDAQInstance;
 class Swapper;
+
+namespace snort
+{
+class SFDAQInstance;
+}
 
 class Analyzer
 {
@@ -82,7 +86,7 @@ private:
     bool exit_requested;
 
     std::string source;
-    SFDAQInstance* daq_instance;
+    snort::SFDAQInstance* daq_instance;
 
     std::mutex pending_work_queue_mutex;
 };

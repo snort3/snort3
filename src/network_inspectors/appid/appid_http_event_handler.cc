@@ -34,6 +34,8 @@
 #include "appid_session.h"
 #include "utils/util.h"
 
+using namespace snort;
+
 void HttpEventHandler::handle(DataEvent& event, Flow* flow)
 {
     int direction;

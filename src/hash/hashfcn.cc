@@ -53,7 +53,7 @@ HashFnc* hashfcn_new(int m)
 
     p = (HashFnc*)snort_calloc(sizeof(*p));
 
-    if ( SnortConfig::static_hash() )
+    if ( snort::SnortConfig::static_hash() )
     {
         p->seed     = 3193;
         p->scale    = 719;

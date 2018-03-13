@@ -35,10 +35,14 @@
 
 #define PLUGIN_KEY_SEP "::"
 
+namespace snort
+{
 class Module;
+}
 
 namespace Piglet
 {
+using namespace snort;
 using namespace std;
 
 // -----------------------------------------------------------------------------

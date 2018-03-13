@@ -37,13 +37,13 @@ class HttpTransaction;
 class HttpJsNorm;
 class HttpMsgSection;
 
-class HttpFlowData : public FlowData
+class HttpFlowData : public snort::FlowData
 {
 public:
     HttpFlowData();
     ~HttpFlowData() override;
     static unsigned inspector_id;
-    static void init() { inspector_id = FlowData::create_flow_data_id(); }
+    static void init() { inspector_id = snort::FlowData::create_flow_data_id(); }
 
     friend class HttpInspect;
     friend class HttpMsgSection;
@@ -130,7 +130,7 @@ private:
         HttpEnums::STAT_NOT_PRESENT };
     int64_t detect_depth_remaining[2] = { HttpEnums::STAT_NOT_PRESENT,
         HttpEnums::STAT_NOT_PRESENT };
-    MimeSession* mime_state[2] = { nullptr, nullptr };
+    snort::MimeSession* mime_state[2] = { nullptr, nullptr };
     UtfDecodeSession* utf_state = nullptr; // SRC_SERVER only
     fd_session_t* fd_state = nullptr; // SRC_SERVER only
     struct FdCallbackContext

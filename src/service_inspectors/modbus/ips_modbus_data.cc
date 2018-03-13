@@ -32,6 +32,8 @@
 
 #include "modbus_decode.h"
 
+using namespace snort;
+
 static const char* s_name = "modbus_data";
 
 //-------------------------------------------------------------------------

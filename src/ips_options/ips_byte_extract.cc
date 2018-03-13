@@ -35,6 +35,8 @@
 
 #include "extract.h"
 
+using namespace snort;
+
 static THREAD_LOCAL ProfileStats byteExtractPerfStats;
 
 #define s_name "byte_extract"

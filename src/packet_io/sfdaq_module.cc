@@ -31,6 +31,8 @@
 
 #include "sfdaq_config.h"
 
+using namespace snort;
+
 #define sfdaq_help "configure packet acquisition interface"
 
 static const Parameter string_list_param[] =

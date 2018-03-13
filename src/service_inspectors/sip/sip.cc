@@ -34,6 +34,8 @@
 #include "sip_module.h"
 #include "sip_utils.h"
 
+using namespace snort;
+
 THREAD_LOCAL ProfileStats sipPerfStats;
 
 static void snort_sip(SIP_PROTO_CONF* GlobalConf, Packet* p);

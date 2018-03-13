@@ -24,7 +24,7 @@
 
 #include "flow/flow.h"
 
-void dce_http_bind(Flow* flow, const char* service);
+void dce_http_bind(snort::Flow* flow, const char* service);
 
 #endif
 

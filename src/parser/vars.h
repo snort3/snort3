@@ -24,7 +24,10 @@
 
 #include "sfip/sf_vartable.h"
 
+namespace snort
+{
 struct SnortConfig;
+}
 
 //-------------------------------------------------------------------------
 // var node stuff
@@ -38,7 +41,7 @@ struct VarNode
     VarNode* next;
 };
 
-void config_set_var(SnortConfig*, const char*);
+void config_set_var(snort::SnortConfig*, const char*);
 void FreeVarList(VarNode*);
 
 //-------------------------------------------------------------------------
@@ -58,15 +61,15 @@ struct VarEntry
     VarEntry* next;
 };
 
-VarEntry* VarDefine(SnortConfig*, const char* name, const char* value);
-int PortVarDefine(SnortConfig*, const char* name, const char* s);
+VarEntry* VarDefine(snort::SnortConfig*, const char* name, const char* value);
+int PortVarDefine(snort::SnortConfig*, const char* name, const char* s);
 
 // FIXIT-L put ParseIpVar() definition and declaration in matching files
-void ParseIpVar(SnortConfig*, const char* name, const char* s);
+void ParseIpVar(snort::SnortConfig*, const char* name, const char* s);
 
 VarEntry* VarAlloc();
 void DeleteVars(VarEntry* var_table);
-void AddVarToTable(SnortConfig*, const char*, const char*);
+void AddVarToTable(snort::SnortConfig*, const char*, const char*);
 
 enum VarType
 {
@@ -77,10 +80,10 @@ enum VarType
 
 int VarIsIpAddr(vartable_t* ip_vartable, const char* value);
 int VarIsIpList(vartable_t* ip_vartable, const char* value);
-void DisallowCrossTableDuplicateVars(SnortConfig*, const char* name, VarType var_type);
+void DisallowCrossTableDuplicateVars(snort::SnortConfig*, const char* name, VarType var_type);
 
-const char* VarSearch(SnortConfig*, const char* name);
-const char* ExpandVars(SnortConfig*, const char* string);
+const char* VarSearch(snort::SnortConfig*, const char* name);
+const char* ExpandVars(snort::SnortConfig*, const char* string);
 
 #endif
 

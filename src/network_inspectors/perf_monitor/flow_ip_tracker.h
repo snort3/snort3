@@ -63,17 +63,17 @@ public:
     ~FlowIPTracker() override;
 
     void reset() override;
-    void update(Packet*) override;
+    void update(snort::Packet*) override;
     void process(bool) override;
 
-    int update_state(const SfIp* src_addr, const SfIp* dst_addr, FlowState);
+    int update_state(const snort::SfIp* src_addr, const snort::SfIp* dst_addr, FlowState);
 
 private:
     FlowStateValue stats;
     XHash* ip_map;
     char ip_a[41], ip_b[41];
 
-    FlowStateValue* find_stats(const SfIp* src_addr, const SfIp* dst_addr, int* swapped);
+    FlowStateValue* find_stats(const snort::SfIp* src_addr, const snort::SfIp* dst_addr, int* swapped);
     void write_stats();
     void display_stats();
 };

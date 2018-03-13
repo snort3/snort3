@@ -25,6 +25,8 @@
 
 #include "managers/plugin_manager.h"
 
+using namespace snort;
+
 extern const BaseApi* pp_codec;
 extern const BaseApi* pp_inspector;
 extern const BaseApi* pp_ips_action;

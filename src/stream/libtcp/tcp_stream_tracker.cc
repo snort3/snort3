@@ -29,6 +29,8 @@
 #include "stream/stream.h"
 #include "stream/tcp/tcp_module.h"
 
+using namespace snort;
+
 const char* tcp_state_names[] =
 {
     "TCP_LISTEN", "TCP_SYN_SENT", "TCP_SYN_RECV",

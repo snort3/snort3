@@ -27,6 +27,8 @@
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 
+using namespace snort;
+
 #define s_name "pkt_data"
 
 static THREAD_LOCAL ProfileStats pktDataPerfStats;

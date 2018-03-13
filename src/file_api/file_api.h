@@ -110,10 +110,14 @@ struct FileState
     FileSigState sig_state;
 };
 
-class FileContext;
 struct FileCaptureInfo;
-class Flow;
+
+namespace snort
+{
+class FileContext;
 class FileInfo;
+class Flow;
+struct Packet;
 
 class SO_PUBLIC FilePolicyBase
 {
@@ -183,8 +187,8 @@ inline FileCharEncoding get_character_encoding(const char* file_name, size_t len
     return encoding;
 }
 
-SO_PUBLIC uint64_t get_file_processed_size(class Flow* flow);
-FilePosition get_file_position(struct Packet* pkt);
-
+SO_PUBLIC uint64_t get_file_processed_size(Flow* flow);
+FilePosition get_file_position(Packet* pkt);
+}
 #endif
 

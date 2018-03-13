@@ -41,12 +41,12 @@ struct dnp3_paf_data
     uint16_t real_length;
 };
 
-class Dnp3Splitter : public StreamSplitter
+class Dnp3Splitter : public snort::StreamSplitter
 {
 public:
     Dnp3Splitter(bool c2s);
 
-    Status scan(Flow*, const uint8_t* data, uint32_t len,
+    Status scan(snort::Flow*, const uint8_t* data, uint32_t len,
         uint32_t flags, uint32_t* fp) override;
 
     bool is_paf() override

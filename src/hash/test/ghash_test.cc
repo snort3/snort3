@@ -31,6 +31,8 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
+using namespace snort;
+
 // Stubs whose sole purpose is to make the test code link
 static SnortConfig my_config;
 THREAD_LOCAL SnortConfig *snort_conf = &my_config;

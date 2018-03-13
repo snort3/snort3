@@ -38,6 +38,8 @@
 #include "dce_smb_utils.h"
 #include "dce_smb2.h"
 
+using namespace snort;
+
 /********************************************************************
  * Global variables
  ********************************************************************/
@@ -1358,7 +1360,7 @@ static DCE2_SmbSsnData* dce2_create_new_smb_session(Packet* p, dce2SmbProtoConf*
         dce2_smb_sess->tid = DCE2_SENTINEL;
         dce2_smb_sess->ftracker.fid_v1 = DCE2_SENTINEL;
         dce2_smb_sess->rtracker.mid = DCE2_SENTINEL;
-        dce2_smb_sess->max_file_depth = FileService::get_max_file_depth();
+        dce2_smb_sess->max_file_depth = snort::FileService::get_max_file_depth();
 
         DCE2_ResetRopts(&dce2_smb_sess->sd.ropts);
 
@@ -2627,7 +2629,7 @@ void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
         return;
     }
 
-    Packet* p = ssd->sd.wire_pkt;
+    snort::Packet* p = ssd->sd.wire_pkt;
     DCE2_SmbVersion smb_version = DCE2_Smb2Version(p);
     if (smb_version == DCE2_SMB_VERISON_1)
     {

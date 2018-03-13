@@ -31,7 +31,7 @@ FileSegment::~FileSegment ()
         delete data;
 }
 
-FileSegments::FileSegments (FileContext* ctx)
+FileSegments::FileSegments (snort::FileContext* ctx)
 {
     head = nullptr;
     current_offset = 0;
@@ -150,15 +150,15 @@ FilePosition FileSegments::get_file_position(uint64_t data_size, uint64_t file_s
     return SNORT_FILE_MIDDLE;
 }
 
-int FileSegments::process_one(Flow* flow, const uint8_t* file_data, int data_size,
-    FilePolicyBase* policy)
+int FileSegments::process_one(snort::Flow* flow, const uint8_t* file_data, int data_size,
+    snort::FilePolicyBase* policy)
 {
     FilePosition position = get_file_position(data_size, context->get_file_size());
 
     return context->process(flow, file_data, data_size, position, policy);
 }
 
-int FileSegments::process_all(Flow* flow, FilePolicyBase* policy)
+int FileSegments::process_all(snort::Flow* flow, snort::FilePolicyBase* policy)
 {
     int ret = 1;
 
@@ -190,8 +190,8 @@ int FileSegments::process_all(Flow* flow, FilePolicyBase* policy)
  *    1: continue processing/log/block this file
  *    0: ignore this file
  */
-int FileSegments::process(Flow* flow, const uint8_t* file_data, uint64_t data_size,
-    uint64_t offset, FilePolicyBase* policy)
+int FileSegments::process(snort::Flow* flow, const uint8_t* file_data, uint64_t data_size,
+    uint64_t offset, snort::FilePolicyBase* policy)
 {
     int ret = 0;
 

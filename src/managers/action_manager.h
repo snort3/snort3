@@ -28,21 +28,20 @@
 #include "framework/ips_action.h"
 #include "framework/module.h"
 
-#ifdef PIGLET
-#include "framework/ips_action.h"
-#endif
-
+namespace snort
+{
 struct ActionApi;
 class IpsAction;
 struct SnortConfig;
 struct Packet;
+}
 
 //-------------------------------------------------------------------------
 
 #ifdef PIGLET
 struct IpsActionWrapper
 {
-    IpsActionWrapper(const ActionApi* a, IpsAction* p) :
+    IpsActionWrapper(const snort::ActionApi* a, snort::IpsAction* p) :
         api { a }, instance { p } { }
 
     ~IpsActionWrapper()
@@ -51,32 +50,32 @@ struct IpsActionWrapper
             api->dtor(instance);
     }
 
-    const ActionApi* api;
-    IpsAction* instance;
+    const snort::ActionApi* api;
+    snort::IpsAction* instance;
 };
 #endif
 
 class ActionManager
 {
 public:
-    static void add_plugin(const ActionApi*);
+    static void add_plugin(const snort::ActionApi*);
     static void release_plugins();
     static void dump_plugins();
 
-    static Actions::Type get_action_type(const char*);
+    static snort::Actions::Type get_action_type(const char*);
 
-    static void instantiate(const ActionApi*, Module*, SnortConfig*);
+    static void instantiate(const snort::ActionApi*, snort::Module*, snort::SnortConfig*);
 
-    static void thread_init(SnortConfig*);
-    static void thread_term(SnortConfig*);
+    static void thread_init(snort::SnortConfig*);
+    static void thread_term(snort::SnortConfig*);
 
     static void reset_queue();
-    static void queue_reject(const Packet*);
-    static void queue(IpsAction*);
-    static void execute(Packet*);
+    static void queue_reject(const snort::Packet*);
+    static void queue(snort::IpsAction*);
+    static void execute(snort::Packet*);
 
 #ifdef PIGLET
-    static IpsActionWrapper* instantiate(const char*, Module*);
+    static IpsActionWrapper* instantiate(const char*, snort::Module*);
 #endif
 };
 

@@ -29,6 +29,11 @@
 #include "framework/counts.h"
 #include "main/thread.h"
 
+namespace snort
+{
+struct Packet;
+}
+
 #define MIN_GTP_VERSION_CODE   (0)
 #define MAX_GTP_VERSION_CODE   (2)
 
@@ -73,7 +78,7 @@ struct GTP_Stats
 
 extern THREAD_LOCAL GTP_Stats gtp_stats;
 
-void GTPmain(const GTPConfig&, struct Packet*);
+void GTPmain(const GTPConfig&, snort::Packet*);
 
 #endif
 

@@ -37,6 +37,8 @@
 #include "pop_module.h"
 #include "pop_paf.h"
 
+using namespace snort;
+
 THREAD_LOCAL ProfileStats popPerfStats;
 THREAD_LOCAL PopStats popstats;
 

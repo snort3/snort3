@@ -42,14 +42,14 @@ struct SSHData
     uint32_t state_flags;      // Bit vector describing the current state of the session
 };
 
-class SshFlowData : public FlowData
+class SshFlowData : public snort::FlowData
 {
 public:
     SshFlowData();
     ~SshFlowData() override;
 
     static void init()
-    { inspector_id = FlowData::create_flow_data_id(); }
+    { inspector_id = snort::FlowData::create_flow_data_id(); }
 
 public:
     static unsigned inspector_id;

@@ -35,6 +35,8 @@
 
 #include "sip.h"
 
+using namespace snort;
+
 enum SipIdx
 {
     SIP_HEADER, SIP_BODY, SIP_MAX

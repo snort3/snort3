@@ -22,8 +22,11 @@
 
 #include "lua/lua_iface.h"
 
+namespace snort
+{
 struct EncState;
+}
 
-extern const struct Lua::TypeInterface<EncState> EncStateIface;
+extern const struct Lua::TypeInterface<snort::EncState> EncStateIface;
 
 #endif

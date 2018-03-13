@@ -27,22 +27,25 @@
 #include "application_ids.h"
 #include "flow/flow.h"
 
+namespace snort
+{
 struct Packet;
-class SipEventHandler;
 struct SnortConfig;
+}
+class SipEventHandler;
 
-class AppIdInspector : public Inspector
+class AppIdInspector : public snort::Inspector
 {
 public:
 
     AppIdInspector(AppIdModule&);
     ~AppIdInspector() override;
 
-    bool configure(SnortConfig*) override;
-    void show(SnortConfig*) override;
+    bool configure(snort::SnortConfig*) override;
+    void show(snort::SnortConfig*) override;
     void tinit() override;
     void tterm() override;
-    void eval(Packet*) override;
+    void eval(snort::Packet*) override;
     AppIdConfig* get_appid_config();
 
     SipEventHandler& get_sip_event_handler()

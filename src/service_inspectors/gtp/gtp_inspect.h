@@ -35,7 +35,7 @@ struct GTP_Roptions
     GTP_IEData* gtp_infoElements;
 };
 
-class GtpFlowData : public FlowData
+class GtpFlowData : public snort::FlowData
 {
 public:
     GtpFlowData();

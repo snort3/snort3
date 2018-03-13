@@ -19,9 +19,13 @@
 #ifndef IPS_REGEX_H
 #define IPS_REGEX_H
 
+namespace snort
+{
 struct SnortConfig;
-void regex_setup(SnortConfig*);
-void regex_cleanup(SnortConfig*);
+}
+
+void regex_setup(snort::SnortConfig*);
+void regex_cleanup(snort::SnortConfig*);
 
 #endif
 

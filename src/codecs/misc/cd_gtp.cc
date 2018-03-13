@@ -27,6 +27,8 @@
 #include "main/snort_config.h"
 #include "packet_io/active.h"
 
+using namespace snort;
+
 #define CD_GTP_NAME "gtp"
 #define CD_GTP_HELP "support for general-packet-radio-service tunneling protocol"
 

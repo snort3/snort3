@@ -25,26 +25,30 @@
 #include "main/snort_types.h"
 #include "main/thread.h"
 
-struct Event;
+namespace snort
+{
+struct Packet;
 struct ProfileStats;
+}
+struct Event;
 struct RuleFpList;
 struct RuleTreeNode;
 
-extern THREAD_LOCAL ProfileStats eventqPerfStats;
-extern THREAD_LOCAL ProfileStats detectPerfStats;
-extern THREAD_LOCAL ProfileStats rebuiltPacketPerfStats;
+extern THREAD_LOCAL snort::ProfileStats eventqPerfStats;
+extern THREAD_LOCAL snort::ProfileStats detectPerfStats;
+extern THREAD_LOCAL snort::ProfileStats rebuiltPacketPerfStats;
 
 // main loop hooks
-void snort_ignore(Packet*);
-void snort_log(Packet*);
+void snort_ignore(snort::Packet*);
+void snort_log(snort::Packet*);
 
 // alerts
-void CallLogFuncs(Packet*, ListHead*, Event*, const char*);
-void CallLogFuncs(Packet*, const OptTreeNode*, ListHead*);
-void CallAlertFuncs(Packet*, const OptTreeNode*, ListHead*);
+void CallLogFuncs(snort::Packet*, ListHead*, Event*, const char*);
+void CallLogFuncs(snort::Packet*, const OptTreeNode*, ListHead*);
+void CallAlertFuncs(snort::Packet*, const OptTreeNode*, ListHead*);
 
 void enable_tags();
-void check_tags(Packet*);
+void check_tags(snort::Packet*);
 
 #endif
 

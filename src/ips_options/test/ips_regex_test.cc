@@ -37,6 +37,8 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
+using namespace snort;
+
 //-------------------------------------------------------------------------
 // stubs, spies, etc.
 //-------------------------------------------------------------------------
@@ -48,17 +50,8 @@ void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void mix_str(uint32_t& a, uint32_t&, uint32_t&, const char* s, unsigned)
 { a += strlen(s); }
 
-Packet::Packet(bool) { }
-Packet::~Packet() { }
-
-Cursor::Cursor(Packet* p)
-{ set("pkt_data", p->data, p->dsize); }
-
-static unsigned s_parse_errors = 0;
-
-void ParseError(const char*, ...)
-{ s_parse_errors++; }
-
+namespace snort
+{
 SnortConfig s_conf;
 THREAD_LOCAL SnortConfig* snort_conf = &s_conf;
 
@@ -75,6 +68,19 @@ SnortConfig::~SnortConfig() { }
 
 SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
+
+Packet::Packet(bool) { }
+Packet::~Packet() { }
+}
+
+Cursor::Cursor(Packet* p)
+{ set("pkt_data", p->data, p->dsize); }
+
+static unsigned s_parse_errors = 0;
+
+void ParseError(const char*, ...)
+{ s_parse_errors++; }
+
 
 unsigned get_instance_id()
 { return 0; }

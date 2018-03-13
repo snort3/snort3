@@ -24,6 +24,8 @@
 
 #include "arp_module.h"
 
+using namespace snort;
+
 #define ARPSPOOF_UNICAST_ARP_REQUEST_STR \
     "unicast ARP request"
 #define ARPSPOOF_ETHERFRAME_ARP_MISMATCH_SRC_STR \

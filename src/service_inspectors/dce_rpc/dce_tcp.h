@@ -70,18 +70,18 @@ struct dce2TcpStats
 };
 
 extern THREAD_LOCAL dce2TcpStats dce2_tcp_stats;
-extern THREAD_LOCAL ProfileStats dce2_tcp_pstat_main;
-extern THREAD_LOCAL ProfileStats dce2_tcp_pstat_session;
-extern THREAD_LOCAL ProfileStats dce2_tcp_pstat_new_session;
-extern THREAD_LOCAL ProfileStats dce2_tcp_pstat_session_state;
-extern THREAD_LOCAL ProfileStats dce2_tcp_pstat_detect;
-extern THREAD_LOCAL ProfileStats dce2_tcp_pstat_log;
-extern THREAD_LOCAL ProfileStats dce2_tcp_pstat_co_seg;
-extern THREAD_LOCAL ProfileStats dce2_tcp_pstat_co_frag;
-extern THREAD_LOCAL ProfileStats dce2_tcp_pstat_co_reass;
-extern THREAD_LOCAL ProfileStats dce2_tcp_pstat_co_ctx;
+extern THREAD_LOCAL snort::ProfileStats dce2_tcp_pstat_main;
+extern THREAD_LOCAL snort::ProfileStats dce2_tcp_pstat_session;
+extern THREAD_LOCAL snort::ProfileStats dce2_tcp_pstat_new_session;
+extern THREAD_LOCAL snort::ProfileStats dce2_tcp_pstat_session_state;
+extern THREAD_LOCAL snort::ProfileStats dce2_tcp_pstat_detect;
+extern THREAD_LOCAL snort::ProfileStats dce2_tcp_pstat_log;
+extern THREAD_LOCAL snort::ProfileStats dce2_tcp_pstat_co_seg;
+extern THREAD_LOCAL snort::ProfileStats dce2_tcp_pstat_co_frag;
+extern THREAD_LOCAL snort::ProfileStats dce2_tcp_pstat_co_reass;
+extern THREAD_LOCAL snort::ProfileStats dce2_tcp_pstat_co_ctx;
 
-inline bool DCE2_TcpAutodetect(Packet* p)
+inline bool DCE2_TcpAutodetect(snort::Packet* p)
 {
     if (p->dsize >= sizeof(DceRpcCoHdr))
     {
@@ -112,7 +112,7 @@ struct DCE2_TcpSsnData
     DCE2_CoTracker co_tracker;
 };
 
-class Dce2TcpFlowData : public FlowData
+class Dce2TcpFlowData : public snort::FlowData
 {
 public:
     Dce2TcpFlowData();
@@ -120,7 +120,7 @@ public:
 
     static void init()
     {
-        inspector_id = FlowData::create_flow_data_id();
+        inspector_id = snort::FlowData::create_flow_data_id();
     }
 
 public:
@@ -128,7 +128,7 @@ public:
     DCE2_TcpSsnData dce2_tcp_session;
 };
 
-DCE2_TcpSsnData* get_dce2_tcp_session_data(Flow*);
+DCE2_TcpSsnData* get_dce2_tcp_session_data(snort::Flow*);
 
 #endif
 

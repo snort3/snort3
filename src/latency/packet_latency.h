@@ -21,13 +21,16 @@
 #ifndef PACKET_LATENCY_H
 #define PACKET_LATENCY_H
 
+namespace snort
+{
 struct Packet;
+}
 
 class PacketLatency
 {
 public:
     static void push();
-    static void pop(const Packet*);
+    static void pop(const snort::Packet*);
     static bool fastpath();
 
     static void tterm();
@@ -35,11 +38,11 @@ public:
     class Context
     {
     public:
-        Context(const Packet* p) : p(p) { PacketLatency::push(); }
+        Context(const snort::Packet* p) : p(p) { PacketLatency::push(); }
         ~Context() { PacketLatency::pop(p); }
 
     private:
-        const Packet* p;
+        const snort::Packet* p;
     };
 };
 

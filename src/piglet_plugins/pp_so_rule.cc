@@ -28,6 +28,8 @@
 
 #include "pp_so_rule_iface.h"
 
+using namespace snort;
+
 class SoRulePiglet : public Piglet::BasePlugin
 {
 public:

@@ -30,6 +30,8 @@
 #include "protocols/tcp.h"
 #include "protocols/udp.h"
 
+using namespace snort;
+
 namespace
 {
 #define ICMP4_IP_NAME "icmp4_ip"
@@ -58,7 +60,7 @@ bool Icmp4IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snor
     }
 
     /* lay the IP struct over the raw data */
-    const IP4Hdr* const ip4h = reinterpret_cast<const IP4Hdr*>(raw.data);
+    const ip::IP4Hdr* const ip4h = reinterpret_cast<const ip::IP4Hdr*>(raw.data);
 
     /*
      * with datalink DLT_RAW it's impossible to differ ARP datagrams from IP.
@@ -140,7 +142,7 @@ struct ip4_addr
 void Icmp4IpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     const uint16_t /*lyr_len*/)
 {
-    const IP4Hdr* const ip4h = reinterpret_cast<const IP4Hdr*>(raw_pkt);
+    const ip::IP4Hdr* const ip4h = reinterpret_cast<const ip::IP4Hdr*>(raw_pkt);
     TextLog_Puts(text_log, "\n\t**** ORIGINAL DATAGRAM DUMP: ****");
     TextLog_NewLine(text_log);
     TextLog_Puts(text_log, "\tIPv4\n\t\t");

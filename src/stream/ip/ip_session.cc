@@ -30,6 +30,8 @@
 #include "ip_ha.h"
 #include "stream_ip.h"
 
+using namespace snort;
+
 const PegInfo ip_pegs[] =
 {
     SESSION_PEGS("ip"),

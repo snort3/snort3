@@ -35,7 +35,8 @@ public:
 
 protected:
     HttpMsgStart(const uint8_t* buffer, const uint16_t buf_size, HttpFlowData* session_data_,
-        HttpEnums::SourceId source_id_, bool buf_owner, Flow* flow_, const HttpParaList* params_)
+        HttpEnums::SourceId source_id_, bool buf_owner, snort::Flow* flow_,
+        const HttpParaList* params_)
         : HttpMsgSection(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_)
         { }
     virtual void parse_start_line() = 0;

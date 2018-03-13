@@ -25,6 +25,8 @@
 #include "log/text_log.h"
 #include "protocols/wlan.h"
 
+using namespace snort;
+
 #define CD_WLAN_NAME "wlan"
 #define CD_WLAN_HELP_STR "support for wireless local area network protocol"
 #define CD_WLAN_HELP ADD_DLT(CD_WLAN_HELP_STR, DLT_IEEE802_11)

@@ -26,6 +26,11 @@
 #include "client_plugins/client_detector.h"
 #include "service_plugins/service_detector.h"
 
+namespace snort
+{
+class SearchTool;
+}
+
 struct PortPatternNode
 {
     AppId appId;
@@ -66,10 +71,6 @@ struct PatternService
     unsigned longest;
 };
 
-class SearchTool;
-class ClientDetector;
-class ServiceDetector;
-
 class PatternClientDetector : public ClientDetector
 {
 public:
@@ -87,8 +88,8 @@ private:
 
     PortPatternNode* luaInjectedPatterns = nullptr;
     PatternService* servicePortPattern = nullptr;
-    SearchTool* tcp_pattern_matcher = nullptr;
-    SearchTool* udp_pattern_matcher = nullptr;
+    snort::SearchTool* tcp_pattern_matcher = nullptr;
+    snort::SearchTool* udp_pattern_matcher = nullptr;
 };
 
 class PatternServiceDetector : public ServiceDetector
@@ -109,10 +110,10 @@ private:
 
     PortPatternNode* luaInjectedPatterns = nullptr;
     PatternService* servicePortPattern = nullptr;
-    SearchTool* tcp_pattern_matcher = nullptr;
-    SearchTool* udp_pattern_matcher = nullptr;
-    SearchTool* tcpPortPatternTree[65536] = { nullptr };
-    SearchTool* udpPortPatternTree[65536] = { nullptr };
+    snort::SearchTool* tcp_pattern_matcher = nullptr;
+    snort::SearchTool* udp_pattern_matcher = nullptr;
+    snort::SearchTool* tcpPortPatternTree[65536] = { nullptr };
+    snort::SearchTool* udpPortPatternTree[65536] = { nullptr };
 };
 
 #endif

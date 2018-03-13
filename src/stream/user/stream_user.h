@@ -22,7 +22,10 @@
 
 #include <cstdint>
 
+namespace snort
+{
 class Inspector;
+}
 
 struct StreamUserConfig
 {
@@ -31,6 +34,6 @@ struct StreamUserConfig
     StreamUserConfig();
 };
 
-StreamUserConfig* get_user_cfg(Inspector*);
+StreamUserConfig* get_user_cfg(snort::Inspector*);
 
 #endif

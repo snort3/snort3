@@ -46,6 +46,8 @@
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
 
+using namespace snort;
+
 AppIdDiscovery::AppIdDiscovery(AppIdInspector& ins)
     : inspector(ins)
 {

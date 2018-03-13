@@ -32,6 +32,7 @@
 
 #include "module_manager.h"
 
+using namespace snort;
 using namespace std;
 
 struct Output

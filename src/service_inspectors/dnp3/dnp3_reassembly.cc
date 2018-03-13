@@ -32,6 +32,8 @@
 
 #include "dnp3_map.h"
 
+using namespace snort;
+
 /* CRC look-up table, for computeCRC() below */
 static uint16_t crcLookUpTable[256] =
 {

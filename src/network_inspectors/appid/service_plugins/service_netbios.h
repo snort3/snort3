@@ -51,7 +51,7 @@ public:
 
     int validate(AppIdDiscoveryArgs&) override;
 
-    static void AppIdFreeSMBData(FpSMBData*);
+    static void AppIdFreeSMBData(snort::FpSMBData*);
 
 private:
     void add_smb_info(AppIdSession&, unsigned major, unsigned minor, uint32_t flags);

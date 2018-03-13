@@ -33,6 +33,8 @@
 #include "catch/snort_catch.h"
 #endif
 
+using namespace snort;
+
 #define TRACKER_NAME PERF_NAME "_flow"
 
 #define MAX_PKT_LEN  9000

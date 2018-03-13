@@ -24,6 +24,8 @@
 #include "codecs/codec_module.h"
 #include "framework/codec.h"
 
+using namespace snort;
+
 #define CD_CISCOMETADATA_NAME "ciscometadata"
 #define CD_CISCOMETADATA_HELP "support for cisco metadata"
 

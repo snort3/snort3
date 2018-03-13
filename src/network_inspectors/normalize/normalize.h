@@ -66,7 +66,6 @@ enum NormMode : int8_t
 };
 
 typedef PegCount (* NormPegs)[NORM_MODE_MAX];
-struct SnortConfig;
 
 bool Normalize_IsEnabled(NormFlags);
 NormMode Normalize_GetMode(NormFlags);

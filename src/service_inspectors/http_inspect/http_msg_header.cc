@@ -32,6 +32,7 @@
 #include "pub_sub/http_events.h"
 #include "sfip/sf_ip.h"
 
+using namespace snort;
 using namespace HttpEnums;
 
 HttpMsgHeader::HttpMsgHeader(const uint8_t* buffer, const uint16_t buf_size,

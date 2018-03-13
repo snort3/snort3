@@ -35,7 +35,7 @@ class FlowTracker : public PerfTracker
 public:
     FlowTracker(PerfConfig* perf);
 
-    void update(Packet*) override;
+    void update(snort::Packet*) override;
     void process(bool) override;
 
 protected:

@@ -30,8 +30,11 @@
 #include "main/snort_types.h"
 
 struct lua_State;
+namespace snort
+{
 class Module;
 struct SnortConfig;
+}
 
 #define PIGLET_API_VERSION 1
 
@@ -47,7 +50,7 @@ class SO_PUBLIC BasePlugin
 {
 public:
     BasePlugin(Lua::State& lua, const std::string& t,
-        Module* m = nullptr, SnortConfig* sc = nullptr) :
+        snort::Module* m = nullptr, snort::SnortConfig* sc = nullptr) :
         L { lua.get_ptr() }, target { t },
         module { m }, snort_conf { sc } { }
 
@@ -69,8 +72,8 @@ public:
 protected:
     lua_State* L;
     std::string target;
-    Module* module;
-    SnortConfig* snort_conf;
+    snort::Module* module;
+    snort::SnortConfig* snort_conf;
 
     std::string error;  // FIXIT-L unused
 
@@ -85,7 +88,7 @@ private:
 // Plugin ctor/dtor
 //--------------------------------------------------------------------------
 
-using PluginCtor = BasePlugin* (*)(Lua::State&, const std::string&, Module*, SnortConfig*);
+using PluginCtor = BasePlugin* (*)(Lua::State&, const std::string&, snort::Module*, snort::SnortConfig*);
 using PluginDtor = void (*)(BasePlugin*);
 
 //--------------------------------------------------------------------------
@@ -94,7 +97,7 @@ using PluginDtor = void (*)(BasePlugin*);
 
 struct Api
 {
-    BaseApi base;
+    snort::BaseApi base;
     PluginCtor ctor;
     PluginDtor dtor;
     PlugType target;

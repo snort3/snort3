@@ -34,6 +34,8 @@
 #include "sip_module.h"
 #include "sip_utils.h"
 
+using namespace snort;
+
 #define MAX_NUM_32BIT  2147483647
 
 #define SIP_PARSE_NOFOLDING  (-2)

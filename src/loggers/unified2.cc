@@ -52,6 +52,7 @@
 #include "utils/util.h"
 #include "utils/util_cstring.h"
 
+using namespace snort;
 using namespace std;
 
 #define S_NAME "unified2"

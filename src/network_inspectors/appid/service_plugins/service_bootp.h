@@ -36,8 +36,8 @@ public:
     int validate(AppIdDiscoveryArgs&) override;
 
     // FIXIT-L - move to service discovery class
-    static void AppIdFreeDhcpData(DHCPData*);
-    static void AppIdFreeDhcpInfo(DHCPInfo*);
+    static void AppIdFreeDhcpData(snort::DHCPData*);
+    static void AppIdFreeDhcpInfo(snort::DHCPInfo*);
 
 private:
     int add_dhcp_info(AppIdSession&, unsigned op55_len, const uint8_t* op55, unsigned

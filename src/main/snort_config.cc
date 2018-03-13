@@ -69,6 +69,8 @@
 #include "snort.h"
 #include "thread_config.h"
 
+using namespace snort;
+
 #define LOG_NONE    "none"
 #define LOG_DUMP    "dump"
 #define LOG_CODECS  "codecs"
@@ -962,14 +964,14 @@ void SnortConfig::set_alert_mode(const char* val)
         output = val;
 
     output_flags |= OUTPUT_FLAG__ALERTS;
-    Snort::set_main_hook(DetectionEngine::inspect);
+    snort::Snort::set_main_hook(DetectionEngine::inspect);
 }
 
 void SnortConfig::set_log_mode(const char* val)
 {
     if (strcasecmp(val, LOG_NONE) == 0)
     {
-        Snort::set_main_hook(snort_ignore);
+        snort::Snort::set_main_hook(snort_ignore);
         EventManager::enable_logs(false);
     }
     else
@@ -977,7 +979,7 @@ void SnortConfig::set_log_mode(const char* val)
         if ( !strcmp(val, LOG_DUMP) )
             val = LOG_CODECS;
         output = val;
-        Snort::set_main_hook(snort_log);
+        snort::Snort::set_main_hook(snort_log);
     }
 }
 

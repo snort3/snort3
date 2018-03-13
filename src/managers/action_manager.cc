@@ -30,6 +30,7 @@
 #include "packet_io/active.h"
 #include "parser/parser.h"
 
+using namespace snort;
 using namespace std;
 
 struct Actor

@@ -26,6 +26,8 @@
 
 #include "main/snort_debug.h"
 
+using namespace snort;
+
 static const Parameter file_connector_params[] =
 {
     { "connector", Parameter::PT_STRING, nullptr, nullptr,

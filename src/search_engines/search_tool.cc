@@ -27,6 +27,8 @@
 
 #include "managers/mpse_manager.h"
 
+namespace snort
+{
 SearchTool::SearchTool(const char* method, bool dfa)
 {
     mpse = MpseManager::get_search_engine(method);
@@ -126,4 +128,4 @@ int SearchTool::find_all(
 
     return num;
 }
-
+} // namespace snort

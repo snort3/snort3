@@ -24,6 +24,8 @@
 
 #include "sf_cidr.h"
 
+using namespace snort;
+
 SfIpRet SfCidr::set(const char* src)
 {
     return addr.set(src, &bits);

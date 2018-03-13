@@ -38,6 +38,8 @@
 #include "sip.h"
 #include "sip_module.h"
 
+using namespace snort;
+
 static void SIP_updateMedias(SIP_MediaSession*, SIP_MediaList*);
 static int SIP_compareMedias(SIP_MediaDataList, SIP_MediaDataList);
 static bool SIP_checkMediaChange(SIPMsg* sipMsg, SIP_DialogData* dialog);

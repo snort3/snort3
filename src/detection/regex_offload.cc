@@ -39,7 +39,7 @@
 
 struct RegexRequest
 {
-    Packet* packet = nullptr;
+    snort::Packet* packet = nullptr;
 
     std::thread* thread;
     std::mutex mutex;
@@ -107,14 +107,14 @@ void RegexOffload::worker(RegexRequest* req)
         assert(req->packet);
         assert(req->packet->flow->is_offloaded());
 
-        SnortConfig::set_conf(req->packet->context->conf);  // FIXIT-H reload issue
+        snort::SnortConfig::set_conf(req->packet->context->conf);  // FIXIT-H reload issue
         fp_offload(req->packet);
 
         req->offload = false;
     }
 }
 
-void RegexOffload::put(unsigned id, Packet* p)
+void RegexOffload::put(unsigned id, snort::Packet* p)
 {
     assert(p);
     assert(!idle.empty());
@@ -150,7 +150,7 @@ bool RegexOffload::get(unsigned& id)
     return true;
 }
 
-bool RegexOffload::on_hold(Flow* f)
+bool RegexOffload::on_hold(snort::Flow* f)
 {
     for ( auto* req : busy )
     {

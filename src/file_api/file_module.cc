@@ -33,6 +33,8 @@
 
 #include "file_stats.h"
 
+using namespace snort;
+
 static const Parameter file_magic_params[] =
 {
     { "content", Parameter::PT_STRING, nullptr, nullptr,

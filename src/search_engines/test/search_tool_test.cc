@@ -38,11 +38,16 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
+using namespace snort;
+
 //-------------------------------------------------------------------------
 // base stuff
 //-------------------------------------------------------------------------
 
+namespace snort
+{
 SnortConfig s_conf;
+
 THREAD_LOCAL SnortConfig* snort_conf = &s_conf;
 
 static SnortState s_state;
@@ -60,6 +65,7 @@ SnortConfig::~SnortConfig() { }
 SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
 
+}
 unsigned get_instance_id()
 { return 0; }
 
@@ -85,6 +91,8 @@ void LogStat(const char*, double, FILE*)
 static void* s_tree = (void*)"tree";
 static void* s_list = (void*)"list";
 
+namespace snort
+{
 static MpseAgent s_agent =
 {
     [](struct SnortConfig* sc, void*, void** ppt)
@@ -103,6 +111,23 @@ static MpseAgent s_agent =
     [](void** ppt) { CHECK(*ppt == s_tree); },
     [](void** ppl) { CHECK(*ppl == s_list); }
 };
+
+Mpse::Mpse(const char*) { }
+
+int Mpse::search(
+    const unsigned char* T, int n, MpseMatch match,
+    void* context, int* current_state)
+{
+    return _search(T, n, match, context, current_state);
+}
+
+int Mpse::search_all(
+    const unsigned char* T, int n, MpseMatch match,
+    void* context, int* current_state)
+{
+    return _search(T, n, match, context, current_state);
+}
+}
 
 extern const BaseApi* se_ac_bnfa;
 Mpse* mpse = nullptr;
@@ -125,21 +150,6 @@ void MpseManager::delete_search_engine(Mpse*)
     mpse_api->dtor(mpse);
 }
 
-Mpse::Mpse(const char*) { }
-
-int Mpse::search(
-    const unsigned char* T, int n, MpseMatch match,
-    void* context, int* current_state)
-{
-    return _search(T, n, match, context, current_state);
-}
-
-int Mpse::search_all(
-    const unsigned char* T, int n, MpseMatch match,
-    void* context, int* current_state)
-{
-    return _search(T, n, match, context, current_state);
-}
 
 static int pattern_id = 0;
 static int Test_SearchStrFound(

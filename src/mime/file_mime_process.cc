@@ -31,6 +31,8 @@
 #include "log/messages.h"
 #include "search_engines/search_tool.h"
 
+using namespace snort;
+
 struct MimeToken
 {
     const char* name;

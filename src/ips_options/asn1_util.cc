@@ -115,7 +115,7 @@ static ASN1_TYPE* asn1_node_alloc()
 **  @retval ASN1_ERR_MEM_ALLOC memory allocation failed
 **  @retval ASN1_ERR_INVALID_ARG invalid argument
 */
-void asn1_init_mem(SnortConfig* sc)
+void asn1_init_mem(snort::SnortConfig* sc)
 {
     int num_nodes;
 
@@ -143,7 +143,7 @@ void asn1_init_mem(SnortConfig* sc)
 **  @return none
 **
 */
-void asn1_free_mem(SnortConfig*)
+void asn1_free_mem(snort::SnortConfig*)
 {
     if (asn1_config.mem != nullptr)
     {

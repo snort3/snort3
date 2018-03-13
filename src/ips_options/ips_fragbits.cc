@@ -55,6 +55,8 @@
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 
+using namespace snort;
+
 static THREAD_LOCAL ProfileStats fragBitsPerfStats;
 
 // this class holds the logic for setting up the fragment test

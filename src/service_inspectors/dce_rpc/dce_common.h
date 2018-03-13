@@ -31,11 +31,11 @@
 
 #include "dce_list.h"
 
-extern const InspectApi dce2_smb_api;
-extern const InspectApi dce2_tcp_api;
-extern const InspectApi dce2_udp_api;
-extern const InspectApi dce_http_proxy_api;
-extern const InspectApi dce_http_server_api;
+extern const snort::InspectApi dce2_smb_api;
+extern const snort::InspectApi dce2_tcp_api;
+extern const snort::InspectApi dce2_udp_api;
+extern const snort::InspectApi dce_http_proxy_api;
+extern const snort::InspectApi dce_http_server_api;
 extern THREAD_LOCAL int dce2_detected;
 
 #define GID_DCE2 133
@@ -198,7 +198,7 @@ struct DCE2_SsnData
     DCE2_Policy server_policy;
     DCE2_Policy client_policy;
     int flags;
-    Packet* wire_pkt;
+    snort::Packet* wire_pkt;
     uint64_t alert_mask;
     DCE2_Roptions ropts;
     void* config;
@@ -258,12 +258,12 @@ inline uint16_t DCE2_GcMaxFragLen(dce2CommonProtoConf* config)
     return UINT16_MAX;
 }
 
-inline int DCE2_SsnFromServer(Packet* p)
+inline int DCE2_SsnFromServer(snort::Packet* p)
 {
     return p->is_from_server();
 }
 
-inline int DCE2_SsnFromClient(Packet* p)
+inline int DCE2_SsnFromClient(snort::Packet* p)
 {
     return p->is_from_client();
 }
@@ -391,20 +391,20 @@ inline bool DCE2_SsnIsServerSambaPolicy(DCE2_SsnData* sd)
 
 inline void dce_alert(uint32_t gid, uint32_t sid, dce2CommonStats* stats)
 {
-    DetectionEngine::queue_event(gid,sid);
+    snort::DetectionEngine::queue_event(gid,sid);
     stats->events++;
 }
 
-bool dce2_set_common_config(Value&, dce2CommonProtoConf&);
+bool dce2_set_common_config(snort::Value&, dce2CommonProtoConf&);
 void print_dce2_common_config(dce2CommonProtoConf&);
-bool dce2_set_co_config(Value&, dce2CoProtoConf&);
+bool dce2_set_co_config(snort::Value&, dce2CoProtoConf&);
 void print_dce2_co_config(dce2CoProtoConf&);
-bool dce2_paf_abort(Flow*, DCE2_SsnData*);
+bool dce2_paf_abort(snort::Flow*, DCE2_SsnData*);
 void DCE2_Detect(DCE2_SsnData*);
-Packet* DCE2_GetRpkt(Packet*, DCE2_RpktType, const uint8_t*, uint32_t);
+snort::Packet* DCE2_GetRpkt(snort::Packet*, DCE2_RpktType, const uint8_t*, uint32_t);
 uint16_t DCE2_GetRpktMaxData(DCE2_SsnData*, DCE2_RpktType);
-DCE2_Ret DCE2_AddDataToRpkt(Packet*, const uint8_t*, uint32_t);
-DCE2_SsnData* get_dce2_session_data(Packet*);
+DCE2_Ret DCE2_AddDataToRpkt(snort::Packet*, const uint8_t*, uint32_t);
+DCE2_SsnData* get_dce2_session_data(snort::Packet*);
 
 #endif
 

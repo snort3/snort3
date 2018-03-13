@@ -39,6 +39,7 @@
 #include "target_based/snort_protocols.h"
 #include "utils/util.h"
 
+using namespace snort;
 using namespace std;
 
 struct SfSock

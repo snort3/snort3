@@ -27,6 +27,8 @@
 
 #include "checksum.h"
 
+using namespace snort;
+
 namespace
 {
 #define CD_PGM_NAME "pgm"

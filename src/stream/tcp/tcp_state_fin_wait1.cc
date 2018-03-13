@@ -97,7 +97,7 @@ bool TcpStateFinWait1::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
 
 bool TcpStateFinWait1::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    Flow* flow = tsd.get_flow();
+    snort::Flow* flow = tsd.get_flow();
 
     trk.update_tracker_ack_recv(tsd);
     if ( trk.update_on_fin_recv(tsd) )

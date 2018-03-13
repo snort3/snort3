@@ -24,6 +24,8 @@
 
 #include "host_cache.h"
 
+using namespace snort;
+
 #define LRU_CACHE_INITIAL_SIZE 65535
 
 LruCacheShared<HostIpKey, std::shared_ptr<HostTracker>, HashHostIpKey>
@@ -35,6 +37,8 @@ void host_cache_add_host_tracker(HostTracker* ht)
     host_cache.insert((const uint8_t*) ht->get_ip_addr().get_ip6_ptr(), sptr);
 }
 
+namespace snort
+{
 bool host_cache_add_service(const SfIp& ipaddr, Protocol ipproto, Port port, const char* /*service*/)
 {
     HostIpKey ipkey((const uint8_t*) ipaddr.get_ip6_ptr());
@@ -57,4 +61,4 @@ bool host_cache_add_service(const SfIp& ipaddr, Protocol ipproto, Port port, con
 
     return ht->add_service(app_entry);
 }
-
+}

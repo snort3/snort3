@@ -35,7 +35,7 @@ class ScriptManager
 public:
     static void load_scripts(const std::vector<std::string>& paths);
     static void release_scripts();
-    static const BaseApi** get_plugins();
+    static const snort::BaseApi** get_plugins();
     static std::string* get_chunk(const char* key);
 };
 

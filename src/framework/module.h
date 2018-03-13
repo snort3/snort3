@@ -49,7 +49,16 @@
 #include "main/snort_types.h"
 #include "utils/stats.h"
 
-using LuaCFunction = int(*)(struct lua_State*);
+struct lua_State;
+
+class ModuleManager;
+
+namespace snort
+{
+struct ProfileStats;
+struct SnortConfig;
+
+using LuaCFunction = int(*)(lua_State*);
 
 struct Command
 {
@@ -66,9 +75,6 @@ struct RuleMap
     unsigned sid;
     const char* msg;
 };
-
-struct ProfileStats;
-struct SnortConfig;
 
 class SO_PUBLIC Module
 {
@@ -176,7 +182,7 @@ protected:
         bool is_list = false, Trace* = nullptr);
 
 private:
-    friend class ModuleManager;
+    friend ModuleManager;
     void init(const char*, const char* = nullptr);
 
     std::vector<PegCount> counts;
@@ -211,6 +217,6 @@ private:
         counts[index] += value;
     }
 };
-
+}
 #endif
 

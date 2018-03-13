@@ -422,7 +422,7 @@ static void Build_Bad_Character_Shifts(KTRIE_STRUCT* kt)
 }
 
 static int KTrieBuildMatchStateNode(
-    SnortConfig* sc, KTRIENODE* root, KTRIE_STRUCT* ts)
+    snort::SnortConfig* sc, KTRIENODE* root, KTRIE_STRUCT* ts)
 {
     int cnt = 0;
     KTRIEPATTERN* p;
@@ -470,7 +470,7 @@ static int KTrieBuildMatchStateNode(
     return cnt;
 }
 
-static int KTrieBuildMatchStateTrees(SnortConfig* sc, KTRIE_STRUCT* ts)
+static int KTrieBuildMatchStateTrees(snort::SnortConfig* sc, KTRIE_STRUCT* ts)
 {
     int cnt = 0;
 
@@ -522,7 +522,7 @@ static inline int _KTrieCompile(KTRIE_STRUCT* ts)
     return 0;
 }
 
-int KTrieCompile(SnortConfig* sc, KTRIE_STRUCT* ts)
+int KTrieCompile(snort::SnortConfig* sc, KTRIE_STRUCT* ts)
 {
     int rval;
 

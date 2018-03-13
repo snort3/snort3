@@ -30,6 +30,8 @@
 #include "managers/inspector_manager.h"
 #include "stream/libtcp/tcp_stream_session.h"
 
+using namespace snort;
+
 THREAD_LOCAL DceHttpProxyStats dce_http_proxy_stats;
 
 //-------------------------------------------------------------------------

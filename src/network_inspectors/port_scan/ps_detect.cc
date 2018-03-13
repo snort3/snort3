@@ -45,6 +45,8 @@
 
 #include "ps_inspect.h"
 
+using namespace snort;
+
 PADDING_GUARD_BEGIN
 struct PS_HASH_KEY
 {

@@ -24,6 +24,7 @@
 
 #include "stream_module.h"
 
+using namespace snort;
 using namespace std;
 
 //-------------------------------------------------------------------------

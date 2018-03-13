@@ -39,6 +39,8 @@
 #include "ssl_module.h"
 #include "ssl_splitter.h"
 
+using namespace snort;
+
 THREAD_LOCAL ProfileStats sslPerfStats;
 THREAD_LOCAL SslStats sslstats;
 

@@ -32,6 +32,8 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
+using namespace snort;
+
 // Stubs whose sole purpose is to make the test code link
 long HttpTestManager::print_amount {};
 bool HttpTestManager::print_hex {};

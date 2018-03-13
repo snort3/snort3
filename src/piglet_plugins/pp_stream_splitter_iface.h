@@ -22,8 +22,11 @@
 
 #include "lua/lua_iface.h"
 
+namespace snort
+{
 class StreamSplitter;
+}
 
-extern const struct Lua::TypeInterface<StreamSplitter> StreamSplitterIface;
+extern const struct Lua::TypeInterface<snort::StreamSplitter> StreamSplitterIface;
 
 #endif

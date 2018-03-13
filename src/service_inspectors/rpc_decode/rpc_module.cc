@@ -24,6 +24,8 @@
 
 #include "rpc_module.h"
 
+using namespace snort;
+
 #define RPC_FRAG_TRAFFIC_STR \
     "fragmented RPC records"
 #define RPC_MULTIPLE_RECORD_STR \

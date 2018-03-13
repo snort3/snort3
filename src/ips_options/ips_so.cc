@@ -30,6 +30,7 @@
 #include "managers/so_manager.h"
 #include "profiler/profiler.h"
 
+using namespace snort;
 using namespace std;
 
 #define s_name "so"

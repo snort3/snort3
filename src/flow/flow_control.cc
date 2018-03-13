@@ -39,6 +39,8 @@
 #include "flow_cache.h"
 #include "session.h"
 
+using namespace snort;
+
 FlowControl::FlowControl() = default;
 
 FlowControl::~FlowControl()

@@ -52,6 +52,8 @@
 #include "protocols/icmp6.h"
 #include "protocols/packet.h"
 
+using namespace snort;
+
 #define s_name "icmp_id"
 
 static THREAD_LOCAL ProfileStats icmpIdPerfStats;

@@ -70,14 +70,14 @@ public:
 
 protected:
     HttpMsgSection(const uint8_t* buffer, const uint16_t buf_size, HttpFlowData* session_data_,
-        HttpEnums::SourceId source_id_, bool buf_owner, Flow* flow_, const HttpParaList*
+        HttpEnums::SourceId source_id_, bool buf_owner, snort::Flow* flow_, const HttpParaList*
         params_);
 
     const Field msg_text;
 
     HttpFlowData* const session_data;
     const HttpEnums::SourceId source_id;
-    Flow* const flow;
+    snort::Flow* const flow;
     uint64_t trans_num;
     const HttpParaList* const params;
     HttpTransaction* const transaction;

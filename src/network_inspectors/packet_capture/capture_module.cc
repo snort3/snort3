@@ -30,6 +30,7 @@
 
 #include "packet_capture.h"
 
+using namespace snort;
 using namespace std;
 
 static int enable(lua_State*);

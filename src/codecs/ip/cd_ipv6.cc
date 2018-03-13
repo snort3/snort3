@@ -28,6 +28,8 @@
 #include "main/snort_config.h"
 #include "packet_io/active.h"
 
+using namespace snort;
+
 #define CD_IPV6_NAME "ipv6"
 #define CD_IPV6_HELP "support for Internet protocol v6"
 

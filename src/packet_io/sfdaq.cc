@@ -39,6 +39,7 @@ extern "C" {
 
 #include "sfdaq_config.h"
 
+using namespace snort;
 using namespace std;
 
 #ifdef DEFAULT_DAQ

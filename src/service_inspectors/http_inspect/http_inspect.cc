@@ -40,6 +40,7 @@
 #include "http_msg_trailer.h"
 #include "http_test_manager.h"
 
+using namespace snort;
 using namespace HttpEnums;
 
 uint32_t HttpInspect::xtra_trueip_id;

@@ -27,6 +27,8 @@
 #include "framework/module.h"
 #include "main/snort_config.h"
 
+using namespace snort;
+
 #define s_name "reference"
 
 //-------------------------------------------------------------------------

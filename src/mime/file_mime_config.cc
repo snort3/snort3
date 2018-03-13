@@ -92,7 +92,7 @@ bool DecodeConfig::is_decoding_enabled()
 // update file depth and max_depth etc
 void DecodeConfig::sync_all_depths()
 {
-    file_depth = FileService::get_max_file_depth();
+    file_depth = snort::FileService::get_max_file_depth();
     if ((file_depth >= 0)or (b64_depth >= 0) or (qp_depth >= 0)
         or (bitenc_depth >= 0) or (uu_depth >= 0))
         decode_enabled = true;

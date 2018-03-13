@@ -39,6 +39,8 @@
 #include "catch/snort_catch.h"
 #endif
 
+using namespace snort;
+
 static ProfilerNodeMap s_profiler_nodes;
 
 void Profiler::register_module(Module* m)

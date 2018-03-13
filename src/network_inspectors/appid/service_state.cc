@@ -33,6 +33,8 @@
 #include "time/packet_time.h"
 #include "utils/util.h"
 
+using namespace snort;
+
 ServiceDiscoveryState::ServiceDiscoveryState()
 {
     state = SERVICE_ID_STATE::SEARCHING_PORT_PATTERN;

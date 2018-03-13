@@ -26,6 +26,8 @@
 #include "log/text_log.h"
 #include "main/snort_config.h"
 
+using namespace snort;
+
 #define CD_IPV6_FRAG_NAME "ipv6_frag"
 #define CD_IPV6_FRAG_HELP "support for IPv6 fragment decoding"
 

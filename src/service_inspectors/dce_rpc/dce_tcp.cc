@@ -31,6 +31,8 @@
 #include "dce_tcp_module.h"
 #include "dce_tcp_paf.h"
 
+using namespace snort;
+
 Dce2TcpFlowData::Dce2TcpFlowData() : FlowData(inspector_id)
 {
     dce2_tcp_stats.concurrent_sessions++;

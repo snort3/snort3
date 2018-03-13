@@ -25,6 +25,7 @@
 #include "http_stream_splitter.h"
 #include "http_test_input.h"
 
+using namespace snort;
 using namespace HttpEnums;
 
 // Convenience function. All housekeeping that must be done before we can return FLUSH to stream.

@@ -28,25 +28,28 @@
 struct FragEngine;
 struct FragTracker;
 struct Fragment;
+namespace snort
+{
 struct Packet;
 struct SnortConfig;
+}
 
 class Defrag
 {
 public:
     Defrag(FragEngine&);
 
-    bool configure(SnortConfig*);
-    void show(SnortConfig*);
+    bool configure(snort::SnortConfig*);
+    void show(snort::SnortConfig*);
 
-    void process(Packet*, FragTracker*);
+    void process(snort::Packet*, FragTracker*);
     void cleanup(FragTracker*);
 
     static void init();
 
 private:
-    int insert(Packet*, FragTracker*, FragEngine*);
-    int new_tracker(Packet* p, FragTracker*);
+    int insert(snort::Packet*, FragTracker*, FragEngine*);
+    int new_tracker(snort::Packet* p, FragTracker*);
 
     int add_frag_node(  // FIXIT-L too many args
         FragTracker* ft, FragEngine*,
@@ -56,7 +59,7 @@ private:
         Fragment* left, Fragment** retFrag);
 
     int dup_frag_node(FragTracker*, Fragment* left, Fragment** retFrag);
-    int expired(Packet*, FragTracker*, FragEngine*);
+    int expired(snort::Packet*, FragTracker*, FragEngine*);
 
 private:
     FragEngine& engine;

@@ -26,6 +26,8 @@
 #include "framework/codec.h"
 #include "lua/lua_arg.h"
 
+using namespace snort;
+
 static void set_fields(lua_State* L, int tindex, CodecData& self)
 {
     Lua::Table table(L, tindex);

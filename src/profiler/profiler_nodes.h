@@ -28,7 +28,10 @@
 
 #include "profiler_defs.h"
 
+namespace snort
+{
 class Module;
+}
 struct GetProfileFunctor;
 
 class ProfilerNode
@@ -37,8 +40,8 @@ public:
     ProfilerNode(const std::string& key) :
         name { key } { }
 
-    void set(Module* m);
-    void set(get_profile_stats_fn fn);
+    void set(snort::Module* m);
+    void set(snort::get_profile_stats_fn fn);
 
     bool is_set() const
     { return bool(getter); }
@@ -46,10 +49,10 @@ public:
     // thread local call
     void accumulate();
 
-    const ProfileStats& get_stats() const
+    const snort::ProfileStats& get_stats() const
     { return stats; }
 
-    void set_stats(const ProfileStats& ps)
+    void set_stats(const snort::ProfileStats& ps)
     { stats = ps; }
 
     void reset()
@@ -66,7 +69,7 @@ public:
 private:
     std::vector<ProfilerNode*> children;
     std::shared_ptr<GetProfileFunctor> getter;
-    ProfileStats stats;
+    snort::ProfileStats stats;
 };
 
 inline bool operator==(const ProfilerNode& lhs, const ProfilerNode& rhs)
@@ -86,8 +89,8 @@ public:
     map_type::const_iterator end() const
     { return nodes.end(); }
 
-    void register_node(const std::string&, const char*, Module*);
-    void register_node(const std::string&, const char*, get_profile_stats_fn);
+    void register_node(const std::string&, const char*, snort::Module*);
+    void register_node(const std::string&, const char*, snort::get_profile_stats_fn);
 
     void accumulate_nodes();
     void reset_nodes();

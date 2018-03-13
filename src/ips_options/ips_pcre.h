@@ -20,9 +20,13 @@
 #ifndef IPS_PCRE_H
 #define IPS_PCRE_H
 
+namespace snort
+{
 struct SnortConfig;
-void pcre_setup(SnortConfig*);
-void pcre_cleanup(SnortConfig*);
+}
+
+void pcre_setup(snort::SnortConfig*);
+void pcre_cleanup(snort::SnortConfig*);
 
 #endif
 

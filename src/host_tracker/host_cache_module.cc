@@ -26,6 +26,8 @@
 
 #include "host_cache.h"
 
+using namespace snort;
+
 const Parameter HostCacheModule::host_cache_params[] =
 {
     { "size", Parameter::PT_INT, nullptr, nullptr,

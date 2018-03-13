@@ -26,6 +26,8 @@
 #include "stream/icmp/icmp_session.h"
 #include "stream/stream.h"
 
+using namespace snort;
+
 Flow* IcmpHA::create_session(FlowKey* key)
 {
     assert(key);

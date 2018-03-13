@@ -125,8 +125,8 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
     int mode = 0;
     uint16_t block = 0;
     uint16_t tmp = 0;
-    const SfIp* sip = nullptr;
-    const SfIp* dip = nullptr;
+    const snort::SfIp* sip = nullptr;
+    const snort::SfIp* dip = nullptr;
     AppIdSession* pf = nullptr;
     const uint8_t* data = args.data;
     uint16_t size = args.size;

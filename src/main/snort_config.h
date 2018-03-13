@@ -113,15 +113,33 @@ enum TunnelFlags
     TUNNEL_MPLS   = 0x80
 };
 
+struct ClassType;
 struct srmm_table_t;
 struct sopg_table_t;
-struct PORT_RULE_MAP;
+struct GHash;
 struct XHash;
-struct ProfilerConfig;
 struct MemoryConfig;
 struct LatencyConfig;
+struct PORT_RULE_MAP;
+struct RuleListNode;
+struct RulePortTables;
+struct RuleState;
+struct DetectionFilterConfig;
+struct EventQueueConfig;
+class FastPatternConfig;
+struct FrameworkConfig;
+struct ThresholdConfig;
+struct RateFilterConfig;
 struct SFDAQConfig;
 class ThreadConfig;
+struct ReferenceSystemNode;
+class ProtocolReference;
+struct VarNode;
+struct _IntelPmHandles;
+
+namespace snort
+{
+struct ProfilerConfig;
 
 // SnortState members are updated during runtime. an array in SnortConfig is
 // used instead of thread_locals because these must get changed on reload
@@ -257,13 +275,13 @@ public:
 
     //------------------------------------------------------
     // various modules
-    class FastPatternConfig* fast_pattern_config = nullptr;
-    struct EventQueueConfig* event_queue_config = nullptr;
+    FastPatternConfig* fast_pattern_config = nullptr;
+    EventQueueConfig* event_queue_config = nullptr;
 
     /* XXX XXX policy specific? */
-    struct ThresholdConfig* threshold_config = nullptr;
-    struct RateFilterConfig* rate_filter_config = nullptr;
-    struct DetectionFilterConfig* detection_filter_config = nullptr;
+    ThresholdConfig* threshold_config = nullptr;
+    RateFilterConfig* rate_filter_config = nullptr;
+    DetectionFilterConfig* detection_filter_config = nullptr;
 
     //------------------------------------------------------
     // FIXIT-L command line only stuff, add to conf / module
@@ -287,21 +305,21 @@ public:
 
     int thiszone = 0;
 
-    struct RuleState* rule_state_list = nullptr;
-    struct ClassType* classifications = nullptr;
-    struct ReferenceSystemNode* references = nullptr;
-    struct GHash* otn_map = nullptr;
+    RuleState* rule_state_list = nullptr;
+    ClassType* classifications = nullptr;
+    ReferenceSystemNode* references = nullptr;
+    GHash* otn_map = nullptr;
 
-    class ProtocolReference* proto_ref = nullptr;
+    ProtocolReference* proto_ref = nullptr;
 
     int num_rule_types = 0;
-    struct RuleListNode* rule_lists = nullptr;
+    RuleListNode* rule_lists = nullptr;
     int evalOrder[Actions::MAX + 1];
 
-    struct FrameworkConfig* framework_config = nullptr;
+    FrameworkConfig* framework_config = nullptr;
 
     /* master port list table */
-    struct RulePortTables* port_tables = nullptr;
+    RulePortTables* port_tables = nullptr;
 
     /* The port-rule-maps map the src-dst ports to rules for
      * udp and tcp, for Ip we map the dst port as the protocol,
@@ -325,7 +343,7 @@ public:
     XHash* rtn_hash_table = nullptr;
 
     PolicyMap* policy_map = nullptr;
-    struct VarNode* var_list = nullptr;
+    VarNode* var_list = nullptr;
 
     uint8_t tunnel_mask = 0;
 
@@ -338,7 +356,7 @@ public:
     ProfilerConfig* profiler = nullptr;
 
     LatencyConfig* latency = nullptr;
-    struct _IntelPmHandles* ipm_handles = nullptr;
+    _IntelPmHandles* ipm_handles = nullptr;
 
     unsigned remote_control_port = 0;
     std::string remote_control_socket;
@@ -445,10 +463,10 @@ public:
     { return get_conf()->run_flags & RUN_FLAG__READ; }
 
     static bool inline_mode()
-    { return ::get_ips_policy()->policy_mode == POLICY_MODE__INLINE; }
+    { return snort::get_ips_policy()->policy_mode == POLICY_MODE__INLINE; }
 
     static bool inline_test_mode()
-    { return ::get_ips_policy()->policy_mode == POLICY_MODE__INLINE_TEST; }
+    { return snort::get_ips_policy()->policy_mode == POLICY_MODE__INLINE_TEST; }
 
     static bool adaptor_inline_mode()
     { return get_conf()->run_flags & RUN_FLAG__INLINE; }
@@ -483,31 +501,31 @@ public:
 
     // checksum stuff
     static bool checksum_drop(uint16_t codec_cksum_err_flag)
-    { return ::get_network_policy()->checksum_drop & codec_cksum_err_flag; }
+    { return snort::get_network_policy()->checksum_drop & codec_cksum_err_flag; }
 
     static bool ip_checksums()
-    { return ::get_network_policy()->checksum_eval & CHECKSUM_FLAG__IP; }
+    { return snort::get_network_policy()->checksum_eval & CHECKSUM_FLAG__IP; }
 
     static bool ip_checksum_drops()
-    { return ::get_network_policy()->checksum_drop & CHECKSUM_FLAG__IP; }
+    { return snort::get_network_policy()->checksum_drop & CHECKSUM_FLAG__IP; }
 
     static bool udp_checksums()
-    { return ::get_network_policy()->checksum_eval & CHECKSUM_FLAG__UDP; }
+    { return snort::get_network_policy()->checksum_eval & CHECKSUM_FLAG__UDP; }
 
     static bool udp_checksum_drops()
-    { return ::get_network_policy()->checksum_drop & CHECKSUM_FLAG__UDP; }
+    { return snort::get_network_policy()->checksum_drop & CHECKSUM_FLAG__UDP; }
 
     static bool tcp_checksums()
-    { return ::get_network_policy()->checksum_eval & CHECKSUM_FLAG__TCP; }
+    { return snort::get_network_policy()->checksum_eval & CHECKSUM_FLAG__TCP; }
 
     static bool tcp_checksum_drops()
-    { return ::get_network_policy()->checksum_drop & CHECKSUM_FLAG__TCP; }
+    { return snort::get_network_policy()->checksum_drop & CHECKSUM_FLAG__TCP; }
 
     static bool icmp_checksums()
-    { return ::get_network_policy()->checksum_eval & CHECKSUM_FLAG__ICMP; }
+    { return snort::get_network_policy()->checksum_eval & CHECKSUM_FLAG__ICMP; }
 
     static bool icmp_checksum_drops()
-    { return ::get_network_policy()->checksum_drop & CHECKSUM_FLAG__ICMP; }
+    { return snort::get_network_policy()->checksum_drop & CHECKSUM_FLAG__ICMP; }
 
     // output stuff
     static bool output_include_year()
@@ -580,10 +598,10 @@ public:
 
     // other stuff
     static uint8_t min_ttl()
-    { return ::get_network_policy()->min_ttl; }
+    { return snort::get_network_policy()->min_ttl; }
 
     static uint8_t new_ttl()
-    { return ::get_network_policy()->new_ttl; }
+    { return snort::get_network_policy()->new_ttl; }
 
     static long int get_pcre_match_limit()
     { return get_conf()->pcre_match_limit; }
@@ -628,8 +646,10 @@ public:
 
     // Use this to access current thread's conf from other units
     static void set_conf(SnortConfig*);
+
     SO_PUBLIC static SnortConfig* get_conf();
 };
+}
 
 #endif
 

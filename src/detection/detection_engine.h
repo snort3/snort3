@@ -31,8 +31,10 @@
 #include "main/snort_types.h"
 
 struct DataPointer;
-struct Packet;
 
+namespace snort
+{
+struct Packet;
 class Flow;
 class IpsContext;
 class IpsContextData;
@@ -112,7 +114,10 @@ static inline void set_file_data(const uint8_t* p, unsigned n)
 }
 
 static inline void clear_file_data()
-{ set_file_data(nullptr, 0); }
+{
+    set_file_data(nullptr, 0);
+}
 
+} // namespace snort
 #endif
 

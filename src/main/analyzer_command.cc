@@ -62,7 +62,7 @@ void ACResume::execute(Analyzer& analyzer)
 
 void ACRotate::execute(Analyzer&)
 {
-    Snort::thread_rotate();
+    snort::Snort::thread_rotate();
 }
 
 void ACGetStats::execute(Analyzer&)
@@ -70,7 +70,7 @@ void ACGetStats::execute(Analyzer&)
     // FIXIT-P This incurs locking on all threads to retrieve stats.  It could be reimplemented to
     //  optimize for large thread counts by retrieving stats in the command and accumulating in the
     //  main thread.
-    ModuleManager::accumulate(SnortConfig::get_conf());
+    ModuleManager::accumulate(snort::SnortConfig::get_conf());
 }
 
 ACGetStats::~ACGetStats()

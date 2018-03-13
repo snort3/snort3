@@ -25,8 +25,12 @@
 #include "framework/bits.h"
 #include "sfip/sf_ipvar.h"
 
+namespace snort
+{
 class Flow;
 struct Packet;
+}
+
 struct BindWhen
 {
     enum Role
@@ -97,17 +101,17 @@ struct Binding
     Binding();
     ~Binding();
 
-    bool check_all(const Flow*, Packet*) const;
-    bool check_ips_policy(const Flow*) const;
-    bool check_iface(const Packet*) const;
-    bool check_vlan(const Flow*) const;
-    bool check_addr(const Flow*) const;
-    DirResult check_split_addr(const Flow*, const Packet*, const DirResult) const;
-    bool check_proto(const Flow*) const;
-    bool check_port(const Flow*) const;
-    DirResult check_split_port(const Flow*, const Packet*, const DirResult) const;
-    bool check_service(const Flow*) const;
-    DirResult check_zone(const Packet*, const DirResult) const;
+    bool check_all(const snort::Flow*, snort::Packet*) const;
+    bool check_ips_policy(const snort::Flow*) const;
+    bool check_iface(const snort::Packet*) const;
+    bool check_vlan(const snort::Flow*) const;
+    bool check_addr(const snort::Flow*) const;
+    DirResult check_split_addr(const snort::Flow*, const snort::Packet*, const DirResult) const;
+    bool check_proto(const snort::Flow*) const;
+    bool check_port(const snort::Flow*) const;
+    DirResult check_split_port(const snort::Flow*, const snort::Packet*, const DirResult) const;
+    bool check_service(const snort::Flow*) const;
+    DirResult check_zone(const snort::Packet*, const DirResult) const;
 };
 
 #endif

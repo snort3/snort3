@@ -69,23 +69,23 @@ struct PerfConfigBase
 
 struct PerfConfig:public PerfConfigBase
 {
-    std::vector<Module*> modules;
+    std::vector<snort::Module*> modules;
     std::vector<IndexVec> mod_peg_idxs;
 };
 
 /* The Module Class for incorporation into Snort++ */
-class PerfMonModule : public Module
+class PerfMonModule : public snort::Module
 {
 public:
     PerfMonModule();
 
-    bool set(const char*, Value&, SnortConfig*) override;
-    bool begin(const char*, int, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
+    bool begin(const char*, int, snort::SnortConfig*) override;
+    bool end(const char*, int, snort::SnortConfig*) override;
 
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
-    ProfileStats* get_profile() const override;
+    snort::ProfileStats* get_profile() const override;
 
     void get_config(PerfConfig&);
 
@@ -100,7 +100,7 @@ private:
 };
 
 extern THREAD_LOCAL SimpleStats pmstats;
-extern THREAD_LOCAL ProfileStats perfmonStats;
+extern THREAD_LOCAL snort::ProfileStats perfmonStats;
 
 #endif
 

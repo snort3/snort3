@@ -22,8 +22,11 @@
 
 #include "lua/lua_iface.h"
 
+namespace snort
+{
 struct Packet;
+}
 
-extern const struct Lua::TypeInterface<Packet> PacketIface;
+extern const struct Lua::TypeInterface<snort::Packet> PacketIface;
 
 #endif

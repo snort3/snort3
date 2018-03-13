@@ -25,6 +25,8 @@
 
 #include "packet.h"
 
+namespace snort
+{
 namespace ip
 {
 IpOptionIteratorIter::IpOptionIteratorIter(const IpOptions* first_opt) : opt(first_opt)
@@ -74,4 +76,5 @@ IpOptionIteratorIter IpOptionIterator::end() const
     return IpOptionIteratorIter(reinterpret_cast<const IpOptions*>(end_ptr));
 }
 } // namespace ip
+} // namespace snort
 

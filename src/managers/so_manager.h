@@ -25,7 +25,10 @@
 
 #include "framework/so_rule.h"
 
+namespace snort
+{
 struct SnortConfig;
+}
 struct SoApi;
 
 //-------------------------------------------------------------------------

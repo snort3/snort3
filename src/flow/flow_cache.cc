@@ -35,6 +35,8 @@
 
 #include "flow_key.h"
 
+using namespace snort;
+
 #define SESSION_CACHE_FLAG_PURGING  0x01
 
 //-------------------------------------------------------------------------

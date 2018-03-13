@@ -141,7 +141,7 @@ struct SMTP_PROTO_CONF
     SMTPToken* cmds;
     SMTPCmdConfig* cmd_config;
     SMTPSearch* cmd_search;
-    SearchTool* cmd_search_mpse;
+    snort::SearchTool* cmd_search_mpse;
 };
 
 struct SmtpStats

@@ -33,6 +33,8 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
+using namespace snort;
+
 THREAD_LOCAL SimpleStats sc_stats;
 THREAD_LOCAL ProfileStats sc_perf_stats;
 

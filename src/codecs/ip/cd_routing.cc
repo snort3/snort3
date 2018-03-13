@@ -26,6 +26,8 @@
 #include "framework/codec.h"
 #include "main/snort_config.h"
 
+using namespace snort;
+
 #define CD_IPV6_ROUTING_NAME "ipv6_routing"
 #define CD_IPV6_ROUTING_HELP "support for IPv6 routing extension"
 

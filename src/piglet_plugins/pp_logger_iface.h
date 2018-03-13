@@ -22,8 +22,11 @@
 
 #include "lua/lua_iface.h"
 
+namespace snort
+{
 class Logger;
+}
 
-extern const struct Lua::InstanceInterface<Logger> LoggerIface;
+extern const struct Lua::InstanceInterface<snort::Logger> LoggerIface;
 
 #endif

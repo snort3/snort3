@@ -26,6 +26,7 @@
 
 #include <cassert>
 
+using namespace snort;
 using namespace std;
 
 #define SSL_INVALID_CLIENT_HELLO_STR "invalid client HELLO after server HELLO detected"

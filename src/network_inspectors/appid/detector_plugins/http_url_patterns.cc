@@ -666,7 +666,7 @@ int HttpPatternMatchers::process_host_patterns(DetectorHTTPPatterns patterns)
 int HttpPatternMatchers::process_chp_list(CHPListElement* chplist)
 {
     for (size_t i = 0; i <= MAX_PATTERN_TYPE; i++)
-        chp_matchers[i] = new SearchTool("ac_full", true);
+        chp_matchers[i] = new snort::SearchTool("ac_full", true);
 
     for (CHPListElement* chpe = chplist; chpe; chpe = chpe->next)
         chp_matchers[chpe->chp_action.ptype]->add(chpe->chp_action.pattern,
@@ -705,9 +705,9 @@ static FieldPattern http_field_patterns[] =
     { (const uint8_t*)HTTP_FIELD_PREFIX_USER_AGENT, REQ_AGENT_FID, HTTP_FIELD_PREFIX_USER_AGENT_SIZE },
 };
 
-static SearchTool* process_http_field_patterns(FieldPattern* patternList, size_t patternListCount)
+static snort::SearchTool* process_http_field_patterns(FieldPattern* patternList, size_t patternListCount)
 {
-    SearchTool* patternMatcher = new SearchTool("ac_full", true);
+    snort::SearchTool* patternMatcher = new snort::SearchTool("ac_full", true);
 
     for (size_t i=0; i < patternListCount; i++)
         patternMatcher->add( (const char*)patternList[i].data, patternList[i].length,
@@ -717,7 +717,7 @@ static SearchTool* process_http_field_patterns(FieldPattern* patternList, size_t
     return patternMatcher;
 }
 
-static void process_patterns(SearchTool& matcher, DetectorHTTPPatterns& patterns, bool last = true)
+static void process_patterns(snort::SearchTool& matcher, DetectorHTTPPatterns& patterns, bool last = true)
 {
     for (auto& pat: patterns)
         matcher.add(pat.pattern, pat.pattern_size, &pat, false);
@@ -776,7 +776,7 @@ static int http_field_pattern_match(void* id, void*, int match_end_pos, void* da
 }
 
 //  FIXIT-M: Is this still necessary now that we use inspection events?
-void HttpPatternMatchers::get_http_offsets(Packet* pkt, AppIdHttpSession* hsession)
+void HttpPatternMatchers::get_http_offsets(snort::Packet* pkt, AppIdHttpSession* hsession)
 {
     constexpr auto MIN_HTTP_REQ_HEADER_SIZE = (sizeof("GET /\r\n\r\n") - 1);
     static const uint8_t crlfcrlf[] = "\r\n\r\n";
@@ -1702,7 +1702,7 @@ bool HttpPatternMatchers::get_appid_from_url(char* host, const char* url, char**
 }
 
 void HttpPatternMatchers::get_server_vendor_version(const char* data, int len, char** version,
-    char** vendor, AppIdServiceSubtype** subtype)
+    char** vendor, snort::AppIdServiceSubtype** subtype)
 {
     int vendor_len = len;
 
@@ -1741,8 +1741,8 @@ void HttpPatternMatchers::get_server_vendor_version(const char* data, int len, c
                 {
                     if ( subname && subname_len > 0 && subver && *subname )
                     {
-                        AppIdServiceSubtype* sub =
-                            (AppIdServiceSubtype*)snort_calloc(sizeof(AppIdServiceSubtype));
+                        snort::AppIdServiceSubtype* sub =
+                            (snort::AppIdServiceSubtype*)snort_calloc(sizeof(snort::AppIdServiceSubtype));
                         char* tmp = (char*)snort_calloc(subname_len + 1);
                         memcpy(tmp, subname, subname_len);
                         tmp[subname_len] = 0;
@@ -1774,8 +1774,8 @@ void HttpPatternMatchers::get_server_vendor_version(const char* data, int len, c
 
         if ( subname && subname_len > 0 && subver && *subname )
         {
-            AppIdServiceSubtype* sub =
-                (AppIdServiceSubtype*)snort_calloc(sizeof(AppIdServiceSubtype));
+            snort::AppIdServiceSubtype* sub =
+                (snort::AppIdServiceSubtype*)snort_calloc(sizeof(snort::AppIdServiceSubtype));
             char* tmp = (char*)snort_calloc(subname_len + 1);
             memcpy(tmp, subname, subname_len);
             tmp[subname_len] = 0;

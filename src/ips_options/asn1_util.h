@@ -125,7 +125,10 @@ struct ASN1_CONFIG
     int num_nodes;
 };
 
+namespace snort
+{
 struct SnortConfig;
+}
 
 /*
 **  Error Codes
@@ -144,8 +147,8 @@ struct SnortConfig;
 #define ASN1_ERR_INVALID_ARG         (-7)
 #define ASN1_ERR_STACK               (-8)
 
-void asn1_init_mem(SnortConfig*);
-void asn1_free_mem(SnortConfig*);
+void asn1_init_mem(snort::SnortConfig*);
+void asn1_free_mem(snort::SnortConfig*);
 int asn1_decode(const unsigned char* data, unsigned int len, ASN1_TYPE** asn1_type);
 int asn1_print_types(ASN1_TYPE* asn1_type, void* user);
 int asn1_traverse(ASN1_TYPE* asn1, void* user,

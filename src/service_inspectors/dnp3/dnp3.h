@@ -167,7 +167,7 @@ struct dnp3_session_data_t
     dnp3_reassembly_data_t server_rdata;
 };
 
-class Dnp3FlowData : public FlowData
+class Dnp3FlowData : public snort::FlowData
 {
 public:
     Dnp3FlowData();
@@ -175,7 +175,7 @@ public:
 
     static void init()
     {
-        inspector_id = FlowData::create_flow_data_id();
+        inspector_id = snort::FlowData::create_flow_data_id();
     }
 
 public:
@@ -184,7 +184,7 @@ public:
 };
 
 extern THREAD_LOCAL Dnp3Stats dnp3_stats;
-extern THREAD_LOCAL ProfileStats dnp3_perf_stats;
+extern THREAD_LOCAL snort::ProfileStats dnp3_perf_stats;
 
 #endif
 

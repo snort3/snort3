@@ -29,19 +29,19 @@
 class Http2Api
 {
 public:
-    static const InspectApi http2_api;
+    static const snort::InspectApi http2_api;
     static const char* classic_buffer_names[];
 
 private:
     Http2Api() = delete;
-    static Module* http2_mod_ctor() { return new Http2Module; }
-    static void http2_mod_dtor(Module* m) { delete m; }
+    static snort::Module* http2_mod_ctor() { return new Http2Module; }
+    static void http2_mod_dtor(snort::Module* m) { delete m; }
     static const char* http2_my_name;
     static const char* http2_help;
     static void http2_init() { Http2FlowData::init(); }
     static void http2_term() { }
-    static Inspector* http2_ctor(Module* mod);
-    static void http2_dtor(Inspector* p) { delete p; }
+    static snort::Inspector* http2_ctor(snort::Module* mod);
+    static void http2_dtor(snort::Inspector* p) { delete p; }
     static void http2_tinit() { }
     static void http2_tterm() { }
 };

@@ -26,6 +26,11 @@
 #include "framework/cursor.h"
 #include "main/snort_types.h"
 
+namespace snort
+{
+    struct Packet;
+}
+
 struct detection_option_tree_node_t;
 struct PatternMatchData;
 
@@ -40,7 +45,7 @@ enum
 };
 
 void clear_trace_cursor_info();
-void print_pkt_info(Packet* p);
+void print_pkt_info(snort::Packet* p);
 void print_pattern(const PatternMatchData* pmd);
 void dump_buffer(const uint8_t* buff, unsigned len);
 void node_eval_trace(const detection_option_tree_node_t* node, const Cursor& cursor);

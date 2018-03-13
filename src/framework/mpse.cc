@@ -26,8 +26,11 @@
 #include "profiler/profiler_defs.h"
 #include "search_engines/pat_stats.h"
 
+
 using namespace std;
 
+namespace snort
+{
 THREAD_LOCAL ProfileStats mpsePerfStats;
 
 //-------------------------------------------------------------------------
@@ -38,6 +41,7 @@ Mpse::Mpse(const char* m)
 {
     method = m;
     verbose = 0;
+    api = nullptr;
 }
 
 int Mpse::search(
@@ -58,5 +62,7 @@ int Mpse::search_all(
     void* context, int* current_state)
 {
     return _search(T, n, match, context, current_state);
+}
+
 }
 

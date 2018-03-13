@@ -27,7 +27,10 @@
 #include "application_ids.h"
 
 class AppIdSession;
+namespace snort
+{
 struct Packet;
+}
 
 // indicator - the appId that indicates there may be subsequent flows to look for,
 // from the same host
@@ -59,8 +62,8 @@ struct AFActVal
 int init_appid_forecast();
 void clean_appid_forecast();
 void add_af_indicator(AppId, AppId, AppId);
-void check_session_for_AF_indicator(Packet*, int, AppId);
-AppId check_session_for_AF_forecast(AppIdSession&, Packet*, int, AppId);
+void check_session_for_AF_indicator(snort::Packet*, int, AppId);
+AppId check_session_for_AF_forecast(AppIdSession&, snort::Packet*, int, AppId);
 
 #endif
 

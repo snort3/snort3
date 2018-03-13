@@ -51,6 +51,8 @@
 #include "catch/snort_catch.h"
 #endif
 
+using namespace snort;
+
 #define s_rule_table_title "rule profile"
 
 static inline OtnState& operator+=(OtnState& lhs, const OtnState& rhs)

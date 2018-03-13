@@ -35,6 +35,8 @@
 #include "protocols/tcp.h"
 #include "stream/tcp/tcp_session.h"
 
+using namespace snort;
+
 // SYN PACKET
 // IP 192.168.0.89.9012 > p3nlh044.shr.prod.phx3.secureserver.net.http: Flags [S], seq 9050, win
 // 8192, length 0

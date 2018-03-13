@@ -27,6 +27,8 @@
 
 #include "ip_session.h"
 
+using namespace snort;
+
 Flow* IpHA::create_session(FlowKey* key)
 {
     assert(key);

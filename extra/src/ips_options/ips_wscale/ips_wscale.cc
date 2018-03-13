@@ -27,6 +27,8 @@
 #include "protocols/tcp.h"
 #include "protocols/tcp_options.h"
 
+using namespace snort;
+
 static const char* s_name = "wscale";
 static const char* s_help = "detection for TCP window scale";
 

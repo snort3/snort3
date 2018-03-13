@@ -29,6 +29,8 @@
 #include "framework/base_api.h"
 #include "main/snort_types.h"
 
+namespace snort
+{
 // this is the current version of the api
 #define CONNECTOR_API_VERSION ((BASE_API_VERSION << 16) | 0)
 
@@ -111,6 +113,6 @@ struct ConnectorApi
     ConnectorNewFunc ctor;
     ConnectorDelFunc dtor;
 };
-
+}
 #endif
 

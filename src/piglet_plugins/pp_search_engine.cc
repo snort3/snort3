@@ -26,6 +26,8 @@
 
 #include "pp_search_engine_iface.h"
 
+using namespace snort;
+
 class SearchEnginePiglet : public Piglet::BasePlugin
 {
 public:

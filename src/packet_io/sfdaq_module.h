@@ -23,18 +23,21 @@
 
 #include "framework/module.h"
 
+namespace snort
+{
 struct SnortConfig;
+}
 struct SFDAQConfig;
 struct SFDAQInstanceConfig;
 
-class SFDAQModule : public Module
+class SFDAQModule : public snort::Module
 {
 public:
     SFDAQModule();
 
-    bool set(const char*, Value&, SnortConfig*) override;
-    bool begin(const char*, int, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
+    bool begin(const char*, int, snort::SnortConfig*) override;
+    bool end(const char*, int, snort::SnortConfig*) override;
 
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;

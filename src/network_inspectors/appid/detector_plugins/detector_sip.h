@@ -29,6 +29,11 @@
 #include "framework/data_bus.h"
 #include "pub_sub/sip_events.h"
 
+namespace snort
+{
+class Flow;
+}
+
 struct SipUaUserData
 {
     AppId ClientAppId;
@@ -74,11 +79,11 @@ public:
     void addFutureRtpFlows(SipEvent&, AppIdSession&);
 
 private:
-    void createRtpFlow(AppIdSession&, const Packet*, const SfIp* cliIp,
-        uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol, int16_t app_id);
+    void createRtpFlow(AppIdSession&, const snort::Packet*, const snort::SfIp* cliIp,
+        uint16_t cliPort, const snort::SfIp* srvIp, uint16_t srvPort, IpProtocol, int16_t app_id);
 };
 
-class SipEventHandler : public DataHandler
+class SipEventHandler : public snort::DataHandler
 {
 public:
 
@@ -91,9 +96,9 @@ public:
     void set_service(SipServiceDetector* sd) { SipEventHandler::service = sd; }
 
     void subscribe()
-    { DataBus::subscribe(SIP_EVENT_TYPE_SIP_DIALOG_KEY, this); }
+    { snort::DataBus::subscribe(SIP_EVENT_TYPE_SIP_DIALOG_KEY, this); }
 
-    void handle(DataEvent&, Flow*) override;
+    void handle(snort::DataEvent&, snort::Flow*) override;
 
 private:
     SipEventHandler() = default;

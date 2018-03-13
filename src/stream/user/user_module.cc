@@ -25,6 +25,7 @@
 
 #include "stream_user.h"
 
+using namespace snort;
 using namespace std;
 
 Trace TRACE_NAME(stream_user);

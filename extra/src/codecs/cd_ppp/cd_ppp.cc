@@ -21,6 +21,8 @@
 
 #include "framework/codec.h"
 
+using namespace snort;
+
 #define PPP_NAME "ppp"
 #define PPP_HELP_STR "support for point-to-point encapsulation"
 #define PPP_HELP ADD_DLT(PPP_HELP_STR, DLT_PPP)

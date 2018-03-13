@@ -31,6 +31,8 @@
 
 #include "dce_common.h"
 
+using namespace snort;
+
 #define s_name "dce_stub_data"
 #define s_help \
     "sets the cursor to dcerpc stub data"

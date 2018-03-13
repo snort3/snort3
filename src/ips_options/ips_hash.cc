@@ -34,6 +34,8 @@
 
 #include "extract.h"
 
+using namespace snort;
+
 enum HashPsIdx
 {
     HPI_MD5, HPI_SHA256, HPI_SHA512, HPI_MAX

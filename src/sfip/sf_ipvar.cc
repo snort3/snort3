@@ -42,6 +42,8 @@
 #include "utils/util_cstring.h"
 #endif
 
+using namespace snort;
+
 #define LIST_OPEN '['
 #define LIST_CLOSE ']'
 

@@ -27,7 +27,11 @@
 #include <cstdint>
 #include <cstdio>
 
+namespace snort
+{
 struct SnortConfig;
+}
+
 struct OptTreeNode;
 struct GHash;
 
@@ -39,7 +43,7 @@ struct ReferenceSystemNode
     ReferenceSystemNode* next;
 };
 
-ReferenceSystemNode* ReferenceSystemAdd(SnortConfig*, const char*, const char* = nullptr);
+ReferenceSystemNode* ReferenceSystemAdd(snort::SnortConfig*, const char*, const char* = nullptr);
 
 /* XXX: update to point to the ReferenceURLNode in the referenceURL list */
 struct ReferenceNode
@@ -49,7 +53,7 @@ struct ReferenceNode
     ReferenceNode* next;
 };
 
-void AddReference(SnortConfig*, ReferenceNode**, const char*, const char*);
+void AddReference(snort::SnortConfig*, ReferenceNode**, const char*, const char*);
 
 /* struct for rule classification */
 struct ClassType
@@ -63,9 +67,9 @@ struct ClassType
 };
 
 /* NOTE:  These methods can only be used during parse time */
-void AddClassification(SnortConfig*, const char* type, const char* name, int priority);
+void AddClassification(snort::SnortConfig*, const char* type, const char* name, int priority);
 
-ClassType* ClassTypeLookupByType(SnortConfig*, const char*);
+ClassType* ClassTypeLookupByType(snort::SnortConfig*, const char*);
 
 struct SignatureServiceInfo
 {

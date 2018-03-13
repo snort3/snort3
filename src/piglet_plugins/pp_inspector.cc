@@ -33,6 +33,8 @@
 #include "pp_raw_buffer_iface.h"
 #include "pp_stream_splitter_iface.h"
 
+using namespace snort;
+
 class InspectorPiglet : public Piglet::BasePlugin
 {
 public:

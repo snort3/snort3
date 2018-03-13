@@ -31,6 +31,10 @@
 #include <functional>
 #include "main/snort_types.h"
 
+namespace snort
+{
+class Value;
+
 struct SO_PUBLIC Parameter
 {
     using RangeQuery = std::function<const char*()>;
@@ -67,7 +71,7 @@ struct SO_PUBLIC Parameter
     const char* get_type() const;
     const char* get_range() const;
 
-    bool validate(class Value&) const;
+    bool validate(Value&) const;
 
     bool is_positional() const
     { return ( name && *name == '~' ); }
@@ -91,6 +95,6 @@ struct SO_PUBLIC Parameter
     // 0-based; -1 if not found; list is | delimited
     static int index(const char* list, const char* key);
 };
-
+}
 #endif
 

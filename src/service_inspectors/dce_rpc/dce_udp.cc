@@ -30,6 +30,8 @@
 
 #include "dce_udp_module.h"
 
+using namespace snort;
+
 THREAD_LOCAL dce2UdpStats dce2_udp_stats;
 
 THREAD_LOCAL ProfileStats dce2_udp_pstat_main;

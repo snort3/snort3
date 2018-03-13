@@ -93,14 +93,14 @@ struct TELNET_SESSION
     int encr_state;
 };
 
-class TelnetFlowData : public FlowData
+class TelnetFlowData : public snort::FlowData
 {
 public:
     TelnetFlowData();
     ~TelnetFlowData() override;
 
     static void init()
-    { inspector_id = FlowData::create_flow_data_id(); }
+    { inspector_id = snort::FlowData::create_flow_data_id(); }
 
 public:
     static unsigned inspector_id;
@@ -159,9 +159,9 @@ struct FTP_SESSION
     int data_chan_index;
     int data_xfer_index;
     bool data_xfer_dir;
-    SfIp clientIP;
+    snort::SfIp clientIP;
     uint16_t clientPort;
-    SfIp serverIP;
+    snort::SfIp serverIP;
     uint16_t serverPort;
 
     /* A file is being transferred on ftp-data channel */
@@ -176,14 +176,14 @@ struct FTP_SESSION
 
 void FTPFreesession(FTP_SESSION*);
 
-class FtpFlowData : public FlowData
+class FtpFlowData : public snort::FlowData
 {
 public:
     FtpFlowData();
     ~FtpFlowData() override;
 
     static void init()
-    { inspector_id = FlowData::create_flow_data_id(); }
+    { inspector_id = snort::FlowData::create_flow_data_id(); }
 
 public:
     static unsigned inspector_id;
@@ -210,17 +210,17 @@ struct FTP_DATA_SESSION
     unsigned char packet_flags;
 };
 
-class FtpDataFlowData : public FlowData
+class FtpDataFlowData : public snort::FlowData
 {
 public:
-    FtpDataFlowData(Packet*);
+    FtpDataFlowData(snort::Packet*);
     ~FtpDataFlowData() override;
 
     static void init()
-    { inspector_id = FlowData::create_flow_data_id(); }
+    { inspector_id = snort::FlowData::create_flow_data_id(); }
 
-    void handle_expected(Packet*) override;
-    void handle_eof(Packet*) override;
+    void handle_expected(snort::Packet*) override;
+    void handle_eof(snort::Packet*) override;
 
 public:
     static unsigned inspector_id;
@@ -246,29 +246,28 @@ public:
  */
 struct FTPP_SI_INPUT
 {
-    SfIp sip;
-    SfIp dip;
+    snort::SfIp sip;
+    snort::SfIp dip;
     unsigned short sport;
     unsigned short dport;
     unsigned char pdir;
     unsigned char pproto;
 };
 
-int FTPGetPacketDir(Packet*);
+int FTPGetPacketDir(snort::Packet*);
 
 /* FTP-Data file processing */
-FTP_DATA_SESSION* FTPDatasessionNew(Packet* p);
+FTP_DATA_SESSION* FTPDatasessionNew(snort::Packet* p);
 void FTPDatasessionFree(void* p_ssn);
 
-bool FTPDataDirection(Packet* p, FTP_DATA_SESSION* ftpdata);
+bool FTPDataDirection(snort::Packet* p, FTP_DATA_SESSION* ftpdata);
 
-int TelnetsessionInspection(
-    Packet*, TELNET_PROTO_CONF*, TELNET_SESSION**, FTPP_SI_INPUT*, int* piInspectMode);
+int TelnetsessionInspection(snort::Packet*, TELNET_PROTO_CONF*, TELNET_SESSION**,
+    FTPP_SI_INPUT*, int* piInspectMode);
 
-int FTPsessionInspection(
-    Packet*, FTP_SESSION**, FTPP_SI_INPUT*, int* piInspectMode);
+int FTPsessionInspection(snort::Packet*, FTP_SESSION**, FTPP_SI_INPUT*, int* piInspectMode);
 
-int SetSiInput(FTPP_SI_INPUT*, Packet*);
+int SetSiInput(FTPP_SI_INPUT*, snort::Packet*);
 
 struct FtpStats
 {

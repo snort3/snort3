@@ -50,6 +50,8 @@
 
 #include "extract.h"
 
+using namespace snort;
+
 #define s_name "isdataat"
 
 static THREAD_LOCAL ProfileStats isDataAtPerfStats;

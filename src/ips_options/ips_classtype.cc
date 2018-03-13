@@ -26,6 +26,8 @@
 #include "framework/ips_option.h"
 #include "framework/module.h"
 
+using namespace snort;
+
 #define s_name "classtype"
 
 //-------------------------------------------------------------------------

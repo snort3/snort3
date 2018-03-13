@@ -135,6 +135,8 @@
 #define s_help \
     "back orifice detection"
 
+using namespace snort;
+
 /* global keyvalue for the BoRand() function */
 static THREAD_LOCAL uint64_t holdrand = 1;
 

@@ -20,7 +20,11 @@
 #ifndef SFTHRESHOLD_H
 #define SFTHRESHOLD_H
 
+namespace snort
+{
 struct SfIp;
+struct SnortConfig;
+}
 struct THDX_STRUCT;
 struct ThresholdObjects;
 
@@ -34,8 +38,8 @@ struct ThresholdConfig
 ThresholdConfig* ThresholdConfigNew();
 void ThresholdConfigFree(ThresholdConfig*);
 void sfthreshold_reset();
-int sfthreshold_create(struct SnortConfig*, ThresholdConfig*, THDX_STRUCT*);
-int sfthreshold_test(unsigned int, unsigned int, const SfIp*, const SfIp*, long curtime);
+int sfthreshold_create(snort::SnortConfig*, ThresholdConfig*, THDX_STRUCT*);
+int sfthreshold_test(unsigned int, unsigned int, const snort::SfIp*, const snort::SfIp*, long curtime);
 void print_thresholding(ThresholdConfig*, unsigned shutdown);
 void sfthreshold_free();
 

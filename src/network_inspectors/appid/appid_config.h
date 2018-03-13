@@ -47,8 +47,8 @@ extern int16_t snortId_for_http2;
 struct PortExclusion
 {
     int family;
-    ip::snort_in6_addr ip;
-    ip::snort_in6_addr netmask;
+    snort::ip::snort_in6_addr ip;
+    snort::ip::snort_in6_addr netmask;
 };
 
 struct AppIdSessionLogFilter
@@ -59,9 +59,9 @@ struct AppIdSessionLogFilter
         dip.clear();
     }
 
-    SfIp sip;
+    snort::SfIp sip;
     bool sip_flag = false;
-    SfIp dip;
+    snort::SfIp dip;
     bool dip_flag = false;
     uint16_t sport = 0;
     uint16_t dport = 0;
@@ -140,8 +140,8 @@ public:
 private:
     void read_port_detectors(const char* files);
     void configure_analysis_networks(char* toklist[], uint32_t flag);
-    int add_port_exclusion(AppIdPortExclusions&, const ip::snort_in6_addr* ip,
-        const ip::snort_in6_addr* netmask, int family, uint16_t port);
+    int add_port_exclusion(AppIdPortExclusions&, const snort::ip::snort_in6_addr* ip,
+        const snort::ip::snort_in6_addr* netmask, int family, uint16_t port);
     void process_port_exclusion(char* toklist[]);
     void process_config_directive(char* toklist[], int /* reload */);
     int load_analysis_config(const char* config_file, int reload, int instance_id);

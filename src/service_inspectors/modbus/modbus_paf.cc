@@ -32,6 +32,8 @@
 #include "modbus.h"
 #include "modbus_module.h"
 
+using namespace snort;
+
 #define MODBUS_MIN_HDR_LEN 2        // Enough for Unit ID + Function
 #define MODBUS_MAX_HDR_LEN 254      // Max PDU size is 260, 6 bytes already seen
 

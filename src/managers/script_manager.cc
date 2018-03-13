@@ -37,6 +37,7 @@
 #include "piglet/piglet_manager.h"
 #endif
 
+using namespace snort;
 using namespace std;
 
 // FIXIT-P this approach results in N * K lua states where

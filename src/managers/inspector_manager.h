@@ -29,10 +29,13 @@
 #include "framework/inspector.h"
 #endif
 
-struct Packet;
 struct FrameworkPolicy;
-struct SnortConfig;
 struct InspectionPolicy;
+
+namespace snort
+{
+struct Packet;
+struct SnortConfig;
 
 //-------------------------------------------------------------------------
 
@@ -91,6 +94,6 @@ private:
     static void full_inspection(Packet*);
     static void execute_control(Packet*);
 };
-
+}
 #endif
 

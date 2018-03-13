@@ -22,8 +22,11 @@
 
 #include "lua/lua_iface.h"
 
+namespace snort
+{
 class Codec;
+}
 
-extern const struct Lua::InstanceInterface<Codec> CodecIface;
+extern const struct Lua::InstanceInterface<snort::Codec> CodecIface;
 
 #endif

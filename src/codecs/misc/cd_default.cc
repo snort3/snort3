@@ -23,6 +23,8 @@
 
 #include "framework/codec.h"
 
+using namespace snort;
+
 #define CD_DEFAULT_NAME "unknown"
 #define CD_DEFAULT_HELP "support for unknown protocols"
 

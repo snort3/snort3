@@ -29,6 +29,8 @@
 #include "dcerpc.h"
 #include "protocols/packet.h"
 
+using namespace snort;
+
 #define NBSS_PORT   139
 
 #define NBNS_NB 32

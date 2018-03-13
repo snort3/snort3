@@ -26,6 +26,7 @@
 #include "framework/logger.h"
 #include "framework/module.h"
 
+using namespace snort;
 using namespace std;
 
 static const char* s_name = "alert_ex";

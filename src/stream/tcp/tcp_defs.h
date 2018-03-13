@@ -24,7 +24,10 @@
 
 #include "main/thread.h"
 
+namespace snort
+{
 struct Packet;
+}
 
 /* actions */
 #define ACTION_NOTHING                  0x00000000

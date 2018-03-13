@@ -88,16 +88,16 @@ static int prmFindRuleGroup(
     assert(src and dst and gen);
     *src = *dst = *gen = nullptr;
 
-    if ( (dport != ANYPORT) and (dport < MAX_PORTS) )
+    if ( (dport != ANYPORT) and (dport < snort::MAX_PORTS) )
         *dst = p->prmDstPort[dport];
 
-    if ( (sport != ANYPORT) and (sport < MAX_PORTS) )
+    if ( (sport != ANYPORT) and (sport < snort::MAX_PORTS) )
         *src = p->prmSrcPort[sport];
 
     /* If no Src/Dst rules - use the generic set, if any exist  */
     if ( p->prmGeneric and (p->prmGeneric->rule_count > 0) )
     {
-        if ( SnortConfig::get_conf()->fast_pattern_config->get_split_any_any() or (!*src and !*dst) )
+        if ( snort::SnortConfig::get_conf()->fast_pattern_config->get_split_any_any() or (!*src and !*dst) )
         {
             *gen = p->prmGeneric;
         }

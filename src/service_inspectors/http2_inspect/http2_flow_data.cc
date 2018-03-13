@@ -26,6 +26,7 @@
 #include "http2_enum.h"
 #include "http2_module.h"
 
+using namespace snort;
 using namespace Http2Enums;
 
 unsigned Http2FlowData::inspector_id = 0;

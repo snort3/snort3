@@ -43,8 +43,8 @@ struct PORT_RULE_MAP
     int prmNumDstGroups;
     int prmNumSrcGroups;
 
-    PortGroup* prmSrcPort[MAX_PORTS];
-    PortGroup* prmDstPort[MAX_PORTS];
+    PortGroup* prmSrcPort[snort::MAX_PORTS];
+    PortGroup* prmDstPort[snort::MAX_PORTS];
     PortGroup* prmGeneric;
 };
 

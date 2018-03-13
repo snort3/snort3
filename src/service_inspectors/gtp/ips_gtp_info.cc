@@ -34,6 +34,8 @@
 #include "gtp.h"
 #include "gtp_inspect.h"
 
+using namespace snort;
+
 static const char* s_name = "gtp_info";
 
 //-------------------------------------------------------------------------

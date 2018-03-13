@@ -24,6 +24,8 @@
 #include "codecs/codec_module.h"
 #include "framework/codec.h"
 
+using namespace snort;
+
 #define CD_BAD_PROTO_NAME "bad_proto"
 #define CD_BAD_PROTO_HELP "bad protocol id"
 

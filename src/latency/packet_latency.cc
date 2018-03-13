@@ -40,6 +40,8 @@
 #include "catch/snort_catch.h"
 #endif
 
+using namespace snort;
+
 static THREAD_LOCAL uint64_t elapsed = 0;
 
 namespace packet_latency

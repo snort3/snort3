@@ -34,6 +34,8 @@
 
 #include "sfdaq.h"
 
+using namespace snort;
+
 #define MAX_ATTEMPTS 20
 
 // these can't be pkt flags because we do the handling
@@ -147,9 +149,9 @@ void Active::kill_session(Packet* p, EncodeFlags flags)
 
     default:
         if ( Active::packet_force_dropped() )
-            Active::send_unreach(p, UnreachResponse::FWD);
+            Active::send_unreach(p, snort::UnreachResponse::FWD);
         else
-            Active::send_unreach(p, UnreachResponse::PORT);
+            Active::send_unreach(p, snort::UnreachResponse::PORT);
         break;
     }
 }
@@ -216,7 +218,7 @@ void Active::send_reset(Packet* p, EncodeFlags ef)
     }
 }
 
-void Active::send_unreach(Packet* p, UnreachResponse type)
+void Active::send_unreach(Packet* p, snort::UnreachResponse type)
 {
     uint32_t len;
     const uint8_t* rej;

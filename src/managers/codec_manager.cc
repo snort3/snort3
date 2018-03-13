@@ -29,6 +29,8 @@
 #include "protocols/packet_manager.h"
 #include "utils/dnet_header.h"
 
+using namespace snort;
+
 struct CodecManager::CodecApiWrapper
 {
     const CodecApi* api;

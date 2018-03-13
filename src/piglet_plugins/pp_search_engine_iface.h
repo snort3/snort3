@@ -22,8 +22,11 @@
 
 #include "lua/lua_iface.h"
 
+namespace snort
+{
 class Mpse;
+}
 
-extern const struct Lua::InstanceInterface<Mpse> SearchEngineIface;
+extern const struct Lua::InstanceInterface<snort::Mpse> SearchEngineIface;
 
 #endif

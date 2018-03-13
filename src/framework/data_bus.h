@@ -33,10 +33,8 @@
 
 #include "main/snort_types.h"
 
-// FIXIT-P evaluate perf; focus is on correctness
-typedef std::vector<class DataHandler*> DataList;
-typedef std::map<std::string, DataList> DataMap;
-
+namespace snort
+{
 class Flow;
 struct Packet;
 
@@ -71,6 +69,10 @@ public:
 protected:
     DataHandler() = default;
 };
+
+// FIXIT-P evaluate perf; focus is on correctness
+typedef std::vector<DataHandler*> DataList;
+typedef std::map<std::string, DataList> DataMap;
 
 class SO_PUBLIC DataBus
 {
@@ -115,6 +117,7 @@ private:
     int type;
     const uint8_t* data;
 };
+}
 
 // common data events
 #define PACKET_EVENT "detection.packet"

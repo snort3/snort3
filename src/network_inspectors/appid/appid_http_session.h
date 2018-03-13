@@ -121,7 +121,7 @@ public:
     uint16_t get_cookie_offset();
     uint16_t get_cookie_end_offset();
 
-    SfIp* get_xff_addr()
+    snort::SfIp* get_xff_addr()
     { return xff_addr; }
 
     void update_host(const uint8_t* new_host, int32_t len);
@@ -216,7 +216,7 @@ protected:
     int num_scans = 0;
     bool rebuilt_offsets = false;
     bool skip_simple_detect = false;
-    SfIp* xff_addr = nullptr;
+    snort::SfIp* xff_addr = nullptr;
     const char** xffPrecedence = nullptr;
     unsigned numXffFields = 0;
     std::vector<int> ptype_req_counts;

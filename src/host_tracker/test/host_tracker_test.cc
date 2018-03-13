@@ -28,6 +28,8 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
+using namespace snort;
+
 // Fake snort_strdup() because sfutil dependencies suck
 char* snort_strdup(const char* str)
 {

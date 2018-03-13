@@ -144,13 +144,13 @@ struct IMAPSearchInfo
     int length;
 };
 
-class ImapMime : public MimeSession
+class ImapMime : public snort::MimeSession
 {
-    using MimeSession::MimeSession;
+    using snort::MimeSession::MimeSession;
 private:
     void decode_alert() override;
-    void reset_state(Flow* ssn) override;
-    bool is_end_of_data(Flow* ssn) override;
+    void reset_state(snort::Flow* ssn) override;
+    bool is_end_of_data(snort::Flow* ssn) override;
 };
 
 struct IMAPData
@@ -163,14 +163,14 @@ struct IMAPData
     ImapMime* mime_ssn;
 };
 
-class ImapFlowData : public FlowData
+class ImapFlowData : public snort::FlowData
 {
 public:
     ImapFlowData();
     ~ImapFlowData() override;
 
     static void init()
-    { inspector_id = FlowData::create_flow_data_id(); }
+    { inspector_id = snort::FlowData::create_flow_data_id(); }
 
 public:
     static unsigned inspector_id;

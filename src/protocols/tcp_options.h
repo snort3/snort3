@@ -22,6 +22,8 @@
 
 #include "main/snort_types.h"
 
+namespace snort
+{
 struct Packet;
 
 namespace tcp
@@ -178,6 +180,7 @@ private:
     const uint8_t* end_ptr;
 };
 } // namespace tcp
+} // namespace snort
 
 #endif
 

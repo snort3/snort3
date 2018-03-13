@@ -27,15 +27,19 @@
 #include "framework/ips_option.h"
 #include "framework/module.h"
 
-struct SnortConfig;
-struct IpsApi;
+namespace snort
+{
+    struct IpsApi;
+    class IpsOption;
+    struct SnortConfig;
+}
 
 //-------------------------------------------------------------------------
 
 #ifdef PIGLET
 struct IpsOptionWrapper
 {
-    IpsOptionWrapper(const IpsApi* a, IpsOption* p) :
+    IpsOptionWrapper(const snort::IpsApi* a, snort::IpsOption* p) :
         api { a }, instance { p } { }
 
     ~IpsOptionWrapper()
@@ -44,43 +48,43 @@ struct IpsOptionWrapper
             api->dtor(instance);
     }
 
-    const IpsApi* api;
-    IpsOption* instance;
+    const snort::IpsApi* api;
+    snort::IpsOption* instance;
 };
 #endif
 
 class IpsManager
 {
 public:
-    static void add_plugin(const IpsApi*);
+    static void add_plugin(const snort::IpsApi*);
     static void dump_plugins();
     static void release_plugins();
 
-    static void instantiate(const IpsApi*, Module*, SnortConfig*);
+    static void instantiate(const snort::IpsApi*, snort::Module*, snort::SnortConfig*);
 
     static bool get_option(
-        SnortConfig*, struct OptTreeNode*, int proto,
-        const char* keyword, char* args, RuleOptType&);
+        snort::SnortConfig*, struct OptTreeNode*, int proto,
+        const char* keyword, char* args, snort::RuleOptType&);
 
-    static bool option_begin(SnortConfig*, const char* key, int proto);
+    static bool option_begin(snort::SnortConfig*, const char* key, int proto);
     static bool option_set(
-        SnortConfig*, const char* key, const char* opt, const char* val);
+        snort::SnortConfig*, const char* key, const char* opt, const char* val);
     static bool option_end(
-        SnortConfig*, OptTreeNode*, int proto, const char* key, RuleOptType&);
+        snort::SnortConfig*, OptTreeNode*, int proto, const char* key, snort::RuleOptType&);
 
-    static void delete_option(class IpsOption*);
+    static void delete_option(snort::IpsOption*);
     static const char* get_option_keyword();
 
-    static void global_init(SnortConfig*);
-    static void global_term(SnortConfig*);
+    static void global_init(snort::SnortConfig*);
+    static void global_term(snort::SnortConfig*);
 
     static void reset_options();
     static void setup_options();
     static void clear_options();
-    static bool verify(SnortConfig*);
+    static bool verify(snort::SnortConfig*);
 
 #ifdef PIGLET
-    static IpsOptionWrapper* instantiate(const char*, Module*, struct OptTreeNode*);
+    static IpsOptionWrapper* instantiate(const char*, snort::Module*, struct OptTreeNode*);
 #endif
 };
 

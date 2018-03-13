@@ -29,7 +29,11 @@
 #include "utils/cpp_macros.h"
 
 struct HashFnc;
+
+namespace snort
+{
 struct SfIp;
+}
 
 PADDING_GUARD_BEGIN
 struct FlowKey
@@ -52,13 +56,13 @@ struct FlowKey
         addresses at this time. */
     bool init(
         PktType, IpProtocol,
-        const SfIp *srcIP, uint16_t srcPort,
-        const SfIp *dstIP, uint16_t dstPort,
+        const snort::SfIp *srcIP, uint16_t srcPort,
+        const snort::SfIp *dstIP, uint16_t dstPort,
         uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId);
 
     bool init(
         PktType, IpProtocol,
-        const SfIp *srcIP, const SfIp *dstIP,
+        const snort::SfIp *srcIP, const snort::SfIp *dstIP,
         uint32_t id, uint16_t vlanId,
         uint32_t mplsId, uint16_t addrSpaceId);
 
@@ -73,14 +77,14 @@ struct FlowKey
 private:
     bool init4(
         IpProtocol,
-        const SfIp *srcIP, uint16_t srcPort,
-        const SfIp *dstIP, uint16_t dstPort,
+        const snort::SfIp *srcIP, uint16_t srcPort,
+        const snort::SfIp *dstIP, uint16_t dstPort,
         uint32_t mplsId, bool order = true);
 
     bool init6(
         IpProtocol,
-        const SfIp *srcIP, uint16_t srcPort,
-        const SfIp *dstIP, uint16_t dstPort,
+        const snort::SfIp *srcIP, uint16_t srcPort,
+        const snort::SfIp *dstIP, uint16_t dstPort,
         uint32_t mplsId, bool order = true);
 };
 PADDING_GUARD_END

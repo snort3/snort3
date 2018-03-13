@@ -24,8 +24,13 @@
 #include "detection/treenodes.h"
 #include "main/policy.h"
 
+namespace snort
+{
+struct SnortConfig;
+}
+
 void parser_init();
-void parser_term(SnortConfig*);
+void parser_term(snort::SnortConfig*);
 
 // line > 0 implies name is non-null
 void get_parse_location(const char*& name, unsigned& line);
@@ -36,28 +41,28 @@ void push_parse_location(const char* name, unsigned line = 1);
 void pop_parse_location();
 void inc_parse_position();
 
-SnortConfig* ParseSnortConf(const SnortConfig*, const char* fname = nullptr);
-void ParseRules(SnortConfig*);
+snort::SnortConfig* ParseSnortConf(const snort::SnortConfig*, const char* fname = nullptr);
+void ParseRules(snort::SnortConfig*);
 
-void OrderRuleLists(SnortConfig*, const char*);
+void OrderRuleLists(snort::SnortConfig*, const char*);
 void PrintRuleOrder(RuleListNode*);
 
-char* ProcessFileOption(SnortConfig*, const char*);
-void SetRuleStates(SnortConfig*);
+char* ProcessFileOption(snort::SnortConfig*, const char*);
+void SetRuleStates(snort::SnortConfig*);
 
-void FreeRuleLists(SnortConfig*);
-void VarTablesFree(SnortConfig*);
+void FreeRuleLists(snort::SnortConfig*);
+void VarTablesFree(snort::SnortConfig*);
 
 void parser_append_rules(const char*);
 
 int ParseBool(const char* arg);
 
-int addRtnToOtn(SnortConfig*, struct OptTreeNode*, RuleTreeNode*);
-int addRtnToOtn(SnortConfig*, struct OptTreeNode*, RuleTreeNode*, PolicyId);
+int addRtnToOtn(snort::SnortConfig*, struct OptTreeNode*, RuleTreeNode*);
+int addRtnToOtn(snort::SnortConfig*, struct OptTreeNode*, RuleTreeNode*, PolicyId);
 
 bool same_headers(RuleTreeNode*, RuleTreeNode*);
-RuleTreeNode* deleteRtnFromOtn(OptTreeNode*, SnortConfig* sc = nullptr);
-RuleTreeNode* deleteRtnFromOtn(struct OptTreeNode*, PolicyId, SnortConfig* sc = nullptr, bool remove = true);
+RuleTreeNode* deleteRtnFromOtn(OptTreeNode*, snort::SnortConfig* sc = nullptr);
+RuleTreeNode* deleteRtnFromOtn(struct OptTreeNode*, PolicyId, snort::SnortConfig* sc = nullptr, bool remove = true);
 
 inline RuleTreeNode* getRtnFromOtn(const struct OptTreeNode* otn, PolicyId policyId)
 {
@@ -70,7 +75,7 @@ inline RuleTreeNode* getRtnFromOtn(const struct OptTreeNode* otn, PolicyId polic
 
 inline RuleTreeNode* getRtnFromOtn(const struct OptTreeNode* otn)
 {
-    return getRtnFromOtn(otn, get_ips_policy()->policy_id);
+    return getRtnFromOtn(otn, snort::get_ips_policy()->policy_id);
 }
 
 inline RuleTreeNode* getRuntimeRtnFromOtn(const struct OptTreeNode* otn)
@@ -78,7 +83,7 @@ inline RuleTreeNode* getRuntimeRtnFromOtn(const struct OptTreeNode* otn)
     return getRtnFromOtn(otn);
 }
 
-ListHead* CreateRuleType(SnortConfig* sc, const char* name, Actions::Type);
+ListHead* CreateRuleType(snort::SnortConfig* sc, const char* name, snort::Actions::Type);
 
 void FreeRuleTreeNode(RuleTreeNode*);
 void DestroyRuleTreeNode(RuleTreeNode*);

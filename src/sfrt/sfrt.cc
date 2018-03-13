@@ -86,6 +86,8 @@
 #include "sfip/sf_cidr.h"
 #include "utils/util.h"
 
+using namespace snort;
+
 const char* rt_error_messages[] =
 {
     "Success",

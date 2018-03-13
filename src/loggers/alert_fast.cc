@@ -54,6 +54,7 @@
 #include "packet_io/sfdaq.h"
 #include "service_inspectors/http_inspect/http_enum.h"
 
+using namespace snort;
 using namespace std;
 
 /* full buf was chosen to allow printing max size packets

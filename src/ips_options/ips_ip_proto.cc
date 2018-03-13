@@ -31,6 +31,8 @@
 #include "protocols/packet.h"
 #include "utils/util_cstring.h"
 
+using namespace snort;
+
 #define s_name "ip_proto"
 
 static THREAD_LOCAL ProfileStats ipProtoPerfStats;

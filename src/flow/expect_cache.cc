@@ -32,6 +32,8 @@
 #include "stream/stream.h"      // FIXIT-M bad dependency
 #include "time/packet_time.h"
 
+using namespace snort;
+
 /* Reasonably small, and prime */
 // FIXIT-L size based on max_tcp + max_udp?
 #define MAX_HASH 1021
@@ -320,10 +322,8 @@ ExpectCache::~ExpectCache()
  * existing appId, new appId and associated data is not stored.
  *
  */
-int ExpectCache::add_flow(const Packet *ctrlPkt,
-    PktType type, IpProtocol ip_proto,
-    const SfIp* cliIP, uint16_t cliPort,
-    const SfIp* srvIP, uint16_t srvPort,
+int ExpectCache::add_flow(const Packet *ctrlPkt, PktType type, IpProtocol ip_proto,
+    const SfIp* cliIP, uint16_t cliPort, const SfIp* srvIP, uint16_t srvPort,
     char direction, FlowData* fd, int16_t appId)
 {
     /* Just pull the VLAN ID, MPLS ID, and Address Space ID from the

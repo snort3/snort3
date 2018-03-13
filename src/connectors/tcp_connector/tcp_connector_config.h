@@ -25,12 +25,12 @@
 
 #include "framework/connector.h"
 
-class TcpConnectorConfig : public ConnectorConfig
+class TcpConnectorConfig : public snort::ConnectorConfig
 {
 public:
     enum Setup { CALL, ANSWER };
     TcpConnectorConfig()
-    { direction = Connector::CONN_DUPLEX; async_receive = true; }
+    { direction = snort::Connector::CONN_DUPLEX; async_receive = true; }
 
     uint16_t base_port;
     std::string address;

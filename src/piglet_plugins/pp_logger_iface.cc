@@ -29,6 +29,8 @@
 #include "pp_event_iface.h"
 #include "pp_packet_iface.h"
 
+using namespace snort;
+
 static const luaL_Reg methods[] =
 {
     {

@@ -27,6 +27,8 @@
 
 #include "snort_config.h"
 
+using namespace snort;
+
 bool Swapper::reload_in_progress = false;
 
 Swapper::Swapper(SnortConfig* s, tTargetBasedConfig* t)
@@ -77,7 +79,7 @@ Swapper::~Swapper()
 void Swapper::apply()
 {
     if ( new_conf )
-        SnortConfig::set_conf(new_conf);
+        snort::SnortConfig::set_conf(new_conf);
 
     if ( new_attribs )
         SFAT_SetConfig(new_attribs);

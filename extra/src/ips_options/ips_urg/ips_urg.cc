@@ -26,6 +26,8 @@
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
 
+using namespace snort;
+
 static const char* s_name = "urg";
 static const char* s_help = "detection for TCP urgent pointer";
 

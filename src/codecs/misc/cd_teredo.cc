@@ -27,6 +27,8 @@
 #include "packet_io/active.h"
 #include "protocols/teredo.h"
 
+using namespace snort;
+
 #define CD_TEREDO_NAME "teredo"
 #define CD_TEREDO_HELP "support for teredo"
 

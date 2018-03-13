@@ -33,12 +33,15 @@
 #include "framework/decode_data.h"
 #include "framework/inspector.h"
 
+namespace snort
+{
 class Flow;
 class FlowData;
-class FlowCache;
-struct FlowKey;
 struct Packet;
 struct SfIp;
+}
+class FlowCache;
+struct FlowKey;
 
 enum class PruneReason : uint8_t;
 
@@ -49,45 +52,45 @@ public:
     ~FlowControl();
 
 public:
-    void process_ip(Packet*);
-    void process_icmp(Packet*);
-    void process_tcp(Packet*);
-    void process_udp(Packet*);
-    void process_user(Packet*);
-    void process_file(Packet*);
+    void process_ip(snort::Packet*);
+    void process_icmp(snort::Packet*);
+    void process_tcp(snort::Packet*);
+    void process_udp(snort::Packet*);
+    void process_user(snort::Packet*);
+    void process_file(snort::Packet*);
 
-    Flow* find_flow(const FlowKey*);
-    Flow* new_flow(const FlowKey*);
+    snort::Flow* find_flow(const FlowKey*);
+    snort::Flow* new_flow(const FlowKey*);
 
-    void init_ip(const FlowConfig&, InspectSsnFunc);
-    void init_icmp(const FlowConfig&, InspectSsnFunc);
-    void init_tcp(const FlowConfig&, InspectSsnFunc);
-    void init_udp(const FlowConfig&, InspectSsnFunc);
-    void init_user(const FlowConfig&, InspectSsnFunc);
-    void init_file(const FlowConfig&, InspectSsnFunc);
+    void init_ip(const FlowConfig&, snort::InspectSsnFunc);
+    void init_icmp(const FlowConfig&, snort::InspectSsnFunc);
+    void init_tcp(const FlowConfig&, snort::InspectSsnFunc);
+    void init_udp(const FlowConfig&, snort::InspectSsnFunc);
+    void init_user(const FlowConfig&, snort::InspectSsnFunc);
+    void init_file(const FlowConfig&, snort::InspectSsnFunc);
     void init_exp(uint32_t max);
 
     void delete_flow(const FlowKey*);
-    void delete_flow(Flow*, PruneReason);
+    void delete_flow(snort::Flow*, PruneReason);
     void purge_flows(PktType);
     bool prune_one(PruneReason, bool do_cleanup);
 
     void timeout_flows(time_t cur_time);
 
-    bool expected_flow(Flow*, Packet*);
-    bool is_expected(Packet*);
+    bool expected_flow(snort::Flow*, snort::Packet*);
+    bool is_expected(snort::Packet*);
 
     int add_expected(
-        const Packet* ctrlPkt, PktType, IpProtocol,
-        const SfIp *srcIP, uint16_t srcPort,
-        const SfIp *dstIP, uint16_t dstPort,
-        char direction, FlowData*);
+        const snort::Packet* ctrlPkt, PktType, IpProtocol,
+        const snort::SfIp *srcIP, uint16_t srcPort,
+        const snort::SfIp *dstIP, uint16_t dstPort,
+        char direction, snort::FlowData*);
 
     int add_expected(
-        const Packet* ctrlPkt, PktType, IpProtocol,
-        const SfIp *srcIP, uint16_t srcPort,
-        const SfIp *dstIP, uint16_t dstPort,
-        int16_t appId, FlowData*);
+        const snort::Packet* ctrlPkt, PktType, IpProtocol,
+        const snort::SfIp *srcIP, uint16_t srcPort,
+        const snort::SfIp *dstIP, uint16_t dstPort,
+        int16_t appId, snort::FlowData*);
 
     PegCount get_flows(PktType);
     PegCount get_total_prunes(PktType) const;
@@ -99,9 +102,9 @@ private:
     FlowCache* get_cache(PktType);
     const FlowCache* get_cache(PktType) const;
 
-    void set_key(FlowKey*, Packet*);
+    void set_key(FlowKey*, snort::Packet*);
 
-    unsigned process(Flow*, Packet*);
+    unsigned process(snort::Flow*, snort::Packet*);
     void preemptive_cleanup();
 
 private:
@@ -113,19 +116,19 @@ private:
     FlowCache* file_cache = nullptr;
 
     // preallocated arrays
-    Flow* ip_mem = nullptr;
-    Flow* icmp_mem = nullptr;
-    Flow* tcp_mem = nullptr;
-    Flow* udp_mem = nullptr;
-    Flow* user_mem = nullptr;
-    Flow* file_mem = nullptr;
+    snort::Flow* ip_mem = nullptr;
+    snort::Flow* icmp_mem = nullptr;
+    snort::Flow* tcp_mem = nullptr;
+    snort::Flow* udp_mem = nullptr;
+    snort::Flow* user_mem = nullptr;
+    snort::Flow* file_mem = nullptr;
 
-    InspectSsnFunc get_ip = nullptr;
-    InspectSsnFunc get_icmp = nullptr;
-    InspectSsnFunc get_tcp = nullptr;
-    InspectSsnFunc get_udp = nullptr;
-    InspectSsnFunc get_user = nullptr;
-    InspectSsnFunc get_file = nullptr;
+    snort::InspectSsnFunc get_ip = nullptr;
+    snort::InspectSsnFunc get_icmp = nullptr;
+    snort::InspectSsnFunc get_tcp = nullptr;
+    snort::InspectSsnFunc get_udp = nullptr;
+    snort::InspectSsnFunc get_user = nullptr;
+    snort::InspectSsnFunc get_file = nullptr;
 
     class ExpectCache* exp_cache = nullptr;
     PktType last_pkt_type = PktType::NONE;

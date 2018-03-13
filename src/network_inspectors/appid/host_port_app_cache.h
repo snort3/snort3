@@ -22,7 +22,13 @@
 #ifndef HOST_PORT_APP_CACHE_H
 #define HOST_PORT_APP_CACHE_H
 
-#include "appid_api.h"
+#include "application_ids.h"
+#include "protocols/protocol_ids.h"
+
+namespace snort
+{
+struct SfIp;
+}
 
 struct HostPortVal
 {
@@ -35,8 +41,8 @@ class HostPortCache
 public:
     static void initialize();
     static void terminate();
-    static HostPortVal* find(const SfIp*, uint16_t port, IpProtocol);
-    static bool add(const SfIp*, uint16_t port, IpProtocol, unsigned type, AppId);
+    static HostPortVal* find(const snort::SfIp*, uint16_t port, IpProtocol);
+    static bool add(const snort::SfIp*, uint16_t port, IpProtocol, unsigned type, AppId);
     static void dump();
 };
 

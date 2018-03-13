@@ -43,5 +43,5 @@ int main()
 }
 
 bool piglet_mode()
-{ return SnortConfig::get_conf()->run_flags & RUN_FLAG__PIGLET; }
+{ return snort::SnortConfig::get_conf()->run_flags & RUN_FLAG__PIGLET; }
 } // namespace Piglet

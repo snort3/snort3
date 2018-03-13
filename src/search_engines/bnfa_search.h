@@ -34,6 +34,11 @@
 
 #include "search_common.h"
 
+namespace snort
+{
+struct SnortConfig;
+}
+
 /* debugging - allow printing the trie and nfa in list format
    #define ALLOW_LIST_PRINT */
 
@@ -163,7 +168,7 @@ int bnfaAddPattern(
     bnfa_struct_t* pstruct, const uint8_t* pat, unsigned patlen,
     bool nocase, bool negative, void* userdata);
 
-int bnfaCompile(struct SnortConfig*, bnfa_struct_t*);
+int bnfaCompile(snort::SnortConfig*, bnfa_struct_t*);
 
 unsigned _bnfa_search_csparse_nfa(
     bnfa_struct_t * pstruct, const uint8_t* t, int tlen, MpseMatch,

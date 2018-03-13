@@ -511,7 +511,7 @@ int16_t AppInfoManager::add_appid_protocol_reference(const char* protocol)
     static std::mutex apr_mutex;
 
     std::lock_guard<std::mutex> lock(apr_mutex);
-    int16_t id = SnortConfig::get_conf()->proto_ref->add(protocol);
+    int16_t id = snort::SnortConfig::get_conf()->proto_ref->add(protocol);
     return id;
 }
 

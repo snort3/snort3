@@ -28,7 +28,7 @@
 struct OptFpList;
 struct OptTreeNode;
 
-struct PatternMatchData* get_pmd(OptFpList*, int proto, RuleDirection);
+struct PatternMatchData* get_pmd(OptFpList*, int proto, snort::RuleDirection);
 bool is_fast_pattern_only(OptFpList*);
 void validate_fast_pattern(OptTreeNode*);
 

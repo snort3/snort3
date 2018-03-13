@@ -114,7 +114,7 @@ public:
     uuid_t uuid{};
 
     struct FrameworkPolicy* framework_policy;
-    DataBus dbus;
+    snort::DataBus dbus;
     bool cloned;
 
 private:
@@ -232,29 +232,32 @@ private:
 // navigator stuff
 //-------------------------------------------------------------------------
 
-struct SnortConfig;
 
 // FIXIT-L may be inlined at some point; on lockdown for now
 // FIXIT-L SO_PUBLIC required because SnortConfig::inline_mode(), etc. uses the function
+namespace snort
+{
+struct SnortConfig;
+
 SO_PUBLIC NetworkPolicy* get_network_policy();
 SO_PUBLIC InspectionPolicy* get_inspection_policy();
 SO_PUBLIC IpsPolicy* get_ips_policy();
-
-SO_PUBLIC InspectionPolicy* get_default_inspection_policy(SnortConfig*);
+SO_PUBLIC InspectionPolicy* get_default_inspection_policy(snort::SnortConfig*);
+SO_PUBLIC void set_user_ips_policy(unsigned policy_id);
+}
 
 void set_network_policy(NetworkPolicy*);
-void set_network_policy(SnortConfig*, unsigned = 0);
+void set_network_policy(snort::SnortConfig*, unsigned = 0);
 
 void set_inspection_policy(InspectionPolicy*);
-void set_inspection_policy(SnortConfig*, unsigned = 0);
+void set_inspection_policy(snort::SnortConfig*, unsigned = 0);
 
 void set_ips_policy(IpsPolicy*);
-SO_PUBLIC void set_user_ips_policy(unsigned policy_id);
-void set_ips_policy(SnortConfig*, unsigned = 0);
+void set_ips_policy(snort::SnortConfig*, unsigned = 0);
 
-void set_policies(SnortConfig*, Shell*);
+void set_policies(snort::SnortConfig*, Shell*);
 void set_default_policy();
-void set_default_policy(SnortConfig*);
+void set_default_policy(snort::SnortConfig*);
 
 bool only_inspection_policy();
 bool only_ips_policy();

@@ -32,6 +32,8 @@
 
 #include "dnp3.h"
 
+using namespace snort;
+
 #define s_name "dnp3_data"
 #define s_help \
     "sets the cursor to dnp3 data"

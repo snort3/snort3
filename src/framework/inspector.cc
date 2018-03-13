@@ -27,6 +27,8 @@
 #include "protocols/packet.h"
 #include "stream/stream_splitter.h"
 
+using namespace snort;
+
 //-------------------------------------------------------------------------
 // packet handler stuff
 //-------------------------------------------------------------------------

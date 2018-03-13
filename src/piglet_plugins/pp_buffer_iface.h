@@ -22,8 +22,11 @@
 
 #include "lua/lua_iface.h"
 
+namespace snort
+{
 struct Buffer;
+}
 
-extern const struct Lua::TypeInterface<Buffer> BufferIface;
+extern const struct Lua::TypeInterface<snort::Buffer> BufferIface;
 
 #endif

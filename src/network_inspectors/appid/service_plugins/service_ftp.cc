@@ -29,6 +29,8 @@
 #include "app_info_table.h"
 #include "protocols/packet.h"
 
+using namespace snort;
+
 #define FTP_PORT    21
 
 enum FTPState

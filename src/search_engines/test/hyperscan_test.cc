@@ -34,10 +34,13 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
+using namespace snort;
+
 //-------------------------------------------------------------------------
 // base stuff
 //-------------------------------------------------------------------------
-
+namespace snort
+{
 Mpse::Mpse(const char*) { }
 
 int Mpse::search(
@@ -54,6 +57,24 @@ int Mpse::search_all(
     return _search(T, n, match, context, current_state);
 }
 
+SnortConfig s_conf;
+THREAD_LOCAL SnortConfig* snort_conf = &s_conf;
+
+static SnortState s_state;
+
+SnortConfig::SnortConfig(SnortConfig*)
+{
+    state = &s_state;
+    memset(state, 0, sizeof(*state));
+    num_slots = 1;
+}
+
+SnortConfig::~SnortConfig() { }
+
+SnortConfig* SnortConfig::get_conf()
+{ return snort_conf; }
+
+}
 //-------------------------------------------------------------------------
 // stubs, spies, etc.
 //-------------------------------------------------------------------------
@@ -73,22 +94,6 @@ static int match(
     void* /*user*/, void* /*tree*/, int /*index*/, void* /*context*/, void* /*list*/)
 { ++hits; return 0; }
 
-SnortConfig s_conf;
-THREAD_LOCAL SnortConfig* snort_conf = &s_conf;
-
-static SnortState s_state;
-
-SnortConfig::SnortConfig(SnortConfig*)
-{
-    state = &s_state;
-    memset(state, 0, sizeof(*state));
-    num_slots = 1;
-}
-
-SnortConfig::~SnortConfig() { }
-
-SnortConfig* SnortConfig::get_conf()
-{ return snort_conf; }
 
 unsigned get_instance_id()
 { return 0; }

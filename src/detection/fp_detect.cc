@@ -79,6 +79,8 @@
 #include "tag.h"
 #include "treenodes.h"
 
+using namespace snort;
+
 THREAD_LOCAL ProfileStats rulePerfStats;
 THREAD_LOCAL ProfileStats ruleRTNEvalPerfStats;
 THREAD_LOCAL ProfileStats ruleOTNEvalPerfStats;

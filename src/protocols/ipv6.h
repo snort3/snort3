@@ -24,6 +24,8 @@
 
 #include "protocols/protocol_ids.h"
 
+namespace snort
+{
 namespace ip
 {
 constexpr uint8_t IP6_HEADER_LEN = 40;
@@ -246,7 +248,7 @@ inline int IPV6ExtensionOrder(const IpProtocol ip_proto)
 {
     return IPV6IdExtensionOrder((ProtocolId)ip_proto);
 }
-} // namespace ipv6
-
+} // namespace ip
+} // namespace snort
 #endif
 

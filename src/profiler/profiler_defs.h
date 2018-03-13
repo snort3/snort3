@@ -27,6 +27,8 @@
 #include "rule_profiler_defs.h"
 #include "time_profiler_defs.h"
 
+namespace snort
+{
 #define ROOT_NODE "total"
 
 struct ProfilerConfig
@@ -94,5 +96,5 @@ private:
 using get_profile_stats_fn = ProfileStats* (*)(const char*);
 
 using Profile = ProfileContext;
-
+}
 #endif

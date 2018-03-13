@@ -25,6 +25,11 @@
 
 #include "file_api.h"
 
+namespace snort
+{
+class FileInfo;
+}
+
 struct FileVerdictWhen
 {
     uint32_t type_id;
@@ -49,22 +54,20 @@ public:
     void clear();
 };
 
-class FileInfo;
-
-class FilePolicy: public FilePolicyBase
+class FilePolicy: public snort::FilePolicyBase
 {
 public:
 
     FilePolicy() = default;
     ~FilePolicy() override = default;
 
-    void policy_check(Flow* flow, FileInfo* file) override;
+    void policy_check(snort::Flow*, snort::FileInfo*) override;
 
     // This is called after file type is known
-    FileVerdict type_lookup(Flow* flow, FileInfo* file) override;
+    FileVerdict type_lookup(snort::Flow*, snort::FileInfo*) override;
 
     // This is called after file signature is complete
-    FileVerdict signature_lookup(Flow* flow, FileInfo* file) override;
+    FileVerdict signature_lookup(snort::Flow*, snort::FileInfo*) override;
 
     void insert_file_rule(FileRule&);
     void set_file_type(bool enabled);
@@ -74,8 +77,8 @@ public:
     void set_verdict_delay(int64_t delay) { verdict_delay = delay; }
 
 private:
-    FileRule& match_file_rule(Flow*, FileInfo* file);
-    FileVerdict match_file_signature(Flow*, FileInfo* file);
+    FileRule& match_file_rule(snort::Flow*, snort::FileInfo*);
+    FileVerdict match_file_signature(snort::Flow*, snort::FileInfo*);
     std::vector<FileRule> file_rules;
     std::map<std::string, FileVerdict> file_shas;
     bool type_enabled = false;

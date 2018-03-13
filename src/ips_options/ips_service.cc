@@ -27,6 +27,7 @@
 #include "log/messages.h"
 #include "parser/parse_conf.h"
 
+using namespace snort;
 using namespace std;
 
 #define s_name "service"

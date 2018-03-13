@@ -39,17 +39,17 @@ struct HighAvailabilityConfig
 };
 
 extern THREAD_LOCAL SimpleStats ha_stats;
-extern THREAD_LOCAL ProfileStats ha_perf_stats;
+extern THREAD_LOCAL snort::ProfileStats ha_perf_stats;
 
-class HighAvailabilityModule : public Module
+class HighAvailabilityModule : public snort::Module
 {
 public:
     HighAvailabilityModule();
     ~HighAvailabilityModule() override;
 
-    bool set(const char*, Value&, SnortConfig*) override;
-    bool begin(const char*, int, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
+    bool begin(const char*, int, snort::SnortConfig*) override;
+    bool end(const char*, int, snort::SnortConfig*) override;
 
     PegCount* get_counts() const override
     { return (PegCount*)&ha_stats; }
@@ -57,7 +57,7 @@ public:
     const PegInfo* get_pegs() const override
     { return simple_pegs; }
 
-    ProfileStats* get_profile() const override;
+    snort::ProfileStats* get_profile() const override;
 
     Usage get_usage() const override
     { return GLOBAL; }

@@ -54,6 +54,8 @@
 static THREAD_LOCAL RegexOffload* offloader = nullptr;
 static THREAD_LOCAL uint64_t context_num = 0;
 
+using namespace snort;
+
 //--------------------------------------------------------------------------
 // basic de
 //--------------------------------------------------------------------------

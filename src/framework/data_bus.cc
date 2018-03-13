@@ -27,8 +27,10 @@
 #include "main/snort_config.h"
 #include "protocols/packet.h"
 
+using namespace snort;
+
 static DataBus& get_data_bus()
-{ return get_inspection_policy()->dbus; }
+{ return snort::get_inspection_policy()->dbus; }
 
 class BufferEvent : public DataEvent
 {
@@ -80,11 +82,11 @@ void DataBus::subscribe(const char* key, DataHandler* h)
 // notify subscribers of event
 void DataBus::publish(const char* key, DataEvent& e, Flow* f)
 {
-    InspectionPolicy* pi = get_inspection_policy();
+    InspectionPolicy* pi = snort::get_inspection_policy();
     pi->dbus._publish(key, e, f);
 
     // also publish to default policy to notify control subscribers such as appid
-    InspectionPolicy* di = get_default_inspection_policy(SnortConfig::get_conf());
+    InspectionPolicy* di = snort::get_default_inspection_policy(SnortConfig::get_conf());
 
     // of course, only when current is not default
     if ( di != pi )

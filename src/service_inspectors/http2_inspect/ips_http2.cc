@@ -29,6 +29,7 @@
 #include "http2_flow_data.h"
 #include "http2_inspect.h"
 
+using namespace snort;
 using namespace Http2Enums;
 
 THREAD_LOCAL std::array<ProfileStats, PSI_MAX> Http2CursorModule::http2_ps;

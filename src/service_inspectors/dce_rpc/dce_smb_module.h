@@ -66,21 +66,21 @@ struct dce2SmbProtoConf
     bool legacy_mode;
 };
 
-class Dce2SmbModule : public Module
+class Dce2SmbModule : public snort::Module
 {
 public:
     Dce2SmbModule();
     ~Dce2SmbModule() override;
 
-    bool set(const char*, Value&, SnortConfig*) override;
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
 
     unsigned get_gid() const override
     { return GID_DCE2; }
 
-    const RuleMap* get_rules() const override;
+    const snort::RuleMap* get_rules() const override;
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
-    ProfileStats* get_profile(unsigned, const char*&, const char*&) const override;
+    snort::ProfileStats* get_profile(unsigned, const char*&, const char*&) const override;
     void get_data(dce2SmbProtoConf&);
 
     Usage get_usage() const override

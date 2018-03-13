@@ -28,6 +28,8 @@
 #include "main/snort_debug.h"
 #include "protocols/packet.h"
 
+using namespace snort;
+
 //--------------------------------------------------------------------
 // private state
 //--------------------------------------------------------------------

@@ -29,6 +29,8 @@
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
 
+using namespace snort;
+
 #define s_name "window"
 
 static THREAD_LOCAL ProfileStats tcpWinPerfStats;

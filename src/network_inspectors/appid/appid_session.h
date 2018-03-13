@@ -33,7 +33,6 @@
 #include "service_state.h"
 #include "detector_plugins/http_url_patterns.h"
 
-struct AppIdServiceSubtype;
 class ClientDetector;
 class ServiceDetector;
 class AppIdDnsSession;
@@ -123,11 +122,11 @@ struct CommonAppIdData
         initiator_ip.clear();
     }
 
-    APPID_FLOW_TYPE flow_type = APPID_FLOW_TYPE_IGNORE;
+    snort::APPID_FLOW_TYPE flow_type = snort::APPID_FLOW_TYPE_IGNORE;
     unsigned policyId = 0;
     //flags shared with other preprocessor via session attributes.
     uint64_t flags = 0;
-    SfIp initiator_ip;
+    snort::SfIp initiator_ip;
     uint16_t initiator_port = 0;
 };
 
@@ -141,14 +140,14 @@ struct TlsSession
     int tls_orgUnit_strlen = 0;
 };
 
-class AppIdSession : public FlowData
+class AppIdSession : public snort::FlowData
 {
 public:
-    AppIdSession(IpProtocol, const SfIp*, uint16_t port, AppIdInspector&);
+    AppIdSession(IpProtocol, const snort::SfIp*, uint16_t port, AppIdInspector&);
     ~AppIdSession() override;
 
-    static AppIdSession* allocate_session(const Packet*, IpProtocol, int, AppIdInspector&);
-    static AppIdSession* create_future_session(const Packet*, const SfIp*, uint16_t, const SfIp*,
+    static AppIdSession* allocate_session(const snort::Packet*, IpProtocol, int, AppIdInspector&);
+    static AppIdSession* create_future_session(const snort::Packet*, const snort::SfIp*, uint16_t, const snort::SfIp*,
         uint16_t, IpProtocol, int16_t, int, AppIdInspector&);
 
     AppIdInspector& get_inspector() const
@@ -157,14 +156,14 @@ public:
     }
 
     uint32_t session_id = 0;
-    Flow* flow = nullptr;
+    snort::Flow* flow = nullptr;
     AppIdConfig* config;
     std::map<unsigned, AppIdFlowData*> flow_data;
     AppInfoManager* app_info_mgr = nullptr;
     CommonAppIdData common;
     uint16_t session_packet_count = 0;
 
-    SfIp service_ip;
+    snort::SfIp service_ip;
     uint16_t service_port = 0;
     IpProtocol protocol = IpProtocol::PROTO_NOT_SET;
     uint8_t previous_tcp_flags = 0;
@@ -173,7 +172,7 @@ public:
     APPID_DISCOVERY_STATE service_disco_state = APPID_DISCO_STATE_NONE;
     SESSION_SERVICE_SEARCH_STATE service_search_state = SESSION_SERVICE_SEARCH_STATE::START;
     ServiceDetector* service_detector = nullptr;
-    AppIdServiceSubtype* subtype = nullptr;
+    snort::AppIdServiceSubtype* subtype = nullptr;
     std::vector<ServiceDetector*> service_candidates;
     ServiceAppDescriptor service;
     ClientAppDescriptor client;
@@ -231,7 +230,7 @@ public:
     AppId past_forecast = APP_ID_NONE;
 
     bool is_http2 = false;
-    SEARCH_SUPPORT_TYPE search_support_type = UNKNOWN_SEARCH_ENGINE;
+    snort::SEARCH_SUPPORT_TYPE search_support_type = snort::UNKNOWN_SEARCH_ENGINE;
     bool in_expected_cache = false;
     static unsigned inspector_id;
     static void init() { inspector_id = FlowData::create_flow_data_id(); }
@@ -272,7 +271,7 @@ public:
     void get_application_ids(AppId&, AppId&, AppId&, AppId&);
 
     bool is_ssl_session_decrypted();
-    void examine_ssl_metadata(Packet*);
+    void examine_ssl_metadata(snort::Packet*);
     void set_client_appid_data(AppId, char*);
     void set_service_appid_data(AppId, char*, char*);
     void set_referred_payload_app_id_data(AppId);
@@ -280,8 +279,8 @@ public:
     void check_app_detection_restart();
     void update_encrypted_app_id(AppId);
     void examine_rtmp_metadata();
-    void sync_with_snort_id(AppId, Packet*);
-    void stop_rna_service_inspection(Packet*,  int);
+    void sync_with_snort_id(AppId, snort::Packet*);
+    void stop_rna_service_inspection(snort::Packet*,  int);
 
     bool is_payload_appid_set();
     void clear_http_flags();
@@ -298,8 +297,8 @@ private:
     void delete_session_data();
     bool is_ssl_decryption_enabled();
 
-    void set_session_logging_state(const Packet*, int direction);
-    void create_session_logging_id(int direction, Packet*);
+    void set_session_logging_state(const snort::Packet*, int direction);
+    void create_session_logging_id(int direction, snort::Packet*);
 
     static THREAD_LOCAL uint32_t appid_flow_data_id;
     AppId application_ids[APP_PROTOID_MAX];

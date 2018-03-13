@@ -29,6 +29,8 @@
 #include "packet_io/active.h"
 #include "utils/safec.h"
 
+using namespace snort;
+
 #define CD_MPLS_NAME "mpls"
 #define CD_MPLS_HELP "support for multiprotocol label switching"
 

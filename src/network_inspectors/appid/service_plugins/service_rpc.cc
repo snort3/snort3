@@ -38,6 +38,8 @@
 #include "log/messages.h"
 #include "protocols/packet.h"
 
+using namespace snort;
+
 /*#define APPID_DEBUG_RPC   1 */
 
 enum RPCState

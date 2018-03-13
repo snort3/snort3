@@ -31,6 +31,8 @@
 #include "app_info_table.h"
 #include "protocols/packet.h"
 
+using namespace snort;
+
 #define SSL_PORT    443
 
 enum SSLContentType
@@ -1125,13 +1127,13 @@ void ssl_detector_free_patterns()
     ssl_patterns_free(&service_ssl_config.DetectorSSLCnamePatternList);
 }
 
-bool setSSLSquelch(Packet* p, int type, AppId appId, AppIdInspector& inspector)
+bool setSSLSquelch(snort::Packet* p, int type, AppId appId, AppIdInspector& inspector)
 {
     if (!AppInfoManager::get_instance().get_app_info_flags(appId, APPINFO_FLAG_SSL_SQUELCH))
         return false;
 
-    const SfIp* dip = p->ptrs.ip_api.get_dst();
-    const SfIp* sip = p->ptrs.ip_api.get_src();
+    const snort::SfIp* dip = p->ptrs.ip_api.get_dst();
+    const snort::SfIp* sip = p->ptrs.ip_api.get_src();
     AppIdSession* asd = AppIdSession::create_future_session(p, sip, 0, dip, p->ptrs.dp, IpProtocol::TCP,
         appId, 0, inspector);
     if ( asd )

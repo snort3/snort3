@@ -44,6 +44,8 @@
 #include "catch/snort_catch.h"
 #endif
 
+using namespace snort;
+
 THREAD_LOCAL SimpleStats pmstats;
 THREAD_LOCAL ProfileStats perfmonStats;
 

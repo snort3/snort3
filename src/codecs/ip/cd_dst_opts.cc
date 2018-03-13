@@ -25,6 +25,8 @@
 #include "framework/codec.h"
 #include "main/snort_config.h"
 
+using namespace snort;
+
 #define CD_DSTOPTS_NAME "ipv6_dst_opts"
 #define CD_DSTOPTS_HELP "support for ipv6 destination options"
 

@@ -37,6 +37,7 @@
 #include "utils/util_cstring.h"
 #include "utils/util_net.h"
 
+using namespace snort;
 using namespace std;
 
 #ifndef LOG_AUTHPRIV

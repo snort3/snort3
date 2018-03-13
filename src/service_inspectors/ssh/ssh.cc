@@ -38,6 +38,8 @@
 
 #include "ssh_module.h"
 
+using namespace snort;
+
 THREAD_LOCAL ProfileStats sshPerfStats;
 THREAD_LOCAL SshStats sshstats;
 

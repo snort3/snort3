@@ -53,6 +53,8 @@
 #include "packet_io/active.h"
 #include "profiler/profiler.h"
 
+using namespace snort;
+
 #define REJ_RST_SRC  0x01
 #define REJ_RST_DST  0x02
 #define REJ_UNR_NET  0x04
@@ -111,13 +113,13 @@ void RejectAction::send(Packet* p)
         Active::send_reset(p, ENC_FLAG_FWD);
 
     if ( flags & REJ_UNR_NET )
-        Active::send_unreach(p, UnreachResponse::NET);
+        Active::send_unreach(p, snort::UnreachResponse::NET);
 
     if ( flags & REJ_UNR_HOST )
-        Active::send_unreach(p, UnreachResponse::HOST);
+        Active::send_unreach(p, snort::UnreachResponse::HOST);
 
     if ( flags & REJ_UNR_PORT )
-        Active::send_unreach(p, UnreachResponse::PORT);
+        Active::send_unreach(p, snort::UnreachResponse::PORT);
 }
 
 //-------------------------------------------------------------------------

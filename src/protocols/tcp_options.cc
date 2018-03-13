@@ -26,14 +26,13 @@
 #include "packet.h"
 #include "tcp.h"
 
+namespace snort
+{
 namespace tcp
 {
-TcpOptIteratorIter::TcpOptIteratorIter(const TcpOption* first_opt) : opt(first_opt)
-{
-}
+TcpOptIteratorIter::TcpOptIteratorIter(const TcpOption* first_opt) : opt(first_opt) { }
 
-const TcpOption& TcpOptIteratorIter::operator*() const
-{ return *opt; }
+const TcpOption& TcpOptIteratorIter::operator*() const { return *opt; }
 
 TcpOptIterator::TcpOptIterator(const TCPHdr* const tcp_header, const Packet* const p)
 {
@@ -77,4 +76,5 @@ TcpOptIteratorIter TcpOptIterator::end() const
     return TcpOptIteratorIter(reinterpret_cast<const TcpOption*>(end_ptr));
 }
 } // namespace ip
+} // namespace snort
 

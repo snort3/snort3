@@ -27,18 +27,23 @@
 #include "framework/base_api.h"
 #include "main/snort_types.h"
 
-struct Packet;
-
-// this is the current version of the api
-#define IPSAPI_VERSION ((BASE_API_VERSION << 16) | 0)
-
 //-------------------------------------------------------------------------
 // api for class
 // eval and action are packet thread specific
 //-------------------------------------------------------------------------
 
-struct SnortConfig;
 class Cursor;
+struct OptTreeNode;
+struct PatternMatchData;
+
+namespace snort
+{
+struct Packet;
+struct SnortConfig;
+class Module;
+
+// this is the current version of the api
+#define IPSAPI_VERSION ((BASE_API_VERSION << 16) | 0)
 
 enum CursorActionType
 {
@@ -90,7 +95,7 @@ public:
     { return CAT_NONE; }
 
     // for fast-pattern options like content
-    virtual struct PatternMatchData* get_pattern(int /*proto*/, RuleDirection = RULE_WO_DIR)
+    virtual PatternMatchData* get_pattern(int /*proto*/, RuleDirection = RULE_WO_DIR)
     { return nullptr; }
 
     virtual struct PatternMatchData* get_alternate_pattern()
@@ -142,6 +147,6 @@ struct IpsApi
     IpsDelFunc dtor;
     IpsOptFunc verify;
 };
-
+}
 #endif
 

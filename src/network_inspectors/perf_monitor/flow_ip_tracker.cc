@@ -27,6 +27,8 @@
 #include "log/messages.h"
 #include "protocols/packet.h"
 
+using namespace snort;
+
 #define TRACKER_NAME PERF_NAME "_flow_ip"
 
 struct FlowStateKey

@@ -28,6 +28,8 @@
 #include "pub_sub/http_events.h"
 #include "time/packet_time.h"
 
+using namespace snort;
+
 static const char* s_name = "data_log";
 static const char* s_help = "log selected published data to data.log";
 

@@ -35,14 +35,17 @@
 
 #include "framework/base_api.h"
 
+namespace snort
+{
 class Module;
 struct SnortConfig;
+}
 
 class PluginManager
 {
 public:
     // plugin methods
-    static void load_plugins(const BaseApi**);
+    static void load_plugins(const snort::BaseApi**);
     static void load_plugins(const std::string& lib_paths);
 
     static void list_plugins();
@@ -53,14 +56,15 @@ public:
     static PlugType get_type(const char*);
     static const char* get_type_name(PlugType);
 
-    static const BaseApi* get_api(PlugType, const char* name);
+    static const snort::BaseApi* get_api(PlugType, const char* name);
 #ifdef PIGLET
     static PlugType get_type_from_name(const std::string&);
 #endif
     static const char* get_current_plugin();
 
-    static void instantiate(const BaseApi*, Module*, SnortConfig*);
-    static void instantiate(const BaseApi*, Module*, SnortConfig*, const char* name);
+    static void instantiate(const snort::BaseApi*, snort::Module*, snort::SnortConfig*);
+    static void instantiate(const snort::BaseApi*, snort::Module*, snort::SnortConfig*,
+        const char* name);
 
     static const char* get_available_plugins(PlugType);
 };

@@ -31,6 +31,8 @@
 #include "packet_io/sfdaq_config.h"
 #include "packet_io/sfdaq_module.h"
 
+using namespace snort;
+
 TEST_CASE("Kitchen Sink", "[SFDAQModule]")
 {
     SFDAQModule sfdm;

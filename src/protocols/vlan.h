@@ -22,6 +22,8 @@
 
 #include <arpa/inet.h>
 
+namespace snort
+{
 namespace vlan
 {
 struct VlanTagHdr
@@ -42,6 +44,7 @@ struct VlanTagHdr
     { return ntohs(vth_proto); }
 };
 } // namespace vlan
+} // namespace snort
 
 #endif
 

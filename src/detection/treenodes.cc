@@ -49,7 +49,7 @@ OptFpList* AddOptFuncToList(RuleOptEvalFunc ro_eval_func, OptTreeNode* otn)
     return ofp;
 }
 
-bool otn_set_agent(OptTreeNode* otn, IpsOption* opt)
+bool otn_set_agent(OptTreeNode* otn, snort::IpsOption* opt)
 {
     if ( otn->agent )
         return false;
@@ -58,7 +58,7 @@ bool otn_set_agent(OptTreeNode* otn, IpsOption* opt)
     return true;
 }
 
-void otn_trigger_actions(const OptTreeNode* otn, Packet* p)
+void otn_trigger_actions(const OptTreeNode* otn, snort::Packet* p)
 {
     if ( otn->agent )
         otn->agent->action(p);

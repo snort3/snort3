@@ -29,6 +29,8 @@
 #include "main/snort_debug.h"
 #include "stream/tcp/tcp_ha.h"
 
+using namespace snort;
+
 #ifdef DEBUG_MSGS
 const char* const flush_policy_names[] =
 {
@@ -37,10 +39,6 @@ const char* const flush_policy_names[] =
     "on-data"
 };
 #endif
-
-TcpStreamSession::TcpStreamSession(Flow* flow) : Session(flow)
-{
-}
 
 TcpStreamSession::~TcpStreamSession()
 {

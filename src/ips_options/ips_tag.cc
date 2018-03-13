@@ -29,6 +29,8 @@
 #include "framework/module.h"
 #include "utils/util.h"
 
+using namespace snort;
+
 #define s_name "tag"
 
 //-------------------------------------------------------------------------

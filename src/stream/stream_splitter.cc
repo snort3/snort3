@@ -30,6 +30,8 @@
 #include "flush_bucket.h"
 #include "stream.h"
 
+using namespace snort;
+
 unsigned StreamSplitter::max(Flow*)
 { return SnortConfig::get_conf()->max_pdu; }
 

@@ -50,7 +50,7 @@ public:
         return hs_timeout >= 0;
     }
 
-    bool midstream_allowed(Packet* p)
+    bool midstream_allowed(snort::Packet* p)
     {
         if ( ( hs_timeout < 0 ) || ( p->pkth->ts.tv_sec - packet_first_time() < hs_timeout ) )
             return true;

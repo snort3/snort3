@@ -47,7 +47,7 @@ struct PORTSET
 
 struct IP_PORT
 {
-    SfCidr ip;
+    snort::SfCidr ip;
     PORTSET portset;
     char notflag;
 };
@@ -75,8 +75,8 @@ struct IPSET
    255.255.255.255, or 0xffffffff, or -1.
 */
 IPSET* ipset_new();
-int ipset_add(IPSET* ipset, SfCidr* ip, void* port, int notflag);
-int ipset_contains(IPSET* ipset, const SfIp* ip, void* port);
+int ipset_add(IPSET* ipset, snort::SfCidr* ip, void* port, int notflag);
+int ipset_contains(IPSET* ipset, const snort::SfIp* ip, void* port);
 IPSET* ipset_copy(IPSET* ipset);
 void ipset_free(IPSET* ipset);
 int ipset_print(IPSET* ipset);

@@ -57,7 +57,7 @@ void PrintAllInterfaces()
             struct sockaddr_in* saddr = (struct sockaddr_in*)dev->addresses->addr;
             if ((saddr->sin_family == AF_INET) || (saddr->sin_family == AF_INET6))
             {
-                SfIp dev_ip;
+                snort::SfIp dev_ip;
                 dev_ip.set(&saddr->sin_addr, saddr->sin_family);
                 printf("\t%s", dev_ip.ntoa());
             }

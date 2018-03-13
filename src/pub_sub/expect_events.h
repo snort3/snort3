@@ -29,33 +29,37 @@
 
 #define EXPECT_EVENT_TYPE_EARLY_SESSION_CREATE_KEY "expect_event_type_early_session_create"
 
-struct Packet;
-class FlowData;
+namespace snort
+{
 struct ExpectFlow;
+class FlowData;
+struct Packet;
+}
 
-class ExpectEvent : public DataEvent
+class ExpectEvent : public snort::DataEvent
 {
 public:
-    ExpectEvent(const Packet* ctrl_packet, ExpectFlow* ef, const FlowData* fd)
+    ExpectEvent(const snort::Packet* ctrl_packet, snort::ExpectFlow* ef,
+        const snort::FlowData* fd)
     {
         p = ctrl_packet;
         expect_flow = ef;
         flow_data = fd;
     }
 
-    const Packet* get_packet() override
+    const snort::Packet* get_packet() override
     { return p; }
 
-    ExpectFlow* get_expect_flow()
+    snort::ExpectFlow* get_expect_flow()
     { return expect_flow; }
 
-    const FlowData* get_flow_data()
+    const snort::FlowData* get_flow_data()
     { return flow_data; }
 
 private:
-    const Packet* p;
-    ExpectFlow* expect_flow;
-    const FlowData* flow_data;
+    const snort::Packet* p;
+    snort::ExpectFlow* expect_flow;
+    const snort::FlowData* flow_data;
 };
 
 #endif

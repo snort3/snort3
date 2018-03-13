@@ -63,6 +63,8 @@
 #include "tcp_reassemblers.h"
 #include "tcp_stream_state_machine.h"
 
+using namespace snort;
+
 #ifdef DEBUG_MSGS
 static THREAD_LOCAL const char* t_name = nullptr;
 static THREAD_LOCAL const char* l_name = nullptr;
@@ -73,6 +75,7 @@ TcpSession::TcpSession(Flow* flow) : TcpStreamSession(flow)
     tsm = TcpStreamStateMachine::get_instance();
     client = new TcpTracker(true, this);
     server = new TcpTracker(false, this);
+    splitter_init = false;
 }
 
 TcpSession::~TcpSession()

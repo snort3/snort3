@@ -27,6 +27,8 @@
 
 #include "hash/hashfcn.h"
 
+using namespace snort;
+
 static const char* s_buffer = nullptr;
 
 void IpsOption::set_buffer(const char* s)

@@ -75,7 +75,7 @@ public:
     uint32_t serviceId;
     uint32_t clientId;
     uint32_t payloadId;
-    int16_t snortId = SFTARGET_UNKNOWN_PROTOCOL;
+    int16_t snortId = snort::SFTARGET_UNKNOWN_PROTOCOL;
     uint32_t flags = 0;
     uint32_t priority = APP_PRIORITY_DEFAULT;
     ClientDetector* client_detector = nullptr;

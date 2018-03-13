@@ -55,6 +55,8 @@ enum PlugType
     PT_MAX
 };
 
+namespace snort
+{
 class Module;
 typedef Module* (* ModNewFunc)();
 typedef void (* ModDelFunc)(Module*);
@@ -71,9 +73,9 @@ struct BaseApi
     const char* options;
     const char* name;
     const char* help;
-    ModNewFunc mod_ctor;
+    snort::ModNewFunc mod_ctor;
     ModDelFunc mod_dtor;
 };
-
+}
 #endif
 

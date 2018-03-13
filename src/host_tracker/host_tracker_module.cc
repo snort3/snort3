@@ -30,6 +30,8 @@
 
 #include "host_cache.h"
 
+using namespace snort;
+
 const PegInfo host_tracker_pegs[] =
 {
     { CountType::SUM, "service_adds", "host service adds" },

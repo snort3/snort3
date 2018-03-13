@@ -25,8 +25,8 @@
 #include "framework/connector.h"
 #include "managers/plugin_manager.h"
 
-extern const BaseApi* file_connector[];
-extern const BaseApi* tcp_connector[];
+extern const snort::BaseApi* file_connector[];
+extern const snort::BaseApi* tcp_connector[];
 
 void load_connectors()
 {

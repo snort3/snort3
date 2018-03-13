@@ -25,11 +25,11 @@
 class IcmpSession : public Session
 {
 public:
-    IcmpSession(Flow*);
+    IcmpSession(snort::Flow*);
 
-    bool setup(Packet*) override;
-    void update_direction(char dir, const SfIp*, uint16_t port) override;
-    int process(Packet*) override;
+    bool setup(snort::Packet*) override;
+    void update_direction(char dir, const snort::SfIp*, uint16_t port) override;
+    int process(snort::Packet*) override;
     void clear() override;
 
 public:

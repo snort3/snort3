@@ -309,7 +309,7 @@ static int64_t updateEntryInfo(INFO* current, INFO new_entry, SaveDest saveDest,
     return bytesAllocated;
 }
 
-static int AddIPtoList(SfCidr* ipAddr,INFO ipInfo_ptr, ReputationConfig* config)
+static int AddIPtoList(snort::SfCidr* ipAddr,INFO ipInfo_ptr, ReputationConfig* config)
 {
     int iRet;
     int iFinalRet = IP_INSERT_SUCCESS;
@@ -388,7 +388,7 @@ static int AddIPtoList(SfCidr* ipAddr,INFO ipInfo_ptr, ReputationConfig* config)
 }
 
 // FIXIT-L X Remove this or at least move it to SfCidr?
-static int snort_pton__address(char const* src, SfCidr* dest)
+static int snort_pton__address(char const* src, snort::SfCidr* dest)
 {
     unsigned char _temp[sizeof(struct in6_addr)];
 
@@ -404,7 +404,7 @@ static int snort_pton__address(char const* src, SfCidr* dest)
 
 // FIXIT-L X Remove this or at least move it to SfCidr?
 #define isident(x) (isxdigit((x)) || (x) == ':' || (x) == '.')
-static int snort_pton(char const* src, SfCidr* dest)
+static int snort_pton(char const* src, snort::SfCidr* dest)
 {
     char ipbuf[INET6_ADDRSTRLEN];
     char cidrbuf[sizeof("128")];
@@ -528,7 +528,7 @@ static int snort_pton(char const* src, SfCidr* dest)
 
 static int ProcessLine(char* line, INFO info, ReputationConfig* config)
 {
-    SfCidr address;
+    snort::SfCidr address;
 
     if ( !line || *line == '\0' )
         return IP_INSERT_SUCCESS;

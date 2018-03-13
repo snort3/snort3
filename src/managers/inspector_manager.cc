@@ -41,6 +41,7 @@
 
 #include "module_manager.h"
 
+using namespace snort;
 using namespace std;
 
 // FIXIT-L define module names just once
@@ -421,7 +422,7 @@ static PHInstance* get_new(
 
     if ( get_instance(fp, keyword, false, old_it) )
     {
-        if ( Snort::is_reloading() )
+        if ( snort::Snort::is_reloading() )
         {
             (*old_it)->set_reloaded(RELOAD_TYPE_REENABLED);
             fp->ilist.erase(old_it);
@@ -439,7 +440,7 @@ static PHInstance* get_new(
         return nullptr;
     }
 
-    if ( Snort::is_reloading() )
+    if ( snort::Snort::is_reloading() )
     {
         if ( reloaded )
             p->set_reloaded(RELOAD_TYPE_REENABLED);
@@ -498,7 +499,7 @@ void InspectorManager::dispatch_meta(FrameworkPolicy* fp, int type, const uint8_
 
 Inspector* InspectorManager::get_binder()
 {
-    InspectionPolicy* pi = get_inspection_policy();
+    InspectionPolicy* pi = snort::get_inspection_policy();
 
     if ( !pi || !pi->framework_policy )
         return nullptr;
@@ -512,9 +513,9 @@ Inspector* InspectorManager::get_inspector(const char* key, bool dflt_only)
     InspectionPolicy* pi;
     
     if (dflt_only)
-        pi = get_default_inspection_policy(SnortConfig::get_conf());
+        pi = snort::get_default_inspection_policy(SnortConfig::get_conf());
     else
-        pi = get_inspection_policy();
+        pi = snort::get_inspection_policy();
 
     if ( !pi || !pi->framework_policy )
         return nullptr;
@@ -628,7 +629,7 @@ void InspectorManager::thread_init(SnortConfig* sc)
 
     // pin->tinit() only called for default policy
     set_default_policy();
-    InspectionPolicy* pi = get_inspection_policy();
+    InspectionPolicy* pi = snort::get_inspection_policy();
 
     if ( pi && pi->framework_policy )
     {
@@ -648,7 +649,7 @@ void InspectorManager::thread_stop(SnortConfig*)
 {
     // pin->tterm() only called for default policy
     set_default_policy();
-    InspectionPolicy* pi = get_inspection_policy();
+    InspectionPolicy* pi = snort::get_inspection_policy();
 
     if ( pi && pi->framework_policy )
     {
@@ -684,7 +685,7 @@ void InspectorManager::instantiate(
     assert(mod);
 
     FrameworkConfig* fc = sc->framework_config;
-    FrameworkPolicy* fp = get_inspection_policy()->framework_policy;
+    FrameworkPolicy* fp = snort::get_inspection_policy()->framework_policy;
 
     // FIXIT-L should not need to lookup inspector etc
     // since given api and mod
@@ -720,7 +721,7 @@ Inspector* InspectorManager::instantiate(
     if ( !ppc )
         return nullptr;
 
-    auto fp = get_inspection_policy()->framework_policy;
+    auto fp = snort::get_inspection_policy()->framework_policy;
     auto ppi = get_new(ppc, fp, name, mod, sc);
 
     if ( !ppi )
@@ -867,7 +868,7 @@ bool InspectorManager::configure(SnortConfig* sc, bool cloned)
 
 void InspectorManager::print_config(SnortConfig* sc)
 {
-    InspectionPolicy* pi = get_inspection_policy();
+    InspectionPolicy* pi = snort::get_inspection_policy();
 
     if ( !pi->framework_policy )
         return;
@@ -939,7 +940,7 @@ void InspectorManager::full_inspection(Packet* p)
 void InspectorManager::execute_control(Packet* p)
 {
     SnortConfig* sc = SnortConfig::get_conf();
-    FrameworkPolicy* fp = get_default_inspection_policy(sc)->framework_policy;
+    FrameworkPolicy* fp = snort::get_default_inspection_policy(sc)->framework_policy;
     ::execute(p, fp->control.vec, fp->control.num);
 }
 
@@ -948,7 +949,7 @@ void InspectorManager::execute_control(Packet* p)
 
 void InspectorManager::execute(Packet* p)
 {
-    FrameworkPolicy* fp = get_inspection_policy()->framework_policy;
+    FrameworkPolicy* fp = snort::get_inspection_policy()->framework_policy;
     assert(fp);
 
     if ( !p->has_paf_payload() )
@@ -958,7 +959,7 @@ void InspectorManager::execute(Packet* p)
         // a flow control wrapper) and use eval() instead of process()
         // for stream_*.
         ::execute(p, fp->session.vec, fp->session.num);
-        fp = get_inspection_policy()->framework_policy;
+        fp = snort::get_inspection_policy()->framework_policy;
     }
     // must check between each ::execute()
     if ( p->disable_inspect )
@@ -1000,7 +1001,7 @@ void InspectorManager::execute(Packet* p)
 
 void InspectorManager::probe(Packet* p)
 {
-    FrameworkPolicy* fp = get_inspection_policy()->framework_policy;
+    FrameworkPolicy* fp = snort::get_inspection_policy()->framework_policy;
     ::execute(p, fp->probe.vec, fp->probe.num);
 }
 

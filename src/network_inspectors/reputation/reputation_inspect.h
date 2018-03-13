@@ -29,14 +29,14 @@ struct ReputationData
     bool disabled = false;
 };
 
-class ReputationFlowData : public FlowData
+class ReputationFlowData : public snort::FlowData
 {
 public:
-    ReputationFlowData() : FlowData(inspector_id){}
+    ReputationFlowData() : snort::FlowData(inspector_id){}
 
 
     static void init()
-    { inspector_id = FlowData::create_flow_data_id(); }
+    { inspector_id = snort::FlowData::create_flow_data_id(); }
 
 public:
     static unsigned inspector_id;

@@ -28,6 +28,8 @@
 
 #include "sf_cidr.h"
 
+using namespace snort;
+
 //---------------------------------------------------------------
 
 static int s_debug = 0;

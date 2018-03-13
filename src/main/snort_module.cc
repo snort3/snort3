@@ -44,6 +44,7 @@
 #include "snort_config.h"
 #include "thread_config.h"
 
+using namespace snort;
 using namespace std;
 
 //-------------------------------------------------------------------------

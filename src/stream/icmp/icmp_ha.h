@@ -24,13 +24,16 @@
 
 //-------------------------------------------------------------------------
 
+namespace snort
+{
 class Flow;
+}
 
 class IcmpHA : public ProtocolHA
 {
 public:
     IcmpHA() : ProtocolHA(PktType::ICMP) { }
-    Flow* create_session(FlowKey*) override;
+    snort::Flow* create_session(FlowKey*) override;
 
 private:
 };
@@ -38,7 +41,7 @@ private:
 class IcmpHAManager
 {
 public:
-    static void process_deletion(Flow* flow);
+    static void process_deletion(snort::Flow* flow);
     static void tinit();
     static void tterm();
     static THREAD_LOCAL IcmpHA* icmp_ha;

@@ -32,9 +32,9 @@
 
 struct TextLog;
 struct _daq_pkthdr;
-struct Packet;
-struct Layer;
-class Flow;
+
+namespace snort
+{
 enum CodecSid : uint32_t;
 
 namespace ip
@@ -53,6 +53,10 @@ namespace icmp
 {
 struct ICMPHdr;
 }
+
+class Flow;
+struct Layer;
+struct Packet;
 
 // Used by root codecs to add their DLT to their HELP string
 #define ADD_DLT(help, x) help " (DLT " STRINGIFY_MX(x) ")"
@@ -385,6 +389,6 @@ struct CodecApi
     CdNewFunc ctor;   // get eval optional instance data
     CdDelFunc dtor;   // clean up instance data
 };
-
+}
 #endif /* FRAMEWORK_CODEC_H */
 

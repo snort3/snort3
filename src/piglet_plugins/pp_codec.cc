@@ -32,6 +32,8 @@
 #include "pp_enc_state_iface.h"
 #include "pp_raw_buffer_iface.h"
 
+using namespace snort;
+
 class CodecPiglet : public Piglet::BasePlugin
 {
 public:

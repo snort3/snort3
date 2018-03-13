@@ -30,6 +30,8 @@
 #include "ip_module.h"
 #include "ip_session.h"
 
+using namespace snort;
+
 /* max frags in a single frag tracker */
 #define DEFAULT_MAX_FRAGS 8192
 

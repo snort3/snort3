@@ -63,8 +63,8 @@ struct StreamIpConfig
     StreamIpConfig();
 };
 
-StreamIpConfig* get_ip_cfg(Inspector*);
-class Defrag* get_defrag(Inspector*);
+StreamIpConfig* get_ip_cfg(snort::Inspector*);
+class Defrag* get_defrag(snort::Inspector*);
 
 #endif
 

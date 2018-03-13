@@ -34,7 +34,7 @@ class HttpMsgRequest : public HttpMsgStart
 {
 public:
     HttpMsgRequest(const uint8_t* buffer, const uint16_t buf_size, HttpFlowData* session_data_,
-        HttpEnums::SourceId source_id_, bool buf_owner, Flow* flow_,
+        HttpEnums::SourceId source_id_, bool buf_owner, snort::Flow* flow_,
         const HttpParaList* params_);
     ~HttpMsgRequest() override { delete uri; }
     void gen_events() override;

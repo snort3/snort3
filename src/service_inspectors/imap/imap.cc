@@ -37,6 +37,8 @@
 #include "imap_module.h"
 #include "imap_paf.h"
 
+using namespace snort;
+
 THREAD_LOCAL ProfileStats imapPerfStats;
 THREAD_LOCAL ImapStats imapstats;
 

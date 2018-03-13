@@ -35,6 +35,8 @@
 #include "log/messages.h"
 #include "sfip/sf_ip.h"
 
+using namespace snort;
+
 static THREAD_LOCAL unsigned service_module_index = 0;
 
 ServiceDetector::ServiceDetector()

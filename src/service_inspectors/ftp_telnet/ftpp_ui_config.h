@@ -196,7 +196,7 @@ struct FTP_SERVER_PROTO_CONF
 
 typedef struct s_FTP_BOUNCE_TO
 {
-    SfIp ip;
+    snort::SfIp ip;
     int relevant_bits;
     unsigned short portlo;
     unsigned short porthi;

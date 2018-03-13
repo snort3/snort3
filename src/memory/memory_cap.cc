@@ -141,7 +141,7 @@ bool MemoryCap::free_space(size_t n)
     if ( !thread_cap )
         return true;
 
-    const auto& config = *SnortConfig::get_conf()->memory;
+    const auto& config = *snort::SnortConfig::get_conf()->memory;
     return memory::free_space(n, thread_cap, s_tracker, prune_handler) || config.soft;
 }
 
@@ -172,7 +172,7 @@ bool MemoryCap::over_threshold()
 void MemoryCap::calculate(unsigned num_threads)
 {
     assert(!is_packet_thread());
-    const MemoryConfig& config = *SnortConfig::get_conf()->memory;
+    const MemoryConfig& config = *snort::SnortConfig::get_conf()->memory;
 
     auto main_thread_used = s_tracker.used();
 
@@ -209,12 +209,12 @@ void MemoryCap::print()
     if ( !MemoryModule::is_active() )
         return;
 
-    const MemoryConfig& config = *SnortConfig::get_conf()->memory;
+    const MemoryConfig& config = *snort::SnortConfig::get_conf()->memory;
 
-    if ( SnortConfig::log_verbose() or s_tracker.allocations )
+    if ( snort::SnortConfig::log_verbose() or s_tracker.allocations )
         LogLabel("memory (heap)");
 
-    if ( SnortConfig::log_verbose() )
+    if ( snort::SnortConfig::log_verbose() )
     {
         LogMessage("    global cap: %zu\n", config.cap);
         LogMessage("    global preemptive threshold percent: %zu\n", config.threshold);

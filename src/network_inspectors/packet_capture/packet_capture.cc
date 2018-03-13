@@ -37,6 +37,7 @@
 
 #include "capture_module.h"
 
+using namespace snort;
 using namespace std;
 
 #define FILE_NAME "packet_capture.pcap"

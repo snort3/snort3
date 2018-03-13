@@ -516,7 +516,7 @@ ImapClientDetector::~ImapClientDetector()
 
 void ImapClientDetector::do_custom_init()
 {
-    cmd_matcher = new SearchTool("ac_full", true);
+    cmd_matcher = new snort::SearchTool("ac_full", true);
 
     if ( !tcp_patterns.empty() )
     {

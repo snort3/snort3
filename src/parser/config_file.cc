@@ -166,13 +166,13 @@ static int GetChecksumFlags(const char* args)
 
 void ConfigChecksumDrop(const char* args)
 {
-    NetworkPolicy* policy = get_network_policy();
+    NetworkPolicy* policy = snort::get_network_policy();
     policy->checksum_drop = GetChecksumFlags(args);
 }
 
 void ConfigChecksumMode(const char* args)
 {
-    NetworkPolicy* policy = get_network_policy();
+    NetworkPolicy* policy = snort::get_network_policy();
     policy->checksum_eval = GetChecksumFlags(args);
 }
 
@@ -180,7 +180,7 @@ void config_conf(const char* val)
 {
     lua_conf = val;
     SetSnortConfDir(lua_conf.c_str());
-    Snort::set_main_hook(DetectionEngine::inspect);
+    snort::Snort::set_main_hook(snort::DetectionEngine::inspect);
 }
 
 void SetSnortConfDir(const char* file)

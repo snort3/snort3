@@ -33,42 +33,43 @@
 
 class HttpApi;
 
-class HttpInspect : public Inspector
+class HttpInspect : public snort::Inspector
 {
 public:
     HttpInspect(const HttpParaList* params_);
     ~HttpInspect() override { delete params; }
 
-    bool get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b) override;
-    bool get_buf(unsigned id, Packet* p, InspectionBuffer& b) override;
-    bool http_get_buf(
-        unsigned id, uint64_t sub_id, uint64_t form, Packet* p, InspectionBuffer& b);
-    bool get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b) override;
-    bool configure(SnortConfig*) override;
-    void show(SnortConfig*) override { LogMessage("HttpInspect\n"); }
-    void eval(Packet* p) override;
-    void clear(Packet* p) override;
+    bool get_buf(snort::InspectionBuffer::Type ibt, snort::Packet* p,
+        snort::InspectionBuffer& b) override;
+    bool get_buf(unsigned id, snort::Packet* p, snort::InspectionBuffer& b) override;
+    bool http_get_buf(unsigned id, uint64_t sub_id, uint64_t form, snort::Packet* p,
+        snort::InspectionBuffer& b);
+    bool get_fp_buf(snort::InspectionBuffer::Type ibt, snort::Packet* p, snort::InspectionBuffer& b) override;
+    bool configure(snort::SnortConfig*) override;
+    void show(snort::SnortConfig*) override { LogMessage("HttpInspect\n"); }
+    void eval(snort::Packet* p) override;
+    void clear(snort::Packet* p) override;
     void tinit() override { }
     void tterm() override { }
     HttpStreamSplitter* get_splitter(bool is_client_to_server) override
     {
         return new HttpStreamSplitter(is_client_to_server, this);
     }
-    static HttpEnums::InspectSection get_latest_is(const Packet* p);
+    static HttpEnums::InspectSection get_latest_is(const snort::Packet* p);
 
     // Callbacks that provide "extra data"
-    static int get_xtra_trueip(Flow*, uint8_t**, uint32_t*, uint32_t*);
-    static int get_xtra_uri(Flow*, uint8_t**, uint32_t*, uint32_t*);
-    static int get_xtra_host(Flow*, uint8_t** buf, uint32_t* len, uint32_t* type);
-    static int get_xtra_jsnorm(Flow*, uint8_t**, uint32_t*, uint32_t*);
+    static int get_xtra_trueip(snort::Flow*, uint8_t**, uint32_t*, uint32_t*);
+    static int get_xtra_uri(snort::Flow*, uint8_t**, uint32_t*, uint32_t*);
+    static int get_xtra_host(snort::Flow*, uint8_t** buf, uint32_t* len, uint32_t* type);
+    static int get_xtra_jsnorm(snort::Flow*, uint8_t**, uint32_t*, uint32_t*);
 
 private:
     friend HttpApi;
     friend HttpStreamSplitter;
 
-    bool process(const uint8_t* data, const uint16_t dsize, Flow* const flow,
+    bool process(const uint8_t* data, const uint16_t dsize, snort::Flow* const flow,
         HttpEnums::SourceId source_id_, bool buf_owner) const;
-    static HttpEnums::SourceId get_latest_src(const Packet* p);
+    static HttpEnums::SourceId get_latest_src(const snort::Packet* p);
 
     const HttpParaList* const params;
 

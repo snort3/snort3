@@ -34,6 +34,8 @@
 #include "profiler/profiler.h"
 #include "utils/util_unfold.h"
 
+using namespace snort;
+
 static THREAD_LOCAL uint8_t base64_decode_buf[DECODE_BLEN];
 static THREAD_LOCAL uint32_t base64_decode_size;
 

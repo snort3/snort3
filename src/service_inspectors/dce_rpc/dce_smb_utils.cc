@@ -34,6 +34,8 @@
 
 #include "dce_smb_module.h"
 
+using namespace snort;
+
 static uint8_t dce2_smb_delete_pdu[65535];
 
 /********************************************************************
@@ -1489,7 +1491,7 @@ void DCE2_SmbInitDeletePdu()
 
 static void DCE2_SmbInjectDeletePdu(DCE2_SmbSsnData* ssd, DCE2_SmbFileTracker* ftracker)
 {
-    Packet* inject_pkt = Snort::get_packet();
+    Packet* inject_pkt = snort::Snort::get_packet();
     if ( inject_pkt->flow != ssd->sd.wire_pkt->flow )
         return;
 

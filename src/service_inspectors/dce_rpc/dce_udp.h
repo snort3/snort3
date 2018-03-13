@@ -65,14 +65,14 @@ struct dce2UdpStats
 };
 
 extern THREAD_LOCAL dce2UdpStats dce2_udp_stats;
-extern THREAD_LOCAL ProfileStats dce2_udp_pstat_main;
-extern THREAD_LOCAL ProfileStats dce2_udp_pstat_session;
-extern THREAD_LOCAL ProfileStats dce2_udp_pstat_new_session;
-extern THREAD_LOCAL ProfileStats dce2_udp_pstat_detect;
-extern THREAD_LOCAL ProfileStats dce2_udp_pstat_log;
-extern THREAD_LOCAL ProfileStats dce2_udp_pstat_cl_acts;
-extern THREAD_LOCAL ProfileStats dce2_udp_pstat_cl_frag;
-extern THREAD_LOCAL ProfileStats dce2_udp_pstat_cl_reass;
+extern THREAD_LOCAL snort::ProfileStats dce2_udp_pstat_main;
+extern THREAD_LOCAL snort::ProfileStats dce2_udp_pstat_session;
+extern THREAD_LOCAL snort::ProfileStats dce2_udp_pstat_new_session;
+extern THREAD_LOCAL snort::ProfileStats dce2_udp_pstat_detect;
+extern THREAD_LOCAL snort::ProfileStats dce2_udp_pstat_log;
+extern THREAD_LOCAL snort::ProfileStats dce2_udp_pstat_cl_acts;
+extern THREAD_LOCAL snort::ProfileStats dce2_udp_pstat_cl_frag;
+extern THREAD_LOCAL snort::ProfileStats dce2_udp_pstat_cl_reass;
 
 struct DceRpcClHdr   /* Connectionless header */
 {
@@ -193,7 +193,7 @@ struct DCE2_UdpSsnData
     DCE2_ClTracker cl_tracker;
 };
 
-class Dce2UdpFlowData : public FlowData
+class Dce2UdpFlowData : public snort::FlowData
 {
 public:
     Dce2UdpFlowData();
@@ -201,14 +201,14 @@ public:
 
     static void init()
     {
-        inspector_id = FlowData::create_flow_data_id();
+        inspector_id = snort::FlowData::create_flow_data_id();
     }
 
     static unsigned inspector_id;
     DCE2_UdpSsnData dce2_udp_session;
 };
 
-DCE2_UdpSsnData* get_dce2_udp_session_data(Flow*);
+DCE2_UdpSsnData* get_dce2_udp_session_data(snort::Flow*);
 
 void DCE2_ClProcess(DCE2_SsnData* sd, DCE2_ClTracker* clt);
 void DCE2_ClInitRdata(uint8_t*);

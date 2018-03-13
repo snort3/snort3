@@ -30,6 +30,8 @@
 #include "protocols/packet.h"
 #include "search_engines/search_tool.h"
 
+using namespace snort;
+
 #define MDNS_PORT   5353
 #define PATTERN_REFERENCE_PTR   3
 #define PATTERN_STR_LOCAL_1           "\005local"
@@ -104,7 +106,7 @@ MdnsServiceDetector::MdnsServiceDetector(ServiceDiscovery* sd)
         { 5353, IpProtocol::UDP, false },
     };
 
-    matcher = new SearchTool("ac_full", true);
+    matcher = new snort::SearchTool("ac_full", true);
     for (unsigned i = 0; i < sizeof(patterns) / sizeof(*patterns); i++)
         matcher->add((const char*)patterns[i].pattern, patterns[i].length, &patterns[i]);
     matcher->prep();

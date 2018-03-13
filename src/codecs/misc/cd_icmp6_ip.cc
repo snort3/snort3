@@ -24,6 +24,8 @@
 #include "codecs/codec_module.h"
 #include "framework/codec.h"
 
+using namespace snort;
+
 // yes, macros are necessary. The API and class constructor require different strings.
 //
 // this macros is defined in the module to ensure identical names. However,

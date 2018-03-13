@@ -27,9 +27,9 @@
 #include "ftpp_si.h"
 
 /* list of function prototypes for this preprocessor */
-extern int check_ftp(FTP_SESSION* session, Packet* p, int iMode);
+extern int check_ftp(FTP_SESSION* session, snort::Packet* p, int iMode);
 
-extern int initialize_ftp(FTP_SESSION* session, Packet* p, int iMode);
+extern int initialize_ftp(FTP_SESSION* session, snort::Packet* p, int iMode);
 
 #endif
 

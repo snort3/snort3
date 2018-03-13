@@ -87,6 +87,8 @@
 #include "ip_session.h"
 #include "stream_ip.h"
 
+using namespace snort;
+
 /*  D E F I N E S  **************************************************/
 
 /* flags for the FragTracker->frag_flags field */
@@ -720,7 +722,7 @@ static void FragRebuild(FragTracker* ft, Packet* p)
 
     DetectionEngine de;
     de.set_encode_packet(p);
-    Snort::process_packet(dpkt, dpkt->pkth, dpkt->pkt, true);
+    snort::Snort::process_packet(dpkt, dpkt->pkth, dpkt->pkt, true);
     de.set_encode_packet(nullptr);
 
     trace_log(stream_ip, "Done with rebuilt packet, marking rebuilt...\n");

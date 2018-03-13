@@ -30,7 +30,7 @@
 #include "protocols/tcp_options.h"
 #include "stream/tcp/tcp_defs.h"
 
-using namespace tcp;
+using namespace snort;
 
 TcpSegmentDescriptor::TcpSegmentDescriptor(Flow* flow, Packet* pkt, TcpEventLogger& tel) :
     flow(flow), pkt(pkt)
@@ -57,10 +57,10 @@ uint32_t TcpSegmentDescriptor::init_mss(uint16_t* value)
 {
     DebugMessage(DEBUG_STREAM_STATE, "Getting MSS...\n");
 
-    TcpOptIterator iter(tcph, pkt);
-    for ( const TcpOption& opt : iter )
+    tcp::TcpOptIterator iter(tcph, pkt);
+    for ( const tcp::TcpOption& opt : iter )
     {
-        if ( opt.code == TcpOptCode::MAXSEG )
+        if ( opt.code == tcp::TcpOptCode::MAXSEG )
         {
             *value = extract_16bits(opt.data);
             DebugFormat(DEBUG_STREAM_STATE, "Found MSS %hu\n", *value);
@@ -79,11 +79,11 @@ uint32_t TcpSegmentDescriptor::init_wscale(uint16_t* value)
 {
     DebugMessage(DEBUG_STREAM_STATE, "Getting wscale...\n");
 
-    TcpOptIterator iter(tcph, pkt);
+    tcp::TcpOptIterator iter(tcph, pkt);
 
-    for (const TcpOption& opt : iter)
+    for (const tcp::TcpOption& opt : iter)
     {
-        if (opt.code == TcpOptCode::WSCALE)
+        if (opt.code == tcp::TcpOptCode::WSCALE)
         {
             *value = (uint16_t)opt.data[0];
             DebugFormat(DEBUG_STREAM_STATE, "Found wscale %d\n", *value);

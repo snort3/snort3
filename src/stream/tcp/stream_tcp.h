@@ -19,10 +19,13 @@
 #ifndef STREAM_TCP_H
 #define STREAM_TCP_H
 
+namespace snort
+{
 class Inspector;
+}
 class TcpStreamConfig;
 
-TcpStreamConfig* get_tcp_cfg(Inspector*);
+TcpStreamConfig* get_tcp_cfg(snort::Inspector*);
 
 #endif
 

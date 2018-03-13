@@ -31,6 +31,8 @@
 #include "lua_detector_api.h"
 #include "protocols/packet.h"
 
+using namespace snort;
+
 int AppIdDetector::initialize()
 {
     if ( !tcp_patterns.empty() )

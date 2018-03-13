@@ -25,6 +25,8 @@
 
 #include "service_direct_connect.h"
 
+using namespace snort;
+
 enum CONNECTION_STATES
 {
     CONN_STATE_INIT,

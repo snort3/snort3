@@ -25,6 +25,8 @@
 #include "hash/hashfcn.h"
 #include "profiler/profiler.h"
 
+using namespace snort;
+
 static const char* s_name = "pkt_num";
 static const char* s_help = "alert on raw packet number";
 

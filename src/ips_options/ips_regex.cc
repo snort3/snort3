@@ -39,6 +39,8 @@
 #include "main/snort_config.h"
 #include "profiler/profiler.h"
 
+using namespace snort;
+
 #define s_name "regex"
 
 #define s_help \

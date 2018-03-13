@@ -22,15 +22,19 @@
 
 // used to make thread local, pointer-based config swaps by packet threads
 
+namespace snort
+{
 struct SnortConfig;
+}
+
 struct tTargetBasedConfig;
 
 class Swapper
 {
 public:
-    Swapper(SnortConfig*, tTargetBasedConfig*);
-    Swapper(SnortConfig*, SnortConfig*);
-    Swapper(SnortConfig*, SnortConfig*, tTargetBasedConfig*, tTargetBasedConfig*);
+    Swapper(snort::SnortConfig*, tTargetBasedConfig*);
+    Swapper(snort::SnortConfig*, snort::SnortConfig*);
+    Swapper(snort::SnortConfig*, snort::SnortConfig*, tTargetBasedConfig*, tTargetBasedConfig*);
     Swapper(tTargetBasedConfig*, tTargetBasedConfig*);
     ~Swapper();
 
@@ -40,8 +44,8 @@ public:
     static void set_reload_in_progress(bool rip) { reload_in_progress = rip; }
 
 private:
-    SnortConfig* old_conf;
-    SnortConfig* new_conf;
+    snort::SnortConfig* old_conf;
+    snort::SnortConfig* new_conf;
 
     tTargetBasedConfig* old_attribs;
     tTargetBasedConfig* new_attribs;

@@ -21,6 +21,8 @@
 
 #include "framework/so_rule.h"
 
+using namespace snort;
+
 static IpsOption::EvalStatus eval(void*, Cursor&, Packet*)
 {
     return IpsOption::MATCH;

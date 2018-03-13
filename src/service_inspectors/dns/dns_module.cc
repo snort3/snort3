@@ -24,6 +24,7 @@
 
 #include "dns_module.h"
 
+using namespace snort;
 using namespace std;
 
 #define DNS_EVENT_OBSOLETE_TYPES_STR \

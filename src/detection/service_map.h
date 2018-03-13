@@ -32,9 +32,12 @@
 
 #include "target_based/snort_protocols.h"
 
+namespace snort
+{
+struct SnortConfig;
+}
 struct PortGroup;
 struct GHash;
-struct SnortConfig;
 
 //  Service Rule Map Master Table
 struct srmm_table_t
@@ -49,8 +52,8 @@ void ServiceMapFree(srmm_table_t*);
 srmm_table_t* ServicePortGroupMapNew();
 void ServicePortGroupMapFree(srmm_table_t*);
 
-void fpPrintServicePortGroupSummary(SnortConfig*, srmm_table_t*);
-int fpCreateServiceMaps(SnortConfig*);
+void fpPrintServicePortGroupSummary(snort::SnortConfig*, srmm_table_t*);
+int fpCreateServiceMaps(snort::SnortConfig*);
 
 //  Service/Protocol Ordinal To PortGroup table
 typedef std::vector<PortGroup*> PortGroupVector;

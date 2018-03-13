@@ -56,6 +56,8 @@
 #include "ft_main.h"
 #include "ftpp_return_codes.h"
 
+using namespace snort;
+
 unsigned FtpFlowData::inspector_id = 0;
 unsigned TelnetFlowData::inspector_id = 0;
 

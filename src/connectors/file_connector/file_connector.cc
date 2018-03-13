@@ -30,6 +30,8 @@
 
 #include "file_connector_module.h"
 
+using namespace snort;
+
 /* Globals ****************************************************************/
 
 THREAD_LOCAL SimpleStats file_connector_stats;

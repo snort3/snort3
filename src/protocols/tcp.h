@@ -24,6 +24,10 @@
 
 #include <cstdint>
 
+namespace snort
+{
+namespace tcp
+{
 // these are bits in th_flags:
 #define TH_FIN  0x01
 #define TH_SYN  0x02
@@ -61,8 +65,6 @@
 
 #define GET_PKT_SEQ(p) (ntohl((p)->ptrs.tcph->th_seq))
 
-namespace tcp
-{
 constexpr uint8_t TCP_MIN_HEADER_LEN = 20; // this is actually the minimal TCP header length
 constexpr int OPT_TRUNC = -1;
 constexpr int OPT_BADLEN = -2;
@@ -174,6 +176,7 @@ struct TCPHdr
     { th_urp = new_urp; }
 };
 }  // namespace tcp
+}  // namespace snort
 
 #endif
 

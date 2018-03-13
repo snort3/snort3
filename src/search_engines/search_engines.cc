@@ -24,7 +24,8 @@
 
 #include "managers/plugin_manager.h"
 
-struct BaseApi;
+using namespace snort;
+
 extern const BaseApi* se_ac_bnfa[];
 
 #ifdef HAVE_HYPERSCAN

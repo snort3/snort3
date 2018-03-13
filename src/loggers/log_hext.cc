@@ -28,6 +28,7 @@
 #include "log/text_log.h"
 #include "protocols/packet.h"
 
+using namespace snort;
 using namespace std;
 
 #define S_NAME "log_hext"

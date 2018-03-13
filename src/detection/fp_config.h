@@ -25,6 +25,11 @@
 #ifndef FP_CONFIG_H
 #define FP_CONFIG_H
 
+namespace snort
+{
+    struct MpseApi;
+}
+
 // this is a basically a factory for creating MPSE
 
 #define PL_BLEEDOVER_WARNINGS_ENABLED        0x01
@@ -122,7 +127,7 @@ public:
 
     void set_max_pattern_len(unsigned);
 
-    const struct MpseApi* get_search_api()
+    const snort::MpseApi* get_search_api()
     { return search_api; }
 
     bool get_trim()
@@ -143,7 +148,7 @@ public:
     { return max_pattern_len; }
 
 private:
-    const struct MpseApi* search_api;
+    const snort::MpseApi* search_api;
 
     bool inspect_stream_insert = true;
     bool trim;

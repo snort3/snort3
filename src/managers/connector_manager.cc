@@ -33,6 +33,8 @@
 #include "main/snort_debug.h"
 #include "utils/util.h"
 
+using namespace snort;
+
 //  ConnectorManager Private Data
 
 // One ConnectorElem for each Connector within the ConnectorCommon configuration

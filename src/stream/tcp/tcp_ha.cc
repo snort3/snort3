@@ -28,6 +28,8 @@
 
 #include "tcp_session.h"
 
+using namespace snort;
+
 Flow* TcpHA::create_session(FlowKey* key)
 {
     assert(key);

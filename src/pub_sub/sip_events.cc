@@ -25,6 +25,7 @@
 
 #include "service_inspectors/sip/sip_dialog.h"
 
+using namespace snort;
 using namespace std;
 
 SipEvent::SipEvent(const Packet* p, const SIPMsg* msg, const SIP_DialogData* dialog)

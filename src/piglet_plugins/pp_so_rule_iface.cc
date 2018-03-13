@@ -25,6 +25,8 @@
 
 #include "framework/so_rule.h"
 
+using namespace snort;
+
 static const luaL_Reg methods[] =
 {
     { nullptr, nullptr }

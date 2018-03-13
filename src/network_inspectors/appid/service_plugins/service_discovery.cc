@@ -81,6 +81,8 @@
 #include "service_regtest.h"
 #endif
 
+using namespace snort;
+
 static THREAD_LOCAL ServiceDetector* ftp_service = nullptr;
 
 ProfileStats serviceMatchPerfStats;

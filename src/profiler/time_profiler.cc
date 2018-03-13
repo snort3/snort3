@@ -34,6 +34,8 @@
 #include "catch/snort_catch.h"
 #endif
 
+using namespace snort;
+
 #define s_time_table_title "module profile"
 
 namespace time_stats

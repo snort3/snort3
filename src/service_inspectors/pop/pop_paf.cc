@@ -28,6 +28,8 @@
 
 #include "pop.h"
 
+using namespace snort;
+
 extern POPToken pop_known_cmds[];
 
 static inline PopPafData* get_state(Flow* flow, bool c2s)

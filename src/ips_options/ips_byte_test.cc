@@ -105,6 +105,7 @@
 
 #include "extract.h"
 
+using namespace snort;
 using namespace std;
 
 #define PARSELEN 10
