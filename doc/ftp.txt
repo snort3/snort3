@@ -132,7 +132,7 @@ MDTM commands that set the modification time on a file.  The most common
 among servers that do, accept a format using YYYYMMDDHHmmss[.uuu].  Some
 others accept a format using YYYYMMDDHHmmss[+|-]TZ format.  The example
 above is for the first case (time format as specified in
-http://www.ietf.org/internet-drafts/draft-ietf-ftpext-mlst-16.txt)
+https://tools.ietf.org/html/draft-ietf-ftpext-mlst-16)
 
 To check validity for a server that uses the TZ format, use the following:
 
