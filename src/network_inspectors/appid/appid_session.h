@@ -148,7 +148,7 @@ public:
 
     static AppIdSession* allocate_session(const snort::Packet*, IpProtocol, int, AppIdInspector&);
     static AppIdSession* create_future_session(const snort::Packet*, const snort::SfIp*, uint16_t, const snort::SfIp*,
-        uint16_t, IpProtocol, int16_t, int, AppIdInspector&);
+        uint16_t, IpProtocol, SnortProtocolId, int, AppIdInspector&);
 
     AppIdInspector& get_inspector() const
     {
@@ -202,7 +202,7 @@ public:
     uint16_t init_tpPackets = 0;
     uint16_t resp_tpPackets = 0;
     bool tp_reinspect_by_initiator = false;
-    int16_t snort_id = 0;
+    SnortProtocolId snort_protocol_id = UNKNOWN_PROTOCOL_ID;
 
     /* Length-based detectors. */
     LengthKey length_sequence;
@@ -279,7 +279,7 @@ public:
     void check_app_detection_restart();
     void update_encrypted_app_id(AppId);
     void examine_rtmp_metadata();
-    void sync_with_snort_id(AppId, snort::Packet*);
+    void sync_with_snort_protocol_id(AppId, snort::Packet*);
     void stop_rna_service_inspection(snort::Packet*,  int);
 
     bool is_payload_appid_set();

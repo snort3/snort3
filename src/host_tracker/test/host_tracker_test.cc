@@ -103,20 +103,20 @@ TEST(host_tracker, add_find_service_test)
     CHECK(true == ret);
     CHECK(actual_entry.port == 2112);
     CHECK(actual_entry.ipproto == 6);
-    CHECK(actual_entry.protocol == 3);
+    CHECK(actual_entry.snort_protocol_id == 3);
 
     ht.add_service(app_entry2);
     ret = ht.find_service(6, 2112, actual_entry);
     CHECK(true == ret);
     CHECK(actual_entry.port == 2112);
     CHECK(actual_entry.ipproto == 6);
-    CHECK(actual_entry.protocol == 3);
+    CHECK(actual_entry.snort_protocol_id == 3);
 
     ret = ht.find_service(17, 7777, actual_entry);
     CHECK(true == ret);
     CHECK(actual_entry.port == 7777);
     CHECK(actual_entry.ipproto == 17);
-    CHECK(actual_entry.protocol == 10);
+    CHECK(actual_entry.snort_protocol_id == 10);
 
     //  Try adding an entry that exists already.
     ret = ht.add_service(app_entry1);

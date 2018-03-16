@@ -86,7 +86,7 @@ bool HostTrackerModule::set(const char*, Value& v, SnortConfig* sc)
         host->set_stream_policy(v.get_long() + 1);
 
     else if ( v.is("name") )
-        app.protocol = sc->proto_ref->add(v.get_string());
+        app.snort_protocol_id = sc->proto_ref->add(v.get_string());
 
     else if ( v.is("proto") )
         app.ipproto = sc->proto_ref->add(v.get_string());

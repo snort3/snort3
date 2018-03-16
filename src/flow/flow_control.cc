@@ -797,11 +797,11 @@ int FlowControl::add_expected(
     const Packet* ctrlPkt, PktType type, IpProtocol ip_proto,
     const SfIp *srcIP, uint16_t srcPort,
     const SfIp *dstIP, uint16_t dstPort,
-    int16_t appId, FlowData* fd)
+    SnortProtocolId snort_protocol_id, FlowData* fd)
 {
     return exp_cache->add_flow(
         ctrlPkt, type, ip_proto, srcIP, srcPort, dstIP, dstPort,
-        SSN_DIR_BOTH, fd, appId);
+        SSN_DIR_BOTH, fd, snort_protocol_id);
 }
 
 bool FlowControl::is_expected(Packet* p)

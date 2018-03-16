@@ -98,7 +98,7 @@ AppIdConfig* AppIdInspector::get_appid_config()
     return active_config;
 }
 
-bool AppIdInspector::configure(SnortConfig*)
+bool AppIdInspector::configure(SnortConfig* sc)
 {
     assert(!active_config);
 
@@ -113,7 +113,7 @@ bool AppIdInspector::configure(SnortConfig*)
     my_seh = SipEventHandler::create();
     my_seh->subscribe();
 
-    active_config->init_appid();
+    active_config->init_appid(sc);
     return true;
 
     // FIXIT-M some of this stuff may be needed in some fashion...

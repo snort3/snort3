@@ -31,7 +31,7 @@
 #include "flow/flow.h"
 #include "framework/counts.h"
 #include "main/thread.h"
-#include "protocols/packet.h"
+#include "target_based/snort_protocols.h"
 #include "utils/util.h"
 
 #define APP_PRIORITY_DEFAULT 2
@@ -75,7 +75,7 @@ public:
     uint32_t serviceId;
     uint32_t clientId;
     uint32_t payloadId;
-    int16_t snortId = snort::SFTARGET_UNKNOWN_PROTOCOL;
+    SnortProtocolId snort_protocol_id = UNKNOWN_PROTOCOL_ID;
     uint32_t flags = 0;
     uint32_t priority = APP_PRIORITY_DEFAULT;
     ClientDetector* client_detector = nullptr;
@@ -139,10 +139,10 @@ public:
         return entry ? entry->priority : 0;
     }
 
-    void init_appid_info_table(AppIdModuleConfig*);
+    void init_appid_info_table(AppIdModuleConfig*, snort::SnortConfig*);
     void cleanup_appid_info_table();
     void dump_app_info_table();
-    int16_t add_appid_protocol_reference(const char* protocol);
+    SnortProtocolId add_appid_protocol_reference(const char* protocol, snort::SnortConfig*);
 
 private:
     AppInfoManager() = default;

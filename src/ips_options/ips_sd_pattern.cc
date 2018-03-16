@@ -124,7 +124,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
-    PatternMatchData* get_pattern(int, RuleDirection) override
+    PatternMatchData* get_pattern(SnortProtocolId, RuleDirection) override
     { return &config.pmd; }
 
     EvalStatus eval(Cursor&, Packet* p) override;

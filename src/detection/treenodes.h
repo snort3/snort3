@@ -95,8 +95,9 @@ struct OptTreeNode
 
     int chain_node_number;
     int evalIndex;       /* where this rule sits in the evaluation sets */
-    int proto;           /* protocol, added for integrity checks
-                            during rule parsing */
+
+    // Added for integrity checks during rule parsing.
+    SnortProtocolId snort_protocol_id;
 
     unsigned ruleIndex; // unique index
 
@@ -147,7 +148,7 @@ struct RuleTreeNode
 
     struct ListHead* listhead;
 
-    int proto;
+    SnortProtocolId snort_protocol_id;
 
     uint32_t flags;     /* control flags */
 

@@ -34,7 +34,7 @@ public:
     int validate(AppIdDiscoveryArgs&) override;
 
 private:
-    int16_t app_id = 0;
+    SnortProtocolId tftp_snort_protocol_id = UNKNOWN_PROTOCOL_ID;
 };
 #endif
 

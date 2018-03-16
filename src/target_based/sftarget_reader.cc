@@ -204,8 +204,8 @@ static void PrintHostAttributeEntry(HostAttributeEntry* host)
     for (i=0, app = host->services; app; app = app->next,i++)
     {
         DebugFormat(DEBUG_ATTRIBUTE, "\tService #%d:\n", i);
-        DebugFormat(DEBUG_ATTRIBUTE, "\t\tIPProtocol: %d\tPort: %d\tProtocol %d\n",
-            app->ipproto, app->port, app->protocol);
+        DebugFormat(DEBUG_ATTRIBUTE, "\t\tIPProtocol: %d\tPort: %d\tSnortProtocolId %hu\n",
+            app->ipproto, app->port, app->snort_protocol_id);
     }
     if (i==0)
         DebugMessage(DEBUG_ATTRIBUTE, "\t\tNone\n");
@@ -214,8 +214,8 @@ static void PrintHostAttributeEntry(HostAttributeEntry* host)
     for (i=0, app = host->clients; app; app = app->next,i++)
     {
         DebugFormat(DEBUG_ATTRIBUTE, "\tClient #%d:\n", i);
-        DebugFormat(DEBUG_ATTRIBUTE, "\t\tIPProtocol: %d\tProtocol %d\n",
-            app->ipproto, app->protocol);
+        DebugFormat(DEBUG_ATTRIBUTE, "\t\tIPProtocol: %d\tSnortProtocolId %hu\n",
+            app->ipproto, app->snort_protocol_id);
 
         if (app->fields & APPLICATION_ENTRY_PORT)
         {
@@ -347,7 +347,7 @@ tTargetBasedConfig* SFAT_Swap()
     return curr_cfg;
 }
 
-void SFAT_UpdateApplicationProtocol(SfIp* ipAddr, uint16_t port, uint16_t protocol, uint16_t id)
+void SFAT_UpdateApplicationProtocol(SfIp* ipAddr, uint16_t port, uint16_t protocol, SnortProtocolId snort_protocol_id)
 {
     HostAttributeEntry* host_entry;
     ApplicationEntry* service;
@@ -394,11 +394,11 @@ void SFAT_UpdateApplicationProtocol(SfIp* ipAddr, uint16_t port, uint16_t protoc
         service->ipproto = protocol;
         service->next = host_entry->services;
         host_entry->services = service;
-        service->protocol = id;
+        service->snort_protocol_id = snort_protocol_id;
     }
-    else if (service->protocol != id)
+    else if (service->snort_protocol_id != snort_protocol_id)
     {
-        service->protocol = id;
+        service->snort_protocol_id = snort_protocol_id;
     }
 }
 

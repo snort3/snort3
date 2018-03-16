@@ -41,7 +41,7 @@ private:
     int rpc_tcp_validate(AppIdDiscoveryArgs&);
     int validate_packet(const uint8_t* data, uint16_t size, int dir, AppIdSession&,
         snort::Packet*, ServiceRPCData*, const char** pname, uint32_t* program);
-    int16_t app_id = 0;
+    SnortProtocolId sunrpc_snort_protocol_id = UNKNOWN_PROTOCOL_ID;
 };
 #endif
 

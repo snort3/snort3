@@ -32,6 +32,8 @@
 #ifndef FT_MAIN_H
 #define FT_MAIN_H
 
+#include "target_based/snort_protocols.h"
+
 #include "ftpp_ui_config.h"
 
 #define BUF_SIZE 1024
@@ -39,11 +41,10 @@
 namespace snort
 {
 struct Packet;
-struct ProfileStats;
 struct SnortConfig;
 }
 
-extern int16_t ftp_data_app_id;
+extern SnortProtocolId ftp_data_snort_protocol_id;
 
 void do_detection(snort::Packet*);
 

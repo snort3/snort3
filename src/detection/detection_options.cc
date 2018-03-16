@@ -419,16 +419,16 @@ int detection_option_node_evaluate(
             // Add the match for this otn to the queue.
         {
             OptTreeNode* otn = (OptTreeNode*)node->option_data;
-            int16_t app_proto = p->get_application_protocol();
+            SnortProtocolId snort_protocol_id = p->get_snort_protocol_id();
             int check_ports = 1;
 
-            if ( app_proto and ((OtnxMatchData*)(pomd))->check_ports != 2 )
+            if ( snort_protocol_id != UNKNOWN_PROTOCOL_ID and ((OtnxMatchData*)(pomd))->check_ports != 2 )
             {
                 auto sig_info = otn->sigInfo;
 
                 for ( unsigned svc_idx = 0; svc_idx < sig_info.num_services; ++svc_idx )
                 {
-                    if ( app_proto == sig_info.services[svc_idx].service_ordinal )
+                    if ( snort_protocol_id == sig_info.services[svc_idx].snort_protocol_id )
                     {
                         check_ports = 0;
                         break;  // out of for
@@ -440,10 +440,10 @@ int detection_option_node_evaluate(
                     // none of the services match
                     DebugFormat(DEBUG_DETECT,
                         "[**] SID %u not matched because of service mismatch (%d!=%d [**]\n",
-                        sig_info.sid, app_proto, sig_info.services[0].service_ordinal);
+                        sig_info.sid, snort_protocol_id, sig_info.services[0].snort_protocol_id);
                     trace_logf(detection, TRACE_RULE_EVAL,
                         "SID %u not matched because of service mismatch %d!=%d \n",
-                        sig_info.sid, app_proto, sig_info.services[0].service_ordinal);
+                        sig_info.sid, snort_protocol_id, sig_info.services[0].snort_protocol_id);
                     break;  // out of case
                 }
             }

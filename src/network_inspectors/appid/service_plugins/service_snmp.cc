@@ -95,8 +95,6 @@ SnmpServiceDetector::SnmpServiceDetector(ServiceDiscovery* sd)
     proto = IpProtocol::UDP;
     detectorType = DETECTOR_TYPE_DECODER;
 
-    app_id = AppInfoManager::get_instance().add_appid_protocol_reference("snmp");
-
     udp_patterns =
     {
         { SNMP_PATTERN_2, sizeof(SNMP_PATTERN_2), 2, 0, 0 },
@@ -474,10 +472,13 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
         sd->state = SNMP_STATE_RESPONSE;
 
         /*adding expected connection in case the server doesn't send from 161*/
+        if(snmp_snort_protocol_id == UNKNOWN_PROTOCOL_ID)
+            snmp_snort_protocol_id = snort::SnortConfig::get_conf()->proto_ref->find("snmp");
+
         const snort::SfIp* dip = args.pkt->ptrs.ip_api.get_dst();
         const snort::SfIp* sip = args.pkt->ptrs.ip_api.get_src();
         AppIdSession* pf = AppIdSession::create_future_session(args.pkt, dip, 0, sip,
-            args.pkt->ptrs.sp, args.asd.protocol, app_id, 0, handler->get_inspector());
+            args.pkt->ptrs.sp, args.asd.protocol, snmp_snort_protocol_id, 0, handler->get_inspector());
         if (pf)
         {
             tmp_sd = (ServiceSNMPData*)snort_calloc(sizeof(ServiceSNMPData));

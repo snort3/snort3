@@ -1145,40 +1145,40 @@ static inline void fpEvalHeaderUdp(Packet* p, OtnxMatchData* omd)
         fpEvalHeaderSW(any, p, 1, 0, 0, omd);
 }
 
-static inline bool fpEvalHeaderSvc(Packet* p, OtnxMatchData* omd, int proto)
+static inline bool fpEvalHeaderSvc(Packet* p, OtnxMatchData* omd, SnortProtocolId proto_id)
 {
     PortGroup* svc = nullptr, * file = nullptr;
 
-    int16_t proto_ordinal = p->get_application_protocol();
+    SnortProtocolId snort_protocol_id = p->get_snort_protocol_id();
 
-    DebugFormat(DEBUG_ATTRIBUTE, "proto_ordinal=%d\n", proto_ordinal);
+    DebugFormat(DEBUG_ATTRIBUTE, "snort_protocol_id=%hu\n", snort_protocol_id);
 
-    if (proto_ordinal > 0)
+    if (snort_protocol_id != UNKNOWN_PROTOCOL_ID and snort_protocol_id != INVALID_PROTOCOL_ID)
     {
         if (p->is_from_server()) /* to cli */
         {
             DebugMessage(DEBUG_ATTRIBUTE, "pkt_from_server\n");
 
-            svc = SnortConfig::get_conf()->sopgTable->get_port_group(proto, false, proto_ordinal);
-            file = SnortConfig::get_conf()->sopgTable->get_port_group(proto, false, SNORT_PROTO_FILE);
+            svc = SnortConfig::get_conf()->sopgTable->get_port_group(proto_id, false, snort_protocol_id);
+            file = SnortConfig::get_conf()->sopgTable->get_port_group(proto_id, false, SNORT_PROTO_FILE);
         }
 
         if (p->is_from_client()) /* to srv */
         {
             DebugMessage(DEBUG_ATTRIBUTE, "pkt_from_client\n");
 
-            svc = SnortConfig::get_conf()->sopgTable->get_port_group(proto, true, proto_ordinal);
-            file = SnortConfig::get_conf()->sopgTable->get_port_group(proto, true, SNORT_PROTO_FILE);
+            svc = SnortConfig::get_conf()->sopgTable->get_port_group(proto_id, true, snort_protocol_id);
+            file = SnortConfig::get_conf()->sopgTable->get_port_group(proto_id, true, SNORT_PROTO_FILE);
         }
 
         DebugFormat(DEBUG_ATTRIBUTE,
             "fpEvalHeaderSvc:targetbased-ordinal-lookup: "
-            "sport=%d, dport=%d, proto_ordinal=%d, proto=%d, src:%p, "
-            "file:%p\n",p->ptrs.sp,p->ptrs.dp,proto_ordinal,proto,(void*)svc,(void*)file);
+            "sport=%d, dport=%d, snort_protocol_id=%hu, proto_id=%d, src:%p, "
+            "file:%p\n",p->ptrs.sp,p->ptrs.dp,snort_protocol_id,proto_id,(void*)svc,(void*)file);
     }
     // FIXIT-P put alert service rules with file data fp in alert file group and
     // verify ports and service during rule eval to avoid searching file data 2x.
-    int check_ports = (proto == SNORT_PROTO_USER) ? 2 : 1;
+    int check_ports = (proto_id == SNORT_PROTO_USER) ? 2 : 1;
 
     if ( file )
         fpEvalHeaderSW(file, p, check_ports, 0, 2, omd);
@@ -1277,12 +1277,12 @@ static int fpEvalPacket(Packet* p)
         // use ports if we don't know service or don't have rules
         else if ( p->proto_bits & PROTO_BIT__TCP )
         {
-            if ( !p->get_application_protocol() or !fpEvalHeaderSvc(p, omd, SNORT_PROTO_TCP) )
+            if ( p->get_snort_protocol_id() == UNKNOWN_PROTOCOL_ID or !fpEvalHeaderSvc(p, omd, SNORT_PROTO_TCP) )
                 fpEvalHeaderTcp(p, omd);
         }
         else if ( p->proto_bits & PROTO_BIT__UDP )
         {
-            if ( !p->get_application_protocol() or !fpEvalHeaderSvc(p, omd, SNORT_PROTO_UDP) )
+            if ( p->get_snort_protocol_id() == UNKNOWN_PROTOCOL_ID or !fpEvalHeaderSvc(p, omd, SNORT_PROTO_UDP) )
                 fpEvalHeaderUdp(p, omd);
         }
         break;

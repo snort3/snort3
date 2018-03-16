@@ -120,7 +120,7 @@ AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto, 
     asd->flow = p->flow;
     asd->stats.first_packet_second = p->pkth->ts.tv_sec;
     asd->set_session_logging_state(p, direction);
-    asd->snort_id = snortId_for_unsynchronized;
+    asd->snort_protocol_id = snortId_for_unsynchronized;
     p->flow->set_flow_data(asd);
     return asd;
 }
@@ -208,7 +208,7 @@ static inline PktType get_pkt_type_from_ip_proto(IpProtocol proto)
 
 AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const SfIp* cliIp,
     uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol proto,
-    int16_t app_id, int /*flags*/, AppIdInspector& inspector)
+    SnortProtocolId snort_protocol_id, int /*flags*/, AppIdInspector& inspector)
 {
     char src_ip[INET6_ADDRSTRLEN];
     char dst_ip[INET6_ADDRSTRLEN];
@@ -221,8 +221,8 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
     AppIdSession* asd = new AppIdSession(proto, cliIp, 0, inspector);
     asd->common.policyId = asd->config->appIdPolicyId;
 
-    if ( Stream::set_application_protocol_id_expected(ctrlPkt, type, proto, cliIp, cliPort, srvIp,
-        srvPort, app_id, asd) )
+    if ( Stream::set_snort_protocol_id_expected(ctrlPkt, type, proto, cliIp, cliPort, srvIp,
+        srvPort, snort_protocol_id, asd) )
     {
         sfip_ntop(cliIp, src_ip, sizeof(src_ip));
         sfip_ntop(srvIp, dst_ip, sizeof(dst_ip));
@@ -292,7 +292,7 @@ void AppIdSession::reinit_session_data()
         APPID_SESSION_SSL_SESSION|APPID_SESSION_HTTP_SESSION | APPID_SESSION_APP_REINSPECT);
 }
 
-void AppIdSession::sync_with_snort_id(AppId newAppId, Packet* p)
+void AppIdSession::sync_with_snort_protocol_id(AppId newAppId, Packet* p)
 {
     if (newAppId  > APP_ID_NONE && newAppId < SF_APPID_MAX)
     {
@@ -330,21 +330,21 @@ void AppIdSession::sync_with_snort_id(AppId newAppId, Packet* p)
         AppInfoTableEntry* entry = app_info_mgr->get_app_info_entry(newAppId);
         if ( entry )
         {
-            int16_t tempSnortId = entry->snortId;
+            SnortProtocolId tmp_snort_protocol_id = entry->snort_protocol_id;
             // A particular APP_ID_xxx may not be assigned a service_snort_key value
-            // in the rna_app.yaml file entry; so ignore the tempSnortId == 0 case.
-            if ( tempSnortId == 0 && (newAppId == APP_ID_HTTP2))
-                tempSnortId = snortId_for_http2;
+            // in the rna_app.yaml file entry; so ignore the snort_protocol_id == UNKNOWN_PROTOCOL_ID case.
+            if ( tmp_snort_protocol_id == UNKNOWN_PROTOCOL_ID && (newAppId == APP_ID_HTTP2))
+                tmp_snort_protocol_id = snortId_for_http2;
 
-            if ( tempSnortId != snort_id )
+            if ( tmp_snort_protocol_id != snort_protocol_id )
             {
-                snort_id = tempSnortId;
+                snort_protocol_id = tmp_snort_protocol_id;
                 if (session_logging_enabled)
-                    if (tempSnortId == snortId_for_http2)
+                    if (tmp_snort_protocol_id == snortId_for_http2)
                         LogMessage("AppIdDbg %s Telling Snort that it's HTTP/2\n",
                             session_logging_id);
 
-                p->flow->ssn_state.application_protocol = tempSnortId;
+                p->flow->ssn_state.snort_protocol_id = tmp_snort_protocol_id;
             }
         }
     }

@@ -26,14 +26,18 @@
 #include "host_tracker/host_cache.h"
 #include "host_tracker/host_tracker_module.h"
 #include "target_based/snort_protocols.h"
+#include "main/snort_config.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
 using namespace snort;
 
-//  Fake to avoid bringing in a ton of dependencies.
-int16_t ProtocolReference::add(const char* protocol)
+SnortConfig* SnortConfig::get_conf() { return nullptr; }
+
+SnortProtocolId ProtocolReference::find(char const*) { return 0; }
+
+SnortProtocolId ProtocolReference::add(const char* protocol)
 {
     if (!strcmp("servicename", protocol))
         return 3;

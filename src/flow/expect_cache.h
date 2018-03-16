@@ -62,6 +62,7 @@
 //-------------------------------------------------------------------------
 #include <vector>
 #include "flow/flow_key.h"
+#include "target_based/snort_protocols.h"
 
 struct ExpectNode;
 
@@ -97,7 +98,7 @@ public:
     int add_flow(const snort::Packet *ctrlPkt, PktType, IpProtocol,
         const snort::SfIp* cliIP, uint16_t cliPort,
         const snort::SfIp* srvIP, uint16_t srvPort,
-        char direction, snort::FlowData*, int16_t appId = 0);
+        char direction, snort::FlowData*, SnortProtocolId snort_protocol_id = UNKNOWN_PROTOCOL_ID);
 
     bool is_expected(snort::Packet*);
     bool check(snort::Packet*, snort::Flow*);

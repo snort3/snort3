@@ -30,7 +30,7 @@
 bool hasProtocol(const HostAttributeEntry*, int ipprotocol, int protocol, int application);
 #endif
 
-int getApplicationProtocolId(
+SnortProtocolId get_snort_protocol_id_from_host_table(
     const HostAttributeEntry*, int ipprotocol, uint16_t port, char direction);
 
 #endif

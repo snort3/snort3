@@ -28,6 +28,7 @@
 
 #include "framework/base_api.h"
 #include "main/thread.h"
+#include "target_based/snort_protocols.h"
 
 class Session;
 
@@ -35,8 +36,6 @@ namespace snort
 {
 struct SnortConfig;
 struct Packet;
-
-typedef int16_t ServiceId;
 
 // this is the current version of the api
 #define INSAPI_VERSION ((BASE_API_VERSION << 16) | 0)
@@ -52,13 +51,11 @@ struct InspectionBuffer
     unsigned len;
 };
 
-
 struct InspectApi;
 
 //-------------------------------------------------------------------------
 // api for class
 //-------------------------------------------------------------------------
-
 
 class SO_PUBLIC Inspector
 {
@@ -102,8 +99,12 @@ public:
 
     bool is_inactive();
 
-    void set_service(ServiceId id) { srv_id = id; }
-    ServiceId get_service() { return srv_id; }
+    void set_service(SnortProtocolId snort_protocol_id_param)
+    {
+        snort_protocol_id = snort_protocol_id_param;
+    }
+
+    SnortProtocolId get_service() { return snort_protocol_id; }
 
     // for well known buffers
     // well known buffers may be included among generic below,
@@ -144,7 +145,7 @@ protected:
 private:
     const InspectApi* api;
     std::atomic_uint* ref_count;
-    ServiceId srv_id;
+    SnortProtocolId snort_protocol_id;
 };
 
 template <typename T>
@@ -206,5 +207,6 @@ struct InspectApi
 inline const char* Inspector::get_name()
 { return api->base.name; }
 }
+
 #endif
 

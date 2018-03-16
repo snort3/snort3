@@ -191,15 +191,15 @@ static void ServiceMapAddOtnRaw(GHash* table, const char* servicename, OptTreeNo
  *  service name.
  */
 static int ServiceMapAddOtn(
-    srmm_table_t* srmm, int proto, const char* servicename, OptTreeNode* otn)
+    srmm_table_t* srmm, SnortProtocolId proto_id, const char* servicename, OptTreeNode* otn)
 {
     assert(servicename and otn);
 
-    if ( proto > SNORT_PROTO_USER )
-        proto = SNORT_PROTO_USER;
+    if ( proto_id > SNORT_PROTO_USER )
+        proto_id = SNORT_PROTO_USER;
 
-    GHash* to_srv = srmm->to_srv[proto];
-    GHash* to_cli = srmm->to_cli[proto];
+    GHash* to_srv = srmm->to_srv[proto_id];
+    GHash* to_cli = srmm->to_cli[proto_id];
 
     if ( !OtnFlowFromClient(otn) )
         ServiceMapAddOtnRaw(to_cli, servicename, otn);
@@ -210,7 +210,7 @@ static int ServiceMapAddOtn(
     return 0;
 }
 
-void fpPrintServicePortGroupSummary(SnortConfig* sc, srmm_table_t* srvc_pg_map)
+void fpPrintServicePortGroupSummary(SnortConfig* sc)
 {
     LogMessage("+--------------------------------\n");
     LogMessage("| Service-PortGroup Table Summary \n");
@@ -218,10 +218,10 @@ void fpPrintServicePortGroupSummary(SnortConfig* sc, srmm_table_t* srvc_pg_map)
 
     for ( int i = SNORT_PROTO_IP; i < SNORT_PROTO_MAX; i++ )
     {
-        if ( unsigned n = srvc_pg_map->to_srv[i]->count )
+        if ( unsigned n = sc->spgmmTable->to_srv[i]->count )
             LogMessage("| %s to server   : %d services\n", sc->proto_ref->get_name(i), n);
 
-        if ( unsigned n = srvc_pg_map->to_cli[i]->count )
+        if ( unsigned n = sc->spgmmTable->to_cli[i]->count )
             LogMessage("| %s to client   : %d services\n", sc->proto_ref->get_name(i), n);
     }
 
@@ -265,7 +265,7 @@ int fpCreateServiceMaps(SnortConfig* sc)
                 {
                     const char* svc = otn->sigInfo.services[svc_idx].service;
 
-                    if ( ServiceMapAddOtn(sc->srmmTable, rtn->proto, svc, otn) )
+                    if ( ServiceMapAddOtn(sc->srmmTable, rtn->snort_protocol_id, svc, otn) )
                         return -1;
                 }
             }
@@ -293,16 +293,16 @@ sopg_table_t::sopg_table_t(unsigned n)
 }
 
 PortGroup* sopg_table_t::get_port_group(
-    int proto, bool c2s, int16_t proto_ordinal)
+    SnortProtocolId proto_id, bool c2s, SnortProtocolId snort_protocol_id)
 {
-    assert(proto < SNORT_PROTO_MAX);
+    assert(proto_id < SNORT_PROTO_MAX);
 
-    PortGroupVector& v = c2s ? to_srv[proto] : to_cli[proto];
+    PortGroupVector& v = c2s ? to_srv[proto_id] : to_cli[proto_id];
 
-    if ( (unsigned)proto_ordinal >= v.size() )
+    if ( snort_protocol_id >= v.size() )
         return nullptr;
 
-    return v[proto_ordinal];
+    return v[snort_protocol_id];
 }
 
 bool sopg_table_t::set_user_mode()

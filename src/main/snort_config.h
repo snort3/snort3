@@ -159,8 +159,12 @@ struct SnortState
 
 struct SnortConfig
 {
+private:
+    void init(const SnortConfig* const, ProtocolReference*);
+
 public:
-    SnortConfig(SnortConfig* other_conf = nullptr );
+    SnortConfig(const SnortConfig* const other_conf = nullptr);
+    SnortConfig(ProtocolReference* protocol_reference);
     ~SnortConfig();
 
     SnortConfig(const SnortConfig&) = delete;
@@ -170,7 +174,7 @@ public:
     bool verify();
 
     void merge(SnortConfig*);
-    void clone(SnortConfig*);
+    void clone(const SnortConfig* const);
 
 public:
     //------------------------------------------------------

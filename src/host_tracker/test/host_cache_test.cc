@@ -25,20 +25,34 @@
 
 #include "host_tracker/host_cache.h"
 
+#include "main/snort_config.h"
+
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
 using namespace snort;
 
-//  Fake AddProtocolReference to avoid bringing in a ton of dependencies.
-int16_t AddProtocolReference(const char* protocol)
+SnortConfig s_conf;
+THREAD_LOCAL SnortConfig* snort_conf = &s_conf;
+
+SnortConfig::SnortConfig(const SnortConfig* const) { }
+
+SnortConfig::~SnortConfig() { } 
+
+SnortConfig* SnortConfig::get_conf()
+{ return snort_conf; }
+
+SnortProtocolId ProtocolReference::find(char const*) { return 0; }
+
+SnortProtocolId ProtocolReference::add(const char* protocol)
 {
+    if (!strcmp("servicename", protocol))
+        return 3;
     if (!strcmp("tcp", protocol))
         return 2;
     return 1;
 }
 
-// Ditto for snort_strdup()
 char* snort_strdup(const char* str)
 {
     return strdup(str);

@@ -160,10 +160,10 @@ public:
     static bool missed_packets(Flow*, uint8_t dir);
 
     // Get the protocol identifier from a stream
-    static int16_t get_application_protocol_id(Flow*);
+    static SnortProtocolId get_snort_protocol_id(Flow*);
 
     // Set the protocol identifier for a stream
-    static int16_t set_application_protocol_id(Flow*, int16_t appId);
+    static SnortProtocolId set_snort_protocol_id(Flow*, SnortProtocolId);
 
     // initialize response count and expiration time
     static void init_active_response(const Packet*, Flow*);
@@ -173,9 +173,9 @@ public:
 
     // Turn off inspection for potential session. Adds session identifiers to a hash table.
     // TCP only.
-    static int set_application_protocol_id_expected(
+    static int set_snort_protocol_id_expected(
         const Packet* ctrlPkt, PktType, IpProtocol, const snort::SfIp* srcIP, uint16_t srcPort,
-        const snort::SfIp* dstIP, uint16_t dstPort, int16_t appId, FlowData*);
+        const snort::SfIp* dstIP, uint16_t dstPort, SnortProtocolId, FlowData*);
 
     // Get pointer to application data for a flow based on the lookup tuples for cases where
     // Snort does not have an active packet that is relevant.
@@ -206,7 +206,7 @@ public:
 
     static void update_direction(Flow*, char dir, const snort::SfIp* ip, uint16_t port);
 
-    static void set_application_protocol_id(
+    static void set_snort_protocol_id(
         Flow*, const HostAttributeEntry*, int direction);
 
     static bool is_midstream(Flow* flow)

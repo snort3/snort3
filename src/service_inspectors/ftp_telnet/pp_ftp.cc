@@ -1077,11 +1077,11 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                                     session->datassn = ftpdata;
 
                                 /* Call into Streams to mark data channel as ftp-data */
-                                result = Stream::set_application_protocol_id_expected(
+                                result = Stream::set_snort_protocol_id_expected(
                                     p, PktType::TCP, IpProtocol::TCP,
                                     &session->clientIP, session->clientPort,
                                     &session->serverIP, session->serverPort,
-                                    ftp_data_app_id, fd);
+                                    ftp_data_snort_protocol_id, fd);
 
                                 if (result < 0)
                                 {
@@ -1155,11 +1155,11 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                                 session->datassn = ftpdata;
 
                             /* Call into Streams to mark data channel as ftp-data */
-                            result = Stream::set_application_protocol_id_expected(
+                            result = Stream::set_snort_protocol_id_expected(
                                 p, PktType::TCP, IpProtocol::TCP,
                                 &session->clientIP, session->clientPort,
                                 &session->serverIP, session->serverPort,
-                                ftp_data_app_id, fd);
+                                ftp_data_snort_protocol_id, fd);
 
                             if (result < 0)
                             {

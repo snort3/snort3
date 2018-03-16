@@ -26,6 +26,7 @@
 #include "detection/rule_option_types.h"
 #include "framework/base_api.h"
 #include "main/snort_types.h"
+#include "target_based/snort_protocols.h"
 
 //-------------------------------------------------------------------------
 // api for class
@@ -95,10 +96,10 @@ public:
     { return CAT_NONE; }
 
     // for fast-pattern options like content
-    virtual PatternMatchData* get_pattern(int /*proto*/, RuleDirection = RULE_WO_DIR)
+    virtual PatternMatchData* get_pattern(SnortProtocolId, RuleDirection = RULE_WO_DIR)
     { return nullptr; }
 
-    virtual struct PatternMatchData* get_alternate_pattern()
+    virtual PatternMatchData* get_alternate_pattern()
     { return nullptr; }
 
     static int eval(void* v, Cursor& c, Packet* p)
@@ -128,7 +129,7 @@ enum RuleOptType
 
 typedef void (* IpsOptFunc)(SnortConfig*);
 
-typedef IpsOption* (* IpsNewFunc)(class Module*, struct OptTreeNode*);
+typedef IpsOption* (* IpsNewFunc)(Module*, OptTreeNode*);
 typedef void (* IpsDelFunc)(IpsOption*);
 
 struct IpsApi

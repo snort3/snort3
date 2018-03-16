@@ -679,7 +679,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p, int di
             APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE |
             APPID_SESSION_IGNORE_HOST) == APPID_SESSION_SERVICE_DETECTED)
         {
-            asd.sync_with_snort_id(asd.service.get_id(), p);
+            asd.sync_with_snort_protocol_id(asd.service.get_id(), p);
         }
     }
 

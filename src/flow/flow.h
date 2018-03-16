@@ -31,6 +31,7 @@
 #include "framework/inspector.h"
 #include "protocols/layer.h"
 #include "sfip/sf_ip.h"
+#include "target_based/snort_protocols.h"
 
 #define SSNFLAG_SEEN_CLIENT         0x00000001
 #define SSNFLAG_SEEN_SENDER         0x00000001
@@ -134,7 +135,7 @@ struct LwState
     uint32_t session_flags;
 
     int16_t ipprotocol;
-    int16_t application_protocol;
+    SnortProtocolId snort_protocol_id;
 
     char direction;
     char ignore_direction;
@@ -379,5 +380,6 @@ inline bool Flow::is_detection_enabled(bool to_server)
     return !(ssn_state.session_flags & SSNFLAG_NO_DETECT_TO_CLIENT);
 }
 }
+
 #endif
 

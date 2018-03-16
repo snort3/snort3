@@ -215,7 +215,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
     EvalStatus eval(Cursor&, Packet*) override;
-    PatternMatchData* get_pattern(int proto, RuleDirection direction) override;
+    PatternMatchData* get_pattern(SnortProtocolId snort_protocol_id, RuleDirection direction) override;
     PatternMatchData* get_alternate_pattern() override;
     ~Dce2IfaceOption() override;
 
@@ -267,14 +267,14 @@ static char* make_pattern_buffer( const Uuid &uuid, DceRpcBoFlag type )
     return pattern_buf;
 }
 
-PatternMatchData* Dce2IfaceOption::get_pattern(int proto, RuleDirection direction)
+PatternMatchData* Dce2IfaceOption::get_pattern(SnortProtocolId snort_protocol_id, RuleDirection direction)
 {
     if (pmd.pattern_buf)
     {
         return &pmd;
     }
 
-    if (proto == SNORT_PROTO_TCP)
+    if (snort_protocol_id == SNORT_PROTO_TCP)
     {
         const char client_fp[] = "\x05\x00\x00";
         const char server_fp[] = "\x05\x00\x02";
@@ -302,7 +302,7 @@ PatternMatchData* Dce2IfaceOption::get_pattern(int proto, RuleDirection directio
         }
         return &pmd;
     }
-    else if (proto == SNORT_PROTO_UDP)
+    else if (snort_protocol_id == SNORT_PROTO_UDP)
     {
         pmd.pattern_buf = make_pattern_buffer( uuid, DCERPC_BO_FLAG__LITTLE_ENDIAN );
         pmd.pattern_size = sizeof(Uuid);

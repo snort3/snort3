@@ -255,7 +255,7 @@ static OptTreeNode* OptTreeNode_Search(uint32_t, uint32_t sid)
         OptTreeNode* otn = (OptTreeNode*)hashNode->data;
         RuleTreeNode* rtn = getRuntimeRtnFromOtn(otn);
 
-        if ( rtn and is_network_protocol(rtn->proto) )
+        if ( rtn and is_network_protocol(rtn->snort_protocol_id) )
         {
             if (otn->sigInfo.sid == sid)
                 return otn;

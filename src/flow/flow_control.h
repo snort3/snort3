@@ -90,7 +90,7 @@ public:
         const snort::Packet* ctrlPkt, PktType, IpProtocol,
         const snort::SfIp *srcIP, uint16_t srcPort,
         const snort::SfIp *dstIP, uint16_t dstPort,
-        int16_t appId, snort::FlowData*);
+        SnortProtocolId snort_protocol_id, snort::FlowData*);
 
     PegCount get_flows(PktType);
     PegCount get_total_prunes(PktType) const;

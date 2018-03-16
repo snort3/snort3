@@ -23,6 +23,7 @@
 #define SFTARGET_DATA_H
 
 #include "sfip/sf_cidr.h"
+#include "target_based/snort_protocols.h"
 
 #define SFAT_OK 0
 #define SFAT_ERROR (-1)
@@ -46,7 +47,7 @@ struct ApplicationEntry
 
     uint16_t port;
     uint16_t ipproto;
-    uint16_t protocol;
+    SnortProtocolId snort_protocol_id;
 
     uint8_t fields;
 };

@@ -29,6 +29,8 @@
 #include "app_info_table.h"
 #include "protocols/packet.h"
 
+using namespace snort;
+
 static const char SIP_REGISTER_BANNER[] = "REGISTER ";
 static const char SIP_INVITE_BANNER[] = "INVITE ";
 static const char SIP_CANCEL_BANNER[] = "CANCEL ";
@@ -327,10 +329,10 @@ static int get_sip_client_app(void* patternMatcher, const char* pattern, uint32_
     return 1;
 }
 
-void SipServiceDetector::createRtpFlow(AppIdSession& asd, const snort::Packet* pkt,
-    const snort::SfIp* cliIp, uint16_t cliPort, const snort::SfIp* srvIp, uint16_t srvPort,
-    IpProtocol proto, int16_t app_id)
+void SipServiceDetector::createRtpFlow(AppIdSession& asd, const Packet* pkt, const SfIp* cliIp,
+    uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol proto, int16_t app_id)
 {
+    //  FIXIT-H: Passing app_id instead of SnortProtocolId to create_future_session is incorrect. We need to look up snort_protocol_id.
     AppIdSession* fp = AppIdSession::create_future_session(pkt, cliIp, cliPort, srvIp, srvPort,
         proto, app_id, APPID_EARLY_SESSION_FLAG_FW_RULE, handler->get_inspector());
     if ( fp )
@@ -464,17 +466,17 @@ int SipServiceDetector::validate(AppIdDiscoveryArgs& args)
 THREAD_LOCAL SipUdpClientDetector* SipEventHandler::client = nullptr;
 THREAD_LOCAL SipServiceDetector* SipEventHandler::service = nullptr;
 
-void SipEventHandler::handle(snort::DataEvent& event, snort::Flow* flow)
+void SipEventHandler::handle(DataEvent& event, Flow* flow)
 {
     SipEvent& sip_event = (SipEvent&)event;
     AppIdSession* asd = nullptr;
 
     if ( flow )
-        asd = snort::appid_api.get_appid_session(*flow);
+        asd = appid_api.get_appid_session(*flow);
 
     if ( !asd )
     {
-        const snort::Packet* p = sip_event.get_packet();
+        const Packet* p = sip_event.get_packet();
         IpProtocol protocol = p->is_tcp() ? IpProtocol::TCP : IpProtocol::UDP;
         int direction = p->is_from_client() ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
         asd = AppIdSession::allocate_session(p, protocol, direction,

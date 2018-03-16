@@ -103,7 +103,7 @@ bool hasProtocol(const HostAttributeEntry* host_entry,
 }
 #endif
 
-int getApplicationProtocolId(const HostAttributeEntry* host_entry,
+SnortProtocolId get_snort_protocol_id_from_host_table(const HostAttributeEntry* host_entry,
     int ipprotocol,
     uint16_t port,
     char direction)
@@ -121,7 +121,7 @@ int getApplicationProtocolId(const HostAttributeEntry* host_entry,
             {
                 if ((uint16_t)application->port == port)
                 {
-                    return application->protocol;
+                    return application->snort_protocol_id;
                 }
             }
         }

@@ -27,6 +27,8 @@
 #include <cstdint>
 #include <cstdio>
 
+#include "target_based/snort_protocols.h"
+
 namespace snort
 {
 struct SnortConfig;
@@ -74,7 +76,7 @@ ClassType* ClassTypeLookupByType(snort::SnortConfig*, const char*);
 struct SignatureServiceInfo
 {
     char* service;
-    int16_t service_ordinal;
+    SnortProtocolId snort_protocol_id;
 };
 
 struct OtnKey

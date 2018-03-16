@@ -52,7 +52,7 @@ void ServiceMapFree(srmm_table_t*);
 srmm_table_t* ServicePortGroupMapNew();
 void ServicePortGroupMapFree(srmm_table_t*);
 
-void fpPrintServicePortGroupSummary(snort::SnortConfig*, srmm_table_t*);
+void fpPrintServicePortGroupSummary(snort::SnortConfig*);
 int fpCreateServiceMaps(snort::SnortConfig*);
 
 //  Service/Protocol Ordinal To PortGroup table
@@ -62,7 +62,7 @@ struct sopg_table_t
 {
     sopg_table_t(unsigned size);
     bool set_user_mode();
-    PortGroup* get_port_group(int proto, bool c2s, int16_t proto_ordinal);
+    PortGroup* get_port_group(SnortProtocolId proto_id, bool c2s, SnortProtocolId snort_protocol_id);
 
     PortGroupVector to_srv[SNORT_PROTO_MAX];
     PortGroupVector to_cli[SNORT_PROTO_MAX];

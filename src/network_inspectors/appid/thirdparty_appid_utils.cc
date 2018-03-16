@@ -902,7 +902,7 @@ bool do_third_party_discovery(AppIdSession& asd, IpProtocol protocol, const SfIp
             }
 
             if (asd.tp_app_id == APP_ID_SSL &&
-                (Stream::get_application_protocol_id(p->flow) == snortId_for_ftp_data))
+                (Stream::get_snort_protocol_id(p->flow) == snortId_for_ftp_data))
             {
                 //  If we see SSL on an FTP data channel set tpAppId back
                 //  to APP_ID_NONE so the FTP preprocessor picks up the flow.
@@ -995,7 +995,7 @@ bool do_third_party_discovery(AppIdSession& asd, IpProtocol protocol, const SfIp
                     snort_app_id = asd.tp_app_id;
                 }
 
-                asd.sync_with_snort_id(snort_app_id, p);
+                asd.sync_with_snort_protocol_id(snort_app_id, p);
             }
             else
             {

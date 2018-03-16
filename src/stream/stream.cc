@@ -379,28 +379,28 @@ bool Stream::expected_flow(Flow* f, Packet* p)
 // app proto id foo
 //-------------------------------------------------------------------------
 
-int Stream::set_application_protocol_id_expected(
+int Stream::set_snort_protocol_id_expected(
     const Packet* ctrlPkt, PktType type, IpProtocol ip_proto,
     const SfIp* srcIP, uint16_t srcPort,
     const SfIp* dstIP, uint16_t dstPort,
-    int16_t appId, FlowData* fd)
+    SnortProtocolId snort_protocol_id, FlowData* fd)
 {
     assert(flow_con);
 
     return flow_con->add_expected(
-        ctrlPkt, type, ip_proto, srcIP, srcPort, dstIP, dstPort, appId, fd);
+        ctrlPkt, type, ip_proto, srcIP, srcPort, dstIP, dstPort, snort_protocol_id, fd);
 }
 
-void Stream::set_application_protocol_id(
+void Stream::set_snort_protocol_id(
     Flow* flow, const HostAttributeEntry* host_entry, int /*direction*/)
 {
-    int16_t application_protocol;
+    SnortProtocolId snort_protocol_id;
 
     if (!flow || !host_entry)
         return;
 
     /* Cool, its already set! */
-    if (flow->ssn_state.application_protocol != 0)
+    if (flow->ssn_state.snort_protocol_id != UNKNOWN_PROTOCOL_ID)
         return;
 
     if (flow->ssn_state.ipprotocol == 0)
@@ -408,7 +408,7 @@ void Stream::set_application_protocol_id(
         set_ip_protocol(flow);
     }
 
-    application_protocol = getApplicationProtocolId(
+    snort_protocol_id = get_snort_protocol_id_from_host_table(
         host_entry, flow->ssn_state.ipprotocol,
         flow->server_port, SFAT_SERVICE);
 
@@ -416,32 +416,32 @@ void Stream::set_application_protocol_id(
     // FIXIT-M from client doesn't imply need to swap
     if (direction == FROM_CLIENT)
     {
-        if ( application_protocol &&
+        if ( snort_protocol_id &&
             (flow->ssn_state.session_flags & SSNFLAG_MIDSTREAM) )
             flow->ssn_state.session_flags |= SSNFLAG_CLIENT_SWAP;
     }
 #endif
 
-    if (flow->ssn_state.application_protocol != application_protocol)
+    if (flow->ssn_state.snort_protocol_id != snort_protocol_id)
     {
-        flow->ssn_state.application_protocol = application_protocol;
+        flow->ssn_state.snort_protocol_id = snort_protocol_id;
     }
 }
 
-int16_t Stream::get_application_protocol_id(Flow* flow)
+SnortProtocolId Stream::get_snort_protocol_id(Flow* flow)
 {
     /* Not caching the source and dest host_entry in the session so we can
      * swap the table out after processing this packet if we need
      * to.  */
 
     if (!flow)
-        return 0;
+        return UNKNOWN_PROTOCOL_ID;
 
-    if ( flow->ssn_state.application_protocol == -1 )
-        return 0;
+    if ( flow->ssn_state.snort_protocol_id == INVALID_PROTOCOL_ID )
+        return UNKNOWN_PROTOCOL_ID;
 
-    if (flow->ssn_state.application_protocol != 0)
-        return flow->ssn_state.application_protocol;
+    if (flow->ssn_state.snort_protocol_id != UNKNOWN_PROTOCOL_ID)
+        return flow->ssn_state.snort_protocol_id;
 
     if (flow->ssn_state.ipprotocol == 0)
     {
@@ -450,32 +450,32 @@ int16_t Stream::get_application_protocol_id(Flow* flow)
 
     if ( HostAttributeEntry* host_entry = SFAT_LookupHostEntryByIP(&flow->server_ip) )
     {
-        set_application_protocol_id(flow, host_entry, FROM_SERVER);
+        set_snort_protocol_id(flow, host_entry, FROM_SERVER);
 
-        if (flow->ssn_state.application_protocol != 0)
-            return flow->ssn_state.application_protocol;
+        if (flow->ssn_state.snort_protocol_id != UNKNOWN_PROTOCOL_ID)
+            return flow->ssn_state.snort_protocol_id;
     }
 
     if ( HostAttributeEntry* host_entry = SFAT_LookupHostEntryByIP(&flow->client_ip) )
     {
-        set_application_protocol_id(flow, host_entry, FROM_CLIENT);
+        set_snort_protocol_id(flow, host_entry, FROM_CLIENT);
 
-        if (flow->ssn_state.application_protocol != 0)
-            return flow->ssn_state.application_protocol;
+        if (flow->ssn_state.snort_protocol_id != UNKNOWN_PROTOCOL_ID)
+            return flow->ssn_state.snort_protocol_id;
     }
 
-    flow->ssn_state.application_protocol = -1;
-    return 0;
+    flow->ssn_state.snort_protocol_id = INVALID_PROTOCOL_ID;
+    return UNKNOWN_PROTOCOL_ID;
 }
 
-int16_t Stream::set_application_protocol_id(Flow* flow, int16_t id)
+SnortProtocolId Stream::set_snort_protocol_id(Flow* flow, SnortProtocolId id)
 {
     if (!flow)
-        return 0;
+        return UNKNOWN_PROTOCOL_ID;
 
-    if (flow->ssn_state.application_protocol != id)
+    if (flow->ssn_state.snort_protocol_id != id)
     {
-        flow->ssn_state.application_protocol = id;
+        flow->ssn_state.snort_protocol_id = id;
     }
 
     if (!flow->ssn_state.ipprotocol)

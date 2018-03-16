@@ -412,7 +412,7 @@ static void parse_file(SnortConfig* sc, Shell* sh)
  ***************************************************************************/
 SnortConfig* ParseSnortConf(const SnortConfig* boot_conf, const char* fname)
 {
-    SnortConfig* sc = new SnortConfig;
+    SnortConfig* sc = new SnortConfig(SnortConfig::get_conf()->proto_ref);
 
     sc->logging_flags = boot_conf->logging_flags;
     VarNode* tmp = boot_conf->var_list;
@@ -776,7 +776,7 @@ RuleTreeNode* deleteRtnFromOtn(OptTreeNode* otn, PolicyId policyId, SnortConfig*
 
 RuleTreeNode* deleteRtnFromOtn(OptTreeNode* otn, SnortConfig* sc)
 {
-    return deleteRtnFromOtn(otn, snort::get_ips_policy()->policy_id, sc);
+    return deleteRtnFromOtn(otn, get_ips_policy()->policy_id, sc);
 }
 
 static uint32_t rtn_hash_func(HashFnc*, const unsigned char *k, int)
@@ -882,7 +882,7 @@ int addRtnToOtn(SnortConfig* sc, OptTreeNode* otn, RuleTreeNode* rtn, PolicyId p
 
 int addRtnToOtn(SnortConfig*sc, OptTreeNode* otn, RuleTreeNode* rtn)
 {
-    return addRtnToOtn(sc, otn, rtn, snort::get_ips_policy()->policy_id);
+    return addRtnToOtn(sc, otn, rtn, get_ips_policy()->policy_id);
 }
 
 void rule_index_map_print_index(int index, char* buf, int bufsize)

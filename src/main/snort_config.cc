@@ -178,15 +178,7 @@ static void init_policies(SnortConfig* sc)
     }
 }
 
-//-------------------------------------------------------------------------
-// public methods
-//-------------------------------------------------------------------------
-
-/* A lot of this initialization can be skipped if not running in IDS mode
- * but the goal is to minimize config checks at run time when running in
- * IDS mode so we keep things simple and enforce that the only difference
- * among run_modes is how we handle packets via the log_func. */
-SnortConfig::SnortConfig(SnortConfig* other_conf)
+void SnortConfig::init(const SnortConfig* const other_conf, ProtocolReference* protocol_reference)
 {
     homenet.clear();
     obfuscation_net.clear();
@@ -214,7 +206,7 @@ SnortConfig::SnortConfig(SnortConfig* other_conf)
         thread_config = new ThreadConfig();
 
         memset(evalOrder, 0, sizeof(evalOrder));
-        proto_ref = new ProtocolReference;
+        proto_ref = new ProtocolReference(protocol_reference);
     }
     else
     {
@@ -225,6 +217,25 @@ SnortConfig::SnortConfig(SnortConfig* other_conf)
     set_inspection_policy(policy_map->get_inspection_policy());
     set_ips_policy(policy_map->get_ips_policy());
     set_network_policy(policy_map->get_network_policy());
+}
+
+//-------------------------------------------------------------------------
+// public methods
+//-------------------------------------------------------------------------
+
+/* A lot of this initialization can be skipped if not running in IDS mode
+ * but the goal is to minimize config checks at run time when running in
+ * IDS mode so we keep things simple and enforce that the only difference
+ * among run_modes is how we handle packets via the log_func. */
+SnortConfig::SnortConfig(const SnortConfig* const other_conf)
+{
+    init(other_conf, nullptr);
+}
+
+//  Copy the ProtocolReference data into the new SnortConfig.
+SnortConfig::SnortConfig(ProtocolReference* protocol_reference)
+{
+    init(nullptr, protocol_reference);
 }
 
 SnortConfig::~SnortConfig()
@@ -335,7 +346,7 @@ void SnortConfig::post_setup()
 #endif
 }
 
-void SnortConfig::clone(SnortConfig* conf)
+void SnortConfig::clone(const SnortConfig* const conf)
 {
     *this = *conf;
     if (conf->homenet.get_family() != 0)
@@ -964,14 +975,14 @@ void SnortConfig::set_alert_mode(const char* val)
         output = val;
 
     output_flags |= OUTPUT_FLAG__ALERTS;
-    snort::Snort::set_main_hook(DetectionEngine::inspect);
+    Snort::set_main_hook(DetectionEngine::inspect);
 }
 
 void SnortConfig::set_log_mode(const char* val)
 {
     if (strcasecmp(val, LOG_NONE) == 0)
     {
-        snort::Snort::set_main_hook(snort_ignore);
+        Snort::set_main_hook(snort_ignore);
         EventManager::enable_logs(false);
     }
     else
@@ -979,7 +990,7 @@ void SnortConfig::set_log_mode(const char* val)
         if ( !strcmp(val, LOG_DUMP) )
             val = LOG_CODECS;
         output = val;
-        snort::Snort::set_main_hook(snort_log);
+        Snort::set_main_hook(snort_log);
     }
 }
 

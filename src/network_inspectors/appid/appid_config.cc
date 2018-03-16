@@ -46,6 +46,8 @@
 #define MAX_DISPLAY_SIZE   65536
 #define MAX_LINE    2048
 
+using namespace snort;
+
 uint32_t app_id_netmasks[33] =
 { 0x00000000, 0x80000000, 0xC0000000, 0xE0000000, 0xF0000000, 0xF8000000, 0xFC000000,
   0xFE000000, 0xFF000000, 0xFF800000, 0xFFC00000, 0xFFE00000, 0xFFF00000, 0xFFF80000,
@@ -59,16 +61,23 @@ struct PortList
     uint16_t port;
 };
 
-int16_t snortId_for_unsynchronized;
-int16_t snortId_for_ftp_data;
-int16_t snortId_for_http2;
+SnortProtocolId snortId_for_unsynchronized;
+SnortProtocolId snortId_for_ftp_data;
+SnortProtocolId snortId_for_http2;
 
-static void map_app_names_to_snort_ids()
+static void map_app_names_to_snort_ids(SnortConfig* sc)
 {
     /* init globals for snortId compares */
-    snortId_for_unsynchronized = snort::SnortConfig::get_conf()->proto_ref->add("unsynchronized");
-    snortId_for_ftp_data = snort::SnortConfig::get_conf()->proto_ref->add("ftp-data");
-    snortId_for_http2    = snort::SnortConfig::get_conf()->proto_ref->add("http2");
+    snortId_for_unsynchronized = sc->proto_ref->add("unsynchronized");
+    snortId_for_ftp_data = sc->proto_ref->add("ftp-data");
+    snortId_for_http2    = sc->proto_ref->add("http2");
+
+    // Have to create SnortProtocolIds during configuration initialization.
+    sc->proto_ref->add("rexec");
+    sc->proto_ref->add("rsh-error");
+    sc->proto_ref->add("snmp");
+    sc->proto_ref->add("sunrpc");
+    sc->proto_ref->add("tftp");
 }
 
 AppIdModuleConfig::AppIdModuleConfig()
@@ -736,16 +745,16 @@ void AppIdConfig::set_safe_search_enforcement(bool enabled)
     mod_config->safe_search_enabled = enabled;
 }
 
-bool AppIdConfig::init_appid( )
+bool AppIdConfig::init_appid(SnortConfig* sc)
 {
-    app_info_mgr.init_appid_info_table(mod_config);
+    app_info_mgr.init_appid_info_table(mod_config, sc);
 #ifdef USE_RNA_CONFIG
     load_analysis_config(mod_config->conf_file, 0, mod_config->instance_id);
 #endif
     read_port_detectors(ODP_PORT_DETECTORS);
     read_port_detectors(CUSTOM_PORT_DETECTORS);
     ThirdPartyAppIDInit(mod_config);
-    map_app_names_to_snort_ids();
+    map_app_names_to_snort_ids(sc);
     return true;
 }
 

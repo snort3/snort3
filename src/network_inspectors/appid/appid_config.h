@@ -26,8 +26,10 @@
 
 #include "application_ids.h"
 #include "framework/decode_data.h"
+#include "main/snort_config.h"
 #include "protocols/ipv6.h"
 #include "sfip/sf_ip.h"
+#include "target_based/snort_protocols.h"
 #include "utils/sflsq.h"
 
 #define APP_ID_MAX_DIRS         16
@@ -40,9 +42,9 @@ class AppInfoManager;
 extern unsigned appIdPolicyId;
 extern uint32_t app_id_netmasks[];
 
-extern int16_t snortId_for_unsynchronized;
-extern int16_t snortId_for_ftp_data;
-extern int16_t snortId_for_http2;
+extern SnortProtocolId snortId_for_unsynchronized;
+extern SnortProtocolId snortId_for_ftp_data;
+extern SnortProtocolId snortId_for_http2;
 
 struct PortExclusion
 {
@@ -112,7 +114,7 @@ public:
     AppIdConfig(AppIdModuleConfig*);
     ~AppIdConfig();
 
-    bool init_appid();
+    bool init_appid(snort::SnortConfig*);
     void cleanup();
     void show();
     void set_safe_search_enforcement(bool enabled);

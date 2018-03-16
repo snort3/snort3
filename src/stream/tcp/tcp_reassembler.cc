@@ -631,13 +631,13 @@ int TcpReassembler::_flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
             else
                 pdu->packet_flags |= ( PKT_REBUILT_STREAM | PKT_STREAM_EST );
 
-            pdu->set_application_protocol(p->get_application_protocol());
+            pdu->set_snort_protocol_id(p->get_snort_protocol_id());
             show_rebuilt_packet(pdu);
             tcpStats.rebuilt_packets++;
             tcpStats.rebuilt_bytes += flushed_bytes;
 
             ProfileExclude profile_exclude(s5TcpFlushPerfStats);
-            snort::Snort::inspect(pdu);
+            Snort::inspect(pdu);
         }
         else
         {
@@ -723,12 +723,12 @@ int TcpReassembler::do_zero_byte_flush(Packet* p, uint32_t pkt_flags)
         pdu->data = sb.data;
         pdu->dsize = sb.length;
         pdu->packet_flags |= ( PKT_REBUILT_STREAM | PKT_STREAM_EST | PKT_PDU_HEAD | PKT_PDU_TAIL );
-        pdu->set_application_protocol(p->get_application_protocol());
+        pdu->set_snort_protocol_id(p->get_snort_protocol_id());
         flush_count++;
 
         show_rebuilt_packet(pdu);
         ProfileExclude profile_exclude(s5TcpFlushPerfStats);
-        snort::Snort::inspect(pdu);
+        Snort::inspect(pdu);
         if ( tracker->splitter )
             tracker->splitter->update();
      }

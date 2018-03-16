@@ -71,8 +71,6 @@ TftpServiceDetector::TftpServiceDetector(ServiceDiscovery* sd)
     proto = IpProtocol::UDP;
     detectorType = DETECTOR_TYPE_DECODER;
 
-    app_id = AppInfoManager::get_instance().add_appid_protocol_reference("tftp");
-
     appid_registry =
     {
         { APP_ID_TFTP, APPINFO_FLAG_SERVICE_ADDITIONAL }
@@ -179,12 +177,15 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
         if (strcasecmp((const char*)data, "netascii") && strcasecmp((const char*)data, "octet"))
             goto bail;
 
+        if(tftp_snort_protocol_id == UNKNOWN_PROTOCOL_ID)
+            tftp_snort_protocol_id = snort::SnortConfig::get_conf()->proto_ref->find("tftp");
+
         tmp_td = (ServiceTFTPData*)snort_calloc(sizeof(ServiceTFTPData));
         tmp_td->state = TFTP_STATE_TRANSFER;
         dip = args.pkt->ptrs.ip_api.get_dst();
         sip = args.pkt->ptrs.ip_api.get_src();
         pf = AppIdSession::create_future_session(args.pkt, dip, 0, sip,
-            args.pkt->ptrs.sp, args.asd.protocol, app_id, APPID_EARLY_SESSION_FLAG_FW_RULE,
+            args.pkt->ptrs.sp, args.asd.protocol, tftp_snort_protocol_id, APPID_EARLY_SESSION_FLAG_FW_RULE,
             handler->get_inspector());
         if (pf)
         {

@@ -57,7 +57,7 @@ THREAD_LOCAL SnortConfig* snort_conf = &s_conf;
 
 static SnortState s_state;
 
-SnortConfig::SnortConfig(SnortConfig*)
+SnortConfig::SnortConfig(const SnortConfig* const)
 {
     state = &s_state;
     memset(state, 0, sizeof(*state));
@@ -80,7 +80,6 @@ static unsigned s_parse_errors = 0;
 
 void ParseError(const char*, ...)
 { s_parse_errors++; }
-
 
 unsigned get_instance_id()
 { return 0; }

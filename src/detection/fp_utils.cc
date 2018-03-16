@@ -47,7 +47,7 @@ using namespace snort;
 
 static void finalize_content(OptFpList* ofl)
 {
-    PatternMatchData* pmd = get_pmd(ofl, 0, RULE_WO_DIR);
+    PatternMatchData* pmd = get_pmd(ofl, UNKNOWN_PROTOCOL_ID, RULE_WO_DIR);
 
     if ( !pmd )
         return;
@@ -59,7 +59,7 @@ static void finalize_content(OptFpList* ofl)
 
 static void clear_fast_pattern_only(OptFpList* ofl)
 {
-    PatternMatchData* pmd = get_pmd(ofl, 0, RULE_WO_DIR);
+    PatternMatchData* pmd = get_pmd(ofl, UNKNOWN_PROTOCOL_ID, RULE_WO_DIR);
 
     if ( pmd && pmd->fp_only > 0 )
         pmd->fp_only = 0;
@@ -119,17 +119,17 @@ static RuleDirection get_dir(OptTreeNode* otn)
 // public utilities
 //--------------------------------------------------------------------------
 
-PatternMatchData* get_pmd(OptFpList* ofl, int proto, RuleDirection direction)
+PatternMatchData* get_pmd(OptFpList* ofl, SnortProtocolId snort_protocol_id, RuleDirection direction)
 {
     if ( !ofl->ips_opt )
         return nullptr;
 
-    return ofl->ips_opt->get_pattern(proto, direction);
+    return ofl->ips_opt->get_pattern(snort_protocol_id, direction);
 }
 
 bool is_fast_pattern_only(OptFpList* ofl)
 {
-    PatternMatchData* pmd = get_pmd(ofl, 0, RULE_WO_DIR);
+    PatternMatchData* pmd = get_pmd(ofl, UNKNOWN_PROTOCOL_ID, RULE_WO_DIR);
 
     if ( !pmd )
         return false;
@@ -307,7 +307,7 @@ PatternMatchVector get_fp_content(
         }
 
         RuleDirection dir = get_dir(otn);
-        PatternMatchData* tmp = get_pmd(ofl, otn->proto, dir);
+        PatternMatchData* tmp = get_pmd(ofl, otn->snort_protocol_id, dir);
 
         if ( !tmp )
             continue;
@@ -343,7 +343,7 @@ PatternMatchVector get_fp_content(
     else
         exclude = false;
 
-    if ( best.pmd and otn->proto == SNORT_PROTO_FILE and best.cat != CAT_SET_FILE )
+    if ( best.pmd and otn->snort_protocol_id == SNORT_PROTO_FILE and best.cat != CAT_SET_FILE )
     {
         ParseWarning(WARN_RULES, "file rule %u:%u does not have file_data fast pattern",
             otn->sigInfo.gid, otn->sigInfo.sid);

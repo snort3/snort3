@@ -24,6 +24,9 @@
 
 #include "host_cache.h"
 
+#include "main/snort_config.h"
+#include "target_based/snort_protocols.h"
+
 using namespace snort;
 
 #define LRU_CACHE_INITIAL_SIZE 65535
@@ -39,11 +42,11 @@ void host_cache_add_host_tracker(HostTracker* ht)
 
 namespace snort
 {
-bool host_cache_add_service(const SfIp& ipaddr, Protocol ipproto, Port port, const char* /*service*/)
+bool host_cache_add_service(const SfIp& ipaddr, Protocol ipproto, Port port, const char* service)
 {
     HostIpKey ipkey((const uint8_t*) ipaddr.get_ip6_ptr());
-    uint16_t proto = 0; // FIXIT-M not safe with multithreads SnortConfig::get_conf()->proto_ref->add(service));
-    HostApplicationEntry app_entry(ipproto, port, proto);
+    SnortProtocolId proto_id = SnortConfig::get_conf()->proto_ref->find(service);
+    HostApplicationEntry app_entry(ipproto, port, proto_id);
     std::shared_ptr<HostTracker> ht;
 
     if (!host_cache.find(ipkey, ht))
@@ -62,3 +65,4 @@ bool host_cache_add_service(const SfIp& ipaddr, Protocol ipproto, Port port, con
     return ht->add_service(app_entry);
 }
 }
+

@@ -389,15 +389,15 @@ static void set_session(Flow* flow)
 
 static void set_service(Flow* flow, const HostAttributeEntry* host)
 {
-    Stream::set_application_protocol_id(flow, host, FROM_SERVER);
+    Stream::set_snort_protocol_id(flow, host, FROM_SERVER);
 }
 
 static Inspector* get_gadget(Flow* flow)
 {
-    if ( !flow->ssn_state.application_protocol )
+    if ( !flow->ssn_state.snort_protocol_id )
         return nullptr;
 
-    const char* s = SnortConfig::get_conf()->proto_ref->get_name(flow->ssn_state.application_protocol);
+    const char* s = SnortConfig::get_conf()->proto_ref->get_name(flow->ssn_state.snort_protocol_id);
 
     return InspectorManager::get_inspector(s);
 }
@@ -551,8 +551,8 @@ void Stuff::apply_service(Flow* flow, const HostAttributeEntry* host)
     {
         flow->set_gadget(gadget);
 
-        if ( !flow->ssn_state.application_protocol )
-            flow->ssn_state.application_protocol = gadget->get_service();
+        if ( !flow->ssn_state.snort_protocol_id )
+            flow->ssn_state.snort_protocol_id = gadget->get_service();
     }
 
     else if ( wizard )
@@ -674,10 +674,10 @@ int Binder::exec_handle_gadget( void* pv )
         if (flow->gadget != nullptr )
             flow->clear_gadget();
         flow->set_gadget(ins);
-        flow->ssn_state.application_protocol = ins->get_service();
+        flow->ssn_state.snort_protocol_id = ins->get_service();
     }
     else if ( flow->service )
-        flow->ssn_state.application_protocol = SnortConfig::get_conf()->proto_ref->find(flow->service);
+        flow->ssn_state.snort_protocol_id = SnortConfig::get_conf()->proto_ref->find(flow->service);
 
     if ( !flow->is_stream() )
         return 0;

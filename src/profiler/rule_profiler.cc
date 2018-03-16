@@ -321,7 +321,7 @@ void reset_rule_profiler_stats()
 
         auto* rtn = getRtnFromOtn(otn);
 
-        if ( !rtn || !is_network_protocol(rtn->proto) )
+        if ( !rtn || !is_network_protocol(rtn->snort_protocol_id) )
             continue;
 
         for ( unsigned i = 0; i < ThreadConfig::get_instance_max(); ++i )

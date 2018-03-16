@@ -122,7 +122,7 @@ void parse_include(SnortConfig* sc, const char* arg)
 void ParseIpVar(SnortConfig* sc, const char* var, const char* val)
 {
     int ret;
-    IpsPolicy* p = snort::get_ips_policy();  // FIXIT-M double check, see below
+    IpsPolicy* p = get_ips_policy();  // FIXIT-M double check, see below
     DisallowCrossTableDuplicateVars(sc, var, VAR_TYPE__IPVAR);
 
     if ((ret = sfvt_define(p->ip_vartable, var, val)) != SFIP_SUCCESS)
@@ -161,10 +161,10 @@ void add_service_to_otn(SnortConfig* sc, OptTreeNode* otn, const char* svc_name)
         ParseError("too many service's specified for rule, can't add %s", svc_name);
         return;
     }
-    int16_t svc_id = sc->proto_ref->add(svc_name);
+    SnortProtocolId svc_id = sc->proto_ref->add(svc_name);
 
     for ( unsigned i = 0; i < otn->sigInfo.num_services; ++i )
-        if ( otn->sigInfo.services[i].service_ordinal == svc_id )
+        if ( otn->sigInfo.services[i].snort_protocol_id == svc_id )
             return;  // already added
 
     if ( !otn->sigInfo.services )
@@ -174,7 +174,7 @@ void add_service_to_otn(SnortConfig* sc, OptTreeNode* otn, const char* svc_name)
     int idx = otn->sigInfo.num_services++;
 
     otn->sigInfo.services[idx].service = snort_strdup(svc_name);
-    otn->sigInfo.services[idx].service_ordinal = svc_id;
+    otn->sigInfo.services[idx].snort_protocol_id = svc_id;
 }
 
 // only keep drop rules ...

@@ -435,7 +435,7 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p, int dire
             LogMessage("AppIdDbg %s Got a preface for HTTP/2\n", asd.session_logging_id);
 
     if ( !was_service && asd.is_service_detected() )
-        asd.sync_with_snort_id(asd.service.get_id(), p);
+        asd.sync_with_snort_protocol_id(asd.service.get_id(), p);
 
     return isTpAppidDiscoveryDone;
 }

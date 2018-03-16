@@ -58,7 +58,6 @@ RshellServiceDetector::RshellServiceDetector(ServiceDiscovery* sd)
     name = "rshell";
     proto = IpProtocol::TCP;
     detectorType = DETECTOR_TYPE_DECODER;
-    app_id = AppInfoManager::get_instance().add_appid_protocol_reference("rsh-error");
 
     appid_registry =
     {
@@ -135,6 +134,9 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
             goto bail;
         if (port)
         {
+            if(rsh_error_snort_protocol_id == UNKNOWN_PROTOCOL_ID)
+                rsh_error_snort_protocol_id = snort::SnortConfig::get_conf()->proto_ref->find("rsh-error");
+
             ServiceRSHELLData* tmp_rd = (ServiceRSHELLData*)snort_calloc(
                 sizeof(ServiceRSHELLData));
             tmp_rd->state = RSHELL_STATE_STDERR_CONNECT_SYN;
@@ -142,7 +144,7 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
             const snort::SfIp* dip = args.pkt->ptrs.ip_api.get_dst();
             const snort::SfIp* sip = args.pkt->ptrs.ip_api.get_src();
             AppIdSession* pf = AppIdSession::create_future_session(args.pkt, dip, 0, sip,
-                (uint16_t)port, IpProtocol::TCP, app_id, APPID_EARLY_SESSION_FLAG_FW_RULE,
+                (uint16_t)port, IpProtocol::TCP, rsh_error_snort_protocol_id, APPID_EARLY_SESSION_FLAG_FW_RULE,
                 handler->get_inspector());
             if (pf)
             {

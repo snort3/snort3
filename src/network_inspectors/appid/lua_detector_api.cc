@@ -2101,7 +2101,7 @@ static int create_future_flow(lua_State* L)
 {
     SfIp client_addr;
     SfIp server_addr;
-    int16_t snort_app_id = 0;
+    SnortProtocolId snort_protocol_id = UNKNOWN_PROTOCOL_ID;
     AppIdDetector* ud = *UserData<AppIdDetector>::check(L, DETECTOR, 1);
     LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
@@ -2127,11 +2127,11 @@ static int create_future_flow(lua_State* L)
             app_id_to_snort);
         if (!entry)
             return 0;
-        snort_app_id = entry->snortId;
+        snort_protocol_id = entry->snort_protocol_id;
     }
 
     AppIdSession* fp = AppIdSession::create_future_session(lsd->ldp.pkt,  &client_addr,
-        client_port, &server_addr, server_port, proto, snort_app_id,
+        client_port, &server_addr, server_port, proto, snort_protocol_id,
         APPID_EARLY_SESSION_FLAG_FW_RULE, ud->get_handler().get_inspector());
     if (fp)
     {

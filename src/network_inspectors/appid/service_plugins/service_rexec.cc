@@ -63,8 +63,6 @@ RexecServiceDetector::RexecServiceDetector(ServiceDiscovery* sd)
     proto = IpProtocol::TCP;
     detectorType = DETECTOR_TYPE_DECODER;
 
-    app_id = AppInfoManager::get_instance().add_appid_protocol_reference("rexec");
-
     appid_registry =
     {
         { APP_ID_EXEC, APPINFO_FLAG_SERVICE_ADDITIONAL }
@@ -119,6 +117,9 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
     switch (rd->state)
     {
     case REXEC_STATE_PORT:
+        if(rexec_snort_protocol_id == UNKNOWN_PROTOCOL_ID)
+            rexec_snort_protocol_id = snort::SnortConfig::get_conf()->proto_ref->find("rexec");
+
         if (args.dir != APP_ID_FROM_INITIATOR)
             goto bail;
         if (size > REXEC_MAX_PORT_PACKET)
@@ -143,7 +144,7 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
             dip = args.pkt->ptrs.ip_api.get_dst();
             sip = args.pkt->ptrs.ip_api.get_src();
             AppIdSession* pf = AppIdSession::create_future_session(args.pkt, dip, 0, sip, (uint16_t)port,
-                IpProtocol::TCP, app_id, APPID_EARLY_SESSION_FLAG_FW_RULE, handler->get_inspector());
+                IpProtocol::TCP, rexec_snort_protocol_id, APPID_EARLY_SESSION_FLAG_FW_RULE, handler->get_inspector());
             if (pf)
             {
                 ServiceREXECData* tmp_rd = (ServiceREXECData*)snort_calloc(

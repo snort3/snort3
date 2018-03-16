@@ -211,7 +211,7 @@ static void update_flags(Flow* flow)
         }
 
         if( ( old_state->ipprotocol != cur_state->ipprotocol ) ||
-            ( old_state->application_protocol != cur_state->application_protocol ) ||
+            ( old_state->snort_protocol_id != cur_state->snort_protocol_id ) ||
             ( old_state->direction != cur_state->direction ) )
         {
             flow->ha_state->add(FlowHAState::MODIFIED);

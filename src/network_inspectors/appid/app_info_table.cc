@@ -506,16 +506,15 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* config, const char* pa
     fclose(config_file);
 }
 
-int16_t AppInfoManager::add_appid_protocol_reference(const char* protocol)
+SnortProtocolId AppInfoManager::add_appid_protocol_reference(const char* protocol,
+    snort::SnortConfig* sc)
 {
-    static std::mutex apr_mutex;
-
-    std::lock_guard<std::mutex> lock(apr_mutex);
-    int16_t id = snort::SnortConfig::get_conf()->proto_ref->add(protocol);
-    return id;
+    SnortProtocolId snort_protocol_id = sc->proto_ref->add(protocol);
+    return snort_protocol_id;
 }
 
-void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config)
+void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config,
+    snort::SnortConfig* sc)
 {
     if ( !mod_config->app_detector_dir )
     {
@@ -592,8 +591,10 @@ void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config)
 
             /* snort service key, if it exists */
             token = strtok_r(nullptr, CONF_SEPARATORS, &context);
+
+            // FIXIT-H: Sometimes the token is "~". Should we ignore those?
             if (token)
-                entry->snortId = add_appid_protocol_reference(token);
+                entry->snort_protocol_id = add_appid_protocol_reference(token, sc);
 
             if ((app_id = get_static_app_info_entry(entry->appId)))
             {

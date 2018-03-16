@@ -585,7 +585,7 @@ static void lookup_appid_by_host_port(AppIdSession& asd, Packet* p, IpProtocol p
             break;
         default:
             asd.service.set_id(hv->appId);
-            asd.sync_with_snort_id(hv->appId, p);
+            asd.sync_with_snort_protocol_id(hv->appId, p);
             asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
             asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
             asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED);

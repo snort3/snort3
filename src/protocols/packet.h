@@ -25,6 +25,7 @@
 #include "flow/flow.h"
 #include "framework/decode_data.h"
 #include "main/snort_types.h"
+#include "target_based/snort_protocols.h"
 
 class Endianness;
 class Obfuscator;
@@ -96,7 +97,6 @@ enum PseudoPacketType
 
 constexpr int32_t MAX_PORTS = 65536;
 constexpr uint16_t NUM_IP_PROTOS = 256;
-constexpr int16_t SFTARGET_UNKNOWN_PROTOCOL = -1;
 constexpr uint8_t TCP_OPTLENMAX = 40; /* (((2^4) - 1) * 4  - TCP_HEADER_LEN) */
 constexpr uint8_t DEFAULT_LAYERMAX = 40;
 
@@ -260,11 +260,11 @@ struct SO_PUBLIC Packet
     bool is_rebuilt() const
     { return (packet_flags & (PKT_REBUILT_STREAM|PKT_REBUILT_FRAG)) != 0; }
 
-    int16_t get_application_protocol()
-    { return flow ? flow->ssn_state.application_protocol : 0; }
+    SnortProtocolId get_snort_protocol_id()
+    { return flow ? flow->ssn_state.snort_protocol_id : UNKNOWN_PROTOCOL_ID; }
 
-    void set_application_protocol(int16_t ap)
-    { if ( flow ) flow->ssn_state.application_protocol = ap; }
+    void set_snort_protocol_id(SnortProtocolId proto_id)
+    { if ( flow ) flow->ssn_state.snort_protocol_id = proto_id; }
 
 private:
     bool allocated;

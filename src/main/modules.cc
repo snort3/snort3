@@ -1091,7 +1091,7 @@ public:
 
 bool NetworkModule::set(const char*, Value& v, SnortConfig* sc)
 {
-    NetworkPolicy* p = snort::get_network_policy();
+    NetworkPolicy* p = get_network_policy();
 
     if ( v.is("checksum_drop") )
         ConfigChecksumDrop(v.get_string());
@@ -1161,7 +1161,7 @@ public:
 
 bool InspectionModule::set(const char*, Value& v, SnortConfig* sc)
 {
-    InspectionPolicy* p = snort::get_inspection_policy();
+    InspectionPolicy* p = get_inspection_policy();
 
     if ( v.is("id") )
     {
@@ -1251,7 +1251,7 @@ public:
     { return ips_module_pegs; }
 
     PegCount* get_counts() const override
-    { return (PegCount*) &snort::ips_module_stats; }
+    { return (PegCount*) &ips_module_stats; }
 
     Usage get_usage() const override
     { return DETECT; }
@@ -1259,7 +1259,7 @@ public:
 
 bool IpsModule::set(const char*, Value& v, SnortConfig* sc)
 {
-    IpsPolicy* p = snort::get_ips_policy();
+    IpsPolicy* p = get_ips_policy();
 
     if ( v.is("enable_builtin_rules") )
         p->enable_builtin_rules = v.get_bool();
@@ -1846,7 +1846,7 @@ bool HostsModule::set(const char*, Value& v, SnortConfig* sc)
         host->hostInfo.streamPolicy = v.get_long() + 1;
 
     else if ( app and v.is("name") )
-        app->protocol = sc->proto_ref->add(v.get_string());
+        app->snort_protocol_id = sc->proto_ref->add(v.get_string());
 
     else if ( app and v.is("proto") )
         app->ipproto = sc->proto_ref->add(v.get_string());

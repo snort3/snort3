@@ -43,7 +43,7 @@
 
 using namespace snort;
 
-int16_t ftp_data_app_id = SFTARGET_UNKNOWN_PROTOCOL;
+SnortProtocolId ftp_data_snort_protocol_id = UNKNOWN_PROTOCOL_ID;
 
 #define client_key "ftp_client"
 #define server_key "ftp_server"
@@ -344,6 +344,7 @@ FtpServer::~FtpServer ()
 
 bool FtpServer::configure(SnortConfig* sc)
 {
+    ftp_data_snort_protocol_id = sc->proto_ref->add("ftp-data");
     return !FTPCheckConfigs(sc, ftp_server);
 }
 
@@ -455,7 +456,6 @@ static Module* fs_mod_ctor()
 
 static void fs_init()
 {
-    ftp_data_app_id = SnortConfig::get_conf()->proto_ref->add("ftp-data");
     FtpFlowData::init();
 }
 

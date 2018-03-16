@@ -135,7 +135,7 @@ public:
     EvalStatus eval(Cursor& c, Packet*) override
     { return CheckANDPatternMatch(config, c); }
 
-    PatternMatchData* get_pattern(int, RuleDirection) override
+    PatternMatchData* get_pattern(SnortProtocolId, RuleDirection) override
     { return &config->pmd; }
 
 protected:
