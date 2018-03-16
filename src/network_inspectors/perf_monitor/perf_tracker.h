@@ -45,8 +45,9 @@
 
 namespace snort
 {
-    class Packet;
+struct Packet;
 }
+
 class PerfTracker
 {
 public:

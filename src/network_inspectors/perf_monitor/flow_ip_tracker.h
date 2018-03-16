@@ -57,7 +57,6 @@ struct FlowStateValue
     PegCount state_changes[SFS_STATE_MAX];
 };
 
-class FlowIPDataHandler;
 class FlowIPTracker : public PerfTracker
 {
 public:
@@ -71,7 +70,6 @@ public:
     int update_state(const snort::SfIp* src_addr, const snort::SfIp* dst_addr, FlowState);
 
 private:
-    FlowIPDataHandler* handler;
     FlowStateValue stats;
     XHash* ip_map;
     char ip_a[41], ip_b[41];

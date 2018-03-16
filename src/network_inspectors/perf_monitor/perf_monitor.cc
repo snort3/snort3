@@ -55,8 +55,7 @@ static THREAD_LOCAL std::vector<PerfTracker*>* trackers;
 // class stuff
 //-------------------------------------------------------------------------
 
-class PerfIdleHandler;
-class PerfRotateHandler;
+class FlowIPDataHandler;
 class PerfMonitor : public Inspector
 {
 public:
@@ -72,10 +71,15 @@ public:
     void tterm() override;
 
     void rotate();
+
+    FlowIPTracker* get_flow_ip();
+
 private:
     PerfConfig& config;
-    PerfIdleHandler* idle_handler = nullptr;
-    PerfRotateHandler* rotate_handler = nullptr;
+    FlowIPTracker* flow_ip_tracker = nullptr;
+    FlowIPDataHandler* flow_ip_handler = nullptr;
+
+    void disable_tracker(size_t);
 };
 
 class PerfIdleHandler : public DataHandler
@@ -104,11 +108,41 @@ private:
     PerfMonitor& perf_monitor;
 };
 
-PerfMonitor::PerfMonitor(PerfMonModule* mod) : config(mod->get_config())
+class FlowIPDataHandler : public DataHandler
 {
-    idle_handler = new PerfIdleHandler(*this);
-    rotate_handler = new PerfRotateHandler(*this);
-}
+public:
+    FlowIPDataHandler(PerfMonitor& p) : perf_monitor(p)
+    { DataBus::subscribe_default(FLOW_STATE_EVENT, this); }
+
+    virtual void handle(DataEvent&, Flow* flow) override
+    {
+        FlowState state = SFS_STATE_MAX;
+
+        if ( flow->pkt_type == PktType::UDP )
+            state = SFS_STATE_UDP_CREATED;
+
+        if ( flow->pkt_type == PktType::TCP )
+        {
+            if ( flow->get_session_flags() & SSNFLAG_COUNTED_ESTABLISH )
+                state = SFS_STATE_TCP_ESTABLISHED;
+
+            if ( flow->get_session_flags() & SSNFLAG_COUNTED_CLOSED )
+                state = SFS_STATE_TCP_CLOSED;
+        }
+
+        if ( state == SFS_STATE_MAX )
+            return;
+
+        FlowIPTracker* tracker = perf_monitor.get_flow_ip();
+        tracker->update_state(&flow->client_ip, &flow->server_ip, state);
+    }
+
+private:
+    PerfMonitor& perf_monitor;
+};
+
+PerfMonitor::PerfMonitor(PerfMonModule* mod) : config(mod->get_config())
+{ }
 
 void PerfMonitor::show(SnortConfig*)
 {
@@ -165,10 +199,17 @@ void PerfMonitor::show(SnortConfig*)
     }
 }
 
-static void disable_tracker(size_t i)
+void PerfMonitor::disable_tracker(size_t i)
 {
     WarningMessage("Disabling %s\n", (*trackers)[i]->get_name().c_str());
     auto tracker = trackers->at(i);
+
+    if ( tracker == flow_ip_tracker )
+    {
+        DataBus::unsubscribe_default(FLOW_STATE_EVENT, flow_ip_handler);
+        flow_ip_tracker = nullptr;
+    }
+
     (*trackers)[i] = (*trackers)[trackers->size() - 1];
     trackers->pop_back();
     delete tracker;
@@ -180,8 +221,12 @@ static void disable_tracker(size_t i)
 
 bool PerfMonitor::configure(SnortConfig*)
 {
-    idle_handler = new PerfIdleHandler(*this);
-    rotate_handler = new PerfRotateHandler(*this);
+    // DataBus deletes these when it destructs
+    new PerfIdleHandler(*this);
+    new PerfRotateHandler(*this);
+
+    if ( config.perf_flags & PERF_FLOWIP )
+        flow_ip_handler = new FlowIPDataHandler(*this);
 
     return config.resolve();
 }
@@ -197,7 +242,10 @@ void PerfMonitor::tinit()
         trackers->push_back(new FlowTracker(&config));
 
     if (config.perf_flags & PERF_FLOWIP)
-        trackers->push_back(new FlowIPTracker(&config));
+    {
+        flow_ip_tracker = new FlowIPTracker(&config);
+        trackers->push_back(flow_ip_tracker);
+    }
 
     if (config.perf_flags & PERF_CPU )
         trackers->push_back(new CPUTracker(&config));
@@ -298,6 +346,9 @@ bool PerfMonitor::ready_to_process(Packet* p)
     }
     return false;
 }
+
+FlowIPTracker* PerfMonitor::get_flow_ip()
+{ return flow_ip_tracker; }
 
 //-------------------------------------------------------------------------
 // api stuff
