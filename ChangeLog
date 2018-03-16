@@ -1,3 +1,28 @@
+18/03/15 - build 244
+
+-- appid: unit-tests for http detector plugins
+-- build: address compiler warnings, spell check and static analyzer issues
+-- build: extirpate autotools usage
+-- build: fix compilation issue on FreeBSD with extra
+-- byte_jump: updated byte_jump post_offset option to support variable
+-- cmake: update CMake config to use GNUInstallDirs and match automake
+-- daq: hext DAQ can generate start of flow and end of flow meta events
+-- doc: add documentation for ftp telnet
+-- doc: fix including config_changes.txt when ruby is not present
+-- doc: update ftp time format link
+-- doc: updates for HTTP/2
+-- http_inspect: handle white space before chunk length
+-- inspectors: probes run regardless of active policy
+-- logger: update Hext Logger to subscribe and log DAQ Meta Packets
+-- main: reload hosts while reloading config
+-- memory: override C++14 delete operators as well
+-- packet tracer: added ability to direct logging to file
+-- perf_monitor: fixed flow_ip outputting erroneous values
+-- perf_monitor: query modules for stats only after they have all loaded
+-- snort: --rule-to-text [<delim>] raw string output
+-- snort: allow colon separated directories for --daq-dir
+-- snort: wrap SO_PUBLIC APIs (classes, functions exported public from snort) in the 'snort' namespace
+
 18/02/12 - build 243
 
 -- build: enable gdb debugging info by default

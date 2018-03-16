@@ -779,10 +779,10 @@ asciidoc.install(2);
 <div class="literalblock">
 <div class="content">
 <pre><code> ,,_     -*&gt; Snort++ &lt;*-
-o"  )~   Version 3.0.0 (Build 242) from 2.9.11
+o"  )~   Version 3.0.0 (Build 243) from 2.9.11
  ''''    By Martin Roesch &amp; The Snort Team
          http://snort.org/contact#team
-         Copyright (C) 2014-2017 Cisco and/or its affiliates. All rights reserved.
+         Copyright (C) 2014-2018 Cisco and/or its affiliates. All rights reserved.
          Copyright (C) 1998-2013 Sourcefire, Inc., et al.</code></pre>
 </div></div>
 <div id="toc">
@@ -2180,17 +2180,6 @@ Now do one of the following:
 <div class="olist loweralpha"><ol class="loweralpha">
 <li>
 <p>
-To build with autotools, simply do the usual from the top level directory:
-</p>
-<div class="literalblock">
-<div class="content">
-<pre><code>./configure --prefix=$my_path
-make -j 8
-make install</code></pre>
-</div></div>
-</li>
-<li>
-<p>
 To build with cmake and make, run configure_cmake.sh.  It will
    automatically create and populate a new subdirectory named <em>build</em>.
 </p>
@@ -3565,7 +3554,7 @@ byte_test: offset, value
 </li>
 <li>
 <p>
-byte_jump: offset
+byte_jump: offset, post_offset
 </p>
 </li>
 <li>
@@ -3583,6 +3572,13 @@ isdataat: offset
     byte_extract:1, 1, str_depth;
     content:"bad stuff", offset str_offset, depth str_depth;
     msg:"Bad Stuff detected within field";)</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>alert tcp (content:"START"; byte_extract:1, 0, myvar, relative;
+    byte_jump:1, 3, relative, post_offset myvar;
+    content:"END", distance 6, within 3;
+    msg: "byte_jump - pass variable to post_offset";)</code></pre>
 </div></div>
 <div class="paragraph"><p>This example uses two variables.</p></div>
 <div class="paragraph"><p>The first variable keeps the offset of a string, read from a byte at offset 0.
@@ -4702,6 +4698,260 @@ configuration:</p></div>
 </div>
 </div>
 <div class="sect2">
+<h3 id="_ftp">FTP</h3>
+<div class="paragraph"><p>Given an FTP command channel buffer, FTP will interpret the data,
+identifying FTP commands and parameters, as well as FTP response codes
+and messages.  It will enforce correctness of the parameters, determine
+when an FTP command connection is encrypted, and determine when an FTP
+data channel is opened.</p></div>
+<div class="sect3">
+<h4 id="_configuring_the_inspector_to_block_exploits_and_attacks">Configuring the inspector to block exploits and attacks</h4>
+<div class="sect4">
+<h5 id="_ftp_server_configuration">ftp_server configuration</h5>
+<div class="ulist"><ul>
+<li>
+<p>
+ftp_cmds
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>This specifies additional FTP commands outside of those checked by
+default within the inspector.  The inspector may be configured
+to generate an alert when it sees a command it does not recognize.</p></div>
+<div class="paragraph"><p>Aside from the default commands recognized, it may be necessary to
+allow the use of the "X" commands, specified in RFC 775.  To do so, use
+the following ftp_cmds option.  Since these are rarely used by FTP
+client implementations, they are not included in the defaults.</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>ftp_cmds = [[ XPWD XCWD XCUP XMKD XRMD ]]</code></pre>
+</div></div>
+<div class="ulist"><ul>
+<li>
+<p>
+def_max_param_len
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>This specifies the default maximum parameter length for all commands
+in bytes.  If the parameter for an FTP command exceeds that length,
+and the inspector is configured to do so, an alert will be generated.
+This is used to check for buffer overflow exploits within FTP servers.</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+cmd_validity
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>This specifies the valid format and length for parameters of a given command.</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+cmd_validity[].len
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>This specifies the maximum parameter length for the specified command
+in bytes, overriding the default.  If the parameter for that FTP command
+exceeds that length, and the inspector is configured to do so, an
+alert will be generated.  It can be used to restrict specific commands to
+small parameter values.  For example the USER command&#8201;&#8212;&#8201;usernames may
+be no longer than 16 bytes, so the appropriate configuration would be:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>cmd_validity =
+{
+    {
+        command = 'USER',
+        length = 16,
+    }
+}</code></pre>
+</div></div>
+<div class="ulist"><ul>
+<li>
+<p>
+cmd_validity[].format
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>format is as follows:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>int                 Param must be an integer
+number              Param must be an integer between 1 and 255
+char &lt;chars&gt;        Param must be a single char, and one of &lt;chars&gt;
+date &lt;datefmt&gt;      Param follows format specified where
+                    # = Number, C=Char, []=optional, |=OR, {}=choice,
+                    anything else=literal (i.e., .+- )
+string              Param is string (effectively unrestricted)
+host_port           Param must a host port specifier, per RFC 959.
+long_host_port      Parameter must be a long host port specified, per RFC 1639
+extended_host_port  Parameter must be an extended host port specified, per RFC 2428</code></pre>
+</div></div>
+<div class="paragraph"><p>Examples of the cmd_validity option are shown below.  These examples
+are the default checks (per RFC 959 and others) performed by the
+inspector.</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>cmd_validity =
+{
+    {
+        command = 'CWD',
+        length = 200,
+    },
+    {
+        command = 'MODE',
+        format = '&lt; char SBC &gt;',
+    },
+    {
+        command = 'STRU',
+        format = '&lt; char FRP &gt;',
+    },
+    {
+        command = 'ALLO',
+        format = '&lt; int [ char R int ] &gt;',
+    },
+    {
+        command = 'TYPE',
+        format = [[ &lt; { char AE [ char NTC ] | char I | char L [ number ]
+            } &gt; ]],
+    },
+    {
+        command = 'PORT',
+        format = '&lt; host_port &gt;',
+    },
+}</code></pre>
+</div></div>
+<div class="paragraph"><p>A cmd_validity entry in the configuration can be used to override these
+defaults and/or add a check for other commands.  A few examples follow.</p></div>
+<div class="paragraph"><p>This allows additional modes, including mode Z which allows for
+zip-style compression:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>cmd_validity =
+{
+    {
+        command = 'MODE',
+        format = '&lt; char ASBCZ &gt;',
+    },
+}</code></pre>
+</div></div>
+<div class="paragraph"><p>Allow for a date in the MDTM command:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>cmd_validity =
+{
+    {
+        command = 'MDTM',
+        format = '&lt; [ date nnnnnnnnnnnnnn[.n[n[n]]] ] string &gt;',
+    },
+}</code></pre>
+</div></div>
+<div class="paragraph"><p>MDTM is an odd case that is worth discussing&#8230;</p></div>
+<div class="paragraph"><p>While not part of an established standard, certain FTP servers accept
+MDTM commands that set the modification time on a file.  The most common
+among servers that do, accept a format using YYYYMMDDHHmmss[.uuu].  Some
+others accept a format using YYYYMMDDHHmmss[+|-]TZ format.  The example
+above is for the first case (time format as specified in
+<a href="https://tools.ietf.org/html/draft-ietf-ftpext-mlst-16">https://tools.ietf.org/html/draft-ietf-ftpext-mlst-16</a>)</p></div>
+<div class="paragraph"><p>To check validity for a server that uses the TZ format, use the following:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>cmd_validity =
+{
+    {
+        command = 'MDTM',
+        format = '&lt; [ date nnnnnnnnnnnnnn[{+|-}n[n]] ] string &gt;',
+    },
+}</code></pre>
+</div></div>
+<div class="ulist"><ul>
+<li>
+<p>
+chk_str_fmt
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>This causes the inspector to check for string format attacks on
+the specified commands.</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+telnet_cmds
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Detect and alert when telnet cmds are seen on the FTP command channel.</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+ignore_telnet_erase_cmds
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>This option allows Snort to ignore telnet escape sequences for erase character
+(TNC EAC) and erase line (TNC EAL) when normalizing FTP command channel.  Some
+FTP servers do not process those telnet escape sequences.</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+ignore_data_chan
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>When set to true, causes the FTP inspector to force the rest of snort
+to ignore the FTP data channel connections. NO INSPECTION other than state
+(inspector AND rules) will be performed on that data channel. It can
+be turned on to improve performance&#8201;&#8212;&#8201;especially with respect to large
+file transfers from a trusted source&#8201;&#8212;&#8201;by ignoring traffic. If your rule
+set includes virus-type rules, it is recommended that this option not be used.</p></div>
+</div>
+<div class="sect4">
+<h5 id="_ftp_client_configuration">ftp_client configuration</h5>
+<div class="ulist"><ul>
+<li>
+<p>
+max_resp_len
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>This specifies the maximum length for all response messages in bytes.
+If the message for an FTP response (everything after the 3 digit code)
+exceeds that length, and the inspector is configured to do so, an
+alert will be generated.  This is used to check for buffer overflow
+exploits within FTP clients.</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+telnet_cmds
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Detect and alert when telnet cmds are seen on the FTP command channel.</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+ignore_telnet_erase_cmds
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>This option allows Snort to ignore telnet escape sequences for erase character
+(TNC EAC) and erase line (TNC EAL) when normalizing FTP command channel.  Some
+FTP clients do not process those telnet escape sequences.</p></div>
+</div>
+<div class="sect4">
+<h5 id="_ftp_data">ftp_data</h5>
+<div class="paragraph"><p>In order to enable file inspection for ftp, the following should be added to the
+configuration:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>ftp_data = {}</code></pre>
+</div></div>
+</div>
+</div>
+</div>
+<div class="sect2">
 <h3 id="_http_inspector">HTTP Inspector</h3>
 <div class="paragraph"><p>One of the major undertakings for Snort 3 is developing a completely new
 HTTP inspector.</p></div>
@@ -4714,9 +4964,6 @@ HTTP inspector.</p></div>
 </div></div>
 <div class="paragraph"><p>to your snort.lua configuration file. Or you can read about it in the
 source code under src/service_inspectors/http_inspect.</p></div>
-<div class="paragraph"><p>The classic HTTP preprocessor is still available in the alpha release
-under extra. It has been renamed http_server. Be sure not to configure
-both old and new HTTP inspectors at the same time.</p></div>
 <div class="paragraph"><p>So why a new HTTP inspector?</p></div>
 <div class="paragraph"><p>For starters it is object-oriented. That’s good for us because we maintain
 this software. But it should also be really nice for open-source
@@ -5341,6 +5588,50 @@ described above.
 <div class="paragraph"><p>Message body data can only go through detection at the time it is received.
 Headers may be combined with later items but the body cannot.</p></div>
 </div>
+</div>
+<div class="sect2">
+<h3 id="_http_2_inspector">HTTP/2 Inspector</h3>
+<div class="paragraph"><p>Snort 3 is developing an inspector for HTTP/2.</p></div>
+<div class="paragraph"><p>You can configure it by adding:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>http2_inspect = {}</code></pre>
+</div></div>
+<div class="paragraph"><p>to your snort.lua configuration file.</p></div>
+<div class="paragraph"><p>Everything has a beginning and for http2_inspect this is the beginning of
+the beginning. Most of the protocol including HPACK decompression is not
+implemented yet.</p></div>
+<div class="paragraph"><p>Currently http2_inspect will divide an HTTP/2 connection into individual
+frames and make them available for detection. Two new rule options are
+available for looking at HTTP/2 frames: http2_frame_header provides the
+9-octet frame header and http2_frame_data provides the frame content.</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>alert tcp any any -&gt; any any (msg:"Frame type"; flow:established,
+to_client; http2_frame_header; content:"|06|", offset 3, depth 1;
+sid:1; rev:1; )</code></pre>
+</div></div>
+<div class="paragraph"><p>This will match if the Type byte of the frame header is 6 (PING).</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>alert tcp any any -&gt; any any ( msg:"Content of HTTP/2 frame";
+flow:established, to_client; http2_frame_data; content:"peppermint";
+sid:2; rev:1; )</code></pre>
+</div></div>
+<div class="paragraph"><p>This will look for peppermint in the frame data but not the frame header.</p></div>
+<div class="paragraph"><p>These can be combined:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>alert tcp any any -&gt; any any ( msg:"Search in message bodies";
+flow:established, to_client;
+http2_frame_header; content:"|00|", offset 3, depth 1;
+http2_frame_data; content:"MaLwArE"; sid:3; rev:1; )</code></pre>
+</div></div>
+<div class="paragraph"><p>Frame type 0 is DATA which carries the HTTP message body. This rule will
+search for MaLwArE inside an HTTP message body.</p></div>
+<div class="paragraph"><p>In the future, http2_inspect will support HPACK header decompression and
+be fully integrated with http_inspect to provide full inspection of the
+individual HTTP/1.1 streams.</p></div>
 </div>
 <div class="sect2">
 <h3 id="_performance_monitor">Performance Monitor</h3>
@@ -6276,6 +6567,21 @@ headers logging. The default value for this option is 1464.</p></div>
     },
 }</code></pre>
 </div></div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_telnet">Telnet</h3>
+<div class="paragraph"><p>Given a telnet data buffer, Telnet will normalize the buffer with
+respect to telnet commands and option negotiation, eliminating telnet
+command sequences per RFC 854.  It will also determine when a
+telnet connection is encrypted, per the use of the telnet encryption
+option per RFC 2946.</p></div>
+<div class="sect3">
+<h4 id="_configuring_the_inspector_to_block_exploits_and_attacks_2">Configuring the inspector to block exploits and attacks</h4>
+<div class="paragraph"><p>ayt_attack_thresh number</p></div>
+<div class="paragraph"><p>Detect and alert on consecutive are you there [AYT] commands beyond the
+threshold number specified.  This addresses a few specific vulnerabilities
+relating to bsd-based implementations of telnet.</p></div>
 </div>
 </div>
 <div class="sect2">
@@ -7412,6 +7718,11 @@ bool <strong>output.wide_hex_dump</strong> = true: output 20 bytes per lines ins
 bool <strong>output.enable_packet_trace</strong> = false: enable summary output of state that determined packet verdict
 </p>
 </li>
+<li>
+<p>
+enum <strong>output.packet_trace_output</strong> = console: select where to send packet trace { console | file }
+</p>
+</li>
 </ul></div>
 </div>
 <div class="sect2">
@@ -7722,7 +8033,7 @@ bool <strong>search_engine.detect_raw_tcp</strong> = true: detect on TCP payload
 </li>
 <li>
 <p>
-dynamic <strong>search_engine.search_method</strong> = ac_bnfa: set fast pattern algorithm - choose available search engine { ac_banded | ac_bnfa | ac_full | ac_sparse | ac_sparse_bands | ac_std | hyperscan }
+dynamic <strong>search_engine.search_method</strong> = ac_bnfa: set fast pattern algorithm - choose available search engine { ac_banded | ac_bnfa | ac_full | ac_sparse | ac_sparse_bands | ac_std | hyperscan | lowmem }
 </p>
 </li>
 <li>
@@ -8286,7 +8597,7 @@ implied <strong>snort.--rule-to-hex</strong>: output so rule header to stdout fo
 </li>
 <li>
 <p>
-implied <strong>snort.--rule-to-text</strong>: output plain so rule header to stdout for text rule on stdin
+string <strong>snort.--rule-to-text</strong> = [SnortFoo]: output plain so rule header to stdout for text rule on stdin { 16 }
 </p>
 </li>
 <li>
@@ -11490,7 +11801,7 @@ bool <strong>ftp_client.telnet_cmds</strong> = false: detect Telnet escape seque
 </ul></div>
 </div>
 <div class="sect2">
-<h3 id="_ftp_data">ftp_data</h3>
+<h3 id="_ftp_data_2">ftp_data</h3>
 <div class="paragraph"><p>What: FTP data channel handler</p></div>
 <div class="paragraph"><p>Type: inspector</p></div>
 <div class="paragraph"><p>Usage: inspect</p></div>
@@ -11769,6 +12080,31 @@ int <strong>gtp_inspect[].infos[].length</strong> = 0: information element type 
 <li>
 <p>
 <strong>gtp_inspect.unknown_infos</strong>: unknown information elements (sum)
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_http2_inspect">http2_inspect</h3>
+<div class="paragraph"><p>What: HTTP/2 inspector</p></div>
+<div class="paragraph"><p>Type: inspector</p></div>
+<div class="paragraph"><p>Usage: inspect</p></div>
+<div class="paragraph"><p>Rules:</p></div>
+<div class="paragraph"><p>Peg counts:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>http2_inspect.flows</strong>: HTTP connections inspected (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>http2_inspect.concurrent_sessions</strong>: total concurrent HTTP/2 sessions (now)
+</p>
+</li>
+<li>
+<p>
+<strong>http2_inspect.max_concurrent_sessions</strong>: maximum concurrent HTTP/2 sessions (max)
 </p>
 </li>
 </ul></div>
@@ -12240,7 +12576,7 @@ bool <strong>http_inspect.show_scan</strong> = false: display scanned segments
 </li>
 <li>
 <p>
-<strong>119:65</strong> (http_inspect) white space following chunk length
+<strong>119:65</strong> (http_inspect) white space adjacent to chunk length
 </p>
 </li>
 <li>
@@ -13121,7 +13457,7 @@ bool <strong>normalizer.icmp6</strong> = false: clear reserved flag
 <h3 id="_packet_capture">packet_capture</h3>
 <div class="paragraph"><p>What: raw packet dumping facility</p></div>
 <div class="paragraph"><p>Type: inspector</p></div>
-<div class="paragraph"><p>Usage: context</p></div>
+<div class="paragraph"><p>Usage: global</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -13166,7 +13502,7 @@ string <strong>packet_capture.filter</strong>: bpf filter to use for packet dump
 <h3 id="_perf_monitor">perf_monitor</h3>
 <div class="paragraph"><p>What: performance monitoring and flow statistics collection</p></div>
 <div class="paragraph"><p>Type: inspector</p></div>
-<div class="paragraph"><p>Usage: context</p></div>
+<div class="paragraph"><p>Usage: global</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -13373,7 +13709,7 @@ int <strong>pop.uu_decode_depth</strong> = 1460:  Unix-to-Unix decoding depth { 
 <h3 id="_port_scan_2">port_scan</h3>
 <div class="paragraph"><p>What: detect various ip, icmp, tcp, and udp port or protocol scans</p></div>
 <div class="paragraph"><p>Type: inspector</p></div>
-<div class="paragraph"><p>Usage: context</p></div>
+<div class="paragraph"><p>Usage: global</p></div>
 <div class="paragraph"><p>Configuration:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -15958,7 +16294,7 @@ int <strong>stream_user.trace</strong>: mask for enabling debug traces in module
 </ul></div>
 </div>
 <div class="sect2">
-<h3 id="_telnet">telnet</h3>
+<h3 id="_telnet_2">telnet</h3>
 <div class="paragraph"><p>What: telnet inspection and normalization</p></div>
 <div class="paragraph"><p>Type: inspector</p></div>
 <div class="paragraph"><p>Usage: inspect</p></div>
@@ -16416,7 +16752,7 @@ int <strong>byte_jump.align</strong> = 0: round the number of converted bytes up
 </li>
 <li>
 <p>
-int <strong>byte_jump.post_offset</strong> = 0: also skip forward or backwards (positive of negative value) this number of bytes { -65535:65535 }
+string <strong>byte_jump.post_offset</strong>: skip forward or backward (positive or negative value) by variable name or number of bytes after the other jump options have been applied
 </p>
 </li>
 <li>
@@ -17021,6 +17357,18 @@ int <strong>gtp_version.~</strong>: version to match { 0:2 }
 </p>
 </li>
 </ul></div>
+</div>
+<div class="sect2">
+<h3 id="_http2_frame_data">http2_frame_data</h3>
+<div class="paragraph"><p>What: rule option to see HTTP/2 frame body</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Usage: detect</p></div>
+</div>
+<div class="sect2">
+<h3 id="_http2_frame_header">http2_frame_header</h3>
+<div class="paragraph"><p>What: rule option to see 9-octet HTTP/2 frame header</p></div>
+<div class="paragraph"><p>Type: ips_option</p></div>
+<div class="paragraph"><p>Usage: detect</p></div>
 </div>
 <div class="sect2">
 <h3 id="_http_client_body_2">http_client_body</h3>
@@ -18888,10 +19236,15 @@ $packet -&gt; server</code></pre>
 <div class="content">
 <pre><code>$packet &lt;addr&gt; &lt;port&gt; -&gt; &lt;addr&gt; &lt;port&gt;</code></pre>
 </div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>$sof &lt;i32:ingressZone&gt; &lt;i32:egressZone&gt; &lt;i32:ingressIntf&gt; &lt;i32:egressIntf&gt; &lt;s:srcIp&gt; &lt;i16:srcPort&gt; &lt;s:destIp&gt; &lt;i16:dstPort&gt; &lt;u32:opaque&gt; &lt;u64:initiatorPkts&gt; &lt;u64:responderPkts&gt; &lt;u64:initiatorPktsDropped&gt; &lt;u64:responderPktsDropped&gt; &lt;u64:initiatorBytesDropped&gt; &lt;u64:responderBytesDropped&gt; &lt;u8:isQosAppliedOnSrcIntf&gt; &lt;timeval:sof_timestamp&gt; &lt;timeval:eof_timestamp&gt; &lt;u16:vlan&gt; &lt;u16:address_space_id&gt; &lt;u8:protocol&gt;
+$eof &lt;i32:ingressZone&gt; &lt;i32:egressZone&gt; &lt;i32:ingressIntf&gt; &lt;i32:egressIntf&gt; &lt;s:srcIp&gt; &lt;i16:srcPort&gt; &lt;s:destIp&gt; &lt;i16:dstPort&gt; &lt;u32:opaque&gt; &lt;u64:initiatorPkts&gt; &lt;u64:responderPkts&gt; &lt;u64:initiatorPktsDropped&gt; &lt;u64:responderPktsDropped&gt; &lt;u64:initiatorBytesDropped&gt; &lt;u64:responderBytesDropped&gt; &lt;u8:isQosAppliedOnSrcIntf&gt; &lt;timeval:sof_timestamp&gt; &lt;timeval:eof_timestamp&gt; &lt;u16:vlan&gt; &lt;u16:address_space_id&gt; &lt;u8:protocol&gt;</code></pre>
+</div></div>
 <div class="paragraph"><p>Client and server are determined as follows.  $packet &#8594; client indicates
 to the client (from server) and $packet &#8594; server indicates a packet to the
 server (from client).  $packet followed by a 4-tuple uses the heuristic
-that the client is the side with the lower port number.</p></div>
+that the client is the side with the greater port number.</p></div>
 <div class="paragraph"><p>The default client and server are 192.168.1.1 12345 and 10.1.2.3 80
 respectively.  $packet commands with a 4-tuple do not change client and
 server set with the other $packet commands.</p></div>
@@ -18899,6 +19252,9 @@ server set with the other $packet commands.</p></div>
 combination of hex and strings.  Data for a packet ends with the next
 command or a blank line.  Data after a blank line will start another packet
 with the same tuple as the prior one.</p></div>
+<div class="paragraph"><p>$sof and $eof commands generate Start of Flow and End of Flow metapackets
+respectively. They are followed by a definition of a Flow_Stats_t data structure
+which will be fed into Snort via the metadata callback.</p></div>
 <div class="paragraph"><p>Strings may contain the following escape sequences:</p></div>
 <div class="literalblock">
 <div class="content">
@@ -22256,7 +22612,7 @@ these libraries see the Getting Started section of the manual.</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-<strong>--alert-before-pass</strong> process alert, drop, sdrop, or reject before pass; default is pass before alert, drop,&#8230;
+<strong>-?</strong> &lt;option prefix&gt; output matching command line option quick help (same as --help-options) (optional)
 </p>
 </li>
 <li>
@@ -22271,17 +22627,7 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>--bpf</strong> &lt;filter options&gt; are standard BPF options, as seen in TCPDump
-</p>
-</li>
-<li>
-<p>
-<strong>--c2x</strong> output hex for given char (see also --x2c)
-</p>
-</li>
-<li>
-<p>
-<strong>--catch-test</strong> comma separated list of cat unit test tags or <em>all</em>
+<strong>-C</strong> print out payloads with character data only (no hex)
 </p>
 </li>
 <li>
@@ -22291,37 +22637,7 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>--control-socket</strong> &lt;file&gt; to create unix socket
-</p>
-</li>
-<li>
-<p>
-<strong>-C</strong> print out payloads with character data only (no hex)
-</p>
-</li>
-<li>
-<p>
-<strong>--create-pidfile</strong> create PID file, even when not in Daemon mode
-</p>
-</li>
-<li>
-<p>
-<strong>--daq-dir</strong> &lt;dir&gt; tell snort where to find desired DAQ
-</p>
-</li>
-<li>
-<p>
-<strong>--daq-list</strong> list packet acquisition modules available in optional dir, default is static modules only
-</p>
-</li>
-<li>
-<p>
-<strong>--daq</strong> &lt;type&gt; select packet acquisition module (default is pcap)
-</p>
-</li>
-<li>
-<p>
-<strong>--daq-var</strong> &lt;name=value&gt; specify extra DAQ configuration variable
+<strong>-D</strong> run Snort in background (daemon) mode
 </p>
 </li>
 <li>
@@ -22331,42 +22647,7 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>--dirty-pig</strong> don&#8217;t flush packets on shutdown
-</p>
-</li>
-<li>
-<p>
-<strong>-D</strong> run Snort in background (daemon) mode
-</p>
-</li>
-<li>
-<p>
-<strong>--dump-builtin-rules</strong> [&lt;module prefix&gt;] output stub rules for selected modules (optional)
-</p>
-</li>
-<li>
-<p>
-<strong>--dump-defaults</strong> [&lt;module prefix&gt;] output module defaults in Lua format (optional)
-</p>
-</li>
-<li>
-<p>
-<strong>--dump-dynamic-rules</strong> output stub rules for all loaded rules libraries
-</p>
-</li>
-<li>
-<p>
-<strong>--dump-version</strong> output the version, the whole version, and only the version
-</p>
-</li>
-<li>
-<p>
 <strong>-e</strong> display the second layer header info
-</p>
-</li>
-<li>
-<p>
-<strong>--enable-inline-test</strong> enable Inline-Test Mode Operation
 </p>
 </li>
 <li>
@@ -22381,12 +22662,227 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
+<strong>-g</strong> &lt;gname&gt; run snort gid as &lt;gname&gt; group (or gid) after initialization
+</p>
+</li>
+<li>
+<p>
+<strong>-H</strong> make hash tables deterministic
+</p>
+</li>
+<li>
+<p>
+<strong>-i</strong> &lt;iface&gt;&#8230; list of interfaces
+</p>
+</li>
+<li>
+<p>
+<strong>-j</strong> &lt;port&gt; to listen for Telnet connections
+</p>
+</li>
+<li>
+<p>
+<strong>-k</strong> &lt;mode&gt; checksum mode; default is all (all|noip|notcp|noudp|noicmp|none)
+</p>
+</li>
+<li>
+<p>
+<strong>-L</strong> &lt;mode&gt; logging mode (none, dump, pcap, or log_*)
+</p>
+</li>
+<li>
+<p>
+<strong>-l</strong> &lt;logdir&gt; log to this directory instead of current directory
+</p>
+</li>
+<li>
+<p>
+<strong>-M</strong> log messages to syslog (not alerts)
+</p>
+</li>
+<li>
+<p>
+<strong>-m</strong> &lt;umask&gt; set umask = &lt;umask&gt; (0:)
+</p>
+</li>
+<li>
+<p>
+<strong>-n</strong> &lt;count&gt; stop after count packets (0:)
+</p>
+</li>
+<li>
+<p>
+<strong>-O</strong> obfuscate the logged IP addresses
+</p>
+</li>
+<li>
+<p>
+<strong>-Q</strong> enable inline mode operation
+</p>
+</li>
+<li>
+<p>
+<strong>-q</strong> quiet mode - Don&#8217;t show banner and status report
+</p>
+</li>
+<li>
+<p>
+<strong>-R</strong> &lt;rules&gt; include this rules file in the default policy
+</p>
+</li>
+<li>
+<p>
+<strong>-r</strong> &lt;pcap&gt;&#8230; (same as --pcap-list)
+</p>
+</li>
+<li>
+<p>
+<strong>-S</strong> &lt;x=v&gt; set config variable x equal to value v
+</p>
+</li>
+<li>
+<p>
+<strong>-s</strong> &lt;snap&gt; (same as --snaplen); default is 1514 (68:65535)
+</p>
+</li>
+<li>
+<p>
+<strong>-T</strong> test and report on the current Snort configuration
+</p>
+</li>
+<li>
+<p>
+<strong>-t</strong> &lt;dir&gt; chroots process to &lt;dir&gt; after initialization
+</p>
+</li>
+<li>
+<p>
+<strong>-U</strong> use UTC for timestamps
+</p>
+</li>
+<li>
+<p>
+<strong>-u</strong> &lt;uname&gt; run snort as &lt;uname&gt; or &lt;uid&gt; after initialization
+</p>
+</li>
+<li>
+<p>
+<strong>-V</strong> (same as --version)
+</p>
+</li>
+<li>
+<p>
+<strong>-v</strong> be verbose
+</p>
+</li>
+<li>
+<p>
+<strong>-W</strong> lists available interfaces
+</p>
+</li>
+<li>
+<p>
+<strong>-X</strong> dump the raw packet data starting at the link layer
+</p>
+</li>
+<li>
+<p>
+<strong>-x</strong> same as --pedantic
+</p>
+</li>
+<li>
+<p>
+<strong>-y</strong> include year in timestamp in the alert and log files
+</p>
+</li>
+<li>
+<p>
+<strong>-z</strong> &lt;count&gt; maximum number of packet threads (same as --max-packet-threads); 0 gets the number of CPU cores reported by the system; default is 1 (0:)
+</p>
+</li>
+<li>
+<p>
+<strong>--alert-before-pass</strong> process alert, drop, sdrop, or reject before pass; default is pass before alert, drop,&#8230;
+</p>
+</li>
+<li>
+<p>
+<strong>--bpf</strong> &lt;filter options&gt; are standard BPF options, as seen in TCPDump
+</p>
+</li>
+<li>
+<p>
+<strong>--c2x</strong> output hex for given char (see also --x2c)
+</p>
+</li>
+<li>
+<p>
+<strong>--control-socket</strong> &lt;file&gt; to create unix socket
+</p>
+</li>
+<li>
+<p>
+<strong>--create-pidfile</strong> create PID file, even when not in Daemon mode
+</p>
+</li>
+<li>
+<p>
+<strong>--daq</strong> &lt;type&gt; select packet acquisition module (default is pcap)
+</p>
+</li>
+<li>
+<p>
+<strong>--daq-dir</strong> &lt;dir&gt; tell snort where to find desired DAQ
+</p>
+</li>
+<li>
+<p>
+<strong>--daq-list</strong> list packet acquisition modules available in optional dir, default is static modules only
+</p>
+</li>
+<li>
+<p>
+<strong>--daq-var</strong> &lt;name=value&gt; specify extra DAQ configuration variable
+</p>
+</li>
+<li>
+<p>
+<strong>--dirty-pig</strong> don&#8217;t flush packets on shutdown
+</p>
+</li>
+<li>
+<p>
+<strong>--dump-builtin-rules</strong> [&lt;module prefix&gt;] output stub rules for selected modules (optional)
+</p>
+</li>
+<li>
+<p>
+<strong>--dump-dynamic-rules</strong> output stub rules for all loaded rules libraries
+</p>
+</li>
+<li>
+<p>
+<strong>--dump-defaults</strong> [&lt;module prefix&gt;] output module defaults in Lua format (optional)
+</p>
+</li>
+<li>
+<p>
+<strong>--dump-version</strong> output the version, the whole version, and only the version
+</p>
+</li>
+<li>
+<p>
+<strong>--enable-inline-test</strong> enable Inline-Test Mode Operation
+</p>
+</li>
+<li>
+<p>
 <strong>--gen-msg-map</strong> dump builtin rules in gen-msg.map format for use by other tools
 </p>
 </li>
 <li>
 <p>
-<strong>-g</strong> &lt;gname&gt; run snort gid as &lt;gname&gt; group (or gid) after initialization
+<strong>--help</strong> list command line options
 </p>
 </li>
 <li>
@@ -22402,11 +22898,6 @@ these libraries see the Getting Started section of the manual.</p></div>
 <li>
 <p>
 <strong>--help-counts</strong> [&lt;module prefix&gt;] output matching peg counts (optional)
-</p>
-</li>
-<li>
-<p>
-<strong>--help</strong> list command line options
 </p>
 </li>
 <li>
@@ -22436,11 +22927,6 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>-H</strong> make hash tables deterministic
-</p>
-</li>
-<li>
-<p>
 <strong>--id-offset</strong> offset to add to instance IDs when logging to files (0:65535)
 </p>
 </li>
@@ -22452,21 +22938,6 @@ these libraries see the Getting Started section of the manual.</p></div>
 <li>
 <p>
 <strong>--id-zero</strong> use id prefix / subdirectory even with one packet thread
-</p>
-</li>
-<li>
-<p>
-<strong>-i</strong> &lt;iface&gt;&#8230; list of interfaces
-</p>
-</li>
-<li>
-<p>
-<strong>-j</strong> &lt;port&gt; to listen for Telnet connections
-</p>
-</li>
-<li>
-<p>
-<strong>-k</strong> &lt;mode&gt; checksum mode; default is all (all|noip|notcp|noudp|noicmp|none)
 </p>
 </li>
 <li>
@@ -22496,22 +22967,12 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>-l</strong> &lt;logdir&gt; log to this directory instead of current directory
-</p>
-</li>
-<li>
-<p>
-<strong>-L</strong> &lt;mode&gt; logging mode (none, dump, pcap, or log_*)
+<strong>--lua</strong> &lt;chunk&gt; extend/override conf with chunk; may be repeated
 </p>
 </li>
 <li>
 <p>
 <strong>--logid</strong> &lt;0xid&gt; log Identifier to uniquely id events for multiple snorts (same as -G) (0:65535)
-</p>
-</li>
-<li>
-<p>
-<strong>--lua</strong> &lt;chunk&gt; extend/override conf with chunk; may be repeated
 </p>
 </li>
 <li>
@@ -22531,17 +22992,7 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>-M</strong> log messages to syslog (not alerts)
-</p>
-</li>
-<li>
-<p>
-<strong>-m</strong> &lt;umask&gt; set umask = &lt;umask&gt; (0:)
-</p>
-</li>
-<li>
-<p>
-<strong>-n</strong> &lt;count&gt; stop after count packets (0:)
+<strong>--nostamps</strong> don&#8217;t include timestamps in log file names
 </p>
 </li>
 <li>
@@ -22551,17 +23002,7 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>--nostamps</strong> don&#8217;t include timestamps in log file names
-</p>
-</li>
-<li>
-<p>
-<strong>-O</strong> obfuscate the logged IP addresses
-</p>
-</li>
-<li>
-<p>
-<strong>-?</strong> &lt;option prefix&gt; output matching command line option quick help (same as --help-options) (optional)
+<strong>--pause</strong> wait for resume/quit command before processing packets/terminating
 </p>
 </li>
 <li>
@@ -22571,7 +23012,12 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>--pause</strong> wait for resume/quit command before processing packets/terminating
+<strong>--pcap-file</strong> &lt;file&gt; file that contains a list of pcaps to read - read mode is implied
+</p>
+</li>
+<li>
+<p>
+<strong>--pcap-list</strong> &lt;list&gt; a space separated list of pcaps to read - read mode is implied
 </p>
 </li>
 <li>
@@ -22581,17 +23027,7 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>--pcap-file</strong> &lt;file&gt; file that contains a list of pcaps to read - read mode is implied
-</p>
-</li>
-<li>
-<p>
 <strong>--pcap-filter</strong> &lt;filter&gt; filter to apply when getting pcaps from file or directory
-</p>
-</li>
-<li>
-<p>
-<strong>--pcap-list</strong> &lt;list&gt; a space separated list of pcaps to read - read mode is implied
 </p>
 </li>
 <li>
@@ -22621,37 +23057,12 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>--piglet</strong> enable piglet test harness mode
-</p>
-</li>
-<li>
-<p>
 <strong>--plugin-path</strong> &lt;path&gt; where to find plugins
 </p>
 </li>
 <li>
 <p>
 <strong>--process-all-events</strong> process all action groups
-</p>
-</li>
-<li>
-<p>
-<strong>-Q</strong> enable inline mode operation
-</p>
-</li>
-<li>
-<p>
-<strong>-q</strong> quiet mode - Don&#8217;t show banner and status report
-</p>
-</li>
-<li>
-<p>
-<strong>-r</strong> &lt;pcap&gt;&#8230; (same as --pcap-list)
-</p>
-</li>
-<li>
-<p>
-<strong>-R</strong> &lt;rules&gt; include this rules file in the default policy
 </p>
 </li>
 <li>
@@ -22666,7 +23077,7 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>--rule-to-text</strong> output plain so rule header to stdout for text rule on stdin
+<strong>--rule-to-text</strong> output plain so rule header to stdout for text rule on stdin (16)
 </p>
 </li>
 <li>
@@ -22686,6 +23097,11 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
+<strong>--piglet</strong> enable piglet test harness mode
+</p>
+</li>
+<li>
+<p>
 <strong>--show-plugins</strong> list module and plugin versions
 </p>
 </li>
@@ -22701,22 +23117,7 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>-s</strong> &lt;snap&gt; (same as --snaplen); default is 1514 (68:65535)
-</p>
-</li>
-<li>
-<p>
 <strong>--stdin-rules</strong> read rules from stdin until EOF or a line starting with END is read
-</p>
-</li>
-<li>
-<p>
-<strong>-S</strong> &lt;x=v&gt; set config variable x equal to value v
-</p>
-</li>
-<li>
-<p>
-<strong>-t</strong> &lt;dir&gt; chroots process to &lt;dir&gt; after initialization
 </p>
 </li>
 <li>
@@ -22731,32 +23132,12 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>-T</strong> test and report on the current Snort configuration
-</p>
-</li>
-<li>
-<p>
-<strong>-u</strong> &lt;uname&gt; run snort as &lt;uname&gt; or &lt;uid&gt; after initialization
-</p>
-</li>
-<li>
-<p>
-<strong>-U</strong> use UTC for timestamps
-</p>
-</li>
-<li>
-<p>
-<strong>-v</strong> be verbose
+<strong>--catch-test</strong> comma separated list of cat unit test tags or <em>all</em>
 </p>
 </li>
 <li>
 <p>
 <strong>--version</strong> show version number (same as -V)
-</p>
-</li>
-<li>
-<p>
-<strong>-V</strong> (same as --version)
 </p>
 </li>
 <li>
@@ -22811,37 +23192,12 @@ these libraries see the Getting Started section of the manual.</p></div>
 </li>
 <li>
 <p>
-<strong>-W</strong> lists available interfaces
-</p>
-</li>
-<li>
-<p>
 <strong>--x2c</strong> output ASCII char for given hex (see also --c2x)
 </p>
 </li>
 <li>
 <p>
 <strong>--x2s</strong> output ASCII string for given byte code (see also --x2c)
-</p>
-</li>
-<li>
-<p>
-<strong>-X</strong> dump the raw packet data starting at the link layer
-</p>
-</li>
-<li>
-<p>
-<strong>-x</strong> same as --pedantic
-</p>
-</li>
-<li>
-<p>
-<strong>-y</strong> include year in timestamp in the alert and log files
-</p>
-</li>
-<li>
-<p>
-<strong>-z</strong> &lt;count&gt; maximum number of packet threads (same as --max-packet-threads); 0 gets the number of CPU cores reported by the system; default is 1 (0:)
 </p>
 </li>
 </ul></div>
@@ -23436,7 +23792,7 @@ string <strong>byte_jump.~offset</strong>: variable name or number of bytes into
 </li>
 <li>
 <p>
-int <strong>byte_jump.post_offset</strong> = 0: also skip forward or backwards (positive of negative value) this number of bytes { -65535:65535 }
+string <strong>byte_jump.post_offset</strong>: skip forward or backward (positive or negative value) by variable name or number of bytes after the other jump options have been applied
 </p>
 </li>
 <li>
@@ -25391,6 +25747,11 @@ bool <strong>output.obfuscate_pii</strong> = false: mask all but the last 4 char
 </li>
 <li>
 <p>
+enum <strong>output.packet_trace_output</strong> = console: select where to send packet trace { console | file }
+</p>
+</li>
+<li>
+<p>
 bool <strong>output.quiet</strong> = false: suppress non-fatal information (still show alerts, same as -q)
 </p>
 </li>
@@ -26936,7 +27297,7 @@ implied <strong>snort.--rule-to-hex</strong>: output so rule header to stdout fo
 </li>
 <li>
 <p>
-implied <strong>snort.--rule-to-text</strong>: output plain so rule header to stdout for text rule on stdin
+string <strong>snort.--rule-to-text</strong> = [SnortFoo]: output plain so rule header to stdout for text rule on stdin { 16 }
 </p>
 </li>
 <li>
@@ -28657,6 +29018,21 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <li>
 <p>
 <strong>host_tracker.service_removes</strong>: host service removes (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>http2_inspect.concurrent_sessions</strong>: total concurrent HTTP/2 sessions (now)
+</p>
+</li>
+<li>
+<p>
+<strong>http2_inspect.flows</strong>: HTTP connections inspected (sum)
+</p>
+</li>
+<li>
+<p>
+<strong>http2_inspect.max_concurrent_sessions</strong>: maximum concurrent HTTP/2 sessions (max)
 </p>
 </li>
 <li>
@@ -30736,6 +31112,11 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
+<strong>219</strong>: http2_inspect
+</p>
+</li>
+<li>
+<p>
 <strong>256</strong>: dpx
 </p>
 </li>
@@ -31936,7 +32317,7 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>119:65</strong> (http_inspect) white space following chunk length
+<strong>119:65</strong> (http_inspect) white space adjacent to chunk length
 </p>
 </li>
 <li>
@@ -33136,12 +33517,17 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 <div class="ulist"><ul>
 <li>
 <p>
+<strong>packet_capture.enable</strong>(filter): dump raw packets
+</p>
+</li>
+<li>
+<p>
 <strong>packet_capture.disable</strong>(): stop packet dump
 </p>
 </li>
 <li>
 <p>
-<strong>packet_capture.enable</strong>(filter): dump raw packets
+<strong>snort.show_plugins</strong>(): show available plugins
 </p>
 </li>
 <li>
@@ -33151,32 +33537,22 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>snort.detach</strong>(): exit shell w/o shutdown
-</p>
-</li>
-<li>
-<p>
 <strong>snort.dump_stats</strong>(): show summary statistics
 </p>
 </li>
 <li>
 <p>
-<strong>snort.help</strong>(): this output
-</p>
-</li>
-<li>
-<p>
-<strong>snort.pause</strong>(): suspend packet processing
-</p>
-</li>
-<li>
-<p>
-<strong>snort.quit</strong>(): shutdown and dump-stats
+<strong>snort.rotate_stats</strong>(): roll perfmonitor log files
 </p>
 </li>
 <li>
 <p>
 <strong>snort.reload_config</strong>(filename): load new configuration
+</p>
+</li>
+<li>
+<p>
+<strong>snort.reload_policy</strong>(filename): reload part or all of the default policy
 </p>
 </li>
 <li>
@@ -33191,7 +33567,7 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>snort.reload_policy</strong>(filename): reload part or all of the default policy
+<strong>snort.pause</strong>(): suspend packet processing
 </p>
 </li>
 <li>
@@ -33201,12 +33577,17 @@ interval <strong>wscale.~range</strong>: check if TCP window scale is in given r
 </li>
 <li>
 <p>
-<strong>snort.rotate_stats</strong>(): roll perfmonitor log files
+<strong>snort.detach</strong>(): exit shell w/o shutdown
 </p>
 </li>
 <li>
 <p>
-<strong>snort.show_plugins</strong>(): show available plugins
+<strong>snort.quit</strong>(): shutdown and dump-stats
+</p>
+</li>
+<li>
+<p>
+<strong>snort.help</strong>(): this output
 </p>
 </li>
 </ul></div>
@@ -33225,7 +33606,7 @@ documentation and are not applicable elsewhere.</td>
 <div class="ulist"><ul>
 <li>
 <p>
-<strong>hosts</strong>(23): reload hosts file
+<strong>term</strong>(15): shutdown normally
 </p>
 </li>
 <li>
@@ -33240,7 +33621,7 @@ documentation and are not applicable elsewhere.</td>
 </li>
 <li>
 <p>
-<strong>reload</strong>(1): reload config file
+<strong>stats</strong>(10): dump stats to stdout
 </p>
 </li>
 <li>
@@ -33250,12 +33631,12 @@ documentation and are not applicable elsewhere.</td>
 </li>
 <li>
 <p>
-<strong>stats</strong>(10): dump stats to stdout
+<strong>reload</strong>(1): reload config file
 </p>
 </li>
 <li>
 <p>
-<strong>term</strong>(15): shutdown normally
+<strong>hosts</strong>(23): reload hosts file
 </p>
 </li>
 </ul></div>
@@ -33988,6 +34369,21 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <li>
 <p>
 <strong>hosts</strong> (basic): configure hosts
+</p>
+</li>
+<li>
+<p>
+<strong>http2_frame_data</strong> (ips_option): rule option to see HTTP/2 frame body
+</p>
+</li>
+<li>
+<p>
+<strong>http2_frame_header</strong> (ips_option): rule option to see 9-octet HTTP/2 frame header
+</p>
+</li>
+<li>
+<p>
+<strong>http2_inspect</strong> (inspector): HTTP/2 inspector
 </p>
 </li>
 <li>
@@ -34987,6 +35383,11 @@ deleted -&gt; unified2: 'filename'</code></pre>
 </li>
 <li>
 <p>
+<strong>inspector::http2_inspect</strong>: the HTTP/2 inspector
+</p>
+</li>
+<li>
+<p>
 <strong>inspector::http_inspect</strong>: the new HTTP inspector!
 </p>
 </li>
@@ -35283,6 +35684,16 @@ deleted -&gt; unified2: 'filename'</code></pre>
 <li>
 <p>
 <strong>ips_option::gtp_version</strong>: rule option to check GTP version
+</p>
+</li>
+<li>
+<p>
+<strong>ips_option::http2_frame_data</strong>: rule option to see HTTP/2 frame body
+</p>
+</li>
+<li>
+<p>
+<strong>ips_option::http2_frame_header</strong>: rule option to see 9-octet HTTP/2 frame header
 </p>
 </li>
 <li>
@@ -36573,7 +36984,7 @@ Note that on OpenBSD, divert sockets don&#8217;t work with bridges!
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-02-10 00:01:09 EST
+Last updated 2018-03-15 02:27:21 EDT
 </div>
 </div>
 </body>
