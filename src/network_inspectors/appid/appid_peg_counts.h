@@ -95,6 +95,7 @@ public:
 
 private:
      static bool detectors_configured;
+     static bool dynamic_counts_imported;
      static uint32_t unknown_app_idx;
      static std::map<AppId, uint32_t> appid_detector_pegs_idx;
      static std::vector<PegInfo> appid_detectors_peg_info;

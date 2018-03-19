@@ -30,6 +30,7 @@
 #include <string>
 
 bool AppIdPegCounts::detectors_configured = false;
+bool AppIdPegCounts::dynamic_counts_imported = false;
 uint32_t AppIdPegCounts::unknown_app_idx = 0;
 std::map<AppId, uint32_t> AppIdPegCounts::appid_detector_pegs_idx;
 std::vector<PegInfo> AppIdPegCounts::appid_detectors_peg_info;
@@ -101,10 +102,13 @@ PegInfo* AppIdPegCounts::get_peg_info()
 {
     if ( AppIdPegCounts::detectors_configured )
     {
-        appid_pegs.insert( appid_pegs.end(), appid_detectors_peg_info.begin(), appid_detectors_peg_info.end());
-
-        // add the sentinel entry at the end
-        appid_pegs.push_back({ CountType::END, nullptr, nullptr });
+        if ( !AppIdPegCounts::dynamic_counts_imported )
+        {
+            appid_pegs.insert( appid_pegs.end(), appid_detectors_peg_info.begin(), appid_detectors_peg_info.end());
+            // add the sentinel entry at the end
+            appid_pegs.push_back({ CountType::END, nullptr, nullptr });
+            AppIdPegCounts::dynamic_counts_imported = true;
+        }
         return appid_pegs.data();
     }
     else
