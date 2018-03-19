@@ -135,6 +135,7 @@ const StrCode HttpMsgHeadShared::header_list[] =
     { HEAD_X_WORKING_WITH,            "x-working-with" },
     { HEAD_CONTENT_TRANSFER_ENCODING, "content-transfer-encoding" },
     { HEAD_MIME_VERSION,              "mime-version" },
+    { HEAD_PROXY_AGENT,               "proxy-agent" },
     { 0,                              nullptr }
 };
 
@@ -270,6 +271,7 @@ const HeaderNormalizer* const HttpMsgHeadShared::header_norms[HEAD__MAX_VALUE] =
     [HEAD_X_WORKING_WITH] = &NORMALIZER_BASIC,
     [HEAD_CONTENT_TRANSFER_ENCODING] = &NORMALIZER_TOKEN_LIST,
     [HEAD_MIME_VERSION] = &NORMALIZER_BASIC,
+    [HEAD_PROXY_AGENT] = &NORMALIZER_BASIC,
 };
 /* *INDENT-ON* */
 

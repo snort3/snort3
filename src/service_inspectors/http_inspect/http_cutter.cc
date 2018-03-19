@@ -288,14 +288,18 @@ ScanResult HttpBodyClCutter::cut(const uint8_t*, uint32_t length, HttpInfraction
     }
 }
 
-ScanResult HttpBodyOldCutter::cut(const uint8_t*, uint32_t, HttpInfractions*, HttpEventGen*,
+ScanResult HttpBodyOldCutter::cut(const uint8_t*, uint32_t length, HttpInfractions*, HttpEventGen*,
     uint32_t flow_target, uint32_t)
 {
     if (flow_target == 0)
     {
-        // With other types of body we could skip to the next message now. But this body will run
-        // to connection close so we just stop.
-        return SCAN_END;
+        // FIXIT-P Need StreamSplitter::END
+        // With other types of body we would skip to the trailers and/or next message now. But this
+        // will run to connection close so we should just stop processing this flow. But there is
+        // no way to ask stream to do that so we must skip through the rest of the message
+        // ourselves.
+        num_flush = length;
+        return SCAN_DISCARD_PIECE;
     }
 
     num_flush = flow_target;

@@ -188,7 +188,6 @@ StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data,
 #endif
         return StreamSplitter::SEARCH;
     case SCAN_ABORT:
-    case SCAN_END: // FIXIT-H need StreamSplitter::END
         session_data->type_expected[source_id] = SEC_ABORT;
         delete cutter;
         cutter = nullptr;
