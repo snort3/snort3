@@ -735,7 +735,10 @@ public:
     static const unsigned max = 32;
 
     void init()
-    { if ( enable ) { count = flushed = 0; } }
+    {
+        if ( enable )
+            count = flushed = 0;
+    }
 
     // this is done in the offload thread
     bool push(void* user, void* tree, int index, void* list);
@@ -1313,6 +1316,7 @@ void fp_offload(Packet* p)
 {
     IpsContext* c = p->context;
     MpseStash* stash = c->stash;
+    stash->enable_process();
     stash->init();
     stash->disable_process();
     init_match_info(c->otnx, true);
