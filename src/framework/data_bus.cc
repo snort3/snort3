@@ -154,9 +154,12 @@ void DataBus::_unsubscribe(const char* key, DataHandler* h)
 // notify subscribers of event
 void DataBus::_publish(const char* key, DataEvent& e, Flow* f)
 {
-    DataList& v = map[key];
+    auto v = map.find(key);
 
-    for ( auto* h : v )
-        h->handle(e, f);
+    if ( v != map.end() )
+    {
+        for ( auto* h : v->second )
+            h->handle(e, f);
+    }
 }
 
