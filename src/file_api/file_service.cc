@@ -34,7 +34,6 @@
 
 #include "file_cache.h"
 #include "file_capture.h"
-#include "file_enforcer.h"
 #include "file_flows.h"
 #include "file_stats.h"
 
@@ -45,7 +44,6 @@ bool FileService::file_signature_enabled = false;
 bool FileService::file_capture_enabled = false;
 bool FileService::file_processing_initiated = false;
 
-FileEnforcer* FileService::file_enforcer = nullptr;
 FileCache* FileService::file_cache = nullptr;
 
 void FileService::init()
@@ -61,14 +59,15 @@ void FileService::post_init()
     if (!conf)
         return;
 
+    if (!file_cache)
+        file_cache = new FileCache(conf->max_files_cached);
+
     if (file_capture_enabled)
         FileCapture::init(conf->capture_memcap, conf->capture_block_size);
 }
 
 void FileService::close()
 {
-    if (file_enforcer)
-        delete file_enforcer;
     if (file_cache)
         delete file_cache;
 
@@ -82,42 +81,21 @@ void FileService::thread_init()
 void FileService::thread_term()
 { file_stats_term(); }
 
-void FileService::start_file_processing()
-{
-    if (!file_processing_initiated)
-    {
-        file_enforcer = new FileEnforcer;
-        file_cache = new FileCache;
-        file_processing_initiated = true;
-    }
-}
-
 void FileService::enable_file_type()
 {
-    if (!file_type_id_enabled)
-    {
-        file_type_id_enabled = true;
-        start_file_processing();
-    }
+    file_type_id_enabled = true;
 }
 
 void FileService::enable_file_signature()
 {
-    if (!file_signature_enabled)
-    {
-        file_signature_enabled = true;
-        start_file_processing();
-    }
+    file_signature_enabled = true;
 }
 
 /* Enable file capture, also enable file signature */
 void FileService::enable_file_capture()
 {
-    if (!file_capture_enabled)
-    {
-        file_capture_enabled = true;
-        enable_file_signature();
-    }
+    file_capture_enabled = true;
+    enable_file_signature();
 }
 
 bool FileService::is_file_service_enabled()

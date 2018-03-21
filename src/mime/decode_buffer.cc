@@ -110,8 +110,8 @@ DecodeBuffer::DecodeBuffer(int max_depth)
     if (max_depth < 0)
         return;
 
-    encodeBuf = (uint8_t*)snort_calloc(buf_size);
-    decodeBuf = (uint8_t*)snort_calloc(buf_size);
+    encodeBuf = (uint8_t*)snort_alloc(buf_size);
+    decodeBuf = (uint8_t*)snort_alloc(buf_size);
 }
 
 DecodeBuffer::~DecodeBuffer()

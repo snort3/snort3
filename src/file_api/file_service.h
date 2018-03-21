@@ -56,16 +56,13 @@ public:
     static bool is_file_service_enabled();
     static int64_t get_max_file_depth();
 
-    static FileEnforcer* get_file_enforcer() { return file_enforcer; }
     static FileCache* get_file_cache() { return file_cache; }
 
 private:
-    static void start_file_processing();
     static bool file_type_id_enabled;
     static bool file_signature_enabled;
     static bool file_capture_enabled;
     static bool file_processing_initiated;
-    static FileEnforcer* file_enforcer;
     static FileCache* file_cache;
 };
 } // namespace snort

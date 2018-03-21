@@ -42,7 +42,7 @@ public:
     FileInspect(FileIdModule*);
     ~FileInspect() override;
     void eval(Packet*) override { }
-
+    bool configure(SnortConfig*) override;
     FileConfig* config;
 };
 
@@ -77,6 +77,8 @@ public:
         gen_signature = enable;
     }
 
+    void add_pending_file(uint64_t file_id);
+
     // This is used when there is only one file per session
     bool file_process(const uint8_t* file_data, int data_size, FilePosition,
         bool upload, size_t file_index = 0);
@@ -94,9 +96,9 @@ private:
     void init_file_context(FileDirection, FileContext*);
     FileContext* find_main_file_context(FilePosition, FileDirection, size_t id = 0);
     FileContext* main_context = nullptr;
-    FileContext* pending_context = nullptr;
     FileContext* current_context = nullptr;
     uint64_t current_file_id = 0;
+    uint64_t pending_file_id = 0;
     bool gen_signature = false;
     Flow* flow = nullptr;
     FilePolicyBase* file_policy = nullptr;

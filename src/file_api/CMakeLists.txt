@@ -20,8 +20,6 @@ add_library ( file_api OBJECT
     file_cache.cc
     file_cache.h
     file_config.cc 
-    file_enforcer.cc 
-    file_enforcer.h 
     file_flows.cc 
     file_identifier.cc
     file_lib.cc 

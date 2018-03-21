@@ -27,7 +27,7 @@
 #include "hash/hashes.h"
 
 #include "file_capture.h"
-#include "file_enforcer.h"
+#include "file_lib.h"
 #include "file_service.h"
 
 using namespace snort;

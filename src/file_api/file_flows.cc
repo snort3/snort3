@@ -35,7 +35,6 @@
 
 #include "file_cache.h"
 #include "file_config.h"
-#include "file_enforcer.h"
 #include "file_lib.h"
 #include "file_service.h"
 
@@ -49,14 +48,14 @@ void FileFlows::handle_retransmit (Packet*)
     if (file_policy == nullptr)
         return;
 
-    FileContext* file = get_current_file_context();
+    FileContext* file = get_file_context(pending_file_id, false);
     if ((file == nullptr) or (file->verdict != FILE_VERDICT_PENDING))
         return;
 
     FileVerdict verdict = file_policy->signature_lookup(flow, file);
-    FileEnforcer* file_enforcer = FileService::get_file_enforcer();
-    if (file_enforcer)
-        file_enforcer->apply_verdict(flow, file, verdict, false,file_policy);
+    FileCache* file_cache = FileService::get_file_cache();
+    if (file_cache)
+        file_cache->apply_verdict(flow, file, verdict, false, file_policy);
     file->log_file_event(flow, file_policy);
 }
 
@@ -119,12 +118,6 @@ uint64_t FileFlows::get_new_file_instance()
 
 FileFlows::~FileFlows()
 {
-    /*Clean up all the file contexts*/
-    if ( pending_context and (main_context != pending_context))
-    {
-        delete(pending_context);
-    }
-
     delete(main_context);
 }
 
@@ -159,17 +152,7 @@ FileContext* FileFlows::get_file_context(uint64_t file_id, bool to_create)
     FileCache* file_cache = FileService::get_file_cache();
     assert(file_cache);
 
-    FileCache::FileHashKey key;
-    key.dip.set(flow->client_ip);
-    key.sip.set(flow->server_ip);
-    key.padding = 0;
-    key.file_sig = file_id;
-
-    FileContext* context = file_cache->find(key);
-
-    if (!context && to_create)
-        context = file_cache->add(key);
-
+    FileContext* context = file_cache->get_file(flow, file_id, to_create);
     current_file_id = file_id;
     return context;
 }
@@ -258,6 +241,10 @@ void FileFlows::set_file_name(const uint8_t* fname, uint32_t name_size)
     }
 }
 
+void FileFlows::add_pending_file(uint64_t file_id)
+{
+    current_file_id = pending_file_id = file_id;
+}
 namespace snort
 {
 FilePosition get_file_position(Packet* pkt)
@@ -286,6 +273,22 @@ FileInspect:: ~FileInspect()
 {
     if (config)
         delete config;
+}
+
+bool FileInspect::configure(SnortConfig*)
+{
+    if (!config)
+        return true;
+
+    FileCache* file_cache = FileService::get_file_cache();
+    if (file_cache)
+    {
+        file_cache->set_block_timeout(config->file_block_timeout);
+        file_cache->set_lookup_timeout(config->file_lookup_timeout);
+        file_cache->set_max_files(config->max_files_cached);
+    }
+
+    return true;
 }
 
 static Module* mod_ctor()

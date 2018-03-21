@@ -44,7 +44,7 @@
 #include "file_api.h"
 #include "file_capture.h"
 #include "file_config.h"
-#include "file_enforcer.h"
+#include "file_cache.h"
 #include "file_flows.h"
 #include "file_service.h"
 #include "file_segment.h"
@@ -106,6 +106,7 @@ void FileInfo::copy(const FileInfo& other)
     file_type_id = other.file_type_id;
     file_id = other.file_id;
     file_name = other.file_name;
+    file_name_set = other.file_name_set;
     verdict = other.verdict;
     file_type_enabled = other.file_type_enabled;
     file_signature_enabled = other.file_signature_enabled;
@@ -358,9 +359,9 @@ void FileContext::finish_signature_lookup(Flow* flow, bool final_lookup, FilePol
         verdict = policy->signature_lookup(flow, this);
         if ( verdict != FILE_VERDICT_UNKNOWN || final_lookup )
         {
-            FileEnforcer* file_enforcer = FileService::get_file_enforcer();
-            if (file_enforcer)
-                file_enforcer->apply_verdict(flow, this, verdict, false, policy);
+            FileCache* file_cache = FileService::get_file_cache();
+            if (file_cache)
+                file_cache->apply_verdict(flow, this, verdict, false, policy);
             log_file_event(flow, policy);
             config_file_signature(false);
             file_stats->signatures_processed[get_file_type()][get_file_direction()]++;
@@ -419,7 +420,7 @@ bool FileContext::process(Flow* flow, const uint8_t* file_data, int data_size,
         return false;
     }
 
-    if ((FileService::get_file_enforcer()->cached_verdict_lookup(flow, this,
+    if ((FileService::get_file_cache()->cached_verdict_lookup(flow, this,
         policy) != FILE_VERDICT_UNKNOWN))
         return true;
 
@@ -446,9 +447,9 @@ bool FileContext::process(Flow* flow, const uint8_t* file_data, int data_size,
             FileVerdict v = policy->type_lookup(flow, this);
             if ( v != FILE_VERDICT_UNKNOWN )
             {
-                FileEnforcer* file_enforcer = FileService::get_file_enforcer();
-                if (file_enforcer)
-                    file_enforcer->apply_verdict(flow, this, v, false, policy);
+                FileCache* file_cache = FileService::get_file_cache();
+                if (file_cache)
+                    file_cache->apply_verdict(flow, this, v, false, policy);
             }
 
             log_file_event(flow, policy);
