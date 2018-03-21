@@ -20,6 +20,8 @@
 #ifndef UDP_SESSION_H
 #define UDP_SESSION_H
 
+#include <sys/time.h>
+
 #include "flow/session.h"
 
 class UdpSession : public Session

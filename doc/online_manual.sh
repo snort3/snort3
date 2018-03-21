@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # run this from build/doc/ to create an all in one html manual
 # with embedded images in base64 format for use in places where
@@ -38,11 +38,11 @@ END
 }
 
 # create working dir
-mkdir tmp || exit -1
+mkdir tmp || exit 1
 cd tmp
 
 # copy the sources since we need to make edits
-cp ../*.{txt,png} ./
+cp ../*.txt ../*.png ./
 
 # create a list of 'txt png' pairs
 grep -o 'image::.*.png' *.txt > $data

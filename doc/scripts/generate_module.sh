@@ -1,11 +1,11 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 SNORT_BINARY="$1"
 OUTPUT_FILE="$2"
 PLUGIN_PATH="$3"
 PLUGIN_ARGS=
 
-if [[ -n "${PLUGIN_PATH}" ]]; then
+if [ -n "${PLUGIN_PATH}" ] ; then
   PLUGIN_ARGS="--plugin-path=${PLUGIN_PATH}"
 fi
 

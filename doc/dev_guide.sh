@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # run from top of source tree (where configure.ac lives)
 # or supply top_srcdir as argument
 # this will create /tmp/dev_guide.{txt,html}

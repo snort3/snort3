@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 SNORT_BINARY="$1"
 OUTPUT_FILE="$2"
@@ -7,13 +7,13 @@ HELP_ARG="--help"
 PLUGIN_ARGS=
 SORT_ARGS=
 
-if [[ -n "${PLUGIN_PATH}" ]]; then
+if [ -n "${PLUGIN_PATH}" ] ; then
   PLUGIN_ARGS="--plugin-path=${PLUGIN_PATH}"
 fi
 
 HELP_TYPE=`basename "${OUTPUT_FILE}" .txt`
 
-if [[ "${HELP_TYPE}" != "help" ]]; then
+if [ "${HELP_TYPE}" != "help" ] ; then
   HELP_ARG="${HELP_ARG}-${HELP_TYPE}"
 
   case "${HELP_TYPE}" in
@@ -26,7 +26,7 @@ if [[ "${HELP_TYPE}" != "help" ]]; then
   esac
 fi
 
-if [[ -n "${SORT_ARGS}" ]]; then
+if [ -n "${SORT_ARGS}" ] ; then
   "${SNORT_BINARY}" ${PLUGIN_ARGS} --markup "${HELP_ARG}" | sort ${SORT_ARGS} \
     > "${OUTPUT_FILE}"
 else

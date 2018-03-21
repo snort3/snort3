@@ -86,8 +86,7 @@ echo "Build Directory : $builddir"
 echo "Source Directory: $sourcedir"
 cd $builddir
 
-gen=""
-[ "$CMakeGenerator" ] && gen+=" -G $CMakeGenerator"
+[ "$CMakeGenerator" ] && gen="-G $CMakeGenerator"
 
 cmake $gen \
     -DCMAKE_CXX_FLAGS:STRING="$CXXFLAGS $CPPFLAGS" \

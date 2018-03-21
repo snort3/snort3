@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 SNORT_BINARY="$1"
 OUTPUT_FILE="$2"
@@ -7,7 +7,7 @@ LIST_ARG=
 PLUGIN_ARGS=
 SORT_OPTIONS=
 
-if [[ -n "${PLUGIN_PATH}" ]]; then
+if [ -n "${PLUGIN_PATH}" ] ; then
   PLUGIN_ARGS="--plugin-path=${PLUGIN_PATH}"
 fi
 
