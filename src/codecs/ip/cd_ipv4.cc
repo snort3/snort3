@@ -22,6 +22,8 @@
 #include "config.h"
 #endif
 
+#include <random>
+
 #include "codecs/codec_module.h"
 #include "log/log_text.h"
 #include "log/messages.h"
@@ -33,7 +35,6 @@
 #include "protocols/ipv4_options.h"
 #include "protocols/tcp.h"
 #include "sfip/sf_ipvar.h"
-#include "utils/dnet_header.h"
 
 #include "checksum.h"
 
@@ -117,13 +118,6 @@ private:
     void IP4AddrTests(const ip::IP4Hdr*, const CodecData&, DecodeData&);
     void IPMiscTests(const ip::IP4Hdr* const ip4h, const CodecData& codec, uint16_t len);
     void DecodeIPOptions(const uint8_t* start, uint8_t& o_len, CodecData& data);
-};
-
-const uint16_t IP_ID_COUNT = 8192;
-static THREAD_LOCAL rand_t* s_rand = nullptr;
-static THREAD_LOCAL uint16_t s_id_index = 0;
-static THREAD_LOCAL std::array<uint16_t, IP_ID_COUNT> s_id_pool {
-    { 0 }
 };
 }  // namespace
 
@@ -624,19 +618,11 @@ void Ipv4Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
  ******************** E N C O D E R  ******************************
 *******************************************************************/
 
+static THREAD_LOCAL std::mt19937* thread_rand = nullptr;
+
 static inline uint16_t IpId_Next()
 {
-#if defined(REG_TEST)
-    uint16_t id = htons(s_id_index + 1);
-#else
-    uint16_t id = s_id_pool[s_id_index];
-#endif
-    s_id_index = (s_id_index + 1) % IP_ID_COUNT;
-
-    if ( !s_id_index )
-        rand_shuffle(s_rand, &s_id_pool[0], sizeof(s_id_pool), 1);
-
-    return id;
+    return (*thread_rand)() % UINT16_MAX;
 }
 
 /******************************************************************
@@ -726,28 +712,8 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-//-------------------------------------------------------------------------
-// ip id considerations:
-//
-// we use dnet's rand services to generate a vector of random 16-bit values and
-// iterate over the vector as IDs are assigned.  when we wrap to the beginning,
-// the vector is randomly reordered.
-//-------------------------------------------------------------------------
 static void ipv4_codec_ginit()
 {
-    if ( s_rand )
-        rand_close(s_rand);
-
-    // rand_open() can yield valgrind errors because the
-    // starting seed may come from "random stack contents"
-    // (see man 3 dnet)
-    s_rand = rand_open();
-
-    if ( !s_rand )
-        FatalError("rand_open() failed.\n");
-
-    rand_get(s_rand, &s_id_pool[0], sizeof(s_id_pool));
-
     // Reserved addresses within multicast address space (See RFC 5771)
     MulticastReservedIp = sfip_var_from_string(
         "[224.1.0.0/16,224.5.0.0/16,224.6.0.0/15,224.8.0.0/13,224.16.0.0/12,"
@@ -759,14 +725,28 @@ static void ipv4_codec_ginit()
 
 static void ipv4_codec_gterm()
 {
-    if ( s_rand )
-        rand_close(s_rand);
-
     if ( MulticastReservedIp )
         sfvar_free(MulticastReservedIp);
 
-    s_rand = nullptr;
     MulticastReservedIp = nullptr;
+}
+
+static void ipv4_codec_tinit()
+{
+    std::random_device rd; // for a good seed
+    auto id = rd();
+
+#ifdef REG_TEST
+    id = 1;
+#endif
+
+    thread_rand = new std::mt19937(id);
+}
+
+static void ipv4_codec_tterm()
+{
+    delete thread_rand;
+    thread_rand = nullptr;
 }
 
 static Codec* ctor(Module*)
@@ -791,8 +771,8 @@ static const CodecApi ipv4_api =
     },
     ipv4_codec_ginit, // pinit
     ipv4_codec_gterm, // pterm
-    nullptr, // tinit
-    nullptr, // tterm
+    ipv4_codec_tinit, // tinit
+    ipv4_codec_tterm, // tterm
     ctor, // ctor
     dtor, // dtor
 };
