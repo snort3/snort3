@@ -66,6 +66,8 @@ struct dce2SmbProtoConf
     bool legacy_mode;
 };
 
+extern Trace TRACE_NAME(dce_smb);
+
 class Dce2SmbModule : public snort::Module
 {
 public:

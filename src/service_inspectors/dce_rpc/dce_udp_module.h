@@ -44,6 +44,8 @@ struct dce2UdpProtoConf
     dce2CommonProtoConf common;
 };
 
+extern Trace TRACE_NAME(dce_udp);
+
 class Dce2UdpModule : public snort::Module
 {
 public:

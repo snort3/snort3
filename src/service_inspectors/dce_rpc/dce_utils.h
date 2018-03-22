@@ -128,7 +128,6 @@ inline int DCE2_UuidCompare(const void*, const void*);
  * Public function prototypes
  ********************************************************************/
 DCE2_Ret DCE2_GetValue(const char*, char*, void*, int, DCE2_IntType, uint8_t);
-void DCE2_PrintPktData(const uint8_t*, const uint16_t);
 DCE2_Buffer* DCE2_BufferNew(uint32_t, uint32_t);
 void* DCE2_ReAlloc(void*, uint32_t, uint32_t);
 DCE2_Ret DCE2_BufferAddData(DCE2_Buffer*, const uint8_t*,

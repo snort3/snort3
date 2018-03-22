@@ -25,7 +25,6 @@
 
 #include "dce_co.h"
 
-#include "main/snort_debug.h"
 #include "utils/util.h"
 
 #include "dce_smb.h"
@@ -641,16 +640,6 @@ static void DCE2_CoCtxReq(DCE2_SsnData* sd, DCE2_CoTracker* cot, const DceRpcCoH
         {
             return;
         }
-        DEBUG_WRAP(char uuid_buf[DCE2_UUID_BUF_SIZE];)
-
-        DebugFormat(DEBUG_DCE_COMMON, "Added Context item to queue.\n"
-            " Context id: %hu\n"
-            " Interface: %s\n"
-            " Interface major version: %hu\n"
-            " Interface minor version: %hu\n",
-            ctx_node->ctx_id,
-            DCE2_UuidToStr(&ctx_node->iface, DCERPC_BO_FLAG__NONE, uuid_buf),
-            ctx_node->iface_vers_maj, ctx_node->iface_vers_min);
 
         switch (policy)
         {
@@ -689,30 +678,17 @@ static void dce_co_process_ctx_result(DCE2_SsnData* sd,DCE2_CoTracker* cot,
     ctx_node = (DCE2_CoCtxIdNode*)DCE2_QueueDequeue(cot->pending_ctx_ids);
     if (ctx_node == nullptr)
     {
-        DebugMessage(DEBUG_DCE_COMMON, "Failed to dequeue a context id node.\n");
         return;
     }
-    DEBUG_WRAP(char uuid_buf[DCE2_UUID_BUF_SIZE];)
-
-    DebugFormat(DEBUG_DCE_COMMON, "Adding Context item to context item list.\n"
-        " Context id: %hu\n"
-        " Interface: %s\n"
-        " Interface major version: %hu\n"
-        " Interface minor version: %hu\n",
-        ctx_node->ctx_id,
-        DCE2_UuidToStr(&ctx_node->iface, DCERPC_BO_FLAG__NONE, uuid_buf),
-        ctx_node->iface_vers_maj, ctx_node->iface_vers_min);
 
     if (result == DCERPC_CO_CONT_DEF_RESULT__ACCEPTANCE)
     {
-        DebugMessage(DEBUG_DCE_COMMON, "Server accepted context item.\n");
         ctx_node->state = DCE2_CO_CTX_STATE__ACCEPTED;
         if (DceRpcCoPduType(co_hdr) == DCERPC_PDU_TYPE__BIND_ACK)
             cot->got_bind = 1;
     }
     else
     {
-        DebugMessage(DEBUG_DCE_COMMON, "Server rejected context item.\n");
         ctx_node->state = DCE2_CO_CTX_STATE__REJECTED;
         cot->got_bind = 0;
     }
@@ -773,8 +749,6 @@ static void dce_co_process_ctx_result(DCE2_SsnData* sd,DCE2_CoTracker* cot,
         if (status != DCE2_RET__SUCCESS)
         {
             snort_free((void*)ctx_node);
-            DebugMessage(DEBUG_DCE_COMMON,
-                "Failed to add context id node to list.\n");
             return;
         }
     }
@@ -936,7 +910,7 @@ static void DCE2_CoBind(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         break;
 
     default:
-        DebugFormat(DEBUG_DCE_COMMON, "Invalid policy: %d\n", policy);
+        assert(false);
         return;
     }
 
@@ -998,7 +972,7 @@ static void DCE2_CoAlterCtx(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         break;
 
     default:
-        DebugFormat(DEBUG_DCE_COMMON, "Invalid policy: %d\n", policy);
+        assert(false);
         break;
     }
 
@@ -1084,7 +1058,7 @@ static DCE2_RpktType DCE2_CoGetRpktType(DCE2_SsnData* sd, DCE2_BufType btype)
             break;
 
         default:
-            DebugFormat(DEBUG_DCE_COMMON, "Invalid buffer type: %d\n", btype);
+            assert(false);
             break;
         }
         break;
@@ -1102,13 +1076,13 @@ static DCE2_RpktType DCE2_CoGetRpktType(DCE2_SsnData* sd, DCE2_BufType btype)
             break;
 
         default:
-            DebugFormat(DEBUG_DCE_COMMON, "Invalid buffer type: %d\n", btype);
+            assert(false);
             break;
         }
         break;
 
     default:
-        DebugFormat(DEBUG_DCE_COMMON, "Invalid transport type: %d", sd->trans);
+        assert(false);
         break;
     }
     return rtype;
@@ -1169,7 +1143,7 @@ static Packet* DCE2_CoGetRpkt(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         break;
 
     default:
-        DebugFormat(DEBUG_DCE_COMMON, "Invalid CO rpkt type: %d\n", co_rtype);
+        assert(false);
         return nullptr;
     }
 
@@ -1246,10 +1220,9 @@ static Packet* dce_co_reassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     Packet* rpkt = DCE2_CoGetRpkt(sd, cot, co_rtype, &rpkt_type);
     if (rpkt == nullptr)
     {
-        DebugMessage(DEBUG_DCE_COMMON, "Could not create DCE/RPC frag reassembled buffer.\n");
         return nullptr;
     }
-    uint8_t *wrdata = const_cast<uint8_t*>(rpkt->data);
+    uint8_t* wrdata = const_cast<uint8_t*>(rpkt->data);
 
     switch (rpkt_type)
     {
@@ -1304,7 +1277,7 @@ static Packet* dce_co_reassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         return rpkt;
 
     default:
-        DebugFormat(DEBUG_DCE_COMMON, "Invalid rpkt type: %d\n", rpkt_type);
+        assert(false);
         return nullptr;
     }
 }
@@ -1327,9 +1300,6 @@ static void DCE2_CoReassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot, DCE2_CoRpkt
         return;
 
     DCE2_CoSetRopts(sd, cot, co_hdr, rpkt);
-
-    DebugMessage(DEBUG_DCE_COMMON, "Reassembled CO fragmented packet:\n");
-    DCE2_PrintPktData(rpkt->data, rpkt->dsize);
 
     DCE2_Detect(sd);
     co_reassembled = 1;
@@ -1554,7 +1524,6 @@ static void DCE2_CoRequest(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     if (DceRpcCoFirstFrag(co_hdr) && DceRpcCoLastFrag(co_hdr))
     {
         int auth_len = DCE2_CoGetAuthLen(sd, co_hdr, frag_ptr, frag_len);
-        DebugMessage(DEBUG_DCE_COMMON, "First and last fragment.\n");
         if (auth_len == -1)
             return;
         DCE2_CoSetRopts(sd, cot, co_hdr, sd->wire_pkt);
@@ -1565,16 +1534,6 @@ static void DCE2_CoRequest(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         int auth_len = DCE2_CoGetAuthLen(sd, co_hdr, frag_ptr, frag_len);
 
         dce_common_stats->co_req_fragments++;
-
-        if (DceRpcCoFirstFrag(co_hdr))
-            DebugMessage(DEBUG_DCE_COMMON, "First fragment.\n");
-        else if (DceRpcCoLastFrag(co_hdr))
-            DebugMessage(DEBUG_DCE_COMMON, "Last fragment.\n");
-        else
-        {
-            DebugMessage(DEBUG_DCE_COMMON, "Middle fragment.\n");
-        }
-        DCE2_PrintPktData(frag_ptr, frag_len);
 
         if (auth_len == -1)
             return;
@@ -1630,7 +1589,7 @@ static void DCE2_CoRequest(DCE2_SsnData* sd, DCE2_CoTracker* cot,
             break;
 
         default:
-            DebugFormat(DEBUG_DCE_COMMON, "Invalid policy: %d\n", policy);
+            assert(false);
             break;
         }
 
@@ -1668,7 +1627,7 @@ static void DCE2_CoRequest(DCE2_SsnData* sd, DCE2_CoTracker* cot,
             break;
 
         default:
-            DebugFormat(DEBUG_DCE_COMMON, "Invalid policy: %d\n", policy);
+            assert(false);
             break;
         }
 
@@ -1737,7 +1696,6 @@ static void DCE2_CoResponse(DCE2_SsnData* sd, DCE2_CoTracker* cot,
 
         if (ctx_node == nullptr)
         {
-            DebugMessage(DEBUG_DCE_COMMON, "Failed to dequeue a context id node.\n");
             return;
         }
 
@@ -1774,7 +1732,7 @@ static void DCE2_CoResponse(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     if (DceRpcCoFirstFrag(co_hdr) && DceRpcCoLastFrag(co_hdr))
     {
         int auth_len = DCE2_CoGetAuthLen(sd, co_hdr, frag_ptr, frag_len);
-        DebugMessage(DEBUG_DCE_COMMON, "First and last fragment.\n");
+
         if (auth_len == -1)
             return;
         DCE2_CoSetRopts(sd, cot, co_hdr, sd->wire_pkt);
@@ -1820,15 +1778,12 @@ static void DCE2_CoDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot,
      * start of the pdu */
     DCE2_MOVE(frag_ptr, frag_len, sizeof(DceRpcCoHdr));
 
-    DebugMessage(DEBUG_DCE_COMMON, "PDU type: ");
-
     /* Client specific pdu types - some overlap with server */
     if (DCE2_SsnFromClient(sd->wire_pkt))
     {
         switch (pdu_type)
         {
         case DCERPC_PDU_TYPE__BIND:
-            DebugMessage(DEBUG_DCE_COMMON, "Bind\n");
             dce_common_stats->co_bind++;
 
             /* Make sure context id list and queue are initialized */
@@ -1840,7 +1795,6 @@ static void DCE2_CoDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot,
             break;
 
         case DCERPC_PDU_TYPE__ALTER_CONTEXT:
-            DebugMessage(DEBUG_DCE_COMMON, "Alter Context\n");
             dce_common_stats->co_alter_ctx++;
 
             if (DCE2_CoInitCtxStorage(cot) != DCE2_RET__SUCCESS)
@@ -1851,7 +1805,6 @@ static void DCE2_CoDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot,
             break;
 
         case DCERPC_PDU_TYPE__REQUEST:
-            DebugMessage(DEBUG_DCE_COMMON, "Request\n");
             dce_common_stats->co_request++;
 
             if (DCE2_ListIsEmpty(cot->ctx_ids) &&
@@ -1865,27 +1818,22 @@ static void DCE2_CoDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot,
             break;
 
         case DCERPC_PDU_TYPE__AUTH3:
-            DebugMessage(DEBUG_DCE_COMMON, "Auth3\n");
             dce_common_stats->co_auth3++;
             break;
 
         case DCERPC_PDU_TYPE__CO_CANCEL:
-            DebugMessage(DEBUG_DCE_COMMON, "Cancel\n");
             dce_common_stats->co_cancel++;
             break;
 
         case DCERPC_PDU_TYPE__ORPHANED:
-            DebugMessage(DEBUG_DCE_COMMON, "Orphaned\n");
             dce_common_stats->co_orphaned++;
             break;
 
         case DCERPC_PDU_TYPE__MICROSOFT_PROPRIETARY_OUTLOOK2003_RPC_OVER_HTTP:
-            DebugMessage(DEBUG_DCE_COMMON, "Microsoft Request To Send RPC over HTTP\n");
             dce_common_stats->co_ms_pdu++;
             break;
 
         default:
-            DebugFormat(DEBUG_DCE_COMMON, "Unknown (0x%02x)\n", pdu_type);
             dce_common_stats->co_other_req++;
             break;
         }
@@ -1898,12 +1846,10 @@ static void DCE2_CoDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         case DCERPC_PDU_TYPE__ALTER_CONTEXT_RESP:
             if (pdu_type == DCERPC_PDU_TYPE__BIND_ACK)
             {
-                DebugMessage(DEBUG_DCE_COMMON, "Bind Ack\n");
                 dce_common_stats->co_bind_ack++;
             }
             else
             {
-                DebugMessage(DEBUG_DCE_COMMON, "Alter Context Response\n");
                 dce_common_stats->co_alter_ctx_resp++;
             }
 
@@ -1920,7 +1866,6 @@ static void DCE2_CoDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot,
             break;
 
         case DCERPC_PDU_TYPE__BIND_NACK:
-            DebugMessage(DEBUG_DCE_COMMON, "Bind Nack\n");
             dce_common_stats->co_bind_nack++;
 
             /* Bind nack in Windows seems to blow any previous context away */
@@ -1944,13 +1889,11 @@ static void DCE2_CoDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot,
             break;
 
         case DCERPC_PDU_TYPE__RESPONSE:
-            DebugMessage(DEBUG_DCE_COMMON, "Response\n");
             dce_common_stats->co_response++;
             DCE2_CoResponse(sd, cot, co_hdr, frag_ptr, frag_len);
             break;
 
         case DCERPC_PDU_TYPE__FAULT:
-            DebugMessage(DEBUG_DCE_COMMON, "Fault\n");
             dce_common_stats->co_fault++;
 
             /* Clear out the client side */
@@ -1963,12 +1906,10 @@ static void DCE2_CoDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot,
             break;
 
         case DCERPC_PDU_TYPE__SHUTDOWN:
-            DebugMessage(DEBUG_DCE_COMMON, "Shutdown\n");
             dce_common_stats->co_shutdown++;
             break;
 
         case DCERPC_PDU_TYPE__REJECT:
-            DebugMessage(DEBUG_DCE_COMMON, "Reject\n");
             dce_common_stats->co_reject++;
 
             DCE2_QueueEmpty(cot->pending_ctx_ids);
@@ -1976,12 +1917,10 @@ static void DCE2_CoDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot,
             break;
 
         case DCERPC_PDU_TYPE__MICROSOFT_PROPRIETARY_OUTLOOK2003_RPC_OVER_HTTP:
-            DebugMessage(DEBUG_DCE_COMMON, "Microsoft Request To Send RPC over HTTP\n");
             dce_common_stats->co_ms_pdu++;
             break;
 
         default:
-            DebugFormat(DEBUG_DCE_COMMON, "Unknown (0x%02x)\n", pdu_type);
             dce_common_stats->co_other_resp++;
             break;
         }
@@ -2074,13 +2013,10 @@ static void DCE2_CoEarlyReassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot)
         {
             if (seg_bytes == 0)
             {
-                DebugMessage(DEBUG_DCE_COMMON, "Early reassemble - DCE/RPC fragments\n");
                 DCE2_CoReassemble(sd, cot, DCE2_CO_RPKT_TYPE__FRAG);
             }
             else
             {
-                DebugMessage(DEBUG_DCE_COMMON,
-                    "Early reassemble - DCE/RPC fragments and segments\n");
                 DCE2_CoReassemble(sd, cot, DCE2_CO_RPKT_TYPE__ALL);
             }
         }
@@ -2093,13 +2029,9 @@ static void DCE2_CoEarlyReassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot)
         {
             DCE2_Ret status;
 
-            DebugMessage(DEBUG_DCE_COMMON, "Early reassemble - DCE/RPC segments\n");
-
             status = DCE2_CoSegEarlyRequest(cot, DCE2_BufferData(cot->cli_seg.buf), bytes);
             if (status != DCE2_RET__SUCCESS)
             {
-                DebugMessage(DEBUG_DCE_COMMON,
-                    "Not enough data in seg buffer to set rule option data.\n");
                 return;
             }
 
@@ -2149,7 +2081,7 @@ static Packet* DCE2_CoGetSegRpkt(DCE2_SsnData* sd,
         break;
 
     default:
-        DebugFormat(DEBUG_DCE_COMMON, "Invalid transport type: %d\n", sd->trans);
+        assert(false);
         break;
     }
 
@@ -2205,16 +2137,12 @@ static void DCE2_CoSegDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot, DCE2_CoSeg* 
         break;
 
     default:
-        DebugFormat(DEBUG_DCE_COMMON, "Invalid transport type: %d\n",
-            sd->trans);
+        assert(false);
         return;
     }
 
     /* All is good.  Decode the pdu */
     DCE2_CoDecode(sd, cot, frag_ptr, frag_len);
-
-    DebugMessage(DEBUG_DCE_COMMON, "Reassembled CO segmented packet\n");
-    DCE2_PrintPktData(rpkt->data, rpkt->dsize);
 
     /* Call detect since this is a reassembled packet that the
      * detection engine hasn't seen yet */
@@ -2335,8 +2263,6 @@ void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     {
         num_frags++;
 
-        DebugFormat(DEBUG_DCE_COMMON, "DCE/RPC message number: %u\n", num_frags);
-
         /* Fast track full fragments */
         if (DCE2_BufferIsEmpty(seg->buf))
         {
@@ -2347,9 +2273,6 @@ void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
             /* Not enough data left for a header.  Buffer it and return */
             if (data_len < sizeof(DceRpcCoHdr))
             {
-                DebugMessage(DEBUG_DCE_COMMON,
-                    "Not enough data in packet for DCE/RPC Connection-oriented header.\n");
-
                 DCE2_CoHandleSegmentation(sd, seg, data_ptr, data_len, sizeof(DceRpcCoHdr),
                     &data_used);
 
@@ -2365,9 +2288,6 @@ void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
             /* Not enough data left for the pdu. */
             if (data_len < frag_len)
             {
-                DebugFormat(DEBUG_DCE_COMMON,
-                    "Not enough data in packet for fragment length: %hu\n", frag_len);
-
                 /* Set frag length so we don't have to check it again in seg code */
                 seg->frag_len = frag_len;
 
@@ -2394,9 +2314,6 @@ void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         {
             uint16_t data_used = 0;
 
-            DebugFormat(DEBUG_DCE_COMMON, "Segmentation buffer has %u bytes\n",
-                DCE2_BufferLength(seg->buf));
-
             // Need more data to get header
             if (DCE2_BufferLength(seg->buf) < sizeof(DceRpcCoHdr))
             {
@@ -2419,7 +2336,8 @@ void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
                     data_back = -data_used;
                     DCE2_MOVE(data_ptr, data_len, data_back);
                     /*Check the original packet*/
-                    if (DCE2_CoHdrChecks(sd, cot, (const DceRpcCoHdr*)data_ptr) != DCE2_RET__SUCCESS)
+                    if (DCE2_CoHdrChecks(sd, cot, (const DceRpcCoHdr*)data_ptr) !=
+                        DCE2_RET__SUCCESS)
                         return;
                     else
                     {

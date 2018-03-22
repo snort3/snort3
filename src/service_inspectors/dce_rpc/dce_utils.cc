@@ -23,7 +23,6 @@
 
 #include "dce_utils.h"
 
-#include "main/snort_debug.h"
 #include "utils/safec.h"
 #include "utils/util.h"
 
@@ -183,120 +182,6 @@ const char* DCE2_UuidToStr(
     return uuid_buf;
 }
 
-#ifdef DEBUG_MSGS
-void DCE2_PrintPktData(const uint8_t* data, const uint16_t len)
-{
-    unsigned int i, j = 0, line_len = 0;
-    uint8_t hex_buf[16];
-    uint8_t char_buf[16];
-
-    for (i = 0; i < len; i++)
-    {
-        hex_buf[j] = data[i];
-
-        if (isascii((int)data[i]) && isprint((int)data[i]))
-            char_buf[j] = data[i];
-        else
-            char_buf[j] = '.';
-
-        if (line_len == 15)
-        {
-            unsigned int k, sub_line_len = 0;
-            for (k = 0; k <= j; k++)
-            {
-                DebugFormatNoFileLine(DEBUG_DCE_COMMON,"%02x ", hex_buf[k]);
-                if (sub_line_len >= 7)
-                {
-                    DebugFormatNoFileLine(DEBUG_DCE_COMMON,"%s"," ");
-                    sub_line_len = 0;
-                }
-                else
-                {
-                    sub_line_len++;
-                }
-            }
-
-            DebugFormatNoFileLine(DEBUG_DCE_COMMON,"%s"," ");
-
-            sub_line_len = 0;
-            for (k = 0; k <= j; k++)
-            {
-                DebugFormatNoFileLine(DEBUG_DCE_COMMON,"%c", char_buf[k]);
-                if (sub_line_len >= 7)
-                {
-                    DebugFormatNoFileLine(DEBUG_DCE_COMMON,"%s"," ");
-                    sub_line_len = 0;
-                }
-                else
-                {
-                    sub_line_len++;
-                }
-            }
-
-            DebugFormatNoFileLine(DEBUG_DCE_COMMON,"%s","\n");
-
-            j = line_len = 0;
-        }
-        else
-        {
-            j++;
-            line_len++;
-        }
-    }
-
-    if (line_len > 0)
-    {
-        unsigned int k, sub_line_len = 0;
-        for (k = 0; k < j; k++)
-        {
-            DebugFormatNoFileLine(DEBUG_DCE_COMMON,"%02x ", hex_buf[k]);
-            if (sub_line_len >= 7)
-            {
-                DebugFormatNoFileLine(DEBUG_DCE_COMMON,"%s"," ");
-                sub_line_len = 0;
-            }
-            else
-            {
-                sub_line_len++;
-            }
-        }
-
-        if (k < 8)
-            DebugFormatNoFileLine(DEBUG_DCE_COMMON,"%s","   ");
-        else
-            DebugFormatNoFileLine(DEBUG_DCE_COMMON,"%s","  ");
-
-        while (k < 16)
-        {
-            DebugFormatNoFileLine(DEBUG_DCE_COMMON,"%s","   ");
-            k++;
-        }
-
-        sub_line_len = 0;
-        for (k = 0; k < j; k++)
-        {
-            DebugFormatNoFileLine(DEBUG_DCE_COMMON,"%c", char_buf[k]);
-            if (sub_line_len >= 7)
-            {
-                DebugFormatNoFileLine(DEBUG_DCE_COMMON,"%s"," ");
-                sub_line_len = 0;
-            }
-            else
-            {
-                sub_line_len++;
-            }
-        }
-    }
-
-    DebugFormatNoFileLine(DEBUG_DCE_COMMON,"%s","\n");
-}
-
-#else
-void DCE2_PrintPktData(const uint8_t*, const uint16_t)
-{
-}
-
-#endif // DEBUG_MSGS
 
 DCE2_Buffer* DCE2_BufferNew(uint32_t initial_size, uint32_t min_add_size)
 {
@@ -323,7 +208,6 @@ void* DCE2_ReAlloc(void* old_mem, uint32_t old_size, uint32_t new_size)
     }
     else if (new_size < old_size)
     {
-        DebugMessage(DEBUG_DCE_COMMON, "New size is less than old size.\n");
         return nullptr;
     }
     else if (new_size == old_size)

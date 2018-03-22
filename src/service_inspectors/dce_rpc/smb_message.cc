@@ -445,9 +445,6 @@ static DCE2_SmbRequestTracker* DCE2_SmbFindRequestTracker(DCE2_SmbSsnData* ssd,
 
     Profile profile(dce2_smb_pstat_smb_req);
 
-    DebugFormat(DEBUG_DCE_SMB, "Find request tracker => "
-        "Uid: %hu, Tid: %hu, Pid: %hu, Mid: %hu ... ", uid, tid, pid, mid);
-
     DCE2_SmbRequestTracker* tmp_rtracker = &ssd->rtracker;
     int smb_com = SmbCom(smb_hdr);
     switch (smb_com)
@@ -505,7 +502,6 @@ static DCE2_SmbRequestTracker* DCE2_SmbFindRequestTracker(DCE2_SmbSsnData* ssd,
 
             if (ret_rtracker != nullptr)
             {
-                DebugMessage(DEBUG_DCE_SMB, "Found.\n");
                 return ret_rtracker;
             }
 
@@ -560,7 +556,7 @@ static DCE2_SmbRequestTracker* DCE2_SmbFindRequestTracker(DCE2_SmbSsnData* ssd,
             ret_rtracker = first_mid_rtracker;
         break;
     default:
-        DebugFormat(DEBUG_DCE_SMB, "Invalid policy: %d", policy);
+        assert(false);
         break;
     }
 
@@ -607,13 +603,9 @@ static void DCE2_SmbCheckCommand(DCE2_SmbSsnData* ssd,
         if ((SmbEmptyComWct(ec) == 0)
             && (SmbEmptyComBcc(ec) == 0) && SmbError(smb_hdr))
         {
-            DebugFormat(DEBUG_DCE_SMB,
-                "Response error: 0x%08X\n", SmbNtStatus(smb_hdr));
-
             // If broken pipe, clean up data associated with open named pipe
             if (SmbBrokenPipe(smb_hdr))
             {
-                DebugMessage(DEBUG_DCE_SMB, "Broken or disconnected pipe.\n");
                 DCE2_SmbRemoveFileTracker(ssd, ssd->cur_rtracker->ftracker);
             }
 
@@ -803,7 +795,7 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
         com_info.cmd_size = 0;
         com_info.byte_count = 0;
         DCE2_SmbCheckCommand(ssd, smb_hdr, smb_com, nb_ptr, nb_len, com_info);
-        DebugFormat(DEBUG_DCE_SMB, "Processing command: %s (0x%02X)\n",
+        trace_logf(dce_smb, "Processing command: %s (0x%02X)\n",
             get_smb_com_string(smb_com), smb_com);
 
         // Note that even if the command shouldn't be processed, some of
@@ -828,7 +820,7 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
         if (smb_com2 == SMB_COM_NO_ANDX_COMMAND)
             break;
 
-        DebugFormat(DEBUG_DCE_SMB, "Chained SMB command: %s\n",
+        trace_logf(dce_smb, "Chained SMB command: %s\n",
             get_smb_com_string(smb_com2));
 
         num_chained++;
@@ -1024,13 +1016,11 @@ static DCE2_SmbRequestTracker* DCE2_SmbInspect(DCE2_SmbSsnData* ssd, const SmbNt
 {
     int smb_com = SmbCom(smb_hdr);
 
-    DebugFormat(DEBUG_DCE_SMB, "SMB command: %s (0x%02X)\n",
+    trace_logf(dce_smb, "SMB command: %s (0x%02X)\n",
         get_smb_com_string(smb_com), smb_com);
 
     if (smb_com_funcs[smb_com] == nullptr)
     {
-        DebugMessage(DEBUG_DCE_SMB, "Command isn't processed "
-            "by preprocessor.\n");
         return nullptr;
     }
 
@@ -1060,11 +1050,7 @@ static DCE2_SmbRequestTracker* DCE2_SmbInspect(DCE2_SmbSsnData* ssd, const SmbNt
             break;
         default:
             if (DCE2_SmbFindTid(ssd, SmbTid(smb_hdr)) != DCE2_RET__SUCCESS)
-            {
-                DebugFormat(DEBUG_DCE_SMB,
-                    "Couldn't find Tid (%hu)\n", SmbTid(smb_hdr));
                 return nullptr;
-            }
 
             if (DCE2_SmbIsTidIPC(ssd, SmbTid(smb_hdr)))
             {
@@ -1083,8 +1069,6 @@ static DCE2_SmbRequestTracker* DCE2_SmbInspect(DCE2_SmbSsnData* ssd, const SmbNt
                     case DCE2_POLICY__SAMBA_3_0_37:
                     case DCE2_POLICY__SAMBA_3_0_22:
                     case DCE2_POLICY__SAMBA_3_0_20:
-                        DebugMessage(DEBUG_DCE_SMB, "Samba doesn't "
-                            "process this command under an IPC tree.\n");
                         return nullptr;
                     default:
                         break;
@@ -1105,9 +1089,6 @@ static DCE2_SmbRequestTracker* DCE2_SmbInspect(DCE2_SmbSsnData* ssd, const SmbNt
                     case DCE2_POLICY__SAMBA_3_0_37:
                     case DCE2_POLICY__SAMBA_3_0_22:
                     case DCE2_POLICY__SAMBA_3_0_20:
-                        DebugMessage(DEBUG_DCE_SMB, "Samba and "
-                            "Windows Vista on don't process this "
-                            "command under an IPC tree.\n");
                         return nullptr;
                     default:
                         break;
@@ -1127,7 +1108,6 @@ static DCE2_SmbRequestTracker* DCE2_SmbInspect(DCE2_SmbSsnData* ssd, const SmbNt
                 // These commands are only used for IPC
                 case SMB_COM_TRANSACTION:
                 case SMB_COM_TRANSACTION_SECONDARY:
-                    DebugMessage(DEBUG_DCE_SMB, "secondary transaction not IPC.\n");
                     return nullptr;
                 case SMB_COM_READ_RAW:
                 case SMB_COM_WRITE_RAW:
@@ -1140,9 +1120,6 @@ static DCE2_SmbRequestTracker* DCE2_SmbInspect(DCE2_SmbSsnData* ssd, const SmbNt
                     case DCE2_POLICY__WINVISTA:
                     case DCE2_POLICY__WIN2008:
                     case DCE2_POLICY__WIN7:
-                        DebugMessage(DEBUG_DCE_SMB,
-                            "Windows Vista on don't process "
-                            "this command.\n");
                         return nullptr;
                     default:
                         break;
@@ -1199,9 +1176,6 @@ static void DCE2_SmbProcessRawData(DCE2_SmbSsnData* ssd, const uint8_t* nb_ptr, 
 
     if (DCE2_SsnFromClient(ssd->sd.wire_pkt))
     {
-        DebugMessage(DEBUG_DCE_SMB, "Raw data: Write Raw\n");
-        DebugFormat(DEBUG_DCE_SMB, "Request Fid: 0x%04X\n", ftracker->fid_v1);
-
         if (nb_len > ssd->cur_rtracker->writeraw_remaining)
         {
             dce_alert(GID_DCE2, DCE2_SMB_TDCNT_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats);
@@ -1225,9 +1199,6 @@ static void DCE2_SmbProcessRawData(DCE2_SmbSsnData* ssd, const uint8_t* nb_ptr, 
     }
     else
     {
-        DebugMessage(DEBUG_DCE_SMB, "Raw data: Read Raw\n");
-        DebugFormat(DEBUG_DCE_SMB, "Response Fid: 0x%04X\n", ftracker->fid_v1);
-
         remove_rtracker = true;
     }
 
@@ -1314,7 +1285,7 @@ static void DCE2_SmbDataFree(DCE2_SmbSsnData* ssd)
 Dce2SmbFlowData::Dce2SmbFlowData() : FlowData(inspector_id)
 {
     dce2_smb_stats.concurrent_sessions++;
-    if(dce2_smb_stats.max_concurrent_sessions < dce2_smb_stats.concurrent_sessions)
+    if (dce2_smb_stats.max_concurrent_sessions < dce2_smb_stats.concurrent_sessions)
         dce2_smb_stats.max_concurrent_sessions = dce2_smb_stats.concurrent_sessions;
 }
 
@@ -1345,9 +1316,6 @@ static DCE2_SmbSsnData* dce2_create_new_smb_session(Packet* p, dce2SmbProtoConf*
 {
     Profile profile(dce2_smb_pstat_new_session);
 
-    DebugMessage(DEBUG_DCE_SMB, "DCE over SMB packet detected\n");
-    DebugMessage(DEBUG_DCE_SMB, "Creating new session\n");
-
     DCE2_SmbSsnData* dce2_smb_sess = set_new_dce2_smb_session(p);
     if ( dce2_smb_sess )
     {
@@ -1365,7 +1333,6 @@ static DCE2_SmbSsnData* dce2_create_new_smb_session(Packet* p, dce2SmbProtoConf*
         DCE2_ResetRopts(&dce2_smb_sess->sd.ropts);
 
         dce2_smb_stats.smb_sessions++;
-        DebugFormat(DEBUG_DCE_SMB,"Created (%p)\n", (void*)dce2_smb_sess);
 
         dce2_smb_sess->sd.trans = DCE2_TRANS_TYPE__SMB;
         dce2_smb_sess->sd.server_policy = config->common.policy;
@@ -1407,14 +1374,10 @@ static DCE2_Ret DCE2_NbssHdrChecks(DCE2_SmbSsnData* ssd, const NbssHdr* nb_hdr)
     Packet* p = ssd->sd.wire_pkt;
     bool is_seg_buf = DCE2_SmbIsSegBuffer(ssd, (const uint8_t*)nb_hdr);
 
-    DebugMessage(DEBUG_DCE_SMB, "NetBIOS Session Service type: ");
-
     switch (NbssType(nb_hdr))
     {
     case NBSS_SESSION_TYPE__MESSAGE:
         /* Only want to look at session messages */
-        DebugMessage(DEBUG_DCE_SMB, "Session Message\n");
-
         if (!DCE2_SmbIsRawData(ssd))
         {
             uint32_t nb_len = NbssLen(nb_hdr);
@@ -1424,9 +1387,6 @@ static DCE2_Ret DCE2_NbssHdrChecks(DCE2_SmbSsnData* ssd, const NbssHdr* nb_hdr)
 
             if (nb_len < sizeof(SmbNtHdr))
             {
-                DebugFormat(DEBUG_DCE_SMB, "NetBIOS SS len(%zu) < SMB header len(%zu).\n",
-                    sizeof(SmbNtHdr), sizeof(NbssHdr) + nb_len);
-
                 if (is_seg_buf)
                     DCE2_SmbSegAlert(ssd, DCE2_SMB_NB_LT_SMBHDR);
                 else
@@ -1439,7 +1399,6 @@ static DCE2_Ret DCE2_NbssHdrChecks(DCE2_SmbSsnData* ssd, const NbssHdr* nb_hdr)
         return DCE2_RET__SUCCESS;
 
     case NBSS_SESSION_TYPE__REQUEST:
-        DebugMessage(DEBUG_DCE_SMB, "Session Request\n");
         if (DCE2_SsnFromServer(p))
         {
             if (is_seg_buf)
@@ -1464,13 +1423,9 @@ static DCE2_Ret DCE2_NbssHdrChecks(DCE2_SmbSsnData* ssd, const NbssHdr* nb_hdr)
         break;
 
     case NBSS_SESSION_TYPE__KEEP_ALIVE:
-        DebugMessage(DEBUG_DCE_SMB, "Session Keep Alive\n");
         break;
 
     default:
-        DebugFormat(DEBUG_DCE_SMB,
-            "Invalid Session Service type: 0x%02X\n", NbssType(nb_hdr));
-
         if (is_seg_buf)
             DCE2_SmbSegAlert(ssd, DCE2_SMB_BAD_NBSS_TYPE);
         else
@@ -1482,11 +1437,9 @@ static DCE2_Ret DCE2_NbssHdrChecks(DCE2_SmbSsnData* ssd, const NbssHdr* nb_hdr)
     return DCE2_RET__IGNORE;
 }
 
-
 // This is the main entry point for SMB1 processing.
 static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
 {
-    DebugMessage(DEBUG_DCE_SMB, "Processing SMB packet.\n");
     dce2_smb_stats.smb_pkts++;
 
     const Packet* p = ssd->sd.wire_pkt;
@@ -1504,8 +1457,6 @@ static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
         uint32_t* ignore_bytes = DCE2_SmbGetIgnorePtr(ssd);
         if (*ignore_bytes)
         {
-            DebugFormat(DEBUG_DCE_SMB, "Ignoring %u bytes\n", *ignore_bytes);
-
             if (data_len <= *ignore_bytes)
             {
                 *ignore_bytes -= data_len;
@@ -1534,9 +1485,6 @@ static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
             // See if there is enough data to process the NetBIOS header
             if (data_len < data_need)
             {
-                DebugFormat(DEBUG_DCE_SMB, "Data len(%hu) < NetBIOS SS header(%u). "
-                    "Queuing data.\n", data_len, data_need);
-
                 if (DCE2_SmbHandleSegmentation(seg_buf, data_ptr,
                     data_len, sizeof(NbssHdr)) != DCE2_RET__SUCCESS)
                 {
@@ -1567,25 +1515,17 @@ static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
             }
 
             uint32_t nb_len = NbssLen(nb_hdr);
-
-            DebugFormat(DEBUG_DCE_SMB, "NetBIOS PDU length: %u\n", nb_len);
-
             DCE2_Ret status = DCE2_NbssHdrChecks(ssd, nb_hdr);
             if (status != DCE2_RET__SUCCESS)
             {
-                DebugMessage(DEBUG_DCE_SMB, "Not a NetBIOS Session Message.\n");
-
                 if (status == DCE2_RET__IGNORE)
                 {
-                    DebugMessage(DEBUG_DCE_SMB, "Valid NetBIOS header "
-                        "type so ignoring NetBIOS length bytes.\n");
+                    // Valid NetBIOS header type so ignoring NetBIOS length bytes
                     *ignore_bytes = data_need + nb_len;
                 }
                 else      // nb_ret == DCE2_RET__ERROR, i.e. invalid NetBIOS type
                 {
-                    DebugMessage(DEBUG_DCE_SMB, "Not a valid NetBIOS "
-                        "header type so trying to find \\xffSMB to "
-                        "determine how many bytes to ignore.\n");
+                    // Trying to find \\xffSMB to determine how many bytes to ignore
                     *ignore_bytes = DCE2_IgnoreJunkData(data_ptr, data_len, data_need + nb_len);
                 }
 
@@ -1607,7 +1547,6 @@ static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
                 // Continue here because of fall through below
                 continue;
             default:
-                DebugFormat(DEBUG_DCE_SMB,"Invalid SMB PDU state: %d\n", ssd->pdu_state);
                 return;
             }
         }
@@ -1627,10 +1566,6 @@ static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
             // See if there is enough data to process the SMB header
             if (data_len < data_need)
             {
-                DebugFormat(DEBUG_DCE_SMB, "Data len (%hu) < "
-                    "NetBIOS SS header + SMB header (%u). Queuing data.\n",
-                    data_len, data_need);
-
                 if (DCE2_SmbHandleSegmentation(seg_buf, data_ptr, data_len,
                     sizeof(NbssHdr) + sizeof(SmbNtHdr)) != DCE2_RET__SUCCESS)
                 {
@@ -1675,7 +1610,7 @@ static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
             rtracker = DCE2_SmbInspect(ssd, smb_hdr);
             if (rtracker == nullptr)
             {
-                DebugMessage(DEBUG_DCE_SMB, "Not inspecting SMB packet.\n");
+                trace_log(dce_smb, "Not inspecting SMB packet.\n");
 
                 if (DCE2_BufferIsEmpty(*seg_buf))
                 {
@@ -1696,8 +1631,6 @@ static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
             // Check the SMB header for anomalies
             if (DCE2_SmbHdrChecks(ssd, smb_hdr) != DCE2_RET__SUCCESS)
             {
-                DebugMessage(DEBUG_DCE_SMB, "Bad SMB header.\n");
-
                 if (DCE2_BufferIsEmpty(*seg_buf))
                 {
                     *ignore_bytes = sizeof(NbssHdr) + NbssLen((const NbssHdr*)data_ptr);
@@ -1744,10 +1677,6 @@ static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
             /* It's something we want to inspect so make sure we have the full NBSS packet */
             if (data_len < data_need)
             {
-                DebugFormat(DEBUG_DCE_SMB, "Data len(%hu) < "
-                    "NetBIOS SS header + NetBIOS len(%zu). "
-                    "Queuing data.\n", data_len, sizeof(NbssHdr) + nb_len);
-
                 if (DCE2_SmbHandleSegmentation(seg_buf, data_ptr, data_len,
                     sizeof(NbssHdr) + nb_len) != DCE2_RET__SUCCESS)
                 {
@@ -1797,17 +1726,10 @@ static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
                 nb_ptr = DCE2_BufferData(*seg_buf);
                 nb_len = DCE2_BufferLength(*seg_buf);
 
-                DebugFormat(DEBUG_DCE_SMB,
-                    "Segmentation buffer: len: %u, size: %u\n",
-                    DCE2_BufferLength(*seg_buf), DCE2_BufferSize(*seg_buf));
-
                 if (DCE2_SsnFromClient(ssd->sd.wire_pkt))
                     dce2_smb_stats.smb_cli_seg_reassembled++;
                 else
                     dce2_smb_stats.smb_srv_seg_reassembled++;
-
-                DebugMessage(DEBUG_DCE_SMB, "TCP reassembled SMB PDU\n");
-                DCE2_PrintPktData(rpkt->data, rpkt->dsize);
             }
 
             switch (ssd->pdu_state)
@@ -1831,7 +1753,6 @@ static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
                 ssd->pdu_state = DCE2_SMB_PDU_STATE__COMMAND;
                 break;
             default:
-                DebugFormat(DEBUG_DCE_SMB, "Invalid SMB PDU state: %d\n", ssd->pdu_state);
                 return;
             }
 
@@ -1845,7 +1766,6 @@ static void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
         }
 
         default:
-            DebugFormat(DEBUG_DCE_SMB, "Invalid SMB Data state: %d\n", *data_state);
             return;
         }
     }
@@ -2615,8 +2535,6 @@ DCE2_SmbSsnData* dce2_handle_smb_session(Packet* p, dce2SmbProtoConf* config)
         dce2_smb_sess = dce2_create_new_smb_session(p, config);
     }
 
-    DebugFormat(DEBUG_DCE_SMB, "Session pointer: %p\n", (void*)dce2_smb_sess);
-
     return dce2_smb_sess;
 }
 
@@ -2635,7 +2553,6 @@ void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
     {
         if ((ssd->sd.flags & DCE2_SSN_FLAG__SMB2))
         {
-            DebugMessage(DEBUG_DCE_SMB, "SMB1 packet detected!\n");
             ssd->sd.flags &= ~DCE2_SSN_FLAG__SMB2;
             DCE2_SmbCleanFileTracker(&(ssd->ftracker));
             ssd->ftracker.is_smb2 = false;
@@ -2645,7 +2562,6 @@ void DCE2_SmbProcess(DCE2_SmbSsnData* ssd)
     {
         if (!(ssd->sd.flags & DCE2_SSN_FLAG__SMB2))
         {
-            DebugMessage(DEBUG_DCE_SMB, "SMB2 packet detected!\n");
             DCE2_SmbCleanFileTracker(&(ssd->ftracker));
             DCE2_Smb2InitFileTracker(&(ssd->ftracker), false, 0);
             ssd->sd.flags |= DCE2_SSN_FLAG__SMB2;

@@ -109,8 +109,6 @@ void DCE2_ClProcess(DCE2_SsnData* sd, DCE2_ClTracker* clt)
     const uint8_t* data_ptr = sd->wire_pkt->data;
     uint16_t data_len = sd->wire_pkt->dsize;
 
-    DebugMessage(DEBUG_DCE_UDP, "Cl processing ...\n");
-
     if (data_len < sizeof(DceRpcClHdr))
     {
         dce_alert(GID_DCE2,  DCE2_CL_DATA_LT_HDR, (dce2CommonStats*)&dce2_udp_stats);
@@ -134,34 +132,29 @@ void DCE2_ClProcess(DCE2_SsnData* sd, DCE2_ClTracker* clt)
         switch (DceRpcClPduType(cl_hdr))
         {
         case DCERPC_PDU_TYPE__REQUEST:
-            DebugMessage(DEBUG_DCE_UDP, "Request\n");
             dce2_udp_stats.cl_request++;
             DCE2_ClRequest(sd, at, cl_hdr, data_ptr, data_len);
             break;
 
         case DCERPC_PDU_TYPE__ACK:
-            DebugMessage(DEBUG_DCE_UDP, "Ack\n");
             dce2_udp_stats.cl_ack++;
             break;
 
         case DCERPC_PDU_TYPE__CL_CANCEL:
-            DebugMessage(DEBUG_DCE_UDP, "Cancel\n");
             dce2_udp_stats.cl_cancel++;
             break;
 
         case DCERPC_PDU_TYPE__FACK:
-            DebugMessage(DEBUG_DCE_UDP, "Fack\n");
             dce2_udp_stats.cl_cli_fack++;
             break;
 
         case DCERPC_PDU_TYPE__PING:
-            DebugMessage(DEBUG_DCE_UDP, "Ping\n");
             dce2_udp_stats.cl_ping++;
             break;
 
         case DCERPC_PDU_TYPE__RESPONSE:
         {
-            DebugMessage(DEBUG_DCE_UDP, "Response from client.  Changing stream direction.");
+            trace_log(dce_udp, "Response from client.  Changing stream direction.\n");
             Packet* p = sd->wire_pkt;
             ip::IpApi* ip_api = &p->ptrs.ip_api;
 
@@ -172,7 +165,6 @@ void DCE2_ClProcess(DCE2_SsnData* sd, DCE2_ClTracker* clt)
             break;
         }
         default:
-            DebugMessage(DEBUG_DCE_UDP, "Other pdu type\n");
             dce2_udp_stats.cl_other_req++;
             break;
         }
@@ -182,12 +174,10 @@ void DCE2_ClProcess(DCE2_SsnData* sd, DCE2_ClTracker* clt)
         switch (DceRpcClPduType(cl_hdr))
         {
         case DCERPC_PDU_TYPE__RESPONSE:
-            DebugMessage(DEBUG_DCE_UDP, "Response\n");
             dce2_udp_stats.cl_response++;
             break;
 
         case DCERPC_PDU_TYPE__REJECT:
-            DebugMessage(DEBUG_DCE_UDP, "Reject\n");
             dce2_udp_stats.cl_reject++;
 
             if (DceRpcClSeqNum(cl_hdr) == at->seq_num)
@@ -199,32 +189,26 @@ void DCE2_ClProcess(DCE2_SsnData* sd, DCE2_ClTracker* clt)
             break;
 
         case DCERPC_PDU_TYPE__CANCEL_ACK:
-            DebugMessage(DEBUG_DCE_UDP, "Cancel Ack\n");
             dce2_udp_stats.cl_cancel_ack++;
             break;
 
         case DCERPC_PDU_TYPE__FACK:
-            DebugMessage(DEBUG_DCE_UDP, "Fack\n");
             dce2_udp_stats.cl_srv_fack++;
             break;
 
         case DCERPC_PDU_TYPE__FAULT:
-            DebugMessage(DEBUG_DCE_UDP, "Fault\n");
             dce2_udp_stats.cl_fault++;
             break;
 
         case DCERPC_PDU_TYPE__NOCALL:
-            DebugMessage(DEBUG_DCE_UDP, "No call\n");
             dce2_udp_stats.cl_nocall++;
             break;
 
         case DCERPC_PDU_TYPE__WORKING:
-            DebugMessage(DEBUG_DCE_UDP, "Working\n");
             dce2_udp_stats.cl_working++;
             break;
 
         default:
-            DebugMessage(DEBUG_DCE_UDP, "Other pdu type\n");
             dce2_udp_stats.cl_other_resp++;
             break;
         }
@@ -309,8 +293,6 @@ static void DCE2_ClRequest(DCE2_SsnData* sd, DCE2_ClActTracker* at, const DceRpc
     const uint8_t* data_ptr, uint16_t data_len)
 {
     const uint32_t seq_num = DceRpcClSeqNum(cl_hdr);
-
-    DebugMessage(DEBUG_DCE_UDP, "Processing Request ...\n");
 
     if (seq_num > at->seq_num)
     {
@@ -573,12 +555,7 @@ static void DCE2_ClFragReassemble(
         fnode = (DCE2_ClFragNode*)DCE2_ListNext(ft->frags))
     {
         if (fnode->frag_len > rlen)
-        {
-            DebugMessage(DEBUG_DCE_UDP,
-                "Size of fragments exceeds reassembly buffer size. "
-                "Using as many fragments as will fit.");
             break;
-        }
 
         memcpy(const_cast<uint8_t*>(rdata), fnode->frag_data, fnode->frag_len);
         DCE2_MOVE(rdata, rlen, fnode->frag_len);

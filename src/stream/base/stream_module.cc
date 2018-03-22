@@ -24,12 +24,15 @@
 
 #include "stream_module.h"
 
+#include "main/snort_debug.h"
+
 using namespace snort;
 using namespace std;
 
 //-------------------------------------------------------------------------
 // stream module
 //-------------------------------------------------------------------------
+Trace TRACE_NAME(stream);
 
 #define CACHE_PARAMS(name, max, prune, idle, cleanup) \
 static const Parameter name[] = \
@@ -76,7 +79,7 @@ static const Parameter s_params[] =
 };
 
 StreamModule::StreamModule() :
-    Module(MOD_NAME, MOD_HELP, s_params)
+    Module(MOD_NAME, MOD_HELP, s_params, false, &TRACE_NAME(stream))
 { }
 
 const PegInfo* StreamModule::get_pegs() const
@@ -101,7 +104,7 @@ bool StreamModule::begin(const char* fqn, int, SnortConfig*)
     return true;
 }
 
-bool StreamModule::set(const char* fqn, Value& v, SnortConfig*)
+bool StreamModule::set(const char* fqn, Value& v, SnortConfig* c)
 {
     FlowConfig* fc = nullptr;
 
@@ -134,7 +137,7 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig*)
         fc = &config.file_cfg;
 
     else
-        return false;
+        return Module::set(fqn, v, c);
 
     if ( v.is("max_sessions") )
         fc->max_sessions = v.get_long();

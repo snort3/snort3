@@ -25,8 +25,6 @@
 
 #include "dce_tcp_paf.h"
 
-#include "main/snort_debug.h"
-
 #include "dce_tcp.h"
 
 using namespace snort;
@@ -53,27 +51,14 @@ static StreamSplitter::Status dce2_tcp_paf(DCE2_PafTcpData* ds, Flow* flow, cons
 
     int num_requests = 0;
 
-    DebugFormat(DEBUG_DCE_TCP, "%s\n", DCE2_DEBUG__PAF_START_MSG_TCP);
-    DebugFormat(DEBUG_DCE_TCP, "TCP: %u bytes of data\n", len);
-
-#ifdef DEBUG_MSGS
-    if (flags & PKT_FROM_CLIENT)
-        DebugMessage(DEBUG_DCE_TCP, "Packet from Client\n");
-    else
-        DebugMessage(DEBUG_DCE_TCP, "Packet from Server\n");
-#endif
-
     if (dce2_paf_abort(flow, (DCE2_SsnData*)sd))
     {
-        DebugFormat(DEBUG_DCE_TCP, "%s\n", DCE2_DEBUG__PAF_END_MSG);
         return StreamSplitter::ABORT;
     }
 
     if (sd == nullptr)
     {
         bool autodetected = false;
-        DebugMessage(DEBUG_DCE_TCP, "No session data - autodetecting\n");
-
         if (len >= sizeof(DceRpcCoHdr))
         {
             const DceRpcCoHdr* co_hdr = (const DceRpcCoHdr*)data;
@@ -87,46 +72,30 @@ static StreamSplitter::Status dce2_tcp_paf(DCE2_PafTcpData* ds, Flow* flow, cons
                 && (DceRpcCoFragLen(co_hdr) >= sizeof(DceRpcCoHdr)))
             {
                 autodetected = true;
-                DebugMessage(DEBUG_DCE_TCP, "Autodetected!\n");
             }
         }
         else if ((*data == DCERPC_PROTO_MAJOR_VERS__5) && (flags & PKT_FROM_CLIENT))
         {
             autodetected = true;
-            DebugMessage(DEBUG_DCE_TCP, "Autodetected!\n");
         }
 
         if (!autodetected)
         {
-            DebugMessage(DEBUG_DCE_TCP, "Couldn't autodetect - aborting\n");
-            DebugFormat(DEBUG_DCE_TCP, "%s\n", DCE2_DEBUG__PAF_END_MSG);
             return StreamSplitter::ABORT;
         }
     }
 
-    DebugFormat(DEBUG_DCE_TCP, "Start state: %d\n", ds->paf_state);
     start_state = (uint8_t)ds->paf_state;
 
     while (n < len)
     {
-        DebugFormatNoFileLine(DEBUG_DCE_TCP, " State %d : 0x%02x\n", ds->paf_state, data[n]);
-
         switch (ds->paf_state)
         {
         case DCE2_PAF_TCP_STATES__4:      // Get byte order
             ds->byte_order = DceRpcByteOrder(data[n]);
             ds->paf_state = (DCE2_PafTcpStates)(((int)ds->paf_state) + 1);
-            if (ds->byte_order == DCERPC_BO_FLAG__LITTLE_ENDIAN)
-            {
-                DebugFormatNoFileLine(DEBUG_DCE_TCP, "%s","Byte order: Little endian\n");
-            }
-            else
-            {
-                DebugFormatNoFileLine(DEBUG_DCE_TCP, "%s","Byte order: Big endian\n");
-            }
             break;
         case DCE2_PAF_TCP_STATES__8:
-            DebugFormatNoFileLine(DEBUG_DCE_TCP, "%s", "First byte of fragment length\n");
             if (ds->byte_order == DCERPC_BO_FLAG__LITTLE_ENDIAN)
                 ds->frag_len = data[n];
             else
@@ -134,7 +103,6 @@ static StreamSplitter::Status dce2_tcp_paf(DCE2_PafTcpData* ds, Flow* flow, cons
             ds->paf_state = (DCE2_PafTcpStates)(((int)ds->paf_state) + 1);
             break;
         case DCE2_PAF_TCP_STATES__9:
-            DebugFormatNoFileLine(DEBUG_DCE_TCP, "%s", "Second byte of fragment length\n");
             if (ds->byte_order == DCERPC_BO_FLAG__LITTLE_ENDIAN)
                 ds->frag_len |= data[n] << 8;
             else
@@ -143,11 +111,8 @@ static StreamSplitter::Status dce2_tcp_paf(DCE2_PafTcpData* ds, Flow* flow, cons
             /* If we get a bad frag length abort */
             if (ds->frag_len < sizeof(DceRpcCoHdr))
             {
-                DebugFormatNoFileLine(DEBUG_DCE_TCP, "%s\n", DCE2_DEBUG__PAF_END_MSG);
                 return StreamSplitter::ABORT;
             }
-
-            DebugFormatNoFileLine(DEBUG_DCE_TCP, "Fragment length: %hu\n", ds->frag_len);
 
             /* Increment n here so we can continue */
             n += ds->frag_len - (uint8_t)ds->paf_state;
@@ -156,7 +121,7 @@ static StreamSplitter::Status dce2_tcp_paf(DCE2_PafTcpData* ds, Flow* flow, cons
              * flush just before it */
             if ((num_requests == 1) || (n <= len))
                 tmp_fp += ds->frag_len;
-            DebugFormatNoFileLine(DEBUG_DCE_TCP, "Requests: %d\n", num_requests);
+          
             ds->paf_state = DCE2_PAF_TCP_STATES__0;
             continue;      // we incremented n already
         default:
@@ -170,12 +135,9 @@ static StreamSplitter::Status dce2_tcp_paf(DCE2_PafTcpData* ds, Flow* flow, cons
     if (tmp_fp != 0)
     {
         *fp = tmp_fp - start_state;
-        DebugFormat(DEBUG_DCE_TCP, "Setting flush point: %u\n", *fp);
-        DebugFormat(DEBUG_DCE_TCP, "%s\n", DCE2_DEBUG__PAF_END_MSG);
         return StreamSplitter::FLUSH;
     }
 
-    DebugFormat(DEBUG_DCE_TCP, "%s\n", DCE2_DEBUG__PAF_END_MSG);
     return ps;
 }
 

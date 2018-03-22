@@ -27,8 +27,6 @@
 
 #include "dce_smb_transaction_utils.h"
 
-#include "main/snort_debug.h"
-
 #define TRANS_NM_PIPE_0       (0)
 #define TRANS_NM_PIPE_1       (TRANS_NM_PIPE_0+7)
 #define TRANS_NM_PIPE_2       (TRANS_NM_PIPE_1+1)
@@ -363,8 +361,6 @@ DCE2_Ret DCE2_SmbBufferTransactionData(DCE2_SmbTransactionTracker* ttracker,
 {
     snort::Profile profile(dce2_smb_pstat_smb_req);
 
-    DebugMessage(DEBUG_DCE_SMB, "Buffering transaction data.\n");
-
     if (ttracker->dbuf == nullptr)
     {
         /* Buf size should be the total data count we need */
@@ -374,13 +370,8 @@ DCE2_Ret DCE2_SmbBufferTransactionData(DCE2_SmbTransactionTracker* ttracker,
     if (DCE2_BufferAddData(ttracker->dbuf, data_ptr, dcnt, ddisp,
         DCE2_BUFFER_MIN_ADD_FLAG__IGNORE) != DCE2_RET__SUCCESS)
     {
-        DebugMessage(DEBUG_DCE_SMB,
-            "Failed to buffer transaction data.\n");
         return DCE2_RET__ERROR;
     }
-
-    DebugMessage(DEBUG_DCE_SMB,
-        "Successfully buffered transaction data.\n");
 
     return DCE2_RET__SUCCESS;
 }
@@ -389,8 +380,6 @@ DCE2_Ret DCE2_SmbBufferTransactionParameters(DCE2_SmbTransactionTracker* ttracke
     const uint8_t* param_ptr, uint16_t pcnt, uint16_t pdisp)
 {
     snort::Profile profile(dce2_smb_pstat_smb_req);
-
-    DebugMessage(DEBUG_DCE_SMB, "Buffering transaction parameters.\n");
 
     if (ttracker->pbuf == nullptr)
     {
@@ -401,13 +390,8 @@ DCE2_Ret DCE2_SmbBufferTransactionParameters(DCE2_SmbTransactionTracker* ttracke
     if (DCE2_BufferAddData(ttracker->pbuf, param_ptr, pcnt, pdisp,
         DCE2_BUFFER_MIN_ADD_FLAG__IGNORE) != DCE2_RET__SUCCESS)
     {
-        DebugMessage(DEBUG_DCE_SMB,
-            "Failed to buffer transaction parameter data.\n");
         return DCE2_RET__ERROR;
     }
-
-    DebugMessage(DEBUG_DCE_SMB,
-        "Successfully buffered transaction parameter data.\n");
 
     return DCE2_RET__SUCCESS;
 }

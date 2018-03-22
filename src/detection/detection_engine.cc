@@ -173,6 +173,7 @@ void DetectionEngine::disable_content(Packet* p)
 {
     if ( p->context->active_rules == IpsContext::CONTENT )
         p->context->active_rules = IpsContext::NON_CONTENT;
+    trace_logf(detection, TRACE_PKT_DETECTION, "Disabled content detect, packet %" PRIu64"\n", pc.total_from_daq);
 }
 
 void DetectionEngine::enable_content(Packet* p)

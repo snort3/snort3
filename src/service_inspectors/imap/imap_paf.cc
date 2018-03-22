@@ -22,7 +22,6 @@
 
 #include "imap_paf.h"
 
-#include "main/snort_debug.h"
 #include "protocols/packet.h"
 #include "stream/stream.h"
 
@@ -204,18 +203,13 @@ static bool find_data_end_mime_data(const uint8_t ch, ImapPafData* pfdata)
     if (literal_complete(pfdata)
         && check_imap_data_end(&(pfdata->data_end_state), ch))
     {
-        DebugMessage(DEBUG_IMAP, "IMAP PAF: End of Data!\n");
         reset_data_states(pfdata);
         return true;
     }
 
     // check for mime flush point
     if (process_mime_paf_data(&(pfdata->mime_info), ch))
-    {
-        DebugMessage(DEBUG_IMAP, "IMAP PAF: Mime Boundary found."
-            " Flushing data!\n");
         return true;
-    }
 
     return false;
 }
@@ -432,8 +426,6 @@ static StreamSplitter::Status imap_paf_server(ImapPafData* pfdata,
 
     if (flush_len)
     {
-        DebugMessage(DEBUG_IMAP, "IMAP PAF: flushing data!\n");
-
         // flush at the final termination sequence
         *fp = flush_len;
         return StreamSplitter::FLUSH;
@@ -467,8 +459,6 @@ static StreamSplitter::Status imap_paf_client(const uint8_t* data, uint32_t len,
 
     if (pch != nullptr)
     {
-        DebugMessage(DEBUG_IMAP, "IMAP PAF: Flushing client"
-            " data!\n");
         *fp = (uint32_t)(pch - (const char*)data) + 1;
         return StreamSplitter::FLUSH;
     }
@@ -513,15 +503,9 @@ StreamSplitter::Status ImapSplitter::scan(
     ImapPafData* pfdata = &state;
 
     if (flags & PKT_FROM_SERVER)
-    {
-        DebugMessage(DEBUG_IMAP, "PAF: From server.\n");
         return imap_paf_server(pfdata, data, len, fp);
-    }
     else
-    {
-        DebugMessage(DEBUG_IMAP, "PAF: From client.\n");
         return imap_paf_client(data, len, fp);
-    }
 }
 
 bool imap_is_data_end(Flow* ssn)

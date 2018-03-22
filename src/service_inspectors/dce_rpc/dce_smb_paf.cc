@@ -25,8 +25,6 @@
 
 #include "dce_smb_paf.h"
 
-#include "main/snort_debug.h"
-
 #include "dce_smb.h"
 
 using namespace snort;
@@ -86,7 +84,7 @@ static inline bool DCE2_PafSmbIsValidNetbiosHdr(uint32_t nb_hdr, bool junk)
  *
  *********************************************************************/
 static StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, const uint8_t* data,
-    uint32_t len, uint32_t flags, uint32_t* fp)
+    uint32_t len, uint32_t, uint32_t* fp)
 {
     uint32_t n = 0;
     StreamSplitter::Status ps = StreamSplitter::SEARCH;
@@ -94,30 +92,13 @@ static StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, cons
     uint32_t nb_len;
     DCE2_SmbSsnData* sd = get_dce2_smb_session_data(flow);
 
-    DebugFormat(DEBUG_DCE_SMB, "%s\n", DCE2_DEBUG__PAF_START_MSG_SMB);
-    DebugFormat(DEBUG_DCE_SMB, "SMB: %u bytes of data\n", len);
-
-#ifdef DEBUG_MSGS
-    if (flags & PKT_FROM_CLIENT)
-        DebugMessage(DEBUG_DCE_SMB, "Packet from Client\n");
-    else
-        DebugMessage(DEBUG_DCE_SMB, "Packet from Server\n");
-#else
-    UNUSED(flags);
-#endif
-
     if (dce2_paf_abort(flow, (DCE2_SsnData*)sd))
     {
-        DebugFormat(DEBUG_DCE_SMB, "%s\n", DCE2_DEBUG__PAF_END_MSG);
         return StreamSplitter::ABORT;
     }
 
-    DebugFormat(DEBUG_DCE_SMB, "Start state: %u\n", ss->paf_state);
-
     while (n < len)
     {
-        DebugFormatNoFileLine(DEBUG_DCE_SMB, " State %d : 0x%02x\n", ss->paf_state, data[n]);
-
         switch (ss->paf_state)
         {
         case DCE2_PAF_SMB_STATES__0:
@@ -132,13 +113,9 @@ static StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, cons
                 nb_len = NbssLen((const NbssHdr*)&nb_hdr);
                 *fp = (nb_len + sizeof(NbssHdr) + n) - ss->paf_state;
                 ss->paf_state = DCE2_PAF_SMB_STATES__0;
-                DebugFormat(DEBUG_DCE_SMB,
-                    "Setting flush point: %u\n", *fp);
-                DebugFormat(DEBUG_DCE_SMB, "%s\n", DCE2_DEBUG__PAF_END_MSG);
                 return StreamSplitter::FLUSH;
             }
-             DebugFormatNoFileLine(DEBUG_DCE_SMB, "%s", "Invalid NetBIOS header - "
-                "entering junk data states.\n");
+          
             ss->paf_state = (DCE2_PafSmbStates)(((int)ss->paf_state) + 1);
             break;
         case DCE2_PAF_SMB_STATES__7:
@@ -146,25 +123,19 @@ static StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, cons
 
             if (!DCE2_PafSmbIsValidNetbiosHdr((uint32_t)(ss->nb_hdr >> 32), true))
             {
-                 DebugFormatNoFileLine(DEBUG_DCE_SMB, "%s", "Invalid NetBIOS header - "
-                    "staying in State 7.\n");
                 break;
             }
             if (((uint32_t)ss->nb_hdr != DCE2_SMB_ID)
                 && ((uint32_t)ss->nb_hdr != DCE2_SMB2_ID))
             {
-                 DebugFormatNoFileLine(DEBUG_DCE_SMB, "%s", "Invalid SMB ID - "
-                    "staying in State 7.\n");
                 break;
             }
 
             nb_hdr = htonl((uint32_t)(ss->nb_hdr >> 32));
             nb_len = NbssLen((const NbssHdr*)&nb_hdr);
             *fp = (nb_len + sizeof(NbssHdr) + n) - ss->paf_state;
-            DebugFormat(DEBUG_DCE_SMB,
-                "Setting flush point: %u\n", *fp);
             ss->paf_state = DCE2_PAF_SMB_STATES__0;
-            DebugFormat(DEBUG_DCE_SMB, "%s\n", DCE2_DEBUG__PAF_END_MSG);
+   
             return StreamSplitter::FLUSH;
         default:
             DCE2_SMB_PAF_SHIFT(ss->nb_hdr, data[n]);
@@ -175,7 +146,6 @@ static StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, cons
         n++;
     }
 
-    DebugFormat(DEBUG_DCE_SMB, "%s\n", DCE2_DEBUG__PAF_END_MSG);
     return ps;
 }
 

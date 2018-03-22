@@ -34,6 +34,7 @@ struct SnortConfig;
 //-------------------------------------------------------------------------
 // stream module
 //-------------------------------------------------------------------------
+extern Trace TRACE_NAME(stream);
 
 #define MOD_NAME "stream"
 #define MOD_HELP "common flow tracking"

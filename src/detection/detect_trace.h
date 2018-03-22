@@ -41,7 +41,8 @@ enum
     TRACE_BUFFER_MINIMAL = 0x4,
     TRACE_BUFFER_VERBOSE = 0x8,
     TRACE_RULE_VARS = 0x10,
-    TRACE_FP_SEARCH = 0x20
+    TRACE_FP_SEARCH = 0x20,
+    TRACE_PKT_DETECTION = 0x40,
 };
 
 void clear_trace_cursor_info();

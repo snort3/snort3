@@ -80,9 +80,6 @@ static DCE2_TcpSsnData* dce2_create_new_tcp_session(Packet* p, dce2TcpProtoConf*
 {
     Profile profile(dce2_tcp_pstat_new_session);
 
-    DebugMessage(DEBUG_DCE_TCP, "DCE over TCP packet detected\n");
-    DebugMessage(DEBUG_DCE_TCP, "Creating new session\n");
-
     DCE2_TcpSsnData* dce2_tcp_sess = set_new_dce2_tcp_session(p);
 
     if ( dce2_tcp_sess )
@@ -91,7 +88,6 @@ static DCE2_TcpSsnData* dce2_create_new_tcp_session(Packet* p, dce2TcpProtoConf*
         DCE2_ResetRopts(&dce2_tcp_sess->sd.ropts);
 
         dce2_tcp_stats.tcp_sessions++;
-        DebugFormat(DEBUG_DCE_TCP,"Created (%p)\n", (void*)dce2_tcp_sess);
 
         dce2_tcp_sess->sd.trans = DCE2_TRANS_TYPE__TCP;
         dce2_tcp_sess->sd.server_policy = config->common.policy;
@@ -113,8 +109,6 @@ static DCE2_TcpSsnData* dce2_handle_tcp_session(Packet* p, dce2TcpProtoConf* con
     {
         dce2_tcp_sess = dce2_create_new_tcp_session(p, config);
     }
-
-    DebugFormat(DEBUG_DCE_TCP, "Session pointer: %p\n", (void*)dce2_tcp_sess);
 
     return dce2_tcp_sess;
 }
@@ -153,22 +147,12 @@ void Dce2Tcp::eval(Packet* p)
 {
     DCE2_TcpSsnData* dce2_tcp_sess;
     Profile profile(dce2_tcp_pstat_main);
-    if (DCE2_SsnFromServer(p))
-    {
-        DebugMessage(DEBUG_DCE_TCP, "Packet from Server.\n");
-    }
-    else
-    {
-        DebugMessage(DEBUG_DCE_TCP, "Packet from Client.\n");
-    }
 
     assert(p->has_tcp_data());
     assert(p->flow);
 
     if (p->flow->get_session_flags() & SSNFLAG_MIDSTREAM)
     {
-        DebugMessage(DEBUG_DCE_TCP,
-            "Midstream - not inspecting.\n");
         return;
     }
 

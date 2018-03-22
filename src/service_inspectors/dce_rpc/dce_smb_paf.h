@@ -25,7 +25,6 @@
 #include "stream/stream_splitter.h"
 
 #define DCE2_SMB_PAF_SHIFT(x64, x8) { (x64) <<= 8; (x64) |= (uint64_t)(x8); }
-#define DCE2_DEBUG__PAF_START_MSG_SMB  "DCE/RPC over SMB PAF ====================================="
 
 // Enumerations for PAF states
 enum DCE2_PafSmbStates

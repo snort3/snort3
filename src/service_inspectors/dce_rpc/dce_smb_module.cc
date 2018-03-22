@@ -33,6 +33,8 @@
 using namespace snort;
 using namespace std;
 
+Trace TRACE_NAME(dce_smb);
+
 static const PegInfo dce2_smb_pegs[] =
 {
     { CountType::SUM, "events", "total events" },
@@ -175,7 +177,7 @@ static const RuleMap dce2_smb_rules[] =
     { 0, nullptr }
 };
 
-Dce2SmbModule::Dce2SmbModule() : Module(DCE2_SMB_NAME, DCE2_SMB_HELP, s_params)
+Dce2SmbModule::Dce2SmbModule() : Module(DCE2_SMB_NAME, DCE2_SMB_HELP, s_params, false, &TRACE_NAME(dce_smb))
 {
     memset(&config, 0, sizeof(config));
 }
@@ -424,7 +426,7 @@ static bool set_smb_invalid_shares(dce2SmbProtoConf& config, Value& v)
     return(true);
 }
 
-bool Dce2SmbModule::set(const char*, snort::Value& v, snort::SnortConfig*)
+bool Dce2SmbModule::set(const char* fqn, snort::Value& v, snort::SnortConfig* c)
 {
     if (dce2_set_co_config(v,config.common))
         return true;
@@ -445,7 +447,7 @@ bool Dce2SmbModule::set(const char*, snort::Value& v, snort::SnortConfig*)
     else if ( v.is("smb_legacy_mode"))
         config.legacy_mode = v.get_bool();
     else
-        return false;
+        return Module::set(fqn, v, c);
     return true;
 }
 

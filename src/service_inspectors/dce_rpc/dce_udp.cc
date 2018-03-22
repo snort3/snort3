@@ -92,16 +92,11 @@ static DCE2_UdpSsnData* dce2_create_new_udp_session(Packet* p, dce2UdpProtoConf*
 {
     Profile profile(dce2_udp_pstat_new_session);
 
-    DebugMessage(DEBUG_DCE_UDP, "DCE over UDP packet detected\n");
-    DebugMessage(DEBUG_DCE_UDP, "Creating new session\n");
-
     DCE2_UdpSsnData* dce2_udp_sess = set_new_dce2_udp_session(p);
 
     DCE2_ResetRopts(&dce2_udp_sess->sd.ropts);
 
     dce2_udp_stats.udp_sessions++;
-    DebugFormat(DEBUG_DCE_UDP,"Created (%p)\n", (void*)dce2_udp_sess);
-
     dce2_udp_sess->sd.trans = DCE2_TRANS_TYPE__UDP;
     dce2_udp_sess->sd.wire_pkt = p;
     dce2_udp_sess->sd.config = (void*)config;
@@ -119,8 +114,6 @@ static DCE2_UdpSsnData* dce2_handle_udp_session(Packet* p, dce2UdpProtoConf* con
     {
         dce2_udp_sess = dce2_create_new_udp_session(p, config);
     }
-
-    DebugFormat(DEBUG_DCE_UDP, "Session pointer: %p\n", (void*)dce2_udp_sess);
 
     return dce2_udp_sess;
 }
@@ -150,14 +143,6 @@ void Dce2Udp::eval(Packet* p)
 {
     DCE2_UdpSsnData* dce2_udp_sess;
     Profile profile(dce2_udp_pstat_main);
-    if (DCE2_SsnFromServer(p))
-    {
-        DebugMessage(DEBUG_DCE_UDP, "Packet from Server.\n");
-    }
-    else
-    {
-        DebugMessage(DEBUG_DCE_UDP, "Packet from Client.\n");
-    }
 
     assert(p->flow);
 

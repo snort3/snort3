@@ -35,6 +35,7 @@
 #include "main/snort_debug.h"
 #include "packet_io/active.h"
 #include "protocols/vlan.h"
+#include "stream/base/stream_module.h"
 #include "target_based/sftarget_hostentry.h"
 #include "target_based/snort_protocols.h"
 #include "utils/util.h"
@@ -212,6 +213,10 @@ void Stream::stop_inspection(
     int32_t /*bytes*/, int /*response*/)
 {
     assert(flow && flow->session);
+
+    trace_logf(stream, "stop inspection on flow, dir %s \n",
+	       dir == SSN_DIR_BOTH ? "BOTH": 
+	       ((dir == SSN_DIR_FROM_CLIENT) ? "FROM_CLIENT" : "FROM_SERVER"));
 
     switch (dir)
     {

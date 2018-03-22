@@ -385,8 +385,6 @@ void Dce2Smb::eval(snort::Packet* p)
 
     if (p->flow->get_session_flags() & SSNFLAG_MIDSTREAM)
     {
-        DebugMessage(DEBUG_DCE_SMB,
-            "Midstream - not inspecting.\n");
         return;
     }
 

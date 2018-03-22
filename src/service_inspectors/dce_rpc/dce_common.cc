@@ -27,7 +27,6 @@
 #include "detection/detection_engine.h"
 #include "ips_options/extract.h"
 #include "log/messages.h"
-#include "main/snort_debug.h"
 #include "utils/safec.h"
 
 #include "dce_http_proxy_module.h"
@@ -130,56 +129,21 @@ bool dce2_paf_abort(Flow* flow, DCE2_SsnData* sd)
 {
     if (flow->get_session_flags() & SSNFLAG_MIDSTREAM)
     {
-        DebugMessage(DEBUG_DCE_COMMON,
-            "Aborting PAF because of midstream pickup.\n");
         return true;
     }
     else if (!(flow->get_session_flags() & SSNFLAG_ESTABLISHED))
     {
-        DebugMessage(DEBUG_DCE_COMMON,
-            "Aborting PAF because of unestablished session.\n");
         return true;
     }
 
     if ((sd != nullptr) && DCE2_SsnNoInspect(sd))
     {
-        DebugMessage(DEBUG_DCE_COMMON, "Aborting PAF because of session data check.\n");
         return true;
     }
 
     return false;
 }
 
-static void DCE2_PrintRoptions(DCE2_Roptions* ropts)
-{
-    DebugFormat(DEBUG_DCE_COMMON,
-        "  First frag: %s\n", ropts->first_frag == 1 ? "yes" : (ropts->first_frag == 0 ? "no" :
-        "unset"));
-    if (ropts->first_frag == DCE2_SENTINEL)
-    {
-        DebugMessage(DEBUG_DCE_COMMON, "  Iface: unset\n");
-        DebugMessage(DEBUG_DCE_COMMON, "  Iface version: unset\n");
-    }
-    else
-    {
-        DEBUG_WRAP(char uuid_buf[DCE2_UUID_BUF_SIZE];)
-        DebugFormat(DEBUG_DCE_COMMON, "  Iface: %s\n",
-            DCE2_UuidToStr(&ropts->iface, DCERPC_BO_FLAG__NONE, uuid_buf));
-        DebugFormat(DEBUG_DCE_COMMON, "  Iface version: %hu\n", ropts->iface_vers_maj);
-    }
-    if (ropts->opnum == DCE2_SENTINEL)
-        DebugMessage(DEBUG_DCE_COMMON, "  Opnum: unset\n");
-    else
-    {
-        DebugFormat(DEBUG_DCE_COMMON, "  Opnum: %d\n", ropts->opnum);
-    }
-    if (ropts->stub_data != nullptr)
-        DebugFormat(DEBUG_DCE_COMMON, "  Stub data: %p\n", ropts->stub_data);
-    else
-    {
-        DebugMessage(DEBUG_DCE_COMMON, "  Stub data: NULL\n");
-    }
-}
 
 static void dce2_protocol_detect(DCE2_SsnData* sd, snort::Packet* pkt)
 {
@@ -212,22 +176,9 @@ void DCE2_Detect(DCE2_SsnData* sd)
         return;
     }
     snort::Packet* top_pkt = DetectionEngine::get_current_packet();
-
-    DCE2_PrintRoptions(&sd->ropts);
-    DebugMessage(DEBUG_DCE_COMMON, "Payload:\n");
-    DCE2_PrintPktData(top_pkt->data, top_pkt->dsize);
-
-    if (sd->ropts.stub_data != nullptr)
-    {
-        DebugMessage(DEBUG_DCE_COMMON,"\nStub data:\n");
-        DCE2_PrintPktData(sd->ropts.stub_data,
-            top_pkt->dsize - (sd->ropts.stub_data - top_pkt->data));
-    }
-
     dce2_protocol_detect(sd, top_pkt);
     /* Always reset rule option data after detecting */
     DCE2_ResetRopts(&sd->ropts);
-    DebugMessage(DEBUG_DCE_COMMON, "----------------------------------------------------------\n");
 }
 
 DCE2_SsnData* get_dce2_session_data(snort::Packet* p)
@@ -276,37 +227,23 @@ bool DceEndianness::get_offset_endianness(int32_t offset, uint8_t& endian)
 
     if ((data_byte_order == DCE2_SENTINEL) ||
         (hdr_byte_order == DCE2_SENTINEL))
-    {
-        DebugMessage(DEBUG_DCE_COMMON,
-            "Data byte order or header byte order not set "
-            "in rule options - not evaluating.\n");
         return false;
-    }
 
     if (stub_data_offset == DCE2_SENTINEL)
     {
-        DebugMessage(DEBUG_DCE_COMMON, "Stub data is NULL.  "
-            "Setting byte order to that of the header.\n");
         byte_order = (DceRpcBoFlag)hdr_byte_order;
     }
     else if (offset < stub_data_offset)
     {
-        DebugMessage(DEBUG_DCE_COMMON,
-            "Reading data in the header.  Setting byte order "
-            "to that of the header.\n");
         byte_order = (DceRpcBoFlag)hdr_byte_order;
     }
     else
     {
-        DebugMessage(DEBUG_DCE_COMMON,
-            "Reading data in the stub.  Setting byte order "
-            "to that of the stub data.\n");
         byte_order = (DceRpcBoFlag)data_byte_order;
     }
 
     endian = (byte_order == DCERPC_BO_FLAG__BIG_ENDIAN) ? ENDIAN_BIG : ENDIAN_LITTLE;
-    DebugFormat(DEBUG_DCE_COMMON, " Byte order: %s\n",
-        endian == ENDIAN_LITTLE ? "little endian" : "big endian");
+ 
     return true;
 }
 
@@ -345,7 +282,7 @@ uint16_t DCE2_GetRpktMaxData(DCE2_SsnData* sd, DCE2_RpktType rtype)
         break;
 
     default:
-        DebugFormat(DEBUG_DCE_COMMON,"Invalid reassembly packet type: %d\n",rtype);
+        assert(false);
         return 0;
     }
     return (snort::Packet::max_dsize - overhead);
@@ -463,7 +400,6 @@ snort::Packet* DCE2_GetRpkt(snort::Packet* p,DCE2_RpktType rpkt_type,
         break;
 
     default:
-        DebugFormat(DEBUG_DCE_COMMON, "Invalid reassembly packet type: %d\n",rpkt_type);
         assert(false);
         return nullptr;
     }
@@ -473,7 +409,6 @@ snort::Packet* DCE2_GetRpkt(snort::Packet* p,DCE2_RpktType rpkt_type,
 
     if (data_len > snort::Packet::max_dsize - data_overhead)
     {
-        DebugMessage(DEBUG_DCE_COMMON, "Failed to create reassembly packet.\n");
         delete rpkt->endianness;
         rpkt->endianness = nullptr;
         return nullptr;
