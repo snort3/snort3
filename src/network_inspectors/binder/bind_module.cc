@@ -281,6 +281,7 @@ bool BinderModule::begin(const char* fqn, int idx, SnortConfig*)
     {
         work = new Binding;
         unsplit_nets = false;
+        unsplit_ports = false;
         use_name_count = 0;
         use_type_count = 0;
     }

@@ -1,6 +1,7 @@
 #!/bin/sh
 # Convenience wrapper for easily viewing/setting options that
 # the project's CMake scripts will recognize
+
 set -e
 command="$0 $*"
 
@@ -53,6 +54,8 @@ Optional Features:
                             enable address sanitizer support
     --enable-thread-sanitizer
                             enable thread sanitizer support
+    --enable-ub-sanitizer
+                            enable undefined behavior sanitizer support
     --enable-unit-tests     build unit tests
     --enable-piglet         build piglet test harness
     --disable-static-daq    link static DAQ modules
@@ -115,20 +118,6 @@ sourcedir="$( cd "$( dirname "$0" )" && pwd )"
 #   $3 is the cache entry variable value
 append_cache_entry () {
     CMakeCacheEntries="$CMakeCacheEntries -D $1:$2=$3"
-}
-
-check_and_append_cache_entry() {
-    if [ -f $3 ]; then
-        append_cache_entry $1 $2 $3
-    else 
-        echo ""
-        echo "the $1 variable, which is specified using a --with-* options,"
-        echo "requires an absolute path to the library.  Could not stat the"
-        echo "the library:"
-        echo "    $3"
-        echo ""
-        exit 1
-    fi
 }
 
 # set defaults
@@ -282,6 +271,12 @@ while [ $# -ne 0 ]; do
             ;;
         --disable-thread-sanitizer)
             append_cache_entry ENABLE_THREAD_SANITIZER  BOOL false
+            ;;
+        --enable-ub-sanitizer)
+            append_cache_entry ENABLE_UB_SANITIZER  BOOL true
+            ;;
+        --disable-ub-sanitizer)
+            append_cache_entry ENABLE_UB_SANITIZER  BOOL false
             ;;
         --enable-unit-tests)
             append_cache_entry ENABLE_UNIT_TESTS        BOOL true

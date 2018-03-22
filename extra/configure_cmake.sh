@@ -20,6 +20,20 @@ Usage: $0 [OPTION]... [VAR=VALUE]...
         --builddir=   The build directory
         --generator=  run cmake --help for a list of generators
         --prefix=     Snort++ installation prefix
+
+Optional Features:
+    --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
+    --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+    --enable-code-coverage  Whether to enable code coverage support
+    --enable-debug          enable debugging options (bugreports and developers
+                            only)
+    --disable-gdb           disable gdb debugging information
+    --enable-address-sanitizer
+                            enable address sanitizer support
+    --enable-thread-sanitizer
+                            enable thread sanitizer support
+    --enable-ub-sanitizer
+                            enable undefined behavior sanitizer support
 "
 
 sourcedir="$( cd "$( dirname "$0" )" && pwd )"
@@ -55,12 +69,51 @@ while [ $# -ne 0 ]; do
         --builddir=*)
             builddir=$optarg
             ;;
+        --define=*)
+            CMakeCacheEntries="$CMakeCacheEntries -D$optarg"
+            ;;
         --generator=*)
             CMakeGenerator="$optarg"
             ;;
         --prefix=*)
             prefix=$optarg
             append_cache_entry CMAKE_INSTALL_PREFIX PATH $optarg
+            ;;
+        --enable-code-coverage)
+            append_cache_entry ENABLE_CODE_COVERAGE     BOOL true
+            ;;
+        --disable-code-coverage)
+            append_cache_entry ENABLE_CODE_COVERAGE     BOOL false
+            ;;
+        --enable-debug)
+            append_cache_entry ENABLE_DEBUG             BOOL true
+            ;;
+        --disable-debug)
+            append_cache_entry ENABLE_DEBUG             BOOL false
+            ;;
+        --enable-gdb)
+            append_cache_entry ENABLE_GDB               BOOL true
+            ;;
+        --disable-gdb)
+            append_cache_entry ENABLE_GDB               BOOL false
+            ;;
+        --enable-address-sanitizer)
+            append_cache_entry ENABLE_ADDRESS_SANITIZER BOOL true
+            ;;
+        --disable-address-sanitizer)
+            append_cache_entry ENABLE_ADDRESS_SANITIZER BOOL false
+            ;;
+        --enable-thread-sanitizer)
+            append_cache_entry ENABLE_THREAD_SANITIZER  BOOL true
+            ;;
+        --disable-thread-sanitizer)
+            append_cache_entry ENABLE_THREAD_SANITIZER  BOOL false
+            ;;
+        --enable-ub-sanitizer)
+            append_cache_entry ENABLE_UB_SANITIZER  BOOL true
+            ;;
+        --disable-ub-sanitizer)
+            append_cache_entry ENABLE_UB_SANITIZER  BOOL false
             ;;
         *)
             echo "Invalid option '$1'.  Try $0 --help to see available options."

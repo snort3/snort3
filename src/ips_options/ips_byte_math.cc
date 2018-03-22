@@ -110,9 +110,9 @@ uint32_t ByteMathOption::hash() const
     mix(a,b,c);
 
     a += data->offset;
-    b += (data->rvalue_var << 24 |
-        data->offset_var << 16 |
-        data->result_var << 8 |
+    b += ((uint32_t) data->rvalue_var << 24 |
+        (uint32_t) data->offset_var << 16 |
+        (uint32_t) data->result_var << 8 |
         data->endianess);
     c += data->base;
 

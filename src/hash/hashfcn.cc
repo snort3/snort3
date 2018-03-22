@@ -63,7 +63,7 @@ HashFnc* hashfcn_new(int m)
     {
         p->seed     = nearest_prime( (rand()%m)+3191);
         p->scale    = nearest_prime( (rand()%m)+709);
-        p->hardener = (rand()*rand()) + 133824503;
+        p->hardener = ((unsigned) rand() * rand()) + 133824503;
     }
 
     p->hash_fcn   = &hashfcn_hash;
@@ -133,7 +133,7 @@ void mix_str(
 
         for (unsigned l=0; l<k; l++)
         {
-            tmp |= s[i + l] << l*8;
+            tmp |= (unsigned char) s[i + l] << l*8;
         }
 
         switch (j)

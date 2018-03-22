@@ -253,7 +253,7 @@ static bool valid_multi(Value& v, const char* r)
     vector<string> list;
     split(s, list);
 
-    unsigned mask = 0;
+    unsigned long long mask = 0;
 
     for ( const auto& p : list )
     {
@@ -264,7 +264,7 @@ static bool valid_multi(Value& v, const char* r)
         unsigned idx = get_index(r, t);
 
         if ( idx < Value::mask_bits )
-            mask |= (1 << idx);
+            mask |= (1ULL << idx);
     }
     v.set_aux(mask);
     return true;

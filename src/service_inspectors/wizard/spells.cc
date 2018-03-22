@@ -94,6 +94,7 @@ bool SpellBook::add_spell(const char* key, const char* val)
     unsigned i = 0;
     MagicPage* p = root;
 
+    // Perform a longest prefix match before inserting the pattern.
     while ( i < hv.size() )
     {
         int c = toupper(hv[i]);
@@ -101,7 +102,7 @@ bool SpellBook::add_spell(const char* key, const char* val)
         if ( c == WILD && p->any )
             p = p->any;
 
-        else if ( p->next[c] )
+        else if ( c != WILD && p->next[c] )
             p = p->next[c];
 
         else

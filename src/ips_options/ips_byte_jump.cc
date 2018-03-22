@@ -160,7 +160,7 @@ uint32_t ByteJumpOption::hash() const
     mix(a,b,c);
 
     a += data->post_offset;
-    b += data->from_end_flag << 16 | data->offset_var << 8 | data->post_offset_var;
+    b += data->from_end_flag << 16 | (uint32_t) data->offset_var << 8 | data->post_offset_var;
     c += data->bitmask_val;
 
     mix(a,b,c);
