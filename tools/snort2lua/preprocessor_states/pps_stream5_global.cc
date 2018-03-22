@@ -160,6 +160,9 @@ bool StreamGlobal::convert(std::istringstream& data_stream)
             table_api.add_diff_option_comment("max_active_responses","max_responses");
             tmpval = parse_int_option("max_responses", arg_stream, false);
             table_api.close_table();
+            table_api.open_top_level_table("reject");
+            table_api.add_option("reset", "both");
+            table_api.close_table();
         }
         else
         {

@@ -179,6 +179,10 @@ bool Active::init(SnortConfig* sc)
 #endif
         }
     }
+
+    if (sc->max_responses > 0)
+        Active::set_enabled();
+
     return true;
 }
 
