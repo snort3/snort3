@@ -468,7 +468,7 @@ void Active::reset_session(Packet* p, bool force)
     if ( force or SnortConfig::inline_mode() or SnortConfig::treat_drop_as_ignore() )
         Stream::drop_flow(p);
 
-    if ( s_enabled and SnortConfig::get_conf()->max_responses )
+    if ( s_enabled )
     {
         ActionManager::queue_reject(p);
 
