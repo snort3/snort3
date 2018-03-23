@@ -25,9 +25,11 @@
 
 #include "service_tftp.h"
 
-#include "appid_inspector.h"
-#include "app_info_table.h"
 #include "protocols/packet.h"
+
+#include "app_info_table.h"
+#include "appid_debug.h"
+#include "appid_inspector.h"
 
 #define TFTP_PORT   69
 #define TFTP_COUNT_THRESHOLD 1
@@ -139,8 +141,8 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
         data_add(args.asd, td, &snort_free);
         td->state = TFTP_STATE_CONNECTION;
     }
-    if (args.session_logging_enabled)
-        LogMessage("AppIdDbg %s tftp state %d\n", args.session_logging_id, td->state);
+    if (appidDebug->is_active())
+        LogMessage("AppIdDbg %s TFTP state %d\n", appidDebug->get_debug_session(), td->state);
 
     if (td->state == TFTP_STATE_CONNECTION && args.dir == APP_ID_FROM_RESPONDER)
         goto fail;
@@ -212,12 +214,12 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
     case TFTP_STATE_TRANSFER:
         if ((mode=tftp_verify_header(data, size, &block)) < 0)
         {
-            if (args.session_logging_enabled)
-                LogMessage("AppIdDbg %s tftp failed to verify\n", args.session_logging_id);
+            if (appidDebug->is_active())
+                LogMessage("AppIdDbg %s TFTP failed to verify\n", appidDebug->get_debug_session());
             goto fail;
         }
-        if (args.session_logging_enabled)
-            LogMessage("AppIdDbg %s tftp mode %d and block %u\n", args.session_logging_id,
+        if (appidDebug->is_active())
+            LogMessage("AppIdDbg %s TFTP mode %d and block %u\n", appidDebug->get_debug_session(),
                 mode, (unsigned)block);
         if (mode == TFTP_STATE_ACK)
         {
@@ -255,13 +257,13 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
                 goto fail;
             else
             {
-                if (args.session_logging_enabled)
-                    LogMessage("AppIdDbg %s tftp failed to verify\n", args.session_logging_id);
+                if (appidDebug->is_active())
+                    LogMessage("AppIdDbg %s TFTP failed to verify\n", appidDebug->get_debug_session());
                 goto bail;
             }
         }
-        if (args.session_logging_enabled)
-            LogMessage("AppIdDbg %s tftp mode %d\n", args.session_logging_id, mode);
+        if (appidDebug->is_active())
+            LogMessage("AppIdDbg %s TFTP mode %d\n", appidDebug->get_debug_session(), mode);
         if (mode == TFTP_STATE_ERROR)
         {
             td->state = TFTP_STATE_TRANSFER;
@@ -269,8 +271,8 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
         }
         if (args.dir == APP_ID_FROM_INITIATOR && mode != TFTP_STATE_DATA)
         {
-            if (args.session_logging_enabled)
-                LogMessage("AppIdDbg %s tftp bad mode\n", args.session_logging_id);
+            if (appidDebug->is_active())
+                LogMessage("AppIdDbg %s TFTP bad mode\n", appidDebug->get_debug_session());
             goto bail;
         }
         if (args.dir == APP_ID_FROM_RESPONDER && mode != TFTP_STATE_ACK)
@@ -318,8 +320,8 @@ inprocess:
     return APPID_INPROCESS;
 
 success:
-    if (args.session_logging_enabled)
-        LogMessage("AppIdDbg %s tftp success\n", args.session_logging_id);
+    if (appidDebug->is_active())
+        LogMessage("AppIdDbg %s TFTP success\n", appidDebug->get_debug_session());
     return add_service(args.asd, args.pkt, args.dir, APP_ID_TFTP);
 
 bail:

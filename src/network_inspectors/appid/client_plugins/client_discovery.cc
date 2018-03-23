@@ -27,9 +27,12 @@
 
 #include <map>
 
+#include "profiler/profiler.h"
+#include "protocols/packet.h"
+
 #include "app_info_table.h"
+#include "appid_debug.h"
 #include "appid_session.h"
-#include "thirdparty_appid_utils.h"
 #include "client_app_aim.h"
 #include "client_app_bit_tracker.h"
 #include "client_app_bit.h"
@@ -46,8 +49,7 @@
 #include "detector_plugins/detector_pop3.h"
 #include "detector_plugins/detector_sip.h"
 #include "detector_plugins/detector_smtp.h"
-#include "protocols/packet.h"
-#include "profiler/profiler.h"
+#include "thirdparty_appid_utils.h"
 
 using namespace snort;
 
@@ -286,9 +288,9 @@ int ClientDiscovery::exec_client_detectors(AppIdSession& asd, Packet* p, int dir
     {
         AppIdDiscoveryArgs disco_args(p->data, p->dsize, direction, asd, p);
         ret = asd.client_detector->validate(disco_args);
-        if (asd.session_logging_enabled)
+        if (appidDebug->is_active())
             LogMessage("AppIdDbg %s %s client detector returned %d\n",
-                asd.session_logging_id, asd.client_detector->get_name().c_str(), ret);
+                appidDebug->get_debug_session(), asd.client_detector->get_name().c_str(), ret);
     }
     else
     {
@@ -296,9 +298,9 @@ int ClientDiscovery::exec_client_detectors(AppIdSession& asd, Packet* p, int dir
         {
             AppIdDiscoveryArgs disco_args(p->data, p->dsize, direction, asd, p);
             int result = kv->second->validate(disco_args);
-            if (asd.session_logging_enabled)
+            if (appidDebug->is_active())
                 LogMessage("AppIdDbg %s %s client detector returned %d\n",
-                    asd.session_logging_id, kv->second->get_name().c_str(), result);
+                    appidDebug->get_debug_session(), kv->second->get_name().c_str(), result);
 
             if (result == APPID_SUCCESS)
             {
@@ -430,9 +432,9 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p, int dire
         }
     }
 
-    if ( asd.session_logging_enabled )
+    if ( appidDebug->is_active() )
         if ( !was_http2 && asd.is_http2 )
-            LogMessage("AppIdDbg %s Got a preface for HTTP/2\n", asd.session_logging_id);
+            LogMessage("AppIdDbg %s Got a preface for HTTP/2\n", appidDebug->get_debug_session());
 
     if ( !was_service && asd.is_service_detected() )
         asd.sync_with_snort_protocol_id(asd.service.get_id(), p);

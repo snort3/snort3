@@ -43,6 +43,7 @@ public:
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
     bool end(const char*, int, snort::SnortConfig*) override;
 
+    const snort::Command* get_commands() const override;
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
     snort::ProfileStats* get_profile() const override;

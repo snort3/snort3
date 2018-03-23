@@ -150,6 +150,8 @@ set ( APPID_SOURCES
     appid_app_descriptor.h
     appid_config.cc
     appid_config.h
+    appid_debug.cc
+    appid_debug.h
     appid_detector.cc
     appid_detector.h
     appid_discovery.cc

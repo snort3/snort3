@@ -22,3 +22,7 @@ add_cpputest( appid_http_event_test
     SOURCES $<TARGET_OBJECTS:appid_cpputest_deps>
 )
 
+add_cpputest( appid_debug_test
+    SOURCES $<TARGET_OBJECTS:appid_cpputest_deps>
+)
+

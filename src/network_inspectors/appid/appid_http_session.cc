@@ -25,13 +25,14 @@
 
 #include "appid_http_session.h"
 
-#include "app_info_table.h"
-#include "appid_config.h"
-#include "appid_session.h"
-#include "thirdparty_appid_utils.h"
-#include "detector_plugins/http_url_patterns.h"
 #include "profiler/profiler.h"
 
+#include "app_info_table.h"
+#include "appid_config.h"
+#include "appid_debug.h"
+#include "appid_session.h"
+#include "detector_plugins/http_url_patterns.h"
+#include "thirdparty_appid_utils.h"
 
 static const char* httpFieldName[ MAX_HTTP_FIELD_ID ] = // for use in debug messages
 {
@@ -316,8 +317,8 @@ void AppIdHttpSession::process_chp_buffers()
             for (unsigned i = 0; i < MAX_HTTP_FIELD_ID; i++)
                 if ( cmd.chp_rewritten[i] )
                 {
-                    if (asd.session_logging_enabled)
-                        LogMessage("AppIdDbg %s rewritten %s: %s\n", asd.session_logging_id,
+                    if (appidDebug->is_active())
+                        LogMessage("AppIdDbg %s Rewritten %s: %s\n", appidDebug->get_debug_session(),
                             httpFieldName[i], cmd.chp_rewritten[i]);
 
                     http_fields[i].field = cmd.chp_rewritten[i];
@@ -371,8 +372,8 @@ int AppIdHttpSession::process_http_packet(int direction)
             constexpr auto RESPONSE_CODE_LENGTH = 3;
             if (response_code.size() != RESPONSE_CODE_LENGTH)
             {
-                if (asd.session_logging_enabled)
-                    LogMessage("AppIdDbg %s bad http response code.\n", asd.session_logging_id);
+                if (appidDebug->is_active())
+                    LogMessage("AppIdDbg %s Bad http response code.\n", appidDebug->get_debug_session());
                 asd.reset_session_data();
                 return 0;
             }
@@ -383,8 +384,8 @@ int AppIdHttpSession::process_http_packet(int direction)
             set_session_flags(APPID_SESSION_RESPONSE_CODE_CHECKED);
             /* didn't receive response code in first X packets. Stop processing this session */
             asd.reset_session_data();
-            if (asd.session_logging_enabled)
-                LogMessage("AppIdDbg %s no response code received\n", asd.session_logging_id);
+            if (appidDebug->is_active())
+                LogMessage("AppIdDbg %s No response code received\n", appidDebug->get_debug_session());
             return 0;
         }
 #endif
@@ -393,8 +394,8 @@ int AppIdHttpSession::process_http_packet(int direction)
     if (asd.service.get_id() == APP_ID_NONE)
         asd.service.set_id(APP_ID_HTTP);
 
-    if (asd.session_logging_enabled)
-        LogMessage("AppIdDbg %s chp_finished %d chp_hold_flow %d\n", asd.session_logging_id,
+    if (appidDebug->is_active())
+        LogMessage("AppIdDbg %s chp_finished %d chp_hold_flow %d\n", appidDebug->get_debug_session(),
             chp_finished, chp_hold_flow);
 
     if (!chp_finished || chp_hold_flow)
@@ -444,8 +445,8 @@ int AppIdHttpSession::process_http_packet(int direction)
 
             if (is_webdav)
             {
-                if (asd.session_logging_enabled and asd.payload.get_id() != APP_ID_WEBDAV)
-                    LogMessage("AppIdDbg %s data is webdav\n", asd.session_logging_id);
+                if (appidDebug->is_active() and asd.payload.get_id() != APP_ID_WEBDAV)
+                    LogMessage("AppIdDbg %s Data is webdav\n", appidDebug->get_debug_session());
                 asd.set_payload_appid_data(APP_ID_WEBDAV, nullptr);
             }
 
@@ -457,6 +458,13 @@ int AppIdHttpSession::process_http_packet(int direction)
 
                 http_matchers->identify_user_agent(useragent.c_str(), useragent.size(),
                     service_id, client_id, &version);
+                if (appidDebug->is_active())
+                {
+                    if (service_id > APP_ID_NONE and service_id != APP_ID_HTTP and asd.service.get_id() != service_id)
+                        LogMessage("AppIdDbg %s User Agent is service %d\n", appidDebug->get_debug_session(), service_id);
+                    if (client_id > APP_ID_NONE and client_id != APP_ID_HTTP and asd.client.get_id() != client_id)
+                        LogMessage("AppIdDbg %s User Agent is client %d\n", appidDebug->get_debug_session(), client_id);
+                }
                 asd.set_service_appid_data(service_id, nullptr, nullptr);
                 asd.set_client_appid_data(client_id, version);
                 asd.scan_flags &= ~SCAN_HTTP_USER_AGENT_FLAG;
@@ -467,9 +475,9 @@ int AppIdHttpSession::process_http_packet(int direction)
             if ( !asd.is_payload_appid_set() && (asd.scan_flags & SCAN_HTTP_VIA_FLAG) && !via.empty() )
             {
                 payload_id = http_matchers->get_appid_by_pattern(via.c_str(), via.size(), nullptr);
-                if (asd.session_logging_enabled && payload_id > APP_ID_NONE &&
+                if (appidDebug->is_active() && payload_id > APP_ID_NONE &&
                                 asd.payload.get_id() != payload_id)
-                    LogMessage("AppIdDbg %s VIA data %d\n", asd.session_logging_id, payload_id);
+                    LogMessage("AppIdDbg %s VIA is payload %d\n", appidDebug->get_debug_session(), payload_id);
                 asd.set_payload_appid_data((AppId)payload_id, nullptr);
                 asd.scan_flags &= ~SCAN_HTTP_VIA_FLAG;
             }
@@ -490,17 +498,17 @@ int AppIdHttpSession::process_http_packet(int direction)
             {
                 if (direction == APP_ID_FROM_INITIATOR)
                 {
-                    if (asd.session_logging_enabled && client_id > APP_ID_NONE && client_id !=
+                    if (appidDebug->is_active() && client_id > APP_ID_NONE && client_id !=
                                     APP_ID_HTTP && asd.client.get_id() != client_id)
-                        LogMessage("AppIdDbg %s X is client %d\n", asd.session_logging_id, appId);
+                        LogMessage("AppIdDbg %s X is client %d\n", appidDebug->get_debug_session(), appId);
 
                     asd.set_client_appid_data(appId, version);
                 }
                 else
                 {
-                    if (asd.session_logging_enabled && service_id > APP_ID_NONE && service_id !=
+                    if (appidDebug->is_active() && service_id > APP_ID_NONE && service_id !=
                                     APP_ID_HTTP && asd.service.get_id() != service_id)
-                        LogMessage("AppIdDbg %s X service %d\n", asd.session_logging_id, appId);
+                        LogMessage("AppIdDbg %s X service %d\n", appidDebug->get_debug_session(), appId);
                     asd.set_service_appid_data(appId, nullptr, version);
                 }
                 asd.scan_flags &= ~SCAN_HTTP_XWORKINGWITH_FLAG;
@@ -517,9 +525,9 @@ int AppIdHttpSession::process_http_packet(int direction)
                         || (!thirdparty_appid_module && !asd.is_payload_appid_set() && !content_type.empty()) )
         {
             payload_id = http_matchers->get_appid_by_content_type(content_type.c_str(), content_type.size());
-            if (asd.session_logging_enabled && payload_id > APP_ID_NONE
+            if (appidDebug->is_active() && payload_id > APP_ID_NONE
                             && asd.payload.get_id() != payload_id)
-                LogMessage("AppIdDbg %s Content-Type is data %d\n", asd.session_logging_id,
+                LogMessage("AppIdDbg %s Content-Type is payload %d\n", appidDebug->get_debug_session(),
                     payload_id);
             asd.set_payload_appid_data((AppId)payload_id, nullptr);
             asd.scan_flags &= ~SCAN_HTTP_CONTENT_TYPE_FLAG;
@@ -536,26 +544,26 @@ int AppIdHttpSession::process_http_packet(int direction)
                 // do not overwrite a previously-set client or service
                 if (asd.client.get_id() <= APP_ID_NONE)
                 {
-                    if (asd.session_logging_enabled && client_id > APP_ID_NONE && client_id !=
+                    if (appidDebug->is_active() && client_id > APP_ID_NONE && client_id !=
                                     APP_ID_HTTP && asd.client.get_id() != client_id)
-                        LogMessage("AppIdDbg %s URL is client %d\n", asd.session_logging_id,
+                        LogMessage("AppIdDbg %s URL is client %d\n", appidDebug->get_debug_session(),
                             client_id);
                     asd.set_client_appid_data(client_id, nullptr);
                 }
 
                 if (asd.service.get_id() <= APP_ID_NONE)
                 {
-                    if (asd.session_logging_enabled && service_id > APP_ID_NONE && service_id !=
+                    if (appidDebug->is_active() && service_id > APP_ID_NONE && service_id !=
                                     APP_ID_HTTP && asd.service.get_id() != service_id)
-                        LogMessage("AppIdDbg %s URL is service %d\n", asd.session_logging_id,
+                        LogMessage("AppIdDbg %s URL is service %d\n", appidDebug->get_debug_session(),
                             service_id);
                     asd.set_service_appid_data(service_id, nullptr, nullptr);
                 }
 
                 // DO overwrite a previously-set data
-                if (asd.session_logging_enabled && payload_id > APP_ID_NONE &&
+                if (appidDebug->is_active() && payload_id > APP_ID_NONE &&
                                 asd.payload.get_id() != payload_id)
-                    LogMessage("AppIdDbg %s URL is data %d\n", asd.session_logging_id,
+                    LogMessage("AppIdDbg %s URL is payload %d\n", appidDebug->get_debug_session(),
                         payload_id);
                 asd.set_payload_appid_data((AppId)payload_id, version);
                 asd.set_referred_payload_app_id_data(referredPayloadAppId);
@@ -625,11 +633,11 @@ void AppIdHttpSession::update_http_xff_address(struct XffFieldValue* /*xff_field
     for (unsigned j = 0; j < numXffFields; j++)
         xffPrecedence[j] = strndup(xffPrecedence[j], UINT8_MAX);
 
-    if (asd.session_logging_enabled)
+    if (appidDebug->is_active())
     {
         for (unsigned i = 0; i < numXffFields; i++)
-            LogMessage("AppIdDbg %s %s : %s\n", asd.session_logging_id,
-                xff_fields[i].field, xff_fields[i].value);
+            LogMessage("AppIdDbg %s XFF %s : %s\n", appidDebug->get_debug_session(),
+                xff_fields[i].field, xff_fields[i].value.empty()? "(empty)": xff_fields[i].value);
     }
 
     // xffPrecedence array is sorted based on precedence

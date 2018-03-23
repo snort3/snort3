@@ -25,7 +25,13 @@
 
 #include "appid_discovery.h"
 
+#include "log/messages.h"
+#include "profiler/profiler.h"
+#include "protocols/packet.h"
+#include "protocols/tcp.h"
+
 #include "appid_config.h"
+#include "appid_debug.h"
 #include "appid_detector.h"
 #include "app_forecast.h"
 #include "appid_dns_session.h"
@@ -34,17 +40,12 @@
 #include "appid_session.h"
 #include "appid_utils/ip_funcs.h"
 #include "appid_utils/network_set.h"
-#include "host_port_app_cache.h"
-#include "thirdparty_appid_utils.h"
-#include "service_plugins/service_discovery.h"
 #include "client_plugins/client_discovery.h"
 #include "detector_plugins/detector_dns.h"
 #include "detector_plugins/http_url_patterns.h"
-
-#include "profiler/profiler.h"
-#include "log/messages.h"
-#include "protocols/packet.h"
-#include "protocols/tcp.h"
+#include "host_port_app_cache.h"
+#include "service_plugins/service_discovery.h"
+#include "thirdparty_appid_utils.h"
 
 using namespace snort;
 
@@ -340,15 +341,14 @@ static bool is_packet_ignored(AppIdSession* asd, Packet* p, int& direction)
             if ( direction == APP_ID_FROM_INITIATOR && hsession && hsession->is_rebuilt_offsets() )
             {
                 HttpPatternMatchers::get_instance()->get_http_offsets(p, hsession);
-                if (asd->session_logging_enabled)
-                    LogMessage(
-                    "AppIdDbg %s offsets from rebuilt packet: uri: %u-%u cookie: %u-%u\n",
-                    asd->session_logging_id,
-                    hsession->get_field_offset(REQ_URI_FID),
-                    hsession->get_field_end_offset(REQ_URI_FID),
-                    hsession->get_field_offset(REQ_COOKIE_FID),
-                    hsession->get_field_end_offset(REQ_COOKIE_FID));
-        }
+                if (appidDebug->is_active())
+                    LogMessage("AppIdDbg %s Offsets from rebuilt packet: uri: %u-%u cookie: %u-%u\n",
+                        appidDebug->get_debug_session(),
+                        hsession->get_field_offset(REQ_URI_FID),
+                        hsession->get_field_end_offset(REQ_URI_FID),
+                        hsession->get_field_offset(REQ_COOKIE_FID),
+                        hsession->get_field_end_offset(REQ_COOKIE_FID));
+            }
         AppIdPegCounts::inc_disco_peg(AppIdPegCounts::DiscoveryPegs::IGNORED_PACKETS);
         return true;
         }
@@ -610,6 +610,8 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
         return;
     }
 
+    appidDebug->activate(p->flow, asd, inspector.get_appid_config()->mod_config->log_all_sessions);
+
     if ( is_packet_ignored(asd, p, direction) )
         return;
 
@@ -633,13 +635,27 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
                 port = (direction == APP_ID_FROM_INITIATOR) ? p->ptrs.sp : p->ptrs.dp;
             }
 
+            // FIXIT-H - Creating AppId session even when flow is ignored (not monitored, e.g.,
+            // when AppId discovery is disabled) will consume a lot of unneeded memory and perform
+            // unneeded tasks in constructor. Snort2 uses static APPID_SESSION_STRUCT_FLAG ignore_fsf.
+            // Snort3 may use something like that or a dummy class/object having only common.flow_type
+            // to let us know that it is APPID_FLOW_TYPE_IGNORE type and thus being returned early
+            // from this method due to set_network_attributes() checking.
             AppIdSession* tmp_session = new AppIdSession(protocol, ip, port, inspector);
 
             if ((flow_flags & APPID_SESSION_BIDIRECTIONAL_CHECKED) ==
                 APPID_SESSION_BIDIRECTIONAL_CHECKED)
+            {
                 tmp_session->common.flow_type = APPID_FLOW_TYPE_IGNORE;
+                if (appidDebug->is_active())
+                    LogMessage("AppIdDbg %s Not monitored\n", appidDebug->get_debug_session());
+            }
             else
+            {
                 tmp_session->common.flow_type = APPID_FLOW_TYPE_TMP;
+                if (appidDebug->is_active())
+                    LogMessage("AppIdDbg %s Unknown monitoring\n", appidDebug->get_debug_session());
+            }
             tmp_session->common.flags = flow_flags;
             tmp_session->common.policyId = inspector.get_appid_config()->appIdPolicyId;
             p->flow->set_flow_data(tmp_session);
@@ -651,6 +667,8 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
                 APPID_SESSION_BIDIRECTIONAL_CHECKED )
                 asd->common.flow_type = APPID_FLOW_TYPE_IGNORE;
             asd->common.policyId = asd->config->appIdPolicyId;
+            if (appidDebug->is_active())
+                LogMessage("AppIdDbg %s Not monitored\n", appidDebug->get_debug_session());
         }
 
         return;
@@ -659,9 +677,8 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
     if ( !asd || asd->common.flow_type == APPID_FLOW_TYPE_TMP )
     {
         asd = AppIdSession::allocate_session(p, protocol, direction, inspector);
-
-        if (asd->session_logging_enabled)
-            LogMessage("AppIdDbg %s new session\n", asd->session_logging_id);
+        if (appidDebug->is_active())
+            LogMessage("AppIdDbg %s New AppId session\n", appidDebug->get_debug_session());
     }
 
     // FIXIT-L - from this point on we always have a valid ptr to an AppIdSession and a Packet
@@ -679,12 +696,12 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
 
     if (asd->get_session_flags(APPID_SESSION_IGNORE_FLOW))
     {
-        if ( asd->session_logging_enabled &&
-            !asd->get_session_flags(APPID_SESSION_IGNORE_FLOW_LOGGED) )
+        if (appidDebug->is_active() &&
+            !asd->get_session_flags(APPID_SESSION_IGNORE_FLOW_LOGGED))
         {
             asd->set_session_flags(APPID_SESSION_IGNORE_FLOW_LOGGED);
             LogMessage("AppIdDbg %s Ignoring connection with service %d\n",
-                asd->session_logging_id, asd->service.get_id());
+                appidDebug->get_debug_session(), asd->service.get_id());
         }
 
         return;
@@ -748,9 +765,9 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
         default:
         {
             asd->service.set_port_service_id(asd->config->get_port_service_id(protocol, p->ptrs.sp));
-            if (asd->session_logging_enabled)
-                LogMessage("AppIdDbg %s port service %d\n",
-                    asd->session_logging_id, asd->service.get_port_service_id());
+            if (appidDebug->is_active())
+                LogMessage("AppIdDbg %s Port service %d\n",
+                    appidDebug->get_debug_session(), asd->service.get_port_service_id());
             asd->set_session_flags(APPID_SESSION_PORT_SERVICE_DONE);
         }
         break;
@@ -811,11 +828,11 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
     }
     else
     {
-        if (asd->session_logging_enabled && p->dsize &&
+        if (appidDebug->is_active() && p->dsize &&
             !asd->get_session_flags(APPID_SESSION_OOO_LOGGED))
         {
             asd->set_session_flags(APPID_SESSION_OOO_LOGGED);
-            LogMessage("AppIdDbg %s packet out-of-order\n", asd->session_logging_id);
+            LogMessage("AppIdDbg %s Packet out-of-order\n", appidDebug->get_debug_session());
         }
     }
 
@@ -852,7 +869,7 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
             ((flags & APPINFO_FLAG_SUPPORTED_SEARCH) ? SUPPORTED_SEARCH_ENGINE :
             UNSUPPORTED_SEARCH_ENGINE )
             : NOT_A_SEARCH_ENGINE;
-        if (asd->session_logging_enabled)
+        if (appidDebug->is_active())
         {
             const char* typeString;
             switch ( asd->search_support_type )
@@ -863,8 +880,8 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
             default: typeString = "unknown"; break;
             }
 
-            LogMessage("AppIdDbg %s appId: %u (safe)search_support_type=%s\n",
-                asd->session_logging_id, payload_id, typeString);
+            LogMessage("AppIdDbg %s AppId %u (safe)search_support_type=%s\n",
+                appidDebug->get_debug_session(), payload_id, typeString);
         }
     }
 

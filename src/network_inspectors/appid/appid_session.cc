@@ -27,15 +27,6 @@
 
 #include <cstring>
 
-#include "app_forecast.h"
-#include "app_info_table.h"
-#include "appid_dns_session.h"
-#include "appid_http_session.h"
-#include "appid_inspector.h"
-#include "appid_stats.h"
-#include "appid_utils/ip_funcs.h"
-#include "service_plugins/service_ssl.h"
-#include "thirdparty_appid_utils.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "profiler/profiler.h"
@@ -44,6 +35,17 @@
 #include "stream/stream.h"
 #include "target_based/snort_protocols.h"
 #include "time/packet_time.h"
+
+#include "app_forecast.h"
+#include "app_info_table.h"
+#include "appid_debug.h"
+#include "appid_dns_session.h"
+#include "appid_http_session.h"
+#include "appid_inspector.h"
+#include "appid_stats.h"
+#include "appid_utils/ip_funcs.h"
+#include "service_plugins/service_ssl.h"
+#include "thirdparty_appid_utils.h"
 
 using namespace snort;
 
@@ -66,46 +68,6 @@ const uint8_t* service_strstr(const uint8_t* haystack, unsigned haystack_len,
     return nullptr;
 }
 
-void AppIdSession::set_session_logging_state(const Packet* pkt, int direction)
-{
-    if (config->mod_config->session_log_filter.log_all_sessions)
-    {
-        session_logging_enabled = true;
-    }
-    else
-    {
-        if ( !pkt->ptrs.ip_api.get_src()->equals(config->mod_config->session_log_filter.sip) )
-            return;
-
-        if ( !pkt->ptrs.ip_api.get_dst()->equals(config->mod_config->session_log_filter.dip) )
-            return;
-
-        if ( !( pkt->ptrs.sp == config->mod_config->session_log_filter.sport ) )
-            return;
-
-        if ( !( pkt->ptrs.dp == config->mod_config->session_log_filter.dport ) )
-            return;
-
-        if ( !( pkt->ptrs.type == config->mod_config->session_log_filter.protocol ) )
-            return;
-
-        session_logging_enabled = true;
-    }
-
-    if (session_logging_enabled)
-    {
-        char src_ip_str[INET6_ADDRSTRLEN], dst_ip_str[INET6_ADDRSTRLEN];
-
-        pkt->ptrs.ip_api.get_src()->ntop(src_ip_str, sizeof(src_ip_str));
-        pkt->ptrs.ip_api.get_dst()->ntop(dst_ip_str, sizeof(dst_ip_str));
-        snprintf(session_logging_id, MAX_SESSION_LOGGING_ID_LEN,
-            "%s-%hu -> %s-%hu %u%s AS %u I %u",
-            src_ip_str, pkt->ptrs.sp, dst_ip_str, pkt->ptrs.dp,
-            (unsigned)pkt->ptrs.type, (direction == APP_ID_FROM_INITIATOR) ? "" : " R",
-            (unsigned)pkt->pkth->address_space_id, get_instance_id());
-    }
-}
-
 AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto, int direction,
     AppIdInspector& inspector)
 {
@@ -119,7 +81,6 @@ AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto, 
     AppIdSession* asd = new AppIdSession(proto, ip, port, inspector);
     asd->flow = p->flow;
     asd->stats.first_packet_second = p->pkth->ts.tv_sec;
-    asd->set_session_logging_state(p, direction);
     asd->snort_protocol_id = snortId_for_unsynchronized;
     p->flow->set_flow_data(asd);
     return asd;
@@ -143,7 +104,6 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t port,
     length_sequence.proto = IpProtocol::PROTO_NOT_SET;
     length_sequence.sequence_cnt = 0;
     memset(length_sequence.sequence, '\0', sizeof(length_sequence.sequence));
-    session_logging_id[0] = '\0';
 
     AppIdPegCounts::inc_disco_peg(AppIdPegCounts::DiscoveryPegs::TOTAL_SESSIONS);
 }
@@ -224,25 +184,27 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
     if ( Stream::set_snort_protocol_id_expected(ctrlPkt, type, proto, cliIp, cliPort, srvIp,
         srvPort, snort_protocol_id, asd) )
     {
-        sfip_ntop(cliIp, src_ip, sizeof(src_ip));
-        sfip_ntop(srvIp, dst_ip, sizeof(dst_ip));
-        WarningMessage("AppIdDbg %s failed to create a related flow for %s-%u -> %s-%u %u\n",
-            asd->session_logging_id, src_ip, (unsigned)cliPort, dst_ip,
-            (unsigned)srvPort, (unsigned)proto);
+        if (appidDebug->is_active())
+        {
+            sfip_ntop(cliIp, src_ip, sizeof(src_ip));
+            sfip_ntop(srvIp, dst_ip, sizeof(dst_ip));
+            LogMessage("AppIdDbg %s Failed to create a related flow for %s-%u -> %s-%u %u\n",
+                appidDebug->get_debug_session(), src_ip, (unsigned)cliPort, dst_ip,
+                (unsigned)srvPort, (unsigned)proto);
+        }
         delete asd;
         asd = nullptr;
     }
     else
     {
-        if (asd->session_logging_enabled)
+        if (appidDebug->is_active())
         {
             sfip_ntop(cliIp, src_ip, sizeof(src_ip));
             sfip_ntop(srvIp, dst_ip, sizeof(dst_ip));
-            LogMessage("AppIdDbg %s related flow created for %s-%u -> %s-%u %u\n",
-                asd->session_logging_id,
+            LogMessage("AppIdDbg %s Related flow created for %s-%u -> %s-%u %u\n",
+                appidDebug->get_debug_session(),
                 src_ip, (unsigned)cliPort, dst_ip, (unsigned)srvPort, (unsigned)proto);
         }
-
         asd->in_expected_cache = true;
     }
 
@@ -339,10 +301,9 @@ void AppIdSession::sync_with_snort_protocol_id(AppId newAppId, Packet* p)
             if ( tmp_snort_protocol_id != snort_protocol_id )
             {
                 snort_protocol_id = tmp_snort_protocol_id;
-                if (session_logging_enabled)
-                    if (tmp_snort_protocol_id == snortId_for_http2)
-                        LogMessage("AppIdDbg %s Telling Snort that it's HTTP/2\n",
-                            session_logging_id);
+                if (appidDebug->is_active() && tmp_snort_protocol_id == snortId_for_http2) 
+                    LogMessage("AppIdDbg %s Telling Snort that it's HTTP/2\n",
+                        appidDebug->get_debug_session());
 
                 p->flow->ssn_state.snort_protocol_id = tmp_snort_protocol_id;
             }
@@ -379,9 +340,9 @@ void AppIdSession::check_app_detection_restart()
         encrypted.misc_id = pick_misc_app_id();
         encrypted.referred_id = pick_referred_payload_app_id();
         reinit_session_data();
-        if (session_logging_enabled)
-            LogMessage("AppIdDbg %s SSL decryption is available, restarting app Detection\n",
-                session_logging_id);
+        if (appidDebug->is_active())
+            LogMessage("AppIdDbg %s SSL decryption is available, restarting app detection\n",
+                appidDebug->get_debug_session());
 
         // APPID_SESSION_ENCRYPTED is set upon receiving a command which upgrades the session to
         // SSL. Next packet after the command will have encrypted traffic.  In the case of a

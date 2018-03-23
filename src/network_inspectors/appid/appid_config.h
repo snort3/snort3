@@ -53,28 +53,10 @@ struct PortExclusion
     snort::ip::snort_in6_addr netmask;
 };
 
-struct AppIdSessionLogFilter
-{
-    AppIdSessionLogFilter()
-    {
-        sip.clear();
-        dip.clear();
-    }
-
-    snort::SfIp sip;
-    bool sip_flag = false;
-    snort::SfIp dip;
-    bool dip_flag = false;
-    uint16_t sport = 0;
-    uint16_t dport = 0;
-    PktType protocol = PktType::NONE;
-    bool log_all_sessions = false;
-};
-
 class AppIdModuleConfig
 {
 public:
-    AppIdModuleConfig();
+    AppIdModuleConfig() = default;
     ~AppIdModuleConfig();
 
 #ifdef USE_RNA_CONFIG
@@ -90,7 +72,7 @@ public:
     uint32_t memcap = 0;
     bool debug = false;
     bool dump_ports = false;
-    AppIdSessionLogFilter session_log_filter;
+    bool log_all_sessions = false;
 
     bool safe_search_enabled = true;
     bool dns_host_reporting = true;

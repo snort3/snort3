@@ -27,12 +27,24 @@
 
 #include <algorithm>
 
+#include "profiler/profiler.h"
+#include "protocols/packet.h"
+#include "protocols/tcp.h"
+
+#include "app_info_table.h"
 #include "appid_config.h"
+#include "appid_debug.h"
 #include "appid_dns_session.h"
 #include "appid_session.h"
-#include "app_info_table.h"
+#include "detector_plugins/detector_dns.h"
+#include "detector_plugins/detector_http.h"
+#include "detector_plugins/detector_imap.h"
+#include "detector_plugins/detector_kerberos.h"
+#include "detector_plugins/detector_pattern.h"
+#include "detector_plugins/detector_pop3.h"
+#include "detector_plugins/detector_sip.h"
+#include "detector_plugins/detector_smtp.h"
 #include "lua_detector_api.h"
-
 #include "service_battle_field.h"
 #include "service_bgp.h"
 #include "service_bit.h"
@@ -59,23 +71,11 @@
 #include "service_snmp.h"
 #include "service_ssh.h"
 #include "service_ssl.h"
+#include "service_telnet.h"
 #include "service_tftp.h"
 #include "service_timbuktu.h"
 #include "service_tns.h"
-#include "service_telnet.h"
 #include "thirdparty_appid_utils.h"
-#include "detector_plugins/detector_dns.h"
-#include "detector_plugins/detector_http.h"
-#include "detector_plugins/detector_imap.h"
-#include "detector_plugins/detector_kerberos.h"
-#include "detector_plugins/detector_pattern.h"
-#include "detector_plugins/detector_pop3.h"
-#include "detector_plugins/detector_sip.h"
-#include "detector_plugins/detector_smtp.h"
-
-#include "profiler/profiler.h"
-#include "protocols/packet.h"
-#include "protocols/tcp.h"
 
 #ifdef REG_TEST
 #include "service_regtest.h"
@@ -433,6 +433,8 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p, int dir)
 
         if ( sds->get_state() == SERVICE_ID_STATE::FAILED )
         {
+            if (appidDebug->is_active())
+                LogMessage("AppIdDbg %s Failed state, no service match\n", appidDebug->get_debug_session());
             fail_service(asd, p, dir, nullptr);
             return APPID_NOMATCH;
         }
@@ -442,6 +444,14 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p, int dir)
             /* If a valid service already exists in host tracker, give it a try. */
             if ( sds->get_state() == SERVICE_ID_STATE::VALID )
                 asd.service_detector = sds->get_service();
+
+            // FIXIT-H: The following logic sets asd.service_detector to sds.service even if
+            // (state != SEARCHING_BRUTE_FORCE && state != VALID). Need to verify if this is really
+            // intended as this is diverged from Snort2 logic. Also, when the walking of brute-force
+            // list is done, we should not do port-pattern again -- which is what this implementation
+            // is doing! We should do port-pattern only if (!bruteForceDone). See Snort 2.9.11-125 logic.
+
+            /* If we've gotten to brute force, give next detector a try. */
             else if ( asd.service_candidates.empty() )
             {
                 asd.service_detector = sds->select_detector_by_brute_force(proto);
@@ -450,15 +460,17 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p, int dir)
     }
 
     AppIdDiscoveryArgs args(p->data, p->dsize, dir, asd, p);
+    /* If we already have a service to try, then try it out. */
     if ( asd.service_detector )
     {
         ret = asd.service_detector->validate(args);
         if (ret == APPID_NOT_COMPATIBLE)
             got_incompatible_services = true;
-        if (asd.session_logging_enabled)
-            LogMessage("AppIdDbg %s %s returned %d\n", asd.session_logging_id,
+        if (appidDebug->is_active())
+            LogMessage("AppIdDbg %s %s returned %d\n", appidDebug->get_debug_session(),
                 asd.service_detector->get_name().c_str(), ret);
     }
+    /* Try to find detectors based on ports and patterns. */
     else
     {
         /* See if we've got more detector(s) to add to the candidate list. */
@@ -480,9 +492,9 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p, int dir)
             result = service->validate(args);
             if ( result == APPID_NOT_COMPATIBLE )
                 got_incompatible_services = true;
-            if ( asd.session_logging_enabled )
+            if ( appidDebug->is_active() )
                 LogMessage("AppIdDbg %s %s returned %d\n",
-                    asd.session_logging_id, service->get_name().c_str(), result);
+                    appidDebug->get_debug_session(), service->get_name().c_str(), result);
 
             if ( result == APPID_SUCCESS )
             {
@@ -515,8 +527,8 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p, int dir)
     }
     else if ( dir == APP_ID_FROM_RESPONDER )    // bidirectional exchange unknown service
     {
-        if (asd.session_logging_enabled)
-            LogMessage("AppIdDbg %s no service detector\n", asd.session_logging_id);
+        if (appidDebug->is_active())
+            LogMessage("AppIdDbg %s No service detector\n", appidDebug->get_debug_session());
 
         fail_service(asd, p, dir, nullptr);
         ret = APPID_NOMATCH;
@@ -617,8 +629,8 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p, int di
         if ( entry && entry->service_detector &&
             !(entry->flags & APPINFO_FLAG_SERVICE_ADDITIONAL) )
         {
-            if (asd.session_logging_enabled)
-                LogMessage("AppIdDbg %s Stop service detection\n", asd.session_logging_id);
+            if (appidDebug->is_active())
+                LogMessage("AppIdDbg %s Stop service detection\n", appidDebug->get_debug_session());
             asd.stop_rna_service_inspection(p, direction);
         }
     }

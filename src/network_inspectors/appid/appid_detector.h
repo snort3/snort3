@@ -74,12 +74,8 @@ class AppIdDiscoveryArgs
 {
 public:
     AppIdDiscoveryArgs(const uint8_t* data, uint16_t size, int dir, AppIdSession& asd,
-        snort::Packet* p) : data(data), size(size), dir(dir), asd(asd), pkt(p)
-    {
-        config = asd.config;
-        session_logging_enabled = asd.session_logging_enabled;
-        session_logging_id = asd.session_logging_id;
-    }
+        snort::Packet* p) : data(data), size(size), dir(dir), asd(asd), pkt(p), config(asd.config)
+    {}
 
     const uint8_t* data;
     uint16_t size;
@@ -87,8 +83,6 @@ public:
     AppIdSession& asd;
     snort::Packet* pkt;
     const AppIdConfig* config = nullptr;
-    bool session_logging_enabled = false;
-    char* session_logging_id = nullptr;
 };
 
 enum APPID_STATUS_CODE

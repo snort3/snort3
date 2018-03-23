@@ -27,18 +27,19 @@
 
 #include <dlfcn.h>
 
+#include "log/messages.h"
+#include "main/snort_debug.h"
+#include "profiler/profiler.h"
+#include "protocols/packet.h"
+#include "stream/stream.h"
+
+#include "app_info_table.h"
 #include "appid_config.h"
+#include "appid_debug.h"
 #include "appid_http_session.h"
 #include "appid_inspector.h"
-#include "app_info_table.h"
 #include "detector_plugins/http_url_patterns.h"
 #include "service_plugins/service_ssl.h"
-
-#include "protocols/packet.h"
-#include "main/snort_debug.h"
-#include "log/messages.h"
-#include "profiler/profiler.h"
-#include "stream/stream.h"
 
 using namespace snort;
 
@@ -272,14 +273,14 @@ static void ProcessThirdPartyResults(AppIdSession& asd, int confidence,  AppId* 
 
     if (ThirdPartyAppIDFoundProto(APP_ID_HTTP, proto_list))
     {
-        if (asd.session_logging_enabled)
-            LogMessage("AppIdDbg %s flow is HTTP\n", asd.session_logging_id);
+        if (appidDebug->is_active())
+            LogMessage("AppIdDbg %s HTTP flow\n", appidDebug->get_debug_session());
         asd.set_session_flags(APPID_SESSION_HTTP_SESSION);
     }
     if (ThirdPartyAppIDFoundProto(APP_ID_SPDY, proto_list))
     {
-        if (asd.session_logging_enabled)
-            LogMessage("AppIdDbg %s flow is SPDY\n", asd.session_logging_id);
+        if (appidDebug->is_active())
+            LogMessage("AppIdDbg %s SPDY flow\n", appidDebug->get_debug_session());
 
         asd.set_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_SPDY_SESSION);
     }
@@ -341,8 +342,8 @@ static void ProcessThirdPartyResults(AppIdSession& asd, int confidence,  AppId* 
                 hsession->set_field_offset(REQ_HOST_FID, attribute_data->spdyRequestHostOffset);
                 hsession->set_field_end_offset(REQ_HOST_FID,
                     attribute_data->spdyRequestHostEndOffset);
-                if (asd.session_logging_enabled)
-                    LogMessage("AppIdDbg %s SPDY Host (%u-%u) is %s\n", asd.session_logging_id,
+                if (appidDebug->is_active())
+                    LogMessage("AppIdDbg %s SPDY host (%u-%u) is %s\n", appidDebug->get_debug_session(),
                         hsession->get_field_offset(REQ_HOST_FID),
                         hsession->get_field_end_offset(REQ_HOST_FID), hsession->get_host());
                 asd.scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
@@ -359,8 +360,8 @@ static void ProcessThirdPartyResults(AppIdSession& asd, int confidence,  AppId* 
                 //attribute_data->spdyRequestPath = nullptr;
                 hsession->set_field_offset(REQ_URI_FID, attribute_data->spdyRequestPathOffset);
                 hsession->set_field_end_offset(REQ_URI_FID, attribute_data->spdyRequestPathEndOffset);
-                if (asd.session_logging_enabled)
-                    LogMessage("AppIdDbg %s SPDY URI (%u-%u) is %s\n", asd.session_logging_id,
+                if (appidDebug->is_active())
+                    LogMessage("AppIdDbg %s SPDY URI (%u-%u) is %s\n", appidDebug->get_debug_session(),
                         hsession->get_field_offset(REQ_URI_FID),
                         hsession->get_field_end_offset(REQ_URI_FID), hsession->get_uri());
             }
@@ -379,9 +380,10 @@ static void ProcessThirdPartyResults(AppIdSession& asd, int confidence,  AppId* 
                 hsession->set_field_end_offset(REQ_HOST_FID, attribute_data->httpRequestHostEndOffset);
                 // FIXIT-M do we need to free this memeory and set to null
                 //attribute_data->httpRequestHost = nullptr;
-                if (asd.session_logging_enabled)
-                    LogMessage("AppIdDbg %s HTTP host is %s\n",
-                        asd.session_logging_id, attribute_data->httpRequestHost);
+                if (appidDebug->is_active())
+                    LogMessage("AppIdDbg %s HTTP host (%u-%u) is %s\n",
+                        appidDebug->get_debug_session(), hsession->get_field_offset(REQ_HOST_FID),
+                        hsession->get_field_end_offset(REQ_HOST_FID), attribute_data->httpRequestHost);
                 asd.scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
             }
 
@@ -427,8 +429,8 @@ static void ProcessThirdPartyResults(AppIdSession& asd, int confidence,  AppId* 
                 hsession->set_field_end_offset(REQ_URI_FID, attribute_data->httpRequestUriEndOffset);
                 snort_free(attribute_data->httpRequestUri);
                 attribute_data->httpRequestUri = nullptr;
-                if (asd.session_logging_enabled)
-                    LogMessage("AppIdDbg %s uri (%u-%u) is %s\n", asd.session_logging_id,
+                if (appidDebug->is_active())
+                    LogMessage("AppIdDbg %s URI (%u-%u) is %s\n", appidDebug->get_debug_session(),
                         hsession->get_field_offset(REQ_URI_FID),
                         hsession->get_field_end_offset(REQ_URI_FID), hsession->get_uri());
             }
@@ -469,20 +471,24 @@ static void ProcessThirdPartyResults(AppIdSession& asd, int confidence,  AppId* 
                 strlen(attribute_data->httpRequestUserAgent));
             snort_free(attribute_data->httpRequestUserAgent);
             attribute_data->httpRequestUserAgent = nullptr;
+            if (appidDebug->is_active())
+                LogMessage("AppIdDbg %s User Agent (%u-%u) is %s\n",
+                    appidDebug->get_debug_session(), hsession->get_field_offset(REQ_AGENT_FID),
+                    hsession->get_field_end_offset(REQ_AGENT_FID), hsession->get_user_agent());
             asd.scan_flags |= SCAN_HTTP_USER_AGENT_FLAG;
         }
 
         // Check to see if third party discovered HTTP/2. - once it supports it...
         if (attribute_data->httpResponseVersion)
         {
-            if (asd.session_logging_enabled)
-                LogMessage("AppIdDbg %s HTTP response version is %s\n", asd.session_logging_id,
+            if (appidDebug->is_active())
+                LogMessage("AppIdDbg %s HTTP response version is %s\n", appidDebug->get_debug_session(),
                     attribute_data->httpResponseVersion);
             if (strncmp(attribute_data->httpResponseVersion, "HTTP/2", 6) == 0)
             {
-                if (asd.session_logging_enabled)
+                if (appidDebug->is_active())
                     LogMessage("AppIdDbg %s 3rd party detected and parsed HTTP/2\n",
-                        asd.session_logging_id);
+                        appidDebug->get_debug_session());
                 asd.is_http2 = true;
             }
             snort_free(attribute_data->httpResponseVersion);
@@ -490,8 +496,8 @@ static void ProcessThirdPartyResults(AppIdSession& asd, int confidence,  AppId* 
         }
         if (attribute_data->httpResponseCode)
         {
-            if (asd.session_logging_enabled)
-                LogMessage("AppIdDbg %s HTTP response code is %s\n", asd.session_logging_id,
+            if (appidDebug->is_active())
+                LogMessage("AppIdDbg %s HTTP response code is %s\n", appidDebug->get_debug_session(),
                     attribute_data->httpResponseCode);
             if (hsession->get_response_code())
                 if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
@@ -506,17 +512,17 @@ static void ProcessThirdPartyResults(AppIdSession& asd, int confidence,  AppId* 
         //    asks the server to upgrade to HTTP/2).
         if (attribute_data->httpResponseUpgrade)
         {
-            if (asd.session_logging_enabled)
-                LogMessage("AppIdDbg %s HTTP response upgrade is %s\n", asd.session_logging_id,
+            if (appidDebug->is_active())
+                LogMessage("AppIdDbg %s HTTP response upgrade is %s\n", appidDebug->get_debug_session(),
                     attribute_data->httpResponseUpgrade);
             if (asd.config->mod_config->http2_detection_enabled)
                 if ( hsession->get_response_code()
                     && (strncmp(hsession->get_response_code(), "101", 3) == 0) )
                     if (strncmp(attribute_data->httpResponseUpgrade, "h2c", 3) == 0)
                     {
-                        if (asd.session_logging_enabled)
+                        if (appidDebug->is_active())
                             LogMessage("AppIdDbg %s Got an upgrade to HTTP/2\n",
-                                asd.session_logging_id);
+                                appidDebug->get_debug_session());
                         asd.is_http2 = true;
                     }
             snort_free(attribute_data->httpResponseUpgrade);
@@ -524,9 +530,6 @@ static void ProcessThirdPartyResults(AppIdSession& asd, int confidence,  AppId* 
         }
         if (attribute_data->httpRequestReferer)
         {
-            if (asd.session_logging_enabled)
-                LogMessage("AppIdDbg %s referrer is %s\n", asd.session_logging_id,
-                    attribute_data->httpRequestReferer);
             if (hsession->get_referer())
                 if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
                     hsession->set_chp_finished(false);
@@ -537,8 +540,8 @@ static void ProcessThirdPartyResults(AppIdSession& asd, int confidence,  AppId* 
             attribute_data->httpRequestReferer = nullptr;
             hsession->set_field_offset(REQ_REFERER_FID, attribute_data->httpRequestRefererOffset);
             hsession->set_field_end_offset(REQ_REFERER_FID, attribute_data->httpRequestRefererEndOffset);
-            if (asd.session_logging_enabled)
-                LogMessage("AppIdDbg %s Referer (%u-%u) is %s\n", asd.session_logging_id,
+            if (appidDebug->is_active())
+                LogMessage("AppIdDbg %s Referrer (%u-%u) is %s\n", appidDebug->get_debug_session(),
                     hsession->get_field_offset(REQ_REFERER_FID),
                     hsession->get_field_end_offset(REQ_REFERER_FID),
                     hsession->get_referer());
@@ -558,8 +561,8 @@ static void ProcessThirdPartyResults(AppIdSession& asd, int confidence,  AppId* 
             attribute_data->httpRequestCookie = nullptr;
             attribute_data->httpRequestCookieOffset = 0;
             attribute_data->httpRequestCookieEndOffset = 0;
-            if (asd.session_logging_enabled)
-                LogMessage("AppIdDbg %s cookie (%u-%u) is %s\n", asd.session_logging_id,
+            if (appidDebug->is_active())
+                LogMessage("AppIdDbg %s Cookie (%u-%u) is %s\n", appidDebug->get_debug_session(),
                     hsession->get_field_offset(REQ_COOKIE_FID),
                     hsession->get_field_offset(REQ_COOKIE_FID),
                     hsession->get_cookie());
@@ -592,8 +595,8 @@ static void ProcessThirdPartyResults(AppIdSession& asd, int confidence,  AppId* 
 
         if (attribute_data->httpRequestBody)
         {
-            if (asd.session_logging_enabled)
-                LogMessage("AppIdDbg %s got a request body %s\n", asd.session_logging_id,
+            if (appidDebug->is_active())
+                LogMessage("AppIdDbg %s Got a request body %s\n", appidDebug->get_debug_session(),
                     attribute_data->httpRequestBody);
             if (hsession->get_req_body())
                 if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
@@ -795,9 +798,9 @@ bool do_third_party_discovery(AppIdSession& asd, IpProtocol protocol, const SfIp
     {
         asd.tp_reinspect_by_initiator = true;
         asd.set_session_flags(APPID_SESSION_APP_REINSPECT);
-        if (asd.session_logging_enabled)
+        if (appidDebug->is_active())
             LogMessage("AppIdDbg %s 3rd party allow reinspect http\n",
-                asd.session_logging_id);
+                appidDebug->get_debug_session());
         asd.reset_session_data();
     }
 
@@ -808,8 +811,8 @@ bool do_third_party_discovery(AppIdSession& asd, IpProtocol protocol, const SfIp
         if ( p->ptrs.ip_api.tos() == 8 )
         {
             asd.payload.set_id(APP_ID_SFTP);
-            if (asd.session_logging_enabled)
-                LogMessage("AppIdDbg %s data is SFTP\n", asd.session_logging_id);
+            if (appidDebug->is_active())
+                LogMessage("AppIdDbg %s Payload is SFTP\n", appidDebug->get_debug_session());
         }
     }
 
@@ -845,16 +848,16 @@ bool do_third_party_discovery(AppIdSession& asd, IpProtocol protocol, const SfIp
                     TP_STATE_CLASSIFIED)
                     asd.clear_session_flags(APPID_SESSION_APP_REINSPECT);
 
-                if (asd.session_logging_enabled)
-                    LogMessage("AppIdDbg %s 3rd party returned %d\n", asd.session_logging_id,
+                if (appidDebug->is_active())
+                    LogMessage("AppIdDbg %s 3rd party returned %d\n", appidDebug->get_debug_session(),
                         asd.tp_app_id);
 
                 // For now, third party can detect HTTP/2 (w/o metadata) for
                 // some cases.  Treat it like HTTP w/ is_http2 flag set.
                 if ((asd.tp_app_id == APP_ID_HTTP2) && (tp_confidence == 100))
                 {
-                    if (asd.session_logging_enabled)
-                        LogMessage("AppIdDbg %s 3rd party saw HTTP/2\n", asd.session_logging_id);
+                    if (appidDebug->is_active())
+                        LogMessage("AppIdDbg %s 3rd party saw HTTP/2\n", appidDebug->get_debug_session());
 
                     asd.tp_app_id = APP_ID_HTTP;
                     asd.is_http2 = true;
@@ -873,8 +876,8 @@ bool do_third_party_discovery(AppIdSession& asd, IpProtocol protocol, const SfIp
 
                 if (asd.app_info_mgr->get_app_info_flags(asd.tp_app_id, APPINFO_FLAG_IGNORE))
                 {
-                    if (asd.session_logging_enabled)
-                        LogMessage("AppIdDbg %s 3rd party ignored\n", asd.session_logging_id);
+                    if (appidDebug->is_active())
+                        LogMessage("AppIdDbg %s 3rd party ignored\n", appidDebug->get_debug_session());
 
                     if (asd.get_session_flags(APPID_SESSION_HTTP_SESSION))
                         asd.tp_app_id = APP_ID_HTTP;
@@ -885,12 +888,12 @@ bool do_third_party_discovery(AppIdSession& asd, IpProtocol protocol, const SfIp
             else
             {
                 asd.tp_app_id = APP_ID_NONE;
-                if (asd.session_logging_enabled && !asd.get_session_flags(
+                if (appidDebug->is_active() && !asd.get_session_flags(
                     APPID_SESSION_TPI_OOO_LOGGED))
                 {
                     asd.set_session_flags(APPID_SESSION_TPI_OOO_LOGGED);
                     LogMessage("AppIdDbg %s 3rd party packet out-of-order\n",
-                        asd.session_logging_id);
+                        appidDebug->get_debug_session());
                 }
             }
 
@@ -974,17 +977,17 @@ bool do_third_party_discovery(AppIdSession& asd, IpProtocol protocol, const SfIp
                         //SSL policy determines IMAPS/POP3S etc before appId sees first server
                         // packet
                         asd.service.set_port_service_id(porAppId);
-                        if (asd.session_logging_enabled)
+                        if (appidDebug->is_active())
                             LogMessage("AppIdDbg %s SSL is service %d, portServiceAppId %d\n",
-                                asd.session_logging_id,
+                                appidDebug->get_debug_session(),
                                 asd.tp_app_id, asd.service.get_port_service_id());
                     }
                     else
                     {
                         asd.tp_payload_app_id = asd.tp_app_id;
                         asd.tp_app_id = porAppId;
-                        if (asd.session_logging_enabled)
-                            LogMessage("AppIdDbg %s SSL is %d\n", asd.session_logging_id,
+                        if (appidDebug->is_active())
+                            LogMessage("AppIdDbg %s SSL is %d\n", appidDebug->get_debug_session(),
                                 asd.tp_app_id);
                     }
                     snort_app_id = APP_ID_SSL;

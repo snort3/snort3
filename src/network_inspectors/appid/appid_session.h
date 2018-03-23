@@ -79,8 +79,6 @@ enum AppIdFlowStatusCodes
     APPID_SESSION_EEXISTS
 };
 
-#define MAX_SESSION_LOGGING_ID_LEN    (39+1+5+4+39+1+5+1+3+1+1+1+2+1+10+1+1+1+10+1)
-
 enum APPID_DISCOVERY_STATE
 {
     APPID_DISCO_STATE_NONE = 0,
@@ -244,9 +242,6 @@ public:
     bool is_client_detected() { return common.flags & APPID_SESSION_CLIENT_DETECTED; }
     bool is_decrypted() { return common.flags & APPID_SESSION_DECRYPTED; }
 
-    char session_logging_id[MAX_SESSION_LOGGING_ID_LEN];
-    bool session_logging_enabled = false;
-
     void* get_flow_data(unsigned id);
     int add_flow_data(void* data, unsigned id, AppIdFreeFCN);
     int add_flow_data_id(uint16_t port, ServiceDetector*);
@@ -296,9 +291,6 @@ private:
     void reinit_session_data();
     void delete_session_data();
     bool is_ssl_decryption_enabled();
-
-    void set_session_logging_state(const snort::Packet*, int direction);
-    void create_session_logging_id(int direction, snort::Packet*);
 
     static THREAD_LOCAL uint32_t appid_flow_data_id;
     AppId application_ids[APP_PROTOID_MAX];

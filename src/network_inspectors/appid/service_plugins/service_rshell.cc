@@ -25,9 +25,11 @@
 
 #include "service_rshell.h"
 
-#include "appid_inspector.h"
-#include "app_info_table.h"
 #include "protocols/packet.h"
+
+#include "app_info_table.h"
+#include "appid_debug.h"
+#include "appid_inspector.h"
 
 #define RSHELL_PORT  514
 #define RSHELL_MAX_PORT_PACKET 6
@@ -110,8 +112,8 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
         rd->state = RSHELL_STATE_PORT;
     }
 
-    if (args.session_logging_enabled)
-        LogMessage("AppIdDbg %s rshell state %d\n", args.session_logging_id, rd->state);
+    if (appidDebug->is_active())
+        LogMessage("AppIdDbg %s RSHELL state %d\n", appidDebug->get_debug_session(), rd->state);
 
     switch (rd->state)
     {

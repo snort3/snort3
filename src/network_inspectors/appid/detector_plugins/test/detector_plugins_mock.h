@@ -55,7 +55,6 @@ public:
 };
 
 // Stubs for modules, config
-AppIdModuleConfig::AppIdModuleConfig() {}
 AppIdModuleConfig::~AppIdModuleConfig() {}
 AppIdModule::AppIdModule()
     : Module("a", "b") {}
@@ -71,6 +70,10 @@ bool AppIdModule::set(const char*, snort::Value&, snort::SnortConfig*)
 bool AppIdModule::end(const char*, int, snort::SnortConfig*)
 {
     return false;
+}
+const Command* AppIdModule::get_commands() const
+{
+    return nullptr;
 }
 const PegInfo* AppIdModule::get_pegs() const
 {

@@ -27,11 +27,13 @@
 
 #include <map>
 
-#include "service_plugins/service_detector.h"
 #include "log/messages.h"
 #include "sfip/sf_ip.h"
 #include "time/packet_time.h"
 #include "utils/util.h"
+
+#include "appid_debug.h"
+#include "service_plugins/service_detector.h"
 
 using namespace snort;
 
@@ -53,6 +55,8 @@ ServiceDetector* ServiceDiscoveryState::select_detector_by_brute_force(IpProtoco
 {
     if ( state == SERVICE_ID_STATE::SEARCHING_BRUTE_FORCE )
     {
+        if (appidDebug->is_active())
+            LogMessage("AppIdDbg %s Brute-force state\n", appidDebug->get_debug_session());
         if ( !brute_force_mgr )
             brute_force_mgr = new AppIdDetectorList(proto);
 

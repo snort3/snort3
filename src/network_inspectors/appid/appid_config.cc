@@ -80,12 +80,6 @@ static void map_app_names_to_snort_ids(SnortConfig* sc)
     sc->proto_ref->add("tftp");
 }
 
-AppIdModuleConfig::AppIdModuleConfig()
-{
-    session_log_filter.sip.clear();
-    session_log_filter.dip.clear();
-}
-
 AppIdModuleConfig::~AppIdModuleConfig()
 {
 #ifdef USE_RNA_CONFIG
