@@ -48,9 +48,17 @@ struct TscClock
 
     static uint64_t counter()
     {
+#if defined(__aarch64__)
+        uint64_t ticks;
+
+        asm volatile("mrs %0, CNTVCT_EL0" : "=r" (ticks));
+        return ticks;
+#else
+        // Default to x86, other archs will compile error anyway
         uint32_t lo, hi;
         asm volatile("rdtsc" : "=a" (lo), "=d" (hi));
         return ((uint64_t)hi << 32) | lo;
+#endif
     }
 
     static time_point now() noexcept
