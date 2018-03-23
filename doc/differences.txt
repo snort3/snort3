@@ -197,7 +197,7 @@ Some things Snort++ can do today that Snort can not do as well:
 * deleted fast_pattern:only; use fast_pattern, nocase
   (option is not added to detection tree if not required)
 * changed fast_pattern:<offset>,<length> to
-  fastpattern_offset: <offset>, fast_pattern_length <length>
+  fast_pattern,fast_pattern_offset <offset>,fast_pattern_length <length>
 * fast pattern sensitive data with sd_pattern using hyperscan
 * hyperscan regex fast patterns with regex:"<regex>", fast_pattern;
 * no ; separated content suboptions
