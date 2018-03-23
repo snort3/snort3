@@ -104,7 +104,7 @@ bool AppIdInspector::configure(SnortConfig* sc)
 {
     assert(!active_config);
 
-    active_config = new AppIdConfig((AppIdModuleConfig*)config);
+    active_config = new AppIdConfig(const_cast<AppIdModuleConfig*>(config));
 
     DataBus::subscribe(HTTP_REQUEST_HEADER_EVENT_KEY, new HttpEventHandler(
         HttpEventHandler::REQUEST_EVENT));

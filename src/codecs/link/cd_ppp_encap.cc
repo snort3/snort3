@@ -92,8 +92,12 @@ bool PppEncap::decode(const RawData& raw, CodecData& codec, DecodeData&)
             return false;
         }
 
-        // FIXIT-M X This is broken - it should not modify the packet data (which should be const).
-        ((ip::IP4Hdr*)(raw.data + codec.lyr_len))->set_proto(IpProtocol::TCP);
+        {
+            // FIXIT-M X This is broken - it should not modify the packet data
+            // (which should be const).
+            const ip::IP4Hdr* iph = reinterpret_cast<const ip::IP4Hdr*>(raw.data + codec.lyr_len);
+            const_cast<ip::IP4Hdr*>(iph)->set_proto(IpProtocol::TCP);
+        }
     /* fall through */
 
     case PPP_IP:

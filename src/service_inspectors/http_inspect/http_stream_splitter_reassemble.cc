@@ -143,7 +143,7 @@ void HttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& offset, cons
 {
     if ((compression == CMP_GZIP) || (compression == CMP_DEFLATE))
     {
-        compress_stream->next_in = (Bytef*)data;
+        compress_stream->next_in = const_cast<Bytef*>(data);
         compress_stream->avail_in = length;
         compress_stream->next_out = buffer + offset;
         compress_stream->avail_out = MAX_OCTETS - offset;
@@ -184,10 +184,10 @@ void HttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& offset, cons
         {
             // Some incorrect implementations of deflate don't use the expected header. Feed a
             // dummy header to zlib and retry the inflate.
-            static constexpr char zlib_header[2] = { 0x78, 0x01 };
+            static constexpr uint8_t zlib_header[2] = { 0x78, 0x01 };
 
             inflateReset(compress_stream);
-            compress_stream->next_in = (Bytef*)zlib_header;
+            compress_stream->next_in = const_cast<Bytef*>(zlib_header);
             compress_stream->avail_in = sizeof(zlib_header);
             inflate(compress_stream, Z_SYNC_FLUSH);
 

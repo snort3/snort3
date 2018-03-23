@@ -63,7 +63,7 @@ public:
     AltPktHandler() = default;
 
     void handle(DataEvent& e, Flow*) override
-    { DetectionEngine::detect((Packet*)e.get_packet()); }  // FIXIT-L not const!
+    { DetectionEngine::detect(const_cast<Packet*>(e.get_packet())); }
 };
 
 InspectionPolicy::InspectionPolicy(PolicyId id)
