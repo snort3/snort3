@@ -350,9 +350,6 @@ static int BoGetDirection(Packet* p, const char* pkt_data)
         pkt_data++;
     }
 
-    DebugFormat(DEBUG_INSPECTOR, "Data length = %u\n", len);
-    DebugFormat(DEBUG_INSPECTOR, "ID = %u\n", id);
-
     /* Do more len checking */
 
     if ( len >= BO_BUF_ATTACK_SIZE )
@@ -388,19 +385,8 @@ static int BoGetDirection(Packet* p, const char* pkt_data)
         return BO_FROM_UNKNOWN;
     }
 
-    if ( type & 0x80 )
-    {
-        DebugMessage(DEBUG_INSPECTOR, "Partial packet\n");
-    }
-    if ( type & 0x40 )
-    {
-        DebugMessage(DEBUG_INSPECTOR, "Continued packet\n");
-    }
-
     /* Extract type of BO packet */
     type = type & 0x3F;
-
-    DebugFormat(DEBUG_INSPECTOR, "Type = 0x%x\n", type);
 
     /* Only examine data if this is a ping request or response */
     if ( type == BO_TYPE_PING )
@@ -500,37 +486,18 @@ void BackOrifice::eval(Packet* p)
                 char plaintext = *pkt_data ^ BoRand();
 
                 if ( *magic_data != plaintext )
-                {
-                    DebugFormat(DEBUG_INSPECTOR,
-                        "Failed check one on 0x%X : 0x%X\n",
-                        *magic_data, plaintext);
-
                     return;
-                }
 
                 ++magic_data;
                 ++pkt_data;
             }
 
             // if we fall thru there's a detect
-            DebugMessage(DEBUG_INSPECTOR,
-                "Detected Back Orifice Data!\n");
-                DebugFormat(DEBUG_INSPECTOR, "hash value: %d\n", key);
-
             int bo_direction = BoGetDirection(p, pkt_data);
-
             if ( bo_direction == BO_FROM_CLIENT )
-            {
                 DetectionEngine::queue_event(GID_BO, BO_CLIENT_TRAFFIC_DETECT);
-                DebugMessage(DEBUG_INSPECTOR, "Client packet\n");
-            }
-
             else if ( bo_direction == BO_FROM_SERVER )
-            {
                 DetectionEngine::queue_event(GID_BO, BO_SERVER_TRAFFIC_DETECT);
-                DebugMessage(DEBUG_INSPECTOR, "Server packet\n");
-            }
-
             else
                 DetectionEngine::queue_event(GID_BO, BO_TRAFFIC_DETECT);
         }

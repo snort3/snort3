@@ -26,7 +26,6 @@
 
 #include "gtp.h"
 
-#include "main/snort_debug.h"
 #include "protocols/packet.h"
 
 #include "gtp_inspect.h"
@@ -62,9 +61,6 @@ static inline int GTP_Process(const GTPConfig& config, Packet* p, GTP_Roptions* 
     pRopts->gtp_header = gtpMsg.gtp_header;
     pRopts->msg_id = gtpMsg.msg_id;
 
-    DEBUG_WRAP(DebugFormat(DEBUG_GTP, "GTP message version: %d\n", gtpMsg.version));
-    DEBUG_WRAP(DebugFormat(DEBUG_GTP, "GTP message type: %d\n", gtpMsg.msg_type));
-
     return status;
 }
 
@@ -91,11 +87,7 @@ void GTPmain(const GTPConfig& config, Packet* packetp)
         pRopts = GTPGetNewSession(packetp);
 
         if ( !pRopts )
-        {
-            /* Could not get/create the session data for this packet. */
-            DEBUG_WRAP(DebugMessage(DEBUG_GTP, "Create session error - not inspecting.\n"));
             return;
-        }
     }
 
     GTP_Process(config, packetp, pRopts);

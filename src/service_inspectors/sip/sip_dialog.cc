@@ -28,7 +28,6 @@
 #include "detection/detection_engine.h"
 #include "events/event_queue.h"
 #include "framework/data_bus.h"
-#include "main/snort_debug.h"
 #include "protocols/packet.h"
 #include "protocols/vlan.h"
 #include "pub_sub/sip_events.h"
@@ -50,10 +49,6 @@ static int SIP_processResponse(SIPMsg*, SIP_DialogData*, SIP_DialogList*, Packet
 static int SIP_ignoreChannels(SIP_DialogData*, Packet* p, SIP_PROTO_CONF*);
 static SIP_DialogData* SIP_addDialog(SIPMsg*, SIP_DialogData*, SIP_DialogList*);
 static int SIP_deleteDialog(SIP_DialogData*, SIP_DialogList*);
-
-#ifdef DEBUG_MSGS
-static void SIP_displayMedias(SIP_MediaList* dList);
-#endif
 
 /********************************************************************
  * Function: SIP_processRequest()
@@ -149,15 +144,10 @@ static int SIP_processInvite(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_DialogL
     if (nullptr == dialog)
         return false;
 
-    DebugFormat(DEBUG_SIP, "Processing invite, dialog state %d \n", dialog->state);
-
     /*Check for the invite replay attack: authenticated invite without challenge*/
     // check whether this invite has authorization information
     if ((SIP_DLG_AUTHENCATING != dialog->state) && (nullptr != sipMsg->authorization))
     {
-        DebugFormat(DEBUG_SIP, "Dialog state code: %hu\n",
-            dialog->status_code);
-
         DetectionEngine::queue_event(GID_SIP, SIP_EVENT_AUTH_INVITE_REPLAY_ATTACK);
         return false;
     }
@@ -249,8 +239,6 @@ static int SIP_processResponse(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_Dialo
 
     if (nullptr == dialog)
         return false;
-
-    DebugFormat(DEBUG_SIP, "Processing response, dialog state %d \n", dialog->state);
 
     if (sipMsg->status_code > 0)
         dialog->status_code = sipMsg->status_code;
@@ -354,18 +342,12 @@ static bool SIP_checkMediaChange(SIPMsg* sipMsg, SIP_DialogData* dialog)
     if (nullptr == medias)
     {
         // Can't find the media session by ID, SDP has been changed.
-        DebugFormat(DEBUG_SIP, "Can't find the media data, ID: %u\n",
-            sipMsg->mediaSession->sessionID);
-
         return false;
     }
     // The media content has been changed
     if (0 != SIP_compareMedias(medias->medias, sipMsg->mediaSession->medias))
-    {
-        // Can't find the media session by ID, SDP has been changed.
-        DebugMessage(DEBUG_SIP, "The media data is different!\n");
         return false;
-    }
+
     return true;
 }
 
@@ -391,8 +373,6 @@ static int SIP_ignoreChannels(SIP_DialogData* dialog, Packet* p, SIP_PROTO_CONF*
     if (0 == config->ignoreChannel)
         return false;
 
-    DebugFormat(DEBUG_SIP, "Ignoring the media data in Dialog: %u\n",
-        dialog->dlgID.callIdHash);
     // check the first media session
     if (nullptr == dialog->mediaSessions)
         return false;
@@ -400,18 +380,12 @@ static int SIP_ignoreChannels(SIP_DialogData* dialog, Packet* p, SIP_PROTO_CONF*
     if (nullptr == dialog->mediaSessions->nextS)
         return false;
 
-    DebugFormat(DEBUG_SIP, "Ignoring the media sessions ID: %u and %u\n",
-        dialog->mediaSessions->sessionID, dialog->mediaSessions->nextS->sessionID);
     mdataA = dialog->mediaSessions->medias;
     mdataB = dialog->mediaSessions->nextS->medias;
     sip_stats.ignoreSessions++;
     while ((nullptr != mdataA)&&(nullptr != mdataB))
     {
         //void *ssn;
-        DebugFormat(DEBUG_SIP, "Ignoring channels Source IP: %s Port: %hu\n",
-            mdataA->maddress.ntoa(), mdataA->mport);
-        DebugFormat(DEBUG_SIP, "Ignoring channels Destine IP: %s Port: %hu\n",
-            mdataB->maddress.ntoa(), mdataB->mport);
 
         /* Call into Streams to mark data channel as something to ignore. */
         Flow* ssn = Stream::get_flow(
@@ -457,7 +431,6 @@ static int SIP_compareMedias(SIP_MediaDataList mlistA, SIP_MediaDataList mlistB)
     SIP_MediaData* mdataA,* mdataB;
     mdataA = mlistA;
     mdataB = mlistB;
-    DebugMessage(DEBUG_SIP, "Compare the media data \n");
     while ((nullptr != mdataA) && (nullptr != mdataB))
     {
         if (mdataA->maddress.compare(mdataB->maddress) != SFIP_EQUAL)
@@ -492,21 +465,15 @@ static void SIP_updateMedias(SIP_MediaSession* mSession, SIP_MediaList* dList)
 
     if (nullptr == mSession)
         return;
-    DebugFormat(DEBUG_SIP, "Updating session id: %u\n",
-        mSession->sessionID);
+  
     mSession->savedFlag = SIP_SESSION_SAVED;
     // Find out the media session based on session id
     currSession = *dList;
     while (nullptr != currSession)
     {
-        DebugFormat(DEBUG_SIP, "Session id: %u\n",
-            currSession->sessionID);
         if (currSession->sessionID == mSession->sessionID)
-        {
-            DebugFormat(DEBUG_SIP, "Found Session id: %u\n",
-                currSession->sessionID);
             break;
-        }
+        
         preSession = currSession;
         currSession = currSession->nextS;
     }
@@ -515,12 +482,10 @@ static void SIP_updateMedias(SIP_MediaSession* mSession, SIP_MediaList* dList)
     {
         mSession->nextS = *dList;
         *dList = mSession;
-        DEBUG_WRAP(DebugFormat(DEBUG_SIP, "Add Session id: %u\n", mSession->sessionID));
     }
     else
     {
         // if this session needs to be updated
-        DebugFormat(DEBUG_SIP, "Insert Session id: %u\n", mSession->sessionID);
         mSession->nextS = currSession->nextS;
         // if this is the header, update the new header
         if (nullptr == preSession)
@@ -532,36 +497,8 @@ static void SIP_updateMedias(SIP_MediaSession* mSession, SIP_MediaList* dList)
         currSession->nextS = nullptr;
         sip_freeMediaSession(currSession);
     }
-
-    // Display the final media session
-#ifdef DEBUG_MSGS
-    SIP_displayMedias(dList);
-#endif
 }
 
-#ifdef DEBUG_MSGS
-void SIP_displayMedias(SIP_MediaList* dList)
-{
-    SIP_MediaSession* currSession;
-    DebugMessage(DEBUG_SIP, "Updated Session information------------\n");
-    currSession = *dList;
-    while (nullptr != currSession)
-    {
-        SIP_MediaData* mdata;
-        DebugFormat(DEBUG_SIP, "Session id: %u\n", currSession->sessionID);
-        mdata =  currSession->medias;
-        while (nullptr != mdata)
-        {
-            DebugFormat(DEBUG_SIP, "Media IP: %s, port: %hu, number of ports %hhu\n",
-                mdata->maddress.ntoa(), mdata->mport, mdata->numPort);
-            mdata = mdata->nextM;
-        }
-        currSession = currSession->nextS;
-    }
-    DebugMessage(DEBUG_SIP, "End  of Session information------------\n");
-}
-
-#endif
 /********************************************************************
  * Function: SIP_addDialog
  *
@@ -580,10 +517,6 @@ static SIP_DialogData* SIP_addDialog(SIPMsg* sipMsg, SIP_DialogData* currDialog,
     SIP_DialogList* dList)
 {
     SIP_DialogData* dialog;
-
-    DebugFormat(DEBUG_SIP, "Add Dialog id: %u, From: %u, To: %u, status code: %hu\n",
-        sipMsg->dlgID.callIdHash,sipMsg->dlgID.fromTagHash,sipMsg->dlgID.toTagHash,
-        sipMsg->status_code);
 
     sip_stats.dialogs++;
     dialog = (SIP_DialogData*)snort_calloc(sizeof(SIP_DialogData));
@@ -631,8 +564,6 @@ static int SIP_deleteDialog(SIP_DialogData* currDialog, SIP_DialogList* dList)
     if ((nullptr == currDialog)||(nullptr == dList))
         return false;
 
-    DebugFormat(DEBUG_SIP, "Delete Dialog id: %u, From: %u, To: %u \n",
-        currDialog->dlgID.callIdHash,currDialog->dlgID.fromTagHash,currDialog->dlgID.toTagHash);
     // If this is the header
     if (nullptr ==  currDialog->prevD)
     {
@@ -683,23 +614,15 @@ int SIP_updateDialog(SIPMsg* sipMsg, SIP_DialogList* dList, Packet* p, SIP_PROTO
     if ((nullptr == sipMsg)||(0 == sipMsg->dlgID.callIdHash))
         return false;
 
-    DebugFormat(DEBUG_SIP, "Updating Dialog id: %u, From: %u, To: %u\n",
-        sipMsg->dlgID.callIdHash,sipMsg->dlgID.fromTagHash,sipMsg->dlgID.toTagHash);
-
     dialog = dList->head;
 
     /*Find out the dialog in the dialog list*/
 
     while (nullptr != dialog)
     {
-        DebugFormat(DEBUG_SIP, "Dialog id: %u, From: %u, To: %u\n",
-            dialog->dlgID.callIdHash,dialog->dlgID.fromTagHash,dialog->dlgID.toTagHash);
         if (sipMsg->dlgID.callIdHash == dialog->dlgID.callIdHash)
-        {
-            DebugFormat(DEBUG_SIP, "Found Dialog id: %u, From: %u, To: %u\n",
-                dialog->dlgID.callIdHash,dialog->dlgID.fromTagHash,dialog->dlgID.toTagHash);
             break;
-        }
+        
         oldDialog = dialog;
         dialog = dialog->nextD;
     }
@@ -749,10 +672,6 @@ void sip_freeDialogs(SIP_DialogList* list)
 
     while (nullptr != curNode)
     {
-        DebugFormat(DEBUG_SIP,
-            "*Clean Dialog creator: 0x%x, id: %u, From: %u, To: %u, State: %d\n",
-            curNode->creator, curNode->dlgID.callIdHash,curNode->dlgID.fromTagHash,
-            curNode->dlgID.toTagHash,curNode->state);
         nextNode = curNode->nextD;
         sip_freeMediaList(curNode->mediaSessions);
         snort_free(curNode);

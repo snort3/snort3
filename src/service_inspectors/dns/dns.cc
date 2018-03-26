@@ -734,20 +734,6 @@ static void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
             dnsSessionData->curr_rec = 0;
         }
 
-        /* Print out the header (but only once -- when we're ready to parse the Questions */
-        if ((dnsSessionData->curr_rec_state == DNS_RESP_STATE_Q_NAME) &&
-            (dnsSessionData->curr_rec == 0))
-        {
-            DebugFormat(DEBUG_DNS,
-                "DNS Header: length %d, id 0x%x, flags 0x%x, "
-                "questions %d, answers %d, authorities %d, additionals %d\n",
-                dnsSessionData->length, dnsSessionData->hdr.id,
-                dnsSessionData->hdr.flags, dnsSessionData->hdr.questions,
-                dnsSessionData->hdr.answers,
-                dnsSessionData->hdr.authorities,
-                dnsSessionData->hdr.additionals);
-        }
-
         if (!(dnsSessionData->hdr.flags & DNS_HDR_FLAG_RESPONSE))
         {
             /* Not a response */
@@ -764,11 +750,6 @@ static void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
 
                 if (dnsSessionData->curr_rec_state == DNS_RESP_STATE_Q_COMPLETE)
                 {
-                    DebugFormat(DEBUG_DNS,
-                        "DNS Question %d: type %d, class %d\n",
-                        i, dnsSessionData->curr_q.type,
-                        dnsSessionData->curr_q.dns_class);
-
                     dnsSessionData->curr_rec_state = DNS_RESP_STATE_Q_NAME;
                     dnsSessionData->curr_rec++;
                 }
@@ -804,14 +785,6 @@ static void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
                 switch (dnsSessionData->curr_rec_state)
                 {
                 case DNS_RESP_STATE_RR_RDATA_START:
-                    DebugFormat(DEBUG_DNS,
-                        "DNS ANSWER RR %d: type %hu, class %hu, "
-                        "ttl %u rdlength %hu\n", i,
-                        dnsSessionData->curr_rr.type,
-                        dnsSessionData->curr_rr.dns_class,
-                        dnsSessionData->curr_rr.ttl,
-                        dnsSessionData->curr_rr.length);
-
                     dnsSessionData->bytes_seen_curr_rec = 0;
                     dnsSessionData->curr_rec_state = DNS_RESP_STATE_RR_RDATA_MID;
                 /* Fall through */
@@ -857,14 +830,6 @@ static void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
                 switch (dnsSessionData->curr_rec_state)
                 {
                 case DNS_RESP_STATE_RR_RDATA_START:
-                    DebugFormat(DEBUG_DNS,
-                        "DNS AUTH RR %d: type %hu, class %hu, "
-                        "ttl %u rdlength %hu\n", i,
-                        dnsSessionData->curr_rr.type,
-                        dnsSessionData->curr_rr.dns_class,
-                        dnsSessionData->curr_rr.ttl,
-                        dnsSessionData->curr_rr.length);
-
                     dnsSessionData->bytes_seen_curr_rec = 0;
                     dnsSessionData->curr_rec_state = DNS_RESP_STATE_RR_RDATA_MID;
                 /* Fall through */
@@ -910,14 +875,6 @@ static void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData)
                 switch (dnsSessionData->curr_rec_state)
                 {
                 case DNS_RESP_STATE_RR_RDATA_START:
-                    DebugFormat(DEBUG_DNS,
-                        "DNS ADDITIONAL RR %d: type %hu, class %hu, "
-                        "ttl %u rdlength %hu\n", i,
-                        dnsSessionData->curr_rr.type,
-                        dnsSessionData->curr_rr.dns_class,
-                        dnsSessionData->curr_rr.ttl,
-                        dnsSessionData->curr_rr.length);
-
                     dnsSessionData->bytes_seen_curr_rec = 0;
                     dnsSessionData->curr_rec_state = DNS_RESP_STATE_RR_RDATA_MID;
                 /* Fall through */

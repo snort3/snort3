@@ -116,7 +116,7 @@ static void printInfoElements(GTP_IEData* info_elements, GTPMsg* msg)
             char buf[STD_BUF];
             convertToHex( (char*)buf, sizeof(buf),
                 msg->gtp_header + info_elements[i].shift, info_elements[i].length);
-            DEBUG_WRAP(DebugFormat(DEBUG_GTP, "Info type: %.3d, content: %s\n", i, buf); );
+            trace_logf(gtp_inspect, "Info type: %.3d, content: %s\n", i, buf);
         }
     }
 }
@@ -128,8 +128,6 @@ static int gtp_processInfoElements(
     const uint8_t* start = buff;
     uint8_t previous_type = (uint8_t)*start;
     int32_t unprocessed_len = len;
-
-    DEBUG_WRAP(DebugFormat(DEBUG_GTP, "Information elements: length: %d\n", len); );
 
     while ( unprocessed_len > 0)
     {
@@ -143,7 +141,6 @@ static int gtp_processInfoElements(
 
         if ( nullptr == ie )
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_GTP, "Unsupported Information elements!\n"); );
             gtp_stats.unknownIEs++;
             return false;
         }
@@ -195,13 +192,13 @@ static int gtp_processInfoElements(
             msg->info_elements[type].msg_id = msg->msg_id;
         }
 
-        DEBUG_WRAP(DebugFormat(DEBUG_GTP, "GTP information element: %s(%d), length: %d\n",
-            ie->name.c_str(), type, length));
         start += length;
         unprocessed_len -= length;
         previous_type = type;
     }
-    DEBUG_WRAP(printInfoElements(msg->info_elements, msg); );
+#ifdef DEBUG_MSGS
+    printInfoElements(msg->info_elements, msg);
+#endif
     return true;
 }
 
@@ -237,17 +234,12 @@ static int gtp_parse_v0(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
 {
     const GTP_C_Hdr* hdr;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_GTP, "This is a GTP v0 packet.\n"); );
-
     hdr = (const GTP_C_Hdr*)buff;
-
     msg->header_len = GTP_HEADER_LEN_V0;
 
     /*Check the length field. */
     if (gtp_len != ((unsigned int)ntohs(hdr->length) + GTP_LENGTH_OFFSET_V0))
     {
-        DEBUG_WRAP(DebugFormat(DEBUG_GTP, "Calculated length %d != %d in header.\n",
-            gtp_len - GTP_LENGTH_OFFSET_V0, ntohs(hdr->length)); );
         alert(GTP_EVENT_BAD_MSG_LEN);
         return false;
     }
@@ -286,8 +278,6 @@ static int gtp_parse_v0(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
 static int gtp_parse_v1(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
 {
     const GTP_C_Hdr* hdr;
-
-    DEBUG_WRAP(DebugMessage(DEBUG_GTP, "This ia a GTP v1 packet.\n"); );
 
     hdr = (const GTP_C_Hdr*)buff;
 
@@ -342,8 +332,6 @@ static int gtp_parse_v1(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
     /*Check the length field. */
     if (gtp_len != ((unsigned int)ntohs(hdr->length) + GTP_LENGTH_OFFSET_V1))
     {
-        DEBUG_WRAP(DebugFormat(DEBUG_GTP, "Calculated length %d != %d in header.\n",
-            gtp_len - GTP_LENGTH_OFFSET_V1, ntohs(hdr->length)); );
         alert(GTP_EVENT_BAD_MSG_LEN);
         return false;
     }
@@ -379,8 +367,6 @@ static int gtp_parse_v2(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
 {
     const GTP_C_Hdr* hdr;
 
-    DEBUG_WRAP(DebugMessage(DEBUG_GTP, "This ia a GTP v2 packet.\n"); );
-
     hdr = (const GTP_C_Hdr*)buff;
 
     if (hdr->flag & 0x8)
@@ -391,8 +377,6 @@ static int gtp_parse_v2(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
     /*Check the length field. */
     if (gtp_len != ((unsigned int)ntohs(hdr->length) + GTP_LENGTH_OFFSET_V2))
     {
-        DEBUG_WRAP(DebugFormat(DEBUG_GTP, "Calculated length %d != %d in header.\n",
-            gtp_len - GTP_LENGTH_OFFSET_V2, ntohs(hdr->length)); );
         alert(GTP_EVENT_BAD_MSG_LEN);
         return false;
     }
@@ -416,10 +400,7 @@ static int gtp_parse_v2(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
  ********************************************************************/
 int gtp_parse(const GTPConfig& config, GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
 {
-    DEBUG_WRAP(DebugMessage(DEBUG_GTP, "Start parsing...\n"));
-
     /*Check the length*/
-    DEBUG_WRAP(DebugFormat(DEBUG_GTP, "Basic header length: %d\n", GTP_MIN_HEADER_LEN));
     if (gtp_len < GTP_MIN_HEADER_LEN)
         return false;
 
@@ -430,29 +411,18 @@ int gtp_parse(const GTPConfig& config, GTPMsg* msg, const uint8_t* buff, uint16_
     msg->gtp_header = buff;
 
     if (msg->version > MAX_GTP_VERSION_CODE)
-    {
-        DEBUG_WRAP(DebugFormat(DEBUG_GTP, "Unsupported GTP version: %d!\n",msg->version); );
         return false;
-    }
+    
     /*Check whether this is GTP or GTP', Exit if GTP'*/
     if (!(hdr->flag & 0x10))
-    {
-        DEBUG_WRAP(DebugMessage(DEBUG_GTP, "Unsupported GTP'!\n"); );
         return false;
-    }
 
     const GTP_MsgType* msgType = &config.msgv[msg->version][msg->msg_type];
 
     if ( nullptr == msgType )
     {
-        DEBUG_WRAP(DebugFormat(DEBUG_GTP, "Unsupported GTP message type: %d!\n",msg->msg_type); );
         gtp_stats.unknownTypes++;
         return false;
-    }
-    else
-    {
-        DEBUG_WRAP(DebugFormat(DEBUG_GTP, "GTP version: %d, message type: %s(%d)\n",
-            msg->version, msgType->name.c_str(), msg->msg_type));
     }
 
     // FIXIT-L need to implement stats retrieval from module
@@ -479,7 +449,6 @@ int gtp_parse(const GTPConfig& config, GTPMsg* msg, const uint8_t* buff, uint16_
         break;
 
     default:
-        DEBUG_WRAP(DebugMessage(DEBUG_GTP, "Unknown protocol version.\n"); );
         return false;
     }
 
