@@ -131,9 +131,9 @@ bool TcpStateSynRecv::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker&
         trk.session->set_pkt_action_flag(trk.normalizer->handle_paws(tsd) );
         trk.session->update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
         trk.set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
-        if ( tsd.get_seg_len() > 0 )
-            trk.session->handle_data_segment(tsd);
     }
+    if ( tsd.get_seg_len() > 0 )
+        trk.session->handle_data_segment(tsd);
     return true;
 }
 
