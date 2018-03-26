@@ -33,10 +33,10 @@ namespace snort
 {
 // Stubs for packet
 Packet::Packet(bool) { }
-Packet::~Packet() { }
+Packet::~Packet() = default;
 
-Inspector::Inspector() {}
-Inspector::~Inspector() {}
+Inspector::Inspector() = default;
+Inspector::~Inspector() = default;
 bool Inspector::likes(Packet*) { return true; }
 bool Inspector::get_buf(const char*, Packet*, InspectionBuffer&) { return true; }
 class StreamSplitter* Inspector::get_splitter(bool) { return nullptr; }
@@ -46,19 +46,19 @@ class AppIdInspector : public snort::Inspector
 {
 public:
     AppIdInspector(AppIdModule& ) {}
-    ~AppIdInspector() {}
-    void eval(Packet*) {}
-    bool configure(snort::SnortConfig*) { return true; }
-    void show(snort::SnortConfig*) {}
-    void tinit() {}
-    void tterm() {}
+    ~AppIdInspector() override = default;
+    void eval(Packet*) override {}
+    bool configure(snort::SnortConfig*) override { return true; }
+    void show(snort::SnortConfig*) override {}
+    void tinit() override {}
+    void tterm() override {}
 };
 
 // Stubs for modules, config
-AppIdModuleConfig::~AppIdModuleConfig() {}
+AppIdModuleConfig::~AppIdModuleConfig() = default;
 AppIdModule::AppIdModule()
     : Module("a", "b") {}
-AppIdModule::~AppIdModule() {}
+AppIdModule::~AppIdModule() = default;
 bool AppIdModule::begin(const char*, int, snort::SnortConfig*)
 {
     return false;
@@ -100,10 +100,10 @@ snort::FlowData::~FlowData() = default;
 unsigned AppIdSession::inspector_id = 0;
 AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t, AppIdInspector& inspector)
     : snort::FlowData(inspector_id, (snort::Inspector*)&inspector), inspector(inspector) {}
-AppIdSession::~AppIdSession() {}
+AppIdSession::~AppIdSession() = default;
 AppIdHttpSession::AppIdHttpSession(AppIdSession& session)
     : asd(session) {}
-AppIdHttpSession::~AppIdHttpSession() {}
+AppIdHttpSession::~AppIdHttpSession() = default;
 
 // Stubs for AppIdPegCounts
 void AppIdPegCounts::inc_disco_peg(enum DiscoveryPegs) {}
@@ -120,7 +120,7 @@ namespace snort
 {
 // Stubs for search_tool.cc
 SearchTool::SearchTool(const char*, bool) {}
-SearchTool::~SearchTool() {}
+SearchTool::~SearchTool() = default;
 void SearchTool::add(const char*, unsigned, int, bool) {}
 void SearchTool::add(const char*, unsigned, void*, bool) {}
 void SearchTool::add(const uint8_t*, unsigned, int, bool) {}

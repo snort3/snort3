@@ -60,7 +60,7 @@ SnortConfig::SnortConfig(const SnortConfig* const)
     fast_pattern_config = nullptr;
 }
 
-SnortConfig::~SnortConfig() { }
+SnortConfig::~SnortConfig() = default;
 
 SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
@@ -161,7 +161,7 @@ static int Test_SearchStrFound(
 
 TEST_GROUP(search_tool_tests)
 {
-    void setup()
+    void setup() override
     { CHECK(se_ac_bnfa); }
 };
 

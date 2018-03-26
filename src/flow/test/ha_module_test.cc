@@ -78,11 +78,11 @@ bool HighAvailabilityManager::instantiate(PortBitSet* mod_ports, bool mod_use_da
 
 TEST_GROUP(high_availability_module_test)
 {
-    void setup()
+    void setup() override
     {
     }
 
-    void teardown()
+    void teardown() override
     {
     }
 };

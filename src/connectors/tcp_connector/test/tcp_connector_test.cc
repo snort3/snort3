@@ -179,7 +179,7 @@ TcpConnectorConfig::TcpConnectorConfigSet* TcpConnectorModule::get_and_clear_con
     return config_set;
 }
 
-TcpConnectorModule::~TcpConnectorModule() { }
+TcpConnectorModule::~TcpConnectorModule() = default;
 
 ProfileStats* TcpConnectorModule::get_profile() const { return nullptr; }
 
@@ -192,7 +192,7 @@ PegCount* TcpConnectorModule::get_counts() const { return nullptr; }
 
 TEST_GROUP(tcp_connector)
 {
-    void setup()
+    void setup() override
     {
         // FIXIT-L workaround for CppUTest mem leak detector issue
         //MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
@@ -205,7 +205,7 @@ TEST_GROUP(tcp_connector)
         connector_config.async_receive = false;
     }
 
-    void teardown()
+    void teardown() override
     {
         //MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
@@ -232,7 +232,7 @@ TEST(tcp_connector, mod_instance_ctor_dtor)
 
 TEST_GROUP(tcp_connector_call_error)
 {
-    void setup()
+    void setup() override
     {
         // FIXIT-L workaround for CppUTest mem leak detector issue
         //MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
@@ -251,7 +251,7 @@ TEST_GROUP(tcp_connector_call_error)
         CHECK(connector_common != nullptr);
     }
 
-    void teardown()
+    void teardown() override
     {
         connector = tcpc_api->tinit(&connector_config);
         CHECK(connector == nullptr);
@@ -263,13 +263,13 @@ TEST_GROUP(tcp_connector_call_error)
 
 TEST_GROUP(tcp_connector_call_other)
 {
-    void setup()
+    void setup() override
     {
         // FIXIT-L workaround for CppUTest mem leak detector issue
         //MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
     }
 
-    void teardown()
+    void teardown() override
     {
         //MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
@@ -277,7 +277,7 @@ TEST_GROUP(tcp_connector_call_other)
 
 TEST_GROUP(tcp_connector_answer_error)
 {
-    void setup()
+    void setup() override
     {
         // FIXIT-L workaround for CppUTest mem leak detector issue
         //MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
@@ -295,7 +295,7 @@ TEST_GROUP(tcp_connector_answer_error)
         CHECK(connector_common != nullptr);
     }
 
-    void teardown()
+    void teardown() override
     {
         connector = tcpc_api->tinit(&connector_config);
         CHECK(connector == nullptr);
@@ -365,7 +365,7 @@ TEST(tcp_connector_call_other, bad_setup)
 
 TEST_GROUP(tcp_connector_tinit_tterm_thread_call)
 {
-    void setup()
+    void setup() override
     {
         // FIXIT-L workaround for CppUTest mem leak detector issue
         //MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
@@ -388,7 +388,7 @@ TEST_GROUP(tcp_connector_tinit_tterm_thread_call)
         CHECK(connector->get_connector_direction() == Connector::CONN_DUPLEX);
     }
 
-    void teardown()
+    void teardown() override
     {
         tcpc_api->tterm(connector);
         tcpc_api->dtor(connector_common);
@@ -399,7 +399,7 @@ TEST_GROUP(tcp_connector_tinit_tterm_thread_call)
 
 TEST_GROUP(tcp_connector_tinit_tterm_call)
 {
-    void setup()
+    void setup() override
     {
         // FIXIT-L workaround for CppUTest mem leak detector issue
         //MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
@@ -422,7 +422,7 @@ TEST_GROUP(tcp_connector_tinit_tterm_call)
         CHECK(connector->get_connector_direction() == Connector::CONN_DUPLEX);
     }
 
-    void teardown()
+    void teardown() override
     {
         tcpc_api->tterm(connector);
         tcpc_api->dtor(connector_common);
@@ -433,7 +433,7 @@ TEST_GROUP(tcp_connector_tinit_tterm_call)
 
 TEST_GROUP(tcp_connector_no_tinit_tterm_call)
 {
-    void setup()
+    void setup() override
     {
         // FIXIT-L workaround for CppUTest mem leak detector issue
         //MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
@@ -453,7 +453,7 @@ TEST_GROUP(tcp_connector_no_tinit_tterm_call)
         CHECK(connector_common != nullptr);
     }
 
-    void teardown()
+    void teardown() override
     {
         tcpc_api->tterm(connector);
         tcpc_api->dtor(connector_common);
@@ -510,7 +510,7 @@ TEST(tcp_connector_no_tinit_tterm_call, poll_error)
 
 TEST_GROUP(tcp_connector_tinit_tterm_answer)
 {
-    void setup()
+    void setup() override
     {
         // FIXIT-L workaround for CppUTest mem leak detector issue
         //MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
@@ -532,7 +532,7 @@ TEST_GROUP(tcp_connector_tinit_tterm_answer)
         CHECK(connector != nullptr);
     }
 
-    void teardown()
+    void teardown() override
     {
         tcpc_api->tterm(connector);
         tcpc_api->dtor(connector_common);
@@ -783,11 +783,11 @@ TEST(tcp_connector_no_tinit_tterm_call, receive_recv_body_closed)
 
 TEST_GROUP(tcp_connector_msg_handle)
 {
-    void setup()
+    void setup() override
     {
     }
 
-    void teardown()
+    void teardown() override
     {
     }
 };

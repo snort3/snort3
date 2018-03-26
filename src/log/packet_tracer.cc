@@ -317,7 +317,7 @@ public:
     static uint8_t get_dump_reason()
     { return ((TestPacketTracer*)s_pkt_trace)->dump_reason; }
 
-    virtual void dump_to_daq(const DAQ_PktHdr_t*) override
+    void dump_to_daq(const DAQ_PktHdr_t*) override
     { dump_reason = reason; }
 
     static std::vector<bool> get_mutes()

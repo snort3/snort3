@@ -561,12 +561,8 @@ bool HighAvailabilityManager::instantiate(PortBitSet* mod_ports, bool mod_use_da
     DebugMessage(DEBUG_HA,"HighAvailabilityManager::instantiate()\n");
     ports = mod_ports;
     FlowHAState::config_timers(*min_session_lifetime, *min_sync_interval);
-#ifdef HAVE_DAQ_EXT_MODFLOW
     use_daq_channel = mod_use_daq_channel;
-#else
-    if ( mod_use_daq_channel )
-        return false;
-#endif
+
     return true;
 }
 

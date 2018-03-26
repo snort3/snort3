@@ -5,10 +5,17 @@ include(CheckTypeSize)
 include(CheckLibraryExists)
 include(CheckCXXSourceCompiles)
 
-
 include (TestBigEndian)
 test_big_endian(WORDS_BIGENDIAN)
 
+#--------------------------------------------------------------------------
+# Checks for system library functions
+#--------------------------------------------------------------------------
+
+check_function_exists(mallinfo HAVE_MALLINFO)
+check_function_exists(malloc_trim HAVE_MALLOC_TRIM)
+check_function_exists(memrchr HAVE_MEMRCHR)
+check_function_exists(sigaction HAVE_SIGACTION)
 
 #--------------------------------------------------------------------------
 # Checks for typedefs, structures, and compiler characteristics.

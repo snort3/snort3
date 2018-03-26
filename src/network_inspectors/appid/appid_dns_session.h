@@ -30,7 +30,7 @@
 class AppIdDnsSession
 {
 public:
-    virtual ~AppIdDnsSession() {}
+    virtual ~AppIdDnsSession() = default;
 
     void reset()
     {

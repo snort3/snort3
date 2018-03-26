@@ -31,7 +31,7 @@
 class MockServiceDetector : public ServiceDetector
 {
 public:
-    int validate(AppIdDiscoveryArgs&) { return 0; }
+    int validate(AppIdDiscoveryArgs&) override { return 0; }
 };
 
 AppIdSession* parent = nullptr;
@@ -51,14 +51,14 @@ static inline void cleanup()
 
 TEST_GROUP(appid_expected_flags)
 {
-    void setup()
+    void setup() override
     {
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         parent = new AppIdSession(IpProtocol::TCP, nullptr, 1492, appid_inspector);
         expected = new AppIdSession(IpProtocol::TCP, nullptr, 1492, appid_inspector);
     }
 
-    void teardown()
+    void teardown() override
     {
         delete parent;
         delete expected;

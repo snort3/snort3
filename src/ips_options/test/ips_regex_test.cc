@@ -64,13 +64,13 @@ SnortConfig::SnortConfig(const SnortConfig* const)
     num_slots = 1;
 }
 
-SnortConfig::~SnortConfig() { }
+SnortConfig::~SnortConfig() = default;
 
 SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
 
 Packet::Packet(bool) { }
-Packet::~Packet() { }
+Packet::~Packet() = default;
 }
 
 Cursor::Cursor(Packet* p)
@@ -85,7 +85,7 @@ unsigned get_instance_id()
 { return 0; }
 
 MemoryContext::MemoryContext(MemoryTracker&) { }
-MemoryContext::~MemoryContext() { }
+MemoryContext::~MemoryContext() = default;
 
 void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) { }
 
@@ -139,7 +139,7 @@ static IpsOption* get_option(const char* pat, bool relative = false)
 
 TEST_GROUP(ips_regex_base)
 {
-    void setup()
+    void setup() override
     { CHECK(ips_regex); }
 };
 
@@ -173,14 +173,14 @@ TEST_GROUP(ips_regex_module)
     bool end = true;
     unsigned expect = 0;
 
-    void setup()
+    void setup() override
     {
         s_parse_errors = 0;
         mod = ips_regex->mod_ctor();
         CHECK(mod);
         CHECK(mod->begin(ips_regex->name, 0, nullptr));
     }
-    void teardown()
+    void teardown() override
     {
         CHECK(mod->end(ips_regex->name, 0, nullptr) == end);
         LONGS_EQUAL(expect, s_parse_errors);
@@ -264,14 +264,14 @@ TEST_GROUP(ips_regex_option)
 {
     IpsOption* opt = nullptr;
 
-    void setup()
+    void setup() override
     {
         // FIXIT-L cpputest hangs or crashes in the leak detector
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         opt = get_option(" foo ");
         regex_setup(snort_conf);
     }
-    void teardown()
+    void teardown() override
     {
         IpsApi* api = (IpsApi*)ips_regex;
         api->dtor(opt);
@@ -338,14 +338,14 @@ TEST_GROUP(ips_regex_option_relative)
 {
     IpsOption* opt = nullptr;
 
-    void setup()
+    void setup() override
     {
         // FIXIT-L cpputest hangs or crashes in the leak detector
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         opt = get_option("\\bfoo", true);
         regex_setup(snort_conf);
     }
-    void teardown()
+    void teardown() override
     {
         IpsApi* api = (IpsApi*)ips_regex;
         api->dtor(opt);

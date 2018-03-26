@@ -38,7 +38,7 @@ using namespace HttpEnums;
 // Stubs whose sole purpose is to make the test code link
 unsigned FlowData::flow_data_id = 0;
 FlowData::FlowData(unsigned, Inspector*) {}
-FlowData::~FlowData() {}
+FlowData::~FlowData() = default;
 int DetectionEngine::queue_event(unsigned int, unsigned int, Actions::Type) { return 0; }
 THREAD_LOCAL PegCount HttpModule::peg_counts[1];
 fd_status_t File_Decomp_StopFree(fd_session_t*) { return File_Decomp_OK; }
@@ -58,7 +58,7 @@ TEST_GROUP(http_transaction_test)
     SectionType* const section_type = HttpUnitTestSetup::get_section_type(flow_data);
     SectionType* const type_expected = HttpUnitTestSetup::get_type_expected(flow_data);
 
-    void teardown()
+    void teardown() override
     {
         delete flow_data;
     }

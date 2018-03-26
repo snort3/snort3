@@ -28,7 +28,7 @@ Inspector::Inspector()
     set_api(nullptr);
 }
 
-Inspector::~Inspector() { }
+Inspector::~Inspector() = default;
 bool Inspector::likes(Packet*) { return true; }
 bool Inspector::get_buf(const char*, Packet*, InspectionBuffer&) { return true; }
 class StreamSplitter* Inspector::get_splitter(bool) { return nullptr; }
@@ -37,8 +37,8 @@ class StreamSplitter* Inspector::get_splitter(bool) { return nullptr; }
 class AppIdModule
 {
 public:
-    AppIdModule() {}
-    ~AppIdModule() {}
+    AppIdModule() = default;
+    ~AppIdModule() = default;
 
 };
 
@@ -46,12 +46,12 @@ class AppIdInspector : public snort::Inspector
 {
 public:
     AppIdInspector(AppIdModule& ) { }
-    ~AppIdInspector() { }
-    void eval(snort::Packet*) { }
-    bool configure(snort::SnortConfig*) { return true; }
-    void show(snort::SnortConfig*) { }
-    void tinit() { }
-    void tterm() { }
+    ~AppIdInspector() override = default;
+    void eval(snort::Packet*) override { }
+    bool configure(snort::SnortConfig*) override { return true; }
+    void show(snort::SnortConfig*) override { }
+    void tinit() override { }
+    void tterm() override { }
 };
 
 AppIdModule appid_mod;

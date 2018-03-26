@@ -25,27 +25,10 @@
 /* but luckily it is not yet needed */
 #define API_OPTIONS ""
 
-/*  User configured options */
 
-/* include internal inspectors in binary */
-#cmakedefine STATIC_INSPECTORS 1
+/*  User-configured options */
 
-/* include internal loggers in binary */
-#cmakedefine STATIC_LOGGERS 1
-
-/* include internal ips actions in binary */
-#cmakedefine STATIC_IPS_ACTIONS 1
-
-/* include internal ips options in binary */
-#cmakedefine STATIC_IPS_OPTIONS 1
-
-/* include internal inspectors in binary */
-#cmakedefine STATIC_SEARCH_ENGINES 1
-
-/* include internal decoders in binary */
-#cmakedefine STATIC_CODECS 1
-
-/* enalbe debug messages */
+/* enable debug messages */
 #cmakedefine DEBUG_MSGS 1
 
 /* enable profiling */
@@ -54,33 +37,32 @@
 /* do not generate a core file on segfault etc */
 #cmakedefine NOCOREFILE 1
 
-/* enable ha capable build */
-#cmakedefine ENABLE_HA 1
-
-/* enable unit tests in build */
-#cmakedefine UNIT_TEST 1
-
-/* enable piglet in build */
+/* enable piglet */
 #cmakedefine PIGLET 1
 
-/* Set by user */
-#cmakedefine SIGNAL_SNORT_DUMP_STATS @SIGNAL_SNORT_DUMP_STATS@
-
-/* Set by user */
-#cmakedefine SIGNAL_SNORT_READ_ATTR_TBL @SIGNAL_SNORT_READ_ATTR_TBL@
-
-/* Set by user */
-#cmakedefine SIGNAL_SNORT_RELOAD @SIGNAL_SNORT_RELOAD@
-
-/* Set by user */
-#cmakedefine SIGNAL_SNORT_ROTATE_STATS @SIGNAL_SNORT_ROTATE_STATS@
-
-/* enable ha capable build */
+/* enable command shell */
 #cmakedefine SHELL 1
 
-/* large pcap options */
-#cmakedefine _LARGEFILE_SOURCE 1
-#cmakedefine _FILE_OFFSET_BITS @_FILE_OFFSET_BITS@
+/* include internal decoders in binary */
+#cmakedefine STATIC_CODECS 1
+
+/* include internal inspectors in binary */
+#cmakedefine STATIC_INSPECTORS 1
+
+/* include internal ips actions in binary */
+#cmakedefine STATIC_IPS_ACTIONS 1
+
+/* include internal ips options in binary */
+#cmakedefine STATIC_IPS_OPTIONS 1
+
+/* include internal loggers in binary */
+#cmakedefine STATIC_LOGGERS 1
+
+/* include internal inspectors in binary */
+#cmakedefine STATIC_SEARCH_ENGINES 1
+
+/* enable unit tests */
+#cmakedefine UNIT_TEST 1
 
 /* enable stdlog */
 #cmakedefine USE_STDLOG 1
@@ -88,8 +70,24 @@
 /* enable tsc clock */
 #cmakedefine USE_TSC_CLOCK 1
 
+/* signal to dump stats  */
+#cmakedefine SIGNAL_SNORT_DUMP_STATS @SIGNAL_SNORT_DUMP_STATS@
 
-/*  Print available system types and their sizes */
+/* signal to reload attribute table */
+#cmakedefine SIGNAL_SNORT_READ_ATTR_TBL @SIGNAL_SNORT_READ_ATTR_TBL@
+
+/* signal to reload configuration */
+#cmakedefine SIGNAL_SNORT_RELOAD @SIGNAL_SNORT_RELOAD@
+
+/* signal to reload stats */
+#cmakedefine SIGNAL_SNORT_ROTATE_STATS @SIGNAL_SNORT_ROTATE_STATS@
+
+/* large pcap options */
+#cmakedefine _LARGEFILE_SOURCE 1
+#cmakedefine _FILE_OFFSET_BITS @_FILE_OFFSET_BITS@
+
+
+/*  System types and their sizes */
 
 /* The size of `long int', as computed by sizeof. */
 #cmakedefine SIZEOF_LONG_INT @SIZEOF_LONG_INT@
@@ -125,10 +123,23 @@
 
 #cmakedefine HAVE_UUID 1
 
-/* Library specific functions */
+
+/*  Availability of specific library functions */
+
+/* Define to 1 if you have the `mallinfo' function. */
+#define HAVE_MALLINFO 1
+
+/* Define to 1 if you have the `malloc_trim' function. */
+#define HAVE_MALLOC_TRIM 1
+
+/* Define to 1 if you have the `memrchr' function. */
+#define HAVE_MEMRCHR 1
+
+/* Define to 1 if you have the `sigaction' function. */
+#define HAVE_SIGACTION 1
 
 
-/* Available compiler options */
+/*  Available compiler options */
 
 /* Define if the compiler supports visibility declarations. */
 #cmakedefine HAVE_VISIBILITY 1

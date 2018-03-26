@@ -49,12 +49,12 @@ char* snort_strdup(const char* s)
 
 TEST_GROUP(file_connector_module)
 {
-    void setup()
+    void setup() override
     {
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
     }
 
-    void teardown()
+    void teardown() override
     {
         MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }

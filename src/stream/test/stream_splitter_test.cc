@@ -43,7 +43,7 @@ SnortConfig* SnortConfig::get_conf()
 
 static StreamSplitter* next_splitter = nullptr;
 
-Flow::Flow() { }
+Flow::Flow() = default;
 
 struct Packet* DetectionEngine::get_current_packet()
 { return nullptr; }

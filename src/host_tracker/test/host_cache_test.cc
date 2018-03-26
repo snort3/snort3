@@ -37,7 +37,7 @@ THREAD_LOCAL SnortConfig* snort_conf = &s_conf;
 
 SnortConfig::SnortConfig(const SnortConfig* const) { }
 
-SnortConfig::~SnortConfig() { } 
+SnortConfig::~SnortConfig() = default;
 
 SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }

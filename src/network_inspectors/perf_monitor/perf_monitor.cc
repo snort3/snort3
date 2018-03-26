@@ -88,7 +88,7 @@ public:
     PerfIdleHandler(PerfMonitor& p) : perf_monitor(p)
     { DataBus::subscribe_default(THREAD_IDLE_EVENT, this); }
 
-    virtual void handle(DataEvent&, Flow*) override
+    void handle(DataEvent&, Flow*) override
     { perf_monitor.eval(nullptr); }
 
 private:
@@ -101,7 +101,7 @@ public:
     PerfRotateHandler(PerfMonitor& p) : perf_monitor(p)
     { DataBus::subscribe_default(THREAD_ROTATE_EVENT, this); }
 
-    virtual void handle(DataEvent&, Flow*) override
+    void handle(DataEvent&, Flow*) override
     { perf_monitor.rotate(); }
 
 private:
@@ -114,7 +114,7 @@ public:
     FlowIPDataHandler(PerfMonitor& p) : perf_monitor(p)
     { DataBus::subscribe_default(FLOW_STATE_EVENT, this); }
 
-    virtual void handle(DataEvent&, Flow* flow) override
+    void handle(DataEvent&, Flow* flow) override
     {
         FlowState state = SFS_STATE_MAX;
 

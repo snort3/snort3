@@ -40,15 +40,15 @@
 class AppIdInspector
 {
 public:
-    AppIdInspector() { }
+    AppIdInspector() = default;
 };
 
 FlowData::FlowData(unsigned, Inspector*) { }
-FlowData::~FlowData() { }
+FlowData::~FlowData() = default;
 
 AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t, AppIdInspector& inspector)
     : FlowData(0), inspector(inspector) { }
-AppIdSession::~AppIdSession() { }
+AppIdSession::~AppIdSession() = default;
 
 // Utility functions
 

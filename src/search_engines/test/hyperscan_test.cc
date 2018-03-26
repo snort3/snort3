@@ -69,7 +69,7 @@ SnortConfig::SnortConfig(const SnortConfig* const)
     num_slots = 1;
 }
 
-SnortConfig::~SnortConfig() { }
+SnortConfig::~SnortConfig() = default;
 
 SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
@@ -127,7 +127,7 @@ static MpseAgent s_agent =
 
 TEST_GROUP(mpse_hs_base)
 {
-    void setup()
+    void setup() override
     {
         CHECK(se_hyperscan);
     }
@@ -170,7 +170,7 @@ TEST_GROUP(mpse_hs_match)
     Mpse* hs = nullptr;
     const MpseApi* mpse_api = (MpseApi*)se_hyperscan;
 
-    void setup()
+    void setup() override
     {
         // FIXIT-L cpputest hangs or crashes in the leak detector
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
@@ -180,7 +180,7 @@ TEST_GROUP(mpse_hs_match)
         hits = 0;
         parse_errors = 0;
     }
-    void teardown()
+    void teardown() override
     {
         mpse_api->dtor(hs);
         hyperscan_cleanup(snort_conf);
@@ -311,7 +311,7 @@ TEST_GROUP(mpse_hs_multi)
     Mpse* hs2 = nullptr;
     const MpseApi* mpse_api = (MpseApi*)se_hyperscan;
 
-    void setup()
+    void setup() override
     {
         // FIXIT-L cpputest hangs or crashes in the leak detector
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
@@ -326,7 +326,7 @@ TEST_GROUP(mpse_hs_multi)
         hits = 0;
         parse_errors = 0;
     }
-    void teardown()
+    void teardown() override
     {
         mpse_api->dtor(hs1);
         mpse_api->dtor(hs2);

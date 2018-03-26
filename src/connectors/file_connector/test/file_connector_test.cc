@@ -73,7 +73,7 @@ FileConnectorConfig::FileConnectorConfigSet* FileConnectorModule::get_and_clear_
     return config_set;
 }
 
-FileConnectorModule::~FileConnectorModule() { }
+FileConnectorModule::~FileConnectorModule() = default;
 
 ProfileStats* FileConnectorModule::get_profile() const { return nullptr; }
 
@@ -86,7 +86,7 @@ PegCount* FileConnectorModule::get_counts() const { return nullptr; }
 
 TEST_GROUP(file_connector)
 {
-    void setup()
+    void setup() override
     {
         // FIXIT-L workaround for CppUTest mem leak detector issue
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
@@ -109,7 +109,7 @@ TEST_GROUP(file_connector)
         connector_rx_binary_config.text_format = false;
     }
 
-    void teardown()
+    void teardown() override
     {
         MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
@@ -136,7 +136,7 @@ TEST(file_connector, mod_instance_ctor_dtor)
 
 TEST_GROUP(file_connector_tinit_tterm)
 {
-    void setup()
+    void setup() override
     {
         // FIXIT-L workaround for CppUTest mem leak detector issue
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
@@ -172,7 +172,7 @@ TEST_GROUP(file_connector_tinit_tterm)
         CHECK(connector_rb != nullptr);
     }
 
-    void teardown()
+    void teardown() override
     {
         fc_api->tterm(connector_tt);
         fc_api->tterm(connector_rt);
@@ -198,7 +198,7 @@ TEST(file_connector_tinit_tterm, alloc_discard)
 
 TEST_GROUP(file_connector_text)
 {
-    void setup()
+    void setup() override
     {
         // FIXIT-L workaround for CppUTest mem leak detector issue
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
@@ -214,7 +214,7 @@ TEST_GROUP(file_connector_text)
         CHECK(file_connector != nullptr);
     }
 
-    void teardown()
+    void teardown() override
     {
         MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
@@ -264,7 +264,7 @@ TEST(file_connector_text, alloc_transmit_rename_receive_discard)
 
 TEST_GROUP(file_connector_binary)
 {
-    void setup()
+    void setup() override
     {
         // FIXIT-L workaround for CppUTest mem leak detector issue
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
@@ -280,7 +280,7 @@ TEST_GROUP(file_connector_binary)
         CHECK(file_connector != nullptr);
     }
 
-    void teardown()
+    void teardown() override
     {
         MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
@@ -330,11 +330,11 @@ TEST(file_connector_binary, alloc_transmit_rename_receive_discard)
 
 TEST_GROUP(file_connector_msg_handle)
 {
-    void setup()
+    void setup() override
     {
     }
 
-    void teardown()
+    void teardown() override
     {
     }
 };

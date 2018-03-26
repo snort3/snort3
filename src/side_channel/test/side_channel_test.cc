@@ -53,61 +53,61 @@ public:
 
 class DuplexConnector : public Connector
 {
-    ConnectorMsgHandle* alloc_message(const uint32_t length, const uint8_t** data)
+    ConnectorMsgHandle* alloc_message(const uint32_t length, const uint8_t** data) override
     {
         TestConnectorMsgHandle* msg = new TestConnectorMsgHandle(length);
         *data = (uint8_t*)msg->connector_msg.data;
         return msg;
     }
-    void discard_message(ConnectorMsgHandle* msg)
+    void discard_message(ConnectorMsgHandle* msg) override
     { delete (TestConnectorMsgHandle*)msg; }
-    bool transmit_message(ConnectorMsgHandle* msg)
+    bool transmit_message(ConnectorMsgHandle* msg) override
     { delete (TestConnectorMsgHandle*)msg; return true; }
-    ConnectorMsgHandle* receive_message(bool)
+    ConnectorMsgHandle* receive_message(bool) override
     { return new TestConnectorMsgHandle(30); }
-    ConnectorMsg* get_connector_msg(ConnectorMsgHandle* handle)
+    ConnectorMsg* get_connector_msg(ConnectorMsgHandle* handle) override
     { return &((TestConnectorMsgHandle*)handle)->connector_msg; }
-    Direction get_connector_direction()
+    Direction get_connector_direction() override
     { return CONN_DUPLEX; }
 };
 
 class ReceiveConnector : public Connector
 {
-    ConnectorMsgHandle* alloc_message(const uint32_t length, const uint8_t** data)
+    ConnectorMsgHandle* alloc_message(const uint32_t length, const uint8_t** data) override
     {
         TestConnectorMsgHandle* msg = new TestConnectorMsgHandle(length);
         *data = (uint8_t*)msg->connector_msg.data;
         return msg;
     }
-    void discard_message(ConnectorMsgHandle* msg)
+    void discard_message(ConnectorMsgHandle* msg) override
     { delete (TestConnectorMsgHandle*)msg; }
-    bool transmit_message(ConnectorMsgHandle* msg)
+    bool transmit_message(ConnectorMsgHandle* msg) override
     { delete (TestConnectorMsgHandle*)msg; return true; }
-    ConnectorMsgHandle* receive_message(bool)
+    ConnectorMsgHandle* receive_message(bool) override
     { return new TestConnectorMsgHandle(30); }
-    ConnectorMsg* get_connector_msg(ConnectorMsgHandle* handle)
+    ConnectorMsg* get_connector_msg(ConnectorMsgHandle* handle) override
     { return &((TestConnectorMsgHandle*)handle)->connector_msg; }
-    Direction get_connector_direction()
+    Direction get_connector_direction() override
     { return CONN_RECEIVE; }
 };
 
 class TransmitConnector : public Connector
 {
-    ConnectorMsgHandle* alloc_message(const uint32_t length, const uint8_t** data)
+    ConnectorMsgHandle* alloc_message(const uint32_t length, const uint8_t** data) override
     {
         TestConnectorMsgHandle* msg = new TestConnectorMsgHandle(length);
         *data = (uint8_t*)msg->connector_msg.data;
         return msg;
     }
-    void discard_message(ConnectorMsgHandle* msg)
+    void discard_message(ConnectorMsgHandle* msg) override
     { delete (TestConnectorMsgHandle*)msg; }
-    bool transmit_message(ConnectorMsgHandle* msg)
+    bool transmit_message(ConnectorMsgHandle* msg) override
     { delete (TestConnectorMsgHandle*)msg; return true; }
-    ConnectorMsgHandle* receive_message(bool)
+    ConnectorMsgHandle* receive_message(bool) override
     { return nullptr; }
-    ConnectorMsg* get_connector_msg(ConnectorMsgHandle*)
+    ConnectorMsg* get_connector_msg(ConnectorMsgHandle*) override
     { return nullptr; }
-    Direction get_connector_direction()
+    Direction get_connector_direction() override
     { return CONN_TRANSMIT; }
 };
 
@@ -149,7 +149,7 @@ void Debug::print(const char*, int, uint64_t, const char*, ...) { }
 
 TEST_GROUP(side_channel)
 {
-    void setup()
+    void setup() override
     {
         // FIXIT-L workaround for issue with CppUTest memory leak detection
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
@@ -201,7 +201,7 @@ TEST_GROUP(side_channel)
         SideChannelManager::thread_init();
     }
 
-    void teardown()
+    void teardown() override
     {
         SideChannelManager::thread_term();
         SideChannelManager::term();

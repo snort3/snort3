@@ -27,7 +27,7 @@
 
 // Stubs whose sole purpose is to make the test code link
 snort::FlowData::FlowData(unsigned u, Inspector* ph) : next(nullptr), prev(nullptr), handler(ph), id(u) {}
-snort::FlowData::~FlowData() {}
+snort::FlowData::~FlowData() = default;
 unsigned snort::FlowData::flow_data_id = 0;
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) { }

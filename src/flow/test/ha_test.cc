@@ -95,20 +95,20 @@ class StreamHAClient : public FlowHAClient
 {
 public:
     StreamHAClient() : FlowHAClient(10, true) { }
-    ~StreamHAClient() { }
-    bool consume(Flow*&, FlowKey*, HAMessage*)
+    ~StreamHAClient() override = default;
+    bool consume(Flow*&, FlowKey*, HAMessage*) override
     {
         s_stream_consume_called = true;
         return true;
     }
-    bool produce(Flow*, HAMessage* msg)
+    bool produce(Flow*, HAMessage* msg) override
     {
         for ( uint8_t i=0; i<10; i++ )
             *(msg->cursor)++ = i;
         return true;
     }
     uint8_t get_message_size() { return 10; }
-    bool is_update_required(Flow*) { return s_stream_update_required; }
+    bool is_update_required(Flow*) override { return s_stream_update_required; }
     bool fit(HAMessage*,uint8_t) { return true; }
     bool place(HAMessage*,uint8_t*,uint8_t) { return true; }
 
@@ -119,20 +119,20 @@ class OtherHAClient : public FlowHAClient
 {
 public:
     OtherHAClient() : FlowHAClient(5, false) { }
-    ~OtherHAClient() { }
+    ~OtherHAClient() override = default;
     bool consume(Flow*&, HAMessage*)
     {
         s_other_consume_called = true;
         return true;
     }
-    bool produce(Flow*, HAMessage* msg)
+    bool produce(Flow*, HAMessage* msg) override
     {
         for ( uint8_t i=0; i<5; i++ )
             *(msg->cursor)++ = i;
         return true;
     }
     uint8_t get_message_size() { return 5; }
-    bool is_update_required(Flow*) { return s_other_update_required; }
+    bool is_update_required(Flow*) override { return s_other_update_required; }
     bool fit(HAMessage*,uint8_t) { return true; }
     bool place(HAMessage*,uint8_t*,uint8_t) { return true; }
 
@@ -167,9 +167,9 @@ Flow::Flow() { ha_state = new FlowHAState; key = new FlowKey; }
 SideChannel* SideChannelManager::get_side_channel(SCPort)
 { return &s_side_channel; }
 
-SideChannel::~SideChannel() { }
+SideChannel::~SideChannel() = default;
 
-SideChannel::SideChannel() { }
+SideChannel::SideChannel() = default;
 
 Connector::Direction SideChannel::get_direction()
 { return Connector::CONN_DUPLEX; }
@@ -220,12 +220,12 @@ SCMessage* SideChannel::alloc_transmit_message(uint32_t len)
 
 TEST_GROUP(high_availability_manager_test)
 {
-    void setup()
+    void setup() override
     {
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
     }
 
-    void teardown()
+    void teardown() override
     {
         MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
@@ -258,8 +258,8 @@ TEST(high_availability_manager_test, inst_init_term)
 
 TEST_GROUP(flow_ha_state_test)
 {
-    void setup() { }
-    void teardown() { }
+    void setup() override { }
+    void teardown() override { }
 };
 
 TEST(flow_ha_state_test, timing_test)
@@ -321,7 +321,7 @@ TEST(flow_ha_state_test, state_test)
 
 TEST_GROUP(high_availability_test)
 {
-    void setup()
+    void setup() override
     {
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         HighAvailabilityManager::pre_config_init();
@@ -335,7 +335,7 @@ TEST_GROUP(high_availability_test)
         s_other_ha_client = new OtherHAClient;
     }
 
-    void teardown()
+    void teardown() override
     {
         delete s_other_ha_client;
         delete s_ha_client;
