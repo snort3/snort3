@@ -39,8 +39,10 @@ class HeaderNormalizer
 {
 public:
     constexpr HeaderNormalizer(HttpEnums::EventSid _repeat_event,
-        HttpEnums::Infraction _repeat_inf, NormFunc* f1, NormFunc* f2, NormFunc* f3)
-        : repeat_event(_repeat_event), repeat_inf(_repeat_inf), normalizer { f1, f2, f3 },
+        HttpEnums::Infraction _repeat_inf, bool _alert_ws,
+        NormFunc* f1, NormFunc* f2, NormFunc* f3)
+        : repeat_event(_repeat_event), repeat_inf(_repeat_inf), alert_ws(_alert_ws),
+        normalizer { f1, f2, f3 },
         num_normalizers((f1 != nullptr) + (f1 != nullptr)*(f2 != nullptr) + (f1 != nullptr)*(f2 !=
             nullptr)*(f3 != nullptr)) { }
 
@@ -50,10 +52,9 @@ public:
         const int32_t num_headers, Field& result_field) const;
 
 private:
-    static int32_t derive_header_content(const uint8_t* value, int32_t length, uint8_t* buffer);
-
     const HttpEnums::EventSid repeat_event;
     const HttpEnums::Infraction repeat_inf;
+    const bool alert_ws;  // alert if white space in middle of value
     NormFunc* const normalizer[3];
     const int num_normalizers;
 };

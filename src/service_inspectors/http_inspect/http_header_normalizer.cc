@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include "http_enum.h"
 #include "http_header_normalizer.h"
 
 #include <cstring>
@@ -29,15 +30,23 @@ using namespace HttpEnums;
 
 // This derivation removes leading and trailing linear white space and replaces internal strings of
 // linear whitespace with a single <SP>
-int32_t HeaderNormalizer::derive_header_content(const uint8_t* value, int32_t length,
-    uint8_t* buffer)
+static int32_t derive_header_content(const uint8_t* value, int32_t length, uint8_t* buffer,
+    bool alert_ws, HttpInfractions* infractions, HttpEventGen* events)
 {
     int32_t out_length = 0;
+    bool beginning = true;
     bool last_white = true;
     for (int32_t k=0; k < length; k++)
     {
         if (!is_sp_tab_cr_lf[value[k]])
         {
+            if (alert_ws && last_white && !beginning)
+            {
+                // white space which is not at beginning or end
+                *infractions += INF_BAD_HEADER_WHITESPACE;
+                events->create_event(EVENT_BAD_HEADER_WHITESPACE);
+            }
+            beginning = false;
             last_white = false;
             buffer[out_length++] = value[k];
         }
@@ -99,8 +108,8 @@ void HeaderNormalizer::normalize(const HeaderId head_id, const int count,
     // number of normalization functions is odd or even, the initial buffer is chosen so that the
     // final normalization leaves the normalized header value in norm_value.
 
-    uint8_t* const norm_value = new uint8_t[buffer_length]();
-    uint8_t* const temp_space = new uint8_t[buffer_length]();
+    uint8_t* const norm_value = new uint8_t[buffer_length];
+    uint8_t* const temp_space = new uint8_t[buffer_length];
     uint8_t* const norm_start = (num_normalizers%2 == 0) ? norm_value : temp_space;
     uint8_t* working = norm_start;
     int32_t data_length = 0;
@@ -113,7 +122,7 @@ void HeaderNormalizer::normalize(const HeaderId head_id, const int count,
             while (header_name_id[++curr_match] != head_id);
         }
         int32_t growth = derive_header_content(header_value[curr_match].start(),
-            header_value[curr_match].length(), working);
+            header_value[curr_match].length(), working, alert_ws, infractions, events);
         working += growth;
         data_length += growth;
     }

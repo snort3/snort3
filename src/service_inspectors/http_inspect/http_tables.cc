@@ -172,39 +172,39 @@ const StrCode HttpMsgHeadShared::charset_code_opt_list[] =
 };
 
 const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_BASIC
-    { EVENT__NONE, INF__NONE, nullptr, nullptr, nullptr };
+    { EVENT__NONE, INF__NONE, false, nullptr, nullptr, nullptr };
 
 const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_NO_REPEAT
-    { EVENT_REPEATED_HEADER, INF_REPEATED_HEADER, nullptr, nullptr, nullptr };
+    { EVENT_REPEATED_HEADER, INF_REPEATED_HEADER, false, nullptr, nullptr, nullptr };
 
 const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_CASE_INSENSITIVE
-    { EVENT__NONE, INF__NONE, norm_to_lower, nullptr, nullptr };
+    { EVENT__NONE, INF__NONE, false, norm_to_lower, nullptr, nullptr };
 
 const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_NUMBER
-    { EVENT_REPEATED_HEADER, INF_REPEATED_HEADER, norm_remove_lws, nullptr, nullptr };
+    { EVENT_REPEATED_HEADER, INF_REPEATED_HEADER, false, norm_remove_lws, nullptr, nullptr };
 
 const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_TOKEN_LIST
-    { EVENT__NONE, INF__NONE, norm_remove_lws, norm_to_lower, nullptr };
+    { EVENT__NONE, INF__NONE, false, norm_remove_lws, norm_to_lower, nullptr };
 
 const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_METHOD_LIST
-    { EVENT__NONE, INF__NONE, norm_remove_lws, nullptr, nullptr };
+    { EVENT__NONE, INF__NONE, false, norm_remove_lws, nullptr, nullptr };
 
 // FIXIT-L implement a date normalization function that converts the three legal formats into a
 // single standard format. For now we do nothing special for dates. This object is a placeholder
 // to keep track of which headers have date values.
 const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_DATE
-    { EVENT__NONE, INF__NONE, nullptr, nullptr, nullptr };
+    { EVENT__NONE, INF__NONE, false, nullptr, nullptr, nullptr };
 
 // FIXIT-M implement a URI normalization function, probably by extending existing URI capabilities
 // to cover relative formats
 const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_URI
-    { EVENT__NONE, INF__NONE, nullptr, nullptr, nullptr };
+    { EVENT__NONE, INF__NONE, false, nullptr, nullptr, nullptr };
 
 const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_CONTENT_LENGTH
-    { EVENT_MULTIPLE_CONTLEN, INF_MULTIPLE_CONTLEN, norm_remove_lws, nullptr, nullptr };
+    { EVENT_MULTIPLE_CONTLEN, INF_MULTIPLE_CONTLEN, true, norm_remove_lws, nullptr, nullptr };
 
 const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_CHARSET
-    { EVENT__NONE, INF__NONE, norm_remove_quotes_lws, norm_to_lower, nullptr };
+    { EVENT__NONE, INF__NONE, false, norm_remove_quotes_lws, norm_to_lower, nullptr };
 
 #if defined(__clang__)
 // Designated initializers are not supported in C++11. However we're going to play compilation
@@ -380,6 +380,7 @@ const snort::RuleMap HttpModule::http_events[] =
     { EVENT_CONTENT_ENCODING_CHUNKED,   "invalid value chunked in Content-Encoding header" },
     { EVENT_206_WITHOUT_RANGE,          "206 response sent to a request without a Range header" },
     { EVENT_VERSION_NOT_UPPERCASE,      "'HTTP' in version field not all upper case" },
+    { EVENT_BAD_HEADER_WHITESPACE,      "white space embedded in critical header value" },
     { 0, nullptr }
 };
 
