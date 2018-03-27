@@ -96,14 +96,16 @@ static void test_sfrt_remove_after_insert()
 
         if ( s_debug )
         {
-            printf("Insert IP addr: %s, family: %d\n", ip.get_addr()->ntoa(), ip.get_family());
+            SfIpString ip_str;
+            printf("Insert IP addr: %s, family: %d\n", ip.get_addr()->ntop(ip_str), ip.get_family());
         }
         CHECK(sfrt_insert(&ip, ip.get_bits(), &(ip_entry->value), RT_FAVOR_TIME, dir) ==
             RT_SUCCESS); // "sfrt_insert()"
 
         if ( s_debug )
         {
-            printf("Lookup IP addr: %s, family: %d\n", ip2.ntoa(), ip2.get_family());
+            SfIpString ip_str;
+            printf("Lookup IP addr: %s, family: %d\n", ip2.ntop(ip_str), ip2.get_family());
         }
         result = (int*)sfrt_lookup(&ip2, dir);
         if ( s_debug )
@@ -118,7 +120,8 @@ static void test_sfrt_remove_after_insert()
 
         if ( s_debug )
         {
-            printf("IP addr: %s, family: %d\n", ip.get_addr()->ntoa(), ip.get_family());
+            SfIpString ip_str;
+            printf("IP addr: %s, family: %d\n", ip.get_addr()->ntop(ip_str), ip.get_family());
             printf("value input: %d, output: %d\n", ip_entry->value, *result);
         }
 

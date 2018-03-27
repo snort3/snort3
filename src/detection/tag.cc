@@ -692,22 +692,23 @@ void SetTags(Packet* p, const OptTreeNode* otn, uint16_t event_id)
             RuleTreeNode* rtn = getRuntimeRtnFromOtn(otn);
             void* log_list = rtn ? rtn->listhead : nullptr;
 
+            DEBUG_WRAP( SfIpString ip_str; )
             switch (otn->tag->tag_type)
             {
             case TAG_SESSION:
                 DebugMessage(DEBUG_FLOW,"Setting session tag:\n");
                 DebugFormat(DEBUG_FLOW,"SIP: %s  SP: %d   ",
-                    p->ptrs.ip_api.get_src()->ntoa(), p->ptrs.sp);
+                    p->ptrs.ip_api.get_src()->ntop(ip_str), p->ptrs.sp);
                 DebugFormat(DEBUG_FLOW,"DIP: %s  DP: %d\n",
-                    p->ptrs.ip_api.get_dst()->ntoa(), p->ptrs.dp);
+                    p->ptrs.ip_api.get_dst()->ntop(ip_str), p->ptrs.dp);
                 TagSession(p, otn->tag, p->pkth->ts.tv_sec, event_id, log_list);
                 break;
             case TAG_HOST:
                 DebugMessage(DEBUG_FLOW,"Setting host tag:\n");
                 DebugFormat(DEBUG_FLOW,"SIP: %s  SP: %d   ",
-                    p->ptrs.ip_api.get_src()->ntoa(), p->ptrs.sp);
+                    p->ptrs.ip_api.get_src()->ntop(ip_str), p->ptrs.sp);
                 DebugFormat(DEBUG_FLOW, "DIP: %s  DP: %d\n",
-                    p->ptrs.ip_api.get_dst()->ntoa(), p->ptrs.dp);
+                    p->ptrs.ip_api.get_dst()->ntop(ip_str), p->ptrs.dp);
                 TagHost(p, otn->tag, p->pkth->ts.tv_sec, event_id, log_list);
                 break;
 

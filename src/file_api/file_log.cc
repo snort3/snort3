@@ -161,8 +161,9 @@ void LogHandler::handle(DataEvent&, Flow* f)
         TextLog_Print(tlog, " ");
     }
 
-    TextLog_Print(tlog, " %s:%d -> ", f->client_ip.ntoa(), f->client_port);
-    TextLog_Print(tlog, "%s:%d, ", f->server_ip.ntoa(), f->server_port);
+    SfIpString ip_str;
+    TextLog_Print(tlog, " %s:%d -> ", f->client_ip.ntop(ip_str), f->client_port);
+    TextLog_Print(tlog, "%s:%d, ", f->server_ip.ntop(ip_str), f->server_port);
 
     FileFlows* files = FileFlows::get_file_flows(f);
 

@@ -57,9 +57,15 @@ public:
 
     int validate(AppIdDiscoveryArgs&) override;
 
+    void finalize() override;
+
+    // FIXIT-L revisit init so it's not split between static methods and constructor
     static int sipUaPatternAdd(AppId, const char* clientVersion, const char* uaPattern);
     static int sipServerPatternAdd(AppId, const char* clientVersion, const char* uaPattern);
-    static int finalize_sip_ua();
+
+private:
+    static const int PATTERN_PART_MAX = 10;
+    tMlmpPattern patterns[PATTERN_PART_MAX];
 };
 
 class SipTcpClientDetector : public ClientDetector

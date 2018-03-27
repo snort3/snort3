@@ -167,7 +167,8 @@ int ipset_print(IPSET* ipc)
             p!=nullptr;
             p =(IP_PORT*)sflist_next(&cur_ip) )
         {
-            printf("CIDR BLOCK: %c%s", p->notflag ? '!' : ' ', p->ip.get_addr()->ntoa());
+            SfIpString ip_str;
+            printf("CIDR BLOCK: %c%s", p->notflag ? '!' : ' ', p->ip.get_addr()->ntop(ip_str));
             SF_LNODE* cur_port;
 
             for ( PORTRANGE* pr=(PORTRANGE*)sflist_first(&p->portset.port_list, &cur_port);

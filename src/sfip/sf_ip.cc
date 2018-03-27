@@ -383,14 +383,9 @@ const char* SfIp::ntop(char* buf, int bufsize) const
     return snort_inet_ntop(family, get_ptr(), buf, bufsize);
 }
 
-/* Uses a static buffer to return a string representation of the IP */
-const char* SfIp::ntoa() const
+const char* SfIp::ntop(SfIpString str) const
 {
-    static THREAD_LOCAL char buf[INET6_ADDRSTRLEN];
-
-    ntop(buf, sizeof(buf));
-
-    return buf;
+    return snort_inet_ntop(family, get_ptr(), str, sizeof(SfIpString));
 }
 
 bool SfIp::is_mapped() const

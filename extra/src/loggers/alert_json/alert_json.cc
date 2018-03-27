@@ -148,8 +148,9 @@ static bool ff_dst_addr(Args& a)
 {
     if ( a.pkt->has_ip() or a.pkt->is_data() )
     {
+        SfIpString ip_str;
         print_label(a, "dst_addr");
-        TextLog_Quote(json_log, a.pkt->ptrs.ip_api.get_dst()->ntoa());
+        TextLog_Quote(json_log, a.pkt->ptrs.ip_api.get_dst()->ntop(ip_str));
         return true;
     }
     return false;
@@ -157,11 +158,11 @@ static bool ff_dst_addr(Args& a)
 
 static bool ff_dst_ap(Args& a)
 {
-    const char* addr = "";
+    SfIpString addr = "";
     unsigned port = 0;
 
     if ( a.pkt->has_ip() or a.pkt->is_data() )
-        addr = a.pkt->ptrs.ip_api.get_dst()->ntoa();
+        a.pkt->ptrs.ip_api.get_dst()->ntop(addr);
 
     if ( a.pkt->proto_bits & (PROTO_BIT__TCP|PROTO_BIT__UDP) )
         port = a.pkt->ptrs.dp;
@@ -425,8 +426,9 @@ static bool ff_src_addr(Args& a)
 {
     if ( a.pkt->has_ip() or a.pkt->is_data() )
     {
+        SfIpString ip_str;
         print_label(a, "src_addr");
-        TextLog_Quote(json_log, a.pkt->ptrs.ip_api.get_src()->ntoa());
+        TextLog_Quote(json_log, a.pkt->ptrs.ip_api.get_src()->ntop(ip_str));
         return true;
     }
     return false;
@@ -434,11 +436,11 @@ static bool ff_src_addr(Args& a)
 
 static bool ff_src_ap(Args& a)
 {
-    const char* addr = "";
+    SfIpString addr = "";
     unsigned port = 0;
 
     if ( a.pkt->has_ip() or a.pkt->is_data() )
-        addr = a.pkt->ptrs.ip_api.get_src()->ntoa();
+        a.pkt->ptrs.ip_api.get_src()->ntop(addr);
 
     if ( a.pkt->proto_bits & (PROTO_BIT__TCP|PROTO_BIT__UDP) )
         port = a.pkt->ptrs.sp;
@@ -461,13 +463,13 @@ static bool ff_src_port(Args& a)
 
 static bool ff_target(Args& a)
 {
-    const char* addr;
+    SfIpString addr = "";
 
     if ( a.event.sig_info->target == TARGET_SRC )
-        addr = a.pkt->ptrs.ip_api.get_src()->ntoa();
+        a.pkt->ptrs.ip_api.get_src()->ntop(addr);
 
     else if ( a.event.sig_info->target == TARGET_DST )
-        addr = a.pkt->ptrs.ip_api.get_dst()->ntoa();
+        a.pkt->ptrs.ip_api.get_dst()->ntop(addr);
 
     else
         return false;

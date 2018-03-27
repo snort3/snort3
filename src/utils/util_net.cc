@@ -57,8 +57,8 @@ char* ObfuscateIpToText(const SfIp* ip, SfCidr& homenet, SfCidr& obfunet, InetBu
             tmp.obfuscate(&obfunet);
         }
 
-        const char* tmp_buf = tmp.ntoa();
-        SnortSnprintf(ab, sizeof(ab), "%s", tmp_buf);
+        SfIpString ip_str;
+        SnortSnprintf(ab, sizeof(ab), "%s", tmp.ntop(ip_str));
     }
 
     return ab;

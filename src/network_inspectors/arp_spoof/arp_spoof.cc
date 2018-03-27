@@ -117,7 +117,8 @@ static void PrintIPMacEntryList(IPMacEntryList& ipmel)
     {
         SfIp in;
         in.set(&p.ipv4_addr, AF_INET);
-        LogMessage("    %s -> ", in.ntoa());
+        SfIpString ip_str;
+        LogMessage("    %s -> ", in.ntop(ip_str));
 
         for (int i = 0; i < 6; i++)
         {

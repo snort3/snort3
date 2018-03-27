@@ -57,6 +57,9 @@ enum class UnreachResponse
 class SO_PUBLIC PacketManager
 {
 public:
+    static void thread_init();
+    static void thread_term();
+
     // decode this packet and set all relevant packet fields.
     static void decode(Packet*, const struct _daq_pkthdr*, const uint8_t*, bool cooked = false);
 

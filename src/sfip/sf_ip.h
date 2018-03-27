@@ -32,8 +32,9 @@
 
 namespace snort
 {
-struct SfCidr;
+using SfIpString = char[INET6_ADDRSTRLEN];
 
+struct SfCidr;
 struct SO_PUBLIC SfIp
 {
     /*
@@ -87,7 +88,7 @@ struct SO_PUBLIC SfIp
     bool is_private() const;
 
     const char* ntop(char* buf, int bufsize) const;
-    const char* ntoa() const;
+    const char* ntop(SfIpString) const;
 
     void obfuscate(SfCidr* ob);
 
@@ -461,10 +462,8 @@ SO_PUBLIC const char* sfip_ntop(const SfIp* ip, char* buf, int bufsize);
 
 inline std::ostream& operator<<(std::ostream& os, const SfIp* addr)
 {
-    char str[INET6_ADDRSTRLEN];
-    sfip_ntop(addr, str, sizeof(str));
-    os << str;
-    return os;
+    SfIpString str;
+    return os << addr->ntop(str);
 }
 
 // FIXIT-L X This should be in utils_net if anywhere, but that makes it way harder to link into unit tests

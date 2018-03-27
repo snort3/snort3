@@ -68,7 +68,17 @@ const std::array<const char*, PacketManager::stat_offset> PacketManager::stat_na
 
 // Encoder Foo
 static THREAD_LOCAL PegCount total_rebuilt_pkts = 0;
-static THREAD_LOCAL std::array<uint8_t, Codec::PKT_MAX> s_pkt { { 0 } };
+static THREAD_LOCAL std::array<uint8_t, Codec::PKT_MAX>* s_pkt;
+
+void PacketManager::thread_init()
+{
+    s_pkt = new std::array<uint8_t, Codec::PKT_MAX>{ {0} };
+}
+
+void PacketManager::thread_term()
+{
+    delete s_pkt;
+}
 
 //-------------------------------------------------------------------------
 // Private helper functions
@@ -418,7 +428,7 @@ const uint8_t* PacketManager::encode_response(
     TcpResponse type, EncodeFlags flags, const Packet* p, uint32_t& len,
     const uint8_t* const payload, uint32_t payload_len)
 {
-    Buffer buf(s_pkt.data(), s_pkt.size());
+    Buffer buf(s_pkt->data(), s_pkt->size());
 
     switch (type)
     {
@@ -465,7 +475,7 @@ const uint8_t* PacketManager::encode_response(
 const uint8_t* PacketManager::encode_reject(UnreachResponse type,
     EncodeFlags flags, const Packet* p, uint32_t& len)
 {
-    Buffer buf(s_pkt.data(), s_pkt.size());
+    Buffer buf(s_pkt->data(), s_pkt->size());
 
     if (p->is_ip4())
     {

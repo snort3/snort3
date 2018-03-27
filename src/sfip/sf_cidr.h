@@ -57,7 +57,7 @@ struct SO_PUBLIC SfCidr
     bool fast_cont6(const SfIp& ip) const;
     SfIpRet contains(const SfIp* ip) const;
 
-    const char* ntoa() const;
+    const char* ntop(SfIpString) const;
     SfIpRet compare(const SfCidr&) const;
 
 private:
@@ -161,9 +161,9 @@ inline bool SfCidr::fast_cont6(const SfIp& ip) const
     return ntohl(addr.get_ip6_ptr()[i]) == needle;
 }
 
-inline const char* SfCidr::ntoa() const
+inline const char* SfCidr::ntop(SfIpString ip_str) const
 {
-    return addr.ntoa();
+    return addr.ntop(ip_str);
 }
 
 inline SfIpRet SfCidr::compare(const SfCidr& cidr2) const

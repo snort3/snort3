@@ -322,12 +322,14 @@ static int AddIPtoList(snort::SfCidr* ipAddr,INFO ipInfo_ptr, ReputationConfig* 
 #ifdef DEBUG_MSGS
     if (nullptr != sfrt_flat_lookup(ipAddr->get_addr(), config->iplist))
     {
-        DebugFormat(DEBUG_REPUTATION, "Find address before insert: %s\n", ipAddr->ntoa() );
+        snort::SfIpString ip_str;
+        DebugFormat(DEBUG_REPUTATION, "Find address before insert: %s\n", ipAddr->ntop(ip_str) );
     }
     else
     {
+        snort::SfIpString ip_str;
         DebugFormat(DEBUG_REPUTATION,
-            "Can't find address before insert: %s\n", ipAddr->ntoa() );
+            "Can't find address before insert: %s\n", ipAddr->ntop(ip_str) );
     }
 #endif
 
@@ -353,7 +355,8 @@ static int AddIPtoList(snort::SfCidr* ipAddr,INFO ipInfo_ptr, ReputationConfig* 
         result = (IPrepInfo*)sfrt_flat_lookup(ipAddr->get_addr(), config->iplist);
         if (nullptr != result)
         {
-            DebugFormat(DEBUG_REPUTATION, "Find address after insert: %s \n", ipAddr->ntoa() );
+            snort::SfIpString ip_str;
+            DebugFormat(DEBUG_REPUTATION, "Find address after insert: %s \n", ipAddr->ntop(ip_str) );
             DEBUG_WRAP(ReputationPrintRepInfo(result, (uint8_t*)config->iplist); );
         }
 #endif
@@ -362,14 +365,16 @@ static int AddIPtoList(snort::SfCidr* ipAddr,INFO ipInfo_ptr, ReputationConfig* 
     else if (MEM_ALLOC_FAILURE == iRet)
     {
         iFinalRet = IP_MEM_ALLOC_FAILURE;
+        snort::SfIpString ip_str;
         DEBUG_WRAP(DebugFormat(DEBUG_REPUTATION, "Insert error: %d for address: %s \n",iRet,
-            ipAddr->ntoa() ); );
+            ipAddr->ntop(ip_str) ); );
     }
     else
     {
         iFinalRet = IP_INSERT_FAILURE;
+        snort::SfIpString ip_str;
         DEBUG_WRAP(DebugFormat(DEBUG_REPUTATION, "Insert error: %d for address: %s \n",iRet,
-            ipAddr->ntoa() ); );
+            ipAddr->ntop(ip_str) ); );
     }
 
     usageAfterAdd = sfrt_flat_usage(config->iplist);

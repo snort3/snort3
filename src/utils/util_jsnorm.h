@@ -31,12 +31,12 @@
 
 #define MAX_ALLOWED_OBFUSCATION 1
 
-typedef struct
+struct JSState
 {
     int allowed_spaces;
     int allowed_levels;
     uint16_t alerts;
-} JSState;
+};
 
 SO_PUBLIC int JSNormalizeDecode(
     const char*, uint16_t, char*, uint16_t destlen, const char**, int*, JSState*, uint8_t*);

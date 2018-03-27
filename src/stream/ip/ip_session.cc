@@ -51,7 +51,6 @@ const PegInfo ip_pegs[] =
     { CountType::SUM, "trackers_completed", "datagram trackers completed" },
     { CountType::SUM, "nodes_inserted", "fragments added to tracker" },
     { CountType::SUM, "nodes_deleted", "fragments deleted from tracker" },
-    { CountType::NOW, "memory_used", "current memory usage in bytes" },
     { CountType::SUM, "reassembled_bytes", "total reassembled bytes" },
     { CountType::SUM, "fragmented_bytes", "total fragmented bytes" },
     { CountType::END, nullptr, nullptr }

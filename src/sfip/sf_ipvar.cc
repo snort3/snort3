@@ -1096,9 +1096,15 @@ static void print_var_list(sfip_node_t* var_list, bool print_bits = false)
         if (p->flags & SFIP_ANY)
             n += safe_snprintf(sfipvar_test_buff+n, SFIPVAR_TEST_BUFF_LEN - n, "any");
         else if (p->flags & SFIP_NEGATED)
-            n += safe_snprintf(sfipvar_test_buff+n, SFIPVAR_TEST_BUFF_LEN - n, "!%s",p->ip->ntoa());
+        {
+            SfIpString ip_str;
+            n += safe_snprintf(sfipvar_test_buff+n, SFIPVAR_TEST_BUFF_LEN - n, "!%s",p->ip->ntop(ip_str));
+        }
         else
-            n += safe_snprintf(sfipvar_test_buff+n, SFIPVAR_TEST_BUFF_LEN - n, "%s", p->ip->ntoa());
+        {
+            SfIpString ip_str;
+            n += safe_snprintf(sfipvar_test_buff+n, SFIPVAR_TEST_BUFF_LEN - n, "%s", p->ip->ntop(ip_str));
+        }
 
         if (print_bits and !(p->flags & SFIP_ANY))
             n += safe_snprintf(sfipvar_test_buff+n, SFIPVAR_TEST_BUFF_LEN - n, "/%d",

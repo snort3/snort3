@@ -76,7 +76,6 @@ struct IpStats
     PegCount trackers_completed;// iFragComplete
     PegCount nodes_created;     // iFragInserts tracked a similar stat (# calls to insert)
     PegCount nodes_released;
-    PegCount mem_in_use;        // frag_mem_in_use
     PegCount reassembled_bytes; // total_ipreassembled_bytes
     PegCount fragmented_bytes;  // total_ipfragmented_bytes
 };

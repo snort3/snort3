@@ -116,20 +116,53 @@ using namespace snort;
 
 /*  D A T A   S T R U C T U R E S  **********************************/
 
+
 struct Fragment
 {
-    uint8_t* data;       /* ptr to adjusted start position */
-    uint16_t size;       /* adjusted frag size */
-    uint16_t offset;     /* adjusted offset position */
+    Fragment(uint16_t flen, const uint8_t* fptr, int ord)
+    { init(flen, fptr, ord); }
 
-    uint8_t* fptr;       /* free pointer */
-    uint16_t flen;       /* free len, unneeded? */
+    Fragment(Fragment* other, int ord)
+    {
+        init(other->flen, other->fptr, ord);
+        data = fptr + (other->data - other->fptr);
+        size = other->size;
+        offset = other->offset;
+        last = other->last;
+    }
 
-    Fragment* prev;
-    Fragment* next;
+    ~Fragment()
+    {
+        if ( fptr )
+            delete fptr;
 
-    int ord;
-    char last;
+        ip_stats.nodes_released++;
+    }
+
+    uint8_t* data = nullptr;    /* ptr to adjusted start position */
+    uint16_t size = 0;          /* adjusted frag size */
+    uint16_t offset = 0;        /* adjusted offset position */
+
+    uint8_t* fptr = nullptr;    /* free pointer */
+    uint16_t flen = 0;          /* free len, unneeded? */
+
+    Fragment* prev = nullptr;
+    Fragment* next = nullptr;
+
+    int ord = 0;
+    char last = 0;
+
+private:
+    inline void init(uint16_t flen, const uint8_t* fptr, int ord)
+    {
+        this->flen = flen;
+        this->fptr = new uint8_t[flen];
+        this->ord = ord;
+
+        memcpy(this->fptr, fptr, flen);
+
+        ip_stats.nodes_created++;
+    }
 };
 
 /*  G L O B A L S  **************************************************/
@@ -146,9 +179,6 @@ static const char* const frag_policy_names[] =
     "WINDOWS",
     "SOLARIS"
 };
-
-// FIXIT-M convert to session memcap
-static THREAD_LOCAL unsigned long mem_in_use = 0; /* memory in use, used for self pres */
 
 THREAD_LOCAL ProfileStats fragPerfStats;
 THREAD_LOCAL ProfileStats fragInsertPerfStats;
@@ -765,21 +795,6 @@ static inline void add_node(FragTracker* ft, Fragment* prev, Fragment* node)
     ft->fraglist_count++;
 }
 
-static void delete_frag(Fragment* frag)
-{
-    /*
-     * delete the fragment either in prealloc or dynamic mode
-     */
-    snort_free(frag->fptr);
-    mem_in_use -= frag->flen;
-
-    snort_free(frag);
-    mem_in_use -= sizeof(Fragment);
-
-    ip_stats.mem_in_use = mem_in_use;
-    ip_stats.nodes_released++;
-}
-
 static inline void delete_node(FragTracker* ft, Fragment* node)
 {
     trace_logf(stream_ip, "Deleting list node %p (p %p n %p)\n",
@@ -803,7 +818,7 @@ static inline void delete_node(FragTracker* ft, Fragment* node)
         ft->fraglist_tail = node->prev;
     }
 
-    delete_frag(node);
+    delete node;
     ft->fraglist_count--;
 }
 
@@ -825,7 +840,7 @@ static void delete_tracker(FragTracker* ft)
     {
         dump_me = idx;
         idx = idx->next;
-        delete_frag(dump_me);
+        delete dump_me;
     }
     ft->fraglist = nullptr;
     if (ft->ip_options_data)
@@ -1844,34 +1859,16 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
     ft->frag_policy = p->flow->ssn_policy ? p->flow->ssn_policy : engine.frag_policy;
     ft->engine = &engine;
 
-    /*
-     * get our first fragment storage struct
-     */
-    {
-        f = (Fragment*)snort_calloc(sizeof(Fragment));
-        mem_in_use += sizeof(Fragment);
-
-        f->fptr = (uint8_t*)snort_calloc(fragLength);
-        mem_in_use += fragLength;
-
-        ip_stats.mem_in_use = mem_in_use;
-    }
-
-    ip_stats.nodes_created++;
-
     /* initialize the fragment list */
     ft->fraglist = nullptr;
 
-    /*
-     * setup the Fragment struct with the current packet's data
-     */
-    memcpy(f->fptr, fragStart, fragLength);
+    f = new Fragment(fragLength, fragStart, ft->ordinal++);
 
-    f->size = f->flen = fragLength;
+    f->size = fragLength;
     f->offset = frag_off;
-    frag_end = f->offset + fragLength;
-    f->ord = ft->ordinal++;
     f->data = f->fptr;     /* ptr to adjusted start position */
+
+    frag_end = f->offset + fragLength;
     if (!(p->ptrs.decode_flags & DECODE_MF))
     {
         f->last = 1;
@@ -1984,30 +1981,7 @@ int Defrag::add_frag_node(
         return FRAG_INSERT_ANOMALY;
     }
 
-    /*
-     * grab/generate a new frag node
-     */
-    {
-        /*
-         * build a frag struct to track this particular fragment
-         */
-        newfrag = (Fragment*)snort_calloc(sizeof(Fragment));
-        mem_in_use += sizeof(Fragment);
-
-        /*
-         * allocate some space to hold the actual data
-         */
-        newfrag->fptr = (uint8_t*)snort_calloc(fragLength);
-        mem_in_use += fragLength;
-
-        ip_stats.mem_in_use = mem_in_use;
-    }
-
-    ip_stats.nodes_created++;
-
-    newfrag->flen = fragLength;
-    memcpy(newfrag->fptr, fragStart, fragLength);
-    newfrag->ord = ft->ordinal++;
+    newfrag = new Fragment(fragLength, fragStart, ft->ordinal++);
 
     /*
      * twiddle the frag values for overlaps
@@ -2060,43 +2034,8 @@ int Defrag::add_frag_node(
  */
 int Defrag::dup_frag_node( FragTracker* ft, Fragment* left, Fragment** retFrag)
 {
-    Fragment* newfrag = nullptr;  /* new frag container */
+    Fragment* newfrag = new Fragment(left, ft->ordinal++);
 
-    /*
-     * grab/generate a new frag node
-     */
-    {
-        /*
-         * build a frag struct to track this particular fragment
-         */
-        newfrag = (Fragment*)snort_calloc(sizeof(Fragment));
-        mem_in_use += sizeof(Fragment);
-
-        /*
-         * allocate some space to hold the actual data
-         */
-        newfrag->fptr = (uint8_t*)snort_calloc(left->flen);
-        mem_in_use += left->flen;
-
-        ip_stats.mem_in_use = mem_in_use;
-    }
-
-    ip_stats.nodes_created++;
-
-    newfrag->ord = ft->ordinal++;
-    /*
-     * twiddle the frag values for overlaps
-     */
-    newfrag->flen = left->flen;
-    memcpy(newfrag->fptr, left->fptr, newfrag->flen);
-    newfrag->data = newfrag->fptr + (left->data - left->fptr);
-    newfrag->size = left->size;
-    newfrag->offset = left->offset;
-    newfrag->last = left->last;
-
-    /*
-     * insert the new frag into the list
-     */
     add_node(ft, left, newfrag);
 
     trace_logf(stream_ip,

@@ -174,23 +174,23 @@ static FILE* OpenSessionFile(Packet* p)
     dst = p->ptrs.ip_api.get_dst();
     src = p->ptrs.ip_api.get_src();
 
-    const char* addr;
+    SfIpString addr;
 
     if (SnortConfig::get_conf()->homenet.contains(dst) == SFIP_CONTAINS)
     {
         if (SnortConfig::get_conf()->homenet.contains(src) == SFIP_NOT_CONTAINS)
         {
-            addr = p->ptrs.ip_api.get_src()->ntoa();
+            p->ptrs.ip_api.get_src()->ntop(addr);
         }
         else
         {
             if (p->ptrs.sp >= p->ptrs.dp)
             {
-                addr = p->ptrs.ip_api.get_src()->ntoa();
+                p->ptrs.ip_api.get_src()->ntop(addr);
             }
             else
             {
-                addr = p->ptrs.ip_api.get_dst()->ntoa();
+                p->ptrs.ip_api.get_dst()->ntop(addr);
             }
         }
     }
@@ -198,17 +198,17 @@ static FILE* OpenSessionFile(Packet* p)
     {
         if (SnortConfig::get_conf()->homenet.contains(src) == SFIP_CONTAINS)
         {
-            addr = p->ptrs.ip_api.get_dst()->ntoa();
+            p->ptrs.ip_api.get_dst()->ntop(addr);
         }
         else
         {
             if (p->ptrs.sp >= p->ptrs.dp)
             {
-                addr = p->ptrs.ip_api.get_src()->ntoa();
+                p->ptrs.ip_api.get_src()->ntop(addr);
             }
             else
             {
-                addr = p->ptrs.ip_api.get_dst()->ntoa();
+                p->ptrs.ip_api.get_dst()->ntop(addr);
             }
         }
     }

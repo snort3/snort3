@@ -155,7 +155,6 @@ void AppIdInspector::tinit()
     PatternClientDetector::finalize_client_port_patterns();
     AppIdDiscovery::finalize_plugins();
     http_matchers->finalize();
-    SipUdpClientDetector::finalize_sip_ua();
     ssl_detector_process_patterns();
     dns_host_detector_process_patterns();
 }

@@ -67,14 +67,15 @@ void LogHandler::handle(DataEvent& e, Flow* f)
     time_t pt = packet_time();
     struct tm st;
     char buf[26];
+    SfIpString ip_str;
     
     gmtime_r(&pt, &st);
     asctime_r(&st, buf);
     buf[sizeof(buf)-2] = '\0';
 
     TextLog_Print(tlog, "%s, ", buf);
-    TextLog_Print(tlog, "%s, %d, ", f->client_ip.ntoa(), f->client_port);
-    TextLog_Print(tlog, "%s, %d", f->server_ip.ntoa(), f->server_port);
+    TextLog_Print(tlog, "%s, %d, ", f->client_ip.ntop(ip_str), f->client_port);
+    TextLog_Print(tlog, "%s, %d", f->server_ip.ntop(ip_str), f->server_port);
 
     HttpEvent* he = (HttpEvent*)&e;
     int32_t n;

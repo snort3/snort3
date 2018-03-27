@@ -61,7 +61,7 @@ void clear_trace_cursor_info()
 void print_pkt_info(Packet* p)
 {
     const char* dir;
-    string dst_addr, src_addr;
+    SfIpString src_addr, dst_addr;
     unsigned src_port = 0, dst_port = 0;
 
     pkt = p; //save packet pointer for later
@@ -75,8 +75,8 @@ void print_pkt_info(Packet* p)
 
     if ( pkt->has_ip() or pkt->is_data() )
     {
-        src_addr = string(pkt->ptrs.ip_api.get_src()->ntoa());
-        dst_addr = string(pkt->ptrs.ip_api.get_dst()->ntoa());
+        pkt->ptrs.ip_api.get_src()->ntop(src_addr);
+        pkt->ptrs.ip_api.get_dst()->ntop(dst_addr);
     }
 
     if ( pkt->proto_bits & (PROTO_BIT__TCP|PROTO_BIT__UDP) )
@@ -86,7 +86,7 @@ void print_pkt_info(Packet* p)
     }
 
     trace_logf(detection, TRACE_RULE_EVAL,"packet %" PRIu64 " %s %s:%u %s:%u\n",
-        pc.total_from_daq, dir, src_addr.c_str(), src_port, dst_addr.c_str(), dst_port);
+        pc.total_from_daq, dir, src_addr, src_port, dst_addr, dst_port);
 }
 
 void print_pattern(const PatternMatchData* pmd)

@@ -123,16 +123,19 @@ static void ff_dir(Args& a)
 static void ff_dst_addr(Args& a)
 {
     if ( a.pkt->has_ip() or a.pkt->is_data() )
-        TextLog_Puts(csv_log, a.pkt->ptrs.ip_api.get_dst()->ntoa());
+    {
+        SfIpString ip_str;
+        TextLog_Puts(csv_log, a.pkt->ptrs.ip_api.get_dst()->ntop(ip_str));
+    }
 }
 
 static void ff_dst_ap(Args& a)
 {
-    const char* addr = "";
+    SfIpString addr = "";
     unsigned port = 0;
 
     if ( a.pkt->has_ip() or a.pkt->is_data() )
-        addr = a.pkt->ptrs.ip_api.get_dst()->ntoa();
+        a.pkt->ptrs.ip_api.get_dst()->ntop(addr);
 
     if ( a.pkt->proto_bits & (PROTO_BIT__TCP|PROTO_BIT__UDP) )
         port = a.pkt->ptrs.dp;
@@ -314,16 +317,19 @@ static void ff_sid(Args& a)
 static void ff_src_addr(Args& a)
 {
     if ( a.pkt->has_ip() or a.pkt->is_data() )
-        TextLog_Puts(csv_log, a.pkt->ptrs.ip_api.get_src()->ntoa());
+    {
+        SfIpString ip_str;
+        TextLog_Puts(csv_log, a.pkt->ptrs.ip_api.get_src()->ntop(ip_str));
+    }
 }
 
 static void ff_src_ap(Args& a)
 {
-    const char* addr = "";
+    SfIpString addr = "";
     unsigned port = 0;
 
     if ( a.pkt->has_ip() or a.pkt->is_data() )
-        addr = a.pkt->ptrs.ip_api.get_src()->ntoa();
+        a.pkt->ptrs.ip_api.get_src()->ntop(addr);
 
     if ( a.pkt->proto_bits & (PROTO_BIT__TCP|PROTO_BIT__UDP) )
         port = a.pkt->ptrs.sp;
@@ -339,13 +345,13 @@ static void ff_src_port(Args& a)
 
 static void ff_target(Args& a)
 {
-    const char* addr;
+    SfIpString addr = "";
 
     if ( a.event.sig_info->target == TARGET_SRC )
-        addr = a.pkt->ptrs.ip_api.get_src()->ntoa();
+        a.pkt->ptrs.ip_api.get_src()->ntop(addr);
 
     else if ( a.event.sig_info->target == TARGET_DST )
-        addr = a.pkt->ptrs.ip_api.get_dst()->ntoa();
+        a.pkt->ptrs.ip_api.get_dst()->ntop(addr);
 
     else
         return;

@@ -113,7 +113,7 @@ static pid_t snort_main_thread_pid = 0;
 
 // non-local for easy access from core
 static THREAD_LOCAL DAQ_PktHdr_t s_pkth;
-static THREAD_LOCAL uint8_t s_data[65536];
+static THREAD_LOCAL uint8_t* s_data = nullptr;
 static THREAD_LOCAL Packet* s_packet = nullptr;
 static THREAD_LOCAL ContextSwitcher* s_switcher = nullptr;
 
@@ -718,6 +718,7 @@ void Snort::thread_rotate()
  */
 bool Snort::thread_init_privileged(const char* intf)
 {
+    s_data = new uint8_t[65535];
     show_source(intf);
 
     SnortConfig::get_conf()->thread_config->implement_thread_affinity(STHREAD_TYPE_PACKET, get_instance_id());
@@ -773,6 +774,7 @@ void Snort::thread_init_unprivileged()
 
     // in case there are HA messages waiting, process them first
     HighAvailabilityManager::process_receive();
+    PacketManager::thread_init();
 }
 
 void Snort::thread_term()
@@ -813,9 +815,11 @@ void Snort::thread_term()
     CleanupTag();
     FileService::thread_term();
     PacketTracer::thread_term();
+    PacketManager::thread_term();
 
     Active::term();
     delete s_switcher;
+    delete s_data;
 }
 
 void Snort::inspect(Packet* p)

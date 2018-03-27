@@ -100,13 +100,13 @@ static void make_open_port_info(Packet* p, PS_PROTO* proto)
 static void make_open_port_info(Packet* p, uint16_t port)
 {
     DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
-
-    const char* addr = p->ptrs.ip_api.get_src()->ntoa();
+    
+    SfIpString ip_str;
 
     buf.len = safe_snprintf((char*)buf.data, sizeof(buf.data),
         "Scanned IP: %s\n"
         "Open Port: %hu\n",
-        addr, port);
+        p->ptrs.ip_api.get_src()->ntop(ip_str), port);
 }
 
 static void PortscanAlertTcp(Packet* p, PS_PROTO* proto)
@@ -303,9 +303,10 @@ static void PortscanAlert(PS_PKT* ps_pkt, PS_PROTO* proto, int proto_type)
 
 static void PrintIPPortSet(IP_PORT* p)
 {
-    char ip_str[80], output_str[80];
+    char output_str[80];
 
-    SnortSnprintf(ip_str, sizeof(ip_str), "%s", p->ip.get_addr()->ntoa());
+    SfIpString ip_str;
+    p->ip.get_addr()->ntop(ip_str);
 
     if (p->notflag)
         SnortSnprintf(output_str, sizeof(output_str), "        !%s", ip_str);

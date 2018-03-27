@@ -59,7 +59,9 @@ void PrintAllInterfaces()
             {
                 snort::SfIp dev_ip;
                 dev_ip.set(&saddr->sin_addr, saddr->sin_family);
-                printf("\t%s", dev_ip.ntoa());
+
+                snort::SfIpString ip;
+                printf("\t%s", dev_ip.ntop(ip));
             }
             else
                 printf("\tdisabled");

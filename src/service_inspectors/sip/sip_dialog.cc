@@ -386,7 +386,6 @@ static int SIP_ignoreChannels(SIP_DialogData* dialog, Packet* p, SIP_PROTO_CONF*
     while ((nullptr != mdataA)&&(nullptr != mdataB))
     {
         //void *ssn;
-
         /* Call into Streams to mark data channel as something to ignore. */
         Flow* ssn = Stream::get_flow(
             PktType::UDP, IpProtocol::UDP, &mdataA->maddress,

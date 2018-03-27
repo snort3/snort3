@@ -190,8 +190,9 @@ static void PrintHostAttributeEntry(HostAttributeEntry* host)
     if (!host)
         return;
 
+    SfIpString ip_str;
     DebugFormat(DEBUG_ATTRIBUTE, "Host IP: %s/%d\n",
-        host->ipAddr.ntoa(),
+        host->ipAddr.ntop(ip_str),
         host->ipAddr.get_bits());
 
     DebugFormat(DEBUG_ATTRIBUTE,

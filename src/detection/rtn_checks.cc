@@ -100,7 +100,8 @@ static int CheckAddrPort(sfip_var_t* rule_addr, PortObject* po, Packet* p,
         }
     }
 
-    DebugFormat(DEBUG_DETECT, "addr %s, port %d ", pkt_addr->ntoa(), pkt_port);
+    DEBUG_WRAP( SfIpString ip_str; )
+    DebugFormat(DEBUG_DETECT, "addr %s, port %d ", pkt_addr->ntop(ip_str), pkt_port);
 
     if (!rule_addr)
         goto bail;

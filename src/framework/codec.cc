@@ -27,6 +27,10 @@
 #include "detection/detection_engine.h"
 #include "events/event_queue.h"
 
+#ifdef UNIT_TEST
+#include "catch/snort_catch.h"
+#endif
+
 using namespace snort;
 
 EncState::EncState(const ip::IpApi& api, EncodeFlags f, IpProtocol pr,
@@ -64,7 +68,7 @@ uint8_t EncState::get_ttl(uint8_t lyr_ttl) const
     }
 }
 
-/* Logic behind 'buf + size + 1' -- we're encoding the
+/* Logic behind 'buf + size' -- we're encoding the
  * packet from the inside out.  So, whenever we add
  * data, 'allocating' N bytes means moving the pointer
  * N characters farther from the end. For this scheme
@@ -73,7 +77,7 @@ uint8_t EncState::get_ttl(uint8_t lyr_ttl) const
  * array
  */
 Buffer::Buffer(uint8_t* buf, uint32_t size) :
-    base(buf + size + 1),
+    base(buf + size),
     end(0),
     max_len(size),
     off(0)
@@ -174,3 +178,47 @@ void Codec::CheckIPv6ExtensionOrder(CodecData& codec, const IpProtocol ip_proto)
         codec.codec_flags |= CODEC_ROUTING_SEEN;
 }
 
+#ifdef UNIT_TEST
+TEST_CASE("init", "[buffer]")
+{
+    uint8_t raw_buf[2];
+    Buffer buf(&raw_buf[0], 1);
+    CHECK( buf.data() == &raw_buf[1] ); // 1 past the "known" buffer
+    CHECK( buf.size() == 0 );
+}
+
+TEST_CASE("alloc", "[buffer]")
+{
+    uint8_t raw_buf[1];
+    Buffer buf(raw_buf, 1);
+    buf.allocate(1);
+
+    CHECK( buf.data() == &raw_buf[0] );
+    CHECK( buf.size() == 1 );
+}
+
+TEST_CASE("multi alloc", "[buffer]")
+{
+    uint8_t raw_buf2[3];
+    Buffer buf2(raw_buf2, 3);
+    buf2.allocate(1);
+
+    CHECK( buf2.data() == &raw_buf2[2] );
+    CHECK( buf2.size() == 1 );
+
+    buf2.allocate(2);
+    CHECK( buf2.data() == &raw_buf2[0] );
+    CHECK( buf2.size() == 3 );
+}
+
+TEST_CASE("clear", "[buffer]")
+{
+    uint8_t raw_buf[2];
+    Buffer buf(raw_buf, 1);
+    buf.allocate(1);
+    buf.clear();
+    
+    CHECK( buf.data() == &raw_buf[1] ); // 1 past the "known" buffer
+    CHECK( buf.size() == 0 );
+}
+#endif
