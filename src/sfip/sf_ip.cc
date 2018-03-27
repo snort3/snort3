@@ -342,6 +342,17 @@ SfIpRet SfIp::set(const void* src, int fam)
     return SFIP_SUCCESS;
 }
 
+SfIpRet SfIp::set(const void* src)
+{
+    assert(src);
+    if ( ((const uint32_t*)src)[0] == 0 &&
+         ((const uint32_t*)src)[1] == 0 &&
+         ((const uint16_t*)src)[4] == 0 &&
+         ((const uint16_t*)src)[5] == 0xffff )
+        return set(&((const uint32_t*)src)[3], AF_INET);
+    return set(src, AF_INET6);
+}
+
 /* Obfuscates this IP with an obfuscation CIDR
     Makes this:  ob | (this & mask) */
 void SfIp::obfuscate(SfCidr* ob)

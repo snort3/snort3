@@ -62,16 +62,15 @@ void DaqMetaEventHandler::handle(DataEvent& event, Flow*)
 
     const Flow_Stats_t* fs = (const Flow_Stats_t*)ev->get_data();
 
+    SfIp src, dst;
     char shost[INET6_ADDRSTRLEN];
     char dhost[INET6_ADDRSTRLEN];
 
-    const uint32_t *sip = (const uint32_t*)fs->initiatorIp;
-    int fam = AF_INET;
-    if ( sip[1] || sip[2] || sip[3] )
-        fam = AF_INET6;
+    src.set(fs->initiatorIp);
+    dst.set(fs->responderIp);
 
-    inet_ntop(fam, fs->initiatorIp, shost, INET6_ADDRSTRLEN);
-    inet_ntop(fam, fs->responderIp, dhost, INET6_ADDRSTRLEN);
+    src.ntop(shost, sizeof(shost));
+    dst.ntop(dhost, sizeof(dhost));
 
     int vlan_tag = fs->vlan_tag == 0xfff ?  0 : fs->vlan_tag;
 

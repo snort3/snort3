@@ -39,7 +39,7 @@ class StreamHAClient : public FlowHAClient
 {
 public:
     StreamHAClient() : FlowHAClient(sizeof(SessionHAContent), true) { }
-    bool consume(snort::Flow*&, FlowKey*, HAMessage*) override;
+    bool consume(snort::Flow*&, snort::FlowKey*, HAMessage*) override;
     bool produce(snort::Flow*, HAMessage*) override;
     bool is_update_required(snort::Flow*) override;
     bool is_delete_required(snort::Flow*) override;
@@ -53,7 +53,7 @@ public:
     ProtocolHA(PktType);
     virtual ~ProtocolHA();
     virtual void delete_session(snort::Flow*) { }
-    virtual snort::Flow* create_session(FlowKey*) { return nullptr; }
+    virtual snort::Flow* create_session(snort::FlowKey*) { return nullptr; }
     virtual void deactivate_session(snort::Flow*) { }
     virtual void process_deletion(snort::Flow*);
 

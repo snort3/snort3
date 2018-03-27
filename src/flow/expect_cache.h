@@ -111,11 +111,11 @@ public:
 private:
     void prune();
 
-    ExpectNode* get_node(FlowKey&, bool&);
+    ExpectNode* get_node(snort::FlowKey&, bool&);
     snort::ExpectFlow* get_flow(ExpectNode*, uint32_t, int16_t);
     bool set_data(ExpectNode*, snort::ExpectFlow*&, snort::FlowData*);
-    ExpectNode* find_node_by_packet(snort::Packet*, FlowKey&);
-    bool process_expected(ExpectNode*, FlowKey&, snort::Packet*, snort::Flow*);
+    ExpectNode* find_node_by_packet(snort::Packet*, snort::FlowKey&);
+    bool process_expected(ExpectNode*, snort::FlowKey&, snort::Packet*, snort::Flow*);
 
 private:
     class ZHash* hash_table;

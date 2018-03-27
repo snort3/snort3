@@ -33,10 +33,9 @@ struct HashFnc;
 namespace snort
 {
 struct SfIp;
-}
 
 PADDING_GUARD_BEGIN
-struct FlowKey
+struct SO_PUBLIC FlowKey
 {
     uint32_t   ip_l[4]; /* Low IP */
     uint32_t   ip_h[4]; /* High IP */
@@ -88,6 +87,8 @@ private:
         uint32_t mplsId, bool order = true);
 };
 PADDING_GUARD_END
+
+}
 
 #endif
 

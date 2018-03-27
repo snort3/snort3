@@ -37,11 +37,11 @@ namespace snort
 {
 class Flow;
 class FlowData;
+struct FlowKey;
 struct Packet;
 struct SfIp;
 }
 class FlowCache;
-struct FlowKey;
 
 enum class PruneReason : uint8_t;
 
@@ -59,8 +59,8 @@ public:
     void process_user(snort::Packet*);
     void process_file(snort::Packet*);
 
-    snort::Flow* find_flow(const FlowKey*);
-    snort::Flow* new_flow(const FlowKey*);
+    snort::Flow* find_flow(const snort::FlowKey*);
+    snort::Flow* new_flow(const snort::FlowKey*);
 
     void init_ip(const FlowConfig&, snort::InspectSsnFunc);
     void init_icmp(const FlowConfig&, snort::InspectSsnFunc);
@@ -70,7 +70,7 @@ public:
     void init_file(const FlowConfig&, snort::InspectSsnFunc);
     void init_exp(uint32_t max);
 
-    void delete_flow(const FlowKey*);
+    void delete_flow(const snort::FlowKey*);
     void delete_flow(snort::Flow*, PruneReason);
     void purge_flows(PktType);
     bool prune_one(PruneReason, bool do_cleanup);
@@ -102,7 +102,7 @@ private:
     FlowCache* get_cache(PktType);
     const FlowCache* get_cache(PktType) const;
 
-    void set_key(FlowKey*, snort::Packet*);
+    void set_key(snort::FlowKey*, snort::Packet*);
 
     unsigned process(snort::Flow*, snort::Packet*);
     void preemptive_cleanup();

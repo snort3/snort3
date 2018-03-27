@@ -200,7 +200,7 @@ enum
 struct FTP_DATA_SESSION
 {
     FTP_TELNET_SESSION ft_ssn;
-    FlowKey ftp_key;
+    snort::FlowKey ftp_key;
     char* filename;
     int data_chan;
     int file_xfer_info;

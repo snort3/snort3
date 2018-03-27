@@ -33,7 +33,7 @@ class IpHA : public ProtocolHA
 {
 public:
     IpHA() : ProtocolHA(PktType::IP) { }
-    snort::Flow* create_session(FlowKey*) override;
+    snort::Flow* create_session(snort::FlowKey*) override;
 
 private:
 };

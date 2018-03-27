@@ -33,7 +33,7 @@ class UdpHA : public ProtocolHA
 {
 public:
     UdpHA() : ProtocolHA(PktType::UDP) { }
-    snort::Flow* create_session(FlowKey*) override;
+    snort::Flow* create_session(snort::FlowKey*) override;
 
 private:
 };

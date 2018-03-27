@@ -133,6 +133,30 @@ static void parse_pci(HextImpl* impl, const char* s)
         impl->pci.flags &= ~DAQ_USR_FLAG_TO_SERVER;
 }
 
+static bool is_ipv4(char const* src)
+{
+    struct in6_addr temp;
+    if ( inet_pton(AF_INET, src, &temp) == 1 )
+        return true;
+    else if ( inet_pton(AF_INET6, src, &temp) == 1 )
+        return false;
+
+    return false;
+}
+
+void IpAddr(uint32_t* addr, char const* ip)
+{
+    if ( is_ipv4(ip) ) {
+        addr[0] = 0;
+        addr[1] = 0;
+        addr[2] = htonl(0xffff);
+        inet_pton(AF_INET, ip, &addr[3]);
+    }
+    else {
+        inet_pton(AF_INET6, ip, addr);
+    }
+}
+
 enum Search {
     I_ZONE,
     E_ZONE,
@@ -179,17 +203,15 @@ static void set_flowstats(Flow_Stats_t* f, enum Search state, const char* s)
             break;
 
         case SRC_HOST:
-            if (inet_pton(AF_INET, s, (uint32_t*)&f->initiatorIp) == 0)
-                inet_pton(AF_INET6, s, (uint32_t*)&f->initiatorIp);
-            break;
-
-        case DST_HOST:
-            if (inet_pton(AF_INET, s, (uint32_t*)&f->responderIp) == 0)
-                inet_pton(AF_INET6, s, (uint32_t*)&f->responderIp);
+            IpAddr((uint32_t*)&f->initiatorIp, s);
             break;
 
         case SRC_PORT:
             f->initiatorPort = htons(atoi(s));
+            break;
+
+        case DST_HOST:
+            IpAddr((uint32_t*)&f->responderIp, s);
             break;
 
         case DST_PORT:

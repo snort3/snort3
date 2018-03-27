@@ -33,7 +33,7 @@ class TcpHA : public ProtocolHA
 {
 public:
     TcpHA() : ProtocolHA(PktType::TCP) { }
-    snort::Flow* create_session(FlowKey*) override;
+    snort::Flow* create_session(snort::FlowKey*) override;
     void deactivate_session(snort::Flow*) override;
 
 private:

@@ -51,6 +51,9 @@ struct SO_PUBLIC SfIp
     SfIpRet set(const char* src, uint16_t* srcBits = nullptr);
     /* Sets to a raw source IP (4 or 16 bytes, according to family) */
     SfIpRet set(const void* src, int fam);
+    /* Sets to a raw source IP, source must be a 128 bit IPv6 (detects IPv4 mapped IPv6)
+     * This is specifically for conversion of Flow_Stats_t ipv4 mapped ipv6 addresses */
+    SfIpRet set(const void* src);
     /* Converts string IP format to an array of values. Also checks IP address format. */
     SfIpRet pton(const int fam, const char* ip);
 

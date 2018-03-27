@@ -33,7 +33,7 @@ class IcmpHA : public ProtocolHA
 {
 public:
     IcmpHA() : ProtocolHA(PktType::ICMP) { }
-    snort::Flow* create_session(FlowKey*) override;
+    snort::Flow* create_session(snort::FlowKey*) override;
 
 private:
 };

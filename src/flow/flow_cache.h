@@ -34,8 +34,8 @@
 namespace snort
 {
 class Flow;
-}
 struct FlowKey;
+}
 
 class FlowCache
 {
@@ -48,8 +48,8 @@ public:
 
     void push(snort::Flow*);
 
-    snort::Flow* find(const FlowKey*);
-    snort::Flow* get(const FlowKey*);
+    snort::Flow* find(const snort::FlowKey*);
+    snort::Flow* get(const snort::FlowKey*);
 
     int release(snort::Flow*, PruneReason = PruneReason::NONE, bool do_cleanup = true);
 

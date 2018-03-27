@@ -95,11 +95,11 @@
 
 class BitOp;
 class FlowHAState;
-struct FlowKey;
 class Session;
 
 namespace snort
 {
+struct FlowKey;
 struct Packet;
 
 typedef void (* StreamAppDataFree)(void*);

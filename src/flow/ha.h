@@ -30,8 +30,8 @@
 namespace snort
 {
 class Flow;
-}
 struct FlowKey;
+}
 
 // The FlowHAHandle is the dynamically allocated index used uniquely identify
 //   the client.  Used both in the API and HA messages.
@@ -126,7 +126,7 @@ class FlowHAClient
 {
 public:
     virtual ~FlowHAClient() = default;
-    virtual bool consume(snort::Flow*&, FlowKey*, HAMessage*) { return false; }
+    virtual bool consume(snort::Flow*&, snort::FlowKey*, HAMessage*) { return false; }
     virtual bool produce(snort::Flow*, HAMessage*) { return false; }
     virtual bool is_update_required(snort::Flow*) { return false; }
     virtual bool is_delete_required(snort::Flow*) { return false; }
