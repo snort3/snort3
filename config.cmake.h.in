@@ -127,16 +127,16 @@
 /*  Availability of specific library functions */
 
 /* Define to 1 if you have the `mallinfo' function. */
-#define HAVE_MALLINFO 1
+#cmakedefine HAVE_MALLINFO 1
 
 /* Define to 1 if you have the `malloc_trim' function. */
-#define HAVE_MALLOC_TRIM 1
+#cmakedefine HAVE_MALLOC_TRIM 1
 
 /* Define to 1 if you have the `memrchr' function. */
-#define HAVE_MEMRCHR 1
+#cmakedefine HAVE_MEMRCHR 1
 
 /* Define to 1 if you have the `sigaction' function. */
-#define HAVE_SIGACTION 1
+#cmakedefine HAVE_SIGACTION 1
 
 
 /*  Available compiler options */
