@@ -95,7 +95,7 @@ AcAppIdDebug::AcAppIdDebug(AppIdDebugSessionConstraints* cs)
 {
     if (cs)
     {
-        memcpy(&constraints, cs, sizeof(constraints));
+        constraints.set(*cs);
         enable = true;
     }
 }
@@ -120,35 +120,25 @@ static int enable_debug(lua_State* L)
     const char* dipstr = luaL_optstring(L, 4, nullptr);
     int dport = luaL_optint(L, 5, 0);
 
-    SfIp sip, dip;
+    AppIdDebugSessionConstraints constraints = { };
     if (sipstr)
     {
-        if (sip.set(sipstr) != SFIP_SUCCESS)
+        if (constraints.sip.set(sipstr) != SFIP_SUCCESS)
             LogMessage("Invalid source IP address provided: %s\n", sipstr);
+        else if (constraints.sip.is_set())
+            constraints.sip_flag = true;
     }
 
     if (dipstr)
     {
-        if (dip.set(dipstr) != SFIP_SUCCESS)
+        if (constraints.dip.set(dipstr) != SFIP_SUCCESS)
             LogMessage("Invalid destination IP address provided: %s\n", dipstr);
+        else if (constraints.dip.is_set())
+            constraints.dip_flag = true;
     }
-
-    AppIdDebugSessionConstraints constraints = { };
 
     if (proto)
         constraints.protocol = (IpProtocol) proto;
-
-    if (sip.is_set())
-    {
-        memcpy(&constraints.sip, sip.get_ip6_ptr(), sizeof(constraints.sip));
-        constraints.sip_flag = true;
-    }
-
-    if (dip.is_set())
-    {
-        memcpy(&constraints.dip, dip.get_ip6_ptr(), sizeof(constraints.dip));
-        constraints.dip_flag = true;
-    }
 
     constraints.sport = sport;
     constraints.dport = dport;

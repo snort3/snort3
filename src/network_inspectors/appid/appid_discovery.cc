@@ -610,7 +610,8 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
         return;
     }
 
-    appidDebug->activate(p->flow, asd, inspector.get_appid_config()->mod_config->log_all_sessions);
+    if (appidDebug->is_enabled())
+        appidDebug->activate(p->flow, asd, inspector.get_appid_config()->mod_config->log_all_sessions);
 
     if ( is_packet_ignored(asd, p, direction) )
         return;

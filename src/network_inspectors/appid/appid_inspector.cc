@@ -157,6 +157,9 @@ void AppIdInspector::tinit()
     http_matchers->finalize();
     ssl_detector_process_patterns();
     dns_host_detector_process_patterns();
+    appidDebug = new AppIdDebug();
+    if (active_config->mod_config and active_config->mod_config->log_all_sessions)
+        appidDebug->set_enabled(true);
 }
 
 void AppIdInspector::tterm()
@@ -172,6 +175,8 @@ void AppIdInspector::tterm()
     LuaDetectorManager::terminate();
     AppIdDiscovery::release_plugins();
     delete HttpPatternMatchers::get_instance();
+    delete appidDebug;
+    appidDebug = nullptr;
 }
 
 void AppIdInspector::eval(Packet* p)
@@ -216,18 +221,12 @@ static void appid_inspector_pterm()
 
 static void appid_inspector_tinit()
 {
-    uint32_t snort_instance = get_instance_id();
-    appidDebug = new AppIdDebug(snort_instance);
-
     AppIdPegCounts::init_pegs();
 }
 
 static void appid_inspector_tterm()
 {
     AppIdPegCounts::cleanup_pegs();
-
-    delete appidDebug;
-    appidDebug = nullptr;
 }
 
 static Inspector* appid_inspector_ctor(Module* m)

@@ -37,6 +37,8 @@
 
 // Mocks
 
+unsigned get_instance_id() { return 3; }
+
 class AppIdInspector
 {
 public:
@@ -53,27 +55,24 @@ AppIdSession::~AppIdSession() = default;
 // Utility functions
 
 static void SetConstraints(IpProtocol protocol,    // use IpProtocol::PROTO_NOT_SET for "any"
-                           const char* sipstr, uint16_t sport,
-                           const char* dipstr, uint16_t dport,
-                           AppIdDebugSessionConstraints& constraints)
+                const char* sipstr, uint16_t sport, const char* dipstr, uint16_t dport,
+                AppIdDebugSessionConstraints& constraints)
 {
     SfIp sip, dip;
     if (sipstr)
-        sip.set(sipstr);
+    {
+        constraints.sip.set(sipstr);
+        if (constraints.sip.is_set())
+            constraints.sip_flag = true;
+    }
     if (dipstr)
-        dip.set(dipstr);
+    {
+        constraints.dip.set(dipstr);
+        if (constraints.dip.is_set())
+            constraints.dip_flag = true;
+    }
 
     constraints.protocol = protocol;
-    if (sip.is_set())
-    {
-        memcpy(&constraints.sip, sip.get_ip6_ptr(), sizeof(constraints.sip));
-        constraints.sip_flag = true;
-    }
-    if (dip.is_set())
-    {
-        memcpy(&constraints.dip, dip.get_ip6_ptr(), sizeof(constraints.dip));
-        constraints.dip_flag = true;
-    }
     constraints.sport = sport;
     constraints.dport = dport;
 }
@@ -84,7 +83,7 @@ TEST_GROUP(appid_debug)
 {
     void setup() override
     {
-        appidDebug = new AppIdDebug(3);
+        appidDebug = new AppIdDebug();
     }
 
     void teardown() override
@@ -118,7 +117,7 @@ TEST(appid_debug, basic_test)
     session.common.initiator_ip = sip;
     // activate()
     appidDebug->activate(sip.get_ip6_ptr(), dip.get_ip6_ptr(), sport, dport,
-                         protocol, address_space_id, &session, false);
+        protocol, 4, address_space_id, &session, false);
     CHECK_EQUAL(appidDebug->is_active(), true);
 
     // get_debug_session()
@@ -151,7 +150,7 @@ TEST(appid_debug, reverse_direction_activate_test)
     session.common.initiator_ip = dip;
     // activate()
     appidDebug->activate(sip.get_ip6_ptr(), dip.get_ip6_ptr(), sport, dport,
-                         protocol, address_space_id, &session, false);
+        protocol, 4, address_space_id, &session, false);
     CHECK_EQUAL(appidDebug->is_active(), true);
 
     // get_debug_session()
@@ -164,7 +163,8 @@ TEST(appid_debug, ipv6_test)
 {
     // set_constraints()
     AppIdDebugSessionConstraints constraints = { };
-    SetConstraints(IpProtocol::UDP, "2001:db8:85a3::8a2e:370:7334", 1234, "2001:db8:85a3::8a2e:370:7335", 443, constraints);
+    SetConstraints(IpProtocol::UDP, "2001:db8:85a3::8a2e:370:7334", 1234,
+        "2001:db8:85a3::8a2e:370:7335", 443, constraints);
     appidDebug->set_constraints("appid", &constraints);
     CHECK_EQUAL(appidDebug->is_enabled(), true);
 
@@ -184,11 +184,12 @@ TEST(appid_debug, ipv6_test)
     session.common.initiator_ip = sip;
     // activate()
     appidDebug->activate(sip.get_ip6_ptr(), dip.get_ip6_ptr(), sport, dport,
-                         protocol, address_space_id, &session, false);
+        protocol, 6, address_space_id, &session, false);
     CHECK_EQUAL(appidDebug->is_active(), true);
 
     // get_debug_session()
-    const char* str = "2001:db8:85a3::8a2e:370:7334 1234 -> 2001:db8:85a3::8a2e:370:7335 443 17 AS=100 ID=3";
+    const char* str = "2001:0db8:85a3:0000:0000:8a2e:0370:7334 1234 -> "
+            "2001:0db8:85a3:0000:0000:8a2e:0370:7335 443 17 AS=100 ID=3";
     CHECK_TRUE(strcmp(appidDebug->get_debug_session(), str) == 0);
 }
 
@@ -217,7 +218,7 @@ TEST(appid_debug, no_initiator_port_test)
     session.common.initiator_ip = sip;
     // activate()
     appidDebug->activate(sip.get_ip6_ptr(), dip.get_ip6_ptr(), sport, dport,
-                         protocol, address_space_id, &session, false);
+        protocol, 4, address_space_id, &session, false);
     CHECK_EQUAL(appidDebug->is_active(), true);
 
     // get_debug_session()
@@ -250,7 +251,7 @@ TEST(appid_debug, no_initiator_port_reversed_test)
     session.common.initiator_ip = dip;
     // activate()
     appidDebug->activate(sip.get_ip6_ptr(), dip.get_ip6_ptr(), sport, dport,
-                         protocol, address_space_id, &session, false);
+        protocol, 4, address_space_id, &session, false);
     CHECK_EQUAL(appidDebug->is_active(), true);
 
     // get_debug_session()
@@ -275,8 +276,7 @@ TEST(appid_debug, null_session_test)
     uint16_t address_space_id = 0;
     // activate()
     appidDebug->activate(sip.get_ip6_ptr(), dip.get_ip6_ptr(), sport, dport,
-                         protocol, address_space_id,
-                         nullptr, false);    // null session
+        protocol, 4, address_space_id, nullptr, false);    // null session
     CHECK_EQUAL(appidDebug->is_active(), false);    // not active
 }
 
@@ -319,7 +319,7 @@ TEST(appid_debug, no_match_test)
     session.common.initiator_ip = sip;
     // activate()
     appidDebug->activate(sip.get_ip6_ptr(), dip.get_ip6_ptr(), sport, dport,
-                         protocol, address_space_id, &session, false);
+        protocol, 4, address_space_id, &session, false);
     CHECK_EQUAL(appidDebug->is_active(), false);    // not active (no match)
 }
 
@@ -348,7 +348,7 @@ TEST(appid_debug, all_constraints_test)
     session.common.initiator_ip = sip;
     // activate()
     appidDebug->activate(sip.get_ip6_ptr(), dip.get_ip6_ptr(), sport, dport,
-                         protocol, address_space_id, &session, false);
+        protocol, 4, address_space_id, &session, false);
     CHECK_EQUAL(appidDebug->is_active(), true);
 
     // get_debug_session()
@@ -381,7 +381,7 @@ TEST(appid_debug, just_proto_test)
     session.common.initiator_ip = sip;
     // activate()
     appidDebug->activate(sip.get_ip6_ptr(), dip.get_ip6_ptr(), sport, dport,
-                         protocol, address_space_id, &session, false);
+        protocol, 4, address_space_id, &session, false);
     CHECK_EQUAL(appidDebug->is_active(), true);
 
     // get_debug_session()
@@ -414,7 +414,7 @@ TEST(appid_debug, just_ip_test)
     session.common.initiator_ip = sip;
     // activate()
     appidDebug->activate(sip.get_ip6_ptr(), dip.get_ip6_ptr(), sport, dport,
-                         protocol, address_space_id, &session, false);
+        protocol, 4, address_space_id, &session, false);
     CHECK_EQUAL(appidDebug->is_active(), true);
 
     // get_debug_session()
@@ -447,39 +447,12 @@ TEST(appid_debug, just_port_test)
     session.common.initiator_ip = sip;
     // activate()
     appidDebug->activate(sip.get_ip6_ptr(), dip.get_ip6_ptr(), sport, dport,
-                         protocol, address_space_id, &session, false);
+        protocol, 4, address_space_id, &session, false);
     CHECK_EQUAL(appidDebug->is_active(), true);
 
     // get_debug_session()
     const char* str = "10.1.2.3 48620 -> 10.9.8.7 80 6 AS=0 ID=3";
     CHECK_TRUE(strcmp(appidDebug->get_debug_session(), str) == 0);
-}
-
-// Clear constraints (disables it so it won't activate).
-TEST(appid_debug, clear_constraints_test)
-{
-    // set_constraints()
-    appidDebug->set_constraints("appid", nullptr);    // clear constraints
-    CHECK_EQUAL(appidDebug->is_enabled(), false);    // disabled
-
-    SfIp sip;
-    SfIp dip;
-    AppIdInspector inspector;
-    AppIdSession session(IpProtocol::PROTO_NOT_SET, nullptr, 0, inspector);
-    // This packet...
-    sip.set("10.1.2.3");
-    dip.set("10.9.8.7");
-    uint16_t sport = 48620;
-    uint16_t dport = 80;
-    IpProtocol protocol = IpProtocol::TCP;
-    uint16_t address_space_id = 0;
-    // The session...
-    session.common.initiator_port = sport;
-    session.common.initiator_ip = sip;
-    // activate()
-    appidDebug->activate(sip.get_ip6_ptr(), dip.get_ip6_ptr(), sport, dport,
-                         protocol, address_space_id, &session, false);
-    CHECK_EQUAL(appidDebug->is_active(), false);    // won't activate (since disabled)
 }
 
 int main(int argc, char** argv)
