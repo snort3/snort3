@@ -134,9 +134,16 @@ public:
     virtual const PegInfo* get_pegs() const
     { return nullptr; }
 
+    virtual bool counts_need_prep() const
+    { return false; }
+
+    virtual void prep_counts() { }
+
     // counts and profile are thread local
     virtual PegCount* get_counts() const
     { return nullptr; }
+
+    virtual PegCount get_global_count(const char* name) const;
 
     virtual int get_num_counts() const
     { return num_counts; }

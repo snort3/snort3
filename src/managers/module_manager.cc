@@ -1434,10 +1434,10 @@ void ModuleManager::accumulate(SnortConfig*)
     for ( auto p : s_modules )
     {
         std::lock_guard<std::mutex> lock(stats_mutex);
+        p->mod->prep_counts();
         p->mod->sum_stats(true);
     }
     std::lock_guard<std::mutex> lock(stats_mutex);
-    pc_sum();
 }
 
 void ModuleManager::reset_stats(SnortConfig*)

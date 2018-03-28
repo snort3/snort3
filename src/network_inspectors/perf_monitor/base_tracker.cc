@@ -46,9 +46,12 @@ BaseTracker::BaseTracker(PerfConfig* perf) : PerfTracker(perf, PERF_NAME "_base"
 
 void BaseTracker::process(bool summary)
 {
+    for ( Module* mod : config->mods_to_prep )
+        mod->prep_counts();
+
     write();
 
-    for ( auto const& mod : config->modules )
+    for ( const ModuleConfig& mod : config->modules )
         if ( !summary )
             mod.ptr->sum_stats(false);
 }

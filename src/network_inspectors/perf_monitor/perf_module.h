@@ -84,6 +84,7 @@ struct PerfConfig
     PerfFormat format = PerfFormat::CSV;
     PerfOutput output = PerfOutput::TO_FILE;
     std::vector<ModuleConfig> modules;
+    std::vector<snort::Module*> mods_to_prep;
 
     bool resolve();
 };

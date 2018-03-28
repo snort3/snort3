@@ -163,6 +163,19 @@ void Module::reset_stats()
         counts[i] = 0;
 }
 
+PegCount Module::get_global_count(const char* name) const
+{
+    const PegInfo* infos = get_pegs();
+
+    for ( unsigned i = 0; infos[i].name; i++ )
+    {
+        if ( strcmp(name, infos[i].name) == 0 )
+            return counts[i];
+    }
+    assert(false); // wrong name = programmer error
+    return 0;
+}
+
 bool Module::verified_begin(const char* fqn, int idx, SnortConfig* c)
 {
     table_level++;

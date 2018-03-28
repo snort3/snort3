@@ -41,6 +41,10 @@ public:
 
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
+    void prep_counts() override;
+
+    bool counts_need_prep() const override
+    { return true; }
 
     Usage get_usage() const override
     { return GLOBAL; }

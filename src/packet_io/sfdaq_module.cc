@@ -29,11 +29,61 @@
 #include "log/messages.h"
 #include "main/snort_config.h"
 
+#include "active.h"
+#include "sfdaq.h"
 #include "sfdaq_config.h"
+#include "trough.h"
 
 using namespace snort;
 
 #define sfdaq_help "configure packet acquisition interface"
+
+struct DAQStats
+{
+    PegCount pcaps;
+    PegCount received;
+    PegCount analyzed;
+    PegCount dropped;
+    PegCount filtered;
+    PegCount outstanding;
+    PegCount injected;
+    PegCount verdicts[MAX_DAQ_VERDICT];
+    PegCount internal_blacklist;
+    PegCount internal_whitelist;
+    PegCount skipped;
+    PegCount idle;
+    PegCount rx_bytes;
+};
+
+const PegInfo daq_names[] =
+{
+    { CountType::MAX, "pcaps", "total files and interfaces processed" },
+    { CountType::SUM, "received", "total packets received from DAQ" },
+    { CountType::SUM, "analyzed", "total packets analyzed from DAQ" },
+    { CountType::SUM, "dropped", "packets dropped" },
+    { CountType::SUM, "filtered", "packets filtered out" },
+    { CountType::SUM, "outstanding", "packets unprocessed" },
+    { CountType::SUM, "injected", "active responses or replacements" },
+    { CountType::SUM, "allow", "total allow verdicts" },
+    { CountType::SUM, "block", "total block verdicts" },
+    { CountType::SUM, "replace", "total replace verdicts" },
+    { CountType::SUM, "whitelist", "total whitelist verdicts" },
+    { CountType::SUM, "blacklist", "total blacklist verdicts" },
+    { CountType::SUM, "ignore", "total ignore verdicts" },
+    { CountType::SUM, "retry", "total retry verdicts" },
+
+    // FIXIT-L these are not exactly DAQ counts - but they are related
+    { CountType::SUM, "internal_blacklist",
+        "packets blacklisted internally due to lack of DAQ support" },
+    { CountType::SUM, "internal_whitelist",
+        "packets whitelisted internally due to lack of DAQ support" },
+    { CountType::SUM, "skipped", "packets skipped at startup" },
+    { CountType::SUM, "idle", "attempts to acquire from DAQ without available packets" },
+    { CountType::SUM, "rx_bytes", "total bytes received" },
+    { CountType::END, nullptr, nullptr }
+};
+
+static THREAD_LOCAL DAQStats stats;
 
 static const Parameter string_list_param[] =
 {
@@ -167,9 +217,71 @@ const PegInfo* SFDAQModule::get_pegs() const
 
 PegCount* SFDAQModule::get_counts() const
 {
-    static THREAD_LOCAL DAQStats ds;
+    return (PegCount*) &stats;
+}
 
-    get_daq_stats(ds);
-    return (PegCount*) &ds;
+static DAQ_Stats_t operator-(const DAQ_Stats_t& left, const DAQ_Stats_t& right)
+{
+    DAQ_Stats_t ret;
+
+    ret.hw_packets_received = left.hw_packets_received - right.hw_packets_received;
+    ret.hw_packets_dropped = left.hw_packets_dropped - right.hw_packets_dropped;
+    ret.packets_received = left.packets_received - right.packets_received;
+    ret.packets_filtered = left.packets_filtered - right.packets_filtered;
+    ret.packets_injected = left.packets_injected - right.packets_injected;
+
+    for ( unsigned i = 0; i < MAX_DAQ_VERDICT; i++ )
+        ret.verdicts[i] = left.verdicts[i] - right.verdicts[i];
+
+    return ret;
+}
+
+void SFDAQModule::prep_counts()
+{
+    static THREAD_LOCAL DAQ_Stats_t sfdaq_stats;
+    static THREAD_LOCAL PegCount last_skipped = 0;
+    static THREAD_LOCAL bool did_init = false;
+
+    if ( !did_init )
+    {
+        memset(&sfdaq_stats, 0, sizeof(DAQ_Stats_t));
+        did_init = true;
+    }
+
+    if ( SFDAQ::get_local_instance() == nullptr )
+        return;
+
+    DAQ_Stats_t new_sfdaq_stats = *SFDAQ::get_stats();
+
+    // must subtract explicitly; can't zero; daq stats are cumulative ...
+    DAQ_Stats_t sfdaq_stats_delta = new_sfdaq_stats - sfdaq_stats;
+
+    uint64_t pkts_out = new_sfdaq_stats.hw_packets_received -
+                        new_sfdaq_stats.packets_filtered -
+                        new_sfdaq_stats.packets_received;
+
+    stats.pcaps = Trough::get_file_count();
+    stats.received = sfdaq_stats_delta.hw_packets_received;
+    stats.analyzed = sfdaq_stats_delta.packets_received;
+    stats.dropped = sfdaq_stats_delta.hw_packets_dropped;
+    stats.filtered =  sfdaq_stats_delta.packets_filtered;
+    stats.outstanding =  pkts_out;
+    stats.injected =  sfdaq_stats_delta.packets_injected;
+
+    for ( unsigned i = 0; i < MAX_DAQ_VERDICT; i++ )
+        stats.verdicts[i] = sfdaq_stats_delta.verdicts[i];
+
+    stats.internal_blacklist = aux_counts.internal_blacklist;
+    stats.internal_whitelist = aux_counts.internal_whitelist;
+    stats.skipped = SnortConfig::get_conf()->pkt_skip - last_skipped;
+    stats.idle = aux_counts.idle;
+    stats.rx_bytes = aux_counts.rx_bytes;
+
+    memset(&aux_counts, 0, sizeof(AuxCount));
+    last_skipped = stats.skipped;
+
+    sfdaq_stats = new_sfdaq_stats;
+    for ( unsigned i = 0; i < MAX_DAQ_VERDICT; i++ )
+        sfdaq_stats.verdicts[i] = new_sfdaq_stats.verdicts[i];
 }
 

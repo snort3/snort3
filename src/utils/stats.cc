@@ -26,6 +26,7 @@
 #include "detection/detection_engine.h"
 #include "file_api/file_stats.h"
 #include "filters/sfthreshold.h"
+#include "framework/module.h"
 #include "helpers/process.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
@@ -44,11 +45,8 @@ using namespace snort;
 #define STATS_SEPARATOR \
     "--------------------------------------------------"
 
-static DAQ_Stats_t g_daq_stats;
-static AuxCount gaux;
-
-THREAD_LOCAL PacketCount pc;
 THREAD_LOCAL AuxCount aux_counts;
+THREAD_LOCAL PacketCount pc;
 ProcessCount proc_stats;
 
 PegCount get_packet_number()
@@ -136,6 +134,7 @@ static void timing_stats()
     struct timeval difftime;
     TIMERSUB(&endtime, &starttime, &difftime);
 
+
     uint32_t tmp = (uint32_t)difftime.tv_sec;
     uint32_t total_secs = tmp;
     if ( total_secs < 1 )
@@ -154,7 +153,7 @@ static void timing_stats()
     LogMessage("%25.25s: %lu.%lu\n", "seconds",
         (unsigned long)difftime.tv_sec, (unsigned long)difftime.tv_usec);
 
-    PegCount num_pkts = g_daq_stats.hw_packets_received;
+    PegCount num_pkts = ModuleManager::get_module("daq")->get_global_count("received");
     LogMessage("%25.25s: " STDu64 "\n", "packets", num_pkts);
 
     uint64_t pps = (num_pkts / total_secs);
@@ -162,35 +161,6 @@ static void timing_stats()
 }
 
 //-------------------------------------------------------------------------
-// FIXIT-L need better encapsulation of these daq counts by their modules
-
-const PegInfo daq_names[] =
-{
-    { CountType::SUM, "pcaps", "total files and interfaces processed" },
-    { CountType::SUM, "received", "total packets received from DAQ" },
-    { CountType::SUM, "analyzed", "total packets analyzed from DAQ" },
-    { CountType::SUM, "dropped", "packets dropped" },
-    { CountType::SUM, "filtered", "packets filtered out" },
-    { CountType::SUM, "outstanding", "packets unprocessed" },
-    { CountType::SUM, "injected", "active responses or replacements" },
-    { CountType::SUM, "allow", "total allow verdicts" },
-    { CountType::SUM, "block", "total block verdicts" },
-    { CountType::SUM, "replace", "total replace verdicts" },
-    { CountType::SUM, "whitelist", "total whitelist verdicts" },
-    { CountType::SUM, "blacklist", "total blacklist verdicts" },
-    { CountType::SUM, "ignore", "total ignore verdicts" },
-    { CountType::SUM, "retry", "total retry verdicts" },
-
-    // FIXIT-L these are not exactly DAQ counts - but they are related
-    { CountType::SUM, "internal_blacklist",
-        "packets blacklisted internally due to lack of DAQ support" },
-    { CountType::SUM, "internal_whitelist",
-        "packets whitelisted internally due to lack of DAQ support" },
-    { CountType::SUM, "skipped", "packets skipped at startup" },
-    { CountType::SUM, "idle", "attempts to acquire from DAQ without available packets" },
-    { CountType::SUM, "rx_bytes", "total bytes received" },
-    { CountType::END, nullptr, nullptr }
-};
 
 const PegInfo pc_names[] =
 {
@@ -233,64 +203,11 @@ const PegInfo proc_names[] =
 
 //-------------------------------------------------------------------------
 
-void pc_sum()
-{
-    // must sum explicitly; can't zero; daq stats are cumulative ...
-    const DAQ_Stats_t* daq_stats = SFDAQ::get_stats();
-
-    g_daq_stats.hw_packets_received += daq_stats->hw_packets_received;
-    g_daq_stats.hw_packets_dropped += daq_stats->hw_packets_dropped;
-    g_daq_stats.packets_received += daq_stats->packets_received;
-    g_daq_stats.packets_filtered += daq_stats->packets_filtered;
-    g_daq_stats.packets_injected += daq_stats->packets_injected;
-
-    for ( unsigned i = 0; i < MAX_DAQ_VERDICT; i++ )
-        g_daq_stats.verdicts[i] += daq_stats->verdicts[i];
-
-    sum_stats((PegCount*)&gaux, (PegCount*)&aux_counts, sizeof(aux_counts)/sizeof(PegCount));
-
-    memset(&aux_counts, 0, sizeof(aux_counts));
-}
-
-//-------------------------------------------------------------------------
-
-void get_daq_stats(DAQStats& daq_stats)
-{
-    uint64_t pkts_recv = g_daq_stats.hw_packets_received;
-    uint64_t pkts_drop = g_daq_stats.hw_packets_dropped;
-    uint64_t pkts_inj = g_daq_stats.packets_injected + Active::get_injects();
-
-    uint64_t pkts_out = 0;
-
-    if ( pkts_recv > g_daq_stats.packets_filtered + g_daq_stats.packets_received )
-        pkts_out = pkts_recv - g_daq_stats.packets_filtered - g_daq_stats.packets_received;
-
-    daq_stats.pcaps = Trough::get_file_count();
-    daq_stats.received = pkts_recv;
-    daq_stats.analyzed = g_daq_stats.packets_received;
-    daq_stats.dropped =  pkts_drop;
-    daq_stats.filtered =  g_daq_stats.packets_filtered;
-    daq_stats.outstanding =  pkts_out;
-    daq_stats.injected =  pkts_inj;
-
-    for ( unsigned i = 0; i < MAX_DAQ_VERDICT; i++ )
-        daq_stats.verdicts[i] = g_daq_stats.verdicts[i];
-
-    daq_stats.internal_blacklist = gaux.internal_blacklist;
-    daq_stats.internal_whitelist = gaux.internal_whitelist;
-    daq_stats.skipped = SnortConfig::get_conf()->pkt_skip;
-    daq_stats.idle = gaux.idle;
-    daq_stats.rx_bytes = gaux.rx_bytes;
-}
-
 void DropStats()
 {
-    DAQStats daq_stats;
-    get_daq_stats(daq_stats);
-
     LogLabel("Packet Statistics");
-    show_stats((PegCount*)&daq_stats, daq_names, array_size(daq_names)-1, "daq");
-
+    ModuleManager::get_module("daq")->show_stats();
+    
     PacketManager::dump_stats();
 
     LogLabel("Module Statistics");
@@ -357,6 +274,14 @@ static bool show_stat(
 
     LogCount(name, count, fh);
     return head;
+}
+
+void show_stats(PegCount* pegs, const PegInfo* info, const char* module_name)
+{
+    bool head = false;
+
+    for ( unsigned i = 0; info->name[i]; ++i )
+        head = show_stat(head, pegs[i], info[i].name, module_name);
 }
 
 void show_stats(

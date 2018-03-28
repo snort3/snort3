@@ -286,8 +286,13 @@ bool PerfConfig::resolve()
     }
 
     for ( auto& mod : modules )
+    {
         if ( !mod.resolve() )
             return false;
+
+        if ( mod.ptr->counts_need_prep() )
+            mods_to_prep.push_back(mod.ptr);
+    }
 
     return true;
 }
