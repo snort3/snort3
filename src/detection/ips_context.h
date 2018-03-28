@@ -40,6 +40,11 @@ struct SF_EVENTQ;
 namespace snort
 {
 struct SnortConfig;
+struct Replacement
+{
+    std::string data;
+    unsigned offset;
+};
 
 class SO_PUBLIC IpsContextData
 {
@@ -91,6 +96,8 @@ public:
     uint64_t context_num;
     ActiveRules active_rules;
     bool check_tags;
+
+    std::vector<Replacement> rpl;
 
     static const unsigned buf_size = Codec::PKT_MAX;
 

@@ -31,6 +31,7 @@
 #include "main/snort_types.h"
 
 struct DataPointer;
+struct Replacement;
 
 namespace snort
 {
@@ -74,6 +75,10 @@ public:
 
     static void set_data(unsigned id, IpsContextData*);
     static IpsContextData* get_data(unsigned id);
+
+    static void add_replacement(const std::string&, unsigned);
+    static bool get_replacement(std::string&, unsigned&);
+    static void clear_replacement();
 
     static bool detect(Packet*, bool offload_ok = false);
     static void inspect(Packet*);

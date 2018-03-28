@@ -23,6 +23,7 @@
 
 #include "act_replace.h"
 
+#include "detection/detection_engine.h"
 #include "framework/ips_action.h"
 #include "framework/module.h"
 #include "packet_io/active.h"
@@ -39,59 +40,46 @@ using namespace snort;
 // queue foo
 //--------------------------------------------------------------------------
 
-struct Replacement
-{
-    std::string data;
-    unsigned offset;
-};
-
-#define MAX_REPLACEMENTS 32
-static THREAD_LOCAL Replacement* rpl;
-static THREAD_LOCAL int num_rpl = 0;
-
 void Replace_ResetQueue()
 {
-    num_rpl = 0;
+    DetectionEngine::clear_replacement();
 }
 
 void Replace_QueueChange(const std::string& s, unsigned off)
 {
-    Replacement* r;
-
-    if ( num_rpl == MAX_REPLACEMENTS )
-        return;
-
-    r = rpl + num_rpl++;
-
-    r->data = s;
-    r->offset = off;
+    DetectionEngine::add_replacement(s, off);
 }
 
-static inline void Replace_ApplyChange(Packet* p, Replacement* r)
+static inline void Replace_ApplyChange(Packet* p, std::string& data, unsigned offset)
 {
-    uint8_t* start = const_cast<uint8_t*>(p->data) + r->offset;
+    uint8_t* start = const_cast<uint8_t*>(p->data) + offset;
     const uint8_t* end = p->data + p->dsize;
     unsigned len;
 
-    if ( (start + r->data.size()) >= end )
-        len = p->dsize - r->offset;
+    if ( (start + data.size()) >= end )
+        len = p->dsize - offset;
     else
-        len = r->data.size();
+        len = data.size();
 
-    memcpy(start, r->data.c_str(), len);
+    memcpy(start, data.c_str(), len);
 }
 
 static void Replace_ModifyPacket(Packet* p)
 {
-    if ( num_rpl == 0 )
-        return;
+    std::string data;
+    unsigned offset;
+    bool modified = false;
 
-    for ( int n = 0; n < num_rpl; n++ )
+    while ( DetectionEngine::get_replacement(data, offset) )
     {
-        Replace_ApplyChange(p, rpl+n);
+        modified = true;
+        Replace_ApplyChange(p, data, offset);
     }
-    p->packet_flags |= PKT_MODIFIED;
-    num_rpl = 0;
+
+    if ( modified )
+        p->packet_flags |= PKT_MODIFIED;
+
+    DetectionEngine::clear_replacement();
 }
 
 //-------------------------------------------------------------------------
@@ -183,12 +171,6 @@ static IpsAction* rep_ctor(Module* m)
 static void rep_dtor(IpsAction* p)
 { delete p; }
 
-static void rep_tinit()
-{ rpl = new Replacement[MAX_REPLACEMENTS]; }
-
-static void rep_tterm()
-{ delete[] rpl; }
-
 static ActionApi rep_api
 {
     {
@@ -206,8 +188,8 @@ static ActionApi rep_api
     Actions::ALERT,
     nullptr,
     nullptr,
-    rep_tinit,
-    rep_tterm,
+    nullptr,
+    nullptr,
     rep_ctor,
     rep_dtor
 };

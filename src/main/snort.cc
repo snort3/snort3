@@ -882,32 +882,32 @@ DAQ_Verdict Snort::process_packet(
 }
 
 // process (wire-only) packet verdicts here
-static DAQ_Verdict update_verdict(DAQ_Verdict verdict, int& inject)
+static DAQ_Verdict update_verdict(Packet* p, DAQ_Verdict verdict, int& inject)
 {
     if ( Active::packet_was_dropped() and Active::can_block() )
     {
         if ( verdict == DAQ_VERDICT_PASS )
             verdict = DAQ_VERDICT_BLOCK;
     }
-    else if ( s_packet->packet_flags & PKT_RESIZED )
+    else if ( p->packet_flags & PKT_RESIZED )
     {
         // we never increase, only trim, but daq doesn't support resizing wire packet
-        PacketManager::encode_update(s_packet);
+        PacketManager::encode_update(p);
 
-        if ( !SFDAQ::inject(s_packet->pkth, 0, s_packet->pkt, s_packet->pkth->pktlen) )
+        if ( !SFDAQ::inject(p->pkth, 0, p->pkt, p->pkth->pktlen) )
         {
             inject = 1;
             verdict = DAQ_VERDICT_BLOCK;
         }
     }
-    else if ( s_packet->packet_flags & PKT_MODIFIED )
+    else if ( p->packet_flags & PKT_MODIFIED )
     {
         // this packet was normalized and/or has replacements
-        PacketManager::encode_update(s_packet);
+        PacketManager::encode_update(p);
         verdict = DAQ_VERDICT_REPLACE;
     }
-    else if ( (s_packet->packet_flags & PKT_IGNORE) ||
-        (s_packet->flow && s_packet->flow->get_ignore_direction( ) == SSN_DIR_BOTH) )
+    else if ( (p->packet_flags & PKT_IGNORE) ||
+        (p->flow && p->flow->get_ignore_direction( ) == SSN_DIR_BOTH) )
     {
         if ( !Active::get_tunnel_bypass() )
         {
@@ -919,10 +919,10 @@ static DAQ_Verdict update_verdict(DAQ_Verdict verdict, int& inject)
             aux_counts.internal_whitelist++;
         }
     }
-    else if ( s_packet->ptrs.decode_flags & DECODE_PKT_TRUST )
+    else if ( p->ptrs.decode_flags & DECODE_PKT_TRUST )
     {
-        if (s_packet->flow)
-            s_packet->flow->set_ignore_direction(SSN_DIR_BOTH);
+        if (p->flow)
+            p->flow->set_ignore_direction(SSN_DIR_BOTH);
         verdict = DAQ_VERDICT_WHITELIST;
     }
     else
@@ -960,7 +960,7 @@ DAQ_Verdict Snort::packet_callback(
     ActionManager::execute(s_packet);
 
     int inject = 0;
-    verdict = update_verdict(verdict, inject);
+    verdict = update_verdict(s_packet, verdict, inject);
 
     PacketTracer::log("NAP id %u, IPS id %u, Verdict %s\n",
         get_network_policy()->policy_id, get_ips_policy()->policy_id,

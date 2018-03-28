@@ -24,6 +24,7 @@
 
 #include "detection_engine.h"
 
+#include "actions/act_replace.h"
 #include "events/sfeventq.h"
 #include "filters/sfthreshold.h"
 #include "framework/endianness.h"
@@ -162,6 +163,34 @@ void DetectionEngine::set_data(unsigned id, IpsContextData* p)
 
 IpsContextData* DetectionEngine::get_data(unsigned id)
 { return Snort::get_switcher()->get_context()->get_context_data(id); }
+
+void DetectionEngine::add_replacement(const std::string& s, unsigned off)
+{ 
+    Replacement r;
+
+    r.data = s;
+    r.offset = off;
+    Snort::get_switcher()->get_context()->rpl.push_back(r); 
+}
+
+bool DetectionEngine::get_replacement(std::string& s, unsigned& off)
+{ 
+    if ( Snort::get_switcher()->get_context()->rpl.empty() )
+        return false;
+
+    auto rep = Snort::get_switcher()->get_context()->rpl.back();
+
+    s = rep.data;
+    off = rep.offset;
+
+    Snort::get_switcher()->get_context()->rpl.pop_back();
+    return true;
+}
+
+void DetectionEngine::clear_replacement()
+{
+    Snort::get_switcher()->get_context()->rpl.clear();
+}
 
 void DetectionEngine::disable_all(Packet* p)
 { p->context->active_rules = IpsContext::NONE; }
