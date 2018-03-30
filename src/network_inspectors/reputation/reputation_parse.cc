@@ -240,11 +240,6 @@ static int64_t updateEntryInfo(INFO* current, INFO new_entry, SaveDest saveDest,
     }
     newIndex = lastInfo->listIndexes[i++];
 
-    DEBUG_WRAP(DebugMessage(DEBUG_REPUTATION, "Current IP reputation information: \n"); );
-    DEBUG_WRAP(ReputationPrintRepInfo(currentInfo, base); );
-    DEBUG_WRAP(DebugMessage(DEBUG_REPUTATION, "New IP reputation information: \n"); );
-    DEBUG_WRAP(ReputationPrintRepInfo(newInfo, base); );
-
     if (SAVE_TO_NEW == saveDest)
     {
         int bytesDuplicated;
@@ -281,8 +276,6 @@ static int64_t updateEntryInfo(INFO* current, INFO new_entry, SaveDest saveDest,
             break;
         else if (destInfo->listIndexes[i] == newIndex)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_REPUTATION, "Final IP reputation information: \n"); );
-            DEBUG_WRAP(ReputationPrintRepInfo(destInfo, base); );
             return bytesAllocated;
         }
     }
@@ -303,9 +296,6 @@ static int64_t updateEntryInfo(INFO* current, INFO new_entry, SaveDest saveDest,
         bytesAllocated += sizeof(IPrepInfo);
     }
 
-    DEBUG_WRAP(DebugMessage(DEBUG_REPUTATION, "Final IP reputation information: \n"); );
-    DEBUG_WRAP(ReputationPrintRepInfo(destInfo, base); );
-
     return bytesAllocated;
 }
 
@@ -319,20 +309,6 @@ static int AddIPtoList(snort::SfCidr* ipAddr,INFO ipInfo_ptr, ReputationConfig* 
     uint32_t usageBeforeAdd;
     uint32_t usageAfterAdd;
 
-#ifdef DEBUG_MSGS
-    if (nullptr != sfrt_flat_lookup(ipAddr->get_addr(), config->iplist))
-    {
-        snort::SfIpString ip_str;
-        DebugFormat(DEBUG_REPUTATION, "Find address before insert: %s\n", ipAddr->ntop(ip_str) );
-    }
-    else
-    {
-        snort::SfIpString ip_str;
-        DebugFormat(DEBUG_REPUTATION,
-            "Can't find address before insert: %s\n", ipAddr->ntop(ip_str) );
-    }
-#endif
-
     usageBeforeAdd =  sfrt_flat_usage(config->iplist);
 
     /*Check whether the same or more generic address is already in the table*/
@@ -343,38 +319,18 @@ static int AddIPtoList(snort::SfCidr* ipAddr,INFO ipInfo_ptr, ReputationConfig* 
 
     iRet = sfrt_flat_insert(ipAddr, (unsigned char)ipAddr->get_bits(), ipInfo_ptr, RT_FAVOR_ALL,
         config->iplist, &updateEntryInfo);
-    DEBUG_WRAP(DebugFormat(DEBUG_REPUTATION, "Unused memory: %zu \n",segment_unusedmem()); );
 
     if (RT_SUCCESS == iRet)
     {
-#ifdef DEBUG_MSGS
-        IPrepInfo* result;
-        DebugFormat(DEBUG_REPUTATION, "Number of entries input: %d, in table: %u \n",
-            totalNumEntries,sfrt_flat_num_entries(config->iplist) );
-        DebugFormat(DEBUG_REPUTATION, "Memory allocated: %u \n",sfrt_flat_usage(config->iplist) );
-        result = (IPrepInfo*)sfrt_flat_lookup(ipAddr->get_addr(), config->iplist);
-        if (nullptr != result)
-        {
-            snort::SfIpString ip_str;
-            DebugFormat(DEBUG_REPUTATION, "Find address after insert: %s \n", ipAddr->ntop(ip_str) );
-            DEBUG_WRAP(ReputationPrintRepInfo(result, (uint8_t*)config->iplist); );
-        }
-#endif
         totalNumEntries++;
     }
     else if (MEM_ALLOC_FAILURE == iRet)
     {
         iFinalRet = IP_MEM_ALLOC_FAILURE;
-        snort::SfIpString ip_str;
-        DEBUG_WRAP(DebugFormat(DEBUG_REPUTATION, "Insert error: %d for address: %s \n",iRet,
-            ipAddr->ntop(ip_str) ); );
     }
     else
     {
         iFinalRet = IP_INSERT_FAILURE;
-        snort::SfIpString ip_str;
-        DEBUG_WRAP(DebugFormat(DEBUG_REPUTATION, "Insert error: %d for address: %s \n",iRet,
-            ipAddr->ntop(ip_str) ); );
     }
 
     usageAfterAdd = sfrt_flat_usage(config->iplist);
@@ -664,8 +620,6 @@ void LoadListFile(char* filename, INFO info, ReputationConfig* config)
         int iRet;
         addrline++;
 
-        DEBUG_WRAP(DebugFormat(DEBUG_REPUTATION, "Reputation configurations: %s\n",linebuf); );
-
         // Remove comments
         if ( (cmt = strchr(linebuf, '#')) )
             *cmt = '\0';
@@ -673,8 +627,6 @@ void LoadListFile(char* filename, INFO info, ReputationConfig* config)
         // Remove newline as well, prevent double newline in logging.
         if ( (cmt = strchr(linebuf, '\n')) )
             *cmt = '\0';
-
-        DEBUG_WRAP(DebugFormat(DEBUG_REPUTATION, "Reputation configurations: %s\n",linebuf); );
 
         /* process the line */
         iRet = ProcessLine(linebuf, ipInfo_ptr, config);
@@ -786,63 +738,4 @@ void EstimateNumEntries(ReputationConfig* config)
     config->numEntries = totalLines;
 }
 
-#ifdef DEBUG_MSGS
-static void ReputationRepInfo(IPrepInfo* repInfo, uint8_t* base, char* repInfoBuff,
-    int bufLen)
-{
-    char* index = repInfoBuff;
-    int len = bufLen -1;
-    int writed;
-
-    writed = snprintf(index, len, "Reputation Info: ");
-    if (writed >= len || writed < 0)
-        return;
-
-    index += writed;
-    len -= writed;
-
-    while (repInfo)
-    {
-        int i;
-        for (i = 0; i < NUM_INDEX_PER_ENTRY; i++)
-        {
-            writed = snprintf(index, len, "%d,",repInfo->listIndexes[i]);
-            if (writed >= len || writed < 0)
-                return;
-            else
-            {
-                index += writed;
-                len -=writed;
-            }
-        }
-        writed = snprintf(index, len, "->");
-        if (writed >= len || writed < 0)
-            return;
-        else
-        {
-            index += writed;
-            len -=writed;
-        }
-
-        if (!repInfo->next)
-            break;
-
-        repInfo = (IPrepInfo*)(&base[repInfo->next]);
-    }
-}
-
-void ReputationPrintRepInfo(IPrepInfo* repInfo, uint8_t* base)
-{
-    char repInfoBuff[STD_BUF];
-    int len = STD_BUF -1;
-
-    repInfoBuff[STD_BUF -1] = '\0';
-
-    ReputationRepInfo(repInfo, base, repInfoBuff, len);
-
-    DEBUG_WRAP(DebugFormat(DEBUG_REPUTATION, "Reputation Info: %s \n",
-        repInfoBuff); );
-}
-
-#endif
 

@@ -21,7 +21,6 @@
 #define REPUTATION_CONFIG_H
 
 #include "framework/counts.h"
-#include "main/snort_debug.h"
 #include "main/thread.h"
 #include "sfrt/sfrt_flat.h"
 
@@ -84,8 +83,6 @@ struct IPrepInfo
     char listIndexes[NUM_INDEX_PER_ENTRY];
     MEM_OFFSET next;
 };
-
-DEBUG_WRAP(void ReputationPrintRepInfo(IPrepInfo* repInfo, uint8_t* base); )
 
 struct ReputationStats
 {
