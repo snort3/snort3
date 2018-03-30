@@ -233,8 +233,7 @@ IpsOption::EvalStatus ByteJumpOption::eval(Cursor& c, Packet* p)
     }
 
     const uint8_t* const start_ptr = c.buffer();
-    const int dsize = c.size();
-    const uint8_t* const end_ptr = start_ptr + dsize;
+    const uint8_t* const end_ptr = start_ptr + c.size();
     const uint8_t* const base_ptr = offset +
         ((bjd->relative_flag) ? c.start() : start_ptr);
 
@@ -301,20 +300,20 @@ IpsOption::EvalStatus ByteJumpOption::eval(Cursor& c, Packet* p)
         }
     }
 
-    if (!bjd->from_beginning_flag && !bjd->from_end_flag)
-    {
-        jump += payload_bytes_grabbed;
-        jump += c.get_pos();
-    }
+    uint32_t pos;
 
-    if (bjd->from_end_flag)
-        jump += dsize;
+    if ( bjd->from_beginning_flag )
+        pos = jump;
+
+    else if ( bjd->from_end_flag )
+        pos = c.size() + jump;
+
     else
-        jump += offset;
+        pos = c.get_pos() + offset + payload_bytes_grabbed + jump;
 
-    jump += post_offset;
+    pos += post_offset;
 
-    if ( !c.set_pos(jump) )
+    if ( !c.set_pos(pos) )
         return NO_MATCH;
 
     return MATCH;

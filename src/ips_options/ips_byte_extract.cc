@@ -217,7 +217,7 @@ IpsOption::EvalStatus ByteExtractOption::eval(Cursor& c, Packet* p)
     SetVarValueByIndex(value, data->var_number);
 
     /* advance cursor */
-    c.add_pos(bytes_read);
+    c.add_pos(data->offset + bytes_read);
 
     /* this rule option always "matches" if the read is performed correctly */
     return MATCH;

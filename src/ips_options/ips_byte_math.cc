@@ -177,7 +177,7 @@ IpsOption::EvalStatus ByteMathOption::eval(Cursor& c, Packet* p)
     if (config.rvalue_var >= 0 && config.rvalue_var < NUM_IPS_OPTIONS_VARS)
     {
         GetVarValueByIndex(&rvalue, config.rvalue_var);
-        if (rvalue == 0)
+        if (rvalue == 0 and config.oper == BM_DIVIDE)
             return NO_MATCH;
     }
     else
