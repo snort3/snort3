@@ -130,5 +130,8 @@ private:
 #define THREAD_IDLE_EVENT "thread.idle"
 #define THREAD_ROTATE_EVENT "thread.rotate"
 
+// An event that indicates that the service on a flow has been updated.
+#define FLOW_SERVICE_CHANGE_EVENT "flow_service_change_event"
+
 #endif
 

@@ -38,7 +38,7 @@ public:
     {
         min = sz + get_flush_bucket_size();
         restart_scan();
-        last_seg_size = 1448;  // FIXIT-H base this off mss or snaplen
+        expected_seg_size = 0;
     }
 
 
@@ -49,7 +49,7 @@ private:
     uint16_t min;
     uint16_t segs;
     uint16_t bytes;
-    uint16_t last_seg_size;
+    uint16_t expected_seg_size;
 
     void restart_scan();
 };

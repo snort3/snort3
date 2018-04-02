@@ -772,6 +772,12 @@ void TcpSession::handle_data_segment(TcpSegmentDescriptor& tsd)
 
     if ( TcpStreamTracker::TCP_CLOSED != talker->get_tcp_state() )
     {
+        uint8_t tcp_options_len = tsd.get_tcph()->options_len();
+        if (tsd.is_packet_from_server())
+            server->set_tcp_options_len(tcp_options_len);
+        else
+            client->set_tcp_options_len(tcp_options_len);
+
         // FIXIT-M move this to normalizer base class, handle OS_PROXY in derived class
         if (config->policy != StreamPolicy::OS_PROXY)
         {

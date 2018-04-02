@@ -4,8 +4,6 @@ set( FILE_LIST
     dce_co.h 
     dce_common.cc 
     dce_common.h 
-    dce_http_common.cc
-    dce_http_common.h 
     dce_http_proxy.cc
     dce_http_proxy_module.cc 
     dce_http_proxy_module.h 

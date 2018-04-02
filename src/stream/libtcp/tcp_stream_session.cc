@@ -461,6 +461,20 @@ void TcpStreamSession::set_splitter(bool to_server, StreamSplitter* ss)
     trk->set_splitter(ss);
 }
 
+uint16_t TcpStreamSession::get_mss(bool to_server) const
+{
+    TcpStreamTracker* trk = (to_server) ? client : server;
+
+    return trk->get_mss();
+}
+
+uint8_t TcpStreamSession::get_tcp_options_len(bool to_server) const
+{
+    TcpStreamTracker* trk = (to_server) ? client : server;
+
+    return trk->get_tcp_options_len();
+}
+
 StreamSplitter* TcpStreamSession::get_splitter(bool to_server)
 {
     if ( to_server )

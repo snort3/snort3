@@ -25,7 +25,6 @@
 
 #include "dce_http_server_splitter.h"
 
-#include "dce_http_common.h"
 #include "dce_http_server_module.h"
 
 #ifdef UNIT_TEST

@@ -39,6 +39,7 @@ extern const snort::InspectApi dce_http_server_api;
 extern THREAD_LOCAL int dce2_detected;
 
 #define GID_DCE2 133
+#define DCE_RPC_SERVICE_NAME "dcerpc"
 
 enum DCE2_Policy
 {

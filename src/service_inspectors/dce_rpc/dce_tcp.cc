@@ -28,6 +28,7 @@
 #include "detection/detection_engine.h"
 #include "utils/util.h"
 
+#include "dce_common.h"
 #include "dce_tcp_module.h"
 #include "dce_tcp_paf.h"
 
@@ -225,7 +226,7 @@ const InspectApi dce2_tcp_api =
     IT_SERVICE,
     (uint16_t)PktType::PDU,
     nullptr,  // buffers
-    "dcerpc",
+    DCE_RPC_SERVICE_NAME,
     dce2_tcp_init,
     nullptr, // pterm
     nullptr, // tinit

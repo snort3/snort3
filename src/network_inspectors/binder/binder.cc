@@ -25,6 +25,7 @@
 
 #include "flow/flow.h"
 #include "flow/flow_key.h"
+#include "framework/data_bus.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "managers/inspector_manager.h"
@@ -596,6 +597,20 @@ private:
     vector<Binding*> bindings;
 };
 
+// When a flow's service changes, re-evaluate service to inspector mapping.
+class FlowServiceChangeHandler : public DataHandler
+{
+public:
+    FlowServiceChangeHandler() { }
+
+    void handle(DataEvent&, Flow* flow) override
+    {
+        Binder* binder = (Binder*)InspectorManager::get_binder();
+        if(binder and flow)
+            binder->exec(BinderSpace::ExecOperation::HANDLE_GADGET, flow);
+    }
+};
+
 Binder::Binder(vector<Binding*>& v)
 {
     bindings = std::move(v);
@@ -628,6 +643,9 @@ bool Binder::configure(SnortConfig* sc)
         if ( !pb->use.ips_index and !pb->use.inspection_index and !pb->use.network_index )
             set_binding(sc, pb);
     }
+
+    DataBus::subscribe(FLOW_SERVICE_CHANGE_EVENT, new FlowServiceChangeHandler);
+
     return true;
 }
 
@@ -666,6 +684,8 @@ void Binder::eval(Packet* p)
 
 int Binder::exec_handle_gadget( void* pv )
 {
+    assert(pv);
+
     Flow* flow = (Flow*)pv;
     Inspector* ins = find_gadget(flow);
 

@@ -206,9 +206,8 @@ FtpDataFlowData::~FtpDataFlowData()
 
 void FtpDataFlowData::handle_expected(Packet* p)
 {
-    // FIXIT-M X This is an ugly, ugly hack, but it's the way Wizard is doing it
     if (!p->flow->service)
-        p->flow->service = fd_svc_name;
+        p->flow->set_service(p, fd_svc_name);
 }
 
 void FtpDataFlowData::handle_eof(Packet* p)

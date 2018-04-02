@@ -41,6 +41,7 @@
 #include "utils/util.h"
 
 #include "tcp/tcp_session.h"
+#include "libtcp/tcp_stream_session.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -795,6 +796,23 @@ bool Stream::missed_packets(Flow* flow, uint8_t dir)
     assert(flow && flow->session);
     return flow->session->are_packets_missing(dir);
 }
+
+uint16_t Stream::get_mss(Flow* flow, bool to_server)
+{
+    assert(flow and flow->session and flow->pkt_type == PktType::TCP);
+
+    TcpStreamSession* tcp_session = (TcpStreamSession*)flow->session;
+    return tcp_session->get_mss(to_server);
+}
+
+uint8_t Stream::get_tcp_options_len(Flow* flow, bool to_server)
+{
+    assert(flow and flow->session and flow->pkt_type == PktType::TCP);
+
+    TcpStreamSession* tcp_session = (TcpStreamSession*)flow->session;
+    return tcp_session->get_tcp_options_len(to_server);
+}
+
 
 #ifdef UNIT_TEST
 

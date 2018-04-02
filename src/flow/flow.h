@@ -27,6 +27,7 @@
 // state.  Inspector state is stored in FlowData, and Flow manages a list
 // of FlowData items.
 
+#include "framework/data_bus.h"
 #include "framework/decode_data.h"
 #include "framework/inspector.h"
 #include "protocols/layer.h"
@@ -179,6 +180,7 @@ public:
     void set_ttl(Packet*, bool client);
     void set_mpls_layer_per_dir(Packet*);
     Layer get_mpls_layer_per_dir(bool);
+    void set_service(Packet* pkt, const char* new_service);
 
     uint32_t update_session_flags(uint32_t flags)
     { return ssn_state.session_flags = flags; }

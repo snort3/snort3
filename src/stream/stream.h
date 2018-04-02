@@ -228,6 +228,10 @@ public:
     static void reg_xtra_data_log(LogExtraData, void*);
     static uint32_t get_xtra_data_map(LogFunction*&);
 
+    // TCP-specific accessor methods.
+    static uint16_t get_mss(Flow*, bool to_server);
+    static uint8_t get_tcp_options_len(Flow*, bool to_server);
+
 private:
     static void set_ip_protocol(Flow*);
 };

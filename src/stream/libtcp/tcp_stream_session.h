@@ -55,6 +55,8 @@ public:
     bool check_alerted(snort::Packet*, uint32_t gid, uint32_t sid) override;
     int update_alert(snort::Packet*, uint32_t /*gid*/, uint32_t /*sid*/,
         uint32_t /*event_id*/, uint32_t /*event_second*/) override;
+    uint16_t get_mss(bool to_server) const;
+    uint8_t get_tcp_options_len(bool to_server) const;
 
     static void sinit();
     static void sterm();

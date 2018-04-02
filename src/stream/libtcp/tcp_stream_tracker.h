@@ -316,6 +316,16 @@ public:
         this->mss = mss;
     }
 
+    uint8_t get_tcp_options_len() const
+    {
+        return tcp_options_len;
+    }
+
+    void set_tcp_options_len(uint8_t tcp_options_len)
+    {
+        this->tcp_options_len = tcp_options_len;
+    }
+
     void cache_mac_address(TcpSegmentDescriptor&, uint8_t direction);
     bool compare_mac_addresses(const uint8_t eth_addr[]);
 
@@ -410,8 +420,9 @@ protected:
     bool mac_addr_valid = false;
     uint32_t fin_final_seq = 0;
     bool fin_seq_set = false;  // FIXIT-M should be obviated by tcp state
-    // FIXIT-L make this protected...
+    uint8_t tcp_options_len = 0;
 
+    // FIXIT-L make this protected...
 public:
     uint16_t wscale = 0; /* window scale setting */
     uint16_t mss = 0; /* max segment size */

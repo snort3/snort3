@@ -25,7 +25,6 @@
 
 #include "dce_http_proxy_splitter.h"
 
-#include "dce_http_common.h"
 #include "dce_http_proxy_module.h"
 
 #ifdef UNIT_TEST

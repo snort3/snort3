@@ -26,3 +26,9 @@ The implementation is not yet optimized for performance.  A faster method
 of searching for applicable bindings should be developed.
 
 The exec() method implements specialized Inspector::Binder functionality.
+
+Binder subscribes to the FLOW_SERVICE_CHANGE_EVENT and if the event
+is received, possibly due to an inspector discovering new information
+about the flow's service, then it will call Bind::exec again to reset
+the service-to-inspector mapping.
+

@@ -363,7 +363,10 @@ char* UtfDecodeSession::convert_character_encoding(const char* to_code, const ch
     char* out = out_buf;
     size_t iconv_rval = iconv(convert_encoding, &in_buf, &in_bytes, &out, &out_bytes);
     if (iconv_rval == (size_t)-1)
+    {
+        iconv_close(convert_encoding);
         return nullptr;
+    }
 
     *out = '\0';
     *out_buf_length = (out - out_buf);

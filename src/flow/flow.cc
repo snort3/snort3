@@ -26,6 +26,7 @@
 #include "detection/detection_engine.h"
 #include "flow/ha.h"
 #include "flow/session.h"
+#include "framework/data_bus.h"
 #include "ips_options/ips_flowbits.h"
 #include "protocols/packet.h"
 #include "sfip/sf_ip.h"
@@ -468,3 +469,10 @@ bool Flow::is_pdu_inorder(uint8_t dir)
             && (session->missing_in_reassembled(dir) == SSN_MISSING_NONE)
             && !(ssn_state.session_flags & SSNFLAG_MIDSTREAM));
 }
+
+void Flow::set_service(Packet* pkt, const char* new_service)
+{   
+    service = new_service;
+    DataBus::publish(FLOW_SERVICE_CHANGE_EVENT, pkt);
+}   
+
