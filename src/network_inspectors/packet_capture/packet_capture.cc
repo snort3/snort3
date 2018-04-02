@@ -25,7 +25,6 @@
 #include "packet_capture.h"
 
 #include <pcap.h>
-#include <sfbpf.h>
 
 #include "framework/inspector.h"
 #include "log/messages.h"
@@ -47,7 +46,7 @@ static CaptureConfig config;
 
 static THREAD_LOCAL pcap_t* pcap = nullptr;
 static THREAD_LOCAL pcap_dumper_t* dumper = nullptr;
-static THREAD_LOCAL struct sfbpf_program bpf;
+static THREAD_LOCAL struct bpf_program bpf;
 
 static inline bool capture_initialized()
 { return dumper != nullptr; }
@@ -99,7 +98,7 @@ void PacketCapture::eval(Packet* p)
             if ( !capture_init() )
                 return;
 
-        if ( !bpf.bf_insns || sfbpf_filter(bpf.bf_insns, p->pkt,
+        if ( !bpf.bf_insns || bpf_filter(bpf.bf_insns, p->pkt,
                 p->pkth->caplen, p->pkth->pktlen) )
         {
             write_packet(p);
@@ -114,10 +113,10 @@ void PacketCapture::eval(Packet* p)
 
 bool PacketCapture::capture_init()
 {
-    if ( sfbpf_compile(SNAP_LEN, DLT_EN10MB, &bpf,
+    if ( pcap_compile_nopcap(SNAP_LEN, DLT_EN10MB, &bpf,
         config.filter.c_str(), 1, 0) >= 0 )
     {
-        if ( sfbpf_validate(bpf.bf_insns, bpf.bf_len) )
+        if ( bpf_validate(bpf.bf_insns, bpf.bf_len) )
         {
             string fname;
             get_instance_file(fname, FILE_NAME);
@@ -156,7 +155,7 @@ void PacketCapture::capture_term()
         free(pcap);
         pcap = nullptr;
     }
-    sfbpf_freecode(&bpf);
+    pcap_freecode(&bpf);
 }
 
 void PacketCapture::write_packet(Packet* p)

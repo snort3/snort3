@@ -144,7 +144,7 @@ static bool is_ipv4(char const* src)
     return false;
 }
 
-void IpAddr(uint32_t* addr, char const* ip)
+static void IpAddr(uint32_t* addr, char const* ip)
 {
     if ( is_ipv4(ip) ) {
         addr[0] = 0;

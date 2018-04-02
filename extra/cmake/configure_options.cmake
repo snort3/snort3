@@ -5,12 +5,15 @@ include(CheckCXXCompilerFlag)
 
 # debugging
 
+# FIXIT-L Properly handle NDEBUG through CMAKE_BUILD_TYPE
 if ( ENABLE_DEBUG )
-    set ( DEBUGGING_C_FLAGS "${DEBUGGING_C_FLAGS} -g -DDEBUG" )
+    string ( APPEND DEBUGGING_C_FLAGS " -g -DDEBUG" )
+else ()
+    string ( APPEND DEBUGGING_C_FLAGS " -DNDEBUG" )
 endif ( ENABLE_DEBUG )
 
 if ( ENABLE_GDB )
-    set ( DEBUGGING_C_FLAGS "${DEBUGGING_C_FLAGS} -g -ggdb" )
+    string ( APPEND DEBUGGING_C_FLAGS " -g -ggdb" )
 endif ( ENABLE_GDB )
 
 # ASAN and TSAN are mutually exclusive, so have them absolutely set SANITIZER_*_FLAGS first.
@@ -49,8 +52,8 @@ if ( ENABLE_UB_SANITIZER )
     check_cxx_compiler_flag ( "${UBSAN_CXX_FLAGS}" HAVE_UB_SANITIZER )
     unset ( CMAKE_REQUIRED_FLAGS )
     if ( HAVE_UB_SANITIZER )
-        set ( SANITIZER_CXX_FLAGS "${SANITIZER_CXX_FLAGS} ${UBSAN_CXX_FLAGS}" )
-        set ( SANITIZER_LINKER_FLAGS "${SANITIZER_LINKER_FLAGS} ${UBSAN_LINKER_FLAGS}" )
+        string ( APPEND SANITIZER_CXX_FLAGS " ${UBSAN_CXX_FLAGS}" )
+        string ( APPEND SANITIZER_LINKER_FLAGS " ${UBSAN_LINKER_FLAGS}" )
     else ()
         message ( SEND_ERROR "Could not enable the undefined behavior sanitizer!" )
     endif ()

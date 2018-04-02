@@ -59,8 +59,7 @@ PacketTracer::PacketTracer()
 
 void PacketTracer::register_verdict_reason(uint8_t reason_code, uint8_t priority)
 {
-    auto it = reasons.find(reason_code);
-    assert( it == reasons.end() );
+    assert(reasons.find(reason_code) == reasons.end());
 
     reasons[reason_code] = priority;
 }

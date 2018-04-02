@@ -174,8 +174,10 @@ ConnectorMsgHandle* FileConnector::receive_message_text()
     char line_buffer[4*MAXIMUM_SC_MESSAGE_CONTENT];
     char message[MAXIMUM_SC_MESSAGE_CONTENT];
     char* current = line_buffer;
+    uint64_t time_seconds;
+    uint32_t time_u_seconds;
+    uint16_t port;
     int length = 0;
-    SCMsgHdr hdr;
 
     // Read the record
     file.getline(line_buffer, sizeof(line_buffer));
@@ -187,7 +189,8 @@ ConnectorMsgHandle* FileConnector::receive_message_text()
         return nullptr;
     }
 
-    sscanf(line_buffer, "%hu:%" SCNu64 ".%" SCNu32, &hdr.port, &hdr.time_seconds, &hdr.time_u_seconds);
+    // FIXIT-L Add sanity/retval checking for sscanfs below
+    sscanf(line_buffer, "%hu:%" SCNu64 ".%" SCNu32, &port, &time_seconds, &time_u_seconds);
 
     while ( (current = strchr(current,(int)',')) != nullptr )
     {
@@ -198,8 +201,12 @@ ConnectorMsgHandle* FileConnector::receive_message_text()
     // The message is valid, make a ConnectorMsg to contain it.
     FileConnectorMsgHandle* handle = new FileConnectorMsgHandle(length+sizeof(SCMsgHdr));
 
-    // Copy the header
-    memcpy(handle->connector_msg.data, &hdr, sizeof(SCMsgHdr));
+    // Populate the new message header
+    SCMsgHdr* hdr = (SCMsgHdr*) handle->connector_msg.data;
+    hdr->port = port;
+    hdr->sequence = 0;
+    hdr->time_seconds = time_seconds;
+    hdr->time_u_seconds = time_u_seconds;
     // Copy the connector message into the new ConnectorMsg
     memcpy((handle->connector_msg.data+sizeof(SCMsgHdr)), message, length);
 

@@ -309,10 +309,10 @@ while [ $# -ne 0 ]; do
             append_cache_entry MAKE_PDF_DOC             BOOL true
             ;;
         --with-pcap-includes=*)
-            append_cache_entry PCAP_INCLUDE_DIR PATH $optarg
+            append_cache_entry PCAP_INCLUDE_DIR_HINT PATH $optarg
             ;;
         --with-pcap-libraries=*)
-            append_cache_entry PCAP_LIBRARIES_DIR PATH $optarg
+            append_cache_entry PCAP_LIBRARIES_DIR_HINT PATH $optarg
             ;;
         --with-luajit-includes=*)
             append_cache_entry LUAJIT_INCLUDE_DIR_HINT PATH $optarg
