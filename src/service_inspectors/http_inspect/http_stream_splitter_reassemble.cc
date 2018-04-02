@@ -159,11 +159,11 @@ void HttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& offset, cons
                 {
                     // The zipped data stream ended but there is more input data
                     *infractions += INF_GZIP_EARLY_END;
-                    events->create_event(EVENT_GZIP_FAILURE);
+                    events->create_event(EVENT_GZIP_EARLY_END);
                     const uInt num_copy =
                         (compress_stream->avail_in <= compress_stream->avail_out) ?
                         compress_stream->avail_in : compress_stream->avail_out;
-                    memcpy(buffer + offset, data, num_copy);
+                    memcpy(buffer + offset, data + (length - compress_stream->avail_in), num_copy);
                     offset += num_copy;
                 }
                 else

@@ -381,6 +381,8 @@ const snort::RuleMap HttpModule::http_events[] =
     { EVENT_206_WITHOUT_RANGE,          "206 response sent to a request without a Range header" },
     { EVENT_VERSION_NOT_UPPERCASE,      "'HTTP' in version field not all upper case" },
     { EVENT_BAD_HEADER_WHITESPACE,      "white space embedded in critical header value" },
+    { EVENT_GZIP_EARLY_END,             "gzip compressed data followed by unexpected non-gzip "
+                                        "data" },
     { 0, nullptr }
 };
 
