@@ -113,45 +113,15 @@ Enable/disable xlink2state alert, options are {disable | alert | drop}.
 See CVE-2005-0560 for a description of the vulnerability.
 
 
-===== b64_decode_depth
+===== MIME processing depth parameters
 
-This config option is used to turn off/on or set the base64 decoding depth 
-used to decode the base64 encoded MIME attachments. The value ranges from 
--1 to 65535. A value of -1 turns off the base64 decoding of MIME 
-attachments. The value of 0 
-sets the decoding of base64 encoded MIME attachments to unlimited. A value 
-other than 0 or -1 restricts the decoding of base64 MIME attachments, and 
-applies per attachment. 
+These four MIME processing depth parameters are identical to their POP and
+IMAP counterparts. See that section for further details.
 
-===== qp_decode_depth
-
-This config option is used to turn off/on or set the Quoted-Printable 
-decoding depth used to decode the Quoted-Printable(QP) encoded MIME 
-attachments. The value ranges from -1 to 65535. A value of -1 turns off 
-the QP decoding of MIME attachments. 
-The value of 0 sets the decoding of QP encoded MIME attachments to 
-unlimited. A value other than 0 or -1 restricts the decoding of QP MIME 
-attachments, and applies per attachment.
-
-===== bitenc_decode_depth * default to 25
-
-This config option is used to turn off/on or set the non-encoded MIME 
-extraction depth used to extract the non-encoded MIME attachments. The 
-value ranges from -1 to 65535. A value of -1 turns off the extraction of 
-these MIME attachments. 
-The value of 0 sets the extraction of these MIME attachments to unlimited. 
-A value other than 0 or -1 restricts the extraction of these MIME 
-attachments, and applies per attachment.
-
-===== uu_decode_depth
-
-This config option is used to turn off/on or set the Unix-to-Unix decoding 
-depth used to decode the Unix-to-Unix(UU) encoded attachments. The value 
-ranges from -1 to 65535. A value of -1 turns off the UU decoding of SMTP 
-attachments. 
-The value of 0 sets the decoding of UU encoded SMTP attachments to 
-unlimited. A value other than 0 or -1 restricts the decoding of UU SMTP 
-attachments, and applies per attachment.
+b64_decode_depth
+qp_decode_depth
+bitenc_decode_depth
+uu_decode_depth
 
 ===== Log Options
 

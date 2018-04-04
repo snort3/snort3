@@ -12,47 +12,32 @@ imap traffic.
 ==== Configuration
 
 POP inspector and IMAP inspector offer same set of configuration options 
-for MIME decoding depth:
+for MIME decoding depth. These depths range from 0 to 65535 bytes. Setting
+the value to 0 ("do none") turns the feature off. Alternatively the value
+-1 means an unlimited amount of data should be decoded. If you do not
+specify the default value is 1460 bytes.
+
+The depth limits apply per attachment. They are:
 
 ===== b64_decode_depth
 
-This config option is used to turn off/on or set the base64 decoding depth 
-used to decode the base64 encoded MIME attachments. The value ranges from 
--1 to 65535. A value of -1 turns off the base64 decoding of MIME 
-attachments. The value of 0 sets the decoding of base64 encoded MIME 
-attachments to unlimited. A value other than 0 or -1 restricts the 
-decoding of base64 MIME attachments, and applies per attachment. The 
-default value is 1460.
+Set the base64 decoding depth used to decode the base64-encoded MIME
+attachments.
 
 ===== qp_decode_depth
 
-This config option is used to turn off/on or set the Quoted-Printable 
-decoding depth used to decode the Quoted-Printable(QP) encoded MIME 
-attachments. The value ranges from -1 to 65535. A value of -1 turns off 
-the QP decoding of MIME attachments. 
-The value of 0 sets the decoding of QP encoded MIME attachments to 
-unlimited. A value other than 0 or -1 restricts the decoding of QP MIME 
-attachments, and applies per attachment.
+Set the Quoted-Printable (QP) decoding depth used to decode QP-encoded
+MIME attachments.
 
 ===== bitenc_decode_depth
 
-This config option is used to turn off/on or set the non-encoded MIME 
-extraction depth used to extract the non-encoded MIME attachments. The 
-value ranges from -1 to 65535. A value of -1 turns off the extraction of 
-these MIME attachments. 
-The value of 0 sets the extraction of these MIME attachments to unlimited. 
-A value other than 0 or -1 restricts the extraction of these MIME 
-attachments, and applies per attachment.
+Set the non-encoded MIME extraction depth used for non-encoded MIME
+attachments.
 
 ===== uu_decode_depth
 
-This config option is used to turn off/on or set the Unix-to-Unix decoding 
-depth used to decode the Unix-to-Unix(UU) encoded attachments. The value 
-ranges from -1 to 65535. A value of -1 turns off the UU decoding of POP 
-attachments. 
-The value of 0 sets the decoding of UU encoded POP attachments to 
-unlimited. A value other than 0 or -1 restricts the decoding of UU POP 
-attachments, and applies per attachment.
+Set the Unix-to-Unix (UU) decoding depth used to decode UU-encoded
+attachments.
 
 ===== Examples
 
@@ -79,13 +64,13 @@ attachments, and applies per attachment.
 
     imap =
     {
-        qp_decode_depth = 15,
+        qp_decode_depth = 500,
     }
 
     pop =
     {
-        qp_decode_depth = 0,
-        b64_decode_depth = 10,
+        qp_decode_depth = -1,
+        b64_decode_depth = 3000,
     }
 
 

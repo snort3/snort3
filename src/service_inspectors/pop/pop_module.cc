@@ -31,37 +31,30 @@
 using namespace snort;
 using namespace std;
 
-#define POP_UNKNOWN_CMD_STR                 "unknown POP3 command"
-#define POP_UNKNOWN_RESP_STR                "unknown POP3 response"
-#define POP_B64_DECODING_FAILED_STR         "base64 decoding failed"
-#define POP_QP_DECODING_FAILED_STR          "quoted-printable decoding failed"
-#define POP_UU_DECODING_FAILED_STR          "Unix-to-Unix decoding failed"
-
 static const Parameter s_params[] =
 {
     { "b64_decode_depth", Parameter::PT_INT, "-1:65535", "1460",
-      " base64 decoding depth" },
+      "base64 decoding depth (-1 no limit)" },
 
     { "bitenc_decode_depth", Parameter::PT_INT, "-1:65535", "1460",
-      " Non-Encoded MIME attachment extraction depth" },
+      "Non-Encoded MIME attachment extraction depth (-1 no limit)" },
 
     { "qp_decode_depth", Parameter::PT_INT, "-1:65535", "1460",
-      " Quoted Printable decoding depth" },
+      "Quoted Printable decoding depth (-1 no limit)" },
 
     { "uu_decode_depth", Parameter::PT_INT, "-1:65535", "1460",
-      " Unix-to-Unix decoding depth" },
+      "Unix-to-Unix decoding depth (-1 no limit)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 static const RuleMap pop_rules[] =
 {
-    { POP_UNKNOWN_CMD, POP_UNKNOWN_CMD_STR },
-    { POP_UNKNOWN_RESP, POP_UNKNOWN_RESP_STR },
-    { POP_B64_DECODING_FAILED, POP_B64_DECODING_FAILED_STR },
-    { POP_QP_DECODING_FAILED, POP_QP_DECODING_FAILED_STR },
-    { POP_UU_DECODING_FAILED, POP_UU_DECODING_FAILED_STR },
-
+    { POP_UNKNOWN_CMD, "unknown POP3 command" },
+    { POP_UNKNOWN_RESP, "unknown POP3 response" },
+    { POP_B64_DECODING_FAILED, "base64 decoding failed" },
+    { POP_QP_DECODING_FAILED, "quoted-printable decoding failed" },
+    { POP_UU_DECODING_FAILED, "Unix-to-Unix decoding failed" },
     { 0, nullptr }
 };
 
@@ -94,34 +87,16 @@ ProfileStats* PopModule::get_profile() const
 
 bool PopModule::set(const char*, Value& v, SnortConfig*)
 {
+    const long value = v.get_long();
+    const long mime_value = (value > 0) ? value : -(value+1); // flip 0 and -1 for MIME processing
     if ( v.is("b64_decode_depth") )
-    {
-        int decode_depth = v.get_long();
-
-        if ((decode_depth > 0) && (decode_depth & 3))
-        {
-            decode_depth += 4 - (decode_depth & 3);
-            if (decode_depth > 65535 )
-            {
-                decode_depth = decode_depth - 4;
-            }
-            ParseWarning(WARN_CONF,
-                "POP: 'b64_decode_depth' is not a multiple of 4. "
-                "Rounding up to the next multiple of 4. "
-                "The new 'b64_decode_depth' is %d.\n",
-                decode_depth);
-        }
-        config->decode_conf.set_b64_depth(decode_depth);
-    }
+        config->decode_conf.set_b64_depth(mime_value);
     else if ( v.is("bitenc_decode_depth") )
-        config->decode_conf.set_bitenc_depth(v.get_long());
-
+        config->decode_conf.set_bitenc_depth(mime_value);
     else if ( v.is("qp_decode_depth") )
-        config->decode_conf.set_qp_depth(v.get_long());
-
+        config->decode_conf.set_qp_depth(mime_value);
     else if ( v.is("uu_decode_depth") )
-        config->decode_conf.set_uu_depth(v.get_long());
-
+        config->decode_conf.set_uu_depth(mime_value);
     else
         return false;
 

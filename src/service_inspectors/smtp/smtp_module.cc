@@ -70,14 +70,14 @@ static const Parameter s_params[] =
     { "auth_cmds", Parameter::PT_STRING, nullptr, nullptr,
       "commands that initiate an authentication exchange" },
 
+    { "b64_decode_depth", Parameter::PT_INT, "-1:65535", "1460",
+      "depth used to decode the base64 encoded MIME attachments (-1 no limit)" },
+
     { "binary_data_cmds", Parameter::PT_STRING, nullptr, nullptr,
       "commands that initiate sending of data and use a length value after the command" },
 
-    { "bitenc_decode_depth", Parameter::PT_INT, "-1:65535", "25",
-      "depth used to extract the non-encoded MIME attachments" },
-
-    { "b64_decode_depth", Parameter::PT_INT, "-1:65535", "25",
-      "depth used to decode the base64 encoded MIME attachments" },
+    { "bitenc_decode_depth", Parameter::PT_INT, "-1:65535", "1460",
+      "depth used to extract the non-encoded MIME attachments (-1 no limit)" },
 
     { "data_cmds", Parameter::PT_STRING, nullptr, nullptr,
       "commands that initiate sending of data with an end of data delimiter" },
@@ -98,7 +98,8 @@ static const Parameter s_params[] =
       "log the SMTP email headers extracted from SMTP data" },
 
     { "log_filename", Parameter::PT_BOOL, nullptr, "false",
-      "log the MIME attachment filenames extracted from the Content-Disposition header within the MIME body" },
+      "log the MIME attachment filenames extracted from the Content-Disposition header within"
+      " the MIME body" },
 
     { "log_mailfrom", Parameter::PT_BOOL, nullptr, "false",
       "log the sender's email address extracted from the MAIL FROM command" },
@@ -124,11 +125,11 @@ static const Parameter s_params[] =
     { "normalize_cmds", Parameter::PT_STRING, nullptr, nullptr,
       "list of commands to normalize" },
 
-    { "qp_decode_depth", Parameter::PT_INT, "-1:65535", "25",
-      "quoted-Printable decoding depth" },
+    { "qp_decode_depth", Parameter::PT_INT, "-1:65535", "1460",
+      "quoted-Printable decoding depth (-1 no limit)" },
 
-    { "uu_decode_depth", Parameter::PT_INT, "-1:65535", "25",
-      "unix-to-Unix decoding depth" },
+    { "uu_decode_depth", Parameter::PT_INT, "-1:65535", "1460",
+      "Unix-to-Unix decoding depth (-1 no limit)" },
 
     { "valid_cmds", Parameter::PT_STRING, nullptr, nullptr,
       "list of valid commands" },
@@ -225,24 +226,17 @@ bool SmtpModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("b64_decode_depth") )
     {
-        int decode_depth = v.get_long();
-
-        if ((decode_depth > 0) && (decode_depth & 3))
-        {
-            decode_depth += 4 - (decode_depth & 3);
-            if (decode_depth > 65535 )
-            {
-                decode_depth = decode_depth - 4;
-            }
-            ParseWarning(WARN_CONF, "SMTP: 'b64_decode_depth' is not a multiple of 4. "
-                "Rounding up to the next multiple of 4. The new 'b64_decode_depth' is %d.\n",
-                decode_depth);
-        }
-        config->decode_conf.set_b64_depth(decode_depth);
+        const long value = v.get_long();
+        const long mime_value = (value > 0) ? value : -(value+1);
+        config->decode_conf.set_b64_depth(mime_value);
     }
 
     else if ( v.is("bitenc_decode_depth") )
-        config->decode_conf.set_bitenc_depth(v.get_long());
+    {
+        const long value = v.get_long();
+        const long mime_value = (value > 0) ? value : -(value+1);
+        config->decode_conf.set_bitenc_depth(mime_value);
+    }
 
     else if ( v.is("command") )
         names = v.get_string();
@@ -299,13 +293,21 @@ bool SmtpModule::set(const char*, Value& v, SnortConfig*)
         add_commands(v, PCMD_NORM);
 
     else if ( v.is("qp_decode_depth") )
-        config->decode_conf.set_qp_depth(v.get_long());
+    {
+        const long value = v.get_long();
+        const long mime_value = (value > 0) ? value : -(value+1);
+        config->decode_conf.set_qp_depth(mime_value);
+    }
 
     else if ( v.is("valid_cmds"))
         add_commands(v, PCMD_VALID);
 
     else if ( v.is("uu_decode_depth") )
-        config->decode_conf.set_uu_depth(v.get_long());
+    {
+        const long value = v.get_long();
+        const long mime_value = (value > 0) ? value : -(value+1);
+        config->decode_conf.set_uu_depth(mime_value);
+    }
 
     else if ( v.is("xlink2state") )
         config->xlink2state = (XLINK2STATE)v.get_long();

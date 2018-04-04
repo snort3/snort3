@@ -48,32 +48,6 @@ protected:
     TableApi& table_api;
     RuleApi& rule_api;
 
-#if 0
-    Forward declaration of parsing methods.Since these are all inline,
-    unable to forward declare in regular code.
-
-    inline bool eat_option(std::istringstream& stream);
-    inline bool parse_string_option(std::string opt_name,
-        std::istringstream& stream);
-    inline bool parse_int_option(std::string opt_name,
-        std::istringstream& stream, bool append);
-    inline bool parse_curly_bracket_list(std::string list_name,
-        std::istringstream& stream);
-    inline bool parse_yn_bool_option(std::string opt_name,
-        std::istringstream& stream, bool append);
-    inline bool parse_bracketed_byte_list(std::string list_name,
-        std::istringstream& stream);
-    inline bool parse_bracketed_unsupported_list(std::string list_name,
-        std::istringstream& stream);
-    inline bool parse_deleted_option(std::string table_name,
-        std::istringstream& stream);
-
-    //  rules have no order. Function placed here because every rule
-    //  uses this.
-    inline bool set_next_rule_state(std::istringstream& stream)
-
-#endif
-
     inline bool eat_option(std::istringstream& stream)
     {
         std::string val;
@@ -112,6 +86,23 @@ protected:
                 table_api.append_option(opt_name, val);
             else
                 table_api.add_option(opt_name, val);
+            return true;
+        }
+
+        table_api.add_comment("snort.conf missing argument for: " + opt_name + " <int>");
+        return false;
+    }
+
+    // Like parse_int_option() but reverses -1 and 0 values
+    inline bool parse_int_option_reverse_m10(const std::string& opt_name,
+        std::istringstream& stream)
+    {
+        int val;
+
+        if (stream >> val)
+        {
+            val = !val ? -1 : ( val == -1 ? 0 : val );
+            table_api.add_option(opt_name, val);
             return true;
         }
 

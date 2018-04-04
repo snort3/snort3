@@ -74,22 +74,22 @@ bool Pop::convert(std::istringstream& data_stream)
 
         else if (keyword == "b64_decode_depth")
         {
-            tmpval = parse_int_option("b64_decode_depth", data_stream, false);
+            tmpval = parse_int_option_reverse_m10("b64_decode_depth", data_stream);
         }
 
         else if (keyword == "qp_decode_depth")
         {
-            tmpval = parse_int_option("qp_decode_depth", data_stream, false);
+            tmpval = parse_int_option_reverse_m10("qp_decode_depth", data_stream);
         }
 
         else if (keyword == "bitenc_decode_depth")
         {
-            tmpval = parse_int_option("bitenc_decode_depth", data_stream, false);
+            tmpval = parse_int_option_reverse_m10("bitenc_decode_depth", data_stream);
         }
 
         else if (keyword == "uu_decode_depth")
         {
-            tmpval = parse_int_option("uu_decode_depth", data_stream, false);
+            tmpval = parse_int_option_reverse_m10("uu_decode_depth", data_stream);
         }
 
         else if (keyword == "ports")
