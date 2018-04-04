@@ -394,13 +394,6 @@ void HttpMsgHeader::setup_encoding_decompression()
         case CONTENTCODE_DEFLATE:
             compression = CMP_DEFLATE;
             break;
-        case CONTENTCODE_COMPRESS:
-        case CONTENTCODE_EXI:
-        case CONTENTCODE_PACK200_GZIP:
-        case CONTENTCODE_X_COMPRESS:
-            add_infraction(INF_UNSUPPORTED_ENCODING);
-            create_event(EVENT_UNSUPPORTED_ENCODING);
-            break;
         case CONTENTCODE_IDENTITY:
             break;
         case CONTENTCODE_CHUNKED:
@@ -408,8 +401,14 @@ void HttpMsgHeader::setup_encoding_decompression()
             create_event(EVENT_CONTENT_ENCODING_CHUNKED);
             break;
         case CONTENTCODE__OTHER:
+            // The ones we never heard of
             add_infraction(INF_UNKNOWN_ENCODING);
             create_event(EVENT_UNKNOWN_ENCODING);
+            break;
+        default:
+            // The ones we know by name but don't support
+            add_infraction(INF_UNSUPPORTED_ENCODING);
+            create_event(EVENT_UNSUPPORTED_ENCODING);
             break;
         }
     }

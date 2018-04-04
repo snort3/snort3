@@ -150,6 +150,13 @@ const StrCode HttpMsgHeadShared::content_code_list[] =
     { CONTENTCODE_X_COMPRESS,    "x-compress" },
     { CONTENTCODE_IDENTITY,      "identity" },
     { CONTENTCODE_CHUNKED,       "chunked" },
+    { CONTENTCODE_BR,            "br" },
+    { CONTENTCODE_BZIP2,         "bzip2" },
+    { CONTENTCODE_LZMA,          "lzma" },
+    { CONTENTCODE_PEERDIST,      "peerdist" },
+    { CONTENTCODE_SDCH,          "sdch" },
+    { CONTENTCODE_XPRESS,        "xpress" },
+    { CONTENTCODE_XZ,            "xz" },
     { 0,                         nullptr }
 };
 
