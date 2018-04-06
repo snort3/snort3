@@ -27,9 +27,9 @@
 
 #include "app_info_table.h"
 #include "log/messages.h"
-#include "main/snort_debug.h"
 #include "protocols/packet.h"
 #include "search_engines/search_tool.h"
+
 
 static THREAD_LOCAL PatternServiceDetector* service_pattern_detector;
 static THREAD_LOCAL PatternClientDetector* client_pattern_detector;
@@ -38,12 +38,12 @@ static void dumpPatterns(const char* name, PatternService* pList)
 {
     UNUSED(name);
 
-    DebugFormat(DEBUG_LOG,"Adding pattern for \"%s\"\n", name);
+    trace_logf(appid_module,"Adding pattern for \"%s\"\n", name);
     for (PatternService* ps = pList; ps; ps = ps->next)
         for (Pattern* pattern = ps->pattern; pattern; pattern = pattern->next)
             if (pattern->data && pattern->length)
             {
-                DebugFormat(DEBUG_LOG,"\t\t%s, %u\n",pattern->data, pattern->length);
+                trace_logf(appid_module,"\t\t%s, %u\n",pattern->data, pattern->length);
             }
 }
 
@@ -330,14 +330,12 @@ void PatternServiceDetector::register_service_patterns()
                 {
                     if (ps->proto == IpProtocol::TCP)
                     {
-                        DebugFormat(DEBUG_LOG,"Adding pattern with length %u\n",pattern->length);
                         handler->register_tcp_pattern(this, pattern->data, pattern->length,
                             pattern->offset, 0);
                         register_pattern(&tcp_pattern_matcher, pattern);
                     }
                     else
                     {
-                        DebugFormat(DEBUG_LOG,"Adding pattern with length %u\n",pattern->length);
                         handler->register_udp_pattern(this, pattern->data, pattern->length,
                             pattern->offset, 0);
                         register_pattern(&udp_pattern_matcher, pattern);
@@ -604,14 +602,12 @@ void PatternClientDetector::register_client_patterns()
             {
                 if (ps->proto == IpProtocol::TCP)
                 {
-                    DebugFormat(DEBUG_LOG,"Adding pattern with length %u\n",pattern->length);
                     handler->register_tcp_pattern(this, pattern->data, pattern->length,
                         pattern->offset, 0);
                     register_pattern(&tcp_pattern_matcher, pattern);
                 }
                 else
                 {
-                    DebugFormat(DEBUG_LOG,"Adding pattern with length %u\n",pattern->length);
                     handler->register_udp_pattern(this, pattern->data, pattern->length,
                         pattern->offset, 0);
                     register_pattern(&udp_pattern_matcher, pattern);

@@ -40,7 +40,6 @@
 
 using namespace snort;
 
-/*#define APPID_DEBUG_RPC   1 */
 
 enum RPCState
 {
@@ -482,17 +481,7 @@ int RpcServiceDetector::rpc_udp_validate(AppIdDiscoveryArgs& args)
         rd->xid = 0xFFFFFFFF;
     }
 
-#ifdef APPID_DEBUG_RPC
-    fprintf(SF_DEBUG_FILE, "Begin %u -> %u %u %d state %d\n", pkt->src_port, pkt->dst_port,
-        args.asd.proto, dir, rd->state);
-#endif
-
     rval = validate_packet(data, size, dir, args.asd, pkt, rd, &pname, &program);
-
-#ifdef APPID_DEBUG_RPC
-    fprintf(SF_DEBUG_FILE, "End %u -> %u %u %d state %d rval %d\n", pkt->src_port, pkt->dst_port,
-        args.asd.proto, dir, rd->state, rval);
-#endif
 
 done:
     switch (rval)
@@ -731,18 +720,10 @@ int RpcServiceDetector::rpc_tcp_validate(AppIdDiscoveryArgs& args)
                     {
                         if (rd->tcpsize[dir] & RPC_TCP_FRAG_MASK)
                         {
-#ifdef APPID_DEBUG_RPC
-                            fprintf(SF_DEBUG_FILE, "V Begin %u -> %u %u %d state %d\n",
-                                pkt->src_port, pkt->dst_port, args.asd.proto, dir, rd->state);
-#endif
 
                             ret = validate_packet(rd->tcpdata[dir], rd->tcppos[dir], dir, args.asd,
                                 pkt, rd, &pname, &program);
 
-#ifdef APPID_DEBUG_RPC
-                            fprintf(SF_DEBUG_FILE, "V End %u -> %u %u %d state %d rval %d\n",
-                                pkt->src_port, pkt->dst_port, args.asd.proto, dir, rd->state, ret);
-#endif
 
                             if (retval == -1)
                                 retval = ret;
@@ -810,18 +791,10 @@ int RpcServiceDetector::rpc_tcp_validate(AppIdDiscoveryArgs& args)
             {
                 if (rd->tcpsize[dir] & RPC_TCP_FRAG_MASK)
                 {
-#ifdef APPID_DEBUG_RPC
-                    fprintf(SF_DEBUG_FILE, "P Begin %u -> %u %u %d state %d\n", pkt->src_port,
-                        pkt->dst_port, args.asd.proto, dir, rd->state);
-#endif
 
                     ret = validate_packet(rd->tcpdata[dir], rd->tcppos[dir], dir, args.asd, pkt,
                         rd, &pname, &program);
 
-#ifdef APPID_DEBUG_RPC
-                    fprintf(SF_DEBUG_FILE, "P End %u -> %u %u %d state %d rval %d\n",
-                        pkt->src_port, pkt->dst_port, args.asd.proto, dir, rd->state, ret);
-#endif
 
                     if (retval == -1)
                         retval = ret;

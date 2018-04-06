@@ -35,7 +35,6 @@
 #include "appid_utils/network_set.h"
 #include "appid_utils/ip_funcs.h"
 #endif
-#include "main/snort_debug.h"
 #include "main/snort_config.h"
 #include "log/messages.h"
 #include "utils/util.h"
@@ -295,8 +294,6 @@ void AppIdConfig::configure_analysis_networks(char* toklist[], uint32_t flag)
                 six = ias6->range_max;
                 NetworkSetManager::ntoh_ipv6(&six);
                 inet_ntop(AF_INET6, (struct in6_addr*)&six, max_ip, sizeof(max_ip));
-                DebugFormat(DEBUG_APPID, "Adding %s-%s (0x%08X) with zone %d\n", min_ip, max_ip,
-                    ias6->addr_flags, zone);
                 if (zone >= 0)
                 {
                     if (!(my_net_list = net_list_by_zone[zone]))
@@ -348,8 +345,6 @@ void AppIdConfig::configure_analysis_networks(char* toklist[], uint32_t flag)
                 else
                     zone = -1;
                 ias->addr_flags |= flag;
-                DebugFormat(DEBUG_APPID, "Adding 0x%08X-0x%08X (0x%08X) with zone %d\n",
-                    ias->range_min, ias->range_max, ias->addr_flags, zone);
                 if (zone >= 0)
                 {
                     if (!(my_net_list = net_list_by_zone[zone]))
@@ -645,7 +640,6 @@ int AppIdConfig::load_analysis_config(const char* config_file, int reload, int i
     if (!config_file || (!config_file[0]))
     {
         char addrString[sizeof("0.0.0.0/0")];
-        DebugMessage(DEBUG_APPID, "Defaulting to monitoring all Snort traffic for AppID.\n");
         toklist[1] = nullptr;
         toklist[0] = addrString;
         strcpy(addrString,"0.0.0.0/0");
@@ -658,7 +652,6 @@ int AppIdConfig::load_analysis_config(const char* config_file, int reload, int i
     }
     else
     {
-        DebugFormat(DEBUG_APPID, "Loading configuration file: %s", config_file);
         FILE* fp;
 
         if (!(fp = fopen(config_file, "r")))
@@ -701,7 +694,6 @@ int AppIdConfig::load_analysis_config(const char* config_file, int reload, int i
     {
         char* instance_toklist[2];
         char addrString[sizeof("0.0.0.0/0")];
-        DebugMessage(DEBUG_APPID, "Defaulting to monitoring all Snort traffic for AppID.\n");
         instance_toklist[0] = addrString;
         instance_toklist[1] = nullptr;
         strcpy(addrString,"0.0.0.0/0");
@@ -734,8 +726,6 @@ int AppIdConfig::load_analysis_config(const char* config_file, int reload, int i
 
 void AppIdConfig::set_safe_search_enforcement(bool enabled)
 {
-    DEBUG_WRAP(DebugFormat(DEBUG_APPID,
-        "    Safe Search Enforcement enabled = %d.\n", enabled); );
     mod_config->safe_search_enabled = enabled;
 }
 

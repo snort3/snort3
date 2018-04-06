@@ -31,7 +31,6 @@
 #include "lua_detector_api.h"
 
 #include "protocols/packet.h"
-#include "main/snort_debug.h"
 #include "log/messages.h"
 #include "sfip/sf_ip.h"
 
@@ -60,10 +59,7 @@ void ServiceDetector::register_appid(AppId appId, unsigned extractsInfo)
     }
     extractsInfo &= (APPINFO_FLAG_SERVICE_ADDITIONAL | APPINFO_FLAG_SERVICE_UDP_REVERSED);
     if (!extractsInfo)
-    {
-        DebugFormat(DEBUG_APPID, "Ignoring direct service without info for AppId %d\n", appId);
         return;
-    }
     pEntry->service_detector = this;
     pEntry->flags |= extractsInfo;
 }

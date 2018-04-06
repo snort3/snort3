@@ -46,10 +46,6 @@ void WarningMessage(const char*,...) { }
 void LogMessage(const char*,...) { }
 void ParseWarning(WarningGroup, const char*, ...) { }
 
-#ifdef DEBUG_MSGS
-void Debug::print(const char*, int, uint64_t, const char*, ...) { }
-#endif
-
 const char* UT_TEST_APP_NAME_001 = "ut_app_001";
 const char* UT_TEST_APP_NAME_002 = "ut_app_002";
 const char* UT_TEST_APP_NAME_TOO_LONG =

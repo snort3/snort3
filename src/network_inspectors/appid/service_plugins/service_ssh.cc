@@ -27,7 +27,6 @@
 
 #include "app_info_table.h"
 #include "application_ids.h"
-#include "main/snort_debug.h"
 
 #define SSH_PORT    22
 

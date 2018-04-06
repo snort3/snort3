@@ -25,7 +25,6 @@
 
 #include "client_app_timbuktu.h"
 
-#include "main/snort_debug.h"
 #include "protocols/packet.h"
 #include "utils/sflsq.h"
 #include "utils/util.h"

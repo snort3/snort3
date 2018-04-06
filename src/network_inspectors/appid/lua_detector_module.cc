@@ -35,7 +35,6 @@
 #include "lua_detector_api.h"
 #include "lua_detector_flow_api.h"
 #include "detector_plugins/detector_http.h"
-#include "main/snort_debug.h"
 #include "utils/util.h"
 #include "utils/sflsq.h"
 #include "log/messages.h"
@@ -224,10 +223,6 @@ static inline void set_lua_tracker_size(lua_State* L, uint32_t numTrackers)
                     numTrackers);
         }
     }
-    else
-    {
-        DebugMessage(DEBUG_LOG, "hostServiceTrackerModule.setHostServiceTrackerSize not found");
-    }
 
     lua_pop(L, 1);
 
@@ -242,10 +237,6 @@ static inline void set_lua_tracker_size(lua_State* L, uint32_t numTrackers)
             if (lua_pcall(L, 1, 0, 0) != 0)
                 ErrorMessage("error setting tracker size");
         }
-    }
-    else
-    {
-        DebugMessage(DEBUG_LOG, "flowTrackerModule.setFlowTrackerSize not found");
     }
 
     lua_pop(L, 1);
@@ -342,7 +333,6 @@ void LuaDetectorManager::load_detector(char* detector_filename, bool isCustom)
     allocated_detectors.push_front(detector);
     num_lua_detectors++;
 
-    DebugFormat(DEBUG_LOG,"Loaded detector %s\n", detectorName);
 }
 
 void LuaDetectorManager::load_lua_detectors(const char* path, bool isCustom)

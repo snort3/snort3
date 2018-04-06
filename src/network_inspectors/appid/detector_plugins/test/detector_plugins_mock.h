@@ -25,9 +25,6 @@ void ErrorMessage(const char*,...) {}
 void WarningMessage(const char*,...) {}
 void LogMessage(const char*,...) {}
 void ParseWarning(WarningGroup, const char*, ...) {}
-#ifdef DEBUG_MSGS
-void Debug::print(const char*, int, uint64_t, const char*, ...) {}
-#endif
 
 namespace snort
 {

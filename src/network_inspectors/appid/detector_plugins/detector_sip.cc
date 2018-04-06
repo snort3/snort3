@@ -367,9 +367,6 @@ void SipServiceDetector::addFutureRtpFlows(SipEvent& event, AppIdSession& asd)
     if ( !session_a || !session_b )
         return;
 
-    DebugFormat(DEBUG_SIP, "Adding future media sessions ID: %u and %u\n",
-        session_b->get_id(), session_b->get_id());
-
     session_a->begin_media_data();
     session_b->begin_media_data();
 
@@ -378,12 +375,6 @@ void SipServiceDetector::addFutureRtpFlows(SipEvent& event, AppIdSession& asd)
 
     while ( media_a && media_b )
     {
-        DEBUG_WRAP( snort::SfIpString ip_str; )
-        DebugFormat(DEBUG_SIP, "Adding future channels Source IP: %s Port: %hu\n",
-            media_a->get_address()->ntop(ip_str), media_a->get_port());
-        DebugFormat(DEBUG_SIP, "Adding future channels Destine IP: %s Port: %hu\n",
-            media_b->get_address()->ntop(ip_str), media_b->get_port());
-
         createRtpFlow(asd, event.get_packet(), media_a->get_address(), media_a->get_port(),
             media_b->get_address(), media_b->get_port(), IpProtocol::UDP, APP_ID_RTP);
         createRtpFlow(asd, event.get_packet(), media_b->get_address(), media_b->get_port(),

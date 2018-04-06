@@ -104,34 +104,6 @@ static IPMacEntry* LookupIPMacEntryByIP(
     return nullptr;
 }
 
-#ifdef DEBUG_MSGS
-static void PrintIPMacEntryList(IPMacEntryList& ipmel)
-{
-    if ( ipmel.empty() )
-        return;
-
-    LogMessage("Arpspoof IPMacEntry List");
-    LogMessage("  Size: %zu\n", ipmel.size());
-
-    for ( auto p : ipmel )
-    {
-        SfIp in;
-        in.set(&p.ipv4_addr, AF_INET);
-        SfIpString ip_str;
-        LogMessage("    %s -> ", in.ntop(ip_str));
-
-        for (int i = 0; i < 6; i++)
-        {
-            LogMessage("%02x", p.mac_addr[i]);
-            if (i != 5)
-                LogMessage(":");
-        }
-        LogMessage("\n");
-    }
-}
-
-#endif
-
 //-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
@@ -163,10 +135,6 @@ void ArpSpoof::show(SnortConfig*)
 {
     LogMessage("arpspoof configured\n");
 
-#ifdef DEBUG_MSGS
-    if ( Debug::enabled(DEBUG_INSPECTOR) )
-        PrintIPMacEntryList(config->ipmel);
-#endif
 }
 
 void ArpSpoof::eval(Packet* p)
@@ -228,13 +196,11 @@ void ArpSpoof::eval(Packet* p)
         if (memcmp((const u_char*)dst_mac_addr, (const u_char*)bcast, 6) != 0)
         {
             DetectionEngine::queue_event(GID_ARP_SPOOF, ARPSPOOF_UNICAST_ARP_REQUEST);
-            DebugMessage(DEBUG_INSPECTOR, "MODNAME: Unicast request\n");
         }
         else if (memcmp((const u_char*)src_mac_addr,
             (const u_char*)ah->arp_sha, 6) != 0)
         {
             DetectionEngine::queue_event(GID_ARP_SPOOF, ARPSPOOF_ETHERFRAME_ARP_MISMATCH_SRC);
-            DebugMessage(DEBUG_INSPECTOR, "MODNAME: Ethernet/ARP mismatch request\n");
         }
         break;
     case ARPOP_REPLY:
@@ -242,13 +208,11 @@ void ArpSpoof::eval(Packet* p)
             (const u_char*)ah->arp_sha, 6) != 0)
         {
             DetectionEngine::queue_event(GID_ARP_SPOOF, ARPSPOOF_ETHERFRAME_ARP_MISMATCH_SRC);
-            DebugMessage(DEBUG_INSPECTOR, "MODNAME: Ethernet/ARP mismatch reply src\n");
         }
         else if (memcmp((const u_char*)dst_mac_addr,
             (const u_char*)ah->arp_tha, 6) != 0)
         {
             DetectionEngine::queue_event(GID_ARP_SPOOF, ARPSPOOF_ETHERFRAME_ARP_MISMATCH_DST);
-            DebugMessage(DEBUG_INSPECTOR, "MODNAME: Ethernet/ARP mismatch reply dst\n");
         }
         break;
     }
@@ -260,9 +224,6 @@ void ArpSpoof::eval(Packet* p)
     IPMacEntry* ipme = LookupIPMacEntryByIP(config->ipmel, ah->arp_spa32);
     if ( ipme )
     {
-        DebugFormat(DEBUG_INSPECTOR,
-            "MODNAME: LookupIPMacEntryByIP returned %p\n", (void*)ipme);
-
         auto cmp_ether_src = memcmp(src_mac_addr, ipme->mac_addr, 6);
         auto cmp_arp_sha = memcmp(ah->arp_sha, ipme->mac_addr, 6);
 
@@ -271,13 +232,7 @@ void ArpSpoof::eval(Packet* p)
         if ( cmp_ether_src || cmp_arp_sha )
         {
             DetectionEngine::queue_event(GID_ARP_SPOOF, ARPSPOOF_ARP_CACHE_OVERWRITE_ATTACK);
-            DebugMessage(DEBUG_INSPECTOR, "MODNAME: Attempted ARP cache overwrite attack\n");
         }
-    }
-    else
-    {
-        DebugMessage(DEBUG_INSPECTOR,
-            "MODNAME: LookupIPMacEntryByIp returned NULL\n");
     }
 }
 

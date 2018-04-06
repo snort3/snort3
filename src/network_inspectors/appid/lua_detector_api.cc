@@ -45,7 +45,6 @@
 #include "detector_plugins/detector_pattern.h"
 #include "hash/xhash.h"
 #include "log/messages.h"
-#include "main/snort_debug.h"
 #include "main/snort_types.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
@@ -61,7 +60,7 @@ enum LuaLogLevels
     LUA_LOG_WARN = 2,
     LUA_LOG_NOTICE = 3,
     LUA_LOG_INFO = 4,
-    LUA_LOG_DEBUG = 5,
+    LUA_LOG_TRACE = 5,
 };
 
 ProfileStats luaDetectorsPerfStats;
@@ -259,8 +258,8 @@ static int detector_log_message(lua_State* L)
         LogMessage("%s:%s\n", name.c_str(), message);
         break;
 
-    case LUA_LOG_DEBUG:
-        DebugFormat(DEBUG_APPID, "%s:%s\n", name.c_str(), message);
+    case LUA_LOG_TRACE:
+        trace_logf(appid_module, "%s:%s\n", name.c_str(), message);
         break;
 
     default:
@@ -2352,8 +2351,6 @@ int LuaStateDescriptor::lua_validate(AppIdDiscoveryArgs& args)
     }
 
     lua_getglobal(my_lua_state, validateFn);
-    DebugFormat(DEBUG_APPID, "lua detector %s validating: Lua Memory usage %d\n",
-        package_info.name.c_str(), lua_gc(my_lua_state, LUA_GCCOUNT, 0));
 
     if ( lua_pcall(my_lua_state, 0, 1, 0) )
     {
@@ -2379,7 +2376,6 @@ int LuaStateDescriptor::lua_validate(AppIdDiscoveryArgs& args)
 
     int rc = lua_tonumber(my_lua_state, -1);
     lua_pop(my_lua_state, 1);
-    DebugFormat(DEBUG_APPID, "lua detector %s: status: %d\n", package_info.name.c_str(), rc);
     ldp.pkt = nullptr;
     return rc;
 }

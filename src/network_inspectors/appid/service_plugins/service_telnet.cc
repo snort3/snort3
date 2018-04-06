@@ -35,7 +35,6 @@
 
 #include "appid_session.h"
 #include "application_ids.h"
-#include "main/snort_debug.h"
 #include "utils/util.h"
 
 #define TELNET_COUNT_THRESHOLD 3

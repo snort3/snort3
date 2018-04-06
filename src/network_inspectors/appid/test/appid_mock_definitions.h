@@ -52,10 +52,6 @@ void Field::set(int32_t length, const uint8_t* start, bool own_the_buffer_)
 
 Field global_field;
 
-#ifdef DEBUG_MSGS
-void Debug::print(const char*, int, uint64_t, const char*, ...) { }
-#endif
-
 void ErrorMessage(const char*,...) { }
 void WarningMessage(const char*,...) { }
 void LogMessage(const char*,...) { }

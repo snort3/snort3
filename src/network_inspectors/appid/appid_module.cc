@@ -40,6 +40,8 @@
 using namespace snort;
 using namespace std;
 
+Trace TRACE_NAME(appid_module);
+
 //-------------------------------------------------------------------------
 // appid module
 //-------------------------------------------------------------------------
@@ -182,7 +184,7 @@ static const RuleMap appid_rules[] =
 #endif
 
 AppIdModule::AppIdModule() :
-    Module(MOD_NAME, MOD_HELP, s_params)
+    Module(MOD_NAME, MOD_HELP, s_params, false, &TRACE_NAME(appid_module))
 {
     config = nullptr;
 }
@@ -204,7 +206,7 @@ const AppIdModuleConfig* AppIdModule::get_data()
     return temp;
 }
 
-bool AppIdModule::set(const char*, Value& v, SnortConfig*)
+bool AppIdModule::set(const char* fqn, Value& v, SnortConfig* c)
 {
 #ifdef USE_RNA_CONFIG
     if ( v.is("conf") )
@@ -234,7 +236,7 @@ bool AppIdModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("log_all_sessions") )
         config->log_all_sessions = v.get_bool();
     else
-        return false;
+        return Module::set(fqn, v, c);
 
     return true;
 }

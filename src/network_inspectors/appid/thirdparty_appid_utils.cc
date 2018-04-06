@@ -28,7 +28,6 @@
 #include <dlfcn.h>
 
 #include "log/messages.h"
-#include "main/snort_debug.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "stream/stream.h"
@@ -108,8 +107,6 @@ static int LoadCallback(const char* const path, int /* indent */)
         return 0;
     }
 
-    DEBUG_WRAP(DebugFormat(DEBUG_APPID, "Found 3rd party AppID module (%s).\n",
-        tp_module->module_name ? tp_module->module_name : ""); );
     module_handle = handle;
     thirdparty_appid_module = tp_module;
     return 0;
@@ -146,10 +143,8 @@ void ThirdPartyAppIDInit(const AppIdModuleConfig* config)
     // _dpd.loadAllLibs(thirdparty_appid_dir, LoadCallback);
     if (thirdparty_appid_module == nullptr)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_APPID, "No 3rd party AppID module loaded.\n"); );
         return;
     }
-
     memset(&thirdpartyConfig, 0, sizeof(thirdpartyConfig));
     thirdpartyConfig.chp_body_collection_max = config->chp_body_collection_max;
     thirdpartyConfig.ftp_userid_disabled = config->ftp_userid_disabled;
@@ -179,10 +174,6 @@ void ThirdPartyAppIDInit(const AppIdModuleConfig* config)
         thirdparty_appid_module = nullptr;
         return;
     }
-
-    DEBUG_WRAP(DebugFormat(DEBUG_APPID,
-        "3rd party AppID module loaded and initialized OK (%s).\n",
-        thirdparty_appid_module->module_name ? thirdparty_appid_module->module_name : ""); );
 }
 
 void ThirdPartyAppIDReconfigure()
@@ -191,7 +182,6 @@ void ThirdPartyAppIDReconfigure()
 
     if (thirdparty_appid_module == nullptr)
     {
-        DEBUG_WRAP(DebugMessage(DEBUG_APPID, "No 3rd party AppID module loaded.\n"); );
         return;
     }
 
@@ -209,9 +199,6 @@ void ThirdPartyAppIDReconfigure()
         ErrorMessage("Unable to reconfigure 3rd party AppID module (%d)!\n", ret);
         return;
     }
-
-    DEBUG_WRAP(DebugFormat(DEBUG_APPID, "3rd party AppID module reconfigured OK (%s).\n",
-        thirdparty_appid_module->module_name ? thirdparty_appid_module->module_name : ""); );
 }
 
 void ThirdPartyAppIDFini()
@@ -227,8 +214,6 @@ void ThirdPartyAppIDFini()
         module_handle = nullptr;
         thirdparty_appid_module = nullptr;
 
-        DEBUG_WRAP(DebugMessage(DEBUG_APPID,
-            "3rd party AppID module finalized and unloaded OK.\n"); );
     }
 }
 

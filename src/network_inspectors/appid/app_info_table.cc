@@ -35,7 +35,6 @@
 #include "log/messages.h"
 #include "log/unified2.h"
 #include "main/snort_config.h"
-#include "main/snort_debug.h"
 #include "target_based/snort_protocols.h"
 #include "utils/util_cstring.h"
 
@@ -274,8 +273,6 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* config, const char* pa
     if (config_file == nullptr)
         return;
 
-    DebugFormat(DEBUG_APPID, "Loading configuration file %s\n", path);
-
     while (fgets(buf, sizeof(buf), config_file) != nullptr)
     {
         char* context;
@@ -320,9 +317,6 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* config, const char* pa
                 }
                 else
                 {
-                    DebugFormat(DEBUG_APPID,
-                        "AppId: setting max thirdparty inspection flow depth to %d packets.\n",
-                        max_tp_flow_depth);
                     config->max_tp_flow_depth = max_tp_flow_depth;
                 }
             }
@@ -330,62 +324,40 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* config, const char* pa
             {
                 if (!(strcasecmp(conf_val, "enabled")))
                 {
-                    DebugMessage(DEBUG_APPID,
-                        "AppId: TCP probes will be analyzed by NAVL.\n");
-
                     config->tp_allow_probes = 1;
                 }
             }
             else if (!(strcasecmp(conf_key, "tp_client_app")))
             {
-                DebugFormat(DEBUG_APPID,
-                    "AppId: if thirdparty reports app %d, we will use it as a client.\n",
-                    atoi(conf_val));
                 set_app_info_flags(atoi(conf_val), APPINFO_FLAG_TP_CLIENT);
             }
             else if (!(strcasecmp(conf_key, "ssl_reinspect")))
             {
-                DebugFormat(DEBUG_APPID,
-                    "AppId: adding app %d to list of SSL apps that get more granular inspection.\n",
-                    atoi(conf_val));
                 set_app_info_flags(atoi(conf_val), APPINFO_FLAG_SSL_INSPECT);
             }
             else if (!(strcasecmp(conf_key, "disable_safe_search")))
             {
                 if (!(strcasecmp(conf_val, "disabled")))
                 {
-                    DebugMessage(DEBUG_APPID, "AppId: disabling safe search enforcement.\n");
                     config->safe_search_enabled = false;
                 }
             }
             else if (!(strcasecmp(conf_key, "ssl_squelch")))
             {
-                DebugFormat(DEBUG_APPID,
-                    "AppId: adding app %d to list of SSL apps that may open a second SSL connection.\n",
-                    atoi(conf_val));
                 set_app_info_flags(atoi(conf_val), APPINFO_FLAG_SSL_SQUELCH);
             }
             else if (!(strcasecmp(conf_key, "defer_to_thirdparty")))
             {
-                DebugFormat(DEBUG_APPID,
-                    "AppId: adding app %d to list of apps where we should take thirdparty ID over the NDE's.\n",
-                    atoi(conf_val));
                 set_app_info_flags(atoi(conf_val), APPINFO_FLAG_DEFER);
             }
             else if (!(strcasecmp(conf_key, "defer_payload_to_thirdparty")))
             {
-                DebugFormat(DEBUG_APPID,
-                    "AppId: adding app %d to list of apps where we should take "
-                    "thirdparty payload ID over the NDE's.\n",
-                    atoi(conf_val));
                 set_app_info_flags(atoi(conf_val), APPINFO_FLAG_DEFER_PAYLOAD);
             }
             else if (!(strcasecmp(conf_key, "chp_userid")))
             {
                 if (!(strcasecmp(conf_val, "disabled")))
                 {
-                    DebugMessage(DEBUG_APPID,
-                        "AppId: HTTP UserID collection disabled.\n");
                     config->chp_userid_disabled = true;
                     continue;
                 }
@@ -394,8 +366,6 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* config, const char* pa
             {
                 if (!(strcasecmp(conf_val, "disabled")))
                 {
-                    DebugMessage(DEBUG_APPID,
-                        "AppId: HTTP Body header reading disabled.\n");
                     config->chp_body_collection_disabled = 1;
                     continue;
                 }
@@ -404,7 +374,6 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* config, const char* pa
             {
                 if (!(strcasecmp(conf_val, "disabled")))
                 {
-                    DebugMessage(DEBUG_APPID, "AppId: FTP userID disabled.\n");
                     config->ftp_userid_disabled = 1;
                     continue;
                 }
@@ -424,8 +393,6 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* config, const char* pa
                 uint8_t temp_val;
                 temp_val = strtol(conf_val, nullptr, 10);
                 set_app_info_priority (temp_appid, temp_val);
-                DebugFormat(DEBUG_APPID,"AppId: %d Setting priority bit %d .\n",
-                    temp_appid, temp_val);
             }
             else if (!(strcasecmp(conf_key, "referred_appId")))
             {
@@ -448,9 +415,6 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* config, const char* pa
                             sizeof(referred_app_list) - referred_app_index, "%d ", id);
                         set_app_info_flags(id, APPINFO_FLAG_REFERRED);
                     }
-                    DebugFormat(DEBUG_APPID,
-                        "AppId: adding appIds to list of referred web apps: %s\n",
-                        referred_app_list);
                 }
             }
             else if (!(strcasecmp(conf_key, "rtmp_max_packets")))
@@ -471,9 +435,6 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* config, const char* pa
             }
             else if (!(strcasecmp(conf_key, "ignore_thirdparty_appid")))
             {
-                DebugFormat(DEBUG_APPID,
-                    "AppId: adding app %d to list of ignore thirdparty apps.\n",
-                    atoi(conf_val));
                 set_app_info_flags(atoi(conf_val), APPINFO_FLAG_IGNORE);
             }
             else if (!(strcasecmp(conf_key, "http2_detection")))
@@ -485,12 +446,10 @@ void AppInfoManager::load_appid_config(AppIdModuleConfig* config, const char* pa
                 // ports.
                 if (!(strcasecmp(conf_val, "disabled")))
                 {
-                    DebugMessage(DEBUG_APPID, "AppId: disabling internal HTTP/2 detection.\n");
                     config->http2_detection_enabled = false;
                 }
                 else if (!(strcasecmp(conf_val, "enabled")))
                 {
-                    DebugMessage(DEBUG_APPID, "AppId: enabling internal HTTP/2 detection.\n");
                     config->http2_detection_enabled = true;
                 }
                 else

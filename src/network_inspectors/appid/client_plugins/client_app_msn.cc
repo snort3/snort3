@@ -23,7 +23,6 @@
 #include "config.h"
 #endif
 
-#include "main/snort_debug.h"
 
 #include "client_app_msn.h"
 

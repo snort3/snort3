@@ -63,9 +63,6 @@ FlowStateValue* FlowIPTracker::find_stats(const SfIp* src_addr, const SfIp* dst_
 
         if (!node)
         {
-            DEBUG_WRAP(DebugMessage(DEBUG_STREAM,
-                "Key/Value pair didn't exist in the flow stats table and we couldn't add it!\n");
-                );
             return nullptr;
         }
         memset(node->data, 0, sizeof(FlowStateValue));
