@@ -684,9 +684,9 @@ SO_PUBLIC bool open_table(const char* s, int idx)
     if ( !h || (h->api && h->api->type == PT_IPS_OPTION) )
         return false;
 
-    // FIXIT-M only basic modules and inspectors can be reloaded at present
-    if ( ( snort::Snort::is_reloading() )
-            and h->api and h->api->type != PT_INSPECTOR )
+    // FIXIT-M only basic modules, inspectors and ips actions can be reloaded at present
+    if ( ( snort::Snort::is_reloading() ) and h->api
+            and h->api->type != PT_INSPECTOR and h->api->type != PT_IPS_ACTION )
         return false;
 
     Module* m = h->mod;

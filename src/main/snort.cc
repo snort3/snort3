@@ -572,7 +572,7 @@ SnortConfig* Snort::get_reload_config(const char* fname)
     ControlMgmt::reconfigure_controls();
 #endif
 
-    if ( !InspectorManager::configure(sc) )
+    if ( get_parse_errors() or !InspectorManager::configure(sc) )
     {
         parser_term(sc);
         delete sc;
