@@ -192,12 +192,13 @@ ftp_command_specs =
     { command = 'SIZE', length = 512 },
 
     { command = 'ALLO', length = 200, format = '< int [ char R int ] >' },
-    { command = 'PORT', length = 400, format = '< host_port >' },
-
+    { command = 'EPRT', length = 400, format = '< extd_host_port >' },
     { command = 'EPSV', format = '< [ { char 12 | char A char L char L } ] >' },
+    { command = 'LPRT', length = 400, format = '< long_host_port >' },
     { command = 'MACB', format = '< string >' },
     { command = 'MDTM', format = '< [ date nnnnnnnnnnnnnn[.n[n[n]]] ] string >' },
     { command = 'MODE', format = '< char ASBCZ >' },
+    { command = 'PORT', length = 400, format = '< host_port >' },
     { command = 'PROT', format = '< char CSEP >' },
     { command = 'STRU', format = '< char FRPO [ string ] >' },
     { command = 'TYPE', 

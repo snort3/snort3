@@ -17,6 +17,8 @@
 //--------------------------------------------------------------------------
 // pps_ftp_telnet_protocol.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
+#include <map>
+#include <set>
 #include <sstream>
 #include <vector>
 
@@ -32,10 +34,14 @@ namespace preprocessors
 
 namespace
 {
+
 class FtpServer : public ConversionState
 {
 public:
-    FtpServer(Converter& c) : ConversionState(c) { }
+    FtpServer(Converter& c) : ConversionState(c)
+    {
+        commands = ftp_default_command_specs;
+    }
     bool convert(std::istringstream& data_stream) override;
 
 private:
@@ -44,24 +50,70 @@ private:
         std::string name;
         std::string format;
         int length;
-
-        Command() : name(std::string()),
-            format(std::string()),
-            length(command_default_len) { }
     };
 
     static const int command_default_len = -1;
-    static int ftpsever_binding_id;
+    static int ftpserver_binding_id;
+    static bool added_ftp_data;
     std::vector<Command> commands;
 
     bool parse_alt_max_cmd(std::istringstream& data_stream);
     bool parse_cmd_validity_cmd(std::istringstream& data_stream);
     std::vector<Command>::iterator get_command(const std::string& cmd_name,
         std::vector<FtpServer::Command>::iterator it);
+    bool add_cmd_to_set(std::set<std::string>& cmd_set, std::istringstream& stream);
+
+    std::vector<Command> ftp_default_command_specs =
+    {
+        { "ABOR", "", 0 },
+        { "CCC", "", 0 },
+        { "CDUP", "", 0 },
+        { "ESTA", "", 0 },
+        { "FEAT", "", 0 },
+        { "LPSV", "", 0 },
+        { "NOOP", "", 0 },
+        { "PASV", "", 0 },
+        { "PWD", "", 0 },
+        { "QUIT", "", 0 },
+        { "REIN", "", 0 },
+        { "SYST", "", 0 },
+        { "XCUP", "", 0 },
+        { "XPWD", "", 0 },
+
+        { "APPE", "", 200 },
+        { "CMD", "", 200 },
+        { "HELP", "", 200 },
+        { "NLST", "", 200 },
+        { "RETR", "", 200 },
+        { "RNFR", "", 200 },
+        { "STOR", "", 200 },
+        { "STOU", "", 200 },
+        { "XMKD", "", 200 },
+
+        { "CWD", "", 256 },
+        { "RNTO", "", 256 },
+        { "SIZE", "", 512 },
+
+        { "ALLO", "< int [ char R int ] >", 200 },
+        { "PORT", "< host_port >", 400 },
+        { "LPRT", "< long_host_port >", 400 },
+        { "EPRT", "< extd_host_port >", 400 },
+
+        { "EPSV", "< [ { char 12 | char A char L char L } ] >", command_default_len },
+        { "MACB", "< string >", command_default_len },
+        { "MDTM", "< [ date nnnnnnnnnnnnnn[.n[n[n]]] ] string >", command_default_len },
+        { "MODE", "< char ASBCZ >", command_default_len },
+        { "PROT", "< char CSEP >", command_default_len },
+        { "STRU", "< char FRPO [ string ] >", command_default_len },
+        { "TYPE", "< { char AE [ char NTC ] | char I | char L [ number ] } >",
+            command_default_len }
+    };
+
 };
 }  // namespace
 
-int FtpServer::ftpsever_binding_id = 1;
+int FtpServer::ftpserver_binding_id = 1;
+bool FtpServer::added_ftp_data = false;
 
 std::vector<FtpServer::Command>::iterator FtpServer::get_command(
     const std::string& cmd_name,
@@ -78,13 +130,10 @@ bool FtpServer::parse_alt_max_cmd(std::istringstream& stream)
 {
     int len;
     std::string elem;
+    bool updated = false;
 
     if (!(stream >> len))
         return false;
-
-    table_api.open_table("cmd_validity");
-    table_api.add_diff_option_comment("alt_max_param_len", "cmd_validity");
-    table_api.close_table();
 
     if (!(stream >> elem) || elem != "{")
         return false;
@@ -99,6 +148,7 @@ bool FtpServer::parse_alt_max_cmd(std::istringstream& stream)
             c.name = std::string(elem);
             c.length = len;
             commands.push_back(c);
+            updated = true;
         }
         else
         {
@@ -106,7 +156,10 @@ bool FtpServer::parse_alt_max_cmd(std::istringstream& stream)
             do
             {
                 if ((*it).length < len)
+                {
                     (*it).length = len;
+                    updated = true;
+                }
 
                 it = get_command(elem, ++it);
             }
@@ -115,7 +168,15 @@ bool FtpServer::parse_alt_max_cmd(std::istringstream& stream)
     }
 
     if (elem == "}")
-        return true;
+    {
+        if(updated)
+        {
+            table_api.open_table("cmd_validity");
+            table_api.add_diff_option_comment("alt_max_param_len", "cmd_validity");
+            table_api.close_table();
+        }
+        return updated;
+    }
     return false;
 }
 
@@ -123,6 +184,7 @@ bool FtpServer::parse_cmd_validity_cmd(std::istringstream& data_stream)
 {
     std::string command;
     std::string elem;
+    bool updated = false;
 
     if (!(data_stream >> command) ||
         !(data_stream >> elem) ||
@@ -145,12 +207,15 @@ bool FtpServer::parse_cmd_validity_cmd(std::istringstream& data_stream)
         Command c;
         c.name = std::string(command);
         c.format = std::string(format);
+        c.length = command_default_len;
         commands.push_back(c);
+        updated = true;
     }
     // command exists, but format unspecified (length likely specified)
     else if (it->format.empty())
     {
         it->format = std::string(format);
+        updated = true;
     }
     // command && format exists, but format is different. create new command
     else if (format != it->format)
@@ -160,6 +225,7 @@ bool FtpServer::parse_cmd_validity_cmd(std::istringstream& data_stream)
         c.format = std::string(format);
         c.length = it->length;
         commands.push_back(c);
+        updated = true;
     }
     else
     {
@@ -167,14 +233,111 @@ bool FtpServer::parse_cmd_validity_cmd(std::istringstream& data_stream)
         // do nothing
     }
 
-    return true;
+    return updated;
 }
+
+// Add command to existing set of commands if it's not already there.
+bool FtpServer::add_cmd_to_set(std::set<std::string>& cmd_set, std::istringstream& stream)
+{
+    std::string cmd;
+    bool updated = false;
+
+    if (!(stream >> cmd) || (cmd != "{"))
+        return false;
+
+    while (stream >> cmd && cmd != "}")
+    {
+        auto result = cmd_set.insert(cmd);
+        if(result.second)
+            updated = true; // cmd wasn't already in the set.
+    }
+
+    return updated;
+}
+
+
+std::set<std::string> ftp_default_cmds =
+{
+    "ABOR", "ACCT", "ADAT", "ALLO", "APPE", "AUTH", "CCC", "CDUP", "CEL",
+    "CLNT", "CMD", "CONF", "CWD", "DELE", "ENC", "EPRT", "EPSV", "ESTA",
+    "ESTP", "FEAT", "HELP", "LANG", "LIST", "LPRT", "LPSV", "MACB", "MAIL",
+    "MDTM", "MIC", "MKD", "MLSD", "MLST", "MODE", "NLST", "NOOP", "OPTS",
+    "PASS", "PASV", "PBSZ", "PORT", "PROT", "PWD", "QUIT", "REIN", "REST",
+    "RETR", "RMD", "RNFR", "RNTO", "SDUP", "SITE", "SIZE", "SMNT", "STAT",
+    "STOR", "STOU", "STRU", "SYST", "TEST", "TYPE", "USER", "XCUP", "XCRC",
+    "XCWD", "XMAS", "XMD5", "XMKD", "XPWD", "XRCP", "XRMD", "XRSQ", "XSEM",
+    "XSEN", "XSHA1", "XSHA256"
+};
+
+std::set<std::string> ftp_default_data_chan_cmds =
+{
+    "PORT", "PASV", "LPRT", "LPSV", "EPRT", "EPSV"
+};
+
+std::set<std::string> ftp_default_data_xfer_cmds =
+{
+    "RETR", "STOR", "STOU", "APPE", "LIST", "NLST"
+};
+
+std::set<std::string> ftp_default_file_put_cmds = { "STOR", "STOU" };
+
+std::set<std::string> ftp_default_file_get_cmds = { "RETR" };
+
+std::set<std::string> ftp_default_login_cmds = { "USER", "PASS" };
+
+std::set<std::string> ftp_default_encr_cmds = { "AUTH" };
+
+std::set<std::string> ftp_format_commands =
+{
+    "ACCT", "ADAT", "ALLO", "APPE", "AUTH", "CEL", "CLNT", "CMD", "CONF",
+    "CWD", "DELE", "ENC", "EPRT", "EPSV", "ESTP", "HELP", "LANG", "LIST",
+    "LPRT", "MACB", "MAIL", "MDTM", "MIC", "MKD", "MLSD", "MLST", "MODE",
+    "NLST", "OPTS", "PASS", "PBSZ", "PORT", "PROT", "REST", "RETR", "RMD",
+    "RNFR", "RNTO", "SDUP", "SITE", "SIZE", "SMNT", "STAT", "STOR", "STRU",
+    "TEST", "TYPE", "USER", "XCRC", "XCWD", "XMAS", "XMD5", "XMKD", "XRCP",
+    "XRMD", "XRSQ", "XSEM", "XSEN", "XSHA1", "XSHA256"
+};
+
+
+struct FtpDefaultCmd
+{
+    std::string default_name;
+    std::set<std::string> cmd_set;
+};
+
+// Use these defaults for the entries that the original config didn't provide.
+static std::map<std::string, FtpDefaultCmd> ftp_defaults =
+{
+    // NOTE: cmd_validity is handled separately.
+    {"chk_str_fmt", {"ftp_format_commands", ftp_format_commands}},
+    {"data_chan_cmds", {"ftp_default_data_chan_cmds", ftp_default_data_chan_cmds}},
+    {"data_xfer_cmds", {"ftp_default_data_xfer_cmds", ftp_default_data_xfer_cmds}},
+    {"encr_cmds", {"ftp_default_encr_cmds", ftp_default_encr_cmds}},
+    {"file_put_cmds", {"ftp_default_file_put_cmds", ftp_default_file_put_cmds}},
+    {"file_get_cmds", {"ftp_default_file_get_cmds", ftp_default_file_get_cmds}},
+    {"ftp_cmds", {"ftp_default_cmds", ftp_default_cmds}},
+    {"login_cmds", {"ftp_default_login_cmds", ftp_default_login_cmds}},
+};
 
 bool FtpServer::convert(std::istringstream& data_stream)
 {
     std::string keyword;
     bool retval = true;
     bool ports_set = false;
+
+    // Set up ftp_data whenever we have ftp_server configured.
+    if(!added_ftp_data)
+    {
+        auto& ftp_data_bind = cv.make_binder();
+        ftp_data_bind.set_use_type("ftp_data");
+        ftp_data_bind.set_when_service("ftp-data");
+
+        table_api.open_table("ftp_data");
+        table_api.close_table();
+
+        added_ftp_data = true;
+    }
+
     auto& bind = cv.make_binder();
     bind.set_use_type("ftp_server");
     bind.set_when_proto("tcp");
@@ -187,10 +350,10 @@ bool FtpServer::convert(std::istringstream& data_stream)
         }
         else
         {
-            std::string table_name = "ftp_server_target_" + std::to_string(ftpsever_binding_id);
+            std::string table_name = "ftp_server_target_" + std::to_string(ftpserver_binding_id);
             bind.set_use_name(table_name);
             table_api.open_table(table_name);
-            ftpsever_binding_id++;
+            ftpserver_binding_id++;
 
             if (keyword == "{")
             {
@@ -213,6 +376,9 @@ bool FtpServer::convert(std::istringstream& data_stream)
         return false;
     }
 
+    std::set<std::string> configured_keywords;
+    std::map<std::string, FtpDefaultCmd> updated_defaults = ftp_defaults;
+
     while (data_stream >> keyword)
     {
         bool tmpval = true;
@@ -233,31 +399,70 @@ bool FtpServer::convert(std::istringstream& data_stream)
             tmpval = parse_yn_bool_option("ignore_data_chan", data_stream, false);
 
         else if (keyword == "ftp_cmds")
-            tmpval = parse_curly_bracket_list("ftp_cmds", data_stream);
+        {
+            if(add_cmd_to_set(updated_defaults["ftp_cmds"].cmd_set, data_stream))
+                configured_keywords.insert(keyword);
+        }
+
+        else if (keyword == "encr_cmds")
+        {
+            if(add_cmd_to_set(updated_defaults["encr_cmds"].cmd_set, data_stream))
+                configured_keywords.insert(keyword);
+        }
+
+        else if (keyword == "login_cmds")
+        {
+            if(add_cmd_to_set(updated_defaults["login_cmds"].cmd_set, data_stream))
+                configured_keywords.insert(keyword);
+        }
+
+        // FIXIT-M Snort2lua needs to handle dir_cmds.
 
         else if (keyword == "chk_str_fmt")
-            tmpval = parse_curly_bracket_list("chk_str_fmt", data_stream);
+        {
+            if(add_cmd_to_set(updated_defaults["chk_str_fmt"].cmd_set, data_stream))
+                configured_keywords.insert(keyword);
+        }
 
         else if (keyword == "alt_max_param_len")
-            tmpval = parse_alt_max_cmd(data_stream);
+        {
+            // alt_max_param_len is converted to cmd_validity.
+            if(parse_alt_max_cmd(data_stream))
+                configured_keywords.insert("cmd_validity");
+        }
 
         else if (keyword == "cmd_validity")
-            tmpval = parse_cmd_validity_cmd(data_stream);
+        {
+            if(parse_cmd_validity_cmd(data_stream))
+                configured_keywords.insert(keyword);
+        }
 
         else if (keyword == "data_chan_cmds")
-            tmpval = parse_curly_bracket_list("data_chan_cmds", data_stream);
+        {
+            if(add_cmd_to_set(updated_defaults["data_chan_cmds"].cmd_set, data_stream))
+                configured_keywords.insert(keyword);
+        }
 
         else if (keyword == "data_rest_cmds")
             tmpval = parse_curly_bracket_list("data_rest_cmds", data_stream);
 
         else if (keyword == "data_xfer_cmds")
-            tmpval = parse_curly_bracket_list("data_xfer_cmds", data_stream);
+        {
+            if(add_cmd_to_set(updated_defaults["data_xfer_cmds"].cmd_set, data_stream))
+                configured_keywords.insert(keyword);
+        }
 
         else if (keyword == "file_put_cmds")
-            tmpval = parse_curly_bracket_list("file_put_cmds", data_stream);
+        {
+            if(add_cmd_to_set(updated_defaults["file_put_cmds"].cmd_set, data_stream))
+                configured_keywords.insert(keyword);
+        }
 
         else if (keyword == "file_get_cmds")
-            tmpval = parse_curly_bracket_list("file_get_cmds", data_stream);
+        {
+            if(add_cmd_to_set(updated_defaults["file_get_cmds"].cmd_set, data_stream))
+                configured_keywords.insert(keyword);
+        }
 
         else if (keyword == "data_chan")
         {
@@ -294,7 +499,31 @@ bool FtpServer::convert(std::istringstream& data_stream)
         }
     }
 
-    if (!commands.empty())
+    for(auto const& default_entry : updated_defaults)
+    {
+        if(configured_keywords.find(default_entry.first) == configured_keywords.end())
+        {
+            //  Use the defaults since no additional commands were added.
+            if(!table_api.add_option(default_entry.first, "$" + default_entry.second.default_name))
+                retval = false;
+        }
+        else
+        {
+            //  Use the defaults plus the added commands.
+            for(auto const& cmd_entry : default_entry.second.cmd_set)
+            {
+                retval = table_api.add_list(default_entry.first, cmd_entry) && retval;
+            }
+        }
+    }
+
+    if(configured_keywords.find("cmd_validity") == configured_keywords.end())
+    {
+        //  Use the defaults since no changes were made to the format specs.
+        if(!table_api.add_option("cmd_validity", "$ftp_command_specs"))
+            retval = false;
+    }
+    else
     {
         table_api.open_table("cmd_validity");
 
