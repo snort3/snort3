@@ -412,3 +412,8 @@ void FileIdModule::load_config(FileConfig*& dst)
         fc = nullptr;
     }
 }
+
+void FileIdModule::show_dynamic_stats()
+{
+    file_stats_print();
+}

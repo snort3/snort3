@@ -166,6 +166,7 @@ public:
     virtual void show_interval_stats(IndexVec&, FILE*);
     virtual void show_stats();
     virtual void reset_stats();
+    virtual void show_dynamic_stats() {}
 
     // Wrappers to check that lists are not tables
     bool verified_begin(const char*, int, SnortConfig*);

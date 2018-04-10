@@ -212,9 +212,8 @@ void DropStats()
 
     LogLabel("Module Statistics");
     const char* exclude = "daq snort";
-    ModuleManager::dump_stats(SnortConfig::get_conf(), exclude);
-
-    file_stats_print();
+    ModuleManager::dump_stats(SnortConfig::get_conf(), exclude, false);
+    ModuleManager::dump_stats(SnortConfig::get_conf(), exclude, true);
 
     LogLabel("Summary Statistics");
     show_stats((PegCount*)&proc_stats, proc_names, array_size(proc_names)-1, "process");

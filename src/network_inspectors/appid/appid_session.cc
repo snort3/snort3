@@ -105,7 +105,7 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t port,
     length_sequence.sequence_cnt = 0;
     memset(length_sequence.sequence, '\0', sizeof(length_sequence.sequence));
 
-    AppIdPegCounts::inc_disco_peg(AppIdPegCounts::DiscoveryPegs::TOTAL_SESSIONS);
+    appid_stats.total_sessions++;
 }
 
 AppIdSession::~AppIdSession()

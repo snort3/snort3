@@ -1417,14 +1417,17 @@ void ModuleManager::dump_msg_map(const char* pfx)
         cout << "no match" << endl;
 }
 
-void ModuleManager::dump_stats(SnortConfig*, const char* skip)
+void ModuleManager::dump_stats(SnortConfig*, const char* skip, bool dynamic)
 {
     for ( auto p : s_modules )
     {
         if ( !skip || !strstr(skip, p->mod->get_name()) )
         {
             std::lock_guard<std::mutex> lock(stats_mutex);
-            p->mod->show_stats();
+            if (dynamic)
+                p->mod->show_dynamic_stats();
+            else
+                p->mod->show_stats();
         }
     }
 }

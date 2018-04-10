@@ -760,8 +760,7 @@ static int detector_get_packet_dst_port(lua_State* L)
 static int detector_get_packet_count(lua_State* L)
 {
     lua_checkstack (L, 1);
-    lua_pushnumber(L,
-        AppIdPegCounts::get_disco_peg(AppIdPegCounts::DiscoveryPegs::PROCESSED_PACKETS));
+    lua_pushnumber(L, appid_stats.processed_packets);
     return 1;
 }
 

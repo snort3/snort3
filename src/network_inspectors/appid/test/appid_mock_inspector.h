@@ -32,15 +32,28 @@ Inspector::~Inspector() = default;
 bool Inspector::likes(Packet*) { return true; }
 bool Inspector::get_buf(const char*, Packet*, InspectionBuffer&) { return true; }
 class StreamSplitter* Inspector::get_splitter(bool) { return nullptr; }
+
+Module::Module(char const*, char const*) {}
+bool Module::set(const char*, Value&, SnortConfig*) { return true; }
+void Module::sum_stats(bool) {}
+void Module::show_interval_stats(std::vector<unsigned int, std::allocator<unsigned int> >&, _IO_FILE*) {}
+void Module::show_stats() {}
+void Module::reset_stats() {}
+PegCount Module::get_global_count(char const*) const { return 0; }
+
 }
 
-class AppIdModule
-{
-public:
-    AppIdModule() = default;
-    ~AppIdModule() = default;
-
-};
+AppIdModule::AppIdModule(): snort::Module("appid_mock", "appid_mock_help") {}
+AppIdModule::~AppIdModule() {}
+void AppIdModule::sum_stats(bool) {}
+void AppIdModule::show_dynamic_stats() {}
+bool AppIdModule::begin(char const*, int, snort::SnortConfig*) { return true; }
+bool AppIdModule::end(char const*, int, snort::SnortConfig*) { return true; }
+bool AppIdModule::set(char const*, snort::Value&, snort::SnortConfig*) { return true; }
+const snort::Command* AppIdModule::get_commands() const { return nullptr; }
+const PegInfo* AppIdModule::get_pegs() const { return nullptr; }
+PegCount* AppIdModule::get_counts() const { return nullptr; }
+snort::ProfileStats* AppIdModule::get_profile() const { return nullptr; }
 
 class AppIdInspector : public snort::Inspector
 {

@@ -477,7 +477,6 @@ void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config,
 {
     if ( !mod_config->app_detector_dir )
     {
-        AppIdPegCounts::set_detectors_configured();
         return;  // no lua detectors, no rule support, already warned
     }
 
@@ -573,7 +572,6 @@ void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config,
         }
         fclose(tableFile);
 
-        AppIdPegCounts::add_unknown_app_peg();
         snprintf(filepath, sizeof(filepath), "%s/odp/%s", mod_config->app_detector_dir,
             APP_CONFIG_FILE);
         load_appid_config (mod_config, filepath);
@@ -581,7 +579,5 @@ void AppInfoManager::init_appid_info_table(AppIdModuleConfig* mod_config,
             USR_CONFIG_FILE);
         load_appid_config (mod_config, filepath);
     }
-
-    AppIdPegCounts::set_detectors_configured();
 }
 

@@ -35,6 +35,17 @@ extern Trace TRACE_NAME(appid_module);
 #define MOD_NAME "appid"
 #define MOD_HELP "application and service identification"
 
+struct AppIdStats
+{
+    PegCount packets;
+    PegCount processed_packets;
+    PegCount ignored_packets;
+    PegCount total_sessions;
+    PegCount appid_unknown;  
+};
+
+extern THREAD_LOCAL AppIdStats appid_stats;
+
 class AppIdModule : public snort::Module
 {
 public:
@@ -54,6 +65,8 @@ public:
 
     Usage get_usage() const override
     { return CONTEXT; }
+    void sum_stats(bool) override;
+    void show_dynamic_stats() override;
 
 private:
     AppIdModuleConfig* config;

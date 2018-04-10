@@ -47,6 +47,7 @@ Trace TRACE_NAME(appid_module);
 //-------------------------------------------------------------------------
 
 THREAD_LOCAL ProfileStats appidPerfStats;
+THREAD_LOCAL AppIdStats appid_stats;
 
 static const Parameter s_params[] =
 {
@@ -183,6 +184,16 @@ static const RuleMap appid_rules[] =
 };
 #endif
 
+static const PegInfo appid_pegs[] =
+{
+    { CountType::SUM, "packets", "count of packets received" },
+    { CountType::SUM, "processed_packets", "count of packets processed" },
+    { CountType::SUM, "ignored_packets", "count of packets ignored" },
+    { CountType::SUM, "total_sessions", "count of sessions created" },
+    { CountType::SUM, "appid_unknown", "count of sessions where appid could not be determined" },
+    { CountType::END, nullptr, nullptr},
+};
+
 AppIdModule::AppIdModule() :
     Module(MOD_NAME, MOD_HELP, s_params, false, &TRACE_NAME(appid_module))
 {
@@ -269,11 +280,21 @@ const Command* AppIdModule::get_commands() const
 
 const PegInfo* AppIdModule::get_pegs() const
 {
-    return AppIdPegCounts::get_peg_info();
+    return appid_pegs;
 }
 
 PegCount* AppIdModule::get_counts() const
 {
-    return AppIdPegCounts::get_peg_counts();
+    return (PegCount*)&appid_stats;
 }
 
+void AppIdModule::sum_stats(bool accumulate_now_stats)
+{
+    AppIdPegCounts::sum_stats();
+    Module::sum_stats(accumulate_now_stats);
+}
+
+void AppIdModule::show_dynamic_stats()
+{
+    AppIdPegCounts::print();
+}

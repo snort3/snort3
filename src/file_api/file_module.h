@@ -52,6 +52,8 @@ public:
     Usage get_usage() const override
     { return GLOBAL; }
 
+    void show_dynamic_stats() override;
+
 private:
     FileMagicRule rule;
     FileMagicData magic;

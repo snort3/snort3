@@ -30,6 +30,7 @@
 
 #include <string>
 
+#include "appid_module.h"
 #include "appid_peg_counts.h"
 
 class ApplicationDescriptor
@@ -67,7 +68,7 @@ public:
             if ( app_id > APP_ID_NONE )
                 update_stats(app_id);
             else if ( app_id == APP_ID_UNKNOWN )
-                AppIdPegCounts::inc_disco_peg(AppIdPegCounts::DiscoveryPegs::APPID_UNKNOWN);
+                appid_stats.appid_unknown++;
         }
     }
 

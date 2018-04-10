@@ -75,7 +75,8 @@ public:
     static void reset_errors();
     static unsigned get_errors();
 
-    static void dump_stats(snort::SnortConfig*, const char* skip = nullptr);
+    static void dump_stats(snort::SnortConfig*, const char* skip = nullptr, bool dynamic = false);
+ 
     static void accumulate(snort::SnortConfig*);
     static void reset_stats(snort::SnortConfig*);
 

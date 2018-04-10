@@ -57,6 +57,8 @@ void WarningMessage(const char*,...) { }
 void LogMessage(const char*,...) { }
 void ParseWarning(WarningGroup, const char*, ...) { }
 
+void LogLabel(const char*, FILE*) {}
+
 int ServiceDiscovery::add_ftp_service_state(AppIdSession&)
 {
     return 0;
@@ -97,9 +99,6 @@ int ServiceDiscovery::fail_service(AppIdSession&, const Packet*, int, ServiceDet
 
 void mock_init_appid_pegs()
 {
-    AppIdPegCounts::set_detectors_configured();
-    AppIdPegCounts::add_unknown_app_peg();
-    AppIdPegCounts::get_peg_info();
     AppIdPegCounts::init_pegs();
 }
 
@@ -108,5 +107,8 @@ void mock_cleanup_appid_pegs()
     AppIdPegCounts::cleanup_pegs();
     AppIdPegCounts::cleanup_peg_info();
 }
+
+THREAD_LOCAL AppIdStats appid_stats;
+
 #endif
 

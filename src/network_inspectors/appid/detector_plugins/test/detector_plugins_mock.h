@@ -103,15 +103,14 @@ AppIdHttpSession::AppIdHttpSession(AppIdSession& session)
 AppIdHttpSession::~AppIdHttpSession() = default;
 
 // Stubs for AppIdPegCounts
-void AppIdPegCounts::inc_disco_peg(enum DiscoveryPegs) {}
 void AppIdPegCounts::inc_service_count(AppId) {}
 void AppIdPegCounts::inc_client_count(AppId) {}
 void AppIdPegCounts::inc_user_count(AppId) {}
 void AppIdPegCounts::inc_payload_count(AppId) {}
-PegCount AppIdPegCounts::get_disco_peg(enum DiscoveryPegs)
-{
-    return 0;
-}
+
+THREAD_LOCAL AppIdStats appid_stats;
+void AppIdModule::sum_stats(bool) {}
+void AppIdModule::show_dynamic_stats() {}
 
 namespace snort
 {
