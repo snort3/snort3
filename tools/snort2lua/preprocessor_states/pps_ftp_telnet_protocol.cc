@@ -54,7 +54,6 @@ private:
 
     static const int command_default_len = -1;
     static int ftpserver_binding_id;
-    static bool added_ftp_data;
     std::vector<Command> commands;
 
     bool parse_alt_max_cmd(std::istringstream& data_stream);
@@ -113,7 +112,6 @@ private:
 }  // namespace
 
 int FtpServer::ftpserver_binding_id = 1;
-bool FtpServer::added_ftp_data = false;
 
 std::vector<FtpServer::Command>::iterator FtpServer::get_command(
     const std::string& cmd_name,
@@ -326,7 +324,7 @@ bool FtpServer::convert(std::istringstream& data_stream)
     bool ports_set = false;
 
     // Set up ftp_data whenever we have ftp_server configured.
-    if(!added_ftp_data)
+    if(!cv.added_ftp_data())
     {
         auto& ftp_data_bind = cv.make_binder();
         ftp_data_bind.set_use_type("ftp_data");
@@ -335,7 +333,7 @@ bool FtpServer::convert(std::istringstream& data_stream)
         table_api.open_table("ftp_data");
         table_api.close_table();
 
-        added_ftp_data = true;
+        cv.set_added_ftp_data();
     }
 
     auto& bind = cv.make_binder();

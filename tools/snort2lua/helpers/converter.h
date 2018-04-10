@@ -111,6 +111,12 @@ public:
     inline RuleApi& get_rule_api()
     { return rule_api; }
 
+    bool added_ftp_data() const
+    { return ftp_data_is_added; }
+
+    void set_added_ftp_data()
+    { ftp_data_is_added = true; }
+
 private:
     static std::string ips_pattern;
     static bool parse_includes;
@@ -118,6 +124,8 @@ private:
     static bool convert_conf_mult_files;
     static bool empty_args;
     static bool bind_wizard;
+
+    bool ftp_data_is_added = false;
 
     DataApi data_api;
 
