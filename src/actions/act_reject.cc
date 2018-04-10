@@ -93,6 +93,28 @@ private:
 void RejectAction::exec(Packet* p)
 {
     Profile profile(rejPerfStats);
+
+    if ( !p->ptrs.ip_api.is_ip() )
+        return;
+
+    switch ( p->type() )
+    {
+    case PktType::TCP:
+        if ( !Active::is_reset_candidate(p) )
+            return;
+        break;
+
+    case PktType::UDP:
+    case PktType::ICMP:
+    case PktType::IP:
+        if ( !Active::is_unreachable_candidate(p) )
+            return;
+        break;
+
+    default:
+        return;
+    }
+
     send(p);
 }
 

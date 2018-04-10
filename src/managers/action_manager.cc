@@ -152,28 +152,8 @@ void ActionManager::queue(IpsAction* a)
         s_action = a;
 }
 
-void ActionManager::queue_reject(const Packet* p)
+void ActionManager::queue_reject()
 {
-    if ( !p->ptrs.ip_api.is_ip() )
-        return;
-
-    switch ( p->type() )
-    {
-    case PktType::TCP:
-        if ( !Active::is_reset_candidate(p) )
-            return;
-        break;
-
-    case PktType::UDP:
-    case PktType::ICMP:
-    case PktType::IP:
-        if ( !Active::is_unreachable_candidate(p) )
-            return;
-        break;
-
-    default:
-        return;
-    }
     if ( s_reject )
         queue(s_reject);
 }

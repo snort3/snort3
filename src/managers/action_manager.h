@@ -70,7 +70,7 @@ public:
     static void thread_term(snort::SnortConfig*);
 
     static void reset_queue();
-    static void queue_reject(const snort::Packet*);
+    static void queue_reject();
     static void queue(snort::IpsAction*);
     static void execute(snort::Packet*);
 

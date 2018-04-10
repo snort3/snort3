@@ -470,7 +470,7 @@ void Active::reset_session(Packet* p, bool force)
 
     if ( s_enabled )
     {
-        ActionManager::queue_reject(p);
+        ActionManager::queue_reject();
 
         if ( p->flow )
         {
