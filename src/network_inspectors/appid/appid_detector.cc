@@ -25,11 +25,12 @@
 
 #include "appid_detector.h"
 
+#include "protocols/packet.h"
+
+#include "app_info_table.h"
 #include "appid_config.h"
 #include "appid_http_session.h"
-#include "app_info_table.h"
 #include "lua_detector_api.h"
-#include "protocols/packet.h"
 
 using namespace snort;
 
@@ -96,4 +97,32 @@ void AppIdDetector::add_app(AppIdSession& asd, AppId service_id, AppId client_id
     asd.set_client_detected();
     asd.client_inferred_service_id = service_id;
     asd.client.set_id(client_id);
+}
+
+const char* AppIdDetector::get_code_string(APPID_STATUS_CODE code) const
+{
+    switch (code)
+    {
+    case APPID_SUCCESS:
+        return "success";
+    case APPID_INPROCESS:
+        return "inprocess";
+    case APPID_NEED_REASSEMBLY:
+        return "need-reassembly";
+    case APPID_NOT_COMPATIBLE:
+        return "not-compatible";
+    case APPID_INVALID_CLIENT:
+        return "invalid-client";
+    case APPID_REVERSED:
+        return "appid-reversed";
+    case APPID_NOMATCH:
+        return "no-match";
+    case APPID_ENULL:
+        return "error-null";
+    case APPID_EINVALID:
+        return "error-invalid";
+    case APPID_ENOMEM:
+        return "error-memory";
+    }
+    return "unknown code";
 }

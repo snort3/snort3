@@ -24,12 +24,12 @@
 
 #include "appid_discovery.h"
 
-#include <map>
+#include <unordered_map>
 #include <vector>
 
-#include "utils/sflsq.h"
 #include "flow/flow.h"
 #include "log/messages.h"
+#include "utils/sflsq.h"
 
 class AppIdConfig;
 class AppIdSession;
@@ -77,20 +77,21 @@ public:
 
     bool do_service_discovery(AppIdSession&, snort::Packet*, int);
     int identify_service(AppIdSession&, snort::Packet*, int dir);
-    int fail_service(AppIdSession&, const snort::Packet*, int dir, ServiceDetector*);
+    int fail_service(AppIdSession&, const snort::Packet*, int dir, ServiceDetector*,
+        ServiceDiscoveryState* sds = nullptr);
     int incompatible_data(AppIdSession&, const snort::Packet*, int dir, ServiceDetector*);
     static int add_ftp_service_state(AppIdSession&);
 
 private:
     ServiceDiscovery(AppIdInspector& ins);
     void initialize() override;
-    void get_next_service(const snort::Packet*, const int dir, AppIdSession&, ServiceDiscoveryState*);
+    void get_next_service(const snort::Packet*, const int dir, AppIdSession&);
     void get_port_based_services(IpProtocol, uint16_t port, AppIdSession&);
     void match_by_pattern(AppIdSession&, const snort::Packet*, IpProtocol);
 
-    std::map<uint16_t, std::vector<ServiceDetector*> > tcp_services;
-    std::map<uint16_t, std::vector<ServiceDetector*> > udp_services;
-    std::map<uint16_t, std::vector<ServiceDetector*> > udp_reversed_services;
+    std::unordered_map<uint16_t, std::vector<ServiceDetector*> > tcp_services;
+    std::unordered_map<uint16_t, std::vector<ServiceDetector*> > udp_services;
+    std::unordered_map<uint16_t, std::vector<ServiceDetector*> > udp_reversed_services;
 };
 
 #endif

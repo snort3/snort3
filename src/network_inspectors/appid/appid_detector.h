@@ -23,11 +23,13 @@
 #define APPID_DETECTOR_H
 
 #include <vector>
-#include "appid_discovery.h"
-#include "application_ids.h"
-#include "appid_session.h"
-#include "service_state.h"
+
 #include "flow/flow.h"
+
+#include "appid_discovery.h"
+#include "appid_session.h"
+#include "application_ids.h"
+#include "service_state.h"
 
 class AppIdConfig;
 class LuaStateDescriptor;
@@ -85,6 +87,8 @@ public:
     const AppIdConfig* config = nullptr;
 };
 
+// These numbers are what Lua (VDB/ODP) gives us. If these numbers are ever changed,
+// we need to change get_code_string() code to avoid misinterpretations.
 enum APPID_STATUS_CODE
 {
     APPID_SUCCESS = 0,
@@ -117,6 +121,7 @@ public:
     virtual void add_payload(AppIdSession&, AppId);
     virtual void add_app(AppIdSession&, AppId, AppId, const char*);
     virtual void finalize() {}
+    const char* get_code_string(APPID_STATUS_CODE) const;
 
     const std::string& get_name() const
     { return name; }

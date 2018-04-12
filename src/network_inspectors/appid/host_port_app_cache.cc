@@ -82,7 +82,7 @@ void HostPortCache::terminate()
 {
     if (host_port_cache)
     {
-        host_port_cache->empty();
+        host_port_cache->clear();
         delete host_port_cache;
         host_port_cache = nullptr;
     }

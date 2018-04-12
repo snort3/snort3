@@ -295,8 +295,9 @@ int ClientDiscovery::exec_client_detectors(AppIdSession& asd, Packet* p, int dir
         AppIdDiscoveryArgs disco_args(p->data, p->dsize, direction, asd, p);
         ret = asd.client_detector->validate(disco_args);
         if (appidDebug->is_active())
-            LogMessage("AppIdDbg %s %s client detector returned %d\n",
-                appidDebug->get_debug_session(), asd.client_detector->get_name().c_str(), ret);
+            LogMessage("AppIdDbg %s %s client detector %s (%d)\n",
+                appidDebug->get_debug_session(), asd.client_detector->get_name().c_str(),
+                asd.client_detector->get_code_string((APPID_STATUS_CODE)ret), ret);
     }
     else
     {
@@ -305,8 +306,9 @@ int ClientDiscovery::exec_client_detectors(AppIdSession& asd, Packet* p, int dir
             AppIdDiscoveryArgs disco_args(p->data, p->dsize, direction, asd, p);
             int result = kv->second->validate(disco_args);
             if (appidDebug->is_active())
-                LogMessage("AppIdDbg %s %s client detector returned %d\n",
-                    appidDebug->get_debug_session(), kv->second->get_name().c_str(), result);
+                LogMessage("AppIdDbg %s %s client candidate %s (%d)\n",
+                    appidDebug->get_debug_session(), kv->second->get_name().c_str(),
+                    kv->second->get_code_string((APPID_STATUS_CODE)result), result);
 
             if (result == APPID_SUCCESS)
             {

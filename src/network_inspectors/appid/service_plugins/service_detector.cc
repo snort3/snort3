@@ -25,14 +25,14 @@
 
 #include "service_detector.h"
 
-#include "appid_config.h"
+#include "log/messages.h"
+#include "protocols/packet.h"
+#include "sfip/sf_ip.h"
+
 #include "app_info_table.h"
+#include "appid_config.h"
 #include "appid_session.h"
 #include "lua_detector_api.h"
-
-#include "protocols/packet.h"
-#include "log/messages.h"
-#include "sfip/sf_ip.h"
 
 using namespace snort;
 
@@ -126,10 +126,7 @@ int ServiceDetector::update_service_data(AppIdSession& asd, const Packet* pkt, i
 
     asd.service_ip = *ip;
     asd.service_port = port;
-    ServiceDiscoveryState* sds = AppIdServiceState::get(ip, asd.protocol, port,
-        asd.is_decrypted());
-    if ( !sds )
-        sds = AppIdServiceState::add(ip, asd.protocol, port, asd.is_decrypted());
+    ServiceDiscoveryState* sds = AppIdServiceState::add(ip, asd.protocol, port, asd.is_decrypted());
     sds->set_service_id_valid(this);
 
     return APPID_SUCCESS;

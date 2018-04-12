@@ -26,3 +26,7 @@ add_cpputest( appid_debug_test
     SOURCES $<TARGET_OBJECTS:appid_cpputest_deps>
 )
 
+add_cpputest( service_state_test
+    SOURCES $<TARGET_OBJECTS:appid_cpputest_deps>
+)
+

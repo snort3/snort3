@@ -24,9 +24,10 @@
 
 #include <mutex>
 
-#include "sfip/sf_ip.h"
-#include "service_plugins/service_discovery.h"
 #include "protocols/protocol_ids.h"
+#include "sfip/sf_ip.h"
+
+#include "service_plugins/service_discovery.h"
 #include "utils/util.h"
 
 class ServiceDetector;
@@ -114,7 +115,8 @@ public:
 private:
     SERVICE_ID_STATE state;
     ServiceDetector* service = nullptr;
-    AppIdDetectorList* brute_force_mgr = nullptr;
+    AppIdDetectorList* tcp_brute_force_mgr = nullptr;
+    AppIdDetectorList* udp_brute_force_mgr = nullptr;
     unsigned valid_count = 0;
     unsigned detract_count = 0;
     snort::SfIp last_detract;

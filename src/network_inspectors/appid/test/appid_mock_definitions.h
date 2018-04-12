@@ -92,7 +92,8 @@ int ServiceDiscovery::incompatible_data(AppIdSession&, const Packet*, int, Servi
   return 0;
 }
 
-int ServiceDiscovery::fail_service(AppIdSession&, const Packet*, int, ServiceDetector*)
+int ServiceDiscovery::fail_service(AppIdSession&, const Packet*, int, ServiceDetector*,
+    ServiceDiscoveryState*)
 {
   return 0;
 }

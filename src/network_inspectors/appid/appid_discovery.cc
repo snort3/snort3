@@ -30,10 +30,10 @@
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
 
+#include "app_forecast.h"
 #include "appid_config.h"
 #include "appid_debug.h"
 #include "appid_detector.h"
-#include "app_forecast.h"
 #include "appid_dns_session.h"
 #include "appid_http_session.h"
 #include "appid_inspector.h"
@@ -678,7 +678,13 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
     if ( !asd || asd->common.flow_type == APPID_FLOW_TYPE_TMP )
     {
         asd = AppIdSession::allocate_session(p, protocol, direction, inspector);
-        if (appidDebug->is_active())
+        if (p->flow->get_session_flags() & SSNFLAG_MIDSTREAM)
+        {
+            asd->set_session_flags(APPID_SESSION_MID);
+            if (appidDebug->is_active())
+                LogMessage("AppIdDbg %s New AppId mid-stream session\n", appidDebug->get_debug_session());
+        }
+        else if (appidDebug->is_active())
             LogMessage("AppIdDbg %s New AppId session\n", appidDebug->get_debug_session());
     }
 
@@ -708,6 +714,7 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
         return;
     }
 
+    // FIXIT-H - Bring APPID_SESSION_OOO related changes from snort2 ASAP for performance reason
     if (p->packet_flags & PKT_STREAM_ORDER_BAD)
         asd->set_session_flags(APPID_SESSION_OOO);
     else if ( p->is_tcp() && p->ptrs.tcph )

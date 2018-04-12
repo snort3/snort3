@@ -47,23 +47,35 @@ ServiceDiscoveryState::ServiceDiscoveryState()
 
 ServiceDiscoveryState::~ServiceDiscoveryState()
 {
-    if ( brute_force_mgr )
-        delete brute_force_mgr;
+    delete tcp_brute_force_mgr;
+    delete udp_brute_force_mgr;
 }
 
 ServiceDetector* ServiceDiscoveryState::select_detector_by_brute_force(IpProtocol proto)
 {
-    if ( state == SERVICE_ID_STATE::SEARCHING_BRUTE_FORCE )
+    if (proto == IpProtocol::TCP)
     {
+        if ( !tcp_brute_force_mgr )
+            tcp_brute_force_mgr = new AppIdDetectorList(IpProtocol::TCP);
+        service = tcp_brute_force_mgr->next();
         if (appidDebug->is_active())
-            LogMessage("AppIdDbg %s Brute-force state\n", appidDebug->get_debug_session());
-        if ( !brute_force_mgr )
-            brute_force_mgr = new AppIdDetectorList(proto);
-
-        service = brute_force_mgr->next();
-        if ( !service )
-            state = SERVICE_ID_STATE::FAILED;
+            LogMessage("AppIdDbg %s Brute-force state %s\n", appidDebug->get_debug_session(),
+                service? "" : "failed - no more TCP detectors");
     }
+    else if (proto == IpProtocol::UDP)
+    {
+        if ( !udp_brute_force_mgr )
+            udp_brute_force_mgr = new AppIdDetectorList(IpProtocol::UDP);
+        service = udp_brute_force_mgr->next();
+        if (appidDebug->is_active())
+            LogMessage("AppIdDbg %s Brute-force state %s\n", appidDebug->get_debug_session(),
+                service? "" : "failed - no more UDP detectors");
+    }
+    else
+        service = nullptr;
+
+    if ( !service )
+        state = SERVICE_ID_STATE::FAILED;
 
     return service;
 }
@@ -80,13 +92,13 @@ void ServiceDiscoveryState::set_service_id_valid(ServiceDetector* sd)
 
     if ( !valid_count )
     {
+        valid_count = 1;
         detract_count = 0;
         last_detract.clear();
         invalid_client_count = 0;
         last_invalid_client.clear();
     }
-
-    if ( valid_count < STATE_ID_MAX_VALID_COUNT)
+    else if ( valid_count < STATE_ID_MAX_VALID_COUNT)
         valid_count++;
 }
 
@@ -148,11 +160,15 @@ void ServiceDiscoveryState::set_service_id_failed(AppIdSession& asd, const SfIp*
             }
         }
     }
-    else if ( ( state == SERVICE_ID_STATE::SEARCHING_PORT_PATTERN ) &&
-        ( asd.service_search_state == SESSION_SERVICE_SEARCH_STATE::PENDING ) &&
-        ( asd.service_candidates.empty() ) )
+    else if ( ( state == SERVICE_ID_STATE::SEARCHING_PORT_PATTERN ) and
+        ( asd.service_search_state == SESSION_SERVICE_SEARCH_STATE::PENDING ) and
+        asd.service_candidates.empty() and
+        !asd.get_session_flags(APPID_SESSION_MID | APPID_SESSION_OOO) )
     {
-        state = SEARCHING_BRUTE_FORCE;
+        if ( ( asd.protocol == IpProtocol::TCP ) or ( asd.protocol == IpProtocol::UDP ) )
+            state = SEARCHING_BRUTE_FORCE;
+        else
+            state = FAILED;
     }
 }
 
@@ -227,7 +243,7 @@ void AppIdServiceState::clean()
         for ( auto& kv : *service_state_cache )
             delete kv.second;
 
-        service_state_cache->empty();
+        service_state_cache->clear();
         delete service_state_cache;
         service_state_cache = nullptr;
     }
@@ -313,6 +329,7 @@ void AppIdServiceState::check_reset(AppIdSession& asd, const SfIp* ip, uint16_t 
         else if ( ( packet_time() - sds->get_reset_time() ) >= 60 )
         {
             AppIdServiceState::remove(ip, IpProtocol::TCP, port, asd.is_decrypted());
+            // FIXIT-L - Remove if this flag not used anywhere
             asd.set_session_flags(APPID_SESSION_SERVICE_DELETED);
         }
     }
