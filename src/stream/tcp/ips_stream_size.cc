@@ -105,26 +105,26 @@ IpsOption::EvalStatus SizeOption::eval(Cursor&, Packet* pkt)
     uint32_t client_size;
     uint32_t server_size;
 
-    if (tcpssn->client->get_snd_nxt() > tcpssn->client->get_iss())
+    if (tcpssn->client.get_snd_nxt() > tcpssn->client.get_iss())
     {
         /* the normal case... */
-        client_size = tcpssn->client->get_snd_nxt() - tcpssn->client->get_iss();
+        client_size = tcpssn->client.get_snd_nxt() - tcpssn->client.get_iss();
     }
     else
     {
         /* the seq num wrapping case... */
-        client_size = tcpssn->client->get_iss() - tcpssn->client->get_snd_nxt();
+        client_size = tcpssn->client.get_iss() - tcpssn->client.get_snd_nxt();
     }
 
-    if (tcpssn->server->get_snd_nxt() > tcpssn->server->get_iss())
+    if (tcpssn->server.get_snd_nxt() > tcpssn->server.get_iss())
     {
         /* the normal case... */
-        server_size = tcpssn->server->get_snd_nxt() - tcpssn->server->get_iss();
+        server_size = tcpssn->server.get_snd_nxt() - tcpssn->server.get_iss();
     }
     else
     {
         /* the seq num wrapping case... */
-        server_size = tcpssn->server->get_iss() - tcpssn->server->get_snd_nxt();
+        server_size = tcpssn->server.get_iss() - tcpssn->server.get_snd_nxt();
     }
 
     switch ( direction )

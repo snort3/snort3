@@ -164,8 +164,8 @@ TEST_CASE("TCP State Closed", "[tcp_closed_state][stream_tcp]")
     TcpSession* session = new TcpSession(flow);
     TcpStateMachine* tsm =  new TcpStateMachine;
     TcpStateHandler* tsh = new TcpStateClosed(*tsm, *session);
-    ctrk->normalizer = TcpNormalizerFactory::create(session, StreamPolicy::OS_LINUX, ctrk, strk);
-    strk->normalizer = TcpNormalizerFactory::create(session, StreamPolicy::OS_LINUX, strk, ctrk);
+    ctrk->normalizer = TcpNormalizerFactory::create(StreamPolicy::OS_LINUX, session, ctrk, strk);
+    strk->normalizer = TcpNormalizerFactory::create(StreamPolicy::OS_LINUX, session, strk, ctrk);
     ctrk->reassembler = TcpReassemblerFactory::create(session, ctrk, StreamPolicy::OS_LINUX,
         false);
     strk->reassembler = TcpReassemblerFactory::create(session, strk, StreamPolicy::OS_LINUX, true);

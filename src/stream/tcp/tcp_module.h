@@ -85,8 +85,8 @@ struct TcpStats
     PegCount exceeded_max_segs;
     PegCount exceeded_max_bytes;
     PegCount internalEvents;
-    PegCount s5tcp1;
-    PegCount s5tcp2;
+    PegCount client_cleanups;
+    PegCount server_cleanups;
     PegCount mem_in_use;
     PegCount sessions_initializing;
     PegCount sessions_established;

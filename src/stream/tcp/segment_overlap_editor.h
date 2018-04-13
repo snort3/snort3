@@ -26,90 +26,98 @@
 #include "stream/tcp/tcp_segment_node.h"
 
 class TcpSession;
+class TcpStreamTracker;
 
 #define STREAM_INSERT_OK  0  // FIXIT-L replace with bool
+
+struct SegmentOverlapState
+{
+    TcpSession* session;
+    TcpSegmentDescriptor* tsd;
+    TcpSegmentNode* left;
+    TcpSegmentNode* right;
+    const uint8_t* rdata;
+
+    TcpSegmentList seglist;
+    ReassemblyPolicy reassembly_policy;
+
+    uint32_t seglist_base_seq;      /* seq of first queued segment */
+    uint32_t seg_count;             /* number of current queued segments */
+    uint32_t seg_bytes_total;       /* total bytes currently queued */
+    uint32_t seg_bytes_logical;     /* logical bytes queued (total - overlaps) */
+    uint32_t total_bytes_queued;    /* total bytes queued (life of session) */
+    uint32_t total_segs_queued;     /* number of segments queued (life) */
+    uint32_t overlap_count;         /* overlaps encountered */
+
+    uint32_t seq;
+    uint32_t seq_end;
+    uint32_t rseq;
+
+    int32_t overlap;
+    int32_t slide;
+    int32_t trunc_len;
+
+    uint16_t len;
+    uint16_t rsize;
+    int8_t tcp_ips_data;
+
+    bool keep_segment;
+
+    ~SegmentOverlapState()
+    {
+        seglist.reset();
+    }
+
+    void init_sos(TcpSession*, ReassemblyPolicy);
+    void init_soe(TcpSegmentDescriptor& tsd, TcpSegmentNode* left, TcpSegmentNode* right);
+};
+
+struct TcpReassemblerState
+{
+    SegmentOverlapState sos;
+    TcpStreamTracker* tracker;
+    uint32_t flush_count;   // number of flushed queued segments
+    uint32_t xtradata_mask; // extra data available to log
+    bool server_side;
+    uint8_t ignore_dir;
+    uint8_t packet_dir;
+};
 
 class SegmentOverlapEditor
 {
 protected:
-
-    SegmentOverlapEditor()
-    {
-        tcp_ips_data = Normalize_GetMode(NORM_TCP_IPS);
-    }
-
+    SegmentOverlapEditor() { }
     virtual ~SegmentOverlapEditor() = default;
 
-    void init_soe(TcpSegmentDescriptor& tsd, TcpSegmentNode* left, TcpSegmentNode* right)
-    {
-        this->tsd = &tsd;
-        this->left = left;
-        this->right = right;
-        seq = tsd.get_seg_seq();
-        seq_end = tsd.get_end_seq();
-        len = tsd.get_seg_len();
-        overlap = 0;
-        slide = 0;
-        trunc_len = 0;
-        rdata = tsd.get_pkt()->data;
-        rsize = tsd.get_seg_len();
-        rseq = tsd.get_seg_seq();
-        keep_segment = true;
-    }
+    int eval_left(TcpReassemblerState&);
+    int eval_right(TcpReassemblerState&);
 
-    int eval_left();
-    int eval_right();
+    virtual bool is_segment_retransmit(TcpReassemblerState&, bool*);
+    virtual void drop_old_segment(TcpReassemblerState&);
 
-    virtual bool is_segment_retransmit(bool*);
-    virtual void drop_old_segment();
+    virtual int left_overlap_keep_first(TcpReassemblerState&);
+    virtual int left_overlap_trim_first(TcpReassemblerState&);
+    virtual int left_overlap_keep_last(TcpReassemblerState&);
+    virtual void right_overlap_truncate_existing(TcpReassemblerState&);
+    virtual void right_overlap_truncate_new(TcpReassemblerState&);
+    virtual int full_right_overlap_truncate_new(TcpReassemblerState&);
+    virtual int full_right_overlap_os1(TcpReassemblerState&);
+    virtual int full_right_overlap_os2(TcpReassemblerState&);
+    virtual int full_right_overlap_os3(TcpReassemblerState&);
+    virtual int full_right_overlap_os4(TcpReassemblerState&);
+    virtual int full_right_overlap_os5(TcpReassemblerState&);
 
-    virtual int left_overlap_keep_first();
-    virtual int left_overlap_trim_first();
-    virtual int left_overlap_keep_last();
-    virtual void right_overlap_truncate_existing();
-    virtual void right_overlap_truncate_new();
-    virtual int full_right_overlap_truncate_new();
-    virtual int full_right_overlap_os1();
-    virtual int full_right_overlap_os2();
-    virtual int full_right_overlap_os3();
-    virtual int full_right_overlap_os4();
-    virtual int full_right_overlap_os5();
+    virtual int insert_left_overlap(TcpReassemblerState&) = 0;
+    virtual void insert_right_overlap(TcpReassemblerState&) = 0;
+    virtual int insert_full_overlap(TcpReassemblerState&) = 0;
 
-    virtual int insert_left_overlap() = 0;
-    virtual void insert_right_overlap() = 0;
-    virtual int insert_full_overlap() = 0;
-    virtual int add_reassembly_segment(TcpSegmentDescriptor&, int16_t, uint32_t, uint32_t,
-        uint32_t, TcpSegmentNode*) = 0;
-    virtual int dup_reassembly_segment(TcpSegmentNode*, TcpSegmentNode**) = 0;
-    virtual int delete_reassembly_segment(TcpSegmentNode*) = 0;
-    virtual void print();
+    virtual int add_reassembly_segment(
+        TcpReassemblerState&, TcpSegmentDescriptor&, int16_t, uint32_t,
+        uint32_t, uint32_t, TcpSegmentNode*) = 0;
 
-    TcpSession* session = nullptr;
-    ReassemblyPolicy reassembly_policy = ReassemblyPolicy::OS_DEFAULT;
-    NormMode tcp_ips_data;
-
-    TcpSegmentList seglist;
-    uint32_t seglist_base_seq = 0;      /* seq of first queued segment */
-    uint32_t seg_count = 0;             /* number of current queued segments */
-    uint32_t seg_bytes_total = 0;       /* total bytes currently queued */
-    uint32_t seg_bytes_logical = 0;     /* logical bytes queued (total - overlaps) */
-    uint32_t total_bytes_queued = 0;    /* total bytes queued (life of session) */
-    uint32_t total_segs_queued = 0;     /* number of segments queued (life) */
-    uint32_t overlap_count = 0;         /* overlaps encountered */
-
-    TcpSegmentDescriptor* tsd = nullptr;
-    TcpSegmentNode* left = nullptr;
-    TcpSegmentNode* right = nullptr;
-    const uint8_t* rdata = nullptr;
-    uint32_t seq = 0;
-    uint32_t seq_end = 0;
-    uint16_t len = 0;
-    int32_t overlap = 0;
-    int32_t slide = 0;
-    int32_t trunc_len = 0;
-    uint16_t rsize = 0;
-    uint32_t rseq = 0;
-    bool keep_segment = true;
+    virtual int dup_reassembly_segment(TcpReassemblerState&, TcpSegmentNode*, TcpSegmentNode**) = 0;
+    virtual int delete_reassembly_segment(TcpReassemblerState&, TcpSegmentNode*) = 0;
+    virtual void print(TcpReassemblerState&);
 };
 
 #endif

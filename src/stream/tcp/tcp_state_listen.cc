@@ -25,7 +25,7 @@
 
 #include "tcp_state_listen.h"
 
-#include "tcp_normalizer.h"
+#include "tcp_normalizers.h"
 #include "tcp_session.h"
 
 using namespace snort;
@@ -49,8 +49,8 @@ bool TcpStateListen::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 bool TcpStateListen::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.init_on_syn_recv(tsd);
-    trk.normalizer->ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs() );
-    trk.session->set_pkt_action_flag(trk.normalizer->handle_paws(tsd) );
+    trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs());
+    trk.session->set_pkt_action_flag(trk.normalizer.handle_paws(tsd) );
     if ( tsd.get_seg_len() > 0 )
         trk.session->handle_data_on_syn(tsd);
     return true;
@@ -64,7 +64,7 @@ bool TcpStateListen::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& t
     if ( trk.session->config->midstream_allowed(tsd.get_pkt() ) )
     {
         trk.init_on_synack_sent(tsd);
-        trk.normalizer->ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs() );
+        trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs());
         trk.session->init_new_tcp_session(tsd);
     }
     else if ( trk.session->config->require_3whs() )
@@ -125,7 +125,8 @@ bool TcpStateListen::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
         if ( !tsd.get_tcph()->is_rst() && ( flow->session_state & STREAM_STATE_SYN_ACK ) )
         {
             trk.init_on_3whs_ack_recv(tsd);
-            trk.normalizer->ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs() );
+            trk.normalizer.ecn_tracker(
+                tsd.get_tcph(), trk.session->config->require_3whs());
         }
     }
     else if ( trk.session->config->require_3whs() )
@@ -168,7 +169,7 @@ bool TcpStateListen::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
         flow->session_state |= STREAM_STATE_MIDSTREAM;
         flow->set_session_flags(SSNFLAG_MIDSTREAM);
         trk.init_on_data_seg_recv(tsd);
-        trk.normalizer->ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs() );
+        trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs());
         trk.session->handle_data_segment(tsd);
     }
     else if ( trk.session->config->require_3whs() )
@@ -207,7 +208,7 @@ bool TcpStateListen::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateListen::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.normalizer->trim_rst_payload(tsd);
+    trk.normalizer.trim_rst_payload(tsd);
     return true;
 }
 

@@ -40,14 +40,12 @@ const char* const flush_policy_names[] =
 };
 #endif
 
+TcpStreamSession::TcpStreamSession(Flow* f)
+    : Session(f), client(true), server(false)
+{ }
+
 TcpStreamSession::~TcpStreamSession()
-{
-    if (tcp_init)
-    {
-        delete client;
-        delete server;
-    }
-}
+{ }
 
 void TcpStreamSession::init_new_tcp_session(TcpSegmentDescriptor& tsd)
 {
@@ -96,8 +94,8 @@ void TcpStreamSession::update_session_on_server_packet(TcpSegmentDescriptor& tsd
     DebugMessage(DEBUG_STREAM_STATE, "Stream: Updating on packet from server\n");
 
     flow->set_session_flags(SSNFLAG_SEEN_SERVER);
-    talker = server;
-    listener = client;
+    talker = &server;
+    listener = &client;
 
     /* If we picked this guy up midstream, finish the initialization */
     if ( !( flow->session_state & STREAM_STATE_ESTABLISHED )
@@ -126,8 +124,8 @@ void TcpStreamSession::update_session_on_client_packet(TcpSegmentDescriptor& tsd
 
     /* if we got here we had to see the SYN already... */
     flow->set_session_flags(SSNFLAG_SEEN_CLIENT);
-    talker = client;
-    listener = server;
+    talker = &client;
+    listener = &server;
 
     if ( !( flow->session_state & STREAM_STATE_ESTABLISHED )
         && ( flow->session_state & STREAM_STATE_MIDSTREAM ) )
@@ -148,10 +146,10 @@ uint8_t TcpStreamSession::get_reassembly_direction()
 {
     uint8_t dir = SSN_DIR_NONE;
 
-    if (server->flush_policy != STREAM_FLPOLICY_IGNORE)
+    if (server.get_flush_policy() != STREAM_FLPOLICY_IGNORE)
         dir |= SSN_DIR_FROM_CLIENT;
 
-    if (client->flush_policy != STREAM_FLPOLICY_IGNORE)
+    if (client.get_flush_policy() != STREAM_FLPOLICY_IGNORE)
         dir |= SSN_DIR_FROM_SERVER;
 
     return dir;
@@ -161,13 +159,13 @@ bool TcpStreamSession::is_sequenced(uint8_t dir)
 {
     if (dir & SSN_DIR_FROM_CLIENT)
     {
-        if ( server->get_tf_flags() & ( TF_MISSING_PREV_PKT | TF_PKT_MISSED ) )
+        if ( server.get_tf_flags() & ( TF_MISSING_PREV_PKT | TF_PKT_MISSED ) )
             return false;
     }
 
     if ( dir & SSN_DIR_FROM_SERVER )
     {
-        if ( client->get_tf_flags() & ( TF_MISSING_PREV_PKT | TF_PKT_MISSED ) )
+        if ( client.get_tf_flags() & ( TF_MISSING_PREV_PKT | TF_PKT_MISSED ) )
             return false;
     }
 
@@ -180,22 +178,22 @@ uint8_t TcpStreamSession::missing_in_reassembled(uint8_t dir)
 {
     if (dir & SSN_DIR_FROM_CLIENT)
     {
-        if ( (server->get_tf_flags() & TF_MISSING_PKT)
-            && (server->get_tf_flags() & TF_MISSING_PREV_PKT))
+        if ( (server.get_tf_flags() & TF_MISSING_PKT)
+            && (server.get_tf_flags() & TF_MISSING_PREV_PKT))
             return SSN_MISSING_BOTH;
-        else if (server->get_tf_flags() & TF_MISSING_PREV_PKT)
+        else if (server.get_tf_flags() & TF_MISSING_PREV_PKT)
             return SSN_MISSING_BEFORE;
-        else if (server->get_tf_flags() & TF_MISSING_PKT)
+        else if (server.get_tf_flags() & TF_MISSING_PKT)
             return SSN_MISSING_AFTER;
     }
     else if (dir & SSN_DIR_FROM_SERVER)
     {
-        if ((client->get_tf_flags() & TF_MISSING_PKT)
-            && (client->get_tf_flags() & TF_MISSING_PREV_PKT))
+        if ((client.get_tf_flags() & TF_MISSING_PKT)
+            && (client.get_tf_flags() & TF_MISSING_PREV_PKT))
             return SSN_MISSING_BOTH;
-        else if (client->get_tf_flags() & TF_MISSING_PREV_PKT)
+        else if (client.get_tf_flags() & TF_MISSING_PREV_PKT)
             return SSN_MISSING_BEFORE;
-        else if (client->get_tf_flags() & TF_MISSING_PKT)
+        else if (client.get_tf_flags() & TF_MISSING_PKT)
             return SSN_MISSING_AFTER;
     }
 
@@ -206,13 +204,13 @@ bool TcpStreamSession::are_packets_missing(uint8_t dir)
 {
     if (dir & SSN_DIR_FROM_CLIENT)
     {
-        if (server->get_tf_flags() & TF_PKT_MISSED)
+        if (server.get_tf_flags() & TF_PKT_MISSED)
             return true;
     }
 
     if (dir & SSN_DIR_FROM_SERVER)
     {
-        if (client->get_tf_flags() & TF_PKT_MISSED)
+        if (client.get_tf_flags() & TF_PKT_MISSED)
             return true;
     }
 
@@ -223,7 +221,6 @@ void TcpStreamSession::update_direction(char dir, const SfIp* ip, uint16_t port)
 {
     SfIp tmpIp;
     uint16_t tmpPort;
-    TcpStreamTracker* tracker;
 
     if (flow->client_ip.equals(*ip) && (flow->client_port == port))
     {
@@ -251,7 +248,7 @@ void TcpStreamSession::update_direction(char dir, const SfIp* ip, uint16_t port)
     flow->server_port = tmpPort;
 
     SwapPacketHeaderFoo( );
-    tracker = client;
+    TcpStreamTracker& tracker = client;
     client = server;
     server = tracker;
 }
@@ -260,25 +257,20 @@ void TcpStreamSession::update_direction(char dir, const SfIp* ip, uint16_t port)
 // packet / PDU split because PDU rules won't run on raw packets
 bool TcpStreamSession::add_alert(Packet* p, uint32_t gid, uint32_t sid)
 {
-    TcpStreamTracker* st;
+    TcpStreamTracker& st = p->ptrs.ip_api.get_src()->equals(flow->client_ip) ? server : client;
     StreamAlertInfo* ai;
 
-    if (p->ptrs.ip_api.get_src()->equals(flow->client_ip))
-        st = server;
-    else
-        st = client;
-
-    if (st->alert_count >= MAX_SESSION_ALERTS)
+    if (st.alert_count >= MAX_SESSION_ALERTS)
         return false;
 
-    ai = st->alerts + st->alert_count;
+    ai = st.alerts + st.alert_count;
     ai->gid = gid;
     ai->sid = sid;
     ai->seq = 0;
     ai->event_id = 0;
     ai->event_second = 0;
 
-    st->alert_count++;
+    st.alert_count++;
 
     return true;
 }
@@ -289,22 +281,14 @@ bool TcpStreamSession::check_alerted(Packet* p, uint32_t gid, uint32_t sid)
     if (!(p->packet_flags & PKT_REBUILT_STREAM))
         return false;
 
-    TcpStreamTracker* st;
-
-    if (p->ptrs.ip_api.get_src()->equals(flow->client_ip))
-        st = server;
-    else
-        st = client;
-
-    for (int i = 0; i < st->alert_count; i++)
+    TcpStreamTracker& st = p->ptrs.ip_api.get_src()->equals(flow->client_ip) ? server : client;
+    for (int i = 0; i < st.alert_count; i++)
     {
         /*  This is a rebuilt packet and if we've seen this alert before,
          *  return that we have previously alerted on original packet.
          */
-        if (st->alerts[i].gid == gid && st->alerts[i].sid == sid)
-        {
+        if (st.alerts[i].gid == gid && st.alerts[i].sid == sid)
             return true;
-        }
     }
 
     return false;
@@ -313,20 +297,12 @@ bool TcpStreamSession::check_alerted(Packet* p, uint32_t gid, uint32_t sid)
 int TcpStreamSession::update_alert(Packet* p, uint32_t gid, uint32_t sid,
     uint32_t event_id, uint32_t event_second)
 {
-    TcpStreamTracker* st;
-    int i;
-    uint32_t seq_num;
+    uint32_t seq_num = 0;
+    TcpStreamTracker& st = p->ptrs.ip_api.get_src()->equals(flow->client_ip) ? server : client;
 
-    if (p->ptrs.ip_api.get_src()->equals(flow->client_ip))
-        st = server;
-    else
-        st = client;
-
-    seq_num = 0;
-
-    for (i = 0; i < st->alert_count; i++)
+    for (unsigned i = 0; i < st.alert_count; i++)
     {
-        StreamAlertInfo* ai = st->alerts + i;
+        StreamAlertInfo* ai = st.alerts + i;
 
         if (ai->gid == gid && ai->sid == sid && SEQ_EQ(ai->seq, seq_num))
         {
@@ -424,11 +400,8 @@ void TcpStreamSession::reset()
 
 bool TcpStreamSession::setup(Packet*)
 {
-    // FIXIT-L this it should not be necessary to reset here
-    reset();
-
-    client->init_tcp_state();
-    server->init_tcp_state();
+    client.init_tcp_state();
+    server.init_tcp_state();
     lws_init = tcp_init = false;
     generate_3whs_alert = true;
     pkt_action_mask = ACTION_NOTHING;
@@ -444,6 +417,8 @@ bool TcpStreamSession::setup(Packet*)
 void TcpStreamSession::cleanup(Packet* p)
 {
     clear_session(true, true, false, p);
+    client.normalizer.reset();
+    server.reassembler.reset();
 }
 
 void TcpStreamSession::clear()
@@ -451,36 +426,37 @@ void TcpStreamSession::clear()
     if ( tcp_init )
         // this does NOT flush data
         clear_session( true, false, false );
+
     TcpHAManager::process_deletion(flow);
 }
 
 void TcpStreamSession::set_splitter(bool to_server, StreamSplitter* ss)
 {
-    TcpStreamTracker* trk = ( to_server ) ? server : client;
+    TcpStreamTracker& trk = ( to_server ) ? server : client;
 
-    trk->set_splitter(ss);
+    trk.set_splitter(ss);
 }
 
 uint16_t TcpStreamSession::get_mss(bool to_server) const
 {
-    TcpStreamTracker* trk = (to_server) ? client : server;
+    const TcpStreamTracker& trk = (to_server) ? client : server;
 
-    return trk->get_mss();
+    return trk.get_mss();
 }
 
 uint8_t TcpStreamSession::get_tcp_options_len(bool to_server) const
 {
-    TcpStreamTracker* trk = (to_server) ? client : server;
+    const TcpStreamTracker& trk = (to_server) ? client : server;
 
-    return trk->get_tcp_options_len();
+    return trk.get_tcp_options_len();
 }
 
 StreamSplitter* TcpStreamSession::get_splitter(bool to_server)
 {
     if ( to_server )
-        return server->splitter;
+        return server.get_splitter();
     else
-        return client->splitter;
+        return client.get_splitter();
 }
 
 void TcpStreamSession::start_proxy()
@@ -513,9 +489,9 @@ void TcpStreamSession::print()
     LogMessage("    client port:        %d\n", flow->client_port);
     LogMessage("    flags:              0x%X\n", flow->get_session_flags());
     LogMessage("Client Tracker:\n");
-    client->print();
+    client.print();
     LogMessage("Server Tracker:\n");
-    server->print();
+    server.print();
 }
 
 

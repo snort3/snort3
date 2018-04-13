@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_segment.h author davis mcpherson <davmcphe@@cisco.com>
+// tcp_segment_node.h author davis mcpherson <davmcphe@@cisco.com>
 // Created on: Sep 21, 2015
 
 #ifndef TCP_SEGMENT_H
@@ -25,6 +25,8 @@
 #include "main/snort_debug.h"
 #include "stream/libtcp/tcp_segment_descriptor.h"
 #include "stream/tcp/tcp_defs.h"
+
+class TcpSegmentDescriptor;
 
 //-----------------------------------------------------------------
 // we make a lot of TcpSegments so it is organized by member
@@ -37,7 +39,7 @@ struct TcpSegmentNode
     TcpSegmentNode();
 
     static TcpSegmentNode* init(TcpSegmentDescriptor& tsd);
-    static TcpSegmentNode* init(TcpSegmentNode& tsn);
+    static TcpSegmentNode* init(TcpSegmentNode& tns);
     static TcpSegmentNode* init(const struct timeval&, const uint8_t*, unsigned);
 
     void term();
@@ -66,32 +68,10 @@ struct TcpSegmentNode
 class TcpSegmentList
 {
 public:
-    TcpSegmentList() :
-        head(nullptr), tail(nullptr), next(nullptr), count(0)
-    {
-    }
-
-    ~TcpSegmentList()
-    {
-        clear( );
-    }
-
-    TcpSegmentNode* head;
-    TcpSegmentNode* tail;
-
-    // FIXIT-P seglist_base_seq is the sequence number to flush from
-    // and is valid even when seglist is empty.  next points to
-    // the segment to flush from and is set per packet.  should keep
-    // up to date.
-    TcpSegmentNode* next;
-
-    uint32_t count;
-
-    uint32_t clear()
+    uint32_t reset()
     {
         int i = 0;
 
-        DebugMessage(DEBUG_STREAM_STATE, "Clearing segment list.\n");
         while ( head )
         {
             i++;
@@ -102,7 +82,6 @@ public:
 
         head = tail = next = nullptr;
         count = 0;
-        DebugFormat(DEBUG_STREAM_STATE, "Dropped %d segments\n", i);
         return i;
     }
 
@@ -113,6 +92,7 @@ public:
             ss->next = prev->next;
             ss->prev = prev;
             prev->next = ss;
+
             if ( ss->next )
                 ss->next->prev = ss;
             else
@@ -121,6 +101,7 @@ public:
         else
         {
             ss->next = head;
+
             if ( ss->next )
                 ss->next->prev = ss;
             else
@@ -145,6 +126,16 @@ public:
 
         count--;
     }
+
+    TcpSegmentNode* head = nullptr;
+    TcpSegmentNode* tail = nullptr;
+
+    // FIXIT-P seglist_base_seq is the sequence number to flush from
+    // and is valid even when seglist is empty.  next points to
+    // the segment to flush from and is set per packet.  should keep
+    // up to date.
+    TcpSegmentNode* next = nullptr;
+    uint32_t count = 0;
 };
 
 #endif

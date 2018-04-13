@@ -27,7 +27,7 @@
 
 #include "main/snort_debug.h"
 
-#include "tcp_normalizer.h"
+#include "tcp_normalizers.h"
 #include "tcp_session.h"
 
 #ifdef UNIT_TEST
@@ -49,7 +49,7 @@ bool TcpStateClosing::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateClosing::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.normalizer->ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs() );
+    trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs());
     if ( tsd.get_seg_len() )
         trk.session->handle_data_on_syn(tsd);
     return true;
@@ -98,7 +98,7 @@ bool TcpStateClosing::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     {
         DebugMessage(DEBUG_STREAM_STATE, "FIN beyond previous, ignoring\n");
         trk.session->tel.set_tcp_event(EVENT_BAD_FIN);
-        trk.normalizer->packet_dropper(tsd, NORM_TCP_BLOCK);
+        trk.normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
         trk.session->set_pkt_action_flag(ACTION_BAD_PKT);
     }
 

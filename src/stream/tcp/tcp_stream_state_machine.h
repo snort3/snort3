@@ -35,7 +35,6 @@ public:
 
 private:
     TcpStreamStateMachine();
-    void initialize_tsm();
 
 };
 #endif

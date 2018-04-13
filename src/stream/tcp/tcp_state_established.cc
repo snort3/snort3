@@ -25,7 +25,7 @@
 
 #include "tcp_state_established.h"
 
-#include "tcp_normalizer.h"
+#include "tcp_normalizers.h"
 #include "tcp_session.h"
 
 TcpStateEstablished::TcpStateEstablished(TcpStateMachine& tsm) :
@@ -42,7 +42,7 @@ bool TcpStateEstablished::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
 bool TcpStateEstablished::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.session->check_for_repeated_syn(tsd);
-    trk.normalizer->ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs() );
+    trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs());
     return true;
 }
 
@@ -59,7 +59,7 @@ bool TcpStateEstablished::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTrack
     }
 
     if ( trk.is_server_tracker() )
-        trk.normalizer->ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs() );
+        trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs() );
 
     return true;
 }
@@ -91,16 +91,13 @@ bool TcpStateEstablished::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTrac
 
 bool TcpStateEstablished::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    TcpStreamTracker* listener = nullptr;
+    TcpStreamTracker& listener =
+        tsd.get_pkt()->is_from_client() ? trk.session->server : trk.session->client;
 
-    if ( tsd.get_pkt()->is_from_client() )
-        listener = trk.session->server;
-    else
-        listener = trk.session->client;
     trk.update_on_fin_sent(tsd);
 
-    if ( SEQ_EQ(tsd.get_end_seq(), (listener->r_nxt_ack +  tsd.get_seg_len())) ||
-        listener->process_inorder_fin() || !listener->is_segment_seq_valid(tsd) )
+    if ( SEQ_EQ(tsd.get_end_seq(), (listener.r_nxt_ack +  tsd.get_seg_len())) ||
+        listener.process_inorder_fin() || !listener.is_segment_seq_valid(tsd) )
     {
         trk.session->eof_handle(tsd.get_pkt());
         trk.set_tcp_state(TcpStreamTracker::TCP_FIN_WAIT1);

@@ -26,7 +26,7 @@
 #include "tcp_state_syn_recv.h"
 
 #include "tcp_module.h"
-#include "tcp_normalizer.h"
+#include "tcp_normalizers.h"
 #include "tcp_session.h"
 
 using namespace snort;
@@ -42,7 +42,7 @@ bool TcpStateSynRecv::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     Flow* flow = tsd.get_flow();
 
     trk.finish_server_init(tsd);
-    trk.normalizer->ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs() );
+    trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs());
     trk.session->update_timestamp_tracking(tsd);
     if ( tsd.get_tcph()->are_flags_set(TH_ECE) &&
         ( flow->get_session_flags() & SSNFLAG_ECN_CLIENT_QUERY ) )
@@ -69,7 +69,7 @@ bool TcpStateSynRecv::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
 
     // FIXIT-H verify ack being sent is valid...
     trk.finish_server_init(tsd);
-    trk.normalizer->ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs() );
+    trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs());
     flow->session_state |= STREAM_STATE_SYN_ACK;
     return true;
 }
@@ -81,7 +81,7 @@ bool TcpStateSynRecv::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
         Flow* flow = tsd.get_flow();
 
         trk.update_tracker_ack_recv(tsd);
-        trk.normalizer->ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs() );
+        trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs());
         flow->set_session_flags(SSNFLAG_ESTABLISHED);
         flow->session_state |= ( STREAM_STATE_ACK | STREAM_STATE_ESTABLISHED );
         trk.session->update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
@@ -108,7 +108,7 @@ bool TcpStateSynRecv::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
         Flow* flow = tsd.get_flow();
 
         trk.update_tracker_ack_recv(tsd);
-        trk.session->set_pkt_action_flag(trk.normalizer->handle_paws(tsd) );
+        trk.session->set_pkt_action_flag(trk.normalizer.handle_paws(tsd));
         tsd.get_pkt()->packet_flags |= PKT_STREAM_TWH;
         flow->set_session_flags(SSNFLAG_ESTABLISHED);
         flow->session_state |= ( STREAM_STATE_ACK | STREAM_STATE_ESTABLISHED );
@@ -128,7 +128,7 @@ bool TcpStateSynRecv::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker&
     {
         trk.update_tracker_ack_recv(tsd);
         tsd.get_pkt()->packet_flags |= PKT_STREAM_TWH;
-        trk.session->set_pkt_action_flag(trk.normalizer->handle_paws(tsd) );
+        trk.session->set_pkt_action_flag(trk.normalizer.handle_paws(tsd));
         trk.session->update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
         trk.set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
     }
@@ -144,7 +144,7 @@ bool TcpStateSynRecv::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
         Flow* flow = tsd.get_flow();
 
         trk.update_tracker_ack_recv(tsd);
-        trk.session->set_pkt_action_flag(trk.normalizer->handle_paws(tsd) );
+        trk.session->set_pkt_action_flag(trk.normalizer.handle_paws(tsd));
         flow->session_state |= STREAM_STATE_ACK;
         if ( tsd.get_seg_len() > 0 )
         {
@@ -163,20 +163,20 @@ bool TcpStateSynRecv::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateSynRecv::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.normalizer->trim_rst_payload(tsd);
-    if ( trk.normalizer->validate_rst(tsd) )
+    trk.normalizer.trim_rst_payload(tsd);
+    if ( trk.normalizer.validate_rst(tsd) )
     {
         Flow* flow = tsd.get_flow();
 
         flow->set_session_flags(SSNFLAG_RESET);
-        if ( trk.normalizer->is_tcp_ips_enabled() )
+        if ( trk.normalizer.is_tcp_ips_enabled() )
             tcp_state = TcpStreamTracker::TCP_LISTEN;
     }
     else
     {
         DebugMessage(DEBUG_STREAM_STATE, "Received RST with bad sequence number\n");
         inc_tcp_discards();
-        trk.normalizer->packet_dropper(tsd, NORM_TCP_BLOCK);
+        trk.normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
         trk.session->tel.set_tcp_event(EVENT_BAD_RST);
     }
 

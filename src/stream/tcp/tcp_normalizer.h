@@ -22,9 +22,11 @@
 #ifndef TCP_NORMALIZER_H
 #define TCP_NORMALIZER_H
 
+#include "tcp_defs.h"
+
+#include "main/thread.h"
 #include "normalize/normalize.h"
 #include "protocols/tcp_options.h"
-#include "stream/tcp/tcp_session.h"
 
 enum TcpPegCounts
 {
@@ -41,127 +43,72 @@ enum TcpPegCounts
 
 extern THREAD_LOCAL PegCount tcp_norm_stats[PC_TCP_MAX][NORM_MODE_MAX];
 
+class TcpStreamSession;
+class TcpStreamTracker;
+class TcpSegmentDescriptor;
+
+struct TcpNormalizerState
+{
+    TcpStreamSession* session = nullptr;
+    TcpStreamTracker* tracker = nullptr;
+    TcpStreamTracker* peer_tracker = nullptr;
+
+    StreamPolicy os_policy = StreamPolicy::OS_INVALID;
+
+    int32_t paws_ts_fudge = 0;
+    int tcp_ts_flags = 0;
+
+    int8_t trim_syn = 0;
+    int8_t trim_rst = 0;
+    int8_t trim_win = 0;
+    int8_t trim_mss = 0;
+    int8_t strip_ecn = 0;
+    int8_t tcp_block = 0;
+    int8_t opt_block = 0;
+
+    bool tcp_ips_enabled = false;
+    bool paws_drop_zero_ts = false;
+};
+
 class TcpNormalizer
 {
 public:
+    using State = TcpNormalizerState;
 
-    virtual ~TcpNormalizer( ) = default;
+    virtual ~TcpNormalizer() = default;
 
-    virtual bool packet_dropper (TcpSegmentDescriptor&, NormFlags);
-    virtual void trim_syn_payload(TcpSegmentDescriptor&, uint32_t max = 0);
-    virtual void trim_rst_payload(TcpSegmentDescriptor&, uint32_t max = 0);
-    virtual void trim_win_payload(TcpSegmentDescriptor&, uint32_t max = 0);
-    virtual void trim_mss_payload(TcpSegmentDescriptor&, uint32_t max = 0);
-    virtual void ecn_tracker(const snort::tcp::TCPHdr*, bool req3way);
-    virtual void ecn_stripper(snort::Packet*);
-    virtual uint32_t get_stream_window(TcpSegmentDescriptor&);
-    virtual uint32_t get_tcp_timestamp(TcpSegmentDescriptor&, bool strip);
-    virtual int handle_paws(TcpSegmentDescriptor&);
-    virtual bool validate_rst(TcpSegmentDescriptor&);
-    virtual int handle_repeated_syn(TcpSegmentDescriptor&) = 0;
-    virtual uint16_t set_urg_offset(const snort::tcp::TCPHdr* tcph, uint16_t dsize);
+    virtual void init(State&) { }
+    virtual bool packet_dropper(State&, TcpSegmentDescriptor&, NormFlags);
+    virtual void trim_syn_payload(State&, TcpSegmentDescriptor&, uint32_t max = 0);
+    virtual void trim_rst_payload(State&, TcpSegmentDescriptor&, uint32_t max = 0);
+    virtual void trim_win_payload(State&, TcpSegmentDescriptor&, uint32_t max = 0);
+    virtual void trim_mss_payload(State&, TcpSegmentDescriptor&, uint32_t max = 0);
+    virtual void ecn_tracker(State&, const snort::tcp::TCPHdr*, bool req3way);
+    virtual void ecn_stripper(State&, snort::Packet*);
+    virtual uint32_t get_stream_window(State&, TcpSegmentDescriptor&);
+    virtual uint32_t get_tcp_timestamp(State&, TcpSegmentDescriptor&, bool strip);
+    virtual int handle_paws(State&, TcpSegmentDescriptor&);
+    virtual bool validate_rst(State&, TcpSegmentDescriptor&);
+    virtual int handle_repeated_syn(State&, TcpSegmentDescriptor&) = 0;
+    virtual uint16_t set_urg_offset(State&, const snort::tcp::TCPHdr* tcph, uint16_t dsize);
 
     static const PegInfo* get_normalization_pegs();
     static NormPegs get_normalization_counts(unsigned&);
 
-    void set_peer_tracker(TcpStreamTracker* peer_tracker)
-    {
-        this->peer_tracker = peer_tracker;
-    }
-
-    StreamPolicy get_os_policy() const
-    {
-        return os_policy;
-    }
-
-    bool is_paws_drop_zero_ts() const
-    {
-        return paws_drop_zero_ts;
-    }
-
-    int32_t get_paws_ts_fudge() const
-    {
-        return paws_ts_fudge;
-    }
-
-    NormMode get_opt_block() const
-    {
-        return opt_block;
-    }
-
-    NormMode get_strip_ecn() const
-    {
-        return strip_ecn;
-    }
-
-    NormMode get_tcp_block() const
-    {
-        return tcp_block;
-    }
-
-    NormMode get_trim_rst() const
-    {
-        return trim_rst;
-    }
-
-    NormMode get_trim_syn() const
-    {
-        return trim_syn;
-    }
-
-    NormMode get_trim_mss() const
-    {
-        return trim_mss;
-    }
-
-    NormMode get_trim_win() const
-    {
-        return trim_win;
-    }
-
-    bool is_tcp_ips_enabled() const
-    {
-        return tcp_ips_enabled;
-    }
-
-    bool handling_timestamps() const
-    {
-        return tcp_ts_flags != TF_NONE;
-    }
-
-    uint32_t get_timestamp_flags()
-    {
-        return tcp_ts_flags;
-    }
-
 protected:
-    TcpNormalizer(StreamPolicy, TcpSession*, TcpStreamTracker*);
-    virtual void trim_payload(TcpSegmentDescriptor&, uint32_t, NormMode, TcpPegCounts);
-    virtual bool strip_tcp_timestamp(TcpSegmentDescriptor&, const snort::tcp::TcpOption*, NormMode);
-    virtual bool validate_rst_seq_geq(TcpSegmentDescriptor&);
-    virtual bool validate_rst_end_seq_geq(TcpSegmentDescriptor&);
-    virtual bool validate_rst_seq_eq(TcpSegmentDescriptor&);
+    TcpNormalizer() = default;
 
-    virtual int validate_paws_timestamp(TcpSegmentDescriptor&);
-    virtual bool is_paws_ts_checked_required(TcpSegmentDescriptor&);
-    virtual int validate_paws(TcpSegmentDescriptor&);
-    virtual int handle_paws_no_timestamps(TcpSegmentDescriptor&);
+    virtual void trim_payload(State&, TcpSegmentDescriptor&, uint32_t, NormMode, TcpPegCounts);
+    virtual bool strip_tcp_timestamp(
+        State&, TcpSegmentDescriptor&, const snort::tcp::TcpOption*, NormMode);
+    virtual bool validate_rst_seq_geq(State&, TcpSegmentDescriptor&);
+    virtual bool validate_rst_end_seq_geq(State&, TcpSegmentDescriptor&);
+    virtual bool validate_rst_seq_eq(State&, TcpSegmentDescriptor&);
 
-    StreamPolicy os_policy;
-    TcpSession* session = nullptr;
-    TcpStreamTracker* tracker = nullptr;
-    TcpStreamTracker* peer_tracker = nullptr;
-    bool tcp_ips_enabled;
-    NormMode trim_syn;
-    NormMode trim_rst;
-    NormMode trim_win;
-    NormMode trim_mss;
-    NormMode strip_ecn;
-    NormMode tcp_block;
-    NormMode opt_block;
-    int32_t paws_ts_fudge = 0;
-    bool paws_drop_zero_ts = true;
-    int tcp_ts_flags = 0;
+    virtual int validate_paws_timestamp(State&, TcpSegmentDescriptor&);
+    virtual bool is_paws_ts_checked_required(State&, TcpSegmentDescriptor&);
+    virtual int validate_paws(State&, TcpSegmentDescriptor&);
+    virtual int handle_paws_no_timestamps(State&, TcpSegmentDescriptor&);
 };
 
 #endif

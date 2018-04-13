@@ -24,7 +24,7 @@
 
 #include "utils/stats.h"
 
-#include "tcp_reassembler.h"
+#include "tcp_reassemblers.h"
 
 #ifndef REG_TEST
 #define S5TraceTCP(pkt, flow, tsd, evt)
@@ -42,7 +42,8 @@ static const char* const flushxt[] = { "IGN", "FPR", "PRE", "PRO", "PAF" };
 
 static THREAD_LOCAL int s5_trace_enabled = -1;  // FIXIT-L should use module trace feature
 
-inline void TraceEvent(const snort::Packet* p, TcpSegmentDescriptor*, uint32_t txd, uint32_t rxd)
+inline void TraceEvent(
+    const snort::Packet* p, TcpSegmentDescriptor*, uint32_t txd, uint32_t rxd)
 {
     int i;
     char flags[7] = "UAPRSF";
@@ -78,7 +79,7 @@ inline void TraceSession(const snort::Flow* lws)
         lws->ssn_state.session_flags, lws->client_port, lws->server_port);
 }
 
-inline void TraceState(const TcpStreamTracker* a, const TcpStreamTracker* b, const char* s)
+inline void TraceState(TcpStreamTracker* a, TcpStreamTracker* b, const char* s)
 {
     uint32_t ua = a->get_snd_una() ? LCL(a, get_snd_una) : 0;
     uint32_t ns = a->get_snd_nxt() ? LCL(a, get_snd_nxt) : 0;
@@ -94,21 +95,22 @@ inline void TraceState(const TcpStreamTracker* a, const TcpStreamTracker* b, con
 
     fprintf(stdout, "         FP=%s:%-4u SC=%-4u FL=%-4u SL=%-5u BS=%-4u",
         flushxt[a->flush_policy + paf], fpt,
-        a->reassembler->get_seg_count(), a->reassembler->get_flush_count(),
-        a->reassembler->get_seg_bytes_logical(),
-        a->reassembler->get_seglist_base_seq() - b->get_iss());
+        a->reassembler.get_seg_count(), a->reassembler.get_flush_count(),
+        a->reassembler.get_seg_bytes_logical(),
+        a->reassembler.get_seglist_base_seq() - b->get_iss());
 
     if (s5_trace_enabled == 2)
-        a->reassembler->trace_segments();
+        a->reassembler.trace_segments();
 
     fprintf(stdout, "\n");
 }
 
-inline void TraceTCP(const snort::Packet* p, const snort::Flow* lws, TcpSegmentDescriptor* tsd, int event)
+inline void TraceTCP(
+    const snort::Packet* p, const snort::Flow* lws, TcpSegmentDescriptor* tsd, int event)
 {
-    const TcpSession* ssn = (TcpSession*)lws->session;
-    const TcpStreamTracker* srv = ssn ? ssn->server : nullptr;
-    const TcpStreamTracker* cli = ssn ? ssn->client : nullptr;
+    TcpSession* ssn = (TcpSession*)lws->session;
+    TcpStreamTracker* srv = ssn ? &ssn->server : nullptr;
+    TcpStreamTracker* cli = ssn ? &ssn->client : nullptr;
 
     const char* cdir = "?", * sdir = "?";
     uint32_t txd = 0, rxd = 0;
@@ -141,7 +143,8 @@ inline void TraceTCP(const snort::Packet* p, const snort::Flow* lws, TcpSegmentD
     }
 }
 
-inline void S5TraceTCP(const snort::Packet* p, const snort::Flow* lws, TcpSegmentDescriptor* tsd, int event)
+inline void S5TraceTCP(
+    const snort::Packet* p, const snort::Flow* lws, TcpSegmentDescriptor* tsd, int event)
 {
     if (!s5_trace_enabled)
         return;
@@ -162,7 +165,6 @@ inline void S5TraceTCP(const snort::Packet* p, const snort::Flow* lws, TcpSegmen
 
     TraceTCP(p, lws, tsd, event);
 }
-
 #endif  // REG_TEST
 
 #endif

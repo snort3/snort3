@@ -122,13 +122,13 @@ IpsOption::EvalStatus ReassembleOption::eval(Cursor&, Packet* pkt)
         {
             if ( srod.direction & SSN_DIR_FROM_SERVER )
             {
-                tcpssn->server->flush_policy = STREAM_FLPOLICY_IGNORE;
+                tcpssn->server.flush_policy = STREAM_FLPOLICY_IGNORE;
                 Stream::set_splitter(lwssn, true);
             }
 
             if ( srod.direction & SSN_DIR_FROM_CLIENT )
             {
-                tcpssn->client->flush_policy = STREAM_FLPOLICY_IGNORE;
+                tcpssn->client.flush_policy = STREAM_FLPOLICY_IGNORE;
                 Stream::set_splitter(lwssn, false);
             }
         }
@@ -138,13 +138,13 @@ IpsOption::EvalStatus ReassembleOption::eval(Cursor&, Packet* pkt)
             // FIXIT-M PAF need to check for ips / on-data
             if ( srod.direction & SSN_DIR_FROM_SERVER )
             {
-                tcpssn->server->flush_policy = STREAM_FLPOLICY_ON_ACK;
+                tcpssn->server.flush_policy = STREAM_FLPOLICY_ON_ACK;
                 Stream::set_splitter(lwssn, true, new AtomSplitter(true));
             }
 
             if ( srod.direction & SSN_DIR_FROM_CLIENT )
             {
-                tcpssn->client->flush_policy = STREAM_FLPOLICY_ON_ACK;
+                tcpssn->client.flush_policy = STREAM_FLPOLICY_ON_ACK;
                 Stream::set_splitter(lwssn, false, new AtomSplitter(false));
             }
         }

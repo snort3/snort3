@@ -27,6 +27,7 @@
 
 #include "utils/util.h"
 
+#include "segment_overlap_editor.h"
 #include "tcp_module.h"
 
 // FIXIT-P this is going to set each member 2X; once here and once in init
@@ -46,9 +47,9 @@ TcpSegmentNode* TcpSegmentNode::init(TcpSegmentDescriptor& tsd)
     return init(tsd.get_pkt()->pkth->ts, tsd.get_pkt()->data, tsd.get_seg_len() );
 }
 
-TcpSegmentNode* TcpSegmentNode::init(TcpSegmentNode& tsn)
+TcpSegmentNode* TcpSegmentNode::init(TcpSegmentNode& tns)
 {
-    return init(tsn.tv, tsn.payload(), tsn.payload_size);
+    return init(tns.tv, tns.payload(), tns.payload_size);
 }
 
 TcpSegmentNode* TcpSegmentNode::init(const struct timeval& tv, const uint8_t* data, unsigned dsize)

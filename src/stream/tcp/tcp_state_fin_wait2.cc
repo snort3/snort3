@@ -25,7 +25,7 @@
 
 #include "tcp_state_fin_wait2.h"
 
-#include "tcp_normalizer.h"
+#include "tcp_normalizers.h"
 #include "tcp_session.h"
 
 using namespace std;
@@ -43,7 +43,7 @@ bool TcpStateFinWait2::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
 
 bool TcpStateFinWait2::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.normalizer->ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs() );
+    trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs());
     if ( tsd.get_seg_len() )
         trk.session->handle_data_on_syn(tsd);
     return true;
@@ -66,7 +66,7 @@ bool TcpStateFinWait2::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
 {
     if ( SEQ_GT(tsd.get_seg_ack(), trk.get_snd_nxt() ) )
     {
-        trk.normalizer->packet_dropper(tsd, NORM_TCP_BLOCK);
+        trk.normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
         trk.session->tel.set_tcp_event(EVENT_BAD_ACK);
         trk.session->set_pkt_action_flag(ACTION_BAD_PKT);
     }
@@ -88,7 +88,7 @@ bool TcpStateFinWait2::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker
 {
     if ( SEQ_GT(tsd.get_seg_ack(), trk.get_snd_nxt() ) )
     {
-        trk.normalizer->packet_dropper(tsd, NORM_TCP_BLOCK);
+        trk.normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
         trk.session->tel.set_tcp_event(EVENT_BAD_ACK);
         trk.session->set_pkt_action_flag(ACTION_BAD_PKT);
     }

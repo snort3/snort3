@@ -24,8 +24,6 @@ add_library( stream_tcp OBJECT
     tcp_reassembler.cc
     tcp_reassemblers.h
     tcp_reassemblers.cc
-    tcp_tracker.cc
-    tcp_tracker.h
     tcp_session.cc
     tcp_session.h
     tcp_state_closed.cc

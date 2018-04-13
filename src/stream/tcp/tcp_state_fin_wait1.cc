@@ -27,7 +27,7 @@
 
 #include "main/snort_debug.h"
 
-#include "tcp_normalizer.h"
+#include "tcp_normalizers.h"
 #include "tcp_module.h"
 #include "tcp_session.h"
 
@@ -46,7 +46,7 @@ bool TcpStateFinWait1::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
 
 bool TcpStateFinWait1::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.normalizer->ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs() );
+    trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->config->require_3whs());
     if ( tsd.get_seg_len() )
         trk.session->handle_data_on_syn(tsd);
     return true;
@@ -147,13 +147,13 @@ bool TcpStateFinWait1::check_for_window_slam(TcpSegmentDescriptor& tsd, TcpStrea
 
     if ( SEQ_EQ(tsd.get_seg_ack(), trk.get_snd_nxt() ) )
     {
-        if ( (trk.normalizer->get_os_policy() == StreamPolicy::OS_WINDOWS)
+        if ( (trk.normalizer.get_os_policy() == StreamPolicy::OS_WINDOWS)
             && (tsd.get_seg_wnd() == 0))
         {
             trk.session->tel.set_tcp_event(EVENT_WINDOW_SLAM);
             inc_tcp_discards();
 
-            if (trk.normalizer->packet_dropper(tsd, NORM_TCP_BLOCK))
+            if (trk.normalizer.packet_dropper(tsd, NORM_TCP_BLOCK))
             {
                 trk.session->set_pkt_action_flag(ACTION_BAD_PKT);
                 return false;

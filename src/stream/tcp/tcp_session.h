@@ -20,11 +20,17 @@
 #ifndef TCP_SESSION_H
 #define TCP_SESSION_H
 
-#include "stream/libtcp/tcp_stream_session.h"
 #include "stream/libtcp/tcp_state_machine.h"
-#include "stream/tcp/tcp_tracker.h"
+#include "stream/libtcp/tcp_stream_session.h"
+#include "stream/libtcp/tcp_stream_tracker.h"
 
+namespace snort
+{
+class Flow;
+struct Packet;
+}
 class TcpEventLogger;
+
 
 class TcpSession : public TcpStreamSession
 {
@@ -42,11 +48,8 @@ public:
     void flush_server(snort::Packet*) override;
     void flush_talker(snort::Packet*, bool final_flush = false) override;
     void flush_listener(snort::Packet*, bool final_flush = false) override;
-
     void clear_session(bool free_flow_data, bool flush_segments, bool restart, snort::Packet* p = nullptr) override;
-
     void set_extra_data(snort::Packet*, uint32_t /*flag*/) override;
-
     void update_perf_base_state(char new_state) override;
     TcpStreamTracker::TcpState get_talker_state() override;
     TcpStreamTracker::TcpState get_listener_state() override;
@@ -61,7 +64,6 @@ public:
     bool check_for_window_slam(TcpSegmentDescriptor& tsd) override;
     void mark_packet_for_drop(TcpSegmentDescriptor&) override;
     void handle_data_segment(TcpSegmentDescriptor&) override;
-
     bool validate_packet_established_session(TcpSegmentDescriptor&) override;
 
 private:
@@ -79,8 +81,9 @@ private:
     void cleanup_session_if_expired(snort::Packet*);
     bool do_packet_analysis_pre_checks(snort::Packet*, TcpSegmentDescriptor&);
     void do_packet_analysis_post_checks(snort::Packet*);
-    void flush_tracker(TcpStreamTracker*, snort::Packet*, uint32_t dir, bool final_flush);
+    void flush_tracker(TcpStreamTracker&, snort::Packet*, uint32_t dir, bool final_flush);
 
+private:
     TcpStateMachine* tsm;
     bool splitter_init;
 };

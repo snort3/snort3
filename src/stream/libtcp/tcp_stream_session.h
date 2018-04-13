@@ -25,6 +25,7 @@
 #include "detection/detection_engine.h"
 #include "flow/session.h"
 #include "protocols/ipv6.h"
+
 #include "stream/libtcp/tcp_stream_tracker.h"
 #include "stream/tcp/tcp_stream_config.h"
 
@@ -38,7 +39,6 @@ extern const char* const flush_policy_names[];
 class TcpStreamSession : public Session
 {
 public:
-    TcpStreamSession(snort::Flow* flow) : Session(flow) { }
     ~TcpStreamSession() override;
 
     bool setup(snort::Packet*) override;
@@ -130,8 +130,8 @@ public:
     virtual void handle_data_segment(TcpSegmentDescriptor&) { }
     virtual bool validate_packet_established_session(TcpSegmentDescriptor&) { return true; }
 
-    TcpStreamTracker* client = nullptr;
-    TcpStreamTracker* server = nullptr;
+    TcpStreamTracker client;
+    TcpStreamTracker server;
     bool lws_init = false;
     bool tcp_init = false;
     uint32_t pkt_action_mask = ACTION_NOTHING;
@@ -153,6 +153,7 @@ private:
     uint16_t real_dst_port = 0;
 
 protected:
+    TcpStreamSession(snort::Flow*);
     virtual void set_os_policy() = 0;
 
     TcpStreamTracker* talker = nullptr;
