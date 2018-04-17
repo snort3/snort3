@@ -111,7 +111,6 @@ IpsOption::EvalStatus IpOptOption::eval(Cursor&, Packet* p)
 
     if ((config.any_flag == 1) && (option_len > 0))
     {
-        DebugMessage(DEBUG_IPS_OPTION, "Matched any ip options!\n");
         return MATCH;
     }
 
@@ -119,10 +118,6 @@ IpsOption::EvalStatus IpOptOption::eval(Cursor&, Packet* p)
 
     for ( const ip::IpOptions& opt : iter)
     {
-        DebugFormat(DEBUG_IPS_OPTION, "testing pkt(%d):rule(%d)\n",
-            static_cast<int>(config.ip_option),
-            static_cast<int>(opt.code));
-
         if (config.ip_option == opt.code)
             return MATCH;
 

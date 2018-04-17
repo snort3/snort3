@@ -199,9 +199,6 @@ static inline bool byte_test_check(uint32_t op, uint32_t val, uint32_t cmp, bool
 
     if ( not_flag )
     {
-        DebugMessage(DEBUG_PATTERN_MATCH,
-            "checking for not success...flag\n");
-
         success = !success;
     }
 
@@ -338,9 +335,6 @@ IpsOption::EvalStatus ByteTestOption::eval(Cursor& c, Packet* p)
             endian, btd->bytes_to_compare,
             start_ptr, c.buffer(), c.endo(), &value))
             return NO_MATCH;
-#ifdef DEBUG_MSGS
-        payload_bytes_grabbed = (int)btd->bytes_to_compare;
-#endif
     }
     else
     {
@@ -354,9 +348,6 @@ IpsOption::EvalStatus ByteTestOption::eval(Cursor& c, Packet* p)
 
         if ( payload_bytes_grabbed < 0 )
         {
-            DebugMessage(DEBUG_PATTERN_MATCH,
-                "String Extraction Failed\n");
-
             return NO_MATCH;
         }
     }
@@ -370,10 +361,6 @@ IpsOption::EvalStatus ByteTestOption::eval(Cursor& c, Packet* p)
             value = value >> num_tailing_zeros_bitmask;
         }
     }
-
-    DebugFormat(DEBUG_PATTERN_MATCH,
-        "Grabbed %d bytes at offset %d, value = 0x%08X(%u)\n",
-        payload_bytes_grabbed, btd->offset, value, value);
 
     if ( byte_test_check(btd->opcode, value, cmp_value, btd->not_flag) )
         return MATCH;

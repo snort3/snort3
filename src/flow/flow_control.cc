@@ -153,9 +153,6 @@ void FlowControl::timeout_flows(time_t cur_time)
 
 void FlowControl::preemptive_cleanup()
 {
-    DebugFormat(DEBUG_FLOW, "doing preemptive cleanup for packet of type %u",
-            (unsigned) last_pkt_type);
-
     // FIXIT-H is there a possibility of this looping forever?
     while ( memory::MemoryCap::over_threshold() )
     {

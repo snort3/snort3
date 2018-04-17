@@ -258,7 +258,6 @@ static void pcre_parse(const char* data, PcreData* pcre_data)
     }
 
     /* now compile the re */
-    DebugFormat(DEBUG_PATTERN_MATCH, "pcre: compiling %s\n", re);
     pcre_data->re = pcre_compile(re, compile_flags, &error, &erroffset, nullptr);
 
     if (pcre_data->re == nullptr)
@@ -408,7 +407,6 @@ static bool pcre_search(
     }
     else
     {
-        DebugFormat(DEBUG_PATTERN_MATCH, "pcre_exec error : %d \n", result);
         return false;
     }
 

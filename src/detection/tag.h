@@ -29,6 +29,9 @@
 
 #include <cstdint>
 
+#include "main/snort_debug.h"
+extern Trace TRACE_NAME(detection);
+
 namespace snort
 {
 struct Packet;

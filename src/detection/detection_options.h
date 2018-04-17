@@ -36,6 +36,9 @@
 #include "detection/rule_option_types.h"
 #include "time/clock_defs.h"
 
+#include "main/snort_debug.h"
+extern Trace TRACE_NAME(detection);
+
 namespace snort
 {
 struct Packet;

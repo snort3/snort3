@@ -307,14 +307,8 @@ int fpEvalRTN(RuleTreeNode* rtn, Packet* p, int check_ports)
 
     // FIXIT-L maybe add a port test here ...
 
-    DebugFormat(DEBUG_DETECT, "[*] Rule Head %p\n", (void*)rtn);
-
     if (!rtn->rule_func->RuleHeadFunc(p, rtn, rtn->rule_func, check_ports))
     {
-        DebugMessage(DEBUG_DETECT,
-            "   => Header check failed, checking next node\n");
-        DebugMessage(DEBUG_DETECT,
-            "   => returned from next node check\n");
         return 0;
     }
 
@@ -1113,10 +1107,6 @@ static inline void fpEvalHeaderTcp(Packet* p, OtnxMatchData* omd)
     if ( !prmFindRuleGroupTcp(SnortConfig::get_conf()->prmTcpRTNX, p->ptrs.dp, p->ptrs.sp, &src, &dst, &any) )
         return;
 
-    DebugFormat(DEBUG_ATTRIBUTE,
-        "fpEvalHeaderTcp: sport=%d, dport=%d, src:%p, dst:%p, any:%p\n",
-        p->ptrs.sp,p->ptrs.dp,(void*)src,(void*)dst,(void*)any);
-
     if ( dst )
         fpEvalHeaderSW(dst, p, 1, 0, 0, omd);
 
@@ -1134,10 +1124,6 @@ static inline void fpEvalHeaderUdp(Packet* p, OtnxMatchData* omd)
     if ( !prmFindRuleGroupUdp(SnortConfig::get_conf()->prmUdpRTNX, p->ptrs.dp, p->ptrs.sp, &src, &dst, &any) )
         return;
 
-    DebugFormat(DEBUG_ATTRIBUTE,
-        "fpEvalHeaderUdp: sport=%d, dport=%d, src:%p, dst:%p, any:%p\n",
-        p->ptrs.sp,p->ptrs.dp,(void*)src,(void*)dst,(void*)any);
-
     if ( dst )
         fpEvalHeaderSW(dst, p, 1, 0, 0, omd);
 
@@ -1154,30 +1140,19 @@ static inline bool fpEvalHeaderSvc(Packet* p, OtnxMatchData* omd, SnortProtocolI
 
     SnortProtocolId snort_protocol_id = p->get_snort_protocol_id();
 
-    DebugFormat(DEBUG_ATTRIBUTE, "snort_protocol_id=%hu\n", snort_protocol_id);
-
     if (snort_protocol_id != UNKNOWN_PROTOCOL_ID and snort_protocol_id != INVALID_PROTOCOL_ID)
     {
         if (p->is_from_server()) /* to cli */
         {
-            DebugMessage(DEBUG_ATTRIBUTE, "pkt_from_server\n");
-
             svc = SnortConfig::get_conf()->sopgTable->get_port_group(proto_id, false, snort_protocol_id);
             file = SnortConfig::get_conf()->sopgTable->get_port_group(proto_id, false, SNORT_PROTO_FILE);
         }
 
         if (p->is_from_client()) /* to srv */
         {
-            DebugMessage(DEBUG_ATTRIBUTE, "pkt_from_client\n");
-
             svc = SnortConfig::get_conf()->sopgTable->get_port_group(proto_id, true, snort_protocol_id);
             file = SnortConfig::get_conf()->sopgTable->get_port_group(proto_id, true, SNORT_PROTO_FILE);
         }
-
-        DebugFormat(DEBUG_ATTRIBUTE,
-            "fpEvalHeaderSvc:targetbased-ordinal-lookup: "
-            "sport=%d, dport=%d, snort_protocol_id=%hu, proto_id=%d, src:%p, "
-            "file:%p\n",p->ptrs.sp,p->ptrs.dp,snort_protocol_id,proto_id,(void*)svc,(void*)file);
     }
     // FIXIT-P put alert service rules with file data fp in alert file group and
     // verify ports and service during rule eval to avoid searching file data 2x.

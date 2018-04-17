@@ -112,7 +112,6 @@ IpsOption::EvalStatus IpProtoOption::eval(Cursor&, Packet* p)
 
     if (!p->has_ip())
     {
-        DebugMessage(DEBUG_IPS_OPTION,"Not IP\n");
         return NO_MATCH;
     }
 

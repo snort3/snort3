@@ -186,13 +186,6 @@ static int CvsDecode(const uint8_t* data, uint16_t data_len,
         if (command.cmd_str == nullptr)
             return CVS_NO_ALERT;
 
-        DebugFormat(DEBUG_IPS_OPTION, "CVS command\n"
-            " command: %.*s\n"
-            "argument: %.*s\n",
-            command.cmd_str_len, (const char*)command.cmd_str,
-            command.cmd_arg == nullptr ? 4 : command.cmd_arg_len,
-            command.cmd_arg == nullptr ? "none" : (const char*)command.cmd_arg);
-
         switch (cvs_rule_option->type)
         {
         case CVS_INVALID_ENTRY:

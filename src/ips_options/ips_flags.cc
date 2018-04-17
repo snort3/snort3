@@ -126,19 +126,12 @@ IpsOption::EvalStatus TcpFlagOption::eval(Cursor&, Packet* p)
     TcpFlagCheckData* flagptr = &config;
     u_char tcp_flags = p->ptrs.tcph->th_flags & (0xFF ^ flagptr->tcp_mask);
 
-    DebugMessage(DEBUG_IPS_OPTION, "           <!!> CheckTcpFlags: ");
-
     switch ((flagptr->mode))
     {
     case M_NORMAL:
         if (flagptr->tcp_flags == tcp_flags)    /* only these set */
         {
-            DebugMessage(DEBUG_IPS_OPTION,"Got TCP [default] flag match!\n");
             return MATCH;
-        }
-        else
-        {
-            DebugMessage(DEBUG_IPS_OPTION,"No match\n");
         }
         break;
 
@@ -146,42 +139,25 @@ IpsOption::EvalStatus TcpFlagOption::eval(Cursor&, Packet* p)
         /* all set */
         if ((flagptr->tcp_flags & tcp_flags) == flagptr->tcp_flags)
         {
-            DebugMessage(DEBUG_IPS_OPTION, "Got TCP [ALL] flag match!\n");
             return MATCH;
-        }
-        else
-        {
-            DebugMessage(DEBUG_IPS_OPTION,"No match\n");
         }
         break;
 
     case M_NOT:
         if ((flagptr->tcp_flags & tcp_flags) == 0)     /* none set */
         {
-            DebugMessage(DEBUG_IPS_OPTION,"Got TCP [NOT] flag match!\n");
             return MATCH;
-        }
-        else
-        {
-            DebugMessage(DEBUG_IPS_OPTION, "No match\n");
         }
         break;
 
     case M_ANY:
         if ((flagptr->tcp_flags & tcp_flags) != 0)     /* something set */
         {
-            DebugMessage(DEBUG_IPS_OPTION,"Got TCP [ANY] flag match!\n");
             return MATCH;
-        }
-        else
-        {
-            DebugMessage(DEBUG_IPS_OPTION,"No match\n");
         }
         break;
 
     default:      /* Should never see this */
-        DebugMessage(DEBUG_IPS_OPTION, "TCP flag check went to default case"
-            " for some silly reason\n");
         break;
     }
 

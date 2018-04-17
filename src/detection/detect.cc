@@ -33,7 +33,6 @@
 #include "events/event.h"
 #include "latency/packet_latency.h"
 #include "main/snort_config.h"
-#include "main/snort_debug.h"
 #include "managers/event_manager.h"
 #include "managers/inspector_manager.h"
 #include "packet_io/active.h"
@@ -134,13 +133,9 @@ void check_tags(Packet* p)
     if ( DetectionEngine::get_check_tags() and !(p->packet_flags & PKT_REBUILT_STREAM) )
     {
         void* listhead = nullptr;
-        DebugMessage(DEBUG_FLOW, "calling CheckTagList\n");
 
         if (CheckTagList(p, event, &listhead))
         {
-            DebugMessage(DEBUG_FLOW, "Matching tag node found, "
-                "calling log functions\n");
-
             /* if we find a match, we want to send the packet to the
              * logging mechanism
              */

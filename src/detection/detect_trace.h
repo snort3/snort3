@@ -43,6 +43,8 @@ enum
     TRACE_RULE_VARS = 0x10,
     TRACE_FP_SEARCH = 0x20,
     TRACE_PKT_DETECTION = 0x40,
+    TRACE_OPTION_TREE = 0x80,
+    TRACE_TAG = 0x100,
 };
 
 void clear_trace_cursor_info();

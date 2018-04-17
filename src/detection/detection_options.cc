@@ -300,7 +300,7 @@ static XHash* DetectionTreeHashTableNew()
 
 void print_option_tree(detection_option_tree_node_t* node, int level)
 {
-#ifdef DEBUG_OPTION_TREE
+#ifdef DEBUG_MSGS
     char buf[32];
     const char* opt;
 
@@ -314,8 +314,8 @@ void print_option_tree(detection_option_tree_node_t* node, int level)
         opt = buf;
     }
 
-    DebugFormatNoFileLine(DEBUG_DETECT, "%3d %3d  %p %*s\n",
-        level, node->num_children, node->option_data, level + strlen(opt), opt);
+    trace_logf(detection, TRACE_OPTION_TREE, "%3d %3d  %p %*s\n",
+        level, node->num_children, node->option_data, (int)(level + strlen(opt)), opt);
 
     for ( int i=0; i<node->num_children; i++ )
         print_option_tree(node->children[i], level+1);
@@ -438,9 +438,6 @@ int detection_option_node_evaluate(
                 if (sig_info.num_services && check_ports)
                 {
                     // none of the services match
-                    DebugFormat(DEBUG_DETECT,
-                        "[**] SID %u not matched because of service mismatch (%d!=%d [**]\n",
-                        sig_info.sid, snort_protocol_id, sig_info.services[0].snort_protocol_id);
                     trace_logf(detection, TRACE_RULE_EVAL,
                         "SID %u not matched because of service mismatch %d!=%d \n",
                         sig_info.sid, snort_protocol_id, sig_info.services[0].snort_protocol_id);

@@ -378,8 +378,6 @@ static IpsOption::EvalStatus CheckANDPatternMatch(ContentData* idx, Cursor& c)
 {
     Profile profile(contentPerfStats);
 
-    DebugMessage(DEBUG_PATTERN_MATCH, "CheckPatternANDMatch: ");
-
     int found = uniSearchReal(idx, c);
 
     if ( found == -1 )
@@ -397,12 +395,10 @@ static IpsOption::EvalStatus CheckANDPatternMatch(ContentData* idx, Cursor& c)
 
     if ( found )
     {
-        DebugMessage(DEBUG_PATTERN_MATCH, "Pattern match found\n");
         return IpsOption::MATCH;
     }
     else
     {
-        DebugMessage(DEBUG_PATTERN_MATCH, "Pattern match failed\n");
         return IpsOption::NO_MATCH;
     }
 }
@@ -490,7 +486,6 @@ static void parse_offset(ContentData* cd, const char* data)
         }
     }
 
-    DebugFormat(DEBUG_PARSER, "Pattern offset = %d\n", cd->pmd.offset);
 }
 
 static void parse_depth(ContentData* cd, const char* data)
@@ -530,7 +525,6 @@ static void parse_depth(ContentData* cd, const char* data)
         }
     }
 
-    DebugFormat(DEBUG_PATTERN_MATCH, "Pattern depth = %d\n", cd->pmd.depth);
 }
 
 static void parse_distance(ContentData* cd, const char* data)
@@ -600,7 +594,6 @@ static void parse_within(ContentData* cd, const char* data)
         }
     }
 
-    DebugFormat(DEBUG_PATTERN_MATCH, "Pattern within = %d\n", cd->pmd.depth);
 
     cd->pmd.set_relative();
 }

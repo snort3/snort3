@@ -633,8 +633,6 @@ static void processFlowbits(
         return;
     }
 
-    DebugFormat(DEBUG_FLOWBITS, "%s tag id parsing %s\n", s_name, flowbits_names);
-
     flowbits_name = snort_strdup(flowbits_names);
 
     if (nullptr != strchr(flowbits_name, '|'))
@@ -799,23 +797,6 @@ static FLOWBITS_GRP* getFlowBitGroup(char* groupName)
     return flowbits_grp;
 }
 
-#ifdef DEBUG_MSGS
-static void printOutFlowbits(FLOWBITS_OP* flowbits)
-{
-    DebugFormat(DEBUG_FLOWBITS, "%s: type = %d\n", s_name, flowbits->type);
-    DebugFormat(DEBUG_FLOWBITS, "%s: name = %s\n", s_name, flowbits->name);
-    DebugFormat(DEBUG_FLOWBITS, "%s: eval = %d\n", s_name, flowbits->eval);
-    DebugFormat(DEBUG_FLOWBITS, "%s: num_ids = %d\n", s_name, flowbits->num_ids);
-    DebugFormat(DEBUG_FLOWBITS, "%s: grp_id = %u\n", s_name, flowbits->group_id);
-    DebugFormat(DEBUG_FLOWBITS, "%s: group_name = %s\n", s_name, flowbits->group);
-
-    for (int i = 0; i < flowbits->num_ids; i++)
-    {
-        DebugFormat(DEBUG_FLOWBITS, "%s: value = %d\n", s_name, flowbits->ids[i]);
-    }
-}
-#endif
-
 static void processFlowBitsWithGroup(char* flowbitsName, char* groupName, FLOWBITS_OP* flowbits)
 {
     FLOWBITS_GRP* flowbits_grp;
@@ -829,7 +810,6 @@ static void processFlowBitsWithGroup(char* flowbitsName, char* groupName, FLOWBI
         flowbits->group_id = flowbits_grp->group_id;
     }
     validateFlowbitsSyntax(flowbits);
-    DEBUG_WRAP(printOutFlowbits(flowbits));
 
     if ( flowbits->group )
         op_list.push_front(flowbits);

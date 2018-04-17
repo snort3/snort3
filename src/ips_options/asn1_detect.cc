@@ -55,7 +55,6 @@
 
 #include "asn1_detect.h"
 
-#include "main/snort_debug.h"
 #include "utils/snort_bounds.h"
 
 #include "asn1_util.h"
@@ -327,8 +326,6 @@ int Asn1DoDetect(const uint8_t* data, uint16_t dsize, ASN1_CTXT* ctxt, const uin
     case REL_OFFSET:
         if (!rel_ptr)
         {
-            DebugMessage(DEBUG_ASN1, "[*] No rel_ptr for "
-                "relative offset, so we are bailing.\n");
             return 0;
         }
 
@@ -340,8 +337,6 @@ int Asn1DoDetect(const uint8_t* data, uint16_t dsize, ASN1_CTXT* ctxt, const uin
         */
         if (!inBounds(start, end + 1, rel_ptr))
         {
-            DebugMessage(DEBUG_ASN1, "[*] ASN.1 bounds "
-                "check failed for rel_ptr.\n");
             return 0;
         }
 
@@ -349,8 +344,6 @@ int Asn1DoDetect(const uint8_t* data, uint16_t dsize, ASN1_CTXT* ctxt, const uin
 
         if (!inBounds(start, end, offset))
         {
-            DebugMessage(DEBUG_ASN1, "[*] ASN.1 bounds "
-                "check failed rel_ptr+offset.\n");
             return 0;
         }
 
@@ -362,8 +355,6 @@ int Asn1DoDetect(const uint8_t* data, uint16_t dsize, ASN1_CTXT* ctxt, const uin
 
         if (!inBounds(start, end, offset))
         {
-            DebugMessage(DEBUG_ASN1, "[*] ASN.1 bounds "
-                "check failed.\n");
             return 0;
         }
 
@@ -379,8 +370,6 @@ int Asn1DoDetect(const uint8_t* data, uint16_t dsize, ASN1_CTXT* ctxt, const uin
     iRet = asn1_decode(offset, size, &asn1);
     if (iRet && !asn1)
     {
-        DebugMessage(DEBUG_ASN1, "[*] ASN.1 decode failed "
-            "miserably.\n");
         return 0;
     }
 
