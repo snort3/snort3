@@ -130,7 +130,7 @@ private:
         const uint8_t* const end,
         const int expected_len);
 
-    void DecodeTCPOptions(const uint8_t*, uint32_t, CodecData&);
+    void DecodeTCPOptions(const uint8_t*, uint32_t, CodecData&, DecodeData&);
     void TCPMiscTests(const tcp::TCPHdr* const tcph,
         const DecodeData& snort,
         const CodecData& codec);
@@ -265,8 +265,10 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     uint16_t tcp_opt_len = (uint16_t)(tcph->hlen() - tcp::TCP_MIN_HEADER_LEN);
 
     if (tcp_opt_len > 0)
-        DecodeTCPOptions((const uint8_t*)(raw.data + tcp::TCP_MIN_HEADER_LEN), tcp_opt_len, codec);
-
+    {
+        const uint8_t* opts = (const uint8_t*)(raw.data + tcp::TCP_MIN_HEADER_LEN);
+        DecodeTCPOptions(opts, tcp_opt_len, codec, snort);
+    }
     int dsize = raw.len - tcph->hlen();
     if (dsize < 0)
         dsize = 0;
@@ -344,7 +346,8 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
  *
  * Returns: void function
  */
-void TcpCodec::DecodeTCPOptions(const uint8_t* start, uint32_t o_len, CodecData& codec)
+void TcpCodec::DecodeTCPOptions(
+    const uint8_t* start, uint32_t o_len, CodecData& codec, DecodeData& snort)
 {
     const uint8_t* const end_ptr = start + o_len; /* points to byte after last option */
     const tcp::TcpOption* opt = reinterpret_cast<const tcp::TcpOption*>(start);
@@ -396,6 +399,7 @@ void TcpCodec::DecodeTCPOptions(const uint8_t* start, uint32_t o_len, CodecData&
                     /* LOG INVALID WINDOWSCALE alert */
                     codec_event(codec, DECODE_TCPOPT_WSCALE_INVALID);
                 }
+                snort.decode_flags |= DECODE_WSCALE;
             }
             break;
 

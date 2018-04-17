@@ -73,7 +73,7 @@ const InspectApi HttpApi::http_api =
         HttpApi::http_mod_dtor
     },
     IT_SERVICE,
-    (uint16_t)PktType::PDU,
+    PROTO_BIT__PDU,
     classic_buffer_names,
     "http",
     HttpApi::http_init,

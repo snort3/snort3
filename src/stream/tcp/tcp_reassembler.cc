@@ -106,6 +106,16 @@ bool TcpReassembler::flush_data_ready(TcpReassemblerState& trs)
     return ( get_pending_segment_count(trs, 2) > 1 );  // FIXIT-L return false?
 }
 
+bool TcpReassembler::next_no_gap(TcpSegmentNode& tsn)
+{
+    return tsn.next and (tsn.next->seq == tsn.seq + tsn.payload_size);
+}
+
+void TcpReassembler::update_next(TcpReassemblerState& trs, TcpSegmentNode& tsn)
+{
+    trs.sos.seglist.next = next_no_gap(tsn) ?  tsn.next : nullptr;
+}
+
 int TcpReassembler::delete_reassembly_segment(TcpReassemblerState& trs, TcpSegmentNode* tsn)
 {
     int ret;
@@ -136,7 +146,7 @@ int TcpReassembler::delete_reassembly_segment(TcpReassemblerState& trs, TcpSegme
     }
 
     if (trs.sos.seglist.next == tsn)
-        trs.sos.seglist.next = nullptr;
+        update_next(trs, *tsn);
 
     tsn->term( );
     trs.sos.seg_count--;
@@ -467,7 +477,7 @@ int TcpReassembler::flush_data_segments(
         trs.flush_count++;
         segs++;
 
-        trs.sos.seglist.next = tsn->next;
+        update_next(trs, *tsn);
 
         if ( SEQ_EQ(tsn->seq + bytes_to_copy, to_seq) )
             break;
@@ -630,7 +640,7 @@ int TcpReassembler::_flush_to_seq(
             tcpStats.rebuilt_packets++;
             tcpStats.rebuilt_bytes += flushed_bytes;
 
-            ProfileExclude profile_exclude(s5TcpFlushPerfStats);
+            NoProfile exclude(s5TcpFlushPerfStats);
             Snort::inspect(pdu);
         }
         else
@@ -723,7 +733,7 @@ int TcpReassembler::do_zero_byte_flush(TcpReassemblerState& trs, Packet* p, uint
         trs.flush_count++;
 
         show_rebuilt_packet(trs, pdu);
-        ProfileExclude profile_exclude(s5TcpFlushPerfStats);
+        NoProfile profile_exclude(s5TcpFlushPerfStats);
         Snort::inspect(pdu);
 
         if ( trs.tracker->splitter )
@@ -743,12 +753,12 @@ uint32_t TcpReassembler::get_q_footprint(TcpReassemblerState& trs)
     if ( !trs.tracker )
         return 0;
 
-    trs.sos.seglist.next = trs.sos.seglist.head;
     footprint = trs.tracker->r_win_base - trs.sos.seglist_base_seq;
 
     if ( footprint )
     {
         sequenced = get_q_sequenced(trs);
+
         if ( trs.tracker->fin_seq_status == TcpStreamTracker::FIN_WITH_SEQ_ACKED )
             --footprint;
     }
@@ -762,33 +772,42 @@ uint32_t TcpReassembler::get_q_footprint(TcpReassemblerState& trs)
 
 uint32_t TcpReassembler::get_q_sequenced(TcpReassemblerState& trs)
 {
-    TcpSegmentNode* tsn = trs.tracker ? trs.sos.seglist.head : nullptr;
-    TcpSegmentNode* base = nullptr;
+    TcpSegmentNode* tsn;
 
-    if ( !tsn || ( trs.sos.session->flow->two_way_traffic() &&
-        SEQ_LT(trs.tracker->r_win_base, tsn->seq) ) )
-        return 0;
-
-    while ( tsn->next && ( tsn->next->seq == tsn->seq + tsn->payload_size ) )
+    if ( trs.sos.seglist.next )
+        tsn = trs.sos.seglist.next;
+    else
     {
-        if ( !tsn->buffered && !base )
-            base = tsn;
+        trs.sos.seglist.next = trs.sos.seglist.head;
+        tsn = trs.tracker ? trs.sos.seglist.next : nullptr;  // FIXIT-H why check tracker here?
+
+        if ( !tsn or (trs.sos.session->flow->two_way_traffic() and
+            SEQ_LT(trs.tracker->r_win_base, tsn->seq)) )
+        {
+            if ( trs.sos.seglist.next )
+                trs.sos.seglist.next = trs.sos.seglist.next->prev;
+            return 0;
+        }
+    }
+
+    uint32_t len = 0;
+    const uint32_t limit = trs.tracker->splitter->get_max_pdu();
+
+    while ( len < limit and next_no_gap(*tsn) )
+    {
+        if ( tsn->buffered )
+            trs.sos.seglist.next = tsn->next;
+        else
+            len += tsn->payload_size;
+
         tsn = tsn->next;
     }
+    if ( !tsn->buffered )
+        len += tsn->payload_size;
 
-    if ( !tsn->buffered && !base )
-        base = tsn;
+    trs.sos.seglist_base_seq = trs.sos.seglist.next->seq;
 
-    int32_t len = 0;
-
-    if ( base )
-    {
-        trs.sos.seglist.next = base;
-        trs.sos.seglist_base_seq = base->seq;
-        len = tsn->seq + tsn->payload_size - base->seq;
-    }
-
-    return ( len > 0 ) ? len : 0;
+    return len;
 }
 
 // FIXIT-L flush_stream() calls should be replaced with calls to

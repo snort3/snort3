@@ -197,15 +197,14 @@ void ZHash::move_to_front(ZHashNode* node)
     }
 }
 
-ZHashNode* ZHash::find_node_row(const void* key, int* rindex)
+ZHashNode* ZHash::find_node_row(const void* key, int& row)
 {
     unsigned hashkey = hashfcn->hash_fcn(
         hashfcn, (const unsigned char*)key, keysize);
 
     // Modulus is slow; use a table size that is a power of 2.
     int index = hashkey & (nrows - 1);
-
-    *rindex = index;
+    row = index;
 
     for ( ZHashNode* node=table[index]; node; node=node->next )  // UNINITUSE
     {
@@ -313,8 +312,8 @@ void* ZHash::pop()
 
 void* ZHash::get(const void* key, bool *new_node)
 {
-    int index = 0;
-    ZHashNode* node = find_node_row(key, &index);
+    int row;
+    ZHashNode* node = find_node_row(key, row);
 
     if ( node )
         return node->data;
@@ -324,9 +323,9 @@ void* ZHash::get(const void* key, bool *new_node)
     if ( !node )
         return nullptr;
 
-    memcpy(node->key,key,keysize);
+    memcpy(node->key, key, keysize);
 
-    node->rindex = index;
+    node->rindex = row;
     link_node (node);
     glink_node(node);
 
@@ -340,8 +339,8 @@ void* ZHash::get(const void* key, bool *new_node)
 
 void* ZHash::find(const void* key)
 {
-    int rindex = 0;
-    ZHashNode* node = find_node_row(key, &rindex);
+    int row;
+    ZHashNode* node = find_node_row(key, row);
 
     if ( node )
         return node->data;
@@ -410,8 +409,8 @@ bool ZHash::remove()
 
 bool ZHash::remove(const void* key)
 {
-    int row = 0;
-    ZHashNode* node = find_node_row(key, &row);
+    int row;
+    ZHashNode* node = find_node_row(key, row);
     return remove(node);
 }
 

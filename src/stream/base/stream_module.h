@@ -74,6 +74,7 @@ struct StreamModuleConfig
 
     int footprint;
     bool ip_frags_only;
+    bool track_on_syn;
 };
 
 class StreamModule : public snort::Module

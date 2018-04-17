@@ -101,7 +101,7 @@ StreamSplitter* Inspector::get_splitter(bool to_server)
 
 bool Inspector::likes(Packet* p)
 {
-    if ( !((uint16_t)p->type() & api->proto_bits) )
+    if ( !(BIT((uint16_t)p->type()) & api->proto_bits) )
         return false;
 
     if ( p->is_tcp() && api->type == IT_SERVICE )

@@ -224,7 +224,7 @@ const InspectApi dce2_tcp_api =
         mod_dtor
     },
     IT_SERVICE,
-    (uint16_t)PktType::PDU,
+    PROTO_BIT__PDU,
     nullptr,  // buffers
     DCE_RPC_SERVICE_NAME,
     dce2_tcp_init,

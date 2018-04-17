@@ -180,7 +180,7 @@ static const InspectApi dpx_api
         mod_dtor
     },
     IT_NETWORK,
-    (uint16_t)PktType::UDP,
+    PROTO_BIT__UDP,
     nullptr, // buffers
     nullptr, // service
     nullptr, // pinit

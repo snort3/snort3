@@ -96,7 +96,7 @@ static int SnortFTP(
     ret = check_ftp(FTPsession, p, iInspectMode);
     if ( ret == FTPP_SUCCESS )
     {
-        ProfileExclude exclude(ftpPerfStats);
+        NoProfile exclude(ftpPerfStats);
 
         // FIXIT-L ideally do_detection will look at the cmd & param buffers
         // or the rsp & msg buffers.  We should call it from inside check_ftp
@@ -419,7 +419,7 @@ static const InspectApi fc_api =
         mod_dtor
     },
     IT_PASSIVE,
-    (uint16_t)PktType::NONE,
+    PROTO_BIT__NONE,
     nullptr, // buffers
     "ftp",
     nullptr, // init,
@@ -474,7 +474,7 @@ static const InspectApi fs_api =
         mod_dtor
     },
     IT_SERVICE,
-    (uint16_t)PktType::PDU,
+    PROTO_BIT__PDU,
     nullptr, // buffers
     "ftp",
     fs_init,

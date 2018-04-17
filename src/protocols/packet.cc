@@ -150,9 +150,6 @@ const char* Packet::get_type() const
     case PktType::UDP:
         return "UDP";
 
-    case PktType::ARP:
-        return "ARP";
-
     case PktType::PDU:
     case PktType::FILE:
         if ( proto_bits & PROTO_BIT__TCP )
@@ -165,6 +162,9 @@ const char* Packet::get_type() const
         return "Error";
 
     case PktType::NONE:
+        if ( proto_bits & PROTO_BIT__ARP )
+            return "ARP";
+
         if ( num_layers > 0 )
             return PacketManager::get_proto_name(layers[num_layers-1].prot_id);
 

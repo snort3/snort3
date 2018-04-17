@@ -239,7 +239,7 @@ static const Parameter search_engine_params[] =
     { "max_queue_events", Parameter::PT_INT, "2:100", "5",  // upper bound is MAX_EVENT_MATCH
       "maximum number of matching fast pattern states to queue per packet" },
 
-    { "detect_raw_tcp", Parameter::PT_BOOL, nullptr, "true",
+    { "detect_raw_tcp", Parameter::PT_BOOL, nullptr, "false",
       "detect on TCP payload before reassembly" },
 
     { "search_method", Parameter::PT_DYNAMIC, (void*)&get_search_methods, "ac_bnfa",

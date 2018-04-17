@@ -29,7 +29,6 @@ class Inspector;
 struct StreamUdpConfig
 {
     uint32_t session_timeout;
-    bool ignore_any;
 
     StreamUdpConfig();
 };

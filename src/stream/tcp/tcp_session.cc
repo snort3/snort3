@@ -81,8 +81,7 @@ TcpSession::TcpSession(Flow* flow)
 
 TcpSession::~TcpSession()
 {
-    if (tcp_init)
-        clear_session(true, false, false);
+    clear_session(true, false, false);
 }
 
 bool TcpSession::setup(Packet* p)
@@ -139,6 +138,9 @@ void TcpSession::restart(Packet* p)
 
 void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool restart, Packet* p)
 {
+    if ( !tcp_init )
+        return;
+
     assert(!p or p->flow == flow);
     DetectionEngine::onload(flow);
 

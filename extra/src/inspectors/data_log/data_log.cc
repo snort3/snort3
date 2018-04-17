@@ -235,7 +235,7 @@ static const InspectApi dl_api
         mod_dtor
     },
     IT_PASSIVE,
-    (uint16_t)PktType::NONE,
+    PROTO_BIT__NONE,
     nullptr, // buffers
     nullptr, // service
     nullptr, // pinit

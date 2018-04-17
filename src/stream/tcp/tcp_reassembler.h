@@ -90,6 +90,9 @@ protected:
     void fallback(TcpReassemblerState&);
     int32_t flush_pdu_ackd(TcpReassemblerState&, uint32_t* flags);
     int purge_to_seq(TcpReassemblerState&, uint32_t flush_seq);
+
+    bool next_no_gap(TcpSegmentNode&);
+    void update_next(TcpReassemblerState&, TcpSegmentNode&);
 };
 
 #endif

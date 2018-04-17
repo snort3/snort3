@@ -155,7 +155,9 @@ IpsOption::EvalStatus AppIdIpsOption::eval(Cursor&, Packet* p)
 {
     AppId app_ids[NUM_ID_TYPES];
 
-    assert(p->flow);
+    if ( !p->flow )
+        return NO_MATCH;
+
     Profile profile(appidRuleOptionPerfStats);
 
     if ( !opt_data.ids_mapped )

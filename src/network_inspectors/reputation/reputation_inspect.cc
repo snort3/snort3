@@ -411,7 +411,7 @@ const InspectApi reputation_api =
         mod_dtor
     },
     IT_NETWORK,
-    (uint16_t)PktType::ANY_IP,
+    PROTO_BIT__ANY_IP,
     nullptr, // buffers
     nullptr, // service
     reputation_init, // pinit

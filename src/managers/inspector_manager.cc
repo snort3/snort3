@@ -573,7 +573,7 @@ InspectSsnFunc InspectorManager::get_session(uint16_t proto)
 {
     for ( auto* p : s_handlers )
     {
-        if ( p->api.type == IT_STREAM && p->api.proto_bits == proto && !p->init )
+        if ( p->api.type == IT_STREAM and p->api.proto_bits == proto and !p->init )
             return p->api.ssn;
     }
     return nullptr;
@@ -753,18 +753,18 @@ static void instantiate_binder(SnortConfig* sc, FrameworkPolicy* fp)
         const char* t = api.base.name;
         m->add(s, t);
 
-        tcp = tcp || (api.proto_bits & (unsigned)PktType::TCP);
-        udp = udp || (api.proto_bits & (unsigned)PktType::UDP);
-        pdu = pdu || (api.proto_bits & (unsigned)PktType::PDU);
+        tcp = tcp or (api.proto_bits & PROTO_BIT__TCP);
+        udp = udp or (api.proto_bits & PROTO_BIT__UDP);
+        pdu = pdu or (api.proto_bits & PROTO_BIT__PDU);
     }
     if ( tcp or pdu )
-        m->add((unsigned)PktType::TCP, wiz_id);
+        m->add(PROTO_BIT__TCP, wiz_id);
 
     if ( udp )
-        m->add((unsigned)PktType::UDP, wiz_id);
+        m->add(PROTO_BIT__UDP, wiz_id);
 
     if ( tcp or udp or pdu )
-        m->add((unsigned)PktType::PDU, wiz_id);
+        m->add(PROTO_BIT__PDU, wiz_id);
 
     const InspectApi* api = get_plugin(bind_id);
     InspectorManager::instantiate(api, m, sc);
@@ -902,7 +902,14 @@ static inline void execute(
         if ( !p->flow && (ppc.api.type == IT_SERVICE) )
             break;
 
-        if ( (unsigned)p->type() & ppc.api.proto_bits )
+        // FIXIT-L ideally we could eliminate PktType and just use
+        // proto_bits but things like teredo need to be fixed up.
+        if ( p->type() == PktType::NONE )
+        {
+            if ( p->proto_bits & ppc.api.proto_bits )
+                (*prep)->handler->eval(p);
+        }
+        else if ( BIT((unsigned)p->type()) & ppc.api.proto_bits )
             (*prep)->handler->eval(p);
     }
 }

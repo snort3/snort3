@@ -113,7 +113,7 @@ const InspectApi dce_http_server_api =
         mod_server_dtor
     },
     IT_SERVICE,
-    (uint16_t)PktType::PDU,
+    PROTO_BIT__PDU,
     nullptr,  // buffers
     "dce_http_server",
     nullptr, // pinit

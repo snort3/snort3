@@ -1555,7 +1555,7 @@ const InspectApi smtp_api =
         mod_dtor
     },
     IT_SERVICE,
-    (uint16_t)PktType::PDU,
+    PROTO_BIT__PDU,
     nullptr,                // buffers
     "smtp",
     smtp_init,

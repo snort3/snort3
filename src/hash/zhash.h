@@ -56,7 +56,7 @@ public:
 
 private:
     ZHashNode* get_free_node();
-    ZHashNode* find_node_row(const void*, int*);
+    ZHashNode* find_node_row(const void*, int&);
 
     void glink_node(ZHashNode*);
     void gunlink_node(ZHashNode*);

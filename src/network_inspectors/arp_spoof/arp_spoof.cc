@@ -142,7 +142,8 @@ void ArpSpoof::eval(Packet* p)
     Profile profile(arpPerfStats);
 
     // precondition - what we registered for
-    assert(p->type() == PktType::ARP);
+    assert(p->proto_bits & PROTO_BIT__ARP);
+
     const uint8_t* dst_mac_addr;
     const uint8_t* src_mac_addr;
 
@@ -269,7 +270,7 @@ static const InspectApi as_api =
         mod_dtor
     },
     IT_NETWORK,
-    (uint16_t)PktType::ARP,
+    PROTO_BIT__ARP,
     nullptr, // buffers
     nullptr, // service
     nullptr, // pinit

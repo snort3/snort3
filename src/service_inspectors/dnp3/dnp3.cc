@@ -318,7 +318,7 @@ const InspectApi dnp3_api =
         mod_dtor
     },
     IT_SERVICE,
-    (uint16_t)PktType::PDU | (uint16_t)PktType::UDP,
+    PROTO_BIT__UDP | PROTO_BIT__PDU,
     nullptr,  // buffers
     "dnp3",
     dnp3_init,

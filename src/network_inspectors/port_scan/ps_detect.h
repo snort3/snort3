@@ -61,7 +61,6 @@ struct Packet;
 #define PS_ALERT_ONE_TO_ONE_DECOY_FILTERED 6
 #define PS_ALERT_DISTRIBUTED_FILTERED      7
 #define PS_ALERT_PORTSWEEP_FILTERED        8
-#define PS_ALERT_OPEN_PORT                 9
 
 #define PS_ALERT_GENERATED                 255
 

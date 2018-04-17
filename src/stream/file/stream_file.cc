@@ -96,7 +96,7 @@ static const InspectApi sfile_api =
         mod_dtor
     },
     IT_STREAM,
-    (unsigned)PktType::FILE,
+    PROTO_BIT__FILE,
     nullptr, // buffers
     nullptr, // service
     nullptr, // pinit

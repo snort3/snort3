@@ -54,7 +54,7 @@ bool StreamUdp::convert(std::istringstream& data_stream)
             continue;
 
         if (keyword == "ignore_any_rules")
-            tmpval = table_api.add_option("ignore_any_rules", true);
+            table_api.add_deleted_comment("ignore_any_rules");
 
         else if (keyword == "timeout")
         {

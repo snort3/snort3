@@ -288,7 +288,7 @@ static const InspectApi rti_api
         mod_dtor
     },
     IT_PACKET,
-    (uint16_t)PktType::TCP | (uint16_t)PktType::UDP | (uint16_t)PktType::PDU,
+    PROTO_BIT__ANY_PDU,
     nullptr, // buffers
     s_name,  // service
     reg_test_init, // pinit

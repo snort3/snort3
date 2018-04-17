@@ -304,7 +304,7 @@ bool StreamTcp::convert(std::istringstream& data_stream)
             tmpval = parse_small_segments(arg_stream);
 
         else if (keyword == "ignore_any_rules")
-            tmpval = table_api.add_option("ignore_any_rules", true);
+            table_api.add_deleted_comment("ignore_any_rules");
 
         else if (keyword == "ports")
             tmpval = parse_ports(arg_stream);

@@ -62,9 +62,6 @@ void TcpStreamConfig::show_config(TcpStreamConfig* config)
     if ( config->flags )
     {
         LogMessage("    Options:\n");
-        if (config->flags & STREAM_CONFIG_IGNORE_ANY)
-            LogMessage("        Ignore Any -> Any Rules: YES\n");
-
         if (config->flags & STREAM_CONFIG_NO_ASYNC_REASSEMBLY)
             LogMessage("        Don't queue packets on one-sided sessions: YES\n");
     }

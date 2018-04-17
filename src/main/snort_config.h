@@ -72,6 +72,7 @@ enum RunFlag
     RUN_FLAG__PIGLET              = 0x01000000,
 #endif
     RUN_FLAG__MEM_CHECK           = 0x02000000,
+    RUN_FLAG__TRACK_ON_SYN        = 0x04000000,
 };
 
 enum OutputFlag
@@ -649,6 +650,9 @@ public:
     {
         return get_conf()->enable_packet_trace;
     }
+
+    bool track_on_syn() const
+    { return (run_flags & RUN_FLAG__TRACK_ON_SYN) != 0; }
 
     // Use this to access current thread's conf from other units
     static void set_conf(SnortConfig*);

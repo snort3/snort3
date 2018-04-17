@@ -538,11 +538,6 @@ static int ps_update_open_ports(PS_PROTO* proto, unsigned short port)
     {
         proto->open_ports[iCtr] = port;
         proto->open_ports_cnt++;
-
-        if (proto->alerts == PS_ALERT_GENERATED)
-        {
-            proto->alerts = PS_ALERT_OPEN_PORT;
-        }
     }
 
     return 0;
@@ -649,22 +644,14 @@ void PortScan::ps_tracker_update_tcp(PS_PKT* ps_pkt, PS_TRACKER* scanner,
             !(p->packet_flags & PKT_STREAM_EST))
         {
             if (scanned)
-            {
                 ps_update_open_ports(&scanned->proto, p->ptrs.sp);
-            }
-
-            if (scanner)
-            {
-                if (scanner->proto.alerts == PS_ALERT_GENERATED)
-                    scanner->proto.alerts = PS_ALERT_OPEN_PORT;
-            }
         }
     }
     /*
     ** Stream didn't create a session on the SYN packet,
     ** so check specifically for SYN here.
     */
-    else if (p->ptrs.tcph && (p->ptrs.tcph->th_flags == TH_SYN))
+    else if ( p->ptrs.tcph and p->ptrs.tcph->is_syn_only() )
     {
         /* No session established, packet only has SYN.  SYN only
         ** packet always from client, so use dp.
@@ -686,7 +673,7 @@ void PortScan::ps_tracker_update_tcp(PS_PKT* ps_pkt, PS_TRACKER* scanner,
     ** so check specifically for SYN & ACK here.  Clear based
     ** on the 'completion' of three-way handshake.
     */
-    else if (p->ptrs.tcph && (p->ptrs.tcph->th_flags == (TH_SYN|TH_ACK)))
+    else if ( p->ptrs.tcph and p->ptrs.tcph->is_syn_ack() )
     {
         if (scanned)
         {

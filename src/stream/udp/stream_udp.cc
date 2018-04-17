@@ -37,16 +37,12 @@ using namespace snort;
 StreamUdpConfig::StreamUdpConfig()
 {
     session_timeout = 30;
-    ignore_any = false;
 }
 
 static void udp_show(StreamUdpConfig* pc)
 {
     LogMessage("Stream UDP config:\n");
     LogMessage("    Timeout: %d seconds\n", pc->session_timeout);
-
-    const char* opt = (pc->ignore_any) ? "YES" : "NO";
-    LogMessage("    Ignore Any -> Any Rules: %s\n", opt);
 
 #ifdef REG_TEST
     LogMessage("    UDP Session Size: %zu\n", sizeof(UdpSession));
@@ -149,7 +145,7 @@ static const InspectApi udp_api =
         mod_dtor
     },
     IT_STREAM,
-    (unsigned)PktType::UDP,
+    PROTO_BIT__UDP,
     nullptr, // buffers
     nullptr, // service
     nullptr, // init

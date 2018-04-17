@@ -117,7 +117,7 @@ const InspectApi dce_http_proxy_api =
         mod_proxy_dtor
     },
     IT_SERVICE,
-    (uint16_t)PktType::PDU,
+    PROTO_BIT__PDU,
     nullptr,  // buffers
     "dce_http_proxy",
     nullptr, // pinit

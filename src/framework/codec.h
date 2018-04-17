@@ -126,7 +126,7 @@ struct CodecData
     /* Reset before each decode of packet begins */
 
     /*  Codec specific fields.  These fields are only relevant to codecs. */
-    uint16_t proto_bits;    /* protocols contained within this packet
+    uint32_t proto_bits;    /* protocols contained within this packet
                                  -- will be propogated to Snort++ Packet struct*/
     uint16_t codec_flags;   /* flags used while decoding */
     uint8_t ip_layer_cnt;

@@ -241,7 +241,7 @@ static const InspectApi gtp_api =
         mod_dtor
     },
     IT_SERVICE,
-    (uint16_t)PktType::UDP,
+    PROTO_BIT__UDP,
     nullptr,
     "gtp",
     gtp_init,

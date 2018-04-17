@@ -215,7 +215,7 @@ const InspectApi dce2_udp_api =
         mod_dtor
     },
     IT_SERVICE,
-    (uint16_t)PktType::UDP,
+    PROTO_BIT__UDP,
     nullptr,  // buffers
     DCE_RPC_SERVICE_NAME,
     dce2_udp_init,

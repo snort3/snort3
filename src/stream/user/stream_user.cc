@@ -131,7 +131,7 @@ static const InspectApi user_api =
         mod_dtor
     },
     IT_STREAM,
-    (unsigned)PktType::PDU,
+    PROTO_BIT__PDU,
     nullptr, // buffers
     nullptr, // service
     nullptr, // pinit

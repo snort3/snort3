@@ -52,22 +52,12 @@ public:
     ~FlowControl();
 
 public:
-    void process_ip(snort::Packet*);
-    void process_icmp(snort::Packet*);
-    void process_tcp(snort::Packet*);
-    void process_udp(snort::Packet*);
-    void process_user(snort::Packet*);
-    void process_file(snort::Packet*);
+    bool process(PktType, snort::Packet*);
 
     snort::Flow* find_flow(const snort::FlowKey*);
     snort::Flow* new_flow(const snort::FlowKey*);
 
-    void init_ip(const FlowConfig&, snort::InspectSsnFunc);
-    void init_icmp(const FlowConfig&, snort::InspectSsnFunc);
-    void init_tcp(const FlowConfig&, snort::InspectSsnFunc);
-    void init_udp(const FlowConfig&, snort::InspectSsnFunc);
-    void init_user(const FlowConfig&, snort::InspectSsnFunc);
-    void init_file(const FlowConfig&, snort::InspectSsnFunc);
+    void init_proto(PktType, const FlowConfig&, snort::InspectSsnFunc);
     void init_exp(uint32_t max);
 
     void delete_flow(const snort::FlowKey*);
@@ -92,15 +82,20 @@ public:
         const snort::SfIp *dstIP, uint16_t dstPort,
         SnortProtocolId snort_protocol_id, snort::FlowData*);
 
-    PegCount get_flows(PktType);
+    PegCount get_flows(PktType pt)
+    { return proto[to_utype(pt)].num_flows; }
+
     PegCount get_total_prunes(PktType) const;
     PegCount get_prunes(PktType, PruneReason) const;
 
     void clear_counts();
 
 private:
-    FlowCache* get_cache(PktType);
-    const FlowCache* get_cache(PktType) const;
+    FlowCache* get_cache(PktType pt)
+    { return proto[to_utype(pt)].cache; }
+
+    const FlowCache* get_cache(PktType pt) const
+    { return proto[to_utype(pt)].cache; }
 
     void set_key(snort::FlowKey*, snort::Packet*);
 
@@ -108,27 +103,13 @@ private:
     void preemptive_cleanup();
 
 private:
-    FlowCache* ip_cache = nullptr;
-    FlowCache* icmp_cache = nullptr;
-    FlowCache* tcp_cache = nullptr;
-    FlowCache* udp_cache = nullptr;
-    FlowCache* user_cache = nullptr;
-    FlowCache* file_cache = nullptr;
-
-    // preallocated arrays
-    snort::Flow* ip_mem = nullptr;
-    snort::Flow* icmp_mem = nullptr;
-    snort::Flow* tcp_mem = nullptr;
-    snort::Flow* udp_mem = nullptr;
-    snort::Flow* user_mem = nullptr;
-    snort::Flow* file_mem = nullptr;
-
-    snort::InspectSsnFunc get_ip = nullptr;
-    snort::InspectSsnFunc get_icmp = nullptr;
-    snort::InspectSsnFunc get_tcp = nullptr;
-    snort::InspectSsnFunc get_udp = nullptr;
-    snort::InspectSsnFunc get_user = nullptr;
-    snort::InspectSsnFunc get_file = nullptr;
+    struct
+    {
+        FlowCache* cache = nullptr;
+        snort::Flow* mem = nullptr;
+        snort::InspectSsnFunc get_ssn = nullptr;
+        PegCount num_flows = 0;
+    } proto[to_utype(PktType::MAX)];
 
     class ExpectCache* exp_cache = nullptr;
     PktType last_pkt_type = PktType::NONE;

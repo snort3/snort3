@@ -110,6 +110,9 @@ bool TcpSegmentDescriptor::has_wscale()
 
     DebugMessage(DEBUG_STREAM_STATE, "Checking for wscale...\n");
 
+    if ( !(pkt->ptrs.decode_flags & DECODE_WSCALE) )
+        return false;
+
     return ( init_wscale(&wscale) & TF_WSCALE ) != TF_NONE;
 }
 

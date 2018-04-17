@@ -496,7 +496,7 @@ const InspectApi ssl_api =
         mod_dtor
     },
     IT_SERVICE,
-    (uint16_t)PktType::PDU,
+    PROTO_BIT__PDU,
     nullptr, // buffers
     "ssl",
     ssl_init,

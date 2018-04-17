@@ -55,7 +55,6 @@ public:
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
-    void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
 };
 } // anonymous namespace
 
@@ -65,7 +64,7 @@ void ArpCodec::get_protocol_ids(std::vector<ProtocolId>& v)
     v.push_back(ProtocolId::ETHERTYPE_REVARP);
 }
 
-bool ArpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
+bool ArpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     if (raw.len < arp::ETHERARP_HDR_LEN)
     {
@@ -75,14 +74,8 @@ bool ArpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
     codec.proto_bits |= PROTO_BIT__ARP;
     codec.lyr_len = arp::ETHERARP_HDR_LEN;
-    snort.set_pkt_type(PktType::ARP);
 
     return true;
-}
-
-void ArpCodec::format(bool /*reverse*/, uint8_t* /*raw_pkt*/, DecodeData& snort)
-{
-    snort.set_pkt_type(PktType::ARP);
 }
 
 //-------------------------------------------------------------------------

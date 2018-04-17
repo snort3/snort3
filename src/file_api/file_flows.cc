@@ -332,7 +332,7 @@ static const InspectApi file_inspect_api =
         mod_dtor
     },
     IT_PASSIVE,
-    (uint16_t)PktType::NONE,
+    PROTO_BIT__NONE,
     nullptr,
     "file",
     file_init,

@@ -117,8 +117,8 @@ struct SO_PUBLIC Packet
 
     uint32_t packet_flags;      /* special flags for the packet */
     uint32_t xtradata_mask;
+    uint32_t proto_bits;        /* protocols contained within this packet */
 
-    uint16_t proto_bits;        /* protocols contained within this packet */
     uint16_t alt_dsize;         /* size for detection (iff PKT_DETECT_LIMIT) */
 
     uint8_t num_layers;         /* index into layers for next encap */

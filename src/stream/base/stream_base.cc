@@ -20,11 +20,15 @@
 #include "config.h"
 #endif
 
+#include <functional>
+
 #include "flow/flow_control.h"
 #include "flow/prune_stats.h"
+#include "main/snort_config.h"
 #include "managers/inspector_manager.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
+#include "protocols/tcp.h"
 #include "stream/flush_bucket.h"
 
 #include "stream_ha.h"
@@ -138,6 +142,7 @@ class StreamBase : public Inspector
 public:
     StreamBase(const StreamModuleConfig*);
 
+    bool configure(SnortConfig*) override;
     void show(SnortConfig*) override;
 
     void tinit() override;
@@ -162,33 +167,33 @@ void StreamBase::tinit()
 
     if ( config.ip_cfg.max_sessions )
     {
-        if ( (f = InspectorManager::get_session((uint16_t)PktType::IP)) )
-            flow_con->init_ip(config.ip_cfg, f);
+        if ( (f = InspectorManager::get_session(PROTO_BIT__IP)) )
+            flow_con->init_proto(PktType::IP, config.ip_cfg, f);
     }
     if ( config.icmp_cfg.max_sessions )
     {
-        if ( (f = InspectorManager::get_session((uint16_t)PktType::ICMP)) )
-            flow_con->init_icmp(config.icmp_cfg, f);
+        if ( (f = InspectorManager::get_session(PROTO_BIT__ICMP)) )
+            flow_con->init_proto(PktType::ICMP, config.icmp_cfg, f);
     }
     if ( config.tcp_cfg.max_sessions )
     {
-        if ( (f = InspectorManager::get_session((uint16_t)PktType::TCP)) )
-            flow_con->init_tcp(config.tcp_cfg, f);
+        if ( (f = InspectorManager::get_session(PROTO_BIT__TCP)) )
+            flow_con->init_proto(PktType::TCP, config.tcp_cfg, f);
     }
     if ( config.udp_cfg.max_sessions )
     {
-        if ( (f = InspectorManager::get_session((uint16_t)PktType::UDP)) )
-            flow_con->init_udp(config.udp_cfg, f);
+        if ( (f = InspectorManager::get_session(PROTO_BIT__UDP)) )
+            flow_con->init_proto(PktType::UDP, config.udp_cfg, f);
     }
     if ( config.user_cfg.max_sessions )
     {
-        if ( (f = InspectorManager::get_session((uint16_t)PktType::PDU)) )
-            flow_con->init_user(config.user_cfg, f);
+        if ( (f = InspectorManager::get_session(PROTO_BIT__PDU)) )
+            flow_con->init_proto(PktType::PDU, config.user_cfg, f);
     }
     if ( config.file_cfg.max_sessions )
     {
-        if ( (f = InspectorManager::get_session((uint16_t)PktType::FILE)) )
-            flow_con->init_file(config.file_cfg, f);
+        if ( (f = InspectorManager::get_session(PROTO_BIT__FILE)) )
+            flow_con->init_proto(PktType::FILE, config.file_cfg, f);
     }
     uint32_t max = config.tcp_cfg.max_sessions + config.udp_cfg.max_sessions
         + config.user_cfg.max_sessions;
@@ -203,6 +208,12 @@ void StreamBase::tterm()
 {
     StreamHAManager::tterm();
     FlushBucket::clear();
+}
+
+bool StreamBase::configure(SnortConfig* sc)
+{
+    config.track_on_syn = sc->track_on_syn();
+    return true;
 }
 
 void StreamBase::show(SnortConfig*)
@@ -220,41 +231,46 @@ void StreamBase::eval(Packet* p)
 
     switch ( p->type() )
     {
-    case PktType::IP:
-        if ( p->has_ip() and
-            ((p->ptrs.decode_flags & DECODE_FRAG) or !config.ip_frags_only) )
-            flow_con->process_ip(p);
+    case PktType::NONE:
         break;
 
-    case PktType::ICMP:
-        if ( p->ptrs.icmph )
-            flow_con->process_icmp(p);
+    case PktType::IP:
+        if ( p->has_ip() and ((p->ptrs.decode_flags & DECODE_FRAG) or !config.ip_frags_only) )
+            flow_con->process(PktType::IP, p);
         break;
 
     case PktType::TCP:
         if ( p->ptrs.tcph )
-            flow_con->process_tcp(p);
+            flow_con->process(PktType::TCP, p);
         break;
 
     case PktType::UDP:
         if ( p->ptrs.decode_flags & DECODE_FRAG )
-            flow_con->process_ip(p);
+            flow_con->process(PktType::IP, p);
 
         if ( p->ptrs.udph )
-            flow_con->process_udp(p);
+            flow_con->process(PktType::UDP, p);
+        break;
+
+    case PktType::ICMP:
+        if ( p->ptrs.icmph )
+        {
+            if ( !flow_con->process(PktType::ICMP, p) )
+                flow_con->process(PktType::IP, p);
+        }
         break;
 
     case PktType::PDU:
-        flow_con->process_user(p);
+        flow_con->process(PktType::PDU, p);
         break;
 
     case PktType::FILE:
-        flow_con->process_file(p);
+        flow_con->process(PktType::FILE, p);
         break;
 
-    default:
+    case PktType::MAX:
         break;
-    }
+    };
 }
 
 #if 0
@@ -308,7 +324,7 @@ static const InspectApi base_api =
         mod_dtor
     },
     IT_STREAM,
-    (unsigned)PktType::ANY_SSN,
+    PROTO_BIT__ANY_SSN,
     nullptr, // buffers
     nullptr, // service
     nullptr, // init

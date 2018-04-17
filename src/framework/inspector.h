@@ -189,7 +189,7 @@ struct InspectApi
 {
     BaseApi base;
     InspectorType type;
-    uint16_t proto_bits;
+    uint32_t proto_bits;
 
     const char** buffers;  // null terminated list of exported buffers
     const char* service;   // nullptr when type != IT_SERVICE

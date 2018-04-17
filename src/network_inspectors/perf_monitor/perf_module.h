@@ -58,7 +58,7 @@ enum class PerfOutput
 
 struct ModuleConfig
 {
-    // state optimized for run time using indicies
+    // state optimized for run time using indices
     // can't be determined until all modules have loaded (PerfMonitor::configure)
     snort::Module* ptr;
     IndexVec pegs;

@@ -368,7 +368,7 @@ const InspectApi sip_api =
         mod_dtor
     },
     IT_SERVICE,
-    (uint16_t)PktType::PDU | (uint16_t)PktType::UDP,
+    PROTO_BIT__UDP | PROTO_BIT__PDU,
     nullptr, // buffers
     "sip",
     sip_init,

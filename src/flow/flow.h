@@ -224,7 +224,7 @@ public:
     { return (ssn_state.session_flags & SSNFLAG_PROXIED) != 0; }
 
     bool is_stream()
-    { return (to_utype(pkt_type) & to_utype(PktType::STREAM)) != 0; }
+    { return pkt_type == PktType::TCP or pkt_type == PktType::PDU; }
 
     void block()
     { ssn_state.session_flags |= SSNFLAG_BLOCK; }
@@ -311,7 +311,7 @@ public:  // FIXIT-M privatize if possible
     BitOp* bitop;
     FlowHAState* ha_state;
 
-    uint8_t ip_proto; // FIXIT-M do we need both of these?
+    uint8_t ip_proto;
     PktType pkt_type; // ^^
 
     // these fields are always set; not zeroed

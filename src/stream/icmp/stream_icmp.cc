@@ -133,7 +133,7 @@ static const InspectApi icmp_api =
         mod_dtor
     },
     IT_STREAM,
-    (unsigned)PktType::ICMP,
+    PROTO_BIT__ICMP,
     nullptr, // buffers
     nullptr, // service
     nullptr, // init

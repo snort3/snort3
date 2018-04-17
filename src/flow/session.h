@@ -23,6 +23,7 @@
 // Session is an abstract base class for the various protocol subclasses.
 // the subclasses do the actual work of tracking, reassembly, etc.
 
+#include <cassert>
 #include "stream/stream.h"
 
 namespace snort
@@ -59,7 +60,7 @@ public:
     virtual void flush_talker(snort::Packet*, bool /*final_flush */ = false) { }
     virtual void flush_listener(snort::Packet*, bool /*final_flush */ = false) { }
 
-    virtual void set_splitter(bool /*c2s*/, snort::StreamSplitter*) { }
+    virtual void set_splitter(bool /*c2s*/, snort::StreamSplitter*) { assert(false); }
     virtual snort::StreamSplitter* get_splitter(bool /*c2s*/) { return nullptr; }
 
     virtual void set_extra_data(snort::Packet*, uint32_t /*flag*/) { }

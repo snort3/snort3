@@ -405,10 +405,7 @@ static IpsOption::EvalStatus check_flowbits(
     BitOp* bitop = get_flow_bitop(p);
 
     if (!bitop)
-    {
-        assert(false);
         return IpsOption::NO_MATCH;
-    }
 
     switch (type)
     {

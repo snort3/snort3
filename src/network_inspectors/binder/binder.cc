@@ -68,7 +68,7 @@ Binding::Binding()
     when.src_ports.set();
     when.dst_ports.set();
 
-    when.protos = (unsigned)PktType::ANY;
+    when.protos = PROTO_BIT__ANY_TYPE;
     when.vlans.set();
     when.ifaces.reset();
 
@@ -141,7 +141,7 @@ inline bool Binding::check_addr(const Flow* flow) const
 
 inline bool Binding::check_proto(const Flow* flow) const
 {
-    if ( when.protos & (unsigned)flow->pkt_type )
+    if ( when.protos & BIT((unsigned)flow->pkt_type) )
         return true;
 
     return false;
@@ -893,7 +893,7 @@ static const InspectApi bind_api =
         mod_dtor
     },
     IT_BINDER,
-    (uint16_t)PktType::ANY,
+    PROTO_BIT__ANY_TYPE,
     nullptr, // buffers
     nullptr, // service
     nullptr, // pinit

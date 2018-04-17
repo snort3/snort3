@@ -38,9 +38,6 @@ static const Parameter s_params[] =
     { "session_timeout", Parameter::PT_INT, "1:86400", "30",
       "session tracking timeout" },
 
-    { "ignore_any_rules", Parameter::PT_BOOL, nullptr, "false",
-      "process UDP content rules w/o ports only if rules with ports are present" },
-
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -66,9 +63,6 @@ bool StreamUdpModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("session_timeout") )
         config->session_timeout = v.get_long();
-
-    else if ( v.is("ignore_any_rules") )
-        config->ignore_any = v.get_bool();
 
     else
         return false;

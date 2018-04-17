@@ -328,7 +328,7 @@ void Flow::set_direction(Packet* p)
     {
         if (ip_api->get_src()->fast_eq4(client_ip))
         {
-            if ( !(p->proto_bits & (PROTO_BIT__TCP | PROTO_BIT__UDP)) )
+            if ( p->type() != PktType::TCP and p->type() != PktType::UDP )
                 p->packet_flags |= PKT_FROM_CLIENT;
 
             else if (p->ptrs.sp == client_port)
@@ -339,7 +339,7 @@ void Flow::set_direction(Packet* p)
         }
         else if (ip_api->get_dst()->fast_eq4(client_ip))
         {
-            if ( !(p->proto_bits & (PROTO_BIT__TCP | PROTO_BIT__UDP)) )
+            if ( p->type() != PktType::TCP and p->type() != PktType::UDP )
                 p->packet_flags |= PKT_FROM_SERVER;
 
             else if (p->ptrs.dp == client_port)
@@ -353,7 +353,7 @@ void Flow::set_direction(Packet* p)
     {
         if (ip_api->get_src()->fast_eq6(client_ip))
         {
-            if ( !(p->proto_bits & (PROTO_BIT__TCP | PROTO_BIT__UDP)) )
+            if ( p->type() != PktType::TCP and p->type() != PktType::UDP )
                 p->packet_flags |= PKT_FROM_CLIENT;
 
             else if (p->ptrs.sp == client_port)
@@ -364,7 +364,7 @@ void Flow::set_direction(Packet* p)
         }
         else if (ip_api->get_dst()->fast_eq6(client_ip))
         {
-            if ( !(p->proto_bits & (PROTO_BIT__TCP | PROTO_BIT__UDP)) )
+            if ( p->type() != PktType::TCP and p->type() != PktType::UDP )
                 p->packet_flags |= PKT_FROM_SERVER;
 
             else if (p->ptrs.dp == client_port)

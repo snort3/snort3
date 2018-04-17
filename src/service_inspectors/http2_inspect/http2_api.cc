@@ -58,7 +58,7 @@ const InspectApi Http2Api::http2_api =
         Http2Api::http2_mod_dtor
     },
     IT_SERVICE,
-    (uint16_t)PktType::PDU,
+    PROTO_BIT__PDU,
     classic_buffer_names,
     "http2",
     Http2Api::http2_init,

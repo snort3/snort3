@@ -322,7 +322,7 @@ static void ProcessThirdPartyResults(AppIdSession& asd, int confidence,  AppId* 
 
                 hsession->update_host((const uint8_t*)attribute_data->spdyRequestHost,
                     strlen(attribute_data->spdyRequestHost));
-                // FIXIT-M do we need to free this memeory and set to null
+                // FIXIT-M do we need to free this memory and set to null
                 // attribute_data->spdyRequestHost = nullptr;
                 hsession->set_field_offset(REQ_HOST_FID, attribute_data->spdyRequestHostOffset);
                 hsession->set_field_end_offset(REQ_HOST_FID,
@@ -341,7 +341,7 @@ static void ProcessThirdPartyResults(AppIdSession& asd, int confidence,  AppId* 
 
                 hsession->update_uri((const uint8_t*)attribute_data->spdyRequestPath,
                     strlen(attribute_data->spdyRequestPath));
-                // FIXIT-M do we need to free this memeory and set to null
+                // FIXIT-M do we need to free this memory and set to null
                 //attribute_data->spdyRequestPath = nullptr;
                 hsession->set_field_offset(REQ_URI_FID, attribute_data->spdyRequestPathOffset);
                 hsession->set_field_end_offset(REQ_URI_FID, attribute_data->spdyRequestPathEndOffset);
@@ -363,7 +363,7 @@ static void ProcessThirdPartyResults(AppIdSession& asd, int confidence,  AppId* 
                     attribute_data->httpRequestHostLen);
                 hsession->set_field_offset(REQ_HOST_FID, attribute_data->httpRequestHostOffset);
                 hsession->set_field_end_offset(REQ_HOST_FID, attribute_data->httpRequestHostEndOffset);
-                // FIXIT-M do we need to free this memeory and set to null
+                // FIXIT-M do we need to free this memory and set to null
                 //attribute_data->httpRequestHost = nullptr;
                 if (appidDebug->is_active())
                     LogMessage("AppIdDbg %s HTTP host (%u-%u) is %s\n",

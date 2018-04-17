@@ -24,6 +24,8 @@
 
 #include "file_decomp_pdf.h"
 
+#include <cassert>
+
 #include "main/thread.h"
 #include "utils/util.h"
 
@@ -601,6 +603,7 @@ static inline fd_status_t Handle_State_IND_OBJ(fd_session_t* SessionPtr, uint8_t
             return( File_Decomp_Error );
         }
     }
+    // fallthrough
 
     case ( P_OBJ_EOL ):
     {
@@ -1134,7 +1137,8 @@ fd_status_t File_Decomp_PDF(fd_session_t* SessionPtr)
         } // switch()
     } // while()
 
-    return( File_Decomp_OK );
+    // can not reach this point
+    assert(false);
 }
 
 //--------------------------------------------------------------------------

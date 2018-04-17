@@ -193,6 +193,7 @@ THREAD_LOCAL bool Interface<Allocator, Cap>::in_allocation_call = false;
 
 // these don't have to be visible to operate as replacements
 
+#ifndef NO_MEM_MGR
 void* operator new(size_t n)
 {
     auto p = memory::Interface<>::allocate(n);
@@ -232,6 +233,7 @@ SO_PUBLIC void operator delete(void* p, size_t) noexcept
 void operator delete[](void* p, size_t) noexcept;
 SO_PUBLIC void operator delete[](void* p, size_t) noexcept
 { ::operator delete[](p); }
+#endif
 
 // -----------------------------------------------------------------------------
 // unit tests
@@ -451,6 +453,8 @@ TEST_CASE( "memory manager interface", "[memory]" )
             CHECK( CapSpy::update_deallocations_arg == memory::Metadata::calculate_total_size(n) );
         }
     }
+    AllocatorSpy::pool = nullptr;
+    AllocatorSpy::deallocate_arg = nullptr;
 }
 
 #endif

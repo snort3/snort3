@@ -82,7 +82,7 @@ private:
     MemoryContext memory;
 };
 
-class SO_PUBLIC ProfileExclude
+class ProfileExclude
 {
 public:
     ProfileExclude(ProfileStats& stats) : ProfileExclude(stats.time, stats.memory) { }
@@ -95,6 +95,45 @@ private:
 
 using get_profile_stats_fn = ProfileStats* (*)(const char*);
 
+class NoMemContext
+{
+public:
+    NoMemContext(ProfileStats& stats) :
+        time(stats.time) { }
+
+private:
+    TimeContext time;
+};
+
+class NoMemExclude
+{
+public:
+    NoMemExclude(ProfileStats& stats) : NoMemExclude(stats.time, stats.memory) { }
+    NoMemExclude(TimeProfilerStats& time, MemoryTracker&) : time(time) { }
+
+private:
+    TimeExclude time;
+};
+
+class ProfileDisabled
+{
+public:
+    ProfileDisabled(ProfileStats&) { }
+    ProfileDisabled(TimeProfilerStats&, MemoryTracker&) { }
+};
+
+#ifdef NO_PROFILER
+using Profile = ProfileDisabled;
+using NoProfile = ProfileDisabled;
+#else
+#ifdef NO_MEM_MGR
+using Profile = NoMemContext;
+using NoProfile = NoMemExclude;
+#else
 using Profile = ProfileContext;
+using NoProfile = ProfileExclude;
+#endif
+#endif
+
 }
 #endif

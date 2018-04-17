@@ -24,6 +24,7 @@
 
 #include "tcp_module.h"
 
+#include "main/snort_config.h"
 #include "profiler/profiler_defs.h"
 
 using namespace snort;
@@ -152,9 +153,6 @@ static const Parameter s_params[] =
 {
     { "flush_factor", Parameter::PT_INT, "0:", "0",
       "flush upon seeing a drop in segment size after given number of non-decreasing segments" },
-
-    { "ignore_any_rules", Parameter::PT_BOOL, nullptr, "false",
-      "process TCP content rules w/o ports only if rules with ports are present" },
 
     { "max_window", Parameter::PT_INT, "0:1073725440", "0",
       "maximum allowed TCP window" },
@@ -291,9 +289,6 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("flush_factor") )
         config->flush_factor = v.get_long();
 
-    else if ( v.is("ignore_any_rules") )
-        config->flags |= STREAM_CONFIG_IGNORE_ANY;
-
     else if ( v.is("max_bytes") )
         config->max_queued_bytes = v.get_long();
 
@@ -354,8 +349,10 @@ bool StreamTcpModule::begin(const char* fqn, int, SnortConfig*)
     return true;
 }
 
-bool StreamTcpModule::end(const char*, int, SnortConfig*)
+bool StreamTcpModule::end(const char*, int, SnortConfig* sc)
 {
+    if ( config->hs_timeout >= 0 )
+        sc->run_flags |= RUN_FLAG__TRACK_ON_SYN;
     return true;
 }
 

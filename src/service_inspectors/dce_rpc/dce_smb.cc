@@ -458,7 +458,7 @@ const snort::InspectApi dce2_smb_api =
         mod_dtor
     },
     snort::IT_SERVICE,
-    (uint16_t)PktType::PDU,
+    PROTO_BIT__PDU,
     nullptr,  // buffers
     "netbios-ssn",
     dce2_smb_init,

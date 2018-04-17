@@ -255,7 +255,7 @@ const InspectApi appid_inspector_api =
         mod_dtor
     },
     IT_CONTROL,
-    (uint16_t)PktType::ANY_IP,
+    PROTO_BIT__ANY_IP,
     nullptr, // buffers
     nullptr, // service
     appid_inspector_pinit,

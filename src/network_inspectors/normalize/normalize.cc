@@ -293,7 +293,7 @@ static const InspectApi no_api =
         mod_dtor
     },
     IT_PACKET,
-    (uint16_t)PktType::ANY_IP,
+    PROTO_BIT__ANY_IP,
     nullptr, // buffers
     nullptr, // service
     nullptr, // pinit

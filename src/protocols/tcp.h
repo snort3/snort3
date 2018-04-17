@@ -121,7 +121,6 @@ struct TCPHdr
     inline bool is_syn() const
     { return (th_flags & TH_SYN); }
 
-    // FIXIT-L should other flags (e.g. RST, FIN) be included in check for syn only?
     inline bool is_syn_only() const
     { return (th_flags & (TH_SYN | TH_ACK)) == TH_SYN; }
 
