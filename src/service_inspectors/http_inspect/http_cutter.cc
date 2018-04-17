@@ -546,7 +546,12 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
             // If we are skipping to the trailers and next message the broken chunk thwarts us
             if (discard_mode)
             {
-                return SCAN_ABORT;
+                // FIXIT-P Need StreamSplitter::END
+                // With the broken chunk this will run to connection close so we should just stop
+                // processing this flow. But there is no way to ask stream to do that so we must
+                // skip through the rest of the message ourselves.
+                num_flush = length;
+                return SCAN_DISCARD_PIECE;
             }
             uint32_t skip_amount = length-k;
             skip_amount = (skip_amount <= flow_target-data_seen) ? skip_amount :
