@@ -302,7 +302,7 @@ TcpReassembler* TcpReassemblerFactory::create(StreamPolicy os_policy)
 {
     static TcpReassemblerFirst first;
     static TcpReassemblerLast last;
-    static TcpReassemblerLinux linux;
+    static TcpReassemblerLinux new_linux;
     static TcpReassemblerOldLinux old_linux;
     static TcpReassemblerBSD bsd;
     static TcpReassemblerMacOS mac_os;
@@ -323,7 +323,7 @@ TcpReassembler* TcpReassemblerFactory::create(StreamPolicy os_policy)
     {
     case StreamPolicy::OS_FIRST: reassembler = &first; break;
     case StreamPolicy::OS_LAST: reassembler = &last; break;
-    case StreamPolicy::OS_LINUX: reassembler = &linux; break;
+    case StreamPolicy::OS_LINUX: reassembler = &new_linux; break;
     case StreamPolicy::OS_OLD_LINUX: reassembler = &old_linux; break;
     case StreamPolicy::OS_BSD: reassembler = &bsd; break;
     case StreamPolicy::OS_MACOS: reassembler = &mac_os; break;

@@ -506,7 +506,7 @@ TcpNormalizer* TcpNormalizerFactory::create(StreamPolicy os_policy)
 {
     static TcpNormalizerFirst first;
     static TcpNormalizerLast last;
-    static TcpNormalizerLinux linux;
+    static TcpNormalizerLinux new_linux;
     static TcpNormalizerOldLinux old_linux;
     static TcpNormalizerBSD bsd;
     static TcpNormalizerMacOS mac_os;
@@ -525,7 +525,7 @@ TcpNormalizer* TcpNormalizerFactory::create(StreamPolicy os_policy)
     {
     case StreamPolicy::OS_FIRST: normalizer = &first; break;
     case StreamPolicy::OS_LAST: normalizer = &last; break;
-    case StreamPolicy::OS_LINUX: normalizer = &linux; break;
+    case StreamPolicy::OS_LINUX: normalizer = &new_linux; break;
     case StreamPolicy::OS_OLD_LINUX: normalizer = &old_linux; break;
     case StreamPolicy::OS_BSD: normalizer = &bsd; break;
     case StreamPolicy::OS_MACOS: normalizer = &mac_os; break;
