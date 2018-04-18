@@ -1,135 +1,125 @@
-# vim:ts=4:sw=4:expandtab:autoindent:
+# Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
+# file Copyright.txt or https://cmake.org/licensing for details.
+
+#[=======================================================================[.rst:
+FindIconv
+---------
+
+This module finds the ``iconv()`` POSIX.1 functions on the system.
+These functions might be provided in the regular C library or externally
+in the form of an additional library.
+
+The following variables are provided to indicate iconv support:
+
+.. variable:: ICONV_FOUND
+
+  Variable indicating if the iconv support was found.
+
+.. variable:: Iconv_INCLUDE_DIRS
+
+  The directories containing the iconv headers.
+
+.. variable:: Iconv_LIBRARIES
+
+  The iconv libraries to be linked.
+
+.. variable:: Iconv_IS_BUILT_IN
+
+  A variable indicating whether iconv support is stemming from the
+  C library or not. Even if the C library provides `iconv()`, the presence of
+  an external `libiconv` implementation might lead to this being false.
+
+The following cache variables may also be set:
+
+.. variable:: ICONV_INCLUDE_DIR
+
+  The directory containing the iconv headers.
+
+.. variable:: ICONV_LIBRARY
+
+  The iconv library (if not implicitly given in the C library).
+
+.. note::
+  On POSIX platforms, iconv might be part of the C library and the cache
+  variables ``ICONV_INCLUDE_DIR`` and ``ICONV_LIBRARY`` might be empty.
+
+#]=======================================================================]
 #
-# The MIT License
-#
-# Copyright (c) 2008, 2009 Flusspferd contributors (see "CONTRIBUTORS" or
-#                                      http://flusspferd.org/contributors.txt)
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
+# This file was modified to work in Snort build environment
 #
 
-Include(CheckFunctionExists)
-include(CheckCXXSourceCompiles)
-
-if(ICONV_INCLUDE_DIR)
-  set(ICONV_FIND_QUIETLY TRUE)
-endif()
-
-find_path(ICONV_INCLUDE_DIR iconv.h
-    HINTS
-    ${CMAKE_PREFIX_PATH}
-    ${ICONV_DIR}
-    $ENV{ICONV_DIR}
-    PATH_SUFFIXES include
-)
-
-if(NOT ICONV_INCLUDE_DIR STREQUAL "ICONV_INCLUDE_DIR-NOTFOUND")
-    set(CMAKE_REQUIRED_INCLUDES ${ICONV_INCLUDE_DIR})
-    check_function_exists(iconv_open ICONV_IN_GLIBC)
-endif()
-
-if(NOT ICONV_IN_GLIBC)
-    if (CMAKE_CL_64)
-        find_library(ICONV_LIBRARY
-            NAMES iconv64
-            HINTS
-            ${CMAKE_PREFIX_PATH}
-            ${ICONV_DIR}
-            $ENV{ICONV_DIR}
-            PATH_SUFFIXES lib64 lib
-            )
-    else()
-        find_library(ICONV_LIBRARY
-            NAMES iconv
-            HINTS
-            ${CMAKE_PREFIX_PATH}
-            ${ICONV_DIR}
-            $ENV{ICONV_DIR}
-            PATH_SUFFIXES lib64 lib
-            )
-    endif()
-    set(ICONV_TEST ${ICONV_LIBRARY})
+include(CMakePushCheckState)
+if(CMAKE_C_COMPILER_LOADED)
+  include(CheckCSourceCompiles)
+elseif(CMAKE_CXX_COMPILER_LOADED)
+  include(CheckCXXSourceCompiles)
 else()
-    set(ICONV_TEST "In glibc")
+  # If neither C nor CXX are loaded, implicit iconv makes no sense.
+  set(Iconv_IS_BUILT_IN FALSE)
 endif()
 
-set(CMAKE_REQUIRED_INCLUDES ${ICONV_INCLUDE_DIR})
-set(CMAKE_REQUIRED_LIBRARIES ${ICONV_LIBRARY})
-
-if(MSVC_VERSION GREATER 1800)
-    set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} legacy_stdio_definitions.lib)
+# iconv can only be provided in libc on a POSIX system.
+# If any cache variable is already set, we'll skip this test.
+if(NOT DEFINED Iconv_IS_BUILT_IN)
+  if(UNIX AND NOT DEFINED ICONV_INCLUDE_DIR AND NOT DEFINED ICONV_LIBRARY)
+    cmake_push_check_state(RESET)
+    # We always suppress the message here: Otherwise on supported systems
+    # not having iconv in their C library (e.g. those using libiconv)
+    # would always display a confusing "Looking for iconv - not found" message
+    set(CMAKE_FIND_QUIETLY TRUE)
+    # The following code will not work, but it's sufficient to see if it compiles.
+    # Note: libiconv will define the iconv functions as macros, so CheckSymbolExists
+    # will not yield correct results.
+    set(Iconv_IMPLICIT_TEST_CODE
+      "
+      #include <stddef.h>
+      #include <iconv.h>
+      int main() {
+        char *a, *b;
+        size_t i, j;
+        iconv_t ic;
+        ic = iconv_open(\"to\", \"from\");
+        iconv(ic, &a, &i, &b, &j);
+        iconv_close(ic);
+      }
+      "
+    )
+    if(CMAKE_C_COMPILER_LOADED)
+      check_c_source_compiles("${Iconv_IMPLICIT_TEST_CODE}" Iconv_IS_BUILT_IN)
+    else()
+      check_cxx_source_compiles("${Iconv_IMPLICIT_TEST_CODE}" Iconv_IS_BUILT_IN)
+    endif()
+    cmake_pop_check_state()
+  else()
+    set(Iconv_IS_BUILT_IN FALSE)
+  endif()
 endif()
 
-check_cxx_source_compiles(
-    "#include <iconv.h>
-     int main() {
-        iconv(iconv_t(-1), 0, 0, 0, 0);
-     }"
-    ICONV_COMPILES)
+if(NOT Iconv_IS_BUILT_IN)
+  find_path(ICONV_INCLUDE_DIR
+    NAMES "iconv.h"
+    DOC "iconv include directory")
+  set(Iconv_LIBRARY_NAMES "iconv" "libiconv")
+else()
+  set(ICONV_INCLUDE_DIR "" CACHE FILEPATH "iconv include directory")
+  set(Iconv_LIBRARY_NAMES "c")
+endif()
+
+find_library(ICONV_LIBRARY
+  NAMES ${Iconv_LIBRARY_NAMES}
+  DOC "iconv library (potentially the C library)")
+
+mark_as_advanced(ICONV_INCLUDE_DIR)
+mark_as_advanced(ICONV_LIBRARY)
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(ICONV DEFAULT_MSG ICONV_TEST ICONV_INCLUDE_DIR ICONV_COMPILES)
-
-if(ICONV_FOUND)
-  set(ICONV_LIBRARIES ${ICONV_LIBRARY})
-else(ICONV_FOUND)
-  set(ICONV_LIBRARIES)
-endif(ICONV_FOUND)
-
-if(ICONV_FOUND)
-    set(CMAKE_REQUIRED_INCLUDES ${ICONV_INCLUDE_DIR})
-    set(CMAKE_REQUIRED_LIBRARIES ${ICONV_LIBRARIES})
-
-    if(MSVC_VERSION GREATER 1800)
-        set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} legacy_stdio_definitions.lib)
-    endif()
-
-    if (NOT DEFINED ICONV_ACCEPTS_NONCONST_INPUT)
-        # Display a useful message first time we come through here
-        message(STATUS "One (and only one) of the ICONV_ACCEPTS_... tests must pass")
-    endif()
-    check_cxx_source_compiles(
-        "#include <iconv.h>
-         int main() {
-            char *p = 0;
-            iconv(iconv_t(-1), &p, 0, 0, 0);
-         }"
-        ICONV_ACCEPTS_NONCONST_INPUT)
-
-    check_cxx_source_compiles(
-        "#include <iconv.h>
-         int main() {
-            char const *p = 0;
-            iconv(iconv_t(-1), &p, 0, 0, 0);
-         }"
-        ICONV_ACCEPTS_CONST_INPUT)
-
-    if (ICONV_LIBRARY)
-        list(REMOVE_ITEM CMAKE_REQUIRED_LIBRARIES ${ICONV_LIBRARY})
-        list(REMOVE_DUPLICATES CMAKE_REQUIRED_LIBRARIES)
-    endif()
+if(NOT Iconv_IS_BUILT_IN)
+  find_package_handle_standard_args(ICONV REQUIRED_VARS ICONV_LIBRARY ICONV_INCLUDE_DIR)
+else()
+  find_package_handle_standard_args(ICONV REQUIRED_VARS ICONV_LIBRARY)
 endif()
 
-if(NOT ICONV_ACCEPTS_CONST_INPUT AND NOT ICONV_ACCEPTS_NONCONST_INPUT)
-  MESSAGE(FATAL_ERROR "Unable to determine iconv() signature")
-elseif(ICONV_ACCEPTS_CONST_INPUT AND ICONV_ACCEPTS_NONCONST_INPUT)
-  MESSAGE(FATAL_ERROR "Unable to determine iconv() signature - both test cases passed!")
+if(ICONV_FOUND)
+  set(CMAKE_REQUIRED_INCLUDES ${ICONV_INCLUDE_DIR})
+  set(CMAKE_REQUIRED_LIBRARIES ${ICONV_LIBRARY})
 endif()
-
-mark_as_advanced(ICONV_LIBRARY ICONV_INCLUDE_DIR)
