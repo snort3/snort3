@@ -27,7 +27,6 @@
 
 #include "binder/binder.h"
 #include "flow/flow_key.h"
-#include "main/snort_debug.h"
 #include "managers/inspector_manager.h"
 #include "stream/stream.h"
 
@@ -91,8 +90,6 @@ static bool is_client_lower(Flow* flow)
 
 bool StreamHAClient::consume(Flow*& flow, FlowKey* key, HAMessage* msg)
 {
-    DebugMessage(DEBUG_HA,"StreamHAClient::consume()\n");
-
     assert(key);
     assert(msg);
 
@@ -145,7 +142,6 @@ bool StreamHAClient::consume(Flow*& flow, FlowKey* key, HAMessage* msg)
 
 bool StreamHAClient::produce(Flow* flow, HAMessage* msg)
 {
-    DebugMessage(DEBUG_HA,"StreamHAClient::produce()\n");
     assert(flow);
     assert(msg);
 
@@ -229,8 +225,6 @@ static void update_flags(Flow* flow)
 
 bool StreamHAClient::is_update_required(Flow* flow)
 {
-    DebugMessage(DEBUG_HA,"StreamHAClient::update_required()\n");
-
     assert(flow);
     assert(flow->ha_state);
 
@@ -253,14 +247,11 @@ bool StreamHAClient::is_update_required(Flow* flow)
 
 bool StreamHAClient::is_delete_required(Flow*)
 {
-    DebugMessage(DEBUG_HA,"StreamHAClient::update_required()\n");
     return true;
 }
 
 ProtocolHA::ProtocolHA(PktType protocol)
 {
-    DebugFormat(DEBUG_HA,"ProtocolHA::ProtocolHA(): protocol: %d\n",(int)protocol);
-
     if ( proto_map == nullptr )
         proto_map = new ProtocolMap;
 

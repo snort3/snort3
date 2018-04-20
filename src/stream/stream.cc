@@ -32,7 +32,6 @@
 #include "flow/prune_stats.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
-#include "main/snort_debug.h"
 #include "packet_io/active.h"
 #include "protocols/vlan.h"
 #include "stream/base/stream_module.h"
@@ -616,10 +615,6 @@ bool Stream::blocked_flow(Flow* flow, Packet* p)
         ((p->is_from_client()) &&
         (flow->ssn_state.session_flags & SSNFLAG_DROP_CLIENT)) )
     {
-        DebugFormat(DEBUG_STREAM_STATE,
-            "Blocking %s packet as session was blocked\n",
-            p->is_from_server() ?  "server" : "client");
-
         DetectionEngine::disable_content(p);
         Active::drop_packet(p);
         active_response(p, flow);
@@ -635,10 +630,6 @@ bool Stream::ignored_flow(Flow* flow, Packet* p)
         ((p->is_from_client()) &&
         (flow->ssn_state.ignore_direction & SSN_DIR_FROM_SERVER)) )
     {
-        DebugFormat(DEBUG_STREAM_STATE,
-            "Stream Ignoring packet from %s. Session marked as ignore\n",
-            p->is_from_client() ? "sender" : "responder");
-
         DetectionEngine::disable_all(p);
         return true;
     }
@@ -665,7 +656,6 @@ bool Stream::expired_flow(Flow* flow, Packet* p)
     if ( (flow->session_state & STREAM_STATE_TIMEDOUT)
         || StreamExpire(p, flow) )
     {
-        DebugMessage(DEBUG_STREAM, "Stream IP session timeout!\n");
         flow->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
         return true;
     }

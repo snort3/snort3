@@ -192,16 +192,12 @@ static inline int handle_repeated_syn_mswin(
      */
     if (SEQ_EQ(tsd.get_seg_seq(), listener->r_nxt_ack))
     {
-        DebugMessage(DEBUG_STREAM_STATE,
-            "Got syn on established windows ssn, which causes Reset, bailing\n");
         session->flow->set_session_flags(SSNFLAG_RESET);
         talker->set_tcp_state(TcpStreamTracker::TCP_CLOSED);
         return ACTION_RST;
     }
     else
     {
-        DebugMessage(DEBUG_STREAM_STATE,
-            "Got syn on established windows ssn, not causing Reset, bailing\n");
         inc_tcp_discards();
         return ACTION_NOTHING;
     }
@@ -213,16 +209,12 @@ static inline int handle_repeated_syn_bsd(
     /* If its not a retransmission of the actual SYN... RESET */
     if (!SEQ_EQ(tsd.get_seg_seq(), talker->get_iss()))
     {
-        DebugMessage(DEBUG_STREAM_STATE,
-            "Got syn on established ssn, which causes Reset, bailing\n");
         session->flow->set_session_flags(SSNFLAG_RESET);
         talker->set_tcp_state(TcpStreamTracker::TCP_CLOSED);
         return ACTION_RST;
     }
     else
     {
-        DebugMessage(DEBUG_STREAM_STATE,
-            "Got syn on established ssn, not causing Reset, bailing\n");
         inc_tcp_discards();
         return ACTION_NOTHING;
     }
@@ -358,8 +350,6 @@ int TcpNormalizerMacOS::handle_repeated_syn(
     TcpNormalizerState&, TcpSegmentDescriptor&)
 {
     /* MACOS ignores a 2nd SYN, regardless of the sequence number. */
-    DebugMessage(DEBUG_STREAM_STATE,
-        "Got syn on established macos ssn, not causing Reset, bailing\n");
     inc_tcp_discards();
     return ACTION_NOTHING;
 }
@@ -448,21 +438,9 @@ int TcpNormalizerVista::handle_repeated_syn(
 }
 
 bool TcpNormalizerProxy::validate_rst(
-    TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
+    TcpNormalizerState&, TcpSegmentDescriptor&)
+
 {
-#ifndef DEBUG_MSGS
-    UNUSED(tsd);
-#endif
-
-    // FIXIT-L will session->flow ever be null? convert to assert if possible
-    if ( tns.session->flow )
-    {
-        DebugFormat(DEBUG_STREAM_STATE,
-            "Proxy Normalizer - Not Valid\n end_seq (%X) > r_win_base (%X) && seq (%X) < r_nxt_ack(%X)\n",
-            tsd.get_end_seq(), tns.tracker->r_win_base, tsd.get_seg_seq(), tns.tracker->r_nxt_ack +
-            get_stream_window(tns, tsd));
-    }
-
     return false;
 }
 

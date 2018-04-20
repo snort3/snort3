@@ -142,9 +142,6 @@ int SegmentOverlapEditor::eval_right(TcpReassemblerState& trs)
         assert(SEQ_LEQ(trs.sos.seq, trs.sos.right->seq));
         trs.sos.overlap = ( int )( trs.sos.seq_end - trs.sos.right->seq );
 
-        DebugFormat(DEBUG_STREAM_STATE, "right overlap(%d): len: %d right->seq: 0x%X seq: 0x%X\n",
-            trs.sos.overlap, trs.sos.len, trs.sos.right->seq, trs.sos.seq);
-
         // Treat sequence number overlap as a retransmission, only check right side since
         //  left side happens rarely
         trs.sos.session->retransmit_handle(trs.sos.tsd->get_pkt());
@@ -193,10 +190,6 @@ int SegmentOverlapEditor::eval_right(TcpReassemblerState& trs)
 
 void SegmentOverlapEditor::drop_old_segment(TcpReassemblerState& trs)
 {
-    DebugFormat(DEBUG_STREAM_STATE,
-        "full right overlap, dropping old segment at seq %u, size %hu\n",
-        trs.sos.right->seq, trs.sos.right->payload_size);
-
     TcpSegmentNode* drop_seg = trs.sos.right;
     trs.sos.right = trs.sos.right->next;
     delete_reassembly_segment(trs, drop_seg);
@@ -204,8 +197,6 @@ void SegmentOverlapEditor::drop_old_segment(TcpReassemblerState& trs)
 
 int SegmentOverlapEditor::left_overlap_keep_first(TcpReassemblerState& trs)
 {
-    DebugFormat(DEBUG_STREAM_STATE, "left overlap %d\n", trs.sos.overlap);
-
     // NOTE that overlap will always be less than left->size since
     // seq is always greater than left->seq
     assert(SEQ_GT(trs.sos.seq, trs.sos.left->seq));
@@ -220,8 +211,6 @@ int SegmentOverlapEditor::left_overlap_keep_first(TcpReassemblerState& trs)
     {
         tcpStats.overlaps++;
         trs.sos.overlap_count++;
-
-        DebugMessage(DEBUG_STREAM_STATE, "left overlap, honoring old data\n");
 
         if ( SEQ_GT(trs.sos.left->seq + trs.sos.left->payload_size, trs.sos.seq_end) )
         {
@@ -257,7 +246,6 @@ int SegmentOverlapEditor::left_overlap_keep_first(TcpReassemblerState& trs)
 
 int SegmentOverlapEditor::left_overlap_trim_first(TcpReassemblerState& trs)
 {
-    DebugFormat(DEBUG_STREAM_STATE, "left overlap %d\n", trs.sos.overlap);
     assert(SEQ_GT(trs.sos.seq, trs.sos.left->seq));
 
     trs.sos.len = trs.sos.tsd->get_seg_len();
@@ -271,7 +259,6 @@ int SegmentOverlapEditor::left_overlap_trim_first(TcpReassemblerState& trs)
         if ( SEQ_GEQ(trs.sos.left->seq + trs.sos.left->payload_size, trs.sos.seq + trs.sos.len)  )
         {
             // existing packet overlaps new on both sides.  Drop the new data.
-            DebugMessage(DEBUG_STREAM_STATE, "left overlap, honoring old data\n");
             trs.sos.seq += trs.sos.len;
         }
         else
@@ -279,7 +266,6 @@ int SegmentOverlapEditor::left_overlap_trim_first(TcpReassemblerState& trs)
             /* Otherwise, trim the old data accordingly */
             trs.sos.left->payload_size -= ( int16_t )trs.sos.overlap;
             trs.sos.seg_bytes_logical -= trs.sos.overlap;
-            DebugMessage(DEBUG_STREAM_STATE, "left overlap, honoring new data\n");
         }
     }
 
@@ -288,7 +274,6 @@ int SegmentOverlapEditor::left_overlap_trim_first(TcpReassemblerState& trs)
 
 int SegmentOverlapEditor::left_overlap_keep_last(TcpReassemblerState& trs)
 {
-    DebugFormat(DEBUG_STREAM_STATE, "left overlap %d\n", trs.sos.overlap);
     assert(SEQ_GT(trs.sos.seq, trs.sos.left->seq));
 
     trs.sos.len = trs.sos.tsd->get_seg_len();
@@ -333,7 +318,6 @@ int SegmentOverlapEditor::left_overlap_keep_last(TcpReassemblerState& trs)
 
 void SegmentOverlapEditor::right_overlap_truncate_existing(TcpReassemblerState& trs)
 {
-    DebugMessage(DEBUG_STREAM_STATE, "Got partial right overlap\n");
     if ( SEQ_EQ(trs.sos.right->seq, trs.sos.seq) && ( trs.sos.reassembly_policy != ReassemblyPolicy::OS_LAST ) )
     {
         trs.sos.slide = ( trs.sos.right->seq + trs.sos.right->payload_size - trs.sos.seq );
@@ -370,8 +354,6 @@ void SegmentOverlapEditor::right_overlap_truncate_new(TcpReassemblerState& trs)
 // REASSEMBLY_POLICY_VISTA:
 int SegmentOverlapEditor::full_right_overlap_truncate_new(TcpReassemblerState& trs)
 {
-    DebugMessage(DEBUG_STREAM_STATE, "Got full right overlap, truncating new\n");
-
     if ( trs.sos.tcp_ips_data == NORM_MODE_ON )
     {
         unsigned offset = trs.sos.right->seq - trs.sos.tsd->get_seg_seq();

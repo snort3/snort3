@@ -25,8 +25,6 @@
 
 #include "tcp_state_fin_wait1.h"
 
-#include "main/snort_debug.h"
-
 #include "tcp_normalizers.h"
 #include "tcp_module.h"
 #include "tcp_session.h"
@@ -142,9 +140,6 @@ bool TcpStateFinWait1::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
 
 bool TcpStateFinWait1::check_for_window_slam(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk, bool* is_ack_valid)
 {
-    DebugFormat(DEBUG_STREAM_STATE, "tsd.ack %X >= listener->snd_nxt %X\n",
-        tsd.get_seg_ack(), trk.get_snd_nxt());
-
     if ( SEQ_EQ(tsd.get_seg_ack(), trk.get_snd_nxt() ) )
     {
         if ( (trk.normalizer.get_os_policy() == StreamPolicy::OS_WINDOWS)

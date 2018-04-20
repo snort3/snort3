@@ -24,7 +24,6 @@
 
 #include "detection/detection_engine.h"
 #include "main/snort_config.h"
-#include "main/snort_debug.h"
 #include "managers/inspector_manager.h"
 #include "memory/memory_cap.h"
 #include "packet_io/active.h"
@@ -499,10 +498,6 @@ bool FlowControl::expected_flow(Flow* flow, Packet* p)
 
     if ( ignore )
     {
-        DebugFormat(DEBUG_STREAM_STATE,
-            "Stream: Ignoring packet from %s. Marking flow marked as ignore.\n",
-            (p->packet_flags & PKT_FROM_CLIENT) ? "sender" : "responder");
-
         flow->ssn_state.ignore_direction = ignore;
         DetectionEngine::disable_all(p);
     }

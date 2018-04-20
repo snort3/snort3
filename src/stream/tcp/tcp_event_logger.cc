@@ -94,7 +94,6 @@ void TcpEventLogger::log_internal_event(uint32_t eventSid)
     {
         tcpStats.internalEvents++;
         snort::DetectionEngine::queue_event(GENERATOR_INTERNAL, eventSid);
-        DebugFormat(DEBUG_STREAM, "Stream raised internal event %u\n", eventSid);
     }
 }
 

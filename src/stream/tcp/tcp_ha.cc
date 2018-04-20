@@ -23,7 +23,6 @@
 
 #include "tcp_ha.h"
 
-#include "main/snort_debug.h"
 #include "stream/stream.h"
 
 #include "tcp_session.h"
@@ -48,7 +47,6 @@ Flow* TcpHA::create_session(FlowKey* key)
 
 void TcpHA::deactivate_session(Flow* flow)
 {
-    DebugMessage(DEBUG_HA,"TcpHA::deactivate_session)\n");
     assert( flow );
     if ( flow->session )
         ((TcpSession*)(flow->session))->clear_session(true, true, false);

@@ -174,7 +174,6 @@ bool TcpStateSynRecv::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     }
     else
     {
-        DebugMessage(DEBUG_STREAM_STATE, "Received RST with bad sequence number\n");
         inc_tcp_discards();
         trk.normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
         trk.session->tel.set_tcp_event(EVENT_BAD_RST);

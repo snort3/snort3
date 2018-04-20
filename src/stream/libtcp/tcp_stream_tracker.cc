@@ -290,8 +290,6 @@ void TcpStreamTracker::init_on_synack_sent(TcpSegmentDescriptor& tsd)
 {
     Profile profile(s5TcpNewSessPerfStats);
 
-    DebugMessage(DEBUG_STREAM_STATE, "Creating new session tracker on SYN_ACK!\n");
-
     tsd.get_flow()->set_session_flags(SSNFLAG_SEEN_SERVER);
     if (tsd.get_tcph()->are_flags_set(TH_CWR | TH_ECE))
         tsd.get_flow()->set_session_flags(SSNFLAG_ECN_SERVER_REPLY);
@@ -528,9 +526,6 @@ bool TcpStreamTracker::update_on_3whs_ack(TcpSegmentDescriptor& tsd)
     }
     else
     {
-        DebugFormat(DEBUG_STREAM_STATE,
-            "Pkt Ack is Out of Bounds (%X, %X, %X) = (snd_una, snd_nxt, cur)\n",
-            snd_una, snd_nxt, tsd.get_seg_ack());
         inc_tcp_discards();
         normalizer.trim_win_payload(tsd);
         good_ack = false;
@@ -548,14 +543,12 @@ bool TcpStreamTracker::update_on_rst_recv(TcpSegmentDescriptor& tsd)
     {
         Flow* flow = tsd.get_flow();
 
-        DebugMessage(DEBUG_STREAM_STATE, "Received Valid RST, bailing\n");
         flow->set_session_flags(SSNFLAG_RESET);
         if ( normalizer.is_tcp_ips_enabled() )
             tcp_state = TcpStreamTracker::TCP_CLOSED;
     }
     else
     {
-        DebugMessage(DEBUG_STREAM_STATE, "Received RST with bad sequence number, bailing\n");
         inc_tcp_discards();
         normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
         good_rst = false;
@@ -586,7 +579,6 @@ bool TcpStreamTracker::update_on_fin_recv(TcpSegmentDescriptor& tsd)
 {
     if ( SEQ_LT(tsd.get_end_seq(), r_win_base) )
     {
-        DebugMessage(DEBUG_STREAM_STATE, "FIN inside r_win_base, bailing\n");
         return false;
     }
 
@@ -623,11 +615,6 @@ bool TcpStreamTracker::is_segment_seq_valid(TcpSegmentDescriptor& tsd)
     int right_ok;
     uint32_t left_seq;
 
-    DebugFormat(DEBUG_STREAM_STATE,
-        "Checking end_seq (%X) > r_win_base (%X) && seq (%X) < r_nxt_ack(%X)\n",
-        tsd.get_end_seq(), r_win_base, tsd.get_seg_seq(),
-        r_nxt_ack + normalizer.get_stream_window(tsd));
-
     if ( SEQ_LT(r_nxt_ack, r_win_base) )
         left_seq = r_nxt_ack;
     else
@@ -644,17 +631,15 @@ bool TcpStreamTracker::is_segment_seq_valid(TcpSegmentDescriptor& tsd)
 
         if ( SEQ_LEQ(tsd.get_seg_seq(), r_win_base + win) )
         {
-            DebugMessage(DEBUG_STREAM_STATE, "seq is within window!\n");
+            return true;
         }
         else
         {
-            DebugMessage(DEBUG_STREAM_STATE, "seq is past the end of the window!\n");
             valid_seq = false;
         }
     }
     else
     {
-        DebugMessage(DEBUG_STREAM_STATE, "end_seq is before win_base\n");
         valid_seq = false;
     }
 

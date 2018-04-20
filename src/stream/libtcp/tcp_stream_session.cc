@@ -26,7 +26,6 @@
 #include "tcp_stream_session.h"
 
 #include "log/messages.h"
-#include "main/snort_debug.h"
 #include "stream/tcp/tcp_ha.h"
 
 using namespace snort;
@@ -91,8 +90,6 @@ void TcpStreamSession::update_session_on_ack()
 
 void TcpStreamSession::update_session_on_server_packet(TcpSegmentDescriptor& tsd)
 {
-    DebugMessage(DEBUG_STREAM_STATE, "Stream: Updating on packet from server\n");
-
     flow->set_session_flags(SSNFLAG_SEEN_SERVER);
     talker = &server;
     listener = &client;
@@ -120,8 +117,6 @@ void TcpStreamSession::update_session_on_server_packet(TcpSegmentDescriptor& tsd
 
 void TcpStreamSession::update_session_on_client_packet(TcpSegmentDescriptor& tsd)
 {
-    DebugMessage(DEBUG_STREAM_STATE, "Stream: Updating on packet from client\n");
-
     /* if we got here we had to see the SYN already... */
     flow->set_session_flags(SSNFLAG_SEEN_CLIENT);
     talker = &client;

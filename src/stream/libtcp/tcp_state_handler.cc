@@ -27,7 +27,6 @@
 
 #include <iostream>
 
-#include "main/snort_debug.h"
 #include "tcp_segment_descriptor.h"
 #include "tcp_state_machine.h"
 

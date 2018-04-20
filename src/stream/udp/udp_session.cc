@@ -73,15 +73,11 @@ static int ProcessUdp(
     /* if both seen, mark established */
     if (p->is_from_server())
     {
-        DebugMessage(DEBUG_STREAM_STATE,
-            "Stream: Updating on packet from responder\n");
         lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_RESPONDER;
         lwssn->set_ttl(p, false);
     }
     else
     {
-        DebugMessage(DEBUG_STREAM_STATE,
-            "Stream: Updating on packet from client\n");
         lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_SENDER;
         lwssn->set_ttl(p, true);
     }

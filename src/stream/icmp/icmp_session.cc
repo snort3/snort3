@@ -164,8 +164,6 @@ static int ProcessIcmpUnreach(Packet* p)
     if (ssn)
     {
         /* Mark this session as dead. */
-        DebugMessage(DEBUG_STREAM_STATE,
-            "Marking session as dead, per ICMP Unreachable!\n");
         ssn->ssn_state.session_flags |= SSNFLAG_DROP_CLIENT;
         ssn->ssn_state.session_flags |= SSNFLAG_DROP_SERVER;
         ssn->session_state |= STREAM_STATE_UNREACH;

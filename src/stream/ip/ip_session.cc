@@ -87,25 +87,16 @@ static inline void UpdateSession(Packet* p, Flow* lws)
     {
         if ( p->is_from_client() )
         {
-            DebugMessage(DEBUG_STREAM_STATE,
-                "Stream: Updating on packet from client\n");
-
             lws->ssn_state.session_flags |= SSNFLAG_SEEN_CLIENT;
         }
         else
         {
-            DebugMessage(DEBUG_STREAM_STATE,
-                "Stream: Updating on packet from server\n");
-
             lws->ssn_state.session_flags |= SSNFLAG_SEEN_SERVER;
         }
 
         if ( (lws->ssn_state.session_flags & SSNFLAG_SEEN_CLIENT) &&
             (lws->ssn_state.session_flags & SSNFLAG_SEEN_SERVER) )
         {
-            DebugMessage(DEBUG_STREAM_STATE,
-                "Stream: session established!\n");
-
             lws->ssn_state.session_flags |= SSNFLAG_ESTABLISHED;
 
             lws->set_ttl(p, false);
@@ -142,8 +133,6 @@ void IpSession::clear()
 
 bool IpSession::setup(Packet* p)
 {
-    DebugMessage(DEBUG_STREAM, "Stream IP session created!\n");
-
     SESSION_STATS_ADD(ip_stats);
     memset(&tracker, 0, sizeof(tracker));
 

@@ -28,7 +28,6 @@
 #include "stream/libtcp/tcp_stream_session.h"
 #include "stream/libtcp/tcp_stream_tracker.h"
 
-#include "main/snort_debug.h"
 #include "packet_io/active.h"
 
 using namespace snort;
@@ -189,8 +188,6 @@ uint32_t TcpNormalizer::get_stream_window(
 uint32_t TcpNormalizer::get_tcp_timestamp(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd, bool strip)
 {
-    DebugMessage(DEBUG_STREAM_STATE, "Getting timestamp...\n");
-
     tcp::TcpOptIterator iter(tsd.get_tcph(), tsd.get_pkt() );
 
     // using const because non-const is not supported
@@ -206,14 +203,11 @@ uint32_t TcpNormalizer::get_tcp_timestamp(
             if (!stripped)
             {
                 tsd.set_ts(extract_32bits(opt.data) );
-                DebugFormat(DEBUG_STREAM_STATE, "Found timestamp %u\n", tsd.get_ts());
                 return TF_TSTAMP;
             }
         }
     }
     tsd.set_ts(0);
-
-    DebugMessage(DEBUG_STREAM_STATE, "No timestamp...\n");
 
     return TF_NONE;
 }
@@ -221,30 +215,18 @@ uint32_t TcpNormalizer::get_tcp_timestamp(
 bool TcpNormalizer::validate_rst_seq_geq(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
 {
-    DebugFormat(DEBUG_STREAM_STATE,
-        "Checking end_seq (%X) > r_win_base (%X) && seq (%X) < r_nxt_ack(%X)\n",
-        tsd.get_end_seq(), tns.tracker->r_win_base, tsd.get_seg_seq(), tns.tracker->r_nxt_ack +
-        get_stream_window(tns, tsd));
-
     // FIXIT-H check for r_win_base == 0 is hack for uninitialized r_win_base, fix this
     if ( ( tns.tracker->r_nxt_ack == 0 ) || SEQ_GEQ(tsd.get_seg_seq(), tns.tracker->r_nxt_ack) )
     {
-        DebugMessage(DEBUG_STREAM_STATE, "rst is valid seq (>= next seq)!\n");
         return true;
     }
 
-    DebugMessage(DEBUG_STREAM_STATE, "rst is not valid seq (>= next seq)!\n");
     return false;
 }
 
 bool TcpNormalizer::validate_rst_end_seq_geq(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
 {
-    DebugFormat(DEBUG_STREAM_STATE,
-        "Checking end_seq (%X) > r_win_base (%X) && seq (%X) < r_nxt_ack(%X)\n",
-        tsd.get_end_seq(), tns.tracker->r_win_base, tsd.get_seg_seq(), tns.tracker->r_nxt_ack +
-        get_stream_window(tns, tsd));
-
     // FIXIT-H check for r_win_base == 0 is hack for uninitialized r_win_base, fix this
     if ( tns.tracker->r_win_base == 0 )
         return true;
@@ -254,31 +236,22 @@ bool TcpNormalizer::validate_rst_end_seq_geq(
         // reset must be admitted when window closed
         if (SEQ_LEQ(tsd.get_seg_seq(), tns.tracker->r_win_base + get_stream_window(tns, tsd)))
         {
-            DebugMessage(DEBUG_STREAM_STATE, "rst is valid seq (within window)!\n");
             return true;
         }
     }
 
-    DebugMessage(DEBUG_STREAM_STATE, "rst is not valid seq (within window)!\n");
     return false;
 }
 
 bool TcpNormalizer::validate_rst_seq_eq(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
 {
-    DebugFormat(DEBUG_STREAM_STATE,
-        "Checking end_seq (%X) > r_win_base (%X) && seq (%X) < r_nxt_ack(%X)\n",
-        tsd.get_end_seq(), tns.tracker->r_win_base, tsd.get_seg_seq(),
-        tns.tracker->r_nxt_ack + get_stream_window(tns, tsd));
-
     // FIXIT-H check for r_nxt_ack == 0 is hack for uninitialized r_nxt_ack, fix this
     if ( ( tns.tracker->r_nxt_ack == 0 ) || SEQ_EQ(tsd.get_seg_seq(), tns.tracker->r_nxt_ack) )
     {
-        DebugMessage(DEBUG_STREAM_STATE, "rst is valid seq (next seq)!\n");
         return true;
     }
 
-    DebugMessage(DEBUG_STREAM_STATE, "rst is not valid seq (next seq)!\n");
     return false;
 }
 
@@ -297,7 +270,6 @@ int TcpNormalizer::validate_paws_timestamp(
 {
     if ( ( (int)( ( tsd.get_ts() - tns.peer_tracker->get_ts_last() ) + tns.paws_ts_fudge ) ) < 0 )
     {
-        DebugMessage(DEBUG_STREAM_STATE, "Packet outside PAWS window, dropping\n");
         /* bail, we've got a packet outside the PAWS window! */
         //inc_tcp_discards();
         tns.session->tel.set_tcp_event(EVENT_BAD_TIMESTAMP);
@@ -309,9 +281,6 @@ int TcpNormalizer::validate_paws_timestamp(
         PAWS_24DAYS ) )
     {
         /* this packet is from way too far into the future */
-        DebugFormat(DEBUG_STREAM_STATE,
-            "packet PAWS timestamp way too far ahead of last packet %ld %u...\n",
-            tsd.get_pkt()->pkth->ts.tv_sec, tns.peer_tracker->get_ts_last_packet() );
         //inc_tcp_discards();
         tns.session->tel.set_tcp_event(EVENT_BAD_TIMESTAMP);
         packet_dropper(tns, tsd, NORM_TCP_OPT);
@@ -319,7 +288,6 @@ int TcpNormalizer::validate_paws_timestamp(
     }
     else
     {
-        DebugMessage(DEBUG_STREAM_STATE, "packet PAWS ok...\n");
         return ACTION_NOTHING;
     }
 }
@@ -348,8 +316,6 @@ int TcpNormalizer::validate_paws(
         // we've got a packet with no timestamp, but 3whs indicated talker was doing
         //  timestamps.  This breaks protocol, however, some servers still ack the packet
         //   with the missing timestamp.  Log an alert, but continue to process the packet
-        DebugMessage(DEBUG_STREAM_STATE,
-            "packet no timestamp, had one earlier from this side...ok for now...\n");
         tns.session->tel.set_tcp_event(EVENT_NO_TIMESTAMP);
 
         /* Ignore the timestamp for this first packet, next one will checked. */
@@ -381,7 +347,6 @@ int TcpNormalizer::handle_paws_no_timestamps(
         if ( ( tns.paws_drop_zero_ts && ( tsd.get_ts() == 0 ) ) &&
             ( tns.tracker->get_tf_flags() & TF_TSTAMP ) )
         {
-            DebugMessage(DEBUG_STREAM_STATE, "Packet with 0 timestamp, dropping\n");
             tns.session->tel.set_tcp_event(EVENT_BAD_TIMESTAMP);
             return ACTION_BAD_PKT;
         }
@@ -408,7 +373,6 @@ int TcpNormalizer::handle_paws(
     if ((tns.peer_tracker->get_tf_flags() & TF_TSTAMP) &&
         (tns.tracker->get_tf_flags() & TF_TSTAMP))
     {
-        DebugMessage(DEBUG_STREAM_STATE, "Checking timestamps for PAWS\n");
         return validate_paws(tns, tsd);
     }
     else if (tsd.get_tcph()->is_syn_only())

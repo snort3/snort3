@@ -648,8 +648,6 @@ static void FragRebuild(FragTracker* ft, Packet* p)
 
         trace_log(stream_ip,
             "[^^] Walking fraglist:\n");
-        DebugMessage(DEBUG_FRAG,
-            "[^^] Walking fraglist:\n");
     }
 
     /*

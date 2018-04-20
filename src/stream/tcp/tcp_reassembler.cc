@@ -121,9 +121,6 @@ int TcpReassembler::delete_reassembly_segment(TcpReassemblerState& trs, TcpSegme
     int ret;
     assert(tsn);
 
-    DebugFormat(DEBUG_STREAM_STATE, "Dropping segment at seq %X, len %d\n", tsn->seq,
-        tsn->payload_size);
-
     if (tsn->prev)
         tsn->prev->next = tsn->next;
     else
@@ -163,9 +160,6 @@ int TcpReassembler::trim_delete_reassembly_segment(
 
         if (delta < tsn->payload_size)
         {
-            DebugFormat(DEBUG_STREAM_STATE, "Left-Trimming segment at seq %X, len %d, delta %u\n",
-                tsn->seq, tsn->payload_size, delta);
-
             tsn->seq = flush_seq;
             tsn->payload_size -= (uint16_t)delta;
             trs.sos.seg_bytes_logical -= delta;
@@ -189,9 +183,6 @@ void TcpReassembler::queue_reassembly_segment(
 bool TcpReassembler::is_segment_fasttrack(
     TcpReassemblerState&, TcpSegmentNode* tail, TcpSegmentDescriptor& tsd)
 {
-    DebugFormat(DEBUG_STREAM_STATE,  "Checking seq for fast track: %X > %X\n",
-        tsd.get_seg_seq(), tail->seq + tail->payload_size);
-
     if ( SEQ_EQ(tsd.get_seg_seq(), tail->seq + tail->payload_size) )
         return true;
 
@@ -211,8 +202,6 @@ int TcpReassembler::add_reassembly_segment(
         //assert(newSize == 0);
 
         // zero size data because of trimming.  Don't insert it
-        DebugFormat(DEBUG_STREAM_STATE, "zero size TCP data after left & right trimming "
-            "(len: %hd slide: %u trunc: %u)\n", len, slide, trunc_len);
 
         inc_tcp_discards();
         trs.tracker->normalizer.trim_win_payload(tsd);
@@ -238,10 +227,6 @@ int TcpReassembler::add_reassembly_segment(
     trs.sos.total_bytes_queued += tsn->payload_size;
     tsd.get_pkt()->packet_flags |= PKT_STREAM_INSERT;
 
-    DebugFormat(DEBUG_STREAM_STATE,
-        "added %hu bytes on segment list @ seq: 0x%X, total %u, %u segments queued\n",
-        tsn->payload_size, tsn->seq, trs.sos.seg_bytes_logical,
-        get_pending_segment_count(trs, 0));
 
 #ifdef SEG_TEST
     CheckSegments(trs.tracker);
@@ -260,11 +245,6 @@ int TcpReassembler::dup_reassembly_segment(
     tsn->seq = left->seq;
 
     queue_reassembly_segment(trs, left, tsn);
-
-    DebugFormat(DEBUG_STREAM_STATE,
-        "added %hu bytes on segment list @ seq: 0x%X, total %u, %u segments queued\n",
-        tsn->payload_size, tsn->seq, trs.sos.seg_bytes_logical,
-        get_pending_segment_count(trs, 0));
 
     *retSeg = tsn;
     return STREAM_INSERT_OK;
@@ -290,12 +270,8 @@ int TcpReassembler::purge_to_seq(TcpReassemblerState& trs, uint32_t flush_seq)
     int purged_bytes = 0;
     uint32_t last_ts = 0;
 
-    DebugFormat(DEBUG_STREAM_STATE, "In purge_to_seq, start seq = 0x%X end seq = 0x%X delta %u\n",
-        tsn->seq, flush_seq, flush_seq-tsn->seq);
-
     while ( tsn )
     {
-        DebugFormat(DEBUG_STREAM_STATE, "s: %X  sz: %d\n", tsn->seq, tsn->payload_size);
         dump_me = tsn;
 
         tsn = tsn->next;
@@ -313,7 +289,6 @@ int TcpReassembler::purge_to_seq(TcpReassemblerState& trs, uint32_t flush_seq)
     if ( SEQ_LT(trs.sos.seglist_base_seq, flush_seq) )
     {
         // FIXIT-M these lines are out of code coverage. Is this even possible?
-        DebugFormat(DEBUG_STREAM_STATE, "setting seglist_base_seq to 0x%X\n", flush_seq);
         trs.sos.seglist_base_seq = flush_seq;
     }
 
@@ -424,7 +399,6 @@ int TcpReassembler::flush_data_segments(
     uint32_t bytes_flushed = 0;
     uint32_t segs = 0;
     uint32_t flags = PKT_PDU_HEAD;
-    DEBUG_WRAP(uint32_t bytes_queued = trs.sos.seg_bytes_logical; );
 
     assert(trs.sos.seglist.next);
     Profile profile(s5TcpBuildPacketPerfStats);
@@ -438,8 +412,6 @@ int TcpReassembler::flush_data_segments(
             trs, tsn, to_seq, trs.tracker->splitter->max(p->flow));
         unsigned bytes_copied = 0;
         assert(bytes_to_copy);
-
-        DebugFormat(DEBUG_STREAM_STATE, "Flushing %u bytes from %X\n", bytes_to_copy, tsn->seq);
 
         if ( !tsn->next or (bytes_to_copy < tsn->payload_size) or
             SEQ_EQ(tsn->seq +  bytes_to_copy, to_seq) or
@@ -505,11 +477,6 @@ int TcpReassembler::flush_data_segments(
             trs.tracker->splitter->get_max_pdu() )
             break;
     }
-
-    DEBUG_WRAP(bytes_queued -= bytes_flushed; );
-    DebugFormat(DEBUG_STREAM_STATE,
-        "flushed %u bytes / %u segs on stream, %u bytes still queued\n",
-        bytes_flushed, segs, bytes_queued);
 
     return bytes_flushed;
 }
@@ -599,8 +566,6 @@ int TcpReassembler::_flush_to_seq(
         p = pdu;
     }
 
-    DebugFormat(DEBUG_STREAM_STATE, "Attempting to flush %u bytes\n", bytes);
-
     uint32_t bytes_processed = 0;
     uint32_t stop_seq = trs.sos.seglist.next->seq + bytes;
 
@@ -648,9 +613,6 @@ int TcpReassembler::_flush_to_seq(
             tcpStats.rebuilt_buffers++; // FIXIT-L this is not accurate
         }
 
-        DebugFormat(DEBUG_STREAM_STATE, "setting trs.sos.seglist_base_seq to 0x%X\n",
-            trs.sos.seglist_base_seq);
-
         // FIXIT-L must check because above may clear trs.sos.session
         if ( trs.tracker->splitter )
             trs.tracker->splitter->update();
@@ -679,15 +641,12 @@ int TcpReassembler::flush_to_seq(
 {
     if ( !bytes || !trs.sos.seglist.next )
     {
-        DebugFormat(DEBUG_STREAM_STATE, "bailing: no bytes: %u or empty trs.sos.seglist: %p\n",
-            bytes, (void*)trs.sos.seglist.next);
         return 0;
     }
 
     if ( !flush_data_ready(trs) and !(trs.tracker->get_tf_flags() & TF_FORCE_FLUSH) and
         !trs.tracker->splitter->is_paf() )
     {
-        DebugMessage(DEBUG_STREAM_STATE, "only 1 packet in trs.sos.seglist no need to flush\n");
         return 0;
     }
 
@@ -1072,14 +1031,9 @@ int TcpReassembler::flush_on_data_policy(TcpReassemblerState& trs, Packet* p)
 {
     uint32_t flushed = 0;
 
-    DebugMessage(DEBUG_STREAM_STATE, "In CheckFlushPolicyOnData\n");
-    DebugFormat(DEBUG_STREAM_STATE, "Listener flush policy: %s\n",
-        flush_policy_names[ trs.tracker->flush_policy ]);
-
     switch ( trs.tracker->flush_policy )
     {
     case STREAM_FLPOLICY_IGNORE:
-        DebugMessage(DEBUG_STREAM_STATE, "STREAM_FLPOLICY_IGNORE\n");
         return 0;
 
     case STREAM_FLPOLICY_ON_ACK:
@@ -1140,14 +1094,9 @@ int TcpReassembler::flush_on_ack_policy(TcpReassemblerState& trs, Packet* p)
 {
     uint32_t flushed = 0;
 
-    DebugMessage(DEBUG_STREAM_STATE, "In CheckFlushPolicyOnAck\n");
-    DebugFormat(DEBUG_STREAM_STATE, "Talker flush policy: %s\n",
-        flush_policy_names[ trs.tracker->flush_policy ]);
-
     switch (trs.tracker->flush_policy)
     {
     case STREAM_FLPOLICY_IGNORE:
-        DebugMessage(DEBUG_STREAM_STATE, "STREAM_FLPOLICY_IGNORE\n");
         return 0;
 
     case STREAM_FLPOLICY_ON_ACK:
@@ -1219,12 +1168,10 @@ void TcpReassembler::insert_segment_in_empty_seglist(
 
     if ( SEQ_GT(trs.tracker->r_win_base, seq) )
     {
-        DebugMessage(DEBUG_STREAM_STATE, "segment overlaps ack'd data...\n");
         overlap = trs.tracker->r_win_base - tsd.get_seg_seq();
 
         if ( overlap >= tsd.get_seg_len() )
         {
-            DebugMessage(DEBUG_STREAM_STATE, "full overlap on ack'd data, dropping segment\n");
             return;
         }
     }
@@ -1233,9 +1180,6 @@ void TcpReassembler::insert_segment_in_empty_seglist(
     add_reassembly_segment(
         trs, tsd, tsd.get_seg_len(), overlap, 0, tsd.get_seg_seq() + overlap, nullptr);
 
-    DebugFormat(DEBUG_STREAM_STATE,
-        "Attached new queue to trs.sos.seglist, %u bytes queued, base_seq 0x%X\n",
-        tsd.get_seg_len() - overlap, trs.sos.seglist_base_seq);
 }
 
 void TcpReassembler::init_overlap_editor(
@@ -1247,12 +1191,6 @@ void TcpReassembler::init_overlap_editor(
 
     int32_t dist_head;
     int32_t dist_tail;
-
-    DEBUG_WRAP(
-        TcpSegmentNode *lastptr = nullptr;
-        uint32_t base_seq = trs.sos.seglist_base_seq;
-        int last = 0;
-    );
 
     if ( trs.sos.seglist.head && trs.sos.seglist.tail )
     {
@@ -1273,17 +1211,6 @@ void TcpReassembler::init_overlap_editor(
     {
         for ( tsn = trs.sos.seglist.head; tsn; tsn = tsn->next )
         {
-            DEBUG_WRAP(
-                DebugFormat(DEBUG_STREAM_STATE, "tsn: %p  seq: 0x%X  size: %hu delta: %u\n",
-                    (void*) tsn, tsn->seq, tsn->payload_size, ( tsn->seq - base_seq ) - last);
-
-                last = tsn->seq - base_seq;
-                lastptr = tsn;
-
-                DebugFormat(DEBUG_STREAM_STATE, "   lastptr: %p tsn->next: %p tsn->prev: %p\n",
-                    (void*) lastptr, (void*) tsn->next, (void*) tsn->prev);
-            );
-
             right = tsn;
 
             if ( SEQ_GEQ(right->seq, tsd.get_seg_seq() ) )
@@ -1299,17 +1226,6 @@ void TcpReassembler::init_overlap_editor(
     {
         for ( tsn = trs.sos.seglist.tail; tsn; tsn = tsn->prev )
         {
-            DEBUG_WRAP(
-                DebugFormat(DEBUG_STREAM_STATE, "tsn: %p  seq: 0x%X  size: %hu delta: %u\n",
-                    (void*) tsn, tsn->seq, tsn->payload_size, ( tsn->seq - base_seq ) - last);
-
-                last = tsn->seq - base_seq;
-                lastptr = tsn;
-
-                DebugFormat(DEBUG_STREAM_STATE, "   lastptr: %p tsn->next: %p tsn->prev: %p\n",
-                    (void*) lastptr, (void*) tsn->next, (void*) tsn->prev);
-            );
-
             left = tsn;
 
             if ( SEQ_LT(left->seq, tsd.get_seg_seq() ) )
@@ -1322,11 +1238,6 @@ void TcpReassembler::init_overlap_editor(
             left = nullptr;
     }
 
-    DebugMessage(DEBUG_STREAM_STATE, "!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+\n");
-    DebugMessage(DEBUG_STREAM_STATE, "!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+\n");
-
-    DebugFormat(DEBUG_STREAM_STATE, "left: %p:0x%X  right: %p:0x%X\n",
-        (void*) left, left ? left->seq : 0, (void*) right, right ? right->seq : 0);
 
     trs.sos.init_soe(tsd, left, right);
 }
@@ -1336,26 +1247,12 @@ int TcpReassembler::insert_segment_in_seglist(
 {
     int rc = STREAM_INSERT_OK;
 
-    DebugFormat(DEBUG_STREAM_STATE,
-        "Queuing %u bytes on stream!\nbase_seq: %X seq: %X  seq_end: %X\n",
-        tsd.get_end_seq() - tsd.get_seg_seq(), trs.sos.seglist_base_seq, tsd.get_seg_seq(),
-        tsd.get_end_seq());
-
-    DebugFormat(DEBUG_STREAM_STATE, "%u segments on trs.sos.seglist\n",
-        get_pending_segment_count(trs, 0));
-
-    DebugMessage(DEBUG_STREAM_STATE, "!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+\n");
-    DebugMessage(DEBUG_STREAM_STATE, "!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+!+\n");
-
     // NORM fast tracks are in sequence - no norms
     if ( trs.sos.seglist.tail && is_segment_fasttrack(trs, trs.sos.seglist.tail, tsd) )
     {
         /* segment fit cleanly at the end of the segment list */
         TcpSegmentNode* left = trs.sos.seglist.tail;
-
-        DebugFormat(DEBUG_STREAM_STATE, "Fast tracking segment! (tail_seq %X size %d)\n",
-            trs.sos.seglist.tail->seq, trs.sos.seglist.tail->payload_size);
-
+        
         // BLOCK add to existing block and/or allocate new block
         rc = add_reassembly_segment(trs, tsd, tsd.get_seg_len(), 0, 0, tsd.get_seg_seq(), left);
         return rc;
@@ -1381,7 +1278,6 @@ int TcpReassembler::insert_segment_in_seglist(
     }
     else
     {
-        DebugMessage(DEBUG_STREAM_STATE, "Fully truncated right overlap\n");
         rc = STREAM_INSERT_OK;
     }
 
