@@ -26,13 +26,11 @@
 
 #include "log/messages.h"
 
+#include "ft_main.h"
 #include "ftpp_si.h"
 
 using namespace snort;
 using namespace std;
-
-#define FTP_CLIENT "ftp_client"
-#define FTP_SERVER "ftp_server"
 
 #define ftp_client_help \
     "FTP client configuration module for use with ftp_server"
@@ -80,7 +78,7 @@ static const Parameter ftp_client_params[] =
 };
 
 FtpClientModule::FtpClientModule() :
-    Module(FTP_CLIENT, ftp_client_help, ftp_client_params)
+    Module(FTP_CLIENT_NAME, ftp_client_help, ftp_client_params)
 {
     conf = nullptr;
 }
@@ -350,7 +348,7 @@ static const PegInfo ftp_pegs[] =
 //-------------------------------------------------------------------------
 
 FtpServerModule::FtpServerModule() :
-    Module(FTP_SERVER, ftp_server_help, ftp_server_params)
+    Module(FTP_SERVER_NAME, ftp_server_help, ftp_server_params)
 {
     conf = nullptr;
 }

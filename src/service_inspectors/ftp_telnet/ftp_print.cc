@@ -178,7 +178,7 @@ int PrintFTPClientConf(FTP_CLIENT_PROTO_CONF* ClientConf)
     FTP_BOUNCE_TO* FTPBounce;
     int iErr;
 
-    LogMessage("ftp_client:\n");
+    LogMessage(FTP_CLIENT_NAME ":\n");
 
     PrintConfOpt(ClientConf->bounce, "Check for Bounce Attacks");
     PrintConfOpt(ClientConf->telnet_cmds, "Check for Telnet Cmds");
@@ -235,7 +235,7 @@ int PrintFTPServerConf(FTP_SERVER_PROTO_CONF* ServerConf)
         return FTPP_INVALID_ARG;
     }
 
-    LogMessage("ftp_server:\n");
+    LogMessage(FTP_SERVER_NAME ":\n");
 
     PrintConfOpt(ServerConf->telnet_cmds, "Check for Telnet Cmds");
     PrintConfOpt(ServerConf->ignore_telnet_erase_cmds, "Ignore Telnet Cmd Operations");

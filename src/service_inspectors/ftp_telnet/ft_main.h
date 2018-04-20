@@ -44,6 +44,10 @@ struct Packet;
 struct SnortConfig;
 }
 
+#define FTP_CLIENT_NAME "ftp_client"
+#define FTP_DATA_NAME "ftp_data"
+#define FTP_SERVER_NAME "ftp_server"
+
 extern SnortProtocolId ftp_data_snort_protocol_id;
 
 void do_detection(snort::Packet*);

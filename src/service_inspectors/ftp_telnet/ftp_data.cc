@@ -31,13 +31,12 @@
 #include "stream/stream.h"
 #include "utils/util.h"
 
+#include "ft_main.h"
 #include "ftp_module.h"
 #include "ftpp_si.h"
 #include "ftpdata_splitter.h"
 
 using namespace snort;
-
-#define s_name "ftp_data"
 
 #define s_help \
     "FTP data channel handler"
@@ -238,7 +237,7 @@ public:
 class FtpDataModule : public Module
 {
 public:
-    FtpDataModule() : Module(s_name, s_help) { }
+    FtpDataModule() : Module(FTP_DATA_NAME, s_help) { }
 
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
@@ -314,7 +313,7 @@ const InspectApi fd_api =
         0,
         API_RESERVED,
         API_OPTIONS,
-        s_name,
+        FTP_DATA_NAME,
         s_help,
         mod_ctor,
         mod_dtor

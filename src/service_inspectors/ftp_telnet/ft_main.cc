@@ -47,6 +47,7 @@
 #include "detection/detection_engine.h"
 #include "framework/data_bus.h"
 #include "log/messages.h"
+#include "managers/inspector_manager.h"
 #include "utils/util.h"
 
 #include "ftp_cmd_lookup.h"
@@ -166,16 +167,23 @@ int FTPCheckConfigs(snort::SnortConfig* sc, void* pData)
             "default client and default server configurations.\n");
         return -1;
     }
-#if 0
-    if ( file_api->get_max_file_depth() < 0 )
-    {
-        // FIXIT-M need to change to IT_SERVICE and FTPTelnetChecks
-        // for optimization
-    }
-#endif
+
     int rval;
     if ((rval = CheckFTPServerConfigs(sc, config)))
         return rval;
+
+    //  Verify that FTP client and FTP data inspectors are initialized.
+    if(!snort::InspectorManager::get_inspector(FTP_CLIENT_NAME, false))
+    {
+        ParseError("ftp_server requires that %s also be configured.", FTP_CLIENT_NAME);
+        return -1;
+    }
+
+    if(!snort::InspectorManager::get_inspector(FTP_DATA_NAME, false))
+    {
+        ParseError("ftp_server requires that %s also be configured.", FTP_DATA_NAME);
+        return -1;
+    }
 
     return 0;
 }
