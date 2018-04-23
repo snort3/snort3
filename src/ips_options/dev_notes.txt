@@ -15,7 +15,7 @@ Hyperscan is an "optional" dependency for Snort3; These rule options will
 not exist without satisfying that dependency.
 
 Hyperscan documentation can be found online 
-http://01org.github.io/hyperscan/dev-reference
+https://intel.github.io/hyperscan/dev-reference
 
 The "sd_pattern" will be used as a fast pattern in the future (like "regex")
 for performance. 
