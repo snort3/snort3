@@ -8,7 +8,7 @@ expression syntax is available for defining your own PII.
 The `sd_pattern` rule option is powered by the open source Hyperscan
 library from Intel.  It provides a regex grammar which is mostly PCRE
 compatible. To learn more about Hyperscan see
-http://01org.github.io/hyperscan/dev-reference/
+https://intel.github.io/hyperscan/dev-reference/
 
 ==== Syntax 
 
@@ -23,7 +23,7 @@ Pattern is the most important and is the only required parameter to
 `sd_pattern`. It supports 3 built in patterns which are configured by name:
 "credit_card", "us_social" and "us_social_nodashes", as well as user
 defined regular expressions of the Hyperscan dialect (see
-http://01org.github.io/hyperscan/dev-reference/compilation.html#pattern-support).
+https://intel.github.io/hyperscan/dev-reference/compilation.html#pattern-support).
 
     sd_pattern:"credit_card";
 
