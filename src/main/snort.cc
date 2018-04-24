@@ -54,7 +54,6 @@
 #include "latency/rule_latency.h"
 #include "log/log.h"
 #include "log/messages.h"
-#include "log/packet_tracer.h"
 #include "loggers/loggers.h"
 #include "main.h"
 #include "main/shell.h"
@@ -73,6 +72,7 @@
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/trough.h"
+#include "packet_tracer/packet_tracer.h"
 #include "parser/cmd_line.h"
 #include "parser/parser.h"
 #include "profiler/profiler.h"
@@ -769,9 +769,7 @@ void Snort::thread_init_unprivileged()
     HighAvailabilityManager::thread_init(); // must be before InspectorManager::thread_init();
     InspectorManager::thread_init(SnortConfig::get_conf());
     PacketTracer::thread_init();
-    if (SnortConfig::packet_trace_enabled())
-        PacketTracer::enable_user();
-
+    
     // in case there are HA messages waiting, process them first
     HighAvailabilityManager::process_receive();
     PacketManager::thread_init();
@@ -840,7 +838,7 @@ DAQ_Verdict Snort::process_packet(
     PacketManager::decode(p, pkthdr, pkt, is_frag);
     assert(p->pkth && p->pkt);
 
-    PacketTracer::add_header_info(p);
+    PacketTracer::activate(*p);
 
     if (is_frag)
     {
@@ -935,11 +933,6 @@ static DAQ_Verdict update_verdict(Packet* p, DAQ_Verdict verdict, int& inject)
 DAQ_Verdict Snort::packet_callback(
     void*, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt)
 {
-    if (pkthdr->flags & DAQ_PKT_FLAG_TRACE_ENABLED)
-        PacketTracer::enable_daq();
-    else
-        PacketTracer::disable_daq();
-
     set_default_policy();
     Profile profile(totalPerfStats);
 
@@ -962,11 +955,14 @@ DAQ_Verdict Snort::packet_callback(
     int inject = 0;
     verdict = update_verdict(s_packet, verdict, inject);
 
-    PacketTracer::log("NAP id %u, IPS id %u, Verdict %s\n",
-        get_network_policy()->policy_id, get_ips_policy()->policy_id,
-        SFDAQ::verdict_to_string(verdict));
+    if (PacketTracer::is_active())
+    {
+        PacketTracer::log("NAP id %u, IPS id %u, Verdict %s\n",
+            get_network_policy()->policy_id, get_ips_policy()->policy_id,
+            SFDAQ::verdict_to_string(verdict));
 
-    PacketTracer::dump(pkthdr);
+        PacketTracer::dump(pkthdr);
+    }
 
     HighAvailabilityManager::process_update(s_packet->flow, pkthdr);
 

@@ -29,9 +29,9 @@
 
 #include "flow/flow.h"
 #include "log/messages.h"
-#include "log/packet_tracer.h"
 #include "managers/inspector_manager.h"
 #include "managers/module_manager.h"
+#include "packet_tracer/packet_tracer.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 
@@ -75,12 +75,15 @@ static void add_appid_to_packet_trace(Flow& flow)
         payload_app_name = appid_api.get_application_name(payload_id);
         misc_name = appid_api.get_application_name(misc_id);
 
-        PacketTracer::log(appid_mute,
-            "AppID: service: %s(%d), client: %s(%d), payload: %s(%d), misc: %s(%d)\n",
-            (service_app_name ? service_app_name : ""), service_id,
-            (client_app_name ? client_app_name : ""), client_id,
-            (payload_app_name ? payload_app_name : ""), payload_id,
-            (misc_name ? misc_name : ""), misc_id);
+        if (PacketTracer::is_active())
+        {
+            PacketTracer::log(appid_mute,
+                    "AppID: service: %s(%d), client: %s(%d), payload: %s(%d), misc: %s(%d)\n",
+                    (service_app_name ? service_app_name : ""), service_id,
+                    (client_app_name ? client_app_name : ""), client_id,
+                    (payload_app_name ? payload_app_name : ""), payload_id,
+                    (misc_name ? misc_name : ""), misc_id);
+        }
     }
 }
 
@@ -182,13 +185,13 @@ void AppIdInspector::tterm()
 void AppIdInspector::eval(Packet* p)
 {
     Profile profile(appidPerfStats);
-
     appid_stats.packets++;
+    
     if (p->flow)
     {
         AppIdDiscovery::do_application_discovery(p, *this);
         // FIXIT-L tag verdict reason as appid for daq
-        if (PacketTracer::active())
+        if (PacketTracer::is_active())
             add_appid_to_packet_trace(*p->flow);
     }
     else

@@ -203,7 +203,6 @@ public:
 
     uint16_t event_trace_max = 0;
     long int tagged_packet_limit = 256;
-    bool enable_packet_trace = false;
 
     std::string log_dir;
 
@@ -644,11 +643,6 @@ public:
     {
         return get_conf()->user_id != -1 || get_conf()->group_id != -1 ||
             !get_conf()->chroot_dir.empty();
-    }
-
-    static bool packet_trace_enabled()
-    {
-        return get_conf()->enable_packet_trace;
     }
 
     bool track_on_syn() const

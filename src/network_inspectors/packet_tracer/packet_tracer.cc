@@ -28,14 +28,15 @@
 #include <cstdio>
 #include <unordered_map>
 
+#include "log/log.h"
+#include "log/messages.h"
 #include "packet_io/sfdaq.h"
 #include "protocols/eth.h"
+#include "protocols/icmp4.h"
 #include "protocols/ip.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
-
-#include "log.h"
-#include "messages.h"
+#include "utils/util.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -43,29 +44,351 @@
 
 using namespace snort;
 
+// -----------------------------------------------------------------------------
+// static variables
+// -----------------------------------------------------------------------------
+
 static const uint8_t VERDICT_REASON_NO_BLOCK = 2; /* Not blocking packet; all enum defined after this indicates blocking */
+
+// FIXIT-M currently non-threadsafe accesses being done in packet threads against this
 static std::unordered_map<uint8_t, uint8_t> reasons = { {VERDICT_REASON_NO_BLOCK, PacketTracer::PRIORITY_UNSET} };
-    
+
 // FIXIT-M refactor the way this is used so all methods are members called against this pointer
-static THREAD_LOCAL PacketTracer* s_pkt_trace = nullptr;
+THREAD_LOCAL PacketTracer* snort::s_pkt_trace = nullptr;
 
 // so modules can register regardless of when packet trace is activated
 static THREAD_LOCAL struct{ unsigned val = 0; } global_mutes;
 
 static std::string log_file = "-";
+static bool config_status = false;
 
-PacketTracer::PacketTracer()
-{ reason = VERDICT_REASON_NO_BLOCK; }
+// -----------------------------------------------------------------------------
+// static functions
+// -----------------------------------------------------------------------------
 
 void PacketTracer::register_verdict_reason(uint8_t reason_code, uint8_t priority)
 {
     assert(reasons.find(reason_code) == reasons.end());
-
     reasons[reason_code] = priority;
 }
 
 void PacketTracer::set_log_file(std::string file)
 { log_file = file; }
+
+// template needed for unit tests
+template<typename T> void PacketTracer::_thread_init()
+{
+    if ( s_pkt_trace == nullptr )
+        s_pkt_trace = new T();
+
+    s_pkt_trace->mutes.resize(global_mutes.val, false);
+    s_pkt_trace->open_file();
+    s_pkt_trace->user_enabled = config_status;
+}
+template void PacketTracer::_thread_init<PacketTracer>();
+
+void PacketTracer::thread_init()
+{ _thread_init(); }
+
+void PacketTracer::thread_term()
+{
+    if ( s_pkt_trace )
+    {
+        delete s_pkt_trace;
+        s_pkt_trace = nullptr;
+    }
+}
+
+void PacketTracer::dump(char* output_buff, unsigned int len)
+{
+    if (is_paused())
+        return;
+
+    if (output_buff)
+        memcpy(output_buff, s_pkt_trace->buffer,
+            (len < s_pkt_trace->buff_len + 1 ? len : s_pkt_trace->buff_len + 1));
+
+    s_pkt_trace->reset();
+}
+
+void PacketTracer::dump(const DAQ_PktHdr_t* pkt_hdr)
+{
+    if (is_paused())
+        return;
+
+    if (s_pkt_trace->daq_activated)
+        s_pkt_trace->dump_to_daq(pkt_hdr);
+
+    if (s_pkt_trace->user_enabled or s_pkt_trace->shell_enabled)
+        LogMessage(s_pkt_trace->log_fh, "%s\n", s_pkt_trace->buffer);
+
+    s_pkt_trace->reset();
+}
+
+void PacketTracer::set_reason(uint8_t reason)
+{
+    if ( reasons[reason] > reasons[s_pkt_trace->reason] )
+        s_pkt_trace->reason = reason;
+}
+
+void PacketTracer::log(const char* format, ...)
+{
+    if (is_paused())
+        return;
+
+    va_list ap;
+    va_start(ap, format);
+    s_pkt_trace->log(format, ap);
+    va_end(ap);
+}
+
+void PacketTracer::log(TracerMute mute, const char* format, ...)
+{
+    if ( s_pkt_trace->mutes[mute] )
+        return; // logged under this mute once. don't log again until dump.
+
+    va_list ap;
+    va_start(ap, format);
+    s_pkt_trace->log(format, ap);
+    va_end(ap);
+
+    s_pkt_trace->mutes[mute] = true;
+}
+
+bool PacketTracer::is_paused()
+{
+    if ( s_pkt_trace and s_pkt_trace->pause_count )
+        return true;
+    return false;
+}
+
+void PacketTracer::set_constraints(const PTSessionConstraints* constraints)
+{
+    if (!s_pkt_trace)
+        return;
+
+    if (!constraints)
+    {
+        LogMessage("Debugging packet tracer disabled\n");
+        s_pkt_trace->shell_enabled = false;
+    }
+    else 
+        s_pkt_trace->update_constraints(constraints);
+}
+
+void PacketTracer::configure(bool status, const std::string& file_name)
+{
+
+    log_file = file_name;
+    config_status = status;
+}
+
+void PacketTracer::pause()
+{ s_pkt_trace->pause_count++; }
+
+void PacketTracer::unpause()
+{
+    assert(s_pkt_trace->pause_count);
+    s_pkt_trace->pause_count--;
+}
+
+PacketTracer::TracerMute PacketTracer::get_mute()
+{
+    global_mutes.val++;
+    if ( s_pkt_trace == nullptr )
+        return global_mutes.val - 1;
+
+    s_pkt_trace->mutes.push_back(false);
+    return s_pkt_trace->mutes.size() - 1;
+}
+
+void PacketTracer::activate(const Packet& p)
+{
+    if (!s_pkt_trace)
+        return;
+
+    if ( p.pkth->flags &  DAQ_PKT_FLAG_TRACE_ENABLED )
+        s_pkt_trace->daq_activated = true;
+    else 
+        s_pkt_trace->daq_activated = false;
+
+    if (s_pkt_trace->daq_activated or s_pkt_trace->user_enabled or s_pkt_trace->shell_enabled)
+    {
+        if (!p.ptrs.ip_api.is_ip())
+        {
+            s_pkt_trace->add_eth_header_info(p);
+            s_pkt_trace->add_packet_type_info(p);
+        }
+        else
+        {
+            if (s_pkt_trace->shell_enabled)
+            {
+                uint16_t sport = p.ptrs.sp;
+                uint16_t dport = p.ptrs.dp;
+
+                const SfIp *actual_sip = p.ptrs.ip_api.get_src();
+                const SfIp *actual_dip = p.ptrs.ip_api.get_dst();
+
+                const uint32_t *sip_ptr = actual_sip->get_ip6_ptr();
+                const uint32_t *dip_ptr = actual_dip->get_ip6_ptr();
+
+                IpProtocol proto = p.get_ip_proto_next();
+
+                if (!(s_pkt_trace->info.proto_match(proto) and
+                        ((s_pkt_trace->info.port_match(sport, dport) and s_pkt_trace->info.ip_match(sip_ptr, dip_ptr)) or
+                        (s_pkt_trace->info.port_match(dport, sport) and s_pkt_trace->info.ip_match(dip_ptr, sip_ptr)))))
+                {
+                    s_pkt_trace->active = false;
+                    return;
+                }
+            }
+            s_pkt_trace->active = true;
+            s_pkt_trace->add_ip_header_info(p);
+        }
+    }
+    else
+        s_pkt_trace->active = false;
+}
+
+// -----------------------------------------------------------------------------
+// non-static functions
+// -----------------------------------------------------------------------------
+
+// constructor
+PacketTracer::PacketTracer()
+{ reason = VERDICT_REASON_NO_BLOCK; }
+
+// destructor
+PacketTracer::~PacketTracer()
+{
+    if ( log_fh && log_fh != stdout )
+    {
+        fclose(log_fh);
+        log_fh = nullptr;
+    }
+}
+
+void PacketTracer::log(const char* format, va_list ap)
+{       
+    // FIXIT-L Need to find way to add 'PktTracerDbg' string as part of format string.
+    std::string dbg_str;
+    if (shell_enabled) // only add debug string during shell execution
+    {
+        dbg_str = "PktTracerDbg "; 
+        if (strcmp(format, "\n") != 0)
+            dbg_str += get_debug_session();
+        dbg_str += format;
+        format = dbg_str.c_str();
+    }
+
+    const int buff_space = max_buff_size - buff_len;
+    const int len = vsnprintf(buffer + buff_len, buff_space, format, ap);
+
+    if (len >= 0 and len < buff_space)
+        buff_len += len;
+    else
+        buff_len = max_buff_size - 1;
+}
+
+void PacketTracer::add_ip_header_info(const Packet& p)
+{
+    SfIpString sipstr;
+    SfIpString dipstr;
+
+    uint16_t sport = p.ptrs.sp;
+    uint16_t dport = p.ptrs.dp;
+
+    const SfIp* actual_sip = p.ptrs.ip_api.get_src();
+    const SfIp* actual_dip = p.ptrs.ip_api.get_dst();
+    
+    IpProtocol proto = p.get_ip_proto_next();
+
+    actual_sip->ntop(sipstr, sizeof(sipstr));
+    actual_dip->ntop(dipstr, sizeof(dipstr));
+
+    if (shell_enabled)
+    {
+        PacketTracer::log("\n");
+        snprintf(debug_session, sizeof(debug_session), "%s %hu -> %s %hu %hhu AS=%hu ID=%u ",
+            sipstr, sport, dipstr, dport, static_cast<uint8_t>(proto),
+            p.pkth->address_space_id, get_instance_id());
+    }
+    else
+    {
+        add_eth_header_info(p);
+        PacketTracer::log("%s:%hu -> %s:%hu proto %u AS=%hu ID=%u\n",
+            sipstr, sport, dipstr, dport, static_cast<uint8_t>(proto),
+            p.pkth->address_space_id, get_instance_id());
+    }
+    add_packet_type_info(p);
+}
+
+void PacketTracer::add_packet_type_info(const Packet& p)
+{
+    bool is_v6 = p.ptrs.ip_api.is_ip6();
+    char timestamp[TIMEBUF_SIZE];
+    ts_print((const struct timeval*)&p.pkth->ts, timestamp);
+
+    switch (p.type())
+    {
+        case PktType::TCP:
+        {
+            char tcpFlags[10];
+            CreateTCPFlagString(p.ptrs.tcph, tcpFlags);
+
+            if (p.ptrs.tcph->th_flags & TH_ACK)
+                PacketTracer::log("Packet: TCP %s, %s, seq %u, ack %u\n", tcpFlags, timestamp,
+                    p.ptrs.tcph->seq(), p.ptrs.tcph->ack());
+            else
+                PacketTracer::log("Packet: TCP %s, %s, seq %u\n", tcpFlags, timestamp, p.ptrs.tcph->seq());
+            break;
+        }
+
+        case PktType::ICMP:
+        {
+            const char* icmp_str = is_v6 ? "ICMPv6" : "ICMP";
+
+            PacketTracer::log("Packet: %s, %s, Type: %u  Code: %u \n", icmp_str, timestamp,
+                p.ptrs.icmph->type, p.ptrs.icmph->code);
+            break;
+        }
+
+        default:
+            PacketTracer::log("Packet: %s, %s\n", p.get_type(), timestamp);
+            break;
+    }
+}
+
+void PacketTracer::add_eth_header_info(const Packet& p)
+{
+    auto eh = layer::get_eth_layer(&p);
+    if (!(shell_enabled) && eh )
+    {
+        // MAC layer
+        PacketTracer::log("%02X:%02X:%02X:%02X:%02X:%02X -> %02X:%02X:%02X:%02X:%02X:%02X %04X\n",
+            eh->ether_src[0], eh->ether_src[1], eh->ether_src[2],
+            eh->ether_src[3], eh->ether_src[4], eh->ether_src[5],
+            eh->ether_dst[0], eh->ether_dst[1], eh->ether_dst[2],
+            eh->ether_dst[3], eh->ether_dst[4], eh->ether_dst[5],
+            (uint16_t)eh->ethertype());
+    }
+}
+
+void PacketTracer::update_constraints(const PTSessionConstraints* constraints)
+{
+
+    char sipstr[INET6_ADDRSTRLEN];
+    char dipstr[INET6_ADDRSTRLEN];
+
+    info.set(*constraints);
+    info.sip.ntop(sipstr, sizeof(sipstr));
+    info.dip.ntop(dipstr, sizeof(dipstr));
+    LogMessage("Debugging packet tracer with %s-%hu and %s-%hu %hhu\n",
+               sipstr, info.sport, dipstr, info.dport, static_cast<uint8_t>(info.protocol));
+
+    shell_enabled = true;
+
+}
 
 void PacketTracer::open_file()
 {
@@ -85,42 +408,10 @@ void PacketTracer::open_file()
     }
 }
 
-// template needed for unit tests
-template<typename T> void PacketTracer::_thread_init()
-{
-    if ( s_pkt_trace == nullptr )
-        s_pkt_trace = new T();
-
-    s_pkt_trace->mutes.resize(global_mutes.val, false);
-    s_pkt_trace->open_file();
-}
-template void PacketTracer::_thread_init<PacketTracer>();
-
-void PacketTracer::thread_init()
-{ _thread_init(); }
-
-PacketTracer::~PacketTracer()
-{
-    if ( log_fh && log_fh != stdout )
-    {
-        fclose(log_fh);
-        log_fh = nullptr;
-    }
-}
-
-void PacketTracer::thread_term()
-{
-    if ( s_pkt_trace )
-    {
-        delete s_pkt_trace;
-        s_pkt_trace = nullptr;
-    }
-}
-
 void PacketTracer::dump_to_daq(const DAQ_PktHdr_t* pkt_hdr)
 {
-    SFDAQ::get_local_instance()->modify_flow_pkt_trace(pkt_hdr, s_pkt_trace->reason,
-        (uint8_t *)s_pkt_trace->buffer, s_pkt_trace->buff_len + 1);
+    SFDAQ::get_local_instance()->modify_flow_pkt_trace(pkt_hdr, reason,
+        (uint8_t *)buffer, buff_len + 1);
 }
 
 void PacketTracer::reset()
@@ -133,155 +424,9 @@ void PacketTracer::reset()
         mutes[i] = false;
 }
 
-void PacketTracer::dump(char* output_buff, unsigned int len)
-{
-    if (!active())
-        return;
-
-    if (output_buff)
-        memcpy(output_buff, s_pkt_trace->buffer,
-            (len < s_pkt_trace->buff_len + 1 ? len : s_pkt_trace->buff_len + 1));
-
-    s_pkt_trace->reset();
-}
-
-void PacketTracer::dump(const DAQ_PktHdr_t* pkt_hdr)
-{
-    if (!active())
-        return;
-
-    if (s_pkt_trace->daq_enabled)
-        s_pkt_trace->dump_to_daq(pkt_hdr);
-
-    if (s_pkt_trace->user_enabled)
-        LogMessage(s_pkt_trace->log_fh, "%s\n", s_pkt_trace->buffer);
-
-    s_pkt_trace->reset();
-}
-
-void PacketTracer::set_reason(uint8_t reason)
-{
-    if ( !active() )
-        return;
-
-    if ( reasons[reason] > reasons[s_pkt_trace->reason] )
-        s_pkt_trace->reason = reason;
-}
-
-void PacketTracer::log(const char* format, va_list ap)
-{
-    if ( !active() )
-        return;
-
-    const int buff_space = max_buff_size - s_pkt_trace->buff_len;
-    const int len = vsnprintf(s_pkt_trace->buffer + s_pkt_trace->buff_len,
-            buff_space, format, ap);
-
-    if (len >= 0 and len < buff_space)
-        s_pkt_trace->buff_len += len;
-    else
-        s_pkt_trace->buff_len = max_buff_size - 1;
-}
-
-void PacketTracer::log(const char* format, ...)
-{
-    va_list ap;
-    va_start(ap, format);
-    log(format, ap);
-    va_end(ap);
-}
-
-void PacketTracer::log(TracerMute mute, const char* format, ...)
-{
-    if ( s_pkt_trace->mutes[mute] )
-        return; // logged under this mute once. don't log again until dump.
-
-    va_list ap;
-    va_start(ap, format);
-    log(format, ap);
-    va_end(ap);
-
-    s_pkt_trace->mutes[mute] = true;
-}
-
-void PacketTracer::add_header_info(Packet* p)
-{
-    if (!active())
-        return;
-
-    if ( auto eh = layer::get_eth_layer(p) )
-    {
-        // MAC layer
-        log("%02X:%02X:%02X:%02X:%02X:%02X -> ", eh->ether_src[0],
-            eh->ether_src[1], eh->ether_src[2], eh->ether_src[3],
-            eh->ether_src[4], eh->ether_src[5]);
-        log("%02X:%02X:%02X:%02X:%02X:%02X ", eh->ether_dst[0],
-            eh->ether_dst[1], eh->ether_dst[2], eh->ether_dst[3],
-            eh->ether_dst[4], eh->ether_dst[5]);
-        // protocol and pkt size
-        log("%04X\n", (uint16_t)eh->ethertype());
-    }
-
-    if (p->ptrs.ip_api.get_src() and p->ptrs.ip_api.get_dst())
-    {
-        char sipstr[INET6_ADDRSTRLEN], dipstr[INET6_ADDRSTRLEN];
-
-        p->ptrs.ip_api.get_src()->ntop(sipstr, sizeof(sipstr));
-        p->ptrs.ip_api.get_dst()->ntop(dipstr, sizeof(dipstr));
-
-        log("%s:%hu -> %s:%hu proto %u\n",
-            sipstr, p->ptrs.sp, dipstr, p->ptrs.dp, (unsigned)p->ptrs.ip_api.proto());
-        log("Packet: %s", p->get_type());
-        if (p->type() == PktType::TCP)
-        {
-            char tcpFlags[10];
-            CreateTCPFlagString(p->ptrs.tcph, tcpFlags);
-            log( " %s, seq %u, ack %u", tcpFlags,
-                p->ptrs.tcph->seq(), p->ptrs.tcph->ack());
-        }
-        log("\n");
-    }
-}
-
-bool PacketTracer::active()
-{
-    if ( !s_pkt_trace )
-        return false;
-
-    if ( s_pkt_trace->pause_count )
-        return false;
-
-    return s_pkt_trace->user_enabled || s_pkt_trace->daq_enabled;
-}
-
-void PacketTracer::enable_user()
-{ s_pkt_trace->user_enabled = true; }
-
-void PacketTracer::enable_daq()
-{ s_pkt_trace->daq_enabled = true; }
-
-void PacketTracer::disable_daq()
-{ s_pkt_trace->daq_enabled = false; }
-
-void PacketTracer::pause()
-{ s_pkt_trace->pause_count++; }
-
-void PacketTracer::unpause()
-{
-    assert(s_pkt_trace->pause_count);
-
-    s_pkt_trace->pause_count--;
-}
-
-PacketTracer::TracerMute PacketTracer::get_mute()
-{
-    global_mutes.val++;
-    if ( s_pkt_trace == nullptr )
-        return global_mutes.val - 1;
-
-    s_pkt_trace->mutes.push_back(false);
-    return s_pkt_trace->mutes.size() - 1;
-}
+// --------------------------------------------------------------------------
+// unit tests
+// --------------------------------------------------------------------------
 
 #ifdef UNIT_TEST
 #include <fcntl.h>
@@ -301,11 +446,17 @@ public:
     static unsigned int get_buff_len()
     { return ((TestPacketTracer*)s_pkt_trace)->buff_len; }
 
+    static void set_user_enable(bool status)
+    { ((TestPacketTracer*)s_pkt_trace)->user_enabled = status; }
+
     static bool is_user_enabled()
     { return ((TestPacketTracer*)s_pkt_trace)->user_enabled; }
 
+    static void set_daq_enable(bool status)
+    { ((TestPacketTracer*)s_pkt_trace)->daq_activated = status; }
+
     static bool is_daq_enabled()
-    { return ((TestPacketTracer*)s_pkt_trace)->daq_enabled; }
+    { return ((TestPacketTracer*)s_pkt_trace)->daq_activated; }
 
     static bool is_paused()
     { return ((TestPacketTracer*)s_pkt_trace)->pause_count; }
@@ -331,7 +482,7 @@ TEST_CASE("basic log", "[PacketTracer]")
     char test_str[] = "1234567890";
     // instantiate a packet tracer
     TestPacketTracer::thread_init();
-    TestPacketTracer::enable_user();
+    TestPacketTracer::set_user_enable(true);
     // basic logging
     TestPacketTracer::log("%s", test_str);
     CHECK(!(strcmp(TestPacketTracer::get_buff(), test_str)));
@@ -353,7 +504,7 @@ TEST_CASE("corner cases", "[PacketTracer]")
 {
     char test_str[] = "1234567890", empty_str[] = "";
     TestPacketTracer::thread_init();
-    TestPacketTracer::enable_user();
+    TestPacketTracer::set_user_enable(true);
     // init length check
     CHECK((TestPacketTracer::get_buff_len() == 0));
     // logging empty string to start with
@@ -379,7 +530,7 @@ TEST_CASE("dump", "[PacketTracer]")
     char test_str[] = "ABCD", results[] = "ABCD3=400";
 
     TestPacketTracer::thread_init();
-    TestPacketTracer::enable_user();
+    TestPacketTracer::set_user_enable(true);
     TestPacketTracer::log("%s%d=%d", test_str, 3, 400);
     TestPacketTracer::dump(test_string, TestPacketTracer::max_buff_size);
     CHECK(!strcmp(test_string, results));
@@ -397,21 +548,18 @@ TEST_CASE("enable", "[PacketTracer]")
 {
     TestPacketTracer::thread_init();
     // packet tracer is disabled by default
-    CHECK(!TestPacketTracer::active());
+    CHECK(!TestPacketTracer::is_active());
     // enabled from user
-    TestPacketTracer::enable_user();
-    CHECK(TestPacketTracer::active());
+    TestPacketTracer::set_user_enable(true);
     CHECK(TestPacketTracer::is_user_enabled());
     CHECK(!TestPacketTracer::is_daq_enabled());
     // enabled from DAQ
-    TestPacketTracer::enable_daq();
-    CHECK(TestPacketTracer::active());
+    TestPacketTracer::set_daq_enable(true);
     CHECK(TestPacketTracer::is_daq_enabled());
     // disable DAQ enable
-    TestPacketTracer::disable_daq();
+    TestPacketTracer::set_daq_enable(false);
     CHECK(!TestPacketTracer::is_daq_enabled());
     // user configuration remain enabled
-    CHECK(TestPacketTracer::active());
     CHECK(TestPacketTracer::is_user_enabled());
     
     TestPacketTracer::thread_term();
@@ -422,7 +570,7 @@ TEST_CASE("pause", "[PacketTracer]")
     char test_str[] = "1234567890";
 
     TestPacketTracer::thread_init();
-    TestPacketTracer::enable_user();
+    TestPacketTracer::set_user_enable(true);
     TestPacketTracer::pause();
     TestPacketTracer::pause();
     TestPacketTracer::pause();
@@ -455,7 +603,7 @@ TEST_CASE("pause", "[PacketTracer]")
 TEST_CASE("reasons", "[PacketTracer]")
 {
     TestPacketTracer::thread_init();
-    TestPacketTracer::enable_daq();
+    TestPacketTracer::set_daq_enable(true);
     uint8_t low1 = 100, low2 = 101, high = 102;
     TestPacketTracer::register_verdict_reason(low1, PacketTracer::PRIORITY_LOW);
     TestPacketTracer::register_verdict_reason(low2, PacketTracer::PRIORITY_LOW);
@@ -491,7 +639,7 @@ TEST_CASE("reasons", "[PacketTracer]")
 TEST_CASE("verbosity", "[PacketTracer]")
 {
     TestPacketTracer::thread_init();
-    TestPacketTracer::enable_user();
+    TestPacketTracer::set_user_enable(true);
     PacketTracer::TracerMute mute_1 = TestPacketTracer::get_mute();
     PacketTracer::TracerMute mute_2 = TestPacketTracer::get_mute();
 

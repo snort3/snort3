@@ -37,11 +37,11 @@
 #include "host_tracker/host_cache_module.h"
 #include "latency/latency_module.h"
 #include "log/messages.h"
-#include "log/packet_tracer.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
 #include "memory/memory_module.h"
 #include "packet_io/sfdaq_module.h"
+#include "packet_tracer/packet_tracer_module.h"
 #include "parser/config_file.h"
 #include "parser/parse_conf.h"
 #include "parser/parse_ip.h"
@@ -773,12 +773,6 @@ static const Parameter output_params[] =
 #endif
       "output 20 bytes per lines instead of 16 when dumping buffers" },
 
-    { "enable_packet_trace", Parameter::PT_BOOL, nullptr, "false",
-      "enable summary output of state that determined packet verdict" },
-
-    { "packet_trace_output", Parameter::PT_ENUM, "console | file", "console",
-      "select where to send packet trace" },
-
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -793,12 +787,6 @@ public:
 
     Usage get_usage() const override
     { return GLOBAL; }
-
-    enum PacketTraceOutput
-    {
-        PACKET_TRACE_CONSOLE,
-        PACKET_TRACE_FILE
-    };
 };
 
 bool OutputModule::set(const char*, Value& v, SnortConfig* sc)
@@ -811,26 +799,6 @@ bool OutputModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("dump_payload_verbose") )
         v.update_mask(sc->output_flags, OUTPUT_FLAG__VERBOSE_DUMP);
-
-    else if ( v.is("enable_packet_trace") )
-        sc->enable_packet_trace = v.get_bool();
-
-    else if ( v.is("packet_trace_output") )
-    {
-        switch ( v.get_long() )
-        {
-            case PACKET_TRACE_CONSOLE:
-                PacketTracer::set_log_file("-");
-                break;
-
-            case PACKET_TRACE_FILE:
-                PacketTracer::set_log_file("packet_trace.txt");
-                break;
-
-            default:
-                return false;
-        }
-    }
 
     else if ( v.is("quiet") )
         v.update_mask(sc->logging_flags, LOGGING_FLAG__QUIET);
@@ -1904,6 +1872,7 @@ void module_init()
     ModuleManager::add_module(new CodecModule);
     ModuleManager::add_module(new DetectionModule);
     ModuleManager::add_module(new MemoryModule);
+    ModuleManager::add_module(new PacketTracerModule);
     ModuleManager::add_module(new PacketsModule);
     ModuleManager::add_module(new ProcessModule);
     ModuleManager::add_module(new ProfilerModule);

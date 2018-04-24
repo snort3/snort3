@@ -4,7 +4,6 @@ set (LOG_INCLUDES
     log_text.h
     messages.h
     obfuscator.h
-    packet_tracer.h
     text_log.h
     unified2.h
     u2_packet.h
@@ -16,7 +15,6 @@ add_library ( log OBJECT
     log_text.cc
     messages.cc
     obfuscator.cc
-    packet_tracer.cc
     text_log.cc
     u2_packet.cc
 )
