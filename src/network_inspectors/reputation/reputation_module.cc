@@ -46,6 +46,9 @@ static const Parameter s_params[] =
     { "blacklist", Parameter::PT_STRING, nullptr, nullptr,
       "blacklist file name with IP lists" },
 
+    { "list_dir", Parameter::PT_STRING, nullptr, nullptr,
+      "directory for IP lists and manifest file" },
+
     { "memcap", Parameter::PT_INT, "1:4095", "500",
       "maximum total MB of memory allocated" },
 
@@ -101,18 +104,21 @@ PegCount* ReputationModule::get_counts() const
 { return (PegCount*)&reputationstats; }
 
 ProfileStats* ReputationModule::get_profile() const
-{ return &reputationPerfStats; }
+{ return &reputation_perf_stats; }
 
 bool ReputationModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("blacklist") )
         conf->blacklist_path = snort_strdup(v.get_string());
 
+    else if ( v.is("list_dir") )
+        conf->list_dir = std::string(v.get_string());
+
     else if ( v.is("memcap") )
         conf->memcap = v.get_long();
 
     else if ( v.is("nested_ip") )
-        conf->nestedIP = (NestedIP)v.get_long();
+        conf->nested_ip = (NestedIP)v.get_long();
 
     else if ( v.is("priority") )
         conf->priority = (IPdecision)(v.get_long() + 1);
@@ -121,7 +127,7 @@ bool ReputationModule::set(const char*, Value& v, SnortConfig*)
         conf->scanlocal = v.get_bool();
 
     else if ( v.is("white") )
-        conf->whiteAction = (WhiteAction)v.get_long();
+        conf->white_action = (WhiteAction)v.get_long();
 
     else if ( v.is("whitelist") )
         conf->whitelist_path = snort_strdup(v.get_string());
@@ -148,25 +154,27 @@ bool ReputationModule::begin(const char*, int, SnortConfig*)
 
 bool ReputationModule::end(const char*, int, SnortConfig*)
 {
-    EstimateNumEntries(conf);
-    if (conf->numEntries <= 0)
+    if (!conf->list_dir.empty())
+        read_manifest(MANIFEST_FILENAME, conf);
+
+    add_black_white_List(conf);
+    estimate_num_entries(conf);
+    if (conf->num_entries <= 0)
     {
         ParseWarning(WARN_CONF,
             "reputation: can't find any whitelist/blacklist entries; disabled.");
         return true;
     }
 
-    IpListInit(conf->numEntries + 1, conf);
+    ip_list_init(conf->num_entries + 1, conf);
 
-    if ( (conf->priority == WHITELISTED_TRUST) && (conf->whiteAction == UNBLACK) )
+    if ( (conf->priority == WHITELISTED_TRUST) && (conf->white_action == UNBLACK) )
     {
         ParseWarning(WARN_CONF, "Keyword \"whitelist\" for \"priority\" is "
             "not applied when white action is unblack.\n");
             conf->priority = WHITELISTED_UNBLACK;
     }
 
-    LoadListFile(conf->blacklist_path, conf->local_black_ptr, conf);
-    LoadListFile(conf->whitelist_path, conf->local_white_ptr, conf);
     return true;
 }
 

@@ -40,7 +40,7 @@ namespace snort
 struct SnortConfig;
 }
 
-extern THREAD_LOCAL snort::ProfileStats reputationPerfStats;
+extern THREAD_LOCAL snort::ProfileStats reputation_perf_stats;
 extern unsigned long total_duplicates;
 extern unsigned long total_invalids;
 

@@ -4,3 +4,11 @@ Reputation inspector provides basic IP blacklist/whitelist capabilities, to
 block/drop/pass traffic from IP addresses listed. In the past, we use standard
 Snort rules to implement Reputation-based IP blocking. This inspector will
 address the performance issue and make the IP reputation management easier.
+
+This inspector also supports zones through manifest files. You can specify an 
+action (BLACK, WHITE, MONITOR) for an IP list with zones. The name of manifest 
+file is zone.info. For each line of the manifest file, the format is:
+
+  file_name, list_id, action (black, white, monitor), [zone information]
+
+If zone information is empty, this means all zones are applied

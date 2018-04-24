@@ -24,6 +24,9 @@
 #include "main/thread.h"
 #include "sfrt/sfrt_flat.h"
 
+#include <vector>
+#include <string>
+
 #define NUM_INDEX_PER_ENTRY 4
 
 // Configuration for reputation network inspector
@@ -51,36 +54,53 @@ enum IPdecision
     DECISION_MAX
 };
 
+#define MAX_NUM_ZONES             1052  // FIXIT-L hard limit due to hardware platform
+#define MAX_MANIFEST_LINE_LENGTH  (8*MAX_NUM_ZONES)
+#define MAX_LIST_ID               UINT32_MAX
+
+struct ListFile
+{
+    std::string file_name;
+    int file_type;
+    uint32_t list_id;
+    bool zones[MAX_NUM_ZONES];
+};
+
+typedef std::vector<ListFile*> ListFiles;
+
 struct ListInfo
 {
-    uint8_t listIndex;
-    uint8_t listType;
-    uint32_t listId;
+    uint8_t list_index;
+    uint8_t list_type;
+    uint32_t list_id;
+    bool zones[MAX_NUM_ZONES];
+    char padding[2 + MAX_NUM_ZONES - MAX_NUM_ZONES/4*4];
 };
 
 struct ReputationConfig
 {
     uint32_t memcap = 500;
-    int numEntries = 0;
+    int num_entries = 0;
     bool scanlocal = false;
     IPdecision priority = WHITELISTED_TRUST;
-    NestedIP nestedIP = INNER;
-    WhiteAction whiteAction = UNBLACK;
+    NestedIP nested_ip = INNER;
+    WhiteAction white_action = UNBLACK;
     MEM_OFFSET local_black_ptr = 0;
     MEM_OFFSET local_white_ptr = 0;
     uint8_t* reputation_segment = nullptr;
     char* blacklist_path = nullptr;
     char* whitelist_path = nullptr;
-    bool memCapReached = false;
-    table_flat_t* iplist = nullptr;
-    ListInfo* listInfo = nullptr;
+    bool memcap_reached = false;
+    table_flat_t* ip_list = nullptr;
+    ListFiles list_files;
+    std::string list_dir;
 
     ~ReputationConfig();
 };
 
 struct IPrepInfo
 {
-    char listIndexes[NUM_INDEX_PER_ENTRY];
+    char list_indexes[NUM_INDEX_PER_ENTRY];
     MEM_OFFSET next;
 };
 
