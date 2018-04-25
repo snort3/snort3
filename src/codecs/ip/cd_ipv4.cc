@@ -736,9 +736,8 @@ static void ipv4_codec_tinit()
     std::random_device rd; // for a good seed
     auto id = rd();
 
-#ifdef REG_TEST
-    id = 1;
-#endif
+    if (SnortConfig::static_hash())
+        id = 1;
 
     thread_rand = new std::mt19937(id);
 }
