@@ -239,7 +239,6 @@ fd_status_t File_Decomp_Init(fd_session_t* SessionPtr)
         return( File_Decomp_Error );
 
     SessionPtr->State = STATE_READY;
-    SessionPtr->File_Type = FILE_TYPE_NONE;
     SessionPtr->Decomp_Type = FILE_COMPRESSION_TYPE_NONE;
 
     for ( Sig=0; Signature_Map[Sig].Sig != nullptr; Sig++ )
@@ -277,6 +276,7 @@ fd_session_t* File_Decomp_New()
     New_Session->Next_In = nullptr;
     New_Session->Avail_Out = 0;
     New_Session->Next_Out = nullptr;
+    New_Session->File_Type = FILE_TYPE_NONE;
 
     return New_Session;
 }
@@ -429,6 +429,7 @@ TEST_CASE("File_Decomp_New", "[file_decomp]")
     REQUIRE(p_s->Avail_Out == 0);
     REQUIRE(p_s->Next_In == nullptr);
     REQUIRE(p_s->Next_Out == nullptr);
+    REQUIRE(p_s->File_Type == FILE_TYPE_NONE);
     File_Decomp_Free(p_s);
 }
 

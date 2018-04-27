@@ -38,12 +38,6 @@
 
 using namespace snort;
 
-#if defined(__APPLE__)
-#define __THROW
-#define __SOCKADDR_ARG          struct sockaddr*
-#define __CONST_SOCKADDR_ARG    const struct sockaddr*
-#endif
-
 extern const BaseApi* tcp_connector;
 ConnectorApi* tcpc_api = nullptr;
 
@@ -86,7 +80,7 @@ void Debug::print(const char*, int, uint64_t, const char*, ...) { }
 void ErrorMessage(const char*, ...) { }
 void LogMessage(const char*, ...) { }
 
-int connect (int, __CONST_SOCKADDR_ARG, socklen_t) { return s_connect_return; }
+int connect (int, const struct sockaddr*, socklen_t) { return s_connect_return; } 
 ssize_t send (int, const void*, size_t n, int)
 {
     if ( n == sizeof(TcpConnectorMsgHdr) )
@@ -140,10 +134,11 @@ ssize_t recv (int, void *buf, size_t n, int)
     else
         return 0;
 }
-int socket (int, int, int) __THROW { return s_socket_return; }
-int bind (int, __CONST_SOCKADDR_ARG, socklen_t) __THROW { return s_bind_return; }
-int listen (int, int) __THROW { return s_listen_return; }
-int accept (int, __SOCKADDR_ARG, socklen_t *__restrict) { return s_accept_return; }
+
+int socket (int, int, int) { return s_socket_return; } 
+int bind (int, const struct sockaddr*, socklen_t) { return s_bind_return; } 
+int listen (int, int) { return s_listen_return; } 
+int accept (int, struct sockaddr*, socklen_t*) { return s_accept_return; } 
 int close (int) { return 0; }
 
 static void set_normal_status()

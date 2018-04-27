@@ -36,7 +36,7 @@ class StreamSplitter* Inspector::get_splitter(bool) { return nullptr; }
 Module::Module(char const*, char const*) {}
 bool Module::set(const char*, Value&, SnortConfig*) { return true; }
 void Module::sum_stats(bool) {}
-void Module::show_interval_stats(std::vector<unsigned int, std::allocator<unsigned int> >&, _IO_FILE*) {}
+void Module::show_interval_stats(std::vector<unsigned int, std::allocator<unsigned int> >&, FILE*) {}
 void Module::show_stats() {}
 void Module::reset_stats() {}
 PegCount Module::get_global_count(char const*) const { return 0; }
