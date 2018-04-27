@@ -84,8 +84,7 @@ private:
     std::vector<SnortProtocolId> ind_map;
     std::unordered_map<std::string, SnortProtocolId> ref_table;
 
-    // Start at 1 since 0 will be "unknown".
-    SnortProtocolId protocol_number = 1;
+    SnortProtocolId protocol_number = 0;
 
     void init(ProtocolReference* old_proto_ref);
 };

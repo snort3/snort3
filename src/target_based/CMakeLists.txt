@@ -15,3 +15,5 @@ set ( TARGET_BASED_INCLUDES
 install (FILES ${TARGET_BASED_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/target_based"
 )
+
+add_subdirectory( test )
