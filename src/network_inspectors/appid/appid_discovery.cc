@@ -45,9 +45,13 @@
 #include "detector_plugins/http_url_patterns.h"
 #include "host_port_app_cache.h"
 #include "service_plugins/service_discovery.h"
-#include "thirdparty_appid_utils.h"
+#ifdef ENABLE_THIRD_PARTY_APPID
+#include "tp_appid_session_api.h"
+#endif
 
 using namespace snort;
+
+bool do_discovery(AppIdSession&, IpProtocol, Packet*, AppidSessionDirection&);
 
 AppIdDiscovery::AppIdDiscovery(AppIdInspector& ins)
     : inspector(ins)
@@ -269,7 +273,7 @@ static inline bool is_special_session_monitored(const Packet* p)
 }
 
 static bool set_network_attributes(AppIdSession* asd, Packet* p, IpProtocol& protocol,
-    int& direction)
+    AppidSessionDirection& direction)
 {
     if (asd)
     {
@@ -314,7 +318,7 @@ static bool set_network_attributes(AppIdSession* asd, Packet* p, IpProtocol& pro
     return true;
 }
 
-static bool is_packet_ignored(AppIdSession* asd, Packet* p, int& direction)
+static bool is_packet_ignored(AppIdSession* asd, Packet* p, AppidSessionDirection& direction)
 {
 // FIXIT-M - Need to convert this _dpd stream api call to the correct snort++ method
 #ifdef REMOVED_WHILE_NOT_IN_USE
@@ -357,7 +361,7 @@ static bool is_packet_ignored(AppIdSession* asd, Packet* p, int& direction)
     return false;
 }
 
-static uint64_t is_session_monitored(AppIdSession& asd, const Packet* p, int dir,
+static uint64_t is_session_monitored(AppIdSession& asd, const Packet* p, AppidSessionDirection dir,
     AppIdInspector& inspector)
 {
     uint64_t flags = 0;
@@ -491,7 +495,7 @@ static uint64_t is_session_monitored(AppIdSession& asd, const Packet* p, int dir
     return flow_flags;
 }
 
-static uint64_t is_session_monitored(const Packet* p, int dir, AppIdInspector& inspector)
+static uint64_t is_session_monitored(const Packet* p, AppidSessionDirection dir, AppIdInspector& inspector)
 {
     uint64_t flags = 0;
     uint64_t flow_flags = APPID_SESSION_DISCOVER_APP;
@@ -556,7 +560,7 @@ static uint64_t is_session_monitored(const Packet* p, int dir, AppIdInspector& i
 }
 
 static void lookup_appid_by_host_port(AppIdSession& asd, Packet* p, IpProtocol protocol,
-    int direction)
+    AppidSessionDirection direction)
 {
     HostPortVal* hv = nullptr;
     uint16_t port = 0;
@@ -589,10 +593,10 @@ static void lookup_appid_by_host_port(AppIdSession& asd, Packet* p, IpProtocol p
             asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
             asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
             asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED);
-            if (thirdparty_appid_module)
-                thirdparty_appid_module->session_delete(asd.tpsession, 1);
-
-            asd.tpsession = nullptr;
+#ifdef ENABLE_THIRD_PARTY_APPID
+            if (asd.tpsession)
+                asd.tpsession->reset();
+#endif
         }
     }
 }
@@ -600,8 +604,8 @@ static void lookup_appid_by_host_port(AppIdSession& asd, Packet* p, IpProtocol p
 void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspector)
 {
     IpProtocol protocol = IpProtocol::PROTO_NOT_SET;
-    bool isTpAppidDiscoveryDone = false;
-    int direction = 0;
+    bool isTpAppidDiscoveryDone = true;
+    AppidSessionDirection direction = APP_ID_FROM_INITIATOR;
 
     AppIdSession* asd = (AppIdSession*)p->flow->get_flow_data(AppIdSession::inspector_id);
     if ( !set_network_attributes(asd, p, protocol, direction) )
@@ -616,6 +620,7 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
     if ( is_packet_ignored(asd, p, direction) )
         return;
 
+    // Create a TPDiscovery object from a TPLibHandle.
     uint64_t flow_flags;
     if (asd)
         flow_flags = is_session_monitored(*asd, p, direction, inspector);
@@ -749,9 +754,10 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
 
     asd->check_app_detection_restart();
 
-#ifdef REMOVED_WHILE_NOT_IN_USE
-    // do third party detector processing
-    isTpAppidDiscoveryDone = do_third_party_discovery(asd, protocol, ip, p, direction);
+// #ifdef ENABLE_APPID_THIRD_PARTY
+#if(0)   // FIXIT-H switch to ENABLE_APPID_THIRD_PARTY once bugs fixed
+    if(asd->config->have_tp())
+        isTpAppidDiscoveryDone = do_discovery(*asd,protocol,p,direction);
 #endif
 
     if ( !asd->get_session_flags(APPID_SESSION_PORT_SERVICE_DONE) )

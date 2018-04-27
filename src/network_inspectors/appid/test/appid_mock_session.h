@@ -241,5 +241,15 @@ AppIdDnsSession* AppIdSession::get_dns_session()
     return dsession;
 }
 
+bool AppIdSession::is_third_party_appid_done() const
+{
+    return true;
+}
+
+bool AppIdSession::is_third_party_appid_available() const
+{
+    return false;
+}
+
 #endif
 

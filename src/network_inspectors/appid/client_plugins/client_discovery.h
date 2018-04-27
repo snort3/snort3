@@ -27,6 +27,8 @@
 #include "flow/flow.h"
 #include "log/messages.h"
 
+#include "appid_types.h"
+
 class ClientDetector;
 class AppIdSession;
 
@@ -46,15 +48,15 @@ public:
     static ClientDiscovery& get_instance(AppIdInspector* ins = nullptr);
 
     void finalize_client_plugins();
-    bool do_client_discovery(AppIdSession&, snort::Packet*, int direction);
+    bool do_client_discovery(AppIdSession&, snort::Packet*, AppidSessionDirection direction);
 
 private:
     ClientDiscovery(AppIdInspector& ins);
     void initialize() override;
-    int exec_client_detectors(AppIdSession&, snort::Packet*, int direction);
+    int exec_client_detectors(AppIdSession&, snort::Packet*, AppidSessionDirection direction);
     ClientAppMatch* find_detector_candidates(const snort::Packet* pkt, IpProtocol);
     void create_detector_candidates_list(AppIdSession&, snort::Packet*);
-    int get_detector_candidates_list(AppIdSession&, snort::Packet*, int direction);
+    int get_detector_candidates_list(AppIdSession&, snort::Packet*, AppidSessionDirection direction);
 };
 
 #endif

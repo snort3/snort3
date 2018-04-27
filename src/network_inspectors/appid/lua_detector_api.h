@@ -66,7 +66,7 @@ struct LuaDetectorParameters
 
     const uint8_t* data = nullptr;
     uint16_t size = 0;
-    int dir = 0;
+    AppidSessionDirection dir = APP_ID_FROM_INITIATOR;
     AppIdSession* asd;
     snort::Packet* pkt = nullptr;
     uint8_t macAddress[6] = { 0 };
@@ -75,7 +75,7 @@ struct LuaDetectorParameters
 class LuaStateDescriptor
 {
 public:
-	LuaStateDescriptor() = default;
+    LuaStateDescriptor() = default;
     virtual ~LuaStateDescriptor();
 
     LuaDetectorParameters ldp;
@@ -91,7 +91,7 @@ class LuaServiceDetector : public ServiceDetector
 {
 public:
     LuaServiceDetector(AppIdDiscovery* sdm, const std::string& detector_name, IpProtocol protocol,
-            lua_State* L);
+        lua_State* L);
     int validate(AppIdDiscoveryArgs&) override;
     LuaStateDescriptor* validate_lua_state(bool packet_context) override;
 

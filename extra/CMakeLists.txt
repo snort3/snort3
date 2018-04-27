@@ -77,6 +77,9 @@ foreach ( OPT ${CPP_OPTS_OTHER} )
 
     string ( REGEX REPLACE "[\r\n]" " " CPPFLAGS "${CPPFLAGS}" )
     set ( ${OPT}_CPPFLAGS "${CPPFLAGS}" CACHE STRING "" )
+
+    set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${${OPT}_CPPFLAGS}" CACHE STRING "" FORCE )
+    set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${${OPT}_CPPFLAGS}" CACHE STRING "" FORCE )
 endforeach ( OPT )
 
 # Set these after all tests are done but *before* any subdirectories are included

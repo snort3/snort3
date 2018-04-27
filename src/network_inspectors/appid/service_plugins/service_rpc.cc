@@ -272,7 +272,7 @@ static const RPCProgram* FindRPCProgram(uint32_t program)
     return rpc;
 }
 
-int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, int dir,
+int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, AppidSessionDirection dir,
     AppIdSession& asd, Packet* pkt, ServiceRPCData* rd, const char** pname, uint32_t* program)
 {
     const ServiceRPCCall* call = nullptr;
@@ -463,7 +463,7 @@ int RpcServiceDetector::rpc_udp_validate(AppIdDiscoveryArgs& args)
     int rval;
     const uint8_t* data = args.data;
     Packet* pkt = args.pkt;
-    const int dir = args.dir;
+    const AppidSessionDirection dir = args.dir;
     uint16_t size = args.size;
 
     if (!size)
@@ -553,7 +553,7 @@ int RpcServiceDetector::rpc_tcp_validate(AppIdDiscoveryArgs& args)
     const char* pname = nullptr;
     const uint8_t* data = args.data;
     Packet* pkt = args.pkt;
-    const int dir = args.dir;
+    const AppidSessionDirection dir = args.dir;
     uint16_t size = args.size;
 
     if (!size)

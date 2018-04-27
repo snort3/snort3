@@ -478,7 +478,7 @@ int DnsValidator::dns_validate_answer(const uint8_t* data, uint16_t* offset, uin
     return ret;
 }
 
-int DnsValidator::dns_validate_header(const int dir, const DNSHeader* hdr,
+int DnsValidator::dns_validate_header(const AppidSessionDirection dir, const DNSHeader* hdr,
     bool host_reporting, AppIdSession& asd)
 {
     if (hdr->Opcode > MAX_OPCODE || hdr->Opcode == INVALID_OPCODE)

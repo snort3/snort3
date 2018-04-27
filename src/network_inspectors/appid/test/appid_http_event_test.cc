@@ -29,7 +29,8 @@
 #include "network_inspectors/appid/appid_http_event_handler.cc"
 #include "protocols/protocol_ids.h"
 #include "service_inspectors/http_inspect/http_msg_header.h"
-#include "thirdparty_appid_api.h"
+#include "tp_appid_module_api.h"
+#include "tp_appid_session_api.h"
 
 #include "appid_mock_definitions.h"
 #include "appid_mock_inspector.h"

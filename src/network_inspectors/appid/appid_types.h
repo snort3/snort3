@@ -17,41 +17,16 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// length_app_cache.h author Sourcefire Inc.
+// appid_session.h author Sourcefire Inc.
 
-#ifndef LENGTH_APP_CACHE_H
-#define LENGTH_APP_CACHE_H
+#ifndef APPID_TYPES_H
+#define APPID_TYPES_H
 
-#include "protocols/protocol_ids.h"
-#include "appid_types.h"
-#include "application_ids.h"
-
-#define LENGTH_SEQUENCE_CNT_MAX (5)
-
-#pragma pack(1)
-
-class AppIdConfig;
-enum class IpProtocol : uint8_t;
-
-struct LengthSequenceEntry
+enum AppidSessionDirection
 {
-    AppidSessionDirection direction = APP_ID_FROM_INITIATOR;
-    uint16_t length = 0;       /* payload size (bytes) */
+    APP_ID_FROM_INITIATOR,
+    APP_ID_FROM_RESPONDER,
+    APP_ID_APPID_SESSION_DIRECTION_MAX 
 };
-
-struct LengthKey
-{
-    IpProtocol proto = IpProtocol::PROTO_NOT_SET;  // IpProtocol::TCP or IpProtocol::UDP
-    uint8_t sequence_cnt = 0;                      // num valid entries in sequence
-    LengthSequenceEntry sequence[LENGTH_SEQUENCE_CNT_MAX];
-};
-
-#pragma pack()
-
-void init_length_app_cache();
-void free_length_app_cache();
-AppId find_length_app_cache(const LengthKey*);
-bool add_length_app_cache(const LengthKey*, AppId);
 
 #endif
-

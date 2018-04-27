@@ -1,9 +1,21 @@
+if ( ENABLE_APPID_THIRD_PARTY )
+  set (APPID_TP_INCLUDES
+    tp_appid_module_api.h
+    tp_appid_session_api.h
+    tp_appid_types.h
+    http_xff_fields.h
+    )
+endif()
+
 
 set (APPID_INCLUDES
     appid_api.h
     appid_dns_session.h
     appid_http_session.h
+    appid_types.h
     application_ids.h
+    http_xff_fields.h
+    ${APPID_TP_INCLUDES}
 )
 
 set ( APPID_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR} )
@@ -142,6 +154,15 @@ set ( UTIL_APPID_SOURCES
 	appid_utils/sf_multi_mpse.h
 )
 
+if ( ENABLE_APPID_THIRD_PARTY )
+  set( APPID_TP_SOURCES
+    tp_lib_handler.cc
+    tp_appid_utils.cc
+    tp_lib_handler.h
+    tp_appid_types.h
+    )
+endif()
+
 set ( APPID_SOURCES
     app_forecast.cc
     app_forecast.h
@@ -163,6 +184,7 @@ set ( APPID_SOURCES
     appid_peg_counts.cc
     appid_session.cc
     appid_session.h
+    appid_types.h
     appid_inspector.cc
     appid_inspector.h
     appid_module.cc
@@ -188,10 +210,8 @@ set ( APPID_SOURCES
     lua_detector_util.h
     service_state.cc
     service_state.h
-    thirdparty_appid_api.h
-    thirdparty_appid_types.h
-    thirdparty_appid_utils.cc
-    thirdparty_appid_utils.h
+    http_xff_fields.h
+    ${APPID_TP_SOURCES}
     )
 
 

@@ -463,7 +463,7 @@ int NbnsServiceDetector::validate(AppIdDiscoveryArgs& args)
     const uint8_t* begin;
     const uint8_t* end;
     const uint8_t* data = args.data;
-    const int dir = args.dir;
+    const AppidSessionDirection dir = args.dir;
     uint16_t size = args.size;
 
     if (!size)
@@ -795,7 +795,7 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
     uint32_t tmp;
     int retval = -1;
     const uint8_t* data = args.data;
-    const int dir = args.dir;
+    const AppidSessionDirection dir = args.dir;
     uint16_t size = args.size;
 
     if (dir != APP_ID_FROM_RESPONDER)
@@ -1043,7 +1043,7 @@ int NbdgmServiceDetector::validate(AppIdDiscoveryArgs& args)
     AppId serviceAppId = APP_ID_NETBIOS_DGM;
     AppId miscAppId = APP_ID_NONE;
     const uint8_t* data = args.data;
-    const int dir = args.dir;
+    const AppidSessionDirection dir = args.dir;
     uint16_t size = args.size;
 
     if (!size)

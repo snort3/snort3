@@ -467,7 +467,7 @@ void SipEventHandler::handle(DataEvent& event, Flow* flow)
     {
         const Packet* p = sip_event.get_packet();
         IpProtocol protocol = p->is_tcp() ? IpProtocol::TCP : IpProtocol::UDP;
-        int direction = p->is_from_client() ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
+        AppidSessionDirection direction = p->is_from_client() ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
         asd = AppIdSession::allocate_session(p, protocol, direction,
             client->get_handler().get_inspector());
     }
@@ -490,7 +490,7 @@ void SipEventHandler::client_handler(SipEvent& sip_event, AppIdSession& asd)
         asd.set_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
     }
 
-    int direction = (sip_event.get_packet()->is_from_client()) ?
+    AppidSessionDirection direction = (sip_event.get_packet()->is_from_client()) ?
         APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
 
     if ( sip_event.is_invite() && direction == APP_ID_FROM_INITIATOR )
@@ -540,7 +540,7 @@ void SipEventHandler::service_handler(SipEvent& sip_event, AppIdSession& asd)
     }
 
     ss->serverPkt = 0;
-    int direction = sip_event.get_packet()->is_from_client() ? APP_ID_FROM_INITIATOR :
+    AppidSessionDirection direction = sip_event.get_packet()->is_from_client() ? APP_ID_FROM_INITIATOR :
         APP_ID_FROM_RESPONDER;
 
     if ( direction == APP_ID_FROM_RESPONDER )

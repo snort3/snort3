@@ -32,7 +32,10 @@
 #include "appid_debug.h"
 #include "appid_session.h"
 #include "detector_plugins/http_url_patterns.h"
-#include "thirdparty_appid_utils.h"
+#include "http_xff_fields.h"
+#ifdef ENABLE_APPID_THIRD_PARTY
+#include "tp_appid_session_api.h"
+#endif
 
 static const char* httpFieldName[ MAX_HTTP_FIELD_ID ] = // for use in debug messages
 {
@@ -122,9 +125,10 @@ int AppIdHttpSession::initial_chp_sweep(ChpMatchDescriptor& cmd)
                                              && !asd.get_session_flags(APPID_SESSION_SPDY_SESSION))
         {
             asd.clear_session_flags(APPID_SESSION_CHP_INSPECTING);
-            if (thirdparty_appid_module)
-                thirdparty_appid_module->session_attr_clear(asd.tpsession,
-                    TP_ATTR_CONTINUE_MONITORING);
+#ifdef ENABLE_APPID_THIRD_PARTY
+            if (asd.tpsession)
+                asd.tpsession->clear_attr(TP_ATTR_CONTINUE_MONITORING);
+#endif
         }
     }
     chp_candidate = cah->appIdInstance;
@@ -132,28 +136,25 @@ int AppIdHttpSession::initial_chp_sweep(ChpMatchDescriptor& cmd)
     num_matches = cah->num_matches;
     num_scans = cah->num_scans;
 
-    if (thirdparty_appid_module)
+#ifdef ENABLE_APPID_THIRD_PARTY
+    if (asd.tpsession)
     {
         if ((ptype_scan_counts[RSP_CONTENT_TYPE_FID]))
-            thirdparty_appid_module->session_attr_set(asd.tpsession,
-                TP_ATTR_COPY_RESPONSE_CONTENT);
+            asd.tpsession->set_attr(TP_ATTR_COPY_RESPONSE_CONTENT);
         else
-            thirdparty_appid_module->session_attr_clear(asd.tpsession,
-                TP_ATTR_COPY_RESPONSE_CONTENT);
+            asd.tpsession->clear_attr(TP_ATTR_COPY_RESPONSE_CONTENT);
 
         if ((ptype_scan_counts[RSP_LOCATION_FID]))
-            thirdparty_appid_module->session_attr_set(asd.tpsession,
-                TP_ATTR_COPY_RESPONSE_LOCATION);
+            asd.tpsession->set_attr(TP_ATTR_COPY_RESPONSE_LOCATION);
         else
-            thirdparty_appid_module->session_attr_clear(asd.tpsession,
-                TP_ATTR_COPY_RESPONSE_LOCATION);
+            asd.tpsession->clear_attr(TP_ATTR_COPY_RESPONSE_LOCATION);
 
         if ((ptype_scan_counts[RSP_BODY_FID]))
-            thirdparty_appid_module->session_attr_set(asd.tpsession, TP_ATTR_COPY_RESPONSE_BODY);
+            asd.tpsession->set_attr(TP_ATTR_COPY_RESPONSE_BODY);
         else
-            thirdparty_appid_module->session_attr_clear(asd.tpsession,
-                TP_ATTR_COPY_RESPONSE_BODY);
+            asd.tpsession->clear_attr(TP_ATTR_COPY_RESPONSE_BODY);
     }
+#endif
 
     return 1;
 }
@@ -347,13 +348,14 @@ void AppIdHttpSession::process_chp_buffers()
     }
 }
 
-int AppIdHttpSession::process_http_packet(int direction)
+int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
 {
     snort::Profile http_profile_context(httpPerfStats);
     AppId service_id = APP_ID_NONE;
     AppId client_id = APP_ID_NONE;
     AppId payload_id = APP_ID_NONE;
-
+    bool have_tp = asd.tpsession != nullptr;
+    
     // For fragmented HTTP headers, do not process if none of the fields are set.
     // These fields will get set when the HTTP header is reassembled.
     if ( useragent.empty() && host.empty() && referer.empty() && uri.empty() )
@@ -407,9 +409,9 @@ int AppIdHttpSession::process_http_packet(int direction)
         {
             // Scan Server Header for Vendor & Version
             // FIXIT-M: Should we be checking the scan_flags even when
-            //     thirdparty_appid_module is off?
-            if ( (thirdparty_appid_module && (asd.scan_flags & SCAN_HTTP_VENDOR_FLAG) &&
-                            !server.empty()) || (!thirdparty_appid_module && !server.empty()) )
+            //     tp_appid_module is off?
+            if ( (have_tp && (asd.scan_flags & SCAN_HTTP_VENDOR_FLAG) &&
+                  !server.empty()) || (!have_tp && !server.empty()) )
             {
                 if ( asd.service.get_id() == APP_ID_NONE || asd.service.get_id() == APP_ID_HTTP )
                 {
@@ -485,9 +487,9 @@ int AppIdHttpSession::process_http_packet(int direction)
 
         /* Scan X-Working-With HTTP header */
         // FIXIT-M: Should we be checking the scan_flags even when
-        //     thirdparty_appid_module is off?
-        if ( (thirdparty_appid_module && (asd.scan_flags & SCAN_HTTP_XWORKINGWITH_FLAG) &&
-                        !x_working_with.empty()) || (!thirdparty_appid_module && !x_working_with.empty()) )
+        //     tp_appid_module is off?
+        if ( (have_tp && (asd.scan_flags & SCAN_HTTP_XWORKINGWITH_FLAG) &&
+              !x_working_with.empty()) || (!have_tp && !x_working_with.empty()))
         {
             AppId appId;
             char* version = nullptr;
@@ -519,10 +521,10 @@ int AppIdHttpSession::process_http_packet(int direction)
 
         // Scan Content-Type Header for multimedia types and scan contents
         // FIXIT-M: Should we be checking the scan_flags even when
-        //     thirdparty_appid_module is off?
-        if ( (thirdparty_appid_module && (asd.scan_flags & SCAN_HTTP_CONTENT_TYPE_FLAG)
-                        && !content_type.empty() && !asd.is_payload_appid_set())
-                        || (!thirdparty_appid_module && !asd.is_payload_appid_set() && !content_type.empty()) )
+        //     tp_appid_module is off?
+        if ( (have_tp && (asd.scan_flags & SCAN_HTTP_CONTENT_TYPE_FLAG)
+              && !content_type.empty() && !asd.is_payload_appid_set())
+             || (!have_tp && !asd.is_payload_appid_set() && !content_type.empty()) )
         {
             payload_id = http_matchers->get_appid_by_content_type(content_type.c_str(), content_type.size());
             if (appidDebug->is_active() && payload_id > APP_ID_NONE
@@ -606,11 +608,12 @@ int AppIdHttpSession::process_http_packet(int direction)
     return 0;
 }
 
-// FIXIT-H - This function is unused and untested currently... need to figure who wants it
-// and what it should do
-void AppIdHttpSession::update_http_xff_address(struct XffFieldValue* /*xff_fields*/,
-    uint32_t /*numXffFields*/)
+// FIXIT-H - Implement this function when (reconfigurable) XFF is supported.
+void AppIdHttpSession::update_http_xff_address(struct XffFieldValue* xff_fields,
+    uint32_t numXffFields)
 {
+    UNUSED(xff_fields);
+    UNUSED(numXffFields);
 #if 0
     static const char* defaultXffPrecedence[] =
     {
@@ -637,7 +640,7 @@ void AppIdHttpSession::update_http_xff_address(struct XffFieldValue* /*xff_field
     {
         for (unsigned i = 0; i < numXffFields; i++)
             LogMessage("AppIdDbg %s XFF %s : %s\n", appidDebug->get_debug_session(),
-                xff_fields[i].field, xff_fields[i].value.empty()? "(empty)": xff_fields[i].value);
+               xff_fields[i].field.c_str(), xff_fields[i].value.empty()? "(empty)": xff_fields[i].value);
     }
 
     // xffPrecedence array is sorted based on precedence
@@ -651,32 +654,36 @@ void AppIdHttpSession::update_http_xff_address(struct XffFieldValue* /*xff_field
                 xff_addr = nullptr;
             }
 
-            if (strncasecmp(xff_fields[j].field, xffPrecedence[i], UINT8_MAX) == 0)
+            if (strncasecmp(xff_fields[j].field.c_str(), xffPrecedence[i], UINT8_MAX) == 0)
             {
-                if (!xff_fields[j].value || (xff_fields[j].value[0] == '\0'))
+                if(xff_fields[j].value.empty())
                     return;
 
                 // For a comma-separated list of addresses, pick the last address
                 // FIXIT-L: change to select last address port from 2.9.10-42..not tested
-                xff_addr = new snort::SfIp();
-                char* xff_addr_str = nullptr;
-                char* tmp = strchr(xff_fields[j].value, ',');
 
-                if (tmp)
-                {
-                    xff_addr_str = tmp + 1;
-                }
-                else
-                {
-                    xff_fields[j].value[tmp - xff_fields[j].value] = '\0';
-                    xff_addr_str = xff_fields[j].value;
-                }
+                // FIXIT_H: - this code is wrong. We can't have
+                // tmp-xff_fields[j].value when tmp=0.
 
-                if (xff_addr->set(xff_addr_str) != SFIP_SUCCESS)
-                {
-                    delete xff_addr;
-                    xff_addr = nullptr;
-                }
+                // xff_addr = new snort::SfIp();
+                // char* xff_addr_str = nullptr;
+                // char* tmp = strchr(xff_fields[j].value, ',');
+
+                // if (tmp)
+                // {
+                //     xff_addr_str = tmp + 1;
+                // }
+                // else
+                // {
+                //     xff_fields[j].value[tmp - xff_fields[j].value] = '\0';
+                //     xff_addr_str = xff_fields[j].value;
+                // }
+
+                // if (xff_addr->set(xff_addr_str) != SFIP_SUCCESS)
+                // {
+                //     delete xff_addr;
+                //     xff_addr = nullptr;
+                // }
                 break;
             }
         }
@@ -760,23 +767,14 @@ uint16_t AppIdHttpSession::get_cookie_end_offset()
     return http_fields[REQ_COOKIE_FID].end_offset;
 }
 
-static void replace_header_data(std::string& header, const uint8_t* content, int32_t clen)
-{
-    if (clen <= 0)
-        return;
-
-    header.clear();
-    header.append((const char*) content, clen);
-}
-
 void AppIdHttpSession::update_host(const uint8_t* new_host, int32_t len)
 {
-    replace_header_data(host, new_host, len);
+    host.assign((const char*)new_host, len);
 }
 
 void AppIdHttpSession::update_uri(const uint8_t* new_uri, int32_t len)
 {
-    replace_header_data(uri, new_uri, len);
+    uri.assign((const char*)new_uri, len);
 }
 
 void AppIdHttpSession::update_url()
@@ -787,52 +785,52 @@ void AppIdHttpSession::update_url()
 
 void AppIdHttpSession::update_useragent(const uint8_t* new_ua, int32_t len)
 {
-    replace_header_data(useragent, new_ua, len);
+    useragent.assign((const char*)new_ua, len);
 }
 
 void AppIdHttpSession::update_cookie(const uint8_t* new_cookie, int32_t len)
 {
-    replace_header_data(cookie, new_cookie, len);
+    cookie.assign((const char*)new_cookie, len);
 }
 
 void AppIdHttpSession::update_referer(const uint8_t* new_referer, int32_t len)
 {
-    replace_header_data(referer, new_referer, len);
+    referer.assign((const char*)new_referer, len);
 }
 
 void AppIdHttpSession::update_x_working_with(const uint8_t* new_xww, int32_t len)
 {
-    replace_header_data(x_working_with, new_xww, len);
+    x_working_with.assign((const char*)new_xww, len);
 }
 
 void AppIdHttpSession::update_content_type(const uint8_t* new_content_type, int32_t len)
 {
-    replace_header_data(content_type, new_content_type, len);
+    content_type.assign((const char*)new_content_type, len);
 }
 
 void AppIdHttpSession::update_location(const uint8_t* new_location, int32_t len)
 {
-    replace_header_data(location, new_location, len);
+    location.assign((const char*)new_location, len);
 }
 
 void AppIdHttpSession::update_server(const uint8_t* new_server, int32_t len)
 {
-    replace_header_data(server, new_server, len);
+    server.assign((const char*)new_server, len);
 }
 
 void AppIdHttpSession::update_via(const uint8_t* new_via, int32_t len)
 {
-    replace_header_data(via, new_via, len);
+    via.assign((const char*)new_via, len);
 }
 
 void AppIdHttpSession::update_body(const uint8_t* new_body, int32_t len)
 {
-    replace_header_data(body, new_body, len);
+    body.assign((const char*)new_body, len);
 }
 
 void AppIdHttpSession::update_req_body(const uint8_t* new_req_body, int32_t len)
 {
-    replace_header_data(req_body, new_req_body, len);
+    req_body.assign((const char*)new_req_body, len);
 }
 
 void AppIdHttpSession::update_response_code(const char* new_rc)

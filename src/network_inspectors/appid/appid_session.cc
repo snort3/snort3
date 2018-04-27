@@ -45,7 +45,9 @@
 #include "appid_stats.h"
 #include "appid_utils/ip_funcs.h"
 #include "service_plugins/service_ssl.h"
-#include "thirdparty_appid_utils.h"
+#ifdef ENABLE_APPID_THIRD_PARTY
+#include "tp_appid_session_api.h"
+#endif
 
 using namespace snort;
 
@@ -68,7 +70,8 @@ const uint8_t* service_strstr(const uint8_t* haystack, unsigned haystack_len,
     return nullptr;
 }
 
-AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto, int direction,
+AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto,
+    AppidSessionDirection direction,
     AppIdInspector& inspector)
 {
     uint16_t port = 0;
@@ -89,7 +92,7 @@ AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto, 
 AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t port,
     AppIdInspector& inspector)
     : FlowData(inspector_id, &inspector), config(inspector.get_appid_config()),
-      protocol(proto), inspector(inspector)
+    protocol(proto), inspector(inspector)
 {
     service_ip.clear();
     session_id = ++appid_flow_data_id;
@@ -97,9 +100,6 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t port,
     common.initiator_ip = *ip;
     common.initiator_port = port;
     app_info_mgr = &AppInfoManager::get_instance();
-    if (thirdparty_appid_module)
-        if (!(tpsession = thirdparty_appid_module->session_create()))
-            ErrorMessage("Could not allocate third party session data");
 
     length_sequence.proto = IpProtocol::PROTO_NOT_SET;
     length_sequence.sequence_cnt = 0;
@@ -134,11 +134,13 @@ AppIdSession::~AppIdSession()
         }
     }
 
-    if (thirdparty_appid_module)
+#ifdef ENABLE_APPID_THIRD_PARTY
+    if (tpsession)
     {
-        thirdparty_appid_module->session_delete(tpsession, 0);
+        delete tpsession;
         tpsession = nullptr;
     }
+#endif
 
     delete_session_data();
     free_flow_data();
@@ -243,9 +245,12 @@ void AppIdSession::reinit_session_data()
     client_disco_state = APPID_DISCO_STATE_NONE;
     free_flow_data_by_mask(APPID_SESSION_DATA_CLIENT_MODSTATE_BIT);
 
+#ifdef ENABLE_APPID_THIRD_PARTY
     //3rd party cleaning
-    if (thirdparty_appid_module)
-        thirdparty_appid_module->session_delete(tpsession, 1);
+    if (tpsession)
+        tpsession->reset();
+#endif
+
     init_tpPackets = 0;
     resp_tpPackets = 0;
 
@@ -294,14 +299,15 @@ void AppIdSession::sync_with_snort_protocol_id(AppId newAppId, Packet* p)
         {
             SnortProtocolId tmp_snort_protocol_id = entry->snort_protocol_id;
             // A particular APP_ID_xxx may not be assigned a service_snort_key value
-            // in the rna_app.yaml file entry; so ignore the snort_protocol_id == UNKNOWN_PROTOCOL_ID case.
+            // in the rna_app.yaml file entry; so ignore the snort_protocol_id ==
+            // UNKNOWN_PROTOCOL_ID case.
             if ( tmp_snort_protocol_id == UNKNOWN_PROTOCOL_ID && (newAppId == APP_ID_HTTP2))
                 tmp_snort_protocol_id = snortId_for_http2;
 
             if ( tmp_snort_protocol_id != snort_protocol_id )
             {
                 snort_protocol_id = tmp_snort_protocol_id;
-                if (appidDebug->is_active() && tmp_snort_protocol_id == snortId_for_http2) 
+                if (appidDebug->is_active() && tmp_snort_protocol_id == snortId_for_http2)
                     LogMessage("AppIdDbg %s Telling Snort that it's HTTP/2\n",
                         appidDebug->get_debug_session());
 
@@ -516,7 +522,7 @@ void AppIdSession::set_payload_appid_data(AppId id, char* version)
         return;
 
     if ( app_info_mgr->get_priority(payload.get_id()) > app_info_mgr->get_priority(id) )
-            return;
+        return;
     payload.set_id(id);
     payload.set_version(version);
 }
@@ -575,7 +581,6 @@ void AppIdSession::delete_session_data()
     free_tls_session_data();
     delete dsession;
 }
-
 
 int AppIdSession::add_flow_data(void* data, unsigned id, AppIdFreeFCN fcn)
 {
@@ -651,7 +656,7 @@ int AppIdSession::add_flow_data_id(uint16_t port, ServiceDetector* service)
     return 0;
 }
 
-void AppIdSession::stop_rna_service_inspection(Packet* p, int direction)
+void AppIdSession::stop_rna_service_inspection(Packet* p, AppidSessionDirection direction)
 {
     if (direction == APP_ID_FROM_INITIATOR)
     {
@@ -683,7 +688,7 @@ AppId AppIdSession::pick_service_app_id()
 
         if (service.get_id() > APP_ID_NONE && !deferred)
             return service.get_id();
-        if (is_third_party_appid_available(tpsession))
+        if (is_third_party_appid_available())
         {
             if (tp_app_id > APP_ID_NONE)
                 return tp_app_id;
@@ -720,7 +725,7 @@ AppId AppIdSession::pick_only_service_app_id()
     if (service.get_id() > APP_ID_NONE && !deferred)
         return service.get_id();
 
-    if (is_third_party_appid_available(tpsession) && tp_app_id > APP_ID_NONE)
+    if (is_third_party_appid_available() && tp_app_id > APP_ID_NONE)
         return tp_app_id;
     else if (deferred)
         return service.get_id();
@@ -812,7 +817,7 @@ AppId AppIdSession::pick_fw_referred_payload_app_id()
 }
 
 void AppIdSession::set_application_ids(AppId service_id, AppId client_id,
-        AppId payload_id, AppId misc_id)
+    AppId payload_id, AppId misc_id)
 {
     application_ids[APP_PROTOID_SERVICE] = service_id;
     application_ids[APP_PROTOID_CLIENT] = client_id;
@@ -821,7 +826,7 @@ void AppIdSession::set_application_ids(AppId service_id, AppId client_id,
 }
 
 void AppIdSession::get_application_ids(AppId& service_id, AppId& client_id,
-        AppId& payload_id, AppId& misc_id)
+    AppId& payload_id, AppId& misc_id)
 {
     service_id = application_ids[APP_PROTOID_SERVICE];
     client_id  = application_ids[APP_PROTOID_CLIENT];
@@ -844,8 +849,10 @@ void AppIdSession::reset_session_data()
     tp_payload_app_id = APP_ID_UNKNOWN;
     tp_app_id = APP_ID_UNKNOWN;
 
-    if (thirdparty_appid_module)
-        thirdparty_appid_module->session_delete(tpsession, 1);
+#ifdef ENABLE_APPID_THIRD_PARTY
+    if (this->tpsession)
+        this->tpsession->reset();
+#endif
 }
 
 bool AppIdSession::is_payload_appid_set()
@@ -858,9 +865,10 @@ void AppIdSession::clear_http_flags()
     if (!get_session_flags(APPID_SESSION_SPDY_SESSION))
     {
         clear_session_flags(APPID_SESSION_CHP_INSPECTING);
-        if (thirdparty_appid_module)
-            thirdparty_appid_module->session_attr_clear(tpsession,
-                TP_ATTR_CONTINUE_MONITORING);
+#ifdef ENABLE_APPID_THIRD_PARTY
+        if (this->tpsession)
+            this->tpsession->clear_attr(TP_ATTR_CONTINUE_MONITORING);
+#endif
     }
 }
 
@@ -876,4 +884,44 @@ AppIdDnsSession* AppIdSession::get_dns_session()
     if ( !dsession )
         dsession = new AppIdDnsSession();
     return dsession;
+}
+
+bool AppIdSession::is_third_party_appid_done() const
+{
+#ifdef ENABLE_APPID_THIRD_PARTY
+    if (config->have_tp())
+    {
+        unsigned state;
+
+        if (tpsession)
+            state = tpsession->get_state();
+        else
+            state = TP_STATE_INIT;
+
+        return (state  == TP_STATE_CLASSIFIED || state == TP_STATE_TERMINATED
+               || state == TP_STATE_HA);
+    }
+#endif
+
+    return true;
+}
+
+bool AppIdSession::is_third_party_appid_available() const
+{
+#ifdef ENABLE_APPID_THIRD_PARTY
+    if (config->have_tp())
+    {
+        unsigned state;
+
+        if (tpsession)
+            state = tpsession->get_state();
+        else
+            state = TP_STATE_INIT;
+
+        return (state == TP_STATE_CLASSIFIED || state == TP_STATE_TERMINATED
+               || state == TP_STATE_MONITORING);
+    }
+#endif
+
+    return false;
 }

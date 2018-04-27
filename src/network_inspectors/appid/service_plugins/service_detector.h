@@ -34,13 +34,13 @@ public:
 
     void do_custom_init() override { }
     void register_appid(AppId, unsigned extractsInfo) override;
-    int service_inprocess(AppIdSession&, const snort::Packet*, int dir);
-    int add_service(AppIdSession&, const snort::Packet*, int dir, AppId, const char* vendor = nullptr,
+    int service_inprocess(AppIdSession&, const snort::Packet*, AppidSessionDirection dir);
+    int add_service(AppIdSession&, const snort::Packet*, AppidSessionDirection dir, AppId, const char* vendor = nullptr,
         const char* version = nullptr, const snort::AppIdServiceSubtype* = nullptr);
-    int add_service_consume_subtype(AppIdSession&, const snort::Packet*, int dir, AppId,
+    int add_service_consume_subtype(AppIdSession&, const snort::Packet*, AppidSessionDirection dir, AppId,
         const char* vendor, const char* version, snort::AppIdServiceSubtype*);
-    int incompatible_data(AppIdSession&, const snort::Packet*, int dir);
-    int fail_service(AppIdSession&, const snort::Packet*, int dir);
+    int incompatible_data(AppIdSession&, const snort::Packet*, AppidSessionDirection dir);
+    int fail_service(AppIdSession&, const snort::Packet*, AppidSessionDirection dir);
 
     void add_host_info(AppIdSession&, SERVICE_HOST_INFO_CODE, const void*)
     {
@@ -52,10 +52,10 @@ public:
         asd.misc_app_id = miscId;
     }
 
-    void initialize_expected_session(AppIdSession&, AppIdSession&, uint64_t flags, APPID_SESSION_DIRECTION dir);
+    void initialize_expected_session(AppIdSession&, AppIdSession&, uint64_t flags, AppidSessionDirection dir);
 
 private:
-    int update_service_data(AppIdSession&, const snort::Packet*, int dir, AppId, const char* vendor,
+    int update_service_data(AppIdSession&, const snort::Packet*, AppidSessionDirection dir, AppId, const char* vendor,
         const char* version);
 };
 #endif

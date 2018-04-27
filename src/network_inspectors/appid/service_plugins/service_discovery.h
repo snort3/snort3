@@ -31,6 +31,8 @@
 #include "log/messages.h"
 #include "utils/sflsq.h"
 
+#include "appid_types.h"
+
 class AppIdConfig;
 class AppIdSession;
 class ServiceDetector;
@@ -75,17 +77,16 @@ public:
     ServiceDetector* get_next_tcp_detector(AppIdDetectorsIterator&);
     ServiceDetector* get_next_udp_detector(AppIdDetectorsIterator&);
 
-    bool do_service_discovery(AppIdSession&, snort::Packet*, int);
-    int identify_service(AppIdSession&, snort::Packet*, int dir);
-    int fail_service(AppIdSession&, const snort::Packet*, int dir, ServiceDetector*,
-        ServiceDiscoveryState* sds = nullptr);
-    int incompatible_data(AppIdSession&, const snort::Packet*, int dir, ServiceDetector*);
+    bool do_service_discovery(AppIdSession&, snort::Packet*, AppidSessionDirection dir);
+    int identify_service(AppIdSession&, snort::Packet*, AppidSessionDirection dir);
+    int fail_service(AppIdSession&, const snort::Packet*, AppidSessionDirection dir, ServiceDetector*, ServiceDiscoveryState* sds = nullptr);
+    int incompatible_data(AppIdSession&, const snort::Packet*, AppidSessionDirection dir, ServiceDetector*);
     static int add_ftp_service_state(AppIdSession&);
 
 private:
     ServiceDiscovery(AppIdInspector& ins);
     void initialize() override;
-    void get_next_service(const snort::Packet*, const int dir, AppIdSession&);
+    void get_next_service(const snort::Packet*, const AppidSessionDirection dir, AppIdSession&);
     void get_port_based_services(IpProtocol, uint16_t port, AppIdSession&);
     void match_by_pattern(AppIdSession&, const snort::Packet*, IpProtocol);
 

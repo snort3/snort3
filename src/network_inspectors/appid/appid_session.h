@@ -25,18 +25,20 @@
 #include <map>
 #include <string>
 
+#include "detector_plugins/http_url_patterns.h"
 #include "app_info_table.h"
 #include "appid_api.h"
 #include "appid_app_descriptor.h"
+#include "appid_types.h"
 #include "application_ids.h"
 #include "length_app_cache.h"
 #include "service_state.h"
-#include "detector_plugins/http_url_patterns.h"
 
 class ClientDetector;
 class ServiceDetector;
 class AppIdDnsSession;
 class AppIdHttpSession;
+class ThirdPartyAppIDSession;
 
 using AppIdFreeFCN = void (*)(void*);
 
@@ -87,13 +89,6 @@ enum APPID_DISCOVERY_STATE
     APPID_DISCO_STATE_FINISHED
 };
 
-enum APPID_SESSION_DIRECTION
-{
-    APP_ID_FROM_INITIATOR,
-    APP_ID_FROM_RESPONDER,
-    APP_ID_APPID_SESSION_DIRECTION_MAX // Maximum value of a direction (must be last in the list)
-};
-
 class AppIdFlowData
 {
 public:
@@ -128,6 +123,7 @@ struct CommonAppIdData
     uint16_t initiator_port = 0;
 };
 
+// FIXIT-L: make these const strings
 struct TlsSession
 {
     char* tls_host = nullptr;
@@ -144,8 +140,10 @@ public:
     AppIdSession(IpProtocol, const snort::SfIp*, uint16_t port, AppIdInspector&);
     ~AppIdSession() override;
 
-    static AppIdSession* allocate_session(const snort::Packet*, IpProtocol, int, AppIdInspector&);
-    static AppIdSession* create_future_session(const snort::Packet*, const snort::SfIp*, uint16_t, const snort::SfIp*,
+    static AppIdSession* allocate_session(const snort::Packet*, IpProtocol,
+        AppidSessionDirection, AppIdInspector&);
+    static AppIdSession* create_future_session(const snort::Packet*, const snort::SfIp*, uint16_t,
+        const snort::SfIp*,
         uint16_t, IpProtocol, SnortProtocolId, int, AppIdInspector&);
 
     AppIdInspector& get_inspector() const
@@ -196,7 +194,7 @@ public:
 
     TlsSession* tsession = nullptr;
     unsigned scan_flags = 0;
-    void* tpsession = nullptr;
+    ThirdPartyAppIDSession* tpsession = nullptr;
     uint16_t init_tpPackets = 0;
     uint16_t resp_tpPackets = 0;
     bool tp_reinspect_by_initiator = false;
@@ -233,9 +231,9 @@ public:
     static unsigned inspector_id;
     static void init() { inspector_id = FlowData::create_flow_data_id(); }
 
-    void set_session_flags(uint64_t flags){ common.flags |= flags; }
+    void set_session_flags(uint64_t flags) { common.flags |= flags; }
     void clear_session_flags(uint64_t flags) { common.flags &= ~flags; }
-    uint64_t get_session_flags(uint64_t flags) { return (common.flags & flags); }
+    uint64_t get_session_flags(uint64_t flags) const { return (common.flags & flags); }
     void set_service_detected() { common.flags |= APPID_SESSION_SERVICE_DETECTED; }
     bool is_service_detected() { return common.flags & APPID_SESSION_SERVICE_DETECTED; }
     void set_client_detected() { common.flags |= APPID_SESSION_CLIENT_DETECTED; }
@@ -275,7 +273,7 @@ public:
     void update_encrypted_app_id(AppId);
     void examine_rtmp_metadata();
     void sync_with_snort_protocol_id(AppId, snort::Packet*);
-    void stop_rna_service_inspection(snort::Packet*,  int);
+    void stop_rna_service_inspection(snort::Packet*,  AppidSessionDirection);
 
     bool is_payload_appid_set();
     void clear_http_flags();
@@ -283,6 +281,9 @@ public:
 
     AppIdHttpSession* get_http_session();
     AppIdDnsSession* get_dns_session();
+
+    bool is_third_party_appid_done() const;
+    bool is_third_party_appid_available() const;
 
 private:
     AppIdHttpSession* hsession = nullptr;

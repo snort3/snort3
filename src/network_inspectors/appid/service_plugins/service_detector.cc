@@ -64,7 +64,7 @@ void ServiceDetector::register_appid(AppId appId, unsigned extractsInfo)
     pEntry->flags |= extractsInfo;
 }
 
-int ServiceDetector::service_inprocess(AppIdSession& asd, const Packet* pkt, int dir)
+int ServiceDetector::service_inprocess(AppIdSession& asd, const Packet* pkt, AppidSessionDirection dir)
 {
     if (dir == APP_ID_FROM_INITIATOR ||
         asd.get_session_flags(APPID_SESSION_IGNORE_HOST | APPID_SESSION_UDP_REVERSED))
@@ -80,7 +80,7 @@ int ServiceDetector::service_inprocess(AppIdSession& asd, const Packet* pkt, int
     return APPID_SUCCESS;
 }
 
-int ServiceDetector::update_service_data(AppIdSession& asd, const Packet* pkt, int dir, AppId appId,
+int ServiceDetector::update_service_data(AppIdSession& asd, const Packet* pkt, AppidSessionDirection dir, AppId appId,
     const char* vendor, const char* version)
 {
     uint16_t port = 0;
@@ -132,15 +132,16 @@ int ServiceDetector::update_service_data(AppIdSession& asd, const Packet* pkt, i
     return APPID_SUCCESS;
 }
 
-int ServiceDetector::add_service_consume_subtype(AppIdSession& asd, const Packet* pkt, int dir,
-    AppId appId, const char* vendor, const char* version, AppIdServiceSubtype* subtype)
+int ServiceDetector::add_service_consume_subtype(AppIdSession& asd, const Packet* pkt,
+    AppidSessionDirection dir, AppId appId, const char* vendor, const char* version,
+    AppIdServiceSubtype* subtype)
 {
     asd.subtype = subtype;
     return update_service_data(asd, pkt, dir, appId, vendor, version);
 }
 
-int ServiceDetector::add_service(AppIdSession& asd, const Packet* pkt, int dir, AppId appId,
-    const char* vendor, const char* version, const AppIdServiceSubtype* subtype)
+int ServiceDetector::add_service(AppIdSession& asd, const Packet* pkt, AppidSessionDirection dir,
+    AppId appId, const char* vendor, const char* version, const AppIdServiceSubtype* subtype)
 {
     AppIdServiceSubtype* new_subtype = nullptr;
 
@@ -164,18 +165,18 @@ int ServiceDetector::add_service(AppIdSession& asd, const Packet* pkt, int dir, 
     return update_service_data(asd, pkt, dir, appId, vendor, version);
 }
 
-int ServiceDetector::incompatible_data(AppIdSession& asd, const Packet* pkt, int dir)
+int ServiceDetector::incompatible_data(AppIdSession& asd, const Packet* pkt, AppidSessionDirection dir)
 {
     return static_cast<ServiceDiscovery*>(handler)->incompatible_data(asd, pkt, dir, this);
 }
 
-int ServiceDetector::fail_service(AppIdSession& asd, const Packet* pkt, int dir)
+int ServiceDetector::fail_service(AppIdSession& asd, const Packet* pkt, AppidSessionDirection dir)
 {
     return static_cast<ServiceDiscovery*>(handler)->fail_service(asd, pkt, dir, this);
 }
 
 void ServiceDetector::initialize_expected_session(AppIdSession& parent, AppIdSession& expected,
-    uint64_t flags, APPID_SESSION_DIRECTION dir)
+    uint64_t flags, AppidSessionDirection dir)
 {
     if (dir == APP_ID_FROM_INITIATOR)
     {

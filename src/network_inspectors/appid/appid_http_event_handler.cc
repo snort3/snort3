@@ -38,7 +38,7 @@ using namespace snort;
 
 void HttpEventHandler::handle(DataEvent& event, Flow* flow)
 {
-    int direction;
+    AppidSessionDirection direction;
     const uint8_t* header_start;
     int32_t header_length;
     HttpEvent* http_event = (HttpEvent*)&event;

@@ -116,7 +116,7 @@ int DirectConnectServiceDetector::validate(AppIdDiscoveryArgs& args)
         return udp_validate(data, size, args.dir, args.asd, args.pkt, fd);
 }
 
-int DirectConnectServiceDetector::tcp_validate(const uint8_t* data, uint16_t size, const int dir,
+int DirectConnectServiceDetector::tcp_validate(const uint8_t* data, uint16_t size, const AppidSessionDirection dir,
     AppIdSession& asd, const Packet* pkt, ServiceData* serviceData)
 {
     switch (serviceData->state)
@@ -222,7 +222,7 @@ fail:
     return APPID_NOMATCH;
 }
 
-int DirectConnectServiceDetector::udp_validate(const uint8_t* data, uint16_t size, const int dir,
+int DirectConnectServiceDetector::udp_validate(const uint8_t* data, uint16_t size, const AppidSessionDirection dir,
     AppIdSession& asd, const Packet* pkt, ServiceData* serviceData)
 {
     if (dir == APP_ID_FROM_RESPONDER && serviceData->state == CONN_STATE_SERVICE_DETECTED)

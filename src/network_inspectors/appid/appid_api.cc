@@ -25,10 +25,12 @@
 
 #include "appid_api.h"
 #include "app_info_table.h"
-#include "thirdparty_appid_utils.h"
 #include "service_plugins/service_bootp.h"
 #include "service_plugins/service_netbios.h"
 #include "utils/util.h"
+#ifdef ENABLE_APPID_THIRD_PARTY
+#include "tp_appid_session_api.h"
+#endif
 
 using namespace snort;
 
@@ -195,11 +197,11 @@ bool AppIdApi::is_appid_inspecting_session(Flow& flow)
         if ( asd->common.flow_type == APPID_FLOW_TYPE_NORMAL )
         {
             if ( asd->service_disco_state != APPID_DISCO_STATE_FINISHED ||
-                !is_third_party_appid_done(asd->tpsession) ||
-                asd->get_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_CONTINUE) ||
-                (asd->get_session_flags(APPID_SESSION_ENCRYPTED) &&
-                (asd->get_session_flags(APPID_SESSION_DECRYPTED) ||
-                asd->session_packet_count < SSL_WHITELIST_PKT_LIMIT)) )
+                 !asd->is_third_party_appid_done() ||
+                 asd->get_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_CONTINUE) ||
+                 (asd->get_session_flags(APPID_SESSION_ENCRYPTED) &&
+                  (asd->get_session_flags(APPID_SESSION_DECRYPTED) ||
+                   asd->session_packet_count < SSL_WHITELIST_PKT_LIMIT)) )
             {
                 return true;
             }
@@ -244,7 +246,7 @@ bool AppIdApi::is_appid_available(Flow& flow)
         // FIXIT-M: If a third-party module is not available then this
         //          should probably check if an appId has been discovered
         //          by the local AppId module.
-        return is_third_party_appid_available(asd->tpsession);
+        return asd->is_third_party_appid_available();
     }
 
     return false;
@@ -395,7 +397,7 @@ uint32_t AppIdApi::produce_ha_state(Flow& flow, uint8_t* buf)
     if ( asd && ( get_flow_type(flow) == APPID_FLOW_TYPE_NORMAL ) )
     {
         appHA->flags = APPID_HA_FLAGS_APP;
-        if ( is_third_party_appid_available(asd->tpsession) )
+        if ( asd->is_third_party_appid_available() )
             appHA->flags |= APPID_HA_FLAGS_TP_DONE;
         if ( asd->is_service_detected() )
             appHA->flags |= APPID_HA_FLAGS_SVC_DONE;
@@ -446,8 +448,10 @@ uint32_t AppIdApi::consume_ha_state(Flow& flow, const uint8_t* buf, uint8_t, IpP
                 asd->service_disco_state = APPID_DISCO_STATE_FINISHED;
 
             asd->client_disco_state = APPID_DISCO_STATE_FINISHED;
-            if ( thirdparty_appid_module )
-                thirdparty_appid_module->session_state_set(asd->tpsession, TP_STATE_HA);
+#ifdef ENABLE_APPID_THIRD_PARTY
+            if (asd->tpsession)
+                asd->tpsession->set_state(TP_STATE_HA);
+#endif
         }
 #else
         if ( !asd )
@@ -457,9 +461,12 @@ uint32_t AppIdApi::consume_ha_state(Flow& flow, const uint8_t* buf, uint8_t, IpP
         }
 #endif
 
-        if ( ( appHA->flags & APPID_HA_FLAGS_TP_DONE ) && thirdparty_appid_module )
+        if( (appHA->flags & APPID_HA_FLAGS_TP_DONE) && asd->tpsession )
         {
-            thirdparty_appid_module->session_state_set(asd->tpsession, TP_STATE_TERMINATED);
+#ifdef ENABLE_APPID_THIRD_PARTY
+            if( asd->tpsession)
+                asd->tpsession->set_state(TP_STATE_TERMINATED);
+#endif
             asd->set_session_flags(APPID_SESSION_NO_TPI);
         }
 
@@ -514,7 +521,7 @@ bool AppIdApi::is_http_inspection_done(Flow& flow)
 
     if ( AppIdSession* asd = get_appid_session(flow) )
         if ( ( asd->common.flow_type == APPID_FLOW_TYPE_NORMAL ) &&
-                    !is_third_party_appid_done(asd->tpsession) )
+             !asd->is_third_party_appid_done() )
             done = false;
 
     return done;

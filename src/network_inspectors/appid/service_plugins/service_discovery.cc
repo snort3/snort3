@@ -75,10 +75,13 @@
 #include "service_tftp.h"
 #include "service_timbuktu.h"
 #include "service_tns.h"
-#include "thirdparty_appid_utils.h"
 
 #ifdef REG_TEST
 #include "service_regtest.h"
+#endif
+
+#ifdef ENABLE_APPID_THIRD_PARTY
+#include "tp_appid_session_api.h"
 #endif
 
 using namespace snort;
@@ -346,7 +349,7 @@ void ServiceDiscovery::get_port_based_services(IpProtocol protocol, uint16_t por
  * been specified (service_detector).  Basically, this function handles going
  * through the main port/pattern search (and returning which detector to add
  * next to the list of detectors to try (even if only 1)). */
-void ServiceDiscovery::get_next_service(const Packet* p, const int dir, AppIdSession& asd)
+void ServiceDiscovery::get_next_service(const Packet* p, const AppidSessionDirection dir, AppIdSession& asd)
 {
     auto proto = asd.protocol;
 
@@ -394,7 +397,7 @@ void ServiceDiscovery::get_next_service(const Packet* p, const int dir, AppIdSes
     }
 }
 
-int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p, int dir)
+int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p, AppidSessionDirection dir)
 {
     ServiceDiscoveryState* sds = nullptr;
     bool got_brute_force = false;
@@ -562,7 +565,7 @@ int ServiceDiscovery::add_ftp_service_state(AppIdSession& asd)
     return asd.add_flow_data_id(21, ftp_service);
 }
 
-bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p, int direction)
+bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p, AppidSessionDirection direction)
 {
     bool isTpAppidDiscoveryDone = false;
 
@@ -593,7 +596,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p, int di
                 asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
             }
         }
-        else if (is_third_party_appid_available(asd.tpsession))
+        else if (asd.is_third_party_appid_available())
         {
             if (asd.tp_app_id > APP_ID_NONE)
             {
@@ -623,10 +626,10 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p, int di
 
     //stop rna inspection as soon as tp has classified a valid AppId later in the session
     if ( asd.service_disco_state == APPID_DISCO_STATE_STATEFUL &&
-        prevRnaServiceState == APPID_DISCO_STATE_STATEFUL &&
-        !asd.get_session_flags(APPID_SESSION_NO_TPI) &&
-        is_third_party_appid_available(asd.tpsession) &&
-        asd.tp_app_id > APP_ID_NONE && asd.tp_app_id < SF_APPID_MAX)
+         prevRnaServiceState == APPID_DISCO_STATE_STATEFUL &&
+         !asd.get_session_flags(APPID_SESSION_NO_TPI) &&
+         asd.is_third_party_appid_available() &&
+         asd.tp_app_id > APP_ID_NONE && asd.tp_app_id < SF_APPID_MAX)
     {
         AppInfoTableEntry* entry = asd.app_info_mgr->get_app_info_entry(asd.tp_app_id);
         if ( entry && entry->service_detector &&
@@ -660,7 +663,10 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p, int di
             asd.stop_rna_service_inspection(p, direction);
             asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
             //  - Shut down TP.
-            thirdparty_appid_module->session_state_set(asd.tpsession, TP_STATE_TERMINATED);
+
+#ifdef ENABLE_APPID_THIRD_PARTY
+            asd.tpsession->set_state(TP_STATE_TERMINATED);
+#endif
             //  - Just ignore everything from now on.
             asd.set_session_flags(APPID_SESSION_IGNORE_FLOW);
         }
@@ -707,7 +713,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p, int di
  * client ultimately we will have to fail the service. If the same behavior is seen from different
  * clients going to same service then this most likely the service is something else.
  */
-int ServiceDiscovery::incompatible_data(AppIdSession& asd, const Packet* pkt, int dir,
+int ServiceDiscovery::incompatible_data(AppIdSession& asd, const Packet* pkt, AppidSessionDirection dir,
     ServiceDetector* service)
 {
     if (service)
@@ -744,7 +750,7 @@ int ServiceDiscovery::incompatible_data(AppIdSession& asd, const Packet* pkt, in
     return APPID_SUCCESS;
 }
 
-int ServiceDiscovery::fail_service(AppIdSession& asd, const Packet* pkt, int dir,
+int ServiceDiscovery::fail_service(AppIdSession& asd, const Packet* pkt, AppidSessionDirection dir,
     ServiceDetector* service, ServiceDiscoveryState* sds)
 {
     if ( service )

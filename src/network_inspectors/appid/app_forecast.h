@@ -24,6 +24,7 @@
 
 #include <ctime>
 #include "flow/flow.h"
+#include "appid_types.h"
 #include "application_ids.h"
 
 class AppIdSession;
@@ -62,8 +63,8 @@ struct AFActVal
 int init_appid_forecast();
 void clean_appid_forecast();
 void add_af_indicator(AppId, AppId, AppId);
-void check_session_for_AF_indicator(snort::Packet*, int, AppId);
-AppId check_session_for_AF_forecast(AppIdSession&, snort::Packet*, int, AppId);
+void check_session_for_AF_indicator(snort::Packet*, AppidSessionDirection, AppId);
+AppId check_session_for_AF_forecast(AppIdSession&, snort::Packet*, AppidSessionDirection, AppId);
 
 #endif
 

@@ -23,6 +23,7 @@
 #define APP_ID_CONFIG_H
 
 #include <array>
+#include <string>
 
 #include "application_ids.h"
 #include "framework/decode_data.h"
@@ -38,6 +39,7 @@
 
 struct NetworkSet;
 class AppInfoManager;
+class TPLibHandler;
 
 extern unsigned appIdPolicyId;
 extern uint32_t app_id_netmasks[];
@@ -67,7 +69,8 @@ public:
     unsigned long app_stats_rollover_size = 0;
     unsigned long app_stats_rollover_time = 0;
     const char* app_detector_dir = nullptr;
-    const char* thirdparty_appid_dir = nullptr;
+    std::string tp_appid_path = "";
+    std::string tp_appid_config = "";
     uint32_t instance_id = 0;
     uint32_t memcap = 0;
     bool debug = false;
@@ -121,6 +124,11 @@ public:
     AppIdModuleConfig* mod_config = nullptr;
     unsigned appIdPolicyId = 53;
 
+    const TPLibHandler * tp_handler() const;
+    bool have_tp() const;
+    void tp_appid_module_tinit();
+    void tp_appid_module_tterm();
+
 private:
     void read_port_detectors(const char* files);
     void configure_analysis_networks(char* toklist[], uint32_t flag);
@@ -132,6 +140,11 @@ private:
     void display_port_config();
 
     AppInfoManager& app_info_mgr;
+
+// #ifdef ENABLE_APPID_THIRD_PARTY
+    // class that holds pointers to third party objects in thirdparty.so
+    TPLibHandler* tph = nullptr;
+// #endif
 };
 
 #endif

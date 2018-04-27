@@ -796,7 +796,7 @@ static inline void WatchForCommandResult(ServiceFTPData* fd, AppIdSession& asd, 
 
 void FtpServiceDetector::create_expected_session(AppIdSession& asd, const Packet* pkt, const SfIp* cliIp,
     uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol proto,
-    int flags, APPID_SESSION_DIRECTION dir)
+    int flags, AppidSessionDirection dir)
 {
     if(ftp_data_snort_protocol_id == UNKNOWN_PROTOCOL_ID)
         ftp_data_snort_protocol_id = SnortConfig::get_conf()->proto_ref->find("ftp-data");

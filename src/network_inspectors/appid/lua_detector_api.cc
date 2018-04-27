@@ -284,7 +284,8 @@ static int service_analyze_payload(lua_State* L)
 }
 
 // FIXIT-M - the comments and code below for service_get_service_id don't appear to be useful
-//           the ud->server.service_id field is set to APP_ID_UNKNOWN at init time and never updated
+//           the ud->server.service_id field is set to APP_ID_UNKNOWN at init time and never
+// updated
 //           is this function ever used?
 /**design: don't store service_id in detector structure since a single detector
  * can get service_id for multiple protocols. For example SIP which gets Id for RTP and
@@ -930,7 +931,7 @@ static int detector_add_http_pattern(lua_State* L)
     const uint8_t* pattern_str = (const uint8_t*)lua_tolstring(L, ++index, &pattern_size);
     uint32_t app_id = lua_tointeger(L, ++index);
     DetectorHTTPPattern pattern;
-    if( pattern.init(pattern_str, pattern_size, seq, service_id, client_id,
+    if ( pattern.init(pattern_str, pattern_size, seq, service_id, client_id,
         payload_id, app_id) )
     {
         HttpPatternMatchers::get_instance()->insert_http_pattern(pat_type, pattern);
@@ -1298,7 +1299,6 @@ static int detector_add_chp_action(lua_State* L)
     // Verify detector user data and that we are not in packet context
     auto& ud = *UserData<AppIdDetector>::check(L, DETECTOR, index);
     ud->validate_lua_state(false);
-
 
     // Parameter 1
     AppId appId = lua_tointeger(L, ++index);
@@ -1864,7 +1864,7 @@ static int add_http_pattern(lua_State* L)
     size_t pattern_size = 0;
     const uint8_t* pattern_str = (const uint8_t*)lua_tolstring(L, ++index, &pattern_size);
     DetectorHTTPPattern pattern;
-    if( pattern.init(pattern_str, pattern_size, seq, service_id, client_id,
+    if ( pattern.init(pattern_str, pattern_size, seq, service_id, client_id,
         payload_id, APP_ID_NONE) )
     {
         HttpPatternMatchers::get_instance()->insert_http_pattern(pat_type, pattern);
@@ -2151,12 +2151,25 @@ static const luaL_Reg detector_methods[] =
 {
     /* Obsolete API names.  No longer use these!  They are here for backward
      * compatibility and will eventually be removed. */
-    { "memcmp",                   detector_memcmp },                 //  - "memcmp" is now "matchSimplePattern" (below)
-    { "getProtocolType",          detector_get_protocol_type },      //  - "getProtocolType" is now "getL4Protocol" (below)
-    { "inCompatibleData",         service_set_incompatible_data },   //  - "inCompatibleData" is now "markIncompleteData" (below)
-    { "addDataId",                service_add_data_id },             //  - "addDataId" is now "addAppIdDataToFlow" (below)
-    { "service_inCompatibleData", service_set_incompatible_data },   //  - "service_inCompatibleData" is now "service_markIncompleteData" (below)
-    { "service_addDataId",        service_add_data_id },             //  - "service_addDataId" is now "service_addAppIdDataToFlow" (below)
+    { "memcmp",                   detector_memcmp },                 //  - "memcmp" is now
+                                                                     // "matchSimplePattern"
+                                                                     // (below)
+    { "getProtocolType",          detector_get_protocol_type },      //  - "getProtocolType" is now
+                                                                     // "getL4Protocol" (below)
+    { "inCompatibleData",         service_set_incompatible_data },   //  - "inCompatibleData" is
+                                                                     // now "markIncompleteData"
+                                                                     // (below)
+    { "addDataId",                service_add_data_id },             //  - "addDataId" is now
+                                                                     // "addAppIdDataToFlow"
+                                                                     // (below)
+    { "service_inCompatibleData", service_set_incompatible_data },   //  - "service_inCompatibleData"
+                                                                     // is now
+                                                                     // "service_markIncompleteData"
+                                                                     // (below)
+    { "service_addDataId",        service_add_data_id },             //  - "service_addDataId" is
+                                                                     // now
+                                                                     // "service_addAppIdDataToFlow"
+                                                                     // (below)
 
     { "getPacketSize",            detector_get_packet_size },
     { "getPacketDir",             detector_get_packet_direction },
@@ -2379,14 +2392,15 @@ int LuaStateDescriptor::lua_validate(AppIdDiscoveryArgs& args)
     return rc;
 }
 
-static inline void init_lsd(LuaStateDescriptor* lsd, const std::string& detector_name, lua_State* L)
+static inline void init_lsd(LuaStateDescriptor* lsd, const std::string& detector_name,
+    lua_State* L)
 {
-	lsd->service_id = APP_ID_UNKNOWN;
-	get_lua_field(L, -1, "init", lsd->package_info.initFunctionName);
-	get_lua_field(L, -1, "clean", lsd->package_info.cleanFunctionName);
-	get_lua_field(L, -1, "validate", lsd->package_info.validateFunctionName);
-	get_lua_field(L, -1, "minimum_matches", lsd->package_info.minimum_matches);
-	lsd->package_info.name = detector_name;
+    lsd->service_id = APP_ID_UNKNOWN;
+    get_lua_field(L, -1, "init", lsd->package_info.initFunctionName);
+    get_lua_field(L, -1, "clean", lsd->package_info.cleanFunctionName);
+    get_lua_field(L, -1, "validate", lsd->package_info.validateFunctionName);
+    get_lua_field(L, -1, "minimum_matches", lsd->package_info.minimum_matches);
+    lsd->package_info.name = detector_name;
     lua_pop(L, 1);    // pop client table
     lua_pop(L, 1);    // pop DetectorPackageInfo table
     lsd->my_lua_state = L;
@@ -2394,21 +2408,21 @@ static inline void init_lsd(LuaStateDescriptor* lsd, const std::string& detector
 
 static inline bool lua_params_validator(LuaDetectorParameters& ldp, bool packet_context)
 {
-	if ( packet_context )
-	{
-		assert(ldp.asd);
-		assert(ldp.pkt);
-	}
-	else
-	{
-		assert(!ldp.pkt);
-	}
+    if ( packet_context )
+    {
+        assert(ldp.asd);
+        assert(ldp.pkt);
+    }
+    else
+    {
+        assert(!ldp.pkt);
+    }
 
 #ifdef NDEBUG
     UNUSED(ldp);
 #endif
 
-	return true;
+    return true;
 }
 
 LuaServiceDetector::LuaServiceDetector(AppIdDiscovery* sdm, const std::string& detector_name,
@@ -2418,7 +2432,7 @@ LuaServiceDetector::LuaServiceDetector(AppIdDiscovery* sdm, const std::string& d
     name = detector_name;
     proto = protocol;
     handler->register_detector(name, this, proto);
-	init_lsd(&lsd, detector_name, L);
+    init_lsd(&lsd, detector_name, L);
     UserData<AppIdDetector>::push(L, DETECTOR, this);
     // add a lua reference so the detector doesn't get garbage-collected
     lua_pushvalue(L, -1);
@@ -2427,8 +2441,8 @@ LuaServiceDetector::LuaServiceDetector(AppIdDiscovery* sdm, const std::string& d
 
 LuaStateDescriptor* LuaServiceDetector::validate_lua_state(bool packet_context)
 {
-	lua_params_validator(lsd.ldp, packet_context);
-	return &lsd;
+    lua_params_validator(lsd.ldp, packet_context);
+    return &lsd;
 }
 
 int LuaServiceDetector::validate(AppIdDiscoveryArgs& args)
@@ -2438,22 +2452,22 @@ int LuaServiceDetector::validate(AppIdDiscoveryArgs& args)
 
 LuaClientDetector::LuaClientDetector(AppIdDiscovery* cdm, const std::string& detector_name,
     IpProtocol protocol, lua_State* L)
- {
-     handler = cdm;
-     name = detector_name;
-     proto = protocol;
-     handler->register_detector(name, this, proto);
-     init_lsd(&lsd, detector_name, L);
-     UserData<AppIdDetector>::push(L, DETECTOR, this);
-     // add a lua reference so the detector doesn't get garbage-collected
-     lua_pushvalue(L, -1);
-     lsd.detector_user_data_ref = luaL_ref(L, LUA_REGISTRYINDEX);
- }
+{
+    handler = cdm;
+    name = detector_name;
+    proto = protocol;
+    handler->register_detector(name, this, proto);
+    init_lsd(&lsd, detector_name, L);
+    UserData<AppIdDetector>::push(L, DETECTOR, this);
+    // add a lua reference so the detector doesn't get garbage-collected
+    lua_pushvalue(L, -1);
+    lsd.detector_user_data_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+}
 
 LuaStateDescriptor* LuaClientDetector::validate_lua_state(bool packet_context)
 {
-	lua_params_validator(lsd.ldp, packet_context);
-	return &lsd;
+    lua_params_validator(lsd.ldp, packet_context);
+    return &lsd;
 }
 
 int LuaClientDetector::validate(AppIdDiscoveryArgs& args)

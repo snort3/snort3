@@ -27,7 +27,7 @@ class Inspector;
 struct ThirdPartyAppIDModule;
 
 AppIdConfig* pAppidActiveConfig = nullptr;
-THREAD_LOCAL ThirdPartyAppIDModule* thirdparty_appid_module = nullptr;
+ThirdPartyAppIDModule* tp_appid_module = nullptr;
 
 char* snort_strndup(const char* src, size_t dst_size)
 {
@@ -87,13 +87,12 @@ ServiceDiscoveryState* AppIdServiceState::add(SfIp const*, IpProtocol, unsigned 
 void ServiceDiscoveryState::set_service_id_valid(ServiceDetector*) { }
 
 // Stubs for service_plugins/service_discovery.h
-int ServiceDiscovery::incompatible_data(AppIdSession&, const Packet*, int, ServiceDetector*)
+int ServiceDiscovery::incompatible_data(AppIdSession&, const Packet*, AppidSessionDirection, ServiceDetector*)
 {
   return 0;
 }
 
-int ServiceDiscovery::fail_service(AppIdSession&, const Packet*, int, ServiceDetector*,
-    ServiceDiscoveryState*)
+int ServiceDiscovery::fail_service(AppIdSession&, const Packet*, AppidSessionDirection, ServiceDetector*, ServiceDiscoveryState*)
 {
   return 0;
 }

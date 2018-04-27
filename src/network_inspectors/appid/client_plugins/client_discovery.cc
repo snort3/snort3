@@ -49,7 +49,6 @@
 #include "detector_plugins/detector_pop3.h"
 #include "detector_plugins/detector_sip.h"
 #include "detector_plugins/detector_smtp.h"
-#include "thirdparty_appid_utils.h"
 
 using namespace snort;
 
@@ -271,7 +270,7 @@ void ClientDiscovery::create_detector_candidates_list(AppIdSession& asd, Packet*
     free_matched_list(&match_list);
 }
 
-int ClientDiscovery::get_detector_candidates_list(AppIdSession& asd, Packet* p, int direction)
+int ClientDiscovery::get_detector_candidates_list(AppIdSession& asd, Packet* p, AppidSessionDirection direction)
 {
     if (direction == APP_ID_FROM_INITIATOR)
     {
@@ -286,7 +285,7 @@ int ClientDiscovery::get_detector_candidates_list(AppIdSession& asd, Packet* p, 
     return APPID_SESSION_SUCCESS;
 }
 
-int ClientDiscovery::exec_client_detectors(AppIdSession& asd, Packet* p, int direction)
+int ClientDiscovery::exec_client_detectors(AppIdSession& asd, Packet* p, AppidSessionDirection direction)
 {
     int ret = APPID_INPROCESS;
 
@@ -327,7 +326,7 @@ int ClientDiscovery::exec_client_detectors(AppIdSession& asd, Packet* p, int dir
     return ret;
 }
 
-bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p, int direction)
+bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p, AppidSessionDirection direction)
 {
     bool isTpAppidDiscoveryDone = false;
     AppInfoTableEntry* entry;
@@ -342,7 +341,7 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p, int dire
     {
         if ( p->flow->get_session_flags() & SSNFLAG_MIDSTREAM )
             asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
-        else if ( is_third_party_appid_available(asd.tpsession)
+        else if ( asd.is_third_party_appid_available()
             && ( asd.tp_app_id > APP_ID_NONE && asd.tp_app_id < SF_APPID_MAX ) )
         {
             //tp has positively identified appId, Dig deeper only if sourcefire
@@ -370,11 +369,11 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p, int dire
 
     //stop rna inspection as soon as tp has classified a valid AppId
     if ( ( asd.client_disco_state == APPID_DISCO_STATE_STATEFUL ||
-        asd.client_disco_state == APPID_DISCO_STATE_DIRECT) &&
-        asd.client_disco_state == prevRnaClientState &&
-        !asd.get_session_flags(APPID_SESSION_NO_TPI)  &&
-        is_third_party_appid_available(asd.tpsession) &&
-        asd.tp_app_id > APP_ID_NONE && asd.tp_app_id < SF_APPID_MAX)
+           asd.client_disco_state == APPID_DISCO_STATE_DIRECT) &&
+         asd.client_disco_state == prevRnaClientState &&
+         !asd.get_session_flags(APPID_SESSION_NO_TPI)  &&
+         asd.is_third_party_appid_available() &&
+         asd.tp_app_id > APP_ID_NONE && asd.tp_app_id < SF_APPID_MAX)
     {
         entry = asd.app_info_mgr->get_app_info_entry(asd.tp_app_id);
         if ( !( entry && entry->client_detector

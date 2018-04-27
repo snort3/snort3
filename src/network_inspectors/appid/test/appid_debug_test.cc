@@ -188,8 +188,13 @@ TEST(appid_debug, ipv6_test)
     CHECK_EQUAL(appidDebug->is_active(), true);
 
     // get_debug_session()
+#ifdef REG_TEST
     const char* str = "2001:0db8:85a3:0000:0000:8a2e:0370:7334 1234 -> "
             "2001:0db8:85a3:0000:0000:8a2e:0370:7335 443 17 AS=100 ID=3";
+#else
+    const char* str = "2001:db8:85a3::8a2e:370:7334 1234 -> "
+            "2001:db8:85a3::8a2e:370:7335 443 17 AS=100 ID=3";
+#endif
     CHECK_TRUE(strcmp(appidDebug->get_debug_session(), str) == 0);
 }
 

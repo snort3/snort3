@@ -25,9 +25,11 @@
 #include <string>
 #include <vector>
 
-#include "application_ids.h"
 #include "flow/flow.h"
 #include "sfip/sf_ip.h"
+#include "appid_types.h"
+#include "application_ids.h"
+#include "http_xff_fields.h"
 
 class AppIdSession;
 class ChpMatchDescriptor;
@@ -48,19 +50,13 @@ struct HttpField
     uint16_t end_offset = 0;
 };
 
-struct XffFieldValue
-{
-    char* field;
-    char* value;
-};
-
 class AppIdHttpSession
 {
 public:
     AppIdHttpSession(AppIdSession&);
     virtual ~AppIdHttpSession();
 
-    int process_http_packet(int);
+    int process_http_packet(AppidSessionDirection direction);
     void update_http_xff_address(struct XffFieldValue* xff_fields, uint32_t numXffFields);
 
     const char* get_user_agent()

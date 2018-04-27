@@ -57,8 +57,7 @@ class AppIdPatternMatchNode
 {
 public:
     AppIdPatternMatchNode(AppIdDetector* detector, int start, unsigned len)
-        : service(detector), pattern_start_pos(start), size(len)
-    {}
+        : service(detector), pattern_start_pos(start), size(len) { }
 
     bool valid_match(int end_position)
     {

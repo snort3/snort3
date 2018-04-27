@@ -73,10 +73,10 @@ static const Parameter s_params[] =
       "enable appid debug logging" },
     { "dump_ports", Parameter::PT_BOOL, nullptr, "false",
       "enable dump of appid port information" },
-#ifdef REMOVED_WHILE_NOT_IN_USE
-    { "thirdparty_appid_dir", Parameter::PT_STRING, nullptr, nullptr,
-      "directory to load thirdparty appid detectors from" },
-#endif
+    { "tp_appid_path", Parameter::PT_STRING, nullptr, nullptr,
+      "path to third party appid dynamic library" },
+    { "tp_appid_config", Parameter::PT_STRING, nullptr, nullptr,
+      "path to third party appid configuration file" },
     { "log_all_sessions", Parameter::PT_BOOL, nullptr, "false",
       "enable logging of all appid sessions" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -236,8 +236,10 @@ bool AppIdModule::set(const char* fqn, Value& v, SnortConfig* c)
         config->app_stats_rollover_time = v.get_long();
     else if ( v.is("app_detector_dir") )
         config->app_detector_dir = snort_strdup(v.get_string());
-    else if ( v.is("thirdparty_appid_dir") )
-        config->thirdparty_appid_dir = snort_strdup(v.get_string());
+    else if ( v.is("tp_appid_path") )
+        config->tp_appid_path = std::string(v.get_string());
+    else if ( v.is("tp_appid_config") )
+        config->tp_appid_config = std::string(v.get_string());
     else if ( v.is("instance_id") )
         config->instance_id = v.get_long();
     else if ( v.is("debug") )

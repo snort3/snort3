@@ -89,7 +89,7 @@ void add_af_indicator(AppId indicator, AppId forecast, AppId target)
         ErrorMessage("LuaDetectorApi:Failed to add AFElement for appId %d", indicator);
 }
 
-static inline void rekey_master_AF_key(Packet* p, int dir, AppId forecast)
+static inline void rekey_master_AF_key(Packet* p, AppidSessionDirection dir, AppId forecast)
 {
     const SfIp* src = dir ? p->ptrs.ip_api.get_dst() : p->ptrs.ip_api.get_src();
 
@@ -99,7 +99,7 @@ static inline void rekey_master_AF_key(Packet* p, int dir, AppId forecast)
     master_key.forecast = forecast;
 }
 
-void check_session_for_AF_indicator(Packet* p, int dir, AppId indicator)
+void check_session_for_AF_indicator(Packet* p, AppidSessionDirection dir, AppId indicator)
 {
     AFElement* ind_element;
     if (!(ind_element = (AFElement*)xhash_find(AF_indicators, &indicator)))
@@ -122,7 +122,7 @@ void check_session_for_AF_indicator(Packet* p, int dir, AppId indicator)
     xhash_add(AF_actives, &master_key, &new_active_value);
 }
 
-AppId check_session_for_AF_forecast(AppIdSession& asd, Packet* p, int dir, AppId forecast)
+AppId check_session_for_AF_forecast(AppIdSession& asd, Packet* p, AppidSessionDirection dir, AppId forecast)
 {
     AFActVal* check_act_val;
 

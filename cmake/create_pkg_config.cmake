@@ -60,6 +60,9 @@ if(UUID_INCLUDE_DIR)
     set(UUID_CPPFLAGS "-I${UUID_INCLUDE_DIR}")
 endif()
 
+if(ENABLE_APPID_THIRD_PARTY)
+    set(TP_APPID_CPPFLAGS "-DENABLE_APPID_THIRD_PARTY")
+endif()
 # create & install pkgconfig file
 
 configure_file(

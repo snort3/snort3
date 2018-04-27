@@ -30,7 +30,6 @@
 
 #include "app_info_table.h"
 #include "appid_session.h"
-#include "thirdparty_appid_utils.h"
 #ifdef USE_RNA_CONFIG
 #include "appid_utils/network_set.h"
 #include "appid_utils/ip_funcs.h"
@@ -39,6 +38,10 @@
 #include "log/messages.h"
 #include "utils/util.h"
 #include "target_based/snort_protocols.h"
+#ifdef ENABLE_APPID_THIRD_PARTY
+#include "tp_lib_handler.h"
+#endif
+
 
 #define ODP_PORT_DETECTORS "odp/port/*"
 #define CUSTOM_PORT_DETECTORS "custom/port/*"
@@ -85,7 +88,6 @@ AppIdModuleConfig::~AppIdModuleConfig()
     snort_free((void*)conf_file);
 #endif
     snort_free((void*)app_detector_dir);
-    snort_free((void*)thirdparty_appid_dir);
 }
 
 AppIdConfig::AppIdConfig(AppIdModuleConfig* config)
@@ -117,6 +119,38 @@ AppIdConfig::AppIdConfig(AppIdModuleConfig* config)
 AppIdConfig::~AppIdConfig()
 {
     cleanup();
+}
+
+const TPLibHandler * AppIdConfig::tp_handler() const
+{
+#ifdef ENABLE_APPID_THIRD_PARTY
+    return tph;
+#else
+    return nullptr;
+#endif
+}
+
+bool AppIdConfig::have_tp() const
+{
+#ifdef ENABLE_APPID_THIRD_PARTY
+    return tph != nullptr && tph->have_tp();
+#else
+    return false;
+#endif
+}
+
+void AppIdConfig::tp_appid_module_tinit()
+{
+#ifdef ENABLE_APPID_THIRD_PARTY
+    if(tph) tph->tinit();
+#endif
+}
+
+void AppIdConfig::tp_appid_module_tterm()
+{
+#ifdef ENABLE_APPID_THIRD_PARTY
+    if(tph) tph->tterm();
+#endif
 }
 
 void AppIdConfig::read_port_detectors(const char* files)
@@ -737,7 +771,11 @@ bool AppIdConfig::init_appid(SnortConfig* sc)
 #endif
     read_port_detectors(ODP_PORT_DETECTORS);
     read_port_detectors(CUSTOM_PORT_DETECTORS);
-    ThirdPartyAppIDInit(mod_config);
+
+#ifdef ENABLE_APPID_THIRD_PARTY
+    tph=TPLibHandler::get();
+    tph->pinit(mod_config);
+#endif
     map_app_names_to_snort_ids(sc);
     return true;
 }
@@ -756,10 +794,11 @@ static void free_port_exclusion_list(AppIdPortExclusions& pe_list)
 
 void AppIdConfig::cleanup()
 {
-    if (thirdparty_appid_module != nullptr)
-        thirdparty_appid_module->print_stats();
-    ThirdPartyAppIDFini();
-
+#ifdef ENABLE_APPID_THIRD_PARTY
+    tph->pfini(0);
+    TPLibHandler::destroy(tph);
+#endif
+    
     app_info_mgr.cleanup_appid_info_table();
 
 #ifdef USE_RNA_CONFIG
@@ -815,8 +854,8 @@ void AppIdConfig::show()
 {
     unsigned i;
 
-    if (mod_config->thirdparty_appid_dir)
-        LogMessage("    3rd Party Dir: %s\n", mod_config->thirdparty_appid_dir);
+    if (!mod_config->tp_appid_path.empty())
+        LogMessage("    3rd Party Dir: %s\n", mod_config->tp_appid_path.c_str());
 
 #ifdef USE_RNA_CONFIG
     struct in_addr ia;

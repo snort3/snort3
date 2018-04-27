@@ -75,13 +75,13 @@ typedef std::vector<ServiceDetectorPort> ServiceDetectorPorts;
 class AppIdDiscoveryArgs
 {
 public:
-    AppIdDiscoveryArgs(const uint8_t* data, uint16_t size, int dir, AppIdSession& asd,
+    AppIdDiscoveryArgs(const uint8_t* data, uint16_t size, AppidSessionDirection dir, AppIdSession& asd,
         snort::Packet* p) : data(data), size(size), dir(dir), asd(asd), pkt(p), config(asd.config)
     {}
 
     const uint8_t* data;
     uint16_t size;
-    int dir;
+    AppidSessionDirection dir;
     AppIdSession& asd;
     snort::Packet* pkt;
     const AppIdConfig* config = nullptr;
@@ -147,11 +147,11 @@ public:
     AppIdDiscovery& get_handler() const
     { return *handler; }
 
-	bool is_client() const
-	{ return client; }
+        bool is_client() const
+        { return client; }
 
-	virtual LuaStateDescriptor* validate_lua_state(bool /*packet_context*/)
-	{ return nullptr; }
+        virtual LuaStateDescriptor* validate_lua_state(bool /*packet_context*/)
+        { return nullptr; }
 
 protected:
     AppIdDiscovery* handler = nullptr;

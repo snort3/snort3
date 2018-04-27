@@ -36,7 +36,7 @@ public:
 private:
     void create_expected_session(AppIdSession& asd,const snort::Packet* pkt,
         const snort::SfIp* cliIp, uint16_t cliPort, const snort::SfIp* srvIp,
-        uint16_t srvPort, IpProtocol proto, int flags, APPID_SESSION_DIRECTION dir);
+        uint16_t srvPort, IpProtocol proto, int flags, AppidSessionDirection dir);
 
     SnortProtocolId ftp_data_snort_protocol_id = UNKNOWN_PROTOCOL_ID;
 };

@@ -16,42 +16,28 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+                                                                            
+// http_xff_fields.h author Sourcefire Inc.                                
+ 
+#ifndef HTTP_XFF_FIELDS_H
+#define HTTP_XFF_FIELDS_H
 
-// length_app_cache.h author Sourcefire Inc.
+#include <string>
 
-#ifndef LENGTH_APP_CACHE_H
-#define LENGTH_APP_CACHE_H
+// FIXIT-L refactor
+#define HTTP_XFF_FIELD_X_FORWARDED_FOR  "X-Forwarded-For"
+#define HTTP_XFF_FIELD_TRUE_CLIENT_IP   "True-Client-IP"
+/* #define HTTP_MAX_XFF_FIELDS             8 */
+/* #define HTTP_XFF_FIELD_X_FORWARDED_FOR "" */
+/* #define HTTP_XFF_FIELD_TRUE_CLIENT_IP "" */
 
-#include "protocols/protocol_ids.h"
-#include "appid_types.h"
-#include "application_ids.h"
+#define HTTP_MAX_XFF_FIELDS 8
 
-#define LENGTH_SEQUENCE_CNT_MAX (5)
-
-#pragma pack(1)
-
-class AppIdConfig;
-enum class IpProtocol : uint8_t;
-
-struct LengthSequenceEntry
+struct XffFieldValue
 {
-    AppidSessionDirection direction = APP_ID_FROM_INITIATOR;
-    uint16_t length = 0;       /* payload size (bytes) */
+    std::string field;
+    std::string value;
 };
 
-struct LengthKey
-{
-    IpProtocol proto = IpProtocol::PROTO_NOT_SET;  // IpProtocol::TCP or IpProtocol::UDP
-    uint8_t sequence_cnt = 0;                      // num valid entries in sequence
-    LengthSequenceEntry sequence[LENGTH_SEQUENCE_CNT_MAX];
-};
-
-#pragma pack()
-
-void init_length_app_cache();
-void free_length_app_cache();
-AppId find_length_app_cache(const LengthKey*);
-bool add_length_app_cache(const LengthKey*, AppId);
 
 #endif
-

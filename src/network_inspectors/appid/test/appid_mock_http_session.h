@@ -34,7 +34,7 @@ AppIdHttpSession::~AppIdHttpSession()
     delete xff_addr;
 }
 
-int AppIdHttpSession::process_http_packet(int) { return 0; }
+int AppIdHttpSession::process_http_packet(AppidSessionDirection) { return 0; }
 
 char const* APPID_UT_XFF_IP_ADDR = "192.168.0.1";
 char const* CONTENT_TYPE = "html/text";
