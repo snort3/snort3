@@ -56,6 +56,8 @@ Optional Features:
                             enable thread sanitizer support
     --enable-ub-sanitizer
                             enable undefined behavior sanitizer support
+    --enable-appid-third-party
+                            enable third party appid
     --enable-unit-tests     build unit tests
     --enable-piglet         build piglet test harness
     --disable-static-daq    link static DAQ modules
@@ -277,6 +279,9 @@ while [ $# -ne 0 ]; do
             ;;
         --disable-ub-sanitizer)
             append_cache_entry ENABLE_UB_SANITIZER  BOOL false
+            ;;
+        --enable-appid-third-party)
+            append_cache_entry ENABLE_APPID_THIRD_PARTY        BOOL true
             ;;
         --enable-unit-tests)
             append_cache_entry ENABLE_UNIT_TESTS        BOOL true
