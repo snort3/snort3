@@ -158,7 +158,13 @@ struct SnortState
     void* regex_scratch;
     void* hyperscan_scratch;
     void* sdpattern_scratch;
+
+    // Dynamically registered members
+    std::vector<void*> scratch;
 };
+
+struct SnortConfig;
+typedef void (* ScScratchFunc)(SnortConfig* sc);
 
 struct SnortConfig
 {
@@ -651,6 +657,10 @@ public:
 
     bool track_on_syn() const
     { return (run_flags & RUN_FLAG__TRACK_ON_SYN) != 0; }
+
+    // This requests an entry in the SnortState scratch space and calls setup /
+    // cleanup as appropriate
+    static int request_scratch(ScScratchFunc setup, ScScratchFunc cleanup);
 
     // Use this to access current thread's conf from other units
     static void set_conf(SnortConfig*);

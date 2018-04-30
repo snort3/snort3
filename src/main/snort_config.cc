@@ -88,6 +88,7 @@ using namespace snort;
 THREAD_LOCAL SnortConfig* snort_conf = nullptr;
 
 uint32_t SnortConfig::warning_flags = 0;
+static std::vector <std::pair<ScScratchFunc,ScScratchFunc>> scratch_handlers;
 
 //-------------------------------------------------------------------------
 // private implementation
@@ -258,6 +259,17 @@ SnortConfig::~SnortConfig()
 #endif
     pcre_cleanup(this);
 
+    // Only call scratch cleanup if we actually called scratch setup
+    if ( state->scratch.size() > 0 )
+    {
+        for ( unsigned i = scratch_handlers.size(); i > 0; i-- )
+        {
+            if ( scratch_handlers[i - 1].second )
+                scratch_handlers[i - 1].second(this);
+        }
+        // FIXME-T: Do we need to shrink_to_fit() state->scratch at this point?
+    }
+
     FreeRuleLists(this);
     OtnLookupFree(otn_map);
     PortTablesFree(port_tables);
@@ -335,6 +347,22 @@ void SnortConfig::setup()
 
 void SnortConfig::post_setup()
 {
+    unsigned i;
+    unsigned int handler_count = scratch_handlers.size();
+
+    // Ensure we have allocated the scratch space for each thread's SnortState
+    for ( i = 0; i < num_slots; ++i )
+    {
+        SnortState* ss = state + i;
+        ss->scratch.resize(handler_count);
+    }
+
+    for ( i = 0; i < handler_count; ++i )
+    {
+        if ( scratch_handlers[i].first )
+            scratch_handlers[i].first(this);
+    }
+
     // FIXIT-L register setup and cleanup  to eliminate explicit calls and
     // allow pcre, regex, and hyperscan to be built dynamically. Hyperscan setup
     // moved to post_setup to ensure all the prep_patterns are called before it.
@@ -1013,6 +1041,15 @@ void SnortConfig::free_rule_state_list()
 bool SnortConfig::tunnel_bypass_enabled(uint8_t proto)
 {
     return (!((get_conf()->tunnel_mask & proto) or SFDAQ::get_tunnel_bypass(proto)));
+}
+
+int SnortConfig::request_scratch(ScScratchFunc setup, ScScratchFunc cleanup)
+{
+    scratch_handlers.push_back(std::make_pair(setup, cleanup));
+
+    // We return an index that the caller uses to reference their SnortState
+    // scratch space
+    return scratch_handlers.size() - 1;
 }
 
 SO_PUBLIC SnortConfig* SnortConfig::get_conf()
