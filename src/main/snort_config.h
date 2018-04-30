@@ -157,7 +157,6 @@ struct SnortState
     // note: fwd decls don't work here.
     void* regex_scratch;
     void* hyperscan_scratch;
-    void* sdpattern_scratch;
 
     // Dynamically registered members
     std::vector<void*> scratch;
