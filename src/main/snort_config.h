@@ -149,8 +149,6 @@ struct ProfilerConfig;
 // FIXIT-L register this data to avoid explicit dependency
 struct SnortState
 {
-    int* pcre_ovector;
-
     // regex hyperscan and sdpattern are conditionally built but these are
     // unconditional to avoid compatibility issues with plugins.  if these are
     // conditional then API_OPTIONS must be updated.

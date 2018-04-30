@@ -37,7 +37,6 @@
 #include "filters/sfthreshold.h"
 #include "hash/xhash.h"
 #include "helpers/process.h"
-#include "ips_options/ips_pcre.h"
 #include "latency/latency_config.h"
 #include "log/messages.h"
 #include "managers/event_manager.h"
@@ -255,7 +254,6 @@ SnortConfig::~SnortConfig()
     hyperscan_cleanup(this);
     regex_cleanup(this);
 #endif
-    pcre_cleanup(this);
 
     // Only call scratch cleanup if we actually called scratch setup
     if ( state->scratch.size() > 0 )
@@ -364,7 +362,6 @@ void SnortConfig::post_setup()
     // FIXIT-L register setup and cleanup  to eliminate explicit calls and
     // allow pcre, regex, and hyperscan to be built dynamically. Hyperscan setup
     // moved to post_setup to ensure all the prep_patterns are called before it.
-    pcre_setup(this);
 #ifdef HAVE_HYPERSCAN
     regex_setup(this);
     hyperscan_setup(this);

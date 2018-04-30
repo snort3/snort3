@@ -23,8 +23,6 @@
 #include "config.h"
 #endif
 
-#include "ips_pcre.h"
-
 #include <pcre.h>
 
 #include <cassert>
@@ -87,6 +85,8 @@ static int s_ovector_max = 0;
 // this is a temporary value used during parsing and set in snort conf
 // by verify; search uses the value in snort conf
 static int s_ovector_size = 0;
+
+static unsigned scratch_index;
 
 static THREAD_LOCAL ProfileStats pcrePerfStats;
 
@@ -364,7 +364,7 @@ static bool pcre_search(
     found_offset = -1;
 
     SnortState* ss = SnortConfig::get_conf()->state + get_instance_id();
-    assert(ss->pcre_ovector);
+    assert(ss->scratch[scratch_index]);
 
     int result = pcre_exec(
         pcre_data->re,  /* result of pcre_compile() */
@@ -373,7 +373,7 @@ static bool pcre_search(
         len,            /* the length of the subject string */
         start_offset,   /* start at offset 0 in the subject */
         0,              /* options(handled at compile time */
-        ss->pcre_ovector,      /* vector for substring information */
+        (int*)ss->scratch[scratch_index], /* vector for substring information */
         SnortConfig::get_conf()->pcre_ovector_size); /* number of elements in the vector */
 
     if (result >= 0)
@@ -399,7 +399,7 @@ static bool pcre_search(
          * and a single int for scratch space.
          */
 
-        found_offset = ss->pcre_ovector[1];
+        found_offset = ((int*)ss->scratch[scratch_index])[1];
     }
     else if (result == PCRE_ERROR_NOMATCH)
     {
@@ -599,32 +599,6 @@ bool PcreOption::retry(Cursor&)
 }
 
 //-------------------------------------------------------------------------
-// public methods
-//-------------------------------------------------------------------------
-
-void pcre_setup(SnortConfig* sc)
-{
-    for ( unsigned i = 0; i < sc->num_slots; ++i )
-    {
-        SnortState* ss = sc->state + i;
-        ss->pcre_ovector = (int*)snort_calloc(s_ovector_max, sizeof(int));
-    }
-}
-
-void pcre_cleanup(SnortConfig* sc)
-{
-    for ( unsigned i = 0; i < sc->num_slots; ++i )
-    {
-        SnortState* ss = sc->state + i;
-
-        if ( ss->pcre_ovector )
-            snort_free(ss->pcre_ovector);
-
-        ss->pcre_ovector = nullptr;
-    }
-}
-
-//-------------------------------------------------------------------------
 // module
 //-------------------------------------------------------------------------
 
@@ -643,7 +617,11 @@ class PcreModule : public Module
 {
 public:
     PcreModule() : Module(s_name, s_help, s_params)
-    { data = nullptr; }
+    {
+        data = nullptr;
+        scratch_index = SnortConfig::request_scratch(
+            PcreModule::scratch_setup, PcreModule::scratch_cleanup);
+    }
 
     ~PcreModule() override
     { delete data; }
@@ -661,6 +639,8 @@ public:
 
 private:
     PcreData* data;
+    static void scratch_setup(SnortConfig* sc);
+    static void scratch_cleanup(SnortConfig* sc);
 };
 
 PcreData* PcreModule::get_data()
@@ -685,6 +665,28 @@ bool PcreModule::set(const char*, Value& v, SnortConfig*)
         return false;
 
     return true;
+}
+
+void PcreModule::scratch_setup(SnortConfig* sc)
+{
+    for ( unsigned i = 0; i < sc->num_slots; ++i )
+    {
+        SnortState* ss = sc->state + i;
+        ss->scratch[scratch_index] = snort_calloc(s_ovector_max, sizeof(int));
+    }
+}
+
+void PcreModule::scratch_cleanup(SnortConfig* sc)
+{
+    for ( unsigned i = 0; i < sc->num_slots; ++i )
+    {
+        SnortState* ss = sc->state + i;
+
+        if ( ss->scratch[scratch_index] )
+            snort_free(ss->scratch[scratch_index]);
+
+        ss->scratch[scratch_index] = nullptr;
+    }
 }
 
 //-------------------------------------------------------------------------
