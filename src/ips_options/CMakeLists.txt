@@ -70,7 +70,7 @@ set (IPS_SOURCES
 )
 
 if ( HAVE_HYPERSCAN )
-    set(OPTION_LIST ips_regex.cc ips_regex.h
+    set(OPTION_LIST ips_regex.cc
         ips_sd_pattern.cc
         sd_credit_card.cc sd_credit_card.h)
 endif ()

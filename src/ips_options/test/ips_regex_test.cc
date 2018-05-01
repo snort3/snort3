@@ -22,8 +22,6 @@
 #include "config.h"
 #endif
 
-#include "ips_options/ips_regex.h"
-
 #include "framework/base_api.h"
 #include "framework/counts.h"
 #include "framework/cursor.h"
@@ -57,6 +55,9 @@ THREAD_LOCAL SnortConfig* snort_conf = &s_conf;
 
 static SnortState s_state;
 
+ScScratchFunc scratch_setup;
+ScScratchFunc scratch_cleanup;
+
 SnortConfig::SnortConfig(const SnortConfig* const)
 {
     state = &s_state;
@@ -65,6 +66,15 @@ SnortConfig::SnortConfig(const SnortConfig* const)
 }
 
 SnortConfig::~SnortConfig() = default;
+
+int SnortConfig::request_scratch(ScScratchFunc setup, ScScratchFunc cleanup)
+{
+    scratch_setup = setup;
+    scratch_cleanup = cleanup;
+    s_state.scratch.resize(1);
+
+    return 0;
+}
 
 SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
@@ -269,13 +279,13 @@ TEST_GROUP(ips_regex_option)
         // FIXIT-L cpputest hangs or crashes in the leak detector
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         opt = get_option(" foo ");
-        regex_setup(snort_conf);
+        scratch_setup(snort_conf);
     }
     void teardown() override
     {
         IpsApi* api = (IpsApi*)ips_regex;
         api->dtor(opt);
-        regex_cleanup(snort_conf);
+        scratch_cleanup(snort_conf);
         api->pterm(snort_conf);
         MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
@@ -343,13 +353,13 @@ TEST_GROUP(ips_regex_option_relative)
         // FIXIT-L cpputest hangs or crashes in the leak detector
         MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         opt = get_option("\\bfoo", true);
-        regex_setup(snort_conf);
+        scratch_setup(snort_conf);
     }
     void teardown() override
     {
         IpsApi* api = (IpsApi*)ips_regex;
         api->dtor(opt);
-        regex_cleanup(snort_conf);
+        scratch_cleanup(snort_conf);
         MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };

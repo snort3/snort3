@@ -23,8 +23,6 @@
 #include "config.h"
 #endif
 
-#include "ips_regex.h"
-
 #include <hs_compile.h>
 #include <hs_runtime.h>
 
@@ -74,6 +72,7 @@ struct RegexConfig
 // rules.
 
 static hs_scratch_t* s_scratch = nullptr;
+static unsigned scratch_index;
 static THREAD_LOCAL unsigned s_to = 0;
 static THREAD_LOCAL ProfileStats regex_perf_stats;
 
@@ -178,13 +177,13 @@ IpsOption::EvalStatus RegexOption::eval(Cursor& c, Packet*)
         return NO_MATCH;
 
     SnortState* ss = SnortConfig::get_conf()->state + get_instance_id();
-    assert(ss->regex_scratch);
+    assert(ss->scratch[scratch_index]);
 
     s_to = 0;
 
     hs_error_t stat = hs_scan(
         config.db, (const char*)c.buffer()+pos, c.size()-pos, 0,
-        (hs_scratch_t*)ss->regex_scratch, hs_match, nullptr);
+        (hs_scratch_t*)ss->scratch[scratch_index], hs_match, nullptr);
 
     if ( s_to and stat == HS_SCAN_TERMINATED )
     {
@@ -230,7 +229,11 @@ static const Parameter s_params[] =
 class RegexModule : public Module
 {
 public:
-    RegexModule() : Module(s_name, s_help, s_params) { }
+    RegexModule() : Module(s_name, s_help, s_params)
+    {
+        scratch_index = SnortConfig::request_scratch(
+            RegexModule::scratch_setup, RegexModule::scratch_cleanup);
+    }
     ~RegexModule() override;
 
     bool begin(const char*, int, SnortConfig*) override;
@@ -251,6 +254,8 @@ public:
 
 private:
     RegexConfig config;
+    static void scratch_setup(SnortConfig* sc);
+    static void scratch_cleanup(SnortConfig* sc);
 };
 
 RegexModule::~RegexModule()
@@ -321,33 +326,29 @@ bool RegexModule::end(const char*, int, SnortConfig*)
     return true;
 }
 
-//-------------------------------------------------------------------------
-// public methods
-//-------------------------------------------------------------------------
-
-void regex_setup(SnortConfig* sc)
+void RegexModule::scratch_setup(SnortConfig* sc)
 {
     for ( unsigned i = 0; i < sc->num_slots; ++i )
     {
         SnortState* ss = sc->state + i;
 
         if ( s_scratch )
-            hs_clone_scratch(s_scratch, (hs_scratch_t**)&ss->regex_scratch);
+            hs_clone_scratch(s_scratch, (hs_scratch_t**)&ss->scratch[scratch_index]);
         else
-            ss->regex_scratch = nullptr;
+            ss->scratch[scratch_index] = nullptr;
     }
 }
 
-void regex_cleanup(SnortConfig* sc)
+void RegexModule::scratch_cleanup(SnortConfig* sc)
 {
     for ( unsigned i = 0; i < sc->num_slots; ++i )
     {
         SnortState* ss = sc->state + i;
 
-        if ( ss->regex_scratch )
+        if ( ss->scratch[scratch_index] )
         {
-            hs_free_scratch((hs_scratch_t*)ss->regex_scratch);
-            ss->regex_scratch = nullptr;
+            hs_free_scratch((hs_scratch_t*)ss->scratch[scratch_index]);
+            ss->scratch[scratch_index] = nullptr;
         }
     }
 }

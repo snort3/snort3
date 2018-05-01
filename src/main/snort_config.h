@@ -153,7 +153,6 @@ struct SnortState
     // unconditional to avoid compatibility issues with plugins.  if these are
     // conditional then API_OPTIONS must be updated.
     // note: fwd decls don't work here.
-    void* regex_scratch;
     void* hyperscan_scratch;
 
     // Dynamically registered members

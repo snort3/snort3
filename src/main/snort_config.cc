@@ -60,7 +60,6 @@
 #include "utils/util_cstring.h"
 
 #ifdef HAVE_HYPERSCAN
-#include "ips_options/ips_regex.h"
 #include "search_engines/hyperscan.h"
 #endif
 
@@ -252,7 +251,6 @@ SnortConfig::~SnortConfig()
 
 #ifdef HAVE_HYPERSCAN
     hyperscan_cleanup(this);
-    regex_cleanup(this);
 #endif
 
     // Only call scratch cleanup if we actually called scratch setup
@@ -363,7 +361,6 @@ void SnortConfig::post_setup()
     // allow pcre, regex, and hyperscan to be built dynamically. Hyperscan setup
     // moved to post_setup to ensure all the prep_patterns are called before it.
 #ifdef HAVE_HYPERSCAN
-    regex_setup(this);
     hyperscan_setup(this);
 #endif
 }
