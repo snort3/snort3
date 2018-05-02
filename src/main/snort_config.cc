@@ -191,7 +191,7 @@ void SnortConfig::init(const SnortConfig* const other_conf, ProtocolReference* p
         InspectorManager::new_config(this);
 
         num_slots = ThreadConfig::get_instance_max();
-        state = (SnortState*)snort_calloc(num_slots, sizeof(SnortState));
+        state = new std::vector<void *>[num_slots];
 
         profiler = new ProfilerConfig;
         latency = new LatencyConfig();
@@ -246,7 +246,7 @@ SnortConfig::~SnortConfig()
     FreeReferences(references);
 
     // Only call scratch cleanup if we actually called scratch setup
-    if ( state->scratch.size() > 0 )
+    if ( state[0].size() > 0 )
     {
         for ( unsigned i = scratch_handlers.size(); i > 0; i-- )
         {
@@ -290,7 +290,7 @@ SnortConfig::~SnortConfig()
     delete policy_map;
     InspectorManager::delete_config(this);
 
-    snort_free(state);
+    delete[] state;
     delete thread_config;
 
     if (gtp_ports)
@@ -336,11 +336,10 @@ void SnortConfig::post_setup()
     unsigned i;
     unsigned int handler_count = scratch_handlers.size();
 
-    // Ensure we have allocated the scratch space for each thread's SnortState
+    // Ensure we have allocated the scratch space vector for each thread
     for ( i = 0; i < num_slots; ++i )
     {
-        SnortState* ss = state + i;
-        ss->scratch.resize(handler_count);
+        state[i].resize(handler_count);
     }
 
     for ( i = 0; i < handler_count; ++i )
@@ -482,9 +481,9 @@ void SnortConfig::merge(SnortConfig* cmd_line)
     // FIXIT-M should cmd_line use the same var list / table?
     var_list = nullptr;
 
-    snort_free(state);
+    delete[] state;
     num_slots = ThreadConfig::get_instance_max();
-    state = (SnortState*)snort_calloc(num_slots, sizeof(SnortState));
+    state = new std::vector<void *>[num_slots];
 }
 
 bool SnortConfig::verify()
@@ -1023,7 +1022,7 @@ int SnortConfig::request_scratch(ScScratchFunc setup, ScScratchFunc cleanup)
 {
     scratch_handlers.push_back(std::make_pair(setup, cleanup));
 
-    // We return an index that the caller uses to reference their SnortState
+    // We return an index that the caller uses to reference their per thread
     // scratch space
     return scratch_handlers.size() - 1;
 }

@@ -252,13 +252,13 @@ unsigned SdPatternOption::SdSearch(Cursor& c, Packet* p)
     const uint8_t* buf = c.start();
     unsigned int buflen = c.length();
 
-    SnortState* ss = SnortConfig::get_conf()->state + get_instance_id();
-    assert(ss->scratch[scratch_index]);
+    std::vector<void *> ss = SnortConfig::get_conf()->state[get_instance_id()];
+    assert(ss[scratch_index]);
 
     hsContext ctx(config, p, start, buf, buflen);
 
     hs_error_t stat = hs_scan(config.db, (const char*)buf, buflen, 0,
-        (hs_scratch_t*)ss->scratch[scratch_index], hs_match, (void*)&ctx);
+        (hs_scratch_t*)ss[scratch_index], hs_match, (void*)&ctx);
 
     if ( stat == HS_SCAN_TERMINATED )
         ++s_stats.terminated;
@@ -407,12 +407,12 @@ void SdPatternModule::scratch_setup(SnortConfig* sc)
 {
     for ( unsigned i = 0; i < sc->num_slots; ++i )
     {
-        SnortState* ss = sc->state + i;
+        std::vector<void *>& ss = sc->state[i];
 
         if ( s_scratch )
-            hs_clone_scratch(s_scratch, (hs_scratch_t**)&ss->scratch[scratch_index]);
+            hs_clone_scratch(s_scratch, (hs_scratch_t**)&ss[scratch_index]);
         else
-            ss->scratch[scratch_index] = nullptr;
+            ss[scratch_index] = nullptr;
     }
 }
 
@@ -420,12 +420,12 @@ void SdPatternModule::scratch_cleanup(SnortConfig* sc)
 {
     for ( unsigned i = 0; i < sc->num_slots; ++i )
     {
-        SnortState* ss = sc->state + i;
+        std::vector<void *>& ss = sc->state[i];
 
-        if ( ss->scratch[scratch_index] )
+        if ( ss[scratch_index] )
         {
-            hs_free_scratch((hs_scratch_t*)ss->scratch[scratch_index]);
-            ss->scratch[scratch_index] = nullptr;
+            hs_free_scratch((hs_scratch_t*)ss[scratch_index]);
+            ss[scratch_index] = nullptr;
         }
     }
 }

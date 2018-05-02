@@ -176,14 +176,13 @@ IpsOption::EvalStatus RegexOption::eval(Cursor& c, Packet*)
     if ( pos > c.size() )
         return NO_MATCH;
 
-    SnortState* ss = SnortConfig::get_conf()->state + get_instance_id();
-    assert(ss->scratch[scratch_index]);
+    hs_scratch_t *ss = (hs_scratch_t *) SnortConfig::get_conf()->state[get_instance_id()][scratch_index];
 
     s_to = 0;
 
     hs_error_t stat = hs_scan(
         config.db, (const char*)c.buffer()+pos, c.size()-pos, 0,
-        (hs_scratch_t*)ss->scratch[scratch_index], hs_match, nullptr);
+        ss, hs_match, nullptr);
 
     if ( s_to and stat == HS_SCAN_TERMINATED )
     {
@@ -330,12 +329,12 @@ void RegexModule::scratch_setup(SnortConfig* sc)
 {
     for ( unsigned i = 0; i < sc->num_slots; ++i )
     {
-        SnortState* ss = sc->state + i;
+        hs_scratch_t** ss = (hs_scratch_t**) &sc->state[i][scratch_index];
 
         if ( s_scratch )
-            hs_clone_scratch(s_scratch, (hs_scratch_t**)&ss->scratch[scratch_index]);
+            hs_clone_scratch(s_scratch, ss);
         else
-            ss->scratch[scratch_index] = nullptr;
+            ss = nullptr;
     }
 }
 
@@ -343,12 +342,12 @@ void RegexModule::scratch_cleanup(SnortConfig* sc)
 {
     for ( unsigned i = 0; i < sc->num_slots; ++i )
     {
-        SnortState* ss = sc->state + i;
+        hs_scratch_t* ss = (hs_scratch_t*) sc->state[i][scratch_index];
 
-        if ( ss->scratch[scratch_index] )
+        if ( ss )
         {
-            hs_free_scratch((hs_scratch_t*)ss->scratch[scratch_index]);
-            ss->scratch[scratch_index] = nullptr;
+            hs_free_scratch(ss);
+            ss = nullptr;
         }
     }
 }

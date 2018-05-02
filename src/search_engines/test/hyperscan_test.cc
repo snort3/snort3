@@ -58,7 +58,7 @@ int Mpse::search_all(
 SnortConfig s_conf;
 THREAD_LOCAL SnortConfig* snort_conf = &s_conf;
 
-static SnortState s_state;
+static std::vector<void *> s_state;
 
 ScScratchFunc scratch_setup;
 ScScratchFunc scratch_cleanup;
@@ -66,7 +66,6 @@ ScScratchFunc scratch_cleanup;
 SnortConfig::SnortConfig(const SnortConfig* const)
 {
     state = &s_state;
-    memset(state, 0, sizeof(*state));
     num_slots = 1;
 }
 
@@ -76,7 +75,7 @@ int SnortConfig::request_scratch(ScScratchFunc setup, ScScratchFunc cleanup)
 {
     scratch_setup = setup;
     scratch_cleanup = cleanup;
-    s_state.scratch.resize(1);
+    s_state.resize(1);
 
     return 0;
 }

@@ -363,8 +363,8 @@ static bool pcre_search(
 
     found_offset = -1;
 
-    SnortState* ss = SnortConfig::get_conf()->state + get_instance_id();
-    assert(ss->scratch[scratch_index]);
+    std::vector<void *> ss = SnortConfig::get_conf()->state[get_instance_id()];
+    assert(ss[scratch_index]);
 
     int result = pcre_exec(
         pcre_data->re,  /* result of pcre_compile() */
@@ -373,7 +373,7 @@ static bool pcre_search(
         len,            /* the length of the subject string */
         start_offset,   /* start at offset 0 in the subject */
         0,              /* options(handled at compile time */
-        (int*)ss->scratch[scratch_index], /* vector for substring information */
+        (int*)ss[scratch_index], /* vector for substring information */
         SnortConfig::get_conf()->pcre_ovector_size); /* number of elements in the vector */
 
     if (result >= 0)
@@ -399,7 +399,7 @@ static bool pcre_search(
          * and a single int for scratch space.
          */
 
-        found_offset = ((int*)ss->scratch[scratch_index])[1];
+        found_offset = ((int*)ss[scratch_index])[1];
     }
     else if (result == PCRE_ERROR_NOMATCH)
     {
@@ -671,8 +671,8 @@ void PcreModule::scratch_setup(SnortConfig* sc)
 {
     for ( unsigned i = 0; i < sc->num_slots; ++i )
     {
-        SnortState* ss = sc->state + i;
-        ss->scratch[scratch_index] = snort_calloc(s_ovector_max, sizeof(int));
+        std::vector<void *>& ss = sc->state[i];
+        ss[scratch_index] = snort_calloc(s_ovector_max, sizeof(int));
     }
 }
 
@@ -680,12 +680,12 @@ void PcreModule::scratch_cleanup(SnortConfig* sc)
 {
     for ( unsigned i = 0; i < sc->num_slots; ++i )
     {
-        SnortState* ss = sc->state + i;
+        std::vector<void *>& ss = sc->state[i];
 
-        if ( ss->scratch[scratch_index] )
-            snort_free(ss->scratch[scratch_index]);
+        if ( ss[scratch_index] )
+            snort_free(ss[scratch_index]);
 
-        ss->scratch[scratch_index] = nullptr;
+        ss[scratch_index] = nullptr;
     }
 }
 

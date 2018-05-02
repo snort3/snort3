@@ -50,12 +50,11 @@ SnortConfig s_conf;
 
 THREAD_LOCAL SnortConfig* snort_conf = &s_conf;
 
-static SnortState s_state;
+static std::vector<void *> s_state;
 
 SnortConfig::SnortConfig(const SnortConfig* const)
 {
     state = &s_state;
-    memset(state, 0, sizeof(*state));
     num_slots = 1;
     fast_pattern_config = nullptr;
 }
