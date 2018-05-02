@@ -29,7 +29,6 @@ set (BNFA_SOURCES
 if ( HAVE_HYPERSCAN )
     set(HYPER_SOURCES
         hyperscan.cc
-        hyperscan.h
     )
 endif ()
 

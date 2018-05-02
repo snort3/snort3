@@ -149,12 +149,6 @@ struct ProfilerConfig;
 // FIXIT-L register this data to avoid explicit dependency
 struct SnortState
 {
-    // regex hyperscan and sdpattern are conditionally built but these are
-    // unconditional to avoid compatibility issues with plugins.  if these are
-    // conditional then API_OPTIONS must be updated.
-    // note: fwd decls don't work here.
-    void* hyperscan_scratch;
-
     // Dynamically registered members
     std::vector<void*> scratch;
 };

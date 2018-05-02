@@ -59,10 +59,6 @@
 #include "utils/util.h"
 #include "utils/util_cstring.h"
 
-#ifdef HAVE_HYPERSCAN
-#include "search_engines/hyperscan.h"
-#endif
-
 #include "snort.h"
 #include "thread_config.h"
 
@@ -249,10 +245,6 @@ SnortConfig::~SnortConfig()
     FreeClassifications(classifications);
     FreeReferences(references);
 
-#ifdef HAVE_HYPERSCAN
-    hyperscan_cleanup(this);
-#endif
-
     // Only call scratch cleanup if we actually called scratch setup
     if ( state->scratch.size() > 0 )
     {
@@ -356,13 +348,6 @@ void SnortConfig::post_setup()
         if ( scratch_handlers[i].first )
             scratch_handlers[i].first(this);
     }
-
-    // FIXIT-L register setup and cleanup  to eliminate explicit calls and
-    // allow pcre, regex, and hyperscan to be built dynamically. Hyperscan setup
-    // moved to post_setup to ensure all the prep_patterns are called before it.
-#ifdef HAVE_HYPERSCAN
-    hyperscan_setup(this);
-#endif
 }
 
 void SnortConfig::clone(const SnortConfig* const conf)
