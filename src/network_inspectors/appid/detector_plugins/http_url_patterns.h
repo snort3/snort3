@@ -30,9 +30,10 @@
 #include "search_engines/search_tool.h"
 #include "utils/util.h"
 
-#include "application_ids.h"
-#include "appid_utils/sf_multi_mpse.h"
+#include "appid_http_session.h"
 #include "appid_utils/sf_mlmp.h"
+#include "appid_utils/sf_multi_mpse.h"
+#include "application_ids.h"
 
 namespace snort
 {
@@ -162,25 +163,6 @@ enum ActionType
     SEARCH_UNSUPPORTED,                     //14
     DEFER_TO_SIMPLE_DETECT,                 //15
     MAX_ACTION_TYPE = DEFER_TO_SIMPLE_DETECT,
-};
-
-// These values are used in Lua code as raw numbers. Do NOT reassign new values.
-enum HttpFieldIds : uint8_t
-{
-    // Request-side headers
-    REQ_AGENT_FID,          // 0
-    REQ_HOST_FID,           // 1
-    REQ_REFERER_FID,        // 2
-    REQ_URI_FID,            // 3
-    REQ_COOKIE_FID,         // 4
-    REQ_BODY_FID,           // 5
-    // Response-side headers
-    RSP_CONTENT_TYPE_FID,   // 6
-    RSP_LOCATION_FID,       // 7
-    RSP_BODY_FID,           // 8
-    MAX_HTTP_FIELD_ID,      // 9
-    MAX_PATTERN_TYPE = RSP_BODY_FID,
-    MAX_KEY_PATTERN = REQ_URI_FID,
 };
 
 struct CHPApp

@@ -29,13 +29,30 @@
 
 #include "appid_types.h"
 #include "application_ids.h"
-#include "detector_plugins/http_url_patterns.h"
 #include "http_xff_fields.h"
 
 class AppIdSession;
 class ChpMatchDescriptor;
 class HttpPatternMatchers;
-enum HttpFieldIds : uint8_t;
+
+// These values are used in Lua code as raw numbers. Do NOT reassign new values.
+enum HttpFieldIds : uint8_t
+{
+    // Request-side headers
+    REQ_AGENT_FID,          // 0
+    REQ_HOST_FID,           // 1
+    REQ_REFERER_FID,        // 2
+    REQ_URI_FID,            // 3
+    REQ_COOKIE_FID,         // 4
+    REQ_BODY_FID,           // 5
+    // Response-side headers
+    RSP_CONTENT_TYPE_FID,   // 6
+    RSP_LOCATION_FID,       // 7
+    RSP_BODY_FID,           // 8
+    MAX_HTTP_FIELD_ID,      // 9
+    MAX_PATTERN_TYPE = RSP_BODY_FID,
+    MAX_KEY_PATTERN = REQ_URI_FID,
+};
 
 #define RESPONSE_CODE_PACKET_THRESHHOLD 0
 
