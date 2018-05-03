@@ -23,12 +23,13 @@
 #define APPID_HTTP_SESSION_H
 
 #include <string>
-#include <vector>
 
 #include "flow/flow.h"
 #include "sfip/sf_ip.h"
+
 #include "appid_types.h"
 #include "application_ids.h"
+#include "detector_plugins/http_url_patterns.h"
 #include "http_xff_fields.h"
 
 class AppIdSession;
@@ -200,7 +201,6 @@ protected:
     std::string req_body;
     std::string server;
     std::string x_working_with;
-    std::vector<HttpField> http_fields;
     bool is_webdav = false;
     bool chp_finished = false;
     AppId chp_candidate = APP_ID_NONE;
@@ -215,8 +215,9 @@ protected:
     snort::SfIp* xff_addr = nullptr;
     const char** xffPrecedence = nullptr;
     unsigned numXffFields = 0;
-    std::vector<int> ptype_req_counts;
-    std::vector<int> ptype_scan_counts;
+    HttpField http_fields[MAX_HTTP_FIELD_ID];
+    int ptype_req_counts[MAX_HTTP_FIELD_ID] = {0};
+    int ptype_scan_counts[MAX_HTTP_FIELD_ID] = {0};
 #if RESPONSE_CODE_PACKET_THRESHHOLD
     unsigned response_code_packets = 0;
 #endif

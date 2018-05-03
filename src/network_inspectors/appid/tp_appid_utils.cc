@@ -187,8 +187,9 @@ static inline void process_http_session(AppIdSession& asd,
             hsession->set_field_offset(REQ_HOST_FID, attribute_data.http_request_host_begin());
             hsession->set_field_end_offset(REQ_HOST_FID, attribute_data.http_request_host_end());
             if (appidDebug->is_active())
-                LogMessage("AppIdDbg %s HTTP host is %s\n",
-                    appidDebug->get_debug_session(), field->c_str());
+                LogMessage("AppIdDbg %s HTTP host (%u-%u) is %s\n",
+                    appidDebug->get_debug_session(), hsession->get_field_offset(REQ_HOST_FID),
+                    hsession->get_field_end_offset(REQ_HOST_FID), field->c_str());
             asd.scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
         }
 
@@ -223,7 +224,7 @@ static inline void process_http_session(AppIdSession& asd,
             hsession->set_field_offset(REQ_URI_FID, attribute_data.http_request_uri_begin());
             hsession->set_field_end_offset(REQ_URI_FID, attribute_data.http_request_uri_end());
             if (appidDebug->is_active())
-                LogMessage("AppIdDbg %s uri (%u-%u) is %s\n", appidDebug->get_debug_session(),
+                LogMessage("AppIdDbg %s URI (%u-%u) is %s\n", appidDebug->get_debug_session(),
                     hsession->get_field_offset(REQ_URI_FID),
                     hsession->get_field_end_offset(REQ_URI_FID), hsession->get_uri());
         }
@@ -544,14 +545,14 @@ static inline void process_third_party_results(AppIdSession& asd, int confidence
     if ( contains(proto_list, APP_ID_HTTP) )
     {
         if (appidDebug->is_active())
-            LogMessage("AppIdDbg %s flow is HTTP\n", appidDebug->get_debug_session());
+            LogMessage("AppIdDbg %s Flow is HTTP\n", appidDebug->get_debug_session());
         asd.set_session_flags(APPID_SESSION_HTTP_SESSION);
     }
 
     if ( contains(proto_list, APP_ID_SPDY) )
     {
         if (appidDebug->is_active())
-            LogMessage("AppIdDbg %s flow is SPDY\n", appidDebug->get_debug_session());
+            LogMessage("AppIdDbg %s Flow is SPDY\n", appidDebug->get_debug_session());
 
         asd.set_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_SPDY_SESSION);
     }

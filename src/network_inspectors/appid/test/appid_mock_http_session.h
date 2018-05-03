@@ -24,9 +24,6 @@
 AppIdHttpSession::AppIdHttpSession(AppIdSession& session)
     : asd(session)
 {
-    http_fields.reserve(MAX_HTTP_FIELD_ID);
-    ptype_req_counts.assign(MAX_HTTP_FIELD_ID, 0);
-    ptype_scan_counts.assign(MAX_HTTP_FIELD_ID, 0);
 }
 
 AppIdHttpSession::~AppIdHttpSession()

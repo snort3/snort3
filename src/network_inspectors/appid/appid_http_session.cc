@@ -56,9 +56,6 @@ AppIdHttpSession::AppIdHttpSession(AppIdSession& asd)
     : asd(asd)
 {
     http_matchers = HttpPatternMatchers::get_instance();
-    http_fields.reserve(MAX_HTTP_FIELD_ID);
-    ptype_req_counts.assign(MAX_HTTP_FIELD_ID, 0);
-    ptype_scan_counts.assign(MAX_HTTP_FIELD_ID, 0);
 }
 
 AppIdHttpSession::~AppIdHttpSession()
@@ -278,7 +275,7 @@ void AppIdHttpSession::process_chp_buffers()
             }
 
             cmd.free_rewrite_buffers();
-            ptype_scan_counts.assign(MAX_HTTP_FIELD_ID, 0);
+            memset(ptype_scan_counts, 0, sizeof(ptype_scan_counts));
 
             // Make it possible for other detectors to run.
             skip_simple_detect = false;
@@ -333,7 +330,7 @@ void AppIdHttpSession::process_chp_buffers()
             asd.scan_flags &= ~SCAN_HTTP_VIA_FLAG;
             asd.scan_flags &= ~SCAN_HTTP_USER_AGENT_FLAG;
             asd.scan_flags &= ~SCAN_HTTP_HOST_URL_FLAG;
-            ptype_scan_counts.assign(MAX_HTTP_FIELD_ID, 0);
+            memset(ptype_scan_counts, 0, sizeof(ptype_scan_counts));
         }
         else /* if we have a candidate, but we're not finished */
         {
@@ -840,7 +837,7 @@ void AppIdHttpSession::update_response_code(const char* new_rc)
 
 void AppIdHttpSession::reset_ptype_scan_counts()
 {
-    ptype_scan_counts.assign(MAX_HTTP_FIELD_ID, 0);
+    memset(ptype_scan_counts, 0, sizeof(ptype_scan_counts));
 }
 
 

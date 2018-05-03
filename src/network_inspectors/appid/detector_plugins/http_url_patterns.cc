@@ -1649,7 +1649,7 @@ bool HttpPatternMatchers::get_appid_from_url(char* host, const char* url, char**
     snort_free(temp_host);
 
     /* if referred_id feature id disabled, referer will be null */
-    if ( referer && (!payload_found ||
+    if ( referer and (referer[0] != '\0') and (!payload_found or
          AppInfoManager::get_instance().get_app_info_flags(data->payload_id,
          APPINFO_FLAG_REFERRED)) )
     {
@@ -1660,7 +1660,7 @@ bool HttpPatternMatchers::get_appid_from_url(char* host, const char* url, char**
             (const uint8_t*)URL_SCHEME_END_PATTERN, sizeof(URL_SCHEME_END_PATTERN)-1);
 
         if ( !referer_offset )
-            return false;
+            return payload_found;
 
         referer_offset += sizeof(URL_SCHEME_END_PATTERN)-1;
         referer_start = referer_offset;
