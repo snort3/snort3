@@ -186,6 +186,13 @@ TEST(protocol_reference, constructors)
     CHECK( refs.find("unknown") == unknown );
 }
 
+// Verify calling get_name(id) where id > id_map.size() returns "unknown".
+TEST(protocol_reference, getname_gt_mapsize)
+{
+    ProtocolReference refs;
+    CHECK( std::string(refs.get_name(100)) == "unknown"  );
+}
+
 int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
