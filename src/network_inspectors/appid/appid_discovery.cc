@@ -754,8 +754,7 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
 
     asd->check_app_detection_restart();
 
-// #ifdef ENABLE_APPID_THIRD_PARTY
-#if(0)   // FIXIT-H switch to ENABLE_APPID_THIRD_PARTY once bugs fixed
+#ifdef ENABLE_APPID_THIRD_PARTY
     if(asd->config->have_tp())
         isTpAppidDiscoveryDone = do_discovery(*asd,protocol,p,direction);
 #endif

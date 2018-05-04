@@ -781,15 +781,15 @@ bool do_discovery(AppIdSession& asd, IpProtocol protocol,
                 {
                     asd.examine_ssl_metadata(p);
                     uint16_t serverPort;
-                    AppId porAppId;
+                    AppId portAppId;
                     serverPort = (direction == APP_ID_FROM_INITIATOR) ? p->ptrs.dp : p->ptrs.sp;
-                    porAppId = serverPort;
+                    portAppId = getSslServiceAppId(serverPort);
                     if (asd.tp_app_id == APP_ID_SSL)
                     {
-                        asd.tp_app_id = porAppId;
+                        asd.tp_app_id = portAppId;
                         //SSL policy determines IMAPS/POP3S etc before appId sees first server
                         // packet
-                        asd.service.set_port_service_id(porAppId);
+                        asd.service.set_port_service_id(portAppId);
                         if (appidDebug->is_active())
                             LogMessage("AppIdDbg %s SSL is service %d, portServiceAppId %d\n",
                                 appidDebug->get_debug_session(),
@@ -798,7 +798,7 @@ bool do_discovery(AppIdSession& asd, IpProtocol protocol,
                     else
                     {
                         asd.tp_payload_app_id = asd.tp_app_id;
-                        asd.tp_app_id = porAppId;
+                        asd.tp_app_id = portAppId;
                         if (appidDebug->is_active())
                             LogMessage("AppIdDbg %s SSL is %d\n", appidDebug->get_debug_session(),
                                 asd.tp_app_id);
