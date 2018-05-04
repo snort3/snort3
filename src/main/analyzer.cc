@@ -33,7 +33,6 @@
 
 #include "analyzer_command.h"
 #include "snort.h"
-#include "snort_debug.h"
 #include "thread.h"
 
 using namespace snort;
@@ -180,7 +179,6 @@ void Analyzer::start()
         exit_requested = true;
     }
     set_state(State::STARTED);
-    DebugMessage(DEBUG_ANALYZER, "Handled START command\n");
 }
 
 void Analyzer::run(bool paused)
@@ -191,13 +189,11 @@ void Analyzer::run(bool paused)
         set_state(State::PAUSED);
     else
         set_state(State::RUNNING);
-    DebugMessage(DEBUG_ANALYZER, "Handled RUN command\n");
 }
 
 void Analyzer::stop()
 {
     exit_requested = true;
-    DebugMessage(DEBUG_ANALYZER, "Handled STOP command\n");
 }
 
 void Analyzer::pause()
@@ -222,6 +218,5 @@ void Analyzer::reload_daq()
 {
     if (daq_instance)
         daq_instance->reload();
-    DebugMessage(DEBUG_ANALYZER, "Handled RELOAD command\n");
 }
 

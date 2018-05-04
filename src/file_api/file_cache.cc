@@ -26,7 +26,6 @@
 #include "hash/xhash.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
-#include "main/snort_debug.h"
 #include "main/thread_config.h"
 #include "packet_io/active.h"
 #include "time/packet_time.h"
@@ -147,7 +146,6 @@ FileContext* FileCache::find(const FileHashKey& hashKey, int64_t timeout)
 
     if (!xhash_count(fileHash))
     {
-        DebugMessage(DEBUG_FILE, "No expected sessions\n");
         return nullptr;
     }
 
@@ -163,11 +161,9 @@ FileContext* FileCache::find(const FileHashKey& hashKey, int64_t timeout)
         return nullptr;
     }
 
-    DebugMessage(DEBUG_FILE, "Found resumed file\n");
     time_t now = packet_time();
     if (node->expires && now > node->expires)
     {
-        DebugMessage(DEBUG_FILE, "File expired\n");
         xhash_free_node(fileHash, hash_node);
         return nullptr;
     }
@@ -297,7 +293,6 @@ FileVerdict FileCache::cached_verdict_lookup(Flow* flow, FileInfo* file,
 
     if (file_found)
     {
-        DebugMessage(DEBUG_FILE, "Found resumed file\n");
         /*Query the file policy in case verdict has been changed*/
         verdict = check_verdict(flow, file_found, policy);
         apply_verdict(flow, file_found, verdict, true, policy);

@@ -47,8 +47,6 @@
 
 #include "boyer_moore.h"
 
-#include "main/snort_debug.h"
-
 #include "util.h"
 
 /****************************************************************
@@ -151,9 +149,6 @@ int* make_shift(const char* ptrn, int plen)
 int mSearch(
     const char* buf, int blen, const char* ptrn, int plen, const int* skip, const int* shift)
 {
-    DebugFormat(DEBUG_PATTERN_MATCH,"buf: %p  blen: %d  ptrn: %p  "
-        "plen: %d\n", buf, blen, ptrn, plen);
-
     if (plen == 0)
         return -1;
 

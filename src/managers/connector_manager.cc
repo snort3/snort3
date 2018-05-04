@@ -30,7 +30,6 @@
 
 #include "framework/connector.h"
 #include "log/messages.h"
-#include "main/snort_debug.h"
 #include "utils/util.h"
 
 using namespace snort;
@@ -65,15 +64,12 @@ static CList s_connector_commons;
 
 void ConnectorManager::add_plugin(const ConnectorApi* api)
 {
-    DebugMessage(DEBUG_SIDE_CHANNEL, "ConnectorManager::add_plugin()\n");
-
     if ( api->pinit )
         api->pinit();
 }
 
 void ConnectorManager::dump_plugins()
 {
-    DebugMessage(DEBUG_SIDE_CHANNEL, "ConnectorManager::dump_plugins()\n");
     Dumper d("Connectors");
 
     for ( auto& sc : s_connector_commons )
@@ -82,7 +78,6 @@ void ConnectorManager::dump_plugins()
 
 void ConnectorManager::release_plugins()
 {
-    DebugMessage(DEBUG_SIDE_CHANNEL, "ConnectorManager::release_plugins()\n");
     for ( auto& sc : s_connector_commons )
     {
         if ( sc.api->dtor )
@@ -102,8 +97,6 @@ void ConnectorManager::release_plugins()
 
 Connector* ConnectorManager::get_connector(const std::string& connector_name)
 {
-    DebugFormat(DEBUG_SIDE_CHANNEL, "ConnectorManager::get_connector(): name: %s\n",
-        connector_name.c_str());
     for ( auto& sc : s_connector_commons )
     {
         pid_t tid = gettid();
@@ -119,7 +112,6 @@ Connector* ConnectorManager::get_connector(const std::string& connector_name)
 
 void ConnectorManager::thread_init()
 {
-    DebugMessage(DEBUG_SIDE_CHANNEL,"ConnectorManager::thread_init()\n");
     pid_t tid = gettid();
 
     for ( auto& sc : s_connector_commons )
@@ -128,9 +120,6 @@ void ConnectorManager::thread_init()
         {
             for ( auto& conn : sc.connectors )
             {
-                DebugFormat(DEBUG_SIDE_CHANNEL,"ConnectorManager::thread_init(): tinit: %s\n",
-                    conn.first.c_str());
-
                 /* There must NOT be a connector for this thread present. */
                 assert(conn.second->thread_connectors.count(tid) == 0);
 
@@ -144,7 +133,6 @@ void ConnectorManager::thread_init()
 
 void ConnectorManager::thread_term()
 {
-    DebugMessage(DEBUG_SIDE_CHANNEL,"ConnectorManager::thread_term()\n");
     pid_t tid = gettid();
 
     for ( auto& sc : s_connector_commons )
@@ -153,9 +141,6 @@ void ConnectorManager::thread_term()
         {
             for ( auto& conn : sc.connectors )
             {
-                DebugFormat(DEBUG_SIDE_CHANNEL,"ConnectorManager::thread_term(): term: %s\n",
-                    conn.first.c_str());
-
                 /* There must be a connector for this thread present. */
                 assert(conn.second->thread_connectors.count(tid) != 0);
 
@@ -169,7 +154,6 @@ void ConnectorManager::thread_term()
 
 void ConnectorManager::instantiate(const ConnectorApi* api, Module* mod, SnortConfig*)
 {
-    DebugMessage(DEBUG_SIDE_CHANNEL,"ConnectorManager::instantiate()\n");
     assert(mod);
     ConnectorCommonElem c(api);
 
@@ -182,9 +166,6 @@ void ConnectorManager::instantiate(const ConnectorApi* api, Module* mod, SnortCo
     // iterate through the config_set and create the connector entries
     for ( auto cfg : *config_set )
     {
-        DebugFormat(DEBUG_SIDE_CHANNEL,"ConnectorManager::instantiate(): %s\n",
-            cfg->connector_name.c_str());
-
         ConnectorElem* connector_elem = new ConnectorElem;
         connector_elem->config = &*cfg;
         std::pair<std::string, ConnectorElem*> element (cfg->connector_name, std::move(connector_elem));

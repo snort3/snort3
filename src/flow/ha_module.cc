@@ -67,7 +67,6 @@ static void convert_real_seconds_to_timeval(double seconds, struct timeval* tv)
 HighAvailabilityModule::HighAvailabilityModule() :
     Module(HA_NAME, HA_HELP, ha_params)
 {
-    DebugMessage(DEBUG_HA,"HighAvailabilityModule::HighAvailabilityModule()\n");
     config.enabled = false;
     config.daq_channel = false;
     config.ports = nullptr;
@@ -77,21 +76,14 @@ HighAvailabilityModule::HighAvailabilityModule() :
 
 HighAvailabilityModule::~HighAvailabilityModule()
 {
-    DebugMessage(DEBUG_HA,"HighAvailabilityModule::~HighAvailabilityModule()\n");
     delete config.ports;
 }
 
 ProfileStats* HighAvailabilityModule::get_profile() const
 { return &ha_perf_stats; }
 
-bool HighAvailabilityModule::set(const char* fqn, Value& v, SnortConfig*)
+bool HighAvailabilityModule::set(const char*, Value& v, SnortConfig*)
 {
-#ifdef DEBUG_MSGS
-    DebugFormat(DEBUG_HA,"HighAvailabilityModule::set(): %s %s\n", fqn, v.get_name());
-#else
-    UNUSED(fqn);
-#endif
-
     if ( v.is("enable") )
         config.enabled = v.get_bool();
 
@@ -118,27 +110,13 @@ bool HighAvailabilityModule::set(const char* fqn, Value& v, SnortConfig*)
     return true;
 }
 
-bool HighAvailabilityModule::begin(const char* fqn, int idx, SnortConfig*)
+bool HighAvailabilityModule::begin(const char*, int, SnortConfig*)
 {
-#ifdef DEBUG_MSGS
-    DebugFormat(DEBUG_HA,"HighAvailabilityModule::begin(): %s %d\n", fqn, idx);
-#else
-    UNUSED(fqn);
-    UNUSED(idx);
-#endif
-
     return true;
 }
 
-bool HighAvailabilityModule::end(const char* fqn, int idx, SnortConfig*)
+bool HighAvailabilityModule::end(const char*, int, SnortConfig*)
 {
-#ifdef DEBUG_MSGS
-    DebugFormat(DEBUG_HA,"HighAvailabilityModule::end(): %s %d\n", fqn, idx);
-#else
-    UNUSED(fqn);
-    UNUSED(idx);
-#endif
-
     if ( config.enabled &&
         !HighAvailabilityManager::instantiate(config.ports, config.daq_channel,
                         &config.min_session_lifetime, &config.min_sync_interval) )

@@ -42,7 +42,5 @@ SO_PUBLIC void LogMessage(const char* format,...)
     va_end(ap);
 }
 
-// void Debug::print(const char*, int, uint64_t, const char*, ...) { }
-
 #endif
 

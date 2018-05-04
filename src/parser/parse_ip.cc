@@ -24,7 +24,6 @@
 
 #include "log/messages.h"
 #include "main/policy.h"
-#include "main/snort_debug.h"
 #include "sfip/sf_ipvar.h"
 #include "sfip/sf_vartable.h"
 #include "utils/util.h"
@@ -36,8 +35,6 @@ sfip_var_t* sfip_var_from_string(const char* addr)
     vartable_t* ip_vartable;
 
     ip_vartable = snort::get_ips_policy()->ip_vartable;
-
-    DebugFormat(DEBUG_CONFIGRULES,"Got address string: %s\n", addr);
 
     ret = (sfip_var_t*)snort_calloc(sizeof(sfip_var_t));
 

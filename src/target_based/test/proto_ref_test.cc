@@ -33,8 +33,6 @@
 
 using namespace snort;
 
-void Debug::print(const char*, int, uint64_t, const char*, ...) { }
-
 TEST_GROUP(protocol_reference)
 {};
 

@@ -21,48 +21,13 @@
 #ifndef SNORT_DEBUG_H
 #define SNORT_DEBUG_H
 
-// this provides a set of flags that can be set by environment variable to
+// this provides a module trace capabilty that can be set by config to
 // turn on the output of specific debug messages.
 //
-// FIXIT-M debug flags needs to be replaced with a module facility.
 
 #include <cstdarg>
 
 #include "main/snort_types.h"
-
-// this env var uses the lower 32 bits of the flags:
-#define DEBUG_BUILTIN "SNORT_DEBUG"
-
-#define DEBUG_INIT            0x0000000000000001LL
-#define DEBUG_PORTLISTS       0x0000000000000004LL
-#define DEBUG_ATTRIBUTE       0x0000000000000008LL
-#define DEBUG_DECODE          0x0000000000000010LL
-#define DEBUG_CONFIGRULES     0x0000000000000020LL
-#define DEBUG_PATTERN_MATCH   0x0000000000000080LL
-#define DEBUG_LOG             0x0000000000000200LL
-#define DEBUG_FILE            0x0000000000000800LL
-#define DEBUG_MEMORY          0x0000000000001000LL
-// FIXIT-L latency doesn't use any debug messages
-#define DEBUG_LATENCY         0x0000000000002000LL
-#define DEBUG_SIDE_CHANNEL    0x0000000000004000LL
-#define DEBUG_CONNECTORS      0x0000000000008000LL
-#define DEBUG_HA              0x0000000000010000LL
-#define DEBUG_ANALYZER        0x0000000000020000LL
-
-// this env var uses the upper 32 bits of the flags:
-#define DEBUG_PLUGIN "SNORT_PP_DEBUG"
-
-#define DEBUG_STREAM          0x0000000200000000LL
-
-#define DEBUG_CODEC           0x0001000000000000LL
-#define DEBUG_IPS_ACTION      0x0004000000000000LL
-#define DEBUG_MPSE            0x0010000000000000LL
-#define DEBUG_SO_RULE         0x0020000000000000LL
-#define DEBUG_LOGGER          0x0040000000000000LL
-
-#ifdef PIGLET
-#define DEBUG_PIGLET          0x0800000000000000LL
-#endif
 
 typedef uint64_t Trace;
 
@@ -143,29 +108,6 @@ static inline void trace_print(const char* name, Trace mask, const char* file,
 #define trace_debugf(tracer, ...) \
     trace_printf(#tracer, tracer##_trace, __FILE__, __LINE__, __VA_ARGS__)
 
-class SO_PUBLIC Debug
-{
-public:
-    static bool enabled(uint64_t flag);
-
-    static void print(const char* file, int line, uint64_t dbg, const char* fmt,
-        ...) __attribute__((format (printf, 4, 5)));
-
-private:
-    static bool init;
-    static uint64_t mask;
-};
-
-#define DebugFormat(dbg, fmt, ...) \
-    Debug::print(__FILE__, __LINE__, dbg, fmt, __VA_ARGS__)
-
-#define DebugFormatNoFileLine(dbg, fmt, ...) \
-    Debug::print(nullptr, 0, dbg, fmt, __VA_ARGS__)
-
-#define DebugMessage(dbg, msg) DebugFormat(dbg, "%s", msg)
-
-#define DEBUG_WRAP(code) code
-
 #else
 #define trace_log(tracer, ...)
 #define trace_log_wo_name(tracer, ...)
@@ -174,10 +116,6 @@ private:
 #define trace_debug(tracer, ...)
 #define trace_debugf(tracer, ...)
 
-#define DebugFormat(dbg, fmt, ...)
-#define DebugFormatNoFileLine(dbg, fmt, ...)
-#define DebugMessage(dbg, msg)
-#define DEBUG_WRAP(code)
 #endif
 
 #endif

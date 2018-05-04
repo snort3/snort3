@@ -24,8 +24,6 @@
 
 #include "tcp_connector_module.h"
 
-#include "main/snort_debug.h"
-
 using namespace snort;
 
 static const Parameter tcp_connector_params[] =
@@ -61,14 +59,12 @@ extern THREAD_LOCAL ProfileStats tcp_connector_perfstats;
 TcpConnectorModule::TcpConnectorModule() :
     Module(TCP_CONNECTOR_NAME, TCP_CONNECTOR_HELP, tcp_connector_params)
 {
-    DebugMessage(DEBUG_CONNECTORS,"TcpConnectorModule::TcpConnectorModule()\n");
     config = nullptr;
     config_set = new TcpConnectorConfig::TcpConnectorConfigSet;
 }
 
 TcpConnectorModule::~TcpConnectorModule()
 {
-    DebugMessage(DEBUG_CONNECTORS,"TcpConnectorModule::~TcpConnectorModule()\n");
     if ( config )
         delete config;
     if ( config_set )
@@ -78,14 +74,8 @@ TcpConnectorModule::~TcpConnectorModule()
 ProfileStats* TcpConnectorModule::get_profile() const
 { return &tcp_connector_perfstats; }
 
-bool TcpConnectorModule::set(const char* fqn, Value& v, SnortConfig*)
+bool TcpConnectorModule::set(const char*, Value& v, SnortConfig*)
 {
-#ifdef DEBUG_MSGS
-    DebugFormat(DEBUG_CONNECTORS,"TcpConnectorModule::set(): %s, %s\n", fqn, v.get_name());
-#else
-    UNUSED(fqn);
-#endif
-
     if ( v.is("connector") )
         config->connector_name = v.get_string();
 
@@ -121,21 +111,14 @@ bool TcpConnectorModule::set(const char* fqn, Value& v, SnortConfig*)
 // clear my working config and hand-over the compiled list to the caller
 TcpConnectorConfig::TcpConnectorConfigSet* TcpConnectorModule::get_and_clear_config()
 {
-    DebugMessage(DEBUG_CONNECTORS,"TcpConnectorModule::get_and_clear_config()\n");
     TcpConnectorConfig::TcpConnectorConfigSet* temp_config = config_set;
     config = nullptr;
     config_set = nullptr;
     return temp_config;
 }
 
-bool TcpConnectorModule::begin(const char* fqn, int idx, SnortConfig*)
+bool TcpConnectorModule::begin(const char*, int, SnortConfig*)
 {
-#ifdef DEBUG_MSGS
-    DebugFormat(DEBUG_CONNECTORS,"TcpConnectorModule::begin(): %s, %d\n", fqn, idx);
-#else
-    UNUSED(fqn);
-    UNUSED(idx);
-#endif
     if ( !config )
     {
         config = new TcpConnectorConfig;
@@ -143,14 +126,8 @@ bool TcpConnectorModule::begin(const char* fqn, int idx, SnortConfig*)
     return true;
 }
 
-bool TcpConnectorModule::end(const char* fqn, int idx, SnortConfig*)
+bool TcpConnectorModule::end(const char*, int idx, SnortConfig*)
 {
-#ifdef DEBUG_MSGS
-    DebugFormat(DEBUG_CONNECTORS,"TcpConnectorModule::end(): %s, %d\n", fqn, idx);
-#else
-    UNUSED(fqn);
-#endif
-
     if (idx != 0)
     {
         config_set->push_back(config);

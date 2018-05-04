@@ -57,10 +57,6 @@ void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) { }
 const char* get_instance_file(std::string& file, const char* name)
 { file += name; return nullptr; }
 
-#ifdef DEBUG_MSGS
-void Debug::print(const char*, int, uint64_t, const char*, ...) { }
-#endif
-
 FileConnectorModule::FileConnectorModule() :
     Module("FC", "FC Help", nullptr)
 { }

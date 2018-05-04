@@ -25,7 +25,6 @@
 
 #include "hash/hashfcn.h"
 #include "log/messages.h"
-#include "main/snort_debug.h"
 #include "parser/parser.h"
 #include "utils/util.h"
 #include "utils/util_cstring.h"
@@ -123,9 +122,6 @@ PortObject2* PortObject2New(int nrules)
 
 void PortObject2Free(PortObject2* po)
 {
-    DEBUG_WRAP(static int pof2_cnt = 0; pof2_cnt++; );
-    DebugFormat(DEBUG_PORTLISTS, "PortObjectFree2-Cnt: %d ptr=%p\n", pof2_cnt, (void*)po);
-
     if ( !po )
         return;
 

@@ -105,8 +105,6 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& dd)
     switch (version)
     {
     case 0: /*GTP v0*/
-        DebugMessage(DEBUG_DECODE, "GTP v0 packets.\n");
-
         len = GTP_V0_HEADER_LEN;
         if (raw.len < len)
         {
@@ -116,16 +114,12 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& dd)
 
         if (raw.len != ((unsigned int)ntohs(hdr->length) + len))
         {
-            DebugFormat(DEBUG_DECODE, "Calculated length %u != %hu in header.\n",
-                raw.len - len, ntohs(hdr->length));
             codec_event(codec, DECODE_GTP_BAD_LEN);
             return false;
         }
 
         break;
     case 1: /*GTP v1*/
-        DebugMessage(DEBUG_DECODE, "GTP v1 packets.\n");
-
         /*Check the length based on optional fields and extension header*/
         if (hdr->flag & 0x07)
         {
@@ -172,15 +166,12 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& dd)
 
         if (raw.len != ((unsigned int)ntohs(hdr->length) + GTP_MIN_LEN))
         {
-            DebugFormat(DEBUG_DECODE, "Calculated length %u != %hu in header.\n",
-                raw.len - GTP_MIN_LEN, ntohs(hdr->length));
             codec_event(codec, DECODE_GTP_BAD_LEN);
             return false;
         }
         break;
 
     default:
-        DebugMessage(DEBUG_DECODE, "Unknown protocol version.\n");
         return false;
     }
 

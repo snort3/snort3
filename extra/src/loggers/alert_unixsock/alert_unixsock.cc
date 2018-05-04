@@ -114,8 +114,6 @@ public:
 static void get_alert_pkt(
     Packet* p, const char* msg, const Event& event)
 {
-    DebugMessage(DEBUG_LOG, "Logging Alert data!\n");
-
     // FIXIT-L minimize or eliminate memset
     memset((char*)&us.alert,0,sizeof(us.alert));
 

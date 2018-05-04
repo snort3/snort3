@@ -24,8 +24,6 @@
 
 #include "file_connector_module.h"
 
-#include "main/snort_debug.h"
-
 using namespace snort;
 
 static const Parameter file_connector_params[] =
@@ -61,14 +59,12 @@ extern THREAD_LOCAL ProfileStats file_connector_perfstats;
 FileConnectorModule::FileConnectorModule() :
     Module(FILE_CONNECTOR_NAME, FILE_CONNECTOR_HELP, file_connector_params)
 {
-    DebugMessage(DEBUG_CONNECTORS,"FileConnectorModule::FileConnectorModule()\n");
     config = nullptr;
     config_set = new FileConnectorConfig::FileConnectorConfigSet;
 }
 
 FileConnectorModule::~FileConnectorModule()
 {
-    DebugMessage(DEBUG_CONNECTORS,"FileConnectorModule::~FileConnectorModule()\n");
     if ( config )
         delete config;
     if ( config_set )
@@ -78,14 +74,8 @@ FileConnectorModule::~FileConnectorModule()
 ProfileStats* FileConnectorModule::get_profile() const
 { return &file_connector_perfstats; }
 
-bool FileConnectorModule::set(const char* fqn, Value& v, SnortConfig*)
+bool FileConnectorModule::set(const char*, Value& v, SnortConfig*)
 {
-#ifdef DEBUG_MSGS
-    DebugFormat(DEBUG_CONNECTORS,"FileConnectorModule::set(): %s, %s\n", fqn, v.get_name());
-#else
-    UNUSED(fqn);
-#endif
-
     if ( v.is("connector") )
         config->connector_name = v.get_string();
 
@@ -126,21 +116,14 @@ bool FileConnectorModule::set(const char* fqn, Value& v, SnortConfig*)
 // clear my working config and hand-over the compiled list to the caller
 FileConnectorConfig::FileConnectorConfigSet* FileConnectorModule::get_and_clear_config()
 {
-    DebugMessage(DEBUG_CONNECTORS,"FileConnectorModule::get_and_clear_config()\n");
     FileConnectorConfig::FileConnectorConfigSet* temp_config = config_set;
     config = nullptr;
     config_set = nullptr;
     return temp_config;
 }
 
-bool FileConnectorModule::begin(const char* fqn, int idx, SnortConfig*)
+bool FileConnectorModule::begin(const char*, int, SnortConfig*)
 {
-#ifdef DEBUG_MSGS
-    DebugFormat(DEBUG_CONNECTORS,"FileConnectorModule::begin(): %s, %d\n", fqn, idx);
-#else
-    UNUSED(fqn);
-    UNUSED(idx);
-#endif
     if ( !config )
     {
         config = new FileConnectorConfig;
@@ -148,14 +131,8 @@ bool FileConnectorModule::begin(const char* fqn, int idx, SnortConfig*)
     return true;
 }
 
-bool FileConnectorModule::end(const char* fqn, int idx, SnortConfig*)
+bool FileConnectorModule::end(const char*, int idx, SnortConfig*)
 {
-#ifdef DEBUG_MSGS
-    DebugFormat(DEBUG_CONNECTORS,"FileConnectorModule::end(): %s, %d\n", fqn, idx);
-#else
-    UNUSED(fqn);
-#endif
-
     if (idx != 0)
     {
         config_set->push_back(config);

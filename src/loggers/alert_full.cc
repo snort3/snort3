@@ -180,8 +180,6 @@ void FullLogger::alert(Packet* p, const char* msg, const Event& event)
             TextLog_NewLine(full_log);
     }
 
-    DebugMessage(DEBUG_LOG, "Logging Alert data!\n");
-
     LogTimeStamp(full_log, p);
     TextLog_Putc(full_log, ' ');
 

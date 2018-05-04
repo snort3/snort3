@@ -25,7 +25,6 @@
 
 #include "log/messages.h"
 #include "main/snort_config.h"
-#include "main/snort_debug.h"
 #include "sfip/sf_ipvar.h"
 #include "utils/util.h"
 #include "utils/util_cstring.h"
@@ -520,9 +519,6 @@ VarEntry* VarDefine(
         }
     }
 
-    DebugFormat(DEBUG_PORTLISTS,
-        "VarDefine: name=%s value=%s\n",name,value);
-
     /* Check to see if this variable is just being aliased */
     if (var_table != nullptr)
     {
@@ -547,9 +543,6 @@ VarEntry* VarDefine(
     {
         ParseAbort("could not expand var('%s').", name);
     }
-
-    DebugFormat(DEBUG_PORTLISTS,
-        "VarDefine: name=%s value=%s (expanded)\n",name,value);
 
     DisallowCrossTableDuplicateVars(sc, name, VAR_TYPE__DEFAULT);
 
@@ -712,7 +705,6 @@ const char* ExpandVars(SnortConfig* sc, const char* string)
 
     int i = 0, j = 0;
     int l_string = strlen(string);
-    DebugFormat(DEBUG_CONFIGRULES, "ExpandVars, Before: %s\n", string);
 
     while (i < l_string && j < (int)sizeof(estring) - 1)
     {
@@ -827,7 +819,6 @@ const char* ExpandVars(SnortConfig* sc, const char* string)
         }
     }
 
-    DebugFormat(DEBUG_CONFIGRULES, "ExpandVars, After: %s\n", estring);
 
     return estring;
 }
@@ -837,7 +828,6 @@ void AddVarToTable(SnortConfig* sc, const char* name, const char* value)
     //TODO: snort.cfg and rules should use PortVar instead ...this allows compatibility for now.
     if (strstr(name, "_PORT") || strstr(name, "PORT_"))
     {
-        DebugMessage(DEBUG_CONFIGRULES,"PortVar\n");
         PortVarDefine(sc, name, value);
     }
     else

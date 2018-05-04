@@ -347,8 +347,6 @@ static void _Unified2LogPacketAlert(
     {
         logheader.event_id = htonl(event->event_reference);
         logheader.event_second = htonl(event->ref_time.tv_sec);
-
-        DebugMessage(DEBUG_LOG, "------------\n");
     }
     else
     {

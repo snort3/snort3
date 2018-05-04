@@ -194,7 +194,6 @@ inline FileCaptureBlock* FileCapture::create_file_buffer()
 
     if (fileBlock == nullptr)
     {
-        FILE_DEBUG_MSGS("Failed to get file capture memory!\n");
         file_counts.file_memcap_failures_total++;
         return nullptr;
     }
@@ -224,7 +223,6 @@ inline FileCaptureState FileCapture::save_to_file_buffer(const uint8_t* file_dat
 
     if ( data_size + (int64_t)capture_size > max_size)
     {
-        FILE_DEBUG_MSGS("Exceeding max file capture size!\n");
         file_counts.file_size_max++;
         capture_state = FILE_CAPTURE_MAX;
         return FILE_CAPTURE_MAX;

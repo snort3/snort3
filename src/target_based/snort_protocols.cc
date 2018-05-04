@@ -28,7 +28,6 @@
 #include <algorithm>
 
 #include "log/messages.h"
-#include "main/snort_debug.h"
 #include "protocols/packet.h"
 #include "utils/util.h"
 #include "utils/util_cstring.h"
@@ -83,9 +82,6 @@ SnortProtocolId ProtocolReference::add(const char* protocol)
     auto protocol_ref = ref_table.find(protocol);
     if ( protocol_ref != ref_table.end() )
     {
-        DebugFormat(DEBUG_ATTRIBUTE, "Protocol Reference for %s exists as %d\n",
-            protocol, protocol_ref->second);
-
         return protocol_ref->second;
     }
 
@@ -101,9 +97,6 @@ SnortProtocolId ProtocolReference::find(const char* protocol)
     auto protocol_ref = ref_table.find(protocol);
     if ( protocol_ref != ref_table.end() )
     {
-        DebugFormat(DEBUG_ATTRIBUTE, "Protocol Reference for %s exists as %d\n",
-            protocol, protocol_ref->second);
-
         return protocol_ref->second;
     }
 

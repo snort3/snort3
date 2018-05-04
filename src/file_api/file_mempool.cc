@@ -39,35 +39,6 @@
 #define FREE_MAGIC    0x2525252525252525
 typedef uint64_t MagicType;
 
-#ifdef DEBUG_MSGS
-void FileMemPool::verify()
-{
-    uint64_t free_size;
-    uint64_t release_size;
-
-    free_size = cbuffer_used(free_list);
-    release_size = cbuffer_used(released_list);
-
-    if (free_size > cbuffer_size(free_list))
-    {
-        DebugMessage(DEBUG_FILE, "file_mempool: failed to verify free list!\n");
-    }
-
-    if (release_size > cbuffer_size(released_list))
-    {
-        DebugMessage(DEBUG_FILE, "file_mempool: failed to verify release list!\n");
-    }
-
-    /* The free mempool and size of release mempool should be smaller than
-     * or equal to the size of mempool
-     */
-    if (free_size + release_size > total)
-    {
-        DebugMessage(DEBUG_FILE, "file_mempool: failed to verify mempool size!\n");
-    }
-}
-
-#endif
 
 void FileMemPool::free_pools()
 {
@@ -104,7 +75,6 @@ FileMemPool::FileMemPool(uint64_t num_objects, size_t o_size)
     free_list = cbuffer_init(num_objects);
     if (!free_list)
     {
-        DebugMessage(DEBUG_FILE, "file_mempool: Failed to init free list\n");
         free_pools();
         return;
     }
@@ -112,7 +82,6 @@ FileMemPool::FileMemPool(uint64_t num_objects, size_t o_size)
     released_list = cbuffer_init(num_objects);
     if (!released_list)
     {
-        DebugMessage(DEBUG_FILE, "file_mempool: Failed to init release list\n");
         free_pools();
         return;
     }
@@ -124,7 +93,6 @@ FileMemPool::FileMemPool(uint64_t num_objects, size_t o_size)
 
         if (cbuffer_write(free_list,  data))
         {
-            DebugMessage(DEBUG_FILE, "file_mempool: Failed to add to free list\n");
             free_pools();
             return;
         }
@@ -165,13 +133,6 @@ void* FileMemPool::m_alloc()
         }
     }
 
-    if (*(MagicType*)b != FREE_MAGIC)
-    {
-        DebugMessage(DEBUG_FILE, "file_mempool_alloc(): Allocation errors!\n");
-    }
-
-    DEBUG_WRAP(verify(); );
-
     return b;
 }
 
@@ -191,7 +152,6 @@ int FileMemPool::remove(CircularBuffer* cb, void* obj)
 
     if (*(MagicType*)obj == FREE_MAGIC)
     {
-        DebugMessage(DEBUG_FILE, "file_mempool_remove(): Double free!\n");
         return FILE_MEM_FAIL;
     }
 
@@ -206,7 +166,6 @@ int FileMemPool::m_free(void* obj)
 
     int ret = remove(free_list, obj);
 
-    DEBUG_WRAP(verify(); );
 
     return ret;
 }
@@ -225,7 +184,6 @@ int FileMemPool::m_release(void* obj)
     /*A writer that might from different thread*/
     int ret = remove(released_list, obj);
 
-    DEBUG_WRAP(verify(); );
 
     return ret;
 }

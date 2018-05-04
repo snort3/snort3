@@ -28,7 +28,6 @@
 #include "hash/zhash.h"
 #include "helpers/flag_context.h"
 #include "ips_options/ips_flowbits.h"
-#include "main/snort_debug.h"
 #include "packet_io/active.h"
 #include "time/packet_time.h"
 #include "utils/stats.h"
@@ -197,7 +196,6 @@ unsigned FlowCache::prune_stale(uint32_t thetime, const Flow* save_me)
         if ( flow->last_data_seen + config.pruning_timeout >= thetime )
             break;
 
-        DebugMessage(DEBUG_STREAM, "pruning stale flow\n");
         flow->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
         release(flow, PruneReason::IDLE);
         ++pruned;
@@ -287,15 +285,6 @@ bool FlowCache::prune_one(PruneReason reason, bool do_cleanup)
     flow->ssn_state.session_flags |= SSNFLAG_PRUNED;
     release(flow, reason, do_cleanup);
 
-#ifdef DEBUG_MSGS
-    const char* s =
-        (reason == PruneReason::MEMCAP) ? "memcap" :
-        (reason == PruneReason::PREEMPTIVE) ? "preemptive" :
-        "other";
-
-    DebugFormat(DEBUG_MEMORY, "prune one for reason %s\n", s);
-#endif
-
     return true;
 }
 
@@ -321,7 +310,6 @@ unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
             continue;
         }
 
-        DebugMessage(DEBUG_STREAM, "retiring stale flow\n");
         flow->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
         release(flow, PruneReason::IDLE);
 

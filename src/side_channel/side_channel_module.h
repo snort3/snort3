@@ -40,7 +40,6 @@ class SideChannelModule : public snort::Module
 {
 public:
     SideChannelModule();
-    ~SideChannelModule() override;
 
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
     bool begin(const char*, int, snort::SnortConfig*) override;

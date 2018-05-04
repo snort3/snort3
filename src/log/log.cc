@@ -26,7 +26,6 @@
 
 #include <mutex>
 
-#include "main/snort_debug.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
 #include "utils/util.h"
@@ -79,8 +78,6 @@ FILE* OpenAlertFile(const char* filearg)
     std::string name;
     const char* filename = get_instance_file(name, filearg);
 
-    DebugFormat(DEBUG_INIT,"Opening alert file: %s\n", filename);
-
     if ((file = fopen(filename, "a")) == nullptr)
     {
         FatalError("OpenAlertFile() => fopen() alert file %s: %s\n",
@@ -116,7 +113,6 @@ int RollAlertFile(const char* filearg)
 
     SnortSnprintf(newname, sizeof(newname)-1, "%s.%lu", oldname, (unsigned long)now);
 
-    DebugFormat(DEBUG_INIT,"Rolling alert file: %s\n", newname);
 
     if ( rename(oldname, newname) )
     {

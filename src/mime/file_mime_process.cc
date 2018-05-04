@@ -533,17 +533,6 @@ const uint8_t* MimeSession::process_mime_data_paf(
 
     if (data_state == STATE_DATA_HEADER)
     {
-#ifdef DEBUG_MSGS
-        if (data_state == STATE_DATA_HEADER)
-        {
-            DEBUG_WRAP(DebugMessage(DEBUG_FILE, "DATA HEADER STATE ~~~~~~~~~~~~~~~~~~~~~~\n"); );
-        }
-        else
-        {
-            DEBUG_WRAP(DebugMessage(DEBUG_FILE, "DATA UNKNOWN STATE ~~~~~~~~~~~~~~~~~~~~~\n"); );
-        }
-#endif
-
         start = process_mime_header(start, end);
         if (start == nullptr)
             return nullptr;
@@ -559,11 +548,9 @@ const uint8_t* MimeSession::process_mime_data_paf(
         switch (data_state)
         {
         case STATE_MIME_HEADER:
-            DEBUG_WRAP(DebugMessage(DEBUG_FILE, "MIME HEADER STATE ~~~~~~~~~~~~~~~~~~~~~~\n"); );
             start = process_mime_header(start, end);
             break;
         case STATE_DATA_BODY:
-            DEBUG_WRAP(DebugMessage(DEBUG_FILE, "DATA BODY STATE ~~~~~~~~~~~~~~~~~~~~~~~~\n"); );
             start = process_mime_body(start, end, isFileEnd(position) );
             break;
         }

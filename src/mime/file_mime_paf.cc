@@ -157,7 +157,6 @@ bool process_mime_paf_data(MimeDataPafInfo* data_info,  uint8_t data)
         if (store_boundary(data_info, data))
         {
             /* End of boundary, move to MIME_PAF_FOUND_BOUNDARY_STATE*/
-            DebugFormat(DEBUG_FILE, "Create boundary string: %s\n", data_info->boundary);
             data_info->data_state = MIME_PAF_FOUND_BOUNDARY_STATE;
         }
         break;
@@ -166,7 +165,6 @@ bool process_mime_paf_data(MimeDataPafInfo* data_info,  uint8_t data)
         if (check_boundary(data_info,  data))
         {
             /* End of boundary, move to MIME_PAF_FOUND_BOUNDARY_STATE*/
-            DebugFormat(DEBUG_FILE, "Found boundary string: %s\n", data_info->boundary);
             return true;
         }
         break;

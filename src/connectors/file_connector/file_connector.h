@@ -62,7 +62,6 @@ class FileConnector : public snort::Connector
 {
 public:
     FileConnector(FileConnectorConfig*);
-    ~FileConnector() override;
     snort::ConnectorMsgHandle* alloc_message(const uint32_t, const uint8_t**) override;
     void discard_message(snort::ConnectorMsgHandle*) override;
     bool transmit_message(snort::ConnectorMsgHandle*) override;

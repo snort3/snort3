@@ -42,10 +42,6 @@ AppIdModuleConfig config;
 
 AppIdModuleConfig::~AppIdModuleConfig() { }
 
-#ifdef DEBUG_MSGS
-void Debug::print(const char*, int, uint64_t, const char*, ...) { }
-#endif
-
 TEST_GROUP(tp_lib_handler)
 {
 };

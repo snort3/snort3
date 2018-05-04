@@ -30,7 +30,6 @@
 #include <unistd.h>
 
 #include "log/messages.h"
-#include "main/snort_debug.h"
 #include "main/thread.h"
 #include "profiler/profiler_defs.h"
 
@@ -45,8 +44,6 @@ THREAD_LOCAL ProfileStats tcp_connector_perfstats;
 
 TcpConnectorMsgHandle::TcpConnectorMsgHandle(const uint32_t length)
 {
-    DebugMessage(DEBUG_CONNECTORS,"TcpConnectorMsgHandle::TcpConnectorMsgHandle()\n");
-
     connector_msg.length = length;
     connector_msg.data = new uint8_t[length];
 }
@@ -213,7 +210,6 @@ void TcpConnector::stop_receive_thread()
 
 TcpConnector::TcpConnector(TcpConnectorConfig* tcp_connector_config, int sfd)
 {
-    DebugMessage(DEBUG_CONNECTORS,"TcpConnector::TcpConnector()\n");
     receive_thread = nullptr;
     config = tcp_connector_config;
     receive_ring = new ReceiveRing(50);
@@ -224,7 +220,6 @@ TcpConnector::TcpConnector(TcpConnectorConfig* tcp_connector_config, int sfd)
 
 TcpConnector::~TcpConnector()
 {
-    DebugMessage(DEBUG_CONNECTORS,"TcpConnector::~TcpConnector()\n");
     stop_receive_thread();
     delete receive_ring;
     close(sock_fd);
@@ -232,7 +227,6 @@ TcpConnector::~TcpConnector()
 
 ConnectorMsgHandle* TcpConnector::alloc_message(const uint32_t length, const uint8_t** data)
 {
-    DebugMessage(DEBUG_CONNECTORS,"TcpConnector::alloc_message()\n");
     TcpConnectorMsgHandle* msg = new TcpConnectorMsgHandle(length);
 
     *data = (uint8_t*)msg->connector_msg.data;
@@ -242,14 +236,12 @@ ConnectorMsgHandle* TcpConnector::alloc_message(const uint32_t length, const uin
 
 void TcpConnector::discard_message(ConnectorMsgHandle* msg)
 {
-    DebugMessage(DEBUG_CONNECTORS,"TcpConnector::discard_message()\n");
     TcpConnectorMsgHandle* tmsg = (TcpConnectorMsgHandle*)msg;
     delete tmsg;
 }
 
 bool TcpConnector::transmit_message(ConnectorMsgHandle* msg)
 {
-    DebugMessage(DEBUG_CONNECTORS,"TcpConnector::transmit_message()\n");
     TcpConnectorMsgHandle* tmsg = (TcpConnectorMsgHandle*)msg;
 
     if ( sock_fd < 0 )
@@ -295,14 +287,12 @@ ConnectorMsgHandle* TcpConnector::receive_message(bool)
 
 static Module* mod_ctor()
 {
-    DebugMessage(DEBUG_CONNECTORS,"tcp_connector:mod_ctor()\n");
     return new TcpConnectorModule;
 }
 
 static void mod_dtor(Module* m)
 {
     delete m;
-    DebugMessage(DEBUG_CONNECTORS,"tcp_connector:mod_dtor(Module*)\n");
 }
 
 static TcpConnector* tcp_connector_tinit_call(TcpConnectorConfig* cfg, const char* port)
@@ -417,7 +407,6 @@ static TcpConnector* tcp_connector_tinit_answer(TcpConnectorConfig* cfg, const c
 // Create a per-thread object
 static Connector* tcp_connector_tinit(ConnectorConfig* config)
 {
-    DebugMessage(DEBUG_CONNECTORS,"tcp_connector:tcp_connector_tinit()\n");
     TcpConnectorConfig* cfg = (TcpConnectorConfig*)config;
 
     uint16_t instance = (uint16_t)get_instance_id();
@@ -445,7 +434,6 @@ static Connector* tcp_connector_tinit(ConnectorConfig* config)
 
 static void tcp_connector_tterm(Connector* connector)
 {
-    DebugMessage(DEBUG_CONNECTORS,"tcp_connector:tcp_connector_tterm()\n");
     TcpConnector* tcp_connector = (TcpConnector*)connector;
 
     delete tcp_connector;
@@ -453,7 +441,6 @@ static void tcp_connector_tterm(Connector* connector)
 
 static ConnectorCommon* tcp_connector_ctor(Module* m)
 {
-    DebugMessage(DEBUG_CONNECTORS,"tcp_connector:tcp_connector_ctor(Module*)\n");
     TcpConnectorModule* mod = (TcpConnectorModule*)m;
     TcpConnectorCommon* tcp_connector_common = new TcpConnectorCommon(
         mod->get_and_clear_config());
@@ -463,7 +450,6 @@ static ConnectorCommon* tcp_connector_ctor(Module* m)
 
 static void tcp_connector_dtor(ConnectorCommon* c)
 {
-    DebugMessage(DEBUG_CONNECTORS,"tcp_connector:tcp_connector_dtor(ConnectorCommon*)\n");
     TcpConnectorCommon* fc = (TcpConnectorCommon*)c;
     delete fc;
 }

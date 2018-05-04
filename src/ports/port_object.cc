@@ -26,7 +26,6 @@
 #include "port_object.h"
 
 #include "log/messages.h"
-#include "main/snort_debug.h"
 #include "parser/parser.h"
 #include "utils/util.h"
 #include "utils/util_cstring.h"
@@ -51,9 +50,6 @@ void PortObjectFree(void* pv)
 {
     assert(pv);
     PortObject* po = (PortObject*)pv;
-
-    DEBUG_WRAP(static int pof_cnt = 0; pof_cnt++; );
-    DebugFormat(DEBUG_PORTLISTS, "PortObjectFree-Cnt: %d ptr=%p\n", pof_cnt, (void*)po);
 
     if ( po->name )
         snort_free(po->name);

@@ -165,20 +165,12 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
     if (hlen < ip::IP4_HEADER_LEN)
     {
-        DebugFormat(DEBUG_DECODE,
-            "Bogus IP header length of %i bytes\n", hlen);
-
         codec_event(codec, DECODE_IPV4_INVALID_HEADER_LEN);
         return false;
     }
 
     if (ip_len > raw.len)
     {
-        DebugFormat(DEBUG_DECODE,
-            "IP Len field is %u bytes bigger than captured length.\n"
-            "    (ip.len: %u, cap.len: %u)\n",
-            ip_len - raw.len, ip_len, raw.len);
-
         codec_event(codec, DECODE_IPV4_DGRAM_GT_CAPLEN);
         // FIXIT-L we should decode this layer if possible instead of stopping now
         // ip6 etc may have similar issues
@@ -195,10 +187,6 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
     if (ip_len < hlen)
     {
-        DebugFormat(DEBUG_DECODE,
-            "IP dgm len (%u bytes) < IP hdr "
-            "len (%hu bytes), packet discarded\n", ip_len, hlen);
-
         codec_event(codec, DECODE_IPV4_DGRAM_LT_IPHDR);
         return false;
     }

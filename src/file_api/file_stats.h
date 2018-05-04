@@ -69,8 +69,6 @@ struct FileStats
 extern THREAD_LOCAL FileCounts file_counts;
 extern THREAD_LOCAL FileStats* file_stats;
 
-#define FILE_DEBUG_MSGS(msg) DebugMessage(DEBUG_FILE, msg)
-
 void file_stats_init();
 void file_stats_term();
 

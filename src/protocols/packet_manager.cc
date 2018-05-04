@@ -30,7 +30,6 @@
 #include "detection/detection_engine.h"
 #include "log/text_log.h"
 #include "main/snort_config.h"
-#include "main/snort_debug.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
 #include "profiler/profiler_defs.h"
@@ -161,11 +160,6 @@ void PacketManager::decode(
     // loop until the protocol id is no longer valid
     while (CodecManager::s_protocols[mapped_prot]->decode(raw, codec_data, p->ptrs))
     {
-        DebugFormat(DEBUG_DECODE, "Codec %s (protocol_id: %hu:"
-            "ip header starts at: %p, length is %d\n",
-            CodecManager::s_protocols[mapped_prot]->get_name(),
-            static_cast<uint16_t>(codec_data.next_prot_id), pkt, codec_data.lyr_len);
-
         if ( codec_data.codec_flags & CODEC_ETHER_NEXT )
         {
             if ( codec_data.next_prot_id < ProtocolId::ETHERTYPE_MINIMUM )
@@ -238,11 +232,6 @@ void PacketManager::decode(
         codec_data.invalid_bytes = 0;
         codec_data.proto_bits = 0;
     }
-
-    DebugFormat(DEBUG_DECODE, "Codec %s (protocol_id: %hu: ip header"
-        " starts at: %p, length is %lu\n",
-        CodecManager::s_protocols[mapped_prot]->get_name(),
-        static_cast<uint16_t>(prev_prot_id), pkt, (unsigned long)codec_data.lyr_len);
 
     if ( p->num_layers > 0 )
         s_stats[mapped_prot + stat_offset]++;

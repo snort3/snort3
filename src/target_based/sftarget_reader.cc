@@ -30,7 +30,6 @@
 
 #include "log/messages.h"
 #include "main/snort_config.h"
-#include "main/snort_debug.h"
 #include "protocols/packet.h"
 #include "sfrt/sfrt.h"
 #include "utils/stats.h"
@@ -91,7 +90,6 @@ uint32_t SFAT_NumberOfHosts()
 
 static void FreeApplicationEntry(ApplicationEntry* app)
 {
-    DebugFormat(DEBUG_ATTRIBUTE, "Freeing ApplicationEntry: 0x%p\n", (void*) app);
     snort_free(app);
 }
 
@@ -112,7 +110,6 @@ void FreeHostEntry(HostAttributeEntry* host)
     if (!host)
         return;
 
-    DebugFormat(DEBUG_ATTRIBUTE, "Freeing HostEntry: 0x%p\n", (void*) host);
 
     /* Free the service list */
     if (host->services)
@@ -181,55 +178,6 @@ int SFAT_AddApplicationData(HostAttributeEntry* host, ApplicationEntry* app)
 
 #endif
 
-#ifdef DEBUG_MSGS
-static void PrintHostAttributeEntry(HostAttributeEntry* host)
-{
-    ApplicationEntry* app;
-    int i = 0;
-
-    if (!host)
-        return;
-
-    SfIpString ip_str;
-    DebugFormat(DEBUG_ATTRIBUTE, "Host IP: %s/%d\n",
-        host->ipAddr.ntop(ip_str),
-        host->ipAddr.get_bits());
-
-    DebugFormat(DEBUG_ATTRIBUTE,
-        "\tPolicy Information: frag:%s (%hhu) stream: %s (%hhu)\n",
-        "look-me-up", host->hostInfo.fragPolicy,
-        "look-me-up", host->hostInfo.streamPolicy);
-
-    DebugMessage(DEBUG_ATTRIBUTE, "\tServices:\n");
-
-    for (i=0, app = host->services; app; app = app->next,i++)
-    {
-        DebugFormat(DEBUG_ATTRIBUTE, "\tService #%d:\n", i);
-        DebugFormat(DEBUG_ATTRIBUTE, "\t\tIPProtocol: %d\tPort: %d\tSnortProtocolId %hu\n",
-            app->ipproto, app->port, app->snort_protocol_id);
-    }
-    if (i==0)
-        DebugMessage(DEBUG_ATTRIBUTE, "\t\tNone\n");
-
-    DebugMessage(DEBUG_ATTRIBUTE, "\tClients:\n");
-    for (i=0, app = host->clients; app; app = app->next,i++)
-    {
-        DebugFormat(DEBUG_ATTRIBUTE, "\tClient #%d:\n", i);
-        DebugFormat(DEBUG_ATTRIBUTE, "\t\tIPProtocol: %d\tSnortProtocolId %hu\n",
-            app->ipproto, app->snort_protocol_id);
-
-        if (app->fields & APPLICATION_ENTRY_PORT)
-        {
-            DebugFormat(DEBUG_ATTRIBUTE, "\t\tPort: %d\n", app->port);
-        }
-    }
-    if (i==0)
-    {
-        DebugMessage(DEBUG_ATTRIBUTE, "\t\tNone\n");
-    }
-}
-
-#endif
 
 int SFAT_AddHost(HostAttributeEntry* host)
 {
@@ -240,8 +188,6 @@ int SFAT_AddHostEntryToMap(HostAttributeEntry* host)
 {
     int ret;
     SfCidr* ipAddr;
-
-    DEBUG_WRAP(PrintHostAttributeEntry(host); );
 
     ipAddr = &host->ipAddr;
     assert(ipAddr);

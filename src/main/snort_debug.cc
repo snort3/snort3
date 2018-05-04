@@ -33,64 +33,6 @@
 
 #include "snort_config.h"
 
-bool Debug::init = false;
-uint64_t Debug::mask = 0;
-
-bool Debug::enabled(uint64_t flag)
-{
-    if ( !init )
-    {
-        const char* b = getenv(DEBUG_BUILTIN);
-        const char* p = getenv(DEBUG_PLUGIN);
-
-        mask = (p ? strtoul(p, nullptr, 0) : 0);
-        mask <<= 32;
-        mask |= (b ? strtoul(b, nullptr, 0) : 0);
-
-        init = true;
-    }
-
-    return (mask & flag) != 0;
-}
-
-void Debug::print(
-    const char* file, int line, uint64_t dbg, const char* fmt, ...)
-{
-    if ( !enabled(dbg) )
-        return;
-
-    va_list ap;
-    va_start(ap, fmt);
-
-    if ( snort::SnortConfig::get_conf() and snort::SnortConfig::log_syslog() )
-    {
-        char buf[STD_BUF];
-        int buf_len = sizeof(buf);
-        char* buf_ptr = buf;
-
-        buf[buf_len - 1] = '\0';
-
-        /* filename and line number information */
-        if ( file )
-        {
-            snprintf(buf, buf_len - 1, "%s:%d: ", file, line);
-            buf_ptr += strlen(buf);
-            buf_len -= strlen(buf);
-        }
-
-        vsnprintf(buf_ptr, buf_len - 1, fmt, ap);
-        syslog(LOG_DAEMON | LOG_DEBUG, "%s", buf);
-    }
-    else
-    {
-        if ( file )
-            printf("%s:%d: ", file, line);
-        vprintf(fmt, ap);
-    }
-
-    va_end(ap);
-}
-
 bool trace_enabled(Trace mask, Trace flags)
 { return mask & flags; }
 

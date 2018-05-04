@@ -23,7 +23,6 @@
 #endif
 
 #include "framework/codec.h"
-#include "main/snort_debug.h"
 
 using namespace snort;
 
@@ -54,8 +53,6 @@ void PppEncap::get_protocol_ids(std::vector<ProtocolId>& v)
 bool PppEncap::decode(const RawData& raw, CodecData& codec, DecodeData&)
 {
     uint16_t protocol;
-
-    DebugMessage(DEBUG_DECODE, "PPP Packet!\n");
 
     if (raw.len < 2)
         return false;

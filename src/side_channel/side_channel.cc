@@ -29,7 +29,6 @@
 #include <cassert>
 
 #include "framework/counts.h"
-#include "main/snort_debug.h"
 #include "managers/connector_manager.h"
 #include "profiler/profiler_defs.h"
 
@@ -62,8 +61,6 @@ SideChannel* SideChannelManager::get_side_channel(SCPort port)
         {
             if ( ( port <= scm->ports.size() ) && ( scm->ports.test(port) ) )
             {
-                DebugFormat(DEBUG_SIDE_CHANNEL,"SideChannelManager::get_side_channel: port: %u\n",
-                    (uint32_t)port);
                 return scm->sc;
             }
         }
@@ -73,17 +70,11 @@ SideChannel* SideChannelManager::get_side_channel(SCPort port)
 
 SideChannel::SideChannel()
 {
-    DebugMessage(DEBUG_SIDE_CHANNEL,"SideChannel::SideChannel()\n");
     sequence = 0;
     default_port = 0;
     connector_receive = nullptr;
     connector_transmit = nullptr;
     receive_handler = nullptr;
-}
-
-SideChannel::~SideChannel()
-{
-    DebugMessage(DEBUG_SIDE_CHANNEL,"SideChannel::~SideChannel()\n");
 }
 
 void SideChannel::set_message_port(SCMessage* msg, SCPort port)
@@ -100,8 +91,6 @@ void SideChannel::set_default_port(SCPort port)
 
 void SideChannelManager::instantiate(const SCConnectors* connectors, const PortBitSet* ports)
 {
-    DebugMessage(DEBUG_SIDE_CHANNEL, "SideChannelManager::instantiate()\n");
-
     SideChannelMapping* scm = new SideChannelMapping;
 
     scm->sc = nullptr;
@@ -114,14 +103,12 @@ void SideChannelManager::instantiate(const SCConnectors* connectors, const PortB
 // Initialize state to be ready to accept configuration
 void SideChannelManager::pre_config_init()
 {
-    DebugMessage(DEBUG_SIDE_CHANNEL,"SideChannelManager::pre_config_init()\n");
     s_maps.clear();
 }
 
 // Within each thread, instantiate the connectors, etc.
 void SideChannelManager::thread_init()
 {
-    DebugMessage(DEBUG_SIDE_CHANNEL,"SideChannelManager::thread_init()\n");
 
     // First startup the connectors
     ConnectorManager::thread_init();
@@ -146,23 +133,17 @@ void SideChannelManager::thread_init()
 
             if ( connector->get_connector_direction() == Connector::CONN_DUPLEX )
             {
-                DebugFormat(DEBUG_SIDE_CHANNEL,
-                    "SideChannelManager::thread_init(): DUPLEX: %s\n", conn_name.c_str());
                 sc->connector_receive = connector;
                 sc->connector_transmit = connector;
             }
 
             if ( connector->get_connector_direction() == Connector::CONN_RECEIVE )
             {
-                DebugFormat(DEBUG_SIDE_CHANNEL,
-                    "SideChannelManager::thread_init(): RECEIVE: %s\n", conn_name.c_str());
                 sc->connector_receive = connector;
             }
 
             if ( connector->get_connector_direction() == Connector::CONN_TRANSMIT )
             {
-                DebugFormat(DEBUG_SIDE_CHANNEL,
-                    "SideChannelManager::thread_init(): TRANSMIT: %s\n", conn_name.c_str());
                 sc->connector_transmit = connector;
             }
         }
@@ -178,7 +159,6 @@ void SideChannelManager::thread_init()
 // Within each thread, shutdown the sidechannel
 void SideChannelManager::thread_term()
 {
-    DebugMessage(DEBUG_SIDE_CHANNEL,"SideChannelManager::thread_term()\n");
 
     // First shutdown the connectors
     ConnectorManager::thread_term();
@@ -207,7 +187,6 @@ void SideChannelManager::term()
 // return true iff we received any messages.
 bool SideChannel::process(int max_messages)
 {
-    DebugMessage(DEBUG_SIDE_CHANNEL,"SideChannelManager::process()\n");
     bool received_message = false;
 
     while (true)
@@ -253,19 +232,16 @@ bool SideChannel::process(int max_messages)
 
 void SideChannel::register_receive_handler(const SCProcessMsgFunc& handler)
 {
-    DebugMessage(DEBUG_SIDE_CHANNEL,"SideChannelManager::register_receive_handler()\n");
     receive_handler = handler;
 }
 
 void SideChannel::unregister_receive_handler()
 {
-    DebugMessage(DEBUG_SIDE_CHANNEL,"SideChannelManager::unregister_receive_handler()\n");
     receive_handler = nullptr;
 }
 
 SCMessage* SideChannel::alloc_transmit_message(uint32_t content_length)
 {
-    DebugMessage(DEBUG_SIDE_CHANNEL,"SideChannelManager::alloc_transmit_message()\n");
     SCMessage* msg = new SCMessage;
     msg->handle = connector_transmit->alloc_message((content_length + sizeof(SCMsgHdr)),
         (const uint8_t**)&(msg->hdr));
@@ -292,7 +268,6 @@ bool SideChannel::discard_message(SCMessage* msg)
 
 bool SideChannel::transmit_message(SCMessage* msg)
 {
-    DebugMessage(DEBUG_SIDE_CHANNEL,"SideChannelManager::transmit_message()\n");
     bool return_value = false;
 
     if ( connector_transmit && msg->handle )
@@ -307,8 +282,6 @@ bool SideChannel::transmit_message(SCMessage* msg)
         delete msg;
     }
 
-    DebugFormat(DEBUG_SIDE_CHANNEL,"SideChannelManager::transmit_message(): return: %d\n",
-        (int)return_value);
     return return_value;
 }
 

@@ -23,7 +23,6 @@
 
 #include "parse_ports.h"
 
-#include "main/snort_debug.h"
 #include "protocols/packet.h"
 #include "utils/util.h"
 
@@ -50,7 +49,6 @@ static int POPGetChar(POParser* pop)
         pop->slen--;
         pop->s++;
         pop->pos++;
-        DebugFormat(DEBUG_PORTLISTS,"GetChar: %c, %d bytes left\n",c, pop->slen);
         return c;
     }
     return 0;
@@ -170,8 +168,6 @@ static char* POParserName(POParser* pop)
         }
     }
 
-    DebugFormat(DEBUG_PORTLISTS,">>> POParserName : %s\n",pop->token);
-
     return snort_strdup(pop->token);
 }
 
@@ -217,8 +213,6 @@ static uint16_t POParserGetShort(POParser* pop)
         pop->errflag = POPERR_BOUNDS;
         return 0;
     }
-
-    DebugFormat(DEBUG_PORTLISTS,"GetUNumber: %d\n",c);
 
     return c;
 }
@@ -480,8 +474,6 @@ PortObject* PortObjectParseString(PortVarTable* pvTable, POParser* pop,
     const char* name, const char* s, int nameflag)
 {
     PortObject* po, * potmp;
-
-    DebugFormat(DEBUG_PORTLISTS,"PortObjectParseString: %s\n",s);
 
     POParserInit(pop, s, pvTable);
 

@@ -627,7 +627,6 @@ void SnortConfig::set_daemon(bool enabled)
 {
     if (enabled)
     {
-        DebugMessage(DEBUG_INIT, "Daemon mode flag set\n");
         run_flags |= RUN_FLAG__DAEMON;
     }
     else
@@ -638,7 +637,6 @@ void SnortConfig::set_decode_data_link(bool enabled)
 {
     if (enabled)
     {
-        DebugMessage(DEBUG_INIT, "Decode DLL set\n");
         output_flags |= OUTPUT_FLAG__SHOW_DATA_LINK;
     }
     else
@@ -650,7 +648,6 @@ void SnortConfig::set_dump_chars_only(bool enabled)
     if (enabled)
     {
         /* dump the application layer as text only */
-        DebugMessage(DEBUG_INIT, "Character payload dump set\n");
         output_flags |= OUTPUT_FLAG__CHAR_DATA;
     }
     else
@@ -662,7 +659,6 @@ void SnortConfig::set_dump_payload(bool enabled)
     if (enabled)
     {
         /* dump the application layer */
-        DebugMessage(DEBUG_INIT, "Payload dump set\n");
         output_flags |= OUTPUT_FLAG__APP_DATA;
     }
     else
@@ -673,7 +669,6 @@ void SnortConfig::set_dump_payload_verbose(bool enabled)
 {
     if (enabled)
     {
-        DebugMessage(DEBUG_INIT, "Verbose packet bytecode dumps enabled\n");
         output_flags |= OUTPUT_FLAG__VERBOSE_DUMP;
     }
     else
@@ -735,8 +730,6 @@ void SnortConfig::set_obfuscation_mask(const char* mask)
 {
    if (!mask)
         return;
-
-    DebugFormat(DEBUG_INIT, "Got obfus data: %s\n", mask);
 
     output_flags |= OUTPUT_FLAG__OBFUSCATE;
 
@@ -817,7 +810,6 @@ void SnortConfig::set_uid(const char* args)
     if (group_id == -1 && pw->pw_gid != getgid())
         group_id = (int) pw->pw_gid;
 
-    DebugFormat(DEBUG_INIT, "UserID: %d GroupID: %d.\n", user_id, group_id);
 }
 
 void SnortConfig::set_show_year(bool enabled)
@@ -825,7 +817,6 @@ void SnortConfig::set_show_year(bool enabled)
     if (enabled)
     {
         output_flags |= OUTPUT_FLAG__INCLUDE_YEAR;
-        DebugMessage(DEBUG_INIT, "Enabled year in timestamp\n");
     }
     else
         output_flags &= ~OUTPUT_FLAG__INCLUDE_YEAR;
@@ -891,7 +882,6 @@ void SnortConfig::set_verbose(bool enabled)
     if (enabled)
     {
         logging_flags |= LOGGING_FLAG__VERBOSE;
-        DebugMessage(DEBUG_INIT, "Verbose Flag active\n");
     }
     else
         logging_flags &= ~LOGGING_FLAG__VERBOSE;

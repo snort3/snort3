@@ -58,7 +58,6 @@ extern "C" {
 #include "log/messages.h"
 #include "main/build.h"
 #include "main/snort_config.h"
-#include "main/snort_debug.h"
 #include "packet_io/sfdaq.h"
 #include "protocols/packet.h"   // For NUM_IP_PROTOS
 
@@ -555,7 +554,6 @@ bool EnterChroot(std::string& root_dir, std::string& log_dir)
         return false;
     }
     PathBuf pwd;
-    DebugFormat(DEBUG_INIT, "EnterChroot: %s\n", CurrentWorkingDir(pwd));
     PathBuf abs_log_dir;
 
     if ( !GetAbsolutePath(log_dir.c_str(), abs_log_dir) )
@@ -577,7 +575,6 @@ bool EnterChroot(std::string& root_dir, std::string& log_dir)
         return false;
     }
     size_t abs_root_dir_len = strlen(abs_root_dir);
-    DebugFormat(DEBUG_INIT, "ABS: %s %zu\n", abs_root_dir, abs_root_dir_len);
 
     if (strncmp(abs_root_dir, abs_log_dir, abs_root_dir_len))
     {
@@ -592,8 +589,6 @@ bool EnterChroot(std::string& root_dir, std::string& log_dir)
         return false;
     }
 
-    DebugFormat(DEBUG_INIT,"chroot success (%s ->", abs_root_dir);
-    DebugFormat(DEBUG_INIT,"%s)\n ", CurrentWorkingDir(pwd));
 
     /* Immediately change to the root directory of the jail. */
     if (chdir("/") < 0)
@@ -603,14 +598,12 @@ bool EnterChroot(std::string& root_dir, std::string& log_dir)
         return false;
     }
 
-    DebugFormat(DEBUG_INIT,"chdir success (%s)\n", CurrentWorkingDir(pwd));
 
     if (abs_root_dir_len >= strlen(abs_log_dir))
         log_dir = "/";
     else
         log_dir = abs_log_dir + abs_root_dir_len;
 
-    DebugFormat(DEBUG_INIT,"new logdir from %s to %s\n", abs_log_dir, log_dir.c_str());
 
     LogMessage("Chroot directory = %s\n", root_dir.c_str());
 

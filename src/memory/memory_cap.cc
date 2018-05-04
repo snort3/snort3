@@ -86,11 +86,6 @@ inline bool free_space(size_t requested, size_t cap, Tracker& trk, Handler& hand
 {
     if ( requested > cap )
     {
-        DebugFormat(
-            DEBUG_MEMORY,
-            "Requested memory (%zu bytes) > cap (%zu bytes)\n",
-            requested, cap);
-
         return false;
     }
 
