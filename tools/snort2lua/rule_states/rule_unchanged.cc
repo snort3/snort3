@@ -80,32 +80,6 @@ static const ConvertMap rule_msg =
 const ConvertMap* msg_map = &rule_msg;
 
 /************************************
- **********  G I D ******************
- ************************************/
-
-static const std::string gid = "gid";
-static const ConvertMap rule_gid =
-{
-    gid,
-    unchanged_rule_ctor<& gid>,
-};
-
-const ConvertMap* gid_map = &rule_gid;
-
-/************************************
- **********  S I D  *****************
- ************************************/
-
-static const std::string sid = "sid";
-static const ConvertMap rule_sid =
-{
-    sid,
-    unchanged_rule_ctor<& sid>,
-};
-
-const ConvertMap* sid_map = &rule_sid;
-
-/************************************
  **********  R E V  *****************
  ************************************/
 

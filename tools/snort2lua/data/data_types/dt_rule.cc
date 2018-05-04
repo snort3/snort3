@@ -24,7 +24,7 @@
 
 Rule::Rule() :  num_hdr_data(0),
     is_bad_rule(false),
-    is_comment(false)
+    is_comment(false), old_http_rule(false)
 {
 }
 
@@ -61,6 +61,9 @@ void Rule::add_comment(const std::string& new_comment)
 void Rule::make_comment()
 { is_comment = true; }
 
+void Rule::set_old_http_rule()
+{ old_http_rule = true; }
+
 void Rule::add_option(const std::string& keyword)
 {
     RuleOption* r = new RuleOption(keyword);
@@ -71,6 +74,28 @@ void Rule::add_option(const std::string& keyword, const std::string& data)
 {
     RuleOption* r = new RuleOption(keyword, data);
     options.push_back(r);
+}
+
+std::string Rule::get_option(const std::string& keyword)
+{
+    for (auto option : options)
+    {
+        if (option->get_name() == keyword)
+            return option->get_value();
+    }
+    return std::string();
+}
+
+void Rule::update_option(const std::string& keyword, std::string& val)
+{
+    for (auto option : options)
+    {
+        if (option->get_name() == keyword)
+        {
+            option->update_value(val);
+            break;
+        }
+    }
 }
 
 void Rule::add_suboption(const std::string& keyword)

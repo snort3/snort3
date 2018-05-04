@@ -7,6 +7,7 @@ add_library( rule_states OBJECT
     rule_dnp3_obj.cc
     rule_dsize.cc
     rule_file_data.cc
+    rule_gid_sid.cc
     rule_http_encode.cc
     rule_isdataat.cc
     rule_metadata.cc

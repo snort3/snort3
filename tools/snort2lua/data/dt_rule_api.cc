@@ -164,6 +164,22 @@ void RuleApi::add_option(const std::string& opt_name, const std::string& val)
     curr_rule->add_option(opt_name, val);
 }
 
+std::string RuleApi::get_option(const std::string& keyword)
+{
+    if (!curr_rule)
+        return std::string();
+
+    return curr_rule->get_option(keyword);
+}
+
+void RuleApi::update_option(const std::string& keyword, std::string& val)
+{
+    if (!curr_rule)
+        return;
+
+    curr_rule->update_option(keyword, val);
+}
+
 void RuleApi::add_suboption(const std::string& keyword)
 {
     if (curr_rule)
@@ -195,6 +211,22 @@ void RuleApi::add_comment(const std::string& comment)
         begin_rule();
 
     curr_rule->add_comment(comment);
+}
+
+void RuleApi::old_http_rule()
+{
+    if (!curr_rule)
+        begin_rule();
+
+    curr_rule->set_old_http_rule();
+}
+
+bool RuleApi::is_old_http_rule()
+{
+    if (!curr_rule)
+        return false;
+
+    return curr_rule->is_old_http_rule();
 }
 
 std::ostream& operator<<(std::ostream& out, const RuleApi& data)

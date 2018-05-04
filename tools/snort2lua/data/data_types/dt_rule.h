@@ -36,6 +36,8 @@ public:
     bool add_hdr_data(const std::string& data);
     void add_option(const std::string& keyword);
     void add_option(const std::string& keyword, const std::string& data);
+    std::string get_option(const std::string& keyword);
+    void update_option(const std::string& keyword, std::string& val);
     void add_suboption(const std::string& keyword);
     void add_suboption(const std::string& keyword, const std::string& val);
     void set_curr_options_buffer(const std::string& buffer, bool add_option);
@@ -44,6 +46,8 @@ public:
     void add_comment(const std::string& comment);
     void bad_rule();
     void make_comment();
+    void set_old_http_rule();
+    bool is_old_http_rule() { return old_http_rule; }
 
     friend std::ostream& operator<<(std::ostream&, const Rule&);
 
@@ -55,6 +59,7 @@ private:
     std::size_t num_hdr_data;
     bool is_bad_rule;
     bool is_comment;
+    bool old_http_rule;
 };
 
 #endif
