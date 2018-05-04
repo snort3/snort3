@@ -72,6 +72,8 @@ unsigned long total_invalids;
 
 int totalNumEntries = 0;
 
+static void load_list_file(ListFile*, ReputationConfig* config);
+
 ReputationConfig::~ReputationConfig()
 {
     if (reputation_segment != nullptr)
@@ -123,7 +125,6 @@ void ip_list_init(uint32_t max_entries, ReputationConfig* config)
         config->reputation_segment = (uint8_t*)snort_alloc(mem_size);
 
         segment_meminit(config->reputation_segment, mem_size);
-        uint8_t* base = config->reputation_segment;
 
         /*DIR_16x7_4x4 for performance, but memory usage is high
          *Use  DIR_8x16 worst case IPV4 5K, IPV6 15K (bytes)
@@ -137,37 +138,23 @@ void ip_list_init(uint32_t max_entries, ReputationConfig* config)
             return;
         }
 
-        MEM_OFFSET list_ptr =
-            segment_snort_calloc((size_t)config->list_files.size(), sizeof(ListInfo));
-        if ( !list_ptr )
-        {
-            ErrorMessage("Failed to create IP list.\n");
-            return;
-        }
-
-        config->ip_list->list_info = list_ptr;
-        ListInfo* listInfo = (ListInfo*)&base[list_ptr];
-
         total_duplicates = 0;
         for (size_t i = 0; i < config->list_files.size(); i++)
         {
-            listInfo[i].list_index = (uint8_t)i + 1;
+            config->list_files[i]->list_index = (uint8_t)i + 1;
             if (config->list_files[i]->file_type == WHITE_LIST)
             {
                 if (config->white_action == UNBLACK)
-                    listInfo[i].list_type = WHITELISTED_UNBLACK;
+                    config->list_files[i]->list_type = WHITELISTED_UNBLACK;
                 else
-                    listInfo[i].list_type = WHITELISTED_TRUST;
+                    config->list_files[i]->list_type = WHITELISTED_TRUST;
             }
             else if (config->list_files[i]->file_type == BLACK_LIST)
-                listInfo[i].list_type = BLACKLISTED;
+                config->list_files[i]->list_type = BLACKLISTED;
             else if (config->list_files[i]->file_type == MONITOR_LIST)
-                listInfo[i].list_type = MONITORED;
+                config->list_files[i]->list_type = MONITORED;
 
-            listInfo[i].list_id = config->list_files[i]->list_id;
-            memcpy(listInfo[i].zones, config->list_files[i]->zones, MAX_NUM_ZONES);
-            load_list_file(config->list_files[i]->file_name.c_str(), list_ptr, config);
-            list_ptr += sizeof(ListInfo);
+            load_list_file(config->list_files[i], config);
         }
     }
 }
@@ -531,12 +518,6 @@ static int update_path_to_file(char* full_filename, unsigned int max_size, const
 {
     const char* snort_conf_dir = get_snort_conf_dir();
 
-    if (!snort_conf_dir || !(*snort_conf_dir) || !full_filename || !filename)
-    {
-        ErrorMessage("can't create path.\n");
-        return 0;
-    }
-
     /*file_name is too long*/
     if ( max_size < strlen(filename) )
     {
@@ -571,15 +552,11 @@ static int update_path_to_file(char* full_filename, unsigned int max_size, const
     return 1;
 }
 
-static char* get_list_type_name(INFO info)
+static char* get_list_type_name(ListFile* list_info)
 {
-    uint8_t* base;
-    ListInfo* info_value;
-    base = (uint8_t*)segment_basePtr();
-    info_value = (ListInfo*)(&base[info]);
-    if (!info_value)
+    if (!list_info)
         return nullptr;
-    switch (info_value->list_type)
+    switch (list_info->list_type)
     {
     case DECISION_NULL:
         return nullptr;
@@ -592,12 +569,11 @@ static char* get_list_type_name(INFO info)
     case WHITELISTED_TRUST:
         return white_info;
     default:
-        break;
+        return nullptr;
     }
-    return nullptr;
 }
 
-void load_list_file(const char* filename, INFO info, ReputationConfig* config)
+static void load_list_file(ListFile* list_info, ReputationConfig* config)
 {
     char linebuf[MAX_ADDR_LINE_LENGTH];
     char full_path_filename[PATH_MAX+1];
@@ -605,7 +581,6 @@ void load_list_file(const char* filename, INFO info, ReputationConfig* config)
     FILE* fp = nullptr;
     char* cmt = nullptr;
     char* list_type_name;
-    ListInfo* list_info;
     IPrepInfo* ip_info;
     MEM_OFFSET ip_info_ptr;
     uint8_t* base;
@@ -616,12 +591,12 @@ void load_list_file(const char* filename, INFO info, ReputationConfig* config)
     unsigned int fail_count = 0;   /*number of invalid entries in this file*/
     unsigned int num_loaded_before = 0;     /*number of valid entries loaded */
 
-    if ((nullptr == filename)||(0 == info)|| (nullptr == config)||config->memcap_reached)
+    if (config->memcap_reached)
         return;
 
-    update_path_to_file(full_path_filename, PATH_MAX, filename);
+    update_path_to_file(full_path_filename, PATH_MAX, list_info->file_name.c_str());
 
-    list_type_name = get_list_type_name(info);
+    list_type_name = get_list_type_name(list_info);
 
     if (!list_type_name)
         return;
@@ -634,7 +609,6 @@ void load_list_file(const char* filename, INFO info, ReputationConfig* config)
     }
     base = (uint8_t*)config->ip_list;
     ip_info = ((IPrepInfo*)&base[ip_info_ptr]);
-    list_info = ((ListInfo*)&base[info]);
     ip_info->list_indexes[0] = list_info->list_index;
 
     LogMessage("    Processing %s file %s\n", list_type_name, full_path_filename);
@@ -780,7 +754,7 @@ void add_black_white_List(ReputationConfig* config)
     if (config->blacklist_path)
     {
         ListFile* listItem = new ListFile;
-        memset(listItem->zones, true, MAX_NUM_ZONES);
+        listItem->all_zones_enabled = true;
         listItem->file_name = config->blacklist_path;
         listItem->file_type = BLACK_LIST;
         listItem->list_id = 0;
@@ -789,7 +763,7 @@ void add_black_white_List(ReputationConfig* config)
     if (config->whitelist_path)
     {
         ListFile* listItem = new ListFile;
-        memset(listItem->zones, true, MAX_NUM_ZONES);
+        listItem->all_zones_enabled = true;
         listItem->file_name = config->whitelist_path;
         listItem->file_type = WHITE_LIST;
         listItem->list_id = 0;
@@ -850,15 +824,15 @@ static int get_file_type(char* type_name)
 //    file_name, list_id, action (black, white, monitor), zone information
 //If no zone information provided, this means all zones are applied.
 
-static bool process_line_in_manifest(ListFile* list_item, const char* manifest, char* line,
+static bool process_line_in_manifest(ListFile* list_item, const char* manifest, const char* line,
     int line_number, ReputationConfig* config)
 {
     char* token;
     int token_index = 0;
-    char* next_ptr = line;
+    char* next_ptr = (char*)line;
     bool has_zone = false;
 
-    memset(list_item->zones, false, MAX_NUM_ZONES);
+    list_item->zones.clear();
 
     while ((token = strtok_r(next_ptr, MANIFEST_SEPARATORS, &next_ptr)) != NULL)
     {
@@ -878,7 +852,7 @@ static bool process_line_in_manifest(ListFile* list_item, const char* manifest, 
             if ( *end_str )
             {
                 ErrorMessage("%s(%d) => Bad value (%s) specified for listID. "
-                    "Please specify an integer between %d and %d.\n",
+                    "Please specify an integer between %u and %u.\n",
                     manifest, line_number, token, 0, MAX_LIST_ID);
                 return false;
             }
@@ -886,7 +860,7 @@ static bool process_line_in_manifest(ListFile* list_item, const char* manifest, 
             if ((list_id < 0)  || (list_id > MAX_LIST_ID) || (errno == ERANGE))
             {
                 ErrorMessage(" %s(%d) => Value specified (%s) is out of "
-                    "bounds.  Please specify an integer between %d and %d.\n",
+                    "bounds.  Please specify an integer between %u and %u.\n",
                     manifest, line_number, token, 0, MAX_LIST_ID);
                 return false;
             }
@@ -915,19 +889,19 @@ static bool process_line_in_manifest(ListFile* list_item, const char* manifest, 
             if ( *end_str )
             {
                 ErrorMessage("%s(%d) => Bad value (%s) specified for zone. "
-                    "Please specify an integer between %d and %d.\n",
-                    manifest, line_number, token, 0, MAX_NUM_ZONES - 1);
+                    "Please specify an integer between %u and %u.\n",
+                    manifest, line_number, token, 0, MAX_NUM_ZONES);
                 return false;
             }
-            if ((zone_id < 0)  || (zone_id >= MAX_NUM_ZONES ) || (errno == ERANGE))
+            if ((zone_id < 0)  || (zone_id > MAX_NUM_ZONES ) || (errno == ERANGE))
             {
                 ErrorMessage(" %s(%d) => Value specified (%s) for zone is "
-                    "out of bounds. Please specify an integer between %d and %d.\n",
-                    manifest, line_number, token, 0, MAX_NUM_ZONES - 1);
+                    "out of bounds. Please specify an integer between %u and %u.\n",
+                    manifest, line_number, token, 0, MAX_NUM_ZONES );
                 return false;
             }
 
-            list_item->zones[zone_id] = true;
+            list_item->zones.insert(zone_id);
             has_zone = true;
         }
 
@@ -945,7 +919,7 @@ static bool process_line_in_manifest(ListFile* list_item, const char* manifest, 
 
     if (!has_zone)
     {
-        memset(list_item->zones, true, MAX_NUM_ZONES);
+        list_item->all_zones_enabled = true;
     }
 
     config->list_files.push_back(list_item);
@@ -955,7 +929,7 @@ static bool process_line_in_manifest(ListFile* list_item, const char* manifest, 
 int read_manifest(const char* manifest_file, ReputationConfig* config)
 {
     int line_number = 0;
-    char line[MAX_MANIFEST_LINE_LENGTH];
+    std::string line;
     char full_path_dir[PATH_MAX+1];
 
     update_path_to_file(full_path_dir, PATH_MAX, config->list_dir.c_str());
@@ -970,20 +944,18 @@ int read_manifest(const char* manifest_file, ReputationConfig* config)
         return -1;
     }
 
-    while (!fs.eof())
+    while (std::getline(fs, line))
     {
-        fs.getline(line, sizeof(line));
-
-        char* nextPtr = NULL;
         line_number++;
 
         /* remove comments */
-        if ( (nextPtr = strchr(line, '#')) )
-            *nextPtr = '\0';
+        size_t pos = line.find_first_of('#');
+        if (pos != line.npos)
+           line[pos] = '\0';
 
         //Processing the line
         ListFile* list_item = new ListFile;
-        if (!process_line_in_manifest(list_item, manifest_file, line, line_number, config))
+        if (!process_line_in_manifest(list_item, manifest_file, line.c_str(), line_number, config))
             delete list_item;
     }
 

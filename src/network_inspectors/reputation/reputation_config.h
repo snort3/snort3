@@ -25,6 +25,7 @@
 #include "sfrt/sfrt_flat.h"
 
 #include <vector>
+#include <set>
 #include <string>
 
 #define NUM_INDEX_PER_ENTRY 4
@@ -54,8 +55,7 @@ enum IPdecision
     DECISION_MAX
 };
 
-#define MAX_NUM_ZONES             1052  // FIXIT-L hard limit due to hardware platform
-#define MAX_MANIFEST_LINE_LENGTH  (8*MAX_NUM_ZONES)
+#define MAX_NUM_ZONES             UINT32_MAX
 #define MAX_LIST_ID               UINT32_MAX
 
 struct ListFile
@@ -63,19 +63,13 @@ struct ListFile
     std::string file_name;
     int file_type;
     uint32_t list_id;
-    bool zones[MAX_NUM_ZONES];
+    bool all_zones_enabled = false;
+    std::set<unsigned int> zones;
+    uint8_t list_index;
+    uint8_t list_type;
 };
 
 typedef std::vector<ListFile*> ListFiles;
-
-struct ListInfo
-{
-    uint8_t list_index;
-    uint8_t list_type;
-    uint32_t list_id;
-    bool zones[MAX_NUM_ZONES];
-    char padding[2 + MAX_NUM_ZONES - MAX_NUM_ZONES/4*4];
-};
 
 struct ReputationConfig
 {

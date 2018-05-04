@@ -26,7 +26,6 @@
 
 void ip_list_init(uint32_t,ReputationConfig *config);
 void estimate_num_entries(ReputationConfig* config);
-void load_list_file(const char* filename, INFO info, ReputationConfig* config);
 int read_manifest(const char* filename, ReputationConfig* config);
 void add_black_white_List(ReputationConfig* config);
 

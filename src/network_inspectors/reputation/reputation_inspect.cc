@@ -175,12 +175,10 @@ static inline IPdecision get_reputation(ReputationConfig* config, IPrepInfo* rep
     uint32_t* listid, uint32_t ingress_zone, uint32_t egress_zone)
 {
     IPdecision decision = DECISION_NULL;
-    uint8_t* base;
-    ListInfo* list_info;
 
     /*Walk through the IPrepInfo lists*/
-    base = (uint8_t*)config->ip_list;
-    list_info =  (ListInfo*)(&base[config->ip_list->list_info]);
+    uint8_t* base = (uint8_t*)config->ip_list;
+    ListFiles& list_info =  config->list_files;
 
     while (rep_info)
     {
@@ -191,19 +189,21 @@ static inline IPdecision get_reputation(ReputationConfig* config, IPrepInfo* rep
             if (!list_index)
                 break;
             list_index--;
-            if (list_info[list_index].zones[ingress_zone] || list_info[list_index].zones[egress_zone])
+            if (list_info[list_index]->all_zones_enabled ||
+                list_info[list_index]->zones.count(ingress_zone) ||
+                list_info[list_index]->zones.count(egress_zone))
             {
-                if (WHITELISTED_UNBLACK == (IPdecision)list_info[list_index].list_type)
+                if (WHITELISTED_UNBLACK == (IPdecision)list_info[list_index]->list_type)
                     return DECISION_NULL;
-                if (config->priority == (IPdecision)list_info[list_index].list_type )
+                if (config->priority == (IPdecision)list_info[list_index]->list_type )
                 {
-                    *listid = list_info[list_index].list_id;
-                    return  ((IPdecision)list_info[list_index].list_type);
+                    *listid = list_info[list_index]->list_id;
+                    return  ((IPdecision)list_info[list_index]->list_type);
                 }
-                else if ( decision < list_info[list_index].list_type)
+                else if ( decision < list_info[list_index]->list_type)
                 {
-                    decision = (IPdecision)list_info[list_index].list_type;
-                    *listid = list_info[list_index].list_id;
+                    decision = (IPdecision)list_info[list_index]->list_type;
+                    *listid = list_info[list_index]->list_id;
                 }
             }
         }
@@ -261,12 +261,6 @@ static IPdecision reputation_decision(ReputationConfig* config, Packet* p)
             egress_zone = ingress_zone;
         else
             egress_zone = p->pkth->egress_group;
-
-        /*Make sure zone ids are in the support range*/
-        if (ingress_zone >= MAX_NUM_ZONES)
-            ingress_zone = 0;
-        if (egress_zone >= MAX_NUM_ZONES)
-            egress_zone = 0;
     }
 
     ip::IpApi tmp_api = p->ptrs.ip_api;
