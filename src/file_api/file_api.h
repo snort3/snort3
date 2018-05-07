@@ -26,8 +26,9 @@
 // Currently, it provides three sets of APIs: file processing, MIME processing,
 // and configurations.
 
-#include <string>
+#include <bitset>
 #include <cstring>
+#include <string>
 
 #include "main/snort_types.h"
 
@@ -114,6 +115,9 @@ struct FileCaptureInfo;
 
 namespace snort
 {
+#define FILE_ID_MAX          1024
+typedef std::bitset<FILE_ID_MAX> FileTypeBitSet;
+
 class FileContext;
 class FileInfo;
 class Flow;
@@ -188,7 +192,9 @@ inline FileCharEncoding get_character_encoding(const char* file_name, size_t len
 }
 
 SO_PUBLIC uint64_t get_file_processed_size(Flow* flow);
-FilePosition get_file_position(Packet* pkt);
+SO_PUBLIC FilePosition get_file_position(Packet* pkt);
+SO_PUBLIC void get_magic_rule_ids_from_type(const std::string& type,
+    const std::string& version, FileTypeBitSet& ids_set);
 }
 #endif
 

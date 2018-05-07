@@ -43,6 +43,26 @@ using namespace snort;
 unsigned FileFlows::file_flow_data_id = 0;
 static THREAD_LOCAL uint32_t max_file_id = 0;
 
+namespace snort
+{
+    FilePosition get_file_position(Packet* pkt)
+    {
+        FilePosition position = SNORT_FILE_POSITION_UNKNOWN;
+        Packet* p = (Packet*)pkt;
+
+        if (p->is_full_pdu())
+            position = SNORT_FILE_FULL;
+        else if (p->is_pdu_start())
+            position = SNORT_FILE_START;
+        else if (p->packet_flags & PKT_PDU_TAIL)
+            position = SNORT_FILE_END;
+        else if (get_file_processed_size(p->flow))
+            position = SNORT_FILE_MIDDLE;
+
+        return position;
+    }
+}
+
 void FileFlows::handle_retransmit (Packet*)
 {
     if (file_policy == nullptr)
@@ -245,25 +265,7 @@ void FileFlows::add_pending_file(uint64_t file_id)
 {
     current_file_id = pending_file_id = file_id;
 }
-namespace snort
-{
-FilePosition get_file_position(Packet* pkt)
-{
-    FilePosition position = SNORT_FILE_POSITION_UNKNOWN;
-    Packet* p = (Packet*)pkt;
 
-    if (p->is_full_pdu())
-        position = SNORT_FILE_FULL;
-    else if (p->is_pdu_start())
-        position = SNORT_FILE_START;
-    else if (p->packet_flags & PKT_PDU_TAIL)
-        position = SNORT_FILE_END;
-    else if (get_file_processed_size(p->flow))
-        position = SNORT_FILE_MIDDLE;
-
-    return position;
-}
-}
 FileInspect::FileInspect(FileIdModule* fm)
 {
     fm->load_config(config);

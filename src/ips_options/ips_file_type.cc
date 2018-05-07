@@ -22,18 +22,15 @@
 #include "config.h"
 #endif
 
-#include <bitset>
-
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "file_api/file_flows.h"
 #include "file_api/file_identifier.h"
+#include "log/messages.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 
 using namespace snort;
-
-typedef std::bitset<FILE_ID_MAX> TypeBitSet;
 
 #define s_name "file_type"
 
@@ -42,21 +39,21 @@ static THREAD_LOCAL ProfileStats fileTypePerfStats;
 class FileTypeOption : public IpsOption
 {
 public:
-    FileTypeOption(TypeBitSet &);
+    FileTypeOption(FileTypeBitSet&);
 
     CursorActionType get_cursor_type() const override
     { return CAT_NONE; }
 
     EvalStatus eval(Cursor&, Packet*) override;
 
-    TypeBitSet types;
+    FileTypeBitSet types;
 };
 
 //-------------------------------------------------------------------------
 // class methods
 //-------------------------------------------------------------------------
 
-FileTypeOption::FileTypeOption(TypeBitSet& t) : IpsOption(s_name)
+FileTypeOption::FileTypeOption(FileTypeBitSet& t) : IpsOption(s_name)
 {
     types = t;
 }
@@ -110,8 +107,6 @@ public:
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
-    bool set_types(long);
-
     ProfileStats* get_profile() const override
     { return &fileTypePerfStats; }
 
@@ -119,22 +114,15 @@ public:
     { return DETECT; }
 
 public:
-    TypeBitSet types;
+    FileTypeBitSet types;
+
+private:
+    bool parse_type_and_version(std::string& token);
 };
 
 bool FileTypeModule::begin(const char*, int, SnortConfig*)
 {
     types.reset();
-
-    return true;
-}
-
-bool FileTypeModule::set_types(long t)
-{
-    if ( t < 0 or t > FILE_ID_MAX )
-        return false;
-
-    types.set((uint32_t)t);
 
     return true;
 }
@@ -149,22 +137,76 @@ bool FileTypeModule::set(const char*, Value& v, SnortConfig*)
 
     while ( v.get_next_token(tok) )
     {
-        long n;
-
         if ( tok[0] == '"' )
             tok.erase(0, 1);
 
         if ( tok[tok.length()-1] == '"' )
             tok.erase(tok.length()-1, 1);
 
-        if ( v.strtol(n, tok) )
-        {
-            if ( !set_types(n) )
-                return false;
-        }
-        else
+        if (! parse_type_and_version(tok) )
             return false;
     }
+    return true;
+}
+
+// Parse a file_type token and add the rule ID associated with the type
+// into the set of file types to match.
+//
+// The file_type token can have the following format where TYPENAME and
+// VER? are strings:
+//
+// TYPENAME     -- Type by itself will match all versions of that type.
+// TYPENAME,VER1 -- Match type and version
+// TYPENAME,VER1,VER2,... -- Match type and any of the specified versions.
+//
+//    Multiple types are separated by spaces:
+// TYPE1,VER1 TYPE2 TYPE3,VER1,VER2 -- Match any of these types
+//
+bool FileTypeModule::parse_type_and_version(std::string& token)
+{
+    std::istringstream stream(token);
+    std::string type_name;
+    std::string version;
+    FileTypeBitSet ids_set;
+
+    if(!std::getline(stream, type_name, ','))
+        return false;
+
+    if(!std::getline(stream, version, ','))
+    {
+        // Match all versions of this type.
+        get_magic_rule_ids_from_type(type_name, "", ids_set);
+        if(ids_set.none())
+        {
+            ParseError("Invalid file_type type '%s'. Not found in file_rules.", type_name.c_str());
+            return false;
+        }
+
+        types |= ids_set;
+        return true;
+    }
+
+    get_magic_rule_ids_from_type(type_name, version, ids_set);
+    if(ids_set.none())
+    {
+        ParseError("Invalid file_type type '%s' or version '%s'. Not found in file_rules.", type_name.c_str(), version.c_str());
+        return false;
+    }
+
+    types |= ids_set;
+
+    while(std::getline(stream, version, ','))
+    {
+        get_magic_rule_ids_from_type(type_name, version, ids_set);
+        if(ids_set.none())
+        {
+            ParseError("Invalid file_type type '%s' or version '%s'. Not found in file_rules.", type_name.c_str(), version.c_str());
+            return false;
+        }
+
+        types |= ids_set;
+    }
+
     return true;
 }
 

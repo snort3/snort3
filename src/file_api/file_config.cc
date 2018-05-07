@@ -71,6 +71,12 @@ FileMagicRule* FileConfig::get_rule_from_id(uint32_t id)
     return fileIdentifier.get_rule_from_id(id);
 }
 
+void FileConfig::get_magic_rule_ids_from_type(const std::string& type,
+    const std::string& version, snort::FileTypeBitSet& ids_set)
+{
+    return fileIdentifier.get_magic_rule_ids_from_type(type, version, ids_set);
+}
+
 std::string FileConfig::file_type_name(uint32_t id)
 {
     if (SNORT_FILE_TYPE_UNKNOWN == id)
@@ -105,3 +111,16 @@ FileConfig* get_file_config ()
     else
         return nullptr;
 }
+
+namespace snort
+{
+    void get_magic_rule_ids_from_type(const std::string& type, const std::string& version, snort::FileTypeBitSet& ids_set)
+    {
+        FileConfig* conf = get_file_config();
+        if(conf)
+            conf->get_magic_rule_ids_from_type(type, version, ids_set);
+        else
+            ids_set.reset();
+    }
+}
+

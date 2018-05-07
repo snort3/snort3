@@ -45,6 +45,8 @@ class FileConfig
 {
 public:
     FileMagicRule* get_rule_from_id(uint32_t);
+    void get_magic_rule_ids_from_type(const std::string&, const std::string&,
+        snort::FileTypeBitSet&);
     void process_file_rule(FileMagicRule&);
     void process_file_policy_rule(FileRule&);
     bool process_file_magic(FileMagicData&);
