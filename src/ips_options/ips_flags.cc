@@ -22,6 +22,8 @@
 #include "config.h"
 #endif
 
+#include <cassert>
+
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/hashfcn.h"
@@ -174,22 +176,7 @@ static void flags_parse_test(const char* rule, TcpFlagCheckData* idx)
     const char* fend;
 
     fptr = rule;
-
-    /* make sure there is at least a split pointer */
-    if (fptr == nullptr)
-    {
-        ParseError("flags missing in TCP flag rule");
-        return;
-    }
-
-    while (isspace((u_char) *fptr))
-        fptr++;
-
-    if (strlen(fptr) == 0)
-    {
-        ParseError("flags missing in TCP flag rule");
-        return;
-    }
+    assert(fptr and *fptr);
 
     /* find the end of the alert string */
     fend = fptr + strlen(fptr);
@@ -277,22 +264,7 @@ static void flags_parse_mask(const char* rule, TcpFlagCheckData* idx)
     const char* fend;
 
     fptr = rule;
-
-    /* make sure there is at least a split pointer */
-    if (fptr == nullptr)
-    {
-        ParseError("flags missing in TCP flag rule");
-        return;
-    }
-
-    while (isspace((u_char) *fptr))
-        fptr++;
-
-    if (strlen(fptr) == 0)
-    {
-        ParseError("flags missing in TCP flag rule");
-        return;
-    }
+    assert(fptr and *fptr);
 
     /* find the end of the alert string */
     fend = fptr + strlen(fptr);
