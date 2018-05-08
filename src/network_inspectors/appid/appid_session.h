@@ -282,8 +282,8 @@ public:
     AppIdHttpSession* get_http_session();
     AppIdDnsSession* get_dns_session();
 
-    bool is_third_party_appid_done() const;
-    bool is_third_party_appid_available() const;
+    bool is_tp_appid_done() const;
+    bool is_tp_appid_available() const;
 
 private:
     AppIdHttpSession* hsession = nullptr;

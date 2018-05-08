@@ -241,12 +241,12 @@ AppIdDnsSession* AppIdSession::get_dns_session()
     return dsession;
 }
 
-bool AppIdSession::is_third_party_appid_done() const
+bool AppIdSession::is_tp_appid_done() const
 {
     return true;
 }
 
-bool AppIdSession::is_third_party_appid_available() const
+bool AppIdSession::is_tp_appid_available() const
 {
     return false;
 }

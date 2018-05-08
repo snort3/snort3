@@ -67,17 +67,10 @@ static bool contains(const vector<Type_t>& vec, const ValType_t& val)
     return false;
 }
 
-// FIXIT-L bogus placeholder for this func, need to find out what it should do
-static inline bool is_appid_done(const ThirdPartyAppIDSession* tpsession)
-{
-    UNUSED(tpsession);
-    return false;
-}
-
 static inline bool check_reinspect(const Packet* p, const AppIdSession& asd)
 {
     return p->dsize && !asd.get_session_flags(APPID_SESSION_NO_TPI) &&
-        asd.get_session_flags(APPID_SESSION_HTTP_SESSION) && is_appid_done(asd.tpsession);
+        asd.get_session_flags(APPID_SESSION_HTTP_SESSION) && asd.is_tp_appid_done();
 }
 
 static inline int check_ssl_appid_for_reinspect(AppId app_id)
@@ -629,7 +622,7 @@ bool do_discovery(AppIdSession& asd, IpProtocol protocol,
     /*** Start of third-party processing. ***/
     if ( asd.config->have_tp()
         && !asd.get_session_flags(APPID_SESSION_NO_TPI)
-        && (!is_appid_done(asd.tpsession)
+        && (!asd.is_tp_appid_done()
         || asd.get_session_flags(APPID_SESSION_APP_REINSPECT
         | APPID_SESSION_APP_REINSPECT_SSL)))
     {
@@ -756,7 +749,7 @@ bool do_discovery(AppIdSession& asd, IpProtocol protocol,
                     if (asd.payload.get_id() == APP_ID_HTTP_SSL_TUNNEL)
                         snort_app_id = APP_ID_SSL;
 
-                    if (asd.is_third_party_appid_available() && asd.tp_app_id ==
+                    if (asd.is_tp_appid_available() && asd.tp_app_id ==
                         APP_ID_HTTP
                         && !asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
                     {

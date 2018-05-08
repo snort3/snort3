@@ -341,7 +341,7 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p, AppidSes
     {
         if ( p->flow->get_session_flags() & SSNFLAG_MIDSTREAM )
             asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
-        else if ( asd.is_third_party_appid_available()
+        else if ( asd.is_tp_appid_available()
             && ( asd.tp_app_id > APP_ID_NONE && asd.tp_app_id < SF_APPID_MAX ) )
         {
             //tp has positively identified appId, Dig deeper only if sourcefire
@@ -372,7 +372,7 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p, AppidSes
            asd.client_disco_state == APPID_DISCO_STATE_DIRECT) &&
          asd.client_disco_state == prevRnaClientState &&
          !asd.get_session_flags(APPID_SESSION_NO_TPI)  &&
-         asd.is_third_party_appid_available() &&
+         asd.is_tp_appid_available() &&
          asd.tp_app_id > APP_ID_NONE && asd.tp_app_id < SF_APPID_MAX)
     {
         entry = asd.app_info_mgr->get_app_info_entry(asd.tp_app_id);

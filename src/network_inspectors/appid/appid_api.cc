@@ -197,7 +197,7 @@ bool AppIdApi::is_appid_inspecting_session(Flow& flow)
         if ( asd->common.flow_type == APPID_FLOW_TYPE_NORMAL )
         {
             if ( asd->service_disco_state != APPID_DISCO_STATE_FINISHED ||
-                 !asd->is_third_party_appid_done() ||
+                 !asd->is_tp_appid_done() ||
                  asd->get_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_CONTINUE) ||
                  (asd->get_session_flags(APPID_SESSION_ENCRYPTED) &&
                   (asd->get_session_flags(APPID_SESSION_DECRYPTED) ||
@@ -246,7 +246,7 @@ bool AppIdApi::is_appid_available(Flow& flow)
         // FIXIT-M: If a third-party module is not available then this
         //          should probably check if an appId has been discovered
         //          by the local AppId module.
-        return asd->is_third_party_appid_available();
+        return asd->is_tp_appid_available();
     }
 
     return false;
@@ -397,7 +397,7 @@ uint32_t AppIdApi::produce_ha_state(Flow& flow, uint8_t* buf)
     if ( asd && ( get_flow_type(flow) == APPID_FLOW_TYPE_NORMAL ) )
     {
         appHA->flags = APPID_HA_FLAGS_APP;
-        if ( asd->is_third_party_appid_available() )
+        if ( asd->is_tp_appid_available() )
             appHA->flags |= APPID_HA_FLAGS_TP_DONE;
         if ( asd->is_service_detected() )
             appHA->flags |= APPID_HA_FLAGS_SVC_DONE;
@@ -521,7 +521,7 @@ bool AppIdApi::is_http_inspection_done(Flow& flow)
 
     if ( AppIdSession* asd = get_appid_session(flow) )
         if ( ( asd->common.flow_type == APPID_FLOW_TYPE_NORMAL ) &&
-             !asd->is_third_party_appid_done() )
+             !asd->is_tp_appid_done() )
             done = false;
 
     return done;

@@ -596,7 +596,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p, AppidS
                 asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
             }
         }
-        else if (asd.is_third_party_appid_available())
+        else if (asd.is_tp_appid_available())
         {
             if (asd.tp_app_id > APP_ID_NONE)
             {
@@ -628,7 +628,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p, AppidS
     if ( asd.service_disco_state == APPID_DISCO_STATE_STATEFUL &&
          prevRnaServiceState == APPID_DISCO_STATE_STATEFUL &&
          !asd.get_session_flags(APPID_SESSION_NO_TPI) &&
-         asd.is_third_party_appid_available() &&
+         asd.is_tp_appid_available() &&
          asd.tp_app_id > APP_ID_NONE && asd.tp_app_id < SF_APPID_MAX)
     {
         AppInfoTableEntry* entry = asd.app_info_mgr->get_app_info_entry(asd.tp_app_id);

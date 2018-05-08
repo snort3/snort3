@@ -688,7 +688,7 @@ AppId AppIdSession::pick_service_app_id()
 
         if (service.get_id() > APP_ID_NONE && !deferred)
             return service.get_id();
-        if (is_third_party_appid_available())
+        if (is_tp_appid_available())
         {
             if (tp_app_id > APP_ID_NONE)
                 return tp_app_id;
@@ -725,7 +725,7 @@ AppId AppIdSession::pick_only_service_app_id()
     if (service.get_id() > APP_ID_NONE && !deferred)
         return service.get_id();
 
-    if (is_third_party_appid_available() && tp_app_id > APP_ID_NONE)
+    if (is_tp_appid_available() && tp_app_id > APP_ID_NONE)
         return tp_app_id;
     else if (deferred)
         return service.get_id();
@@ -886,7 +886,7 @@ AppIdDnsSession* AppIdSession::get_dns_session()
     return dsession;
 }
 
-bool AppIdSession::is_third_party_appid_done() const
+bool AppIdSession::is_tp_appid_done() const
 {
 #ifdef ENABLE_APPID_THIRD_PARTY
     if (config->have_tp())
@@ -906,7 +906,7 @@ bool AppIdSession::is_third_party_appid_done() const
     return true;
 }
 
-bool AppIdSession::is_third_party_appid_available() const
+bool AppIdSession::is_tp_appid_available() const
 {
 #ifdef ENABLE_APPID_THIRD_PARTY
     if (config->have_tp())
