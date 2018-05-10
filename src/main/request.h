@@ -41,6 +41,6 @@ private:
     int fd;
     char read_buf[1024];
     size_t bytes_read;
-    const char* queued_response;
+    const char* queued_response = nullptr;
 };
 #endif

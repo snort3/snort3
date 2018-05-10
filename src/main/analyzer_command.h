@@ -113,7 +113,7 @@ public:
 
 namespace snort
 {
-SO_PUBLIC void main_broadcast_command(AnalyzerCommand* ac);   // From main.cc
+SO_PUBLIC void main_broadcast_command(AnalyzerCommand* ac, bool from_shell = false);   // From main.cc
 }
 
 #endif

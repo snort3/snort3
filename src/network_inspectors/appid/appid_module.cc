@@ -146,14 +146,14 @@ static int enable_debug(lua_State* L)
     constraints.sport = sport;
     constraints.dport = dport;
 
-    main_broadcast_command(new AcAppIdDebug(&constraints));
+    main_broadcast_command(new AcAppIdDebug(&constraints), true);
 
     return 0;
 }
 
 static int disable_debug(lua_State*)
 {
-    main_broadcast_command(new AcAppIdDebug(nullptr));
+    main_broadcast_command(new AcAppIdDebug(nullptr), true);
     return 0;
 }
 

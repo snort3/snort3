@@ -137,21 +137,19 @@ static int enable(lua_State* L)
     constraints.sport = sport;
     constraints.dport = dport;
 
-    main_broadcast_command(new PacketTracerDebug(&constraints));
+    main_broadcast_command(new PacketTracerDebug(&constraints), true);
     return 0;
 }
 
 static int disable(lua_State*)
 {
-    main_broadcast_command(new PacketTracerDebug(nullptr));
+    main_broadcast_command(new PacketTracerDebug(nullptr), true);
     return 0;
 }
 
 PacketTracerModule::PacketTracerModule() :
     Module(PACKET_TRACER_NAME, PACKET_TRACER_HELP, s_params)
-{
-}
-
+{}
 
 bool PacketTracerModule::set(const char *, Value &v, SnortConfig*)
 {
