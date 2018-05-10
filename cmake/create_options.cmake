@@ -44,6 +44,7 @@ option ( ENABLE_PROFILE "Enable profiling options (developers only)" OFF )
 option ( ENABLE_ADDRESS_SANITIZER "enable address sanitizer support" OFF )
 option ( ENABLE_THREAD_SANITIZER "enable thread sanitizer support" OFF )
 option ( ENABLE_UB_SANITIZER "enable undefined behavior sanitizer support" OFF )
+option ( ENABLE_TCMALLOC "enable using tcmalloc for dynamic memory management" OFF )
 option ( ENABLE_CODE_COVERAGE "Whether to enable code coverage support" OFF )
 
 # signals

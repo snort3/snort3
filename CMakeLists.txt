@@ -133,6 +133,14 @@ else ()
     SafeC:          OFF")
 endif ()
 
+if (HAVE_TCMALLOC)
+    message("\
+    TCMalloc:       ON")
+else ()
+    message("\
+    TCMalloc:       OFF")
+endif ()
+
 if (HAVE_UUID)
     message("\
     UUID:           ON")
