@@ -121,9 +121,9 @@ struct View
     hr_duration time_per(hr_duration d, uint64_t v) const
     {
         if ( v  == 0 )
-            return 0_ticks;
+            return CLOCK_ZERO;
 
-        return hr_duration(d.count() / v);
+        return hr_duration(d / v);
     }
 
     hr_duration avg_match() const
@@ -160,7 +160,7 @@ static const ProfilerSorter<View> sorters[] =
     {
         "total_time",
         [](const View& lhs, const View& rhs)
-        { return lhs.elapsed().count() >= rhs.elapsed().count(); }
+        { return TO_TICKS(lhs.elapsed()) >= TO_TICKS(rhs.elapsed()); }
     },
     {
         "matches",
@@ -242,10 +242,10 @@ static void print_single_entry(const View& v, unsigned n)
         table << v.matches();
         table << v.alerts();
 
-        table << clock_usecs(duration_cast<microseconds>(v.elapsed()).count());
-        table << clock_usecs(duration_cast<microseconds>(v.avg_check()).count());
-        table << clock_usecs(duration_cast<microseconds>(v.avg_match()).count());
-        table << clock_usecs(duration_cast<microseconds>(v.avg_no_match()).count());
+        table << clock_usecs(TO_USECS(v.elapsed()));
+        table << clock_usecs(TO_USECS(v.avg_check()));
+        table << clock_usecs(TO_USECS(v.avg_match()));
+        table << clock_usecs(TO_USECS(v.avg_no_match()));
 
         table << v.timeouts();
         table << v.suspends();

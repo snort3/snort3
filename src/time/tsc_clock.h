@@ -37,12 +37,8 @@
 
 struct TscClock
 {
-    // this has to be const so we use a nice round number and scale it later
-    typedef std::ratio<1, 1000000> period;
-
-    typedef uint64_t rep;
-    typedef std::chrono::duration<rep, period> duration;
-    typedef std::chrono::time_point<TscClock> time_point;
+    typedef uint64_t duration;
+    typedef uint64_t time_point;
 
     static const bool is_steady = true;
 

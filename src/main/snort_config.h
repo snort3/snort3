@@ -252,6 +252,7 @@ public:
     uint8_t num_layers = 0;
     uint8_t max_ip6_extensions = 0;
     uint8_t max_ip_layers = 0;
+    bool address_anomaly_check_enabled = false;
 
     //------------------------------------------------------
     // active stuff
@@ -454,6 +455,9 @@ public:
 
     static bool esp_decoding()
     { return get_conf()->enable_esp; }
+
+    static bool is_address_anomaly_check_enabled()
+    { return get_conf()->address_anomaly_check_enabled; }
 
     // mode related
     static bool test_mode()

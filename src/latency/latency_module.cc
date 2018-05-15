@@ -118,22 +118,17 @@ static const PegInfo latency_pegs[] =
 
 static inline bool latency_set(Value& v, PacketLatencyConfig& config)
 {
-    using std::chrono::duration_cast;
-    using std::chrono::microseconds;
-
     if ( v.is("max_time") )
     {
         long t = clock_ticks(v.get_long());
-        config.max_time = duration_cast<decltype(config.max_time)>(microseconds(t));
+        config.max_time = TO_DURATION(config.max_time, t);
     }
-
     else if ( v.is("fastpath") )
         config.fastpath = v.get_bool();
 
     else if ( v.is("action") )
         config.action =
             static_cast<decltype(config.action)>(v.get_long());
-
     else
         return false;
 
@@ -142,14 +137,10 @@ static inline bool latency_set(Value& v, PacketLatencyConfig& config)
 
 static inline bool latency_set(Value& v, RuleLatencyConfig& config)
 {
-    using std::chrono::duration_cast;
-    using std::chrono::microseconds;
-    using std::chrono::milliseconds;
-
     if ( v.is("max_time") )
     {
         long t = clock_ticks(v.get_long());
-        config.max_time = duration_cast<decltype(config.max_time)>(microseconds(t));
+        config.max_time = TO_DURATION(config.max_time, t);
     }
     else if ( v.is("suspend") )
         config.suspend = v.get_bool();
@@ -160,12 +151,11 @@ static inline bool latency_set(Value& v, RuleLatencyConfig& config)
     else if ( v.is("max_suspend_time") )
     {
         long t = clock_ticks(v.get_long());
-        config.max_suspend_time = duration_cast<decltype(config.max_time)>(milliseconds(t));
+        config.max_suspend_time = TO_DURATION(config.max_time, t);
     }
     else if ( v.is("action") )
         config.action =
             static_cast<decltype(config.action)>(v.get_long());
-
     else
         return false;
 

@@ -86,6 +86,9 @@ static const Parameter detection_params[] =
     { "pcre_match_limit_recursion", Parameter::PT_INT, "-1:10000", "1500",
       "limit pcre stack consumption, -1 = max, 0 = off" },
 
+    { "enable_address_anomaly_checks", Parameter::PT_BOOL, nullptr, "false",
+      "enable check and alerting of address anomalies" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 /* *INDENT-ON* */
@@ -129,6 +132,9 @@ bool DetectionModule::set(const char* fqn, Value& v, SnortConfig* sc)
 
     else if ( v.is("pcre_match_limit_recursion") )
         sc->pcre_match_limit_recursion = v.get_long();
+
+    else if ( v.is("enable_address_anomaly_checks") )
+        sc->address_anomaly_check_enabled = v.get_bool();
 
     else
         return Module::set(fqn, v, sc);

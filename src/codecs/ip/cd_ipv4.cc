@@ -374,11 +374,14 @@ void Ipv4Codec::IP4AddrTests(
     if ( msb_src == ip::IP4_MULTICAST )
         codec_event(codec, DECODE_IP4_SRC_MULTICAST);
 
-    if ( msb_src == ip::IP4_RESERVED || sfvar_ip_in(MulticastReservedIp, snort.ip_api.get_src()) )
-        codec_event(codec, DECODE_IP4_SRC_RESERVED);
+    if ( SnortConfig::is_address_anomaly_check_enabled() )
+    {
+        if ( msb_src == ip::IP4_RESERVED || sfvar_ip_in(MulticastReservedIp, snort.ip_api.get_src()) )
+            codec_event(codec, DECODE_IP4_SRC_RESERVED);
 
-    if ( msb_dst == ip::IP4_RESERVED || sfvar_ip_in(MulticastReservedIp, snort.ip_api.get_dst()) )
-        codec_event(codec, DECODE_IP4_DST_RESERVED);
+        if ( msb_dst == ip::IP4_RESERVED || sfvar_ip_in(MulticastReservedIp, snort.ip_api.get_dst()) )
+            codec_event(codec, DECODE_IP4_DST_RESERVED);
+    }
 }
 
 /* IPv4-layer decoder rules */

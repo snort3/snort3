@@ -28,7 +28,7 @@ public:
     using time_point = typename Clock::time_point;
 
     Stopwatch() :
-        elapsed { duration::zero() }, running { false } { }
+        elapsed { DURA_ZERO }, running { false } { }
 
     void start()
     {
@@ -60,7 +60,7 @@ public:
     { return running; }
 
     void reset()
-    { running = false; elapsed = duration::zero(); }
+    { running = false; elapsed = DURA_ZERO; }
 
     void cancel()
     { running = false; }
@@ -71,7 +71,12 @@ private:
 
     duration elapsed;
     bool running;
+
+#ifdef USE_TSC_CLOCK
+    time_point start_time = CLOCK_ZERO;
+#else
     time_point start_time;
+#endif
 };
 
 #endif

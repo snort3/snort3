@@ -103,7 +103,7 @@ static inline std::ostream& operator<<(std::ostream& os, const Event& e)
         break;
     }
 
-    os << clock_usecs(duration_cast<microseconds>(e.elapsed).count()) << " usec, ";
+    os << clock_usecs(TO_USECS(e.elapsed)) << " usec, ";
     os << e.root->otn->sigInfo.gid << ":" << e.root->otn->sigInfo.sid << ":"
         << e.root->otn->sigInfo.rev;
 

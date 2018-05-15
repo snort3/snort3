@@ -602,7 +602,7 @@ static inline int FragIsComplete(FragTracker* ft)
  */
 static void FragRebuild(FragTracker* ft, Packet* p)
 {
-    Profile profile(fragRebuildPerfStats);
+    DeepProfile profile(fragRebuildPerfStats);
     size_t offset = 0;
 
     Packet* dpkt = DetectionEngine::set_next_packet();

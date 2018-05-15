@@ -248,7 +248,7 @@ void TcpStreamTracker::reset_splitter( )
 
 void TcpStreamTracker::init_on_syn_sent(TcpSegmentDescriptor& tsd)
 {
-    Profile profile(s5TcpNewSessPerfStats);
+    DeepProfile profile(s5TcpNewSessPerfStats);
 
     tsd.get_flow()->set_session_flags(SSNFLAG_SEEN_CLIENT);
     if ( tsd.get_tcph()->are_flags_set(TH_CWR | TH_ECE) )
@@ -274,7 +274,7 @@ void TcpStreamTracker::init_on_syn_sent(TcpSegmentDescriptor& tsd)
 
 void TcpStreamTracker::init_on_syn_recv(TcpSegmentDescriptor& tsd)
 {
-    Profile profile(s5TcpNewSessPerfStats);
+    DeepProfile profile(s5TcpNewSessPerfStats);
 
     irs = tsd.get_seg_seq();
     // FIXIT-H can we really set the vars below now?
@@ -288,7 +288,7 @@ void TcpStreamTracker::init_on_syn_recv(TcpSegmentDescriptor& tsd)
 
 void TcpStreamTracker::init_on_synack_sent(TcpSegmentDescriptor& tsd)
 {
-    Profile profile(s5TcpNewSessPerfStats);
+    DeepProfile profile(s5TcpNewSessPerfStats);
 
     tsd.get_flow()->set_session_flags(SSNFLAG_SEEN_SERVER);
     if (tsd.get_tcph()->are_flags_set(TH_CWR | TH_ECE))
@@ -319,7 +319,7 @@ void TcpStreamTracker::init_on_synack_sent(TcpSegmentDescriptor& tsd)
 
 void TcpStreamTracker::init_on_synack_recv(TcpSegmentDescriptor& tsd)
 {
-    Profile profile(s5TcpNewSessPerfStats);
+    DeepProfile profile(s5TcpNewSessPerfStats);
 
     iss = tsd.get_seg_ack() - 1;
     irs = tsd.get_seg_seq();
@@ -336,7 +336,7 @@ void TcpStreamTracker::init_on_synack_recv(TcpSegmentDescriptor& tsd)
 
 void TcpStreamTracker::init_on_3whs_ack_sent(TcpSegmentDescriptor& tsd)
 {
-    Profile profile(s5TcpNewSessPerfStats);
+    DeepProfile profile(s5TcpNewSessPerfStats);
 
     tsd.get_flow()->set_session_flags(SSNFLAG_SEEN_CLIENT);
 
@@ -365,7 +365,7 @@ void TcpStreamTracker::init_on_3whs_ack_sent(TcpSegmentDescriptor& tsd)
 
 void TcpStreamTracker::init_on_3whs_ack_recv(TcpSegmentDescriptor& tsd)
 {
-    Profile profile(s5TcpNewSessPerfStats);
+    DeepProfile profile(s5TcpNewSessPerfStats);
 
     iss = tsd.get_seg_ack() - 1;
     irs = tsd.get_seg_seq();
@@ -383,7 +383,7 @@ void TcpStreamTracker::init_on_3whs_ack_recv(TcpSegmentDescriptor& tsd)
 
 void TcpStreamTracker::init_on_data_seg_sent(TcpSegmentDescriptor& tsd)
 {
-    Profile profile(s5TcpNewSessPerfStats);
+    DeepProfile profile(s5TcpNewSessPerfStats);
 
     Flow* flow = tsd.get_flow();
 
@@ -416,7 +416,7 @@ void TcpStreamTracker::init_on_data_seg_sent(TcpSegmentDescriptor& tsd)
 
 void TcpStreamTracker::init_on_data_seg_recv(TcpSegmentDescriptor& tsd)
 {
-    Profile profile(s5TcpNewSessPerfStats);
+    DeepProfile profile(s5TcpNewSessPerfStats);
 
     iss = tsd.get_seg_ack();
     irs = tsd.get_seg_seq();

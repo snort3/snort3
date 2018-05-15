@@ -349,7 +349,7 @@ void TcpSession::check_fin_transition_status(TcpSegmentDescriptor& tsd)
 
 int TcpSession::process_tcp_data(TcpSegmentDescriptor& tsd)
 {
-    Profile profile(s5TcpDataPerfStats);
+    DeepProfile profile(s5TcpDataPerfStats);
 
     const tcp::TCPHdr* tcph = tsd.get_tcph();
     uint32_t seq = tsd.get_seg_seq();
@@ -999,7 +999,8 @@ bool TcpSession::do_packet_analysis_pre_checks(Packet* p, TcpSegmentDescriptor& 
 
     update_ignored_session(tsd);
     set_window_scale(*talker, *listener, tsd);
-    check_for_session_hijack(tsd);
+    if ( SnortConfig::is_address_anomaly_check_enabled() )
+        check_for_session_hijack(tsd);
 
     return true;
 }
@@ -1040,7 +1041,7 @@ int TcpSession::process(Packet* p)
         return ACTION_NOTHING;
     else
     {
-        Profile profile(s5TcpStatePerfStats);
+        DeepProfile profile(s5TcpStatePerfStats);
 
         if ( tsm->eval(tsd, *talker, *listener) )
         {

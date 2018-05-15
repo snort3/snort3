@@ -114,7 +114,7 @@ IpsOption::EvalStatus ReassembleOption::eval(Cursor&, Packet* pkt)
         return NO_MATCH;
 
     {
-        Profile profile(streamReassembleRuleOptionPerfStats);
+        DeepProfile profile(streamReassembleRuleOptionPerfStats);
         Flow* lwssn = (Flow*)pkt->flow;
         TcpSession* tcpssn = (TcpSession*)lwssn->session;
 

@@ -23,12 +23,22 @@
 #ifdef USE_TSC_CLOCK
 #include "time/tsc_clock.h"
 using SnortClock = TscClock;
+#define CLOCK_ZERO 0
+#define DURA_ZERO 0
+#define TO_TICKS(t) (t)
+#define TO_USECS(t) (t)
+#define TO_DURATION(v, t) (t)
 
 #else
 #include <chrono>
 using hr_clock = std::chrono::high_resolution_clock;
 using SnortClock = hr_clock;
 inline long clock_scale() { return 1; }
+#define CLOCK_ZERO 0_ticks
+#define DURA_ZERO Clock::duration::zero()
+#define TO_TICKS(t) (t.count())
+#define TO_USECS(t) (std::chrono::duration_cast<std::chrono::microseconds>(t).count())
+#define TO_DURATION(v, t) (std::chrono::duration_cast<decltype(v)>(std::chrono::microseconds(t)))
 #endif
 
 using hr_duration = SnortClock::duration;

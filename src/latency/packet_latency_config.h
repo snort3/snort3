@@ -33,11 +33,11 @@ struct PacketLatencyConfig
         ALERT_AND_LOG = ALERT | LOG
     };
 
-    hr_duration max_time = 0_ticks;
+    hr_duration max_time = CLOCK_ZERO;
     bool fastpath = false;
     Action action = NONE;
 
-    bool enabled() const { return max_time > 0_ticks; }
+    bool enabled() const { return max_time > CLOCK_ZERO; }
 };
 
 #endif

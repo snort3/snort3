@@ -95,7 +95,7 @@ bool SizeOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus SizeOption::eval(Cursor&, Packet* pkt)
 {
-    Profile profile(streamSizePerfStats);
+    DeepProfile profile(streamSizePerfStats);
 
     if ( !pkt->flow || pkt->flow->pkt_type != PktType::TCP )
         return NO_MATCH;

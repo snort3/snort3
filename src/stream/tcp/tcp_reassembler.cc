@@ -401,7 +401,7 @@ int TcpReassembler::flush_data_segments(
     uint32_t flags = PKT_PDU_HEAD;
 
     assert(trs.sos.seglist.next);
-    Profile profile(s5TcpBuildPacketPerfStats);
+    DeepProfile profile(s5TcpBuildPacketPerfStats);
 
     uint32_t to_seq = trs.sos.seglist.next->seq + total;
 
@@ -553,7 +553,7 @@ Packet* TcpReassembler::initialize_pdu(
 int TcpReassembler::_flush_to_seq(
     TcpReassemblerState& trs, uint32_t bytes, Packet* p, uint32_t pkt_flags)
 {
-    Profile profile(s5TcpFlushPerfStats);
+    DeepProfile profile(s5TcpFlushPerfStats);
 
     DetectionEngine::onload(trs.sos.session->flow);
     Packet* pdu = DetectionEngine::set_next_packet();
@@ -895,7 +895,7 @@ uint32_t TcpReassembler::get_forward_packet_dir(TcpReassemblerState&, const Pack
 // because we don't wait until it is acknowledged
 int32_t TcpReassembler::flush_pdu_ips(TcpReassemblerState& trs, uint32_t* flags)
 {
-    Profile profile(s5TcpPAFPerfStats);
+    DeepProfile profile(s5TcpPAFPerfStats);
     DetectionEngine::onload(trs.sos.session->flow);
 
     uint32_t total = 0, avail;
@@ -969,7 +969,7 @@ void TcpReassembler::fallback(TcpReassemblerState& trs)
 
 int32_t TcpReassembler::flush_pdu_ackd(TcpReassemblerState& trs, uint32_t* flags)
 {
-    Profile profile(s5TcpPAFPerfStats);
+    DeepProfile profile(s5TcpPAFPerfStats);
     DetectionEngine::onload(trs.sos.session->flow);
 
     uint32_t total = 0;
@@ -1287,7 +1287,7 @@ int TcpReassembler::insert_segment_in_seglist(
 int TcpReassembler::queue_packet_for_reassembly(
     TcpReassemblerState& trs, TcpSegmentDescriptor& tsd)
 {
-    Profile profile(s5TcpInsertPerfStats);
+    DeepProfile profile(s5TcpInsertPerfStats);
 
     int rc = STREAM_INSERT_OK;
 
