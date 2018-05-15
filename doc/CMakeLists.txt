@@ -56,6 +56,7 @@ if ( MAKE_DOC )
 	high_availability.txt
 	http_inspect.txt
 	http2_inspect.txt
+	module_trace.txt
 	overview.txt
 	params.txt
 	perf_monitor.txt
