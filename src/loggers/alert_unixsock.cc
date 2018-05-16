@@ -18,6 +18,9 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <sys/un.h>
 
@@ -130,7 +133,10 @@ static void get_alert_pkt(
 
     if (p && p->pkt)
     {
-        memmove( (void*)&us.alert.pkth, (const void*)p->pkth, sizeof(us.alert.pkth));
+        us.alert.pkth.ts.tv_sec = (uint32_t)p->pkth->ts.tv_sec;
+        us.alert.pkth.ts.tv_usec = (uint32_t)p->pkth->ts.tv_usec;
+        us.alert.pkth.caplen = p->pkth->caplen;
+        us.alert.pkth.len = p->pkth->pktlen;
         memmove(us.alert.pkt, (const void*)p->pkt, us.alert.pkth.caplen);
     }
     else
@@ -155,9 +161,12 @@ static void get_alert_pkt(
             }
 
             /* we don't log any headers besides eth yet */
-            if (p->ptrs.ip_api.is_ip4() && p->pkt)
+            if (p->ptrs.ip_api.is_ip() && p->pkt)
             {
-                us.alert.nethdr=(const char*)p->ptrs.ip_api.get_ip4h()-(const char*)p->pkt;
+                if (p->ptrs.ip_api.is_ip4())
+                    us.alert.nethdr=(const char*)p->ptrs.ip_api.get_ip4h()-(const char*)p->pkt;
+                else
+                    us.alert.nethdr=(const char*)p->ptrs.ip_api.get_ip6h()-(const char*)p->pkt;
 
                 switch (p->type())
                 {
@@ -286,7 +295,11 @@ static LogApi unix_sock_api
     unix_sock_dtor
 };
 
+#ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* alert_unixsock[] =
+#endif
 {
     &unix_sock_api.base,
     nullptr

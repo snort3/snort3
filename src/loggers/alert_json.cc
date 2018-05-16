@@ -799,7 +799,11 @@ static LogApi json_api
     json_dtor
 };
 
+#ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* alert_json[] =
+#endif
 {
     &json_api.base,
     nullptr
