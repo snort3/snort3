@@ -147,7 +147,7 @@ int Trough::get_pcaps(std::vector<struct PcapReadObject> &pol)
                             i = ++pos;
                         }
                         /* do a quick check to make sure file exists */
-                        if (snort::SnortConfig::read_mode())
+                        if (snort::SnortConfig::read_mode() and pcap_name != "-")
                         {
                             if (stat(pcap_name.c_str(), &sb) == -1)
                             {

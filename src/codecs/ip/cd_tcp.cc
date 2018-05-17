@@ -196,7 +196,7 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         /* IPv6 traffic */
         else
         {
-            bad_cksum_cnt = &(stats.bad_ip4_cksum);
+            bad_cksum_cnt = &(stats.bad_ip6_cksum);
             checksum::Pseudoheader6 ph6;
             const ip::IP6Hdr* const ip6h = snort.ip_api.get_ip6h();
             COPY4(ph6.sip, ip6h->get_src()->u6_addr32);
