@@ -53,7 +53,21 @@ static const char* httpFieldName[ MAX_HTTP_FIELD_ID ] = // for use in debug mess
 snort::ProfileStats httpPerfStats;
 
 AppIdHttpSession::AppIdHttpSession(AppIdSession& asd)
-    : asd(asd)
+    : asd(asd),
+    host(nullptr),
+    url(nullptr),
+    uri(nullptr),
+    referer(nullptr),
+    useragent(nullptr),
+    via(nullptr),
+    cookie(nullptr),
+    body(nullptr),
+    response_code(nullptr),
+    content_type(nullptr),
+    location(nullptr),
+    req_body(nullptr),
+    server(nullptr),
+    x_working_with(nullptr)
 {
     http_matchers = HttpPatternMatchers::get_instance();
 }
@@ -61,6 +75,34 @@ AppIdHttpSession::AppIdHttpSession(AppIdSession& asd)
 AppIdHttpSession::~AppIdHttpSession()
 {
     delete xff_addr;
+    if (host)
+        delete host;
+    if (url)
+        delete url;
+    if (uri)
+        delete uri;
+    if (referer)
+        delete referer;
+    if (useragent)
+        delete useragent;
+    if (via)
+        delete via;
+    if (cookie)
+        delete cookie;
+    if (body)
+        delete body;
+    if (response_code)
+        delete response_code;
+    if (content_type)
+        delete content_type;
+    if (location)
+        delete location;
+    if (req_body)
+        delete req_body;
+    if (server)
+        delete server;
+    if (x_working_with)
+        delete x_working_with;
 }
 
 void AppIdHttpSession::free_chp_matches(ChpMatchDescriptor& cmd, unsigned num_matches)
@@ -81,7 +123,6 @@ int AppIdHttpSession::initial_chp_sweep(ChpMatchDescriptor& cmd)
             cmd.cur_ptype = (HttpFieldIds)i;
             http_matchers->scan_key_chp(cmd);
         }
-
     }
 
     if (cmd.match_tally.empty())
@@ -119,7 +160,7 @@ int AppIdHttpSession::initial_chp_sweep(ChpMatchDescriptor& cmd)
         ptype_scan_counts[i] = cah->ptype_scan_counts[i];
         ptype_req_counts[i] = cah->ptype_req_counts[i] + cah->ptype_rewrite_insert_used[i];
         if (i > 3 && !cah->ptype_scan_counts[i]
-                                             && !asd.get_session_flags(APPID_SESSION_SPDY_SESSION))
+            && !asd.get_session_flags(APPID_SESSION_SPDY_SESSION))
         {
             asd.clear_session_flags(APPID_SESSION_CHP_INSPECTING);
 #ifdef ENABLE_APPID_THIRD_PARTY
@@ -158,25 +199,25 @@ int AppIdHttpSession::initial_chp_sweep(ChpMatchDescriptor& cmd)
 
 void AppIdHttpSession::init_chp_match_descriptor(ChpMatchDescriptor& cmd)
 {
-    cmd.buffer[REQ_AGENT_FID] = useragent.c_str();
-    cmd.buffer[REQ_HOST_FID] = host.c_str();
-    cmd.buffer[REQ_REFERER_FID] = referer.c_str();
-    cmd.buffer[REQ_URI_FID] = uri.c_str();
-    cmd.buffer[REQ_COOKIE_FID] = cookie.c_str();
-    cmd.buffer[REQ_BODY_FID] = req_body.c_str();
-    cmd.buffer[RSP_CONTENT_TYPE_FID] = content_type.c_str();
-    cmd.buffer[RSP_LOCATION_FID] = location.c_str();
-    cmd.buffer[RSP_BODY_FID] = body.c_str();
+    cmd.buffer[REQ_AGENT_FID] = useragent ? useragent->c_str() : nullptr;
+    cmd.buffer[REQ_HOST_FID] = host ? host->c_str() : nullptr;
+    cmd.buffer[REQ_REFERER_FID] = referer ? referer->c_str() : nullptr;
+    cmd.buffer[REQ_URI_FID] = uri ? uri->c_str() : nullptr;
+    cmd.buffer[REQ_COOKIE_FID] = cookie ? cookie->c_str() : nullptr;
+    cmd.buffer[REQ_BODY_FID] = req_body ? req_body->c_str() : nullptr;
+    cmd.buffer[RSP_CONTENT_TYPE_FID] = content_type ? content_type->c_str() : nullptr;
+    cmd.buffer[RSP_LOCATION_FID] = location ? location->c_str() : nullptr;
+    cmd.buffer[RSP_BODY_FID] = body ? body->c_str() : nullptr;
 
-    cmd.length[REQ_AGENT_FID] = useragent.size();
-    cmd.length[REQ_HOST_FID] = host.size();
-    cmd.length[REQ_REFERER_FID] = referer.size();
-    cmd.length[REQ_URI_FID] = uri.size();
-    cmd.length[REQ_COOKIE_FID] = cookie.size();
-    cmd.length[REQ_BODY_FID] = req_body.size();
-    cmd.length[RSP_CONTENT_TYPE_FID] = content_type.size();
-    cmd.length[RSP_LOCATION_FID] = location.size();
-    cmd.length[RSP_BODY_FID] = body.size();
+    cmd.length[REQ_AGENT_FID] = useragent ? useragent->size() : 0;
+    cmd.length[REQ_HOST_FID] = host ? host->size() : 0;
+    cmd.length[REQ_REFERER_FID] = referer ? referer->size() : 0;
+    cmd.length[REQ_URI_FID] = uri ? uri->size() : 0;
+    cmd.length[REQ_COOKIE_FID] = cookie ? cookie->size() : 0;
+    cmd.length[REQ_BODY_FID] = req_body ? req_body->size() : 0;
+    cmd.length[RSP_CONTENT_TYPE_FID] = content_type ? content_type->size() : 0;
+    cmd.length[RSP_LOCATION_FID] = location ? location->size() : 0;
+    cmd.length[RSP_BODY_FID] = body ? body->size() : 0;
 }
 
 void AppIdHttpSession::process_chp_buffers()
@@ -244,7 +285,7 @@ void AppIdHttpSession::process_chp_buffers()
                 // either the num_matches value was zero and we failed early-on or we need to check
                 // for the min.
                 if (num_matches &&
-                                total_found < num_matches)
+                    total_found < num_matches)
                 {
                     // There was a minimum scans match count (num_matches != 0)
                     // And we did not reach that minimum
@@ -285,7 +326,7 @@ void AppIdHttpSession::process_chp_buffers()
         if (chp_candidate && chp_finished)
         {
             AppId chp_final = chp_alt_candidate ? chp_alt_candidate
-                            : CHP_APPIDINSTANCE_TO_ID(chp_candidate);
+                : CHP_APPIDINSTANCE_TO_ID(chp_candidate);
 
             if (app_type_flags & APP_TYPE_SERVICE)
                 asd.set_service_appid_data(chp_final, nullptr, version);
@@ -316,7 +357,8 @@ void AppIdHttpSession::process_chp_buffers()
                 if ( cmd.chp_rewritten[i] )
                 {
                     if (appidDebug->is_active())
-                        LogMessage("AppIdDbg %s Rewritten %s: %s\n", appidDebug->get_debug_session(),
+                        LogMessage("AppIdDbg %s Rewritten %s: %s\n",
+                            appidDebug->get_debug_session(),
                             httpFieldName[i], cmd.chp_rewritten[i]);
 
                     http_fields[i].field = cmd.chp_rewritten[i];
@@ -352,10 +394,11 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
     AppId client_id = APP_ID_NONE;
     AppId payload_id = APP_ID_NONE;
     bool have_tp = asd.tpsession != nullptr;
-    
+
     // For fragmented HTTP headers, do not process if none of the fields are set.
     // These fields will get set when the HTTP header is reassembled.
-    if ( useragent.empty() && host.empty() && referer.empty() && uri.empty() )
+
+    if ( !useragent && !host && !referer && !uri )
     {
         if (!skip_simple_detect)
             asd.clear_http_flags();
@@ -363,16 +406,17 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
     }
 
     if ( direction == APP_ID_FROM_RESPONDER &&
-                    !asd.get_session_flags(APPID_SESSION_RESPONSE_CODE_CHECKED) )
+        !asd.get_session_flags(APPID_SESSION_RESPONSE_CODE_CHECKED) )
     {
-        if ( !response_code.empty() )
+        if ( response_code )
         {
             asd.set_session_flags(APPID_SESSION_RESPONSE_CODE_CHECKED);
             constexpr auto RESPONSE_CODE_LENGTH = 3;
-            if (response_code.size() != RESPONSE_CODE_LENGTH)
+            if (response_code->size() != RESPONSE_CODE_LENGTH)
             {
                 if (appidDebug->is_active())
-                    LogMessage("AppIdDbg %s Bad http response code.\n", appidDebug->get_debug_session());
+                    LogMessage("AppIdDbg %s Bad http response code.\n",
+                        appidDebug->get_debug_session());
                 asd.reset_session_data();
                 return 0;
             }
@@ -384,7 +428,8 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
             /* didn't receive response code in first X packets. Stop processing this session */
             asd.reset_session_data();
             if (appidDebug->is_active())
-                LogMessage("AppIdDbg %s No response code received\n", appidDebug->get_debug_session());
+                LogMessage("AppIdDbg %s No response code received\n",
+                    appidDebug->get_debug_session());
             return 0;
         }
 #endif
@@ -394,7 +439,8 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
         asd.service.set_id(APP_ID_HTTP);
 
     if (appidDebug->is_active())
-        LogMessage("AppIdDbg %s chp_finished %d chp_hold_flow %d\n", appidDebug->get_debug_session(),
+        LogMessage("AppIdDbg %s chp_finished %d chp_hold_flow %d\n",
+            appidDebug->get_debug_session(),
             chp_finished, chp_hold_flow);
 
     if (!chp_finished || chp_hold_flow)
@@ -407,8 +453,8 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
             // Scan Server Header for Vendor & Version
             // FIXIT-M: Should we be checking the scan_flags even when
             //     tp_appid_module is off?
-            if ( (have_tp && (asd.scan_flags & SCAN_HTTP_VENDOR_FLAG) &&
-                  !server.empty()) || (!have_tp && !server.empty()) )
+            if ( (have_tp && (asd.scan_flags & SCAN_HTTP_VENDOR_FLAG) && server)
+                || (!have_tp && server) )
             {
                 if ( asd.service.get_id() == APP_ID_NONE || asd.service.get_id() == APP_ID_HTTP )
                 {
@@ -416,7 +462,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
                     char* vendorVersion = nullptr;
                     char* vendor = nullptr;
 
-                    http_matchers->get_server_vendor_version(server.c_str(), server.size(),
+                    http_matchers->get_server_vendor_version(server->c_str(), server->size(),
                         &vendorVersion, &vendor, &asd.subtype);
                     if (vendor || vendorVersion)
                     {
@@ -433,7 +479,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
                         AppIdServiceSubtype** tmpSubtype;
 
                         for (tmpSubtype = &asd.subtype; *tmpSubtype; tmpSubtype =
-                                        &(*tmpSubtype)->next)
+                            &(*tmpSubtype)->next)
                             ;
 
                         *tmpSubtype = local_subtype;
@@ -451,18 +497,22 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
 
             // Scan User-Agent for Browser types or Skype
             if ( (asd.scan_flags & SCAN_HTTP_USER_AGENT_FLAG)
-                            && asd.client.get_id() <= APP_ID_NONE && !useragent.empty() )
+                && asd.client.get_id() <= APP_ID_NONE && useragent )
             {
                 char* version = nullptr;
 
-                http_matchers->identify_user_agent(useragent.c_str(), useragent.size(),
+                http_matchers->identify_user_agent(useragent->c_str(), useragent->size(),
                     service_id, client_id, &version);
                 if (appidDebug->is_active())
                 {
-                    if (service_id > APP_ID_NONE and service_id != APP_ID_HTTP and asd.service.get_id() != service_id)
-                        LogMessage("AppIdDbg %s User Agent is service %d\n", appidDebug->get_debug_session(), service_id);
-                    if (client_id > APP_ID_NONE and client_id != APP_ID_HTTP and asd.client.get_id() != client_id)
-                        LogMessage("AppIdDbg %s User Agent is client %d\n", appidDebug->get_debug_session(), client_id);
+                    if (service_id > APP_ID_NONE and service_id != APP_ID_HTTP and
+                        asd.service.get_id() != service_id)
+                        LogMessage("AppIdDbg %s User Agent is service %d\n",
+                            appidDebug->get_debug_session(), service_id);
+                    if (client_id > APP_ID_NONE and client_id != APP_ID_HTTP and
+                        asd.client.get_id() != client_id)
+                        LogMessage("AppIdDbg %s User Agent is client %d\n",
+                            appidDebug->get_debug_session(), client_id);
                 }
                 asd.set_service_appid_data(service_id, nullptr, nullptr);
                 asd.set_client_appid_data(client_id, version);
@@ -471,12 +521,14 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
             }
 
             /* Scan Via Header for squid */
-            if ( !asd.is_payload_appid_set() && (asd.scan_flags & SCAN_HTTP_VIA_FLAG) && !via.empty() )
+            if ( !asd.is_payload_appid_set() && (asd.scan_flags & SCAN_HTTP_VIA_FLAG) && via )
             {
-                payload_id = http_matchers->get_appid_by_pattern(via.c_str(), via.size(), nullptr);
+                payload_id = http_matchers->get_appid_by_pattern(via->c_str(), via->size(),
+                    nullptr);
                 if (appidDebug->is_active() && payload_id > APP_ID_NONE &&
-                                asd.payload.get_id() != payload_id)
-                    LogMessage("AppIdDbg %s VIA is payload %d\n", appidDebug->get_debug_session(), payload_id);
+                    asd.payload.get_id() != payload_id)
+                    LogMessage("AppIdDbg %s VIA is payload %d\n", appidDebug->get_debug_session(),
+                        payload_id);
                 asd.set_payload_appid_data((AppId)payload_id, nullptr);
                 asd.scan_flags &= ~SCAN_HTTP_VIA_FLAG;
             }
@@ -486,28 +538,30 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
         // FIXIT-M: Should we be checking the scan_flags even when
         //     tp_appid_module is off?
         if ( (have_tp && (asd.scan_flags & SCAN_HTTP_XWORKINGWITH_FLAG) &&
-              !x_working_with.empty()) || (!have_tp && !x_working_with.empty()))
+            x_working_with) || (!have_tp && x_working_with))
         {
             AppId appId;
             char* version = nullptr;
 
-            appId = http_matchers->scan_header_x_working_with(x_working_with.c_str(),
-                x_working_with.size(), &version);
+            appId = http_matchers->scan_header_x_working_with(x_working_with->c_str(),
+                x_working_with->size(), &version);
             if ( appId )
             {
                 if (direction == APP_ID_FROM_INITIATOR)
                 {
                     if (appidDebug->is_active() && client_id > APP_ID_NONE && client_id !=
-                                    APP_ID_HTTP && asd.client.get_id() != client_id)
-                        LogMessage("AppIdDbg %s X is client %d\n", appidDebug->get_debug_session(), appId);
+                        APP_ID_HTTP && asd.client.get_id() != client_id)
+                        LogMessage("AppIdDbg %s X is client %d\n", appidDebug->get_debug_session(),
+                            appId);
 
                     asd.set_client_appid_data(appId, version);
                 }
                 else
                 {
                     if (appidDebug->is_active() && service_id > APP_ID_NONE && service_id !=
-                                    APP_ID_HTTP && asd.service.get_id() != service_id)
-                        LogMessage("AppIdDbg %s X service %d\n", appidDebug->get_debug_session(), appId);
+                        APP_ID_HTTP && asd.service.get_id() != service_id)
+                        LogMessage("AppIdDbg %s X service %d\n", appidDebug->get_debug_session(),
+                            appId);
                     asd.set_service_appid_data(appId, nullptr, version);
                 }
                 asd.scan_flags &= ~SCAN_HTTP_XWORKINGWITH_FLAG;
@@ -520,13 +574,15 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
         // FIXIT-M: Should we be checking the scan_flags even when
         //     tp_appid_module is off?
         if ( (have_tp && (asd.scan_flags & SCAN_HTTP_CONTENT_TYPE_FLAG)
-              && !content_type.empty() && !asd.is_payload_appid_set())
-             || (!have_tp && !asd.is_payload_appid_set() && !content_type.empty()) )
+            && content_type && !asd.is_payload_appid_set())
+            || (!have_tp && !asd.is_payload_appid_set() && content_type) )
         {
-            payload_id = http_matchers->get_appid_by_content_type(content_type.c_str(), content_type.size());
+            payload_id = http_matchers->get_appid_by_content_type(content_type->c_str(),
+                content_type->size());
             if (appidDebug->is_active() && payload_id > APP_ID_NONE
-                            && asd.payload.get_id() != payload_id)
-                LogMessage("AppIdDbg %s Content-Type is payload %d\n", appidDebug->get_debug_session(),
+                && asd.payload.get_id() != payload_id)
+                LogMessage("AppIdDbg %s Content-Type is payload %d\n",
+                    appidDebug->get_debug_session(),
                     payload_id);
             asd.set_payload_appid_data((AppId)payload_id, nullptr);
             asd.scan_flags &= ~SCAN_HTTP_CONTENT_TYPE_FLAG;
@@ -536,16 +592,20 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
         {
             AppId referredPayloadAppId = 0;
             char* version = nullptr;
-            char* my_host = snort_strdup(host.c_str());
-            if ( http_matchers->get_appid_from_url(my_host, url.c_str(), &version,
-                referer.c_str(), &client_id, &service_id, &payload_id, &referredPayloadAppId, false) )
+            char* my_host = host ? snort_strdup(host->c_str()) : nullptr;
+            const char* refStr = referer ? referer->c_str() : nullptr;
+            const char* urlStr = url ? url->c_str() : nullptr;
+            if ( http_matchers->get_appid_from_url(my_host, urlStr, &version,
+                refStr, &client_id, &service_id, &payload_id,
+                &referredPayloadAppId, false) )
             {
                 // do not overwrite a previously-set client or service
                 if (asd.client.get_id() <= APP_ID_NONE)
                 {
                     if (appidDebug->is_active() && client_id > APP_ID_NONE && client_id !=
-                                    APP_ID_HTTP && asd.client.get_id() != client_id)
-                        LogMessage("AppIdDbg %s URL is client %d\n", appidDebug->get_debug_session(),
+                        APP_ID_HTTP && asd.client.get_id() != client_id)
+                        LogMessage("AppIdDbg %s URL is client %d\n",
+                            appidDebug->get_debug_session(),
                             client_id);
                     asd.set_client_appid_data(client_id, nullptr);
                 }
@@ -553,15 +613,16 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
                 if (asd.service.get_id() <= APP_ID_NONE)
                 {
                     if (appidDebug->is_active() && service_id > APP_ID_NONE && service_id !=
-                                    APP_ID_HTTP && asd.service.get_id() != service_id)
-                        LogMessage("AppIdDbg %s URL is service %d\n", appidDebug->get_debug_session(),
+                        APP_ID_HTTP && asd.service.get_id() != service_id)
+                        LogMessage("AppIdDbg %s URL is service %d\n",
+                            appidDebug->get_debug_session(),
                             service_id);
                     asd.set_service_appid_data(service_id, nullptr, nullptr);
                 }
 
                 // DO overwrite a previously-set data
                 if (appidDebug->is_active() && payload_id > APP_ID_NONE &&
-                                asd.payload.get_id() != payload_id)
+                    asd.payload.get_id() != payload_id)
                     LogMessage("AppIdDbg %s URL is payload %d\n", appidDebug->get_debug_session(),
                         payload_id);
                 asd.set_payload_appid_data((AppId)payload_id, version);
@@ -569,8 +630,10 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
             }
 
             asd.scan_flags &= ~SCAN_HTTP_HOST_URL_FLAG;
-            snort_free(version);
-            snort_free(my_host);
+            if ( version )
+                snort_free(version);
+            if ( my_host )
+                snort_free(my_host);
         }
 
         if (asd.client.get_id() == APP_ID_APPLE_CORE_MEDIA)
@@ -637,7 +700,8 @@ void AppIdHttpSession::update_http_xff_address(struct XffFieldValue* xff_fields,
     {
         for (unsigned i = 0; i < numXffFields; i++)
             LogMessage("AppIdDbg %s XFF %s : %s\n", appidDebug->get_debug_session(),
-               xff_fields[i].field.c_str(), xff_fields[i].value.empty()? "(empty)": xff_fields[i].value);
+                xff_fields[i].field.c_str(), xff_fields[i].value.empty() ? "(empty)" :
+                xff_fields[i].value);
     }
 
     // xffPrecedence array is sorted based on precedence
@@ -653,7 +717,7 @@ void AppIdHttpSession::update_http_xff_address(struct XffFieldValue* xff_fields,
 
             if (strncasecmp(xff_fields[j].field.c_str(), xffPrecedence[i], UINT8_MAX) == 0)
             {
-                if(xff_fields[j].value.empty())
+                if (xff_fields[j].value.empty())
                     return;
 
                 // For a comma-separated list of addresses, pick the last address
@@ -693,30 +757,34 @@ void AppIdHttpSession::update_http_xff_address(struct XffFieldValue* xff_fields,
 
 void AppIdHttpSession::set_url(const char* url)
 {
+    if ( this->url )
+        delete this->url;
     if ( url )
-        this->url = url;
+        this->url = new std::string(url);   // FIXIT-M null terminated?
     else
-        this->url.clear();
+        this->url = nullptr;
 }
 
 void AppIdHttpSession::set_referer(char* referer)
 {
+    if ( this->referer )
+        delete this->referer;
     if ( referer )
-        this->referer = referer;
+        this->referer = new std::string(referer);
     else
-        this->referer.clear();
+        this->referer = nullptr;
 }
 
 const char* AppIdHttpSession::get_new_url()
 {
     return http_fields[REQ_URI_FID].field.empty()
-                    ? nullptr : http_fields[REQ_URI_FID].field.c_str();
+           ? nullptr : http_fields[REQ_URI_FID].field.c_str();
 }
 
 const char* AppIdHttpSession::get_new_cookie()
 {
     return http_fields[REQ_COOKIE_FID].field.empty()
-                    ? nullptr : http_fields[REQ_COOKIE_FID].field.c_str();
+           ? nullptr : http_fields[REQ_COOKIE_FID].field.c_str();
 }
 
 const char* AppIdHttpSession::get_new_field(HttpFieldIds fieldId)
@@ -764,80 +832,207 @@ uint16_t AppIdHttpSession::get_cookie_end_offset()
     return http_fields[REQ_COOKIE_FID].end_offset;
 }
 
-void AppIdHttpSession::update_host(const uint8_t* new_host, int32_t len)
+void AppIdHttpSession::update_host(const std::string* new_host)
 {
-    host.assign((const char*)new_host, len);
+    if (host)
+        delete host;
+    host = new_host;
 }
 
-void AppIdHttpSession::update_uri(const uint8_t* new_uri, int32_t len)
+void AppIdHttpSession::update_uri(const std::string* new_uri)
 {
-    uri.assign((const char*)new_uri, len);
+    if (uri)
+        delete uri;
+    uri = new_uri;
 }
 
 void AppIdHttpSession::update_url()
 {
-    url = "http://";
-    url += host + uri;
+    if (host and uri)
+    {
+        if (url)
+            delete url;
+        url = new std::string(std::string("http://") + *host + *uri);
+    }
+}
+
+void AppIdHttpSession::update_url(const std::string* new_url)
+{
+    if ( url )
+        delete url;
+    url = new_url;
+}
+
+void AppIdHttpSession::update_useragent(const std::string* new_ua)
+{
+    if (useragent)
+        delete useragent;
+    useragent = new_ua;
+}
+
+void AppIdHttpSession::update_cookie(const std::string* new_cookie)
+{
+    if (cookie)
+        delete cookie;
+    cookie = new_cookie;
+}
+
+void AppIdHttpSession::update_referer(const std::string* new_referer)
+{
+    if (referer)
+        delete referer;
+    referer = new_referer;
+}
+
+void AppIdHttpSession::update_x_working_with(const std::string* new_xww)
+{
+    if (x_working_with)
+        delete x_working_with;
+    x_working_with = new_xww;
+}
+
+void AppIdHttpSession::update_content_type(const std::string* new_content_type)
+{
+    if (content_type)
+        delete content_type;
+    content_type = new_content_type;
+}
+
+void AppIdHttpSession::update_location(const std::string* new_location)
+{
+    if (location)
+        delete location;
+    location = new_location;
+}
+
+void AppIdHttpSession::update_server(const std::string* new_server)
+{
+    if (server)
+        delete server;
+    server = new_server;
+}
+
+void AppIdHttpSession::update_via(const std::string* new_via)
+{
+    if (via)
+        delete via;
+    via = new_via;
+}
+
+void AppIdHttpSession::update_body(const std::string* new_body)
+{
+    if (body)
+        delete body;
+    body = new_body;
+}
+
+void AppIdHttpSession::update_req_body(const std::string* new_req_body)
+{
+    if (req_body)
+        delete req_body;
+    req_body = new_req_body;
+}
+
+void AppIdHttpSession::update_response_code(const std::string* new_rc)
+{
+    if (response_code)
+        delete response_code;
+    response_code = new_rc;
+}
+
+void AppIdHttpSession::update_host(const uint8_t* new_host, int32_t len)
+{
+    if ( host )
+        delete host;
+    host = new std::string((const char*)new_host, len);
+}
+
+void AppIdHttpSession::update_uri(const uint8_t* new_uri, int32_t len)
+{
+    if ( uri )
+        delete uri;
+    uri = new std::string((const char*)new_uri, len);
 }
 
 void AppIdHttpSession::update_useragent(const uint8_t* new_ua, int32_t len)
 {
-    useragent.assign((const char*)new_ua, len);
+    if ( useragent )
+        delete useragent;
+    useragent = new std::string((const char*)new_ua, len);
 }
 
 void AppIdHttpSession::update_cookie(const uint8_t* new_cookie, int32_t len)
 {
-    cookie.assign((const char*)new_cookie, len);
+    if ( cookie )
+        delete cookie;
+    cookie = new std::string((const char*)new_cookie, len);
 }
 
 void AppIdHttpSession::update_referer(const uint8_t* new_referer, int32_t len)
 {
-    referer.assign((const char*)new_referer, len);
+    if ( referer )
+        delete referer;
+    referer = new std::string((const char*)new_referer, len);
 }
 
 void AppIdHttpSession::update_x_working_with(const uint8_t* new_xww, int32_t len)
 {
-    x_working_with.assign((const char*)new_xww, len);
+    if ( x_working_with )
+        delete x_working_with;
+    x_working_with = new std::string((const char*)new_xww, len);
 }
 
 void AppIdHttpSession::update_content_type(const uint8_t* new_content_type, int32_t len)
 {
-    content_type.assign((const char*)new_content_type, len);
+    if ( content_type )
+        delete content_type;
+    content_type = new std::string((const char*)new_content_type, len);
 }
 
 void AppIdHttpSession::update_location(const uint8_t* new_location, int32_t len)
 {
-    location.assign((const char*)new_location, len);
+    if ( location )
+        delete location;
+    location = new std::string((const char*)new_location, len);
 }
 
 void AppIdHttpSession::update_server(const uint8_t* new_server, int32_t len)
 {
-    server.assign((const char*)new_server, len);
+    if ( server )
+        delete server;
+    server = new std::string((const char*)new_server, len);
 }
 
 void AppIdHttpSession::update_via(const uint8_t* new_via, int32_t len)
 {
-    via.assign((const char*)new_via, len);
+    if ( via )
+        delete via;
+    via = new std::string((const char*)new_via, len);
 }
 
 void AppIdHttpSession::update_body(const uint8_t* new_body, int32_t len)
 {
-    body.assign((const char*)new_body, len);
+    if ( body )
+        delete body;
+    body = new std::string((const char*)new_body, len);
 }
 
 void AppIdHttpSession::update_req_body(const uint8_t* new_req_body, int32_t len)
 {
-    req_body.assign((const char*)new_req_body, len);
+    if ( req_body )
+        delete req_body;
+    req_body = new std::string((const char*)new_req_body, len);
 }
 
 void AppIdHttpSession::update_response_code(const char* new_rc)
 {
-    response_code = new_rc;
+    if ( response_code )
+        delete response_code;
+    response_code = new std::string((const char*)new_rc);  // FIXIT-L null term?
 }
 
 void AppIdHttpSession::reset_ptype_scan_counts()
 {
     memset(ptype_scan_counts, 0, sizeof(ptype_scan_counts));
 }
-
 

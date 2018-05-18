@@ -21,6 +21,8 @@
 #ifndef APPID_MOCK_HTTP_SESSION_H
 #define APPID_MOCK_HTTP_SESSION_H
 
+#include <string>
+
 AppIdHttpSession::AppIdHttpSession(AppIdSession& session)
     : asd(session)
 {
@@ -29,6 +31,34 @@ AppIdHttpSession::AppIdHttpSession(AppIdSession& session)
 AppIdHttpSession::~AppIdHttpSession()
 {
     delete xff_addr;
+    if (host)
+        delete host;
+    if (url)
+        delete url;
+    if (uri)
+        delete uri;
+    if (referer)
+        delete referer;
+    if (useragent)
+        delete useragent;
+    if (via)
+        delete via;
+    if (cookie)
+        delete cookie;
+    if (body)
+        delete body;
+    if (response_code)
+        delete response_code;
+    if (content_type)
+        delete content_type;
+    if (location)
+        delete location;
+    if (req_body)
+        delete req_body;
+    if (server)
+        delete server;
+    if (x_working_with)
+        delete x_working_with;
 }
 
 int AppIdHttpSession::process_http_packet(AppidSessionDirection) { return 0; }
@@ -53,13 +83,14 @@ char const* RSP_BODY = "this is the body of the http response";
 #define URI_OFFSET 22
 #define COOKIE_OFFSET 44
 
-static void replace_header_data(std::string& header, const uint8_t* content, int32_t clen)
+static void replace_header_data(const std::string*& header, const uint8_t* content, int32_t clen)
 {
     if (clen <= 0)
         return;
 
-    header.clear();
-    header.append((char*)content, clen);
+    if (header)
+        delete header;
+    header=new std::string((const char*)content,clen);
 }
 
 void AppIdHttpSession::update_host(const uint8_t* new_host, int32_t len)
@@ -74,8 +105,12 @@ void AppIdHttpSession::update_uri(const uint8_t* new_uri, int32_t len)
 
 void AppIdHttpSession::update_url()
 {
-    url = "http://";
-    url += host + uri;
+    if (host and uri)
+    {
+        if (url)
+            delete url;
+        url=new std::string(std::string("http://") + *host + *uri);
+    }
 }
 
 void AppIdHttpSession::update_useragent(const uint8_t* new_ua, int32_t len)
@@ -130,15 +165,19 @@ void AppIdHttpSession::update_req_body(const uint8_t* new_req_body, int32_t len)
 
 void AppIdHttpSession::update_response_code(const char* new_rc)
 {
-    response_code = new_rc;
+    if ( response_code )
+        delete response_code;
+    response_code = new std::string((char*)new_rc);
 }
 
 void AppIdHttpSession::set_url(const char* url)
 {
+    if ( this->url )
+        delete this->url;
     if ( url )
-        this->url = url;
+        this->url = new std::string(url);   // FIXIT-M null terminated?
     else
-        this->url.clear();
+        this->url = nullptr;
 }
 
 class MockAppIdHttpSession : public AppIdHttpSession
@@ -150,20 +189,20 @@ public:
         SfIp* ip = new SfIp;
         ip->pton(AF_INET, APPID_UT_XFF_IP_ADDR);
         xff_addr = ip;
-        content_type = CONTENT_TYPE;
-        cookie = COOKIE;
-        host = HOST;
-        location = LOCATION;
-        referer = REFERER;
-        response_code = RESPONSE_CODE;
-        server = SERVER;
-        url = URL;
-        uri = URI;
-        useragent = USERAGENT;
-        via = VIA;
-        x_working_with = X_WORKING_WITH;
-        body = RSP_BODY;
-        req_body = REQ_BODY;
+        content_type = new std::string(CONTENT_TYPE);
+        cookie = new std::string(COOKIE);
+        host = new std::string(HOST);
+        location = new std::string(LOCATION);
+        referer = new std::string(REFERER);
+        response_code = new std::string(RESPONSE_CODE);
+        server = new std::string(SERVER);
+        url = new std::string(URL);
+        uri = new std::string(URI);
+        useragent = new std::string(USERAGENT);
+        via = new std::string(VIA);
+        x_working_with = new std::string(X_WORKING_WITH);
+        body = new std::string(RSP_BODY);
+        req_body = new std:: string(REQ_BODY);
         http_fields[REQ_URI_FID].start_offset = URI_OFFSET;
         http_fields[REQ_URI_FID].end_offset = URI_OFFSET + strlen(URI);
         http_fields[REQ_COOKIE_FID].start_offset = COOKIE_OFFSET;
@@ -185,20 +224,47 @@ public:
 
     void reset()
     {
-        content_type.clear();
-        cookie.clear();
-        host.clear();
-        location.clear();
-        referer.clear();
-        response_code.clear();
-        server.clear();
-        url.clear();
-        uri.clear();
-        useragent.clear();
-        via.clear();
-        x_working_with.clear();
-        body.clear();
-        req_body.clear();
+        delete content_type;
+        content_type = nullptr;
+
+        delete cookie;
+        cookie = nullptr;
+
+        delete host;
+        host = nullptr;
+
+        delete location;
+        location = nullptr;
+
+        delete referer;
+        referer = nullptr;
+
+        delete response_code;
+        response_code = nullptr;
+
+        delete server;
+        server = nullptr;
+
+        delete url;
+        url = nullptr;
+
+        delete uri;
+        uri = nullptr;
+
+        delete useragent;
+        useragent = nullptr;
+
+        delete via;
+        via = nullptr;
+
+        delete x_working_with;
+        x_working_with = nullptr;
+
+        delete body;
+        body = nullptr;
+
+        delete req_body;
+        req_body = nullptr;
     }
 
     static AppIdHttpSession* init_http_session(AppIdSession& asd)
@@ -207,9 +273,6 @@ public:
 
         return hsession;
     }
-
-
-
 };
 
 #endif

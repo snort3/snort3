@@ -78,50 +78,50 @@ public:
     void update_http_xff_address(struct XffFieldValue* xff_fields, uint32_t numXffFields);
 
     const char* get_user_agent()
-    { return useragent.empty() ? nullptr : useragent.c_str(); }
+    { return useragent ? useragent->c_str() : nullptr; }
 
     const char* get_host()
-    { return host.empty() ? nullptr : host.c_str(); }
+    { return host ? host->c_str() : nullptr; }
 
     const char* get_url()
-    { return url.empty() ? nullptr : url.c_str(); }
+    { return url ? url->c_str() : nullptr; }
 
     void set_url(const char* url = nullptr);
 
     const char* get_uri()
-    { return uri.empty() ? nullptr : uri.c_str(); }
+    { return uri ? uri->c_str() : nullptr; }
 
     const char* get_via()
-    { return via.empty() ? nullptr : via.c_str(); }
+    { return via ? via->c_str() : nullptr; }
 
     const char* get_referer()
-    { return referer.empty() ? nullptr : referer.c_str(); }
+    { return referer ? referer->c_str() : nullptr; }
 
     void set_referer(char* referer = nullptr);
 
     const char* get_cookie()
-    { return cookie.empty() ? nullptr : cookie.c_str(); }
+    { return cookie ? cookie->c_str() : nullptr; }
 
     const char* get_response_code()
-    { return response_code.empty() ? nullptr : response_code.c_str(); }
+    { return response_code ? response_code->c_str() : nullptr; }
 
     const char* get_content_type()
-    { return content_type.empty() ? nullptr : content_type.c_str(); }
+    { return content_type ? content_type->c_str() : nullptr; }
 
     const char* get_location()
-    { return location.empty() ? nullptr : location.c_str(); }
+    { return location ? location->c_str() : nullptr; }
 
     const char* get_req_body()
-    { return req_body.empty() ? nullptr : req_body.c_str(); }
+    { return req_body ? req_body->c_str() : nullptr; }
 
     const char* get_server()
-    { return server.empty() ? nullptr : server.c_str(); }
+    { return server ? server->c_str() : nullptr; }
 
     const char* get_body()
-    { return body.empty() ? nullptr : body.c_str(); }
+    { return body ? body->c_str() : nullptr; }
 
     const char* get_x_working_with()
-    { return x_working_with.empty() ? nullptr : x_working_with.c_str(); }
+    { return x_working_with ? x_working_with->c_str() : nullptr; }
 
     const char* get_new_url();
     const char* get_new_cookie();
@@ -138,9 +138,34 @@ public:
     snort::SfIp* get_xff_addr()
     { return xff_addr; }
 
+    // FIXME-L
+    // We get these fields from 2 sources: HttpEvent or ThirdParty.
+    // From HttpEvent we get them as char*, from ThirdParty we get them
+    // as string*. Since we own ThirdParty, we can simply snatch the
+    // pointer, thus avoiding an extra copy. From HttpEvent, though, we
+    // must make a hard copy. Consequently, currently we have to have
+    // two sets of update_foo() functions: one for ThirdParty (that just
+    // snatches the string* pointer) and another for HttpEvent (that makes
+    // a hard copy). These should be consolidated at some point.
+
+    // These are used with ThirdParty (tp_appid_utils.cc)
+    void update_host(const std::string* new_host);
+    void update_uri(const std::string* new_uri);
+    void update_useragent(const std::string* new_ua);
+    void update_cookie(const std::string* new_cookie);
+    void update_referer(const std::string* new_referer);
+    void update_x_working_with(const std::string* new_xww);
+    void update_content_type(const std::string* new_content_type);
+    void update_location(const std::string* new_location);
+    void update_server(const std::string* new_server);
+    void update_via(const std::string* new_via);
+    void update_body(const std::string* new_body);
+    void update_req_body(const std::string* new_req_body);
+    void update_response_code(const std::string* new_rc);
+
+    // These are used with HttpEvent (appid_http_event_handler.cc)
     void update_host(const uint8_t* new_host, int32_t len);
     void update_uri(const uint8_t* new_uri, int32_t len);
-    void update_url();
     void update_useragent(const uint8_t* new_ua, int32_t len);
     void update_cookie(const uint8_t* new_cookie, int32_t len);
     void update_referer(const uint8_t* new_referer, int32_t len);
@@ -152,6 +177,10 @@ public:
     void update_body(const uint8_t* new_body, int32_t len);
     void update_req_body(const uint8_t* new_req_body, int32_t len);
     void update_response_code(const char* new_rc);
+
+    void update_url();
+    void update_url(const std::string* new_url);
+
     void set_is_webdav(bool webdav)
     { is_webdav = webdav; }
 
@@ -204,20 +233,20 @@ protected:
     HttpPatternMatchers* http_matchers = nullptr;
 
     AppIdSession& asd;
-    std::string host;
-    std::string url;
-    std::string uri;
-    std::string referer;
-    std::string useragent;
-    std::string via;
-    std::string cookie;
-    std::string body;
-    std::string response_code;
-    std::string content_type;
-    std::string location;
-    std::string req_body;
-    std::string server;
-    std::string x_working_with;
+    const std::string* host;
+    const std::string* url;
+    const std::string* uri;
+    const std::string* referer;
+    const std::string* useragent;
+    const std::string* via;
+    const std::string* cookie;
+    const std::string* body;
+    const std::string* response_code;
+    const std::string* content_type;
+    const std::string* location;
+    const std::string* req_body;
+    const std::string* server;
+    const std::string* x_working_with;
     bool is_webdav = false;
     bool chp_finished = false;
     AppId chp_candidate = APP_ID_NONE;
@@ -233,12 +262,11 @@ protected:
     const char** xffPrecedence = nullptr;
     unsigned numXffFields = 0;
     HttpField http_fields[MAX_HTTP_FIELD_ID];
-    int ptype_req_counts[MAX_HTTP_FIELD_ID] = {0};
-    int ptype_scan_counts[MAX_HTTP_FIELD_ID] = {0};
+    int ptype_req_counts[MAX_HTTP_FIELD_ID] = { 0 };
+    int ptype_scan_counts[MAX_HTTP_FIELD_ID] = { 0 };
 #if RESPONSE_CODE_PACKET_THRESHHOLD
     unsigned response_code_packets = 0;
 #endif
-
 };
 
 #endif

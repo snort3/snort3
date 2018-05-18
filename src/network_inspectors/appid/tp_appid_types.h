@@ -58,9 +58,9 @@ enum TPSessionAttr
 };
 
 #define TPAD_GET(func)                                          \
-    const string* func(bool caller_owns_it = 0)                 \
+    string* func(bool caller_owns_it = 0)                       \
     {                                                           \
-        const string* tmp = func ## _buf;                       \
+        string* tmp = func ## _buf;                             \
         if (caller_owns_it)                                     \
             func ## _buf = nullptr;                             \
         return tmp;                                             \
