@@ -70,18 +70,17 @@ Additional packages provide optional features.  Check the manual for more.
 
 # DOWNLOAD
 
-There are two source tarballs, one for autotools and one for cmake:
+There is a source tarball available in the Downloads section on snort.org:
 
-    snort-3.0.0-a3-auto.tar.gz
-    snort-3.0.0-a3-cmake.tar.gz
+    snort-3.0.0-a3.tar.gz
 
 You can also get the code with:
 
     git clone git://github.com/snortadmin/snort3.git
 
-There are separate extras packages for autotools and cmake that provide
-additional features and demonstrate how to build plugins.  The source for
-extras is in git repo as well.
+There are separate extras packages for cmake that provide additional
+features and demonstrate how to build plugins. The source for extras
+is in snort3_extra.git repo.
 
 # BUILD SNORT
 
