@@ -1208,12 +1208,7 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
     // hard coding these gids do GIDs actually matter anymore (w/o conflict
     // with builtins)?
 
-    if ( otn->sigInfo.gid == GENERATOR_SNORT_ENGINE )
-    {
-        otn->sigInfo.text_rule = true;
-        detect_rule_count++;
-    }
-    else if ( otn->sigInfo.gid == GENERATOR_SNORT_SHARED )
+    if ( otn->sigInfo.gid == GENERATOR_SNORT_SHARED )
     {
         otn->sigInfo.text_rule = true;
         so_rule_count++;
@@ -1226,6 +1221,11 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
 
         otn->sigInfo.text_rule = false;
         builtin_rule_count++;
+    }
+    else
+    {
+        otn->sigInfo.text_rule = true;
+        detect_rule_count++;
     }
 
     if ( !otn_dup )

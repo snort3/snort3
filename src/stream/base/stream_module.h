@@ -90,6 +90,9 @@ public:
     snort::ProfileStats* get_profile() const override;
     const StreamModuleConfig* get_data();
 
+    unsigned get_gid() const override;
+    const snort::RuleMap* get_rules() const override;
+
     void sum_stats(bool) override;
     void show_stats() override;
     void reset_stats() override;

@@ -24,6 +24,7 @@
 
 #include "stream_module.h"
 
+#include "detection/rules.h"
 #include "main/snort_debug.h"
 
 using namespace snort;
@@ -78,6 +79,15 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const RuleMap stream_rules[] =
+{
+    { INTERNAL_EVENT_SYN_RECEIVED, "TCP SYN received" },
+    { INTERNAL_EVENT_SESSION_ADD, "TCP session established" },
+    { INTERNAL_EVENT_SESSION_DEL, "TCP session cleared" },
+
+    { 0, nullptr }
+};
+
 StreamModule::StreamModule() :
     Module(MOD_NAME, MOD_HELP, s_params, false, &TRACE_NAME(stream))
 { }
@@ -90,6 +100,12 @@ PegCount* StreamModule::get_counts() const
 
 ProfileStats* StreamModule::get_profile() const
 { return &s5PerfStats; }
+
+unsigned StreamModule::get_gid() const
+{ return GENERATOR_INTERNAL; }
+
+const RuleMap* StreamModule::get_rules() const
+{ return stream_rules; }
 
 const StreamModuleConfig* StreamModule::get_data()
 {

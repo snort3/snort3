@@ -40,6 +40,7 @@
 #define GENERATOR_SNORT_ENGINE        1
 #define GENERATOR_SNORT_SHARED        3
 
+// FIXIT-L gid 135 defines should be renamed and moved to stream
 #define GENERATOR_INTERNAL          135
 #define INTERNAL_EVENT_SYN_RECEIVED   1
 #define INTERNAL_EVENT_SESSION_ADD    2
