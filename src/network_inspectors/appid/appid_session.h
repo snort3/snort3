@@ -304,6 +304,7 @@ public:
     AppIdDnsSession* get_dns_session();
 
     bool is_tp_appid_done() const;
+    bool is_tp_processing_done() const;
     bool is_tp_appid_available() const;
 
 private:

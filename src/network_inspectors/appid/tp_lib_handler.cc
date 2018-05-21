@@ -136,7 +136,8 @@ void TPLibHandler::pinit(const AppIdModuleConfig* config)
         tp_config.http_upgrade_reporting_enabled = 1;
     else
         tp_config.http_upgrade_reporting_enabled = 0;
-    // FIXIT-H: Init http_response_version_enabled
+
+    tp_config.http_response_version_enabled = config->http_response_version_enabled;
 
     ret = tp_appid_module->pinit(tp_config);
     if (ret != 0)

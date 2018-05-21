@@ -587,18 +587,6 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
     if ( !asd.config->have_tp() )
         return true;
 
-    //restart inspection by 3rd party
-    if (!asd.tp_reinspect_by_initiator && (direction == APP_ID_FROM_INITIATOR) &&
-        check_reinspect(p, asd))
-    {
-        asd.tp_reinspect_by_initiator = true;
-        asd.set_session_flags(APPID_SESSION_APP_REINSPECT);
-        if (appidDebug->is_active())
-            LogMessage("AppIdDbg %s 3rd party allow reinspect http\n",
-                appidDebug->get_debug_session());
-        asd.reset_session_data();
-    }
-
     if (asd.tp_app_id == APP_ID_SSH && asd.payload.get_id() != APP_ID_SFTP &&
         asd.session_packet_count >= MIN_SFTP_PACKET_COUNT &&
         asd.session_packet_count < MAX_SFTP_PACKET_COUNT)
@@ -611,21 +599,22 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
         }
     }
 
-    Profile tpPerfStats_profile_context(tpPerfStats);
-
     /*** Start of third-party processing. ***/
-    if ( asd.config->have_tp()
-        && !asd.get_session_flags(APPID_SESSION_NO_TPI)
-        && (!asd.is_tp_appid_done()
-        || asd.get_session_flags(APPID_SESSION_APP_REINSPECT
-        | APPID_SESSION_APP_REINSPECT_SSL)))
+    Profile tpPerfStats_profile_context(tpPerfStats);
+    if (p->dsize || asd.config->mod_config->tp_allow_probes)
     {
-        // First SSL decrypted packet is now being inspected. Reset the flag so that SSL decrypted
-        // traffic gets processed like regular traffic from next packet onwards
-        if (asd.get_session_flags(APPID_SESSION_APP_REINSPECT_SSL))
-            asd.clear_session_flags(APPID_SESSION_APP_REINSPECT_SSL);
+        //restart inspection by 3rd party
+        if (!asd.tp_reinspect_by_initiator && (direction == APP_ID_FROM_INITIATOR) && check_reinspect(p, asd))
+        {
+            asd.tp_reinspect_by_initiator = true;
+            asd.set_session_flags(APPID_SESSION_APP_REINSPECT);
+            if (appidDebug->is_active())
+                LogMessage("AppIdDbg %s 3rd party allow reinspect http\n",
+                    appidDebug->get_debug_session());
+            asd.reset_session_data();
+        }
 
-        if (p->dsize || asd.config->mod_config->tp_allow_probes)
+        if (!asd.is_tp_processing_done())
         {
             if (protocol != IpProtocol::TCP || (p->packet_flags & PKT_STREAM_ORDER_OK)
                 || asd.config->mod_config->tp_allow_probes)
@@ -646,6 +635,12 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                 asd.tp_app_id=asd.tpsession->get_appid(tp_confidence);
 
                 isTpAppidDiscoveryDone = true;
+
+                // First SSL decrypted packet is now being inspected. Reset the flag so that SSL decrypted
+                // traffic gets processed like regular traffic from next packet onwards
+                if (asd.get_session_flags(APPID_SESSION_APP_REINSPECT_SSL))
+                    asd.clear_session_flags(APPID_SESSION_APP_REINSPECT_SSL);
+
                 if (asd.tpsession->get_state() == TP_STATE_CLASSIFIED)
                     asd.clear_session_flags(APPID_SESSION_APP_REINSPECT);
 
@@ -812,14 +807,15 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                 }
             }
         }
+        if ( asd.tp_reinspect_by_initiator && check_reinspect(p, asd) )
+        {
+            if(isTpAppidDiscoveryDone)
+                asd.clear_session_flags(APPID_SESSION_APP_REINSPECT);
+            if (direction == APP_ID_FROM_RESPONDER)
+                asd.tp_reinspect_by_initiator = false;     //toggle at OK response
+        }
     }
 
-    if ( asd.tp_reinspect_by_initiator && check_reinspect(p, asd) )
-    {
-        asd.clear_session_flags(APPID_SESSION_APP_REINSPECT);
-        if (direction == APP_ID_FROM_RESPONDER)
-            asd.tp_reinspect_by_initiator = false;     //toggle at OK response
-    }
 
     return isTpAppidDiscoveryDone;
 }

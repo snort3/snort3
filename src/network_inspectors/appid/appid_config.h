@@ -89,6 +89,7 @@ public:
     uint32_t rtmp_max_packets = 15;
     uint32_t max_tp_flow_depth = 5;
     uint32_t tp_allow_probes = 0;
+    uint32_t http_response_version_enabled = 0;
 };
 
 typedef std::array<SF_LIST*, APP_ID_PORT_ARRAY_SIZE> AppIdPortExclusions;

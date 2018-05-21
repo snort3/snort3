@@ -891,13 +891,10 @@ bool AppIdSession::is_tp_appid_done() const
 #ifdef ENABLE_APPID_THIRD_PARTY
     if (config->have_tp())
     {
-        unsigned state;
+        if (!tpsession)
+            return false;
 
-        if (tpsession)
-            state = tpsession->get_state();
-        else
-            state = TP_STATE_INIT;
-
+        unsigned state = tpsession->get_state();
         return (state  == TP_STATE_CLASSIFIED || state == TP_STATE_TERMINATED
                || state == TP_STATE_HA);
     }
@@ -905,6 +902,21 @@ bool AppIdSession::is_tp_appid_done() const
 
     return true;
 }
+
+bool AppIdSession::is_tp_processing_done() const
+{
+
+#ifdef ENABLE_APPID_THIRD_PARTY
+    if (config->have_tp() &&
+        !get_session_flags(APPID_SESSION_NO_TPI) &&
+        (!is_tp_appid_done() ||
+        get_session_flags(APPID_SESSION_APP_REINSPECT | APPID_SESSION_APP_REINSPECT_SSL)))
+        return false;
+#endif
+
+    return true;
+}
+
 
 bool AppIdSession::is_tp_appid_available() const
 {
