@@ -23,13 +23,24 @@
 
 #include "codecs/codec_module.h"
 
+#include "main/snort_debug.h"
+
 using namespace snort;
 
 #define codec_module_help \
     "general decoder rules"
 
-CodecModule::CodecModule() : Module("decode", codec_module_help)
+Trace TRACE_NAME(decode);
+
+static const Parameter s_params[] = {{ nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }};
+
+CodecModule::CodecModule() : Module("decode", codec_module_help, s_params, false, &TRACE_NAME(decode))
 { }
+
+bool CodecModule::set(const char* fqn, Value& v, SnortConfig* sc)
+{
+    return Module::set(fqn, v, sc);
+}
 
 static const RuleMap general_decode_rules[] =
 {

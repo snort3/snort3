@@ -24,11 +24,14 @@
 // the snort module is for handling command line args,
 // shell commands, and basic application stats
 
+#include "main/snort_debug.h"
+
 namespace snort
 {
 class Module;
 }
 
+extern Trace TRACE_NAME(snort);
 snort::Module* get_snort_module();
 
 #endif

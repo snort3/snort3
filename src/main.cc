@@ -37,6 +37,7 @@
 #include "main/shell.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
+#include "main/snort_debug.h"
 #include "main/snort_module.h"
 #include "main/swapper.h"
 #include "main/thread_config.h"
@@ -189,7 +190,14 @@ bool Pig::queue_command(AnalyzerCommand* ac, bool orphan)
             orphan_commands.push(ac);
         return false;
     }
+
+#ifdef DEBUG_MSGS
+    unsigned ac_ref_count = ac->get();
+    trace_logf(snort, "[%u] Queuing command %s for execution (refcount %u)\n",
+            idx, ac->stringify(), ac_ref_count);
+#else
     ac->get();
+#endif
     analyzer->execute(ac);
     return true;
 }
@@ -199,8 +207,15 @@ void Pig::reap_command(AnalyzerCommand* ac)
     unsigned ac_ref_count = ac->put();
     if (ac_ref_count == 0)
     {
+        trace_logf(snort, "[%u] Destroying completed command %s\n",
+                idx, ac->stringify());
         delete ac;
     }
+#ifdef DEBUG_MSGS
+    else
+        trace_logf(snort, "[%u] Reaped ongoing command %s (refcount %u)\n",
+                idx, ac->stringify(), ac_ref_count);
+#endif
 }
 
 void Pig::reap_commands()
@@ -258,6 +273,7 @@ void snort::main_broadcast_command(AnalyzerCommand* ac, bool from_shell)
     unsigned dispatched = 0;
     
     ac = get_command(ac, from_shell);
+    trace_logf(snort, "Broadcasting %s command\n", ac->stringify());
 
     for (unsigned idx = 0; idx < max_pigs; ++idx)
     {
@@ -587,6 +603,7 @@ static void reap_commands()
     {
         AnalyzerCommand* ac = orphan_commands.front();
         orphan_commands.pop();
+        trace_logf(snort, "Destroying orphan command %s\n", ac->stringify());
         delete ac;
     }
 }

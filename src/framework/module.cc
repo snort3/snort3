@@ -28,7 +28,7 @@ using namespace snort;
 static const Parameter defaults[] =
 {
     { "trace", Parameter::PT_INT, nullptr, nullptr,
-      "mask for enabling debug traces in module"  },
+      "mask for enabling debug traces in module" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -201,4 +201,10 @@ const PegInfo simple_pegs[] =
     { CountType::SUM, "packets", "total packets" },
     { CountType::END, nullptr, nullptr }
 };
+
+void Module::enable_trace()
+{
+    if ( trace )
+        *trace = 1;
+}
 

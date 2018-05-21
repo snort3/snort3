@@ -184,6 +184,8 @@ public:
     virtual Usage get_usage() const
     { return CONTEXT; }
 
+    void enable_trace();
+
 protected:
     Module(const char* name, const char* help);
     Module(const char* name, const char* help, const Parameter*,

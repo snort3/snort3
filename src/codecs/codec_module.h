@@ -24,6 +24,7 @@
 #include <cstdint>
 
 #include "framework/module.h"
+#include "main/snort_debug.h"
 #include "main/snort_types.h"
 
 namespace snort
@@ -237,7 +238,12 @@ public:
 
     Usage get_usage() const override
     { return CONTEXT; }
+
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
 };
 }
+
+extern Trace TRACE_NAME(decode);
+
 #endif
 

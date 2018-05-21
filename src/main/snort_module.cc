@@ -28,6 +28,7 @@
 #include "framework/parameter.h"
 #include "log/messages.h"
 #include "main.h"
+#include "main/snort_debug.h"
 #include "packet_io/sfdaq_config.h"
 #include "packet_io/trough.h"
 #include "parser/config_file.h"
@@ -501,6 +502,9 @@ static const Parameter s_params[] =
 
     { "--x2s", Parameter::PT_STRING, nullptr, nullptr,
       "output ASCII string for given byte code (see also --x2c)" },
+  
+    { "--trace", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "turn on main loop debug trace" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -519,10 +523,12 @@ static const Parameter s_params[] =
     "command line configuration"
 #endif
 
+Trace TRACE_NAME(snort);
+
 class SnortModule : public Module
 {
 public:
-    SnortModule() : Module(s_name, s_help, s_params)
+    SnortModule() : Module(s_name, s_help, s_params, false, &TRACE_NAME(snort))
     { }
 
 #ifdef SHELL
@@ -943,6 +949,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--x2s") )
         x2s(v.get_string());
+
+    else if (v.is("--trace"))
+        Module::enable_trace();
 
     return true;
 }
