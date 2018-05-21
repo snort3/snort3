@@ -26,6 +26,7 @@
 #include <string>
 #include <vector>
 
+#include "appid_types.h"
 #include "application_ids.h"
 
 #include "protocols/protocol_ids.h"
@@ -130,6 +131,17 @@ protected:
     snort::SearchTool* udp_patterns = nullptr;
     int udp_pattern_count = 0;
     std::vector<AppIdPatternMatchNode*> pattern_data;
+
+private:
+    static bool do_pre_discovery(snort::Packet* p, AppIdSession** p_asd, AppIdInspector& inspector,
+        IpProtocol& protocol, AppidSessionDirection& direction);
+    static bool do_discovery(snort::Packet* p, AppIdSession& asd, IpProtocol protocol,
+        AppidSessionDirection direction);
+    static void do_post_discovery(snort::Packet* p, AppIdSession& asd,
+        AppidSessionDirection direction, bool is_discovery_done);
+    static bool handle_unmonitored_session(AppIdSession* asd, const snort::Packet* p,
+        IpProtocol protocol, AppidSessionDirection dir, AppIdInspector& inspector,
+        uint64_t& flow_flags);
 };
 #endif
 

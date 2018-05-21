@@ -53,7 +53,7 @@ using namespace snort;
 THREAD_LOCAL ProfileStats tpLibPerfStats;
 THREAD_LOCAL ProfileStats tpPerfStats;
 
-bool do_discovery(AppIdSession&, IpProtocol, Packet*, AppidSessionDirection&);
+bool do_tp_discovery(AppIdSession&, IpProtocol, Packet*, AppidSessionDirection&);
 
 // std::vector does not have a convenient find() function.
 // There is a generic std::find() in <algorithm>, but this might be faster.
@@ -578,7 +578,7 @@ static inline void check_terminate_tp_module(AppIdSession& asd, uint16_t tpPktCo
     }
 }
 
-bool do_discovery(AppIdSession& asd, IpProtocol protocol,
+bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
     Packet* p, AppidSessionDirection& direction)
 {
     vector<AppId> tp_proto_list;
@@ -692,13 +692,6 @@ bool do_discovery(AppIdSession& asd, IpProtocol protocol,
             else
             {
                 asd.tp_app_id = APP_ID_NONE;
-                if (appidDebug->is_active() && !asd.get_session_flags(
-                    APPID_SESSION_TPI_OOO_LOGGED))
-                {
-                    asd.set_session_flags(APPID_SESSION_TPI_OOO_LOGGED);
-                    LogMessage("AppIdDbg %s 3rd party packet out-of-order\n",
-                        appidDebug->get_debug_session());
-                }
             }
 
             if (asd.tpsession and asd.tpsession->get_state() == TP_STATE_MONITORING)
