@@ -82,7 +82,6 @@ void HttpMsgSection::update_depth() const
     {
         // Don't need any more of the body
         session_data->section_size_target[source_id] = 0;
-        session_data->section_size_max[source_id] = 0;
         return;
     }
 
@@ -94,13 +93,19 @@ void HttpMsgSection::update_depth() const
 
     if (ddr <= 0)
     {
+        // We are only splitting to support file processing. That's not sensitive to section
+        // boundaries so we don't need random increments and we don't need to delay processing TCP
+        // segments while we accumulate more data. In addition to flushing when we reach target
+        // size, we also flush at the end of each segment provided it's not an unreasonably small
+        // amount.
         session_data->section_size_target[source_id] = target_size;
-        session_data->section_size_max[source_id] = max_size;
+        session_data->section_size_max[source_id] = target_size;
+        session_data->flush_segment_min[source_id] = MIN_AUTOFLUSH_SIZE;
     }
     else if (ddr <= max_size)
     {
-        session_data->section_size_target[source_id] = ddr + 200;
-        session_data->section_size_max[source_id] = ddr + 200;
+        session_data->section_size_target[source_id] = ddr + FLOW_DEPTH_ERROR_MARGIN;
+        session_data->section_size_max[source_id] = ddr + FLOW_DEPTH_ERROR_MARGIN;
     }
     else
     {

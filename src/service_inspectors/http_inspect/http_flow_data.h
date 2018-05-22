@@ -115,6 +115,7 @@ private:
     int64_t data_length[2] = { HttpEnums::STAT_NOT_PRESENT, HttpEnums::STAT_NOT_PRESENT };
     uint32_t section_size_target[2] = { 0, 0 };
     uint32_t section_size_max[2] = { 0, 0 };
+    int32_t flush_segment_min[2] = { -1, -1 };
     HttpEnums::CompressId compression[2] = { HttpEnums::CMP_NONE, HttpEnums::CMP_NONE };
     z_stream* compress_stream[2] = { nullptr, nullptr };
     uint64_t zero_nine_expected = 0;

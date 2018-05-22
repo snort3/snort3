@@ -101,6 +101,7 @@ void HttpFlowData::half_reset(SourceId source_id)
     body_octets[source_id] = STAT_NOT_PRESENT;
     section_size_target[source_id] = 0;
     section_size_max[source_id] = 0;
+    flush_segment_min[source_id] = -1;
     file_depth_remaining[source_id] = STAT_NOT_PRESENT;
     detect_depth_remaining[source_id] = STAT_NOT_PRESENT;
     detection_status[source_id] = DET_REACTIVATING;
