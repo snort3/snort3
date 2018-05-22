@@ -972,7 +972,8 @@ void AppIdHttpSession::update_referer(const uint8_t* new_referer, int32_t len)
 {
     if ( referer )
         delete referer;
-    referer = new std::string((const char*)new_referer, len);
+    if ( new_referer and len ) referer = new std::string((const char*)new_referer, len);
+    else referer = nullptr;
 }
 
 void AppIdHttpSession::update_x_working_with(const uint8_t* new_xww, int32_t len)
