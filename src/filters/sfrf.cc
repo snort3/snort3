@@ -755,8 +755,8 @@ static void _updateDependentThresholds(
     time_t curTime
     )
 {
-    if ( gid == GENERATOR_INTERNAL &&
-        sid == INTERNAL_EVENT_SESSION_DEL )
+    if ( gid == GID_SESSION &&
+        sid == SESSION_EVENT_CLEAR )
     {
         // decrementing counters - this results in the following sequence:
         // 1. sfdos_thd_test_threshold(gid internal, sid DEL)
@@ -765,7 +765,7 @@ static void _updateDependentThresholds(
         // 4.    |       _updateDependentThresholds(gid internal, sid ADD)
         // 5.    continue with regularly scheduled programming (ie step 1)
 
-        SFRF_TestThreshold(config, gid, INTERNAL_EVENT_SESSION_ADD,
+        SFRF_TestThreshold(config, gid, SESSION_EVENT_SETUP,
             sip, dip, curTime, SFRF_COUNT_DECREMENT);
         return;
     }

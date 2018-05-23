@@ -51,7 +51,7 @@ using namespace snort;
 #define TAG_PRUNE_QUANTUM   300
 #define TAG_MEMCAP          4194304  /* 4MB */
 
-#define GENERATOR_TAG       2
+#define GID_TAG             2
 #define TAG_LOG_PKT         1
 
 /*  D A T A   S T R U C T U R E S  **********************************/
@@ -549,7 +549,7 @@ int CheckTagList(Packet* p, Event& event, void** log_list)
         if ( create_event )
         {
             /* set the event info */
-            SetEvent(event, GENERATOR_TAG, TAG_LOG_PKT, 1, 1, 1, returned->event_id);
+            SetEvent(event, GID_TAG, TAG_LOG_PKT, 1, 1, 1, returned->event_id);
 
             /* set event reference details */
             event.ref_time.tv_sec = returned->event_time.tv_sec;

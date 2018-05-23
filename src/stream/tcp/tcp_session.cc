@@ -176,7 +176,7 @@ void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool re
     set_splitter(true, nullptr);
     set_splitter(false, nullptr);
 
-    tel.log_internal_event(INTERNAL_EVENT_SESSION_DEL);
+    tel.log_internal_event(SESSION_EVENT_CLEAR);
 
     lws_init = false;
     tcp_init = false;
@@ -204,7 +204,7 @@ void TcpSession::update_perf_base_state(char newState)
             session_flags |= SSNFLAG_COUNTED_ESTABLISH;
             fire_event = true;
 
-            tel.log_internal_event(INTERNAL_EVENT_SESSION_ADD);
+            tel.log_internal_event(SESSION_EVENT_SETUP);
             if ( ( session_flags & SSNFLAG_COUNTED_INITIALIZE )
                 && !( session_flags & SSNFLAG_COUNTED_CLOSING ) )
             {

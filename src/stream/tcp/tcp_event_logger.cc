@@ -93,7 +93,7 @@ void TcpEventLogger::log_internal_event(uint32_t eventSid)
     if (is_internal_event_enabled(snort::SnortConfig::get_conf()->rate_filter_config, eventSid))
     {
         tcpStats.internalEvents++;
-        snort::DetectionEngine::queue_event(GENERATOR_INTERNAL, eventSid);
+        snort::DetectionEngine::queue_event(GID_SESSION, eventSid);
     }
 }
 

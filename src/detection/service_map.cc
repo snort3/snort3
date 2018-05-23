@@ -254,7 +254,7 @@ int fpCreateServiceMaps(SnortConfig* sc)
             if ( rtn )
             {
                 // skip builtin rules
-                if ( !otn->sigInfo.text_rule )
+                if ( otn->sigInfo.builtin )
                     continue;
 
                 /* Not enabled, don't do the FP content */

@@ -506,7 +506,7 @@ static int fpAddPortGroupRule(
     PatternMatchVector pmv;
 
     // skip builtin rules, continue for text and so rules
-    if ( !otn->sigInfo.text_rule )
+    if ( otn->sigInfo.builtin )
         return -1;
 
     /* Rule not enabled */

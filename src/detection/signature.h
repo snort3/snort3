@@ -103,7 +103,7 @@ struct SigInfo
     uint32_t priority;
     uint32_t num_services;
 
-    bool text_rule;
+    bool builtin;
     Target target;
 };
 

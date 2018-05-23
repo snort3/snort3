@@ -365,7 +365,7 @@ void UserSession::start(Packet* p, Flow* flow)
 
         StreamUpdatePerfBaseState(&sfBase, tmp->flow, TCP_STATE_SYN_SENT);
 
-        EventInternal(INTERNAL_EVENT_SESSION_ADD);
+        EventInternal(SESSION_EVENT_SETUP);
 #endif
     }
 }

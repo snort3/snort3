@@ -1137,7 +1137,7 @@ OptTreeNode* parse_rule_open(SnortConfig* sc, RuleTreeNode& rtn, bool stub)
     otn->state = (OtnState*)snort_calloc(ThreadConfig::get_instance_max(), sizeof(OtnState));
 
     if ( !stub )
-        otn->sigInfo.gid = GENERATOR_SNORT_ENGINE;
+        otn->sigInfo.gid = GID_DEFAULT;
 
     otn->chain_node_number = otn_count;
     otn->snort_protocol_id = rtn.snort_protocol_id;
@@ -1173,8 +1173,6 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
             ParseError("SO rule %s not loaded.", otn->soid);
         else
         {
-            // FIXIT-L gid may be overwritten when set to 3 upon close
-            otn->sigInfo.gid = GENERATOR_SNORT_SHARED;
             entered = true;
             return so_opts;
         }
@@ -1204,13 +1202,9 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
     otn_count++;
     rule_count++;
 
-    // FIXIT-L need more reliable way of knowing type of rule instead of
-    // hard coding these gids do GIDs actually matter anymore (w/o conflict
-    // with builtins)?
-
-    if ( otn->sigInfo.gid == GENERATOR_SNORT_SHARED )
+    if ( otn->soid )
     {
-        otn->sigInfo.text_rule = true;
+        otn->sigInfo.builtin = false;
         so_rule_count++;
     }
     else if ( ModuleManager::gid_in_use(otn->sigInfo.gid) )
@@ -1219,12 +1213,16 @@ const char* parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* ot
             ParseError("%u:%u builtin rules do not support detection options",
                 otn->sigInfo.gid, otn->sigInfo.sid);
 
-        otn->sigInfo.text_rule = false;
+        otn->sigInfo.builtin = true;
         builtin_rule_count++;
     }
     else
     {
-        otn->sigInfo.text_rule = true;
+        if ( !otn->num_detection_opts )
+            ParseWarning(WARN_RULES, "%u:%u does not have any detection options",
+                otn->sigInfo.gid, otn->sigInfo.sid);
+
+        otn->sigInfo.builtin = false;
         detect_rule_count++;
     }
 

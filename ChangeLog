@@ -1,3 +1,156 @@
+18/05/21 - build 245
+
+-- CodecManager: removed unused code
+-- DataBus: fixed creating DataHandler when one doesn't exist
+-- Debug messages: cleanup for service inspectors.  New traces for detection, stream.
+-- Debug: Final debug messages cleanup, removal of macros from snort_debug
+-- Ipv4Codec: removed random ip id pool and replaced randoms on demand
+-- PacketManager: moved encode storage to heap
+-- PerfMonitor: fixed subscribing to flow events multiple times
+-- ProtoRef: Converge on single name for SnortProtocolId. Fix threading problems.
+-- Reset: Always queue reject and test packet type in RejectAction::exec.
+-- SFDAQModule: moved daq stats here. fixed stats not being output from perfmon.
+-- Snort2lua: Add ftp_data to multiple files when needed, once per file.
+-- Snort2lua: Translate ftp_server relative to default configurations.
+-- Snort: moved s_data to heap
+-- active: Enable when max_responses is enabled
+-- alert: moved alert json. unixsock out from extra to snort3
+-- appid: Add AppID debug command
+-- appid: Enable Third-Party Code for Packet Processing
+-- appid: Fix bug where Service and Application ID's set to port number instead of service appid
+-- appid: Fixing service discovery states
+-- appid: Only import dynamic detector pegcounts once
+-- appid: Refactor debug command
+-- appid: Refactor debug command, use SfIp, and fix non-Linux compilation
+-- appid: Third party integration support
+-- appid: appid session unit test changes
+-- appid: change metadata buffers from std::string to pointers, to avoid extra copying
+-- appid: clean-up code for performance and implement is_tp_processing_done()
+-- appid: create referer object only for non-null string
+-- appid: do not inspect out-of-order flows, ignore zero-payload packets for client/service discovery
+-- appid: fix memory leak in appid_http_event_test and warning in appid_http_session.cc
+-- appid: fix segfault due to dereferencing null host pointer.
+-- appid: fix tabs and indentation
+-- appid: fixed http fields, referer payload and appid debug
+-- appid: make tp_attribute_data more localized, so we only allocate/deallocate it if needed.
+-- appid: moved HttpFieldIds to appid_http_session
+-- appid: peg count / dynamic peg count update.  Split peg counts into the ones known at compile time and dynamic ones.  Update stats , module manager and module to support dumping dynamic stats.
+-- appid: report when third party appid is done inspecting
+-- appid: sip: moved pattern thread local to class instance
+-- base64_decode: moved buffer storage to regular heap
+-- binder: Fix UBSAN invalid value type runtime error
+-- build: 244
+-- build: Add --enable-ub-sanitizer option for undefined behavior sanitizer
+-- build: Add some header includes for FreeBSD
+-- build: Clean up CMake string APPENDing for configure options
+-- build: Clean up HAVE_* definition checks
+-- build: Define NDEBUG if debugging is not enabled
+-- build: Fix building unit tests on FreeBSD
+-- build: Modernize code with =default for special member functions
+-- build: Modernize code with virtual/override/final cleanups
+-- build: Remove bashisms from most shell scripts
+-- build: add cmake configure switches for NO_PROFILER, NO_MEM_MGR and DEEP_PROFILING
+-- build: add disable-docs to disable doc build
+-- build: fix various drops const qualifier cases
+-- build: fix various warnings:
+-- build: propogate snort3 tsc build option to the extra build system
+-- byte_extract: fix cursor update
+-- byte_jump: fix from_beginning
+-- byte_math: allow rvalue == 0 except for division
+-- catch: Update to Catch v2.2.1
+-- clock: Allow use of ARM64 CNTVCT_EL0 register for timing (#46); thanks to j.mcdowell@titan-ic.com for the patch.
+-- clock: use uint64_t with tsc clock instead of std::chrono for performance
+-- cmake: Add --enable-appid-third-party to configure_cmake.sh
+-- cmake: Add support for building with tcmalloc
+-- cmake: Rework FindPCAP logic and ignore SFBPF
+-- cmake: fixed checks for functions
+-- cmake: update for iconv
+-- codecs: add config option to detection to enable check and alert for address anomalies
+-- daq_hext: Make IpAddr() static to fix compiler warning
+-- dce_co_process_ctx_id needs to update its caller's (DCE2_CoCtxReq) frag_ptr as it is called in a loop in order to parse each dce/rpc ctx item, otherwise it ends up parsing the same ctx item over and over.
+-- dce_rpc: fix parsing of dce/rpc ctx items
+-- dce_rpc: pass frag_ptr by reference
+-- debug: Remove debug messages from appid, arp_spoof, and perf_monitor
+-- debug: Remove debug messages from detection and ips_options
+-- debug: Remove debug messages from stream
+-- decompress/file_decomp_pdf.cc: implicit fallthrough
+-- detect: moving thread locals identified to ips context
+-- detection: fixed uninitialized MpseStash
+-- doc: add doc for module trace
+-- encoders: fixed off-by-one error in underlying buffer handling
+-- extra: Port some CMake options from Snort prime
+-- extra: splitted extra out to snort3_extra repo
+-- file_api: combine file cache for file resume and partial file processing
+-- file_connector: Fix address-of-packed-member compiler warnings
+-- file_decomp_pdf.cc: unreachable code return
+-- file_type: Require strings instead of integers for types. Handle versions.
+-- flow: SO_PUBLIC FlowKey
+-- framework: align PktType and proto bits
+-- framework: remove bogus PktType for ARP and just use proto bits instead
+-- ftp_server: Added Flow::set_service and fixed FtpDataFlowData::handled_expected.
+-- ftp_server: Added ability get TCP options length from TcpStreamSession.
+-- ftp_server: Added accessors to Stream so TcpStreamSession can be private.
+-- ftp_server: Base last_seg_size off of MSS.
+-- ftp_server: Provide FLOW_SERVICE_CHANGE pub/sub event.
+-- ftp_server: ftp_server requires that ftp_client and ftp_data be configured.
+-- hashfcn: Fix UBSAN integer overflow runtime error
+-- hashfcn: Fix UBSAN left shift of negative value runtime error
+-- http_inspect: broken chunk performance improvement
+-- http_inspect: bugfix and new alert for gzip underrun
+-- http_inspect: embedded white space in Content-Length
+-- http_inspect: handling of run-to-connection-close bodies beyond depth
+-- http_inspect: know more Content-Encodings by name
+-- http_inspect: patch around regression failures until a permanent solution is implemented
+-- http_inspect: performance enhancements for file processing beyond detection depth
+-- ip: replaced REG_TEST with -H option for ipv4 codec fixed seed
+-- ips_byte_jump: Fix UBSAN left shift of negative value runtime error
+-- ips_byte_math: Fix UBSAN left shift of negative value runtime error
+-- ips_flags: remove dead code
+-- javascript: moved decode buffer to stack
+-- memory: disable with -DNO_MEM_MGR
+-- memory_manager.cc: dangling references
+-- packet_capture, cmake: Remove SFBPF dependencies
+-- packet_capture: adding analyzer command to initialize dump file
+-- packet_tracer: Fix compiler warning when compiling with NDEBUG
+-- packet_tracer: Modularize and add constraint-based shell enablement
+-- parameter: Fix UBSAN shift exponent is too large for 32-bit type runtime error
+-- parser: allow arbitrary rule gids
+-- pop, imap, and smtp: changes to MIME configuration parameters
+-- port_scan: include open ports with alerts instead of separate
+-- profile: disable with -DNO_PROFILER
+-- profiler: add deep profiler option
+-- reload: enabled reloading ips_actions; added parse error check for reloading
+-- repuation: remove the limit for zone id
+-- reputation: add zone support
+-- search_engine: revert default detect_raw_tcp to false
+-- service inspectors: debug cleanup
+-- sfip: A version of set() which automatically determines the family
+-- sfip: removed ntoa. use ntop(SfIpString) instead.
+-- snort2lua: Add reject action when active responses is enabled
+-- snort2lua: conversion of gid 120 to 119
+-- snort2lua: enable reject action when firewall is enabled
+-- snort: -r- will read packets from stdin
+-- spell check: fix memeory and indicies typos
+-- steam_tcp: change singleton names from linux to new_linux to avoid spurious collisions with defines
+-- stream ip: refactored to use MemoryManager allocators
+-- stream: assume gid 135 so those rules are handled as standard builtins
+-- stream: be selective about flow creation for scans
+-- stream: refactor flow control for new PktTypes
+-- stream: remove usused ignore_any_rules from tcp and udp
+-- stream: respect tcp require_3whs
+-- stream: warning: potential memory leaks
+-- stream_tcp: refactor tcp normalizer and reassembler to eliminate dynamic heap allocations per flow
+-- stream_tcp: switch to splitter max
+-- stream_tcp: tweak seglist cursor handling
+-- target_based: 100% coverage on snort_protocols.cc
+-- target_based: unit tests for ProtocolReference class
+-- tcp codec: count bad ip6 checksums correctly; thanks to j.mcdowell@titan-ic.com for reporting the issue
+-- tcp: allow data  handlding for packet with invalid ack
+-- time: initialize Stopwatch::start_time member variable to 0 ticks when TSC clock is enabled
+-- trace: add traces for deleted debug messages
+-- wizard: Fix UBSAN out-of-bounds access runtime error
+-- zhash: cleanup cruftiness
+
 18/03/15 - build 244
 
 -- appid: unit-tests for http detector plugins

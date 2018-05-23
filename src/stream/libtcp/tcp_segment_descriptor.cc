@@ -48,7 +48,7 @@ TcpSegmentDescriptor::TcpSegmentDescriptor(Flow* flow, Packet* pkt, TcpEventLogg
     {
         end_seq++;
         if ( !tcph->is_ack() )
-            tel.log_internal_event(INTERNAL_EVENT_SYN_RECEIVED);
+            tel.log_internal_event(SESSION_EVENT_SYN_RX);
     }
 }
 

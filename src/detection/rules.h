@@ -37,16 +37,14 @@
 #define ANY_SRC_IP      0x0100
 #define ANY_DST_IP      0x0200
 
-#define GENERATOR_SNORT_ENGINE        1
-#define GENERATOR_SNORT_SHARED        3
+#define GID_DEFAULT          1
+#define GID_SESSION        135
 
-// FIXIT-L gid 135 defines should be renamed and moved to stream
-#define GENERATOR_INTERNAL          135
-#define INTERNAL_EVENT_SYN_RECEIVED   1
-#define INTERNAL_EVENT_SESSION_ADD    2
-#define INTERNAL_EVENT_SESSION_DEL    3
+#define SESSION_EVENT_SYN_RX 1
+#define SESSION_EVENT_SETUP  2
+#define SESSION_EVENT_CLEAR  3
 
-#define EventIsInternal(gid) ((gid) == GENERATOR_INTERNAL)
+#define EventIsInternal(gid) ((gid) == GID_SESSION)
 
 namespace snort
 {

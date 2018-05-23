@@ -79,11 +79,12 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+// FIXIT-L setup and clear should extend to non-tcp flows as well
 static const RuleMap stream_rules[] =
 {
-    { INTERNAL_EVENT_SYN_RECEIVED, "TCP SYN received" },
-    { INTERNAL_EVENT_SESSION_ADD, "TCP session established" },
-    { INTERNAL_EVENT_SESSION_DEL, "TCP session cleared" },
+    { SESSION_EVENT_SYN_RX, "TCP SYN received" },
+    { SESSION_EVENT_SETUP,  "TCP session established" },
+    { SESSION_EVENT_CLEAR,  "TCP session cleared" },
 
     { 0, nullptr }
 };
@@ -102,7 +103,7 @@ ProfileStats* StreamModule::get_profile() const
 { return &s5PerfStats; }
 
 unsigned StreamModule::get_gid() const
-{ return GENERATOR_INTERNAL; }
+{ return GID_SESSION; }
 
 const RuleMap* StreamModule::get_rules() const
 { return stream_rules; }

@@ -91,8 +91,8 @@ int RateFilter_Create(
     {
         enable_internal_event(rf_config, thdx->sid);
 
-        if ( thdx->sid == INTERNAL_EVENT_SESSION_ADD )
-            enable_internal_event(rf_config, INTERNAL_EVENT_SESSION_DEL);
+        if ( thdx->sid == SESSION_EVENT_SETUP )
+            enable_internal_event(rf_config, SESSION_EVENT_CLEAR);
     }
     return error;
 }
