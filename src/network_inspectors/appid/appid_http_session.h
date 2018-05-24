@@ -224,6 +224,8 @@ public:
 
     virtual void custom_init() { }
 
+    void clear_all_fields();
+
 protected:
     void init_chp_match_descriptor(ChpMatchDescriptor& cmd);
     int initial_chp_sweep(ChpMatchDescriptor&);

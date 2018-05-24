@@ -1037,3 +1037,89 @@ void AppIdHttpSession::reset_ptype_scan_counts()
     memset(ptype_scan_counts, 0, sizeof(ptype_scan_counts));
 }
 
+void AppIdHttpSession::clear_all_fields()
+{
+    if (host)
+    {
+        delete host;
+        host = nullptr;
+    }
+    if (url)
+    {
+        delete url;
+        url = nullptr;
+    }
+    if (uri)
+    {
+        delete uri;
+        uri = nullptr;
+    }
+    if (referer)
+    {
+        delete referer;
+        referer = nullptr;
+    }
+    if (useragent)
+    {
+        delete useragent;
+        useragent = nullptr;
+    }
+    if (via)
+    {
+        delete via;
+        via = nullptr;
+    }
+    if (cookie)
+    {
+        delete cookie;
+        cookie = nullptr;
+    }
+    if (body)
+    {
+        delete body;
+        body = nullptr;
+    }
+    if (response_code)
+    {
+        delete response_code;
+        response_code = nullptr;
+    }
+    if (content_type)
+    {
+        delete content_type;
+        content_type = nullptr;
+    }
+    if (location)
+    {
+        delete location;
+        location = nullptr;
+    }
+    if (req_body)
+    {
+        delete req_body;
+        req_body = nullptr;
+    }
+    if (server)
+    {
+        delete server;
+        server = nullptr;
+    }
+    if (x_working_with)
+    {
+        delete x_working_with;
+        x_working_with = nullptr;
+    }
+    if (xff_addr)
+    {
+        delete xff_addr;
+        xff_addr = nullptr;
+    }
+    if (xffPrecedence)
+    {
+        for (int i = 0; i < numXffFields; i++)
+            delete xffPrecedence[i];
+        delete xffPrecedence;
+        xffPrecedence = NULL;
+    }
+}
+

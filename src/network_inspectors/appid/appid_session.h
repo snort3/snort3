@@ -298,6 +298,7 @@ public:
 
     bool is_payload_appid_set();
     void clear_http_flags();
+    void clear_http_data();
     void reset_session_data();
 
     AppIdHttpSession* get_http_session();

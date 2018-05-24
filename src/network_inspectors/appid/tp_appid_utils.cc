@@ -611,7 +611,7 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
             if (appidDebug->is_active())
                 LogMessage("AppIdDbg %s 3rd party allow reinspect http\n",
                     appidDebug->get_debug_session());
-            asd.reset_session_data();
+            asd.clear_http_data();
         }
 
         if (!asd.is_tp_processing_done())

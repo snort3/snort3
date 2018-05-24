@@ -872,6 +872,12 @@ void AppIdSession::clear_http_flags()
     }
 }
 
+void AppIdSession::clear_http_data()
+{
+  if (!hsession) return;
+  hsession->clear_all_fields();
+}
+
 AppIdHttpSession* AppIdSession::get_http_session()
 {
     if ( !hsession )
