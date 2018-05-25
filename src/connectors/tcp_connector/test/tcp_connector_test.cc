@@ -132,10 +132,17 @@ ssize_t recv (int, void *buf, size_t n, int)
         return 0;
 }
 
-int socket (int, int, int) { return s_socket_return; } 
-int bind (int, const struct sockaddr*, socklen_t) { return s_bind_return; } 
-int listen (int, int) { return s_listen_return; } 
-int accept (int, struct sockaddr*, socklen_t*) { return s_accept_return; } 
+#ifdef __FreeBSD__
+int socket (int, int, int) { return s_socket_return; }
+int bind (int, const struct sockaddr*, socklen_t) { return s_bind_return; }
+int listen (int, int) { return s_listen_return; }
+#else
+int socket (int, int, int) __THROW { return s_socket_return; }
+int bind (int, const struct sockaddr*, socklen_t) __THROW { return s_bind_return; }
+int listen (int, int) __THROW { return s_listen_return; }
+#endif
+
+int accept (int, struct sockaddr*, socklen_t*) { return s_accept_return; }
 int close (int) { return 0; }
 
 static void set_normal_status()
