@@ -133,9 +133,7 @@ struct Fragment
 
     ~Fragment()
     {
-        if ( fptr )
-            delete fptr;
-
+        delete[] fptr;
         ip_stats.nodes_released++;
     }
 
@@ -155,6 +153,8 @@ struct Fragment
 private:
     inline void init(uint16_t flen, const uint8_t* fptr, int ord)
     {
+        assert(flen > 0);
+
         this->flen = flen;
         this->fptr = new uint8_t[flen];
         this->ord = ord;
@@ -1812,10 +1812,10 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
     fragStart = p->data;
 
     /* Just to double check */
-    if (fragLength > SFDAQ::get_snap_len())
+    if (!fragLength or fragLength > SFDAQ::get_snap_len())
     {
         trace_logf(stream_ip,
-            "Overly large fragment length:%d(0x%x) off:0x%x(%d)\n",
+            "Bad fragment length:%d(0x%x) off:0x%x(%d)\n",
             fragLength, p->ptrs.ip_api.dgram_len(), p->ptrs.ip_api.off(),
             p->ptrs.ip_api.off());
 

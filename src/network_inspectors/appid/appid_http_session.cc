@@ -1116,7 +1116,7 @@ void AppIdHttpSession::clear_all_fields()
     }
     if (xffPrecedence)
     {
-        for (int i = 0; i < numXffFields; i++)
+        for (unsigned i = 0; i < numXffFields; i++)
             delete xffPrecedence[i];
         delete xffPrecedence;
         xffPrecedence = NULL;

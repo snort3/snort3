@@ -376,11 +376,11 @@ void FileIdentifier::get_magic_rule_ids_from_type(const std::string& type,
 {
     ids_set.reset();
 
-    for(uint32_t i; i < FILE_ID_MAX; i++)
+    for (uint32_t i = 0; i < FILE_ID_MAX; i++)
     {
-        if(type == file_magic_rules[i].type)
+        if (type == file_magic_rules[i].type)
         {
-            if(version.empty() or version == file_magic_rules[i].version)
+            if (version.empty() or version == file_magic_rules[i].version)
             {
                 ids_set.set(file_magic_rules[i].id);
             }

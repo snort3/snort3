@@ -817,7 +817,7 @@ void Snort::thread_term()
 
     Active::term();
     delete s_switcher;
-    delete s_data;
+    delete[] s_data;
 }
 
 void Snort::inspect(Packet* p)
