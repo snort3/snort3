@@ -36,8 +36,8 @@ class NapRulesState : public ConversionState
 public:
     NapRulesState(Converter& c) : ConversionState(c) { }
 
-// We only care about rules. Format:
-// <rule id> <action> <in_zone> <src_net> <src_port> <out_zone> <dst_zone> <dst_port> <vlan> <proto>
+    // We only care about rules. Format:
+    // <id> <action> <zone> <net <netmask>> <port> <zone> <net <netmask>> <port> <vlan> <proto>
     bool convert(std::istringstream& data_stream) override
     {
 #define TRY_FIELD(field) \
@@ -51,8 +51,8 @@ public:
         if ( data_stream >> rule_id ) // is this a or config
         {
             std::string action;
-            std::string src_zone, src_net, src_port;
-            std::string dst_zone, dst_net, dst_port;
+            std::string src_zone, src_net, src_netmask, src_port;
+            std::string dst_zone, dst_net, dst_netmask, dst_port;
             std::string vlan;
             std::string protocol;
             std::string ips_policy;
@@ -60,9 +60,15 @@ public:
             TRY_FIELD(action);   // ignore since nap rules don't drop
             TRY_FIELD(src_zone);
             TRY_FIELD(src_net);
+            if ( src_net != "any" )
+                TRY_FIELD(src_netmask);
+
             TRY_FIELD(src_port);
             TRY_FIELD(dst_zone);
             TRY_FIELD(dst_net);
+            if ( dst_net != "any" )
+                TRY_FIELD(dst_netmask);
+
             TRY_FIELD(dst_port);
             TRY_FIELD(vlan);
             TRY_FIELD(protocol);
@@ -106,7 +112,7 @@ public:
                 bind.set_when_src_zone(src_zone);
 
             if ( src_net != "any" )
-                bind.add_when_src_net(src_net);
+                bind.add_when_src_net(src_net + '/' + src_netmask);
 
             if ( src_port != "any" )
                 bind.add_when_src_port(src_port);
@@ -115,7 +121,7 @@ public:
                 bind.set_when_dst_zone(dst_zone);
 
             if ( dst_net != "any" )
-                bind.add_when_dst_net(dst_net);
+                bind.add_when_dst_net(dst_net + '/' + dst_netmask);
 
             if ( dst_port != "any" )
                 bind.add_when_dst_port(dst_port);
