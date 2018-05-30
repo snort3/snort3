@@ -1,0 +1,178 @@
+Snort can take more active role in securing network by sending active
+responses to shutdown offending sessions. When active responses is
+enabled, snort will send TCP RST or ICMP unreachable when dropping a
+session.
+
+==== Changes from Snort 2.9
+
+* stream5_global:max_active_responses and min_response_seconds are now
+active.max_responses and active.min_interval.
+
+* Response actions were removed from IPS rule body to the rule action
+in the header.  This includes react, reject, and rewrite (split out of 
+replace which now just does the detection part). These IPS actions are
+plugins.
+
+* drop and block are synonymous in Snort 2.9 but in Snort 3.0 drop means
+don't forward the current packet only whereas block means don't forward
+this or any following packet on the flow.
+
+==== Configure Active
+
+Active response is enabled by configuring one of following IPS action 
+plugins:
+
+    react = { }
+    reject = { }
+    rewrite = { }
+
+Active responses will be performed for reject, react or rewrite IPS rule 
+actions, and response packets are encoded based on the triggering packet. 
+TTL will be set to the value captured at session pickup.
+
+Configure the number of attempts to land a TCP RST within the session's 
+current window (so that it is accepted by the receiving TCP).  This
+sequence "strafing" is really only useful in passive mode.  In inline mode 
+the reset is put straight into the stream in lieu of the triggering packet 
+so strafing is not necessary.
+
+Each attempt (sent in rapid succession) has a different sequence number. 
+Each active response will actually cause this number of TCP resets to be 
+sent. TCP data is multiplied similarly. At most 1 ICMP unreachable is sent,
+iff attempts > 0.
+
+     
+Device IP will perform network layer injection.  It is probably a better 
+choice to specify an interface and avoid kernel routing tables, etc.
+
+dst_mac will change response destination MAC address, if the device is 
+eth0, eth1, eth2 etc. Otherwise, response destination MAC address is 
+derived from packet.
+
+Example:
+
+    active =
+    {
+        attempts = 2,
+        device = "eth0",
+        dst_mac = "00:06:76:DD:5F:E3",
+    }
+
+
+==== Reject
+
+IPS action reject perform active response to shutdown hostile network 
+session by injecting TCP resets (TCP connections) or ICMP unreachable 
+packets.
+
+Example:
+
+    reject = { reset = "both", control = "all" }
+
+    local_rules =
+    [[
+    reject tcp ( msg:"hostile connection"; flow:established, to_server;
+    content:"HACK!"; sid:1; )
+    ]]
+
+    ips =
+    {
+        rules = local_rules,
+    }
+
+
+==== React
+
+IPS action react enables sending an HTML page on a session and then 
+resetting it.
+
+The page to be sent can be read from a file:
+
+    react = { page = "custmized_block_page.html", }
+
+or else the default is used:
+
+    <default_page> ::= \
+        "HTTP/1.1 403 Forbidden\r\n"
+        "Connection: close\r\n"
+        "Content-Type: text/html; charset=utf-8\r\n"
+        "\r\n"
+        "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\r\n" \
+        "    \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\r\n" \
+        "<html xmlns=\"http://www.w3.org/1999/xhtml\" 
+        xml:lang=\"en\">\r\n" \
+        "<head>\r\n" \
+        "<meta http-equiv=\"Content-Type\" content=\"text/html; 
+        charset=UTF-8\" />\r\n" \
+        "<title>Access Denied</title>\r\n" \
+        "</head>\r\n" \
+        "<body>\r\n" \
+        "<h1>Access Denied</h1>\r\n" \
+        "<p>%s</p>\r\n" \
+        "</body>\r\n" \
+        "</html>\r\n";
+
+Note that the file must contain the entire response, including any HTTP 
+headers. In fact, the response isn't strictly limited to HTTP.  You could 
+craft a binary payload of arbitrary content. 
+
+When the rule is configured, the page is loaded and the %s is replaced 
+with the selected message, which defaults to:
+
+        "You are attempting to access a forbidden site.<br />" \
+        "Consult your system administrator for details."
+
+Additional formatting operators beyond a single %s are prohibited, 
+including %d, %x, %s, as well as any URL encodings such as as %20 (space) 
+that may be within a reference URL.
+
+Example:
+
+    react = { page = "my_block_page.html" }
+
+    local_rules =
+    [[
+    react http ( msg:"Unauthorized Access Prohibited!"; flow:established, 
+    to_server; http_method; content:"GET"; sid:1; )
+    ]]
+
+    ips =
+    {
+        rules = local_rules,
+    }
+
+==== Rewrite
+
+IPS action rewrite enables overwrite packet contents based on "replace" 
+option in the rules.
+
+For example:
+
+    rewrite = { }
+    local_rules =
+    [[
+    rewrite tcp 10.1.1.87 any -> 10.1.1.0/24 80
+    (
+        sid:1000002;
+        msg:"test replace rule";
+        content:"index.php", nocase;
+        replace:"indax.php";
+    )
+    ]]
+
+    ips =
+    {
+        rules = local_rules,
+    }
+
+this rule replaces "index.php" with "indax.php", and rewrite action 
+updates that packet.
+
+to enable rewrite action:
+
+    rewrite = { }
+
+the replace operation can be disabled by changing the configuration:
+
+    rewrite = { disable_replace = true }
+

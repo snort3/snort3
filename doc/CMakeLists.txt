@@ -33,6 +33,7 @@ if ( MAKE_DOC )
 
     set (
 	UNBUILT_SOURCES
+	active.txt
 	appid.txt
 	binder.txt
 	bugs.txt
