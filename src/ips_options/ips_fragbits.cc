@@ -48,6 +48,8 @@
 #include "config.h"
 #endif
 
+#include <cassert>
+
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/hashfcn.h"
@@ -210,18 +212,8 @@ bool FragBitsData::check_not(const uint16_t packet_fragbits)
 // parse fragbits and populate the information into this class
 void FragBitsData::parse_fragbits(const char* data)
 {
-    std::string bit_string;
-
-    // if its null the bit_string will stay empty
-    if(data)
-    {
-        bit_string = data;
-    }
-    else if ( bit_string.empty() )
-    {
-        ParseError("no arguments to the fragbits keyword");
-        return;
-    }
+    assert(data);
+    std::string bit_string = data;
 
     unsigned long len = bit_string.length();
 
