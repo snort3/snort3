@@ -45,11 +45,12 @@
 #include "detector_plugins/http_url_patterns.h"
 #include "host_port_app_cache.h"
 #include "service_plugins/service_discovery.h"
-#ifdef ENABLE_THIRD_PARTY_APPID
-#include "tp_appid_session_api.h"
+#ifdef ENABLE_APPID_THIRD_PARTY
+#include "tp_lib_handler.h"
 #endif
 
 using namespace snort;
+
 
 bool do_tp_discovery(AppIdSession&, IpProtocol, Packet*, AppidSessionDirection&);
 
@@ -808,7 +809,7 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
 
     // Third party detection
 #ifdef ENABLE_APPID_THIRD_PARTY
-    if(asd.config->have_tp())
+    if ( TPLibHandler::have_tp() )
         is_discovery_done = do_tp_discovery(asd,protocol,p,direction);
 #endif
 

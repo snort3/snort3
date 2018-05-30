@@ -42,7 +42,6 @@
 #include "tp_lib_handler.h"
 #endif
 
-
 #define ODP_PORT_DETECTORS "odp/port/*"
 #define CUSTOM_PORT_DETECTORS "custom/port/*"
 #define MAX_DISPLAY_SIZE   65536
@@ -119,38 +118,6 @@ AppIdConfig::AppIdConfig(AppIdModuleConfig* config)
 AppIdConfig::~AppIdConfig()
 {
     cleanup();
-}
-
-const TPLibHandler * AppIdConfig::tp_handler() const
-{
-#ifdef ENABLE_APPID_THIRD_PARTY
-    return tph;
-#else
-    return nullptr;
-#endif
-}
-
-bool AppIdConfig::have_tp() const
-{
-#ifdef ENABLE_APPID_THIRD_PARTY
-    return tph != nullptr && tph->have_tp();
-#else
-    return false;
-#endif
-}
-
-void AppIdConfig::tp_appid_module_tinit()
-{
-#ifdef ENABLE_APPID_THIRD_PARTY
-    if(tph) tph->tinit();
-#endif
-}
-
-void AppIdConfig::tp_appid_module_tterm()
-{
-#ifdef ENABLE_APPID_THIRD_PARTY
-    if(tph) tph->tterm();
-#endif
 }
 
 void AppIdConfig::read_port_detectors(const char* files)
@@ -773,8 +740,7 @@ bool AppIdConfig::init_appid(SnortConfig* sc)
     read_port_detectors(CUSTOM_PORT_DETECTORS);
 
 #ifdef ENABLE_APPID_THIRD_PARTY
-    tph=TPLibHandler::get();
-    tph->pinit(mod_config);
+    TPLibHandler::pinit(mod_config);
 #endif
     map_app_names_to_snort_ids(sc);
     return true;
@@ -794,11 +760,6 @@ static void free_port_exclusion_list(AppIdPortExclusions& pe_list)
 
 void AppIdConfig::cleanup()
 {
-#ifdef ENABLE_APPID_THIRD_PARTY
-    tph->pfini(0);
-    TPLibHandler::destroy(tph);
-#endif
-    
     app_info_mgr.cleanup_appid_info_table();
 
 #ifdef USE_RNA_CONFIG

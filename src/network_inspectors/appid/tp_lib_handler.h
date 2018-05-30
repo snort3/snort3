@@ -32,33 +32,27 @@ class TPLibHandler
 {
 public:
 
-    bool have_tp() const
+    static bool have_tp()
     {
-	return tp_appid_module != nullptr;
+        return self and self->tp_appid_module != nullptr;
     }
 
     static TPLibHandler* get()
     {
-        if (handler)
-            return handler;
+        if (self)
+            return self;
         else
-            return (handler=new TPLibHandler());
+            return (self=new TPLibHandler());
     }
 
-    static void destroy(TPLibHandler* tph)
-    {
-        delete tph->handler;
-        tph->handler=nullptr;
-    }
-
-    // called from AppIdConfig::init_appid() and cleanup(), respectively.
-    void pinit(const AppIdModuleConfig* config);
-    void pfini(bool print_stats_flag=0);
+    // called from appid_inspector.cc appid_inspector_pinit() / pterm()
+    static void pinit(const AppIdModuleConfig* config);
+    static void pfini(bool print_stats_flag=0);
 
     // called from AppIdInspector tinit/tterm via
     // AppIdConfig::tp_appid_module_tinit/tterm.
-    void tinit() { if ( tp_appid_module ) tp_appid_module->tinit(); }
-    void tterm() { if ( tp_appid_module ) tp_appid_module->tfini(); }
+    static void tinit() { if ( have_tp() ) self->tp_appid_module->tinit(); }
+    static void tterm() { if ( have_tp() ) self->tp_appid_module->tfini(); }
 
     CreateThirdPartyAppIDSession_t tpsession_factory() const
     {
@@ -67,10 +61,10 @@ public:
 
 private:
 
-    TPLibHandler() { }
-    ~TPLibHandler() { }
+    TPLibHandler() = default;
+    ~TPLibHandler() = default;
 
-    static TPLibHandler* handler;
+    static TPLibHandler* self;
     void* tp_so_handle = nullptr;   // output of dlopen(thirdparty.so)
     ThirdPartyAppIDModule* tp_appid_module = nullptr;
     CreateThirdPartyAppIDSession_t createThirdPartyAppIDSession;
@@ -81,4 +75,3 @@ private:
 };
 
 #endif
-

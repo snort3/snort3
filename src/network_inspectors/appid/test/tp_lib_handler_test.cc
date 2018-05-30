@@ -48,6 +48,7 @@ TEST_GROUP(tp_lib_handler)
 
 TEST(tp_lib_handler, load_unload)
 {
+    tph = TPLibHandler::get();
     tph->pinit(&config);
     CHECK_TRUE(tph->have_tp());
 
@@ -63,8 +64,10 @@ TEST(tp_lib_handler, load_unload)
 
 TEST(tp_lib_handler, tp_lib_handler_get)
 {
+    tph=TPLibHandler::get();
     TPLibHandler* tph2=TPLibHandler::get();
     CHECK_EQUAL(tph,tph2);
+    TPLibHandler::pfini();
 }
 
 TEST(tp_lib_handler, load_error)
@@ -72,10 +75,10 @@ TEST(tp_lib_handler, load_error)
     // Trigger load error:
     AppIdModuleConfig config;
     config.tp_appid_path="nonexistent.so";
-    tph=TPLibHandler::get();
-    tph->pinit(&config);
-    CHECK_FALSE(tph->have_tp());
-    tph->pfini();
+    TPLibHandler::get();
+    TPLibHandler::pinit(&config);
+    CHECK_FALSE(TPLibHandler::have_tp());
+    TPLibHandler::pfini();
 }
 
 TEST(tp_lib_handler, tp_appid_module_pinit_error)
@@ -94,11 +97,8 @@ int main(int argc, char** argv)
 {
     config.tp_appid_path="./libtp_mock.so";
     config.tp_appid_config="./tp.config";
-    tph=TPLibHandler::get();
-
+    
     int rc = CommandLineTestRunner::RunAllTests(argc, argv);
-
-    TPLibHandler::destroy(tph);
 
     return rc;
 }

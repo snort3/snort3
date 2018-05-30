@@ -34,7 +34,7 @@
 #include "detector_plugins/http_url_patterns.h"
 #include "http_xff_fields.h"
 #ifdef ENABLE_APPID_THIRD_PARTY
-#include "tp_appid_session_api.h"
+#include "tp_lib_handler.h"
 #endif
 
 static const char* httpFieldName[ MAX_HTTP_FIELD_ID ] = // for use in debug messages
@@ -393,7 +393,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
     AppId service_id = APP_ID_NONE;
     AppId client_id = APP_ID_NONE;
     AppId payload_id = APP_ID_NONE;
-    bool have_tp = asd.tpsession != nullptr;
+    bool have_tp = asd.tpsession;
 
     // For fragmented HTTP headers, do not process if none of the fields are set.
     // These fields will get set when the HTTP header is reassembled.

@@ -39,7 +39,6 @@
 
 struct NetworkSet;
 class AppInfoManager;
-class TPLibHandler;
 
 extern unsigned appIdPolicyId;
 extern uint32_t app_id_netmasks[];
@@ -125,11 +124,6 @@ public:
     AppIdModuleConfig* mod_config = nullptr;
     unsigned appIdPolicyId = 53;
 
-    const TPLibHandler * tp_handler() const;
-    bool have_tp() const;
-    void tp_appid_module_tinit();
-    void tp_appid_module_tterm();
-
 private:
     void read_port_detectors(const char* files);
     void configure_analysis_networks(char* toklist[], uint32_t flag);
@@ -141,11 +135,6 @@ private:
     void display_port_config();
 
     AppInfoManager& app_info_mgr;
-
-// #ifdef ENABLE_APPID_THIRD_PARTY
-    // class that holds pointers to third party objects in thirdparty.so
-    TPLibHandler* tph = nullptr;
-// #endif
 };
 
 #endif

@@ -37,7 +37,7 @@ using namespace snort;
 #define TP_APPID_MODULE_SYMBOL "create_third_party_appid_module"
 #define TP_APPID_SESSION_SYMBOL "create_third_party_appid_session"
 
-TPLibHandler* TPLibHandler::handler = nullptr;
+TPLibHandler* TPLibHandler::self = nullptr;
 
 int TPLibHandler::LoadCallback(const char* const path, int /* indent */)
 {
@@ -114,59 +114,64 @@ void TPLibHandler::pinit(const AppIdModuleConfig* config)
 {
     int ret;
 
-    if (config->tp_appid_path.empty())
+    if (self->tp_so_handle or config->tp_appid_path.empty())
         return;
 
-    tp_config.tp_appid_config=config->tp_appid_config;
+    self->tp_config.tp_appid_config=config->tp_appid_config;
 
-    LoadCallback(config->tp_appid_path.c_str(),1);
+    self->LoadCallback(config->tp_appid_path.c_str(),1);
 
-    if (tp_appid_module == nullptr)
+    if (self->tp_appid_module == nullptr)
     {
-        // FIXIT-H error message
+        ErrorMessage("Ignoring third party AppId library\n");
         return;
     }
 
-    tp_config.chp_body_collection_max = config->chp_body_collection_max;
-    tp_config.ftp_userid_disabled = config->ftp_userid_disabled;
-    tp_config.chp_body_collection_disabled =
+    self->tp_config.chp_body_collection_max = config->chp_body_collection_max;
+    self->tp_config.ftp_userid_disabled = config->ftp_userid_disabled;
+    self->tp_config.chp_body_collection_disabled =
         config->chp_body_collection_disabled;
-    tp_config.tp_allow_probes = config->tp_allow_probes;
+    self->tp_config.tp_allow_probes = config->tp_allow_probes;
     if (config->http2_detection_enabled)
-        tp_config.http_upgrade_reporting_enabled = 1;
+        self->tp_config.http_upgrade_reporting_enabled = 1;
     else
-        tp_config.http_upgrade_reporting_enabled = 0;
+        self->tp_config.http_upgrade_reporting_enabled = 0;
 
-    tp_config.http_response_version_enabled = config->http_response_version_enabled;
+    self->tp_config.http_response_version_enabled = config->http_response_version_enabled;
 
-    ret = tp_appid_module->pinit(tp_config);
+    ret = self->tp_appid_module->pinit(self->tp_config);
     if (ret != 0)
     {
         ErrorMessage("Unable to initialize 3rd party AppID module (%d)!\n", ret);
-        delete tp_appid_module;
-        dlclose(tp_so_handle);
-        tp_so_handle = nullptr;
-        tp_appid_module = nullptr;
+        delete self->tp_appid_module;
+        dlclose(self->tp_so_handle);
+        self->tp_so_handle = nullptr;
+        self->tp_appid_module = nullptr;
         return;
     }
 }
 
 void TPLibHandler::pfini(bool print_stats_flag)
 {
-    if (tp_appid_module != nullptr)
+    if (self and self->tp_appid_module != nullptr)
     {
         if (print_stats_flag)
-            tp_appid_module->print_stats();
+            self->tp_appid_module->print_stats();
 
-        int ret = tp_appid_module->pfini();
+        int ret = self->tp_appid_module->pfini();
 
         if (ret != 0)
             ErrorMessage("Could not finalize 3rd party AppID module (%d)!\n", ret);
 
-        delete tp_appid_module;
-        tp_appid_module = nullptr;
-        dlclose(tp_so_handle); // after delete, otherwise tpam will be dangling
-        tp_so_handle = nullptr;
+        delete self->tp_appid_module;
+        self->tp_appid_module = nullptr;
+
+        dlclose(self->tp_so_handle); // after delete, otherwise tpam will be dangling
+        self->tp_so_handle = nullptr;
+    }
+
+    if ( self ) {
+        delete self;
+        self = nullptr;
     }
 }
-

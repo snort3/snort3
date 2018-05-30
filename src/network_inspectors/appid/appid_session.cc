@@ -46,7 +46,7 @@
 #include "appid_utils/ip_funcs.h"
 #include "service_plugins/service_ssl.h"
 #ifdef ENABLE_APPID_THIRD_PARTY
-#include "tp_appid_session_api.h"
+#include "tp_lib_handler.h"
 #endif
 
 using namespace snort;
@@ -895,7 +895,7 @@ AppIdDnsSession* AppIdSession::get_dns_session()
 bool AppIdSession::is_tp_appid_done() const
 {
 #ifdef ENABLE_APPID_THIRD_PARTY
-    if (config->have_tp())
+    if ( TPLibHandler::have_tp() )
     {
         if (!tpsession)
             return false;
@@ -911,12 +911,11 @@ bool AppIdSession::is_tp_appid_done() const
 
 bool AppIdSession::is_tp_processing_done() const
 {
-
 #ifdef ENABLE_APPID_THIRD_PARTY
-    if (config->have_tp() &&
-        !get_session_flags(APPID_SESSION_NO_TPI) &&
-        (!is_tp_appid_done() ||
-        get_session_flags(APPID_SESSION_APP_REINSPECT | APPID_SESSION_APP_REINSPECT_SSL)))
+    if ( TPLibHandler::have_tp() &&
+	 !get_session_flags(APPID_SESSION_NO_TPI) &&
+	 (!is_tp_appid_done() ||
+	  get_session_flags(APPID_SESSION_APP_REINSPECT | APPID_SESSION_APP_REINSPECT_SSL)))
         return false;
 #endif
 
@@ -927,7 +926,7 @@ bool AppIdSession::is_tp_processing_done() const
 bool AppIdSession::is_tp_appid_available() const
 {
 #ifdef ENABLE_APPID_THIRD_PARTY
-    if (config->have_tp())
+    if ( TPLibHandler::have_tp() )
     {
         unsigned state;
 

@@ -50,6 +50,9 @@
 #include "lua_detector_module.h"
 #include "service_plugins/service_discovery.h"
 #include "service_plugins/service_ssl.h"
+#ifdef ENABLE_APPID_THIRD_PARTY
+#include "tp_lib_handler.h"
+#endif
 
 using namespace snort;
 static THREAD_LOCAL PacketTracer::TracerMute appid_mute;
@@ -163,7 +166,7 @@ void AppIdInspector::tinit()
     if (active_config->mod_config and active_config->mod_config->log_all_sessions)
         appidDebug->set_enabled(true);
 #ifdef ENABLE_APPID_THIRD_PARTY
-    active_config->tp_appid_module_tinit();
+    TPLibHandler::tinit();
 #endif
 }
 
@@ -183,7 +186,7 @@ void AppIdInspector::tterm()
     delete appidDebug;
     appidDebug = nullptr;
 #ifdef ENABLE_APPID_THIRD_PARTY
-    active_config->tp_appid_module_tterm();
+    TPLibHandler::tterm();
 #endif
 }
 
@@ -220,11 +223,17 @@ static void mod_dtor(Module* m)
 static void appid_inspector_pinit()
 {
     AppIdSession::init();
+#ifdef ENABLE_APPID_THIRD_PARTY
+    TPLibHandler::get();
+#endif
 }
 
 static void appid_inspector_pterm()
 {
     openssl_cleanup();
+#ifdef ENABLE_APPID_THIRD_PARTY
+    TPLibHandler::pfini();
+#endif
 }
 
 static void appid_inspector_tinit()

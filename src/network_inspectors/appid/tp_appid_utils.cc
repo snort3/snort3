@@ -43,9 +43,9 @@
 #include "log/messages.h"
 #include "profiler/profiler.h"
 #include "stream/stream.h"
-#include "tp_appid_types.h"
-#include "tp_appid_session_api.h"
+#ifdef ENABLE_APPID_THIRD_PARTY
 #include "tp_lib_handler.h"
+#endif
 
 using namespace std;
 using namespace snort;
@@ -584,8 +584,8 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
     vector<AppId> tp_proto_list;
     bool isTpAppidDiscoveryDone = false;
 
-    if ( !asd.config->have_tp() )
-        return true;
+    if ( !TPLibHandler::have_tp() )
+	return true;
 
     if (asd.tp_app_id == APP_ID_SSH && asd.payload.get_id() != APP_ID_SFTP &&
         asd.session_packet_count >= MIN_SFTP_PACKET_COUNT &&
@@ -624,7 +624,7 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                 ThirdPartyAppIDAttributeData tp_attribute_data;
                 if (!asd.tpsession)
                 {
-                    const TPLibHandler* tph = asd.config->tp_handler();
+                    const TPLibHandler* tph = TPLibHandler::get();
                     CreateThirdPartyAppIDSession_t tpsf = tph->tpsession_factory();
                     if ( !(asd.tpsession = tpsf()) )
                         FatalError("Could not allocate asd.tpsession data");
