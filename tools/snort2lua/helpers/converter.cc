@@ -212,10 +212,14 @@ int Converter::parse_file(
         data_api.set_current_file(input_file); //Set at each line to handle recursion correctly
         data_api.set_current_line(++line_num);
 
-        std::size_t first_non_white_char = tmp.find_first_not_of(' ');
+        if ( tmp.empty() )
+            continue;
 
-        // no, i did not know that semicolons made a line a comment
-        bool comment = (tmp[first_non_white_char] == '#') || (tmp[first_non_white_char] == ';');
+        // same critea used for rtrim
+        // http://en.cppreference.com/w/cpp/string/byte/isspace
+        std::size_t first_non_white_char = tmp.find_first_not_of(" \f\n\r\t\v");
+
+        bool comment = (tmp[first_non_white_char] == '#') or (tmp[first_non_white_char] == ';');
         bool commented_rule = tmp.substr(0, 7) == "# alert";
 
         if ( !commented_rule && ((first_non_white_char == std::string::npos) || comment) )
