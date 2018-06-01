@@ -7,6 +7,11 @@ operator is used, then it would be the same as using
 [source,c]
 if (data & value) { do_something(); }
 
+'!' operator negates the results from the base check. '!<oper>' is 
+considered as 
+[source,c]
+!(data <oper> value)
+
 Note:
 The bitmask option applies bitwise AND operator on the bytes
 converted. The result will be right-shifted by the number of bits
