@@ -641,7 +641,7 @@ public:
 
     // This requests an entry in the scratch space vector and calls setup /
     // cleanup as appropriate
-    static int request_scratch(ScScratchFunc setup, ScScratchFunc cleanup);
+    SO_PUBLIC static int request_scratch(ScScratchFunc setup, ScScratchFunc cleanup);
 
     // Use this to access current thread's conf from other units
     static void set_conf(SnortConfig*);

@@ -757,5 +757,12 @@ static const IpsApi pcre_api =
     pcre_verify
 };
 
-const BaseApi* ips_pcre = &pcre_api.base;
-
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_pcre[] =
+#endif
+{
+    &pcre_api.base,
+    nullptr
+};

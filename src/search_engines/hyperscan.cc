@@ -380,11 +380,11 @@ static const MpseApi hs_api =
     hs_print,
 };
 
-//#ifdef BUILDING_SO
-//SO_PUBLIC const BaseApi* snort_plugins[] =
-//#else
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
 const BaseApi* se_hyperscan[] =
-//#endif
+#endif
 {
     &hs_api.base,
     nullptr

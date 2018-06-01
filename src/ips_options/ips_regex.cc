@@ -406,5 +406,12 @@ static const IpsApi regex_api =
     nullptr
 };
 
-const BaseApi* ips_regex = &regex_api.base;
-
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_regex[] =
+#endif
+{
+    &regex_api.base,
+    nullptr
+};

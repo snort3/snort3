@@ -1018,7 +1018,7 @@ bool SnortConfig::tunnel_bypass_enabled(uint8_t proto)
     return (!((get_conf()->tunnel_mask & proto) or SFDAQ::get_tunnel_bypass(proto)));
 }
 
-int SnortConfig::request_scratch(ScScratchFunc setup, ScScratchFunc cleanup)
+SO_PUBLIC int SnortConfig::request_scratch(ScScratchFunc setup, ScScratchFunc cleanup)
 {
     scratch_handlers.push_back(std::make_pair(setup, cleanup));
 

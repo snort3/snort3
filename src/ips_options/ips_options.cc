@@ -36,13 +36,8 @@ extern const BaseApi* ips_flow;
 extern const BaseApi* ips_flowbits;
 extern const BaseApi* ips_md5;
 extern const BaseApi* ips_metadata;
-extern const BaseApi* ips_pcre;
 extern const BaseApi* ips_pkt_data;
 extern const BaseApi* ips_reference;
-#ifdef HAVE_HYPERSCAN
-extern const BaseApi* ips_regex;
-extern const BaseApi* ips_sd_pattern;
-#endif
 extern const BaseApi* ips_replace;
 extern const BaseApi* ips_service;
 extern const BaseApi* ips_sha256;
@@ -72,6 +67,7 @@ extern const BaseApi* ips_ip_proto[];
 extern const BaseApi* ips_isdataat[];
 extern const BaseApi* ips_itype[];
 extern const BaseApi* ips_msg[];
+extern const BaseApi* ips_pcre[];
 extern const BaseApi* ips_priority[];
 extern const BaseApi* ips_raw_data[];
 extern const BaseApi* ips_rem[];
@@ -87,6 +83,10 @@ extern const BaseApi* ips_tos[];
 extern const BaseApi* ips_ttl[];
 extern const BaseApi* ips_bufferlen[];
 extern const BaseApi* ips_window[];
+#ifdef HAVE_HYPERSCAN
+extern const BaseApi* ips_regex[];
+extern const BaseApi* ips_sd_pattern[];
+#endif
 #endif
 
 static const BaseApi* ips_options[] =
@@ -100,13 +100,8 @@ static const BaseApi* ips_options[] =
     ips_flowbits,
     ips_md5,
     ips_metadata,
-    ips_pcre,
     ips_pkt_data,
     ips_reference,
-#ifdef HAVE_HYPERSCAN
-    ips_regex,
-    ips_sd_pattern,
-#endif
     ips_replace,
     ips_service,
     ips_sha256,
@@ -142,6 +137,7 @@ void load_ips_options()
     PluginManager::load_plugins(ips_isdataat);
     PluginManager::load_plugins(ips_itype);
     PluginManager::load_plugins(ips_msg);
+    PluginManager::load_plugins(ips_pcre);
     PluginManager::load_plugins(ips_priority);
     PluginManager::load_plugins(ips_raw_data);
     PluginManager::load_plugins(ips_rem);
@@ -157,6 +153,10 @@ void load_ips_options()
     PluginManager::load_plugins(ips_ttl);
     PluginManager::load_plugins(ips_bufferlen);
     PluginManager::load_plugins(ips_window);
+#ifdef HAVE_HYPERSCAN
+    PluginManager::load_plugins(ips_regex);
+    PluginManager::load_plugins(ips_sd_pattern);
+#endif
 #endif
 }
 

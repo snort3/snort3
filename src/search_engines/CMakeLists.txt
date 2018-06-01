@@ -38,13 +38,13 @@ set (SEARCH_ENGINE_SOURCES
     search_engines.h
     search_tool.cc
     ${BNFA_SOURCES}
-    ${HYPER_SOURCES}
 )
 
 if ( STATIC_SEARCH_ENGINES )
     add_library(search_engines OBJECT
         ${ACSMX_SOURCES}
         ${ACSMX2_SOURCES}
+        ${HYPER_SOURCES}
         ${INTEL_SOURCES}
         ${SEARCH_ENGINE_SOURCES}
         ${SEARCH_ENGINE_INCLUDES}
@@ -58,6 +58,9 @@ else ( STATIC_SEARCH_ENGINES)
 
     add_dynamic_module(acsmx search_engines ${ACSMX_SOURCES})
     add_dynamic_module(acsmx2 search_engines ${ACSMX2_SOURCES})
+if ( HAVE_HYPERSCAN )
+    add_dynamic_module(hyperscan search_engines ${HYPER_SOURCES})
+endif ()
 
 endif (STATIC_SEARCH_ENGINES)
 
