@@ -29,6 +29,7 @@
 #include <lua.hpp>
 #include <lua/lua.h>
 
+#include "main/thread.h"
 #include "protocols/protocol_ids.h"
 
 class AppIdConfig;
@@ -48,6 +49,8 @@ public:
     static void terminate();
     static void add_detector_flow(DetectorFlow*);
     static void free_detector_flows();
+    // FIXIT-M: RELOAD - When reload is supported, move this variable to a separate location
+    lua_State* L;
 
 private:
     void initialize_lua_detectors();
@@ -58,12 +61,10 @@ private:
 
     AppIdConfig& config;
     std::list<AppIdDetector*> allocated_detectors;
-
-    // FIXIT-L make these perf counters
-    uint32_t lua_tracker_size = 0;
-    uint32_t num_lua_detectors = 0;
-    uint32_t num_active_lua_detectors = 0;
+    size_t num_odp_detectors = 0;
 };
+
+extern THREAD_LOCAL LuaDetectorManager* lua_detector_mgr;
 
 #endif
 

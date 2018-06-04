@@ -465,7 +465,9 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p, AppidSessio
     if ( asd.service_detector )
     {
         ret = asd.service_detector->validate(args);
-        if (ret == APPID_NOT_COMPATIBLE)
+        if (ret == APPID_NOMATCH)
+            got_fail_service = true;
+        else if (ret == APPID_NOT_COMPATIBLE)
             got_incompatible_service = true;
         asd.service_search_state = SESSION_SERVICE_SEARCH_STATE::PENDING;
         if (appidDebug->is_active())
@@ -528,7 +530,8 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p, AppidSessio
     {
         if (!sds)
             sds = AppIdServiceState::add(ip, proto, port, asd.is_decrypted());
-        if (appidDebug->is_active())
+        // Don't log this if fail service is not due to empty list
+        if (appidDebug->is_active() and !(got_fail_service and asd.service_detector))
             LogMessage("AppIdDbg %s No service %s\n", appidDebug->get_debug_session(),
                 got_fail_service? "candidate" : "detector");
         got_fail_service = true;

@@ -75,11 +75,8 @@ struct LuaDetectorParameters
 class LuaStateDescriptor
 {
 public:
-    LuaStateDescriptor() = default;
-    virtual ~LuaStateDescriptor();
-
     LuaDetectorParameters ldp;
-    lua_State* my_lua_state= nullptr;
+    // FIXIT-M: RELOAD - When reload is supported, update this whenever lua-state is changed
     int detector_user_data_ref = 0;    // key into LUA_REGISTRYINDEX
     DetectorPackageInfo package_info;
     unsigned int service_id = APP_ID_UNKNOWN;

@@ -128,29 +128,29 @@ static inline int convert_string_to_address(const char* string, SfIp* address)
 //  return - a detector instance or none
 static int service_init(lua_State* L)
 {
-    // FIXIT-H - most of this probably not useful anymore...
     auto& ud = *UserData<LuaServiceDetector>::check(L, DETECTOR, 1);
 
     // auto pServiceName = luaL_checkstring(L, 2);
     auto pValidator = luaL_checkstring(L, 3);
     auto pFini = luaL_checkstring(L, 4);
 
-    lua_getglobal(L, pValidator);
-    lua_getglobal(L, pFini);
-
-    if ( lua_isfunction(L, -1) && lua_isfunction(L, -2) )
+    lua_getfield(L, LUA_REGISTRYINDEX, ud->lsd.package_info.name.c_str());
+    lua_getfield(L, -1, pValidator);
+    if (lua_isfunction(L, -1))
     {
-        lua_pop(L, 2);
-        return 1;
+        lua_pop(L, 1);
+        lua_getfield(L, -1, pFini);
+        if (lua_isfunction(L, -1))
+        {
+            lua_pop(L, 1);
+            return 1;
+        }
     }
-    else
-    {
-        ErrorMessage("%s: attempted setting validator/fini to non-function\n",
-            ud->get_name().c_str());
 
-        lua_pop(L, 2);
-        return 0;
-    }
+    ErrorMessage("%s: attempted setting validator/fini to non-function\n",
+        ud->get_name().c_str());
+    lua_pop(L, 1);
+    return 0;
 }
 
 // Register a pattern for fast pattern matching. Lua detector calls this function to register a
@@ -403,8 +403,8 @@ static int service_set_validator(lua_State* L)
     auto& ud = *UserData<LuaServiceDetector>::check(L, DETECTOR, 1);
 
     const char* pValidator = lua_tostring(L, 2);
-    lua_getglobal(L, pValidator);
-
+    lua_getfield(L, LUA_REGISTRYINDEX, ud->lsd.package_info.name.c_str());
+    lua_getfield(L, -1, pValidator);
     if (!lua_isfunction(L, -1))
     {
         ErrorMessage("%s: attempted setting validator to non-function\n",
@@ -1457,7 +1457,6 @@ static int detector_add_length_app_cache(lua_State* L)
 {
     int i;
     const char* str_ptr;
-    LengthKey length_sequence;
     int index = 1;
 
     UserData<AppIdDetector>::check(L, DETECTOR, index);
@@ -1477,8 +1476,8 @@ static int detector_add_length_app_cache(lua_State* L)
         return 1;
     }
 
-    memset(&length_sequence, 0, sizeof(length_sequence));
-
+    LengthKey length_sequence;
+    memset(length_sequence.sequence, 0, sizeof(length_sequence.sequence));
     length_sequence.proto        = proto;
     length_sequence.sequence_cnt = sequence_cnt;
 
@@ -2335,18 +2334,19 @@ int register_detector(lua_State* L)
     return 1;                         /* return methods on the stack */
 }
 
-LuaStateDescriptor::~LuaStateDescriptor()
-{
-    // release the reference of the userdata on the lua side
-    if ( detector_user_data_ref != LUA_REFNIL )
-        luaL_unref(my_lua_state, LUA_REGISTRYINDEX, detector_user_data_ref);
-    lua_close(my_lua_state);
-}
-
 int LuaStateDescriptor::lua_validate(AppIdDiscoveryArgs& args)
 {
     Profile lua_detector_context(luaCustomPerfStats);
 
+    auto my_lua_state = lua_detector_mgr? lua_detector_mgr->L : nullptr;
+    if (!my_lua_state)
+    {
+        ErrorMessage("lua detector %s: no LUA state\n", package_info.name.c_str());
+        return APPID_ENULL;
+    }
+
+    // get the table for this chunk (env)
+    lua_getfield(my_lua_state, LUA_REGISTRYINDEX, package_info.name.c_str());
     ldp.data = args.data;
     ldp.size = args.size;
     ldp.dir = args.dir;
@@ -2354,15 +2354,25 @@ int LuaStateDescriptor::lua_validate(AppIdDiscoveryArgs& args)
     ldp.pkt = args.pkt;
     const char* validateFn = package_info.validateFunctionName.c_str();
 
-    if ( (!validateFn) || !lua_checkstack(my_lua_state, 1) )
+    if ( (!validateFn) || (validateFn[0] == '\0'))
     {
-        ErrorMessage("lua detector %s: invalid LUA %s\n",
-            package_info.name.c_str(), lua_tostring(my_lua_state, -1));
         ldp.pkt = nullptr;
-        return APPID_ENULL;
+        return APPID_NOMATCH;
+    }
+    else if ( !lua_checkstack(my_lua_state, 1) )
+    {
+        static bool logged_stack_error = false;
+        if (!logged_stack_error)
+        {
+            logged_stack_error = true;
+            ErrorMessage("lua detector %s: LUA stack can not grow, %s\n",
+                package_info.name.c_str(), lua_tostring(my_lua_state, -1));
+        }
+        ldp.pkt = nullptr;
+        return APPID_ENOMEM;
     }
 
-    lua_getglobal(my_lua_state, validateFn);
+    lua_getfield(my_lua_state, -1, validateFn); // get the function we want to call
 
     if ( lua_pcall(my_lua_state, 0, 1, 0) )
     {
@@ -2403,7 +2413,6 @@ static inline void init_lsd(LuaStateDescriptor* lsd, const std::string& detector
     lsd->package_info.name = detector_name;
     lua_pop(L, 1);    // pop client table
     lua_pop(L, 1);    // pop DetectorPackageInfo table
-    lsd->my_lua_state = L;
 }
 
 static inline bool lua_params_validator(LuaDetectorParameters& ldp, bool packet_context)

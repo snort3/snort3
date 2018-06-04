@@ -159,10 +159,9 @@ static int pattern_match(void* id, void* /*unused_tree*/, int match_end_pos, voi
             {
                 cam = match_free_list;
                 match_free_list = cam->next;
-                memset(cam, 0, sizeof(*cam));
             }
             else
-                cam = (ClientAppMatch*)snort_calloc(sizeof(ClientAppMatch));
+                cam = (ClientAppMatch*)snort_alloc(sizeof(ClientAppMatch));
 
             cam->count = 1;
             cam->detector =  static_cast<const ClientDetector*>(pd->service);
