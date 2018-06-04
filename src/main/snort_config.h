@@ -144,21 +144,8 @@ namespace snort
 {
 struct ProfilerConfig;
 
-// SnortState members are updated during runtime. an array in SnortConfig is
-// used instead of thread_locals because these must get changed on reload
-// FIXIT-L register this data to avoid explicit dependency
-struct SnortState
-{
-    int* pcre_ovector;
-
-    // regex hyperscan and sdpattern are conditionally built but these are
-    // unconditional to avoid compatibility issues with plugins.  if these are
-    // conditional then API_OPTIONS must be updated.
-    // note: fwd decls don't work here.
-    void* regex_scratch;
-    void* hyperscan_scratch;
-    void* sdpattern_scratch;
-};
+struct SnortConfig;
+typedef void (* ScScratchFunc)(SnortConfig* sc);
 
 struct SnortConfig
 {
@@ -371,7 +358,7 @@ public:
     MemoryConfig* memory = nullptr;
     //------------------------------------------------------
 
-    SnortState* state = nullptr;
+    std::vector<void *>* state = nullptr;
     unsigned num_slots = 0;
 
     ThreadConfig* thread_config;
@@ -651,6 +638,10 @@ public:
 
     bool track_on_syn() const
     { return (run_flags & RUN_FLAG__TRACK_ON_SYN) != 0; }
+
+    // This requests an entry in the scratch space vector and calls setup /
+    // cleanup as appropriate
+    SO_PUBLIC static int request_scratch(ScScratchFunc setup, ScScratchFunc cleanup);
 
     // Use this to access current thread's conf from other units
     static void set_conf(SnortConfig*);

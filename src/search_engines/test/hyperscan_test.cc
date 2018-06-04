@@ -22,8 +22,6 @@
 #include "config.h"
 #endif
 
-#include "search_engines/hyperscan.h"
-
 #include <string.h>
 
 #include "framework/base_api.h"
@@ -60,16 +58,27 @@ int Mpse::search_all(
 SnortConfig s_conf;
 THREAD_LOCAL SnortConfig* snort_conf = &s_conf;
 
-static SnortState s_state;
+static std::vector<void *> s_state;
+
+ScScratchFunc scratch_setup;
+ScScratchFunc scratch_cleanup;
 
 SnortConfig::SnortConfig(const SnortConfig* const)
 {
     state = &s_state;
-    memset(state, 0, sizeof(*state));
     num_slots = 1;
 }
 
 SnortConfig::~SnortConfig() = default;
+
+int SnortConfig::request_scratch(ScScratchFunc setup, ScScratchFunc cleanup)
+{
+    scratch_setup = setup;
+    scratch_cleanup = cleanup;
+    s_state.resize(1);
+
+    return 0;
+}
 
 SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
@@ -183,7 +192,7 @@ TEST_GROUP(mpse_hs_match)
     void teardown() override
     {
         mpse_api->dtor(hs);
-        hyperscan_cleanup(snort_conf);
+        scratch_cleanup(snort_conf);
         MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };
@@ -207,7 +216,7 @@ TEST(mpse_hs_match, single)
     CHECK(hs->prep_patterns(snort_conf) == 0);
     CHECK(hs->get_pattern_count() == 1);
 
-    hyperscan_setup(snort_conf);
+    scratch_setup(snort_conf);
 
     int state = 0;
     CHECK(hs->search((uint8_t*)"foo", 3, match, nullptr, &state) == 1);
@@ -222,7 +231,7 @@ TEST(mpse_hs_match, nocase)
     CHECK(hs->prep_patterns(snort_conf) == 0);
     CHECK(hs->get_pattern_count() == 1);
 
-    hyperscan_setup(snort_conf);
+    scratch_setup(snort_conf);
 
     int state = 0;
     CHECK(hs->search((uint8_t*)"foo", 3, match, nullptr, &state) == 1);
@@ -238,7 +247,7 @@ TEST(mpse_hs_match, other)
     CHECK(hs->prep_patterns(snort_conf) == 0);
     CHECK(hs->get_pattern_count() == 1);
 
-    hyperscan_setup(snort_conf);
+    scratch_setup(snort_conf);
 
     int state = 0;
     CHECK(hs->search((uint8_t*)"foo", 3, match, nullptr, &state) == 1);
@@ -256,7 +265,7 @@ TEST(mpse_hs_match, multi)
 
     CHECK(hs->prep_patterns(snort_conf) == 0);
     CHECK(hs->get_pattern_count() == 3);
-    hyperscan_setup(snort_conf);
+    scratch_setup(snort_conf);
 
     int state = 0;
     CHECK(hs->search((uint8_t*)"foo bar baz", 11, match, nullptr, &state) == 3);
@@ -273,7 +282,7 @@ TEST(mpse_hs_match, regex)
 
     CHECK(hs->prep_patterns(snort_conf) == 0);
     CHECK(hs->get_pattern_count() == 1);
-    hyperscan_setup(snort_conf);
+    scratch_setup(snort_conf);
 
     int state = 0;
     CHECK(hs->search((uint8_t*)"foo bar baz", 11, match, nullptr, &state) == 0);
@@ -290,7 +299,7 @@ TEST(mpse_hs_match, pcre)
 
     CHECK(hs->prep_patterns(snort_conf) == 0);
     CHECK(hs->get_pattern_count() == 1);
-    hyperscan_setup(snort_conf);
+    scratch_setup(snort_conf);
 
     int state = 0;
     CHECK(hs->search((uint8_t*)":definition(", 12, match, nullptr, &state) == 0);
@@ -330,7 +339,7 @@ TEST_GROUP(mpse_hs_multi)
     {
         mpse_api->dtor(hs1);
         mpse_api->dtor(hs2);
-        hyperscan_cleanup(snort_conf);
+        scratch_cleanup(snort_conf);
         MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };
@@ -348,7 +357,7 @@ TEST(mpse_hs_multi, single)
     CHECK(hs1->get_pattern_count() == 1);
     CHECK(hs2->get_pattern_count() == 1);
 
-    hyperscan_setup(snort_conf);
+    scratch_setup(snort_conf);
 
     int state = 0;
     CHECK(hs1->search((uint8_t*)"fubar", 5, match, nullptr, &state) == 1 );

@@ -37,7 +37,6 @@
 #include "filters/sfthreshold.h"
 #include "hash/xhash.h"
 #include "helpers/process.h"
-#include "ips_options/ips_pcre.h"
 #include "latency/latency_config.h"
 #include "log/messages.h"
 #include "managers/event_manager.h"
@@ -59,12 +58,6 @@
 #include "utils/dnet_header.h"
 #include "utils/util.h"
 #include "utils/util_cstring.h"
-
-#ifdef HAVE_HYPERSCAN
-#include "ips_options/ips_regex.h"
-#include "ips_options/ips_sd_pattern.h"
-#include "search_engines/hyperscan.h"
-#endif
 
 #include "snort.h"
 #include "thread_config.h"
@@ -88,6 +81,7 @@ using namespace snort;
 THREAD_LOCAL SnortConfig* snort_conf = nullptr;
 
 uint32_t SnortConfig::warning_flags = 0;
+static std::vector <std::pair<ScScratchFunc,ScScratchFunc>> scratch_handlers;
 
 //-------------------------------------------------------------------------
 // private implementation
@@ -197,7 +191,7 @@ void SnortConfig::init(const SnortConfig* const other_conf, ProtocolReference* p
         InspectorManager::new_config(this);
 
         num_slots = ThreadConfig::get_instance_max();
-        state = (SnortState*)snort_calloc(num_slots, sizeof(SnortState));
+        state = new std::vector<void *>[num_slots];
 
         profiler = new ProfilerConfig;
         latency = new LatencyConfig();
@@ -251,12 +245,16 @@ SnortConfig::~SnortConfig()
     FreeClassifications(classifications);
     FreeReferences(references);
 
-#ifdef HAVE_HYPERSCAN
-    hyperscan_cleanup(this);
-    sdpattern_cleanup(this);
-    regex_cleanup(this);
-#endif
-    pcre_cleanup(this);
+    // Only call scratch cleanup if we actually called scratch setup
+    if ( state[0].size() > 0 )
+    {
+        for ( unsigned i = scratch_handlers.size(); i > 0; i-- )
+        {
+            if ( scratch_handlers[i - 1].second )
+                scratch_handlers[i - 1].second(this);
+        }
+        // FIXME-T: Do we need to shrink_to_fit() state->scratch at this point?
+    }
 
     FreeRuleLists(this);
     OtnLookupFree(otn_map);
@@ -292,7 +290,7 @@ SnortConfig::~SnortConfig()
     delete policy_map;
     InspectorManager::delete_config(this);
 
-    snort_free(state);
+    delete[] state;
     delete thread_config;
 
     if (gtp_ports)
@@ -335,15 +333,20 @@ void SnortConfig::setup()
 
 void SnortConfig::post_setup()
 {
-    // FIXIT-L register setup and cleanup  to eliminate explicit calls and
-    // allow pcre, regex, and hyperscan to be built dynamically. Hyperscan setup
-    // moved to post_setup to ensure all the prep_patterns are called before it.
-    pcre_setup(this);
-#ifdef HAVE_HYPERSCAN
-    regex_setup(this);
-    sdpattern_setup(this);
-    hyperscan_setup(this);
-#endif
+    unsigned i;
+    unsigned int handler_count = scratch_handlers.size();
+
+    // Ensure we have allocated the scratch space vector for each thread
+    for ( i = 0; i < num_slots; ++i )
+    {
+        state[i].resize(handler_count);
+    }
+
+    for ( i = 0; i < handler_count; ++i )
+    {
+        if ( scratch_handlers[i].first )
+            scratch_handlers[i].first(this);
+    }
 }
 
 void SnortConfig::clone(const SnortConfig* const conf)
@@ -478,9 +481,9 @@ void SnortConfig::merge(SnortConfig* cmd_line)
     // FIXIT-M should cmd_line use the same var list / table?
     var_list = nullptr;
 
-    snort_free(state);
+    delete[] state;
     num_slots = ThreadConfig::get_instance_max();
-    state = (SnortState*)snort_calloc(num_slots, sizeof(SnortState));
+    state = new std::vector<void *>[num_slots];
 }
 
 bool SnortConfig::verify()
@@ -1013,6 +1016,15 @@ void SnortConfig::free_rule_state_list()
 bool SnortConfig::tunnel_bypass_enabled(uint8_t proto)
 {
     return (!((get_conf()->tunnel_mask & proto) or SFDAQ::get_tunnel_bypass(proto)));
+}
+
+SO_PUBLIC int SnortConfig::request_scratch(ScScratchFunc setup, ScScratchFunc cleanup)
+{
+    scratch_handlers.push_back(std::make_pair(setup, cleanup));
+
+    // We return an index that the caller uses to reference their per thread
+    // scratch space
+    return scratch_handlers.size() - 1;
 }
 
 SO_PUBLIC SnortConfig* SnortConfig::get_conf()

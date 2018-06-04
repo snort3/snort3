@@ -22,8 +22,6 @@
 #include "config.h"
 #endif
 
-#include "hyperscan.h"
-
 #include <hs_compile.h>
 #include <hs_runtime.h>
 
@@ -100,6 +98,8 @@ typedef std::vector<Pattern> PatternVector;
 // a prototype that is large enough for all uses.
 
 static hs_scratch_t* s_scratch = nullptr;
+static unsigned int scratch_index;
+static bool scratch_registered = false;
 
 //-------------------------------------------------------------------------
 // mpse
@@ -280,31 +280,27 @@ int HyperscanMpse::_search(
     match_cb = mf;
     match_ctx = pv;
 
-    SnortState* ss = SnortConfig::get_conf()->state + get_instance_id();
+    hs_scratch_t *ss = (hs_scratch_t *) SnortConfig::get_conf()->state[get_instance_id()][scratch_index];
 
     // scratch is null for the degenerate case w/o patterns
-    assert(!hs_db or ss->hyperscan_scratch);
+    assert(!hs_db or ss);
 
-    hs_scan(hs_db, (const char*)buf, n, 0, (hs_scratch_t*)ss->hyperscan_scratch,
+    hs_scan(hs_db, (const char*)buf, n, 0, ss,
         HyperscanMpse::match, this);
 
     return nfound;
 }
 
-//-------------------------------------------------------------------------
-// public methods
-//-------------------------------------------------------------------------
-
-void hyperscan_setup(SnortConfig* sc)
+static void scratch_setup(SnortConfig* sc)
 {
     for ( unsigned i = 0; i < sc->num_slots; ++i )
     {
-        SnortState* ss = sc->state + i;
+        hs_scratch_t** ss = (hs_scratch_t**) &sc->state[i][scratch_index];
 
         if ( s_scratch )
-            hs_clone_scratch(s_scratch, (hs_scratch_t**)&ss->hyperscan_scratch);
+            hs_clone_scratch(s_scratch, ss);
         else
-            ss->hyperscan_scratch = nullptr;
+            ss = nullptr;
     }
     if ( s_scratch )
     {
@@ -313,16 +309,16 @@ void hyperscan_setup(SnortConfig* sc)
     }
 }
 
-void hyperscan_cleanup(SnortConfig* sc)
+static void scratch_cleanup(SnortConfig* sc)
 {
     for ( unsigned i = 0; i < sc->num_slots; ++i )
     {
-        SnortState* ss = sc->state + i;
+        hs_scratch_t* ss = (hs_scratch_t*) sc->state[i][scratch_index];
 
-        if ( ss->hyperscan_scratch )
+        if ( ss )
         {
-            hs_free_scratch((hs_scratch_t*)ss->hyperscan_scratch);
-            ss->hyperscan_scratch = nullptr;
+            hs_free_scratch(ss);
+            ss = nullptr;
         }
     }
 }
@@ -334,6 +330,11 @@ void hyperscan_cleanup(SnortConfig* sc)
 static Mpse* hs_ctor(
     SnortConfig* sc, class Module*, const MpseAgent* a)
 {
+    if ( !scratch_registered )
+    {
+        scratch_index = SnortConfig::request_scratch(scratch_setup, scratch_cleanup);
+        scratch_registered = true;
+    }
     return new HyperscanMpse(sc, a);
 }
 
@@ -379,11 +380,11 @@ static const MpseApi hs_api =
     hs_print,
 };
 
-//#ifdef BUILDING_SO
-//SO_PUBLIC const BaseApi* snort_plugins[] =
-//#else
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
 const BaseApi* se_hyperscan[] =
-//#endif
+#endif
 {
     &hs_api.base,
     nullptr
