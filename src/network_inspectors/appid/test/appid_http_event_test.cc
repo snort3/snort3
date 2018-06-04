@@ -41,6 +41,10 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
+// Stubs for AppIdDebug
+THREAD_LOCAL AppIdDebug* appidDebug = nullptr;
+void AppIdDebug::activate(const Flow*, const AppIdSession*, bool) { active = true; }
+
 using namespace snort;
 
 namespace snort
@@ -182,6 +186,8 @@ TEST_GROUP(appid_http_event)
         flow = new Flow;
         mock_session = new AppIdSession(IpProtocol::TCP, nullptr, 1492, appid_inspector);
         flow->set_flow_data(mock_session);
+        appidDebug = new AppIdDebug();
+        appidDebug->activate(nullptr, nullptr, 0);
     }
 
     void teardown() override
@@ -190,6 +196,7 @@ TEST_GROUP(appid_http_event)
         delete mock_session;
         delete flow;
         mock().clear();
+        delete appidDebug;
         MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };

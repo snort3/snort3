@@ -30,6 +30,7 @@
 #include <cassert>
 
 #include "app_info_table.h"
+#include "appid_debug.h"
 #include "appid_http_session.h"
 #include "appid_session.h"
 #include "utils/util.h"
@@ -47,6 +48,10 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     AppIdSession* asd = appid_api.get_appid_session(*flow);
     if (!asd)
         return;
+
+    if (appidDebug->is_active())
+        LogMessage("AppIdDbg %s Processing HTTP metadata from HTTP Inspector\n",
+            appidDebug->get_debug_session());
 
     direction = event_type == REQUEST_EVENT ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
 
@@ -123,10 +128,8 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     hsession->process_http_packet(direction);
     if (asd->service.get_id() == APP_ID_HTTP)
     {
-        asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_HTTP_SESSION);
         asd->set_application_ids(asd->pick_service_app_id(), asd->pick_client_app_id(),
             asd->pick_payload_app_id(), asd->pick_misc_app_id());
-        asd->service_disco_state = APPID_DISCO_STATE_FINISHED;
     }
 }
 

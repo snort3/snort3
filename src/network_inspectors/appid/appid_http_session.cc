@@ -436,7 +436,11 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
     }
 
     if (asd.service.get_id() == APP_ID_NONE)
+    {
         asd.service.set_id(APP_ID_HTTP);
+        asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_HTTP_SESSION);
+        asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
+    }
 
     if (appidDebug->is_active())
         LogMessage("AppIdDbg %s chp_finished %d chp_hold_flow %d\n",

@@ -111,16 +111,22 @@ bool AppIdInspector::configure(SnortConfig* sc)
 
     active_config = new AppIdConfig(const_cast<AppIdModuleConfig*>(config));
 
-    DataBus::subscribe(HTTP_REQUEST_HEADER_EVENT_KEY, new HttpEventHandler(
-        HttpEventHandler::REQUEST_EVENT));
-
-    DataBus::subscribe(HTTP_RESPONSE_HEADER_EVENT_KEY, new HttpEventHandler(
-        HttpEventHandler::RESPONSE_EVENT));
-
     my_seh = SipEventHandler::create();
     my_seh->subscribe();
 
     active_config->init_appid(sc);
+
+#ifdef ENABLE_APPID_THIRD_PARTY
+    if (!TPLibHandler::have_tp())
+#endif
+    {
+        DataBus::subscribe(HTTP_REQUEST_HEADER_EVENT_KEY, new HttpEventHandler(
+            HttpEventHandler::REQUEST_EVENT));
+
+        DataBus::subscribe(HTTP_RESPONSE_HEADER_EVENT_KEY, new HttpEventHandler(
+            HttpEventHandler::RESPONSE_EVENT));
+    }
+
     return true;
 
     // FIXIT-M some of this stuff may be needed in some fashion...
