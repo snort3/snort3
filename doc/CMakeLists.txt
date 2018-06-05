@@ -36,7 +36,6 @@ if ( MAKE_DOC )
 	active.txt
 	appid.txt
 	binder.txt
-	bugs.txt
 	building.txt
 	byte_extract.txt
 	byte_jump.txt

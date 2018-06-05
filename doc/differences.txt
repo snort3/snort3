@@ -226,6 +226,8 @@ Some things Snort++ can do today that Snort can not do as well:
 * nets and/or ports may be omitted from rule headers (matches any)
 * parse all rules and output all errors before quitting
 * read rules from conf, separate rules file, or stdin
+* The symbol =< in a byte test is recognized as a syntax error. The correct
+  symbol is \<=.
 
 
 === Output
@@ -260,3 +262,24 @@ replacement in Snort 3.X. This is because the rule offered no additional
 value over gid:138 rules and was difficult to interpret the result of.
 
 For more information, See Features > Sensitive Data Filtering for details.
+
+=== Features Not Yet Supported by Snort 3
+
+* Support in http_inspect for Original Client IP is limited to the
+  X-Forwarded-For and True-Client-IP headers in that order. It is not
+  possible to configure additional custom headers to search for Original
+  Client IP.
+
+* The -n option does not work properly when perf_monitor is configured. The
+  number of packets processed from the pcap is likely to be more than the
+  number specified with the -n option.
+
+* When a file is transferred via SMB2 it may be allowed even though
+  according to file policy it should be blocked. This occurs when the
+  create and read requests are sent together and then the read and create
+  responses are sent together. Blocking is done correctly if the create and
+  read requests are sent separately or if the file is large enough to
+  require two read responses.
+
+* This user manual is incomplete and does not fully cover many Snort 2.X
+  features that are also supported by Snort 3.
