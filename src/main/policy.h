@@ -191,8 +191,14 @@ public:
     void set_user_ips(IpsPolicy* p)
     { user_ips[p->user_policy_id] = p; }
 
+    void set_user_network(NetworkPolicy* p)
+    { user_network[p->user_policy_id] = p; }
+
     IpsPolicy* get_user_ips(unsigned user_id)
     { return user_ips[user_id]; }
+
+    NetworkPolicy* get_user_network(unsigned user_id)
+    { return user_network[user_id]; }
 
     InspectionPolicy* get_inspection_policy(unsigned i = 0)
     { return i < inspection_policy.size() ? inspection_policy[i] : nullptr; }
@@ -223,6 +229,7 @@ private:
     std::unordered_map<Shell*, std::shared_ptr<PolicyTuple>> shell_map;
     std::unordered_map<unsigned, InspectionPolicy*> user_inspection;
     std::unordered_map<unsigned, IpsPolicy*> user_ips;
+    std::unordered_map<unsigned, NetworkPolicy*> user_network;
 
     bool cloned = false;
 
@@ -243,16 +250,17 @@ SO_PUBLIC NetworkPolicy* get_network_policy();
 SO_PUBLIC InspectionPolicy* get_inspection_policy();
 SO_PUBLIC IpsPolicy* get_ips_policy();
 SO_PUBLIC InspectionPolicy* get_default_inspection_policy(snort::SnortConfig*);
-SO_PUBLIC void set_user_ips_policy(unsigned policy_id);
+SO_PUBLIC void set_ips_policy(IpsPolicy* p);
+SO_PUBLIC void set_network_policy(NetworkPolicy* p);
+SO_PUBLIC IpsPolicy* get_user_ips_policy(snort::SnortConfig* sc, unsigned policy_id);
+SO_PUBLIC NetworkPolicy* get_user_network_policy(snort::SnortConfig* sc, unsigned policy_id);
 }
 
-void set_network_policy(NetworkPolicy*);
 void set_network_policy(snort::SnortConfig*, unsigned = 0);
 
 void set_inspection_policy(InspectionPolicy*);
 void set_inspection_policy(snort::SnortConfig*, unsigned = 0);
 
-void set_ips_policy(IpsPolicy*);
 void set_ips_policy(snort::SnortConfig*, unsigned = 0);
 
 void set_policies(snort::SnortConfig*, Shell*);

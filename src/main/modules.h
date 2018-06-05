@@ -33,15 +33,5 @@ void module_init();
 
 extern Trace TRACE_NAME(detection);  // FIXIT-L refactor detection module out
 
-struct IpsModuleStats
-{
-    PegCount invalid_policy_ids;
-};
-
-namespace snort
-{
-SO_PUBLIC extern THREAD_LOCAL IpsModuleStats ips_module_stats;
-}
-
 #endif
 

@@ -262,21 +262,22 @@ IpsPolicy* get_ips_policy()
 InspectionPolicy* get_default_inspection_policy(SnortConfig* sc)
 { return sc->policy_map->get_inspection_policy(0); }
 
-void set_user_ips_policy(unsigned policy_id)
-{
-    IpsPolicy *p = SnortConfig::get_conf()->policy_map->get_user_ips(policy_id);
-    if(!p)
-    {
-        snort::ips_module_stats.invalid_policy_ids++;
-        return;
-    }
-
-    s_detection_policy = p;
-}
-} // namespace snort
+void set_ips_policy(IpsPolicy* p)
+{ s_detection_policy = p; }
 
 void set_network_policy(NetworkPolicy* p)
 { s_traffic_policy = p; }
+
+IpsPolicy* get_user_ips_policy(SnortConfig* sc, unsigned policy_id)
+{
+    return sc->policy_map->get_user_ips(policy_id);
+}
+
+NetworkPolicy* get_user_network_policy(SnortConfig* sc, unsigned policy_id)
+{
+    return sc->policy_map->get_user_network(policy_id);
+}
+} // namespace snort
 
 void set_network_policy(SnortConfig* sc, unsigned i)
 {
@@ -296,9 +297,6 @@ void set_inspection_policy(SnortConfig* sc, unsigned i)
     if ( i < pm->inspection_policy_count() )
         set_inspection_policy(pm->get_inspection_policy(i));
 }
-
-void set_ips_policy(IpsPolicy* p)
-{ s_detection_policy = p; }
 
 void set_ips_policy(SnortConfig* sc, unsigned i)
 {

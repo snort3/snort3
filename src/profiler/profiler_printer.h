@@ -110,14 +110,17 @@ public:
         int max_depth)
     {
         auto& entries = cur.children;
+        unsigned num_entries;
 
         if ( !count || count > entries.size() )
-            count = entries.size();
+            num_entries = entries.size();
+        else
+            num_entries = count;
 
         if ( sort )
-            std::partial_sort(entries.begin(), entries.begin() + count, entries.end(), sort);
+            std::partial_sort(entries.begin(), entries.begin() + num_entries, entries.end(), sort);
 
-        for ( unsigned i = 0; i < count; ++i )
+        for ( unsigned i = 0; i < num_entries; ++i )
         {
             auto& entry = entries[i];
 

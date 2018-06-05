@@ -70,7 +70,10 @@ public:
     // return verification status
     virtual bool configure(SnortConfig*) { return true; }
     virtual void show(SnortConfig*) { }
-    virtual void update(SnortConfig*, const char*) { }
+
+    // Specific to Binders to notify them of an inspector being removed from the policy
+    // FIXIT-L Probably shouldn't be part of the base Inspector class
+    virtual void remove_inspector_binding(SnortConfig*, const char*) { }
 
     // packet thread functions
     // tinit, tterm called on default policy instance only

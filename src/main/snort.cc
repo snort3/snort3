@@ -957,9 +957,10 @@ DAQ_Verdict Snort::packet_callback(
 
     if (PacketTracer::is_active())
     {
-        PacketTracer::log("NAP id %u, IPS id %u, Verdict %s\n",
-            get_network_policy()->policy_id, get_ips_policy()->policy_id,
-            SFDAQ::verdict_to_string(verdict));
+        PacketTracer::log("Policies: Network %u, Inspection %u, Detection %u\n",
+            get_network_policy()->user_policy_id, get_inspection_policy()->user_policy_id,
+            get_ips_policy()->user_policy_id);
+        PacketTracer::log("Verdict: %s\n", SFDAQ::verdict_to_string(verdict));
 
         PacketTracer::dump(pkthdr);
     }

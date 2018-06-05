@@ -573,7 +573,7 @@ public:
     void show(SnortConfig*) override
     { LogMessage("Binder\n"); }
 
-    void update(SnortConfig*, const char*) override;
+    void remove_inspector_binding(SnortConfig*, const char*) override;
 
     bool configure(SnortConfig*) override;
 
@@ -649,7 +649,7 @@ bool Binder::configure(SnortConfig* sc)
     return true;
 }
 
-void Binder::update(SnortConfig*, const char* name)
+void Binder::remove_inspector_binding(SnortConfig*, const char* name)
 {
     vector<Binding*>::iterator it;
     for ( it = bindings.begin(); it != bindings.end(); ++it )
@@ -781,56 +781,73 @@ void Binder::set_binding(SnortConfig*, Binding* pb)
 // down.  performance should be the focus of the next iteration.
 void Binder::get_bindings(Flow* flow, Stuff& stuff, Packet* p)
 {
-    Binding* pb;
-    unsigned i, sz = bindings.size();
+    unsigned sz = bindings.size();
 
-    for ( i = 0; i < sz; i++ )
+    // Evaluate policy ID bindings first
+    // FIXIT-P The way these are being used, the policy bindings should be a separate list if not a
+    //          separate table entirely
+    // FIXIT-L This will select the first policy ID of each type that it finds and ignore the rest.
+    //          It gets potentially hairy if people start specifying overlapping policy types in
+    //          overlapping rules.
+    bool inspection_set = false, ips_set = false, network_set = false;
+    for ( unsigned i = 0; i < sz; i++ )
     {
-        pb = bindings[i];
+        Binding* pb = bindings[i];
+
+        // Skip any rules that don't contain an ID for a policy type we haven't set yet.
+        if ( (!pb->use.inspection_index or inspection_set) and
+             (!pb->use.ips_index or ips_set) and
+             (!pb->use.network_index or network_set) )
+            continue;
 
         if ( !pb->check_all(flow, p) )
             continue;
 
-        if ( !pb->use.ips_index and !pb->use.inspection_index and !pb->use.network_index )
-        {
-            if ( stuff.update(pb) )
-                return;
-            else
-                continue;
-        }
-
-        if ( pb->use.inspection_index )
+        if ( pb->use.inspection_index and !inspection_set )
         {
             set_inspection_policy(SnortConfig::get_conf(), pb->use.inspection_index - 1);
             flow->inspection_policy_id = pb->use.inspection_index - 1;
+            inspection_set = true;
         }
 
-        if ( pb->use.ips_index )
+        if ( pb->use.ips_index and !ips_set )
         {
             set_ips_policy(SnortConfig::get_conf(), pb->use.ips_index - 1);
             flow->ips_policy_id = pb->use.ips_index - 1;
+            ips_set = true;
         }
 
-        if ( pb->use.network_index )
+        if ( pb->use.network_index and !network_set )
         {
             set_network_policy(SnortConfig::get_conf(), pb->use.network_index - 1);
             flow->network_policy_id = pb->use.network_index - 1;
+            network_set = true;
         }
+    }
 
-        Binder* sub = (Binder*)InspectorManager::get_binder();
+    Binder* sub = (Binder*)InspectorManager::get_binder();
 
-        // If selected sub-policy is IPS, inspection policy wont
-        // change and get_binder() will return this binder. Keep
-        // checking rules in case a new inspection policy is specified
-        // after.
-        if ( sub == this )
+    // If policy selection produced a new binder to use, use that instead.
+    if ( sub && sub != this )
+    {
+        sub->get_bindings(flow, stuff, p);
+        return;
+    }
+
+    // If we got here, that means that a sub-policy with a binder was not invoked.
+    // Continue using this binder for the rest of processing.
+    for ( unsigned i = 0; i < sz; i++ )
+    {
+        Binding* pb = bindings[i];
+
+        if ( pb->use.ips_index or pb->use.inspection_index or pb->use.network_index )
             continue;
 
-        if ( sub )
-        {
-            sub->get_bindings(flow, stuff, p);
+        if ( !pb->check_all(flow, p) )
+            continue;
+
+        if ( stuff.update(pb) )
             return;
-        }
     }
 }
 

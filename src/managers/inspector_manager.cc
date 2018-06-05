@@ -557,7 +557,7 @@ bool InspectorManager::delete_inspector(SnortConfig* sc, const char* iname)
         std::vector<PHInstance*>::iterator bind_it;
         if ( get_instance(fp, "binder", false, bind_it) )
         {
-            (*bind_it)->handler->update(sc, iname);
+            (*bind_it)->handler->remove_inspector_binding(sc, iname);
         }
     }
 

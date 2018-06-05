@@ -96,7 +96,7 @@ int TPLibHandler::LoadCallback(const char* const path, int /* indent */)
     if ( (tp_module->api_version() != THIRD_PARTY_APP_ID_API_VERSION)
         || (tp_module->module_name().empty()) )
     {
-        ErrorMessage("Ignoring incomplete 3rd party AppID module (%s, %d, %s)!\n",
+        ErrorMessage("Ignoring incomplete 3rd party AppID module (%s, %u, %s)!\n",
             path, tp_module->api_version(),
             tp_module->module_name().empty() ? "empty" : tp_module->module_name().c_str());
 
