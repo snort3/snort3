@@ -26,7 +26,7 @@
 using namespace HttpEnums;
 
 ScanResult HttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
-    HttpInfractions* infractions, HttpEventGen* events, uint32_t, uint32_t, int32_t)
+    HttpInfractions* infractions, HttpEventGen* events, uint32_t, uint32_t)
 {
     for (uint32_t k = 0; k < length; k++)
     {
@@ -154,7 +154,7 @@ HttpStartCutter::ValidationResult HttpStatusCutter::validate(uint8_t octet,
 }
 
 ScanResult HttpHeaderCutter::cut(const uint8_t* buffer, uint32_t length,
-    HttpInfractions* infractions, HttpEventGen* events, uint32_t, uint32_t, int32_t)
+    HttpInfractions* infractions, HttpEventGen* events, uint32_t, uint32_t)
 {
     // Header separators: leading \r\n, leading \n, nonleading \r\n\r\n, nonleading \n\r\n,
     // nonleading \r\n\n, and nonleading \n\n. The separator itself becomes num_excess which is
@@ -251,15 +251,9 @@ ScanResult HttpHeaderCutter::cut(const uint8_t* buffer, uint32_t length,
 }
 
 ScanResult HttpBodyClCutter::cut(const uint8_t*, uint32_t length, HttpInfractions*,
-    HttpEventGen*, uint32_t flow_target, uint32_t flow_max, int32_t flush_segment_min)
+    HttpEventGen*, uint32_t flow_target, uint32_t flow_max)
 {
     assert(remaining > 0);
-
-    if (new_section)
-    {
-        new_section = false;
-        octets_seen = 0;
-    }
 
     // Are we skipping to the next message?
     if (flow_target == 0)
@@ -275,37 +269,6 @@ ScanResult HttpBodyClCutter::cut(const uint8_t*, uint32_t length, HttpInfraction
             num_flush = length;
             remaining -= num_flush;
             return SCAN_DISCARD_PIECE;
-        }
-    }
-
-    if (flush_segment_min >= 0)
-    {
-        // Flush at the end of the segment unless it would be really small
-        if ((remaining <= flow_target) && (remaining <= octets_seen + length))
-        {
-            num_flush = remaining - octets_seen;
-            remaining = 0;
-            new_section = true;
-            return SCAN_FOUND;
-        }
-        else if (flow_target <= octets_seen + length)
-        {
-            num_flush = flow_target - octets_seen;
-            remaining -= flow_target;
-            new_section = true;
-            return SCAN_FOUND_PIECE;
-        }
-        else if ((unsigned)flush_segment_min <= octets_seen + length)
-        {
-            num_flush = length;
-            remaining -= octets_seen + length;
-            new_section = true;
-            return SCAN_FOUND_PIECE;
-        }
-        else
-        {
-            octets_seen += length;
-            return SCAN_NOTFOUND;
         }
     }
 
@@ -326,14 +289,8 @@ ScanResult HttpBodyClCutter::cut(const uint8_t*, uint32_t length, HttpInfraction
 }
 
 ScanResult HttpBodyOldCutter::cut(const uint8_t*, uint32_t length, HttpInfractions*, HttpEventGen*,
-    uint32_t flow_target, uint32_t, int32_t flush_segment_min)
+    uint32_t flow_target, uint32_t)
 {
-    if (new_section)
-    {
-        new_section = false;
-        octets_seen = 0;
-    }
-
     if (flow_target == 0)
     {
         // FIXIT-P Need StreamSplitter::END
@@ -345,35 +302,12 @@ ScanResult HttpBodyOldCutter::cut(const uint8_t*, uint32_t length, HttpInfractio
         return SCAN_DISCARD_PIECE;
     }
 
-    if (flush_segment_min >= 0)
-    {
-        // Flush at the end of the segment unless it would be really small
-        if (flow_target <= octets_seen + length)
-        {
-            num_flush = flow_target - octets_seen;
-            new_section = true;
-            return SCAN_FOUND_PIECE;
-        }
-        else if ((unsigned)flush_segment_min <= octets_seen + length)
-        {
-            num_flush = length;
-            new_section = true;
-            return SCAN_FOUND_PIECE;
-        }
-        else
-        {
-            octets_seen += length;
-            return SCAN_NOTFOUND;
-        }
-    }
-
     num_flush = flow_target;
     return SCAN_FOUND_PIECE;
 }
 
 ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
-    HttpInfractions* infractions, HttpEventGen* events, uint32_t flow_target, uint32_t,
-    int32_t flush_segment_min)
+    HttpInfractions* infractions, HttpEventGen* events, uint32_t flow_target, uint32_t)
 {
     // Are we skipping through the rest of this chunked body to the trailers and the next message?
     const bool discard_mode = (flow_target == 0);
@@ -411,7 +345,6 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
                 {
                     events->create_event(EVENT_BROKEN_CHUNK);
                     curr_state = CHUNK_BAD;
-                    k--;
                 }
                 break;
             }
@@ -464,7 +397,6 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
                 *infractions += INF_CHUNK_BAD_CHAR;
                 events->create_event(EVENT_BROKEN_CHUNK);
                 curr_state = CHUNK_BAD;
-                k--;
             }
             else
             {
@@ -475,7 +407,6 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
                     *infractions += INF_CHUNK_TOO_LARGE;
                     events->create_event(EVENT_BROKEN_CHUNK);
                     curr_state = CHUNK_BAD;
-                    k--;
                 }
             }
             break;
@@ -504,7 +435,6 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
                 *infractions += INF_CHUNK_BAD_CHAR;
                 events->create_event(EVENT_BROKEN_CHUNK);
                 curr_state = CHUNK_BAD;
-                k--;
             }
             break;
         case CHUNK_OPTIONS:
@@ -532,7 +462,6 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
                 *infractions += INF_CHUNK_LONE_CR;
                 events->create_event(EVENT_BROKEN_CHUNK);
                 curr_state = CHUNK_BAD;
-                k--;
                 break;
             }
             if (expected > 0)
@@ -551,7 +480,6 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
                 *infractions += INF_CHUNK_NO_LENGTH;
                 events->create_event(EVENT_BROKEN_CHUNK);
                 curr_state = CHUNK_BAD;
-                k--;
             }
             break;
         case CHUNK_DATA:
@@ -569,6 +497,7 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
             }
             if ((data_seen += skip_amount) == flow_target)
             {
+                // FIXIT-M need to randomize slice point
                 data_seen = 0;
                 num_flush = k+1;
                 new_section = true;
@@ -594,7 +523,6 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
                 *infractions += INF_CHUNK_BAD_END;
                 events->create_event(EVENT_BROKEN_CHUNK);
                 curr_state = CHUNK_BAD;
-                k--;
             }
             break;
         case CHUNK_DCRLF2:
@@ -625,19 +553,13 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
                 num_flush = length;
                 return SCAN_DISCARD_PIECE;
             }
-
-            // When chunk parsing breaks down and we first enter CHUNK_BAD state, it may happen
-            // that there were chunk header bytes between the last good chunk and the point where
-            // the failure occurred. These will not have been counted in data_seen because we
-            // planned to delete them during reassembly. Because they are not part of a valid chunk
-            // they will be reassembled after all. This will overrun the flow_target making the
-            // message section a little bigger than planned. It's not important.
             uint32_t skip_amount = length-k;
             skip_amount = (skip_amount <= flow_target-data_seen) ? skip_amount :
                 flow_target-data_seen;
             k += skip_amount - 1;
             if ((data_seen += skip_amount) == flow_target)
             {
+                // FIXIT-M need to randomize slice point
                 data_seen = 0;
                 num_flush = k+1;
                 new_section = true;
@@ -651,15 +573,6 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
         num_flush = length;
         return SCAN_DISCARD_PIECE;
     }
-
-    if ((flush_segment_min >= 0) && ((unsigned)flush_segment_min <= octets_seen + length))
-    {
-        num_flush = length;
-        data_seen = 0;
-        new_section = true;
-        return SCAN_FOUND_PIECE;
-    }
-
     octets_seen += length;
     return SCAN_NOTFOUND;
 }

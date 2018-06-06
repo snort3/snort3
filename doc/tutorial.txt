@@ -263,19 +263,19 @@ include::errors.txt[]
 
 * A nil key in a table will not caught.  Neither will a nil value in a
   table.  Neither of the following will cause errors, nor will they 
-  actually set http_inspect.request_depth:
+  actually set http_server.post_depth:
 
-    http_inspect = { request_depth }
-    http_inspect = { request_depth = undefined_symbol }
+    http_server = { post_depth }
+    http_server = { post_depth = undefined_symbol }
 
 * It is not an error to set a value multiple times.  The actual value
   applied may not be the last in the table either.  It is best to avoid
   such cases.
 
-    http_inspect =
+    http_server =
     {
-        request_depth = 1234,
-        request_depth = 4321
+        post_depth = 1234,
+        post_depth = 4321
     }
 
 * Snort can't tell you the exact filename or line number of a semantic

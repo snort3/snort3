@@ -70,49 +70,40 @@ void HttpMsgSection::create_event(int sid)
 
 void HttpMsgSection::update_depth() const
 {
-    const int64_t& ddr = session_data->detect_depth_remaining[source_id];
-    const int64_t& fdr = session_data->file_depth_remaining[source_id];
-
-    if ((ddr <= 0) && (session_data->detection_status[source_id] == DET_ON))
+    if ((session_data->detect_depth_remaining[source_id] <= 0) &&
+        (session_data->detection_status[source_id] == DET_ON))
     {
         session_data->detection_status[source_id] = DET_DEACTIVATING;
     }
 
-    if ((ddr <= 0) && (fdr <= 0))
+    if ((session_data->file_depth_remaining[source_id] <= 0) &&
+        (session_data->detect_depth_remaining[source_id] <= 0))
     {
         // Don't need any more of the body
         session_data->section_size_target[source_id] = 0;
+        session_data->section_size_max[source_id] = 0;
         return;
     }
 
-    const unsigned max_pdu = snort::SnortConfig::get_conf()->max_pdu;
-    const unsigned target_size = (session_data->compression[source_id] == CMP_NONE) ?
-        max_pdu : GZIP_BLOCK_SIZE;
-    const unsigned max_size = (session_data->compression[source_id] == CMP_NONE) ?
-        max_pdu + (max_pdu >> 1) : FINAL_GZIP_BLOCK_SIZE;
+    const int random_increment = FlushBucket::get_size() - 192;
+    assert((random_increment >= -64) && (random_increment <= 63));
 
-    if (ddr <= 0)
+    switch (session_data->compression[source_id])
     {
-        // We are only splitting to support file processing. That's not sensitive to section
-        // boundaries so we don't need random increments and we don't need to delay processing TCP
-        // segments while we accumulate more data. In addition to flushing when we reach target
-        // size, we also flush at the end of each segment provided it's not an unreasonably small
-        // amount.
-        session_data->section_size_target[source_id] = target_size;
-        session_data->section_size_max[source_id] = target_size;
-        session_data->flush_segment_min[source_id] = MIN_AUTOFLUSH_SIZE;
-    }
-    else if (ddr <= max_size)
-    {
-        session_data->section_size_target[source_id] = ddr + FLOW_DEPTH_ERROR_MARGIN;
-        session_data->section_size_max[source_id] = ddr + FLOW_DEPTH_ERROR_MARGIN;
-    }
-    else
-    {
-        const int random_increment = FlushBucket::get_size() - 192;
-        assert((random_increment >= -64) && (random_increment <= 63));
-        session_data->section_size_target[source_id] = target_size + random_increment;
-        session_data->section_size_max[source_id] = max_size;
+    case CMP_NONE:
+      {
+        unsigned max_pdu = snort::SnortConfig::get_conf()->max_pdu;
+        session_data->section_size_target[source_id] = max_pdu + random_increment;
+        session_data->section_size_max[source_id] = max_pdu + (max_pdu >> 1);
+        break;
+      }
+    case CMP_GZIP:
+    case CMP_DEFLATE:
+        session_data->section_size_target[source_id] = GZIP_BLOCK_SIZE + random_increment;
+        session_data->section_size_max[source_id] = FINAL_GZIP_BLOCK_SIZE;
+        break;
+    default:
+        assert(false);
     }
 }
 

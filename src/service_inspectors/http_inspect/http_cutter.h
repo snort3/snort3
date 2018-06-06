@@ -36,7 +36,7 @@ public:
     virtual ~HttpCutter() = default;
     virtual HttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length,
         HttpInfractions* infractions, HttpEventGen* events, uint32_t flow_target,
-        uint32_t flow_max, int32_t flush_segment_min) = 0;
+        uint32_t flow_max) = 0;
     uint32_t get_num_flush() const { return num_flush; }
     uint32_t get_octets_seen() const { return octets_seen; }
     uint32_t get_num_excess() const { return num_crlf; }
@@ -55,7 +55,7 @@ class HttpStartCutter : public HttpCutter
 {
 public:
     HttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length,
-        HttpInfractions* infractions, HttpEventGen* events, uint32_t, uint32_t, int32_t) override;
+        HttpInfractions* infractions, HttpEventGen* events, uint32_t, uint32_t) override;
 
 protected:
     enum ValidationResult { V_GOOD, V_BAD, V_TBD };
@@ -84,7 +84,7 @@ class HttpHeaderCutter : public HttpCutter
 {
 public:
     HttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length,
-        HttpInfractions* infractions, HttpEventGen* events, uint32_t, uint32_t, int32_t) override;
+        HttpInfractions* infractions, HttpEventGen* events, uint32_t, uint32_t) override;
     uint32_t get_num_head_lines() const override { return num_head_lines; }
 
 private:
@@ -99,28 +99,25 @@ public:
     explicit HttpBodyClCutter(int64_t expected_length) : remaining(expected_length)
         { assert(remaining > 0); }
     HttpEnums::ScanResult cut(const uint8_t*, uint32_t length, HttpInfractions*, HttpEventGen*,
-        uint32_t flow_target, uint32_t flow_max, int32_t flush_segment_min) override;
+        uint32_t flow_target, uint32_t flow_max) override;
 
 private:
     int64_t remaining;
-    bool new_section = false;
 };
 
 class HttpBodyOldCutter : public HttpCutter
 {
 public:
     HttpEnums::ScanResult cut(const uint8_t*, uint32_t, HttpInfractions*, HttpEventGen*,
-        uint32_t flow_target, uint32_t, int32_t flush_segment_min) override;
-private:
-    bool new_section = false;
+        uint32_t flow_target, uint32_t) override;
 };
 
 class HttpBodyChunkCutter : public HttpCutter
 {
 public:
     HttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length,
-        HttpInfractions* infractions, HttpEventGen* events, uint32_t flow_target, uint32_t,
-        int32_t flush_segment_min) override;
+        HttpInfractions* infractions, HttpEventGen* events, uint32_t flow_target, uint32_t)
+        override;
     bool get_is_broken_chunk() const override { return curr_state == HttpEnums::CHUNK_BAD; }
     uint32_t get_num_good_chunks() const override { return num_good_chunks; }
 
