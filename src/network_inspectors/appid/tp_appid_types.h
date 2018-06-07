@@ -29,7 +29,6 @@
 
 using std::string;
 
-// FIXIT-L: these need to disappear from here and go to appid_navl.
 enum TPFlags
 {
     TP_SESSION_FLAG_DPI        = 0x00000001,
