@@ -30,6 +30,7 @@
 
 #include <string>
 
+#include "app_info_table.h"
 #include "appid_module.h"
 #include "appid_peg_counts.h"
 
@@ -60,7 +61,7 @@ public:
         return my_id;
     }
 
-    void set_id(AppId app_id)
+    virtual void set_id(AppId app_id)
     {
         if ( my_id != app_id )
         {
@@ -105,6 +106,16 @@ class ServiceAppDescriptor : public ApplicationDescriptor
 public:
     ServiceAppDescriptor() = default;
 
+    void set_id(AppId app_id) override
+    {
+        if (get_id() != app_id)
+        {
+            ApplicationDescriptor::set_id(app_id);
+            AppInfoManager* app_info_mgr = &AppInfoManager::get_instance();
+            deferred = app_info_mgr->get_app_info_flags(app_id, APPINFO_FLAG_DEFER);
+        }
+    }
+
     void reset() override
     {
         ApplicationDescriptor::reset();
@@ -131,8 +142,14 @@ public:
         }
     }
 
+    bool get_deferred()
+    {
+        return deferred;
+    }
+
 private:
     AppId port_service_id = APP_ID_NONE;
+    bool deferred = false;
 };
 
 class ClientAppDescriptor : public ApplicationDescriptor

@@ -334,6 +334,7 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p, AppidSes
     uint32_t prevRnaClientState = asd.client_disco_state;
     bool was_http2 = asd.is_http2;
     bool was_service = asd.is_service_detected();
+    AppId tp_app_id = asd.get_tp_app_id();
 
     if ( asd.client_disco_state == APPID_DISCO_STATE_NONE
         && p->dsize && direction == APP_ID_FROM_INITIATOR )
@@ -341,11 +342,11 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p, AppidSes
         if ( p->flow->get_session_flags() & SSNFLAG_MIDSTREAM )
             asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
         else if ( asd.is_tp_appid_available()
-            && ( asd.tp_app_id > APP_ID_NONE && asd.tp_app_id < SF_APPID_MAX ) )
+            && ( tp_app_id > APP_ID_NONE && tp_app_id < SF_APPID_MAX ) )
         {
             //tp has positively identified appId, Dig deeper only if sourcefire
             // detector identifies additional information
-            entry = asd.app_info_mgr->get_app_info_entry(asd.tp_app_id);
+            entry = asd.app_info_mgr->get_app_info_entry(tp_app_id);
             if ( entry && entry->client_detector
                 && ( ( entry->flags & ( APPINFO_FLAG_CLIENT_ADDITIONAL |
                 APPINFO_FLAG_CLIENT_USER ) )
@@ -372,9 +373,9 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p, AppidSes
          asd.client_disco_state == prevRnaClientState &&
          !asd.get_session_flags(APPID_SESSION_NO_TPI)  &&
          asd.is_tp_appid_available() &&
-         asd.tp_app_id > APP_ID_NONE && asd.tp_app_id < SF_APPID_MAX)
+         tp_app_id > APP_ID_NONE && tp_app_id < SF_APPID_MAX)
     {
-        entry = asd.app_info_mgr->get_app_info_entry(asd.tp_app_id);
+        entry = asd.app_info_mgr->get_app_info_entry(tp_app_id);
         if ( !( entry && entry->client_detector
             && entry->client_detector == asd.client_detector
             && (entry->flags & (APPINFO_FLAG_CLIENT_ADDITIONAL | APPINFO_FLAG_CLIENT_USER) ) ) )

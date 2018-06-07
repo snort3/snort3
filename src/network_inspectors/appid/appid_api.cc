@@ -214,7 +214,7 @@ bool AppIdApi::is_appid_inspecting_session(Flow& flow)
                 return true;
             }
 
-            if ( asd->tp_app_id == APP_ID_SSH && asd->payload.get_id() != APP_ID_SFTP &&
+            if ( asd->get_tp_app_id() == APP_ID_SSH && asd->payload.get_id() != APP_ID_SFTP &&
                 asd->session_packet_count < MAX_SFTP_PACKET_COUNT )
             {
                 return true;
@@ -403,12 +403,12 @@ uint32_t AppIdApi::produce_ha_state(Flow& flow, uint8_t* buf)
             appHA->flags |= APPID_HA_FLAGS_SVC_DONE;
         if ( asd->get_session_flags(APPID_SESSION_HTTP_SESSION) )
             appHA->flags |= APPID_HA_FLAGS_HTTP;
-        appHA->appId[0] = asd->tp_app_id;
+        appHA->appId[0] = asd->get_tp_app_id();
         appHA->appId[1] = asd->service.get_id();
         appHA->appId[2] = asd->client_inferred_service_id;
         appHA->appId[3] = asd->service.get_port_service_id();
         appHA->appId[4] = asd->payload.get_id();
-        appHA->appId[5] = asd->tp_payload_app_id;
+        appHA->appId[5] = asd->get_tp_payload_app_id();
         appHA->appId[6] = asd->client.get_id();
         appHA->appId[7] = asd->misc_app_id;
     }
@@ -476,12 +476,12 @@ uint32_t AppIdApi::consume_ha_state(Flow& flow, const uint8_t* buf, uint8_t, IpP
         if (appHA->flags & APPID_HA_FLAGS_HTTP)
             asd->set_session_flags(APPID_SESSION_HTTP_SESSION);
 
-        asd->tp_app_id = appHA->appId[0];
+        asd->set_tp_app_id(appHA->appId[0]);
         asd->service.set_id(appHA->appId[1]);
         asd->client_inferred_service_id = appHA->appId[2];
         asd->service.set_port_service_id(appHA->appId[3]);
         asd->payload.set_id(appHA->appId[4]);
-        asd->tp_payload_app_id = appHA->appId[5];
+        asd->set_tp_payload_app_id(appHA->appId[5]);
         asd->client.set_id(appHA->appId[6]);
         asd->misc_app_id = appHA->appId[7];
     }

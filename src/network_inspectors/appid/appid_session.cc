@@ -683,8 +683,7 @@ AppId AppIdSession::pick_service_app_id()
 
     if ( is_service_detected() )
     {
-        bool deferred = app_info_mgr->get_app_info_flags(service.get_id(), APPINFO_FLAG_DEFER)
-            || app_info_mgr->get_app_info_flags(tp_app_id, APPINFO_FLAG_DEFER);
+        bool deferred = service.get_deferred() || tp_app_id_deferred;
 
         if (service.get_id() > APP_ID_NONE && !deferred)
             return service.get_id();
@@ -719,8 +718,7 @@ AppId AppIdSession::pick_only_service_app_id()
     if ( common.flow_type != APPID_FLOW_TYPE_NORMAL )
         return APP_ID_NONE;
 
-    bool deferred = app_info_mgr->get_app_info_flags(service.get_id(), APPINFO_FLAG_DEFER)
-        || app_info_mgr->get_app_info_flags(tp_app_id, APPINFO_FLAG_DEFER);
+    bool deferred = service.get_deferred() || tp_app_id_deferred;
 
     if (service.get_id() > APP_ID_NONE && !deferred)
         return service.get_id();
@@ -759,9 +757,7 @@ AppId AppIdSession::pick_payload_app_id()
     if ( common.flow_type != APPID_FLOW_TYPE_NORMAL )
         return APP_ID_NONE;
 
-    // if we have a deferred payload, just use it.
-    // we are not worried about the APP_ID_UNKNOWN case here
-    if (app_info_mgr->get_app_info_flags(tp_payload_app_id, APPINFO_FLAG_DEFER_PAYLOAD))
+    if (tp_payload_app_id_deferred)
         return tp_payload_app_id;
     else if (payload.get_id() > APP_ID_NONE)
         return payload.get_id();

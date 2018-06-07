@@ -304,13 +304,15 @@ static bool set_network_attributes(AppIdSession* asd, Packet* p, IpProtocol& pro
         else
             protocol = IpProtocol::UDP;
 
-        const SfIp* ip = p->ptrs.ip_api.get_src();
         if (asd->common.initiator_port)
             direction = (asd->common.initiator_port == p->ptrs.sp) ?
                 APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
         else
+        {
+            const SfIp* ip = p->ptrs.ip_api.get_src();
             direction = ip->fast_equals_raw(asd->common.initiator_ip) ?
                 APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
+        }
 
         asd->in_expected_cache = false;
     }
@@ -332,7 +334,7 @@ static bool set_network_attributes(AppIdSession* asd, Packet* p, IpProtocol& pro
     return true;
 }
 
-static bool is_packet_ignored(AppIdSession* asd, Packet* p, AppidSessionDirection& direction)
+static bool is_packet_ignored(AppIdSession* asd, Packet* p, AppidSessionDirection direction)
 {
 // FIXIT-M - Need to convert this _dpd stream api call to the correct snort++ method
 #ifdef REMOVED_WHILE_NOT_IN_USE
@@ -380,11 +382,8 @@ static bool is_packet_ignored(AppIdSession* asd, Packet* p, AppidSessionDirectio
 static uint64_t is_session_monitored(AppIdSession& asd, const Packet* p, AppidSessionDirection dir,
     AppIdInspector& inspector)
 {
-    uint64_t flags = 0;
+    uint64_t flags;
     uint64_t flow_flags = APPID_SESSION_DISCOVER_APP;
-
-    flow_flags |= (dir == APP_ID_FROM_INITIATOR) ?
-        APPID_SESSION_INITIATOR_SEEN : APPID_SESSION_RESPONDER_SEEN;
 
     flow_flags |= asd.common.flags;
     // FIXIT-M - the 2.x purpose of this check is to stop monitoring a flow after a
@@ -395,8 +394,7 @@ static uint64_t is_session_monitored(AppIdSession& asd, const Packet* p, AppidSe
     {
         if ( check_port_exclusion(p, dir == APP_ID_FROM_RESPONDER, inspector) )
         {
-            flow_flags |= APPID_SESSION_INITIATOR_SEEN | APPID_SESSION_RESPONDER_SEEN |
-                APPID_SESSION_INITIATOR_CHECKED | APPID_SESSION_RESPONDER_CHECKED;
+            flow_flags |= APPID_SESSION_INITIATOR_CHECKED | APPID_SESSION_RESPONDER_CHECKED;
             flow_flags &= ~(APPID_SESSION_INITIATOR_MONITORED |
                 APPID_SESSION_RESPONDER_MONITORED);
             return flow_flags;
@@ -516,13 +514,9 @@ static uint64_t is_session_monitored(const Packet* p, AppidSessionDirection dir,
     uint64_t flags = 0;
     uint64_t flow_flags = APPID_SESSION_DISCOVER_APP;
 
-    flow_flags |= (dir == APP_ID_FROM_INITIATOR) ?
-        APPID_SESSION_INITIATOR_SEEN : APPID_SESSION_RESPONDER_SEEN;
-
     if ( check_port_exclusion(p, false, inspector) )
     {
-        flow_flags |= APPID_SESSION_INITIATOR_SEEN | APPID_SESSION_RESPONDER_SEEN |
-            APPID_SESSION_INITIATOR_CHECKED | APPID_SESSION_RESPONDER_CHECKED;
+        flow_flags |= APPID_SESSION_INITIATOR_CHECKED | APPID_SESSION_RESPONDER_CHECKED;
     }
     else if (dir == APP_ID_FROM_INITIATOR)
     {

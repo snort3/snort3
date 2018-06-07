@@ -574,6 +574,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p, AppidS
 
     Profile serviceMatchPerfStats_profile_context(serviceMatchPerfStats);
     uint32_t prevRnaServiceState = asd.service_disco_state;
+    AppId tp_app_id = asd.get_tp_app_id();
 
     if (asd.service_disco_state == APPID_DISCO_STATE_NONE && p->dsize)
     {
@@ -588,8 +589,6 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p, AppidS
                 if ( !ServiceDiscovery::add_ftp_service_state(asd) )
                 {
                     asd.set_session_flags(APPID_SESSION_CONTINUE);
-                    if (p->ptrs.dp != 21)
-                        asd.set_session_flags(APPID_SESSION_RESPONDER_SEEN);
                 }
                 asd.service_disco_state = APPID_DISCO_STATE_STATEFUL;
             }
@@ -601,11 +600,11 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p, AppidS
         }
         else if (asd.is_tp_appid_available())
         {
-            if (asd.tp_app_id > APP_ID_NONE)
+            if (tp_app_id > APP_ID_NONE)
             {
                 //tp has positively identified appId, Dig deeper only if sourcefire
                 // detector identifies additional information or flow is UDP reversed.
-                AppInfoTableEntry* entry = asd.app_info_mgr->get_app_info_entry(asd.tp_app_id);
+                AppInfoTableEntry* entry = asd.app_info_mgr->get_app_info_entry(tp_app_id);
                 if ( entry && entry->service_detector &&
                     ( ( entry->flags & APPINFO_FLAG_SERVICE_ADDITIONAL ) ||
                     ( ( entry->flags & APPINFO_FLAG_SERVICE_UDP_REVERSED ) &&
@@ -632,9 +631,9 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p, AppidS
          prevRnaServiceState == APPID_DISCO_STATE_STATEFUL &&
          !asd.get_session_flags(APPID_SESSION_NO_TPI) &&
          asd.is_tp_appid_available() &&
-         asd.tp_app_id > APP_ID_NONE && asd.tp_app_id < SF_APPID_MAX)
+         tp_app_id > APP_ID_NONE && tp_app_id < SF_APPID_MAX)
     {
-        AppInfoTableEntry* entry = asd.app_info_mgr->get_app_info_entry(asd.tp_app_id);
+        AppInfoTableEntry* entry = asd.app_info_mgr->get_app_info_entry(tp_app_id);
         if ( entry && entry->service_detector &&
             !(entry->flags & APPINFO_FLAG_SERVICE_ADDITIONAL) )
         {
@@ -647,7 +646,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p, AppidS
     // Check to see if we want to stop any detectors for SIP/RTP.
     if (asd.service_disco_state != APPID_DISCO_STATE_FINISHED)
     {
-        if (asd.tp_app_id == APP_ID_SIP)
+        if (tp_app_id == APP_ID_SIP)
         {
             // TP needs to see its own future flows and does a better
             // job of it than we do, so stay out of its way, and don't
@@ -657,12 +656,12 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p, AppidS
             asd.stop_rna_service_inspection(p, direction);
             asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
         }
-        else if ((asd.tp_app_id == APP_ID_RTP) || (asd.tp_app_id == APP_ID_RTP_AUDIO) ||
-            (asd.tp_app_id == APP_ID_RTP_VIDEO))
+        else if ((tp_app_id == APP_ID_RTP) || (tp_app_id == APP_ID_RTP_AUDIO) ||
+            (tp_app_id == APP_ID_RTP_VIDEO))
         {
             // No need for anybody to keep wasting time once we've
             // found RTP - Shut down our detectors.
-            asd.service.set_id(asd.tp_app_id);
+            asd.service.set_id(tp_app_id);
             asd.stop_rna_service_inspection(p, direction);
             asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
             //  - Shut down TP.
@@ -699,7 +698,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p, AppidS
         else if (asd.get_session_flags(APPID_SESSION_SSL_SESSION) && asd.tsession)
             asd.examine_ssl_metadata(p);
 
-        if (asd.tp_app_id <= APP_ID_NONE && asd.get_session_flags(
+        if (tp_app_id <= APP_ID_NONE && asd.get_session_flags(
             APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE |
             APPID_SESSION_IGNORE_HOST) == APPID_SESSION_SERVICE_DETECTED)
         {

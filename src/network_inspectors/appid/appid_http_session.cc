@@ -643,15 +643,15 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
         if (asd.client.get_id() == APP_ID_APPLE_CORE_MEDIA)
         {
             AppInfoTableEntry* entry;
-
-            if (asd.tp_payload_app_id > APP_ID_NONE)
+            AppId tp_payload_app_id = asd.get_tp_payload_app_id();
+            if (tp_payload_app_id > APP_ID_NONE)
             {
-                entry = asd.app_info_mgr->get_app_info_entry(asd.tp_payload_app_id);
+                entry = asd.app_info_mgr->get_app_info_entry(tp_payload_app_id);
                 // only move tpPayloadAppId to client if client app id is valid
                 if (entry && entry->clientId > APP_ID_NONE)
                 {
                     asd.misc_app_id = asd.client.get_id();
-                    asd.client.set_id(asd.tp_payload_app_id);
+                    asd.client.set_id(tp_payload_app_id);
                 }
             }
             else if (asd.payload.get_id() > APP_ID_NONE)

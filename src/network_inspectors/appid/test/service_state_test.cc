@@ -54,6 +54,12 @@ char* snort_strdup(const char* str)
 }
 time_t packet_time() { return std::time(0); }
 
+// Stubs for AppInfoManager
+AppInfoTableEntry* AppInfoManager::get_app_info_entry(AppId)
+{
+    return nullptr;
+}
+
 // Stubs for appid classes
 class AppIdInspector{};
 FlowData::FlowData(unsigned, Inspector*) {}

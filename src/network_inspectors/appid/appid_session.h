@@ -205,9 +205,6 @@ public:
     AppId referred_payload_app_id = APP_ID_NONE;
     AppId misc_app_id = APP_ID_NONE;
 
-    // appId determined by 3rd party library
-    AppId tp_app_id = APP_ID_NONE;
-    AppId tp_payload_app_id = APP_ID_NONE;
 
     // FIXIT-M netbios_name is never set to a valid value
     char* netbios_name = nullptr;
@@ -308,6 +305,28 @@ public:
     bool is_tp_processing_done() const;
     bool is_tp_appid_available() const;
 
+    inline void set_tp_app_id(AppId app_id) {
+        if(tp_app_id != app_id) {
+            tp_app_id = app_id;
+            tp_app_id_deferred = app_info_mgr->get_app_info_flags(tp_app_id, APPINFO_FLAG_DEFER);
+        }
+    }
+
+    inline void set_tp_payload_app_id(AppId app_id) {
+        if(tp_payload_app_id != app_id) {
+            tp_payload_app_id = app_id;
+            tp_payload_app_id_deferred = app_info_mgr->get_app_info_flags(tp_payload_app_id, APPINFO_FLAG_DEFER_PAYLOAD);
+        }
+    }
+
+    inline AppId get_tp_app_id() {
+        return tp_app_id;
+    }
+
+    inline AppId get_tp_payload_app_id() {
+        return tp_payload_app_id;
+    }
+
 private:
     AppIdHttpSession* hsession = nullptr;
     AppIdDnsSession* dsession = nullptr;
@@ -319,6 +338,12 @@ private:
     static THREAD_LOCAL uint32_t appid_flow_data_id;
     AppId application_ids[APP_PROTOID_MAX];
     AppIdInspector& inspector;
+    bool tp_app_id_deferred = false;
+    bool tp_payload_app_id_deferred = false;
+
+    // appId determined by 3rd party library
+    AppId tp_app_id = APP_ID_NONE;
+    AppId tp_payload_app_id = APP_ID_NONE;
 };
 
 #endif

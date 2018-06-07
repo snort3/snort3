@@ -568,8 +568,8 @@ static inline void check_terminate_tp_module(AppIdSession& asd, uint16_t tpPktCo
         (APPID_SESSION_HTTP_SESSION | APPID_SESSION_APP_REINSPECT) &&
         hsession->get_uri() && (!hsession->get_chp_candidate() || hsession->is_chp_finished())))
     {
-        if (asd.tp_app_id == APP_ID_NONE)
-            asd.tp_app_id = APP_ID_UNKNOWN;
+        if (asd.get_tp_app_id() == APP_ID_NONE)
+            asd.set_tp_app_id(APP_ID_UNKNOWN);
         if (asd.payload.get_id() == APP_ID_NONE)
             asd.payload.set_id(APP_ID_UNKNOWN);
 
@@ -581,13 +581,12 @@ static inline void check_terminate_tp_module(AppIdSession& asd, uint16_t tpPktCo
 bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
     Packet* p, AppidSessionDirection& direction)
 {
-    vector<AppId> tp_proto_list;
-    bool isTpAppidDiscoveryDone = false;
-
     if ( !TPLibHandler::have_tp() )
 	return true;
 
-    if (asd.tp_app_id == APP_ID_SSH && asd.payload.get_id() != APP_ID_SFTP &&
+    AppId tp_app_id = asd.get_tp_app_id();
+
+    if (tp_app_id == APP_ID_SSH && asd.payload.get_id() != APP_ID_SFTP &&
         asd.session_packet_count >= MIN_SFTP_PACKET_COUNT &&
         asd.session_packet_count < MAX_SFTP_PACKET_COUNT)
     {
@@ -600,9 +599,12 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
     }
 
     /*** Start of third-party processing. ***/
-    Profile tpPerfStats_profile_context(tpPerfStats);
+    bool isTpAppidDiscoveryDone = false;
+
     if (p->dsize || asd.config->mod_config->tp_allow_probes)
     {
+        Profile tpPerfStats_profile_context(tpPerfStats);
+
         //restart inspection by 3rd party
         if (!asd.tp_reinspect_by_initiator && (direction == APP_ID_FROM_INITIATOR) && check_reinspect(p, asd))
         {
@@ -622,6 +624,7 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                 Profile tpLibPerfStats_profile_context(tpLibPerfStats);
                 int tp_confidence;
                 ThirdPartyAppIDAttributeData tp_attribute_data;
+                vector<AppId> tp_proto_list;
                 if (!asd.tpsession)
                 {
                     const TPLibHandler* tph = TPLibHandler::get();
@@ -632,7 +635,7 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
 
                 asd.tpsession->process(*p, direction,
                     tp_proto_list, tp_attribute_data);
-                asd.tp_app_id=asd.tpsession->get_appid(tp_confidence);
+                tp_app_id = asd.tpsession->get_appid(tp_confidence);
 
                 isTpAppidDiscoveryDone = true;
 
@@ -647,46 +650,46 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                 if (appidDebug->is_active())
                     LogMessage("AppIdDbg %s 3rd party returned %d\n",
                         appidDebug->get_debug_session(),
-                        asd.tp_app_id);
+                        tp_app_id);
 
                 // For now, third party can detect HTTP/2 (w/o metadata) for
                 // some cases.  Treat it like HTTP w/ is_http2 flag set.
-                if ((asd.tp_app_id == APP_ID_HTTP2) && (tp_confidence == 100))
+                if ((tp_app_id == APP_ID_HTTP2) && (tp_confidence == 100))
                 {
                     if (appidDebug->is_active())
                         LogMessage("AppIdDbg %s 3rd party saw HTTP/2\n",
                             appidDebug->get_debug_session());
 
-                    asd.tp_app_id = APP_ID_HTTP;
+                    tp_app_id = APP_ID_HTTP;
                     asd.is_http2 = true;
                 }
                 // if the third-party appId must be treated as a client, do it now
-                if (asd.app_info_mgr->get_app_info_flags(asd.tp_app_id, APPINFO_FLAG_TP_CLIENT))
-                    asd.client.set_id(asd.tp_app_id);
+                if (asd.app_info_mgr->get_app_info_flags(tp_app_id, APPINFO_FLAG_TP_CLIENT))
+                    asd.client.set_id(tp_app_id);
 
                 process_third_party_results(asd, tp_confidence, tp_proto_list, tp_attribute_data);
 
                 if (asd.get_session_flags(APPID_SESSION_SSL_SESSION) &&
                     !(asd.scan_flags & SCAN_SSL_HOST_FLAG))
                 {
-                    setSSLSquelch(p, 1, asd.tp_app_id, asd.get_inspector());
+                    setSSLSquelch(p, 1, tp_app_id, asd.get_inspector());
                 }
 
-                if (asd.app_info_mgr->get_app_info_flags(asd.tp_app_id, APPINFO_FLAG_IGNORE))
+                if (asd.app_info_mgr->get_app_info_flags(tp_app_id, APPINFO_FLAG_IGNORE))
                 {
                     if (appidDebug->is_active())
                         LogMessage("AppIdDbg %s 3rd party ignored\n",
                             appidDebug->get_debug_session());
 
                     if (asd.get_session_flags(APPID_SESSION_HTTP_SESSION))
-                        asd.tp_app_id = APP_ID_HTTP;
+                        tp_app_id = APP_ID_HTTP;
                     else
-                        asd.tp_app_id = APP_ID_NONE;
+                        tp_app_id = APP_ID_NONE;
                 }
             }
             else
             {
-                asd.tp_app_id = APP_ID_NONE;
+                tp_app_id = APP_ID_NONE;
             }
 
             if (asd.tpsession and asd.tpsession->get_state() == TP_STATE_MONITORING)
@@ -695,15 +698,15 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                     TP_SESSION_FLAG_TUNNELING | TP_SESSION_FLAG_FUTUREFLOW);
             }
 
-            if (asd.tp_app_id == APP_ID_SSL &&
+            if (tp_app_id == APP_ID_SSL &&
                 (Stream::get_snort_protocol_id(p->flow) == snortId_for_ftp_data))
             {
                 //  If we see SSL on an FTP data channel set tpAppId back
                 //  to APP_ID_NONE so the FTP preprocessor picks up the flow.
-                asd.tp_app_id = APP_ID_NONE;
+                tp_app_id = APP_ID_NONE;
             }
 
-            if ( asd.tp_app_id > APP_ID_NONE
+            if ( tp_app_id > APP_ID_NONE
                 && (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT)
                 || asd.payload.get_id() > APP_ID_NONE) )
             {
@@ -715,16 +718,20 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                 {
                     snort_app_id = APP_ID_HTTP;
                     //data should never be APP_ID_HTTP
-                    if (asd.tp_app_id != APP_ID_HTTP)
-                        asd.tp_payload_app_id = asd.tp_app_id;
+                    if (tp_app_id != APP_ID_HTTP)
+                        asd.set_tp_payload_app_id(tp_app_id);
 
-                    asd.tp_app_id = APP_ID_HTTP;
+                    // FIXIT-H commented out this part because it will never get executed
+                    // need to make this function par with snort2x code, need to implement setTPAppIdData() and CheckDetectorCallback()
+                    // functions mainly. Set APP_ID_HTTP to asd's tp_session_id var from below
+                    tp_app_id = APP_ID_HTTP;
+
                     // Handle HTTP tunneling and SSL possibly then being used in that tunnel
-                    if (asd.tp_app_id == APP_ID_HTTP_TUNNEL)
+                   /* if (tp_app_id == APP_ID_HTTP_TUNNEL)
                         asd.set_payload_appid_data(APP_ID_HTTP_TUNNEL, NULL);
-                    if ((asd.payload.get_id() == APP_ID_HTTP_TUNNEL) && (asd.tp_app_id ==
+                    else if ((asd.payload.get_id() == APP_ID_HTTP_TUNNEL) && (tp_app_id ==
                         APP_ID_SSL))
-                        asd.set_payload_appid_data(APP_ID_HTTP_SSL_TUNNEL, NULL);
+                        asd.set_payload_appid_data(APP_ID_HTTP_SSL_TUNNEL, NULL);*/
 
                     hsession->process_http_packet(direction);
 
@@ -732,7 +739,7 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                     if (asd.payload.get_id() == APP_ID_HTTP_SSL_TUNNEL)
                         snort_app_id = APP_ID_SSL;
 
-                    if (asd.is_tp_appid_available() && asd.tp_app_id ==
+                    if (asd.is_tp_appid_available() && tp_app_id ==
                         APP_ID_HTTP
                         && !asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
                     {
@@ -760,37 +767,39 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                     AppId portAppId;
                     serverPort = (direction == APP_ID_FROM_INITIATOR) ? p->ptrs.dp : p->ptrs.sp;
                     portAppId = getSslServiceAppId(serverPort);
-                    if (asd.tp_app_id == APP_ID_SSL)
+                    if (tp_app_id == APP_ID_SSL)
                     {
-                        asd.tp_app_id = portAppId;
+                        tp_app_id = portAppId;
                         //SSL policy determines IMAPS/POP3S etc before appId sees first server
                         // packet
                         asd.service.set_port_service_id(portAppId);
                         if (appidDebug->is_active())
                             LogMessage("AppIdDbg %s SSL is service %d, portServiceAppId %d\n",
                                 appidDebug->get_debug_session(),
-                                asd.tp_app_id, asd.service.get_port_service_id());
+                                tp_app_id, asd.service.get_port_service_id());
                     }
                     else
                     {
-                        asd.tp_payload_app_id = asd.tp_app_id;
-                        asd.tp_app_id = portAppId;
+                        asd.set_tp_payload_app_id(tp_app_id);
+                        tp_app_id = portAppId;
                         if (appidDebug->is_active())
                             LogMessage("AppIdDbg %s SSL is %d\n", appidDebug->get_debug_session(),
-                                asd.tp_app_id);
+                                tp_app_id);
                     }
                     snort_app_id = APP_ID_SSL;
                 }
                 else
                 {
                     //for non-http protocols, tp id is treated like serviceId
-                    snort_app_id = asd.tp_app_id;
+                    snort_app_id = tp_app_id;
                 }
 
+                asd.set_tp_app_id(tp_app_id);
                 asd.sync_with_snort_protocol_id(snort_app_id, p);
             }
             else
             {
+                asd.set_tp_app_id(tp_app_id);
                 if (protocol != IpProtocol::TCP ||
                     (p->packet_flags & (PKT_STREAM_ORDER_OK | PKT_STREAM_ORDER_BAD)))
                 {
@@ -815,7 +824,6 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                 asd.tp_reinspect_by_initiator = false;     //toggle at OK response
         }
     }
-
 
     return isTpAppidDiscoveryDone;
 }

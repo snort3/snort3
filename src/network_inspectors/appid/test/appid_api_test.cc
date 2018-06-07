@@ -286,7 +286,7 @@ TEST(appid_api, is_appid_inspecting_session)
     val = appid_api.is_appid_inspecting_session(*flow);
     CHECK_TRUE(!val);
     mock_session->payload.set_id(APP_ID_NONE);
-    mock_session->tp_app_id = APP_ID_SSH;
+    mock_session->set_tp_app_id(APP_ID_SSH);
     val = appid_api.is_appid_inspecting_session(*flow);
     CHECK_TRUE(val);
 }
@@ -462,7 +462,7 @@ TEST(appid_api, produce_ha_state)
     val = appid_api.consume_ha_state(flow, (uint8_t*)&appHA, 0, IpProtocol::TCP, &ip, 1066);
     AppIdSession* session = (AppIdSession*)flow->get_flow_data(AppIdSession::inspector_id);
     CHECK_TRUE(session);
-    CHECK_TRUE(session->tp_app_id == appHA.appId[0]);
+    CHECK_TRUE(session->get_tp_app_id() == appHA.appId[0]);
     CHECK_TRUE(session->service.get_id() == appHA.appId[1]);
     CHECK_TRUE(session->client_inferred_service_id == appHA.appId[2]);
     CHECK_TRUE(session->service.get_port_service_id() == appHA.appId[3]);
