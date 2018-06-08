@@ -596,6 +596,11 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p, AppidS
             {
                 asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED);
                 asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
+
+                if ( (asd.is_tp_appid_available() ||
+                      asd.get_session_flags(APPID_SESSION_NO_TPI))
+                     && asd.payload.get_id() == APP_ID_NONE )
+                    asd.payload.set_id(APP_ID_UNKNOWN);
             }
         }
         else if (asd.is_tp_appid_available())
@@ -681,7 +686,15 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p, AppidS
         //to stop executing validator after service has been detected by RNA.
         if (asd.get_session_flags(APPID_SESSION_SERVICE_DETECTED |
             APPID_SESSION_CONTINUE) == APPID_SESSION_SERVICE_DETECTED)
+        {
             asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
+            if ( (asd.is_tp_appid_available() ||
+                  asd.get_session_flags(APPID_SESSION_NO_TPI)) &&
+                 asd.payload.get_id() == APP_ID_NONE )
+            {
+                asd.payload.set_id(APP_ID_UNKNOWN);
+            }
+        }
 
         AppIdDnsSession* dsession = asd.get_dns_session();
         if (asd.service.get_id() == APP_ID_DNS && asd.config->mod_config->dns_host_reporting

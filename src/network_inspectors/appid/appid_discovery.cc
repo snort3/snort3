@@ -141,7 +141,7 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
     AppidSessionDirection direction = APP_ID_FROM_INITIATOR;
     AppIdSession* asd = (AppIdSession*)p->flow->get_flow_data(AppIdSession::inspector_id);
 
-    if (!do_pre_discovery(p, &asd, inspector, protocol, direction)) return;
+    if ( !do_pre_discovery(p, &asd, inspector, protocol, direction) ) return;
 
     bool is_discovery_done = do_discovery(p, *asd, protocol, direction);
 
@@ -607,6 +607,8 @@ static void lookup_appid_by_host_port(AppIdSession& asd, Packet* p, IpProtocol p
             if (asd.tpsession)
                 asd.tpsession->reset();
 #endif
+            if ( asd.payload.get_id() == APP_ID_NONE)
+                asd.payload.set_id(APP_ID_UNKNOWN);
         }
     }
 }

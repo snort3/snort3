@@ -248,7 +248,7 @@ bool AppIdSession::is_tp_appid_done() const
 
 bool AppIdSession::is_tp_appid_available() const
 {
-    return false;
+    return true;
 }
 
 #endif

@@ -570,7 +570,8 @@ static inline void check_terminate_tp_module(AppIdSession& asd, uint16_t tpPktCo
     {
         if (asd.get_tp_app_id() == APP_ID_NONE)
             asd.set_tp_app_id(APP_ID_UNKNOWN);
-        if (asd.payload.get_id() == APP_ID_NONE)
+
+        if ( asd.service_disco_state == APPID_DISCO_STATE_FINISHED && asd.payload.get_id() == APP_ID_NONE )
             asd.payload.set_id(APP_ID_UNKNOWN);
 
         if (asd.tpsession)
@@ -582,7 +583,7 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
     Packet* p, AppidSessionDirection& direction)
 {
     if ( !TPLibHandler::have_tp() )
-	return true;
+        return true;
 
     AppId tp_app_id = asd.get_tp_app_id();
 

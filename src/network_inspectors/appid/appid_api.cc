@@ -241,13 +241,11 @@ bool AppIdApi::is_appid_available(Flow& flow)
 {
     if ( AppIdSession* asd = get_appid_session(flow) )
     {
-        if (asd->get_session_flags(APPID_SESSION_NO_TPI))
-            return true;
-        // FIXIT-M: If a third-party module is not available then this
-        //          should probably check if an appId has been discovered
-        //          by the local AppId module.
-        return asd->is_tp_appid_available();
-    }
+        return ( (asd->service.get_id() != APP_ID_NONE ||
+                  asd->payload.get_id() != APP_ID_NONE) &&
+                 (asd->is_tp_appid_available() ||
+                  asd->get_session_flags(APPID_SESSION_NO_TPI)) );
+    }   
 
     return false;
 }

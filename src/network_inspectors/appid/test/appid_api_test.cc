@@ -311,7 +311,7 @@ TEST(appid_api, is_appid_available)
 {
     bool val;
     val = appid_api.is_appid_available(*flow);
-    CHECK_FALSE(val);
+    CHECK_TRUE(val);
     mock_session->set_session_flags(APPID_SESSION_NO_TPI);
     val = appid_api.is_appid_available(*flow);
     CHECK_TRUE(val);

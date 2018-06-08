@@ -670,6 +670,11 @@ void AppIdSession::stop_rna_service_inspection(Packet* p, AppidSessionDirection 
     }
 
     service_disco_state = APPID_DISCO_STATE_FINISHED;
+
+    if ( (is_tp_appid_available() || get_session_flags(APPID_SESSION_NO_TPI) )
+	 and payload.get_id() == APP_ID_NONE )
+        payload.set_id(APP_ID_UNKNOWN);
+
     set_session_flags(APPID_SESSION_SERVICE_DETECTED);
     clear_session_flags(APPID_SESSION_CONTINUE);
 }
@@ -909,9 +914,9 @@ bool AppIdSession::is_tp_processing_done() const
 {
 #ifdef ENABLE_APPID_THIRD_PARTY
     if ( TPLibHandler::have_tp() &&
-	 !get_session_flags(APPID_SESSION_NO_TPI) &&
-	 (!is_tp_appid_done() ||
-	  get_session_flags(APPID_SESSION_APP_REINSPECT | APPID_SESSION_APP_REINSPECT_SSL)))
+         !get_session_flags(APPID_SESSION_NO_TPI) &&
+         (!is_tp_appid_done() ||
+          get_session_flags(APPID_SESSION_APP_REINSPECT | APPID_SESSION_APP_REINSPECT_SSL)))
         return false;
 #endif
 
@@ -936,5 +941,5 @@ bool AppIdSession::is_tp_appid_available() const
     }
 #endif
 
-    return false;
+    return true;
 }
