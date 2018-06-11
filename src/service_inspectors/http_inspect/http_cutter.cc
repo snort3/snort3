@@ -345,6 +345,7 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
                 {
                     events->create_event(EVENT_BROKEN_CHUNK);
                     curr_state = CHUNK_BAD;
+                    k--;
                 }
                 break;
             }
@@ -397,6 +398,7 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
                 *infractions += INF_CHUNK_BAD_CHAR;
                 events->create_event(EVENT_BROKEN_CHUNK);
                 curr_state = CHUNK_BAD;
+                k--;
             }
             else
             {
@@ -407,6 +409,7 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
                     *infractions += INF_CHUNK_TOO_LARGE;
                     events->create_event(EVENT_BROKEN_CHUNK);
                     curr_state = CHUNK_BAD;
+                    k--;
                 }
             }
             break;
@@ -435,6 +438,7 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
                 *infractions += INF_CHUNK_BAD_CHAR;
                 events->create_event(EVENT_BROKEN_CHUNK);
                 curr_state = CHUNK_BAD;
+                k--;
             }
             break;
         case CHUNK_OPTIONS:
@@ -462,6 +466,7 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
                 *infractions += INF_CHUNK_LONE_CR;
                 events->create_event(EVENT_BROKEN_CHUNK);
                 curr_state = CHUNK_BAD;
+                k--;
                 break;
             }
             if (expected > 0)
@@ -480,6 +485,7 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
                 *infractions += INF_CHUNK_NO_LENGTH;
                 events->create_event(EVENT_BROKEN_CHUNK);
                 curr_state = CHUNK_BAD;
+                k--;
             }
             break;
         case CHUNK_DATA:
@@ -497,7 +503,6 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
             }
             if ((data_seen += skip_amount) == flow_target)
             {
-                // FIXIT-M need to randomize slice point
                 data_seen = 0;
                 num_flush = k+1;
                 new_section = true;
@@ -523,6 +528,7 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
                 *infractions += INF_CHUNK_BAD_END;
                 events->create_event(EVENT_BROKEN_CHUNK);
                 curr_state = CHUNK_BAD;
+                k--;
             }
             break;
         case CHUNK_DCRLF2:
@@ -553,13 +559,19 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
                 num_flush = length;
                 return SCAN_DISCARD_PIECE;
             }
+
+            // When chunk parsing breaks down and we first enter CHUNK_BAD state, it may happen
+            // that there were chunk header bytes between the last good chunk and the point where
+            // the failure occurred. These will not have been counted in data_seen because we
+            // planned to delete them during reassembly. Because they are not part of a valid chunk
+            // they will be reassembled after all. This will overrun the flow_target making the
+            // message section a little bigger than planned. It's not important.
             uint32_t skip_amount = length-k;
             skip_amount = (skip_amount <= flow_target-data_seen) ? skip_amount :
                 flow_target-data_seen;
             k += skip_amount - 1;
             if ((data_seen += skip_amount) == flow_target)
             {
-                // FIXIT-M need to randomize slice point
                 data_seen = 0;
                 num_flush = k+1;
                 new_section = true;
@@ -573,6 +585,7 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
         num_flush = length;
         return SCAN_DISCARD_PIECE;
     }
+
     octets_seen += length;
     return SCAN_NOTFOUND;
 }
