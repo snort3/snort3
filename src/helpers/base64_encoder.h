@@ -30,6 +30,8 @@
 #include <cstdint>
 #include "main/snort_types.h"
 
+namespace snort
+{
 class SO_PUBLIC Base64Encoder
 {
 public:
@@ -47,6 +49,6 @@ private:
     Steps step;
     uint8_t state;
 };
-
+}
 #endif
 

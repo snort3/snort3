@@ -119,7 +119,7 @@ FileContext* FileCache::add(const FileHashKey& hashKey, int64_t timeout)
      * after that anyway because the file that
      * caused this will be gone.
      */
-    time_t now = packet_time();
+    time_t now = snort::packet_time();
     new_node.expires = now + timeout;
     new_node.file = new FileContext;
 

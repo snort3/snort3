@@ -37,16 +37,19 @@
 
 // Mocks
 
+namespace snort
+{
 unsigned get_instance_id() { return 3; }
+
+FlowData::FlowData(unsigned, Inspector*) { }
+FlowData::~FlowData() = default;
+}
 
 class AppIdInspector
 {
 public:
     AppIdInspector() = default;
 };
-
-FlowData::FlowData(unsigned, Inspector*) { }
-FlowData::~FlowData() = default;
 
 AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t, AppIdInspector& inspector)
     : FlowData(0), inspector(inspector) { }

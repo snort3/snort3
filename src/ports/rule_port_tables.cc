@@ -39,7 +39,7 @@ PortProto::PortProto()
     nfp = PortObjectNew();
 
     if ( !src or !dst or !any or !nfp )
-        ParseAbort("can't allocate port structs");
+        snort::ParseAbort("can't allocate port structs");
 
    // someday these could be read from snort.conf, something like...
    // 'config portlist: large-rule-count <val>'
@@ -70,7 +70,7 @@ RulePortTables* PortTablesNew()
     RulePortTables* rpt = new RulePortTables;
 
     if ( !(rpt->svc_any = PortObjectNew()) )
-        ParseAbort("ParseRulesFile udp any-any PortObjectNew() failed");
+        snort::ParseAbort("ParseRulesFile udp any-any PortObjectNew() failed");
 
     PortObjectAddPortAny(rpt->svc_any);
 

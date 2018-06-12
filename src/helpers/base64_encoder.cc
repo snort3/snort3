@@ -34,6 +34,8 @@
 #include "catch/snort_catch.h"
 #endif
 
+using namespace snort;
+
 static inline char b64(uint8_t idx)
 {
     static const char* encoding =

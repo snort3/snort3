@@ -38,6 +38,8 @@
 #include "target_based/snort_protocols.h"
 #include "utils/util_cstring.h"
 
+using namespace snort;
+
 static AppInfoTable app_info_table;
 static AppInfoTable app_info_service_table;
 static AppInfoTable app_info_client_table;

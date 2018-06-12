@@ -136,7 +136,7 @@ void ThreadConfig::set_thread_affinity(SThreadType type, unsigned id, CpuSet* cp
         thread_affinity[key] = cpuset;
     }
     else
-        ParseWarning(WARN_CONF, "This platform does not support setting thread affinity.\n");
+        snort::ParseWarning(WARN_CONF, "This platform does not support setting thread affinity.\n");
 }
 
 void ThreadConfig::implement_thread_affinity(SThreadType type, unsigned id)
@@ -158,13 +158,13 @@ void ThreadConfig::implement_thread_affinity(SThreadType type, unsigned id)
     current_cpuset = hwloc_bitmap_alloc();
     hwloc_get_cpubind(topology, current_cpuset, HWLOC_CPUBIND_THREAD);
     if (!hwloc_bitmap_isequal(current_cpuset, desired_cpuset))
-        LogMessage("Binding thread %u (type %u) to %s.\n", id, type, s);
+        snort::LogMessage("Binding thread %u (type %u) to %s.\n", id, type, s);
     hwloc_bitmap_free(current_cpuset);
 
     if (hwloc_set_cpubind(topology, desired_cpuset, HWLOC_CPUBIND_THREAD))
     {
-        FatalError("Failed to pin thread %u (type %u) to %s: %s (%d)\n",
-                id, type, s, get_error(errno), errno);
+        snort::FatalError("Failed to pin thread %u (type %u) to %s: %s (%d)\n",
+                id, type, s, snort::get_error(errno), errno);
     }
 
     free(s);

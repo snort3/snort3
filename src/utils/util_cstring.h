@@ -29,6 +29,8 @@
 
 #include "main/snort_types.h"
 
+namespace snort
+{
 #define SNORT_SNPRINTF_SUCCESS 0
 #define SNORT_SNPRINTF_TRUNCATION 1
 #define SNORT_SNPRINTF_ERROR (-1)
@@ -131,6 +133,6 @@ inline int SnortStrToU32(const char* buffer, char** endptr,
 
     return 0;
 }
-
+}
 #endif
 

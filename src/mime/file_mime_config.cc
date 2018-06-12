@@ -29,6 +29,8 @@
 #include "log/messages.h"
 #include "file_api/file_service.h"
 
+using namespace snort;
+
 void DecodeConfig::set_ignore_data(bool ignored)
 {
     ignore_data = ignored;

@@ -40,12 +40,14 @@ private:
     class DecodeBuffer* buffer = nullptr;
 };
 
+namespace snort
+{
 // FIXIT-L inbuf should probably be const uint8_t*
 SO_PUBLIC int sf_base64decode(
     uint8_t* inbuf, uint32_t inbuf_size,
     uint8_t* outbuf, uint32_t outbuf_size,
     uint32_t* bytes_written
     );
-
+}
 #endif
 

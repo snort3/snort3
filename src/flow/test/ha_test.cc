@@ -152,8 +152,11 @@ void Stream::delete_flow(const FlowKey* flowkey)
     s_delete_session_called = true;
 }
 
+namespace snort
+{
 void ErrorMessage(const char*,...) { }
 void LogMessage(const char*,...) { }
+}
 
 void packet_gettimeofday(struct timeval* tv)
 { *tv = s_packet_time; }

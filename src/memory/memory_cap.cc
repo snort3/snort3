@@ -40,6 +40,8 @@
 #include "catch/snort_catch.h"
 #endif
 
+using namespace snort;
+
 namespace memory
 {
 

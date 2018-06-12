@@ -471,6 +471,6 @@ inline std::ostream& operator<<(std::ostream& os, const SfIp* addr)
 
 // FIXIT-L X This should be in utils_net if anywhere, but that makes it way harder to link into unit tests
 SO_PUBLIC const char* snort_inet_ntop(int family, const void* ip_raw, char* buf, int bufsize);
-}
+} // namespace snort
 #endif
 

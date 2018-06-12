@@ -41,7 +41,7 @@ void PrintAllInterfaces()
     int j = 1;
 
     if (pcap_findalldevs(&alldevs, errorbuf) == -1)
-        FatalError("Could not get device list: %s.", errorbuf);
+        snort::FatalError("Could not get device list: %s.", errorbuf);
 
     printf("Index\tDevice\tPhysical Address\tIP Address\tDescription\n");
     printf("-----\t------\t----------------\t----------\t-----------\n");

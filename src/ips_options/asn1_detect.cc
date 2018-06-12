@@ -325,9 +325,7 @@ int Asn1DoDetect(const uint8_t* data, uint16_t dsize, ASN1_CTXT* ctxt, const uin
     {
     case REL_OFFSET:
         if (!rel_ptr)
-        {
             return 0;
-        }
 
         /*
         **  Check that it is in bounds first.
@@ -336,16 +334,12 @@ int Asn1DoDetect(const uint8_t* data, uint16_t dsize, ASN1_CTXT* ctxt, const uin
         **  Bound checked also after offset is applied
         */
         if (!inBounds(start, end + 1, rel_ptr))
-        {
             return 0;
-        }
 
         offset = rel_ptr+ctxt->offset;
 
         if (!inBounds(start, end, offset))
-        {
             return 0;
-        }
 
         break;
 
@@ -354,9 +348,7 @@ int Asn1DoDetect(const uint8_t* data, uint16_t dsize, ASN1_CTXT* ctxt, const uin
         offset = start+ctxt->offset;
 
         if (!inBounds(start, end, offset))
-        {
             return 0;
-        }
 
         break;
     }
@@ -369,9 +361,7 @@ int Asn1DoDetect(const uint8_t* data, uint16_t dsize, ASN1_CTXT* ctxt, const uin
 
     iRet = asn1_decode(offset, size, &asn1);
     if (iRet && !asn1)
-    {
         return 0;
-    }
 
     /*
     **  Let's do detection now.

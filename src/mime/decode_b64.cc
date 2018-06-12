@@ -47,7 +47,7 @@ DecodeResult B64Decode::decode_data(const uint8_t* start, const uint8_t* end)
 
     uint32_t encode_avail = buffer->get_encode_avail() - buffer->get_prev_encoded_bytes();
 
-    if (sf_strip_CRLF(start, (end-start), buffer->get_encode_buff() + buffer->get_prev_encoded_bytes(),
+    if (snort::sf_strip_CRLF(start, (end-start), buffer->get_encode_buff() + buffer->get_prev_encoded_bytes(),
         encode_avail, &act_encode_size) != 0)
     {
         reset_decode_state();
@@ -68,7 +68,7 @@ DecodeResult B64Decode::decode_data(const uint8_t* start, const uint8_t* end)
     else
         buffer->reset_saved();
 
-    if (sf_base64decode(buffer->get_encode_buff(), act_encode_size,
+    if (snort::sf_base64decode(buffer->get_encode_buff(), act_encode_size,
         buffer->get_decode_buff(), buffer->get_decode_avail(), &act_decode_size) != 0)
     {
         reset_decode_state();
@@ -118,6 +118,8 @@ uint8_t sf_decode64tab[256] =
     100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100
 };
 
+namespace snort
+{
 /* base64decode assumes the input data terminates with '=' and/or at the end of the input buffer
  * at inbuf_size.  If extra characters exist within inbuf before inbuf_size is reached, it will
  * happily decode what it can and skip over what it can't.  This is consistent with other decoders
@@ -212,4 +214,5 @@ int sf_base64decode(uint8_t* inbuf, uint32_t inbuf_size, uint8_t* outbuf, uint32
     else
         return(0);
 }
+} // namespace snort
 

@@ -130,7 +130,7 @@ struct SMTP_PROTO_CONF
     int max_response_line_len = 0;
     int xlink2state;
     MailLogConfig log_config;
-    DecodeConfig decode_conf;
+    snort::DecodeConfig decode_conf;
 
     uint32_t xtra_filename_id;
     uint32_t xtra_mfrom_id;

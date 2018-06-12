@@ -266,7 +266,10 @@ static const Parameter search_engine_params[] =
 #define search_engine_help \
     "configure fast pattern matcher"
 
+namespace snort
+{
 THREAD_LOCAL PatMatQStat pmqs;
+}
 
 const PegInfo mpse_pegs[] =
 {

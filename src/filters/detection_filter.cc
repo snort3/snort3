@@ -30,6 +30,8 @@
 
 #include "sfthd.h"
 
+using namespace snort;
+
 static THREAD_LOCAL XHash* detection_filter_hash = nullptr;
 
 DetectionFilterConfig* DetectionFilterConfigNew()
@@ -96,7 +98,7 @@ void detection_filter_term()
     if ( !detection_filter_hash )
         return;
 
-    xhash_delete(detection_filter_hash);
+    snort::xhash_delete(detection_filter_hash);
     detection_filter_hash = nullptr;
 }
 

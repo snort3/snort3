@@ -633,21 +633,21 @@ void UriNormalizer::load_unicode_map(uint8_t map[65536], const char* filename, i
     FILE* file = fopen(filename, "r");
     if (file == nullptr)
     {
-        ParseError("Cannot open unicode map file %s", filename);
+        snort::ParseError("Cannot open unicode map file %s", filename);
         return;
     }
 
     // Advance file to the desired code page
     if (!advance_to_code_page(file, code_page))
     {
-        ParseError("Did not find code page %d in unicode map file %s", code_page, filename);
+        snort::ParseError("Did not find code page %d in unicode map file %s", code_page, filename);
         fclose(file);
         return;
     }
 
     if (!map_code_points(file, map))
     {
-        ParseError("Error while reading code page %d in unicode map file %s", code_page, filename);
+        snort::ParseError("Error while reading code page %d in unicode map file %s", code_page, filename);
         fclose(file);
         return;
     }

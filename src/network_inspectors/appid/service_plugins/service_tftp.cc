@@ -31,6 +31,8 @@
 #include "appid_debug.h"
 #include "appid_inspector.h"
 
+using namespace snort;
+
 #define TFTP_PORT   69
 #define TFTP_COUNT_THRESHOLD 1
 #define TFTP_MAX_PACKET_SIZE 512

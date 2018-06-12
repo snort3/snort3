@@ -34,6 +34,8 @@
 #include "piglet_output.h"
 #include "piglet_utils.h"
 
+using namespace snort;
+
 namespace Piglet
 {
 using namespace std;

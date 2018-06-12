@@ -650,7 +650,7 @@ static int fpCreateInitRuleMap(
     /* Process src PORT groups */
     if ( src )
     {
-        for ( GHashNode* node=ghash_findfirst(src->pt_mpxo_hash);
+        for ( GHashNode* node = ghash_findfirst(src->pt_mpxo_hash);
             node;
             node=ghash_findnext(src->pt_mpxo_hash) )
         {

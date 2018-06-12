@@ -47,6 +47,8 @@ struct decode_utf_state_t
     CharsetCode charset;
 };
 
+namespace snort
+{
 class SO_PUBLIC UtfDecodeSession
 {
 public:
@@ -69,4 +71,6 @@ private:
     bool DecodeUTF32BE(const uint8_t* src, unsigned int src_len, uint8_t* dst, unsigned int dst_len, int* bytes_copied);
     void determine_charset(const uint8_t** src, unsigned int* src_len);
 };
+}
+
 #endif

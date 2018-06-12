@@ -34,6 +34,8 @@
 #include "port_item.h"
 #include "port_utils.h"
 
+using namespace snort;
+
 //-------------------------------------------------------------------------
 // PortObject - public
 //-------------------------------------------------------------------------
@@ -115,7 +117,7 @@ int PortObjectAddItem(PortObject* po, PortObjectItem* poi, int* errflag)
         p=(PortObjectItem*)sflist_next(&pos) )
     {
         if ((p->lport == poi->lport) && (p->hport == poi->hport))
-            ParseWarning(WARN_RULES, "duplicate ports in list");
+            snort::ParseWarning(WARN_RULES, "duplicate ports in list");
     }
 
     sflist_add_tail(po->item_list, poi);
@@ -551,7 +553,7 @@ void PortObjectPrintPortsRaw(PortObject* po)
 
     SnortSnprintfAppend(buf, bufsize, " ]");
 
-    LogMessage("%s", buf);
+    snort::LogMessage("%s", buf);
 
     snort_free(buf);
 }
@@ -638,7 +640,7 @@ void PortObjectPrintEx(PortObject* po, po_print_f print_index_map)
     }
     SnortSnprintfAppend(po_print_buf, bufsize, "  ]\n }\n");
 
-    LogMessage("%s", po_print_buf);
+    snort::LogMessage("%s", po_print_buf);
     snort_free(rlist);
 }
 

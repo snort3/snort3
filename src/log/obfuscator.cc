@@ -24,6 +24,8 @@
 
 #include "obfuscator.h"
 
+using namespace snort;
+
 bool Obfuscator::first(ObfuscatorBlock &b)
 {
     if ( blocks.empty() )

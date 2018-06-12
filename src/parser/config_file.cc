@@ -67,7 +67,7 @@ static int GetChecksumFlags(const char* args)
     if (args == nullptr)
         return CHECKSUM_FLAG__ALL;
 
-    toks = mSplit(args, " \t", 10, &num_toks, 0);
+    toks = snort::mSplit(args, " \t", 10, &num_toks, 0);
     for (i = 0; i < num_toks; i++)
     {
         if (strcasecmp(toks[i], CHECKSUM_MODE_OPT__ALL) == 0)
@@ -132,7 +132,7 @@ static int GetChecksumFlags(const char* args)
         }
         else
         {
-            ParseError("unknown command line checksum option: %s.", toks[i]);
+            snort::ParseError("unknown command line checksum option: %s.", toks[i]);
             return ret_flags;
         }
     }
@@ -160,7 +160,7 @@ static int GetChecksumFlags(const char* args)
         ret_flags = negative_flags;
     }
 
-    mSplitFree(&toks, num_toks);
+    snort::mSplitFree(&toks, num_toks);
     return ret_flags;
 }
 

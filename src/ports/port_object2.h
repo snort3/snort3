@@ -30,6 +30,7 @@
 // PortObject2 is similar to PortObject
 //-------------------------------------------------------------------------
 
+
 struct PortObject;
 
 struct PortObject2
@@ -40,7 +41,7 @@ struct PortObject2
     int id;                     /* internal tracking - compiling sets this value */
 
     SF_LIST* item_list;         /* list of port and port-range items */
-    GHash* rule_hash;         /* hash of rule (rule-indexes) in use */
+    snort::GHash* rule_hash;         /* hash of rule (rule-indexes) in use */
 
     PortBitSet* port_list;      /* for collecting ports that use this object */
     struct PortGroup* group;    /* PortGroup based on rule_hash  */

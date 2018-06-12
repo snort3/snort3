@@ -29,6 +29,8 @@
 #include "main/snort_debug.h"
 #include "utils/util.h"
 
+using namespace snort;
+
 #define SIP_SEPERATORS       "()<>@,;:\\/[]?={}\" "
 
 static SIPMethodNode* SIP_AddMethodToList(

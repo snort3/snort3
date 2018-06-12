@@ -79,11 +79,14 @@ struct AuxCount
 
 extern ProcessCount proc_stats;
 extern THREAD_LOCAL AuxCount aux_counts;
-extern SO_PUBLIC THREAD_LOCAL PacketCount pc;
 
 extern const PegInfo daq_names[];
 extern const PegInfo pc_names[];
 extern const PegInfo proc_names[];
+
+namespace snort
+{
+extern SO_PUBLIC THREAD_LOCAL PacketCount pc;
 
 SO_PUBLIC PegCount get_packet_number();
 
@@ -93,6 +96,7 @@ SO_PUBLIC void LogCount(const char*, uint64_t, FILE* = stdout);
 
 SO_PUBLIC void LogStat(const char*, uint64_t n, uint64_t tot, FILE* = stdout);
 SO_PUBLIC void LogStat(const char*, double, FILE* = stdout);
+}
 
 void sum_stats(PegCount* sums, PegCount* counts, unsigned n);
 void show_stats(PegCount*, const PegInfo*, const char* module_name = nullptr);

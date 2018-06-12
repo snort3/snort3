@@ -30,10 +30,11 @@
 
 using namespace snort;
 
+namespace snort
+{
 // Fake snort_strdup() because sfutil dependencies suck
 char* snort_strdup(const char* str)
-{
-    return strdup(str);
+{ return strdup(str); }
 }
 
 TEST_GROUP(host_tracker)

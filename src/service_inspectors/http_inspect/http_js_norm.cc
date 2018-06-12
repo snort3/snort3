@@ -27,6 +27,7 @@
 #include "utils/safec.h"
 
 using namespace HttpEnums;
+using namespace snort;
 
 HttpJsNorm::HttpJsNorm(int max_javascript_whitespaces_, const HttpParaList::UriParam& uri_param_) :
     max_javascript_whitespaces(max_javascript_whitespaces_), uri_param(uri_param_),

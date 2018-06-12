@@ -114,6 +114,8 @@ int hashfcn_set_keyops(HashFnc* h,
     return -1;
 }
 
+namespace snort
+{
 void mix_str(
     uint32_t& a, uint32_t& b, uint32_t& c,
     const char* s, unsigned n)
@@ -204,4 +206,4 @@ size_t str_to_hash(const uint8_t *str, int length )
     finalize(a,b,c);
     return c;
 }
-
+} //namespace snort

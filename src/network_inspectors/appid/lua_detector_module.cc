@@ -39,6 +39,8 @@
 #include "utils/sflsq.h"
 #include "log/messages.h"
 
+using namespace snort;
+
 #define MAX_LUA_DETECTOR_FILENAME_LEN 1024
 #define MAX_DEFAULT_NUM_LUA_TRACKERS  10000
 #define AVG_LUA_TRACKER_SIZE_IN_BYTES 740

@@ -31,6 +31,8 @@
 
 #include "util.h"
 
+namespace snort
+{
 KMAP* KMapNew(KMapUserFreeFunc userfree)
 {
     KMAP* km = (KMAP*)snort_calloc(sizeof(KMAP));
@@ -404,10 +406,13 @@ void* KMapFindNext(KMAP* km)
     return km->keynext->userdata;
 }
 
+} //namespace snort
+
 #ifdef KMAP_MAIN
 /*
 *
 */
+using namespace snort;
 int main(int argc, char** argv)
 {
     int i,n=10;

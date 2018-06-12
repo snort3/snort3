@@ -44,6 +44,8 @@
 #include "ft_main.h"
 #include "ftpp_return_codes.h"
 
+using namespace snort;
+
 /*
  * Function: ftp_bounce_lookup_init(BOUNCE_LOOKUP **BounceLookup)
  *

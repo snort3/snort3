@@ -91,7 +91,7 @@ public:
             table << StatsTable::HEADER;
         }
 
-        LogMessage("%s", ss.str().c_str());
+        snort::LogMessage("%s", ss.str().c_str());
 
         print_recursive(root, root, 1, count, max_depth);
         print_row(root, root, 0, 0);
@@ -159,7 +159,7 @@ public:
                 table << cur.view.pct_caller() << cur.view.pct_of(root.view.get_stats());
         }
 
-        LogMessage("%s", ss.str().c_str());
+        snort::LogMessage("%s", ss.str().c_str());
     }
 
 private:

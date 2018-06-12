@@ -33,16 +33,18 @@
 
 using namespace snort;
 
+namespace snort
+{
 // Stubs whose sole purpose is to make the test code link
 void ParseWarning(WarningGroup, const char*, ...) {}
 void ParseError(const char*, ...) {}
+void Value::get_bits(std::bitset<256ul>&) const {}
+int DetectionEngine::queue_event(unsigned int, unsigned int, Actions::Type) { return 0; }
+}
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats( PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) { }
 void show_stats(SimpleStats*, const char*) { }
-
-void Value::get_bits(std::bitset<256ul>&) const {}
-int DetectionEngine::queue_event(unsigned int, unsigned int, Actions::Type) { return 0; }
 
 HttpJsNorm::HttpJsNorm(int, const HttpParaList::UriParam& uri_param_) :
     max_javascript_whitespaces(0), uri_param(uri_param_), javascript_search_mpse(nullptr),

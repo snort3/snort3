@@ -152,6 +152,8 @@
 #include "utils/stats.h"
 #include "utils/util.h"
 
+using namespace snort;
+
 /*
  * Used to initialize last state, states are limited to 0-16M
  * so this will not conflict.

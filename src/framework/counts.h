@@ -49,7 +49,11 @@ struct PegInfo
     const char* help;
 };
 
+
+namespace snort
+{
 SO_PUBLIC extern const struct PegInfo simple_pegs[];
+} // namespace snort
 
 #define array_size(a) (sizeof(a)/sizeof((a)[0]))
 

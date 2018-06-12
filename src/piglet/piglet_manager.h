@@ -35,10 +35,7 @@ namespace Piglet
 struct Chunk;
 struct Api;
 class BasePlugin;
-}
 
-namespace Piglet
-{
 class Manager
 {
 public:

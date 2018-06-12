@@ -29,6 +29,7 @@
 #include "http_test_manager.h"
 #include "http_transaction.h"
 
+using namespace snort;
 using namespace HttpEnums;
 
 unsigned HttpFlowData::inspector_id = 0;

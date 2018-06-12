@@ -37,6 +37,8 @@
 #define DSTATE_THIRD 2
 #define DSTATE_FOURTH 3
 
+using namespace snort;
+
 UtfDecodeSession::UtfDecodeSession()
 {
     init_decode_utf_state();

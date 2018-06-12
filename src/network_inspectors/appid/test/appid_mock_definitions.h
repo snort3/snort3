@@ -29,6 +29,8 @@ struct ThirdPartyAppIDModule;
 AppIdConfig* pAppidActiveConfig = nullptr;
 ThirdPartyAppIDModule* tp_appid_module = nullptr;
 
+namespace snort
+{
 char* snort_strndup(const char* src, size_t dst_size)
 {
     return strndup(src, dst_size);
@@ -43,6 +45,14 @@ char* snort_strdup(const char* str)
     return p;
 }
 
+void ErrorMessage(const char*,...) { }
+void WarningMessage(const char*,...) { }
+void LogMessage(const char*,...) { }
+void ParseWarning(WarningGroup, const char*, ...) { }
+
+void LogLabel(const char*, FILE*) {}
+}
+
 void Field::set(int32_t length, const uint8_t* start, bool own_the_buffer_)
 {
     strt = start;
@@ -52,12 +62,6 @@ void Field::set(int32_t length, const uint8_t* start, bool own_the_buffer_)
 
 Field global_field;
 
-void ErrorMessage(const char*,...) { }
-void WarningMessage(const char*,...) { }
-void LogMessage(const char*,...) { }
-void ParseWarning(WarningGroup, const char*, ...) { }
-
-void LogLabel(const char*, FILE*) {}
 
 int ServiceDiscovery::add_ftp_service_state(AppIdSession&)
 {

@@ -26,6 +26,8 @@
 #include <openssl/md5.h>
 #include <openssl/sha.h>
 
+namespace snort
+{
 void sha256(const unsigned char* data, size_t size, unsigned char* digest)
 {
     SHA256_CTX c;
@@ -50,3 +52,4 @@ void md5(const unsigned char* data, size_t size, unsigned char* digest)
     MD5_Final(digest, &c);
 }
 
+}

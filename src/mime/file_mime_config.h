@@ -33,6 +33,8 @@
 #define MAX_DEPTH                     65535
 #define MIN_DEPTH                     (-1)
 
+namespace snort
+{
 class SO_PUBLIC DecodeConfig
 {
 public:
@@ -66,6 +68,6 @@ private:
     int64_t file_depth = MIN_DEPTH;
     bool decode_enabled = true;
 };
-
+}
 #endif
 

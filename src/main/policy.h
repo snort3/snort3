@@ -37,12 +37,17 @@ typedef unsigned char uuid_t[16];
 
 #include "framework/data_bus.h"
 
+namespace snort
+{
+struct GHash;
+}
+
 struct PortTable;
 struct vartable_t;
 struct sfip_var_t;
 
 typedef unsigned int PolicyId;
-typedef struct GHash PortVarTable;
+typedef struct snort::GHash PortVarTable;
 
 enum PolicyMode
 {

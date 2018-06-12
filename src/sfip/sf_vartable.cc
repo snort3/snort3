@@ -39,6 +39,8 @@
 #include "catch/snort_catch.h"
 #endif
 
+using namespace snort;
+
 vartable_t* sfvt_alloc_table()
 {
     vartable_t* table = (vartable_t*)snort_calloc(sizeof(vartable_t));
@@ -193,7 +195,7 @@ SfIpRet sfvt_define(vartable_t* table, const char* name, const char* value)
 
     len = strlen(name) + strlen(value) + 2;
     buf = (char*)snort_alloc(len);
-    SnortSnprintf(buf, len, "%s %s", name, value);
+    snort::SnortSnprintf(buf, len, "%s %s", name, value);
 
     ret = sfvt_add_str(table, buf, &ipret);
     if ((ret == SFIP_SUCCESS) || (ret == SFIP_DUPLICATE))

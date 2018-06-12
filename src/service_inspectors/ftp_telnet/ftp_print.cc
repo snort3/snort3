@@ -40,6 +40,8 @@
 #include "ftp_parse.h"
 #include "ftpp_return_codes.h"
 
+using namespace snort;
+
 int PrintConfOpt(bool on, const char* Option)
 {
     LogMessage("    %s: %s\n", Option, on ? "ON" : "OFF");

@@ -36,6 +36,8 @@
 
 #include "file_capture.h"
 
+using namespace snort;
+
 THREAD_LOCAL FileCounts file_counts;
 THREAD_LOCAL FileStats* file_stats = nullptr;
 

@@ -30,6 +30,8 @@
 #include "log/messages.h"
 #include "main/thread.h"
 
+using namespace snort;
+
 #define HASH_NUM_ROWS (1024)
 
 static THREAD_LOCAL XHash* lengthCache = nullptr;

@@ -103,7 +103,7 @@ private:
     /*properties*/
     IdentifierNode* identifier_root = nullptr; /*Root of magic tries*/
     uint32_t memory_used = 0; /*Track memory usage*/
-    GHash* identifier_merge_hash = nullptr;
+    snort::GHash* identifier_merge_hash = nullptr;
     FileMagicRule file_magic_rules[FILE_ID_MAX + 1];
     IDMemoryBlocks id_memory_blocks;
 };

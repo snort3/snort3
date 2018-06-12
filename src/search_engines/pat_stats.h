@@ -37,7 +37,9 @@ struct PatMatQStat
     PegCount matched_bytes;
 };
 
+namespace snort
+{
 SO_PUBLIC extern THREAD_LOCAL PatMatQStat pmqs;
-
+}
 #endif
 

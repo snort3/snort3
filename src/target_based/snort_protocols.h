@@ -58,6 +58,8 @@ inline bool is_service_protocol(SnortProtocolId proto)
 { return proto > SNORT_PROTO_UDP; }
 
 // A mapping between names and IDs.
+namespace snort
+{
 class SO_PUBLIC ProtocolReference
 {
 public:
@@ -88,6 +90,6 @@ private:
 
     void init(ProtocolReference* old_proto_ref);
 };
-
+}
 #endif
 

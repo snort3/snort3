@@ -72,6 +72,8 @@ typedef struct _kmap
     int nocase;
 } KMAP;
 
+namespace snort
+{
 SO_PUBLIC KMAP* KMapNew(KMapUserFreeFunc userfree);
 SO_PUBLIC void KMapDelete(KMAP* km);
 
@@ -81,6 +83,6 @@ SO_PUBLIC int KMapAdd(KMAP* km, void* key, int ksize, void* userdata);
 SO_PUBLIC void* KMapFind(KMAP* km, void* key, int ksize);
 SO_PUBLIC void* KMapFindFirst(KMAP* km);
 SO_PUBLIC void* KMapFindNext(KMAP* km);
-
+}
 #endif
 

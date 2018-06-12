@@ -34,6 +34,8 @@
 #include "port_object.h"
 #include "port_utils.h"
 
+using namespace snort;
+
 #define PO_EXTRA_RULE_CNT 25
 
 //-------------------------------------------------------------------------

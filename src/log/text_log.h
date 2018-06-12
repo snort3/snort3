@@ -46,6 +46,8 @@
 // or some such to get stdout or syslog
 struct TextLog;
 
+namespace snort
+{
 SO_PUBLIC TextLog* TextLog_Init(
     const char* name, unsigned int maxBuf = 0, size_t maxFile = 0);
 SO_PUBLIC void TextLog_Term(TextLog*);
@@ -59,6 +61,7 @@ SO_PUBLIC bool TextLog_Flush(TextLog* const);
 SO_PUBLIC int TextLog_Tell(TextLog* const);
 SO_PUBLIC int TextLog_Avail(TextLog* const);
 SO_PUBLIC void TextLog_Reset(TextLog* const);
+} // namespace snort
 
 /*-------------------------------------------------------------------
   * helper functions
@@ -66,12 +69,12 @@ SO_PUBLIC void TextLog_Reset(TextLog* const);
   */
 inline bool TextLog_NewLine(TextLog* const txt)
 {
-    return TextLog_Putc(txt, '\n');
+    return snort::TextLog_Putc(txt, '\n');
 }
 
 inline bool TextLog_Puts(TextLog* const txt, const char* str)
 {
-    return TextLog_Write(txt, str, strlen(str));
+    return snort::TextLog_Write(txt, str, strlen(str));
 }
 
 #endif

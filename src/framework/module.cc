@@ -196,15 +196,17 @@ bool Module::verified_end(const char* fqn, int idx, SnortConfig* c)
     return end(fqn, idx, c);
 }
 
-const PegInfo simple_pegs[] =
-{
-    { CountType::SUM, "packets", "total packets" },
-    { CountType::END, nullptr, nullptr }
-};
-
 void Module::enable_trace()
 {
     if ( trace )
         *trace = 1;
 }
 
+namespace snort
+{
+const PegInfo simple_pegs[] =
+{
+    { CountType::SUM, "packets", "total packets" },
+    { CountType::END, nullptr, nullptr }
+};
+}

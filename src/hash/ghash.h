@@ -28,6 +28,9 @@
 
 struct HashFnc;
 
+namespace snort
+{
+
 #define GHASH_NOMEM    (-2)
 #define GHASH_ERR      (-1)
 #define GHASH_OK        0
@@ -74,6 +77,6 @@ SO_PUBLIC GHashNode* ghash_findnext(GHash*);
 SO_PUBLIC int ghash_set_keyops(GHash*,
 unsigned (* hash_fcn)(HashFnc* p, const unsigned char* d, int n),
 int (* keycmp_fcn)(const void* s1, const void* s2, size_t n));
-
+}
 #endif
 

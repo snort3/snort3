@@ -41,6 +41,7 @@
 #include "markup.h"
 #include "ring.h"
 
+using namespace snort;
 using namespace std;
 
 #ifndef SIGNAL_SNORT_RELOAD

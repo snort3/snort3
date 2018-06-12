@@ -65,8 +65,6 @@ extern "C" {
 
 using namespace snort;
 
-char** protocol_names = nullptr;
-
 /****************************************************************************
  * Store interesting data in memory that would not otherwise be visible
  * in a CORE(5) file
@@ -496,28 +494,6 @@ std::string read_infile(const char* key, const char* fname)
     return line;
 }
 
-char* snort_strndup(const char* src, size_t dst_size)
-{
-    char* dup = (char*)snort_calloc(dst_size + 1);
-
-    if ( SnortStrncpy(dup, src, dst_size + 1) == SNORT_STRNCPY_ERROR )
-    {
-        snort_free(dup);
-        return nullptr;
-    }
-
-    return dup;
-}
-
-char* snort_strdup(const char* str)
-{
-    assert(str);
-    size_t n = strlen(str) + 1;
-    char* p = (char*)snort_alloc(n);
-    memcpy(p, str, n);
-    return p;
-}
-
 typedef char PathBuf[PATH_MAX+1];
 
 static const char* CurrentWorkingDir(PathBuf& buf)
@@ -621,6 +597,10 @@ void SetNoCores()
 }
 #endif
 
+namespace snort
+{
+char** protocol_names = nullptr;
+
 const char* get_error(int errnum)
 {
     static THREAD_LOCAL char buf[128];
@@ -633,4 +613,29 @@ const char* get_error(int errnum)
     return buf;
 #endif
 }
+
+char* snort_strndup(const char* src, size_t dst_size)
+{
+    char* dup = (char*)snort_calloc(dst_size + 1);
+
+    if ( SnortStrncpy(dup, src, dst_size + 1) == SNORT_STRNCPY_ERROR )
+    {
+        snort_free(dup);
+        return nullptr;
+    }
+
+    return dup;
+}
+
+char* snort_strdup(const char* str)
+{
+    assert(str);
+    size_t n = strlen(str) + 1;
+    char* p = (char*)snort_alloc(n);
+    memcpy(p, str, n);
+    return p;
+}
+
+}
+
 

@@ -34,19 +34,21 @@
 
 using namespace snort;
 
+namespace snort
+{
 //  Fakes to avoid bringing in a ton of dependencies.
 SnortProtocolId ProtocolReference::add(char const*) { return 0; }
 SnortProtocolId ProtocolReference::find(char const*) { return 0; }
 SnortConfig* SnortConfig::get_conf() { return nullptr; }
+char* snort_strdup(const char* s)
+{ return strdup(s); }
+}
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*)
 { }
 
 void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*)
 { }
-
-char* snort_strdup(const char* s)
-{ return strdup(s); }
 
 #define FRAG_POLICY 33
 #define STREAM_POLICY 100

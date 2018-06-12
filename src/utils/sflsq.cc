@@ -37,9 +37,7 @@
 
 #include "util.h"
 
-/*
-*  private alloc
-*/
+// private alloc
 static void* s_alloc(size_t n)
 {
     return snort_calloc(n);
@@ -54,18 +52,8 @@ static void s_free(void* p)
         snort_free(p);
 }
 
-/*
-*   INIT - called by the NEW functions
-*/
-void sflist_init(SF_LIST* s)
+namespace snort
 {
-    s->count=0;
-    s->head = s->tail = nullptr;
-}
-
-/*
-*    NEW
-*/
 SF_LIST* sflist_new()
 {
     SF_LIST* s;
@@ -74,14 +62,12 @@ SF_LIST* sflist_new()
     return s;
 }
 
-SF_QUEUE* sfqueue_new()
+void sflist_init(SF_LIST* s)
 {
-    return (SF_QUEUE*)sflist_new();
+    s->count=0;
+    s->head = s->tail = nullptr;
 }
 
-/*
-*  Add-before Item
-*/
 void sflist_add_before(SF_LIST* s, SF_LNODE* lnode, NODE_DATA ndata)
 {
     SF_LNODE* q;
@@ -104,12 +90,6 @@ void sflist_add_before(SF_LIST* s, SF_LNODE* lnode, NODE_DATA ndata)
     }
 }
 
-/*
-*     ADD to List/Queue/Dictionary
-*/
-/*
-*  Add-Head Item
-*/
 void sflist_add_head(SF_LIST* s, NODE_DATA ndata)
 {
     SF_LNODE* q;
@@ -132,9 +112,6 @@ void sflist_add_head(SF_LIST* s, NODE_DATA ndata)
     s->count++;
 }
 
-/*
-*  Add-Tail Item
-*/
 void sflist_add_tail(SF_LIST* s, NODE_DATA ndata)
 {
     SF_LNODE* q;
@@ -157,14 +134,6 @@ void sflist_add_tail(SF_LIST* s, NODE_DATA ndata)
     s->count++;
 }
 
-void sfqueue_add(SF_QUEUE* s, NODE_DATA ndata)
-{
-    sflist_add_tail (s, ndata);
-}
-
-/*
-*   List walk - First/Next - return the node data or NULL
-*/
 NODE_DATA sflist_first(SF_LIST* s, SF_LNODE** v)
 {
     if ( !s )
@@ -191,9 +160,6 @@ NODE_DATA sflist_next(SF_LNODE** v)
     return nullptr;
 }
 
-/*
-*  Remove Head Item from list
-*/
 NODE_DATA sflist_remove_head(SF_LIST* s)
 {
     NODE_DATA ndata = nullptr;
@@ -215,9 +181,6 @@ NODE_DATA sflist_remove_head(SF_LIST* s)
     return (NODE_DATA)ndata;
 }
 
-/*
-*  Remove tail Item from list
-*/
 NODE_DATA sflist_remove_tail(SF_LIST* s)
 {
     NODE_DATA ndata = nullptr;
@@ -287,24 +250,6 @@ void sflist_remove_node(SF_LIST* s, SF_LNODE* n)
     }
 }
 
-/*
-*  Remove Head Item from queue
-*/
-NODE_DATA sfqueue_remove(SF_QUEUE* s)
-{
-    return (NODE_DATA)sflist_remove_head(s);
-}
-
-/*
-*  COUNT
-*/
-int sfqueue_count(SF_QUEUE* s)
-{
-    if (!s)
-        return 0;
-    return s->count;
-}
-
 int sflist_count(SF_LIST* s)
 {
     if (!s)
@@ -312,9 +257,15 @@ int sflist_count(SF_LIST* s)
     return s->count;
 }
 
-/*
-*   Free List + Free it's data nodes using 'nfree'
-*/
+void sflist_free(SF_LIST* s)
+{
+    while ( sflist_count(s) )
+    {
+        sflist_remove_head(s);
+    }
+    s_free(s);
+}
+
 void sflist_free_all(SF_LIST* s, void (* nfree)(void*) )
 {
     if (!s)
@@ -328,11 +279,6 @@ void sflist_free_all(SF_LIST* s, void (* nfree)(void*) )
             nfree(p);
     }
     s_free(s);
-}
-
-void sfqueue_free_all(SF_QUEUE* s,void (* nfree)(void*) )
-{
-    sflist_free_all(s, nfree);
 }
 
 void sflist_static_free_all(SF_LIST* s, void (* nfree)(void*) )
@@ -349,17 +295,38 @@ void sflist_static_free_all(SF_LIST* s, void (* nfree)(void*) )
     }
 }
 
-/*
-*  FREE List/Queue/Dictionary
-*
-*  This does not free a nodes data
-*/
-void sflist_free(SF_LIST* s)
-{
-    while ( sflist_count(s) )
-    {
-        sflist_remove_head(s);
-    }
-    s_free(s);
 }
+
+// ----- queue methods -----
+
+using namespace snort;
+
+SF_QUEUE* sfqueue_new()
+{
+    return (SF_QUEUE*)sflist_new();
+}
+
+void sfqueue_add(SF_QUEUE* s, NODE_DATA ndata)
+{
+    sflist_add_tail (s, ndata);
+}
+
+
+NODE_DATA sfqueue_remove(SF_QUEUE* s)
+{
+    return (NODE_DATA)sflist_remove_head(s);
+}
+
+int sfqueue_count(SF_QUEUE* s)
+{
+    if (!s)
+        return 0;
+    return s->count;
+}
+
+void sfqueue_free_all(SF_QUEUE* s,void (* nfree)(void*) )
+{
+    sflist_free_all(s, nfree);
+}
+
 

@@ -44,7 +44,7 @@ public:
     bool get_fp_buf(snort::InspectionBuffer::Type ibt, snort::Packet* p,
         snort::InspectionBuffer& b) override;
     bool configure(snort::SnortConfig*) override;
-    void show(snort::SnortConfig*) override { LogMessage("Http2Inspect\n"); }
+    void show(snort::SnortConfig*) override { snort::LogMessage("Http2Inspect\n"); }
     void eval(snort::Packet* p) override;
     void clear(snort::Packet* p) override;
     void tinit() override { }

@@ -34,6 +34,8 @@
 #include "log/messages.h"
 #include "utils/util.h"
 
+using namespace snort;
+
 /*This magic is used for double free detection*/
 
 #define FREE_MAGIC    0x2525252525252525

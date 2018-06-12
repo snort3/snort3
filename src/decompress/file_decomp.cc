@@ -36,6 +36,8 @@
 #include "catch/snort_catch.h"
 #endif
 
+using namespace snort;
+
 static const char PDF_Sig[5] = { '%', 'P', 'D', 'F', '-' };
 static const char SWF_ZLIB_Sig[3] = { 'C', 'W', 'S' };
 #ifdef HAVE_LZMA
@@ -229,6 +231,8 @@ static fd_status_t Process_Decompression(fd_session_t* SessionPtr)
     return( Ret_Code );
 }
 
+namespace snort
+{
 /* The caller provides Compr_Depth, Decompr_Depth and Modes in the session object.
    Based on the requested Modes, gear=up to initialize the potential decompressors. */
 fd_status_t File_Decomp_Init(fd_session_t* SessionPtr)
@@ -389,6 +393,8 @@ void File_Decomp_Alert(fd_session_t* SessionPtr, int Event)
         (SessionPtr->Alert_Context) )
         (SessionPtr->Alert_Callback)(SessionPtr->Alert_Context, Event);
 }
+
+} // namespace snort
 
 //--------------------------------------------------------------------------
 // unit tests 

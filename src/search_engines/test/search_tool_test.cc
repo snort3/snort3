@@ -64,34 +64,18 @@ SnortConfig::~SnortConfig() = default;
 SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
 
-}
 unsigned get_instance_id()
 { return 0; }
 
-void LogValue(const char*, const char*, FILE*)
-{
-}
-
-SO_PUBLIC void LogMessage(const char*, ...)
-{
-}
-
-[[noreturn]] void FatalError(const char*,...)
-{
-    exit(1);
-}
-
-void LogCount(char const*, uint64_t, FILE*)
-{ }
-
-void LogStat(const char*, double, FILE*)
-{}
+void LogValue(const char*, const char*, FILE*) { }
+SO_PUBLIC void LogMessage(const char*, ...) { }
+[[noreturn]] void FatalError(const char*,...) { exit(1); }
+void LogCount(char const*, uint64_t, FILE*) { }
+void LogStat(const char*, double, FILE*) { }
 
 static void* s_tree = (void*)"tree";
 static void* s_list = (void*)"list";
 
-namespace snort
-{
 static MpseAgent s_agent =
 {
     [](struct SnortConfig* sc, void*, void** ppt)

@@ -29,6 +29,7 @@
 #include "log/messages.h"
 #include "utils/util_cstring.h"
 
+using namespace snort;
 using namespace std;
 
 static inline int xton(int c)

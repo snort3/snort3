@@ -88,7 +88,7 @@ void Request::respond(const char* s, bool queue_response)
 {
     if ( fd < 1 )
     {
-        LogMessage("%s", s);
+        snort::LogMessage("%s", s);
         return;
     }
 

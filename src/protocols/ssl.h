@@ -213,6 +213,8 @@ struct SSLv2_shello_t
 #define SSL_HEARTBLEED_RESPONSE 0x02
 #define SSL_HEARTBLEED_UNKNOWN  0x04
 
+namespace snort
+{
 SO_PUBLIC uint32_t SSL_decode(
     const uint8_t* pkt, int size, uint32_t pktflags, uint32_t prevflags,
     uint8_t* alert_flags, uint16_t* partial_rec_len, int hblen);
@@ -220,6 +222,6 @@ SO_PUBLIC uint32_t SSL_decode(
 SO_PUBLIC bool IsTlsClientHello(const uint8_t* ptr, const uint8_t* end);
 SO_PUBLIC bool IsTlsServerHello(const uint8_t* ptr, const uint8_t* end);
 SO_PUBLIC bool IsSSL(const uint8_t* ptr, int len, int pkt_flags);
-
+}
 #endif
 

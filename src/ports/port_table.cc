@@ -33,6 +33,8 @@
 
 #include "port_utils.h"
 
+using namespace snort;
+
 #define PTBL_LRC_DEFAULT 10
 #define PO_INIT_ID 1000000
 #define PO_HASH_TBL_ROWS 10000

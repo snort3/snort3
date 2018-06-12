@@ -113,7 +113,7 @@ struct CombinedMemoryStats
 
 inline void CombinedMemoryStats::update_allocs(size_t n)
 {
-    if ( is_packet_thread() )
+    if ( snort::is_packet_thread() )
         runtime.update_allocs(n);
     else
         startup.update_allocs(n);
@@ -121,7 +121,7 @@ inline void CombinedMemoryStats::update_allocs(size_t n)
 
 inline void CombinedMemoryStats::update_deallocs(size_t n)
 {
-    if ( is_packet_thread() )
+    if ( snort::is_packet_thread() )
         runtime.update_deallocs(n);
     else
         startup.update_deallocs(n);

@@ -34,7 +34,7 @@ namespace snort
 {
 class Module;
 struct SnortConfig;
-}
+} // namespace snort
 
 #define PIGLET_API_VERSION 1
 
@@ -108,7 +108,7 @@ inline void error(std::string fmt, Args&&... args)
 {
     fmt.insert(0, "piglet: ");
     fmt.append("\n");
-    ErrorMessage(fmt.c_str(), std::forward<Args>(args)...);
+    snort::ErrorMessage(fmt.c_str(), std::forward<Args>(args)...);
 }
 
 } // namespace Piglet

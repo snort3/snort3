@@ -30,6 +30,8 @@
 #include "catch/snort_catch.h"
 #endif
 
+using namespace snort;
+
 #ifdef HAVE_LZMA
 #define LZMA_HEADER_LEN  (13)
 #define LZMA_PRP_OFFSET  (0)

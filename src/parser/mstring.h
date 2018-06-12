@@ -28,8 +28,10 @@
 
 #define TOKS_BUF_SIZE   100
 
+namespace snort
+{
 SO_PUBLIC char** mSplit(const char*, const char*, const int, int*, const char);
 SO_PUBLIC void mSplitFree(char*** toks, int numtoks);
-
+}
 #endif
 

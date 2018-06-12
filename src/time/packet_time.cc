@@ -40,6 +40,14 @@
 static THREAD_LOCAL struct timeval s_recent_packet = { 0, 0 };
 static THREAD_LOCAL uint32_t s_first_packet = 0;
 
+namespace snort
+{
+time_t packet_time()
+{
+    return s_recent_packet.tv_sec;
+}
+}
+
 void packet_time_update(const struct timeval* cur_tv)
 {
     if ( !s_first_packet )
@@ -51,11 +59,6 @@ void packet_time_update(const struct timeval* cur_tv)
 uint32_t packet_first_time()
 {
     return s_first_packet;
-}
-
-time_t packet_time()
-{
-    return s_recent_packet.tv_sec;
 }
 
 void packet_gettimeofday(struct timeval* tv)

@@ -29,6 +29,8 @@
 
 #include "app_info_table.h"
 
+using namespace snort;
+
 enum POP3ClientState
 {
     POP3_CLIENT_STATE_AUTH,     // POP3 - AUTHORIZATION state

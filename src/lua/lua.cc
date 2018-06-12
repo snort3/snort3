@@ -35,7 +35,7 @@ State::State(bool openlibs)
     state = luaL_newstate();
 
     if ( !state )
-        FatalError("Lua state instantiation failed\n");
+        snort::FatalError("Lua state instantiation failed\n");
 
     if ( openlibs )
         luaL_openlibs(state);

@@ -97,6 +97,8 @@
 #include "utils/util.h"
 #include "hashfcn.h"
 
+using namespace snort;
+
 /*
  * Implements XHash as specialized hash container
  */
@@ -124,6 +126,8 @@ static int xhash_nearest_powerof2(int nrows)
     return nrows;
 }
 
+namespace snort
+{
 /*
  * Create a new hash table
  *
@@ -1023,6 +1027,7 @@ void xhash_set_keyops(XHash* h, hash_func hash_fcn, keycmp_func keycmp_fcn)
     assert(h and hash_fcn and keycmp_fcn);
     hashfcn_set_keyops(h->hashfcn, hash_fcn, keycmp_fcn);
 }
+} // namespace snort
 
 /*
  * -----------------------------------------------------------------------------------------

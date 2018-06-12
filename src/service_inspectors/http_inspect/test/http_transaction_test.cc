@@ -35,13 +35,17 @@
 using namespace snort;
 using namespace HttpEnums;
 
+namespace snort
+{
 // Stubs whose sole purpose is to make the test code link
 unsigned FlowData::flow_data_id = 0;
 FlowData::FlowData(unsigned, Inspector*) {}
 FlowData::~FlowData() = default;
 int DetectionEngine::queue_event(unsigned int, unsigned int, Actions::Type) { return 0; }
-THREAD_LOCAL PegCount HttpModule::peg_counts[1];
 fd_status_t File_Decomp_StopFree(fd_session_t*) { return File_Decomp_OK; }
+}
+
+THREAD_LOCAL PegCount HttpModule::peg_counts[1];
 
 class HttpUnitTestSetup
 {

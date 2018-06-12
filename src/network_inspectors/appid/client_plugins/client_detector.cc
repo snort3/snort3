@@ -47,7 +47,7 @@ void ClientDetector::register_appid(AppId appId, unsigned extractsInfo)
     {
         if ( AppInfoManager::get_instance().configured() )
         {
-            ParseWarning(WARN_RULES,
+            snort::ParseWarning(WARN_RULES,
                 "appid: no entry for %d in appMapping.data; no rule support for this ID.",
                 appId);
         }
@@ -55,9 +55,7 @@ void ClientDetector::register_appid(AppId appId, unsigned extractsInfo)
     }
     extractsInfo &= (APPINFO_FLAG_CLIENT_ADDITIONAL | APPINFO_FLAG_CLIENT_USER);
     if (!extractsInfo)
-    {
         return;
-    }
 
     pEntry->client_detector = this;
     pEntry->flags |= extractsInfo;

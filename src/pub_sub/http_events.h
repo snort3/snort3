@@ -31,6 +31,8 @@
 
 class HttpMsgHeader;
 
+namespace snort
+{
 class SO_PUBLIC HttpEvent : public snort::DataEvent
 {
 public:
@@ -59,6 +61,6 @@ private:
     const uint8_t* get_header(unsigned, uint64_t, int32_t&);
 
 };
-
+}
 #endif
 

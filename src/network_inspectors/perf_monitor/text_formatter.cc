@@ -36,6 +36,7 @@
 #include "utils/util.h"
 #endif
 
+using namespace snort;
 using namespace std;
 
 void TextFormatter::write(FILE* fh, time_t)

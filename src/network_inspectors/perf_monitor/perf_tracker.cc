@@ -41,6 +41,7 @@
 #include "json_formatter.h"
 #include "text_formatter.h"
 
+using namespace snort;
 using namespace std;
 
 static inline bool check_file_size(FILE* fh, uint64_t max_file_size)

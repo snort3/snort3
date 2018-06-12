@@ -271,7 +271,8 @@ inline bool Move_N(fd_session_t* SessionPtr, uint16_t N)
 }
 
 /* API Functions */
-
+namespace snort
+{
 /* Create a new decompression session object */
 SO_PUBLIC fd_session_t* File_Decomp_New();
 
@@ -295,5 +296,6 @@ SO_PUBLIC void File_Decomp_Free(fd_session_t*);
 
 /* Call the error alerting call-back function */
 SO_PUBLIC void File_Decomp_Alert(fd_session_t*, int Event);
+}
 #endif
 

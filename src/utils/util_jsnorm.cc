@@ -29,6 +29,8 @@
 
 #include "main/thread.h"
 
+namespace snort
+{
 #define INVALID_HEX_VAL (-1)
 #define MAX_BUF 8
 #define NON_ASCII_CHAR 0xff
@@ -1330,3 +1332,4 @@ int main(int argc, char *argv[])
 
 }*/
 
+}

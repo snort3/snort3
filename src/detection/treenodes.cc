@@ -84,6 +84,8 @@ void* get_rule_type_data(OptTreeNode* otn, const char* name)
     return nullptr;
 }
 
+namespace snort
+{
 bool otn_has_plugin(OptTreeNode* otn, const char* name)
 {
     OptFpList* fpl = otn->opt_func;
@@ -100,4 +102,4 @@ bool otn_has_plugin(OptTreeNode* otn, const char* name)
     }
     return false;
 }
-
+}

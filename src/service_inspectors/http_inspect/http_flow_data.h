@@ -131,7 +131,7 @@ private:
     int64_t detect_depth_remaining[2] = { HttpEnums::STAT_NOT_PRESENT,
         HttpEnums::STAT_NOT_PRESENT };
     snort::MimeSession* mime_state[2] = { nullptr, nullptr };
-    UtfDecodeSession* utf_state = nullptr; // SRC_SERVER only
+    snort::UtfDecodeSession* utf_state = nullptr; // SRC_SERVER only
     fd_session_t* fd_state = nullptr; // SRC_SERVER only
     struct FdCallbackContext
     {

@@ -27,6 +27,8 @@
 
 #include "main/snort_types.h"
 
+namespace snort
+{
 struct ObfuscatorBlock
 {
     // Only used by `class Obfuscator`
@@ -74,6 +76,7 @@ private:
     iterator it;
     static const char mask_char = 'X';
 };
+}
 
 #endif
 

@@ -135,7 +135,7 @@ bool ArpSpoofModule::end(const char*, int idx, SnortConfig*)
 }
 
 const PegInfo* ArpSpoofModule::get_pegs() const
-{ return simple_pegs; }
+{ return snort::simple_pegs; }
 
 PegCount* ArpSpoofModule::get_counts() const
 { return (PegCount*)&asstats; }

@@ -119,8 +119,7 @@ enum TunnelFlags
 struct ClassType;
 struct srmm_table_t;
 struct sopg_table_t;
-struct GHash;
-struct XHash;
+
 struct MemoryConfig;
 struct LatencyConfig;
 struct PORT_RULE_MAP;
@@ -136,13 +135,15 @@ struct RateFilterConfig;
 struct SFDAQConfig;
 class ThreadConfig;
 struct ReferenceSystemNode;
-class ProtocolReference;
 struct VarNode;
 struct _IntelPmHandles;
 
 namespace snort
 {
 struct ProfilerConfig;
+class ProtocolReference;
+struct GHash;
+struct XHash;
 
 struct SnortConfig;
 typedef void (* ScScratchFunc)(SnortConfig* sc);

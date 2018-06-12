@@ -52,7 +52,7 @@ public:
 
     void generate_misformatted_http(const uint8_t* buffer, uint32_t length)
     {
-        if ( SnortStrnStr((const char*)buffer, length, "HTTP/") != nullptr )
+        if ( snort::SnortStrnStr((const char*)buffer, length, "HTTP/") != nullptr )
             create_event(HttpEnums::EVENT_MISFORMATTED_HTTP);
         else
             create_event(HttpEnums::EVENT_LOSS_OF_SYNC);

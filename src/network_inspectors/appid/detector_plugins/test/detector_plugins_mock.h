@@ -20,14 +20,18 @@
 #ifndef DETECTOR_PLUGINS_MOCK_H
 #define DETECTOR_PLUGINS_MOCK_H
 
+namespace snort
+{
 // Stubs for messages
 void ErrorMessage(const char*,...) {}
 void WarningMessage(const char*,...) {}
 void LogMessage(const char*,...) {}
 void ParseWarning(WarningGroup, const char*, ...) {}
 
-namespace snort
-{
+// Stubs for appid sessions
+FlowData::FlowData(unsigned, Inspector*) {}
+FlowData::~FlowData() = default;
+
 // Stubs for packet
 Packet::Packet(bool) { }
 Packet::~Packet() = default;
@@ -37,7 +41,50 @@ Inspector::~Inspector() = default;
 bool Inspector::likes(Packet*) { return true; }
 bool Inspector::get_buf(const char*, Packet*, InspectionBuffer&) { return true; }
 class StreamSplitter* Inspector::get_splitter(bool) { return nullptr; }
+
+// Stubs for search_tool.cc
+SearchTool::SearchTool(const char*, bool) {}
+SearchTool::~SearchTool() = default;
+void SearchTool::add(const char*, unsigned, int, bool) {}
+void SearchTool::add(const char*, unsigned, void*, bool) {}
+void SearchTool::add(const uint8_t*, unsigned, int, bool) {}
+void SearchTool::add(const uint8_t*, unsigned, void*, bool) {}
+void SearchTool::prep() {}
+static bool test_find_all_done = false;
+static bool test_find_all_enabled = false;
+static MatchedPatterns* mock_mp = nullptr;
+int SearchTool::find_all(const char*, unsigned, MpseMatch, bool, void* mp_arg)
+{
+    test_find_all_done = true;
+    if (test_find_all_enabled)
+        memcpy(mp_arg, &mock_mp, sizeof(MatchedPatterns*));
+    return 0;
 }
+
+// Stubs for util.cc
+char* snort_strndup(const char* src, size_t dst_size)
+{
+    char* dup = (char*)snort_calloc(dst_size + 1);
+    if ( SnortStrncpy(dup, src, dst_size + 1) == SNORT_STRNCPY_ERROR )
+    {
+        snort_free(dup);
+        return nullptr;
+    }
+    return dup;
+}
+char* snort_strdup(const char* str)
+{
+    assert(str);
+    size_t n = strlen(str) + 1;
+    char* p = (char*)snort_alloc(n);
+    memcpy(p, str, n);
+    return p;
+}
+}
+
+void show_stats(PegCount*, const PegInfo*, unsigned, const char*) {}
+void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*) {}
+void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) {}
 
 class AppIdInspector : public snort::Inspector
 {
@@ -85,13 +132,6 @@ snort::ProfileStats* AppIdModule::get_profile() const
 {
     return nullptr;
 }
-void show_stats(PegCount*, const PegInfo*, unsigned, const char*) {}
-void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*) {}
-void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) {}
-
-// Stubs for appid sessions
-snort::FlowData::FlowData(unsigned, Inspector*) {}
-snort::FlowData::~FlowData() = default;
 
 // Stubs for inspectors
 unsigned AppIdSession::inspector_id = 0;
@@ -111,28 +151,6 @@ void AppIdPegCounts::inc_payload_count(AppId) {}
 THREAD_LOCAL AppIdStats appid_stats;
 void AppIdModule::sum_stats(bool) {}
 void AppIdModule::show_dynamic_stats() {}
-
-namespace snort
-{
-// Stubs for search_tool.cc
-SearchTool::SearchTool(const char*, bool) {}
-SearchTool::~SearchTool() = default;
-void SearchTool::add(const char*, unsigned, int, bool) {}
-void SearchTool::add(const char*, unsigned, void*, bool) {}
-void SearchTool::add(const uint8_t*, unsigned, int, bool) {}
-void SearchTool::add(const uint8_t*, unsigned, void*, bool) {}
-void SearchTool::prep() {}
-static bool test_find_all_done = false;
-static bool test_find_all_enabled = false;
-static MatchedPatterns* mock_mp = nullptr;
-int SearchTool::find_all(const char*, unsigned, MpseMatch, bool, void* mp_arg)
-{
-    test_find_all_done = true;
-    if (test_find_all_enabled)
-        memcpy(mp_arg, &mock_mp, sizeof(MatchedPatterns*));
-    return 0;
-}
-}
 
 // Stubs for appid_session.cc
 static bool test_service_strstr_enabled = false;
@@ -160,26 +178,6 @@ AppInfoTableEntry* AppInfoManager::get_app_info_entry(int)
 AppInfoTableEntry* AppInfoManager::get_app_info_entry(AppId, const AppInfoTable&)
 {
     return nullptr;
-}
-
-// Stubs for util.cc
-char* snort_strndup(const char* src, size_t dst_size)
-{
-    char* dup = (char*)snort_calloc(dst_size + 1);
-    if ( SnortStrncpy(dup, src, dst_size + 1) == SNORT_STRNCPY_ERROR )
-    {
-        snort_free(dup);
-        return nullptr;
-    }
-    return dup;
-}
-char* snort_strdup(const char* str)
-{
-    assert(str);
-    size_t n = strlen(str) + 1;
-    char* p = (char*)snort_alloc(n);
-    memcpy(p, str, n);
-    return p;
 }
 
 #endif

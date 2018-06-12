@@ -43,6 +43,8 @@
 #include "ft_main.h"
 #include "ftpp_return_codes.h"
 
+using namespace snort;
+
 /*
  * Function: ftp_cmd_lookup_init(CMD_LOOKUP **CmdLookup)
  *

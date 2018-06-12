@@ -40,37 +40,19 @@
 
 #include "util.h"
 
-using namespace snort;
-
 #define STATS_SEPARATOR \
     "--------------------------------------------------"
 
 THREAD_LOCAL AuxCount aux_counts;
-THREAD_LOCAL PacketCount pc;
 ProcessCount proc_stats;
+
+namespace snort
+{
+
+THREAD_LOCAL PacketCount pc;
 
 PegCount get_packet_number()
 { return pc.total_from_daq; }
-
-//-------------------------------------------------------------------------
-
-double CalcPct(uint64_t cnt, uint64_t total)
-{
-    double pct = 0.0;
-
-    if (total == 0.0)
-    {
-        pct = (double)cnt;
-    }
-    else
-    {
-        pct = (double)cnt / (double)total;
-    }
-
-    pct *= 100.0;
-
-    return pct;
-}
 
 //-------------------------------------------------------------------------
 
@@ -113,6 +95,29 @@ void LogStat(const char* s, double d, FILE* fh)
 {
     if ( d )
         LogMessage(fh, "%25.25s: %g\n", s, d);
+}
+}
+
+using namespace snort;
+
+//-------------------------------------------------------------------------
+
+double CalcPct(uint64_t cnt, uint64_t total)
+{
+    double pct = 0.0;
+
+    if (total == 0.0)
+    {
+        pct = (double)cnt;
+    }
+    else
+    {
+        pct = (double)cnt / (double)total;
+    }
+
+    pct *= 100.0;
+
+    return pct;
 }
 
 //-------------------------------------------------------------------------
@@ -324,4 +329,3 @@ void show_percent_stats(
         LogStat(s, c, pegs[0], stdout);
     }
 }
-

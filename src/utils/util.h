@@ -51,9 +51,6 @@
     (x)[8] = (y)[8]; (x)[9] = (y)[9]; (x)[10] = (y)[10]; (x)[11] = (y)[11]; \
     (x)[12] = (y)[12]; (x)[13] = (y)[13]; (x)[14] = (y)[14]; (x)[15] = (y)[15];
 
-// FIXIT-M provide getter function to for standardized access into the protocol_names array
-SO_PUBLIC extern char** protocol_names;
-
 void StoreSnortInfoStrings();
 int DisplayBanner();
 int gmt2local(time_t);
@@ -70,9 +67,6 @@ void InitProtoNames();
 #if defined(NOCOREFILE)
 void SetNoCores();
 #endif
-
-SO_PUBLIC char* snort_strdup(const char*);
-SO_PUBLIC char* snort_strndup(const char*, size_t);
 
 inline void* snort_alloc(size_t sz)
 { return new uint8_t[sz]; }
@@ -103,7 +97,15 @@ inline pid_t gettid()
 #endif
 }
 
+namespace snort
+{
+// FIXIT-M provide getter function to for standardized access into the protocol_names array
+SO_PUBLIC extern char** protocol_names;
+
 SO_PUBLIC const char* get_error(int errnum);
+SO_PUBLIC char* snort_strdup(const char*);
+SO_PUBLIC char* snort_strndup(const char*, size_t);
+}
 
 #endif
 

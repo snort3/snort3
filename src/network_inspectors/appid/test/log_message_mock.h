@@ -9,6 +9,8 @@
 
 using namespace std;
 
+namespace snort
+{
 // Note: without SO_PUBLIC this is not being exported so tp_mock.so won't
 // load because of undefined symbol error. 
 SO_PUBLIC void ErrorMessage(const char* format,...)
@@ -41,6 +43,6 @@ SO_PUBLIC void LogMessage(const char* format,...)
     vfprintf(stdout, format, ap);
     va_end(ap);
 }
-
+}
 #endif
 

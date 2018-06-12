@@ -96,7 +96,7 @@ ACSwap::~ACSwap()
 {
     delete ps;
     Swapper::set_reload_in_progress(false);
-    LogMessage("== reload complete\n");
+    snort::LogMessage("== reload complete\n");
 }
 
 void ACDAQSwap::execute(Analyzer& analyzer)
@@ -106,6 +106,6 @@ void ACDAQSwap::execute(Analyzer& analyzer)
 
 ACDAQSwap::~ACDAQSwap()
 {
-    LogMessage("== daq module reload complete\n");
+    snort::LogMessage("== daq module reload complete\n");
 }
 

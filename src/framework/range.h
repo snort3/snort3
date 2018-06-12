@@ -32,6 +32,8 @@
 // <=> for dsize style and >< for icode style so rule options
 // can coerce <> if needed for backwards compatibility
 
+namespace snort
+{
 class SO_PUBLIC RangeCheck
 {
 public:
@@ -56,6 +58,6 @@ public:
     bool eval(long) const;
     bool validate(const char* s, const char* r);
 };
-
+}
 #endif
 

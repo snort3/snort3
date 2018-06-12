@@ -30,6 +30,8 @@
 
 #include "protocols/packet.h"
 
+using namespace snort;
+
 enum KerberosState
 {
     KRB_STATE_TCP_LENGTH,

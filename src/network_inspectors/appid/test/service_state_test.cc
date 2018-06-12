@@ -26,10 +26,8 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
-// Stubs for AppIdDebug
-THREAD_LOCAL AppIdDebug* appidDebug = nullptr;
-void AppIdDebug::activate(const Flow*, const AppIdSession*, bool) { active = true; }
-
+namespace snort
+{
 // Stubs for logs
 char test_log[256];
 void LogMessage(const char* format,...)
@@ -41,7 +39,6 @@ void LogMessage(const char* format,...)
 }
 void ErrorMessage(const char*,...) {}
 void LogLabel(const char*, FILE*) {}
-THREAD_LOCAL AppIdStats appid_stats;
 
 // Stubs for utils
 char* snort_strdup(const char* str)
@@ -53,6 +50,7 @@ char* snort_strdup(const char* str)
     return p;
 }
 time_t packet_time() { return std::time(0); }
+}
 
 // Stubs for AppInfoManager
 AppInfoTableEntry* AppInfoManager::get_app_info_entry(AppId)
@@ -64,6 +62,13 @@ AppInfoTableEntry* AppInfoManager::get_app_info_entry(AppId)
 class AppIdInspector{};
 FlowData::FlowData(unsigned, Inspector*) {}
 FlowData::~FlowData() = default;
+
+// Stubs for AppIdDebug
+THREAD_LOCAL AppIdDebug* appidDebug = nullptr;
+THREAD_LOCAL AppIdStats appid_stats;
+
+void AppIdDebug::activate(const Flow*, const AppIdSession*, bool) { active = true; }
+
 AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t, AppIdInspector& inspector)
     : FlowData(0), inspector(inspector) {}
 AppIdSession::~AppIdSession() = default;

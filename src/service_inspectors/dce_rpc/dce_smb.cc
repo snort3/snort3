@@ -384,9 +384,7 @@ void Dce2Smb::eval(snort::Packet* p)
     assert(p->flow);
 
     if (p->flow->get_session_flags() & SSNFLAG_MIDSTREAM)
-    {
         return;
-    }
 
     dce2_smb_sess = dce2_handle_smb_session(p, &config);
 
@@ -395,7 +393,7 @@ void Dce2Smb::eval(snort::Packet* p)
         p->packet_flags |= PKT_ALLOW_MULTIPLE_DETECT;
         dce2_detected = 0;
 
-        p->endianness = (Endianness*)new DceEndianness();
+        p->endianness = (snort::Endianness*)new DceEndianness();
 
         DCE2_SmbProcess(dce2_smb_sess);
 

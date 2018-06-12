@@ -124,9 +124,11 @@
 #include "utils/stats.h"
 #include "utils/util.h"
 
+using namespace snort;
+
 #define printf LogMessage
 
-#define MEMASSERT(p,s) if (!(p)) { FatalError("ACSM-No Memory: %s\n",s); }
+#define MEMASSERT(p,s) if (!(p)) { snort::FatalError("ACSM-No Memory: %s\n",s); }
 
 static int acsm2_total_memory = 0;
 static int acsm2_pattern_memory = 0;

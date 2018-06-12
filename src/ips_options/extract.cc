@@ -36,6 +36,7 @@
 #include "catch/snort_catch.h"
 #endif
 
+using namespace snort;
 using namespace std;
 
 /* Storage for extracted variables */
@@ -43,6 +44,8 @@ static string variable_names[NUM_IPS_OPTIONS_VARS];
 static THREAD_LOCAL uint32_t extracted_values[NUM_IPS_OPTIONS_VARS];
 static THREAD_LOCAL uint8_t extracted_values_cnt = 0;
 
+namespace snort
+{
 /* Given a variable name, retrieve its index.*/
 int8_t GetVarByName(const char* name)
 {
@@ -295,6 +298,8 @@ uint8_t numBytesInBitmask(uint32_t bitmask_value)
 
     return num_bytes;
 }
+
+} // namespace snort
 
 #ifdef UNIT_TEST
 TEST_CASE("ips options bitmask utils")

@@ -32,6 +32,7 @@
 #include "parse_conf.h"
 #include "parse_rule.h"
 
+using namespace snort;
 using namespace std;
 
 static unsigned chars = 0, tokens = 0;

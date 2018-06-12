@@ -40,6 +40,8 @@ struct TimeProfilerConfig
     int max_depth = -1;
 };
 
+namespace snort
+{
 struct SO_PUBLIC TimeProfilerStats
 {
     hr_duration elapsed;
@@ -138,4 +140,5 @@ private:
     TimeContext ctx;
 };
 
+} // namespace snort
 #endif

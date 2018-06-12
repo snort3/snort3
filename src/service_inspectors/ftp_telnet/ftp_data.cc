@@ -251,7 +251,7 @@ public:
 };
 
 const PegInfo* FtpDataModule::get_pegs() const
-{ return simple_pegs; }
+{ return snort::simple_pegs; }
 
 PegCount* FtpDataModule::get_counts() const
 { return (PegCount*)&fdstats; }

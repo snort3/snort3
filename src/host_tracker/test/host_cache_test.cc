@@ -32,18 +32,16 @@
 
 using namespace snort;
 
+namespace snort
+{
 SnortConfig s_conf;
 THREAD_LOCAL SnortConfig* snort_conf = &s_conf;
-
 SnortConfig::SnortConfig(const SnortConfig* const) { }
-
 SnortConfig::~SnortConfig() = default;
-
 SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
 
 SnortProtocolId ProtocolReference::find(char const*) { return 0; }
-
 SnortProtocolId ProtocolReference::add(const char* protocol)
 {
     if (!strcmp("servicename", protocol))
@@ -56,6 +54,7 @@ SnortProtocolId ProtocolReference::add(const char* protocol)
 char* snort_strdup(const char* str)
 {
     return strdup(str);
+}
 }
 
 TEST_GROUP(host_cache)

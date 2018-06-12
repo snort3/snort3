@@ -41,15 +41,12 @@ using namespace snort;
 // stubs, spies, etc.
 //-------------------------------------------------------------------------
 
-extern const BaseApi* ips_regex;
-
-void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
+namespace snort
+{
 
 void mix_str(uint32_t& a, uint32_t&, uint32_t&, const char* s, unsigned)
 { a += strlen(s); }
 
-namespace snort
-{
 SnortConfig s_conf;
 THREAD_LOCAL SnortConfig* snort_conf = &s_conf;
 
@@ -80,10 +77,6 @@ SnortConfig* SnortConfig::get_conf()
 
 Packet::Packet(bool) { }
 Packet::~Packet() = default;
-}
-
-Cursor::Cursor(Packet* p)
-{ set("pkt_data", p->data, p->dsize); }
 
 static unsigned s_parse_errors = 0;
 
@@ -93,13 +86,20 @@ void ParseError(const char*, ...)
 unsigned get_instance_id()
 { return 0; }
 
-MemoryContext::MemoryContext(MemoryTracker&) { }
-MemoryContext::~MemoryContext() = default;
-
-void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) { }
-
 char* snort_strdup(const char* s)
 { return strdup(s); }
+
+MemoryContext::MemoryContext(MemoryTracker&) { }
+MemoryContext::~MemoryContext() = default;
+}
+
+extern const BaseApi* ips_regex;
+
+Cursor::Cursor(Packet* p)
+{ set("pkt_data", p->data, p->dsize); }
+
+void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
+void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) { }
 
 //-------------------------------------------------------------------------
 // helpers
@@ -275,8 +275,6 @@ TEST_GROUP(ips_regex_option)
 
     void setup() override
     {
-        // FIXIT-L cpputest hangs or crashes in the leak detector
-        MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         opt = get_option(" foo ");
         scratch_setup(snort_conf);
     }
@@ -286,7 +284,6 @@ TEST_GROUP(ips_regex_option)
         api->dtor(opt);
         scratch_cleanup(snort_conf);
         api->pterm(snort_conf);
-        MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };
 
@@ -349,8 +346,6 @@ TEST_GROUP(ips_regex_option_relative)
 
     void setup() override
     {
-        // FIXIT-L cpputest hangs or crashes in the leak detector
-        MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
         opt = get_option("\\bfoo", true);
         scratch_setup(snort_conf);
     }
@@ -359,7 +354,6 @@ TEST_GROUP(ips_regex_option_relative)
         IpsApi* api = (IpsApi*)ips_regex;
         api->dtor(opt);
         scratch_cleanup(snort_conf);
-        MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
     }
 };
 
@@ -383,6 +377,8 @@ TEST(ips_regex_option_relative, no_match)
 
 int main(int argc, char** argv)
 {
+    // FIXIT-L cpputest hangs or crashes in the leak detector
+    MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
 

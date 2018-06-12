@@ -488,12 +488,12 @@ int SegmentOverlapEditor::full_right_overlap_os5(TcpReassemblerState& trs)
 
 void SegmentOverlapEditor::print(TcpReassemblerState& trs)
 {
-    LogMessage("    seglist_base_seq:   %X\n", trs.sos.seglist_base_seq);
-    LogMessage("    seglist head:       %p\n", (void*)trs.sos.seglist.head);
-    LogMessage("    seglist tail:       %p\n", (void*)trs.sos.seglist.tail);
-    LogMessage("    seglist next:       %p\n", (void*)trs.sos.seglist.next);
-    LogMessage("    seg_count:          %d\n", trs.sos.seg_count);
-    LogMessage("    seg_bytes_total:    %d\n", trs.sos.seg_bytes_total);
-    LogMessage("    seg_bytes_logical:  %d\n", trs.sos.seg_bytes_logical);
+    snort::LogMessage("    seglist_base_seq:   %X\n", trs.sos.seglist_base_seq);
+    snort::LogMessage("    seglist head:       %p\n", (void*)trs.sos.seglist.head);
+    snort::LogMessage("    seglist tail:       %p\n", (void*)trs.sos.seglist.tail);
+    snort::LogMessage("    seglist next:       %p\n", (void*)trs.sos.seglist.next);
+    snort::LogMessage("    seg_count:          %d\n", trs.sos.seg_count);
+    snort::LogMessage("    seg_bytes_total:    %d\n", trs.sos.seg_bytes_total);
+    snort::LogMessage("    seg_bytes_logical:  %d\n", trs.sos.seg_bytes_logical);
 }
 

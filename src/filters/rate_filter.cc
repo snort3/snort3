@@ -35,6 +35,8 @@
 
 #include "sfrf.h"
 
+using namespace snort;
+
 //static int _printThresholdContext(RateFilterConfig*);
 
 RateFilterConfig* RateFilter_ConfigNew()

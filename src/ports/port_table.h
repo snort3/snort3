@@ -49,8 +49,8 @@ struct PortTable
     int pt_poid;
 
     /* Compiled / merged port object hash table */
-    GHash* pt_mpo_hash;
-    GHash* pt_mpxo_hash;
+    snort::GHash* pt_mpo_hash;
+    snort::GHash* pt_mpxo_hash;
 
     /*
     * Final Port/Rule Groupings, one port object per port, or null

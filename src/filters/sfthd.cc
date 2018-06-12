@@ -42,6 +42,8 @@
 #include "utils/sflsq.h"
 #include "utils/util.h"
 
+using namespace snort;
+
 //  Debug Printing
 //#define THD_DEBUG
 

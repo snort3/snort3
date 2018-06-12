@@ -37,6 +37,8 @@
 #include "tp_lib_handler.h"
 #endif
 
+using namespace snort;
+
 static const char* httpFieldName[ MAX_HTTP_FIELD_ID ] = // for use in debug messages
 {
     "useragent",

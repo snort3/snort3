@@ -61,11 +61,13 @@ static void log_message(FILE* file, const char* type, const char* msg)
     get_parse_location(file_name, file_line);
 
     if ( file_line )
-        LogMessage(file, "%s: %s:%d %s\n", type, file_name, file_line, msg);
+        snort::LogMessage(file, "%s: %s:%d %s\n", type, file_name, file_line, msg);
     else
-        LogMessage(file, "%s: %s\n", type, msg);
+        snort::LogMessage(file, "%s: %s\n", type, msg);
 }
 
+namespace snort
+{
 void ParseMessage(const char* format, ...)
 {
     char buf[STD_BUF+1];
@@ -311,4 +313,5 @@ NORETURN_ASSERT void log_safec_error(const char* msg, void*, int e)
 
     assert(false);
 }
+} //namespace snort
 

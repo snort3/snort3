@@ -33,10 +33,10 @@
 
 using namespace snort;
 
+namespace snort
+{
 SnortConfig* SnortConfig::get_conf() { return nullptr; }
-
 SnortProtocolId ProtocolReference::find(char const*) { return 0; }
-
 SnortProtocolId ProtocolReference::add(const char* protocol)
 {
     if (!strcmp("servicename", protocol))
@@ -46,15 +46,13 @@ SnortProtocolId ProtocolReference::add(const char* protocol)
     return 1;
 }
 
-//  Fake show_stats to avoid bringing in a ton of dependencies.
-void show_stats(PegCount*, const PegInfo*, unsigned, const char*)
-{ }
-
-void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*)
-{ }
-
 char* snort_strdup(const char* s)
 { return strdup(s); }
+}
+
+//  Fake show_stats to avoid bringing in a ton of dependencies.
+void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
+void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) { }
 
 #define FRAG_POLICY 33
 #define STREAM_POLICY 100

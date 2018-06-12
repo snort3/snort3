@@ -210,7 +210,7 @@ struct DCE2_SsnData
     uint32_t srv_nseq;
 };
 
-class DceEndianness : public Endianness
+class DceEndianness : public snort::Endianness
 {
 public:
     int hdr_byte_order;   /* Set to sentinel if not applicable */

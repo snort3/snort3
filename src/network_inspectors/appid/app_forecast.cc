@@ -110,7 +110,7 @@ void check_session_for_AF_indicator(Packet* p, AppidSessionDirection dir, AppId 
     AFActVal* test_active_value;
     if ((test_active_value = (AFActVal*)xhash_find(AF_actives, &master_key)))
     {
-        test_active_value->last = packet_time();
+        test_active_value->last = snort::packet_time();
         test_active_value->target = ind_element->target;
         return;
     }

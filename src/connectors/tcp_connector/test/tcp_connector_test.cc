@@ -71,11 +71,14 @@ void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*) { }
 void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) { }
 
+namespace snort
+{
 unsigned get_instance_id()
 { return s_instance; }
 
 void ErrorMessage(const char*, ...) { }
 void LogMessage(const char*, ...) { }
+}
 
 int connect (int, const struct sockaddr*, socklen_t) { return s_connect_return; } 
 ssize_t send (int, const void*, size_t n, int)

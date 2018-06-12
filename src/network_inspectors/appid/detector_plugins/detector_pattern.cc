@@ -30,6 +30,7 @@
 #include "protocols/packet.h"
 #include "search_engines/search_tool.h"
 
+using namespace snort;
 
 static THREAD_LOCAL PatternServiceDetector* service_pattern_detector;
 static THREAD_LOCAL PatternClientDetector* client_pattern_detector;
@@ -125,7 +126,7 @@ static void register_pattern(snort::SearchTool** patterns, Pattern* pattern)
         *patterns = new snort::SearchTool("ac_full", true);
         if (!*patterns)
         {
-            ErrorMessage("Error initializing the pattern table\n");
+            snort::ErrorMessage("Error initializing the pattern table\n");
             return;
         }
     }

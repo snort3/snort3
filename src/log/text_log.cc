@@ -39,6 +39,8 @@
 
 #include "log.h"
 
+using namespace snort;
+
 /* a reasonable minimum */
 #define MIN_BUF  (4* K_BYTES)
 #define STDLOG_FILENO 3
@@ -99,6 +101,8 @@ int TextLog_Tell(TextLog* const txt)
     return txt->pos;
 }
 
+namespace snort
+{
 int TextLog_Avail(TextLog* const txt)
 {
     return txt->maxBuf - txt->pos - 1;
@@ -306,4 +310,4 @@ bool TextLog_Quote(TextLog* const txt, const char* qs)
 
     return true;
 }
-
+} // namespace snort

@@ -49,7 +49,7 @@ public:
     { return (PegCount*)&sc_stats; }
 
     const PegInfo* get_pegs() const override
-    { return simple_pegs; }
+    { return snort::simple_pegs; }
 
     snort::ProfileStats* get_profile() const override;
 

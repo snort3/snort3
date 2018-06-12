@@ -29,6 +29,7 @@
 #include "http_js_norm.h"
 #include "http_msg_request.h"
 
+using namespace snort;
 using namespace HttpEnums;
 
 HttpMsgBody::HttpMsgBody(const uint8_t* buffer, const uint16_t buf_size,

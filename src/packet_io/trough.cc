@@ -35,6 +35,8 @@
 #include "main/snort_config.h"
 #include "utils/util.h"
 
+using namespace snort;
+
 std::vector<struct Trough::PcapReadObject> Trough::pcap_object_list;
 std::vector<std::string> Trough::pcap_queue;
 std::string Trough::pcap_filter;

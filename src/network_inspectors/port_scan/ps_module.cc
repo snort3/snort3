@@ -198,7 +198,7 @@ ProfileStats* PortScanModule::get_profile() const
 { return &psPerfStats; }
 
 const PegInfo* PortScanModule::get_pegs() const
-{ return simple_pegs; }
+{ return snort::simple_pegs; }
 
 PegCount* PortScanModule::get_counts() const
 { return (PegCount*)&spstats; }

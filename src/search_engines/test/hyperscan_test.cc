@@ -83,6 +83,16 @@ int SnortConfig::request_scratch(ScScratchFunc setup, ScScratchFunc cleanup)
 SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
 
+static unsigned parse_errors = 0;
+void ParseError(const char*, ...)
+{ parse_errors++; }
+
+void LogCount(char const*, uint64_t, FILE*)
+{ }
+
+unsigned get_instance_id()
+{ return 0; }
+
 }
 //-------------------------------------------------------------------------
 // stubs, spies, etc.
@@ -91,21 +101,10 @@ SnortConfig* SnortConfig::get_conf()
 extern const BaseApi* se_hyperscan;
 
 static unsigned hits = 0;
-static unsigned parse_errors = 0;
-
-void ParseError(const char*, ...)
-{ parse_errors++; }
-
-void LogCount(char const*, uint64_t, FILE*)
-{ }
 
 static int match(
     void* /*user*/, void* /*tree*/, int /*index*/, void* /*context*/, void* /*list*/)
 { ++hits; return 0; }
-
-
-unsigned get_instance_id()
-{ return 0; }
 
 static void* s_user = (void*)"user";
 static void* s_tree = (void*)"tree";

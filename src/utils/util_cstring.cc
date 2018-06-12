@@ -29,6 +29,8 @@
 #include <cstdio>
 #include <cstring>
 
+namespace snort
+{
 /* Guaranteed to be '\0' terminated even if truncation occurs.
  *
  * returns  SNORT_SNPRINTF_SUCCESS if successful
@@ -344,5 +346,7 @@ int safe_snprintf(char* s, size_t n, const char* format, ... )
         len = 0;
 
     return len;
+}
+
 }
 

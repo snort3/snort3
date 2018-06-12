@@ -136,22 +136,22 @@ struct TlsSession
     void set_tls_host(const char* new_tls_host, uint32_t len)
     {
         if (tls_host) snort_free(tls_host);
-        tls_host=snort_strndup(new_tls_host,len);
-        tls_host_strlen=len;
+        tls_host = snort::snort_strndup(new_tls_host,len);
+        tls_host_strlen = len;
     }
 
     void set_tls_cname(const char* new_tls_cname, uint32_t len)
     {
         if (tls_cname) snort_free(tls_cname);
-        tls_cname=snort_strndup(new_tls_cname,len);
-        tls_cname_strlen=len;
+        tls_cname = snort::snort_strndup(new_tls_cname,len);
+        tls_cname_strlen = len;
     }
 
     void set_tls_org_unit(const char* new_tls_org_unit, uint32_t len)
     {
         if (tls_orgUnit) snort_free(tls_orgUnit);
-        tls_orgUnit=snort_strndup(new_tls_org_unit,len);
-        tls_orgUnit_strlen=len;
+        tls_orgUnit = snort::snort_strndup(new_tls_org_unit,len);
+        tls_orgUnit_strlen = len;
     }
 };
 

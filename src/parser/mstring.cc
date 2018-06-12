@@ -28,6 +28,8 @@
 
 #include "utils/util.h"
 
+namespace snort
+{
 static char* mSplitAddTok(const char*, const int, const char*, const char);
 
 /****************************************************************
@@ -422,4 +424,4 @@ void mSplitFree(char*** pbuf, int num_toks)
     snort_free(buf);
     *pbuf = nullptr;
 }
-
+} // namespace snort

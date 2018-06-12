@@ -70,7 +70,7 @@ inline void TraceEvent(
     uint32_t rack = ( rxd ) ? h->ack() - rxd : h->ack();
     fprintf(stdout, "\n" FMTu64("-3") " %s=0x%02x Seq=%-4u Ack=%-4u Win=%-4hu Len=%-4hu%s\n",
         //"\n" FMTu64("-3") " %s=0x%02x Seq=%-4u Ack=%-4u Win=%-4u Len=%-4u End=%-4u%s\n",
-        get_packet_number(), flags, h->th_flags, rseq, rack, h->win(), p->dsize, order);
+        snort::get_packet_number(), flags, h->th_flags, rseq, rack, h->win(), p->dsize, order);
 }
 
 inline void TraceSession(const snort::Flow* lws)

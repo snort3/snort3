@@ -24,6 +24,8 @@
 
 #include "util_unfold.h"
 
+namespace snort
+{
 /* Given a string, removes header folding (\r\n followed by linear whitespace)
  * and exits when the end of a header is found, defined as \n followed by a
  * non-whitespace.  This is especially helpful for HTML.
@@ -185,5 +187,7 @@ int sf_strip_LWS(const uint8_t* inbuf, uint32_t inbuf_size, uint8_t* outbuf,
         *output_bytes = outbuf_ptr - outbuf;
 
     return(0);
+}
+
 }
 

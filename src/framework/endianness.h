@@ -23,6 +23,8 @@
 
 #include "main/snort_types.h"
 
+namespace snort
+{
 class SO_PUBLIC Endianness
 {
 public:
@@ -30,6 +32,6 @@ public:
     virtual ~Endianness() = default;
     virtual bool get_offset_endianness(int32_t offset, uint8_t& endian) = 0;
 };
-
+}
 #endif
 

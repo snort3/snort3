@@ -29,6 +29,8 @@
 #include "service_inspectors/http_inspect/http_msg_header.h"
 #include "service_inspectors/http_inspect/http_msg_request.h"
 
+using namespace snort;
+
 const uint8_t* HttpEvent::get_header(unsigned id, uint64_t sub_id, int32_t& length)
 {
     const Field& field = http_msg_header->get_classic_buffer(id, sub_id, 0);

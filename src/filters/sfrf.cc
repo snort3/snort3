@@ -35,6 +35,8 @@
 #include "utils/sflsq.h"
 #include "utils/util.h"
 
+using namespace snort;
+
 // Number of hash rows for gid 1 (rules)
 #define SFRF_GEN_ID_1_ROWS 4096
 // Number of hash rows for non-zero gid

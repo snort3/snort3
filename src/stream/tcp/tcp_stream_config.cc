@@ -27,6 +27,8 @@
 
 #include "log/messages.h"
 
+using namespace snort;
+
 static const char* const reassembly_policy_names[] =
 { "no policy", "first", "last", "linux", "old_linux", "bsd", "macos", "solaris", "irix",
   "hpux11", "hpux10", "windows", "win_2003", "vista", "proxy" };

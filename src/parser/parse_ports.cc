@@ -26,6 +26,8 @@
 #include "protocols/packet.h"
 #include "utils/util.h"
 
+using namespace snort;
+
 static int POParserInit(POParser* pop, const char* s, PortVarTable* pvTable)
 {
     memset(pop,0,sizeof(POParser));
@@ -172,7 +174,7 @@ static char* POParserName(POParser* pop)
 }
 
 /*
-*   Read an unsigned short (a port)
+*   read an unsigned short (a port)
 */
 static uint16_t POParserGetShort(POParser* pop)
 {

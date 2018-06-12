@@ -70,7 +70,7 @@ public:
 
         void print()
         {
-            LogMessage("flows: %" PRIu64 ", clients: %" PRIu64 ", users: %" PRIu64 ", payloads %" PRIu64
+            snort::LogMessage("flows: %" PRIu64 ", clients: %" PRIu64 ", users: %" PRIu64 ", payloads %" PRIu64
                 ", misc: %" PRIu64 ", incompatible: %" PRIu64 ", failed: %" PRIu64 "\n",
                 stats[0], stats[1], stats[2], stats[3], stats[4], stats[5], stats[6]);
         }

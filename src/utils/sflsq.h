@@ -74,6 +74,8 @@ typedef sf_list SF_LIST;
 // -----------------------------------------------------------------------------
 // Linked List Interface
 // -----------------------------------------------------------------------------
+namespace snort
+{
 SO_PUBLIC SF_LIST* sflist_new();
 SO_PUBLIC void sflist_init(SF_LIST*);
 SO_PUBLIC void sflist_add_tail(SF_LIST*, NODE_DATA);
@@ -88,6 +90,7 @@ SO_PUBLIC NODE_DATA sflist_next(SF_LNODE**);
 SO_PUBLIC void sflist_free(SF_LIST*);
 SO_PUBLIC void sflist_free_all(SF_LIST*, void (* free)(void*) );
 SO_PUBLIC void sflist_static_free_all(SF_LIST*, void (* nfree)(void*));
+}
 
 // -----------------------------------------------------------------------------
 //  Queue Interface ( FIFO - First in, First out )

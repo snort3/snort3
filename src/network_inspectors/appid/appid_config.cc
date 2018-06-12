@@ -42,6 +42,8 @@
 #include "tp_lib_handler.h"
 #endif
 
+using namespace snort;
+
 #define ODP_PORT_DETECTORS "odp/port/*"
 #define CUSTOM_PORT_DETECTORS "custom/port/*"
 #define MAX_DISPLAY_SIZE   65536

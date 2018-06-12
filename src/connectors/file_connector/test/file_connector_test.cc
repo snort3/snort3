@@ -54,8 +54,11 @@ void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*) { }
 void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) { }
 
+namespace snort
+{
 const char* get_instance_file(std::string& file, const char* name)
 { file += name; return nullptr; }
+}
 
 FileConnectorModule::FileConnectorModule() :
     Module("FC", "FC Help", nullptr)

@@ -94,18 +94,18 @@ struct DetectorHTTPPattern
     {
         if( !pat )
         {
-            ErrorMessage("HTTP pattern string is NULL.");
+            snort::ErrorMessage("HTTP pattern string is NULL.");
             return false;
         }
 
         if (seq < SINGLE || seq > USER_AGENT_HEADER)
         {
-            ErrorMessage("Invalid HTTP DHP Sequence.");
+            snort::ErrorMessage("Invalid HTTP DHP Sequence.");
             return false;
         }
 
         pattern_size = len;
-        pattern = (const uint8_t*)snort_strdup((const char*)pat);
+        pattern = (const uint8_t*)snort::snort_strdup((const char*)pat);
         sequence = seq;
         service_id = service;
         client_id = client;
@@ -255,7 +255,7 @@ class HostUrlDetectorPattern
 public:
     HostUrlDetectorPattern(const uint8_t* host_pattern, unsigned length)
     {
-        host.pattern = (const uint8_t*)snort_strdup((const char*)host_pattern);
+        host.pattern = (const uint8_t*)snort::snort_strdup((const char*)host_pattern);
         host.patternSize = length;
     }
 

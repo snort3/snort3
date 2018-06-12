@@ -43,9 +43,9 @@ namespace snort
 {
 struct Packet;
 struct SnortConfig;
+struct XHash;
 }
 struct RuleLatencyState;
-struct XHash;
 
 typedef int (* eval_func_t)(void* option_data, class Cursor&, snort::Packet*);
 
@@ -124,11 +124,11 @@ void* add_detection_option_tree(struct snort::SnortConfig*, detection_option_tre
 int detection_option_node_evaluate(
     detection_option_tree_node_t*, detection_option_eval_data_t*, class Cursor&);
 
-void DetectionHashTableFree(XHash*);
-void DetectionTreeHashTableFree(XHash*);
+void DetectionHashTableFree(snort::XHash*);
+void DetectionTreeHashTableFree(snort::XHash*);
 
 void print_option_tree(detection_option_tree_node_t*, int level);
-void detection_option_tree_update_otn_stats(XHash*);
+void detection_option_tree_update_otn_stats(snort::XHash*);
 
 detection_option_tree_root_t* new_root(OptTreeNode*);
 void free_detection_option_root(void** existing_tree);

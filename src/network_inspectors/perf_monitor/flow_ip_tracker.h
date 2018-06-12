@@ -71,7 +71,7 @@ public:
 
 private:
     FlowStateValue stats;
-    XHash* ip_map;
+    snort::XHash* ip_map;
     char ip_a[41], ip_b[41];
 
     FlowStateValue* find_stats(const snort::SfIp* src_addr, const snort::SfIp* dst_addr, int* swapped);

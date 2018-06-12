@@ -37,6 +37,8 @@
 #include "gtp_inspect.h"
 #include "gtp_module.h"
 
+using namespace snort;
+
 #pragma pack(1)
 static inline void alert(int sid)
 {

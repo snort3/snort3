@@ -29,10 +29,7 @@ namespace Piglet
 struct Chunk;
 struct Test;
 struct Output;
-}
 
-namespace Piglet
-{
 struct Summary
 {
     unsigned passed = 0;

@@ -27,13 +27,13 @@
 #include "main/snort_types.h"
 #include "target_based/snort_protocols.h"
 
-class Endianness;
-class Obfuscator;
 
 namespace snort
 {
+class Endianness;
 class Flow;
 class IpsContext;
+class Obfuscator;
 
 /* packet status flags */
 #define PKT_REBUILT_FRAG     0x00000001  /* is a rebuilt fragment */

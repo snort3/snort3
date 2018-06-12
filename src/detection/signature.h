@@ -31,11 +31,11 @@
 
 namespace snort
 {
+struct GHash;
 struct SnortConfig;
 }
 
 struct OptTreeNode;
-struct GHash;
 
 /* this contains a list of the URLs for various reference systems */
 struct ReferenceSystemNode
@@ -107,11 +107,11 @@ struct SigInfo
     Target target;
 };
 
-GHash* OtnLookupNew();
-void OtnLookupAdd(GHash*, OptTreeNode*);
-OptTreeNode* OtnLookup(GHash*, uint32_t gid, uint32_t sid);
-void OtnLookupFree(GHash*);
-void OtnRemove(GHash*, OptTreeNode*);
+snort::GHash* OtnLookupNew();
+void OtnLookupAdd(snort::GHash*, OptTreeNode*);
+OptTreeNode* OtnLookup(snort::GHash*, uint32_t gid, uint32_t sid);
+void OtnLookupFree(snort::GHash*);
+void OtnRemove(snort::GHash*, OptTreeNode*);
 
 void OtnDeleteData(void* data);
 void OtnFree(void* data);

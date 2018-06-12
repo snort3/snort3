@@ -30,6 +30,8 @@
 
 #include "main/snort_debug.h"
 
+using namespace snort;
+
 static const char* boundary_str = "boundary=";
 
 /* Save the boundary string into paf state*/
@@ -138,6 +140,8 @@ static inline bool check_boundary(MimeDataPafInfo* data_info,  uint8_t data)
     return false;
 }
 
+namespace snort
+{
 void reset_mime_paf_state(MimeDataPafInfo* data_info)
 {
     data_info->boundary_search = nullptr;
@@ -219,4 +223,4 @@ bool check_data_end(void* data_end_state,  uint8_t val)
     *((DataEndState*)data_end_state) = state;
     return false;
 }
-
+} // namespace snort

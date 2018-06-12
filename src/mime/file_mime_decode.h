@@ -51,7 +51,7 @@ struct MimeStats
 class MimeDecode
 {
 public:
-    MimeDecode(DecodeConfig* conf);
+    MimeDecode(snort::DecodeConfig* conf);
     ~MimeDecode();
 
     // get the decode type from buffer
@@ -73,7 +73,7 @@ public:
 
 private:
     DecodeType decode_type = DECODE_NONE;
-    DecodeConfig* config;
+    snort::DecodeConfig* config;
     DataDecode* decoder = nullptr;
 };
 

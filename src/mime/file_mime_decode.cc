@@ -31,6 +31,8 @@
 #include "decode_qp.h"
 #include "decode_uu.h"
 
+using namespace snort;
+
 void MimeDecode::reset_decoded_bytes()
 {
     if (decoder)
@@ -131,7 +133,7 @@ DecodeType MimeDecode::get_decode_type()
     return decode_type;
 }
 
-MimeDecode::MimeDecode(DecodeConfig* conf)
+MimeDecode::MimeDecode(snort::DecodeConfig* conf)
 {
     config = conf;
 }

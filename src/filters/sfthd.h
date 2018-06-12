@@ -29,10 +29,11 @@
 
 namespace snort
 {
-struct SnortConfig;
-}
 struct GHash;
 struct XHash;
+struct SnortConfig;
+}
+
 typedef struct sf_list SF_LIST;
 
 /*!
@@ -185,14 +186,14 @@ struct tThdItemKey
  */
 struct THD_STRUCT
 {
-    XHash* ip_nodes;   /* Global hash of active IP's key=THD_IP_NODE_KEY, data=THD_IP_NODE */
-    XHash* ip_gnodes;  /* Global hash of active IP's key=THD_IP_GNODE_KEY, data=THD_IP_GNODE */
+    snort::XHash* ip_nodes;   /* Global hash of active IP's key=THD_IP_NODE_KEY, data=THD_IP_NODE */
+    snort::XHash* ip_gnodes;  /* Global hash of active IP's key=THD_IP_GNODE_KEY, data=THD_IP_GNODE */
 };
 
 struct ThresholdObjects
 {
     int count;  /* Total number of thresholding/suppression objects */
-    GHash* sfthd_array[THD_MAX_GENID];    /* Local Hash of THD_ITEM nodes,  lookup by key=sig_id
+    snort::GHash* sfthd_array[THD_MAX_GENID];    /* Local Hash of THD_ITEM nodes,  lookup by key=sig_id
                                               */
 
     /* Double array of THD_NODE pointers. First index is policyId and therefore variable length.
@@ -212,13 +213,13 @@ struct ThresholdObjects
 // lbytes = local threshold memcap
 // gbytes = global threshold memcap (0 to disable global)
 THD_STRUCT* sfthd_new(unsigned lbytes, unsigned gbytes);
-XHash* sfthd_local_new(unsigned bytes);
-XHash* sfthd_global_new(unsigned bytes);
+snort::XHash* sfthd_local_new(unsigned bytes);
+snort::XHash* sfthd_global_new(unsigned bytes);
 void sfthd_free(THD_STRUCT*);
 ThresholdObjects* sfthd_objs_new();
 void sfthd_objs_free(ThresholdObjects*);
 
-int sfthd_test_rule(XHash* rule_hash, THD_NODE* sfthd_node,
+int sfthd_test_rule(snort::XHash* rule_hash, THD_NODE* sfthd_node,
     const snort::SfIp* sip, const snort::SfIp* dip, long curtime);
 
 THD_NODE* sfthd_create_rule_threshold(
@@ -240,9 +241,9 @@ int sfthd_create_threshold(snort::SnortConfig*, ThresholdObjects*, unsigned gen_
 int sfthd_test_threshold(ThresholdObjects*, THD_STRUCT*, unsigned gen_id, unsigned sig_id,
     const snort::SfIp* sip, const snort::SfIp* dip, long curtime);
 
-XHash* sfthd_new_hash(unsigned, size_t, size_t);
+snort::XHash* sfthd_new_hash(unsigned, size_t, size_t);
 
-int sfthd_test_local(XHash* local_hash, THD_NODE* sfthd_node, const snort::SfIp* sip,
+int sfthd_test_local(snort::XHash* local_hash, THD_NODE* sfthd_node, const snort::SfIp* sip,
     const snort::SfIp* dip, time_t curtime);
 
 #ifdef THD_DEBUG

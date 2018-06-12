@@ -60,10 +60,13 @@ void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*) { }
 void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) { }
 
+namespace snort
+{
 void ParseWarning(WarningGroup, const char*, ...) { }
 
 char* snort_strdup(const char* s)
 { return strdup(s); }
+}
 
 TEST_GROUP(side_channel_module)
 { };

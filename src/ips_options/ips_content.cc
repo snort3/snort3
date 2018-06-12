@@ -75,7 +75,7 @@ void ContentData::init()
 
 void ContentData::setup_bm()
 {
-    skip_stride = make_skip(pmd.pattern_buf, pmd.pattern_size);
+    skip_stride = snort::make_skip(pmd.pattern_buf, pmd.pattern_size);
     shift_stride = make_shift(pmd.pattern_buf, pmd.pattern_size);
 }
 

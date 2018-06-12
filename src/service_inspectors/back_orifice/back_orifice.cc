@@ -198,7 +198,7 @@ public:
 };
 
 const PegInfo* BoModule::get_pegs() const
-{ return simple_pegs; }
+{ return snort::simple_pegs; }
 
 PegCount* BoModule::get_counts() const
 { return (PegCount*)&bostats; }

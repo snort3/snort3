@@ -39,6 +39,8 @@
 #include "catch/snort_catch.h"
 #endif
 
+using namespace snort;
+
 struct MergeNode
 {
     IdentifierNode* shared_node;  /*the node that is shared*/
@@ -66,7 +68,7 @@ void FileMagicRule::clear()
 
 void FileIdentifier::init_merge_hash()
 {
-    identifier_merge_hash = ghash_new(1000, sizeof(MergeNode), 0, nullptr);
+    identifier_merge_hash = snort::ghash_new(1000, sizeof(MergeNode), 0, nullptr);
     assert(identifier_merge_hash);
 }
 

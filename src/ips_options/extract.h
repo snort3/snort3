@@ -34,6 +34,8 @@
 #define IPS_OPTIONS_NO_VAR (-1)
 #define INVALID_VAR_ERR_STR "%s uses an undefined rule option variable (%s)"
 
+namespace snort
+{
 SO_PUBLIC int string_extract(
     int bytes_to_grab, int base, const uint8_t* ptr,
     const uint8_t* start, const uint8_t* end, uint32_t* value);
@@ -55,6 +57,6 @@ SO_PUBLIC void ClearIpsOptionsVars();
 // Used during eval
 SO_PUBLIC int GetVarValueByIndex(uint32_t* dst, uint8_t var_number);
 SO_PUBLIC int SetVarValueByIndex(uint32_t value, uint8_t var_number);
-
+}
 #endif
 

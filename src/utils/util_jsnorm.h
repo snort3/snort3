@@ -25,6 +25,8 @@
 
 #include "main/snort_types.h"
 
+namespace snort
+{
 #define ALERT_SPACES_EXCEEDED   0x1
 #define ALERT_LEVELS_EXCEEDED   0x2
 #define ALERT_MIXED_ENCODINGS   0x4
@@ -40,6 +42,6 @@ struct JSState
 
 SO_PUBLIC int JSNormalizeDecode(
     const char*, uint16_t, char*, uint16_t destlen, const char**, int*, JSState*, uint8_t*);
-
+}
 #endif
 

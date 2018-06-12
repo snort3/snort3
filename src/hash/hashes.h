@@ -22,6 +22,8 @@
 
 #include "main/snort_types.h"
 
+namespace snort
+{
 #define MD5_HASH_SIZE    16
 #define SHA256_HASH_SIZE 32
 #define SHA512_HASH_SIZE 64
@@ -31,6 +33,6 @@
 SO_PUBLIC void md5(const unsigned char* data, size_t size, unsigned char* digest);
 SO_PUBLIC void sha256(const unsigned char* data, size_t size, unsigned char* digest);
 SO_PUBLIC void sha512(const unsigned char* data, size_t size, unsigned char* digest);
-
+}
 #endif
 

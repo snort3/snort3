@@ -33,6 +33,8 @@
 #include "catch/snort_catch.h"
 #endif
 
+using namespace snort;
+
 /* Define characters and tokens in PDF grammar */
 #define TOK_STRM_OPEN      "stream"
 #define TOK_STRM_CLOSE     "endstream"

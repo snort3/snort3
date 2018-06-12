@@ -421,7 +421,7 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
     if (snmp_verify_packet(&data, data+size, &pdu, &version))
     {
         if (appidDebug->is_active())
-            LogMessage("AppIdDbg %s SNMP payload verify failed\n", appidDebug->get_debug_session());
+            snort::LogMessage("AppIdDbg %s SNMP payload verify failed\n", appidDebug->get_debug_session());
         if (args.asd.get_session_flags(APPID_SESSION_UDP_REVERSED))
         {
             if (args.dir == APP_ID_FROM_RESPONDER)
@@ -439,7 +439,7 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
 
     if (appidDebug->is_active())
-        LogMessage("AppIdDbg %s SNMP state %d\n", appidDebug->get_debug_session(), sd->state);
+        snort::LogMessage("AppIdDbg %s SNMP state %d\n", appidDebug->get_debug_session(), sd->state);
 
     switch (sd->state)
     {

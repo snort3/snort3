@@ -125,7 +125,7 @@ static int CheckFTPCmdOptions(FTP_SERVER_PROTO_CONF* serverConf)
 
         if ( cmdConf->check_validity && !len )
         {
-            ErrorMessage("FTPConfigCheck() configuration for server, "
+            snort::ErrorMessage("FTPConfigCheck() configuration for server, "
                 "command '%s' has max length of 0 and parameters to validate\n",
                 cmdConf->cmd_name);
             config_error = 1;
@@ -150,7 +150,7 @@ int CheckFTPServerConfigs(snort::SnortConfig*, FTP_SERVER_PROTO_CONF* serverConf
 {
     if (CheckFTPCmdOptions(serverConf))
     {
-        ErrorMessage("FTPConfigCheck(): invalid configuration for FTP commands\n");
+        snort::ErrorMessage("FTPConfigCheck(): invalid configuration for FTP commands\n");
         return -1;
     }
     return 0;
@@ -163,7 +163,7 @@ int FTPCheckConfigs(snort::SnortConfig* sc, void* pData)
 
     if ( !config )
     {
-        ErrorMessage("FTP configuration requires "
+        snort::ErrorMessage("FTP configuration requires "
             "default client and default server configurations.\n");
         return -1;
     }
@@ -175,13 +175,13 @@ int FTPCheckConfigs(snort::SnortConfig* sc, void* pData)
     //  Verify that FTP client and FTP data inspectors are initialized.
     if(!snort::InspectorManager::get_inspector(FTP_CLIENT_NAME, false))
     {
-        ParseError("ftp_server requires that %s also be configured.", FTP_CLIENT_NAME);
+        snort::ParseError("ftp_server requires that %s also be configured.", FTP_CLIENT_NAME);
         return -1;
     }
 
     if(!snort::InspectorManager::get_inspector(FTP_DATA_NAME, false))
     {
-        ParseError("ftp_server requires that %s also be configured.", FTP_DATA_NAME);
+        snort::ParseError("ftp_server requires that %s also be configured.", FTP_DATA_NAME);
         return -1;
     }
 

@@ -65,6 +65,8 @@
 #include "hashfcn.h"
 #include "primetable.h"
 
+namespace snort
+{
 /*
 *
 *    Create a new hash table
@@ -505,4 +507,5 @@ int ghash_set_keyops(GHash* h,
     assert(h && hash_fcn && keycmp_fcn);
 
     return hashfcn_set_keyops(h->hashfcn, hash_fcn, keycmp_fcn);
+}
 }

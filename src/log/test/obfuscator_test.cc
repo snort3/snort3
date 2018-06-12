@@ -29,6 +29,8 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
+using namespace snort;
+
 TEST_GROUP(ObfuscatorTests)
 { };
 

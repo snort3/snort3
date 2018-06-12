@@ -29,6 +29,8 @@
 
 #include "sfthd.h"
 
+using namespace snort;
+
 //---------------------------------------------------------------
 
 #define IP_ANY   nullptr          // used to get "unset"

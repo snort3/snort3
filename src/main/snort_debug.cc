@@ -33,6 +33,8 @@
 
 #include "snort_config.h"
 
+using namespace snort;
+
 bool trace_enabled(Trace mask, Trace flags)
 { return mask & flags; }
 

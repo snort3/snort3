@@ -35,15 +35,15 @@
 namespace snort
 {
 struct SnortConfig;
+struct GHash;
 }
 struct PortGroup;
-struct GHash;
 
 //  Service Rule Map Master Table
 struct srmm_table_t
 {
-    GHash* to_srv[SNORT_PROTO_MAX];
-    GHash* to_cli[SNORT_PROTO_MAX];
+    snort::GHash* to_srv[SNORT_PROTO_MAX];
+    snort::GHash* to_cli[SNORT_PROTO_MAX];
 };
 
 srmm_table_t* ServiceMapNew();

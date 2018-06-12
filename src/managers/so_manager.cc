@@ -55,7 +55,7 @@ void SoManager::release_plugins()
 
 void SoManager::dump_plugins()
 {
-    Dumper d("SO Rules");
+    snort::Dumper d("SO Rules");
 
     for ( auto* p : s_rules )
         d.dump(p->base.name, p->base.version);

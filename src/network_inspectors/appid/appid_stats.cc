@@ -33,6 +33,8 @@
 #include "app_info_table.h"
 #include "appid_session.h"
 
+using namespace snort;
+
 #define URLCATBUCKETS   100
 #define URLREPBUCKETS   5
 
@@ -245,7 +247,7 @@ static void update_stats(AppIdSession& asd, AppId app_id, StatsBucket* bucket)
         }
         else
         {
-            WarningMessage("Error saving statistics record for app id: %d", app_id);
+            snort::WarningMessage("Error saving statistics record for app id: %d", app_id);
             snort_free(record);
             record = nullptr;
         }

@@ -47,7 +47,7 @@ public:
 private:
     // Dummy configurations to support MIME processing
     MailLogConfig mime_conf;
-    DecodeConfig decode_conf;
+    snort::DecodeConfig decode_conf;
 
     void prepare_body();
     void setup_file_processing();

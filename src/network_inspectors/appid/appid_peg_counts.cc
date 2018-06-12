@@ -135,7 +135,7 @@ void AppIdPegCounts::print()
     if (!print && unknown_pegs->all_zeros())
         return;
 
-    LogLabel("Appid dynamic stats:");
+    snort::LogLabel("Appid dynamic stats:");
 
     for (unsigned i = 0; i < app_num; i++)
     {
@@ -144,14 +144,14 @@ void AppIdPegCounts::print()
             continue;
 
         std::string app_name = AppIdPegCounts::appid_detectors_info[i];
-        LogMessage("%s: ", app_name.c_str());
+        snort::LogMessage("%s: ", app_name.c_str());
         pegs->print();
     }
 
     // Print unknown app stats
     if (!unknown_pegs->all_zeros())
     {
-        LogMessage("unknown_app: flows: %" PRIu64 ", clients: %" PRIu64 ", users: %" PRIu64 ", payloads %"
+        snort::LogMessage("unknown_app: flows: %" PRIu64 ", clients: %" PRIu64 ", users: %" PRIu64 ", payloads %"
             PRIu64 ", misc: %" PRIu64 "\n",
             unknown_pegs->stats[0], unknown_pegs->stats[1], unknown_pegs->stats[2],
             unknown_pegs->stats[3], unknown_pegs->stats[4]);

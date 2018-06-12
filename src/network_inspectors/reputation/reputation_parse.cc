@@ -36,6 +36,7 @@
 #include "utils/util.h"
 #include "utils/util_cstring.h"
 
+using namespace snort;
 using namespace std;
 
 enum

@@ -25,7 +25,7 @@
 
 struct IMAP_PROTO_CONF
 {
-    DecodeConfig decode_conf;
+    snort::DecodeConfig decode_conf;
     MailLogConfig log_config;
 };
 

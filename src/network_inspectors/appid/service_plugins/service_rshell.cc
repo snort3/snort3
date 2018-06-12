@@ -113,7 +113,7 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
 
     if (appidDebug->is_active())
-        LogMessage("AppIdDbg %s RSHELL state %d\n", appidDebug->get_debug_session(), rd->state);
+        snort::LogMessage("AppIdDbg %s RSHELL state %d\n", appidDebug->get_debug_session(), rd->state);
 
     switch (rd->state)
     {

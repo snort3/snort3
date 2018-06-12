@@ -40,65 +40,6 @@
 #define SSL2_CHELLO_BYTE 0x01
 #define SSL2_SHELLO_BYTE 0x04
 
-/* very simplistic - just enough to say this is binary data - the rules will make a final
-* judgement.  Should maybe add an option to the imap configuration to enable the
-* continuing of command inspection like ftptelnet. */
-bool IsTlsClientHello(const uint8_t* ptr, const uint8_t* end)
-{
-    /* at least 3 bytes of data - see below */
-    if ((end - ptr) < 3)
-        return false;
-
-    if ((ptr[0] == SSL3_FIRST_BYTE) && (ptr[1] == SSL3_SECOND_BYTE))
-    {
-        /* TLS v1 or SSLv3 */
-        return true;
-    }
-    else if ((ptr[2] == SSL2_CHELLO_BYTE) || (ptr[3] == SSL2_CHELLO_BYTE))
-    {
-        /* SSLv2 */
-        return true;
-    }
-
-    return false;
-}
-
-/* this may at least tell us whether the server accepted the client hello by the presence
- * of binary data */
-
-bool IsTlsServerHello(const uint8_t* ptr, const uint8_t* end)
-{
-    /* at least 3 bytes of data - see below */
-    if ((end - ptr) < 3)
-        return false;
-
-    if ((ptr[0] == SSL3_FIRST_BYTE) && (ptr[1] == SSL3_SECOND_BYTE))
-    {
-        /* TLS v1 or SSLv3 */
-        return true;
-    }
-    else if (ptr[2] == SSL2_SHELLO_BYTE)
-    {
-        /* SSLv2 */
-        return true;
-    }
-
-    return false;
-}
-
-bool IsSSL(const uint8_t* ptr, int len, int pkt_flags)
-{
-    uint32_t ssl_flags = SSL_decode(ptr, len, pkt_flags, 0, nullptr, nullptr, 0);
-
-    if ((ssl_flags != SSL_ARG_ERROR_FLAG) &&
-        !(ssl_flags & SSL_ERROR_FLAGS))
-    {
-        return true;
-    }
-
-    return false;
-}
-
 static uint32_t SSL_decode_version_v3(uint8_t major, uint8_t minor)
 {
     /* Should only be called internally and by functions which have previously
@@ -480,6 +421,8 @@ static uint32_t SSL_decode_v2(const uint8_t* pkt, int size, uint32_t pkt_flags)
     return retval | SSL_VER_SSLV2_FLAG;
 }
 
+namespace snort
+{
 uint32_t SSL_decode(
     const uint8_t* pkt, int size, uint32_t pkt_flags, uint32_t prev_flags,
     uint8_t* alert_flags, uint16_t* partial_rec_len, int max_hb_len)
@@ -553,3 +496,63 @@ uint32_t SSL_decode(
     return SSL_decode_v3(pkt, size, pkt_flags, alert_flags, partial_rec_len, max_hb_len);
 }
 
+/* very simplistic - just enough to say this is binary data - the rules will make a final
+* judgement.  Should maybe add an option to the imap configuration to enable the
+* continuing of command inspection like ftptelnet. */
+bool IsTlsClientHello(const uint8_t* ptr, const uint8_t* end)
+{
+    /* at least 3 bytes of data - see below */
+    if ((end - ptr) < 3)
+        return false;
+
+    if ((ptr[0] == SSL3_FIRST_BYTE) && (ptr[1] == SSL3_SECOND_BYTE))
+    {
+        /* TLS v1 or SSLv3 */
+        return true;
+    }
+    else if ((ptr[2] == SSL2_CHELLO_BYTE) || (ptr[3] == SSL2_CHELLO_BYTE))
+    {
+        /* SSLv2 */
+        return true;
+    }
+
+    return false;
+}
+
+/* this may at least tell us whether the server accepted the client hello by the presence
+ * of binary data */
+
+bool IsTlsServerHello(const uint8_t* ptr, const uint8_t* end)
+{
+    /* at least 3 bytes of data - see below */
+    if ((end - ptr) < 3)
+        return false;
+
+    if ((ptr[0] == SSL3_FIRST_BYTE) && (ptr[1] == SSL3_SECOND_BYTE))
+    {
+        /* TLS v1 or SSLv3 */
+        return true;
+    }
+    else if (ptr[2] == SSL2_SHELLO_BYTE)
+    {
+        /* SSLv2 */
+        return true;
+    }
+
+    return false;
+}
+
+bool IsSSL(const uint8_t* ptr, int len, int pkt_flags)
+{
+    uint32_t ssl_flags = SSL_decode(ptr, len, pkt_flags, 0, nullptr, nullptr, 0);
+
+    if ((ssl_flags != SSL_ARG_ERROR_FLAG) &&
+        !(ssl_flags & SSL_ERROR_FLAGS))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+} // namespace snort

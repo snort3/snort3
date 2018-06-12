@@ -33,6 +33,8 @@
 #include "log/messages.h"
 #include "protocols/packet.h"
 
+using namespace snort;
+
 static const char* const FP_OPERATION_AND = "%&%";
 static const unsigned PATTERN_PART_MAX = 10;
 
@@ -1840,7 +1842,7 @@ uint32_t HttpPatternMatchers::parse_multiple_http_patterns(const char* pattern,
             for (unsigned i = 0; i <= partNum; i++)
                 snort_free((void*)parts[i].pattern);
 
-            ErrorMessage("Failed to allocate memory");
+            snort::ErrorMessage("Failed to allocate memory");
             return 0;
         }
         partNum++;

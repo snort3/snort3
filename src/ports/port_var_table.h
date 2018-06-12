@@ -32,7 +32,7 @@
 // PortVars are internally stored in PortObjects
 //-------------------------------------------------------------------------
 
-typedef GHash PortVarTable;
+typedef snort::GHash PortVarTable;
 
 PortVarTable* PortVarTableCreate();
 int PortVarTableFree(PortVarTable* pvt);

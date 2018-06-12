@@ -32,6 +32,8 @@
 #include "dce_smb_module.h"
 #include "dce_smb_transaction_utils.h"
 
+using namespace snort;
+
 #define SMB_DIALECT_NT_LM_012       "NT LM 0.12"  // NT LAN Manager
 
 #define SERVICE_0     (0)                // IPC start

@@ -47,14 +47,8 @@ uint16_t get_run_num()
 void set_instance_id(unsigned id)
 { instance_id = id; }
 
-unsigned get_instance_id()
-{ return instance_id; }
-
 void set_thread_type(SThreadType type)
 { thread_type = type; }
-
-SThreadType get_thread_type()
-{ return thread_type; }
 
 //-------------------------------------------------------------------------
 // union rules - breaks are mandatory and must be taken in daq thread
@@ -74,6 +68,15 @@ bool break_time()
     t_breaks = g_breaks;
     return true;
 }
+
+namespace snort
+{
+unsigned get_instance_id()
+{ return instance_id; }
+
+SThreadType get_thread_type()
+{ return thread_type; }
+
 
 //-------------------------------------------------------------------------
 // format is:
@@ -123,4 +126,5 @@ const char* get_instance_file(std::string& file, const char* name)
     file += name;
 
     return file.c_str();
+}
 }

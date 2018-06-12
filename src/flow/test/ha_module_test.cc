@@ -35,8 +35,6 @@
 
 using namespace snort;
 
-void LogMessage(const char*,...) { }
-
 THREAD_LOCAL SimpleStats ha_stats;
 THREAD_LOCAL ProfileStats ha_perf_stats;
 
@@ -44,9 +42,12 @@ void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*) { }
 void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) { }
 
+namespace snort
+{
+void LogMessage(const char*,...) { }
 void ParseWarning(WarningGroup, const char*, ...) { }
-
 char* snort_strdup(const char* str) { return strdup(str); }
+}
 
 static bool s_port_1_set = false;
 static bool s_use_daq = false;

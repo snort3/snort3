@@ -202,7 +202,7 @@ PerfConfig& PerfMonModule::get_config()
 { return config; }
 
 const PegInfo* PerfMonModule::get_pegs() const
-{ return simple_pegs; }
+{ return snort::simple_pegs; }
 
 PegCount* PerfMonModule::get_counts() const
 { return (PegCount*)&pmstats; }

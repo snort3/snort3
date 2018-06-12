@@ -24,8 +24,12 @@
 
 #include "main/snort_types.h"
 
-void packet_time_update(const struct timeval* cur_tv);
+namespace snort
+{
 SO_PUBLIC time_t packet_time();
+}
+
+void packet_time_update(const struct timeval* cur_tv);
 uint32_t packet_first_time();
 void packet_gettimeofday(struct timeval* tv);
 

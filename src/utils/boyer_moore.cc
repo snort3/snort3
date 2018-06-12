@@ -49,6 +49,8 @@
 
 #include "util.h"
 
+namespace snort
+{
 /****************************************************************
  *
  *  Function: make_skip(char *, int)
@@ -218,4 +220,4 @@ int mSearchCI(
 
     return -1;
 }
-
+}
