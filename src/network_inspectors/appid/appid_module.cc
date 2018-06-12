@@ -55,6 +55,11 @@ static const Parameter s_params[] =
     { "conf", Parameter::PT_STRING, nullptr, nullptr,
       "RNA configuration file" },  // FIXIT-L eliminate reference to "RNA"
 #endif
+    // FIXIT-L: DECRYPT_DEBUG - Move this to ssl-module
+#ifdef REG_TEST
+    { "first_decrypted_packet_debug", Parameter::PT_INT, "0:", "0",
+      "the first packet of an already decrypted SSL flow (debug single session only)" },
+#endif
     { "memcap", Parameter::PT_INT, "0:", "0",
       "disregard - not implemented" },  // FIXIT-M implement or delete appid.memcap
     { "log_stats", Parameter::PT_BOOL, nullptr, "false",
@@ -222,6 +227,12 @@ bool AppIdModule::set(const char* fqn, Value& v, SnortConfig* c)
 #ifdef USE_RNA_CONFIG
     if ( v.is("conf") )
         config->conf_file = snort_strdup(v.get_string());
+    else
+#endif
+    // FIXIT-L: DECRYPT_DEBUG - Move this to ssl-module
+#ifdef REG_TEST
+    if ( v.is("first_decrypted_packet_debug") )
+        config->first_decrypted_packet_debug = v.get_long();
     else
 #endif
     if ( v.is("memcap") )

@@ -333,7 +333,6 @@ private:
 
     void reinit_session_data();
     void delete_session_data();
-    bool is_ssl_decryption_enabled();
 
     static THREAD_LOCAL uint32_t appid_flow_data_id;
     AppId application_ids[APP_PROTOID_MAX];

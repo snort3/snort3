@@ -63,6 +63,13 @@ public:
 #ifdef USE_RNA_CONFIG
     const char* conf_file = nullptr;
 #endif
+    // FIXIT-L: DECRYPT_DEBUG - Move this to ssl-module
+#ifdef REG_TEST
+    // To manually restart appid detection for an SSL-decrypted flow (single session only),
+    // indicate the first packet from where the flow is decrypted (usually immediately
+    // after certificate-exchange). Such manual detection is disabled by default (0).
+    uint32_t first_decrypted_packet_debug = 0;
+#endif
     bool stats_logging_enabled = false;
     unsigned long app_stats_period = 0;
     unsigned long app_stats_rollover_size = 0;

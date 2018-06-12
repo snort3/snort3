@@ -193,13 +193,13 @@ static inline void process_http_session(AppIdSession& asd,
 
             // Change http to https if session was decrypted.
             if (asd.get_session_flags(APPID_SESSION_DECRYPTED) and
-                memcmp(field->c_str(), httpScheme, sizeof(httpScheme)-1)==0)
+                memcmp(field->c_str(), httpScheme, sizeof(httpScheme)-1) == 0)
             {
                 // This is the only instance that requires that field be
                 // non const and the reason TPAD_GET in tp_appid_types.h
                 // returns string* rather than const string*.
                 // In all other cases field can be const string*.
-                field->insert(4,'s',1);
+                field->insert(4, 1, 's');
             }
             hsession->update_url(field);
 
@@ -306,9 +306,6 @@ static inline void process_http_session(AppIdSession& asd,
 
     if ( (field=attribute_data.http_request_referer(own)) != nullptr )
     {
-        if (appidDebug->is_active())
-            LogMessage("AppIdDbg %s referrer is %s\n",
-                appidDebug->get_debug_session(), field->c_str());
         if (hsession->get_referer())
             if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
                 hsession->set_chp_finished(false);
@@ -317,7 +314,7 @@ static inline void process_http_session(AppIdSession& asd,
         hsession->set_field_offset(REQ_REFERER_FID, attribute_data.http_request_referer_begin());
         hsession->set_field_end_offset(REQ_REFERER_FID, attribute_data.http_request_referer_end());
         if (appidDebug->is_active())
-            LogMessage("AppIdDbg %s Referer (%u-%u) is %s\n", appidDebug->get_debug_session(),
+            LogMessage("AppIdDbg %s Referrer (%u-%u) is %s\n", appidDebug->get_debug_session(),
                 hsession->get_field_offset(REQ_REFERER_FID),
                 hsession->get_field_end_offset(REQ_REFERER_FID),
                 hsession->get_referer());
@@ -337,7 +334,7 @@ static inline void process_http_session(AppIdSession& asd,
         // attribute_data.httpRequestCookieOffset = 0;
         // attribute_data.httpRequestCookieEndOffset = 0;
         if (appidDebug->is_active())
-            LogMessage("AppIdDbg %s cookie (%u-%u) is %s\n", appidDebug->get_debug_session(),
+            LogMessage("AppIdDbg %s Cookie (%u-%u) is %s\n", appidDebug->get_debug_session(),
                 hsession->get_field_offset(REQ_COOKIE_FID),
                 hsession->get_field_offset(REQ_COOKIE_FID),
                 hsession->get_cookie());
@@ -366,7 +363,7 @@ static inline void process_http_session(AppIdSession& asd,
     if ( (field=attribute_data.http_request_body(own)) != nullptr )
     {
         if (appidDebug->is_active())
-            LogMessage("AppIdDbg %s got a request body %s\n",
+            LogMessage("AppIdDbg %s Got a request body %s\n",
                 appidDebug->get_debug_session(), field->c_str());
         if (hsession->get_req_body())
             if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))

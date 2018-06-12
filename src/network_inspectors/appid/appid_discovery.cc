@@ -789,6 +789,19 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession** p_asd, AppIdInsp
         }
     }
 
+    // FIXIT-L: DECRYPT_DEBUG - Move set_proxied and first_decrypted_packet_debug to ssl-module
+    // after ssl-module's decryption capability is implemented
+#ifdef REG_TEST
+    uint32_t fdpd = inspector.get_appid_config()->mod_config->first_decrypted_packet_debug;
+    if (fdpd and (fdpd == asd->session_packet_count))
+    {
+        p->flow->set_proxied();
+        if (appidDebug->is_active())
+            LogMessage("AppIdDbg %s Marked the flow as decrypted at packet number %lu\n",
+                appidDebug->get_debug_session(), (long unsigned)fdpd);
+    }
+#endif
+
     return true;
 }
 

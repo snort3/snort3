@@ -317,17 +317,9 @@ void AppIdSession::sync_with_snort_protocol_id(AppId newAppId, Packet* p)
     }
 }
 
-bool AppIdSession::is_ssl_decryption_enabled()
-{
-    if (get_session_flags(APPID_SESSION_DECRYPTED))
-        return true;
-
-    return flow->is_proxied();
-}
-
 void AppIdSession::check_app_detection_restart()
 {
-    if (get_session_flags(APPID_SESSION_DECRYPTED) || !is_ssl_decryption_enabled() )
+    if (get_session_flags(APPID_SESSION_DECRYPTED) || !flow->is_proxied())
         return;
 
     AppId service_id = pick_service_app_id();
