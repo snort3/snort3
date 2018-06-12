@@ -53,7 +53,20 @@ bool Reputation::convert(std::istringstream& data_stream)
             tmpval = false;
 
         else if (keyword == "shared_mem")
-            table_api.add_deleted_comment("shared_mem");
+        {
+            table_api.add_diff_option_comment("shared_mem", "list_dir");
+
+            std::string path;
+            if( arg_stream >> path)
+            {
+                tmpval = table_api.add_option("list_dir", path);
+            }
+            else
+            {
+                data_api.failed_conversion(arg_stream, "reputation: shared_mem <missing_arg>");
+                tmpval = false;
+            }
+        }
 
         else if (keyword == "shared_refresh")
             table_api.add_deleted_comment("shared_refresh");
@@ -108,6 +121,10 @@ bool Reputation::convert(std::istringstream& data_stream)
         else if (keyword == "scan_local")
         {
             tmpval = table_api.add_option("scan_local", true);
+        }
+        else if(keyword == "shared_max_instances")
+        {
+            table_api.add_deleted_comment("shared_max_instances");
         }
         else if (keyword == "white")
         {
