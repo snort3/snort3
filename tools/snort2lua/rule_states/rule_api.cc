@@ -49,9 +49,10 @@ extern const ConvertMap* dnp3_ind_map;
 extern const ConvertMap* dnp3_obj_map;
 extern const ConvertMap* dsize_map;
 extern const ConvertMap* file_data_map;
+extern const ConvertMap* file_type_map;
 extern const ConvertMap* flags_map;
-extern const ConvertMap* flow_map;
 extern const ConvertMap* flowbits_map;
+extern const ConvertMap* flow_map;
 extern const ConvertMap* fragbits_map;
 extern const ConvertMap* fragoffset_map;
 extern const ConvertMap* ftpbounce_map;
@@ -70,15 +71,15 @@ extern const ConvertMap* isdataat_map;
 extern const ConvertMap* itype_map;
 extern const ConvertMap* logto_map;
 extern const ConvertMap* metadata_map;
-extern const ConvertMap* msg_map;
 extern const ConvertMap* modbus_data_map;
 extern const ConvertMap* modbus_func_map;
 extern const ConvertMap* modbus_unit_map;
+extern const ConvertMap* msg_map;
 extern const ConvertMap* pcre_map;
 extern const ConvertMap* pkt_data_map;
-extern const ConvertMap* react_map;
 extern const ConvertMap* priority_map;
 extern const ConvertMap* protected_content_map;
+extern const ConvertMap* react_map;
 extern const ConvertMap* reference_map;
 extern const ConvertMap* replace_map;
 extern const ConvertMap* resp_map;
@@ -93,14 +94,14 @@ extern const ConvertMap* sip_body_map;
 extern const ConvertMap* sip_header_map;
 extern const ConvertMap* sip_method_map;
 extern const ConvertMap* sip_stat_code_map;
-extern const ConvertMap* stream_reassemble_map;
-extern const ConvertMap* stream_size_map;
 extern const ConvertMap* ssl_state_map;
 extern const ConvertMap* ssl_version_map;
+extern const ConvertMap* stream_reassemble_map;
+extern const ConvertMap* stream_size_map;
 extern const ConvertMap* tag_map;
 extern const ConvertMap* threshold_map;
-extern const ConvertMap* ttl_map;
 extern const ConvertMap* tos_map;
+extern const ConvertMap* ttl_map;
 extern const ConvertMap* uricontent_map;
 extern const ConvertMap* urilen_map;
 extern const ConvertMap* window_map;
@@ -132,9 +133,10 @@ const std::vector<const ConvertMap*> rule_options_api =
     dnp3_obj_map,
     dsize_map,
     file_data_map,
+    file_type_map,
     flags_map,
-    flow_map,
     flowbits_map,
+    flow_map,
     fragbits_map,
     fragoffset_map,
     ftpbounce_map,
@@ -153,10 +155,10 @@ const std::vector<const ConvertMap*> rule_options_api =
     itype_map,
     logto_map,
     metadata_map,
-    msg_map,
     modbus_data_map,
     modbus_func_map,
     modbus_unit_map,
+    msg_map,
     pcre_map,
     pkt_data_map,
     priority_map,
@@ -176,14 +178,14 @@ const std::vector<const ConvertMap*> rule_options_api =
     sip_header_map,
     sip_method_map,
     sip_stat_code_map,
-    stream_reassemble_map,
-    stream_size_map,
     ssl_state_map,
     ssl_version_map,
+    stream_reassemble_map,
+    stream_size_map,
     tag_map,
     threshold_map,
-    ttl_map,
     tos_map,
+    ttl_map,
     uricontent_map,
     urilen_map,
     window_map,

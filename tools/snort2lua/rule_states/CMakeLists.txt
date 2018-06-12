@@ -7,6 +7,7 @@ add_library( rule_states OBJECT
     rule_dnp3_obj.cc
     rule_dsize.cc
     rule_file_data.cc
+    rule_file_type.cc
     rule_gid_sid.cc
     rule_http_encode.cc
     rule_isdataat.cc
@@ -18,8 +19,8 @@ add_library( rule_states OBJECT
     rule_stream_reassemble.cc
     rule_stream_size.cc
     rule_tag.cc
-    rule_ttl.cc
     rule_threshold.cc
+    rule_ttl.cc
     rule_unchanged.cc
     rule_unsupported.cc
     rule_urilen.cc
