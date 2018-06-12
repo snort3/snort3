@@ -39,7 +39,7 @@ Currently output formats are:
 
 3. Flatbuffers (if the library is available at build)
 
-==== Flatbuffers Parsing
+=== Flatbuffers Parsing
 
 While a tool has been included to parse the file format used, it may be
 desired to build analysis tools that deal with the files directly. This can
@@ -48,7 +48,7 @@ flatc along with the included schema, or the schema can be parsed using the
 Flatbuffers reflection API and used to read the data within the records.
 The format for the files is as follows:
 
-===== File Layout
+==== File Layout
 
 [options="header"]
 |============================================================================
@@ -57,7 +57,7 @@ The format for the files is as follows:
 |Records     |This is a stream of records. There may be an unlimited number.
 |============================================================================
 
-===== File Header
+==== File Header
 
 [options="header"]
 |==========================================================================
@@ -67,7 +67,7 @@ The format for the files is as follows:
 |Schema      |(schema size) bytes |Schema for parsing records in this file.
 |==========================================================================
 
-===== Record
+==== Record
 
 [options="header"]
 |===========================================================================
