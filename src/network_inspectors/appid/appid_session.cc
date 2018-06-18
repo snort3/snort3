@@ -224,7 +224,7 @@ void AppIdSession::reinit_session_data()
         referred_payload_app_id = tp_payload_app_id = APP_ID_NONE;
         clear_session_flags(APPID_SESSION_CONTINUE);
         if ( hsession )
-            hsession->set_url(nullptr);
+            hsession->set_field(MISC_URL_FID, nullptr);
     }
 
     //service
@@ -456,16 +456,16 @@ void AppIdSession::examine_rtmp_metadata()
     if ( !hsession )
         hsession = new AppIdHttpSession(*this);
 
-    if ( const char* url = hsession->get_url() )
+    if ( const char* url = hsession->get_cfield(MISC_URL_FID) )
     {
         HttpPatternMatchers* http_matchers = HttpPatternMatchers::get_instance();
-
+        const char* referer = hsession->get_cfield(REQ_REFERER_FID);
         if ( ( ( http_matchers->get_appid_from_url(nullptr, url, &version,
-            hsession->get_referer(), &client_id, &service_id,
+            referer, &client_id, &service_id,
             &payload_id, &referred_payload_id, true) )
             ||
             ( http_matchers->get_appid_from_url(nullptr, url, &version,
-            hsession->get_referer(), &client_id, &service_id,
+            referer, &client_id, &service_id,
             &payload_id, &referred_payload_id, false) ) ) )
         {
             /* do not overwrite a previously-set client or service */
@@ -664,7 +664,7 @@ void AppIdSession::stop_rna_service_inspection(Packet* p, AppidSessionDirection 
     service_disco_state = APPID_DISCO_STATE_FINISHED;
 
     if ( (is_tp_appid_available() || get_session_flags(APPID_SESSION_NO_TPI) )
-	 and payload.get_id() == APP_ID_NONE )
+        and payload.get_id() == APP_ID_NONE )
         payload.set_id(APP_ID_UNKNOWN);
 
     set_session_flags(APPID_SESSION_SERVICE_DETECTED);
@@ -867,8 +867,9 @@ void AppIdSession::clear_http_flags()
 
 void AppIdSession::clear_http_data()
 {
-  if (!hsession) return;
-  hsession->clear_all_fields();
+    if (!hsession)
+        return;
+    hsession->clear_all_fields();
 }
 
 AppIdHttpSession* AppIdSession::get_http_session()
@@ -906,15 +907,14 @@ bool AppIdSession::is_tp_processing_done() const
 {
 #ifdef ENABLE_APPID_THIRD_PARTY
     if ( TPLibHandler::have_tp() &&
-         !get_session_flags(APPID_SESSION_NO_TPI) &&
-         (!is_tp_appid_done() ||
-          get_session_flags(APPID_SESSION_APP_REINSPECT | APPID_SESSION_APP_REINSPECT_SSL)))
+        !get_session_flags(APPID_SESSION_NO_TPI) &&
+        (!is_tp_appid_done() ||
+        get_session_flags(APPID_SESSION_APP_REINSPECT | APPID_SESSION_APP_REINSPECT_SSL)))
         return false;
 #endif
 
     return true;
 }
-
 
 bool AppIdSession::is_tp_appid_available() const
 {
@@ -935,3 +935,4 @@ bool AppIdSession::is_tp_appid_available() const
 
     return true;
 }
+

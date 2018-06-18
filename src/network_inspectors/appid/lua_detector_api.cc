@@ -1143,7 +1143,7 @@ static inline int get_chp_key_pattern_boolean(lua_State* L, int index)
 static inline int get_chp_pattern_type(lua_State* L, int index, HttpFieldIds* pattern_type)
 {
     *pattern_type = (HttpFieldIds)lua_tointeger(L, index);
-    if ( *pattern_type > MAX_PATTERN_TYPE )
+    if ( *pattern_type >= NUM_HTTP_FIELDS )
     {
         ErrorMessage("LuaDetectorApi:Invalid CHP Action pattern type.");
         return -1;

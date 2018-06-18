@@ -71,10 +71,10 @@ TEST(appid_detector_tests, add_info)
     AppIdDetector* ad = new TestDetector;
     MockAppIdHttpSession* hsession = (MockAppIdHttpSession*)mock_session->get_http_session();
     ad->add_info(*mock_session, info_url);
-    STRCMP_EQUAL(hsession->get_url(), URL);
+    STRCMP_EQUAL(hsession->get_cfield(MISC_URL_FID), URL);
     hsession->reset();
     ad->add_info(*mock_session, info_url);
-    STRCMP_EQUAL(mock_session->get_http_session()->get_url(), info_url);
+    STRCMP_EQUAL(mock_session->get_http_session()->get_cfield(MISC_URL_FID), info_url);
     delete ad;
 }
 
@@ -117,3 +117,4 @@ int main(int argc, char** argv)
     mock_cleanup_appid_pegs();
     return rc;
 }
+

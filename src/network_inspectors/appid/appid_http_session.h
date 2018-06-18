@@ -23,6 +23,7 @@
 #define APPID_HTTP_SESSION_H
 
 #include <string>
+#include <utility>
 
 #include "flow/flow.h"
 #include "sfip/sf_ip.h"
@@ -36,8 +37,14 @@ class ChpMatchDescriptor;
 class HttpPatternMatchers;
 
 // These values are used in Lua code as raw numbers. Do NOT reassign new values.
+// 0 - 8 (inclusive)       : used heavily in CHP code. DO NOT CHANGE.
+// 9 - NUM_METADATA_FIELDS : extra metadata buffers, beyond CHP.
+// NUM_METADATA_FIELDS     : must always follow the last metadata FID.
+// NUM_HTTP_FIELDS       : number of CHP filds, so always RSP_BODY_FID + 1
 enum HttpFieldIds : uint8_t
 {
+    // 0-8: CHP fields. DO NOT CHANGE
+
     // Request-side headers
     REQ_AGENT_FID,          // 0
     REQ_HOST_FID,           // 1
@@ -49,9 +56,20 @@ enum HttpFieldIds : uint8_t
     RSP_CONTENT_TYPE_FID,   // 6
     RSP_LOCATION_FID,       // 7
     RSP_BODY_FID,           // 8
-    MAX_HTTP_FIELD_ID,      // 9
-    MAX_PATTERN_TYPE = RSP_BODY_FID,
-    MAX_KEY_PATTERN = REQ_URI_FID,
+
+    // extra (non-CHP) metadata fields.
+    MISC_VIA_FID,           // 9
+    MISC_RESP_CODE_FID,     // 10
+    MISC_SERVER_FID,        // 11
+    MISC_XWW_FID,           // 12
+    MISC_URL_FID,           // 13
+
+    // Total number of metadata fields, always first after actual FIDs.
+    NUM_METADATA_FIELDS,    // 14
+
+    // Number of CHP fields, always 1 past RSP_BODY_FIELD
+    NUM_HTTP_FIELDS = MISC_VIA_FID,
+    MAX_KEY_PATTERN = REQ_URI_FID,     // DO NOT CHANGE, used in CHP
 };
 
 #define RESPONSE_CODE_PACKET_THRESHHOLD 0
@@ -61,125 +79,61 @@ enum HttpFieldIds : uint8_t
 #define APP_TYPE_CLIENT     0x2
 #define APP_TYPE_PAYLOAD    0x4
 
-struct HttpField
-{
-    std::string field;
-    uint16_t start_offset = 0;
-    uint16_t end_offset = 0;
-};
-
 class AppIdHttpSession
 {
 public:
+    typedef std::pair<uint16_t,uint16_t> pair_t;
+
     AppIdHttpSession(AppIdSession&);
     virtual ~AppIdHttpSession();
 
     int process_http_packet(AppidSessionDirection direction);
     void update_http_xff_address(struct XffFieldValue* xff_fields, uint32_t numXffFields);
 
-    const char* get_user_agent()
-    { return useragent ? useragent->c_str() : nullptr; }
-
-    const char* get_host()
-    { return host ? host->c_str() : nullptr; }
-
-    const char* get_url()
-    { return url ? url->c_str() : nullptr; }
-
-    void set_url(const char* url = nullptr);
-
-    const char* get_uri()
-    { return uri ? uri->c_str() : nullptr; }
-
-    const char* get_via()
-    { return via ? via->c_str() : nullptr; }
-
-    const char* get_referer()
-    { return referer ? referer->c_str() : nullptr; }
-
-    void set_referer(char* referer = nullptr);
-
-    const char* get_cookie()
-    { return cookie ? cookie->c_str() : nullptr; }
-
-    const char* get_response_code()
-    { return response_code ? response_code->c_str() : nullptr; }
-
-    const char* get_content_type()
-    { return content_type ? content_type->c_str() : nullptr; }
-
-    const char* get_location()
-    { return location ? location->c_str() : nullptr; }
-
-    const char* get_req_body()
-    { return req_body ? req_body->c_str() : nullptr; }
-
-    const char* get_server()
-    { return server ? server->c_str() : nullptr; }
-
-    const char* get_body()
-    { return body ? body->c_str() : nullptr; }
-
-    const char* get_x_working_with()
-    { return x_working_with ? x_working_with->c_str() : nullptr; }
-
-    const char* get_new_url();
-    const char* get_new_cookie();
-    const char* get_new_field(HttpFieldIds fieldId);
-    uint16_t get_field_offset(HttpFieldIds fid);
-    void set_field_offset(HttpFieldIds fid, uint16_t value);
-    uint16_t get_field_end_offset(HttpFieldIds fid);
-    void set_field_end_offset(HttpFieldIds fid, uint16_t value);
-    uint16_t get_uri_offset();
-    uint16_t get_uri_end_offset();
-    uint16_t get_cookie_offset();
-    uint16_t get_cookie_end_offset();
+    void update_url();
 
     snort::SfIp* get_xff_addr()
     { return xff_addr; }
 
-    // FIXME-L
-    // We get these fields from 2 sources: HttpEvent or ThirdParty.
-    // From HttpEvent we get them as char*, from ThirdParty we get them
-    // as string*. Since we own ThirdParty, we can simply snatch the
-    // pointer, thus avoiding an extra copy. From HttpEvent, though, we
-    // must make a hard copy. Consequently, currently we have to have
-    // two sets of update_foo() functions: one for ThirdParty (that just
-    // snatches the string* pointer) and another for HttpEvent (that makes
-    // a hard copy). These should be consolidated at some point.
+    const std::string* get_field(HttpFieldIds id)
+    { return meta_data[id]; }
 
-    // These are used with ThirdParty (tp_appid_utils.cc)
-    void update_host(const std::string* new_host);
-    void update_uri(const std::string* new_uri);
-    void update_useragent(const std::string* new_ua);
-    void update_cookie(const std::string* new_cookie);
-    void update_referer(const std::string* new_referer);
-    void update_x_working_with(const std::string* new_xww);
-    void update_content_type(const std::string* new_content_type);
-    void update_location(const std::string* new_location);
-    void update_server(const std::string* new_server);
-    void update_via(const std::string* new_via);
-    void update_body(const std::string* new_body);
-    void update_req_body(const std::string* new_req_body);
-    void update_response_code(const std::string* new_rc);
+    const char* get_cfield(HttpFieldIds id)
+    { return meta_data[id] != nullptr ? meta_data[id]->c_str() : nullptr; }
 
-    // These are used with HttpEvent (appid_http_event_handler.cc)
-    void update_host(const uint8_t* new_host, int32_t len);
-    void update_uri(const uint8_t* new_uri, int32_t len);
-    void update_useragent(const uint8_t* new_ua, int32_t len);
-    void update_cookie(const uint8_t* new_cookie, int32_t len);
-    void update_referer(const uint8_t* new_referer, int32_t len);
-    void update_x_working_with(const uint8_t* new_xww, int32_t len);
-    void update_content_type(const uint8_t* new_content_type, int32_t len);
-    void update_location(const uint8_t* new_location, int32_t len);
-    void update_server(const uint8_t* new_server, int32_t len);
-    void update_via(const uint8_t* new_via, int32_t len);
-    void update_body(const uint8_t* new_body, int32_t len);
-    void update_req_body(const uint8_t* new_req_body, int32_t len);
-    void update_response_code(const char* new_rc);
+    void set_field(HttpFieldIds id, const std::string* str)
+    {
+        delete meta_data[id];
+        meta_data[id] = str;
+    }
 
-    void update_url();
-    void update_url(const std::string* new_url);
+    void set_field(HttpFieldIds id, const uint8_t* str, int32_t len)
+    {
+        delete meta_data[id];
+        meta_data[id] = str and len ? new std::string((const char*)str, len) : nullptr;
+    }
+
+    bool get_offset(int id, uint16_t& start, uint16_t& end)
+    {
+        if ( REQ_AGENT_FID <= id and id < NUM_HTTP_FIELDS )
+        {
+            start = meta_offset[id].first;
+            end = meta_offset[id].second;
+            return true;
+        }
+        return false;
+    }
+
+    bool set_offset(int id, uint16_t start, uint16_t end)
+    {
+        if ( REQ_AGENT_FID <= id and id < NUM_HTTP_FIELDS )
+        {
+            meta_offset[id].first = start;
+            meta_offset[id].second = end;
+            return true;
+        }
+        return false;
+    }
 
     void set_is_webdav(bool webdav)
     { is_webdav = webdav; }
@@ -227,6 +181,7 @@ public:
     void clear_all_fields();
 
 protected:
+
     void init_chp_match_descriptor(ChpMatchDescriptor& cmd);
     int initial_chp_sweep(ChpMatchDescriptor&);
     void process_chp_buffers();
@@ -235,20 +190,17 @@ protected:
     HttpPatternMatchers* http_matchers = nullptr;
 
     AppIdSession& asd;
-    const std::string* host;
-    const std::string* url;
-    const std::string* uri;
-    const std::string* referer;
-    const std::string* useragent;
-    const std::string* via;
-    const std::string* cookie;
-    const std::string* body;
-    const std::string* response_code;
-    const std::string* content_type;
-    const std::string* location;
-    const std::string* req_body;
-    const std::string* server;
-    const std::string* x_working_with;
+
+    // FIXIT-M the meta data buffers in this array are only set from
+    // third party (tp_appid_utils.cc) and from http inspect
+    // (appid_http_event_handler.cc). The set_field functions should
+    // only be accessible to those functions/classes, but the process
+    // functions in tp_appid_utils.cc are static. Thus the public
+    // set_field() functions in AppIdHttpSession. We do need set functions
+    // for this array, as old pointers need to be deleted upon set().
+    const std::string* meta_data[NUM_METADATA_FIELDS] = { 0 };
+    pair_t meta_offset[NUM_HTTP_FIELDS];
+
     bool is_webdav = false;
     bool chp_finished = false;
     AppId chp_candidate = APP_ID_NONE;
@@ -263,9 +215,8 @@ protected:
     snort::SfIp* xff_addr = nullptr;
     const char** xffPrecedence = nullptr;
     unsigned numXffFields = 0;
-    HttpField http_fields[MAX_HTTP_FIELD_ID];
-    int ptype_req_counts[MAX_HTTP_FIELD_ID] = { 0 };
-    int ptype_scan_counts[MAX_HTTP_FIELD_ID] = { 0 };
+    int ptype_req_counts[NUM_HTTP_FIELDS] = { 0 };
+    int ptype_scan_counts[NUM_HTTP_FIELDS] = { 0 };
 #if RESPONSE_CODE_PACKET_THRESHHOLD
     unsigned response_code_packets = 0;
 #endif

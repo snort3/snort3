@@ -51,7 +51,6 @@
 
 using namespace snort;
 
-
 bool do_tp_discovery(AppIdSession&, IpProtocol, Packet*, AppidSessionDirection&);
 
 AppIdDiscovery::AppIdDiscovery(AppIdInspector& ins)
@@ -95,7 +94,6 @@ void AppIdDiscovery::release_plugins()
     delete &ServiceDiscovery::get_instance();
     delete &ClientDiscovery::get_instance();
 }
-
 
 void AppIdDiscovery::register_detector(const std::string& name, AppIdDetector* cd,  IpProtocol proto)
 {
@@ -141,7 +139,8 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
     AppidSessionDirection direction = APP_ID_FROM_INITIATOR;
     AppIdSession* asd = (AppIdSession*)p->flow->get_flow_data(AppIdSession::inspector_id);
 
-    if ( !do_pre_discovery(p, &asd, inspector, protocol, direction) ) return;
+    if ( !do_pre_discovery(p, &asd, inspector, protocol, direction) )
+        return;
 
     bool is_discovery_done = do_discovery(p, *asd, protocol, direction);
 
@@ -355,7 +354,7 @@ static bool is_packet_ignored(AppIdSession* asd, Packet* p, AppidSessionDirectio
     }
     else if ( p->is_rebuilt() && !p->flow->is_proxied() )
     {
-        // FIXIT-M: In snort2x, a rebuilt packet was ignored whether it had a session or not. 
+        // FIXIT-M: In snort2x, a rebuilt packet was ignored whether it had a session or not.
         // Here, we are ignoring rebuilt packet only if it has a session. Why?
         if ( asd )
         {
@@ -364,12 +363,15 @@ static bool is_packet_ignored(AppIdSession* asd, Packet* p, AppidSessionDirectio
             {
                 HttpPatternMatchers::get_instance()->get_http_offsets(p, hsession);
                 if (appidDebug->is_active())
-                    LogMessage("AppIdDbg %s Offsets from rebuilt packet: uri: %u-%u cookie: %u-%u\n",
+                {
+                    uint16_t uri_start, uri_end, cookie_start, cookie_end;
+                    hsession->get_offset(REQ_URI_FID, uri_start, uri_end);
+                    hsession->get_offset(REQ_COOKIE_FID, cookie_start, cookie_end);
+                    LogMessage(
+                        "AppIdDbg %s Offsets from rebuilt packet: uri: %u-%u cookie: %u-%u\n",
                         appidDebug->get_debug_session(),
-                        hsession->get_field_offset(REQ_URI_FID),
-                        hsession->get_field_end_offset(REQ_URI_FID),
-                        hsession->get_field_offset(REQ_COOKIE_FID),
-                        hsession->get_field_end_offset(REQ_COOKIE_FID));
+                        uri_start, uri_end, cookie_start, cookie_end);
+                }
             }
             appid_stats.ignored_packets++;
             return true;
@@ -509,7 +511,8 @@ static uint64_t is_session_monitored(AppIdSession& asd, const Packet* p, AppidSe
     return flow_flags;
 }
 
-static uint64_t is_session_monitored(const Packet* p, AppidSessionDirection dir, AppIdInspector& inspector)
+static uint64_t is_session_monitored(const Packet* p, AppidSessionDirection dir,
+    AppIdInspector& inspector)
 {
     uint64_t flags = 0;
     uint64_t flow_flags = APPID_SESSION_DISCOVER_APP;
@@ -689,7 +692,8 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession** p_asd, AppIdInsp
     }
 
     if ( appidDebug->is_enabled() )
-        appidDebug->activate(p->flow, asd, inspector.get_appid_config()->mod_config->log_all_sessions);
+        appidDebug->activate(p->flow, asd,
+            inspector.get_appid_config()->mod_config->log_all_sessions);
 
     if ( is_packet_ignored(asd, p, direction) )
         return false;
@@ -707,7 +711,8 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession** p_asd, AppIdInsp
         {
             asd->set_session_flags(APPID_SESSION_MID);
             if (appidDebug->is_active())
-                LogMessage("AppIdDbg %s New AppId mid-stream session\n", appidDebug->get_debug_session());
+                LogMessage("AppIdDbg %s New AppId mid-stream session\n",
+                    appidDebug->get_debug_session());
         }
         else if (appidDebug->is_active())
             LogMessage("AppIdDbg %s New AppId session\n", appidDebug->get_debug_session());
@@ -746,9 +751,10 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession** p_asd, AppIdInsp
         {
             asd->set_session_flags(APPID_SESSION_OOO);
             if (appidDebug->is_active())
-                LogMessage("AppIdDbg %s Packet out-of-order, %s%sflow\n", appidDebug->get_debug_session(),
-                    (p->packet_flags & PKT_STREAM_ORDER_BAD)? "bad ":"not-ok ",
-                    asd->get_session_flags(APPID_SESSION_MID)? "mid-stream ":"");
+                LogMessage("AppIdDbg %s Packet out-of-order, %s%sflow\n",
+                    appidDebug->get_debug_session(),
+                    (p->packet_flags & PKT_STREAM_ORDER_BAD) ? "bad " : "not-ok ",
+                    asd->get_session_flags(APPID_SESSION_MID) ? "mid-stream " : "");
 
             // Shut off service/client discoveries, since they skip not-ok data packets and
             // may keep failing on subsequent data packets causing performance degradation
@@ -757,9 +763,11 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession** p_asd, AppIdInsp
             {
                 asd->service_disco_state = APPID_DISCO_STATE_FINISHED;
                 asd->client_disco_state = APPID_DISCO_STATE_FINISHED;
-                asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_CLIENT_DETECTED);
+                asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED |
+                    APPID_SESSION_CLIENT_DETECTED);
                 if (appidDebug->is_active())
-                    LogMessage("AppIdDbg %s stopped service/client discovery\n", appidDebug->get_debug_session());
+                    LogMessage("AppIdDbg %s stopped service/client discovery\n",
+                        appidDebug->get_debug_session());
             }
         }
         else
@@ -830,14 +838,14 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
         case IpProtocol::TCP:
             if (asd.get_session_flags(APPID_SESSION_SYN_RST)) // TCP-specific exception
                 break;
-            // fallthrough
+        // fallthrough
         case IpProtocol::UDP:
             // Both TCP and UDP need this test to be made
             // against only the p->src_port of the response.
             // For all other cases the port parameter is never checked.
             if (direction != APP_ID_FROM_RESPONDER)
                 break;
-            // fallthrough
+        // fallthrough
         // All protocols other than TCP and UDP come straight here.
         default:
         {
@@ -856,7 +864,7 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
     }
 
     // Length-based service detection
-    if ( (p->dsize > 0) and (asd.service.get_port_service_id() <= APP_ID_NONE)
+    if ( (p->dsize > 0)and (asd.service.get_port_service_id() <= APP_ID_NONE)
         and (asd.length_sequence.sequence_cnt < LENGTH_SEQUENCE_CNT_MAX) )
     {
         uint8_t index = asd.length_sequence.sequence_cnt;

@@ -173,9 +173,9 @@ struct CHPApp
     int num_scans;
     int key_pattern_count;
     int key_pattern_length_sum;
-    int ptype_scan_counts[MAX_HTTP_FIELD_ID];
-    int ptype_req_counts[MAX_HTTP_FIELD_ID];
-    int ptype_rewrite_insert_used[MAX_HTTP_FIELD_ID]; // boolean
+    int ptype_scan_counts[NUM_HTTP_FIELDS];
+    int ptype_req_counts[NUM_HTTP_FIELDS];
+    int ptype_rewrite_insert_used[NUM_HTTP_FIELDS]; // boolean
 };
 
 struct CHPAction
@@ -218,7 +218,7 @@ class ChpMatchDescriptor
 public:
     void free_rewrite_buffers()
     {
-        for (unsigned i = 0; i < MAX_HTTP_FIELD_ID; i++)
+        for (unsigned i = 0; i < NUM_HTTP_FIELDS; i++)
             if (chp_rewritten[i])
             {
                 snort_free((void*)chp_rewritten[i]);
@@ -232,10 +232,10 @@ public:
     }
 
     HttpFieldIds cur_ptype;
-    const char* buffer[MAX_HTTP_FIELD_ID] = { nullptr };
-    uint16_t length[MAX_HTTP_FIELD_ID] = { 0 };
-    const char* chp_rewritten[MAX_HTTP_FIELD_ID] = { nullptr };
-    std::list<MatchedCHPAction> chp_matches[MAX_HTTP_FIELD_ID];
+    const char* buffer[NUM_HTTP_FIELDS] = { nullptr };
+    uint16_t length[NUM_HTTP_FIELDS] = { 0 };
+    const char* chp_rewritten[NUM_HTTP_FIELDS] = { nullptr };
+    std::list<MatchedCHPAction> chp_matches[NUM_HTTP_FIELDS];
     CHPMatchTally match_tally;
 
 private:
@@ -329,7 +329,7 @@ private:
     snort::SearchTool via_matcher;
     snort::SearchTool content_type_matcher;
     snort::SearchTool* field_matcher = nullptr;
-    snort::SearchTool* chp_matchers[MAX_PATTERN_TYPE + 1] = { nullptr };
+    snort::SearchTool* chp_matchers[NUM_HTTP_FIELDS] = { nullptr };
     tMlmpTree* host_url_matcher = nullptr;
     tMlmpTree* rtmp_host_url_matcher = nullptr;
 

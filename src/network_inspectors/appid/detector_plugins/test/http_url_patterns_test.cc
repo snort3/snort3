@@ -38,7 +38,7 @@ static HttpPatternMatchers* hm = nullptr;
 static Packet pkt;
 static const SfIp* sfip = nullptr;
 static AppIdModule appid_mod;
-static AppIdInspector appid_inspector( appid_mod );
+static AppIdInspector appid_inspector(appid_mod);
 static AppIdSession session(IpProtocol::IP, sfip, 0, appid_inspector);
 static AppIdHttpSession hsession(session);
 static ChpMatchDescriptor cmd;
@@ -53,8 +53,8 @@ static AppIdModuleConfig mod_config;
 static AppId service_id = APP_ID_NONE;
 static AppId client_id = APP_ID_NONE;
 static DetectorHTTPPattern mpattern;
-static const char* my_buffer[MAX_HTTP_FIELD_ID] = { nullptr };
-static uint16_t my_length[MAX_HTTP_FIELD_ID] = { 0 };
+static const char* my_buffer[NUM_HTTP_FIELDS] = { nullptr };
+static uint16_t my_length[NUM_HTTP_FIELDS] = { 0 };
 static CHPAction my_match;
 static void* my_chp_rewritten = nullptr;
 
@@ -76,17 +76,25 @@ TEST(http_url_patterns_tests, http_field_pattern_match)
 {
     FieldPatternData fpd;
     FieldPattern fp;
+    pair_t off;
 
     // verify service_strstr getting called
+    fp.patternType = REQ_HOST_FID;
     fpd.payload = (const uint8_t*)"Google";
     fpd.length = 6;
+    fpd.hsession = &hsession;
+
     test_service_strstr_enabled = false;
     test_field_offset_set_done = false;
+    hsession.set_offset(fp.patternType, 0, 5);
     CHECK_EQUAL(1, http_field_pattern_match(&fp, nullptr, 0, &fpd, nullptr));
-    CHECK_EQUAL(false, test_field_offset_set_done);
+    hsession.get_offset(fp.patternType, off.first, off.second);
+    CHECK_EQUAL(5, off.second);     // check offset did not change
+
     test_service_strstr_enabled = true;
     CHECK_EQUAL(1, http_field_pattern_match(&fp, nullptr, 0, &fpd, nullptr));
-    CHECK_EQUAL(true, test_field_offset_set_done);
+    hsession.get_offset(fp.patternType, off.first, off.second);
+    CHECK_EQUAL(0, off.second);     // if it changed, service_strstr was called
 }
 
 TEST(http_url_patterns_tests, match_query_elements)
@@ -128,8 +136,12 @@ TEST(http_url_patterns_tests, get_http_offsets)
     test_field_offset_set_done = false;
     pkt.data = (const uint8_t*)"Go";
     pkt.dsize = 2;
+
+    pair_t off;
+    hsession.set_offset(REQ_AGENT_FID, 5, 0);
     hm->get_http_offsets(&pkt, &hsession);
-    CHECK_EQUAL(true, test_field_offset_set_done);
+    hsession.get_offset(REQ_AGENT_FID, off.first, off.second);
+    CHECK_EQUAL(0, off.first);
 
     // find_all is not called for bigger payload when service_strstr returns nullptr
     test_service_strstr_enabled = false;
@@ -152,7 +164,7 @@ TEST(http_url_patterns_tests, rewrite_chp_exist)
     my_match.action_data = (char*)"exist";
     my_match.psize = 0;
     rewrite_chp(my_buffer[REQ_AGENT_FID], my_length[REQ_AGENT_FID], 0, my_match.psize,
-            my_match.action_data, (const char**)&my_chp_rewritten, 1);
+        my_match.action_data, (const char**)&my_chp_rewritten, 1);
     CHECK((char*)my_chp_rewritten == nullptr);
 }
 
@@ -162,7 +174,7 @@ TEST(http_url_patterns_tests, rewrite_chp_insert)
     my_buffer[REQ_AGENT_FID] = (const char*)"existing data";
     my_match.action_data = (char*)"new";
     rewrite_chp(my_buffer[REQ_AGENT_FID], my_length[REQ_AGENT_FID], 0, my_match.psize,
-            my_match.action_data, (const char**)&my_chp_rewritten, 1);
+        my_match.action_data, (const char**)&my_chp_rewritten, 1);
     STRCMP_EQUAL((const char*)my_chp_rewritten, (const char*)my_match.action_data);
     snort_free(my_chp_rewritten);
     my_chp_rewritten = nullptr;
@@ -175,8 +187,8 @@ TEST(http_url_patterns_tests, rewrite_chp_same)
     my_buffer[REQ_AGENT_FID] = (const char*)"some data";
     my_match.action_data = (char*)"some data";
     rewrite_chp(my_buffer[REQ_AGENT_FID], my_length[REQ_AGENT_FID], 0, my_match.psize,
-            my_match.action_data, (const char**)&my_chp_rewritten, 0);
-    CHECK((char *)my_chp_rewritten == nullptr);
+        my_match.action_data, (const char**)&my_chp_rewritten, 0);
+    CHECK((char*)my_chp_rewritten == nullptr);
 }
 
 TEST(http_url_patterns_tests, rewrite_chp_replace_null)
@@ -187,7 +199,7 @@ TEST(http_url_patterns_tests, rewrite_chp_replace_null)
     my_match.action_data = nullptr;
     my_match.psize = 0;
     rewrite_chp(my_buffer[REQ_AGENT_FID], strlen(my_buffer[REQ_AGENT_FID]), 0, my_match.psize,
-            my_match.action_data, (const char**)&my_chp_rewritten, 0);
+        my_match.action_data, (const char**)&my_chp_rewritten, 0);
     STRCMP_EQUAL((const char*)my_chp_rewritten, my_buffer[REQ_AGENT_FID]);
     snort_free(my_chp_rewritten);
     my_chp_rewritten = nullptr;
@@ -201,7 +213,7 @@ TEST(http_url_patterns_tests, rewrite_chp_replace_non_null)
     my_match.action_data = (char*)"new data";
     my_match.psize = 1;
     rewrite_chp(my_buffer[REQ_AGENT_FID], 1, 0, my_match.psize,
-            my_match.action_data, (const char**)&my_chp_rewritten, 0);
+        my_match.action_data, (const char**)&my_chp_rewritten, 0);
     STRCMP_EQUAL((const char*)my_chp_rewritten, (const char*)my_match.action_data);
     snort_free(my_chp_rewritten);
     my_chp_rewritten = nullptr;
@@ -228,19 +240,20 @@ TEST(http_url_patterns_tests, normalize_userid)
 TEST(http_url_patterns_tests, scan_header_x_working_with)
 {
     // appid is APP_ID_ASPROXY
-    char *version = snort_strdup("456");
+    char* version = snort_strdup("456");
     const char* data = "ASProxy/123";
-    CHECK(hm->scan_header_x_working_with(data, (uint32_t)strlen(data), (char**)&version) == APP_ID_ASPROXY);
+    CHECK(hm->scan_header_x_working_with(data, (uint32_t)strlen(data), (char**)&version) ==
+        APP_ID_ASPROXY);
     STRCMP_EQUAL(version, "123");
     snort_free(version);
     version = nullptr;
 
     // appid is APP_ID_NONE
     const char* data2 = "Not ASProxy format";
-    CHECK(hm->scan_header_x_working_with(data2, (uint32_t)strlen(data2), (char**)&version) == APP_ID_NONE);
+    CHECK(hm->scan_header_x_working_with(data2, (uint32_t)strlen(data2), (char**)&version) ==
+        APP_ID_NONE);
     CHECK(version == nullptr);
 }
-
 
 TEST(http_url_patterns_tests, scan_chp_defer)
 {
@@ -252,7 +265,8 @@ TEST(http_url_patterns_tests, scan_chp_defer)
     cmd.chp_matches[RSP_BODY_FID].push_back(mchp);
     cmd.cur_ptype = RSP_BODY_FID;
     mod_config.safe_search_enabled = false;
-    CHECK(hm->scan_chp(cmd, &version, &user, &total_found, &hsession, (const AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
+    CHECK(hm->scan_chp(cmd, &version, &user, &total_found, &hsession, (const
+        AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
     CHECK_EQUAL(true, test_find_all_done);
 }
 
@@ -267,10 +281,10 @@ TEST(http_url_patterns_tests, scan_chp_alt_appid)
     cmd.chp_matches[RSP_BODY_FID].push_back(mchp);
     cmd.cur_ptype = RSP_BODY_FID;
     mod_config.safe_search_enabled = false;
-    CHECK(hm->scan_chp(cmd, &version, &user, &total_found, &hsession, (const AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
+    CHECK(hm->scan_chp(cmd, &version, &user, &total_found, &hsession, (const
+        AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
     CHECK_EQUAL(true, test_find_all_done);
 }
-
 
 TEST(http_url_patterns_tests, scan_chp_extract_user)
 {
@@ -287,7 +301,8 @@ TEST(http_url_patterns_tests, scan_chp_extract_user)
     cmd.chp_matches[RSP_BODY_FID].push_back(mchp);
     cmd.buffer[RSP_BODY_FID] = (const char*)"userid\n\rpassword";
     cmd.length[RSP_BODY_FID] = strlen(cmd.buffer[RSP_BODY_FID]);
-    CHECK(hm->scan_chp(cmd, &version, &user, &total_found, &hsession, (const AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
+    CHECK(hm->scan_chp(cmd, &version, &user, &total_found, &hsession, (const
+        AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
     CHECK_EQUAL(true, test_find_all_done);
     snort_free(user);
     user = nullptr;
@@ -308,7 +323,8 @@ TEST(http_url_patterns_tests, scan_chp_rewrite_field)
     cmd.chp_matches[RSP_BODY_FID].push_back(mchp);
     cmd.buffer[RSP_BODY_FID] = my_chp_data;
     cmd.length[RSP_BODY_FID] = strlen(cmd.buffer[RSP_BODY_FID]);
-    CHECK(hm->scan_chp(cmd, &version, &user, &total_found, &hsession, (const AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
+    CHECK(hm->scan_chp(cmd, &version, &user, &total_found, &hsession, (const
+        AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
     CHECK_EQUAL(true, test_find_all_done);
     snort_free(const_cast<char*>(cmd.chp_rewritten[RSP_BODY_FID]));
     cmd.chp_rewritten[RSP_BODY_FID] = nullptr;
@@ -329,7 +345,8 @@ TEST(http_url_patterns_tests, scan_chp_insert_without_action)
     cmd.chp_matches[RSP_BODY_FID].push_back(mchp);
     cmd.buffer[RSP_BODY_FID] = my_chp_data;
     cmd.length[RSP_BODY_FID] = strlen(cmd.buffer[RSP_BODY_FID]);
-    CHECK(hm->scan_chp(cmd, &version, &user, &total_found, &hsession, (const AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
+    CHECK(hm->scan_chp(cmd, &version, &user, &total_found, &hsession, (const
+        AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
     CHECK_EQUAL(true, test_find_all_done);
     snort_free(const_cast<char*>(cmd.chp_rewritten[RSP_BODY_FID]));
     cmd.chp_rewritten[RSP_BODY_FID] = nullptr;
@@ -350,7 +367,8 @@ TEST(http_url_patterns_tests, scan_chp_insert_with_action)
     cmd.chp_matches[RSP_BODY_FID].push_back(mchp);
     cmd.buffer[RSP_BODY_FID] = my_chp_data;
     cmd.length[RSP_BODY_FID] = strlen(cmd.buffer[RSP_BODY_FID]);
-    CHECK(hm->scan_chp(cmd, &version, &user, &total_found, &hsession, (const AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
+    CHECK(hm->scan_chp(cmd, &version, &user, &total_found, &hsession, (const
+        AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
     CHECK_EQUAL(true, test_find_all_done);
     snort_free(const_cast<char*>(cmd.chp_rewritten[RSP_BODY_FID]));
     cmd.chp_rewritten[RSP_BODY_FID] = nullptr;
@@ -371,7 +389,8 @@ TEST(http_url_patterns_tests, scan_chp_hold_and_default)
     mchp.start_match_pos = 0;
     cmd.buffer[RSP_BODY_FID] = my_chp_data;
     cmd.length[RSP_BODY_FID] = strlen(cmd.buffer[RSP_BODY_FID]);
-    CHECK(hm->scan_chp(cmd, &version, &user, &total_found, &hsession, (const AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
+    CHECK(hm->scan_chp(cmd, &version, &user, &total_found, &hsession, (const
+        AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
     CHECK_EQUAL(true, test_find_all_done);
 
     // testing FUTURE_APPID_SESSION_SIP (default action)
@@ -381,19 +400,27 @@ TEST(http_url_patterns_tests, scan_chp_hold_and_default)
     chpa.action = FUTURE_APPID_SESSION_SIP;
     mchp.mpattern = &chpa;
     cmd.chp_matches[RSP_BODY_FID].push_back(mchp);
-    CHECK(hm->scan_chp(cmd, &version, &user, &total_found, &hsession, (const AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
+    CHECK(hm->scan_chp(cmd, &version, &user, &total_found, &hsession, (const
+        AppIdModuleConfig*)&mod_config) == APP_ID_NONE);
     CHECK_EQUAL(true, test_find_all_done);
 }
 
 TEST(http_url_patterns_tests, insert_and_process_pattern)
 {
     DetectorHTTPPattern url_pat, payload_pat;
-    DetectorAppUrlPattern* au_pat = (DetectorAppUrlPattern*)snort_calloc(sizeof(DetectorAppUrlPattern));
+    DetectorAppUrlPattern* au_pat = (DetectorAppUrlPattern*)snort_calloc(
+        sizeof(DetectorAppUrlPattern));
 
     // adding to host_payload_patterns
-    payload_pat.init(nullptr, 6, SINGLE, APP_ID_HTTP, APP_ID_NONE, APP_ID_GOOGLE, APP_ID_NONE); // null pattern test
-    payload_pat.init((const uint8_t*)"Google", 6, (DHPSequence)10, APP_ID_HTTP, APP_ID_NONE, APP_ID_GOOGLE, APP_ID_NONE); // high seq test
-    payload_pat.init((const uint8_t*)"Google", 6, SINGLE, APP_ID_HTTP, APP_ID_NONE, APP_ID_GOOGLE, APP_ID_NONE);
+    payload_pat.init(nullptr, 6, SINGLE, APP_ID_HTTP, APP_ID_NONE, APP_ID_GOOGLE, APP_ID_NONE); // null
+                                                                                                // pattern
+                                                                                                // test
+    payload_pat.init((const uint8_t*)"Google", 6, (DHPSequence)10, APP_ID_HTTP, APP_ID_NONE,
+        APP_ID_GOOGLE, APP_ID_NONE);                                                                                      // high
+                                                                                                                          // seq
+                                                                                                                          // test
+    payload_pat.init((const uint8_t*)"Google", 6, SINGLE, APP_ID_HTTP, APP_ID_NONE, APP_ID_GOOGLE,
+        APP_ID_NONE);
     snort_free(const_cast<uint8_t*>(payload_pat.pattern));
     payload_pat.pattern = nullptr;
     hm->insert_http_pattern(HTTP_PAYLOAD, payload_pat);
@@ -415,14 +442,14 @@ TEST(http_url_patterns_tests, insert_and_process_pattern)
     CHECK(true);
 }
 
-
 TEST(http_url_patterns_tests, identify_user_agent_firefox)
 {
     test_find_all_enabled = true;
 
     // null buffPtr in continue_buffer_scan for APP_ID_FIREFOX
     mpattern.client_id = APP_ID_FIREFOX;
-    mock_mp = (MatchedPatterns*)snort_calloc(sizeof(MatchedPatterns)); // freed by identify_user_agent
+    mock_mp = (MatchedPatterns*)snort_calloc(sizeof(MatchedPatterns)); // freed by
+                                                                       // identify_user_agent
     mock_mp->mpattern = &mpattern;
     mock_mp->after_match_pos = 100; // exceeding size
     mock_mp->next = nullptr;
@@ -507,7 +534,8 @@ TEST(http_url_patterns_tests, identify_user_agent_bittorrent)
 
     // invalid version format following after_match_pos for APP_ID_BITTORRENT
     mpattern.client_id = APP_ID_BITTORRENT;
-    mock_mp = (MatchedPatterns*)snort_calloc(sizeof(MatchedPatterns)); // freed by identify_user_agent
+    mock_mp = (MatchedPatterns*)snort_calloc(sizeof(MatchedPatterns)); // freed by
+                                                                       // identify_user_agent
     mock_mp->mpattern = &mpattern;
     mock_mp->after_match_pos = 10;
     mock_mp->next = nullptr;
@@ -525,7 +553,8 @@ TEST(http_url_patterns_tests, identify_user_agent_google_desktop)
 
     // exceeding after_match_pos for APP_ID_GOOGLE_DESKTOP
     mpattern.client_id = APP_ID_GOOGLE_DESKTOP;
-    mock_mp = (MatchedPatterns*)snort_calloc(sizeof(MatchedPatterns)); // freed by identify_user_agent
+    mock_mp = (MatchedPatterns*)snort_calloc(sizeof(MatchedPatterns)); // freed by
+                                                                       // identify_user_agent
     mock_mp->mpattern = &mpattern;
     mock_mp->after_match_pos = 100; // exceeding size
     mock_mp->next = nullptr;
@@ -580,7 +609,8 @@ TEST(http_url_patterns_tests, identify_user_agent_fake_version_appid)
     // exceeding after_match_pos for FAKE_VERSION_APP_ID
     test_find_all_enabled = true;
     mpattern.client_id = FAKE_VERSION_APP_ID;
-    mock_mp = (MatchedPatterns*)snort_calloc(sizeof(MatchedPatterns)); // freed by identify_user_agent
+    mock_mp = (MatchedPatterns*)snort_calloc(sizeof(MatchedPatterns)); // freed by
+                                                                       // identify_user_agent
     mock_mp->mpattern = &mpattern;
     mock_mp->after_match_pos = 100; // exceeding size
     mock_mp->next = nullptr;
@@ -597,7 +627,8 @@ TEST(http_url_patterns_tests, identify_user_agent_blackberry)
 
     // null buffPtr in continue_buffer_scan for APP_ID_BLACKBERRY_BROWSER
     mpattern.client_id = APP_ID_BLACKBERRY_BROWSER;
-    mock_mp = (MatchedPatterns*)snort_calloc(sizeof(MatchedPatterns)); // freed by identify_user_agent
+    mock_mp = (MatchedPatterns*)snort_calloc(sizeof(MatchedPatterns)); // freed by
+                                                                       // identify_user_agent
     mock_mp->mpattern = &mpattern;
     mock_mp->after_match_pos = 100;
     mock_mp->next = nullptr;
@@ -657,7 +688,8 @@ TEST(http_url_patterns_tests, identify_user_agent_skypedirect)
     // skypeDetect
     test_find_all_enabled = true;
     mpattern.client_id = APP_ID_SKYPE;
-    mock_mp = (MatchedPatterns*)snort_calloc(sizeof(MatchedPatterns)); // freed by identify_user_agent
+    mock_mp = (MatchedPatterns*)snort_calloc(sizeof(MatchedPatterns)); // freed by
+                                                                       // identify_user_agent
     mock_mp->mpattern = &mpattern;
     mock_mp->after_match_pos = 5;
     mock_mp->next = nullptr;
@@ -675,3 +707,4 @@ int main(int argc, char** argv)
     int return_value = CommandLineTestRunner::RunAllTests(argc, argv);
     return return_value;
 }
+

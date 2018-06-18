@@ -23,13 +23,13 @@
 namespace snort
 {
 // Stubs for messages
-void ErrorMessage(const char*,...) {}
-void WarningMessage(const char*,...) {}
-void LogMessage(const char*,...) {}
-void ParseWarning(WarningGroup, const char*, ...) {}
+void ErrorMessage(const char*,...) { }
+void WarningMessage(const char*,...) { }
+void LogMessage(const char*,...) { }
+void ParseWarning(WarningGroup, const char*, ...) { }
 
 // Stubs for appid sessions
-FlowData::FlowData(unsigned, Inspector*) {}
+FlowData::FlowData(unsigned, Inspector*) { }
 FlowData::~FlowData() = default;
 
 // Stubs for packet
@@ -43,13 +43,13 @@ bool Inspector::get_buf(const char*, Packet*, InspectionBuffer&) { return true; 
 class StreamSplitter* Inspector::get_splitter(bool) { return nullptr; }
 
 // Stubs for search_tool.cc
-SearchTool::SearchTool(const char*, bool) {}
+SearchTool::SearchTool(const char*, bool) { }
 SearchTool::~SearchTool() = default;
-void SearchTool::add(const char*, unsigned, int, bool) {}
-void SearchTool::add(const char*, unsigned, void*, bool) {}
-void SearchTool::add(const uint8_t*, unsigned, int, bool) {}
-void SearchTool::add(const uint8_t*, unsigned, void*, bool) {}
-void SearchTool::prep() {}
+void SearchTool::add(const char*, unsigned, int, bool) { }
+void SearchTool::add(const char*, unsigned, void*, bool) { }
+void SearchTool::add(const uint8_t*, unsigned, int, bool) { }
+void SearchTool::add(const uint8_t*, unsigned, void*, bool) { }
+void SearchTool::prep() { }
 static bool test_find_all_done = false;
 static bool test_find_all_enabled = false;
 static MatchedPatterns* mock_mp = nullptr;
@@ -72,6 +72,7 @@ char* snort_strndup(const char* src, size_t dst_size)
     }
     return dup;
 }
+
 char* snort_strdup(const char* str)
 {
     assert(str);
@@ -82,47 +83,52 @@ char* snort_strdup(const char* str)
 }
 }
 
-void show_stats(PegCount*, const PegInfo*, unsigned, const char*) {}
-void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*) {}
-void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) {}
+void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
+void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*) { }
+void show_stats(PegCount*, const PegInfo*, IndexVec&, const char*, FILE*) { }
 
 class AppIdInspector : public snort::Inspector
 {
 public:
-    AppIdInspector(AppIdModule& ) {}
+    AppIdInspector(AppIdModule&) { }
     ~AppIdInspector() override = default;
-    void eval(Packet*) override {}
+    void eval(Packet*) override { }
     bool configure(snort::SnortConfig*) override { return true; }
-    void show(snort::SnortConfig*) override {}
-    void tinit() override {}
-    void tterm() override {}
+    void show(snort::SnortConfig*) override { }
+    void tinit() override { }
+    void tterm() override { }
 };
 
 // Stubs for modules, config
 AppIdModuleConfig::~AppIdModuleConfig() = default;
 AppIdModule::AppIdModule()
-    : Module("a", "b") {}
+    : Module("a", "b") { }
 AppIdModule::~AppIdModule() = default;
 bool AppIdModule::begin(const char*, int, snort::SnortConfig*)
 {
     return false;
 }
+
 bool AppIdModule::set(const char*, snort::Value&, snort::SnortConfig*)
 {
     return false;
 }
+
 bool AppIdModule::end(const char*, int, snort::SnortConfig*)
 {
     return false;
 }
+
 const Command* AppIdModule::get_commands() const
 {
     return nullptr;
 }
+
 const PegInfo* AppIdModule::get_pegs() const
 {
     return nullptr;
 }
+
 PegCount* AppIdModule::get_counts() const
 {
     return nullptr;
@@ -136,21 +142,37 @@ snort::ProfileStats* AppIdModule::get_profile() const
 // Stubs for inspectors
 unsigned AppIdSession::inspector_id = 0;
 AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t, AppIdInspector& inspector)
-    : snort::FlowData(inspector_id, (snort::Inspector*)&inspector), inspector(inspector) {}
+    : snort::FlowData(inspector_id, (snort::Inspector*)&inspector), inspector(inspector) { }
 AppIdSession::~AppIdSession() = default;
-AppIdHttpSession::AppIdHttpSession(AppIdSession& session)
-    : asd(session) {}
-AppIdHttpSession::~AppIdHttpSession() = default;
+AppIdHttpSession::AppIdHttpSession(AppIdSession& asd)
+    : asd(asd)
+{
+    http_matchers = HttpPatternMatchers::get_instance();
+
+    for ( int i = 0; i < NUM_METADATA_FIELDS; i++)
+        meta_data[i] = nullptr;
+}
+
+AppIdHttpSession::~AppIdHttpSession()
+{
+    delete xff_addr;
+
+    for ( int i = 0; i < NUM_METADATA_FIELDS; i++)
+    {
+        if ( meta_data[i] )
+            delete meta_data[i];
+    }
+}
 
 // Stubs for AppIdPegCounts
-void AppIdPegCounts::inc_service_count(AppId) {}
-void AppIdPegCounts::inc_client_count(AppId) {}
-void AppIdPegCounts::inc_user_count(AppId) {}
-void AppIdPegCounts::inc_payload_count(AppId) {}
+void AppIdPegCounts::inc_service_count(AppId) { }
+void AppIdPegCounts::inc_client_count(AppId) { }
+void AppIdPegCounts::inc_user_count(AppId) { }
+void AppIdPegCounts::inc_payload_count(AppId) { }
 
 THREAD_LOCAL AppIdStats appid_stats;
-void AppIdModule::sum_stats(bool) {}
-void AppIdModule::show_dynamic_stats() {}
+void AppIdModule::sum_stats(bool) { }
+void AppIdModule::show_dynamic_stats() { }
 
 // Stubs for appid_session.cc
 static bool test_service_strstr_enabled = false;
@@ -164,17 +186,13 @@ const uint8_t* service_strstr(const uint8_t* p, unsigned,
 
 // Stubs for appid_http_session.cc
 static bool test_field_offset_set_done = false;
-void AppIdHttpSession::set_field_offset(HttpFieldIds, uint16_t)
-{
-    test_field_offset_set_done = true;
-}
-void AppIdHttpSession::set_field_end_offset(HttpFieldIds, uint16_t) {}
 
 // Stubs for app_info_table.cc
 AppInfoTableEntry* AppInfoManager::get_app_info_entry(int)
 {
     return nullptr;
 }
+
 AppInfoTableEntry* AppInfoManager::get_app_info_entry(AppId, const AppInfoTable&)
 {
     return nullptr;

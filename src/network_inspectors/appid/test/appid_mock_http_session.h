@@ -23,42 +23,24 @@
 
 #include <string>
 
+typedef AppIdHttpSession::pair_t pair_t;
+
 AppIdHttpSession::AppIdHttpSession(AppIdSession& session)
     : asd(session)
 {
+    for ( int i = 0; i < NUM_METADATA_FIELDS; i++)
+        meta_data[i] = nullptr;
 }
 
 AppIdHttpSession::~AppIdHttpSession()
 {
     delete xff_addr;
-    if (host)
-        delete host;
-    if (url)
-        delete url;
-    if (uri)
-        delete uri;
-    if (referer)
-        delete referer;
-    if (useragent)
-        delete useragent;
-    if (via)
-        delete via;
-    if (cookie)
-        delete cookie;
-    if (body)
-        delete body;
-    if (response_code)
-        delete response_code;
-    if (content_type)
-        delete content_type;
-    if (location)
-        delete location;
-    if (req_body)
-        delete req_body;
-    if (server)
-        delete server;
-    if (x_working_with)
-        delete x_working_with;
+
+    for ( int i = 0; i < NUM_METADATA_FIELDS; i++)
+    {
+        if ( meta_data[i] )
+            delete meta_data[i];
+    }
 }
 
 int AppIdHttpSession::process_http_packet(AppidSessionDirection) { return 0; }
@@ -83,101 +65,16 @@ char const* RSP_BODY = "this is the body of the http response";
 #define URI_OFFSET 22
 #define COOKIE_OFFSET 44
 
-static void replace_header_data(const std::string*& header, const uint8_t* content, int32_t clen)
-{
-    if (clen <= 0)
-        return;
-
-    if (header)
-        delete header;
-    header=new std::string((const char*)content,clen);
-}
-
-void AppIdHttpSession::update_host(const uint8_t* new_host, int32_t len)
-{
-    replace_header_data(host, new_host, len);
-}
-
-void AppIdHttpSession::update_uri(const uint8_t* new_uri, int32_t len)
-{
-    replace_header_data(uri, new_uri, len);
-}
-
 void AppIdHttpSession::update_url()
 {
+    const std::string* host = meta_data[REQ_HOST_FID];
+    const std::string* uri = meta_data[REQ_URI_FID];
     if (host and uri)
     {
-        if (url)
-            delete url;
-        url=new std::string(std::string("http://") + *host + *uri);
+        if (meta_data[MISC_URL_FID])
+            delete meta_data[MISC_URL_FID];
+        meta_data[MISC_URL_FID] = new std::string(std::string("http://") + *host + *uri);
     }
-}
-
-void AppIdHttpSession::update_useragent(const uint8_t* new_ua, int32_t len)
-{
-    replace_header_data(useragent, new_ua, len);
-}
-
-void AppIdHttpSession::update_cookie(const uint8_t* new_cookie, int32_t len)
-{
-    replace_header_data(cookie, new_cookie, len);
-}
-
-void AppIdHttpSession::update_referer(const uint8_t* new_referer, int32_t len)
-{
-    replace_header_data(referer, new_referer, len);
-}
-
-void AppIdHttpSession::update_x_working_with(const uint8_t* new_xww, int32_t len)
-{
-    replace_header_data(x_working_with, new_xww, len);
-}
-
-void AppIdHttpSession::update_content_type(const uint8_t* new_content_type, int32_t len)
-{
-    replace_header_data(content_type, new_content_type, len);
-}
-
-void AppIdHttpSession::update_location(const uint8_t* new_location, int32_t len)
-{
-    replace_header_data(location, new_location, len);
-}
-
-void AppIdHttpSession::update_server(const uint8_t* new_server, int32_t len)
-{
-    replace_header_data(server, new_server, len);
-}
-
-void AppIdHttpSession::update_via(const uint8_t* new_via, int32_t len)
-{
-    replace_header_data(via, new_via, len);
-}
-
-void AppIdHttpSession::update_body(const uint8_t* new_body, int32_t len)
-{
-    replace_header_data(body, new_body, len);
-}
-
-void AppIdHttpSession::update_req_body(const uint8_t* new_req_body, int32_t len)
-{
-    replace_header_data(req_body, new_req_body, len);
-}
-
-void AppIdHttpSession::update_response_code(const char* new_rc)
-{
-    if ( response_code )
-        delete response_code;
-    response_code = new std::string((char*)new_rc);
-}
-
-void AppIdHttpSession::set_url(const char* url)
-{
-    if ( this->url )
-        delete this->url;
-    if ( url )
-        this->url = new std::string(url);   // FIXIT-M null terminated?
-    else
-        this->url = nullptr;
 }
 
 class MockAppIdHttpSession : public AppIdHttpSession
@@ -189,82 +86,48 @@ public:
         SfIp* ip = new SfIp;
         ip->pton(AF_INET, APPID_UT_XFF_IP_ADDR);
         xff_addr = ip;
-        content_type = new std::string(CONTENT_TYPE);
-        cookie = new std::string(COOKIE);
-        host = new std::string(HOST);
-        location = new std::string(LOCATION);
-        referer = new std::string(REFERER);
-        response_code = new std::string(RESPONSE_CODE);
-        server = new std::string(SERVER);
-        url = new std::string(URL);
-        uri = new std::string(URI);
-        useragent = new std::string(USERAGENT);
-        via = new std::string(VIA);
-        x_working_with = new std::string(X_WORKING_WITH);
-        body = new std::string(RSP_BODY);
-        req_body = new std:: string(REQ_BODY);
-        http_fields[REQ_URI_FID].start_offset = URI_OFFSET;
-        http_fields[REQ_URI_FID].end_offset = URI_OFFSET + strlen(URI);
-        http_fields[REQ_COOKIE_FID].start_offset = COOKIE_OFFSET;
-        http_fields[REQ_COOKIE_FID].end_offset = COOKIE_OFFSET + strlen(NEW_COOKIE);
+
+        meta_data[REQ_AGENT_FID] = new std::string(USERAGENT);
+        meta_data[REQ_HOST_FID] = new std::string(HOST);
+        meta_data[REQ_REFERER_FID] = new std::string(REFERER);
+        meta_data[REQ_URI_FID] = new std::string(URI);
+        meta_data[REQ_COOKIE_FID] = new std::string(COOKIE);
+        meta_data[REQ_BODY_FID] = new std::string(REQ_BODY);
+        meta_data[RSP_CONTENT_TYPE_FID] = new std::string(CONTENT_TYPE);
+        meta_data[RSP_LOCATION_FID] = new std::string(LOCATION);
+        meta_data[RSP_BODY_FID] = new std::string(RSP_BODY);
+        meta_data[MISC_VIA_FID] = new std::string(VIA);
+        meta_data[MISC_RESP_CODE_FID] = new std::string(RESPONSE_CODE);
+        meta_data[MISC_SERVER_FID] = new std::string(SERVER);
+        meta_data[MISC_XWW_FID] = new std::string(X_WORKING_WITH);
+        meta_data[MISC_URL_FID] = new std::string(URL);
+
+        meta_offset[REQ_URI_FID].first = URI_OFFSET;
+        meta_offset[REQ_URI_FID].second = URI_OFFSET + strlen(URI);
+        meta_offset[REQ_COOKIE_FID].first = COOKIE_OFFSET;
+        meta_offset[REQ_COOKIE_FID].second = COOKIE_OFFSET + strlen(NEW_COOKIE);
     }
 
     void init_hsession_new_fields()
     {
-        http_fields[REQ_AGENT_FID].field = USERAGENT;
-        http_fields[REQ_HOST_FID].field = HOST;
-        http_fields[REQ_REFERER_FID].field = REFERER;
-        http_fields[REQ_URI_FID].field = URI;
-        http_fields[REQ_COOKIE_FID].field = NEW_COOKIE;
-        http_fields[REQ_BODY_FID].field = REQ_BODY;
-        http_fields[RSP_CONTENT_TYPE_FID].field = CONTENT_TYPE;
-        http_fields[RSP_LOCATION_FID].field = LOCATION;
-        http_fields[RSP_BODY_FID].field = RSP_BODY;
+        set_field(REQ_AGENT_FID, new std::string(USERAGENT));
+        set_field(REQ_HOST_FID, new std::string(HOST));
+        set_field(REQ_REFERER_FID, new std::string(REFERER));
+        set_field(REQ_URI_FID, new std::string(URI));
+        set_field(REQ_COOKIE_FID, new std::string(COOKIE));
+        set_field(REQ_BODY_FID, new std::string(REQ_BODY));
+        set_field(RSP_CONTENT_TYPE_FID, new std::string(CONTENT_TYPE));
+        set_field(RSP_LOCATION_FID, new std::string(LOCATION));
+        set_field(RSP_BODY_FID, new std::string(RSP_BODY));
     }
 
     void reset()
     {
-        delete content_type;
-        content_type = nullptr;
-
-        delete cookie;
-        cookie = nullptr;
-
-        delete host;
-        host = nullptr;
-
-        delete location;
-        location = nullptr;
-
-        delete referer;
-        referer = nullptr;
-
-        delete response_code;
-        response_code = nullptr;
-
-        delete server;
-        server = nullptr;
-
-        delete url;
-        url = nullptr;
-
-        delete uri;
-        uri = nullptr;
-
-        delete useragent;
-        useragent = nullptr;
-
-        delete via;
-        via = nullptr;
-
-        delete x_working_with;
-        x_working_with = nullptr;
-
-        delete body;
-        body = nullptr;
-
-        delete req_body;
-        req_body = nullptr;
+        for ( int i = 0; i < NUM_METADATA_FIELDS; i++)
+        {
+            delete meta_data[i];
+            meta_data[i] = nullptr;
+        }
     }
 
     static AppIdHttpSession* init_http_session(AppIdSession& asd)

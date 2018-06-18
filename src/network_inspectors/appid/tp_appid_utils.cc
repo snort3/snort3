@@ -50,6 +50,8 @@
 using namespace std;
 using namespace snort;
 
+typedef AppIdHttpSession::pair_t pair_t;
+
 THREAD_LOCAL ProfileStats tpLibPerfStats;
 THREAD_LOCAL ProfileStats tpPerfStats;
 
@@ -110,77 +112,75 @@ static inline void process_http_session(AppIdSession& asd,
 
         if (spdyRequestScheme && spdyRequestHost && spdyRequestPath )
         {
-            static const char httpsScheme[] = "https";
-            static const char httpScheme[] = "http";
-            std::string url;
-
+            std::string* url;
             if (asd.get_session_flags(APPID_SESSION_DECRYPTED)
-                &&
-                memcmp(spdyRequestScheme->c_str(), httpScheme,
-                sizeof(httpScheme) - 1) == 0)
+                && *spdyRequestScheme == "http")
             {
-                url = httpsScheme;
+                url = new std::string("http://" + *spdyRequestHost + *spdyRequestPath);
             }
             else
             {
-                url = *spdyRequestScheme;
+                url = new std::string("https://" + *spdyRequestHost + *spdyRequestPath);
             }
 
-            if (hsession->get_url())
+            if ( hsession->get_field(MISC_URL_FID) )
                 hsession->set_chp_finished(false);
 
-            url += "://" + *spdyRequestHost + *spdyRequestPath;
-            hsession->set_url(url.c_str());
+            hsession->set_field(MISC_URL_FID, url);
             asd.scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
         }
 
         if (spdyRequestHost)
         {
-            if (hsession->get_host())
+            if (hsession->get_field(REQ_HOST_FID))
                 hsession->set_chp_finished(false);
 
-            hsession->update_host(spdyRequestHost);
-            hsession->set_field_offset(REQ_HOST_FID,
-                attribute_data.spdy_request_host_begin());
-            hsession->set_field_end_offset(REQ_HOST_FID,
+            hsession->set_field(REQ_HOST_FID, spdyRequestHost);
+            hsession->set_offset(REQ_HOST_FID,
+                attribute_data.spdy_request_host_begin(),
                 attribute_data.spdy_request_host_end());
             if (appidDebug->is_active())
                 LogMessage("AppIdDbg %s SPDY host (%u-%u) is %s\n",
                     appidDebug->get_debug_session(),
-                    hsession->get_field_offset(REQ_HOST_FID),
-                    hsession->get_field_end_offset(REQ_HOST_FID), hsession->get_host());
+                    attribute_data.spdy_request_host_begin(),
+                    attribute_data.spdy_request_host_end(),
+                    hsession->get_field(REQ_HOST_FID)->c_str());
             asd.scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
         }
 
         if (spdyRequestPath)
         {
-            if (hsession->get_uri())
+            if ( hsession->get_field(REQ_URI_FID) )
                 hsession->set_chp_finished(false);
 
-            hsession->update_uri(spdyRequestPath);
-            hsession->set_field_offset(REQ_URI_FID, attribute_data.spdy_request_path_begin());
-            hsession->set_field_end_offset(REQ_URI_FID, attribute_data.spdy_request_path_end());
+            hsession->set_field(REQ_URI_FID, spdyRequestPath);
+            hsession->set_offset(REQ_URI_FID,
+                attribute_data.spdy_request_path_begin(),
+                attribute_data.spdy_request_path_end());
             if (appidDebug->is_active())
                 LogMessage("AppIdDbg %s SPDY URI (%u-%u) is %s\n", appidDebug->get_debug_session(),
-                    hsession->get_field_offset(REQ_URI_FID),
-                    hsession->get_field_end_offset(REQ_URI_FID), hsession->get_uri());
+                    attribute_data.spdy_request_path_begin(),
+                    attribute_data.spdy_request_path_end(),
+                    hsession->get_field(REQ_URI_FID)->c_str());
         }
     }
     else
     {
         if ( (field=attribute_data.http_request_host(own)) != nullptr )
         {
-            if (hsession->get_host())
+            if ( hsession->get_field(REQ_HOST_FID) )
                 if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
                     hsession->set_chp_finished(false);
 
-            hsession->update_host(field);
-            hsession->set_field_offset(REQ_HOST_FID, attribute_data.http_request_host_begin());
-            hsession->set_field_end_offset(REQ_HOST_FID, attribute_data.http_request_host_end());
+            hsession->set_field(REQ_HOST_FID, field);
+            hsession->set_offset(REQ_HOST_FID,
+                attribute_data.http_request_host_begin(),
+                attribute_data.http_request_host_end());
             if (appidDebug->is_active())
                 LogMessage("AppIdDbg %s HTTP host (%u-%u) is %s\n",
-                    appidDebug->get_debug_session(), hsession->get_field_offset(REQ_HOST_FID),
-                    hsession->get_field_end_offset(REQ_HOST_FID), field->c_str());
+                    appidDebug->get_debug_session(),
+                    attribute_data.http_request_host_begin(),
+                    attribute_data.http_request_host_end(), field->c_str() );
             asd.scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
         }
 
@@ -188,7 +188,8 @@ static inline void process_http_session(AppIdSession& asd,
         {
             static const char httpScheme[] = "http://";
 
-            if (hsession->get_url() and !asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
+            if (hsession->get_field(MISC_URL_FID) and !asd.get_session_flags(
+                APPID_SESSION_APP_REINSPECT))
                 hsession->set_chp_finished(false);
 
             // Change http to https if session was decrypted.
@@ -201,58 +202,64 @@ static inline void process_http_session(AppIdSession& asd,
                 // In all other cases field can be const string*.
                 field->insert(4, 1, 's');
             }
-            hsession->update_url(field);
-
+            hsession->set_field(MISC_URL_FID, field);
             asd.scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
         }
 
         if ( (field=attribute_data.http_request_uri(own)) != nullptr)
         {
-            if (hsession->get_uri())
+            if ( hsession->get_field(REQ_URI_FID) )
                 if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
                     hsession->set_chp_finished(false);
 
-            hsession->update_uri(field);
-            hsession->set_field_offset(REQ_URI_FID, attribute_data.http_request_uri_begin());
-            hsession->set_field_end_offset(REQ_URI_FID, attribute_data.http_request_uri_end());
+            hsession->set_field(REQ_URI_FID, field);
+            hsession->set_offset(REQ_URI_FID,
+                attribute_data.http_request_uri_begin(),
+                attribute_data.http_request_uri_end());
             if (appidDebug->is_active())
                 LogMessage("AppIdDbg %s URI (%u-%u) is %s\n", appidDebug->get_debug_session(),
-                    hsession->get_field_offset(REQ_URI_FID),
-                    hsession->get_field_end_offset(REQ_URI_FID), hsession->get_uri());
+                    attribute_data.http_request_uri_begin(),
+                    attribute_data.http_request_uri_end(),
+                    hsession->get_cfield(REQ_URI_FID));
         }
     }
 
     // FIXIT-M: except for request/response, these cases are duplicate.
     if ( (field=attribute_data.http_request_via(own)) != nullptr )
     {
-        if (hsession->get_via())
+        if ( hsession->get_field(MISC_VIA_FID) )
             if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
                 hsession->set_chp_finished(false);
 
-        hsession->update_via(field);
+        hsession->set_field(MISC_VIA_FID, field);
         asd.scan_flags |= SCAN_HTTP_VIA_FLAG;
     }
     else if ( (field=attribute_data.http_response_via(own)) != nullptr )
     {
-        if (hsession->get_via())
+        if ( hsession->get_field(MISC_VIA_FID) )
             if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
                 hsession->set_chp_finished(false);
 
-        hsession->update_via(field);
+        hsession->set_field(MISC_VIA_FID, field);
         asd.scan_flags |= SCAN_HTTP_VIA_FLAG;
     }
 
     if ( (field=attribute_data.http_request_user_agent(own)) != nullptr )
     {
-        if (hsession->get_user_agent())
+        if (hsession->get_field(REQ_AGENT_FID) )
             if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
                 hsession->set_chp_finished(false);
 
-        hsession->update_useragent(field);
+        hsession->set_field(REQ_AGENT_FID, field);
+        hsession->set_offset(REQ_AGENT_FID,
+            attribute_data.http_request_user_agent_begin(),
+            attribute_data.http_request_user_agent_end());
         if (appidDebug->is_active())
             LogMessage("AppIdDbg %s User Agent (%u-%u) is %s\n",
-                appidDebug->get_debug_session(), hsession->get_field_offset(REQ_AGENT_FID),
-                hsession->get_field_end_offset(REQ_AGENT_FID), hsession->get_user_agent());
+                appidDebug->get_debug_session(),
+                attribute_data.http_request_user_agent_begin(),
+                attribute_data.http_request_user_agent_end(),
+                field->c_str());
         asd.scan_flags |= SCAN_HTTP_USER_AGENT_FLAG;
     }
 
@@ -276,11 +283,11 @@ static inline void process_http_session(AppIdSession& asd,
         if (appidDebug->is_active())
             LogMessage("AppIdDbg %s HTTP response code is %s\n",
                 appidDebug->get_debug_session(), field->c_str());
-        if (hsession->get_response_code())
+        if ( hsession->get_field(MISC_RESP_CODE_FID) )
             if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
                 hsession->set_chp_finished(false);
 
-        hsession->update_response_code(field);
+        hsession->set_field(MISC_RESP_CODE_FID, field);
     }
 
     // Check to see if we've got an upgrade to HTTP/2 (if enabled).
@@ -293,8 +300,9 @@ static inline void process_http_session(AppIdSession& asd,
                 appidDebug->get_debug_session(),field->c_str());
 
         if (asd.config->mod_config->http2_detection_enabled)
-            if ( hsession->get_response_code()
-                && (strncmp(hsession->get_response_code(), "101", 3) == 0) )
+        {
+            const std::string* rc = hsession->get_field(MISC_RESP_CODE_FID);
+            if ( rc && *rc == "101" )
                 if (strncmp(field->c_str(), "h2c", 3) == 0)
                 {
                     if (appidDebug->is_active())
@@ -302,62 +310,60 @@ static inline void process_http_session(AppIdSession& asd,
                             appidDebug->get_debug_session());
                     asd.is_http2 = true;
                 }
+        }
     }
 
     if ( (field=attribute_data.http_request_referer(own)) != nullptr )
     {
-        if (hsession->get_referer())
+        if ( hsession->get_field(REQ_REFERER_FID) )
             if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
                 hsession->set_chp_finished(false);
 
-        hsession->update_referer(field);
-        hsession->set_field_offset(REQ_REFERER_FID, attribute_data.http_request_referer_begin());
-        hsession->set_field_end_offset(REQ_REFERER_FID, attribute_data.http_request_referer_end());
+        hsession->set_field(REQ_REFERER_FID, field);
+        hsession->set_offset(REQ_REFERER_FID,
+            attribute_data.http_request_referer_begin(),
+            attribute_data.http_request_referer_end());
         if (appidDebug->is_active())
-            LogMessage("AppIdDbg %s Referrer (%u-%u) is %s\n", appidDebug->get_debug_session(),
-                hsession->get_field_offset(REQ_REFERER_FID),
-                hsession->get_field_end_offset(REQ_REFERER_FID),
-                hsession->get_referer());
+            LogMessage("AppIdDbg %s Referer (%u-%u) is %s\n", appidDebug->get_debug_session(),
+                attribute_data.http_request_referer_begin(),
+                attribute_data.http_request_referer_end(),
+                hsession->get_cfield(REQ_REFERER_FID) );
     }
 
     if ( (field=attribute_data.http_request_cookie(own)) != nullptr )
     {
-        if (hsession->get_cookie())
+        if ( hsession->get_field(REQ_COOKIE_FID) )
             if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
                 hsession->set_chp_finished(false);
 
-        hsession->update_cookie(field);
-        hsession->set_field_offset(REQ_COOKIE_FID, attribute_data.http_request_cookie_begin());
-        hsession->set_field_end_offset(REQ_COOKIE_FID, attribute_data.http_request_cookie_end());
-        // FIXIT-M currently we're not doing this, check if necessary
-        // attribute_data.httpRequestCookie = nullptr;
-        // attribute_data.httpRequestCookieOffset = 0;
-        // attribute_data.httpRequestCookieEndOffset = 0;
+        hsession->set_field(REQ_COOKIE_FID, field);
+        hsession->set_offset(REQ_COOKIE_FID,
+            attribute_data.http_request_cookie_begin(),
+            attribute_data.http_request_cookie_end());
         if (appidDebug->is_active())
             LogMessage("AppIdDbg %s Cookie (%u-%u) is %s\n", appidDebug->get_debug_session(),
-                hsession->get_field_offset(REQ_COOKIE_FID),
-                hsession->get_field_offset(REQ_COOKIE_FID),
-                hsession->get_cookie());
+                attribute_data.http_request_cookie_begin(),
+                attribute_data.http_request_cookie_end(),
+                hsession->get_cfield(REQ_COOKIE_FID));
     }
 
     if ( (field=attribute_data.http_response_content(own)) != nullptr )
     {
-        if (hsession->get_content_type())
+        if ( hsession->get_field(RSP_CONTENT_TYPE_FID) )
             if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
                 hsession->set_chp_finished(false);
 
-        hsession->update_content_type(field);
+        hsession->set_field(RSP_CONTENT_TYPE_FID, field);
         asd.scan_flags |= SCAN_HTTP_CONTENT_TYPE_FLAG;
     }
 
     if (hsession->get_ptype_scan_count(RSP_LOCATION_FID) &&
         (field=attribute_data.http_response_location(own)) != nullptr)
     {
-        if (hsession->get_location())
+        if ( hsession->get_field(RSP_LOCATION_FID) )
             if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
                 hsession->set_chp_finished(false);
-
-        hsession->update_location(field);
+        hsession->set_field(RSP_LOCATION_FID, field);
     }
 
     if ( (field=attribute_data.http_request_body(own)) != nullptr )
@@ -365,20 +371,19 @@ static inline void process_http_session(AppIdSession& asd,
         if (appidDebug->is_active())
             LogMessage("AppIdDbg %s Got a request body %s\n",
                 appidDebug->get_debug_session(), field->c_str());
-        if (hsession->get_req_body())
+        if ( hsession->get_field(REQ_BODY_FID) )
             if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
                 hsession->set_chp_finished(false);
-        hsession->update_req_body(field);
+        hsession->set_field(REQ_BODY_FID, field);
     }
 
     if (hsession->get_ptype_scan_count(RSP_BODY_FID) &&
         (field=attribute_data.http_response_body(own)) != nullptr)
     {
-        if (hsession->get_body())
+        if (hsession->get_field(RSP_BODY_FID) )
             if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
                 hsession->set_chp_finished(false);
-
-        hsession->update_body(field);
+        hsession->set_field(RSP_BODY_FID, field);
     }
 
     if (attribute_data.numXffFields)
@@ -393,13 +398,13 @@ static inline void process_http_session(AppIdSession& asd,
 
     if ( (field=attribute_data.http_response_server(own)) != nullptr)
     {
-        hsession->update_server(field);
+        hsession->set_field(MISC_SERVER_FID, field);
         asd.scan_flags |= SCAN_HTTP_VENDOR_FLAG;
     }
 
     if ( (field=attribute_data.http_request_x_working_with(own)) != nullptr )
     {
-        hsession->update_x_working_with(field);
+        hsession->set_field(MISC_XWW_FID, field);
         asd.scan_flags |= SCAN_HTTP_XWORKINGWITH_FLAG;
     }
 }
@@ -416,38 +421,39 @@ static inline void process_rtmp(AppIdSession& asd,
 
     const string* field=0;
 
-    if (!hsession->get_url())
+    if (!hsession->get_field(MISC_URL_FID))
     {
         if ( (field=attribute_data.http_request_url(own)) != nullptr )
         {
-            // hsession->set_url(field->c_str());
-            hsession->update_url(field);
+            hsession->set_field(MISC_URL_FID, field);
             asd.scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
         }
     }
 
-    if ( !asd.config->mod_config->referred_appId_disabled && !hsession->get_referer() )
+    if ( !asd.config->mod_config->referred_appId_disabled &&
+        !hsession->get_field(REQ_REFERER_FID) )
     {
         if ( (field=attribute_data.http_request_referer(own)) != nullptr )
         {
-            hsession->update_referer(field);
+            hsession->set_field(REQ_REFERER_FID, field);
         }
     }
 
-    if (hsession->get_url() || (confidence == 100 &&
+    if (hsession->get_field(MISC_URL_FID) || (confidence == 100 &&
         asd.session_packet_count > asd.config->mod_config->rtmp_max_packets))
     {
-        if (hsession->get_url())
+        const std::string* url;
+        if ( (url = hsession->get_field(MISC_URL_FID)) != nullptr )
         {
             HttpPatternMatchers* http_matchers = HttpPatternMatchers::get_instance();
-
-            if ( ( ( http_matchers->get_appid_from_url(nullptr, hsession->get_url(),
-                nullptr, hsession->get_referer(), &client_id, &serviceAppId,
+            const char* referer = hsession->get_cfield(REQ_REFERER_FID);
+            if ( ( ( http_matchers->get_appid_from_url(nullptr, url->c_str(),
+                nullptr, referer, &client_id, &serviceAppId,
                 &payload_id, &referred_payload_app_id, 1) )
                 ||
-                ( http_matchers->get_appid_from_url(nullptr, hsession->get_url(), nullptr,
-                hsession->get_referer(), &client_id, &serviceAppId, &payload_id,
-                &referred_payload_app_id, 0) ) ) == 1 )
+                ( http_matchers->get_appid_from_url(nullptr, url->c_str(),
+                nullptr, referer, &client_id, &serviceAppId,
+                &payload_id, &referred_payload_app_id, 0) ) ) == 1 )
             {
                 // do not overwrite a previously-set client or service
                 if (client_id <= APP_ID_NONE)
@@ -563,12 +569,14 @@ static inline void check_terminate_tp_module(AppIdSession& asd, uint16_t tpPktCo
     if ((tpPktCount >= asd.config->mod_config->max_tp_flow_depth) ||
         (asd.get_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_APP_REINSPECT) ==
         (APPID_SESSION_HTTP_SESSION | APPID_SESSION_APP_REINSPECT) &&
-        hsession->get_uri() && (!hsession->get_chp_candidate() || hsession->is_chp_finished())))
+        hsession->get_field(REQ_URI_FID) &&
+        (!hsession->get_chp_candidate() || hsession->is_chp_finished())))
     {
         if (asd.get_tp_app_id() == APP_ID_NONE)
             asd.set_tp_app_id(APP_ID_UNKNOWN);
 
-        if ( asd.service_disco_state == APPID_DISCO_STATE_FINISHED && asd.payload.get_id() == APP_ID_NONE )
+        if ( asd.service_disco_state == APPID_DISCO_STATE_FINISHED && asd.payload.get_id() ==
+            APP_ID_NONE )
             asd.payload.set_id(APP_ID_UNKNOWN);
 
         if (asd.tpsession)
@@ -604,7 +612,8 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
         Profile tpPerfStats_profile_context(tpPerfStats);
 
         //restart inspection by 3rd party
-        if (!asd.tp_reinspect_by_initiator && (direction == APP_ID_FROM_INITIATOR) && check_reinspect(p, asd))
+        if (!asd.tp_reinspect_by_initiator && (direction == APP_ID_FROM_INITIATOR) &&
+            check_reinspect(p, asd))
         {
             asd.tp_reinspect_by_initiator = true;
             asd.set_session_flags(APPID_SESSION_APP_REINSPECT);
@@ -637,7 +646,8 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
 
                 isTpAppidDiscoveryDone = true;
 
-                // First SSL decrypted packet is now being inspected. Reset the flag so that SSL decrypted
+                // First SSL decrypted packet is now being inspected. Reset the flag so that SSL
+                // decrypted
                 // traffic gets processed like regular traffic from next packet onwards
                 if (asd.get_session_flags(APPID_SESSION_APP_REINSPECT_SSL))
                     asd.clear_session_flags(APPID_SESSION_APP_REINSPECT_SSL);
@@ -720,16 +730,17 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                         asd.set_tp_payload_app_id(tp_app_id);
 
                     // FIXIT-H commented out this part because it will never get executed
-                    // need to make this function par with snort2x code, need to implement setTPAppIdData() and CheckDetectorCallback()
+                    // need to make this function par with snort2x code, need to implement
+                    // setTPAppIdData() and CheckDetectorCallback()
                     // functions mainly. Set APP_ID_HTTP to asd's tp_session_id var from below
                     tp_app_id = APP_ID_HTTP;
 
                     // Handle HTTP tunneling and SSL possibly then being used in that tunnel
-                   /* if (tp_app_id == APP_ID_HTTP_TUNNEL)
-                        asd.set_payload_appid_data(APP_ID_HTTP_TUNNEL, NULL);
-                    else if ((asd.payload.get_id() == APP_ID_HTTP_TUNNEL) && (tp_app_id ==
-                        APP_ID_SSL))
-                        asd.set_payload_appid_data(APP_ID_HTTP_SSL_TUNNEL, NULL);*/
+                    /* if (tp_app_id == APP_ID_HTTP_TUNNEL)
+                         asd.set_payload_appid_data(APP_ID_HTTP_TUNNEL, NULL);
+                     else if ((asd.payload.get_id() == APP_ID_HTTP_TUNNEL) && (tp_app_id ==
+                         APP_ID_SSL))
+                         asd.set_payload_appid_data(APP_ID_HTTP_SSL_TUNNEL, NULL);*/
 
                     hsession->process_http_packet(direction);
 
@@ -816,7 +827,7 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
         }
         if ( asd.tp_reinspect_by_initiator && check_reinspect(p, asd) )
         {
-            if(isTpAppidDiscoveryDone)
+            if (isTpAppidDiscoveryDone)
                 asd.clear_session_flags(APPID_SESSION_APP_REINSPECT);
             if (direction == APP_ID_FROM_RESPONDER)
                 asd.tp_reinspect_by_initiator = false;     //toggle at OK response

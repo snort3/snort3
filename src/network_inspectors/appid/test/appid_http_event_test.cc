@@ -34,7 +34,6 @@
 
 #include "appid_mock_definitions.h"
 #include "appid_mock_inspector.h"
-#include "appid_mock_http_session.h"
 #include "appid_mock_session.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
@@ -269,23 +268,24 @@ static void run_event_handler(TestData test_data, TestData* expect_data = nullpt
     hsession->reset();
     event_handler.handle(event, flow);
     LONGS_EQUAL(expect_data->scan_flags, mock_session->scan_flags);
-    STRCMP_EQUAL(expect_data->host, hsession->get_host());
-    STRCMP_EQUAL(expect_data->uri, hsession->get_uri());
-    STRCMP_EQUAL(expect_data->content_type, hsession->get_content_type());
-    STRCMP_EQUAL(expect_data->cookie, hsession->get_cookie());
-    STRCMP_EQUAL(expect_data->location, hsession->get_location());
-    STRCMP_EQUAL(expect_data->referer, hsession->get_referer());
-    STRCMP_EQUAL(expect_data->server, hsession->get_server());
-    STRCMP_EQUAL(expect_data->x_working_with, hsession->get_x_working_with());
-    STRCMP_EQUAL(expect_data->useragent, hsession->get_user_agent());
-    STRCMP_EQUAL(expect_data->via, hsession->get_via());
-    if (nullptr == hsession->get_response_code())
+    STRCMP_EQUAL(expect_data->host, hsession->get_cfield(REQ_HOST_FID));
+    STRCMP_EQUAL(expect_data->uri, hsession->get_cfield(REQ_URI_FID));
+    STRCMP_EQUAL(expect_data->content_type, hsession->get_cfield(RSP_CONTENT_TYPE_FID));
+    STRCMP_EQUAL(expect_data->cookie, hsession->get_cfield(REQ_COOKIE_FID));
+    STRCMP_EQUAL(expect_data->location, hsession->get_cfield(RSP_LOCATION_FID));
+    STRCMP_EQUAL(expect_data->referer, hsession->get_cfield(REQ_REFERER_FID));
+    STRCMP_EQUAL(expect_data->server, hsession->get_cfield(MISC_SERVER_FID));
+    STRCMP_EQUAL(expect_data->x_working_with, hsession->get_cfield(MISC_XWW_FID));
+    STRCMP_EQUAL(expect_data->useragent, hsession->get_cfield(REQ_AGENT_FID));
+    STRCMP_EQUAL(expect_data->via, hsession->get_cfield(MISC_VIA_FID));
+    if (nullptr == hsession->get_field(MISC_RESP_CODE_FID))
     {
         LONGS_EQUAL(0, expect_data->response_code);
     }
     else
     {
-        LONGS_EQUAL(expect_data->response_code, strtol(hsession->get_response_code(), nullptr, 10));
+        LONGS_EQUAL(expect_data->response_code, strtol(hsession->get_field(
+            MISC_RESP_CODE_FID)->c_str(), nullptr, 10));
     }
     mock().checkExpectations();
 }
