@@ -22,7 +22,7 @@
 
 struct sfip_var_t;
 
-sfip_var_t* sfip_var_from_string(const char*);
+sfip_var_t* sfip_var_from_string(const char* addr, const char* caller);
 
 #endif
 

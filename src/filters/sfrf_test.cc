@@ -908,7 +908,7 @@ static void Init(unsigned cap)
         cfg.seconds = p->seconds;
         cfg.newAction = (snort::Actions::Type)RULE_NEW;
         cfg.timeout = p->timeout;
-        cfg.applyTo = p->ip ? sfip_var_from_string(p->ip) : nullptr;
+        cfg.applyTo = p->ip ? sfip_var_from_string(p->ip, "sfrf_test") : nullptr;
 
         p->create = SFRF_ConfigAdd(nullptr, rfc, &cfg);
     }

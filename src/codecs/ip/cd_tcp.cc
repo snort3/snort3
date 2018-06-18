@@ -763,7 +763,7 @@ static void mod_dtor(Module* m)
 static void tcp_codec_ginit()
 {
     // Multicast addresses pursuant to RFC 5771
-    SynToMulticastDstIp = sfip_var_from_string("[224.0.0.0/4]");
+    SynToMulticastDstIp = sfip_var_from_string("[224.0.0.0/4]", "tcp");
     assert(SynToMulticastDstIp);
 }
 

@@ -1445,7 +1445,7 @@ bool SuppressModule::set(const char*, Value& v, SnortConfig*)
         thdx.tracking = v.get_long() + 1;
 
     else if ( v.is("ip") )
-        thdx.ip_address = sfip_var_from_string(v.get_string());
+        thdx.ip_address = sfip_var_from_string(v.get_string(), "suppress");
 
     else
         return false;
@@ -1533,7 +1533,7 @@ bool EventFilterModule::set(const char*, Value& v, SnortConfig*)
         thdx.tracking = v.get_long() + 1;
 
     else if ( v.is("ip") )
-        thdx.ip_address = sfip_var_from_string(v.get_string());
+        thdx.ip_address = sfip_var_from_string(v.get_string(), "event_filter");
 
     else if ( v.is("count") )
         thdx.count = v.get_long();
@@ -1651,7 +1651,7 @@ bool RateFilterModule::set(const char*, Value& v, SnortConfig*)
         thdx.timeout = v.get_long();
 
     else if ( v.is("apply_to") )
-        thdx.applyTo = sfip_var_from_string(v.get_string());
+        thdx.applyTo = sfip_var_from_string(v.get_string(), "rate_filter");
 
     else if ( v.is("new_action") )
         thdx.newAction = (Actions::Type)(v.get_long() + 1);

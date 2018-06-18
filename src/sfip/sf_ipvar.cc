@@ -236,7 +236,7 @@ static sfip_node_t* merge_lists(sfip_node_t* list1, sfip_node_t* list2, uint16_t
     sfip_node_t* listHead = nullptr, * merge_list = nullptr, * tmp = nullptr, * node = nullptr;
     uint16_t num_nodes = 0;
 
-    if(!list1 && !list2)
+    if (!list1 && !list2)
     {
         merge_len = 0;
         return nullptr;
@@ -253,14 +253,14 @@ static sfip_node_t* merge_lists(sfip_node_t* list1, sfip_node_t* list2, uint16_t
     }
 
     /*Both lists are sorted and not NULL. If list1 or list2 contains "any", free the other list*/
-    if(list1->flags & SFIP_ANY)
+    if (list1->flags & SFIP_ANY)
     {
         merge_len = list1_len;
         sfip_node_freelist(list2);
         return list1;
     }
 
-    if(list2->flags & SFIP_ANY)
+    if (list2->flags & SFIP_ANY)
     {
         merge_len = list2_len;
         sfip_node_freelist(list1);
@@ -271,19 +271,19 @@ static sfip_node_t* merge_lists(sfip_node_t* list1, sfip_node_t* list2, uint16_t
     while (list1 && list2)
     {
         ret = list1->ip->compare(*(list2->ip));
-        if(ret == SFIP_LESSER)
+        if (ret == SFIP_LESSER)
         {
             node = list1;
             list1 = list1->next;
             list1_len--;
         }
-        else if(ret == SFIP_GREATER)
+        else if (ret == SFIP_GREATER)
         {
             node = list2;
             list2 = list2->next;
             list2_len--;
         }
-        else if(ret == SFIP_EQUAL)
+        else if (ret == SFIP_EQUAL)
         {
             node = list1;
             list1 = list1->next;
@@ -296,7 +296,7 @@ static sfip_node_t* merge_lists(sfip_node_t* list1, sfip_node_t* list2, uint16_t
             list2_len--;
         }
 
-        if(!merge_list)
+        if (!merge_list)
         {
             merge_list = node;
             listHead = node;
@@ -384,7 +384,7 @@ static SfIpRet sfvar_add_node(sfip_var_t* var, sfip_node_t* node, int negated)
     }
 
     /*If head node is any, do not add anything else*/
-    if((*head)->flags & SFIP_ANY)
+    if ((*head)->flags & SFIP_ANY)
     {
         sfip_node_free(node);
         return SFIP_SUCCESS;
@@ -393,9 +393,9 @@ static SfIpRet sfvar_add_node(sfip_var_t* var, sfip_node_t* node, int negated)
     /* "Anys" should always be inserted first
        Otherwise, check if this IP is less than the head's IP */
     SfIpRet node_cmp_ret = SFIP_SUCCESS;
-    if(node->flags & SFIP_ANY)
+    if (node->flags & SFIP_ANY)
     {
-        sfip_node_t *tmp;
+        sfip_node_t* tmp;
         /*Free the list when adding any*/
         while (*head)
         {
@@ -410,12 +410,12 @@ static SfIpRet sfvar_add_node(sfip_var_t* var, sfip_node_t* node, int negated)
     else
     {
         node_cmp_ret = node->ip->compare(*((*head)->ip));
-        if(node_cmp_ret == SFIP_EQUAL)
+        if (node_cmp_ret == SFIP_EQUAL)
         {
             sfip_node_free(node);
             return SFIP_SUCCESS;
         }
-        else if(node_cmp_ret == SFIP_LESSER)
+        else if (node_cmp_ret == SFIP_LESSER)
         {
             node->next = *head;
             *head = node;
@@ -446,17 +446,17 @@ static SfIpRet sfvar_add_node(sfip_var_t* var, sfip_node_t* node, int negated)
     for (p = *head; p->next; p=p->next)
     {
         node_cmp_ret = node->ip->compare(*(p->next->ip));
-        if(node_cmp_ret == SFIP_EQUAL)
+        if (node_cmp_ret == SFIP_EQUAL)
         {
             sfip_node_free(node);
             return SFIP_SUCCESS;
         }
-        else if(node_cmp_ret == SFIP_LESSER)
+        else if (node_cmp_ret == SFIP_LESSER)
         {
             swp = p->next;
             p->next = node;
             node->next = swp;
-             ++*count;
+            ++*count;
             return SFIP_SUCCESS;
         }
     }
@@ -516,7 +516,6 @@ static SfIpRet sfvar_list_compare(sfip_node_t* list1, sfip_node_t* list2)
     return SFIP_EQUAL;
 }
 
-
 /* Check's if two variables have the same nodes */
 SfIpRet sfvar_compare(const sfip_var_t* one, const sfip_var_t* two)
 {
@@ -531,10 +530,10 @@ SfIpRet sfvar_compare(const sfip_var_t* one, const sfip_var_t* two)
     if (sfvar_is_alias(one, two))
         return SFIP_EQUAL;
 
-    if(one->head_count != two->head_count)
+    if (one->head_count != two->head_count)
         return SFIP_FAILURE;
 
-    if(one->neg_head_count != two->neg_head_count)
+    if (one->neg_head_count != two->neg_head_count)
         return SFIP_FAILURE;
 
     if (sfvar_list_compare(one->head, two->head) == SFIP_FAILURE)
@@ -620,7 +619,7 @@ SfIpRet sfvar_parse_iplist(vartable_t* table, sfip_var_t* var,
     SfIpRet ret;
     int neg_ip;
 
-    if (!var || !table || !str)
+    if (!var || !str)
         return SFIP_ARG_ERR;
 
     while (*str)
@@ -676,6 +675,12 @@ SfIpRet sfvar_parse_iplist(vartable_t* table, sfip_var_t* var,
         }
         else if (*str == '$')
         {
+            if (!table)
+            {
+                snort_free(tok);
+                return SFIP_LOOKUP_UNAVAILABLE;
+            }
+
             sfip_var_t* tmp_var;
             sfip_var_t* copy_var;
 
@@ -1091,7 +1096,7 @@ static char sfipvar_test_buff[SFIPVAR_TEST_BUFF_LEN];
 static void print_var_list(sfip_node_t* var_list, bool print_bits = false)
 {
     int n = 0;
-    for(sfip_node_t* p = var_list; p; p = p->next)
+    for (sfip_node_t* p = var_list; p; p = p->next)
     {
         if (p->flags & SFIP_ANY)
             n += safe_snprintf(sfipvar_test_buff+n, SFIPVAR_TEST_BUFF_LEN - n, "any");

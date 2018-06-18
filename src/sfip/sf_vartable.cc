@@ -292,12 +292,14 @@ SfIpRet sfvt_add_str(vartable_t* table, const char* str, sfip_var_t** ipret)
 }
 
 /* Adds the variable described by "src" to the variable "dst",
- * using the vartable for looking variables used within "src" */
+ * using the vartable for looking variables used within "src".
+ * If vartable is null variables are not supported. 
+ */
 SfIpRet sfvt_add_to_var(vartable_t* table, sfip_var_t* dst, const char* src)
 {
     SfIpRet ret;
 
-    if (!table || !dst || !src)
+    if (!dst || !src)
         return SFIP_ARG_ERR;
 
     if ((ret = sfvar_parse_iplist(table, dst, src, 0)) == SFIP_SUCCESS)

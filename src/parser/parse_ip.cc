@@ -28,13 +28,14 @@
 #include "sfip/sf_vartable.h"
 #include "utils/util.h"
 
-sfip_var_t* sfip_var_from_string(const char* addr)
+sfip_var_t* sfip_var_from_string(const char* addr, const char* caller)
 {
     sfip_var_t* ret;
     int ret_code;
-    vartable_t* ip_vartable;
+    vartable_t* ip_vartable = nullptr;
 
-    ip_vartable = snort::get_ips_policy()->ip_vartable;
+    if (snort::get_ips_policy())
+        ip_vartable = snort::get_ips_policy()->ip_vartable;
 
     ret = (sfip_var_t*)snort_calloc(sizeof(sfip_var_t));
 
@@ -42,19 +43,26 @@ sfip_var_t* sfip_var_from_string(const char* addr)
     {
         if (ret_code == SFIP_LOOKUP_FAILURE)
         {
-            snort::ParseError("Undefined variable in the string: %s", addr);
+            snort::ParseError("%s: Undefined variable in the IP list: %s", caller, addr);
             return ret;
         }
         else if (ret_code == SFIP_CONFLICT)
         {
-            snort::ParseError("Negated IP ranges that equal to or are"
+            snort::ParseError("%s: Negated IP ranges equal to or"
                 " more-specific than non-negated ranges are not allowed."
-                " Consider inverting the logic: %s.", addr);
+                " Consider inverting the logic: %s.", caller, addr);
+            return ret;
+        }
+        else if (ret_code == SFIP_LOOKUP_UNAVAILABLE)
+        {
+            snort::ParseError("%s: Error parsing IP list: %s. "
+                "Snort variables are only permitted in rule headers, otherwise use Lua variables.",
+                caller, addr);
             return ret;
         }
         else
         {
-            snort::ParseError("Unable to process the IP address: %s", addr);
+            snort::ParseError("%s: Unable to process IP list: %s", caller, addr);
             return ret;
         }
     }

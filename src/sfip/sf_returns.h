@@ -38,7 +38,8 @@ enum SfIpRet
     SFIP_LOOKUP_FAILURE,    /* Failed to lookup a variable from the table */
     SFIP_UNMATCHED_BRACKET, /* IP lists that are missing a closing bracket */
     SFIP_NOT_ANY,           /* For !any */
-    SFIP_CONFLICT           /* For IP conflicts in IP lists */
+    SFIP_CONFLICT,          /* For IP conflicts in IP lists */
+    SFIP_LOOKUP_UNAVAILABLE /* var table unavailable */
 };
 
 #endif

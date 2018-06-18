@@ -169,7 +169,7 @@ static void set_ip_var(sfip_var_t*& var, const char* val)
 {
     if ( var )
         sfvar_free(var);
-    var = sfip_var_from_string(val);
+    var = sfip_var_from_string(val, "binder");
 }
 
 bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
