@@ -22,8 +22,6 @@
 #ifndef DETECTOR_SIP_H
 #define DETECTOR_SIP_H
 
-#include <mutex>
-
 #include "client_plugins/client_detector.h"
 #include "service_plugins/service_detector.h"
 #include "framework/data_bus.h"

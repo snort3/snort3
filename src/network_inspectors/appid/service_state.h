@@ -22,8 +22,6 @@
 #ifndef SERVICE_STATE_H
 #define SERVICE_STATE_H
 
-#include <mutex>
-
 #include "protocols/protocol_ids.h"
 #include "sfip/sf_ip.h"
 
