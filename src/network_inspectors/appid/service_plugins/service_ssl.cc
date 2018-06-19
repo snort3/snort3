@@ -204,7 +204,7 @@ struct ServiceSslConfig
     SearchTool* ssl_cname_matcher;
 };
 
-static THREAD_LOCAL ServiceSslConfig service_ssl_config;
+static ServiceSslConfig service_ssl_config;
 
 #pragma pack()
 

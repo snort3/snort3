@@ -132,6 +132,8 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
     AppIdSession* pf = nullptr;
     const uint8_t* data = args.data;
     uint16_t size = args.size;
+    //FIXIT-M - Avoid thread locals
+    static THREAD_LOCAL SnortProtocolId tftp_snort_protocol_id = UNKNOWN_PROTOCOL_ID;
 
     if (!size)
         goto inprocess;

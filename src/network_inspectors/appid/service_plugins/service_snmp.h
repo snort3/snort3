@@ -32,9 +32,6 @@ public:
     SnmpServiceDetector(ServiceDiscovery*);
 
     int validate(AppIdDiscoveryArgs&) override;
-
-private:
-    SnortProtocolId snmp_snort_protocol_id = UNKNOWN_PROTOCOL_ID;
 };
 
 #endif

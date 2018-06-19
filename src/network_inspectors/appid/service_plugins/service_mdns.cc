@@ -79,6 +79,7 @@ struct MatchedPatterns
     MatchedPatterns* next;
 };
 
+static THREAD_LOCAL MatchedPatterns* patternList;
 static THREAD_LOCAL MatchedPatterns* patternFreeList;
 
 static MdnsPattern patterns[] =
@@ -117,6 +118,19 @@ MdnsServiceDetector::MdnsServiceDetector(ServiceDiscovery* sd)
 MdnsServiceDetector::~MdnsServiceDetector()
 {
     destory_matcher();
+}
+
+void MdnsServiceDetector::release_thread_resources()
+{   
+    MatchedPatterns* node;
+
+    destroy_match_list();
+
+    while ((node = patternFreeList))
+    {
+        patternFreeList = node->next;
+        snort_free(node);
+    }
 }
 
 int MdnsServiceDetector::validate(AppIdDiscoveryArgs& args)

@@ -96,6 +96,7 @@ public:
     static void initialize_plugins(AppIdInspector* ins);
     static void finalize_plugins();
     static void release_plugins();
+    static void tterm();
 
     virtual void initialize() = 0;
     virtual void register_detector(const std::string&, AppIdDetector*,  IpProtocol);

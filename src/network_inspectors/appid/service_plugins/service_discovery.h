@@ -82,14 +82,14 @@ public:
     int fail_service(AppIdSession&, const snort::Packet*, AppidSessionDirection dir, ServiceDetector*, ServiceDiscoveryState* sds = nullptr);
     int incompatible_data(AppIdSession&, const snort::Packet*, AppidSessionDirection dir, ServiceDetector*);
     static int add_ftp_service_state(AppIdSession&);
-
+    void release_thread_resources();
 private:
     ServiceDiscovery(AppIdInspector& ins);
     void initialize() override;
     void get_next_service(const snort::Packet*, const AppidSessionDirection dir, AppIdSession&);
     void get_port_based_services(IpProtocol, uint16_t port, AppIdSession&);
     void match_by_pattern(AppIdSession&, const snort::Packet*, IpProtocol);
-
+    std::vector<AppIdDetector*> service_detector_list;
     std::unordered_map<uint16_t, std::vector<ServiceDetector*> > tcp_services;
     std::unordered_map<uint16_t, std::vector<ServiceDetector*> > udp_services;
     std::unordered_map<uint16_t, std::vector<ServiceDetector*> > udp_reversed_services;

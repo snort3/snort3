@@ -114,7 +114,7 @@ bool AppIdInspector::configure(SnortConfig* sc)
     my_seh = SipEventHandler::create();
     my_seh->subscribe();
 
-    active_config->init_appid(sc);
+    active_config->init_appid(sc, this);
 
 #ifdef ENABLE_APPID_THIRD_PARTY
     if (!TPLibHandler::have_tp())
@@ -155,19 +155,8 @@ void AppIdInspector::tinit()
     appid_mute = PacketTracer::get_mute();
 
     AppIdStatistics::initialize_manager(*config);
-    HostPortCache::initialize();
-    AppIdServiceState::initialize();
-    init_appid_forecast();
-    HttpPatternMatchers* http_matchers = HttpPatternMatchers::get_instance();
-    AppIdDiscovery::initialize_plugins(this);
-    init_length_app_cache();
     LuaDetectorManager::initialize(*active_config);
-    PatternServiceDetector::finalize_service_port_patterns();
-    PatternClientDetector::finalize_client_port_patterns();
-    AppIdDiscovery::finalize_plugins();
-    http_matchers->finalize();
-    ssl_detector_process_patterns();
-    dns_host_detector_process_patterns();
+    AppIdServiceState::initialize();
     appidDebug = new AppIdDebug();
     if (active_config->mod_config and active_config->mod_config->log_all_sessions)
         appidDebug->set_enabled(true);
@@ -179,16 +168,9 @@ void AppIdInspector::tinit()
 void AppIdInspector::tterm()
 {
     AppIdStatistics::cleanup();
-    HostPortCache::terminate();
-    clean_appid_forecast();
-    service_dns_host_clean();
-    service_ssl_clean();
-    free_length_app_cache();
-
-    AppIdServiceState::clean();
     LuaDetectorManager::terminate();
-    AppIdDiscovery::release_plugins();
-    delete HttpPatternMatchers::get_instance();
+    AppIdDiscovery::tterm();
+    AppIdServiceState::clean();
     delete appidDebug;
     appidDebug = nullptr;
 #ifdef ENABLE_APPID_THIRD_PARTY
@@ -236,6 +218,16 @@ static void appid_inspector_pinit()
 
 static void appid_inspector_pterm()
 {
+//FIXIT-M: RELOAD - if app_info_table is associated with an object
+    HostPortCache::terminate();
+    clean_appid_forecast();
+    free_length_app_cache();
+    LuaDetectorManager::terminate();
+    delete HttpPatternMatchers::get_instance();
+    service_dns_host_clean();
+    service_ssl_clean();
+    AppIdConfig::pterm();
+//end of 'FIXIT-M: RELOAD' comment above
     openssl_cleanup();
 #ifdef ENABLE_APPID_THIRD_PARTY
     TPLibHandler::pfini();

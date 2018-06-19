@@ -39,6 +39,7 @@ public:
     static void AppIdFreeDhcpData(snort::DHCPData*);
     static void AppIdFreeDhcpInfo(snort::DHCPInfo*);
 
+    void release_thread_resources() override;
 private:
     int add_dhcp_info(AppIdSession&, unsigned op55_len, const uint8_t* op55, unsigned
         op60_len, const uint8_t* op60, const uint8_t* mac);

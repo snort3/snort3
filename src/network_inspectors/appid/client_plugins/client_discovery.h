@@ -48,6 +48,7 @@ public:
     static ClientDiscovery& get_instance(AppIdInspector* ins = nullptr);
 
     void finalize_client_plugins();
+    void release_thread_resources();
     bool do_client_discovery(AppIdSession&, snort::Packet*, AppidSessionDirection direction);
 
 private:

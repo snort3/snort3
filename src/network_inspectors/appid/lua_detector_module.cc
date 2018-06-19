@@ -86,7 +86,14 @@ bool get_lua_field(lua_State* L, int table, const char* field, IpProtocol& out)
     return result;
 }
 
-static lua_State* create_lua_state(const AppIdModuleConfig* mod_config)
+inline void set_control(lua_State* L, int is_control)
+{
+    lua_pushboolean (L, is_control); // push flag to stack 
+    lua_setglobal(L, "is_control"); // create global key to store value
+    lua_pop(L, 1);
+}
+
+static lua_State* create_lua_state(const AppIdModuleConfig* mod_config, int is_control)
 {
     auto L = luaL_newstate();
 
@@ -95,6 +102,7 @@ static lua_State* create_lua_state(const AppIdModuleConfig* mod_config)
 
     luaL_openlibs(L);
 
+    set_control(L, is_control);
     register_detector(L);
     lua_pop(L, 1);          // After registration the methods are still on the stack, remove them
 
@@ -140,13 +148,14 @@ static lua_State* create_lua_state(const AppIdModuleConfig* mod_config)
     return L;
 }
 
-LuaDetectorManager::LuaDetectorManager(AppIdConfig& config) :
+LuaDetectorManager::LuaDetectorManager(AppIdConfig& config, int is_control) :
     config(config)
 {
-    init_chp_glossary();
     sflist_init(&allocated_detector_flow_list);
-    allocated_detectors.clear();
-    L = create_lua_state(config.mod_config);
+    allocated_objects.clear();
+    L = create_lua_state(config.mod_config, is_control);
+    if (is_control == 1)
+        init_chp_glossary();
 }
 
 LuaDetectorManager::~LuaDetectorManager()
@@ -154,38 +163,44 @@ LuaDetectorManager::~LuaDetectorManager()
     auto L = lua_detector_mgr? lua_detector_mgr->L : nullptr;
     if (L)
     {
-        for ( auto& detector : allocated_detectors )
+        if (init(L))
+            free_chp_glossary();
+
+        for ( auto& lua_object : allocated_objects )
         {
-            LuaStateDescriptor* lsd = detector->validate_lua_state(false);
+            LuaStateDescriptor* lsd = lua_object->validate_lua_state(false);
 
             lua_getfield(L, LUA_REGISTRYINDEX, lsd->package_info.name.c_str());
             lua_getfield(L, -1, lsd->package_info.cleanFunctionName.c_str());
             if ( lua_isfunction(L, -1) )
             {
+                //FIXIT-M: RELOAD - use lua references to get user data object from stack
                 //first parameter is DetectorUserData
-                lua_rawgeti(L, LUA_REGISTRYINDEX, lsd->detector_user_data_ref);
+                std::string name = lsd->package_info.name + "_";
+                lua_getglobal(L, name.c_str());
+
                 if ( lua_pcall(L, 1, 1, 0) )
                 {
                     ErrorMessage("Could not cleanup the %s client app element: %s\n",
                         lsd->package_info.name.c_str(), lua_tostring(L, -1));
                 }
             }
+	    delete lua_object;
         }
         lua_close(L);
     }
 
     sflist_static_free_all(&allocated_detector_flow_list, free_detector_flow);
-    allocated_detectors.clear();
-    free_chp_glossary();
+    allocated_objects.clear();
 }
 
-void LuaDetectorManager::initialize(AppIdConfig& config)
+void LuaDetectorManager::initialize(AppIdConfig& config, int is_control)
 {
     // FIXIT-M: RELOAD - When reload is supported, remove this line which prevents re-initialize
     if (lua_detector_mgr)
         return;
 
-    lua_detector_mgr = new LuaDetectorManager(config);
+    lua_detector_mgr = new LuaDetectorManager(config, is_control);
     if (!lua_detector_mgr->L)
         FatalError("Error - appid: can not create new luaState, instance=%u\n", get_instance_id());
 
@@ -201,13 +216,6 @@ void LuaDetectorManager::terminate()
     if (!lua_detector_mgr)
         return;
 
-    // release the reference of the userdata on the lua side
-    for (auto ld : lua_detector_mgr->allocated_detectors)
-    {
-        LuaStateDescriptor* lsd = ld->validate_lua_state(false);
-        if (lsd->detector_user_data_ref != LUA_REFNIL)
-            luaL_unref(lua_detector_mgr->L, LUA_REGISTRYINDEX, lsd->detector_user_data_ref);
-    }
     delete lua_detector_mgr;
     lua_detector_mgr = nullptr;
 }
@@ -277,7 +285,7 @@ static inline uint32_t compute_lua_tracker_size(uint64_t rnaMemory, uint32_t num
 }
 
 // Leaves 1 value (the Detector userdata) at the top of the stack
-static AppIdDetector* create_lua_detector(lua_State* L, const char* detectorName, bool is_custom)
+static LuaObject* create_lua_detector(lua_State* L, const char* detectorName, bool is_custom)
 {
     std::string detector_name;
     IpProtocol proto = IpProtocol::PROTO_NOT_SET;
@@ -298,10 +306,10 @@ static AppIdDetector* create_lua_detector(lua_State* L, const char* detectorName
     lua_getfield(L, -1, "client");
     if ( lua_istable(L, -1) )
     {
-        LuaClientDetector* cd = new LuaClientDetector(&ClientDiscovery::get_instance(),
+        LuaClientObject* lco = new LuaClientObject(&ClientDiscovery::get_instance(),
             detectorName, proto, L);
-        cd->set_custom_detector(is_custom);
-        return cd;
+        lco->cd->set_custom_detector(is_custom);
+        return lco;
     }
     else
     {
@@ -310,10 +318,10 @@ static AppIdDetector* create_lua_detector(lua_State* L, const char* detectorName
         lua_getfield(L, -1, "server");
         if ( lua_istable(L, -1) )
         {
-            LuaServiceDetector* sd = new LuaServiceDetector(&ServiceDiscovery::get_instance(),
+            LuaServiceObject* lso = new LuaServiceObject(&ServiceDiscovery::get_instance(),
                 detectorName, proto, L);
-            sd->set_custom_detector(is_custom);
-            return sd;
+            lso->sd->set_custom_detector(is_custom);
+            return lso;
         }
 
         lua_pop(L, 1);        // pop server table
@@ -359,9 +367,9 @@ void LuaDetectorManager::load_detector(char* detector_filename, bool isCustom)
         return;
     }
 
-    AppIdDetector* detector = create_lua_detector(L, detectorName, isCustom);
-    if (detector)
-        allocated_detectors.push_front(detector);
+    LuaObject* lua_object = create_lua_detector(L, detectorName, isCustom);
+    if (lua_object)
+        allocated_objects.push_front(lua_object);
 }
 
 void LuaDetectorManager::load_lua_detectors(const char* path, bool isCustom)
@@ -397,7 +405,7 @@ void LuaDetectorManager::initialize_lua_detectors()
 
     snprintf(path, sizeof(path), "%s/odp/lua", dir);
     load_lua_detectors(path, false);
-    num_odp_detectors = allocated_detectors.size();
+    num_odp_detectors = allocated_objects.size();
 
     snprintf(path, sizeof(path), "%s/custom/lua", dir);
     load_lua_detectors(path, true);
@@ -406,28 +414,30 @@ void LuaDetectorManager::initialize_lua_detectors()
 void LuaDetectorManager::activate_lua_detectors()
 {
     uint32_t lua_tracker_size = compute_lua_tracker_size(MAX_MEMORY_FOR_LUA_DETECTORS,
-        allocated_detectors.size());
+        allocated_objects.size());
 
-    for ( auto ld : allocated_detectors )
+    for ( auto lo : allocated_objects )
     {
-        LuaStateDescriptor* lsd = ld->validate_lua_state(false);
+        LuaStateDescriptor* lsd = lo->validate_lua_state(false);
         lua_getfield(L, LUA_REGISTRYINDEX, lsd->package_info.name.c_str());
         lua_getfield(L, -1, lsd->package_info.initFunctionName.c_str());
         if (!lua_isfunction(L, -1))
         {
             ErrorMessage("Detector %s: does not contain DetectorInit() function\n",
-                ld->get_name().c_str());
+                lo->get_detector()->get_name().c_str());
             return;
         }
 
+        //FIXIT-M: RELOAD - use lua references to get user data object from stack
         /*first parameter is DetectorUserData */
-        lua_rawgeti(L, LUA_REGISTRYINDEX, lsd->detector_user_data_ref);
+        std::string name = lsd->package_info.name + "_";
+	    lua_getglobal(L, name.c_str());
 
         /*second parameter is a table containing configuration stuff. */
         lua_newtable(L);
         if ( lua_pcall(L, 2, 1, 0) )
             ErrorMessage("Could not initialize the %s client app element: %s\n",
-                ld->get_name().c_str(), lua_tostring(L, -1));
+                lo->get_detector()->get_name().c_str(), lua_tostring(L, -1));
 
         lua_getfield(L, LUA_REGISTRYINDEX, lsd->package_info.name.c_str());
         set_lua_tracker_size(L, lua_tracker_size);
@@ -438,6 +448,6 @@ void LuaDetectorManager::list_lua_detectors()
 {
     LogMessage("AppId Lua-Detector Stats: instance %u, odp detectors %zu, custom detectors %zu,"
         " total memory %d kb\n", get_instance_id(), num_odp_detectors,
-        (allocated_detectors.size() - num_odp_detectors), lua_gc(L, LUA_GCCOUNT, 0));
+        (allocated_objects.size() - num_odp_detectors), lua_gc(L, LUA_GCCOUNT, 0));
 }
 

@@ -125,8 +125,8 @@ struct POP3DetectorData
     int need_continue;
 };
 
-static THREAD_LOCAL Pop3ClientDetector* pop3_client_detector = nullptr;
-static THREAD_LOCAL Pop3ServiceDetector* pop3_service_detector = nullptr;
+static Pop3ClientDetector* pop3_client_detector;
+static Pop3ServiceDetector* pop3_service_detector;
 
 static AppIdFlowContentPattern pop3_client_patterns[] =
 {

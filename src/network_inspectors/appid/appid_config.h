@@ -38,6 +38,7 @@
 #define MAX_ZONES               1024
 
 struct NetworkSet;
+class AppIdInspector;
 class AppInfoManager;
 
 extern unsigned appIdPolicyId;
@@ -106,7 +107,8 @@ public:
     AppIdConfig(AppIdModuleConfig*);
     ~AppIdConfig();
 
-    bool init_appid(snort::SnortConfig*);
+    bool init_appid(snort::SnortConfig*, AppIdInspector*);
+    static void pterm();
     void cleanup();
     void show();
     void set_safe_search_enforcement(bool enabled);
@@ -140,8 +142,9 @@ private:
     void process_config_directive(char* toklist[], int /* reload */);
     int load_analysis_config(const char* config_file, int reload, int instance_id);
     void display_port_config();
-
-    AppInfoManager& app_info_mgr;
+    //FIXIT-M: RELOAD - Remove static, once app_info_mgr cleanup is
+    //removed from AppIdConfig::pterm
+    static AppInfoManager& app_info_mgr;
 };
 
 #endif

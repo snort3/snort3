@@ -101,6 +101,11 @@ BootpServiceDetector::BootpServiceDetector(ServiceDiscovery* sd)
 
 BootpServiceDetector::~BootpServiceDetector()
 {
+    release_thread_resources();
+}
+
+void BootpServiceDetector::release_thread_resources()
+{
     DHCPInfo* info;
 
     while ((info = dhcp_info_free_list))

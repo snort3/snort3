@@ -103,6 +103,8 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
     uint32_t port = 0;
     const uint8_t* data = args.data;
     uint16_t size = args.size;
+    //FIXIT-M - Avoid thread locals
+    static THREAD_LOCAL SnortProtocolId rexec_snort_protocol_id = UNKNOWN_PROTOCOL_ID;
 
     ServiceREXECData* rd = (ServiceREXECData*)data_get(args.asd);
     if (!rd)

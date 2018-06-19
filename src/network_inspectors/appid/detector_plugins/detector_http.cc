@@ -37,7 +37,7 @@ static const char HTTP2_PREFACE[] = "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n";
 #define HTTP2_PREFACE_LEN (sizeof(HTTP2_PREFACE) - 1)
 #define HTTP2_PREFACE_MAXPOS (sizeof(HTTP2_PREFACE)-2)
 
-static THREAD_LOCAL HttpServiceDetector* http_service_detector;
+static HttpServiceDetector* http_service_detector;
 
 HttpClientDetector::HttpClientDetector(ClientDiscovery* cdm)
 {

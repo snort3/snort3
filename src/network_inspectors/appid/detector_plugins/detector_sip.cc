@@ -85,7 +85,7 @@ struct DetectorSipConfig
     DetectorAppSipPattern* sip_server_list;
 };
 
-static THREAD_LOCAL DetectorSipConfig detector_sip_config;
+static DetectorSipConfig detector_sip_config;
 
 static void clean_sip_ua()
 {
@@ -452,8 +452,8 @@ int SipServiceDetector::validate(AppIdDiscoveryArgs& args)
     return APPID_INPROCESS;
 }
 
-THREAD_LOCAL SipUdpClientDetector* SipEventHandler::client = nullptr;
-THREAD_LOCAL SipServiceDetector* SipEventHandler::service = nullptr;
+SipUdpClientDetector* SipEventHandler::client = nullptr;
+SipServiceDetector* SipEventHandler::service = nullptr;
 
 void SipEventHandler::handle(DataEvent& event, Flow* flow)
 {

@@ -32,9 +32,6 @@ public:
     TftpServiceDetector(ServiceDiscovery*);
 
     int validate(AppIdDiscoveryArgs&) override;
-
-private:
-    SnortProtocolId tftp_snort_protocol_id = UNKNOWN_PROTOCOL_ID;
 };
 #endif
 

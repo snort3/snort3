@@ -32,8 +32,8 @@
 
 using namespace snort;
 
-static THREAD_LOCAL PatternServiceDetector* service_pattern_detector;
-static THREAD_LOCAL PatternClientDetector* client_pattern_detector;
+static PatternServiceDetector* service_pattern_detector;
+static PatternClientDetector* client_pattern_detector;
 
 static void dumpPatterns(const char* name, PatternService* pList)
 {

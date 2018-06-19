@@ -99,18 +99,11 @@ int ServiceDiscovery::add_service_port(AppIdDetector*,
     const ServiceDetectorPort&) { return APPID_EINVALID; }
 ServiceDiscovery::ServiceDiscovery(AppIdInspector& ins)
     : AppIdDiscovery(ins) {}
-bool new_manager_test = true;
+
 ServiceDiscovery& ServiceDiscovery::get_instance(AppIdInspector* ins)
 {
-    static THREAD_LOCAL ServiceDiscovery* discovery_manager = nullptr;
-    if (!new_manager_test)
-    {
-        delete discovery_manager;
-        discovery_manager = nullptr;
-    }
-    else if (!discovery_manager)
-        discovery_manager = new ServiceDiscovery(*ins);
-    return *discovery_manager;
+    static ServiceDiscovery discovery_manager(*ins);
+    return discovery_manager;
 }
 
 TEST_GROUP(service_state_tests)
@@ -130,7 +123,6 @@ TEST_GROUP(service_state_tests)
 TEST(service_state_tests, select_detector_by_brute_force)
 {
     ServiceDiscoveryState sds;
-    new_manager_test = true;
     AppIdInspector ins;
     ServiceDiscovery::get_instance(&ins);
 
@@ -146,9 +138,6 @@ TEST(service_state_tests, select_detector_by_brute_force)
     test_log[0] = '\0';
     sds.select_detector_by_brute_force(IpProtocol::IP);
     STRCMP_EQUAL(test_log, "");
-
-    new_manager_test = false;
-    delete &ServiceDiscovery::get_instance();
 }
 
 TEST(service_state_tests, set_service_id_failed)
@@ -157,7 +146,6 @@ TEST(service_state_tests, set_service_id_failed)
     AppIdInspector inspector;
     AppIdSession asd(IpProtocol::PROTO_NOT_SET, nullptr, 0, inspector);
     SfIp client_ip;
-    new_manager_test = true;
     AppIdInspector ins;
     ServiceDiscovery::get_instance(&ins);
 
@@ -169,9 +157,6 @@ TEST(service_state_tests, set_service_id_failed)
     sds.set_service_id_failed(asd, &client_ip, 0);
     sds.set_service_id_failed(asd, &client_ip, 0);
     CHECK_TRUE(sds.get_state() == SERVICE_ID_STATE::SEARCHING_PORT_PATTERN);
-
-    new_manager_test = false;
-    delete &ServiceDiscovery::get_instance();
 }
 
 
@@ -181,7 +166,6 @@ TEST(service_state_tests, set_service_id_failed_with_valid)
     AppIdInspector inspector;
     AppIdSession asd(IpProtocol::PROTO_NOT_SET, nullptr, 0, inspector);
     SfIp client_ip;
-    new_manager_test = true;
     AppIdInspector ins;
     ServiceDiscovery::get_instance(&ins);
 
@@ -195,9 +179,6 @@ TEST(service_state_tests, set_service_id_failed_with_valid)
     sds.set_service_id_failed(asd, &client_ip, 0);
     sds.set_service_id_failed(asd, &client_ip, 0);
     CHECK_TRUE(sds.get_state() == SERVICE_ID_STATE::VALID);
-
-    new_manager_test = false;
-    delete &ServiceDiscovery::get_instance();
 }
 
 int main(int argc, char** argv)

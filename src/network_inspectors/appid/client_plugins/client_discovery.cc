@@ -65,6 +65,11 @@ ClientDiscovery::ClientDiscovery(AppIdInspector& ins)
 
 ClientDiscovery::~ClientDiscovery()
 {
+    release_thread_resources();
+}
+
+void ClientDiscovery::release_thread_resources()
+{
     ClientAppMatch* match;
     while ((match = match_free_list) != nullptr)
     {
@@ -73,9 +78,10 @@ ClientDiscovery::~ClientDiscovery()
     }
 }
 
+//FIXIT-M: Don't use pointer and pass discovery_manager directly
 ClientDiscovery& ClientDiscovery::get_instance(AppIdInspector* ins)
 {
-    static THREAD_LOCAL ClientDiscovery* discovery_manager = nullptr;
+    static ClientDiscovery* discovery_manager = nullptr;
     if (!discovery_manager)
     {
         assert(ins);

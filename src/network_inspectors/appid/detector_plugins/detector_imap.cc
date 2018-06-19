@@ -153,7 +153,7 @@ struct ImapDetectorData
     int need_continue;
 };
 
-static THREAD_LOCAL ImapClientDetector* imap_client_detector = nullptr;
+static ImapClientDetector* imap_client_detector;
 
 static int isImapTagChar(uint8_t tag)
 {

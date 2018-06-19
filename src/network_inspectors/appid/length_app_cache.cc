@@ -34,7 +34,7 @@ using namespace snort;
 
 #define HASH_NUM_ROWS (1024)
 
-static THREAD_LOCAL XHash* lengthCache = nullptr;
+static XHash* lengthCache = nullptr;
 
 void init_length_app_cache()
 {

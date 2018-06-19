@@ -283,6 +283,8 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, Appi
     uint32_t val = 0;
     const uint8_t* end = nullptr;
     const RPCProgram* rprog = nullptr;
+    //FIXIT-M - Avoid thread locals
+    static THREAD_LOCAL SnortProtocolId sunrpc_snort_protocol_id = UNKNOWN_PROTOCOL_ID;
 
     if (!size)
         return APPID_INPROCESS;

@@ -31,8 +31,8 @@ class ServiceDetector : public AppIdDetector
 {
 public:
     ServiceDetector();
-
     void do_custom_init() override { }
+    void release_thread_resources() override { }
     void register_appid(AppId, unsigned extractsInfo) override;
     int service_inprocess(AppIdSession&, const snort::Packet*, AppidSessionDirection dir);
     int add_service(AppIdSession&, const snort::Packet*, AppidSessionDirection dir, AppId, const char* vendor = nullptr,

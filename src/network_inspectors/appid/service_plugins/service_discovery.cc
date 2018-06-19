@@ -86,7 +86,7 @@
 
 using namespace snort;
 
-static THREAD_LOCAL ServiceDetector* ftp_service = nullptr;
+static ServiceDetector* ftp_service;
 
 ProfileStats serviceMatchPerfStats;
 
@@ -96,10 +96,10 @@ ServiceDiscovery::ServiceDiscovery(AppIdInspector& ins)
     initialize();
 }
 
-
+//FIXIT-M: Don't use pointer and pass discovery_manager directly
 ServiceDiscovery& ServiceDiscovery::get_instance(AppIdInspector* ins)
 {
-    static THREAD_LOCAL ServiceDiscovery* discovery_manager = nullptr;
+    static  ServiceDiscovery* discovery_manager = nullptr;
     if (!discovery_manager)
     {
         assert(ins);
@@ -160,10 +160,15 @@ void ServiceDiscovery::initialize()
 #endif
 
     for ( auto kv : tcp_detectors )
+    {
         kv.second->initialize();
-
+        service_detector_list.push_back(kv.second);
+    }
     for ( auto kv : udp_detectors )
+    {
         kv.second->initialize();
+        service_detector_list.push_back(kv.second);	
+    }
 }
 
 void ServiceDiscovery::finalize_service_patterns()
@@ -812,3 +817,8 @@ int ServiceDiscovery::fail_service(AppIdSession& asd, const Packet* pkt, AppidSe
     return APPID_SUCCESS;
 }
 
+void ServiceDiscovery::release_thread_resources()
+{
+    for (auto detectors : service_detector_list)
+	    detectors->release_thread_resources();
+}

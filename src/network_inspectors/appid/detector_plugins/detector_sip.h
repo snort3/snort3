@@ -109,8 +109,8 @@ private:
     void client_handler(SipEvent&, AppIdSession&);
     void service_handler(SipEvent&, AppIdSession&);
 
-    static THREAD_LOCAL SipUdpClientDetector* client;
-    static THREAD_LOCAL SipServiceDetector* service;
+    static SipUdpClientDetector* client;
+    static SipServiceDetector* service;
 };
 #endif
 

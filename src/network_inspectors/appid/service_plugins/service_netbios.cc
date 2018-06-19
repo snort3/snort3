@@ -1020,6 +1020,11 @@ NbdgmServiceDetector::NbdgmServiceDetector(ServiceDiscovery* sd)
 
 NbdgmServiceDetector::~NbdgmServiceDetector()
 {
+    release_thread_resources();
+}
+
+void NbdgmServiceDetector::release_thread_resources()
+{
     FpSMBData* sd;
 
     while ((sd = smb_data_free_list))

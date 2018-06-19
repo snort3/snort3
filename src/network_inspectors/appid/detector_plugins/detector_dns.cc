@@ -161,7 +161,7 @@ struct ServiceDnsConfig
     DetectorDNSHostPattern* DetectorDNSHostPatternList;
     snort::SearchTool* dns_host_host_matcher;
 };
-static THREAD_LOCAL ServiceDnsConfig serviceDnsConfig;      // DNS service configuration
+static ServiceDnsConfig serviceDnsConfig;      // DNS service configuration
 
 static int dns_host_pattern_match(void* id, void*, int, void* data, void*)
 {

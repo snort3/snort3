@@ -28,15 +28,22 @@
 #include <glob.h>
 #include <climits>
 
+#include "app_forecast.h"
 #include "app_info_table.h"
+#include "appid_discovery.h"
 #include "appid_session.h"
 #ifdef USE_RNA_CONFIG
 #include "appid_utils/network_set.h"
 #include "appid_utils/ip_funcs.h"
 #endif
+#include "detector_plugins/detector_pattern.h"
+#include "host_port_app_cache.h"
 #include "main/snort_config.h"
 #include "log/messages.h"
+#include "lua_detector_module.h"
 #include "utils/util.h"
+#include "service_plugins/service_ssl.h"
+#include "detector_plugins/detector_dns.h"
 #include "target_based/snort_protocols.h"
 #ifdef ENABLE_APPID_THIRD_PARTY
 #include "tp_lib_handler.h"
@@ -91,8 +98,12 @@ AppIdModuleConfig::~AppIdModuleConfig()
     snort_free((void*)app_detector_dir);
 }
 
+//FIXIT-M: RELOAD - move initialization back to AppIdConfig
+//class constructor
+AppInfoManager& AppIdConfig::app_info_mgr = AppInfoManager::get_instance();
+
 AppIdConfig::AppIdConfig(AppIdModuleConfig* config)
-    : mod_config(config), app_info_mgr(AppInfoManager::get_instance())
+    : mod_config(config)
 {
 #ifdef USE_RNA_CONFIG
     for ( unsigned i = 0; i < MAX_ZONES; i++ )
@@ -120,6 +131,13 @@ AppIdConfig::AppIdConfig(AppIdModuleConfig* config)
 AppIdConfig::~AppIdConfig()
 {
     cleanup();
+}
+
+//FIXIT-M: RELOAD - Move app info tabe cleanup back 
+//to AppId config destructor - cleanup()
+void AppIdConfig::pterm()
+{
+    AppIdConfig::app_info_mgr.cleanup_appid_info_table();
 }
 
 void AppIdConfig::read_port_detectors(const char* files)
@@ -238,9 +256,9 @@ void AppIdConfig::read_port_detectors(const char* files)
                     udp_port_only[tmp_port->port] = appId;
 
                 snort_free(tmp_port);
-                app_info_mgr.set_app_info_active(appId);
+                AppIdConfig::app_info_mgr.set_app_info_active(appId);
             }
-            app_info_mgr.set_app_info_active(appId);
+            AppIdConfig::app_info_mgr.set_app_info_active(appId);
         }
         else
             ErrorMessage("Missing parameter(s) in port service '%s'\n",globs.gl_pathv[n]);
@@ -732,14 +750,33 @@ void AppIdConfig::set_safe_search_enforcement(bool enabled)
     mod_config->safe_search_enabled = enabled;
 }
 
-bool AppIdConfig::init_appid(SnortConfig* sc)
+bool AppIdConfig::init_appid(SnortConfig* sc, AppIdInspector *ins)
 {
-    app_info_mgr.init_appid_info_table(mod_config, sc);
+    //FIXIT -M: RELOAD - Get rid of "once" flag
+    //Handle the if condition in AppIdConfig::init_appid
+    static bool once = false;
+    if (!once)
+    {      
+        AppIdConfig::app_info_mgr.init_appid_info_table(mod_config, sc);
+        HostPortCache::initialize();
+        init_appid_forecast();
+        HttpPatternMatchers* http_matchers = HttpPatternMatchers::get_instance();
+        AppIdDiscovery::initialize_plugins(ins);
+        init_length_app_cache();
+        LuaDetectorManager::initialize(*this, 1);
+        PatternServiceDetector::finalize_service_port_patterns();
+        PatternClientDetector::finalize_client_port_patterns();
+        AppIdDiscovery::finalize_plugins();
+        http_matchers->finalize();
+	    ssl_detector_process_patterns();
+        dns_host_detector_process_patterns();
+        read_port_detectors(ODP_PORT_DETECTORS);
+        read_port_detectors(CUSTOM_PORT_DETECTORS);
+        once = true;
+    }
 #ifdef USE_RNA_CONFIG
     load_analysis_config(mod_config->conf_file, 0, mod_config->instance_id);
 #endif
-    read_port_detectors(ODP_PORT_DETECTORS);
-    read_port_detectors(CUSTOM_PORT_DETECTORS);
 
 #ifdef ENABLE_APPID_THIRD_PARTY
     TPLibHandler::pinit(mod_config);
@@ -762,8 +799,6 @@ static void free_port_exclusion_list(AppIdPortExclusions& pe_list)
 
 void AppIdConfig::cleanup()
 {
-    app_info_mgr.cleanup_appid_info_table();
-
 #ifdef USE_RNA_CONFIG
     NetworkSet* net_list;          ///< list of network sets
     while ((net_list = net_list_list))

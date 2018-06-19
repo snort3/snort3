@@ -406,6 +406,8 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
     const char* version_str = nullptr;
     const uint8_t* data = args.data;
     uint16_t size = args.size;
+    //FIXIT-M - Avoid thread locals
+    static THREAD_LOCAL SnortProtocolId snmp_snort_protocol_id = UNKNOWN_PROTOCOL_ID;
 
     if (!size)
         goto inprocess;

@@ -89,10 +89,10 @@ void AppIdDiscovery::finalize_plugins()
     ClientDiscovery::get_instance().finalize_client_plugins();
 }
 
-void AppIdDiscovery::release_plugins()
+void AppIdDiscovery::tterm()
 {
-    delete &ServiceDiscovery::get_instance();
-    delete &ClientDiscovery::get_instance();
+    ClientDiscovery::get_instance().release_thread_resources();
+    ServiceDiscovery::get_instance().release_thread_resources();
 }
 
 void AppIdDiscovery::register_detector(const std::string& name, AppIdDetector* cd,  IpProtocol proto)

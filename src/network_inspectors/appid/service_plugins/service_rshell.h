@@ -32,9 +32,6 @@ public:
     RshellServiceDetector(ServiceDiscovery*);
 
     int validate(AppIdDiscoveryArgs&) override;
-
-private:
-    SnortProtocolId rsh_error_snort_protocol_id = UNKNOWN_PROTOCOL_ID;
 };
 #endif
 

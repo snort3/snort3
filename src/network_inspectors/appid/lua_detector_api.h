@@ -31,6 +31,7 @@
 #include "service_plugins/service_detector.h"
 
 #include "main/snort_debug.h"
+
 extern Trace TRACE_NAME(appid_module);
 
 namespace snort
@@ -77,37 +78,67 @@ class LuaStateDescriptor
 public:
     LuaDetectorParameters ldp;
     // FIXIT-M: RELOAD - When reload is supported, update this whenever lua-state is changed
-    int detector_user_data_ref = 0;    // key into LUA_REGISTRYINDEX
+    // move it to the detector classes
+    //int detector_user_data_ref = 0;    // key into LUA_REGISTRYINDEX
     DetectorPackageInfo package_info;
     unsigned int service_id = APP_ID_UNKNOWN;
-
     int lua_validate(AppIdDiscoveryArgs&);
 };
 
 class LuaServiceDetector : public ServiceDetector
 {
 public:
-    LuaServiceDetector(AppIdDiscovery* sdm, const std::string& detector_name, IpProtocol protocol,
-        lua_State* L);
+    LuaServiceDetector(AppIdDiscovery* sdm, const std::string& detector_name, IpProtocol protocol);
     int validate(AppIdDiscoveryArgs&) override;
-    LuaStateDescriptor* validate_lua_state(bool packet_context) override;
-
-    LuaStateDescriptor lsd;
 };
 
 class LuaClientDetector : public ClientDetector
 {
 public:
-    LuaClientDetector(AppIdDiscovery* cdm, const std::string& detector_name, IpProtocol protocol,
-        lua_State* L);
+    LuaClientDetector(AppIdDiscovery* cdm, const std::string& detector_name, IpProtocol protocol);
     int validate(AppIdDiscoveryArgs&) override;
-    LuaStateDescriptor* validate_lua_state(bool packet_context) override;
+
+};
+
+
+//FIXIT-M: RELOAD - Don't use this class, 
+//required now to store LSD objects
+class LuaObject {
+   
+public:
+    LuaObject() = default;
+    virtual ~LuaObject() = default;
+    LuaObject(const LuaObject&) = delete;
+    LuaObject& operator=(const LuaObject&) = delete;
 
     LuaStateDescriptor lsd;
+    virtual AppIdDetector* get_detector() = 0;
+    LuaStateDescriptor* validate_lua_state(bool packet_context);
+};
+
+class LuaServiceObject: public LuaObject
+{ 
+public:
+    ServiceDetector* sd;
+    LuaServiceObject(AppIdDiscovery* cdm, const std::string& detector_name, IpProtocol protocol,
+        lua_State* L);
+    ServiceDetector* get_detector()
+    { return sd; }
+};
+
+class LuaClientObject : public LuaObject
+{ 
+public:
+    ClientDetector* cd;
+    LuaClientObject(AppIdDiscovery* cdm, const std::string& detector_name, IpProtocol protocol,
+        lua_State* L);
+    ClientDetector* get_detector()
+    { return cd; }
 };
 
 int register_detector(lua_State*);
 int init_chp_glossary();
+int init(lua_State*, int result=0);
 void free_chp_glossary();
 
 #endif

@@ -315,7 +315,7 @@ static int match_query_elements(tMlpPattern* packetData, tMlpPattern* userPatter
 
 HttpPatternMatchers* HttpPatternMatchers::get_instance()
 {
-    static THREAD_LOCAL HttpPatternMatchers* http_matchers = nullptr;
+    static HttpPatternMatchers* http_matchers;
     if (!http_matchers)
         http_matchers = new HttpPatternMatchers;
     return http_matchers;

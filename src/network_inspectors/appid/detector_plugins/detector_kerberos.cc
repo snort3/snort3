@@ -111,8 +111,8 @@ struct KerberosDetectorData
 #define TGS_REP_MSG_TYPE    0x0d
 #define ERROR_MSG_TYPE      0x1e
 
-static THREAD_LOCAL KerberosClientDetector* krb_client_detector = nullptr;
-static THREAD_LOCAL KerberosServiceDetector* krb_service_detector = nullptr;
+static KerberosClientDetector* krb_client_detector;
+static KerberosServiceDetector* krb_service_detector;
 
 static int krb_walk_server_packet(KRBState* krbs, const uint8_t* s, const uint8_t* end,
     AppIdSession& asd, snort::Packet* pkt, const AppidSessionDirection dir, const char* reqCname)

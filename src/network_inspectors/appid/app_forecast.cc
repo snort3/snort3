@@ -33,9 +33,9 @@
 
 using namespace snort;
 
-static THREAD_LOCAL AFActKey master_key;
-static THREAD_LOCAL XHash* AF_indicators = nullptr;     // list of "indicator apps"
-static THREAD_LOCAL XHash* AF_actives = nullptr;        // list of hosts to watch
+static AFActKey master_key;
+static XHash* AF_indicators = nullptr;     // list of "indicator apps"
+static XHash* AF_actives = nullptr;        // list of hosts to watch
 
 int init_appid_forecast()
 {

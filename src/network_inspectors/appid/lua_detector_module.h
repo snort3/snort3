@@ -35,6 +35,7 @@
 class AppIdConfig;
 class AppIdDetector;
 struct DetectorFlow;
+class LuaObject;
 
 bool get_lua_field(lua_State* L, int table, const char* field, std::string& out);
 bool get_lua_field(lua_State* L, int table, const char* field, int& out);
@@ -43,9 +44,9 @@ bool get_lua_field(lua_State* L, int table, const char* field, IpProtocol& out);
 class LuaDetectorManager
 {
 public:
-    LuaDetectorManager(AppIdConfig&);
+    LuaDetectorManager(AppIdConfig&, int);
     ~LuaDetectorManager();
-    static void initialize(AppIdConfig&);
+    static void initialize(AppIdConfig&, int is_control=0);
     static void terminate();
     static void add_detector_flow(DetectorFlow*);
     static void free_detector_flows();
@@ -60,7 +61,7 @@ private:
     void load_lua_detectors(const char* path, bool isCustom);
 
     AppIdConfig& config;
-    std::list<AppIdDetector*> allocated_detectors;
+    std::list<LuaObject*> allocated_objects;
     size_t num_odp_detectors = 0;
 };
 
