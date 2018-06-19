@@ -206,6 +206,12 @@ public:
                 cv.get_table_api().close_table();
                 tmpval = eat_option(data_stream);
             }
+            else if ( keyword == "fw_required" )
+            {
+                cv.get_table_api().open_top_level_table("binder");
+                cv.get_table_api().add_deleted_comment("fw_required");
+                cv.get_table_api().close_table();
+            }
             else
                 tmpval = false;
 
