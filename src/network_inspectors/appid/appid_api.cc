@@ -24,17 +24,17 @@
 #endif
 
 #include "appid_api.h"
-#include "app_info_table.h"
-#include "service_plugins/service_bootp.h"
-#include "service_plugins/service_netbios.h"
+
 #include "utils/util.h"
+
+#include "appid_session.h"
+#include "appid_session_api.h"
+#include "app_info_table.h"
 #ifdef ENABLE_APPID_THIRD_PARTY
 #include "tp_appid_session_api.h"
 #endif
 
 using namespace snort;
-
-#define SSL_WHITELIST_PKT_LIMIT 20
 
 namespace snort
 {
@@ -53,10 +53,10 @@ const char* AppIdApi::get_application_name(AppId app_id)
     return AppInfoManager::get_instance().get_app_name(app_id);
 }
 
-const char* AppIdApi::get_application_name(Flow* flow, bool from_client)
+const char* AppIdApi::get_application_name(Flow& flow, bool from_client)
 {
     const char* app_name = nullptr;
-    AppIdSession* asd = get_appid_session(*flow);
+    AppIdSession* asd = get_appid_session(flow);
     if ( asd )
     {
         if ( asd->payload.get_id() )
@@ -87,301 +87,6 @@ AppId AppIdApi::get_application_id(const char* appName)
     return AppInfoManager::get_instance().get_appid_by_name(appName);
 }
 
-AppId AppIdApi::get_service_app_id(Flow& flow)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-        return asd->pick_service_app_id();
-    else
-        return APP_ID_NONE;
-}
-
-AppId AppIdApi::get_port_service_app_id(Flow& flow)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-        return asd->service.get_port_service_id();
-    else
-        return APP_ID_NONE;
-}
-
-AppId AppIdApi::get_only_service_app_id(Flow& flow)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-        return asd->pick_only_service_app_id();
-    else
-        return APP_ID_NONE;
-}
-
-AppId AppIdApi::get_misc_app_id(Flow& flow)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-        return asd->pick_misc_app_id();
-    else
-        return APP_ID_NONE;
-}
-
-AppId AppIdApi::get_client_app_id(Flow& flow)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-        return asd->pick_client_app_id();
-    else
-        return APP_ID_NONE;
-}
-
-AppId AppIdApi::get_payload_app_id(Flow& flow)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-        return asd->pick_payload_app_id();
-    else
-        return APP_ID_NONE;
-}
-
-AppId AppIdApi::get_referred_app_id(Flow& flow)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-        return asd->pick_referred_payload_app_id();
-    else
-        return APP_ID_NONE;
-}
-
-AppId AppIdApi::get_fw_service_app_id(Flow& flow)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-        return asd->pick_fw_service_app_id();
-    else
-        return APP_ID_NONE;
-}
-
-AppId AppIdApi::get_fw_misc_app_id(Flow& flow)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-        return asd->pick_fw_misc_app_id();
-    else
-        return APP_ID_NONE;
-}
-
-AppId AppIdApi::get_fw_client_app_id(Flow& flow)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-        return asd->pick_fw_client_app_id();
-    else
-        return APP_ID_NONE;
-}
-
-AppId AppIdApi::get_fw_payload_app_id(Flow& flow)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-        return asd->pick_fw_payload_app_id();
-    else
-        return APP_ID_NONE;
-}
-
-AppId AppIdApi::get_fw_referred_app_id(Flow& flow)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-        return asd->pick_fw_referred_payload_app_id();
-    else
-        return APP_ID_NONE;
-}
-
-bool AppIdApi::is_ssl_session_decrypted(Flow& flow)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-        return asd->is_ssl_session_decrypted();
-    return false;
-}
-
-bool AppIdApi::is_appid_inspecting_session(Flow& flow)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-    {
-        if ( asd->common.flow_type == APPID_FLOW_TYPE_NORMAL )
-        {
-            if ( asd->service_disco_state != APPID_DISCO_STATE_FINISHED ||
-                 !asd->is_tp_appid_done() ||
-                 asd->get_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_CONTINUE) ||
-                 (asd->get_session_flags(APPID_SESSION_ENCRYPTED) &&
-                  (asd->get_session_flags(APPID_SESSION_DECRYPTED) ||
-                   asd->session_packet_count < SSL_WHITELIST_PKT_LIMIT)) )
-            {
-                return true;
-            }
-
-            if ( asd->client_disco_state != APPID_DISCO_STATE_FINISHED &&
-                (!asd->is_client_detected() ||
-                (asd->service_disco_state != APPID_DISCO_STATE_STATEFUL
-                && asd->get_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS))) )
-            {
-                return true;
-            }
-
-            if ( asd->get_tp_app_id() == APP_ID_SSH && asd->payload.get_id() != APP_ID_SFTP &&
-                asd->session_packet_count < MAX_SFTP_PACKET_COUNT )
-            {
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
-
-const char* AppIdApi::get_user_name(Flow& flow, AppId* service, bool* isLoginSuccessful)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-    {
-        *service = asd->client.get_user_id();
-        *isLoginSuccessful = asd->get_session_flags(APPID_SESSION_LOGIN_SUCCEEDED) ? true : false;
-        return asd->client.get_username();
-    }
-
-    return nullptr;
-}
-
-bool AppIdApi::is_appid_available(Flow& flow)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-    {
-        return ( (asd->service.get_id() != APP_ID_NONE ||
-                  asd->payload.get_id() != APP_ID_NONE) &&
-                 (asd->is_tp_appid_available() ||
-                  asd->get_session_flags(APPID_SESSION_NO_TPI)) );
-    }   
-
-    return false;
-}
-
-const char* AppIdApi::get_client_version(Flow& flow)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-        return asd->client.get_version();
-    else
-        return nullptr;
-}
-
-uint64_t AppIdApi::get_appid_session_attribute(Flow& flow, uint64_t flags)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-        return asd->get_session_flags(flags);
-    return 0;
-}
-
-APPID_FLOW_TYPE AppIdApi::get_flow_type(Flow& flow)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-        return asd->common.flow_type;
-    else
-        return APPID_FLOW_TYPE_IGNORE;
-}
-
-void AppIdApi::get_service_info(Flow& flow, const char** vendor, const char** version,
-    AppIdServiceSubtype** subtype)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-    {
-        *vendor = asd->service.get_vendor();
-        *version = asd->service.get_version();
-        *subtype = asd->subtype;
-    }
-}
-
-short AppIdApi::get_service_port(Flow& flow)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-        return asd->service_port;
-    else
-        return 0;
-}
-
-char* AppIdApi::get_tls_host(Flow& flow)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-        if (asd->tsession)
-            return asd->tsession->tls_host;
-
-    return nullptr;
-}
-
-SfIp* AppIdApi::get_service_ip(Flow& flow)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-        return &asd->service_ip;
-
-    return nullptr;
-}
-
-SfIp* AppIdApi::get_initiator_ip(Flow& flow)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-        return &asd->common.initiator_ip;
-
-    return nullptr;
-}
-
-DHCPData* AppIdApi::get_dhcp_fp_data(Flow& flow)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-    if (asd->get_session_flags(APPID_SESSION_HAS_DHCP_FP))
-        return static_cast<DHCPData*>(
-                        asd->remove_flow_data(APPID_SESSION_DATA_DHCP_FP_DATA));
-
-    return nullptr;
-}
-
-void AppIdApi::free_dhcp_fp_data(Flow& flow, DHCPData* data)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-    {
-        asd->clear_session_flags(APPID_SESSION_HAS_DHCP_FP);
-        BootpServiceDetector::AppIdFreeDhcpData(data);
-    }
-}
-
-DHCPInfo* AppIdApi::get_dhcp_info(Flow& flow)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-        if (asd->get_session_flags(APPID_SESSION_HAS_DHCP_INFO))
-            return static_cast<DHCPInfo*>(
-                        asd->remove_flow_data(APPID_SESSION_DATA_DHCP_INFO));
-
-    return nullptr;
-}
-
-void AppIdApi::free_dhcp_info(Flow& flow, DHCPInfo* data)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-    {
-        asd->clear_session_flags(APPID_SESSION_HAS_DHCP_INFO);
-        BootpServiceDetector::AppIdFreeDhcpInfo(data);
-    }
-}
-
-FpSMBData* AppIdApi::get_smb_fp_data(Flow& flow)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-        if (asd->get_session_flags(APPID_SESSION_HAS_SMB_INFO))
-            return static_cast<FpSMBData*>(
-                        asd->remove_flow_data(APPID_SESSION_DATA_SMB_DATA));
-
-    return nullptr;
-}
-
-void AppIdApi::free_smb_fp_data(Flow& flow, FpSMBData* data)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-    {
-        asd->clear_session_flags(APPID_SESSION_HAS_SMB_INFO);
-        NbdgmServiceDetector::AppIdFreeSMBData(data);
-    }
-}
-
-const char* AppIdApi::get_netbios_name(Flow& flow)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-        return asd->netbios_name;
-    else
-        return nullptr;
-}
-
 #define APPID_HA_FLAGS_APP ( 1 << 0 )
 #define APPID_HA_FLAGS_TP_DONE ( 1 << 1 )
 #define APPID_HA_FLAGS_SVC_DONE ( 1 << 2 )
@@ -392,7 +97,7 @@ uint32_t AppIdApi::produce_ha_state(Flow& flow, uint8_t* buf)
     assert(buf);
     AppIdSessionHA* appHA = (AppIdSessionHA*)buf;
     AppIdSession* asd = get_appid_session(flow);
-    if ( asd && ( get_flow_type(flow) == APPID_FLOW_TYPE_NORMAL ) )
+    if ( asd and ( asd->common.flow_type == APPID_FLOW_TYPE_NORMAL ) )
     {
         appHA->flags = APPID_HA_FLAGS_APP;
         if ( asd->is_tp_appid_available() )
@@ -486,42 +191,17 @@ uint32_t AppIdApi::consume_ha_state(Flow& flow, const uint8_t* buf, uint8_t, IpP
     return sizeof(*appHA);
 }
 
-SEARCH_SUPPORT_TYPE AppIdApi::get_http_search(Flow& flow)
+AppIdSessionApi* AppIdApi::create_appid_session_api(Flow& flow)
 {
-    SEARCH_SUPPORT_TYPE sst = UNKNOWN_SEARCH_ENGINE;
+    AppIdSession* asd = (AppIdSession*)flow.get_flow_data(AppIdSession::inspector_id);
 
-    if ( AppIdSession* asd = get_appid_session(flow) )
-        sst = (asd->search_support_type != UNKNOWN_SEARCH_ENGINE) ?
-                        asd->search_support_type : NOT_A_SEARCH_ENGINE;
+    if (asd and asd->common.flow_type == APPID_FLOW_TYPE_NORMAL)
+        return new AppIdSessionApi(asd);
 
-    return sst;
+    return nullptr;
 }
 
-AppIdDnsSession* AppIdApi::get_dns_session(Flow& flow)
+void AppIdApi::free_appid_session_api(AppIdSessionApi* api)
 {
-    if ( AppIdSession* asd = get_appid_session(flow) )
-        return asd->get_dns_session();
-    else
-        return nullptr;
+    delete api;
 }
-
-AppIdHttpSession* AppIdApi::get_http_session(Flow& flow)
-{
-    if ( AppIdSession* asd = get_appid_session(flow) )
-        return asd->get_http_session();
-    else
-        return nullptr;
-}
-
-bool AppIdApi::is_http_inspection_done(Flow& flow)
-{
-    bool done = true;
-
-    if ( AppIdSession* asd = get_appid_session(flow) )
-        if ( ( asd->common.flow_type == APPID_FLOW_TYPE_NORMAL ) &&
-             !asd->is_tp_appid_done() )
-            done = false;
-
-    return done;
-}
-

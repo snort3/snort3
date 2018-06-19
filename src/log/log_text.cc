@@ -90,7 +90,7 @@ bool LogAppID(TextLog* log, Packet* p)
 {
     if ( p->flow )
     {
-        const char* app_name = appid_api.get_application_name(p->flow, p->is_from_client());
+        const char* app_name = appid_api.get_application_name(*p->flow, p->is_from_client());
 
         if ( app_name )
         {

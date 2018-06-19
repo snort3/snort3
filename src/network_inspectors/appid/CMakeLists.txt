@@ -12,6 +12,7 @@ set (APPID_INCLUDES
     appid_api.h
     appid_dns_session.h
     appid_http_session.h
+    appid_session_api.h
     appid_types.h
     application_ids.h
     http_xff_fields.h
@@ -184,6 +185,8 @@ set ( APPID_SOURCES
     appid_peg_counts.cc
     appid_session.cc
     appid_session.h
+    appid_session_api.cc
+    appid_session_api.h
     appid_types.h
     appid_inspector.cc
     appid_inspector.h

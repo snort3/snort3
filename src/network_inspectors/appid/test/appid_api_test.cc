@@ -45,21 +45,6 @@
 
 using namespace snort;
 
-void BootpServiceDetector::AppIdFreeDhcpData(DHCPData* data)
-{
-    delete data;
-}
-
-void BootpServiceDetector::AppIdFreeDhcpInfo(DHCPInfo* info)
-{
-    delete info;
-}
-
-void NbdgmServiceDetector::AppIdFreeSMBData(FpSMBData* data)
-{
-    delete data;
-}
-
 const char* AppInfoManager::get_app_name(AppId)
 {
     return test_app_name;
@@ -101,332 +86,6 @@ TEST(appid_api, get_application_id)
 {
     AppId id = appid_api.get_application_id(test_app_name);
     CHECK_EQUAL(id, 1492);
-}
-
-TEST(appid_api, get_service_app_id)
-{
-    AppId id = appid_api.get_service_app_id(*flow);
-    CHECK_EQUAL(id, APPID_UT_ID);
-}
-
-TEST(appid_api, get_port_service_app_id)
-{
-    AppId id = appid_api.get_port_service_app_id(*flow);
-    CHECK_EQUAL(id, APPID_UT_ID + 3);
-}
-
-TEST(appid_api, get_only_service_app_id)
-{
-    AppId id = appid_api.get_only_service_app_id(*flow);
-    CHECK_EQUAL(id, APPID_UT_ID);
-}
-
-TEST(appid_api, get_misc_app_id)
-{
-    AppId id = appid_api.get_misc_app_id(*flow);
-    CHECK_EQUAL(id, APPID_UT_ID);
-}
-
-TEST(appid_api, get_client_app_id)
-{
-    AppId id = appid_api.get_client_app_id(*flow);
-    CHECK_EQUAL(id, APPID_UT_ID);
-}
-
-TEST(appid_api, get_payload_app_id)
-{
-    AppId id = appid_api.get_payload_app_id(*flow);
-    CHECK_EQUAL(id, APPID_UT_ID);
-}
-
-TEST(appid_api, get_referred_app_id)
-{
-    AppId id = appid_api.get_referred_app_id(*flow);
-    CHECK_EQUAL(id, APPID_UT_ID);
-}
-
-TEST(appid_api, get_fw_service_app_id)
-{
-    AppId id = appid_api.get_fw_service_app_id(*flow);
-    CHECK_EQUAL(id, APPID_UT_ID);
-}
-
-TEST(appid_api, get_fw_misc_app_id)
-{
-    AppId id = appid_api.get_fw_misc_app_id(*flow);
-    CHECK_EQUAL(id, APPID_UT_ID);
-}
-
-TEST(appid_api, get_fw_client_app_id)
-{
-    AppId id = appid_api.get_fw_client_app_id(*flow);
-    CHECK_EQUAL(id, APPID_UT_ID);
-}
-
-TEST(appid_api, get_fw_payload_app_id)
-{
-    AppId id = appid_api.get_fw_payload_app_id(*flow);
-    CHECK_EQUAL(id, APPID_UT_ID);
-}
-
-TEST(appid_api, get_fw_referred_app_id)
-{
-    AppId id = appid_api.get_fw_referred_app_id(*flow);
-    CHECK_EQUAL(id, APPID_UT_ID);
-}
-
-TEST(appid_api, get_flow_type)
-{
-    APPID_FLOW_TYPE ft = appid_api.get_flow_type(*flow);
-    CHECK_EQUAL(ft, APPID_FLOW_TYPE_NORMAL);
-}
-
-TEST(appid_api, get_service_port)
-{
-    short sp = appid_api.get_service_port(*flow);
-    CHECK_EQUAL(sp, APPID_UT_SERVICE_PORT);
-}
-
-
-TEST(appid_api, get_http_search)
-{
-    SEARCH_SUPPORT_TYPE val = appid_api.get_http_search(*flow);
-    CHECK_TRUE(val == NOT_A_SEARCH_ENGINE);
-    mock_session->search_support_type = SUPPORTED_SEARCH_ENGINE;
-    val = appid_api.get_http_search(*flow);
-    CHECK_TRUE(val == SUPPORTED_SEARCH_ENGINE);
-    mock_session->search_support_type = UNSUPPORTED_SEARCH_ENGINE;
-    val = appid_api.get_http_search(*flow);
-    CHECK_TRUE(val == UNSUPPORTED_SEARCH_ENGINE);
-    mock_session->search_support_type = NOT_A_SEARCH_ENGINE;
-    val = appid_api.get_http_search(*flow);
-    CHECK_TRUE(val == NOT_A_SEARCH_ENGINE);
-}
-
-TEST(appid_api, get_tls_host)
-{
-    const char* val = appid_api.get_tls_host(*flow);
-    STRCMP_EQUAL(val, APPID_UT_TLS_HOST);
-}
-
-TEST(appid_api, get_service_ip)
-{
-    SfIp expected_ip;
-
-    expected_ip.pton(AF_INET, APPID_UT_SERVICE_IP_ADDR);
-
-    SfIp* val = appid_api.get_service_ip(*flow);
-    CHECK_TRUE(val->fast_eq4(expected_ip));
-}
-
-TEST(appid_api, get_initiator_ip)
-{
-    SfIp expected_ip;
-
-    expected_ip.pton(AF_INET, APPID_UT_INITIATOR_IP_ADDR);
-
-    SfIp* val = appid_api.get_initiator_ip(*flow);
-    CHECK_TRUE(val->fast_eq4(expected_ip));
-}
-
-TEST(appid_api, get_netbios_name)
-{
-    const char* val;
-    val = appid_api.get_netbios_name(*flow);
-    STRCMP_EQUAL(val, APPID_UT_NETBIOS_NAME);
-}
-
-TEST(appid_api, is_ssl_session_decrypted)
-{
-    bool val = appid_api.is_ssl_session_decrypted(*flow);
-    CHECK_TRUE(!val);
-    is_session_decrypted = true;
-    val = appid_api.is_ssl_session_decrypted(*flow);
-    CHECK_TRUE(val);
-}
-
-TEST(appid_api, is_appid_inspecting_session)
-{
-    mock_session->service_disco_state = APPID_DISCO_STATE_STATEFUL;
-    bool val = appid_api.is_appid_inspecting_session(*flow);
-    CHECK_TRUE(val);
-    mock_session->service_disco_state = APPID_DISCO_STATE_FINISHED;
-    mock_session->set_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_CONTINUE);
-    val = appid_api.is_appid_inspecting_session(*flow);
-    CHECK_TRUE(val);
-    mock_session->clear_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_CONTINUE);
-    mock_session->set_session_flags(APPID_SESSION_ENCRYPTED);
-    val = appid_api.is_appid_inspecting_session(*flow);
-    CHECK_TRUE(val);
-    mock_session->set_session_flags(APPID_SESSION_DECRYPTED);
-    mock_session->session_packet_count = SSL_WHITELIST_PKT_LIMIT;
-    val = appid_api.is_appid_inspecting_session(*flow);
-    CHECK_TRUE(val);
-
-    // 2nd if in is_appid_inspecting_session
-    mock_session->clear_session_flags(APPID_SESSION_DECRYPTED);
-    mock_session->set_session_flags(APPID_SESSION_CLIENT_DETECTED);
-    val = appid_api.is_appid_inspecting_session(*flow);
-    CHECK_TRUE(!val);
-    mock_session->set_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
-    val = appid_api.is_appid_inspecting_session(*flow);
-    CHECK_TRUE(val);
-    mock_session->client_disco_state = APPID_DISCO_STATE_FINISHED;
-    val = appid_api.is_appid_inspecting_session(*flow);
-    CHECK_TRUE(!val);
-
-    // 3rd if in is_appid_inspecting_session
-    mock_session->session_packet_count = MAX_SFTP_PACKET_COUNT;
-    val = appid_api.is_appid_inspecting_session(*flow);
-    CHECK_TRUE(!val);
-    mock_session->payload.set_id(APP_ID_SFTP);
-    val = appid_api.is_appid_inspecting_session(*flow);
-    CHECK_TRUE(!val);
-    mock_session->session_packet_count = MAX_SFTP_PACKET_COUNT - 1;
-    val = appid_api.is_appid_inspecting_session(*flow);
-    CHECK_TRUE(!val);
-    mock_session->payload.set_id(APP_ID_NONE);
-    mock_session->set_tp_app_id(APP_ID_SSH);
-    val = appid_api.is_appid_inspecting_session(*flow);
-    CHECK_TRUE(val);
-}
-
-TEST(appid_api, get_user_name)
-{
-    AppId service;
-    bool isLoginSuccessful;
-
-    const char* val;
-    val = appid_api.get_user_name(*flow, &service, &isLoginSuccessful);
-    STRCMP_EQUAL(val, APPID_UT_USERNAME);
-    CHECK_TRUE(service == APPID_UT_ID);
-    CHECK_TRUE(!isLoginSuccessful);
-    mock_session->set_session_flags(APPID_SESSION_LOGIN_SUCCEEDED);
-    val = appid_api.get_user_name(*flow, &service, &isLoginSuccessful);
-    CHECK_TRUE(service == APPID_UT_ID);
-    CHECK_TRUE(isLoginSuccessful);
-}
-
-TEST(appid_api, is_appid_available)
-{
-    bool val;
-    val = appid_api.is_appid_available(*flow);
-    CHECK_TRUE(val);
-    mock_session->set_session_flags(APPID_SESSION_NO_TPI);
-    val = appid_api.is_appid_available(*flow);
-    CHECK_TRUE(val);
-}
-
-TEST(appid_api, get_client_version)
-{
-    const char* val;
-    val = appid_api.get_client_version(*flow);
-    STRCMP_EQUAL(val, APPID_UT_CLIENT_VERSION);
-}
-
-TEST(appid_api, get_appid_session_attribute)
-{
-    uint64_t flags = 0x0000000000000001;
-
-    for ( unsigned i = 0; i < 64; i++ )
-    {
-        flags <<= i;
-        mock_session->set_session_flags(flags);
-        uint64_t fv = appid_api.get_appid_session_attribute(*flow, flags);
-        CHECK_TRUE((fv & flags) == flags);
-        mock_session->clear_session_flags(flags);
-        fv = appid_api.get_appid_session_attribute(*flow, flags);
-        CHECK_TRUE((fv & flags) == 0)
-    }
-}
-
-TEST(appid_api, get_service_info)
-{
-    const char* serviceVendor;
-    const char* serviceVersion;
-    AppIdServiceSubtype* serviceSubtype;
-
-    appid_api.get_service_info(*flow, &serviceVendor, &serviceVersion, &serviceSubtype);
-    STRCMP_EQUAL(serviceVendor, APPID_UT_SERVICE_VENDOR);
-    STRCMP_EQUAL(serviceVersion, APPID_UT_SERVICE_VERSION);
-    STRCMP_EQUAL(serviceSubtype->service, APPID_UT_SERVICE);
-    STRCMP_EQUAL(serviceSubtype->vendor, APPID_UT_SERVICE_VENDOR);
-    STRCMP_EQUAL(serviceSubtype->version, APPID_UT_SERVICE_VERSION);
-}
-
-TEST(appid_api, appid_dns_api)
-{
-    AppIdDnsSession* dsession = appid_api.get_dns_session(*flow);
-
-    const char* val = dsession->get_host();
-    STRCMP_EQUAL(val, APPID_ID_UT_DNS_HOST);
-    uint8_t query_len = dsession->get_host_len();
-    CHECK_TRUE(query_len == strlen(APPID_ID_UT_DNS_HOST));
-
-    uint16_t qoff;
-    qoff = dsession->get_host_offset();
-    CHECK_TRUE(qoff == APPID_UT_DNS_HOST_OFFSET);
-
-    uint16_t rt;
-    rt = dsession->get_record_type();
-    CHECK_TRUE(rt == APPID_UT_DNS_PATTERN_CNAME_REC);
-
-    uint8_t rc;
-    rc = dsession->get_response_type();
-    CHECK_TRUE(rc == APPID_UT_DNS_NOERROR);
-
-    uint32_t ttl;
-    ttl = dsession->get_ttl();
-    CHECK_TRUE(ttl == APPID_UT_DNS_TTL);
-}
-
-TEST(appid_api, dhcp_fp_data)
-{
-    DHCPData* val;
-    val = appid_api.get_dhcp_fp_data(*flow);
-    CHECK_TRUE(!val);
-    val = new DHCPData;
-    mock_session->add_flow_data(val, APPID_SESSION_DATA_DHCP_FP_DATA, nullptr);
-    val = appid_api.get_dhcp_fp_data(*flow);
-    CHECK_TRUE(val);
-    appid_api.free_dhcp_fp_data(*flow, val);
-    val = appid_api.get_dhcp_fp_data(*flow);
-    CHECK_TRUE(!val);
-}
-
-TEST(appid_api, dhcp_info)
-{
-    DHCPInfo* val;
-    val = appid_api.get_dhcp_info(*flow);
-    CHECK_TRUE(!val);
-    val = new DHCPInfo;
-    mock_session->add_flow_data(val, APPID_SESSION_DATA_DHCP_INFO, nullptr);
-    val = appid_api.get_dhcp_info(*flow);
-    CHECK_TRUE(val);
-    appid_api.free_dhcp_info(*flow, val);
-    val = appid_api.get_dhcp_info(*flow);
-    CHECK_TRUE(!val);
-}
-
-TEST(appid_api, smb_fp_data)
-{
-    FpSMBData* val;
-    val = appid_api.get_smb_fp_data(*flow);
-    CHECK_TRUE(!val);
-    val = new FpSMBData;
-    mock_session->add_flow_data(val, APPID_SESSION_DATA_SMB_DATA, nullptr);
-    val = appid_api.get_smb_fp_data(*flow);
-    CHECK_TRUE(val);
-    appid_api.free_smb_fp_data(*flow, val);
-    val = appid_api.get_smb_fp_data(*flow);
-    CHECK_TRUE(!val);
-}
-
-TEST(appid_api, is_http_inspection_done)
-{
-    bool val;
-    val = appid_api.is_http_inspection_done(*flow);
-    CHECK_TRUE(val);
 }
 
 // FIXIT - enable this test when consume ha appid api call is fixed
@@ -490,6 +149,28 @@ TEST(appid_api, produce_ha_state)
     delete session;
 }
 #endif
+
+TEST(appid_api, create_appid_session_api)
+{
+    AppIdSessionApi* appid_session_api = appid_api.create_appid_session_api(*flow);
+    CHECK_TRUE(appid_session_api);
+    appid_api.free_appid_session_api(appid_session_api);
+
+    Flow* old_flow = flow;
+    flow = new Flow;
+    flow->set_flow_data(nullptr);
+    appid_session_api = appid_api.create_appid_session_api(*flow);
+    CHECK_FALSE(appid_session_api);
+
+    AppIdSession ignore_asd(IpProtocol::TCP, nullptr, 1492, appid_inspector);
+    ignore_asd.common.flow_type = APPID_FLOW_TYPE_IGNORE;
+    flow->set_flow_data(&ignore_asd);
+    appid_session_api = appid_api.create_appid_session_api(*flow);
+    CHECK_FALSE(appid_session_api);
+
+    delete flow;
+    flow = old_flow;
+}
 
 int main(int argc, char** argv)
 {

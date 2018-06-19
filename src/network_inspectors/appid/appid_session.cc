@@ -663,7 +663,7 @@ void AppIdSession::stop_rna_service_inspection(Packet* p, AppidSessionDirection 
 
     service_disco_state = APPID_DISCO_STATE_FINISHED;
 
-    if ( (is_tp_appid_available() || get_session_flags(APPID_SESSION_NO_TPI) )
+    if ( (is_tp_appid_available() or get_session_flags(APPID_SESSION_NO_TPI) )
         and payload.get_id() == APP_ID_NONE )
         payload.set_id(APP_ID_UNKNOWN);
 
@@ -773,7 +773,7 @@ AppId AppIdSession::pick_referred_payload_app_id()
 
 AppId AppIdSession::pick_fw_service_app_id()
 {
-    AppId appId = pick_service_app_id();
+    AppId appId = application_ids[APP_PROTOID_SERVICE];
     if (appId == APP_ID_NONE || appId== APP_ID_UNKNOWN_UI)
         appId = encrypted.service_id;
     return appId;
@@ -781,7 +781,7 @@ AppId AppIdSession::pick_fw_service_app_id()
 
 AppId AppIdSession::pick_fw_misc_app_id()
 {
-    AppId appId = pick_misc_app_id();
+    AppId appId = application_ids[APP_PROTOID_MISC];
     if (appId == APP_ID_NONE)
         appId = encrypted.misc_id;
     return appId;
@@ -789,13 +789,12 @@ AppId AppIdSession::pick_fw_misc_app_id()
 
 AppId AppIdSession::pick_fw_client_app_id()
 {
-    AppId appId = pick_client_app_id();
-    return appId;
+    return application_ids[APP_PROTOID_CLIENT];
 }
 
 AppId AppIdSession::pick_fw_payload_app_id()
 {
-    AppId appId = pick_payload_app_id();
+    AppId appId = application_ids[APP_PROTOID_PAYLOAD];
     if (appId == APP_ID_NONE)
         appId = encrypted.payload_id;
     return appId;

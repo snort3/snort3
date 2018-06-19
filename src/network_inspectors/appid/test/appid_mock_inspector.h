@@ -18,6 +18,9 @@
 
 // appid_mock_inspector.h author davis mcpherson <davmcphe@cisco.com>
 
+#ifndef APPID_MOCK_INSPECTOR_H
+#define APPID_MOCK_INSPECTOR_H
+
 typedef uint64_t Trace;
 class Value;
 
@@ -69,3 +72,5 @@ public:
 
 AppIdModule appid_mod;
 AppIdInspector appid_inspector( appid_mod );
+
+#endif

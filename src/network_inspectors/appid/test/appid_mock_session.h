@@ -24,6 +24,7 @@
 #include "appid_dns_session.h"
 #include "appid_mock_flow.h"
 #include "appid_mock_http_session.h"
+#include "appid_mock_inspector.h"
 
 bool is_session_decrypted = false;
 

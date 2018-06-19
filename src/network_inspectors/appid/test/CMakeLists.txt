@@ -6,6 +6,10 @@ add_cpputest( appid_api_test
     SOURCES $<TARGET_OBJECTS:appid_cpputest_deps>
 )
 
+add_cpputest( appid_session_api_test
+    SOURCES $<TARGET_OBJECTS:appid_cpputest_deps>
+)
+
 add_cpputest( appid_detector_test
     SOURCES $<TARGET_OBJECTS:appid_cpputest_deps>
 )

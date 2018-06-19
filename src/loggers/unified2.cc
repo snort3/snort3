@@ -216,7 +216,7 @@ static void alert_event(Packet* p, const char*, Unified2Config* config, const Ev
         u2_event.pkt_ip_proto = (uint8_t)p->get_ip_proto_next();
 
         const char* app_name = p->flow ?
-            appid_api.get_application_name(p->flow, p->is_from_client()) : nullptr;
+            appid_api.get_application_name(*p->flow, p->is_from_client()) : nullptr;
 
         if ( app_name )
             memcpy_s(u2_event.app_name, sizeof(u2_event.app_name),
@@ -671,7 +671,7 @@ static void _AlertIP4_v2(Packet* p, const char*, Unified2Config* config, const E
         alertdata.pad2 = htons((uint16_t)p->user_ips_policy_id);
 
         const char* app_name = p->flow ?
-            appid_api.get_application_name(p->flow, p->is_from_client()) : nullptr;
+            appid_api.get_application_name(*p->flow, p->is_from_client()) : nullptr;
 
         if ( app_name )
             memcpy_s(alertdata.app_name, sizeof(alertdata.app_name),
@@ -757,7 +757,7 @@ static void _AlertIP6_v2(Packet* p, const char*, Unified2Config* config, const E
         alertdata.pad2 = htons((uint16_t)p->user_ips_policy_id);
 
         const char* app_name = p->flow ?
-            appid_api.get_application_name(p->flow, p->is_from_client()) : nullptr;
+            appid_api.get_application_name(*p->flow, p->is_from_client()) : nullptr;
 
         if ( app_name )
             memcpy_s(alertdata.app_name, sizeof(alertdata.app_name),

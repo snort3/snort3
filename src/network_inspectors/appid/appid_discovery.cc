@@ -733,10 +733,18 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession** p_asd, AppIdInsp
 
     if (asd->get_session_flags(APPID_SESSION_IGNORE_FLOW))
     {
+        if (!asd->get_session_flags(APPID_SESSION_IGNORE_FLOW_IDED))
+        {
+            asd->set_application_ids(asd->pick_service_app_id(), asd->pick_client_app_id(),
+                asd->pick_payload_app_id(), asd->pick_misc_app_id());
+            asd->set_session_flags(APPID_SESSION_IGNORE_FLOW_IDED);
+        }
+
         if (appidDebug->is_active() &&
             !asd->get_session_flags(APPID_SESSION_IGNORE_FLOW_LOGGED))
         {
             asd->set_session_flags(APPID_SESSION_IGNORE_FLOW_LOGGED);
+
             LogMessage("AppIdDbg %s Ignoring connection with service %d\n",
                 appidDebug->get_debug_session(), asd->service.get_id());
         }
