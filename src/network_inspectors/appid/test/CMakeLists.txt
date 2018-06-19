@@ -30,6 +30,10 @@ add_cpputest( service_state_test
     SOURCES $<TARGET_OBJECTS:appid_cpputest_deps>
 )
 
+add_cpputest( appid_http_session_test
+    SOURCES $<TARGET_OBJECTS:appid_cpputest_deps>
+)
+
 if ( ENABLE_APPID_THIRD_PARTY )
   add_library(tp_mock MODULE tp_mock.cc)
 
