@@ -1,0 +1,121 @@
+The Application Identification inspector (AppId) is a network inspector that inspects the packets
+of a flow to discover the application (client, service, payload) that is running over
+the network connection. Example applications include:
+
+    - service: HTTP
+    - client: Chrome
+    - payload: Facebook
+
+AppId inspects packets from the client and server endpoints to identify the applications on each
+end of the connection.
+
+The AppIdModule and AppIdInspector classes subclass the framework Module and Inspector classes to 
+provide the logic to plug this inspector into the snort framework.  AppIdModule represents the
+configuration for AppId and AppIdInspector provides the packet processing context.  An AppId
+inspector is instantiated for each packet thread created by the framework.
+
+AppId registers to recieve any IP packet, it does not process rebuilt packets.
+
+AppIdModule contains all the logic to process the AppId inspector Lua configuration which is identified 
+by the 'appid' keyword.  This configuration includes settings for logging, statistics, etc. and also
+the directory path or filename for three additional configuration items:
+
+    - directory for the application id mapping table and Lua detectors
+    - path to legacy 'RNA' configuration (appid uses a small part of this to configure monitored networks)
+    - path to third party application identification configuration
+
+The configuration syntax for these items has not been converted to use Lua so currently custom 
+parsing code is used to process these files.  Converting these to use Lua is on the AppId roadmap.
+
+The application id mapping table is a key component of AppId and must be configured in order for detection
+to work for rules with the 'appids' option.  The value of the 'appids' rule option is a list of the names of
+the applications required for a match to that rule (the match logic is any of the named applications).
+AppId uses numbers to identify applications and the mapping table defines the association of each number
+to the application name.
+
+The set of Lua detectors that AppId loads are located in the odp/lua subdirectory of the directory that
+contains the mapping configuration file.
+
+The legacy 'RNA' configuration is processed by the AppIdConfig class.  This is currently not supported so
+no additional details provided here at this time.  This section should be updated once this feature is
+supported.
+
+<TBD: Provide description for third party configuration>
+
+AppId maintains three categories of statistics counters:
+
+1. Statistics on general events such as packets processed that are known at build time.  These statistics
+are defined as part of AppIdModule and use the PegCounts framework and reporting mechanism of the
+ModuleManager.  See appid_module.[h|cc] for implementation of these counts.
+
+2. Statistics on detector discovery events.  These are counts for each application that is defined in the
+application id mapping table and thus discoverable by AppId.  This is not known until configuration is
+processed at runtime so the data structures for the counts are built dynamically during AppId initialization.
+These counts also use the PegCounts type and a custom 'print' method is provided to dump the counts when
+required.  See appid_peg_counts.[h|cc] for implementation of these counts.
+
+3. AppId periodic 'bucket' statistics.  These statistics count the amount of data processed by AppId and are
+periodically dumped to file for post processing.  These statistics are legacy and are a candidate for
+review to determine if they should be refactored to use the enhanced snort3 statistics capabilities.  See
+appid_stats.[h|cc] for implementation of these counts.
+
+Supporting the 'appids' option on detection rules is one of the primary features of AppId and this 
+support is implemented in the AppIdIpsOption class.  This is a subclass of the IpsOption with an IpsApi
+defined to plug into the detection framework.  The AppIdIpsOption eval method is called for all rules that
+have the 'appids' option to determine if any of the applications discovered on a flow match the rule.
+The application id mapping table is required to map the numerical ids maintained by AppId to the 
+corresponding name that is used in IPS rules.  Since this table is loaded after the framework has
+initialized all the rule options AppIdIpsOption must generate its lookup table on the first call to check
+for a match.  This is not ideal but until the rule option framework supports a 'post-config' callback to
+handle situations like this AppId will need this workaround.
+
+The application discovery state for a flow is maintained in the AppIdSession object that AppId instantiates
+for each flow.  This is typically done of the first packet of the flow, however for expected flows this
+object may have already been allocated.  AppIdSession is a subclass of FlowData and currently is a kitchen 
+sink of data and methods to support discovery and report results to interested parties. Many of the member
+variables are public to support access from legacy code.  Refactoring this class to improve organization
+and encapsulation would be a worthy undertaking.
+
+The application discovery process for a flow is managed in the AppIdDiscovery class or the client or 
+service discovery classes derived from this class.  An instance of the client and service discovery classes
+is created during initialization and these classes in turn instantiate each of builtin detectors for its
+category (client or service).  Detectors register with discovery the ports and patterns they are interested
+in and when a flow matches the port or the packet payload matches a pattern registered then the detector is
+added to the list of candidates to do more detailed inspection of the payload for the current packet.
+Once the list of candidates is created each detector is dispatched in turn to examine the packet.
+
+External detectors coded in Lua are also loading during the initialization process and these detectors use
+AppId's Lua API to register themselves and the ports and patterns to match for selecting them as candidates
+to inspect a flow.
+
+<NOTE: add details for how third-party discovery fits into this process>
+
+Application 'detectors' are the workhorses of the AppId inspector.  Detectors inspect packets for either 
+the server side or the client side (there are a few exceptions where a client detector may look at packets in
+both directions in some scenarios).  Common behavior for both detector types is implemented in the 
+AppIdDetector base class.  ClientDetector and ServiceDetector subclass AppIdDetector to implement behavior
+that is common to all detectors with each catergory.  Finally each application specific detector is a 
+subclass of either the client or service detector class.
+
+When a detector is instantiated it registers the ports for which it should be dispatched when packets 
+arrive on that port and it also registers the set of patterns to match against the content of the packet
+payloads.  The application ids the detector supports and flags indicating additional meta-data the detector
+may discover are also registered.  When a detector is selected based on a port or pattern match the 
+discovery framework will call the 'validate' function of the detector to initiate detailed inspection of
+the payload.  The detector will determine one of the following:
+
+1. The flow is not a match for its applications.  In this case the detector is removed from the list of
+candidates and discovery moves on to the next detector.
+
+2. The flow may match but more packets must be inspected to make a final decision.  In this case the 
+detector remains a candidate and discovery moves on to the next detector.
+
+3. The flow is a match.  In this case the AppIdSession is updated with the detected application id and
+any meta-data that has been extracted.  If more meta-data is expected the detector will continue to be
+dispatched on subsequent packets until that process completes.  Otherwise the detection process is
+finished.  In either case the list of any other candidate detectors is purged.
+
+<NOTE: add description for Lua based detectors>
+
+
+
