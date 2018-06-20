@@ -25,10 +25,7 @@
 
 #include "framework/inspector.h"
 
-#ifdef PIGLET
-#include "framework/inspector.h"
-#endif
-
+class Binder;
 struct FrameworkPolicy;
 struct InspectionPolicy;
 
@@ -64,7 +61,7 @@ public:
     static InspectorType get_type(const char* key);
     SO_PUBLIC static Inspector* get_inspector(const char* key, bool dflt_only = false);
 
-    SO_PUBLIC static Inspector* get_binder();
+    SO_PUBLIC static Binder* get_binder();
 
     SO_PUBLIC static Inspector* acquire(const char* key, bool dflt_only = false);
     SO_PUBLIC static void release(Inspector*);

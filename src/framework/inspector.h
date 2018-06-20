@@ -91,7 +91,6 @@ public:
     virtual void clear(Packet*) { }
 
     virtual void meta(int, const uint8_t*) { }
-    virtual int exec(int, void*) { return 0; }
 
     // framework support
     unsigned get_ref(unsigned i) { return ref_count[i]; }
@@ -172,7 +171,6 @@ public:
 enum InspectorType
 {
     IT_PASSIVE,  // config only, or data consumer (eg file_log, binder, ftp_client)
-    IT_BINDER,   // maps config to traffic
     IT_WIZARD,   // guesses service inspector
     IT_PACKET,   // processes raw packets only (eg normalize, capture)
     IT_STREAM,   // flow tracking and reassembly (eg ip, tcp, udp)

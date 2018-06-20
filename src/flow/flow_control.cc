@@ -416,13 +416,11 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
     else
     {
         init_roles(p, flow);
-        Inspector* b = InspectorManager::get_binder();
+        DataBus::publish(FLOW_STATE_SETUP_EVENT, p);
 
-        if ( b )
-            b->eval(p);
-
-        if ( !b || (flow->flow_state == Flow::FlowState::INSPECT &&
-            (!flow->ssn_client || !flow->session->setup(p))) )
+        if ( flow->flow_state == Flow::FlowState::SETUP ||
+            (flow->flow_state == Flow::FlowState::INSPECT &&
+             (!flow->ssn_client || !flow->session->setup(p))) )
             flow->set_state(Flow::FlowState::ALLOW);
 
         ++news;

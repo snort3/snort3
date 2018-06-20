@@ -21,8 +21,6 @@
 #include "config.h"
 #endif
 
-#include "binder.h"
-
 #include "flow/flow.h"
 #include "flow/flow_key.h"
 #include "framework/data_bus.h"
@@ -577,11 +575,14 @@ public:
 
     bool configure(SnortConfig*) override;
 
-    void eval(Packet*) override;
-    int exec(int, void*) override;
+    void eval(Packet*) override { }
 
     void add(Binding* b)
     { bindings.push_back(b); }
+
+    void handle_flow_setup(Packet*);
+    void handle_flow_service_change(Flow*);
+    void handle_new_standby_flow(Flow*);
 
 private:
     void apply(const Stuff&, Flow*);
@@ -590,24 +591,48 @@ private:
     void get_bindings(Flow*, Stuff&, Packet* = nullptr); // may be null when dealing with HA flows
     void apply(Flow*, Stuff&);
     Inspector* find_gadget(Flow*);
-    int exec_handle_gadget(void*);
-    int exec_eval_standby_flow(void*);
 
 private:
     vector<Binding*> bindings;
+};
+
+class FlowStateSetupHandler : public DataHandler
+{
+public:
+    FlowStateSetupHandler() = default;
+
+    void handle(DataEvent& event, Flow* flow) override
+    {
+        Binder* binder = InspectorManager::get_binder();
+        if (binder && flow)
+            binder->handle_flow_setup(const_cast<Packet*>(event.get_packet()));
+    }
 };
 
 // When a flow's service changes, re-evaluate service to inspector mapping.
 class FlowServiceChangeHandler : public DataHandler
 {
 public:
-    FlowServiceChangeHandler() { }
+    FlowServiceChangeHandler() = default;
 
     void handle(DataEvent&, Flow* flow) override
     {
-        Binder* binder = (Binder*)InspectorManager::get_binder();
-        if(binder and flow)
-            binder->exec(BinderSpace::ExecOperation::HANDLE_GADGET, flow);
+        Binder* binder = InspectorManager::get_binder();
+        if (binder && flow)
+            binder->handle_flow_service_change(flow);
+    }
+};
+
+class StreamHANewFlowHandler : public DataHandler
+{
+public:
+    StreamHANewFlowHandler() = default;
+
+    void handle(DataEvent&, Flow* flow) override
+    {
+        Binder* binder = InspectorManager::get_binder();
+        if (binder && flow)
+            binder->handle_new_standby_flow(flow);
     }
 };
 
@@ -644,7 +669,9 @@ bool Binder::configure(SnortConfig* sc)
             set_binding(sc, pb);
     }
 
-    DataBus::subscribe(FLOW_SERVICE_CHANGE_EVENT, new FlowServiceChangeHandler);
+    DataBus::subscribe(FLOW_STATE_SETUP_EVENT, new FlowStateSetupHandler());
+    DataBus::subscribe(FLOW_SERVICE_CHANGE_EVENT, new FlowServiceChangeHandler());
+    DataBus::subscribe(STREAM_HA_NEW_FLOW_EVENT, new StreamHANewFlowHandler());
 
     return true;
 }
@@ -669,7 +696,7 @@ void Binder::remove_inspector_binding(SnortConfig*, const char* name)
     }
 }
 
-void Binder::eval(Packet* p)
+void Binder::handle_flow_setup(Packet* p)
 {
     Profile profile(bindPerfStats);
     Stuff stuff;
@@ -682,11 +709,12 @@ void Binder::eval(Packet* p)
     ++bstats.packets;
 }
 
-int Binder::exec_handle_gadget( void* pv )
+void Binder::handle_flow_service_change( Flow* flow )
 {
-    assert(pv);
+    Profile profile(bindPerfStats);
 
-    Flow* flow = (Flow*)pv;
+    assert(flow);
+
     Inspector* ins = find_gadget(flow);
 
     if ( ins )
@@ -700,7 +728,7 @@ int Binder::exec_handle_gadget( void* pv )
         flow->ssn_state.snort_protocol_id = SnortConfig::get_conf()->proto_ref->find(flow->service);
 
     if ( !flow->is_stream() )
-        return 0;
+        return;
 
     if ( ins )
     {
@@ -712,36 +740,17 @@ int Binder::exec_handle_gadget( void* pv )
         Stream::set_splitter(flow, true, new AtomSplitter(true));
         Stream::set_splitter(flow, false, new AtomSplitter(false));
     }
-
-    return 0;
 }
 
-// similar to eval(), but working on a Flow in HA Standby mode
-int Binder::exec_eval_standby_flow( void* pv )
+void Binder::handle_new_standby_flow( Flow* flow )
 {
-    Flow* flow = (Flow*)pv;
+    Profile profile(bindPerfStats);
 
     Stuff stuff;
     get_bindings(flow, stuff);
     apply(flow, stuff);
 
     ++bstats.verdicts[stuff.action];
-    return 0;
-}
-
-int Binder::exec(int operation, void* pv)
-{
-    Profile profile(bindPerfStats);
-
-    switch( operation )
-    {
-        case BinderSpace::ExecOperation::HANDLE_GADGET:
-            return exec_handle_gadget( pv );
-        case BinderSpace::ExecOperation::EVAL_STANDBY_FLOW:
-            return exec_eval_standby_flow( pv );
-        default:
-            return (-1);
-    }
 }
 
 //-------------------------------------------------------------------------
@@ -825,7 +834,7 @@ void Binder::get_bindings(Flow* flow, Stuff& stuff, Packet* p)
         }
     }
 
-    Binder* sub = (Binder*)InspectorManager::get_binder();
+    Binder* sub = InspectorManager::get_binder();
 
     // If policy selection produced a new binder to use, use that instead.
     if ( sub && sub != this )
@@ -909,7 +918,7 @@ static const InspectApi bind_api =
         mod_ctor,
         mod_dtor
     },
-    IT_BINDER,
+    IT_PASSIVE,
     PROTO_BIT__ANY_TYPE,
     nullptr, // buffers
     nullptr, // service

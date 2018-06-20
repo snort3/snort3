@@ -27,7 +27,6 @@
 #include <vector>
 
 #include "binder/bind_module.h"
-#include "binder/binder.h"
 #include "detection/detect.h"
 #include "detection/detection_engine.h"
 #include "flow/flow.h"
@@ -248,6 +247,9 @@ void FrameworkPolicy::vectorize()
         {
         case IT_PASSIVE :
             passive.add(p);
+            // FIXIT-L Ugly special case for noticing a binder
+            if ( !strcmp(p->pp_class.api.base.name, bind_id) )
+                binder = p->handler;
             break;
 
         case IT_PACKET:
@@ -265,10 +267,6 @@ void FrameworkPolicy::vectorize()
 
         case IT_SERVICE:
             service.add(p);
-            break;
-
-        case IT_BINDER:
-            binder = p->handler;
             break;
 
         case IT_WIZARD:
@@ -415,7 +413,7 @@ static PHInstance* get_instance(
         FrameworkPolicy* fp, const char* keyword, bool dflt_only = false)
 {
     std::vector<PHInstance*>::iterator it;
-    return get_instance(fp, keyword, dflt_only, it)? *it : nullptr;
+    return get_instance(fp, keyword, dflt_only, it) ? *it : nullptr;
 }
 
 static PHInstance* get_new(
@@ -502,14 +500,14 @@ void InspectorManager::dispatch_meta(FrameworkPolicy* fp, int type, const uint8_
         p->handler->meta(type, data);
 }
 
-Inspector* InspectorManager::get_binder()
+Binder* InspectorManager::get_binder()
 {
     InspectionPolicy* pi = snort::get_inspection_policy();
 
     if ( !pi || !pi->framework_policy )
         return nullptr;
 
-    return pi->framework_policy->binder;
+    return (Binder*) pi->framework_policy->binder;
 }
 
 // FIXIT-P cache get_inspector() returns or provide indexed lookup
@@ -555,7 +553,7 @@ bool InspectorManager::delete_inspector(SnortConfig* sc, const char* iname)
         fp->ilist.erase(old_it);
         ok = true;
         std::vector<PHInstance*>::iterator bind_it;
-        if ( get_instance(fp, "binder", false, bind_it) )
+        if ( get_instance(fp, bind_id, false, bind_it) )
         {
             (*bind_it)->handler->remove_inspector_binding(sc, iname);
         }
@@ -740,7 +738,7 @@ Inspector* InspectorManager::instantiate(
 #endif
 
 // create default binding for wizard and configured services
-static void instantiate_binder(SnortConfig* sc, FrameworkPolicy* fp)
+static void instantiate_default_binder(SnortConfig* sc, FrameworkPolicy* fp)
 {
     BinderModule* m = (BinderModule*)ModuleManager::get_module(bind_id);
     bool tcp = false, udp = false, pdu = false;
@@ -798,7 +796,7 @@ static bool configure(SnortConfig* sc, FrameworkPolicy* fp, bool cloned)
     if ( new_ins or reenabled_ins )
     {
         std::vector<PHInstance*>::iterator old_binder;
-        if ( get_instance(fp, "binder", false, old_binder) )
+        if ( get_instance(fp, bind_id, false, old_binder) )
         {
             if ( new_ins and fp->default_binder )
             {
@@ -823,7 +821,7 @@ static bool configure(SnortConfig* sc, FrameworkPolicy* fp, bool cloned)
     // can't bind wizard but this exposes other issues that must
     // be fixed first.
     if ( fp->session.num and !fp->binder /*and fp->wizard*/ )
-        instantiate_binder(sc, fp);
+        instantiate_default_binder(sc, fp);
 
     return ok;
 }
@@ -918,10 +916,8 @@ static inline void execute(
 void InspectorManager::bumble(Packet* p)
 {
     Flow* flow = p->flow;
-    Inspector* ins = get_binder();
 
-    if ( ins )
-        ins->exec(BinderSpace::ExecOperation::HANDLE_GADGET, flow);
+    DataBus::publish(FLOW_SERVICE_CHANGE_EVENT, p);
 
     flow->clear_clouseau();
 

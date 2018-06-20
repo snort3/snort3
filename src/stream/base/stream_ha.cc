@@ -25,7 +25,6 @@
 
 #include <unordered_map>
 
-#include "binder/binder.h"
 #include "flow/flow_key.h"
 #include "managers/inspector_manager.h"
 #include "stream/stream.h"
@@ -107,9 +106,10 @@ bool StreamHAClient::consume(Flow*& flow, FlowKey* key, HAMessage* msg)
         // A nullptr indicates that the protocol has no handler
         if ( (flow = protocol_create_session(key)) == nullptr )
             return false;
-        Inspector* b = InspectorManager::get_binder();
-        if ( b != nullptr )
-            b->exec(BinderSpace::ExecOperation::EVAL_STANDBY_FLOW,(void*)flow);
+
+        BareDataEvent event;
+        DataBus::publish(STREAM_HA_NEW_FLOW_EVENT, event, flow);
+
         flow->ha_state->clear(FlowHAState::NEW);
         int family = (hac->flags & SessionHAContent::FLAG_IP6) ? AF_INET6 : AF_INET;
         if ( hac->flags & SessionHAContent::FLAG_LOW )
