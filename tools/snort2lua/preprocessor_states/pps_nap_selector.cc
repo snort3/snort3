@@ -19,6 +19,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <unordered_map>
 #include <vector>
 
 #include "conversion_state.h"
@@ -48,7 +49,7 @@ public:
         }
 
         unsigned rule_id;
-        if ( data_stream >> rule_id ) // is this a or config
+        if ( data_stream >> rule_id ) // is this a comment or config
         {
             std::string action;
             std::string src_zone, src_net, src_netmask, src_port;
@@ -104,7 +105,8 @@ public:
                 return false;
             }
 
-            auto& bind = cv.make_pending_binder(policy_id);
+            auto seen = rule_map.find(rule_id);
+            auto& bind = seen == rule_map.end() ? cv.make_pending_binder(policy_id) : *seen->second;
 
             bind.set_priority(order++);
 
@@ -131,6 +133,8 @@ public:
 
             if ( protocol != "any" )
                 bind.set_when_proto(protocol);
+
+            rule_map[rule_id] = &bind;
         }
         else
         {
@@ -152,6 +156,7 @@ public:
 
 private:
     unsigned order = 0;
+    std::unordered_map<unsigned, Binder*> rule_map;
 };
 
 class NapSelectorState : public ConversionState
