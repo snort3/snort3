@@ -945,13 +945,6 @@ void InspectorManager::full_inspection(Packet* p)
     }
 }
 
-void InspectorManager::execute_control(Packet* p)
-{
-    SnortConfig* sc = SnortConfig::get_conf();
-    FrameworkPolicy* fp = snort::get_default_inspection_policy(sc)->framework_policy;
-    ::execute(p, fp->control.vec, fp->control.num);
-}
-
 // FIXIT-M leverage knowledge of flow creation so that reputation (possibly a
 // new it_xxx) is run just once per flow (and all non-flow packets).
 
@@ -979,14 +972,19 @@ void InspectorManager::execute(Packet* p)
     if ( p->disable_inspect )
        return;
 
+    SnortConfig* sc = SnortConfig::get_conf();
+    FrameworkPolicy* fp_dft = snort::get_default_inspection_policy(sc)->framework_policy;
+
     if ( !p->flow )
     {
+        if (fp_dft != fp)
+            ::execute(p, fp_dft->network.vec, fp_dft->network.num);
         ::execute(p, fp->network.vec, fp->network.num);
 
         if ( p->disable_inspect )
            return;
 
-        execute_control(p);
+        ::execute(p, fp_dft->control.vec, fp_dft->control.num);
     }
     else
     {
@@ -994,7 +992,11 @@ void InspectorManager::execute(Packet* p)
             p->flow->session->process(p);
 
         if ( !p->flow->service )
+        {
+            if (fp_dft != fp)
+                ::execute(p, fp_dft->network.vec, fp_dft->network.num);
             ::execute(p, fp->network.vec, fp->network.num);
+        }
 
         if ( p->disable_inspect )
            return;
@@ -1003,7 +1005,7 @@ void InspectorManager::execute(Packet* p)
             full_inspection(p);
 
         if ( !p->disable_inspect and !p->flow->is_inspection_disabled() )
-            execute_control(p);
+            ::execute(p, fp_dft->control.vec, fp_dft->control.num);
     }
 }
 
