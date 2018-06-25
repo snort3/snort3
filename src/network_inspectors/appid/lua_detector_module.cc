@@ -248,9 +248,9 @@ static inline void set_lua_tracker_size(lua_State* L, uint32_t numTrackers)
         if (lua_isfunction(L, -1))
         {
             lua_pushinteger (L, numTrackers);
-            if (lua_pcall(L, 1, 0, 0) != 0)
-                ErrorMessage("Error activating lua detector. Setting tracker size to %u failed.\n",
-                    numTrackers);
+            if (lua_pcall(L, 1, 0, 0) != 0 and init(L))
+                ErrorMessage("Error - appid: activating lua detector. "
+                    "Setting tracker size to %u failed.\n", numTrackers);
         }
     }
 
@@ -264,8 +264,8 @@ static inline void set_lua_tracker_size(lua_State* L, uint32_t numTrackers)
         if (lua_isfunction(L, -1))
         {
             lua_pushinteger (L, numTrackers);
-            if (lua_pcall(L, 1, 0, 0) != 0)
-                ErrorMessage("error setting tracker size");
+            if (lua_pcall(L, 1, 0, 0) != 0 and init(L))
+                ErrorMessage("Error - appid: setting tracker size\n");
         }
     }
 
@@ -284,7 +284,7 @@ static inline uint32_t compute_lua_tracker_size(uint64_t rnaMemory, uint32_t num
            numTrackers;
 }
 
-// Leaves 1 value (the Detector userdata) at the top of the stack
+// Leaves 1 value (the Detector userdata) at the top of the stack when succeeds
 static LuaObject* create_lua_detector(lua_State* L, const char* detectorName, bool is_custom)
 {
     std::string detector_name;
@@ -292,16 +292,35 @@ static LuaObject* create_lua_detector(lua_State* L, const char* detectorName, bo
 
     Lua::ManageStack mgr(L);
     lua_getfield(L, LUA_REGISTRYINDEX, detectorName);
+
     lua_getfield(L, -1, "DetectorPackageInfo");
-    get_lua_field(L, -1, "name", detector_name);
-    if ( !get_lua_field(L, -1, "proto", proto) )
+    if (!lua_istable(L, -1))
     {
-        ErrorMessage("DetectorPackageInfo field 'proto' is not a number\n");
+        if (init(L)) // for control thread only
+            ErrorMessage("Error - appid: can not read DetectorPackageInfo table from %s\n",
+                detectorName);
+        if (!lua_isnil(L, -1)) // pop DetectorPackageInfo index if it was pushed
+            lua_pop(L, 1);
         return nullptr;
     }
 
-    if ( lua_isnil(L, -1) )
+    if (!get_lua_field(L, -1, "name", detector_name))
+    {
+        if (init(L))
+            ErrorMessage("Error - appid: can not read DetectorPackageInfo field 'name' from %s\n",
+                detectorName);
+        lua_pop(L, 1);
         return nullptr;
+    }
+
+    if (!get_lua_field(L, -1, "proto", proto))
+    {
+        if (init(L))
+            ErrorMessage("Error - appid: can not read DetectorPackageInfo field 'proto' from %s\n",
+                detectorName);
+        lua_pop(L, 1);
+        return nullptr;
+    }
 
     lua_getfield(L, -1, "client");
     if ( lua_istable(L, -1) )
@@ -323,6 +342,9 @@ static LuaObject* create_lua_detector(lua_State* L, const char* detectorName, bo
             lso->sd->set_custom_detector(is_custom);
             return lso;
         }
+        else if (init(L))
+            ErrorMessage("Error - appid: can not read DetectorPackageInfo field"
+                " 'client' or 'server' from %s\n", detectorName);
 
         lua_pop(L, 1);        // pop server table
     }
@@ -336,8 +358,8 @@ void LuaDetectorManager::load_detector(char* detector_filename, bool isCustom)
 {
     if (luaL_loadfile(L, detector_filename))
     {
-        ErrorMessage("Error - appid: can not load Lua detector %s : %s\n",
-            detector_filename, lua_tostring(L, -1));
+        if (init(L))
+            ErrorMessage("Error - appid: can not load Lua detector, %s\n", lua_tostring(L, -1));
         return;
     }
 
@@ -415,17 +437,23 @@ void LuaDetectorManager::activate_lua_detectors()
 {
     uint32_t lua_tracker_size = compute_lua_tracker_size(MAX_MEMORY_FOR_LUA_DETECTORS,
         allocated_objects.size());
+    std::list<LuaObject*>::iterator lo = allocated_objects.begin();
 
-    for ( auto lo : allocated_objects )
+    while (lo != allocated_objects.end())
     {
-        LuaStateDescriptor* lsd = lo->validate_lua_state(false);
+        LuaStateDescriptor* lsd = (*lo)->validate_lua_state(false);
         lua_getfield(L, LUA_REGISTRYINDEX, lsd->package_info.name.c_str());
         lua_getfield(L, -1, lsd->package_info.initFunctionName.c_str());
         if (!lua_isfunction(L, -1))
         {
-            ErrorMessage("Detector %s: does not contain DetectorInit() function\n",
-                lo->get_detector()->get_name().c_str());
-            return;
+            if (init(L))
+                ErrorMessage("Error - appid: can not load DetectorInit function from %s\n",
+                    (*lo)->get_detector()->get_name().c_str());
+            if (!(*lo)->get_detector()->is_custom_detector())
+                num_odp_detectors--;
+            delete *lo;
+            lo = allocated_objects.erase(lo);
+            continue;
         }
 
         //FIXIT-M: RELOAD - use lua references to get user data object from stack
@@ -435,12 +463,20 @@ void LuaDetectorManager::activate_lua_detectors()
 
         /*second parameter is a table containing configuration stuff. */
         lua_newtable(L);
-        if ( lua_pcall(L, 2, 1, 0) )
-            ErrorMessage("Could not initialize the %s client app element: %s\n",
-                lo->get_detector()->get_name().c_str(), lua_tostring(L, -1));
+        if (lua_pcall(L, 2, 1, 0))
+        {
+            if (init(L))
+                ErrorMessage("Error - appid: can not run DetectorInit, %s\n", lua_tostring(L, -1));
+            if (!(*lo)->get_detector()->is_custom_detector())
+                num_odp_detectors--;
+            delete *lo;
+            lo = allocated_objects.erase(lo);
+            continue;
+        }
 
         lua_getfield(L, LUA_REGISTRYINDEX, lsd->package_info.name.c_str());
         set_lua_tracker_size(L, lua_tracker_size);
+        ++lo;
     }
 }
 
