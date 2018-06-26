@@ -691,6 +691,8 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
 
                     if (asd.get_session_flags(APPID_SESSION_HTTP_SESSION))
                         tp_app_id = APP_ID_HTTP;
+                    else if ( asd.get_session_flags(APPID_SESSION_SSL_SESSION) )
+                        tp_app_id = APP_ID_SSL;
                     else
                         tp_app_id = APP_ID_NONE;
                 }
@@ -719,7 +721,6 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                 || asd.payload.get_id() > APP_ID_NONE) )
             {
                 AppId snort_app_id;
-                AppIdHttpSession* hsession = asd.get_http_session();
 
                 // if the packet is HTTP, then search for via pattern
                 if ( asd.get_session_flags(APPID_SESSION_HTTP_SESSION) )
@@ -729,26 +730,23 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                     if (tp_app_id != APP_ID_HTTP)
                         asd.set_tp_payload_app_id(tp_app_id);
 
-                    // FIXIT-H commented out this part because it will never get executed
-                    // need to make this function par with snort2x code, need to implement
-                    // setTPAppIdData() and CheckDetectorCallback()
-                    // functions mainly. Set APP_ID_HTTP to asd's tp_session_id var from below
-                    tp_app_id = APP_ID_HTTP;
+                    asd.set_tp_app_id(APP_ID_HTTP);
 
                     // Handle HTTP tunneling and SSL possibly then being used in that tunnel
-                    /* if (tp_app_id == APP_ID_HTTP_TUNNEL)
+                    if (tp_app_id == APP_ID_HTTP_TUNNEL)
                          asd.set_payload_appid_data(APP_ID_HTTP_TUNNEL, NULL);
-                     else if ((asd.payload.get_id() == APP_ID_HTTP_TUNNEL) && (tp_app_id ==
-                         APP_ID_SSL))
-                         asd.set_payload_appid_data(APP_ID_HTTP_SSL_TUNNEL, NULL);*/
+                    else if ((asd.payload.get_id() == APP_ID_HTTP_TUNNEL) &&
+                        (tp_app_id == APP_ID_SSL))
+                        asd.set_payload_appid_data(APP_ID_HTTP_SSL_TUNNEL, NULL);
 
+                    AppIdHttpSession* hsession = asd.get_http_session();
                     hsession->process_http_packet(direction);
 
                     // If SSL over HTTP tunnel, make sure Snort knows that it's encrypted.
                     if (asd.payload.get_id() == APP_ID_HTTP_SSL_TUNNEL)
                         snort_app_id = APP_ID_SSL;
 
-                    if (asd.is_tp_appid_available() && tp_app_id ==
+                    if (asd.is_tp_appid_available() && asd.get_tp_app_id() ==
                         APP_ID_HTTP
                         && !asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
                     {
@@ -808,7 +806,6 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
             }
             else
             {
-                asd.set_tp_app_id(tp_app_id);
                 if (protocol != IpProtocol::TCP ||
                     (p->packet_flags & (PKT_STREAM_ORDER_OK | PKT_STREAM_ORDER_BAD)))
                 {
@@ -836,4 +833,3 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
 
     return isTpAppidDiscoveryDone;
 }
-
