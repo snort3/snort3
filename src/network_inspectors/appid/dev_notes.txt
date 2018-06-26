@@ -115,7 +115,30 @@ any meta-data that has been extracted.  If more meta-data is expected the detect
 dispatched on subsequent packets until that process completes.  Otherwise the detection process is
 finished.  In either case the list of any other candidate detectors is purged.
 
-<NOTE: add description for Lua based detectors>
+As mentioned before, Lua detectors are client and service detectors written in Lua.
+LuaClientDetector and LuaServiceDetector subclass ClientDetector and ServiceDetector respectively to
+represent client and service Lua detectors.
 
+AppId's Lua API relies on Lua States to interact with Lua detectors. Every thread has an independent state
+and the detectors need to be initialized once per thread/state, whereas the C detectors, are only initialized
+once in the control thread. To mimic this behavior, session information is stored in a LuaStateDescriptor 
+object and is associated with every detector in a thread/state. The Lua detectors are initialized once in the 
+control thread and are shared by all the threads/states.
 
+During initialization and discovery there are multiple callbacks between C and Lua functions. To keep track 
+of the session and detector another layer of abstraction is added. The LuaObject class encapsulates a Lua
+detector and a LuaStateDescriptor object, it is stored in the Lua State and is accessed by C functions
+during Lua callbacks. LuaServiceObject and LuaClientObject subclass LuaObject to represent stateful (session)
+LuaServiceDetectors and LuaClientDetectors.
 
+When a Lua detector is initialized, a unique environment/table is created in the global registry of the
+Lua State and a LuaObject object is created in C. And when a detector is activated, a call is made to
+it's initialization function in Lua code and the corresponding LuaObject object is stored in it's local stack.
+Callbacks to C functions to register ports and patterns are processed only in the control thread and 
+ignored in the packet processing threads. 
+
+During discovery, if a Lua detector is selected based on a port or pattern and "validate" is called, 
+the table corresponding to that detector is pulled from the Lua State and a call is made to the 
+corresponding "validate" function in Lua code. The "validate" function in Lua can in turn make callbacks 
+to C functions and shares its local stack with the C function. These funtions make sure that the call 
+is made only during discovery before executing.
