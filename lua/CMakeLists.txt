@@ -1,7 +1,9 @@
 
 set (LUA_SCRIPTS
     file_magic.lua
+    inline.lua
     snort_defaults.lua
+    talos.lua
 )
 
 configure_file(snort.lua.in

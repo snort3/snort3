@@ -339,6 +339,7 @@ public:
 
     PolicyMap* policy_map = nullptr;
     VarNode* var_list = nullptr;
+    std::string tweaks;
 
     uint8_t tunnel_mask = 0;
 
@@ -411,6 +412,7 @@ public:
     void set_tunnel_verdicts(const char*);
     void set_treat_drop_as_alert(bool);
     void set_treat_drop_as_ignore(bool);
+    void set_tweaks(const char*);
     void set_uid(const char*);
     void set_umask(const char*);
     void set_utc(bool);

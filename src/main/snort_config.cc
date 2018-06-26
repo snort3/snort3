@@ -943,6 +943,14 @@ void SnortConfig::set_plugin_path(const char* path)
         plugin_path.clear();
 }
 
+void SnortConfig::set_tweaks(const char* t)
+{
+    if (t)
+        tweaks = t;
+    else
+        tweaks.clear();
+}
+
 void SnortConfig::add_script_path(const char* path)
 {
     if (path)

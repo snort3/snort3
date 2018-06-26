@@ -72,12 +72,18 @@ static int get_line_number(lua_State* L)
 
 #endif
 
-static void load_config(lua_State* L, const char* file)
+static void load_config(lua_State* L, const char* file, const char* tweaks)
 {
     Lua::ManageStack ms(L);
 
     if ( luaL_loadfile(L, file) )
         FatalError("can't load %s: %s\n", file, lua_tostring(L, -1));
+
+    if ( tweaks and *tweaks )
+    {
+        lua_pushstring(L, tweaks);
+        lua_setglobal(L, "tweaks");
+    }
 
     if ( lua_pcall(L, 0, 0, 0) )
         FatalError("can't init %s: %s\n", file, lua_tostring(L, -1));
@@ -117,10 +123,10 @@ static void run_config(lua_State* L, const char* t)
 }
 
 static void config_lua(
-    lua_State* L, const char* file, string& s)
+    lua_State* L, const char* file, string& s, const char* tweaks)
 {
     if ( file && *file )
-        load_config(L, file);
+        load_config(L, file, tweaks);
 
     if ( !s.empty() )
         load_overrides(L, s);
@@ -201,7 +207,7 @@ void Shell::configure(SnortConfig* sc)
     }
 
     const char* base_name = push_relative_path(file.c_str());
-    config_lua(lua, base_name, overrides);
+    config_lua(lua, base_name, overrides, sc->tweaks.c_str());
 
     set_default_policy(sc);
     ModuleManager::set_config(nullptr);

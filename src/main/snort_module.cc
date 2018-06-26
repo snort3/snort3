@@ -454,11 +454,17 @@ static const Parameter s_params[] =
     { "--stdin-rules", Parameter::PT_IMPLIED, nullptr, nullptr,
       "read rules from stdin until EOF or a line starting with END is read", },
 
+    { "--talos", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "enable Talos inline rule test mode (same as --tweaks talos -Q -q)", },
+
     { "--treat-drop-as-alert", Parameter::PT_IMPLIED, nullptr, nullptr,
       "converts drop, sdrop, and reject rules into alert rules during startup" },
 
     { "--treat-drop-as-ignore", Parameter::PT_IMPLIED, nullptr, nullptr,
       "use drop, sdrop, and reject rules to ignore session traffic when not inline" },
+
+    { "--tweaks", Parameter::PT_STRING, nullptr, nullptr,
+        "tune configuration" },
 
 #ifdef UNIT_TEST
     { "--catch-test", Parameter::PT_STRING, nullptr, nullptr,
@@ -901,11 +907,20 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("--stdin-rules") )
         sc->stdin_rules = true;
 
+    else if ( v.is("--talos") )
+    {
+        sc->set_tweaks("talos");
+        sc->run_flags |= RUN_FLAG__INLINE;
+        sc->set_quiet(true);
+    }
     else if ( v.is("--treat-drop-as-alert") )
         sc->set_treat_drop_as_alert(true);
 
     else if ( v.is("--treat-drop-as-ignore") )
         sc->set_treat_drop_as_ignore(true);
+
+    else if ( v.is("--tweaks") )
+        sc->set_tweaks(v.get_string());
 
 #ifdef UNIT_TEST
     else if ( v.is("--catch-test") )

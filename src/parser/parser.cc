@@ -415,6 +415,8 @@ SnortConfig* ParseSnortConf(const SnortConfig* boot_conf, const char* fname)
     SnortConfig* sc = new SnortConfig(SnortConfig::get_conf()->proto_ref);
 
     sc->logging_flags = boot_conf->logging_flags;
+    sc->tweaks = boot_conf->tweaks;
+
     VarNode* tmp = boot_conf->var_list;
 
     if ( !fname )

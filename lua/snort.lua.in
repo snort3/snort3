@@ -14,6 +14,7 @@
 -- 6. configure detection
 -- 7. configure filters
 -- 8. configure outputs
+-- 9. configure tweaks
 
 ---------------------------------------------------------------------------
 -- 1. configure environment
@@ -272,4 +273,12 @@ rate_filter =
 -- additional logs
 --packet_capture = { }
 --file_log = { }
+
+---------------------------------------------------------------------------
+-- 9. configure tweaks
+---------------------------------------------------------------------------
+
+if ( tweaks ~= nil ) then
+    dofile(conf_dir .. tweaks .. '.lua')
+end
 
