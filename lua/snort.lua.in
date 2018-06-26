@@ -28,6 +28,11 @@
 -- export LUA_PATH=$DIR/include/snort/lua/?.lua\;\;
 -- export SNORT_LUA_PATH=$DIR/etc/snort
 
+lua_path = os.getenv('LUA_PATH')
+if ( not lua_path ) then
+    package.path = '${CMAKE_INSTALL_FULL_INCLUDEDIR}/${INSTALL_SUFFIX}/lua/?.lua;?;'
+end
+
 -- this depends on LUA_PATH
 -- used to load this conf into Snort
 require('snort_config')
@@ -37,7 +42,7 @@ require('snort_config')
 conf_dir = os.getenv('SNORT_LUA_PATH')
 
 if ( not conf_dir ) then
-    conf_dir = '.'
+    conf_dir = '${CMAKE_INSTALL_FULL_SYSCONFDIR}/snort'
 end
 
 ---------------------------------------------------------------------------
