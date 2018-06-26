@@ -95,7 +95,7 @@ void Sid::convert_sid(std::string& sid, std::istringstream& data_stream, RuleApi
         rule_api.bad_rule(data_stream, "sid - invalid input, expecting int type");
         return;
     }
-    const int sid_offset = 34;
+    const int sid_offset = 100;
     sid.assign(std::to_string(sid_num + sid_offset));
 }
 

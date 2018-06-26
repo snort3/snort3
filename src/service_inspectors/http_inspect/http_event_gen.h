@@ -62,9 +62,12 @@ public:
     uint64_t get_raw() const { return
         (events_generated & std::bitset<MAX>(0xFFFFFFFFFFFFFFFF)).to_ulong(); }
     uint64_t get_raw2() const { return
-        ((events_generated >> 64) & std::bitset<MAX>(0xFFFFFFFFFFFFFFFF)).to_ulong(); }
-
+        ((events_generated >> BASE_1XX_EVENTS) & std::bitset<MAX>(0xFFFFFFFFFFFFFFFF)).to_ulong(); }
+    uint64_t get_raw3() const { return
+        ((events_generated >> BASE_2XX_EVENTS) & std::bitset<MAX>(0xFFFFFFFFFFFFFFFF)).to_ulong(); }
 private:
+    static const unsigned BASE_1XX_EVENTS = 100;
+    static const unsigned BASE_2XX_EVENTS = 200;
     static const int MAX = HttpEnums::EVENT__MAX_VALUE;
     std::bitset<MAX> events_generated = 0;
 };
