@@ -282,7 +282,7 @@ static int match_query_elements(tMlpPattern* packetData, tMlpPattern* userPatter
 
     appVersion[0] = '\0';
 
-    if (!userPattern->pattern || !packetData->pattern)
+    if (!userPattern || !userPattern->pattern || !packetData || !packetData->pattern)
         return 0;
 
     // queryEnd is 1 past the end.  key1=value1&key2=value2
@@ -1405,6 +1405,10 @@ void HttpPatternMatchers::identify_user_agent(const char* start, int size, AppId
             default:
                 if (match->client_id)
                 {
+                    dominant_pattern_detected = 1;
+                    service_id = APP_ID_HTTP;
+                    client_id = match->client_id;
+
                     if (match->pattern_size <= longest_misc_match)
                         break;
                     longest_misc_match = match->pattern_size;
@@ -1430,9 +1434,6 @@ void HttpPatternMatchers::identify_user_agent(const char* start, int size, AppId
                         }
                         temp_ver[i] = 0;
                     }
-                    dominant_pattern_detected = 1;
-                    service_id = APP_ID_HTTP;
-                    client_id = match->client_id;
                 }
             }
         }
