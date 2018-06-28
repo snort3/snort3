@@ -69,6 +69,7 @@ class ServiceDiscovery : public AppIdDiscovery
 {
 public:
     static ServiceDiscovery& get_instance(AppIdInspector* ins = nullptr);
+    static void release_instance();
 
     void finalize_service_patterns();
     int add_service_port(AppIdDetector*, const ServiceDetectorPort&) override;
@@ -89,6 +90,7 @@ private:
     void get_next_service(const snort::Packet*, const AppidSessionDirection dir, AppIdSession&);
     void get_port_based_services(IpProtocol, uint16_t port, AppIdSession&);
     void match_by_pattern(AppIdSession&, const snort::Packet*, IpProtocol);
+    static ServiceDiscovery* discovery_manager;
     std::vector<AppIdDetector*> service_detector_list;
     std::unordered_map<uint16_t, std::vector<ServiceDetector*> > tcp_services;
     std::unordered_map<uint16_t, std::vector<ServiceDetector*> > udp_services;

@@ -54,6 +54,7 @@ using namespace snort;
 
 #define MAX_CANDIDATE_CLIENTS 10
 
+ClientDiscovery* ClientDiscovery::discovery_manager = nullptr;
 ProfileStats clientMatchPerfStats;
 THREAD_LOCAL ClientAppMatch* match_free_list = nullptr;
 
@@ -78,10 +79,8 @@ void ClientDiscovery::release_thread_resources()
     }
 }
 
-//FIXIT-M: Don't use pointer and pass discovery_manager directly
 ClientDiscovery& ClientDiscovery::get_instance(AppIdInspector* ins)
 {
-    static ClientDiscovery* discovery_manager = nullptr;
     if (!discovery_manager)
     {
         assert(ins);
@@ -91,6 +90,13 @@ ClientDiscovery& ClientDiscovery::get_instance(AppIdInspector* ins)
     return *discovery_manager;
 }
 
+void ClientDiscovery::release_instance()
+{
+    assert(discovery_manager);
+    delete discovery_manager;
+    discovery_manager = nullptr;
+
+}
 void ClientDiscovery::initialize()
 {
     new AimClientDetector(this);

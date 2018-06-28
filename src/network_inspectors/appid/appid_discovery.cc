@@ -89,6 +89,12 @@ void AppIdDiscovery::finalize_plugins()
     ClientDiscovery::get_instance().finalize_client_plugins();
 }
 
+void AppIdDiscovery::release_plugins()
+{
+    ServiceDiscovery::release_instance();
+    ClientDiscovery::release_instance();
+}
+
 void AppIdDiscovery::tterm()
 {
     ClientDiscovery::get_instance().release_thread_resources();

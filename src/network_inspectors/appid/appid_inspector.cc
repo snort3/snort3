@@ -223,6 +223,7 @@ static void appid_inspector_pterm()
     clean_appid_forecast();
     free_length_app_cache();
     LuaDetectorManager::terminate();
+    AppIdDiscovery::release_plugins();
     delete HttpPatternMatchers::get_instance();
     service_dns_host_clean();
     service_ssl_clean();

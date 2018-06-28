@@ -46,6 +46,7 @@ class ClientDiscovery : public AppIdDiscovery
 public:
     ~ClientDiscovery() override;
     static ClientDiscovery& get_instance(AppIdInspector* ins = nullptr);
+    static void release_instance();
 
     void finalize_client_plugins();
     void release_thread_resources();
@@ -58,6 +59,7 @@ private:
     ClientAppMatch* find_detector_candidates(const snort::Packet* pkt, IpProtocol);
     void create_detector_candidates_list(AppIdSession&, snort::Packet*);
     int get_detector_candidates_list(AppIdSession&, snort::Packet*, AppidSessionDirection direction);
+    static ClientDiscovery* discovery_manager;
 };
 
 #endif

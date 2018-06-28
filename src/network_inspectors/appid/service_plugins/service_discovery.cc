@@ -86,9 +86,9 @@
 
 using namespace snort;
 
-static ServiceDetector* ftp_service;
-
 ProfileStats serviceMatchPerfStats;
+static ServiceDetector* ftp_service;
+ServiceDiscovery* ServiceDiscovery::discovery_manager = nullptr;
 
 ServiceDiscovery::ServiceDiscovery(AppIdInspector& ins)
     : AppIdDiscovery(ins)
@@ -96,10 +96,8 @@ ServiceDiscovery::ServiceDiscovery(AppIdInspector& ins)
     initialize();
 }
 
-//FIXIT-M: Don't use pointer and pass discovery_manager directly
 ServiceDiscovery& ServiceDiscovery::get_instance(AppIdInspector* ins)
 {
-    static  ServiceDiscovery* discovery_manager = nullptr;
     if (!discovery_manager)
     {
         assert(ins);
@@ -107,6 +105,13 @@ ServiceDiscovery& ServiceDiscovery::get_instance(AppIdInspector* ins)
     }
 
     return *discovery_manager;
+}
+
+void ServiceDiscovery::release_instance()
+{
+    assert(discovery_manager);
+    delete discovery_manager;
+    discovery_manager = nullptr;
 }
 
 void ServiceDiscovery::initialize()
