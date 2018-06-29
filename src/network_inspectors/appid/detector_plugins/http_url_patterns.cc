@@ -1705,15 +1705,15 @@ bool HttpPatternMatchers::get_appid_from_url(char* host, const char* url, char**
             patterns[1].pattern = (const uint8_t*)referer_path;
             patterns[1].patternSize = referer_path_len;
             patterns[2].pattern = nullptr;
-            HostUrlDetectorPattern* data = (HostUrlDetectorPattern*)mlmpMatchPatternUrl(matcher,
+            HostUrlDetectorPattern* url_pattern_data = (HostUrlDetectorPattern*)mlmpMatchPatternUrl(matcher,
                 patterns);
-            if ( data != nullptr )
+            if ( url_pattern_data != nullptr )
             {
                 if ( payload_found )
                     *referredPayloadAppId = *payloadAppId;
                 else
                     payload_found = true;
-                *payloadAppId = data->payload_id;
+                *payloadAppId = url_pattern_data->payload_id;
             }
         }
     }

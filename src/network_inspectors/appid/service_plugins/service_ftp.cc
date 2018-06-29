@@ -808,18 +808,18 @@ void FtpServiceDetector::create_expected_session(AppIdSession& asd, const Packet
 
     if (fp) // initialize data session
     {
-        uint64_t flags = asd.get_session_flags(APPID_SESSION_ENCRYPTED | APPID_SESSION_DECRYPTED);
-        if (flags == APPID_SESSION_ENCRYPTED)
+        uint64_t encrypted_flags = asd.get_session_flags(APPID_SESSION_ENCRYPTED | APPID_SESSION_DECRYPTED);
+        if (encrypted_flags == APPID_SESSION_ENCRYPTED)
         {
             fp->service.set_id(APP_ID_FTPSDATA);
         }
         else
         {
-            flags = 0; // reset (APPID_SESSION_ENCRYPTED | APPID_SESSION_DECRYPTED) bits
+            encrypted_flags = 0; // reset (APPID_SESSION_ENCRYPTED | APPID_SESSION_DECRYPTED) bits
             fp->service.set_id(APP_ID_FTP_DATA);
         }
 
-        initialize_expected_session(asd, *fp, APPID_SESSION_IGNORE_ID_FLAGS | flags, dir);
+        initialize_expected_session(asd, *fp, APPID_SESSION_IGNORE_ID_FLAGS | encrypted_flags, dir);
     }
 }
 

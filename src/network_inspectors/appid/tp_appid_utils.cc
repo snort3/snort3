@@ -45,6 +45,7 @@
 #include "stream/stream.h"
 #ifdef ENABLE_APPID_THIRD_PARTY
 #include "tp_lib_handler.h"
+#include "tp_appid_utils.h"
 #endif
 
 using namespace std;
@@ -54,8 +55,6 @@ typedef AppIdHttpSession::pair_t pair_t;
 
 THREAD_LOCAL ProfileStats tpLibPerfStats;
 THREAD_LOCAL ProfileStats tpPerfStats;
-
-bool do_tp_discovery(AppIdSession&, IpProtocol, Packet*, AppidSessionDirection&);
 
 // std::vector does not have a convenient find() function.
 // There is a generic std::find() in <algorithm>, but this might be faster.

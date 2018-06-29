@@ -47,11 +47,10 @@
 #include "service_plugins/service_discovery.h"
 #ifdef ENABLE_APPID_THIRD_PARTY
 #include "tp_lib_handler.h"
+#include "tp_appid_utils.h"
 #endif
 
 using namespace snort;
-
-bool do_tp_discovery(AppIdSession&, IpProtocol, Packet*, AppidSessionDirection&);
 
 AppIdDiscovery::AppIdDiscovery(AppIdInspector& ins)
     : inspector(ins)
