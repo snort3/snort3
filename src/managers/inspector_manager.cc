@@ -228,10 +228,10 @@ struct FrameworkPolicy
 
     bool default_binder;
 
-    void vectorize();
+    void vectorize(SnortConfig*);
 };
 
-void FrameworkPolicy::vectorize()
+void FrameworkPolicy::vectorize(SnortConfig* sc)
 {
     passive.alloc(ilist.size());
     packet.alloc(ilist.size());
@@ -281,7 +281,6 @@ void FrameworkPolicy::vectorize()
         {
             // probes always run
             // add them to default so they can be found on InspectorManager::probe
-            SnortConfig* sc = SnortConfig::get_conf();
             sc->policy_map->get_inspection_policy(0)->framework_policy->probe.add(p);
             break;
         }
@@ -481,6 +480,7 @@ void InspectorManager::delete_policy(InspectionPolicy* pi, bool cloned)
             s_trash2.push_back(p->handler);
         else
             s_trash.push_back(p->handler);
+
         delete p;
     }
     delete pi->framework_policy;
@@ -815,7 +815,7 @@ static bool configure(SnortConfig* sc, FrameworkPolicy* fp, bool cloned)
     }
 
     sort(fp->ilist.begin(), fp->ilist.end(), PHInstance::comp);
-    fp->vectorize();
+    fp->vectorize(sc);
 
     // FIXIT-M checking for wizard here would avoid fatals for
     // can't bind wizard but this exposes other issues that must
@@ -866,6 +866,7 @@ bool InspectorManager::configure(SnortConfig* sc, bool cloned)
     }
 
     set_inspection_policy(sc);
+
     return ok;
 }
 
