@@ -94,6 +94,7 @@ class PerfMonModule : public snort::Module
 {
 public:
     PerfMonModule();
+    ~PerfMonModule() override;
 
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
     bool begin(const char*, int, snort::SnortConfig*) override;
@@ -103,13 +104,16 @@ public:
     PegCount* get_counts() const override;
     snort::ProfileStats* get_profile() const override;
 
-    PerfConfig& get_config();
+    PerfConfig* get_config();
+#ifdef UNIT_TEST
+    void set_config(PerfConfig* ptr) { config = ptr; }
+#endif
 
     Usage get_usage() const override
     { return GLOBAL; }
 
 private:
-    PerfConfig config;
+    PerfConfig* config = nullptr;
 };
 
 extern THREAD_LOCAL SimpleStats pmstats;

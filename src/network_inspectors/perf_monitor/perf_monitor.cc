@@ -59,7 +59,8 @@ class FlowIPDataHandler;
 class PerfMonitor : public Inspector
 {
 public:
-    PerfMonitor(PerfMonModule*);
+    PerfMonitor(PerfConfig*);
+    ~PerfMonitor() override { delete config;}
 
     bool configure(SnortConfig*) override;
     void show(SnortConfig*) override;
@@ -75,7 +76,7 @@ public:
     FlowIPTracker* get_flow_ip();
 
 private:
-    PerfConfig& config;
+    PerfConfig* const config;
     FlowIPTracker* flow_ip_tracker = nullptr;
     FlowIPDataHandler* flow_ip_handler = nullptr;
 
@@ -141,36 +142,36 @@ private:
     PerfMonitor& perf_monitor;
 };
 
-PerfMonitor::PerfMonitor(PerfMonModule* mod) : config(mod->get_config())
-{ }
+PerfMonitor::PerfMonitor(PerfConfig* pcfg) : config(pcfg)
+{ assert (config != nullptr); }
 
 void PerfMonitor::show(SnortConfig*)
 {
     LogMessage("PerfMonitor config:\n");
-    LogMessage("  Sample Time:      %d seconds\n", config.sample_interval);
-    LogMessage("  Packet Count:     %d\n", config.pkt_cnt);
-    LogMessage("  Max File Size:    " STDu64 "\n", config.max_file_size);
+    LogMessage("  Sample Time:      %d seconds\n", config->sample_interval);
+    LogMessage("  Packet Count:     %d\n", config->pkt_cnt);
+    LogMessage("  Max File Size:    " STDu64 "\n", config->max_file_size);
     LogMessage("  Summary Mode:     %s\n",
-        (config.perf_flags & PERF_SUMMARY) ? "ACTIVE" : "INACTIVE");
+        (config->perf_flags & PERF_SUMMARY) ? "ACTIVE" : "INACTIVE");
     LogMessage("  Base Stats:       %s\n",
-        (config.perf_flags & PERF_BASE) ? "ACTIVE" : "INACTIVE");
+        (config->perf_flags & PERF_BASE) ? "ACTIVE" : "INACTIVE");
     LogMessage("  Flow Stats:       %s\n",
-        (config.perf_flags & PERF_FLOW) ? "ACTIVE" : "INACTIVE");
-    if (config.perf_flags & PERF_FLOW)
+        (config->perf_flags & PERF_FLOW) ? "ACTIVE" : "INACTIVE");
+    if (config->perf_flags & PERF_FLOW)
     {
-        LogMessage("    Max Flow Port:    %u\n", config.flow_max_port_to_track);
+        LogMessage("    Max Flow Port:    %u\n", config->flow_max_port_to_track);
     }
     LogMessage("  Event Stats:      %s\n",
-        (config.perf_flags & PERF_EVENT) ? "ACTIVE" : "INACTIVE");
+        (config->perf_flags & PERF_EVENT) ? "ACTIVE" : "INACTIVE");
     LogMessage("  Flow IP Stats:    %s\n",
-        (config.perf_flags & PERF_FLOWIP) ? "ACTIVE" : "INACTIVE");
-    if (config.perf_flags & PERF_FLOWIP)
+        (config->perf_flags & PERF_FLOWIP) ? "ACTIVE" : "INACTIVE");
+    if (config->perf_flags & PERF_FLOWIP)
     {
-        LogMessage("    Flow IP Memcap:   %u\n", config.flowip_memcap);
+        LogMessage("    Flow IP Memcap:   %u\n", config->flowip_memcap);
     }
     LogMessage("  CPU Stats:    %s\n",
-        (config.perf_flags & PERF_CPU) ? "ACTIVE" : "INACTIVE");
-    switch ( config.output )
+        (config->perf_flags & PERF_CPU) ? "ACTIVE" : "INACTIVE");
+    switch ( config->output )
     {
         case PerfOutput::TO_CONSOLE:
             LogMessage("    Output Location:  console\n");
@@ -179,7 +180,7 @@ void PerfMonitor::show(SnortConfig*)
             LogMessage("    Output Location:  file\n");
             break;
     }
-    switch(config.format)
+    switch(config->format)
     {
         case PerfFormat::TEXT:
             LogMessage("    Output Format:  text\n");
@@ -225,30 +226,30 @@ bool PerfMonitor::configure(SnortConfig*)
     new PerfIdleHandler(*this);
     new PerfRotateHandler(*this);
 
-    if ( config.perf_flags & PERF_FLOWIP )
+    if ( config->perf_flags & PERF_FLOWIP )
         flow_ip_handler = new FlowIPDataHandler(*this);
 
-    return config.resolve();
+    return config->resolve();
 }
 
 void PerfMonitor::tinit()
 {
     trackers = new std::vector<PerfTracker*>();
 
-    if (config.perf_flags & PERF_BASE)
-        trackers->push_back(new BaseTracker(&config));
+    if (config->perf_flags & PERF_BASE)
+        trackers->push_back(new BaseTracker(config));
 
-    if (config.perf_flags & PERF_FLOW)
-        trackers->push_back(new FlowTracker(&config));
+    if (config->perf_flags & PERF_FLOW)
+        trackers->push_back(new FlowTracker(config));
 
-    if (config.perf_flags & PERF_FLOWIP)
+    if (config->perf_flags & PERF_FLOWIP)
     {
-        flow_ip_tracker = new FlowIPTracker(&config);
+        flow_ip_tracker = new FlowIPTracker(config);
         trackers->push_back(flow_ip_tracker);
     }
 
-    if (config.perf_flags & PERF_CPU )
-        trackers->push_back(new CPUTracker(&config));
+    if (config->perf_flags & PERF_CPU )
+        trackers->push_back(new CPUTracker(config));
 
     for (unsigned i = 0; i < trackers->size(); i++)
     {
@@ -267,7 +268,7 @@ void PerfMonitor::tterm()
         while (!trackers->empty())
         {
             auto back = trackers->back();
-            if ( config.perf_flags & PERF_SUMMARY )
+            if ( config->perf_flags & PERF_SUMMARY )
                 back->process(true);
             delete back;
             trackers->pop_back();
@@ -296,7 +297,7 @@ void PerfMonitor::eval(Packet* p)
         }
     }
 
-    if ( (!p || !p->is_rebuilt()) && !(config.perf_flags & PERF_SUMMARY) )
+    if ( (!p || !p->is_rebuilt()) && !(config->perf_flags & PERF_SUMMARY) )
     {
         if (ready_to_process(p))
         {
@@ -335,9 +336,9 @@ bool PerfMonitor::ready_to_process(Packet* p)
     if (!sample_time)
         sample_time = cur_time;
 
-    if ( cnt >= config.pkt_cnt )
+    if ( cnt >= config->pkt_cnt )
     {
-        if ((cur_time - sample_time) >= config.sample_interval)
+        if ((cur_time - sample_time) >= config->sample_interval)
         {
             cnt = 0;
             sample_time = cur_time;
@@ -361,7 +362,7 @@ static void mod_dtor(Module* m)
 { delete m; }
 
 static Inspector* pm_ctor(Module* m)
-{ return new PerfMonitor((PerfMonModule*)m); }
+{ return new PerfMonitor(((PerfMonModule*)m)->get_config()); }
 
 static void pm_dtor(Inspector* p)
 { delete p; }
@@ -407,30 +408,31 @@ const BaseApi* nin_perf_monitor[] =
 #ifdef UNIT_TEST
 TEST_CASE("Process timing logic", "[perfmon]")
 {
-    PerfMonModule mod;
-    PerfConfig& config = mod.get_config();
-    PerfMonitor perfmon(&mod);
+    PerfMonModule mod; 
+    PerfConfig* config = new PerfConfig;
+    mod.set_config(config);
+    PerfMonitor perfmon(mod.get_config());
 
     Packet p(false);
     DAQ_PktHdr_t pkth;
     p.pkth = &pkth;
 
-    config.pkt_cnt = 0;
-    config.sample_interval = 0;
+    config->pkt_cnt = 0;
+    config->sample_interval = 0;
     pkth.ts.tv_sec = 0;
     REQUIRE((perfmon.ready_to_process(&p) == true));
     pkth.ts.tv_sec = 1;
     REQUIRE((perfmon.ready_to_process(&p) == true));
 
-    config.pkt_cnt = 2;
-    config.sample_interval = 0;
+    config->pkt_cnt = 2;
+    config->sample_interval = 0;
     pkth.ts.tv_sec = 2;
     REQUIRE((perfmon.ready_to_process(&p) == false));
     pkth.ts.tv_sec = 3;
     REQUIRE((perfmon.ready_to_process(&p) == true));
 
-    config.pkt_cnt = 0;
-    config.sample_interval = 2;
+    config->pkt_cnt = 0;
+    config->sample_interval = 2;
     pkth.ts.tv_sec = 4;
     REQUIRE((perfmon.ready_to_process(&p) == false));
     pkth.ts.tv_sec = 8;
@@ -438,8 +440,8 @@ TEST_CASE("Process timing logic", "[perfmon]")
     pkth.ts.tv_sec = 10;
     REQUIRE((perfmon.ready_to_process(&p) == true));
 
-    config.pkt_cnt = 5;
-    config.sample_interval = 4;
+    config->pkt_cnt = 5;
+    config->sample_interval = 4;
     pkth.ts.tv_sec = 11;
     REQUIRE((perfmon.ready_to_process(&p) == false));
     pkth.ts.tv_sec = 14;
