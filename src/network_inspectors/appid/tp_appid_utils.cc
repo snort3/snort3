@@ -671,7 +671,10 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                     asd.is_http2 = true;
                 }
                 // if the third-party appId must be treated as a client, do it now
-                if (asd.app_info_mgr->get_app_info_flags(tp_app_id, APPINFO_FLAG_TP_CLIENT))
+                unsigned app_info_flags = asd.app_info_mgr->get_app_info_flags(tp_app_id,
+                    APPINFO_FLAG_TP_CLIENT | APPINFO_FLAG_IGNORE);
+
+                if ( app_info_flags & APPINFO_FLAG_TP_CLIENT )
                     asd.client.set_id(tp_app_id);
 
                 process_third_party_results(asd, tp_confidence, tp_proto_list, tp_attribute_data);
@@ -682,7 +685,7 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                     setSSLSquelch(p, 1, tp_app_id, asd.get_inspector());
                 }
 
-                if (asd.app_info_mgr->get_app_info_flags(tp_app_id, APPINFO_FLAG_IGNORE))
+                if ( app_info_flags & APPINFO_FLAG_IGNORE )
                 {
                     if (appidDebug->is_active())
                         LogMessage("AppIdDbg %s 3rd party ignored\n",
@@ -733,7 +736,7 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
 
                     // Handle HTTP tunneling and SSL possibly then being used in that tunnel
                     if (tp_app_id == APP_ID_HTTP_TUNNEL)
-                         asd.set_payload_appid_data(APP_ID_HTTP_TUNNEL, NULL);
+                        asd.set_payload_appid_data(APP_ID_HTTP_TUNNEL, NULL);
                     else if ((asd.payload.get_id() == APP_ID_HTTP_TUNNEL) &&
                         (tp_app_id == APP_ID_SSL))
                         asd.set_payload_appid_data(APP_ID_HTTP_SSL_TUNNEL, NULL);
@@ -832,3 +835,4 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
 
     return isTpAppidDiscoveryDone;
 }
+
