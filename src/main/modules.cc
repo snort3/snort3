@@ -860,7 +860,7 @@ static const Parameter active_params[] =
     { "max_responses", Parameter::PT_INT, "0:", "0",
       "maximum number of responses" },
 
-    { "min_interval", Parameter::PT_INT, "1:", "255",
+    { "min_interval", Parameter::PT_INT, "1:255", "255",
       "minimum number of seconds between responses" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
