@@ -30,6 +30,7 @@
 #include "protocols/packet.h"
 
 #include "dce_list.h"
+#include "dce_context_data.h"
 
 extern const snort::InspectApi dce2_smb_api;
 extern const snort::InspectApi dce2_tcp_api;
@@ -223,11 +224,12 @@ public:
     void reset();
 };
 
-inline void DCE2_ResetRopts(DCE2_Roptions* ropts)
+inline void DCE2_ResetRopts(DCE2_SsnData* sd, snort::Packet* p)
 {
-    ropts->first_frag = DCE2_SENTINEL;
-    ropts->opnum = DCE2_SENTINEL;
-    ropts->stub_data = nullptr;
+    sd->ropts.first_frag = DCE2_SENTINEL;
+    sd->ropts.opnum = DCE2_SENTINEL;
+    sd->ropts.stub_data = nullptr;
+    DceContextData::clear_current_ropts(p, sd->trans);
 }
 
 inline void DCE2_SsnSetNoInspect(DCE2_SsnData* sd)
@@ -405,7 +407,7 @@ void DCE2_Detect(DCE2_SsnData*);
 snort::Packet* DCE2_GetRpkt(snort::Packet*, DCE2_RpktType, const uint8_t*, uint32_t);
 uint16_t DCE2_GetRpktMaxData(DCE2_SsnData*, DCE2_RpktType);
 DCE2_Ret DCE2_AddDataToRpkt(snort::Packet*, const uint8_t*, uint32_t);
-DCE2_SsnData* get_dce2_session_data(snort::Packet*);
+DCE2_TransType get_dce2_trans_type(const snort::Packet* p);
 
 #endif
 

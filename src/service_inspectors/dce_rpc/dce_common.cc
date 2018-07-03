@@ -29,6 +29,7 @@
 #include "log/messages.h"
 #include "utils/safec.h"
 
+#include "dce_context_data.h"
 #include "dce_http_proxy_module.h"
 #include "dce_http_server_module.h"
 #include "dce_smb_utils.h"
@@ -168,6 +169,7 @@ static void dce2_protocol_detect(DCE2_SsnData* sd, snort::Packet* pkt)
 
 void DCE2_Detect(DCE2_SsnData* sd)
 {
+    DceContextData::set_current_ropts(sd);
     if ( using_rpkt )
     {
         using_rpkt = false;
@@ -178,33 +180,33 @@ void DCE2_Detect(DCE2_SsnData* sd)
     snort::Packet* top_pkt = DetectionEngine::get_current_packet();
     dce2_protocol_detect(sd, top_pkt);
     /* Always reset rule option data after detecting */
-    DCE2_ResetRopts(&sd->ropts);
+    DCE2_ResetRopts(sd , top_pkt);
 }
 
-DCE2_SsnData* get_dce2_session_data(snort::Packet* p)
+DCE2_TransType get_dce2_trans_type(const snort::Packet* p)
 {
     DCE2_SmbSsnData* smb_data = get_dce2_smb_session_data(p->flow);
     DCE2_SsnData* sd = (smb_data != nullptr) ? &(smb_data->sd) : nullptr;
     if ((sd != nullptr) && (sd->trans == DCE2_TRANS_TYPE__SMB))
     {
-        return sd;
+        return DCE2_TRANS_TYPE__SMB;
     }
 
     DCE2_TcpSsnData* tcp_data = get_dce2_tcp_session_data(p->flow);
     sd = (tcp_data != nullptr) ? &(tcp_data->sd) : nullptr;
     if ((sd != nullptr) && (sd->trans == DCE2_TRANS_TYPE__TCP))
     {
-        return sd;
+        return DCE2_TRANS_TYPE__TCP;
     }
 
     DCE2_UdpSsnData* udp_data = get_dce2_udp_session_data(p->flow);
     sd = (udp_data != nullptr) ? &(udp_data->sd) : nullptr;
     if ((sd != nullptr) && (sd->trans == DCE2_TRANS_TYPE__UDP))
     {
-        return sd;
+        return DCE2_TRANS_TYPE__UDP;
     }
 
-    return nullptr;
+    return DCE2_TRANS_TYPE__NONE;
 }
 
 DceEndianness::DceEndianness()

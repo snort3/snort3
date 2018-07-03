@@ -125,7 +125,9 @@ IpsContext* ContextSwitcher::complete()
     assert(!busy.empty());
     trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::complete %u (i=%zu, b=%zu)\n",
         pc.total_from_daq, busy.back()->get_slot(), idle.size(), busy.size());
-    idle.push_back(busy.back());
+    IpsContext* c = busy.back();
+    c->clear_context_data();
+    idle.push_back(c);
     busy.pop_back();
     return busy.empty() ? nullptr : busy.back();
 }

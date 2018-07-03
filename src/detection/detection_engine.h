@@ -75,6 +75,7 @@ public:
 
     static void set_data(unsigned id, IpsContextData*);
     static IpsContextData* get_data(unsigned id);
+    static IpsContextData* get_data(unsigned id, IpsContext* context);
 
     static void add_replacement(const std::string&, unsigned);
     static bool get_replacement(std::string&, unsigned&);

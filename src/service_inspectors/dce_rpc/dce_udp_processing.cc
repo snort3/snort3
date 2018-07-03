@@ -310,7 +310,7 @@ static void DCE2_ClRequest(DCE2_SsnData* sd, DCE2_ClActTracker* at, const DceRpc
         return;
     }
 
-    DCE2_ResetRopts(&sd->ropts);
+    DCE2_ResetRopts(sd, nullptr);
 
     if (!DceRpcClFrag(cl_hdr))  /* It's a full request */
     {

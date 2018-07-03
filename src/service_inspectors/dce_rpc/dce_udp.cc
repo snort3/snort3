@@ -28,6 +28,7 @@
 #include "detection/detection_engine.h"
 #include "utils/util.h"
 
+#include "dce_context_data.h"
 #include "dce_udp_module.h"
 
 using namespace snort;
@@ -94,7 +95,7 @@ static DCE2_UdpSsnData* dce2_create_new_udp_session(Packet* p, dce2UdpProtoConf*
 
     DCE2_UdpSsnData* dce2_udp_sess = set_new_dce2_udp_session(p);
 
-    DCE2_ResetRopts(&dce2_udp_sess->sd.ropts);
+    DCE2_ResetRopts(&dce2_udp_sess->sd, p);
 
     dce2_udp_stats.udp_sessions++;
     dce2_udp_sess->sd.trans = DCE2_TRANS_TYPE__UDP;
@@ -124,6 +125,7 @@ public:
     Dce2Udp(dce2UdpProtoConf&);
     void show(SnortConfig*) override;
     void eval(Packet*) override;
+    void clear(Packet*) override;
 
 private:
     dce2UdpProtoConf config;
@@ -161,11 +163,19 @@ void Dce2Udp::eval(Packet* p)
         if (!dce2_detected)
             DCE2_Detect(&dce2_udp_sess->sd);
 
-        DCE2_ResetRopts(&dce2_udp_sess->sd.ropts);
-
         delete p->endianness;
         p->endianness = nullptr;
     }
+}
+
+void Dce2Udp::clear(Packet* p)
+{
+    DCE2_UdpSsnData* dce2_udp_sess = get_dce2_udp_session_data(p->flow);
+    if ( dce2_udp_sess )
+    {
+        DCE2_ResetRopts(&dce2_udp_sess->sd, p);
+    }
+
 }
 
 //-------------------------------------------------------------------------
@@ -198,6 +208,7 @@ static void dce2_udp_dtor(Inspector* p)
 static void dce2_udp_init()
 {
     Dce2UdpFlowData::init();
+    DceContextData::init(DCE2_TRANS_TYPE__UDP);
 }
 
 const InspectApi dce2_udp_api =

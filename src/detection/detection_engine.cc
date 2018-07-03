@@ -164,6 +164,14 @@ void DetectionEngine::set_data(unsigned id, IpsContextData* p)
 IpsContextData* DetectionEngine::get_data(unsigned id)
 { return Snort::get_switcher()->get_context()->get_context_data(id); }
 
+IpsContextData* DetectionEngine::get_data(unsigned id, IpsContext* context)
+{
+    if ( context )
+        return context->get_context_data(id);
+
+    return DetectionEngine::get_data(id);
+}
+
 void DetectionEngine::add_replacement(const std::string& s, unsigned off)
 { 
     Replacement r;

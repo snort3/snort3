@@ -53,6 +53,7 @@ public:
 
     static unsigned get_ips_id();
     static unsigned get_max_id();
+    virtual void clear() {}
 
 protected:
     IpsContextData() = default;
@@ -69,6 +70,7 @@ public:
 
     void set_context_data(unsigned id, IpsContextData*);
     IpsContextData* get_context_data(unsigned id) const;
+    void clear_context_data();
 
     void set_slot(unsigned s)
     { slot = s; }

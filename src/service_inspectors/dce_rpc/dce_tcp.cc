@@ -28,6 +28,7 @@
 #include "detection/detection_engine.h"
 #include "utils/util.h"
 
+#include "dce_context_data.h"
 #include "dce_common.h"
 #include "dce_tcp_module.h"
 #include "dce_tcp_paf.h"
@@ -86,7 +87,7 @@ static DCE2_TcpSsnData* dce2_create_new_tcp_session(Packet* p, dce2TcpProtoConf*
     if ( dce2_tcp_sess )
     {
         DCE2_CoInitTracker(&dce2_tcp_sess->co_tracker);
-        DCE2_ResetRopts(&dce2_tcp_sess->sd.ropts);
+        DCE2_ResetRopts(&dce2_tcp_sess->sd, p);
 
         dce2_tcp_stats.tcp_sessions++;
 
@@ -125,6 +126,7 @@ public:
 
     void show(SnortConfig*) override;
     void eval(Packet*) override;
+    void clear(Packet*) override;
     StreamSplitter* get_splitter(bool c2s) override
     {
         return new Dce2TcpSplitter(c2s);
@@ -170,11 +172,19 @@ void Dce2Tcp::eval(Packet* p)
         if (!dce2_detected)
             DCE2_Detect(&dce2_tcp_sess->sd);
 
-        DCE2_ResetRopts(&dce2_tcp_sess->sd.ropts);
-
         delete p->endianness;
         p->endianness = nullptr;
     }
+}
+
+void Dce2Tcp::clear(Packet* p)
+{
+    DCE2_TcpSsnData* dce2_tcp_sess = get_dce2_tcp_session_data(p->flow);
+    if ( dce2_tcp_sess )
+    {
+        DCE2_ResetRopts(&dce2_tcp_sess->sd, p);
+    }
+
 }
 
 //-------------------------------------------------------------------------
@@ -207,6 +217,7 @@ static void dce2_tcp_dtor(Inspector* p)
 static void dce2_tcp_init()
 {
     Dce2TcpFlowData::init();
+    DceContextData::init(DCE2_TRANS_TYPE__TCP);
 }
 
 const InspectApi dce2_tcp_api =

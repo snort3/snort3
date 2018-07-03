@@ -79,7 +79,10 @@ IpsContext::~IpsContext()
     for ( auto* p : data )
     {
         if ( p )
+        {
+            p->clear();
             delete p;
+        }
     }
 
     sfeventq_free(equeue);
@@ -100,6 +103,15 @@ IpsContextData* IpsContext::get_context_data(unsigned id) const
 {
     assert(id < data.size());
     return data[id];
+}
+
+void IpsContext::clear_context_data()
+{
+    for ( auto* p : data )
+    {
+        if ( p )
+            p->clear();
+    }
 }
 
 //--------------------------------------------------------------------------

@@ -78,14 +78,15 @@ IpsOption::EvalStatus Dce2StubDataOption::eval(Cursor& c, Packet* p)
         return NO_MATCH;
     }
 
-    DCE2_SsnData* sd = get_dce2_session_data(p);
-
-    if ((sd == nullptr) || DCE2_SsnNoInspect(sd))
+    if (DceContextData::is_noinspect(p))
     {
         return NO_MATCH;
     }
 
-    DCE2_Roptions* ropts = &sd->ropts;
+    DCE2_Roptions* ropts = DceContextData::get_current_ropts(p);
+
+    if ( !ropts )
+        return NO_MATCH;
 
     if (ropts->stub_data != nullptr)
     {

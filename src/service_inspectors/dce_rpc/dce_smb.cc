@@ -30,6 +30,7 @@
 #include "utils/util.h"
 #include "packet_io/active.h"
 
+#include "dce_context_data.h"
 #include "dce_smb_commands.h"
 #include "dce_smb_module.h"
 #include "dce_smb_paf.h"
@@ -343,6 +344,7 @@ public:
 
     void show(snort::SnortConfig*) override;
     void eval(snort::Packet*) override;
+    void clear(snort::Packet*) override;
     snort::StreamSplitter* get_splitter(bool c2s) override
     {
         return new Dce2SmbSplitter(c2s);
@@ -400,10 +402,17 @@ void Dce2Smb::eval(snort::Packet* p)
         if (!dce2_detected)
             DCE2_Detect(&dce2_smb_sess->sd);
 
-        DCE2_ResetRopts(&dce2_smb_sess->sd.ropts);
-
         delete p->endianness;
         p->endianness = nullptr;
+    }
+}
+
+void Dce2Smb::clear(snort::Packet* p)
+{
+    DCE2_SmbSsnData* dce2_smb_sess = get_dce2_smb_session_data(p->flow);
+    if ( dce2_smb_sess )
+    {
+        DCE2_ResetRopts(&dce2_smb_sess->sd, p);
     }
 }
 
@@ -426,6 +435,7 @@ static void dce2_smb_init()
     Dce2SmbFlowData::init();
     DCE2_SmbInitGlobals();
     DCE2_SmbInitDeletePdu();
+    DceContextData::init(DCE2_TRANS_TYPE__SMB);
 }
 
 static snort::Inspector* dce2_smb_ctor(snort::Module* m)
