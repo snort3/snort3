@@ -178,10 +178,10 @@ public:
     { this->iss = iss; }
 
     uint32_t get_fin_final_seq() const
-    { return fin_final_seq; }
+    { return fin_final_seq + fin_seq_adjust; }
 
-    void set_fin_final_seq(uint32_t fin_final_seq = 0)
-    { this->fin_final_seq = fin_final_seq; }
+    uint32_t get_fin_seq_adjust()
+    { return fin_seq_adjust; }
 
     bool is_fin_seq_set() const
     { return fin_seq_set; }
@@ -245,9 +245,6 @@ public:
     bool is_rst_pkt_sent() const
     { return rst_pkt_sent; }
 
-    bool process_inorder_fin() const
-    { return inorder_fin; }
-
     snort::StreamSplitter* get_splitter()
     { return splitter; }
 
@@ -301,11 +298,9 @@ public:
     uint32_t irs = 0;     // IRS     - initial receive sequence number
 
     bool rst_pkt_sent = false;
-    bool inorder_fin = false;
 
 // FIXIT-L make these non-public
 public:
-    uint32_t r_nxt_ack = 0; /* next expected ack from remote side */
     uint32_t r_win_base = 0; /* remote side window base sequence number
      * (i.e. the last ack we got) */
 
@@ -332,6 +327,7 @@ protected:
     uint8_t mac_addr[6] = { };
     bool mac_addr_valid = false;
     uint32_t fin_final_seq = 0;
+    uint32_t fin_seq_adjust = 0;
     bool fin_seq_set = false;  // FIXIT-M should be obviated by tcp state
     uint8_t tcp_options_len = 0;
 

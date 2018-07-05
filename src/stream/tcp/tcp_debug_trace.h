@@ -87,7 +87,7 @@ inline void TraceState(TcpStreamTracker* a, TcpStreamTracker* b, const char* s)
     fprintf(stdout,
         "    %s ST=%s      UA=%-4u NS=%-4u LW=%-5u RN=%-4u RW=%-4u ISS=%-4u IRS=%-4u ",
         s, statext[a->get_tcp_state()], ua, ns, a->get_snd_wnd( ),
-        RMT(a, r_nxt_ack, b), RMT(a, r_win_base, b), a->get_iss(), a->get_irs());
+        RMT(a, rcv_nxt, b), RMT(a, r_win_base, b), a->get_iss(), a->get_irs());
 
     fprintf(stdout, "\n");
     unsigned paf = (a->splitter and a->splitter->is_paf()) ? 2 : 0;

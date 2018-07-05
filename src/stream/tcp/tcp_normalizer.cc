@@ -215,11 +215,9 @@ uint32_t TcpNormalizer::get_tcp_timestamp(
 bool TcpNormalizer::validate_rst_seq_geq(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
 {
-    // FIXIT-H check for r_win_base == 0 is hack for uninitialized r_win_base, fix this
-    if ( ( tns.tracker->r_nxt_ack == 0 ) || SEQ_GEQ(tsd.get_seg_seq(), tns.tracker->r_nxt_ack) )
-    {
+    // FIXIT-H check for rcv_nxt == 0 is hack for uninitialized rcv_nxt, fix this
+    if ( ( tns.tracker->rcv_nxt == 0 ) || SEQ_GEQ(tsd.get_seg_seq(), tns.tracker->rcv_nxt) )
         return true;
-    }
 
     return false;
 }
@@ -235,9 +233,7 @@ bool TcpNormalizer::validate_rst_end_seq_geq(
     {
         // reset must be admitted when window closed
         if (SEQ_LEQ(tsd.get_seg_seq(), tns.tracker->r_win_base + get_stream_window(tns, tsd)))
-        {
             return true;
-        }
     }
 
     return false;
@@ -246,11 +242,11 @@ bool TcpNormalizer::validate_rst_end_seq_geq(
 bool TcpNormalizer::validate_rst_seq_eq(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
 {
-    // FIXIT-H check for r_nxt_ack == 0 is hack for uninitialized r_nxt_ack, fix this
-    if ( ( tns.tracker->r_nxt_ack == 0 ) || SEQ_EQ(tsd.get_seg_seq(), tns.tracker->r_nxt_ack) )
-    {
+    uint32_t expected_seq = tns.tracker->rcv_nxt + tns.tracker->get_fin_seq_adjust();
+
+    // FIXIT-H check for rcv_nxt == 0 is hack for uninitialized rcv_nxt, fix this
+    if ( ( tns.tracker->rcv_nxt == 0 ) || SEQ_EQ(tsd.get_seg_seq(), expected_seq) )
         return true;
-    }
 
     return false;
 }
@@ -287,9 +283,7 @@ int TcpNormalizer::validate_paws_timestamp(
         return ACTION_BAD_PKT;
     }
     else
-    {
         return ACTION_NOTHING;
-    }
 }
 
 bool TcpNormalizer::is_paws_ts_checked_required(

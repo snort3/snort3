@@ -73,7 +73,6 @@ bool TcpStateSynSent::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     trk.session->update_timestamp_tracking(tsd);
     trk.session->update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
     trk.set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
-    trk.r_nxt_ack = tsd.get_seg_ack();
     return true;
 }
 

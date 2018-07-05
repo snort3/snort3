@@ -292,8 +292,8 @@ int TcpReassembler::purge_to_seq(TcpReassemblerState& trs, uint32_t flush_seq)
         trs.sos.seglist_base_seq = flush_seq;
     }
 
-    if ( SEQ_LT(trs.tracker->r_nxt_ack, flush_seq) )
-        trs.tracker->r_nxt_ack = flush_seq;
+    if ( SEQ_LT(trs.tracker->rcv_nxt, flush_seq) )
+        trs.tracker->rcv_nxt = flush_seq;
 
     purge_alerts(trs, trs.sos.session->flow);
 
@@ -1171,9 +1171,7 @@ void TcpReassembler::insert_segment_in_empty_seglist(
         overlap = trs.tracker->r_win_base - tsd.get_seg_seq();
 
         if ( overlap >= tsd.get_seg_len() )
-        {
             return;
-        }
     }
 
     // BLOCK add new block to trs.sos.seglist containing data

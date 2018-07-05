@@ -189,7 +189,7 @@ void TcpStreamTracker::init_tcp_state()
     flush_policy = STREAM_FLPOLICY_IGNORE;
     memset(&paf_state, 0, sizeof(paf_state));
     snd_una = snd_nxt = snd_wnd = 0;
-    r_nxt_ack = r_win_base = iss = ts_last = ts_last_packet = 0;
+    rcv_nxt = r_win_base = iss = ts_last = ts_last_packet = 0;
     small_seg_count = wscale = mss = 0;
     tf_flags = 0;
     alert_count = 0;
@@ -278,7 +278,7 @@ void TcpStreamTracker::init_on_syn_recv(TcpSegmentDescriptor& tsd)
 
     irs = tsd.get_seg_seq();
     // FIXIT-H can we really set the vars below now?
-    r_nxt_ack = tsd.get_seg_seq() + 1;
+    rcv_nxt = tsd.get_seg_seq() + 1;
     r_win_base = tsd.get_seg_seq() + 1;
     reassembler.set_seglist_base_seq(tsd.get_seg_seq() + 1);
 
@@ -301,7 +301,7 @@ void TcpStreamTracker::init_on_synack_sent(TcpSegmentDescriptor& tsd)
     snd_wnd = tsd.get_seg_wnd();
 
     r_win_base = tsd.get_seg_ack();
-    r_nxt_ack = tsd.get_seg_ack();
+    rcv_nxt = tsd.get_seg_ack();
     reassembler.set_seglist_base_seq(tsd.get_seg_ack() );
 
     ts_last_packet = tsd.get_pkt()->pkth->ts.tv_sec;
@@ -326,7 +326,7 @@ void TcpStreamTracker::init_on_synack_recv(TcpSegmentDescriptor& tsd)
     snd_una = tsd.get_seg_ack();
     snd_nxt = snd_una;
 
-    r_nxt_ack = tsd.get_seg_seq() + 1;
+    rcv_nxt = tsd.get_seg_seq() + 1;
     r_win_base = tsd.get_seg_seq() + 1;
     reassembler.set_seglist_base_seq(tsd.get_seg_seq() + 1);
 
@@ -349,7 +349,7 @@ void TcpStreamTracker::init_on_3whs_ack_sent(TcpSegmentDescriptor& tsd)
     snd_wnd = tsd.get_seg_wnd();
 
     r_win_base = tsd.get_seg_ack();
-    r_nxt_ack = tsd.get_seg_ack();
+    rcv_nxt = tsd.get_seg_ack();
 
     ts_last_packet = tsd.get_pkt()->pkth->ts.tv_sec;
     tf_flags |= normalizer.get_tcp_timestamp(tsd, false);
@@ -372,7 +372,7 @@ void TcpStreamTracker::init_on_3whs_ack_recv(TcpSegmentDescriptor& tsd)
     snd_una = tsd.get_seg_ack();
     snd_nxt = snd_una;
 
-    r_nxt_ack = tsd.get_seg_seq();
+    rcv_nxt = tsd.get_seg_seq();
     r_win_base = tsd.get_seg_seq();
     reassembler.set_seglist_base_seq(tsd.get_seg_seq() + 1);
 
@@ -400,7 +400,7 @@ void TcpStreamTracker::init_on_data_seg_sent(TcpSegmentDescriptor& tsd)
     snd_wnd = tsd.get_seg_wnd();
 
     r_win_base = tsd.get_seg_ack();
-    r_nxt_ack = tsd.get_seg_ack();
+    rcv_nxt = tsd.get_seg_ack();
     reassembler.set_seglist_base_seq(tsd.get_seg_ack());
 
     ts_last_packet = tsd.get_pkt()->pkth->ts.tv_sec;
@@ -424,7 +424,7 @@ void TcpStreamTracker::init_on_data_seg_recv(TcpSegmentDescriptor& tsd)
     snd_nxt = snd_una;
     snd_wnd = 0; /* reset later */
 
-    r_nxt_ack = tsd.get_seg_seq();
+    rcv_nxt = tsd.get_seg_seq();
     r_win_base = tsd.get_seg_seq();
     reassembler.set_seglist_base_seq(tsd.get_seg_seq());
 
@@ -458,7 +458,7 @@ void TcpStreamTracker::finish_client_init(TcpSegmentDescriptor& tsd)
 {
     Flow* flow = tsd.get_flow();
 
-    r_nxt_ack = tsd.get_end_seq();
+    rcv_nxt = tsd.get_end_seq();
 
     if ( !( flow->session_state & STREAM_STATE_MIDSTREAM ) )
     {
@@ -578,16 +578,16 @@ void TcpStreamTracker::flush_data_on_fin_recv(TcpSegmentDescriptor& tsd)
 bool TcpStreamTracker::update_on_fin_recv(TcpSegmentDescriptor& tsd)
 {
     if ( SEQ_LT(tsd.get_end_seq(), r_win_base) )
-    {
         return false;
-    }
 
     //--------------------------------------------------
-    // FIXIT-L don't bump r_nxt_ack unless FIN is in seq
+    // FIXIT-L don't bump rcv_nxt unless FIN is in seq
     // because it causes bogus 129:5 cases
     // but doing so causes extra gaps
-    //if ( SEQ_EQ(tsd.end_seq, r_nxt_ack) )
-    r_nxt_ack++;
+    if ( SEQ_EQ(tsd.get_end_seq(), rcv_nxt) )
+        rcv_nxt++;
+    else
+        fin_seq_adjust = 1;
 
     // set final seq # any packet rx'ed with seq > is bad
     if ( !fin_seq_set )
@@ -615,8 +615,8 @@ bool TcpStreamTracker::is_segment_seq_valid(TcpSegmentDescriptor& tsd)
     int right_ok;
     uint32_t left_seq;
 
-    if ( SEQ_LT(r_nxt_ack, r_win_base) )
-        left_seq = r_nxt_ack;
+    if ( SEQ_LT(rcv_nxt, r_win_base) )
+        left_seq = rcv_nxt;
     else
         left_seq = r_win_base;
 

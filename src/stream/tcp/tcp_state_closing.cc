@@ -62,7 +62,7 @@ bool TcpStateClosing::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 bool TcpStateClosing::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.update_tracker_ack_recv(tsd);
-    if ( SEQ_GEQ(tsd.get_end_seq(), trk.r_nxt_ack) )
+    if ( SEQ_GEQ(tsd.get_end_seq(), trk.rcv_nxt) )
         trk.set_tcp_state(TcpStreamTracker::TCP_TIME_WAIT);
     return true;
 }
@@ -76,7 +76,7 @@ bool TcpStateClosing::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker&
 bool TcpStateClosing::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.update_tracker_ack_recv(tsd);
-    if ( SEQ_GEQ(tsd.get_end_seq(), trk.r_nxt_ack) )
+    if ( SEQ_GEQ(tsd.get_end_seq(), trk.rcv_nxt) )
         trk.set_tcp_state(TcpStreamTracker::TCP_TIME_WAIT);
     return true;
 }

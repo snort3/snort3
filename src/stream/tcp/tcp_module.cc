@@ -46,6 +46,9 @@ THREAD_LOCAL ProfileStats s5TcpBuildPacketPerfStats;
 const PegInfo tcp_pegs[] =
 {
     SESSION_PEGS("tcp"),
+    { CountType::SUM, "instantiated", "new sessions instantiated" },
+    { CountType::SUM, "setups", "session initializations" },
+    { CountType::SUM, "restarts", "sessions restarted" },
     { CountType::SUM, "resyns", "SYN received on established session" },
     { CountType::SUM, "discards", "tcp packets discarded" },
     { CountType::SUM, "events", "events generated" },

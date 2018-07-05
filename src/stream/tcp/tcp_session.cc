@@ -72,6 +72,7 @@ TcpSession::TcpSession(Flow* flow)
 
     client.session = this;
     server.session = this;
+    tcpStats.instantiated++;
 }
 
 TcpSession::~TcpSession()
@@ -85,6 +86,7 @@ bool TcpSession::setup(Packet* p)
     splitter_init = false;
 
     SESSION_STATS_ADD(tcpStats);
+    tcpStats.setups++;
     return true;
 }
 
@@ -116,6 +118,8 @@ void TcpSession::restart(Packet* p)
 
     if (p->ptrs.tcph->is_ack())
         talker->reassembler.flush_on_ack_policy(p);
+
+    tcpStats.restarts++;
 }
 
 //-------------------------------------------------------------------------
@@ -133,29 +137,27 @@ void TcpSession::restart(Packet* p)
 
 void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool restart, Packet* p)
 {
-    if ( !tcp_init )
-        return;
-
     assert(!p or p->flow == flow);
-    DetectionEngine::onload(flow);
-
-    if ( tcp_init )
+    if ( !tcp_init )
     {
-        if ( flush_segments )
-        {
-            client.reassembler.flush_queued_segments(flow, true, p);
-            server.reassembler.flush_queued_segments(flow, true, p);
-        }
-        client.reassembler.purge_segment_list();
-        server.reassembler.purge_segment_list();
+        if ( lws_init )
+            tcpStats.no_pickups++;
+        return;
     }
 
-    if ( tcp_init )
-        tcpStats.released++;
-    else if ( lws_init )
-        tcpStats.no_pickups++;
-    else
-        return;
+    lws_init = false;
+    tcp_init = false;
+    tcpStats.released++;
+
+    DetectionEngine::onload(flow);
+
+    if ( flush_segments )
+    {
+        client.reassembler.flush_queued_segments(flow, true, p);
+        server.reassembler.flush_queued_segments(flow, true, p);
+    }
+    client.reassembler.purge_segment_list();
+    server.reassembler.purge_segment_list();
 
     update_perf_base_state(TcpStreamTracker::TCP_CLOSED);
 
@@ -177,9 +179,6 @@ void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool re
     set_splitter(false, nullptr);
 
     tel.log_internal_event(SESSION_EVENT_CLEAR);
-
-    lws_init = false;
-    tcp_init = false;
 }
 
 void TcpSession::update_perf_base_state(char newState)
@@ -335,18 +334,6 @@ void TcpSession::process_tcp_stream(TcpSegmentDescriptor& tsd)
     }
 }
 
-void TcpSession::check_fin_transition_status(TcpSegmentDescriptor& tsd)
-{
-    if((tsd.get_seg_len() != 0) &&
-            SEQ_EQ(listener->get_fin_final_seq(), listener->r_nxt_ack))
-    {
-        listener->set_tcp_event(TcpStreamTracker::TCP_FIN_RECV_EVENT);
-        talker->set_tcp_event(TcpStreamTracker::TCP_FIN_SENT_EVENT);
-        listener->inorder_fin = true;
-    }
-}
-
-
 int TcpSession::process_tcp_data(TcpSegmentDescriptor& tsd)
 {
     DeepProfile profile(s5TcpDataPerfStats);
@@ -358,15 +345,15 @@ int TcpSession::process_tcp_data(TcpSegmentDescriptor& tsd)
     {
         if (listener->normalizer.get_os_policy() == StreamPolicy::OS_MACOS)
             seq++;
-
         else
         {
             listener->normalizer.trim_syn_payload(tsd);
             return STREAM_UNALIGNED;
-        }   }
+        }
+    }
 
     /* we're aligned, so that's nice anyway */
-    if (seq == listener->r_nxt_ack)
+    if (seq == listener->rcv_nxt)
     {
         /* check if we're in the window */
         if (config->policy != StreamPolicy::OS_PROXY
@@ -378,7 +365,7 @@ int TcpSession::process_tcp_data(TcpSegmentDescriptor& tsd)
 
         /* move the ack boundary up, this is the only way we'll accept data */
         // FIXIT-L for ips, must move all the way to first hole or right end
-        listener->r_nxt_ack = tsd.get_end_seq();
+        listener->rcv_nxt = tsd.get_end_seq();
 
         if (tsd.get_seg_len() != 0)
         {
@@ -410,11 +397,11 @@ int TcpSession::process_tcp_data(TcpSegmentDescriptor& tsd)
         if ((listener->get_tcp_state() == TcpStreamTracker::TCP_ESTABLISHED)
             && (listener->flush_policy == STREAM_FLPOLICY_IGNORE))
         {
-            if (SEQ_GT(tsd.get_end_seq(), listener->r_nxt_ack))
+            if (SEQ_GT(tsd.get_end_seq(), listener->rcv_nxt))
             {
                 // set next ack so we are within the window going forward on this side.
                 // FIXIT-L for ips, must move all the way to first hole or right end
-                listener->r_nxt_ack = tsd.get_end_seq();
+                listener->rcv_nxt = tsd.get_end_seq();
             }
         }
 
@@ -422,7 +409,7 @@ int TcpSession::process_tcp_data(TcpSegmentDescriptor& tsd)
         {
             if (!( flow->get_session_flags() & SSNFLAG_STREAM_ORDER_BAD))
             {
-                if (!SEQ_LEQ((tsd.get_seg_seq() + tsd.get_seg_len()), listener->r_nxt_ack))
+                if (!SEQ_LEQ((tsd.get_seg_seq() + tsd.get_seg_len()), listener->rcv_nxt))
                     flow->set_session_flags(SSNFLAG_STREAM_ORDER_BAD);
             }
             process_tcp_stream(tsd);
@@ -504,7 +491,7 @@ void TcpSession::update_timestamp_tracking(TcpSegmentDescriptor& tsd)
 {
     talker->set_tf_flags(listener->normalizer.get_timestamp_flags());
     if (listener->normalizer.handling_timestamps()
-        && SEQ_EQ(listener->r_nxt_ack, tsd.get_seg_seq()))
+        && SEQ_EQ(listener->rcv_nxt, tsd.get_seg_seq()))
     {
         talker->set_ts_last_packet(tsd.get_pkt()->pkth->ts.tv_sec);
         talker->set_ts_last(tsd.get_ts());
@@ -749,7 +736,7 @@ void TcpSession::handle_data_segment(TcpSegmentDescriptor& tsd)
 
                 // trim to fit in window and mss as needed
                 st->normalizer.trim_win_payload(
-                    tsd, (st->r_win_base + st->get_snd_wnd() - st->r_nxt_ack));
+                    tsd, (st->r_win_base + st->get_snd_wnd() - st->rcv_nxt));
 
                 if (st->get_mss())
                     st->normalizer.trim_mss_payload(tsd, st->get_mss());
@@ -764,8 +751,6 @@ void TcpSession::handle_data_segment(TcpSegmentDescriptor& tsd)
                 or (config->policy == StreamPolicy::OS_PROXY))
         {
             process_tcp_data(tsd);
-            //Check if all segments are received. Process FIN transition
-            check_fin_transition_status(tsd);
         }
         else
         {

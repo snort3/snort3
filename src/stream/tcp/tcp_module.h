@@ -64,6 +64,9 @@ extern THREAD_LOCAL snort::ProfileStats streamSizePerfStats;
 struct TcpStats
 {
     SESSION_STATS;
+    PegCount instantiated;
+    PegCount setups;
+    PegCount restarts;
     PegCount resyns;
     PegCount discards;
     PegCount events;

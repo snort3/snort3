@@ -190,7 +190,7 @@ static inline int handle_repeated_syn_mswin(
     /* Windows has some strange behavior here.  If the sequence of the reset is the
      * next expected sequence, it Resets.  Otherwise it ignores the 2nd SYN.
      */
-    if (SEQ_EQ(tsd.get_seg_seq(), listener->r_nxt_ack))
+    if (SEQ_EQ(tsd.get_seg_seq(), listener->rcv_nxt))
     {
         session->flow->set_session_flags(SSNFLAG_RESET);
         talker->set_tcp_state(TcpStreamTracker::TCP_CLOSED);
@@ -245,7 +245,7 @@ static inline bool paws_3whs_zero_ts_supported(
     if ( talker->get_tf_flags() & TF_TSTAMP_ZERO )
     {
         talker->clear_tf_flags(TF_TSTAMP_ZERO);
-        if ( SEQ_EQ(listener->r_nxt_ack, tsd.get_seg_seq() ) )
+        if ( SEQ_EQ(listener->rcv_nxt, tsd.get_seg_seq() ) )
         {
             // Ignore timestamp for this first packet, save to check on next
             talker->set_ts_last(tsd.get_ts() );
@@ -382,7 +382,7 @@ bool TcpNormalizerHpux11::is_paws_ts_checked_required(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
 {
     /* HPUX 11 ignores timestamps for out of order segments */
-    if ((tns.tracker->get_tf_flags() & TF_MISSING_PKT) || !SEQ_EQ(tns.tracker->r_nxt_ack,
+    if ((tns.tracker->get_tf_flags() & TF_MISSING_PKT) || !SEQ_EQ(tns.tracker->rcv_nxt,
         tsd.get_seg_seq()))
         return false;
     else
