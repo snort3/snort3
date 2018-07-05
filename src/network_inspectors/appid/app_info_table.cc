@@ -151,7 +151,6 @@ AppInfoTableEntry* AppInfoManager::get_app_info_entry(AppId appId, const
     AppInfoTable::const_iterator app;
     AppInfoTableEntry* entry = nullptr;
 
-    std::lock_guard<std::mutex> lock(app_info_tables_rw_mutex);
     if ((tmp = get_static_app_info_entry(appId)))
     {
         app = lookup_table.find(tmp);
@@ -181,7 +180,6 @@ AppInfoTableEntry* AppInfoManager::add_dynamic_app_entry(const char* app_name)
         return nullptr;
     }
 
-    std::lock_guard<std::mutex> lock(app_info_tables_rw_mutex);
     AppInfoTableEntry* entry = find_app_info_by_name(app_name);
     if (!entry)
     {

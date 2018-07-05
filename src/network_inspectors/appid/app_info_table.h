@@ -22,7 +22,6 @@
 #ifndef APP_INFO_TABLE_H
 #define APP_INFO_TABLE_H
 
-#include <mutex>
 #include <unordered_map>
 #include <vector>
 
@@ -148,7 +147,6 @@ private:
     inline AppInfoManager() = default;
     void load_appid_config(AppIdModuleConfig*, const char* path);
     AppInfoTableEntry* get_app_info_entry(AppId appId, const AppInfoTable&);
-    std::mutex app_info_tables_rw_mutex;
 };
 
 #endif
