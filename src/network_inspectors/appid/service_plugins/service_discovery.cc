@@ -383,13 +383,15 @@ void ServiceDiscovery::get_next_service(const Packet* p, const AppidSessionDirec
                 asd.tried_reverse_service = true;
                 ServiceDiscoveryState* rsds = AppIdServiceState::get(p->ptrs.ip_api.get_src(),
                     proto, p->ptrs.sp, asd.is_decrypted());
+                std::unordered_map<uint16_t, std::vector<ServiceDetector*>>::iterator urs_iterator;
                 if ( rsds && rsds->get_service() )
                     asd.service_candidates.push_back(rsds->get_service());
-                else if ( !udp_reversed_services[p->ptrs.sp].empty() )
+                else if ( ( urs_iterator = udp_reversed_services.find(p->ptrs.sp) )
+                          != udp_reversed_services.end() and !urs_iterator->second.empty() )
                 {
                     asd.service_candidates.insert(asd.service_candidates.end(),
-                        udp_reversed_services[p->ptrs.sp].begin(),
-                        udp_reversed_services[p->ptrs.sp].end());
+                        urs_iterator->second.begin(),
+                        urs_iterator->second.end());
                 }
                 else if ( p->dsize )
                 {
