@@ -297,8 +297,10 @@ bool DetectionEngine::offload(Packet* p)
 {
     ContextSwitcher* sw = Snort::get_switcher();
 
-    if ( p->type() != PktType::PDU or (p->dsize < SnortConfig::get_conf()->offload_limit) or
-        !sw->can_hold() )
+    if ( p->type() != PktType::PDU or
+         p->dsize < SnortConfig::get_conf()->offload_limit or
+         !sw->can_hold() or
+         !offloader->available() )
     {
         fp_local(p);
         return false;

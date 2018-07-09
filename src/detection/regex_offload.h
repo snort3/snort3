@@ -49,6 +49,9 @@ public:
 
     void stop();
 
+    unsigned available()
+    { return idle.size(); }
+
     unsigned count()
     { return busy.size(); }
 
