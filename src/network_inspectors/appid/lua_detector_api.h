@@ -137,7 +137,7 @@ public:
 };
 
 int register_detector(lua_State*);
-int init_chp_glossary();
+void init_chp_glossary();
 int init(lua_State*, int result=0);
 void free_chp_glossary();
 

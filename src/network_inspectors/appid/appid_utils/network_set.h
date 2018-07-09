@@ -25,8 +25,8 @@
 #ifdef USE_RNA_CONFIG
 
 #include <cstdio>
+#include <unordered_set>
 
-#include "hash/xhash.h"
 #include "protocols/ipv6.h"
 #include "utils/sflsq.h"
 
@@ -102,11 +102,11 @@ struct NetworkSet
 {
     NetworkSet* next;
     SF_LIST networks;
-    XHash* ids;
+    std::unordered_set<unsigned> ids;
     Network** pnetwork;
     unsigned count;
     SF_LIST networks6;
-    XHash* ids6;
+    std::unordered_set<unsigned> ids6;
     Network6** pnetwork6;
     unsigned count6;
 };

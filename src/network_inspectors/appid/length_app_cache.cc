@@ -25,50 +25,39 @@
 
 #include "length_app_cache.h"
 
-#include "application_ids.h"
-#include "hash/xhash.h"
+#include <map>
+
 #include "log/messages.h"
 #include "main/thread.h"
 
+#include "application_ids.h"
+
 using namespace snort;
 
-#define HASH_NUM_ROWS (1024)
-
-static XHash* lengthCache = nullptr;
+static std::map<LengthKey, AppId>* length_cache = nullptr;
 
 void init_length_app_cache()
 {
-    if (!(lengthCache = xhash_new(HASH_NUM_ROWS, sizeof(LengthKey), sizeof(AppId),
-            0, 0, nullptr, nullptr, 0)))
-    {
-        ErrorMessage("lengthAppCache: Failed to allocate length cache!");
-    }
+    length_cache = new std::map<LengthKey, AppId>;
 }
 
 void free_length_app_cache()
 {
-    if (lengthCache)
-    {
-        xhash_delete(lengthCache);
-        lengthCache = nullptr;
-    }
+    delete length_cache;
+    length_cache = nullptr;
 }
 
-AppId find_length_app_cache(const LengthKey* key)
+AppId find_length_app_cache(const LengthKey& key)
 {
-    AppId* val = (AppId*)xhash_find(lengthCache, (void*)key);
-    if (val == nullptr)
+    auto entry = length_cache->find(key);
+    if (entry == length_cache->end())
         return APP_ID_NONE;    /* no match */
     else
-        return *val;           /* match found */
+        return entry->second;  /* match found */
 }
 
-bool add_length_app_cache(const LengthKey* key, AppId val)
+bool add_length_app_cache(const LengthKey& key, AppId val)
 {
-    if (xhash_add(lengthCache, (void*)key, (void*)&val))
-    {
-        return false;
-    }
-    return true;
+    return (length_cache->insert(std::make_pair(key, val))).second == true;
 }
 

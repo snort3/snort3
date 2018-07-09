@@ -39,23 +39,7 @@ int NetworkSetManager::create(NetworkSet** network_set)
 
     NetworkSet* tmp = (NetworkSet*)snort_calloc(sizeof(NetworkSet));
     sflist_init(&tmp->networks);
-    tmp->ids = xhash_new(64, sizeof(unsigned), 0, 0, 0, nullptr, nullptr, 1);
-    if (tmp->ids == nullptr)
-    {
-        ErrorMessage("NetworkSet:Out of memory (wanted %zu bytes)", sizeof(NetworkSet));
-        destroy(tmp);
-        return -1;
-    }
-
     sflist_init(&tmp->networks6);
-    tmp->ids6 = xhash_new(64, sizeof(unsigned), 0, 0, 0, nullptr, nullptr, 1);
-    if (tmp->ids6 == nullptr)
-    {
-        ErrorMessage("NetworkSet:Out of memory (wanted %zu bytes)", sizeof(NetworkSet));
-        destroy(tmp);
-        return -1;
-    }
-
     *network_set = tmp;
     return 0;
 }
@@ -71,14 +55,14 @@ int NetworkSetManager::destroy(NetworkSet* network_set)
         network_set->pnetwork = nullptr;
     }
     sflist_static_free_all(&network_set->networks, &snort_free);
-    xhash_delete(network_set->ids);
+    network_set->ids.clear();
     if (network_set->pnetwork6)
     {
         snort_free(network_set->pnetwork6);
         network_set->pnetwork6 = nullptr;
     }
     sflist_static_free_all(&network_set->networks6, &snort_free);
-    xhash_delete(network_set->ids6);
+    network_set->ids6.clear();
     snort_free(network_set);
 
     return 0;
@@ -126,11 +110,9 @@ int NetworkSetManager::add_network_range_ex(NetworkSet* network_set, uint32_t ra
     }
 
     sflist_add_tail(&network_set->networks, (void*)network);
-    int rval = xhash_add(network_set->ids, &network->info.id, &network->info.id);
-    if (rval != XHASH_OK && rval != XHASH_INTABLE)
+    if (network_set->ids.insert(network->info.id).second == false)
     {
-        ErrorMessage("NetworkSet:Out of memory");
-        snort_free(network);
+        ErrorMessage("NetworkSet: Failed to add id %u\n", network->info.id);
         return -1;
     }
 
@@ -186,11 +168,9 @@ int NetworkSetManager::add_network_range6(NetworkSet* network_set, NSIPv6Addr* r
     }
 
     sflist_add_tail(&network_set->networks6, (void*)network);
-    int rval = xhash_add(network_set->ids6, &network->info.id, &network->info.id);
-    if (rval != XHASH_OK && rval != XHASH_INTABLE)
+    if (network_set->ids6.insert(network->info.id).second == false)
     {
-        ErrorMessage("NetworkSet:Out of memory");
-        snort_free(network);
+        ErrorMessage("NetworkSet: Failed to add IPv6 id %u\n", network->info.id);
         return -1;
     }
 
@@ -943,8 +923,6 @@ int NetworkSetManager::reduce_network_set6(SF_LIST* networks)
 
 int NetworkSetManager::reduce(NetworkSet* network_set)
 {
-    XHashNode* hnode;
-    unsigned id;
     int rval;
     SF_LIST ordered_networks;
     Network* network;
@@ -955,11 +933,8 @@ int NetworkSetManager::reduce(NetworkSet* network_set)
     if (!network_set)
         return -1;
 
-    for (hnode = xhash_gfindfirst(network_set->ids);
-        hnode;
-        hnode=xhash_gfindnext(network_set->ids))
+    for (auto& id : network_set->ids)
     {
-        id = *(unsigned*)(hnode->data);
         if ((rval = order_by_netmask(&ordered_networks, &network_set->networks, id)) != 0)
         {
             sflist_free_all(&ordered_networks, &snort_free);
@@ -1019,10 +994,8 @@ int NetworkSetManager::reduce(NetworkSet* network_set)
         }
     }
 
-    for (hnode = xhash_gfindfirst(network_set->ids6); hnode; hnode=xhash_gfindnext(
-            network_set->ids6))
+    for (auto& id : network_set->ids6)
     {
-        id = *(unsigned*)(hnode->data);
         if ((rval = order_by_netmask(&ordered_networks, &network_set->networks6, id)) != 0)
         {
             sflist_free_all(&ordered_networks, &snort_free);

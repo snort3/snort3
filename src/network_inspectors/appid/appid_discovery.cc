@@ -885,7 +885,7 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
         asd.length_sequence.sequence_cnt++;
         asd.length_sequence.sequence[index].direction = direction;
         asd.length_sequence.sequence[index].length    = p->dsize;
-        AppId id = find_length_app_cache(&asd.length_sequence);
+        AppId id = find_length_app_cache(asd.length_sequence);
         if (id > APP_ID_NONE)
         {
             asd.service.set_port_service_id(id);

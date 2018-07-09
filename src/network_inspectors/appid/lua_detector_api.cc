@@ -27,27 +27,28 @@
 
 #include <lua.hpp>
 #include <pcre.h>
+#include <unordered_map>
 
-#include "app_forecast.h"
-#include "app_info_table.h"
-#include "appid_inspector.h"
-#include "host_port_app_cache.h"
-#include "lua_detector_flow_api.h"
-#include "lua_detector_module.h"
-#include "lua_detector_util.h"
-#include "client_plugins/client_discovery.h"
-#include "service_plugins/service_discovery.h"
-#include "service_plugins/service_ssl.h"
-#include "detector_plugins/detector_dns.h"
-#include "detector_plugins/detector_http.h"
-#include "detector_plugins/http_url_patterns.h"
-#include "detector_plugins/detector_sip.h"
-#include "detector_plugins/detector_pattern.h"
-#include "hash/xhash.h"
 #include "log/messages.h"
 #include "main/snort_types.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
+
+#include "app_forecast.h"
+#include "app_info_table.h"
+#include "appid_inspector.h"
+#include "client_plugins/client_discovery.h"
+#include "detector_plugins/detector_dns.h"
+#include "detector_plugins/detector_http.h"
+#include "detector_plugins/detector_pattern.h"
+#include "detector_plugins/detector_sip.h"
+#include "detector_plugins/http_url_patterns.h"
+#include "host_port_app_cache.h"
+#include "lua_detector_flow_api.h"
+#include "lua_detector_module.h"
+#include "lua_detector_util.h"
+#include "service_plugins/service_discovery.h"
+#include "service_plugins/service_ssl.h"
 
 using namespace snort;
 
@@ -67,30 +68,24 @@ ProfileStats luaDetectorsPerfStats;
 ProfileStats luaCiscoPerfStats;
 ProfileStats luaCustomPerfStats;
 
-static XHash* CHP_glossary = nullptr;      // keep track of http multipatterns here
+static std::unordered_map<AppId, CHPApp*>* CHP_glossary = nullptr; // tracks http multipatterns
 
-static int free_chp_data(void* /* key */, void* data)
+void init_chp_glossary()
 {
-    if (data)
-        snort_free(data);
-    return 0;
-}
-
-int init_chp_glossary()
-{
-    if (!(CHP_glossary = xhash_new(1024, sizeof(AppId), 0, 0, 0, nullptr, &free_chp_data, 0)))
-    {
-        ErrorMessage("Config: failed to allocate memory for an sfxhash.");
-        return 0;
-    }
-    else
-        return 1;
+    CHP_glossary = new std::unordered_map<AppId, CHPApp*>;
 }
 
 void free_chp_glossary()
 {
-    if (CHP_glossary)
-        xhash_delete(CHP_glossary);
+    if (!CHP_glossary)
+        return;
+
+    for (auto& entry : *CHP_glossary)
+    {
+        if (entry.second)
+            snort_free(entry.second);
+    }
+    delete CHP_glossary;
     CHP_glossary = nullptr;
 }
 
@@ -1201,7 +1196,7 @@ static int create_chp_application(AppId appIdInstance, unsigned app_type_flags, 
     new_app->app_type_flags = app_type_flags;
     new_app->num_matches = num_matches;
 
-    if (xhash_add(CHP_glossary, &(new_app->appIdInstance), new_app))
+    if (CHP_glossary->insert(std::make_pair(appIdInstance, new_app)).second == false)
     {
         ErrorMessage("LuaDetectorApi:Failed to add CHP for appId %d, instance %d",
             CHP_APPIDINSTANCE_TO_ID(appIdInstance), CHP_APPIDINSTANCE_TO_INSTANCE(appIdInstance));
@@ -1227,7 +1222,7 @@ static int detector_chp_create_application(lua_State* L)
     int num_matches = lua_tointeger(L, ++index);
 
     // We only want one of these for each appId.
-    if (xhash_find(CHP_glossary, &appIdInstance))
+    if (CHP_glossary->find(appIdInstance) != CHP_glossary->end())
     {
         ErrorMessage(
             "LuaDetectorApi:Attempt to add more than one CHP for appId %d - use CHPMultiCreateApp",
@@ -1301,12 +1296,9 @@ static inline int get_chp_action_data(lua_State* L, int index, char** action_dat
 static int add_chp_pattern_action(AppId appIdInstance, int isKeyPattern, HttpFieldIds patternType,
     size_t patternSize, char* patternData, ActionType actionType, char* optionalActionData)
 {
-    CHPListElement* chpa;
-    CHPApp* chpapp;
-    AppInfoManager& app_info_mgr = AppInfoManager::get_instance();
-
     //find the CHP App for this
-    if (!(chpapp = (decltype(chpapp))xhash_find(CHP_glossary, &appIdInstance)))
+    auto chp_entry = CHP_glossary->find(appIdInstance);
+    if (chp_entry == CHP_glossary->end() or !chp_entry->second)
     {
         ErrorMessage(
             "LuaDetectorApi:Invalid attempt to add a CHP action for unknown appId %d, instance %d. - pattern:\"%s\" - action \"%s\"\n",
@@ -1317,6 +1309,9 @@ static int add_chp_pattern_action(AppId appIdInstance, int isKeyPattern, HttpFie
             snort_free(optionalActionData);
         return 0;
     }
+
+    CHPApp* chpapp = chp_entry->second;
+    AppInfoManager& app_info_mgr = AppInfoManager::get_instance();
 
     if (isKeyPattern)
     {
@@ -1365,7 +1360,7 @@ static int add_chp_pattern_action(AppId appIdInstance, int isKeyPattern, HttpFie
     else if (actionType != ALTERNATE_APPID && actionType != DEFER_TO_SIMPLE_DETECT)
         chpapp->ptype_req_counts[patternType]++;
 
-    chpa = (CHPListElement*)snort_calloc(sizeof(CHPListElement));
+    CHPListElement* chpa = (CHPListElement*)snort_calloc(sizeof(CHPListElement));
     chpa->chp_action.appIdInstance = appIdInstance;
     chpa->chp_action.precedence = precedence;
     chpa->chp_action.key_pattern = isKeyPattern;
@@ -1457,7 +1452,7 @@ static int detector_create_chp_multi_application(lua_State* L)
     for (instance=0; instance < CHP_APPID_INSTANCE_MAX; instance++ )
     {
         appIdInstance = (appId << CHP_APPID_BITS_FOR_INSTANCE) + instance;
-        if ( xhash_find(CHP_glossary, &appIdInstance) )
+        if (CHP_glossary->find(appIdInstance) != CHP_glossary->end())
             continue;
         break;
     }
@@ -1660,7 +1655,7 @@ static int detector_add_length_app_cache(lua_State* L)
         str_ptr++;
     }
 
-    if ( !add_length_app_cache(&length_sequence, appId) )
+    if ( !add_length_app_cache(length_sequence, appId) )
     {
         ErrorMessage("LuaDetectorApi:Could not add entry to cache!");
         lua_pushnumber(L, -1);
