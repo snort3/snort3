@@ -412,17 +412,18 @@ static inline void process_rtmp(AppIdSession& asd,
     ThirdPartyAppIDAttributeData& attribute_data, int confidence)
 {
     AppIdHttpSession* hsession = asd.get_http_session();
-    AppId serviceAppId = 0;
+    AppId service_id = 0;
     AppId client_id = 0;
     AppId payload_id = 0;
     AppId referred_payload_app_id = 0;
     bool own = true;
+    uint16_t size = 0;
 
     const string* field=0;
 
-    if (!hsession->get_field(MISC_URL_FID))
+    if ( !hsession->get_field(MISC_URL_FID) )
     {
-        if ( (field=attribute_data.http_request_url(own)) != nullptr )
+        if ( ( field=attribute_data.http_request_url(own) ) != nullptr )
         {
             hsession->set_field(MISC_URL_FID, field);
             asd.scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
@@ -432,33 +433,68 @@ static inline void process_rtmp(AppIdSession& asd,
     if ( !asd.config->mod_config->referred_appId_disabled &&
         !hsession->get_field(REQ_REFERER_FID) )
     {
-        if ( (field=attribute_data.http_request_referer(own)) != nullptr )
+        if ( ( field=attribute_data.http_request_referer(own) ) != nullptr )
         {
             hsession->set_field(REQ_REFERER_FID, field);
         }
     }
 
-    if (hsession->get_field(MISC_URL_FID) || (confidence == 100 &&
-        asd.session_packet_count > asd.config->mod_config->rtmp_max_packets))
+    if ( !hsession->get_field(REQ_AGENT_FID) )
+    {
+        if ( ( field=attribute_data.http_request_user_agent(own) ) != nullptr )
+        {
+            hsession->set_field(REQ_AGENT_FID, field);
+            hsession->set_offset(REQ_AGENT_FID,
+                attribute_data.http_request_user_agent_begin(),
+                attribute_data.http_request_user_agent_end());
+
+            asd.scan_flags |= SCAN_HTTP_USER_AGENT_FLAG;
+        }
+    }
+    
+    if ( ( asd.scan_flags & SCAN_HTTP_USER_AGENT_FLAG ) and 
+         asd.client.get_id() <= APP_ID_NONE and
+         ( field = hsession->get_field(REQ_AGENT_FID) ) and 
+         ( size = attribute_data.http_request_user_agent_end() -
+           attribute_data.http_request_user_agent_begin() ) > 0 )
+    {
+        char *version = nullptr;
+        HttpPatternMatchers* http_matchers = HttpPatternMatchers::get_instance();
+       
+        http_matchers->identify_user_agent(field->c_str(), size, service_id, 
+        client_id, &version);
+        
+        asd.set_client_appid_data(client_id, version);
+        
+        // do not overwrite a previously-set service
+        if ( service_id <= APP_ID_NONE )
+            asd.set_service_appid_data(service_id, nullptr, nullptr);
+        
+        asd.scan_flags |= ~SCAN_HTTP_USER_AGENT_FLAG;
+        snort_free(version);
+    }     
+
+    if ( hsession->get_field(MISC_URL_FID) || (confidence == 100 &&
+        asd.session_packet_count > asd.config->mod_config->rtmp_max_packets) )
     {
         const std::string* url;
-        if ( (url = hsession->get_field(MISC_URL_FID)) != nullptr )
+        if ( ( url = hsession->get_field(MISC_URL_FID) ) != nullptr )
         {
             HttpPatternMatchers* http_matchers = HttpPatternMatchers::get_instance();
             const char* referer = hsession->get_cfield(REQ_REFERER_FID);
             if ( ( ( http_matchers->get_appid_from_url(nullptr, url->c_str(),
-                nullptr, referer, &client_id, &serviceAppId,
+                nullptr, referer, &client_id, &service_id,
                 &payload_id, &referred_payload_app_id, 1) )
                 ||
                 ( http_matchers->get_appid_from_url(nullptr, url->c_str(),
-                nullptr, referer, &client_id, &serviceAppId,
+                nullptr, referer, &client_id, &service_id,
                 &payload_id, &referred_payload_app_id, 0) ) ) == 1 )
             {
                 // do not overwrite a previously-set client or service
-                if (client_id <= APP_ID_NONE)
+                if ( client_id <= APP_ID_NONE )
                     asd.set_client_appid_data(client_id, nullptr);
-                if (serviceAppId <= APP_ID_NONE)
-                    asd.set_service_appid_data(serviceAppId, nullptr, nullptr);
+                if ( service_id <= APP_ID_NONE )
+                    asd.set_service_appid_data(service_id, nullptr, nullptr);
 
                 // DO overwrite a previously-set data
                 asd.set_payload_appid_data(payload_id, nullptr);
