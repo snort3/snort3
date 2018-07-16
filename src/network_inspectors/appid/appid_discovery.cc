@@ -147,9 +147,10 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
     if ( !do_pre_discovery(p, &asd, inspector, protocol, direction) )
         return;
 
-    bool is_discovery_done = do_discovery(p, *asd, protocol, direction);
+    AppId service_id;
+    bool is_discovery_done = do_discovery(p, *asd, protocol, direction, service_id);
 
-    do_post_discovery(p, *asd, direction, is_discovery_done);
+    do_post_discovery(p, *asd, direction, is_discovery_done, service_id);
 }
 
 static inline int match_pe_network(const SfIp* pktAddr, const PortExclusion* pe)
@@ -827,7 +828,7 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession** p_asd, AppIdInsp
 }
 
 bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol protocol,
-    AppidSessionDirection direction)
+    AppidSessionDirection direction, AppId& service_id)
 {
     bool is_discovery_done = false;
 
@@ -876,26 +877,6 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
         }
     }
 
-    // Length-based service detection
-    if ( (p->dsize > 0)and (asd.service.get_port_service_id() <= APP_ID_NONE)
-        and (asd.length_sequence.sequence_cnt < LENGTH_SEQUENCE_CNT_MAX) )
-    {
-        uint8_t index = asd.length_sequence.sequence_cnt;
-        asd.length_sequence.proto = protocol;
-        asd.length_sequence.sequence_cnt++;
-        asd.length_sequence.sequence[index].direction = direction;
-        asd.length_sequence.sequence[index].length    = p->dsize;
-        AppId id = find_length_app_cache(asd.length_sequence);
-        if (id > APP_ID_NONE)
-        {
-            asd.service.set_port_service_id(id);
-            if (appidDebug->is_active())
-                LogMessage("AppIdDbg %s Port service %d from length\n",
-                    appidDebug->get_debug_session(), asd.service.get_port_service_id());
-            asd.set_session_flags(APPID_SESSION_PORT_SERVICE_DONE);
-        }
-    }
-
     // exceptions for rexec and any other service detector that need to see SYN and SYN/ACK
     if (asd.get_session_flags(APPID_SESSION_REXEC_STDERR))
     {
@@ -927,13 +908,36 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
         asd.set_session_flags(APPID_SESSION_ADDITIONAL_PACKET);
     }
 
+    service_id = asd.pick_service_app_id();
+
+    // Length-based service detection if no service is found yet
+    if ( (service_id <= APP_ID_NONE or service_id == APP_ID_UNKNOWN_UI) and (p->dsize > 0) and
+         (asd.length_sequence.sequence_cnt < LENGTH_SEQUENCE_CNT_MAX) and
+         !asd.get_session_flags(APPID_SESSION_OOO) )
+    {
+        uint8_t index = asd.length_sequence.sequence_cnt;
+        asd.length_sequence.proto = protocol;
+        asd.length_sequence.sequence_cnt++;
+        asd.length_sequence.sequence[index].direction = direction;
+        asd.length_sequence.sequence[index].length = p->dsize;
+        AppId id = find_length_app_cache(asd.length_sequence);
+        if (id > APP_ID_NONE)
+        {
+            service_id = id;
+            asd.service.set_port_service_id(id);
+            if (appidDebug->is_active())
+                LogMessage("AppIdDbg %s Port service %d from length\n",
+                    appidDebug->get_debug_session(), id);
+            asd.set_session_flags(APPID_SESSION_PORT_SERVICE_DONE);
+        }
+    }
+
     return is_discovery_done;
 }
 
 void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
-    AppidSessionDirection direction, bool is_discovery_done)
+    AppidSessionDirection direction, bool is_discovery_done, AppId service_id)
 {
-    AppId service_id = asd.pick_service_app_id();
     AppId payload_id = asd.pick_payload_app_id();
 
     if (service_id > APP_ID_NONE)

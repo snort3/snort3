@@ -137,9 +137,9 @@ private:
     static bool do_pre_discovery(snort::Packet* p, AppIdSession** p_asd, AppIdInspector& inspector,
         IpProtocol& protocol, AppidSessionDirection& direction);
     static bool do_discovery(snort::Packet* p, AppIdSession& asd, IpProtocol protocol,
-        AppidSessionDirection direction);
+        AppidSessionDirection direction, AppId& service_id);
     static void do_post_discovery(snort::Packet* p, AppIdSession& asd,
-        AppidSessionDirection direction, bool is_discovery_done);
+        AppidSessionDirection direction, bool is_discovery_done, AppId service_id);
     static bool handle_unmonitored_session(AppIdSession* asd, const snort::Packet* p,
         IpProtocol protocol, AppidSessionDirection dir, AppIdInspector& inspector,
         uint64_t& flow_flags);
