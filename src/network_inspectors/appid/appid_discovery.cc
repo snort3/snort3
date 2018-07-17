@@ -751,8 +751,9 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession** p_asd, AppIdInsp
         {
             asd->set_session_flags(APPID_SESSION_IGNORE_FLOW_LOGGED);
 
-            LogMessage("AppIdDbg %s Ignoring connection with service %d\n",
-                appidDebug->get_debug_session(), asd->service.get_id());
+            const char *app_name = AppInfoManager::get_instance().get_app_name(asd->service.get_id());
+            LogMessage("AppIdDbg %s Ignoring connection with service %s (%d)\n",
+                appidDebug->get_debug_session(), app_name ? app_name : "unknown", asd->service.get_id());
         }
 
         return false;
@@ -868,8 +869,11 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
             {
                 asd.service.set_port_service_id(id);
                 if (appidDebug->is_active())
-                    LogMessage("AppIdDbg %s Port service %d from port\n",
-                        appidDebug->get_debug_session(), asd.service.get_port_service_id());
+                {
+                    const char *app_name = AppInfoManager::get_instance().get_app_name(asd.service.get_port_service_id());
+                    LogMessage("AppIdDbg %s Port service %s (%d) from port\n",
+                        appidDebug->get_debug_session(), app_name ? app_name : "unknown", asd.service.get_port_service_id());
+                }
             }
             asd.set_session_flags(APPID_SESSION_PORT_SERVICE_DONE);
         }
@@ -926,8 +930,11 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
             service_id = id;
             asd.service.set_port_service_id(id);
             if (appidDebug->is_active())
-                LogMessage("AppIdDbg %s Port service %d from length\n",
-                    appidDebug->get_debug_session(), id);
+            {
+                const char *app_name = AppInfoManager::get_instance().get_app_name(id);
+                LogMessage("AppIdDbg %s Port service %s (%d) from length\n",
+                    appidDebug->get_debug_session(), app_name ? app_name : "unknown", id);
+            }
             asd.set_session_flags(APPID_SESSION_PORT_SERVICE_DONE);
         }
     }
@@ -973,6 +980,7 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
         if (appidDebug->is_active())
         {
             const char* typeString;
+            const char *app_name = AppInfoManager::get_instance().get_app_name(payload_id);
             switch ( asd.search_support_type )
             {
             case NOT_A_SEARCH_ENGINE: typeString = "NOT_A_SEARCH_ENGINE"; break;
@@ -980,9 +988,8 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
             case UNSUPPORTED_SEARCH_ENGINE: typeString = "UNSUPPORTED_SEARCH_ENGINE"; break;
             default: typeString = "unknown"; break;
             }
-
-            LogMessage("AppIdDbg %s AppId %u (safe)search_support_type=%s\n",
-                appidDebug->get_debug_session(), payload_id, typeString);
+            LogMessage("AppIdDbg %s Application: %s (%d) (safe)search_support_type=%s\n",
+                appidDebug->get_debug_session(), app_name ? app_name : "unknown", payload_id, typeString);
         }
     }
 

@@ -691,9 +691,13 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                     asd.clear_session_flags(APPID_SESSION_APP_REINSPECT);
 
                 if (appidDebug->is_active())
-                    LogMessage("AppIdDbg %s 3rd party returned %d\n",
+                {
+                    const char *app_name = AppInfoManager::get_instance().get_app_name(tp_app_id);
+                    LogMessage("AppIdDbg %s 3rd party returned %s (%d)\n",
                         appidDebug->get_debug_session(),
+                        app_name ? app_name : "unknown",
                         tp_app_id);
+                }
 
                 // For now, third party can detect HTTP/2 (w/o metadata) for
                 // some cases.  Treat it like HTTP w/ is_http2 flag set.
@@ -819,17 +823,25 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                         // packet
                         asd.service.set_port_service_id(portAppId);
                         if (appidDebug->is_active())
-                            LogMessage("AppIdDbg %s SSL is service %d, portServiceAppId %d\n",
+                        {
+                            const char *service_name = AppInfoManager::get_instance().get_app_name(tp_app_id);
+                            const char *port_service_name = AppInfoManager::get_instance().get_app_name(asd.service.get_port_service_id());
+                            LogMessage("AppIdDbg %s SSL is service %s (%d), portServiceAppId %s (%d)\n",
                                 appidDebug->get_debug_session(),
-                                tp_app_id, asd.service.get_port_service_id());
+                                service_name ? service_name : "unknown", tp_app_id,
+                                port_service_name ? port_service_name : "unknown", asd.service.get_port_service_id());
+                        }
                     }
                     else
                     {
                         asd.set_tp_payload_app_id(tp_app_id);
                         tp_app_id = portAppId;
                         if (appidDebug->is_active())
-                            LogMessage("AppIdDbg %s SSL is %d\n", appidDebug->get_debug_session(),
-                                tp_app_id);
+                        {
+                            const char *app_name = AppInfoManager::get_instance().get_app_name(tp_app_id);
+                            LogMessage("AppIdDbg %s SSL is %s (%d)\n", appidDebug->get_debug_session(),
+                                app_name ? app_name : "unknown", tp_app_id);
+                        }
                     }
                     snort_app_id = APP_ID_SSL;
                 }

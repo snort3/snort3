@@ -45,6 +45,11 @@
 
 using namespace snort;
 
+const char* AppInfoManager::get_app_name(AppId)
+{
+    return "";
+}
+
 // HttpPatternMatchers mock functions
 HttpPatternMatchers* HttpPatternMatchers::get_instance()
 {
