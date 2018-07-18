@@ -2,10 +2,11 @@
 if (STATIC_CODECS)
     set (PLUGIN_LIST
         cd_eth.cc
+        cd_raw.cc
     )
 
 else (STATIC_CODECS)
-    add_dynamic_module (cd_eth codecs cd_eth.cc)
+    add_dynamic_module (cd_eth codecs cd_eth.cc cd_raw.cc)
 
 endif (STATIC_CODECS)
 

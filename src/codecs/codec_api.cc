@@ -61,6 +61,7 @@ extern const BaseApi* cd_no_next[];
 extern const BaseApi* cd_pgm[];
 extern const BaseApi* cd_pppencap[];
 extern const BaseApi* cd_pppoepkt[];
+extern const BaseApi* cd_raw[];
 extern const BaseApi* cd_routing[];
 extern const BaseApi* cd_teredo[];
 extern const BaseApi* cd_transbridge[];
@@ -102,6 +103,7 @@ void load_codecs()
     PluginManager::load_plugins(cd_pgm);
     PluginManager::load_plugins(cd_pppencap);
     PluginManager::load_plugins(cd_pppoepkt);
+    PluginManager::load_plugins(cd_raw);
     PluginManager::load_plugins(cd_routing);
     PluginManager::load_plugins(cd_teredo);
     PluginManager::load_plugins(cd_transbridge);

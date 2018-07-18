@@ -22,6 +22,8 @@
 #include "config.h"
 #endif
 
+#include <sfbpf_dlt.h>
+
 #include <random>
 
 #include "codecs/codec_module.h"
@@ -41,7 +43,8 @@
 using namespace snort;
 
 #define CD_IPV4_NAME "ipv4"
-#define CD_IPV4_HELP "support for Internet protocol v4"
+#define CD_IPV4_HELP_STR "support for Internet protocol v4"
+#define CD_IPV4_HELP ADD_DLT(CD_IPV4_HELP_STR, DLT_IPV4)
 
 namespace
 {
@@ -105,6 +108,7 @@ class Ipv4Codec : public Codec
 public:
     Ipv4Codec() : Codec(CD_IPV4_NAME) { }
 
+    void get_data_link_type(std::vector<int>&) override;
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
@@ -120,6 +124,11 @@ private:
     void DecodeIPOptions(const uint8_t* start, uint8_t& o_len, CodecData& data);
 };
 }  // namespace
+
+void Ipv4Codec::get_data_link_type(std::vector<int>& v)
+{
+    v.push_back(DLT_IPV4);
+}
 
 void Ipv4Codec::get_protocol_ids(std::vector<ProtocolId>& v)
 {
