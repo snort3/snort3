@@ -71,6 +71,7 @@ public:
     static void load_commands(Shell*);
     static void load_rules(snort::SnortConfig*);
     static void set_config(snort::SnortConfig*);
+    static void reload_module(const char*, snort::SnortConfig*);
 
     static void reset_errors();
     static unsigned get_errors();

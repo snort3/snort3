@@ -675,6 +675,43 @@ SnortConfig* Snort::get_updated_policy(SnortConfig* other_conf, const char* fnam
     return sc;
 }
 
+SnortConfig* Snort::get_updated_module(SnortConfig* other_conf, const char* name)
+{
+    reloading = true;
+
+    SnortConfig* sc = new SnortConfig(other_conf);
+
+    if ( name )
+    {
+        ModuleManager::reload_module(name, sc);
+        if ( ModuleManager::get_errors() || !sc->verify() )
+        {
+            sc->cloned = true;
+            InspectorManager::update_policy(other_conf);
+            delete sc;
+            set_default_policy(other_conf);
+            reloading = false;
+            return nullptr;
+        }
+    }
+
+    if ( !InspectorManager::configure(sc, true) )
+    {
+        sc->cloned = true;
+        InspectorManager::update_policy(other_conf);
+        delete sc;
+        set_default_policy(other_conf);
+        reloading = false;
+        return nullptr;
+    }
+
+    other_conf->cloned = true;
+
+    InspectorManager::update_policy(sc);
+    reloading = false;
+    return sc;
+}
+
 void Snort::capture_packet()
 {
     if ( snort_main_thread_pid == gettid() )

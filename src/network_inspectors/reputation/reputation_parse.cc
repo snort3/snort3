@@ -80,12 +80,6 @@ ReputationConfig::~ReputationConfig()
     if (reputation_segment != nullptr)
         snort_free(reputation_segment);
 
-    if (blacklist_path)
-        snort_free(blacklist_path);
-
-    if (whitelist_path)
-        snort_free(whitelist_path);
-
     for (auto& file : list_files)
     {
         delete file;
@@ -752,7 +746,7 @@ void estimate_num_entries(ReputationConfig* config)
 
 void add_black_white_List(ReputationConfig* config)
 {
-    if (config->blacklist_path)
+    if (config->blacklist_path.size())
     {
         ListFile* listItem = new ListFile;
         listItem->all_zones_enabled = true;
@@ -761,7 +755,7 @@ void add_black_white_List(ReputationConfig* config)
         listItem->list_id = 0;
         config->list_files.push_back(listItem);
     }
-    if (config->whitelist_path)
+    if (config->whitelist_path.size())
     {
         ListFile* listItem = new ListFile;
         listItem->all_zones_enabled = true;

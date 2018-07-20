@@ -109,10 +109,10 @@ ProfileStats* ReputationModule::get_profile() const
 bool ReputationModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("blacklist") )
-        conf->blacklist_path = snort_strdup(v.get_string());
+        conf->blacklist_path = v.get_string();
 
     else if ( v.is("list_dir") )
-        conf->list_dir = std::string(v.get_string());
+        conf->list_dir = v.get_string();
 
     else if ( v.is("memcap") )
         conf->memcap = v.get_long();
@@ -130,7 +130,7 @@ bool ReputationModule::set(const char*, Value& v, SnortConfig*)
         conf->white_action = (WhiteAction)v.get_long();
 
     else if ( v.is("whitelist") )
-        conf->whitelist_path = snort_strdup(v.get_string());
+        conf->whitelist_path = v.get_string();
 
     else
         return false;
@@ -140,34 +140,17 @@ bool ReputationModule::set(const char*, Value& v, SnortConfig*)
 
 ReputationConfig* ReputationModule::get_data()
 {
-    ReputationConfig* tmp = conf;
-    conf = nullptr;
-    return tmp;
+    return conf;
 }
 
 bool ReputationModule::begin(const char*, int, SnortConfig*)
 {
-    assert(!conf);
     conf = new ReputationConfig;
     return true;
 }
 
 bool ReputationModule::end(const char*, int, SnortConfig*)
 {
-    if (!conf->list_dir.empty())
-        read_manifest(MANIFEST_FILENAME, conf);
-
-    add_black_white_List(conf);
-    estimate_num_entries(conf);
-    if (conf->num_entries <= 0)
-    {
-        ParseWarning(WARN_CONF,
-            "reputation: can't find any whitelist/blacklist entries; disabled.");
-        return true;
-    }
-
-    ip_list_init(conf->num_entries + 1, conf);
-
     if ( (conf->priority == WHITELISTED_TRUST) && (conf->white_action == UNBLACK) )
     {
         ParseWarning(WARN_CONF, "Keyword \"whitelist\" for \"priority\" is "

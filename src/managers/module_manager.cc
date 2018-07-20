@@ -1068,6 +1068,20 @@ void ModuleManager::show_module(const char* name)
         cout << "no match" << endl;
 }
 
+void ModuleManager::reload_module(const char* name, snort::SnortConfig* sc)
+{
+    if ( ModHook* h = get_hook(name) )
+    {
+        PluginManager::instantiate(h->api, h->mod, sc);
+
+    }
+    else
+    {
+        cout << "Module " << name <<" doesn't exist";
+        cout << endl;
+    }
+}
+
 static bool selected(const Module* m, const char* pfx, bool exact)
 {
     if ( !pfx )

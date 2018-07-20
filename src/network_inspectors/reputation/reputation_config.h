@@ -79,12 +79,10 @@ struct ReputationConfig
     IPdecision priority = WHITELISTED_TRUST;
     NestedIP nested_ip = INNER;
     WhiteAction white_action = UNBLACK;
-    MEM_OFFSET local_black_ptr = 0;
-    MEM_OFFSET local_white_ptr = 0;
-    uint8_t* reputation_segment = nullptr;
-    char* blacklist_path = nullptr;
-    char* whitelist_path = nullptr;
+    std::string blacklist_path;
+    std::string whitelist_path;
     bool memcap_reached = false;
+    uint8_t* reputation_segment = nullptr;
     table_flat_t* ip_list = nullptr;
     ListFiles list_files;
     std::string list_dir;

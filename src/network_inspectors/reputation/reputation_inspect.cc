@@ -24,6 +24,7 @@
 #endif
 
 #include "reputation_inspect.h"
+#include "reputation_parse.h"
 
 #include "detection/detect.h"
 #include "detection/detection_engine.h"
@@ -145,11 +146,11 @@ static void print_reputation_conf(ReputationConfig* config)
     LogMessage("    White action: %s %s \n",
         WhiteActionOption[config->white_action],
         config->white_action ==  UNBLACK ? "(Default)" : "");
-    if (config->blacklist_path)
-        LogMessage("    Blacklist File Path: %s\n", config->blacklist_path);
+    if (config->blacklist_path.size())
+        LogMessage("    Blacklist File Path: %s\n", config->blacklist_path.c_str());
 
-    if (config->whitelist_path)
-        LogMessage("    Whitelist File Path: %s\n", config->whitelist_path);
+    if (config->whitelist_path.size())
+        LogMessage("    Whitelist File Path: %s\n", config->whitelist_path.c_str());
 
     LogMessage("\n");
 }
@@ -343,32 +344,37 @@ class Reputation : public Inspector
 {
 public:
     Reputation(ReputationConfig*);
-    ~Reputation() override;
 
     void show(SnortConfig*) override;
     void eval(Packet*) override;
 
 private:
-    ReputationConfig* config;
+    ReputationConfig config;
 };
 
 Reputation::Reputation(ReputationConfig* pc)
 {
-    config = pc;
-    reputationstats.memory_allocated = sfrt_flat_usage(config->ip_list);
-}
+    config = *pc;
+    ReputationConfig* conf = &config;
+    if (!config.list_dir.empty())
+        read_manifest(MANIFEST_FILENAME, conf);
 
-Reputation::~Reputation()
-{
-    if ( config )
+    add_black_white_List(conf);
+    estimate_num_entries(conf);
+    if (conf->num_entries <= 0)
     {
-        delete config;
+        ParseWarning(WARN_CONF,
+            "reputation: can't find any whitelist/blacklist entries; disabled.");
+        return;
     }
+
+    ip_list_init(conf->num_entries + 1, conf);
+    reputationstats.memory_allocated = sfrt_flat_usage(conf->ip_list);
 }
 
 void Reputation::show(SnortConfig*)
 {
-    print_reputation_conf(config);
+    print_reputation_conf(&config);
 }
 
 void Reputation::eval(Packet* p)
@@ -380,7 +386,7 @@ void Reputation::eval(Packet* p)
 
     if (!p->is_rebuilt() && !is_reputation_disabled(p->flow))
     {
-        snort_reputation(config, p);
+        snort_reputation(&config, p);
         disable_reputation(p->flow);
         ++reputationstats.packets;
     }
