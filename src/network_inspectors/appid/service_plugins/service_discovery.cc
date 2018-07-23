@@ -483,8 +483,8 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p, AppidSessio
             got_incompatible_service = true;
         asd.service_search_state = SESSION_SERVICE_SEARCH_STATE::PENDING;
         if (appidDebug->is_active())
-            LogMessage("AppIdDbg %s %s service detector %s (%d)\n",
-                appidDebug->get_debug_session(), asd.service_detector->get_name().c_str(),
+            LogMessage("AppIdDbg %s %s service detector returned %s (%d)\n",
+                appidDebug->get_debug_session(), asd.service_detector->get_log_name().c_str(),
                 asd.service_detector->get_code_string((APPID_STATUS_CODE)ret), ret);
     }
     /* Try to find detectors based on ports and patterns. */
@@ -508,8 +508,8 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p, AppidSessio
 
             result = service->validate(args);
             if ( appidDebug->is_active() )
-                LogMessage("AppIdDbg %s %s service candidate %s (%d)\n",
-                    appidDebug->get_debug_session(), service->get_name().c_str(),
+                LogMessage("AppIdDbg %s %s service candidate returned %s (%d)\n",
+                    appidDebug->get_debug_session(), service->get_log_name().c_str(),
                     service->get_code_string((APPID_STATUS_CODE)result), result);
 
             if ( result == APPID_SUCCESS )

@@ -127,11 +127,11 @@ public:
     const std::string& get_name() const
     { return name; }
 
+    const std::string& get_log_name() const
+    { return log_name.empty()? name : log_name; }
+
     unsigned get_minimum_matches() const
     { return minimum_matches; }
-
-    void set_minimum_matches(unsigned minimumMatches = 0)
-    { minimum_matches = minimumMatches; }
 
     unsigned int get_precedence() const
     { return precedence; }
@@ -142,21 +142,19 @@ public:
     bool is_custom_detector() const
     { return custom_detector; }
 
-    void set_custom_detector(bool isCustom = false)
-    { this->custom_detector = isCustom; }
-
     AppIdDiscovery& get_handler() const
     { return *handler; }
 
-        bool is_client() const
-        { return client; }
+    bool is_client() const
+    { return client; }
 
-        virtual LuaStateDescriptor* validate_lua_state(bool /*packet_context*/)
-        { return nullptr; }
+    virtual LuaStateDescriptor* validate_lua_state(bool /*packet_context*/)
+    { return nullptr; }
 
 protected:
     AppIdDiscovery* handler = nullptr;
-    std::string name;
+    std::string name;     // unique name to map detector; can be UUID file name for lua-detector
+    std::string log_name; // name from detector package info; can be same as 'name' for c-detector
     bool client = false;
     bool enabled = true;
     bool custom_detector = false;

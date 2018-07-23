@@ -2567,21 +2567,27 @@ static inline void init_lsd(LuaStateDescriptor* lsd, const std::string& detector
 }
 
 LuaServiceDetector::LuaServiceDetector(AppIdDiscovery* sdm, const std::string& detector_name,
-    IpProtocol protocol)
+    const std::string& logging_name, bool is_custom, unsigned min_match, IpProtocol protocol)
 {
     handler = sdm;
     name = detector_name;
+    log_name = logging_name;
+    custom_detector = is_custom;
+    minimum_matches = min_match;
     proto = protocol;
     handler->register_detector(name, this, proto);
 }
 
 
 LuaServiceObject::LuaServiceObject(AppIdDiscovery* sdm, const std::string& detector_name,
-    IpProtocol protocol, lua_State* L)
+    const std::string& log_name, bool is_custom, IpProtocol protocol, lua_State* L)
 {
+    init_lsd(&lsd, detector_name, L);
+
     if (init(L))
     {
-	    sd = new LuaServiceDetector(sdm,detector_name,protocol);
+        sd = new LuaServiceDetector(sdm, detector_name,
+            log_name, is_custom, lsd.package_info.minimum_matches, protocol);
     }
     else
     {
@@ -2605,7 +2611,6 @@ LuaServiceObject::LuaServiceObject(AppIdDiscovery* sdm, const std::string& detec
 	    sd = (ServiceDetector*)ad;
     }  
 
-    init_lsd(&lsd, detector_name, L);
     UserData<LuaServiceObject>::push(L, DETECTOR, this);
 
     lua_pushvalue(L, -1);
@@ -2633,20 +2638,26 @@ int LuaServiceDetector::validate(AppIdDiscoveryArgs& args)
 }
 
 LuaClientDetector::LuaClientDetector(AppIdDiscovery* cdm, const std::string& detector_name,
-    IpProtocol protocol)
+    const std::string& logging_name, bool is_custom, unsigned min_match, IpProtocol protocol)
 {
     handler = cdm;
     name = detector_name;
+    log_name = logging_name;
+    custom_detector = is_custom;
+    minimum_matches = min_match;
     proto = protocol;
     handler->register_detector(name, this, proto);
 }
 
 LuaClientObject::LuaClientObject(AppIdDiscovery* cdm, const std::string& detector_name,
-    IpProtocol protocol, lua_State* L)
+    const std::string& log_name, bool is_custom, IpProtocol protocol, lua_State* L)
 {
+    init_lsd(&lsd, detector_name, L);
+
     if (init(L))
     {
-        cd = new LuaClientDetector(cdm, detector_name, protocol);
+        cd = new LuaClientDetector(cdm, detector_name,
+            log_name, is_custom, lsd.package_info.minimum_matches, protocol);
     }
     else
     {
@@ -2670,7 +2681,6 @@ LuaClientObject::LuaClientObject(AppIdDiscovery* cdm, const std::string& detecto
 	    cd = (ClientDetector*)ad;
     }  
     
-    init_lsd(&lsd, detector_name, L);
     UserData<LuaClientObject>::push(L, DETECTOR, this);
 
     lua_pushvalue(L, -1);

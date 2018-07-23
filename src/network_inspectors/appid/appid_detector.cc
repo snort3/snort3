@@ -106,7 +106,7 @@ const char* AppIdDetector::get_code_string(APPID_STATUS_CODE code) const
     case APPID_SUCCESS:
         return "success";
     case APPID_INPROCESS:
-        return "inprocess";
+        return "in-process";
     case APPID_NEED_REASSEMBLY:
         return "need-reassembly";
     case APPID_NOT_COMPATIBLE:
@@ -124,6 +124,6 @@ const char* AppIdDetector::get_code_string(APPID_STATUS_CODE code) const
     case APPID_ENOMEM:
         return "error-memory";
     }
-    return "unknown code";
+    return "unknown-code";
 }
 

@@ -88,16 +88,17 @@ public:
 class LuaServiceDetector : public ServiceDetector
 {
 public:
-    LuaServiceDetector(AppIdDiscovery* sdm, const std::string& detector_name, IpProtocol protocol);
+    LuaServiceDetector(AppIdDiscovery* sdm, const std::string& detector_name,
+        const std::string& log_name, bool is_custom, unsigned min_match, IpProtocol protocol);
     int validate(AppIdDiscoveryArgs&) override;
 };
 
 class LuaClientDetector : public ClientDetector
 {
 public:
-    LuaClientDetector(AppIdDiscovery* cdm, const std::string& detector_name, IpProtocol protocol);
+    LuaClientDetector(AppIdDiscovery* cdm, const std::string& detector_name,
+        const std::string& log_name, bool is_custom, unsigned min_match, IpProtocol protocol);
     int validate(AppIdDiscoveryArgs&) override;
-
 };
 
 
@@ -120,8 +121,8 @@ class LuaServiceObject: public LuaObject
 { 
 public:
     ServiceDetector* sd;
-    LuaServiceObject(AppIdDiscovery* cdm, const std::string& detector_name, IpProtocol protocol,
-        lua_State* L);
+    LuaServiceObject(AppIdDiscovery* sdm, const std::string& detector_name,
+        const std::string& log_name, bool is_custom, IpProtocol protocol, lua_State* L);
     ServiceDetector* get_detector()
     { return sd; }
 };
@@ -130,8 +131,8 @@ class LuaClientObject : public LuaObject
 { 
 public:
     ClientDetector* cd;
-    LuaClientObject(AppIdDiscovery* cdm, const std::string& detector_name, IpProtocol protocol,
-        lua_State* L);
+    LuaClientObject(AppIdDiscovery* cdm, const std::string& detector_name,
+        const std::string& log_name, bool is_custom, IpProtocol protocol, lua_State* L);
     ClientDetector* get_detector()
     { return cd; }
 };

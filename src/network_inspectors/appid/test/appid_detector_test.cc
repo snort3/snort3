@@ -95,7 +95,7 @@ TEST(appid_detector_tests, get_code_string)
 {
     AppIdDetector* ad = new TestDetector;
     STRCMP_EQUAL(ad->get_code_string(APPID_SUCCESS), "success");
-    STRCMP_EQUAL(ad->get_code_string(APPID_INPROCESS), "inprocess");
+    STRCMP_EQUAL(ad->get_code_string(APPID_INPROCESS), "in-process");
     STRCMP_EQUAL(ad->get_code_string(APPID_NEED_REASSEMBLY), "need-reassembly");
     STRCMP_EQUAL(ad->get_code_string(APPID_NOT_COMPATIBLE), "not-compatible");
     STRCMP_EQUAL(ad->get_code_string(APPID_INVALID_CLIENT), "invalid-client");
@@ -105,7 +105,7 @@ TEST(appid_detector_tests, get_code_string)
     STRCMP_EQUAL(ad->get_code_string(APPID_EINVALID), "error-invalid");
     STRCMP_EQUAL(ad->get_code_string(APPID_ENOMEM), "error-memory");
     STRCMP_EQUAL(ad->get_code_string(APPID_SUCCESS), "success");
-    STRCMP_EQUAL(ad->get_code_string((APPID_STATUS_CODE)123), "unknown code");
+    STRCMP_EQUAL(ad->get_code_string((APPID_STATUS_CODE)123), "unknown-code");
     delete ad;
 }
 

@@ -105,7 +105,7 @@ TnsClientDetector::TnsClientDetector(ClientDiscovery* cdm)
 
     tcp_patterns =
     {
-        { (const uint8_t*)TNS_BANNER, TNS_BANNER_LEN, -1, 0, APP_ID_ORACLE_DATABASE },
+        { (const uint8_t*)TNS_BANNER, TNS_BANNER_LEN, 2, 0, APP_ID_ORACLE_DATABASE },
     };
 
     appid_registry =
