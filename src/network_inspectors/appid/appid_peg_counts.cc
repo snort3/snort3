@@ -34,14 +34,12 @@ std::map<AppId, uint32_t> AppIdPegCounts::appid_detector_pegs_idx;
 std::vector<std::string> AppIdPegCounts::appid_detectors_info;
 THREAD_LOCAL std::vector<AppIdPegCounts::AppIdDynamicPeg>* AppIdPegCounts::appid_peg_counts;
 AppIdPegCounts::AppIdDynamicPeg AppIdPegCounts::appid_dynamic_sum[SF_APPID_MAX + 1];
-uint32_t AppIdPegCounts::unknown_app_idx;
 
 void AppIdPegCounts::init_pegs()
 {
     AppIdPegCounts::AppIdDynamicPeg zeroed_peg = AppIdPegCounts::AppIdDynamicPeg();
     appid_peg_counts = new std::vector<AppIdPegCounts::AppIdDynamicPeg>(
         appid_detectors_info.size() + 1, zeroed_peg);
-    AppIdPegCounts::unknown_app_idx = appid_detectors_info.size();
 }
 
 void AppIdPegCounts::cleanup_pegs()
@@ -113,7 +111,7 @@ uint32_t AppIdPegCounts::get_stats_index(AppId id)
     if ( stats_idx_it != appid_detector_pegs_idx.end() )
         return stats_idx_it->second;
     else
-        return AppIdPegCounts::unknown_app_idx;
+        return appid_detectors_info.size();
 }
 
 void AppIdPegCounts::print()

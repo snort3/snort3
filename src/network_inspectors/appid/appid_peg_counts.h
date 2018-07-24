@@ -88,13 +88,13 @@ public:
 
     static void inc_incompatible_count(AppId id)
     {
-        if ( appid_detector_pegs_idx[id] != unknown_app_idx)
+        if ( appid_detector_pegs_idx[id] != appid_detectors_info.size() )
             (*appid_peg_counts)[appid_detector_pegs_idx[id]].stats[DetectorPegs::INCOMPATIBLE]++;
     }
 
     static void inc_failed_count(AppId id)
     {
-        if ( appid_detector_pegs_idx[id] != unknown_app_idx)
+        if ( appid_detector_pegs_idx[id] != appid_detectors_info.size() )
             (*appid_peg_counts)[appid_detector_pegs_idx[id]].stats[DetectorPegs::FAILED]++;
     }
 
@@ -102,7 +102,6 @@ public:
     static void print();
 
 private:
-    static uint32_t unknown_app_idx;
     static std::map<AppId, uint32_t> appid_detector_pegs_idx;
     static std::vector<std::string> appid_detectors_info;
     static AppIdDynamicPeg appid_dynamic_sum[SF_APPID_MAX+1];
