@@ -59,8 +59,8 @@ static ConversionState* deleted_ctor(Converter& c)
 /*************************************************
  *************  dynamicoutput ****************
  *************************************************/
-
 static const std::string dynamicoutput = "dynamicoutput";
+
 static const ConvertMap dynamicoutput_api =
 {
     dynamicoutput,
@@ -68,4 +68,18 @@ static const ConvertMap dynamicoutput_api =
 };
 
 const ConvertMap* dynamicoutput_map = &dynamicoutput_api;
+
+/*************************************************
+ *************  sidechannel ****************
+ *************************************************/
+static const std::string sidechannel = "sidechannel";
+
+static const ConvertMap sidechannel_api =
+{
+    sidechannel,
+    deleted_ctor<&sidechannel>,
+};
+
+const ConvertMap* sidechannel_map = &sidechannel_api;
+
 } // namespace keywords

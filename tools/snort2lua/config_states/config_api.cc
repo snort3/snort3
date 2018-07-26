@@ -130,6 +130,7 @@ extern const ConvertMap* response_map;
 extern const ConvertMap* set_gid_map;
 extern const ConvertMap* set_uid_map;
 extern const ConvertMap* show_year_map;
+extern const ConvertMap* sidechannel_map;
 extern const ConvertMap* snaplen_map;
 extern const ConvertMap* so_rule_memcap_map;
 extern const ConvertMap* stateful_map;
@@ -249,6 +250,7 @@ const std::vector<const ConvertMap*> config_api =
     set_gid_map,
     set_uid_map,
     show_year_map,
+    sidechannel_map,
     snaplen_map,
     so_rule_memcap_map,
     stateful_map,
