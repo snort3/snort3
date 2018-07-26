@@ -261,7 +261,7 @@ include::errors.txt[]
 
 === Gotchas
 
-* A nil key in a table will not caught.  Neither will a nil value in a
+* A nil key in a table will not be caught.  Neither will a nil value in a
   table.  Neither of the following will cause errors, nor will they 
   actually set http_inspect.request_depth:
 
@@ -281,14 +281,12 @@ include::errors.txt[]
 * Snort can't tell you the exact filename or line number of a semantic
   error but it will tell you the fully qualified name.
 
+
+=== Known Issues
+
 * The dump DAQ will not work with multiple threads unless you use --daq-var
-  file=/dev/null.  This will be fixed in at some point to use the Snort log
+  output=none.  This will be fixed at some point to use the Snort log
   directory, etc.
-
-* configure will use clang++ by default if it is installed.  To compile
-  with g++ instead:
-
-    export CXX=g++
 
 * If you build with hyperscan on OS X and see:
 
@@ -300,4 +298,9 @@ include::errors.txt[]
     install_name_tool -change @rpath/libhs.4.0.dylib \
         /path-to/libhs.4.0.dylib src/snort
 
+* Snort built with tcmalloc support (--enable-tcmalloc) on Ubuntu 17.04/18.04
+  crashes immediately.
 
+  Workaround:
+  Uninstall gperftools 2.5 provided by the distribution and install gperftools
+  2.7 before building Snort.
