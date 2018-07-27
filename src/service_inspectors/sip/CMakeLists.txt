@@ -14,6 +14,8 @@ set( FILE_LIST
     sip_config.h
     sip_module.cc
     sip_module.h
+    sip_splitter.cc
+    sip_splitter.h
     ips_sip.cc
     ips_sip_stat_code.cc
     ips_sip_method.cc
@@ -27,3 +29,5 @@ set( FILE_LIST
 #    add_dynamic_module(sip inspectors ${FILE_LIST})
 
 #endif (STATIC_INSPECTORS)
+
+add_subdirectory ( test )

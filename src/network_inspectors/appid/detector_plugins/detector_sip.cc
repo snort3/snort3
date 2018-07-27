@@ -25,6 +25,7 @@
 
 #include "detector_sip.h"
 
+#include "appid_debug.h"
 #include "appid_inspector.h"
 #include "app_info_table.h"
 #include "protocols/packet.h"
@@ -572,6 +573,9 @@ void SipEventHandler::service_handler(SipEvent& sip_event, AppIdSession& asd)
             asd.set_session_flags(APPID_SESSION_CONTINUE);
             service->add_service(asd, sip_event.get_packet(), direction, APP_ID_SIP,
                 ss->vendor[0] ? ss->vendor : nullptr);
+            if (appidDebug->is_active())
+                LogMessage("AppIdDbg %s Sip service detected. Setting APPID_SESSION_CONTINUE flag\n",
+                            appidDebug->get_debug_session());
         }
     }
 }

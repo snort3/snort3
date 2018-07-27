@@ -32,6 +32,7 @@
 #include "stream/stream_splitter.h"
 
 #include "sip_module.h"
+#include "sip_splitter.h"
 #include "sip_utils.h"
 
 using namespace snort;
@@ -248,10 +249,8 @@ public:
     void eval(Packet*) override;
     bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&) override;
 
-    // FIXIT-M implement a sip aware splitter
-    // this will work for single segment PDUs only
     class StreamSplitter* get_splitter(bool to_server) override
-    { return new LogSplitter(to_server); }
+    { return new SipSplitter(to_server); }
 
 private:
     SIP_PROTO_CONF* config;
