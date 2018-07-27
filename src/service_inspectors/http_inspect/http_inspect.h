@@ -49,8 +49,6 @@ public:
     void show(snort::SnortConfig*) override { snort::LogMessage("HttpInspect\n"); }
     void eval(snort::Packet* p) override;
     void clear(snort::Packet* p) override;
-    void tinit() override { }
-    void tterm() override { }
     HttpStreamSplitter* get_splitter(bool is_client_to_server) override
     {
         return new HttpStreamSplitter(is_client_to_server, this);

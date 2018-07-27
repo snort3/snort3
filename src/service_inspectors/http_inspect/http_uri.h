@@ -37,8 +37,8 @@ public:
     HttpUri(const uint8_t* start, int32_t length, HttpEnums::MethodId method_id_,
         const HttpParaList::UriParam& uri_param_, HttpInfractions* infractions_,
         HttpEventGen* events_) :
-        uri(length, start), method_id(method_id_), uri_param(uri_param_),
-        infractions(infractions_), events(events_)
+        uri(length, start), infractions(infractions_), events(events_), method_id(method_id_),
+        uri_param(uri_param_)
         { normalize(); }
     const Field& get_uri() const { return uri; }
     HttpEnums::UriType get_uri_type() { return uri_type; }
@@ -60,10 +60,6 @@ public:
 
 private:
     const Field uri;
-    const HttpEnums::MethodId method_id;
-    const HttpParaList::UriParam& uri_param;
-    HttpInfractions* infractions;
-    HttpEventGen* events;
 
     Field scheme;
     Field authority;
@@ -74,13 +70,17 @@ private:
     Field query;
     Field fragment;
 
-    HttpEnums::UriType uri_type = HttpEnums::URI__NOT_COMPUTE;
     Field host_norm;
     Field path_norm;
     Field query_norm;
     Field fragment_norm;
     Field classic_norm;
+    HttpInfractions* const infractions;
+    HttpEventGen* const events;
     size_t abs_path_hash = 0;
+    HttpEnums::UriType uri_type = HttpEnums::URI__NOT_COMPUTE;
+    const HttpEnums::MethodId method_id;
+    const HttpParaList::UriParam& uri_param;
 
     void normalize();
     void parse_uri();

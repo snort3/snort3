@@ -34,8 +34,8 @@ class HttpStreamSplitter : public snort::StreamSplitter
 public:
     HttpStreamSplitter(bool is_client_to_server, HttpInspect* my_inspector_) :
         snort::StreamSplitter(is_client_to_server),
-        source_id(is_client_to_server ? HttpEnums::SRC_CLIENT : HttpEnums::SRC_SERVER),
-        my_inspector(my_inspector_) { }
+        my_inspector(my_inspector_),
+        source_id(is_client_to_server ? HttpEnums::SRC_CLIENT : HttpEnums::SRC_SERVER) {}
     Status scan(snort::Flow* flow, const uint8_t* data, uint32_t length, uint32_t not_used,
         uint32_t* flush_offset) override;
     const snort::StreamBuffer reassemble(snort::Flow* flow, unsigned total, unsigned, const
@@ -58,8 +58,8 @@ private:
         uint32_t length, HttpEnums::CompressId& compression, z_stream*& compress_stream,
         bool at_start, HttpInfractions* infractions, HttpEventGen* events);
 
-    const HttpEnums::SourceId source_id;
     HttpInspect* const my_inspector;
+    const HttpEnums::SourceId source_id;
 };
 
 #endif

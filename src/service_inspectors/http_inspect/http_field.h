@@ -34,8 +34,8 @@ class Field
 public:
     static const Field FIELD_NULL;
 
-    Field(int32_t length, const uint8_t* start, bool own_the_buffer_ = false) : len(length),
-        own_the_buffer(own_the_buffer_), strt(start) { assert(length <= HttpEnums::MAX_OCTETS); }
+    Field(int32_t length, const uint8_t* start, bool own_the_buffer_ = false) : strt(start),
+        len(length), own_the_buffer(own_the_buffer_) { assert(length <= HttpEnums::MAX_OCTETS); }
     explicit Field(int32_t length) : len(length) { assert(length<=0); }
     Field() = default;
     ~Field() { if (own_the_buffer) delete[] strt; }
@@ -53,9 +53,9 @@ public:
 private:
     Field& operator=(const Field&) = delete;
 
+    const uint8_t* strt = nullptr;
     int32_t len = HttpEnums::STAT_NOT_COMPUTE;
     bool own_the_buffer = false;
-    const uint8_t* strt = nullptr;
 };
 
 #endif

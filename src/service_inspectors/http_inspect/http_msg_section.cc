@@ -39,15 +39,15 @@ HttpMsgSection::HttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
        const HttpParaList* params_) :
     msg_text(buf_size, buffer, buf_owner),
     session_data(session_data_),
-    source_id(source_id_),
     flow(flow_),
-    trans_num(session_data->expected_trans_num[source_id]),
     params(params_),
-    transaction(HttpTransaction::attach_my_transaction(session_data, source_id)),
-    tcp_close(session_data->tcp_close[source_id]),
+    transaction(HttpTransaction::attach_my_transaction(session_data, source_id_)),
+    trans_num(session_data->expected_trans_num[source_id_]),
+    status_code_num((source_id_ == SRC_SERVER) ? session_data->status_code_num : STAT_NOT_PRESENT),
+    source_id(source_id_),
     version_id(session_data->version_id[source_id]),
     method_id((source_id == SRC_CLIENT) ? session_data->method_id : METH__NOT_PRESENT),
-    status_code_num((source_id == SRC_SERVER) ? session_data->status_code_num : STAT_NOT_PRESENT)
+    tcp_close(session_data->tcp_close[source_id])
 {
     assert((source_id == SRC_CLIENT) || (source_id == SRC_SERVER));
 }

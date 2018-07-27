@@ -95,28 +95,28 @@ private:
     void create_norm_head_list();
     void derive_header_name_id(int index);
 
-    std::bitset<MAX> headers_present = 0;
-    int32_t num_headers = HttpEnums::STAT_NOT_COMPUTE;
+    Field classic_raw_header;    // raw headers with cookies spliced out
+    Field classic_norm_header;   // URI normalization applied
+    Field classic_norm_cookie;   // URI normalization applied to concatenated cookie values
     Field* header_line = nullptr;
     Field* header_name = nullptr;
     HttpEnums::HeaderId* header_name_id = nullptr;
     Field* header_value = nullptr;
 
-    Field classic_raw_header;    // raw headers with cookies spliced out
-    Field classic_norm_header;   // URI normalization applied
-    Field classic_norm_cookie;   // URI normalization applied to concatenated cookie values
-
     struct NormalizedHeader
     {
         NormalizedHeader(HttpEnums::HeaderId id_) : id(id_) {}
-        const HttpEnums::HeaderId id;
-        int count;
+
         Field norm;
         NormalizedHeader* next;
+        int32_t count;
+        const HttpEnums::HeaderId id;
     };
-
-    NormalizedHeader* norm_heads = nullptr;
     NormalizedHeader* get_header_node(HttpEnums::HeaderId k) const;
+    NormalizedHeader* norm_heads = nullptr;
+
+    int32_t num_headers = HttpEnums::STAT_NOT_COMPUTE;
+    std::bitset<MAX> headers_present = 0;
 };
 
 #endif

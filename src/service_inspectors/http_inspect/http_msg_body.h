@@ -56,11 +56,11 @@ private:
     void do_js_normalization(const Field& input, Field& output);
 
     Field detect_data;
-    const bool detection_section;
     Field classic_client_body;   // URI normalization applied
     Field decoded_body;
     Field decompressed_pdf_swf_body;
     Field js_norm_body;
+    const bool detection_section;
 };
 
 #endif

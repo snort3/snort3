@@ -43,9 +43,10 @@ public:
     virtual uint32_t get_num_head_lines() const { return 0; }
     virtual bool get_is_broken_chunk() const { return false; }
     virtual uint32_t get_num_good_chunks() const { return 0; }
+    virtual void soft_reset() {}
 
 protected:
-    // number of octets processed by previous cut() calls that returned NOTFOUND
+    // number of octets processed by previous cut() calls that returned NOT_FOUND
     uint32_t octets_seen = 0;
     uint32_t num_crlf = 0;
     uint32_t num_flush = 0;
@@ -120,6 +121,7 @@ public:
         override;
     bool get_is_broken_chunk() const override { return curr_state == HttpEnums::CHUNK_BAD; }
     uint32_t get_num_good_chunks() const override { return num_good_chunks; }
+    void soft_reset() override { octets_seen = 0; num_good_chunks = 0; }
 
 private:
     uint32_t data_seen = 0;
@@ -128,7 +130,6 @@ private:
     uint32_t num_leading_ws = 0;
     uint32_t num_zeros = 0;
     uint32_t digits_seen = 0;
-    bool new_section = false;
     uint32_t num_good_chunks = 0;  // that end in the current section
 };
 

@@ -167,7 +167,7 @@ StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data,
         session_data->section_size_target[source_id], session_data->section_size_max[source_id]);
     switch (cut_result)
     {
-    case SCAN_NOTFOUND:
+    case SCAN_NOT_FOUND:
         if (cutter->get_octets_seen() == MAX_OCTETS)
         {
             *session_data->get_infractions(source_id) += INF_ENDLESS_HEADER;
@@ -201,6 +201,8 @@ StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data,
             delete cutter;
             cutter = nullptr;
         }
+        else
+            cutter->soft_reset();
         return StreamSplitter::FLUSH;
     case SCAN_FOUND:
     case SCAN_FOUND_PIECE:
@@ -215,6 +217,8 @@ StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data,
             delete cutter;
             cutter = nullptr;
         }
+        else
+            cutter->soft_reset();
         return StreamSplitter::FLUSH;
       }
     default:

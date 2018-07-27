@@ -107,7 +107,7 @@ ScanResult HttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
         }
     }
     octets_seen += length;
-    return SCAN_NOTFOUND;
+    return SCAN_NOT_FOUND;
 }
 
 HttpStartCutter::ValidationResult HttpRequestCutter::validate(uint8_t octet, HttpInfractions*,
@@ -247,7 +247,7 @@ ScanResult HttpHeaderCutter::cut(const uint8_t* buffer, uint32_t length,
         }
     }
     octets_seen += length;
-    return SCAN_NOTFOUND;
+    return SCAN_NOT_FOUND;
 }
 
 ScanResult HttpBodyClCutter::cut(const uint8_t*, uint32_t length, HttpInfractions*,
@@ -311,13 +311,6 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
 {
     // Are we skipping through the rest of this chunked body to the trailers and the next message?
     const bool discard_mode = (flow_target == 0);
-
-    if (new_section)
-    {
-        new_section = false;
-        octets_seen = 0;
-        num_good_chunks = 0;
-    }
 
     for (int32_t k=0; k < static_cast<int32_t>(length); k++)
     {
@@ -505,7 +498,6 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
             {
                 data_seen = 0;
                 num_flush = k+1;
-                new_section = true;
                 return SCAN_FOUND_PIECE;
             }
             break;
@@ -574,7 +566,6 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
             {
                 data_seen = 0;
                 num_flush = k+1;
-                new_section = true;
                 return SCAN_FOUND_PIECE;
             }
             break;
@@ -587,6 +578,6 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
     }
 
     octets_seen += length;
-    return SCAN_NOTFOUND;
+    return SCAN_NOT_FOUND;
 }
 

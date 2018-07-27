@@ -45,8 +45,7 @@ void HttpMsgBodyCl::update_flow()
 void HttpMsgBodyCl::print_section(FILE* output)
 {
     HttpMsgSection::print_section_title(output, "Content-Length body");
-    fprintf(output, "Content-Length %" PRIi64 ", octets seen %" PRIi64 "\n", data_length,
-        body_octets);
+    fprintf(output, "octets seen %" PRIi64 "\n", body_octets);
     print_body_section(output);
 }
 #endif

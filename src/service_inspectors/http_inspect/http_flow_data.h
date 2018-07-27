@@ -70,8 +70,6 @@ private:
 
     // 0 element refers to client request, 1 element refers to server response
 
-    // FIXIT-P reorganize HttpFlowData to minimize void space
-
     // *** StreamSplitter internal data - scan()
     HttpCutter* cutter[2] = { nullptr, nullptr };
 
@@ -79,23 +77,23 @@ private:
     uint8_t* section_buffer[2] = { nullptr, nullptr };
     uint32_t section_total[2] = { 0, 0 };
     uint32_t section_offset[2] = { 0, 0 };
-    HttpEnums::ChunkState chunk_state[2] = { HttpEnums::CHUNK_NEWLINES,
-        HttpEnums::CHUNK_NEWLINES };
     uint32_t chunk_expected_length[2] = { 0, 0 };
     uint32_t running_total[2] = { 0, 0 };
+    HttpEnums::ChunkState chunk_state[2] = { HttpEnums::CHUNK_NEWLINES,
+        HttpEnums::CHUNK_NEWLINES };
 
     // *** StreamSplitter internal data - scan() => reassemble()
     uint32_t num_excess[2] = { 0, 0 };
-    bool is_broken_chunk[2] = { false, false };
     uint32_t num_good_chunks[2] = { 0, 0 };
     uint32_t octets_expected[2] = { 0, 0 };
+    bool is_broken_chunk[2] = { false, false };
     bool strict_length[2] = { false, false };
 
     // *** StreamSplitter => Inspector (facts about the most recent message section)
     HttpEnums::SectionType section_type[2] = { HttpEnums::SEC__NOT_COMPUTE,
                                                 HttpEnums::SEC__NOT_COMPUTE };
-    bool tcp_close[2] = { false, false };
     int32_t num_head_lines[2] = { HttpEnums::STAT_NOT_PRESENT, HttpEnums::STAT_NOT_PRESENT };
+    bool tcp_close[2] = { false, false };
     bool zero_byte_workaround[2];
 
     // Infractions and events are associated with a specific message and are stored in the
@@ -112,46 +110,43 @@ private:
     // *** Inspector => StreamSplitter (facts about the message section that is coming next)
     HttpEnums::SectionType type_expected[2] = { HttpEnums::SEC_REQUEST, HttpEnums::SEC_STATUS };
     // length of the data from Content-Length field
+    z_stream* compress_stream[2] = { nullptr, nullptr };
+    uint64_t zero_nine_expected = 0;
     int64_t data_length[2] = { HttpEnums::STAT_NOT_PRESENT, HttpEnums::STAT_NOT_PRESENT };
     uint32_t section_size_target[2] = { 0, 0 };
     uint32_t section_size_max[2] = { 0, 0 };
     HttpEnums::CompressId compression[2] = { HttpEnums::CMP_NONE, HttpEnums::CMP_NONE };
-    z_stream* compress_stream[2] = { nullptr, nullptr };
-    uint64_t zero_nine_expected = 0;
-
     HttpEnums::DetectionStatus detection_status[2] = { HttpEnums::DET_ON, HttpEnums::DET_ON };
 
     // *** Inspector's internal data about the current message
-    HttpEnums::VersionId version_id[2] = { HttpEnums::VERS__NOT_PRESENT,
-                                            HttpEnums::VERS__NOT_PRESENT };
-    HttpEnums::MethodId method_id = HttpEnums::METH__NOT_PRESENT;
-    int32_t status_code_num = HttpEnums::STAT_NOT_PRESENT;
-    int64_t file_depth_remaining[2] = { HttpEnums::STAT_NOT_PRESENT,
-        HttpEnums::STAT_NOT_PRESENT };
-    int64_t detect_depth_remaining[2] = { HttpEnums::STAT_NOT_PRESENT,
-        HttpEnums::STAT_NOT_PRESENT };
-    snort::MimeSession* mime_state[2] = { nullptr, nullptr };
-    snort::UtfDecodeSession* utf_state = nullptr; // SRC_SERVER only
-    fd_session_t* fd_state = nullptr; // SRC_SERVER only
     struct FdCallbackContext
     {
         HttpInfractions* infractions = nullptr;
         HttpEventGen* events = nullptr;
     };
     FdCallbackContext fd_alert_context; // SRC_SERVER only
+    snort::MimeSession* mime_state[2] = { nullptr, nullptr };
+    snort::UtfDecodeSession* utf_state = nullptr; // SRC_SERVER only
+    fd_session_t* fd_state = nullptr; // SRC_SERVER only
+    int64_t file_depth_remaining[2] = { HttpEnums::STAT_NOT_PRESENT,
+        HttpEnums::STAT_NOT_PRESENT };
+    int64_t detect_depth_remaining[2] = { HttpEnums::STAT_NOT_PRESENT,
+        HttpEnums::STAT_NOT_PRESENT };
     uint64_t expected_trans_num[2] = { 1, 1 };
-    HttpMsgSection* latest_section = nullptr;
-
     // number of user data octets seen so far (regular body or chunks)
     int64_t body_octets[2] = { HttpEnums::STAT_NOT_PRESENT, HttpEnums::STAT_NOT_PRESENT };
+    int32_t status_code_num = HttpEnums::STAT_NOT_PRESENT;
+    HttpMsgSection* latest_section = nullptr;
+    HttpEnums::VersionId version_id[2] = { HttpEnums::VERS__NOT_PRESENT,
+                                            HttpEnums::VERS__NOT_PRESENT };
+    HttpEnums::MethodId method_id = HttpEnums::METH__NOT_PRESENT;
 
-    // Transaction management including pipelining
-    // FIXIT-L pipeline deserves to be its own class
-    HttpTransaction* transaction[2] = { nullptr, nullptr };
+    // *** Transaction management including pipelining
     static const int MAX_PIPELINE = 100;  // requests seen - responses seen <= MAX_PIPELINE
+    HttpTransaction* transaction[2] = { nullptr, nullptr };
     HttpTransaction** pipeline = nullptr;
-    int pipeline_front = 0;
-    int pipeline_back = 0;
+    int16_t pipeline_front = 0;
+    int16_t pipeline_back = 0;
     bool pipeline_overflow = false;
     bool pipeline_underflow = false;
 
@@ -160,10 +155,10 @@ private:
     void delete_pipeline();
 
 #ifdef REG_TEST
-    void show(FILE* out_file) const;
-
     static uint64_t instance_count;
     uint64_t seq_num;
+
+    void show(FILE* out_file) const;
 #endif
 };
 

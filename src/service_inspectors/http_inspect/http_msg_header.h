@@ -45,20 +45,20 @@ public:
     const Field& get_true_ip_addr();
 
 private:
-    // Dummy configurations to support MIME processing
-    MailLogConfig mime_conf;
-    snort::DecodeConfig decode_conf;
-
     void prepare_body();
     void setup_file_processing();
     void setup_encoding_decompression();
     void setup_utf_decoding();
     void setup_pdf_swf_decompression();
 
-    bool detection_section = true;
+    // Dummy configurations to support MIME processing
+    MailLogConfig mime_conf;
+    snort::DecodeConfig decode_conf;
 
     Field true_ip;
     Field true_ip_addr;
+
+    bool detection_section = true;
 
 #ifdef REG_TEST
     void print_section(FILE* output) override;

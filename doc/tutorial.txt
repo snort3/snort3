@@ -46,7 +46,9 @@ Optional:
   flatbuffers serialization format
 
 * hyperscan >= 4.4.0 from https://github.com/01org/hyperscan to build new
-  the regex and sd_pattern rule options and hyperscan search engine
+  the regex and sd_pattern rule options and hyperscan search engine.
+  Hyperscan is large so it recommended to follow their instructions for
+  building it as a shared library.
 
 * iconv from https://ftp.gnu.org/pub/gnu/libiconv/ for converting
   UTF16-LE filenames to UTF8 (usually included in glibc)
