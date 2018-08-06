@@ -411,11 +411,6 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
         asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
     }
 
-    if (appidDebug->is_active())
-        LogMessage("AppIdDbg %s chp_finished %d chp_hold_flow %d\n",
-            appidDebug->get_debug_session(),
-            chp_finished, chp_hold_flow);
-
     if (!chp_finished || chp_hold_flow)
         process_chp_buffers();
 
