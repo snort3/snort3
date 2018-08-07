@@ -51,7 +51,6 @@ typedef list<Output*> OutputList;
 static OutputList s_outputs;
 
 typedef list<Logger*> EHList;
-static EHList s_handlers;
 
 struct OutputSet
 {

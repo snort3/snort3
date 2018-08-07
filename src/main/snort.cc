@@ -552,6 +552,7 @@ SnortConfig* Snort::get_reload_config(const char* fname)
 {
     reloading = true;
     ModuleManager::reset_errors();
+    reset_parse_errors();
     trim_heap();
 
     parser_init();

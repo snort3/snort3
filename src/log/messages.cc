@@ -40,6 +40,11 @@ static int already_fatal = 0;
 static unsigned parse_errors = 0;
 static unsigned parse_warnings = 0;
 
+void reset_parse_errors()
+{
+    parse_errors = 0;
+}
+
 unsigned get_parse_errors()
 {
     unsigned tmp = parse_errors;

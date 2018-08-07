@@ -45,6 +45,7 @@ enum WarningGroup
     WARN_MAX
 };
 
+void reset_parse_errors();
 unsigned get_parse_errors();
 unsigned get_parse_warnings();
 

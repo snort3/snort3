@@ -1038,5 +1038,15 @@ SO_PUBLIC int SnortConfig::request_scratch(ScScratchFunc setup, ScScratchFunc cl
 SO_PUBLIC SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
 
-void SnortConfig::set_conf(SnortConfig* conf)
-{ snort_conf = conf; }
+void SnortConfig::set_conf(SnortConfig* sc)
+{
+    snort_conf = sc;
+
+    if ( sc )
+    {
+        Shell* sh = sc->policy_map->get_shell(0);
+        if (sc->policy_map->get_policies(sh))
+            set_policies(sc, sh);
+    }
+}
+
