@@ -22,6 +22,7 @@
 #endif
 
 #include "http_inspect.h"
+#include "http_module.h"
 #include "http_stream_splitter.h"
 #include "http_test_input.h"
 
@@ -81,6 +82,8 @@ HttpCutter* HttpStreamSplitter::get_cutter(SectionType type,
 StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data, uint32_t length,
     uint32_t, uint32_t* flush_offset)
 {
+    snort::Profile profile(HttpModule::get_profile_stats());
+
     assert(length <= MAX_OCTETS);
 
     // This is the session state information we share with HttpInspect and store with stream. A

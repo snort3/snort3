@@ -42,8 +42,6 @@ private:
     static void http_term() { }
     static snort::Inspector* http_ctor(snort::Module* mod);
     static void http_dtor(snort::Inspector* p) { delete p; }
-    static void http_tinit() { }
-    static void http_tterm() { }
 };
 
 #endif

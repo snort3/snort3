@@ -379,6 +379,8 @@ bool HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
 
 void HttpInspect::clear(Packet* p)
 {
+    Profile profile(HttpModule::get_profile_stats());
+
     HttpFlowData* const session_data =
         (HttpFlowData*)p->flow->get_flow_data(HttpFlowData::inspector_id);
 

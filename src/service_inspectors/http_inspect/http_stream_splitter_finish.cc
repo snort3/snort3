@@ -23,6 +23,7 @@
 
 #include "file_api/file_flows.h"
 
+#include "http_module.h"
 #include "http_msg_request.h"
 #include "http_stream_splitter.h"
 #include "http_test_input.h"
@@ -31,6 +32,8 @@ using namespace HttpEnums;
 
 bool HttpStreamSplitter::finish(snort::Flow* flow)
 {
+    snort::Profile profile(HttpModule::get_profile_stats());
+
     HttpFlowData* session_data = (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
     // FIXIT-M - this assert has been changed to check for null session data and return false if so
     //           due to lack of reliable feedback to stream that scan has been called...if that is

@@ -24,6 +24,7 @@
 #include "protocols/packet.h"
 
 #include "http_inspect.h"
+#include "http_module.h"
 #include "http_stream_splitter.h"
 #include "http_test_input.h"
 
@@ -223,6 +224,8 @@ void HttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& offset, cons
 const snort::StreamBuffer HttpStreamSplitter::reassemble(snort::Flow* flow, unsigned total, unsigned,
     const uint8_t* data, unsigned len, uint32_t flags, unsigned& copied)
 {
+    snort::Profile profile(HttpModule::get_profile_stats());
+
     snort::StreamBuffer http_buf { nullptr, 0 };
 
     copied = len;
