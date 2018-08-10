@@ -321,17 +321,8 @@ int sslAppGroupIdLookup(void*, const char*, const char*, AppId*, AppId*, AppId*)
     }
 
     if (ssnptr && (asd = appid_api.get_appid_session(ssnptr)))
-    {
-        *service_id = pick_service_app_id(asd);
-        if (*client_id == APP_ID_NONE)
-        {
-            *client_id = pick_client_app_id(asd);
-        }
-        if (*payload_id == APP_ID_NONE)
-        {
-            *payload_id = pick_payload_app_id(asd);
-        }
-    }
+        asd->get_application_ids(*service_id, *client_id, *payload_id);
+
     if (*service_id != APP_ID_NONE ||
         *client_id != APP_ID_NONE ||
         *payload_id != APP_ID_NONE)

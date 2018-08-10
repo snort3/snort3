@@ -47,7 +47,7 @@ bool AppIdSessionApi::refresh(Flow& flow)
 
 AppId AppIdSessionApi::get_service_app_id()
 {
-    return asd->pick_service_app_id();
+    return asd->get_application_ids_service();
 }
 
 AppId AppIdSessionApi::get_port_service_app_id()
@@ -62,17 +62,17 @@ AppId AppIdSessionApi::get_only_service_app_id()
 
 AppId AppIdSessionApi::get_misc_app_id()
 {
-    return asd->pick_misc_app_id();
+    return asd->get_application_ids_misc();
 }
 
 AppId AppIdSessionApi::get_client_app_id()
 {
-    return asd->pick_client_app_id();
+    return asd->get_application_ids_client();
 }
 
 AppId AppIdSessionApi::get_payload_app_id()
 {
-    return asd->pick_payload_app_id();
+    return asd->get_application_ids_payload();
 }
 
 AppId AppIdSessionApi::get_referred_app_id()
@@ -80,29 +80,26 @@ AppId AppIdSessionApi::get_referred_app_id()
     return asd->pick_referred_payload_app_id();
 }
 
-AppId AppIdSessionApi::get_fw_service_app_id()
+void AppIdSessionApi::get_app_id(AppId& service, AppId& client,
+    AppId& payload, AppId& misc, AppId& referred)
 {
-    return asd->pick_fw_service_app_id();
+    asd->get_application_ids(service, client, payload, misc);
+    referred = asd->pick_referred_payload_app_id();
 }
 
-AppId AppIdSessionApi::get_fw_misc_app_id()
+void AppIdSessionApi::get_app_id(AppId* service, AppId* client,
+    AppId* payload, AppId* misc, AppId* referred)
 {
-    return asd->pick_fw_misc_app_id();
-}
-
-AppId AppIdSessionApi::get_fw_client_app_id()
-{
-    return asd->pick_fw_client_app_id();
-}
-
-AppId AppIdSessionApi::get_fw_payload_app_id()
-{
-    return asd->pick_fw_payload_app_id();
-}
-
-AppId AppIdSessionApi::get_fw_referred_app_id()
-{
-    return asd->pick_fw_referred_payload_app_id();
+    if (service)
+        *service = asd->get_application_ids_service();
+    if (client)
+        *client = asd->get_application_ids_client();
+    if (payload)
+        *payload = asd->get_application_ids_payload();
+    if (misc)
+        *misc = asd->get_application_ids_misc();
+    if (referred)
+        *referred = asd->pick_referred_payload_app_id();
 }
 
 bool AppIdSessionApi::is_ssl_session_decrypted()
