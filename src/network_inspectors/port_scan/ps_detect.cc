@@ -418,11 +418,11 @@ void PortScan::ps_proto_update_window(unsigned interval, PS_PROTO* proto, time_t
 **  @param PS_PROTO pointer to structure to update
 **  @param int      number to increment portscan counter
 **  @param u_long   IP address of other host
-**  @param u_short  port/ip_proto to track
+**  @param unsigned short  port/ip_proto to track
 **  @param time_t   time the packet was received. update windows.
 */
 int PortScan::ps_proto_update(PS_PROTO* proto, int ps_cnt, int pri_cnt,
-    unsigned window, const SfIp* ip, u_short port, time_t pkt_time)
+    unsigned window, const SfIp* ip, unsigned short port, time_t pkt_time)
 {
     if (!proto)
         return 0;
@@ -747,12 +747,12 @@ void PortScan::ps_tracker_update_ip(PS_PKT* ps_pkt, PS_TRACKER* scanner,
 
     if (scanned)
     {
-        ps_proto_update(&scanned->proto, 1, 0, win, &cleared, (u_short)p->get_ip_proto_next(), 0);
+        ps_proto_update(&scanned->proto, 1, 0, win, &cleared, (unsigned short)p->get_ip_proto_next(), 0);
     }
 
     if (scanner)
     {
-        ps_proto_update(&scanner->proto, 1, 0, win, &cleared, (u_short)p->get_ip_proto_next(), 0);
+        ps_proto_update(&scanner->proto, 1, 0, win, &cleared, (unsigned short)p->get_ip_proto_next(), 0);
     }
 }
 

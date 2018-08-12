@@ -38,7 +38,7 @@ static THREAD_LOCAL ProfileStats ipOptionPerfStats;
 struct IpOptionData
 {
     ip::IPOptionCodes ip_option;
-    u_char any_flag;
+    uint8_t any_flag;
 };
 
 class IpOptOption : public IpsOption

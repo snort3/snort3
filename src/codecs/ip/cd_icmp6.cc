@@ -132,7 +132,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         COPY4(ph6.dip, snort.ip_api.get_dst()->get_ip6_ptr());
         ph6.zero = 0;
         ph6.protocol = codec.ip6_csum_proto;
-        ph6.len = htons((u_short)raw.len);
+        ph6.len = htons((unsigned short)raw.len);
 
         uint16_t csum = checksum::icmp_cksum((const uint16_t*)(icmp6h), raw.len, &ph6);
 

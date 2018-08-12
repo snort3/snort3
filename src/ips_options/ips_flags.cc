@@ -52,9 +52,9 @@ static THREAD_LOCAL ProfileStats tcpFlagsPerfStats;
 
 struct TcpFlagCheckData
 {
-    u_char mode;
-    u_char tcp_flags;
-    u_char tcp_mask; /* Mask to take away from the flags check */
+    uint8_t mode;
+    uint8_t tcp_flags;
+    uint8_t tcp_mask; /* Mask to take away from the flags check */
 };
 
 class TcpFlagOption : public IpsOption
@@ -124,7 +124,7 @@ IpsOption::EvalStatus TcpFlagOption::eval(Cursor&, Packet* p)
      */
 
     TcpFlagCheckData* flagptr = &config;
-    u_char tcp_flags = p->ptrs.tcph->th_flags & (0xFF ^ flagptr->tcp_mask);
+    uint8_t tcp_flags = p->ptrs.tcph->th_flags & (0xFF ^ flagptr->tcp_mask);
 
     DebugMessage(DEBUG_IPS_OPTION, "           <!!> CheckTcpFlags: ");
 
@@ -206,7 +206,7 @@ static void flags_parse_test(const char* rule, TcpFlagCheckData* idx)
         return;
     }
 
-    while (isspace((u_char) *fptr))
+    while (isspace((uint8_t) *fptr))
         fptr++;
 
     if (strlen(fptr) == 0)
@@ -309,7 +309,7 @@ static void flags_parse_mask(const char* rule, TcpFlagCheckData* idx)
         return;
     }
 
-    while (isspace((u_char) *fptr))
+    while (isspace((uint8_t) *fptr))
         fptr++;
 
     if (strlen(fptr) == 0)

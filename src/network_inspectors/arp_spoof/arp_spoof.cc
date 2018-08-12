@@ -193,24 +193,24 @@ void ArpSpoof::eval(Packet* p)
     switch (ntohs(ah->ea_hdr.ar_op))
     {
     case ARPOP_REQUEST:
-        if (memcmp((const u_char*)dst_mac_addr, (const u_char*)bcast, 6) != 0)
+        if (memcmp((const uint8_t*)dst_mac_addr, (const uint8_t*)bcast, 6) != 0)
         {
             DetectionEngine::queue_event(GID_ARP_SPOOF, ARPSPOOF_UNICAST_ARP_REQUEST);
         }
-        else if (memcmp((const u_char*)src_mac_addr,
-            (const u_char*)ah->arp_sha, 6) != 0)
+        else if (memcmp((const uint8_t*)src_mac_addr,
+            (const uint8_t*)ah->arp_sha, 6) != 0)
         {
             DetectionEngine::queue_event(GID_ARP_SPOOF, ARPSPOOF_ETHERFRAME_ARP_MISMATCH_SRC);
         }
         break;
     case ARPOP_REPLY:
-        if (memcmp((const u_char*)src_mac_addr,
-            (const u_char*)ah->arp_sha, 6) != 0)
+        if (memcmp((const uint8_t*)src_mac_addr,
+            (const uint8_t*)ah->arp_sha, 6) != 0)
         {
             DetectionEngine::queue_event(GID_ARP_SPOOF, ARPSPOOF_ETHERFRAME_ARP_MISMATCH_SRC);
         }
-        else if (memcmp((const u_char*)dst_mac_addr,
-            (const u_char*)ah->arp_tha, 6) != 0)
+        else if (memcmp((const uint8_t*)dst_mac_addr,
+            (const uint8_t*)ah->arp_tha, 6) != 0)
         {
             DetectionEngine::queue_event(GID_ARP_SPOOF, ARPSPOOF_ETHERFRAME_ARP_MISMATCH_DST);
         }
