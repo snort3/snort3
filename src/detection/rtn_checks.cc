@@ -50,7 +50,7 @@ static int CheckAddrPort(sfip_var_t* rule_addr, PortObject* po, Packet* p,
     uint32_t flags, int mode)
 {
     const SfIp* pkt_addr;          /* packet IP address */
-    u_short pkt_port;                /* packet port */
+    unsigned short pkt_port;                /* packet port */
     int global_except_addr_flag = 0; /* global exception flag is set */
     int any_port_flag = 0;           /* any port flag set */
     int except_port_flag = 0;        /* port exception flag set */

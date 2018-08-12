@@ -132,7 +132,7 @@ static void LogTcpdumpSingle(
     if ( data->limit && (context.size + dumpSize > data->limit) )
         TcpdumpRollLogFile(data);
 
-    pcap_dump((u_char*)context.dumpd, reinterpret_cast<const struct pcap_pkthdr*>(p->pkth), p->pkt);
+    pcap_dump((uint8_t*)context.dumpd, reinterpret_cast<const struct pcap_pkthdr*>(p->pkth), p->pkt);
     context.size += dumpSize;
 
     if (!SnortConfig::line_buffered_logging())  // FIXIT-L misnomer

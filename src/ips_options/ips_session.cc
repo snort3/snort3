@@ -249,8 +249,8 @@ static FILE* OpenSessionFile(Packet* p)
 
 static void DumpSessionData(FILE* fp, Packet* p, SessionData* sessionData)
 {
-    const u_char* idx;
-    const u_char* end;
+    const uint8_t* idx;
+    const uint8_t* end;
     char conv[] = "0123456789ABCDEF"; /* xlation lookup table */
 
     if (p->dsize == 0 || p->data == nullptr || (p->ptrs.decode_flags & DECODE_FRAG))

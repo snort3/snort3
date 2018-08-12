@@ -264,7 +264,7 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
                 COPY4(ph6.dip, ip6h->ip6_dst.u6_addr32);
                 ph6.zero = 0;
                 ph6.protocol = codec.ip6_csum_proto;
-                ph6.len = htons((u_short)raw.len);
+                ph6.len = htons((unsigned short)raw.len);
 
                 csum = checksum::udp_cksum((const uint16_t*)(udph), uhlen, &ph6);
             }

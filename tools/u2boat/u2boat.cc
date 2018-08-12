@@ -174,7 +174,7 @@ static int PcapConversion(u2record* rec, FILE* output)
 
     /* Write to the pcap file */
     pcap_data = rec->data + sizeof(Serial_Unified2Packet) - 4;
-    pcap_dump( (u_char*)output, &pcap_hdr, (u_char*)pcap_data);
+    pcap_dump( (uint8_t*)output, &pcap_hdr, (uint8_t*)pcap_data);
 
     return SUCCESS;
 }
