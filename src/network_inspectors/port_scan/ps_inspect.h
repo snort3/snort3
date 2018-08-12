@@ -65,7 +65,7 @@ private:
     void ps_proto_update_window(unsigned window, PS_PROTO*, time_t pkt_time);
 
     int ps_proto_update( PS_PROTO*, int ps_cnt, int pri_cnt, unsigned window, const snort::SfIp* ip,
-        u_short port, time_t pkt_time);
+        unsigned short port, time_t pkt_time);
 
     void ps_tracker_update_ip(PS_PKT*, PS_TRACKER* scanner, PS_TRACKER* scanned);
     void ps_tracker_update_tcp(PS_PKT*, PS_TRACKER* scanner, PS_TRACKER* scanned);
