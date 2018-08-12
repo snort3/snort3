@@ -49,8 +49,13 @@ using namespace snort;
 static int CheckAddrPort(sfip_var_t* rule_addr, PortObject* po, Packet* p,
     uint32_t flags, int mode)
 {
+<<<<<<< HEAD
     const SfIp* pkt_addr;            /* packet IP address */
     unsigned short pkt_port;         /* packet port */
+=======
+    const SfIp* pkt_addr;          /* packet IP address */
+    unsigned short pkt_port;                /* packet port */
+>>>>>>> 297c54c7093340a8e8941db6357ece161965682d
     int global_except_addr_flag = 0; /* global exception flag is set */
     int any_port_flag = 0;           /* any port flag set */
     int except_port_flag = 0;        /* port exception flag set */
