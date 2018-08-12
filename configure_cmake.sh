@@ -109,6 +109,10 @@ Optional Packages:
                             libuuid include directory
     --with-uuid-libraries=DIR
                             libuuid library directory
+    --with-tirpc-includes=DIR
+                            libtirpc include directory
+    --with-tirpc-libraries=DIR
+                            libtiprc library directory
 
 Some influential environment variables:
     SIGNAL_SNORT_RELOAD=<value>
@@ -400,6 +404,12 @@ while [ $# -ne 0 ]; do
             ;;
         --with-uuid-libraries=*)
             append_cache_entry UUID_LIBRARIES_DIR_HINT PATH $optarg
+            ;;
+        --with-tirpc-includes=*)
+            append_cache_entry TIRPC_INCLUDE_DIR_HINT PATH $optarg
+            ;;
+        --with-tirpc-libraries=*)
+            append_cache_entry TIRPC_LIBRARIES_DIR_HINT PATH $optarg
             ;;
         SIGNAL_SNORT_RELOAD=*)
             append_cache_entry SIGNAL_SNORT_RELOAD STRING $optarg

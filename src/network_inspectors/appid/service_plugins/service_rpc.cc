@@ -31,6 +31,8 @@
 #include <rpc/rpc.h>
 #elif defined(__sun)
 #include <rpc/rpcent.h>
+#elif defined(HAVE_TIRPC)
+#include <tirpc/rpc/rpcent.h>
 #endif
 
 #include "appid_inspector.h"

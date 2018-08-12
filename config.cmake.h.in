@@ -135,6 +135,7 @@
 
 #cmakedefine HAVE_UUID 1
 
+#cmakedefine HAVE_TIRPC 1
 
 /*  Availability of specific library functions */
 
