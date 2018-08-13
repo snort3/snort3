@@ -318,7 +318,6 @@ static unsigned int ProcessSSHProtocolVersionExchange(SSH_PROTO_CONF* config, SS
     Packet* p, uint8_t direction)
 {
     const char* version_stringp = (const char*)p->data;
-    uint8_t version;
     const char* version_end;
 
     /* Get the version. */
@@ -329,11 +328,11 @@ static unsigned int ProcessSSHProtocolVersionExchange(SSH_PROTO_CONF* config, SS
             && (version_stringp[7] == '9'))
         {
             /* SSH 1.99 which is the same as SSH2.0 */
-            version = SSH_VERSION_2;
+            sessionp->version = SSH_VERSION_2;
         }
         else
         {
-            version = SSH_VERSION_1;
+            sessionp->version = SSH_VERSION_1;
         }
 
         /* CAN-2002-0159 */
@@ -354,10 +353,15 @@ static unsigned int ProcessSSHProtocolVersionExchange(SSH_PROTO_CONF* config, SS
     else if ( p->dsize >= 6 &&
         !strncasecmp(version_stringp, "SSH-2.", 6))
     {
-        version = SSH_VERSION_2;
+        sessionp->version = SSH_VERSION_2;
     }
     else
     {
+        /* unknown version */ 
+        sessionp->version =  SSH_VERSION_UNKNOWN;
+
+        DetectionEngine::queue_event(GID_SSH, SSH_EVENT_VERSION);
+        
         return 0;
     }
 
@@ -374,7 +378,6 @@ static unsigned int ProcessSSHProtocolVersionExchange(SSH_PROTO_CONF* config, SS
         break;
     }
 
-    sessionp->version = version;
     version_end = (char*)memchr(version_stringp, '\n', p->dsize);
     if (version_end)
         return ((version_end - version_stringp) + 1);
@@ -545,11 +548,6 @@ static unsigned int ProcessSSHKeyInitExchange(SSHData* sessionp, Packet* p,
     }
     else
     {
-        {
-            /* Unrecognized version. */
-            DetectionEngine::queue_event(GID_SSH, SSH_EVENT_VERSION);
-        }
-
         return 0;
     }
 
