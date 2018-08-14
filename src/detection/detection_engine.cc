@@ -114,7 +114,10 @@ Packet* DetectionEngine::set_next_packet(Packet* parent)
 {
     IpsContext* c = Snort::get_switcher()->get_next();
     if ( parent )
+    {
+        c->snapshot_flow(parent->flow);
         c->packet_number = parent->context->packet_number;
+    }
     else
         c->packet_number = get_packet_number();
 

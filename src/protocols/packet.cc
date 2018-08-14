@@ -23,6 +23,7 @@
 
 #include "packet.h"
 
+#include "detection/ips_context.h"
 #include "flow/expect_cache.h"
 #include "framework/endianness.h"
 #include "log/obfuscator.h"
@@ -209,5 +210,36 @@ const char* Packet::get_pseudo_type() const
     }
     return "other";
 }
+
+// Things that are set prior to PDU creation and used after PDU creation
+static inline uint32_t get_session_flags(Packet& p)
+{
+    if ( p.ptrs.get_pkt_type() == PktType::PDU )
+        return p.context->get_session_flags();
+
+    return p.flow ? p.flow->get_session_flags() : 0;
+}
+
+bool Packet::is_detection_enabled(bool to_server)
+{
+    uint32_t session_flags = get_session_flags(*this);
+
+    if ( to_server )
+        return !(session_flags & SSNFLAG_NO_DETECT_TO_SERVER);
+
+    return !(session_flags & SSNFLAG_NO_DETECT_TO_CLIENT);
+}
+
+bool Packet::test_session_flags(uint32_t flags)
+{ return (get_session_flags(*this) & flags) != 0; }
+
+SnortProtocolId Packet::get_snort_protocol_id()
+{
+    if ( ptrs.get_pkt_type() == PktType::PDU )
+        return context->get_snort_protocol_id();
+
+    return flow ? flow->ssn_state.snort_protocol_id : UNKNOWN_PROTOCOL_ID;
+}
+
 } // namespace snort
 

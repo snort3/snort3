@@ -260,11 +260,19 @@ struct SO_PUBLIC Packet
     bool is_rebuilt() const
     { return (packet_flags & (PKT_REBUILT_STREAM|PKT_REBUILT_FRAG)) != 0; }
 
-    SnortProtocolId get_snort_protocol_id()
-    { return flow ? flow->ssn_state.snort_protocol_id : UNKNOWN_PROTOCOL_ID; }
+    bool is_detection_enabled(bool to_server);
+
+    bool test_session_flags(uint32_t);
+
+    SnortProtocolId get_snort_protocol_id();
 
     void set_snort_protocol_id(SnortProtocolId proto_id)
-    { if ( flow ) flow->ssn_state.snort_protocol_id = proto_id; }
+    {
+        assert( ptrs.get_pkt_type() != PktType::PDU);
+
+        if ( flow )
+            flow->ssn_state.snort_protocol_id = proto_id;
+    }
 
 private:
     bool allocated;

@@ -890,6 +890,10 @@ DAQ_Verdict Snort::process_packet(
     {
         clear_file_data();
         main_hook(p);
+
+        // FIXIT-L remove this onload when DAQng can push multiple packets
+        if ( p->flow )
+            DetectionEngine::onload(p->flow);
     }
 
     // process flow verdicts here

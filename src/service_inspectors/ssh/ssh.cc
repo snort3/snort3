@@ -166,8 +166,8 @@ static void snort_ssh(SSH_PROTO_CONF* config, Packet* p)
     // If we picked up mid-stream or missed any packets (midstream pick up
     // means we've already missed packets) set missed packets flag and make
     // sure we don't do any more reassembly on this session
-    if ((p->flow->get_session_flags() & SSNFLAG_MIDSTREAM)
-        || Stream::missed_packets(p->flow, SSN_DIR_BOTH))
+    if ( p->test_session_flags(SSNFLAG_MIDSTREAM)
+        || Stream::missed_packets(p->flow, SSN_DIR_BOTH) )
     {
         // Order only matters if the packets are not encrypted
         if ( !(sessp->state_flags & SSH_FLG_SESS_ENCRYPTED ))

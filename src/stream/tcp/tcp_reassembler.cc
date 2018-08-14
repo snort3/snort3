@@ -600,7 +600,6 @@ int TcpReassembler::_flush_to_seq(
             else
                 pdu->packet_flags |= ( PKT_REBUILT_STREAM | PKT_STREAM_EST );
 
-            pdu->set_snort_protocol_id(p->get_snort_protocol_id());
             show_rebuilt_packet(trs, pdu);
             tcpStats.rebuilt_packets++;
             tcpStats.rebuilt_bytes += flushed_bytes;
@@ -688,7 +687,6 @@ int TcpReassembler::do_zero_byte_flush(TcpReassemblerState& trs, Packet* p, uint
         pdu->data = sb.data;
         pdu->dsize = sb.length;
         pdu->packet_flags |= (PKT_REBUILT_STREAM | PKT_STREAM_EST | PKT_PDU_HEAD | PKT_PDU_TAIL);
-        pdu->set_snort_protocol_id(p->get_snort_protocol_id());
         trs.flush_count++;
 
         show_rebuilt_packet(trs, pdu);

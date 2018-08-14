@@ -128,19 +128,15 @@ void print_dce2_co_config(dce2CoProtoConf& co)
 
 bool dce2_paf_abort(Flow* flow, DCE2_SsnData* sd)
 {
-    if (flow->get_session_flags() & SSNFLAG_MIDSTREAM)
-    {
+    // FIXIT-L Checking flags from flow is okay here because this is in paf?
+    if ( (flow->get_session_flags() & SSNFLAG_MIDSTREAM) )
         return true;
-    }
-    else if (!(flow->get_session_flags() & SSNFLAG_ESTABLISHED))
-    {
+
+    else if ( !(flow->get_session_flags() & SSNFLAG_ESTABLISHED) )
         return true;
-    }
 
     if ((sd != nullptr) && DCE2_SsnNoInspect(sd))
-    {
         return true;
-    }
 
     return false;
 }

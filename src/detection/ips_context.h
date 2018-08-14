@@ -46,6 +46,12 @@ struct Replacement
     unsigned offset;
 };
 
+struct FlowSnapshot
+{
+    uint32_t session_flags;
+    SnortProtocolId proto_id;
+};
+
 class SO_PUBLIC IpsContextData
 {
 public:
@@ -78,6 +84,14 @@ public:
     unsigned get_slot()
     { return slot; }
 
+    void snapshot_flow(Flow*);
+
+    uint32_t get_session_flags()
+    { return flow.session_flags; }
+
+    SnortProtocolId get_snort_protocol_id()
+    { return flow.proto_id; }
+
     enum ActiveRules
     { NONE, NON_CONTENT, CONTENT };
 
@@ -105,6 +119,7 @@ public:
     static const unsigned buf_size = Codec::PKT_MAX;
 
 private:
+    FlowSnapshot flow;
     std::vector<IpsContextData*> data;
     unsigned slot;
 };

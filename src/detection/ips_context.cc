@@ -114,6 +114,12 @@ void IpsContext::clear_context_data()
     }
 }
 
+void IpsContext::snapshot_flow(Flow* f)
+{
+    flow.session_flags = f->ssn_state.session_flags;
+    flow.proto_id = f->ssn_state.snort_protocol_id;
+}
+
 //--------------------------------------------------------------------------
 // unit tests
 //--------------------------------------------------------------------------

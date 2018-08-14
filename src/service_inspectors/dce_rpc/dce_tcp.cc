@@ -154,7 +154,7 @@ void Dce2Tcp::eval(Packet* p)
     assert(p->has_tcp_data());
     assert(p->flow);
 
-    if (p->flow->get_session_flags() & SSNFLAG_MIDSTREAM)
+    if ( p->test_session_flags(SSNFLAG_MIDSTREAM) )
     {
         return;
     }

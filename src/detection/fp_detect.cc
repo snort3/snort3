@@ -975,7 +975,7 @@ static int fp_search(
 static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
     int check_ports, char ip_rule, int type, OtnxMatchData* omd)
 {
-    if ( p->flow and !p->flow->is_detection_enabled(p->packet_flags & PKT_FROM_CLIENT) )
+    if ( !p->is_detection_enabled(p->packet_flags & PKT_FROM_CLIENT) )
         return 0;
 
     const uint8_t* tmp_payload = nullptr;
