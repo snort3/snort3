@@ -872,7 +872,7 @@ static inline int search_data(
     omd->data = buf; omd->size = len;
     MpseStash* stash = omd->p->context->stash;
     stash->init();
-    dump_buffer(buf, len);
+    dump_buffer(buf, len, omd->p);
     so->search(buf, len, rule_tree_queue, omd, &start_state);
     stash->process(rule_tree_match, omd);
     if ( PacketLatency::fastpath() )

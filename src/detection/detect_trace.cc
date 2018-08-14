@@ -47,7 +47,6 @@ const uint64_t trace_buffer = TRACE_BUFFER_MINIMAL | TRACE_BUFFER_VERBOSE;
 
 static THREAD_LOCAL char* cursor_name = nullptr;
 static THREAD_LOCAL unsigned cursor_pos = -1;
-static THREAD_LOCAL Packet* pkt = nullptr;
 
 void clear_trace_cursor_info()
 {
@@ -65,25 +64,23 @@ void print_pkt_info(Packet* p)
     SfIpString src_addr, dst_addr;
     unsigned src_port = 0, dst_port = 0;
 
-    pkt = p; //save packet pointer for later
-
-    if ( pkt->is_from_client() )
+    if ( p->is_from_client() )
         dir = "C2S";
-    else if ( pkt->is_from_server() )
+    else if ( p->is_from_server() )
         dir = "S2C";
     else
         dir = "UNK";
 
-    if ( pkt->has_ip() or pkt->is_data() )
+    if ( p->has_ip() or p->is_data() )
     {
-        pkt->ptrs.ip_api.get_src()->ntop(src_addr);
-        pkt->ptrs.ip_api.get_dst()->ntop(dst_addr);
+        p->ptrs.ip_api.get_src()->ntop(src_addr);
+        p->ptrs.ip_api.get_dst()->ntop(dst_addr);
     }
 
-    if ( pkt->proto_bits & (PROTO_BIT__TCP|PROTO_BIT__UDP) )
+    if ( p->proto_bits & (PROTO_BIT__TCP|PROTO_BIT__UDP) )
     {
-        src_port = pkt->ptrs.sp;
-        dst_port = pkt->ptrs.dp;
+        src_port = p->ptrs.sp;
+        dst_port = p->ptrs.dp;
     }
 
     trace_logf(detection, TRACE_RULE_EVAL,"packet %" PRIu64 " %s %s:%u %s:%u\n",
@@ -101,7 +98,7 @@ void print_pattern(const PatternMatchData* pmd)
         txt.c_str(), hex.c_str(), opts.c_str());
 }
 
-void dump_buffer(const uint8_t* buff, unsigned len)
+void dump_buffer(const uint8_t* buff, unsigned len, Packet* p)
 {
     if (!trace_enabled(detection_trace, trace_buffer))
         return;
@@ -112,11 +109,10 @@ void dump_buffer(const uint8_t* buff, unsigned len)
         return;
     }
 
-    assert (pkt != nullptr);
-    LogNetData(buff, len, pkt);
+    LogNetData(buff, len, p);
 }
 
-void node_eval_trace(const detection_option_tree_node_t* node, const Cursor& cursor)
+void node_eval_trace(const detection_option_tree_node_t* node, const Cursor& cursor, Packet* p)
 {
     const char* name = cursor.get_name();
     unsigned pos = cursor.get_pos();
@@ -138,14 +134,14 @@ void node_eval_trace(const detection_option_tree_node_t* node, const Cursor& cur
 
     if (trace_enabled(detection_trace, TRACE_BUFFER_VERBOSE))
     {
-        dump_buffer(cursor.buffer() + pos, cursor.length());
+        dump_buffer(cursor.buffer() + pos, cursor.length(), p);
     }
     else if ((pos != cursor_pos) || strcmp(cursor_name, name))
     {
         cursor_pos = pos;
         snort_free(cursor_name);
         cursor_name = snort_strdup(name);
-        dump_buffer(cursor.buffer() + pos, cursor.length());
+        dump_buffer(cursor.buffer() + pos, cursor.length(), p);
     }
 }
 
@@ -163,11 +159,11 @@ void print_pattern(const PatternMatchData*)
 {
 }
 
-void dump_buffer(const uint8_t*, unsigned)
+void dump_buffer(const uint8_t*, unsigned, Packet*)
 {
 }
 
-void node_eval_trace(const detection_option_tree_node_t*, const Cursor&)
+void node_eval_trace(const detection_option_tree_node_t*, const Cursor&, Packet*)
 {
 }
 
