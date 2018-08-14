@@ -33,7 +33,6 @@
 #include "managers/module_manager.h"
 #include "packet_tracer/packet_tracer.h"
 #include "profiler/profiler.h"
-#include "protocols/packet.h"
 
 #include "app_forecast.h"
 #include "appid_debug.h"
@@ -155,6 +154,7 @@ void AppIdInspector::tinit()
     appid_mute = PacketTracer::get_mute();
 
     AppIdStatistics::initialize_manager(*config);
+    appid_forecast_tinit();
     LuaDetectorManager::initialize(*active_config);
     AppIdServiceState::initialize();
     appidDebug = new AppIdDebug();
@@ -167,6 +167,7 @@ void AppIdInspector::tinit()
 
 void AppIdInspector::tterm()
 {
+    appid_forecast_tterm();
     AppIdStatistics::cleanup();
     LuaDetectorManager::terminate();
     AppIdDiscovery::tterm();
@@ -220,7 +221,7 @@ static void appid_inspector_pterm()
 {
 //FIXIT-M: RELOAD - if app_info_table is associated with an object
     HostPortCache::terminate();
-    clean_appid_forecast();
+    appid_forecast_pterm();
     free_length_app_cache();
     LuaDetectorManager::terminate();
     AppIdDiscovery::release_plugins();

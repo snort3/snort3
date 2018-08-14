@@ -1006,6 +1006,8 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
         {
             asd.past_forecast = check_session_for_AF_forecast(asd, p, direction,
                 (AppId)service_id);
+            asd.set_application_ids(service_id, asd.pick_client_app_id(),
+                asd.pick_payload_app_id(), asd.pick_misc_app_id());
         }
     }
 }

@@ -25,56 +25,38 @@
 
 #include "app_forecast.h"
 
-#include "hash/xhash.h"
 #include "log/messages.h"
-#include "protocols/packet.h"
 #include "time/packet_time.h"
 #include "appid_session.h"
 
 using namespace snort;
 
-static AFActKey master_key;
-static XHash* AF_indicators = nullptr;     // list of "indicator apps"
-static XHash* AF_actives = nullptr;        // list of hosts to watch
+static std::unordered_map<AppId, AFElement> AF_indicators;     // list of "indicator apps"
+static THREAD_LOCAL std::map<AFActKey, AFActVal> *AF_actives;        // list of hosts to watch
 
-int init_appid_forecast()
+void appid_forecast_tinit()
 {
-    if (!(AF_indicators = xhash_new(1024, sizeof(AppId), sizeof(AFElement),
-            0, 0, nullptr, nullptr, 0)))
-    {
-        ErrorMessage("Config: failed to allocate memory for an AF Indicators hash.");
-        return 0;
-    }
-
-    if (!(AF_actives = xhash_new(1024, sizeof(AFActKey), sizeof(AFActVal),
-            (sizeof(XHashNode)*2048), 1, nullptr,  nullptr, 1)))
-    {
-        xhash_delete(AF_indicators);
-        ErrorMessage("Config: failed to allocate memory for an AF Actives hash.");
-        return 0;
-    }
-    else
-        return 1;
+    AF_actives = new std::map<AFActKey, AFActVal>;
 }
 
-void clean_appid_forecast()
+void appid_forecast_tterm()
 {
-    if (AF_indicators)
+    if(nullptr != AF_actives)
     {
-        xhash_delete(AF_indicators);
-        AF_indicators = nullptr;
-    }
-
-    if (AF_actives)
-    {
-        xhash_delete(AF_actives);
+        AF_actives->clear();
+        delete AF_actives;
         AF_actives = nullptr;
     }
 }
 
+void appid_forecast_pterm()
+{
+    AF_indicators.clear();
+}
+
 void add_af_indicator(AppId indicator, AppId forecast, AppId target)
 {
-    if (xhash_find(AF_indicators, &indicator))
+    if (AF_indicators.find(indicator) != AF_indicators.end())
     {
         ErrorMessage("LuaDetectorApi:Attempt to add more than one AFElement per appId %d",
             indicator);
@@ -82,66 +64,46 @@ void add_af_indicator(AppId indicator, AppId forecast, AppId target)
     }
 
     AFElement val;
-    val.indicator = indicator;
     val.forecast = forecast;
     val.target = target;
-    if (xhash_add(AF_indicators, &indicator, &val))
+    if (false == AF_indicators.insert({indicator, val}).second)
         ErrorMessage("LuaDetectorApi:Failed to add AFElement for appId %d", indicator);
-}
-
-static inline void rekey_master_AF_key(Packet* p, AppidSessionDirection dir, AppId forecast)
-{
-    const SfIp* src = dir ? p->ptrs.ip_api.get_dst() : p->ptrs.ip_api.get_src();
-
-    for (int i = 0; i < 4; i++)
-        master_key.ip[i] = src->get_ip6_ptr()[i];
-
-    master_key.forecast = forecast;
 }
 
 void check_session_for_AF_indicator(Packet* p, AppidSessionDirection dir, AppId indicator)
 {
-    AFElement* ind_element;
-    if (!(ind_element = (AFElement*)xhash_find(AF_indicators, &indicator)))
+    auto af_indicator_entry = AF_indicators.find(indicator);
+
+    if (af_indicator_entry == AF_indicators.end())
         return;
 
-    rekey_master_AF_key(p, dir, ind_element->forecast);
-
-    AFActVal* test_active_value;
-    if ((test_active_value = (AFActVal*)xhash_find(AF_actives, &master_key)))
-    {
-        test_active_value->last = snort::packet_time();
-        test_active_value->target = ind_element->target;
-        return;
-    }
+    AFElement ind_element = af_indicator_entry->second;
+    AFActKey master_key(p, dir, ind_element.forecast, master_key);
 
     AFActVal new_active_value;
-    new_active_value.target = ind_element->target;
+    new_active_value.target = ind_element.target;
     new_active_value.last = packet_time();
 
-    xhash_add(AF_actives, &master_key, &new_active_value);
+    (*AF_actives)[master_key] = new_active_value;
 }
 
 AppId check_session_for_AF_forecast(AppIdSession& asd, Packet* p, AppidSessionDirection dir, AppId forecast)
 {
-    AFActVal* check_act_val;
-
-    rekey_master_AF_key(p, dir, forecast);
+    AFActKey master_key(p, dir, forecast, master_key);
 
     //get out if there is no value
-    if (!(check_act_val = (AFActVal*)xhash_find(AF_actives, &master_key)))
+    auto check_act_val = AF_actives->find(master_key);
+    if (check_act_val == AF_actives->end())
         return APP_ID_UNKNOWN;
 
     //if the value is older than 5 minutes, remove it and get out
-    time_t age;
-    age = packet_time() - check_act_val->last;
+    time_t age = packet_time() - check_act_val->second.last;
     if (age < 0 || age > 300)
     {
-        xhash_remove(AF_actives, &master_key);
+        AF_actives->erase(master_key);
         return APP_ID_UNKNOWN;
     }
-
-    asd.payload.set_id(check_act_val->target);
+    asd.payload.set_id(check_act_val->second.target);
     return forecast;
 }
 
