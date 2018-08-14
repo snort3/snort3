@@ -307,7 +307,7 @@ static void dce2_fill_rpkt_info(snort::Packet* rpkt, snort::Packet* p)
 snort::Packet* DCE2_GetRpkt(snort::Packet* p,DCE2_RpktType rpkt_type,
     const uint8_t* data, uint32_t data_len)
 {
-    snort::Packet* rpkt = DetectionEngine::set_next_packet();
+    snort::Packet* rpkt = DetectionEngine::set_next_packet(p);
     uint8_t* wrdata = const_cast<uint8_t*>(rpkt->data);
     dce2_fill_rpkt_info(rpkt, p);
     uint16_t data_overhead = 0;

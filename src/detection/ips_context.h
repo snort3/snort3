@@ -96,6 +96,7 @@ public:
     DataBuffer alt_data;
 
     uint64_t context_num;
+    uint64_t packet_number;
     ActiveRules active_rules;
     bool check_tags;
 

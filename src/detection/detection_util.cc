@@ -29,6 +29,7 @@
 #include "protocols/packet.h"
 #include "utils/stats.h"
 
+#include "ips_context.h"
 #include "treenodes.h"
 
 using namespace snort;
@@ -84,7 +85,7 @@ void EventTrace_Log(const Packet* p, const OptTreeNode* otn, int action)
 
     TextLog_Print(tlog,
         "Pkt=%lu, Sec=%u.%6u, Len=%u, Cap=%u\n",
-        pc.total_from_daq, p->pkth->ts.tv_sec, p->pkth->ts.tv_usec,
+        p->context->packet_number, p->pkth->ts.tv_sec, p->pkth->ts.tv_usec,
         p->pkth->pktlen, p->pkth->caplen);
 
     TextLog_Print(tlog,

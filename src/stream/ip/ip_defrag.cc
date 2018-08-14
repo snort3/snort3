@@ -605,7 +605,7 @@ static void FragRebuild(FragTracker* ft, Packet* p)
     DeepProfile profile(fragRebuildPerfStats);
     size_t offset = 0;
 
-    Packet* dpkt = DetectionEngine::set_next_packet();
+    Packet* dpkt = DetectionEngine::set_next_packet(p);
     PacketManager::encode_format(ENC_FLAG_DEF|ENC_FLAG_FWD, p, dpkt, PSEUDO_PKT_IP);
 
     // the encoder ensures enough space for a maximum datagram

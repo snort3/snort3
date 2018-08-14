@@ -86,7 +86,7 @@ static inline std::ostream& operator<<(std::ostream& os, const Event& e)
     using std::chrono::duration_cast;
     using std::chrono::microseconds;
 
-    os << "latency: " << pc.total_from_daq << " rule tree ";
+    os << "latency: " << e.packet->context->packet_number << " rule tree ";
 
     switch ( e.type )
     {

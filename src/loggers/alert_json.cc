@@ -361,7 +361,7 @@ static bool ff_pkt_len(Args& a)
 static bool ff_pkt_num(Args& a)
 {
     print_label(a, "pkt_num");
-    TextLog_Print(json_log, STDu64, get_packet_number());
+    TextLog_Print(json_log, STDu64, a.pkt->context->packet_number);
     return true;
 }
 

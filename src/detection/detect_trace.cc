@@ -33,6 +33,7 @@
 
 #include "detection_options.h"
 #include "fp_create.h"
+#include "ips_context.h"
 #include "pattern_match_data.h"
 
 using namespace snort;
@@ -86,7 +87,7 @@ void print_pkt_info(Packet* p)
     }
 
     trace_logf(detection, TRACE_RULE_EVAL,"packet %" PRIu64 " %s %s:%u %s:%u\n",
-        pc.total_from_daq, dir, src_addr, src_port, dst_addr, dst_port);
+        p->context->packet_number, dir, src_addr, src_port, dst_addr, dst_port);
 }
 
 void print_pattern(const PatternMatchData* pmd)

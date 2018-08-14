@@ -537,7 +537,7 @@ Packet* TcpReassembler::initialize_pdu(
     TcpReassemblerState& trs, Packet* p, uint32_t pkt_flags, struct timeval tv)
 {
     DetectionEngine::onload(trs.sos.session->flow);
-    Packet* pdu = DetectionEngine::set_next_packet();
+    Packet* pdu = DetectionEngine::set_next_packet(p);
 
     EncodeFlags enc_flags = 0;
     DAQ_PktHdr_t pkth;
@@ -556,7 +556,7 @@ int TcpReassembler::_flush_to_seq(
     DeepProfile profile(s5TcpFlushPerfStats);
 
     DetectionEngine::onload(trs.sos.session->flow);
-    Packet* pdu = DetectionEngine::set_next_packet();
+    Packet* pdu = DetectionEngine::set_next_packet(p);
 
     if ( !p )
     {

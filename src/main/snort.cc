@@ -982,6 +982,8 @@ DAQ_Verdict Snort::packet_callback(
 
     s_switcher->start();
     s_packet = s_switcher->get_context()->packet;
+    s_packet->context->packet_number = pc.total_from_daq;
+
     DetectionEngine::reset();
 
     sfthreshold_reset();
