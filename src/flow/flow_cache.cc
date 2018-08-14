@@ -242,13 +242,17 @@ unsigned FlowCache::prune_excess(const Flow* save_me)
     unsigned pruned = 0;
     unsigned blocks = 0;
 
+    // initially skip offloads but if that doesn't work the hashtable is iterated from the
+    // beginning again. prune offloads at that point.
+    unsigned ignore_offloads = hash_table->get_count();
+
     while ( hash_table->get_count() > max_cap and hash_table->get_count() > blocks )
     {
         auto flow = static_cast<Flow*>(hash_table->first());
         assert(flow); // holds true because hash_table->get_count() > 0
 
         if ( (save_me and flow == save_me) or flow->was_blocked() or
-            flow->is_offloaded() )
+            (flow->is_offloaded() and ignore_offloads) )
         {
             // check for non-null save_me above to silence analyzer
             // "called C++ object pointer is null" here
@@ -260,15 +264,15 @@ unsigned FlowCache::prune_excess(const Flow* save_me)
             if ( !hash_table->touch() )
                 break;
         }
-
         else
         {
             flow->ssn_state.session_flags |= SSNFLAG_PRUNED;
             release(flow, PruneReason::EXCESS);
             ++pruned;
         }
+        if ( ignore_offloads > 0 )
+            --ignore_offloads;
     }
-
     return pruned;
 }
 
