@@ -76,11 +76,11 @@ DetectionEngine::DetectionEngine()
 
 DetectionEngine::~DetectionEngine()
 {
-    finish_packet(context->packet);
     ContextSwitcher* sw = Snort::get_switcher();
 
     if ( context == sw->get_context() )
     {
+        finish_packet(context->packet);
         sw->complete();
     }
 }
@@ -406,7 +406,7 @@ void DetectionEngine::inspect(Packet* p)
             if ( !all_disabled(p) )
             {
                 if ( detect(p, true) )
-                    return;
+                    return; // don't finish out offloaded packets
             }
         }
         DetectionEngine::set_check_tags();
@@ -422,9 +422,6 @@ void DetectionEngine::inspect(Packet* p)
 
     log_events(p);
     Active::apply_delayed_action(p);
-
-    if ( offloaded(p) )
-        return;
 
     // clear closed sessions here after inspection since non-stream
     // inspectors may depend on flow information

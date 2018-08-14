@@ -430,7 +430,7 @@ int TcpReassembler::flush_data_segments(
         {
             pdu->data = sb.data;
             pdu->dsize = sb.length;
-            assert(sb.length <= pdu->max_dsize);
+            assert(sb.length <= Packet::max_dsize);
 
             bytes_to_copy = bytes_copied;
         }
@@ -554,16 +554,14 @@ int TcpReassembler::_flush_to_seq(
     TcpReassemblerState& trs, uint32_t bytes, Packet* p, uint32_t pkt_flags)
 {
     DeepProfile profile(s5TcpFlushPerfStats);
-
     DetectionEngine::onload(trs.sos.session->flow);
-    Packet* pdu = DetectionEngine::set_next_packet(p);
 
     if ( !p )
     {
         // FIXIT-H we need to have user_policy_id in this case
         // FIXIT-H this leads to format_tcp() copying from pdu to pdu
         // (neither of these issues is created by passing null through to here)
-        p = pdu;
+        p = DetectionEngine::set_next_packet();
     }
 
     uint32_t bytes_processed = 0;
@@ -577,9 +575,9 @@ int TcpReassembler::_flush_to_seq(
         if ( footprint == 0 )
             return bytes_processed;
 
-        if ( footprint > pdu->max_dsize )
+        if ( footprint > Packet::max_dsize )
             /* this is as much as we can pack into a stream buffer */
-            footprint = pdu->max_dsize;
+            footprint = Packet::max_dsize;
 
         if ( trs.tracker->splitter->is_paf() and
             ( trs.tracker->get_tf_flags() & TF_MISSING_PREV_PKT ) )
