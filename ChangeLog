@@ -1,3 +1,75 @@
+18/08/13 - build 246
+
+-- active: Add an upper limit of 255 to min_interval
+-- appid: Avoid snort crash upon lua file errors
+-- appid: Fixes for TNS, eDonkey, and debug logs in Lua detectors
+-- appid: Single lua-state per thread
+-- appid: code clean-up
+-- appid: create developer notes document
+-- appid: make the code compatible with the latest version of snort2.
+-- appid: refactor detector initialization
+-- appid: fix multithreading issues (data races) from app_forecast
+-- appid: many other updates
+-- binder: Make two passes at binder rules - one for policy IDs and then everything else
+-- binder: Refactor binder as a passive, event-driven inspector
+-- byte_test: update operator parsing, remove dead code
+-- catch: Update to Catch v2.2.3
+-- codecs: Handle raw IP packets in Snort proper
+-- codecs: fix dynamic build of root codecs
+-- decode: alternate checksum calculation to improve runtime performance
+-- detection: don't offload when 0 threads are configured
+-- detection: save the ropts used for dce rule options in ips context to support offload
+-- detection: various bug fixes for offload emulation
+-- doc: Update regarding the build issue with --enable-tcmalloc flag and known workarounds
+-- doc: added active response section to user manual
+-- doc: corrections to tutorial section
+-- doc: update known problems
+-- events: remove manager cruft
+-- file_id: fix uninitialized
+-- file_magic: Update file_magic.lua to cover all file types and versions
+-- framework: Enable dynamic building of ips_{pcre,regex,sd_pattern} + Hyperscan MPSE
+-- framework: Scratch handlers for SnortState
+-- framework: fixed adding probe to wrong SnortConfig
+-- http_inspect: URI normalization added to dev_notes
+-- http_inspect: add perfmon to splitter
+-- http_inspect: bug fix and cleanup
+-- http_inspect: memory reduction and misc cleanup
+-- http_inspect: renumbered events to avoid current and future conflicts with Snort 2.X
+-- inspector: Rename ::update() to ::remove_inspector_binding() to better reflect what it does
+-- ips: Remove unused IPS module stats
+-- ips_fragbits: Removed dead code
+-- packet_tracer: Report user policy IDs and add network policy
+-- parser: reset parse error count before reload to avoid confusion
+-- perf_monitor: fix for reload
+-- perf_monitor: format error in dev_notes
+-- policy: Add the ability to set network policy based on user-specified ID
+-- policy: Export querying policies by user ID and setting runtime policies
+-- profiler: Don't clobber max entry count when recursing
+-- reload: do not set policies for incremental reload case
+-- reload: set policies upon swap to avoid dangling pointers when idle
+-- reputation: make sure reputation inspector is called in default policy
+-- reputation: support reload module
+-- sfip: if ips_policy doesn't exist, allow for ipvar parsing without vartable
+-- sip: Ported sip-splitter implementation from snort2
+-- snort.lua: add inline tweaks
+-- snort.lua: add talos defaults
+-- snort.lua: fix tweaks path; thanks to brastult@cisco.com for reporting the issue
+-- snort.lua: fix community rules filename; thanks to mike@flyn.org for reporting the issue
+-- snort2lua: Handle sidechannel config.
+-- snort2lua: add conversion for shared memory
+-- snort2lua: added missing keyword to nap parsing
+-- snort2lua: don't try to index into empty lines
+-- snort2lua: fixed nap ip parsing
+-- snort2lua: merge multiple nap rules with the same id
+-- snort2lua: translate file_type rule option
+-- snort: match delete[] with new[]
+-- snort: wrap snort SO_PUBLIC symbols in the snort namespace
+-- ssh: added test code
+-- stream_ip: match delete[] with new[]; don't create zero length trackers
+-- stream_tcp: 86 r_nxt_ack as tracker state for next rx seq, use rcv_nxt instead
+-- stream_tcp: back out fin handling changes for bug not relevant to snort3
+-- tcp_connector_test: fixed version-sensitive build problem
+
 18/05/21 - build 245
 
 -- CodecManager: removed unused code

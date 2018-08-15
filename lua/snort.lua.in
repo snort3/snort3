@@ -202,7 +202,7 @@ ips =
 
     -- use include for rules files; be sure to set your path
     -- note that rules files can include other rules files
-    --include = 'snort3_community.rules'
+    --include = 'snort3-community.rules'
 }
 
 -- use these to configure additional rule actions
@@ -279,6 +279,6 @@ rate_filter =
 ---------------------------------------------------------------------------
 
 if ( tweaks ~= nil ) then
-    dofile(conf_dir .. tweaks .. '.lua')
+    dofile(conf_dir .. '/' .. tweaks .. '.lua')
 end
 
