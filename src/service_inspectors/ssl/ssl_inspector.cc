@@ -166,7 +166,7 @@ static inline bool SSLPP_is_encrypted(SSL_PROTO_CONF* config, uint32_t ssl_flags
         }
         /* Check if we're either midstream or if packets were missed after the
          *          * connection was established */
-        else if ((packet->flow->get_session_flags() & SSNFLAG_MIDSTREAM) ||
+        else if ( packet->test_session_flags(SSNFLAG_MIDSTREAM) ||
             (Stream::missed_packets(packet->flow, SSN_DIR_BOTH)))
         {
             if ((ssl_flags & (SSL_CAPP_FLAG | SSL_SAPP_FLAG)) == (SSL_CAPP_FLAG | SSL_SAPP_FLAG))

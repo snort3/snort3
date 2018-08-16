@@ -759,7 +759,6 @@ bool AppIdConfig::init_appid(SnortConfig* sc, AppIdInspector *ins)
     {      
         AppIdConfig::app_info_mgr.init_appid_info_table(mod_config, sc);
         HostPortCache::initialize();
-        init_appid_forecast();
         HttpPatternMatchers* http_matchers = HttpPatternMatchers::get_instance();
         AppIdDiscovery::initialize_plugins(ins);
         init_length_app_cache();

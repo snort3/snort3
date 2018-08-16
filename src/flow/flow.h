@@ -191,15 +191,11 @@ public:
     uint32_t get_session_flags()
     { return ssn_state.session_flags; }
 
-    uint32_t test_session_flags(uint32_t flags)
-    { return (ssn_state.session_flags & flags) != 0; }
-
     uint32_t clear_session_flags(uint32_t flags)
     { return ssn_state.session_flags &= ~flags; }
 
     void set_to_client_detection(bool enable);
     void set_to_server_detection(bool enable);
-    bool is_detection_enabled(bool to_server);
 
     int get_ignore_direction()
     { return ssn_state.ignore_direction; }
@@ -374,13 +370,6 @@ inline void Flow::set_to_server_detection(bool enable)
         ssn_state.session_flags |= SSNFLAG_NO_DETECT_TO_SERVER;
 }
 
-inline bool Flow::is_detection_enabled(bool to_server)
-{
-    if ( to_server )
-        return !(ssn_state.session_flags & SSNFLAG_NO_DETECT_TO_SERVER);
-
-    return !(ssn_state.session_flags & SSNFLAG_NO_DETECT_TO_CLIENT);
-}
 }
 
 #endif

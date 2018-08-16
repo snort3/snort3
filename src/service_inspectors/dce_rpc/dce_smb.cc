@@ -385,7 +385,7 @@ void Dce2Smb::eval(snort::Packet* p)
     assert(p->has_tcp_data());
     assert(p->flow);
 
-    if (p->flow->get_session_flags() & SSNFLAG_MIDSTREAM)
+    if ( p->test_session_flags(SSNFLAG_MIDSTREAM) )
         return;
 
     dce2_smb_sess = dce2_handle_smb_session(p, &config);

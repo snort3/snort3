@@ -160,11 +160,8 @@ public:
     AppId get_client_app_id();
     AppId get_payload_app_id();
     AppId get_referred_app_id();
-    AppId get_fw_service_app_id();
-    AppId get_fw_misc_app_id();
-    AppId get_fw_client_app_id();
-    AppId get_fw_payload_app_id();
-    AppId get_fw_referred_app_id();
+    void get_app_id(AppId& service, AppId& client, AppId& payload, AppId& misc, AppId& referred);
+    void get_app_id(AppId* service, AppId* client, AppId* payload, AppId* misc, AppId* referred);
     bool is_ssl_session_decrypted();
     bool is_appid_inspecting_session();
     bool is_appid_available();

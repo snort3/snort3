@@ -112,9 +112,8 @@ AppIdSession::~AppIdSession()
 {
     if ( !in_expected_cache )
     {
-        AppIdStatistics* stats_mgr = AppIdStatistics::get_stats_manager();
-        if ( stats_mgr )
-            stats_mgr->update(*this);
+        if ( config->mod_config->stats_logging_enabled )
+            AppIdStatistics::get_stats_manager()->update(*this);
 
         // fail any service detection that is in process for this flow
         if (!get_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_UDP_REVERSED |
@@ -673,7 +672,7 @@ void AppIdSession::stop_rna_service_inspection(Packet* p, AppidSessionDirection 
 
 AppId AppIdSession::pick_service_app_id()
 {
-    AppId rval;
+    AppId rval = APP_ID_NONE;
 
     if ( common.flow_type != APPID_FLOW_TYPE_NORMAL )
         return APP_ID_NONE;
@@ -698,14 +697,16 @@ AppId AppIdSession::pick_service_app_id()
     }
     else if (tp_app_id > APP_ID_NONE)
         return tp_app_id;
-    else
-        rval = APP_ID_NONE;
 
     if (client_inferred_service_id > APP_ID_NONE)
         return client_inferred_service_id;
 
     if (service.get_port_service_id() > APP_ID_NONE)
         return service.get_port_service_id();
+
+    if (rval == APP_ID_NONE or
+        (rval == APP_ID_UNKNOWN_UI and encrypted.service_id > APP_ID_NONE))
+        return encrypted.service_id;
 
     return rval;
 }
@@ -737,7 +738,7 @@ AppId AppIdSession::pick_misc_app_id()
         return APP_ID_NONE;
     if (misc_app_id > APP_ID_NONE)
         return misc_app_id;
-    return APP_ID_NONE;
+    return encrypted.misc_id;
 }
 
 AppId AppIdSession::pick_client_app_id()
@@ -746,7 +747,7 @@ AppId AppIdSession::pick_client_app_id()
         return APP_ID_NONE;
     if (client.get_id() > APP_ID_NONE)
         return client.get_id();
-    return APP_ID_NONE;
+    return encrypted.client_id;
 }
 
 AppId AppIdSession::pick_payload_app_id()
@@ -760,52 +761,16 @@ AppId AppIdSession::pick_payload_app_id()
         return payload.get_id();
     else if (tp_payload_app_id > APP_ID_NONE)
         return tp_payload_app_id;
-
-    return APP_ID_NONE;
+    return encrypted.payload_id;
 }
 
 AppId AppIdSession::pick_referred_payload_app_id()
 {
     if ( common.flow_type != APPID_FLOW_TYPE_NORMAL )
         return APP_ID_NONE;
-    return (referred_payload_app_id > APP_ID_NONE) ? referred_payload_app_id : APP_ID_NONE;
-}
-
-AppId AppIdSession::pick_fw_service_app_id()
-{
-    AppId appId = application_ids[APP_PROTOID_SERVICE];
-    if (appId == APP_ID_NONE || appId== APP_ID_UNKNOWN_UI)
-        appId = encrypted.service_id;
-    return appId;
-}
-
-AppId AppIdSession::pick_fw_misc_app_id()
-{
-    AppId appId = application_ids[APP_PROTOID_MISC];
-    if (appId == APP_ID_NONE)
-        appId = encrypted.misc_id;
-    return appId;
-}
-
-AppId AppIdSession::pick_fw_client_app_id()
-{
-    return application_ids[APP_PROTOID_CLIENT];
-}
-
-AppId AppIdSession::pick_fw_payload_app_id()
-{
-    AppId appId = application_ids[APP_PROTOID_PAYLOAD];
-    if (appId == APP_ID_NONE)
-        appId = encrypted.payload_id;
-    return appId;
-}
-
-AppId AppIdSession::pick_fw_referred_payload_app_id()
-{
-    AppId appId = pick_referred_payload_app_id();
-    if (appId == APP_ID_NONE)
-        appId = encrypted.referred_id;
-    return appId;
+    if ( referred_payload_app_id > APP_ID_NONE )
+        return referred_payload_app_id;
+    return encrypted.referred_id;
 }
 
 void AppIdSession::set_application_ids(AppId service_id, AppId client_id,
@@ -824,6 +789,34 @@ void AppIdSession::get_application_ids(AppId& service_id, AppId& client_id,
     client_id  = application_ids[APP_PROTOID_CLIENT];
     payload_id = application_ids[APP_PROTOID_PAYLOAD];
     misc_id    = application_ids[APP_PROTOID_MISC];
+}
+
+void AppIdSession::get_application_ids(AppId& service_id, AppId& client_id,
+    AppId& payload_id)
+{
+    service_id = application_ids[APP_PROTOID_SERVICE];
+    client_id  = application_ids[APP_PROTOID_CLIENT];
+    payload_id = application_ids[APP_PROTOID_PAYLOAD];
+}
+
+AppId AppIdSession::get_application_ids_service()
+{
+    return application_ids[APP_PROTOID_SERVICE];
+}
+
+AppId AppIdSession::get_application_ids_client()
+{
+    return application_ids[APP_PROTOID_CLIENT];
+}
+
+AppId AppIdSession::get_application_ids_payload()
+{
+    return application_ids[APP_PROTOID_PAYLOAD];
+}
+
+AppId AppIdSession::get_application_ids_misc()
+{
+    return application_ids[APP_PROTOID_MISC];
 }
 
 bool AppIdSession::is_ssl_session_decrypted()

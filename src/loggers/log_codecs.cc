@@ -22,6 +22,7 @@
 #include "config.h"
 #endif
 
+#include "detection/ips_context.h"
 #include "detection/signature.h"
 #include "events/event.h"
 #include "framework/logger.h"
@@ -137,7 +138,7 @@ void CodecLogger::close()
 
 void CodecLogger::log(Packet* p, const char* msg, Event* e)
 {
-    TextLog_Print(test_file, "pkt:" STDu64 "\t", pc.total_from_daq);
+    TextLog_Print(test_file, "pkt:" STDu64 "\t", p->context->packet_number);
 
     if (e != nullptr)
     {

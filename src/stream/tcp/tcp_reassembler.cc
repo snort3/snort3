@@ -430,7 +430,7 @@ int TcpReassembler::flush_data_segments(
         {
             pdu->data = sb.data;
             pdu->dsize = sb.length;
-            assert(sb.length <= pdu->max_dsize);
+            assert(sb.length <= Packet::max_dsize);
 
             bytes_to_copy = bytes_copied;
         }
@@ -537,7 +537,7 @@ Packet* TcpReassembler::initialize_pdu(
     TcpReassemblerState& trs, Packet* p, uint32_t pkt_flags, struct timeval tv)
 {
     DetectionEngine::onload(trs.sos.session->flow);
-    Packet* pdu = DetectionEngine::set_next_packet();
+    Packet* pdu = DetectionEngine::set_next_packet(p);
 
     EncodeFlags enc_flags = 0;
     DAQ_PktHdr_t pkth;
@@ -554,16 +554,14 @@ int TcpReassembler::_flush_to_seq(
     TcpReassemblerState& trs, uint32_t bytes, Packet* p, uint32_t pkt_flags)
 {
     DeepProfile profile(s5TcpFlushPerfStats);
-
     DetectionEngine::onload(trs.sos.session->flow);
-    Packet* pdu = DetectionEngine::set_next_packet();
 
     if ( !p )
     {
         // FIXIT-H we need to have user_policy_id in this case
         // FIXIT-H this leads to format_tcp() copying from pdu to pdu
         // (neither of these issues is created by passing null through to here)
-        p = pdu;
+        p = DetectionEngine::set_next_packet();
     }
 
     uint32_t bytes_processed = 0;
@@ -577,9 +575,9 @@ int TcpReassembler::_flush_to_seq(
         if ( footprint == 0 )
             return bytes_processed;
 
-        if ( footprint > pdu->max_dsize )
+        if ( footprint > Packet::max_dsize )
             /* this is as much as we can pack into a stream buffer */
-            footprint = pdu->max_dsize;
+            footprint = Packet::max_dsize;
 
         if ( trs.tracker->splitter->is_paf() and
             ( trs.tracker->get_tf_flags() & TF_MISSING_PREV_PKT ) )
@@ -600,7 +598,6 @@ int TcpReassembler::_flush_to_seq(
             else
                 pdu->packet_flags |= ( PKT_REBUILT_STREAM | PKT_STREAM_EST );
 
-            pdu->set_snort_protocol_id(p->get_snort_protocol_id());
             show_rebuilt_packet(trs, pdu);
             tcpStats.rebuilt_packets++;
             tcpStats.rebuilt_bytes += flushed_bytes;
@@ -688,7 +685,6 @@ int TcpReassembler::do_zero_byte_flush(TcpReassemblerState& trs, Packet* p, uint
         pdu->data = sb.data;
         pdu->dsize = sb.length;
         pdu->packet_flags |= (PKT_REBUILT_STREAM | PKT_STREAM_EST | PKT_PDU_HEAD | PKT_PDU_TAIL);
-        pdu->set_snort_protocol_id(p->get_snort_protocol_id());
         trs.flush_count++;
 
         show_rebuilt_packet(trs, pdu);

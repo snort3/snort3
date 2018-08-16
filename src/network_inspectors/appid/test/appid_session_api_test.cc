@@ -105,36 +105,6 @@ TEST(appid_session_api, get_referred_app_id)
     CHECK_EQUAL(id, APPID_UT_ID);
 }
 
-TEST(appid_session_api, get_fw_service_app_id)
-{
-    AppId id = appid_session_api->get_fw_service_app_id();
-    CHECK_EQUAL(id, APPID_UT_ID);
-}
-
-TEST(appid_session_api, get_fw_misc_app_id)
-{
-    AppId id = appid_session_api->get_fw_misc_app_id();
-    CHECK_EQUAL(id, APPID_UT_ID);
-}
-
-TEST(appid_session_api, get_fw_client_app_id)
-{
-    AppId id = appid_session_api->get_fw_client_app_id();
-    CHECK_EQUAL(id, APPID_UT_ID);
-}
-
-TEST(appid_session_api, get_fw_payload_app_id)
-{
-    AppId id = appid_session_api->get_fw_payload_app_id();
-    CHECK_EQUAL(id, APPID_UT_ID);
-}
-
-TEST(appid_session_api, get_fw_referred_app_id)
-{
-    AppId id = appid_session_api->get_fw_referred_app_id();
-    CHECK_EQUAL(id, APPID_UT_ID);
-}
-
 TEST(appid_session_api, get_service_port)
 {
     short sp = appid_session_api->get_service_port();

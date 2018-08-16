@@ -872,7 +872,7 @@ static inline int search_data(
     omd->data = buf; omd->size = len;
     MpseStash* stash = omd->p->context->stash;
     stash->init();
-    dump_buffer(buf, len);
+    dump_buffer(buf, len, omd->p);
     so->search(buf, len, rule_tree_queue, omd, &start_state);
     stash->process(rule_tree_match, omd);
     if ( PacketLatency::fastpath() )
@@ -888,8 +888,9 @@ static inline int search_buffer(
     {
         if ( Mpse* so = omd->pg->mpse[pmt] )
         {
+            // FIXIT-H get the context packet number
             trace_logf(detection, TRACE_FP_SEARCH, "%" PRIu64 " fp %s.%s[%d]\n",
-                pc.total_from_daq, gadget->get_name(), pm_type_strings[pmt], buf.len);
+                omd->p->context->packet_number, gadget->get_name(), pm_type_strings[pmt], buf.len);
 
             search_data(so, omd, buf.data, buf.len, cnt);
         }
@@ -919,7 +920,7 @@ static int fp_search(
             if ( uint16_t pattern_match_size = p->get_detect_limit() )
             {
                 trace_logf(detection, TRACE_FP_SEARCH, "%" PRIu64 " fp %s[%u]\n",
-                    pc.total_from_daq, pm_type_strings[PM_TYPE_PKT], pattern_match_size);
+                    p->context->packet_number, pm_type_strings[PM_TYPE_PKT], pattern_match_size);
 
                 search_data(so, omd, p->data, pattern_match_size, pc.pkt_searches);
                 p->is_cooked() ?  pc.cooked_searches++ : pc.raw_searches++;
@@ -958,7 +959,7 @@ static int fp_search(
             if ( file_data.len )
             {
                 trace_logf(detection, TRACE_FP_SEARCH, "%" PRIu64 " fp search %s[%d]\n",
-                    pc.total_from_daq, pm_type_strings[PM_TYPE_FILE], file_data.len);
+                    p->context->packet_number, pm_type_strings[PM_TYPE_FILE], file_data.len);
 
                 search_data(so, omd, file_data.data, file_data.len, pc.file_searches);
             }
@@ -974,7 +975,7 @@ static int fp_search(
 static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
     int check_ports, char ip_rule, int type, OtnxMatchData* omd)
 {
-    if ( p->flow and !p->flow->is_detection_enabled(p->packet_flags & PKT_FROM_CLIENT) )
+    if ( !p->is_detection_enabled(p->packet_flags & PKT_FROM_CLIENT) )
         return 0;
 
     const uint8_t* tmp_payload = nullptr;

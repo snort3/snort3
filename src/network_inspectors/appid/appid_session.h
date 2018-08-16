@@ -273,13 +273,13 @@ public:
     AppId pick_client_app_id();
     AppId pick_payload_app_id();
     AppId pick_referred_payload_app_id();
-    AppId pick_fw_service_app_id();
-    AppId pick_fw_misc_app_id();
-    AppId pick_fw_client_app_id();
-    AppId pick_fw_payload_app_id();
-    AppId pick_fw_referred_payload_app_id();
-    void set_application_ids(AppId, AppId, AppId, AppId);
-    void get_application_ids(AppId&, AppId&, AppId&, AppId&);
+    void set_application_ids(AppId service, AppId client, AppId payload, AppId misc);
+    void get_application_ids(AppId& service, AppId& client, AppId& payload, AppId& misc);
+    void get_application_ids(AppId& service, AppId& client, AppId& payload);
+    AppId get_application_ids_service();
+    AppId get_application_ids_client();
+    AppId get_application_ids_payload();
+    AppId get_application_ids_misc();
 
     bool is_ssl_session_decrypted();
     void examine_ssl_metadata(snort::Packet*);

@@ -193,30 +193,17 @@ AppId AppIdSession::pick_referred_payload_app_id()
     return APPID_UT_ID;
 }
 
-AppId AppIdSession::pick_fw_service_app_id()
-{
-    return APPID_UT_ID;
-}
+void AppIdSession::get_application_ids(AppId&, AppId&, AppId&, AppId&) { }
 
-AppId AppIdSession::pick_fw_misc_app_id()
-{
-    return APPID_UT_ID;
-}
+void AppIdSession::get_application_ids(AppId&, AppId&, AppId&) { }
 
-AppId AppIdSession::pick_fw_client_app_id()
-{
-    return APPID_UT_ID;
-}
+AppId AppIdSession::get_application_ids_service() { return APPID_UT_ID; }
 
-AppId AppIdSession::pick_fw_payload_app_id()
-{
-    return APPID_UT_ID;
-}
+AppId AppIdSession::get_application_ids_client() { return APPID_UT_ID; }
 
-AppId AppIdSession::pick_fw_referred_payload_app_id()
-{
-    return APPID_UT_ID;
-}
+AppId AppIdSession::get_application_ids_payload() { return APPID_UT_ID; }
+
+AppId AppIdSession::get_application_ids_misc() { return APPID_UT_ID; }
 
 AppId AppIdSession::pick_only_service_app_id()
 {

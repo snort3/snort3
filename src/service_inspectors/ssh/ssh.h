@@ -32,30 +32,6 @@
 
 #include "flow/flow.h"
 
-// Per-session data block containing current state
-// of the SSH preprocessor for the session.
-struct SSHData
-{
-    uint8_t version;           // Version of SSH detected for this session
-    uint16_t num_enc_pkts;     // encrypted packets seen on this session
-    uint16_t num_client_bytes; // bytes of encrypted data sent by client without a server response
-    uint32_t state_flags;      // Bit vector describing the current state of the session
-};
-
-class SshFlowData : public snort::FlowData
-{
-public:
-    SshFlowData();
-    ~SshFlowData() override;
-
-    static void init()
-    { inspector_id = snort::FlowData::create_flow_data_id(); }
-
-public:
-    static unsigned inspector_id;
-    SSHData session;
-};
-
 // FIXIT-L move these to ssh.cc
 // Session state flags for SSHData::state_flags
 #define SSH_FLG_CLEAR           (0x0)
@@ -108,6 +84,30 @@ public:
 #define SSH_VERSION_UNKNOWN (0x0)
 #define SSH_VERSION_1       (0x1)
 #define SSH_VERSION_2       (0x2)
+
+// Per-session data block containing current state
+// of the SSH preprocessor for the session.
+struct SSHData
+{
+    uint8_t version = SSH_VERSION_UNKNOWN; // Version of SSH detected for this session
+    uint16_t num_enc_pkts;     // encrypted packets seen on this session
+    uint16_t num_client_bytes; // bytes of encrypted data sent by client without a server response
+    uint32_t state_flags;      // Bit vector describing the current state of the session
+};
+
+class SshFlowData : public snort::FlowData
+{
+public:
+    SshFlowData();
+    ~SshFlowData() override;
+
+    static void init()
+    { inspector_id = snort::FlowData::create_flow_data_id(); }
+
+public:
+    static unsigned inspector_id;
+    SSHData session;
+};
 
 // Length of SSH2 header, in bytes.
 #define SSH2_HEADERLEN      (5)

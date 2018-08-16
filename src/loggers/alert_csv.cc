@@ -29,6 +29,7 @@
 #endif
 
 #include "detection/detection_engine.h"
+#include "detection/ips_context.h"
 #include "detection/signature.h"
 #include "events/event.h"
 #include "flow/flow_key.h"
@@ -270,9 +271,9 @@ static void ff_pkt_len(Args& a)
         TextLog_Print(csv_log, "%u", a.pkt->dsize);
 }
 
-static void ff_pkt_num(Args&)
+static void ff_pkt_num(Args& a)
 {
-    TextLog_Print(csv_log, STDu64, get_packet_number());
+    TextLog_Print(csv_log, STDu64, a.pkt->context->packet_number);
 }
 
 static void ff_priority(Args& a)

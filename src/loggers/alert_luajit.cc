@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include "detection/ips_context.h"
 #include "detection/signature.h"
 #include "events/event.h"
 #include "framework/logger.h"
@@ -79,7 +80,7 @@ SO_PUBLIC const SnortPacket* get_packet()
     default: lua_packet.type = "OTHER";
     }
 
-    lua_packet.num = pc.total_from_daq;
+    lua_packet.num = packet->context->packet_number;
     lua_packet.sp = packet->ptrs.sp;
     lua_packet.dp = packet->ptrs.dp;
 

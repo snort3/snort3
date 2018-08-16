@@ -55,7 +55,7 @@ void DceHttpServer::clear(Packet* p)
 
     if (flow->session and flow->pkt_type == PktType::TCP)
     {
-        if ( (flow->get_session_flags() & SSNFLAG_ABORT_SERVER) == 0 )
+        if ( !p->test_session_flags(SSNFLAG_ABORT_SERVER) )
         {
             TcpStreamSession* tcp_session = (TcpStreamSession*)flow->session;
             DceHttpServerSplitter* splitter =

@@ -243,6 +243,7 @@ FlowData* Flow::get_flow_data(unsigned id) const
     return nullptr;
 }
 
+// FIXIT-L: implement doubly linked list with STL to cut down on code we maintain
 void Flow::free_flow_data(FlowData* fd)
 {
     if ( fd == flow_data )

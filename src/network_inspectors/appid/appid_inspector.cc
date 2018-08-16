@@ -33,7 +33,6 @@
 #include "managers/module_manager.h"
 #include "packet_tracer/packet_tracer.h"
 #include "profiler/profiler.h"
-#include "protocols/packet.h"
 
 #include "app_forecast.h"
 #include "appid_debug.h"
@@ -155,6 +154,7 @@ void AppIdInspector::tinit()
     appid_mute = PacketTracer::get_mute();
 
     AppIdStatistics::initialize_manager(*config);
+    appid_forecast_tinit();
     LuaDetectorManager::initialize(*active_config);
     AppIdServiceState::initialize();
     appidDebug = new AppIdDebug();
@@ -167,6 +167,7 @@ void AppIdInspector::tinit()
 
 void AppIdInspector::tterm()
 {
+    appid_forecast_tterm();
     AppIdStatistics::cleanup();
     LuaDetectorManager::terminate();
     AppIdDiscovery::tterm();
@@ -220,7 +221,7 @@ static void appid_inspector_pterm()
 {
 //FIXIT-M: RELOAD - if app_info_table is associated with an object
     HostPortCache::terminate();
-    clean_appid_forecast();
+    appid_forecast_pterm();
     free_length_app_cache();
     LuaDetectorManager::terminate();
     AppIdDiscovery::release_plugins();
@@ -321,17 +322,8 @@ int sslAppGroupIdLookup(void*, const char*, const char*, AppId*, AppId*, AppId*)
     }
 
     if (ssnptr && (asd = appid_api.get_appid_session(ssnptr)))
-    {
-        *service_id = pick_service_app_id(asd);
-        if (*client_id == APP_ID_NONE)
-        {
-            *client_id = pick_client_app_id(asd);
-        }
-        if (*payload_id == APP_ID_NONE)
-        {
-            *payload_id = pick_payload_app_id(asd);
-        }
-    }
+        asd->get_application_ids(*service_id, *client_id, *payload_id);
+
     if (*service_id != APP_ID_NONE ||
         *client_id != APP_ID_NONE ||
         *payload_id != APP_ID_NONE)

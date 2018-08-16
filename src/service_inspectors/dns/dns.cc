@@ -920,21 +920,15 @@ static void snort_dns(Packet* p)
         // If session picked up mid-stream, do not process further.
         // Would be almost impossible to tell where we are in the
         // data stream.
-        if ( p->flow->get_session_flags() & SSNFLAG_MIDSTREAM )
-        {
+        if ( p->test_session_flags(SSNFLAG_MIDSTREAM) )
             return;
-        }
 
         if ( !Stream::is_stream_sequenced(p->flow, SSN_DIR_FROM_CLIENT) )
-        {
             return;
-        }
 
         // If we're waiting on stream reassembly, don't process this packet.
         if ( p->packet_flags & PKT_STREAM_INSERT )
-        {
             return;
-        }
     }
 
     // Get the direction of the packet.

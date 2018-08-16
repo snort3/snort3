@@ -76,8 +76,8 @@ void ContextSwitcher::start()
 {
     assert(busy.empty());
     assert(!idle.empty());
-    trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::start %u (i=%zu, b=%zu)\n",
-        pc.total_from_daq, idle.back()->get_slot(), idle.size(), busy.size());
+    trace_logf(detection, TRACE_DETECTION_ENGINE, "(wire) %" PRIu64 " cs::start %u (i=%zu, b=%zu)\n",
+        get_packet_number(), idle.back()->get_slot(), idle.size(), busy.size());
     busy.push_back(idle.back());
     idle.pop_back();
 }
@@ -85,26 +85,32 @@ void ContextSwitcher::start()
 void ContextSwitcher::stop()
 {
     assert(busy.size() == 1);
-    trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::stop %u (i=%zu, b=%zu)\n",
-        pc.total_from_daq, busy.back()->get_slot(), idle.size(), busy.size());
+    trace_logf(detection, TRACE_DETECTION_ENGINE, "(wire) %" PRIu64 " cs::stop %u (i=%zu, b=%zu)\n",
+        get_packet_number(), busy.back()->get_slot(), idle.size(), busy.size());
     idle.push_back(busy.back());
     busy.pop_back();
 }
 
 void ContextSwitcher::abort()
 {
-    trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::abort (i=%zu, b=%zu)\n",
-        pc.total_from_daq, idle.size(), busy.size());
+    trace_logf(detection, TRACE_DETECTION_ENGINE, "(wire) %" PRIu64 " cs::abort (i=%zu, b=%zu)\n",
+        get_packet_number(), idle.size(), busy.size());
     for ( unsigned i = 0; i < hold.capacity(); ++i )
     {
         if ( hold[i] )
         {
+            trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::abort hold",
+                hold[i]->packet_number);
+
             idle.push_back(hold[i]);
             hold[i] = nullptr;
         }
     }
     while ( !busy.empty() )
     {
+        trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::abort busy",
+            busy[0]->packet_number);
+
         idle.push_back(busy.back());
         busy.pop_back();
     }
@@ -114,7 +120,7 @@ IpsContext* ContextSwitcher::interrupt()
 {
     assert(!idle.empty());
     trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::interrupt %u (i=%zu, b=%zu)\n",
-        pc.total_from_daq, idle.back()->get_slot(), idle.size(), busy.size());
+        idle.back()->packet_number, idle.back()->get_slot(), idle.size(), busy.size());
     busy.push_back(idle.back());
     idle.pop_back();
     return busy.back();
@@ -123,9 +129,11 @@ IpsContext* ContextSwitcher::interrupt()
 IpsContext* ContextSwitcher::complete()
 {
     assert(!busy.empty());
-    trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::complete %u (i=%zu, b=%zu)\n",
-        pc.total_from_daq, busy.back()->get_slot(), idle.size(), busy.size());
     IpsContext* c = busy.back();
+
+    trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::complete %u (i=%zu, b=%zu)\n",
+        c->packet_number, busy.back()->get_slot(), idle.size(), busy.size());
+
     c->clear_context_data();
     idle.push_back(c);
     busy.pop_back();
@@ -135,9 +143,11 @@ IpsContext* ContextSwitcher::complete()
 unsigned ContextSwitcher::suspend()
 {
     assert(!busy.empty());
-    trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::suspend %u (i=%zu, b=%zu)\n",
-        pc.total_from_daq, busy.back()->get_slot(), idle.size(), busy.size());
     IpsContext* c = busy.back();
+
+    trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::suspend %u (i=%zu, b=%zu)\n",
+        c->packet_number, busy.back()->get_slot(), idle.size(), busy.size());
+
     busy.pop_back();
     unsigned slot = c->get_slot();
     assert(!hold[slot]);
@@ -149,7 +159,7 @@ void ContextSwitcher::resume(unsigned slot)
 {
     assert(slot <= hold.capacity());
     trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " cs::resume %u (i=%zu, b=%zu)\n",
-        pc.total_from_daq, slot, idle.size(), busy.size());
+        hold[slot]->packet_number, slot, idle.size(), busy.size());
     busy.push_back(hold[slot]);
     hold[slot] = nullptr;
 }

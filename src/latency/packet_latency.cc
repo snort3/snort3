@@ -72,7 +72,7 @@ using EventHandler = EventingWrapper<Event>;
 
 static inline std::ostream& operator<<(std::ostream& os, const Event& e)
 {
-    os << "latency: " << pc.total_from_daq << " packet";
+    os << "latency: " << e.packet->context->packet_number << " packet";
 
     if ( e.fastpathed )
         os << " fastpathed: ";

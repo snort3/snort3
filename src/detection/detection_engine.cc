@@ -76,11 +76,11 @@ DetectionEngine::DetectionEngine()
 
 DetectionEngine::~DetectionEngine()
 {
-    finish_packet(context->packet);
     ContextSwitcher* sw = Snort::get_switcher();
 
     if ( context == sw->get_context() )
     {
+        finish_packet(context->packet);
         sw->complete();
     }
 }
@@ -110,9 +110,17 @@ Packet* DetectionEngine::get_encode_packet()
 // we need to stay in the current context until rebuild is successful
 // any events while rebuilding will be logged against the current packet
 // however, rebuild is always in the next context, not current.
-Packet* DetectionEngine::set_next_packet()
+Packet* DetectionEngine::set_next_packet(Packet* parent)
 {
-    const IpsContext* c = Snort::get_switcher()->get_next();
+    IpsContext* c = Snort::get_switcher()->get_next();
+    if ( parent )
+    {
+        c->snapshot_flow(parent->flow);
+        c->packet_number = parent->context->packet_number;
+    }
+    else
+        c->packet_number = get_packet_number();
+
     Packet* p = c->packet;
 
     p->pkth = c->pkth;
@@ -210,7 +218,9 @@ void DetectionEngine::disable_content(Packet* p)
 {
     if ( p->context->active_rules == IpsContext::CONTENT )
         p->context->active_rules = IpsContext::NON_CONTENT;
-    trace_logf(detection, TRACE_PKT_DETECTION, "Disabled content detect, packet %" PRIu64"\n", pc.total_from_daq);
+
+    trace_logf(detection, TRACE_PKT_DETECTION,
+        "Disabled content detect, packet %" PRIu64"\n", p->context->packet_number);
 }
 
 void DetectionEngine::enable_content(Packet* p)
@@ -244,12 +254,16 @@ void DetectionEngine::idle()
     {
         while ( offloader->count() )
         {
-            trace_logf(detection, TRACE_DETECTION_ENGINE,  "%" PRIu64 " de::sleep\n", pc.total_from_daq);
+            trace_logf(detection,
+                TRACE_DETECTION_ENGINE,  "(wire) %" PRIu64 " de::sleep\n", get_packet_number());
+
             const struct timespec blip = { 0, 1 };
             nanosleep(&blip, nullptr);
             onload();
         }
-        trace_logf(detection,  TRACE_DETECTION_ENGINE, "%" PRIu64 " de::idle (r=%d)\n", pc.total_from_daq, offloader->count());
+        trace_logf(detection,  TRACE_DETECTION_ENGINE, "(wire) %" PRIu64 " de::idle (r=%d)\n",
+            get_packet_number(), offloader->count());
+
         offloader->stop();
     }
 }
@@ -259,7 +273,9 @@ void DetectionEngine::onload(Flow* flow)
     while ( flow->is_offloaded() )
     {
         const struct timespec blip = { 0, 1 };
-        trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " de::sleep\n", pc.total_from_daq);
+        trace_logf(detection,
+            TRACE_DETECTION_ENGINE, "(wire) %" PRIu64 " de::sleep\n", get_packet_number());
+
         nanosleep(&blip, nullptr);
         onload();
     }
@@ -279,7 +295,7 @@ void DetectionEngine::onload()
     assert(c);
 
     trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " de::onload %u (r=%d)\n",
-        pc.total_from_daq, id, offloader->count());
+        c->packet_number, id, offloader->count());
 
     Packet* p = c->packet;
     p->flow->clear_offloaded();
@@ -312,7 +328,7 @@ bool DetectionEngine::offload(Packet* p)
     unsigned id = sw->suspend();
 
     trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " de::offload %u (r=%d)\n",
-        pc.total_from_daq, id, offloader->count());
+        p->context->packet_number, id, offloader->count());
 
     p->flow->set_offloaded();
     p->context->conf = SnortConfig::get_conf();
@@ -390,7 +406,7 @@ void DetectionEngine::inspect(Packet* p)
             if ( !all_disabled(p) )
             {
                 if ( detect(p, true) )
-                    return;
+                    return; // don't finish out offloaded packets
             }
         }
         DetectionEngine::set_check_tags();
@@ -406,9 +422,6 @@ void DetectionEngine::inspect(Packet* p)
 
     log_events(p);
     Active::apply_delayed_action(p);
-
-    if ( offloaded(p) )
-        return;
 
     // clear closed sessions here after inspection since non-stream
     // inspectors may depend on flow information

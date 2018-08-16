@@ -55,7 +55,7 @@ public:
     static IpsContext* get_context();
 
     static Packet* get_current_packet();
-    static Packet* set_next_packet();
+    static Packet* set_next_packet(Packet* parent = nullptr);
     static uint8_t* get_next_buffer(unsigned& max);
 
     static bool offloaded(Packet*);

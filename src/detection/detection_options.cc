@@ -365,7 +365,7 @@ int detection_option_node_evaluate(
     if ( !eval_data || !eval_data->p || !eval_data->pomd )
         return 0;
 
-    node_eval_trace(node, cursor);
+    node_eval_trace(node, cursor, eval_data->p);
 
     auto p = eval_data->p;
     auto pomd = eval_data->pomd;

@@ -556,7 +556,7 @@ static void snort_pop(POP_PROTO_CONF* config, Packet* p)
             {
                 pop_ssn->state = STATE_TLS_DATA;
             }
-            else if (!(p->flow->get_session_flags() & SSNFLAG_MIDSTREAM)
+            else if ( !p->test_session_flags(SSNFLAG_MIDSTREAM)
                 && !Stream::missed_packets(p->flow, SSN_DIR_BOTH))
             {
                 /* revert back to command state - assume server didn't accept STARTTLS */
