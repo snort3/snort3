@@ -30,7 +30,7 @@
 
 #include "utils/stats.h"
 
-std::map<AppId, uint32_t> AppIdPegCounts::appid_detector_pegs_idx;
+std::unordered_map<AppId, uint32_t> AppIdPegCounts::appid_detector_pegs_idx;
 std::vector<std::string> AppIdPegCounts::appid_detectors_info;
 THREAD_LOCAL std::vector<AppIdPegCounts::AppIdDynamicPeg>* AppIdPegCounts::appid_peg_counts;
 AppIdPegCounts::AppIdDynamicPeg AppIdPegCounts::appid_dynamic_sum[SF_APPID_MAX + 1];
@@ -107,7 +107,7 @@ void AppIdPegCounts::inc_misc_count(AppId id)
 
 uint32_t AppIdPegCounts::get_stats_index(AppId id)
 {
-    std::map<AppId, uint32_t>::iterator stats_idx_it = appid_detector_pegs_idx.find(id);
+    std::unordered_map<AppId, uint32_t>::iterator stats_idx_it = appid_detector_pegs_idx.find(id);
     if ( stats_idx_it != appid_detector_pegs_idx.end() )
         return stats_idx_it->second;
     else

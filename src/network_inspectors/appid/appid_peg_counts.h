@@ -32,7 +32,7 @@
 // array index.
 // Only the main thread is using a static array.
 
-#include <map>
+#include <unordered_map>
 #include <vector>
 
 #include "application_ids.h"
@@ -102,7 +102,7 @@ public:
     static void print();
 
 private:
-    static std::map<AppId, uint32_t> appid_detector_pegs_idx;
+    static std::unordered_map<AppId, uint32_t> appid_detector_pegs_idx;
     static std::vector<std::string> appid_detectors_info;
     static AppIdDynamicPeg appid_dynamic_sum[SF_APPID_MAX+1];
     static THREAD_LOCAL std::vector<AppIdDynamicPeg>* appid_peg_counts;

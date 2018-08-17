@@ -71,7 +71,6 @@ struct HostPortKey
 };
 PADDING_GUARD_END
 
-//FIXIT-H: Use unordered map
 static std::map<HostPortKey, HostPortVal>* host_port_cache = nullptr;
 
 void HostPortCache::initialize()

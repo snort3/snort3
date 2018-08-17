@@ -25,8 +25,6 @@
 
 #include "client_discovery.h"
 
-#include <map>
-
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 

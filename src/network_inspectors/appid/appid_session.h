@@ -24,6 +24,7 @@
 
 #include <map>
 #include <string>
+#include <unordered_map>
 
 #include "detector_plugins/http_url_patterns.h"
 #include "app_info_table.h"
@@ -106,7 +107,7 @@ public:
     unsigned fd_id;
     AppIdFreeFCN fd_free;
 };
-typedef std::map<unsigned, AppIdFlowData*>::const_iterator AppIdFlowDataIter;
+typedef std::unordered_map<unsigned, AppIdFlowData*>::const_iterator AppIdFlowDataIter;
 
 struct CommonAppIdData
 {
@@ -175,7 +176,7 @@ public:
     uint32_t session_id = 0;
     snort::Flow* flow = nullptr;
     AppIdConfig* config;
-    std::map<unsigned, AppIdFlowData*> flow_data;
+    std::unordered_map<unsigned, AppIdFlowData*> flow_data;
     AppInfoManager* app_info_mgr = nullptr;
     CommonAppIdData common;
     uint16_t session_packet_count = 0;
