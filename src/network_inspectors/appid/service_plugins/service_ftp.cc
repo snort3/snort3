@@ -986,7 +986,6 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
                     break;
                 case 234:
                 {
-                    args.asd.set_session_flags(APPID_SESSION_CONTINUE);
                     retval = APPID_SUCCESS;
                     /*
                     // we do not set the state to FTP_STATE_MONITOR here because we don't know
