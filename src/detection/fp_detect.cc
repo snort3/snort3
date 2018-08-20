@@ -90,13 +90,12 @@ THREAD_LOCAL ProfileStats ruleNFPEvalPerfStats;
 // every packet so this only sets the necessary counters to
 // zero which saves us time.
 
-static inline void init_match_info(OtnxMatchData* o, bool do_fp)
+static inline void init_match_info(OtnxMatchData* o)
 {
     for ( int i = 0; i < o->iMatchInfoArraySize; i++ )
         o->matchInfo[i].iMatchCount = 0;
 
     o->have_match = false;
-    o->do_fp = do_fp;
 }
 
 // called by fpLogEvent(), which does the filtering etc.
@@ -1004,15 +1003,12 @@ static inline int fpEvalHeaderSW(PortGroup* port_group, Packet* p,
         p->packet_flags &= ~PKT_IP_RULE;
     }
 
-    if ( omd->do_fp and DetectionEngine::content_enabled(p) )
+    if ( DetectionEngine::content_enabled(p) )
     {
         if ( fp->get_stream_insert() || !(p->packet_flags & PKT_STREAM_INSERT) )
             if ( fp_search(port_group, p, check_ports, type, omd) )
                 return 0;
     }
-
-    if ( DetectionEngine::offloaded(p) )
-        return 0;
 
     do
     {
@@ -1286,7 +1282,7 @@ void fp_local(Packet* p)
     MpseStash* stash = c->stash;
     stash->enable_process();
     stash->init();
-    init_match_info(c->otnx, true);
+    init_match_info(c->otnx);
     fpEvalPacket(p);
     fpFinalSelectEvent(c->otnx, p);
 }
@@ -1298,7 +1294,7 @@ void fp_offload(Packet* p)
     stash->enable_process();
     stash->init();
     stash->disable_process();
-    init_match_info(c->otnx, true);
+    init_match_info(c->otnx);
     fpEvalPacket(p);
 }
 
@@ -1308,7 +1304,6 @@ void fp_onload(Packet* p)
     MpseStash* stash = c->stash;
     stash->enable_process();
     stash->process(rule_tree_match, c->otnx);
-    fpEvalPacket(p);
     fpFinalSelectEvent(c->otnx, p);
 }
 
