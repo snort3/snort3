@@ -606,7 +606,8 @@ const char* get_error(int errnum)
     static THREAD_LOCAL char buf[128];
 
 #if (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE < 200112L && \
-        defined(_XOPEN_SOURCE) && _XOPEN_SOURCE < 600) || _GNU_SOURCE
+     defined(_XOPEN_SOURCE) && _XOPEN_SOURCE < 600) || \
+    (defined(__GLIBC__) && defined(_GNU_SOURCE))
     return strerror_r(errnum, buf, sizeof(buf));
 #else
     (void)strerror_r(errnum, buf, sizeof(buf));
