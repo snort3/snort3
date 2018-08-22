@@ -36,6 +36,7 @@ Table of Contents
     3.5. Help
     3.6. Common Errors
     3.7. Gotchas
+    3.8. Known Issues
 
 4. Usage
 
@@ -53,22 +54,24 @@ Table of Contents
 
 5. Features
 
-    5.1. AppId
-    5.2. Binder
-    5.3. Byte rule options
-    5.4. DCE Inspectors
-    5.5. File Processing
-    5.6. High Availability
-    5.7. FTP
-    5.8. HTTP Inspector
-    5.9. HTTP/2 Inspector
-    5.10. Performance Monitor
-    5.11. POP and IMAP
-    5.12. Port Scan
-    5.13. Sensitive Data Filtering
-    5.14. SMTP
-    5.15. Telnet
-    5.16. Wizard
+    5.1. Active Response
+    5.2. AppId
+    5.3. Binder
+    5.4. Byte rule options
+    5.5. DCE Inspectors
+    5.6. File Processing
+    5.7. High Availability
+    5.8. FTP
+    5.9. HTTP Inspector
+    5.10. HTTP/2 Inspector
+    5.11. Module Trace
+    5.12. Performance Monitor
+    5.13. POP and IMAP
+    5.14. Port Scan
+    5.15. Sensitive Data Filtering
+    5.16. SMTP
+    5.17. Telnet
+    5.18. Wizard
 
 6. Basic Modules
 
@@ -91,16 +94,17 @@ Table of Contents
     6.17. memory
     6.18. network
     6.19. output
-    6.20. packets
-    6.21. process
-    6.22. profiler
-    6.23. rate_filter
-    6.24. references
-    6.25. rule_state
-    6.26. search_engine
-    6.27. side_channel
-    6.28. snort
-    6.29. suppress
+    6.20. packet_tracer
+    6.21. packets
+    6.22. process
+    6.23. profiler
+    6.24. rate_filter
+    6.25. references
+    6.26. rule_state
+    6.27. search_engine
+    6.28. side_channel
+    6.29. snort
+    6.30. suppress
 
 7. Codec Modules
 
@@ -150,38 +154,39 @@ Table of Contents
     9.10. dce_udp
     9.11. dnp3
     9.12. dns
-    9.13. dpx
-    9.14. file_id
-    9.15. file_log
-    9.16. ftp_client
-    9.17. ftp_data
-    9.18. ftp_server
-    9.19. gtp_inspect
-    9.20. http2_inspect
-    9.21. http_inspect
-    9.22. imap
-    9.23. modbus
-    9.24. normalizer
-    9.25. packet_capture
-    9.26. perf_monitor
-    9.27. pop
-    9.28. port_scan
-    9.29. reg_test
-    9.30. reputation
-    9.31. rpc_decode
-    9.32. sip
-    9.33. smtp
-    9.34. ssh
-    9.35. ssl
-    9.36. stream
-    9.37. stream_file
-    9.38. stream_icmp
-    9.39. stream_ip
-    9.40. stream_tcp
-    9.41. stream_udp
-    9.42. stream_user
-    9.43. telnet
-    9.44. wizard
+    9.13. domain_filter
+    9.14. dpx
+    9.15. file_id
+    9.16. file_log
+    9.17. ftp_client
+    9.18. ftp_data
+    9.19. ftp_server
+    9.20. gtp_inspect
+    9.21. http2_inspect
+    9.22. http_inspect
+    9.23. imap
+    9.24. modbus
+    9.25. normalizer
+    9.26. packet_capture
+    9.27. perf_monitor
+    9.28. pop
+    9.29. port_scan
+    9.30. reg_test
+    9.31. reputation
+    9.32. rpc_decode
+    9.33. sip
+    9.34. smtp
+    9.35. ssh
+    9.36. ssl
+    9.37. stream
+    9.38. stream_file
+    9.39. stream_icmp
+    9.40. stream_ip
+    9.41. stream_tcp
+    9.42. stream_udp
+    9.43. stream_user
+    9.44. telnet
+    9.45. wizard
 
 10. IPS Action Modules
 
@@ -326,6 +331,7 @@ Table of Contents
     16.6. Rules
     16.7. Output
     16.8. Sensitive Data
+    16.9. Features Not Yet Supported by Snort 3
 
 17. Snort2Lua
 
@@ -372,13 +378,12 @@ Table of Contents
     20.10. Configuration Changes
     20.11. Module Listing
     20.12. Plugin Listing
-    20.13. Bugs
-    20.14. LibDAQ and DAQ Modules
+    20.13. LibDAQ and DAQ Modules
 
 Snorty
 
  ,,_     -*> Snort++ <*-
-o"  )~   Version 3.0.0 (Build 243) from 2.9.11
+o"  )~   Version 3.0.0 (Build 246) from 2.9.11
  ''''    By Martin Roesch & The Snort Team
          http://snort.org/contact#team
          Copyright (C) 2014-2018 Cisco and/or its affiliates. All rights reserved.
@@ -1246,7 +1251,8 @@ Optional:
     enabling the flatbuffers serialization format
   * hyperscan >= 4.4.0 from https://github.com/01org/hyperscan to
     build new the regex and sd_pattern rule options and hyperscan
-    search engine
+    search engine. Hyperscan is large so it recommended to follow
+    their instructions for building it as a shared library.
   * iconv from https://ftp.gnu.org/pub/gnu/libiconv/ for converting
     UTF16-LE filenames to UTF8 (usually included in glibc)
   * lzma >= 5.1.2 from http://tukaani.org/xz/ for decompression of
@@ -1531,33 +1537,34 @@ WARNING: unknown symbol x
 
 --------------
 
-  * A nil key in a table will not caught. Neither will a nil value in
-    a table. Neither of the following will cause errors, nor will
-    they actually set http_server.post_depth:
+  * A nil key in a table will not be caught. Neither will a nil value
+    in a table. Neither of the following will cause errors, nor will
+    they actually set http_inspect.request_depth:
 
-    http_server = { post_depth }
-    http_server = { post_depth = undefined_symbol }
+    http_inspect = { request_depth }
+    http_inspect = { request_depth = undefined_symbol }
 
   * It is not an error to set a value multiple times. The actual
     value applied may not be the last in the table either. It is best
     to avoid such cases.
 
-    http_server =
+    http_inspect =
     {
-        post_depth = 1234,
-        post_depth = 4321
+        request_depth = 1234,
+        request_depth = 4321
     }
 
   * Snort can’t tell you the exact filename or line number of a
     semantic error but it will tell you the fully qualified name.
+
+
+3.8. Known Issues
+
+--------------
+
   * The dump DAQ will not work with multiple threads unless you use
-    --daq-var file=/dev/null. This will be fixed in at some point to
-    use the Snort log directory, etc.
-  * configure will use clang by default if it is installed. To
-    compile with g instead:
-
-    export CXX=g++
-
+    --daq-var output=none. This will be fixed at some point to use
+    the Snort log directory, etc.
   * If you build with hyperscan on OS X and see:
 
     dyld: Library not loaded: @rpath/libhs.4.0.dylib
@@ -1567,6 +1574,13 @@ WARNING: unknown symbol x
 
     install_name_tool -change @rpath/libhs.4.0.dylib \
         /path-to/libhs.4.0.dylib src/snort
+
+  * Snort built with tcmalloc support (--enable-tcmalloc) on Ubuntu
+    17.04/18.04 crashes immediately.
+
+    Workaround:
+    Uninstall gperftools 2.5 provided by the distribution and install gperftools
+    2.7 before building Snort.
 
 
 ---------------------------------------------------------------------
@@ -1915,7 +1929,187 @@ The available signals may vary from platform to platform.
 This section explains how to use key features of Snort.
 
 
-5.1. AppId
+5.1. Active Response
+
+--------------
+
+Snort can take more active role in securing network by sending active
+responses to shutdown offending sessions. When active responses is
+enabled, snort will send TCP RST or ICMP unreachable when dropping a
+session.
+
+5.1.1. Changes from Snort 2.9
+
+  * stream5_global:max_active_responses and min_response_seconds are
+    now active.max_responses and active.min_interval.
+  * Response actions were removed from IPS rule body to the rule
+    action in the header. This includes react, reject, and rewrite
+    (split out of replace which now just does the detection part).
+    These IPS actions are plugins.
+  * drop and block are synonymous in Snort 2.9 but in Snort 3.0 drop
+    means don’t forward the current packet only whereas block means
+    don’t forward this or any following packet on the flow.
+
+5.1.2. Configure Active
+
+Active response is enabled by configuring one of following IPS action
+plugins:
+
+react = { }
+reject = { }
+rewrite = { }
+
+Active responses will be performed for reject, react or rewrite IPS
+rule actions, and response packets are encoded based on the
+triggering packet. TTL will be set to the value captured at session
+pickup.
+
+Configure the number of attempts to land a TCP RST within the
+session’s current window (so that it is accepted by the receiving
+TCP). This sequence "strafing" is really only useful in passive mode.
+In inline mode the reset is put straight into the stream in lieu of
+the triggering packet so strafing is not necessary.
+
+Each attempt (sent in rapid succession) has a different sequence
+number. Each active response will actually cause this number of TCP
+resets to be sent. TCP data is multiplied similarly. At most 1 ICMP
+unreachable is sent, iff attempts > 0.
+
+Device IP will perform network layer injection. It is probably a
+better choice to specify an interface and avoid kernel routing
+tables, etc.
+
+dst_mac will change response destination MAC address, if the device
+is eth0, eth1, eth2 etc. Otherwise, response destination MAC address
+is derived from packet.
+
+Example:
+
+active =
+{
+    attempts = 2,
+    device = "eth0",
+    dst_mac = "00:06:76:DD:5F:E3",
+}
+
+5.1.3. Reject
+
+IPS action reject perform active response to shutdown hostile network
+session by injecting TCP resets (TCP connections) or ICMP unreachable
+packets.
+
+Example:
+
+reject = { reset = "both", control = "all" }
+
+local_rules =
+[[
+reject tcp ( msg:"hostile connection"; flow:established, to_server;
+content:"HACK!"; sid:1; )
+]]
+
+ips =
+{
+    rules = local_rules,
+}
+
+5.1.4. React
+
+IPS action react enables sending an HTML page on a session and then
+resetting it.
+
+The page to be sent can be read from a file:
+
+react = { page = "custmized_block_page.html", }
+
+or else the default is used:
+
+<default_page> ::= \
+    "HTTP/1.1 403 Forbidden\r\n"
+    "Connection: close\r\n"
+    "Content-Type: text/html; charset=utf-8\r\n"
+    "\r\n"
+    "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\r\n" \
+    "    \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\r\n" \
+    "<html xmlns=\"http://www.w3.org/1999/xhtml\"
+    xml:lang=\"en\">\r\n" \
+    "<head>\r\n" \
+    "<meta http-equiv=\"Content-Type\" content=\"text/html;
+    charset=UTF-8\" />\r\n" \
+    "<title>Access Denied</title>\r\n" \
+    "</head>\r\n" \
+    "<body>\r\n" \
+    "<h1>Access Denied</h1>\r\n" \
+    "<p>%s</p>\r\n" \
+    "</body>\r\n" \
+    "</html>\r\n";
+
+Note that the file must contain the entire response, including any
+HTTP headers. In fact, the response isn’t strictly limited to HTTP.
+You could craft a binary payload of arbitrary content.
+
+When the rule is configured, the page is loaded and the %s is
+replaced with the selected message, which defaults to:
+
+"You are attempting to access a forbidden site.<br />" \
+"Consult your system administrator for details."
+
+Additional formatting operators beyond a single %s are prohibited,
+including %d, %x, %s, as well as any URL encodings such as as %20
+(space) that may be within a reference URL.
+
+Example:
+
+react = { page = "my_block_page.html" }
+
+local_rules =
+[[
+react http ( msg:"Unauthorized Access Prohibited!"; flow:established,
+to_server; http_method; content:"GET"; sid:1; )
+]]
+
+ips =
+{
+    rules = local_rules,
+}
+
+5.1.5. Rewrite
+
+IPS action rewrite enables overwrite packet contents based on
+"replace" option in the rules.
+
+For example:
+
+rewrite = { }
+local_rules =
+[[
+rewrite tcp 10.1.1.87 any -> 10.1.1.0/24 80
+(
+    sid:1000002;
+    msg:"test replace rule";
+    content:"index.php", nocase;
+    replace:"indax.php";
+)
+]]
+
+ips =
+{
+    rules = local_rules,
+}
+
+this rule replaces "index.php" with "indax.php", and rewrite action
+updates that packet.
+
+to enable rewrite action:
+
+rewrite = { }
+
+the replace operation can be disabled by changing the configuration:
+
+rewrite = { disable_replace = true }
+
+
+5.2. AppId
 
 --------------
 
@@ -1926,7 +2120,7 @@ administrator to create rules for applications as needed by the
 business. The rules can be used to take action based on the
 application, such as block, allow or alert.
 
-5.1.1. Overview
+5.2.1. Overview
 
 The AppId inspector provides an application level view when managing
 networks by providing the following features:
@@ -1944,7 +2138,7 @@ networks by providing the following features:
     detectors are provided by the Snort team and can be downloaded
     from snort.org.
 
-5.1.2. Dependency Requirements
+5.2.2. Dependency Requirements
 
 For proper functioning of the AppId inspector, at a minimum stream
 flow tracking must be enabled. In addition, to identify TCP-based or
@@ -1960,7 +2154,7 @@ inspectors, such as the HTTP and SSL inspectors, to gain access to
 the data needed. It uses that data to help determine the application
 ID.
 
-5.1.3. Configuration
+5.2.3. Configuration
 
 The AppId feature can be enabled via configuration. To enable it with
 the default settings use:
@@ -2038,7 +2232,7 @@ ips =
     rules = local_rules,
 }
 
-5.1.4. Session Application Identifiers
+5.2.4. Session Application Identifiers
 
 There are up to four AppIds stored in a session as defined below:
 
@@ -2062,14 +2256,14 @@ The same logic is followed for packets originating from the server
 with one exception. The order of matching is changed to make
 serviceAppId come before clientAppId.
 
-5.1.5. AppId Usage Statistics
+5.2.5. AppId Usage Statistics
 
 The AppId inspector prints application network usage periodically in
 the snort log directory in unified2 format. File name, time interval
 for statistic and file rollover are controlled by appId inspection
 configuration.
 
-5.1.6. Open Detector Package (ODP) Installation
+5.2.6. Open Detector Package (ODP) Installation
 
 Application detectors from Snort team will be delivered in a separate
 package called the Open Detector Package (ODP) that can be downloaded
@@ -2097,7 +2291,7 @@ When installed, ODP will create following sub-directories:
   * odp/lua //Cisco Lua detectors
   * odp/libs //Cisco Lua modules
 
-5.1.7. User Created Application Detectors
+5.2.7. User Created Application Detectors
 
 Users can detect new applications by adding detectors in the Lua
 language. A document will be posted on the Snort Website with details
@@ -2126,7 +2320,7 @@ openappid/custom/lua/
 None of the directories below /usr/local/lib/openappid/ would be
 added for you.
 
-5.1.8. Application Detector Creation Tool
+5.2.8. Application Detector Creation Tool
 
 For rudimentary Lua detectors, there is a tool provided called
 appid_detector_builder.sh. This is a simple, menu-driven bash script
@@ -2163,7 +2357,7 @@ The resulting .lua file will need to be placed in the directory,
 called "User Created Application Detectors"
 
 
-5.2. Binder
+5.3. Binder
 
 --------------
 
@@ -2216,11 +2410,11 @@ can contain any combination of criteria and binder.use can specify an
 action, config file, or inspector configuration.
 
 
-5.3. Byte rule options
+5.4. Byte rule options
 
 --------------
 
-5.3.1. byte_test
+5.4.1. byte_test
 
 This rule option tests a byte field against a specific value (with
 operator). Capable of testing binary values or converting
@@ -2232,12 +2426,17 @@ operator is used, then it would be the same as using
 
 if (data & value) { do_something(); }
 
+! operator negates the results from the base check. !<oper> is
+considered as
+
+!(data <oper> value)
+
 Note: The bitmask option applies bitwise AND operator on the bytes
 converted. The result will be right-shifted by the number of bits
 equal to the number of trailing zeros in the mask. This applies for
 the other rule options as well.
 
-5.3.1.1. Examples
+5.4.1.1. Examples
 
 alert tcp (byte_test:2, =, 568, 0, bitmask 0x3FF0;)
 
@@ -2250,7 +2449,7 @@ alert udp (byte_test:4, =, 1234, 0, string, dec;
 alert udp (byte_test:8, =, 0xdeadbeef, 0, string, hex;
     msg:"got DEADBEEF!";)
 
-5.3.2. byte_jump
+5.4.2. byte_jump
 
 The byte_jump rule option allows rules to be written for length
 encoded protocols trivially. By having an option that reads the
@@ -2259,7 +2458,7 @@ packet, rules can be written that skip over specific portions of
 length-encoded protocols and perform detection in very specific
 locations.
 
-5.3.2.1. Examples
+5.4.2.1. Examples
 
 alert tcp (content:"Begin";
     byte_jump:0, 0, from_end, post_offset -6;
@@ -2271,7 +2470,7 @@ alert tcp (content:"catalog";
     byte_test:2, =, 968, 0, relative;
     msg:"Bitmask applied on the 2 bytes extracted for byte_jump";)
 
-5.3.3. byte_extract
+5.4.3. byte_extract
 
 The byte_extract keyword is another useful option for writing rules
 against length-encoded protocols. It reads in some number of bytes
@@ -2279,7 +2478,7 @@ from the packet payload and saves it to a variable. These variables
 can be referenced later in the rule, instead of using hard-coded
 values.
 
-5.3.3.1. Other options which use byte_extract variables
+5.4.3.1. Other options which use byte_extract variables
 
 A byte_extract rule option detects nothing by itself. Its use is in
 extracting packet data for use in other rule options.
@@ -2291,7 +2490,7 @@ Here is a list of places where byte_extract variables can be used:
   * byte_jump: offset, post_offset
   * isdataat: offset
 
-5.3.3.2. Examples
+5.4.3.2. Examples
 
 alert tcp (byte_extract:1, 0, str_offset;
     byte_extract:1, 1, str_depth;
@@ -2315,7 +2514,7 @@ alert tcp (content:"|04 63 34 35|", offset 4, depth 4;
     byte_test: 2, =, var_match, 2, relative;
     msg:"Test value match, after applying bitmask on bytes extracted";)
 
-5.3.4. byte_math
+5.4.4. byte_math
 
 Perform a mathematical operation on an extracted value and a
 specified value or existing variable, and store the outcome in a new
@@ -2334,7 +2533,7 @@ Byte_math operations are performed on unsigned 32-bit values. When
 writing a rule it should be taken into consideration to avoid wrap
 around.
 
-5.3.4.1. Examples
+5.4.4.1. Examples
 
 alert tcp ( byte_math: bytes 2, offset 0, oper *, rvalue 10, result area;
    byte_test:2,>,area,16;)
@@ -2347,7 +2546,7 @@ Let’s consider 2 bytes of extracted data is 5. The rvalue is 10.
 Result variable area is 50 ( 5 * 10 ). Area variable can be used in
 either byte_test offset/value options.
 
-5.3.5. Testing Numerical Values
+5.4.5. Testing Numerical Values
 
 The rule options byte_test and byte_jump were written to support
 writing rules for protocols that have length encoded data. RPC was
@@ -2504,7 +2703,7 @@ content:"|00 00 00 01 00 00 00 01|", offset 20, depth 8;
 byte_test:4,>,200,36;
 
 
-5.4. DCE Inspectors
+5.5. DCE Inspectors
 
 --------------
 
@@ -2512,7 +2711,7 @@ The main purpose of these inspector are to perform SMB desegmentation
 and DCE/RPC defragmentation to avoid rule evasion using these
 techniques.
 
-5.4.1. Overview
+5.5.1. Overview
 
 The following transports are supported for DCE/RPC: SMB, TCP, and
 UDP. New rule options have been implemented to improve performance,
@@ -2528,7 +2727,7 @@ defragmentation, are copied into each inspector configuration. The
 address/port mapping is handled by the binder. Autodetect
 functionality is replaced by wizard curses.
 
-5.4.2. Quick Guide
+5.5.2. Quick Guide
 
 A typical dcerpce configuration looks like this:
 
@@ -2578,7 +2777,7 @@ dce_udp = { }
 In this example, it defines smb, tcp and udp inspectors based on
 port. All the configurations are default.
 
-5.4.3. Target Based
+5.5.3. Target Based
 
 There are enough important differences between Windows and Samba
 versions that a target based approach has been implemented. Some
@@ -2607,7 +2806,7 @@ different policy. Here are the list of policies supported:
   * Samba-3.0.22
   * Samba-3.0.20
 
-5.4.4. Reassembling
+5.5.4. Reassembling
 
 Both SMB inspector and TCP inspector support reassemble. Reassemble
 threshold specifies a minimum number of bytes in the DCE/RPC
@@ -2618,13 +2817,13 @@ before full defragmentation is done. A value of 0 s supplied as an
 argument to this option will, in effect, disable this option. Default
 is disabled.
 
-5.4.5. SMB
+5.5.5. SMB
 
 SMB inspector is one of the most complex inspectors. In addition to
 supporting rule options and lots of inspector rule events, it also
 supports file processing for both SMB version 1, 2, and 3.
 
-5.4.5.1. Finger Print Policy
+5.5.5.1. Finger Print Policy
 
 In the initial phase of an SMB session, the client needs to
 authenticate with a SessionSetupAndX. Both the request and response
@@ -2632,7 +2831,7 @@ to this command contain OS and version information that can allow the
 inspector to dynamically set the policy for a session which allows
 for better protection against Windows and Samba specific evasions.
 
-5.4.5.2. File Inspection
+5.5.5.2. File Inspection
 
 SMB inspector supports file inspection. A typical configuration looks
 like this:
@@ -2687,16 +2886,16 @@ inspection in rules. An argument of 0 to "file_depth" means
 unlimited. Default is "off", i.e. no SMB file inspection is done in
 the inspector.
 
-5.4.6. TCP
+5.5.6. TCP
 
 dce_tcp inspector supports defragmentation, reassembling, and policy
 that is similar to SMB.
 
-5.4.7. UDP
+5.5.7. UDP
 
 dce_udp is a very simple inspector that only supports defragmentation
 
-5.4.8. Rule Options
+5.5.8. Rule Options
 
 New rule options are supported by enabling the dcerpc2 inspectors:
 
@@ -2709,7 +2908,7 @@ New modifiers to existing byte_test and byte_jump rule options:
   * byte_test: dce
   * byte_jump: dce
 
-5.4.8.1. dce_iface
+5.5.8.1. dce_iface
 
 For DCE/RPC based rules it has been necessary to set flow-bits based
 on a client bind to a service to avoid false positives. It is
@@ -2820,7 +3019,7 @@ longest) pattern will be used. If a content in the rule uses the
 fast_pattern rule option, it will unequivocally be used over the
 above mentioned patterns.
 
-5.4.8.2. dce_opnum
+5.5.8.2. dce_opnum
 
 The opnum represents a specific function call to an interface. After
 is has been determined that a client has bound to a specific
@@ -2842,7 +3041,7 @@ opnum of a DCE/RPC request will be matched against the opnums
 specified with this option. This option matches if any one of the
 opnums specified match the opnum of the DCE/RPC request.
 
-5.4.8.3. dce_stub_data
+5.5.8.3. dce_stub_data
 
 Since most DCE/RPC based rules had to do protocol decoding only to
 get to the DCE/RPC stub data, i.e. the remote procedure call or
@@ -2871,7 +3070,7 @@ that does not specify a relative modifier will be evaluated from the
 start of the stub data buffer. To leave the stub data buffer and
 return to the main payload buffer, use the "pkt_data" rule option.
 
-5.4.8.4. byte_test and byte_jump
+5.5.8.4. byte_test and byte_jump
 
 A DCE/RPC request can specify whether numbers are represented in big
 or little endian. These rule options will take as a new argument
@@ -2897,7 +3096,7 @@ byte_jump arguments will not be allowed: "big", "little", "string",
 "hex", "dec", "oct" and "from_beginning"
 
 
-5.5. File Processing
+5.6. File Processing
 
 --------------
 
@@ -2906,7 +3105,7 @@ network file inspection becomes more and more important. This feature
 will provide file type identification, file signature creation, and
 file capture capabilities to help users deal with those challenges.
 
-5.5.1. Overview
+5.6.1. Overview
 
 There are two parts of file services: file APIs and file policy. File
 APIs provides all the file inspection functionalities, such as file
@@ -2921,7 +3120,7 @@ file policy along with file event log.
   * Supported protocols: HTTP, SMTP, IMAP, POP3, FTP, and SMB.
   * Supported file signature calculation: SHA256
 
-5.5.2. Quick Guide
+5.6.2. Quick Guide
 
 A very simple configuration has been included in lua/snort.lua file.
 A typical file configuration looks like this:
@@ -2960,7 +3159,7 @@ There are 3 steps to enable file processing:
   * At last, enable file_log to get detailed information about file
     event
 
-5.5.3. Pre-packaged File Magic Rules
+5.6.3. Pre-packaged File Magic Rules
 
 A set of file magic rules is packaged with Snort. They can be located
 at "lua/file_magic.lua". To use this feature, it is recommended that
@@ -2983,7 +3182,7 @@ look at content at particular file offset to identify the file type.
 In this case, two magics look at the beginning of the file. You can
 use character if it is printable or hex value in between "|".
 
-5.5.4. File Policy
+5.6.4. File Policy
 
 You can enabled file type, file signature, or file capture by
 configuring file_id. In addition, you can enable trace to see file
@@ -3009,7 +3208,7 @@ In this example, it enables this policy:
   * For all file types identified, they will be logged with
     signature, and also captured onto log folder.
 
-5.5.5. File Capture
+5.6.5. File Capture
 
 File can be captured and stored to log folder. We use SHA as file
 name instead of actual file name to avoid conflicts. You can capture
@@ -3025,7 +3224,7 @@ or enable it for some file or file type in your file policy:
 
 The above rule will enable PDF file capture.
 
-5.5.6. File Events
+5.6.6. File Events
 
 File inspect preprocessor also works as a dynamic output plugin for
 file events. It logs basic information about file. The log file is in
@@ -3047,14 +3246,14 @@ File event example:
 [Size: 1039328]
 
 
-5.6. High Availability
+5.7. High Availability
 
 --------------
 
 High Availability includes the HA flow synchronization and the
 SideChannel messaging subsystems.
 
-5.6.1. HA
+5.7.1. HA
 
 HighAvailability (or HA) is a Snort module that provides state
 coherency between two partner snort instances. It uses SideChannel
@@ -3099,7 +3298,7 @@ message content. The stream HA content is always present in the
 messages while the ancillary module content is only present when
 requested via a status change request.
 
-5.6.2. Connector
+5.7.2. Connector
 
 Connectors are a set of modules that are used to exchange
 message-oriented data among Snort threads and the external world. A
@@ -3110,7 +3309,7 @@ forms of message transport.
 
 Connectors are a Snort plugin type.
 
-5.6.2.1. Connector (parent plugin class)
+5.7.2.1. Connector (parent plugin class)
 
 Connectors may either be a simplex channel and perform unidirectional
 communications. Or may be duplex and perform bidirectional
@@ -3128,7 +3327,7 @@ There are currently two implementations of Connectors:
   * FileConnector - Write messages to files and read messages from
     files.
 
-5.6.2.2. TcpConnector
+5.7.2.2. TcpConnector
 
 TcpConnector is a subclass of Connector and implements a DUPLEX type
 Connector, able to send and receive messages over a tcp session.
@@ -3155,7 +3354,7 @@ tcp_connector =
     },
 }
 
-5.6.2.3. FileConnector
+5.7.2.3. FileConnector
 
 FileConnector implements a Connector that can either read from files
 or write to files. FileConnector’s are simplex and must be configured
@@ -3198,7 +3397,7 @@ file_connector =
     },
 }
 
-5.6.3. Side Channel
+5.7.3. Side Channel
 
 SideChannel is a Snort module that uses Connectors to implement a
 messaging infrastructure that is used to communicate between Snort
@@ -3264,7 +3463,7 @@ file_connector =
 }
 
 
-5.7. FTP
+5.8. FTP
 
 --------------
 
@@ -3274,9 +3473,9 @@ codes and messages. It will enforce correctness of the parameters,
 determine when an FTP command connection is encrypted, and determine
 when an FTP data channel is opened.
 
-5.7.1. Configuring the inspector to block exploits and attacks
+5.8.1. Configuring the inspector to block exploits and attacks
 
-5.7.1.1. ftp_server configuration
+5.8.1.1. ftp_server configuration
 
   * ftp_cmds
 
@@ -3401,8 +3600,7 @@ While not part of an established standard, certain FTP servers accept
 MDTM commands that set the modification time on a file. The most
 common among servers that do, accept a format using YYYYMMDDHHmmss
 [.uuu]. Some others accept a format using YYYYMMDDHHmmss[+|-]TZ
-format. The example above is for the first case (time format as
-specified in https://tools.ietf.org/html/draft-ietf-ftpext-mlst-16)
+format. The example above is for the first case.
 
 To check validity for a server that uses the TZ format, use the
 following:
@@ -3442,7 +3640,7 @@ to large file transfers from a trusted source — by ignoring traffic.
 If your rule set includes virus-type rules, it is recommended that
 this option not be used.
 
-5.7.1.2. ftp_client configuration
+5.8.1.2. ftp_client configuration
 
   * max_resp_len
 
@@ -3464,7 +3662,7 @@ character (TNC EAC) and erase line (TNC EAL) when normalizing FTP
 command channel. Some FTP clients do not process those telnet escape
 sequences.
 
-5.7.1.3. ftp_data
+5.8.1.3. ftp_data
 
 In order to enable file inspection for ftp, the following should be
 added to the configuration:
@@ -3472,14 +3670,14 @@ added to the configuration:
 ftp_data = {}
 
 
-5.8. HTTP Inspector
+5.9. HTTP Inspector
 
 --------------
 
 One of the major undertakings for Snort 3 is developing a completely
 new HTTP inspector.
 
-5.8.1. Overview
+5.9.1. Overview
 
 You can configure it by adding:
 
@@ -3542,7 +3740,7 @@ user to write rules against it. If for example a header is supposed
 to be a date then normalization means put that date in a standard
 format.
 
-5.8.2. Configuration
+5.9.2. Configuration
 
 Configuration can be as simple as adding:
 
@@ -3553,7 +3751,7 @@ inspection and may be all that you need. But there are some options
 that provide extra features, tweak how things are done, or conserve
 resources by doing less.
 
-5.8.2.1. request_depth and response_depth
+5.9.2.1. request_depth and response_depth
 
 These replace the flow depth parameters used by the old HTTP
 inspector but they work differently.
@@ -3581,7 +3779,7 @@ omit the depth parameter entirely because that is the default.
 These limits have no effect on how much data is forwarded to file
 processing.
 
-5.8.2.2. gzip
+5.9.2.2. gzip
 
 http_inspect by default decompresses deflate and gzip message bodies
 before inspecting them. This feature can be turned off by unzip =
@@ -3590,14 +3788,14 @@ improvement but at a very high price. It is unlikely that any
 meaningful inspection of message bodies will be possible. Effectively
 HTTP processing would be limited to the headers.
 
-5.8.2.3. normalize_utf
+5.9.2.3. normalize_utf
 
 http_inspect will decode utf-8, utf-7, utf-16le, utf-16be, utf-32le,
 and utf-32be in response message bodies based on the Content-Type
 header. This feature is on by default: normalize_utf = false will
 deactivate it.
 
-5.8.2.4. decompress_pdf
+5.9.2.4. decompress_pdf
 
 decompress_pdf = true will enable decompression of compressed
 portions of PDF files encountered in a response body. http_inspect
@@ -3606,7 +3804,7 @@ locate PDF streams with a single /FlateDecode filter. The compressed
 content is decompressed and made available through the file data rule
 option.
 
-5.8.2.5. decompress_swf
+5.9.2.5. decompress_swf
 
 decompress_swf = true will enable decompression of compressed SWF
 (Adobe Flash content) files encountered in a response body. The
@@ -3616,7 +3814,7 @@ LZMA. The compressed content is decompressed and made available
 through the file data rule option. The compressed SWF file signature
 is converted to FWS to indicate an uncompressed file.
 
-5.8.2.6. normalize_javascript
+5.9.2.6. normalize_javascript
 
 normalize_javascript = true will enable normalization of JavaScript
 within the HTTP response body. http_inspect looks for JavaScript by
@@ -3628,7 +3826,7 @@ decodeURIComponent are %XX, %uXXXX, XX and uXXXXi. http_inspect also
 replaces consecutive whitespaces with a single space and normalizes
 the plus by concatenating the strings.
 
-5.8.2.7. URI processing
+5.9.2.7. URI processing
 
 Normalization and inspection of the URI in the HTTP request message
 is a key aspect of what http_inspect does. The best way to normalize
@@ -3725,7 +3923,7 @@ backslash_to_slash is turned off by default. If you are protecting
 such a server then set backslash_to_slash = true and all the
 backslashes will be replaced with slashes during normalization.
 
-5.8.3. Detection rules
+5.9.3. Detection rules
 
 http_inspect parses HTTP messages into their components and makes
 them available to the detection engine through rule options. Let’s
@@ -3796,7 +3994,7 @@ list.
 In addition to the headers there are rule options for virtually every
 part of the HTTP message.
 
-5.8.3.1. http_uri and http_raw_uri
+5.9.3.1. http_uri and http_raw_uri
 
 These provide the URI of the request message. The raw form is exactly
 as it appeared in the message and the normalized form is determined
@@ -3846,7 +4044,7 @@ Note: this section uses informal language to explain some things.
 Nothing here is intended to conflict with the technical language of
 the HTTP RFCs and the implementation follows the RFCs.
 
-5.8.3.2. http_header and http_raw_header
+5.9.3.2. http_header and http_raw_header
 
 These cover all the header lines except the first one. You may
 specify an individual header by name using the field option as shown
@@ -3876,7 +4074,7 @@ In most cases specifying individual headers creates a more efficient
 and accurate rule. It is recommended that new rules be written using
 individual headers whenever possible.
 
-5.8.3.3. http_trailer and http_raw_trailer
+5.9.3.3. http_trailer and http_raw_trailer
 
 HTTP permits header lines to appear after a chunked body ends.
 Typically they contain information about the message content that was
@@ -3888,7 +4086,7 @@ counterparts except they apply to these end headers. If you want a
 rule to inspect both kinds of headers you need to write two rules,
 one using header and one using trailer.
 
-5.8.3.4. http_cookie and http_raw_cookie
+5.9.3.4. http_cookie and http_raw_cookie
 
 These provide the value of the Cookie header for a request message
 and the Set-Cookie for a response message. If multiple cookies are
@@ -3897,7 +4095,7 @@ present they will be concatenated into a comma-separated list.
 Normalization for http_cookie is the same URI-style normalization
 applied to http_header when no specific header is specified.
 
-5.8.3.5. http_true_ip
+5.9.3.5. http_true_ip
 
 This provides the original IP address of the client sending the
 request as it was stored by a proxy in the request message headers.
@@ -3905,13 +4103,13 @@ Specifically it is the last IP address listed in the X-Forwarded-For
 or True-Client-IP header. If both headers are present the former is
 used.
 
-5.8.3.6. http_client_body
+5.9.3.6. http_client_body
 
 This is the body of a request message such as POST or PUT.
 Normalization for http_client_body is the same URI-like normalization
 applied to http_header when no specific header is specified.
 
-5.8.3.7. http_raw_body
+5.9.3.7. http_raw_body
 
 This is the body of a request or response message. It will be
 dechunked and unzipped if applicable but will not be normalized in
@@ -3920,30 +4118,30 @@ is a rule that uses packet data will search and may match an HTTP
 header, but http_raw_body is limited to the message body. Thus the
 latter is more efficient and more accurate for most uses.
 
-5.8.3.8. http_method
+5.9.3.8. http_method
 
 The method field of a request message. Common values are "GET",
 "POST", "OPTIONS", "HEAD", "DELETE", "PUT", "TRACE", and "CONNECT".
 
-5.8.3.9. http_stat_code
+5.9.3.9. http_stat_code
 
 The status code field of a response message. This is normally a
 3-digit number between 100 and 599. In this example it is 200.
 
 HTTP/1.1 200 OK
 
-5.8.3.10. http_stat_msg
+5.9.3.10. http_stat_msg
 
 The reason phrase field of a response message. This is the
 human-readable text following the status code. "OK" in the previous
 example.
 
-5.8.3.11. http_version
+5.9.3.11. http_version
 
 The protocol version information that appears on the first line of an
 HTTP message. This is usually "HTTP/1.0" or "HTTP/1.1".
 
-5.8.3.12. http_raw_request and http_raw_status
+5.9.3.12. http_raw_request and http_raw_status
 
 These are the unmodified first header line of the HTTP request and
 response messages respectively. These rule options are a safety valve
@@ -3953,7 +4151,7 @@ first header line. For a request message those are http_method,
 http_raw_uri, and http_version. For a response message those are
 http_version, http_stat_code, and http_stat_msg.
 
-5.8.3.13. file_data and packet data
+5.9.3.13. file_data and packet data
 
 file_data contains the normalized message body. This is the
 normalization described above under gzip, normalize_utf,
@@ -3962,7 +4160,7 @@ decompress_pdf, decompress_swf, and normalize_javascript.
 The unnormalized message content is available in the packet data. If
 gzip is configured the packet data will be unzipped.
 
-5.8.4. Timing issues and combining rule options
+5.9.4. Timing issues and combining rule options
 
 HTTP inspector is stateful. That means it is aware of a bigger
 picture than the packet in front of it. It knows what all the pieces
@@ -4102,7 +4300,7 @@ received. Headers may be combined with later items but the body
 cannot.
 
 
-5.9. HTTP/2 Inspector
+5.10. HTTP/2 Inspector
 
 --------------
 
@@ -4152,7 +4350,190 @@ and be fully integrated with http_inspect to provide full inspection
 of the individual HTTP/1.1 streams.
 
 
-5.10. Performance Monitor
+5.11. Module Trace
+
+--------------
+
+Snort 3 retired the different flavors of debug macros that used to be
+set through environment variable SNORT_DEBUG. It was replaced by a
+module specific trace. Trace is turned on by setting the
+module-specific trace bitmask in snort.lua. As before, in order to
+enable it, snort has to be configured and built with
+--enable-debug-msgs.
+
+5.11.1. Debugging rules using detection trace
+
+Detection engine is responsible for rule evaluation. Turning on the
+trace for it can help with debugging new rules.
+
+The relevant options for detection are as follow (represented as
+hex):
+
+0x2 - follow rule evaluation
+0x4 - print evaluated buffer if it changed
+0x8 - print evaluated buffer at every step
+0x10 - print value of ips rule options vars
+0x20 - print information on fast pattern search
+
+Buffer print is useful, but in case the buffer is very big can be too
+verbose. Choose between 0x4, 0x8 or no buffer trace accordingly.
+
+0x10 is useful when the rule is using ips rule options vars.
+
+5.11.2. Example - rule evaluation traces:
+
+In snort.lua, the following line was added:
+
+detection = {trace = 0x20 + 0x10 + 0x2 + 0x4}
+
+The pcap has a single packet with payload: 10.AAAAAAAfoobar
+
+Evaluated on rules:
+
+# byte_math + oper with byte extract and content
+# VAL = 1, byte_math = 0 + 10
+alert tcp ( byte_extract: 1, 0, VAL, string, dec;
+byte_math:bytes 1,offset VAL,oper +, rvalue 10, result var1, string dec;
+content:"foo", offset var1; sid:3)
+
+#This rule should not trigger
+alert tcp (content:"AAAAA"; byte_jump:2,0,relative;
+content:"foo", within 3; sid:2)
+
+The output:
+
+detection: packet 1 C2S 127.0.0.1:1234 127.0.0.1:5678
+detection: Fast pattern search
+detection: 1 fp packet[16]
+
+snort.raw[16]:
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+31 30 00 41 41 41 41 41 41 41  66 6F 6F 62 61 72              10.AAAAAAAfoobar
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+detection: Processing pattern match #1
+detection: Fast pattern packet[5] = 'AAAAA' |41 41 41 41 41 | ( )
+detection: Starting tree eval
+detection: Evaluating option content, cursor name pkt_data, cursor position 0
+
+snort.raw[16]:
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+31 30 00 41 41 41 41 41 41 41  66 6F 6F 62 61 72              10.AAAAAAAfoobar
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+detection: Rule options variables:
+var[0]=0 var[1]=0 var[2]=0
+detection: Evaluating option byte_jump, cursor name pkt_data, cursor position 8
+
+snort.raw[8]:
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+41 41 66 6F 6F 62 61 72                                       AAfoobar
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+detection: no match
+detection: Rule options variables:
+var[0]=0 var[1]=0 var[2]=0
+detection: Evaluating option byte_jump, cursor name pkt_data, cursor position 9
+
+snort.raw[7]:
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+41 66 6F 6F 62 61 72                                          Afoobar
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+detection: no match
+detection: Rule options variables:
+var[0]=0 var[1]=0 var[2]=0
+detection: Evaluating option byte_jump, cursor name pkt_data, cursor position 10
+
+snort.raw[6]:
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+66 6F 6F 62 61 72                                             foobar
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+detection: no match
+detection: no match
+detection: Processing pattern match #2
+detection: Fast pattern packet[3] = 'foo' |66 6F 6F | ( )
+detection: Starting tree eval
+detection: Evaluating option byte_extract, cursor name pkt_data, cursor position 0
+
+snort.raw[16]:
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+31 30 00 41 41 41 41 41 41 41  66 6F 6F 62 61 72              10.AAAAAAAfoobar
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+detection: Rule options variables:
+var[0]=1 var[1]=0 var[2]=0
+detection: Evaluating option byte_math, cursor name pkt_data, cursor position 1
+
+snort.raw[15]:
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+30 00 41 41 41 41 41 41 41 66  6F 6F 62 61 72                 0.AAAAAAAfoobar
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+detection: Rule options variables:
+var[0]=1 var[1]=10 var[2]=0
+detection: Evaluating option content, cursor name pkt_data, cursor position 2
+
+snort.raw[14]:
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+00 41 41 41 41 41 41 41 66 6F  6F 62 61 72                    .AAAAAAAfoobar
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+detection: Rule options variables:
+var[0]=1 var[1]=10 var[2]=0
+detection: Reached leaf, cursor name pkt_data, cursor position 13
+
+snort.raw[3]:
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+62 61 72                                                      bar
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+detection: Matched rule gid:sid:rev 1:3:0
+detection: Rule options variables:
+var[0]=1 var[1]=10 var[2]=0
+04/22-20:21:40.905630, 1, TCP, raw, 56, C2S, 127.0.0.1:1234, 127.0.0.1:5678, 1:3:0, allow
+
+5.11.3. Protocols decoding trace
+
+Turning on decode trace will print out information about the packets
+decoded protocols. Can be useful in case of tunneling.
+
+Example for a icmpv4-in-ipv6 packet:
+
+In snort.lua, the following line was added:
+
+decode = { trace = 1 }
+
+The output:
+
+decode: Codec eth (protocol_id: 34525) ip header starts at: 0x7f70800110f0, length is 14
+decode: Codec ipv6 (protocol_id: 1) ip header starts at: 0x7f70800110f0, length is 40
+decode: Codec icmp4 (protocol_id: 256) ip header starts at: 0x7f70800110f0, length is 8
+decode: Codec unknown (protocol_id: 256) ip header starts at: 0x7f70800110f0, length is 0
+
+5.11.4. Other available traces
+
+There are more trace options supported by detection:
+
+0x1 - prints statistics about the engine
+0x40 - prints a message when disabling content detect for packet
+0x80 - prints option tree data structure
+0x100 - prints a message when a new tag is added
+
+Detection is the only module that support multiple options for trace.
+
+The rest support only 1 option, and can be turned on by adding trace
+= 1 to their lua config.
+
+  * stream module trace:
+
+When turned on prints a message in case inspection is stopped on a
+flow. Example for output:
+
+stream: stop inspection on flow, dir BOTH
+
+  * stream_ip, stream_user: trace will output general processing
+    messages
+
+Other modules that support trace have messages as seemed fit to the
+developer. Some are for corner cases, other for complex data
+structures prints. Current list of additional modules supporting
+trace: appid, dce_smb, gtp_inspect and dce_udp.
+
+
+5.12. Performance Monitor
 
 --------------
 
@@ -4161,14 +4542,14 @@ down by too many flows? perf_monitor! Why are certain TCP segments
 being dropped without hitting a rule? perf_monitor! Why is a sensor
 leaking water? Not perf_monitor, check with stream…
 
-5.10.1. Overview
+5.12.1. Overview
 
 The Snort performance monitor is the built-in utility for monitoring
 system and traffic statistics. All statistics are separated by
 processing thread. perf_monitor supports several trackers for
 monitoring such data:
 
-5.10.2. Base Tracker
+5.12.2. Base Tracker
 
 The base tracker is used to gather running statistics about Snort and
 its running modules. All Snort modules gather, at the very least,
@@ -4225,7 +4606,7 @@ perf_monitor =
 Note: Event stats from prior Snorts are now located within base
 statistics.
 
-5.10.3. Flow Tracker
+5.12.3. Flow Tracker
 
 Flow tracks statistics regarding traffic and L3/L4 protocol
 distributions. This data can be used to build a profile of traffic
@@ -4235,7 +4616,7 @@ To enable:
 
 perf_monitor = { flow = true }
 
-5.10.4. FlowIP Tracker
+5.12.4. FlowIP Tracker
 
 FlowIP provides statistics for individual hosts within a network.
 This data can be used for identifying communication habits, such as
@@ -4247,7 +4628,7 @@ To enable:
 
 perf_monitor = { flow_ip = true }
 
-5.10.5. CPU Tracker
+5.12.5. CPU Tracker
 
 This tracker monitors the CPU and wall time spent by a given
 processing thread.
@@ -4256,7 +4637,7 @@ To enable:
 
 perf_monitor = { cpu = true }
 
-5.10.6. Formatters
+5.12.6. Formatters
 
 Performance monitor allows statistics to be output in a few formats.
 Along with human readable text (as seen at shutdown) and csv formats,
@@ -4270,14 +4651,14 @@ used by Performance monitor, see the developer notes for Performance
 monitor or the code provided for fbstreamer.
 
 
-5.11. POP and IMAP
+5.13. POP and IMAP
 
 --------------
 
 POP inspector is a service inspector for POP3 protocol and IMAP
 inspector is for IMAP4 protocol.
 
-5.11.1. Overview
+5.13.1. Overview
 
 POP and IMAP inspectors examine data traffic and find POP and IMAP
 commands and responses. The inspectors also identify the command,
@@ -4285,52 +4666,37 @@ header, body sections and extract the MIME attachments and decode it
 appropriately. The pop and imap also identify and whitelist the pop
 and imap traffic.
 
-5.11.2. Configuration
+5.13.2. Configuration
 
 POP inspector and IMAP inspector offer same set of configuration
-options for MIME decoding depth:
+options for MIME decoding depth. These depths range from 0 to 65535
+bytes. Setting the value to 0 ("do none") turns the feature off.
+Alternatively the value -1 means an unlimited amount of data should
+be decoded. If you do not specify the default value is 1460 bytes.
 
-5.11.2.1. b64_decode_depth
+The depth limits apply per attachment. They are:
 
-This config option is used to turn off/on or set the base64 decoding
-depth used to decode the base64 encoded MIME attachments. The value
-ranges from -1 to 65535. A value of -1 turns off the base64 decoding
-of MIME attachments. The value of 0 sets the decoding of base64
-encoded MIME attachments to unlimited. A value other than 0 or -1
-restricts the decoding of base64 MIME attachments, and applies per
-attachment. The default value is 1460.
+5.13.2.1. b64_decode_depth
 
-5.11.2.2. qp_decode_depth
+Set the base64 decoding depth used to decode the base64-encoded MIME
+attachments.
 
-This config option is used to turn off/on or set the Quoted-Printable
-decoding depth used to decode the Quoted-Printable(QP) encoded MIME
-attachments. The value ranges from -1 to 65535. A value of -1 turns
-off the QP decoding of MIME attachments. The value of 0 sets the
-decoding of QP encoded MIME attachments to unlimited. A value other
-than 0 or -1 restricts the decoding of QP MIME attachments, and
-applies per attachment.
+5.13.2.2. qp_decode_depth
 
-5.11.2.3. bitenc_decode_depth
+Set the Quoted-Printable (QP) decoding depth used to decode
+QP-encoded MIME attachments.
 
-This config option is used to turn off/on or set the non-encoded MIME
-extraction depth used to extract the non-encoded MIME attachments.
-The value ranges from -1 to 65535. A value of -1 turns off the
-extraction of these MIME attachments. The value of 0 sets the
-extraction of these MIME attachments to unlimited. A value other than
-0 or -1 restricts the extraction of these MIME attachments, and
-applies per attachment.
+5.13.2.3. bitenc_decode_depth
 
-5.11.2.4. uu_decode_depth
+Set the non-encoded MIME extraction depth used for non-encoded MIME
+attachments.
 
-This config option is used to turn off/on or set the Unix-to-Unix
-decoding depth used to decode the Unix-to-Unix(UU) encoded
-attachments. The value ranges from -1 to 65535. A value of -1 turns
-off the UU decoding of POP attachments. The value of 0 sets the
-decoding of UU encoded POP attachments to unlimited. A value other
-than 0 or -1 restricts the decoding of UU POP attachments, and
-applies per attachment.
+5.13.2.4. uu_decode_depth
 
-5.11.2.5. Examples
+Set the Unix-to-Unix (UU) decoding depth used to decode UU-encoded
+attachments.
+
+5.13.2.5. Examples
 
 stream = { }
 
@@ -4354,23 +4720,23 @@ binder =
 
 imap =
 {
-    qp_decode_depth = 15,
+    qp_decode_depth = 500,
 }
 
 pop =
 {
-    qp_decode_depth = 0,
-    b64_decode_depth = 10,
+    qp_decode_depth = -1,
+    b64_decode_depth = 3000,
 }
 
 
-5.12. Port Scan
+5.14. Port Scan
 
 --------------
 
 A module to detect port scanning
 
-5.12.1. Overview
+5.14.1. Overview
 
 This module is designed to detect the first phase in a network
 attack: Reconnaissance. In the Reconnaissance phase, an attacker
@@ -4470,7 +4836,7 @@ however, Portscan will only track open ports after the alert has been
 triggered. Open port events are not individual alerts, but tags based
 off the original scan alert.
 
-5.12.2. Scan levels
+5.14.2. Scan levels
 
 There are 3 default scan levels that can be set.
 
@@ -4524,7 +4890,7 @@ setting will catch some slow scans because of the continuous
 monitoring, but is very sensitive to active hosts. This most
 definitely will require the user to tune Portscan.
 
-5.12.3. Tuning Portscan
+5.14.3. Tuning Portscan
 
 The most important aspect in detecting portscans is tuning the
 detection engine for your network(s). Here are some tuning tips:
@@ -4601,7 +4967,7 @@ require the least tuning. The low sensitivity level does not catch
 filtered scans, since these are more prone to false positives.
 
 
-5.13. Sensitive Data Filtering
+5.15. Sensitive Data Filtering
 
 --------------
 
@@ -4611,27 +4977,27 @@ credit card numbers, U.S. Social Security numbers, and email
 addresses. A rich regular expression syntax is available for defining
 your own PII.
 
-5.13.1. Hyperscan
+5.15.1. Hyperscan
 
 The sd_pattern rule option is powered by the open source Hyperscan
 library from Intel. It provides a regex grammar which is mostly PCRE
-compatible. To learn more about Hyperscan see http://01org.github.io/
-hyperscan/dev-reference/
+compatible. To learn more about Hyperscan see https://intel.github.io
+/hyperscan/dev-reference/
 
-5.13.2. Syntax
+5.15.2. Syntax
 
 Snort provides sd_pattern as IPS rule option with no additional
 inspector overhead. The Rule option takes the following syntax.
 
 sd_pattern: "<pattern>"[, threshold <count>];
 
-5.13.2.1. Pattern
+5.15.2.1. Pattern
 
 Pattern is the most important and is the only required parameter to
 sd_pattern. It supports 3 built in patterns which are configured by
 name: "credit_card", "us_social" and "us_social_nodashes", as well as
-user defined regular expressions of the Hyperscan dialect (see http:/
-/01org.github.io/hyperscan/dev-reference/compilation.html#
+user defined regular expressions of the Hyperscan dialect (see https:
+//intel.github.io/hyperscan/dev-reference/compilation.html#
 pattern-support).
 
 sd_pattern:"credit_card";
@@ -4663,7 +5029,7 @@ but would not match 1@ourdomain.com ab12@ourdomain.com or
 Note: This is just an example, this pattern is not suitable to detect
 many correctly formatted emails.
 
-5.13.2.2. Threshold
+5.15.2.2. Threshold
 
 Threshold is an optional parameter allowing you to change built in
 default value (default value is 1). The following two instances are
@@ -4681,7 +5047,7 @@ This example requires 300 matches of the pattern "This is a string
 literal" to qualify as a positive match. That is, if the string only
 occurred 299 times in a packet, you will not see an event.
 
-5.13.2.3. Obfuscating Credit Cards and Social Security Numbers
+5.15.2.3. Obfuscating Credit Cards and Social Security Numbers
 
 Snort provides discreet logging for the built in patterns
 "credit_card", "us_social" and "us_social_nodashes". Enabling
@@ -4694,7 +5060,7 @@ output =
     obfuscate_pii = true
 }
 
-5.13.3. Example
+5.15.3. Example
 
 A complete Snort IPS rule
 
@@ -4710,7 +5076,7 @@ Logged output when running Snort in "cmg" alert format.
 58 58 58 58 58 58 58 58 58 58 58 58 39 32 39 34              XXXXXXXXXXXX9294
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-5.13.4. Caveats
+5.15.4. Caveats
 
  1. Snort currently requires setting the fast pattern engine to use
     "hyperscan" in order for sd_pattern ips option to function
@@ -4727,13 +5093,13 @@ Logged output when running Snort in "cmg" alert format.
     (This is a known bug).
 
 
-5.14. SMTP
+5.16. SMTP
 
 --------------
 
 SMTP inspector is a service inspector for SMTP protocol.
 
-5.14.1. Overview
+5.16.1. Overview
 
 The SMTP inspector examines SMTP connections looking for commands and
 responses. It also identifies the command, header and body sections,
@@ -4743,7 +5109,7 @@ identifies and whitelists the SMTP traffic.
 SMTP inspector logs the filename, email addresses, attachment names
 when configured.
 
-5.14.2. Configuration
+5.16.2. Configuration
 
 SMTP command lines can be normalized to remove extraneous spaces.
 TLS-encrypted traffic can be ignored, which improves performance. In
@@ -4752,7 +5118,7 @@ performance boost.
 
 The configuration options are described below:
 
-5.14.2.1. normalize and normalize_cmds
+5.16.2.1. normalize and normalize_cmds
 
 Normalization checks for more than one space character after a
 command. Space characters are defined as space (ASCII 0x20) or tab
@@ -4763,34 +5129,34 @@ example:
 
 smtp = { normalize = 'cmds', normalize_cmds = 'RCPT VRFY EXPN' }
 
-5.14.2.2. ignore_data
+5.16.2.2. ignore_data
 
 Set it to true to ignore data section of mail (except for mail
 headers) when processing rules.
 
-5.14.2.3. ignore_tls_data
+5.16.2.3. ignore_tls_data
 
 Set it to true to ignore TLS-encrypted data when processing rules.
 
-5.14.2.4. max_command_line_len
+5.16.2.4. max_command_line_len
 
 Alert if an SMTP command line is longer than this value. Absence of
 this option or a "0" means never alert on command line length. RFC
 2821 recommends 512 as a maximum command line length.
 
-5.14.2.5. max_header_line_len
+5.16.2.5. max_header_line_len
 
 Alert if an SMTP DATA header line is longer than this value. Absence
 of this option or a "0" means never alert on data header line length.
 RFC 2821 recommends 1024 as a maximum data header line length.
 
-5.14.2.6. max_response_line_len
+5.16.2.6. max_response_line_len
 
 Alert if an SMTP response line is longer than this value. Absence of
 this option or a "0" means never alert on response line length. RFC
 2821 recommends 512 as a maximum response line length.
 
-5.14.2.7. alt_max_command_line_len
+5.16.2.7. alt_max_command_line_len
 
 Overrides max_command_line_len for specific commands For example:
 
@@ -4806,11 +5172,11 @@ alt_max_command_line_len =
     },
 }
 
-5.14.2.8. invalid_cmds
+5.16.2.8. invalid_cmds
 
 Alert if this command is sent from client side.
 
-5.14.2.9. valid_cmds
+5.16.2.9. valid_cmds
 
 List of valid commands. We do not alert on commands in this list.
 
@@ -4820,69 +5186,36 @@ HELO HELP IDENT MAIL NOOP ONEX QUEU QUIT RCPT RSET SAML SEND SIZE
 STARTTLS SOML TICK TIME TURN TURNME VERB VRFY X-EXPS X-LINK2STATE
 XADR XAUTH XCIR XEXCH50 XGEN XLICENSE XQUE XSTA XTRN XUSR ]]
 
-5.14.2.10. data_cmds
+5.16.2.10. data_cmds
 
 List of commands that initiate sending of data with an end of data
 delimiter the same as that of the DATA command per RFC 5321 - "
 <CRLF>.<CRLF>".
 
-5.14.2.11. binary_data_cmds
+5.16.2.11. binary_data_cmds
 
 List of commands that initiate sending of data and use a length value
 after the command to indicate the amount of data to be sent, similar
 to that of the BDAT command per RFC 3030.
 
-5.14.2.12. auth_cmds
+5.16.2.12. auth_cmds
 
 List of commands that initiate an authentication exchange between
 client and server.
 
-5.14.2.13. xlink2state
+5.16.2.13. xlink2state
 
 Enable/disable xlink2state alert, options are {disable | alert |
 drop}. See CVE-2005-0560 for a description of the vulnerability.
 
-5.14.2.14. b64_decode_depth
+5.16.2.14. MIME processing depth parameters
 
-This config option is used to turn off/on or set the base64 decoding
-depth used to decode the base64 encoded MIME attachments. The value
-ranges from -1 to 65535. A value of -1 turns off the base64 decoding
-of MIME attachments. The value of 0 sets the decoding of base64
-encoded MIME attachments to unlimited. A value other than 0 or -1
-restricts the decoding of base64 MIME attachments, and applies per
-attachment.
+These four MIME processing depth parameters are identical to their
+POP and IMAP counterparts. See that section for further details.
 
-5.14.2.15. qp_decode_depth
+b64_decode_depth qp_decode_depth bitenc_decode_depth uu_decode_depth
 
-This config option is used to turn off/on or set the Quoted-Printable
-decoding depth used to decode the Quoted-Printable(QP) encoded MIME
-attachments. The value ranges from -1 to 65535. A value of -1 turns
-off the QP decoding of MIME attachments. The value of 0 sets the
-decoding of QP encoded MIME attachments to unlimited. A value other
-than 0 or -1 restricts the decoding of QP MIME attachments, and
-applies per attachment.
-
-5.14.2.16. bitenc_decode_depth * default to 25
-
-This config option is used to turn off/on or set the non-encoded MIME
-extraction depth used to extract the non-encoded MIME attachments.
-The value ranges from -1 to 65535. A value of -1 turns off the
-extraction of these MIME attachments. The value of 0 sets the
-extraction of these MIME attachments to unlimited. A value other than
-0 or -1 restricts the extraction of these MIME attachments, and
-applies per attachment.
-
-5.14.2.17. uu_decode_depth
-
-This config option is used to turn off/on or set the Unix-to-Unix
-decoding depth used to decode the Unix-to-Unix(UU) encoded
-attachments. The value ranges from -1 to 65535. A value of -1 turns
-off the UU decoding of SMTP attachments. The value of 0 sets the
-decoding of UU encoded SMTP attachments to unlimited. A value other
-than 0 or -1 restricts the decoding of UU SMTP attachments, and
-applies per attachment.
-
-5.14.2.18. Log Options
+5.16.2.15. Log Options
 
 Following log options allow SMTP inspector to log email addresses and
 filenames. Please note, this is logged only with the unified2 output
@@ -4925,7 +5258,7 @@ This option specifies the depth for logging email headers. The
 allowed range for this option is 0 - 20480. A value of 0 will disable
 email headers logging. The default value for this option is 1464.
 
-5.14.3. Example
+5.16.3. Example
 
 smtp =
 {
@@ -4978,7 +5311,7 @@ smtp =
 }
 
 
-5.15. Telnet
+5.17. Telnet
 
 --------------
 
@@ -4988,7 +5321,7 @@ command sequences per RFC 854. It will also determine when a telnet
 connection is encrypted, per the use of the telnet encryption option
 per RFC 2946.
 
-5.15.1. Configuring the inspector to block exploits and attacks
+5.17.1. Configuring the inspector to block exploits and attacks
 
 ayt_attack_thresh number
 
@@ -4997,7 +5330,7 @@ the threshold number specified. This addresses a few specific
 vulnerabilities relating to bsd-based implementations of telnet.
 
 
-5.16. Wizard
+5.18. Wizard
 
 --------------
 
@@ -5062,7 +5395,7 @@ Configuration:
   * string active.dst_mac: use format 01:23:45:67:89:ab
   * int active.max_responses = 0: maximum number of responses { 0: }
   * int active.min_interval = 255: minimum number of seconds between
-    responses { 1: }
+    responses { 1:255 }
 
 
 6.2. alerts
@@ -5163,7 +5496,7 @@ Configuration:
 
 Peg counts:
 
-  * daq.pcaps: total files and interfaces processed (sum)
+  * daq.pcaps: total files and interfaces processed (max)
   * daq.received: total packets received from DAQ (sum)
   * daq.analyzed: total packets analyzed from DAQ (sum)
   * daq.dropped: packets dropped (sum)
@@ -5232,6 +5565,8 @@ Configuration:
     -1 = max, 0 = off { -1:1000000 }
   * int detection.pcre_match_limit_recursion = 1500: limit pcre stack
     consumption, -1 = max, 0 = off { -1:10000 }
+  * bool detection.enable_address_anomaly_checks = false: enable
+    check and alerting of address anomalies
   * int detection.trace: mask for enabling debug traces in module
 
 Peg counts:
@@ -5463,11 +5798,6 @@ Configuration:
   * string ips.uuid = 00000000-0000-0000-0000-000000000000: IPS
     policy uuid
 
-Peg counts:
-
-  * ips.invalid_policy_ids: Number of times an invalid policy ID was
-    provided (sum)
-
 
 6.16. latency
 
@@ -5604,13 +5934,33 @@ Configuration:
   * bool output.verbose = false: be verbose (same as -v)
   * bool output.wide_hex_dump = true: output 20 bytes per lines
     instead of 16 when dumping buffers
-  * bool output.enable_packet_trace = false: enable summary output of
-    state that determined packet verdict
-  * enum output.packet_trace_output = console: select where to send
-    packet trace { console | file }
 
 
-6.20. packets
+6.20. packet_tracer
+
+--------------
+
+What: generate debug trace messages for packets
+
+Type: basic
+
+Usage: global
+
+Configuration:
+
+  * bool packet_tracer.enable = false: enable summary output of state
+    that determined packet verdict
+  * enum packet_tracer.output = console: select where to send packet
+    trace { console | file }
+
+Commands:
+
+  * packet_tracer.enable(proto, src_ip, src_port, dst_ip, dst_port):
+    enable packet tracer debugging
+  * packet_tracer.disable(): disable packet tracer
+
+
+6.21. packets
 
 --------------
 
@@ -5634,7 +5984,7 @@ Configuration:
     is used to track fragments and connections
 
 
-6.21. process
+6.22. process
 
 --------------
 
@@ -5660,7 +6010,7 @@ Configuration:
     timestamps
 
 
-6.22. profiler
+6.23. profiler
 
 --------------
 
@@ -5695,7 +6045,7 @@ Configuration:
     avg_match | avg_no_match }
 
 
-6.23. rate_filter
+6.24. rate_filter
 
 --------------
 
@@ -5721,7 +6071,7 @@ Configuration:
     according to track
 
 
-6.24. references
+6.25. references
 
 --------------
 
@@ -5737,7 +6087,7 @@ Configuration:
   * string references[].url: where this reference is defined
 
 
-6.25. rule_state
+6.26. rule_state
 
 --------------
 
@@ -5755,7 +6105,7 @@ Configuration:
     policies
 
 
-6.26. search_engine
+6.27. search_engine
 
 --------------
 
@@ -5786,7 +6136,7 @@ Configuration:
     compiling into state machine (0 means no maximum) { 0: }
   * int search_engine.max_queue_events = 5: maximum number of
     matching fast pattern states to queue per packet { 2:100 }
-  * bool search_engine.detect_raw_tcp = true: detect on TCP payload
+  * bool search_engine.detect_raw_tcp = false: detect on TCP payload
     before reassembly
   * dynamic search_engine.search_method = ac_bnfa: set fast pattern
     algorithm - choose available search engine { ac_banded | ac_bnfa
@@ -5813,7 +6163,7 @@ Peg counts:
   * search_engine.searched_bytes: total bytes searched (sum)
 
 
-6.27. side_channel
+6.28. side_channel
 
 --------------
 
@@ -5835,7 +6185,7 @@ Peg counts:
   * side_channel.packets: total packets (sum)
 
 
-6.28. snort
+6.29. snort
 
 --------------
 
@@ -6012,10 +6362,13 @@ Configuration:
     -s) { 68:65535 }
   * implied snort.--stdin-rules: read rules from stdin until EOF or a
     line starting with END is read
+  * implied snort.--talos: enable Talos inline rule test mode (same
+    as --tweaks talos -Q -q)
   * implied snort.--treat-drop-as-alert: converts drop, sdrop, and
     reject rules into alert rules during startup
   * implied snort.--treat-drop-as-ignore: use drop, sdrop, and reject
     rules to ignore session traffic when not inline
+  * string snort.--tweaks: tune configuration
   * string snort.--catch-test: comma separated list of cat unit test
     tags or all
   * implied snort.--version: show version number (same as -V)
@@ -6039,6 +6392,8 @@ Configuration:
   * int snort.--x2c: output ASCII char for given hex (see also --c2x)
   * string snort.--x2s: output ASCII string for given byte code (see
     also --x2c)
+  * implied snort.--trace: turn on main loop debug trace
+  * int snort.trace: mask for enabling debug traces in module
 
 Commands:
 
@@ -6050,6 +6405,7 @@ Commands:
   * snort.reload_config(filename): load new configuration
   * snort.reload_policy(filename): reload part or all of the default
     policy
+  * snort.reload_module(module): reload module
   * snort.reload_daq(): reload daq module
   * snort.reload_hosts(filename): load a new hosts table
   * snort.pause(): suspend packet processing
@@ -6076,7 +6432,7 @@ Peg counts:
   * snort.attribute_table_hosts: total number of hosts in table (sum)
 
 
-6.29. suppress
+6.30. suppress
 
 --------------
 
@@ -6395,7 +6751,7 @@ Rules:
 
 --------------
 
-What: support for Internet protocol v4
+What: support for Internet protocol v4 (DLT 228)
 
 Type: codec
 
@@ -6435,7 +6791,7 @@ Peg counts:
 
 --------------
 
-What: support for Internet protocol v6
+What: support for Internet protocol v6 (DLT 229)
 
 Type: codec
 
@@ -6774,6 +7130,8 @@ Usage: context
 
 Configuration:
 
+  * int appid.first_decrypted_packet_debug = 0: the first packet of
+    an already decrypted SSL flow (debug single session only) { 0: }
   * int appid.memcap = 0: disregard - not implemented { 0: }
   * bool appid.log_stats = false: enable logging of appid statistics
   * int appid.app_stats_period = 300: time period for collecting and
@@ -6788,17 +7146,28 @@ Configuration:
   * bool appid.debug = false: enable appid debug logging
   * bool appid.dump_ports = false: enable dump of appid port
     information
-  * addr appid.session_log_filter.src_ip = 0.0.0.0/32: source IP
-    address in CIDR format
-  * addr appid.session_log_filter.dst_ip = 0.0.0.0/32: destination IP
-    address in CIDR format
-  * port appid.session_log_filter.src_port: source port { 1: }
-  * port appid.session_log_filter.dst_port: destination port { 1: }
-  * string appid.session_log_filter.protocol: IP protocol
-  * bool appid.session_log_filter.log_all_sessions = false: enable
-    logging for all appid sessions
+  * string appid.tp_appid_path: path to third party appid dynamic
+    library
+  * string appid.tp_appid_config: path to third party appid
+    configuration file
   * bool appid.log_all_sessions = false: enable logging of all appid
     sessions
+  * int appid.trace: mask for enabling debug traces in module
+
+Commands:
+
+  * appid.enable_debug(proto, src_ip, src_port, dst_ip, dst_port):
+    enable appid debugging
+  * appid.disable_debug(): disable appid debugging
+
+Peg counts:
+
+  * appid.packets: count of packets received (sum)
+  * appid.processed_packets: count of packets processed (sum)
+  * appid.ignored_packets: count of packets ignored (sum)
+  * appid.total_sessions: count of sessions created (sum)
+  * appid.appid_unknown: count of sessions where appid could not be
+    determined (sum)
 
 
 9.2. arp_spoof
@@ -6994,6 +7363,7 @@ Configuration:
     { -1: }
   * string dce_smb.smb_invalid_shares: SMB shares to alert on
   * bool dce_smb.smb_legacy_mode = false: inspect only SMBv1
+  * int dce_smb.trace: mask for enabling debug traces in module
 
 Rules:
 
@@ -7247,6 +7617,7 @@ Configuration:
     defragmentation
   * int dce_udp.max_frag_len = 65535: Maximum fragment size for
     defragmentation { 1514:65535 }
+  * int dce_udp.trace: mask for enabling debug traces in module
 
 Rules:
 
@@ -7353,7 +7724,34 @@ Peg counts:
     (max)
 
 
-9.13. dpx
+9.13. domain_filter
+
+--------------
+
+What: alert on configured HTTP domains
+
+Type: inspector
+
+Usage: inspect
+
+Configuration:
+
+  * string domain_filter.file: file with list of domains identifying
+    hosts to be filtered
+  * string domain_filter.hosts: list of domains identifying hosts to
+    be filtered
+
+Rules:
+
+  * 175:1 (domain_filter) configured domain detected
+
+Peg counts:
+
+  * domain_filter.checked: domains checked (sum)
+  * domain_filter.filtered: domains filtered (sum)
+
+
+9.14. dpx
 
 --------------
 
@@ -7377,7 +7775,7 @@ Peg counts:
   * dpx.packets: total packets (sum)
 
 
-9.14. file_id
+9.15. file_id
 
 --------------
 
@@ -7451,7 +7849,7 @@ Peg counts:
   * file_id.cache_failures: number of file cache add failures (sum)
 
 
-9.15. file_log
+9.16. file_log
 
 --------------
 
@@ -7473,7 +7871,7 @@ Peg counts:
   * file_log.total_events: total file events (sum)
 
 
-9.16. ftp_client
+9.17. ftp_client
 
 --------------
 
@@ -7499,7 +7897,7 @@ Configuration:
     sequences on FTP control channel
 
 
-9.17. ftp_data
+9.18. ftp_data
 
 --------------
 
@@ -7514,7 +7912,7 @@ Peg counts:
   * ftp_data.packets: total packets (sum)
 
 
-9.18. ftp_server
+9.19. ftp_server
 
 --------------
 
@@ -7589,7 +7987,7 @@ Peg counts:
     sessions (max)
 
 
-9.19. gtp_inspect
+9.20. gtp_inspect
 
 --------------
 
@@ -7610,6 +8008,7 @@ Configuration:
   * string gtp_inspect[].infos[].name: information element name
   * int gtp_inspect[].infos[].length = 0: information element type
     code { 0:255 }
+  * int gtp_inspect.trace: mask for enabling debug traces in module
 
 Rules:
 
@@ -7629,7 +8028,7 @@ Peg counts:
   * gtp_inspect.unknown_infos: unknown information elements (sum)
 
 
-9.20. http2_inspect
+9.21. http2_inspect
 
 --------------
 
@@ -7650,7 +8049,7 @@ Peg counts:
     sessions (max)
 
 
-9.21. http_inspect
+9.22. http_inspect
 
 --------------
 
@@ -7758,86 +8157,92 @@ Rules:
   * 119:32 (http_inspect) simple request
   * 119:33 (http_inspect) unescaped space in HTTP URI
   * 119:34 (http_inspect) too many pipelined requests
-  * 119:35 (http_inspect) anomalous http server on undefined HTTP
+  * 119:101 (http_inspect) anomalous http server on undefined HTTP
     port
-  * 119:36 (http_inspect) invalid status code in HTTP response
-  * 119:37 (http_inspect) unused event number—should not appear
-  * 119:38 (http_inspect) HTTP response has UTF charset that failed
+  * 119:102 (http_inspect) invalid status code in HTTP response
+  * 119:103 (http_inspect) unused event number—should not appear
+  * 119:104 (http_inspect) HTTP response has UTF charset that failed
     to normalize
-  * 119:39 (http_inspect) HTTP response has UTF-7 charset
-  * 119:40 (http_inspect) HTTP response gzip decompression failed
-  * 119:41 (http_inspect) server consecutive small chunk sizes
-  * 119:42 (http_inspect) unused event number—should not appear
-  * 119:43 (http_inspect) javascript obfuscation levels exceeds 1
-  * 119:44 (http_inspect) javascript whitespaces exceeds max allowed
-  * 119:45 (http_inspect) multiple encodings within javascript
+  * 119:105 (http_inspect) HTTP response has UTF-7 charset
+  * 119:106 (http_inspect) HTTP response gzip decompression failed
+  * 119:107 (http_inspect) server consecutive small chunk sizes
+  * 119:108 (http_inspect) unused event number—should not appear
+  * 119:109 (http_inspect) javascript obfuscation levels exceeds 1
+  * 119:110 (http_inspect) javascript whitespaces exceeds max allowed
+  * 119:111 (http_inspect) multiple encodings within javascript
     obfuscated data
-  * 119:46 (http_inspect) SWF file zlib decompression failure
-  * 119:47 (http_inspect) SWF file LZMA decompression failure
-  * 119:48 (http_inspect) PDF file deflate decompression failure
-  * 119:49 (http_inspect) PDF file unsupported compression type
-  * 119:50 (http_inspect) PDF file cascaded compression
-  * 119:51 (http_inspect) PDF file parse failure
-  * 119:52 (http_inspect) not HTTP traffic
-  * 119:53 (http_inspect) chunk length has excessive leading zeros
-  * 119:54 (http_inspect) white space before or between messages
-  * 119:55 (http_inspect) request message without URI
-  * 119:56 (http_inspect) control character in reason phrase
-  * 119:57 (http_inspect) illegal extra whitespace in start line
-  * 119:58 (http_inspect) corrupted HTTP version
-  * 119:59 (http_inspect) unknown HTTP version
-  * 119:60 (http_inspect) format error in HTTP header
-  * 119:61 (http_inspect) chunk header options present
-  * 119:62 (http_inspect) URI badly formatted
-  * 119:63 (http_inspect) unrecognized type of percent encoding in
+  * 119:112 (http_inspect) SWF file zlib decompression failure
+  * 119:113 (http_inspect) SWF file LZMA decompression failure
+  * 119:114 (http_inspect) PDF file deflate decompression failure
+  * 119:115 (http_inspect) PDF file unsupported compression type
+  * 119:116 (http_inspect) PDF file cascaded compression
+  * 119:117 (http_inspect) PDF file parse failure
+  * 119:201 (http_inspect) not HTTP traffic
+  * 119:202 (http_inspect) chunk length has excessive leading zeros
+  * 119:203 (http_inspect) white space before or between messages
+  * 119:204 (http_inspect) request message without URI
+  * 119:205 (http_inspect) control character in reason phrase
+  * 119:206 (http_inspect) illegal extra whitespace in start line
+  * 119:207 (http_inspect) corrupted HTTP version
+  * 119:208 (http_inspect) unknown HTTP version
+  * 119:209 (http_inspect) format error in HTTP header
+  * 119:210 (http_inspect) chunk header options present
+  * 119:211 (http_inspect) URI badly formatted
+  * 119:212 (http_inspect) unrecognized type of percent encoding in
     URI
-  * 119:64 (http_inspect) HTTP chunk misformatted
-  * 119:65 (http_inspect) white space adjacent to chunk length
-  * 119:66 (http_inspect) white space within header name
-  * 119:67 (http_inspect) excessive gzip compression
-  * 119:68 (http_inspect) gzip decompression failed
-  * 119:69 (http_inspect) HTTP 0.9 requested followed by another
+  * 119:213 (http_inspect) HTTP chunk misformatted
+  * 119:214 (http_inspect) white space adjacent to chunk length
+  * 119:215 (http_inspect) white space within header name
+  * 119:216 (http_inspect) excessive gzip compression
+  * 119:217 (http_inspect) gzip decompression failed
+  * 119:218 (http_inspect) HTTP 0.9 requested followed by another
     request
-  * 119:70 (http_inspect) HTTP 0.9 request following a normal request
-  * 119:71 (http_inspect) message has both Content-Length and
+  * 119:219 (http_inspect) HTTP 0.9 request following a normal
+    request
+  * 119:220 (http_inspect) message has both Content-Length and
     Transfer-Encoding
-  * 119:72 (http_inspect) status code implying no body combined with
+  * 119:221 (http_inspect) status code implying no body combined with
     Transfer-Encoding or nonzero Content-Length
-  * 119:73 (http_inspect) Transfer-Encoding not ending with chunked
-  * 119:74 (http_inspect) Transfer-Encoding with encodings before
+  * 119:222 (http_inspect) Transfer-Encoding not ending with chunked
+  * 119:223 (http_inspect) Transfer-Encoding with encodings before
     chunked
-  * 119:75 (http_inspect) misformatted HTTP traffic
-  * 119:76 (http_inspect) unsupported Content-Encoding used
-  * 119:77 (http_inspect) unknown Content-Encoding used
-  * 119:78 (http_inspect) multiple Content-Encodings applied
-  * 119:79 (http_inspect) server response before client request
-  * 119:80 (http_inspect) PDF/SWF decompression of server response
+  * 119:224 (http_inspect) misformatted HTTP traffic
+  * 119:225 (http_inspect) unsupported Content-Encoding used
+  * 119:226 (http_inspect) unknown Content-Encoding used
+  * 119:227 (http_inspect) multiple Content-Encodings applied
+  * 119:228 (http_inspect) server response before client request
+  * 119:229 (http_inspect) PDF/SWF decompression of server response
     too big
-  * 119:81 (http_inspect) nonprinting character in HTTP message
+  * 119:230 (http_inspect) nonprinting character in HTTP message
     header name
-  * 119:82 (http_inspect) bad Content-Length value in HTTP header
-  * 119:83 (http_inspect) HTTP header line wrapped
-  * 119:84 (http_inspect) HTTP header line terminated by CR without a
-    LF
-  * 119:85 (http_inspect) chunk terminated by nonstandard separator
-  * 119:86 (http_inspect) chunk length terminated by LF without CR
-  * 119:87 (http_inspect) more than one response with 100 status code
-  * 119:88 (http_inspect) 100 status code not in response to Expect
+  * 119:231 (http_inspect) bad Content-Length value in HTTP header
+  * 119:232 (http_inspect) HTTP header line wrapped
+  * 119:233 (http_inspect) HTTP header line terminated by CR without
+    a LF
+  * 119:234 (http_inspect) chunk terminated by nonstandard separator
+  * 119:235 (http_inspect) chunk length terminated by LF without CR
+  * 119:236 (http_inspect) more than one response with 100 status
+    code
+  * 119:237 (http_inspect) 100 status code not in response to Expect
     header
-  * 119:89 (http_inspect) 1XX status code other than 100 or 101
-  * 119:90 (http_inspect) Expect header sent without a message body
-  * 119:91 (http_inspect) HTTP 1.0 message with Transfer-Encoding
+  * 119:238 (http_inspect) 1XX status code other than 100 or 101
+  * 119:239 (http_inspect) Expect header sent without a message body
+  * 119:240 (http_inspect) HTTP 1.0 message with Transfer-Encoding
     header
-  * 119:92 (http_inspect) Content-Transfer-Encoding used as HTTP
+  * 119:241 (http_inspect) Content-Transfer-Encoding used as HTTP
     header
-  * 119:93 (http_inspect) illegal field in chunked message trailers
-  * 119:94 (http_inspect) header field inappropriately appears twice
+  * 119:242 (http_inspect) illegal field in chunked message trailers
+  * 119:243 (http_inspect) header field inappropriately appears twice
     or has two values
-  * 119:95 (http_inspect) invalid value chunked in Content-Encoding
+  * 119:244 (http_inspect) invalid value chunked in Content-Encoding
     header
-  * 119:96 (http_inspect) 206 response sent to a request without a
+  * 119:245 (http_inspect) 206 response sent to a request without a
     Range header
-  * 119:97 (http_inspect) HTTP in version field not all upper case
+  * 119:246 (http_inspect) HTTP in version field not all upper case
+  * 119:247 (http_inspect) white space embedded in critical header
+    value
+  * 119:248 (http_inspect) gzip compressed data followed by
+    unexpected non-gzip data
 
 Peg counts:
 
@@ -7873,7 +8278,7 @@ Peg counts:
     sessions (max)
 
 
-9.22. imap
+9.23. imap
 
 --------------
 
@@ -7885,14 +8290,14 @@ Usage: inspect
 
 Configuration:
 
-  * int imap.b64_decode_depth = 1460: base64 decoding depth {
-    -1:65535 }
+  * int imap.b64_decode_depth = 1460: base64 decoding depth (-1 no
+    limit) { -1:65535 }
   * int imap.bitenc_decode_depth = 1460: non-Encoded MIME attachment
-    extraction depth { -1:65535 }
+    extraction depth (-1 no limit) { -1:65535 }
   * int imap.qp_decode_depth = 1460: quoted Printable decoding depth
-    { -1:65535 }
-  * int imap.uu_decode_depth = 1460: Unix-to-Unix decoding depth {
-    -1:65535 }
+    (-1 no limit) { -1:65535 }
+  * int imap.uu_decode_depth = 1460: Unix-to-Unix decoding depth (-1
+    no limit) { -1:65535 }
 
 Rules:
 
@@ -7921,7 +8326,7 @@ Peg counts:
   * imap.non_encoded_bytes: total non-encoded extracted bytes (sum)
 
 
-9.23. modbus
+9.24. modbus
 
 --------------
 
@@ -7948,7 +8353,7 @@ Peg counts:
     sessions (max)
 
 
-9.24. normalizer
+9.25. normalizer
 
 --------------
 
@@ -8084,7 +8489,7 @@ Peg counts:
   * normalizer.tcp_block: blocked segments (sum)
 
 
-9.25. packet_capture
+9.26. packet_capture
 
 --------------
 
@@ -8112,7 +8517,7 @@ Peg counts:
     filter (sum)
 
 
-9.26. perf_monitor
+9.27. perf_monitor
 
 --------------
 
@@ -8152,7 +8557,7 @@ Peg counts:
   * perf_monitor.packets: total packets (sum)
 
 
-9.27. pop
+9.28. pop
 
 --------------
 
@@ -8164,14 +8569,14 @@ Usage: inspect
 
 Configuration:
 
-  * int pop.b64_decode_depth = 1460: base64 decoding depth { -1:65535
-    }
+  * int pop.b64_decode_depth = 1460: base64 decoding depth (-1 no
+    limit) { -1:65535 }
   * int pop.bitenc_decode_depth = 1460: Non-Encoded MIME attachment
-    extraction depth { -1:65535 }
-  * int pop.qp_decode_depth = 1460: Quoted Printable decoding depth {
-    -1:65535 }
-  * int pop.uu_decode_depth = 1460: Unix-to-Unix decoding depth {
-    -1:65535 }
+    extraction depth (-1 no limit) { -1:65535 }
+  * int pop.qp_decode_depth = 1460: Quoted Printable decoding depth
+    (-1 no limit) { -1:65535 }
+  * int pop.uu_decode_depth = 1460: Unix-to-Unix decoding depth (-1
+    no limit) { -1:65535 }
 
 Rules:
 
@@ -8200,7 +8605,7 @@ Peg counts:
   * pop.non_encoded_bytes: total non-encoded extracted bytes (sum)
 
 
-9.28. port_scan
+9.29. port_scan
 
 --------------
 
@@ -8364,7 +8769,7 @@ Peg counts:
   * port_scan.packets: total packets (sum)
 
 
-9.29. reg_test
+9.30. reg_test
 
 --------------
 
@@ -8387,7 +8792,7 @@ Peg counts:
   * reg_test.retry_packets: total retried packets received (sum)
 
 
-9.30. reputation
+9.31. reputation
 
 --------------
 
@@ -8400,6 +8805,8 @@ Usage: global
 Configuration:
 
   * string reputation.blacklist: blacklist file name with IP lists
+  * string reputation.list_dir: directory for IP lists and manifest
+    file
   * int reputation.memcap = 500: maximum total MB of memory allocated
     { 1:4095 }
   * enum reputation.nested_ip = inner: IP to use when there is IP
@@ -8427,7 +8834,7 @@ Peg counts:
   * reputation.memory_allocated: total memory allocated (sum)
 
 
-9.31. rpc_decode
+9.32. rpc_decode
 
 --------------
 
@@ -8454,7 +8861,7 @@ Peg counts:
     sessions (max)
 
 
-9.32. sip
+9.33. sip
 
 --------------
 
@@ -8553,7 +8960,7 @@ Peg counts:
   * sip.code_9xx: 9xx (sum)
 
 
-9.33. smtp
+9.34. smtp
 
 --------------
 
@@ -8570,12 +8977,12 @@ Configuration:
     non-default maximum for command { 0: }
   * string smtp.auth_cmds: commands that initiate an authentication
     exchange
+  * int smtp.b64_decode_depth = 1460: depth used to decode the base64
+    encoded MIME attachments (-1 no limit) { -1:65535 }
   * string smtp.binary_data_cmds: commands that initiate sending of
     data and use a length value after the command
-  * int smtp.bitenc_decode_depth = 25: depth used to extract the
-    non-encoded MIME attachments { -1:65535 }
-  * int smtp.b64_decode_depth = 25: depth used to decode the base64
-    encoded MIME attachments { -1:65535 }
+  * int smtp.bitenc_decode_depth = 1460: depth used to extract the
+    non-encoded MIME attachments (-1 no limit) { -1:65535 }
   * string smtp.data_cmds: commands that initiate sending of data
     with an end of data delimiter
   * int smtp.email_hdrs_log_depth = 1464: depth for logging email
@@ -8605,10 +9012,10 @@ Configuration:
   * enum smtp.normalize = none: turns on/off normalization { none |
     cmds | all }
   * string smtp.normalize_cmds: list of commands to normalize
-  * int smtp.qp_decode_depth = 25: quoted-Printable decoding depth {
-    -1:65535 }
-  * int smtp.uu_decode_depth = 25: unix-to-Unix decoding depth {
-    -1:65535 }
+  * int smtp.qp_decode_depth = 1460: quoted-Printable decoding depth
+    (-1 no limit) { -1:65535 }
+  * int smtp.uu_decode_depth = 1460: Unix-to-Unix decoding depth (-1
+    no limit) { -1:65535 }
   * string smtp.valid_cmds: list of valid commands
   * enum smtp.xlink2state = alert: enable/disable xlink2state alert {
     disable | alert | drop }
@@ -8648,7 +9055,7 @@ Peg counts:
   * smtp.non_encoded_bytes: total non-encoded extracted bytes (sum)
 
 
-9.34. ssh
+9.35. ssh
 
 --------------
 
@@ -8685,7 +9092,7 @@ Peg counts:
     (max)
 
 
-9.35. ssl
+9.36. ssl
 
 --------------
 
@@ -8734,7 +9141,7 @@ Peg counts:
     (max)
 
 
-9.36. stream
+9.37. stream
 
 --------------
 
@@ -8785,6 +9192,13 @@ Configuration:
     before being eligible for pruning { 1: }
   * int stream.file_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1: }
+  * int stream.trace: mask for enabling debug traces in module
+
+Rules:
+
+  * 135:1 (stream) TCP SYN received
+  * 135:2 (stream) TCP session established
+  * 135:3 (stream) TCP session cleared
 
 Peg counts:
 
@@ -8859,7 +9273,7 @@ Peg counts:
     sync (sum)
 
 
-9.37. stream_file
+9.38. stream_file
 
 --------------
 
@@ -8874,7 +9288,7 @@ Configuration:
   * bool stream_file.upload = false: indicate file transfer direction
 
 
-9.38. stream_icmp
+9.39. stream_icmp
 
 --------------
 
@@ -8899,7 +9313,7 @@ Peg counts:
   * stream_icmp.prunes: icmp session prunes (sum)
 
 
-9.39. stream_ip
+9.40. stream_ip
 
 --------------
 
@@ -8965,12 +9379,11 @@ Peg counts:
   * stream_ip.trackers_completed: datagram trackers completed (sum)
   * stream_ip.nodes_inserted: fragments added to tracker (sum)
   * stream_ip.nodes_deleted: fragments deleted from tracker (sum)
-  * stream_ip.memory_used: current memory usage in bytes (now)
   * stream_ip.reassembled_bytes: total reassembled bytes (sum)
   * stream_ip.fragmented_bytes: total fragmented bytes (sum)
 
 
-9.40. stream_tcp
+9.41. stream_tcp
 
 --------------
 
@@ -8985,8 +9398,6 @@ Configuration:
 
   * int stream_tcp.flush_factor = 0: flush upon seeing a drop in
     segment size after given number of non-decreasing segments { 0: }
-  * bool stream_tcp.ignore_any_rules = false: process TCP content
-    rules w/o ports only if rules with ports are present
   * int stream_tcp.max_window = 0: maximum allowed TCP window {
     0:1073725440 }
   * int stream_tcp.overlap_limit = 0: maximum number of allowed
@@ -9050,6 +9461,9 @@ Peg counts:
   * stream_tcp.released: tcp session trackers released (sum)
   * stream_tcp.timeouts: tcp session timeouts (sum)
   * stream_tcp.prunes: tcp session prunes (sum)
+  * stream_tcp.instantiated: new sessions instantiated (sum)
+  * stream_tcp.setups: session initializations (sum)
+  * stream_tcp.restarts: sessions restarted (sum)
   * stream_tcp.resyns: SYN received on established session (sum)
   * stream_tcp.discards: tcp packets discarded (sum)
   * stream_tcp.events: events generated (sum)
@@ -9095,7 +9509,7 @@ Peg counts:
   * stream_tcp.fins: number of fin packets (sum)
 
 
-9.41. stream_udp
+9.42. stream_udp
 
 --------------
 
@@ -9109,8 +9523,6 @@ Configuration:
 
   * int stream_udp.session_timeout = 30: session tracking timeout {
     1:86400 }
-  * bool stream_udp.ignore_any_rules = false: process UDP content
-    rules w/o ports only if rules with ports are present
 
 Peg counts:
 
@@ -9123,7 +9535,7 @@ Peg counts:
   * stream_udp.ignored: udp packets ignored (sum)
 
 
-9.42. stream_user
+9.43. stream_user
 
 --------------
 
@@ -9140,7 +9552,7 @@ Configuration:
   * int stream_user.trace: mask for enabling debug traces in module
 
 
-9.43. telnet
+9.44. telnet
 
 --------------
 
@@ -9175,7 +9587,7 @@ Peg counts:
     sessions (max)
 
 
-9.44. wizard
+9.45. wizard
 
 --------------
 
@@ -9506,8 +9918,8 @@ Configuration:
 
   * int byte_test.~count: number of bytes to pick up from the buffer
     { 1:10 }
-  * string byte_test.~operator: variable name or number of bytes into
-    the buffer to start processing
+  * string byte_test.~operator: operation to perform to test the
+    value
   * string byte_test.~compare: variable name or value to test the
     converted result against
   * string byte_test.~offset: variable name or number of bytes into
@@ -11920,8 +12332,9 @@ Some things Snort++ can do today that Snort can not do as well:
     doesn’t care about metadata internal structure / syntax)
   * deleted fast_pattern:only; use fast_pattern, nocase (option is
     not added to detection tree if not required)
-  * changed fast_pattern:<offset>,<length> to fastpattern_offset:
-    <offset>, fast_pattern_length <length>
+  * changed fast_pattern:<offset>,<length> to
+    fast_pattern,fast_pattern_offset <offset>,fast_pattern_length
+    <length>
   * fast pattern sensitive data with sd_pattern using hyperscan
   * hyperscan regex fast patterns with regex:"<regex>", fast_pattern;
   * no ; separated content suboptions
@@ -11952,6 +12365,8 @@ Some things Snort++ can do today that Snort can not do as well:
   * nets and/or ports may be omitted from rule headers (matches any)
   * parse all rules and output all errors before quitting
   * read rules from conf, separate rules file, or stdin
+  * The symbol =< in a byte test is recognized as a syntax error. The
+    correct symbol is <=.
 
 
 16.7. Output
@@ -11995,6 +12410,27 @@ the result of.
 
 For more information, See Features > Sensitive Data Filtering for
 details.
+
+
+16.9. Features Not Yet Supported by Snort 3
+
+--------------
+
+  * Support in http_inspect for Original Client IP is limited to the
+    X-Forwarded-For and True-Client-IP headers in that order. It is
+    not possible to configure additional custom headers to search for
+    Original Client IP.
+  * The -n option does not work properly when perf_monitor is
+    configured. The number of packets processed from the pcap is
+    likely to be more than the number specified with the -n option.
+  * When a file is transferred via SMB2 it may be allowed even though
+    according to file policy it should be blocked. This occurs when
+    the create and read requests are sent together and then the read
+    and create responses are sent together. Blocking is done
+    correctly if the create and read requests are sent separately or
+    if the file is large enough to require two read responses.
+  * This user manual is incomplete and does not fully cover many
+    Snort 2.X features that are also supported by Snort 3.
 
 
 ---------------------------------------------------------------------
@@ -13474,10 +13910,13 @@ these libraries see the Getting Started section of the manual.
   * --snaplen <snap> set snaplen of packet (same as -s) (68:65535)
   * --stdin-rules read rules from stdin until EOF or a line starting
     with END is read
+  * --talos enable Talos inline rule test mode (same as --tweaks
+    talos -Q -q)
   * --treat-drop-as-alert converts drop, sdrop, and reject rules into
     alert rules during startup
   * --treat-drop-as-ignore use drop, sdrop, and reject rules to
     ignore session traffic when not inline
+  * --tweaks tune configuration
   * --catch-test comma separated list of cat unit test tags or all
   * --version show version number (same as -V)
   * --warn-all enable all warnings
@@ -13495,6 +13934,7 @@ these libraries see the Getting Started section of the manual.
   * --warn-vars warn about variable definition and usage issues
   * --x2c output ASCII char for given hex (see also --c2x)
   * --x2s output ASCII string for given byte code (see also --x2c)
+  * --trace turn on main loop debug trace
 
 
 20.4. Configuration
@@ -13510,7 +13950,7 @@ these libraries see the Getting Started section of the manual.
   * string active.dst_mac: use format 01:23:45:67:89:ab
   * int active.max_responses = 0: maximum number of responses { 0: }
   * int active.min_interval = 255: minimum number of seconds between
-    responses { 1: }
+    responses { 1:255 }
   * multi alert_csv.fields = timestamp pkt_num proto pkt_gen pkt_len
     dir src_ap dst_ap rule action: selected fields will be output in
     given order left to right { action | class | b64_data | dir |
@@ -13596,21 +14036,19 @@ these libraries see the Getting Started section of the manual.
   * bool appid.debug = false: enable appid debug logging
   * bool appid.dump_ports = false: enable dump of appid port
     information
+  * int appid.first_decrypted_packet_debug = 0: the first packet of
+    an already decrypted SSL flow (debug single session only) { 0: }
   * int appid.instance_id = 0: instance id - ignored { 0: }
   * bool appid.log_all_sessions = false: enable logging of all appid
     sessions
   * bool appid.log_stats = false: enable logging of appid statistics
   * int appid.memcap = 0: disregard - not implemented { 0: }
   * string appids.~: comma separated list of application names
-  * addr appid.session_log_filter.dst_ip = 0.0.0.0/32: destination IP
-    address in CIDR format
-  * port appid.session_log_filter.dst_port: destination port { 1: }
-  * bool appid.session_log_filter.log_all_sessions = false: enable
-    logging for all appid sessions
-  * string appid.session_log_filter.protocol: IP protocol
-  * addr appid.session_log_filter.src_ip = 0.0.0.0/32: source IP
-    address in CIDR format
-  * port appid.session_log_filter.src_port: source port { 1: }
+  * string appid.tp_appid_config: path to third party appid
+    configuration file
+  * string appid.tp_appid_path: path to third party appid dynamic
+    library
+  * int appid.trace: mask for enabling debug traces in module
   * ip4 arp_spoof.hosts[].ip: host ip address
   * mac arp_spoof.hosts[].mac: host mac address
   * int asn1.absolute_offset: absolute offset from the beginning of
@@ -13744,8 +14182,8 @@ these libraries see the Getting Started section of the manual.
   * implied byte_test.oct: convert from octal string
   * string byte_test.~offset: variable name or number of bytes into
     the payload to start processing
-  * string byte_test.~operator: variable name or number of bytes into
-    the buffer to start processing
+  * string byte_test.~operator: operation to perform to test the
+    value
   * implied byte_test.relative: offset from cursor instead of start
     of buffer
   * implied byte_test.string: convert from string
@@ -13811,6 +14249,7 @@ these libraries see the Getting Started section of the manual.
   * bool dce_smb.smb_legacy_mode = false: inspect only SMBv1
   * int dce_smb.smb_max_chain = 3: SMB max chain size { 0:255 }
   * int dce_smb.smb_max_compound = 3: SMB max compound size { 0:255 }
+  * int dce_smb.trace: mask for enabling debug traces in module
   * multi dce_smb.valid_smb_versions = all: Valid SMB versions { v1 |
     v2 | all }
   * bool dce_tcp.disable_defrag = false: Disable DCE/RPC
@@ -13826,7 +14265,11 @@ these libraries see the Getting Started section of the manual.
     defragmentation
   * int dce_udp.max_frag_len = 65535: Maximum fragment size for
     defragmentation { 1514:65535 }
+  * int dce_udp.trace: mask for enabling debug traces in module
+  * int decode.trace: mask for enabling debug traces in module
   * int detection.asn1 = 256: maximum decode nodes { 1: }
+  * bool detection.enable_address_anomaly_checks = false: enable
+    check and alerting of address anomalies
   * int detection_filter.count: hits in interval before allowing the
     rule to fire { 1: }
   * int detection_filter.seconds: length of interval to count hits {
@@ -13851,6 +14294,10 @@ these libraries see the Getting Started section of the manual.
     0:255 }
   * int dnp3_obj.var = 0: match given DNP3 object header var { 0:255
     }
+  * string domain_filter.file: file with list of domains identifying
+    hosts to be filtered
+  * string domain_filter.hosts: list of domains identifying hosts to
+    be filtered
   * int dpx.max = 0: maximum payload before alert { 0:65535 }
   * port dpx.port: port to check
   * interval dsize.~range: check if packet payload size is in the
@@ -14018,6 +14465,7 @@ these libraries see the Getting Started section of the manual.
   * string gtp_inspect[].messages[].name: message name
   * int gtp_inspect[].messages[].type = 0: message type code { 0:255
     }
+  * int gtp_inspect.trace: mask for enabling debug traces in module
   * int gtp_inspect[].version = 2: GTP version { 0:2 }
   * string gtp_type.~: list of types to match
   * int gtp_version.~: version to match { 0:2 }
@@ -14208,14 +14656,14 @@ these libraries see the Getting Started section of the manual.
     0:255 }
   * interval id.~range: check if the IP ID is in the given range { 0:
     }
-  * int imap.b64_decode_depth = 1460: base64 decoding depth {
-    -1:65535 }
+  * int imap.b64_decode_depth = 1460: base64 decoding depth (-1 no
+    limit) { -1:65535 }
   * int imap.bitenc_decode_depth = 1460: non-Encoded MIME attachment
-    extraction depth { -1:65535 }
+    extraction depth (-1 no limit) { -1:65535 }
   * int imap.qp_decode_depth = 1460: quoted Printable decoding depth
-    { -1:65535 }
-  * int imap.uu_decode_depth = 1460: Unix-to-Unix decoding depth {
-    -1:65535 }
+    (-1 no limit) { -1:65535 }
+  * int imap.uu_decode_depth = 1460: Unix-to-Unix decoding depth (-1
+    no limit) { -1:65535 }
   * int inspection.id = 0: correlate policy and events with other
     items in configuration { 0:65535 }
   * enum inspection.mode = inline-test: set policy mode { inline |
@@ -14361,8 +14809,6 @@ these libraries see the Getting Started section of the manual.
     as -d)
   * bool output.dump_payload_verbose = false: dumps raw packet
     starting at link layer (same as -X)
-  * bool output.enable_packet_trace = false: enable summary output of
-    state that determined packet verdict
   * int output.event_trace.max_data = 0: maximum amount of packet
     data to capture { 0:65535 }
   * string output.logdir = .: where to put log files (same as -l)
@@ -14370,8 +14816,6 @@ these libraries see the Getting Started section of the manual.
     (same as -O)
   * bool output.obfuscate_pii = false: mask all but the last 4
     characters of credit card and social security numbers
-  * enum output.packet_trace_output = console: select where to send
-    packet trace { console | file }
   * bool output.quiet = false: suppress non-fatal information (still
     show alerts, same as -q)
   * bool output.show_year = false: include year in timestamp in the
@@ -14394,6 +14838,10 @@ these libraries see the Getting Started section of the manual.
     processing { 0: }
   * bool packets.vlan_agnostic = false: determines whether VLAN info
     is used to track fragments and connections
+  * bool packet_tracer.enable = false: enable summary output of state
+    that determined packet verdict
+  * enum packet_tracer.output = console: select where to send packet
+    trace { console | file }
   * string pcre.~re: Snort regular expression
   * bool perf_monitor.base = true: enable base statistics { nullptr }
   * bool perf_monitor.cpu = false: enable cpu statistics { nullptr }
@@ -14419,14 +14867,14 @@ these libraries see the Getting Started section of the manual.
   * bool perf_monitor.summary = false: output summary at shutdown
   * interval pkt_num.~range: check if packet number is in given range
     { 1: }
-  * int pop.b64_decode_depth = 1460: base64 decoding depth { -1:65535
-    }
+  * int pop.b64_decode_depth = 1460: base64 decoding depth (-1 no
+    limit) { -1:65535 }
   * int pop.bitenc_decode_depth = 1460: Non-Encoded MIME attachment
-    extraction depth { -1:65535 }
-  * int pop.qp_decode_depth = 1460: Quoted Printable decoding depth {
-    -1:65535 }
-  * int pop.uu_decode_depth = 1460: Unix-to-Unix decoding depth {
-    -1:65535 }
+    extraction depth (-1 no limit) { -1:65535 }
+  * int pop.qp_decode_depth = 1460: Quoted Printable decoding depth
+    (-1 no limit) { -1:65535 }
+  * int pop.uu_decode_depth = 1460: Unix-to-Unix decoding depth (-1
+    no limit) { -1:65535 }
   * bool port_scan.alert_all = false: alert on all events over
     threshold within window if true; else alert on first only
   * int port_scan.icmp_sweep.nets = 25: number of times address
@@ -14616,6 +15064,8 @@ these libraries see the Getting Started section of the manual.
   * string rem.~: comment
   * string replace.~: byte code to replace with
   * string reputation.blacklist: blacklist file name with IP lists
+  * string reputation.list_dir: directory for IP lists and manifest
+    file
   * int reputation.memcap = 500: maximum total MB of memory allocated
     { 1:4095 }
   * enum reputation.nested_ip = inner: IP to use when there is IP
@@ -14652,7 +15102,7 @@ these libraries see the Getting Started section of the manual.
     prints compiled rule group information
   * bool search_engine.debug_print_rule_groups_uncompiled = false:
     prints uncompiled rule group information
-  * bool search_engine.detect_raw_tcp = true: detect on TCP payload
+  * bool search_engine.detect_raw_tcp = false: detect on TCP payload
     before reassembly
   * bool search_engine.enable_single_rule_group = false: put all
     rules into one group
@@ -14717,12 +15167,12 @@ these libraries see the Getting Started section of the manual.
     non-default maximum for command { 0: }
   * string smtp.auth_cmds: commands that initiate an authentication
     exchange
-  * int smtp.b64_decode_depth = 25: depth used to decode the base64
-    encoded MIME attachments { -1:65535 }
+  * int smtp.b64_decode_depth = 1460: depth used to decode the base64
+    encoded MIME attachments (-1 no limit) { -1:65535 }
   * string smtp.binary_data_cmds: commands that initiate sending of
     data and use a length value after the command
-  * int smtp.bitenc_decode_depth = 25: depth used to extract the
-    non-encoded MIME attachments { -1:65535 }
+  * int smtp.bitenc_decode_depth = 1460: depth used to extract the
+    non-encoded MIME attachments (-1 no limit) { -1:65535 }
   * string smtp.data_cmds: commands that initiate sending of data
     with an end of data delimiter
   * int smtp.email_hdrs_log_depth = 1464: depth for logging email
@@ -14752,10 +15202,10 @@ these libraries see the Getting Started section of the manual.
   * string smtp.normalize_cmds: list of commands to normalize
   * enum smtp.normalize = none: turns on/off normalization { none |
     cmds | all }
-  * int smtp.qp_decode_depth = 25: quoted-Printable decoding depth {
-    -1:65535 }
-  * int smtp.uu_decode_depth = 25: unix-to-Unix decoding depth {
-    -1:65535 }
+  * int smtp.qp_decode_depth = 1460: quoted-Printable decoding depth
+    (-1 no limit) { -1:65535 }
+  * int smtp.uu_decode_depth = 1460: Unix-to-Unix decoding depth (-1
+    no limit) { -1:65535 }
   * string smtp.valid_cmds: list of valid commands
   * enum smtp.xlink2state = alert: enable/disable xlink2state alert {
     disable | alert | drop }
@@ -14908,14 +15358,19 @@ these libraries see the Getting Started section of the manual.
   * implied snort.--stdin-rules: read rules from stdin until EOF or a
     line starting with END is read
   * string snort.-S: <x=v> set config variable x equal to value v
+  * implied snort.--talos: enable Talos inline rule test mode (same
+    as --tweaks talos -Q -q)
   * string snort.-t: <dir> chroots process to <dir> after
     initialization
+  * int snort.trace: mask for enabling debug traces in module
+  * implied snort.--trace: turn on main loop debug trace
   * implied snort.--treat-drop-as-alert: converts drop, sdrop, and
     reject rules into alert rules during startup
   * implied snort.--treat-drop-as-ignore: use drop, sdrop, and reject
     rules to ignore session traffic when not inline
   * implied snort.-T: test and report on the current Snort
     configuration
+  * string snort.--tweaks: tune configuration
   * string snort.-u: <uname> run snort as <uname> or <uid> after
     initialization
   * implied snort.-U: use UTC for timestamps
@@ -15049,8 +15504,6 @@ these libraries see the Getting Started section of the manual.
     before being eligible for pruning { 1: }
   * int stream_tcp.flush_factor = 0: flush upon seeing a drop in
     segment size after given number of non-decreasing segments { 0: }
-  * bool stream_tcp.ignore_any_rules = false: process TCP content
-    rules w/o ports only if rules with ports are present
   * int stream_tcp.max_pdu = 16384: maximum reassembled PDU size {
     1460:32768 }
   * int stream_tcp.max_window = 0: maximum allowed TCP window {
@@ -15077,14 +15530,13 @@ these libraries see the Getting Started section of the manual.
     segments queued { 0:2048 }
   * int stream_tcp.small_segments.maximum_size = 0: limit number of
     small segments queued { 0:2048 }
+  * int stream.trace: mask for enabling debug traces in module
   * int stream.udp_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1: }
   * int stream.udp_cache.max_sessions = 131072: maximum simultaneous
     sessions tracked before pruning { 2: }
   * int stream.udp_cache.pruning_timeout = 30: minimum inactive time
     before being eligible for pruning { 1: }
-  * bool stream_udp.ignore_any_rules = false: process UDP content
-    rules w/o ports only if rules with ports are present
   * int stream_udp.session_timeout = 30: session tracking timeout {
     1:86400 }
   * int stream.user_cache.idle_timeout = 180: maximum inactive time
@@ -15163,6 +15615,12 @@ these libraries see the Getting Started section of the manual.
 
 --------------
 
+  * appid.appid_unknown: count of sessions where appid could not be
+    determined (sum)
+  * appid.ignored_packets: count of packets ignored (sum)
+  * appid.packets: count of packets received (sum)
+  * appid.processed_packets: count of packets processed (sum)
+  * appid.total_sessions: count of sessions created (sum)
   * arp_spoof.packets: total packets (sum)
   * back_orifice.packets: total packets (sum)
   * binder.allows: allow bindings (sum)
@@ -15185,7 +15643,7 @@ these libraries see the Getting Started section of the manual.
   * daq.internal_whitelist: packets whitelisted internally due to
     lack of DAQ support (sum)
   * daq.outstanding: packets unprocessed (sum)
-  * daq.pcaps: total files and interfaces processed (sum)
+  * daq.pcaps: total files and interfaces processed (max)
   * daq.received: total packets received from DAQ (sum)
   * daq.replace: total replace verdicts (sum)
   * daq.retry: total retry verdicts (sum)
@@ -15389,6 +15847,8 @@ these libraries see the Getting Started section of the manual.
   * dns.packets: total packets processed (sum)
   * dns.requests: total dns requests (sum)
   * dns.responses: total dns responses (sum)
+  * domain_filter.checked: domains checked (sum)
+  * domain_filter.filtered: domains filtered (sum)
   * dpx.packets: total packets (sum)
   * file_connector.messages: total messages (sum)
   * file_id.cache_failures: number of file cache add failures (sum)
@@ -15478,8 +15938,6 @@ these libraries see the Getting Started section of the manual.
   * imap.sessions: total imap sessions (sum)
   * imap.uu_attachments: total uu attachments decoded (sum)
   * imap.uu_decoded_bytes: total uu decoded bytes (sum)
-  * ips.invalid_policy_ids: Number of times an invalid policy ID was
-    provided (sum)
   * ipv4.bad_checksum: nonzero ip checksums (sum)
   * latency.max_usecs: maximum usecs elapsed (sum)
   * latency.packet_timeouts: packets that timed out (sum)
@@ -15758,7 +16216,6 @@ these libraries see the Getting Started section of the manual.
   * stream_ip.max_frags: max fragments (sum)
   * stream_ip.max: max ip sessions (max)
   * stream.ip_memcap_prunes: ip sessions pruned due to memcap (sum)
-  * stream_ip.memory_used: current memory usage in bytes (now)
   * stream_ip.nodes_deleted: fragments deleted from tracker (sum)
   * stream_ip.nodes_inserted: fragments added to tracker (sum)
   * stream_ip.overlaps: overlapping fragments (sum)
@@ -15801,6 +16258,7 @@ these libraries see the Getting Started section of the manual.
   * stream_tcp.ignored: tcp packets ignored (sum)
   * stream_tcp.initializing: number of sessions currently
     initializing (now)
+  * stream_tcp.instantiated: new sessions instantiated (sum)
   * stream_tcp.internal_events: 135:X events generated (sum)
   * stream_tcp.max: max tcp sessions (max)
   * stream.tcp_memcap_prunes: tcp sessions pruned due to memcap (sum)
@@ -15814,6 +16272,7 @@ these libraries see the Getting Started section of the manual.
   * stream_tcp.rebuilt_packets: total reassembled PDUs (sum)
   * stream_tcp.released: tcp session trackers released (sum)
   * stream_tcp.resets: number of reset packets (sum)
+  * stream_tcp.restarts: sessions restarted (sum)
   * stream_tcp.resyns: SYN received on established session (sum)
   * stream_tcp.segs_queued: total segments queued (sum)
   * stream_tcp.segs_released: total segments released (sum)
@@ -15824,6 +16283,7 @@ these libraries see the Getting Started section of the manual.
   * stream_tcp.server_cleanups: number of times data from client was
     flushed when session released (sum)
   * stream_tcp.sessions: total tcp sessions (sum)
+  * stream_tcp.setups: session initializations (sum)
   * stream_tcp.syn_acks: number of syn-ack packets (sum)
   * stream_tcp.syn_ack_trackers: tcp session tracking started on
     syn-ack (sum)
@@ -15933,6 +16393,7 @@ these libraries see the Getting Started section of the manual.
   * 133: dce_tcp
   * 133: dce_udp
   * 134: latency
+  * 135: stream
   * 136: reputation
   * 137: ssl
   * 140: sip
@@ -15941,6 +16402,8 @@ these libraries see the Getting Started section of the manual.
   * 143: gtp_inspect
   * 144: modbus
   * 145: dnp3
+  * 146: file_id
+  * 175: domain_filter
   * 219: http2_inspect
   * 256: dpx
 
@@ -16184,86 +16647,92 @@ these libraries see the Getting Started section of the manual.
   * 119:32 (http_inspect) simple request
   * 119:33 (http_inspect) unescaped space in HTTP URI
   * 119:34 (http_inspect) too many pipelined requests
-  * 119:35 (http_inspect) anomalous http server on undefined HTTP
+  * 119:101 (http_inspect) anomalous http server on undefined HTTP
     port
-  * 119:36 (http_inspect) invalid status code in HTTP response
-  * 119:37 (http_inspect) unused event number—should not appear
-  * 119:38 (http_inspect) HTTP response has UTF charset that failed
+  * 119:102 (http_inspect) invalid status code in HTTP response
+  * 119:103 (http_inspect) unused event number—should not appear
+  * 119:104 (http_inspect) HTTP response has UTF charset that failed
     to normalize
-  * 119:39 (http_inspect) HTTP response has UTF-7 charset
-  * 119:40 (http_inspect) HTTP response gzip decompression failed
-  * 119:41 (http_inspect) server consecutive small chunk sizes
-  * 119:42 (http_inspect) unused event number—should not appear
-  * 119:43 (http_inspect) javascript obfuscation levels exceeds 1
-  * 119:44 (http_inspect) javascript whitespaces exceeds max allowed
-  * 119:45 (http_inspect) multiple encodings within javascript
+  * 119:105 (http_inspect) HTTP response has UTF-7 charset
+  * 119:106 (http_inspect) HTTP response gzip decompression failed
+  * 119:107 (http_inspect) server consecutive small chunk sizes
+  * 119:108 (http_inspect) unused event number—should not appear
+  * 119:109 (http_inspect) javascript obfuscation levels exceeds 1
+  * 119:110 (http_inspect) javascript whitespaces exceeds max allowed
+  * 119:111 (http_inspect) multiple encodings within javascript
     obfuscated data
-  * 119:46 (http_inspect) SWF file zlib decompression failure
-  * 119:47 (http_inspect) SWF file LZMA decompression failure
-  * 119:48 (http_inspect) PDF file deflate decompression failure
-  * 119:49 (http_inspect) PDF file unsupported compression type
-  * 119:50 (http_inspect) PDF file cascaded compression
-  * 119:51 (http_inspect) PDF file parse failure
-  * 119:52 (http_inspect) not HTTP traffic
-  * 119:53 (http_inspect) chunk length has excessive leading zeros
-  * 119:54 (http_inspect) white space before or between messages
-  * 119:55 (http_inspect) request message without URI
-  * 119:56 (http_inspect) control character in reason phrase
-  * 119:57 (http_inspect) illegal extra whitespace in start line
-  * 119:58 (http_inspect) corrupted HTTP version
-  * 119:59 (http_inspect) unknown HTTP version
-  * 119:60 (http_inspect) format error in HTTP header
-  * 119:61 (http_inspect) chunk header options present
-  * 119:62 (http_inspect) URI badly formatted
-  * 119:63 (http_inspect) unrecognized type of percent encoding in
+  * 119:112 (http_inspect) SWF file zlib decompression failure
+  * 119:113 (http_inspect) SWF file LZMA decompression failure
+  * 119:114 (http_inspect) PDF file deflate decompression failure
+  * 119:115 (http_inspect) PDF file unsupported compression type
+  * 119:116 (http_inspect) PDF file cascaded compression
+  * 119:117 (http_inspect) PDF file parse failure
+  * 119:201 (http_inspect) not HTTP traffic
+  * 119:202 (http_inspect) chunk length has excessive leading zeros
+  * 119:203 (http_inspect) white space before or between messages
+  * 119:204 (http_inspect) request message without URI
+  * 119:205 (http_inspect) control character in reason phrase
+  * 119:206 (http_inspect) illegal extra whitespace in start line
+  * 119:207 (http_inspect) corrupted HTTP version
+  * 119:208 (http_inspect) unknown HTTP version
+  * 119:209 (http_inspect) format error in HTTP header
+  * 119:210 (http_inspect) chunk header options present
+  * 119:211 (http_inspect) URI badly formatted
+  * 119:212 (http_inspect) unrecognized type of percent encoding in
     URI
-  * 119:64 (http_inspect) HTTP chunk misformatted
-  * 119:65 (http_inspect) white space adjacent to chunk length
-  * 119:66 (http_inspect) white space within header name
-  * 119:67 (http_inspect) excessive gzip compression
-  * 119:68 (http_inspect) gzip decompression failed
-  * 119:69 (http_inspect) HTTP 0.9 requested followed by another
+  * 119:213 (http_inspect) HTTP chunk misformatted
+  * 119:214 (http_inspect) white space adjacent to chunk length
+  * 119:215 (http_inspect) white space within header name
+  * 119:216 (http_inspect) excessive gzip compression
+  * 119:217 (http_inspect) gzip decompression failed
+  * 119:218 (http_inspect) HTTP 0.9 requested followed by another
     request
-  * 119:70 (http_inspect) HTTP 0.9 request following a normal request
-  * 119:71 (http_inspect) message has both Content-Length and
+  * 119:219 (http_inspect) HTTP 0.9 request following a normal
+    request
+  * 119:220 (http_inspect) message has both Content-Length and
     Transfer-Encoding
-  * 119:72 (http_inspect) status code implying no body combined with
+  * 119:221 (http_inspect) status code implying no body combined with
     Transfer-Encoding or nonzero Content-Length
-  * 119:73 (http_inspect) Transfer-Encoding not ending with chunked
-  * 119:74 (http_inspect) Transfer-Encoding with encodings before
+  * 119:222 (http_inspect) Transfer-Encoding not ending with chunked
+  * 119:223 (http_inspect) Transfer-Encoding with encodings before
     chunked
-  * 119:75 (http_inspect) misformatted HTTP traffic
-  * 119:76 (http_inspect) unsupported Content-Encoding used
-  * 119:77 (http_inspect) unknown Content-Encoding used
-  * 119:78 (http_inspect) multiple Content-Encodings applied
-  * 119:79 (http_inspect) server response before client request
-  * 119:80 (http_inspect) PDF/SWF decompression of server response
+  * 119:224 (http_inspect) misformatted HTTP traffic
+  * 119:225 (http_inspect) unsupported Content-Encoding used
+  * 119:226 (http_inspect) unknown Content-Encoding used
+  * 119:227 (http_inspect) multiple Content-Encodings applied
+  * 119:228 (http_inspect) server response before client request
+  * 119:229 (http_inspect) PDF/SWF decompression of server response
     too big
-  * 119:81 (http_inspect) nonprinting character in HTTP message
+  * 119:230 (http_inspect) nonprinting character in HTTP message
     header name
-  * 119:82 (http_inspect) bad Content-Length value in HTTP header
-  * 119:83 (http_inspect) HTTP header line wrapped
-  * 119:84 (http_inspect) HTTP header line terminated by CR without a
-    LF
-  * 119:85 (http_inspect) chunk terminated by nonstandard separator
-  * 119:86 (http_inspect) chunk length terminated by LF without CR
-  * 119:87 (http_inspect) more than one response with 100 status code
-  * 119:88 (http_inspect) 100 status code not in response to Expect
+  * 119:231 (http_inspect) bad Content-Length value in HTTP header
+  * 119:232 (http_inspect) HTTP header line wrapped
+  * 119:233 (http_inspect) HTTP header line terminated by CR without
+    a LF
+  * 119:234 (http_inspect) chunk terminated by nonstandard separator
+  * 119:235 (http_inspect) chunk length terminated by LF without CR
+  * 119:236 (http_inspect) more than one response with 100 status
+    code
+  * 119:237 (http_inspect) 100 status code not in response to Expect
     header
-  * 119:89 (http_inspect) 1XX status code other than 100 or 101
-  * 119:90 (http_inspect) Expect header sent without a message body
-  * 119:91 (http_inspect) HTTP 1.0 message with Transfer-Encoding
+  * 119:238 (http_inspect) 1XX status code other than 100 or 101
+  * 119:239 (http_inspect) Expect header sent without a message body
+  * 119:240 (http_inspect) HTTP 1.0 message with Transfer-Encoding
     header
-  * 119:92 (http_inspect) Content-Transfer-Encoding used as HTTP
+  * 119:241 (http_inspect) Content-Transfer-Encoding used as HTTP
     header
-  * 119:93 (http_inspect) illegal field in chunked message trailers
-  * 119:94 (http_inspect) header field inappropriately appears twice
+  * 119:242 (http_inspect) illegal field in chunked message trailers
+  * 119:243 (http_inspect) header field inappropriately appears twice
     or has two values
-  * 119:95 (http_inspect) invalid value chunked in Content-Encoding
+  * 119:244 (http_inspect) invalid value chunked in Content-Encoding
     header
-  * 119:96 (http_inspect) 206 response sent to a request without a
+  * 119:245 (http_inspect) 206 response sent to a request without a
     Range header
-  * 119:97 (http_inspect) HTTP in version field not all upper case
+  * 119:246 (http_inspect) HTTP in version field not all upper case
+  * 119:247 (http_inspect) white space embedded in critical header
+    value
+  * 119:248 (http_inspect) gzip compressed data followed by
+    unexpected non-gzip data
   * 122:1 (port_scan) TCP portscan
   * 122:2 (port_scan) TCP decoy portscan
   * 122:3 (port_scan) TCP portsweep
@@ -16457,6 +16926,9 @@ these libraries see the Getting Started section of the manual.
   * 134:1 (latency) rule tree suspended due to latency
   * 134:2 (latency) rule tree re-enabled after suspend timeout
   * 134:3 (latency) packet fastpathed due to latency
+  * 135:1 (stream) TCP SYN received
+  * 135:2 (stream) TCP session established
+  * 135:3 (stream) TCP session cleared
   * 136:1 (reputation) packets blacklisted
   * 136:2 (reputation) packets whitelisted
   * 136:3 (reputation) packets monitored
@@ -16516,6 +16988,7 @@ these libraries see the Getting Started section of the manual.
   * 145:5 (dnp3) DNP3 link-layer frame uses a reserved address
   * 145:6 (dnp3) DNP3 application-layer fragment uses a reserved
     function code
+  * 175:1 (domain_filter) configured domain detected
   * 256:1 (dpx) too much data sent to port
 
 
@@ -16523,8 +16996,14 @@ these libraries see the Getting Started section of the manual.
 
 --------------
 
+  * appid.enable_debug(proto, src_ip, src_port, dst_ip, dst_port):
+    enable appid debugging
+  * appid.disable_debug(): disable appid debugging
   * packet_capture.enable(filter): dump raw packets
   * packet_capture.disable(): stop packet dump
+  * packet_tracer.enable(proto, src_ip, src_port, dst_ip, dst_port):
+    enable packet tracer debugging
+  * packet_tracer.disable(): disable packet tracer
   * snort.show_plugins(): show available plugins
   * snort.delete_inspector(inspector): delete an inspector from the
     default policy
@@ -16533,6 +17012,7 @@ these libraries see the Getting Started section of the manual.
   * snort.reload_config(filename): load new configuration
   * snort.reload_policy(filename): reload part or all of the default
     policy
+  * snort.reload_module(module): reload module
   * snort.reload_daq(): reload daq module
   * snort.reload_hosts(filename): load a new hosts table
   * snort.pause(): suspend packet processing
@@ -16940,6 +17420,7 @@ deleted -> unified2: 'filename'
   * dnp3_obj (ips_option): detection option to check DNP3 object
     headers
   * dns (inspector): dns inspection
+  * domain_filter (inspector): alert on configured HTTP domains
   * dpx (inspector): dynamic inspector example
   * dsize (ips_option): rule option to test payload size
   * eapol (codec): support for extensible authentication protocol
@@ -17036,8 +17517,8 @@ deleted -> unified2: 'filename'
     number
   * ipopts (ips_option): rule option to check for IP options
   * ips (basic): configure IPS rule processing
-  * ipv4 (codec): support for Internet protocol v4
-  * ipv6 (codec): support for Internet protocol v6
+  * ipv4 (codec): support for Internet protocol v4 (DLT 228)
+  * ipv6 (codec): support for Internet protocol v6 (DLT 229)
   * isdataat (ips_option): rule option to check for the presence of
     payload data
   * itype (ips_option): rule option to check ICMP type
@@ -17064,6 +17545,7 @@ deleted -> unified2: 'filename'
   * normalizer (inspector): packet scrubbing for inline mode
   * output (basic): configure general output parameters
   * packet_capture (inspector): raw packet dumping facility
+  * packet_tracer (basic): generate debug trace messages for packets
   * packets (basic): configure basic packet handling
   * pbb (codec): support for 802.1ah protocol
   * pcre (ips_option): rule option for matching payload data with
@@ -17195,8 +17677,8 @@ deleted -> unified2: 'filename'
   * codec::icmp6: support for Internet control message protocol v6
   * codec::icmp6_ip: support for IP in ICMPv6
   * codec::igmp: support for Internet group management protocol
-  * codec::ipv4: support for Internet protocol v4
-  * codec::ipv6: support for Internet protocol v6
+  * codec::ipv4: support for Internet protocol v4 (DLT 228)
+  * codec::ipv6: support for Internet protocol v6 (DLT 229)
   * codec::ipv6_dst_opts: support for ipv6 destination options
   * codec::ipv6_frag: support for IPv6 fragment decoding
   * codec::ipv6_hop_opts: support for IPv6 hop options
@@ -17214,8 +17696,7 @@ deleted -> unified2: 'filename'
   * codec::ppp_encap: support for point-to-point encapsulation
   * codec::pppoe_disc: support for point-to-point discovery
   * codec::pppoe_sess: support for point-to-point session
-  * codec::raw4: support for unencapsulated IPv4 (DLT 12) (DLT 228)
-  * codec::raw6: support for unencapsulated IPv6 (DLT 229)
+  * codec::raw: support for raw IP (DLT 12)
   * codec::slip: support for slip protocol (DLT 8)
   * codec::tcp: support for transmission control protocol
   * codec::teredo: support for teredo
@@ -17243,6 +17724,7 @@ deleted -> unified2: 'filename'
   * inspector::dce_udp: dce over udp inspection
   * inspector::dnp3: dnp3 inspection
   * inspector::dns: dns inspection
+  * inspector::domain_filter: alert on configured HTTP domains
   * inspector::dpx: dynamic inspector example
   * inspector::file_id: configure file identification
   * inspector::file_log: log file event to file.log
@@ -17482,83 +17964,7 @@ deleted -> unified2: 'filename'
   * so_rule::3|18758: SO rule example
 
 
-20.13. Bugs
-
---------------
-
-20.13.1. Build
-
-  * Enabling large pcap may erroneously affect the number of packets
-    processed from pcaps.
-  * Enabling debug messages may erroneously affect the number of
-    packets processed from pcaps.
-  * Building with clang and autotools on Linux will show the
-    following warning many times. Please ignore.
-
-    clang: warning: argument unused during compilation: '-pthread'
-
-20.13.2. Config
-
-  * Parsing issue with IP lists. can’t parse rules with $EXTERNAL_NET
-    defined as below because of the space between ! and 10.
-
-    HOME_NET = [[ 10.0.17.0/24 10.0.14.0/24 10.247.0.0/16 10.246.0.0/16 ]]
-    EXTERNAL_NET = '! ' .. HOME_NET
-
-  * Multiple versions of luajit scripts are not handled correctly.
-    The first loaded version will always be executed even though
-    plugin manager saves the correct version.
-  * When using -c and -L together, the last on the command line wins
-    (-c -L will dump; -L -c will analyze).
-  * Modules instantiated by command line only will not get default
-    settings unless hard-coded. This notably applies to -A and -L
-    options.
-  * --lua can only be used in addition to, not in place of, a -c
-    config. Ideally, --lua could be used in lieu of -c.
-
-20.13.3. Rules
-
-  * metdata:service foo; metadata:service foo; won’t cause a
-    duplicate service warning as does metadata:service foo, service
-    foo;
-  * ip_proto doesn’t work properly with reassembled packets so it
-    can’t be used to restrict the protocol of service rules.
-
-20.13.4. snort2lua
-
-  * uricontent:"foo"; content:"bar"; → http_uri; content:"foo";
-    content:"bar"; (missing pkt_data)
-  * stream_tcp ports and protocols both go into a single binder.when;
-    this is incorrect as the when fields are logically anded together
-    (ie must all be true). Should create 2 separate bindings.
-  * There is a bug in pps_stream_tcp.cc.. when stream_tcp: is
-    specified without any arguments, snort2lua doesn’t convert it.
-    Same for stream_udp.
-  * Loses the ip list delimiters [ ]; change to ( )
-
-    in snort.conf: var HOME_NET [A,B,C]
-    in snort.lua: HOME_NET = [[A B C]]
-
-  * Won’t convert packet rules (alert tcp etc.) to service rules
-    (alert http etc.).
-  * alert_fast and alert_full: output configuration includes "file = 
-    foo.bar", but file is a bool and you cannot specify an output
-    file name in the configuration.
-
-20.13.5. Runtime
-
-  * -B <mask> feature does not work. It does ordinary IP address
-    obfuscation instead of using the mask.
-  * Obfuscation does not work for csv format.
-  * The hext DAQ will append a newline to text lines (starting with "
-    ).
-  * The hext DAQ does not support embedded quotes in text lines (use
-    hex lines as a workaround).
-  * stream_tcp alert squash mechanism incorrectly squashes alerts for
-    different TCP packets.
-
-
-20.14. LibDAQ and DAQ Modules
+20.13. LibDAQ and DAQ Modules
 
 --------------
 
@@ -17574,7 +17980,7 @@ nature allows you to build new modules for other platforms.
 This README summarizes the important things you need to know to use
 the DAQ.
 
-20.14.1. Building the DAQ Library and DAQ Modules
+20.13.1. Building the DAQ Library and DAQ Modules
 
 The DAQ is bundled with Snort but must be built first using these
 steps:
@@ -17619,7 +18025,7 @@ configure options, run:
 
 ./configure --help
 
-20.14.2. PCAP Module
+20.13.2. PCAP Module
 
 pcap is the default DAQ. If snort is run w/o any DAQ arguments, it
 will operate as it always did using this module. These are
@@ -17651,7 +18057,7 @@ LibPCAP to use TPACKET_V2 instead of TPACKET_V3.
 
   * The pcap DAQ does not count filtered packets. *
 
-20.14.3. AFPACKET Module
+20.13.3. AFPACKET Module
 
 afpacket functions similar to the pcap DAQ but with better
 performance:
@@ -17694,7 +18100,7 @@ Linux kernel version 2.6.31 or higher is required for the AFPacket
 DAQ module due to its dependency on both TPACKET v2 and
 PACKET_TX_RING support.
 
-20.14.3.1. Fanout (Kernel Loadbalancing)
+20.13.3.1. Fanout (Kernel Loadbalancing)
 
 More recent Linux kernel versions (3.1+) support various kernel-space
 loadbalancing methods within AFPacket configured using the
@@ -17720,7 +18126,7 @@ Please read the man page for packet or packet_mmap.txt in the Linux
 kernel source for more details on the different fanout types and
 modifier flags.
 
-20.14.4. NFQ Module
+20.13.4. NFQ Module
 
 NFQ is the new and improved way to process iptables packets:
 
@@ -17738,7 +18144,7 @@ warning and won’t change user or group.
 
 Notes on iptables are given below.
 
-20.14.5. IPQ Module
+20.13.5. IPQ Module
 
 IPQ is the old way to process iptables packets. It replaces the
 inline version available in pre-2.9 versions built with this:
@@ -17763,7 +18169,7 @@ warning and won’t change user or group.
 
 Notes on iptables are given below.
 
-20.14.6. IPFW Module
+20.13.6. IPFW Module
 
 IPFW is available for BSD systems. It replaces the inline version
 available in pre-2.9 versions built with this:
@@ -17784,7 +18190,7 @@ Instead, start Snort like this:
 
 Notes on FreeBSD and OpenBSD are given below.
 
-20.14.7. Dump Module
+20.13.7. Dump Module
 
 The dump DAQ allows you to test the various inline mode features
 available in 2.9 Snort like injection and normalization.
@@ -17817,7 +18223,7 @@ another mode like this:
 ./snort -r <pcap> -Q --daq dump --daq-var load-mode=read-file
 ./snort -i <device> -Q --daq dump --daq-var load-mode=passive
 
-20.14.8. Netmap Module
+20.13.8. Netmap Module
 
 The netmap project is a framework for very high speed packet I/O. It
 is available on both FreeBSD and Linux with varying amounts of
@@ -17848,7 +18254,7 @@ The interfaces will need to be up and in promiscuous mode in order to
 function (ifconfig em1 up promisc). The DAQ module does not currently
 do either of these configuration steps for itself.
 
-20.14.8.1. FreeBSD
+20.13.8.1. FreeBSD
 
 In FreeBSD 10.0, netmap has been integrated into the core OS. In
 order to use it, you must recompile your kernel with the line
@@ -17857,7 +18263,7 @@ device netmap
 
 added to your kernel config.
 
-20.14.8.2. Linux
+20.13.8.2. Linux
 
 You will need to download the netmap source code from the project’s
 repository:
@@ -17885,7 +18291,7 @@ virtio
 TODO: - Support for attaching to only a single ring (queue) on a
 network adapter. - Support for VALE and netmap pipes.
 
-20.14.9. Notes on iptables
+20.13.9. Notes on iptables
 
 These notes are just a quick reminder that you need to set up
 iptables to use the IPQ or NFQ DAQs. Doing so may cause problems with
@@ -17947,7 +18353,7 @@ modprobe nfnetlink_queue
 These DAQs should be run with a snaplen of 65535 since the kernel
 defrags the packets before queuing. Also, no need to configure frag3.
 
-20.14.10. Notes on FreeBSD::IPFW
+20.13.10. Notes on FreeBSD::IPFW
 
 Check the online manual at:
 
@@ -18039,7 +18445,7 @@ The steps to set up NAT with ipfw are as follows:
        # after the TCP "established" rule.
        ${fwcmd} add divert 8000 all from any to any in via ${oif}
 
-20.14.11. Notes on OpenBSD::IPFW
+20.13.11. Notes on OpenBSD::IPFW
 
 OpenBSD supports divert sockets as of 4.7, so we use the ipfw DAQ.
 
