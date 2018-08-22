@@ -24,16 +24,19 @@
 #endif
 
 #include "reputation_inspect.h"
-#include "reputation_parse.h"
 
 #include "detection/detect.h"
 #include "detection/detection_engine.h"
 #include "events/event_queue.h"
 #include "log/messages.h"
+#include "network_inspectors/packet_tracer/packet_tracer.h"
 #include "packet_io/active.h"
 #include "profiler/profiler.h"
 
 #include "reputation_module.h"
+#include "reputation_parse.h"
+
+#define VERDICT_REASON_REPUTATION 19
 
 using namespace snort;
 
@@ -72,49 +75,6 @@ const char* WhiteActionOption[] =
 static void snort_reputation(ReputationConfig* GlobalConf, Packet* p);
 
 unsigned ReputationFlowData::inspector_id = 0;
-
-static ReputationData* set_new_reputation_data(Flow* flow)
-{
-    ReputationFlowData* fd = new ReputationFlowData;
-    flow->set_flow_data(fd);
-    return &fd->session;
-}
-
-static ReputationData* get_session_data(Flow* flow)
-{
-    ReputationFlowData* fd = (ReputationFlowData*)flow->get_flow_data(
-        ReputationFlowData::inspector_id);
-
-    return fd ? &fd->session : nullptr;
-}
-
-static bool is_reputation_disabled(Flow* flow)
-{
-    ReputationData* data;
-
-    if (!flow)
-        return false;
-
-    data = get_session_data(flow);
-
-    if (!data)
-        set_new_reputation_data(flow);
-
-    return data ? data->disabled : false;
-}
-
-static void disable_reputation(Flow* flow)
-{
-    ReputationData* data;
-
-    if (!flow)
-        return;
-
-    data = get_session_data(flow);
-
-    if (data)
-        data->disabled = true;
-}
 
 static void print_iplist_stats(ReputationConfig* config)
 {
@@ -320,6 +280,11 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
         DetectionEngine::disable_all(p);
         Active::block_session(p, true);
         reputationstats.blacklisted++;
+        if (PacketTracer::is_active())
+        {
+            PacketTracer::set_reason(VERDICT_REASON_REPUTATION);
+            PacketTracer::log("Reputation: packet blacklisted, drop\n");
+        }
     }
     else if (MONITORED == decision)
     {
@@ -336,6 +301,14 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
     }
 }
 
+static unsigned create_reputation_id()
+{
+    static unsigned reputation_id_tracker = 0;
+    if (++reputation_id_tracker == 0)
+        ++reputation_id_tracker;
+    return reputation_id_tracker;
+}
+
 //-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
@@ -350,6 +323,8 @@ public:
 
 private:
     ReputationConfig config;
+    unsigned reputation_id;
+    bool is_reputation_disabled(Flow* flow);
 };
 
 Reputation::Reputation(ReputationConfig* pc)
@@ -370,6 +345,27 @@ Reputation::Reputation(ReputationConfig* pc)
 
     ip_list_init(conf->num_entries + 1, conf);
     reputationstats.memory_allocated = sfrt_flat_usage(conf->ip_list);
+    reputation_id = create_reputation_id();
+}
+
+bool Reputation::is_reputation_disabled(Flow* flow)
+{
+    if (!flow)
+        return false;
+
+    ReputationFlowData* fd = (ReputationFlowData*)flow->get_flow_data(
+        ReputationFlowData::inspector_id);
+
+    if (!fd)
+    {
+        fd = new ReputationFlowData;
+        flow->set_flow_data(fd);
+    }
+    else if (fd->checked_reputation_id == reputation_id) // reputation previously checked
+        return true;
+
+    fd->checked_reputation_id = reputation_id; // disable future reputation checking
+    return false;
 }
 
 void Reputation::show(SnortConfig*)
@@ -387,7 +383,6 @@ void Reputation::eval(Packet* p)
     if (!p->is_rebuilt() && !is_reputation_disabled(p->flow))
     {
         snort_reputation(&config, p);
-        disable_reputation(p->flow);
         ++reputationstats.packets;
     }
 }
@@ -405,6 +400,7 @@ static void mod_dtor(Module* m)
 static void reputation_init()
 {
     ReputationFlowData::init();
+    PacketTracer::register_verdict_reason(VERDICT_REASON_REPUTATION, PacketTracer::PRIORITY_LOW);
 }
 
 static Inspector* reputation_ctor(Module* m)

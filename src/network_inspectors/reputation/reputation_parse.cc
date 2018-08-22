@@ -824,7 +824,7 @@ static bool process_line_in_manifest(ListFile* list_item, const char* manifest, 
 {
     char* token;
     int token_index = 0;
-    char* next_ptr = (char*)line;
+    char* next_ptr = const_cast<char*>(line);
     bool has_zone = false;
 
     list_item->zones.clear();
@@ -847,16 +847,16 @@ static bool process_line_in_manifest(ListFile* list_item, const char* manifest, 
             if ( *end_str )
             {
                 ErrorMessage("%s(%d) => Bad value (%s) specified for listID. "
-                    "Please specify an integer between %u and %u.\n",
-                    manifest, line_number, token, 0, MAX_LIST_ID);
+                    "Please specify an integer between 0 and %u.\n",
+                    manifest, line_number, token, MAX_LIST_ID);
                 return false;
             }
 
             if ((list_id < 0)  || (list_id > MAX_LIST_ID) || (errno == ERANGE))
             {
                 ErrorMessage(" %s(%d) => Value specified (%s) is out of "
-                    "bounds.  Please specify an integer between %u and %u.\n",
-                    manifest, line_number, token, 0, MAX_LIST_ID);
+                    "bounds.  Please specify an integer between 0 and %u.\n",
+                    manifest, line_number, token, MAX_LIST_ID);
                 return false;
             }
             list_item->list_id = (uint32_t)list_id;
@@ -884,15 +884,15 @@ static bool process_line_in_manifest(ListFile* list_item, const char* manifest, 
             if ( *end_str )
             {
                 ErrorMessage("%s(%d) => Bad value (%s) specified for zone. "
-                    "Please specify an integer between %u and %u.\n",
-                    manifest, line_number, token, 0, MAX_NUM_ZONES);
+                    "Please specify an integer between 0 and %u.\n",
+                    manifest, line_number, token, MAX_NUM_ZONES);
                 return false;
             }
             if ((zone_id < 0)  || (zone_id > MAX_NUM_ZONES ) || (errno == ERANGE))
             {
                 ErrorMessage(" %s(%d) => Value specified (%s) for zone is "
-                    "out of bounds. Please specify an integer between %u and %u.\n",
-                    manifest, line_number, token, 0, MAX_NUM_ZONES );
+                    "out of bounds. Please specify an integer between 0 and %u.\n",
+                    manifest, line_number, token, MAX_NUM_ZONES);
                 return false;
             }
 

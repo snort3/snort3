@@ -21,26 +21,16 @@
 
 #include "flow/flow.h"
 
-// Per-session data block containing current state
-// of the Reputation preprocessor for the session.
-
-struct ReputationData
-{
-    bool disabled = false;
-};
-
 class ReputationFlowData : public snort::FlowData
 {
 public:
     ReputationFlowData() : snort::FlowData(inspector_id){}
 
-
     static void init()
     { inspector_id = snort::FlowData::create_flow_data_id(); }
 
-public:
     static unsigned inspector_id;
-    ReputationData session;
+    unsigned checked_reputation_id = 0;
 };
 
 #endif
