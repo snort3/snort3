@@ -2,7 +2,7 @@
 # This is being added as part of porting to Alpine Linux for minimal Docker containers
 
 find_package(PkgConfig)
-pkg_check_modules(PKG_HINT uuid)
+pkg_check_modules(PKG_HINT libtirpc)
 
 find_path (TIRPC_INCLUDE_DIR
     NAME tirpc/rpc/rpcent.h
