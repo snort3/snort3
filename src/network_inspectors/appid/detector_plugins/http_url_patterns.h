@@ -288,7 +288,7 @@ public:
     ~HttpPatternMatchers();
 
     static HttpPatternMatchers* get_instance();
-    int finalize();
+    int finalize_patterns();
     void insert_chp_pattern(CHPListElement*);
     void insert_http_pattern(enum httpPatternType, DetectorHTTPPattern&);
     void remove_http_patterns_for_id(AppId);

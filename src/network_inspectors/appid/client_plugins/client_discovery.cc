@@ -125,10 +125,10 @@ void ClientDiscovery::initialize()
 void ClientDiscovery::finalize_client_plugins()
 {
     for ( auto kv : tcp_detectors )
-        kv.second->finalize();
+        kv.second->finalize_patterns();
 
     for ( auto kv : udp_detectors )
-        kv.second->finalize();
+        kv.second->finalize_patterns();
 
     if ( tcp_patterns )
         tcp_patterns->prep();

@@ -766,7 +766,7 @@ bool AppIdConfig::init_appid(SnortConfig* sc, AppIdInspector *ins)
         PatternServiceDetector::finalize_service_port_patterns();
         PatternClientDetector::finalize_client_port_patterns();
         AppIdDiscovery::finalize_plugins();
-        http_matchers->finalize();
+        http_matchers->finalize_patterns();
 	    ssl_detector_process_patterns();
         dns_host_detector_process_patterns();
         read_port_detectors(ODP_PORT_DETECTORS);

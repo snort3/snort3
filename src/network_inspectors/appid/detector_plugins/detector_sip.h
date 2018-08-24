@@ -55,7 +55,7 @@ public:
 
     int validate(AppIdDiscoveryArgs&) override;
 
-    void finalize() override;
+    void finalize_patterns() override;
 
     // FIXIT-L revisit init so it's not split between static methods and constructor
     static int sipUaPatternAdd(AppId, const char* clientVersion, const char* uaPattern);

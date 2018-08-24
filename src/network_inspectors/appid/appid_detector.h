@@ -121,7 +121,7 @@ public:
     virtual void add_user(AppIdSession&, const char*, AppId, bool);
     virtual void add_payload(AppIdSession&, AppId);
     virtual void add_app(AppIdSession&, AppId, AppId, const char*);
-    virtual void finalize() {}
+    virtual void finalize_patterns() {}
     const char* get_code_string(APPID_STATUS_CODE) const;
 
     const std::string& get_name() const

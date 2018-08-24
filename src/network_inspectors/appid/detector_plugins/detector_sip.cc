@@ -262,7 +262,7 @@ int SipUdpClientDetector::sipServerPatternAdd(AppId ClientAppId, const char* cli
         pattern);
 }
 
-void SipUdpClientDetector::finalize()
+void SipUdpClientDetector::finalize_patterns()
 {
     int num_patterns;
     DetectorAppSipPattern* patternNode;

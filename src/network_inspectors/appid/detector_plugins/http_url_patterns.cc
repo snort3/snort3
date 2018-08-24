@@ -739,7 +739,7 @@ static void process_patterns(snort::SearchTool& matcher, DetectorHTTPPatterns& p
         matcher.prep();
 }
 
-int HttpPatternMatchers::finalize()
+int HttpPatternMatchers::finalize_patterns()
 {
     process_patterns(via_matcher, static_via_http_detector_patterns);
     process_patterns(url_matcher, url_patterns);

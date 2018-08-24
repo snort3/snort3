@@ -56,30 +56,16 @@ static const char* APP_CONFIG_FILE = "appid.conf";
 static const char* USR_CONFIG_FILE = "userappid.conf";
 const char* APP_MAPPING_FILE = "appMapping.data";
 
-static inline char* strdup_to_lower(const char* source)
-{
-    char* dest = snort_strdup(source);
-    char* lcd = dest;
-
-    while (*lcd)
-    {
-        *lcd = tolower(*lcd);
-        lcd++;
-    }
-
-    return dest;
-}
-
 AppInfoTableEntry::AppInfoTableEntry(AppId id, char* name)
     : appId(id), serviceId(id), clientId(id), payloadId(id), app_name(name)
 {
-    app_name_key = strdup_to_lower(name);
+    app_name_key = AppInfoManager::strdup_to_lower(name);
 }
 
 AppInfoTableEntry::AppInfoTableEntry(AppId id, char* name, AppId sid, AppId cid, AppId pid)
     : appId(id), serviceId(sid), clientId(cid), payloadId(pid), app_name(name)
 {
-    app_name_key = strdup_to_lower(name);
+    app_name_key = AppInfoManager::strdup_to_lower(name);
 }
 
 AppInfoTableEntry::~AppInfoTableEntry()
@@ -102,7 +88,7 @@ static AppInfoTableEntry* find_app_info_by_name(const char* app_name)
 {
     AppInfoTableEntry* entry = nullptr;
     AppInfoNameTable::iterator app;
-    const char* search_name = strdup_to_lower(app_name);
+    const char* search_name = AppInfoManager::strdup_to_lower(app_name);
 
     app = app_info_name_table.find(search_name);
     if ( app != app_info_name_table.end() )
@@ -137,6 +123,20 @@ static AppId get_static_app_info_entry(AppId appid)
         appid < ( SF_APPID_CSD_MIN + ( SF_APPID_MAX - SF_APPID_BUILDIN_MAX ) ) )
         return (SF_APPID_BUILDIN_MAX + appid - SF_APPID_CSD_MIN);
     return 0;
+}
+
+char* AppInfoManager::strdup_to_lower(const char* source)
+{
+    char* dest = snort_strdup(source);
+    char* lcd = dest;
+
+    while (*lcd)
+    {
+        *lcd = tolower(*lcd);
+        lcd++;
+    }
+
+    return dest;
 }
 
 bool AppInfoManager::configured()
@@ -244,6 +244,12 @@ const char* AppInfoManager::get_app_name(int32_t id)
 {
     AppInfoTableEntry* entry = get_app_info_entry(id);
     return entry ? entry->app_name : nullptr;
+}
+
+const char* AppInfoManager::get_app_name_key(int32_t id)
+{
+    AppInfoTableEntry* entry = get_app_info_entry(id);
+    return entry ? entry->app_name_key : nullptr;
 }
 
 AppId AppInfoManager::get_appid_by_name(const char* app_name)

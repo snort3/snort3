@@ -102,6 +102,8 @@ public:
     AppId get_appid_by_payload_id(uint32_t);
     void set_app_info_active(AppId);
     const char* get_app_name(AppId);
+    const char* get_app_name_key(AppId);
+    static char * strdup_to_lower(const char *app_name);
     int32_t get_appid_by_name(const char* app_name);
     bool configured();
 
