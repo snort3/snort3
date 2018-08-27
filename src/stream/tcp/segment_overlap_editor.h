@@ -23,7 +23,7 @@
 #define SEGMENT_OVERLAP_EDITOR_H
 
 #include "normalize/normalize.h"
-#include "stream/tcp/tcp_segment_node.h"
+#include "tcp_segment_node.h"
 
 class TcpSession;
 class TcpStreamTracker;

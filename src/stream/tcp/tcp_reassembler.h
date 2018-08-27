@@ -52,14 +52,10 @@ protected:
 
     int dup_reassembly_segment(
         TcpReassemblerState&, TcpSegmentNode* left, TcpSegmentNode** retSeg) override;
-
     int delete_reassembly_segment(TcpReassemblerState&, TcpSegmentNode*) override;
-
     virtual void insert_segment_in_empty_seglist(TcpReassemblerState&, TcpSegmentDescriptor&);
     virtual int insert_segment_in_seglist(TcpReassemblerState&, TcpSegmentDescriptor&);
-
     virtual uint32_t get_pending_segment_count(TcpReassemblerState&, unsigned max);
-
     bool flush_data_ready(TcpReassemblerState&);
     int trim_delete_reassembly_segment(TcpReassemblerState&, TcpSegmentNode*, uint32_t flush_seq);
     void queue_reassembly_segment(TcpReassemblerState&, TcpSegmentNode* prev, TcpSegmentNode*);
@@ -67,7 +63,6 @@ protected:
     bool is_segment_fasttrack(TcpReassemblerState&, TcpSegmentNode* tail, TcpSegmentDescriptor&);
     int purge_alerts(TcpReassemblerState&, snort::Flow*);
     void show_rebuilt_packet(TcpReassemblerState&, snort::Packet*);
-
     uint32_t get_flush_data_len(
         TcpReassemblerState&, TcpSegmentNode*, uint32_t to_seq, unsigned max);
     int flush_data_segments(
@@ -77,7 +72,6 @@ protected:
         snort::Packet* pdu);
     snort::Packet* initialize_pdu(
         TcpReassemblerState&, snort::Packet* p, uint32_t pkt_flags, struct timeval tv);
-
     int _flush_to_seq(TcpReassemblerState&, uint32_t bytes, snort::Packet*, uint32_t pkt_flags);
     int flush_to_seq(TcpReassemblerState&, uint32_t bytes, snort::Packet*, uint32_t pkt_flags);
     int do_zero_byte_flush(TcpReassemblerState&, snort::Packet* p, uint32_t pkt_flags);

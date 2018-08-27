@@ -30,13 +30,13 @@
 #include "segment_overlap_editor.h"
 #include "tcp_module.h"
 
-// FIXIT-P this is going to set each member 2X; once here and once in init
-// separate ctors with default initializers would set them only once
-TcpSegmentNode::TcpSegmentNode() :
-    prev(nullptr), next(nullptr), data(nullptr),
-    tv({ 0, 0 }), ts(0), seq(0), offset(0), orig_dsize(0),
-    payload_size(0), urg_offset(0), buffered(false)
+TcpSegmentNode::TcpSegmentNode(const struct timeval& tv, const uint8_t* payload, uint16_t len) :
+    prev(nullptr), next(nullptr), tv(tv), ts(0), i_seq(0), c_seq(0), i_len(len),
+    c_len(len), offset(0), last_flush_len(0), urg_offset(0)
 {
+    data = ( uint8_t* )snort_alloc(len);
+    memcpy(data, payload, len);
+    tcpStats.mem_in_use += len;
 }
 
 //-------------------------------------------------------------------------
@@ -44,45 +44,32 @@ TcpSegmentNode::TcpSegmentNode() :
 //-------------------------------------------------------------------------
 TcpSegmentNode* TcpSegmentNode::init(TcpSegmentDescriptor& tsd)
 {
-    return init(tsd.get_pkt()->pkth->ts, tsd.get_pkt()->data, tsd.get_seg_len() );
+    return new TcpSegmentNode(tsd.get_pkt()->pkth->ts, tsd.get_pkt()->data, tsd.get_seg_len());
 }
 
 TcpSegmentNode* TcpSegmentNode::init(TcpSegmentNode& tns)
 {
-    return init(tns.tv, tns.payload(), tns.payload_size);
-}
-
-TcpSegmentNode* TcpSegmentNode::init(const struct timeval& tv, const uint8_t* data, unsigned dsize)
-{
-    TcpSegmentNode* ss = new TcpSegmentNode;
-    ss->data = ( uint8_t* )snort_alloc(dsize);
-    memcpy(ss->data, data, dsize);
-    ss->offset = 0;
-    ss->tv = tv;
-    ss->orig_dsize = dsize;
-    ss->payload_size = ss->orig_dsize;
-    tcpStats.mem_in_use += dsize;
-    return ss;
+    return new TcpSegmentNode(tns.tv, tns.payload(), tns.c_len);
 }
 
 void TcpSegmentNode::term()
 {
     snort_free(data);
     tcpStats.segs_released++;
-    tcpStats.mem_in_use -= orig_dsize;
+    tcpStats.mem_in_use -= i_len;
     delete this;
 }
 
 bool TcpSegmentNode::is_retransmit(const uint8_t* rdata, uint16_t rsize, uint32_t rseq, uint16_t orig_dsize, bool *full_retransmit)
 {
     // retransmit must have same payload at same place
-    if ( !SEQ_EQ(seq, rseq) )
+    if ( !SEQ_EQ(i_seq, rseq) )
         return false;
 
-    if( orig_dsize == payload_size )
+    if( orig_dsize == c_len )
     {
-        if ( ( ( payload_size <= rsize )and !memcmp(data, rdata, payload_size) )
-            or ( ( payload_size > rsize )and !memcmp(data, rdata, rsize) ) )
+        if ( ( ( c_len <= rsize )and !memcmp(data, rdata, c_len) )
+            or ( ( c_len > rsize )and !memcmp(data, rdata, rsize) ) )
         {
             return true;
         }

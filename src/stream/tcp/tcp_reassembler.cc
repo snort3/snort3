@@ -46,17 +46,16 @@ void TcpReassembler::trace_segments(TcpReassemblerState& trs)
 
     while ( tsn )
     {
-        if (SEQ_LT(sx, tsn->seq))
-            fprintf(stdout, " +%u", tsn->seq - sx);
-        else if (SEQ_GT(sx, tsn->seq))
-            fprintf(stdout, " -%u", sx - tsn->seq);
+        if (SEQ_LT(sx, tsn->c_seq))
+            fprintf(stdout, " +%u", tsn->c_seq - sx);
+        else if (SEQ_GT(sx, tsn->c_seq))
+            fprintf(stdout, " -%u", sx - tsn->c_seq);
 
-        fprintf(stdout, " %hu", tsn->payload_size);
+        fprintf(stdout, " %hu", tsn->c_len);
 
         segs++;
-        bytes += tsn->payload_size;
-
-        sx = tsn->seq + tsn->payload_size;
+        bytes += tsn->i_len;
+        sx = tsn->c_seq + tsn->c_len;
         tsn = tsn->next;
     }
     assert(trs.sos.seg_count == segs);
@@ -80,7 +79,7 @@ uint32_t TcpReassembler::get_pending_segment_count(TcpReassemblerState& trs, uns
     tsn = trs.sos.seglist.head;
     while ( tsn )
     {
-        if ( !tsn->buffered && SEQ_LT(tsn->seq, trs.tracker->r_win_base) )
+        if ( tsn->c_len && SEQ_LT(tsn->c_seq, trs.tracker->r_win_base) )
             n++;
 
         if ( max && n == max )
@@ -108,12 +107,14 @@ bool TcpReassembler::flush_data_ready(TcpReassemblerState& trs)
 
 bool TcpReassembler::next_no_gap(TcpSegmentNode& tsn)
 {
-    return tsn.next and (tsn.next->seq == tsn.seq + tsn.payload_size);
+    return tsn.next and (tsn.next->i_seq == tsn.i_seq + tsn.i_len);
 }
 
 void TcpReassembler::update_next(TcpReassemblerState& trs, TcpSegmentNode& tsn)
 {
-    trs.sos.seglist.next = next_no_gap(tsn) ?  tsn.next : nullptr;
+    trs.sos.seglist.cur_rseg = next_no_gap(tsn) ?  tsn.next : nullptr;
+    if ( trs.sos.seglist.cur_rseg )
+    	trs.sos.seglist.cur_rseg->c_seq = trs.sos.seglist.cur_rseg->i_seq;
 }
 
 int TcpReassembler::delete_reassembly_segment(TcpReassemblerState& trs, TcpSegmentNode* tsn)
@@ -121,61 +122,38 @@ int TcpReassembler::delete_reassembly_segment(TcpReassemblerState& trs, TcpSegme
     int ret;
     assert(tsn);
 
-    if (tsn->prev)
-        tsn->prev->next = tsn->next;
-    else
-        trs.sos.seglist.head = tsn->next;
+    trs.sos.seglist.remove(tsn);
+    trs.sos.seg_bytes_total -= tsn->i_len;
+    trs.sos.seg_bytes_logical -= tsn->i_len;
+    ret = tsn->i_len;
 
-    if (tsn->next)
-        tsn->next->prev = tsn->prev;
-    else
-        trs.sos.seglist.tail = tsn->prev;
-
-    trs.sos.seg_bytes_logical -= tsn->payload_size;
-    trs.sos.seg_bytes_total -= tsn->orig_dsize;
-
-    ret = tsn->orig_dsize;
-
-    if (tsn->buffered)
+    if ( !tsn->c_len )
     {
         tcpStats.segs_used++;
         trs.flush_count--;
     }
 
-    if (trs.sos.seglist.next == tsn)
+    if ( trs.sos.seglist.cur_rseg == tsn )
         update_next(trs, *tsn);
 
-    tsn->term( );
+    tsn->term();
     trs.sos.seg_count--;
 
     return ret;
-}
-
-int TcpReassembler::trim_delete_reassembly_segment(
-    TcpReassemblerState& trs, TcpSegmentNode* tsn, uint32_t flush_seq)
-{
-    if ( paf_active(&trs.tracker->paf_state) && ( ( tsn->seq + tsn->payload_size ) > flush_seq ) )
-    {
-        uint32_t delta = flush_seq - tsn->seq;
-
-        if (delta < tsn->payload_size)
-        {
-            tsn->seq = flush_seq;
-            tsn->payload_size -= (uint16_t)delta;
-            trs.sos.seg_bytes_logical -= delta;
-            return 0;
-        }
-    }
-
-    return delete_reassembly_segment(trs, tsn);
 }
 
 void TcpReassembler::queue_reassembly_segment(
     TcpReassemblerState& trs, TcpSegmentNode* prev, TcpSegmentNode* tsn)
 {
     trs.sos.seglist.insert(prev, tsn);
+    if ( SEQ_EQ(tsn->i_seq, trs.sos.seglist_base_seq) )
+    {
+    	tsn->c_seq = tsn->i_seq;
+        trs.sos.seglist.cur_rseg = tsn;
+    }
+
     trs.sos.seg_count++;
-    trs.sos.seg_bytes_total += tsn->orig_dsize;
+    trs.sos.seg_bytes_total += tsn->i_len;
     trs.sos.total_segs_queued++;
     tcpStats.segs_queued++;
 }
@@ -183,7 +161,7 @@ void TcpReassembler::queue_reassembly_segment(
 bool TcpReassembler::is_segment_fasttrack(
     TcpReassemblerState&, TcpSegmentNode* tail, TcpSegmentDescriptor& tsd)
 {
-    if ( SEQ_EQ(tsd.get_seg_seq(), tail->seq + tail->payload_size) )
+    if ( SEQ_EQ(tsd.get_seg_seq(), tail->i_seq + tail->i_len) )
         return true;
 
     return false;
@@ -212,8 +190,9 @@ int TcpReassembler::add_reassembly_segment(
     // FIXIT-L don't allocate overlapped part
     tsn = TcpSegmentNode::init(tsd);
     tsn->offset = slide;
-    tsn->payload_size = (uint16_t)newSize;
-    tsn->seq = seq;
+    tsn->c_len = (uint16_t)newSize;
+    tsn->i_len = (uint16_t)newSize;
+    tsn->i_seq = tsn->c_seq = seq;
     tsn->ts = tsd.get_ts();
 
     // FIXIT-M the urgent ptr handling is broken... urg_offset is set here but currently
@@ -223,14 +202,10 @@ int TcpReassembler::add_reassembly_segment(
 
     queue_reassembly_segment(trs, left, tsn);
 
-    trs.sos.seg_bytes_logical += tsn->payload_size;
-    trs.sos.total_bytes_queued += tsn->payload_size;
+    trs.sos.seg_bytes_logical += tsn->c_len;
+    trs.sos.total_bytes_queued += tsn->c_len;
     tsd.get_pkt()->packet_flags |= PKT_STREAM_INSERT;
 
-
-#ifdef SEG_TEST
-    CheckSegments(trs.tracker);
-#endif
     return STREAM_INSERT_OK;
 }
 
@@ -241,9 +216,8 @@ int TcpReassembler::dup_reassembly_segment(
     tcpStats.segs_split++;
 
     // twiddle the values for overlaps
-    tsn->payload_size = left->payload_size;
-    tsn->seq = left->seq;
-
+    tsn->c_len = left->c_len;
+    tsn->i_seq = tsn->c_seq = left->i_seq;
     queue_reassembly_segment(trs, left, tsn);
 
     *retSeg = tsn;
@@ -265,31 +239,28 @@ int TcpReassembler::purge_alerts(TcpReassemblerState& trs, Flow* flow)
 int TcpReassembler::purge_to_seq(TcpReassemblerState& trs, uint32_t flush_seq)
 {
     assert(trs.sos.seglist.head != nullptr);
-    TcpSegmentNode* tsn = trs.sos.seglist.head;
-    TcpSegmentNode* dump_me = nullptr;
-    int purged_bytes = 0;
+    int total_purged = 0;
     uint32_t last_ts = 0;
 
-    while ( tsn )
+    TcpSegmentNode* tsn = trs.sos.seglist.head;
+    while ( tsn && SEQ_LT(tsn->i_seq, flush_seq))
     {
-        dump_me = tsn;
+        if ( !tsn->c_len )
+    	{
+            TcpSegmentNode* dump_me = tsn;
+    		tsn = tsn->next;
+    		if (dump_me->ts > last_ts)
+    			last_ts = dump_me->ts;
 
-        tsn = tsn->next;
-        if ( SEQ_LT(dump_me->seq, flush_seq) )
-        {
-            if (dump_me->ts > last_ts)
-                last_ts = dump_me->ts;
-
-            purged_bytes += trim_delete_reassembly_segment(trs, dump_me, flush_seq);
-        }
-        else
-            break;
-    }
-
-    if ( SEQ_LT(trs.sos.seglist_base_seq, flush_seq) )
-    {
-        // FIXIT-M these lines are out of code coverage. Is this even possible?
-        trs.sos.seglist_base_seq = flush_seq;
+    		total_purged += dump_me->last_flush_len;
+    		delete_reassembly_segment(trs, dump_me);
+    	}
+    	else
+    	{
+    	    total_purged += tsn->last_flush_len;
+    		tsn->last_flush_len = 0;
+    		break;
+    	}
     }
 
     if ( SEQ_LT(trs.tracker->rcv_nxt, flush_seq) )
@@ -315,23 +286,23 @@ int TcpReassembler::purge_to_seq(TcpReassemblerState& trs, uint32_t flush_seq)
      * wouldn't be updated for the talker in ProcessTcp() since that
      * code specifically looks for the NEXT sequence number.
      */
-    if ( !last_ts )
-        return purged_bytes;
-
-    if ( !trs.server_side )
+    if ( last_ts )
     {
-        int32_t delta = last_ts - trs.sos.session->server.get_ts_last();
-        if ( delta > 0 )
-            trs.sos.session->server.set_ts_last(last_ts);
-    }
-    else
-    {
-        int32_t delta = last_ts - trs.sos.session->client.get_ts_last();
-        if ( delta > 0 )
-            trs.sos.session->client.set_ts_last(last_ts);
+        if ( trs.server_side )
+        {
+            int32_t delta = last_ts - trs.sos.session->client.get_ts_last();
+            if ( delta > 0 )
+                trs.sos.session->client.set_ts_last(last_ts);
+        }
+       else
+        {
+            int32_t delta = last_ts - trs.sos.session->server.get_ts_last();
+            if ( delta > 0 )
+                trs.sos.session->server.set_ts_last(last_ts);
+        }
     }
 
-    return purged_bytes;
+    return total_purged;
 }
 
 // purge_flushed_ackd():
@@ -348,11 +319,11 @@ int TcpReassembler::purge_flushed_ackd(TcpReassemblerState& trs)
     if (!trs.sos.seglist.head)
         return 0;
 
-    seq = trs.sos.seglist.head->seq;
+    seq = trs.sos.seglist.head->i_seq;
 
-    while ( tsn && tsn->buffered )
+    while ( tsn && !tsn->c_len )
     {
-        uint32_t end = tsn->seq + tsn->payload_size;
+        uint32_t end = tsn->i_seq + tsn->i_len;
 
         if ( SEQ_GT(end, trs.tracker->r_win_base) )
         {
@@ -362,7 +333,8 @@ int TcpReassembler::purge_flushed_ackd(TcpReassemblerState& trs)
         seq = end;
         tsn = tsn->next;
     }
-    if ( seq != trs.sos.seglist.head->seq )
+
+    if ( seq != trs.sos.seglist.head->i_seq )
         return purge_to_seq(trs, seq);
 
     return 0;
@@ -380,86 +352,73 @@ void TcpReassembler::show_rebuilt_packet(TcpReassemblerState& trs, Packet* pkt)
 uint32_t TcpReassembler::get_flush_data_len(
     TcpReassemblerState& trs, TcpSegmentNode* tsn, uint32_t to_seq, unsigned max)
 {
-    unsigned int flushSize = tsn->payload_size;
-
-    if ( flushSize > max )
-        flushSize = max;
+    unsigned int flush_len = ( tsn->c_len <= max ) ? tsn->c_len : max;
 
     // copy only to flush point
-    if ( paf_active(&trs.tracker->paf_state) && SEQ_GT(tsn->seq + flushSize, to_seq) )
-        flushSize = to_seq - tsn->seq;
+    if ( paf_active(&trs.tracker->paf_state) && SEQ_GT(tsn->c_seq + flush_len, to_seq) )
+        flush_len = to_seq - tsn->c_seq;
 
-    return flushSize;
+    return flush_len;
 }
 
 // flush the client trs.sos.seglist up to the most recently acked segment
 int TcpReassembler::flush_data_segments(
     TcpReassemblerState& trs, Packet* p, uint32_t total, Packet* pdu)
 {
-    uint32_t bytes_flushed = 0;
-    uint32_t segs = 0;
+    uint32_t total_flushed = 0;
     uint32_t flags = PKT_PDU_HEAD;
 
-    assert(trs.sos.seglist.next);
+    assert(trs.sos.seglist.cur_rseg);
     DeepProfile profile(s5TcpBuildPacketPerfStats);
 
-    uint32_t to_seq = trs.sos.seglist.next->seq + total;
+    uint32_t to_seq = trs.sos.seglist.cur_rseg->c_seq + total;
 
-    while ( SEQ_LT(trs.sos.seglist.next->seq, to_seq) )
+    while ( SEQ_LT(trs.sos.seglist.cur_rseg->c_seq, to_seq) )
     {
-        TcpSegmentNode* tsn = trs.sos.seglist.next, * sr = nullptr;
+        TcpSegmentNode* tsn = trs.sos.seglist.cur_rseg;
+        unsigned bytes_copied = 0;
         unsigned bytes_to_copy = get_flush_data_len(
             trs, tsn, to_seq, trs.tracker->splitter->max(p->flow));
-        unsigned bytes_copied = 0;
         assert(bytes_to_copy);
 
-        if ( !tsn->next or (bytes_to_copy < tsn->payload_size) or
-            SEQ_EQ(tsn->seq +  bytes_to_copy, to_seq) or
-            (bytes_flushed + tsn->payload_size + tsn->next->payload_size >
+        if ( !tsn->next or (bytes_to_copy < tsn->c_len) or
+            SEQ_EQ(tsn->c_seq + bytes_to_copy, to_seq) or
+            (total_flushed + tsn->c_len + tsn->next->c_len >
                 trs.tracker->splitter->get_max_pdu()) )
         {
             flags |= PKT_PDU_TAIL;
         }
         const StreamBuffer sb = trs.tracker->splitter->reassemble(
-            trs.sos.session->flow, total, bytes_flushed, tsn->payload(),
+            trs.sos.session->flow, total, total_flushed, tsn->payload(),
             bytes_to_copy, flags, bytes_copied);
-
-        flags = 0;
 
         if ( sb.data )
         {
             pdu->data = sb.data;
             pdu->dsize = sb.length;
             assert(sb.length <= Packet::max_dsize);
-
-            bytes_to_copy = bytes_copied;
         }
-        assert(bytes_to_copy == bytes_copied);
-        bytes_flushed += bytes_to_copy;
 
-        if ( bytes_to_copy < tsn->payload_size
-            && dup_reassembly_segment(trs, tsn, &sr) == STREAM_INSERT_OK )
+        total_flushed += bytes_copied;
+        tsn->c_seq += bytes_copied;
+        tsn->c_len -= bytes_copied;
+        tsn->offset += bytes_copied;
+        tsn->last_flush_len = bytes_copied;
+        flags = 0;
+
+        if ( !tsn->c_len )
         {
-            tsn->payload_size = bytes_to_copy;
-            sr->seq += bytes_to_copy;
-            sr->payload_size -= bytes_to_copy;
-            sr->offset += bytes_to_copy;
+            trs.flush_count++;
+            update_next(trs, *tsn);
+            if ( SEQ_EQ(tsn->c_seq, to_seq) )
+                break;
         }
-        tsn->buffered = true;
-        trs.flush_count++;
-        segs++;
-
-        update_next(trs, *tsn);
-
-        if ( SEQ_EQ(tsn->seq + bytes_to_copy, to_seq) )
-            break;
 
         /* Check for a gap/missing packet */
         // FIXIT-L PAF should account for missing data and resume
         // scanning at the start of next PDU instead of aborting.
         // FIXIT-L FIN may be in to_seq causing bogus gap counts.
-        if (((tsn->next && (tsn->seq + tsn->payload_size != tsn->next->seq))
-            || (!tsn->next && (tsn->seq + tsn->payload_size < to_seq))))
+        if ( tsn->is_packet_missing(to_seq) )
         {
             // FIXIT-L this is suboptimal - better to exclude fin from to_seq
             if ( !trs.tracker->is_fin_seq_set() or
@@ -470,15 +429,13 @@ int TcpReassembler::flush_data_segments(
             break;
         }
 
-        if ( sb.data || !trs.sos.seglist.next )
-            break;
-
-        if ( bytes_flushed + trs.sos.seglist.next->payload_size >
-            trs.tracker->splitter->get_max_pdu() )
+        if ( ( sb.data || !trs.sos.seglist.cur_rseg ) or
+             ( ( total_flushed + trs.sos.seglist.cur_rseg->c_len ) >
+                 trs.tracker->splitter->get_max_pdu() ) )
             break;
     }
 
-    return bytes_flushed;
+    return total_flushed;
 }
 
 // FIXIT-L consolidate encode format, update, and this into new function?
@@ -565,11 +522,11 @@ int TcpReassembler::_flush_to_seq(
     }
 
     uint32_t bytes_processed = 0;
-    uint32_t stop_seq = trs.sos.seglist.next->seq + bytes;
+    uint32_t stop_seq = trs.sos.seglist.cur_rseg->c_seq + bytes;
 
-    while ( trs.sos.seglist.next and SEQ_LT(trs.sos.seglist.next->seq, stop_seq) )
+    while ( trs.sos.seglist.cur_rseg and SEQ_LT(trs.sos.seglist.cur_rseg->c_seq, stop_seq) )
     {
-        trs.sos.seglist_base_seq = trs.sos.seglist.next->seq;
+        trs.sos.seglist_base_seq = trs.sos.seglist.cur_rseg->c_seq;
         uint32_t footprint = stop_seq - trs.sos.seglist_base_seq;
 
         if ( footprint == 0 )
@@ -583,7 +540,7 @@ int TcpReassembler::_flush_to_seq(
             ( trs.tracker->get_tf_flags() & TF_MISSING_PREV_PKT ) )
             fallback(trs);
 
-        Packet* pdu = initialize_pdu(trs, p, pkt_flags, trs.sos.seglist.next->tv);
+        Packet* pdu = initialize_pdu(trs, p, pkt_flags, trs.sos.seglist.cur_rseg->tv);
         int32_t flushed_bytes = flush_data_segments(trs, p, footprint, pdu);
         if ( flushed_bytes == 0 )
             break; /* No more data... bail */
@@ -636,24 +593,20 @@ int TcpReassembler::_flush_to_seq(
 int TcpReassembler::flush_to_seq(
     TcpReassemblerState& trs, uint32_t bytes, Packet* p, uint32_t pkt_flags)
 {
-    if ( !bytes || !trs.sos.seglist.next )
-    {
+    if ( !bytes || !trs.sos.seglist.cur_rseg )
         return 0;
-    }
 
     if ( !flush_data_ready(trs) and !(trs.tracker->get_tf_flags() & TF_FORCE_FLUSH) and
         !trs.tracker->splitter->is_paf() )
-    {
         return 0;
-    }
 
     trs.tracker->clear_tf_flags(TF_MISSING_PKT | TF_MISSING_PREV_PKT);
 
     /* This will set this flag on the first reassembly
      * if reassembly for this direction was set midstream */
-    if ( SEQ_LT(trs.sos.seglist_base_seq, trs.sos.seglist.next->seq) )
+    if ( SEQ_LT(trs.sos.seglist_base_seq, trs.sos.seglist.cur_rseg->c_seq) )
     {
-        uint32_t missed = trs.sos.seglist.next->seq - trs.sos.seglist_base_seq;
+        uint32_t missed = trs.sos.seglist.cur_rseg->c_seq - trs.sos.seglist_base_seq;
 
         if ( missed <= bytes )
             bytes -= missed;
@@ -661,7 +614,7 @@ int TcpReassembler::flush_to_seq(
         trs.tracker->set_tf_flags(TF_MISSING_PREV_PKT | TF_PKT_MISSED);
 
         tcpStats.gaps++;
-        trs.sos.seglist_base_seq = trs.sos.seglist.next->seq;
+        trs.sos.seglist_base_seq = trs.sos.seglist.cur_rseg->c_seq;
 
         if ( !bytes )
             return 0;
@@ -729,18 +682,21 @@ uint32_t TcpReassembler::get_q_sequenced(TcpReassemblerState& trs)
 {
     TcpSegmentNode* tsn;
 
-    if ( trs.sos.seglist.next )
-        tsn = trs.sos.seglist.next;
+    if ( trs.sos.seglist.cur_rseg )
+        tsn = trs.sos.seglist.cur_rseg;
     else
     {
-        trs.sos.seglist.next = trs.sos.seglist.head;
-        tsn = trs.tracker ? trs.sos.seglist.next : nullptr;  // FIXIT-H why check tracker here?
+        trs.sos.seglist.cur_rseg = trs.sos.seglist.head;
+        tsn = trs.tracker ? trs.sos.seglist.cur_rseg : nullptr;  // FIXIT-H why check tracker here?
 
         if ( !tsn or (trs.sos.session->flow->two_way_traffic() and
-            SEQ_LT(trs.tracker->r_win_base, tsn->seq)) )
+            SEQ_LT(trs.tracker->r_win_base, tsn->c_seq)) )
         {
-            if ( trs.sos.seglist.next )
-                trs.sos.seglist.next = trs.sos.seglist.next->prev;
+            if ( trs.sos.seglist.cur_rseg )
+                trs.sos.seglist.cur_rseg = trs.sos.seglist.cur_rseg->prev;
+
+            if ( trs.sos.seglist.cur_rseg )
+            	trs.sos.seglist.cur_rseg->c_seq = trs.sos.seglist.cur_rseg->i_seq;
             return 0;
         }
     }
@@ -750,17 +706,17 @@ uint32_t TcpReassembler::get_q_sequenced(TcpReassemblerState& trs)
 
     while ( len < limit and next_no_gap(*tsn) )
     {
-        if ( tsn->buffered )
-            trs.sos.seglist.next = tsn->next;
+        if ( !tsn->c_len )
+            trs.sos.seglist.cur_rseg = tsn->next;
         else
-            len += tsn->payload_size;
+            len += tsn->c_len;
 
         tsn = tsn->next;
     }
-    if ( !tsn->buffered )
-        len += tsn->payload_size;
+    if ( tsn->c_len )
+        len += tsn->c_len;
 
-    trs.sos.seglist_base_seq = trs.sos.seglist.next->seq;
+    trs.sos.seglist_base_seq = trs.sos.seglist.cur_rseg->c_seq;
 
     return len;
 }
@@ -849,9 +805,7 @@ void TcpReassembler::flush_queued_segments(
         and (!trs.tracker->splitter or trs.tracker->splitter->finish(flow) );
 
     if ( pending and !(flow->ssn_state.ignore_direction & trs.ignore_dir) )
-    {
         final_flush(trs, p, trs.packet_dir);
-    }
 }
 
 // this is for post-ack flushing
@@ -898,14 +852,14 @@ int32_t TcpReassembler::flush_pdu_ips(TcpReassemblerState& trs, uint32_t* flags)
     TcpSegmentNode* tsn;
 
     avail = get_q_sequenced(trs);
-    tsn = trs.sos.seglist.next;
+    tsn = trs.sos.seglist.cur_rseg;
 
     // * must stop if gap (checked in paf_check)
     while ( tsn && *flags && ( total < avail ) )
     {
         int32_t flush_pt;
-        uint32_t size = tsn->payload_size;
-        uint32_t end = tsn->seq + tsn->payload_size;
+        uint32_t size = tsn->c_len;
+        uint32_t end = tsn->c_seq + tsn->c_len;
         uint32_t pos = paf_position(&trs.tracker->paf_state);
 
         total += size;
@@ -918,7 +872,7 @@ int32_t TcpReassembler::flush_pdu_ips(TcpReassemblerState& trs, uint32_t* flags)
 
         flush_pt = paf_check(
             trs.tracker->splitter, &trs.tracker->paf_state, trs.sos.session->flow,
-            tsn->payload(), size, total, tsn->seq, flags);
+            tsn->payload(), size, total, tsn->c_seq, flags);
 
         if (flush_pt >= 0)
         {
@@ -975,11 +929,11 @@ int32_t TcpReassembler::flush_pdu_ackd(TcpReassemblerState& trs, uint32_t* flags
     // must stop if not acked
     // must use adjusted size of tsn if not fully acked
     // must stop if gap (checked in paf_check)
-    while (tsn && *flags && SEQ_LT(tsn->seq, trs.tracker->r_win_base))
+    while (tsn && *flags && SEQ_LT(tsn->c_seq, trs.tracker->r_win_base))
     {
         int32_t flush_pt;
-        uint32_t size = tsn->payload_size;
-        uint32_t end = tsn->seq + tsn->payload_size;
+        uint32_t size = tsn->c_len;
+        uint32_t end = tsn->c_seq + tsn->c_len;
         uint32_t pos = paf_position(&trs.tracker->paf_state);
 
         if ( paf_initialized(&trs.tracker->paf_state) && SEQ_LEQ(end, pos) )
@@ -988,17 +942,19 @@ int32_t TcpReassembler::flush_pdu_ackd(TcpReassemblerState& trs, uint32_t* flags
             tsn = tsn->next;
             continue;
         }
+
         if ( SEQ_GT(end, trs.tracker->r_win_base))
-            size = trs.tracker->r_win_base - tsn->seq;
+            size = trs.tracker->r_win_base - tsn->c_seq;
 
         total += size;
-
         flush_pt = paf_check(
             trs.tracker->splitter, &trs.tracker->paf_state, trs.sos.session->flow,
-            tsn->payload(), size, total, tsn->seq, flags);
+            tsn->payload(), size, total, tsn->c_seq, flags);
 
         if ( flush_pt >= 0 )
         {
+        	trs.sos.seglist.cur_rseg = trs.sos.seglist.head;
+        	trs.sos.seglist_base_seq = trs.sos.seglist.head->c_seq;
             // for non-paf splitters, flush_pt > 0 means we reached
             // the minimum required, but we flush what is available
             // instead of creating more, but smaller, packets
@@ -1039,36 +995,15 @@ int TcpReassembler::flush_on_data_policy(TcpReassemblerState& trs, Packet* p)
     {
         uint32_t flags = get_forward_packet_dir(trs, p);
         int32_t flush_amt = flush_pdu_ips(trs, &flags);
-        uint32_t this_flush;
 
         while ( flush_amt >= 0 )
         {
             if ( !flush_amt )
-                flush_amt = trs.sos.seglist.next->seq - trs.sos.seglist_base_seq;
-#if 0
-// FIXIT-P can't do this with new HI - copy is inevitable
-            // if this payload is exactly one pdu, don't
-            // actually flush, just use the raw packet
-            if ( listener->trs.sos.seglist.next &&
-                ( tsd.seq == listener->trs.sos.seglist.next->seq ) &&
-                ( flush_amt == listener->trs.sos.seglist.next->payload_size ) &&
-                ( flush_amt == p->dsize ) )
-            {
-                this_flush = flush_amt;
-                listener->trs.sos.seglist.next->buffered = true;
-                listener->flush_count++;
-                p->packet_flags |= PKT_PDU_FULL;
-                ShowRebuiltPacket(p);
-            }
-            else
-#endif
-            {
-                this_flush = flush_to_seq(trs, flush_amt, p, flags);
-            }
-            // if we didn't flush as expected, bail
-            // (we can flush less than max dsize)
+                flush_amt = trs.sos.seglist.cur_rseg->c_seq - trs.sos.seglist_base_seq;
+
+            uint32_t this_flush = flush_to_seq(trs, flush_amt, p, flags);
             if (!this_flush)
-                break;
+                break;       // bail if nothing flushed
 
             flushed += this_flush;
             flags = get_forward_packet_dir(trs, p);
@@ -1083,12 +1018,13 @@ int TcpReassembler::flush_on_data_policy(TcpReassemblerState& trs, Packet* p)
     }
     break;
     }
+
     return flushed;
 }
 
 int TcpReassembler::flush_on_ack_policy(TcpReassemblerState& trs, Packet* p)
 {
-    uint32_t flushed = 0;
+	uint32_t flushed = 0;
 
     switch (trs.tracker->flush_policy)
     {
@@ -1103,27 +1039,21 @@ int TcpReassembler::flush_on_ack_policy(TcpReassemblerState& trs, Packet* p)
         while (flush_amt >= 0)
         {
             if (!flush_amt)
-                flush_amt = trs.sos.seglist.next->seq - trs.sos.seglist_base_seq;
-
-            trs.sos.seglist.next = trs.sos.seglist.head;
-            trs.sos.seglist_base_seq = trs.sos.seglist.head->seq;
+                flush_amt = trs.sos.seglist.cur_rseg->c_seq - trs.sos.seglist_base_seq;
 
             // for consistency with other cases, should return total
             // but that breaks flushing pipelined pdus
             flushed = flush_to_seq(trs, flush_amt, p, flags);
 
-            // ideally we would purge just once after this loop
-            // but that throws off base
+            // ideally we would purge just once after this loop but that throws off base
             if ( flushed and trs.sos.seglist.head )
-                purge_to_seq(trs, trs.sos.seglist.head->seq + flushed);
-
-            // if we didn't flush as expected, bail
-            // (we can flush less than max dsize)
-            if (!flushed)
-                break;
-
-            flags = get_reverse_packet_dir(trs, p);
-            flush_amt = flush_pdu_ackd(trs, &flags);
+            {
+                purge_to_seq(trs, trs.sos.seglist_base_seq);
+                flags = get_reverse_packet_dir(trs, p);
+                flush_amt = flush_pdu_ackd(trs, &flags);
+            }
+            else
+                break;  // bail if nothing flushed
         }
 
         if (!flags && trs.tracker->splitter->is_paf())
@@ -1172,34 +1102,28 @@ void TcpReassembler::insert_segment_in_empty_seglist(
 
     // BLOCK add new block to trs.sos.seglist containing data
     add_reassembly_segment(
-        trs, tsd, tsd.get_seg_len(), overlap, 0, tsd.get_seg_seq() + overlap, nullptr);
+        trs, tsd, tsd.get_seg_len(), overlap, 0, seq + overlap, nullptr);
 
 }
 
 void TcpReassembler::init_overlap_editor(
     TcpReassemblerState& trs, TcpSegmentDescriptor& tsd)
 {
-    TcpSegmentNode* left = nullptr;
-    TcpSegmentNode* right = nullptr;
-    TcpSegmentNode* tsn = nullptr;
-
-    int32_t dist_head;
-    int32_t dist_tail;
+    TcpSegmentNode* left = nullptr, *right = nullptr, *tsn = nullptr;
+    int32_t dist_head = 0, dist_tail = 0;
 
     if ( trs.sos.seglist.head && trs.sos.seglist.tail )
     {
-        if ( SEQ_GT(tsd.get_seg_seq(), trs.sos.seglist.head->seq) )
-            dist_head = tsd.get_seg_seq() - trs.sos.seglist.head->seq;
+        if ( SEQ_GT(tsd.get_seg_seq(), trs.sos.seglist.head->i_seq) )
+            dist_head = tsd.get_seg_seq() - trs.sos.seglist.head->i_seq;
         else
-            dist_head = trs.sos.seglist.head->seq - tsd.get_seg_seq();
+            dist_head = trs.sos.seglist.head->i_seq - tsd.get_seg_seq();
 
-        if ( SEQ_GT(tsd.get_seg_seq(), trs.sos.seglist.tail->seq) )
-            dist_tail = tsd.get_seg_seq() - trs.sos.seglist.tail->seq;
+        if ( SEQ_GT(tsd.get_seg_seq(), trs.sos.seglist.tail->i_seq) )
+            dist_tail = tsd.get_seg_seq() - trs.sos.seglist.tail->i_seq;
         else
-            dist_tail = trs.sos.seglist.tail->seq - tsd.get_seg_seq();
+            dist_tail = trs.sos.seglist.tail->i_seq - tsd.get_seg_seq();
     }
-    else
-        dist_head = dist_tail = 0;
 
     if ( SEQ_LEQ(dist_head, dist_tail) )
     {
@@ -1207,7 +1131,7 @@ void TcpReassembler::init_overlap_editor(
         {
             right = tsn;
 
-            if ( SEQ_GEQ(right->seq, tsd.get_seg_seq() ) )
+            if ( SEQ_GEQ(right->i_seq, tsd.get_seg_seq() ) )
                 break;
 
             left = right;
@@ -1222,7 +1146,7 @@ void TcpReassembler::init_overlap_editor(
         {
             left = tsn;
 
-            if ( SEQ_LT(left->seq, tsd.get_seg_seq() ) )
+            if ( SEQ_LT(left->i_seq, tsd.get_seg_seq() ) )
                 break;
 
             right = left;
@@ -1231,7 +1155,6 @@ void TcpReassembler::init_overlap_editor(
         if (tsn == nullptr)
             left = nullptr;
     }
-
 
     trs.sos.init_soe(tsd, left, right);
 }
@@ -1245,10 +1168,8 @@ int TcpReassembler::insert_segment_in_seglist(
     if ( trs.sos.seglist.tail && is_segment_fasttrack(trs, trs.sos.seglist.tail, tsd) )
     {
         /* segment fit cleanly at the end of the segment list */
-        TcpSegmentNode* left = trs.sos.seglist.tail;
-        
-        // BLOCK add to existing block and/or allocate new block
-        rc = add_reassembly_segment(trs, tsd, tsd.get_seg_len(), 0, 0, tsd.get_seg_seq(), left);
+        rc = add_reassembly_segment(trs, tsd, tsd.get_seg_len(), 0, 0,
+        		tsd.get_seg_seq(), trs.sos.seglist.tail);
         return rc;
     }
 
@@ -1271,9 +1192,7 @@ int TcpReassembler::insert_segment_in_seglist(
             trs, tsd, trs.sos.len, trs.sos.slide, trs.sos.trunc_len, trs.sos.seq, trs.sos.left);
     }
     else
-    {
         rc = STREAM_INSERT_OK;
-    }
 
     return rc;
 }
@@ -1307,23 +1226,4 @@ int TcpReassembler::queue_packet_for_reassembly(
 
     return rc;
 }
-
-#ifdef SEG_TEST
-static void CheckSegments(const TcpStreamtrs.tracker* a)
-{
-    TcpSegmentNode* tsn = a->trs.sos.seglist.head;
-    uint32_t sx = tsn ? tsn->seq : 0;
-
-    while ( tsn )
-    {
-        if ( SEQ_GT(sx, tsn->seq) )
-        {
-            const int SEGBORK = 0;
-            assert(SEGBORK);
-        }
-        sx = tsn->seq + tsn->payload_size;
-        tsn = tsn->next;
-    }
-}
-#endif
 

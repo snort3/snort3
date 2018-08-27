@@ -34,9 +34,10 @@ class TcpSegmentDescriptor;
 // ... however, use of padding below is critical, adjust if needed
 //-----------------------------------------------------------------
 
-struct TcpSegmentNode
+class TcpSegmentNode
 {
-    TcpSegmentNode();
+public:
+	TcpSegmentNode(const struct timeval& tv, const uint8_t* segment, uint16_t len);
 
     static TcpSegmentNode* init(TcpSegmentDescriptor& tsd);
     static TcpSegmentNode* init(TcpSegmentNode& tns);
@@ -44,9 +45,16 @@ struct TcpSegmentNode
 
     void term();
     bool is_retransmit(const uint8_t*, uint16_t size, uint32_t, uint16_t, bool*);
-
     uint8_t* payload()
     { return data + offset; }
+
+    bool is_packet_missing(uint32_t to_seq)
+    {
+        if ( next )
+            return (i_seq + i_len) != next->i_seq;
+        else
+            return (c_seq + c_len) < to_seq;
+    }
 
     TcpSegmentNode* prev;
     TcpSegmentNode* next;
@@ -55,14 +63,13 @@ struct TcpSegmentNode
 
     struct timeval tv;
     uint32_t ts;
-    uint32_t seq;
-
+    uint32_t i_seq;             // initial seq # of the data segment
+    uint32_t c_seq;             // current seq # of data for reassembly
+    uint16_t i_len;             // initial length of the data segment
+    uint16_t c_len;             // length of data remaining for reassembly
     uint16_t offset;
-    uint16_t orig_dsize;
-    uint16_t payload_size;
+    uint16_t last_flush_len;
     uint16_t urg_offset;
-
-    bool buffered;
 };
 
 class TcpSegmentList
@@ -77,10 +84,10 @@ public:
             i++;
             TcpSegmentNode* dump_me = head;
             head = head->next;
-            dump_me->term( );
+            dump_me->term();
         }
 
-        head = tail = next = nullptr;
+        head = tail = cur_rseg = nullptr;
         count = 0;
         return i;
     }
@@ -114,12 +121,12 @@ public:
 
     void remove(TcpSegmentNode* ss)
     {
-        if (ss->prev)
+        if ( ss->prev )
             ss->prev->next = ss->next;
         else
             head = ss->next;
 
-        if (ss->next)
+        if ( ss->next )
             ss->next->prev = ss->prev;
         else
             tail = ss->prev;
@@ -129,12 +136,7 @@ public:
 
     TcpSegmentNode* head = nullptr;
     TcpSegmentNode* tail = nullptr;
-
-    // FIXIT-P seglist_base_seq is the sequence number to flush from
-    // and is valid even when seglist is empty.  next points to
-    // the segment to flush from and is set per packet.  should keep
-    // up to date.
-    TcpSegmentNode* next = nullptr;
+    TcpSegmentNode* cur_rseg = nullptr;
     uint32_t count = 0;
 };
 

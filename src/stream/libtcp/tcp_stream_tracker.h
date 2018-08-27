@@ -47,7 +47,6 @@ extern const char* tcp_event_names[];
 
 class TcpReassembler;
 class TcpSession;
-struct TcpSegmentNode;
 
 class TcpStreamTracker
 {
