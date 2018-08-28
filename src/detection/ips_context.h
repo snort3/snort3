@@ -58,7 +58,6 @@ public:
     virtual ~IpsContextData() = default;
 
     static unsigned get_ips_id();
-    static unsigned get_max_id();
     virtual void clear() {}
 
 protected:

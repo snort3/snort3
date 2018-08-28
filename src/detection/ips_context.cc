@@ -45,18 +45,23 @@ using namespace snort;
 // tests (and only tests) can reset the id
 static unsigned ips_id = 0;
 
-unsigned IpsContextData::get_ips_id()
-{ return ++ips_id; }
+// Only 5 inspectors currently use the ips context data.
+// FIXIT-L This limit should to be updated if any more inspectors/modules use it.
+constexpr unsigned max_ips_id = 32;
 
-unsigned IpsContextData::get_max_id()
-{ return ips_id; }
+unsigned IpsContextData::get_ips_id()
+{ 
+    ++ips_id;
+    assert( ips_id < max_ips_id );
+    return ips_id; 
+}
 
 //--------------------------------------------------------------------------
 // context methods
 //--------------------------------------------------------------------------
 
 IpsContext::IpsContext(unsigned size) :
-    data(size ? size : IpsContextData::get_max_id() + 1, nullptr)
+    data(size ? size : max_ips_id, nullptr)
 {
     packet = new Packet(false);
     encode_packet = nullptr;
@@ -142,13 +147,12 @@ int TestData::count = 0;
 TEST_CASE("IpsContextData id", "[IpsContextData]")
 {
     ips_id = 0;
-    CHECK(IpsContextData::get_max_id() == 0);
 
     auto id1 = IpsContextData::get_ips_id();
     auto id2 = IpsContextData::get_ips_id();
     CHECK(id1 != id2);
 
-    CHECK(IpsContextData::get_max_id() == id2);
+    CHECK(max_ips_id > id2 );
 }
 
 TEST_CASE("IpsContext basic", "[IpsContext]")
