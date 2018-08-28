@@ -1,3 +1,15 @@
+18/08/27 - build 247 - Beta
+
+-- appid: change map to unordered map
+-- appid: declare SMTPS early in STARTTLS state on success response code
+-- appid: fix data-race issues from ips_appid_option and improve app_name search
+-- detection: avoid repeating detection by always doing non-fast-pattern rules immediately
+   (applies to experimental offload only)
+-- docs: update default html, pdf, and text user manuals
+-- reputation: reevaluate current flows upon reload
+-- stream_tcp: avoid duplicating split sement data
+-- build: removing use of u_char and u_short macros (github #53)
+
 18/08/13 - build 246
 
 -- active: Add an upper limit of 255 to min_interval
@@ -694,7 +706,7 @@
 -- http_inspect: added alert 119:82 for bad Content-Length value
 -- http_inspect: added alert 119:83 for header wrapping; CR and LF parsed as whitespace
 
-17/03/02 - build 228
+17/03/02 - build 228 - Alpha 4
 
 -- update hypercsan mpse: print error message and erroneous pattern when compilation fails
 -- update rule parser: add multiple byte orders warning
