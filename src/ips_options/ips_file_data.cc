@@ -49,12 +49,11 @@ public:
 // class methods
 //-------------------------------------------------------------------------
 
-IpsOption::EvalStatus FileDataOption::eval(Cursor& c, Packet*)
+IpsOption::EvalStatus FileDataOption::eval(Cursor& c, Packet* p)
 {
     Profile profile(fileDataPerfStats);
 
-    DataPointer dp;
-    DetectionEngine::get_file_data(dp);
+    DataPointer dp = DetectionEngine::get_file_data(p->context);
 
     if ( !dp.data || !dp.len )
         return NO_MATCH;

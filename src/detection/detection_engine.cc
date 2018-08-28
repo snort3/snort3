@@ -163,8 +163,8 @@ DataBuffer& DetectionEngine::get_alt_buffer(Packet* p)
 void DetectionEngine::set_file_data(const DataPointer& dp)
 { Snort::get_switcher()->get_context()->file_data = dp; }
 
-void DetectionEngine::get_file_data(DataPointer& dp)
-{ dp = Snort::get_switcher()->get_context()->file_data; }
+DataPointer& DetectionEngine::get_file_data(IpsContext* c)
+{ return c->file_data; }
 
 void DetectionEngine::set_data(unsigned id, IpsContextData* p)
 { Snort::get_switcher()->get_context()->set_context_data(id, p); }

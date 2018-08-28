@@ -360,10 +360,11 @@ int detection_option_node_evaluate(
     char flowbits_setoperation = 0;
     int loop_count = 0;
     uint32_t tmp_byte_extract_vars[NUM_IPS_OPTIONS_VARS];
-    uint64_t cur_eval_context_num = DetectionEngine::get_context()->context_num;
 
     if ( !eval_data || !eval_data->p || !eval_data->pomd )
         return 0;
+
+    uint64_t cur_eval_context_num = eval_data->p->context->context_num;
 
     node_eval_trace(node, cursor, eval_data->p);
 

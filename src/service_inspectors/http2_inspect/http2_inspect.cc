@@ -80,7 +80,8 @@ void Http2Inspect::eval(Packet* p)
     Http2FlowData* const session_data =
         (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
 
-    set_file_data(session_data->frame_data[source_id], session_data->frame_data_size[source_id]);
+    set_file_data(session_data->frame_data[source_id],
+        session_data->frame_data_size[source_id]);
     session_data->frame_in_detection = true;
 
 #ifdef REG_TEST

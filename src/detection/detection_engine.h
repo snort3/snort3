@@ -67,15 +67,15 @@ public:
     static void set_encode_packet(Packet*);
     static Packet* get_encode_packet();
 
-    static void set_file_data(const DataPointer&);
-    static void get_file_data(DataPointer&);
+    static void set_file_data(const DataPointer& dp);
+    static DataPointer& get_file_data(IpsContext*);
 
     static uint8_t* get_buffer(unsigned& max);
     static struct DataBuffer& get_alt_buffer(Packet*);
 
     static void set_data(unsigned id, IpsContextData*);
     static IpsContextData* get_data(unsigned id);
-    static IpsContextData* get_data(unsigned id, IpsContext* context);
+    static IpsContextData* get_data(unsigned id, IpsContext*);
 
     static void add_replacement(const std::string&, unsigned);
     static bool get_replacement(std::string&, unsigned&);
@@ -120,9 +120,7 @@ static inline void set_file_data(const uint8_t* p, unsigned n)
 }
 
 static inline void clear_file_data()
-{
-    set_file_data(nullptr, 0);
-}
+{ set_file_data(nullptr, 0); }
 
 } // namespace snort
 #endif

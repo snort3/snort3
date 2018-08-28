@@ -1356,8 +1356,7 @@ void LogPayload(TextLog* log, Packet* p)
         {
             LogCharData(log, p->data, p->dsize);
 
-            DataPointer file_data;
-            DetectionEngine::get_file_data(file_data);
+            DataPointer file_data = DetectionEngine::get_file_data(p->context);
 
             if ( file_data.len > 0 )
             {
@@ -1381,8 +1380,7 @@ void LogPayload(TextLog* log, Packet* p)
             {
                 LogNetData(log, p->data, p->dsize, p);
 
-                DataPointer file_data;
-                DetectionEngine::get_file_data(file_data);
+                DataPointer file_data = DetectionEngine::get_file_data(p->context);
 
                 if ( file_data.len > 0 )
                 {
