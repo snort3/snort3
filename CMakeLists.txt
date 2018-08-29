@@ -149,4 +149,12 @@ else ()
     UUID:           OFF")
 endif ()
 
+if (HAVE_TIRPC)
+    message("\
+    TIRPC:          ON")
+else ()
+    message("\
+    TIRPC:          OFF")
+endif ()
+
 message("-------------------------------------------------------\n")
