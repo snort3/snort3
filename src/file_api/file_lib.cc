@@ -365,6 +365,8 @@ void FileContext::finish_signature_lookup(Flow* flow, bool final_lookup, FilePol
             log_file_event(flow, policy);
             config_file_signature(false);
             file_stats->signatures_processed[get_file_type()][get_file_direction()]++;
+            if ( verdict == FILE_VERDICT_REJECT or verdict == FILE_VERDICT_BLOCK)
+                flow->disable_inspection();
         }
         else
         {
@@ -800,4 +802,3 @@ bool file_IDs_from_group(const void *conf, const char *group,
     return get_ids_from_group(conf, group, ids, count);
 }
  **/
-
