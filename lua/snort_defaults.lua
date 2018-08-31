@@ -193,7 +193,7 @@ ftp_command_specs =
 
     { command = 'ALLO', length = 200, format = '< int [ char R int ] >' },
     { command = 'EPRT', length = 400, format = '< extd_host_port >' },
-    { command = 'EPSV', format = '< [ { char 12 | char A char L char L } ] >' },
+    { command = 'EPSV', format = "< [ { '1' | '2' | 'ALL' } ] >" },
     { command = 'LPRT', length = 400, format = '< long_host_port >' },
     { command = 'MACB', format = '< string >' },
     { command = 'MDTM', format = '< [ date nnnnnnnnnnnnnn[.n[n[n]]] ] string >' },
