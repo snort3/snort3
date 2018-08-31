@@ -135,6 +135,7 @@ public:
     std::vector<Replacement> rpl;
 
     Packet* packet;
+    Packet* wire_packet;
     Packet* encode_packet;
     DAQ_PktHdr_t* pkth;
     uint8_t* buf;

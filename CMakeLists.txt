@@ -93,6 +93,14 @@ Compiler options:
 Feature options:\
 ")
 
+if (ENABLE_STATIC_DAQ)
+    message("\
+    DAQ Modules:    Static (${DAQ_STATIC_MODULES})")
+else ()
+    message("\
+    DAQ Modules:    Dynamic")
+endif ()
+
 if (HAVE_FLATBUFFERS)
     message("\
     Flatbuffers:    ON")

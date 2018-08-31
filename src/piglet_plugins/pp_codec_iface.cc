@@ -112,18 +112,14 @@ static const luaL_Reg methods[] =
 
             if ( RawBufferIface.is(L, 2) )
             {
-                RawData rd(&daq, get_data(RawBufferIface.get(L, 2)));
+                RawData rd(nullptr, &daq, get_data(RawBufferIface.get(L, 2)), get_data_length(RawBufferIface.get(L, 2)));
                 result = self.decode(rd, cd, dd);
             }
             else
             {
                 size_t len = 0;
-                RawData rd(
-                    &daq,
-                    reinterpret_cast<const uint8_t*>(
-                        luaL_checklstring(L, 2, &len)
-                    )
-                );
+                const uint8_t* data = reinterpret_cast<const uint8_t*>(luaL_checklstring(L, 2, &len));
+                RawData rd(nullptr, &daq, data, len);
 
                 result = self.decode(rd, cd, dd);
             }

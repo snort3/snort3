@@ -26,6 +26,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -33,76 +34,203 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <daq_api.h>
-#include <sfbpf_dlt.h>
+#include <daq_module_api.h>
 
 #define DAQ_MOD_VERSION 0
 #define DAQ_NAME "file"
 #define DAQ_TYPE (DAQ_TYPE_FILE_CAPABLE|DAQ_TYPE_INTF_CAPABLE|DAQ_TYPE_MULTI_INSTANCE)
+
+#define FILE_DEFAULT_POOL_SIZE 16
 #define FILE_BUF_SZ 16384
 
-typedef struct {
-    char* name;
-    int fid;
+#define SET_ERROR(modinst, ...)    daq_base_api.set_errbuf(modinst, __VA_ARGS__)
 
-    int start;
-    int stop;
-    int eof;
+typedef struct _file_msg_desc
+{
+    DAQ_Msg_t msg;
+    DAQ_PktHdr_t pkthdr;
+    DAQ_UsrHdr_t pci;
+    uint8_t* data;
+    struct _file_msg_desc* next;
+} FileMsgDesc;
 
+typedef struct
+{
+    FileMsgDesc* pool;
+    FileMsgDesc* freelist;
+    DAQ_MsgPoolInfo_t info;
+} FileMsgPool;
+
+typedef struct
+{
+    /* Configuration */
+    char* filename;
     unsigned snaplen;
 
-    uint8_t* buf;
-    char error[DAQ_ERRBUF_SIZE];
+    /* State */
+    DAQ_ModuleInstance_h modinst;
+    FileMsgPool pool;
+    int fid;
+    volatile bool interrupted;
+
+    bool sof;
+    bool eof;
 
     DAQ_UsrHdr_t pci;
-    DAQ_State state;
     DAQ_Stats_t stats;
-} FileImpl;
+} FileContext;
+
+static DAQ_BaseAPI_t daq_base_api;
+
+//-------------------------------------------------------------------------
+// utility functions
+//-------------------------------------------------------------------------
+
+static void destroy_message_pool(FileContext* fc)
+{
+    FileMsgPool* pool = &fc->pool;
+    if (pool->pool)
+    {
+        while (pool->info.size > 0)
+            free(pool->pool[--pool->info.size].data);
+        free(pool->pool);
+        pool->pool = NULL;
+    }
+    pool->freelist = NULL;
+    pool->info.available = 0;
+    pool->info.mem_size = 0;
+}
+
+static int create_message_pool(FileContext* fc, unsigned size)
+{
+    FileMsgPool* pool = &fc->pool;
+    pool->pool = calloc(sizeof(FileMsgDesc), size);
+    if (!pool->pool)
+    {
+        SET_ERROR(fc->modinst, "%s: Could not allocate %zu bytes for a packet descriptor pool!",
+                __func__, sizeof(FileMsgDesc) * size);
+        return DAQ_ERROR_NOMEM;
+    }
+    pool->info.mem_size = sizeof(FileMsgDesc) * size;
+    while (pool->info.size < size)
+    {
+        /* Allocate packet data and set up descriptor */
+        FileMsgDesc *desc = &pool->pool[pool->info.size];
+        desc->data = malloc(fc->snaplen);
+        if (!desc->data)
+        {
+            SET_ERROR(fc->modinst, "%s: Could not allocate %d bytes for a packet descriptor message buffer!",
+                    __func__, fc->snaplen);
+            return DAQ_ERROR_NOMEM;
+        }
+        pool->info.mem_size += fc->snaplen;
+
+        /* Initialize non-zero invariant packet header fields. */
+        DAQ_PktHdr_t *pkthdr = &desc->pkthdr;
+        pkthdr->address_space_id = 0;
+        pkthdr->ingress_index = DAQ_PKTHDR_UNKNOWN;
+        pkthdr->ingress_group = DAQ_PKTHDR_UNKNOWN;
+        pkthdr->egress_index = DAQ_PKTHDR_UNKNOWN;
+        pkthdr->egress_group = DAQ_PKTHDR_UNKNOWN;
+        pkthdr->flags = 0;
+
+        /* Initialize non-zero invariant message header fields. */
+        DAQ_Msg_t *msg = &desc->msg;
+        msg->owner = fc->modinst;
+        msg->priv = desc;
+
+        /* Place it on the free list */
+        desc->next = pool->freelist;
+        pool->freelist = desc;
+
+        pool->info.size++;
+    }
+    pool->info.available = pool->info.size;
+    return DAQ_SUCCESS;
+}
 
 //-------------------------------------------------------------------------
 // file functions
 //-------------------------------------------------------------------------
 
-static int file_setup(FileImpl* impl)
+static int file_setup(FileContext* fc)
 {
-    if ( !strcmp(impl->name, "tty") )
+    if ( !strcmp(fc->filename, "tty") )
     {
-        impl->fid = STDIN_FILENO;
+        fc->fid = STDIN_FILENO;
     }
-    else if ( (impl->fid = open(impl->name, O_RDONLY|O_NONBLOCK)) < 0 )
+    else if ( (fc->fid = open(fc->filename, O_RDONLY|O_NONBLOCK)) < 0 )
     {
         char error_msg[1024] = {0};
         if (strerror_r(errno, error_msg, sizeof(error_msg)) == 0)
-            DPE(impl->error, "%s: can't open file (%s)\n", DAQ_NAME, error_msg);
+            SET_ERROR(fc->modinst, "%s: can't open file (%s)", DAQ_NAME, error_msg);
         else
-            DPE(impl->error, "%s: can't open file: %d\n", DAQ_NAME, errno);
+            SET_ERROR(fc->modinst, "%s: can't open file: %d", DAQ_NAME, errno);
         return -1;
     }
-    impl->start = 1;
+
+    fc->sof = true;
+    fc->eof = false;
 
     return 0;
 }
 
-static void file_cleanup(FileImpl* impl)
+static void file_cleanup(FileContext* fc)
 {
-    if ( impl->fid > STDIN_FILENO )
-        close(impl->fid);
+    if ( fc->fid > STDIN_FILENO )
+        close(fc->fid);
 
-    impl->fid = -1;
+    fc->fid = -1;
 }
 
-static int file_read(FileImpl* impl)
-{
-    int n = read(impl->fid, impl->buf, impl->snaplen);
+//-------------------------------------------------------------------------
+// daq utilities
+//-------------------------------------------------------------------------
 
-    if ( !n )
+static void init_packet_message(FileContext* fc, FileMsgDesc* desc)
+{
+    DAQ_PktHdr_t *pkthdr = &desc->pkthdr;
+
+    desc->msg.type = DAQ_MSG_TYPE_PACKET;
+    desc->msg.hdr_len = sizeof(*pkthdr);
+    desc->msg.hdr = pkthdr;
+    desc->msg.data_len = 0;
+    desc->msg.data = desc->data;
+
+    struct timeval t;
+    gettimeofday(&t, NULL);
+
+    pkthdr->ts.tv_sec = t.tv_sec;
+    pkthdr->ts.tv_usec = t.tv_usec;
+
+    desc->pci = fc->pci;
+    if (fc->sof)
     {
-        if ( !impl->eof )
+        desc->pci.flags |= DAQ_USR_FLAG_START_FLOW;
+        fc->sof = false;
+    }
+}
+
+static DAQ_RecvStatus file_read_message(FileContext* fc, FileMsgDesc* desc)
+{
+    desc->msg.data = NULL;
+    int n = read(fc->fid, desc->data, fc->snaplen);
+
+    if ( n )
+    {
+        init_packet_message(fc, desc);
+        desc->msg.data_len = n;
+    }
+    else
+    {
+        // create an empty packet message to convey the End of Flow
+        if (!fc->eof)
         {
-            impl->eof = 1;
-            return 1;  // <= zero won't make it :(
+            init_packet_message(fc, desc);
+            desc->pci.flags |= DAQ_USR_FLAG_END_FLOW;
+            fc->eof = true;
+            return DAQ_RSTAT_EOF;
         }
-        return DAQ_READFILE_EOF;
     }
 
     if ( n < 0 )
@@ -111,230 +239,154 @@ static int file_read(FileImpl* impl)
         {
             char error_msg[1024] = {0};
             if (strerror_r(errno, error_msg, sizeof(error_msg)) == 0)
-                DPE(impl->error, "%s: can't read from file (%s)\n",
-                    DAQ_NAME, error_msg);
+                SET_ERROR(fc->modinst, "%s: can't read from file (%s)", DAQ_NAME, error_msg);
             else
-                DPE(impl->error, "%s: can't read from file: %d\n",
-                    DAQ_NAME, errno);
+                SET_ERROR(fc->modinst, "%s: can't read from file: %d", DAQ_NAME, errno);
+            return DAQ_RSTAT_ERROR;
         }
-        return DAQ_ERROR;
     }
-    return n;
-}
 
-//-------------------------------------------------------------------------
-// daq utilities
-//-------------------------------------------------------------------------
-
-static void set_pkt_hdr(FileImpl* impl, DAQ_PktHdr_t* phdr, ssize_t len)
-{
-    struct timeval t;
-    gettimeofday(&t, NULL);
-
-    phdr->ts.tv_sec = t.tv_sec;
-    phdr->ts.tv_usec = t.tv_usec;
-    phdr->caplen = phdr->pktlen = len;
-
-    phdr->ingress_index = phdr->egress_index = -1;
-    phdr->ingress_group = phdr->egress_group = -1;
-
-    phdr->flags = 0;
-    phdr->address_space_id = 0;
-    phdr->opaque = 0;
-
-    if ( impl->start )
-    {
-        impl->pci.flags = DAQ_USR_FLAG_START_FLOW;
-        impl->start = 0;
-    }
-    else if ( impl->eof )
-        impl->pci.flags = DAQ_USR_FLAG_END_FLOW;
-
-    else
-        impl->pci.flags = 0;
-
-    phdr->priv_ptr = &impl->pci;
-}
-
-static int file_daq_process(
-    FileImpl* impl, DAQ_Analysis_Func_t cb, void* user)
-{
-    DAQ_PktHdr_t hdr;
-    int n = file_read(impl);
-
-    if ( n < 1 )
-        return n;
-
-    set_pkt_hdr(impl, &hdr, n);
-    DAQ_Verdict verdict = cb(user, &hdr, impl->buf);
-
-    if ( verdict >= MAX_DAQ_VERDICT )
-        verdict = DAQ_VERDICT_BLOCK;
-
-    impl->stats.verdicts[verdict]++;
-    return n;
+    return DAQ_RSTAT_OK;
 }
 
 //-------------------------------------------------------------------------
 // daq
 //-------------------------------------------------------------------------
 
-static void file_daq_shutdown (void* handle)
+static int file_daq_module_load(const DAQ_BaseAPI_t* base_api)
 {
-    FileImpl* impl = (FileImpl*)handle;
+    if (base_api->api_version != DAQ_BASE_API_VERSION || base_api->api_size != sizeof(DAQ_BaseAPI_t))
+        return DAQ_ERROR;
 
-    if ( impl->name )
-        free(impl->name);
+    daq_base_api = *base_api;
 
-    if ( impl->buf )
-        free(impl->buf);
-
-    free(impl);
-}
-
-//-------------------------------------------------------------------------
-
-static int file_daq_initialize (
-    const DAQ_Config_t* cfg, void** handle, char* errBuf, size_t errMax)
-{
-    FileImpl* impl = calloc(1, sizeof(*impl));
-
-    if ( !impl )
-    {
-        snprintf(errBuf, errMax, "%s: failed to allocate the ipfw context", DAQ_NAME);
-        return DAQ_ERROR_NOMEM;
-    }
-
-    impl->fid = -1;
-    impl->start = impl->stop = 0;
-    impl->snaplen = cfg->snaplen ? cfg->snaplen : FILE_BUF_SZ;
-
-    if ( cfg->name )
-    {
-        if ( !(impl->name = strdup(cfg->name)) )
-        {
-            snprintf(errBuf, errMax, "%s: failed to allocate the filename", DAQ_NAME);
-            free(impl);
-            return DAQ_ERROR_NOMEM;
-        }
-    }
-
-    if ( !(impl->buf = malloc(impl->snaplen)) )
-    {
-        snprintf(errBuf, errMax, "%s: failed to allocate the ipfw buffer", DAQ_NAME);
-        file_daq_shutdown(impl);
-        return DAQ_ERROR_NOMEM;
-    }
-
-    impl->state = DAQ_STATE_INITIALIZED;
-
-    *handle = impl;
     return DAQ_SUCCESS;
 }
 
-//-------------------------------------------------------------------------
-
-static int file_daq_start (void* handle)
+static int file_daq_instantiate(const DAQ_ModuleConfig_h modcfg, DAQ_ModuleInstance_h modinst, void** ctxt_ptr)
 {
-    FileImpl* impl = (FileImpl*)handle;
+    FileContext* fc;
+    int rval = DAQ_ERROR;
 
-    if ( file_setup(impl) )
+    fc = calloc(1, sizeof(*fc));
+    if (!fc)
+    {
+        SET_ERROR(modinst, "%s: Couldn't allocate memory for the new File context!", DAQ_NAME);
+        rval = DAQ_ERROR_NOMEM;
+        goto err;
+    }
+    fc->modinst = modinst;
+
+    fc->snaplen = daq_base_api.config_get_snaplen(modcfg) ? daq_base_api.config_get_snaplen(modcfg) : FILE_BUF_SZ;
+    fc->fid = -1;
+
+    const char* filename = daq_base_api.config_get_input(modcfg);
+    if (filename)
+    {
+        if (!(fc->filename = strdup(filename)))
+        {
+            SET_ERROR(modinst, "%s: Couldn't allocate memory for the filename!", DAQ_NAME);
+            rval = DAQ_ERROR_NOMEM;
+            goto err;
+        }
+    }
+
+    uint32_t pool_size = daq_base_api.config_get_msg_pool_size(modcfg);
+    rval = create_message_pool(fc, pool_size ? pool_size : FILE_DEFAULT_POOL_SIZE);
+    if (rval != DAQ_SUCCESS)
+        goto err;
+
+    *ctxt_ptr = fc;
+
+    return DAQ_SUCCESS;
+
+err:
+    if (fc)
+    {
+        if (fc->filename)
+            free(fc->filename);
+        destroy_message_pool(fc);
+        free(fc);
+    }
+    return rval;
+}
+
+static void file_daq_destroy(void* handle)
+{
+    FileContext* fc = (FileContext*) handle;
+
+    if (fc->filename)
+        free(fc->filename);
+    destroy_message_pool(fc);
+    free(fc);
+}
+
+static int file_daq_start(void* handle)
+{
+    FileContext* fc = (FileContext*) handle;
+
+    if (file_setup(fc))
         return DAQ_ERROR;
 
-    impl->state = DAQ_STATE_STARTED;
+    return DAQ_SUCCESS;
+}
+
+static int file_daq_interrupt(void* handle)
+{
+    FileContext* fc = (FileContext*) handle;
+    fc->interrupted = true;
     return DAQ_SUCCESS;
 }
 
 static int file_daq_stop (void* handle)
 {
-    FileImpl* impl = (FileImpl*)handle;
-    file_cleanup(impl);
-    impl->state = DAQ_STATE_STOPPED;
+    FileContext* fc = (FileContext*) handle;
+    file_cleanup(fc);
     return DAQ_SUCCESS;
 }
 
-//-------------------------------------------------------------------------
-
-static int file_daq_inject (
-    void* handle, const DAQ_PktHdr_t* hdr, const uint8_t* buf, uint32_t len,
-    int rev)
+static int file_daq_ioctl(void* handle, DAQ_IoctlCmd cmd, void* arg, size_t arglen)
 {
-    (void)handle;
-    (void)hdr;
-    (void)buf;
-    (void)len;
-    (void)rev;
-    return DAQ_ERROR;
-}
+    (void) handle;
 
-//-------------------------------------------------------------------------
-
-static int file_daq_acquire (
-    void* handle, int cnt, DAQ_Analysis_Func_t callback, DAQ_Meta_Func_t meta, void* user)
-{
-    (void)meta;
-
-    FileImpl* impl = (FileImpl*)handle;
-    int hit = 0, miss = 0;
-    impl->stop = 0;
-
-    while ( (hit < cnt || cnt <= 0) && !impl->stop )
+    if (cmd == DIOCTL_QUERY_USR_PCI)
     {
-        int status = file_daq_process(impl, callback, user);
-
-        if ( status > 0 )
-        {
-            hit++;
-            miss = 0;
-        }
-        else if ( status < 0 )
-            return status;
-
-        else if ( ++miss == 2 )
-            break;
+        if (arglen != sizeof(DIOCTL_QueryUsrPCI))
+            return DAQ_ERROR_INVAL;
+        DIOCTL_QueryUsrPCI* qup = (DIOCTL_QueryUsrPCI*) arg;
+        if (!qup->msg)
+            return DAQ_ERROR_INVAL;
+        FileMsgDesc* desc = (FileMsgDesc*) qup->msg->priv;
+        qup->pci = &desc->pci;
+        return DAQ_SUCCESS;
     }
+    return DAQ_ERROR_NOTSUP;
+}
+
+static int file_daq_get_stats(void* handle, DAQ_Stats_t* stats)
+{
+    FileContext* fc = (FileContext*) handle;
+    memcpy(stats, &fc->stats, sizeof(DAQ_Stats_t));
     return DAQ_SUCCESS;
 }
 
-//-------------------------------------------------------------------------
-
-static int file_daq_breakloop (void* handle)
+static void file_daq_reset_stats(void* handle)
 {
-    FileImpl* impl = (FileImpl*)handle;
-    impl->stop = 1;
-    return DAQ_SUCCESS;
-}
-
-static DAQ_State file_daq_check_status (void* handle)
-{
-    FileImpl* impl = (FileImpl*)handle;
-    return impl->state;
-}
-
-static int file_daq_get_stats (void* handle, DAQ_Stats_t* stats)
-{
-    FileImpl* impl = (FileImpl*)handle;
-    *stats = impl->stats;
-    return DAQ_SUCCESS;
-}
-
-static void file_daq_reset_stats (void* handle)
-{
-    FileImpl* impl = (FileImpl*)handle;
-    memset(&impl->stats, 0, sizeof(impl->stats));
+    FileContext* fc = (FileContext*) handle;
+    memset(&fc->stats, 0, sizeof(fc->stats));
 }
 
 static int file_daq_get_snaplen (void* handle)
 {
-    FileImpl* impl = (FileImpl*)handle;
-    return impl->snaplen;
+    FileContext* fc = (FileContext*) handle;
+    return fc->snaplen;
 }
 
-static uint32_t file_daq_get_capabilities (void* handle)
+static uint32_t file_daq_get_capabilities(void* handle)
 {
-    (void)handle;
+    (void) handle;
     return DAQ_CAPA_BLOCK | DAQ_CAPA_REPLACE | DAQ_CAPA_INJECT | DAQ_CAPA_INJECT_RAW
-        | DAQ_CAPA_BREAKLOOP | DAQ_CAPA_UNPRIV_START;
+        | DAQ_CAPA_INTERRUPT | DAQ_CAPA_UNPRIV_START;
 }
 
 static int file_daq_get_datalink_type(void *handle)
@@ -343,82 +395,111 @@ static int file_daq_get_datalink_type(void *handle)
     return DLT_USER;
 }
 
-static const char* file_daq_get_errbuf (void* handle)
+static unsigned file_daq_msg_receive(void* handle, const unsigned max_recv, const DAQ_Msg_t* msgs[], DAQ_RecvStatus* rstat)
 {
-    FileImpl* impl = (FileImpl*)handle;
-    return impl->error;
-}
+    FileContext* fc = (FileContext*) handle;
+    DAQ_RecvStatus status = DAQ_RSTAT_OK;
+    unsigned idx = 0;
 
-static void file_daq_set_errbuf (void* handle, const char* s)
-{
-    FileImpl* impl = (FileImpl*)handle;
-    DPE(impl->error, "%s", s ? s : "");
-}
-
-static int file_daq_get_device_index(void* handle, const char* device)
-{
-    (void)handle;
-    (void)device;
-    return DAQ_ERROR_NOTSUP;
-}
-
-static int file_daq_set_filter (void* handle, const char* filter)
-{
-    (void)handle;
-    (void)filter;
-    return DAQ_ERROR_NOTSUP;
-}
-
-static int file_query_flow(void* handle, const DAQ_PktHdr_t* hdr, DAQ_QueryFlow_t* query)
-{
-    FileImpl* impl = (FileImpl*)handle;
-
-    if ( hdr->priv_ptr != &impl->pci )  // sanity check
-        return DAQ_ERROR_INVAL;
-
-    if ( query->type == DAQ_USR_QUERY_PCI )
+    while (idx < max_recv)
     {
-        query->value = &impl->pci;
-        query->length = sizeof(impl->pci);
-        return DAQ_SUCCESS;
+        /* Check to see if the receive has been canceled.  If so, reset it and return appropriately. */
+        if (fc->interrupted)
+        {
+            fc->interrupted = false;
+            status = DAQ_RSTAT_INTERRUPTED;
+            break;
+        }
+
+        /* Make sure that we have a message descriptor available to populate. */
+        FileMsgDesc* desc = fc->pool.freelist;
+        if (!desc)
+        {
+            status = DAQ_RSTAT_NOBUF;
+            break;
+        }
+
+        /* Attempt to read a message into the descriptor. */
+        status = file_read_message(fc, desc);
+        if (status != DAQ_RSTAT_OK)
+            break;
+
+        /* Last, but not least, extract this descriptor from the free list and
+           place the message in the return vector. */
+        fc->pool.freelist = desc->next;
+        desc->next = NULL;
+        fc->pool.info.available--;
+        msgs[idx] = &desc->msg;
+
+        idx++;
     }
-    return DAQ_ERROR_NOTSUP;
+
+    *rstat = status;
+
+    return idx;
+}
+
+static int file_daq_msg_finalize(void* handle, const DAQ_Msg_t* msg, DAQ_Verdict verdict)
+{
+    FileContext* fc = (FileContext*) handle;
+    FileMsgDesc* desc = (FileMsgDesc *) msg->priv;
+
+    if (verdict >= MAX_DAQ_VERDICT)
+        verdict = DAQ_VERDICT_PASS;
+    fc->stats.verdicts[verdict]++;
+
+    /* Toss the descriptor back on the free list for reuse. */
+    desc->next = fc->pool.freelist;
+    fc->pool.freelist = desc;
+    fc->pool.info.available++;
+
+    return DAQ_SUCCESS;
+}
+
+static int file_daq_get_msg_pool_info(void* handle, DAQ_MsgPoolInfo_t* info)
+{
+    FileContext* fc = (FileContext*) handle;
+
+    *info = fc->pool.info;
+
+    return DAQ_SUCCESS;
 }
 
 //-------------------------------------------------------------------------
 
 #ifdef BUILDING_SO
-DAQ_SO_PUBLIC DAQ_Module_t DAQ_MODULE_DATA =
+DAQ_SO_PUBLIC const DAQ_ModuleAPI_t DAQ_MODULE_DATA =
 #else
-DAQ_Module_t file_daq_module_data =
+const DAQ_ModuleAPI_t file_daq_module_data =
 #endif
 {
-    .api_version = DAQ_API_VERSION,
-    .module_version = DAQ_MOD_VERSION,
-    .name = DAQ_NAME,
-    .type = DAQ_TYPE,
-    .initialize = file_daq_initialize,
-    .set_filter = file_daq_set_filter,
-    .start = file_daq_start,
-    .acquire = file_daq_acquire,
-    .inject = file_daq_inject,
-    .breakloop = file_daq_breakloop,
-    .stop = file_daq_stop,
-    .shutdown = file_daq_shutdown,
-    .check_status = file_daq_check_status,
-    .get_stats = file_daq_get_stats,
-    .reset_stats = file_daq_reset_stats,
-    .get_snaplen = file_daq_get_snaplen,
-    .get_capabilities = file_daq_get_capabilities,
-    .get_datalink_type = file_daq_get_datalink_type,
-    .get_errbuf = file_daq_get_errbuf,
-    .set_errbuf = file_daq_set_errbuf,
-    .get_device_index = file_daq_get_device_index,
-    .modify_flow = NULL,
-    .hup_prep = NULL,
-    .hup_apply = NULL,
-    .hup_post = NULL,
-    .dp_add_dc = NULL,
-    .query_flow = file_query_flow
+    /* .api_version = */ DAQ_MODULE_API_VERSION,
+    /* .api_size = */ sizeof(DAQ_ModuleAPI_t),
+    /* .module_version = */ DAQ_MOD_VERSION,
+    /* .name = */ DAQ_NAME,
+    /* .type = */ DAQ_TYPE,
+    /* .load = */ file_daq_module_load,
+    /* .unload = */ NULL,
+    /* .get_variable_descs = */ NULL,
+    /* .instantiate = */ file_daq_instantiate,
+    /* .destroy = */ file_daq_destroy,
+    /* .set_filter = */ NULL,
+    /* .start = */ file_daq_start,
+    /* .inject = */ NULL,
+    /* .inject_relative = */ NULL,
+    /* .interrupt = */ file_daq_interrupt,
+    /* .stop = */ file_daq_stop,
+    /* .ioctl = */ file_daq_ioctl,
+    /* .get_stats = */ file_daq_get_stats,
+    /* .reset_stats = */ file_daq_reset_stats,
+    /* .get_snaplen = */ file_daq_get_snaplen,
+    /* .get_capabilities = */ file_daq_get_capabilities,
+    /* .get_datalink_type = */ file_daq_get_datalink_type,
+    /* .config_load = */ NULL,
+    /* .config_swap = */ NULL,
+    /* .config_free = */ NULL,
+    /* .msg_receive = */ file_daq_msg_receive,
+    /* .msg_finalize = */ file_daq_msg_finalize,
+    /* .get_msg_pool_info = */ file_daq_get_msg_pool_info,
 };
 

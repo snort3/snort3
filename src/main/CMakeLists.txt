@@ -25,6 +25,8 @@ add_library (main OBJECT
     help.h
     modules.cc
     modules.h
+    oops_handler.cc
+    oops_handler.h
     policy.cc
     request.cc
     request.h

@@ -25,6 +25,7 @@
 
 #include "target_based/sftarget_reader.h"
 
+#include "analyzer.h"
 #include "snort.h"
 #include "snort_config.h"
 
@@ -77,7 +78,7 @@ Swapper::~Swapper()
         SFAT_Free(old_attribs);
 }
 
-void Swapper::apply()
+void Swapper::apply(Analyzer& analyzer)
 {
     if ( new_conf )
     {
@@ -85,7 +86,7 @@ void Swapper::apply()
         snort::SnortConfig::set_conf(new_conf);
         // FIXIT-M Determine whether we really want to do this before or after the set_conf
         if (reload)
-            snort::Snort::thread_reinit(new_conf);
+            analyzer.reinit(new_conf);
     }
 
     if ( new_attribs )

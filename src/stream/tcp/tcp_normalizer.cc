@@ -267,7 +267,7 @@ int TcpNormalizer::validate_paws_timestamp(
 {
     if ( ( (int)( ( tsd.get_ts() - tns.peer_tracker->get_ts_last() ) + tns.paws_ts_fudge ) ) < 0 )
     {
-        if ( tsd.get_pkt()->pkth->flags & DAQ_PKT_FLAG_RETRY_PACKET )
+        if ( tsd.get_pkt()->is_retry() )
         {
             //  Retry packets can legitimately have old timestamps
             //  in TCP options (if a re-transmit comes in before

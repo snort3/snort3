@@ -288,7 +288,7 @@ static bool ff_icmp_type(Args& a)
 static bool ff_iface(Args& a)
 {
     print_label(a, "iface");
-    TextLog_Quote(json_log, SFDAQ::get_interface_spec());
+    TextLog_Quote(json_log, SFDAQ::get_input_spec());
     return true;
 }
 

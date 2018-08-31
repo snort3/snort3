@@ -22,7 +22,7 @@
 #include "config.h"
 #endif
 
-#include <sfbpf_dlt.h>
+#include <daq_dlt.h>
 
 #include <random>
 

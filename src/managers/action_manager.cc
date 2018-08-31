@@ -214,14 +214,17 @@ void ActionManager::thread_reinit(SnortConfig* sc)
 
 void ActionManager::thread_term(SnortConfig*)
 {
-    // Call tterm for every IPS action plugin ever configured during the lifetime of this thread
-    for ( auto& p : *s_tl_actors )
+    if (s_tl_actors)
     {
-        if ( p.api->tterm )
-            p.api->tterm();
+        // Call tterm for every IPS action plugin ever configured during the lifetime of this thread
+        for ( auto& p : *s_tl_actors )
+        {
+            if ( p.api->tterm )
+                p.api->tterm();
+        }
+        delete s_tl_actors;
+        s_tl_actors = nullptr;
     }
-    delete s_tl_actors;
-    s_tl_actors = nullptr;
 }
 
 void ActionManager::execute(Packet* p)

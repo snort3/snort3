@@ -33,7 +33,7 @@
 
 #include "log/messages.h"
 #include "main.h"
-#include "main/snort.h"
+#include "main/oops_handler.h"
 #include "main/snort_config.h"
 #include "utils/stats.h"
 #include "utils/util.h"
@@ -159,7 +159,7 @@ static void oops_handler(int signal)
 {
     // FIXIT-L what should we capture if this is the main thread?
     if ( !is_main_thread )
-        snort::Snort::capture_packet();
+        OopsHandler::handle_crash();
 
     add_signal(signal, SIG_DFL, false);
     raise(signal);

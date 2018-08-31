@@ -76,6 +76,7 @@ struct AuxCount
     PegCount internal_whitelist;
     PegCount idle;
     PegCount rx_bytes;
+    PegCount skipped;
 };
 
 extern ProcessCount proc_stats;

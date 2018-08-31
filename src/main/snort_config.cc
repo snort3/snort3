@@ -61,7 +61,7 @@
 #include "utils/util.h"
 #include "utils/util_cstring.h"
 
-#include "snort.h"
+#include "analyzer.h"
 #include "thread_config.h"
 
 using namespace snort;
@@ -614,7 +614,7 @@ bool SnortConfig::verify()
         return false;
     }
 
-    if (get_conf()->daq_config->mru_size != daq_config->mru_size)
+    if (get_conf()->daq_config->get_mru_size() != daq_config->get_mru_size())
     {
         ReloadError("Snort Reload: Changing the packet snaplen "
             "configuration requires a restart.\n");
@@ -1021,14 +1021,14 @@ void SnortConfig::set_alert_mode(const char* val)
         output = val;
 
     output_flags |= OUTPUT_FLAG__ALERTS;
-    Snort::set_main_hook(DetectionEngine::inspect);
+    Analyzer::set_main_hook(DetectionEngine::inspect);
 }
 
 void SnortConfig::set_log_mode(const char* val)
 {
     if (strcasecmp(val, LOG_NONE) == 0)
     {
-        Snort::set_main_hook(snort_ignore);
+        Analyzer::set_main_hook(snort_ignore);
         EventManager::enable_logs(false);
     }
     else
@@ -1036,7 +1036,7 @@ void SnortConfig::set_log_mode(const char* val)
         if ( !strcmp(val, LOG_DUMP) )
             val = LOG_CODECS;
         output = val;
-        Snort::set_main_hook(snort_log);
+        Analyzer::set_main_hook(snort_log);
     }
 }
 

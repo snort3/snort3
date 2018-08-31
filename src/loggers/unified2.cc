@@ -359,7 +359,7 @@ static void _Unified2LogPacketAlert(
     {
         logheader.packet_second = htonl((uint32_t)p->pkth->ts.tv_sec);
         logheader.packet_microsecond = htonl((uint32_t)p->pkth->ts.tv_usec);
-        pkt_length = ( p->is_rebuilt() ) ? p->dsize : p->pkth->caplen;
+        pkt_length = ( p->is_rebuilt() ) ? p->dsize : p->pktlen;
         logheader.packet_length = htonl(pkt_length + u2h_len);
         write_len += pkt_length + u2h_len;
     }

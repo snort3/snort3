@@ -74,7 +74,7 @@ void FlowTracker::update(Packet* p)
 {
     if (!p->is_rebuilt())
     {
-        auto len = p->pkth->caplen;
+        auto len = p->pktlen;
 
         if (p->ptrs.tcph)
             update_transport_flows(p->ptrs.sp, p->ptrs.dp, tcp, len);
@@ -163,7 +163,7 @@ public:
 TEST_CASE("no protocol", "[FlowTracker]")
 {
     Packet p;
-    uint32_t* len_ptr = &const_cast<DAQ_PktHdr_t*>(p.pkth)->caplen;
+    uint32_t* len_ptr = &p.pktlen;
 
     PerfConfig config;
     config.format = PerfFormat::MOCK;
@@ -208,7 +208,7 @@ TEST_CASE("icmp", "[FlowTracker]")
 {
     Packet p;
     icmp::ICMPHdr icmp;
-    uint32_t* len_ptr = &const_cast<DAQ_PktHdr_t*>(p.pkth)->caplen;
+    uint32_t* len_ptr = &p.pktlen;
     uint8_t* type_ptr = (uint8_t*) &icmp.type;
 
     PerfConfig config;
@@ -253,7 +253,7 @@ TEST_CASE("tcp", "[FlowTracker]")
 {
     Packet p;
     tcp::TCPHdr tcp;
-    uint32_t* len_ptr = &const_cast<DAQ_PktHdr_t*>(p.pkth)->caplen;
+    uint32_t* len_ptr = &p.pktlen;
 
     PerfConfig config;
     config.format = PerfFormat::MOCK;
@@ -307,7 +307,7 @@ TEST_CASE("udp", "[FlowTracker]")
 {
     Packet p;
     udp::UDPHdr udp;
-    uint32_t* len_ptr = &const_cast<DAQ_PktHdr_t*>(p.pkth)->caplen;
+    uint32_t* len_ptr = &p.pktlen;
 
     PerfConfig config;
     config.format = PerfFormat::MOCK;

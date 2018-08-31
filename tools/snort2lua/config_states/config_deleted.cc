@@ -533,19 +533,6 @@ static const ConvertMap disable_inline_init_failopen_api =
 const ConvertMap* disable_inline_init_failopen_map = &disable_inline_init_failopen_api;
 
 /*************************************************
- *****************  daq_mode  *******************
- *************************************************/
-
-static const std::string daq_mode = "daq_mode";
-static const ConvertMap daq_mode_api =
-{
-    daq_mode,
-    deleted_ctor<& daq_mode>,
-};
-
-const ConvertMap* daq_mode_map = &daq_mode_api;
-
-/*************************************************
  *************  decode_data_link  ****************
  *************************************************/
 
@@ -585,5 +572,18 @@ static const ConvertMap sidechannel_api =
 };
 
 const ConvertMap* sidechannel_map = &sidechannel_api;
+
+/*************************************************
+ *****************  no_promisc *******************
+ *************************************************/
+
+static const std::string no_promisc = "no_promisc";
+static const ConvertMap no_promisc_api =
+{
+    no_promisc,
+    deleted_ctor<& no_promisc>,
+};
+
+const ConvertMap* no_promisc_map = &no_promisc_api;
 
 } // namespace config

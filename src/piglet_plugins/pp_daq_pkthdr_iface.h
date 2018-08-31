@@ -22,8 +22,8 @@
 
 #include "lua/lua_iface.h"
 
-struct _daq_pkthdr;
+struct _daq_pkt_hdr;
 
-extern const struct Lua::TypeInterface<_daq_pkthdr> DAQHeaderIface;
+extern const struct Lua::TypeInterface<_daq_pkt_hdr> DAQHeaderIface;
 
 #endif

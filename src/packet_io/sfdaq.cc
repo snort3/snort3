@@ -25,61 +25,50 @@
 
 #include "sfdaq.h"
 
-extern "C" {
 #include <daq.h>
-#include <sfbpf_dlt.h>
-}
-
-#include <cassert>
-#include <mutex>
 
 #include "log/messages.h"
 #include "main/snort_config.h"
-#include "protocols/packet.h"
-#include "protocols/vlan.h"
 
 #include "sfdaq_config.h"
+#include "sfdaq_instance.h"
+#ifdef ENABLE_STATIC_DAQ
+#include "sfdaq_static_modules.h"
+#endif
 
 using namespace snort;
 using namespace std;
 
 #ifdef DEFAULT_DAQ
-#define XSTR(s) STR(s)
-#define STR(s) #s
-#define DAQ_DEFAULT XSTR(DEFAULT_DAQ)
+#define DAQ_DEFAULT STRINGIFY_MX(DEFAULT_DAQ)
 #else
 #define DAQ_DEFAULT "pcap"
 #endif
 
-static const int DEFAULT_PKT_SNAPLEN = 1518;
-
 // common for all daq threads / instances
-static const DAQ_Module_t* daq_mod = nullptr;
-static DAQ_Mode daq_mode = DAQ_MODE_PASSIVE;
-static uint32_t snap = DEFAULT_PKT_SNAPLEN;
+static DAQ_Config_h daqcfg = nullptr;
+static DAQ_Mode default_daq_mode = DAQ_MODE_PASSIVE;
+static string daq_module_names;
 static bool loaded = false;
-static std::mutex bpf_gate;
 
 // specific for each thread / instance
 static THREAD_LOCAL SFDAQInstance *local_instance = nullptr;
 
-/*
- * SFDAQ
- */
-
-void SFDAQ::load(const SnortConfig* sc)
+void SFDAQ::load(const SFDAQConfig* cfg)
 {
-    const char** dirs = new const char*[sc->daq_config->module_dirs.size() + 1];
+    const char** dirs = new const char*[cfg->module_dirs.size() + 1];
     int i = 0;
 
-    for (string& module_dir : sc->daq_config->module_dirs)
+    for (const string& module_dir : cfg->module_dirs)
         dirs[i++] = module_dir.c_str();
     dirs[i] = nullptr;
 
-    int err = daq_load_modules(dirs);
-
+#ifdef ENABLE_STATIC_DAQ
+    daq_load_static_modules(static_daq_modules);
+#endif
+    int err = daq_load_dynamic_modules(dirs);
     if (err)
-        FatalError("Can't load DAQ modules = %d\n", err);
+        FatalError("Could not load dynamic DAQ modules! (%d)\n", err);
 
     delete[] dirs;
 
@@ -94,41 +83,63 @@ void SFDAQ::unload()
 
 void SFDAQ::print_types(ostream& ostr)
 {
-    DAQ_Module_Info_t* list = nullptr;
-    int i, nMods = daq_get_module_list(&list);
+    DAQ_Module_h module = daq_modules_first();
 
-    if (nMods)
+    if (module)
         ostr << "Available DAQ modules:" << endl;
     else
         ostr << "No available DAQ modules (try adding directories with --daq-dir)." << endl;
 
-    for (i = 0; i < nMods; i++)
+    while (module)
     {
-        ostr << list[i].name << "(v" << list[i].version << "):";
+        ostr << daq_module_get_name(module) << "(v" << daq_module_get_version(module) << "):";
 
-        if (list[i].type & DAQ_TYPE_FILE_CAPABLE)
+        uint32_t type = daq_module_get_type(module);
+
+        if (type & DAQ_TYPE_FILE_CAPABLE)
             ostr << " readback";
 
-        if (list[i].type & DAQ_TYPE_INTF_CAPABLE)
+        if (type & DAQ_TYPE_INTF_CAPABLE)
             ostr << " live";
 
-        if (list[i].type & DAQ_TYPE_INLINE_CAPABLE)
+        if (type & DAQ_TYPE_INLINE_CAPABLE)
             ostr << " inline";
 
-        if (list[i].type & DAQ_TYPE_MULTI_INSTANCE)
+        if (type & DAQ_TYPE_MULTI_INSTANCE)
             ostr << " multi";
 
-        if (!(list[i].type & DAQ_TYPE_NO_UNPRIV))
+        if (!(type & DAQ_TYPE_NO_UNPRIV))
             ostr << " unpriv";
 
+        if (type & DAQ_TYPE_WRAPPER)
+            ostr << " wrapper";
+
         ostr << endl;
+
+        const DAQ_VariableDesc_t *var_desc_table;
+        int num_var_descs = daq_module_get_variable_descs(module, &var_desc_table);
+        if (num_var_descs > 0)
+        {
+            ostr << " Variables:" << endl;
+            for (int i = 0; i < num_var_descs; i++)
+            {
+                ostr << "  " << var_desc_table[i].name << " ";
+                if (var_desc_table[i].flags & DAQ_VAR_DESC_REQUIRES_ARGUMENT)
+                    ostr << "<arg> ";
+                else if (!(var_desc_table[i].flags & DAQ_VAR_DESC_FORBIDS_ARGUMENT))
+                    ostr << "[arg] ";
+                ostr << "- " << var_desc_table[i].description << endl;
+            }
+        }
+
+        module = daq_modules_next();
     }
-    daq_free_module_list(list, nMods);
 }
 
-static int DAQ_ValidateModule(DAQ_Mode mode)
+/*
+static int DAQ_ValidateModule(DAQ_Module_h module, DAQ_Mode mode)
 {
-    uint32_t have = daq_get_type(daq_mod);
+    uint32_t have = daq_module_get_type(module);
     uint32_t need = 0;
 
     if (mode == DAQ_MODE_READ_FILE)
@@ -142,42 +153,153 @@ static int DAQ_ValidateModule(DAQ_Mode mode)
 
     return ((have & need) != 0);
 }
+*/
 
-void SFDAQ::init(const SnortConfig* sc)
+static bool AddDaqModuleConfig(const SFDAQModuleConfig *dmc)
+{
+    const char* module_name = dmc->name.c_str();
+    DAQ_Module_h module = daq_find_module(module_name);
+    if (!module)
+    {
+        ErrorMessage("Could not find requested DAQ module: %s\n", module_name);
+        return false;
+    }
+
+    DAQ_ModuleConfig_h modcfg;
+    int rval;
+    if ((rval = daq_module_config_new(&modcfg, module)) != DAQ_SUCCESS)
+    {
+        ErrorMessage("Error allocating a new DAQ module configuration object! (%d)\n", rval);
+        return false;
+    }
+
+    DAQ_Mode mode;
+    if (dmc->mode == SFDAQModuleConfig::SFDAQ_MODE_PASSIVE)
+        mode = DAQ_MODE_PASSIVE;
+    else if (dmc->mode == SFDAQModuleConfig::SFDAQ_MODE_INLINE)
+        mode = DAQ_MODE_INLINE;
+    else if (dmc->mode == SFDAQModuleConfig::SFDAQ_MODE_READ_FILE)
+        mode = DAQ_MODE_READ_FILE;
+    else
+        mode = default_daq_mode;
+    daq_module_config_set_mode(modcfg, mode);
+
+    for (auto& kvp : dmc->variables)
+    {
+        const char* key = kvp.first.c_str();
+        const char* value = kvp.second.length() ? kvp.second.c_str() : nullptr;
+        if (daq_module_config_set_variable(modcfg, key, value) != DAQ_SUCCESS)
+        {
+            ErrorMessage("Error setting DAQ configuration variable with key '%s' and value '%s'! (%d)",
+                    key, value, rval);
+            daq_module_config_destroy(modcfg);
+            return false;
+        }
+    }
+
+    if ((rval = daq_config_push_module_config(daqcfg, modcfg)) != DAQ_SUCCESS)
+    {
+        ErrorMessage("Error pushing DAQ module configuration for '%s' onto the DAQ config! (%d)\n",
+                daq_module_get_name(module), rval);
+        daq_module_config_destroy(modcfg);
+        return false;
+    }
+
+    if (!daq_module_names.empty())
+        daq_module_names.insert(0, 1, ':');
+    daq_module_names.insert(0, module_name);
+
+    return true;
+}
+
+bool SFDAQ::init(const SFDAQConfig* cfg)
 {
     if (!loaded)
-        load(sc);
+        load(cfg);
 
-    const char* type = DAQ_DEFAULT;
-
-    if (!sc->daq_config->module_name.empty())
-        type = sc->daq_config->module_name.c_str();
-
-    daq_mod = daq_find_module(type);
-
-    if (!daq_mod)
-        FatalError("Can't find %s DAQ\n", type);
-
-    snap = (sc->daq_config->mru_size > 0) ? sc->daq_config->mru_size : DEFAULT_PKT_SNAPLEN;
+    int rval;
 
     if (SnortConfig::adaptor_inline_mode())
-        daq_mode = DAQ_MODE_INLINE;
+        default_daq_mode = DAQ_MODE_INLINE;
     else if (SnortConfig::read_mode())
-        daq_mode = DAQ_MODE_READ_FILE;
+        default_daq_mode = DAQ_MODE_READ_FILE;
     else
-        daq_mode = DAQ_MODE_PASSIVE;
+        default_daq_mode = DAQ_MODE_PASSIVE;
 
+    if ((rval = daq_config_new(&daqcfg)) != DAQ_SUCCESS)
+    {
+        ErrorMessage("Error allocating a new DAQ configuration object! (%d)\n", rval);
+        return false;
+    }
+
+    daq_config_set_msg_pool_size(daqcfg, cfg->get_batch_size() * 4);
+    daq_config_set_snaplen(daqcfg, cfg->get_mru_size());
+    daq_config_set_timeout(daqcfg, cfg->timeout);
+
+    /* If no modules were specified, try to automatically configure with the default. */
+    if (cfg->module_configs.empty())
+    {
+        SFDAQModuleConfig dmc;
+        dmc.name = DAQ_DEFAULT;
+        if (!AddDaqModuleConfig(&dmc))
+        {
+            daq_config_destroy(daqcfg);
+            daqcfg = nullptr;
+            return false;
+        }
+    }
+    /* Otherwise, if the module stack doesn't have a terminal module at the bottom, default
+        to a hardcoded base of the PCAP DAQ module in read-file mode.  This is a convenience
+        provided to emulate the previous dump/regtest DAQ module behavior. */
+    else
+    {
+        const char* module_name = cfg->module_configs[0]->name.c_str();
+        DAQ_Module_h module = daq_find_module(module_name);
+        if (module && (daq_module_get_type(module) & DAQ_TYPE_WRAPPER))
+        {
+            SFDAQModuleConfig dmc;
+            dmc.name = "pcap";
+            dmc.mode = SFDAQModuleConfig::SFDAQ_MODE_READ_FILE;
+            if (!AddDaqModuleConfig(&dmc))
+            {
+                daq_config_destroy(daqcfg);
+                daqcfg = nullptr;
+                return false;
+            }
+        }
+    }
+
+    for (SFDAQModuleConfig* dmc : cfg->module_configs)
+    {
+        if (!AddDaqModuleConfig(dmc))
+        {
+            daq_config_destroy(daqcfg);
+            daqcfg = nullptr;
+            return false;
+        }
+    }
+
+/*
     if (!DAQ_ValidateModule(daq_mode))
         FatalError("%s DAQ does not support %s.\n", type, daq_mode_string(daq_mode));
 
-    LogMessage("%s DAQ configured to %s.\n", type, daq_mode_string(daq_mode));
+*/
+    LogMessage("%s DAQ configured to %s.\n", daq_module_names.c_str(), daq_mode_string(default_daq_mode));
+
+    return true;
 }
 
 void SFDAQ::term()
 {
+    if (daqcfg)
+    {
+        daq_config_destroy(daqcfg);
+        daqcfg = nullptr;
+    }
+#ifndef REG_TEST
     if (loaded)
         unload();
-    daq_mod = nullptr;
+#endif
 }
 
 const char* SFDAQ::verdict_to_string(DAQ_Verdict verdict)
@@ -188,25 +310,26 @@ const char* SFDAQ::verdict_to_string(DAQ_Verdict verdict)
 bool SFDAQ::forwarding_packet(const DAQ_PktHdr_t* h)
 {
     // DAQ mode is inline and the packet will be forwarded?
-    return (daq_mode == DAQ_MODE_INLINE && !(h->flags & DAQ_PKT_FLAG_NOT_FORWARDING));
+    return (default_daq_mode == DAQ_MODE_INLINE && !(h->flags & DAQ_PKT_FLAG_NOT_FORWARDING));
 }
 
-const char* SFDAQ::get_type()
+bool SFDAQ::can_run_unprivileged()
 {
-    return daq_mod ? daq_get_name(daq_mod) : "error";
+    // Iterate over the configured modules to see if any of them don't support unprivileged operation
+    DAQ_ModuleConfig_h modcfg = daq_config_top_module_config(daqcfg);
+    while (modcfg)
+    {
+        DAQ_Module_h module = daq_module_config_get_module(modcfg);
+        if (daq_module_get_type(module) & DAQ_TYPE_NO_UNPRIV)
+            return false;
+        modcfg = daq_config_next_module_config(daqcfg);
+    }
+    return true;
 }
 
-// Snort has its own snap applied to packets it acquires via the DAQ.  This
-// should not be confused with the snap that was used to capture a pcap which
-// may be different.
-uint32_t SFDAQ::get_snap_len()
+bool SFDAQ::init_instance(SFDAQInstance* instance, const string& bpf_string)
 {
-    return snap;
-}
-
-bool SFDAQ::unprivileged()
-{
-    return !(daq_get_type(daq_mod) & DAQ_TYPE_NO_UNPRIV);
+    return instance->init(daqcfg, bpf_string);
 }
 
 /*
@@ -223,10 +346,9 @@ SFDAQInstance* SFDAQ::get_local_instance()
     return local_instance;
 }
 
-const char* SFDAQ::get_interface_spec()
+const char* SFDAQ::get_input_spec()
 {
-    assert(local_instance->get_interface_spec());
-    return local_instance->get_interface_spec();
+    return local_instance->get_input_spec();
 }
 
 int SFDAQ::get_base_protocol()
@@ -249,24 +371,14 @@ bool SFDAQ::can_replace()
     return local_instance && local_instance->can_replace();
 }
 
-bool SFDAQ::can_retry()
-{
-    return local_instance && local_instance->can_retry();
-}
-
 bool SFDAQ::get_tunnel_bypass(uint8_t proto)
 {
     return local_instance && local_instance->get_tunnel_bypass(proto);
 }
 
-int SFDAQ::inject(const DAQ_PktHdr_t* hdr, int rev, const uint8_t* buf, uint32_t len)
+int SFDAQ::inject(DAQ_Msg_h msg, int rev, const uint8_t* buf, uint32_t len)
 {
-    return local_instance->inject(hdr, rev, buf, len);
-}
-
-bool SFDAQ::break_loop(int error)
-{
-    return local_instance->break_loop(error);
+    return local_instance->inject(msg, rev, buf, len);
 }
 
 const DAQ_Stats_t* SFDAQ::get_stats()
@@ -274,16 +386,15 @@ const DAQ_Stats_t* SFDAQ::get_stats()
     return local_instance->get_stats();
 }
 
-const char* SFDAQ::get_input_spec(const SnortConfig* sc, unsigned instance_id)
+const char* SFDAQ::get_input_spec(const SFDAQConfig* cfg, unsigned instance_id)
 {
-    auto it = sc->daq_config->instances.find(instance_id);
-    if (it != sc->daq_config->instances.end() && !it->second->input_spec.empty())
-        return it->second->input_spec.c_str();
+    if (cfg->inputs.empty())
+        return nullptr;
 
-    if (!sc->daq_config->input_spec.empty())
-        return sc->daq_config->input_spec.c_str();
+    if (instance_id > 0 && instance_id < cfg->inputs.size())
+        return cfg->inputs[instance_id].c_str();
 
-    return nullptr;
+    return cfg->inputs[0].c_str();
 }
 
 const char* SFDAQ::default_type()
@@ -291,413 +402,3 @@ const char* SFDAQ::default_type()
     return DAQ_DEFAULT;
 }
 
-/*
- * SFDAQInstance
- */
-
-SFDAQInstance::SFDAQInstance(const char* intf)
-{
-    if (intf)
-        interface_spec = intf;
-    daq_hand = nullptr;
-    daq_dlt = -1;
-    s_error = DAQ_SUCCESS;
-    memset(&daq_stats, 0, sizeof(daq_stats));
-    daq_tunnel_mask = 0;
-}
-
-SFDAQInstance::~SFDAQInstance()
-{
-    if (daq_hand)
-        daq_shutdown(daq_mod, daq_hand);
-}
-
-static bool DAQ_ValidateInstance(void* daq_hand)
-{
-    uint32_t caps = daq_get_capabilities(daq_mod, daq_hand);
-
-    if (!SnortConfig::adaptor_inline_mode())
-        return true;
-
-    if (!(caps & DAQ_CAPA_BLOCK))
-        ParseWarning(WARN_DAQ, "inline mode configured but DAQ can't block packets.\n");
-
-    return true;
-}
-
-bool SFDAQInstance::configure(const SnortConfig* sc)
-{
-    DAQ_Config_t cfg;
-    const char* type = daq_get_name(daq_mod);
-    char buf[256] = "";
-    int err;
-
-    memset(&cfg, 0, sizeof(cfg));
-
-    cfg.name = const_cast<char*>(interface_spec.c_str());
-    cfg.snaplen = snap;
-    cfg.timeout = sc->daq_config->timeout;
-    cfg.mode = daq_mode;
-    cfg.extra = nullptr;
-    cfg.flags = 0;
-
-    for (auto& kvp : sc->daq_config->variables)
-    {
-        daq_config_set_value(&cfg, kvp.first.c_str(),
-                kvp.second.length() ? kvp.second.c_str() : nullptr);
-    }
-
-    auto it = sc->daq_config->instances.find(get_instance_id());
-    if (it != sc->daq_config->instances.end())
-    {
-        for (auto& kvp : it->second->variables)
-        {
-            daq_config_set_value(&cfg, kvp.first.c_str(),
-                    kvp.second.length() ? kvp.second.c_str() : nullptr);
-        }
-    }
-
-    if (!SnortConfig::read_mode())
-    {
-        if (!(sc->run_flags & RUN_FLAG__NO_PROMISCUOUS))
-            cfg.flags |= DAQ_CFG_PROMISC;
-    }
-
-    // FIXIT-M - This is sort of an abomination and would ideally be configurable ...
-    if (!strcasecmp(type, "dump") or !strcasecmp(type, "regtest"))
-        cfg.extra = reinterpret_cast<char*>(const_cast<DAQ_Module_t*>(daq_find_module("pcap")));
-
-    err = daq_initialize(daq_mod, &cfg, &daq_hand, buf, sizeof(buf));
-    if (err)
-    {
-        ErrorMessage("Can't initialize DAQ %s (%d) - %s\n", type, err, buf);
-        return false;
-    }
-    daq_config_clear_values(&cfg);
-
-    if (!DAQ_ValidateInstance(daq_hand))
-        FatalError("DAQ configuration incompatible with intended operation.\n");
-
-    set_filter(sc->bpf_filter.c_str());
-
-    return true;
-}
-
-void SFDAQInstance::reload()
-{
-    void* old_config = nullptr;
-    void* new_config = nullptr;
-    if (daq_mod && daq_hand)
-    {
-        if ( ( daq_hup_prep(daq_mod, daq_hand, &new_config) == DAQ_SUCCESS ) and
-            ( daq_hup_apply(daq_mod, daq_hand, new_config, &old_config) == DAQ_SUCCESS ) )
-        {
-            daq_hup_post(daq_mod, daq_hand, old_config);
-        }
-    }
-}
-
-void SFDAQInstance::abort()
-{
-    if (was_started())
-        stop();
-
-    //DAQ_Delete();
-    //DAQ_Term();  FIXIT-L this must be called from main thread on abort
-}
-
-const char* SFDAQInstance::get_interface_spec()
-{
-    return interface_spec.c_str();
-}
-
-// That distinction does not hold with datalink types.  Snort must use whatever
-// datalink type the DAQ coughs up as its base protocol decoder.  For pcaps,
-// the datalink type in the file must be used - which may not be known until
-// start.  The value is cached here since it used for packet operations like
-// logging and is needed at shutdown.  This avoids sequencing issues.
-int SFDAQInstance::get_base_protocol()
-{
-    return daq_dlt;
-}
-
-bool SFDAQInstance::can_inject()
-{
-    return (daq_get_capabilities(daq_mod, daq_hand) & DAQ_CAPA_INJECT) != 0;
-}
-
-bool SFDAQInstance::can_inject_raw()
-{
-    return (daq_get_capabilities(daq_mod, daq_hand) & DAQ_CAPA_INJECT_RAW) != 0;
-}
-
-bool SFDAQInstance::can_replace()
-{
-    return (daq_get_capabilities(daq_mod, daq_hand) & DAQ_CAPA_REPLACE) != 0;
-}
-
-bool SFDAQInstance::can_retry()
-{
-    return (daq_get_capabilities(daq_mod, daq_hand) & DAQ_CAPA_RETRY) != 0;
-}
-
-bool SFDAQInstance::can_start_unprivileged()
-{
-    return (daq_get_capabilities(daq_mod, daq_hand) & DAQ_CAPA_UNPRIV_START) != 0;
-}
-
-bool SFDAQInstance::can_whitelist()
-{
-    return (daq_get_capabilities(daq_mod, daq_hand) & DAQ_CAPA_WHITELIST) != 0;
-}
-
-bool SFDAQInstance::set_filter(const char* bpf)
-{
-    int err = 0;
-
-    // The BPF can be compiled either during daq_set_filter() or daq_start(),
-    // so protect the thread-unsafe BPF scanner/compiler in both places.
-
-    if (bpf and *bpf)
-    {
-        std::lock_guard<std::mutex> lock(bpf_gate);
-        err = daq_set_filter(daq_mod, daq_hand, bpf);
-    }
-
-    if (err)
-        FatalError("Can't set DAQ BPF filter to '%s' (%s)\n",
-            bpf, daq_get_error(daq_mod, daq_hand));
-
-    return (err == DAQ_SUCCESS);
-}
-
-bool SFDAQInstance::start()
-{
-    int err;
-
-    // The BPF can be compiled either during daq_set_filter() or daq_start(),
-    // so protect the thread-unsafe BPF scanner/compiler in both places.
-    {
-        std::lock_guard<std::mutex> lock(bpf_gate);
-        err = daq_start(daq_mod, daq_hand);
-    }
-
-    if (err)
-        ErrorMessage("Can't start DAQ (%d) - %s\n", err, daq_get_error(daq_mod, daq_hand));
-    else
-        daq_dlt = daq_get_datalink_type(daq_mod, daq_hand);
-
-    get_tunnel_capabilities();
-
-    return (err == DAQ_SUCCESS);
-}
-
-void SFDAQInstance::get_tunnel_capabilities()
-{
-    daq_tunnel_mask = 0;
-    if (daq_mod && daq_hand)
-    {
-        uint32_t caps = daq_get_capabilities(daq_mod, daq_hand);
-
-        if (caps & DAQ_CAPA_DECODE_GTP)
-        {
-            daq_tunnel_mask |= TUNNEL_GTP;
-        }
-        if (caps & DAQ_CAPA_DECODE_TEREDO)
-        {
-            daq_tunnel_mask |= TUNNEL_TEREDO;
-        }
-        if (caps & DAQ_CAPA_DECODE_GRE)
-        {
-            daq_tunnel_mask |= TUNNEL_GRE;
-        }
-        if (caps & DAQ_CAPA_DECODE_4IN4)
-        {
-            daq_tunnel_mask |= TUNNEL_4IN4;
-        }
-        if (caps & DAQ_CAPA_DECODE_6IN4)
-        {
-            daq_tunnel_mask |= TUNNEL_6IN4;
-        }
-        if (caps & DAQ_CAPA_DECODE_4IN6)
-        {
-            daq_tunnel_mask |= TUNNEL_4IN6;
-        }
-        if (caps & DAQ_CAPA_DECODE_6IN6)
-        {
-            daq_tunnel_mask |= TUNNEL_6IN6;
-        }
-        if (caps & DAQ_CAPA_DECODE_MPLS)
-        {
-            daq_tunnel_mask |= TUNNEL_MPLS;
-        }
-    }
-}
-
-bool SFDAQInstance::get_tunnel_bypass(uint8_t proto)
-{
-    return (daq_tunnel_mask & proto) != 0;
-}
-
-bool SFDAQInstance::was_started()
-{
-    DAQ_State s;
-
-    if (!daq_hand)
-        return false;
-
-    s = daq_check_status(daq_mod, daq_hand);
-
-    return (DAQ_STATE_STARTED == s);
-}
-
-bool SFDAQInstance::stop()
-{
-    int err = daq_stop(daq_mod, daq_hand);
-
-    if (err)
-        LogMessage("Can't stop DAQ (%d) - %s\n", err, daq_get_error(daq_mod, daq_hand));
-
-    return (err == DAQ_SUCCESS);
-}
-
-static int metacallback(void *user, const DAQ_MetaHdr_t* hdr, const uint8_t* data)
-{
-    DataBus::publish(DAQ_META_EVENT, user, hdr->type, data);
-    return 0;
-}
-
-int SFDAQInstance::acquire(int max, DAQ_Analysis_Func_t callback)
-{
-    int err = daq_acquire_with_meta(daq_mod, daq_hand, max, callback, metacallback, nullptr);
-
-    if (err && err != DAQ_READFILE_EOF)
-        LogMessage("Can't acquire (%d) - %s\n", err, daq_get_error(daq_mod, daq_hand));
-
-    if (s_error != DAQ_SUCCESS)
-    {
-        err = s_error;
-        s_error = DAQ_SUCCESS;
-    }
-    return err;
-}
-
-int SFDAQInstance::inject(const DAQ_PktHdr_t* h, int rev, const uint8_t* buf, uint32_t len)
-{
-    int err = daq_inject(daq_mod, daq_hand, h, buf, len, rev);
-#ifdef DEBUG_MSGS
-    if (err)
-        LogMessage("Can't inject (%d) - %s\n", err, daq_get_error(daq_mod, daq_hand));
-#endif
-    return err;
-}
-
-bool SFDAQInstance::break_loop(int error)
-{
-    if (error)
-        s_error = error;
-    return (daq_breakloop(daq_mod, daq_hand) == DAQ_SUCCESS);
-}
-
-// returns statically allocated stats - don't free
-const DAQ_Stats_t* SFDAQInstance::get_stats()
-{
-    if (daq_hand)
-    {
-        int err = daq_get_stats(daq_mod, daq_hand, &daq_stats);
-
-        if (err)
-            LogMessage("Can't get DAQ stats (%d) - %s\n", err, daq_get_error(daq_mod, daq_hand));
-
-        // Some DAQs don't provide hw numbers, so we default HW RX to the SW equivalent
-        // (this means outstanding packets = 0)
-        if (!daq_stats.hw_packets_received)
-            daq_stats.hw_packets_received = daq_stats.packets_received + daq_stats.packets_filtered;
-    }
-
-    return &daq_stats;
-}
-
-int SFDAQInstance::query_flow(const DAQ_PktHdr_t* hdr, DAQ_QueryFlow_t* query)
-{
-    return daq_query_flow(daq_mod, daq_hand, hdr, query);
-}
-
-int SFDAQInstance::modify_flow_opaque(const DAQ_PktHdr_t* hdr, uint32_t opaque)
-{
-    DAQ_ModFlow_t mod;
-
-    mod.type = DAQ_MODFLOW_TYPE_OPAQUE;
-    mod.length = sizeof(opaque);
-    mod.value = &opaque;
-
-    return daq_modify_flow(daq_mod, daq_hand, hdr, &mod);
-}
-
-int SFDAQInstance::modify_flow_pkt_trace(const DAQ_PktHdr_t* hdr, uint8_t verdict_reason,
-    uint8_t* buff, uint32_t buff_len)
-{
-    DAQ_ModFlow_t mod;
-    DAQ_ModFlowPktTrace_t mod_tr;
-    mod_tr.vreason = verdict_reason;
-    mod_tr.pkt_trace_data_len = buff_len;
-    mod_tr.pkt_trace_data = buff;
-    mod.type = DAQ_MODFLOW_TYPE_PKT_TRACE;
-    mod.length = sizeof(DAQ_ModFlowPktTrace_t);
-    mod.value = (void*)&mod_tr;
-    return daq_modify_flow(daq_mod, daq_hand, hdr, &mod);
-}
-
-// FIXIT-L X Add Snort flag definitions for callers to use and translate/pass them through to
-// the DAQ module
-int SFDAQInstance::add_expected(const Packet* ctrlPkt, const SfIp* cliIP, uint16_t cliPort,
-        const SfIp* srvIP, uint16_t srvPort, IpProtocol protocol, unsigned timeout_ms, unsigned /* flags */)
-{
-    DAQ_Data_Channel_Params_t daq_params;
-    DAQ_DP_key_t dp_key;
-
-    dp_key.src_af = cliIP->get_family();
-    if (cliIP->is_ip4())
-        dp_key.sa.src_ip4.s_addr = cliIP->get_ip4_value();
-    else
-        memcpy(&dp_key.sa.src_ip6, cliIP->get_ip6_ptr(), sizeof(dp_key.sa.src_ip6));
-    dp_key.src_port = cliPort;
-
-    dp_key.dst_af = srvIP->get_family();
-    if (srvIP->is_ip4())
-        dp_key.da.dst_ip4.s_addr = srvIP->get_ip4_value();
-    else
-        memcpy(&dp_key.da.dst_ip6, srvIP->get_ip6_ptr(), sizeof(dp_key.da.dst_ip6));
-    dp_key.dst_port = srvPort;
-
-    dp_key.protocol = (uint8_t) protocol;
-    dp_key.vlan_cnots = 1;
-    if (ctrlPkt->proto_bits & PROTO_BIT__VLAN)
-        dp_key.vlan_id = layer::get_vlan_layer(ctrlPkt)->vid();
-    else
-        dp_key.vlan_id = 0xFFFF;
-
-    if (ctrlPkt->proto_bits & PROTO_BIT__GTP)
-        dp_key.tunnel_type = DAQ_DP_TUNNEL_TYPE_GTP_TUNNEL;
-    else if (ctrlPkt->proto_bits & PROTO_BIT__MPLS)
-        dp_key.tunnel_type = DAQ_DP_TUNNEL_TYPE_MPLS_TUNNEL;
-/*
-    else if ( ctrlPkt->encapsulated )
-        dp_key.tunnel_type = DAQ_DP_TUNNEL_TYPE_OTHER_TUNNEL;
-*/
-    else
-        dp_key.tunnel_type = DAQ_DP_TUNNEL_TYPE_NON_TUNNEL;
-
-    memset(&daq_params, 0, sizeof(daq_params));
-    daq_params.timeout_ms = timeout_ms;
-/*
-    if (flags & DAQ_DC_FLOAT)
-        daq_params.flags |= DAQ_DATA_CHANNEL_FLOAT;
-    if (flags & DAQ_DC_ALLOW_MULTIPLE)
-        daq_params.flags |= DAQ_DATA_CHANNEL_ALLOW_MULTIPLE;
-    if (flags & DAQ_DC_PERSIST)
-        daq_params.flags |= DAQ_DATA_CHANNEL_PERSIST;
-*/
-
-    return daq_dp_add_dc(daq_mod, daq_hand, ctrlPkt->pkth, &dp_key, nullptr, &daq_params);
-}

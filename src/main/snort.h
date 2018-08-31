@@ -31,23 +31,9 @@ class ContextSwitcher;
 namespace snort
 {
 class Flow;
+class SFDAQInstance;
 struct Packet;
 struct SnortConfig;
-
-typedef bool (* MainHook_f)(Packet*);
-
-class TestPause
-{
-public:
-    bool get_pause() { return pause; }
-    void clear_pause() { pause = false; }
-    void set_pause_cnt(int cnt);
-
-public:
-    bool pause = false;
-    bool was_paused = false;
-    uint64_t pause_cnt = 0;
-};
 
 class Snort
 {
@@ -63,29 +49,6 @@ public:
     static bool is_starting();
     static bool is_reloading();
     static bool has_dropped_privileges();
-
-    static bool thread_init_privileged(const char* intf);
-    static void thread_init_unprivileged();
-    static void thread_reinit(SnortConfig*);
-    static void thread_term();
-
-    static void thread_idle();
-    static void thread_rotate();
-
-    static void capture_packet();
-
-    static DAQ_Verdict process_packet(
-        Packet*, const DAQ_PktHdr_t*, const uint8_t* pkt, bool is_frag=false);
-
-    static DAQ_Verdict packet_callback(void*, const DAQ_PktHdr_t*, const uint8_t*);
-
-    static bool inspect(Packet*);
-
-    static void set_main_hook(MainHook_f);
-    static ContextSwitcher* get_switcher();
-
-    SO_PUBLIC static Packet* get_packet();
-    static TestPause& get_test_pause();
 
 private:
     static void init(int, char**);

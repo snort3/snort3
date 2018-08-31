@@ -33,135 +33,152 @@
 
 using namespace snort;
 
-TEST_CASE("Kitchen Sink", "[SFDAQModule]")
+
+TEST_CASE("parse sfdaq config", "[SFDAQModule]")
 {
-    SFDAQModule sfdm;
     SnortConfig sc;
+    SFDAQModule sfdm;
 
     /* Generate the configuration */
     sfdm.begin("daq", 0, &sc);
 
     Value module_dir1("/test/dir/1");
-    Value module_dir2("/test/dir/2");
     CHECK(sfdm.set("daq.module_dirs", module_dir1, &sc));
+
+    Value module_dir2("/test/dir/2");
     CHECK(sfdm.set("daq.module_dirs", module_dir2, &sc));
 
-    Value module_name("test_module");
-    CHECK(sfdm.set("daq.module", module_name, &sc));
+    Value input1("test_input1");
+    CHECK(sfdm.set("daq.inputs", input1, &sc));
 
-    Value input_spec("test_input");
-    CHECK(sfdm.set("daq.input_spec", input_spec, &sc));
+    Value input2("test_input2");
+    CHECK(sfdm.set("daq.inputs", input2, &sc));
 
-    Value var1("foo=bar");
-    Value var2("debug");
-    Value var3("hello=world");
-    CHECK(sfdm.set("daq.variables", var1, &sc));
-    CHECK(sfdm.set("daq.variables", var2, &sc));
-    CHECK(sfdm.set("daq.variables", var3, &sc));
+    Value input3("test_input3");
+    CHECK(sfdm.set("daq.inputs", input3, &sc));
 
     Value snaplen(static_cast<double>(6666));
     CHECK(sfdm.set("daq.snaplen", snaplen, &sc));
 
-    Value no_promisc(true);
-    CHECK(sfdm.set("daq.no_promisc", no_promisc, &sc));
+    Value batch_size(static_cast<double>(10));
+    CHECK(sfdm.set("daq.batch_size", batch_size, &sc));
 
-    CHECK(sfdm.begin("daq.instances", 0, &sc));
-    CHECK(sfdm.begin("daq.instances", 1, &sc));
+    CHECK(sfdm.begin("daq.modules", 0, &sc));
 
-    CHECK_FALSE(sfdm.end("daq.instances", 1, &sc));
-    CHECK(sfdm.begin("daq.instances", 2, &sc));
-
-    Value instance_id(static_cast<double>(5));
-    CHECK(sfdm.set("daq.instances.id", instance_id, &sc));
-
-    Value instance_input_spec("instance_5_input");
-    CHECK(sfdm.set("daq.instances.input_spec", instance_input_spec, &sc));
-
-    Value instance_var1("instance5_var1=foo");
-    Value instance_var2("instance5_var2");
-    CHECK(sfdm.set("daq.instances.variables", instance_var1, &sc));
-    CHECK(sfdm.set("daq.instances.variables", instance_var2, &sc));
-
-    CHECK(sfdm.end("daq.instances", 2, &sc));
-    CHECK(sfdm.end("daq.instances", 0, &sc));
-    CHECK(sfdm.end("daq", 0, &sc));
-
-    /* Validate the configuration */
-    SFDAQConfig *cfg = sc.daq_config;
-
-    REQUIRE((cfg->module_dirs.size() == 2));
-    CHECK(cfg->module_dirs[0] == module_dir1.get_string());
-    CHECK(cfg->module_dirs[1] == module_dir2.get_string());
-
-    CHECK(cfg->module_name == module_name.get_string());
-
-    CHECK(cfg->input_spec == input_spec.get_string());
-
-    REQUIRE((cfg->variables.size() == 3));
-    CHECK(cfg->variables[0].first == "foo");
-    CHECK(cfg->variables[0].second == "bar");
-    CHECK(cfg->variables[1].first == "debug");
-    CHECK(cfg->variables[1].second.empty());
-    CHECK(cfg->variables[2].first == "hello");
-    CHECK(cfg->variables[2].second == "world");
-
-    CHECK((cfg->mru_size == 6666));
-
-    REQUIRE(cfg->instances.size() == 1);
-    for (auto it : cfg->instances)
+    SECTION("empty module config")
     {
-        CHECK((it.first == 5));
-        SFDAQInstanceConfig* icfg = it.second;
-        CHECK(icfg->input_spec == instance_input_spec.get_string());
-        REQUIRE((icfg->variables.size() == 2));
-        CHECK(icfg->variables[0].first == "instance5_var1");
-        CHECK(icfg->variables[0].second == "foo");
-        CHECK(icfg->variables[1].first == instance_var2.get_string());
-        CHECK(icfg->variables[1].second.empty());
+        // Empty module table entry should fail
+        CHECK(sfdm.begin("daq.modules", 1, &sc));
+        CHECK_FALSE(sfdm.end("daq.modules", 1, &sc));
     }
 
-    /* Secondary config to overlay from, for example, the command line */
-    SnortConfig sc2;
+    CHECK(sfdm.begin("daq.modules", 2, &sc));
 
-    sc2.daq_config->add_module_dir("cli_module_dir");
-    sc2.daq_config->set_module_name("cli_module_name");
-    sc2.daq_config->set_input_spec(nullptr);
-    sc2.daq_config->set_input_spec("cli_input_spec");
-    sc2.daq_config->set_variable("cli_global_variable=abc");
-    sc2.daq_config->set_mru_size(3333);
-    sc2.daq_config->set_input_spec(nullptr, 2);
-    sc2.daq_config->set_input_spec("cli_instance_2_input", 2);
-    sc2.daq_config->set_input_spec("cli_instance_5_input", 5);
-    sc2.daq_config->set_variable("cli_instance_5_var1=def", 5);
+    Value module_name("dump");
+    CHECK(sfdm.set("daq.modules.name", module_name, &sc));
 
-    cfg->overlay(sc2.daq_config);
+    Value mode_val("passive");
+    Parameter mode_param = { "mode", Parameter::PT_ENUM, "passive | inline | read-file", "passive", "DAQ module mode" };
+    mode_val.set(&mode_param);
+    CHECK(sfdm.set("daq.modules.mode", mode_val, &sc));
 
-    REQUIRE(cfg->module_dirs.size() == 1);
-    CHECK(cfg->module_dirs[0] == "cli_module_dir");
-    CHECK(cfg->module_name == "cli_module_name");
-    CHECK(cfg->input_spec == "cli_input_spec");
-    REQUIRE(cfg->variables.size() == 1);
-    CHECK(cfg->variables[0].first == "cli_global_variable");
-    CHECK(cfg->variables[0].second == "abc");
-    CHECK((cfg->mru_size == 3333));
-    REQUIRE((cfg->instances.size() == 2));
-    for (auto it : cfg->instances)
+    Value dump_var1("dump_var1=foo");
+    CHECK(sfdm.set("daq.modules.variables", dump_var1, &sc));
+
+    Value dump_var2("dump_var2");
+    CHECK(sfdm.set("daq.modules.variables", dump_var2, &sc));
+
+    CHECK(sfdm.end("daq.modules", 2, &sc));
+    CHECK(sfdm.end("daq.modules", 0, &sc));
+    CHECK(sfdm.end("daq", 0, &sc));
+
+    SECTION("validate sfdaq config")
     {
-        CHECK((it.first == 2 || it.first == 5));
-        if (it.first == 2)
+        /* Validate the configuration */
+        SFDAQConfig* cfg = sc.daq_config;
+        REQUIRE((cfg->module_dirs.size() == 2));
+        CHECK(cfg->module_dirs[0] == module_dir1.get_string());
+        CHECK(cfg->module_dirs[1] == module_dir2.get_string());
+
+        REQUIRE((cfg->inputs.size() == 3));
+        CHECK(cfg->inputs[0] == input1.get_string());
+        CHECK(cfg->inputs[1] == input2.get_string());
+        CHECK(cfg->inputs[2] == input3.get_string());
+
+        CHECK((cfg->mru_size == 6666));
+        CHECK((cfg->batch_size == 10));
+
+        REQUIRE(cfg->module_configs.size() == 1);
+        for (auto it : cfg->module_configs)
         {
-            SFDAQInstanceConfig* icfg = it.second;
-            CHECK(icfg->input_spec == "cli_instance_2_input");
-            CHECK(icfg->variables.empty());
+            SFDAQModuleConfig* mcfg = it;
+            CHECK((mcfg->name == module_name.get_string()));
+            CHECK((mcfg->mode == SFDAQModuleConfig::SFDAQ_MODE_PASSIVE));
+            REQUIRE((mcfg->variables.size() == 2));
+            CHECK(mcfg->variables[0].first == "dump_var1");
+            CHECK(mcfg->variables[0].second == "foo");
+            CHECK(mcfg->variables[1].first == dump_var2.get_string());
+            CHECK(mcfg->variables[1].second.empty());
         }
-        else if (it.first == 5)
+    }
+
+    SECTION("sfdaq command line config and overlay verification")
+    {
+        /* Secondary config to overlay from, for example, the command line */
+        SFDAQConfig overlay_cfg;
+
+        overlay_cfg.add_module_dir("cli_module_dir");
+        overlay_cfg.add_input("cli_input");
+        overlay_cfg.set_mru_size(3333);
+        overlay_cfg.set_batch_size(12);
+
+        SFDAQModuleConfig* cli_module_cfg = overlay_cfg.add_module_config("cli_module_name");
+
+        cli_module_cfg->set_variable("cli_module_variable=abc");
+        cli_module_cfg->mode = SFDAQModuleConfig::SFDAQ_MODE_READ_FILE;
+
+        SFDAQModuleConfig* cli_dump_cfg = overlay_cfg.add_module_config("dump");
+
+        cli_dump_cfg->mode = SFDAQModuleConfig::SFDAQ_MODE_INLINE;
+        cli_dump_cfg->set_variable("dump_var3");
+        cli_dump_cfg->set_variable("dump_var4=bar");
+        cli_dump_cfg->set_variable("dump_var5=foo");
+
+        SFDAQConfig* cfg = sc.daq_config;
+        cfg->overlay(&overlay_cfg);
+
+        REQUIRE(cfg->module_dirs.size() == 1);
+        CHECK(cfg->module_dirs[0] == "cli_module_dir");
+
+        REQUIRE((cfg->inputs.size() == 1));
+        CHECK(cfg->inputs[0] == "cli_input");
+
+        CHECK((cfg->mru_size == 3333));
+        CHECK((cfg->batch_size == 12));
+
+        REQUIRE(cfg->module_configs.size() == 2);
+        for (auto it : cfg->module_configs)
         {
-            SFDAQInstanceConfig* icfg = it.second;
-            CHECK(icfg->input_spec == "cli_instance_5_input");
-            REQUIRE(icfg->variables.size() == 1);
-            CHECK(icfg->variables[0].first == "cli_instance_5_var1");
-            CHECK(icfg->variables[0].second == "def");
+            SFDAQModuleConfig* mcfg = it;
+            CHECK((mcfg->name == "cli_module_name" or mcfg->name == "dump"));
+            if (mcfg->name == "cli_module_name")
+            {
+                CHECK(mcfg->mode == SFDAQModuleConfig::SFDAQ_MODE_READ_FILE);
+                REQUIRE((mcfg->variables.size() == 1));
+                CHECK(mcfg->variables[0].first == "cli_module_variable");
+                CHECK(mcfg->variables[0].second == "abc");
+            }
+            else if (mcfg->name == "dump")
+            {
+                CHECK(mcfg->mode == SFDAQModuleConfig::SFDAQ_MODE_INLINE);
+                REQUIRE((mcfg->variables.size() == 3));
+                CHECK(mcfg->variables[0].first == "dump_var3");
+                CHECK(mcfg->variables[0].second.empty());
+                CHECK(mcfg->variables[1].first == "dump_var4");
+                CHECK(mcfg->variables[1].second == "bar");
+                CHECK(mcfg->variables[2].first == "dump_var5");
+                CHECK(mcfg->variables[2].second == "foo");
+            }
         }
     }
 }
-

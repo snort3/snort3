@@ -137,7 +137,7 @@ void FlowIPTracker::update(Packet* p)
 
         const SfIp* src_addr = p->ptrs.ip_api.get_src();
         const SfIp* dst_addr = p->ptrs.ip_api.get_dst();
-        int len = p->pkth->caplen;
+        int len = p->pktlen;
 
         if (p->ptrs.tcph)
             type = SFS_TYPE_TCP;

@@ -55,8 +55,8 @@ void DaqMetaEventHandler::handle(DataEvent& event, Flow*)
 
     const char* cmd;
     switch (ev->get_type()) {
-        case DAQ_METAHDR_TYPE_SOF: cmd = "sof"; break;
-        case DAQ_METAHDR_TYPE_EOF: cmd = "eof"; break;
+        case DAQ_MSG_TYPE_SOF: cmd = "sof"; break;
+        case DAQ_MSG_TYPE_EOF: cmd = "eof"; break;
         default: return;
     }
 
@@ -106,7 +106,7 @@ void DaqMetaEventHandler::handle(DataEvent& event, Flow*)
 static void log_raw(const Packet* p)
 {
     TextLog_Print(hext_log, "\n# %u [%u]\n",
-        s_pkt_num++, p->pkth->caplen);
+        s_pkt_num++, p->pktlen);
 }
 
 static void log_header(const Packet* p)
@@ -271,7 +271,7 @@ void HextLogger::log(Packet* p, const char*, Event*)
     if ( raw )
     {
         log_raw(p);
-        log_data(p->pkt, p->pkth->caplen, width);
+        log_data(p->pkt, p->pktlen, width);
     }
     else if ( p->has_tcp_data() )
     {

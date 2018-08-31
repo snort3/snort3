@@ -23,19 +23,16 @@
 #define DAQ_USER_H
 
 #include <stdint.h>
+#include <daq_common.h>
 
 /* for raw payload only */
 #define DLT_USER 230
-
-/* in: DAQ_QueryFlow_t.type */
-#define DAQ_USR_QUERY_PCI       1000
 
 /* DAQ_UsrHdr_t.flags */
 #define DAQ_USR_FLAG_TO_SERVER  0x01
 #define DAQ_USR_FLAG_START_FLOW 0x02
 #define DAQ_USR_FLAG_END_FLOW   0x04
 
-/* out: DAQ_QueryFlow_t.value */
 typedef struct
 {
     uint32_t src_addr;
@@ -45,6 +42,13 @@ typedef struct
     uint8_t ip_proto;
     uint8_t flags;
 } DAQ_UsrHdr_t;
+
+#define DIOCTL_QUERY_USR_PCI    (DAQ_IoctlCmd) 2048
+typedef struct
+{
+    DAQ_Msg_h msg;
+    DAQ_UsrHdr_t* pci;
+} DIOCTL_QueryUsrPCI;
 
 #endif
 

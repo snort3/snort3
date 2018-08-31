@@ -85,7 +85,7 @@ int FileSession::process(Packet* p)
     if (file_flows &&
         file_flows->file_process(p, p->data, p->dsize, position(p), c->upload))
     {
-        const char* file_name = SFDAQ::get_interface_spec();
+        const char* file_name = SFDAQ::get_input_spec();
         if (file_name)
             file_flows->set_file_name((const uint8_t*)file_name, strlen(file_name));
     }

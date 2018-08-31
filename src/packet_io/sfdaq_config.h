@@ -25,19 +25,27 @@
 #include <unordered_map>
 #include <vector>
 
-/* Per-Instance override configuration */
-struct SFDAQInstanceConfig
+using DaqVar = std::pair<std::string, std::string>;
+using DaqVarList = std::vector<DaqVar>;
+
+/* Module configuration */
+struct SFDAQModuleConfig
 {
-    SFDAQInstanceConfig() = default;
-    SFDAQInstanceConfig(const SFDAQInstanceConfig&);
+    enum SFDAQMode
+    {
+        SFDAQ_MODE_UNSET,
+        SFDAQ_MODE_PASSIVE,
+        SFDAQ_MODE_INLINE,
+        SFDAQ_MODE_READ_FILE,
+    };
 
-    SFDAQInstanceConfig& operator=(const SFDAQInstanceConfig&) = delete;
-
-    void set_input_spec(const char*);
+    SFDAQModuleConfig() = default;
+    SFDAQModuleConfig(const SFDAQModuleConfig&);
     void set_variable(const char* varkvp);
 
-    std::string input_spec;
-    std::vector<std::pair<std::string, std::string>> variables;
+    std::string name;
+    SFDAQMode mode = SFDAQ_MODE_UNSET;
+    DaqVarList variables;
 };
 
 /* General/base configuration */
@@ -46,23 +54,32 @@ struct SFDAQConfig
     SFDAQConfig();
     ~SFDAQConfig();
 
+    void add_input(const char*);
+    SFDAQModuleConfig* add_module_config(const char* module_name);
     void add_module_dir(const char*);
-    void set_input_spec(const char*, int instance_id = -1);
-    void set_module_name(const char*);
+    void set_batch_size(uint32_t);
     void set_mru_size(int);
-    void set_variable(const char* varkvp, int instance_id = -1);
+
+    uint32_t get_batch_size() const { return (batch_size == BATCH_SIZE_UNSET) ? BATCH_SIZE_DEFAULT : batch_size; }
+    uint32_t get_mru_size() const { return (mru_size == SNAPLEN_UNSET) ? SNAPLEN_DEFAULT : mru_size; }
 
     void overlay(const SFDAQConfig*);
 
     /* General configuration */
     std::vector<std::string> module_dirs;
-    std::string module_name;
-    /* Module configuration */
-    std::string input_spec;
-    std::vector<std::pair<std::string, std::string>> variables;
+    /* Instance configuration */
+    std::vector<std::string> inputs;
+    uint32_t batch_size;
     int mru_size;
     unsigned int timeout;
-    std::unordered_map<unsigned, SFDAQInstanceConfig*> instances;
+    std::vector<SFDAQModuleConfig*> module_configs;
+
+    /* Constants */
+    static constexpr uint32_t BATCH_SIZE_UNSET = 0;
+    static constexpr int SNAPLEN_UNSET = -1;
+    static constexpr uint32_t BATCH_SIZE_DEFAULT = 64;
+    static constexpr int SNAPLEN_DEFAULT = 1518;
+    static constexpr unsigned TIMEOUT_DEFAULT = 1000;
 };
 
 #endif

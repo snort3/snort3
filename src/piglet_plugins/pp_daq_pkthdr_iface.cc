@@ -29,11 +29,10 @@
 
 #include "lua/lua_arg.h"
 
-static void set_fields(lua_State* L, int tindex, struct _daq_pkthdr& self)
+static void set_fields(lua_State* L, int tindex, DAQ_PktHdr_t& self)
 {
     Lua::Table table(L, tindex);
 
-    table.get_field("caplen", self.caplen);
     table.get_field("pktlen", self.pktlen);
     table.get_field("ingress_index", self.ingress_index);
     table.get_field("egress_index", self.egress_index);
@@ -47,11 +46,10 @@ static void set_fields(lua_State* L, int tindex, struct _daq_pkthdr& self)
     // FIXIT-L do we want to be able to set the priv_ptr field?
 }
 
-static void get_fields(lua_State* L, int tindex, struct _daq_pkthdr& self)
+static void get_fields(lua_State* L, int tindex, DAQ_PktHdr_t& self)
 {
     Lua::Table table(L, tindex);
 
-    table.set_field("caplen", self.caplen);
     table.set_field("pktlen", self.pktlen);
     table.set_field("ingress_index", self.ingress_index);
     table.set_field("egress_index", self.egress_index);
@@ -107,7 +105,7 @@ static const luaL_Reg metamethods[] =
     { nullptr, nullptr }
 };
 
-const struct Lua::TypeInterface<_daq_pkthdr> DAQHeaderIface =
+const struct Lua::TypeInterface<DAQ_PktHdr_t> DAQHeaderIface =
 {
     "DAQHeader",
     methods,

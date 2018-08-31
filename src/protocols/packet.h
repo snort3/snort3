@@ -36,6 +36,7 @@ class Flow;
 class IpsAction;
 class IpsContext;
 class Obfuscator;
+class SFDAQInstance;
 
 /* packet status flags */
 #define PKT_REBUILT_FRAG     0x00000001  /* is a rebuilt fragment */
@@ -77,7 +78,8 @@ class Obfuscator;
 #define PKT_FILE_EVENT_SET   0x00400000
 #define PKT_IGNORE           0x00800000  /* this packet should be ignored, based on port */
 #define PKT_RETRANSMIT       0x01000000  // packet is a re-transmitted pkt.
-#define PKT_UNUSED_FLAGS     0xfe000000
+#define PKT_RETRY            0x02000000  /* this packet is being re-evaluated from the internal retry queue */
+#define PKT_UNUSED_FLAGS     0xfc000000
 
 #define PKT_TS_OFFLOADED        0x01
 
@@ -130,16 +132,21 @@ struct SO_PUBLIC Packet
     // FIXIT-M Consider moving ip_proto_next below `pkth`.
     IpProtocol ip_proto_next;      /* the protocol ID after IP and all IP6 extension */
     bool disable_inspect;
-    // nothing after this point is zeroed ...
+    // nothing after this point is zeroed by reset() ...
 
-    // Everything beyond this point is set by PacketManager::decode()
-    IpsContext* context;   // set by control
+    IpsContext* context;
     Active* active;
     Active* active_inst;
     IpsAction** action;
     IpsAction* action_inst;
-    const DAQ_PktHdr_t* pkth;    // packet meta data
-    const uint8_t* pkt;          // raw packet data
+
+    DAQ_Msg_h daq_msg;              // DAQ message this packet came from
+    SFDAQInstance* daq_instance;    // DAQ instance the message came from
+
+    // Everything beyond this point is set by PacketManager::decode()
+    const DAQ_PktHdr_t* pkth;   // packet meta data
+    const uint8_t* pkt;         // raw packet data
+    uint32_t pktlen;            // raw packet data length
 
     // These are both set before PacketManager::decode() returns
     const uint8_t* data;        /* packet payload pointer */
@@ -271,6 +278,9 @@ struct SO_PUBLIC Packet
 
     bool is_rebuilt() const
     { return (packet_flags & (PKT_REBUILT_STREAM|PKT_REBUILT_FRAG)) != 0; }
+
+    bool is_retry() const
+    { return (packet_flags & PKT_RETRY) != 0; }
 
     bool is_offloaded() const
     { return (ts_packet_flags & PKT_TS_OFFLOADED) != 0; }

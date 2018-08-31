@@ -135,7 +135,7 @@ static void get_alert_pkt(
     {
         us.alert.pkth.ts.tv_sec = (uint32_t)p->pkth->ts.tv_sec;
         us.alert.pkth.ts.tv_usec = (uint32_t)p->pkth->ts.tv_usec;
-        us.alert.pkth.caplen = p->pkth->caplen;
+        us.alert.pkth.caplen = p->pktlen;
         us.alert.pkth.len = p->pkth->pktlen;
         memmove(us.alert.pkt, (const void*)p->pkt, us.alert.pkth.caplen);
     }

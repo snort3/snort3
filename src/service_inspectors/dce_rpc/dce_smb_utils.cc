@@ -1431,7 +1431,7 @@ void DCE2_SmbInitDeletePdu()
 
 static void DCE2_SmbInjectDeletePdu(DCE2_SmbFileTracker* ftracker)
 {
-    Packet* inject_pkt = snort::Snort::get_packet();
+    Packet* inject_pkt = DetectionEngine::get_current_wire_packet();
     Packet* p = DetectionEngine::get_current_packet();
 
     if ( inject_pkt->flow != p->flow )

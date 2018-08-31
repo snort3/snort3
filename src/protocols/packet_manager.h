@@ -61,7 +61,8 @@ public:
     static void thread_term();
 
     // decode this packet and set all relevant packet fields.
-    static void decode(Packet*, const struct _daq_pkthdr*, const uint8_t*, bool cooked = false);
+    static void decode(Packet*, const struct _daq_pkt_hdr*, const uint8_t* pkt,
+        uint32_t pktlen, bool cooked = false, bool retry = false);
 
     // update the packet's checksums and length variables. Call this function
     // after Snort has changed any data in this packet

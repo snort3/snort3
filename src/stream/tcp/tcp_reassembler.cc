@@ -27,7 +27,7 @@
 
 #include "detection/detection_engine.h"
 #include "log/log.h"
-#include "main/snort.h"
+#include "main/analyzer.h"
 #include "memory/memory_cap.h"
 #include "profiler/profiler.h"
 #include "protocols/packet_manager.h"
@@ -584,7 +584,7 @@ int TcpReassembler::_flush_to_seq(
 
             NoProfile exclude(s5TcpFlushPerfStats);
 
-            if ( !Snort::inspect(pdu) )
+            if ( !Analyzer::get_local_analyzer()->inspect_rebuilt(pdu) )
                 last_pdu = pdu;
             else
                 last_pdu = nullptr;
@@ -670,7 +670,7 @@ int TcpReassembler::do_zero_byte_flush(TcpReassemblerState& trs, Packet* p, uint
 
         show_rebuilt_packet(trs, pdu);
         NoProfile profile_exclude(s5TcpFlushPerfStats);
-        Snort::inspect(pdu);
+        Analyzer::get_local_analyzer()->inspect_rebuilt(pdu);
 
         if ( trs.tracker->splitter )
             trs.tracker->splitter->update();
@@ -822,6 +822,7 @@ static Packet* set_packet(Flow* flow, uint32_t flags, bool c2s)
     memset(ph, 0, sizeof(*ph));
     packet_gettimeofday(&ph->ts);
 
+    p->pktlen = 0;
     p->data = nullptr;
     p->dsize = 0;
 

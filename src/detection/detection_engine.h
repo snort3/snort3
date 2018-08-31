@@ -56,6 +56,7 @@ public:
     static IpsContext* get_context();
 
     static Packet* get_current_packet();
+    static Packet* get_current_wire_packet();
     static Packet* set_next_packet(Packet* parent = nullptr);
     static uint8_t* get_next_buffer(unsigned& max);
 
@@ -101,6 +102,8 @@ public:
     static void set_check_tags(bool enable = true);
     static bool get_check_tags();
 
+    static void wait_for_context();
+
 private:
     static struct SF_EVENTQ* get_event_queue();
     static bool do_offload(snort::Packet*);
@@ -113,7 +116,6 @@ private:
     static void finish_inspect_with_latency(Packet*);
     static void finish_inspect(Packet*, bool inspected);
     static void finish_packet(Packet*, bool flow_deletion = false);
-    static void wait_for_context();
 
 private:
     IpsContext* context;

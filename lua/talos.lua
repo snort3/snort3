@@ -5,9 +5,19 @@
 
 daq =
 {
-    module = 'dump',
-    variables = { "load-mode=read-file", "output=none" }
+    modules =
+    {
+        {
+            name = 'pcap',
+            mode = 'read-file'
+        },
+        {
+            name = 'dump',
+            variables = { 'output = none' }
+        },
+    },
 }
+
 normalizer = { tcp = { ips = true } }
 
 ips.include = 'local.rules'

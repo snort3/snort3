@@ -26,7 +26,7 @@
 
 #include "log_text.h"
 
-#include <sfbpf_dlt.h>
+#include <daq_dlt.h>
 
 #include "detection/detection_engine.h"
 #include "detection/signature.h"
@@ -1383,7 +1383,7 @@ void LogPayload(TextLog* log, Packet* p)
     }
     else if (SnortConfig::verbose_byte_dump())
     {
-        LogNetData(log, p->pkt, p->pkth->caplen, p);
+        LogNetData(log, p->pkt, p->pktlen, p);
     }
 }
 } // namespace snort

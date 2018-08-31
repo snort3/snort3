@@ -25,7 +25,7 @@
 
 #include "detection/detection_engine.h"
 #include "detection/rules.h"
-#include "main/snort.h"
+#include "main/analyzer.h"
 #include "memory/memory_cap.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
@@ -166,7 +166,7 @@ void UserTracker::detect(
     up->packet_flags |= (p->packet_flags & (PKT_STREAM_EST|PKT_STREAM_UNEST_UNI));
 
     trace_logf(stream_user, "detect[%d]\n", up->dsize);
-    snort::Snort::inspect(up);
+    Analyzer::get_local_analyzer()->inspect_rebuilt(up);
 }
 
 int UserTracker::scan(Packet* p, uint32_t& flags)

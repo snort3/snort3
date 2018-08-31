@@ -28,8 +28,9 @@
 #include "framework/module.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
-#include "protocols/packet.h"
 #include "packet_io/sfdaq.h"
+#include "packet_io/sfdaq_config.h"
+#include "protocols/packet.h"
 #include "utils/util.h"
 
 using namespace snort;
@@ -119,22 +120,22 @@ bool TcpdumpModule::begin(const char*, int, SnortConfig*)
 // api stuff
 //-------------------------------------------------------------------------
 
-static inline size_t SizeOf(const DAQ_PktHdr_t* pkth)
+static inline size_t SizeOf(const Packet* p)
 {
-    return PCAP_PKT_HDR_SZ + pkth->caplen;
+    return PCAP_PKT_HDR_SZ + p->pktlen;
 }
 
 static void LogTcpdumpSingle(
     LtdConfig* data, Packet* p, const char*, Event*)
 {
-    size_t dumpSize = SizeOf(p->pkth);
+    size_t dumpSize = SizeOf(p);
 
     if ( data->limit && (context.size + dumpSize > data->limit) )
         TcpdumpRollLogFile(data);
 
     struct pcap_pkthdr pcaphdr;
     pcaphdr.ts = p->pkth->ts;
-    pcaphdr.caplen = p->pkth->caplen;
+    pcaphdr.caplen = p->pktlen;
     pcaphdr.len = p->pkth->pktlen;
     pcap_dump((uint8_t*)context.dumpd, &pcaphdr, p->pkt);
     context.size += dumpSize;
@@ -177,7 +178,7 @@ static void TcpdumpInitLogFile(LtdConfig*, bool no_timestamp)
         dlt = DLT_RAW;
 
     pcap_t* pcap;
-    pcap = pcap_open_dead(dlt, SFDAQ::get_snap_len());
+    pcap = pcap_open_dead(dlt, SnortConfig::get_conf()->daq_config->get_mru_size());
 
     if ( !pcap )
         FatalError("%s: can't get pcap context\n", S_NAME);

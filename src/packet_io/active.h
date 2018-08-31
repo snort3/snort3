@@ -129,8 +129,8 @@ public:
 private:
     static bool open(const char*);
     static void close();
-    static int send_eth(const DAQ_PktHdr_t*, int, const uint8_t* buf, uint32_t len);
-    static int send_ip(const DAQ_PktHdr_t*, int, const uint8_t* buf, uint32_t len);
+    static int send_eth(DAQ_Msg_h, int, const uint8_t* buf, uint32_t len);
+    static int send_ip(DAQ_Msg_h, int, const uint8_t* buf, uint32_t len);
 
     void update_status(const Packet*, bool force = false);
     void daq_update_status(const Packet*);

@@ -56,11 +56,11 @@ public:
 class ACResume : public AnalyzerCommand
 {
 public:
-    ACResume(int n): pkt_count(n){}
+    ACResume(uint64_t msg_cnt): msg_cnt(msg_cnt) { }
     void execute(Analyzer&) override;
     const char* stringify() override { return "RESUME"; }
 private:
-    int pkt_count;
+    uint64_t msg_cnt;
 };
 
 class ACRotate : public AnalyzerCommand

@@ -303,11 +303,17 @@ static const Parameter s_params[] =
     { "--daq", Parameter::PT_STRING, nullptr, nullptr,
       "<type> select packet acquisition module (default is pcap)" },
 
+    { "--daq-batch-size", Parameter::PT_INT, "1:", "64",
+      "<size> set the DAQ receive batch size", },
+
     { "--daq-dir", Parameter::PT_STRING, nullptr, nullptr,
       "<dir> tell snort where to find desired DAQ" },
 
     { "--daq-list", Parameter::PT_IMPLIED, nullptr, nullptr,
       "list packet acquisition modules available in optional dir, default is static modules only" },
+
+    { "--daq-mode", Parameter::PT_ENUM, "passive | inline | read-file", nullptr,
+      "<mode> select DAQ module operating mode (overrides automatic selection)" },
 
     { "--daq-var", Parameter::PT_STRING, nullptr, nullptr,
       "<name=value> specify extra DAQ configuration variable" },
@@ -606,13 +612,13 @@ public:
     { return GLOBAL; }
 
 private:
-    int instance_id;
+    SFDAQModuleConfig *module_config;
 };
 
 bool SnortModule::begin(const char* fqn, int, SnortConfig*)
 {
     if (!strcmp(fqn, "snort"))
-        instance_id = -1;
+        module_config = nullptr;
     return true;
 }
 
@@ -655,13 +661,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->run_flags |= RUN_FLAG__STATIC_HASH;
 
     else if ( v.is("-i") )
-    {
-        instance_id++;
-        if (instance_id > 0)
-            sc->daq_config->set_input_spec(v.get_string(), instance_id);
-        else
-            sc->daq_config->set_input_spec(v.get_string());
-    }
+        sc->daq_config->add_input(v.get_string());
 
 #ifdef SHELL
     else if ( v.is("-j") )
@@ -766,7 +766,10 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->set_create_pid_file(true);
 
     else if ( v.is("--daq") )
-        sc->daq_config->set_module_name(v.get_string());
+        module_config = sc->daq_config->add_module_config(v.get_string());
+
+    else if ( v.is("--daq-batch-size") )
+        sc->daq_config->set_batch_size(v.get_long());
 
     else if ( v.is("--daq-dir") )
     {
@@ -776,15 +779,31 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         while ( getline(ss, path, ':') )
             sc->daq_config->add_module_dir(path.c_str());
     }
+    else if ( v.is("--daq-mode") )
+    {
+        if (!module_config)
+            return false;
+        switch ( v.get_long() )
+        {
+            case 0:
+                module_config->mode = SFDAQModuleConfig::SFDAQ_MODE_PASSIVE;
+                break;
+            case 1:
+                module_config->mode = SFDAQModuleConfig::SFDAQ_MODE_INLINE;
+                break;
+            case 2:
+                module_config->mode = SFDAQModuleConfig::SFDAQ_MODE_READ_FILE;
+                break;
+        }
+    }
     else if ( v.is("--daq-list") )
         list_daqs(sc);
 
     else if ( v.is("--daq-var") )
     {
-        if (instance_id < 0)
-            sc->daq_config->set_variable(v.get_string());
-        else
-            sc->daq_config->set_variable(v.get_string(), instance_id);
+        if (!module_config)
+            return false;
+        module_config->set_variable(v.get_string());
     }
     else if ( v.is("--dirty-pig") )
         sc->set_dirty_pig(true);

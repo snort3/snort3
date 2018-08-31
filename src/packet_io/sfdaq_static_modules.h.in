@@ -1,0 +1,11 @@
+
+#include <daq_module_api.h>
+
+@DAQ_STATIC_MODULE_EXTERNS@
+
+static DAQ_Module_h static_daq_modules[] =
+{
+@DAQ_STATIC_MODULE_DATA_ARRAY@
+    nullptr
+};
+

@@ -38,13 +38,13 @@ static void set_retransmit_flag(snort::Packet* p)
     if ( snort::PacketTracer::is_active() )
     {
         snort::PacketTracer::log("Packet was retransmitted and %s from the retry queue.\n",
-        (p->pkth->flags & DAQ_PKT_FLAG_RETRY_PACKET) ? "is" : "is not");
+            p->is_retry() ? "is" : "is not");
     }
 
     // Mark the packet as being a re-transmit if it's not from the retry
     // queue. That way we can avoid adding re-transmitted packets to
     // the retry queue.
-    if ( !(p->pkth->flags & DAQ_PKT_FLAG_RETRY_PACKET) )
+    if ( !p->is_retry() )
         p->packet_flags |= PKT_RETRANSMIT;
 }
 

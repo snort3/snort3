@@ -285,7 +285,7 @@ void CreatePidFile(pid_t pid)
     else
     {
         const char* error = get_error(errno);
-        ErrorMessage("Failed to create pid file %s, Error: %s",
+        ErrorMessage("Failed to create pid file %s, Error: %s\n",
             SnortConfig::get_conf()->pid_filename.c_str(), error);
         SnortConfig::get_conf()->pid_filename.clear();
     }
@@ -334,13 +334,6 @@ bool SetUidGid(int user_id, int group_id)
     // Were any changes requested?
     if (group_id == -1 && user_id == -1)
         return true;
-
-    // FIXIT-L Move this check to Snort::drop_privileges()
-    if (!SFDAQ::unprivileged())
-    {
-        ParseError("Cannot drop privileges - %s DAQ does not support unprivileged operation.\n", SFDAQ::get_type());
-        return false;
-    }
 
     if (group_id != -1)
     {

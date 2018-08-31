@@ -64,10 +64,13 @@ int64_t timersub_ms(const struct timeval* end, const struct timeval* start)
 
 void packet_time_update(const struct timeval* cur_tv)
 {
-    if ( !s_first_packet )
-        s_first_packet = cur_tv->tv_sec;
+    if (timercmp(cur_tv, &s_recent_packet, >))
+    {
+        if ( !s_first_packet )
+            s_first_packet = cur_tv->tv_sec;
 
-    s_recent_packet = *cur_tv;
+        s_recent_packet = *cur_tv;
+    }
 }
 
 uint32_t packet_first_time()

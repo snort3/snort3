@@ -325,8 +325,7 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
                 //  Won't add packet to retry queue if it is a retransmit
                 //  and not from the retry queue since it should already
                 //  be there.
-                if (!(p->packet_flags & PKT_RETRANSMIT) or
-                    p->pkth->flags & DAQ_PKT_FLAG_RETRY_PACKET)
+                if (!(p->packet_flags & PKT_RETRANSMIT) or p->is_retry())
                 {
                     PacketTracer::log("File signature lookup: adding packet to retry queue. Resume=%d, Waited %" PRIi64 "ms.\n", resume, time_elapsed_ms(&now, &file_ctx->pending_expire_time, lookup_timeout));
                 }

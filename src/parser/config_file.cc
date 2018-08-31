@@ -28,7 +28,7 @@
 #include "detection/detect.h"
 #include "detection/detection_engine.h"
 #include "log/messages.h"
-#include "main/snort.h"
+#include "main/analyzer.h"
 #include "main/policy.h"
 
 #include "mstring.h"
@@ -43,6 +43,8 @@
 #define CHECKSUM_MODE_OPT__NO_UDP   "noudp"
 #define CHECKSUM_MODE_OPT__ICMP     "icmp"
 #define CHECKSUM_MODE_OPT__NO_ICMP  "noicmp"
+
+using namespace snort;
 
 static std::string lua_conf;
 static std::string snort_conf_dir;
@@ -67,7 +69,7 @@ static int GetChecksumFlags(const char* args)
     if (args == nullptr)
         return CHECKSUM_FLAG__ALL;
 
-    toks = snort::mSplit(args, " \t", 10, &num_toks, 0);
+    toks = mSplit(args, " \t", 10, &num_toks, 0);
     for (i = 0; i < num_toks; i++)
     {
         if (strcasecmp(toks[i], CHECKSUM_MODE_OPT__ALL) == 0)
@@ -132,7 +134,7 @@ static int GetChecksumFlags(const char* args)
         }
         else
         {
-            snort::ParseError("unknown command line checksum option: %s.", toks[i]);
+            ParseError("unknown command line checksum option: %s.", toks[i]);
             return ret_flags;
         }
     }
@@ -160,19 +162,19 @@ static int GetChecksumFlags(const char* args)
         ret_flags = negative_flags;
     }
 
-    snort::mSplitFree(&toks, num_toks);
+    mSplitFree(&toks, num_toks);
     return ret_flags;
 }
 
 void ConfigChecksumDrop(const char* args)
 {
-    NetworkPolicy* policy = snort::get_network_policy();
+    NetworkPolicy* policy = get_network_policy();
     policy->checksum_drop = GetChecksumFlags(args);
 }
 
 void ConfigChecksumMode(const char* args)
 {
-    NetworkPolicy* policy = snort::get_network_policy();
+    NetworkPolicy* policy = get_network_policy();
     policy->checksum_eval = GetChecksumFlags(args);
 }
 
@@ -180,7 +182,7 @@ void config_conf(const char* val)
 {
     lua_conf = val;
     SetSnortConfDir(lua_conf.c_str());
-    snort::Snort::set_main_hook(snort::DetectionEngine::inspect);
+    Analyzer::set_main_hook(DetectionEngine::inspect);
 }
 
 void SetSnortConfDir(const char* file)

@@ -31,7 +31,8 @@
 #include "utils/cpp_macros.h"
 
 struct TextLog;
-struct _daq_pkthdr;
+struct _daq_msg;
+struct _daq_pkt_hdr;
 
 namespace snort
 {
@@ -65,11 +66,13 @@ constexpr uint8_t MAX_TTL = 255;
 
 struct RawData
 {
-    const _daq_pkthdr* pkth;
+    const struct _daq_msg* daq_msg;
+    const _daq_pkt_hdr* pkth;
     const uint8_t* data;
     uint32_t len;
 
-    RawData(const _daq_pkthdr*, const uint8_t*);
+    RawData(const struct _daq_msg* daq_msg, const _daq_pkt_hdr* pkth, const uint8_t* data, uint32_t len) :
+        daq_msg(daq_msg), pkth(pkth), data(data), len(len) { }
 };
 
 /*  Decode Flags */

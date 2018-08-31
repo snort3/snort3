@@ -38,6 +38,139 @@ using namespace snort;
 
 #define sfdaq_help "configure packet acquisition interface"
 
+/*
+ * Module Configuration
+ */
+
+static const Parameter daqvar_list_param[] =
+{
+    { "variable", Parameter::PT_STRING, nullptr, nullptr, "DAQ module variable (foo[=bar])" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter daq_module_param[] = 
+{
+    { "name", Parameter::PT_STRING, nullptr, nullptr, "DAQ module name (required)" },
+    { "mode", Parameter::PT_ENUM, "passive | inline | read-file", "passive", "DAQ module mode" },
+    { "variables", Parameter::PT_LIST, daqvar_list_param, nullptr, "DAQ module variables" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter path_list_param[] =
+{
+    { "path", Parameter::PT_STRING, nullptr, nullptr, "directory path" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter input_list_param[] =
+{
+    { "input", Parameter::PT_STRING, nullptr, nullptr, "input source" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter s_params[] =
+{
+    { "module_dirs", Parameter::PT_LIST, path_list_param, nullptr, "directories to search for dynamic DAQ modules" },
+    { "inputs", Parameter::PT_LIST, input_list_param, nullptr, "input sources" },
+    { "snaplen", Parameter::PT_INT, "0:65535", "1518", "set snap length (same as -s)" },
+    { "batch_size", Parameter::PT_INT, "1:", "64", "set receive batch size (same as --daq-batch-size)" },
+    { "modules", Parameter::PT_LIST, daq_module_param, nullptr, "DAQ modules to use" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+SFDAQModule::SFDAQModule() : Module("daq", sfdaq_help, s_params)
+{
+    config = nullptr;
+    module_config = nullptr;
+}
+
+bool SFDAQModule::begin(const char* fqn, int idx, SnortConfig*)
+{
+    if (!strcmp(fqn, "daq"))
+        config = new SFDAQConfig();
+    else if (!strcmp(fqn, "daq.modules"))
+    {
+        if (idx == 0)
+            return true;
+
+        module_config = new SFDAQModuleConfig();
+    }
+
+    return true;
+}
+
+bool SFDAQModule::set(const char* fqn, Value& v, SnortConfig*)
+{
+    if (!strcmp(fqn, "daq.module_dirs"))
+    {
+        config->add_module_dir(v.get_string());
+    }
+    else if (!strcmp(fqn, "daq.inputs"))
+    {
+        config->add_input(v.get_string());
+    }
+    else if (!strcmp(fqn, "daq.snaplen"))
+    {
+        config->set_mru_size(v.get_uint16());
+    }
+    else if (!strcmp(fqn, "daq.batch_size"))
+    {
+        config->set_batch_size(v.get_long());
+    }
+    else if (!strcmp(fqn, "daq.modules.name"))
+    {
+        module_config->name = v.get_string();
+    }
+    else if (!strcmp(fqn, "daq.modules.mode"))
+    {
+        module_config->mode = (SFDAQModuleConfig::SFDAQMode) (v.get_long() + 1);
+    }
+    else if (!strcmp(fqn, "daq.modules.variables"))
+    {
+        module_config->set_variable(v.get_string());
+    }
+
+    return true;
+}
+
+bool SFDAQModule::end(const char* fqn, int idx, SnortConfig* sc)
+{
+    if (!strcmp(fqn, "daq.modules"))
+    {
+        if (idx == 0)
+            return true;
+
+        if (module_config->name.empty())
+        {
+            ParseError("%s - No module name specified!", fqn);
+            delete module_config;
+            module_config = nullptr;
+            return false;
+        }
+        config->module_configs.push_back(module_config);
+        module_config = nullptr;
+    }
+    else if (!strcmp(fqn, "daq"))
+    {
+        if ( sc->daq_config )
+            delete sc->daq_config;
+
+        sc->daq_config = config;
+        config = nullptr;
+    }
+
+    return true;
+}
+
+/*
+ * Module Counters
+ */
+
 struct DAQStats
 {
     PegCount pcaps;
@@ -85,131 +218,6 @@ const PegInfo daq_names[] =
 
 static THREAD_LOCAL DAQStats stats;
 
-static const Parameter string_list_param[] =
-{
-    { "str", Parameter::PT_STRING, nullptr, nullptr, "string parameter" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-static const Parameter instance_params[] =
-{
-    { "id", Parameter::PT_INT, "0:max32", nullptr, "instance ID (required)" },
-    { "input_spec", Parameter::PT_STRING, nullptr, nullptr, "input specification" },
-    { "variables", Parameter::PT_LIST, string_list_param, nullptr, "DAQ variables" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-static const Parameter s_params[] =
-{
-    { "module_dirs", Parameter::PT_LIST, string_list_param, nullptr, "directories to search for DAQ modules" },
-    { "input_spec", Parameter::PT_STRING, nullptr, nullptr, "input specification" },
-    { "module", Parameter::PT_STRING, nullptr, nullptr, "DAQ module to use" },
-    { "variables", Parameter::PT_LIST, string_list_param, nullptr, "DAQ variables" },
-    { "instances", Parameter::PT_LIST, instance_params, nullptr, "DAQ instance overrides" },
-    { "snaplen", Parameter::PT_INT, "0:65535", nullptr, "set snap length (same as -s)" },
-    { "no_promisc", Parameter::PT_BOOL, nullptr, "false", "whether to put DAQ device into promiscuous mode" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-SFDAQModule::SFDAQModule() : Module("daq", sfdaq_help, s_params)
-{
-    config = nullptr;
-    instance_config = nullptr;
-}
-
-
-bool SFDAQModule::begin(const char* fqn, int idx, SnortConfig*)
-{
-    if (!strcmp(fqn, "daq"))
-        config = new SFDAQConfig();
-
-    else if (!strcmp(fqn, "daq.instances"))
-    {
-        if (idx == 0)
-            return true;
-
-        assert(!instance_config);
-        instance_config = new SFDAQInstanceConfig();
-
-        instance_id = -1;
-    }
-    return true;
-}
-
-bool SFDAQModule::set(const char* fqn, Value& v, SnortConfig* sc)
-{
-    if (!strcmp(fqn, "daq.module_dirs"))
-    {
-        config->add_module_dir(v.get_string());
-    }
-    else if (!strcmp(fqn, "daq.module"))
-    {
-        config->set_module_name(v.get_string());
-    }
-    else if (!strcmp(fqn, "daq.input_spec"))
-    {
-        config->set_input_spec(v.get_string());
-    }
-    else if (!strcmp(fqn, "daq.variables"))
-    {
-        config->set_variable(v.get_string());
-    }
-    else if (!strcmp(fqn, "daq.snaplen"))
-    {
-        config->set_mru_size(v.get_uint16());
-    }
-    else if (!strcmp(fqn, "daq.no_promisc"))
-    {
-        v.update_mask(sc->run_flags, RUN_FLAG__NO_PROMISCUOUS);
-    }
-    else if (!strcmp(fqn, "daq.instances.id"))
-    {
-        instance_id = v.get_uint32();
-    }
-    else if (!strcmp(fqn, "daq.instances.input_spec"))
-    {
-        instance_config->set_input_spec(v.get_string());
-    }
-    else if (!strcmp(fqn, "daq.instances.variables"))
-    {
-        instance_config->set_variable(v.get_string());
-    }
-
-    return true;
-}
-
-bool SFDAQModule::end(const char* fqn, int idx, SnortConfig* sc)
-{
-    if (!strcmp(fqn, "daq.instances"))
-    {
-        if (idx == 0)
-            return true;
-
-        if (instance_id < 0 or config->instances[instance_id])
-        {
-            ParseError("%s - duplicate or no DAQ instance ID specified", fqn);
-            delete instance_config;
-            instance_config = nullptr;
-            return false;
-        }
-        config->instances[instance_id] = instance_config;
-        instance_config = nullptr;
-    }
-    else if (!strcmp(fqn, "daq"))
-    {
-        if ( sc->daq_config )
-            delete sc->daq_config;
-
-        sc->daq_config = config;
-        config = nullptr;
-    }
-
-    return true;
-}
-
 const PegInfo* SFDAQModule::get_pegs() const
 {
     return daq_names;
@@ -239,7 +247,6 @@ static DAQ_Stats_t operator-(const DAQ_Stats_t& left, const DAQ_Stats_t& right)
 void SFDAQModule::prep_counts()
 {
     static THREAD_LOCAL DAQ_Stats_t sfdaq_stats;
-    static THREAD_LOCAL PegCount last_skipped = 0;
     static THREAD_LOCAL bool did_init = false;
 
     if ( !did_init )
@@ -273,12 +280,11 @@ void SFDAQModule::prep_counts()
 
     stats.internal_blacklist = aux_counts.internal_blacklist;
     stats.internal_whitelist = aux_counts.internal_whitelist;
-    stats.skipped = SnortConfig::get_conf()->pkt_skip - last_skipped;
+    stats.skipped = aux_counts.skipped;
     stats.idle = aux_counts.idle;
     stats.rx_bytes = aux_counts.rx_bytes;
 
     memset(&aux_counts, 0, sizeof(AuxCount));
-    last_skipped = stats.skipped;
 
     sfdaq_stats = new_sfdaq_stats;
     for ( unsigned i = 0; i < MAX_DAQ_VERDICT; i++ )

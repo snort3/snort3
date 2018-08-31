@@ -58,12 +58,12 @@ void ACPause::execute(Analyzer& analyzer)
 
 void ACResume::execute(Analyzer& analyzer)
 {
-    analyzer.resume(pkt_count);
+    analyzer.resume(msg_cnt);
 }
 
-void ACRotate::execute(Analyzer&)
+void ACRotate::execute(Analyzer& analyzer)
 {
-    snort::Snort::thread_rotate();
+    analyzer.rotate();
 }
 
 void ACGetStats::execute(Analyzer&)
@@ -89,10 +89,10 @@ ACSwap::ACSwap(Swapper* ps, Request* req, bool from_shell) : ps(ps), request(req
     Swapper::set_reload_in_progress(true);
 }
 
-void ACSwap::execute(Analyzer&)
+void ACSwap::execute(Analyzer& analyzer)
 {
     if (ps)
-        ps->apply();
+        ps->apply(analyzer);
 }
 
 ACSwap::~ACSwap()

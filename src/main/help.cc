@@ -280,7 +280,7 @@ void config_markup(SnortConfig*, const char*)
 
 [[noreturn]] void list_daqs(SnortConfig* sc)
 {
-    SFDAQ::load(sc);
+    SFDAQ::load(sc->daq_config);
     SFDAQ::print_types(cout);
     SFDAQ::unload();
     exit(0);

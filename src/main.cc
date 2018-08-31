@@ -45,6 +45,8 @@
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
 #include "packet_io/sfdaq.h"
+#include "packet_io/sfdaq_config.h"
+#include "packet_io/sfdaq_instance.h"
 #include "packet_io/trough.h"
 #include "target_based/sftarget_reader.h"
 #include "time/periodic.h"
@@ -120,30 +122,44 @@ static int current_fd = -1;
 class Pig
 {
 public:
-    Analyzer* analyzer;
-    bool awaiting_privilege_change = false;
-
-    Pig() { analyzer = nullptr; athread = nullptr; idx = (unsigned)-1; }
+    Pig() = default;
 
     void set_index(unsigned index) { idx = index; }
 
-    void prep(const char* source);
+    bool prep(const char* source);
     void start();
     void stop();
 
     bool queue_command(AnalyzerCommand*, bool orphan = false);
     void reap_commands();
 
+    Analyzer* analyzer = nullptr;
+    bool awaiting_privilege_change = false;
+    bool requires_privileged_start = true;
+
 private:
     void reap_command(AnalyzerCommand* ac);
 
-    std::thread* athread;
-    unsigned idx;
+    std::thread* athread = nullptr;
+    unsigned idx = (unsigned)-1;
 };
 
-void Pig::prep(const char* source)
+bool Pig::prep(const char* source)
 {
-    analyzer = new Analyzer(idx, source);
+    SnortConfig* sc = SnortConfig::get_conf();
+    SFDAQInstance *instance = new SFDAQInstance(source, sc->daq_config);
+    if (!SFDAQ::init_instance(instance, sc->bpf_filter))
+    {
+        delete instance;
+        return false;
+    }
+    requires_privileged_start = instance->can_start_unprivileged();
+    analyzer = new Analyzer(instance, idx, source, sc->pkt_cnt);
+    analyzer->set_skip_cnt(sc->pkt_skip);
+#ifdef REG_TEST
+    analyzer->set_pause_after_cnt(sc->pkt_pause_cnt);
+#endif
+    return true;
 }
 
 void Pig::start()
@@ -545,15 +561,14 @@ int main_pause(lua_State* L)
 
 int main_resume(lua_State* L)
 {
-    const bool from_shell = ( L != nullptr );
-
-    int pkt_num = 0;
+    bool from_shell = ( L != nullptr );
+    uint64_t pkt_num = 0;
     if (from_shell)
     {
         const int num_of_args = lua_gettop(L);
         if (num_of_args)
         {
-            pkt_num = lua_tonumber(L, 1);
+            pkt_num = lua_tointeger(L, 1);
             if (pkt_num < 1)
             {
                 current_request->respond("Invalid usage of resume(n), n should be a number > 0\n");
@@ -714,14 +729,12 @@ static bool just_validate()
     if ( use_shell(SnortConfig::get_conf()) )
         return false;
 
-    /* FIXIT-L X This should really check if the DAQ module was unset as it could be explicitly
-        set to the default value */
-    if ( !strcmp(SFDAQ::get_type(), SFDAQ::default_type()) )
+    if ( SnortConfig::get_conf()->daq_config->module_configs.empty() )
     {
         if ( SnortConfig::read_mode() && !Trough::get_queue_size() )
             return true;
 
-        if ( !SnortConfig::read_mode() && !SFDAQ::get_input_spec(SnortConfig::get_conf(), 0) )
+        if ( !SnortConfig::read_mode() && !SFDAQ::get_input_spec(SnortConfig::get_conf()->daq_config, 0) )
             return true;
     }
 
@@ -795,7 +808,7 @@ static void handle(Pig& pig, unsigned& swine, unsigned& pending_privileges)
         break;
 
     case Analyzer::State::INITIALIZED:
-        if (pig.analyzer->requires_privileged_start() && pending_privileges &&
+        if (pig.requires_privileged_start && pending_privileges &&
             !Snort::has_dropped_privileges())
         {
             if (!pig.awaiting_privilege_change)
@@ -820,7 +833,7 @@ static void handle(Pig& pig, unsigned& swine, unsigned& pending_privileges)
         break;
 
     case Analyzer::State::STARTED:
-        if (!pig.analyzer->requires_privileged_start() && pending_privileges &&
+        if (!pig.requires_privileged_start && pending_privileges &&
             !Snort::has_dropped_privileges())
         {
             if (!pig.awaiting_privilege_change)
@@ -864,8 +877,11 @@ static void main_loop()
     // Preemptively prep all pigs in live traffic mode
     if (!SnortConfig::read_mode())
     {
-        for (swine = 0; swine < max_pigs; swine++)
-            pigs[swine].prep(SFDAQ::get_input_spec(SnortConfig::get_conf(), swine));
+        for (unsigned i = 0; i < max_pigs; i++)
+        {
+            if (pigs[i].prep(SFDAQ::get_input_spec(SnortConfig::get_conf()->daq_config, i)))
+                swine++;
+        }
     }
 
     // Iterate over the drove, spawn them as allowed, and handle their deaths.
@@ -911,8 +927,8 @@ static void main_loop()
         if ( !exit_requested and (swine < max_pigs) and (src = Trough::get_next()) )
         {
             Pig* pig = get_lazy_pig(max_pigs);
-            pig->prep(src);
-            ++swine;
+            if (pig->prep(src))
+                ++swine;
             continue;
         }
         service_check();

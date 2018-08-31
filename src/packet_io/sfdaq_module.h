@@ -28,7 +28,7 @@ namespace snort
 struct SnortConfig;
 }
 struct SFDAQConfig;
-struct SFDAQInstanceConfig;
+struct SFDAQModuleConfig;
 
 class SFDAQModule : public snort::Module
 {
@@ -51,8 +51,7 @@ public:
 
 private:
     SFDAQConfig* config;
-    SFDAQInstanceConfig* instance_config;
-    int instance_id;
+    SFDAQModuleConfig* module_config;
 };
 
 #endif

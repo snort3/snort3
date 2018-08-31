@@ -516,7 +516,7 @@ int CheckTagList(Packet* p, Event& event, void** log_list)
 
         if ( returned->metric & TAG_METRIC_BYTES )
         {
-            int n = p->pkth->caplen;
+            int n = p->pktlen;
             if ( n < returned->bytes )
                 returned->bytes -= n;
             else

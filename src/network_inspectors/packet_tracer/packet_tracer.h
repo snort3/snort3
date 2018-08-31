@@ -24,7 +24,6 @@
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
-#include <daq_common.h>
 #include <vector>
 
 #include "main/snort_types.h"
@@ -102,7 +101,7 @@ public:
     static void thread_term();
 
     static void dump(char* output_buff, unsigned int len);
-    static void dump(const DAQ_PktHdr_t*);
+    static void dump(Packet*);
 
     static void configure(bool status, const std::string& file_name);
     static void set_constraints(const PTSessionConstraints* constraints);
@@ -151,7 +150,7 @@ protected:
     const char *get_debug_session() { return debug_session; }
 
     virtual void open_file();
-    virtual void dump_to_daq(const DAQ_PktHdr_t*);
+    virtual void dump_to_daq(Packet*);
     virtual void reset();
 
 };

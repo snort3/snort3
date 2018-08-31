@@ -73,11 +73,11 @@
 #include "detection/detect.h"
 #include "detection/detection_engine.h"
 #include "log/messages.h"
-#include "main/snort.h"
+#include "main/analyzer.h"
 #include "main/snort_config.h"
 #include "memory/memory_cap.h"
 #include "packet_io/active.h"
-#include "packet_io/sfdaq.h"
+#include "packet_io/sfdaq_config.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/ipv4_options.h"
 #include "time/timersub.h"
@@ -739,7 +739,7 @@ static void FragRebuild(FragTracker* ft, Packet* p)
         "Processing rebuilt packet:\n");
 
     ip_stats.reassembles++;
-    ip_stats.reassembled_bytes += dpkt->pkth->caplen;
+    ip_stats.reassembled_bytes += dpkt->pktlen;
 
 #if defined(DEBUG_FRAG_EX) && defined(DEBUG_MSGS)
     /*
@@ -752,7 +752,7 @@ static void FragRebuild(FragTracker* ft, Packet* p)
 
     DetectionEngine de;
     de.set_encode_packet(p);
-    snort::Snort::process_packet(dpkt, dpkt->pkth, dpkt->pkt, true);
+    Analyzer::get_local_analyzer()->process_rebuilt_packet(dpkt, dpkt->pkth, dpkt->pkt, dpkt->pktlen);
     de.set_encode_packet(nullptr);
 
     trace_log(stream_ip, "Done with rebuilt packet, marking rebuilt...\n");
@@ -946,7 +946,7 @@ void Defrag::process(Packet* p, FragTracker* ft)
     }
 
     ip_stats.total++;
-    ip_stats.fragmented_bytes += p->pkth->caplen + 4; /* 4 for the CRC */
+    ip_stats.fragmented_bytes += p->pktlen + 4; /* 4 for the CRC */
 
     DeepProfile profile(fragPerfStats);
 
@@ -1439,7 +1439,7 @@ left_overlap_last:
         }
     }
 
-    if ((uint16_t)fragLength > SFDAQ::get_snap_len())
+    if ((uint16_t)fragLength > SnortConfig::get_conf()->daq_config->get_mru_size())
     {
         trace_logf(stream_ip,
             "Overly large fragment %d 0x%x 0x%x %d\n",
@@ -1814,7 +1814,7 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
     fragStart = p->data;
 
     /* Just to double check */
-    if (!fragLength or fragLength > SFDAQ::get_snap_len())
+    if (!fragLength or fragLength > SnortConfig::get_conf()->daq_config->get_mru_size())
     {
         trace_logf(stream_ip,
             "Bad fragment length:%d(0x%x) off:0x%x(%d)\n",

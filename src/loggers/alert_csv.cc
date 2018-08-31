@@ -222,7 +222,7 @@ static void ff_icmp_type(Args& a)
 
 static void ff_iface(Args&)
 {
-    TextLog_Print(csv_log, "%s", SFDAQ::get_interface_spec());
+    TextLog_Print(csv_log, "%s", SFDAQ::get_input_spec());
 }
 
 static void ff_ip_id(Args& a)

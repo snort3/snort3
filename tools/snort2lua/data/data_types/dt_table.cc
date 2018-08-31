@@ -25,9 +25,6 @@
 
 static inline Table* find_table(std::vector<Table*> vec, const std::string& name)
 {
-    if (name.empty())
-        return nullptr;
-
     for ( auto* t : vec)
         if (name == t->get_name())
             return t;

@@ -32,6 +32,9 @@ inline const uint8_t* get_data(RawBuffer& rb)
 inline uint8_t* get_mutable_data(RawBuffer& rb)
 { return const_cast<uint8_t*>(get_data(rb)); }
 
+inline size_t get_data_length(RawBuffer& rb)
+{ return rb.size(); }
+
 extern const struct Lua::TypeInterface<RawBuffer> RawBufferIface;
 
 #endif

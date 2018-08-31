@@ -23,42 +23,29 @@
 
 #include "snort.h"
 
+#include <daq.h>
 #include <sys/stat.h>
 #include <syslog.h>
 
 #include "actions/ips_actions.h"
 #include "codecs/codec_api.h"
 #include "connectors/connectors.h"
-#include "decompress/file_decomp.h"
-#include "detection/context_switcher.h"
 #include "detection/detect.h"
-#include "detection/detection_engine.h"
-#include "detection/detection_util.h"
 #include "detection/fp_config.h"
 #include "detection/fp_detect.h"
-#include "detection/ips_context.h"
-#include "detection/tag.h"
 #include "file_api/file_service.h"
-#include "filters/detection_filter.h"
 #include "filters/rate_filter.h"
 #include "filters/sfthreshold.h"
 #include "flow/ha.h"
-#include "framework/endianness.h"
 #include "framework/mpse.h"
-#include "helpers/base64_encoder.h"
 #include "helpers/process.h"
 #include "host_tracker/host_cache.h"
-#include "ips_options/ips_flowbits.h"
 #include "ips_options/ips_options.h"
-#include "latency/packet_latency.h"
-#include "latency/rule_latency.h"
 #include "log/log.h"
 #include "log/messages.h"
 #include "loggers/loggers.h"
 #include "main.h"
 #include "main/shell.h"
-#include "main/thread_config.h"
-#include "managers/action_manager.h"
 #include "managers/codec_manager.h"
 #include "managers/inspector_manager.h"
 #include "managers/ips_manager.h"
@@ -72,21 +59,16 @@
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/trough.h"
-#include "packet_tracer/packet_tracer.h"
 #include "parser/cmd_line.h"
 #include "parser/parser.h"
 #include "profiler/profiler.h"
 #include "search_engines/search_engines.h"
 #include "service_inspectors/service_inspectors.h"
 #include "side_channel/side_channel.h"
-#include "stream/stream.h"
 #include "stream/stream_inspectors.h"
 #include "target_based/sftarget_reader.h"
-#include "time/packet_time.h"
 #include "time/periodic.h"
 #include "utils/util.h"
-#include "utils/util_utf.h"
-#include "utils/util_jsnorm.h"
 
 #ifdef PIGLET
 #include "piglet/piglet.h"
@@ -106,36 +88,13 @@
 using namespace snort;
 using namespace std;
 
-//-------------------------------------------------------------------------
-
 static SnortConfig* snort_cmd_line_conf = nullptr;
 static pid_t snort_main_thread_pid = 0;
-
-// non-local for easy access from core
-static THREAD_LOCAL DAQ_PktHdr_t s_pkth;
-static THREAD_LOCAL uint8_t* s_data = nullptr;
-static THREAD_LOCAL Packet* s_packet = nullptr;
-static THREAD_LOCAL ContextSwitcher* s_switcher = nullptr;
-
-ContextSwitcher* Snort::get_switcher()
-{ return s_switcher; }
-
-// Test util - used for pause-after-n and resume(n)
-static THREAD_LOCAL TestPause s_pause;
-
-TestPause& Snort::get_test_pause()
-{ return s_pause; }
- 
-void TestPause::set_pause_cnt(int cnt)
-{ pause_cnt = cnt ? (cnt + pc.total_from_daq) : 0; }
 
 //-------------------------------------------------------------------------
 // perf stats
 // FIXIT-M move these to appropriate modules
 //-------------------------------------------------------------------------
-
-static THREAD_LOCAL ProfileStats totalPerfStats;
-static THREAD_LOCAL ProfileStats metaPerfStats;
 
 static ProfileStats* get_profile(const char* key)
 {
@@ -169,9 +128,6 @@ static ProfileStats* get_profile(const char* key)
     if ( !strcmp(key, "total") )
         return &totalPerfStats;
 
-    if ( !strcmp(key, "daq_meta") )
-        return &metaPerfStats;
-
     return nullptr;
 }
 
@@ -193,36 +149,6 @@ static void register_profiles()
 //-------------------------------------------------------------------------
 // helpers
 //-------------------------------------------------------------------------
-
-static bool pass_pkts(Packet*) { return true; }
-static MainHook_f main_hook = pass_pkts;
-
-static void set_policy(Packet* p)
-{
-    set_default_policy();
-    p->user_inspection_policy_id = get_inspection_policy()->user_policy_id;
-    p->user_ips_policy_id = get_ips_policy()->user_policy_id;
-    p->user_network_policy_id = get_network_policy()->user_policy_id;
-}
-
-static void show_source(const char* pcap)
-{
-    if ( !SnortConfig::pcap_show() )
-        return;
-
-    if ( !strcmp(pcap, "-") )
-        pcap = "stdin";
-
-    static bool first = true;
-    if ( first )
-        first = false;
-    else
-        fprintf(stdout, "%s", "\n");
-
-    fprintf(stdout, "Reading network traffic from \"%s\" with snaplen = %u\n",
-        pcap, SFDAQ::get_snap_len());
-}
-
 
 //-------------------------------------------------------------------------
 // initialization
@@ -273,7 +199,7 @@ void Snort::init(int argc, char** argv)
     ScriptManager::load_scripts(snort_cmd_line_conf->script_paths);
     PluginManager::load_plugins(snort_cmd_line_conf->plugin_path);
 
-    if ( SnortConfig::get_conf()->logging_flags & LOGGING_FLAG__SHOW_PLUGINS )
+    if ( snort_cmd_line_conf->logging_flags & LOGGING_FLAG__SHOW_PLUGINS )
     {
         ModuleManager::dump_modules();
         PluginManager::dump_plugins();
@@ -352,6 +278,10 @@ void Snort::init(int argc, char** argv)
     parser_term(sc);
 
     Active::init(sc);
+
+    LogMessage("%s\n", LOG_DIV);
+
+    SFDAQ::init(sc->daq_config);
 }
 
 // this function should only include initialization that must be done as a
@@ -380,10 +310,9 @@ bool Snort::drop_privileges()
     /* Drop privileges if requested. */
     if (SnortConfig::get_uid() != -1 || SnortConfig::get_gid() != -1)
     {
-        if (!SFDAQ::unprivileged())
+        if (!SFDAQ::can_run_unprivileged())
         {
-            ParseError("Cannot drop privileges - %s DAQ does not support unprivileged operation.\n",
-                SFDAQ::get_type());
+            ParseError("Cannot drop privileges - at least one of the configured DAQ modules does not support unprivileged operation.\n");
             return false;
         }
         if (!SetUidGid(SnortConfig::get_uid(), SnortConfig::get_gid()))
@@ -509,12 +438,6 @@ bool Snort::is_reloading()
 bool Snort::has_dropped_privileges()
 { return privileges_dropped; }
 
-void Snort::set_main_hook(MainHook_f f)
-{ main_hook = f; }
-
-Packet* Snort::get_packet()
-{ return s_packet; }
-
 void Snort::setup(int argc, char* argv[])
 {
     set_main_thread();
@@ -524,9 +447,6 @@ void Snort::setup(int argc, char* argv[])
     OpenLogger();
 
     init(argc, argv);
-
-    LogMessage("%s\n", LOG_DIV);
-    SFDAQ::init(SnortConfig::get_conf());
 
     if ( SnortConfig::daemon_mode() )
         daemonize();
@@ -735,343 +655,5 @@ SnortConfig* Snort::get_updated_module(SnortConfig* other_conf, const char* name
     InspectorManager::update_policy(sc);
     reloading = false;
     return sc;
-}
-
-void Snort::capture_packet()
-{
-    if ( snort_main_thread_pid == gettid() )
-    {
-        // FIXIT-L main thread crashed.  Do anything?
-    }
-    else
-    {
-        // Copy the crashed threads data.  C++11 specs ensure the
-        // thread that segfaulted will still be running.
-        if ( s_packet && s_packet->pkth )
-        {
-            s_pkth = *(s_packet->pkth);
-
-            if ( s_packet->pkt )
-            {
-                memcpy(s_data, s_packet->pkt, 0xFFFF & s_packet->pkth->caplen);
-                s_packet->pkt = s_data;
-            }
-        }
-    }
-}
-
-void Snort::thread_idle()
-{
-    // FIXIT-L this whole thing could be pub-sub
-    DataBus::publish(THREAD_IDLE_EVENT, nullptr);
-    if (SnortConfig::read_mode())
-        Stream::timeout_flows(packet_time());
-    else
-        Stream::timeout_flows(time(nullptr));
-    aux_counts.idle++;
-    HighAvailabilityManager::process_receive();
-}
-
-void Snort::thread_rotate()
-{
-    DataBus::publish(THREAD_ROTATE_EVENT, nullptr);
-}
-
-/*
- * Perform all packet thread initialization actions that need to be taken with escalated privileges
- * prior to starting the DAQ module.
- */
-bool Snort::thread_init_privileged(const char* intf)
-{
-    s_data = new uint8_t[65535];
-    show_source(intf);
-
-    SnortConfig::get_conf()->thread_config->implement_thread_affinity(STHREAD_TYPE_PACKET,
-        get_instance_id());
-
-    // FIXIT-M the start-up sequence is a little off due to dropping privs
-    SFDAQInstance* daq_instance = new SFDAQInstance(intf);
-    SFDAQ::set_local_instance(daq_instance);
-    if (!daq_instance->configure(SnortConfig::get_conf()))
-    {
-        SFDAQ::set_local_instance(nullptr);
-        delete daq_instance;
-        return false;
-    }
-
-    return true;
-}
-
-/*
- * Perform all packet thread initialization actions that can be taken with dropped privileges
- * and/or must be called after the DAQ module has been started.
- */
-void Snort::thread_init_unprivileged()
-{
-    // using dummy values until further integration
-    const unsigned max_contexts = 20;
-
-    s_switcher = new ContextSwitcher;
-
-    for ( unsigned i = 0; i < max_contexts; ++i )
-        s_switcher->push(new IpsContext);
-
-    CodecManager::thread_init(SnortConfig::get_conf());
-
-    // this depends on instantiated daq capabilities
-    // so it is done here instead of init()
-    Active::thread_init(SnortConfig::get_conf());
-
-    InitTag();
-    EventTrace_Init();
-    detection_filter_init(SnortConfig::get_conf()->detection_filter_config);
-    DetectionEngine::thread_init();
-
-    EventManager::open_outputs();
-    IpsManager::setup_options();
-    ActionManager::thread_init(SnortConfig::get_conf());
-    FileService::thread_init();
-    SideChannelManager::thread_init();
-    HighAvailabilityManager::thread_init(); // must be before InspectorManager::thread_init();
-    InspectorManager::thread_init(SnortConfig::get_conf());
-    PacketTracer::thread_init();
-
-    // in case there are HA messages waiting, process them first
-    HighAvailabilityManager::process_receive();
-    PacketManager::thread_init();
-}
-
-void Snort::thread_reinit(SnortConfig* sc)
-{
-    InspectorManager::thread_reinit(sc);
-    ActionManager::thread_reinit(sc);
-}
-
-void Snort::thread_term()
-{
-    HighAvailabilityManager::thread_term_beginning();
-
-    if ( !SnortConfig::get_conf()->dirty_pig )
-        Stream::purge_flows();
-
-    DetectionEngine::idle();
-    InspectorManager::thread_stop(SnortConfig::get_conf());
-    ModuleManager::accumulate(SnortConfig::get_conf());
-    InspectorManager::thread_term(SnortConfig::get_conf());
-    ActionManager::thread_term(SnortConfig::get_conf());
-
-    IpsManager::clear_options();
-    EventManager::close_outputs();
-    CodecManager::thread_term();
-    HighAvailabilityManager::thread_term();
-    SideChannelManager::thread_term();
-
-    s_packet = nullptr;
-
-    SFDAQInstance* daq_instance = SFDAQ::get_local_instance();
-    if ( daq_instance->was_started() )
-        daq_instance->stop();
-    SFDAQ::set_local_instance(nullptr);
-    delete daq_instance;
-
-    PacketLatency::tterm();
-    RuleLatency::tterm();
-
-    Profiler::consolidate_stats();
-
-    DetectionEngine::thread_term();
-    detection_filter_term();
-    EventTrace_Term();
-    CleanupTag();
-    FileService::thread_term();
-    PacketTracer::thread_term();
-    PacketManager::thread_term();
-
-    Active::thread_term();
-    delete s_switcher;
-    delete[] s_data;
-}
-
-bool Snort::inspect(Packet* p)
-{
-    // Need to include this b/c call is outside the detect tree
-    Profile detect_profile(detectPerfStats);
-    DeepProfile rebuilt_profile(rebuiltPacketPerfStats);
-
-    DetectionEngine de;
-    return main_hook(p);
-}
-
-DAQ_Verdict Snort::process_packet(
-    Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt, bool is_frag)
-{
-    aux_counts.rx_bytes += pkthdr->caplen;
-
-    PacketManager::decode(p, pkthdr, pkt, is_frag);
-    assert(p->pkth && p->pkt);
-
-    PacketTracer::activate(*p);
-
-    if (is_frag)
-    {
-        p->packet_flags |= (PKT_PSEUDO | PKT_REBUILT_FRAG);
-        p->pseudo_type = PSEUDO_PKT_IP;
-    }
-
-    set_policy(p);  // FIXIT-M should not need this here
-
-    if ( !(p->packet_flags & PKT_IGNORE) )
-    {
-        clear_file_data();
-        main_hook(p);
-
-        // FIXIT-L remove this onload when DAQng can push multiple packets
-        if ( p->flow )
-            DetectionEngine::onload(p->flow);
-    }
-
-    Active* act = p->active;
-    // process flow verdicts here
-    if ( act->packet_retry_requested() )
-    {
-        return DAQ_VERDICT_RETRY;
-    }
-    else if ( act->session_was_blocked() )
-    {
-        if ( !act->can_block() )
-            return DAQ_VERDICT_PASS;
-
-        if ( act->get_tunnel_bypass() )
-        {
-            aux_counts.internal_blacklist++;
-            return DAQ_VERDICT_PASS;
-        }
-
-        if ( SnortConfig::inline_mode() or act->packet_force_dropped() )
-            return DAQ_VERDICT_BLACKLIST;
-        else
-            return DAQ_VERDICT_IGNORE;
-    }
-
-    return DAQ_VERDICT_PASS;
-}
-
-// process (wire-only) packet verdicts here
-static DAQ_Verdict update_verdict(Packet* p, DAQ_Verdict verdict, int& inject)
-{
-    if ( p->active->packet_was_dropped() and p->active->can_block() )
-    {
-        if ( verdict == DAQ_VERDICT_PASS )
-            verdict = DAQ_VERDICT_BLOCK;
-    }
-    else if ( verdict == DAQ_VERDICT_RETRY )
-    {
-        return verdict;
-    }
-    else if ( p->packet_flags & PKT_RESIZED )
-    {
-        // we never increase, only trim, but daq doesn't support resizing wire packet
-        PacketManager::encode_update(p);
-
-        if ( !SFDAQ::inject(p->pkth, 0, p->pkt, p->pkth->pktlen) )
-        {
-            inject = 1;
-            verdict = DAQ_VERDICT_BLOCK;
-        }
-    }
-    else if ( p->packet_flags & PKT_MODIFIED )
-    {
-        // this packet was normalized and/or has replacements
-        PacketManager::encode_update(p);
-        verdict = DAQ_VERDICT_REPLACE;
-    }
-    else if ( (p->packet_flags & PKT_IGNORE) ||
-        (p->flow && p->flow->get_ignore_direction( ) == SSN_DIR_BOTH) )
-    {
-        if ( !p->active->get_tunnel_bypass() )
-        {
-            verdict = DAQ_VERDICT_WHITELIST;
-        }
-        else
-        {
-            verdict = DAQ_VERDICT_PASS;
-            aux_counts.internal_whitelist++;
-        }
-    }
-    else if ( p->ptrs.decode_flags & DECODE_PKT_TRUST )
-    {
-        if (p->flow)
-            p->flow->set_ignore_direction(SSN_DIR_BOTH);
-        verdict = DAQ_VERDICT_WHITELIST;
-    }
-    else
-    {
-        verdict = DAQ_VERDICT_PASS;
-    }
-    return verdict;
-}
-
-DAQ_Verdict Snort::packet_callback(
-    void*, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt)
-{
-    set_default_policy();
-    Profile profile(totalPerfStats);
-
-    pc.total_from_daq++;
-    packet_time_update(&pkthdr->ts);
-
-    if ( SnortConfig::get_conf()->pkt_skip && pc.total_from_daq <= SnortConfig::get_conf()->pkt_skip )
-        return DAQ_VERDICT_PASS;
-
-    s_switcher->start();
-    s_packet = s_switcher->get_context()->packet;
-    s_packet->context->packet_number = pc.total_from_daq;
-
-    DetectionEngine::reset();
-
-    sfthreshold_reset();
-    ActionManager::reset_queue(s_packet);
-
-    DAQ_Verdict verdict = process_packet(s_packet, pkthdr, pkt);
-    ActionManager::execute(s_packet);
-
-    int inject = 0;
-    verdict = update_verdict(s_packet, verdict, inject);
-
-    if (PacketTracer::is_active())
-    {
-        PacketTracer::log("Policies: Network %u, Inspection %u, Detection %u\n",
-            get_network_policy()->user_policy_id, get_inspection_policy()->user_policy_id,
-            get_ips_policy()->user_policy_id);
-        PacketTracer::log("Verdict: %s\n", SFDAQ::verdict_to_string(verdict));
-
-        PacketTracer::dump(pkthdr);
-    }
-
-    HighAvailabilityManager::process_update(s_packet->flow, pkthdr);
-
-    Stream::timeout_flows(pkthdr->ts.tv_sec);
-    HighAvailabilityManager::process_receive();
-
-    s_packet->pkth = nullptr;  // no longer avail upon sig segv
-
-    if ( SnortConfig::get_conf()->pkt_cnt && pc.total_from_daq >= SnortConfig::get_conf()->pkt_cnt )
-        SFDAQ::break_loop(-1);
-
-    // Check for resume(n) 
-    else if ((s_pause.pause_cnt && pc.total_from_daq >= s_pause.pause_cnt) 
-#ifdef REG_TEST   // pause-after-n
-        || ( SnortConfig::get_conf()->pkt_pause_cnt && !s_pause.was_paused && 
-	pc.total_from_daq >= SnortConfig::get_conf()->pkt_pause_cnt )
-#endif
-	)
-    {
-        SFDAQ::break_loop(0);
-        s_pause.was_paused = s_pause.pause = true;
-    }  
-
-    s_switcher->stop();
-
-    return verdict;
 }
 

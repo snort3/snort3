@@ -303,19 +303,6 @@ static const ConvertMap nopcre_api =
 const ConvertMap* nopcre_map = &nopcre_api;
 
 /*************************************************
- ******************  no_promisc  *****************
- *************************************************/
-
-static const std::string no_promisc = "no_promisc";
-static const ConvertMap no_promisc_api =
-{
-    no_promisc,
-    config_true_no_opt_ctor<& no_promisc, & daq>
-};
-
-const ConvertMap* no_promisc_map = &no_promisc_api;
-
-/*************************************************
  ******************  obfuscate  ******************
  *************************************************/
 

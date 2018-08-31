@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2019 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2019-2019 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,43 +15,32 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// swapper.h author Russ Combs <rucombs@cisco.com>
+// oops_handler.h author Michael Altizer <mialtize@cisco.com>
 
-#ifndef SWAPPER_H
-#define SWAPPER_H
+#ifndef OOPS_HANDLER_H
+#define OOPS_HANDLER_H
 
-// used to make thread local, pointer-based config swaps by packet threads
+#include <daq_common.h>
 
 namespace snort
 {
-struct SnortConfig;
+struct Packet;
 }
 
-class Analyzer;
-struct tTargetBasedConfig;
-
-class Swapper
+class OopsHandler
 {
 public:
-    Swapper(snort::SnortConfig*, tTargetBasedConfig*);
-    Swapper(snort::SnortConfig*, snort::SnortConfig*);
-    Swapper(snort::SnortConfig*, snort::SnortConfig*, tTargetBasedConfig*, tTargetBasedConfig*);
-    Swapper(tTargetBasedConfig*, tTargetBasedConfig*);
-    ~Swapper();
+    static void handle_crash();
 
-    void apply(Analyzer&);
-
-    static bool get_reload_in_progress() { return reload_in_progress; }
-    static void set_reload_in_progress(bool rip) { reload_in_progress = rip; }
+    OopsHandler();
+    ~OopsHandler();
+    void set_current_packet(snort::Packet* p) { packet = p; }
+    void eternalize();
 
 private:
-    snort::SnortConfig* old_conf;
-    snort::SnortConfig* new_conf;
-
-    tTargetBasedConfig* old_attribs;
-    tTargetBasedConfig* new_attribs;
-
-    static bool reload_in_progress;
+    DAQ_PktHdr_t pkth = { };
+    uint8_t data[65535] = { };
+    snort::Packet* packet = nullptr;
 };
 
 #endif

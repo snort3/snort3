@@ -119,7 +119,6 @@ static ConversionState* config_string_ctor(Converter& c)
  *************************************************/
 
 static const std::string alerts = "alerts";
-static const std::string daq = "daq";
 static const std::string mode = "mode";
 static const std::string packets = "packets";
 static const std::string process = "process";
@@ -153,22 +152,10 @@ static const ConvertMap chroot_api =
 const ConvertMap* chroot_map = &chroot_api;
 
 /*************************************************
- *********************  daq  *********************
- *************************************************/
-
-static const std::string module = "module";
-static const ConvertMap daq_api =
-{
-    daq,
-    config_string_ctor<& daq, & daq, & module>,
-};
-
-const ConvertMap* daq_map = &daq_api;
-
-/*************************************************
  *******************  daq_dir  *******************
  *************************************************/
 
+static const std::string daq = "daq";
 static const std::string daq_dir = "daq_dir";
 static const std::string module_dirs = "module_dirs";
 static const ConvertMap daq_dir_api =
@@ -178,20 +165,6 @@ static const ConvertMap daq_dir_api =
 };
 
 const ConvertMap* daq_dir_map = &daq_dir_api;
-
-/*************************************************
- *******************  daq_var  *******************
- *************************************************/
-
-static const std::string daq_var = "daq_var";
-static const std::string variables = "variables";
-static const ConvertMap daq_var_api =
-{
-    daq_var,
-    config_string_ctor<& daq_var, & daq, & variables, true>,
-};
-
-const ConvertMap* daq_var_map = &daq_var_api;
 
 /*************************************************
  *******************  logdir  ********************

@@ -31,7 +31,7 @@
 #include "detection/ips_context.h"
 #include "log/log.h"
 #include "log/messages.h"
-#include "packet_io/sfdaq.h"
+#include "packet_io/sfdaq_instance.h"
 #include "protocols/eth.h"
 #include "protocols/icmp4.h"
 #include "protocols/ip.h"
@@ -112,13 +112,13 @@ void PacketTracer::dump(char* output_buff, unsigned int len)
     s_pkt_trace->reset();
 }
 
-void PacketTracer::dump(const DAQ_PktHdr_t* pkt_hdr)
+void PacketTracer::dump(Packet* p)
 {
     if (is_paused())
         return;
 
     if (s_pkt_trace->daq_activated)
-        s_pkt_trace->dump_to_daq(pkt_hdr);
+        s_pkt_trace->dump_to_daq(p);
 
     if (s_pkt_trace->user_enabled or s_pkt_trace->shell_enabled)
         LogMessage(s_pkt_trace->log_fh, "%s\n", s_pkt_trace->buffer);
@@ -341,12 +341,12 @@ void PacketTracer::add_packet_type_info(const Packet& p)
                 PacketTracer::log("Packet %" PRIu64 ": TCP %s, %s, seq %u, ack %u, dsize %u%s\n",
                     p.context->packet_number, tcpFlags, timestamp,
                     p.ptrs.tcph->seq(), p.ptrs.tcph->ack(), p.dsize,
-                    (p.pkth->flags & DAQ_PKT_FLAG_RETRY_PACKET) ? ", retry pkt" : "");
+                    p.is_retry() ? ", retry pkt" : "");
             else
                 PacketTracer::log("Packet %" PRIu64 ": TCP %s, %s, seq %u, dsize %u%s\n",
                     p.context->packet_number, tcpFlags, timestamp, p.ptrs.tcph->seq(),
                     p.dsize,
-                    (p.pkth->flags & DAQ_PKT_FLAG_RETRY_PACKET) ? ", retry pkt" : "");
+                    p.is_retry() ? ", retry pkt" : "");
             break;
         }
 
@@ -416,9 +416,10 @@ void PacketTracer::open_file()
     }
 }
 
-void PacketTracer::dump_to_daq(const DAQ_PktHdr_t* pkt_hdr)
+void PacketTracer::dump_to_daq(Packet* p)
 {
-    SFDAQ::get_local_instance()->modify_flow_pkt_trace(pkt_hdr, reason,
+    assert(p);
+    p->daq_instance->modify_flow_pkt_trace(p->daq_msg, reason,
         (uint8_t *)buffer, buff_len + 1);
 }
 
@@ -475,7 +476,7 @@ public:
     static uint8_t get_dump_reason()
     { return ((TestPacketTracer*)s_pkt_trace)->dump_reason; }
 
-    void dump_to_daq(const DAQ_PktHdr_t*) override
+    void dump_to_daq(Packet*) override
     { dump_reason = reason; }
 
     static std::vector<bool> get_mutes()

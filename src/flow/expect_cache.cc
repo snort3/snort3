@@ -24,7 +24,7 @@
 #include "expect_cache.h"
 
 #include "hash/zhash.h"
-#include "packet_io/sfdaq.h"
+#include "packet_io/sfdaq_instance.h"
 #include "protocols/packet.h"
 #include "protocols/vlan.h"
 #include "pub_sub/expect_events.h"
@@ -402,7 +402,7 @@ int ExpectCache::add_flow(const Packet *ctrlPkt,
         last = nullptr;
         /* Only add TCP and UDP expected flows for now via the DAQ module. */
         if (ip_proto == IpProtocol::TCP || ip_proto == IpProtocol::UDP)
-            SFDAQ::get_local_instance()->add_expected(ctrlPkt, cliIP, cliPort, srvIP, srvPort,
+            ctrlPkt->daq_instance->add_expected(ctrlPkt, cliIP, cliPort, srvIP, srvPort,
                     ip_proto, 1000, 0);
     }
 

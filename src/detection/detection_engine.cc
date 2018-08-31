@@ -30,8 +30,8 @@
 #include "framework/endianness.h"
 #include "helpers/ring.h"
 #include "latency/packet_latency.h"
+#include "main/analyzer.h"
 #include "main/modules.h"
-#include "main/snort.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
 #include "main/thread.h"
@@ -101,40 +101,44 @@ void DetectionEngine::thread_term()
 
 DetectionEngine::DetectionEngine()
 {
-    context = Snort::get_switcher()->interrupt();
+    context = Analyzer::get_switcher()->interrupt();
     context->file_data = { nullptr, 0 };
     reset();
 }
 
 DetectionEngine::~DetectionEngine()
 {
-    if ( context == Snort::get_switcher()->get_context() )
+    if ( context == Analyzer::get_switcher()->get_context() )
     {
         // finish_packet is called here so that we clear wire packets at the right time
+        // FIXIT-L if might not be needed anymore with wire packet checks in finish_packet
         finish_packet(context->packet, true);
     }
 }
 
 void DetectionEngine::reset()
 {
-    IpsContext* c = Snort::get_switcher()->get_context();
+    IpsContext* c = Analyzer::get_switcher()->get_context();
     c->alt_data.len = 0;  // FIXIT-H need context::reset()
 }
 
 IpsContext* DetectionEngine::get_context()
-{ return Snort::get_switcher()->get_context(); }
+{ return Analyzer::get_switcher()->get_context(); }
 
 SF_EVENTQ* DetectionEngine::get_event_queue()
-{ return Snort::get_switcher()->get_context()->equeue; }
+{ return Analyzer::get_switcher()->get_context()->equeue; }
 
 Packet* DetectionEngine::get_current_packet()
-{ return Snort::get_switcher()->get_context()->packet; }
+{ return Analyzer::get_switcher()->get_context()->packet; }
+
+Packet* DetectionEngine::get_current_wire_packet()
+{ return Analyzer::get_switcher()->get_context()->wire_packet; }
 
 void DetectionEngine::set_encode_packet(Packet* p)
-{ Snort::get_switcher()->get_context()->encode_packet = p; }
+{ Analyzer::get_switcher()->get_context()->encode_packet = p; }
 
 Packet* DetectionEngine::get_encode_packet()
-{ return Snort::get_switcher()->get_context()->encode_packet; }
+{ return Analyzer::get_switcher()->get_context()->encode_packet; }
 
 // we need to stay in the current context until rebuild is successful
 // any events while rebuilding will be logged against the current packet
@@ -145,14 +149,18 @@ Packet* DetectionEngine::set_next_packet(Packet* parent)
     static THREAD_LOCAL IpsAction* shutdown_action = nullptr;
 
     wait_for_context();
-    IpsContext* c = Snort::get_switcher()->get_next();
-    if ( parent ) // FIXIT-L parent can probably be determined by busy queue
+    IpsContext* c = Analyzer::get_switcher()->get_next();
+    if ( parent )
     {
         c->snapshot_flow(parent->flow);
         c->packet_number = parent->context->packet_number;
+        c->wire_packet = parent->context->wire_packet;
     }
     else
+    {
         c->packet_number = get_packet_number();
+        c->wire_packet = nullptr;
+    }
 
     Packet* p = c->packet;
 
@@ -163,13 +171,17 @@ Packet* DetectionEngine::set_next_packet(Packet* parent)
     // normal rebuild
     if ( parent )
     {
+        p->daq_msg = parent->daq_msg;
+        p->daq_instance = parent->daq_instance;
         p->active = parent->active;
         p->action = parent->action;
     }
     
     // processing but parent is already gone (flow cache flush etc..)
-    else if ( Snort::get_switcher()->get_context() )
+    else if ( Analyzer::get_switcher()->get_context() )
     {
+        p->daq_msg = nullptr;
+        p->daq_instance = nullptr;
         p->active = get_current_packet()->active;
         p->action = get_current_packet()->action;
     }
@@ -177,6 +189,8 @@ Packet* DetectionEngine::set_next_packet(Packet* parent)
     // shutdown, so use a dummy so null checking is not needed everywhere
     else
     {
+        p->daq_msg = nullptr;
+        p->daq_instance = nullptr;
         p->action = &shutdown_action;
         p->active = &shutdown_active;
         shutdown_active.reset();
@@ -221,7 +235,7 @@ void DetectionEngine::finish_inspect(Packet* p, bool inspected)
 
 void DetectionEngine::finish_packet(Packet* p, bool flow_deletion)
 {
-    ContextSwitcher* sw = Snort::get_switcher();
+    ContextSwitcher* sw = Analyzer::get_switcher();
 
     log_events(p);
     clear_events(p);
@@ -236,27 +250,18 @@ void DetectionEngine::finish_packet(Packet* p, bool flow_deletion)
 
     if ( flow_deletion or p->is_rebuilt() )
         sw->complete();
-
-    // FIXIT-H enable for daqng
-#if 0
-    if ( !p->is_rebuilt() )
-    {
-        sw->stop();
-        queue for daq msg finalize
-    }
-#endif
 }
 
 uint8_t* DetectionEngine::get_buffer(unsigned& max)
 {
     max = IpsContext::buf_size;
-    return Snort::get_switcher()->get_context()->buf;
+    return Analyzer::get_switcher()->get_context()->buf;
 }
 
 uint8_t* DetectionEngine::get_next_buffer(unsigned& max)
 {
     max = IpsContext::buf_size;
-    return Snort::get_switcher()->get_next()->buf;
+    return Analyzer::get_switcher()->get_next()->buf;
 }
 
 DataBuffer& DetectionEngine::get_alt_buffer(Packet* p)
@@ -266,23 +271,23 @@ DataBuffer& DetectionEngine::get_alt_buffer(Packet* p)
 }
 
 void DetectionEngine::set_file_data(const DataPointer& dp)
-{ Snort::get_switcher()->get_context()->file_data = dp; }
+{ Analyzer::get_switcher()->get_context()->file_data = dp; }
 
 DataPointer& DetectionEngine::get_file_data(IpsContext* c)
 { return c->file_data; }
 
 void DetectionEngine::set_data(unsigned id, IpsContextData* p)
-{ Snort::get_switcher()->get_context()->set_context_data(id, p); }
+{ Analyzer::get_switcher()->get_context()->set_context_data(id, p); }
 
 IpsContextData* DetectionEngine::get_data(unsigned id)
-{ return Snort::get_switcher()->get_context()->get_context_data(id); }
+{ return Analyzer::get_switcher()->get_context()->get_context_data(id); }
 
 IpsContextData* DetectionEngine::get_data(unsigned id, IpsContext* context)
 {
     if ( context )
         return context->get_context_data(id);
 
-    ContextSwitcher* sw = Snort::get_switcher();
+    ContextSwitcher* sw = Analyzer::get_switcher();
 
     if ( !sw )
         return nullptr;
@@ -296,26 +301,26 @@ void DetectionEngine::add_replacement(const std::string& s, unsigned off)
 
     r.data = s;
     r.offset = off;
-    Snort::get_switcher()->get_context()->rpl.emplace_back(r); 
+    Analyzer::get_switcher()->get_context()->rpl.emplace_back(r); 
 }
 
 bool DetectionEngine::get_replacement(std::string& s, unsigned& off)
 { 
-    if ( Snort::get_switcher()->get_context()->rpl.empty() )
+    if ( Analyzer::get_switcher()->get_context()->rpl.empty() )
         return false;
 
-    auto rep = Snort::get_switcher()->get_context()->rpl.back();
+    auto rep = Analyzer::get_switcher()->get_context()->rpl.back();
 
     s = rep.data;
     off = rep.offset;
 
-    Snort::get_switcher()->get_context()->rpl.pop_back();
+    Analyzer::get_switcher()->get_context()->rpl.pop_back();
     return true;
 }
 
 void DetectionEngine::clear_replacement()
 {
-    Snort::get_switcher()->get_context()->rpl.clear();
+    Analyzer::get_switcher()->get_context()->rpl.clear();
 }
 
 void DetectionEngine::disable_all(Packet* p)
@@ -346,10 +351,10 @@ void DetectionEngine::set_detects(Packet* p, IpsContext::ActiveRules ar)
 { p->context->active_rules = ar; }
 
 void DetectionEngine::set_check_tags(bool enable)
-{ Snort::get_switcher()->get_context()->check_tags = enable; }
+{ Analyzer::get_switcher()->get_context()->check_tags = enable; }
 
 bool DetectionEngine::get_check_tags()
-{ return Snort::get_switcher()->get_context()->check_tags; }
+{ return Analyzer::get_switcher()->get_context()->check_tags; }
 
 //--------------------------------------------------------------------------
 // offload / onload
@@ -357,7 +362,7 @@ bool DetectionEngine::get_check_tags()
 
 bool DetectionEngine::do_offload(Packet* p)
 {
-    ContextSwitcher* sw = Snort::get_switcher();
+    ContextSwitcher* sw = Analyzer::get_switcher();
 
     assert(p == p->context->packet);
     assert(p->context == sw->get_context());
@@ -401,7 +406,7 @@ bool DetectionEngine::do_offload(Packet* p)
 
 bool DetectionEngine::offload(Packet* p)
 {
-    ContextSwitcher* sw = Snort::get_switcher();
+    ContextSwitcher* sw = Analyzer::get_switcher();
 
     bool depends_on_suspended = p->flow ? p->flow->context_chain.front() : sw->non_flow_chain.front();
     bool can_offload = offloader->available();
@@ -458,14 +463,15 @@ void DetectionEngine::onload(Flow* flow)
 
 void DetectionEngine::onload()
 {
-    for( Packet* p; offloader->count() and offloader->get(p); )
+    Packet* p;
+    while (offloader->count() and offloader->get(p))
     {
         trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " de::onload %" PRIu64 " (r=%d)\n",
             p->context->packet_number, p->context->context_num, offloader->count());
         
         p->clear_offloaded();
         
-        IpsContextChain& chain = p->flow ? p->flow->context_chain : Snort::get_switcher()->non_flow_chain;
+        IpsContextChain& chain = p->flow ? p->flow->context_chain : Analyzer::get_switcher()->non_flow_chain;
         
         resume_ready_suspends(chain);
     }
@@ -482,17 +488,25 @@ void DetectionEngine::resume(Packet* p)
     trace_logf(detection, TRACE_DETECTION_ENGINE, "%" PRIu64 " de::resume %" PRIu64 " (r=%d)\n",
         p->context->packet_number, p->context->context_num, offloader->count());
 
-    Snort::get_switcher()->resume(p->context);
+    ContextSwitcher* sw = Analyzer::get_switcher();
+    sw->resume(p->context);
     
     fp_complete(p);
     finish_inspect_with_latency(p); // FIXIT-L should latency be evaluated here?
     finish_inspect(p, true);
     finish_packet(p);
+
+    if ( !p->is_rebuilt() )
+    {
+        // This happens here to ensure needed contexts are available ASAP as
+        // not directly forwarding leads to deadlocking waiting on new contexts
+        Analyzer::get_local_analyzer()->post_process_packet(p);
+    }
 }
 
 void DetectionEngine::wait_for_context()
 {
-    ContextSwitcher* sw = Snort::get_switcher();
+    ContextSwitcher* sw = Analyzer::get_switcher();
 
     if ( !sw->idle_count() )
     {
@@ -576,6 +590,7 @@ bool DetectionEngine::inspect(Packet* p)
         finish_inspect_with_latency(p);
     }
     finish_inspect(p, inspected);
+
     return true;
 }
 

@@ -119,7 +119,7 @@ void TalosLogger::open()
 {
     talos_log = new AlertLog;
 
-    string ifname = string(SFDAQ::get_interface_spec());
+    string ifname = string(SFDAQ::get_input_spec());
     size_t sep_pos = ifname.find_last_of("/\\");
 
     if ( sep_pos != string::npos )

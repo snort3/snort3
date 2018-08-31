@@ -53,7 +53,7 @@ THREAD_LOCAL bool Active::s_suspend = false;
 THREAD_LOCAL Active::Counts snort::active_counts;
 
 typedef int (* send_t) (
-    const DAQ_PktHdr_t* h, int rev, const uint8_t* buf, uint32_t len);
+    DAQ_Msg_h msg, int rev, const uint8_t* buf, uint32_t len);
 
 static THREAD_LOCAL eth_t* s_link = nullptr;
 static THREAD_LOCAL ip_t* s_ipnet = nullptr;
@@ -63,7 +63,7 @@ static THREAD_LOCAL send_t s_send = SFDAQ::inject;
 // helpers
 
 int Active::send_eth(
-    const DAQ_PktHdr_t*, int, const uint8_t* buf, uint32_t len)
+    DAQ_Msg_h, int, const uint8_t* buf, uint32_t len)
 {
     ssize_t sent = eth_send(s_link, buf, len);
     active_counts.injects++;
@@ -71,7 +71,7 @@ int Active::send_eth(
 }
 
 int Active::send_ip(
-    const DAQ_PktHdr_t*, int, const uint8_t* buf, uint32_t len)
+    DAQ_Msg_h, int, const uint8_t* buf, uint32_t len)
 {
     ssize_t sent = ip_send(s_ipnet, buf, len);
     active_counts.injects++;
@@ -209,7 +209,7 @@ void Active::send_reset(Packet* p, EncodeFlags ef)
         if ( !rej )
             return;
 
-        s_send(p->pkth, !(ef & ENC_FLAG_FWD), rej, len);
+        s_send(p->daq_msg, !(ef & ENC_FLAG_FWD), rej, len);
     }
 }
 
@@ -226,7 +226,7 @@ void Active::send_unreach(Packet* p, snort::UnreachResponse type)
     if ( !rej )
         return;
 
-    s_send(p->pkth, 1, rej, len);
+    s_send(p->daq_msg, 1, rej, len);
 }
 
 bool Active::send_data(
@@ -246,7 +246,7 @@ bool Active::send_data(
 
         if ( seg )
         {
-            s_send(p->pkth, !(tmp_flags & ENC_FLAG_FWD), seg, plen);
+            s_send(p->daq_msg, !(tmp_flags & ENC_FLAG_FWD), seg, plen);
             active_counts.injects++;
         }
     }
@@ -268,7 +268,7 @@ bool Active::send_data(
             if ( !seg )
                 return false;
 
-            s_send(p->pkth, !(flags & ENC_FLAG_FWD), seg, plen);
+            s_send(p->daq_msg, !(flags & ENC_FLAG_FWD), seg, plen);
             active_counts.injects++;
 
             buf += toSend;
@@ -284,7 +284,7 @@ bool Active::send_data(
     if ( !seg )
         return false;
 
-    s_send(p->pkth, !(flags & ENC_FLAG_FWD), seg, plen);
+    s_send(p->daq_msg, !(flags & ENC_FLAG_FWD), seg, plen);
     active_counts.injects++;
 
     if (flags & ENC_FLAG_RST_CLNT)
@@ -296,7 +296,7 @@ bool Active::send_data(
 
         if ( seg )
         {
-            s_send(p->pkth, !(flags & ENC_FLAG_FWD), seg, plen);
+            s_send(p->daq_msg, !(flags & ENC_FLAG_FWD), seg, plen);
             active_counts.injects++;
         }
     }
@@ -320,7 +320,7 @@ void Active::inject_data(
     if ( !seg )
         return;
 
-    s_send(p->pkth, !(flags & ENC_FLAG_FWD), seg, plen);
+    s_send(p->daq_msg, !(flags & ENC_FLAG_FWD), seg, plen);
 }
 
 //--------------------------------------------------------------------
@@ -422,11 +422,11 @@ bool Active::daq_retry_packet(const Packet* p)
 {
     bool retry_queued = false;
 
-    if ( ( active_action == ACT_PASS ) and SFDAQ::can_retry() )
+    if ( !p->is_rebuilt() && (active_action == ACT_PASS) )
     {
         if ( SFDAQ::forwarding_packet(p->pkth) )
         {
-            if(p->packet_flags & PKT_RETRANSMIT)
+            if (p->packet_flags & PKT_RETRANSMIT)
                 active_action = ACT_DROP;  // Don't add retransmits to retry queue.
             else
                 active_action = ACT_RETRY;

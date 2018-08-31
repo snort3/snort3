@@ -123,18 +123,11 @@ static_assert(CODEC_ENCAP_LAYER == (CODEC_UNSURE_ENCAP | CODEC_SAVE_LAYER),
     "If this is an encapsulated layer, you must also set UNSURE_ENCAP"
     " and SAVE_LAYER");
 
-RawData::RawData(const DAQ_PktHdr_t* h, const uint8_t* p)
-{
-    pkth = h;
-    data = p;
-    len = h->caplen;
-}
-
 //-------------------------------------------------------------------------
 // Encode/Decode functions
 //-------------------------------------------------------------------------
 void PacketManager::decode(
-    Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt, bool cooked)
+    Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt, uint32_t pktlen, bool cooked, bool retry)
 {
     Profile profile(decodePerfStats);
 
@@ -143,7 +136,7 @@ void PacketManager::decode(
     ProtocolIndex mapped_prot = CodecManager::grinder;
     ProtocolId prev_prot_id = CodecManager::grinder_id;
 
-    RawData raw(pkthdr, pkt);
+    RawData raw(p->daq_msg, pkthdr, pkt, pktlen);
     CodecData codec_data(ProtocolId::FINISHED_DECODE);
 
     if ( cooked )
@@ -153,6 +146,9 @@ void PacketManager::decode(
     p->reset();
     p->pkth = pkthdr;
     p->pkt = pkt;
+    p->pktlen = pktlen;
+    if (retry)
+        p->packet_flags |= PKT_RETRY;
     layer::set_packet_pointer(p);
 
     s_stats[total_processed]++;
@@ -668,7 +664,7 @@ int PacketManager::format_tcp(
 
     // setup pkt capture header
     DAQ_PktHdr_t* pkth = const_cast<DAQ_PktHdr_t*>(c->pkth);
-    pkth->caplen = 0;
+    c->pktlen = 0;
     pkth->pktlen = 0;
     pkth->ts = p->pkth->ts;
 
@@ -774,7 +770,7 @@ int PacketManager::encode_format(
 
     // setup pkt capture header
     DAQ_PktHdr_t* pkth = const_cast<DAQ_PktHdr_t*>(c->pkth);
-    pkth->caplen = len;
+    c->pktlen = len;
     pkth->pktlen = len;
     pkth->ts = p->pkth->ts;
 
@@ -842,7 +838,7 @@ void PacketManager::encode_update(Packet* p)
     if ( !(p->packet_flags & PKT_MODIFIED) || (p->packet_flags & PKT_RESIZED) )
     {
         DAQ_PktHdr_t* pkth = const_cast<DAQ_PktHdr_t*>(p->pkth);
-        pkth->caplen = len;
+        p->pktlen = len;
         pkth->pktlen = len;
     }
 }

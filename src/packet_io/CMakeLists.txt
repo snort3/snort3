@@ -2,6 +2,7 @@
 set ( PACKET_IO_INCLUDES
     active.h
     sfdaq.h
+    sfdaq_instance.h
 )
 
 if (ENABLE_UNIT_TESTS)
@@ -10,6 +11,20 @@ if (ENABLE_UNIT_TESTS)
     )
 endif (ENABLE_UNIT_TESTS)
 
+if (ENABLE_STATIC_DAQ)
+    foreach (STATIC_MODULE_NAME IN LISTS DAQ_STATIC_MODULES)
+        string(APPEND DAQ_STATIC_MODULE_EXTERNS "extern const DAQ_ModuleAPI_t ${STATIC_MODULE_NAME}_daq_module_data;\n")
+        string(APPEND DAQ_STATIC_MODULE_DATA_ARRAY "    &${STATIC_MODULE_NAME}_daq_module_data,\n")
+    endforeach ()
+    configure_file (
+        "${CMAKE_CURRENT_SOURCE_DIR}/sfdaq_static_modules.h.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/sfdaq_static_modules.h"
+    )
+    set_source_files_properties(sfdaq.cc PROPERTIES COMPILE_DEFINITIONS ENABLE_STATIC_DAQ)
+    include_directories(${CMAKE_CURRENT_BINARY_DIR})
+    set(STATIC_DAQ_MODULES_HEADER "sfdaq_static_modules.h")
+endif ()
+
 add_library (packet_io OBJECT
     active.cc
     active.h
@@ -17,10 +32,13 @@ add_library (packet_io OBJECT
     sfdaq.h
     sfdaq_config.cc
     sfdaq_config.h
+    sfdaq_instance.cc
+    sfdaq_instance.h
     sfdaq_module.cc
     sfdaq_module.h
     trough.cc
     trough.h
+    ${STATIC_DAQ_MODULES_HEADER}
     ${TEST_FILES}
 )
 

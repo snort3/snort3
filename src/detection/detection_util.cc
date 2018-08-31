@@ -86,7 +86,7 @@ void EventTrace_Log(const Packet* p, const OptTreeNode* otn, int action)
     TextLog_Print(tlog,
         "Pkt=" STDu64 ", Sec=%lu.%6lu, Len=%u, Cap=%u\n",
         p->context->packet_number, (long)p->pkth->ts.tv_sec, (long)p->pkth->ts.tv_usec,
-        p->pkth->pktlen, p->pkth->caplen);
+        p->pkth->pktlen, p->pktlen);
 
     TextLog_Print(tlog,
         "Pkt Bits: Flags=0x%X, Proto=0x%X, Err=0x%X\n",

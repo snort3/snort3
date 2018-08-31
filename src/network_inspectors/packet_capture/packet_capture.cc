@@ -205,7 +205,7 @@ void PacketCapture::eval(Packet* p)
                 return;
 
         if ( !bpf.bf_insns || bpf_filter(bpf.bf_insns, p->pkt,
-                p->pkth->caplen, p->pkth->pktlen) )
+                p->pktlen, p->pkth->pktlen) )
         {
             write_packet(p);
             cap_count_stats.matched++;
@@ -221,7 +221,7 @@ void PacketCapture::write_packet(Packet* p)
 {
     struct pcap_pkthdr pcaphdr;
     pcaphdr.ts = p->pkth->ts;
-    pcaphdr.caplen = p->pkth->caplen;
+    pcaphdr.caplen = p->pktlen;
     pcaphdr.len = p->pkth->pktlen;
     pcap_dump((unsigned char*)dumper, &pcaphdr, p->pkt);
     pcap_dump_flush(dumper);
@@ -291,9 +291,9 @@ static Packet* init_null_packet()
     static Packet p(false);
     static DAQ_PktHdr_t h;
 
-    p.pkt = nullptr;
     p.pkth = &h;
-    h.caplen = 0;
+    p.pkt = nullptr;
+    p.pktlen = 0;
     h.pktlen = 0;
 
     return &p;
@@ -394,10 +394,10 @@ TEST_CASE("blank filter", "[PacketCapture]")
 
     Packet p(false);
     DAQ_PktHdr_t daq_hdr;
-    p.pkt = cooked;
     p.pkth = &daq_hdr;
+    p.pkt = cooked;
+    p.pktlen = sizeof(cooked);
 
-    daq_hdr.caplen = sizeof(cooked);
     daq_hdr.pktlen = sizeof(cooked);
 
     CaptureModule mod;
@@ -479,7 +479,9 @@ TEST_CASE("bpf filter", "[PacketCapture]")
     p_match.pkt = match;
     p_non_match.pkt = non_match;
 
-    daq_hdr.caplen = sizeof(match);
+    p_match.pktlen = sizeof(match);
+    p_non_match.pktlen = sizeof(match);
+
     daq_hdr.pktlen = sizeof(match);
 
     CaptureModule mod;
