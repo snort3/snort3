@@ -329,6 +329,7 @@ private:
 
 Reputation::Reputation(ReputationConfig* pc)
 {
+    reputation_id = create_reputation_id();
     config = *pc;
     ReputationConfig* conf = &config;
     if (!config.list_dir.empty())
@@ -345,7 +346,6 @@ Reputation::Reputation(ReputationConfig* pc)
 
     ip_list_init(conf->num_entries + 1, conf);
     reputationstats.memory_allocated = sfrt_flat_usage(conf->ip_list);
-    reputation_id = create_reputation_id();
 }
 
 bool Reputation::is_reputation_disabled(Flow* flow)
