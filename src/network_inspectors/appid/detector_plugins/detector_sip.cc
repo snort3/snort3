@@ -496,12 +496,16 @@ void SipEventHandler::client_handler(SipEvent& sip_event, AppIdSession& asd)
 
     if ( sip_event.is_invite() && direction == APP_ID_FROM_INITIATOR )
     {
-        if (sip_event.get_from_len())
-            fd->from = sip_event.get_from();
-        if (sip_event.get_user_name_len())
-            fd->user_name = sip_event.get_user_name();
-        if (sip_event.get_user_agent_len())
-            fd->user_agent = sip_event.get_user_agent();
+        size_t len;
+        len = sip_event.get_from_len();
+        if (len > 0)
+            fd->from.assign(sip_event.get_from(), len);
+        len = sip_event.get_user_name_len();
+        if (len > 0)
+            fd->user_name.assign(sip_event.get_user_name(), len);
+        len = sip_event.get_user_agent_len();
+        if (len > 0)
+            fd->user_agent.assign(sip_event.get_user_agent(), len);
     }
 
     if ( !fd->user_agent.empty() )
