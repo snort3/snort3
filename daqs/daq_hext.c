@@ -24,19 +24,17 @@
 
 #include "daq_user.h"
 
-#include <assert.h>
+#include <arpa/inet.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <arpa/inet.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/unistd.h>
 #include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <daq_api.h>
 #include <sfbpf_dlt.h>

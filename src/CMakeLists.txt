@@ -43,6 +43,11 @@ if ( ICONV_FOUND )
     LIST(APPEND EXTERNAL_INCLUDES ${ICONV_INCLUDE_DIR})
 endif ()
 
+if ( USE_TIRPC )
+    LIST(APPEND EXTERNAL_LIBRARIES ${TIRPC_LIBRARIES})
+    LIST(APPEND EXTERNAL_INCLUDES ${TIRPC_INCLUDE_DIRS})
+endif ()
+
 include_directories(BEFORE ${LUAJIT_INCLUDE_DIR})
 include_directories(AFTER ${EXTERNAL_INCLUDES})
 
@@ -177,6 +182,11 @@ message("
 target_link_libraries( snort
     ${EXTERNAL_LIBRARIES}
 )
+
+# Solaris requires libnsl and libsocket for various network-related library functions
+if ( CMAKE_SYSTEM_NAME STREQUAL SunOS )
+    target_link_libraries(snort nsl socket)
+endif ()
 
 #  setting export properties
 set_property(TARGET snort APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES

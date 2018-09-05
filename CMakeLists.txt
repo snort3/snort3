@@ -125,6 +125,14 @@ else ()
     LZMA:           OFF")
 endif ()
 
+if (USE_TIRPC)
+    message("\
+    RPC DB:         TIRPC")
+else ()
+    message("\
+    RPC DB:         Built-in")
+endif ()
+
 if (HAVE_SAFEC AND SAFEC_ENABLED)
     message("\
     SafeC:          ON")

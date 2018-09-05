@@ -24,16 +24,14 @@
 
 #include "daq_user.h"
 
-#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-
-#include <sys/types.h>
 #include <sys/time.h>
-#include <sys/unistd.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <daq_api.h>
 #include <sfbpf_dlt.h>

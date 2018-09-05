@@ -27,7 +27,7 @@
 
 #include <netdb.h>
 
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
+#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(USE_TIRPC)
 #include <rpc/rpc.h>
 #elif defined(__sun)
 #include <rpc/rpcent.h>

@@ -1,9 +1,9 @@
+include(CheckCXXSourceCompiles)
 include(CheckIncludeFileCXX)
 include(CheckFunctionExists)
+include(CheckLibraryExists)
 include(CheckSymbolExists)
 include(CheckTypeSize)
-include(CheckLibraryExists)
-include(CheckCXXSourceCompiles)
 
 include (TestBigEndian)
 test_big_endian(WORDS_BIGENDIAN)
@@ -16,6 +16,42 @@ check_function_exists(mallinfo HAVE_MALLINFO)
 check_function_exists(malloc_trim HAVE_MALLOC_TRIM)
 check_function_exists(memrchr HAVE_MEMRCHR)
 check_function_exists(sigaction HAVE_SIGACTION)
+
+check_cxx_source_compiles(
+    "
+    #include <string.h>
+    #include <errno.h>
+
+    void check(char c) {}
+
+    int main()
+    {
+        char buffer[1024];
+	/* This will not compile if strerror_r does not return a char* */
+	check(strerror_r(EACCES, buffer, sizeof(buffer))[0]);
+	return 0;
+    }
+    "
+    HAVE_GNU_STRERROR_R)
+
+# vvvvvvvvv  GETRPCENT TEST vvvvvvvvv
+cmake_push_check_state(RESET)
+if ( CMAKE_SYSTEM_NAME STREQUAL SunOS )
+    set(CMAKE_REQUIRED_LIBRARIES nsl)
+endif ()
+check_function_exists(getrpcent HAVE_GETRPCENT)
+if (NOT HAVE_GETRPCENT)
+    find_package(TIRPC)
+    set(CMAKE_REQUIRED_LIBRARIES ${TIRPC_LIBRARIES})
+    check_function_exists(getrpcent HAVE_TIRPC_GETRPCENT)
+    if (HAVE_TIRPC_GETRPCENT)
+        set(USE_TIRPC TRUE)
+    else()
+        message(SEND_ERROR "Couldn't find an RPC program number database implementation!")
+    endif()
+endif()
+cmake_pop_check_state()
+# ^^^^^^^^^  GETRPCENT TEST ^^^^^^^^^
 
 #--------------------------------------------------------------------------
 # Checks for typedefs, structures, and compiler characteristics.

@@ -135,6 +135,8 @@
 
 #cmakedefine HAVE_UUID 1
 
+#cmakedefine USE_TIRPC 1
+
 
 /*  Availability of specific library functions */
 
@@ -149,6 +151,9 @@
 
 /* Define to 1 if you have the `sigaction' function. */
 #cmakedefine HAVE_SIGACTION 1
+
+/* Define to 1 if you have the GNU form of the `strerror_r' function. */
+#cmakedefine HAVE_GNU_STRERROR_R 1
 
 
 /*  Available compiler options */
