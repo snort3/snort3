@@ -63,10 +63,12 @@ using namespace std;
 struct PHGlobal
 {
     const InspectApi& api;
-    bool init;  // call api.pinit()
+    bool initialized = false;   // In the context of the main thread, this means that api.pinit()
+                                // has been called.  In the packet thread, it means that api.tinit()
+                                // has been called.
+    bool instance_initialized = false;  // In the packet thread, at least one instance has had tinit() called.
 
-    PHGlobal(const InspectApi& p) : api(p)
-    { init = true; }
+    PHGlobal(const InspectApi& p) : api(p) { }
 
     static bool comp(const PHGlobal* a, const PHGlobal* b)
     { return ( a->api.type < b->api.type ); }
@@ -75,23 +77,10 @@ struct PHGlobal
 struct PHClass
 {
     const InspectApi& api;
-    bool* init;  // call pin->tinit()
-    bool* term;  // call pin->tterm()
 
-    PHClass(const InspectApi& p) : api(p)
-    {
-        init = new bool[ThreadConfig::get_instance_max()];
-        term = new bool[ThreadConfig::get_instance_max()];
+    PHClass(const InspectApi& p) : api(p) { }
 
-        for ( unsigned i = 0; i < ThreadConfig::get_instance_max(); ++i )
-            init[i] = term[i] = true;
-    }
-
-    ~PHClass()
-    {
-        delete[] init;
-        delete[] term;
-    }
+    ~PHClass() = default;
 
     PHClass(const PHClass&) = delete;
     PHClass& operator=(const PHClass&) = delete;
@@ -165,12 +154,14 @@ typedef list<Inspector*> PHList;
 static PHGlobalList s_handlers;
 static PHList s_trash;
 static PHList s_trash2;
-static THREAD_LOCAL bool s_clear = false;
 static bool s_sorted = false;
+
+static THREAD_LOCAL vector<PHGlobal>* s_tl_handlers = nullptr;
+static THREAD_LOCAL bool s_clear = false;
 
 struct FrameworkConfig
 {
-    PHClassList clist;
+    PHClassList clist;  // List of inspector module classes that have been configured
 };
 
 struct PHVector
@@ -213,7 +204,7 @@ void PHVector::add_control(PHInstance* p)
 
 struct FrameworkPolicy
 {
-    PHInstanceList ilist;
+    PHInstanceList ilist;   // List of inspector module instances
 
     PHVector passive;
     PHVector packet;
@@ -357,7 +348,7 @@ void InspectorManager::release_plugins()
 
     for ( auto* p : s_handlers )
     {
-        if ( !p->init && p->api.pterm )
+        if ( p->initialized && p->api.pterm )
             p->api.pterm();
 
         delete p;
@@ -493,6 +484,7 @@ void InspectorManager::update_policy(SnortConfig* sc)
     for ( auto* p : pi->framework_policy->ilist )
         p->set_reloaded(RELOAD_TYPE_NONE);
 }
+
 // FIXIT-M create a separate list for meta handlers?  is there really more than one?
 void InspectorManager::dispatch_meta(FrameworkPolicy* fp, int type, const uint8_t* data)
 {
@@ -571,7 +563,7 @@ InspectSsnFunc InspectorManager::get_session(uint16_t proto)
 {
     for ( auto* p : s_handlers )
     {
-        if ( p->api.type == IT_STREAM and p->api.proto_bits == proto and !p->init )
+        if ( p->api.type == IT_STREAM && p->api.proto_bits == proto && p->initialized )
             return p->api.ssn;
     }
     return nullptr;
@@ -607,11 +599,11 @@ static PHClass* get_class(const char* keyword, FrameworkConfig* fc)
     for ( auto* p : s_handlers )
         if ( !strcmp(p->api.base.name, keyword) )
         {
-            if ( p->init )
+            if ( !p->initialized )
             {
                 if ( p->api.pinit )
                     p->api.pinit();
-                p->init = false;
+                p->initialized = true;
             }
             PHClass* ppc = new PHClass(p->api);
             fc->clist.push_back(ppc);
@@ -620,14 +612,31 @@ static PHClass* get_class(const char* keyword, FrameworkConfig* fc)
     return nullptr;
 }
 
+static PHGlobal& get_thread_local_plugin(const InspectApi& api)
+{
+    assert(s_tl_handlers != nullptr);
+
+    for ( PHGlobal& phg : *s_tl_handlers )
+    {
+        if ( &phg.api == &api )
+            return phg;
+    }
+    s_tl_handlers->emplace_back(api);
+    return s_tl_handlers->back();
+}
+
 void InspectorManager::thread_init(SnortConfig* sc)
 {
     Inspector::slot = get_instance_id();
 
+    // Initial build out of this thread's configured plugin registry
+    s_tl_handlers = new vector<PHGlobal>;
     for ( auto* p : sc->framework_config->clist )
     {
-        if ( p->api.tinit )
-            p->api.tinit();
+        PHGlobal& phg = get_thread_local_plugin(p->api);
+        if (phg.api.tinit)
+            phg.api.tinit();
+        phg.initialized = true;
     }
 
     // pin->tinit() only called for default policy
@@ -636,15 +645,47 @@ void InspectorManager::thread_init(SnortConfig* sc)
 
     if ( pi && pi->framework_policy )
     {
-        unsigned slot = get_instance_id();
-
         for ( auto* p : pi->framework_policy->ilist )
-            if ( p->pp_class.init[slot] )
+        {
+            PHGlobal& phg = get_thread_local_plugin(p->pp_class.api);
+            if ( !phg.instance_initialized )
             {
                 p->handler->tinit();
-                p->pp_class.init[slot] = false;
-                p->pp_class.term[slot] = true;
+                phg.instance_initialized = true;
             }
+        }
+    }
+}
+
+void InspectorManager::thread_reinit(SnortConfig* sc)
+{
+    // Update this thread's configured plugin registry with any newly configured inspectors
+    for ( auto* p : sc->framework_config->clist )
+    {
+        PHGlobal& phg = get_thread_local_plugin(p->api);
+        if (!phg.initialized)
+        {
+            if (phg.api.tinit)
+                phg.api.tinit();
+            phg.initialized = true;
+        }
+    }
+
+    // pin->tinit() only called for default policy
+    InspectionPolicy* pi = snort::get_default_inspection_policy(sc);
+
+    if ( pi && pi->framework_policy )
+    {
+        // Call pin->tinit() for anything that hasn't yet
+        for ( auto* p : pi->framework_policy->ilist )
+        {
+            PHGlobal& phg = get_thread_local_plugin(p->pp_class.api);
+            if ( !phg.instance_initialized )
+            {
+                p->handler->tinit();
+                phg.instance_initialized = true;
+            }
+        }
     }
 }
 
@@ -654,27 +695,32 @@ void InspectorManager::thread_stop(SnortConfig*)
     set_default_policy();
     InspectionPolicy* pi = snort::get_inspection_policy();
 
+    // FIXIT-H Any inspectors that were once configured/instantiated but no longer exist in the conf
+    //  cannot have their instance tterm() called and will leak!
     if ( pi && pi->framework_policy )
     {
-        unsigned slot = get_instance_id();
-
         for ( auto* p : pi->framework_policy->ilist )
-            if ( p->pp_class.term[slot] )
+        {
+            PHGlobal& phg = get_thread_local_plugin(p->pp_class.api);
+            if ( phg.instance_initialized )
             {
                 p->handler->tterm();
-                p->pp_class.term[slot] = false;
-                p->pp_class.init[slot] = true;
+                phg.instance_initialized = false;
             }
+        }
     }
 }
 
-void InspectorManager::thread_term(SnortConfig* sc)
+void InspectorManager::thread_term(SnortConfig*)
 {
-    for ( auto* p : sc->framework_config->clist )
+    // Call tterm for every inspector plugin ever configured during the lifetime of this thread
+    for ( PHGlobal& phg : *s_tl_handlers )
     {
-        if ( p->api.tterm )
-            p->api.tterm();
+        if ( phg.api.tterm && phg.initialized )
+            phg.api.tterm();
     }
+    delete s_tl_handlers;
+    s_tl_handlers = nullptr;
 }
 
 //-------------------------------------------------------------------------

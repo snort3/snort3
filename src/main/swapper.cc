@@ -23,6 +23,7 @@
 
 #include "swapper.h"
 
+#include "managers/inspector_manager.h"
 #include "target_based/sftarget_reader.h"
 
 #include "snort_config.h"
@@ -79,7 +80,12 @@ Swapper::~Swapper()
 void Swapper::apply()
 {
     if ( new_conf )
+    {
+        const bool reload = (snort::SnortConfig::get_conf() != nullptr);
         snort::SnortConfig::set_conf(new_conf);
+        if (reload)
+            snort::InspectorManager::thread_reinit(new_conf);
+    }
 
     if ( new_attribs )
         SFAT_SetConfig(new_attribs);
