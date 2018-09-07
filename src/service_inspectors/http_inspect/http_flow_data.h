@@ -114,9 +114,9 @@ private:
     uint64_t zero_nine_expected = 0;
     int64_t data_length[2] = { HttpEnums::STAT_NOT_PRESENT, HttpEnums::STAT_NOT_PRESENT };
     uint32_t section_size_target[2] = { 0, 0 };
-    uint32_t section_size_max[2] = { 0, 0 };
     HttpEnums::CompressId compression[2] = { HttpEnums::CMP_NONE, HttpEnums::CMP_NONE };
     HttpEnums::DetectionStatus detection_status[2] = { HttpEnums::DET_ON, HttpEnums::DET_ON };
+    bool stretch_section_to_packet[2] = { false, false };
 
     // *** Inspector's internal data about the current message
     struct FdCallbackContext

@@ -90,6 +90,9 @@ bool HttpStreamSplitter::finish(snort::Flow* flow)
             session_data->cutter[source_id]->get_num_good_chunks(),
             session_data->cutter[source_id]->get_octets_seen(),
             true);
+        delete session_data->cutter[source_id];
+        session_data->cutter[source_id] = nullptr;
+
         return true;
     }
 

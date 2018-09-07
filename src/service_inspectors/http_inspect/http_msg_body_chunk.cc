@@ -27,10 +27,11 @@ using namespace HttpEnums;
 
 void HttpMsgBodyChunk::update_flow()
 {
-    // Cutter was deleted by splitter when zero-length chunk received
+    session_data->body_octets[source_id] = body_octets;
+
+    // Cutter was deleted by splitter when zero-length chunk received or at TCP close
     if (session_data->cutter[source_id] == nullptr)
     {
-        session_data->body_octets[source_id] = body_octets;
         session_data->trailer_prep(source_id);
         if (session_data->mime_state[source_id] != nullptr)
         {
@@ -46,7 +47,6 @@ void HttpMsgBodyChunk::update_flow()
     }
     else
     {
-        session_data->body_octets[source_id] = body_octets;
         update_depth();
     }
     session_data->section_type[source_id] = SEC__NOT_COMPUTE;

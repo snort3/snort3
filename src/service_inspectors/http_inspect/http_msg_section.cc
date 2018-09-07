@@ -70,40 +70,48 @@ void HttpMsgSection::create_event(int sid)
 
 void HttpMsgSection::update_depth() const
 {
-    if ((session_data->detect_depth_remaining[source_id] <= 0) &&
+    int64_t& file_depth_remaining = session_data->file_depth_remaining[source_id];
+    int64_t& detect_depth_remaining = session_data->detect_depth_remaining[source_id];
+
+    if ((detect_depth_remaining <= 0) &&
         (session_data->detection_status[source_id] == DET_ON))
     {
         session_data->detection_status[source_id] = DET_DEACTIVATING;
     }
 
-    if ((session_data->file_depth_remaining[source_id] <= 0) &&
-        (session_data->detect_depth_remaining[source_id] <= 0))
+    if (detect_depth_remaining <= 0)
     {
-        // Don't need any more of the body
-        session_data->section_size_target[source_id] = 0;
-        session_data->section_size_max[source_id] = 0;
+        if (file_depth_remaining <= 0)
+        {
+            // Don't need any more of the body
+            session_data->section_size_target[source_id] = 0;
+        }
+        else
+        {
+            // Just for file processing
+            session_data->section_size_target[source_id] = snort::SnortConfig::get_conf()->max_pdu;
+            session_data->stretch_section_to_packet[source_id] = true;
+        }
         return;
     }
 
-    const int random_increment = FlushBucket::get_size() - 192;
-    assert((random_increment >= -64) && (random_increment <= 63));
+    const unsigned target_size = (session_data->compression[source_id] == CMP_NONE) ?
+        snort::SnortConfig::get_conf()->max_pdu : GZIP_BLOCK_SIZE;
 
-    switch (session_data->compression[source_id])
+    if (detect_depth_remaining <= target_size)
     {
-    case CMP_NONE:
-      {
-        unsigned max_pdu = snort::SnortConfig::get_conf()->max_pdu;
-        session_data->section_size_target[source_id] = max_pdu + random_increment;
-        session_data->section_size_max[source_id] = max_pdu + (max_pdu >> 1);
-        break;
-      }
-    case CMP_GZIP:
-    case CMP_DEFLATE:
-        session_data->section_size_target[source_id] = GZIP_BLOCK_SIZE + random_increment;
-        session_data->section_size_max[source_id] = FINAL_GZIP_BLOCK_SIZE;
-        break;
-    default:
-        assert(false);
+        // Go to detection as soon as detect depth is reached
+        session_data->section_size_target[source_id] = detect_depth_remaining;
+        session_data->stretch_section_to_packet[source_id] = true;
+    }
+    else
+    {
+        // Randomize the split point a little bit to make it harder to evade detection.
+        // FlushBucket provides pseudo random numbers in the range 128 to 255.
+        const int random_increment = FlushBucket::get_size() - 192;
+        assert((random_increment >= -64) && (random_increment <= 63));
+        session_data->section_size_target[source_id] = target_size + random_increment;
+        session_data->stretch_section_to_packet[source_id] = false;
     }
 }
 

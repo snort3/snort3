@@ -26,8 +26,8 @@ namespace HttpEnums
 {
 static const int MAX_OCTETS = 63780;
 static const int GZIP_BLOCK_SIZE = 2048;
-static const int FINAL_GZIP_BLOCK_SIZE = 2304; // compromise value, too big causes gzip overruns
-                                               // too small leaves too many little end sections
+static const int MAX_SECTION_STRETCH = 1460;
+
 static const uint32_t HTTP_GID = 119;
 static const int GZIP_WINDOW_BITS = 31;
 static const int DEFLATE_WINDOW_BITS = 15;
@@ -284,7 +284,7 @@ enum EventSid
     EVENT_UNESCAPED_SPACE_URI,
     EVENT_PIPELINE_MAX,
 
-    EVENT_ANOM_SERVER = 101,
+    EVENT_OBSOLETE_ANOM_SERVER = 101,      // Previously used, do not reuse this number
     EVENT_INVALID_STATCODE,
     EVENT_UNUSED_1,
     EVENT_UTF_NORM_FAIL,
