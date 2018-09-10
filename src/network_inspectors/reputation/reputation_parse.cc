@@ -876,7 +876,7 @@ static bool process_line_in_manifest(ListFile* list_item, const char* manifest, 
 
         default:
             token= ignore_start_space(token);
-            if (!(*token))
+            if ('0' == (*token))
                 break;
             zone_id = SnortStrtol(token, &end_str, 10);
             end_str = ignore_start_space(end_str);
