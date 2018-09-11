@@ -876,45 +876,29 @@ success:
         /* TLS Host */
         if (ss->host_name)
         {
-            if (args.asd.tsession->tls_host)
-                snort_free(args.asd.tsession->tls_host);
-            args.asd.tsession->tls_host = ss->host_name;
-            args.asd.tsession->tls_host_strlen = ss->host_name_strlen;
+            args.asd.tsession->set_tls_host(ss->host_name, 0, args.change_bits);
             args.asd.scan_flags |= SCAN_SSL_HOST_FLAG;
         }
         else if (ss->common_name)
         {
             // use common name (from server) if we didn't see host name (from client)
-            char* common_name = snort_strdup(ss->common_name);
-
-            if (args.asd.tsession->tls_host)
-                snort_free(args.asd.tsession->tls_host);
-            args.asd.tsession->tls_host = common_name;
-            args.asd.tsession->tls_host_strlen = ss->common_name_strlen;
+            args.asd.tsession->set_tls_host(ss->common_name, ss->common_name_strlen,
+                args.change_bits);
             args.asd.scan_flags |= SCAN_SSL_HOST_FLAG;
         }
 
         /* TLS Common Name */
         if (ss->common_name)
-        {
-            if (args.asd.tsession->tls_cname)
-                snort_free(args.asd.tsession->tls_cname);
-            args.asd.tsession->tls_cname = ss->common_name;
-            args.asd.tsession->tls_cname_strlen = ss->common_name_strlen;
-        }
+            args.asd.tsession->set_tls_cname(ss->common_name, 0);
 
         /* TLS Org Unit */
         if (ss->org_name)
-        {
-            if (args.asd.tsession->tls_orgUnit)
-                snort_free(args.asd.tsession->tls_orgUnit);
-            args.asd.tsession->tls_orgUnit = ss->org_name;
-            args.asd.tsession->tls_orgUnit_strlen = ss->org_name_strlen;
-        }
+            args.asd.tsession->set_tls_org_unit(ss->org_name, 0);
 
         ss->host_name = ss->common_name = ss->org_name = nullptr;
     }
-    return add_service(args.asd, args.pkt, args.dir, getSslServiceAppId(args.pkt->ptrs.sp));
+    return add_service(args.change_bits, args.asd, args.pkt, args.dir,
+        getSslServiceAppId(args.pkt->ptrs.sp));
 }
 
 AppId getSslServiceAppId(short srcPort)

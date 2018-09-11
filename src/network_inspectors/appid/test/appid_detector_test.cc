@@ -39,6 +39,8 @@
 Flow* flow = nullptr;
 AppIdSession* mock_session = nullptr;
 
+void AppIdHttpSession::set_http_change_bits(AppidChangeBits&, HttpFieldIds) {}
+
 class TestDetector : public AppIdDetector
 {
 public:
@@ -69,12 +71,13 @@ TEST_GROUP(appid_detector_tests)
 TEST(appid_detector_tests, add_info)
 {
     const char* info_url = "https://tools.ietf.org/html/rfc793";
+    AppidChangeBits change_bits;
     AppIdDetector* ad = new TestDetector;
     MockAppIdHttpSession* hsession = (MockAppIdHttpSession*)mock_session->get_http_session();
-    ad->add_info(*mock_session, info_url);
+    ad->add_info(*mock_session, info_url, change_bits);
     STRCMP_EQUAL(hsession->get_cfield(MISC_URL_FID), URL);
     hsession->reset();
-    ad->add_info(*mock_session, info_url);
+    ad->add_info(*mock_session, info_url, change_bits);
     STRCMP_EQUAL(mock_session->get_http_session()->get_cfield(MISC_URL_FID), info_url);
     delete ad;
 }

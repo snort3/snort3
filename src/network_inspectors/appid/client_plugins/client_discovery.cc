@@ -294,13 +294,14 @@ int ClientDiscovery::get_detector_candidates_list(AppIdSession& asd, Packet* p, 
     return APPID_SESSION_SUCCESS;
 }
 
-int ClientDiscovery::exec_client_detectors(AppIdSession& asd, Packet* p, AppidSessionDirection direction)
+int ClientDiscovery::exec_client_detectors(AppIdSession& asd, Packet* p,
+    AppidSessionDirection direction, AppidChangeBits& change_bits)
 {
     int ret = APPID_INPROCESS;
 
     if (asd.client_detector != nullptr)
     {
-        AppIdDiscoveryArgs disco_args(p->data, p->dsize, direction, asd, p);
+        AppIdDiscoveryArgs disco_args(p->data, p->dsize, direction, asd, p, change_bits);
         ret = asd.client_detector->validate(disco_args);
         if (appidDebug->is_active())
             LogMessage("AppIdDbg %s %s client detector returned %s (%d)\n",
@@ -311,7 +312,7 @@ int ClientDiscovery::exec_client_detectors(AppIdSession& asd, Packet* p, AppidSe
     {
         for ( auto kv = asd.client_candidates.begin(); kv != asd.client_candidates.end(); )
         {
-            AppIdDiscoveryArgs disco_args(p->data, p->dsize, direction, asd, p);
+            AppIdDiscoveryArgs disco_args(p->data, p->dsize, direction, asd, p, change_bits);
             int result = kv->second->validate(disco_args);
             if (appidDebug->is_active())
                 LogMessage("AppIdDbg %s %s client candidate returned %s (%d)\n",
@@ -336,7 +337,8 @@ int ClientDiscovery::exec_client_detectors(AppIdSession& asd, Packet* p, AppidSe
     return ret;
 }
 
-bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p, AppidSessionDirection direction)
+bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p,
+    AppidSessionDirection direction, AppidChangeBits& change_bits)
 {
     bool isTpAppidDiscoveryDone = false;
     AppInfoTableEntry* entry;
@@ -403,12 +405,12 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p, AppidSes
         {
             /* get out if we've already tried to validate a client app */
             if (!asd.is_client_detected() )
-                ret = exec_client_detectors(asd, p, direction);
+                ret = exec_client_detectors(asd, p, direction, change_bits);
         }
         else if ( asd.service_disco_state != APPID_DISCO_STATE_STATEFUL
             && asd.get_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS) )
         {
-            ret = exec_client_detectors(asd, p, direction);
+            ret = exec_client_detectors(asd, p, direction, change_bits);
         }
 
         switch (ret)
@@ -431,11 +433,11 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p, AppidSes
             {
                 /* get out if we've already tried to validate a client app */
                 if (!asd.is_client_detected())
-                    ret = exec_client_detectors(asd, p, direction);
+                    ret = exec_client_detectors(asd, p, direction, change_bits);
             }
             else if ( asd.service_disco_state != APPID_DISCO_STATE_STATEFUL
                 && asd.get_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS) )
-                ret = exec_client_detectors(asd, p, direction);
+                ret = exec_client_detectors(asd, p, direction, change_bits);
 
             if ( ret < 0 )
             {

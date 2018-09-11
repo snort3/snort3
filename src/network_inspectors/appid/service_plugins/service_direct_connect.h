@@ -37,9 +37,9 @@ public:
 
 private:
     int tcp_validate(const uint8_t* data, uint16_t size, const AppidSessionDirection dir, AppIdSession&,
-        const snort::Packet*, ServiceData*);
+        const snort::Packet*, ServiceData*, AppidChangeBits&);
     int udp_validate(const uint8_t* data, uint16_t size, const AppidSessionDirection dir, AppIdSession&,
-        const snort::Packet*, ServiceData*);
+        const snort::Packet*, ServiceData*, AppidChangeBits&);
 };
 
 #endif

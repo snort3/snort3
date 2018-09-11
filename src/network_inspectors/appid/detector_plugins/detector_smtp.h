@@ -40,9 +40,9 @@ public:
 private:
     int extract_version_and_add_client_app(AppId, const int prefix_len,
         const uint8_t* product, const uint8_t* product_end, ClientSMTPData* const,
-        AppIdSession&, AppId);
+        AppIdSession&, AppId, AppidChangeBits&);
     int identify_client_version(ClientSMTPData* const, const uint8_t* product,
-        const uint8_t* data_end, AppIdSession&, snort::Packet*);
+        const uint8_t* data_end, AppIdSession&, snort::Packet*, AppidChangeBits&);
 };
 
 class SmtpServiceDetector : public ServiceDetector

@@ -148,7 +148,7 @@ int YmDetector::validate(AppIdDiscoveryArgs& args)
     return APPID_INPROCESS;
 
 done:
-    add_app(args.asd, APP_ID_YAHOO, product_id, (char*)version);
+    add_app(args.asd, APP_ID_YAHOO, product_id, (char*)version, args.change_bits);
     return APPID_SUCCESS;
 }
 

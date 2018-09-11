@@ -97,7 +97,8 @@ int RfbServiceDetector::validate(AppIdDiscoveryArgs& args)
         p++;
     }
     *v = 0;
-    return add_service(args.asd, args.pkt, args.dir, APP_ID_VNC_RFB, nullptr, version, nullptr);
+    return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_VNC_RFB,
+        nullptr, version, nullptr);
 
 inprocess:
     service_inprocess(args.asd, args.pkt, args.dir);

@@ -283,7 +283,7 @@ inprocess:
     return APPID_INPROCESS;
 
 success:
-    return add_service(args.asd, args.pkt, args.dir, APP_ID_IRCD);
+    return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_IRCD);
 
 fail:
     if (args.dir == APP_ID_FROM_RESPONDER)

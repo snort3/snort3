@@ -276,7 +276,7 @@ inprocess:
     return APPID_INPROCESS;
 
 success:
-    return add_service(args.asd, args.pkt, args.dir, APP_ID_ORACLE_TNS,
+    return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_ORACLE_TNS,
         nullptr, ss->version ? ss->version : nullptr, nullptr);
 
 fail:

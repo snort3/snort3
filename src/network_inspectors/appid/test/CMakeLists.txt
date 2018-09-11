@@ -14,6 +14,10 @@ add_cpputest( appid_detector_test
     SOURCES $<TARGET_OBJECTS:appid_cpputest_deps>
 )
 
+add_cpputest( appid_discovery_test
+    SOURCES $<TARGET_OBJECTS:appid_cpputest_deps>
+)
+
 add_cpputest( appid_expected_flags_test
     SOURCES $<TARGET_OBJECTS:appid_cpputest_deps>
 )

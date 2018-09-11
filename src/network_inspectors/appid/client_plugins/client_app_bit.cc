@@ -154,7 +154,7 @@ inprocess:
     return APPID_INPROCESS;
 
 done:
-    add_app(args.asd, APP_ID_BITTORRENT, APP_ID_BITTORRENT, nullptr);
+    add_app(args.asd, APP_ID_BITTORRENT, APP_ID_BITTORRENT, nullptr, args.change_bits);
     return APPID_SUCCESS;
 }
 

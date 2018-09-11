@@ -332,7 +332,7 @@ inprocess:
     return APPID_INPROCESS;
 
 done:
-    add_app(args.asd, APP_ID_ORACLE_TNS, APP_ID_ORACLE_DATABASE, fd->version);
+    add_app(args.asd, APP_ID_ORACLE_TNS, APP_ID_ORACLE_DATABASE, fd->version, args.change_bits);
     if (user_start && user_end && ((user_size = user_end - user_start) > 0))
     {
         /* we truncate extra long usernames */

@@ -127,7 +127,7 @@ inprocess:
     return APPID_INPROCESS;
 
 done:
-    add_app(args.asd, APP_ID_VNC_RFB, APP_ID_VNC, (const char*)fd->version);
+    add_app(args.asd, APP_ID_VNC_RFB, APP_ID_VNC, (const char*)fd->version, args.change_bits);
     return APPID_SUCCESS;
 }
 

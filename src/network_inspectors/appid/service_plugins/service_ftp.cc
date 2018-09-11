@@ -1228,8 +1228,8 @@ inprocess:
                 | APPID_SESSION_DECRYPTED);
 
             // FTPS only when encrypted==1 decrypted==0
-            add_service(args.asd, args.pkt, args.dir, flags == APPID_SESSION_ENCRYPTED ?
-                APP_ID_FTPS : APP_ID_FTP_CONTROL,
+            add_service(args.change_bits, args.asd, args.pkt, args.dir,
+                flags == APPID_SESSION_ENCRYPTED ? APP_ID_FTPS : APP_ID_FTP_CONTROL,
                 fd->vendor[0] ? fd->vendor : nullptr,
                 fd->version[0] ? fd->version : nullptr, nullptr);
         }

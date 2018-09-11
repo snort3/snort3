@@ -512,7 +512,8 @@ done:
             else
                 subtype = nullptr;
 
-            add_service(args.asd, pkt, dir, APP_ID_SUN_RPC, nullptr, nullptr, subtype);
+            add_service(args.change_bits, args.asd, pkt, dir, APP_ID_SUN_RPC,
+                nullptr, nullptr, subtype);
         }
         args.asd.set_session_flags(APPID_SESSION_CONTINUE);
         return APPID_SUCCESS;
@@ -857,7 +858,8 @@ inprocess:
             }
             else
                 subtype = nullptr;
-            add_service(args.asd, pkt, dir, APP_ID_SUN_RPC, nullptr, nullptr, subtype);
+            add_service(args.change_bits, args.asd, pkt, dir, APP_ID_SUN_RPC,
+                nullptr, nullptr, subtype);
         }
         args.asd.set_session_flags(APPID_SESSION_CONTINUE);
         return APPID_SUCCESS;

@@ -78,8 +78,9 @@ public:
     ServiceDetector* get_next_tcp_detector(AppIdDetectorsIterator&);
     ServiceDetector* get_next_udp_detector(AppIdDetectorsIterator&);
 
-    bool do_service_discovery(AppIdSession&, snort::Packet*, AppidSessionDirection dir);
-    int identify_service(AppIdSession&, snort::Packet*, AppidSessionDirection dir);
+    bool do_service_discovery(AppIdSession&, snort::Packet*, AppidSessionDirection dir,
+        AppidChangeBits& change_bits);
+    int identify_service(AppIdSession&, snort::Packet*, AppidSessionDirection, AppidChangeBits&);
     int fail_service(AppIdSession&, const snort::Packet*, AppidSessionDirection dir, ServiceDetector*, ServiceDiscoveryState* sds = nullptr);
     int incompatible_data(AppIdSession&, const snort::Packet*, AppidSessionDirection dir, ServiceDetector*);
     static int add_ftp_service_state(AppIdSession&);

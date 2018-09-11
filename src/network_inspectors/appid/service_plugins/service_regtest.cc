@@ -80,7 +80,8 @@ int RegTestServiceDetector::validate(AppIdDiscoveryArgs& args)
         p++;
     }
     *v = 0;
-    return add_service(args.asd, args.pkt, args.dir, APP_ID_REGTEST, nullptr, version, nullptr);
+    return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_REGTEST, nullptr,
+        version, nullptr);
 
 inprocess:
     service_inprocess(args.asd, args.pkt, args.dir);
@@ -138,7 +139,8 @@ int RegTestServiceDetector1::validate(AppIdDiscoveryArgs& args)
         p++;
     }
     *v = 0;
-    return add_service(args.asd, args.pkt, args.dir, APP_ID_REGTEST1, nullptr, version, nullptr);
+    return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_REGTEST1, nullptr,
+        version, nullptr);
 
 inprocess:
     service_inprocess(args.asd, args.pkt, args.dir);
@@ -191,7 +193,8 @@ int RegTestServiceDetector2::validate(AppIdDiscoveryArgs& args)
         p++;
     }
     *v = 0;
-    return add_service(args.asd, args.pkt, args.dir, APP_ID_REGTEST2, nullptr, version, nullptr);
+    return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_REGTEST2, nullptr,
+        version, nullptr);
 
 inprocess:
     service_inprocess(args.asd, args.pkt, args.dir);

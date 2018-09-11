@@ -26,13 +26,14 @@
 #include <string>
 #include <vector>
 
+#include "flow/flow.h"
+#include "protocols/protocol_ids.h"
+#include "pub_sub/appid_events.h"
+#include "search_engines/search_tool.h"
+#include "utils/util.h"
+
 #include "appid_types.h"
 #include "application_ids.h"
-
-#include "protocols/protocol_ids.h"
-#include "search_engines/search_tool.h"
-#include "flow/flow.h"
-#include "utils/util.h"
 
 class AppIdInspector;
 class AppIdSession;
@@ -109,6 +110,7 @@ public:
     virtual int add_service_port(AppIdDetector*, const ServiceDetectorPort&);
 
     static void do_application_discovery(snort::Packet* p, AppIdInspector&);
+    static void publish_appid_event(AppidChangeBits&, snort::Flow*);
 
     AppIdDetectors* get_tcp_detectors()
     {
@@ -137,9 +139,10 @@ private:
     static bool do_pre_discovery(snort::Packet* p, AppIdSession** p_asd, AppIdInspector& inspector,
         IpProtocol& protocol, AppidSessionDirection& direction);
     static bool do_discovery(snort::Packet* p, AppIdSession& asd, IpProtocol protocol,
-        AppidSessionDirection direction, AppId& service_id);
+        AppidSessionDirection direction, AppId& service_id, AppidChangeBits& change_bits);
     static void do_post_discovery(snort::Packet* p, AppIdSession& asd,
-        AppidSessionDirection direction, bool is_discovery_done, AppId service_id);
+        AppidSessionDirection direction, bool is_discovery_done, AppId service_id,
+        AppidChangeBits& change_bits);
     static bool handle_unmonitored_session(AppIdSession* asd, const snort::Packet* p,
         IpProtocol protocol, AppidSessionDirection dir, AppIdInspector& inspector,
         uint64_t& flow_flags);

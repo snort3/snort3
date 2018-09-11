@@ -148,9 +148,26 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
         return;
 
     AppId service_id;
-    bool is_discovery_done = do_discovery(p, *asd, protocol, direction, service_id);
+    AppidChangeBits change_bits;
+    bool is_discovery_done = do_discovery(p, *asd, protocol, direction, service_id, change_bits);
 
-    do_post_discovery(p, *asd, direction, is_discovery_done, service_id);
+    do_post_discovery(p, *asd, direction, is_discovery_done, service_id, change_bits);
+}
+
+void AppIdDiscovery::publish_appid_event(AppidChangeBits& change_bits, snort::Flow* flow)
+{
+    if (change_bits.none())
+        return;
+
+    AppidEvent app_event(change_bits);
+    DataBus::publish(APPID_EVENT_ANY_CHANGE, app_event, flow);
+    if (appidDebug->is_active())
+    {
+        std::string str;
+        change_bits_to_string(change_bits, str);
+        LogMessage("AppIdDbg %s Published event for changes: %s\n",
+            appidDebug->get_debug_session(), str.c_str());
+    }
 }
 
 static inline int match_pe_network(const SfIp* pktAddr, const PortExclusion* pe)
@@ -741,8 +758,10 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession** p_asd, AppIdInsp
     {
         if (!asd->get_session_flags(APPID_SESSION_IGNORE_FLOW_IDED))
         {
+            AppidChangeBits change_bits;
             asd->set_application_ids(asd->pick_service_app_id(), asd->pick_client_app_id(),
-                asd->pick_payload_app_id(), asd->pick_misc_app_id());
+                asd->pick_payload_app_id(), asd->pick_misc_app_id(), change_bits);
+            publish_appid_event(change_bits, p->flow);
             asd->set_session_flags(APPID_SESSION_IGNORE_FLOW_IDED);
         }
 
@@ -829,7 +848,7 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession** p_asd, AppIdInsp
 }
 
 bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol protocol,
-    AppidSessionDirection direction, AppId& service_id)
+    AppidSessionDirection direction, AppId& service_id, AppidChangeBits& change_bits)
 {
     bool is_discovery_done = false;
 
@@ -837,12 +856,12 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
     if ( !(asd.scan_flags & SCAN_HOST_PORT_FLAG) )
         lookup_appid_by_host_port(asd, p, protocol, direction);
 
-    asd.check_app_detection_restart();
+    asd.check_app_detection_restart(change_bits);
 
     // Third party detection
 #ifdef ENABLE_APPID_THIRD_PARTY
     if ( TPLibHandler::have_tp() )
-        is_discovery_done = do_tp_discovery(asd,protocol,p,direction);
+        is_discovery_done = do_tp_discovery(asd, protocol, p, direction, change_bits);
 #endif
 
     // Port-based service detection
@@ -884,7 +903,7 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
     // exceptions for rexec and any other service detector that need to see SYN and SYN/ACK
     if (asd.get_session_flags(APPID_SESSION_REXEC_STDERR))
     {
-        ServiceDiscovery::get_instance().identify_service(asd, p, direction);
+        ServiceDiscovery::get_instance().identify_service(asd, p, direction, change_bits);
         AppIdDnsSession* dsession = asd.get_dns_session();
 
         if (asd.service.get_id() == APP_ID_DNS &&
@@ -893,22 +912,22 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
             AppId client_id = APP_ID_NONE, payload_id = APP_ID_NONE;
             dns_host_scan_hostname((const uint8_t*)dsession->get_host(), dsession->get_host_len(),
                 &client_id, &payload_id);
-            asd.set_client_appid_data(client_id, nullptr);
+            asd.set_client_appid_data(client_id, nullptr, change_bits);
         }
         else if (asd.service.get_id() == APP_ID_RTMP)
-            asd.examine_rtmp_metadata();
+            asd.examine_rtmp_metadata(change_bits);
         else if (asd.get_session_flags(APPID_SESSION_SSL_SESSION) && asd.tsession)
-            asd.examine_ssl_metadata(p);
+            asd.examine_ssl_metadata(p, change_bits);
     }
     // FIXIT-M - snort 2.x has added a check for midstream pickup to this, do we need that?
     else if (protocol != IpProtocol::TCP || (p->packet_flags & PKT_STREAM_ORDER_OK))
     {
         if (asd.service_disco_state != APPID_DISCO_STATE_FINISHED)
-            is_discovery_done =
-                ServiceDiscovery::get_instance().do_service_discovery(asd, p, direction);
+            is_discovery_done = ServiceDiscovery::get_instance().do_service_discovery(asd, p,
+                direction, change_bits);
         if (asd.client_disco_state != APPID_DISCO_STATE_FINISHED)
-            is_discovery_done =
-                ClientDiscovery::get_instance().do_client_discovery(asd, p, direction);
+            is_discovery_done = ClientDiscovery::get_instance().do_client_discovery(asd, p,
+                direction, change_bits);
         asd.set_session_flags(APPID_SESSION_ADDITIONAL_PACKET);
     }
 
@@ -943,7 +962,8 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
 }
 
 void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
-    AppidSessionDirection direction, bool is_discovery_done, AppId service_id)
+    AppidSessionDirection direction, bool is_discovery_done, AppId service_id,
+    AppidChangeBits& change_bits)
 {
     AppId payload_id = asd.pick_payload_app_id();
 
@@ -965,7 +985,7 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
     }
 
     asd.set_application_ids(service_id, asd.pick_client_app_id(), payload_id,
-        asd.pick_misc_app_id());
+        asd.pick_misc_app_id(), change_bits);
 
     // Set the field that the Firewall queries to see if we have a search engine
     if (asd.search_support_type == UNKNOWN_SEARCH_ENGINE && payload_id > APP_ID_NONE)
@@ -1007,8 +1027,10 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
             asd.past_forecast = check_session_for_AF_forecast(asd, p, direction,
                 (AppId)service_id);
             asd.set_application_ids(service_id, asd.pick_client_app_id(),
-                asd.pick_payload_app_id(), asd.pick_misc_app_id());
+                asd.pick_payload_app_id(), asd.pick_misc_app_id(), change_bits);
         }
     }
+
+    publish_appid_event(change_bits, p->flow);
 }
 

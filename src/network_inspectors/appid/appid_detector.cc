@@ -66,12 +66,12 @@ int AppIdDetector::data_add(AppIdSession& asd, void* data, AppIdFreeFCN fcn)
     return asd.add_flow_data(data, flow_data_index, fcn);
 }
 
-void AppIdDetector::add_info(AppIdSession& asd, const char* info)
+void AppIdDetector::add_info(AppIdSession& asd, const char* info, AppidChangeBits& change_bits)
 {
     AppIdHttpSession* hsession = asd.get_http_session();
 
     if ( !hsession->get_field(MISC_URL_FID) )
-        hsession->set_field(MISC_URL_FID, new std::string(info));
+        hsession->set_field(MISC_URL_FID, new std::string(info), change_bits);
 }
 
 void AppIdDetector::add_user(AppIdSession& asd, const char* username, AppId appId, bool success)
@@ -89,10 +89,10 @@ void AppIdDetector::add_payload(AppIdSession& asd, AppId payload_id)
 }
 
 void AppIdDetector::add_app(AppIdSession& asd, AppId service_id, AppId client_id,
-    const char* version)
+    const char* version, AppidChangeBits& change_bits)
 {
     if ( version )
-        asd.client.set_version(version);
+        asd.client.set_version(version, change_bits);
 
     asd.set_client_detected();
     asd.client_inferred_service_id = service_id;

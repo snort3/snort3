@@ -129,6 +129,8 @@ TEST(appid_session_api, get_http_search)
 
 TEST(appid_session_api, get_tls_host)
 {
+    AppidChangeBits change_bits;
+    mock_session->tsession->set_tls_host(APPID_UT_TLS_HOST, 0, change_bits);
     const char* val = appid_session_api->get_tls_host();
     STRCMP_EQUAL(val, APPID_UT_TLS_HOST);
 }
@@ -226,7 +228,7 @@ TEST(appid_session_api, get_user_name)
     CHECK_TRUE(service == APPID_UT_ID);
     CHECK_TRUE(!isLoginSuccessful);
     mock_session->set_session_flags(APPID_SESSION_LOGIN_SUCCEEDED);
-    val = appid_session_api->get_user_name(&service, &isLoginSuccessful);
+    appid_session_api->get_user_name(&service, &isLoginSuccessful);
     CHECK_TRUE(service == APPID_UT_ID);
     CHECK_TRUE(isLoginSuccessful);
 }

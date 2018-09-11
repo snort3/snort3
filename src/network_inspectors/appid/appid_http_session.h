@@ -26,6 +26,7 @@
 #include <utility>
 
 #include "flow/flow.h"
+#include "pub_sub/appid_events.h"
 #include "sfip/sf_ip.h"
 
 #include "appid_types.h"
@@ -87,10 +88,10 @@ public:
     AppIdHttpSession(AppIdSession&);
     virtual ~AppIdHttpSession();
 
-    int process_http_packet(AppidSessionDirection direction);
-    void update_http_xff_address(struct XffFieldValue* xff_fields, uint32_t numXffFields);
+    int process_http_packet(AppidSessionDirection direction, AppidChangeBits& change_bits);
+    void update_http_xff_address(struct XffFieldValue*, uint32_t, AppidChangeBits&);
 
-    void update_url();
+    void update_url(AppidChangeBits& change_bits);
 
     snort::SfIp* get_xff_addr()
     { return xff_addr; }
@@ -101,16 +102,24 @@ public:
     const char* get_cfield(HttpFieldIds id)
     { return meta_data[id] != nullptr ? meta_data[id]->c_str() : nullptr; }
 
-    void set_field(HttpFieldIds id, const std::string* str)
+    void set_field(HttpFieldIds id, const std::string* str, AppidChangeBits& change_bits)
     {
         delete meta_data[id];
         meta_data[id] = str;
+        if (str)
+            set_http_change_bits(change_bits, id);
     }
 
-    void set_field(HttpFieldIds id, const uint8_t* str, int32_t len)
+    void set_field(HttpFieldIds id, const uint8_t* str, int32_t len, AppidChangeBits& change_bits)
     {
         delete meta_data[id];
-        meta_data[id] = str and len ? new std::string((const char*)str, len) : nullptr;
+        if (str and len)
+        {
+            meta_data[id] = new std::string((const char*)str, len);
+            set_http_change_bits(change_bits, id);
+        }
+        else
+            meta_data[id] = nullptr;
     }
 
     bool get_offset(int id, uint16_t& start, uint16_t& end)
@@ -184,8 +193,9 @@ protected:
 
     void init_chp_match_descriptor(ChpMatchDescriptor& cmd);
     int initial_chp_sweep(ChpMatchDescriptor&);
-    void process_chp_buffers();
+    void process_chp_buffers(AppidChangeBits&);
     void free_chp_matches(ChpMatchDescriptor& cmd, unsigned max_matches);
+    void set_http_change_bits(AppidChangeBits& change_bits, HttpFieldIds id);
 
     HttpPatternMatchers* http_matchers = nullptr;
 

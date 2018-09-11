@@ -50,12 +50,14 @@ public:
 
     void finalize_client_plugins();
     void release_thread_resources();
-    bool do_client_discovery(AppIdSession&, snort::Packet*, AppidSessionDirection direction);
+    bool do_client_discovery(AppIdSession&, snort::Packet*,
+        AppidSessionDirection direction, AppidChangeBits& change_bits);
 
 private:
     ClientDiscovery(AppIdInspector& ins);
     void initialize() override;
-    int exec_client_detectors(AppIdSession&, snort::Packet*, AppidSessionDirection direction);
+    int exec_client_detectors(AppIdSession&, snort::Packet*,
+        AppidSessionDirection direction, AppidChangeBits& change_bits);
     ClientAppMatch* find_detector_candidates(const snort::Packet* pkt, IpProtocol);
     void create_detector_candidates_list(AppIdSession&, snort::Packet*);
     int get_detector_candidates_list(AppIdSession&, snort::Packet*, AppidSessionDirection direction);

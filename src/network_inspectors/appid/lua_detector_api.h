@@ -62,6 +62,7 @@ struct LuaDetectorParameters
         size = args.size;
         dir = args.dir;
         asd = &args.asd;
+        change_bits = &args.change_bits;
         pkt = args.pkt;
     }
 
@@ -69,6 +70,7 @@ struct LuaDetectorParameters
     uint16_t size = 0;
     AppidSessionDirection dir = APP_ID_FROM_INITIATOR;
     AppIdSession* asd;
+    AppidChangeBits* change_bits = nullptr;
     snort::Packet* pkt = nullptr;
     uint8_t macAddress[6] = { 0 };
 };

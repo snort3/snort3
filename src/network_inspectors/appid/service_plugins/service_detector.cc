@@ -81,14 +81,14 @@ int ServiceDetector::service_inprocess(AppIdSession& asd, const Packet* pkt, App
 }
 
 int ServiceDetector::update_service_data(AppIdSession& asd, const Packet* pkt, AppidSessionDirection dir, AppId appId,
-    const char* vendor, const char* version)
+    const char* vendor, const char* version, AppidChangeBits& change_bits)
 {
     uint16_t port = 0;
     const SfIp* ip = nullptr;
 
     asd.service_detector = this;
     asd.service.set_vendor(vendor);
-    asd.service.set_version(version);
+    asd.service.set_version(version, change_bits);
     asd.set_service_detected();
     asd.service.set_id(appId);
 
@@ -134,14 +134,15 @@ int ServiceDetector::update_service_data(AppIdSession& asd, const Packet* pkt, A
 
 int ServiceDetector::add_service_consume_subtype(AppIdSession& asd, const Packet* pkt,
     AppidSessionDirection dir, AppId appId, const char* vendor, const char* version,
-    AppIdServiceSubtype* subtype)
+    AppIdServiceSubtype* subtype, AppidChangeBits& change_bits)
 {
     asd.subtype = subtype;
-    return update_service_data(asd, pkt, dir, appId, vendor, version);
+    return update_service_data(asd, pkt, dir, appId, vendor, version, change_bits);
 }
 
-int ServiceDetector::add_service(AppIdSession& asd, const Packet* pkt, AppidSessionDirection dir,
-    AppId appId, const char* vendor, const char* version, const AppIdServiceSubtype* subtype)
+int ServiceDetector::add_service(AppidChangeBits& change_bits, AppIdSession& asd,
+    const Packet* pkt, AppidSessionDirection dir, AppId appId, const char* vendor,
+    const char* version, const AppIdServiceSubtype* subtype)
 {
     AppIdServiceSubtype* new_subtype = nullptr;
 
@@ -162,7 +163,7 @@ int ServiceDetector::add_service(AppIdSession& asd, const Packet* pkt, AppidSess
         new_subtype = tmp_subtype;
     }
     asd.subtype = new_subtype;
-    return update_service_data(asd, pkt, dir, appId, vendor, version);
+    return update_service_data(asd, pkt, dir, appId, vendor, version, change_bits);
 }
 
 int ServiceDetector::incompatible_data(AppIdSession& asd, const Packet* pkt, AppidSessionDirection dir)

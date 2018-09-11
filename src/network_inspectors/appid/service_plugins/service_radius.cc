@@ -168,7 +168,7 @@ inprocess:
     return APPID_INPROCESS;
 
 success:
-    return add_service(args.asd, args.pkt, args.dir, APP_ID_RADIUS);
+    return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_RADIUS);
 
 not_compatible:
     incompatible_data(args.asd, args.pkt, args.dir);
@@ -283,7 +283,7 @@ inprocess:
     return APPID_INPROCESS;
 
 success:
-    return add_service(args.asd, args.pkt, args.dir, APP_ID_RADIUS_ACCT);
+    return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_RADIUS_ACCT);
 
 not_compatible:
     incompatible_data(args.asd, args.pkt, args.dir);

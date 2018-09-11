@@ -283,7 +283,7 @@ static int pop3_check_line(const uint8_t** data, const uint8_t* end)
 }
 
 static int pop3_server_validate(POP3DetectorData* dd, const uint8_t* data, uint16_t size,
-    AppIdSession& asd, int server)
+    AppIdSession& asd, int server, AppidChangeBits& change_bits)
 {
     ServicePOP3Data* pd = &dd->server;
     const uint8_t* begin = nullptr;
@@ -337,7 +337,7 @@ static int pop3_server_validate(POP3DetectorData* dd, const uint8_t* data, uint1
                 // we are potentially overriding the APP_ID_POP3 assessment that was made earlier.
                 asd.set_session_flags(APPID_SESSION_ENCRYPTED);
                 asd.clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
-                pop3_client_detector->add_app(asd, APP_ID_POP3S, APP_ID_POP3S, nullptr);
+                pop3_client_detector->add_app(asd, APP_ID_POP3S, APP_ID_POP3S, nullptr, change_bits);
             }
         }
         else if (dd->client.username) // possible only with non-TLS auth, therefore APP_ID_POP3
@@ -572,7 +572,7 @@ int Pop3ClientDetector::validate(AppIdDiscoveryArgs& args)
 
     if (args.dir == APP_ID_FROM_RESPONDER)
     {
-        if (pop3_server_validate(dd, args.data, args.size, args.asd, 0))
+        if (pop3_server_validate(dd, args.data, args.size, args.asd, 0, args.change_bits))
             args.asd.clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
         return APPID_INPROCESS;
     }
@@ -709,7 +709,7 @@ int Pop3ClientDetector::validate(AppIdDiscoveryArgs& args)
             if (pattern_index >= PATTERN_POP3_OTHER)
             {
                 // Still in non-secure mode and received a TRANSACTION-state command: POP3 found
-                add_app(args.asd, APP_ID_POP3, APP_ID_POP3, nullptr);
+                add_app(args.asd, APP_ID_POP3, APP_ID_POP3, nullptr, args.change_bits);
                 fd->detected = 1;
             }
             else
@@ -787,14 +787,14 @@ int Pop3ServiceDetector::validate(AppIdDiscoveryArgs& args)
             return APPID_SUCCESS;
     }
 
-    if (!pop3_server_validate(dd, args.data, args.size, args.asd, 1))
+    if (!pop3_server_validate(dd, args.data, args.size, args.asd, 1, args.change_bits))
     {
         if (pd->count >= POP3_COUNT_THRESHOLD
             && !args.asd.is_service_detected())
         {
             add_service_consume_subtype(args.asd, args.pkt, args.dir,
                 dd->client.state == POP3_CLIENT_STATE_STLS_CMD ? APP_ID_POP3S : APP_ID_POP3,
-                pd->vendor, pd->version[0] ? pd->version : nullptr, pd->subtype);
+                pd->vendor, pd->version[0] ? pd->version : nullptr, pd->subtype, args.change_bits);
             pd->subtype = nullptr;
             return APPID_SUCCESS;
         }

@@ -26,12 +26,14 @@
 #include <string>
 #include <unordered_map>
 
-#include "detector_plugins/http_url_patterns.h"
+#include "pub_sub/appid_events.h"
+
 #include "app_info_table.h"
 #include "appid_api.h"
 #include "appid_app_descriptor.h"
 #include "appid_types.h"
 #include "application_ids.h"
+#include "detector_plugins/http_url_patterns.h"
 #include "length_app_cache.h"
 #include "service_state.h"
 
@@ -127,33 +129,57 @@ struct CommonAppIdData
 // FIXIT-L: make these const strings
 struct TlsSession
 {
-    char* tls_host = nullptr;
-    int tls_host_strlen = 0;     // FIXIT-M: not rvalue, remove
-    char* tls_cname = nullptr;
-    int tls_cname_strlen = 0;    // FIXIT-M: not rvalue, remove
-    char* tls_orgUnit = nullptr;
-    int tls_orgUnit_strlen = 0;  // FIXiT-M: not rvalue, remove
+    char* get_tls_host() { return tls_host; }
 
-    void set_tls_host(const char* new_tls_host, uint32_t len)
+    char* get_tls_cname() { return tls_cname; }
+
+    char* get_tls_org_unit() { return tls_org_unit; }
+
+    // Duplicate only if len > 0, otherwise simply set (i.e., own the argument)
+    void set_tls_host(const char* new_tls_host, uint32_t len, AppidChangeBits& change_bits)
     {
-        if (tls_host) snort_free(tls_host);
-        tls_host = snort::snort_strndup(new_tls_host,len);
-        tls_host_strlen = len;
+        if (tls_host)
+            snort_free(tls_host);
+        if (!new_tls_host)
+        {
+            tls_host = nullptr;
+            return;
+        }
+        tls_host = len? snort::snort_strndup(new_tls_host,len) : const_cast<char*>(new_tls_host);
+        change_bits.set(APPID_TLSHOST_BIT);
     }
 
     void set_tls_cname(const char* new_tls_cname, uint32_t len)
     {
-        if (tls_cname) snort_free(tls_cname);
-        tls_cname = snort::snort_strndup(new_tls_cname,len);
-        tls_cname_strlen = len;
+        if (tls_cname)
+            snort_free(tls_cname);
+        tls_cname = len? snort::snort_strndup(new_tls_cname,len) :
+            const_cast<char*>(new_tls_cname);
     }
 
     void set_tls_org_unit(const char* new_tls_org_unit, uint32_t len)
     {
-        if (tls_orgUnit) snort_free(tls_orgUnit);
-        tls_orgUnit = snort::snort_strndup(new_tls_org_unit,len);
-        tls_orgUnit_strlen = len;
+        if (tls_org_unit)
+            snort_free(tls_org_unit);
+        tls_org_unit = len? snort::snort_strndup(new_tls_org_unit,len) :
+            const_cast<char*>(new_tls_org_unit);
     }
+
+    void free_data()
+    {
+        if (tls_host)
+            snort_free(tls_host);
+        if (tls_cname)
+            snort_free(tls_cname);
+        if (tls_org_unit)
+            snort_free(tls_org_unit);
+        tls_host = tls_cname = tls_org_unit = nullptr;
+    }
+
+private:
+    char* tls_host = nullptr;
+    char* tls_cname = nullptr;
+    char* tls_org_unit = nullptr;
 };
 
 class AppIdSession : public snort::FlowData
@@ -274,7 +300,8 @@ public:
     AppId pick_client_app_id();
     AppId pick_payload_app_id();
     AppId pick_referred_payload_app_id();
-    void set_application_ids(AppId service, AppId client, AppId payload, AppId misc);
+    void set_application_ids(AppId service, AppId client, AppId payload, AppId misc,
+        AppidChangeBits& change_bits);
     void get_application_ids(AppId& service, AppId& client, AppId& payload, AppId& misc);
     void get_application_ids(AppId& service, AppId& client, AppId& payload);
     AppId get_application_ids_service();
@@ -283,14 +310,14 @@ public:
     AppId get_application_ids_misc();
 
     bool is_ssl_session_decrypted();
-    void examine_ssl_metadata(snort::Packet*);
-    void set_client_appid_data(AppId, char*);
-    void set_service_appid_data(AppId, char*, char*);
-    void set_referred_payload_app_id_data(AppId);
-    void set_payload_appid_data(AppId, char*);
-    void check_app_detection_restart();
+    void examine_ssl_metadata(snort::Packet*, AppidChangeBits& change_bits);
+    void set_client_appid_data(AppId, char*, AppidChangeBits& change_bits);
+    void set_service_appid_data(AppId, char*, char*, AppidChangeBits& change_bits);
+    void set_referred_payload_app_id_data(AppId, AppidChangeBits& change_bits);
+    void set_payload_appid_data(AppId, char*, AppidChangeBits& change_bits);
+    void check_app_detection_restart(AppidChangeBits& change_bits);
     void update_encrypted_app_id(AppId);
-    void examine_rtmp_metadata();
+    void examine_rtmp_metadata(AppidChangeBits& change_bits);
     void sync_with_snort_protocol_id(AppId, snort::Packet*);
     void stop_rna_service_inspection(snort::Packet*,  AppidSessionDirection);
 
@@ -332,7 +359,7 @@ private:
     AppIdHttpSession* hsession = nullptr;
     AppIdDnsSession* dsession = nullptr;
 
-    void reinit_session_data();
+    void reinit_session_data(AppidChangeBits& change_bits);
     void delete_session_data();
 
     static THREAD_LOCAL uint32_t appid_flow_data_id;

@@ -272,7 +272,7 @@ inprocess:
 
 success:
     if (!args.asd.is_service_detected())
-        return add_service(args.asd, args.pkt, args.dir, APP_ID_EXEC);
+        return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_EXEC);
 
 bail:
     if (!args.asd.is_service_detected())

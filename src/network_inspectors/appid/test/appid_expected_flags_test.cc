@@ -28,6 +28,8 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
+void AppIdHttpSession::set_http_change_bits(AppidChangeBits&, HttpFieldIds) {}
+
 class MockServiceDetector : public ServiceDetector
 {
 public:

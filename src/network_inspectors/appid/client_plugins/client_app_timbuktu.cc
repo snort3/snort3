@@ -169,7 +169,7 @@ inprocess:
     return APPID_INPROCESS;
 
 done:
-    add_app(args.asd, APP_ID_TIMBUKTU, APP_ID_TIMBUKTU, nullptr);
+    add_app(args.asd, APP_ID_TIMBUKTU, APP_ID_TIMBUKTU, nullptr, args.change_bits);
     return APPID_SUCCESS;
 }
 

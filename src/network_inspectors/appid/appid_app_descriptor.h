@@ -47,11 +47,11 @@ public:
         my_version.clear();
     }
 
-    virtual void update(AppId id, char* vendor, char* version)
+    virtual void update(AppId id, char* vendor, char* version, AppidChangeBits& change_bits)
     {
         set_id(id);
         set_vendor(vendor);
-        set_version(version);
+        set_version(version, change_bits);
     }
 
     virtual void update_stats(AppId id) = 0;
@@ -89,10 +89,13 @@ public:
         return my_version.empty() ? nullptr : my_version.c_str();
     }
 
-    void set_version(const char* version)
+    void set_version(const char* version, AppidChangeBits& change_bits)
     {
         if ( version )
+        {
             my_version = version;
+            change_bits.set(APPID_VERSION_BIT);
+        }
     }
 
 private:

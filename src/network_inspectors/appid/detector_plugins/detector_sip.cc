@@ -473,11 +473,14 @@ void SipEventHandler::handle(DataEvent& event, Flow* flow)
             client->get_handler().get_inspector());
     }
 
-    client_handler(sip_event, *asd);
-    service_handler(sip_event, *asd);
+    AppidChangeBits change_bits;
+    client_handler(sip_event, *asd, change_bits);
+    service_handler(sip_event, *asd, change_bits);
+    AppIdDiscovery::publish_appid_event(change_bits, flow);
 }
 
-void SipEventHandler::client_handler(SipEvent& sip_event, AppIdSession& asd)
+void SipEventHandler::client_handler(SipEvent& sip_event, AppIdSession& asd,
+    AppidChangeBits& change_bits)
 {
     AppId ClientAppId = APP_ID_SIP;
     char* clientVersion = nullptr;
@@ -529,13 +532,14 @@ void SipEventHandler::client_handler(SipEvent& sip_event, AppIdSession& asd)
 
 success:
     if( !asd.is_client_detected() )
-        client->add_app(asd, APP_ID_SIP, ClientAppId, clientVersion);
+        client->add_app(asd, APP_ID_SIP, ClientAppId, clientVersion, change_bits);
 
     if ( !fd->user_name.empty() )
         client->add_user(asd, fd->user_name.c_str(), APP_ID_SIP, true);
 }
 
-void SipEventHandler::service_handler(SipEvent& sip_event, AppIdSession& asd)
+void SipEventHandler::service_handler(SipEvent& sip_event, AppIdSession& asd,
+    AppidChangeBits& change_bits)
 {
     ServiceSIPData* ss = (ServiceSIPData*)service->data_get(asd);
     if ( !ss )
@@ -575,7 +579,7 @@ void SipEventHandler::service_handler(SipEvent& sip_event, AppIdSession& asd)
         if ( !asd.is_service_detected() )
         {
             asd.set_session_flags(APPID_SESSION_CONTINUE);
-            service->add_service(asd, sip_event.get_packet(), direction, APP_ID_SIP,
+            service->add_service(change_bits, asd, sip_event.get_packet(), direction, APP_ID_SIP,
                 ss->vendor[0] ? ss->vendor : nullptr);
             if (appidDebug->is_active())
                 LogMessage("AppIdDbg %s Sip service detected. Setting APPID_SESSION_CONTINUE flag\n",

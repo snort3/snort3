@@ -127,7 +127,7 @@ int NtpServiceDetector::validate(AppIdDiscoveryArgs& args)
             goto fail;
     }
 
-    return add_service(args.asd, args.pkt, args.dir, APP_ID_NTP);
+    return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_NTP);
 
 inprocess:
     service_inprocess(args.asd, args.pkt, args.dir);

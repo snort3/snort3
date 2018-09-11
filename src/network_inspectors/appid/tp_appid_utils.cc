@@ -95,7 +95,7 @@ static inline int check_ssl_appid_for_reinspect(AppId app_id)
 // Or, register observers with THirdPartyAppIDAttributeData and modify the
 // set functions to copy the tp buffers directly into the appropriate observer.
 static inline void process_http_session(AppIdSession& asd,
-    ThirdPartyAppIDAttributeData& attribute_data)
+    ThirdPartyAppIDAttributeData& attribute_data, AppidChangeBits& change_bits)
 {
     AppIdHttpSession* hsession = asd.get_http_session();
     string* field=0;
@@ -125,7 +125,7 @@ static inline void process_http_session(AppIdSession& asd,
             if ( hsession->get_field(MISC_URL_FID) )
                 hsession->set_chp_finished(false);
 
-            hsession->set_field(MISC_URL_FID, url);
+            hsession->set_field(MISC_URL_FID, url, change_bits);
             asd.scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
         }
 
@@ -134,7 +134,7 @@ static inline void process_http_session(AppIdSession& asd,
             if (hsession->get_field(REQ_HOST_FID))
                 hsession->set_chp_finished(false);
 
-            hsession->set_field(REQ_HOST_FID, spdyRequestHost);
+            hsession->set_field(REQ_HOST_FID, spdyRequestHost, change_bits);
             hsession->set_offset(REQ_HOST_FID,
                 attribute_data.spdy_request_host_begin(),
                 attribute_data.spdy_request_host_end());
@@ -152,7 +152,7 @@ static inline void process_http_session(AppIdSession& asd,
             if ( hsession->get_field(REQ_URI_FID) )
                 hsession->set_chp_finished(false);
 
-            hsession->set_field(REQ_URI_FID, spdyRequestPath);
+            hsession->set_field(REQ_URI_FID, spdyRequestPath, change_bits);
             hsession->set_offset(REQ_URI_FID,
                 attribute_data.spdy_request_path_begin(),
                 attribute_data.spdy_request_path_end());
@@ -171,7 +171,7 @@ static inline void process_http_session(AppIdSession& asd,
                 if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
                     hsession->set_chp_finished(false);
 
-            hsession->set_field(REQ_HOST_FID, field);
+            hsession->set_field(REQ_HOST_FID, field, change_bits);
             hsession->set_offset(REQ_HOST_FID,
                 attribute_data.http_request_host_begin(),
                 attribute_data.http_request_host_end());
@@ -201,7 +201,7 @@ static inline void process_http_session(AppIdSession& asd,
                 // In all other cases field can be const string*.
                 field->insert(4, 1, 's');
             }
-            hsession->set_field(MISC_URL_FID, field);
+            hsession->set_field(MISC_URL_FID, field, change_bits);
             asd.scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
         }
 
@@ -211,7 +211,7 @@ static inline void process_http_session(AppIdSession& asd,
                 if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
                     hsession->set_chp_finished(false);
 
-            hsession->set_field(REQ_URI_FID, field);
+            hsession->set_field(REQ_URI_FID, field, change_bits);
             hsession->set_offset(REQ_URI_FID,
                 attribute_data.http_request_uri_begin(),
                 attribute_data.http_request_uri_end());
@@ -230,7 +230,7 @@ static inline void process_http_session(AppIdSession& asd,
             if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
                 hsession->set_chp_finished(false);
 
-        hsession->set_field(MISC_VIA_FID, field);
+        hsession->set_field(MISC_VIA_FID, field, change_bits);
         asd.scan_flags |= SCAN_HTTP_VIA_FLAG;
     }
     else if ( (field=attribute_data.http_response_via(own)) != nullptr )
@@ -239,7 +239,7 @@ static inline void process_http_session(AppIdSession& asd,
             if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
                 hsession->set_chp_finished(false);
 
-        hsession->set_field(MISC_VIA_FID, field);
+        hsession->set_field(MISC_VIA_FID, field, change_bits);
         asd.scan_flags |= SCAN_HTTP_VIA_FLAG;
     }
 
@@ -249,7 +249,7 @@ static inline void process_http_session(AppIdSession& asd,
             if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
                 hsession->set_chp_finished(false);
 
-        hsession->set_field(REQ_AGENT_FID, field);
+        hsession->set_field(REQ_AGENT_FID, field, change_bits);
         hsession->set_offset(REQ_AGENT_FID,
             attribute_data.http_request_user_agent_begin(),
             attribute_data.http_request_user_agent_end());
@@ -286,7 +286,7 @@ static inline void process_http_session(AppIdSession& asd,
             if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
                 hsession->set_chp_finished(false);
 
-        hsession->set_field(MISC_RESP_CODE_FID, field);
+        hsession->set_field(MISC_RESP_CODE_FID, field, change_bits);
     }
 
     // Check to see if we've got an upgrade to HTTP/2 (if enabled).
@@ -318,7 +318,7 @@ static inline void process_http_session(AppIdSession& asd,
             if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
                 hsession->set_chp_finished(false);
 
-        hsession->set_field(REQ_REFERER_FID, field);
+        hsession->set_field(REQ_REFERER_FID, field, change_bits);
         hsession->set_offset(REQ_REFERER_FID,
             attribute_data.http_request_referer_begin(),
             attribute_data.http_request_referer_end());
@@ -335,7 +335,7 @@ static inline void process_http_session(AppIdSession& asd,
             if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
                 hsession->set_chp_finished(false);
 
-        hsession->set_field(REQ_COOKIE_FID, field);
+        hsession->set_field(REQ_COOKIE_FID, field, change_bits);
         hsession->set_offset(REQ_COOKIE_FID,
             attribute_data.http_request_cookie_begin(),
             attribute_data.http_request_cookie_end());
@@ -352,7 +352,7 @@ static inline void process_http_session(AppIdSession& asd,
             if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
                 hsession->set_chp_finished(false);
 
-        hsession->set_field(RSP_CONTENT_TYPE_FID, field);
+        hsession->set_field(RSP_CONTENT_TYPE_FID, field, change_bits);
         asd.scan_flags |= SCAN_HTTP_CONTENT_TYPE_FLAG;
     }
 
@@ -362,7 +362,7 @@ static inline void process_http_session(AppIdSession& asd,
         if ( hsession->get_field(RSP_LOCATION_FID) )
             if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
                 hsession->set_chp_finished(false);
-        hsession->set_field(RSP_LOCATION_FID, field);
+        hsession->set_field(RSP_LOCATION_FID, field, change_bits);
     }
 
     if ( (field=attribute_data.http_request_body(own)) != nullptr )
@@ -373,7 +373,7 @@ static inline void process_http_session(AppIdSession& asd,
         if ( hsession->get_field(REQ_BODY_FID) )
             if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
                 hsession->set_chp_finished(false);
-        hsession->set_field(REQ_BODY_FID, field);
+        hsession->set_field(REQ_BODY_FID, field, change_bits);
     }
 
     if (hsession->get_ptype_scan_count(RSP_BODY_FID) &&
@@ -382,12 +382,12 @@ static inline void process_http_session(AppIdSession& asd,
         if (hsession->get_field(RSP_BODY_FID) )
             if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
                 hsession->set_chp_finished(false);
-        hsession->set_field(RSP_BODY_FID, field);
+        hsession->set_field(RSP_BODY_FID, field, change_bits);
     }
 
     if (attribute_data.numXffFields)
         hsession->update_http_xff_address(attribute_data.xffFieldValue,
-            attribute_data.numXffFields);
+            attribute_data.numXffFields, change_bits);
 
     if (!hsession->is_chp_finished() || hsession->is_chp_hold_flow())
     {
@@ -397,19 +397,19 @@ static inline void process_http_session(AppIdSession& asd,
 
     if ( (field=attribute_data.http_response_server(own)) != nullptr)
     {
-        hsession->set_field(MISC_SERVER_FID, field);
+        hsession->set_field(MISC_SERVER_FID, field, change_bits);
         asd.scan_flags |= SCAN_HTTP_VENDOR_FLAG;
     }
 
     if ( (field=attribute_data.http_request_x_working_with(own)) != nullptr )
     {
-        hsession->set_field(MISC_XWW_FID, field);
+        hsession->set_field(MISC_XWW_FID, field, change_bits);
         asd.scan_flags |= SCAN_HTTP_XWORKINGWITH_FLAG;
     }
 }
 
 static inline void process_rtmp(AppIdSession& asd,
-    ThirdPartyAppIDAttributeData& attribute_data, int confidence)
+    ThirdPartyAppIDAttributeData& attribute_data, int confidence, AppidChangeBits& change_bits)
 {
     AppIdHttpSession* hsession = asd.get_http_session();
     AppId service_id = 0;
@@ -425,7 +425,7 @@ static inline void process_rtmp(AppIdSession& asd,
     {
         if ( ( field=attribute_data.http_request_url(own) ) != nullptr )
         {
-            hsession->set_field(MISC_URL_FID, field);
+            hsession->set_field(MISC_URL_FID, field, change_bits);
             asd.scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
         }
     }
@@ -435,7 +435,7 @@ static inline void process_rtmp(AppIdSession& asd,
     {
         if ( ( field=attribute_data.http_request_referer(own) ) != nullptr )
         {
-            hsession->set_field(REQ_REFERER_FID, field);
+            hsession->set_field(REQ_REFERER_FID, field, change_bits);
         }
     }
 
@@ -443,7 +443,7 @@ static inline void process_rtmp(AppIdSession& asd,
     {
         if ( ( field=attribute_data.http_request_user_agent(own) ) != nullptr )
         {
-            hsession->set_field(REQ_AGENT_FID, field);
+            hsession->set_field(REQ_AGENT_FID, field, change_bits);
             hsession->set_offset(REQ_AGENT_FID,
                 attribute_data.http_request_user_agent_begin(),
                 attribute_data.http_request_user_agent_end());
@@ -464,11 +464,11 @@ static inline void process_rtmp(AppIdSession& asd,
         http_matchers->identify_user_agent(field->c_str(), size, service_id, 
         client_id, &version);
         
-        asd.set_client_appid_data(client_id, version);
+        asd.set_client_appid_data(client_id, version, change_bits);
         
         // do not overwrite a previously-set service
         if ( service_id <= APP_ID_NONE )
-            asd.set_service_appid_data(service_id, nullptr, nullptr);
+            asd.set_service_appid_data(service_id, nullptr, nullptr, change_bits);
         
         asd.scan_flags |= ~SCAN_HTTP_USER_AGENT_FLAG;
         snort_free(version);
@@ -492,13 +492,13 @@ static inline void process_rtmp(AppIdSession& asd,
             {
                 // do not overwrite a previously-set client or service
                 if ( client_id <= APP_ID_NONE )
-                    asd.set_client_appid_data(client_id, nullptr);
+                    asd.set_client_appid_data(client_id, nullptr, change_bits);
                 if ( service_id <= APP_ID_NONE )
-                    asd.set_service_appid_data(service_id, nullptr, nullptr);
+                    asd.set_service_appid_data(service_id, nullptr, nullptr, change_bits);
 
                 // DO overwrite a previously-set data
-                asd.set_payload_appid_data(payload_id, nullptr);
-                asd.set_referred_payload_app_id_data(referred_payload_app_id);
+                asd.set_payload_appid_data(payload_id, nullptr, change_bits);
+                asd.set_referred_payload_app_id_data(referred_payload_app_id, change_bits);
             }
         }
 
@@ -511,7 +511,7 @@ static inline void process_rtmp(AppIdSession& asd,
 }
 
 static inline void process_ssl(AppIdSession& asd,
-    ThirdPartyAppIDAttributeData& attribute_data)
+    ThirdPartyAppIDAttributeData& attribute_data, AppidChangeBits& change_bits)
 {
     AppId tmpAppId = APP_ID_NONE;
     int tmpConfidence = 0;
@@ -526,11 +526,11 @@ static inline void process_ssl(AppIdSession& asd,
         asd.tsession = (TlsSession*)snort_calloc(sizeof(TlsSession));
 
     if (!asd.client.get_id())
-        asd.set_client_appid_data(APP_ID_SSL_CLIENT, nullptr);
+        asd.set_client_appid_data(APP_ID_SSL_CLIENT, nullptr, change_bits);
 
     if ( (field=attribute_data.tls_host(false)) != nullptr )
     {
-        asd.tsession->set_tls_host(field->c_str(), field->size());
+        asd.tsession->set_tls_host(field->c_str(), field->size(), change_bits);
         if (check_ssl_appid_for_reinspect(tmpAppId))
             asd.scan_flags |= SCAN_SSL_HOST_FLAG;
     }
@@ -563,7 +563,8 @@ static inline void process_ftp_control(AppIdSession& asd,
 }
 
 static inline void process_third_party_results(AppIdSession& asd, int confidence,
-    vector<AppId>& proto_list, ThirdPartyAppIDAttributeData& attribute_data)
+    vector<AppId>& proto_list, ThirdPartyAppIDAttributeData& attribute_data,
+    AppidChangeBits& change_bits)
 {
     if ( asd.payload.get_id() == APP_ID_NONE and contains(proto_list, APP_ID_EXCHANGE) )
         asd.payload.set_id(APP_ID_EXCHANGE);
@@ -584,14 +585,14 @@ static inline void process_third_party_results(AppIdSession& asd, int confidence
     }
 
     if (asd.get_session_flags(APPID_SESSION_HTTP_SESSION))
-        process_http_session(asd, attribute_data);
+        process_http_session(asd, attribute_data, change_bits);
 
     else if (contains(proto_list, APP_ID_RTMP) ||
         contains(proto_list, APP_ID_RTSP) )
-        process_rtmp(asd, attribute_data, confidence);
+        process_rtmp(asd, attribute_data, confidence, change_bits);
 
     else if (contains(proto_list, APP_ID_SSL))
-        process_ssl(asd, attribute_data);
+        process_ssl(asd, attribute_data, change_bits);
 
     else if (contains(proto_list, APP_ID_FTP_CONTROL))
         process_ftp_control(asd, attribute_data);
@@ -620,7 +621,7 @@ static inline void check_terminate_tp_module(AppIdSession& asd, uint16_t tpPktCo
 }
 
 bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
-    Packet* p, AppidSessionDirection& direction)
+    Packet* p, AppidSessionDirection& direction, AppidChangeBits& change_bits)
 {
     if ( !TPLibHandler::have_tp() )
         return true;
@@ -717,7 +718,8 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                 if ( app_info_flags & APPINFO_FLAG_TP_CLIENT )
                     asd.client.set_id(tp_app_id);
 
-                process_third_party_results(asd, tp_confidence, tp_proto_list, tp_attribute_data);
+                process_third_party_results(asd, tp_confidence, tp_proto_list, tp_attribute_data,
+                    change_bits);
 
                 if (asd.get_session_flags(APPID_SESSION_SSL_SESSION) &&
                     !(asd.scan_flags & SCAN_SSL_HOST_FLAG))
@@ -776,13 +778,13 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
 
                     // Handle HTTP tunneling and SSL possibly then being used in that tunnel
                     if (tp_app_id == APP_ID_HTTP_TUNNEL)
-                        asd.set_payload_appid_data(APP_ID_HTTP_TUNNEL, NULL);
+                        asd.set_payload_appid_data(APP_ID_HTTP_TUNNEL, NULL, change_bits);
                     else if ((asd.payload.get_id() == APP_ID_HTTP_TUNNEL) &&
                         (tp_app_id == APP_ID_SSL))
-                        asd.set_payload_appid_data(APP_ID_HTTP_SSL_TUNNEL, NULL);
+                        asd.set_payload_appid_data(APP_ID_HTTP_SSL_TUNNEL, NULL, change_bits);
 
                     AppIdHttpSession* hsession = asd.get_http_session();
-                    hsession->process_http_packet(direction);
+                    hsession->process_http_packet(direction, change_bits);
 
                     // If SSL over HTTP tunnel, make sure Snort knows that it's encrypted.
                     if (asd.payload.get_id() == APP_ID_HTTP_SSL_TUNNEL)
@@ -811,7 +813,7 @@ bool do_tp_discovery(AppIdSession& asd, IpProtocol protocol,
                 }
                 else if (asd.get_session_flags(APPID_SESSION_SSL_SESSION) && asd.tsession)
                 {
-                    asd.examine_ssl_metadata(p);
+                    asd.examine_ssl_metadata(p, change_bits);
                     uint16_t serverPort;
                     AppId portAppId;
                     serverPort = (direction == APP_ID_FROM_INITIATOR) ? p->ptrs.dp : p->ptrs.sp;

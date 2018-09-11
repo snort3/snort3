@@ -536,7 +536,8 @@ inprocess:
         return APPID_INPROCESS;
 
     case APPID_SUCCESS:
-        return add_service(args.asd, args.pkt, args.dir, APP_ID_SSH, ss->vendor, ss->version, nullptr);
+        return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_SSH,
+            ss->vendor, ss->version, nullptr);
 
     case APPID_NOMATCH:
 fail:

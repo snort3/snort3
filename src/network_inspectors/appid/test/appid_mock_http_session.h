@@ -43,7 +43,7 @@ AppIdHttpSession::~AppIdHttpSession()
     }
 }
 
-int AppIdHttpSession::process_http_packet(AppidSessionDirection) { return 0; }
+int AppIdHttpSession::process_http_packet(AppidSessionDirection, AppidChangeBits&) { return 0; }
 
 char const* APPID_UT_XFF_IP_ADDR = "192.168.0.1";
 char const* CONTENT_TYPE = "html/text";
@@ -65,7 +65,7 @@ char const* RSP_BODY = "this is the body of the http response";
 #define URI_OFFSET 22
 #define COOKIE_OFFSET 44
 
-void AppIdHttpSession::update_url()
+void AppIdHttpSession::update_url(AppidChangeBits&)
 {
     const std::string* host = meta_data[REQ_HOST_FID];
     const std::string* uri = meta_data[REQ_URI_FID];
@@ -106,19 +106,6 @@ public:
         meta_offset[REQ_URI_FID].second = URI_OFFSET + strlen(URI);
         meta_offset[REQ_COOKIE_FID].first = COOKIE_OFFSET;
         meta_offset[REQ_COOKIE_FID].second = COOKIE_OFFSET + strlen(NEW_COOKIE);
-    }
-
-    void init_hsession_new_fields()
-    {
-        set_field(REQ_AGENT_FID, new std::string(USERAGENT));
-        set_field(REQ_HOST_FID, new std::string(HOST));
-        set_field(REQ_REFERER_FID, new std::string(REFERER));
-        set_field(REQ_URI_FID, new std::string(URI));
-        set_field(REQ_COOKIE_FID, new std::string(COOKIE));
-        set_field(REQ_BODY_FID, new std::string(REQ_BODY));
-        set_field(RSP_CONTENT_TYPE_FID, new std::string(CONTENT_TYPE));
-        set_field(RSP_LOCATION_FID, new std::string(LOCATION));
-        set_field(RSP_BODY_FID, new std::string(RSP_BODY));
     }
 
     void reset()

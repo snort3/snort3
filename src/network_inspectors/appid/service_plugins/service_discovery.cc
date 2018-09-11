@@ -409,7 +409,8 @@ void ServiceDiscovery::get_next_service(const Packet* p, const AppidSessionDirec
     }
 }
 
-int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p, AppidSessionDirection dir)
+int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
+    AppidSessionDirection dir, AppidChangeBits& change_bits)
 {
     ServiceDiscoveryState* sds = nullptr;
     bool got_brute_force = false;
@@ -472,7 +473,7 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p, AppidSessio
     int ret = APPID_NOMATCH;
     bool got_incompatible_service = false;
     bool got_fail_service = false;
-    AppIdDiscoveryArgs args(p->data, p->dsize, dir, asd, p);
+    AppIdDiscoveryArgs args(p->data, p->dsize, dir, asd, p, change_bits);
     /* If we already have a service to try, then try it out. */
     if ( asd.service_detector )
     {
@@ -580,7 +581,8 @@ int ServiceDiscovery::add_ftp_service_state(AppIdSession& asd)
     return asd.add_flow_data_id(21, ftp_service);
 }
 
-bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p, AppidSessionDirection direction)
+bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
+    AppidSessionDirection direction, AppidChangeBits& change_bits)
 {
     bool isTpAppidDiscoveryDone = false;
 
@@ -693,7 +695,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p, AppidS
 
     if (asd.service_disco_state == APPID_DISCO_STATE_STATEFUL)
     {
-        identify_service(asd, p, direction);
+        identify_service(asd, p, direction, change_bits);
         isTpAppidDiscoveryDone = true;
         //to stop executing validator after service has been detected by RNA.
         if (asd.get_session_flags(APPID_SESSION_SERVICE_DETECTED |
@@ -716,12 +718,12 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p, AppidS
             AppId payload_id = APP_ID_NONE;
             dns_host_scan_hostname((const uint8_t*)(dsession->get_host()), dsession->get_host_len(),
                 &client_id, &payload_id);
-            asd.set_client_appid_data(client_id, nullptr);
+            asd.set_client_appid_data(client_id, nullptr, change_bits);
         }
         else if (asd.service.get_id() == APP_ID_RTMP)
-            asd.examine_rtmp_metadata();
+            asd.examine_rtmp_metadata(change_bits);
         else if (asd.get_session_flags(APPID_SESSION_SSL_SESSION) && asd.tsession)
-            asd.examine_ssl_metadata(p);
+            asd.examine_ssl_metadata(p, change_bits);
 
         if (tp_app_id <= APP_ID_NONE && asd.get_session_flags(
             APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE |

@@ -104,7 +104,7 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t port,
     length_sequence.proto = IpProtocol::PROTO_NOT_SET;
     length_sequence.sequence_cnt = 0;
     memset(length_sequence.sequence, '\0', sizeof(length_sequence.sequence));
-
+    memset(application_ids, 0, sizeof(application_ids));
     appid_stats.total_sessions++;
 }
 
@@ -212,7 +212,7 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
     return asd;
 }
 
-void AppIdSession::reinit_session_data()
+void AppIdSession::reinit_session_data(AppidChangeBits& change_bits)
 {
     misc_app_id = APP_ID_NONE;
 
@@ -223,7 +223,7 @@ void AppIdSession::reinit_session_data()
         referred_payload_app_id = tp_payload_app_id = APP_ID_NONE;
         clear_session_flags(APPID_SESSION_CONTINUE);
         if ( hsession )
-            hsession->set_field(MISC_URL_FID, nullptr);
+            hsession->set_field(MISC_URL_FID, nullptr, change_bits);
     }
 
     //service
@@ -316,7 +316,7 @@ void AppIdSession::sync_with_snort_protocol_id(AppId newAppId, Packet* p)
     }
 }
 
-void AppIdSession::check_app_detection_restart()
+void AppIdSession::check_app_detection_restart(AppidChangeBits& change_bits)
 {
     if (get_session_flags(APPID_SESSION_DECRYPTED) || !flow->is_proxied())
         return;
@@ -336,7 +336,7 @@ void AppIdSession::check_app_detection_restart()
         encrypted.client_id = pick_client_app_id();
         encrypted.misc_id = pick_misc_app_id();
         encrypted.referred_id = pick_referred_payload_app_id();
-        reinit_session_data();
+        reinit_session_data(change_bits);
         if (appidDebug->is_active())
             LogMessage("AppIdDbg %s SSL decryption is available, restarting app detection\n",
                 appidDebug->get_debug_session());
@@ -398,53 +398,52 @@ void AppIdSession::update_encrypted_app_id(AppId service_id)
     }
 }
 
-void AppIdSession::examine_ssl_metadata(Packet* p)
+void AppIdSession::examine_ssl_metadata(Packet* p, AppidChangeBits& change_bits)
 {
     int ret;
     AppId client_id = 0;
     AppId payload_id = 0;
+    const char* tls_str = tsession->get_tls_host();
 
-    if ((scan_flags & SCAN_SSL_HOST_FLAG) && tsession->tls_host)
+    if ((scan_flags & SCAN_SSL_HOST_FLAG) and tls_str)
     {
-        size_t size = strlen(tsession->tls_host);
-        if ((ret = ssl_scan_hostname((const uint8_t*)tsession->tls_host, size,
+        size_t size = strlen(tls_str);
+        if ((ret = ssl_scan_hostname((const uint8_t*)tls_str, size,
                 &client_id, &payload_id)))
         {
-            set_client_appid_data(client_id, nullptr);
-            set_payload_appid_data((AppId)payload_id, nullptr);
+            set_client_appid_data(client_id, nullptr, change_bits);
+            set_payload_appid_data((AppId)payload_id, nullptr, change_bits);
             setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id), inspector);
         }
         scan_flags &= ~SCAN_SSL_HOST_FLAG;
     }
-    if (tsession->tls_cname)
+    if ((tls_str = tsession->get_tls_cname()))
     {
-        size_t size = strlen(tsession->tls_cname);
-        if ((ret = ssl_scan_cname((const uint8_t*)tsession->tls_cname, size,
+        size_t size = strlen(tls_str);
+        if ((ret = ssl_scan_cname((const uint8_t*)tls_str, size,
                 &client_id, &payload_id)))
         {
-            set_client_appid_data(client_id, nullptr);
-            set_payload_appid_data((AppId)payload_id, nullptr);
+            set_client_appid_data(client_id, nullptr, change_bits);
+            set_payload_appid_data((AppId)payload_id, nullptr, change_bits);
             setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id), inspector);
         }
-        snort_free(tsession->tls_cname);
-        tsession->tls_cname = nullptr;
+        tsession->set_tls_cname(nullptr, 0);
     }
-    if (tsession->tls_orgUnit)
+    if ((tls_str = tsession->get_tls_org_unit()))
     {
-        size_t size = strlen(tsession->tls_orgUnit);
-        if ((ret = ssl_scan_cname((const uint8_t*)tsession->tls_orgUnit, size,
+        size_t size = strlen(tls_str);
+        if ((ret = ssl_scan_cname((const uint8_t*)tls_str, size,
                 &client_id, &payload_id)))
         {
-            set_client_appid_data(client_id, nullptr);
-            set_payload_appid_data((AppId)payload_id, nullptr);
+            set_client_appid_data(client_id, nullptr, change_bits);
+            set_payload_appid_data((AppId)payload_id, nullptr, change_bits);
             setSSLSquelch(p, ret, (ret == 1 ? payload_id : client_id), inspector);
         }
-        snort_free(tsession->tls_orgUnit);
-        tsession->tls_orgUnit = nullptr;
+        tsession->set_tls_org_unit(nullptr, 0);
     }
 }
 
-void AppIdSession::examine_rtmp_metadata()
+void AppIdSession::examine_rtmp_metadata(AppidChangeBits& change_bits)
 {
     AppId service_id = APP_ID_NONE;
     AppId client_id = APP_ID_NONE;
@@ -469,18 +468,18 @@ void AppIdSession::examine_rtmp_metadata()
         {
             /* do not overwrite a previously-set client or service */
             if (client.get_id() <= APP_ID_NONE)
-                set_client_appid_data(payload_id, nullptr);
+                set_client_appid_data(payload_id, nullptr, change_bits);
             if (service.get_id() <= APP_ID_NONE)
-                set_service_appid_data(service_id, nullptr, nullptr);
+                set_service_appid_data(service_id, nullptr, nullptr, change_bits);
 
             /* DO overwrite a previously-set data */
-            set_payload_appid_data((AppId)payload.get_id(), nullptr);
-            set_referred_payload_app_id_data(referred_payload_id);
+            set_payload_appid_data((AppId)payload.get_id(), nullptr, change_bits);
+            set_referred_payload_app_id_data(referred_payload_id, change_bits);
         }
     }
 }
 
-void AppIdSession::set_client_appid_data(AppId id, char* version)
+void AppIdSession::set_client_appid_data(AppId id, char* version, AppidChangeBits& change_bits)
 {
     if ( id <= APP_ID_NONE || id == APP_ID_HTTP )
         return;
@@ -495,19 +494,22 @@ void AppIdSession::set_client_appid_data(AppId id, char* version)
         client.set_id(id);
     }
 
-    client.set_version(version);
+    client.set_version(version, change_bits);
 }
 
-void AppIdSession::set_referred_payload_app_id_data(AppId id)
+void AppIdSession::set_referred_payload_app_id_data(AppId id, AppidChangeBits& change_bits)
 {
     if (id <= APP_ID_NONE)
         return;
 
     if (referred_payload_app_id != id)
+    {
         referred_payload_app_id = id;
+        change_bits.set(APPID_REFERRED_BIT);
+    }
 }
 
-void AppIdSession::set_payload_appid_data(AppId id, char* version)
+void AppIdSession::set_payload_appid_data(AppId id, char* version, AppidChangeBits& change_bits)
 {
     if ( id <= APP_ID_NONE )
         return;
@@ -515,10 +517,11 @@ void AppIdSession::set_payload_appid_data(AppId id, char* version)
     if ( app_info_mgr->get_priority(payload.get_id()) > app_info_mgr->get_priority(id) )
         return;
     payload.set_id(id);
-    payload.set_version(version);
+    payload.set_version(version, change_bits);
 }
 
-void AppIdSession::set_service_appid_data(AppId id, char* vendor, char* version)
+void AppIdSession::set_service_appid_data(AppId id, char* vendor, char* version,
+    AppidChangeBits& change_bits)
 {
     if (id <= APP_ID_NONE)
         return;
@@ -531,19 +534,14 @@ void AppIdSession::set_service_appid_data(AppId id, char* vendor, char* version)
         return;
     }
 
-    service.update(id, vendor, version);
+    service.update(id, vendor, version, change_bits);
 }
 
 void AppIdSession::free_tls_session_data()
 {
     if ( tsession )
     {
-        if (tsession->tls_host)
-            snort_free(tsession->tls_host);
-        if (tsession->tls_cname)
-            snort_free(tsession->tls_cname);
-        if (tsession->tls_orgUnit)
-            snort_free(tsession->tls_orgUnit);
+        tsession->free_data();
         snort_free(tsession);
         tsession = nullptr;
     }
@@ -774,12 +772,28 @@ AppId AppIdSession::pick_referred_payload_app_id()
 }
 
 void AppIdSession::set_application_ids(AppId service_id, AppId client_id,
-    AppId payload_id, AppId misc_id)
+    AppId payload_id, AppId misc_id, AppidChangeBits& change_bits)
 {
-    application_ids[APP_PROTOID_SERVICE] = service_id;
-    application_ids[APP_PROTOID_CLIENT] = client_id;
-    application_ids[APP_PROTOID_PAYLOAD] = payload_id;
-    application_ids[APP_PROTOID_MISC] = misc_id;
+    if (application_ids[APP_PROTOID_SERVICE] != service_id)
+    {
+        application_ids[APP_PROTOID_SERVICE] = service_id;
+        change_bits.set(APPID_SERVICE_BIT);
+    }
+    if (application_ids[APP_PROTOID_CLIENT] != client_id)
+    {
+        application_ids[APP_PROTOID_CLIENT] = client_id;
+        change_bits.set(APPID_CLIENT_BIT);
+    }
+    if (application_ids[APP_PROTOID_PAYLOAD] != payload_id)
+    {
+        application_ids[APP_PROTOID_PAYLOAD] = payload_id;
+        change_bits.set(APPID_PAYLOAD_BIT);
+    }
+    if (application_ids[APP_PROTOID_MISC] != misc_id)
+    {
+        application_ids[APP_PROTOID_MISC] = misc_id;
+        change_bits.set(APPID_MISC_BIT);
+    }
 }
 
 void AppIdSession::get_application_ids(AppId& service_id, AppId& client_id,

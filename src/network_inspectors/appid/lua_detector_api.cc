@@ -518,8 +518,8 @@ static int service_add_service(lua_State* L)
 
     /*Phase2 - discuss AppIdServiceSubtype will be maintained on lua side therefore the last
       parameter on the following call is nullptr. Subtype is not displayed on DC at present. */
-    unsigned int retValue = ud->sd->add_service(*lsd->ldp.asd, lsd->ldp.pkt, lsd->ldp.dir,
-        AppInfoManager::get_instance().get_appid_by_service_id(service_id),
+    unsigned int retValue = ud->sd->add_service(*lsd->ldp.change_bits, *lsd->ldp.asd, lsd->ldp.pkt,
+        lsd->ldp.dir, AppInfoManager::get_instance().get_appid_by_service_id(service_id),
         vendor, version, nullptr);
 
     lua_pushnumber(L, retValue);
@@ -902,7 +902,7 @@ static int service_add_client(lua_State* L)
         return 1;
     }
 
-    ud->cd->add_app(*lsd->ldp.asd, service_id, client_id, version);
+    ud->cd->add_app(*lsd->ldp.asd, service_id, client_id, version, *lsd->ldp.change_bits);
     lua_pushnumber(L, 0);
     return 1;
 }
@@ -918,7 +918,8 @@ static int client_add_application(lua_State* L)
     const char* version = lua_tostring(L, 5);
     ud->cd->add_app(*lsd->ldp.asd,
         AppInfoManager::get_instance().get_appid_by_service_id(service_id),
-        AppInfoManager::get_instance().get_appid_by_client_id(productId), version);
+        AppInfoManager::get_instance().get_appid_by_client_id(productId), version,
+        *lsd->ldp.change_bits);
 
     lua_pushnumber(L, 0);
     return 1;
@@ -931,7 +932,7 @@ static int client_add_info(lua_State* L)
     LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
     const char* info = lua_tostring(L, 2);
-    ud->cd->add_info(*lsd->ldp.asd, info);
+    ud->cd->add_info(*lsd->ldp.asd, info, *lsd->ldp.change_bits);
     lua_pushnumber(L, 0);
     return 1;
 }
@@ -1933,7 +1934,7 @@ static int add_client_application(lua_State* L)
     unsigned int service_id = lua_tonumber(L, 2);
     unsigned int client_id = lua_tonumber(L, 3);
 
-    ud->cd->add_app(*lsd->ldp.asd, service_id, client_id, "");
+    ud->cd->add_app(*lsd->ldp.asd, service_id, client_id, "", *lsd->ldp.change_bits);
     lua_pushnumber(L, 0);
     return 1;
 }
@@ -1959,7 +1960,7 @@ static int add_service_application(lua_State* L)
     /*Phase2 - discuss AppIdServiceSubtype will be maintained on lua side therefore the last
       parameter on the following call is nullptr.
       Subtype is not displayed on DC at present. */
-    unsigned retValue = ud->sd->add_service(*lsd->ldp.asd, lsd->ldp.pkt,
+    unsigned retValue = ud->sd->add_service(*lsd->ldp.change_bits, *lsd->ldp.asd, lsd->ldp.pkt,
         lsd->ldp.dir, service_id);
 
     lua_pushnumber(L, retValue);
@@ -2502,6 +2503,7 @@ int LuaStateDescriptor::lua_validate(AppIdDiscoveryArgs& args)
     ldp.size = args.size;
     ldp.dir = args.dir;
     ldp.asd = &args.asd;
+    ldp.change_bits = &args.change_bits;
     ldp.pkt = args.pkt;
     const char* validateFn = package_info.validateFunctionName.c_str();
 

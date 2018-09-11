@@ -147,7 +147,7 @@ int MsnClientDetector::validate(AppIdDiscoveryArgs& args)
     return APPID_INPROCESS;
 
 done:
-    add_app(args.asd, APP_ID_MSN_MESSENGER, product_id, (char*)version);
+    add_app(args.asd, APP_ID_MSN_MESSENGER, product_id, (char*)version, args.change_bits);
     return APPID_SUCCESS;
 }
 

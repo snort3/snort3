@@ -548,7 +548,7 @@ int NbnsServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
 
 success:
-    return add_service(args.asd, args.pkt, dir, APP_ID_NETBIOS_NS);
+    return add_service(args.change_bits, args.asd, args.pkt, dir, APP_ID_NETBIOS_NS);
 
 inprocess:
     service_inprocess(args.asd, args.pkt, dir);
@@ -983,7 +983,7 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
         goto inprocess;
 
     if ( !args.asd.is_service_detected() )
-        if ( add_service(args.asd, args.pkt, dir, nd->serviceAppId) == APPID_SUCCESS )
+        if ( add_service(args.change_bits, args.asd, args.pkt, dir, nd->serviceAppId) == APPID_SUCCESS )
             add_miscellaneous_info(args.asd, nd->miscAppId);
     return APPID_SUCCESS;
 
@@ -1166,7 +1166,7 @@ success:
     {
         if ( dir == APP_ID_FROM_RESPONDER )
         {
-            if ( add_service(args.asd, args.pkt, dir, serviceAppId) == APPID_SUCCESS )
+            if ( add_service(args.change_bits, args.asd, args.pkt, dir, serviceAppId) == APPID_SUCCESS )
                 add_miscellaneous_info(args.asd, miscAppId);
         }
     }

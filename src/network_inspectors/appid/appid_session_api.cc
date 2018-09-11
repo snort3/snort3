@@ -177,7 +177,7 @@ short AppIdSessionApi::get_service_port()
 char* AppIdSessionApi::get_tls_host()
 {
     if (asd->tsession)
-        return asd->tsession->tls_host;
+        return asd->tsession->get_tls_host();
 
     return nullptr;
 }

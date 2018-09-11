@@ -81,6 +81,30 @@ void AppIdHttpSession::free_chp_matches(ChpMatchDescriptor& cmd, unsigned num_ma
             cmd.chp_matches[i].clear();
 }
 
+void AppIdHttpSession::set_http_change_bits(AppidChangeBits& change_bits, HttpFieldIds id)
+{
+    switch (id)
+    {
+    case REQ_HOST_FID:
+        change_bits.set(APPID_HOST_BIT);
+        break;
+    case MISC_URL_FID:
+        change_bits.set(APPID_URL_BIT);
+        break;
+    case REQ_AGENT_FID:
+        change_bits.set(APPID_USERAGENT_BIT);
+        break;
+    case MISC_RESP_CODE_FID:
+        change_bits.set(APPID_RESPONSE_BIT);
+        break;
+    case REQ_REFERER_FID:
+        change_bits.set(APPID_REFERER_BIT);
+        break;
+    default:
+        break;
+    }
+}
+
 int AppIdHttpSession::initial_chp_sweep(ChpMatchDescriptor& cmd)
 {
     CHPApp* cah = nullptr;
@@ -184,7 +208,7 @@ void AppIdHttpSession::init_chp_match_descriptor(ChpMatchDescriptor& cmd)
     }
 }
 
-void AppIdHttpSession::process_chp_buffers()
+void AppIdHttpSession::process_chp_buffers(AppidChangeBits& change_bits)
 {
     ChpMatchDescriptor cmd;
 
@@ -290,13 +314,13 @@ void AppIdHttpSession::process_chp_buffers()
                 : CHP_APPIDINSTANCE_TO_ID(chp_candidate);
 
             if (app_type_flags & APP_TYPE_SERVICE)
-                asd.set_service_appid_data(chp_final, nullptr, version);
+                asd.set_service_appid_data(chp_final, nullptr, version, change_bits);
 
             if (app_type_flags & APP_TYPE_CLIENT)
-                asd.set_client_appid_data(chp_final, version);
+                asd.set_client_appid_data(chp_final, version, change_bits);
 
             if ( app_type_flags & APP_TYPE_PAYLOAD )
-                asd.set_payload_appid_data((AppId)chp_final, version);
+                asd.set_payload_appid_data((AppId)chp_final, version, change_bits);
 
             if ( version )
             {
@@ -323,7 +347,7 @@ void AppIdHttpSession::process_chp_buffers()
                             httpFieldName[i], cmd.chp_rewritten[i]);
 
                     set_field((HttpFieldIds)i, (const uint8_t*)cmd.chp_rewritten[i],
-                        strlen(cmd.chp_rewritten[i]));
+                        strlen(cmd.chp_rewritten[i]), change_bits);
                     delete [] cmd.chp_rewritten[i];
                     cmd.chp_rewritten[i] = nullptr;
                 }
@@ -350,7 +374,8 @@ void AppIdHttpSession::process_chp_buffers()
     }
 }
 
-int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
+int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
+    AppidChangeBits& change_bits)
 {
     snort::Profile http_profile_context(httpPerfStats);
     AppId service_id = APP_ID_NONE;
@@ -412,7 +437,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
     }
 
     if (!chp_finished || chp_hold_flow)
-        process_chp_buffers();
+        process_chp_buffers(change_bits);
 
     if (!skip_simple_detect)  // true if processCHP found match
     {
@@ -436,7 +461,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
                     if (vendor || vendorVersion)
                     {
                         asd.service.set_vendor(vendor);
-                        asd.service.set_version(vendorVersion);
+                        asd.service.set_version(vendorVersion, change_bits);
                         asd.scan_flags &= ~SCAN_HTTP_VENDOR_FLAG;
 
                         snort_free(vendor);
@@ -461,7 +486,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
             {
                 if (appidDebug->is_active() and asd.payload.get_id() != APP_ID_WEBDAV)
                     LogMessage("AppIdDbg %s Data is webdav\n", appidDebug->get_debug_session());
-                asd.set_payload_appid_data(APP_ID_WEBDAV, nullptr);
+                asd.set_payload_appid_data(APP_ID_WEBDAV, nullptr, change_bits);
             }
 
             // Scan User-Agent for Browser types or Skype
@@ -489,8 +514,8 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
                             appidDebug->get_debug_session(), app_name ? app_name : "unknown", client_id);
                     }
                 }
-                asd.set_service_appid_data(service_id, nullptr, nullptr);
-                asd.set_client_appid_data(client_id, version);
+                asd.set_service_appid_data(service_id, nullptr, nullptr, change_bits);
+                asd.set_client_appid_data(client_id, version, change_bits);
                 asd.scan_flags &= ~SCAN_HTTP_USER_AGENT_FLAG;
                 snort_free(version);
             }
@@ -509,7 +534,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
                         app_name ? app_name : "unknown",
                         payload_id);
                 }
-                asd.set_payload_appid_data((AppId)payload_id, nullptr);
+                asd.set_payload_appid_data((AppId)payload_id, nullptr, change_bits);
                 asd.scan_flags &= ~SCAN_HTTP_VIA_FLAG;
             }
         }
@@ -537,7 +562,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
                         LogMessage("AppIdDbg %s X is client %s (%d)\n", appidDebug->get_debug_session(),
                         app_name ? app_name : "unknown", appId);
                     }
-                    asd.set_client_appid_data(appId, version);
+                    asd.set_client_appid_data(appId, version, change_bits);
                 }
                 else
                 {
@@ -548,7 +573,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
                         LogMessage("AppIdDbg %s X service %s (%d)\n", appidDebug->get_debug_session(),
                             app_name ? app_name : "unknown", appId);
                     }
-                    asd.set_service_appid_data(appId, nullptr, version);
+                    asd.set_service_appid_data(appId, nullptr, version, change_bits);
                 }
                 asd.scan_flags &= ~SCAN_HTTP_XWORKINGWITH_FLAG;
             }
@@ -575,7 +600,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
                     app_name ? app_name : "unknown",
                     payload_id);
             }
-            asd.set_payload_appid_data((AppId)payload_id, nullptr);
+            asd.set_payload_appid_data((AppId)payload_id, nullptr, change_bits);
             asd.scan_flags &= ~SCAN_HTTP_CONTENT_TYPE_FLAG;
         }
 
@@ -603,7 +628,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
                             app_name ? app_name : "unknown",
                             client_id);
                     }
-                    asd.set_client_appid_data(client_id, nullptr);
+                    asd.set_client_appid_data(client_id, nullptr, change_bits);
                 }
 
                 if (asd.service.get_id() <= APP_ID_NONE)
@@ -617,7 +642,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
                             app_name ? app_name : "unknown",
                             service_id);
                     }
-                    asd.set_service_appid_data(service_id, nullptr, nullptr);
+                    asd.set_service_appid_data(service_id, nullptr, nullptr, change_bits);
                 }
 
                 // DO overwrite a previously-set data
@@ -629,8 +654,8 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
                         app_name ? app_name : "unknown",
                         payload_id);
                 }
-                asd.set_payload_appid_data((AppId)payload_id, version);
-                asd.set_referred_payload_app_id_data(referredPayloadAppId);
+                asd.set_payload_appid_data((AppId)payload_id, version, change_bits);
+                asd.set_referred_payload_app_id_data(referredPayloadAppId, change_bits);
             }
 
             asd.scan_flags &= ~SCAN_HTTP_HOST_URL_FLAG;
@@ -674,11 +699,13 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction)
 
 // FIXIT-H - Implement this function when (reconfigurable) XFF is supported.
 void AppIdHttpSession::update_http_xff_address(struct XffFieldValue* xff_fields,
-    uint32_t numXffFields)
+    uint32_t numXffFields, AppidChangeBits& change_bits)
 {
     UNUSED(xff_fields);
     UNUSED(numXffFields);
+    UNUSED(change_bits);
 #if 0
+    // When this is implemented, do change_bits.set(APPID_XFF_BIT) soon after xff_addr is changed
     static const char* defaultXffPrecedence[] =
     {
         HTTP_XFF_FIELD_X_FORWARDED_FOR,
@@ -759,7 +786,7 @@ void AppIdHttpSession::update_http_xff_address(struct XffFieldValue* xff_fields,
 #endif
 }
 
-void AppIdHttpSession::update_url()
+void AppIdHttpSession::update_url(AppidChangeBits& change_bits)
 {
     const std::string* host = meta_data[REQ_HOST_FID];
     const std::string* uri = meta_data[REQ_URI_FID];
@@ -768,6 +795,7 @@ void AppIdHttpSession::update_url()
         if (meta_data[MISC_URL_FID])
             delete meta_data[MISC_URL_FID];
         meta_data[MISC_URL_FID] = new std::string(std::string("http://") + *host + *uri);
+        change_bits.set(APPID_URL_BIT);
     }
 }
 

@@ -106,8 +106,8 @@ public:
 
 private:
     SipEventHandler() = default;
-    void client_handler(SipEvent&, AppIdSession&);
-    void service_handler(SipEvent&, AppIdSession&);
+    void client_handler(SipEvent&, AppIdSession&, AppidChangeBits&);
+    void service_handler(SipEvent&, AppIdSession&, AppidChangeBits&);
 
     static SipUdpClientDetector* client;
     static SipServiceDetector* service;

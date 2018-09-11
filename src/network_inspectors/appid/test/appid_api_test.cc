@@ -118,7 +118,7 @@ TEST(appid_api, produce_ha_state)
     mock_flow_data= nullptr;
     SfIp ip;
     ip.pton(AF_INET, "192.168.1.222");
-    val = appid_api.consume_ha_state(flow, (uint8_t*)&appHA, 0, IpProtocol::TCP, &ip, 1066);
+    appid_api.consume_ha_state(flow, (uint8_t*)&appHA, 0, IpProtocol::TCP, &ip, 1066);
     AppIdSession* session = (AppIdSession*)flow->get_flow_data(AppIdSession::inspector_id);
     CHECK_TRUE(session);
     CHECK_TRUE(session->get_tp_app_id() == appHA.appId[0]);
@@ -136,7 +136,7 @@ TEST(appid_api, produce_ha_state)
     // test logic when service app is ftp control
     appHA.appId[1] = APP_ID_FTP_CONTROL;
     mock_flow_data= nullptr;
-    val = appid_api.consume_ha_state(flow, (uint8_t*)&appHA, 0, IpProtocol::TCP, &ip, 1066);
+    appid_api.consume_ha_state(flow, (uint8_t*)&appHA, 0, IpProtocol::TCP, &ip, 1066);
     session = (AppIdSession*)flow->get_flow_data(AppIdSession::inspector_id);
     CHECK_TRUE(session);
     uint64_t flags = session->get_session_flags(APPID_SESSION_CLIENT_DETECTED |

@@ -228,7 +228,7 @@ int AimClientDetector::validate(AppIdDiscoveryArgs& args)
 
                 snprintf(version, sizeof(version), "%d.%d.%d", major, minor, lesser);
                 add_app(args.asd, APP_ID_AOL_INSTANT_MESSENGER, APP_ID_AOL_INSTANT_MESSENGER,
-                    version);
+                    version, args.change_bits);
             }
         }
     }

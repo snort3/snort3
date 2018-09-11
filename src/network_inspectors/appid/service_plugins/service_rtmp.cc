@@ -637,7 +637,7 @@ success:
     {
         if ( !hsession->get_field(MISC_URL_FID) )
         {
-            hsession->set_field(MISC_URL_FID, new std::string(ss->swfUrl));
+            hsession->set_field(MISC_URL_FID, new std::string(ss->swfUrl), args.change_bits);
             args.asd.scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
         }
 
@@ -649,12 +649,12 @@ success:
     {
         if ( !hsession->get_field(REQ_REFERER_FID) &&
             !args.asd.config->mod_config->referred_appId_disabled )
-            hsession->set_field(REQ_REFERER_FID, new std::string(ss->pageUrl));
+            hsession->set_field(REQ_REFERER_FID, new std::string(ss->pageUrl), args.change_bits);
 
         snort_free(ss->pageUrl);
         ss->pageUrl = nullptr;
     }
 
-    return add_service(args.asd, args.pkt, args.dir, APP_ID_RTMP);
+    return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_RTMP);
 }
 

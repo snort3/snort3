@@ -183,7 +183,7 @@ SmtpClientDetector::SmtpClientDetector(ClientDiscovery* cdm)
 // FIXIT-M - refactor this to reduce the number of function parameters
 int SmtpClientDetector::extract_version_and_add_client_app(AppId clientId, const int prefix_len,
     const uint8_t* product, const uint8_t* product_end, ClientSMTPData* const client_data,
-    AppIdSession& asd, AppId appId)
+    AppIdSession& asd, AppId appId, AppidChangeBits& change_bits)
 {
     uint8_t* v_end = client_data->version + MAX_VERSION_SIZE - 1;
 
@@ -196,7 +196,7 @@ int SmtpClientDetector::extract_version_and_add_client_app(AppId clientId, const
     for (v = client_data->version; v < v_end && p < product_end; v++,p++)
         *v = *p;
     *v = 0;
-    add_app(asd, appId, clientId, (char*)client_data->version);
+    add_app(asd, appId, clientId, (char*)client_data->version, change_bits);
     return 0;
 }
 
@@ -206,7 +206,7 @@ int SmtpClientDetector::extract_version_and_add_client_app(AppId clientId, const
  *  Returns 0 if a recognized product is found.  Otherwise returns 1.
  */
 int SmtpClientDetector::identify_client_version(ClientSMTPData* const fd, const uint8_t* product,
-    const uint8_t* data_end, AppIdSession& asd, snort::Packet*)
+    const uint8_t* data_end, AppIdSession& asd, snort::Packet*, AppidChangeBits& change_bits)
 {
     const uint8_t* p;
     AppId appId = APP_ID_SMTP;
@@ -227,7 +227,7 @@ int SmtpClientDetector::identify_client_version(ClientSMTPData* const fd, const 
                 if (p >= data_end || *p != ' ')
                     return 1;
                 return extract_version_and_add_client_app(APP_ID_OUTLOOK,
-                    2, p, data_end, fd, asd, appId);
+                    2, p, data_end, fd, asd, appId, change_bits);
             }
             else if (*p == ' ')
             {
@@ -235,12 +235,12 @@ int SmtpClientDetector::identify_client_version(ClientSMTPData* const fd, const 
                 if (data_end-p >= (int)sizeof(EXPRESS) && memcmp(p, EXPRESS, sizeof(EXPRESS)-1) == 0)
                 {
                     return extract_version_and_add_client_app(APP_ID_OUTLOOK_EXPRESS,
-                        sizeof(EXPRESS), p, data_end, fd, asd, appId);
+                        sizeof(EXPRESS), p, data_end, fd, asd, appId, change_bits);
                 }
                 else if (data_end-p >= (int)sizeof(IMO) && memcmp(p, IMO, sizeof(IMO)-1) == 0)
                 {
                     return extract_version_and_add_client_app(APP_ID_OUTLOOK,
-                        sizeof(IMO), p, data_end, fd, asd, appId);
+                        sizeof(IMO), p, data_end, fd, asd, appId, change_bits);
                 }
             }
         }
@@ -249,13 +249,13 @@ int SmtpClientDetector::identify_client_version(ClientSMTPData* const fd, const 
         sizeof(APP_SMTP_EVOLUTION)-1) == 0)
     {
         return extract_version_and_add_client_app(APP_ID_EVOLUTION,
-            sizeof(APP_SMTP_EVOLUTION), product, data_end, fd, asd, appId);
+            sizeof(APP_SMTP_EVOLUTION), product, data_end, fd, asd, appId, change_bits);
     }
     else if (len >= sizeof(APP_SMTP_LOTUS_NOTES) && memcmp(product, APP_SMTP_LOTUS_NOTES,
         sizeof(APP_SMTP_LOTUS_NOTES)-1) == 0)
     {
         return extract_version_and_add_client_app(APP_ID_LOTUS_NOTES,
-            sizeof(APP_SMTP_LOTUS_NOTES), product, data_end, fd, asd, appId);
+            sizeof(APP_SMTP_LOTUS_NOTES), product, data_end, fd, asd, appId, change_bits);
     }
     else if (len >= sizeof(APP_SMTP_APPLEMAIL) && memcmp(product, APP_SMTP_APPLEMAIL,
         sizeof(APP_SMTP_APPLEMAIL)-1) == 0)
@@ -271,50 +271,50 @@ int SmtpClientDetector::identify_client_version(ClientSMTPData* const fd, const 
         }
         *v = 0;
 
-        add_app(asd, appId, APP_ID_APPLE_EMAIL, (char*)fd->version);
+        add_app(asd, appId, APP_ID_APPLE_EMAIL, (char*)fd->version, change_bits);
         return 0;
     }
     else if (len >= sizeof(APP_SMTP_EUDORA) && memcmp(product, APP_SMTP_EUDORA,
         sizeof(APP_SMTP_EUDORA)-1) == 0)
     {
         return extract_version_and_add_client_app(APP_ID_EUDORA,
-            sizeof(APP_SMTP_EUDORA), product, data_end, fd, asd, appId);
+            sizeof(APP_SMTP_EUDORA), product, data_end, fd, asd, appId, change_bits);
     }
     else if (len >= sizeof(APP_SMTP_EUDORAPRO) && memcmp(product, APP_SMTP_EUDORAPRO,
         sizeof(APP_SMTP_EUDORAPRO)-1) == 0)
     {
         return extract_version_and_add_client_app(APP_ID_EUDORA_PRO,
-            sizeof(APP_SMTP_EUDORAPRO), product, data_end, fd, asd, appId);
+            sizeof(APP_SMTP_EUDORAPRO), product, data_end, fd, asd, appId, change_bits);
     }
     else if (len >= sizeof(APP_SMTP_AOL) && memcmp(product, APP_SMTP_AOL,
         sizeof(APP_SMTP_AOL)-1) == 0)
     {
         return extract_version_and_add_client_app(APP_ID_AOL_EMAIL,
-            sizeof(APP_SMTP_AOL), product, data_end, fd, asd, appId);
+            sizeof(APP_SMTP_AOL), product, data_end, fd, asd, appId, change_bits);
     }
     else if (len >= sizeof(APP_SMTP_MUTT) && memcmp(product, APP_SMTP_MUTT,
         sizeof(APP_SMTP_MUTT)-1) == 0)
     {
         return extract_version_and_add_client_app(APP_ID_MUTT,
-            sizeof(APP_SMTP_MUTT), product, data_end, fd, asd, appId);
+            sizeof(APP_SMTP_MUTT), product, data_end, fd, asd, appId, change_bits);
     }
     else if (len >= sizeof(APP_SMTP_KMAIL) && memcmp(product, APP_SMTP_KMAIL,
         sizeof(APP_SMTP_KMAIL)-1) == 0)
     {
         return extract_version_and_add_client_app(APP_ID_KMAIL,
-            sizeof(APP_SMTP_KMAIL), product, data_end, fd, asd, appId);
+            sizeof(APP_SMTP_KMAIL), product, data_end, fd, asd, appId, change_bits);
     }
     else if (len >= sizeof(APP_SMTP_THUNDERBIRD) && memcmp(product, APP_SMTP_THUNDERBIRD,
         sizeof(APP_SMTP_THUNDERBIRD)-1) == 0)
     {
         return extract_version_and_add_client_app(APP_ID_THUNDERBIRD,
-            sizeof(APP_SMTP_THUNDERBIRD), product, data_end, fd, asd, appId);
+            sizeof(APP_SMTP_THUNDERBIRD), product, data_end, fd, asd, appId, change_bits);
     }
     else if (len >= sizeof(APP_SMTP_MTHUNDERBIRD) && memcmp(product, APP_SMTP_MTHUNDERBIRD,
         sizeof(APP_SMTP_MTHUNDERBIRD)-1) == 0)
     {
         return extract_version_and_add_client_app(APP_ID_THUNDERBIRD,
-            sizeof(APP_SMTP_MTHUNDERBIRD), product, data_end, fd, asd, appId);
+            sizeof(APP_SMTP_MTHUNDERBIRD), product, data_end, fd, asd, appId, change_bits);
     }
     else if (len >= sizeof(APP_SMTP_MOZILLA) && memcmp(product, APP_SMTP_MOZILLA,
         sizeof(APP_SMTP_MOZILLA)-1) == 0)
@@ -329,7 +329,7 @@ int SmtpClientDetector::identify_client_version(ClientSMTPData* const fd, const 
                 {
                     return extract_version_and_add_client_app(
                         APP_ID_THUNDERBIRD, sizeof(APP_SMTP_THUNDERBIRD_SHORT),
-                        p, data_end, fd, asd, appId);
+                        p, data_end, fd, asd, appId, change_bits);
                 }
             }
         }
@@ -387,7 +387,7 @@ int SmtpClientDetector::validate(AppIdDiscoveryArgs& args)
                 /* Because we can't see any further info without decryption we settle for
                    plain APP_ID_SMTPS instead of perhaps finding data that would make calling
                    ExtractVersion() worthwhile, So set the appid and call it good. */
-                add_app(args.asd, APP_ID_SMTPS, APP_ID_SMTPS, nullptr);
+                add_app(args.asd, APP_ID_SMTPS, APP_ID_SMTPS, nullptr, args.change_bits);
                 goto done;
             }
         }
@@ -517,7 +517,7 @@ int SmtpClientDetector::validate(AppIdDiscoveryArgs& args)
                     (len >= 1 && args.data[1] == '\n') ||
                     (len >= 2 && args.data[1] == '\r' && args.data[2] == '\n'))
                 {
-                    add_app(args.asd, APP_ID_SMTP, APP_ID_SMTP, nullptr);
+                    add_app(args.asd, APP_ID_SMTP, APP_ID_SMTP, nullptr, args.change_bits);
                     goto done;
                 }
             }
@@ -545,7 +545,7 @@ int SmtpClientDetector::validate(AppIdDiscoveryArgs& args)
             {
                 if (fd->headerline && fd->pos)
                 {
-                    identify_client_version(fd, fd->headerline, fd->headerline + fd->pos, args.asd, args.pkt);
+                    identify_client_version(fd, fd->headerline, fd->headerline + fd->pos, args.asd, args.pkt, args.change_bits);
                     snort_free(fd->headerline);
                     fd->headerline = nullptr;
                     fd->pos = 0;
@@ -842,7 +842,7 @@ int SmtpServiceDetector::validate(AppIdDiscoveryArgs& args)
                     dd->client.decryption_countdown = 1
 #endif
 
-                add_service(args.asd, args.pkt, args.dir,  APP_ID_SMTPS);
+                add_service(args.change_bits, args.asd, args.pkt, args.dir,  APP_ID_SMTPS);
 
                 if(dd->need_continue > 0)
                     args.asd.set_session_flags(APPID_SESSION_ENCRYPTED | APPID_SESSION_STICKY_SERVICE | APPID_SESSION_CONTINUE);
@@ -869,7 +869,7 @@ success:
     if (dd->need_continue > 0)
         args.asd.set_session_flags(APPID_SESSION_CONTINUE);
 
-    return add_service(args.asd, args.pkt, args.dir,
+    return add_service(args.change_bits, args.asd, args.pkt, args.dir,
         (fd->state == SMTP_SERVICE_STATE_STARTTLS) ? APP_ID_SMTPS : APP_ID_SMTP);
 
 fail:

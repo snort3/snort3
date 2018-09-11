@@ -111,13 +111,13 @@ int DirectConnectServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
 
     if (args.asd.protocol == IpProtocol::TCP)
-        return tcp_validate(data, size, args.dir, args.asd, args.pkt, fd);
+        return tcp_validate(data, size, args.dir, args.asd, args.pkt, fd, args.change_bits);
     else
-        return udp_validate(data, size, args.dir, args.asd, args.pkt, fd);
+        return udp_validate(data, size, args.dir, args.asd, args.pkt, fd, args.change_bits);
 }
 
 int DirectConnectServiceDetector::tcp_validate(const uint8_t* data, uint16_t size, const AppidSessionDirection dir,
-    AppIdSession& asd, const Packet* pkt, ServiceData* serviceData)
+    AppIdSession& asd, const Packet* pkt, ServiceData* serviceData, AppidChangeBits& change_bits)
 {
     switch (serviceData->state)
     {
@@ -215,7 +215,7 @@ success:
         goto inprocess;
     }
 
-    return add_service(asd, pkt, dir, APP_ID_DIRECT_CONNECT);
+    return add_service(change_bits, asd, pkt, dir, APP_ID_DIRECT_CONNECT);
 
 fail:
     fail_service(asd, pkt, dir);
@@ -223,7 +223,7 @@ fail:
 }
 
 int DirectConnectServiceDetector::udp_validate(const uint8_t* data, uint16_t size, const AppidSessionDirection dir,
-    AppIdSession& asd, const Packet* pkt, ServiceData* serviceData)
+    AppIdSession& asd, const Packet* pkt, ServiceData* serviceData, AppidChangeBits& change_bits)
 {
     if (dir == APP_ID_FROM_RESPONDER && serviceData->state == CONN_STATE_SERVICE_DETECTED)
     {
@@ -263,7 +263,7 @@ success:
     }
 
 reportSuccess:
-    return add_service(asd, pkt, dir, APP_ID_DIRECT_CONNECT);
+    return add_service(change_bits, asd, pkt, dir, APP_ID_DIRECT_CONNECT);
 
 fail:
     fail_service(asd, pkt, dir);

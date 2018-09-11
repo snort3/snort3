@@ -326,7 +326,7 @@ inprocess:
 success:
     if (appidDebug->is_active())
         LogMessage("AppIdDbg %s TFTP success\n", appidDebug->get_debug_session());
-    return add_service(args.asd, args.pkt, args.dir, APP_ID_TFTP);
+    return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_TFTP);
 
 bail:
     incompatible_data(args.asd, args.pkt, args.dir);

@@ -75,8 +75,9 @@ typedef std::vector<ServiceDetectorPort> ServiceDetectorPorts;
 class AppIdDiscoveryArgs
 {
 public:
-    AppIdDiscoveryArgs(const uint8_t* data, uint16_t size, AppidSessionDirection dir, AppIdSession& asd,
-        snort::Packet* p) : data(data), size(size), dir(dir), asd(asd), pkt(p), config(asd.config)
+    AppIdDiscoveryArgs(const uint8_t* data, uint16_t size, AppidSessionDirection dir,
+        AppIdSession& asd, snort::Packet* p, AppidChangeBits& cb) : data(data),
+        size(size), dir(dir), asd(asd), pkt(p), config(asd.config), change_bits(cb)
     {}
 
     const uint8_t* data;
@@ -85,6 +86,7 @@ public:
     AppIdSession& asd;
     snort::Packet* pkt;
     const AppIdConfig* config = nullptr;
+    AppidChangeBits& change_bits;
 };
 
 // These numbers are what Lua (VDB/ODP) gives us. If these numbers are ever changed,
@@ -117,10 +119,10 @@ public:
 
     virtual void* data_get(AppIdSession&);
     virtual int data_add(AppIdSession&, void*, AppIdFreeFCN);
-    virtual void add_info(AppIdSession&, const char*);
+    virtual void add_info(AppIdSession&, const char*, AppidChangeBits&);
     virtual void add_user(AppIdSession&, const char*, AppId, bool);
     virtual void add_payload(AppIdSession&, AppId);
-    virtual void add_app(AppIdSession&, AppId, AppId, const char*);
+    virtual void add_app(AppIdSession&, AppId, AppId, const char*, AppidChangeBits&);
     virtual void finalize_patterns() {}
     const char* get_code_string(APPID_STATUS_CODE) const;
 

@@ -115,7 +115,8 @@ static KerberosClientDetector* krb_client_detector;
 static KerberosServiceDetector* krb_service_detector;
 
 static int krb_walk_server_packet(KRBState* krbs, const uint8_t* s, const uint8_t* end,
-    AppIdSession& asd, snort::Packet* pkt, const AppidSessionDirection dir, const char* reqCname)
+    AppIdSession& asd, snort::Packet* pkt, const AppidSessionDirection dir,
+    const char* reqCname, AppidChangeBits& change_bits)
 {
     static const uint8_t KRB_SERVER_VERSION[] = "\x0a0\x003\x002\x001";
     static const uint8_t KRB_SERVER_TYPE[] = "\x0a1\x003\x002\x001";
@@ -410,7 +411,7 @@ static int krb_walk_server_packet(KRBState* krbs, const uint8_t* s, const uint8_
         /*end of server response message */
         if (krbs->flags & KRB_FLAG_SERVICE_DETECTED)
             if (!asd.is_service_detected() && pkt)
-                krb_service_detector->add_service(asd, pkt, dir, APP_ID_KERBEROS,
+                krb_service_detector->add_service(change_bits, asd, pkt, dir, APP_ID_KERBEROS,
                     nullptr, krbs->ver, nullptr);
 
         if (krbs->flags & KRB_FLAG_AUTH_FAILED)
@@ -500,8 +501,8 @@ int KerberosServiceDetector::validate(AppIdDiscoveryArgs& args)
             return APPID_SUCCESS;
     }
 
-    if (krb_walk_server_packet(&fd->svr_state, s, end, args.asd, args.pkt, args.dir, fd->clnt_state.cname) ==
-        KRB_FAILED)
+    if (krb_walk_server_packet(&fd->svr_state, s, end, args.asd, args.pkt, args.dir,
+        fd->clnt_state.cname, args.change_bits) == KRB_FAILED)
     {
         if (!args.asd.is_service_detected())
         {
@@ -551,7 +552,7 @@ KerberosClientDetector::KerberosClientDetector(ClientDiscovery* cdm)
 
 
 int KerberosClientDetector::krb_walk_client_packet(KRBState* krbs, const uint8_t* s,
-    const  uint8_t* end, AppIdSession& asd)
+    const  uint8_t* end, AppIdSession& asd, AppidChangeBits& change_bits)
 {
     static const uint8_t KRB_CLIENT_VERSION[] = "\x0a1\x003\x002\x001";
     static const uint8_t KRB_CLIENT_TYPE[] = "\x0a2\x003\x002\x001";
@@ -660,7 +661,7 @@ int KerberosClientDetector::krb_walk_client_packet(KRBState* krbs, const uint8_t
                 {
                     if (!krbs->added)
                     {
-                        add_app(asd, APP_ID_KERBEROS, APP_ID_KERBEROS, krbs->ver);
+                        add_app(asd, APP_ID_KERBEROS, APP_ID_KERBEROS, krbs->ver, change_bits);
                         krbs->added = 1;
                     }
                     krbs->state = KRB_STATE_APP;
@@ -906,7 +907,7 @@ int KerberosClientDetector::validate(AppIdDiscoveryArgs& args)
 
     if (args.dir == APP_ID_FROM_INITIATOR)
     {
-        if (krb_walk_client_packet(&fd->clnt_state, s, end, args.asd) == KRB_FAILED)
+        if (krb_walk_client_packet(&fd->clnt_state, s, end, args.asd, args.change_bits) == KRB_FAILED)
         {
             args.asd.set_client_detected();
             args.asd.clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
@@ -914,7 +915,7 @@ int KerberosClientDetector::validate(AppIdDiscoveryArgs& args)
         }
     }
     else if (krb_walk_server_packet(&fd->svr_state, s, end, args.asd, nullptr, args.dir,
-        fd->clnt_state.cname) == KRB_FAILED)
+        fd->clnt_state.cname, args.change_bits) == KRB_FAILED)
     {
         args.asd.clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
     }

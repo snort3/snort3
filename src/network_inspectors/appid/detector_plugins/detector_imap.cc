@@ -683,7 +683,7 @@ int ImapClientDetector::validate(AppIdDiscoveryArgs& args)
                                 fd->count++;
                                 if (fd->count == MIN_CMDS)
                                 {
-                                    add_app(args.asd, APP_ID_IMAP, APP_ID_IMAP, nullptr);
+                                    add_app(args.asd, APP_ID_IMAP, APP_ID_IMAP, nullptr, args.change_bits);
                                     fd->detected = 1;
                                     if (fd->got_user)
                                     {
@@ -728,7 +728,7 @@ int ImapClientDetector::validate(AppIdDiscoveryArgs& args)
                                 fd->count++;
                                 if (fd->count == MIN_CMDS)
                                 {
-                                    add_app(args.asd, APP_ID_IMAP, APP_ID_IMAP, nullptr);
+                                    add_app(args.asd, APP_ID_IMAP, APP_ID_IMAP, nullptr, args.change_bits);
                                     fd->detected = 1;
                                     if (fd->got_user)
                                     {
@@ -777,7 +777,7 @@ int ImapClientDetector::validate(AppIdDiscoveryArgs& args)
                 fd->count++;
                 if (fd->count == MIN_CMDS)
                 {
-                    add_app(args.asd, APP_ID_IMAP, APP_ID_IMAP, nullptr);
+                    add_app(args.asd, APP_ID_IMAP, APP_ID_IMAP, nullptr, args.change_bits);
                     fd->detected = 1;
                     if (fd->got_user)
                     {
@@ -799,7 +799,7 @@ int ImapClientDetector::validate(AppIdDiscoveryArgs& args)
             fd->count++;
             if (fd->count == MIN_CMDS)
             {
-                add_app(args.asd, APP_ID_IMAP, APP_ID_IMAP, nullptr);
+                add_app(args.asd, APP_ID_IMAP, APP_ID_IMAP, nullptr, args.change_bits);
                 fd->detected = 1;
                 if (fd->got_user)
                 {
@@ -883,10 +883,10 @@ int ImapServiceDetector::validate(AppIdDiscoveryArgs& args)
     {
         if ((id->flags & IMAP_FLAG_RESULT_OK) &&
             dd->client.state == IMAP_CLIENT_STATE_STARTTLS_CMD)
-            return add_service(args.asd, args.pkt, args.dir, APP_ID_IMAPS);
+            return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_IMAPS);
 
         if (id->count >= IMAP_COUNT_THRESHOLD && !args.asd.is_service_detected())
-            return add_service(args.asd, args.pkt, args.dir, APP_ID_IMAP);
+            return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_IMAP);
     }
     else if (!args.asd.is_service_detected())
     {

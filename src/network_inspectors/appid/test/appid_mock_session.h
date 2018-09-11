@@ -73,18 +73,18 @@ AppIdSession::AppIdSession(IpProtocol, const SfIp*, uint16_t, AppIdInspector& in
 {
     common.flow_type = APPID_FLOW_TYPE_NORMAL;
     service_port = APPID_UT_SERVICE_PORT;
+    AppidChangeBits change_bits;
 
     client.update_user(APPID_UT_ID, APPID_UT_USERNAME);
-    client.set_version(APPID_UT_CLIENT_VERSION);
+    client.set_version(APPID_UT_CLIENT_VERSION, change_bits);
 
     service.set_vendor(APPID_UT_SERVICE_VENDOR);
-    service.set_version(APPID_UT_SERVICE_VERSION);
+    service.set_version(APPID_UT_SERVICE_VERSION, change_bits);
     subtype = &APPID_UT_SERVICE_SUBTYPE;
 
     search_support_type = UNKNOWN_SEARCH_ENGINE;
 
     tsession = new TlsSession;
-    tsession->tls_host = (char*)APPID_UT_TLS_HOST;
 
     service_ip.pton(AF_INET, APPID_UT_SERVICE_IP_ADDR);
     common.initiator_ip.pton(AF_INET, APPID_UT_INITIATOR_IP_ADDR);
@@ -166,26 +166,49 @@ void* AppIdSession::remove_flow_data(unsigned type)
     return data;
 }
 
-void AppIdSession::set_application_ids(AppId, AppId, AppId, AppId) { }
+void AppIdSession::set_application_ids(AppId service_id, AppId client_id,
+    AppId payload_id, AppId misc_id, AppidChangeBits& change_bits)
+{
+    if (application_ids[APP_PROTOID_SERVICE] != service_id)
+    {
+        application_ids[APP_PROTOID_SERVICE] = service_id;
+        change_bits.set(APPID_SERVICE_BIT);
+    }
+    if (application_ids[APP_PROTOID_CLIENT] != client_id)
+    {
+        application_ids[APP_PROTOID_CLIENT] = client_id;
+        change_bits.set(APPID_CLIENT_BIT);
+    }
+    if (application_ids[APP_PROTOID_PAYLOAD] != payload_id)
+    {
+        application_ids[APP_PROTOID_PAYLOAD] = payload_id;
+        change_bits.set(APPID_PAYLOAD_BIT);
+    }
+    if (application_ids[APP_PROTOID_MISC] != misc_id)
+    {
+        application_ids[APP_PROTOID_MISC] = misc_id;
+        change_bits.set(APPID_MISC_BIT);
+    }
+}
 
 AppId AppIdSession::pick_service_app_id()
 {
-    return APPID_UT_ID;
+    return service.get_id();
 }
 
 AppId AppIdSession::pick_misc_app_id()
 {
-    return APPID_UT_ID;
+    return misc_app_id;
 }
 
 AppId AppIdSession::pick_client_app_id()
 {
-    return APPID_UT_ID;
+    return client.get_id();
 }
 
 AppId AppIdSession::pick_payload_app_id()
 {
-    return APPID_UT_ID;
+    return payload.get_id();
 }
 
 AppId AppIdSession::pick_referred_payload_app_id()

@@ -627,7 +627,7 @@ udp_done:
     case APPID_SUCCESS:
 success:
         args.asd.set_session_flags(APPID_SESSION_CONTINUE);
-        return add_service(args.asd, args.pkt, args.dir, APP_ID_DNS);
+        return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_DNS);
 
     case APPID_INVALID_CLIENT:
 invalid:
@@ -641,7 +641,7 @@ nomatch:
 
     case APPID_INPROCESS:
 inprocess:
-        add_app(args.asd, APP_ID_NONE, APP_ID_DNS, nullptr);
+        add_app(args.asd, APP_ID_NONE, APP_ID_DNS, nullptr, args.change_bits);
         service_inprocess(args.asd, args.pkt, args.dir);
         return APPID_INPROCESS;
 
@@ -723,7 +723,7 @@ tcp_done:
 
 success:
     args.asd.set_session_flags(APPID_SESSION_CONTINUE);
-    return add_service(args.asd, args.pkt, args.dir, APP_ID_DNS);
+    return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_DNS);
 
 not_compatible:
     incompatible_data(args.asd, args.pkt, args.dir);
@@ -734,7 +734,7 @@ fail:
     return APPID_NOMATCH;
 
 inprocess:
-    add_app(args.asd, APP_ID_NONE, APP_ID_DNS, nullptr);
+    add_app(args.asd, APP_ID_NONE, APP_ID_DNS, nullptr, args.change_bits);
     service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 }

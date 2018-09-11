@@ -121,7 +121,7 @@ inprocess:
     return APPID_INPROCESS;
 
 success:
-    return add_service(args.asd, args.pkt, args.dir, APP_ID_RSYNC);
+    return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_RSYNC);
 
 fail:
     fail_service(args.asd, args.pkt, args.dir);

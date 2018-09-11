@@ -296,7 +296,7 @@ success:
     if (!args.asd.is_service_detected())
     {
         args.asd.set_session_flags(APPID_SESSION_CONTINUE);
-        add_service(args.asd, args.pkt, args.dir, APP_ID_DHCP);
+        add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_DHCP);
     }
     return APPID_SUCCESS;
 

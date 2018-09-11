@@ -39,7 +39,8 @@ public:
     bool failed_login = false;
 
 private:
-    int krb_walk_client_packet(KRBState*, const uint8_t*, const uint8_t*, AppIdSession&);
+    int krb_walk_client_packet(KRBState*, const uint8_t*, const uint8_t*,
+        AppIdSession&, AppidChangeBits&);
 };
 
 class KerberosServiceDetector : public ServiceDetector

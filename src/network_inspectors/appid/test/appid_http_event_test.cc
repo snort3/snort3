@@ -68,6 +68,10 @@ class FakeHttpMsgHeader
 };
 FakeHttpMsgHeader* fake_msg_header = nullptr;
 
+void AppIdDiscovery::publish_appid_event(AppidChangeBits&, snort::Flow*) {}
+
+void AppIdHttpSession::set_http_change_bits(AppidChangeBits&, HttpFieldIds) {}
+
 const uint8_t* HttpEvent::get_content_type(int32_t& length)
 {
     global_field.set(0, nullptr);

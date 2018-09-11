@@ -285,7 +285,7 @@ int RtpClientDetector::validate(AppIdDiscoveryArgs& args)
         return APPID_INPROCESS;
     }
 
-    add_app(args.asd, APP_ID_RTP, APP_ID_RTP, nullptr);
+    add_app(args.asd, APP_ID_RTP, APP_ID_RTP, nullptr, args.change_bits);
     return APPID_SUCCESS;
 }
 

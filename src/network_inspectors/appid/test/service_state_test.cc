@@ -88,9 +88,11 @@ void ServiceDiscovery::finalize_service_patterns() {}
 void ServiceDiscovery::match_by_pattern(AppIdSession&, const Packet*, IpProtocol) {}
 void ServiceDiscovery::get_port_based_services(IpProtocol, uint16_t, AppIdSession&) {}
 void ServiceDiscovery::get_next_service(const Packet*, const AppidSessionDirection, AppIdSession&) {}
-int ServiceDiscovery::identify_service(AppIdSession&, Packet*, AppidSessionDirection) { return 0; }
+int ServiceDiscovery::identify_service(AppIdSession&, Packet*, AppidSessionDirection,
+    AppidChangeBits&) { return 0; }
 int ServiceDiscovery::add_ftp_service_state(AppIdSession&) { return 0; }
-bool ServiceDiscovery::do_service_discovery(AppIdSession&, Packet*, AppidSessionDirection) { return 0; }
+bool ServiceDiscovery::do_service_discovery(AppIdSession&, Packet*, AppidSessionDirection,
+    AppidChangeBits&) { return 0; }
 int ServiceDiscovery::incompatible_data(AppIdSession&, const Packet*,AppidSessionDirection,
     ServiceDetector*) { return 0; }
 int ServiceDiscovery::fail_service(AppIdSession&, const Packet*, AppidSessionDirection,

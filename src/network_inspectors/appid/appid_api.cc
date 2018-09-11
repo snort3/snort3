@@ -167,8 +167,7 @@ uint32_t AppIdApi::consume_ha_state(Flow& flow, const uint8_t* buf, uint8_t, IpP
         if( (appHA->flags & APPID_HA_FLAGS_TP_DONE) && asd->tpsession )
         {
 #ifdef ENABLE_APPID_THIRD_PARTY
-            if( asd->tpsession)
-                asd->tpsession->set_state(TP_STATE_TERMINATED);
+            asd->tpsession->set_state(TP_STATE_TERMINATED);
 #endif
             asd->set_session_flags(APPID_SESSION_NO_TPI);
         }

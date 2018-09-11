@@ -200,7 +200,7 @@ inprocess:
     return APPID_INPROCESS;
 
 done:
-    add_app(args.asd, APP_ID_BITTORRENT, APP_ID_BITTRACKER_CLIENT, nullptr);
+    add_app(args.asd, APP_ID_BITTORRENT, APP_ID_BITTRACKER_CLIENT, nullptr, args.change_bits);
     return APPID_SUCCESS;
 }
 
