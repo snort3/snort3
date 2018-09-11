@@ -204,6 +204,7 @@ static struct SnortLogHandler : public EventHandler
 
 static THREAD_LOCAL Impl<>* impl = nullptr;
 
+// FIXIT-L this should probably be put in a tinit
 static inline Impl<>& get_impl()
 {
     if ( !impl )

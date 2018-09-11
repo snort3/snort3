@@ -34,6 +34,8 @@
 #include <thread>
 
 #include "main/snort_config.h"
+#include "latency/packet_latency.h"
+#include "latency/rule_latency.h"
 #include "fp_detect.h"
 #include "ips_context.h"
 
@@ -112,6 +114,14 @@ void RegexOffload::worker(RegexRequest* req)
 
         req->offload = false;
     }
+    tterm();
+}
+
+void RegexOffload::tterm()
+{
+    // FIXIT-M break this overcoupling. In reality we shouldn't be evaluating latency in offload.
+    PacketLatency::tterm();
+    RuleLatency::tterm();
 }
 
 void RegexOffload::put(unsigned id, snort::Packet* p)

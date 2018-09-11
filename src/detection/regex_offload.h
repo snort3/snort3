@@ -62,6 +62,7 @@ public:
 
 private:
     static void worker(RegexRequest*);
+    static void tterm();
 
 private:
     std::list<RegexRequest*> busy;
