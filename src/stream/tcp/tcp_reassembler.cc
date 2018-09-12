@@ -38,6 +38,28 @@
 
 using namespace snort;
 
+static THREAD_LOCAL Packet* last_pdu = nullptr;
+
+void purge_alerts_callback_ackd(IpsContext* c)
+{
+    TcpSession* session = (TcpSession*)c->packet->flow->session;
+
+    if ( c->packet->is_from_server() )
+        session->client.reassembler.purge_alerts();
+    else
+        session->server.reassembler.purge_alerts();
+}
+
+void purge_alerts_callback_ips(IpsContext* c)
+{
+    TcpSession* session = (TcpSession*)c->packet->flow->session;
+
+    if ( c->packet->is_from_server() )
+        session->server.reassembler.purge_alerts();
+    else
+        session->client.reassembler.purge_alerts();
+}
+
 void TcpReassembler::trace_segments(TcpReassemblerState& trs)
 {
     TcpSegmentNode* tsn = trs.sos.seglist.head;
@@ -224,16 +246,17 @@ int TcpReassembler::dup_reassembly_segment(
     return STREAM_INSERT_OK;
 }
 
-int TcpReassembler::purge_alerts(TcpReassemblerState& trs, Flow* flow)
+void TcpReassembler::purge_alerts(TcpReassemblerState& trs)
 {
+    Flow* flow = trs.sos.session->flow;
+
     for (int i = 0; i < trs.tracker->alert_count; i++)
     {
         StreamAlertInfo* ai = trs.tracker->alerts + i;
         Stream::log_extra_data(flow, trs.xtradata_mask, ai->event_id, ai->event_second);
     }
     trs.tracker->alert_count = 0;
-
-    return 0;
+    last_pdu = nullptr;
 }
 
 int TcpReassembler::purge_to_seq(TcpReassemblerState& trs, uint32_t flush_seq)
@@ -266,7 +289,17 @@ int TcpReassembler::purge_to_seq(TcpReassemblerState& trs, uint32_t flush_seq)
     if ( SEQ_LT(trs.tracker->rcv_nxt, flush_seq) )
         trs.tracker->rcv_nxt = flush_seq;
 
-    purge_alerts(trs, trs.sos.session->flow);
+    if ( last_pdu )
+    {
+        if ( trs.tracker->normalizer.is_tcp_ips_enabled() )
+            last_pdu->context->register_post_callback(purge_alerts_callback_ips);
+        else
+            last_pdu->context->register_post_callback(purge_alerts_callback_ackd);
+
+        last_pdu = nullptr;
+    }
+    else
+        purge_alerts(trs);
 
     if ( trs.sos.seglist.head == nullptr )
         trs.sos.seglist.tail = nullptr;
@@ -561,6 +594,9 @@ int TcpReassembler::_flush_to_seq(
 
             NoProfile exclude(s5TcpFlushPerfStats);
             Snort::inspect(pdu);
+
+            if ( pdu->flow->is_offloaded() )
+                last_pdu = pdu;
         }
         else
         {

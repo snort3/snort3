@@ -82,6 +82,7 @@ DetectionEngine::~DetectionEngine()
     {
         finish_packet(context->packet);
         sw->complete();
+        context->post_detection();
     }
 }
 
@@ -307,6 +308,7 @@ void DetectionEngine::onload()
 
     InspectorManager::clear(p);
     sw->complete();
+    c->post_detection();
 }
 
 bool DetectionEngine::offload(Packet* p)

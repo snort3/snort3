@@ -67,6 +67,8 @@ protected:
 class SO_PUBLIC IpsContext
 {
 public:
+    using Callback = void(*)(IpsContext*);
+
     IpsContext(unsigned size = 0);  // defaults to max id
     ~IpsContext();
 
@@ -94,6 +96,14 @@ public:
     enum ActiveRules
     { NONE, NON_CONTENT, CONTENT };
 
+    void register_post_callback(Callback callback)
+    { post_callbacks.push_back(callback); }
+
+    void clear_callbacks()
+    { post_callbacks.clear(); }
+
+    void post_detection();
+
 public:
     Packet* packet;
     Packet* encode_packet;
@@ -120,6 +130,8 @@ public:
 private:
     FlowSnapshot flow;
     std::vector<IpsContextData*> data;
+    std::vector<Callback> post_callbacks;
+
     unsigned slot;
 };
 }

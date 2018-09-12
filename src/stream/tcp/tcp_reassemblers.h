@@ -43,6 +43,9 @@ public:
     int queue_packet_for_reassembly(TcpSegmentDescriptor& tsd)
     { return reassembler->queue_packet_for_reassembly(trs, tsd); }
 
+    void purge_alerts()
+    { reassembler->purge_alerts(trs); }
+
     void purge_segment_list()
     { reassembler->purge_segment_list(trs); }
 

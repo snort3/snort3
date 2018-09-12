@@ -76,6 +76,7 @@ struct TcpReassemblerState
 {
     SegmentOverlapState sos;
     TcpStreamTracker* tracker;
+    snort::Packet* last_pdu = nullptr;
     uint32_t flush_count;   // number of flushed queued segments
     uint32_t xtradata_mask; // extra data available to log
     bool server_side;

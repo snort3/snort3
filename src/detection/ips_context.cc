@@ -125,6 +125,14 @@ void IpsContext::snapshot_flow(Flow* f)
     flow.proto_id = f->ssn_state.snort_protocol_id;
 }
 
+void IpsContext::post_detection()
+{
+    for ( auto callback : post_callbacks )
+        callback(this);
+
+    post_callbacks.clear();
+}
+
 //--------------------------------------------------------------------------
 // unit tests
 //--------------------------------------------------------------------------
@@ -190,6 +198,26 @@ TEST_CASE("IpsContext basic", "[IpsContext]")
         num_data = 2;
     }
     CHECK(TestData::count == num_data);
+}
+
+IpsContext* post_val;
+void test_post(IpsContext* c)
+{ post_val = c; }
+
+TEST_CASE("IpsContext post detection", "[IpsContext]")
+{
+    post_val = nullptr;
+    IpsContext c;
+    c.register_post_callback(test_post);
+
+    CHECK( post_val == nullptr);
+    c.post_detection();
+    CHECK( post_val == &c);
+
+    // callbacks should be cleared
+    post_val = nullptr;
+    c.post_detection();
+    CHECK( post_val == nullptr );
 }
 #endif
 

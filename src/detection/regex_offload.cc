@@ -146,7 +146,9 @@ void RegexOffload::put(unsigned id, snort::Packet* p)
 bool RegexOffload::get(unsigned& id)
 {
     assert(!busy.empty());
-    RegexRequest* req = busy.front();  // FIXIT-H onload any order
+
+    // FIXIT-H onload flows in any order
+    RegexRequest* req = busy.front();
 
     if ( req->offload )
         return false;

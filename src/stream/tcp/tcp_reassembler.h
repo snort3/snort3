@@ -42,6 +42,7 @@ public:
     virtual int flush_on_data_policy(TcpReassemblerState&, snort::Packet*);
     virtual int flush_on_ack_policy(TcpReassemblerState&, snort::Packet*);
     virtual void trace_segments(TcpReassemblerState&);
+    virtual void purge_alerts(TcpReassemblerState&);
 
 protected:
     TcpReassembler() = default;
@@ -61,7 +62,6 @@ protected:
     void queue_reassembly_segment(TcpReassemblerState&, TcpSegmentNode* prev, TcpSegmentNode*);
     void init_overlap_editor(TcpReassemblerState&, TcpSegmentDescriptor&);
     bool is_segment_fasttrack(TcpReassemblerState&, TcpSegmentNode* tail, TcpSegmentDescriptor&);
-    int purge_alerts(TcpReassemblerState&, snort::Flow*);
     void show_rebuilt_packet(TcpReassemblerState&, snort::Packet*);
     uint32_t get_flush_data_len(
         TcpReassemblerState&, TcpSegmentNode*, uint32_t to_seq, unsigned max);
