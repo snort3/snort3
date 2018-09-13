@@ -29,6 +29,7 @@
 #include "utils/sflsq.cc"
 
 #include "appid_mock_session.h"
+#include "tp_lib_handler.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
@@ -76,7 +77,7 @@ char* snort_strndup(const char* src, size_t)
 {
     return snort_strdup(src);
 }
-time_t packet_time() { return std::time(0); }
+time_t packet_time() { return std::time(nullptr); }
 
 // Stubs for search_tool
 SearchTool::SearchTool(const char*, bool) {}
@@ -202,10 +203,14 @@ ServiceDiscovery::ServiceDiscovery(AppIdInspector& ins)
     : AppIdDiscovery(ins) {}
 void ServiceDiscovery::release_instance() {}
 void ServiceDiscovery::release_thread_resources() {}
-ServiceDiscovery& ServiceDiscovery::get_instance(AppIdInspector* ins)
+static AppIdModule* s_app_module = nullptr;
+static AppIdInspector* s_ins = nullptr;
+static ServiceDiscovery* s_discovery_manager = nullptr;
+ServiceDiscovery& ServiceDiscovery::get_instance(AppIdInspector*)
 {
-    static ServiceDiscovery s_discovery_manager(*ins);
-    return s_discovery_manager;
+    if (!s_discovery_manager)
+        s_discovery_manager = new ServiceDiscovery(*s_ins);
+    return *s_discovery_manager;
 }
 
 // Stubs for ClientDiscovery
@@ -216,10 +221,12 @@ void ClientDiscovery::initialize() {}
 void ClientDiscovery::finalize_client_plugins() {}
 void ClientDiscovery::release_instance() {}
 void ClientDiscovery::release_thread_resources() {}
-ClientDiscovery& ClientDiscovery::get_instance(AppIdInspector* ins)
+static ClientDiscovery* c_discovery_manager = nullptr;
+ClientDiscovery& ClientDiscovery::get_instance(AppIdInspector*)
 {
-    static ClientDiscovery c_discovery_manager(*ins);
-    return c_discovery_manager;
+    if (!c_discovery_manager)
+        c_discovery_manager = new ClientDiscovery(*s_ins);
+    return *c_discovery_manager;
 }
 bool ClientDiscovery::do_client_discovery(AppIdSession&, Packet*,
     AppidSessionDirection, AppidChangeBits&)
@@ -262,6 +269,8 @@ TEST_GROUP(appid_discovery_tests)
     {
         appidDebug = new AppIdDebug();
         http_matchers = new HttpPatternMatchers;
+        s_app_module = new AppIdModule;
+        s_ins = new AppIdInspector(*s_app_module);
         AppIdPegCounts::init_pegs();
     }
 
@@ -269,6 +278,18 @@ TEST_GROUP(appid_discovery_tests)
     {
         delete appidDebug;
         delete http_matchers;
+        if (s_discovery_manager)
+        {
+            delete s_discovery_manager;
+            s_discovery_manager = nullptr;
+        }
+        if (c_discovery_manager)
+        {
+            delete c_discovery_manager;
+            c_discovery_manager = nullptr;
+        }
+        delete s_ins;
+        delete s_app_module;
         AppIdPegCounts::cleanup_pegs();
         AppIdPegCounts::cleanup_peg_info();
     }
@@ -422,13 +443,8 @@ TEST(appid_discovery_tests, change_bits_to_string)
     STRCMP_EQUAL(str.c_str(), "service, client, payload, misc, referred, host,"
         " tls-host, url, user-agent, response, referrer, xff, client-version");
 
-    // Detect enum vs translator mismatch actually working
-    std::bitset<APPID_MAX_BIT+1> change_bits_extra;
-    change_bits_extra.set();
-    str.clear();
-    change_bits_to_string(*((AppidChangeBits*) &change_bits_extra), str);
-    STRCMP_EQUAL(str.c_str(), "service, client, payload, misc, referred, host, tls-host, url,"
-        " user-agent, response, referrer, xff, client-version, change_bits_to_string error!");
+    // Failure of this test is a reminder that enum is changed, hence translator needs update
+    CHECK_EQUAL(APPID_MAX_BIT, 13);
 }
 
 int main(int argc, char** argv)
