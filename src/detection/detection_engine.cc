@@ -76,13 +76,10 @@ DetectionEngine::DetectionEngine()
 
 DetectionEngine::~DetectionEngine()
 {
-    ContextSwitcher* sw = Snort::get_switcher();
-
-    if ( context == sw->get_context() )
+    if ( context == Snort::get_switcher()->get_context() )
     {
+        // finish_packet is called here so that we clear wire packets at the right time
         finish_packet(context->packet);
-        sw->complete();
-        context->post_detection();
     }
 }
 
@@ -132,6 +129,36 @@ Packet* DetectionEngine::set_next_packet(Packet* parent)
     return p;
 }
 
+void DetectionEngine::finish_inspect_with_latency(Packet* p)
+{
+    DetectionEngine::set_check_tags();
+
+    // By checking tagging here, we make sure that we log the
+    // tagged packet whether it generates an alert or not.
+
+    if ( p->has_ip() )
+        check_tags(p);
+
+    InspectorManager::probe(p);
+}
+
+void DetectionEngine::finish_inspect(Packet* p, bool inspected)
+{
+    log_events(p);
+
+    Active::apply_delayed_action(p);
+
+    // clear closed sessions here after inspection since non-stream
+    // inspectors may depend on flow information
+    // this also handles block pending state
+    Stream::check_flow_closed(p);
+
+    if ( inspected )
+        InspectorManager::clear(p);
+
+    clear_events(p);
+}
+
 void DetectionEngine::finish_packet(Packet* p)
 {
     log_events(p);
@@ -141,6 +168,9 @@ void DetectionEngine::finish_packet(Packet* p)
     // clean up any failed rebuilds
     const IpsContext* c = Snort::get_switcher()->get_next();
     c->packet->release_helpers();
+
+    p->context->post_detection();
+    Snort::get_switcher()->complete();
 }
 
 uint8_t* DetectionEngine::get_buffer(unsigned& max)
@@ -304,11 +334,9 @@ void DetectionEngine::onload()
     sw->resume(id);
 
     fp_onload(p);
+    finish_inspect_with_latency(p); // FIXIT-L should latency be evaluated here?
+    finish_inspect(p, true);
     finish_packet(p);
-
-    InspectorManager::clear(p);
-    sw->complete();
-    c->post_detection();
 }
 
 bool DetectionEngine::offload(Packet* p)
@@ -411,29 +439,9 @@ void DetectionEngine::inspect(Packet* p)
                     return; // don't finish out offloaded packets
             }
         }
-        DetectionEngine::set_check_tags();
-
-        // By checking tagging here, we make sure that we log the
-        // tagged packet whether it generates an alert or not.
-
-        if ( p->has_ip() )
-            check_tags(p);
-
-        InspectorManager::probe(p);
+        finish_inspect_with_latency(p);
     }
-
-    log_events(p);
-    Active::apply_delayed_action(p);
-
-    // clear closed sessions here after inspection since non-stream
-    // inspectors may depend on flow information
-    // this also handles block pending state
-    Stream::check_flow_closed(p);
-
-    if ( inspected )
-        InspectorManager::clear(p);
-
-    clear_events(p);
+    finish_inspect(p, inspected);
 }
 
 //--------------------------------------------------------------------------
