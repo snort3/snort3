@@ -301,6 +301,7 @@ TEST(appid_discovery_tests, event_published_when_ignoring_flow)
     databus_publish_called = false;
     test_log[0] = '\0';
     Packet p;
+    p.packet_flags = 0;
     DAQ_PktHdr_t pkth;
     p.pkth = &pkth;
     SfIp ip;
@@ -331,6 +332,7 @@ TEST(appid_discovery_tests, event_published_when_processing_flow)
     databus_publish_called = false;
     test_log[0] = '\0';
     Packet p;
+    p.packet_flags = 0;
     DAQ_PktHdr_t pkth;
     p.pkth = &pkth;
     SfIp ip;
@@ -386,6 +388,7 @@ TEST(appid_discovery_tests, change_bits_for_non_http_appid)
     // Testing FTP appid
     databus_publish_called = false;
     Packet p;
+    p.packet_flags = 0;
     DAQ_PktHdr_t pkth;
     p.pkth = &pkth;
     SfIp ip;
