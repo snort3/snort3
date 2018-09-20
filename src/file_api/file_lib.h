@@ -139,7 +139,6 @@ private:
     FileInspect* inspector;
     FileConfig*  config;
 
-    inline int get_data_size_from_depth_limit(FileProcessType type, int data_size);
     inline void finalize_file_type();
     inline void finish_signature_lookup(Flow*, bool, FilePolicyBase*);
 };

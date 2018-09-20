@@ -271,31 +271,6 @@ FileContext::~FileContext ()
     InspectorManager::release(inspector);
 }
 
-inline int FileContext::get_data_size_from_depth_limit(FileProcessType type, int
-    data_size)
-{
-    uint64_t max_depth;
-
-    switch (type)
-    {
-    case SNORT_FILE_TYPE_ID:
-        max_depth = config->file_type_depth;
-        break;
-    case SNORT_FILE_SHA256:
-        max_depth = config->file_signature_depth;
-        break;
-    default:
-        return data_size;
-    }
-
-    if (processed_bytes > max_depth)
-        data_size = -1;
-    else if (processed_bytes + data_size > max_depth)
-        data_size = (int)(max_depth - processed_bytes);
-
-    return data_size;
-}
-
 /* stop file type identification */
 inline void FileContext::finalize_file_type()
 {
@@ -506,40 +481,33 @@ bool FileContext::process(Flow* flow, const uint8_t* file_data, int data_size,
  * 3) file magics are exhausted in depth
  *
  */
-void FileContext::process_file_type(const uint8_t* file_data, int size, FilePosition position)
+void FileContext::process_file_type(const uint8_t* file_data, int data_size, FilePosition position)
 {
-    int data_size;
-
-    /* file type already found and no magics to continue*/
+    /* file type already found and no magics to continue */
     if (file_type_id && !file_type_context)
         return;
 
-    /* Check whether file type depth is reached*/
-    data_size = get_data_size_from_depth_limit(SNORT_FILE_TYPE_ID, size);
+    bool depth_exhausted = false;
 
-    if (data_size < 0)
+    if ((int64_t)processed_bytes + data_size >= config->file_type_depth)
     {
-        finalize_file_type();
-        return;
+        data_size = config->file_type_depth - processed_bytes;
+        assert(data_size > 0);
+        depth_exhausted = true;
     }
 
     file_type_id =
         config->find_file_type_id(file_data, data_size, processed_bytes, &file_type_context);
 
-    /* Check whether file transfer is done or type depth is reached*/
-    if ( (position == SNORT_FILE_END)  || (position == SNORT_FILE_FULL) ||
-        (data_size != size) )
-    {
+    /* Check whether file transfer is done or type depth is reached */
+    if ( (position == SNORT_FILE_END) || (position == SNORT_FILE_FULL) || depth_exhausted )
         finalize_file_type();
-    }
 }
 
-void FileContext::process_file_signature_sha256(const uint8_t* file_data, int size,
+void FileContext::process_file_signature_sha256(const uint8_t* file_data, int data_size,
     FilePosition position)
 {
-    int data_size = get_data_size_from_depth_limit(SNORT_FILE_SHA256, size);
-
-    if (data_size != size)
+    if ((int64_t)processed_bytes + data_size > config->file_signature_depth)
     {
         file_state.sig_state = FILE_SIG_DEPTH_FAIL;
         return;
