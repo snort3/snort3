@@ -370,7 +370,7 @@ bool Snort::drop_privileges()
         if (!SFDAQ::unprivileged())
         {
             ParseError("Cannot drop privileges - %s DAQ does not support unprivileged operation.\n",
-                    SFDAQ::get_type());
+                SFDAQ::get_type());
             return false;
         }
         if (!SetUidGid(SnortConfig::get_uid(), SnortConfig::get_gid()))
@@ -486,6 +486,8 @@ void Snort::clean_exit(int)
 bool Snort::initializing = true;
 bool Snort::reloading = false;
 bool Snort::privileges_dropped = false;
+bool Snort::pause = false;
+bool Snort::was_paused = false;
 
 bool Snort::is_starting()
 { return initializing; }
@@ -759,10 +761,11 @@ bool Snort::thread_init_privileged(const char* intf)
     s_data = new uint8_t[65535];
     show_source(intf);
 
-    SnortConfig::get_conf()->thread_config->implement_thread_affinity(STHREAD_TYPE_PACKET, get_instance_id());
+    SnortConfig::get_conf()->thread_config->implement_thread_affinity(STHREAD_TYPE_PACKET,
+        get_instance_id());
 
     // FIXIT-M the start-up sequence is a little off due to dropping privs
-    SFDAQInstance *daq_instance = new SFDAQInstance(intf);
+    SFDAQInstance* daq_instance = new SFDAQInstance(intf);
     SFDAQ::set_local_instance(daq_instance);
     if (!daq_instance->configure(SnortConfig::get_conf()))
     {
@@ -807,7 +810,7 @@ void Snort::thread_init_unprivileged()
     HighAvailabilityManager::thread_init(); // must be before InspectorManager::thread_init();
     InspectorManager::thread_init(SnortConfig::get_conf());
     PacketTracer::thread_init();
-    
+
     // in case there are HA messages waiting, process them first
     HighAvailabilityManager::process_receive();
     PacketManager::thread_init();
@@ -834,7 +837,7 @@ void Snort::thread_term()
 
     s_packet = nullptr;
 
-    SFDAQInstance *daq_instance = SFDAQ::get_local_instance();
+    SFDAQInstance* daq_instance = SFDAQ::get_local_instance();
     if ( daq_instance->was_started() )
         daq_instance->stop();
     SFDAQ::set_local_instance(nullptr);
@@ -1019,7 +1022,14 @@ DAQ_Verdict Snort::packet_callback(
 
     if ( SnortConfig::get_conf()->pkt_cnt && pc.total_from_daq >= SnortConfig::get_conf()->pkt_cnt )
         SFDAQ::break_loop(-1);
-
+#ifdef REG_TEST
+    else if ( SnortConfig::get_conf()->pkt_pause_cnt && !was_paused && 
+             pc.total_from_daq >= SnortConfig::get_conf()->pkt_pause_cnt )
+    {
+        SFDAQ::break_loop(0);
+        was_paused = pause = true;
+    }
+#endif
     else if ( break_time() )
         SFDAQ::break_loop(0);
 

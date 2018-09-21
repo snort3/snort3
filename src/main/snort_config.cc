@@ -433,6 +433,9 @@ void SnortConfig::merge(SnortConfig* cmd_line)
     if (cmd_line->pkt_skip != 0)
         pkt_skip = cmd_line->pkt_skip;
 
+    if (cmd_line->pkt_pause_cnt != 0)
+        pkt_pause_cnt = cmd_line->pkt_pause_cnt;
+
     if (cmd_line->group_id != -1)
         group_id = cmd_line->group_id;
 

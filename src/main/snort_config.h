@@ -265,6 +265,7 @@ public:
 
     uint64_t pkt_cnt = 0;           /* -n */
     uint64_t pkt_skip = 0;
+    uint64_t pkt_pause_cnt = 0;
 
     std::string bpf_file;          /* -F or config bpf_file */
 

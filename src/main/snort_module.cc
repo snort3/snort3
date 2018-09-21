@@ -390,6 +390,11 @@ static const Parameter s_params[] =
     { "--pause", Parameter::PT_IMPLIED, nullptr, nullptr,
       "wait for resume/quit command before processing packets/terminating", },
 
+#ifdef REG_TEST
+    { "--pause-after-n", Parameter::PT_INT, "1:", nullptr,
+      "<count> pause after count packets, to be used with single packet thread only", },
+#endif
+
     { "--parsing-follows-files", Parameter::PT_IMPLIED, nullptr, nullptr,
       "parse relative paths from the perspective of the current configuration file" },
 
@@ -473,11 +478,11 @@ static const Parameter s_params[] =
       "use drop, sdrop, and reject rules to ignore session traffic when not inline" },
 
     { "--tweaks", Parameter::PT_STRING, nullptr, nullptr,
-        "tune configuration" },
+      "tune configuration" },
 
 #ifdef UNIT_TEST
     { "--catch-test", Parameter::PT_STRING, nullptr, nullptr,
-        "comma separated list of cat unit test tags or 'all'" },
+      "comma separated list of cat unit test tags or 'all'" },
 #endif
     { "--version", Parameter::PT_IMPLIED, nullptr, nullptr,
       "show version number (same as -V)" },
@@ -517,7 +522,7 @@ static const Parameter s_params[] =
 
     { "--x2s", Parameter::PT_STRING, nullptr, nullptr,
       "output ASCII string for given byte code (see also --x2c)" },
-  
+
     { "--trace", Parameter::PT_IMPLIED, nullptr, nullptr,
       "turn on main loop debug trace" },
 
@@ -558,7 +563,7 @@ public:
     { return proc_names; }
 
     PegCount* get_counts() const override
-    { return (PegCount*) &proc_stats; }
+    { return (PegCount*)&proc_stats; }
 
     bool global_stats() const override
     { return true; }
@@ -740,10 +745,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         stringstream ss { v.get_string() };
         string path;
 
-        while( getline(ss, path, ':') )
+        while ( getline(ss, path, ':') )
             sc->daq_config->add_module_dir(path.c_str());
     }
-
     else if ( v.is("--daq-list") )
         list_daqs(sc);
 
@@ -754,7 +758,6 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         else
             sc->daq_config->set_variable(v.get_string(), instance_id);
     }
-
     else if ( v.is("--dirty-pig") )
         sc->set_dirty_pig(true);
 
@@ -844,6 +847,11 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--pause") )
         sc->run_flags |= RUN_FLAG__PAUSE;
+
+#ifdef REG_TEST
+    else if ( v.is("--pause-after-n") )
+        sc->pkt_pause_cnt = v.get_long();
+#endif
 
     else if ( v.is("--parsing-follows-files") )
         parsing_follows_files = true;

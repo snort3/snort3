@@ -72,6 +72,9 @@ public:
 
     SO_PUBLIC static Packet* get_packet();
 
+    static bool get_pause() { return pause; }
+    static void clear_pause() { pause = false; }
+
 private:
     static void init(int, char**);
     static void term();
@@ -81,6 +84,8 @@ private:
     static bool initializing;
     static bool reloading;
     static bool privileges_dropped;
+    static bool pause;
+    static bool was_paused;
 };
 }
 
