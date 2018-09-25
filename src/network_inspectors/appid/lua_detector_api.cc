@@ -1914,14 +1914,12 @@ static int create_custom_application(lua_State* L)
     {
         AppInfoTableEntry* entry = AppInfoManager::get_instance().add_dynamic_app_entry(tmp_string);
         appId = entry->appId;
+        AppIdPegCounts::add_app_peg_info(tmp_string, appId);
     }
     else 
         appId  = AppInfoManager::get_instance().get_appid_by_name(tmp_string);
        
-    if (appId != APP_ID_NONE)
-        lua_pushnumber(L, appId);
-    else
-        lua_pushnumber(L, APP_ID_NONE);
+    lua_pushnumber(L, appId);
     return 1;   /*number of results */
 }
 
