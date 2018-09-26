@@ -1,3 +1,35 @@
+18/09/26 - build 248
+
+-- appid: adding detector builder and fixing stats to recognize custom appid
+   thanks to Wang Jun <traceflight@outlook.com> for reporting the issue
+-- appid: fixing ubuntu check tests
+-- appid: fix valgrind issues in SIP event handler
+-- appid: FreeBSD unit-test fix
+-- appid: supporting pub-sub mechanism for app changes
+-- build: add libnsl and libsocket to Snort for Solaris builds
+-- build: fall back on TI-RPC if no built-in RPC DB is found
+-- build: introduce a more robust check for GNU strerror_r
+-- daqs: include unistd.h directly for better cross-platform compatibility
+-- dce_rpc: add DCE2_CO_REM_FRAG_LEN_LT_SIZE (133:31) to the TCP rule map
+-- dce_rpc: add DCE2_SMB_NB_LT_COM (133:11) to the SMB rule map
+-- detection: added post-onload callbacks
+-- detection: allocate ips context data using hard coded max_ips_id == 32
+-- detection: don't use s_switcher to get file data
+-- detection: run active actions at onload
+-- detection: use packet to reference context
+-- file_api: fix off-by-one bug that was hurting performance
+-- file_api: move the check on REJECT or BLOCK inside an upper if clause for performance reasons
+-- file_api: set disable flow inspection as soon as the verdict is REJECT
+-- file_api: treat a BLOCK verdict the same as a REJECT verdict, for good measure
+-- http_inspect: split and inspect immediately upon reaching depth
+-- latency: added cleanup for RegexOffload threads
+-- lua: changing default FTP EPSV string format
+-- main: pause-after-n support
+-- managers: handle tinit for inspectors added during reload
+-- managers: if a plugin doesn't have tinit, still mark it as initialized
+-- reputation: early return on parsing error causing uninitialized id
+-- reputation: fix SI doesn't block traffic if Any Zone is specified
+
 18/08/27 - build 247 - Beta
 
 -- appid: change map to unordered map
