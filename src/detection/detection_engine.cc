@@ -153,7 +153,7 @@ void DetectionEngine::finish_inspect(Packet* p, bool inspected)
     // this also handles block pending state
     Stream::check_flow_closed(p);
 
-    if ( inspected )
+    if ( inspected and (!p->flow or !p->flow->is_offloaded()) )
         InspectorManager::clear(p);
 
     clear_events(p);
