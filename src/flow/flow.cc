@@ -64,7 +64,6 @@ void Flow::init(PktType type)
 {
     pkt_type = type;
     bitop = nullptr;
-    flow_flags = 0;
 
     if ( HighAvailabilityManager::active() )
     {
@@ -73,6 +72,7 @@ void Flow::init(PktType type)
     }
     mpls_client.length = 0;
     mpls_server.length = 0;
+    offloads_pending = 0;
 }
 
 void Flow::term()

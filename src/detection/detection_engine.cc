@@ -147,6 +147,7 @@ void DetectionEngine::finish_inspect(Packet* p, bool inspected)
     log_events(p);
 
     Active::apply_delayed_action(p);
+    p->context->post_detection();
 
     // clear closed sessions here after inspection since non-stream
     // inspectors may depend on flow information
@@ -169,7 +170,6 @@ void DetectionEngine::finish_packet(Packet* p)
     const IpsContext* c = Snort::get_switcher()->get_next();
     c->packet->release_helpers();
 
-    p->context->post_detection();
     Snort::get_switcher()->complete();
 }
 

@@ -91,9 +91,6 @@
 #define STREAM_STATE_NO_PICKUP         0x2000
 #define STREAM_STATE_BLOCK_PENDING     0x4000
 
-#define FLOW_IS_OFFLOADED              0x01
-#define FLOW_WAS_OFFLOADED             0x02  // FIXIT-L debug only
-
 class BitOp;
 class FlowHAState;
 class Session;
@@ -289,13 +286,21 @@ public:
     { return disable_inspect; }
 
     bool is_offloaded() const
-    { return flow_flags & FLOW_IS_OFFLOADED; }
+    { return offloads_pending; }
 
     void set_offloaded()
-    { flow_flags |= (FLOW_IS_OFFLOADED|FLOW_WAS_OFFLOADED); }
+    {
+        assert(offloads_pending < 0xFF);
+
+        offloads_pending++;
+    }
 
     void clear_offloaded()
-    { flow_flags &= ~FLOW_IS_OFFLOADED; }
+    {
+        assert(offloads_pending);
+
+        offloads_pending--;
+    }
 
 public:  // FIXIT-M privatize if possible
     // fields are organized by initialization and size to minimize
@@ -311,7 +316,6 @@ public:  // FIXIT-M privatize if possible
     PktType pkt_type; // ^^
 
     // these fields are always set; not zeroed
-    uint64_t flow_flags;  // FIXIT-H required to ensure atomic?
     Flow* prev, * next;
     Inspector* ssn_client;
     Inspector* ssn_server;
@@ -348,9 +352,11 @@ public:  // FIXIT-M privatize if possible
     uint8_t outer_client_ttl, outer_server_ttl;
 
     uint8_t response_count;
-    bool disable_inspect;
 
 private:
+    uint8_t offloads_pending;
+    bool disable_inspect;
+
     void clean();
 };
 
