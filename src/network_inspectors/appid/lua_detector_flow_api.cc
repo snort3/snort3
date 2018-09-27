@@ -313,7 +313,7 @@ static int clear_detector_flow_flag(lua_State* L)
 }
 
 /**Set service id on a flow
- * If funtion is implemented, then
+ * If function is implemented, then
  * verify detector user data and that we are in packet context
  *
  * @param Lua_State* - Lua state variable.
@@ -325,7 +325,7 @@ static int set_detector_flow_service_id(lua_State*)
 { return 0; }
 
 /**Set client application id on a flow, during packet processing
- * If funtion is implemented, then
+ * If function is implemented, then
  * verify detector user data and that we are in packet context
  *
  * @param Lua_State* - Lua state variable.
@@ -339,7 +339,7 @@ static int set_detecter_flow_cln_app_id(lua_State*)
 }
 
 /**Set client application type id on a flow, during packet processing
- * If funtion is implemented, then
+ * If function is implemented, then
  * verify detector user data and that we are in packet context
  *
  * @param Lua_State* - Lua state variable.

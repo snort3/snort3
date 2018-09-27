@@ -133,7 +133,7 @@ AppIdConfig::~AppIdConfig()
     cleanup();
 }
 
-//FIXIT-M: RELOAD - Move app info tabe cleanup back 
+//FIXIT-M: RELOAD - Move app info table cleanup back 
 //to AppId config destructor - cleanup()
 void AppIdConfig::pterm()
 {

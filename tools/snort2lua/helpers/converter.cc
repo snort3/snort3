@@ -215,7 +215,7 @@ int Converter::parse_file(
         if ( tmp.empty() )
             continue;
 
-        // same critea used for rtrim
+        // same criteria used for rtrim
         // http://en.cppreference.com/w/cpp/string/byte/isspace
         std::size_t first_non_white_char = tmp.find_first_not_of(" \f\n\r\t\v");
 

@@ -22,7 +22,7 @@
  **
  **  NOTES
  **
- **  Circular buffer is thread safe for one writer and one reader thread
+ **  Circular buffer is thread-safe for one writer and one reader thread
  **
  **  This implementation is inspired by one slot open approach.
  **  See http://en.wikipedia.org/wiki/Circular_buffer

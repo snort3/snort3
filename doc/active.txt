@@ -88,7 +88,7 @@ resetting it.
 
 The page to be sent can be read from a file:
 
-    react = { page = "custmized_block_page.html", }
+    react = { page = "customized_block_page.html", }
 
 or else the default is used:
 

@@ -50,7 +50,7 @@ using namespace snort;
 
 static const uint8_t VERDICT_REASON_NO_BLOCK = 2; /* Not blocking packet; all enum defined after this indicates blocking */
 
-// FIXIT-M currently non-threadsafe accesses being done in packet threads against this
+// FIXIT-M currently non-thread-safe accesses being done in packet threads against this
 static std::unordered_map<uint8_t, uint8_t> reasons = { {VERDICT_REASON_NO_BLOCK, PacketTracer::PRIORITY_UNSET} };
 
 // FIXIT-M refactor the way this is used so all methods are members called against this pointer

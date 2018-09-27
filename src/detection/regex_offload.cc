@@ -119,7 +119,7 @@ void RegexOffload::worker(RegexRequest* req)
 
 void RegexOffload::tterm()
 {
-    // FIXIT-M break this overcoupling. In reality we shouldn't be evaluating latency in offload.
+    // FIXIT-M break this over-coupling. In reality we shouldn't be evaluating latency in offload.
     PacketLatency::tterm();
     RuleLatency::tterm();
 }

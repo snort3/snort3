@@ -21,7 +21,7 @@
 #ifndef SNORT_DEBUG_H
 #define SNORT_DEBUG_H
 
-// this provides a module trace capabilty that can be set by config to
+// this provides a module trace capability that can be set by config to
 // turn on the output of specific debug messages.
 //
 

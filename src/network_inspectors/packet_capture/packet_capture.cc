@@ -76,7 +76,7 @@ static void _capture_term()
 
 static bool bpf_compile_and_validate()
 {
-    // FIXIT-M This BPF compilation is not threadsafe and should be handled by the main thread
+    // FIXIT-M This BPF compilation is not thread-safe and should be handled by the main thread
     // and this call should use DLT from DAQ rather then hard coding DLT_EN10MB
     if ( pcap_compile_nopcap(SNAP_LEN, DLT_EN10MB, &bpf,
         config.filter.c_str(), 1, 0) >= 0 )

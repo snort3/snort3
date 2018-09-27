@@ -41,7 +41,7 @@ class HttpPatternMatchers;
 // 0 - 8 (inclusive)       : used heavily in CHP code. DO NOT CHANGE.
 // 9 - NUM_METADATA_FIELDS : extra metadata buffers, beyond CHP.
 // NUM_METADATA_FIELDS     : must always follow the last metadata FID.
-// NUM_HTTP_FIELDS       : number of CHP filds, so always RSP_BODY_FID + 1
+// NUM_HTTP_FIELDS         : number of CHP fields, so always RSP_BODY_FID + 1
 enum HttpFieldIds : uint8_t
 {
     // 0-8: CHP fields. DO NOT CHANGE
