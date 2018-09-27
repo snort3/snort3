@@ -58,7 +58,6 @@ SO_PUBLIC bool TextLog_Write(TextLog* const, const char*, int len);
 SO_PUBLIC bool TextLog_Print(TextLog* const, const char* format, ...);
 
 SO_PUBLIC bool TextLog_Flush(TextLog* const);
-SO_PUBLIC int TextLog_Tell(TextLog* const);
 SO_PUBLIC int TextLog_Avail(TextLog* const);
 SO_PUBLIC void TextLog_Reset(TextLog* const);
 } // namespace snort

@@ -353,10 +353,10 @@ public:  // FIXIT-M privatize if possible
 
     uint8_t response_count;
 
-private:
     uint8_t offloads_pending;
     bool disable_inspect;
 
+private:
     void clean();
 };
 

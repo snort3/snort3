@@ -96,11 +96,6 @@ static size_t TextLog_Size(FILE* file)
     return err ? 0 : sbuf.st_size;
 }
 
-int TextLog_Tell(TextLog* const txt)
-{
-    return txt->pos;
-}
-
 namespace snort
 {
 int TextLog_Avail(TextLog* const txt)

@@ -40,7 +40,7 @@ using namespace snort;
 
 static THREAD_LOCAL Packet* last_pdu = nullptr;
 
-void purge_alerts_callback_ackd(IpsContext* c)
+static void purge_alerts_callback_ackd(IpsContext* c)
 {
     TcpSession* session = (TcpSession*)c->packet->flow->session;
 
@@ -50,7 +50,7 @@ void purge_alerts_callback_ackd(IpsContext* c)
         session->server.reassembler.purge_alerts();
 }
 
-void purge_alerts_callback_ips(IpsContext* c)
+static void purge_alerts_callback_ips(IpsContext* c)
 {
     TcpSession* session = (TcpSession*)c->packet->flow->session;
 
