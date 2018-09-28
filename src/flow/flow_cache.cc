@@ -242,7 +242,7 @@ unsigned FlowCache::prune_excess(const Flow* save_me)
     unsigned pruned = 0;
     unsigned blocks = 0;
 
-    // initially skip offloads but if that doesn't work the hashtable is iterated from the
+    // initially skip offloads but if that doesn't work the hash table is iterated from the
     // beginning again. prune offloads at that point.
     unsigned ignore_offloads = hash_table->get_count();
 
