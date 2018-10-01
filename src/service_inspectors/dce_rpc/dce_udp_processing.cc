@@ -106,8 +106,9 @@ void DCE2_ClProcess(DCE2_SsnData* sd, DCE2_ClTracker* clt)
 {
     const DceRpcClHdr* cl_hdr;
     DCE2_ClActTracker* at;
-    const uint8_t* data_ptr = sd->wire_pkt->data;
-    uint16_t data_len = sd->wire_pkt->dsize;
+    Packet* p = DetectionEngine::get_current_packet();
+    const uint8_t* data_ptr = p->data;
+    uint16_t data_len = p->dsize;
 
     if (data_len < sizeof(DceRpcClHdr))
     {
@@ -127,7 +128,7 @@ void DCE2_ClProcess(DCE2_SsnData* sd, DCE2_ClTracker* clt)
     if (at == nullptr)
         return;
 
-    if (DCE2_SsnFromClient(sd->wire_pkt))
+    if ( p->is_from_client() )
     {
         switch (DceRpcClPduType(cl_hdr))
         {
@@ -155,7 +156,6 @@ void DCE2_ClProcess(DCE2_SsnData* sd, DCE2_ClTracker* clt)
         case DCERPC_PDU_TYPE__RESPONSE:
         {
             trace_log(dce_udp, "Response from client.  Changing stream direction.\n");
-            Packet* p = sd->wire_pkt;
             ip::IpApi* ip_api = &p->ptrs.ip_api;
 
             p->flow->session->update_direction(SSN_DIR_FROM_SERVER,
@@ -349,7 +349,7 @@ static void DCE2_ClRequest(DCE2_SsnData* sd, DCE2_ClActTracker* at, const DceRpc
     sd->ropts.iface_vers = DceRpcClIfaceVers(cl_hdr);
     sd->ropts.opnum = DceRpcClOpnum(cl_hdr);
     sd->ropts.stub_data = (const uint8_t*)cl_hdr + sizeof(DceRpcClHdr);
-    DceEndianness* endianness = (DceEndianness*)sd->wire_pkt->endianness;
+    DceEndianness* endianness = (DceEndianness*)DetectionEngine::get_current_packet()->endianness;
     endianness->hdr_byte_order = DceRpcClByteOrder(cl_hdr);
     endianness->data_byte_order = DceRpcClByteOrder(cl_hdr);
     DCE2_Detect(sd);
@@ -486,7 +486,7 @@ static void DCE2_ClHandleFrag(DCE2_SsnData* sd, DCE2_ClActTracker* at, const Dce
     sd->ropts.first_frag = DceRpcClFirstFrag(cl_hdr);
     DCE2_CopyUuid(&sd->ropts.iface, &ft->iface, DCERPC_BO_FLAG__NONE);
     sd->ropts.iface_vers = ft->iface_vers;
-    DceEndianness* endianness = (DceEndianness*)sd->wire_pkt->endianness;
+    DceEndianness* endianness = (DceEndianness*)DetectionEngine::get_current_packet()->endianness;
     endianness->hdr_byte_order = DceRpcClByteOrder(cl_hdr);
 
     if (ft->data_byte_order != DCE2_SENTINEL)
@@ -562,8 +562,8 @@ static void DCE2_ClFragReassemble(
         stub_len += fnode->frag_len;
     }
 
-    Packet* rpkt = DCE2_GetRpkt(
-        sd->wire_pkt, DCE2_RPKT_TYPE__UDP_CL_FRAG, dce2_cl_rbuf, stub_len);
+    Packet* rpkt = DCE2_GetRpkt(DetectionEngine::get_current_packet(),
+        DCE2_RPKT_TYPE__UDP_CL_FRAG, dce2_cl_rbuf, stub_len);
 
     if ( !rpkt )
         return;
@@ -577,7 +577,7 @@ static void DCE2_ClFragReassemble(
     sd->ropts.first_frag = 1;
     DCE2_CopyUuid(&sd->ropts.iface, &ft->iface, DCERPC_BO_FLAG__NONE);
     sd->ropts.iface_vers = ft->iface_vers;
-    DceEndianness* endianness = (DceEndianness*)sd->wire_pkt->endianness;
+    DceEndianness* endianness = (DceEndianness*)DetectionEngine::get_current_packet()->endianness;
     endianness->hdr_byte_order = DceRpcClByteOrder(cl_hdr);
 
     if (ft->data_byte_order != DCE2_SENTINEL)

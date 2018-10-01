@@ -91,7 +91,7 @@ inline bool DCE2_TcpAutodetect(snort::Packet* p)
             && (DceRpcCoVersMin(co_hdr) == DCERPC_PROTO_MINOR_VERS__0)
             && ((p->is_from_client()
             && DceRpcCoPduType(co_hdr) == DCERPC_PDU_TYPE__BIND)
-            || (DCE2_SsnFromServer(p)
+            || (p->is_from_server()
             && DceRpcCoPduType(co_hdr) == DCERPC_PDU_TYPE__BIND_ACK))
             && (DceRpcCoFragLen(co_hdr) >= sizeof(DceRpcCoHdr)))
         {

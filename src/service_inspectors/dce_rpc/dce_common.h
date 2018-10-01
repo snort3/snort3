@@ -200,7 +200,6 @@ struct DCE2_SsnData
     DCE2_Policy server_policy;
     DCE2_Policy client_policy;
     int flags;
-    snort::Packet* wire_pkt;
     uint64_t alert_mask;
     DCE2_Roptions ropts;
     void* config;
@@ -261,21 +260,11 @@ inline uint16_t DCE2_GcMaxFragLen(dce2CommonProtoConf* config)
     return UINT16_MAX;
 }
 
-inline int DCE2_SsnFromServer(snort::Packet* p)
-{
-    return p->is_from_server();
-}
-
-inline int DCE2_SsnFromClient(snort::Packet* p)
-{
-    return p->is_from_client();
-}
-
 inline DCE2_Policy DCE2_SsnGetPolicy(DCE2_SsnData* sd)
 {
     assert(sd);
 
-    if (DCE2_SsnFromClient(sd->wire_pkt))
+    if ( snort::DetectionEngine::get_current_packet()->is_from_client() )
         return sd->server_policy;
     else
         return sd->client_policy;
@@ -283,7 +272,7 @@ inline DCE2_Policy DCE2_SsnGetPolicy(DCE2_SsnData* sd)
 
 inline void DCE2_SsnSetPolicy(DCE2_SsnData* sd, DCE2_Policy policy)
 {
-    if (DCE2_SsnFromClient(sd->wire_pkt))
+    if ( snort::DetectionEngine::get_current_packet()->is_from_client() )
         sd->client_policy = policy;
     else
         sd->server_policy = policy;
@@ -405,7 +394,7 @@ void print_dce2_co_config(dce2CoProtoConf&);
 bool dce2_paf_abort(snort::Flow*, DCE2_SsnData*);
 void DCE2_Detect(DCE2_SsnData*);
 snort::Packet* DCE2_GetRpkt(snort::Packet*, DCE2_RpktType, const uint8_t*, uint32_t);
-uint16_t DCE2_GetRpktMaxData(DCE2_SsnData*, DCE2_RpktType);
+uint16_t DCE2_GetRpktMaxData(DCE2_RpktType);
 DCE2_Ret DCE2_AddDataToRpkt(snort::Packet*, const uint8_t*, uint32_t);
 DCE2_TransType get_dce2_trans_type(const snort::Packet* p);
 

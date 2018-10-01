@@ -43,7 +43,7 @@ static uint8_t dce2_smb_delete_pdu[65535];
  ********************************************************************/
 static void DCE2_SmbSetNewFileAPIFileTracker(DCE2_SmbSsnData* ssd);
 static void DCE2_SmbResetFileChunks(DCE2_SmbFileTracker* ssd);
-static void DCE2_SmbFinishFileAPI(DCE2_SmbSsnData* ssd);
+static void DCE2_SmbFinishFileAPI(DCE2_SmbSsnData*);
 static void DCE2_SmbFinishFileBlockVerdict(DCE2_SmbSsnData* ssd);
 
 /********************************************************************
@@ -1160,7 +1160,7 @@ void DCE2_SmbSetRdata(DCE2_SmbSsnData* ssd, uint8_t* nb_ptr, uint16_t co_len)
     smb_hdr->smb_uid = SmbHtons((const uint16_t*)&uid);
     smb_hdr->smb_tid = SmbHtons((const uint16_t*)&tid);
 
-    if (DCE2_SsnFromClient(ssd->sd.wire_pkt))
+    if ( DetectionEngine::get_current_packet()->is_from_client() )
     {
         SmbWriteAndXReq* writex =
             (SmbWriteAndXReq*)((uint8_t*)smb_hdr + sizeof(SmbNtHdr));
@@ -1213,7 +1213,7 @@ Packet* DCE2_SmbGetRpkt(DCE2_SmbSsnData* ssd,
         || (data_len == nullptr) || (*data_len == 0))
         return nullptr;
 
-    Packet* rpkt = DCE2_GetRpkt(ssd->sd.wire_pkt, rtype, *data, *data_len);
+    Packet* rpkt = DCE2_GetRpkt(DetectionEngine::get_current_packet(), rtype, *data, *data_len);
 
     if ( !rpkt )
         return nullptr;
@@ -1225,7 +1225,7 @@ Packet* DCE2_SmbGetRpkt(DCE2_SmbSsnData* ssd,
     switch (rtype)
     {
     case DCE2_RPKT_TYPE__SMB_TRANS:
-        if (DCE2_SmbType(ssd) == SMB_TYPE__REQUEST)
+        if (DCE2_SmbType() == SMB_TYPE__REQUEST)
             header_len = DCE2_MOCK_HDR_LEN__SMB_CLI;
         else
             header_len = DCE2_MOCK_HDR_LEN__SMB_SRV;
@@ -1309,7 +1309,7 @@ bool DCE2_SmbIsSegBuffer(DCE2_SmbSsnData* ssd, const uint8_t* ptr)
 {
     DCE2_Buffer* seg_buf;
 
-    if (DCE2_SsnFromServer(ssd->sd.wire_pkt))
+    if ( DetectionEngine::get_current_packet()->is_from_server() )
         seg_buf = ssd->srv_seg;
     else
         seg_buf = ssd->cli_seg;
@@ -1346,7 +1346,7 @@ void DCE2_SmbSegAlert(DCE2_SmbSsnData* ssd, uint32_t rule_id)
 {
     DCE2_Buffer* buf;
 
-    if (DCE2_SsnFromClient(ssd->sd.wire_pkt))
+    if ( DetectionEngine::get_current_packet()->is_from_client() )
         buf = ssd->cli_seg;
     else
         buf = ssd->srv_seg;
@@ -1381,17 +1381,16 @@ void DCE2_SmbAbortFileAPI(DCE2_SmbSsnData* ssd)
     ssd->fapi_ftracker = nullptr;
 }
 
-static FileContext* DCE2_get_main_file_context(DCE2_SmbSsnData* ssd)
+static FileContext* DCE2_get_main_file_context()
 {
-    assert(ssd->sd.wire_pkt);
-    FileFlows* file_flows = FileFlows::get_file_flows((ssd->sd.wire_pkt)->flow);
+    FileFlows* file_flows = FileFlows::get_file_flows(DetectionEngine::get_current_packet()->flow);
     assert(file_flows);
     return file_flows->get_current_file_context();
 }
 
-FileVerdict DCE2_get_file_verdict(DCE2_SmbSsnData* ssd)
+FileVerdict DCE2_get_file_verdict()
 {
-    FileContext* file = DCE2_get_main_file_context(ssd);
+    FileContext* file = DCE2_get_main_file_context();
     if ( !file )
         return FILE_VERDICT_UNKNOWN;
     return file->verdict;
@@ -1427,10 +1426,12 @@ void DCE2_SmbInitDeletePdu()
     *del_req_fmt = SMB_FMT__ASCII;
 }
 
-static void DCE2_SmbInjectDeletePdu(DCE2_SmbSsnData* ssd, DCE2_SmbFileTracker* ftracker)
+static void DCE2_SmbInjectDeletePdu(DCE2_SmbFileTracker* ftracker)
 {
     Packet* inject_pkt = snort::Snort::get_packet();
-    if ( inject_pkt->flow != ssd->sd.wire_pkt->flow )
+    Packet* p = DetectionEngine::get_current_packet();
+
+    if ( inject_pkt->flow != p->flow )
         return;
 
     NbssHdr* nb_hdr = (NbssHdr*)dce2_smb_delete_pdu;
@@ -1462,11 +1463,11 @@ static void DCE2_SmbInjectDeletePdu(DCE2_SmbSsnData* ssd, DCE2_SmbFileTracker* f
     Active::inject_data(inject_pkt, 0, (uint8_t*)nb_hdr, len);
 }
 
-static FileVerdict DCE2_SmbLookupFileVerdict(DCE2_SmbSsnData* ssd)
+static FileVerdict DCE2_SmbLookupFileVerdict()
 {
     Profile profile(dce2_smb_pstat_smb_file_api);
 
-    FileContext* file = DCE2_get_main_file_context(ssd);
+    FileContext* file = DCE2_get_main_file_context();
 
     if ( !file )
         return FILE_VERDICT_UNKNOWN;
@@ -1474,7 +1475,7 @@ static FileVerdict DCE2_SmbLookupFileVerdict(DCE2_SmbSsnData* ssd)
     FileVerdict verdict = file->verdict;
 
     if (verdict == FILE_VERDICT_PENDING)
-        verdict = file->file_signature_lookup(ssd->sd.wire_pkt->flow);
+        verdict = file->file_signature_lookup(DetectionEngine::get_current_packet()->flow);
 
     return verdict;
 }
@@ -1483,10 +1484,10 @@ static void DCE2_SmbFinishFileBlockVerdict(DCE2_SmbSsnData* ssd)
 {
     Profile profile(dce2_smb_pstat_smb_file);
 
-    FileVerdict verdict = DCE2_SmbLookupFileVerdict(ssd);
+    FileVerdict verdict = DCE2_SmbLookupFileVerdict();
     if ((verdict == FILE_VERDICT_BLOCK) || (verdict == FILE_VERDICT_REJECT))
     {
-        DCE2_SmbInjectDeletePdu(ssd, ssd->fb_ftracker);
+        DCE2_SmbInjectDeletePdu(ssd->fb_ftracker);
     }
 
     ssd->fb_ftracker = nullptr;
@@ -1495,7 +1496,7 @@ static void DCE2_SmbFinishFileBlockVerdict(DCE2_SmbSsnData* ssd)
 
 static void DCE2_SmbFinishFileAPI(DCE2_SmbSsnData* ssd)
 {
-    Packet* p = ssd->sd.wire_pkt;
+    Packet* p = DetectionEngine::get_current_packet();
     DCE2_SmbFileTracker* ftracker = ssd->fapi_ftracker;
 
     if (ftracker == nullptr)
@@ -1517,7 +1518,7 @@ static void DCE2_SmbFinishFileAPI(DCE2_SmbSsnData* ssd)
             {
                 if (upload)
                 {
-                    FileVerdict verdict = DCE2_get_file_verdict(ssd);
+                    FileVerdict verdict = DCE2_get_file_verdict();
 
                     if ((verdict == FILE_VERDICT_BLOCK) || (verdict == FILE_VERDICT_REJECT))
                         ssd->fb_ftracker = ftracker;
@@ -1575,7 +1576,7 @@ static DCE2_Ret DCE2_SmbFileAPIProcess(DCE2_SmbSsnData* ssd,
     }
 
     Profile profile(dce2_smb_pstat_smb_file_api);
-    FileFlows* file_flows = FileFlows::get_file_flows(ssd->sd.wire_pkt->flow);
+    FileFlows* file_flows = FileFlows::get_file_flows(DetectionEngine::get_current_packet()->flow);
     if (!file_flows->file_process(data_ptr, (int)data_len, position, upload,
         DCE2_SmbIsVerdictSuspend(upload, position)))
     {
@@ -1597,7 +1598,7 @@ static DCE2_Ret DCE2_SmbFileAPIProcess(DCE2_SmbSsnData* ssd,
         {
             if (upload)
             {
-                FileVerdict verdict = DCE2_get_file_verdict(ssd);
+                FileVerdict verdict = DCE2_get_file_verdict();
 
                 if ((verdict == FILE_VERDICT_BLOCK) || (verdict == FILE_VERDICT_REJECT)
                     || (verdict == FILE_VERDICT_PENDING))

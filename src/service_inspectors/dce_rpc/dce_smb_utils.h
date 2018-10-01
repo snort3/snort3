@@ -177,7 +177,7 @@ void DCE2_SmbProcessFileData(DCE2_SmbSsnData* ssd,
     DCE2_SmbFileTracker* ftracker, const uint8_t* data_ptr,
     uint32_t data_len, bool upload);
 void DCE2_FileDetect();
-FileVerdict DCE2_get_file_verdict(DCE2_SmbSsnData* );
+FileVerdict DCE2_get_file_verdict();
 void DCE2_SmbInitDeletePdu();
 void DCE2_Update_Ftracker_from_ReqTracker(DCE2_SmbFileTracker*, DCE2_SmbRequestTracker*);
 
@@ -202,9 +202,9 @@ void DCE2_Update_Ftracker_from_ReqTracker(DCE2_SmbFileTracker*, DCE2_SmbRequestT
  *  SMB_TYPE__RESPONSE if packet is from server
  *
  ********************************************************************/
-inline int DCE2_SmbType(DCE2_SmbSsnData* ssd)
+inline int DCE2_SmbType()
 {
-    if (DCE2_SsnFromClient(ssd->sd.wire_pkt))
+    if ( snort::DetectionEngine::get_current_packet()->is_from_client() )
         return SMB_TYPE__REQUEST;
     else
         return SMB_TYPE__RESPONSE;
@@ -341,7 +341,7 @@ inline bool DCE2_SmbIsTransactionComplete(DCE2_SmbTransactionTracker* ttracker)
 
 inline DCE2_Buffer** DCE2_SmbGetSegBuffer(DCE2_SmbSsnData* ssd)
 {
-    if (DCE2_SsnFromServer(ssd->sd.wire_pkt))
+    if ( snort::DetectionEngine::get_current_packet()->is_from_server() )
         return &ssd->srv_seg;
     return &ssd->cli_seg;
 }

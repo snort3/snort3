@@ -99,7 +99,6 @@ static DCE2_UdpSsnData* dce2_create_new_udp_session(Packet* p, dce2UdpProtoConf*
 
     dce2_udp_stats.udp_sessions++;
     dce2_udp_sess->sd.trans = DCE2_TRANS_TYPE__UDP;
-    dce2_udp_sess->sd.wire_pkt = p;
     dce2_udp_sess->sd.config = (void*)config;
 
     return dce2_udp_sess;

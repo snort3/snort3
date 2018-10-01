@@ -201,12 +201,13 @@ static inline void DCE2_Smb2ResetFileName(DCE2_SmbFileTracker* ftracker)
     ftracker->file_name_size = 0;
 }
 
-static inline FileContext* get_file_context(DCE2_SmbSsnData* ssd, uint64_t file_id)
+static inline FileContext* get_file_context(uint64_t file_id)
 {
-    assert(ssd->sd.wire_pkt);
-    FileFlows* file_flows = FileFlows::get_file_flows((ssd->sd.wire_pkt)->flow);
-    if(!file_flows)
+    FileFlows* file_flows = FileFlows::get_file_flows(DetectionEngine::get_current_packet()->flow);
+
+    if ( !file_flows )
         return nullptr;
+
     return file_flows->get_file_context(file_id, true);
 }
 
@@ -234,9 +235,8 @@ static inline void DCE2_Smb2ProcessFileData(DCE2_SmbSsnData* ssd, const uint8_t*
         DCE2_FileDetect();
     }
 
-    assert(ssd->sd.wire_pkt);
-    FileFlows* file_flows = FileFlows::get_file_flows((ssd->sd.wire_pkt)->flow);
-    if(!file_flows)
+    FileFlows* file_flows = FileFlows::get_file_flows(DetectionEngine::get_current_packet()->flow);
+    if ( !file_flows )
         return;
 
     file_flows->file_process(ssd->ftracker.fid_v2, file_data, data_size,
@@ -347,7 +347,7 @@ static void DCE2_Smb2CreateResponse(DCE2_SmbSsnData* ssd, const Smb2Hdr*,
 
     if (ssd->ftracker.file_name && ssd->ftracker.file_name_size)
     {
-        FileContext* file = get_file_context(ssd, ssd->ftracker.fid_v2);
+        FileContext* file = get_file_context(ssd->ftracker.fid_v2);
         if (file)
         {
             file->set_file_size(file_size);
@@ -419,10 +419,12 @@ static void DCE2_Smb2CloseCmd(DCE2_SmbSsnData* ssd, const Smb2Hdr*,
         !ssd->ftracker.tracker.file.file_size
         && ssd->ftracker.tracker.file.file_offset)
     {
-        FileDirection dir = DCE2_SsnFromClient(ssd->sd.wire_pkt) ? FILE_UPLOAD : FILE_DOWNLOAD;
+        FileDirection dir = DetectionEngine::get_current_packet()->is_from_client() ?
+            FILE_UPLOAD : FILE_DOWNLOAD;
+
         ssd->ftracker.tracker.file.file_size = ssd->ftracker.tracker.file.file_offset;
         uint64_t fileId_persistent = alignedNtohq(&(smb_close_hdr->fileId_persistent));
-        FileContext* file = get_file_context(ssd, fileId_persistent);
+        FileContext* file = get_file_context(fileId_persistent);
         if (file)
         {
             file->set_file_size(ssd->ftracker.tracker.file.file_size);
@@ -458,7 +460,7 @@ static void DCE2_Smb2SetInfo(DCE2_SmbSsnData* ssd, const Smb2Hdr*,
             uint64_t file_size = alignedNtohq((const uint64_t*)file_data);
             ssd->ftracker.tracker.file.file_size = file_size;
             uint64_t fileId_persistent = alignedNtohq(&(smb_set_info_hdr->fileId_persistent));
-            FileContext* file = get_file_context(ssd, fileId_persistent);
+            FileContext* file = get_file_context(fileId_persistent);
             if (file)
             {
                 file->set_file_size(ssd->ftracker.tracker.file.file_size);
@@ -698,7 +700,7 @@ static void DCE2_Smb2Inspect(DCE2_SmbSsnData* ssd, const Smb2Hdr* smb_hdr, const
 // This is the main entry point for SMB2 processing.
 void DCE2_Smb2Process(DCE2_SmbSsnData* ssd)
 {
-    Packet* p = ssd->sd.wire_pkt;
+    Packet* p = DetectionEngine::get_current_packet();
     const uint8_t* data_ptr = p->data;
     uint16_t data_len = p->dsize;
 
@@ -727,7 +729,7 @@ void DCE2_Smb2Process(DCE2_SmbSsnData* ssd)
     else if (ssd->pdu_state == DCE2_SMB_PDU_STATE__RAW_DATA)
     {
         /*continue processing raw data*/
-        FileDirection dir = DCE2_SsnFromClient(ssd->sd.wire_pkt) ? FILE_UPLOAD : FILE_DOWNLOAD;
+        FileDirection dir = p->is_from_client() ? FILE_UPLOAD : FILE_DOWNLOAD;
         DCE2_Smb2ProcessFileData(ssd, data_ptr, data_len, dir);
         ssd->ftracker.tracker.file.file_offset += data_len;
     }

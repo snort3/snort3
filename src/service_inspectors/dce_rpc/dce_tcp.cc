@@ -94,7 +94,6 @@ static DCE2_TcpSsnData* dce2_create_new_tcp_session(Packet* p, dce2TcpProtoConf*
         dce2_tcp_sess->sd.trans = DCE2_TRANS_TYPE__TCP;
         dce2_tcp_sess->sd.server_policy = config->common.policy;
         dce2_tcp_sess->sd.client_policy = DCE2_POLICY__WINXP;
-        dce2_tcp_sess->sd.wire_pkt = p;
         dce2_tcp_sess->sd.config = (void*)config;
     }
 

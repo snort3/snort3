@@ -640,7 +640,7 @@ DCE2_Ret DCE2_SmbClose(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
 
         if ((ssd->fb_ftracker != nullptr) && (ssd->fb_ftracker == ssd->cur_rtracker->ftracker))
         {
-            FileVerdict verdict = DCE2_get_file_verdict(ssd);
+            FileVerdict verdict = DCE2_get_file_verdict();
 
             if ((verdict == FILE_VERDICT_BLOCK) || (verdict == FILE_VERDICT_REJECT))
                 ssd->block_pdus = true;

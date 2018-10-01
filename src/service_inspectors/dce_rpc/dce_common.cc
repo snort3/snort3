@@ -245,9 +245,9 @@ bool DceEndianness::get_offset_endianness(int32_t offset, uint8_t& endian)
     return true;
 }
 
-uint16_t DCE2_GetRpktMaxData(DCE2_SsnData* sd, DCE2_RpktType rtype)
+uint16_t DCE2_GetRpktMaxData(DCE2_RpktType rtype)
 {
-    snort::Packet* p = sd->wire_pkt;
+    snort::Packet* p = DetectionEngine::get_current_packet();
     uint16_t overhead = 0;
 
     switch (rtype)
@@ -257,14 +257,14 @@ uint16_t DCE2_GetRpktMaxData(DCE2_SsnData* sd, DCE2_RpktType rtype)
         break;
 
     case DCE2_RPKT_TYPE__SMB_CO_SEG:
-        if (DCE2_SsnFromClient(p))
+        if (p->is_from_client())
             overhead += DCE2_MOCK_HDR_LEN__SMB_CLI;
         else
             overhead += DCE2_MOCK_HDR_LEN__SMB_SRV;
         break;
 
     case DCE2_RPKT_TYPE__SMB_CO_FRAG:
-        if (DCE2_SsnFromClient(p))
+        if (p->is_from_client())
             overhead += DCE2_MOCK_HDR_LEN__SMB_CLI + DCE2_MOCK_HDR_LEN__CO_CLI;
         else
             overhead += DCE2_MOCK_HDR_LEN__SMB_SRV + DCE2_MOCK_HDR_LEN__CO_SRV;
@@ -273,7 +273,7 @@ uint16_t DCE2_GetRpktMaxData(DCE2_SsnData* sd, DCE2_RpktType rtype)
     case DCE2_RPKT_TYPE__TCP_CO_SEG:
         break;
     case DCE2_RPKT_TYPE__TCP_CO_FRAG:
-        if (DCE2_SsnFromClient(p))
+        if (p->is_from_client())
             overhead += DCE2_MOCK_HDR_LEN__CO_CLI;
         else
             overhead += DCE2_MOCK_HDR_LEN__CO_SRV;
@@ -316,7 +316,7 @@ snort::Packet* DCE2_GetRpkt(snort::Packet* p,DCE2_RpktType rpkt_type,
 
     case DCE2_RPKT_TYPE__SMB_TRANS:
         rpkt->pseudo_type = PSEUDO_PKT_SMB_TRANS;
-        if (DCE2_SsnFromClient(p))
+        if (p->is_from_client())
         {
             data_overhead = DCE2_MOCK_HDR_LEN__SMB_CLI;
             memset(wrdata, 0, data_overhead);
@@ -332,7 +332,7 @@ snort::Packet* DCE2_GetRpkt(snort::Packet* p,DCE2_RpktType rpkt_type,
 
     case DCE2_RPKT_TYPE__SMB_CO_SEG:
         rpkt->pseudo_type = PSEUDO_PKT_DCE_SEG;
-        if (DCE2_SsnFromClient(p))
+        if (p->is_from_client())
         {
             data_overhead = DCE2_MOCK_HDR_LEN__SMB_CLI;
             memset(wrdata, 0, data_overhead);
@@ -348,7 +348,7 @@ snort::Packet* DCE2_GetRpkt(snort::Packet* p,DCE2_RpktType rpkt_type,
 
     case DCE2_RPKT_TYPE__SMB_CO_FRAG:
         rpkt->pseudo_type = PSEUDO_PKT_DCE_FRAG;
-        if (DCE2_SsnFromClient(p))
+        if (p->is_from_client())
         {
             data_overhead = DCE2_MOCK_HDR_LEN__SMB_CLI + DCE2_MOCK_HDR_LEN__CO_CLI;
             memset(wrdata, 0, data_overhead);
@@ -378,7 +378,7 @@ snort::Packet* DCE2_GetRpkt(snort::Packet* p,DCE2_RpktType rpkt_type,
         if (rpkt_type == DCE2_RPKT_TYPE__TCP_CO_FRAG)
         {
             rpkt->pseudo_type = PSEUDO_PKT_DCE_FRAG;
-            if (DCE2_SsnFromClient(p))
+            if (p->is_from_client())
             {
                 data_overhead = DCE2_MOCK_HDR_LEN__CO_CLI;
                 memset(wrdata, 0, data_overhead);

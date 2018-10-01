@@ -147,8 +147,7 @@ void DCE2_CoCleanTracker(DCE2_CoTracker* cot)
  * The reassembly buffer used is big enough for the headers.
  *
  ********************************************************************/
-static inline void DCE2_CoSetRdata(DCE2_SsnData* sd, DCE2_CoTracker* cot,
-    uint8_t* co_ptr, uint16_t stub_len)
+static inline void DCE2_CoSetRdata(DCE2_CoTracker* cot, uint8_t* co_ptr, uint16_t stub_len)
 {
     DceRpcCoHdr* co_hdr = (DceRpcCoHdr*)co_ptr;
     /* If we've set the fragment tracker context id or opnum, use them. */
@@ -159,7 +158,7 @@ static inline void DCE2_CoSetRdata(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         (cot->frag_tracker.opnum != DCE2_SENTINEL) ?
         (uint16_t)cot->frag_tracker.opnum : (uint16_t)cot->opnum;
 
-    if (DCE2_SsnFromClient(sd->wire_pkt))
+    if ( DetectionEngine::get_current_packet()->is_from_client() )
     {
         DceRpcCoRequest* co_req = (DceRpcCoRequest*)((uint8_t*)co_hdr + sizeof(DceRpcCoHdr));
         /* Doesn't really matter if this wraps ... it is basically just for presentation */
@@ -203,9 +202,9 @@ void DCE2_CoInitRdata(uint8_t* co_ptr, int dir)
         co_hdr->ptype = DCERPC_PDU_TYPE__RESPONSE;
 }
 
-static inline DCE2_CoSeg* DCE2_CoGetSegPtr(DCE2_SsnData* sd, DCE2_CoTracker* cot)
+static inline DCE2_CoSeg* DCE2_CoGetSegPtr(DCE2_CoTracker* cot)
 {
-    if (DCE2_SsnFromServer(sd->wire_pkt))
+    if ( DetectionEngine::get_current_packet()->is_from_server() )
         return &cot->srv_seg;
 
     return &cot->cli_seg;
@@ -404,7 +403,7 @@ static DCE2_Ret DCE2_CoHdrChecks(DCE2_SsnData* sd, DCE2_CoTracker* cot, const Dc
         return DCE2_RET__ERROR;
     }
 
-    if (DCE2_SsnFromClient(sd->wire_pkt) && (cot->max_xmit_frag != DCE2_SENTINEL))
+    if (DetectionEngine::get_current_packet()->is_from_client() && (cot->max_xmit_frag != DCE2_SENTINEL))
     {
         if (frag_len > cot->max_xmit_frag)
         {
@@ -1019,15 +1018,9 @@ static int DCE2_CoGetAuthLen(DCE2_SsnData* sd, const DceRpcCoHdr* co_hdr,
     return (int)auth_len;
 }
 
-/********************************************************************
- * Function: DCE2_CoGetFragBuf()
- *
- * Returns the appropriate fragmentation buffer.
- *
- ********************************************************************/
-static DCE2_Buffer* DCE2_CoGetFragBuf(DCE2_SsnData* sd, DCE2_CoFragTracker* ft)
+static DCE2_Buffer* DCE2_CoGetFragBuf(DCE2_CoFragTracker* ft)
 {
-    if (DCE2_SsnFromServer(sd->wire_pkt))
+    if ( DetectionEngine::get_current_packet()->is_from_server() )
         return ft->srv_stub_buf;
 
     return ft->cli_stub_buf;
@@ -1099,8 +1092,8 @@ static DCE2_RpktType DCE2_CoGetRpktType(DCE2_SsnData* sd, DCE2_BufType btype)
 static Packet* DCE2_CoGetRpkt(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     DCE2_CoRpktType co_rtype, DCE2_RpktType* rtype)
 {
-    DCE2_CoSeg* seg_buf = DCE2_CoGetSegPtr(sd, cot);
-    DCE2_Buffer* frag_buf = DCE2_CoGetFragBuf(sd, &cot->frag_tracker);
+    DCE2_CoSeg* seg_buf = DCE2_CoGetSegPtr(cot);
+    DCE2_Buffer* frag_buf = DCE2_CoGetFragBuf(&cot->frag_tracker);
     const uint8_t* frag_data = nullptr, * seg_data = nullptr;
     uint32_t frag_len = 0, seg_len = 0;
     Packet* rpkt = nullptr;
@@ -1182,7 +1175,7 @@ static Packet* DCE2_CoGetRpkt(DCE2_SsnData* sd, DCE2_CoTracker* cot,
 
     if ( frag_data )
     {
-        rpkt = DCE2_GetRpkt(sd->wire_pkt, *rtype, frag_data, frag_len);
+        rpkt = DCE2_GetRpkt(DetectionEngine::get_current_packet(), *rtype, frag_data, frag_len);
 
         if ( rpkt and seg_data )
         {
@@ -1192,7 +1185,7 @@ static Packet* DCE2_CoGetRpkt(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     }
     else if ( seg_data )
     {
-        rpkt = DCE2_GetRpkt(sd->wire_pkt, *rtype, seg_data, seg_len);
+        rpkt = DCE2_GetRpkt(DetectionEngine::get_current_packet(), *rtype, seg_data, seg_len);
     }
 
     return rpkt;
@@ -1202,10 +1195,10 @@ static Packet* dce_co_reassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     DCE2_CoRpktType co_rtype, const DceRpcCoHdr** co_hdr)
 {
     dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
-    int co_hdr_len = DCE2_SsnFromClient(sd->wire_pkt) ? DCE2_MOCK_HDR_LEN__CO_CLI :
-        DCE2_MOCK_HDR_LEN__CO_SRV;
-    int smb_hdr_len = DCE2_SsnFromClient(sd->wire_pkt) ? DCE2_MOCK_HDR_LEN__SMB_CLI :
-        DCE2_MOCK_HDR_LEN__SMB_SRV;
+    bool from_client = DetectionEngine::get_current_packet()->is_from_client();
+
+    int co_hdr_len = from_client ? DCE2_MOCK_HDR_LEN__CO_CLI : DCE2_MOCK_HDR_LEN__CO_SRV;
+    int smb_hdr_len = from_client ? DCE2_MOCK_HDR_LEN__SMB_CLI : DCE2_MOCK_HDR_LEN__SMB_SRV;
 
     if (sd->trans == DCE2_TRANS_TYPE__TCP)
     {
@@ -1233,17 +1226,17 @@ static Packet* dce_co_reassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot,
 
         if (rpkt_type == DCE2_RPKT_TYPE__SMB_CO_FRAG)
         {
-            DCE2_CoSetRdata(sd, cot, wrdata + smb_hdr_len,
+            DCE2_CoSetRdata(cot, wrdata + smb_hdr_len,
                 (uint16_t)(rpkt->dsize - (smb_hdr_len + co_hdr_len)));
 
-            if (DCE2_SsnFromClient(sd->wire_pkt))
+            if ( from_client )
                 dce_common_stats->co_cli_frag_reassembled++;
             else
                 dce_common_stats->co_srv_frag_reassembled++;
         }
         else
         {
-            if (DCE2_SsnFromClient(sd->wire_pkt))
+            if ( from_client )
                 dce_common_stats->co_cli_seg_reassembled++;
             else
                 dce_common_stats->co_srv_seg_reassembled++;
@@ -1257,16 +1250,16 @@ static Packet* dce_co_reassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     case DCE2_RPKT_TYPE__TCP_CO_SEG:
         if (rpkt_type == DCE2_RPKT_TYPE__TCP_CO_FRAG)
         {
-            DCE2_CoSetRdata(sd, cot, wrdata, (uint16_t)(rpkt->dsize - co_hdr_len));
+            DCE2_CoSetRdata(cot, wrdata, (uint16_t)(rpkt->dsize - co_hdr_len));
 
-            if (DCE2_SsnFromClient(sd->wire_pkt))
+            if ( from_client )
                 dce_common_stats->co_cli_frag_reassembled++;
             else
                 dce_common_stats->co_srv_frag_reassembled++;
         }
         else
         {
-            if (DCE2_SsnFromClient(sd->wire_pkt))
+            if ( from_client )
                 dce_common_stats->co_cli_seg_reassembled++;
             else
                 dce_common_stats->co_cli_seg_reassembled++;
@@ -1319,6 +1312,7 @@ static DCE2_Ret dce_co_handle_frag(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     DCE2_BufferMinAddFlag mflag = DCE2_BUFFER_MIN_ADD_FLAG__USE;
     DCE2_Ret status;
     dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
+    Packet* p = DetectionEngine::get_current_packet();
 
     if (sd->trans == DCE2_TRANS_TYPE__TCP)
     {
@@ -1329,7 +1323,7 @@ static DCE2_Ret dce_co_handle_frag(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         Profile profile(dce2_smb_pstat_co_frag);
     }
 
-    if (DCE2_SsnFromClient(sd->wire_pkt))
+    if ( p->is_from_client() )
     {
         if (frag_len > dce_common_stats->co_cli_max_frag_size)
             dce_common_stats->co_cli_max_frag_size = frag_len;
@@ -1350,7 +1344,7 @@ static DCE2_Ret dce_co_handle_frag(DCE2_SsnData* sd, DCE2_CoTracker* cot,
 
     if (frag_buf == nullptr)
     {
-        if (DCE2_SsnFromServer(sd->wire_pkt))
+        if ( p->is_from_server() )
         {
             cot->frag_tracker.srv_stub_buf =
                 DCE2_BufferNew(size, DCE2_CO__MIN_ALLOC_SIZE);
@@ -1419,14 +1413,14 @@ static void DCE2_CoHandleFrag(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     const DceRpcCoHdr* co_hdr, const uint8_t* frag_ptr, uint16_t frag_len)
 {
     DCE2_Ret ret_val;
-    DCE2_Buffer* frag_buf = DCE2_CoGetFragBuf(sd, &cot->frag_tracker);
+    DCE2_Buffer* frag_buf = DCE2_CoGetFragBuf(&cot->frag_tracker);
     uint16_t max_frag_data;
 
     /* Check for potential overflow */
     if (sd->trans == DCE2_TRANS_TYPE__SMB)
-        max_frag_data = DCE2_GetRpktMaxData(sd, DCE2_RPKT_TYPE__SMB_CO_FRAG);
+        max_frag_data = DCE2_GetRpktMaxData(DCE2_RPKT_TYPE__SMB_CO_FRAG);
     else
-        max_frag_data = DCE2_GetRpktMaxData(sd, DCE2_RPKT_TYPE__TCP_CO_FRAG);
+        max_frag_data = DCE2_GetRpktMaxData(DCE2_RPKT_TYPE__TCP_CO_FRAG);
 
     ret_val = dce_co_handle_frag(sd, cot,co_hdr, frag_ptr, frag_len,frag_buf,max_frag_data);
     if (ret_val == DCE2_RET__SUCCESS)
@@ -1526,7 +1520,7 @@ static void DCE2_CoRequest(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         int auth_len = DCE2_CoGetAuthLen(sd, co_hdr, frag_ptr, frag_len);
         if (auth_len == -1)
             return;
-        DCE2_CoSetRopts(sd, cot, co_hdr, sd->wire_pkt);
+        DCE2_CoSetRopts(sd, cot, co_hdr, DetectionEngine::get_current_packet() );
     }
     else
     {
@@ -1631,7 +1625,7 @@ static void DCE2_CoRequest(DCE2_SsnData* sd, DCE2_CoTracker* cot,
             break;
         }
 
-        DCE2_CoSetRopts(sd, cot, co_hdr, sd->wire_pkt);
+        DCE2_CoSetRopts(sd, cot, co_hdr, DetectionEngine::get_current_packet() );
 
         /* If we're configured to do defragmentation */
         if (DCE2_GcDceDefrag((dce2CommonProtoConf*)sd->config))
@@ -1729,13 +1723,15 @@ static void DCE2_CoResponse(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     cot->ctx_id = ctx_id;
     cot->call_id = DceRpcCoCallId(co_hdr);
 
+    Packet* p = DetectionEngine::get_current_packet();
+
     if (DceRpcCoFirstFrag(co_hdr) && DceRpcCoLastFrag(co_hdr))
     {
         int auth_len = DCE2_CoGetAuthLen(sd, co_hdr, frag_ptr, frag_len);
 
         if (auth_len == -1)
             return;
-        DCE2_CoSetRopts(sd, cot, co_hdr, sd->wire_pkt);
+        DCE2_CoSetRopts(sd, cot, co_hdr, p);
     }
     else
     {
@@ -1746,7 +1742,7 @@ static void DCE2_CoResponse(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         if (auth_len == -1)
             return;
 
-        DCE2_CoSetRopts(sd, cot, co_hdr, sd->wire_pkt);
+        DCE2_CoSetRopts(sd, cot, co_hdr, p);
 
         /* If we're configured to do defragmentation */
         if (DCE2_GcDceDefrag((dce2CommonProtoConf*)sd->config))
@@ -1779,7 +1775,7 @@ static void DCE2_CoDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     DCE2_MOVE(frag_ptr, frag_len, sizeof(DceRpcCoHdr));
 
     /* Client specific pdu types - some overlap with server */
-    if (DCE2_SsnFromClient(sd->wire_pkt))
+    if ( DetectionEngine::get_current_packet()->is_from_client() )
     {
         switch (pdu_type)
         {
@@ -1981,9 +1977,9 @@ static DCE2_Ret DCE2_CoSegEarlyRequest(DCE2_CoTracker* cot,
  ********************************************************************/
 static void DCE2_CoEarlyReassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot)
 {
-    DCE2_Buffer* frag_buf = DCE2_CoGetFragBuf(sd, &cot->frag_tracker);
+    DCE2_Buffer* frag_buf = DCE2_CoGetFragBuf(&cot->frag_tracker);
 
-    if (DCE2_SsnFromServer(sd->wire_pkt))
+    if ( DetectionEngine::get_current_packet()->is_from_server() )
         return;
 
     if (!DCE2_BufferIsEmpty(frag_buf))
@@ -2050,9 +2046,9 @@ static void DCE2_CoEarlyReassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot)
 static Packet* DCE2_CoGetSegRpkt(DCE2_SsnData* sd,
     const uint8_t* data_ptr, uint32_t data_len)
 {
+    Packet* p = DetectionEngine::get_current_packet();
     Packet* rpkt = nullptr;
-    int smb_hdr_len = DCE2_SsnFromClient(sd->wire_pkt) ? DCE2_MOCK_HDR_LEN__SMB_CLI :
-        DCE2_MOCK_HDR_LEN__SMB_SRV;
+    int smb_hdr_len = p->is_from_client() ? DCE2_MOCK_HDR_LEN__SMB_CLI : DCE2_MOCK_HDR_LEN__SMB_SRV;
 
     if (sd->trans == DCE2_TRANS_TYPE__TCP)
     {
@@ -2066,7 +2062,7 @@ static Packet* DCE2_CoGetSegRpkt(DCE2_SsnData* sd,
     switch (sd->trans)
     {
     case DCE2_TRANS_TYPE__SMB:
-        rpkt = DCE2_GetRpkt(sd->wire_pkt, DCE2_RPKT_TYPE__SMB_CO_SEG, data_ptr, data_len);
+        rpkt = DCE2_GetRpkt(p, DCE2_RPKT_TYPE__SMB_CO_SEG, data_ptr, data_len);
 
         if ( !rpkt )
             return nullptr;
@@ -2077,7 +2073,7 @@ static Packet* DCE2_CoGetSegRpkt(DCE2_SsnData* sd,
 
     case DCE2_TRANS_TYPE__TCP:
         // FIXIT-M add HTTP cases when it is ported
-        rpkt = DCE2_GetRpkt(sd->wire_pkt, DCE2_RPKT_TYPE__TCP_CO_SEG, data_ptr, data_len);
+        rpkt = DCE2_GetRpkt(p, DCE2_RPKT_TYPE__TCP_CO_SEG, data_ptr, data_len);
         break;
 
     default:
@@ -2101,13 +2097,19 @@ static void DCE2_CoSegDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot, DCE2_CoSeg* 
     const uint8_t* frag_ptr = nullptr;
     uint16_t frag_len = 0;
     dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
-    int smb_hdr_len = DCE2_SsnFromClient(sd->wire_pkt) ? DCE2_MOCK_HDR_LEN__SMB_CLI :
-        DCE2_MOCK_HDR_LEN__SMB_SRV;
-
-    if (DCE2_SsnFromClient(sd->wire_pkt))
+    int smb_hdr_len;
+    
+    if ( DetectionEngine::get_current_packet()->is_from_client() )
+    {
+        smb_hdr_len = DCE2_MOCK_HDR_LEN__SMB_CLI;
         dce_common_stats->co_cli_seg_reassembled++;
+    }
     else
+    {
+        smb_hdr_len = DCE2_MOCK_HDR_LEN__SMB_SRV;
         dce_common_stats->co_srv_seg_reassembled++;
+    }
+
 
     Packet* rpkt = DCE2_CoGetSegRpkt(sd, DCE2_BufferData(seg->buf), DCE2_BufferLength(seg->buf));
 
@@ -2252,7 +2254,7 @@ static DCE2_Ret DCE2_CoHandleSegmentation(DCE2_SsnData* sd, DCE2_CoSeg* seg,
 void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     const uint8_t* data_ptr, uint16_t data_len)
 {
-    DCE2_CoSeg* seg = DCE2_CoGetSegPtr(sd, cot);
+    DCE2_CoSeg* seg = DCE2_CoGetSegPtr(cot);
     dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
     uint32_t num_frags = 0;
 
