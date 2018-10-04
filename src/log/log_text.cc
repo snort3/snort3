@@ -412,15 +412,14 @@ void LogIPHeader(TextLog* log, Packet* p)
 static void LogOuterIPHeader(TextLog* log, Packet* p)
 {
     uint8_t save_frag_flag = (p->ptrs.decode_flags & DECODE_FRAG);
-    uint16_t save_sp, save_dp;
     ip::IpApi save_ip_api = p->ptrs.ip_api;
 
     p->ptrs.decode_flags &= ~DECODE_FRAG;
 
     if (p->proto_bits & PROTO_BIT__TEREDO)
     {
-        save_sp = p->ptrs.sp;
-        save_dp = p->ptrs.dp;
+        uint16_t save_sp = p->ptrs.sp;
+        uint16_t save_dp = p->ptrs.dp;
 
         const udp::UDPHdr* udph = layer::get_outer_udp_lyr(p);
         p->ptrs.sp = ntohs(udph->uh_sport);

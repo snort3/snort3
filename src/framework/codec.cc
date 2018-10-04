@@ -208,7 +208,7 @@ TEST_CASE("multi alloc", "[buffer]")
 
     buf2.allocate(2);
     CHECK( buf2.data() == &raw_buf2[0] );
-    CHECK( buf2.size() == 3 );
+    CHECK( (buf2.size() == 3) );
 }
 
 TEST_CASE("clear", "[buffer]")
