@@ -39,13 +39,14 @@ using namespace snort;
 
 #define MAX_PKT_LEN  9000
 
-FlowTracker::FlowTracker(PerfConfig* perf) : PerfTracker(perf, TRACKER_NAME)
+FlowTracker::FlowTracker(PerfConfig* perf) : PerfTracker(perf, TRACKER_NAME),
+    flow_max_port_to_track(perf->flow_max_port_to_track)
 {
     pkt_len_cnt.resize( MAX_PKT_LEN + 1 );
-    tcp.src.resize( config->flow_max_port_to_track + 1, 0 );
-    tcp.dst.resize( config->flow_max_port_to_track + 1, 0 );
-    udp.src.resize( config->flow_max_port_to_track + 1, 0 );
-    udp.dst.resize( config->flow_max_port_to_track + 1, 0 );
+    tcp.src.resize( flow_max_port_to_track + 1, 0 );
+    tcp.dst.resize( flow_max_port_to_track + 1, 0 );
+    udp.src.resize( flow_max_port_to_track + 1, 0 );
+    udp.dst.resize( flow_max_port_to_track + 1, 0 );
     type_icmp.resize( UINT8_MAX + 1, 0 );
 
     formatter->register_section("flow");
@@ -120,20 +121,20 @@ void FlowTracker::clear()
 void FlowTracker::update_transport_flows(int sport, int dport,
     FlowProto& proto, int len)
 {
-    if (sport <= config->flow_max_port_to_track &&
-        dport > config->flow_max_port_to_track)
+    if (sport <= flow_max_port_to_track &&
+        dport > flow_max_port_to_track)
     {
         proto.src[sport] += len;
     }
 
-    else if (dport <= config->flow_max_port_to_track &&
-        sport > config->flow_max_port_to_track)
+    else if (dport <= flow_max_port_to_track &&
+        sport > flow_max_port_to_track)
     {
         proto.dst[dport] += len;
     }
 
-    else if (sport <= config->flow_max_port_to_track &&
-        dport <= config->flow_max_port_to_track)
+    else if (sport <= flow_max_port_to_track &&
+        dport <= flow_max_port_to_track)
     {
         proto.src[sport] += len;
         proto.dst[dport] += len;

@@ -62,7 +62,7 @@ static inline bool check_file_size(FILE* fh, uint64_t max_file_size)
 
 PerfTracker::PerfTracker(PerfConfig* config, const char* tracker_name)
 {
-    this->config = config;
+    max_file_size = config->max_file_size;
 
     switch (config->format)
     {
@@ -342,7 +342,7 @@ bool PerfTracker::rotate()
 {
     if (fh && fh != stdout)
     {
-        if (!rotate_file(fname.c_str(), fh, config->max_file_size))
+        if (!rotate_file(fname.c_str(), fh, max_file_size))
             return false;
 
         return open(false);
@@ -352,7 +352,7 @@ bool PerfTracker::rotate()
 
 bool PerfTracker::auto_rotate()
 {
-    if (fh && fh != stdout && check_file_size(fh, config->max_file_size))
+    if (fh && fh != stdout && check_file_size(fh, max_file_size))
         return rotate();
 
     return true;

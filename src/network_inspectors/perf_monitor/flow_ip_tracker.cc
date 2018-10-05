@@ -72,7 +72,8 @@ FlowStateValue* FlowIPTracker::find_stats(const SfIp* src_addr, const SfIp* dst_
     return value;
 }
 
-FlowIPTracker::FlowIPTracker(PerfConfig* perf) : PerfTracker(perf, TRACKER_NAME)
+FlowIPTracker::FlowIPTracker(PerfConfig* perf) : PerfTracker(perf, TRACKER_NAME),
+    perf_flags(perf->perf_flags)
 {
     formatter->register_section("flow_ip");
     formatter->register_field("ip_a", ip_a);
@@ -178,7 +179,7 @@ void FlowIPTracker::process(bool)
         write();
     }
 
-    if ( !(config->perf_flags & PERF_SUMMARY) )
+    if ( !(perf_flags & PERF_SUMMARY) )
         reset();
 }
 

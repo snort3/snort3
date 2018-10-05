@@ -43,6 +43,7 @@ protected:
 
 private:
     PegCount byte_total = 0;
+    int flow_max_port_to_track;
 
     std::vector<PegCount> pkt_len_cnt;
     PegCount pkt_len_oversize_cnt = 0;

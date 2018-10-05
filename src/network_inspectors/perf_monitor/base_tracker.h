@@ -29,6 +29,10 @@ public:
     BaseTracker(PerfConfig* perf);
 
     void process(bool) override;
+
+private:
+    std::vector<ModuleConfig> modules;
+    std::vector<snort::Module*> mods_to_prep;
 };
 
 #endif

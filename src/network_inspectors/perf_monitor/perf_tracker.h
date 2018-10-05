@@ -69,7 +69,8 @@ public:
     PerfTracker& operator=(const PerfTracker&) = delete;
 
 protected:
-    PerfConfig* config;
+    uint64_t max_file_size = 0;
+
     PerfFormatter* formatter;
 
     PerfTracker(PerfConfig*, const char* tracker_name);

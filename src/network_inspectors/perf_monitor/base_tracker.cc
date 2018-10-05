@@ -32,9 +32,10 @@
 using namespace snort;
 using namespace std;
 
-BaseTracker::BaseTracker(PerfConfig* perf) : PerfTracker(perf, PERF_NAME "_base")
+BaseTracker::BaseTracker(PerfConfig* perf) : PerfTracker(perf, PERF_NAME "_base"),
+    modules(perf->modules), mods_to_prep(perf->mods_to_prep)
 {
-    for ( ModuleConfig& mod : config->modules )
+    for ( ModuleConfig& mod : modules )
     {
         formatter->register_section(mod.ptr->get_name());
 
@@ -46,12 +47,12 @@ BaseTracker::BaseTracker(PerfConfig* perf) : PerfTracker(perf, PERF_NAME "_base"
 
 void BaseTracker::process(bool summary)
 {
-    for ( Module* mod : config->mods_to_prep )
+    for ( Module* mod : mods_to_prep )
         mod->prep_counts();
 
     write();
 
-    for ( const ModuleConfig& mod : config->modules )
+    for ( const ModuleConfig& mod : modules )
         if ( !summary )
             mod.ptr->sum_stats(false);
 }
