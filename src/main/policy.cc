@@ -192,6 +192,27 @@ void PolicyMap::clone(PolicyMap *other_map)
         else
             inspection_policy.push_back(other_map->inspection_policy[i]);
     }
+
+    shell_map = other_map->shell_map;
+
+    // Fix references to inspection_policy[0]
+    for ( auto p : other_map->shell_map )
+    {
+        if ( p.second->inspection == other_map->inspection_policy[0] )
+            shell_map[p.first]->inspection = inspection_policy[0];
+    }
+
+    user_inspection = other_map->user_inspection;
+
+    // Fix references to inspection_policy[0]
+    for ( auto p : other_map->user_inspection )
+    {
+        if ( p.second == other_map->inspection_policy[0] )
+            user_inspection[p.first] = inspection_policy[0];
+    }
+
+    user_ips = other_map->user_ips;
+    user_network = other_map->user_network;
 }
 
 unsigned PolicyMap::add_inspection_shell(Shell* sh)
