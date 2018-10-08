@@ -245,11 +245,16 @@ static void SMTP_InitCmds(SMTP_PROTO_CONF* config)
 
 static void SMTP_TermCmds(SMTP_PROTO_CONF* config)
 {
-    for ( int i = 0; i <= config->num_cmds; ++i )
-        snort_free(const_cast<char*>(config->cmds[i].name));
-
-    snort_free(config->cmds);
-    snort_free(config->cmd_config);
+    if (!config)
+        return;
+    if (config->cmds)
+    {
+        for ( int i = 0; i <= config->num_cmds; ++i )
+            snort_free(const_cast<char*>(config->cmds[i].name));
+        snort_free(config->cmds);
+    }
+    if (config->cmd_config)
+        snort_free(config->cmd_config);
 }
 
 static void SMTP_CommandSearchInit(SMTP_PROTO_CONF* config)
@@ -269,6 +274,8 @@ static void SMTP_CommandSearchInit(SMTP_PROTO_CONF* config)
 
 static void SMTP_CommandSearchTerm(SMTP_PROTO_CONF* config)
 {
+    if (config->cmd_search == nullptr)
+        return;
     snort_free(config->cmd_search);
     delete config->cmd_search_mpse;
 }

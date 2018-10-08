@@ -138,10 +138,10 @@ struct SMTP_PROTO_CONF
     uint32_t xtra_ehdrs_id;
 
     int num_cmds;
-    SMTPToken* cmds;
-    SMTPCmdConfig* cmd_config;
-    SMTPSearch* cmd_search;
-    snort::SearchTool* cmd_search_mpse;
+    SMTPToken* cmds = nullptr;
+    SMTPCmdConfig* cmd_config = nullptr;
+    SMTPSearch* cmd_search = nullptr;
+    snort::SearchTool* cmd_search_mpse = nullptr;
 };
 
 struct SmtpStats
