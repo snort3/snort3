@@ -27,7 +27,7 @@
 #include "connectors/tcp_connector/tcp_connector_module.h"
 
 #include <netdb.h>
-#include <sys/poll.h>
+#include <poll.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
@@ -135,14 +135,14 @@ ssize_t recv (int, void *buf, size_t n, int)
         return 0;
 }
 
-#ifdef __FreeBSD__
-int socket (int, int, int) { return s_socket_return; }
-int bind (int, const struct sockaddr*, socklen_t) { return s_bind_return; }
-int listen (int, int) { return s_listen_return; }
-#else
+#if defined __GLIBC__ && !defined __FreeBSD__
 int socket (int, int, int) __THROW { return s_socket_return; }
 int bind (int, const struct sockaddr*, socklen_t) __THROW { return s_bind_return; }
 int listen (int, int) __THROW { return s_listen_return; }
+#else
+int socket (int, int, int) { return s_socket_return; }
+int bind (int, const struct sockaddr*, socklen_t) { return s_bind_return; }
+int listen (int, int) { return s_listen_return; }
 #endif
 
 int accept (int, struct sockaddr*, socklen_t*) { return s_accept_return; }
