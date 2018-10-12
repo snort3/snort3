@@ -1283,6 +1283,11 @@ void fp_local(Packet* p)
     stash->enable_process();
     stash->init();
     init_match_info(c->otnx);
+
+    // FIXIT-L set up a dependency chain between contexts and "pause" here
+    if ( p->flow )
+        DetectionEngine::onload(p->flow);
+
     fpEvalPacket(p);
     fpFinalSelectEvent(c->otnx, p);
 }
